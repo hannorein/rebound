@@ -7,6 +7,10 @@
 #include "integrator.h"
 #include "main.h"
 
+const int nghostx = 1;
+const int nghosty = 1;
+const int nghostz = 1;
+
 void check_boundaries(){
 	for (int i=0;i<N;i++){
 		while(particles[i].x>boxsize/2.){
@@ -29,3 +33,12 @@ void check_boundaries(){
 		}
 	}
 }
+
+struct ghostbox get_ghostbox(int i, int j, int k){
+	gb.shiftx = boxsize*(double)i;
+	gb.shifty = boxsize*(double)j;
+	gb.shiftz = boxsize*(double)k;
+	return gb;
+}
+
+

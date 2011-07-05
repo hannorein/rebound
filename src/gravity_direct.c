@@ -5,20 +5,29 @@
 #include <time.h>
 #include "particle.h"
 #include "main.h"
+#include "boundaries.h"
 
 void calculate_forces(){
-	for (int i=0;i<N;i++){
-		for (int j=0;j<N;j++){
+	// Summing over all Ghost Boxes
+	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
+	for (int gby=-nghosty; gby<=nghosty; gby++){
+	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
+		struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
+		// Summing over all particle pairs
+		for (int i=0; i<N; i++){
+		for (int j=0; j<N; j++){
 			if (i==j) continue;
-			double dx = particles[i].x - particles[j].x;
-			double dy = particles[i].y - particles[j].y;
-			double dz = particles[i].z - particles[j].z;
+			double dx = (gb.shiftx+particles[i].x) - particles[j].x;
+			double dy = (gb.shifty+particles[i].y) - particles[j].y;
+			double dz = (gb.shiftz+particles[i].z) - particles[j].z;
 			double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
 			double prefact = -G/(r*r*r)*particles[i].m*particles[j].m;
 			particles[i].ax += prefact*dx; 
 			particles[i].ay += prefact*dy; 
 			particles[i].az += prefact*dz; 
 		}
+		}
 	}
-
+	}
+	}
 }
