@@ -5,8 +5,10 @@
 #include <time.h>
 #include "particle.h"
 #include "main.h"
+#include "gravity.h"
 
 void integrate_particles(){
+	calculate_forces();
 	for (int i=0;i<N;i++){
 		particles[i].vx += dt * particles[i].ax;
 		particles[i].vy += dt * particles[i].ay;

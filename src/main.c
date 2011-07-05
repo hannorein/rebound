@@ -5,6 +5,7 @@
 #include <time.h>
 #include "particle.h"
 #include "integrator.h"
+#include "boundaries.h"
 #include "gravity.h"
 #ifdef OPENGL
 #include "opengl.h"
@@ -15,14 +16,14 @@ double softening = 0.01;
 double G=1;
 double t=0;
 double tmax=10;
-double dt = 0.004;
+double dt = 0.01;
 int N = 1000;
 
 void iterate(){	
-	calculate_force();
 	integrate_particles();
-	printf("t = %f\n",t);
 	t+=dt;
+	check_boundaries();
+	printf("t = %f\n",t);
 #ifdef OPENGL
 	display();
 #endif

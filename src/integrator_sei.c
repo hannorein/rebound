@@ -4,19 +4,28 @@
 #include <math.h>
 #include <time.h>
 #include "particle.h"
+#include "gravity.h"
 #include "main.h"
 
-#define OMEGA 1. // Orbital velocity
+const double OMEGA = 1.; // Orbital velocity
 
+void operator_H0(double dt, struct particle* p);
+void operator_phi(double dt, struct particle* p);
 // Cache sin() tan() values.
 double lastdt=0;
 double sindt, tandt;
 
-void operator_sei(double dt, struct particle* p);
-
+// This function is the SEI integrator.
+// It is symplectic, second order accurate and time-reversible.
+// I.e. pretty cool.
 void integrate_particles(){
 	for (int i=0;i<N;i++){
-		operator_sei(dt, &(particles[i]));
+		operator_H0(dt/2.,&(particles[i]));
+	}
+	calculate_forces();
+	for (int i=0;i<N;i++){
+		operator_phi(dt,&(particles[i]));
+		operator_H0(dt/2.,&(particles[i]));
 	}
 }
 
@@ -70,12 +79,4 @@ void operator_phi(double dt, struct particle* p){
 	p->vy += p->ay * dt;
 	p->vz += p->az * dt;
 }
-
-// This function is the SEI integrator.
-// It is symplectic, second order accurate and time-reversible.
-void operator_sei(double dt, struct particle* p){
-	operator_H0(dt/2.,p);
-	operator_phi(dt,p);
-	operator_H0(dt/2.,p);
-}	
 

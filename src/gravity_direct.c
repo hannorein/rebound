@@ -6,7 +6,7 @@
 #include "particle.h"
 #include "main.h"
 
-void calculate_force(){
+void calculate_forces(){
 	for (int i=0;i<N;i++){
 		for (int j=0;j<N;j++){
 			if (i==j) continue;
