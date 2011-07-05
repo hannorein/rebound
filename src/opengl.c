@@ -12,11 +12,17 @@
 #include "zpr.h"
 #include "main.h"
 #include "particle.h"
+#include "boundaries.h"
+
+int display_boundaries = 1;
 
 void displayKey(unsigned char key, int x, int y){
 	switch(key){
 		case 'q':
 			exit(0);
+			break;
+		case 'b':
+			display_boundaries = !display_boundaries;
 			break;
 	}
 }
@@ -26,12 +32,25 @@ void display(){
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glTranslatef(0,0,-boxsize);
-	glPointSize(4.);
+	glPointSize(5.);
 	glEnable(GL_POINT_SMOOTH);
-	glColor4f(1.0,1.0,0.0,0.4);
+	glColor4f(1.0,1.0,0.0,0.6);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_DOUBLE, 10*sizeof(double), particles);
-	glDrawArrays(GL_POINTS, 0, N);
+	if (display_boundaries==1){
+		for (int i=-nghostx;i<=nghostx;i++){
+		for (int j=-nghosty;j<=nghosty;j++){
+		for (int k=-nghostz;k<=nghostz;k++){
+			struct ghostbox gb = get_ghostbox(i,j,k);
+			glTranslatef(gb.shiftx,gb.shifty,gb.shiftz);
+			glDrawArrays(GL_POINTS, 0, N);
+			glTranslatef(-gb.shiftx,-gb.shifty,-gb.shiftz);
+		}
+		}
+		}
+	}else{
+		glDrawArrays(GL_POINTS, 0, N);
+	}
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glColor4f(1.0,0.0,0.0,0.4);
 	glutWireCube(boxsize);
@@ -48,6 +67,8 @@ void init_display(int argc, char* argv[]){
 	glutDisplayFunc(display);
 	glutIdleFunc(iterate);
 	glutKeyboardFunc(displayKey);
+	glEnable(GL_BLEND);                    
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);  
 	glutMainLoop();
 }
 

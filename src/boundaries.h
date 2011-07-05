@@ -8,5 +8,10 @@ struct ghostbox{
 	double shiftz;
 } ghostbox;
 
+struct ghostbox get_ghostbox(int i, int j, int k);
+
+extern const int nghostx;
+extern const int nghosty;
+extern const int nghostz;
 
 #endif
