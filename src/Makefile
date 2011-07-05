@@ -1,5 +1,5 @@
 CC=gcc
-UNAME=Ubuntu
+UNAME=Darwin
 ifeq ($(UNAME), Ubuntu)
 OPT= -L/usr/lib -I/usr/include  -O3 -Wall  -g
 OPT += -DOPENGL 

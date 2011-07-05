@@ -23,6 +23,9 @@ void displayKey(unsigned char key, int x, int y){
 
 void display(){
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslatef(0,0,-boxsize);
 	glPointSize(4.);
 	glEnable(GL_POINT_SMOOTH);
 	glColor4f(1.0,1.0,0.0,0.4);
@@ -33,6 +36,7 @@ void display(){
 	glColor4f(1.0,0.0,0.0,0.4);
 	glutWireCube(boxsize);
 	glutSwapBuffers();
+	glMatrixMode(GL_PROJECTION);
 }
 
 void init_display(int argc, char* argv[]){

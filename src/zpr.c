@@ -5,6 +5,7 @@
 #include <math.h>
 
 #include "zpr.h"
+#include "main.h"
 
 /* This code was originally C++ :-) */
 
@@ -16,8 +17,8 @@ static double _left   = 0.0;
 static double _right  = 0.0;
 static double _bottom = 0.0;
 static double _top    = 0.0;
-static double _zNear  = 0.1;
-static double _zFar   = 100.0;
+static double _zNear  = 0.01;
+static double _zFar   = 100000.0;
 
 static int  _mouseX      = 0;
 static int  _mouseY      = 0;
@@ -44,7 +45,6 @@ static void zprMotion(int x, int y);
 
 /* Configurable center point for zooming and rotation */
 
-GLfloat zprReferencePoint[4] = { 0,0,0,0 };
 double glscale = 1;
 int resetOrientation = 0;
 
@@ -146,10 +146,10 @@ zprMotion(int x, int y)
     {
         double s = exp((double)dy*0.01);
 
-        glTranslatef( zprReferencePoint[0], zprReferencePoint[1], zprReferencePoint[2]);
+        glTranslatef(0, 0, boxsize);
 	glscale *=s;
         glScalef(s,s,s);
-        glTranslatef(-zprReferencePoint[0],-zprReferencePoint[1],-zprReferencePoint[2]);
+        glTranslatef(0, 0,-boxsize);
 
         changed = true;
     }
@@ -171,9 +171,9 @@ zprMotion(int x, int y)
             by = _matrixInverse[1]*ax + _matrixInverse[5]*ay + _matrixInverse[9] *az;
             bz = _matrixInverse[2]*ax + _matrixInverse[6]*ay + _matrixInverse[10]*az;
 
-            glTranslatef( zprReferencePoint[0], zprReferencePoint[1], zprReferencePoint[2]);
+            glTranslatef( 0, 0,-boxsize);
             glRotatef(angle,bx,by,bz);
-            glTranslatef(-zprReferencePoint[0],-zprReferencePoint[1],-zprReferencePoint[2]);
+            glTranslatef( 0, 0, boxsize);
 
             changed = true;
         }
