@@ -7,7 +7,7 @@
 #include "gravity.h"
 #include "main.h"
 
-const double OMEGA = 1.; // Orbital velocity
+double OMEGA = 1.; // Orbital velocity
 
 void operator_H0(double dt, struct particle* p);
 void operator_phi(double dt, struct particle* p);

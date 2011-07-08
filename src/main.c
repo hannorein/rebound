@@ -7,6 +7,7 @@
 #include "integrator.h"
 #include "boundaries.h"
 #include "gravity.h"
+#include "problem.h"
 #ifdef OPENGL
 #include "opengl.h"
 #endif
@@ -16,8 +17,8 @@ double softening = 0.01;
 double G=1;
 double t=0;
 double tmax=10;
-double dt = 0.0001;
-int N = 50;
+double dt = 0.01;
+int N = 0;
 
 void iterate(){	
 	integrate_particles();
@@ -31,7 +32,7 @@ void iterate(){
 
 int main(int argc, char* argv[]) {
 	srand ( time(NULL) );
-	init_particles();
+	problem_init();
 #ifdef OPENGL
 	init_display(argc, argv);
 #else

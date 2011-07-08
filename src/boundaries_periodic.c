@@ -8,9 +8,9 @@
 #include "main.h"
 #include "boundaries.h"
 
-const int nghostx = 1;
-const int nghosty = 1;
-const int nghostz = 1;
+int nghostx = 1;
+int nghosty = 1;
+int nghostz = 1;
 
 void check_boundaries(){
 	for (int i=0;i<N;i++){
