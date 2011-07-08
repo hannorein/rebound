@@ -14,6 +14,7 @@ endif
 
 all:
 	$(CC) $(OPT) -std=c99 main.c -c
+	$(CC) $(OPT) -std=c99 problem.c -c
 	$(CC) $(OPT) -std=c99 tree.c -c
 	$(CC) $(OPT) -std=c99 particle.c -c
 	$(CC) $(OPT) -std=c99 gravity.c -c

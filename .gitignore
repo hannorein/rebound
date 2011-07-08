@@ -1,2 +1,5 @@
 *.o
 nbody
+gravity.c
+boundaries.c
+integrator.c
