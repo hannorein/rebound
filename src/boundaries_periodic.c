@@ -6,6 +6,7 @@
 #include "particle.h"
 #include "integrator.h"
 #include "main.h"
+#include "boundaries.h"
 
 const int nghostx = 1;
 const int nghosty = 1;
@@ -35,6 +36,7 @@ void check_boundaries(){
 }
 
 struct ghostbox get_ghostbox(int i, int j, int k){
+	struct ghostbox gb;
 	gb.shiftx = boxsize*(double)i;
 	gb.shifty = boxsize*(double)j;
 	gb.shiftz = boxsize*(double)k;

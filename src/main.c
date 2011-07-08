@@ -17,7 +17,7 @@ double G=1;
 double t=0;
 double tmax=10;
 double dt = 0.01;
-int N = 1000;
+int N = 50;
 
 void iterate(){	
 	integrate_particles();
