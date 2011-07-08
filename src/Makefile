@@ -1,24 +1,16 @@
-bash -c "if [ `uname` = "Linux" ] ; then UNAME=Ubuntu ; else UNAME=Darwin ; fi"
-#SHELL := /bin/bash
+UNAME := $(shell uname)
 CC=gcc
-#UNAME=Darwin
-UNAME=Ubuntu
-ifeq ($(UNAME), Ubuntu)
+ifeq ($(UNAME), Linux)
 	OPT= -L/usr/lib -I/usr/include -Wall  -g
 	OPT += -DOPENGL 
 	LIB=  -lm -lglut  #-lconfig
 endif
-#ifeq ($(UNAME), Linux)
-#OPT= -L/home/rein/localinstalls_linux/lib -I/home/rein/localinstalls_linux/include  -O3 -Wall  -g 
-#LIB=  -lm -lglut  -lconfig
-#endif
 ifeq ($(UNAME), Darwin)
 	OPT= -L/usr/local/lib -I/usr/local/include  -Wall -g 
 	OPT += -D_APPLE  
 	OPT += -DOPENGL 
 	LIB =  -framework OPENGL -framework GLUT
 endif
-#fi
 
 all:
 	$(CC) $(OPT) -std=c99 main.c -c
