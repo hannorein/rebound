@@ -13,8 +13,8 @@
 #include "main.h"
 #include "particle.h"
 #include "boundaries.h"
+#include "tree.h"
 
-int display_boundaries = 1;
 
 void displayKey(unsigned char key, int x, int y){
 	switch(key){
@@ -22,8 +22,18 @@ void displayKey(unsigned char key, int x, int y){
 			exit(0);
 			break;
 		case 'b':
-			display_boundaries = !display_boundaries;
+			printf("key caught\n");
 			break;
+	}
+}
+
+void displayTree(struct cell *node){
+	if (node == NULL) return;
+	glTranslatef(node->x,node->y,node->z);
+	glutWireCube(node->w);
+	glTranslatef(-node->x,-node->y,-node->z);
+	for (int i=0;i<8;i++) {
+		displayTree(node->oct[i]);
 	}
 }
 
@@ -34,24 +44,24 @@ void display(){
 	glTranslatef(0,0,-boxsize);
 	glPointSize(5.);
 	glEnable(GL_POINT_SMOOTH);
-	glColor4f(1.0,1.0,0.0,0.6);
-	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_DOUBLE, 10*sizeof(double), particles);
-	if (display_boundaries==1){
-		for (int i=-nghostx;i<=nghostx;i++){
-		for (int j=-nghosty;j<=nghosty;j++){
-		for (int k=-nghostz;k<=nghostz;k++){
-			struct ghostbox gb = get_ghostbox(i,j,k);
-			glTranslatef(gb.shiftx,gb.shifty,gb.shiftz);
-			glDrawArrays(GL_POINTS, 0, N);
-			glTranslatef(-gb.shiftx,-gb.shifty,-gb.shiftz);
-		}
-		}
-		}
-	}else{
+	for (int i=-nghostx;i<=nghostx;i++){
+	for (int j=-nghosty;j<=nghosty;j++){
+	for (int k=-nghostz;k<=nghostz;k++){
+		struct ghostbox gb = get_ghostbox(i,j,k);
+		glTranslatef(gb.shiftx,gb.shifty,gb.shiftz);
+		// Drawing Points
+		glColor4f(1.0,1.0,0.0,0.6);
+		glEnableClientState(GL_VERTEX_ARRAY);
 		glDrawArrays(GL_POINTS, 0, N);
+		glDisableClientState(GL_VERTEX_ARRAY);
+		// Drawing Tree
+		glColor4f(1.0,0.0,0.0,0.4);
+		displayTree(root);
+		glTranslatef(-gb.shiftx,-gb.shifty,-gb.shiftz);
 	}
-	glDisableClientState(GL_VERTEX_ARRAY);
+	}
+	}
 	glColor4f(1.0,0.0,0.0,0.4);
 	glutWireCube(boxsize);
 	glutSwapBuffers();
