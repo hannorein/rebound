@@ -8,21 +8,32 @@
 #include "boundaries.h"
 
 void problem_init(){
+	// Setup constants
+	dt = 1e-3;
+	boxsize = 3;
 	// Setup particle structures
-	init_particles(50);
+	init_particles(2);
 	// Initial conditions
-	for (int i =0;i<N;i++){
-		particles[i].x = ((double)rand()/(double)RAND_MAX-0.5)*boxsize;
-		particles[i].y = ((double)rand()/(double)RAND_MAX-0.5)*boxsize;
-		particles[i].z = 0.1*((double)rand()/(double)RAND_MAX-0.5)*boxsize;
-		particles[i].vx = 0;
-		particles[i].vy = 0;
-		particles[i].vz = 0;
-		particles[i].ax = 0;
-		particles[i].ay = 0;
-		particles[i].az = 0;
-		particles[i].m = 0.0001;
-	}
+	particles[0].x  = 0;
+	particles[0].y  = 0;
+	particles[0].z  = 0;
+	particles[0].vx = 0;
+	particles[0].vy = 0;
+	particles[0].vz = 0;
+	particles[0].ax = 0;
+	particles[0].ay = 0;
+	particles[0].az = 0;
+	particles[0].m  = 1;
+	particles[1].x  = 1;
+	particles[1].y  = 0;
+	particles[1].z  = 0;
+	particles[1].vx = 0;
+	particles[1].vy = 1;
+	particles[1].vz = 0;
+	particles[1].ax = 0;
+	particles[1].ay = 0;
+	particles[1].az = 0;
+	particles[1].m  = 0;
 	// Do not use any ghost boxes
 	nghostx = 0;
 	nghosty = 0;
