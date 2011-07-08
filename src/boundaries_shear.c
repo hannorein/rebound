@@ -8,9 +8,9 @@
 #include "main.h"
 
 extern const double OMEGA;
-const int nghostx = 1;
-const int nghosty = 1;
-const int nghostz = 0;
+int nghostx = 1;
+int nghosty = 1;
+int nghostz = 0;
 
 void check_boundaries(){
 	double offset = -0.5*boxsize + fmod(1.5*OMEGA*t,1.)*boxsize;
