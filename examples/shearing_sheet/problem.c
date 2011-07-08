@@ -10,9 +10,10 @@
 extern double OMEGA;
 
 void problem_init(){
+	// Setup constants
+	OMEGA = 1.;
 	// Setup particle structures
 	init_particles(50);
-	OMEGA = 1.;
 	// Initial conditions
 	for (int i =0;i<N;i++){
 		particles[i].x = ((double)rand()/(double)RAND_MAX-0.5)*boxsize;
