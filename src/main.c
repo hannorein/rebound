@@ -16,7 +16,7 @@ double softening = 0.01;
 double G=1;
 double t=0;
 double tmax=10;
-double dt = 0.01;
+double dt = 0.0001;
 int N = 50;
 
 void iterate(){	
