@@ -64,6 +64,7 @@ void display(){
 	glColor4f(1.0,0.0,0.0,0.4);
 	glutWireCube(boxsize);
 	glutSwapBuffers();
+	glTranslatef(0,0,boxsize);
 	glMatrixMode(GL_PROJECTION);
 }
 
