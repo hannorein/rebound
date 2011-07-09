@@ -1,4 +1,4 @@
-
+#ifdef OPENGL
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
@@ -352,3 +352,4 @@ invertMatrix(const GLdouble *me, GLdouble *out )
 #undef MAT
 }
 
+#endif // OPENGL

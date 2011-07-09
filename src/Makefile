@@ -1,15 +1,22 @@
 UNAME := $(shell uname)
 CC=gcc
+OPENGL=0
 ifeq ($(UNAME), Linux)
-	OPT= -L/usr/lib -I/usr/include -Wall  -g
-	OPT += -DOPENGL 
-	LIB=  -lm -lglut  #-lconfig
+	OPT = -L/usr/lib -I/usr/include -Wall  -g
+	LIB =  -lm
+ifeq ($(OPENGL), 1)
+	OPT+= -DOPENGL 
+	LIB+= -lglut 
+endif
 endif
 ifeq ($(UNAME), Darwin)
-	OPT= -L/usr/local/lib -I/usr/local/include  -Wall -g 
-	OPT += -D_APPLE  
-	OPT += -DOPENGL 
-	LIB =  -framework OPENGL -framework GLUT
+	OPT = -L/usr/local/lib -I/usr/local/include  -Wall -g 
+	OPT+= -D_APPLE  
+	LIB =  
+ifeq ($(OPENGL), 1)
+	OPT+= -DOPENGL 
+	LIB+= -framework OPENGL -framework GLUT
+endif
 endif
 
 all:
