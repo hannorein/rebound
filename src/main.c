@@ -16,7 +16,7 @@ double boxsize = 1;
 double softening = 0.01;
 double G=1;
 double t=0;
-double tmax=10;
+double tmax=0; // Run forever
 double dt = 0.01;
 int N = 0;
 
@@ -28,15 +28,20 @@ void iterate(){
 #ifdef OPENGL
 	display();
 #endif
+	problem_inloop();
+	while(t>=tmax && tmax!=0.0){
+		problem_finish();
+		exit(0);
+	}
 }
 
 int main(int argc, char* argv[]) {
 	srand ( time(NULL) );
-	problem_init();
+	problem_init(argc, argv);
 #ifdef OPENGL
 	init_display(argc, argv);
 #else
-	while(t<tmax){
+	while(t<tmax||tmax==0.0){
 		iterate();
 	}
 #endif

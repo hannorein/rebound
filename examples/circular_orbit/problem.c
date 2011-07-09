@@ -7,7 +7,7 @@
 #include "particle.h"
 #include "boundaries.h"
 
-void problem_init(){
+void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt = 1e-3;
 	boxsize = 3;
@@ -38,6 +38,10 @@ void problem_init(){
 	nghostx = 0;
 	nghosty = 0;
 	nghostz = 0;
+}
+
+void problem_inloop(){
+
 }
 
 void problem_output(){

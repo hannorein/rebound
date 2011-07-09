@@ -9,7 +9,7 @@
 
 extern double OMEGA;
 
-void problem_init(){
+void problem_init(int argc, char* argv[]){
 	// Setup constants
 	OMEGA = 1.;
 	// Setup particle structures
@@ -31,6 +31,10 @@ void problem_init(){
 	nghostx = 1;
 	nghosty = 1;
 	nghostz = 0;
+}
+
+void problem_inloop(){
+
 }
 
 void problem_output(){

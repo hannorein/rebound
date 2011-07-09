@@ -5,6 +5,7 @@ extern double boxsize;
 extern double softening;
 extern double G;
 extern double t;
+extern double tmax;
 extern double dt;
 extern int N;
 
