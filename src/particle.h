@@ -15,7 +15,7 @@ struct particle {
 	double az;
 	double m;
 #ifdef GRAVITY_TREE
-	struct cell* c;
+	struct cell* node;
 #endif
 #ifndef COLLISIONS_NONE
 	double r; 
