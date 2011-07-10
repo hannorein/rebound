@@ -1,4 +1,5 @@
 PROBLEMDIR=examples/shearing_sheet
+export OPENGL=1
 
 all:
 	# Setup link to different modules

@@ -24,20 +24,23 @@ void iterate(){
 	integrate_particles();
 	t+=dt;
 	check_boundaries();
-	printf("t = %f\n",t);
+//	printf("t = %f\n",t);
 #ifdef OPENGL
 	display();
 #endif
 	problem_inloop();
+	problem_output();
 	while(t>=tmax && tmax!=0.0){
 		problem_finish();
 		exit(0);
 	}
+
 }
 
 int main(int argc, char* argv[]) {
 	srand ( time(NULL) );
 	problem_init(argc, argv);
+	problem_output();
 #ifdef OPENGL
 	init_display(argc, argv);
 #else

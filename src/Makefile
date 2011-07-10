@@ -1,28 +1,33 @@
 UNAME := $(shell uname)
 CC=gcc
-OPENGL=1
-TREE=1
 ifeq ($(UNAME), Linux)
-	OPT = -L/usr/lib -I/usr/include -Wall  -g
+	OPT = -L/usr/lib -I/usr/include -Wall  -g 
 	LIB =  -lm
-ifeq ($(OPENGL), 1)
-	OPT+= -DOPENGL 
-	LIB+= -lglut 
-endif
 endif
 ifeq ($(UNAME), Darwin)
 	OPT = -L/usr/local/lib -I/usr/local/include  -Wall -g 
 	OPT+= -D_APPLE  
 	LIB =  
+endif
+
+# Nothing needs to be changed below
+
 ifeq ($(OPENGL), 1)
+ifeq ($(UNAME), Linux)
+	OPT+= -DOPENGL 
+	LIB+= -lglut 
+endif
+ifeq ($(UNAME), Darwin)
 	OPT+= -DOPENGL 
 	LIB+= -framework OPENGL -framework GLUT
 endif
 endif
 
-ifeq ($(TREE), 1)
-	OPT+= -DTREE
-endif
+# Create precompiler definitions from links
+OPT+= -D$(shell basename `readlink gravity.c` '.c' | tr '[a-z]' '[A-Z]')
+OPT+= -D$(shell basename `readlink integrator.c` '.c' | tr '[a-z]' '[A-Z]')
+OPT+= -D$(shell basename `readlink boundaries.c` '.c' | tr '[a-z]' '[A-Z]')
+
 
 all:
 	$(CC) $(OPT) -std=c99 main.c -c
@@ -31,8 +36,9 @@ all:
 	$(CC) $(OPT) -std=c99 particle.c -c
 	$(CC) $(OPT) -std=c99 gravity.c -c
 	$(CC) $(OPT) -std=c99 integrator.c -c
-	$(CC) $(OPT) -std=c99 zpr.c -c
 	$(CC) $(OPT) -std=c99 boundaries.c -c
+	$(CC) $(OPT) -std=c99 output.c -c
+	$(CC) $(OPT) -std=c99 zpr.c -c
 	$(CC) $(OPT) -std=c99 opengl.c -c
 	$(CC) $(LIB) -std=c99 *.o -o nbody
 
