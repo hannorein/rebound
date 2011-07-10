@@ -39,7 +39,6 @@ void displayTree(struct cell *node){
 
 void display(){
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glMatrixMode(GL_MODELVIEW);
 	glTranslatef(0,0,-boxsize);
 	glPointSize(5.);
 	glEnable(GL_POINT_SMOOTH);
@@ -65,7 +64,6 @@ void display(){
 	glutWireCube(boxsize);
 	glutSwapBuffers();
 	glTranslatef(0,0,boxsize);
-	glMatrixMode(GL_PROJECTION);
 }
 
 void init_display(int argc, char* argv[]){
