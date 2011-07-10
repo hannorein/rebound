@@ -1,6 +1,6 @@
 UNAME := $(shell uname)
 CC=gcc
-OPENGL=0
+OPENGL=1
 ifeq ($(UNAME), Linux)
 	OPT = -L/usr/lib -I/usr/include -Wall  -g
 	LIB =  -lm
