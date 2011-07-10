@@ -1,4 +1,5 @@
 PROBLEMDIR=examples/circular_orbit
+export OPENGL=1 
 
 all:
 	# Setup link to different modules
