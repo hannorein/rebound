@@ -24,7 +24,7 @@ void iterate(){
 	integrate_particles();
 	t+=dt;
 	check_boundaries();
-	printf("t = %f\n",t);
+//	printf("t = %f\n",t);
 #ifdef OPENGL
 	display();
 #endif
