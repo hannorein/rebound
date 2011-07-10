@@ -14,6 +14,7 @@
 #include "particle.h"
 #include "boundaries.h"
 #include "tree.h"
+#include "opengl.h"
 
 
 void displayKey(unsigned char key, int x, int y){

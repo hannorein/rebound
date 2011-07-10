@@ -25,10 +25,9 @@ struct cell *add_leaf(struct cell *, int, struct cell *,  int);
 
 int get_octant(int n, struct cell *node);
 
-
 void init_tree();
 
-//void refresh_tree();
+void update_tree();
 
 //void finalize_tree();
 

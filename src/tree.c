@@ -12,8 +12,8 @@ struct cell* root;
 
 void init_tree(){
 	printf("Initializing the tree\n");
-	int	level;
-	level = 0;
+/*	int	level;
+	level = 0;*/
 	root = NULL;
 	for (int i=0;i<N;i++){
 //		root = add_leaf(root, particles[i], level);
@@ -71,8 +71,16 @@ struct cell *add_leaf(struct cell *node, int n, struct cell *parent, int o){
 
 int get_octant(int n, struct cell *node){
 	int octant;
-	octant = ldexp((particles[n].x>node->x) ? 0 : 1 , 0)	+ \
-			ldexp((particles[n].y>node->y) ? 0 : 1 , 1) + \
-			ldexp((particles[n].z>node->z) ? 0 : 1 , 2);
+	octant = ldexp((particles[n].x > node->x) ? 0 : 1 , 0)	+ \
+			ldexp((particles[n].y > node->y) ? 0 : 1 , 1) + \
+			ldexp((particles[n].z > node->z) ? 0 : 1 , 2);
 	return octant;
 }
+
+void update_tree(struct cell *node){
+	if (node != NULL) {
+//		update_tree(node->oct
+	}
+}
+
+

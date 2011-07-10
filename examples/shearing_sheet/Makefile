@@ -2,7 +2,7 @@ PROBLEMDIR=examples/shearing_sheet
 
 all:
 	# Setup link to different modules
-	ln -fs gravity_direct.c ../../src/gravity.c
+	ln -fs gravity_tree.c ../../src/gravity.c
 	ln -fs boundaries_shear.c ../../src/boundaries.c
 	ln -fs integrator_sei.c ../../src/integrator.c
 	# Setup link to problem file

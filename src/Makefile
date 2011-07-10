@@ -1,6 +1,7 @@
 UNAME := $(shell uname)
 CC=gcc
-OPENGL=0
+OPENGL=1
+TREE=1
 ifeq ($(UNAME), Linux)
 	OPT = -L/usr/lib -I/usr/include -Wall  -g
 	LIB =  -lm
@@ -17,6 +18,10 @@ ifeq ($(OPENGL), 1)
 	OPT+= -DOPENGL 
 	LIB+= -framework OPENGL -framework GLUT
 endif
+endif
+
+ifeq ($(TREE), 1)
+	OPT+= -DTREE
 endif
 
 all:

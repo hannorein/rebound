@@ -11,6 +11,13 @@
 void calculate_forces(){
 	if (root==NULL){
 		init_tree();
+	} else {
+		update_tree(root);
+	}
+	for (int i=0; i<N; i++){
+		particles[i].ax = 0; 
+		particles[i].ay = 0; 
+		particles[i].az = 0; 
 	}
 	// Summing over all Ghost Boxes
 	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
@@ -19,9 +26,6 @@ void calculate_forces(){
 		struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
 		// Summing over all particle pairs
 		for (int i=0; i<N; i++){
-			particles[i].ax = 0; 
-			particles[i].ay = 0; 
-			particles[i].az = 0; 
 		for (int j=0; j<N; j++){
 			if (i==j) continue;
 			double dx = (gb.shiftx+particles[i].x) - particles[j].x;
