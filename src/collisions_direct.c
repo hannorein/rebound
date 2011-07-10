@@ -17,6 +17,7 @@ struct collision{
 struct collision* collisions = NULL;
 int collisions_NMAX = 0;
 int collisions_N = 0;
+double coefficient_of_restitution = 1;
 void collisions_add(int i, int j);
 
 void collisions_search(){
@@ -76,7 +77,7 @@ void collisions_resolve_single(struct collision c){
 	double vx21nn = cphi * vx21  + sphi * vy21n;		
 
 	// Coefficient of restitution
-	double eps=1.;
+	double eps= coefficient_of_restitution;
 	double dvx2 = -(0.5+0.5*eps)*2.0*vx21nn/(1.0+m21) ;
 
 	// Now we are rotating backwards
