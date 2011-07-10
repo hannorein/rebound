@@ -12,6 +12,9 @@ struct particle {
 	double ay;
 	double az;
 	double m;
+#ifndef COLLISIONS_NONE
+	double r; 
+#endif
 } particle;
 
 extern struct particle* particles;

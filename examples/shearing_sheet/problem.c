@@ -14,6 +14,7 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	OMEGA = 1.;
 	// Setup particle structures
+	boxsize = 1;
 	init_particles(50);
 	// Initial conditions
 	for (int i =0;i<N;i++){
@@ -27,6 +28,7 @@ void problem_init(int argc, char* argv[]){
 		particles[i].ay = 0;
 		particles[i].az = 0;
 		particles[i].m = 0.0001;
+		particles[i].r = 0.05;
 	}
 	// Do use ghost boxes in x and y
 	nghostx = 1;

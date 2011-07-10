@@ -8,6 +8,7 @@
 #include "boundaries.h"
 #include "gravity.h"
 #include "problem.h"
+#include "collisions.h"
 #ifdef OPENGL
 #include "opengl.h"
 #endif
@@ -28,6 +29,8 @@ void iterate(){
 #ifdef OPENGL
 	display();
 #endif
+	collisions_search();
+	collisions_resolve();
 	problem_inloop();
 	problem_output();
 	while(t>=tmax && tmax!=0.0){
