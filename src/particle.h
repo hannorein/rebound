@@ -14,6 +14,7 @@ struct particle {
 	double m;
 #ifndef COLLISIONS_NONE
 	double r; 
+	double lastcollision;
 #endif
 } particle;
 

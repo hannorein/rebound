@@ -53,6 +53,7 @@ void collisions_add(int i, int j){
 void collisions_resolve_single(struct collision c){
 	struct particle p1 = particles[c.p1];
 	struct particle p2 = particles[c.p2];
+	if (p1.lastcollision==t || p2.lastcollision==t) return;
 	double m21  = p2.m / p1.m; 
 	double x21  = p2.x - p1.x; 
 	double y21  = p2.y - p1.y; 
@@ -75,7 +76,7 @@ void collisions_resolve_single(struct collision c){
 	double vx21nn = cphi * vx21  + sphi * vy21n;		
 
 	// Coefficient of restitution
-	double eps=0.5;
+	double eps=1.;
 	double dvx2 = -(0.5+0.5*eps)*2.0*vx21nn/(1.0+m21) ;
 
 	// Now we are rotating backwards
@@ -85,12 +86,15 @@ void collisions_resolve_single(struct collision c){
 	double dvz2nn = stheta * dvy2n;	
 
 	// Applying the changes to the particles.
-	particles[c.p2].vx +=	dvx2n; 
-	particles[c.p2].vy +=	dvy2nn; 
 	particles[c.p1].vx -=	m21*dvx2n;
 	particles[c.p1].vy -=	m21*dvy2nn;
+	particles[c.p1].vz -=	m21*dvz2nn;
+	particles[c.p1].lastcollision = t;
+	particles[c.p2].vx +=	dvx2n; 
+	particles[c.p2].vy +=	dvy2nn; 
 	particles[c.p2].vz +=	dvz2nn; 
-	particles[c.p2].vz -=	m21*dvz2nn;
+	particles[c.p2].lastcollision = t;
+
 }
 
 void collisions_resolve(){
