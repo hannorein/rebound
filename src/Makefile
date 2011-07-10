@@ -36,8 +36,9 @@ all:
 	$(CC) $(OPT) -std=c99 particle.c -c
 	$(CC) $(OPT) -std=c99 gravity.c -c
 	$(CC) $(OPT) -std=c99 integrator.c -c
-	$(CC) $(OPT) -std=c99 zpr.c -c
 	$(CC) $(OPT) -std=c99 boundaries.c -c
+	$(CC) $(OPT) -std=c99 output.c -c
+	$(CC) $(OPT) -std=c99 zpr.c -c
 	$(CC) $(OPT) -std=c99 opengl.c -c
 	$(CC) $(LIB) -std=c99 *.o -o nbody
 
