@@ -4,3 +4,4 @@ gravity.c
 boundaries.c
 integrator.c
 src/problem.c
+.DS_Store
