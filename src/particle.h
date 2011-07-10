@@ -14,7 +14,13 @@ struct particle {
 	double ay;
 	double az;
 	double m;
-	struct cell* node;
+#ifdef GRAVITY_TREE
+	struct cell* c;
+#endif
+#ifndef COLLISIONS_NONE
+	double r; 
+	double lastcollision;
+#endif
 } particle;
 
 extern struct particle* particles;

@@ -40,11 +40,10 @@ void displayTree(struct cell *node){
 
 void display(){
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glMatrixMode(GL_MODELVIEW);
 	glTranslatef(0,0,-boxsize);
 	glPointSize(5.);
 	glEnable(GL_POINT_SMOOTH);
-	glVertexPointer(3, GL_DOUBLE, 10*sizeof(double), particles);
+	glVertexPointer(3, GL_DOUBLE, sizeof(struct particle), particles);
 	for (int i=-nghostx;i<=nghostx;i++){
 	for (int j=-nghosty;j<=nghosty;j++){
 	for (int k=-nghostz;k<=nghostz;k++){
@@ -66,7 +65,6 @@ void display(){
 	glutWireCube(boxsize);
 	glutSwapBuffers();
 	glTranslatef(0,0,boxsize);
-	glMatrixMode(GL_PROJECTION);
 }
 
 void init_display(int argc, char* argv[]){

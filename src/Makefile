@@ -27,6 +27,7 @@ endif
 OPT+= -D$(shell basename `readlink gravity.c` '.c' | tr '[a-z]' '[A-Z]')
 OPT+= -D$(shell basename `readlink integrator.c` '.c' | tr '[a-z]' '[A-Z]')
 OPT+= -D$(shell basename `readlink boundaries.c` '.c' | tr '[a-z]' '[A-Z]')
+OPT+= -D$(shell basename `readlink collisions.c` '.c' | tr '[a-z]' '[A-Z]')
 
 
 all:
@@ -38,6 +39,7 @@ all:
 	$(CC) $(OPT) -std=c99 integrator.c -c
 	$(CC) $(OPT) -std=c99 boundaries.c -c
 	$(CC) $(OPT) -std=c99 output.c -c
+	$(CC) $(OPT) -std=c99 collisions.c -c
 	$(CC) $(OPT) -std=c99 zpr.c -c
 	$(CC) $(OPT) -std=c99 opengl.c -c
 	$(CC) $(LIB) -std=c99 *.o -o nbody
