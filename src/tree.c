@@ -29,58 +29,127 @@ struct cell *add_leaf(struct cell *node, int n, struct cell *parent, int o){
 //		node.my	= particles[n].y;
 //		node.mz	= particles[n].z;
 		if (parent == NULL){
-			node->x	= 0;
+			for (int i=0; i<3; i++) node->x[i] = 0;
+		/*	node->x	= 0;
 			node->y	= 0;
-			node->z	= 0;
+			node->z	= 0; */
 			node->w = boxsize;
 		} else {
 			node->w = parent->w/2.;
 //			node->x	= node->w * (floor(node->mx / node->w) + 0.5);
 //			node->y	= node->w * (floor(node->my / node->w) + 0.5);
 //			node->z	= node->w * (floor(node->mz / node->w) + 0.5);
-			node->x = parent->x + node->w/2.*(o%2==0?1.:-1);
-			node->y = parent->y + node->w/2.*((o/2)%2==0?1.:-1);
-			node->z = parent->z - node->w/2.*(o>3?1.:-1);
+			for (int i=0; i<3; i++) {
+				node->x[i] = parent->x[i] + node->w/2.*((o>>i)%2==0?1.:-1);
+			}
+		/*	node->x[0] = parent->x[0] + node->w/2.*(o%2==0?1.:-1);
+			node->x[1] = parent->x[1] + node->w/2.*((o/2)%2==0?1.:-1);
+			node->x[2] = parent->x[2] - node->w/2.*(o>3?1.:-1);*/ 
 			
 		}
 		node->pt	= n;	//?
 //		node->lv	= l; 
-		node->num = 1;
+//		node->num = 1;
+//		particles[n].leaf = node; 
 		for (int i=0;i<8;i++) node->oct[i] = NULL;
 		//printf("%d%",node->w);
-	} else {
-		node->num++;
+	} else if (isLeaf(node->oct[0]) == 1){
+//		node->num++;
 //		node.m	+= particles[n].m;
 //		node.mx	=  (node.mx*node.m + particles[n].m*particles[n].x) / node.m;
 //		node.my	=  (node.my*node.m + particles[n].m*particles[n].y) / node.m;
 //		node.mz	=  (node.mz*node.m + particles[n].m*particles[n].z) / node.m;
-		if (node->num == 2){
-			int o;
-			o = get_octant(node->pt, node);
-			node->oct[o] = add_leaf(node->oct[o], node->pt, node, o); 
-			o = get_octant(n, node);
-			node->oct[o] = add_leaf(node->oct[o], n, node, o);
+//		if (node->num == 2){
+		int o;
+		o = get_octant(node->pt, node);
+		node->oct[o] = add_leaf(node->oct[o], node->pt, node, o); 
+		o = get_octant(n, node);
+		node->oct[o] = add_leaf(node->oct[o], n, node, o);
+//			particles[node->pt].leaf = NULL;
 		}
-		else {
-			int o = get_octant(n, node);
-			node->oct[o] = add_leaf(node->oct[o], n, node, o);
-		}
+	else {
+		int o = get_octant(n, node);
+		node->oct[o] = add_leaf(node->oct[o], n, node, o);
 	}
 	return node;
 }
 
 int get_octant(int n, struct cell *node){
-	int octant;
-	octant = ldexp((particles[n].x > node->x) ? 0 : 1 , 0)	+ \
-			ldexp((particles[n].y > node->y) ? 0 : 1 , 1) + \
-			ldexp((particles[n].z > node->z) ? 0 : 1 , 2);
+	int octant = 0;
+/*	for (int i=0; i<3; i++) {
+		octant += ldexp((particles[n].x[i] > node->x[i]) ? 0 : 1 , 0);
+	}*/
+	octant = ldexp((particles[n].x > node->x[0]) ? 0 : 1 , 0)	+ \
+			ldexp((particles[n].y > node->x[1]) ? 0 : 1 , 1) + \
+			ldexp((particles[n].z > node->x[2]) ? 0 : 1 , 2);
 	return octant;
 }
 
-void update_tree(struct cell *node){
-	if (node != NULL) {
-//		update_tree(node->oct
+int isLeaf(struct cell *octant){
+	for (int o=0; o<8; o++) {
+		if ((octant+o) != NULL) return 0;
 	}
+	return 1;
 }
 
+int need_derefine(struct cell *node){
+	int leaves = 0;
+	for (int o=0; o<8; o++) {
+		if ((isLeaf(node->oct[o]->oct[0]) == 0) || leaves > 1) {
+			return 0;
+		} else leaves++;
+	}
+	return 1;
+}
 
+int isInside(struct cell *node){
+	for (int i=0; i<3; i++) {
+		if (fabs(particles[node->pt].x[i]-node->x[i]) > node->w) {
+			return 0;
+		}
+	}
+	return 1;
+}
+	
+void cell *derefine(struct cell *node) {
+	int o = get_octant(node->pt, node);
+	for (int i = 0; i<3; i++) {
+		node->x[i] = node->oct[o]->x[i];
+	}
+	free(node->oct[o]);
+}
+
+struct cell *update_tree(struct cell *node){
+/*	for (int i=0;i<N;i++) {
+		if (fabs(particles[i].x-particles[i].tree->x) > particles[i].tree->w || \
+			fabs(particles[i].y-particles[i].tree->y) > particles[i].tree->w || \
+			fabs(particles[i].z-particles[i].tree->z) > particles[i].tree->w ) {
+				particles[i].tree->
+				free();	
+				add_leaf(root, i, NULL, -1);
+		} 
+	} */
+	if (isLeaf(node->oct[0]) == 0) {
+		int leaves = 0;
+		for (int o = 0; o < 8; o++) {
+			node->oct[o] = update_tree(node->oct[o]);
+			if (node->oct[o] == NULL) leaves++;
+		}
+		// If no leaf left
+		if (leaves == 0) {
+			free(node);
+			return NULL;
+		}
+		// Check if needs derefinement.
+		if (need_derefine(node->oct[0]) == 1) {
+			derefine();
+		}
+	} else if (isInside(node) == 0) { 
+		root = add_leaf(root, node->pt, NULL, -1);
+		free(node);
+		return NULL; 
+	} else {
+		return node;
+	}
+	return node;
+}
