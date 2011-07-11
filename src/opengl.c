@@ -77,6 +77,7 @@ void display(){
 			// Drawing Spheres
 			glColor4f(1.0,1.0,1.0,1.0);
 #ifndef COLLISIONS_NONE
+#ifdef _APPLE
 			for (int i=0;i<N;i++){
 				struct particle p = particles[i];
 				glTranslatef(p.x,p.y,p.z);
@@ -85,6 +86,7 @@ void display(){
 				glScalef(1./p.r,1./p.r,1./p.r);
 				glTranslatef(-p.x,-p.y,-p.z);
 			}
+#endif
 #endif
 		}else{
 			// Drawing Points
@@ -119,6 +121,7 @@ void init_display(int argc, char* argv[]){
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);  
 	
 	// Sphere
+#ifdef _APPLE
 	DListSPHERE = glGenLists(1);
 	GLUquadricObj *sphere;
 	glNewList(DListSPHERE, GL_COMPILE);
@@ -126,6 +129,7 @@ void init_display(int argc, char* argv[]){
 	gluSphere(sphere, 1.f, 20, 20);
 	gluDeleteQuadric(sphere);
 	glEndList();
+#endif
   	
 	// Light
 
