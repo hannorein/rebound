@@ -6,6 +6,9 @@ struct ghostbox{
 	double shiftx;
 	double shifty;
 	double shiftz;
+	double shiftvx;
+	double shiftvy;
+	double shiftvz;
 } ghostbox;
 
 struct ghostbox get_ghostbox(int i, int j, int k);

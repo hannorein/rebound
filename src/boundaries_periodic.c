@@ -40,6 +40,9 @@ struct ghostbox get_ghostbox(int i, int j, int k){
 	gb.shiftx = boxsize*(double)i;
 	gb.shifty = boxsize*(double)j;
 	gb.shiftz = boxsize*(double)k;
+	gb.shiftvx = 0;
+	gb.shiftvy = 0;
+	gb.shiftvz = 0;
 	return gb;
 }
 

@@ -44,7 +44,10 @@ void check_boundaries(){
 }
 
 struct ghostbox get_ghostbox(int i, int j, int k){
-	double shift = fmod(1.5*(double)i*OMEGA*t,1.)*boxsize; 
+	gb.shiftvx = 0;
+	gb.shiftvy = 1.5*(double)i*OMEGA*boxsize;
+	gb.shiftvz = 0;
+	double shift = fmod(gb.shiftvy*t,1.)*boxsize; 
 	struct ghostbox gb;
 	gb.shiftx = boxsize*(double)i;
 	gb.shifty = boxsize*(double)j-shift;
