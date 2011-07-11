@@ -5,7 +5,7 @@ ifeq ($(UNAME), Linux)
 	LIB =  -lm
 endif
 ifeq ($(UNAME), Darwin)
-	OPT = -L/usr/local/lib -I/usr/local/include  -Wall -g 
+	OPT = -L/usr/local/lib -I/usr/local/include  -Wall -g -O3 
 	OPT+= -D_APPLE  
 	LIB =  
 endif
@@ -20,6 +20,13 @@ endif
 ifeq ($(UNAME), Darwin)
 	OPT+= -DOPENGL 
 	LIB+= -framework OPENGL -framework GLUT
+endif
+
+ifeq ($(LIBPNG), 1)
+ifeq ($(UNAME), Darwin)
+	OPT+= -DLIBPNG -L/usr/local/lib -I/usr/local/include 
+	LIB+= -lpng
+endif
 endif
 endif
 

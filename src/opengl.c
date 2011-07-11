@@ -22,6 +22,7 @@ int display_spheres = 1;
 #else
 int display_spheres = 0;
 #endif
+int display_init_done = 0;
 
 void displayKey(unsigned char key, int x, int y){
 	switch(key){
@@ -150,7 +151,9 @@ void init_display(int argc, char* argv[]){
 	glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, sphere_mat);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, sphere_spec);
 	glMaterialf(GL_FRONT, GL_SHININESS, 80);
-	
+
+	display_init_done =1; 
+
 	glutMainLoop();
 }
 
