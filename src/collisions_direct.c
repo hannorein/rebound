@@ -21,6 +21,7 @@ struct collision* collisions = NULL;
 int collisions_NMAX = 0;
 int collisions_N = 0;
 double coefficient_of_restitution = 1;
+double minimum_collision_velocity = 0;
 void collisions_add(int i, int j, struct ghostbox gb);
 
 void collisions_search(){
@@ -93,6 +94,10 @@ void collisions_resolve_single(struct collision c){
 	// Coefficient of restitution
 	double eps= coefficient_of_restitution;
 	double dvx2 = -(0.5+0.5*eps)*2.0*vx21nn/(1.0+m21) ;
+
+	if (dvx2<minimum_collision_velocity){
+		dvx2 = minimum_collision_velocity;
+	}
 
 	// Now we are rotating backwards
 	double dvx2n = cphi * dvx2;		
