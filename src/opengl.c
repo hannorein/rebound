@@ -76,6 +76,7 @@ void display(){
 		if (display_spheres){
 			// Drawing Spheres
 			glColor4f(1.0,1.0,1.0,1.0);
+#ifndef COLLISIONS_NONE
 			for (int i=0;i<N;i++){
 				struct particle p = particles[i];
 				glTranslatef(p.x,p.y,p.z);
@@ -84,6 +85,7 @@ void display(){
 				glScalef(1./p.r,1./p.r,1./p.r);
 				glTranslatef(-p.x,-p.y,-p.z);
 			}
+#endif
 		}else{
 			// Drawing Points
 			glColor4f(1.0,1.0,0.0,0.6);

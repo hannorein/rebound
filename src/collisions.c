@@ -1,1 +1,0 @@
-collisions_direct.c
