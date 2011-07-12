@@ -15,12 +15,13 @@ void problem_init(int argc, char* argv[]){
 	OMEGA = 1.;
 	// Setup particle structures
 	boxsize = 1;
-	init_particles(50);
+	init_particles(5);
+	dt = 1e-4;
 	// Initial conditions
 	for (int i =0;i<N;i++){
 		particles[i].x = ((double)rand()/(double)RAND_MAX-0.5)*boxsize;
 		particles[i].y = ((double)rand()/(double)RAND_MAX-0.5)*boxsize;
-		particles[i].z = 0.1*((double)rand()/(double)RAND_MAX-0.5)*boxsize;
+		particles[i].z = 0;//0.1*((double)rand()/(double)RAND_MAX-0.5)*boxsize;
 		particles[i].vx = 0;
 		particles[i].vy = -1.5*particles[i].x*OMEGA;
 		particles[i].vz = 0;
@@ -31,8 +32,8 @@ void problem_init(int argc, char* argv[]){
 		particles[i].r = 0.05;
 	}
 	// Do use ghost boxes in x and y
-	nghostx = 1;
-	nghosty = 1;
+	nghostx = 0;
+	nghosty = 0;
 	nghostz = 0;
 }
 

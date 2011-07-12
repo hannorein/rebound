@@ -13,7 +13,7 @@
 #include "main.h"
 #include "particle.h"
 #include "boundaries.h"
-#include "tree.h"
+#include "tree_hanno.h"
 #include "opengl.h"
 
 GLuint DListSPHERE;
@@ -43,8 +43,12 @@ void displayTree(struct cell *node){
 	glTranslatef(node->x[0],node->x[1],node->x[2]);
 	glutWireCube(node->w);
 	glTranslatef(-node->x[0],-node->x[1],-node->x[2]);
-	for (int i=0;i<8;i++) {
-		displayTree(node->oct[i]);
+	if (node->oct!=NULL){
+		for (int i=0;i<8;i++) {
+			if (node->oct[i]!=NULL){
+				displayTree(node->oct[i]);
+			}
+		}
 	}
 }
 
