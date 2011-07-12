@@ -1,4 +1,4 @@
-PROBLEMDIR=examples/wh_integrator
+PROBLEMDIR=examples/$(shell basename `pwd`)
 export OPENGL=1
 
 all:

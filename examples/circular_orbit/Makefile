@@ -1,4 +1,4 @@
-PROBLEMDIR=examples/circular_orbit
+PROBLEMDIR=examples/$(shell basename `pwd`)
 export OPENGL=1
 
 all:

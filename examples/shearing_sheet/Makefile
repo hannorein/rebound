@@ -1,4 +1,4 @@
-PROBLEMDIR=examples/shearing_sheet
+PROBLEMDIR=examples/$(shell basename `pwd`)
 export OPENGL=1
 
 all:
