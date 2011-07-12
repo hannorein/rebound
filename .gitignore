@@ -1,4 +1,5 @@
 *.o
+*.bin
 nbody
 gravity.c
 boundaries.c

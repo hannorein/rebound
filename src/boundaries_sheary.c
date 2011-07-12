@@ -9,23 +9,13 @@
 
 extern const double OMEGA;
 int nghostx = 1;
-int nghosty = 1;
+int nghosty = 0;
 int nghostz = 0;
 
 void check_boundaries(){
-	double offset = -0.5*boxsize + fmod(1.5*OMEGA*t,1.)*boxsize;
 	for (int i=0;i<N;i++){
-		// Radial
-		while(particles[i].x>boxsize/2.){
-			particles[i].x -= boxsize;
-			particles[i].y += offset;
-			particles[i].vy += 3./2.*OMEGA*boxsize;
-		}
-		while(particles[i].x<-boxsize/2.){
-			particles[i].x += boxsize;
-			particles[i].y -= offset;
-			particles[i].vy -= 3./2.*OMEGA*boxsize;
-		}
+		// No boundary in the radial direction. This will not work with GRAVITY_TREE!
+		
 		// Azimuthal
 		while(particles[i].y>boxsize/2.){
 			particles[i].y -= boxsize;
@@ -46,14 +36,11 @@ void check_boundaries(){
 struct ghostbox get_ghostbox(int i, int j, int k){
 	struct ghostbox gb;
 	gb.shiftvx = 0;
-	gb.shiftvy = 1.5*(double)i*OMEGA*boxsize;
+	gb.shiftvy = 0;
 	gb.shiftvz = 0;
-	double shift = fmod(gb.shiftvy*t,boxsize); 
-	gb.shiftx = boxsize*(double)i;
-	gb.shifty = boxsize*(double)j-shift;
-	gb.shiftz = boxsize*(double)k;
-	if(i>0) gb.shifty += boxsize*0.5;
-	if(i<0) gb.shifty -= boxsize*0.5;
+	gb.shiftx  = 0;
+	gb.shifty  = boxsize*(double)j;
+	gb.shiftz  = boxsize*(double)k;
 	return gb;
 }
 

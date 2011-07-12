@@ -22,6 +22,7 @@ int display_spheres = 1;
 #else
 int display_spheres = 0;
 #endif
+int display_init_done = 0;
 
 void displayKey(unsigned char key, int x, int y){
 	switch(key){
@@ -90,9 +91,11 @@ void display(){
 #endif
 		}else{
 			// Drawing Points
-			glColor4f(1.0,1.0,0.0,0.6);
 			glEnableClientState(GL_VERTEX_ARRAY);
-			glDrawArrays(GL_POINTS, 0, N);
+			glColor4f(1.0,0.0,0.0,0.9);
+			glDrawArrays(GL_POINTS, 0, N_active);
+			glColor4f(1.0,1.0,0.0,0.6);
+			glDrawArrays(GL_POINTS, N_active, N-N_active);
 			glDisableClientState(GL_VERTEX_ARRAY);
 		}
 		// Drawing Tree
@@ -150,7 +153,9 @@ void init_display(int argc, char* argv[]){
 	glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, sphere_mat);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, sphere_spec);
 	glMaterialf(GL_FRONT, GL_SHININESS, 80);
-	
+
+	display_init_done =1; 
+
 	glutMainLoop();
 }
 

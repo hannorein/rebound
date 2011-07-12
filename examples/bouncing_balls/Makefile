@@ -1,4 +1,4 @@
-PROBLEMDIR=examples/bouncing_balls
+PROBLEMDIR=examples/$(shell basename `pwd`)
 export OPENGL=1
 
 all:

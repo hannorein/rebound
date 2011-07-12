@@ -1,13 +1,13 @@
 UNAME := $(shell uname)
 CC=gcc
 ifeq ($(UNAME), Linux)
-	OPT = -L/usr/lib -I/usr/include -Wall  -g 
-	LIB =  -lm
+	OPT+= -L/usr/lib -I/usr/include -Wall  -g 
+	LIB+= -lm
 endif
 ifeq ($(UNAME), Darwin)
-	OPT = -L/usr/local/lib -I/usr/local/include  -Wall -g 
+	OPT+= -L/usr/local/lib -I/usr/local/include  -Wall -g
 	OPT+= -D_APPLE  
-	LIB =  
+	LIB+=  
 endif
 
 # Nothing needs to be changed below
@@ -20,6 +20,13 @@ endif
 ifeq ($(UNAME), Darwin)
 	OPT+= -DOPENGL 
 	LIB+= -framework OPENGL -framework GLUT
+endif
+
+ifeq ($(LIBPNG), 1)
+ifeq ($(UNAME), Darwin)
+	OPT+= -DLIBPNG -L/usr/local/lib -I/usr/local/include 
+	LIB+= -lpng
+endif
 endif
 endif
 
@@ -38,6 +45,7 @@ all:
 	$(CC) $(OPT) -std=c99 gravity.c -c
 	$(CC) $(OPT) -std=c99 integrator.c -c
 	$(CC) $(OPT) -std=c99 boundaries.c -c
+	$(CC) $(OPT) -std=c99 input.c -c
 	$(CC) $(OPT) -std=c99 output.c -c
 	$(CC) $(OPT) -std=c99 collisions.c -c
 	$(CC) $(OPT) -std=c99 zpr.c -c
