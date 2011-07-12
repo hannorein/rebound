@@ -39,9 +39,9 @@ void displayKey(unsigned char key, int x, int y){
 
 void displayTree(struct cell *node){
 	if (node == NULL) return;
-	glTranslatef(node->x,node->y,node->z);
+	glTranslatef(node->x[0],node->x[1],node->x[2]);
 	glutWireCube(node->w);
-	glTranslatef(-node->x,-node->y,-node->z);
+	glTranslatef(-node->x[0],-node->x[1],-node->x[2]);
 	for (int i=0;i<8;i++) {
 		displayTree(node->oct[i]);
 	}

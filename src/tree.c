@@ -53,7 +53,7 @@ struct cell *add_leaf(struct cell *node, int n, struct cell *parent, int o){
 //		particles[n].leaf = node; 
 		for (int i=0;i<8;i++) node->oct[i] = NULL;
 		//printf("%d%",node->w);
-	} else if (isLeaf(node->oct[0]) == 1){
+	} else if (isLeaf(node->oct) == 1){
 //		node->num++;
 //		node.m	+= particles[n].m;
 //		node.mx	=  (node.mx*node.m + particles[n].m*particles[n].x) / node.m;
@@ -85,41 +85,55 @@ int get_octant(int n, struct cell *node){
 	return octant;
 }
 
-int isLeaf(struct cell *octant){
+int isLeaf(struct cell **octant){
 	for (int o=0; o<8; o++) {
-		if ((octant+o) != NULL) return 0;
+	//	if (*(octant+o) != NULL) return 0;
+		if (octant[o] != NULL) return 0;
 	}
 	return 1;
 }
 
 int need_derefine(struct cell *node){
 	int leaves = 0;
+	int oct = -1;
 	for (int o=0; o<8; o++) {
-		if ((isLeaf(node->oct[o]->oct[0]) == 0) || leaves > 1) {
-			return 0;
-		} else leaves++;
+		if (node->oct[o]!=NULL){
+			if ((isLeaf(node->oct[o]->oct) == 0) || leaves > 1){
+				return 0;
+			}else{
+				leaves++;
+				oct = o;
+			}
+		}
 	}
-	return 1;
+	return oct;
 }
 
 int isInside(struct cell *node){
-	for (int i=0; i<3; i++) {
+/*	for (int i=0; i<3; i++) {
 		if (fabs(particles[node->pt].x[i]-node->x[i]) > node->w) {
 			return 0;
 		}
+	}*/
+	if (fabs(particles[node->pt].x-node->x[0]) > node->w || \
+		fabs(particles[node->pt].y-node->x[1]) > node->w || \
+		fabs(particles[node->pt].z-node->x[2]) > node->w) {
+		return 0;
 	}
 	return 1;
 }
 	
+/*
 void cell *derefine(struct cell *node) {
 	int o = get_octant(node->pt, node);
 	for (int i = 0; i<3; i++) {
 		node->x[i] = node->oct[o]->x[i];
 	}
 	free(node->oct[o]);
-}
+}*/
 
 struct cell *update_tree(struct cell *node){
+	//printf("Updating the tree\n");
 /*	for (int i=0;i<N;i++) {
 		if (fabs(particles[i].x-particles[i].tree->x) > particles[i].tree->w || \
 			fabs(particles[i].y-particles[i].tree->y) > particles[i].tree->w || \
@@ -129,20 +143,28 @@ struct cell *update_tree(struct cell *node){
 				add_leaf(root, i, NULL, -1);
 		} 
 	} */
-	if (isLeaf(node->oct[0]) == 0) {
-		int leaves = 0;
+	int test;
+	if (node == NULL) {
+		return NULL;
+	} else	if (isLeaf(node->oct) == 0) {
+//		int leaves = 0;
 		for (int o = 0; o < 8; o++) {
 			node->oct[o] = update_tree(node->oct[o]);
-			if (node->oct[o] == NULL) leaves++;
+//			if (node->oct[o] == NULL) leaves++;
 		}
 		// If no leaf left
-		if (leaves == 0) {
+/*		if (leaves == 0) {
 			free(node);
 			return NULL;
-		}
+		} */
 		// Check if needs derefinement.
-		if (need_derefine(node->oct[0]) == 1) {
-			derefine();
+		if (isLeaf(node->oct) == 1) {
+			free(node);
+			return NULL;
+		} else if ((test = need_derefine(node)) != 0) {
+			node->pt = node->oct[test]->pt;
+			free(node->oct[test]);
+			return node;
 		}
 	} else if (isInside(node) == 0) { 
 		root = add_leaf(root, node->pt, NULL, -1);
@@ -151,5 +173,5 @@ struct cell *update_tree(struct cell *node){
 	} else {
 		return node;
 	}
-	return node;
+//	return node;
 }
