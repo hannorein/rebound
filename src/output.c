@@ -44,6 +44,15 @@ struct vec3 {
 	double z;
 } vec3;
 
+void output_append_ascii(char* filename){
+	FILE* of = fopen(filename,"a"); 
+	for (int i=0;i<N;i++){
+		struct particle p = particles[i];
+		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\n",p.x,p.y,p.z,p.vx,p.vy,p.vz);
+	}
+	fclose(of);
+}
+
 void output_ascii(char* filename){
 	FILE* of = fopen(filename,"w"); 
 	for (int i=0;i<N;i++){
