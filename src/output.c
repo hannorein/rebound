@@ -25,7 +25,7 @@ extern double OMEGA;
 // Check if output is needed
 
 int output_check(double interval){
-	if (floor(t/interval)!=floor((t+dt)/interval)){
+	if (floor(t/interval)!=floor((t-dt)/interval)){
 		return 1;
 	}
 	// Output at beginning or end of simulation
@@ -56,6 +56,8 @@ void output_ascii(char* filename){
 
 void output_binary(char* filename){
 	FILE* of = fopen(filename,"wb"); 
+	fwrite(&N,sizeof(int),1,of);
+	fwrite(&t,sizeof(double),1,of);
 	for (int i=0;i<N;i++){
 		struct particle p = particles[i];
 		fwrite(&(p),sizeof(struct particle),1,of);

@@ -45,6 +45,7 @@ all:
 	$(CC) $(OPT) -std=c99 gravity.c -c
 	$(CC) $(OPT) -std=c99 integrator.c -c
 	$(CC) $(OPT) -std=c99 boundaries.c -c
+	$(CC) $(OPT) -std=c99 input.c -c
 	$(CC) $(OPT) -std=c99 output.c -c
 	$(CC) $(OPT) -std=c99 collisions.c -c
 	$(CC) $(OPT) -std=c99 zpr.c -c
