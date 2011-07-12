@@ -10,5 +10,6 @@ struct particle* particles;
 
 void init_particles(int _N){	
 	N = _N;
+	N_active = _N;
 	particles = malloc(sizeof(struct particle)*N);
 }

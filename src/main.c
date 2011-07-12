@@ -20,6 +20,7 @@ double t=0;
 double tmax=0; // Run forever
 double dt = 0.01;
 int N = 0;
+int N_active = 0;
 
 void iterate(){	
 	integrate_particles();
