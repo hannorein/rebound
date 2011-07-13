@@ -5,7 +5,7 @@
 #include <time.h>
 #include "particle.h"
 #include "main.h"
-#include "tree_hanno.h"
+#include "tree.h"
 #include "boundaries.h"
 
 void calculate_forces(){
