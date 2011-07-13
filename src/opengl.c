@@ -23,14 +23,22 @@ int display_spheres = 1;
 int display_spheres = 0;
 #endif
 int display_init_done = 0;
+int display_pause = 0;
 
 void displayKey(unsigned char key, int x, int y){
 	switch(key){
 		case 'q':
 			exit(0);
 			break;
-		case 'b':
-			printf("key caught\n");
+		case ' ':
+			display_pause=!display_pause;
+			if (display_pause){
+				printf("Pause.\n");
+				glutIdleFunc(NULL);
+			}else{
+				printf("Resume.\n");
+				glutIdleFunc(iterate);
+			}
 			break;
 		case 's':
 			display_spheres = !display_spheres;
@@ -38,6 +46,7 @@ void displayKey(unsigned char key, int x, int y){
 	}
 }
 
+#ifdef GRAVITY_TREE
 void displayTree(struct cell *node){
 	if (node == NULL) return;
 	glTranslatef(node->x[0],node->x[1],node->x[2]);
@@ -49,6 +58,7 @@ void displayTree(struct cell *node){
 		}
 	}
 }
+#endif
 
 void display(){
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -101,8 +111,10 @@ void display(){
 			glDisableClientState(GL_VERTEX_ARRAY);
 		}
 		// Drawing Tree
+#ifdef GRAVITY_TREE
 		glColor4f(1.0,0.0,0.0,0.4);
 		displayTree(root);
+#endif
 		glTranslatef(-gb.shiftx,-gb.shifty,-gb.shiftz);
 	}
 	}
