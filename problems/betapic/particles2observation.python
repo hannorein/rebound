@@ -1,0 +1,29 @@
+#!/usr/bin/python
+import os, glob, string, csv, datetime, random, sys 
+
+f = open(sys.argv[1], 'rt') 
+d = f.readlines()
+pos = []
+
+for line in d:
+	lines = line.split('\t')
+	pos.append([float(lines[0]),float(lines[4])])
+
+oversampling = float(sys.argv[2])
+
+binwidth = 0.25/oversampling
+velocitybinwidth = 0.3/oversampling
+velocitymax = 3
+for y0 in range(-3*1000,3*1000,int(binwidth*1000)):
+	y = y0/1000.
+	v = [0] *int(velocitymax/velocitybinwidth*2)
+	for line in pos:
+		if line[1]>y and line[1]<y+binwidth:
+			index = int(line[0]/velocitybinwidth+velocitymax/velocitybinwidth)
+			if index>0 and index< int(velocitymax/velocitybinwidth*2):
+				v[index] = v[index]+ 1
+	for index in range(0,int(velocitymax/velocitybinwidth*2)):		
+		print y, float(index)*velocitybinwidth-velocitymax, v[index]
+
+	print " "
+
