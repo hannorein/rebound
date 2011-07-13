@@ -10,11 +10,11 @@
 
 void calculate_forces(){
 	if (root==NULL){
-		init_tree();
+		tree_init();
 	} else {
 		check_boundaries();
-		update_tree1();
-		update_tree(root);
+		tree_check_moved_particles();
+		tree_update(root);
 	}
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 

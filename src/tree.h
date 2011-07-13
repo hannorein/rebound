@@ -11,8 +11,8 @@ struct cell {
 } cell;
 
 extern struct cell* root;
-void update_tree1();
-void update_tree(struct cell *node);
+void tree_check_moved_particles();
+void tree_update(struct cell *node);
 void init_tree();
 
 //void finalize_tree();
