@@ -40,7 +40,7 @@ OPT+= -D$(shell basename `readlink collisions.c` '.c' | tr '[a-z]' '[A-Z]')
 all:
 	$(CC) $(OPT) -std=c99 main.c -c
 	$(CC) $(OPT) -std=c99 problem.c -c
-	$(CC) $(OPT) -std=c99 tree_hanno.c -c
+	$(CC) $(OPT) -std=c99 tree.c -c
 	$(CC) $(OPT) -std=c99 particle.c -c
 	$(CC) $(OPT) -std=c99 gravity.c -c
 	$(CC) $(OPT) -std=c99 integrator.c -c

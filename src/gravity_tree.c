@@ -5,7 +5,7 @@
 #include <time.h>
 #include "particle.h"
 #include "main.h"
-#include "tree_hanno.h"
+#include "tree.h"
 #include "boundaries.h"
 
 void calculate_forces(){
@@ -13,8 +13,7 @@ void calculate_forces(){
 		init_tree();
 	} else {
 		check_boundaries();
-		update_tree1();
-		update_tree(root);
+		root = update_tree(root);
 	}
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 
