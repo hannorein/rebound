@@ -50,9 +50,9 @@ void add_particle(struct cell* node, struct particle* pt){	// Tries to put the p
 			pt->c = node;
 			return;
 		}else{						// Leaf with one particle in it. 
-			node->pt=NULL;				// Need to remove particle in cell.
 			node->oct = calloc(8,sizeof(struct cell*));
 			add_particle_to_daughter(node,node->pt);// Then re-add particle.
+			node->pt=NULL;				// Need to remove particle in cell.
 		}
 	}
 	add_particle_to_daughter(node,pt);			// Not a leaf, put particle in daughter cell.

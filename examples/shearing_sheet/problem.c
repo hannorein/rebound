@@ -15,7 +15,7 @@ void problem_init(int argc, char* argv[]){
 	OMEGA = 1.;
 	// Setup particle structures
 	boxsize = 1;
-	init_particles(5);
+	init_particles(50);
 	dt = 1e-4;
 	// Initial conditions
 	for (int i =0;i<N;i++){
