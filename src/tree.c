@@ -164,6 +164,7 @@ struct cell *update_tree(struct cell *node){
 		} else if ((test = need_derefine(node)) != 0) {
 			node->pt = node->oct[test]->pt;
 			free(node->oct[test]);
+			node->oct[test]=NULL;
 			return node;
 		}
 		return node;
