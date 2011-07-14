@@ -16,14 +16,14 @@ int bb_N=0;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	boxsize = 5; 
+	boxsize = 8; 
 	dt = 2e-3*2.*M_PI;
 	// Setup particle structures
 	init_particles(5000); // Number of particles
 	N_active = 1; // Only the planet's gravity is felt by all other particles
 	// Initial conditions
 	// Planet
-	double planet_e = 0.2;
+	double planet_e = 0.5;
 	particles[0].x  = 1.-planet_e;
 	particles[0].y  = 0; 
 	particles[0].vx = 0;
