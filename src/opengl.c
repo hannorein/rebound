@@ -45,6 +45,9 @@ void displayKey(unsigned char key, int x, int y){
 		case 's':
 			display_spheres = !display_spheres;
 			break;
+		case 'r':
+			zprReset(0.7/boxsize);
+			break;
 		case 't':
 			display_tree = !display_tree;
 			break;
@@ -86,7 +89,7 @@ void display(){
 		glDisable(GL_LIGHTING);
 		glDisable(GL_LIGHT0);
 	}
-	glTranslatef(0,0,-boxsize);
+	//glTranslatef(0,0,-boxsize);
 	glPointSize(5.);
 	glEnable(GL_POINT_SMOOTH);
 	glVertexPointer(3, GL_DOUBLE, sizeof(struct particle), particles);
@@ -133,7 +136,7 @@ void display(){
 	glColor4f(1.0,0.0,0.0,0.4);
 	glutWireCube(boxsize);
 	glutSwapBuffers();
-	glTranslatef(0,0,boxsize);
+	//glTranslatef(0,0,boxsize);
 }
 
 void init_display(int argc, char* argv[]){
