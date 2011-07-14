@@ -13,7 +13,7 @@ struct cell {
 extern struct cell* root;
 void tree_check_moved_particles();
 void tree_update(struct cell *node);
-void init_tree();
+void tree_init();
 
 //void finalize_tree();
 

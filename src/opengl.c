@@ -24,6 +24,7 @@ int display_spheres = 0;
 #endif
 int display_init_done = 0;
 int display_pause = 0;
+int display_tree = 1;
 
 void displayKey(unsigned char key, int x, int y){
 	switch(key){
@@ -43,10 +44,13 @@ void displayKey(unsigned char key, int x, int y){
 		case 's':
 			display_spheres = !display_spheres;
 			break;
+		case 't':
+			display_tree = !display_tree;
+			break;
 	}
 }
 
-#ifdef GRAVITY_TREE
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
 void displayTree(struct cell *node){
 	if (node == NULL) return;
 	glTranslatef(node->x[0],node->x[1],node->x[2]);
@@ -111,9 +115,11 @@ void display(){
 			glDisableClientState(GL_VERTEX_ARRAY);
 		}
 		// Drawing Tree
-#ifdef GRAVITY_TREE
-		glColor4f(1.0,0.0,0.0,0.4);
-		displayTree(root);
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+		if (display_tree){
+			glColor4f(1.0,0.0,0.0,0.4);
+			displayTree(root);
+		}
 #endif
 		glTranslatef(-gb.shiftx,-gb.shifty,-gb.shiftz);
 	}

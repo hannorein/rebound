@@ -10,6 +10,7 @@
 
 
 // Dummy. No collision search
+double collisions_max_r;
 
 struct collision{
 	int p1;
