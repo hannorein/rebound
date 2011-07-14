@@ -166,6 +166,7 @@ struct cell *update_tree(struct cell *node){
 			free(node->oct[test]);
 			return node;
 		}
+		return node;
 	} else if (isInside(node) == 0) { 
 		root = add_leaf(root, node->pt, NULL, -1);
 		free(node);
