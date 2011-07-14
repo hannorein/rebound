@@ -23,6 +23,7 @@ int display_spheres = 1;
 int display_spheres = 0;
 #endif
 int display_init_done = 0;
+int display_pause_sim = 0;
 int display_pause = 0;
 int display_tree = 1;
 
@@ -32,8 +33,8 @@ void displayKey(unsigned char key, int x, int y){
 			exit(0);
 			break;
 		case ' ':
-			display_pause=!display_pause;
-			if (display_pause){
+			display_pause_sim=!display_pause_sim;
+			if (display_pause_sim){
 				printf("Pause.\n");
 				glutIdleFunc(NULL);
 			}else{
@@ -46,6 +47,9 @@ void displayKey(unsigned char key, int x, int y){
 			break;
 		case 't':
 			display_tree = !display_tree;
+			break;
+		case 'd':
+			display_pause = !display_pause;
 			break;
 	}
 }
@@ -65,6 +69,7 @@ void displayTree(struct cell *node){
 #endif
 
 void display(){
+	if (display_pause) return;
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	if (display_spheres){
 		glDisable(GL_BLEND);                    
