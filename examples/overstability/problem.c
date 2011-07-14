@@ -19,10 +19,10 @@ void problem_init(int argc, char* argv[]){
 	OMEGA = 1.;
 	OMEGAZ = 3.6;
 	// Setup particle structures
-	boxsize = 3;
-	init_particles(400);
-	dt = 1e-2*2.*M_PI;
-	double particle_size = 0.1;
+	boxsize = 30;
+	init_particles(1000);
+	dt = 2e-2*2.*M_PI;
+	double particle_size = 0.2;
 	coefficient_of_restitution = 0.5;
 	minimum_collision_velocity = 0.01*particle_size*OMEGA;
 	collisions_max_r = particle_size;
@@ -51,6 +51,9 @@ void problem_inloop(){
 }
 
 void problem_output(){
+	if (output_check(1e1*2.*M_PI)){
+		output_timing();
+	}
 }
 
 void problem_finish(){
