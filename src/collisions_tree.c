@@ -24,7 +24,6 @@ double coefficient_of_restitution = 1;
 double minimum_collision_velocity = 0;
 void collisions_add(struct particle* p1, struct particle* p2, struct ghostbox gb);
 void tree_get_nearest_neighbour_in_cell(struct particle* p, struct ghostbox gb, struct cell* c);
-void tree_get_nearest_neighbour(struct particle* p, struct ghostbox gb);
 
 double nearest_r;
 struct particle* nearest_p;
@@ -49,7 +48,7 @@ void collisions_search(){
 		for (int gby=-nghostycol; gby<=nghostycol; gby++){
 		for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
 			struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
-			tree_get_nearest_neighbour(p1,gb);
+			tree_get_nearest_neighbour_in_cell(p1,gb,root);
 		}
 		}
 		}
@@ -135,10 +134,6 @@ void collisions_resolve(){
 		collisions_resolve_single(collisions[i]);
 	}
 	collisions_N=0;
-}
-
-void tree_get_nearest_neighbour(struct particle* p, struct ghostbox gb){
-	tree_get_nearest_neighbour_in_cell(p,gb,root);
 }
 
 void tree_get_nearest_neighbour_in_cell(struct particle* p, struct ghostbox gb, struct cell* c){
