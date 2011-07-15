@@ -30,13 +30,7 @@ struct particle* nearest_p;
 struct ghostbox nearest_gb;
 
 void collisions_search(){
-	if (root==NULL){
-		tree_init();
-	} else {
-		check_boundaries();
-		tree_check_moved_particles();
-		tree_update(root);
-	}
+	tree_update();
 	int nghostxcol = (nghostx>1?1:nghostx);
 	int nghostycol = (nghosty>1?1:nghosty);
 	int nghostzcol = (nghostz>1?1:nghostz);

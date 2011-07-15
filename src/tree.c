@@ -101,13 +101,19 @@ void tree_check_moved_particles(){				// Check each particle if it's in it's cel
 	}
 }
 void tree_update(){
-	for(int i=0;i<root_nx;i++){
-	for(int j=0;j<root_ny;j++){
-	for(int k=0;k<root_nz;k++){
-		int index = (k*root_ny+j)*root_nx+i;
-		tree_update_cell(root[index]);
-	}
-	}
+	if (root==NULL){
+		tree_init();
+	} else {
+		check_boundaries();
+		tree_check_moved_particles();
+		for(int i=0;i<root_nx;i++){
+		for(int j=0;j<root_ny;j++){
+		for(int k=0;k<root_nz;k++){
+			int index = (k*root_ny+j)*root_nx+i;
+			tree_update_cell(root[index]);
+		}
+		}
+		}
 	}
 }
 

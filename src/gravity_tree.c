@@ -9,13 +9,7 @@
 #include "boundaries.h"
 
 void calculate_forces(){
-	if (root==NULL){
-		tree_init();
-	} else {
-		check_boundaries();
-		tree_check_moved_particles();
-		tree_update(root);
-	}
+	tree_update();
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 
 		particles[i].ay = 0; 

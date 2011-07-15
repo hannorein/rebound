@@ -9,6 +9,8 @@
 #include "output.h"
 
 extern double OMEGA;
+extern double coefficient_of_restitution;
+extern double minimum_collision_velocity;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -18,7 +20,9 @@ void problem_init(int argc, char* argv[]){
 	boxsize_y = 4;
 	boxsize_z = 1;
 	init_particles(50);
-	dt = 1e-4;
+	coefficient_of_restitution = 0.5;
+	minimum_collision_velocity = 0.005;
+	dt = 1e-3;
 	// Initial conditions
 	for (int i =0;i<N;i++){
 		particles[i].x = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
@@ -31,7 +35,7 @@ void problem_init(int argc, char* argv[]){
 		particles[i].ay = 0;
 		particles[i].az = 0;
 		particles[i].m = 0.0001;
-		particles[i].r = 0.05;
+		particles[i].r = 0.1;
 	}
 	// Do use ghost boxes in x and y
 	nghostx = 1;

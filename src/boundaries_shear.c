@@ -13,7 +13,7 @@ int nghosty = 1;
 int nghostz = 0;
 
 void check_boundaries(){
-	double offset = -0.5*boxsize_y + fmod(1.5*OMEGA*t,1.)*boxsize_x;
+	double offset = -0.5*boxsize_y + fmod(t*1.5*OMEGA*boxsize_x,boxsize_y);
 	for (int i=0;i<N;i++){
 		// Radial
 		while(particles[i].x>boxsize_x/2.){
@@ -46,9 +46,9 @@ void check_boundaries(){
 struct ghostbox get_ghostbox(int i, int j, int k){
 	struct ghostbox gb;
 	gb.shiftvx = 0;
-	gb.shiftvy = 1.5*(double)i*OMEGA*boxsize_x;
+	gb.shiftvy = -1.5*(double)i*OMEGA*boxsize_x;
 	gb.shiftvz = 0;
-	double shift = fmod(gb.shiftvy*t,boxsize_y); 
+	double shift = -fmod(gb.shiftvy*t,boxsize_y); 
 	gb.shiftx = boxsize_x*(double)i;
 	gb.shifty = boxsize_y*(double)j-shift;
 	gb.shiftz = boxsize_z*(double)k;
