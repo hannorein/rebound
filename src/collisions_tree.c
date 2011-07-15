@@ -52,11 +52,11 @@ void collisions_search(){
 			for (int rj=0;rj<root_ny;rj++){
 			for (int rk=0;rk<root_nz;rk++){
 				if (gbx== 1 && ri!=0) continue;
-				if (gbx==-1 && ri!=0) continue;
+				if (gbx==-1 && ri!=root_nx-1) continue;
 				if (gby== 1 && rj!=0) continue;
-				if (gby==-1 && rj!=0) continue;
+				if (gby==-1 && rj!=root_ny-1) continue;
 				if (gbz== 1 && rk!=0) continue;
-				if (gbz==-1 && rk!=0) continue;
+				if (gbz==-1 && rk!=root_nz-1) continue;
 				int index = (rk*root_ny+rj)*root_nx+ri;
 				tree_get_nearest_neighbour_in_cell(p1,gb,root[index]);
 			}
