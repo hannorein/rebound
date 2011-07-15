@@ -23,7 +23,9 @@ int display_spheres = 1;
 int display_spheres = 0;
 #endif
 int display_init_done = 0;
+int display_pause_sim = 0;
 int display_pause = 0;
+int display_tree = 1;
 
 void displayKey(unsigned char key, int x, int y){
 	switch(key){
@@ -31,8 +33,8 @@ void displayKey(unsigned char key, int x, int y){
 			exit(0);
 			break;
 		case ' ':
-			display_pause=!display_pause;
-			if (display_pause){
+			display_pause_sim=!display_pause_sim;
+			if (display_pause_sim){
 				printf("Pause.\n");
 				glutIdleFunc(NULL);
 			}else{
@@ -43,11 +45,20 @@ void displayKey(unsigned char key, int x, int y){
 		case 's':
 			display_spheres = !display_spheres;
 			break;
+		case 'r':
+			zprReset(0.7/boxsize_max);
+			break;
+		case 't':
+			display_tree = !display_tree;
+			break;
+		case 'd':
+			display_pause = !display_pause;
+			break;
 	}
 }
 
-#ifdef GRAVITY_TREE
-void display_cell(struct cell *node){
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+void display_cell(struct cell* node){
 	if (node == NULL) return;
 	glTranslatef(node->x,node->y,node->z);
 	glutWireCube(node->w);
@@ -58,7 +69,7 @@ void display_cell(struct cell *node){
 		}
 	}
 }
-void display_tree(){
+void display_entire_tree(){
 	for(int i=0;i<root_nx;i++){
 	for(int j=0;j<root_ny;j++){
 	for(int k=0;k<root_nz;k++){
@@ -71,6 +82,7 @@ void display_tree(){
 #endif
 
 void display(){
+	if (display_pause) return;
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	if (display_spheres){
 		glDisable(GL_BLEND);                    
@@ -121,9 +133,12 @@ void display(){
 			glDisableClientState(GL_VERTEX_ARRAY);
 		}
 		// Drawing Tree
-#ifdef GRAVITY_TREE
 		glColor4f(1.0,0.0,0.0,0.4);
-		display_tree();
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+		if (display_tree){
+			glColor4f(1.0,0.0,0.0,0.4);
+			display_entire_tree();
+		}
 #endif
 		glTranslatef(-gb.shiftx,-gb.shifty,-gb.shiftz);
 	}

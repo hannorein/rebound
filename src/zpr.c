@@ -7,6 +7,12 @@
 #include "zpr.h"
 #include "main.h"
 
+#ifdef _APPLE
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif 
+
 /* This code was originally C++ :-) */
 
 #define bool int
@@ -17,8 +23,8 @@ static double _left   = 0.0;
 static double _right  = 0.0;
 static double _bottom = 0.0;
 static double _top    = 0.0;
-static double _zNear  = 0.01;
-static double _zFar   = 100000.0;
+static double _zNear  = 0.1;
+static double _zFar   = 100.0;
 
 static int  _mouseX      = 0;
 static int  _mouseY      = 0;
@@ -45,15 +51,18 @@ static void zprMotion(int x, int y);
 
 /* Configurable center point for zooming and rotation */
 
+GLfloat zprReferencePoint[4] = { 0,0,0,0 };
 double glscale = 1;
-double boxsize_max;
 int resetOrientation = 0;
 
 void
-zprReset(double initscale)
+zprReset()
 {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    double initscale = 0.875/boxsize_max;
+    glScalef(initscale,initscale,initscale);
+    glTranslatef( 0, 0, -boxsize_max*2.);
     switch(resetOrientation){
 	    case 1:
 	    	glRotatef(90,1.,0.,0.);
@@ -63,8 +72,6 @@ zprReset(double initscale)
 	    	glRotatef(90,0.,0.,1.);
 		break;
     }
-    initscale *= 5.0/4.0;
-    glScalef(initscale,initscale,initscale);
     glscale = 1.0;
     resetOrientation++;
     if (resetOrientation>2){
@@ -73,14 +80,13 @@ zprReset(double initscale)
 }
 
 void
-zprInit(double initscale)
+zprInit()
 {
     getMatrix();
-
     glutReshapeFunc(zprReshape);
     glutMouseFunc(zprMouse);
     glutMotionFunc(zprMotion);
-    zprReset(initscale);
+    zprReset();
 }
 
 static void
@@ -353,4 +359,4 @@ invertMatrix(const GLdouble *me, GLdouble *out )
 #undef MAT
 }
 
-#endif // OPENGL
+#endif

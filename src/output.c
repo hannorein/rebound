@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <sys/time.h>
 #include "particle.h"
 #include "main.h"
 #include "output.h"
@@ -43,6 +44,16 @@ struct vec3 {
 	double y;
 	double z;
 } vec3;
+
+double output_timing_last = -1;
+void output_timing(){
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	double temp = tim.tv_sec+(tim.tv_usec/1000000.0);
+	if (output_timing_last==-1) output_timing_last = temp;
+	printf("N= %d \tt= %f \tcpu= %f s\n",N,t,temp-output_timing_last);
+	output_timing_last = temp;
+}
 
 void output_append_ascii(char* filename){
 	FILE* of = fopen(filename,"a"); 

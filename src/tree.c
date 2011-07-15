@@ -1,4 +1,3 @@
-#ifdef GRAVITY_TREE
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -144,4 +143,3 @@ void tree_update_cell(struct cell *node){
 		}
 	}
 }
-#endif //GRAVITY_TREE
