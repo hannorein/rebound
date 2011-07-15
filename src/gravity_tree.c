@@ -15,6 +15,7 @@ void calculate_forces(){
 		check_boundaries();
 		root = update_tree(root);
 	}
+	printf("Number of particles is %d\n",-root->pt);
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 
 		particles[i].ay = 0; 

@@ -15,8 +15,8 @@ void problem_init(int argc, char* argv[]){
 	OMEGA = 1.;
 	// Setup particle structures
 	boxsize = 1;
-	init_particles(50);
-	dt = 1e-4;
+	init_particles(200);
+	dt = 1e-3;
 	// Initial conditions
 	for (int i =0;i<N;i++){
 		particles[i].x = ((double)rand()/(double)RAND_MAX-0.5)*boxsize;
