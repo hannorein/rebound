@@ -12,7 +12,9 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt = 1e-3;
 	tmax = 10000;
-	boxsize = 3;
+	boxsize_x = 3;
+	boxsize_y = 3;
+	boxsize_z = 3;
 	coefficient_of_restitution = 1; // elastic collisions
 
 	// Setup particle structures

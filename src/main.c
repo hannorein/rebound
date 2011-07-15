@@ -13,11 +13,12 @@
 #include "opengl.h"
 #endif
 
-double boxsize_x = 1;
-double boxsize_y = 1;
-double boxsize_z = 1;
-double boxsize_max = 1;
-double boxsize_min = 1;
+double boxsize = -1;
+double boxsize_x = -1;
+double boxsize_y = -1;
+double boxsize_z = -1;
+double boxsize_max = -1;
+double boxsize_min = -1;
 double softening = 0.01;
 double G=1;
 double t=0;

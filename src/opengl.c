@@ -25,7 +25,7 @@ int display_spheres = 0;
 int display_init_done = 0;
 int display_pause_sim = 0;
 int display_pause = 0;
-int display_tree = 1;
+int display_tree = 0;
 
 void displayKey(unsigned char key, int x, int y){
 	switch(key){

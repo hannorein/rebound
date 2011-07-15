@@ -42,13 +42,20 @@ void collisions_search(){
 	int nghostzcol = (nghostz>1?1:nghostz);
 	for (int i=0;i<N;i++){
 		struct particle* p1 = &(particles[i]);
-		nearest_r = boxsize;
+		nearest_r = boxsize_max;
 		nearest_p = NULL;
 		for (int gbx=-nghostxcol; gbx<=nghostxcol; gbx++){
 		for (int gby=-nghostycol; gby<=nghostycol; gby++){
 		for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
 			struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
-			tree_get_nearest_neighbour_in_cell(p1,gb,root);
+			for (int ri=0;ri<root_nx;ri++){
+			for (int rj=0;rj<root_ny;rj++){
+			for (int rk=0;rk<root_nz;rk++){
+				int index = (rk*root_ny+rj)*root_nx+ri;
+				tree_get_nearest_neighbour_in_cell(p1,gb,root[index]);
+			}
+			}
+			}
 		}
 		}
 		}
@@ -137,9 +144,9 @@ void collisions_resolve(){
 }
 
 void tree_get_nearest_neighbour_in_cell(struct particle* p, struct ghostbox gb, struct cell* c){
-	double dx = p->x - (c->x[0]+gb.shiftx);
-	double dy = p->y - (c->x[1]+gb.shifty);
-	double dz = p->z - (c->x[2]+gb.shiftz);
+	double dx = p->x - (c->x+gb.shiftx);
+	double dy = p->y - (c->y+gb.shifty);
+	double dz = p->z - (c->z+gb.shiftz);
 	double r2 = dx*dx+dy*dy+dz*dz;
 	if (r2<nearest_r*nearest_r+c->w*c->w*3.+2.*nearest_r+1.732*c->w){
 		if (c->oct!=NULL){

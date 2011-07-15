@@ -15,22 +15,22 @@ int nghostz = 0;
 void check_boundaries(){
 	for (int i=0;i<N;i++){
 		int removep = 0;
-		if(particles[i].x>boxsize/2.){
+		if(particles[i].x>boxsize_x/2.){
 			removep = 1;
 		}
-		if(particles[i].x<-boxsize/2.){
+		if(particles[i].x<-boxsize_x/2.){
 			removep = 1;
 		}
-		if(particles[i].y>boxsize/2.){
+		if(particles[i].y>boxsize_y/2.){
 			removep = 1;
 		}
-		if(particles[i].y<-boxsize/2.){
+		if(particles[i].y<-boxsize_y/2.){
 			removep = 1;
 		}
-		if(particles[i].z>boxsize/2.){
+		if(particles[i].z>boxsize_z/2.){
 			removep = 1;
 		}
-		if(particles[i].z<-boxsize/2.){
+		if(particles[i].z<-boxsize_z/2.){
 			removep = 1;
 		}
 		if (removep==1){
@@ -48,9 +48,9 @@ void check_boundaries(){
 
 struct ghostbox get_ghostbox(int i, int j, int k){
 	struct ghostbox gb;
-	gb.shiftx = boxsize*(double)i;
-	gb.shifty = boxsize*(double)j;
-	gb.shiftz = boxsize*(double)k;
+	gb.shiftx = boxsize_x*(double)i;
+	gb.shifty = boxsize_y*(double)j;
+	gb.shiftz = boxsize_z*(double)k;
 	gb.shiftvx = 0;
 	gb.shiftvy = 0;
 	gb.shiftvz = 0;

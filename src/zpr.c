@@ -150,7 +150,7 @@ zprMotion(int x, int y)
     if (dx==0 && dy==0)
         return;
 
-    if (_mouseMiddle || (_mouseLeft && _mouseRight))
+    if (_mouseMiddle || _mouseRight)
     {
         double s = exp((double)dy*0.01);
 
@@ -186,7 +186,7 @@ zprMotion(int x, int y)
             changed = true;
         }
         else
-            if (_mouseRight)
+            if (0&&_mouseRight)
             {
                 double px,py,pz;
 
