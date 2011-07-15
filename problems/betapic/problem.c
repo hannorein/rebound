@@ -16,17 +16,17 @@ int bb_N=0;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	boxsize_x = 8; 
-	boxsize_y = 8; 
-	boxsize_z = 8; 
+	boxsize_x = 5; 
+	boxsize_y = 5; 
+	boxsize_z = 5; 
 	dt = 2.0e-3*2.*M_PI;
 	// Setup particle structures
-	init_particles(1000); // Number of particles
+	init_particles(10000); // Number of particles
 	N_active_first = 1; // Only the planet's gravity is felt by all other particles
 	N_active_last = 2; // Only the planet's gravity is felt by all other particles
 	// Initial conditions
 	// Planet
-	double planet_e = 0.5;
+	double planet_e = 0.2;
 	particles[0].x  = 0;
 	particles[0].y  = 0; 
 	particles[0].vx = 0;
@@ -44,8 +44,8 @@ void problem_init(int argc, char* argv[]){
 
 	int i=2;
 	while(i<N){
-		double x = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x/4.;
-		double y = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y/4.;
+		double x = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
+		double y = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
 		double a = sqrt(x*x+y*y);
 		x = a; y=0;
 		//double phi = atan2(y,x);

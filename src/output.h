@@ -4,6 +4,7 @@
 int output_check(double interval);
 
 void output_ascii(char* filename);
+void output_orbit(char* filename);
 void output_append_ascii(char* filename);
 void output_binary(char* filename);
 void output_binary_positions(char* filename);

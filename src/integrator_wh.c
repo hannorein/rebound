@@ -33,6 +33,11 @@ void integrate_particles(){
 		calculate_forces();
 		for (int i=1;i<N;i++){
 			//					   indirect term
+			/*
+			particles[i].vx += dt * particles[i].ax;
+			particles[i].vy += dt * particles[i].ay;
+			particles[i].vz += dt * particles[i].az;
+			*/
 			particles[i].vx += dt * (particles[i].ax - 1.*particles[0].ax);
 			particles[i].vy += dt * (particles[i].ay - 1.*particles[0].ay);
 			particles[i].vz += dt * (particles[i].az - 1.*particles[0].az);
