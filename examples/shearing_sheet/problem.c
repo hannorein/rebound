@@ -34,8 +34,8 @@ void problem_init(int argc, char* argv[]){
 		particles[i].r = 0.05;
 	}
 	// Do use ghost boxes in x and y
-	nghostx = 0;
-	nghosty = 0;
+	nghostx = 1;
+	nghosty = 1;
 	nghostz = 0;
 }
 

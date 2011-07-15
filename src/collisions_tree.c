@@ -51,6 +51,12 @@ void collisions_search(){
 			for (int ri=0;ri<root_nx;ri++){
 			for (int rj=0;rj<root_ny;rj++){
 			for (int rk=0;rk<root_nz;rk++){
+				if (gbx== 1 && ri!=0) continue;
+				if (gbx==-1 && ri!=0) continue;
+				if (gby== 1 && rj!=0) continue;
+				if (gby==-1 && rj!=0) continue;
+				if (gbz== 1 && rk!=0) continue;
+				if (gbz==-1 && rk!=0) continue;
 				int index = (rk*root_ny+rj)*root_nx+ri;
 				tree_get_nearest_neighbour_in_cell(p1,gb,root[index]);
 			}
@@ -88,7 +94,8 @@ void collisions_add(struct particle* p1, struct particle* p2, struct ghostbox gb
 void collisions_resolve_single(struct collision c){
 	struct particle p1 = *(c.p1);
 	struct particle p2 = *(c.p2);
-	if (p1.lastcollision==t || p2.lastcollision==t) return;
+	// The following line would disallow multiple collisons per timestep.
+//	if (p1.lastcollision==t || p2.lastcollision==t) return;
 	double m21  = p1.m  /  p2.m; 
 	double x21  = p1.x  - (p2.x+c.gb.shiftx); 
 	double y21  = p1.y  - (p2.y+c.gb.shifty); 
@@ -148,7 +155,7 @@ void tree_get_nearest_neighbour_in_cell(struct particle* p, struct ghostbox gb, 
 	double dy = p->y - (c->y+gb.shifty);
 	double dz = p->z - (c->z+gb.shiftz);
 	double r2 = dx*dx+dy*dy+dz*dz;
-	if (r2<nearest_r*nearest_r+c->w*c->w*3.+2.*nearest_r+1.732*c->w){
+	if (r2<nearest_r*nearest_r+c->w*c->w*3.+2.*nearest_r+2.*1.732*c->w){
 		if (c->oct!=NULL){
 			for (int i=0;i<8;i++){
 				if (c->oct[i]!=NULL){
