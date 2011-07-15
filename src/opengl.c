@@ -55,6 +55,7 @@ void displayKey(unsigned char key, int x, int y){
 			display_pause = !display_pause;
 			break;
 	}
+	display();
 }
 
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
