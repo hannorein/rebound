@@ -72,6 +72,7 @@ zprReset()
 	    	glRotatef(90,0.,0.,1.);
 		break;
     }
+    glTranslatef(0, 0, boxsize_max);
     glscale = 1.0;
     resetOrientation++;
     if (resetOrientation>2){
@@ -153,10 +154,10 @@ zprMotion(int x, int y)
     {
         double s = exp((double)dy*0.01);
 
-        glTranslatef(0, 0, boxsize_max);
+        glTranslatef(0, 0, -boxsize_max);
 	glscale *=s;
         glScalef(s,s,s);
-        glTranslatef(0, 0,-boxsize_max);
+        glTranslatef(0, 0,  boxsize_max);
 
         changed = true;
     }
