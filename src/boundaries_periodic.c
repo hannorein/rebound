@@ -38,8 +38,8 @@ void check_boundaries(){
 struct ghostbox get_ghostbox(int i, int j, int k){
 	struct ghostbox gb;
 	gb.shiftx = boxsize_x*(double)i;
-	gb.shifty = boxsize_x*(double)j;
-	gb.shiftz = boxsize_y*(double)k;
+	gb.shifty = boxsize_y*(double)j;
+	gb.shiftz = boxsize_z*(double)k;
 	gb.shiftvx = 0;
 	gb.shiftvy = 0;
 	gb.shiftvz = 0;
