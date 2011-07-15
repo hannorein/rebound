@@ -128,9 +128,11 @@ void display(){
 			// Drawing Points
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glColor4f(1.0,0.0,0.0,0.9);
-			glDrawArrays(GL_POINTS, 0, N_active);
+			glDrawArrays(GL_POINTS, 0, N_active_first);
 			glColor4f(1.0,1.0,0.0,0.6);
-			glDrawArrays(GL_POINTS, N_active, N-N_active);
+			glDrawArrays(GL_POINTS, N_active_first, N_active_last-N_active_first);
+			glColor4f(1.0,1.0,0.0,0.9);
+			glDrawArrays(GL_POINTS, N_active_last, N-N_active_last);
 			glDisableClientState(GL_VERTEX_ARRAY);
 		}
 		// Drawing Tree

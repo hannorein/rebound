@@ -20,7 +20,7 @@ void calculate_forces(){
 		struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
 		// Summing over all particle pairs
 		for (int i=0; i<N; i++){
-		for (int j=0; j<N_active; j++){
+		for (int j=N_active_first; j<N_active_last; j++){
 			if (i==j) continue;
 			double dx = (gb.shiftx+particles[i].x) - particles[j].x;
 			double dy = (gb.shifty+particles[i].y) - particles[j].y;

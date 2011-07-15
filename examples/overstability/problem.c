@@ -21,7 +21,7 @@ void problem_init(int argc, char* argv[]){
 	// Setup particle structures
 	boxsize_x = 200;
 	boxsize_y = 4;
-	boxsize_z = 100;
+	boxsize_z = 8;
 	init_particles(600);
 	dt = 1e-2*2.*M_PI;
 	double particle_size = 0.5;
@@ -32,7 +32,7 @@ void problem_init(int argc, char* argv[]){
 	for (int i =0;i<N;i++){
 		particles[i].x = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
 		particles[i].y = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
-		particles[i].z = 0.1*((double)rand()/(double)RAND_MAX-0.5)*boxsize_z;
+		particles[i].z = 4.0*((double)rand()/(double)RAND_MAX-0.5)*particle_size;
 		particles[i].vx = 0;
 		particles[i].vy = -1.5*particles[i].x*OMEGA;
 		particles[i].vz = 0;

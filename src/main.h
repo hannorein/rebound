@@ -16,7 +16,8 @@ extern double t;
 extern double tmax;
 extern double dt;
 extern int N;
-extern int N_active;
+extern int N_active_first;
+extern int N_active_last;
 
 
 void iterate();

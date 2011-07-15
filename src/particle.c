@@ -10,6 +10,7 @@ struct particle* particles;
 
 void init_particles(int _N){	
 	N = _N;
-	N_active = _N;
+	N_active_first = 0;
+	N_active_last  = _N;
 	particles = calloc(N,sizeof(struct particle));
 }
