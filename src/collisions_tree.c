@@ -66,9 +66,9 @@ void collisions_search(){
 		double sr = p1->r + nearest_p->r; 
 		double r2 = dx*dx+dy*dy+dz*dz;
 		if (r2>sr*sr) continue;	// not overlapping
-		double dvx = p1->vx - (nearest_p->vx-nearest_gb.shiftvx); 
-		double dvy = p1->vy - (nearest_p->vy-nearest_gb.shiftvy); 
-		double dvz = p1->vz - (nearest_p->vz-nearest_gb.shiftvz); 
+		double dvx = p1->vx - (nearest_p->vx+nearest_gb.shiftvx); 
+		double dvy = p1->vy - (nearest_p->vy+nearest_gb.shiftvy); 
+		double dvz = p1->vz - (nearest_p->vz+nearest_gb.shiftvz); 
 		if (dvx*dx + dvy*dy + dvz*dz >0) continue; // not approaching
 		collisions_add(p1,nearest_p, nearest_gb);
 	}
@@ -94,9 +94,10 @@ void collisions_resolve_single(struct collision c){
 	double x21  = p1.x  - (p2.x+c.gb.shiftx); 
 	double y21  = p1.y  - (p2.y+c.gb.shifty); 
 	double z21  = p1.z  - (p2.z+c.gb.shiftz); 
-	double vx21 = p1.vx - (p2.vx-c.gb.shiftvx); 
-	double vy21 = p1.vy - (p2.vy-c.gb.shiftvy); 
-	double vz21 = p1.vz - (p2.vz-c.gb.shiftvz); 
+	double vx21 = p1.vx - (p2.vx+c.gb.shiftvx); 
+	double vy21 = p1.vy - (p2.vy+c.gb.shiftvy); 
+	double vz21 = p1.vz - (p2.vz+c.gb.shiftvz); 
+	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return; // not approaching
 	// Bring the to balls in the xy plane.
 	// NOTE: this could probabely be an atan (which is faster than atan2)
 	double theta = atan2(z21,y21);

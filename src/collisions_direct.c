@@ -78,6 +78,7 @@ void collisions_resolve_single(struct collision c){
 	double vx21 = p1.vx - (p2.vx+c.gb.shiftvx); 
 	double vy21 = p1.vy - (p2.vy+c.gb.shiftvy); 
 	double vz21 = p1.vz - (p2.vz+c.gb.shiftvz); 
+	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return; // not approaching
 	// Bring the to balls in the xy plane.
 	// NOTE: this could probabely be an atan (which is faster than atan2)
 	double theta = atan2(z21,y21);

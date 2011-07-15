@@ -21,8 +21,8 @@ void problem_init(int argc, char* argv[]){
 	// Setup particle structures
 	boxsize_x = 200;
 	boxsize_y = 4;
-	boxsize_z = 8;
-	init_particles(500);
+	boxsize_z = 100;
+	init_particles(600);
 	dt = 1e-2*2.*M_PI;
 	double particle_size = 0.5;
 	coefficient_of_restitution = 0.5;
