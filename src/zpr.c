@@ -46,6 +46,7 @@ static void zprMotion(int x, int y);
 /* Configurable center point for zooming and rotation */
 
 double glscale = 1;
+double boxsize_max;
 int resetOrientation = 0;
 
 void
@@ -146,10 +147,10 @@ zprMotion(int x, int y)
     {
         double s = exp((double)dy*0.01);
 
-        glTranslatef(0, 0, boxsize);
+        glTranslatef(0, 0, boxsize_max);
 	glscale *=s;
         glScalef(s,s,s);
-        glTranslatef(0, 0,-boxsize);
+        glTranslatef(0, 0,-boxsize_max);
 
         changed = true;
     }
@@ -171,9 +172,9 @@ zprMotion(int x, int y)
             by = _matrixInverse[1]*ax + _matrixInverse[5]*ay + _matrixInverse[9] *az;
             bz = _matrixInverse[2]*ax + _matrixInverse[6]*ay + _matrixInverse[10]*az;
 
-            glTranslatef( 0, 0,-boxsize);
+            glTranslatef( 0, 0,-boxsize_max);
             glRotatef(angle,bx,by,bz);
-            glTranslatef( 0, 0, boxsize);
+            glTranslatef( 0, 0, boxsize_max);
 
             changed = true;
         }

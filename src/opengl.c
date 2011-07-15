@@ -47,15 +47,25 @@ void displayKey(unsigned char key, int x, int y){
 }
 
 #ifdef GRAVITY_TREE
-void displayTree(struct cell *node){
+void display_cell(struct cell *node){
 	if (node == NULL) return;
-	glTranslatef(node->x[0],node->x[1],node->x[2]);
+	glTranslatef(node->x,node->y,node->z);
 	glutWireCube(node->w);
-	glTranslatef(-node->x[0],-node->x[1],-node->x[2]);
+	glTranslatef(-node->x,-node->y,-node->z);
 	if (node->oct!=NULL){
 		for (int i=0;i<8;i++) {
-			displayTree(node->oct[i]);
+			display_cell(node->oct[i]);
 		}
+	}
+}
+void display_tree(){
+	for(int i=0;i<root_nx;i++){
+	for(int j=0;j<root_ny;j++){
+	for(int k=0;k<root_nz;k++){
+		int index = (k*root_ny+j)*root_nx+i;
+		display_cell(root[index]);
+	}
+	}
 	}
 }
 #endif
@@ -68,7 +78,7 @@ void display(){
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_LIGHTING);
 		glEnable(GL_LIGHT0);
-		GLfloat lightpos[] = {0, boxsize, boxsize, 0.f};
+		GLfloat lightpos[] = {0, boxsize_max, boxsize_max, 0.f};
 		glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
 	}else{
 		glEnable(GL_BLEND);                    
@@ -77,7 +87,7 @@ void display(){
 		glDisable(GL_LIGHTING);
 		glDisable(GL_LIGHT0);
 	}
-	glTranslatef(0,0,-boxsize);
+	glTranslatef(0,0,-boxsize_max);
 	glPointSize(5.);
 	glEnable(GL_POINT_SMOOTH);
 	glVertexPointer(3, GL_DOUBLE, sizeof(struct particle), particles);
@@ -113,16 +123,18 @@ void display(){
 		// Drawing Tree
 #ifdef GRAVITY_TREE
 		glColor4f(1.0,0.0,0.0,0.4);
-		displayTree(root);
+		display_tree();
 #endif
 		glTranslatef(-gb.shiftx,-gb.shifty,-gb.shiftz);
 	}
 	}
 	}
 	glColor4f(1.0,0.0,0.0,0.4);
-	glutWireCube(boxsize);
+	glScalef(boxsize_x,boxsize_y,boxsize_z);
+	glutWireCube(1);
+	glScalef(1./boxsize_x,1./boxsize_y,1./boxsize_z);
 	glutSwapBuffers();
-	glTranslatef(0,0,boxsize);
+	glTranslatef(0,0,boxsize_max);
 }
 
 void init_display(int argc, char* argv[]){
@@ -130,7 +142,7 @@ void init_display(int argc, char* argv[]){
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
 	glutInitWindowSize(700,700);
 	glutCreateWindow("nbody");
-	zprInit(0.7/boxsize);
+	zprInit(0.7/boxsize_max);
 	glutDisplayFunc(display);
 	glutIdleFunc(iterate);
 	glutKeyboardFunc(displayKey);
