@@ -1,12 +1,12 @@
-PROBLEMDIR=examples/$(shell basename `pwd`)
+PROBLEMDIR=problems/$(shell basename `pwd`)
 export OPENGL=1
 
 all:
 	# Setup link to different modules
-	ln -fs gravity_tree.c ../../src/gravity.c
+	ln -fs ../$(PROBLEMDIR)/gravity_direct_cutoff.c ../../src/gravity.c
 	ln -fs boundaries_shear.c ../../src/boundaries.c
 	ln -fs integrator_sei.c ../../src/integrator.c
-	ln -fs collisions_tree.c ../../src/collisions.c
+	ln -fs collisions_none.c ../../src/collisions.c
 	# Setup link to problem file
 	ln -fs ../$(PROBLEMDIR)/problem.c ../../src/problem.c
 	# Compile

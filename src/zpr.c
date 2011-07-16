@@ -7,6 +7,12 @@
 #include "zpr.h"
 #include "main.h"
 
+#ifdef _APPLE
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif 
+
 /* This code was originally C++ :-) */
 
 #define bool int
@@ -17,8 +23,8 @@ static double _left   = 0.0;
 static double _right  = 0.0;
 static double _bottom = 0.0;
 static double _top    = 0.0;
-static double _zNear  = 0.01;
-static double _zFar   = 100000.0;
+static double _zNear  = 0.1;
+static double _zFar   = 100.0;
 
 static int  _mouseX      = 0;
 static int  _mouseY      = 0;
@@ -45,14 +51,18 @@ static void zprMotion(int x, int y);
 
 /* Configurable center point for zooming and rotation */
 
+GLfloat zprReferencePoint[4] = { 0,0,0,0 };
 double glscale = 1;
 int resetOrientation = 0;
 
 void
-zprReset(double initscale)
+zprReset()
 {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    double initscale = 0.875/boxsize_max;
+    glScalef(initscale,initscale,initscale);
+    glTranslatef( 0, 0, -boxsize_max*2.);
     switch(resetOrientation){
 	    case 1:
 	    	glRotatef(90,1.,0.,0.);
@@ -62,8 +72,7 @@ zprReset(double initscale)
 	    	glRotatef(90,0.,0.,1.);
 		break;
     }
-    initscale *= 5.0/4.0;
-    glScalef(initscale,initscale,initscale);
+    glTranslatef(0, 0, boxsize_max);
     glscale = 1.0;
     resetOrientation++;
     if (resetOrientation>2){
@@ -72,14 +81,13 @@ zprReset(double initscale)
 }
 
 void
-zprInit(double initscale)
+zprInit()
 {
     getMatrix();
-
     glutReshapeFunc(zprReshape);
     glutMouseFunc(zprMouse);
     glutMotionFunc(zprMotion);
-    zprReset(initscale);
+    zprReset();
 }
 
 static void
@@ -142,14 +150,14 @@ zprMotion(int x, int y)
     if (dx==0 && dy==0)
         return;
 
-    if (_mouseMiddle || (_mouseLeft && _mouseRight))
+    if (_mouseMiddle || _mouseRight)
     {
         double s = exp((double)dy*0.01);
 
-        glTranslatef(0, 0, boxsize);
+        glTranslatef(0, 0, -boxsize_max);
 	glscale *=s;
         glScalef(s,s,s);
-        glTranslatef(0, 0,-boxsize);
+        glTranslatef(0, 0,  boxsize_max);
 
         changed = true;
     }
@@ -171,14 +179,14 @@ zprMotion(int x, int y)
             by = _matrixInverse[1]*ax + _matrixInverse[5]*ay + _matrixInverse[9] *az;
             bz = _matrixInverse[2]*ax + _matrixInverse[6]*ay + _matrixInverse[10]*az;
 
-            glTranslatef( 0, 0,-boxsize);
+            glTranslatef( 0, 0,-boxsize_max);
             glRotatef(angle,bx,by,bz);
-            glTranslatef( 0, 0, boxsize);
+            glTranslatef( 0, 0, boxsize_max);
 
             changed = true;
         }
         else
-            if (_mouseRight)
+            if (0&&_mouseRight)
             {
                 double px,py,pz;
 
@@ -352,4 +360,4 @@ invertMatrix(const GLdouble *me, GLdouble *out )
 #undef MAT
 }
 
-#endif // OPENGL
+#endif

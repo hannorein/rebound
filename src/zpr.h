@@ -44,18 +44,11 @@
  *
  */
 
-#ifdef _APPLE
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif 
 
 /* Mouse Manipulation API */
 
-void zprReset(double initscale);
-void zprInit(double initscale);
+void zprReset();
+void zprInit();
 
-extern GLfloat zprReferencePoint[4];
-extern int resetOrientation;
 #endif
 

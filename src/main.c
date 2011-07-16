@@ -13,14 +13,20 @@
 #include "opengl.h"
 #endif
 
-double boxsize = 1;
+double boxsize = -1;
+double boxsize_x = -1;
+double boxsize_y = -1;
+double boxsize_z = -1;
+double boxsize_max = -1;
+double boxsize_min = -1;
 double softening = 0.01;
 double G=1;
 double t=0;
 double tmax=0; // Run forever
 double dt = 0.001;
 int N = 0;
-int N_active = 0;
+int N_active_last = -1;
+int N_active_first = -1;
 
 void iterate(){	
 	integrate_particles();
@@ -44,6 +50,12 @@ void iterate(){
 int main(int argc, char* argv[]) {
 	srand ( time(NULL) );
 	problem_init(argc, argv);
+	boxsize_max = boxsize_x;
+	if (boxsize_max<boxsize_y) boxsize_max = boxsize_y;
+	if (boxsize_max<boxsize_z) boxsize_max = boxsize_z;
+	boxsize_min = boxsize_x;
+	if (boxsize_y<boxsize_min) boxsize_min = boxsize_y;
+	if (boxsize_z<boxsize_min) boxsize_min = boxsize_z;
 	problem_output();
 #ifdef OPENGL
 	init_display(argc, argv);

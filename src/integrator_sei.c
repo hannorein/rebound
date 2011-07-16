@@ -7,13 +7,15 @@
 #include "gravity.h"
 #include "main.h"
 
-double OMEGA = 1.; // Orbital velocity
+double OMEGA = 1.; // Epicyclic frequency 
+double OMEGAZ = -1.; // Epicyclic frequency in vertical direction
 
 void operator_H0(double dt, struct particle* p);
 void operator_phi(double dt, struct particle* p);
 // Cache sin() tan() values.
 double lastdt=0;
 double sindt, tandt;
+double sindtz, tandtz;
 
 // This function is the SEI integrator.
 // It is symplectic, second order accurate and time-reversible.
@@ -34,21 +36,26 @@ void integrate_particles(){
 void operator_H0(double dt, struct particle* p){
 	if (lastdt!=dt){
 		// Only calculate sin() and tan() if timestep changed
+		if (OMEGAZ==-1){
+			OMEGAZ=OMEGA;
+		}
 		sindt = sin(OMEGA*(-dt));
 		tandt = tan(OMEGA*(-dt/2.));
+		sindtz = sin(OMEGAZ*(-dt));
+		tandtz = tan(OMEGAZ*(-dt/2.));
 		lastdt = dt;
 	}
 		
 	// Integrate vertical motion
-	const double zx = p->z * OMEGA;
+	const double zx = p->z * OMEGAZ;
 	const double zy = p->vz;
 	
 	// Rotation implemeted as 3 shear operators
 	// to avoid round-off errors
-	const double zt1 =  zx - tandt*zy;			
-	const double zyt =  sindt*zt1 + zy;
-	const double zxt =  zt1 - tandt*zyt;	
-	p->z  = zxt/OMEGA;
+	const double zt1 =  zx - tandtz*zy;			
+	const double zyt =  sindtz*zt1 + zy;
+	const double zxt =  zt1 - tandtz*zyt;	
+	p->z  = zxt/OMEGAZ;
 	p->vz = zyt;
 
 	// Integrate motion in xy directions

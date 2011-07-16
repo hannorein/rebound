@@ -10,7 +10,9 @@
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt = 1e-3;
-	boxsize = 3;
+	boxsize_x = 3;
+	boxsize_y = 3;
+	boxsize_z = 3;
 	// Setup particle structures
 	init_particles(2);
 	// Initial conditions

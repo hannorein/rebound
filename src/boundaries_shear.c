@@ -13,32 +13,32 @@ int nghosty = 1;
 int nghostz = 0;
 
 void check_boundaries(){
-	double offset = -0.5*boxsize + fmod(1.5*OMEGA*t,1.)*boxsize;
+	double offset = -0.5*boxsize_y + fmod(t*1.5*OMEGA*boxsize_x,boxsize_y);
 	for (int i=0;i<N;i++){
 		// Radial
-		while(particles[i].x>boxsize/2.){
-			particles[i].x -= boxsize;
+		while(particles[i].x>boxsize_x/2.){
+			particles[i].x -= boxsize_x;
 			particles[i].y += offset;
-			particles[i].vy += 3./2.*OMEGA*boxsize;
+			particles[i].vy += 3./2.*OMEGA*boxsize_x;
 		}
-		while(particles[i].x<-boxsize/2.){
-			particles[i].x += boxsize;
+		while(particles[i].x<-boxsize_x/2.){
+			particles[i].x += boxsize_x;
 			particles[i].y -= offset;
-			particles[i].vy -= 3./2.*OMEGA*boxsize;
+			particles[i].vy -= 3./2.*OMEGA*boxsize_x;
 		}
 		// Azimuthal
-		while(particles[i].y>boxsize/2.){
-			particles[i].y -= boxsize;
+		while(particles[i].y>boxsize_y/2.){
+			particles[i].y -= boxsize_y;
 		}
-		while(particles[i].y<-boxsize/2.){
-			particles[i].y += boxsize;
+		while(particles[i].y<-boxsize_y/2.){
+			particles[i].y += boxsize_y;
 		}
 		// Vertical (there should be no boundary, but periodic makes life easier)
-		while(particles[i].z>boxsize/2.){
-			particles[i].z -= boxsize;
+		while(particles[i].z>boxsize_z/2.){
+			particles[i].z -= boxsize_z;
 		}
-		while(particles[i].z<-boxsize/2.){
-			particles[i].z += boxsize;
+		while(particles[i].z<-boxsize_z/2.){
+			particles[i].z += boxsize_z;
 		}
 	}
 }
@@ -46,14 +46,14 @@ void check_boundaries(){
 struct ghostbox get_ghostbox(int i, int j, int k){
 	struct ghostbox gb;
 	gb.shiftvx = 0;
-	gb.shiftvy = 1.5*(double)i*OMEGA*boxsize;
+	gb.shiftvy = -1.5*(double)i*OMEGA*boxsize_x;
 	gb.shiftvz = 0;
-	double shift = fmod(gb.shiftvy*t,boxsize); 
-	gb.shiftx = boxsize*(double)i;
-	gb.shifty = boxsize*(double)j-shift;
-	gb.shiftz = boxsize*(double)k;
-	if(i>0) gb.shifty += boxsize*0.5;
-	if(i<0) gb.shifty -= boxsize*0.5;
+	double shift = -fmod(gb.shiftvy*t,boxsize_y); 
+	gb.shiftx = boxsize_x*(double)i;
+	gb.shifty = boxsize_y*(double)j-shift;
+	gb.shiftz = boxsize_z*(double)k;
+	if(i>0) gb.shifty += boxsize_y*0.5;
+	if(i<0) gb.shifty -= boxsize_y*0.5;
 	return gb;
 }
 

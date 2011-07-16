@@ -31,11 +31,18 @@ void integrate_particles(){
 		drift_wh(dt/2.);
 		// KICK
 		calculate_forces();
-		for (int i=0;i<N;i++){
+		for (int i=1;i<N;i++){
+			//					   indirect term
+			/*
 			particles[i].vx += dt * particles[i].ax;
 			particles[i].vy += dt * particles[i].ay;
 			particles[i].vz += dt * particles[i].az;
+			*/
+			particles[i].vx += dt * (particles[i].ax - 1.*particles[0].ax);
+			particles[i].vy += dt * (particles[i].ay - 1.*particles[0].ay);
+			particles[i].vz += dt * (particles[i].az - 1.*particles[0].az);
 		}
+
 		// DRIFT
 		drift_wh(dt/2.);
 	}else{
@@ -45,7 +52,7 @@ void integrate_particles(){
 }
 
 void drift_wh(double _dt){
-	for (int i=0;i<N;i++){
+	for (int i=1;i<N;i++){
 		struct particle* p = &(particles[i]);
 		int iflag = 0;
 		drift_dan(p,_dt,&iflag);
@@ -60,9 +67,9 @@ void drift_wh(double _dt){
 
 void drift_dan(struct particle* pv, double dt0, int* iflag){
 	double dt1 = dt0;
-	double x0 = pv->x;
-	double y0 = pv->y;
-	double z0 = pv->z;
+	double x0 = pv->x-particles[0].x;
+	double y0 = pv->y-particles[0].y;
+	double z0 = pv->z-particles[0].z;
 	double vx0 = pv->vx;
 	double vy0 = pv->vy;
 	double vz0 = pv->vz;
@@ -70,7 +77,7 @@ void drift_dan(struct particle* pv, double dt0, int* iflag){
 	double r0 = sqrt(x0*x0 + y0*y0 + z0*z0);
 	double v0s = vx0*vx0 + vy0*vy0 + vz0*vz0;
 	double u = x0*vx0 + y0*vy0 + z0*vz0;
-	double mu = 1.;
+	double mu = G*(particles[0].m+pv->m);
 	double alpha = 2.0*mu/r0 - v0s;
 
 	if (alpha > 0.0){
@@ -121,9 +128,9 @@ void drift_dan(struct particle* pv, double dt0, int* iflag){
 		double fdot = -(mu/(fp*r0))*c1;
 		double gdot = 1.0 - (mu/fp)*c2;
 
-		pv->x = x0*f + vx0*g;
-		pv->y = y0*f + vy0*g;
-		pv->z = z0*f + vz0*g;
+		pv->x = x0*f + vx0*g + particles[0].x;
+		pv->y = y0*f + vy0*g + particles[0].y;
+		pv->z = z0*f + vz0*g + particles[0].z;
 		
 		pv->vx = x0*fdot + vx0*gdot;
 		pv->vy = y0*fdot + vy0*gdot;

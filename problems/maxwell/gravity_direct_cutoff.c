@@ -7,6 +7,8 @@
 #include "main.h"
 #include "boundaries.h"
 
+extern double cutoff_radius;
+
 void calculate_forces(){
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 
@@ -20,12 +22,13 @@ void calculate_forces(){
 		struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
 		// Summing over all particle pairs
 		for (int i=0; i<N; i++){
-		for (int j=N_active_first; j<N_active_last; j++){
-			if (i==j) continue;
+		for (int j=0; j<N; j++){
+			if (i==j && gbx==0 && gby==0 && gbz==0) continue;
 			double dx = (gb.shiftx+particles[i].x) - particles[j].x;
 			double dy = (gb.shifty+particles[i].y) - particles[j].y;
 			double dz = (gb.shiftz+particles[i].z) - particles[j].z;
 			double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
+			if (r>cutoff_radius) continue;
 			double prefact = -G/(r*r*r)*particles[j].m;
 			particles[i].ax += prefact*dx; 
 			particles[i].ay += prefact*dy; 

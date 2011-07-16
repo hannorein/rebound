@@ -8,6 +8,7 @@
 #include "main.h"
 
 // Dummy. No collision search
+double collisions_max_r;
 
 void collisions_search(){
 

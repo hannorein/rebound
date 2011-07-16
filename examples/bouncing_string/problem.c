@@ -12,39 +12,31 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt = 1e-3;
 	tmax = 10000;
-	boxsize_x = 3;
-	boxsize_y = 3;
+	boxsize_x = 30;
+	boxsize_y = 10;
 	boxsize_z = 3;
 	coefficient_of_restitution = 1; // elastic collisions
 
 	// Setup particle structures
-	init_particles(2);
+	init_particles(10);
 	// Initial conditions
-	particles[0].x  = 1;
-	particles[0].y  = 1;
-	particles[0].z  = 0;
-	particles[0].vx = 0;
-	particles[0].vy = 0;
-	particles[0].vz = 0;
-	particles[0].ax = 0;
-	particles[0].ay = 0;
-	particles[0].az = 0;
-	particles[0].m  = 1;
-	particles[0].r  = 0.1;
-	particles[1].x  = -1;
-	particles[1].y  = -1;
-	particles[1].z  = 0;
-	particles[1].vx = 0;
-	particles[1].vy = 0;
-	particles[1].vz = 0;
-	particles[1].ax = 0;
-	particles[1].ay = 0;
-	particles[1].az = 0;
-	particles[1].m  = 1;
-	particles[1].r  = 0.1;
+	for (int i=0;i<N;i++){
+		particles[i].x  = -boxsize_x/2.+boxsize_x*(double)i/(double)N;
+		particles[i].y  = 0;
+		particles[i].z  = 0;
+		particles[i].vx = 0;
+		particles[i].vy = 0;
+		particles[i].vz = 0;
+		particles[i].ax = 0;
+		particles[i].ay = 0;
+		particles[i].az = 0;
+		particles[i].m  = 1;
+		particles[i].r  = 1;
+	}
+	particles[0].vx = 20;
 	// Do not use any ghost boxes
-	nghostx = 0;
-	nghosty = 0;
+	nghostx = 1;
+	nghosty = 1;
 	nghostz = 0;
 	printf("init done\n");
 }

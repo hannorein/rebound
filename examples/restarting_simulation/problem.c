@@ -26,7 +26,9 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	OMEGA = 1.;
 	dt = 1e-4*M_PI*2.; 
-	boxsize = 1;
+	boxsize_x = 1;
+	boxsize_y = 1;
+	boxsize_z = 1;
 	coefficient_of_restitution = 0.5;
 	minimum_collision_velocity = .01;
 	nghostx = 1;
@@ -38,9 +40,9 @@ void problem_init(int argc, char* argv[]){
 		init_particles(50);
 		// Initial conditions
 		for (int i =0;i<N;i++){
-			particles[i].x  = ((double)rand()/(double)RAND_MAX-0.5)*boxsize;
-			particles[i].y  = ((double)rand()/(double)RAND_MAX-0.5)*boxsize;
-			particles[i].z  = 0.1*((double)rand()/(double)RAND_MAX-0.5)*boxsize;
+			particles[i].x  = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
+			particles[i].y  = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
+			particles[i].z  = 0.1*((double)rand()/(double)RAND_MAX-0.5)*boxsize_z;
 			particles[i].vx = 0;
 			particles[i].vy = -1.5*particles[i].x*OMEGA;
 			particles[i].vz = 0;

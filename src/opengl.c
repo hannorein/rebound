@@ -23,32 +23,65 @@ int display_spheres = 1;
 int display_spheres = 0;
 #endif
 int display_init_done = 0;
+int display_pause_sim = 0;
+int display_pause = 0;
+int display_tree = 0;
 
 void displayKey(unsigned char key, int x, int y){
 	switch(key){
 		case 'q':
 			exit(0);
 			break;
-		case 'b':
-			printf("key caught\n");
+		case ' ':
+			display_pause_sim=!display_pause_sim;
+			if (display_pause_sim){
+				printf("Pause.\n");
+				glutIdleFunc(NULL);
+			}else{
+				printf("Resume.\n");
+				glutIdleFunc(iterate);
+			}
 			break;
 		case 's':
 			display_spheres = !display_spheres;
 			break;
+		case 'r':
+			zprReset(0.7/boxsize_max);
+			break;
+		case 't':
+			display_tree = !display_tree;
+			break;
+		case 'd':
+			display_pause = !display_pause;
+			break;
 	}
+	display();
 }
 
-void displayTree(struct cell *node){
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+void display_cell(struct cell* node){
 	if (node == NULL) return;
-	glTranslatef(node->x[0],node->x[1],node->x[2]);
+	glTranslatef(node->x,node->y,node->z);
 	glutWireCube(node->w);
-	glTranslatef(-node->x[0],-node->x[1],-node->x[2]);
+	glTranslatef(-node->x,-node->y,-node->z);
 	for (int i=0;i<8;i++) {
-		displayTree(node->oct[i]);
+		display_cell(node->oct[i]);
 	}
 }
+void display_entire_tree(){
+	for(int i=0;i<root_nx;i++){
+	for(int j=0;j<root_ny;j++){
+	for(int k=0;k<root_nz;k++){
+		int index = (k*root_ny+j)*root_nx+i;
+		display_cell(root[index]);
+	}
+	}
+	}
+}
+#endif
 
 void display(){
+	if (display_pause) return;
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	if (display_spheres){
 		glDisable(GL_BLEND);                    
@@ -56,7 +89,7 @@ void display(){
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_LIGHTING);
 		glEnable(GL_LIGHT0);
-		GLfloat lightpos[] = {0, boxsize, boxsize, 0.f};
+		GLfloat lightpos[] = {0, boxsize_max, boxsize_max, 0.f};
 		glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
 	}else{
 		glEnable(GL_BLEND);                    
@@ -65,7 +98,7 @@ void display(){
 		glDisable(GL_LIGHTING);
 		glDisable(GL_LIGHT0);
 	}
-	glTranslatef(0,0,-boxsize);
+	glTranslatef(0,0,-boxsize_max);
 	glPointSize(5.);
 	glEnable(GL_POINT_SMOOTH);
 	glVertexPointer(3, GL_DOUBLE, sizeof(struct particle), particles);
@@ -93,22 +126,31 @@ void display(){
 			// Drawing Points
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glColor4f(1.0,0.0,0.0,0.9);
-			glDrawArrays(GL_POINTS, 0, N_active);
+			glDrawArrays(GL_POINTS, 0, N_active_first);
 			glColor4f(1.0,1.0,0.0,0.6);
-			glDrawArrays(GL_POINTS, N_active, N-N_active);
+			glDrawArrays(GL_POINTS, N_active_first, N_active_last-N_active_first);
+			glColor4f(1.0,1.0,0.0,0.9);
+			glDrawArrays(GL_POINTS, N_active_last, N-N_active_last);
 			glDisableClientState(GL_VERTEX_ARRAY);
 		}
 		// Drawing Tree
 		glColor4f(1.0,0.0,0.0,0.4);
-		displayTree(root);
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+		if (display_tree){
+			glColor4f(1.0,0.0,0.0,0.4);
+			display_entire_tree();
+		}
+#endif
 		glTranslatef(-gb.shiftx,-gb.shifty,-gb.shiftz);
 	}
 	}
 	}
 	glColor4f(1.0,0.0,0.0,0.4);
-	glutWireCube(boxsize);
+	glScalef(boxsize_x,boxsize_y,boxsize_z);
+	glutWireCube(1);
+	glScalef(1./boxsize_x,1./boxsize_y,1./boxsize_z);
 	glutSwapBuffers();
-	glTranslatef(0,0,boxsize);
+	glTranslatef(0,0,boxsize_max);
 }
 
 void init_display(int argc, char* argv[]){
@@ -116,7 +158,7 @@ void init_display(int argc, char* argv[]){
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
 	glutInitWindowSize(700,700);
 	glutCreateWindow("nbody");
-	zprInit(0.7/boxsize);
+	zprInit(0.7/boxsize_max);
 	glutDisplayFunc(display);
 	glutIdleFunc(iterate);
 	glutKeyboardFunc(displayKey);

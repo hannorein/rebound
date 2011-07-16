@@ -1,0 +1,35 @@
+#!/usr/bin/python
+import os, glob, string, csv, datetime, random, sys, subprocess, shlex
+
+if os.path.exists("killtime.txt"):
+	os.remove("killtime.txt");
+
+gmax = 2.
+gdelta = .01
+gmin = 0.1
+
+
+g = gmax
+while g>=gmin:
+	args = shlex.split("./nbody %f"%g)
+	print args
+	p = subprocess.Popen(args)
+	p.wait()
+
+	g = g - gdelta
+
+
+gmax = .1
+gdelta = .0001
+gmin = 0.0955
+
+g = gmax
+while g>=gmin:
+	args = shlex.split("./nbody %f"%g)
+	print args
+	p = subprocess.Popen(args)
+	p.wait()
+
+	g = g - gdelta
+
+
