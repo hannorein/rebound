@@ -11,6 +11,7 @@
 void calculate_forces(){
 	if (root==NULL){
 		init_tree();
+		root = update_tree(root);
 	} else {
 		check_boundaries();
 		root = update_tree(root);

@@ -8,18 +8,14 @@ struct cell {
 	double x[3];
 	double w;
 	struct cell *oct[8];
-	int pt;							//index of last particle
+	int pt;							// has double usages
 } cell;
 
 extern struct cell* root;
 
-struct cell *add_leaf(struct cell *, int, struct cell *,  int);
+struct cell *add_particle(struct cell *, int, struct cell *,  int);
 
 int get_octant(int n, struct cell *node);
-
-int isLeaf(struct cell **);
-
-int need_derefine(struct cell *);
 
 int isInside(struct cell *);
 
