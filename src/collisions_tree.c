@@ -159,14 +159,16 @@ void tree_get_nearest_neighbour_in_cell(struct particle* p, struct ghostbox gb, 
 			}
 		}
 	}
-	if (c->pt!=NULL && c->pt!=p){
-		double dx = p->x - (c->pt->x+gb.shiftx);
-		double dy = p->y - (c->pt->y+gb.shifty);
-		double dz = p->z - (c->pt->z+gb.shiftz);
+//	if (c->pt>=0 && c->pt!=p){
+	if (c->pt>=0 && &(particles[c->pt])!=p){
+		struct particle pt = particles[c->pt];
+		double dx = p->x - (pt.x+gb.shiftx);
+		double dy = p->y - (pt.y+gb.shifty);
+		double dz = p->z - (pt.z+gb.shiftz);
 		double r2 = dx*dx+dy*dy+dz*dz;
 		if (r2<nearest_r*nearest_r){
 			nearest_r = sqrt(r2);
-			nearest_p = c->pt;
+			nearest_p = &(particles[c->pt]);
 			nearest_gb = gb;
 		}
 	}
