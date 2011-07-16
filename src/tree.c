@@ -139,17 +139,21 @@ struct cell *tree_update_cell(struct cell *node){
 		// Calculate the total mass and center of mass, and check if the node needs 
 		// derefinement after updating the tree.
 		node->pt = 0;
+#ifdef GRAVITY_TREE
 		node->m	 = 0;
 		node->mx = 0;
 		node->my = 0;
 		node->mz = 0;
+#endif // GRAVITY_TREE
 		for (int o = 0; o < 8; o++) {
 			if (node->oct[o] != NULL) {
 				// Calculate the total mass and the center of mass
+#ifdef GRAVITY_TREE
 				node->mx = (node->mx*node->m + node->oct[o]->mx* node->oct[o]->m) / (node->m + node->oct[o]->m);
 				node->my = (node->my*node->m + node->oct[o]->my* node->oct[o]->m) / (node->m + node->oct[o]->m);
 				node->mz = (node->mz*node->m + node->oct[o]->mz* node->oct[o]->m) / (node->m + node->oct[o]->m);
 				node->m += node->oct[o]->m;
+#endif // GRAVITY_TREE
 				// Update node->pt
 				if (node->oct[o]->pt >= 0) {	// The child is a leaf
 					node->pt--;
