@@ -1,1 +1,0 @@
-ffmpeg -y -qscale 5 -r 20 -b 9600 -i png/%09d.png movie.mp4
