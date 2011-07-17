@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <sys/time.h>
 #include "particle.h"
 #include "integrator.h"
 #include "boundaries.h"
@@ -28,11 +29,12 @@ int N = 0;
 int N_active_last = -1;
 int N_active_first = -1;
 
+double timing_initial = -1;
+
 void iterate(){	
 	integrate_particles();
 	t+=dt;
 	check_boundaries();
-	printf("t = %f\n",t);
 #ifdef OPENGL
 	display();
 #endif
@@ -40,14 +42,23 @@ void iterate(){
 	collisions_resolve();
 	problem_inloop();
 	problem_output();
-	while(t>=tmax && tmax!=0.0){
+	if(t+dt>tmax && tmax!=0.0){
 		problem_finish();
+		struct timeval tim;
+		gettimeofday(&tim, NULL);
+		double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
+		printf("Computation finished. Total runtime: %f s\n",timing_final-timing_initial);
 		exit(0);
 	}
 
 }
 
 int main(int argc, char* argv[]) {
+	// Timing
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
+	// Initialiase random numbers, problem, box and OpengL
 	srand ( time(NULL) );
 	problem_init(argc, argv);
 	boxsize_max = boxsize_x;
@@ -60,11 +71,10 @@ int main(int argc, char* argv[]) {
 #ifdef OPENGL
 	init_display(argc, argv);
 #else
-	while(t<tmax||tmax==0.0){
+	while(1){
 		iterate();
 	}
 #endif
-	printf("Computation finished\n");
 	return 0;
 }
 	
