@@ -7,3 +7,5 @@ integrator.c
 collisions.c
 src/problem.c
 .DS_Store
+error.txt
+tests/testall.html
