@@ -9,10 +9,6 @@
 #include "boundaries.h"
 
 void calculate_forces(){
-	if (root==NULL){
-		tree_init();
-	}
-	check_boundaries();
 	tree_update();
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 

@@ -52,7 +52,10 @@ void collisions_search(){
 				if (gbz== 1 && rk!=0) continue;
 				if (gbz==-1 && rk!=root_nz-1) continue;
 				int index = (rk*root_ny+rj)*root_nx+ri;
-				tree_get_nearest_neighbour_in_cell(p1,gb,root[index]);
+				struct cell* rootcell = root[index];
+				if (rootcell!=NULL){
+					tree_get_nearest_neighbour_in_cell(p1,gb,rootcell);
+				}
 			}
 			}
 			}

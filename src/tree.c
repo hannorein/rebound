@@ -192,6 +192,10 @@ struct cell *tree_update_cell(struct cell *node){
 }
 
 void tree_update(){
+	if (root==NULL){
+		tree_init();
+	}
+	check_boundaries();
 	for(int i=0;i<root_nx;i++){
 	for(int j=0;j<root_ny;j++){
 	for(int k=0;k<root_nz;k++){
