@@ -12,5 +12,10 @@ void init_particles(int _N){
 	N = _N;
 	N_active_first = 0;
 	N_active_last  = _N;
+	if (boxsize!=-1){
+		boxsize_x = boxsize;
+		boxsize_y = boxsize;
+		boxsize_z = boxsize;
+	}
 	particles = calloc(N,sizeof(struct particle));
 }
