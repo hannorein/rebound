@@ -34,6 +34,11 @@ cat >> testall.html <<EOF
 EOF
 printtable shearing_sheet
 
+cat >> testall.html <<EOF
+	<h2>Bouncing String (collision detection with tree)</h2>
+EOF
+printtable bouncing_string_tree
+
 
 
 
