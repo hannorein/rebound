@@ -63,6 +63,7 @@ void problem_output(){
 	// Override the restartfile every orbit.
 	if (output_check(1e-0*2.*M_PI&&t!=0)){
 		output_binary("restart.bin");
+		printf("Saved binary file. Restart simulation with './nbody --restart restart.bin'.\n");
 	}
 }
 
