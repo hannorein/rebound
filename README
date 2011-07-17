@@ -1,1 +1,35 @@
 2011 ISIMA project on N-body simulations
+----------------------------------------
+
+Contributors:
+  * Hanno Rein
+  * Shangfei Liu
+  
+The following modules are available:
+  * Gravity
+     - No self-gravity
+     - Direct summation, O(N^2)
+     - Oct tree, Barnes & Hut 1986, O(N log(N))
+  * Integrators
+     - Euler, first order
+     - Leap frog, second order, symplectic
+     - Mixed variable symplectic integrator for 1/r potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991
+     - Symplectic Eplicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
+  * Collision detection
+     - No collision detection
+     - Direct nearest neighbour search, O(N^2)
+     - Oct tree, O(N log(N))
+  * Output/Visualization
+     - Standard ASCII or binary output 
+     - Real-time, 3D OpenGL visualization
+
+Other features:
+  * The code is written entirely in C. It is standard compliant to C99.
+  * No libraries are needed. The use of OpenGL/GLUT/libpng is optional.
+  * The code is fully open-source and can be downloaded freely from http://github.com/hannorein/nbody.
+  * No configuration is needed to run any of the example problems. Just type 'make && ./nbody' to run them.
+  * Different modules are easily interchangable by one line in the Makefile.
+  
+
+Acknowledgements:
+   When you use this code or parts of this code for results presented in a scientific publication, we would greatly appriciate a citation to #TBD# and an acknoledgement of the form: "Calculations in this paper made use of the collisional N-body code #TBD# which can be downloaded freely at http://github.com/hannorein/nbody.". Also, please send us a copy of your paper so that we can keep track of all publications that made use of the code.
