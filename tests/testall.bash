@@ -1,11 +1,11 @@
 #!/bin/bash
 function printtable {
 cat >> testall.html <<EOF
-	<table>
-	<tr><th>Test</hd><th>Error (limit)</hd><th>Runtime [s]</hd><th>Pass</th></tr>
+	<table width="100%">
+	<tr><th align=left>Test</hd><th align=left>Error (limit)</hd><th align=left>Runtime [s]</hd><th align=left>Pass</th></tr>
 EOF
 make test -k -C $1
-awk -Ft 'BEGIN{ORS=""}{print "<tr><td>", $7, "</td><td>", $3, " (",$4, ")</td><td>", $6, "</td><td bgcolor=#"; if($5==1){print "00FF00";}else{print "FF0000";} print">", $5 ,"</td></tr>\n";}' $1/error.txt >> testall.html
+awk -Ft 'BEGIN{ORS=""}{print "<tr><td>", $7, "</td><td width="300px">", $3, " (",$4, ")</td><td width="150px">", $6, "</td><td width="100px" bgcolor=#"; if($5==1){print "00FF00";}else{print "FF0000";} print">", $5 ,"</td></tr>\n";}' $1/error.txt >> testall.html
 cat >> testall.html <<EOF
 	</table>
 EOF
