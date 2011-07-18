@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <sys/time.h>
 #include "main.h"
 #include "particle.h"
 #include "boundaries.h"
@@ -12,14 +13,19 @@ extern double OMEGA;
 extern double coefficient_of_restitution;
 extern double minimum_collision_velocity;
 
+double size = 2;
+
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	OMEGA = 1.;
 	// Setup particle structures
-	boxsize_x = 2;
-	boxsize_y = 2;
-	boxsize_z = 10;
-	init_particles(250);
+	if (argc>1){
+		size= atof(argv[1]);
+	}
+	boxsize_x = size;
+	boxsize_y = size;
+	boxsize_z = 4;
+	init_particles((int)round(50.*size*size));
 	coefficient_of_restitution = 0.5;
 	minimum_collision_velocity = 0.05;
 	dt = 1e-2;
@@ -56,5 +62,4 @@ void problem_output(){
 }
 
 void problem_finish(){
-
 }
