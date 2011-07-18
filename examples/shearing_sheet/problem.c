@@ -19,10 +19,10 @@ void problem_init(int argc, char* argv[]){
 	boxsize_x = 2;
 	boxsize_y = 4;
 	boxsize_z = 1;
-	init_particles(50);
+	init_particles(500);
 	coefficient_of_restitution = 0.5;
 	minimum_collision_velocity = 0.005;
-	dt = 1e-3;
+	dt = 1e-2;
 	// Initial conditions
 	for (int i =0;i<N;i++){
 		particles[i].x = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
@@ -34,8 +34,8 @@ void problem_init(int argc, char* argv[]){
 		particles[i].ax = 0;
 		particles[i].ay = 0;
 		particles[i].az = 0;
-		particles[i].m = 0.0001;
-		particles[i].r = 0.1;
+		particles[i].m = 0.016;
+		particles[i].r = 0.01;
 	}
 	// Do use ghost boxes in x and y
 	nghostx = 1;

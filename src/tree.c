@@ -111,9 +111,9 @@ struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *p
 int tree_get_octant_for_particle_in_cell(int pt, struct cell *node){
 	int octant = 0;
 	struct particle p = particles[pt];
-	if (p.x<node->x) octant+=1;
-	if (p.y<node->y) octant+=2;
-	if (p.z<node->z) octant+=4;
+	if (p.x < node->x) octant+=1;
+	if (p.y < node->y) octant+=2;
+	if (p.z < node->z) octant+=4;
 	return octant;
 }
 
@@ -165,28 +165,27 @@ struct cell *tree_update_cell(struct cell *node){
 			}		
 		}
 		// Check if the node require derefinement.
-		if (t > 0) {
-			if (node->pt == 0) {	// The node is empty.
-				free(node);
-				return NULL;
-			} else if (node->pt == -1) { // The node becomes a leaf.
-				node->pt = node->oct[test]->pt;
-				free(node->oct[test]);
-				node->oct[test]=NULL;
-				return node;
-			}
+		if (node->pt == 0) {	// The node is empty.
+			free(node);
+			return NULL;
+		} else if (node->pt == -1) { // The node becomes a leaf.
+			node->pt = node->oct[test]->pt;
+			free(node->oct[test]);
+			node->oct[test]=NULL;
+			return node;
 		}
 		return node;
 	} 
 	// Leaf nodes
-	if (t == 0) {
-		return node;
-	}
 	if (tree_particle_is_inside_cell(node) == 0) {
 		tree_add_particle_to_tree(node->pt);
 		free(node);
 		return NULL; 
 	} else {
+		struct particle p = particles[node->pt];
+		node->mx	= p.x;
+		node->my	= p.y;
+		node->mz	= p.z;
 		return node;
 	}
 }
