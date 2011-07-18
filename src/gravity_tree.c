@@ -8,7 +8,7 @@
 #include "tree.h"
 #include "boundaries.h"
 #ifndef THETA
-	#define THETA 0.2
+	#define THETA 0.5
 #endif
 
 void calculate_forces(){
@@ -25,19 +25,8 @@ void calculate_forces(){
 		struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
 		// Summing over all particle pairs
 		for (int i=0; i<N; i++){
-//		for (int j=0; j<N; j++){
-//			if (i==j) continue;
 			calculate_forces_for_particle(i, gb);
-//			double dx = particles[i].x - (particles[j].x + gb.shiftx);
-//			double dy = particles[i].y - (particles[j].y + gb.shifty);
-//			double dz = particles[i].z - (particles[j].z + gb.shiftz);
-//			double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
-//			double prefact = -G/(r*r*r)*particles[j].m;
-//			particles[i].ax += prefact*dx; 
-//			particles[i].ay += prefact*dy; 
-//			particles[i].az += prefact*dz; 
 		}
-//		}
 	}
 	}
 	}

@@ -16,6 +16,7 @@ void problem_init(int argc, char* argv[]){
 	// Setup particle structures
 	init_particles(2);
 	// Initial conditions
+	/*
 	particles[0].x  = 0;
 	particles[0].y  = 0;
 	particles[0].z  = 0;
@@ -36,6 +37,27 @@ void problem_init(int argc, char* argv[]){
 	particles[1].ay = 0;
 	particles[1].az = 0;
 	particles[1].m  = 0;
+	*/
+	particles[0].x  = -0.5;
+	particles[0].y  = 0;
+	particles[0].z  = 0;
+	particles[0].vx = 0;
+	particles[0].vy = -1;
+	particles[0].vz = 0;
+	particles[0].ax = 0;
+	particles[0].ay = 0;
+	particles[0].az = 0;
+	particles[0].m  = 2;
+	particles[1].x  = 0.5;
+	particles[1].y  = 0;
+	particles[1].z  = 0;
+	particles[1].vx = 0;
+	particles[1].vy = 1;
+	particles[1].vz = 0;
+	particles[1].ax = 0;
+	particles[1].ay = 0;
+	particles[1].az = 0;
+	particles[1].m  = 2;
 	// Do not use any ghost boxes
 	nghostx = 0;
 	nghosty = 0;

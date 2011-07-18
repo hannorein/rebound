@@ -182,10 +182,12 @@ struct cell *tree_update_cell(struct cell *node){
 		free(node);
 		return NULL; 
 	} else {
+#ifdef GRAVITY_TREE
 		struct particle p = particles[node->pt];
 		node->mx	= p.x;
 		node->my	= p.y;
 		node->mz	= p.z;
+#endif // GRAVITY_TREE
 		return node;
 	}
 }

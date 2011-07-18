@@ -30,6 +30,11 @@ EOF
 printtable wisdom_holman
 
 cat >> testall.html <<EOF
+	<h2>Shearing Sheat (gravity tree, collision tree)</h2>
+EOF
+printtable speed_shearing_sheet
+
+cat >> testall.html <<EOF
 	<h2>Shearing Sheat (dummy)</h2>
 EOF
 printtable shearing_sheet
