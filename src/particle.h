@@ -24,7 +24,7 @@ struct particle {
 #endif
 } particle;
 
-extern struct particle* particles;
+extern struct particle* restrict particles;
 
 void init_particles();
 

@@ -6,7 +6,7 @@
 #include "particle.h"
 #include "main.h"
 
-struct particle* particles;
+struct particle* restrict particles;
 
 void init_particles(int _N){	
 	N = _N;

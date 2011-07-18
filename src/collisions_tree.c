@@ -33,22 +33,11 @@ void collisions_search(){
 		for (int gby=-nghostycol; gby<=nghostycol; gby++){
 		for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
 			struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
-			for (int ri=0;ri<root_nx;ri++){
-			for (int rj=0;rj<root_ny;rj++){
-			for (int rk=0;rk<root_nz;rk++){
-				if (gbx== 1 && ri!=0) continue;
-				if (gbx==-1 && ri!=root_nx-1) continue;
-				if (gby== 1 && rj!=0) continue;
-				if (gby==-1 && rj!=root_ny-1) continue;
-				if (gbz== 1 && rk!=0) continue;
-				if (gbz==-1 && rk!=root_nz-1) continue;
-				int index = (rk*root_ny+rj)*root_nx+ri;
-				struct cell* rootcell = root[index];
+			for (int ri=0;ri<root_nx*root_ny*root_nz;ri++){
+				struct cell* rootcell = root[ri];
 				if (rootcell!=NULL){
 					tree_get_nearest_neighbour_in_cell(i,gb,rootcell);
 				}
-			}
-			}
 			}
 		}
 		}
@@ -93,8 +82,9 @@ void tree_get_nearest_neighbour_in_cell(int pt, struct ghostbox gb, struct cell*
 	double dx = p1.x - (c->x+gb.shiftx);
 	double dy = p1.y - (c->y+gb.shifty);
 	double dz = p1.z - (c->z+gb.shiftz);
-	double r2 = dx*dx+dy*dy+dz*dz;
-	if (r2<nearest_r*nearest_r+c->w*c->w*3.+2.*nearest_r+2.*1.732*c->w){
+	double r2 = dx*dx + dy*dy + dz*dz;
+	double crit1 = p1.r + collisions_max_r + c->w*0.86602540;
+	if (r2 < crit1*crit1){
 		if (c->oct!=NULL){
 			for (int i=0;i<8;i++){
 				if (c->oct[i]!=NULL){
