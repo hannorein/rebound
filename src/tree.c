@@ -26,15 +26,7 @@ void tree_init(){
 	boxsize_x = (double)root_nx * boxsize_min;
 	boxsize_y = (double)root_ny * boxsize_min;
 	boxsize_z = (double)root_nz * boxsize_min;
-	root = malloc(root_nx*root_ny*root_nz*sizeof(struct cell*));
-	for(int i=0;i<root_nx;i++){
-	for(int j=0;j<root_ny;j++){
-	for(int k=0;k<root_nz;k++){
-		int index = (k*root_ny+j)*root_nx+i;
-		root[index] = NULL;
-	}
-	}
-	}
+	root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
 
 	for (int i=0;i<N;i++){
 		tree_add_particle_to_tree(i);
@@ -44,9 +36,9 @@ void tree_init(){
 
 int tree_get_root_for_particle(int pt){
 	struct particle p = particles[pt];
-	int i = ((int)floor((p.x + boxsize_x/2.)/boxsize_min));
-	int j = ((int)floor((p.y + boxsize_y/2.)/boxsize_min));
-	int k = ((int)floor((p.z + boxsize_z/2.)/boxsize_min));
+	int i = ((int)floor((p.x + boxsize_x/2.)/boxsize_min))%root_nx;
+	int j = ((int)floor((p.y + boxsize_y/2.)/boxsize_min))%root_ny;
+	int k = ((int)floor((p.z + boxsize_z/2.)/boxsize_min))%root_nz;
 	int index = (k*root_ny+j)*root_nx+i;
 	return index;
 }

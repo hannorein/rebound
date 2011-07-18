@@ -47,7 +47,7 @@ void calculate_forces_for_particle_from_cell(int pt, struct cell *node, struct g
 	double dy = particles[pt].y - (node->y + gb.shifty);
 	double dz = particles[pt].z - (node->z + gb.shiftz);
 	double r2 = dx*dx + dy*dy + dz*dz;
-	if (((node->w*node->w)/r2 > THETA*THETA) && (node->pt < 0)) {
+	if (((node->w*node->w)> THETA*THETA*r2) && (node->pt < 0)) {
 		for (int o=0; o<8; o++) {
 			if (node->oct[o] != NULL) {
 				calculate_forces_for_particle_from_cell(pt, node->oct[o], gb);
