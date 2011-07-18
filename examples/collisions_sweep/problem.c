@@ -19,10 +19,10 @@ void problem_init(int argc, char* argv[]){
 	OMEGA = 1.;
 	OMEGAZ = 3.6;
 	// Setup particle structures
-	boxsize_x = 20;
+	boxsize_x = 200;
 	boxsize_y = 10;
 	boxsize_z = 10;
-	init_particles(20);
+	init_particles(2000);
 	dt = 1e-4*2.*M_PI;
 	double particle_size = 0.5;
 	coefficient_of_restitution = 0.5;
