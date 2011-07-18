@@ -12,6 +12,12 @@
 
 // Dummy. No collision search
 double collisions_max_r;
+int	sweeps_proc;
+int 	sweeps_init_done = 0;
+
+static inline double min(double a, double b){ return (a>b)?b:a;}
+static inline double max(double a, double b){ return (b>a)?b:a;}
+static inline double sgn(const double a){ return (a>=0 ? 1. : -1); }
 
 void collisions_resolve_single(struct collision c);
 void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox const gb, int proc, int crossing);
@@ -30,29 +36,25 @@ struct xvaluelist {
 	int 	N;
 	int	_N; 		// array size
 };
+struct  xvaluelist* restrict xvlist;
 
 struct collisionlist {
 	struct collision* collisions;
 	int N;
 	int _N;
 };
-
-struct  xvaluelist* restrict xvlist;
 struct 	collisionlist* restrict clist;
-int	proc;
-
-int sweeps_init_done = 0;
 
 void init_sweep(){
 #ifdef _OPENMP
-	proc 		= omp_get_max_threads();
+	sweeps_proc 		= omp_get_max_threads();
 #else
-	proc 		= 1;
+	sweeps_proc 		= 1;
 #endif
-	printf("Optimizing sweep lists for %d processors.\n",proc);
-	xvlist		= (struct xvaluelist*)calloc(proc,sizeof(struct xvaluelist));
-	clist		= (struct collisionlist*)calloc(proc,sizeof(struct collisionlist));
-	for (int i=0;i<proc;i++){
+	printf("Optimizing sweep lists for %d processors.\n",sweeps_proc);
+	xvlist		= (struct xvaluelist*)calloc(sweeps_proc,sizeof(struct xvaluelist));
+	clist		= (struct collisionlist*)calloc(sweeps_proc,sizeof(struct collisionlist));
+	for (int i=0;i<sweeps_proc;i++){
 		xvlist[i].N		= 0;
 		xvlist[i]._N 		= 512;
 		xvlist[i].xvalues 	= (struct xvalue*)malloc(xvlist[i]._N*sizeof(struct xvalue));
@@ -83,17 +85,17 @@ void add_line_to_xvsublist(double x1, double x2, int pt, int n, int i, int cross
 }
 
 void add_line_to_xvlist(double x1, double x2, int pt, int n, int crossing){
-	int ix1 = (int)(floor( (x1/boxsize_x+0.5) *(double)proc));// %sweeps.xvlists;
-	int ix2 = (int)(floor( (x2/boxsize_x+0.5) *(double)proc));// %sweeps.xvlists;
-	if (ix2>=proc){
-		ix2 = proc-1;
+	int ix1 = (int)(floor( (x1/boxsize_x+0.5) *(double)sweeps_proc));// %sweeps.xvlists;
+	int ix2 = (int)(floor( (x2/boxsize_x+0.5) *(double)sweeps_proc));// %sweeps.xvlists;
+	if (ix2>=sweeps_proc){
+		ix2 = sweeps_proc-1;
 	}
 	if (ix1<0){
 		ix1 = 0;
 	}
 
 	if (ix1!=ix2){
-		double b = -boxsize_x/2.+boxsize_x/(double)proc*(double)ix2; 
+		double b = -boxsize_x/2.+boxsize_x/(double)sweeps_proc*(double)ix2; 
 		add_line_to_xvsublist(x1,b,pt,n,ix1,1);
 		add_line_to_xvsublist(b,x2,pt,n,ix2,1);
 	}else{
@@ -156,7 +158,7 @@ void collisions_search(){
 		add_to_xvlist(oldx,particles[i].x,i);
 	}
 //#pragma omp parallel for
-	for (int proci=0;proci<proc;proci++){
+	for (int proci=0;proci<sweeps_proc;proci++){
 		struct xvaluelist xvlisti = xvlist[proci];
 		qsort (xvlisti.xvalues, xvlisti.N, sizeof(struct xvalue), compare_xvalue);
 
@@ -203,15 +205,7 @@ void collisions_search(){
 
 }
 
-double min(double a, double b){ return (a>b)?b:a;}
-
-double max(double a, double b){ return (b>a)?b:a;}
-
-double sgn(const double a){
-	return (a>=0 ? 1. : -1);
-}
-
-void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox const gb, int proc, int crossing){
+void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox const gb, int proci, int crossing){
 	struct particle* p1 = &(particles[pt1]);
 	struct particle* p2 = &(particles[pt2]);
 	const double y 	= p1->y	+ gb.shifty	- p2->y;
@@ -245,7 +239,7 @@ void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox cons
 					timesave = time2;
 				}
 			}
-			struct collisionlist* const clisti = &(clist[proc]);
+			struct collisionlist* const clisti = &(clist[proci]);
 			if (clisti->N>=clisti->_N){
 				if (clisti->_N==0){
 					clisti->_N 		= 1024;
@@ -267,14 +261,6 @@ void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox cons
 	}
 }
 
-int compare_time(const void * a, const void * b){
-	struct collision* ca = (struct collision*)a;
-	struct collision* cb = (struct collision*)b;
-	const double diff = ca->time - cb->time;
-	if (diff > 0) return 1;
-	if (diff < 0) return -1;
-	return 0;
-}
 void collisions_resolve(){
 #ifdef _OPENMP
 	omp_lock_t boundarylock;
@@ -282,7 +268,7 @@ void collisions_resolve(){
 #endif //_OPENMP
 
 //#pragma omp parallel for
-	for (int proci=0;proci<proc;proci++){
+	for (int proci=0;proci<sweeps_proc;proci++){
 		struct collision* c = clist[proci].collisions;
 		int N = clist[proci].N;
 	

@@ -53,7 +53,7 @@ void problem_inloop(){
 }
 
 void problem_output(){
-	if (output_check(1e1*2.*M_PI)){
+	if (output_check(2.*M_PI)){
 		output_timing();
 	}
 }
