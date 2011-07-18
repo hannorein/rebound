@@ -60,9 +60,9 @@ struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *p
 #endif // GRAVITY_TREE
 		if (parent == NULL){
 			node->w = boxsize_min;
-			int i = ((int)floor((p.x + boxsize_x/2.)/boxsize_min));
-			int j = ((int)floor((p.y + boxsize_y/2.)/boxsize_min));
-			int k = ((int)floor((p.z + boxsize_z/2.)/boxsize_min));
+			int i = ((int)floor((p.x + boxsize_x/2.)/boxsize_min))%root_nx;
+			int j = ((int)floor((p.y + boxsize_y/2.)/boxsize_min))%root_ny;
+			int k = ((int)floor((p.z + boxsize_z/2.)/boxsize_min))%root_nz;
 			node->x = -boxsize_x/2.+boxsize_min*(0.5+(double)i);
 			node->y = -boxsize_y/2.+boxsize_min*(0.5+(double)j);
 			node->z = -boxsize_z/2.+boxsize_min*(0.5+(double)k);
@@ -79,20 +79,15 @@ struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *p
 		for (int i=0; i<8; i++){
 			node->oct[i] = NULL;
 		}
-	} else if (node->pt >= 0) {
-#ifdef GRAVITY_TREE
-//		node.m	+= particles[pt].m;
-//		node.mx	=  (node.mx*node.m + particles[pt].m*particles[pt].x) / node.m;
-//		node.my	=  (node.my*node.m + particles[pt].m*particles[pt].y) / node.m;
-//		node.mz	=  (node.mz*node.m + particles[pt].m*particles[pt].z) / node.m;
-#endif
+		return node;
+	}
+	if (node->pt >= 0) {
 		int o = tree_get_octant_for_particle_in_cell(node->pt, node);
 		node->oct[o] = tree_add_particle_to_cell(node->oct[o], node->pt, node, o); 
 		o = tree_get_octant_for_particle_in_cell(pt, node);
 		node->oct[o] = tree_add_particle_to_cell(node->oct[o], pt, node, o);
 		node->pt = -2;
-		}
-	else {
+	}else{
 		node->pt--;
 		int o = tree_get_octant_for_particle_in_cell(pt, node);
 		node->oct[o] = tree_add_particle_to_cell(node->oct[o], pt, node, o);
