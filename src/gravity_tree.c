@@ -11,6 +11,9 @@
 	#define THETA 0.5
 #endif
 
+void calculate_forces_for_particle(int pt, struct ghostbox gb);
+void calculate_forces_for_particle_from_cell(int pt, struct cell *node, struct ghostbox gb);
+
 void calculate_forces(){
 	tree_update();
 	for (int i=0; i<N; i++){
