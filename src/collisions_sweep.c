@@ -37,70 +37,63 @@ struct collisionlist {
 	int _N;
 };
 
-struct sweep {
-	double	widthx;
-	double	widthy;
-	struct  xvaluelist* restrict xvlist;
-	struct 	collisionlist* restrict clist;
-	int	proc;
-};
+struct  xvaluelist* restrict xvlist;
+struct 	collisionlist* restrict clist;
+int	proc;
 
-struct sweep sweeps;
 int sweeps_init_done = 0;
 
 void init_sweep(){
-	sweeps.widthx = boxsize_x;
-	sweeps.widthy = boxsize_y;
 #ifdef _OPENMP
-	sweeps.proc 		= omp_get_max_threads();
+	proc 		= omp_get_max_threads();
 #else
-	sweeps.proc 		= 1;
+	proc 		= 1;
 #endif
-	printf("Optimizing sweep lists for %d processors.\n",sweeps.proc);
-	sweeps.xvlist		= (struct xvaluelist*)calloc(sweeps.proc,sizeof(struct xvaluelist));
-	sweeps.clist		= (struct collisionlist*)calloc(sweeps.proc,sizeof(struct collisionlist));
-	for (int i=0;i<sweeps.proc;i++){
-		sweeps.xvlist[i].N		= 0;
-		sweeps.xvlist[i]._N 		= 512;
-		sweeps.xvlist[i].xvalues 	= (struct xvalue*)malloc(sweeps.xvlist[i]._N*sizeof(struct xvalue));
+	printf("Optimizing sweep lists for %d processors.\n",proc);
+	xvlist		= (struct xvaluelist*)calloc(proc,sizeof(struct xvaluelist));
+	clist		= (struct collisionlist*)calloc(proc,sizeof(struct collisionlist));
+	for (int i=0;i<proc;i++){
+		xvlist[i].N		= 0;
+		xvlist[i]._N 		= 512;
+		xvlist[i].xvalues 	= (struct xvalue*)malloc(xvlist[i]._N*sizeof(struct xvalue));
 	}
 }
 
 void add_line_to_xvsublist(double x1, double x2, int pt, int n, int i, int crossing){
-	int N = sweeps.xvlist[i].N;
+	int N = xvlist[i].N;
 	
-	if (N+2>sweeps.xvlist[i]._N){
-		sweeps.xvlist[i]._N 		+= 1024;
-		sweeps.xvlist[i].xvalues	= (struct xvalue*)realloc(sweeps.xvlist[i].xvalues,sweeps.xvlist[i]._N*sizeof(struct xvalue));
-		printf("xvlist size now %d\n",sweeps.xvlist[i]._N);
+	if (N+2>xvlist[i]._N){
+		xvlist[i]._N 		+= 1024;
+		xvlist[i].xvalues	= (struct xvalue*)realloc(xvlist[i].xvalues,xvlist[i]._N*sizeof(struct xvalue));
+		printf("xvlist size now %d\n",xvlist[i]._N);
 	}
 
-	sweeps.xvlist[i].xvalues[N].x 	= x1;
-	sweeps.xvlist[i].xvalues[N].pt 	= pt;
-	sweeps.xvlist[i].xvalues[N].nx 	= n;
-	sweeps.xvlist[i].xvalues[N].inout 	= 0;
-	sweeps.xvlist[i].xvalues[N].crossing 	= crossing;
-	sweeps.xvlist[i].xvalues[N+1].x 	= x2;
-	sweeps.xvlist[i].xvalues[N+1].pt 	= pt;
-	sweeps.xvlist[i].xvalues[N+1].nx 	= n;
-	sweeps.xvlist[i].xvalues[N+1].inout	= 1;
-	sweeps.xvlist[i].xvalues[N+1].crossing= crossing;
+	xvlist[i].xvalues[N].x 	= x1;
+	xvlist[i].xvalues[N].pt 	= pt;
+	xvlist[i].xvalues[N].nx 	= n;
+	xvlist[i].xvalues[N].inout 	= 0;
+	xvlist[i].xvalues[N].crossing 	= crossing;
+	xvlist[i].xvalues[N+1].x 	= x2;
+	xvlist[i].xvalues[N+1].pt 	= pt;
+	xvlist[i].xvalues[N+1].nx 	= n;
+	xvlist[i].xvalues[N+1].inout	= 1;
+	xvlist[i].xvalues[N+1].crossing= crossing;
 
-	sweeps.xvlist[i].N += 2;
+	xvlist[i].N += 2;
 }
 
 void add_line_to_xvlist(double x1, double x2, int pt, int n, int crossing){
-	int ix1 = (int)(floor( (x1/sweeps.widthx+0.5) *(double)sweeps.proc));// %sweeps.xvlists;
-	int ix2 = (int)(floor( (x2/sweeps.widthx+0.5) *(double)sweeps.proc));// %sweeps.xvlists;
-	if (ix2>=sweeps.proc){
-		ix2 = sweeps.proc-1;
+	int ix1 = (int)(floor( (x1/boxsize_x+0.5) *(double)proc));// %sweeps.xvlists;
+	int ix2 = (int)(floor( (x2/boxsize_x+0.5) *(double)proc));// %sweeps.xvlists;
+	if (ix2>=proc){
+		ix2 = proc-1;
 	}
 	if (ix1<0){
 		ix1 = 0;
 	}
 
 	if (ix1!=ix2){
-		double b = -sweeps.widthx/2.+sweeps.widthx/(double)sweeps.proc*(double)ix2; 
+		double b = -boxsize_x/2.+boxsize_x/(double)proc*(double)ix2; 
 		add_line_to_xvsublist(x1,b,pt,n,ix1,1);
 		add_line_to_xvsublist(b,x2,pt,n,ix2,1);
 	}else{
@@ -121,14 +114,14 @@ void add_to_xvlist(double x1, double x2, int pt){
 	xmin -= radius;
 	xmax += radius;
 
-	if (xmin<-sweeps.widthx/2.){
-		add_line_to_xvlist(xmin+sweeps.widthx,sweeps.widthx/2.,pt,1,1);
-		add_line_to_xvlist(-sweeps.widthx/2.,xmax,pt,0,1);
+	if (xmin<-boxsize_x/2.){
+		add_line_to_xvlist(xmin+boxsize_x,boxsize_x/2.,pt,1,1);
+		add_line_to_xvlist(-boxsize_x/2.,xmax,pt,0,1);
 		return;
 	}
-	if (xmax>sweeps.widthx/2.){
-		add_line_to_xvlist(-sweeps.widthx/2.,xmax-sweeps.widthx,pt,-1,1);
-		add_line_to_xvlist(xmin,sweeps.widthx/2.,pt,0,1);
+	if (xmax>boxsize_x/2.){
+		add_line_to_xvlist(-boxsize_x/2.,xmax-boxsize_x,pt,-1,1);
+		add_line_to_xvlist(xmin,boxsize_x/2.,pt,0,1);
 		return;
 	}
 	add_line_to_xvlist(xmin,xmax,pt,0,0);
@@ -163,15 +156,15 @@ void collisions_search(){
 		add_to_xvlist(oldx,particles[i].x,i);
 	}
 //#pragma omp parallel for
-	for (int proc=0;proc<sweeps.proc;proc++){
-		struct xvaluelist xvlist = sweeps.xvlist[proc];
-		qsort (xvlist.xvalues, xvlist.N, sizeof(struct xvalue), compare_xvalue);
+	for (int proci=0;proci<proc;proci++){
+		struct xvaluelist xvlisti = xvlist[proci];
+		qsort (xvlisti.xvalues, xvlisti.N, sizeof(struct xvalue), compare_xvalue);
 
 		struct xvalue** sweeps 	= malloc(sizeof(struct xvalue*)*1024); // Active list. Make the magic number go away.
 		int sweeps_N			= 0;
 
-		for (int i=0;i<xvlist.N;i++){
-			struct xvalue* const xv = &(xvlist.xvalues[i]);
+		for (int i=0;i<xvlisti.N;i++){
+			struct xvalue* const xv = &(xvlisti.xvalues[i]);
 			if (xv->inout == 0){
 				// Add event if start of line
 				sweeps[sweeps_N] = xv;
@@ -189,7 +182,7 @@ void collisions_search(){
 					int gbnz = 0;
 					for (int gbny = -1; gbny<=1; gbny++){
 						struct ghostbox gb = get_ghostbox(gbnx,gbny,gbnz);
-						detect_collision_of_pair(p1,p2,gb,proc,sweeps[k]->crossing||xv->crossing);
+						detect_collision_of_pair(p1,p2,gb,proci,sweeps[k]->crossing||xv->crossing);
 					}
 				}
 				sweeps_N++;
@@ -252,24 +245,24 @@ void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox cons
 					timesave = time2;
 				}
 			}
-			struct collisionlist* const clist = &(sweeps.clist[proc]);
-			if (clist->N>=clist->_N){
-				if (clist->_N==0){
-					clist->_N 		= 1024;
-					clist->collisions	= (struct collision*)malloc(clist->_N*sizeof(struct collision));
+			struct collisionlist* const clisti = &(clist[proc]);
+			if (clisti->N>=clisti->_N){
+				if (clisti->_N==0){
+					clisti->_N 		= 1024;
+					clisti->collisions	= (struct collision*)malloc(clisti->_N*sizeof(struct collision));
 				}else{
-					clist->_N	 	+= 1024;
-					clist->collisions	= (struct collision*)realloc(clist->collisions,clist->_N*sizeof(struct collision));
+					clisti->_N	 	+= 1024;
+					clisti->collisions	= (struct collision*)realloc(clisti->collisions,clisti->_N*sizeof(struct collision));
 				}
-				printf("Collisions array size now: %d\n", clist->_N);
+				printf("Collisions array size now: %d\n", clisti->_N);
 			}
-			struct collision* const c = &(clist->collisions[clist->N]);
+			struct collision* const c = &(clist->collisions[clisti->N]);
 			c->p1		= pt1;
 			c->p2		= pt2;
 			c->gb	 	= gb;
 			c->time 	= timesave;
 			c->crossing 	= crossing;
-			clist->N++;
+			clisti->N++;
 		}
 	}
 }
@@ -289,9 +282,9 @@ void collisions_resolve(){
 #endif //_OPENMP
 
 //#pragma omp parallel for
-	for (int proc=0;proc<sweeps.proc;proc++){
-		struct collision* c = sweeps.clist[proc].collisions;
-		int N = sweeps.clist[proc].N;
+	for (int proci=0;proci<proc;proci++){
+		struct collision* c = clist[proci].collisions;
+		int N = clist[proci].N;
 	
 		// Randomize array.	
 		for(int i=0; i<N; i++){
@@ -316,8 +309,8 @@ void collisions_resolve(){
 			}
 #endif //_OPENMP
 		}
-		sweeps.clist[proc].N = 0;
-		sweeps.xvlist[proc].N = 0;
+		clist[proci].N = 0;
+		xvlist[proci].N = 0;
 	}
 #ifdef _OPENMP
 	omp_destroy_lock(&boundarylock);

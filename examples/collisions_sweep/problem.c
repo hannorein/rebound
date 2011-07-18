@@ -23,7 +23,7 @@ void problem_init(int argc, char* argv[]){
 	boxsize_y = 10;
 	boxsize_z = 10;
 	init_particles(2000);
-	dt = 1e-4*2.*M_PI;
+	dt = 1e-3*2.*M_PI;
 	double particle_size = 0.5;
 	coefficient_of_restitution = 0.5;
 	minimum_collision_velocity = 0.09*particle_size*OMEGA;
