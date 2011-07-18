@@ -12,6 +12,7 @@ double coefficient_of_restitution = 1;
 double minimum_collision_velocity = 0;
 
 void collisions_resolve_single(struct collision c){
+#ifndef COLLISIONS_NONE
 	struct particle p1 = particles[c.p1];
 	struct particle p2 = particles[c.p2];
 	//if (p1.lastcollision==t || p2.lastcollision==t) return;
@@ -60,5 +61,5 @@ void collisions_resolve_single(struct collision c){
 	particles[c.p1].vy +=	dvy2nn; 
 	particles[c.p1].vz +=	dvz2nn; 
 	particles[c.p1].lastcollision = t;
-
+#endif // COLLISIONS_NONE
 }
