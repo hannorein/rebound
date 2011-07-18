@@ -44,13 +44,12 @@ void calculate_forces(){
 }
 
 void calculate_forces_for_particle(int pt, struct ghostbox gb) {
-	for(int i=0;i<root_nx;i++){
-	for(int j=0;j<root_ny;j++){
-	for(int k=0;k<root_nz;k++){
-		int index = (k*root_ny+j)*root_nx+i;
-		calculate_forces_for_particle_from_cell(pt, root[index], gb);
-	}
-	}
+	int root_n = root_nx*root_ny*root_nz;
+	for(int i=0;i<root_n;i++){
+		struct cell* node = root[i];
+		if (node!=NULL){
+			calculate_forces_for_particle_from_cell(pt, node, gb);
+		}
 	}
 }
 
