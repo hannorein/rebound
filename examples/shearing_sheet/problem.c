@@ -17,25 +17,27 @@ void problem_init(int argc, char* argv[]){
 	OMEGA = 1.;
 	// Setup particle structures
 	boxsize_x = 2;
-	boxsize_y = 4;
-	boxsize_z = 1;
-	init_particles(500);
+	boxsize_y = 2;
+	boxsize_z = 10;
+	init_particles(250);
 	coefficient_of_restitution = 0.5;
-	minimum_collision_velocity = 0.005;
+	minimum_collision_velocity = 0.05;
 	dt = 1e-2;
 	// Initial conditions
 	for (int i =0;i<N;i++){
+		double vrand = 0.4*((double)rand()/(double)RAND_MAX-0.5);
+		double phirand = 2.*M_PI*((double)rand()/(double)RAND_MAX-0.5);
 		particles[i].x = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
 		particles[i].y = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
-		particles[i].z = 0;//0.1*((double)rand()/(double)RAND_MAX-0.5)*boxsize;
+		particles[i].z = .4*((double)rand()/(double)RAND_MAX-0.5);
 		particles[i].vx = 0;
-		particles[i].vy = -1.5*particles[i].x*OMEGA;
-		particles[i].vz = 0;
+		particles[i].vy = -1.5*particles[i].x*OMEGA+2.*vrand*cos(phirand);
+		particles[i].vz = vrand*sin(phirand);
 		particles[i].ax = 0;
 		particles[i].ay = 0;
 		particles[i].az = 0;
-		particles[i].m = 0.016;
-		particles[i].r = 0.01;
+		particles[i].m = 0.005;
+		particles[i].r = 0.1;
 	}
 	// Do use ghost boxes in x and y
 	nghostx = 1;
