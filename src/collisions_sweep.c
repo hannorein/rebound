@@ -16,57 +16,29 @@ struct collision{
 	int p1;
 	int p2;
 	struct ghostbox gb;
+	double time;
+	int crossing;
 } collision;
 
-struct collision* collisions = NULL;
-int collisions_NMAX = 0;
-int collisions_N = 0;
 double coefficient_of_restitution = 1;
 double minimum_collision_velocity = 0;
-void collisions_add(int i, int j, struct ghostbox gb);
 
-void collisions_search(){
-	int nghostxcol = (nghostx>1?1:nghostx);
-	int nghostycol = (nghosty>1?1:nghosty);
-	int nghostzcol = (nghostz>1?1:nghostz);
-	for (int gbx=-nghostxcol; gbx<=nghostxcol; gbx++){
-	for (int gby=-nghostycol; gby<=nghostycol; gby++){
-	for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
-		struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
-		for (int i=0;i<N;i++){
-		for (int j=0;j<N;j++){
-			if (i==j) continue;
-			struct particle p1 = particles[i];
-			struct particle p2 = particles[j];
-			double dx = p1.x - (p2.x+gb.shiftx); 
-			double dy = p1.y - (p2.y+gb.shifty); 
-			double dz = p1.z - (p2.z+gb.shiftz); 
-			double sr = p1.r + p2.r; 
-			double r2 = dx*dx+dy*dy+dz*dz;
-			if (r2>sr*sr) continue;	// not overlapping
-			double dvx = p1.vx - (p2.vx+gb.shiftvx); 
-			double dvy = p1.vy - (p2.vy+gb.shiftvy); 
-			double dvz = p1.vz - (p2.vz+gb.shiftvz); 
-			if (dvx*dx + dvy*dy + dvz*dz >0) continue; // not approaching
-			collisions_add(i,j, gb);
-		}
-		}
-	}
-	}
-	}
-}
+void collisions_resolve_single(struct collision c);
+void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox const gb, int proc, int crossing);
+
+
 struct xvalue {
-	double 	x;
-	int 	inout;
-	int	nx;
-	int 	crossing;
-	struct 	particle* p;
+	double 	x;		// position along sweep axis
+	int 	inout;		// start or endpoint
+	int	nx;		
+	int 	crossing;	// crosses boundary
+	int 	pt;		// particle
 };
 
 struct xvaluelist {
 	struct xvalue* xvalues;
 	int 	N;
-	int	_N; // array size
+	int	_N; 		// array size
 };
 
 struct collisionlist {
@@ -78,20 +50,17 @@ struct collisionlist {
 struct sweep {
 	double	widthx;
 	double	widthy;
-//	struct  particle** p;
 	struct  xvaluelist* restrict xvlist;
 	struct 	collisionlist* restrict clist;
 	int	proc;
-//	int 	N;
-//	int 	_N; // array size len(p)
 };
+
 struct sweep sweeps;
+int sweeps_init_done = 0;
 
 void init_sweep(){
-//	sweeps.N		= 0;
-//	sweeps._N		= 0;
-//	sweeps.p		= 0;
-
+	sweeps.widthx = boxsize_x;
+	sweeps.widthy = boxsize_y;
 #ifdef _OPENMP
 	sweeps.proc 		= omp_get_max_threads();
 #else
@@ -107,7 +76,7 @@ void init_sweep(){
 	}
 }
 
-void add_line_to_xvsublist(double x1, double x2, struct particle* const restrict p, int n, int i, int crossing){
+void add_line_to_xvsublist(double x1, double x2, int pt, int n, int i, int crossing){
 	int N = sweeps.xvlist[i].N;
 	
 	if (N+2>sweeps.xvlist[i]._N){
@@ -116,15 +85,13 @@ void add_line_to_xvsublist(double x1, double x2, struct particle* const restrict
 		printf("xvlist size now %d\n",sweeps.xvlist[i]._N);
 	}
 
-	
-
 	sweeps.xvlist[i].xvalues[N].x 	= x1;
-	sweeps.xvlist[i].xvalues[N].p 	= p;
+	sweeps.xvlist[i].xvalues[N].pt 	= pt;
 	sweeps.xvlist[i].xvalues[N].nx 	= n;
 	sweeps.xvlist[i].xvalues[N].inout 	= 0;
 	sweeps.xvlist[i].xvalues[N].crossing 	= crossing;
 	sweeps.xvlist[i].xvalues[N+1].x 	= x2;
-	sweeps.xvlist[i].xvalues[N+1].p 	= p;
+	sweeps.xvlist[i].xvalues[N+1].pt 	= pt;
 	sweeps.xvlist[i].xvalues[N+1].nx 	= n;
 	sweeps.xvlist[i].xvalues[N+1].inout	= 1;
 	sweeps.xvlist[i].xvalues[N+1].crossing= crossing;
@@ -132,7 +99,7 @@ void add_line_to_xvsublist(double x1, double x2, struct particle* const restrict
 	sweeps.xvlist[i].N += 2;
 }
 
-void add_line_to_xvlist(double x1, double x2, struct particle* const restrict p, int n, int crossing){
+void add_line_to_xvlist(double x1, double x2, int pt, int n, int crossing){
 	int ix1 = (int)(floor( (x1/sweeps.widthx+0.5) *(double)sweeps.proc));// %sweeps.xvlists;
 	int ix2 = (int)(floor( (x2/sweeps.widthx+0.5) *(double)sweeps.proc));// %sweeps.xvlists;
 	if (ix2>=sweeps.proc){
@@ -144,14 +111,14 @@ void add_line_to_xvlist(double x1, double x2, struct particle* const restrict p,
 
 	if (ix1!=ix2){
 		double b = -sweeps.widthx/2.+sweeps.widthx/(double)sweeps.proc*(double)ix2; 
-		add_line_to_xvsublist(x1,b,p,n,ix1,1);
-		add_line_to_xvsublist(b,x2,p,n,ix2,1);
+		add_line_to_xvsublist(x1,b,pt,n,ix1,1);
+		add_line_to_xvsublist(b,x2,pt,n,ix2,1);
 	}else{
-		add_line_to_xvsublist(x1,x2,p,n,ix1,crossing);
+		add_line_to_xvsublist(x1,x2,pt,n,ix1,crossing);
 	}
 }
 
-void add_to_xvlist(double x1, double x2, struct particle* const restrict p){
+void add_to_xvlist(double x1, double x2, int pt){
 	double xmin, xmax;
 	if (x1 < x2){
 		xmin = x1;
@@ -160,37 +127,22 @@ void add_to_xvlist(double x1, double x2, struct particle* const restrict p){
 		xmin = x2;
 		xmax = x1;
 	}
-	xmin -= p->r;
-	xmax += p->r;
+	const double radius = particles[pt].r;
+	xmin -= radius;
+	xmax += radius;
 
 	if (xmin<-sweeps.widthx/2.){
-		add_line_to_xvlist(xmin+sweeps.widthx,sweeps.widthx/2.,p,1,1);
-		add_line_to_xvlist(-sweeps.widthx/2.,xmax,p,0,1);
+		add_line_to_xvlist(xmin+sweeps.widthx,sweeps.widthx/2.,pt,1,1);
+		add_line_to_xvlist(-sweeps.widthx/2.,xmax,pt,0,1);
 		return;
 	}
 	if (xmax>sweeps.widthx/2.){
-		add_line_to_xvlist(-sweeps.widthx/2.,xmax-sweeps.widthx,p,-1,1);
-		add_line_to_xvlist(xmin,sweeps.widthx/2.,p,0,1);
+		add_line_to_xvlist(-sweeps.widthx/2.,xmax-sweeps.widthx,pt,-1,1);
+		add_line_to_xvlist(xmin,sweeps.widthx/2.,pt,0,1);
 		return;
 	}
-	add_line_to_xvlist(xmin,xmax,p,0,0);
+	add_line_to_xvlist(xmin,xmax,pt,0,0);
 }
-
-/*
-void add_particle_to_tree(struct particle* p){
-	if (sweeps.N>=sweeps._N){
-		if (sweeps.N==0){
-			sweeps._N 	= 32;
-			sweeps.p 	= (struct particle**)malloc(sweeps._N*sizeof(struct particle*));
-		}else{
-			sweeps._N 	+= 32;
-			sweeps.p 	= (struct particle**)realloc(sweeps.p,sweeps._N*sizeof(struct particle*));
-		}
-	}
-	sweeps.p[sweeps.N] = p;
-	sweeps.N++;
-}
-*/
 
 int compare_xparticle (const void * a, const void * b){
 	const struct particle* x1 = *(struct particle**)a;
@@ -207,8 +159,20 @@ int compare_xvalue (const void * a, const void * b){
 	return 0;
 }
 
-void detect_collisions(){
-#pragma omp parallel for
+void collisions_search(){
+	if (sweeps_init_done!=1){
+		sweeps_init_done = 1;
+		init_sweep();	
+	}
+	for (int i=0;i<N;i++){
+		particles[i].ovx = particles[i].vx;
+		particles[i].ovy = particles[i].vy;
+		particles[i].ovz = particles[i].vz;
+	
+		double oldx = particles[i].x-dt*particles[i].vx;	
+		add_to_xvlist(oldx,particles[i].x,i);
+	}
+//#pragma omp parallel for
 	for (int proc=0;proc<sweeps.proc;proc++){
 		struct xvaluelist xvlist = sweeps.xvlist[proc];
 		qsort (xvlist.xvalues, xvlist.N, sizeof(struct xvalue), compare_xvalue);
@@ -222,12 +186,12 @@ void detect_collisions(){
 				// Add event if start of line
 				sweeps[sweeps_N] = xv;
 				for (int k=0;k<sweeps_N;k++){
-					struct particle* p1 = xv->p;
-					struct particle* p2 = sweeps[k]->p;
+					int p1 = xv->pt;
+					int p2 = sweeps[k]->pt;
 					int gbnx = xv->nx;
 					if (sweeps[k]->nx!=0){
 						if (sweeps[k]->nx==xv->nx) continue;
-						struct particle* const tmp = p1;
+						int tmp = p1;
 						p1 = p2;
 						p2 = tmp;
 						gbnx = sweeps[k]->nx;
@@ -242,7 +206,7 @@ void detect_collisions(){
 			}else{
 				// Remove event if end of line
 				for (int j=0;j<sweeps_N;j++){
-					if (sweeps[j]->p == xv->p){
+					if (sweeps[j]->pt == xv->pt){
 						sweeps_N--;
 						sweeps[j] = sweeps[sweeps_N];
 						j--;
@@ -260,12 +224,13 @@ double min(double a, double b){ return (a>b)?b:a;}
 
 double max(double a, double b){ return (b>a)?b:a;}
 
-inline double sgn(const double a){
-	if (a>=0) return 1.;
-	return -1;
+double sgn(const double a){
+	return (a>=0 ? 1. : -1);
 }
 
-void detect_collision_of_pair(struct particle* const restrict p1, struct particle* const restrict p2, struct ghostbox const gb, int proc, int crossing){
+void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox const gb, int proc, int crossing){
+	struct particle* p1 = &(particles[pt1]);
+	struct particle* p2 = &(particles[pt2]);
 	const double y 	= p1->y	+ gb.shifty	- p2->y;
 	const double vy = p1->vy	+ gb.shiftvy 	- p2->ovy;
 
@@ -276,7 +241,8 @@ void detect_collision_of_pair(struct particle* const restrict p1, struct particl
 
 	const double a = vx*vx + vy*vy + vz*vz;
 	const double b = 2.*(vx*x + vy*y + vz*z);
-	const double c = -4.0*particle_radius*particle_radius + x*x + y*y + z*z;
+	const double rr = p1->r + p2->r;
+	const double c = -rr*rr + x*x + y*y + z*z;
 
 	const double root = b*b-4.*a*c;
 	if (root>=0.){
@@ -308,14 +274,12 @@ void detect_collision_of_pair(struct particle* const restrict p1, struct particl
 				printf("Collisions array size now: %d\n", clist->_N);
 			}
 			struct collision* const c = &(clist->collisions[clist->N]);
-			c->p1		= p1;
-			c->p2		= p2;
-			c->shift 	= shift;
+			c->p1		= pt1;
+			c->p2		= pt2;
+			c->gb	 	= gb;
 			c->time 	= timesave;
 			c->crossing 	= crossing;
 			clist->N++;
-			p1->collisionpartner = p2;
-			p2->collisionpartner = p1;
 		}
 	}
 }
@@ -328,13 +292,13 @@ int compare_time(const void * a, const void * b){
 	if (diff < 0) return -1;
 	return 0;
 }
-void resolve_collisions(){
+void collisions_resolve(){
 #ifdef _OPENMP
 	omp_lock_t boundarylock;
 	omp_init_lock(&boundarylock);
 #endif //_OPENMP
 
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int proc=0;proc<sweeps.proc;proc++){
 		struct collision* c = sweeps.clist[proc].collisions;
 		int N = sweeps.clist[proc].N;
@@ -355,7 +319,7 @@ void resolve_collisions(){
 				omp_set_lock(&boundarylock);
 			}
 #endif //_OPENMP
-			resolve_collision(c1);
+			collisions_resolve_single(c1);
 #ifdef _OPENMP
 			if (c1.crossing){
 				omp_unset_lock(&boundarylock);
@@ -377,17 +341,6 @@ void resolve_collisions(){
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-void collisions_add(int i, int j, struct ghostbox gb){
-	if (collisions_NMAX<=collisions_N){
-		collisions_NMAX += 32;
-		collisions = realloc(collisions,sizeof(struct collision)*collisions_NMAX);
-	}
-	collisions[collisions_N].p1 = i;
-	collisions[collisions_N].p2 = j;
-	collisions[collisions_N].gb = gb;
-	collisions_N++;
-}
 
 void collisions_resolve_single(struct collision c){
 	struct particle p1 = particles[c.p1];
@@ -441,9 +394,3 @@ void collisions_resolve_single(struct collision c){
 
 }
 
-void collisions_resolve(){
-	for (int i=0;i<collisions_N;i++){
-		collisions_resolve_single(collisions[i]);
-	}
-	collisions_N=0;
-}
