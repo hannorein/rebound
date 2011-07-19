@@ -36,9 +36,9 @@ void tree_init(){
 
 int tree_get_root_for_particle(int pt){
 	struct particle p = particles[pt];
-	int i = ((int)floor((p.x + boxsize_x/2.)/boxsize_min))%root_nx;
-	int j = ((int)floor((p.y + boxsize_y/2.)/boxsize_min))%root_ny;
-	int k = ((int)floor((p.z + boxsize_z/2.)/boxsize_min))%root_nz;
+	int i = ((int)floor((p.x + boxsize_x/2.)/boxsize_min)+root_nx)%root_nx;
+	int j = ((int)floor((p.y + boxsize_y/2.)/boxsize_min)+root_ny)%root_ny;
+	int k = ((int)floor((p.z + boxsize_z/2.)/boxsize_min)+root_nz)%root_nz;
 	int index = (k*root_ny+j)*root_nx+i;
 	return index;
 }

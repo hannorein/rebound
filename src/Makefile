@@ -2,7 +2,7 @@ UNAME := $(shell uname)
 CC=gcc
 ifeq ($(UNAME), Linux)
 	OPT+= -L/usr/lib -I/usr/include -Wall  -g 
-	LIB+= -lm
+	LIB+=
 endif
 ifeq ($(UNAME), Darwin)
 	OPT+= -L/usr/local/lib -I/usr/local/include  -Wall -g
