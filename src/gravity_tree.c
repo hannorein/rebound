@@ -7,9 +7,8 @@
 #include "main.h"
 #include "tree.h"
 #include "boundaries.h"
-#ifndef THETA
-	#define THETA 0.5
-#endif
+
+double opening_angle2 = 0.25;
 
 void calculate_forces_for_particle(int pt, struct ghostbox gb);
 void calculate_forces_for_particle_from_cell(int pt, struct cell *node, struct ghostbox gb);
@@ -54,7 +53,7 @@ void calculate_forces_for_particle_from_cell(int pt, struct cell *node, struct g
 	double dy = gb.shifty - node->y;
 	double dz = gb.shiftz - node->z;
 	double r2 = dx*dx + dy*dy + dz*dz;
-	if (((node->w*node->w)> THETA*THETA*r2) && (node->pt < 0)) {
+	if (((node->w*node->w)> opening_angle2*r2) && (node->pt < 0)) {
 		for (int o=0; o<8; o++) {
 			if (node->oct[o] != NULL) {
 				calculate_forces_for_particle_from_cell(pt, node->oct[o], gb);
