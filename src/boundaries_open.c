@@ -34,14 +34,19 @@ void check_boundaries(){
 			removep = 1;
 		}
 		if (removep==1){
-			// Note this has to be modified to work with the tree code.
 			if (N==1){
-				printf("Last particle removed. Exiting.");
+				printf("Last particle removed. Exiting.\n");
 				exit(0);
 			}
+			// Note this has to be modified to work with the tree code.
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+			printf("Particle leaving the box. Exiting.\n");
+			exit(0);
+#else
 			particles[i] = particles[N-1];
 			i--;
 			N--;
+#endif
 		}
 	}
 }
