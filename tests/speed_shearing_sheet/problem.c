@@ -57,9 +57,6 @@ void problem_inloop(){
 }
 
 void problem_output(){
-	if (output_check(1e-1*2.*M_PI)){
-		output_append_velocity_dispersion("veldisp.txt");
-	}
 }
 
 void problem_finish(){
