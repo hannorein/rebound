@@ -25,9 +25,13 @@ void calculate_forces(){
 	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
 	for (int gby=-nghosty; gby<=nghosty; gby++){
 	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
-		struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
 		// Summing over all particle pairs
 		for (int i=0; i<N; i++){
+			struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
+			// Precalculated shifted position
+			gb.shiftx += particles[i].x;
+			gb.shifty += particles[i].y;
+			gb.shiftz += particles[i].z;
 			calculate_forces_for_particle(i, gb);
 		}
 	}
@@ -46,9 +50,9 @@ void calculate_forces_for_particle(int pt, struct ghostbox gb) {
 }
 
 void calculate_forces_for_particle_from_cell(int pt, struct cell *node, struct ghostbox gb) {
-	double dx = particles[pt].x - (node->x + gb.shiftx);
-	double dy = particles[pt].y - (node->y + gb.shifty);
-	double dz = particles[pt].z - (node->z + gb.shiftz);
+	double dx = gb.shiftx - node->x;
+	double dy = gb.shifty - node->y;
+	double dz = gb.shiftz - node->z;
 	double r2 = dx*dx + dy*dy + dz*dz;
 	if (((node->w*node->w)> THETA*THETA*r2) && (node->pt < 0)) {
 		for (int o=0; o<8; o++) {
@@ -58,9 +62,9 @@ void calculate_forces_for_particle_from_cell(int pt, struct cell *node, struct g
 		}
 	} else {
 		if (node->pt == pt) return;
-		double dx = particles[pt].x - (node->mx + gb.shiftx);
-		double dy = particles[pt].y - (node->my + gb.shifty);
-		double dz = particles[pt].z - (node->mz + gb.shiftz);
+		double dx = gb.shiftx - node->mx;
+		double dy = gb.shifty - node->my;
+		double dz = gb.shiftz - node->mz;
 		double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
 		double prefact = -G/(r*r*r)*node->m;
 		particles[pt].ax += prefact*dx; 
