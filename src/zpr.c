@@ -60,7 +60,7 @@ zprReset()
 {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    double initscale = 0.875/boxsize_max;
+    double initscale = 1.5/boxsize_max;
     glScalef(initscale,initscale,initscale);
     glTranslatef( 0, 0, -boxsize_max*2.);
     switch(resetOrientation){

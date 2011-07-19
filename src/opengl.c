@@ -26,6 +26,7 @@ int display_init_done = 0;
 int display_pause_sim = 0;
 int display_pause = 0;
 int display_tree = 0;
+int display_ghostboxes = 0;
 
 void displayKey(unsigned char key, int x, int y){
 	switch(key){
@@ -45,8 +46,11 @@ void displayKey(unsigned char key, int x, int y){
 		case 's':
 			display_spheres = !display_spheres;
 			break;
+		case 'g':
+			display_ghostboxes = !display_ghostboxes;
+			break;
 		case 'r':
-			zprReset(0.7/boxsize_max);
+			zprReset(0.85/boxsize_max);
 			break;
 		case 't':
 			display_tree = !display_tree;
@@ -102,9 +106,9 @@ void display(){
 	glPointSize(5.);
 	glEnable(GL_POINT_SMOOTH);
 	glVertexPointer(3, GL_DOUBLE, sizeof(struct particle), particles);
-	for (int i=-nghostx;i<=nghostx;i++){
-	for (int j=-nghosty;j<=nghosty;j++){
-	for (int k=-nghostz;k<=nghostz;k++){
+	for (int i=-display_ghostboxes*nghostx;i<=display_ghostboxes*nghostx;i++){
+	for (int j=-display_ghostboxes*nghosty;j<=display_ghostboxes*nghosty;j++){
+	for (int k=-display_ghostboxes*nghostz;k<=display_ghostboxes*nghostz;k++){
 		struct ghostbox gb = get_ghostbox(i,j,k);
 		glTranslatef(gb.shiftx,gb.shifty,gb.shiftz);
 		if (display_spheres){
@@ -158,7 +162,7 @@ void init_display(int argc, char* argv[]){
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
 	glutInitWindowSize(700,700);
 	glutCreateWindow("nbody");
-	zprInit(0.7/boxsize_max);
+	zprInit(0.85/boxsize_max);
 	glutDisplayFunc(display);
 	glutIdleFunc(iterate);
 	glutKeyboardFunc(displayKey);
