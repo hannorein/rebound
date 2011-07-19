@@ -30,6 +30,11 @@ EOF
 printtable wisdom_holman
 
 cat >> testall.html <<EOF
+	<h2>Collapsing cloud (gravity tree, energy conservation check)</h2>
+EOF
+printtable energy_collapse
+
+cat >> testall.html <<EOF
 	<h2>Shearing Sheat (gravity tree, collision tree)</h2>
 EOF
 printtable speed_shearing_sheet
