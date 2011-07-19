@@ -10,6 +10,8 @@
 
 double coefficient_of_restitution = 1;
 double minimum_collision_velocity = 0;
+double constant_coefficient_of_restitution_for_velocity(double v);
+double (*coefficient_of_restitution_for_velocity) (double) = constant_coefficient_of_restitution_for_velocity;
 
 void collisions_resolve_single(struct collision c){
 #ifndef COLLISIONS_NONE
@@ -39,7 +41,7 @@ void collisions_resolve_single(struct collision c){
 	double vx21nn = cphi * vx21  + sphi * vy21n;		
 
 	// Coefficient of restitution
-	double eps= coefficient_of_restitution;
+	double eps= coefficient_of_restitution_for_velocity(vx21nn);
 	double dvx2 = -(0.5+0.5*eps)*2.0*vx21nn/(1.0+m21) ;
 
 	if (dvx2<minimum_collision_velocity){
@@ -62,4 +64,8 @@ void collisions_resolve_single(struct collision c){
 	particles[c.p1].vz +=	dvz2nn; 
 	particles[c.p1].lastcollision = t;
 #endif // COLLISIONS_NONE
+}
+
+double constant_coefficient_of_restitution_for_velocity(double v){
+	return coefficient_of_restitution;
 }

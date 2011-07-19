@@ -18,4 +18,5 @@ void init_particles(int _N){
 		boxsize_z = boxsize;
 	}
 	particles = calloc(N,sizeof(struct particle));
+	printf("Initialized memory for %d particles.\n",N);
 }

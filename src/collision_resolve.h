@@ -12,6 +12,8 @@ struct collision{
 
 extern double coefficient_of_restitution;
 extern double minimum_collision_velocity;
+extern double (*coefficient_of_restitution_for_velocity) (double);
+
 
 void collisions_resolve_single(struct collision c);
 

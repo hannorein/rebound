@@ -13,42 +13,51 @@ extern double OMEGA;
 extern double coefficient_of_restitution;
 extern double minimum_collision_velocity;
 
-double size = 2;
+extern double (*coefficient_of_restitution_for_velocity)(double); 
+double coefficient_of_restitution_bridges(double v); 
+
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	OMEGA = 1.;
-	// Setup particle structures
-	if (argc>1){
-		size= atof(argv[1]);
+	OMEGA 	= 0.00013143527;		// 1/s
+	G 	= 6.67428e-11;			// m^3 / kg s^2
+	softening = 0.1;			// m
+	dt = 1e-3*2.*M_PI/OMEGA;		// s
+	nghostx = 3; nghosty = 3; nghostz = 0; 	// Use three ghost rings
+	double surfacedensity 	= 400; 		// kg/m^2
+	double particle_mass 	= 1675; 	// kg
+	double particle_radius 	= 1;		// m
+	if (argc>1){				// Try to read boxsize from command line
+		boxsize = atof(argv[1]);
+	}else{
+		boxsize = 200;
 	}
-	boxsize_x = size;
-	boxsize_y = size;
-	boxsize_z = 4;
-	init_particles((int)round(50.*size*size));
-	coefficient_of_restitution = 0.5;
-	minimum_collision_velocity = 0.05;
-	dt = 1e-2;
+	// Use Bridges et al coefficient of restitution.
+	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
+	minimum_collision_velocity = particle_radius*OMEGA*0.01;  // small fraction of the shear
+	// Setup particle structures
+	init_particles((int)round(surfacedensity*boxsize*boxsize/particle_mass));
 	// Initial conditions
 	for (int i =0;i<N;i++){
-		double vrand = 0.4*((double)rand()/(double)RAND_MAX-0.5);
+		double vrand = 0.01*OMEGA*((double)rand()/(double)RAND_MAX-0.5);
 		double phirand = 2.*M_PI*((double)rand()/(double)RAND_MAX-0.5);
-		particles[i].x = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
-		particles[i].y = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
-		particles[i].z = .4*((double)rand()/(double)RAND_MAX-0.5);
-		particles[i].vx = 0;
-		particles[i].vy = -1.5*particles[i].x*OMEGA+2.*vrand*cos(phirand);
-		particles[i].vz = vrand*sin(phirand);
-		particles[i].ax = 0;
-		particles[i].ay = 0;
-		particles[i].az = 0;
-		particles[i].m = 0.005;
-		particles[i].r = 0.1;
+		particles[i].x 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
+		particles[i].y 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
+		particles[i].z 		= 10.*((double)rand()/(double)RAND_MAX-0.5);
+		particles[i].vx 	= 0;
+		particles[i].vy 	= -1.5*particles[i].x*OMEGA+2.*vrand*cos(phirand);
+		particles[i].vz 	= vrand*sin(phirand);
+		particles[i].ax 	= 0;
+		particles[i].ay 	= 0;
+		particles[i].az 	= 0;
+		particles[i].m 		= particle_mass;
+		particles[i].r 		= particle_radius;
 	}
-	// Do use ghost boxes in x and y
-	nghostx = 1;
-	nghosty = 1;
-	nghostz = 0;
+}
+
+double coefficient_of_restitution_bridges(double v){
+	// v in [m/s]
+	return 0.34*pow(fabs(v)*100.,-0.234);
 }
 
 void problem_inloop(){
