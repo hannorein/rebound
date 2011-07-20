@@ -28,7 +28,7 @@ void problem_init(int argc, char* argv[]){
 	double tau 		= 0.5;
 	double surface_density 	= tau/(M_PI*particle_radius*particle_radius)*particle_mass;
 	double lambda_crit 	= 4.*M_PI*M_PI*G*surface_density/OMEGA/OMEGA;
-	boxsize 		= 20;
+	boxsize 		= 150;
 	N 			= (int)round(tau*boxsize*boxsize/(M_PI*particle_radius*particle_radius));
 	coefficient_of_restitution = 0.5;
 	minimum_collision_velocity = 0.01*OMEGA*particle_radius;
@@ -116,7 +116,7 @@ void problem_output(){
 void problem_finish(){
 	calculate_viscosity_tot();
 	FILE* of = fopen("error.txt","a+"); 
-	double error= 0;
+	double error= 1;  // TODO!
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);

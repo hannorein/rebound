@@ -1,5 +1,5 @@
 PROBLEMDIR=tests/$(shell basename `pwd`)
-export OPENGL=1
+export OPENGL=0
 
 all:
 	# Setup link to different modules
