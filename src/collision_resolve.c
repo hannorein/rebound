@@ -12,6 +12,7 @@ double coefficient_of_restitution = 1;
 double minimum_collision_velocity = 0;
 double constant_coefficient_of_restitution_for_velocity(double v);
 double (*coefficient_of_restitution_for_velocity) (double) = constant_coefficient_of_restitution_for_velocity;
+double collisions_plog =0;
 
 void collisions_resolve_single(struct collision c){
 #ifndef COLLISIONS_NONE
@@ -53,6 +54,9 @@ void collisions_resolve_single(struct collision c){
 	double dvy2n = sphi * dvx2;		
 	double dvy2nn = ctheta * dvy2n;	
 	double dvz2nn = stheta * dvy2n;	
+
+	// Log y-momentum change
+	collisions_plog += fabs(dvy2nn*p1.m*x21);
 
 	// Applying the changes to the particles.
 	particles[c.p2].vx -=	m21*dvx2n;
