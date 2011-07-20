@@ -7,6 +7,9 @@
 #include "main.h"
 #include "boundaries.h"
 #include "tree.h"
+#ifndef QUADRUPOLE
+	#define QUADRUPOLE
+#endif
 
 struct cell** root;
 int root_nx;
@@ -52,10 +55,18 @@ struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *p
 		node = calloc(1, sizeof(struct cell));
 		struct particle p = particles[pt];
 #ifdef GRAVITY_TREE
-		node->m		= p.m;
-		node->mx	= p.x;
-		node->my	= p.y;
-		node->mz	= p.z;
+		node->m	 = p.m;
+		node->mx = p.x;
+		node->my = p.y;
+		node->mz = p.z;
+	#ifdef QUADRUPOLE
+		node->mxx = 0;
+		node->mxy = 0;
+		node->mxz = 0;
+		node->myy = 0;
+		node->myz = 0;
+		node->mzz = 0;
+	#endif // QUADRUPOLE
 #endif // GRAVITY_TREE
 		if (parent == NULL){
 			node->w = boxsize_min;
@@ -122,23 +133,45 @@ struct cell *tree_update_cell(struct cell *node){
 		for (int o = 0; o < 8; o++) {
 			node->oct[o] = tree_update_cell(node->oct[o]);
 		}
-		// Calculate the total mass and center of mass, and check if the node needs 
-		// derefinement after updating the tree.
+		// Calculate the total mass (, quadrupole tensor) and center of mass, and check
+		// if the node needs derefinement after updating the tree.
 		node->pt = 0;
 #ifdef GRAVITY_TREE
 		node->m	 = 0;
 		node->mx = 0;
 		node->my = 0;
 		node->mz = 0;
+	#ifdef QUADRUPOLE
+		node->mxx = 0;
+		node->mxy = 0;
+		node->mxz = 0;
+		node->myy = 0;
+		node->myz = 0;
+		node->mzz = 0;
+	#endif // QUADRUPOLE
 #endif // GRAVITY_TREE
 		for (int o = 0; o < 8; o++) {
 			if (node->oct[o] != NULL) {
 				// Calculate the total mass and the center of mass
 #ifdef GRAVITY_TREE
-				node->mx = (node->mx*node->m + node->oct[o]->mx* node->oct[o]->m) / (node->m + node->oct[o]->m);
-				node->my = (node->my*node->m + node->oct[o]->my* node->oct[o]->m) / (node->m + node->oct[o]->m);
-				node->mz = (node->mz*node->m + node->oct[o]->mz* node->oct[o]->m) / (node->m + node->oct[o]->m);
-				node->m += node->oct[o]->m;
+				double m_o = node->oct[o]->m;
+				node->mx = (node->mx*node->m + node->oct[o]->mx*m_o) / (node->m + m_o);
+				node->my = (node->my*node->m + node->oct[o]->my*m_o) / (node->m + m_o);
+				node->mz = (node->mz*node->m + node->oct[o]->mz*m_o) / (node->m + m_o);
+				node->m += m_o;
+	#ifdef QUADRUPOLE
+				// Ref: Hernquist, L., 1987, APJS
+				double qx  = node->oct[o]->mx - node->mx;
+				double qy  = node->oct[o]->my - node->my;
+				double qz  = node->oct[o]->mz - node->mz;
+				double qr2 = qx*qx + qy*qy + qz*qz;
+				node->mxx += node->oct[o]->mxx + m_o*(3*qx*qx - qr2);
+				node->mxy += node->oct[o]->mxy + m_o*3*qx*qy;
+				node->mxz += node->oct[o]->mxz + m_o*3*qx*qz;
+				node->myy += node->oct[o]->myy + m_o*(3*qy*qy - qr2);
+				node->myz += node->oct[o]->myz + m_o*3*qy*qz;
+				node->mzz += -node->mxx -node->myy;
+	#endif
 #endif // GRAVITY_TREE
 				// Update node->pt
 				if (node->oct[o]->pt >= 0) {	// The child is a leaf
@@ -170,9 +203,9 @@ struct cell *tree_update_cell(struct cell *node){
 	} else {
 #ifdef GRAVITY_TREE
 		struct particle p = particles[node->pt];
-		node->mx	= p.x;
-		node->my	= p.y;
-		node->mz	= p.z;
+		node->mx = p.x;
+		node->my = p.y;
+		node->mz = p.z;
 #endif // GRAVITY_TREE
 		return node;
 	}
