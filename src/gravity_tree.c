@@ -49,9 +49,9 @@ void calculate_forces_for_particle(int pt, struct ghostbox gb) {
 }
 
 void calculate_forces_for_particle_from_cell(int pt, struct cell *node, struct ghostbox gb) {
-	double dx = gb.shiftx - node->x;
-	double dy = gb.shifty - node->y;
-	double dz = gb.shiftz - node->z;
+	double dx = gb.shiftx - node->mx;
+	double dy = gb.shifty - node->my;
+	double dz = gb.shiftz - node->mz;
 	double r2 = dx*dx + dy*dy + dz*dz;
 	if (((node->w*node->w)> opening_angle2*r2) && (node->pt < 0)) {
 		for (int o=0; o<8; o++) {
@@ -61,10 +61,7 @@ void calculate_forces_for_particle_from_cell(int pt, struct cell *node, struct g
 		}
 	} else {
 		if (node->pt == pt) return;
-		double dx = gb.shiftx - node->mx;
-		double dy = gb.shifty - node->my;
-		double dz = gb.shiftz - node->mz;
-		double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
+		double r = sqrt(r2 + softening*softening);
 		double prefact = -G/(r*r*r)*node->m;
 		particles[pt].ax += prefact*dx; 
 		particles[pt].ay += prefact*dy; 
