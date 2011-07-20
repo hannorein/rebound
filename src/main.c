@@ -33,7 +33,7 @@ double timing_initial = -1;
 
 void iterate(){	
 	integrate_particles();
-	t+=dt;
+	t+=dt;  // Note: This might be better at the end of this function (t is used in check_boundaries).
 	check_boundaries();
 #ifdef OPENGL
 	display();

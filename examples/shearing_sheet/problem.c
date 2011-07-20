@@ -25,8 +25,9 @@ void problem_init(int argc, char* argv[]){
 	dt = 1e-3*2.*M_PI/OMEGA;		// s
 	nghostx = 3; nghosty = 3; nghostz = 0; 	// Use three ghost rings
 	double surfacedensity 	= 400; 		// kg/m^2
-	double particle_mass 	= 1675; 	// kg
-	double particle_radius 	= 1;		// m
+	double particle_density	= 400;		// g/cm^3
+	double particle_radius 	= 5;		// m
+	double particle_mass 	= particle_density*4./3.*M_PI*pow(particle_radius,3); 	// kg
 	if (argc>1){				// Try to read boxsize from command line
 		boxsize = atof(argv[1]);
 	}else{
@@ -65,7 +66,7 @@ void problem_inloop(){
 }
 
 void problem_output(){
-	if (output_check(1e-1*2.*M_PI)){
+	if (output_check(1e-1*2.*M_PI/OMEGA)){
 		output_append_velocity_dispersion("veldisp.txt");
 	}
 }
