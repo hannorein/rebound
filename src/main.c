@@ -47,7 +47,7 @@ void iterate(){
 		struct timeval tim;
 		gettimeofday(&tim, NULL);
 		double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
-		printf("Computation finished. Total runtime: %f s\n",timing_final-timing_initial);
+		printf("\nComputation finished. Total runtime: %f s\n",timing_final-timing_initial);
 		exit(0);
 	}
 

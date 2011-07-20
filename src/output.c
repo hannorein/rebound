@@ -64,8 +64,13 @@ void output_timing(){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double temp = tim.tv_sec+(tim.tv_usec/1000000.0);
-	if (output_timing_last==-1) output_timing_last = temp;
-	printf("N= %d \tt= %f \tcpu= %f s\n",N,t,temp-output_timing_last);
+	if (output_timing_last==-1){
+		output_timing_last = temp;
+	}else{
+		printf("\r");
+	}
+	printf("N= %- 9d  t= %- 9f  cpu= %- 9f s  t/tmax= %5.2f%%",N,t,temp-output_timing_last,t/tmax*100);
+	fflush(stdout);
 	output_timing_last = temp;
 }
 

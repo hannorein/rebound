@@ -19,7 +19,6 @@ int tree_get_octant_for_particle_in_cell(int pt, struct cell *node);
 struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *parent, int o);
 
 void tree_init(){
-	printf("Initializing the tree\n");
 	root_nx = round(boxsize_x/boxsize_min);
 	root_ny = round(boxsize_y/boxsize_min);
 	root_nz = round(boxsize_z/boxsize_min);
