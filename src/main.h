@@ -20,6 +20,10 @@ extern int N;
 extern int N_active_first;
 extern int N_active_last;
 extern double timing_initial;
+#ifdef MPI
+int mpi_num;
+int mpi_id;
+#endif // MPI
 
 
 void iterate();

@@ -1,5 +1,4 @@
 UNAME := $(shell uname)
-CC=gcc
 ifeq ($(UNAME), Linux)
 	OPT+= -L/usr/lib -I/usr/include -Wall  -g 
 	LIB+= -lm
@@ -9,6 +8,14 @@ ifeq ($(UNAME), Darwin)
 	OPT+= -D_APPLE  
 	LIB+= 
 endif
+
+ifeq ($(MPI), 1)
+	CC=mpicc
+	OPT += -DMPI
+else
+	CC=gcc
+endif
+
 
 # Nothing needs to be changed below
 
@@ -35,7 +42,7 @@ ifeq ($(QUADRUPOLE), 1)
 endif
 
 ifeq ($(OPENMP), 1)
-	OPT+= -fopenmp
+	OPT+= -fopenmp -DOPENMP
 	LIB+= -fopenmp
 else
 	OPT+= -Wno-unknown-pragmas

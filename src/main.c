@@ -12,6 +12,13 @@
 #include "collisions.h"
 #ifdef OPENGL
 #include "opengl.h"
+#endif // OPENGL
+#ifdef MPI
+#include "mpi.h"
+void mpi_init(int argc, char** argv);
+#endif // MPI
+#ifdef OPENMP
+#include <omp.h>
 #endif
 
 double boxsize = -1;
@@ -54,6 +61,12 @@ void iterate(){
 }
 
 int main(int argc, char* argv[]) {
+#ifdef MPI
+	mpi_init(argc,argv);
+#endif
+#ifdef OPENMP
+	printf("Using OpenMP with %d threads per node.\n",omp_get_num_threads());
+#endif
 	// Timing
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
@@ -70,11 +83,54 @@ int main(int argc, char* argv[]) {
 	problem_output();
 #ifdef OPENGL
 	init_display(argc, argv);
-#else
+#else // OPENGL
 	while(1){
 		iterate();
 	}
-#endif
+#endif // OPENGL
 	return 0;
 }
+
+#ifdef MPI
+MPI_Datatype newtype;
+MPI_Status stat; 
+int mpi_num;
+int mpi_id;
+
+void mpi_init(int argc, char** argv){
+	MPI_Init(&argc,&argv);
+	MPI_Comm_size(MPI_COMM_WORLD,&mpi_num);
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpi_id);
 	
+	struct particle p;
+	/* Setup MPI description of the particle structure */ 
+	int bnum = 0;
+	int blen[3];
+	MPI_Aint indices[3];
+	MPI_Datatype oldtypes[3];
+
+#ifdef COLLISIONS_NONE
+	blen[bnum] 	= 13;
+#else //COLLISIONS_NONE
+	blen[bnum] 	= 15; 
+#endif //COLLISIONS_NONE
+	indices[bnum] 	= 0; 
+	oldtypes[bnum] 	= MPI_DOUBLE;
+	bnum++;
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+	blen[bnum] 	= 1; 
+	indices[bnum] 	= (void*)&p.c - (void*)&p; 
+	oldtypes[bnum] 	= MPI_CHAR;
+	bnum++;
+#endif
+	blen[bnum] 	= 1; 
+	indices[bnum] 	= sizeof(struct particle); 
+	oldtypes[bnum] 	= MPI_UB;
+	bnum++;
+	MPI_Type_struct(bnum, blen, indices, oldtypes, &newtype );
+	if (mpi_id==0){
+		printf("Using MPI with %d processors.\n",mpi_num);
+	}
+
+}
+#endif // MPI

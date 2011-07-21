@@ -17,10 +17,12 @@ struct particle {
 	double ay;
 	double az;
 	double m;
-	struct cell* c;
 #ifndef COLLISIONS_NONE
 	double r; 
 	double lastcollision;
+#endif
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+	struct cell* c;
 #endif
 } particle;
 
