@@ -10,6 +10,7 @@
 #include "gravity.h"
 #include "problem.h"
 #include "collisions.h"
+#include "tree.h"
 #ifdef OPENGL
 #include "opengl.h"
 #endif // OPENGL
@@ -21,20 +22,11 @@ void mpi_init(int argc, char** argv);
 #include <omp.h>
 #endif
 
-double boxsize = -1;
-double boxsize_x = -1;
-double boxsize_y = -1;
-double boxsize_z = -1;
-double boxsize_max = -1;
-double boxsize_min = -1;
 double softening = 0.01;
 double G=1;
 double t=0;
 double tmax=0; // Run forever
 double dt = 0.001;
-int N = 0;
-int N_active_last = -1;
-int N_active_first = -1;
 
 double timing_initial = -1;
 
@@ -74,12 +66,7 @@ int main(int argc, char* argv[]) {
 	// Initialiase random numbers, problem, box and OpengL
 	srand ( time(NULL) );
 	problem_init(argc, argv);
-	boxsize_max = boxsize_x;
-	if (boxsize_max<boxsize_y) boxsize_max = boxsize_y;
-	if (boxsize_max<boxsize_z) boxsize_max = boxsize_z;
-	boxsize_min = boxsize_x;
-	if (boxsize_y<boxsize_min) boxsize_min = boxsize_y;
-	if (boxsize_z<boxsize_min) boxsize_min = boxsize_z;
+	init_box();
 	problem_output();
 #ifdef OPENGL
 	init_display(argc, argv);
@@ -92,7 +79,10 @@ int main(int argc, char* argv[]) {
 }
 
 #ifdef MPI
-MPI_Datatype newtype;
+MPI_Datatype mpi_particle;
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+MPI_Datatype mpi_cell;
+#endif
 MPI_Status stat; 
 int mpi_num;
 int mpi_id;
@@ -102,13 +92,13 @@ void mpi_init(int argc, char** argv){
 	MPI_Comm_size(MPI_COMM_WORLD,&mpi_num);
 	MPI_Comm_rank(MPI_COMM_WORLD,&mpi_id);
 	
+	
+	// Setup MPI description of the particle structure 
 	struct particle p;
-	/* Setup MPI description of the particle structure */ 
 	int bnum = 0;
-	int blen[3];
-	MPI_Aint indices[3];
-	MPI_Datatype oldtypes[3];
-
+	int blen[4];
+	MPI_Aint indices[4];
+	MPI_Datatype oldtypes[4];
 #ifdef COLLISIONS_NONE
 	blen[bnum] 	= 13;
 #else //COLLISIONS_NONE
@@ -127,7 +117,39 @@ void mpi_init(int argc, char** argv){
 	indices[bnum] 	= sizeof(struct particle); 
 	oldtypes[bnum] 	= MPI_UB;
 	bnum++;
-	MPI_Type_struct(bnum, blen, indices, oldtypes, &newtype );
+	MPI_Type_struct(bnum, blen, indices, oldtypes, &mpi_particle );
+
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+	// Setup MPI description of the cell structure 
+	struct cell c;
+	bnum = 0;
+#ifdef GRAVITY_TREE
+#ifdef QUADRUPOLE
+	blen[bnum] 	= 14;
+#else // QUADRUPOLE
+	blen[bnum] 	= 8;
+#endif // QUADRUPOLE
+#else //GRAVITY_TREE
+	blen[bnum] 	= 4; 
+#endif //GRAVITY_TREE
+	indices[bnum] 	= 0; 
+	oldtypes[bnum] 	= MPI_DOUBLE;
+	bnum++;
+	blen[bnum] 	= 1; 
+	indices[bnum] 	= (void*)&c.oct - (void*)&c; 
+	oldtypes[bnum] 	= MPI_CHAR;
+	bnum++;
+	blen[bnum] 	= 1; 
+	indices[bnum] 	= (void*)&c.pt - (void*)&c; 
+	oldtypes[bnum] 	= MPI_INT;
+	bnum++;
+	blen[bnum] 	= 1; 
+	indices[bnum] 	= sizeof(struct cell); 
+	oldtypes[bnum] 	= MPI_UB;
+	bnum++;
+	MPI_Type_struct(bnum, blen, indices, oldtypes, &mpi_cell );
+#endif 
+
 	if (mpi_id==0){
 		printf("Using MPI with %d processors.\n",mpi_num);
 	}

@@ -8,14 +8,14 @@ struct cell {
 	double mx;
 	double my;
 	double mz;
-	#ifdef QUADRUPOLE
-		double mxx;
-		double mxy;
-		double mxz;
-		double myy;
-		double myz;
-		double mzz;
-	#endif
+#ifdef QUADRUPOLE
+	double mxx;
+	double mxy;
+	double mxz;
+	double myy;
+	double myz;
+	double mzz;
+#endif
 #endif
 	double x;
 	double y;
@@ -26,9 +26,6 @@ struct cell {
 } cell;
 
 extern struct cell** root;
-extern int root_nx;
-extern int root_ny;
-extern int root_nz;
 
 void tree_init();
 void tree_update();

@@ -26,8 +26,19 @@ struct particle {
 #endif
 } particle;
 
-extern struct particle* restrict particles;
+extern struct particle* particles;
+extern int root_nx;
+extern int root_ny;
+extern int root_nz;
+extern double boxsize;
+extern double boxsize_x;
+extern double boxsize_y;
+extern double boxsize_z;
+extern double boxsize_max;
 
 void init_particles();
+void init_box();
+int get_rootbox_for_particle(struct particle pt);
+int get_rootbox_for_particle_int(int pt);
 
 #endif

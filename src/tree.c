@@ -9,41 +9,21 @@
 #include "tree.h"
 
 struct cell** root;
-int root_nx;
-int root_ny;
-int root_nz;
 
 void tree_add_particle_to_tree(int pt);
-int tree_get_root_for_particle(int pt);
 int tree_get_octant_for_particle_in_cell(int pt, struct cell *node);
 struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *parent, int o);
 
 void tree_init(){
-	root_nx = round(boxsize_x/boxsize_min);
-	root_ny = round(boxsize_y/boxsize_min);
-	root_nz = round(boxsize_z/boxsize_min);
-	boxsize_x = (double)root_nx * boxsize_min;
-	boxsize_y = (double)root_ny * boxsize_min;
-	boxsize_z = (double)root_nz * boxsize_min;
 	root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
-
 	for (int i=0;i<N;i++){
 		tree_add_particle_to_tree(i);
 	}
 }
 
 
-int tree_get_root_for_particle(int pt){
-	struct particle p = particles[pt];
-	int i = ((int)floor((p.x + boxsize_x/2.)/boxsize_min)+root_nx)%root_nx;
-	int j = ((int)floor((p.y + boxsize_y/2.)/boxsize_min)+root_ny)%root_ny;
-	int k = ((int)floor((p.z + boxsize_z/2.)/boxsize_min)+root_nz)%root_nz;
-	int index = (k*root_ny+j)*root_nx+i;
-	return index;
-}
-
 void tree_add_particle_to_tree(int pt){
-	int root_index = tree_get_root_for_particle(pt);
+	int root_index = get_rootbox_for_particle_int(pt);
 	root[root_index] = tree_add_particle_to_cell(root[root_index],pt,NULL,0);
 }
 
@@ -58,13 +38,13 @@ struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *p
 		node->mz = p.z;
 #endif // GRAVITY_TREE
 		if (parent == NULL){
-			node->w = boxsize_min;
-			int i = ((int)floor((p.x + boxsize_x/2.)/boxsize_min))%root_nx;
-			int j = ((int)floor((p.y + boxsize_y/2.)/boxsize_min))%root_ny;
-			int k = ((int)floor((p.z + boxsize_z/2.)/boxsize_min))%root_nz;
-			node->x = -boxsize_x/2.+boxsize_min*(0.5+(double)i);
-			node->y = -boxsize_y/2.+boxsize_min*(0.5+(double)j);
-			node->z = -boxsize_z/2.+boxsize_min*(0.5+(double)k);
+			node->w = boxsize;
+			int i = ((int)floor((p.x + boxsize_x/2.)/boxsize))%root_nx;
+			int j = ((int)floor((p.y + boxsize_y/2.)/boxsize))%root_ny;
+			int k = ((int)floor((p.z + boxsize_z/2.)/boxsize))%root_nz;
+			node->x = -boxsize_x/2.+boxsize*(0.5+(double)i);
+			node->y = -boxsize_y/2.+boxsize*(0.5+(double)j);
+			node->z = -boxsize_z/2.+boxsize*(0.5+(double)k);
 		}else{
 			node->w 	= parent->w/2.;
 			node->x 	= parent->x + node->w/2.*((o>>0)%2==0?1.:-1);
