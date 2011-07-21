@@ -31,28 +31,32 @@ void problem_init(int argc, char* argv[]){
 	if (argc>1){				// Try to read boxsize from command line
 		boxsize = atof(argv[1]);
 	}else{
-		boxsize = 200;
+		boxsize = 100;
 	}
+	root_nx = 2; root_ny = 2; root_nz = 2;
 	// Use Bridges et al coefficient of restitution.
 	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
 	minimum_collision_velocity = particle_radius*OMEGA*0.01;  // small fraction of the shear
 	// Setup particle structures
-	init_particles((int)round(surfacedensity*boxsize*boxsize/particle_mass));
+	int _N = round(surfacedensity*boxsize*boxsize/particle_mass);
+	init_box();
 	// Initial conditions
-	for (int i =0;i<N;i++){
+	for (int i =0;i<_N;i++){
+		struct particle pt;
 		double vrand = 0.01*OMEGA*((double)rand()/(double)RAND_MAX-0.5);
 		double phirand = 2.*M_PI*((double)rand()/(double)RAND_MAX-0.5);
-		particles[i].x 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
-		particles[i].y 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
-		particles[i].z 		= 10.*((double)rand()/(double)RAND_MAX-0.5);
-		particles[i].vx 	= 0;
-		particles[i].vy 	= -1.5*particles[i].x*OMEGA+2.*vrand*cos(phirand);
-		particles[i].vz 	= vrand*sin(phirand);
-		particles[i].ax 	= 0;
-		particles[i].ay 	= 0;
-		particles[i].az 	= 0;
-		particles[i].m 		= particle_mass;
-		particles[i].r 		= particle_radius;
+		pt.x 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
+		pt.y 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
+		pt.z 		= 10.*((double)rand()/(double)RAND_MAX-0.5);
+		pt.vx 		= 0;
+		pt.vy 		= -1.5*pt.x*OMEGA+2.*vrand*cos(phirand);
+		pt.vz 		= vrand*sin(phirand);
+		pt.ax 		= 0;
+		pt.ay 		= 0;
+		pt.az 		= 0;
+		pt.m 		= particle_mass;
+		pt.r 		= particle_radius;
+		add_particle(pt);
 	}
 }
 

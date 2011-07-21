@@ -106,6 +106,7 @@ void display(){
 	glPointSize(5.);
 	glEnable(GL_POINT_SMOOTH);
 	glVertexPointer(3, GL_DOUBLE, sizeof(struct particle), particles);
+	int _N_active_last = (N_active_last==-1)?N:N_active_last;
 	for (int i=-display_ghostboxes*nghostx;i<=display_ghostboxes*nghostx;i++){
 	for (int j=-display_ghostboxes*nghosty;j<=display_ghostboxes*nghosty;j++){
 	for (int k=-display_ghostboxes*nghostz;k<=display_ghostboxes*nghostz;k++){
@@ -132,9 +133,9 @@ void display(){
 			glColor4f(1.0,0.0,0.0,0.9);
 			glDrawArrays(GL_POINTS, 0, N_active_first);
 			glColor4f(1.0,1.0,0.0,0.6);
-			glDrawArrays(GL_POINTS, N_active_first, N_active_last-N_active_first);
+			glDrawArrays(GL_POINTS, N_active_first, _N_active_last-N_active_first);
 			glColor4f(1.0,1.0,0.0,0.9);
-			glDrawArrays(GL_POINTS, N_active_last, N-N_active_last);
+			glDrawArrays(GL_POINTS, _N_active_last, N-_N_active_last);
 			glDisableClientState(GL_VERTEX_ARRAY);
 		}
 		// Drawing Tree

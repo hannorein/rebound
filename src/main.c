@@ -151,7 +151,7 @@ void mpi_init(int argc, char** argv){
 #endif 
 
 	if (mpi_id==0){
-		printf("Using MPI with %d processors.\n",mpi_num);
+		printf("Using MPI with %d nodes.\n",mpi_num);
 	}
 
 }

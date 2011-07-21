@@ -49,7 +49,8 @@ void input_binary(char* filename){
 	bytes += fread(&t,sizeof(double),1,inf);
 	printf("Found %d particles in file '%s'. ",N,filename);
 	// Create particle structure
-	init_particles(N);
+#warning BINARY RESTART FILES NOT WORKING 
+	//init_particles(N);
 	for (int i=0;i<N;i++){
 		bytes += fread(&(particles[i]),sizeof(struct particle),1,inf);
 	}

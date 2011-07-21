@@ -6,6 +6,7 @@
 
 #include "zpr.h"
 #include "main.h"
+#include "particle.h"
 
 #ifdef _APPLE
 #include <GLUT/glut.h>

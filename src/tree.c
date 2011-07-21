@@ -10,19 +10,18 @@
 
 struct cell** root;
 
-void tree_add_particle_to_tree(int pt);
 int tree_get_octant_for_particle_in_cell(int pt, struct cell *node);
 struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *parent, int o);
 
 void tree_init(){
 	root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
-	for (int i=0;i<N;i++){
-		tree_add_particle_to_tree(i);
-	}
 }
 
 
 void tree_add_particle_to_tree(int pt){
+	if (root==NULL){
+		tree_init();
+	}
 	int root_index = get_rootbox_for_particle_int(pt);
 	root[root_index] = tree_add_particle_to_cell(root[root_index],pt,NULL,0);
 }
@@ -166,7 +165,9 @@ struct cell *tree_update_cell(struct cell *node){
 	} 
 	// Leaf nodes
 	if (tree_particle_is_inside_cell(node) == 0) {
-		tree_add_particle_to_tree(node->pt);
+		struct particle reinsertme = *(node->pt);
+#error HAVE TO WRITE REMOVE_PARTICLE_FROM_TREE_METHOD
+		add_particle(reinsertme);
 		free(node);
 		return NULL; 
 	} else {

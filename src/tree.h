@@ -29,5 +29,6 @@ extern struct cell** root;
 
 void tree_init();
 void tree_update();
+void tree_add_particle_to_tree(int pt);
 
 #endif

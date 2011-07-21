@@ -36,8 +36,8 @@ extern double boxsize_y;
 extern double boxsize_z;
 extern double boxsize_max;
 
-void init_particles();
 void init_box();
+void add_particle(struct particle pt);
 int get_rootbox_for_particle(struct particle pt);
 int get_rootbox_for_particle_int(int pt);
 
