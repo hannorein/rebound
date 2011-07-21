@@ -9,7 +9,12 @@ awk -Ft 'BEGIN{ORS=""}{print "<tr><td>", $7, "</td><td width="300px">", $3, " ("
 cat >> testall.html <<EOF
 	</table>
 EOF
+}
 
+function printimage {
+cat >> testall.html <<EOF
+	<p><img src="$1" /></p>
+EOF
 }
 
 cat > testall.html <<EOF
@@ -33,6 +38,7 @@ cat >> testall.html <<EOF
 	<h2>Collapsing cloud (gravity tree, force error)</h2>
 EOF
 printtable force_accuracy
+printimage force_accuracy/plot.png
 
 cat >> testall.html <<EOF
 	<h2>Collapsing cloud (gravity tree, energy conservation check)</h2>

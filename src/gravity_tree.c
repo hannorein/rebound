@@ -65,21 +65,20 @@ void calculate_forces_for_particle_from_cell(int pt, struct cell *node, struct g
 		double prefact = -G/(r*r*r)*node->m;
 #ifdef QUADRUPOLE
 		if (node->pt < 0) {
-			double qprefact = G/fabs(r*r*r*r*r);
+			double qprefact = G/(r*r*r*r*r);
 			particles[pt].ax += qprefact*(dx*node->mxx + dy*node->mxy + dz*node->mxz); 
 			particles[pt].ay += qprefact*(dx*node->mxy + dy*node->myy + dz*node->myz); 
 			particles[pt].az += qprefact*(dx*node->mxz + dy*node->myz + dz*node->mzz); 
 			double mrr 	= dx*dx*node->mxx 	+ dy*dy*node->myy 	+ dz*dz*node->mzz
 					+ 2.*dx*dy*node->mxy 	+ 2.*dx*dz*node->mxz 	+ 2.*dy*dz*node->myz; 
 			qprefact *= -5.0/(2.0*r*r)*mrr;
-			particles[pt].ax += (prefact + qprefact)*dx; 
-			particles[pt].ay += (prefact + qprefact)*dy; 
-			particles[pt].az += (prefact + qprefact)*dz; 
+			particles[pt].ax += qprefact*dx; 
+			particles[pt].ay += qprefact*dy; 
+			particles[pt].az += qprefact*dz; 
 		}
-#else
+#endif
 		particles[pt].ax += prefact*dx; 
 		particles[pt].ay += prefact*dy; 
 		particles[pt].az += prefact*dz; 
-#endif
 	}
 }
