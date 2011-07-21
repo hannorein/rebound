@@ -30,6 +30,11 @@ EOF
 printtable wisdom_holman
 
 cat >> testall.html <<EOF
+	<h2>Collapsing cloud (gravity tree, force error)</h2>
+EOF
+printtable force_accuracy
+
+cat >> testall.html <<EOF
 	<h2>Collapsing cloud (gravity tree, energy conservation check)</h2>
 EOF
 printtable energy_collapse

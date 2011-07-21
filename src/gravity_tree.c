@@ -63,25 +63,23 @@ void calculate_forces_for_particle_from_cell(int pt, struct cell *node, struct g
 		if (node->pt == pt) return;
 		double r = sqrt(r2 + softening*softening);
 		double prefact = -G/(r*r*r)*node->m;
+#ifdef QUADRUPOLE
+		if (node->pt < 0) {
+			double qprefact = G/fabs(r*r*r*r*r);
+			particles[pt].ax += qprefact*(dx*node->mxx + dy*node->mxy + dz*node->mxz); 
+			particles[pt].ay += qprefact*(dx*node->mxy + dy*node->myy + dz*node->myz); 
+			particles[pt].az += qprefact*(dx*node->mxz + dy*node->myz + dz*node->mzz); 
+			double mrr 	= dx*dx*node->mxx 	+ dy*dy*node->myy 	+ dz*dz*node->mzz
+					+ 2.*dx*dy*node->mxy 	+ 2.*dx*dz*node->mxz 	+ 2.*dy*dz*node->myz; 
+			qprefact *= -5.0/(2.0*r*r)*mrr;
+			particles[pt].ax += (prefact + qprefact)*dx; 
+			particles[pt].ay += (prefact + qprefact)*dy; 
+			particles[pt].az += (prefact + qprefact)*dz; 
+		}
+#else
 		particles[pt].ax += prefact*dx; 
 		particles[pt].ay += prefact*dy; 
 		particles[pt].az += prefact*dz; 
-#ifdef QUADRUPOLE
-		if (node->pt < 0) {
-			double mrr = dx*dx*node->mxx + \
-						 dx*dy*node->mxy + \
-						 dx*dz*node->mxz + \
-						 dy*dx*node->mxy + \
-						 dy*dy*node->myy + \
-						 dy*dz*node->myz + \
-						 dz*dx*node->mxz + \
-						 dz*dy*node->myz + \
-						 dz*dz*node->mzz;
-			double qprefact = -G/(2*r*r*r*r*r)*mrr;
-			particles[pt].ax += qprefact*dx; 
-			particles[pt].ay += qprefact*dy; 
-			particles[pt].az += qprefact*dz; 
-		}
 #endif
 	}
 }

@@ -18,16 +18,18 @@ all:
 
 test:
 	make all QUADRUPOLE=1
-	rm -f error.txt
-	./nbody 0.1
-	./nbody 0.2
-	./nbody 0.4
-	./nbody 0.6
-	./nbody 0.8
+	mv nbody nbody-quad
 	make all QUADRUPOLE=0
-	./nbody 0.1
-	./nbody 0.2
-	./nbody 0.4
-	./nbody 0.6
-	./nbody 0.8
+	mv nbody nbody-mono
+	rm -f error.txt
+	./nbody-quad 0.1
+	./nbody-quad 0.2
+	./nbody-quad 0.4
+	./nbody-quad 0.6
+	./nbody-quad 0.8
+	./nbody-mono 0.1
+	./nbody-mono 0.2
+	./nbody-mono 0.4
+	./nbody-mono 0.6
+	./nbody-mono 0.8
 

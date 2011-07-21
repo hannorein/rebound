@@ -8,9 +8,9 @@
 #include "particle.h"
 #include "boundaries.h"
 #include "output.h"
+#include "gravity.h"
 
 
-double total_energy();
 double energy_initial;
 
 #ifdef GRAVITY_TREE
@@ -27,9 +27,9 @@ void problem_init(int argc, char* argv[]){
 	}
 	boxsize = 2;
 	softening =boxsize/100.;
-	tmax = 1.;
-	init_particles(200);
+	init_particles(10000);
 	dt = 1e-4;
+	tmax = dt/10.;
 	// Initial conditions
 	for (int i =0;i<N;i++){
 		double r;
@@ -52,27 +52,43 @@ void problem_init(int argc, char* argv[]){
 		particles[i].az = 0;
 		particles[i].m = 1./(double)N;
 	}
-	energy_initial = total_energy();
 	// No ghost boxes 
 	nghostx = 0;
 	nghosty = 0;
 	nghostz = 0;
 }
-
-double total_energy(){
-	double energy = 0;
-	for (int i=0;i<N;i++){
-		struct particle p1 = particles[i];
-		energy += 0.5*p1.m*(p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz);
-		for (int j=i+1;j<N;j++){
-			struct particle p2 = particles[j];
-			double dx = p2.x - p1.x;
-			double dy = p2.y - p1.y;
-			double dz = p2.z - p1.z;
-			energy -= G*p1.m*p2.m/sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
+double average_relative_force_error(){	
+	double error=0;
+	for (int i=0; i<N; i++){
+		double ax = particles[i].ax; 
+		double ay = particles[i].ay; 
+		double az = particles[i].az; 
+		particles[i].ax = 0; 
+		particles[i].ay = 0; 
+		particles[i].az = 0; 
+		for (int gbx=-nghostx; gbx<=nghostx; gbx++){
+		for (int gby=-nghosty; gby<=nghosty; gby++){
+		for (int gbz=-nghostz; gbz<=nghostz; gbz++){
+			struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
+			for (int j=N_active_first; j<N_active_last; j++){
+				if (i==j) continue;
+				double dx = (gb.shiftx+particles[i].x) - particles[j].x;
+				double dy = (gb.shifty+particles[i].y) - particles[j].y;
+				double dz = (gb.shiftz+particles[i].z) - particles[j].z;
+				double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
+				double prefact = -G/(r*r*r)*particles[j].m;
+				particles[i].ax += prefact*dx; 
+				particles[i].ay += prefact*dy; 
+				particles[i].az += prefact*dz; 
+			}
 		}
+		}
+		}
+		error += fabs((particles[i].ax - ax)/ax);
+		error += fabs((particles[i].ay - ay)/ay);
+		error += fabs((particles[i].az - az)/az);
 	}
-	return energy;
+	return error/((double)N*3.);
 }
 
 void problem_inloop(){
@@ -83,7 +99,8 @@ void problem_output(){
 
 void problem_finish(){
 	FILE* of = fopen("error.txt","a+"); 
-	double error= fabs((energy_initial-total_energy())/energy_initial);
+	calculate_forces();
+	double error= average_relative_force_error();
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
