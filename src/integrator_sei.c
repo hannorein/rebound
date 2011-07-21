@@ -21,19 +21,6 @@ double sindtz, tandtz;
 // It is symplectic, second order accurate and time-reversible.
 // I.e. pretty cool.
 void integrate_particles(){
-	for (int i=0;i<N;i++){
-		operator_H0(dt/2.,&(particles[i]));
-	}
-	calculate_forces();
-	for (int i=0;i<N;i++){
-		operator_phi(dt,&(particles[i]));
-		operator_H0(dt/2.,&(particles[i]));
-	}
-}
-
-// This function evolves a particle under 
-// Hamiltonian H0 exactly up to machine precission.
-void operator_H0(double dt, struct particle* p){
 	if (lastdt!=dt){
 		// Only calculate sin() and tan() if timestep changed
 		if (OMEGAZ==-1){
@@ -45,6 +32,22 @@ void operator_H0(double dt, struct particle* p){
 		tandtz = tan(OMEGAZ*(-dt/2.));
 		lastdt = dt;
 	}
+
+#pragma omp parallel for
+	for (int i=0;i<N;i++){
+		operator_H0(dt/2.,&(particles[i]));
+	}
+	calculate_forces();
+#pragma omp parallel for
+	for (int i=0;i<N;i++){
+		operator_phi(dt,&(particles[i]));
+		operator_H0(dt/2.,&(particles[i]));
+	}
+}
+
+// This function evolves a particle under 
+// Hamiltonian H0 exactly up to machine precission.
+void operator_H0(double dt, struct particle* p){
 		
 	// Integrate vertical motion
 	const double zx = p->z * OMEGAZ;

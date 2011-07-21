@@ -8,6 +8,7 @@
 #include "boundaries.h"
 
 void calculate_forces(){
+#pragma omp parallel for
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 
 		particles[i].ay = 0; 
@@ -19,6 +20,7 @@ void calculate_forces(){
 	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
 		struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
 		// Summing over all particle pairs
+#pragma omp parallel for
 		for (int i=0; i<N; i++){
 		for (int j=N_active_first; j<N_active_last; j++){
 			if (i==j) continue;

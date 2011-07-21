@@ -8,6 +8,7 @@
 #include "boundaries.h"
 
 void calculate_forces(){
+#pragma omp parallel for
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 
 		particles[i].ay = 0; 

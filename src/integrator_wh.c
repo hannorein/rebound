@@ -52,6 +52,7 @@ void integrate_particles(){
 }
 
 void drift_wh(double _dt){
+#pragma omp parallel for
 	for (int i=1;i<N;i++){
 		struct particle* p = &(particles[i]);
 		int iflag = 0;
