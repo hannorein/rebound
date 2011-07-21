@@ -7,7 +7,7 @@ endif
 ifeq ($(UNAME), Darwin)
 	OPT+= -L/usr/local/lib -I/usr/local/include  -Wall -g
 	OPT+= -D_APPLE  
-	LIB+=  
+	LIB+= 
 endif
 
 # Nothing needs to be changed below
@@ -33,6 +33,14 @@ endif
 ifeq ($(QUADRUPOLE), 1)
 	OPT+= -DQUADRUPOLE
 endif
+
+ifeq ($(OPENMP), 1)
+	OPT+= -fopenmp
+	LIB+= -fopenmp
+else
+	OPT+= -Wno-pragmas
+endif
+
 
 # Create precompiler definitions from links
 OPT+= -D$(shell basename `readlink gravity.c` '.c' | tr '[a-z]' '[A-Z]')

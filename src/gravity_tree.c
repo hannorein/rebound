@@ -15,6 +15,7 @@ void calculate_forces_for_particle_from_cell(int pt, struct cell *node, struct g
 
 void calculate_forces(){
 	tree_update();
+#pragma omp parallel for
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 
 		particles[i].ay = 0; 
@@ -25,6 +26,7 @@ void calculate_forces(){
 	for (int gby=-nghosty; gby<=nghosty; gby++){
 	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
 		// Summing over all particle pairs
+#pragma omp parallel for
 		for (int i=0; i<N; i++){
 			struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
 			// Precalculated shifted position
