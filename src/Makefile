@@ -38,7 +38,7 @@ ifeq ($(OPENMP), 1)
 	OPT+= -fopenmp
 	LIB+= -fopenmp
 else
-	OPT+= -Wno-pragmas
+	OPT+= -Wno-unknown-pragmas
 endif
 
 
