@@ -13,6 +13,7 @@ int nghosty = 0;
 int nghostz = 0;
 
 void check_boundaries(){
+#pragma omp parallel for
 	for (int i=0;i<N;i++){
 		// No boundary in the radial direction. This will not work with GRAVITY_TREE!
 		

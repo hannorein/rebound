@@ -14,6 +14,7 @@ int nghostz = 0;
 
 void check_boundaries(){
 	double offset = -0.5*boxsize_y + fmod(t*1.5*OMEGA*boxsize_x,boxsize_y);
+#pragma omp parallel for
 	for (int i=0;i<N;i++){
 		// Radial
 		while(particles[i].x>boxsize_x/2.){
