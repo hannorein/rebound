@@ -1,8 +1,5 @@
 #ifndef _TREE_H
 #define _TREE_H
-#ifndef QUADRUPOLE
-	#define QUADRUPOLE
-#endif
 struct cell;
 
 struct cell {

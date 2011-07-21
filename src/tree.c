@@ -7,9 +7,6 @@
 #include "main.h"
 #include "boundaries.h"
 #include "tree.h"
-#ifndef QUADRUPOLE
-	#define QUADRUPOLE
-#endif
 
 struct cell** root;
 int root_nx;

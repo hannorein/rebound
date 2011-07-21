@@ -30,6 +30,10 @@ endif
 endif
 endif
 
+ifeq ($(QUADRUPOLE), 1)
+	OPT+= -DQUADRUPOLE
+endif
+
 # Create precompiler definitions from links
 OPT+= -D$(shell basename `readlink gravity.c` '.c' | tr '[a-z]' '[A-Z]')
 OPT+= -D$(shell basename `readlink integrator.c` '.c' | tr '[a-z]' '[A-Z]')

@@ -1,6 +1,7 @@
 PROBLEMDIR=examples/$(shell basename `pwd`)
 export OPENGL=1
 export OPT=-O3
+export QUADRUPOLE=1
 
 all:
 	# Setup link to different modules
