@@ -27,12 +27,24 @@ test:
 	./nbody-quad 0.4
 	./nbody-quad 0.6
 	./nbody-quad 0.8
+	./nbody-quad 1.0
+	./nbody-quad 1.2
+	./nbody-quad 1.4
+	./nbody-quad 1.6
+	./nbody-quad 1.8
+	./nbody-quad 2.0
 	mv error.txt error-quad.txt
 	./nbody-mono 0.1
 	./nbody-mono 0.2
 	./nbody-mono 0.4
 	./nbody-mono 0.6
 	./nbody-mono 0.8
+	./nbody-mono 1.0
+	./nbody-mono 1.2
+	./nbody-mono 1.4
+	./nbody-mono 1.6
+	./nbody-mono 1.8
+	./nbody-mono 2.0
 	cp error.txt error-mono.txt
 	cat error-quad.txt >> error.txt
 	gnuplot plot.plt

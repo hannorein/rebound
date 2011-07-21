@@ -26,7 +26,7 @@ void problem_init(int argc, char* argv[]){
 		opening_angle2 *= opening_angle2;
 	}
 	boxsize = 2;
-	softening =boxsize/100.;
+	softening = 0;//boxsize/100.;
 	init_particles(10000);
 	dt = 1e-4;
 	tmax = dt/10.;
@@ -59,6 +59,7 @@ void problem_init(int argc, char* argv[]){
 }
 double average_relative_force_error(){	
 	double error=0;
+	double acceltot=0;
 	for (int i=0; i<N; i++){
 		double ax = particles[i].ax; 
 		double ay = particles[i].ay; 
@@ -84,11 +85,14 @@ double average_relative_force_error(){
 		}
 		}
 		}
-		error += fabs((particles[i].ax - ax)/ax);
-		error += fabs((particles[i].ay - ay)/ay);
-		error += fabs((particles[i].az - az)/az);
+		acceltot += fabs((particles[i].ax));
+		acceltot += fabs((particles[i].ay));
+		acceltot += fabs((particles[i].az));
+		error += fabs((particles[i].ax - ax));
+		error += fabs((particles[i].ay - ay));
+		error += fabs((particles[i].az - az));
 	}
-	return error/((double)N*3.);
+	return error/acceltot;
 }
 
 void problem_inloop(){
