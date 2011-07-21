@@ -56,14 +56,6 @@ struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *p
 		node->mx = p.x;
 		node->my = p.y;
 		node->mz = p.z;
-	#ifdef QUADRUPOLE
-		node->mxx = 0;
-		node->mxy = 0;
-		node->mxz = 0;
-		node->myy = 0;
-		node->myz = 0;
-		node->mzz = 0;
-	#endif // QUADRUPOLE
 #endif // GRAVITY_TREE
 		if (parent == NULL){
 			node->w = boxsize_min;
@@ -121,7 +113,7 @@ int tree_particle_is_inside_cell(struct cell *node){
 }
 
 struct cell *tree_update_cell(struct cell *node){
-	int test;
+	int test = -1;
 	if (node == NULL) {
 		return NULL;
 	}
