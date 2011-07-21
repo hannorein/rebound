@@ -44,14 +44,16 @@ int input_check_restart(int argc, char** argv){
 
 void input_binary(char* filename){
 	FILE* inf = fopen(filename,"rb"); 
-	fread(&N,sizeof(int),1,inf);
-	fread(&t,sizeof(double),1,inf);
-	printf("Found %d particles in file '%s'. Restarting at time t=%f\n",N,filename,t);
+	long bytes = 0;
+	bytes += fread(&N,sizeof(int),1,inf);
+	bytes += fread(&t,sizeof(double),1,inf);
+	printf("Found %d particles in file '%s'. ",N,filename);
 	// Create particle structure
 	init_particles(N);
 	for (int i=0;i<N;i++){
-		fread(&(particles[i]),sizeof(struct particle),1,inf);
+		bytes += fread(&(particles[i]),sizeof(struct particle),1,inf);
 	}
 	fclose(inf);
+	printf("%ld bytes read. Restarting at time t=%f\n",bytes,t);
 }
 
