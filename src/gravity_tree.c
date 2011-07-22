@@ -11,7 +11,7 @@
 double opening_angle2 = 0.25;
 
 void calculate_forces_for_particle(int pt, struct ghostbox gb);
-void calculate_forces_for_particle_from_cell(int pt, struct cell *node, struct ghostbox gb);
+void calculate_forces_for_particle_from_cell(int pt, struct cell const *node, struct ghostbox const gb);
 
 void calculate_forces(){
 #pragma omp parallel for
@@ -49,7 +49,7 @@ void calculate_forces_for_particle(int pt, struct ghostbox gb) {
 	}
 }
 
-void calculate_forces_for_particle_from_cell(int pt, struct cell *node, struct ghostbox gb) {
+void calculate_forces_for_particle_from_cell(int pt, struct cell const *node, struct ghostbox const gb) {
 	double dx = gb.shiftx - node->mx;
 	double dy = gb.shifty - node->my;
 	double dz = gb.shiftz - node->mz;

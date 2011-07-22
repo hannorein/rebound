@@ -113,7 +113,7 @@ void communication_mpi_distribute_particles(){
 	// Allocate memory for incoming particles
 	for (int i=0;i<mpi_num;i++){
 		if  (i==mpi_id) continue;
-		if (particles_recv_Nmax[i]<particles_recv_N[i]){
+		while (particles_recv_Nmax[i]<particles_recv_N[i]){
 			particles_recv_Nmax[i] += 32;
 			particles_recv[i] = realloc(particles_recv[i],sizeof(struct particle)*particles_recv_Nmax[i]);
 		}
@@ -157,7 +157,7 @@ void communication_mpi_distribute_particles(){
 
 void communication_mpi_add_particle_to_send_queue(struct particle pt, int proc_id){
 	int send_N = particles_send_N[proc_id];
-	if (particles_send_Nmax[proc_id] <= send_N){
+	while (particles_send_Nmax[proc_id] <= send_N){
 		particles_send_Nmax[proc_id] += 128;
 		particles_send[proc_id] = realloc(particles_send[proc_id],sizeof(struct particle)*particles_send_Nmax[proc_id]);
 	}

@@ -17,7 +17,7 @@ int N_active_first 	= 0;		// First active particle.
 
 
 void particles_add_local(struct particle pt){
-	if (Nmax<=N){
+	while (Nmax<=N){
 		Nmax += 128;
 		particles = realloc(particles,sizeof(struct particle)*Nmax);
 	}
@@ -43,6 +43,17 @@ void particles_add(struct particle pt){
 	particles_add_local(pt);
 }
 
+#ifdef MPI
+int rootbox_is_local(int i){
+	int root_n_per_node = root_n/mpi_num;
+	int proc_id = i/root_n_per_node;
+	if (proc_id != mpi_id){
+		return 0;
+	}else{
+		return 1;
+	}
+}
+#endif
 
 
 

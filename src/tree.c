@@ -7,6 +7,7 @@
 #include "main.h"
 #include "boundaries.h"
 #include "tree.h"
+#include "communication_mpi.h"
 
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
 
@@ -126,7 +127,7 @@ struct cell *tree_update_cell(struct cell *node){
 				node->my = (node->my*node->m + node->oct[o]->my*m_o) / (node->m + m_o);
 				node->mz = (node->mz*node->m + node->oct[o]->mz*m_o) / (node->m + m_o);
 				node->m += m_o;
-	#ifdef QUADRUPOLE
+#ifdef QUADRUPOLE
 				// Ref: Hernquist, L., 1987, APJS
 				double qx  = node->oct[o]->mx - node->mx;
 				double qy  = node->oct[o]->my - node->my;
@@ -138,7 +139,7 @@ struct cell *tree_update_cell(struct cell *node){
 				node->myy += node->oct[o]->myy + m_o*(3*qy*qy - qr2);
 				node->myz += node->oct[o]->myz + m_o*3*qy*qz;
 				node->mzz += -node->mxx -node->myy;
-	#endif
+#endif // QUADRUPOLE
 #endif // GRAVITY_TREE
 				// Update node->pt
 				if (node->oct[o]->pt >= 0) {	// The child is a leaf
@@ -185,19 +186,35 @@ struct cell *tree_update_cell(struct cell *node){
 	}
 }
 
+#ifdef MPI
+void tree_delete_remote_tree(struct cell* node){
+	for (int o=0;o<8;o++){
+		if (node->oct[o] != NULL){
+			tree_delete_remote_tree(node->oct[o]);
+		}
+	}
+	free(node);
+}
+#endif // MPI
+
 void tree_update(){
 	if (tree_root==NULL){
 		tree_root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
 	}
-	for(int i=0;i<root_nx;i++){
-	for(int j=0;j<root_ny;j++){
-	for(int k=0;k<root_nz;k++){
-		int index = (k*root_ny+j)*root_nx+i;
-		tree_root[index] = tree_update_cell(tree_root[index]);
-	}
-	}
+	for(int i=0;i<root_n;i++){
+#ifdef MPI
+		if (rootbox_is_local(i)==1){
+			tree_root[i] = tree_update_cell(tree_root[i]);
+		}else{
+			if (tree_root[i]!=NULL){
+				tree_delete_remote_tree(tree_root[i]);
+				tree_root[i] = NULL;
+			}
+		}
+#else // MPI
+		tree_root[i] = tree_update_cell(tree_root[i]);
+#endif // MPI
 	}
 }
-
 
 #endif

@@ -82,10 +82,10 @@ void iterate(){
 int main(int argc, char* argv[]) {
 #ifdef MPI
 	communication_mpi_init(argc,argv);
-#endif
+#endif // MPI
 #ifdef OPENMP
 	printf("Using OpenMP with %d threads per node.\n",omp_get_num_threads());
-#endif
+#endif // OPENMP
 	// Timing
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
