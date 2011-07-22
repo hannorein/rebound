@@ -187,34 +187,49 @@ struct cell *tree_update_cell(struct cell *node){
 }
 
 #ifdef MPI
-void tree_delete_remote_tree(struct cell* node){
+
+void tree_add_essential_node(struct cell node){
+	// Add essential node to appropriate parent.
+}
+
+void tree_delete_essential_tree(struct cell* node){
 	for (int o=0;o<8;o++){
 		if (node->oct[o] != NULL){
-			tree_delete_remote_tree(node->oct[o]);
+			tree_delete_essential_tree(node->oct[o]);
 		}
 	}
 	free(node);
 }
-#endif // MPI
+
 
 void tree_update(){
 	if (tree_root==NULL){
 		tree_root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
 	}
 	for(int i=0;i<root_n;i++){
-#ifdef MPI
 		if (rootbox_is_local(i)==1){
 			tree_root[i] = tree_update_cell(tree_root[i]);
+			communication_prepare_essential_tree(tree_root[i]);
 		}else{
 			if (tree_root[i]!=NULL){
-				tree_delete_remote_tree(tree_root[i]);
+				tree_delete_essential_tree(tree_root[i]);
 				tree_root[i] = NULL;
 			}
 		}
+	}
+	communication_distribute_essential_tree();
+}
+
 #else // MPI
+
+void tree_update(){
+	if (tree_root==NULL){
+		tree_root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
+	}
+	for(int i=0;i<root_n;i++){
 		tree_root[i] = tree_update_cell(tree_root[i]);
-#endif // MPI
 	}
 }
 
+#endif // ndef MPI
 #endif

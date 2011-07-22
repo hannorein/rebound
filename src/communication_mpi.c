@@ -25,6 +25,16 @@ struct particle** 	particles_recv;
 int* 			particles_recv_N;
 int* 			particles_recv_Nmax;
 
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+struct cell** 	tree_essential_send;
+int* 		tree_essential_send_N;
+int* 		tree_essential_send_Nmax;
+struct cell** 	tree_essential_recv;
+int* 		tree_essential_recv_N;
+int* 		tree_essential_recv_Nmax;
+#endif
+
+
 void communication_mpi_init(int argc, char** argv){
 	MPI_Init(&argc,&argv);
 	MPI_Comm_size(MPI_COMM_WORLD,&mpi_num);
@@ -90,7 +100,7 @@ void communication_mpi_init(int argc, char** argv){
 	MPI_Type_commit(&mpi_cell); 
 #endif 
 	
-	// Prepare send/recv buffers.
+	// Prepare send/recv buffers for particles
 	particles_send   	= calloc(mpi_num,sizeof(struct particle*));
 	particles_send_N 	= calloc(mpi_num,sizeof(int));
 	particles_send_Nmax 	= calloc(mpi_num,sizeof(int));
@@ -98,6 +108,15 @@ void communication_mpi_init(int argc, char** argv){
 	particles_recv_N 	= calloc(mpi_num,sizeof(int));
 	particles_recv_Nmax 	= calloc(mpi_num,sizeof(int));
 
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+	// Prepare send/recv buffers for essential tree
+	tree_essential_send   	= calloc(mpi_num,sizeof(struct cell*));
+	tree_essential_send_N 	= calloc(mpi_num,sizeof(int));
+	tree_essential_send_Nmax= calloc(mpi_num,sizeof(int));
+	tree_essential_recv   	= calloc(mpi_num,sizeof(struct cell*));
+	tree_essential_recv_N 	= calloc(mpi_num,sizeof(int));
+	tree_essential_recv_Nmax= calloc(mpi_num,sizeof(int));
+#endif
 
 	if (mpi_id==0){
 		printf("Using MPI with %d nodes.\n",mpi_num);
@@ -165,6 +184,62 @@ void communication_mpi_add_particle_to_send_queue(struct particle pt, int proc_i
 	particles_send_N[proc_id]++;
 }
 
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+void communication_prepare_essential_tree(struct cell* root){
+	// Find out which cells are needed by every other node
+	// Add them to tree_essential_send
+}
+
+void communication_distribute_essential_tree(){
+	// Distribute the number of cells to be transferred.
+	for (int i=0;i<mpi_num;i++){
+		MPI_Scatter(tree_essential_send_N, 1, MPI_INT, &(tree_essential_recv_N[i]), 1, MPI_INT, i, MPI_COMM_WORLD);
+	}
+	// Allocate memory for incoming tree_essential
+	for (int i=0;i<mpi_num;i++){
+		if  (i==mpi_id) continue;
+		while (tree_essential_recv_Nmax[i]<tree_essential_recv_N[i]){
+			tree_essential_recv_Nmax[i] += 32;
+			tree_essential_recv[i] = realloc(tree_essential_recv[i],sizeof(struct cell)*tree_essential_recv_Nmax[i]);
+		}
+	}
+
+	
+	// Exchange tree_essential via MPI.
+	// Using non-blocking receive call.
+	MPI_Request request[mpi_num];
+	for (int i=0;i<mpi_num;i++){
+		if (i==mpi_id) continue;
+		if (tree_essential_recv_N[i]==0) continue;
+		MPI_Irecv(tree_essential_recv[i], tree_essential_recv_N[i], mpi_cell, i, i*mpi_num+mpi_id, MPI_COMM_WORLD, &(request[i]));
+	}
+	// Using blocking send call.
+	for (int i=0;i<mpi_num;i++){
+		if (i==mpi_id) continue;
+		if (tree_essential_send_N[i]==0) continue;
+		MPI_Send(tree_essential_send[i], tree_essential_send_N[i], mpi_cell, i, mpi_id*mpi_num+i, MPI_COMM_WORLD);
+	}
+	// Wait for all tree_essential to be received.
+	for (int i=0;i<mpi_num;i++){
+		if (i==mpi_id) continue;
+		if (tree_essential_recv_N[i]==0) continue;
+		MPI_Status status;
+		MPI_Wait(&(request[i]), &status);
+	}
+	// Add tree_essential to local tree
+	for (int i=0;i<mpi_num;i++){
+		for (int j=0;j<tree_essential_recv_N[i];j++){
+			tree_add_essential_node(tree_essential_recv[i][j]);
+		}
+	}
+	// Bring everybody into sync, clean up. 
+	MPI_Barrier(MPI_COMM_WORLD);
+	for (int i=0;i<mpi_num;i++){
+		tree_essential_send_N[i] = 0;
+		tree_essential_recv_N[i] = 0;
+	}
+}
+#endif
 
 
 #endif // MPI
