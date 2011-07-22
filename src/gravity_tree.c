@@ -42,7 +42,7 @@ void calculate_forces(){
 void calculate_forces_for_particle(int pt, struct ghostbox gb) {
 	int root_n = root_nx*root_ny*root_nz;
 	for(int i=0;i<root_n;i++){
-		struct cell* node = root[i];
+		struct cell* node = tree_root[i];
 		if (node!=NULL){
 			calculate_forces_for_particle_from_cell(pt, node, gb);
 		}

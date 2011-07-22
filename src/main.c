@@ -19,13 +19,43 @@
 #include <omp.h>
 #endif
 
-double softening = 0.01;
-double G=1;
-double t=0;
-double tmax=0; // Run forever
-double dt = 0.001;
+double softening 	= 0;
+double G		= 1;
+double t		= 0;
+double tmax		= 0; // 0 == run forever
+double dt 		= 0.001;
+double timing_initial 	= -1;
 
-double timing_initial = -1;
+double boxsize 		= -1;
+double boxsize_x 	= -1;
+double boxsize_y 	= -1;
+double boxsize_z 	= -1;
+double boxsize_max 	= -1;
+int root_nx		= 1;
+int root_ny		= 1;
+int root_nz		= 1;
+int root_n		= 1;
+
+void init_box(){	
+	boxsize_x = boxsize *(double)root_nx;
+	boxsize_y = boxsize *(double)root_ny;
+	boxsize_z = boxsize *(double)root_nz;
+	root_n = root_nx*root_ny*root_nz;
+
+#ifdef MPI
+	if ((root_n/mpi_num)*mpi_num != root_n){
+		if (mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",root_n,mpi_num);
+		exit(-1);
+	}
+#endif // MPI
+
+	boxsize_max = boxsize_x;
+	if (boxsize_max<boxsize_y) boxsize_max = boxsize_y;
+	if (boxsize_max<boxsize_z) boxsize_max = boxsize_z;
+	
+	printf("Initialized %d*%d*%d root boxes.\n",root_nx,root_ny,root_nz);
+}
+
 
 void iterate(){	
 	integrate_particles();
@@ -47,6 +77,7 @@ void iterate(){
 	}
 
 }
+
 
 int main(int argc, char* argv[]) {
 #ifdef MPI

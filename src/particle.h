@@ -27,19 +27,8 @@ struct particle {
 } particle;
 
 extern struct particle* particles;
-extern int root_nx;
-extern int root_ny;
-extern int root_nz;
-extern double boxsize;
-extern double boxsize_x;
-extern double boxsize_y;
-extern double boxsize_z;
-extern double boxsize_max;
-
-void init_box();
 void particles_add(struct particle pt);
-int get_rootbox_for_particle(struct particle pt);
-int get_rootbox_for_particle_int(int pt);
+int particles_get_rootbox_for_particle(struct particle pt);
 void particles_communicate();
 
 #endif

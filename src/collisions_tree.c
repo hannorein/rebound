@@ -34,7 +34,7 @@ void collisions_search(){
 		for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
 			struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
 			for (int ri=0;ri<root_nx*root_ny*root_nz;ri++){
-				struct cell* rootcell = root[ri];
+				struct cell* rootcell = tree_root[ri];
 				if (rootcell!=NULL){
 					tree_get_nearest_neighbour_in_cell(i,gb,rootcell);
 				}

@@ -25,7 +25,7 @@ struct cell {
 	int pt;						// has double usages
 } cell;
 
-extern struct cell** root;
+extern struct cell** tree_root;
 
 void tree_init();
 void tree_update();

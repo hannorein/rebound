@@ -68,7 +68,7 @@ void problem_init(int argc, char* argv[]){
 #ifdef MPI
 	}
 #endif
-	printf("%d particles initialized on root node\n",_N);
+	printf("%d particles initialized on root node.\n",_N);
 }
 
 double coefficient_of_restitution_bridges(double v){

@@ -10,17 +10,18 @@
 
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
 
-struct cell** root;
+struct cell** tree_root;
 
 int tree_get_octant_for_particle_in_cell(int pt, struct cell *node);
 struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *parent, int o);
 
 void tree_add_particle_to_tree(int pt){
-	if (root==NULL){
-		root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
+	if (tree_root==NULL){
+		tree_root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
 	}
-	int root_index = get_rootbox_for_particle_int(pt);
-	root[root_index] = tree_add_particle_to_cell(root[root_index],pt,NULL,0);
+	struct particle p = particles[pt];
+	int root_index = particles_get_rootbox_for_particle(p);
+	tree_root[root_index] = tree_add_particle_to_cell(tree_root[root_index],pt,NULL,0);
 }
 
 struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *parent, int o){
@@ -185,14 +186,14 @@ struct cell *tree_update_cell(struct cell *node){
 }
 
 void tree_update(){
-	if (root==NULL){
-		root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
+	if (tree_root==NULL){
+		tree_root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
 	}
 	for(int i=0;i<root_nx;i++){
 	for(int j=0;j<root_ny;j++){
 	for(int k=0;k<root_nz;k++){
 		int index = (k*root_ny+j)*root_nx+i;
-		root[index] = tree_update_cell(root[index]);
+		tree_root[index] = tree_update_cell(tree_root[index]);
 	}
 	}
 	}

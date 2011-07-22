@@ -1,4 +1,7 @@
 #ifdef OPENGL
+#ifdef MPI
+#error OpenGL is not compatible with MPI.
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -73,13 +76,8 @@ void display_cell(struct cell* node){
 	}
 }
 void display_entire_tree(){
-	for(int i=0;i<root_nx;i++){
-	for(int j=0;j<root_ny;j++){
-	for(int k=0;k<root_nz;k++){
-		int index = (k*root_ny+j)*root_nx+i;
-		display_cell(root[index]);
-	}
-	}
+	for(int i=0;i<root_n;i++){
+		display_cell(tree_root[i]);
 	}
 }
 #endif

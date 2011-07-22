@@ -37,6 +37,8 @@ void boundaries_check(){
 	}
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
 	tree_update();
+#else
+#error CHECK FOR ROOT BOX CROSSING, DISTRIBUTE PARTICLES 
 #endif
 #ifdef MPI
 	communication_mpi_distribute_particles();
