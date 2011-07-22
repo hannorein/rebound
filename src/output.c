@@ -7,6 +7,7 @@
 #include "particle.h"
 #include "main.h"
 #include "output.h"
+#include "communication_mpi.h"
 #ifdef OPENGL
 #include "opengl.h"
 #ifdef LIBPNG
@@ -77,7 +78,7 @@ void output_timing(){
 	if (output_timing_last==-1){
 		output_timing_last = temp;
 	}else{
-		printf("\r");
+		printf("\nN=%d\n",N);
 	}
 	if (tmax>0){
 		printf("N_tot= %- 9d  t= %- 9f  cpu= %- 9f s  t/tmax= %5.2f%%",N_tot,t,temp-output_timing_last,t/tmax*100);

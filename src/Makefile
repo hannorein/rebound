@@ -68,6 +68,7 @@ all:
 	$(CC) $(OPT) -std=c99 output.c -c
 	$(CC) $(OPT) -std=c99 collisions.c -c
 	$(CC) $(OPT) -std=c99 collision_resolve.c -c
+	$(CC) $(OPT) -std=c99 communication_mpi.c -c
 	$(CC) $(OPT) -std=c99 zpr.c -c
 	$(CC) $(OPT) -std=c99 opengl.c -c
 	$(CC) $(LIB) -std=c99 *.o -o nbody

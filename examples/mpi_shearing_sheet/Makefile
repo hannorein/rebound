@@ -3,7 +3,7 @@ export OPENGL=0
 export OPT=-O3
 export QUADRUPOLE=1
 export MPI=1
-export OPENMP=1
+export OPENMP=0
 
 all:
 	# Setup link to different modules

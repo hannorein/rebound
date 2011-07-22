@@ -8,6 +8,7 @@
 #include "particle.h"
 #include "boundaries.h"
 #include "output.h"
+#include "communication_mpi.h"
 
 extern double OMEGA;
 extern double coefficient_of_restitution;
@@ -41,23 +42,30 @@ void problem_init(int argc, char* argv[]){
 	int _N = round(surfacedensity*boxsize*boxsize/particle_mass);
 	init_box();
 	// Initial conditions
-	for (int i =0;i<_N;i++){
-		struct particle pt;
-		double vrand = 0.01*OMEGA*((double)rand()/(double)RAND_MAX-0.5);
-		double phirand = 2.*M_PI*((double)rand()/(double)RAND_MAX-0.5);
-		pt.x 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
-		pt.y 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
-		pt.z 		= 10.*((double)rand()/(double)RAND_MAX-0.5);
-		pt.vx 		= 0;
-		pt.vy 		= -1.5*pt.x*OMEGA+2.*vrand*cos(phirand);
-		pt.vz 		= vrand*sin(phirand);
-		pt.ax 		= 0;
-		pt.ay 		= 0;
-		pt.az 		= 0;
-		pt.m 		= particle_mass;
-		pt.r 		= particle_radius;
-		add_particle(pt);
+#ifdef MPI
+	if (mpi_id==0){
+#endif
+		for (int i =0;i<_N;i++){
+			struct particle pt;
+			double vrand = 0.01*OMEGA*((double)rand()/(double)RAND_MAX-0.5);
+			double phirand = 2.*M_PI*((double)rand()/(double)RAND_MAX-0.5);
+			pt.x 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
+			pt.y 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
+			pt.z 		= 10.*((double)rand()/(double)RAND_MAX-0.5);
+			pt.vx 		= 0;
+			pt.vy 		= -1.5*pt.x*OMEGA+2.*vrand*cos(phirand);
+			pt.vz 		= vrand*sin(phirand);
+			pt.ax 		= 0;
+			pt.ay 		= 0;
+			pt.az 		= 0;
+			pt.m 		= particle_mass;
+			pt.r 		= particle_radius;
+			add_particle(pt);
+		}
+#ifdef MPI
 	}
+#endif
+	printf("%d particles initialized on root node\n",_N);
 }
 
 double coefficient_of_restitution_bridges(double v){
