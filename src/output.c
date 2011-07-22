@@ -90,7 +90,13 @@ void output_timing(){
 }
 
 void output_append_ascii(char* filename){
+#ifdef MPI
+	char filename_mpi[1024];
+	sprintf("%s_%d",filename,mpi_id);
+	FILE* of = fopen(filename_mpi,"a"); 
+#else // MPI
 	FILE* of = fopen(filename,"a"); 
+#endif // MPI
 	for (int i=0;i<N;i++){
 		struct particle p = particles[i];
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\n",p.x,p.y,p.z,p.vx,p.vy,p.vz);
@@ -99,7 +105,13 @@ void output_append_ascii(char* filename){
 }
 
 void output_ascii(char* filename){
+#ifdef MPI
+	char filename_mpi[1024];
+	sprintf("%s_%d",filename,mpi_id);
+	FILE* of = fopen(filename_mpi,"w"); 
+#else // MPI
 	FILE* of = fopen(filename,"w"); 
+#endif // MPI
 	for (int i=0;i<N;i++){
 		struct particle p = particles[i];
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\n",p.x,p.y,p.z,p.vx,p.vy,p.vz);
@@ -108,7 +120,13 @@ void output_ascii(char* filename){
 }
 
 void output_orbit(char* filename){
+#ifdef MPI
+	char filename_mpi[1024];
+	sprintf("%s_%d",filename,mpi_id);
+	FILE* of = fopen(filename_mpi,"w"); 
+#else // MPI
 	FILE* of = fopen(filename,"w"); 
+#endif // MPI
 	for (int i=1;i<N;i++){
 		struct particle* p = &(particles[i]);
 		struct opv_orbit o;
@@ -120,7 +138,13 @@ void output_orbit(char* filename){
 
 
 void output_binary(char* filename){
+#ifdef MPI
+	char filename_mpi[1024];
+	sprintf("%s_%d",filename,mpi_id);
+	FILE* of = fopen(filename_mpi,"wb"); 
+#else // MPI
 	FILE* of = fopen(filename,"wb"); 
+#endif // MPI
 	fwrite(&N,sizeof(int),1,of);
 	fwrite(&t,sizeof(double),1,of);
 	for (int i=0;i<N;i++){
@@ -131,7 +155,13 @@ void output_binary(char* filename){
 }
 
 void output_binary_positions(char* filename){
+#ifdef MPI
+	char filename_mpi[1024];
+	sprintf("%s_%d",filename,mpi_id);
+	FILE* of = fopen(filename_mpi,"wb"); 
+#else // MPI
 	FILE* of = fopen(filename,"wb"); 
+#endif // MPI
 	for (int i=0;i<N;i++){
 		struct vec3 v;
 		v.x = particles[i].x;
@@ -164,11 +194,27 @@ void output_append_velocity_dispersion(char* filename){
 #endif
 		Q.z = Q.z + (p.vz-Aim1.z)*(p.vz-A.z);
 	}
-	Q.x = sqrt(Q.x/(double)N);
-	Q.y = sqrt(Q.y/(double)N);
-	Q.z = sqrt(Q.z/(double)N);
+#ifdef MPI
+	int N_tot = 0;
+	struct vec3 A_tot = {.x=0, .y=0, .z=0};
+	struct vec3 Q_tot = {.x=0, .y=0, .z=0};
+	MPI_Reduce(&N, &N_tot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD); 
+	MPI_Reduce(&(A.x), &(A_tot.x), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+	MPI_Reduce(&(A.y), &(A_tot.y), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+	MPI_Reduce(&(A.z), &(A_tot.z), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+	MPI_Reduce(&(Q.x), &(Q_tot.x), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+	MPI_Reduce(&(Q.y), &(Q_tot.y), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+	MPI_Reduce(&(Q.z), &(Q_tot.z), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+#else
+	int N_tot = N;
+	struct vec3 A_tot = A;
+	struct vec3 Q_tot = Q;
+#endif
+	Q_tot.x = sqrt(Q_tot.x/(double)N_tot);
+	Q_tot.y = sqrt(Q_tot.y/(double)N_tot);
+	Q_tot.z = sqrt(Q_tot.z/(double)N_tot);
 	FILE* of = fopen(filename,"a"); 
-	fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,A.x,A.y,A.z,Q.x,Q.y,Q.z);
+	fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,A_tot.x,A_tot.y,A_tot.z,Q_tot.x,Q_tot.y,Q_tot.z);
 	fclose(of);
 }
 
