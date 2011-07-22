@@ -11,13 +11,16 @@
 #include "opengl.h"
 #ifdef LIBPNG
 #include <png.h>
-#endif
+#endif // LIBPNG
 #ifdef _APPLE
 #include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
-#endif 
-#endif 
+#endif  // _APPLE
+#endif  // OPENGL
+#ifdef MPI
+#include "mpi.h"
+#endif // MPI
 
 #ifdef INTEGRATOR_SEI 	// Shearing sheet
 extern double OMEGA;
@@ -61,6 +64,13 @@ void posvel2orbit(struct opv_orbit* o, struct particle* pv, double gmsum);
 
 double output_timing_last = -1;
 void output_timing(){
+#ifdef MPI
+	int N_tot = 0;
+	MPI_Reduce(&N, &N_tot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD); 
+	if (mpi_id!=0) return;
+#else
+	int N_tot = N;
+#endif
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double temp = tim.tv_sec+(tim.tv_usec/1000000.0);
@@ -69,7 +79,7 @@ void output_timing(){
 	}else{
 		printf("\r");
 	}
-	printf("N= %- 9d  t= %- 9f  cpu= %- 9f s  t/tmax= %5.2f%%",N,t,temp-output_timing_last,t/tmax*100);
+	printf("N_tot= %- 9d  t= %- 9f  cpu= %- 9f s  t/tmax= %5.2f%%",N_tot,t,temp-output_timing_last,t/tmax*100);
 	fflush(stdout);
 	output_timing_last = temp;
 }

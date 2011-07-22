@@ -54,6 +54,7 @@ struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *p
 		// Double usages: in a leaf node, it stores the index of a particle; in a non-
 		// leaf node, it equals to (-1)*Total Number of particles within that cell.
 		node->pt = pt;
+		particles[pt].c = node;
 		for (int i=0; i<8; i++){
 			node->oct[i] = NULL;
 		}
@@ -157,6 +158,7 @@ struct cell *tree_update_cell(struct cell *node){
 			return NULL;
 		} else if (node->pt == -1) { // The node becomes a leaf.
 			node->pt = node->oct[test]->pt;
+			particles[node->pt].c = node;
 			free(node->oct[test]);
 			node->oct[test]=NULL;
 			return node;
@@ -165,8 +167,11 @@ struct cell *tree_update_cell(struct cell *node){
 	} 
 	// Leaf nodes
 	if (tree_particle_is_inside_cell(node) == 0) {
-		struct particle reinsertme = *(node->pt);
-#error HAVE TO WRITE REMOVE_PARTICLE_FROM_TREE_METHOD
+		int oldpos = node->pt;
+		struct particle reinsertme = particles[oldpos];
+		N--;
+		particles[oldpos] = particles[N];
+		particles[oldpos].c->pt = oldpos;
 		add_particle(reinsertme);
 		free(node);
 		return NULL; 
@@ -177,6 +182,7 @@ struct cell *tree_update_cell(struct cell *node){
 		node->my = p.y;
 		node->mz = p.z;
 #endif // GRAVITY_TREE
+		particles[node->pt].c = node;
 		return node;
 	}
 }

@@ -34,6 +34,9 @@ void iterate(){
 	integrate_particles();
 	t+=dt;  // Note: This might be better at the end of this function (t is used in check_boundaries).
 	check_boundaries();
+#ifdef MPI
+	particles_communicate();
+#endif
 #ifdef OPENGL
 	display();
 #endif

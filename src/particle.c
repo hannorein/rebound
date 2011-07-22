@@ -14,6 +14,9 @@ struct particle* particles;
 struct particle** particles_add;
 int* particles_add_N;
 int* particles_add_Nmax;
+struct particle** particles_recv;
+int* particles_recv_N;
+int* particles_recv_Nmax;
 void add_particle_remote(struct particle pt, int proc_id);
 void add_particle_local(struct particle pt);
 
@@ -50,6 +53,9 @@ void init_box(){
 	particles_add   	= calloc(mpi_num,sizeof(struct particle*));
 	particles_add_N 	= calloc(mpi_num,sizeof(int));
 	particles_add_Nmax 	= calloc(mpi_num,sizeof(int));
+	particles_recv   	= calloc(mpi_num,sizeof(struct particle*));
+	particles_recv_N 	= calloc(mpi_num,sizeof(int));
+	particles_recv_Nmax 	= calloc(mpi_num,sizeof(int));
 
 #endif // MPI
 
@@ -67,6 +73,7 @@ void add_particle(struct particle pt){
 	int proc_id = rootbox/root_n_per_node;
 	if (proc_id != mpi_id){
 		// Add particle to array and send them to proc_id later. 
+		printf("adding particle tp remore\n");
 		add_particle_remote(pt,proc_id);
 		return;
 	}
@@ -77,6 +84,14 @@ void add_particle(struct particle pt){
 
 #ifdef MPI
 void particles_communicate(){
+	for (int i =0;i<mpi_num;i++){
+		MPI_Scatter(particles_add_N, 1, MPI_INT, &(particles_recv_N[i]), 1, MPI_INT, i, MPI_COMM_WORLD);
+	}
+	for (int i =0;i<mpi_num;i++){
+		if (particles_recv_N[i]!=0){
+			printf("mpi_id=%d\tN=%d\tparticles_recv_N[%d]=%d\n",mpi_id,N,i,particles_recv_N[i]);
+		}
+	}
 	// Send and receive particles that are in particles_add array via MPI
 	// Alltoall for particles_add_N
 	// Adjust local arrays for incoming particle
