@@ -8,6 +8,7 @@
 #include "particle.h"
 #include "main.h"
 #include "input.h"
+#include "communication_mpi.h"
 
 int input_check_restart(int argc, char** argv){
 	char filename[1024];
@@ -43,16 +44,22 @@ int input_check_restart(int argc, char** argv){
 }
 
 void input_binary(char* filename){
+#ifdef MPI
+	char filename_mpi[1024];
+	sprintf("%s_%d",filename,mpi_id);
+	FILE* inf = fopen(filename_mpi,"rb"); 
+#else // MPI
 	FILE* inf = fopen(filename,"rb"); 
+#endif // MPI
 	long bytes = 0;
-	bytes += fread(&N,sizeof(int),1,inf);
+	int _N;
+	bytes += fread(&_N,sizeof(int),1,inf);
 	bytes += fread(&t,sizeof(double),1,inf);
-	printf("Found %d particles in file '%s'. ",N,filename);
-	// Create particle structure
-#warning BINARY RESTART FILES NOT WORKING 
-	//init_particles(N);
-	for (int i=0;i<N;i++){
-		bytes += fread(&(particles[i]),sizeof(struct particle),1,inf);
+	printf("Found %d particles in file '%s'. ",_N,filename);
+	for (int i=0;i<_N;i++){
+		struct particle p;
+		bytes += fread(&p,sizeof(struct particle),1,inf);
+		particles_add(p);
 	}
 	fclose(inf);
 	printf("%ld bytes read. Restarting at time t=%f\n",bytes,t);
