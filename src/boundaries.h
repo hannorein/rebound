@@ -1,6 +1,6 @@
 #ifndef _BOUNDARIES_H
 #define _BOUNDARIES_H
-void check_boundaries();
+void boundaries_check();
 
 struct ghostbox{
 	double shiftx;

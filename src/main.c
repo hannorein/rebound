@@ -30,10 +30,6 @@ double timing_initial = -1;
 void iterate(){	
 	integrate_particles();
 	t+=dt;  // Note: This might be better at the end of this function (t is used in check_boundaries).
-	check_boundaries();
-#ifdef MPI
-	particles_communicate();
-#endif
 #ifdef OPENGL
 	display();
 #endif
@@ -54,7 +50,7 @@ void iterate(){
 
 int main(int argc, char* argv[]) {
 #ifdef MPI
-	mpi_init(argc,argv);
+	communication_mpi_init(argc,argv);
 #endif
 #ifdef OPENMP
 	printf("Using OpenMP with %d threads per node.\n",omp_get_num_threads());
@@ -66,9 +62,7 @@ int main(int argc, char* argv[]) {
 	// Initialiase random numbers, problem, box and OpengL
 	srand ( time(NULL) );
 	problem_init(argc, argv);
-#ifdef MPI
-	particles_communicate();
-#endif
+	boundaries_check();
 	problem_output();
 #ifdef OPENGL
 	init_display(argc, argv);

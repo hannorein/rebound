@@ -14,7 +14,6 @@ void calculate_forces_for_particle(int pt, struct ghostbox gb);
 void calculate_forces_for_particle_from_cell(int pt, struct cell *node, struct ghostbox gb);
 
 void calculate_forces(){
-	tree_update();
 #pragma omp parallel for
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 

@@ -35,7 +35,7 @@ void init_box(){
 
 #ifdef MPI
 	if ((root_n/mpi_num)*mpi_num != root_n){
-		fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",root_n,mpi_num);
+		if (mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",root_n,mpi_num);
 		exit(-1);
 	}
 #endif // MPI
@@ -48,14 +48,14 @@ void init_box(){
 }
 
 void add_particle_local(struct particle pt);
-void add_particle(struct particle pt){
+void particles_add(struct particle pt){
 #ifdef MPI
 	int rootbox = get_rootbox_for_particle(pt);
 	int root_n_per_node = root_n/mpi_num;
 	int proc_id = rootbox/root_n_per_node;
 	if (proc_id != mpi_id){
 		// Add particle to array and send them to proc_id later. 
-		add_particle_remote(pt,proc_id);
+		communication_mpi_add_particle_to_send_queue(pt,proc_id);
 		return;
 	}
 #endif // MPI

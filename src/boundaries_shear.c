@@ -6,13 +6,15 @@
 #include "particle.h"
 #include "boundaries.h"
 #include "main.h"
+#include "tree.h"
+#include "communication_mpi.h"
 
 extern const double OMEGA;
 int nghostx = 1;
 int nghosty = 1;
 int nghostz = 0;
 
-void check_boundaries(){
+void boundaries_check(){
 	double offset = -0.5*boxsize_y + fmod(t*1.5*OMEGA*boxsize_x,boxsize_y);
 #pragma omp parallel for
 	for (int i=0;i<N;i++){
@@ -42,6 +44,12 @@ void check_boundaries(){
 			particles[i].z += boxsize_z;
 		}
 	}
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+	tree_update();
+#endif
+#ifdef MPI
+	communication_mpi_distribute_particles();
+#endif
 }
 
 struct ghostbox get_ghostbox(int i, int j, int k){

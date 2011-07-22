@@ -43,6 +43,7 @@ void problem_init(int argc, char* argv[]){
 	init_box();
 	// Initial conditions
 #ifdef MPI
+	// Only initialise particles on master. This should also be parallised, but obviously depends on the problem.
 	if (mpi_id==0){
 #endif
 		for (int i =0;i<_N;i++){
@@ -59,8 +60,10 @@ void problem_init(int argc, char* argv[]){
 			pt.ay 		= 0;
 			pt.az 		= 0;
 			pt.m 		= particle_mass;
+#ifndef COLLISIONS_NONE
 			pt.r 		= particle_radius;
-			add_particle(pt);
+#endif
+			particles_add(pt);
 		}
 #ifdef MPI
 	}
@@ -78,7 +81,7 @@ void problem_inloop(){
 }
 
 void problem_output(){
-	if (output_check(1e-1*2.*M_PI/OMEGA)){
+	if (output_check(2.*M_PI/OMEGA)){
 		output_timing();
 	}
 }

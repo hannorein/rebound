@@ -6,6 +6,7 @@
 #include "particle.h"
 #include "boundaries.h"
 #include "main.h"
+#include "tree.h"
 
 extern const double OMEGA;
 int nghostx = 1;
@@ -32,6 +33,12 @@ void check_boundaries(){
 			particles[i].z += boxsize;
 		}
 	}
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+	tree_update();
+#endif
+#ifdef MPI
+	communication_mpi_distribute_particles();
+#endif
 }
 
 struct ghostbox get_ghostbox(int i, int j, int k){

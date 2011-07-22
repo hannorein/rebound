@@ -7,12 +7,13 @@
 #include "integrator.h"
 #include "main.h"
 #include "boundaries.h"
+#include "tree.h"
 
 int nghostx = 0;
 int nghosty = 0;
 int nghostz = 0;
 
-void check_boundaries(){
+void boundaries_check(){
 	for (int i=0;i<N;i++){
 		int removep = 0;
 		if(particles[i].x>boxsize_x/2.){
@@ -49,6 +50,12 @@ void check_boundaries(){
 #endif
 		}
 	}
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+	tree_update();
+#endif
+#ifdef MPI
+	communication_mpi_distribute_particles();
+#endif
 }
 
 struct ghostbox get_ghostbox(int i, int j, int k){

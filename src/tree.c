@@ -8,19 +8,16 @@
 #include "boundaries.h"
 #include "tree.h"
 
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+
 struct cell** root;
 
 int tree_get_octant_for_particle_in_cell(int pt, struct cell *node);
 struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *parent, int o);
 
-void tree_init(){
-	root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
-}
-
-
 void tree_add_particle_to_tree(int pt){
 	if (root==NULL){
-		tree_init();
+		root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
 	}
 	int root_index = get_rootbox_for_particle_int(pt);
 	root[root_index] = tree_add_particle_to_cell(root[root_index],pt,NULL,0);
@@ -172,7 +169,7 @@ struct cell *tree_update_cell(struct cell *node){
 		N--;
 		particles[oldpos] = particles[N];
 		particles[oldpos].c->pt = oldpos;
-		add_particle(reinsertme);
+		particles_add(reinsertme);
 		free(node);
 		return NULL; 
 	} else {
@@ -189,9 +186,8 @@ struct cell *tree_update_cell(struct cell *node){
 
 void tree_update(){
 	if (root==NULL){
-		tree_init();
+		root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
 	}
-	check_boundaries();
 	for(int i=0;i<root_nx;i++){
 	for(int j=0;j<root_ny;j++){
 	for(int k=0;k<root_nz;k++){
@@ -201,3 +197,6 @@ void tree_update(){
 	}
 	}
 }
+
+
+#endif

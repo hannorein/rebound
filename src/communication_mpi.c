@@ -25,14 +25,13 @@ struct particle** 	particles_recv;
 int* 			particles_recv_N;
 int* 			particles_recv_Nmax;
 
-void mpi_init(int argc, char** argv){
+void communication_mpi_init(int argc, char** argv){
 	MPI_Init(&argc,&argv);
 	MPI_Comm_size(MPI_COMM_WORLD,&mpi_num);
 	MPI_Comm_rank(MPI_COMM_WORLD,&mpi_id);
 	
 	
 	// Setup MPI description of the particle structure 
-	struct particle p;
 	int bnum = 0;
 	int blen[4];
 	MPI_Aint indices[4];
@@ -46,6 +45,7 @@ void mpi_init(int argc, char** argv){
 	oldtypes[bnum] 	= MPI_DOUBLE;
 	bnum++;
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+	struct particle p;
 	blen[bnum] 	= 1; 
 	indices[bnum] 	= (void*)&p.c - (void*)&p; 
 	oldtypes[bnum] 	= MPI_CHAR;
@@ -105,7 +105,7 @@ void mpi_init(int argc, char** argv){
 
 }
 
-void particles_communicate(){
+void communication_mpi_distribute_particles(){
 	// Distribute the number of particles to be transferred.
 	for (int i=0;i<mpi_num;i++){
 		MPI_Scatter(particles_send_N, 1, MPI_INT, &(particles_recv_N[i]), 1, MPI_INT, i, MPI_COMM_WORLD);
@@ -119,10 +119,6 @@ void particles_communicate(){
 		}
 	}
 
-	for (int i=0;i<mpi_num;i++){
-		if (i==mpi_id) continue;
-		if (particles_recv_N[i]==0) continue;
-	}
 	
 	// Exchange particles via MPI.
 	// Using non-blocking receive call.
@@ -148,7 +144,7 @@ void particles_communicate(){
 	// Add particles to local tree
 	for (int i=0;i<mpi_num;i++){
 		for (int j=0;j<particles_recv_N[i];j++){
-			add_particle(particles_recv[i][j]);
+			particles_add(particles_recv[i][j]);
 		}
 	}
 	// Bring everybody into sync, clean up. 
@@ -159,7 +155,7 @@ void particles_communicate(){
 	}
 }
 
-void add_particle_remote(struct particle pt, int proc_id){
+void communication_mpi_add_particle_to_send_queue(struct particle pt, int proc_id){
 	int send_N = particles_send_N[proc_id];
 	if (particles_send_Nmax[proc_id] <= send_N){
 		particles_send_Nmax[proc_id] += 128;

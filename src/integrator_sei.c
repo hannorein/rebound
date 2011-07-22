@@ -6,6 +6,7 @@
 #include "particle.h"
 #include "gravity.h"
 #include "main.h"
+#include "boundaries.h"
 
 double OMEGA = 1.; // Epicyclic frequency 
 double OMEGAZ = -1.; // Epicyclic frequency in vertical direction
@@ -37,12 +38,14 @@ void integrate_particles(){
 	for (int i=0;i<N;i++){
 		operator_H0(dt/2.,&(particles[i]));
 	}
+	boundaries_check();
 	calculate_forces();
 #pragma omp parallel for
 	for (int i=0;i<N;i++){
 		operator_phi(dt,&(particles[i]));
 		operator_H0(dt/2.,&(particles[i]));
 	}
+	boundaries_check();
 }
 
 // This function evolves a particle under 

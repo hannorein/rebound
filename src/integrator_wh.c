@@ -29,6 +29,7 @@ void integrate_particles(){
 	if (WH_SELFGRAVITY_ENABLED==1){
 		// DRIFT
 		drift_wh(dt/2.);
+		boundaries_check();
 		// KICK
 		calculate_forces();
 		for (int i=1;i<N;i++){
@@ -49,6 +50,7 @@ void integrate_particles(){
 		// DRIFT
 		drift_wh(dt);
 	}
+	boundaries_check();
 }
 
 void drift_wh(double _dt){

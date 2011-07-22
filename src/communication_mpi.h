@@ -10,9 +10,9 @@ MPI_Datatype mpi_particle;
 MPI_Datatype mpi_cell;
 #endif
 
-void mpi_init(int argc, char** argv);
-void add_particle_remote(struct particle pt, int proc_id);
-
+void communication_mpi_init(int argc, char** argv);
+void communication_mpi_distribute_particles();
+void communication_mpi_add_particle_to_send_queue(struct particle pt, int proc_id);
 
 #endif // MPI
 #endif // _COMMUNICATION_MPI_H
