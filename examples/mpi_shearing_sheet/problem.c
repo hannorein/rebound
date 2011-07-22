@@ -84,6 +84,7 @@ void problem_output(){
 //	if (output_check(2.*M_PI/OMEGA)){
 		output_timing();
 //	}
+		output_append_velocity_dispersion("veldisp.txt");
 }
 
 void problem_finish(){

@@ -198,13 +198,10 @@ void output_append_velocity_dispersion(char* filename){
 	int N_tot = 0;
 	struct vec3 A_tot = {.x=0, .y=0, .z=0};
 	struct vec3 Q_tot = {.x=0, .y=0, .z=0};
-	MPI_Reduce(&N, &N_tot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD); 
-	MPI_Reduce(&(A.x), &(A_tot.x), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
-	MPI_Reduce(&(A.y), &(A_tot.y), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
-	MPI_Reduce(&(A.z), &(A_tot.z), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
-	MPI_Reduce(&(Q.x), &(Q_tot.x), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
-	MPI_Reduce(&(Q.y), &(Q_tot.y), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
-	MPI_Reduce(&(Q.z), &(Q_tot.z), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+	MPI_Reduce(&N, &N_tot, 3, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD); 
+	MPI_Reduce(&A, &A_tot, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+	MPI_Reduce(&Q, &Q_tot, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+	if (mpi_id!=0) return;
 #else
 	int N_tot = N;
 	struct vec3 A_tot = A;
