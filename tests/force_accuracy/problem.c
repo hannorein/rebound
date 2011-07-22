@@ -25,32 +25,34 @@ void problem_init(int argc, char* argv[]){
 		opening_angle2 = atof(argv[1]);
 		opening_angle2 *= opening_angle2;
 	}
-	boxsize = 2;
-	softening = 0;//boxsize/100.;
-	init_particles(10000);
-	dt = 1e-4;
-	tmax = dt/10.;
+	boxsize 	= 2;
+	dt 		= 1e-4;
+	tmax 		= dt/10.;
+	int _N 		= 1000;
+	init_box();
 	// Initial conditions
-	for (int i =0;i<N;i++){
+	for (int i =0;i<_N;i++){
+		struct particle p;
 		double r;
 		double rmax = 0.1*boxsize;
 		do{
-			particles[i].x = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
-			particles[i].y = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
-			particles[i].z = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_z;
-			r = sqrt(particles[i].x*particles[i].x+particles[i].y*particles[i].y+particles[i].z*particles[i].z);
+			p.x = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
+			p.y = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
+			p.z = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_z;
+			r = sqrt(p.x*p.x+p.y*p.y+p.z*p.z);
 		}while(r>rmax);
 		double M = pow(r/rmax,3.);
 		double vkep = sqrt(G*M/r);
 		double phi = 2.*M_PI*((double)rand()/(double)RAND_MAX-0.5);
 		double psi = 2.*M_PI*((double)rand()/(double)RAND_MAX-0.5);
-		particles[i].vx = vkep*sin(phi)*sin(psi)   +vkep*0.1*((double)rand()/(double)RAND_MAX-0.5);
-		particles[i].vy = vkep*cos(phi)*sin(psi)   +vkep*0.1*((double)rand()/(double)RAND_MAX-0.5);
-		particles[i].vz = vkep*cos(psi)            +vkep*0.1*((double)rand()/(double)RAND_MAX-0.5);
-		particles[i].ax = 0;
-		particles[i].ay = 0;
-		particles[i].az = 0;
-		particles[i].m = 1./(double)N;
+		p.vx = vkep*sin(phi)*sin(psi)   +vkep*0.1*((double)rand()/(double)RAND_MAX-0.5);
+		p.vy = vkep*cos(phi)*sin(psi)   +vkep*0.1*((double)rand()/(double)RAND_MAX-0.5);
+		p.vz = vkep*cos(psi)            +vkep*0.1*((double)rand()/(double)RAND_MAX-0.5);
+		p.ax = 0;
+		p.ay = 0;
+		p.az = 0;
+		p.m = 1./(double)_N;
+		particles_add(p);
 	}
 	// No ghost boxes 
 	nghostx = 0;
@@ -71,7 +73,7 @@ double average_relative_force_error(){
 		for (int gby=-nghosty; gby<=nghosty; gby++){
 		for (int gbz=-nghostz; gbz<=nghostz; gbz++){
 			struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
-			for (int j=N_active_first; j<N_active_last; j++){
+			for (int j=N_active_first; j<(N_active_last==-1?N:N_active_last); j++){
 				if (i==j) continue;
 				double dx = (gb.shiftx+particles[i].x) - particles[j].x;
 				double dy = (gb.shifty+particles[i].y) - particles[j].y;
@@ -92,6 +94,7 @@ double average_relative_force_error(){
 		error += fabs((particles[i].ay - ay));
 		error += fabs((particles[i].az - az));
 	}
+	printf("error = %f\n",acceltot);
 	return error/acceltot;
 }
 

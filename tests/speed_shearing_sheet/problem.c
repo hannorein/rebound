@@ -13,38 +13,40 @@ extern double OMEGA;
 extern double coefficient_of_restitution;
 extern double minimum_collision_velocity;
 
-double size = 2;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	OMEGA = 1.;
 	// Setup particle structures
 	if (argc>1){
-		size= atof(argv[1]);
+		boxsize = atof(argv[1]);
+	}else{
+		boxsize = 2;
 	}
-	boxsize_x = size;
-	boxsize_y = size;
-	boxsize_z = 4;
-	tmax = 10.*M_PI;
-	init_particles((int)round(50.*size*size));
+	root_nz 	= 4;
+	dt 		= 1e-2;
+	tmax 		= 10.*M_PI;
+	int _N 		= round(50.*boxsize*boxsize);
 	coefficient_of_restitution = 0.5;
 	minimum_collision_velocity = 0.05;
-	dt = 1e-2;
+	init_box();
 	// Initial conditions
-	for (int i =0;i<N;i++){
+	for (int i =0;i<_N;i++){
+		struct particle p;
 		double vrand = 0.4*((double)rand()/(double)RAND_MAX-0.5);
 		double phirand = 2.*M_PI*((double)rand()/(double)RAND_MAX-0.5);
-		particles[i].x = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
-		particles[i].y = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
-		particles[i].z = .4*((double)rand()/(double)RAND_MAX-0.5);
-		particles[i].vx = 0;
-		particles[i].vy = -1.5*particles[i].x*OMEGA+2.*vrand*cos(phirand);
-		particles[i].vz = vrand*sin(phirand);
-		particles[i].ax = 0;
-		particles[i].ay = 0;
-		particles[i].az = 0;
-		particles[i].m = 0.005;
-		particles[i].r = 0.1;
+		p.x = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
+		p.y = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
+		p.z = .4*((double)rand()/(double)RAND_MAX-0.5);
+		p.vx = 0;
+		p.vy = -1.5*p.x*OMEGA+2.*vrand*cos(phirand);
+		p.vz = vrand*sin(phirand);
+		p.ax = 0;
+		p.ay = 0;
+		p.az = 0;
+		p.m = 0.005;
+		p.r = 0.1;
+		particles_add(p);
 	}
 	// Do use ghost boxes in x and y
 	nghostx = 1;

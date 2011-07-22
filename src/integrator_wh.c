@@ -6,6 +6,7 @@
 #include "particle.h"
 #include "main.h"
 #include "gravity.h"
+#include "boundaries.h"
 
 // Wisdom Holman Integrator
 // for non-rotating frames.

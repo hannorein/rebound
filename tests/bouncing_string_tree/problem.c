@@ -24,28 +24,30 @@ void problem_init(int argc, char* argv[]){
 	loopsleft = loops;
 
 	tmax = 1.2*(double)loops;
-	boxsize_x = 30;
-	boxsize_y = 10;
-	boxsize_z = 3;
+	boxsize = 3;
+	root_nx = 10;
+	root_ny = 3;
+	root_nz = 1;
 	coefficient_of_restitution = 1; // elastic collisions
 
 	// Setup particle structures
-	init_particles(10);
+	init_box();
 	// Initial conditions
-	for (int i=0;i<N;i++){
-		particles[i].x  = -boxsize_x/2.+boxsize_x*(double)i/(double)N;
-		particles[i].y  = 0;
-		particles[i].z  = 0;
-		particles[i].vx = 0;
-		particles[i].vy = 0;
-		particles[i].vz = 0;
-		particles[i].ax = 0;
-		particles[i].ay = 0;
-		particles[i].az = 0;
-		particles[i].m  = 1;
-		particles[i].r  = 1;
+	for (int i=0;i<10;i++){
+		struct particle pt;
+		pt.x  = -boxsize_x/2.+boxsize_x*(double)i/10.;
+		pt.y  = 0;
+		pt.z  = 0;
+		pt.vx = (i==0?10:0);
+		pt.vy = 0;
+		pt.vz = 0;
+		pt.ax = 0;
+		pt.ay = 0;
+		pt.az = 0;
+		pt.m  = 1;
+		pt.r  = 1;
+		particles_add(pt);
 	}
-	particles[0].vx = 10;
 	// Do not use any ghost boxes
 	nghostx = 1;
 	nghosty = 1;
@@ -55,6 +57,7 @@ void problem_init(int argc, char* argv[]){
 
 double tcontact =0 ;
 double vlast = 0;
+extern double collisions_plog;
 void problem_inloop(){
 	if (particles[0].vx!=vlast){
 		vlast = particles[0].vx;

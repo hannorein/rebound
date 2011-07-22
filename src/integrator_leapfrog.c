@@ -6,6 +6,7 @@
 #include "particle.h"
 #include "main.h"
 #include "gravity.h"
+#include "boundaries.h"
 
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
@@ -16,6 +17,7 @@ void integrate_particles(){
 		particles[i].y  += 0.5* dt * particles[i].vy;
 		particles[i].z  += 0.5* dt * particles[i].vz;
 	}
+	boundaries_check();
 	calculate_forces();
 #pragma omp parallel for
 	for (int i=0;i<N;i++){
