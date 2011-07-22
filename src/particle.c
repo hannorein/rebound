@@ -11,9 +11,9 @@
 #endif // MPI
 
 struct particle* particles;
-struct particle** particles_add;
-int* particles_add_N;
-int* particles_add_Nmax;
+struct particle** particles_send;
+int* particles_send_N;
+int* particles_send_Nmax;
 struct particle** particles_recv;
 int* particles_recv_N;
 int* particles_recv_Nmax;
@@ -50,9 +50,9 @@ void init_box(){
 		exit(-1);
 	}
 	
-	particles_add   	= calloc(mpi_num,sizeof(struct particle*));
-	particles_add_N 	= calloc(mpi_num,sizeof(int));
-	particles_add_Nmax 	= calloc(mpi_num,sizeof(int));
+	particles_send   	= calloc(mpi_num,sizeof(struct particle*));
+	particles_send_N 	= calloc(mpi_num,sizeof(int));
+	particles_send_Nmax 	= calloc(mpi_num,sizeof(int));
 	particles_recv   	= calloc(mpi_num,sizeof(struct particle*));
 	particles_recv_N 	= calloc(mpi_num,sizeof(int));
 	particles_recv_Nmax 	= calloc(mpi_num,sizeof(int));
@@ -73,7 +73,6 @@ void add_particle(struct particle pt){
 	int proc_id = rootbox/root_n_per_node;
 	if (proc_id != mpi_id){
 		// Add particle to array and send them to proc_id later. 
-		printf("adding particle tp remore\n");
 		add_particle_remote(pt,proc_id);
 		return;
 	}
@@ -84,33 +83,67 @@ void add_particle(struct particle pt){
 
 #ifdef MPI
 void particles_communicate(){
-	for (int i =0;i<mpi_num;i++){
-		MPI_Scatter(particles_add_N, 1, MPI_INT, &(particles_recv_N[i]), 1, MPI_INT, i, MPI_COMM_WORLD);
+	// Distribute the number of particles to be transferred.
+	for (int i=0;i<mpi_num;i++){
+		MPI_Scatter(particles_send_N, 1, MPI_INT, &(particles_recv_N[i]), 1, MPI_INT, i, MPI_COMM_WORLD);
 	}
-	for (int i =0;i<mpi_num;i++){
-		if (particles_recv_N[i]!=0){
-			printf("mpi_id=%d\tN=%d\tparticles_recv_N[%d]=%d\n",mpi_id,N,i,particles_recv_N[i]);
+	// Allocate memory for incoming particles
+	for (int i=0;i<mpi_num;i++){
+		if  (i==mpi_id) continue;
+		if (particles_recv_Nmax[i]<particles_recv_N[i]){
+			particles_recv_Nmax[i] += 32;
+			particles_recv[i] = realloc(particles_recv[i],sizeof(struct particle)*particles_recv_Nmax[i]);
 		}
 	}
-	// Send and receive particles that are in particles_add array via MPI
-	// Alltoall for particles_add_N
-	// Adjust local arrays for incoming particle
-	// Create assynchonous recv for incoming particles
+
+	for (int i=0;i<mpi_num;i++){
+		if (i==mpi_id) continue;
+		if (particles_recv_N[i]==0) continue;
+	}
+	
+	// Exchange particles via MPI.
+	// Using non-blocking receive call.
+	MPI_Request request[mpi_num];
+	for (int i=0;i<mpi_num;i++){
+		if (i==mpi_id) continue;
+		if (particles_recv_N[i]==0) continue;
+		MPI_Irecv(particles_recv[i], particles_recv_N[i], mpi_particle, i, i*mpi_num+mpi_id, MPI_COMM_WORLD, &(request[i]));
+	}
+	// Using blocking send call.
+	for (int i=0;i<mpi_num;i++){
+		if (i==mpi_id) continue;
+		if (particles_send_N[i]==0) continue;
+		MPI_Send(particles_send[i], particles_send_N[i], mpi_particle, i, mpi_id*mpi_num+i, MPI_COMM_WORLD);
+	}
+	// Wait for all particles to be received.
+	for (int i=0;i<mpi_num;i++){
+		if (i==mpi_id) continue;
+		if (particles_recv_N[i]==0) continue;
+		MPI_Status status;
+		MPI_Wait(&(request[i]), &status);
+	}
+	// Add particles to local tree
+	for (int i=0;i<mpi_num;i++){
+		for (int j=0;j<particles_recv_N[i];j++){
+			add_particle(particles_recv[i][j]);
+		}
+	}
+	// Bring everybody into sync, clean up. 
 	MPI_Barrier(MPI_COMM_WORLD);
-	// Create assynchonous send for incoming particles
-	// Wait for particles to arrive.
-	// Add received particles to local structures.
-	MPI_Barrier(MPI_COMM_WORLD);
+	for (int i=0;i<mpi_num;i++){
+		particles_send_N[i] = 0;
+		particles_recv_N[i] = 0;
+	}
 }
 
 
 void add_particle_remote(struct particle pt, int proc_id){
-	if (particles_add_Nmax[proc_id]<=particles_add_N[proc_id]){
-		particles_add_Nmax[proc_id] += 128;
-		particles_add[proc_id] = realloc(particles_add[proc_id],sizeof(struct particle)*particles_add_Nmax[proc_id]);
+	if (particles_send_Nmax[proc_id]<=particles_send_N[proc_id]){
+		particles_send_Nmax[proc_id] += 128;
+		particles_send[proc_id] = realloc(particles_send[proc_id],sizeof(struct particle)*particles_send_Nmax[proc_id]);
 	}
-	particles_add[proc_id][particles_add_N[proc_id]] = pt;
-	particles_add_N[proc_id]++;
+	particles_send[proc_id][particles_send_N[proc_id]] = pt;
+	particles_send_N[proc_id]++;
 }
 #endif // MPI
 

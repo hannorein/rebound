@@ -121,6 +121,7 @@ void mpi_init(int argc, char** argv){
 	oldtypes[bnum] 	= MPI_UB;
 	bnum++;
 	MPI_Type_struct(bnum, blen, indices, oldtypes, &mpi_particle );
+	MPI_Type_commit(&mpi_particle); 
 
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
 	// Setup MPI description of the cell structure 
@@ -151,6 +152,7 @@ void mpi_init(int argc, char** argv){
 	oldtypes[bnum] 	= MPI_UB;
 	bnum++;
 	MPI_Type_struct(bnum, blen, indices, oldtypes, &mpi_cell );
+	MPI_Type_commit(&mpi_cell); 
 #endif 
 
 	if (mpi_id==0){

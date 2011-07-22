@@ -79,7 +79,11 @@ void output_timing(){
 	}else{
 		printf("\r");
 	}
-	printf("N_tot= %- 9d  t= %- 9f  cpu= %- 9f s  t/tmax= %5.2f%%",N_tot,t,temp-output_timing_last,t/tmax*100);
+	if (tmax>0){
+		printf("N_tot= %- 9d  t= %- 9f  cpu= %- 9f s  t/tmax= %5.2f%%",N_tot,t,temp-output_timing_last,t/tmax*100);
+	}else{
+		printf("N_tot= %- 9d  t= %- 9f  cpu= %- 9f s ",N_tot,t,temp-output_timing_last);
+	}
 	fflush(stdout);
 	output_timing_last = temp;
 }

@@ -40,5 +40,6 @@ void init_box();
 void add_particle(struct particle pt);
 int get_rootbox_for_particle(struct particle pt);
 int get_rootbox_for_particle_int(int pt);
+void particles_communicate();
 
 #endif
