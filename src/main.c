@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
 	communication_mpi_init(argc,argv);
 #endif // MPI
 #ifdef OPENMP
-	printf("Using OpenMP with %d threads per node.\n",omp_get_num_threads());
+	printf("Using OpenMP with %d threads per node.\n",omp_get_max_threads());
 #endif // OPENMP
 	// Timing
 	struct timeval tim;
