@@ -23,7 +23,7 @@ struct cell {
 	double w;
 	struct cell *oct[8];
 	int pt;						// has double usages
-} cell;
+};
 
 extern struct cell** tree_root;
 

@@ -17,18 +17,20 @@ extern double minimum_collision_velocity;
 extern double (*coefficient_of_restitution_for_velocity)(double); 
 double coefficient_of_restitution_bridges(double v); 
 
+extern double opening_angle2;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
+	opening_angle2	= 1;
 	OMEGA 		= 0.00013143527;		// 1/s
 	G 		= 6.67428e-11;			// m^3 / kg s^2
-	softening 	= 0.1;				// m
-	dt 		= 1e-3*2.*M_PI/OMEGA;		// s
-	root_nx = 2; root_ny = 2; root_nz = 2;
-	nghostx = 3; nghosty = 3; nghostz = 0; 		// Use three ghost rings
+	softening 	= 1.;				// m
+	dt 		= 1e-2*2.*M_PI/OMEGA;		// s
+	root_nx = 1; root_ny = 1; root_nz = 1;
+	nghostx = 1; nghosty = 1; nghostz = 0; 		// Use three ghost rings
 	double surfacedensity 	= 400; 			// kg/m^2
 	double particle_density	= 400;			// g/cm^3
-	double particle_radius 	= 5;			// m
+	double particle_radius 	= 2;			// m
 	double particle_mass 	= particle_density*4./3.*M_PI*pow(particle_radius,3); 	// kg
 	if (argc>1){					// Try to read boxsize from command line
 		boxsize = atof(argv[1]);
@@ -81,9 +83,12 @@ void problem_inloop(){
 }
 
 void problem_output(){
-//	if (output_check(2.*M_PI/OMEGA)){
+	if (output_check(2.*M_PI/OMEGA)){
 		output_timing();
-//	}
+	}
+	if (output_check(1e-1*2.*M_PI/OMEGA)){
+		output_append_velocity_dispersion("veldisp.txt");
+	}
 }
 
 void problem_finish(){

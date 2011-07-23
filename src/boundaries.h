@@ -9,7 +9,7 @@ struct ghostbox{
 	double shiftvx;
 	double shiftvy;
 	double shiftvz;
-} ghostbox;
+};
 
 struct ghostbox get_ghostbox(int i, int j, int k);
 

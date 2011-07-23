@@ -24,7 +24,7 @@ struct particle {
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
 	struct cell* c;
 #endif
-} particle;
+} ;
 
 extern struct particle* particles;
 void particles_add(struct particle pt);

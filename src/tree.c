@@ -118,7 +118,7 @@ struct cell *tree_update_cell(struct cell *node){
 		node->mzz = 0;
 	#endif // QUADRUPOLE
 #endif // GRAVITY_TREE
-		for (int o = 0; o < 8; o++) {
+		for (int o=0; o<8; o++) {
 			if (node->oct[o] != NULL) {
 				// Calculate the total mass and the center of mass
 #ifdef GRAVITY_TREE
@@ -145,8 +145,7 @@ struct cell *tree_update_cell(struct cell *node){
 				if (node->oct[o]->pt >= 0) {	// The child is a leaf
 					node->pt--;
 					test = o;
-				}
-				else {	// The child cell contains several particles
+				}else{				// The child cell contains several particles
 					node->pt += node->oct[o]->pt;
 				}
 			}		
