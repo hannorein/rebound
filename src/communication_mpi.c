@@ -334,7 +334,7 @@ void communication_distribute_essential_tree(){
 	// Add tree_essential to local tree
 	for (int i=0;i<mpi_num;i++){
 		for (int j=0;j<tree_essential_recv_N[i];j++){
-			tree_add_essential_node(tree_essential_recv[i][j]);
+			tree_add_essential_node(&(tree_essential_recv[i][j]));
 		}
 	}
 	// Bring everybody into sync, clean up. 

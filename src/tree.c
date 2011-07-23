@@ -187,20 +187,43 @@ struct cell *tree_update_cell(struct cell *node){
 }
 
 #ifdef MPI
-
-void tree_add_essential_node(struct cell node){
-	// Add essential node to appropriate parent.
+int particles_get_rootbox_for_node(struct cell* node){
+	int i = ((int)floor((node->x + boxsize_x/2.)/boxsize)+root_nx)%root_nx;
+	int j = ((int)floor((node->y + boxsize_y/2.)/boxsize)+root_ny)%root_ny;
+	int k = ((int)floor((node->z + boxsize_z/2.)/boxsize)+root_nz)%root_nz;
+	int index = (k*root_ny+j)*root_nx+i;
+	return index;
 }
 
-void tree_delete_essential_tree(struct cell* node){
-	for (int o=0;o<8;o++){
-		if (node->oct[o] != NULL){
-			tree_delete_essential_tree(node->oct[o]);
-		}
+int tree_get_octant_for_cell_in_cell(struct cell* nnode, struct cell *node){
+	int octant = 0;
+	if (nnode->x < node->x) octant+=1;
+	if (nnode->y < node->y) octant+=2;
+	if (nnode->z < node->z) octant+=4;
+	return octant;
+}
+
+void tree_add_essential_node_to_node(struct cell* nnode, struct cell* node){
+	int o = tree_get_octant_for_cell_in_cell(nnode, node);
+	if (node->oct[o]==NULL){
+		node->oct[o] = nnode;
+	}else{
+		tree_add_essential_node_to_node(nnode, node->oct[o]);
 	}
-	free(node);
 }
 
+void tree_add_essential_node(struct cell* node){
+	// Add essential node to appropriate parent.
+	for (int o=0;o<8;o++){
+		node->oct[o] = NULL;	
+	}
+	int index = particles_get_rootbox_for_node(node);
+	if (tree_root[index]==NULL){
+		tree_root[index] = node;
+	}else{
+		tree_add_essential_node_to_node(node, tree_root[index]);
+	}
+}
 
 void tree_update(){
 	if (tree_root==NULL){
@@ -211,10 +234,10 @@ void tree_update(){
 			tree_root[i] = tree_update_cell(tree_root[i]);
 			communication_prepare_essential_tree(tree_root[i]);
 		}else{
-			if (tree_root[i]!=NULL){
-				tree_delete_essential_tree(tree_root[i]);
-				tree_root[i] = NULL;
-			}
+			// Delete essential tree reference. 
+			// Tree itself is saved in tree_essential_recv[][] and
+			// will be overwritten the next timestep.
+			tree_root[i] = NULL;
 		}
 	}
 	communication_distribute_essential_tree();

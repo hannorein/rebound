@@ -31,7 +31,7 @@ void tree_init();
 void tree_update();
 void tree_add_particle_to_tree(int pt);
 #ifdef MPI
-void tree_add_essential_node(struct cell node);
+void tree_add_essential_node(struct cell* node);
 #endif
 
 
