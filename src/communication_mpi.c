@@ -6,7 +6,9 @@
 #include <time.h>
 #include <sys/time.h>
 #include "particle.h"
+#include "main.h"
 #include "tree.h"
+#include "boundaries.h"
 #include "communication_mpi.h"
 
 #include "mpi.h"
@@ -185,9 +187,112 @@ void communication_mpi_add_particle_to_send_queue(struct particle pt, int proc_i
 }
 
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+
+struct aabb{ // axis aligned bounding box
+	double xmin;
+	double xmax;
+	double ymin;
+	double ymax;
+	double zmin;
+	double zmax;
+} aabb;
+
+struct aabb communication_boundingbox_for_root(int index){
+	int i = index%root_nx;
+	int j = ((index-i)/root_nx)%root_ny;
+	int k = ((index-i)/root_nx-j)/root_ny;
+	struct aabb boundingbox;
+	boundingbox.xmin = -boxsize_x/2.+boxsize*(double)i;
+	boundingbox.ymin = -boxsize_y/2.+boxsize*(double)j;
+	boundingbox.zmin = -boxsize_z/2.+boxsize*(double)k;
+	boundingbox.xmax = -boxsize_x/2.+boxsize*(double)(i+1);
+	boundingbox.ymax = -boxsize_y/2.+boxsize*(double)(j+1);
+	boundingbox.zmax = -boxsize_z/2.+boxsize*(double)(k+1);
+	return boundingbox;
+}
+
+struct aabb communication_boundingbox_for_proc(int proc_id){
+	int root_n_per_node = root_n/mpi_num;
+	int root_start = proc_id*root_n_per_node;
+	int root_stop  = (proc_id+1)*root_n_per_node;
+	struct aabb boundingbox = communication_boundingbox_for_root(root_start);
+	for (int i=root_start+1;i<root_stop;i++){
+		struct aabb boundingbox2 = communication_boundingbox_for_root(i);
+		if (boundingbox.xmin > boundingbox2.xmin) boundingbox.xmin = boundingbox2.xmin;
+		if (boundingbox.ymin > boundingbox2.ymin) boundingbox.ymin = boundingbox2.ymin;
+		if (boundingbox.zmin > boundingbox2.zmin) boundingbox.zmin = boundingbox2.zmin;
+		if (boundingbox.xmax < boundingbox2.xmax) boundingbox.xmax = boundingbox2.xmax;
+		if (boundingbox.ymax < boundingbox2.ymax) boundingbox.ymax = boundingbox2.ymax;
+		if (boundingbox.zmax < boundingbox2.zmax) boundingbox.zmax = boundingbox2.zmax;
+	}
+	return boundingbox;
+}
+double communication_distance2_of_aabb_to_cell(struct aabb bb, struct cell* node){
+	double distancex = fabs(node->x - (bb.xmin+bb.xmax)/2.)  -  (node->w + bb.xmax-bb.xmin)/2.;
+	double distancey = fabs(node->y - (bb.ymin+bb.ymax)/2.)  -  (node->w + bb.ymax-bb.ymin)/2.;
+	double distancez = fabs(node->z - (bb.zmin+bb.zmax)/2.)  -  (node->w + bb.zmax-bb.zmin)/2.;
+	if (distancex<=0 && distancey<=0 && distancez<=0) return 0;	// Overlapping
+	if (distancex<=0 && distancey <=0) return distancez*distancez;
+	if (distancey<=0 && distancez <=0) return distancex*distancex;
+	if (distancez<=0 && distancex <=0) return distancey*distancey;
+	if (distancex<=0)  return distancey*distancey + distancez*distancez;
+	if (distancey<=0)  return distancex*distancex + distancez*distancez;
+	if (distancez<=0)  return distancey*distancey + distancex*distancex;
+	return distancex*distancex + distancey*distancey + distancez*distancez;
+}
+
+double communication_distance2_of_proc_to_node(int proc_id, struct cell* node){
+	int nghostxcol = (nghostx>1?1:0);
+	int nghostycol = (nghosty>1?1:0);
+	int nghostzcol = (nghostz>1?1:0);
+	double distance = boxsize*(double)root_n;
+	for (int gbx=-nghostxcol; gbx<=nghostxcol; gbx++){
+	for (int gby=-nghostycol; gby<=nghostycol; gby++){
+	for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
+		struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
+		struct aabb boundingbox = communication_boundingbox_for_proc(proc_id);
+		boundingbox.xmin+=gb.shiftx;
+		boundingbox.xmax+=gb.shiftx;
+		boundingbox.ymin+=gb.shifty;
+		boundingbox.ymax+=gb.shifty;
+		boundingbox.zmin+=gb.shiftz;
+		boundingbox.zmax+=gb.shiftz;
+		// calculate distance
+		double distanceb = communication_distance2_of_aabb_to_cell(boundingbox,node);
+		if (distance > distanceb) distance = distanceb;
+	}
+	}
+	}
+	return distance;
+}
+
+extern double opening_angle2;
+void communication_prepare_essential_cell_for_proc(struct cell* node, int proc){
+	// Add essential cell to tree_essential_send
+	if (tree_essential_send_N[proc]>=tree_essential_send_Nmax[proc]){
+		tree_essential_send_Nmax[proc] += 32;
+		tree_essential_send[proc] = realloc(tree_essential_send[proc],sizeof(struct cell)*tree_essential_send_Nmax[proc]);
+	}
+	tree_essential_send[proc][tree_essential_send_N[proc]] = (*node);
+	tree_essential_send_N[proc]++;
+		
+	double distance2 = communication_distance2_of_proc_to_node(proc,node);
+	if (((node->w*node->w)> opening_angle2*distance2)) {
+		for (int o=0;o<8;o++){
+			struct cell* d = node->oct[o];
+			if (d==NULL) continue;
+			communication_prepare_essential_cell_for_proc(d,proc);
+		}
+	}
+}
+
 void communication_prepare_essential_tree(struct cell* root){
+	if (root==NULL) return;
 	// Find out which cells are needed by every other node
-	// Add them to tree_essential_send
+	for (int i=0; i<mpi_num; i++){
+		if (i==mpi_id) continue;
+		communication_prepare_essential_cell_for_proc(root,i);	
+	}
 }
 
 void communication_distribute_essential_tree(){
