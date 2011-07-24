@@ -38,6 +38,7 @@ void integrate_particles(){
 	for (int i=0;i<N;i++){
 		operator_H0(dt/2.,&(particles[i]));
 	}
+	t+=dt/2.;
 	boundaries_check();
 	calculate_forces();
 #pragma omp parallel for
@@ -45,6 +46,7 @@ void integrate_particles(){
 		operator_phi(dt,&(particles[i]));
 		operator_H0(dt/2.,&(particles[i]));
 	}
+	t+=dt/2.;
 	boundaries_check();
 }
 

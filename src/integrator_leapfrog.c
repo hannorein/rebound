@@ -17,6 +17,7 @@ void integrate_particles(){
 		particles[i].y  += 0.5* dt * particles[i].vy;
 		particles[i].z  += 0.5* dt * particles[i].vz;
 	}
+	t+=dt/2.;
 	boundaries_check();
 	calculate_forces();
 #pragma omp parallel for
@@ -28,6 +29,7 @@ void integrate_particles(){
 		particles[i].y  += 0.5* dt * particles[i].vy;
 		particles[i].z  += 0.5* dt * particles[i].vz;
 	}
+	t+=dt/2.;
 	boundaries_check();
 }
 	

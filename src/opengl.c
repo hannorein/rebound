@@ -68,6 +68,13 @@ void displayKey(unsigned char key, int x, int y){
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
 void display_cell(struct cell* node){
 	if (node == NULL) return;
+	glColor4f(1.0,0.5,1.0,0.4);
+	glTranslatef(node->mx,node->my,node->mz);
+	glScalef(0.04*node->w,0.04*node->w,0.04*node->w);
+	glCallList(DListSPHERE);
+	glScalef(25./node->w,25./node->w,25./node->w);
+	glTranslatef(-node->mx,-node->my,-node->mz);
+	glColor4f(1.0,0.0,0.0,0.4);
 	glTranslatef(node->x,node->y,node->z);
 	glutWireCube(node->w);
 	glTranslatef(-node->x,-node->y,-node->z);

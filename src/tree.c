@@ -59,6 +59,13 @@ struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *p
 		}
 		return node;
 	}
+
+	// Modify the total mass and center of mass of a cell
+#warning ADD QUADRUPOLE TESNOR CALCULAION HERE
+	node->mx  = (node->m*node->mx + particles[pt].m*particles[pt].x) / (node->m+particles[pt].m);
+	node->my  = (node->m*node->my + particles[pt].m*particles[pt].y) / (node->m+particles[pt].m);
+	node->mz  = (node->m*node->mz + particles[pt].m*particles[pt].z) / (node->m+particles[pt].m);
+	node->m  += particles[pt].m;
 	if (node->pt >= 0) {
 		int o = tree_get_octant_for_particle_in_cell(node->pt, node);
 		node->oct[o] = tree_add_particle_to_cell(node->oct[o], node->pt, node, o); 
@@ -83,9 +90,9 @@ int tree_get_octant_for_particle_in_cell(int pt, struct cell *node){
 }
 
 int tree_particle_is_inside_cell(struct cell *node){
-	if (fabs(particles[node->pt].x-node->x) > node->w || \
-		fabs(particles[node->pt].y-node->y) > node->w || \
-		fabs(particles[node->pt].z-node->z) > node->w) {
+	if (fabs(particles[node->pt].x-node->x) > node->w/2. || \
+		fabs(particles[node->pt].y-node->y) > node->w/2. || \
+		fabs(particles[node->pt].z-node->z) > node->w/2.) {
 		return 0;
 	}
 	return 1;
@@ -119,14 +126,15 @@ struct cell *tree_update_cell(struct cell *node){
 	#endif // QUADRUPOLE
 #endif // GRAVITY_TREE
 		for (int o=0; o<8; o++) {
-			if (node->oct[o] != NULL) {
+			struct cell *d = node->oct[o];
+			if (d != NULL) {
 				// Calculate the total mass and the center of mass
 #ifdef GRAVITY_TREE
-				double m_o = node->oct[o]->m;
-				node->mx = (node->mx*node->m + node->oct[o]->mx*m_o) / (node->m + m_o);
-				node->my = (node->my*node->m + node->oct[o]->my*m_o) / (node->m + m_o);
-				node->mz = (node->mz*node->m + node->oct[o]->mz*m_o) / (node->m + m_o);
-				node->m += m_o;
+				double m_o = d->m;
+				node->mx += d->mx*m_o;
+				node->my += d->my*m_o;
+				node->mz += d->mz*m_o;
+				node->m  += m_o;
 #ifdef QUADRUPOLE
 				// Ref: Hernquist, L., 1987, APJS
 				double qx  = node->oct[o]->mx - node->mx;
@@ -150,6 +158,14 @@ struct cell *tree_update_cell(struct cell *node){
 				}
 			}		
 		}
+#ifdef GRAVITY_TREE
+		double m_tot = node->m;
+		if (m_tot>0){
+			node->mx /= m_tot;
+			node->my /= m_tot;
+			node->mz /= m_tot;
+		}
+#endif // GRAVITY_TREE
 		// Check if the node require derefinement.
 		if (node->pt == 0) {	// The node is empty.
 			free(node);
@@ -176,6 +192,7 @@ struct cell *tree_update_cell(struct cell *node){
 	} else {
 #ifdef GRAVITY_TREE
 		struct particle p = particles[node->pt];
+		node->m = p.m;
 		node->mx = p.x;
 		node->my = p.y;
 		node->mz = p.z;

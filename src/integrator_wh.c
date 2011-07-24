@@ -51,6 +51,7 @@ void integrate_particles(){
 		// DRIFT
 		drift_wh(dt);
 	}
+	t+=dt;
 	boundaries_check();
 }
 

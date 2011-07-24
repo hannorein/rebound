@@ -9,6 +9,7 @@
 #include "boundaries.h"
 #include "output.h"
 #include "communication_mpi.h"
+#include "tree.h"
 
 extern double OMEGA;
 extern double coefficient_of_restitution;
@@ -23,7 +24,7 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	opening_angle2	= 1;
 	OMEGA 		= 0.00013143527;		// 1/s
-	G 		= 6.67428e-11;			// m^3 / kg s^2
+	G 		= 6.67428e-11;			// N / (1e-5 kg)^2 m^2
 	softening 	= 1.;				// m
 	dt 		= 1e-2*2.*M_PI/OMEGA;		// s
 	root_nx = 1; root_ny = 1; root_nz = 1;
@@ -50,18 +51,16 @@ void problem_init(int argc, char* argv[]){
 #endif
 		for (int i =0;i<_N;i++){
 			struct particle pt;
-			double vrand 	= 0.01*OMEGA*((double)rand()/(double)RAND_MAX-0.5);
-			double phirand 	= 2.*M_PI*((double)rand()/(double)RAND_MAX-0.5);
 			pt.x 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
 			pt.y 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
-			pt.z 		= 10.*((double)rand()/(double)RAND_MAX-0.5);
+			pt.z 		= 0.1*((double)rand()/(double)RAND_MAX-0.5);
 			pt.vx 		= 0;
-			pt.vy 		= -1.5*pt.x*OMEGA+2.*vrand*cos(phirand);
-			pt.vz 		= vrand*sin(phirand);
+			pt.vy 		= -1.5*pt.x*OMEGA;
+			pt.vz 		= 0;
 			pt.ax 		= 0;
 			pt.ay 		= 0;
 			pt.az 		= 0;
-			pt.m 		= particle_mass;
+			pt.m 		= particle_mass*1.e0;
 #ifndef COLLISIONS_NONE
 			pt.r 		= particle_radius;
 #endif
@@ -82,13 +81,31 @@ void problem_inloop(){
 
 }
 
+
+void print_tree(struct cell* node, FILE* fp){
+	fprintf(fp,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",node->x,node->y,node->z,node->mx,node->my,node->mz,node->m,node->w);
+	for (int o=0;o<8;o++){
+		if (node->oct[o]!=NULL){
+			print_tree(node->oct[o],fp);
+		}
+	}
+}
+
+
 void problem_output(){
-	if (output_check(2.*M_PI/OMEGA)){
+//	if (output_check(1e-2*2.*M_PI/OMEGA)){
 		output_timing();
-	}
-	if (output_check(1e-1*2.*M_PI/OMEGA)){
-		output_append_velocity_dispersion("veldisp.txt");
-	}
+	//	output_ascii("ascii.txt");
+		/*
+		integrate_particles();
+		calculate_forces();
+		FILE* of = fopen("tree.txt","w"); 
+		print_tree(tree_root[0],of);
+		fclose(of);
+//	if (t>0)	exit(-1);
+		exit(1);
+//	}
+*/
 }
 
 void problem_finish(){

@@ -20,6 +20,7 @@ void integrate_particles(){
 		particles[i].vy += dt * particles[i].ay;
 		particles[i].vz += dt * particles[i].az;
 	}
+	t+=dt;
 	boundaries_check();
 }
 	
