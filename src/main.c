@@ -59,7 +59,6 @@ void init_box(){
 
 void iterate(){	
 	integrate_particles();
-	t+=dt;  // Note: This might be better at the end of this function (t is used in check_boundaries).
 #ifdef OPENGL
 	display();
 #endif
@@ -91,7 +90,7 @@ int main(int argc, char* argv[]) {
 	gettimeofday(&tim, NULL);
 	timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 	// Initialiase random numbers, problem, box and OpengL
-	srand ( time(NULL) );
+	srand ( tim.tv_usec + getpid());
 	problem_init(argc, argv);
 	boundaries_check();
 	problem_output();
