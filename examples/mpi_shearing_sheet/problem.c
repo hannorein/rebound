@@ -26,9 +26,9 @@ void problem_init(int argc, char* argv[]){
 	OMEGA 		= 0.00013143527;		// 1/s
 	G 		= 6.67428e-11;			// N / (1e-5 kg)^2 m^2
 	softening 	= 1.;				// m
-	dt 		= 1e-2*2.*M_PI/OMEGA;		// s
-	root_nx = 1; root_ny = 1; root_nz = 1;
-	nghostx = 1; nghosty = 1; nghostz = 0; 		// Use three ghost rings
+	dt 		= 1e-3*2.*M_PI/OMEGA;		// s
+	root_nx = 2; root_ny = 2; root_nz = 1;
+	nghostx = 4; nghosty = 4; nghostz = 0; 		// Use three ghost rings
 	double surfacedensity 	= 400; 			// kg/m^2
 	double particle_density	= 400;			// g/cm^3
 	double particle_radius 	= 2;			// m
@@ -36,7 +36,7 @@ void problem_init(int argc, char* argv[]){
 	if (argc>1){					// Try to read boxsize from command line
 		boxsize = atof(argv[1]);
 	}else{
-		boxsize = 100;
+		boxsize = 200;
 	}
 	// Use Bridges et al coefficient of restitution.
 	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
@@ -93,19 +93,13 @@ void print_tree(struct cell* node, FILE* fp){
 
 
 void problem_output(){
-//	if (output_check(1e-2*2.*M_PI/OMEGA)){
+	if (output_check(1e-2*2.*M_PI/OMEGA)){
 		output_timing();
-	//	output_ascii("ascii.txt");
-		/*
-		integrate_particles();
-		calculate_forces();
-		FILE* of = fopen("tree.txt","w"); 
-		print_tree(tree_root[0],of);
-		fclose(of);
-//	if (t>0)	exit(-1);
-		exit(1);
-//	}
-*/
+		output_append_velocity_dispersion("veldisp.txt");
+	}
+	if (output_check(2.*M_PI/OMEGA)){
+		output_ascii("position.txt");
+	}
 }
 
 void problem_finish(){
