@@ -92,7 +92,7 @@ void output_timing(){
 void output_append_ascii(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
-	sprintf("%s_%d",filename,mpi_id);
+	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
 	FILE* of = fopen(filename_mpi,"a"); 
 #else // MPI
 	FILE* of = fopen(filename,"a"); 
@@ -107,7 +107,7 @@ void output_append_ascii(char* filename){
 void output_ascii(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
-	sprintf("%s_%d",filename,mpi_id);
+	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
 	FILE* of = fopen(filename_mpi,"w"); 
 #else // MPI
 	FILE* of = fopen(filename,"w"); 
@@ -122,7 +122,7 @@ void output_ascii(char* filename){
 void output_orbit(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
-	sprintf("%s_%d",filename,mpi_id);
+	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
 	FILE* of = fopen(filename_mpi,"w"); 
 #else // MPI
 	FILE* of = fopen(filename,"w"); 
@@ -140,7 +140,7 @@ void output_orbit(char* filename){
 void output_binary(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
-	sprintf("%s_%d",filename,mpi_id);
+	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
 	FILE* of = fopen(filename_mpi,"wb"); 
 #else // MPI
 	FILE* of = fopen(filename,"wb"); 
@@ -157,7 +157,7 @@ void output_binary(char* filename){
 void output_binary_positions(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
-	sprintf("%s_%d",filename,mpi_id);
+	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
 	FILE* of = fopen(filename_mpi,"wb"); 
 #else // MPI
 	FILE* of = fopen(filename,"wb"); 
