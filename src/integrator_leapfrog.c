@@ -10,7 +10,7 @@
 
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
-void integrate_particles(){
+void integrator_part1(){
 #pragma omp parallel for
 	for (int i=0;i<N;i++){
 		particles[i].x  += 0.5* dt * particles[i].vx;
@@ -18,8 +18,8 @@ void integrate_particles(){
 		particles[i].z  += 0.5* dt * particles[i].vz;
 	}
 	t+=dt/2.;
-	boundaries_check();
-	calculate_forces();
+}
+void integrator_part2(){
 #pragma omp parallel for
 	for (int i=0;i<N;i++){
 		particles[i].vx += dt * particles[i].ax;
@@ -30,7 +30,6 @@ void integrate_particles(){
 		particles[i].z  += 0.5* dt * particles[i].vz;
 	}
 	t+=dt/2.;
-	boundaries_check();
 }
 	
 

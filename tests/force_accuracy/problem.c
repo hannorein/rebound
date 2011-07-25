@@ -5,6 +5,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include "main.h"
+#include "tree.h"
 #include "particle.h"
 #include "boundaries.h"
 #include "output.h"
@@ -27,7 +28,7 @@ void problem_init(int argc, char* argv[]){
 	}
 	boxsize 	= 2;
 	dt 		= 1e-4;
-	tmax 		= dt/10.;
+	tmax 		= 10.*dt;
 	int _N 		= 1000;
 	init_box();
 	// Initial conditions
@@ -106,6 +107,8 @@ void problem_output(){
 
 void problem_finish(){
 	FILE* of = fopen("error.txt","a+"); 
+	tree_update();
+	tree_update_gravity_data();
 	calculate_forces();
 	double error= average_relative_force_error();
 	struct timeval tim;

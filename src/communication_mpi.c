@@ -124,7 +124,7 @@ void communication_mpi_init(int argc, char** argv){
 
 }
 
-int  communication_mpi_rootbox_is_local(int i){
+int communication_mpi_rootbox_is_local(int i){
 	int root_n_per_node = root_n/mpi_num;
 	int proc_id = i/root_n_per_node;
 	if (proc_id != mpi_id){
@@ -297,10 +297,19 @@ void communication_mpi_prepare_essential_cell_for_proc(struct cell* node, int pr
 		tree_essential_send[proc][tree_essential_send_N[proc]-1].pt = particles_send_N[proc];
 		particles_send_N[proc]++;
 	}else{		// Not a leaf. Check if we need to transfer daughters.
-		double distance2 = communication_distance2_of_proc_to_node(proc,node);
 		double width2 = node->w*node->w;
-		if ( (width2 > opening_angle2*distance2)  			// Gravity criteria
-			|| ( 3.*width2 > 4.*collisions_max_r*collisions_max_r) ){  		// Collision criteria
+#ifdef GRAVITY_TREE
+		double distance2 = communication_distance2_of_proc_to_node(proc,node);
+		int opening_criteria_gravity = (width2 > opening_angle2*distance2);
+#else  // GRAVITY_TREE
+		int opening_criteria_gravity = 0;
+#endif // GRAVITY_TREE
+#ifdef COLLISIONS_TREE
+		int opening_criteria_collisions = (3.*width2 > 4.*collisions_max_r*collisions_max_r);
+#else  // COLLISIONS_TREE
+		int opening_criteria_gravity = 0;
+#endif // COLLISIONS_TREE
+		if (  opening_criteria_gravity || opening_criteria_collisions ){ 
 			for (int o=0;o<8;o++){
 				struct cell* d = node->oct[o];
 				if (d==NULL) continue;

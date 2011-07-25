@@ -15,6 +15,8 @@ double (*coefficient_of_restitution_for_velocity) (double) = constant_coefficien
 double collisions_plog =0;
 
 void collisions_resolve_single(struct collision c){
+#warning COLLISIONS not resolved.
+	return;
 #ifndef COLLISIONS_NONE
 	struct particle p1 = particles[c.p1];
 	struct particle p2 = particles[c.p2];

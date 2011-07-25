@@ -22,7 +22,9 @@ extern double opening_angle2;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
+#ifdef GRAVITY_TREE
 	opening_angle2	= 1;
+#endif
 	OMEGA 		= 0.00013143527;		// 1/s
 	G 		= 6.67428e-11;			// N / (1e-5 kg)^2 m^2
 	softening 	= 1.;				// m
@@ -80,17 +82,6 @@ double coefficient_of_restitution_bridges(double v){
 void problem_inloop(){
 
 }
-
-
-void print_tree(struct cell* node, FILE* fp){
-	fprintf(fp,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",node->x,node->y,node->z,node->mx,node->my,node->mz,node->m,node->w);
-	for (int o=0;o<8;o++){
-		if (node->oct[o]!=NULL){
-			print_tree(node->oct[o],fp);
-		}
-	}
-}
-
 
 void problem_output(){
 	if (output_check(1e-2*2.*M_PI/OMEGA)){

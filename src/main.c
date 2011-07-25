@@ -60,7 +60,6 @@ void init_box(){
 void iterate(){	
 	// A 'DKD'-like integrator will do the first 'D' part.
 	integrator_part1();
-	t+=dt/2.;
 
 	// Check for root crossings.
 	boundaries_check();     
@@ -77,8 +76,7 @@ void iterate(){
 
 #ifdef GRAVITY_TREE
 	// Update center of mass and quadrupole moments in tree in preparation of force calculation.
-#warning tree_update_gravity_tensors();   ---- NOT YET IMPLEMENTED ----
-	tree_update_gravity_tensors(); 
+	tree_update_gravity_data(); 
 #endif
 
 #if defined(TREE) && defined(MPI)
@@ -105,7 +103,6 @@ void iterate(){
 
 	// A 'DKD'-like integrator will do the 'KD' part.
 	integrator_part2();
-	t+=dt/2.;
 
 #ifdef OPENGL
 	display();

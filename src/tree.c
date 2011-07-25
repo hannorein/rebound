@@ -9,7 +9,7 @@
 #include "tree.h"
 #include "communication_mpi.h"
 
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+#ifdef TREE
 
 struct cell** tree_root;
 
@@ -29,12 +29,6 @@ struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *p
 	if (node == NULL) {
 		node = calloc(1, sizeof(struct cell));
 		struct particle p = particles[pt];
-#ifdef GRAVITY_TREE
-		node->m	 = p.m;
-		node->mx = p.x;
-		node->my = p.y;
-		node->mz = p.z;
-#endif // GRAVITY_TREE
 		if (parent == NULL){
 			node->w = boxsize;
 			int i = ((int)floor((p.x + boxsize_x/2.)/boxsize))%root_nx;
@@ -61,11 +55,6 @@ struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *p
 	}
 
 	// Modify the total mass and center of mass of a cell
-#warning ADD QUADRUPOLE TESNOR CALCULAION HERE
-	node->mx  = (node->m*node->mx + particles[pt].m*particles[pt].x) / (node->m+particles[pt].m);
-	node->my  = (node->m*node->my + particles[pt].m*particles[pt].y) / (node->m+particles[pt].m);
-	node->mz  = (node->m*node->mz + particles[pt].m*particles[pt].z) / (node->m+particles[pt].m);
-	node->m  += particles[pt].m;
 	if (node->pt >= 0) {
 		int o = tree_get_octant_for_particle_in_cell(node->pt, node);
 		node->oct[o] = tree_add_particle_to_cell(node->oct[o], node->pt, node, o); 
@@ -105,67 +94,22 @@ struct cell *tree_update_cell(struct cell *node){
 	}
 	// Non-leaf nodes	
 	if (node->pt < 0) {
-		for (int o = 0; o < 8; o++) {
+		for (int o=0; o<8; o++) {
 			node->oct[o] = tree_update_cell(node->oct[o]);
 		}
-		// Calculate the total mass (, quadrupole tensor) and center of mass, and check
-		// if the node needs derefinement after updating the tree.
 		node->pt = 0;
-#ifdef GRAVITY_TREE
-		node->m	 = 0;
-		node->mx = 0;
-		node->my = 0;
-		node->mz = 0;
-	#ifdef QUADRUPOLE
-		node->mxx = 0;
-		node->mxy = 0;
-		node->mxz = 0;
-		node->myy = 0;
-		node->myz = 0;
-		node->mzz = 0;
-	#endif // QUADRUPOLE
-#endif // GRAVITY_TREE
 		for (int o=0; o<8; o++) {
 			struct cell *d = node->oct[o];
 			if (d != NULL) {
-				// Calculate the total mass and the center of mass
-#ifdef GRAVITY_TREE
-				double m_o = d->m;
-				node->mx += d->mx*m_o;
-				node->my += d->my*m_o;
-				node->mz += d->mz*m_o;
-				node->m  += m_o;
-#ifdef QUADRUPOLE
-				// Ref: Hernquist, L., 1987, APJS
-				double qx  = node->oct[o]->mx - node->mx;
-				double qy  = node->oct[o]->my - node->my;
-				double qz  = node->oct[o]->mz - node->mz;
-				double qr2 = qx*qx + qy*qy + qz*qz;
-				node->mxx += node->oct[o]->mxx + m_o*(3*qx*qx - qr2);
-				node->mxy += node->oct[o]->mxy + m_o*3*qx*qy;
-				node->mxz += node->oct[o]->mxz + m_o*3*qx*qz;
-				node->myy += node->oct[o]->myy + m_o*(3*qy*qy - qr2);
-				node->myz += node->oct[o]->myz + m_o*3*qy*qz;
-				node->mzz += -node->mxx -node->myy;
-#endif // QUADRUPOLE
-#endif // GRAVITY_TREE
 				// Update node->pt
-				if (node->oct[o]->pt >= 0) {	// The child is a leaf
+				if (d->pt >= 0) {	// The child is a leaf
 					node->pt--;
 					test = o;
 				}else{				// The child cell contains several particles
-					node->pt += node->oct[o]->pt;
+					node->pt += d->pt;
 				}
 			}		
 		}
-#ifdef GRAVITY_TREE
-		double m_tot = node->m;
-		if (m_tot>0){
-			node->mx /= m_tot;
-			node->my /= m_tot;
-			node->mz /= m_tot;
-		}
-#endif // GRAVITY_TREE
 		// Check if the node require derefinement.
 		if (node->pt == 0) {	// The node is empty.
 			free(node);
@@ -190,20 +134,87 @@ struct cell *tree_update_cell(struct cell *node){
 		free(node);
 		return NULL; 
 	} else {
-#ifdef GRAVITY_TREE
-		struct particle p = particles[node->pt];
-		node->m = p.m;
-		node->mx = p.x;
-		node->my = p.y;
-		node->mz = p.z;
-#endif // GRAVITY_TREE
 		particles[node->pt].c = node;
 		return node;
 	}
 }
 
-void tree_update_gravity_tensors(){
+#ifdef GRAVITY_TREE
+void tree_update_gravity_data_in_cell(struct cell *node){
+#ifdef QUADRUPOLE
+	node->mxx = 0;
+	node->mxy = 0;
+	node->mxz = 0;
+	node->myy = 0;
+	node->myz = 0;
+	node->mzz = 0;
+#endif // QUADRUPOLE
+	if (node->pt < 0) {
+		// Non-leaf nodes	
+		node->m  = 0;
+		node->mx = 0;
+		node->my = 0;
+		node->mz = 0;
+		for (int o=0; o<8; o++) {
+			struct cell* d = node->oct[o];
+			if (d!=NULL){
+				tree_update_gravity_data_in_cell(d);
+				// Calculate the total mass and the center of mass
+				double d_m = d->m;
+				node->mx += d->mx*d_m;
+				node->my += d->my*d_m;
+				node->mz += d->mz*d_m;
+				node->m  += d_m;
+			}
+		}
+		double m_tot = node->m;
+		if (m_tot>0){
+			node->mx /= m_tot;
+			node->my /= m_tot;
+			node->mz /= m_tot;
+		}
+#ifdef QUADRUPOLE
+		for (int o=0; o<8; o++) {
+			struct cell* d = node->oct[o];
+			if (d!=NULL){
+				// Ref: Hernquist, L., 1987, APJS
+				double d_m = d->m;
+				double qx  = d->mx - node->mx;
+				double qy  = d->my - node->my;
+				double qz  = d->mz - node->mz;
+				double qr2 = qx*qx + qy*qy + qz*qz;
+				node->mxx += d->mxx + d_m*(3.*qx*qx - qr2);
+				node->mxy += d->mxy + d_m*3.*qx*qy;
+				node->mxz += d->mxz + d_m*3.*qx*qz;
+				node->myy += d->myy + d_m*(3.*qy*qy - qr2);
+				node->myz += d->myz + d_m*3.*qy*qz;
+			}
+		}
+		node->mzz = -node->mxx -node->myy;
+#endif // QUADRUPOLE
+	}else{ 
+		// Leaf nodes
+		struct particle p = particles[node->pt];
+		node->m = p.m;
+		node->mx = p.x;
+		node->my = p.y;
+		node->mz = p.z;
+	}
 }
+
+void tree_update_gravity_data(){
+	for(int i=0;i<root_n;i++){
+#ifdef MPI
+		if (communication_mpi_rootbox_is_local(i)==1){
+#endif // MPI
+			tree_update_gravity_data_in_cell(tree_root[i]);
+#ifdef MPI
+		}
+#endif // MPI
+	}
+}
+
+#endif // GRAVITY_TREE
 
 #ifdef MPI
 int particles_get_rootbox_for_node(struct cell* node){

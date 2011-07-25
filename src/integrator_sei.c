@@ -38,6 +38,7 @@ void integrator_part1(){
 	for (int i=0;i<N;i++){
 		operator_H0(dt/2.,&(particles[i]));
 	}
+	t+=dt/2.;
 }
 
 void integrator_part2(){
@@ -46,6 +47,7 @@ void integrator_part2(){
 		operator_phi(dt,&(particles[i]));
 		operator_H0(dt/2.,&(particles[i]));
 	}
+	t+=dt/2.;
 }
 
 // This function evolves a particle under 

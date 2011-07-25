@@ -22,9 +22,9 @@ void particles_add_local(struct particle pt){
 		particles = realloc(particles,sizeof(struct particle)*Nmax);
 	}
 	particles[N] = pt;
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+#ifdef TREE
 	tree_add_particle_to_tree(N);
-#endif
+#endif // TREE
 	N++;
 }
 

@@ -2,7 +2,6 @@
 #define _TREE_H
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
 #define TREE
-#endif
 
 struct cell;
 
@@ -19,8 +18,8 @@ struct cell {
 	double myy;
 	double myz;
 	double mzz;
-#endif
-#endif
+#endif // QUADRUPOLE
+#endif // GRAVITY_TREE
 	double x;
 	double y;
 	double z;
@@ -33,12 +32,15 @@ extern struct cell** tree_root;
 
 void tree_init();
 void tree_update();
-void tree_update_gravity_tensors();
+#ifdef GRAVITY_TREE
+void tree_update_gravity_data();
+#endif // GRAVITY_TREE
 void tree_add_particle_to_tree(int pt);
 #ifdef MPI
 void tree_add_essential_node(struct cell* node);
 void tree_prepare_essential_tree();
-#endif
+#endif // MPI
 
 
-#endif
+#endif // TREE
+#endif // _TREE_H
