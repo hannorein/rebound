@@ -1,8 +1,8 @@
 PROBLEMDIR=examples/$(shell basename `pwd`)
-export OPENGL=1
+export OPENGL=0
 export OPT=
 export QUADRUPOLE=1
-export MPI=0
+export MPI=1
 export OPENMP=0
 
 all:

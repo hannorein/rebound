@@ -307,7 +307,7 @@ void communication_mpi_prepare_essential_cell_for_proc(struct cell* node, int pr
 #ifdef COLLISIONS_TREE
 		int opening_criteria_collisions = (3.*width2 > 4.*collisions_max_r*collisions_max_r);
 #else  // COLLISIONS_TREE
-		int opening_criteria_gravity = 0;
+		int opening_criteria_collisions = 0;
 #endif // COLLISIONS_TREE
 		if (  opening_criteria_gravity || opening_criteria_collisions ){ 
 			for (int o=0;o<8;o++){
