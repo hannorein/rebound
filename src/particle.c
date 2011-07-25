@@ -43,19 +43,6 @@ void particles_add(struct particle pt){
 	particles_add_local(pt);
 }
 
-#ifdef MPI
-int rootbox_is_local(int i){
-	int root_n_per_node = root_n/mpi_num;
-	int proc_id = i/root_n_per_node;
-	if (proc_id != mpi_id){
-		return 0;
-	}else{
-		return 1;
-	}
-}
-#endif
-
-
 
 int particles_get_rootbox_for_particle(struct particle pt){
 	int i = ((int)floor((pt.x + boxsize_x/2.)/boxsize)+root_nx)%root_nx;

@@ -14,7 +14,7 @@
 
 #include "mpi.h"
 MPI_Datatype mpi_particle;
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+#ifdef TREE
 MPI_Datatype mpi_cell;
 #endif
 MPI_Status stat; 
@@ -28,7 +28,7 @@ struct particle** 	particles_recv;
 int* 			particles_recv_N;
 int* 			particles_recv_Nmax;
 
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+#ifdef TREE
 struct cell** 	tree_essential_send;
 int* 		tree_essential_send_N;
 int* 		tree_essential_send_Nmax;
@@ -56,7 +56,7 @@ void communication_mpi_init(int argc, char** argv){
 	indices[bnum] 	= 0; 
 	oldtypes[bnum] 	= MPI_DOUBLE;
 	bnum++;
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+#ifdef TREE
 	struct particle p;
 	blen[bnum] 	= 1; 
 	indices[bnum] 	= (void*)&p.c - (void*)&p; 
@@ -70,7 +70,7 @@ void communication_mpi_init(int argc, char** argv){
 	MPI_Type_struct(bnum, blen, indices, oldtypes, &mpi_particle );
 	MPI_Type_commit(&mpi_particle); 
 
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+#ifdef TREE
 	// Setup MPI description of the cell structure 
 	struct cell c;
 	bnum = 0;
@@ -108,7 +108,7 @@ void communication_mpi_init(int argc, char** argv){
 	particles_recv_N 	= calloc(mpi_num,sizeof(int));
 	particles_recv_Nmax 	= calloc(mpi_num,sizeof(int));
 
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+#ifdef TREE
 	// Prepare send/recv buffers for essential tree
 	tree_essential_send   	= calloc(mpi_num,sizeof(struct cell*));
 	tree_essential_send_N 	= calloc(mpi_num,sizeof(int));
@@ -123,6 +123,17 @@ void communication_mpi_init(int argc, char** argv){
 	}
 
 }
+
+int  communication_mpi_rootbox_is_local(int i){
+	int root_n_per_node = root_n/mpi_num;
+	int proc_id = i/root_n_per_node;
+	if (proc_id != mpi_id){
+		return 0;
+	}else{
+		return 1;
+	}
+}
+
 
 void communication_mpi_distribute_particles(){
 	// Distribute the number of particles to be transferred.
@@ -184,7 +195,7 @@ void communication_mpi_add_particle_to_send_queue(struct particle pt, int proc_i
 	particles_send_N[proc_id]++;
 }
 
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+#ifdef TREE
 
 struct aabb{ // axis aligned bounding box
 	double xmin;
@@ -265,7 +276,7 @@ double communication_distance2_of_proc_to_node(int proc_id, struct cell* node){
 }
 
 extern double opening_angle2;
-void communication_prepare_essential_cell_for_proc(struct cell* node, int proc){
+void communication_mpi_prepare_essential_cell_for_proc(struct cell* node, int proc){
 	// Add essential cell to tree_essential_send
 	if (tree_essential_send_N[proc]>=tree_essential_send_Nmax[proc]){
 		tree_essential_send_Nmax[proc] += 32;
@@ -293,22 +304,22 @@ void communication_prepare_essential_cell_for_proc(struct cell* node, int proc){
 			for (int o=0;o<8;o++){
 				struct cell* d = node->oct[o];
 				if (d==NULL) continue;
-				communication_prepare_essential_cell_for_proc(d,proc);
+				communication_mpi_prepare_essential_cell_for_proc(d,proc);
 			}
 		}
 	}
 }
 
-void communication_prepare_essential_tree(struct cell* root){
+void communication_mpi_prepare_essential_tree(struct cell* root){
 	if (root==NULL) return;
 	// Find out which cells are needed by every other node
 	for (int i=0; i<mpi_num; i++){
 		if (i==mpi_id) continue;
-		communication_prepare_essential_cell_for_proc(root,i);	
+		communication_mpi_prepare_essential_cell_for_proc(root,i);	
 	}
 }
 
-void communication_distribute_essential_tree(){
+void communication_mpi_distribute_essential_tree(){
 	///////////////////////////////////////////////////////////////
 	// Distribute essential tree needed for gravity and collisions
 	///////////////////////////////////////////////////////////////

@@ -29,8 +29,5 @@ struct particle {
 extern struct particle* particles;
 void particles_add(struct particle pt);
 int particles_get_rootbox_for_particle(struct particle pt);
-#ifdef MPI
-int rootbox_is_local(int i);
-#endif
 
 #endif

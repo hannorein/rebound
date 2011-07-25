@@ -58,12 +58,58 @@ void init_box(){
 
 
 void iterate(){	
-	integrate_particles();
+	// A 'DKD'-like integrator will do the first 'D' part.
+	integrator_part1();
+	t+=dt/2.;
+
+	// Check for root crossings.
+	boundaries_check();     
+
+	// Update and simplify tree. 
+	// Prepare particles for distribution to other nodes. 
+	// This function also creates the tree if called for the first time.
+	tree_update();          
+
+#ifdef MPI
+	// Distribute particles and add newly received particles to tree.
+	communication_mpi_distribute_particles();
+#endif
+
+#ifdef GRAVITY_TREE
+	// Update center of mass and quadrupole moments in tree in preparation of force calculation.
+#warning tree_update_gravity_tensors();   ---- NOT YET IMPLEMENTED ----
+	tree_update_gravity_tensors(); 
+#endif
+
+#if defined(TREE) && defined(MPI)
+	// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
+	tree_prepare_essential_tree();
+
+	// Transfer essential tree and particles needed for collisions.
+	communication_mpi_distribute_essential_tree();
+#endif 
+
+#ifndef COLLISIONS_NONE
+	// Search for collisions using local and essential tree.
+	collisions_search();
+
+	// Resolve collisions (only local particles are affected).
+	collisions_resolve();
+#endif
+
+#ifndef GRAVITY_NONE
+	// Calculate forces using local and essential tree. 
+	// Collisions only change the velocity, so we don't need to update the tree here.
+	calculate_forces();
+#endif
+
+	// A 'DKD'-like integrator will do the 'KD' part.
+	integrator_part2();
+	t+=dt/2.;
+
 #ifdef OPENGL
 	display();
 #endif
-	collisions_search();
-	collisions_resolve();
 	problem_inloop();
 	problem_output();
 	if(t+dt>tmax && tmax!=0.0){
@@ -74,7 +120,6 @@ void iterate(){
 		printf("\nComputation finished. Total runtime: %f s\n",timing_final-timing_initial);
 		exit(0);
 	}
-
 }
 
 

@@ -202,6 +202,9 @@ struct cell *tree_update_cell(struct cell *node){
 	}
 }
 
+void tree_update_gravity_tensors(){
+}
+
 #ifdef MPI
 int particles_get_rootbox_for_node(struct cell* node){
 	int i = ((int)floor((node->x + boxsize_x/2.)/boxsize)+root_nx)%root_nx;
@@ -240,15 +243,10 @@ void tree_add_essential_node(struct cell* node){
 		tree_add_essential_node_to_node(node, tree_root[index]);
 	}
 }
-
-void tree_update(){
-	if (tree_root==NULL){
-		tree_root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
-	}
+void tree_prepare_essential_tree(){
 	for(int i=0;i<root_n;i++){
-		if (rootbox_is_local(i)==1){
-			tree_root[i] = tree_update_cell(tree_root[i]);
-			communication_prepare_essential_tree(tree_root[i]);
+		if (communication_mpi_rootbox_is_local(i)==1){
+			communication_mpi_prepare_essential_tree(tree_root[i]);
 		}else{
 			// Delete essential tree reference. 
 			// Tree itself is saved in tree_essential_recv[][] and
@@ -256,19 +254,22 @@ void tree_update(){
 			tree_root[i] = NULL;
 		}
 	}
-	communication_distribute_essential_tree();
 }
-
-#else // MPI
+#endif // MPI
 
 void tree_update(){
 	if (tree_root==NULL){
 		tree_root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
 	}
 	for(int i=0;i<root_n;i++){
-		tree_root[i] = tree_update_cell(tree_root[i]);
+#ifdef MPI
+		if (communication_mpi_rootbox_is_local(i)==1){
+#endif // MPI
+			tree_root[i] = tree_update_cell(tree_root[i]);
+#ifdef MPI
+		}
+#endif // MPI
 	}
 }
 
-#endif // ndef MPI
 #endif

@@ -21,7 +21,7 @@ double sindtz, tandtz;
 // This function is the SEI integrator.
 // It is symplectic, second order accurate and time-reversible.
 // I.e. pretty cool.
-void integrate_particles(){
+void integrator_part1(){
 	if (lastdt!=dt){
 		// Only calculate sin() and tan() if timestep changed
 		if (OMEGAZ==-1){
@@ -38,33 +38,14 @@ void integrate_particles(){
 	for (int i=0;i<N;i++){
 		operator_H0(dt/2.,&(particles[i]));
 	}
-	t+=dt/2.;
-	// Check for root crossings.
-	boundaries_check(); 	
-	// Update and simplify tree. Prepare particles for distribution to other nodes.
-	tree_update();		
-	// Distribute particles and add new particles to tree.
-	communication_mpi_distribute_particles();
-	// Update center of mass in tree in preparation of force calculation.
-#warn tree_update_gravity_tensors() ---- NOT YET IMPLEMENTED ----
-	// tree_update_gravity_tensors();  
-	// Prepare essential tree and particles used in collision.
-	tree_prepare_essential_tree();
-	// Transfer essential tree and particles used in collision.
-	communication_distribute_essential_tree();
-	// Calculate forces using local and essential tree.
-	calculate_forces();
-	// Search for collisions using local and essential tree.
-	collisions_search();
-	// Resolve collisions
-	collisions_resolve();
+}
+
+void integrator_part2(){
 #pragma omp parallel for
 	for (int i=0;i<N;i++){
 		operator_phi(dt,&(particles[i]));
 		operator_H0(dt/2.,&(particles[i]));
 	}
-	t+=dt/2.;
-	boundaries_check();
 }
 
 // This function evolves a particle under 

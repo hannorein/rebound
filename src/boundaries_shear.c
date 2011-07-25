@@ -44,14 +44,6 @@ void boundaries_check(){
 			particles[i].z += boxsize_z;
 		}
 	}
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
-	tree_update();
-#else
-#error CHECK FOR ROOT BOX CROSSING, DISTRIBUTE PARTICLES 
-#endif
-#ifdef MPI
-	communication_mpi_distribute_particles();
-#endif
 }
 
 struct ghostbox get_ghostbox(int i, int j, int k){
