@@ -9,6 +9,7 @@
 #include "main.h"
 #include "tree.h"
 #include "boundaries.h"
+#include "collisions.h"
 #include "communication_mpi.h"
 
 #include "mpi.h"
@@ -48,10 +49,9 @@ void communication_mpi_init(int argc, char** argv){
 	int blen[4];
 	MPI_Aint indices[4];
 	MPI_Datatype oldtypes[4];
-#ifdef COLLISIONS_NONE
 	blen[bnum] 	= 13;
-#else //COLLISIONS_NONE
-	blen[bnum] 	= 15; 
+#ifndef COLLISIONS_NONE
+	blen[bnum] 	+= 2; 
 #endif //COLLISIONS_NONE
 	indices[bnum] 	= 0; 
 	oldtypes[bnum] 	= MPI_DOUBLE;
@@ -74,14 +74,12 @@ void communication_mpi_init(int argc, char** argv){
 	// Setup MPI description of the cell structure 
 	struct cell c;
 	bnum = 0;
-#ifdef GRAVITY_TREE
-#ifdef QUADRUPOLE
-	blen[bnum] 	= 14;
-#else // QUADRUPOLE
-	blen[bnum] 	= 8;
-#endif // QUADRUPOLE
-#else //GRAVITY_TREE
 	blen[bnum] 	= 4; 
+#ifdef GRAVITY_TREE
+	blen[bnum] 	+= 8;
+#ifdef QUADRUPOLE
+	blen[bnum] 	+= 6;
+#endif // QUADRUPOLE
 #endif //GRAVITY_TREE
 	indices[bnum] 	= 0; 
 	oldtypes[bnum] 	= MPI_DOUBLE;
@@ -273,15 +271,30 @@ void communication_prepare_essential_cell_for_proc(struct cell* node, int proc){
 		tree_essential_send_Nmax[proc] += 32;
 		tree_essential_send[proc] = realloc(tree_essential_send[proc],sizeof(struct cell)*tree_essential_send_Nmax[proc]);
 	}
+	// Copy node to send buffer
 	tree_essential_send[proc][tree_essential_send_N[proc]] = (*node);
 	tree_essential_send_N[proc]++;
-		
-	double distance2 = communication_distance2_of_proc_to_node(proc,node);
-	if (((node->w*node->w)> opening_angle2*distance2)) {
-		for (int o=0;o<8;o++){
-			struct cell* d = node->oct[o];
-			if (d==NULL) continue;
-			communication_prepare_essential_cell_for_proc(d,proc);
+	if (node->pt>=0){ // Is leaf
+		// Also transmit particle (Here could be another check if the particle actually overlaps with the other box)
+		if (particles_send_N[proc]>=particles_send_Nmax[proc]){
+			particles_send_Nmax[proc] += 32;
+			particles_send[proc] = realloc(particles_send[proc],sizeof(struct cell)*particles_send_Nmax[proc]);
+		}
+		// Copy particle to send buffer
+		particles_send[proc][particles_send_N[proc]] = particles[node->pt];
+		// Update reference from cell to particle
+		tree_essential_send[proc][tree_essential_send_N[proc]-1].pt = particles_send_N[proc];
+		particles_send_N[proc]++;
+	}else{		// Not a leaf. Check if we need to transfer daughters.
+		double distance2 = communication_distance2_of_proc_to_node(proc,node);
+		double width2 = node->w*node->w;
+		if ( (width2 > opening_angle2*distance2)  			// Gravity criteria
+			|| ( 3.*width2 > 4.*collisions_max_r*collisions_max_r) ){  		// Collision criteria
+			for (int o=0;o<8;o++){
+				struct cell* d = node->oct[o];
+				if (d==NULL) continue;
+				communication_prepare_essential_cell_for_proc(d,proc);
+			}
 		}
 	}
 }
@@ -296,6 +309,10 @@ void communication_prepare_essential_tree(struct cell* root){
 }
 
 void communication_distribute_essential_tree(){
+	///////////////////////////////////////////////////////////////
+	// Distribute essential tree needed for gravity and collisions
+	///////////////////////////////////////////////////////////////
+	
 	// Distribute the number of cells to be transferred.
 	for (int i=0;i<mpi_num;i++){
 		MPI_Scatter(tree_essential_send_N, 1, MPI_INT, &(tree_essential_recv_N[i]), 1, MPI_INT, i, MPI_COMM_WORLD);
@@ -342,6 +359,51 @@ void communication_distribute_essential_tree(){
 	for (int i=0;i<mpi_num;i++){
 		tree_essential_send_N[i] = 0;
 		tree_essential_recv_N[i] = 0;
+	}
+
+	//////////////////////////////////////////////////////
+	// Distribute particles needed for collisiosn search 
+	//////////////////////////////////////////////////////
+	
+	// Distribute the number of particles to be transferred.
+	for (int i=0;i<mpi_num;i++){
+		MPI_Scatter(particles_send_N, 1, MPI_INT, &(particles_recv_N[i]), 1, MPI_INT, i, MPI_COMM_WORLD);
+	}
+	// Allocate memory for incoming particles
+	for (int i=0;i<mpi_num;i++){
+		if  (i==mpi_id) continue;
+		while (particles_recv_Nmax[i]<particles_recv_N[i]){
+			particles_recv_Nmax[i] += 32;
+			particles_recv[i] = realloc(particles_recv[i],sizeof(struct particle)*particles_recv_Nmax[i]);
+		}
+	}
+	
+	// Exchange particles via MPI.
+	// Using non-blocking receive call.
+	for (int i=0;i<mpi_num;i++){
+		if (i==mpi_id) continue;
+		if (particles_recv_N[i]==0) continue;
+		MPI_Irecv(particles_recv[i], particles_recv_N[i], mpi_particle, i, i*mpi_num+mpi_id, MPI_COMM_WORLD, &(request[i]));
+	}
+	// Using blocking send call.
+	for (int i=0;i<mpi_num;i++){
+		if (i==mpi_id) continue;
+		if (particles_send_N[i]==0) continue;
+		MPI_Send(particles_send[i], particles_send_N[i], mpi_particle, i, mpi_id*mpi_num+i, MPI_COMM_WORLD);
+	}
+	// Wait for all particles to be received.
+	for (int i=0;i<mpi_num;i++){
+		if (i==mpi_id) continue;
+		if (particles_recv_N[i]==0) continue;
+		MPI_Status status;
+		MPI_Wait(&(request[i]), &status);
+	}
+	// No need to add particles to tree as reference already set.
+	// Bring everybody into sync, clean up. 
+	MPI_Barrier(MPI_COMM_WORLD);
+	for (int i=0;i<mpi_num;i++){
+		particles_send_N[i] = 0;
+		particles_recv_N[i] = 0;
 	}
 }
 #endif
