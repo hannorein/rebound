@@ -67,7 +67,9 @@ void iterate(){
 	// Update and simplify tree. 
 	// Prepare particles for distribution to other nodes. 
 	// This function also creates the tree if called for the first time.
+#ifdef TREE
 	tree_update();          
+#endif //TREE
 
 #ifdef MPI
 	// Distribute particles and add newly received particles to tree.

@@ -9,6 +9,7 @@
 #include "main.h"
 #include "tree.h"
 #include "boundaries.h"
+#include "communication_mpi.h"
 
 struct 	collision* collisions 	= NULL;
 int 	collisions_NMAX 	= 0;
@@ -71,10 +72,30 @@ void collisions_resolve(){
 void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, int ri, struct cell* c){
 	if (c->pt>=0){ 	
 		// Leaf node
-#ifndef MPI
-		if (c->pt != collision_nearest.p1){
-			struct particle p2 = particles[c->pt];
-#endif
+		int condition 	= 1;
+#ifdef MPI
+		int isloc	= 1 ;
+		isloc = communication_mpi_rootbox_is_local(ri);
+		if (isloc==1){
+#endif // MPI
+			condition = (c->pt != collision_nearest.p1);
+#ifdef MPI
+		}
+#endif // MPI
+		if (condition){
+			struct particle p2;
+#ifdef MPI
+			if (isloc==1){
+#endif // MPI
+				p2 = particles[c->pt];
+#ifdef MPI
+			}else{
+				int root_n_per_node = root_n/mpi_num;
+				int proc_id = ri/root_n_per_node;
+				p2 = particles_recv[proc_id][c->pt];
+			}
+#endif // MPI
+
 			double dx = gb.shiftx - p2.x;
 			double dy = gb.shifty - p2.y;
 			double dz = gb.shiftz - p2.z;

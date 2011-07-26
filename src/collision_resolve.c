@@ -7,6 +7,7 @@
 #include "collision_resolve.h"
 #include "main.h"
 #include "boundaries.h"
+#include "communication_mpi.h"
 
 double coefficient_of_restitution = 1;
 double minimum_collision_velocity = 0;
@@ -17,7 +18,20 @@ double collisions_plog =0;
 void collisions_resolve_single(struct collision c){
 #ifndef COLLISIONS_NONE
 	struct particle p1 = particles[c.p1];
-	struct particle p2 = particles[c.p2];
+	struct particle p2;
+	int isloc	= 1 ;
+#ifdef MPI
+	isloc = communication_mpi_rootbox_is_local(c.ri);
+	if (isloc==1){
+#endif // MPI
+		p2 = particles[c.p2];
+#ifdef MPI
+	}else{
+		int root_n_per_node = root_n/mpi_num;
+		int proc_id = c.ri/root_n_per_node;
+		p2 = particles_recv[proc_id][c.p2];
+	}
+#endif // MPI
 	struct ghostbox gb = c.gb;
 	//if (p1.lastcollision==t || p2.lastcollision==t) return;
 	double m21  = p1.m  /  p2.m; 
@@ -62,10 +76,12 @@ void collisions_resolve_single(struct collision c){
 	collisions_plog += fabs(dvy2nn*p1.m*x21);
 
 	// Applying the changes to the particles.
-	particles[c.p2].vx -=	m21*dvx2n;
-	particles[c.p2].vy -=	m21*dvy2nn;
-	particles[c.p2].vz -=	m21*dvz2nn;
-	particles[c.p2].lastcollision = t;
+	if (isloc==1){
+		particles[c.p2].vx -=	m21*dvx2n;
+		particles[c.p2].vy -=	m21*dvy2nn;
+		particles[c.p2].vz -=	m21*dvz2nn;
+		particles[c.p2].lastcollision = t;
+	}
 	particles[c.p1].vx +=	dvx2n; 
 	particles[c.p1].vy +=	dvy2nn; 
 	particles[c.p1].vz +=	dvz2nn; 

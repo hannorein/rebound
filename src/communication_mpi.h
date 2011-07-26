@@ -10,6 +10,13 @@ MPI_Datatype mpi_particle;
 MPI_Datatype mpi_cell;
 #endif
 
+extern struct particle** 	particles_send;
+extern int* 			particles_send_N;
+extern int* 			particles_send_Nmax;
+extern struct particle** 	particles_recv;
+extern int* 			particles_recv_N;
+extern int* 			particles_recv_Nmax;
+
 void communication_mpi_init(int argc, char** argv);
 void communication_mpi_distribute_particles();
 void communication_mpi_add_particle_to_send_queue(struct particle pt, int proc_id);

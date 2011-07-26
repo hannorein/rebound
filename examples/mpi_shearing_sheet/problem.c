@@ -23,14 +23,14 @@ extern double opening_angle2;
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 #ifdef GRAVITY_TREE
-	opening_angle2	= .5;
+	opening_angle2	= 1;
 #endif
 	OMEGA 		= 0.00013143527;		// 1/s
 	G 		= 6.67428e-11;			// N / (1e-5 kg)^2 m^2
 	softening 	= 1.;				// m
 	dt 		= 1e-3*2.*M_PI/OMEGA;		// s
 	root_nx = 2; root_ny = 2; root_nz = 1;
-	nghostx = 4; nghosty = 4; nghostz = 0; 		// Use three ghost rings
+	nghostx = 3; nghosty = 3; nghostz = 0; 		// Use three ghost rings
 	double surfacedensity 	= 400; 			// kg/m^2
 	double particle_density	= 400;			// g/cm^3
 	double particle_radius 	= 2;			// m
@@ -42,7 +42,7 @@ void problem_init(int argc, char* argv[]){
 	}
 	// Use Bridges et al coefficient of restitution.
 	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
-	minimum_collision_velocity = particle_radius*OMEGA*0.01;  // small fraction of the shear
+	minimum_collision_velocity = particle_radius*OMEGA*0.001;  // small fraction of the shear
 	// Setup particle structures
 	init_box();
 	int _N = round(surfacedensity*boxsize_x*boxsize_y/particle_mass);

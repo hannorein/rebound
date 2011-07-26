@@ -213,6 +213,7 @@ void tree_update_gravity_data(){
 #endif // MPI
 	}
 }
+#endif // GRAVITY_TREE
 
 void tree_update(){
 	if (tree_root==NULL){
@@ -230,7 +231,6 @@ void tree_update(){
 }
 
 
-#endif // GRAVITY_TREE
 
 #ifdef MPI
 int particles_get_rootbox_for_node(struct cell* node){
