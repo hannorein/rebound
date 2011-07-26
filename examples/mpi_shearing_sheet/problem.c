@@ -76,7 +76,10 @@ void problem_init(int argc, char* argv[]){
 
 double coefficient_of_restitution_bridges(double v){
 	// v in [m/s]
-	return 0.34*pow(fabs(v)*100.,-0.234);
+	double eps = 0.34*pow(fabs(v)*100.,-0.234);
+	if (eps>1) eps=1;
+	if (eps<0) eps=0;
+	return eps;
 }
 
 void problem_inloop(){
