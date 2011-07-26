@@ -23,7 +23,7 @@ extern double opening_angle2;
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 #ifdef GRAVITY_TREE
-	opening_angle2	= 1;
+	opening_angle2	= .5;
 #endif
 	OMEGA 		= 0.00013143527;		// 1/s
 	G 		= 6.67428e-11;			// N / (1e-5 kg)^2 m^2
@@ -55,7 +55,7 @@ void problem_init(int argc, char* argv[]){
 			struct particle pt;
 			pt.x 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
 			pt.y 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
-			pt.z 		= 0.1*((double)rand()/(double)RAND_MAX-0.5);
+			pt.z 		= particle_radius*((double)rand()/(double)RAND_MAX-0.5);
 			pt.vx 		= 0;
 			pt.vy 		= -1.5*pt.x*OMEGA;
 			pt.vz 		= 0;

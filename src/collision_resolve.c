@@ -15,19 +15,20 @@ double (*coefficient_of_restitution_for_velocity) (double) = constant_coefficien
 double collisions_plog =0;
 
 void collisions_resolve_single(struct collision c){
-#warning COLLISIONS not resolved.
-	return;
 #ifndef COLLISIONS_NONE
 	struct particle p1 = particles[c.p1];
 	struct particle p2 = particles[c.p2];
+	struct ghostbox gb = c.gb;
 	//if (p1.lastcollision==t || p2.lastcollision==t) return;
 	double m21  = p1.m  /  p2.m; 
-	double x21  = p1.x  - (p2.x+c.gb.shiftx); 
-	double y21  = p1.y  - (p2.y+c.gb.shifty); 
-	double z21  = p1.z  - (p2.z+c.gb.shiftz); 
-	double vx21 = p1.vx - (p2.vx+c.gb.shiftvx); 
-	double vy21 = p1.vy - (p2.vy+c.gb.shiftvy); 
-	double vz21 = p1.vz - (p2.vz+c.gb.shiftvz); 
+	double x21  = gb.shiftx  - p2.x; 
+	double y21  = gb.shifty  - p2.y; 
+	double z21  = gb.shiftz  - p2.z; 
+	double rp   = p1.r+p2.r;
+	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return;
+	double vx21 = gb.shiftvx - p2.vx; 
+	double vy21 = gb.shiftvy - p2.vy; 
+	double vz21 = gb.shiftvz - p2.vz; 
 	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return; // not approaching
 	// Bring the to balls in the xy plane.
 	// NOTE: this could probabely be an atan (which is faster than atan2)

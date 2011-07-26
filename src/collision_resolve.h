@@ -8,6 +8,7 @@ struct collision{
 	struct ghostbox gb;
 	double time;
 	int crossing;
+	int ri;	 /**< Index of rootcell */
 } collision;
 
 extern double coefficient_of_restitution;

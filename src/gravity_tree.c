@@ -54,10 +54,12 @@ void calculate_forces_for_particle_from_cell(int pt, struct cell const *node, st
 	double dy = gb.shifty - node->my;
 	double dz = gb.shiftz - node->mz;
 	double r2 = dx*dx + dy*dy + dz*dz;
-	if (((node->w*node->w)> opening_angle2*r2) && (node->pt < 0)) {
-		for (int o=0; o<8; o++) {
-			if (node->oct[o] != NULL) {
-				calculate_forces_for_particle_from_cell(pt, node->oct[o], gb);
+	if ( node->pt < 0) {
+		if ( node->w*node->w > opening_angle2*r2 ){
+			for (int o=0; o<8; o++) {
+				if (node->oct[o] != NULL) {
+					calculate_forces_for_particle_from_cell(pt, node->oct[o], gb);
+				}
 			}
 		}
 	} else {

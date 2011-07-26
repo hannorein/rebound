@@ -10,16 +10,16 @@
 #include "tree.h"
 #include "boundaries.h"
 
-struct collision* collisions = NULL;
-int collisions_NMAX = 0;
-int collisions_N = 0;
-double nearest_r;
-double collisions_max_r;
-int nearest_pt;
-struct ghostbox nearest_gb;
+struct 	collision* collisions 	= NULL;
+int 	collisions_NMAX 	= 0;
+int 	collisions_N		= 0;
+double 	nearest_r2;
+double 	collisions_max_r;
+int 	nearest_ri;
+double 	p1_r;
+struct  collision collision_nearest;
 
-void collisions_add(int p1, int p2, struct ghostbox gb);
-void tree_get_nearest_neighbour_in_cell(int pt, struct ghostbox gb, struct cell* c);
+void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, int ri, struct cell* c);
 
 void collisions_search(){
 	tree_update();
@@ -27,47 +27,38 @@ void collisions_search(){
 	int nghostycol = (nghosty>1?1:nghosty);
 	int nghostzcol = (nghostz>1?1:nghostz);
 	for (int i=0;i<N;i++){
-		nearest_r = boxsize_max;
-		nearest_pt = -1;
+		struct particle p1 = particles[i];
+		collision_nearest.p1 = i;
+		collision_nearest.p2 = -1;
+		p1_r = p1.r;
+		nearest_r2 = boxsize_max*boxsize_max/4.;
 		for (int gbx=-nghostxcol; gbx<=nghostxcol; gbx++){
 		for (int gby=-nghostycol; gby<=nghostycol; gby++){
 		for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
 			struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
+			gb.shiftx += p1.x; 
+			gb.shifty += p1.y; 
+			gb.shiftz += p1.z; 
+			gb.shiftvx += p1.vx; 
+			gb.shiftvy += p1.vy; 
+			gb.shiftvz += p1.vz; 
 			for (int ri=0;ri<root_n;ri++){
 				struct cell* rootcell = tree_root[ri];
 				if (rootcell!=NULL){
-					tree_get_nearest_neighbour_in_cell(i,gb,rootcell);
+					tree_get_nearest_neighbour_in_cell(gb,ri,rootcell);
 				}
 			}
 		}
 		}
 		}
-		if (nearest_pt==-1) continue;
-		struct particle p1 = particles[i];
-		struct particle p2 = particles[nearest_pt];
-		double dx = p1.x - (p2.x+nearest_gb.shiftx); 
-		double dy = p1.y - (p2.y+nearest_gb.shifty); 
-		double dz = p1.z - (p2.z+nearest_gb.shiftz); 
-		double sr = p1.r + p2.r; 
-		double r2 = dx*dx+dy*dy+dz*dz;
-		if (r2>sr*sr) continue;	// not overlapping
-		double dvx = p1.vx - (p2.vx+nearest_gb.shiftvx); 
-		double dvy = p1.vy - (p2.vy+nearest_gb.shiftvy); 
-		double dvz = p1.vz - (p2.vz+nearest_gb.shiftvz); 
-		if (dvx*dx + dvy*dy + dvz*dz >0) continue; // not approaching
-		collisions_add(i,nearest_pt, nearest_gb);
+		if (collision_nearest.p2==-1) continue;
+		if (collisions_NMAX<=collisions_N){
+			collisions_NMAX += 32;
+			collisions = realloc(collisions,sizeof(struct collision)*collisions_NMAX);
+		}
+		collisions[collisions_N] = collision_nearest;
+		collisions_N++;
 	}
-}
-
-void collisions_add(int p1, int p2, struct ghostbox gb){
-	if (collisions_NMAX<=collisions_N){
-		collisions_NMAX += 32;
-		collisions = realloc(collisions,sizeof(struct collision)*collisions_NMAX);
-	}
-	collisions[collisions_N].p1 = p1;
-	collisions[collisions_N].p2 = p2;
-	collisions[collisions_N].gb = gb;
-	collisions_N++;
 }
 
 void collisions_resolve(){
@@ -77,32 +68,41 @@ void collisions_resolve(){
 	collisions_N=0;
 }
 
-void tree_get_nearest_neighbour_in_cell(int pt, struct ghostbox gb, struct cell* c){
-	struct particle p1 = particles[pt];
-	double dx = p1.x - (c->x+gb.shiftx);
-	double dy = p1.y - (c->y+gb.shifty);
-	double dz = p1.z - (c->z+gb.shiftz);
-	double r2 = dx*dx + dy*dy + dz*dz;
-	double crit1 = p1.r + collisions_max_r + c->w*0.86602540;
-	if (r2 < crit1*crit1){
-		if (c->oct!=NULL){
-			for (int i=0;i<8;i++){
-				if (c->oct[i]!=NULL){
-					tree_get_nearest_neighbour_in_cell(pt,gb,c->oct[i]);
+void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, int ri, struct cell* c){
+	if (c->pt>=0){ 	
+		// Leaf node
+#ifndef MPI
+		if (c->pt != collision_nearest.p1){
+			struct particle p2 = particles[c->pt];
+#endif
+			double dx = gb.shiftx - p2.x;
+			double dy = gb.shifty - p2.y;
+			double dz = gb.shiftz - p2.z;
+			double r2 = dx*dx+dy*dy+dz*dz;
+			if (r2 > nearest_r2) return;
+			double dvx = gb.shiftvx - p2.vx;
+			double dvy = gb.shiftvy - p2.vy;
+			double dvz = gb.shiftvz - p2.vz;
+			if (dvx*dx + dvy*dy + dvz*dz >0) return; // not approaching
+			nearest_r2 = r2;
+			collision_nearest.ri = ri;
+			collision_nearest.p2 = c->pt;
+			collision_nearest.gb = gb;
+		}
+	}else{		
+		// Not a leaf node
+		double dx = gb.shiftx - c->x;
+		double dy = gb.shifty - c->y;
+		double dz = gb.shiftz - c->z;
+		double r2 = dx*dx + dy*dy + dz*dz;
+		double rp  = p1_r + collisions_max_r + 0.86602540378443*c->w;
+		if (r2 < rp*rp ){
+			for (int o=0;o<8;o++){
+				struct cell* d = c->oct[o];
+				if (d!=NULL){
+					tree_get_nearest_neighbour_in_cell(gb,ri,d);
 				}
 			}
-		}
-	}
-	if (c->pt>=0 && c->pt !=pt){
-		struct particle p2 = particles[c->pt];
-		double dx = p1.x - (p2.x+gb.shiftx);
-		double dy = p1.y - (p2.y+gb.shifty);
-		double dz = p1.z - (p2.z+gb.shiftz);
-		double r2 = dx*dx+dy*dy+dz*dz;
-		if (r2<nearest_r*nearest_r){
-			nearest_r = sqrt(r2);
-			nearest_pt = c->pt;
-			nearest_gb = gb;
 		}
 	}
 }
