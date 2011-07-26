@@ -9,3 +9,5 @@ src/problem.c
 .DS_Store
 error.txt
 tests/testall.html
+doc/html/*
+doc/latex/*
