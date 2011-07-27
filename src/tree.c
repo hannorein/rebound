@@ -13,7 +13,31 @@
 
 struct cell** tree_root;
 
+/**
+  * Given the index of a particle and a pointer to a node cell, the function returns the index
+  * of the octant which the particle belongs to.
+  *
+  * @param pt is the index of a particle.
+  * @param node is the pointer to a node cell. 
+  */
 int tree_get_octant_for_particle_in_cell(int pt, struct cell *node);
+
+/**
+  * This function adds a particle to the octant[o] of a node. 
+  *
+  * If node is NULL, the function allocate memory for it and calculate its geometric properties. 
+  * As a leaf node, node->pt = pt. 
+  *
+  * If node already exists, the function calls itself recursively until reach a leaf node.
+  * The leaf node would be divided into eight octants, then it puts the leaf-node hosting particle 
+  * and the new particle into these octants. 
+  * 
+  * @param node is the pointer to a node cell
+  * @param pt is the index of a particle.
+  * @param parent is the pointer to the parent cell of node. if node is a root, then parent
+  * is set to be NULL.
+  * @param o is the index of the octant of the node which particles[pt] belongs to.
+  */
 struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *parent, int o);
 
 void tree_add_particle_to_tree(int pt){
@@ -26,10 +50,11 @@ void tree_add_particle_to_tree(int pt){
 }
 
 struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *parent, int o){
-	if (node == NULL) {
+	// Initialize a new node
+	if (node == NULL) {  
 		node = calloc(1, sizeof(struct cell));
 		struct particle p = particles[pt];
-		if (parent == NULL){
+		if (parent == NULL){ // The new node is a root
 			node->w = boxsize;
 			int i = ((int)floor((p.x + boxsize_x/2.)/boxsize))%root_nx;
 			int j = ((int)floor((p.y + boxsize_y/2.)/boxsize))%root_ny;
@@ -37,31 +62,27 @@ struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *p
 			node->x = -boxsize_x/2.+boxsize*(0.5+(double)i);
 			node->y = -boxsize_y/2.+boxsize*(0.5+(double)j);
 			node->z = -boxsize_z/2.+boxsize*(0.5+(double)k);
-		}else{
+		}else{ // The new node is a normal node
 			node->w 	= parent->w/2.;
 			node->x 	= parent->x + node->w/2.*((o>>0)%2==0?1.:-1);
 			node->y 	= parent->y + node->w/2.*((o>>1)%2==0?1.:-1);
 			node->z 	= parent->z + node->w/2.*((o>>2)%2==0?1.:-1);
 		}
-
-		// Double usages: in a leaf node, it stores the index of a particle; in a non-
-		// leaf node, it equals to (-1)*Total Number of particles within that cell.
-		node->pt = pt;
+		node->pt = pt; 
 		particles[pt].c = node;
 		for (int i=0; i<8; i++){
 			node->oct[i] = NULL;
 		}
 		return node;
 	}
-
-	// Modify the total mass and center of mass of a cell
-	if (node->pt >= 0) {
+	// In a existing node
+	if (node->pt >= 0) { // It's a leaf node
 		int o = tree_get_octant_for_particle_in_cell(node->pt, node);
 		node->oct[o] = tree_add_particle_to_cell(node->oct[o], node->pt, node, o); 
 		o = tree_get_octant_for_particle_in_cell(pt, node);
 		node->oct[o] = tree_add_particle_to_cell(node->oct[o], pt, node, o);
 		node->pt = -2;
-	}else{
+	}else{ // It's not a leaf
 		node->pt--;
 		int o = tree_get_octant_for_particle_in_cell(pt, node);
 		node->oct[o] = tree_add_particle_to_cell(node->oct[o], pt, node, o);
@@ -78,6 +99,11 @@ int tree_get_octant_for_particle_in_cell(int pt, struct cell *node){
 	return octant;
 }
 
+/**
+  * The function tests whether the particle is still within the cubic cell box. If the particle has moved outside the box, it returns 0. Otherwise, it returns 1. 
+  *
+  * @param node is the pointer to a node cell
+  */
 int tree_particle_is_inside_cell(struct cell *node){
 	if (fabs(particles[node->pt].x-node->x) > node->w/2. || \
 		fabs(particles[node->pt].y-node->y) > node->w/2. || \
@@ -87,8 +113,13 @@ int tree_particle_is_inside_cell(struct cell *node){
 	return 1;
 }
 
+/**
+  * The function is called to walk through the whole tree to update its structure and node->pt at the end of each time step.
+  *
+  * @param node is the pointer to a node cell
+  */
 struct cell *tree_update_cell(struct cell *node){
-	int test = -1;
+	int test = -1; /**< A temporary int variable is used to store the index of an octant when it needs to be freed. */
 	if (node == NULL) {
 		return NULL;
 	}
@@ -140,6 +171,9 @@ struct cell *tree_update_cell(struct cell *node){
 }
 
 #ifdef GRAVITY_TREE
+/**
+  * The function calculates the total mass and center of mass of a node. If QUADRUPOLE is defined, then it also calculates the quadrupole tensor if the node is not a leaf.
+  */
 void tree_update_gravity_data_in_cell(struct cell *node){
 #ifdef QUADRUPOLE
 	node->mxx = 0;
@@ -220,6 +254,7 @@ void tree_update(){
 		tree_root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
 	}
 	for(int i=0;i<root_n;i++){
+
 #ifdef MPI
 		if (communication_mpi_rootbox_is_local(i)==1){
 #endif // MPI
@@ -241,6 +276,9 @@ int particles_get_rootbox_for_node(struct cell* node){
 	return index;
 }
 
+/**
+  * I am not quite sure what does the funtion do...
+  */
 int tree_get_octant_for_cell_in_cell(struct cell* nnode, struct cell *node){
 	int octant = 0;
 	if (nnode->x < node->x) octant+=1;
