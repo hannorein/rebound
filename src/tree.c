@@ -207,7 +207,9 @@ void tree_update_gravity_data(){
 #ifdef MPI
 		if (communication_mpi_rootbox_is_local(i)==1){
 #endif // MPI
-			tree_update_gravity_data_in_cell(tree_root[i]);
+			if (tree_root[i]!=NULL){
+				tree_update_gravity_data_in_cell(tree_root[i]);
+			}
 #ifdef MPI
 		}
 #endif // MPI
