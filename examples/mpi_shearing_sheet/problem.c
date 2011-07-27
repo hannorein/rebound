@@ -23,26 +23,27 @@ extern double opening_angle2;
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 #ifdef GRAVITY_TREE
-	opening_angle2	= 1;
+	opening_angle2	= .5;
 #endif
 	OMEGA 		= 0.00013143527;		// 1/s
 	G 		= 6.67428e-11;			// N / (1e-5 kg)^2 m^2
-	softening 	= 1.;				// m
+	softening 	= 0.4;				// m
 	dt 		= 1e-3*2.*M_PI/OMEGA;		// s
 	root_nx = 2; root_ny = 2; root_nz = 1;
 	nghostx = 3; nghosty = 3; nghostz = 0; 		// Use three ghost rings
 	double surfacedensity 	= 400; 			// kg/m^2
-	double particle_density	= 400;			// g/cm^3
-	double particle_radius 	= 2;			// m
+	double particle_density	= 800;			// kg/m^3
+	double particle_radius 	= 1;			// m
 	double particle_mass 	= particle_density*4./3.*M_PI*pow(particle_radius,3); 	// kg
 	if (argc>1){					// Try to read boxsize from command line
 		boxsize = atof(argv[1]);
 	}else{
 		boxsize = 200;
 	}
+	printf("Toomre wavelength: %f\n",2.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*G);
 	// Use Bridges et al coefficient of restitution.
 	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
-	minimum_collision_velocity = particle_radius*OMEGA*0.001;  // small fraction of the shear
+	minimum_collision_velocity = particle_radius*OMEGA*0.01;  // small fraction of the shear
 	// Setup particle structures
 	init_box();
 	int _N = round(surfacedensity*boxsize_x*boxsize_y/particle_mass);
@@ -62,7 +63,7 @@ void problem_init(int argc, char* argv[]){
 			pt.ax 		= 0;
 			pt.ay 		= 0;
 			pt.az 		= 0;
-			pt.m 		= particle_mass*1.e0;
+			pt.m 		= particle_mass;
 #ifndef COLLISIONS_NONE
 			pt.r 		= particle_radius;
 #endif
@@ -75,7 +76,7 @@ void problem_init(int argc, char* argv[]){
 }
 
 double coefficient_of_restitution_bridges(double v){
-	// v in [m/s]
+	// assumes v in units of [m/s]
 	double eps = 0.34*pow(fabs(v)*100.,-0.234);
 	if (eps>1) eps=1;
 	if (eps<0) eps=0;

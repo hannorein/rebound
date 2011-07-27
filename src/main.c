@@ -109,6 +109,9 @@ void iterate(){
 	tree_update();          
 
 #ifdef MPI
+	// Distribute particles and add newly received particles to tree.
+	communication_mpi_distribute_particles();
+	
 	// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
 	tree_prepare_essential_tree();
 
