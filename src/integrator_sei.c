@@ -11,8 +11,8 @@
 double OMEGA = 1.; // Epicyclic frequency 
 double OMEGAZ = -1.; // Epicyclic frequency in vertical direction
 
-void operator_H0(double dt, struct particle* p);
-void operator_phi(double dt, struct particle* p);
+void operator_H012(struct particle* p);
+void operator_phi1(struct particle* p);
 // Cache sin() tan() values.
 double lastdt=0;
 double sindt, tandt;
@@ -27,16 +27,16 @@ void integrator_part1(){
 		if (OMEGAZ==-1){
 			OMEGAZ=OMEGA;
 		}
-		sindt = sin(OMEGA*(-dt));
-		tandt = tan(OMEGA*(-dt/2.));
-		sindtz = sin(OMEGAZ*(-dt));
-		tandtz = tan(OMEGAZ*(-dt/2.));
+		sindt = sin(OMEGA*(-dt/2.));
+		tandt = tan(OMEGA*(-dt/4.));
+		sindtz = sin(OMEGAZ*(-dt/2.));
+		tandtz = tan(OMEGAZ*(-dt/4.));
 		lastdt = dt;
 	}
 
 #pragma omp parallel for
 	for (int i=0;i<N;i++){
-		operator_H0(dt/2.,&(particles[i]));
+		operator_H012(&(particles[i]));
 	}
 	t+=dt/2.;
 }
@@ -44,15 +44,15 @@ void integrator_part1(){
 void integrator_part2(){
 #pragma omp parallel for
 	for (int i=0;i<N;i++){
-		operator_phi(dt,&(particles[i]));
-		operator_H0(dt/2.,&(particles[i]));
+		operator_phi1(&(particles[i]));
+		operator_H012(&(particles[i]));
 	}
 	t+=dt/2.;
 }
 
 // This function evolves a particle under 
 // Hamiltonian H0 exactly up to machine precission.
-void operator_H0(double dt, struct particle* p){
+void operator_H012(struct particle* p){
 		
 	// Integrate vertical motion
 	const double zx = p->z * OMEGAZ;
@@ -80,14 +80,14 @@ void operator_H0(double dt, struct particle* p){
 	const double xst  =  xst1 - tandt*yst;	
 
 	p->x  = (xst+aO)    /OMEGA;			
-	p->y  = (yst*2.+bO) /OMEGA - 3./2.*aO*dt;	
+	p->y  = (yst*2.+bO) /OMEGA - 3./4.*aO*dt;	
 	p->vx = yst;
 	p->vy = -xst*2. -3./2.*aO;
 }
 
 // This function evolves a particle under the operator
 // Phi exactly up to machine precission.
-void operator_phi(double dt, struct particle* p){
+void operator_phi1(struct particle* p){
 	// The force used here is for test cases 2 and 3 
 	// in Rein & Tremaine 2011. 
 	p->vx += p->ax * dt;

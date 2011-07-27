@@ -35,7 +35,7 @@ void problem_init(int argc, char* argv[]){
 	}
 	// Use Bridges et al coefficient of restitution.
 	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
-	minimum_collision_velocity = particle_radius*OMEGA*0.01;  // small fraction of the shear
+	minimum_collision_velocity = particle_radius*OMEGA*0.1;  // small fraction of the shear
 	// Setup particle structures
 	init_box();
 	int _N = (int)round(surfacedensity*boxsize*boxsize/particle_mass);
@@ -43,13 +43,12 @@ void problem_init(int argc, char* argv[]){
 	for (int i =0;i<_N;i++){
 		struct particle p;
 		double vrand = 0.0*OMEGA*((double)rand()/(double)RAND_MAX-0.5);
-		double phirand = 2.*M_PI*((double)rand()/(double)RAND_MAX-0.5);
 		p.x 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
 		p.y 		= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
-		p.z 		= 10.*((double)rand()/(double)RAND_MAX-0.5);
+		p.z 		= 0;
 		p.vx 		= 0;
-		p.vy 		= -1.5*p.x*OMEGA+2.*vrand*cos(phirand);
-		p.vz 		= vrand*sin(phirand);
+		p.vy 		= -1.5*p.x*OMEGA;
+		p.vz 		= 0;;
 		p.ax 		= 0;
 		p.ay 		= 0;
 		p.az 		= 0;
@@ -61,7 +60,10 @@ void problem_init(int argc, char* argv[]){
 
 double coefficient_of_restitution_bridges(double v){
 	// v in [m/s]
-	return 0.34*pow(fabs(v)*100.,-0.234);
+	double eps = 0.34*pow(fabs(v)*100.,-0.234);
+	if (eps>1) eps=1;
+	if (eps<0) eps=0;
+	return eps;
 }
 
 void problem_inloop(){
