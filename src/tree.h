@@ -46,13 +46,13 @@ void tree_update();
 
 #ifdef GRAVITY_TREE
 /**
-  * The wrap function calls tree_update_gravity_data_in_cell to for each tree.
+  * The wrap function calls tree_update_gravity_data_in_cell() to for each tree.
   */
 void tree_update_gravity_data();
 #endif // GRAVITY_TREE
 
 /**
-  * The wrap function calls tree_add_particle_to_cell to add the particle into one of the trees. If the tree_root doesn't exist, then it initializes the trees. 
+  * The wrap function calls tree_add_particle_to_cell() to add the particle into one of the trees. If the tree_root doesn't exist, then it initializes the trees. 
   *
   * @param pt is the index of a particle.
   */

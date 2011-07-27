@@ -646,7 +646,7 @@ EXCLUDE                =
 # directories that are symbolic links (a Unix file system feature) are excluded
 # from the input.
 
-EXCLUDE_SYMLINKS       = YES
+EXCLUDE_SYMLINKS       = NO
 
 # If the value of the INPUT tag contains directories, you can use the
 # EXCLUDE_PATTERNS tag to specify one or more wildcard patterns to exclude
@@ -1406,7 +1406,7 @@ PERLMOD_MAKEVAR_PREFIX =
 # evaluate all C-preprocessor directives found in the sources and include
 # files.
 
-ENABLE_PREPROCESSING   = NO
+ENABLE_PREPROCESSING   = YES
 
 # If the MACRO_EXPANSION tag is set to YES Doxygen will expand all macro
 # names in the source code. If set to NO (the default) only conditional
@@ -1447,7 +1447,7 @@ INCLUDE_FILE_PATTERNS  = *.h
 # undefined via #undef or recursively expanded use the := operator
 # instead of the = operator.
 
-PREDEFINED             = GRAVITY_TREE GRAVITY_DIRECT COLLISIONS_TREE
+PREDEFINED             =
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
 # this tag can be used to specify a list of macro names that should be expanded.
