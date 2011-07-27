@@ -74,41 +74,58 @@ void iterate(){
 #ifdef MPI
 	// Distribute particles and add newly received particles to tree.
 	communication_mpi_distribute_particles();
-#endif
+#endif // MPI
 
 #ifdef GRAVITY_TREE
 	// Update center of mass and quadrupole moments in tree in preparation of force calculation.
 	tree_update_gravity_data(); 
-#endif
-
-#if defined(TREE) && defined(MPI)
+	
+#ifdef MPI
 	// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
 	tree_prepare_essential_tree();
 
 	// Transfer essential tree and particles needed for collisions.
 	communication_mpi_distribute_essential_tree();
-#endif 
-
-#ifndef COLLISIONS_NONE
-	// Search for collisions using local and essential tree.
-	collisions_search();
-
-	// Resolve collisions (only local particles are affected).
-	collisions_resolve();
-#endif
+#endif // MPI
+#endif // GRAVITY_TREE
 
 #ifndef GRAVITY_NONE
 	// Calculate forces using local and essential tree. 
 	// Collisions only change the velocity, so we don't need to update the tree here.
 	calculate_forces();
-#endif
+#endif // GRAVITY_NONE
 
 	// A 'DKD'-like integrator will do the 'KD' part.
 	integrator_part2();
 
+	// Do collisions here. We need both the positions and velocities at the same time.
+#ifndef COLLISIONS_NONE
+	// Check for root crossings.
+	boundaries_check();     
+
+#ifdef COLLISIONS_TREE
+	// Update and simplify tree. 
+	// Prepare particles for distribution to other nodes. 
+	tree_update();          
+
+#ifdef MPI
+	// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
+	tree_prepare_essential_tree();
+
+	// Transfer essential tree and particles needed for collisions.
+	communication_mpi_distribute_essential_tree();
+#endif // MPI
+#endif // COLLISIONS_TREE
+	// Search for collisions using local and essential tree.
+	collisions_search();
+
+	// Resolve collisions (only local particles are affected).
+	collisions_resolve();
+#endif  // COLLISIONS_NONE
+
 #ifdef OPENGL
 	display();
-#endif
+#endif // OPENGL
 	problem_inloop();
 	problem_output();
 	if(t+dt>tmax && tmax!=0.0){

@@ -12,40 +12,39 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt = 1e-3;
 	tmax = 10000;
-	boxsize_x = 3;
-	boxsize_y = 3;
-	boxsize_z = 3;
+	boxsize = 3;
 	coefficient_of_restitution = 1; // elastic collisions
+	// Do not use any ghost boxes
+	nghostx = 0; nghosty = 0; nghostz = 0;
 
 	// Setup particle structures
-	init_particles(2);
+	init_box();
 	// Initial conditions
-	particles[0].x  = 1;
-	particles[0].y  = 1;
-	particles[0].z  = 0;
-	particles[0].vx = 0;
-	particles[0].vy = 0;
-	particles[0].vz = 0;
-	particles[0].ax = 0;
-	particles[0].ay = 0;
-	particles[0].az = 0;
-	particles[0].m  = 1;
-	particles[0].r  = 0.1;
-	particles[1].x  = -1;
-	particles[1].y  = -1;
-	particles[1].z  = 0;
-	particles[1].vx = 0;
-	particles[1].vy = 0;
-	particles[1].vz = 0;
-	particles[1].ax = 0;
-	particles[1].ay = 0;
-	particles[1].az = 0;
-	particles[1].m  = 1;
-	particles[1].r  = 0.1;
-	// Do not use any ghost boxes
-	nghostx = 0;
-	nghosty = 0;
-	nghostz = 0;
+	struct particle p;
+	p.x  = 1;
+	p.y  = 1;
+	p.z  = 0;
+	p.vx = 0;
+	p.vy = 0;
+	p.vz = 0;
+	p.ax = 0;
+	p.ay = 0;
+	p.az = 0;
+	p.m  = 1;
+	p.r  = 0.1;
+	particles_add(p);
+	p.x  = -1;
+	p.y  = -1;
+	p.z  = 0;
+	p.vx = 0;
+	p.vy = 0;
+	p.vz = 0;
+	p.ax = 0;
+	p.ay = 0;
+	p.az = 0;
+	p.m  = 1;
+	p.r  = 0.1;
+	particles_add(p);
 	printf("init done\n");
 }
 

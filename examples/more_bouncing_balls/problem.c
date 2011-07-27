@@ -11,7 +11,6 @@ extern double coefficient_of_restitution;
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt = 1e-3;
-	tmax = 10000;
 	boxsize = 3;
 	nghostx = 1; nghosty = 1; nghostz = 0;
 	coefficient_of_restitution = 1; // elastic collisions

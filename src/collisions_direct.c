@@ -9,6 +9,9 @@
 #include "main.h"
 #include "boundaries.h"
 
+#ifdef MPI
+#error COLLISIONS_DIRECT not compatible with MPI
+#endif
 
 double collisions_max_r;
 
@@ -24,24 +27,31 @@ void collisions_search(){
 	for (int gbx=-nghostxcol; gbx<=nghostxcol; gbx++){
 	for (int gby=-nghostycol; gby<=nghostycol; gby++){
 	for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
-		struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
 		for (int i=0;i<N;i++){
-		for (int j=0;j<N;j++){
-			if (i==j) continue;
 			struct particle p1 = particles[i];
-			struct particle p2 = particles[j];
-			double dx = p1.x - (p2.x+gb.shiftx); 
-			double dy = p1.y - (p2.y+gb.shifty); 
-			double dz = p1.z - (p2.z+gb.shiftz); 
-			double sr = p1.r + p2.r; 
-			double r2 = dx*dx+dy*dy+dz*dz;
-			if (r2>sr*sr) continue;	// not overlapping
-			double dvx = p1.vx - (p2.vx+gb.shiftvx); 
-			double dvy = p1.vy - (p2.vy+gb.shiftvy); 
-			double dvz = p1.vz - (p2.vz+gb.shiftvz); 
-			if (dvx*dx + dvy*dy + dvz*dz >0) continue; // not approaching
-			collisions_add(i,j, gb);
-		}
+			struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
+			// Precalculate shift.
+			gb.shiftx += p1.x;
+			gb.shifty += p1.y;
+			gb.shiftz += p1.z;
+			gb.shiftvx += p1.vx;
+			gb.shiftvy += p1.vy;
+			gb.shiftvz += p1.vz;
+			for (int j=0;j<N;j++){
+				if (i==j) continue;
+				struct particle p2 = particles[j];
+				double dx = gb.shiftx - p2.x; 
+				double dy = gb.shifty - p2.y; 
+				double dz = gb.shiftz - p2.z; 
+				double sr = p1.r + p2.r; 
+				double r2 = dx*dx+dy*dy+dz*dz;
+				if (r2>sr*sr) continue;	// not overlapping
+				double dvx = gb.shiftvx - p2.vx; 
+				double dvy = gb.shiftvy - p2.vy; 
+				double dvz = gb.shiftvz - p2.vz; 
+				if (dvx*dx + dvy*dy + dvz*dz >0) continue; // not approaching
+				collisions_add(i,j, gb);
+			}
 		}
 	}
 	}
