@@ -82,10 +82,10 @@ void iterate(){
 	
 #ifdef MPI
 	// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
-	tree_prepare_essential_tree();
+	tree_prepare_essential_tree_for_gravity();
 
 	// Transfer essential tree and particles needed for collisions.
-	communication_mpi_distribute_essential_tree();
+	communication_mpi_distribute_essential_tree_for_gravity();
 #endif // MPI
 #endif // GRAVITY_TREE
 
@@ -113,12 +113,13 @@ void iterate(){
 	communication_mpi_distribute_particles();
 	
 	// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
-	tree_prepare_essential_tree();
+	tree_prepare_essential_tree_for_collisions();
 
 	// Transfer essential tree and particles needed for collisions.
-	communication_mpi_distribute_essential_tree();
+	communication_mpi_distribute_essential_tree_for_collisions();
 #endif // MPI
 #endif // COLLISIONS_TREE
+
 	// Search for collisions using local and essential tree.
 	collisions_search();
 

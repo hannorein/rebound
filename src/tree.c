@@ -272,10 +272,22 @@ void tree_add_essential_node(struct cell* node){
 		tree_add_essential_node_to_node(node, tree_root[index]);
 	}
 }
-void tree_prepare_essential_tree(){
+void tree_prepare_essential_tree_for_gravity(){
 	for(int i=0;i<root_n;i++){
 		if (communication_mpi_rootbox_is_local(i)==1){
-			communication_mpi_prepare_essential_tree(tree_root[i]);
+			communication_mpi_prepare_essential_tree_for_gravity(tree_root[i]);
+		}else{
+			// Delete essential tree reference. 
+			// Tree itself is saved in tree_essential_recv[][] and
+			// will be overwritten the next timestep.
+			tree_root[i] = NULL;
+		}
+	}
+}
+void tree_prepare_essential_tree_for_collisions(){
+	for(int i=0;i<root_n;i++){
+		if (communication_mpi_rootbox_is_local(i)==1){
+			communication_mpi_prepare_essential_tree_for_collisions(tree_root[i]);
 		}else{
 			// Delete essential tree reference. 
 			// Tree itself is saved in tree_essential_recv[][] and

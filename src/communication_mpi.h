@@ -72,19 +72,36 @@ void communication_mpi_add_particle_to_send_queue(struct particle pt, int proc_i
  */ 
 int  communication_mpi_rootbox_is_local(int i);
 
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+#ifdef GRAVITY_TREE
 /**
  * Send cells in buffer tree_essential_send to corresponding node. 
  * Receives cells from all nodes in buffer tree_essential_recv and adds them
  * to the non-local root boxes.
  */
-void communication_mpi_distribute_essential_tree();
+void communication_mpi_distribute_essential_tree_for_gravity();
+
 /**
  * Prepares the essential tree of a root box for communication with other nodes.
  * @param root The root cell under investigation.
  */
-void communication_mpi_prepare_essential_tree(struct cell* root);
+void communication_mpi_prepare_essential_tree_for_gravity(struct cell* root);
 #endif // TREE
+
+#ifdef COLLISIONS_TREE
+/**
+ * Send cells/particles in buffer tree_essential_send/particles_send to corresponding node. 
+ * Receives cells/particles from all nodes in buffers. Does not insert particles 
+ * into local tree.
+ */
+void communication_mpi_distribute_essential_tree_for_collisions();
+
+/**
+ * Prepares the essential tree/particles of a root box for communication with other nodes.
+ * Adds copy of particles into particles_send.  
+ * @param root The root cell under investigation.
+ */
+void communication_mpi_prepare_essential_tree_for_collisions(struct cell* root);
+#endif //COLLISIONS_TREE
 
 
 #endif // MPI
