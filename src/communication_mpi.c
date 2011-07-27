@@ -62,7 +62,7 @@ void communication_mpi_init(int argc, char** argv){
 	indices[bnum] 	= (void*)&p.c - (void*)&p; 
 	oldtypes[bnum] 	= MPI_CHAR;
 	bnum++;
-#endif
+#endif // TREE
 	blen[bnum] 	= 1; 
 	indices[bnum] 	= sizeof(struct particle); 
 	oldtypes[bnum] 	= MPI_UB;
@@ -98,7 +98,7 @@ void communication_mpi_init(int argc, char** argv){
 	bnum++;
 	MPI_Type_struct(bnum, blen, indices, oldtypes, &mpi_cell );
 	MPI_Type_commit(&mpi_cell); 
-#endif 
+#endif // TREE 
 	
 	// Prepare send/recv buffers for particles
 	particles_send   	= calloc(mpi_num,sizeof(struct particle*));
@@ -149,7 +149,6 @@ void communication_mpi_distribute_particles(){
 		}
 	}
 
-	
 	// Exchange particles via MPI.
 	// Using non-blocking receive call.
 	MPI_Request request[mpi_num];
@@ -197,14 +196,17 @@ void communication_mpi_add_particle_to_send_queue(struct particle pt, int proc_i
 
 #ifdef TREE
 
-struct aabb{ // axis aligned bounding box
+/** 
+ * This is the data structure for an axis aligned bounding box.
+ */
+struct aabb{
 	double xmin;
 	double xmax;
 	double ymin;
 	double ymax;
 	double zmin;
 	double zmax;
-} aabb;
+};
 
 struct aabb communication_boundingbox_for_root(int index){
 	int i = index%root_nx;
@@ -236,6 +238,7 @@ struct aabb communication_boundingbox_for_proc(int proc_id){
 	}
 	return boundingbox;
 }
+
 double communication_distance2_of_aabb_to_cell(struct aabb bb, struct cell* node){
 	double distancex = fabs(node->x - (bb.xmin+bb.xmax)/2.)  -  (node->w + bb.xmax-bb.xmin)/2.;
 	double distancey = fabs(node->y - (bb.ymin+bb.ymax)/2.)  -  (node->w + bb.ymax-bb.ymin)/2.;
@@ -275,7 +278,10 @@ double communication_distance2_of_proc_to_node(int proc_id, struct cell* node){
 	return distance;
 }
 
+#ifdef GRAVITY_TREE
 extern double opening_angle2;
+#endif 
+
 void communication_mpi_prepare_essential_cell_for_proc(struct cell* node, int proc){
 	// Add essential cell to tree_essential_send
 	if (tree_essential_send_N[proc]>=tree_essential_send_Nmax[proc]){
