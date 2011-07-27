@@ -1,5 +1,5 @@
 UNAME := $(shell uname)
-OPT += -std=c99
+OPT+= -std=c99
 ifeq ($(UNAME), Linux)
 	OPT+= -L/usr/lib -I/usr/include -Wall  -g 
 	LIB+= -lm
@@ -12,7 +12,7 @@ endif
 
 ifeq ($(MPI), 1)
 	CC=mpicc
-	PREDEF += -DMPI
+	PREDEF+= -DMPI
 else
 	CC=gcc
 endif
@@ -58,7 +58,7 @@ PREDEF+= -D$(shell basename `readlink integrator.c` '.c' | tr '[a-z]' '[A-Z]')
 PREDEF+= -D$(shell basename `readlink boundaries.c` '.c' | tr '[a-z]' '[A-Z]')
 PREDEF+= -D$(shell basename `readlink collisions.c` '.c' | tr '[a-z]' '[A-Z]')
 
-PREDEFLIST = $(shell echo "$(PREDEF)" | sed 's/-D//g')
+PREDEFLIST= $(shell echo "$(PREDEF)" | sed 's/-D//g')
 
 all:
 	$(CC) $(OPT) $(PREDEF) main.c -c
