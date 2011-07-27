@@ -17,3 +17,6 @@ all:
 	$(MAKE) -C ../../src/
 	# Copy result
 	cp ../../src/nbody .
+
+doc:
+	$(MAKE) -C ../../src/ doc
