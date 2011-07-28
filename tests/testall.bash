@@ -17,6 +17,8 @@ cat >> testall.html <<EOF
 EOF
 }
 
+rm ./*/error.txt
+
 cat > testall.html <<EOF
 <html>
 <head>
@@ -38,7 +40,8 @@ cat >> testall.html <<EOF
 	<h2>Collapsing cloud (gravity tree, force error)</h2>
 EOF
 printtable force_accuracy
-printimage force_accuracy/plot.png
+printimage force_accuracy/plot1.png
+printimage force_accuracy/plot2.png
 
 cat >> testall.html <<EOF
 	<h2>Collapsing cloud (gravity tree, energy conservation check)</h2>

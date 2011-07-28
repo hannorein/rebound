@@ -25,34 +25,39 @@ void drift_kepu_fchk(double dt0, double r0, double mu, double alpha, double u, d
 void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* c);
 
 int WH_SELFGRAVITY_ENABLED = 1;
+int WH_INDIRECT_TERM = 1;
 
-void integrate_particles(){
+void integrator_part1(){
 	if (WH_SELFGRAVITY_ENABLED==1){
 		// DRIFT
 		drift_wh(dt/2.);
-		boundaries_check();
-		// KICK
-		calculate_forces();
-		for (int i=1;i<N;i++){
-			//					   indirect term
-			/*
-			particles[i].vx += dt * particles[i].ax;
-			particles[i].vy += dt * particles[i].ay;
-			particles[i].vz += dt * particles[i].az;
-			*/
-			particles[i].vx += dt * (particles[i].ax - 1.*particles[0].ax);
-			particles[i].vy += dt * (particles[i].ay - 1.*particles[0].ay);
-			particles[i].vz += dt * (particles[i].az - 1.*particles[0].az);
-		}
-
-		// DRIFT
-		drift_wh(dt/2.);
+		t+=dt/2.;
 	}else{
 		// DRIFT
 		drift_wh(dt);
+		t+=dt;
 	}
-	t+=dt;
-	boundaries_check();
+}
+
+void integrator_part2(){
+	if (WH_SELFGRAVITY_ENABLED==1){
+		// DRIFT
+		if (WH_INDIRECT_TERM==1){
+			for (int i=1;i<N;i++){
+				particles[i].vx += dt * (particles[i].ax - 1.*particles[0].ax);
+				particles[i].vy += dt * (particles[i].ay - 1.*particles[0].ay);
+				particles[i].vz += dt * (particles[i].az - 1.*particles[0].az);
+			}
+		}else{
+			for (int i=1;i<N;i++){
+				particles[i].vx += dt * particles[i].ax;
+				particles[i].vy += dt * particles[i].ay;
+				particles[i].vz += dt * particles[i].az;
+			}
+		}
+		drift_wh(dt/2.);
+		t+=dt/2.;
+	}
 }
 
 void drift_wh(double _dt){
