@@ -23,7 +23,6 @@ struct  collision collision_nearest;
 void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, int ri, struct cell* c);
 
 void collisions_search(){
-	tree_update();
 	int nghostxcol = (nghostx>1?1:nghostx);
 	int nghostycol = (nghosty>1?1:nghosty);
 	int nghostzcol = (nghostz>1?1:nghostz);
