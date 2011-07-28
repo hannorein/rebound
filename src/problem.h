@@ -47,7 +47,8 @@ void problem_init(int argc, char* argv[]);
  */
 void problem_output();
 /**
- * This function is called at the end of each timestep. The user may add 
+ * This function is called in the middle of each timestep (after the gravitational
+ * acceleration is added to the particles. The user may add 
  * any problem specific work (additional forces, etc) here.
  */
 void problem_inloop();

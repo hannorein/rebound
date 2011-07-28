@@ -1,10 +1,33 @@
+/**
+ * @file 	main.c
+ * @brief 	Main routine, iteration loop, timing.
+ * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * 
+ * @section 	LICENSE
+ * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ *
+ * This file is part of nbody.
+ *
+ * nbody is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * nbody is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with nbody.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
-#include "particle.h"
 #include "integrator.h"
 #include "boundaries.h"
 #include "gravity.h"
@@ -22,7 +45,7 @@
 double softening 	= 0;
 double G		= 1;
 double t		= 0;
-double tmax		= 0; // 0 == run forever
+double tmax		= 0; 
 double dt 		= 0.001;
 double timing_initial 	= -1;
 
@@ -43,6 +66,7 @@ void init_box(){
 	root_n = root_nx*root_ny*root_nz;
 
 #ifdef MPI
+	// Make sure domain can be decomposed into equal number of root boxes per node.
 	if ((root_n/mpi_num)*mpi_num != root_n){
 		if (mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",root_n,mpi_num);
 		exit(-1);
@@ -95,6 +119,9 @@ void iterate(){
 	calculate_forces();
 #endif // GRAVITY_NONE
 
+	// Call problem specific function (e.g. to add additional forces). 
+	problem_inloop();
+
 	// A 'DKD'-like integrator will do the 'KD' part.
 	integrator_part2();
 
@@ -130,8 +157,9 @@ void iterate(){
 #ifdef OPENGL
 	display();
 #endif // OPENGL
-	problem_inloop();
 	problem_output();
+	// Check if the simulation finished.
+	// @TODO: Adjust timestep so that t==tmax exaclty at the end.
 	if(t+dt>tmax && tmax!=0.0){
 		problem_finish();
 		struct timeval tim;
@@ -150,19 +178,19 @@ int main(int argc, char* argv[]) {
 #ifdef OPENMP
 	printf("Using OpenMP with %d threads per node.\n",omp_get_max_threads());
 #endif // OPENMP
-	// Timing
+	// Store time to calculate total runtime.
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 	// Initialiase random numbers, problem, box and OpengL
 	srand ( tim.tv_usec + getpid());
 	problem_init(argc, argv);
-	boundaries_check();
 	problem_output();
 #ifdef OPENGL
 	init_display(argc, argv);
 #else // OPENGL
 	while(1){
+		// Main run loop.
 		iterate();
 	}
 #endif // OPENGL
