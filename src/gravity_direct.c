@@ -1,3 +1,32 @@
+/**
+ * @file 	gravity.c
+ * @brief 	Direct gravity calculation, O(N^2).
+ * @author 	Hanno Rein <hanno@hanno-rein.de>
+ *
+ * @details 	This is the crudest implementation of an N-body code
+ * which sums up every pair of particles. It is only useful very small 
+ * particle numbers (N<~100) as it scales as O(N^2). 
+ *
+ * 
+ * @section LICENSE
+ * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ *
+ * This file is part of nbody.
+ *
+ * nbody is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * nbody is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with nbody.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -7,7 +36,11 @@
 #include "main.h"
 #include "boundaries.h"
 
-void calculate_forces(){
+#ifdef MPI
+#error GRAVITY_DIRECT not compatible with MPI
+#endif
+
+void gravity_calculate_acceleration(){
 #pragma omp parallel for
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 
@@ -19,7 +52,7 @@ void calculate_forces(){
 	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
 	for (int gby=-nghosty; gby<=nghosty; gby++){
 	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
-		struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
+		struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
 		// Summing over all particle pairs
 #pragma omp parallel for
 		for (int i=0; i<N; i++){

@@ -40,7 +40,8 @@ void boundaries_check(){
 				exit(0);
 			}
 			// Note this has to be modified to work with the tree code.
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+#ifdef TREE
+#error OPEN_BOUNDARY CONDITIONS NOT YET SUPPORTYED WITH TREE
 			printf("Particle leaving the box. Exiting.\n");
 			exit(0);
 #else
@@ -50,15 +51,9 @@ void boundaries_check(){
 #endif
 		}
 	}
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
-	tree_update();
-#endif
-#ifdef MPI
-	communication_mpi_distribute_particles();
-#endif
 }
 
-struct ghostbox get_ghostbox(int i, int j, int k){
+struct ghostbox boundaries_get_ghostbox(int i, int j, int k){
 	struct ghostbox gb;
 	gb.shiftx = boxsize_x*(double)i;
 	gb.shifty = boxsize_y*(double)j;

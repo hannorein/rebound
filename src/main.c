@@ -113,11 +113,8 @@ void iterate(){
 #endif // MPI
 #endif // GRAVITY_TREE
 
-#ifndef GRAVITY_NONE
-	// Calculate forces using local and essential tree. 
-	// Collisions only change the velocity, so we don't need to update the tree here.
-	calculate_forces();
-#endif // GRAVITY_NONE
+	// Calculate accelerations. 
+	gravity_calculate_acceleration();
 
 	// Call problem specific function (e.g. to add additional forces). 
 	problem_inloop();
