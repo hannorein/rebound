@@ -88,7 +88,12 @@ void problem_inloop(){
 }
 
 void problem_output(){
-	if (output_check(1e-2*2.*M_PI/OMEGA)){
+#ifdef LIBPNG
+	if (output_check(1e-3*2.*M_PI/OMEGA)){
+		output_png("png/");
+	}
+#endif //LIBPNG
+	if (output_check(1e-3*2.*M_PI/OMEGA)){
 		output_timing();
 		output_append_velocity_dispersion("veldisp.txt");
 	}

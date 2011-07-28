@@ -218,6 +218,7 @@ void output_append_velocity_dispersion(char* filename){
 #ifdef OPENGL
 #ifdef LIBPNG
 unsigned char* 	imgdata = NULL;
+int output_png_num = 0;
 void output_png(char* filename){
 	// Read Image
 	if (display_init_done==0) return;
@@ -241,7 +242,10 @@ void output_png(char* filename){
 	FILE *fp;
 	png_structp png_ptr;
 	png_infop info_ptr;
-	fp = fopen(filename, "wb");
+	char filenameapp[1024];
+	sprintf(filenameapp,"%s%09d.png",filename,output_png_num);
+	output_png_num++;
+	fp = fopen(filenameapp, "wb");
 	if (fp == NULL) return;
 
 	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
