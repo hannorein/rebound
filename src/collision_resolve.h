@@ -16,7 +16,7 @@ extern double minimum_collision_velocity;
 extern double (*coefficient_of_restitution_for_velocity) (double);
 
 
-void collisions_resolve_single(struct collision c);
+void collision_resolve_single(struct collision c);
 
 #endif // _COLLISION_RESOLVE_H
 
