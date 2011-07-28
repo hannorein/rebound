@@ -1,6 +1,12 @@
 /**
  * @file problem.h
+ * @brief The user must implement all functions declared in this file. 
  * @author Hanno Rein <hanno@hanno-rein.de>
+ *
+ * @details This file contains the function declarations that must be 
+ * implemented by the user in the problem.c file. All functions must be 
+ * present, even if they are empty and have no use.
+ * 
  * 
  * @section LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
@@ -20,11 +26,6 @@
  * You should have received a copy of the GNU General Public License
  * along with nbody.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @section DESCRIPTION
- * This file contains the function definitions that the user must implement
- * in the problem.c file. All functions must be present, even if they are 
- * empty. 
- * 
  */
 #ifndef _PROBLEM_H
 #define _PROBLEM_H
