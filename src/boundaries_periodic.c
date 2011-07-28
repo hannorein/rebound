@@ -37,7 +37,7 @@ void boundaries_check(){
 	}
 }
 
-struct ghostbox get_ghostbox(int i, int j, int k){
+struct ghostbox boundaries_get_ghostbox(int i, int j, int k){
 	struct ghostbox gb;
 	gb.shiftx = boxsize_x*(double)i;
 	gb.shifty = boxsize_y*(double)j;

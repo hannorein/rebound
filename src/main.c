@@ -113,10 +113,8 @@ void iterate(){
 #endif // MPI
 #endif // GRAVITY_TREE
 
-#ifndef GRAVITY_NONE
 	// Calculate accelerations. 
 	gravity_calculate_acceleration();
-#endif // GRAVITY_NONE
 
 	// Call problem specific function (e.g. to add additional forces). 
 	problem_inloop();

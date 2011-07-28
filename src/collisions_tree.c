@@ -89,7 +89,7 @@ void collisions_search(){
 		for (int gby=-nghostycol; gby<=nghostycol; gby++){
 		for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
 			// Calculated shifted position (for speedup). 
-			struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
+			struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
 			gb.shiftx += p1.x; 
 			gb.shifty += p1.y; 
 			gb.shiftz += p1.z; 

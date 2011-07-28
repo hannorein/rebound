@@ -121,7 +121,7 @@ void display(){
 	for (int i=-display_ghostboxes*nghostx;i<=display_ghostboxes*nghostx;i++){
 	for (int j=-display_ghostboxes*nghosty;j<=display_ghostboxes*nghosty;j++){
 	for (int k=-display_ghostboxes*nghostz;k<=display_ghostboxes*nghostz;k++){
-		struct ghostbox gb = get_ghostbox(i,j,k);
+		struct ghostbox gb = boundaries_get_ghostbox(i,j,k);
 		glTranslatef(gb.shiftx,gb.shifty,gb.shiftz);
 		if (display_spheres){
 			// Drawing Spheres

@@ -183,7 +183,7 @@ void collisions_search(){
 					}
 					int gbnz = 0;
 					for (int gbny = -1; gbny<=1; gbny++){
-						struct ghostbox gb = get_ghostbox(gbnx,gbny,gbnz);
+						struct ghostbox gb = boundaries_get_ghostbox(gbnx,gbny,gbnz);
 						detect_collision_of_pair(p1,p2,gb,proci,sweeps[k]->crossing||xv->crossing);
 					}
 				}

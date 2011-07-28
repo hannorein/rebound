@@ -52,7 +52,7 @@ void gravity_calculate_acceleration(){
 	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
 	for (int gby=-nghosty; gby<=nghosty; gby++){
 	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
-		struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
+		struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
 		// Summing over all particle pairs
 #pragma omp parallel for
 		for (int i=0; i<N; i++){

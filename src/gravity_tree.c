@@ -75,7 +75,7 @@ void gravity_calculate_acceleration(){
 		// Summing over all particle pairs
 #pragma omp parallel for
 		for (int i=0; i<N; i++){
-			struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
+			struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
 			// Precalculated shifted position
 			gb.shiftx += particles[i].x;
 			gb.shifty += particles[i].y;

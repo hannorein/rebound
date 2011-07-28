@@ -65,7 +65,7 @@ void collisions_search(){
 		// Loop over all particles
 		for (int i=0;i<N;i++){
 			struct particle p1 = particles[i];
-			struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
+			struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
 			// Precalculate shifted position 
 			gb.shiftx += p1.x;
 			gb.shifty += p1.y;
