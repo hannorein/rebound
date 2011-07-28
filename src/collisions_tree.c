@@ -108,16 +108,6 @@ void collisions_search(){
 		}
 		// Continue if no collision was found
 		if (collision_nearest.p2==-1) continue;
-		// Save collision in collisions array.
-#pragma omp critical
-		{
-			if (collisions_NMAX<=collisions_N){
-				collisions_NMAX += 32;
-				collisions = realloc(collisions,sizeof(struct collision)*collisions_NMAX);
-			}
-			collisions[collisions_N] = collision_nearest;
-			collisions_N++;
-		}
 	}
 }
 
@@ -160,7 +150,7 @@ void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, int ri, double p1_r,
 			double dz = gb.shiftz - p2.z;
 			double r2 = dx*dx+dy*dy+dz*dz;
 			// A closer neighbour has already been found 
-			if (r2 > *nearest_r2) return;
+			//if (r2 > *nearest_r2) return;
 			double rp = p1_r+p2.r;
 			// Particles are not overlapping 
 			if (r2 > rp*rp) return;
@@ -174,6 +164,16 @@ void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, int ri, double p1_r,
 			collision_nearest->ri = ri;
 			collision_nearest->p2 = c->pt;
 			collision_nearest->gb = gb;
+			// Save collision in collisions array.
+#pragma omp critical
+			{
+				if (collisions_NMAX<=collisions_N){
+					collisions_NMAX += 32;
+					collisions = realloc(collisions,sizeof(struct collision)*collisions_NMAX);
+				}
+				collisions[collisions_N] = *collision_nearest;
+				collisions_N++;
+			}
 		}
 	}else{		
 		// c is not a leaf node

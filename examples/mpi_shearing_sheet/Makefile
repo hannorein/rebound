@@ -1,8 +1,8 @@
 PROBLEMDIR=examples/$(shell basename `pwd`)
-export OPENGL=0
+export OPENGL=1
 export OPT=
 export QUADRUPOLE=0
-export MPI=1
+export MPI=0
 export OPENMP=0
 
 all:
@@ -18,5 +18,5 @@ all:
 	# Copy result
 	cp ../../src/nbody .
 
-doc:
+doc: all
 	$(MAKE) -C ../../src/ doc

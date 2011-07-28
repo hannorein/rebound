@@ -7,7 +7,7 @@
 #include "main.h"
 #include "boundaries.h"
 
-void calculate_forces(){
+void gravity_calculate_acceleration(){
 #pragma omp parallel for
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 

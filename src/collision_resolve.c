@@ -32,7 +32,7 @@ void collision_resolve_single(struct collision c){
 	}
 #endif // MPI
 	struct ghostbox gb = c.gb;
-	if (p1.lastcollision==t || p2.lastcollision==t) return;
+//	if (p1.lastcollision==t || p2.lastcollision==t) return;
 #warning TODO: Make sure this ratio is the right way round.
 	double m21  = p1.m  /  p2.m; 
 	double x21  = gb.shiftx  - p2.x; 

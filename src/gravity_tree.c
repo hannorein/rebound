@@ -1,3 +1,37 @@
+/**
+ * @file 	gravity.c
+ * @brief 	Gravity calculation using an oct-tree, O(N log(N)).
+ * @author 	Hanno Rein <hanno@hanno-rein.de>, Shangfei Liu <shangfei.liu@gmail.com>
+ *
+ * @details 	The routines in this file implement a gravity calculation 
+ * using the oct-tree defined in file tree.h. It can be run with
+ * MPI using a distributed tree. In that case the locally essential tree 
+ * is shared with every other node. The method scales as O(N log(N)) for 
+ * large particles. For small particle numbers, a direct summation
+ * might be faster, as it avoids having the overhead of a * complicated 
+ * data structure. 
+ *
+ * 
+ * @section LICENSE
+ * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ *
+ * This file is part of nbody.
+ *
+ * nbody is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * nbody is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with nbody.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -8,26 +42,26 @@
 #include "tree.h"
 #include "boundaries.h"
 
-double opening_angle2 = 0.25; /**< The square of the cell breaking parameter \f$ \theta \f$. */
+double opening_angle2 = 0.25; /**< Square of the cell opening angle \f$ \theta \f$. */
 
 /**
   * The function calls calculate_forces_for_particle_from_cell() for each tree.
   *
-  * @param pt is the index of a particle.
-  * @param gb is the index of a ghostbox.
+  * @param pt Index of the particle the force is calculated for.
+  * @param gb Ghostbox plus position of the particle (precalculated). 
   */
-void calculate_forces_for_particle(int pt, struct ghostbox gb);
+void gravity_calculate_acceleration_for_particle(int pt, struct ghostbox gb);
 
 /**
-  * 
+  * Calculate the acceleration for a particle from a given cell and all its daughter cells.
   *
-  * @param pt is the index of a particle.
-  * @param node is the pointer to a node cell. 
-  * @param gb is the index of a ghostbox.
+  * @param pt Index of the particle the force is calculated for.
+  * @param node Pointer to the cell the force is calculated from.
+  * @param gb Ghostbox plus position of the particle (precalculated). 
   */
-void calculate_forces_for_particle_from_cell(int pt, struct cell const *node, struct ghostbox const gb);
+void gravity_calculate_acceleration_for_particle_from_cell(int pt, struct cell const *node, struct ghostbox const gb);
 
-void calculate_forces(){
+void gravity_calculate_acceleration(){
 #pragma omp parallel for
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 
@@ -46,24 +80,24 @@ void calculate_forces(){
 			gb.shiftx += particles[i].x;
 			gb.shifty += particles[i].y;
 			gb.shiftz += particles[i].z;
-			calculate_forces_for_particle(i, gb);
+			gravity_calculate_acceleration_for_particle(i, gb);
 		}
 	}
 	}
 	}
 }
 
-void calculate_forces_for_particle(int pt, struct ghostbox gb) {
+void gravity_calculate_acceleration_for_particle(int pt, struct ghostbox gb) {
 	int root_n = root_nx*root_ny*root_nz;
 	for(int i=0;i<root_n;i++){
 		struct cell* node = tree_root[i];
 		if (node!=NULL){
-			calculate_forces_for_particle_from_cell(pt, node, gb);
+			gravity_calculate_acceleration_for_particle_from_cell(pt, node, gb);
 		}
 	}
 }
 
-void calculate_forces_for_particle_from_cell(int pt, struct cell const *node, struct ghostbox const gb) {
+void gravity_calculate_acceleration_for_particle_from_cell(int pt, struct cell const *node, struct ghostbox const gb) {
 	double dx = gb.shiftx - node->mx;
 	double dy = gb.shifty - node->my;
 	double dz = gb.shiftz - node->mz;
@@ -72,7 +106,7 @@ void calculate_forces_for_particle_from_cell(int pt, struct cell const *node, st
 		if ( node->w*node->w > opening_angle2*r2 ){
 			for (int o=0; o<8; o++) {
 				if (node->oct[o] != NULL) {
-					calculate_forces_for_particle_from_cell(pt, node->oct[o], gb);
+					gravity_calculate_acceleration_for_particle_from_cell(pt, node->oct[o], gb);
 				}
 			}
 		} else {
