@@ -8,9 +8,23 @@
 #include "tree.h"
 #include "boundaries.h"
 
-double opening_angle2 = 0.25;
+double opening_angle2 = 0.25; /**< The square of the cell breaking parameter \f$ \theta \f$. */
 
+/**
+  * The function calls calculate_forces_for_particle_from_cell() for each tree.
+  *
+  * @param pt is the index of a particle.
+  * @param gb is the index of a ghostbox.
+  */
 void calculate_forces_for_particle(int pt, struct ghostbox gb);
+
+/**
+  * 
+  *
+  * @param pt is the index of a particle.
+  * @param node is the pointer to a node cell. 
+  * @param gb is the index of a ghostbox.
+  */
 void calculate_forces_for_particle_from_cell(int pt, struct cell const *node, struct ghostbox const gb);
 
 void calculate_forces(){
@@ -54,20 +68,17 @@ void calculate_forces_for_particle_from_cell(int pt, struct cell const *node, st
 	double dy = gb.shifty - node->my;
 	double dz = gb.shiftz - node->mz;
 	double r2 = dx*dx + dy*dy + dz*dz;
-	if ( node->pt < 0) {
+	if ( node->pt < 0 ) { // Not a leaf
 		if ( node->w*node->w > opening_angle2*r2 ){
 			for (int o=0; o<8; o++) {
 				if (node->oct[o] != NULL) {
 					calculate_forces_for_particle_from_cell(pt, node->oct[o], gb);
 				}
 			}
-		}
-	} else {
-		if (node->pt == pt) return;
-		double r = sqrt(r2 + softening*softening);
-		double prefact = -G/(r*r*r)*node->m;
+		} else {
+			double r = sqrt(r2 + softening*softening);
+			double prefact = -G/(r*r*r)*node->m;
 #ifdef QUADRUPOLE
-		if (node->pt < 0) {
 			double qprefact = G/(r*r*r*r*r);
 			particles[pt].ax += qprefact*(dx*node->mxx + dy*node->mxy + dz*node->mxz); 
 			particles[pt].ay += qprefact*(dx*node->mxy + dy*node->myy + dz*node->myz); 
@@ -78,8 +89,15 @@ void calculate_forces_for_particle_from_cell(int pt, struct cell const *node, st
 			particles[pt].ax += qprefact*dx; 
 			particles[pt].ay += qprefact*dy; 
 			particles[pt].az += qprefact*dz; 
-		}
 #endif
+			particles[pt].ax += prefact*dx; 
+			particles[pt].ay += prefact*dy; 
+			particles[pt].az += prefact*dz; 
+		}
+	} else { // It's a leaf node
+		if (node->pt == pt) return;
+		double r = sqrt(r2 + softening*softening);
+		double prefact = -G/(r*r*r)*node->m;
 		particles[pt].ax += prefact*dx; 
 		particles[pt].ay += prefact*dy; 
 		particles[pt].az += prefact*dz; 

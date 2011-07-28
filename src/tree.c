@@ -280,6 +280,9 @@ int particles_get_rootbox_for_node(struct cell* node){
 
 /**
   * I am not quite sure what does the funtion do...
+  *
+  * @param nnode
+  * @param node
   */
 int tree_get_octant_for_cell_in_cell(struct cell* nnode, struct cell *node){
 	int octant = 0;
