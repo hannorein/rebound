@@ -72,7 +72,11 @@ void display_cell(struct cell* node){
 	glColor4f(1.0,0.5,1.0,0.4);
 	glTranslatef(node->mx,node->my,node->mz);
 	glScalef(0.04*node->w,0.04*node->w,0.04*node->w);
+#ifdef APPLE
 	glCallList(DListSPHERE);
+#else
+	glutSolidSphere(1,40,10);
+#endif
 	glScalef(25./node->w,25./node->w,25./node->w);
 	glTranslatef(-node->mx,-node->my,-node->mz);
 #endif
@@ -123,16 +127,18 @@ void display(){
 			// Drawing Spheres
 			glColor4f(1.0,1.0,1.0,1.0);
 #ifndef COLLISIONS_NONE
-#ifdef _APPLE
 			for (int i=0;i<N;i++){
 				struct particle p = particles[i];
 				glTranslatef(p.x,p.y,p.z);
 				glScalef(p.r,p.r,p.r);
+#ifdef APPLE
 				glCallList(DListSPHERE);
+#else
+				glutSolidSphere(1,40,10);
+#endif
 				glScalef(1./p.r,1./p.r,1./p.r);
 				glTranslatef(-p.x,-p.y,-p.z);
 			}
-#endif
 #endif
 		}else{
 			// Drawing Points
