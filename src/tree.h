@@ -60,7 +60,12 @@ void tree_add_particle_to_tree(int pt);
 
 #ifdef MPI
 void tree_add_essential_node(struct cell* node);
-void tree_prepare_essential_tree();
+#ifdef GRAVITY_TREE
+void tree_prepare_essential_tree_for_gravity();
+#endif //GRAVITY_TREE
+#ifdef COLLISIONS_TREE
+void tree_prepare_essential_tree_for_collisions();
+#endif //COLLISIONS_TREE
 #endif // MPI
 
 
