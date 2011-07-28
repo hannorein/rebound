@@ -1,3 +1,28 @@
+/**
+ * @file 	gravity.c
+ * @brief 	Gravity routine using tree method.
+ * @author 	Shangfei Liu <liushangfei@pku.edu.cn> 
+ * @author  Hanno Rein <hanno@hanno-rein.de>
+ * 
+ * @section 	LICENSE
+ * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ *
+ * This file is part of nbody.
+ *
+ * nbody is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * nbody is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with nbody.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -11,7 +36,7 @@
 double opening_angle2 = 0.25; /**< The square of the cell breaking parameter \f$ \theta \f$. */
 
 /**
-  * The function calls calculate_forces_for_particle_from_cell() for each tree.
+  * The function loops over all trees to call calculate_forces_for_particle_from_cell() tree to calculate forces for each particle.
   *
   * @param pt is the index of a particle.
   * @param gb is the index of a ghostbox.
@@ -19,7 +44,7 @@ double opening_angle2 = 0.25; /**< The square of the cell breaking parameter \f$
 void calculate_forces_for_particle(int pt, struct ghostbox gb);
 
 /**
-  * 
+  * The function calls itself recursively using cell breaking criterion to check whether it can use center of mass (and mass quadrupole tensor) to calculate forces.
   *
   * @param pt is the index of a particle.
   * @param node is the pointer to a node cell. 
@@ -78,6 +103,9 @@ void calculate_forces_for_particle_from_cell(int pt, struct cell const *node, st
 		} else {
 			double r = sqrt(r2 + softening*softening);
 			double prefact = -G/(r*r*r)*node->m;
+			particles[pt].ax += prefact*dx; 
+			particles[pt].ay += prefact*dy; 
+			particles[pt].az += prefact*dz; 
 #ifdef QUADRUPOLE
 			double qprefact = G/(r*r*r*r*r);
 			particles[pt].ax += qprefact*(dx*node->mxx + dy*node->mxy + dz*node->mxz); 

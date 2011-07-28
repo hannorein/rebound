@@ -34,6 +34,7 @@ int display_ghostboxes = 0;
 void displayKey(unsigned char key, int x, int y){
 	switch(key){
 		case 'q':
+			printf("\nProgram ends.\n");
 			exit(0);
 			break;
 		case ' ':
