@@ -86,13 +86,14 @@ void calculate_forces_for_particle_from_cell(int pt, struct cell const *node, st
 			double mrr 	= dx*dx*node->mxx 	+ dy*dy*node->myy 	+ dz*dz*node->mzz
 					+ 2.*dx*dy*node->mxy 	+ 2.*dx*dz*node->mxz 	+ 2.*dy*dz*node->myz; 
 			qprefact *= -5.0/(2.0*r*r)*mrr;
-			particles[pt].ax += qprefact*dx; 
-			particles[pt].ay += qprefact*dy; 
-			particles[pt].az += qprefact*dz; 
-#endif
+			particles[pt].ax += (qprefact + prefact) * dx; 
+			particles[pt].ay += (qprefact + prefact) * dy; 
+			particles[pt].az += (qprefact + prefact) * dz; 
+#else
 			particles[pt].ax += prefact*dx; 
 			particles[pt].ay += prefact*dy; 
 			particles[pt].az += prefact*dz; 
+#endif
 		}
 	} else { // It's a leaf node
 		if (node->pt == pt) return;
