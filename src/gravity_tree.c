@@ -113,9 +113,6 @@ void gravity_calculate_acceleration_for_particle_from_cell(int pt, struct cell c
 		} else {
 			double r = sqrt(r2 + softening*softening);
 			double prefact = -G/(r*r*r)*node->m;
-			particles[pt].ax += prefact*dx; 
-			particles[pt].ay += prefact*dy; 
-			particles[pt].az += prefact*dz; 
 #ifdef QUADRUPOLE
 			double qprefact = G/(r*r*r*r*r);
 			particles[pt].ax += qprefact*(dx*node->mxx + dy*node->mxy + dz*node->mxz); 
