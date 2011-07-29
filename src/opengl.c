@@ -29,6 +29,7 @@ int display_init_done = 0;
 int display_pause_sim = 0;
 int display_pause = 0;
 int display_tree = 0;
+int display_mass = 0;
 int display_ghostboxes = 0;
 
 void displayKey(unsigned char key, int x, int y){
@@ -62,6 +63,9 @@ void displayKey(unsigned char key, int x, int y){
 		case 'd':
 			display_pause = !display_pause;
 			break;
+		case 'm':
+			display_mass = !display_mass;
+			break;
 	}
 	display();
 }
@@ -73,11 +77,13 @@ void display_cell(struct cell* node){
 	glColor4f(1.0,0.5,1.0,0.4);
 	glTranslatef(node->mx,node->my,node->mz);
 	glScalef(0.04*node->w,0.04*node->w,0.04*node->w);
+	if (display_mass) {
 #ifdef APPLE
-	glCallList(DListSPHERE);
+		glCallList(DListSPHERE);
 #else
-	glutSolidSphere(1,40,10);
+		glutSolidSphere(1,40,10);
 #endif
+	}
 	glScalef(25./node->w,25./node->w,25./node->w);
 	glTranslatef(-node->mx,-node->my,-node->mz);
 #endif

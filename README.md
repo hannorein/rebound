@@ -4,7 +4,7 @@
 Contributors
 ------------
 * Hanno Rein, Institute for Advanced Study (IAS), Princeton, <hanno@hanno-rein.de>
-* Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University (KIAA-PKU), Beijing, <shangfei.liu@gmail.com>
+* Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University (KIAA-PKU), Beijing, <liushangfei@pku.edu.cn>
   
 Available modules
 -----------------
