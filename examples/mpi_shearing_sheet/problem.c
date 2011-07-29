@@ -27,12 +27,12 @@ void problem_init(int argc, char* argv[]){
 #endif
 	OMEGA 		= 0.00013143527;		// 1/s
 	G 		= 6.67428e-11;			// N / (1e-5 kg)^2 m^2
-	softening 	= 0.4;				// m
+	softening 	= 0.1;				// m
 	dt 		= 1e-3*2.*M_PI/OMEGA;		// s
 	root_nx = 2; root_ny = 2; root_nz = 1;
-	nghostx = 3; nghosty = 3; nghostz = 0; 		// Use three ghost rings
+	nghostx = 2; nghosty = 2; nghostz = 0; 		// Use three ghost rings
 	double surfacedensity 	= 400; 			// kg/m^2
-	double particle_density	= 800;			// kg/m^3
+	double particle_density	= 400;			// kg/m^3
 	double particle_radius 	= 1;			// m
 	double particle_mass 	= particle_density*4./3.*M_PI*pow(particle_radius,3); 	// kg
 	if (argc>1){					// Try to read boxsize from command line
@@ -77,7 +77,7 @@ void problem_init(int argc, char* argv[]){
 
 double coefficient_of_restitution_bridges(double v){
 	// assumes v in units of [m/s]
-	double eps = 0.34*pow(fabs(v)*100.,-0.234);
+	double eps = 0.32*pow(fabs(v)*100.,-0.234);
 	if (eps>1) eps=1;
 	if (eps<0) eps=0;
 	return eps;

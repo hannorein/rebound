@@ -31,18 +31,18 @@ void collision_resolve_single(struct collision c){
 		p2 = particles_recv[proc_id][c.p2];
 	}
 #endif // MPI
-	struct ghostbox gb = c.gb;
 //	if (p1.lastcollision==t || p2.lastcollision==t) return;
+	struct ghostbox gb = c.gb;
 #warning TODO: Make sure this ratio is the right way round.
 	double m21  = p1.m  /  p2.m; 
-	double x21  = gb.shiftx  - p2.x; 
-	double y21  = gb.shifty  - p2.y; 
-	double z21  = gb.shiftz  - p2.z; 
+	double x21  = p1.x + gb.shiftx  - p2.x; 
+	double y21  = p1.y + gb.shifty  - p2.y; 
+	double z21  = p1.z + gb.shiftz  - p2.z; 
 	double rp   = p1.r+p2.r;
 	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return;
-	double vx21 = gb.shiftvx - p2.vx; 
-	double vy21 = gb.shiftvy - p2.vy; 
-	double vz21 = gb.shiftvz - p2.vz; 
+	double vx21 = p1.vx + gb.shiftvx - p2.vx; 
+	double vy21 = p1.vy + gb.shiftvy - p2.vy; 
+	double vz21 = p1.vz + gb.shiftvz - p2.vz; 
 	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return; // not approaching
 	// Bring the to balls in the xy plane.
 	// NOTE: this could probabely be an atan (which is faster than atan2)

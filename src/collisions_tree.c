@@ -68,7 +68,7 @@ double 	collisions_max_r;
  * @param collision_nearest Pointer to the nearest collision found so far.
  * @param c Pointer to the cell currently being searched in.
  */
-void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct cell* c);
+void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, struct ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct cell* c);
 
 void collisions_search(){
 	// Loop over ghost boxes, but only the inner most ring.
@@ -90,6 +90,7 @@ void collisions_search(){
 		for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
 			// Calculated shifted position (for speedup). 
 			struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
+			struct ghostbox gbunmod = gb;
 			gb.shiftx += p1.x; 
 			gb.shifty += p1.y; 
 			gb.shiftz += p1.z; 
@@ -100,7 +101,7 @@ void collisions_search(){
 			for (int ri=0;ri<root_n;ri++){
 				struct cell* rootcell = tree_root[ri];
 				if (rootcell!=NULL){
-					tree_get_nearest_neighbour_in_cell(gb,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
+					tree_get_nearest_neighbour_in_cell(gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
 				}
 			}
 		}
@@ -111,8 +112,11 @@ void collisions_search(){
 	}
 }
 
-
-void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, int ri, double p1_r, double* nearest_r2, struct collision* collision_nearest, struct cell* c){
+/**
+ * This is really nice with all those parametes.
+ * @TODO Cleanup
+ */ 
+void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, struct ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct collision* collision_nearest, struct cell* c){
 	if (c->pt>=0){ 	
 		// c is a leaf node
 		int condition 	= 1;
@@ -163,7 +167,7 @@ void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, int ri, double p1_r,
 			*nearest_r2 = r2;
 			collision_nearest->ri = ri;
 			collision_nearest->p2 = c->pt;
-			collision_nearest->gb = gb;
+			collision_nearest->gb = gbunmod;
 			// Save collision in collisions array.
 #pragma omp critical
 			{
@@ -187,7 +191,7 @@ void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, int ri, double p1_r,
 			for (int o=0;o<8;o++){
 				struct cell* d = c->oct[o];
 				if (d!=NULL){
-					tree_get_nearest_neighbour_in_cell(gb,ri,p1_r,nearest_r2,collision_nearest,d);
+					tree_get_nearest_neighbour_in_cell(gb,gbunmod,ri,p1_r,nearest_r2,collision_nearest,d);
 				}
 			}
 		}
@@ -195,6 +199,13 @@ void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, int ri, double p1_r,
 }
 
 void collisions_resolve(){
+	// randomize
+	for (int i=0;i<collisions_N;i++){
+		int new = rand()%collisions_N;
+		struct collision c1 = collisions[i];
+		collisions[i] = collisions[new];
+		collisions[new] = c1;
+	}
 	// Loop over all collisions previously found in collisions_search().
 	for (int i=0;i<collisions_N;i++){
 		// Resolve collision

@@ -23,7 +23,7 @@ void problem_init(int argc, char* argv[]){
 	struct particle p;
 	p.x  = 1;
 	p.y  = 1;
-	p.z  = 0;
+	p.z  = 1;
 	p.vx = 0;
 	p.vy = 0;
 	p.vz = 0;
@@ -35,7 +35,7 @@ void problem_init(int argc, char* argv[]){
 	particles_add(p);
 	p.x  = -1;
 	p.y  = -1;
-	p.z  = 0;
+	p.z  = -1;
 	p.vx = 0;
 	p.vy = 0;
 	p.vz = 0;
