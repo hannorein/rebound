@@ -1,7 +1,7 @@
 /**
  * @file 	gravity.c
  * @brief 	Gravity calculation using an oct-tree, O(N log(N)).
- * @author 	Hanno Rein <hanno@hanno-rein.de>, Shangfei Liu <shangfei.liu@gmail.com>
+ * @author 	Hanno Rein <hanno@hanno-rein.de>, Shangfei Liu <liushangfei@pku.edu.cn>
  *
  * @details 	The routines in this file implement a gravity calculation 
  * using the oct-tree defined in file tree.h. It can be run with
@@ -45,7 +45,7 @@
 double opening_angle2 = 0.25; /**< Square of the cell opening angle \f$ \theta \f$. */
 
 /**
-  * The function calls calculate_forces_for_particle_from_cell() for each tree.
+  * The function loops over all trees to call calculate_forces_for_particle_from_cell() tree to calculate forces for each particle.
   *
   * @param pt Index of the particle the force is calculated for.
   * @param gb Ghostbox plus position of the particle (precalculated). 
@@ -53,6 +53,7 @@ double opening_angle2 = 0.25; /**< Square of the cell opening angle \f$ \theta \
 void gravity_calculate_acceleration_for_particle(int pt, struct ghostbox gb);
 
 /**
+  * The function calls itself recursively using cell breaking criterion to check whether it can use center of mass (and mass quadrupole tensor) to calculate forces.
   * Calculate the acceleration for a particle from a given cell and all its daughter cells.
   *
   * @param pt Index of the particle the force is calculated for.
@@ -112,6 +113,9 @@ void gravity_calculate_acceleration_for_particle_from_cell(int pt, struct cell c
 		} else {
 			double r = sqrt(r2 + softening*softening);
 			double prefact = -G/(r*r*r)*node->m;
+			particles[pt].ax += prefact*dx; 
+			particles[pt].ay += prefact*dy; 
+			particles[pt].az += prefact*dz; 
 #ifdef QUADRUPOLE
 			double qprefact = G/(r*r*r*r*r);
 			particles[pt].ax += qprefact*(dx*node->mxx + dy*node->mxy + dz*node->mxz); 
