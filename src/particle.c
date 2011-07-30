@@ -15,8 +15,17 @@ int Nmax		= 0;		// Current maximum number of particles in particle array.
 int N_active_last 	= -1; 		// Last active (massive) particle. -1 is equivalent to N.
 int N_active_first 	= 0;		// First active particle.
 
+#ifdef BOUNDARIES_OPEN
+int boundaries_particle_is_in_box(struct particle p);
+#endif // BOUNDARIES_OPEN
 
 void particles_add_local(struct particle pt){
+#ifdef BOUNDARIES_OPEN
+	if (boundaries_particle_is_in_box(pt)==0){
+		// Particle has left the box. Do not add.
+		return;
+	}
+#endif // BOUNDARIES_OPEN
 	while (Nmax<=N){
 		Nmax += 128;
 		particles = realloc(particles,sizeof(struct particle)*Nmax);

@@ -73,7 +73,7 @@ double average_relative_force_error(){
 		for (int gbx=-nghostx; gbx<=nghostx; gbx++){
 		for (int gby=-nghosty; gby<=nghosty; gby++){
 		for (int gbz=-nghostz; gbz<=nghostz; gbz++){
-			struct ghostbox gb = get_ghostbox(gbx,gby,gbz);
+			struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
 			for (int j=N_active_first; j<(N_active_last==-1?N:N_active_last); j++){
 				if (i==j) continue;
 				double dx = (gb.shiftx+particles[i].x) - particles[j].x;
@@ -109,7 +109,7 @@ void problem_finish(){
 	FILE* of = fopen("error.txt","a+"); 
 	tree_update();
 	tree_update_gravity_data();
-	calculate_forces();
+	gravity_calculate_acceleration();
 	double error= average_relative_force_error();
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
