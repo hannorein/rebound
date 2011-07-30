@@ -6,6 +6,7 @@
 #include "particle.h"
 #include "main.h"
 #include "tree.h"
+#include "collisions.h"
 #include "communication_mpi.h"
 
 struct particle* 	particles;	// Main data stucture. Contains all particles.
@@ -38,6 +39,11 @@ void particles_add_local(struct particle pt){
 }
 
 void particles_add(struct particle pt){
+#ifndef COLLISIONS_NONE
+	if (pt.r>collisions_max_r){
+		collisions_max_r = pt.r;
+	}
+#endif // COLLISIONS_NONE
 #ifdef MPI
 	int rootbox = particles_get_rootbox_for_particle(pt);
 	int root_n_per_node = root_n/mpi_num;
