@@ -1,3 +1,38 @@
+/**
+ * @file 	integrator.c
+ * @brief 	Wisdom-Holman integrator.
+ * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @detail	This file implements the Wisdom-Holman integration scheme.  
+ * This scheme is second order accurate, symplectic and well suited for 
+ * systems where there is one dominant mass and all particles are nearly on 
+ * Keplerian orbits. Note that the scheme is formally only first order 
+ * accurate when velocity dependend forces are present.
+ * The source code is based on the swift code. 
+ *
+ * The central mass is fixed at the origin (x,y,z)=(0,0,0). The indirect term
+ * can be included by setting WH_INDIRECT_TERM equal to 1. When self-gravity 
+ * is not included, the code can be run with a single sub-step insted of two by
+ * setting WH_SELF_GRAVITY_ENABLED equal to 1. 
+ * 
+ * @section 	LICENSE
+ * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ *
+ * This file is part of nbody.
+ *
+ * nbody is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * nbody is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with nbody.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -7,11 +42,6 @@
 #include "main.h"
 #include "gravity.h"
 #include "boundaries.h"
-
-// Wisdom Holman Integrator
-// for non-rotating frames.
-// Central mass is fixed at r=0 and has mass=1
-// Based on the swift code.
 
 void drift_wh(double _dt);
 void drift_dan(struct particle* pv, double dt, int* iflag);
@@ -24,8 +54,8 @@ void drift_kepu_stumpff(double x, double* c0, double* c1, double* c2, double* c3
 void drift_kepu_fchk(double dt0, double r0, double mu, double alpha, double u, double s, double* f);
 void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* c);
 
-int WH_SELFGRAVITY_ENABLED = 1;
-int WH_INDIRECT_TERM = 1;
+int WH_SELFGRAVITY_ENABLED 	= 0;	/**< Can performs a single sub-step instead of two if particles feel no acceleration other than central object. */
+int WH_INDIRECT_TERM 		= 1;	/**< Include/ignore the indirect term. */
 
 void integrator_part1(){
 	if (WH_SELFGRAVITY_ENABLED==1){
@@ -41,7 +71,7 @@ void integrator_part1(){
 
 void integrator_part2(){
 	if (WH_SELFGRAVITY_ENABLED==1){
-		// DRIFT
+		// KICK
 		if (WH_INDIRECT_TERM==1){
 			for (int i=1;i<N;i++){
 				particles[i].vx += dt * (particles[i].ax - 1.*particles[0].ax);
@@ -55,11 +85,16 @@ void integrator_part2(){
 				particles[i].vz += dt * particles[i].az;
 			}
 		}
+		// DRIFT
 		drift_wh(dt/2.);
 		t+=dt/2.;
 	}
 }
 
+/**
+ * This function integrates the Keplerian motion of all particles.
+ * @param _dt Timestep.
+ */
 void drift_wh(double _dt){
 #pragma omp parallel for
 	for (int i=1;i<N;i++){
