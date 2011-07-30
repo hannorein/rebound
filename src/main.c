@@ -36,7 +36,7 @@
 #include "tree.h"
 #include "communication_mpi.h"
 #ifdef OPENGL
-#include "opengl.h"
+#include "display.h"
 #endif // OPENGL
 #ifdef OPENMP
 #include <omp.h>
@@ -184,7 +184,7 @@ int main(int argc, char* argv[]) {
 	problem_init(argc, argv);
 	problem_output();
 #ifdef OPENGL
-	init_display(argc, argv);
+	display_init(argc, argv);
 #else // OPENGL
 	while(1){
 		// Main run loop.

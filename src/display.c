@@ -1,7 +1,34 @@
+/**
+ * @file 	display.c
+ * @brief 	Realtime OpenGL visualization.
+ * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @details 	These functions provide real time visualizations
+ * using OpenGL. Screenshots can be saved with the output_png() routine.
+ * Tested under Mac OSX Snow Leopard and Linux. 
+ * 
+ * @section 	LICENSE
+ * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ *
+ * This file is part of nbody.
+ *
+ * nbody is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * nbody is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with nbody.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #ifdef OPENGL
 #ifdef MPI
 #error OpenGL is not compatible with MPI.
-#endif
+#endif //MPI
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -9,29 +36,37 @@
 #include <sys/stat.h>
 #ifdef _APPLE
 #include <GLUT/glut.h>
-#else
+#else // _APPLE
 #include <GL/glut.h>
-#endif 
+#endif // _APPLE
 #include "zpr.h"
 #include "main.h"
 #include "particle.h"
 #include "boundaries.h"
 #include "tree.h"
-#include "opengl.h"
+#include "display.h"
 
-GLuint DListSPHERE;
+#ifdef _APPLE
+GLuint display_dlist_sphere;	/**< Precalculated display list of a sphere. */
+#endif // APPLE
 #ifndef COLLISIONS_NONE
-int display_spheres = 1;
-#else
-int display_spheres = 0;
-#endif
-int display_init_done = 0;
-int display_pause_sim = 0;
-int display_pause = 0;
-int display_tree = 0;
-int display_mass = 0;
-int display_ghostboxes = 0;
+int display_spheres = 1;	/**< Switches between point sprite and real spheres. */
+#else // COLLISIONS_NONE
+int display_spheres = 0;	/**< Switches between point sprite and real spheres. */
+#endif // COLLISIONS_NONE
+int display_init_done = 0;	
+int display_pause_sim = 0;	/**< Pauses simulation. */
+int display_pause = 0;		/**< Pauses visualization, but keep simulation running */
+int display_tree = 0;		/**< Shows/hides tree structure. */
+int display_mass = 0;		/**< Shows/hides centre of mass in tree structure. */
+int display_ghostboxes = 0;	/**< Shows/hides ghost boxes. */
 
+/**
+ * This function is called when the user presses a key. 
+ * @param key Character pressed.
+ * @param x Position on screen.
+ * @param y Position on screen.
+ */
 void displayKey(unsigned char key, int x, int y){
 	switch(key){
 		case 'q':
@@ -72,6 +107,10 @@ void displayKey(unsigned char key, int x, int y){
 }
 
 #ifdef TREE
+/**
+ * Draws a cell and all its daughters.
+ * @param node Cell to draw.
+ */
 void display_cell(struct cell* node){
 	if (node == NULL) return;
 #ifdef GRAVITY_TREE
@@ -79,8 +118,8 @@ void display_cell(struct cell* node){
 	glTranslatef(node->mx,node->my,node->mz);
 	glScalef(0.04*node->w,0.04*node->w,0.04*node->w);
 	if (display_mass) {
-#ifdef APPLE
-		glCallList(DListSPHERE);
+#ifdef _APPLE
+		glCallList(display_dlist_sphere);
 #else
 		glutSolidSphere(1,40,10);
 #endif
@@ -96,6 +135,10 @@ void display_cell(struct cell* node){
 		display_cell(node->oct[i]);
 	}
 }
+
+/**
+ * Draws the entire tree structure.
+ */
 void display_entire_tree(){
 	for(int i=0;i<root_n;i++){
 		display_cell(tree_root[i]);
@@ -147,15 +190,15 @@ void display(){
 				struct particle p = particles[i];
 				glTranslatef(p.x,p.y,p.z);
 				glScalef(p.r,p.r,p.r);
-#ifdef APPLE
-				glCallList(DListSPHERE);
-#else
+#ifdef _APPLE
+				glCallList(display_dlist_sphere);
+#else //_APPLE
 				glutSolidSphere(1,40,10);
-#endif
+#endif //_APPLE
 				glScalef(1./p.r,1./p.r,1./p.r);
 				glTranslatef(-p.x,-p.y,-p.z);
 			}
-#endif
+#endif // COLLISIONS_NONE
 		}else{
 			// Drawing Points
 			glEnableClientState(GL_VERTEX_ARRAY);
@@ -174,7 +217,7 @@ void display(){
 			glColor4f(1.0,0.0,0.0,0.4);
 			display_entire_tree();
 		}
-#endif
+#endif // TREE
 		glTranslatef(-gb.shiftx,-gb.shifty,-gb.shiftz);
 	}
 	}
@@ -187,7 +230,7 @@ void display(){
 	glTranslatef(0,0,boxsize_max);
 }
 
-void init_display(int argc, char* argv[]){
+void display_init(int argc, char* argv[]){
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
 	glutInitWindowSize(700,700);
@@ -201,16 +244,16 @@ void init_display(int argc, char* argv[]){
 	
 	// Sphere
 #ifdef _APPLE
-	DListSPHERE = glGenLists(1);
+	display_dlist_sphere = glGenLists(1);
 	GLUquadricObj *sphere;
-	glNewList(DListSPHERE, GL_COMPILE);
+	glNewList(display_dlist_sphere, GL_COMPILE);
 	sphere = gluNewQuadric();
 	gluSphere(sphere, 1.f, 20, 20);
 	gluDeleteQuadric(sphere);
 	glEndList();
-#endif
+#endif // _APPLE
   	
-	// Light
+	// Setup lights
 
 	glCullFace(GL_BACK);
 	glShadeModel ( GL_SMOOTH );
@@ -230,9 +273,9 @@ void init_display(int argc, char* argv[]){
 	glMaterialfv(GL_FRONT, GL_SPECULAR, sphere_spec);
 	glMaterialf(GL_FRONT, GL_SHININESS, 80);
 
+	// Enter glut run loop and never come back.
 	display_init_done =1; 
-
 	glutMainLoop();
 }
 
-#endif
+#endif // OPENGL

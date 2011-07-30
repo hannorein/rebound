@@ -9,7 +9,7 @@
 #include "output.h"
 #include "communication_mpi.h"
 #ifdef OPENGL
-#include "opengl.h"
+#include "display.h"
 #ifdef LIBPNG
 #include <png.h>
 #endif // LIBPNG
