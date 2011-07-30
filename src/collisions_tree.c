@@ -54,7 +54,7 @@ struct 	collision* collisions 	= NULL;		/**< Array of all collisions. */
 int 	collisions_NMAX 	= 0;		/**< Size allocated for collisions.*/
 int 	collisions_N 		= 0;		/**< Number of elements in collisions. */
 
-double 	collisions_max_r;
+double 	collisions_max_r	= 0;
 
 /**
  * Find the nearest neighbour in a cell or its daughters.
