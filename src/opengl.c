@@ -58,6 +58,7 @@ void displayKey(unsigned char key, int x, int y){
 			zprReset(0.85/boxsize_max);
 			break;
 		case 't':
+			display_mass = 0;
 			display_tree = !display_tree;
 			break;
 		case 'd':
