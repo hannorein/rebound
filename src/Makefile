@@ -75,6 +75,7 @@ all:
 	$(CC) $(OPT) $(PREDEF) communication_mpi.c -c
 	$(CC) $(OPT) $(PREDEF) zpr.c -c
 	$(CC) $(OPT) $(PREDEF) opengl.c -c
+	$(CC) $(OPT) $(PREDEF) tools.c -c
 	$(CC) $(LIB) *.o -o nbody
 
 clean:
