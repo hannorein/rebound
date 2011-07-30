@@ -105,6 +105,14 @@ void display_entire_tree(){
 
 void display(){
 	if (display_pause) return;
+#ifdef TREE
+	if (display_tree){
+		tree_update();
+#ifdef GRAVITY_TREE
+		tree_update_gravity_data();
+#endif
+	}
+#endif
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	if (display_spheres){
 		glDisable(GL_BLEND);                    
@@ -161,7 +169,7 @@ void display(){
 		}
 		// Drawing Tree
 		glColor4f(1.0,0.0,0.0,0.4);
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+#ifdef TREE
 		if (display_tree){
 			glColor4f(1.0,0.0,0.0,0.4);
 			display_entire_tree();
