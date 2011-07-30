@@ -104,7 +104,7 @@ void drift_wh(double _dt){
 		if (iflag != 0){ // Try again with 10 times smaller timestep.
 			for (int j=0;j<10;j++){
 				drift_dan(&(particles[i]),_dt/10.,&iflag);
-				if (iflag != 0) return;
+				if (iflag != 0) break;
 			}
 		}
 	}
