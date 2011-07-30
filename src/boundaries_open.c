@@ -39,18 +39,40 @@ void boundaries_check(){
 				printf("Last particle removed. Exiting.\n");
 				exit(0);
 			}
-			// Note this has to be modified to work with the tree code.
-#ifdef TREE
-#error OPEN_BOUNDARY CONDITIONS NOT YET SUPPORTYED WITH TREE
-			printf("Particle leaving the box. Exiting.\n");
-			exit(0);
-#else
+#ifndef TREE
 			particles[i] = particles[N-1];
 			i--;
 			N--;
 #endif
 		}
 	}
+}
+
+/**
+ * Checks if a given particle is within the computational domain.
+ * @param p Particle to be checked.
+ * @return Return value is 1 if particle is inside the box and 0 otherwise.
+ */
+int boundaries_particle_is_in_box(struct particle p){
+	if(p.x>boxsize_x/2.){
+		return 0;
+	}
+	if(p.x<-boxsize_x/2.){
+		return 0;
+	}
+	if(p.y>boxsize_y/2.){
+		return 0;
+	}
+	if(p.y<-boxsize_y/2.){
+		return 0;
+	}
+	if(p.z>boxsize_z/2.){
+		return 0;
+	}
+	if(p.z<-boxsize_z/2.){
+		return 0;
+	}
+	return 1;
 }
 
 struct ghostbox boundaries_get_ghostbox(int i, int j, int k){
