@@ -1,3 +1,27 @@
+/**
+ * @file 	collisions.c
+ * @brief 	Resolve a single collision. 
+ * @author 	Hanno Rein <hanno@hanno-rein.de>
+ *
+ * @section LICENSE
+ * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ *
+ * This file is part of nbody.
+ *
+ * nbody is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * nbody is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with nbody.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,7 +37,7 @@ double coefficient_of_restitution = 1;
 double minimum_collision_velocity = 0;
 double collisions_constant_coefficient_of_restitution_for_velocity(double v);
 double (*coefficient_of_restitution_for_velocity) (double) = collisions_constant_coefficient_of_restitution_for_velocity;
-double collisions_plog =0;
+double collisions_plog =0;	/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
 
 void collision_resolve_single(struct collision c){
 #ifndef COLLISIONS_NONE
@@ -33,7 +57,6 @@ void collision_resolve_single(struct collision c){
 #endif // MPI
 //	if (p1.lastcollision==t || p2.lastcollision==t) return;
 	struct ghostbox gb = c.gb;
-#warning TODO: Make sure this ratio is the right way round.
 	double m21  = p1.m  /  p2.m; 
 	double x21  = p1.x + gb.shiftx  - p2.x; 
 	double y21  = p1.y + gb.shifty  - p2.y; 

@@ -1,7 +1,7 @@
 /**
- * @file communication_mpi.c
- * @brief  Handles communication between nodes using MPI.
- * @author Hanno Rein <hanno@hanno-rein.de>
+ * @file 	communication_mpi.c
+ * @brief	Handles communication between nodes using MPI.
+ * @author 	Hanno Rein <hanno@hanno-rein.de>
  *
  * @details These routines handle the communication between
  * different nodes via the Message Passing Interface (MPI). 

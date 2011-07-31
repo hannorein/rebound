@@ -1,22 +1,64 @@
+/**
+ * @file 	collisions.h
+ * @brief 	Resolve a single collision. 
+ * @author 	Hanno Rein <hanno@hanno-rein.de>
+ *
+ * @details 	These functions resolve a single collision
+ * of two colliding particles using momentum und energy conservation.
+ * The coefficient resitution can be set with the variable 
+ * coefficient_of_restitution or, when a velocity dependend 
+ * coefficient of restitution is required with the function pointer
+ * coefficient_of_restitution_for_velocity.
+ * 
+ * 
+ * @section LICENSE
+ * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ *
+ * This file is part of nbody.
+ *
+ * nbody is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * nbody is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with nbody.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #ifndef _COLLISION_RESOLVE_H
 #define _COLLISION_RESOLVE_H
 #include "boundaries.h"
 
+/**
+ * Collision structure of one single collisions
+ * Used to save a collision during collision search. 
+ */
 struct collision{
-	int p1;
-	int p2;
-	struct ghostbox gb;
-	double time;
-	int crossing;
-	int ri;	 /**< Index of rootcell */
+	int p1;			/**< First colliding particle. */
+	int p2;			/**< Second colliding particle. */
+	struct ghostbox gb;	/**< Ghostbox (of particle p1). */
+#ifdef COLLISIONS_SWEEP
+	double time;		/**< Time of collision. */
+	int crossing;		/**< Collision occurs at the interface of two sweep boxes. */
+#endif // COLLISIONS_SWEEP
+	int ri;	 		/**< Index of rootcell (Needed for MPI). */
 } collision;
 
-extern double coefficient_of_restitution;
-extern double minimum_collision_velocity;
-extern double (*coefficient_of_restitution_for_velocity) (double);
+extern double coefficient_of_restitution;	/**< Constant coefficient of restitution. Only used when coefficient_of_restitution_for_velocity not set by user. */
+extern double minimum_collision_velocity;	/**< Minimal collision velocity. Needed to avoid particles slowly sinking into each other while constantly touching each other. */
+extern double (*coefficient_of_restitution_for_velocity) (double); /**< Function pointer to a function that returns the coefficient of restitution as a function of velocity. */
 
 
-void collision_resolve_single(struct collision c);
+/**
+ * Resolve a single collision.
+ * @param c Collision to resolve.
+ */
+void collision_resolve_single(struct collision c);	
 
 #endif // _COLLISION_RESOLVE_H
 
