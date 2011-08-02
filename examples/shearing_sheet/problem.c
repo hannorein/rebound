@@ -99,11 +99,11 @@ void problem_output(){
 		output_png("png/");
 	}
 #endif //LIBPNG
-	/*
-	if (output_check(1e-1*2.*M_PI/OMEGA)){
+	if (output_check(1e-3*2.*M_PI/OMEGA)){
 		output_timing();
-		output_append_velocity_dispersion("veldisp.txt");
+		//output_append_velocity_dispersion("veldisp.txt");
 	}
+	/*
 	if (output_check(2.*M_PI/OMEGA)){
 		output_ascii("position.txt");
 	}

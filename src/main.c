@@ -34,6 +34,7 @@
 #include "problem.h"
 #include "collisions.h"
 #include "tree.h"
+#include "main.h"
 #include "communication_mpi.h"
 #ifdef OPENGL
 #include "display.h"
@@ -169,6 +170,12 @@ void iterate(){
 
 
 int main(int argc, char* argv[]) {
+	int i=0;
+	while (logo[i]!=NULL){
+		printf("%s",logo[i]);
+		i++;
+	}
+
 #ifdef MPI
 	communication_mpi_init(argc,argv);
 #endif // MPI
@@ -194,3 +201,36 @@ int main(int argc, char* argv[]) {
 	return 0;
 }
 
+
+static char* logo[] = {
+"                _                           _  \n",   
+"               | |                         | | \n",  
+"       _ __ ___| |__   ___  _   _ _ __   __| | \n", 
+"      | '__/ _ \\ '_ \\ / _ \\| | | | '_ \\ / _` | \n", 
+"      | | |  __/ |_) | (_) | |_| | | | | (_| | \n", 
+"      |_|  \\___|_.__/ \\___/ \\__,_|_| |_|\\__,_| \n", 
+"                                               \n",   
+"                    `-:://::.`                 \n",
+"                `/oshhoo+++oossso+:`           \n", 
+"             `/ssooys++++++ossssssyyo:`        \n", 
+"           `+do++oho+++osssso++++++++sy/`      \n", 
+"          :yoh+++ho++oys+++++++++++++++ss.     \n", 
+"         /y++hooyyooshooo+++++++++++++++oh-    \n", 
+"        -dsssdssdsssdssssssssssooo+++++++oh`   \n", 
+"        ho++ys+oy+++ho++++++++oosssssooo++so   \n", 
+"       .d++oy++ys+++oh+++++++++++++++oosssod   \n", 
+"       -h+oh+++yo++++oyo+++++++++++++++++oom   \n", 
+"       `d+ho+++ys+++++oys++++++++++++++++++d   \n", 
+"        yys++++oy+++++++oys+++++++++++++++s+   \n", 
+"        .m++++++h+++++++++oys++++++++++++oy`   \n", 
+"         -yo++++ss++++++++++oyso++++++++oy.    \n", 
+"          .ss++++ho+++++++++++osys+++++yo`     \n", 
+"            :ss+++ho+++++++++++++osssss-       \n", 
+"              -ossoys++++++++++++osso.         \n", 
+"                `-/oyyyssosssyso+/.            \n", 
+"                      ``....`                  \n", 
+"                                               \n",   
+"    Copyright (C) 2011 Hanno Rein, Shangfei Liu\n",  
+"       http://github.com/hannorein/rebound/    \n",    
+"                                               \n", 
+NULL};
