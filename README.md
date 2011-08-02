@@ -42,13 +42,15 @@ How to compile and run rebound
 
 **For the impatient**
 
+Simply copy and paste
+
     git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./nbody
 
-or
+or if you do not have git installed
 
     wget https://github.com/hannorein/rebound/tarball/master && tar xvfz master && cd hannorein-rebound-*/examples/shearing_sheet/ && make && ./nbody
 
-**Long description**
+**For the patient**
 
 rebound is very easy to use. To get started, download the latest version of the code from github. If you are familiar with `git`, you can clone the project and keep up-to-date with the latest developments. Otherwise, you can also simply download a snapshot of the repository. 
 
