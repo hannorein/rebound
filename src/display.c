@@ -9,20 +9,20 @@
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
  *
- * This file is part of nbody.
+ * This file is part of rebound.
  *
- * nbody is free software: you can redistribute it and/or modify
+ * rebound is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * nbody is distributed in the hope that it will be useful,
+ * rebound is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with nbody.  If not, see <http://www.gnu.org/licenses/>.
+ * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 #ifdef OPENGL
@@ -234,7 +234,7 @@ void display_init(int argc, char* argv[]){
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
 	glutInitWindowSize(700,700);
-	glutCreateWindow("nbody");
+	glutCreateWindow("rebound");
 	zprInit(0.85/boxsize_max);
 	glutDisplayFunc(display);
 	glutIdleFunc(iterate);
