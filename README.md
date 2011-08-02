@@ -37,8 +37,8 @@ Other features
 * Different modules are easily interchangable by one line in the Makefile.
   
 
-How to compile and run
-----------------------
+How to compile and run rebound
+------------------------------
 
 **For the impatient**
 
