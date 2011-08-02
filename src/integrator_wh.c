@@ -96,7 +96,7 @@ void integrator_part2(){
  * @param _dt Timestep.
  */
 void drift_wh(double _dt){
-#pragma omp parallel for
+#pragma omp parallel for schedule(guided)
 	for (int i=1;i<N;i++){
 		struct particle* p = &(particles[i]);
 		int iflag = 0;

@@ -44,7 +44,7 @@ void integrator_part1(){
 }
 
 void integrator_part2(){
-#pragma omp parallel for
+#pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		particles[i].x  += dt * particles[i].vx;
 		particles[i].y  += dt * particles[i].vy;

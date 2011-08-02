@@ -63,7 +63,7 @@ void gravity_calculate_acceleration_for_particle(int pt, struct ghostbox gb);
 void gravity_calculate_acceleration_for_particle_from_cell(int pt, struct cell const *node, struct ghostbox const gb);
 
 void gravity_calculate_acceleration(){
-#pragma omp parallel for
+#pragma omp parallel for schedule(guided)
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 
 		particles[i].ay = 0; 
@@ -74,7 +74,7 @@ void gravity_calculate_acceleration(){
 	for (int gby=-nghosty; gby<=nghosty; gby++){
 	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
 		// Summing over all particle pairs
-#pragma omp parallel for
+#pragma omp parallel for schedule(guided)
 		for (int i=0; i<N; i++){
 			struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
 			// Precalculated shifted position

@@ -68,7 +68,7 @@ void integrator_cache_coefficients(){
 
 void integrator_part1(){
 	integrator_cache_coefficients();
-#pragma omp parallel for
+#pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		operator_H012(&(particles[i]));
 	}
@@ -77,7 +77,7 @@ void integrator_part1(){
 
 void integrator_part2(){
 	integrator_cache_coefficients();
-#pragma omp parallel for
+#pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		operator_phi1(&(particles[i]));
 		operator_H012(&(particles[i]));
