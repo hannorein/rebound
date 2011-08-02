@@ -1,5 +1,6 @@
-2011 ISIMA project on N-body simulations
+REBOUND - A collisional N-body code
 ========================================
+2011 ISIMA project
 
 Contributors
 ------------
