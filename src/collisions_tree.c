@@ -76,7 +76,7 @@ void collisions_search(){
 	int nghostycol = (nghosty>1?1:nghosty);
 	int nghostzcol = (nghostz>1?1:nghostz);
 	// Loop over all particles
-#pragma omp for
+#pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		struct particle p1 = particles[i];
 		struct  collision collision_nearest;
