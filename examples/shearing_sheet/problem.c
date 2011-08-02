@@ -40,7 +40,7 @@ void problem_init(int argc, char* argv[]){
 	if (argc>1){					// Try to read boxsize from command line
 		boxsize = atof(argv[1]);
 	}else{
-		boxsize = 200;
+		boxsize = 100;
 	}
 	printf("Toomre wavelength: %f\n",2.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*G);
 	// Use Bridges et al coefficient of restitution.
@@ -99,13 +99,15 @@ void problem_output(){
 		output_png("png/");
 	}
 #endif //LIBPNG
-	if (output_check(1e-3*2.*M_PI/OMEGA)){
+	/*
+	if (output_check(1e-1*2.*M_PI/OMEGA)){
 		output_timing();
 		output_append_velocity_dispersion("veldisp.txt");
 	}
 	if (output_check(2.*M_PI/OMEGA)){
 		output_ascii("position.txt");
 	}
+	*/
 }
 
 void problem_finish(){
