@@ -170,12 +170,9 @@ void iterate(){
 
 
 int main(int argc, char* argv[]) {
+	// Print logo.
 	int i=0;
-	while (logo[i]!=NULL){
-		printf("%s",logo[i]);
-		i++;
-	}
-
+	while (logo[i]!=NULL){ printf("%s",logo[i++]); }
 #ifdef MPI
 	communication_mpi_init(argc,argv);
 #endif // MPI
