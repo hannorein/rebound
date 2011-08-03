@@ -1,6 +1,6 @@
 REBOUND - A collisional N-body code
 ========================================
-2011 ISIMA project
+A 2011 ISIMA project
 
 Contributors
 ------------
@@ -22,6 +22,7 @@ Available modules
    - No collision detection
    - Direct nearest neighbor search, O(N^2)
    - Oct tree, O(N log(N))
+   - Line sweep algorithm, ideal for low dimensional problems, O(N log(N))
 * Output/Visualization
    - Standard ASCII or binary output 
    - Real-time, 3D OpenGL visualization
