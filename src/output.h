@@ -79,7 +79,7 @@ void output_binary_positions(char* filename);
  */
 void output_append_velocity_dispersion(char* filename);
 
-#if define(OPENGL) && defined(LIBPNG)
+#if defined(OPENGL) && defined(LIBPNG)
 /**
  * Outputs a screenshot of the current OpenGL view.
  * @details Requires OpenGL and LIBPNG to be installed.
