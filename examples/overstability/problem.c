@@ -23,8 +23,8 @@ void problem_init(int argc, char* argv[]){
 	double tau			= 1;
 	coefficient_of_restitution 	= 0.5;
 //	minimum_collision_velocity 	= 0.001*particle_r*OMEGA;
-	boxsize 			= 8;
-	root_nx = 50; 	root_ny = 1; 	root_nz = 2;
+	boxsize 			= 10;
+	root_nx = 100; 	root_ny = 1; 	root_nz = 2;
 	nghostx = 1; 	nghosty = 1; 	nghostz = 0;
 	init_box();
 	// Initial conditions

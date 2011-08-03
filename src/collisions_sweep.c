@@ -1,3 +1,32 @@
+/**
+ * @file 	collisions.c
+ * @brief 	Collision search using a line sweep algorithm, O(N log(N)).
+ * @author 	Hanno Rein <hanno@hanno-rein.de>
+ *
+ * @details 	The routines in this file implement a collision detection
+ * method called line sweep. It is very fast for a low number of effective 
+ * dimensions (less then three).
+ * 
+ * 
+ * @section LICENSE
+ * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ *
+ * This file is part of rebound.
+ *
+ * rebound is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * rebound is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -11,9 +40,9 @@
 
 
 // Dummy. No collision search
-double collisions_max_r	= 0;
+double 	collisions_max_r	= 0;
 int	sweeps_proc;
-int 	sweeps_init_done = 0;
+int 	sweeps_init_done 	= 0;
 
 static inline double min(double a, double b){ return (a>b)?b:a;}
 static inline double max(double a, double b){ return (b>a)?b:a;}
@@ -154,8 +183,9 @@ void collisions_search(){
 		particles[i].ovy = particles[i].vy;
 		particles[i].ovz = particles[i].vz;
 	
-		double oldx = particles[i].x-dt*particles[i].vx;	
-		add_to_xvlist(oldx,particles[i].x,i);
+		double oldx = particles[i].x-0.5*dt*particles[i].vx;	
+		double newx = particles[i].x+0.5*dt*particles[i].vx;	
+		add_to_xvlist(oldx,newx,i);
 	}
 //#pragma omp parallel for
 	for (int proci=0;proci<sweeps_proc;proci++){
@@ -181,9 +211,8 @@ void collisions_search(){
 						p2 = tmp;
 						gbnx = sweeps[k]->nx;
 					}
-					int gbnz = 0;
 					for (int gbny = -1; gbny<=1; gbny++){
-						struct ghostbox gb = boundaries_get_ghostbox(gbnx,gbny,gbnz);
+						struct ghostbox gb = boundaries_get_ghostbox(gbnx,gbny,0);
 						detect_collision_of_pair(p1,p2,gb,proci,sweeps[k]->crossing||xv->crossing);
 					}
 				}
@@ -209,7 +238,7 @@ void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox cons
 	struct particle* p1 = &(particles[pt1]);
 	struct particle* p2 = &(particles[pt2]);
 	const double y 	= p1->y	+ gb.shifty	- p2->y;
-	const double vy = p1->vy	+ gb.shiftvy 	- p2->ovy;
+	const double vy = p1->vy+ gb.shiftvy 	- p2->ovy;
 
 	const double x = p1->x + gb.shiftx	- p2->x;
 	const double z = p1->z + gb.shiftz	- p2->z;
@@ -288,7 +317,7 @@ void collisions_resolve(){
 				omp_set_lock(&boundarylock);
 			}
 #endif //_OPENMP
-			collisions_resolve_single(c1);
+			collision_resolve_single(c1);
 #ifdef _OPENMP
 			if (c1.crossing){
 				omp_unset_lock(&boundarylock);
@@ -302,13 +331,4 @@ void collisions_resolve(){
 	omp_destroy_lock(&boundarylock);
 #endif //_OPENMP
 }
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 
