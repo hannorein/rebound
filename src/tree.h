@@ -1,9 +1,9 @@
 /**
- * @file tree.h
- * @brief Tree header file. All the tree implementations needed by other routines.
- * @author Shangfei Liu <liushangfei@pku.edu.cn>, Hanno Rein <hanno@hanno-rein.de>
+ * @file 	tree.h
+ * @brief 	Tree header file. All the tree implementations needed by other routines.
+ * @author 	Shangfei Liu <liushangfei@pku.edu.cn>, Hanno Rein <hanno@hanno-rein.de>
  *
- * @section LICENSE
+ * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
  *
  * This file is part of rebound.

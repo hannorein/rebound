@@ -39,7 +39,6 @@
 #include "boundaries.h"
 
 
-// Dummy. No collision search
 double 	collisions_max_r	= 0;
 int	sweeps_proc;
 int 	sweeps_init_done 	= 0;

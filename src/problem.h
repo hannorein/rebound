@@ -1,14 +1,14 @@
 /**
- * @file problem.h
- * @brief The user must implement all functions declared in this file. 
- * @author Hanno Rein <hanno@hanno-rein.de>
+ * @file 	problem.h
+ * @brief 	The user must implement all functions declared in this file. 
+ * @author 	Hanno Rein <hanno@hanno-rein.de>
  *
- * @details This file contains the function declarations that must be 
+ * @details 	This file contains the function declarations that must be 
  * implemented by the user in the problem.c file. All functions must be 
  * present, even if they are empty and have no use.
  * 
  * 
- * @section LICENSE
+ * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
  *
  * This file is part of rebound.

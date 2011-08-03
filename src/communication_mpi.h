@@ -1,9 +1,9 @@
 /**
- * @file communication_mpi.h
- * @brief  Handles communication between nodes using MPI.
- * @author Hanno Rein <hanno@hanno-rein.de>
+ * @file 	communication_mpi.h
+ * @brief  	Handles communication between nodes using MPI.
+ * @author 	Hanno Rein <hanno@hanno-rein.de>
  *
- * @details These routines handle the communication between
+ * @details 	These routines handle the communication between
  * different nodes via the Message Passing Interface (MPI). 
  * There are two different types of communications
  * implemented at the moment:
@@ -14,7 +14,7 @@
  *   tree walks.
  * 
  * 
- * @section LICENSE
+ * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
  *
  * This file is part of rebound.

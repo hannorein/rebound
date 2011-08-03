@@ -1,3 +1,27 @@
+/**
+ * @file 	output.c
+ * @brief 	Output routines.
+ * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * 
+ * @section 	LICENSE
+ * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ *
+ * This file is part of rebound.
+ *
+ * rebound is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * rebound is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -41,14 +65,18 @@ int output_check(double interval){
 }
 
 
-// Various output routines that are used often.
-
+/**
+ * 3D vector struct.
+ */
 struct vec3 {
 	double x;
 	double y;
 	double z;
-} vec3;
+};
 
+/**
+ * Struct representing a Keplerian orbit.
+ */
 struct opv_orbit {
 	double a;
 	double e;
@@ -58,12 +86,12 @@ struct opv_orbit {
 	double M;  	// mean anomaly
 	double E;  	// eccentric anomaly
 	double f; 	// true anomaly
-} opv_orbit;
+};
 
 void posvel2orbit(struct opv_orbit* o, struct particle* pv, double gmsum);
 
 
-double output_timing_last = -1;
+double output_timing_last = -1; 	/**< Time when output_timing() was called the last time. */
 void output_timing(){
 #ifdef MPI
 	int N_tot = 0;
@@ -219,7 +247,7 @@ void output_append_velocity_dispersion(char* filename){
 #ifdef LIBPNG
 unsigned char* 	imgdata = NULL;
 int output_png_num = 0;
-void output_png(char* filename){
+void output_png(char* dirname){
 	// Read Image
 	if (display_init_done==0) return;
 	GLint viewport[4];
