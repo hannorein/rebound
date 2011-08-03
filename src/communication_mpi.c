@@ -84,7 +84,7 @@ void communication_mpi_init(int argc, char** argv){
 	int blen[4];
 	MPI_Aint indices[4];
 	MPI_Datatype oldtypes[4];
-	blen[bnum] 	= 13;
+	blen[bnum] 	= 10;
 #ifndef COLLISIONS_NONE
 	blen[bnum] 	+= 2; 
 #endif //COLLISIONS_NONE

@@ -75,12 +75,11 @@ struct collisionlist {
 struct 	collisionlist* restrict clist;
 
 void init_sweep(){
-#ifdef _OPENMP
+#ifdef OPENMP
 	sweeps_proc 		= omp_get_max_threads();
-#else
+#else // OPENMP
 	sweeps_proc 		= 1;
-#endif
-	printf("Optimizing sweep lists for %d processors.\n",sweeps_proc);
+#endif // OPENMP
 	xvlist		= (struct xvaluelist*)calloc(sweeps_proc,sizeof(struct xvaluelist));
 	clist		= (struct collisionlist*)calloc(sweeps_proc,sizeof(struct collisionlist));
 	for (int i=0;i<sweeps_proc;i++){
@@ -96,7 +95,6 @@ void add_line_to_xvsublist(double x1, double x2, int pt, int n, int i, int cross
 	if (N+2>xvlist[i]._N){
 		xvlist[i]._N 		+= 1024;
 		xvlist[i].xvalues	= (struct xvalue*)realloc(xvlist[i].xvalues,xvlist[i]._N*sizeof(struct xvalue));
-		printf("xvlist size now %d\n",xvlist[i]._N);
 	}
 
 	xvlist[i].xvalues[N].x 	= x1;
@@ -179,10 +177,6 @@ void collisions_search(){
 		init_sweep();	
 	}
 	for (int i=0;i<N;i++){
-		particles[i].ovx = particles[i].vx;
-		particles[i].ovy = particles[i].vy;
-		particles[i].ovz = particles[i].vz;
-	
 		double oldx = particles[i].x-0.5*dt*particles[i].vx;	
 		double newx = particles[i].x+0.5*dt*particles[i].vx;	
 		add_to_xvlist(oldx,newx,i);
@@ -237,13 +231,12 @@ void collisions_search(){
 void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox const gb, int proci, int crossing){
 	struct particle* p1 = &(particles[pt1]);
 	struct particle* p2 = &(particles[pt2]);
-	const double y 	= p1->y	+ gb.shifty	- p2->y;
-	const double vy = p1->vy+ gb.shiftvy 	- p2->ovy;
-
-	const double x = p1->x + gb.shiftx	- p2->x;
-	const double z = p1->z + gb.shiftz	- p2->z;
-	const double vx = p1->ovx + gb.shiftvx	- p2->ovx;
-	const double vz = p1->ovz + gb.shiftvz	- p2->ovz;
+	const double x  = p1->x  + gb.shiftx	- p2->x;
+	const double y 	= p1->y	 + gb.shifty	- p2->y;
+	const double z  = p1->z  + gb.shiftz	- p2->z;
+	const double vx = p1->vx + gb.shiftvx	- p2->vx;
+	const double vy = p1->vy + gb.shiftvy 	- p2->vy;
+	const double vz = p1->vz + gb.shiftvz	- p2->vz;
 
 	const double a = vx*vx + vy*vy + vz*vz;
 	const double b = 2.*(vx*x + vy*y + vz*z);
@@ -259,7 +252,6 @@ void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox cons
 		//if ( (time1>-dt && time1<0.) || (time2>-dt && time2<0.) || (time1<-dt && time2>0) ){
 			// THIS NEEDS IMPROVEMENT #TODO
 		if ( (time1>-dt && time1<0.) || (time1<-dt && time2>0) ){
-		//printf("Collisiontime: \n\t%f\n\t%f\n",time1,time2);
 			double timesave = -dt;
 			if (time1>-dt || time2<0){
 				if (time1>-dt){
@@ -271,13 +263,9 @@ void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox cons
 			struct collisionlist* const clisti = &(clist[proci]);
 			if (clisti->N>=clisti->_N){
 				if (clisti->_N==0){
-					clisti->_N 		= 1024;
-					clisti->collisions	= (struct collision*)malloc(clisti->_N*sizeof(struct collision));
-				}else{
 					clisti->_N	 	+= 1024;
 					clisti->collisions	= (struct collision*)realloc(clisti->collisions,clisti->_N*sizeof(struct collision));
 				}
-				printf("Collisions array size now: %d\n", clisti->_N);
 			}
 			struct collision* const c = &(clist->collisions[clisti->N]);
 			c->p1		= pt1;
@@ -291,10 +279,10 @@ void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox cons
 }
 
 void collisions_resolve(){
-#ifdef _OPENMP
+#ifdef OPENMP
 	omp_lock_t boundarylock;
 	omp_init_lock(&boundarylock);
-#endif //_OPENMP
+#endif //OPENMP
 
 //#pragma omp parallel for
 	for (int proci=0;proci<sweeps_proc;proci++){
@@ -312,23 +300,23 @@ void collisions_resolve(){
 
 		for(int i=0; i<N; i++){
 			struct collision c1= c[i];
-#ifdef _OPENMP
+#ifdef OPENMP
 			if (c1.crossing){
 				omp_set_lock(&boundarylock);
 			}
-#endif //_OPENMP
+#endif //OPENMP
 			collision_resolve_single(c1);
-#ifdef _OPENMP
+#ifdef OPENMP
 			if (c1.crossing){
 				omp_unset_lock(&boundarylock);
 			}
-#endif //_OPENMP
+#endif //OPENMP
 		}
 		clist[proci].N = 0;
 		xvlist[proci].N = 0;
 	}
-#ifdef _OPENMP
+#ifdef OPENMP
 	omp_destroy_lock(&boundarylock);
-#endif //_OPENMP
+#endif //OPENMP
 }
 

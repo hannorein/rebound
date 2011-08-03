@@ -18,13 +18,13 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	OMEGA 				= 1.;
 	OMEGAZ 				= 3.6;
-	dt				= 1e-2*2.*M_PI/OMEGA;
+	dt				= 1e-3*2.*M_PI/OMEGA;
 	double particle_r 		= 1;
-	double tau			= 1;
+	double tau			= 1.64;
 	coefficient_of_restitution 	= 0.5;
 //	minimum_collision_velocity 	= 0.001*particle_r*OMEGA;
-	boxsize 			= 10;
-	root_nx = 100; 	root_ny = 1; 	root_nz = 2;
+	boxsize 			= 1;
+	root_nx = 200; 	root_ny = 5; 	root_nz = 10;
 	nghostx = 1; 	nghosty = 1; 	nghostz = 0;
 	init_box();
 	// Initial conditions
@@ -37,9 +37,7 @@ void problem_init(int argc, char* argv[]){
 		p.vx 	= 0;
 		p.vy 	= -1.5*p.x*OMEGA;
 		p.vz 	= 0;
-		p.ax 	= 0;
-		p.ay 	= 0;
-		p.az 	= 0;
+		p.ax 	= 0; p.ay 	= 0; p.az 	= 0;
 		p.m 	= 0.0001;
 		p.r 	= particle_r;
 		particles_add(p);
@@ -51,7 +49,7 @@ void problem_inloop(){
 }
 
 void problem_output(){
-	if (output_check(dt)){
+	if (output_check(2.*M_PI)){
 		output_timing();
 	}
 }

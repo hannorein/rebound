@@ -10,9 +10,6 @@ struct particle {
 	double vx;
 	double vy;
 	double vz;
-	double ovx;
-	double ovy;
-	double ovz;
 	double ax;
 	double ay;
 	double az;
