@@ -30,8 +30,8 @@ Available modules
 Other features
 --------------
 * The code is written entirely in C. It is standard compliant to C99.
-* Parallelized with OpenMP (for shared memory systems)
-* Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems)
+* Parallelized with OpenMP (for shared memory systems).
+* Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems).
 * No libraries are needed. The use of OpenGL/GLUT/libpng for visualization is optional.
 * The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound.
 * No configuration is needed to run any of the example problems. Just type 'make && ./nbody' to run them.

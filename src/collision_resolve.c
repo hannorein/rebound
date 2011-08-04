@@ -1,5 +1,5 @@
 /**
- * @file 	collisions.c
+ * @file 	collision_resolve.c
  * @brief 	Resolve a single collision. 
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  *
