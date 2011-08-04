@@ -13,3 +13,10 @@ all:
 	$(MAKE) -C ../../src/
 	# Copy result
 	cp ../../src/nbody .
+
+doc: all
+	$(MAKE) -C ../../src/ doc
+
+clean:
+	$(MAKE) -C ../../src/ clean
+	rm -vf nbody

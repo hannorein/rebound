@@ -14,5 +14,9 @@ all:
 	# Copy result
 	cp ../../src/nbody .
 
-doc:
+doc: all
 	$(MAKE) -C ../../src/ doc
+
+clean:
+	$(MAKE) -C ../../src/ clean
+	rm -vf nbody

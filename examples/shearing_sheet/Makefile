@@ -20,3 +20,7 @@ all:
 
 doc: all
 	$(MAKE) -C ../../src/ doc
+
+clean:
+	$(MAKE) -C ../../src/ clean
+	rm -vf nbody
