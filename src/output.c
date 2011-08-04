@@ -271,7 +271,7 @@ void output_png(char* dirname){
 	png_structp png_ptr;
 	png_infop info_ptr;
 	char filenameapp[1024];
-	sprintf(filenameapp,"%s%09d.png",filename,output_png_num);
+	sprintf(filenameapp,"%s%09d.png",dirname,output_png_num);
 	output_png_num++;
 	fp = fopen(filenameapp, "wb");
 	if (fp == NULL) return;

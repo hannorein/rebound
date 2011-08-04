@@ -49,7 +49,7 @@ Simply copy and paste this line to your terminal
 
 or if you do not have git installed
 
-    wget https://github.com/hannorein/rebound/tarball/master && tar xvfz master && cd hannorein-rebound-*/examples/shearing_sheet/ && make && ./nbody
+    wget https://github.com/hannorein/rebound/tarball/master -O- | tar xvz && cd hannorein-rebound-*/examples/shearing_sheet/ && make && ./nbody
 
 **For the patient**
 
