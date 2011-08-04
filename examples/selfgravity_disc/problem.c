@@ -1,3 +1,30 @@
+/**
+ * @file 	problem.c
+ * @brief 	Example problem: self-gravity disc.
+ * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @detail 	A self-gravitating disc is integrated using
+ * the leap frog integrator. This example is also compatible with 
+ * the Wisdom Holman integrator. Collisions are not resolved.
+ * 
+ * @section 	LICENSE
+ * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ *
+ * This file is part of rebound.
+ *
+ * rebound is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * rebound is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -26,6 +53,7 @@ void problem_init(int argc, char* argv[]){
 	root_nx = 1; root_ny = 1; root_nz = 1;
 	nghostx = 0; nghosty = 0; nghostz = 0; 		
 	init_box();
+
 	// Setup particles
 	double disc_mass = 2e-1;
 	int _N = 10000;
@@ -54,7 +82,6 @@ void problem_init(int argc, char* argv[]){
 		pt.y 		= a*sin(phi);
 		pt.z 		= a*tools_normal(0.001);
 		double mu 	= star.m + disc_mass * (pow(a,-3./2.)-pow(boxsize/10.,-3./2.))/(pow(boxsize/2./1.2,-3./2.)-pow(boxsize/10.,-3./2.));
-		printf("a = %f\tmu = %f\n",a,mu);
 		double vkep 	= sqrt(G*mu/a);
 		pt.vx 		=  vkep * sin(phi);
 		pt.vy 		= -vkep * cos(phi);
