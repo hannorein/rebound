@@ -1,54 +1,43 @@
-#ifndef ZPR_H
-#define ZPR_H
-
-/*
- * Zoom-pan-rotate mouse manipulation module for GLUT
- * Version 0.4, October 2003
+/**
+ * @file 	zpr.h
+ * @brief 	Zoom-Pan-Rotate mouse manipulation module for GLUT.
+ * @author 	Nigel Stewart
+ * 		School of Computer Science and Information Technology
+ * 		RMIT University
+ * 		nigels@cs.rmit.edu.au
+ * 
+ * @section 	LICENSE
+ * Copyright (c) 2003,2011 Nigel Stewart, Hanno Rein
  *
- * Nigel Stewart
- * School of Computer Science and Information Technology
- * RMIT University
- * nigels@cs.rmit.edu.au
+ * This file is part of rebound.
  *
- * Instructions
- * ------------
+ * rebound is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Call zprInit() immediately after your call to glutCreateWindow()
+ * rebound is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * The ZPR module handles glutReshapeFunc(), glutMouseFunc() and glutMotionFunc()
- * Applications should not bypass the ZPR handlers for reshape or mouse events.
+ * You should have received a copy of the GNU General Public License
+ * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Mouse manipulation of the GLUT window via the modelview matrix:
- *
- * Left   button -> rotate
- * Middle button -> zoom
- * Right  button -> pan
- *
- * Picking is also provided via two configurable callbacks:
- *
- * void zprSelectionFunc(void (*f)(void))
- *
- *   The draw function to be called in OpenGL selection
- *   mode in response to a mouse-down button event.
- *
- *
- * Limitations
- * -----------
- *
- * Works best with zprReferencePoint appropriately configured.
- * Works best with ortho projection.
- * You may need to use glEnable(GL_NORMALIZATION) for correct lighting.
- * Near and far clip planes are hard-coded.
- * Zooming and rotation is centered on the origin.
- * Only one window can use the callbacks at one time.
  *
  */
 
+#ifndef _ZPR_H
+#define _ZPR_H
 
-/* Mouse Manipulation API */
-
-void zprReset();
+/**
+ * Initialize the zoom/pan/rotating module.
+ */
 void zprInit();
 
-#endif
+/**
+ * Reset the viewing angle, zooming scale.
+ */
+void zprReset();
 
+#endif // _ZPR_H
