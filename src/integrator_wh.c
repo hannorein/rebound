@@ -7,7 +7,8 @@
  * systems where there is one dominant mass and all particles are nearly on 
  * Keplerian orbits. Note that the scheme is formally only first order 
  * accurate when velocity dependend forces are present.
- * The source code is based on the swift code. 
+ * The code is based on the SWIFT code. 
+ * References: AJ, vol. 102, Oct. 1991, p. 1528-1538.
  *
  * The central mass is fixed at the origin (x,y,z)=(0,0,0). The indirect term
  * can be included by setting WH_INDIRECT_TERM equal to 1. When self-gravity 
