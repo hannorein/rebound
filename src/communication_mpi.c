@@ -301,7 +301,7 @@ double communication_distance2_of_proc_to_node(int proc_id, struct cell* node){
 		boundingbox.zmax+=gb.shiftz;
 		// calculate distance
 		double distanceb = communication_distance2_of_aabb_to_cell(boundingbox,node);
-		if (distance > distanceb) distance = distanceb;
+		if (distance < distanceb) distance = distanceb;
 	}
 	}
 	}
