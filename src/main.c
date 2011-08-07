@@ -170,11 +170,16 @@ void iterate(){
 
 
 int main(int argc, char* argv[]) {
-	// Print logo.
-	int i=0;
-	while (logo[i]!=NULL){ printf("%s",logo[i++]); }
 #ifdef MPI
 	communication_mpi_init(argc,argv);
+	// Print logo only on main node.
+	if (mpi_id==0){
+#endif // MPI
+		int i=0;
+		while (logo[i]!=NULL){ printf("%s",logo[i++]); }
+#ifdef MPI
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
 #endif // MPI
 #ifdef OPENMP
 	printf("Using OpenMP with %d threads per node.\n",omp_get_max_threads());
