@@ -182,6 +182,7 @@ int main(int argc, char* argv[]) {
 		int i=0;
 		while (logo[i]!=NULL){ printf("%s",logo[i++]); }
 #ifdef MPI
+		printf("Using MPI with %d nodes.\n",mpi_num);
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif // MPI

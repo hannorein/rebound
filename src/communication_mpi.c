@@ -152,11 +152,6 @@ void communication_mpi_init(int argc, char** argv){
 	tree_essential_recv_N 	= calloc(mpi_num,sizeof(int));
 	tree_essential_recv_Nmax= calloc(mpi_num,sizeof(int));
 #endif
-
-	if (mpi_id==0){
-		printf("Using MPI with %d nodes.\n",mpi_num);
-	}
-
 }
 
 int communication_mpi_rootbox_is_local(int i){
@@ -313,9 +308,6 @@ double communication_distance2_of_proc_to_node(int proc_id, struct cell* node){
 	return distance;
 }
 
-#ifdef GRAVITY_TREE
-extern double opening_angle2;
-#endif 
 void communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct cell* node, int proc){
 	// Add essential cell to tree_essential_send
 	if (tree_essential_send_N[proc]>=tree_essential_send_Nmax[proc]){
@@ -348,7 +340,18 @@ void communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct cel
 		}
 	}
 }
+void communication_mpi_prepare_essential_tree_for_collisions(struct cell* root){
+	if (root==NULL) return;
+	// Find out which cells are needed by every other node
+	for (int i=0; i<mpi_num; i++){
+		if (i==mpi_id) continue;
+		communication_mpi_prepare_essential_cell_for_collisions_for_proc(root,i);	
+	}
+}
 
+
+#ifdef GRAVITY_TREE
+extern double opening_angle2;
 void communication_mpi_prepare_essential_cell_for_gravity_for_proc(struct cell* node, int proc){
 	// Add essential cell to tree_essential_send
 	if (tree_essential_send_N[proc]>=tree_essential_send_Nmax[proc]){
@@ -388,15 +391,6 @@ void communication_mpi_prepare_essential_tree_for_gravity(struct cell* root){
 	for (int i=0; i<mpi_num; i++){
 		if (i==mpi_id) continue;
 		communication_mpi_prepare_essential_cell_for_gravity_for_proc(root,i);	
-	}
-}
-
-void communication_mpi_prepare_essential_tree_for_collisions(struct cell* root){
-	if (root==NULL) return;
-	// Find out which cells are needed by every other node
-	for (int i=0; i<mpi_num; i++){
-		if (i==mpi_id) continue;
-		communication_mpi_prepare_essential_cell_for_collisions_for_proc(root,i);	
 	}
 }
 
@@ -452,6 +446,7 @@ void communication_mpi_distribute_essential_tree_for_gravity(){
 		tree_essential_recv_N[i] = 0;
 	}
 }
+#endif // GRAVITY_TREE
 
 void communication_mpi_distribute_essential_tree_for_collisions(){
 	///////////////////////////////////////////////////////////////

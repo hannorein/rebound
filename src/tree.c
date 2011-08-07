@@ -338,6 +338,7 @@ void tree_add_essential_node(struct cell* node){
 		tree_add_essential_node_to_node(node, tree_root[index]);
 	}
 }
+#ifdef GRAVITY_TREE
 void tree_prepare_essential_tree_for_gravity(){
 	for(int i=0;i<root_n;i++){
 		if (communication_mpi_rootbox_is_local(i)==1){
@@ -350,6 +351,7 @@ void tree_prepare_essential_tree_for_gravity(){
 		}
 	}
 }
+#endif // GRAVITY_TREE
 void tree_prepare_essential_tree_for_collisions(){
 	for(int i=0;i<root_n;i++){
 		if (communication_mpi_rootbox_is_local(i)==1){
