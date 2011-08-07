@@ -45,12 +45,12 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	OMEGA 				= 1.;
 	OMEGAZ 				= 3.6;
-	dt				= 1e-3*2.*M_PI/OMEGA;
+	dt				= 2e-3*2.*M_PI/OMEGA;
 	double particle_r 		= 1;
 	double tau			= 1.64;
 	coefficient_of_restitution 	= 0.5;
 	boxsize 			= 1;
-	root_nx = 200; 	root_ny = 5; 	root_nz = 10;
+	root_nx = 200; 	root_ny = 5; 	root_nz = 20;
 	nghostx = 1; 	nghosty = 1; 	nghostz = 0;
 	init_box();
 
@@ -60,7 +60,7 @@ void problem_init(int argc, char* argv[]){
 		struct particle p;
 		p.x 	= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
 		p.y 	= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
-		p.z 	= 4.0*((double)rand()/(double)RAND_MAX-0.5)*particle_r;
+		p.z 	= 10.0*((double)rand()/(double)RAND_MAX-0.5)*particle_r;
 		p.vx 	= 0;
 		p.vy 	= -1.5*p.x*OMEGA;
 		p.vz 	= 0;

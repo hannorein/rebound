@@ -246,19 +246,14 @@ void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox cons
 	if (root>=0.){
 		// Floating point optimized solution of a quadratic equation. Avoids cancelations.
 		const double q = -0.5*(b+sgn(b)*sqrt(root));
-		const double time2 = q/a;
-		const double time1 = c/q;
-		//if ( (time1>-dt && time1<0.) || (time2>-dt && time2<0.) || (time1<-dt && time2>0) ){
-			// THIS NEEDS IMPROVEMENT #TODO
-		if ( (time1>-dt && time1<0.) || (time1<-dt && time2>0) ){
-			double timesave = -dt;
-			if (time1>-dt || time2<0){
-				if (time1>-dt){
-					timesave = time1;
-				}else{
-					timesave = time2;
-				}
-			}
+		double time1 = c/q;
+		double time2 = q/a;
+		if (time1>time2){
+			double tmp = time2;
+			time1=tmp;
+			time2=time1;
+		}
+		if ( (time1>-dt/2. && time1<dt/2.) || (time1<-dt/2. && time2>dt/2.) ){
 			struct collisionlist* const clisti = &(clist[proci]);
 			if (clisti->N>=clisti->_N){
 				if (clisti->_N==0){
@@ -270,7 +265,7 @@ void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox cons
 			c->p1		= pt1;
 			c->p2		= pt2;
 			c->gb	 	= gb;
-			c->time 	= timesave;
+			c->time 	= time1;
 			c->crossing 	= crossing;
 			clisti->N++;
 		}
@@ -299,6 +294,13 @@ void collisions_resolve(){
 
 		for(int i=0; i<N; i++){
 			struct collision c1= c[i];
+			double time = c1.time;
+			particles[c->p1].x += time*particles[c->p1].vx; 
+			particles[c->p1].y += time*particles[c->p1].vy; 
+			particles[c->p1].z += time*particles[c->p1].vz; 
+			particles[c->p2].x += time*particles[c->p2].vx; 
+			particles[c->p2].y += time*particles[c->p2].vy; 
+			particles[c->p2].z += time*particles[c->p2].vz; 
 #ifdef OPENMP
 			if (c1.crossing){
 				omp_set_lock(&boundarylock);
@@ -310,6 +312,12 @@ void collisions_resolve(){
 				omp_unset_lock(&boundarylock);
 			}
 #endif //OPENMP
+			particles[c->p1].x -= time*particles[c->p1].vx; 
+			particles[c->p1].y -= time*particles[c->p1].vy; 
+			particles[c->p1].z -= time*particles[c->p1].vz; 
+			particles[c->p2].x -= time*particles[c->p2].vx; 
+			particles[c->p2].y -= time*particles[c->p2].vy; 
+			particles[c->p2].z -= time*particles[c->p2].vz; 
 		}
 		clist[proci].N = 0;
 		xvlist[proci].N = 0;
