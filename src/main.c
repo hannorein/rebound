@@ -78,7 +78,11 @@ void init_box(){
 	if (boxsize_max<boxsize_y) boxsize_max = boxsize_y;
 	if (boxsize_max<boxsize_z) boxsize_max = boxsize_z;
 	
-	printf("Initialized %d*%d*%d root boxes.\n",root_nx,root_ny,root_nz);
+#ifdef MPI
+	printf("Initialized %d*%d*%d root boxes. MPI-node: %d. Process id: %d.\n",root_nx,root_ny,root_nz,mpi_id, getpid());
+#else // MPI
+	printf("Initialized %d*%d*%d root boxes. Process id: %d.\n",root_nx,root_ny,root_nz, getpid());
+#endif // MPI
 }
 
 
