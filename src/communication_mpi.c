@@ -425,8 +425,6 @@ void communication_mpi_distribute_essential_tree_for_gravity(){
 		if (i==mpi_id) continue;
 		for (int j=0;j<tree_essential_recv_N[i];j++){
 			tree_add_essential_node(&(tree_essential_recv[i][j]));
-			if (tree_essential_recv[i][j].w ==600)
-			printf("%f\t%f\t%f\n",tree_essential_recv[i][j].x,tree_essential_recv[i][j].y,tree_essential_recv[i][j].m);
 		}
 	}
 	// Bring everybody into sync, clean up. 
