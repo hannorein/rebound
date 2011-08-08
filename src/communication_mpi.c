@@ -111,7 +111,7 @@ void communication_mpi_init(int argc, char** argv){
 	bnum = 0;
 	blen[bnum] 	= 4; 
 #ifdef GRAVITY_TREE
-	blen[bnum] 	+= 8;
+	blen[bnum] 	+= 4;
 #ifdef QUADRUPOLE
 	blen[bnum] 	+= 6;
 #endif // QUADRUPOLE
@@ -119,7 +119,7 @@ void communication_mpi_init(int argc, char** argv){
 	indices[bnum] 	= 0; 
 	oldtypes[bnum] 	= MPI_DOUBLE;
 	bnum++;
-	blen[bnum] 	= 1; 
+	blen[bnum] 	= 8; 
 	indices[bnum] 	= (void*)&c.oct - (void*)&c; 
 	oldtypes[bnum] 	= MPI_CHAR;
 	bnum++;
@@ -422,8 +422,11 @@ void communication_mpi_distribute_essential_tree_for_gravity(){
 	}
 	// Add tree_essential to local tree
 	for (int i=0;i<mpi_num;i++){
+		if (i==mpi_id) continue;
 		for (int j=0;j<tree_essential_recv_N[i];j++){
 			tree_add_essential_node(&(tree_essential_recv[i][j]));
+			if (tree_essential_recv[i][j].w ==600)
+			printf("%f\t%f\t%f\n",tree_essential_recv[i][j].x,tree_essential_recv[i][j].y,tree_essential_recv[i][j].m);
 		}
 	}
 	// Bring everybody into sync, clean up. 

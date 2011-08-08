@@ -35,10 +35,6 @@ struct cell {
 	double y; /**< The y position of the center of a cell */
 	double z; /**< The z position of the center of a cell */
 	double w; /**< The width of a cell */
-	struct cell *oct[8]; /**< The pointer array to the octants of a cell */
-	int pt;	/**< It has double usages: in a leaf node, it stores the index 
-			  * of a particle; in a non-leaf node, it equals to (-1)*Total 
-			  * Number of particles within that cell. */ 
 #ifdef GRAVITY_TREE
 	double m; /**< The total mass of a cell */
 	double mx; /**< The x position of the center of mass of a cell */
@@ -53,6 +49,10 @@ struct cell {
 	double mzz; /**< The zz component of the quadrupole tensor of mass of a cell */
 #endif // QUADRUPOLE
 #endif // GRAVITY_TREE
+	struct cell *oct[8]; /**< The pointer array to the octants of a cell */
+	int pt;	/**< It has double usages: in a leaf node, it stores the index 
+			  * of a particle; in a non-leaf node, it equals to (-1)*Total 
+			  * Number of particles within that cell. */ 
 };
 
 extern struct cell** tree_root; /**< A public pointer to the roots of the trees. */
