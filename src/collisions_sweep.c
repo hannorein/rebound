@@ -138,7 +138,7 @@ void add_to_xvlist(double x1, double x2, int pt){
 		xmin = x2;
 		xmax = x1;
 	}
-	const double radius = particles[pt].r;
+	const double radius = particles[pt].r*1.0001; //Safety factor to avoid floating point issues.
 	xmin -= radius;
 	xmax += radius;
 
