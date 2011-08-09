@@ -64,7 +64,7 @@ struct xvaluelist {
 	int 	N;
 	int	_N; 		// array size
 };
-struct  xvaluelist* restrict xvlist;
+struct  xvaluelist* restrict sweepx;
 
 struct collisionlist {
 	struct collision* collisions;
@@ -79,35 +79,35 @@ void init_sweep(){
 #else // OPENMP
 	sweeps_proc 		= 1;
 #endif // OPENMP
-	xvlist		= (struct xvaluelist*)calloc(sweeps_proc,sizeof(struct xvaluelist));
+	sweepx		= (struct xvaluelist*)calloc(sweeps_proc,sizeof(struct xvaluelist));
 	clist		= (struct collisionlist*)calloc(sweeps_proc,sizeof(struct collisionlist));
 	for (int i=0;i<sweeps_proc;i++){
-		xvlist[i].N		= 0;
-		xvlist[i]._N 		= 512;
-		xvlist[i].xvalues 	= (struct xvalue*)malloc(xvlist[i]._N*sizeof(struct xvalue));
+		sweepx[i].N		= 0;
+		sweepx[i]._N 		= 512;
+		sweepx[i].xvalues 	= (struct xvalue*)malloc(sweepx[i]._N*sizeof(struct xvalue));
 	}
 }
 
 void add_line_to_xvsublist(double x1, double x2, int pt, int n, int i, int crossing){
-	int N = xvlist[i].N;
+	int N = sweepx[i].N;
 	
-	if (N+2>xvlist[i]._N){
-		xvlist[i]._N 		+= 1024;
-		xvlist[i].xvalues	= (struct xvalue*)realloc(xvlist[i].xvalues,xvlist[i]._N*sizeof(struct xvalue));
+	if (N+2>sweepx[i]._N){
+		sweepx[i]._N 		+= 1024;
+		sweepx[i].xvalues	= (struct xvalue*)realloc(sweepx[i].xvalues,sweepx[i]._N*sizeof(struct xvalue));
 	}
 
-	xvlist[i].xvalues[N].x 	= x1;
-	xvlist[i].xvalues[N].pt 	= pt;
-	xvlist[i].xvalues[N].nx 	= n;
-	xvlist[i].xvalues[N].inout 	= 0;
-	xvlist[i].xvalues[N].crossing 	= crossing;
-	xvlist[i].xvalues[N+1].x 	= x2;
-	xvlist[i].xvalues[N+1].pt 	= pt;
-	xvlist[i].xvalues[N+1].nx 	= n;
-	xvlist[i].xvalues[N+1].inout	= 1;
-	xvlist[i].xvalues[N+1].crossing= crossing;
+	sweepx[i].xvalues[N].x 	= x1;
+	sweepx[i].xvalues[N].pt 	= pt;
+	sweepx[i].xvalues[N].nx 	= n;
+	sweepx[i].xvalues[N].inout 	= 0;
+	sweepx[i].xvalues[N].crossing 	= crossing;
+	sweepx[i].xvalues[N+1].x 	= x2;
+	sweepx[i].xvalues[N+1].pt 	= pt;
+	sweepx[i].xvalues[N+1].nx 	= n;
+	sweepx[i].xvalues[N+1].inout	= 1;
+	sweepx[i].xvalues[N+1].crossing= crossing;
 
-	xvlist[i].N += 2;
+	sweepx[i].N += 2;
 }
 
 void add_line_to_xvlist(double x1, double x2, int pt, int n, int crossing){
@@ -182,14 +182,14 @@ void collisions_search(){
 	}
 //#pragma omp parallel for
 	for (int proci=0;proci<sweeps_proc;proci++){
-		struct xvaluelist xvlisti = xvlist[proci];
-		qsort (xvlisti.xvalues, xvlisti.N, sizeof(struct xvalue), compare_xvalue);
+		struct xvaluelist sweepxi = sweepx[proci];
+		qsort (sweepxi.xvalues, sweepxi.N, sizeof(struct xvalue), compare_xvalue);
 
 		struct xvalue** sweeps 	= malloc(sizeof(struct xvalue*)*1024); // Active list. Make the magic number go away.
 		int sweeps_N			= 0;
 
-		for (int i=0;i<xvlisti.N;i++){
-			struct xvalue* const xv = &(xvlisti.xvalues[i]);
+		for (int i=0;i<sweepxi.N;i++){
+			struct xvalue* const xv = &(sweepxi.xvalues[i]);
 			if (xv->inout == 0){
 				// Add event if start of line
 				sweeps[sweeps_N] = xv;
@@ -320,7 +320,7 @@ void collisions_resolve(){
 			particles[c->p2].z -= time*particles[c->p2].vz; 
 		}
 		clist[proci].N = 0;
-		xvlist[proci].N = 0;
+		sweepx[proci].N = 0;
 	}
 #ifdef OPENMP
 	omp_destroy_lock(&boundarylock);
