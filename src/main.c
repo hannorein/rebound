@@ -78,7 +78,11 @@ void init_box(){
 	if (boxsize_max<boxsize_y) boxsize_max = boxsize_y;
 	if (boxsize_max<boxsize_z) boxsize_max = boxsize_z;
 	
-	printf("Initialized %d*%d*%d root boxes.\n",root_nx,root_ny,root_nz);
+#ifdef MPI
+	printf("Initialized %d*%d*%d root boxes. MPI-node: %d. Process id: %d.\n",root_nx,root_ny,root_nz,mpi_id, getpid());
+#else // MPI
+	printf("Initialized %d*%d*%d root boxes. Process id: %d.\n",root_nx,root_ny,root_nz, getpid());
+#endif // MPI
 }
 
 
@@ -170,11 +174,17 @@ void iterate(){
 
 
 int main(int argc, char* argv[]) {
-	// Print logo.
-	int i=0;
-	while (logo[i]!=NULL){ printf("%s",logo[i++]); }
 #ifdef MPI
 	communication_mpi_init(argc,argv);
+	// Print logo only on main node.
+	if (mpi_id==0){
+#endif // MPI
+		int i=0;
+		while (logo[i]!=NULL){ printf("%s",logo[i++]); }
+#ifdef MPI
+		printf("Using MPI with %d nodes.\n",mpi_num);
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
 #endif // MPI
 #ifdef OPENMP
 	printf("Using OpenMP with %d threads per node.\n",omp_get_max_threads());

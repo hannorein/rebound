@@ -89,7 +89,6 @@ void gravity_calculate_acceleration(){
 }
 
 void gravity_calculate_acceleration_for_particle(int pt, struct ghostbox gb) {
-	int root_n = root_nx*root_ny*root_nz;
 	for(int i=0;i<root_n;i++){
 		struct cell* node = tree_root[i];
 		if (node!=NULL){

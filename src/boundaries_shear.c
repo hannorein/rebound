@@ -90,12 +90,19 @@ struct ghostbox boundaries_get_ghostbox(int i, int j, int k){
 	gb.shiftvy = -1.5*(double)i*OMEGA*boxsize_x;
 	gb.shiftvz = 0;
 	// The shift in the y direction is time dependent. 
-	double shift = -fmod(gb.shiftvy*t,boxsize_y); 
+	double shift;
+	if (i==0){
+		shift = -fmod(gb.shiftvy*t,boxsize_y); 
+	}else{
+		if (i>0){
+			shift = -fmod(gb.shiftvy*t+boxsize_y/2.,boxsize_y)-boxsize_y/2.; 
+		}else{
+			shift = -fmod(gb.shiftvy*t-boxsize_y/2.,boxsize_y)+boxsize_y/2.; 
+		}	
+	}
 	gb.shiftx = boxsize_x*(double)i;
 	gb.shifty = boxsize_y*(double)j-shift;
 	gb.shiftz = boxsize_z*(double)k;
-	if(i>0) gb.shifty += boxsize_y*0.5;
-	if(i<0) gb.shifty -= boxsize_y*0.5;
 	return gb;
 }
 

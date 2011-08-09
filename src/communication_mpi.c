@@ -111,7 +111,7 @@ void communication_mpi_init(int argc, char** argv){
 	bnum = 0;
 	blen[bnum] 	= 4; 
 #ifdef GRAVITY_TREE
-	blen[bnum] 	+= 8;
+	blen[bnum] 	+= 4;
 #ifdef QUADRUPOLE
 	blen[bnum] 	+= 6;
 #endif // QUADRUPOLE
@@ -119,7 +119,7 @@ void communication_mpi_init(int argc, char** argv){
 	indices[bnum] 	= 0; 
 	oldtypes[bnum] 	= MPI_DOUBLE;
 	bnum++;
-	blen[bnum] 	= 1; 
+	blen[bnum] 	= 8; 
 	indices[bnum] 	= (void*)&c.oct - (void*)&c; 
 	oldtypes[bnum] 	= MPI_CHAR;
 	bnum++;
@@ -152,11 +152,6 @@ void communication_mpi_init(int argc, char** argv){
 	tree_essential_recv_N 	= calloc(mpi_num,sizeof(int));
 	tree_essential_recv_Nmax= calloc(mpi_num,sizeof(int));
 #endif
-
-	if (mpi_id==0){
-		printf("Using MPI with %d nodes.\n",mpi_num);
-	}
-
 }
 
 int communication_mpi_rootbox_is_local(int i){
@@ -278,21 +273,18 @@ double communication_distance2_of_aabb_to_cell(struct aabb bb, struct cell* node
 	double distancex = fabs(node->x - (bb.xmin+bb.xmax)/2.)  -  (node->w + bb.xmax-bb.xmin)/2.;
 	double distancey = fabs(node->y - (bb.ymin+bb.ymax)/2.)  -  (node->w + bb.ymax-bb.ymin)/2.;
 	double distancez = fabs(node->z - (bb.zmin+bb.zmax)/2.)  -  (node->w + bb.zmax-bb.zmin)/2.;
-	if (distancex<=0 && distancey<=0 && distancez<=0) return 0;	// Overlapping
-	if (distancex<=0 && distancey <=0) return distancez*distancez;
-	if (distancey<=0 && distancez <=0) return distancex*distancex;
-	if (distancez<=0 && distancex <=0) return distancey*distancey;
-	if (distancex<=0)  return distancey*distancey + distancez*distancez;
-	if (distancey<=0)  return distancex*distancex + distancez*distancez;
-	if (distancez<=0)  return distancey*distancey + distancex*distancex;
+	if (distancex<0) distancex =0;
+	if (distancey<0) distancey =0;
+	if (distancez<0) distancez =0;
 	return distancex*distancex + distancey*distancey + distancez*distancez;
 }
 
 double communication_distance2_of_proc_to_node(int proc_id, struct cell* node){
-	int nghostxcol = (nghostx>1?1:0);
-	int nghostycol = (nghosty>1?1:0);
-	int nghostzcol = (nghostz>1?1:0);
-	double distance = boxsize*(double)root_n;
+	int nghostxcol = (nghostx>0?1:0);
+	int nghostycol = (nghosty>0?1:0);
+	int nghostzcol = (nghostz>0?1:0);
+	double distance2 = boxsize*(double)root_n; // A conservative estimate for the minimum distance.
+	distance2 *= distance2;
 	for (int gbx=-nghostxcol; gbx<=nghostxcol; gbx++){
 	for (int gby=-nghostycol; gby<=nghostycol; gby++){
 	for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
@@ -305,17 +297,14 @@ double communication_distance2_of_proc_to_node(int proc_id, struct cell* node){
 		boundingbox.zmin+=gb.shiftz;
 		boundingbox.zmax+=gb.shiftz;
 		// calculate distance
-		double distanceb = communication_distance2_of_aabb_to_cell(boundingbox,node);
-		if (distance > distanceb) distance = distanceb;
+		double distance2new = communication_distance2_of_aabb_to_cell(boundingbox,node);
+		if (distance2 > distance2new) distance2 = distance2new;
 	}
 	}
 	}
-	return distance;
+	return distance2;
 }
 
-#ifdef GRAVITY_TREE
-extern double opening_angle2;
-#endif 
 void communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct cell* node, int proc){
 	// Add essential cell to tree_essential_send
 	if (tree_essential_send_N[proc]>=tree_essential_send_Nmax[proc]){
@@ -348,7 +337,18 @@ void communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct cel
 		}
 	}
 }
+void communication_mpi_prepare_essential_tree_for_collisions(struct cell* root){
+	if (root==NULL) return;
+	// Find out which cells are needed by every other node
+	for (int i=0; i<mpi_num; i++){
+		if (i==mpi_id) continue;
+		communication_mpi_prepare_essential_cell_for_collisions_for_proc(root,i);	
+	}
+}
 
+
+#ifdef GRAVITY_TREE
+extern double opening_angle2;
 void communication_mpi_prepare_essential_cell_for_gravity_for_proc(struct cell* node, int proc){
 	// Add essential cell to tree_essential_send
 	if (tree_essential_send_N[proc]>=tree_essential_send_Nmax[proc]){
@@ -358,25 +358,15 @@ void communication_mpi_prepare_essential_cell_for_gravity_for_proc(struct cell* 
 	// Copy node to send buffer
 	tree_essential_send[proc][tree_essential_send_N[proc]] = (*node);
 	tree_essential_send_N[proc]++;
-	if (node->pt>=0){ // Is leaf
-		// Also transmit particle (Here could be another check if the particle actually overlaps with the other box)
-		if (particles_send_N[proc]>=particles_send_Nmax[proc]){
-			particles_send_Nmax[proc] += 32;
-			particles_send[proc] = realloc(particles_send[proc],sizeof(struct cell)*particles_send_Nmax[proc]);
-		}
-		// Copy particle to send buffer
-		particles_send[proc][particles_send_N[proc]] = particles[node->pt];
-		// Update reference from cell to particle
-		tree_essential_send[proc][tree_essential_send_N[proc]-1].pt = particles_send_N[proc];
-		particles_send_N[proc]++;
-	}else{		// Not a leaf. Check if we need to transfer daughters.
+	if (node->pt<0){		// Not a leaf. Check if we need to transfer daughters.
 		double width = node->w;
 		double distance2 = communication_distance2_of_proc_to_node(proc,node);
 		if ( width*width > opening_angle2*distance2) {
 			for (int o=0;o<8;o++){
 				struct cell* d = node->oct[o];
-				if (d==NULL) continue;
-				communication_mpi_prepare_essential_cell_for_gravity_for_proc(d,proc);
+				if (d!=NULL){
+					communication_mpi_prepare_essential_cell_for_gravity_for_proc(d,proc);
+				}
 			}
 		}
 	}
@@ -388,15 +378,6 @@ void communication_mpi_prepare_essential_tree_for_gravity(struct cell* root){
 	for (int i=0; i<mpi_num; i++){
 		if (i==mpi_id) continue;
 		communication_mpi_prepare_essential_cell_for_gravity_for_proc(root,i);	
-	}
-}
-
-void communication_mpi_prepare_essential_tree_for_collisions(struct cell* root){
-	if (root==NULL) return;
-	// Find out which cells are needed by every other node
-	for (int i=0; i<mpi_num; i++){
-		if (i==mpi_id) continue;
-		communication_mpi_prepare_essential_cell_for_collisions_for_proc(root,i);	
 	}
 }
 
@@ -441,6 +422,7 @@ void communication_mpi_distribute_essential_tree_for_gravity(){
 	}
 	// Add tree_essential to local tree
 	for (int i=0;i<mpi_num;i++){
+		if (i==mpi_id) continue;
 		for (int j=0;j<tree_essential_recv_N[i];j++){
 			tree_add_essential_node(&(tree_essential_recv[i][j]));
 		}
@@ -452,6 +434,7 @@ void communication_mpi_distribute_essential_tree_for_gravity(){
 		tree_essential_recv_N[i] = 0;
 	}
 }
+#endif // GRAVITY_TREE
 
 void communication_mpi_distribute_essential_tree_for_collisions(){
 	///////////////////////////////////////////////////////////////
