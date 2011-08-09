@@ -62,38 +62,23 @@ struct xvalue {
 struct xvaluelist {
 	struct xvalue* xvalues;
 	int 	N;
-	int	_N; 		// array size
+	int	Nmax; 		// array size
 };
 struct  xvaluelist* restrict sweepx;
 
 struct collisionlist {
 	struct collision* collisions;
-	int N;
-	int _N;
+	int 	N;
+	int 	Nmax;
 };
 struct 	collisionlist* restrict clist;
-
-void init_sweep(){
-#ifdef OPENMP
-	sweeps_proc 		= omp_get_max_threads();
-#else // OPENMP
-	sweeps_proc 		= 1;
-#endif // OPENMP
-	sweepx		= (struct xvaluelist*)calloc(sweeps_proc,sizeof(struct xvaluelist));
-	clist		= (struct collisionlist*)calloc(sweeps_proc,sizeof(struct collisionlist));
-	for (int i=0;i<sweeps_proc;i++){
-		sweepx[i].N		= 0;
-		sweepx[i]._N 		= 512;
-		sweepx[i].xvalues 	= (struct xvalue*)malloc(sweepx[i]._N*sizeof(struct xvalue));
-	}
-}
 
 void add_line_to_xvsublist(double x1, double x2, int pt, int n, int i, int crossing){
 	int N = sweepx[i].N;
 	
-	if (N+2>sweepx[i]._N){
-		sweepx[i]._N 		+= 1024;
-		sweepx[i].xvalues	= (struct xvalue*)realloc(sweepx[i].xvalues,sweepx[i]._N*sizeof(struct xvalue));
+	if (N+2>sweepx[i].Nmax){
+		sweepx[i].Nmax 		+= 1024;
+		sweepx[i].xvalues	= (struct xvalue*)realloc(sweepx[i].xvalues,sweepx[i].Nmax*sizeof(struct xvalue));
 	}
 
 	sweepx[i].xvalues[N].x 	= x1;
@@ -173,7 +158,18 @@ int compare_xvalue (const void * a, const void * b){
 void collisions_search(){
 	if (sweeps_init_done!=1){
 		sweeps_init_done = 1;
-		init_sweep();	
+#ifdef OPENMP
+		sweeps_proc 		= omp_get_max_threads();
+#else // OPENMP
+		sweeps_proc 		= 1;
+#endif // OPENMP
+		sweepx		= (struct xvaluelist*)calloc(sweeps_proc,sizeof(struct xvaluelist));
+		clist		= (struct collisionlist*)calloc(sweeps_proc,sizeof(struct collisionlist));
+		for (int i=0;i<sweeps_proc;i++){
+			sweepx[i].N		= 0;
+			sweepx[i].Nmax 		= 512;
+			sweepx[i].xvalues 	= (struct xvalue*)malloc(sweepx[i].Nmax*sizeof(struct xvalue));
+		}
 	}
 	for (int i=0;i<N;i++){
 		double oldx = particles[i].x-0.5*dt*particles[i].vx;	
@@ -184,45 +180,51 @@ void collisions_search(){
 	for (int proci=0;proci<sweeps_proc;proci++){
 		struct xvaluelist sweepxi = sweepx[proci];
 		qsort (sweepxi.xvalues, sweepxi.N, sizeof(struct xvalue), compare_xvalue);
-
-		struct xvalue** sweeps 	= malloc(sizeof(struct xvalue*)*1024); // Active list. Make the magic number go away.
-		int sweeps_N			= 0;
+		
+		// SWEEPL list.
+		int 		sweepl_N 	= 0;
+		int 		sweepl_Nmax 	= 0;
+		struct xvalue** sweepl 		= NULL;
 
 		for (int i=0;i<sweepxi.N;i++){
 			struct xvalue* const xv = &(sweepxi.xvalues[i]);
 			if (xv->inout == 0){
 				// Add event if start of line
-				sweeps[sweeps_N] = xv;
-				for (int k=0;k<sweeps_N;k++){
+				if (sweepl_N>=sweepl_Nmax){
+					sweepl_Nmax +=32;
+		 			sweepl= realloc(sweepl,sizeof(struct xvalue*)*sweepl_Nmax); 
+				}
+				sweepl[sweepl_N] = xv;
+				for (int k=0;k<sweepl_N;k++){
 					int p1 = xv->pt;
-					int p2 = sweeps[k]->pt;
+					int p2 = sweepl[k]->pt;
 					int gbnx = xv->nx;
-					if (sweeps[k]->nx!=0){
-						if (sweeps[k]->nx==xv->nx) continue;
+					if (sweepl[k]->nx!=0){
+						if (sweepl[k]->nx==xv->nx) continue;
 						int tmp = p1;
 						p1 = p2;
 						p2 = tmp;
-						gbnx = sweeps[k]->nx;
+						gbnx = sweepl[k]->nx;
 					}
 					for (int gbny = -1; gbny<=1; gbny++){
 						struct ghostbox gb = boundaries_get_ghostbox(gbnx,gbny,0);
-						detect_collision_of_pair(p1,p2,gb,proci,sweeps[k]->crossing||xv->crossing);
+						detect_collision_of_pair(p1,p2,gb,proci,sweepl[k]->crossing||xv->crossing);
 					}
 				}
-				sweeps_N++;
+				sweepl_N++;
 			}else{
 				// Remove event if end of line
-				for (int j=0;j<sweeps_N;j++){
-					if (sweeps[j]->pt == xv->pt){
-						sweeps_N--;
-						sweeps[j] = sweeps[sweeps_N];
+				for (int j=0;j<sweepl_N;j++){
+					if (sweepl[j]->pt == xv->pt){
+						sweepl_N--;
+						sweepl[j] = sweepl[sweepl_N];
 						j--;
 						break;
 					}
 				}
 			}
 		}
-		free(sweeps);
+		free(sweepl);
 	}
 
 }
@@ -255,11 +257,9 @@ void detect_collision_of_pair(const int pt1, const int pt2, struct ghostbox cons
 		}
 		if ( (time1>-dt/2. && time1<dt/2.) || (time1<-dt/2. && time2>dt/2.) ){
 			struct collisionlist* const clisti = &(clist[proci]);
-			if (clisti->N>=clisti->_N){
-				if (clisti->_N==0){
-					clisti->_N	 	+= 1024;
-					clisti->collisions	= (struct collision*)realloc(clisti->collisions,clisti->_N*sizeof(struct collision));
-				}
+			if (clisti->N>=clisti->Nmax){
+				clisti->Nmax	 	+= 1024;
+				clisti->collisions	= (struct collision*)realloc(clisti->collisions,clisti->Nmax*sizeof(struct collision));
 			}
 			struct collision* const c = &(clist->collisions[clisti->N]);
 			c->p1		= pt1;
