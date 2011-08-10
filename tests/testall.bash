@@ -5,7 +5,7 @@ cat >> testall.html <<EOF
 	<tr><th align=left>Test</hd><th align=left>Error (limit)</hd><th align=left>Runtime [s]</hd><th align=left>Pass</th></tr>
 EOF
 make test -k -C $1
-awk -Ft 'BEGIN{ORS=""}{print "<tr><td>", $7, "</td><td width="300px">", $3, " (",$4, ")</td><td width="150px">", $6, "</td><td width="100px" bgcolor=#"; if($5==1){print "00FF00";}else{print "FF0000";} print">", $5 ,"</td></tr>\n";}' $1/error.txt >> testall.html
+awk -Ft 'BEGIN{ORS="";FS="\t"}{print "<tr><td>", $7, "</td><td width="300px">", $3, " (",$4, ")</td><td width="150px">", $6, "</td><td width="100px" bgcolor=#"; if($5==1){print "00FF00";}else{print "FF0000";} print">", $5 ,"</td></tr>\n";}' $1/error.txt >> testall.html
 cat >> testall.html <<EOF
 	</table>
 EOF
@@ -32,21 +32,20 @@ EOF
 
 
 cat >> testall.html <<EOF
-	<h2>Wisdom Holman Integrator</h2>
+	<h2>Accuracy integrator wh</h2>
 EOF
-printtable wisdom_holman
+printtable accuracy_integrator_wh
 
 cat >> testall.html <<EOF
-	<h2>Collapsing cloud (gravity tree, force error)</h2>
+	<h2>Accuracy tree force</h2>
 EOF
-printtable force_accuracy
-printimage force_accuracy/plot1.png
-printimage force_accuracy/plot2.png
+printtable accuracy_tree_force
+printimage accuracy_tree_force/plot1.png
 
 cat >> testall.html <<EOF
-	<h2>Collapsing cloud (gravity tree, energy conservation check)</h2>
+	<h2>Accuracy tree energy</h2>
 EOF
-printtable energy_collapse
+printtable accuracy_tree_energy
 
 cat >> testall.html <<EOF
 	<h2>Shearing Sheat (gravity tree, collision tree)</h2>

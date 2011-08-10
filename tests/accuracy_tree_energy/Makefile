@@ -17,17 +17,20 @@ all:
 	cp ../../src/nbody .
 
 test:
+	rm -f error-mono.txt
+	rm -f error-quad.txt
 	make all QUADRUPOLE=1
-	rm -f error.txt
 	./nbody 0.1
 	./nbody 0.2
 	./nbody 0.4
 	./nbody 0.6
 	./nbody 0.8
+	mv error.txt error-mono.txt
 	make all QUADRUPOLE=0
 	./nbody 0.1
 	./nbody 0.2
 	./nbody 0.4
 	./nbody 0.6
 	./nbody 0.8
+	mv error.txt error-quad.txt
 
