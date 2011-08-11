@@ -48,6 +48,13 @@ EOF
 printtable accuracy_tree_energy
 
 cat >> testall.html <<EOF
+	<h2>Scaling tree</h2>
+EOF
+make test -k -C scaling_tree
+printimage scaling_tree/plot.png
+
+
+cat >> testall.html <<EOF
 	<h2>Shearing Sheat (gravity tree, collision tree)</h2>
 EOF
 printtable speed_shearing_sheet
