@@ -4,8 +4,13 @@
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  *
  * @details 	The routines in this file implement a collision detection
- * method called line sweep. It is very fast for a low number of effective 
- * dimensions (less then three).
+ * method called line sweep. It is very fast if all dimensions except one 
+ * are small. The algorithm is similar to the original algorithm proposed
+ * by Bentley & Ottmann (1979) but does not maintain a binary search tree.
+ * This is much faster as long as the number of particle trajectories
+ * currently intersecting the plane is small.
+ *
+ * The sweeping direction in this implementation is x.
  * 
  * 
  * @section LICENSE
@@ -43,17 +48,26 @@
 
 
 double 	collisions_max_r	= 0;
-int	sweeps_proc;
-int 	sweeps_init_done 	= 0;
+int	sweeps_proc		= 1;	/**< Number of processors used for seeping algorithm. */
+int 	sweeps_init_done 	= 0;	/**< Used for initialisation of data structures. */
 
 static inline double min(double a, double b){ return (a>b)?b:a;}
 static inline double max(double a, double b){ return (b>a)?b:a;}
 static inline double sgn(const double a){ return (a>=0 ? 1. : -1); }
 
-void collisions_resolve_single(struct collision c);
+/** 
+ * This function checks if two particles colliding during one drift step.
+ * @param pt1 Particle 1. 
+ * @param pt2 Particle 2. 
+ * @param proci Processor id (OpenMP) for this collision.
+ * @param crossing Flag that is one if one of the particles crosses a boundary in this timestep.
+ * @param ghostbox Ghostbox used in this collision.
+ */
 void detect_collision_of_pair(int pt1, int pt2, int proci, int crossing, struct ghostbox gb);
 
-
+/**
+ * Structure that stores a start or end point of a particle trajectory.
+ */
 struct xvalue {
 	double 	x;		// position along sweep axis
 	int 	inout;		// start or endpoint
@@ -62,42 +76,54 @@ struct xvalue {
 	int 	pt;		// particle
 };
 
+/**
+ * Structure that contains a list of xvalues.
+ */
 struct xvaluelist {
 	struct xvalue* xvalues;
-	int 	N;
-	int	Nmax; 		// array size
+	int 	N;		/**< Current array size. */
+	int 	Nmax;		/**< Maximum array size before realloc() is needed. */
 };
-struct  xvaluelist* sweepx;
+struct  xvaluelist* sweepx;	/**< Pointers to the SWEEPX list of each processor. */
 
+/**
+ * Structure that contains a list of collisions.
+ */
 struct collisionlist {
 	struct collision* collisions;
-	int 	N;
-	int 	Nmax;
+	int 	N;		/**< Current array size. */
+	int 	Nmax;		/**< Maximum array size before realloc() is needed. */
 };
-struct 	collisionlist* clist;
+struct 	collisionlist* clist;	/**< Pointers to the collisions list of each processor. */
 
+/**
+ * Adds a line to the SWEEPX array of processor proci.
+ */
 void add_line_to_xvsublist(double x1, double x2, int pt, int n, int proci, int crossing){
 	int N = sweepx[proci].N;
 	
 	if (N+2>sweepx[proci].Nmax){
-		sweepx[proci].Nmax 		+= 1024;
+		sweepx[proci].Nmax 	+= 1024;
 		sweepx[proci].xvalues	= (struct xvalue*)realloc(sweepx[proci].xvalues,sweepx[proci].Nmax*sizeof(struct xvalue));
 	}
 
 	sweepx[proci].xvalues[N].x 		= x1;
-	sweepx[proci].xvalues[N].pt 	= pt;
-	sweepx[proci].xvalues[N].nx 	= n;
-	sweepx[proci].xvalues[N].inout 	= 0;
+	sweepx[proci].xvalues[N].pt 		= pt;
+	sweepx[proci].xvalues[N].nx 		= n;
+	sweepx[proci].xvalues[N].inout 		= 0;
 	sweepx[proci].xvalues[N].crossing 	= crossing;
-	sweepx[proci].xvalues[N+1].x 	= x2;
-	sweepx[proci].xvalues[N+1].pt 	= pt;
-	sweepx[proci].xvalues[N+1].nx 	= n;
+	sweepx[proci].xvalues[N+1].x 		= x2;
+	sweepx[proci].xvalues[N+1].pt 		= pt;
+	sweepx[proci].xvalues[N+1].nx 		= n;
 	sweepx[proci].xvalues[N+1].inout	= 1;
 	sweepx[proci].xvalues[N+1].crossing	= crossing;
 
 	sweepx[proci].N += 2;
 }
 
+/**
+ * Adds a line to the SWEEPX array and checks for crossings of processor boundaries.
+ */
 void add_line_to_xvlist(double x1, double x2, int pt, int n, int crossing){
 	int procix1 = (int)(floor( (x1/boxsize_x+0.5) *(double)sweeps_proc));// %sweeps.xvlists;
 	int procix2 = (int)(floor( (x2/boxsize_x+0.5) *(double)sweeps_proc));// %sweeps.xvlists;
@@ -117,6 +143,9 @@ void add_line_to_xvlist(double x1, double x2, int pt, int n, int crossing){
 	}
 }
 
+/**
+ * Adds a line to the SWEEPX array and checks for crossings of simulation boundaries.
+ */
 void add_to_xvlist(double x1, double x2, int pt){
 	double xmin, xmax;
 	if (x1 < x2){
@@ -143,6 +172,9 @@ void add_to_xvlist(double x1, double x2, int pt){
 	add_line_to_xvlist(xmin,xmax,pt,0,0);
 }
 
+/**
+ * Compares the x position of two xvalues.
+ */
 int compare_xvalue (const void * a, const void * b){
 	const double diff = ((struct xvalue*)a)->x - ((struct xvalue*)b)->x;
 	if (diff > 0) return 1;
@@ -150,72 +182,140 @@ int compare_xvalue (const void * a, const void * b){
 	return 0;
 }
 
+/**
+ * Compares the x position of two particles.
+ */
+int compare_particle (const void * a, const void * b){
+	const double diff = ((struct particle*)a)->x - ((struct particle*)b)->x;
+	if (diff > 0) return 1;
+	if (diff < 0) return -1;
+	return 0;
+}
+
+/**
+ * Sorts the array xvl with insertion sort.
+ */
+void collisions_sweep_insertionsort_xvaluelist(struct xvaluelist* xvl){
+	struct xvalue* xv = xvl->xvalues;
+	int _N = xvl->N;
+	for(int j=1;j<_N;j++){
+		struct xvalue key = xv[j];
+		int i = j - 1;
+		while(i >= 0 && xv[i].x > key.x){
+		    xv[i+1] = xv[i];
+		    i--;
+		}
+		xv[i+1] = key;
+	}
+}
+
+/**
+ * Sorts the particle array with insertion sort.
+ */
+void collisions_sweep_insertionsort_particles(){
+	for(int j=1;j<N;j++){
+		struct particle key = particles[j];
+		int i = j - 1;
+		while(i >= 0 && particles[i].x > key.x){
+		    particles[i+1] = particles[i];
+		    i--;
+		}
+		particles[i+1] = key;
+	}
+}
+
+
+
 void collisions_search(){
 	if (sweeps_init_done!=1){
 		sweeps_init_done = 1;
 #ifdef OPENMP
 		sweeps_proc 		= omp_get_max_threads();
-#else // OPENMP
-		sweeps_proc 		= 1;
 #endif // OPENMP
 		sweepx		= (struct xvaluelist*)   calloc(sweeps_proc,sizeof(struct xvaluelist));
 		clist		= (struct collisionlist*)calloc(sweeps_proc,sizeof(struct collisionlist));
+#ifndef TREE
+		// Sort particles according to their x position to speed up sorting of lines.
+		// Initially the particles are not pre-sorted, thus qsort is faster than insertionsort.
+		// Note that this rearranges particles and will cause problems if the particle id is used elsewhere.
+		qsort (particles, N, sizeof(struct particle), compare_particle);
+	}else{
+		// Keep particles sorted according to their x position to speed up sorting of lines.
+		collisions_sweep_insertionsort_particles();
+#endif //TREE
 	}
 	for (int i=0;i<N;i++){
 		double oldx = particles[i].x-0.5*dt*particles[i].vx;	
 		double newx = particles[i].x+0.5*dt*particles[i].vx;	
 		add_to_xvlist(oldx,newx,i);
 	}
+	
+	// Precalculate most comonly used ghostboxes
+	const struct ghostbox gb00  = boundaries_get_ghostbox(0,0,0);
+	const struct ghostbox gb0p1 = boundaries_get_ghostbox(0,1,0);
+	const struct ghostbox gb0m1 = boundaries_get_ghostbox(0,-1,0);
+
 #pragma omp parallel for schedule (static,1)
 	for (int proci=0;proci<sweeps_proc;proci++){
 		struct xvaluelist* sweepxi = &(sweepx[proci]);
+#ifdef TREE
+		// Use quicksort when there is a tree. Particles are not pre-sorted.
 		qsort (sweepxi->xvalues, sweepxi->N, sizeof(struct xvalue), compare_xvalue);
+#else //TREE 
+		// Use insertionsort when there is a tree. Particles are pre-sorted.
+		collisions_sweep_insertionsort_xvaluelist(sweepxi);	
+#endif //TREE
 		
-		// SWEEPL list.
-		int 		sweepl_N 	= 0;
-		int 		sweepl_Nmax 	= 0;
-		struct xvalue** sweepl 		= NULL;
+		// SWEEPL: List of lines intersecting the plane.
+		struct xvaluelist sweepl = {NULL,0,0};
 
 		for (int i=0;i<sweepxi->N;i++){
-			struct xvalue* xv = &(sweepxi->xvalues[i]);
-			if (xv->inout == 0){
+			struct xvalue xv = sweepxi->xvalues[i];
+			if (xv.inout == 0){
 				// Add event if start of line
-				if (sweepl_N>=sweepl_Nmax){
-					sweepl_Nmax +=32;
-		 			sweepl= realloc(sweepl,sizeof(struct xvalue*)*sweepl_Nmax); 
+				if (sweepl.N>=sweepl.Nmax){
+					sweepl.Nmax +=32;
+		 			sweepl.xvalues = realloc(sweepl.xvalues,sizeof(struct xvalue)*sweepl.Nmax); 
 				}
-				sweepl[sweepl_N] = xv;
-				for (int k=0;k<sweepl_N;k++){
-					int p1 = xv->pt;
-					int p2 = sweepl[k]->pt;
+				sweepl.xvalues[sweepl.N] = xv;
+				// Check for collisions with other particles in SWEEPL
+				for (int k=0;k<sweepl.N;k++){
+					int p1 = xv.pt;
+					int p2 = sweepl.xvalues[k].pt;
 					if (p1==p2) continue;
-					int gbnx = xv->nx;
-					if (sweepl[k]->nx!=0){
-						if (sweepl[k]->nx==xv->nx) continue;
+					int gbnx = xv.nx;
+					if (sweepl.xvalues[k].nx!=0){
+						if (sweepl.xvalues[k].nx==xv.nx) continue;
 						int tmp = p1;
 						p1 = p2;
 						p2 = tmp;
-						gbnx = sweepl[k]->nx;
+						gbnx = sweepl.xvalues[k].nx;
 					}
-					for (int gbny = -1; gbny<=1; gbny++){
-						struct ghostbox gb = boundaries_get_ghostbox(gbnx,gbny,0);
-						detect_collision_of_pair(p1,p2,proci,sweepl[k]->crossing||xv->crossing,gb);
+					if (gbnx==0){
+						// Use cached ghostboxes if possible
+						detect_collision_of_pair(p1,p2,proci,sweepl.xvalues[k].crossing||xv.crossing,gb00);
+						detect_collision_of_pair(p1,p2,proci,sweepl.xvalues[k].crossing||xv.crossing,gb0p1);
+						detect_collision_of_pair(p1,p2,proci,sweepl.xvalues[k].crossing||xv.crossing,gb0m1);
+					}else{
+						for (int gbny = -1; gbny<=1; gbny++){
+							struct ghostbox gb = boundaries_get_ghostbox(gbnx,gbny,0);
+							detect_collision_of_pair(p1,p2,proci,sweepl.xvalues[k].crossing||xv.crossing,gb);
+						}
 					}
 				}
-				sweepl_N++;
+				sweepl.N++;
 			}else{
 				// Remove event if end of line
-				for (int j=0;j<sweepl_N;j++){
-					if (sweepl[j]->pt == xv->pt){
-						sweepl_N--;
-						sweepl[j] = sweepl[sweepl_N];
+				for (int j=0;j<sweepl.N;j++){
+					if (sweepl.xvalues[j].pt == xv.pt){
+						sweepl.N--;
+						sweepl.xvalues[j] = sweepl.xvalues[sweepl.N];
 						j--;
 						break;
 					}
 				}
 			}
 		}
-		free(sweepl);
 	}
 
 }
@@ -243,8 +343,8 @@ void detect_collision_of_pair(int pt1, int pt2, int proci, int crossing, struct 
 		double time2 = q/a;
 		if (time1>time2){
 			double tmp = time2;
-			time1=tmp;
 			time2=time1;
+			time1=tmp;
 		}
 		if ( (time1>-dt/2. && time1<dt/2.) || (time1<-dt/2. && time2>dt/2.) ){
 			struct collisionlist* clisti = &(clist[proci]);
@@ -256,7 +356,12 @@ void detect_collision_of_pair(int pt1, int pt2, int proci, int crossing, struct 
 			c->p1		= pt1;
 			c->p2		= pt2;
 			c->gb	 	= gb;
-			c->time 	= time1;
+			if ( (time1>-dt/2. && time1<dt/2.)) { 
+				c->time 	= time1;
+			}else{
+				c->time 	= 0;
+			}
+				
 			c->crossing 	= crossing;
 			clisti->N++;
 		}
@@ -285,13 +390,12 @@ void collisions_resolve(){
 
 		for(int i=0; i<colN; i++){
 			struct collision c1= c[i];
-			double time = c1.time;
-			particles[c1.p1].x += time*particles[c1.p1].vx; 
-			particles[c1.p1].y += time*particles[c1.p1].vy; 
-			particles[c1.p1].z += time*particles[c1.p1].vz; 
-			particles[c1.p2].x += time*particles[c1.p2].vx; 
-			particles[c1.p2].y += time*particles[c1.p2].vy; 
-			particles[c1.p2].z += time*particles[c1.p2].vz; 
+			particles[c1.p1].x -= c1.time*particles[c1.p1].vx; 
+			particles[c1.p1].y -= c1.time*particles[c1.p1].vy; 
+			particles[c1.p1].z -= c1.time*particles[c1.p1].vz; 
+			particles[c1.p2].x -= c1.time*particles[c1.p2].vx; 
+			particles[c1.p2].y -= c1.time*particles[c1.p2].vy; 
+			particles[c1.p2].z -= c1.time*particles[c1.p2].vz; 
 #ifdef OPENMP
 			if (c1.crossing){
 				omp_set_lock(&boundarylock);
@@ -303,12 +407,12 @@ void collisions_resolve(){
 				omp_unset_lock(&boundarylock);
 			}
 #endif //OPENMP
-			particles[c1.p1].x -= time*particles[c1.p1].vx; 
-			particles[c1.p1].y -= time*particles[c1.p1].vy; 
-			particles[c1.p1].z -= time*particles[c1.p1].vz; 
-			particles[c1.p2].x -= time*particles[c1.p2].vx; 
-			particles[c1.p2].y -= time*particles[c1.p2].vy; 
-			particles[c1.p2].z -= time*particles[c1.p2].vz; 
+			particles[c1.p1].x += c1.time*particles[c1.p1].vx; 
+			particles[c1.p1].y += c1.time*particles[c1.p1].vy; 
+			particles[c1.p1].z += c1.time*particles[c1.p1].vz; 
+			particles[c1.p2].x += c1.time*particles[c1.p2].vx; 
+			particles[c1.p2].y += c1.time*particles[c1.p2].vy; 
+			particles[c1.p2].z += c1.time*particles[c1.p2].vz; 
 		}
 		clist[proci].N = 0;
 		sweepx[proci].N = 0;
