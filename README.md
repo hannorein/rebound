@@ -1,6 +1,5 @@
-REBOUND - A collisional N-body code
-========================================
-A 2011 ISIMA project
+REBOUND - An open-source multi-purpose N-body code for collisional dynamics
+===========================================================================
 
 Contributors
 ------------
@@ -10,31 +9,31 @@ Contributors
 Available modules
 -----------------
 * Gravity
-   - No self-gravity
-   - Direct summation, O(N^2)
-   - Oct tree, Barnes & Hut 1986, O(N log(N))
+   - `gravity_none.c       ` No self-gravity
+   - `gravity_direct.c     ` Direct summation, O(N^2)
+   - `gravity_tree.c       ` Oct tree, Barnes & Hut 1986, O(N log(N))
 * Integrators
-   - Euler, first order
-   - Leap frog, second order, symplectic
-   - Mixed variable symplectic integrator for 1/r potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991
-   - Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
+   - `integrator_euler.c   ` Euler scheme, first order
+   - `integrator_leapfrog.c` Leap frog, second order, symplectic
+   - `integrator_wh.c      ` Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991
+   - `integrator_sei.c     ` Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
 * Collision detection
-   - No collision detection
-   - Direct nearest neighbor search, O(N^2)
-   - Oct tree, O(N log(N))
-   - Line sweep algorithm, ideal for low dimensional problems, O(N log(N))
+   - `collisions_none.c    ` No collision detection
+   - `collisions_direct.c  ` Direct nearest neighbor search, O(N^2)
+   - `collisions_tree.c    ` Oct tree, O(N log(N))
+   - `collisions_sweep.c   ` Line sweep algorithm, ideal for low dimensional problems, O(N) or O(N^1.5) depending on geometry
 * Output/Visualization
    - Standard ASCII or binary output 
    - Real-time, 3D OpenGL visualization
 
 Other features
 --------------
-* The code is written entirely in C. It is standard compliant to C99.
+* The code is written entirely in C. It conforms to the ISO standard C99.
 * Parallelized with OpenMP (for shared memory systems).
 * Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems).
 * No libraries are needed. The use of OpenGL/GLUT/libpng for visualization is optional.
 * The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound.
-* No configuration is needed to run any of the example problems. Just type 'make && ./nbody' to run them.
+* No configuration is needed to run any of the example problems. Just type `make && ./nbody` in the problem directory to run them.
 * Different modules are easily interchangeable by one line in the Makefile.
   
 
@@ -53,7 +52,7 @@ or if you do not have git installed
 
 **For the patient**
 
-rebound is very easy to use. To get started, download the latest version of the code from github. If you are familiar with `git`, you can clone the project and keep up-to-date with the latest developments. Otherwise, you can also simply download a snapshot of the repository at http://github.com/hannorein/rebound. 
+rebound is very easy to use. To get started, download the latest version of the code from github. If you are familiar with `git`, you can clone the project and keep up-to-date with the latest developments. Otherwise, you can also simply download a snapshot of the repository as a tar or zip file at http://github.com/hannorein/rebound. 
 
 In the main directory, you find a sub-directory called `src` which contains the source code and a directory called `examples` with various example problems. To compile one of the example, go have to go to that directory, for example:
 
@@ -81,7 +80,7 @@ To run the code, simply type
 
     ./nbody
 
-If you want to create your own problem, just copy one of the example directories and modify `problem.c` and `Makefile` accordingly.  
+If you want to create your own problem, just copy one of the example directories or the template in the `problems` directory and modify `problem.c` and `Makefile` accordingly.  
 
 
 License
@@ -103,6 +102,6 @@ Acknowledgements
 ----------------
 When you use this code or parts of this code for results presented in a scientific publication, we would greatly appreciate a citation to Rein and Liu (in preparation) and an acknowledgement of the form: 
 
-_Calculations in this paper made use of the collisional N-body code rebound which can be downloaded freely at http://github.com/hannorein/rebound._
+_Simulations in this paper made use of the collisional N-body code `REBOUND` which can be downloaded freely at http://github.com/hannorein/rebound._
 
 Also, please send us a copy of your paper so that we can keep track of all publications that made use of the code.
