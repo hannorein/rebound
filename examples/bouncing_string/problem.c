@@ -2,7 +2,7 @@
  * @file 	problem.c
  * @brief 	Example problem: bouncing string.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example tests collision detection.
+ * @detail 	This example tests collision detection methods.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu

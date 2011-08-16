@@ -2,7 +2,10 @@
  * @file 	problem.c
  * @brief 	Example problem: bouncing balls.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example tests collision detection.
+ * @detail 	This example tests collision detection methods.
+ * To change the collision detection algorithm, change the module
+ * collisions_direct.c to either collisions_tree.c or 
+ * collisions_sweep.c in the Makefile. 
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu

@@ -1,8 +1,8 @@
 /**
  * @file 	problem.c
- * @brief 	Example problem: more bouncing balls.
+ * @brief 	Example problem: bouncing balls at corner.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example tests collision detection on box boundaries.
+ * @detail 	This example tests collision detection methon near box boundaries.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu

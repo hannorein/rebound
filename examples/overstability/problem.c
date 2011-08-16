@@ -4,7 +4,7 @@
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @detail 	A narrow box of Saturn's rings is simulated to
  * study the viscous overstability. Collisions are resolved using
- * the line sweeping method.
+ * the plane-sweep method.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
