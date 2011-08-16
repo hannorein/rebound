@@ -65,7 +65,7 @@ void problem_init(int argc, char* argv[]){
 	double particle_radius_min 	= 1;			// m
 	double particle_radius_max 	= 4;			// m
 	double particle_radius_slope 	= -3;	
-	boxsize 			= 140.0 * sqrt((double)mpi_num);
+	boxsize 			= 100.0 * sqrt((double)mpi_num);
 	if (argc>1){						// Try to read boxsize from command line
 		boxsize = atof(argv[1]);
 	}
@@ -126,7 +126,7 @@ void problem_output(){
 
 void problem_finish(){
 	if(mpi_id==0){
-		FILE* of = fopen("scaling.txt","a+"); 
+		FILE* of = fopen("scaling25k.txt","a+"); 
 		struct timeval tim;
 		gettimeofday(&tim, NULL);
 		double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
