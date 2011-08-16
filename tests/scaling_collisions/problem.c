@@ -46,23 +46,17 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	OMEGA 				= 1.;
 	OMEGAZ 				= 3.6;
-	dt				= 2e-3*2.*M_PI/OMEGA;
-	tmax				= 2.*M_PI/OMEGA;
+	dt				= 4e-3 *2.*M_PI/OMEGA;
+	tmax				= 4e-2 *2.*M_PI/OMEGA;
 	double particle_r 		= 1;
 	double tau			= 1.64;
 	coefficient_of_restitution 	= 0.5;
-	boxsize 			= 1;
-	root_nx = 200; 	root_ny = 5; 	root_nz = 20;
+	boxsize 			= 5;
+	root_nx = 40; 	root_ny = 1; 	root_nz = 4;
 	nghostx = 1; 	nghosty = 1; 	nghostz = 0;
 	if (argc>1){						// Try to read boxsize from command line
-#ifdef COLLISIONS_TREE
-		root_nx = 1;
-		root_ny = 1;
-		root_nz = 1;
-		boxsize = 31.0*sqrt(atof(argv[1])/200.);
-#else
-		root_nx = atoi(argv[1]);
-#endif
+		//root_nx = atoi(argv[1]);
+		boxsize = atof(argv[1]);
 	}
 	init_box();
 
