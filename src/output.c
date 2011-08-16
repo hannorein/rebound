@@ -248,6 +248,13 @@ void output_append_velocity_dispersion(char* filename){
 unsigned char* 	imgdata = NULL;
 int output_png_num = 0;
 void output_png(char* dirname){
+	char filename[1024];
+	sprintf(filename,"%s%09d.png",dirname,output_png_num);
+	output_png_num++;
+	output_png_single(filename);
+}
+
+void output_png_single(char* filename){
 	// Read Image
 	if (display_init_done==0) return;
 	GLint viewport[4];
@@ -270,10 +277,7 @@ void output_png(char* dirname){
 	FILE *fp;
 	png_structp png_ptr;
 	png_infop info_ptr;
-	char filenameapp[1024];
-	sprintf(filenameapp,"%s%09d.png",dirname,output_png_num);
-	output_png_num++;
-	fp = fopen(filenameapp, "wb");
+	fp = fopen(filename, "wb");
 	if (fp == NULL) return;
 
 	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);

@@ -89,6 +89,12 @@ void output_append_velocity_dispersion(char* filename);
  * @param dirname Output directory (e.g. 'src/'). Must end with a slash. Directory must exist.
  */
 void output_png(char* dirname);
+/**
+ * Outputs a single screenshot of the current OpenGL view.
+ * @details Requires OpenGL and LIBPNG to be installed.
+ * @param filename Output filename.
+ */
+void output_png_single(char* filename);
 #endif
 
 #endif

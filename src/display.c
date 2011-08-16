@@ -102,6 +102,14 @@ void displayKey(unsigned char key, int x, int y){
 		case 'm':
 			display_mass = !display_mass;
 			break;
+		case 'p':
+#ifdef LIBPNG
+			output_png_single("screenshot.png");
+			printf("\nScreenshot saved as 'screenshot.png'.\n");
+#else // LIBPNG
+			printf("\nNeed LIBPNG to save screenshot.\n");
+#endif // LIBPNG
+			break;
 	}
 	display();
 }
