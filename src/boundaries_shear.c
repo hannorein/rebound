@@ -52,18 +52,19 @@ int nghostz = 0;	/**< The boundary condition is periodic in z, but usually we do
 
 void boundaries_check(){
 	// The offset of ghostcell is time dependent.
-	double offset = -0.5*boxsize_y + fmod(t*1.5*OMEGA*boxsize_x,boxsize_y);
+	double offsetp1 = -fmod(-1.5*OMEGA*boxsize_x*t+boxsize_y/2.,boxsize_y)-boxsize_y/2.; 
+	double offsetm1 = -fmod( 1.5*OMEGA*boxsize_x*t-boxsize_y/2.,boxsize_y)+boxsize_y/2.; 
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		// Radial
 		while(particles[i].x>boxsize_x/2.){
 			particles[i].x -= boxsize_x;
-			particles[i].y += offset;
+			particles[i].y += offsetp1;
 			particles[i].vy += 3./2.*OMEGA*boxsize_x;
 		}
 		while(particles[i].x<-boxsize_x/2.){
 			particles[i].x += boxsize_x;
-			particles[i].y -= offset;
+			particles[i].y += offsetm1;
 			particles[i].vy -= 3./2.*OMEGA*boxsize_x;
 		}
 		// Azimuthal
