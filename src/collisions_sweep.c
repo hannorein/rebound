@@ -41,6 +41,7 @@
 #include "collisions.h"
 #include "collision_resolve.h"
 #include "main.h"
+#include "tree.h"
 #include "boundaries.h"
 #ifdef OPENMP
 #include <omp.h>
