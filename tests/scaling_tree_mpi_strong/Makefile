@@ -7,12 +7,12 @@ export OPENMP=0
 
 all:
 	# Setup link to different modules
-	/bin/ln -fs gravity_tree.c ../../src/gravity.c
-	/bin/ln -fs boundaries_shear.c ../../src/boundaries.c
-	/bin/ln -fs integrator_sei.c ../../src/integrator.c
-	/bin/ln -fs collisions_tree.c ../../src/collisions.c
+	ln -fs gravity_tree.c ../../src/gravity.c
+	ln -fs boundaries_shear.c ../../src/boundaries.c
+	ln -fs integrator_sei.c ../../src/integrator.c
+	ln -fs collisions_tree.c ../../src/collisions.c
 	# Setup link to problem file
-	/bin/ln -fs ../$(PROBLEMDIR)/problem.c ../../src/problem.c
+	ln -fs ../$(PROBLEMDIR)/problem.c ../../src/problem.c
 	# Compile
 	$(MAKE) -C ../../src/
 	# Copy result
