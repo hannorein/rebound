@@ -14,7 +14,7 @@ Available modules
 <table>
   <tr><th>Module nameID</th>
      <th>Description</th></tr>
-  <tr><td>`gravity_none.c`</td>
+  <tr><td><pre>gravity_none.c</pre></td>
      <td>No self-gravity</td></tr>
   <tr><td>`gravity_direct.c`</td>
      <td>Direct summation, O(N^2)</td></tr>
