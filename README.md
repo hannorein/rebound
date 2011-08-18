@@ -8,26 +8,26 @@ Contributors
   
 Available modules
 -----------------
-* Gravity
-   - `gravity_none.c       ` No self-gravity
-   - `gravity_direct.c     ` Direct summation, O(N^2)
-   - `gravity_tree.c       ` Oct tree, Barnes & Hut 1986, O(N log(N))
-* Integrators
-   - `integrator_euler.c   ` Euler scheme, first order
-   - `integrator_leapfrog.c` Leap frog, second order, symplectic
-   - `integrator_wh.c      ` Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991
-   - `integrator_sei.c     ` Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
-* Collision detection
-   - `collisions_none.c    ` No collision detection
-   - `collisions_direct.c  ` Direct nearest neighbor search, O(N^2)
-   - `collisions_tree.c    ` Oct tree, O(N log(N))
-   - `collisions_sweep.c   ` Line sweep algorithm, ideal for low dimensional problems, O(N) or O(N^1.5) depending on geometry
-* Output/Visualization
-   - Standard ASCII or binary output 
-   - Real-time, 3D OpenGL visualization
+### Gravity ###
+- `gravity_none.c       ` No self-gravity
+- `gravity_direct.c     ` Direct summation, O(N^2)
+- `gravity_tree.c       ` Oct tree, Barnes & Hut 1986, O(N log(N))
+### Integrators ###
+- `integrator_euler.c   ` Euler scheme, first order
+- `integrator_leapfrog.c` Leap frog, second order, symplectic
+- `integrator_wh.c      ` Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991
+- `integrator_sei.c     ` Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
+### Collision detection ###
+- `collisions_none.c    ` No collision detection
+- `collisions_direct.c  ` Direct nearest neighbor search, O(N^2)
+- `collisions_tree.c    ` Oct tree, O(N log(N))
+- `collisions_sweep.c   ` Line sweep algorithm, ideal for low dimensional problems, O(N) or O(N^1.5) depending on geometry
+### Output/Visualization ###
+- Standard ASCII or binary output 
+- Real-time, 3D OpenGL visualization
 
-Other features
---------------
+Other features worth mentioning
+-------------------------------
 * The code is written entirely in C. It conforms to the ISO standard C99.
 * Parallelized with OpenMP (for shared memory systems).
 * Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems).
@@ -37,12 +37,12 @@ Other features
 * Different modules are easily interchangeable by one line in the Makefile.
   
 
-How to download, compile and run rebound
+How to download, compile and run REBOUND
 ----------------------------------------
 
-**For the impatient**
+### For the impatient ###
 
-Simply copy and paste this line to your terminal
+Simply copy and paste this line to your terminal and press enter
 
     git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./nbody
 
@@ -50,11 +50,11 @@ or if you do not have git installed
 
     wget https://github.com/hannorein/rebound/tarball/master -O- | tar xvz && cd hannorein-rebound-*/examples/shearing_sheet/ && make && ./nbody
 
-**For the patient**
+### For the patient ###
 
-rebound is very easy to use. To get started, download the latest version of the code from github. If you are familiar with `git`, you can clone the project and keep up-to-date with the latest developments. Otherwise, you can also simply download a snapshot of the repository as a tar or zip file at http://github.com/hannorein/rebound. 
+REBOUND is very easy to install and use. To get started, download the latest version of the code from github. If you are familiar with `git`, you can clone the project and keep up-to-date with the latest developments. Otherwise, you can also simply download a snapshot of the repository as a tar or zip file at http://github.com/hannorein/rebound. There is a download botton at the top right. 
 
-In the main directory, you find a sub-directory called `src` which contains the source code and a directory called `examples` with various example problems. To compile one of the example, go have to go to that directory, for example:
+In the main directory, you find a sub-directory called `src` which contains the bulk parts of the  source code and a directory called `examples` with various example problems. To compile one of the example, you have to go to that directory, for example:
 
     cd examples/shearing_sheet/
 
@@ -64,39 +64,96 @@ Then, type
 
 This will do the following things    
 
-* It sets various environment variables. These determine the compiler optimization flags and which libraries should be included. In the example `shearing_sheet` the variables are:
-   - `OPT=-O3`. This sets the additional compiler flag `-O3` and optimizes the code for speed.
-   - `QUADRUPOLE=0`. This disables the calculation of quadrupole moments for each cell in the tree. The simulation is faster, but less accurate.
-   - `OPENGL=1`. This enables real-time OpenGL visualizations and requires both OpenGL and GLUT libraries to be installed. This should work without any further adjustments on any Mac which has Xcode installed. On Linux both libraries must be installed in `/usr/local/`. You can change the default search paths for libraries in the file `src/Makefile`. 
-   - `MPI=0`. This disables parallelization with MPI.
-   - `OPENMP=1`. This enables parallelization with OpenMP. The number of threads can be set with an environment variable at runtime, e.g.: `export OMP_NUM_THREADS=8`.
+* It sets various environment variables. These determine settings like the compiler optimization flags and which libraries are included (see below). 
 * It creates symbolic links to the active modules. This allows you to choose from different gravity solvers, boundary conditions, integrators and collision solvers. For example, to change the gravity solver from using a tree to direct summation you could change `gravity_tree.c` to `gravity_direct.c`. 
 * It creates a symbolic link to the current problem file. Each problem file contains the initial conditions and the output routines for the current problem. You do not need to change any file in `src/` to create a new problem unless you want to do something very special. This keeps the initial conditions and the code itself cleanly separated.
 * It compiles the code and copies the binary into the current directory.
 
-You can also create a documentation with `doxygen` based on the current choice of modules by typing `make doc`. This requires `doxygen` to be installed. The documentation will be generated in the directory `doc/html/`.
+If something goes wrong, it is most likely the visualization module. You can turn it off by deleting the line containg `OPENGL` in the makefile. Of course, you will not see much unless you put in some extra work to visualize the results.
 
-To run the code, simply type
+You can also create a documentation based on the current choice of modules by typing `make doc`. This requires the documentation generator `doxygen` to be installed. The documentation will be generated in the directory `doc/html/`.
+
+To finally run the code, simply type
 
     ./nbody
 
+A window should open and you will see a simulation running in real time. The setup simulates the Rings of Saturn and uses a local shearing sheet approximation. Have a look at the other examples too, to get an impression of what REBOUND can do. 
+
 If you want to create your own problem, just copy one of the example directories or the template in the `problems` directory and modify `problem.c` and `Makefile` accordingly.  
+
+### Environment variables ###
+The makefile in each problem directory sets various e environment variables. These determine the compiler optimazation flags, the libraries included and basic code settings. Let us look at one of the examples `shearing_sheet` in more detail. 
+
+- `export OPT=-O3`. This sets the additional compiler flag `-O3` and optimizes the code for speed.
+- `export QUADRUPOLE=0`. This disables the calculation of quadrupole moments for each cell in the tree. The simulation is faster, but less accurate.
+- `export OPENGL=1`. This enables real-time OpenGL visualizations and requires both OpenGL and GLUT libraries to be installed. This should work without any further adjustments on any Mac which has Xcode installed. On Linux both libraries must be installed in `/usr/local/`. You can change the default search paths for libraries in the file `src/Makefile`. 
+- `export MPI=0`. This disables parallelization with MPI.
+- `export OPENMP=1`. This enables parallelization with OpenMP. The number of threads can be set with an environment variable at runtime, e.g.: `export OMP_NUM_THREADS=8`.
+
+All of these variables are read by the main makefile in the `src/` directory. The `OPENGL` variable, for example, is used to determine if the OpenGL and GLUT libraries should be included. If the variabllle is `1` the makefile also sets a precompiler macro with `-DOPENGL`.
+
+The default compilers are `gcc` for the sequential and `mpicc` for the parallel version. These can be changed in the main makefile `src/Makefile`. This is also where the paths to external libraries (such as OpenGL, GLUT and LIBPNG) can be changed if necessary.
+
+### User-defined functions in the problem.c file ###
+The problem.c file contains at least four functions. You do not need to implement all of them, a dummy might be enough. 
+
+#### `void problem_init(int argc, char* argv[])` ####
+This routine is where you read command line arguments and set up your inital conditions. REBOUND does not come with a built-in functionality to read configuration files at run-time. You should see this as a feature. In REBOUND, you have one `problem.c` file for each problem. Thus, everything can be set within this file. There are, of course, situation in which you want to do something like a parameter space survey. In almost all cases, you vary a few parameters but rarely more, say 5. You can easily read these parameters from the command line.
+ 
+Here is one example that reads in the first argument given to rebound as the boxsize and sets a default value when no value is given:
+
+    if (argc>1){
+	    boxsize = atof(argv[1]);
+    }else{
+	    boxsize = 100;
+    }
+
+If you are still convinced that you need a configuration file, you are welcome to implement it yourself. This function is where you want to do that.    
+
+
+#### `void problem_inloop()` ####
+This function is called once per timestep. It is called at the end of the K part of the DKD timestepping scheme. This is where you can implement all kind of things such as additional forces onto particles. 
+
+The following lines of code, for example, implement the Poynting Robertson drag force on each particle exept the first one (which is the star in this example):
+
+    double alpha = 1e-4;
+    for (int i=1;i<N;i++){
+    	double x = particles[i].x;
+    	double y = particles[i].y;
+    	double z = particles[i].z;
+    	double r2 = (x*x + y*y + z*z); 
+    	particles[i].vx -= dt * particles[i].vx*alpha/r2;
+    	particles[i].vy -= dt * particles[i].vy*alpha/r2;
+    	particles[i].vz -= dt * particles[i].vz*alpha/r2;
+    }
+
+#### `void problem_output()` ####
+This function is called at the beginning of the simulation and at the end of each timestep. You can implement your output routines here. Many basic output functions are already implemented in REBOUND. See `output.h` for more details. The function `output_check(odt)` can be used to easily check if an output is needed after a regular interval. For example, the following code snipplet outputs some timing statistics to the console every 10 timesteps:
+
+    if (output_check(10.*dt)){
+    	output_timing();
+    }
+ 
+
+#### `void problem_finish()` ####
+This function is called at the end of the simulation, when t >= tmax. This is the last chance to output any quantities before the program ends.
+
 
 
 License
 -------
-rebound is free software: you can redistribute it and/or modify
+REBOUND is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-rebound is distributed in the hope that it will be useful,
+REBOUND is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with rebound.  If not, see <http://www.gnu.org/licenses/>.
+along with REBOUND.  If not, see <http://www.gnu.org/licenses/>.
 
 Acknowledgements
 ----------------
