@@ -124,7 +124,7 @@ The default compilers are `gcc` for the sequential and `mpicc` for the parallel 
 ### User-defined functions in the problem.c file ###
 The problem.c file contains at least four functions. You do not need to implement all of them, a dummy might be enough. 
 
-#### <pre>void problem_init(int argc, char* argv[])</pre> ####
+#### void problem_init(int argc, char* argv[]) ####
 This routine is where you read command line arguments and set up your initial conditions. REBOUND does not come with a built-in functionality to read configuration files at run-time. You should see this as a feature. In REBOUND, you have one `problem.c` file for each problem. Thus, everything can be set within this file. There are, of course, situation in which you want to do something like a parameter space survey. In almost all cases, you vary a few parameters but rarely more, say 5. You can easily read these parameters from the command line.
  
 Here is one example that reads in the first argument given to rebound as the box-size and sets a default value when no value is given:
@@ -139,7 +139,7 @@ if (argc>1){
 
 If you are still convinced that you need a configuration file, you are welcome to implement it yourself. This function is where you want to do that.    
 
-#### <pre>void problem_inloop()</pre> ####
+#### void problem_inloop() ####
 This function is called once per time-step. It is called at the end of the K part of the DKD time-stepping scheme. This is where you can implement all kind of things such as additional forces onto particles. 
 
 The following lines of code, for example, implement the Poynting Robertson drag force on each particle except the first one (which is the star in this example):
@@ -157,7 +157,7 @@ for (int i=1;i<N;i++){
 }
 ```
 
-#### <pre>void problem_output()</pre> ####
+#### void problem_output() ####
 This function is called at the beginning of the simulation and at the end of each time-step. You can implement your output routines here. Many basic output functions are already implemented in REBOUND. See `output.h` for more details. The function `output_check(odt)` can be used to easily check if an output is needed after a regular interval. For example, the following code snippet outputs some timing statistics to the console every 10 time-steps:
 
 ```c
@@ -166,7 +166,7 @@ if (output_check(10.*dt)){
 }
 ```    
  
-#### <pre>void problem_finish()</pre> ####
+#### void problem_finish() ####
 This function is called at the end of the simulation, when t >= tmax. This is the last chance to output any quantities before the program ends.
 
 
