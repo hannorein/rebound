@@ -15,6 +15,10 @@ Screenshot
 Available modules
 -----------------
 
+REBOUND is extremely modular. You have the choice between different gravity, collision, boundary and integration modules. It is also possible to implement completely new modules with minimal effort. Modules are chosen by setting symbolic links. Thus, there is no need to run a configure script. For example, there is one link `gravity.c` that points to one of the gravity modules `gravity_*.c`. The symbolic links are set in the problem makefile (see below).
+
+This setup allows you to work on multiple projects at the same time using different modules. When switching to another problem, nothing has to be set-up and the problem can by compiled by simply typing `make` in the corresponding directory (see below).
+
 ### Gravity ###
 <table>
   <tr><th>Module name</th>
@@ -25,6 +29,20 @@ Available modules
      <td>Direct summation, O(N^2)</td></tr>
   <tr><td><pre>gravity_tree.c       </pre></td>
      <td>Oct tree, Barnes & Hut 1986, O(N log(N))</td></tr>
+</table>
+
+### Collision detection ###
+<table>
+  <tr><th>Module name</th>
+     <th>Description</th></tr>
+  <tr><td><pre>collisions_none.c    </pre></td>
+     <td>No collision detection</td></tr>
+  <tr><td><pre>collisions_direct.c  </pre></td>
+     <td>Direct nearest neighbor search, O(N^2)</td></tr>
+  <tr><td><pre>collisions_tree.c    </pre></td>
+     <td>Oct tree, O(N log(N))</td></tr>
+  <tr><td><pre>collisions_sweep.c   </pre></td>
+     <td>Plane sweep algorithm, ideal for low dimensional problems, O(N) or O(N^1.5) depending on geometry</td></tr>
 </table>
 
 ### Integrators ###
@@ -41,18 +59,16 @@ Available modules
      <td>Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011</td></tr>
 </table>
 
-### Collision detection ###
+### Boundaries ###
 <table>
   <tr><th>Module name</th>
      <th>Description</th></tr>
-  <tr><td><pre>collisions_none.c    </pre></td>
-     <td>No collision detection</td></tr>
-  <tr><td><pre>collisions_direct.c  </pre></td>
-     <td>Direct nearest neighbor search, O(N^2)</td></tr>
-  <tr><td><pre>collisions_tree.c    </pre></td>
-     <td>Oct tree, O(N log(N))</td></tr>
-  <tr><td><pre>collisions_sweep.c   </pre></td>
-     <td>Plane sweep algorithm, ideal for low dimensional problems, O(N) or O(N^1.5) depending on geometry</td></tr>
+  <tr><td><pre>boundaries_open.c    </pre></td>
+     <td>Particles are removed from the simulation if they leaves the box.</td></tr>
+  <tr><td><pre>boundaries_periodic.c</pre></td>
+     <td>Periodic boundary conditions. Particles are reinserted on the other side if they cross the box boundaries. You can use an arbitrary number of ghostboxes with this module.</td></tr>
+  <tr><td><pre>boundaries_shear.c   </pre></td>
+     <td>Shear periodic bounary conditions. Similar to periodic boundary conditions, but ghostboxes are moving with constant speed, set by the shear.</td></tr>
 </table>
 
 
