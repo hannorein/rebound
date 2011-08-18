@@ -6,34 +6,61 @@ Contributors
 * Hanno Rein, Institute for Advanced Study (IAS), Princeton, <hanno@hanno-rein.de>
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University (KIAA-PKU), Beijing, <liushangfei@pku.edu.cn>
   
+
 Available modules
 -----------------
+
 ### Gravity ###
-- `gravity_none.c       ` No self-gravity
-- `gravity_direct.c     ` Direct summation, O(N^2)
-- `gravity_tree.c       ` Oct tree, Barnes & Hut 1986, O(N log(N))
+<table>
+  <tr><th>Module nameID</th>
+     <th>Description</th></tr>
+  <tr><td>`gravity_none.c`</td>
+     <td>No self-gravity</td></tr>
+  <tr><td>`gravity_direct.c`</td>
+     <td>Direct summation, O(N^2)</td></tr>
+  <tr><td>`gravity_tree.c`</td>
+     <td>Oct tree, Barnes & Hut 1986, O(N log(N))</td></tr>
+</table>
+
 ### Integrators ###
-- `integrator_euler.c   ` Euler scheme, first order
-- `integrator_leapfrog.c` Leap frog, second order, symplectic
-- `integrator_wh.c      ` Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991
-- `integrator_sei.c     ` Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
+<table>
+  <tr><th>Module nameID</th>
+     <th>Description</th></tr>
+  <tr><td>`integrator_euler.c`</td>
+     <td>Euler scheme, first order</td></tr>
+  <tr><td>`integrator_leapfrog.c`</td>
+     <td>Leap frog, second order, symplectic</td></tr>
+  <tr><td>`integrator_wh.c`</td>
+     <td>Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991</td></tr>
+  <tr><td>`integrator_sei.c`</td>
+     <td>Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011</td></tr>
+</table>
+
 ### Collision detection ###
-- `collisions_none.c    ` No collision detection
-- `collisions_direct.c  ` Direct nearest neighbor search, O(N^2)
-- `collisions_tree.c    ` Oct tree, O(N log(N))
-- `collisions_sweep.c   ` Line sweep algorithm, ideal for low dimensional problems, O(N) or O(N^1.5) depending on geometry
-### Output/Visualization ###
-- Standard ASCII or binary output 
-- Real-time, 3D OpenGL visualization
+<table>
+  <tr><th>Module nameID</th>
+     <th>Description</th></tr>
+  <tr><td>`collisions_none.c`</td>
+     <td>No collision detection</td></tr>
+  <tr><td>`collisions_direct.c`</td>
+     <td>Direct nearest neighbor search, O(N^2)</td></tr>
+  <tr><td>`collisions_tree.c`</td>
+     <td>Oct tree, O(N log(N))</td></tr>
+  <tr><td>`collisions_sweep.c`</td>
+     <td>Line sweep algorithm, ideal for low dimensional problems, O(N) or O(N^1.5) depending on geometry</td></tr>
+</table>
+
 
 Other features worth mentioning
 -------------------------------
+* Real-time, 3D OpenGL visualization.
 * The code is written entirely in C. It conforms to the ISO standard C99.
 * Parallelized with OpenMP (for shared memory systems).
 * Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems).
 * No libraries are needed. The use of OpenGL/GLUT/libpng for visualization is optional.
 * The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound.
 * No configuration is needed to run any of the example problems. Just type `make && ./nbody` in the problem directory to run them.
+* Standard ASCII or binary output routines. 
 * Different modules are easily interchangeable by one line in the Makefile.
   
 
@@ -41,7 +68,6 @@ How to download, compile and run REBOUND
 ----------------------------------------
 
 ### For the impatient ###
-
 Simply copy and paste this line to your terminal and press enter
 
     git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./nbody
@@ -51,7 +77,6 @@ or if you do not have git installed
     wget https://github.com/hannorein/rebound/tarball/master -O- | tar xvz && cd hannorein-rebound-*/examples/shearing_sheet/ && make && ./nbody
 
 ### For the patient ###
-
 REBOUND is very easy to install and use. To get started, download the latest version of the code from github. If you are familiar with `git`, you can clone the project and keep up-to-date with the latest developments. Otherwise, you can also simply download a snapshot of the repository as a tar or zip file at http://github.com/hannorein/rebound. There is a download bottom at the top right. 
 
 In the main directory, you find a sub-directory called `src` which contains the bulk parts of the  source code and a directory called `examples` with various example problems. To compile one of the example, you have to go to that directory, for example:
@@ -102,11 +127,13 @@ This routine is where you read command line arguments and set up your initial co
  
 Here is one example that reads in the first argument given to rebound as the box-size and sets a default value when no value is given:
 
-    if (argc>1){
-	    boxsize = atof(argv[1]);
-    }else{
-	    boxsize = 100;
-    }
+```c
+if (argc>1){
+	boxsize = atof(argv[1]);
+}else{
+	boxsize = 100;
+}
+```
 
 If you are still convinced that you need a configuration file, you are welcome to implement it yourself. This function is where you want to do that.    
 
@@ -115,23 +142,27 @@ This function is called once per time-step. It is called at the end of the K par
 
 The following lines of code, for example, implement the Poynting Robertson drag force on each particle except the first one (which is the star in this example):
 
-    double alpha = 1e-4;
-    for (int i=1;i<N;i++){
-    	double x = particles[i].x;
-    	double y = particles[i].y;
-    	double z = particles[i].z;
-    	double r2 = (x*x + y*y + z*z); 
-    	particles[i].vx -= dt * particles[i].vx*alpha/r2;
-    	particles[i].vy -= dt * particles[i].vy*alpha/r2;
-    	particles[i].vz -= dt * particles[i].vz*alpha/r2;
-    }
+```c
+double alpha = 1e-4;
+for (int i=1;i<N;i++){
+	double x = particles[i].x;
+	double y = particles[i].y;
+	double z = particles[i].z;
+	double r2 = (x*x + y*y + z*z); 
+	particles[i].vx -= dt * particles[i].vx*alpha/r2;
+	particles[i].vy -= dt * particles[i].vy*alpha/r2;
+	particles[i].vz -= dt * particles[i].vz*alpha/r2;
+}
+```
 
 #### `void problem_output()` ####
 This function is called at the beginning of the simulation and at the end of each time-step. You can implement your output routines here. Many basic output functions are already implemented in REBOUND. See `output.h` for more details. The function `output_check(odt)` can be used to easily check if an output is needed after a regular interval. For example, the following code snippet outputs some timing statistics to the console every 10 time-steps:
 
-    if (output_check(10.*dt)){
-    	output_timing();
-    }
+```c
+if (output_check(10.*dt)){
+	output_timing();
+}
+```    
  
 #### `void problem_finish()` ####
 This function is called at the end of the simulation, when t >= tmax. This is the last chance to output any quantities before the program ends.
@@ -142,6 +173,7 @@ Support and contributions
 We offer limited support for REBOUND. If you encounter any problems, just send as an e-mail with as much details as possible and include your problem.c and makefile. Please make sure you are using the latest version of REBOUND that is available on github. 
 
 REBOUND is open source and you are strongly encouraged to contribute to this project if you are using it. Please contact us and we will give you permission to push directly to the public repository. 
+
 
 License
 -------
@@ -158,10 +190,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with REBOUND.  If not, see <http://www.gnu.org/licenses/>.
 
+
 Acknowledgments
 ---------------
 When you use this code or parts of this code for results presented in a scientific publication, we would greatly appreciate a citation to Rein and Liu (in preparation) and an acknowledgment of the form: 
 
-_Simulations in this paper made use of the collisional N-body code `REBOUND` which can be downloaded freely at http://github.com/hannorein/rebound._
+_Simulations in this paper made use of the collisional N-body code REBOUND which can be downloaded freely at http://github.com/hannorein/rebound._
 
 Also, please send us a copy of your paper so that we can keep track of all publications that made use of the code.
