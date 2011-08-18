@@ -7,7 +7,7 @@ Contributors
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University (KIAA-PKU), Beijing, <liushangfei@pku.edu.cn>
  
  
-![Tree structure in REBOUND](doc/image/screenshot_shearingsheet.png) 
+![Tree structure in REBOUND](/doc/image/screenshot_shearingsheet.png) 
 
 Available modules
 -----------------
