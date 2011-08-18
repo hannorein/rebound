@@ -5,7 +5,10 @@ Contributors
 ------------
 * Hanno Rein, Institute for Advanced Study (IAS), Princeton, <hanno@hanno-rein.de>
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University (KIAA-PKU), Beijing, <liushangfei@pku.edu.cn>
- 
+
+
+Screenshot
+---------- 
  
 ![Tree structure in REBOUND](/hannorein/rebound/raw/master/doc/images/screenshot_shearingsheet.png) 
 
