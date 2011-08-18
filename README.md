@@ -5,49 +5,51 @@ Contributors
 ------------
 * Hanno Rein, Institute for Advanced Study (IAS), Princeton, <hanno@hanno-rein.de>
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University (KIAA-PKU), Beijing, <liushangfei@pku.edu.cn>
-  
+ 
+ 
+![Tree structure in REBOUND](doc/image/screenshot_shearingsheet.png) 
 
 Available modules
 -----------------
 
 ### Gravity ###
 <table>
-  <tr><th>Module nameID</th>
+  <tr><th>Module name</th>
      <th>Description</th></tr>
-  <tr><td><pre>gravity_none.c</pre></td>
+  <tr><td><pre>gravity_none.c       </pre></td>
      <td>No self-gravity</td></tr>
-  <tr><td>`gravity_direct.c`</td>
+  <tr><td><pre>gravity_direct.c     </pre></td>
      <td>Direct summation, O(N^2)</td></tr>
-  <tr><td>`gravity_tree.c`</td>
+  <tr><td><pre>gravity_tree.c       </pre></td>
      <td>Oct tree, Barnes & Hut 1986, O(N log(N))</td></tr>
 </table>
 
 ### Integrators ###
 <table>
-  <tr><th>Module nameID</th>
+  <tr><th>Module name</th>
      <th>Description</th></tr>
-  <tr><td>`integrator_euler.c`</td>
+  <tr><td><pre>integrator_euler.c   </pre></td>
      <td>Euler scheme, first order</td></tr>
-  <tr><td>`integrator_leapfrog.c`</td>
+  <tr><td><pre>integrator_leapfrog.c</pre></td>
      <td>Leap frog, second order, symplectic</td></tr>
-  <tr><td>`integrator_wh.c`</td>
+  <tr><td><pre>integrator_wh.c      </pre></td>
      <td>Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991</td></tr>
-  <tr><td>`integrator_sei.c`</td>
+  <tr><td><pre>integrator_sei.c     </pre></td>
      <td>Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011</td></tr>
 </table>
 
 ### Collision detection ###
 <table>
-  <tr><th>Module nameID</th>
+  <tr><th>Module name</th>
      <th>Description</th></tr>
-  <tr><td>`collisions_none.c`</td>
+  <tr><td><pre>collisions_none.c    </pre></td>
      <td>No collision detection</td></tr>
-  <tr><td>`collisions_direct.c`</td>
+  <tr><td><pre>collisions_direct.c  </pre></td>
      <td>Direct nearest neighbor search, O(N^2)</td></tr>
-  <tr><td>`collisions_tree.c`</td>
+  <tr><td><pre>collisions_tree.c    </pre></td>
      <td>Oct tree, O(N log(N))</td></tr>
-  <tr><td>`collisions_sweep.c`</td>
-     <td>Line sweep algorithm, ideal for low dimensional problems, O(N) or O(N^1.5) depending on geometry</td></tr>
+  <tr><td><pre>collisions_sweep.c   </pre></td>
+     <td>Plane sweep algorithm, ideal for low dimensional problems, O(N) or O(N^1.5) depending on geometry</td></tr>
 </table>
 
 
@@ -122,7 +124,7 @@ The default compilers are `gcc` for the sequential and `mpicc` for the parallel 
 ### User-defined functions in the problem.c file ###
 The problem.c file contains at least four functions. You do not need to implement all of them, a dummy might be enough. 
 
-#### `void problem_init(int argc, char* argv[])` ####
+#### <pre>void problem_init(int argc, char* argv[])</pre> ####
 This routine is where you read command line arguments and set up your initial conditions. REBOUND does not come with a built-in functionality to read configuration files at run-time. You should see this as a feature. In REBOUND, you have one `problem.c` file for each problem. Thus, everything can be set within this file. There are, of course, situation in which you want to do something like a parameter space survey. In almost all cases, you vary a few parameters but rarely more, say 5. You can easily read these parameters from the command line.
  
 Here is one example that reads in the first argument given to rebound as the box-size and sets a default value when no value is given:
@@ -137,7 +139,7 @@ if (argc>1){
 
 If you are still convinced that you need a configuration file, you are welcome to implement it yourself. This function is where you want to do that.    
 
-#### `void problem_inloop()` ####
+#### <pre>void problem_inloop()</pre> ####
 This function is called once per time-step. It is called at the end of the K part of the DKD time-stepping scheme. This is where you can implement all kind of things such as additional forces onto particles. 
 
 The following lines of code, for example, implement the Poynting Robertson drag force on each particle except the first one (which is the star in this example):
@@ -155,7 +157,7 @@ for (int i=1;i<N;i++){
 }
 ```
 
-#### `void problem_output()` ####
+#### <pre>void problem_output()</pre> ####
 This function is called at the beginning of the simulation and at the end of each time-step. You can implement your output routines here. Many basic output functions are already implemented in REBOUND. See `output.h` for more details. The function `output_check(odt)` can be used to easily check if an output is needed after a regular interval. For example, the following code snippet outputs some timing statistics to the console every 10 time-steps:
 
 ```c
@@ -164,7 +166,7 @@ if (output_check(10.*dt)){
 }
 ```    
  
-#### `void problem_finish()` ####
+#### <pre>void problem_finish()</pre> ####
 This function is called at the end of the simulation, when t >= tmax. This is the last chance to output any quantities before the program ends.
 
 
