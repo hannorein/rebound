@@ -1,6 +1,7 @@
 PROBLEMDIR=tests/$(shell basename `pwd`)
-export OPENGL=0
-export QUADRUPOLE=1
+export OPENGL=1
+export OPENMP=1
+export QUADRUPOLE=0
 
 all:
 	# Setup link to different modules
