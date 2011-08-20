@@ -195,15 +195,15 @@ You can use the following keybard command to alter the OpenGL real-time visualti
 <table>
   <tr><th>Key</th>
      <th>Description</th></tr>
-  <tr><td>** ** (space)</td><td>Pause simulation.</td></tr>
-  <tr><td>**d**</td><td>Pause real-time visualization (simulation continues).</td></tr>
-  <tr><td>**q**</td><td>Quit simulation.</td></tr>
-  <tr><td>**s**</td><td>Toggle three dimensional spheres (look better)/points (draws faster)</td></tr>
-  <tr><td>**g**</td><td>Toggle ghost boxes</td></tr>
-  <tr><td>**r**</td><td>Reset view. Press multiple times to change orientation.</td></tr>
-  <tr><td>**t**</td><td>Show tree structure.</td></tr>
-  <tr><td>**m**</td><td>Show center of mass in tree structure.</td></tr>
-  <tr><td>**p**</td><td>Save screen shot to file.</td></tr>
+  <tr><td>(space)</td><td>Pause simulation.</td></tr>
+  <tr><td>d</td><td>Pause real-time visualization (simulation continues).</td></tr>
+  <tr><td>q</td><td>Quit simulation.</td></tr>
+  <tr><td>s</td><td>Toggle three dimensional spheres (look better)/points (draws faster)</td></tr>
+  <tr><td>g</td><td>Toggle ghost boxes</td></tr>
+  <tr><td>r</td><td>Reset view. Press multiple times to change orientation.</td></tr>
+  <tr><td>t</td><td>Show tree structure.</td></tr>
+  <tr><td>m</td><td>Show center of mass in tree structure.</td></tr>
+  <tr><td>p</td><td>Save screen shot to file.</td></tr>
 </table>
 
 Support and contributions
