@@ -130,15 +130,16 @@ If you want to create your own problem, just copy one of the example directories
 ### Environment variables ###
 The makefile in each problem directory sets various environment variables. These determine the compiler optimization flags, the libraries included and basic code settings. Let us look at one of the examples `shearing_sheet` in more detail. 
 
-- `export OPT=-O3`. This sets the additional compiler flag `-O3` and optimizes the code for speed.
 - `export QUADRUPOLE=0`. This disables the calculation of quadrupole moments for each cell in the tree. The simulation is faster, but less accurate.
 - `export OPENGL=1`. This enables real-time OpenGL visualizations and requires both OpenGL and GLUT libraries to be installed. This should work without any further adjustments on any Mac which has Xcode installed. On Linux both libraries must be installed in `/usr/local/`. You can change the default search paths for libraries in the file `src/Makefile`. 
 - `export MPI=0`. This disables parallelization with MPI.
 - `export OPENMP=1`. This enables parallelization with OpenMP. The number of threads can be set with an environment variable at runtime, e.g.: `export OMP_NUM_THREADS=8`.
+- `export CC=icc`. This flag can be used to override the default compiler. The default compilers are `gcc` for the sequential and `mpicc` for the parallel version. 
+- `export LIB=`. Additional search paths for external libraries (such as OpenGL, GLUT and LIBPNG) can be set up using this variable. 
+- `export OPT=-O3`. This sets the additional compiler flag `-O3` and optimizes the code for speed. Additional search paths to header files for external libraries (such as OpenGL, GLUT and LIBPNG) can be set up using this variable. 
 
 All of these variables are read by the main makefile in the `src/` directory. The `OPENGL` variable, for example, is used to determine if the OpenGL and GLUT libraries should be included. If the variable is `1` the makefile also sets a pre-compiler macro with `-DOPENGL`. Note that because OPENGL is incompatible with MPI, when MPI is turned on (set to 1), OPENGL is automatically turned off (set to 0) in the main makefile.
 
-The default compilers are `gcc` for the sequential and `mpicc` for the parallel version. These can be changed in the main makefile `src/Makefile`. This is also where the paths to external libraries (such as OpenGL, GLUT and LIBPNG) can be changed if necessary.
 
 ### User-defined functions in the problem.c file ###
 The problem.c file contains at least four functions. You do not need to implement all of them, a dummy might be enough. 
