@@ -77,11 +77,22 @@ void tree_update_gravity_data();
 void tree_add_particle_to_tree(int pt);
 
 #ifdef MPI
+/**
+  * Needs more comments!
+  *
+  * @param node is a pointer to a node cell.
+  */
 void tree_add_essential_node(struct cell* node);
 #ifdef GRAVITY_TREE
+/**
+  * Needs more comments!
+  */
 void tree_prepare_essential_tree_for_gravity();
 #endif //GRAVITY_TREE
 #ifdef COLLISIONS_TREE
+/**
+  * Needs more comments!
+  */
 void tree_prepare_essential_tree_for_collisions();
 #endif //COLLISIONS_TREE
 #endif // MPI

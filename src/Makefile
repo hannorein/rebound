@@ -13,6 +13,7 @@ endif
 ifeq ($(MPI), 1)
 	CC=mpicc
 	PREDEF+= -DMPI
+	OPENGL=0
 else
 	CC=gcc
 endif

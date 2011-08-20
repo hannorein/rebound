@@ -166,7 +166,7 @@ struct cell *tree_update_cell(struct cell *node){
 				}
 			}		
 		}
-		// Check if the node require derefinement.
+		// Check if the node requires derefinement.
 		if (node->pt == 0) {	// The node is empty.
 			free(node);
 			return NULL;
@@ -197,7 +197,7 @@ struct cell *tree_update_cell(struct cell *node){
 
 #ifdef GRAVITY_TREE
 /**
-  * The function calculates the total mass and center of mass of a node. If QUADRUPOLE is defined, then it also calculates the quadrupole tensor if the node is not a leaf.
+  * The function calculates the total mass and center of mass of a node. When QUADRUPOLE is defined, it also calculates the mass quadrupole tensor for all non-leaf nodes.
   */
 void tree_update_gravity_data_in_cell(struct cell *node){
 #ifdef QUADRUPOLE
@@ -295,6 +295,11 @@ void tree_update(){
 
 
 #ifdef MPI
+/**
+  * The function returns the index of the root which contains the cell.
+  *
+  * @param node is a pointer to a node cell.
+  */
 int particles_get_rootbox_for_node(struct cell* node){
 	int i = ((int)floor((node->x + boxsize_x/2.)/boxsize)+root_nx)%root_nx;
 	int j = ((int)floor((node->y + boxsize_y/2.)/boxsize)+root_ny)%root_ny;
@@ -304,10 +309,10 @@ int particles_get_rootbox_for_node(struct cell* node){
 }
 
 /**
-  * I am not quite sure what does the funtion do...
+  * The function returns the octant index of a child cell within a parent cell.
   *
-  * @param nnode
-  * @param node
+  * @param nnode is a pointer to a child cell of the cell which node points to.
+  * @param node is a pointer to a node cell.
   */
 int tree_get_octant_for_cell_in_cell(struct cell* nnode, struct cell *node){
 	int octant = 0;
@@ -317,6 +322,12 @@ int tree_get_octant_for_cell_in_cell(struct cell* nnode, struct cell *node){
 	return octant;
 }
 
+/**
+  * Needs more comments!
+  *
+  * @param nnode is a pointer to a child cell of the cell which node points to.
+  * @param node is a pointer to a node cell.
+  */
 void tree_add_essential_node_to_node(struct cell* nnode, struct cell* node){
 	int o = tree_get_octant_for_cell_in_cell(nnode, node);
 	if (node->oct[o]==NULL){

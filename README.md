@@ -128,7 +128,7 @@ A window should open and you will see a simulation running in real time. The set
 If you want to create your own problem, just copy one of the example directories or the template in the `problems` directory. Then simply modify `problem.c` and `Makefile` accordingly.  
 
 ### Environment variables ###
-The makefile in each problem directory sets various e environment variables. These determine the compiler optimization flags, the libraries included and basic code settings. Let us look at one of the examples `shearing_sheet` in more detail. 
+The makefile in each problem directory sets various environment variables. These determine the compiler optimization flags, the libraries included and basic code settings. Let us look at one of the examples `shearing_sheet` in more detail. 
 
 - `export OPT=-O3`. This sets the additional compiler flag `-O3` and optimizes the code for speed.
 - `export QUADRUPOLE=0`. This disables the calculation of quadrupole moments for each cell in the tree. The simulation is faster, but less accurate.
@@ -136,7 +136,7 @@ The makefile in each problem directory sets various e environment variables. The
 - `export MPI=0`. This disables parallelization with MPI.
 - `export OPENMP=1`. This enables parallelization with OpenMP. The number of threads can be set with an environment variable at runtime, e.g.: `export OMP_NUM_THREADS=8`.
 
-All of these variables are read by the main makefile in the `src/` directory. The `OPENGL` variable, for example, is used to determine if the OpenGL and GLUT libraries should be included. If the variable is `1` the makefile also sets a pre-compiler macro with `-DOPENGL`.
+All of these variables are read by the main makefile in the `src/` directory. The `OPENGL` variable, for example, is used to determine if the OpenGL and GLUT libraries should be included. If the variable is `1` the makefile also sets a pre-compiler macro with `-DOPENGL`. Note that because OPENGL is incompatible with MPI, when MPI is turned on (set to 1), OPENGL is automatically turned off (set to 0) in the main makefile.
 
 The default compilers are `gcc` for the sequential and `mpicc` for the parallel version. These can be changed in the main makefile `src/Makefile`. This is also where the paths to external libraries (such as OpenGL, GLUT and LIBPNG) can be changed if necessary.
 
@@ -191,7 +191,7 @@ This function is called at the end of the simulation, when t >= tmax. This is th
 
 Support and contributions
 -------------------------
-We offer limited support for REBOUND. If you encounter any problems, just send as an e-mail with as much details as possible and include your problem.c and makefile. Please make sure you are using the latest version of REBOUND that is available on github. 
+We offer limited support for REBOUND. If you encounter any problems, just send us an e-mail with as much details as possible and include your problem.c and makefile. Please make sure you are using the latest version of REBOUND that is available on github. 
 
 REBOUND is open source and you are strongly encouraged to contribute to this project if you are using it. Please contact us and we will give you permission to push directly to the public repository. 
 
