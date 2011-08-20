@@ -1,21 +1,25 @@
 UNAME := $(shell uname)
 OPT+= -std=c99
 ifeq ($(UNAME), Linux)
-	OPT+= -L/usr/lib -I/usr/include -Wall  -g 
-	LIB+= -lm
+	OPT+= -I/usr/include -Wall  -g 
+	LIB+= -L/usr/lib -lm
 endif
 ifeq ($(UNAME), Darwin)
-	OPT+= -L/usr/local/lib -I/usr/local/include  -Wall -g
+	OPT+= -I/usr/local/include  -Wall -g
 	PREDEF+= -D_APPLE
-	LIB+= 
+	LIB+= -L/usr/local/lib
 endif
 
 ifeq ($(MPI), 1)
+ifndef CC
 	CC=mpicc
+endif
 	PREDEF+= -DMPI
 	OPENGL=0
 else
+ifndef CC
 	CC=gcc
+endif
 endif
 
 
@@ -33,7 +37,6 @@ endif
 
 ifeq ($(LIBPNG), 1)
 ifeq ($(UNAME), Darwin)
-	OPT+= -L/usr/local/lib -I/usr/local/include 
 	PREDEF+= -DLIBPNG
 	LIB+= -lpng
 endif

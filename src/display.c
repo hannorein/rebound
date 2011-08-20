@@ -45,6 +45,7 @@
 #include "boundaries.h"
 #include "tree.h"
 #include "display.h"
+#include "output.h"
 
 #ifdef _APPLE
 GLuint display_dlist_sphere;	/**< Precalculated display list of a sphere. */
