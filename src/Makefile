@@ -1,7 +1,7 @@
 OPT+= -std=c99
 ifeq ($(OS), Linux)
-	OPT+= -I/usr/include -Wall  -g 
-	LIB+= -L/usr/lib -lm
+	OPT+= -Wall  -g 
+	LIB+= -lm
 endif
 ifeq ($(OS), Darwin)
 	OPT+= -I/usr/local/include  -Wall -g
