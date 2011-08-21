@@ -60,6 +60,12 @@ else
 	OPT+= -Wno-unknown-pragmas
 endif
 
+# If a customized problem.h does not exist, then use the default one.
+ifeq ($(wildcard problem.h), problem.h)
+else
+check_header_for_problem:
+	ln -s ../problems/template/problem.h problem.h
+endif
 
 # Create precompiler definitions from links
 PREDEF+= -D$(shell basename `readlink gravity.c` '.c' | tr '[a-z]' '[A-Z]')
