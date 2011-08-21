@@ -10,6 +10,7 @@ all:
 	ln -fs integrator_sei.c ../../src/integrator.c
 	ln -fs collisions_sweep.c ../../src/collisions.c
 	# Setup link to problem file
+	ln -fs ../$(PROBLEMDIR)/problem.h ../../src/problem.h
 	ln -fs ../$(PROBLEMDIR)/problem.c ../../src/problem.c
 	# Compile
 	$(MAKE) -C ../../src/
