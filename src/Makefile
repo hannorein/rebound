@@ -51,6 +51,10 @@ ifeq ($(OPENMP), 1)
 	OPT+= -fopenmp
 	PREDEF+= -DOPENMP
 	LIB+= -fopenmp
+ifeq ($(CC), icc)
+	OPT+= -openmp
+	LIB+= -openmp
+endif
 else
 	OPT+= -Wno-unknown-pragmas
 endif
