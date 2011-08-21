@@ -24,11 +24,16 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
+ * along with rebound. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 #ifndef _PROBLEM_H
 #define _PROBLEM_H
+
+// User defined variables should be here.
+
+// End of variable declarations.
+
 /**
  * Main initialization function.
  * In this function, the user should set the timestep, the boxsize and

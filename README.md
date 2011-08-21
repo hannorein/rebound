@@ -198,7 +198,7 @@ You can use the following keybard command to alter the OpenGL real-time visualti
   <tr><td>(space)</td><td>Pause simulation.</td></tr>
   <tr><td>d</td><td>Pause real-time visualization (simulation continues).</td></tr>
   <tr><td>q</td><td>Quit simulation.</td></tr>
-  <tr><td>s</td><td>Toggle three dimensional spheres (look better)/points (draws faster)</td></tr>
+  <tr><td>s</td><td>Toggle three dimensional spheres (looks better)/points (draws faster)</td></tr>
   <tr><td>g</td><td>Toggle ghost boxes</td></tr>
   <tr><td>r</td><td>Reset view. Press multiple times to change orientation.</td></tr>
   <tr><td>t</td><td>Show tree structure.</td></tr>

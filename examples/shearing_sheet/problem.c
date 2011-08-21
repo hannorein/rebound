@@ -38,15 +38,15 @@
 #include "communication_mpi.h"
 #include "tree.h"
 #include "tools.h"
+#include "problem.h"
 
-extern double OMEGA;
-extern double coefficient_of_restitution;
-extern double minimum_collision_velocity;
+double OMEGA;
+double coefficient_of_restitution;
+double minimum_collision_velocity;
 
-extern double (*coefficient_of_restitution_for_velocity)(double); 
-double coefficient_of_restitution_bridges(double v); 
+double (*coefficient_of_restitution_for_velocity)(double); 
 
-extern double opening_angle2;
+double opening_angle2;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
