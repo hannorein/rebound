@@ -48,9 +48,14 @@ ifeq ($(QUADRUPOLE), 1)
 endif
 
 ifeq ($(OPENMP), 1)
-	OPT+= -fopenmp
 	PREDEF+= -DOPENMP
+ifeq ($(CC), icc)
+	OPT+= -openmp
+	LIB+= -openmp
+else
+	OPT+= -fopenmp
 	LIB+= -fopenmp
+endif
 else
 	OPT+= -Wno-unknown-pragmas
 endif
