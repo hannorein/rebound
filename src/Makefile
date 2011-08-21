@@ -1,45 +1,35 @@
-UNAME := $(shell uname)
 OPT+= -std=c99
-ifeq ($(UNAME), Linux)
+ifeq ($(OS), Linux)
 	OPT+= -I/usr/include -Wall  -g 
 	LIB+= -L/usr/lib -lm
 endif
-ifeq ($(UNAME), Darwin)
+ifeq ($(OS), Darwin)
 	OPT+= -I/usr/local/include  -Wall -g
 	PREDEF+= -D_APPLE
 	LIB+= -L/usr/local/lib
 endif
 
 ifeq ($(MPI), 1)
-ifndef CC
-	CC=mpicc
-endif
+	CC?=mpicc
 	PREDEF+= -DMPI
 	OPENGL=0
 else
-ifndef CC
-	CC=gcc
+	CC?=gcc
 endif
-endif
-
-
-# Nothing needs to be changed below
 
 ifeq ($(OPENGL), 1)
-ifeq ($(UNAME), Linux)
+ifeq ($(OS), Linux)
 	PREDEF+= -DOPENGL
 	LIB+= -lglut 
 endif
-ifeq ($(UNAME), Darwin)
+ifeq ($(OS), Darwin)
 	PREDEF+= -DOPENGL
 	LIB+= -framework OPENGL -framework GLUT
 endif
 
 ifeq ($(LIBPNG), 1)
-ifeq ($(UNAME), Darwin)
 	PREDEF+= -DLIBPNG
 	LIB+= -lpng
-endif
 endif
 endif
 
