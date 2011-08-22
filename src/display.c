@@ -70,7 +70,7 @@ int display_ghostboxes = 0;	/**< Shows/hides ghost boxes. */
  */
 void displayKey(unsigned char key, int x, int y){
 	switch(key){
-		case 'q':
+		case 'q': case 'Q':
 			printf("\nProgram ends.\n");
 			exit(0);
 			break;
@@ -84,26 +84,26 @@ void displayKey(unsigned char key, int x, int y){
 				glutIdleFunc(iterate);
 			}
 			break;
-		case 's':
+		case 's': case 'S':
 			display_spheres = !display_spheres;
 			break;
-		case 'g':
+		case 'g': case 'G':
 			display_ghostboxes = !display_ghostboxes;
 			break;
-		case 'r':
+		case 'r': case 'R':
 			zprReset(0.85/boxsize_max);
 			break;
-		case 't':
+		case 't': case 'T':
 			display_mass = 0;
 			display_tree = !display_tree;
 			break;
-		case 'd':
+		case 'd': case 'D':
 			display_pause = !display_pause;
 			break;
-		case 'm':
+		case 'm': case 'M':
 			display_mass = !display_mass;
 			break;
-		case 'p':
+		case 'p': case 'P':
 #ifdef LIBPNG
 			output_png_single("screenshot.png");
 			printf("\nScreenshot saved as 'screenshot.png'.\n");
