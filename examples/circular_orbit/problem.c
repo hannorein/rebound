@@ -49,11 +49,27 @@ void problem_init(int argc, char* argv[]){
 	p.ax = 0; p.ay = 0; p.az = 0;
 	p.m  = 1;
 	particles_add(p); // Star
-	p.x  = 1; p.y  = 0; p.z  = 0;
-	p.vx = 0; p.vy = 1; p.vz = 0;
-	p.ax = 0; p.ay = 0; p.az = 0;
-	p.m  = 0;
-	particles_add(p); // Test particle
+	
+	int N = 100; // Number of test particles
+	if(argc>1){
+		N = atoi(argv[1]);
+	}
+	for(int n=0; n<N; n++){
+		p.x  = cos(2.*M_PI/(double)(N)*(double)(n));
+		p.y  = sin(2.*M_PI/(double)(N)*(double)(n));
+		p.z  = 0;
+		p.vx = cos(2.*M_PI/(double)(N)*(double)(n)+M_PI/2.);
+		p.vy = sin(2.*M_PI/(double)(N)*(double)(n)+M_PI/2.);
+		p.vz = 0;
+		p.ax = 0; p.ay = 0; p.az = 0;
+		p.m  = 0;
+		particles_add(p); // Test particle
+	}
+	if(N==1){
+		printf("1 test particle is created.\n");
+	} else {
+		printf("%d test particles are created.\n", N);
+	}
 }
 
 void problem_inloop(){
