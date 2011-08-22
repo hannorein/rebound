@@ -35,7 +35,6 @@
 #include "communication_mpi.h"
 #include "tree.h"
 #include "tools.h"
-#include "problem.h"
 
 void problem_init(int argc, char* argv[]){
 	if (argc>1){						// Try to read boxsize from command line
