@@ -147,7 +147,7 @@ void output_ascii(char* filename){
 	fclose(of);
 }
 
-void output_orbit(char* filename){
+void output_orbits(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -366,12 +366,10 @@ void posvel2orbit(struct opv_orbit* o, struct particle* pv, double gmsum){
 	  	u = atan2 ( pv->z/sin(inc) , pv->x*cos(Omega) + pv->y*sin(Omega));
 	}
 
-	if(Omega < 0.){
-		Omega = Omega + 2.*M_PI;
-	}
-	if(u < 0.){
-		u = u + 2.*M_PI;
-	}
+	while(Omega < 0.) Omega = Omega + 2.*M_PI;
+	
+	while(u < 0.) u = u + 2.*M_PI;
+	
 
 	//  Compute the radius R and velocity squared V2, and the dot product RDOTV, the energy per unit mass ENERGY .
 
@@ -415,7 +413,7 @@ void posvel2orbit(struct opv_orbit* o, struct particle* pv, double gmsum){
 	    		cw = (cos( cape) -e)/(1. - e*cos(cape));
 	    		sw = sqrt(1. - e*e)*sin(cape)/(1. - e*cos(cape));
 	    		w = atan2(sw,cw);
-	    		if(w < 0.) w = w + 2.*M_PI;
+	    		while(w < 0.) w = w + 2.*M_PI;
 	  	}else{
 	    		e = 0.;
 	    		w = u;
@@ -425,7 +423,7 @@ void posvel2orbit(struct opv_orbit* o, struct particle* pv, double gmsum){
 		E = cape;
 	  	M = cape - e*sin (cape);
 	  	omega = u - w;
-	  	if(omega < 0.) omega = omega + 2.*M_PI;
+	  	while(omega < 0.) omega = omega + 2.*M_PI;
 	  	omega = omega - floor(omega/(2.*M_PI))*2.*M_PI;
 	}
 	// HYPERBOLA :

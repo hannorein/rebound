@@ -40,7 +40,6 @@
 #include "tools.h"
 
 extern double opening_angle2;
-extern int WH_SELFGRAVITY_ENABLED;
 extern int Nmax;
 
 void problem_init(int argc, char* argv[]){
@@ -65,8 +64,6 @@ void problem_init(int argc, char* argv[]){
 	star.m 		= 1;
 #ifdef INTEGRATOR_WH
 	// Insert particle manually. Don't add it to tree.
-	WH_SELFGRAVITY_ENABLED 	= 1;
-	N_active_first 		= 1;
 	Nmax 			+= 128;
 	particles 		= realloc(particles,sizeof(struct particle)*Nmax);
 	particles[N] 		= star;

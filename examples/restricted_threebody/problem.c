@@ -8,18 +8,12 @@
 #include "boundaries.h"
 #include "output.h"
 
-extern int WH_SELFGRAVITY_ENABLED;
-extern int WH_INDIRECT_TERM;
-
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	boxsize 		= 8; 
 	softening		= 1e-6;
 	dt 			= 1.0e-2*2.*M_PI;
-	N_active_first 		= 1; 	// Only the planet's gravity is felt by all other particles
-	N_active_last 		= 2; 	// Only the planet's gravity is felt by all other particles
-	WH_SELFGRAVITY_ENABLED 	= 1;
-	WH_INDIRECT_TERM	= 1;
+	N_active 		= 2; 	// Only the planet's gravity is felt by all other particles
 	init_box(); 		// Init simulation box.
 	
 	// Initial conditions for star
@@ -63,7 +57,7 @@ void problem_init(int argc, char* argv[]){
 void problem_output(){
 	output_timing();
 	if (output_check(2.*M_PI)){
-		output_orbit("orbit.txt");
+		output_orbits("orbit.txt");
 	}
 }
 

@@ -36,8 +36,7 @@ extern double 	t;		/**< Current simulation time. */
 extern double 	tmax;		/**< Maximum simulation time. Simulation stops if t>=tmax. Simulation runs forever if t==0.*/
 extern double 	dt;		/**< Current timestep. */
 extern int 	N;		/**< Current number of particles on this node. */
-extern int 	N_active_first;	/**< First massive particle included in force calculation. Default: 0.*/
-extern int 	N_active_last;	/**< Last massive particle included in force calculation. Default: N.*/
+extern int 	N_active;	/**< Number of massive particles included in force calculation. Default: N.*/
 extern int 	root_nx;	/**< Number of root boxes in x direction. Default: 1. */
 extern int 	root_ny;	/**< Number of root boxes in y direction. Default: 1. */
 extern int 	root_nz;	/**< Number of root boxes in z direction. Default: 1. */

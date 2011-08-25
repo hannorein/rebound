@@ -45,7 +45,7 @@
 #include "boundaries.h"
 
 void drift_wh(double _dt);
-void drift_dan(struct particle* pv, double dt, int* iflag);
+void drift_dan(struct particle* pv, double mu, double dt, int* iflag);
 void drift_kepu(double dt, double r0, double mu, double alpha, double u, double* fp, double* c1, double* c2, double* c3, int* iflag);
 void drift_kepu_guess(double dt0, double r0, double mu, double alpha, double u, double* s);
 void drift_kepu_p3solve(double dt0, double r0, double mu, double alpha, double u, double* s, int* iflag);
@@ -55,40 +55,190 @@ void drift_kepu_stumpff(double x, double* c0, double* c1, double* c2, double* c3
 void drift_kepu_fchk(double dt0, double r0, double mu, double alpha, double u, double s, double* f);
 void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* c);
 
-int WH_SELFGRAVITY_ENABLED 	= 0;	/**< Can performs a single sub-step instead of two if particles feel no acceleration other than central object. */
-int WH_INDIRECT_TERM 		= 1;	/**< Include/ignore the indirect term. */
-
+int _N_active;
 void integrator_part1(){
-	if (WH_SELFGRAVITY_ENABLED==1){
-		// DRIFT
-		drift_wh(dt/2.);
-		t+=dt/2.;
-	}else{
-		// DRIFT
-		drift_wh(dt);
-		t+=dt;
-	}
+	// DRIFT
+	_N_active = (N_active==-1)?N:N_active;
+	integrator_wh_to_jacobi();
+	drift_wh(dt/2.);
+	integrator_wh_from_jacobi();
+	t+=dt/2.;
 }
 
 void integrator_part2(){
-	if (WH_SELFGRAVITY_ENABLED==1){
-		// KICK
-		if (WH_INDIRECT_TERM==1){
-			for (int i=1;i<N;i++){
-				particles[i].vx += dt * (particles[i].ax - 1.*particles[0].ax);
-				particles[i].vy += dt * (particles[i].ay - 1.*particles[0].ay);
-				particles[i].vz += dt * (particles[i].az - 1.*particles[0].az);
-			}
-		}else{
-			for (int i=1;i<N;i++){
-				particles[i].vx += dt * particles[i].ax;
-				particles[i].vy += dt * particles[i].ay;
-				particles[i].vz += dt * particles[i].az;
-			}
-		}
-		// DRIFT
-		drift_wh(dt/2.);
-		t+=dt/2.;
+	// KICK
+	_N_active = (N_active==-1)?N:N_active;
+	// Calculate terms in Heliocentric coordinates
+	integrator_wh_ah();
+	integrator_wh_to_jacobi();
+	// Calculate terms in Jacobi coordinates
+	integrator_wh_aj();
+	integrator_wh_from_jacobi();
+	for (int i=1;i<N;i++){
+		particles[i].vx += dt*particles[i].ax;
+		particles[i].vy += dt*particles[i].ay;
+		particles[i].vz += dt*particles[i].az;
+	}
+	// DRIFT
+	integrator_wh_to_jacobi();
+	drift_wh(dt/2.);
+	integrator_wh_from_jacobi();
+	t+=dt/2.;
+}
+
+int wh_check_normal(struct particle* p){
+	if (isnan(p->vx) || isnan(p->vy)) return 1;
+	if (isinf(p->vx) || isinf(p->vy)) return 2;
+	return 0;
+}
+
+void integrator_wh_to_jacobi(){
+	double* eta = malloc(sizeof(double)*_N_active);
+	eta[0] = particles[0].m;
+	for(int i=1;i<_N_active;i++){
+	  eta[i] = eta[i-1] + particles[i].m;
+	}
+
+	double sumx  = particles[1].m * particles[1].x;
+	double sumy  = particles[1].m * particles[1].y;
+	double sumz  = particles[1].m * particles[1].z;
+	double sumvx = particles[1].m * particles[1].vx;
+	double sumvy = particles[1].m * particles[1].vy;
+	double sumvz = particles[1].m * particles[1].vz;
+
+	double capx  = sumx/eta[1];
+	double capy  = sumy/eta[1];
+	double capz  = sumz/eta[1];
+	double capvx = sumvx/eta[1];
+	double capvy = sumvy/eta[1];
+	double capvz = sumvz/eta[1];
+
+	for (int i=2;i<_N_active;i++){
+		struct particle p = particles[i];
+		sumx  += p.m*p.x;
+		sumy  += p.m*p.y;
+		sumz  += p.m*p.z;
+		sumvx += p.m*p.vx;
+		sumvy += p.m*p.vy;
+		sumvz += p.m*p.vz;
+		
+		particles[i].x  -= capx;
+		particles[i].y  -= capy;
+		particles[i].z  -= capz;
+		particles[i].vx -= capvx;
+		particles[i].vy -= capvy;
+		particles[i].vz -= capvz;
+
+		capx  = sumx /eta[i];
+		capy  = sumy /eta[i];
+		capz  = sumz /eta[i];
+		capvx = sumvx/eta[i];
+		capvy = sumvy/eta[i];
+		capvz = sumvz/eta[i];
+	}
+	free(eta);
+}
+
+void integrator_wh_from_jacobi(){
+	double* eta = malloc(sizeof(double)*_N_active);
+	eta[0] = particles[0].m;
+	for(int i=1;i<_N_active;i++){
+	  eta[i] = eta[i-1] + particles[i].m;
+	}
+
+	double sumx  = particles[1].m*particles[1].x /eta[1];
+	double sumy  = particles[1].m*particles[1].y /eta[1];
+	double sumz  = particles[1].m*particles[1].z /eta[1];
+	double sumvx = particles[1].m*particles[1].vx/eta[1];
+	double sumvy = particles[1].m*particles[1].vy/eta[1];
+	double sumvz = particles[1].m*particles[1].vz/eta[1];
+
+	for(int i=2;i<_N_active;i++){
+		struct particle p = particles[i];
+
+		particles[i].x  += sumx;
+		particles[i].y  += sumy;
+		particles[i].z  += sumz;
+		particles[i].vx += sumvx;
+		particles[i].vy += sumvy;
+		particles[i].vz += sumvz;
+
+		sumx  += p.m*p.x  / eta[i];
+		sumy  += p.m*p.y  / eta[i];
+		sumz  += p.m*p.z  / eta[i];
+		sumvx += p.m*p.vx / eta[i];
+		sumvy += p.m*p.vy / eta[i];
+		sumvz += p.m*p.vz / eta[i];
+	}
+	free(eta);
+}
+
+// Assumes positions in heliocentric coordinates
+void integrator_wh_ah(){
+	// Massive particles
+	double mass0 = particles[0].m;
+	double axh0 = 0.0;
+	double ayh0 = 0.0;
+	double azh0 = 0.0;
+	for(int i=2;i<_N_active;i++){
+		struct particle p = particles[i];
+		double r = sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
+		double ir3h = 1./(r*r*r);
+		double fac = p.m*ir3h;
+		axh0 -= fac*p.x;
+		ayh0 -= fac*p.y;
+		azh0 -= fac*p.z;
+	}
+	for(int i=1;i<_N_active;i++){
+		struct particle* p = &(particles[i]);
+		double r = sqrt(p->x*p->x + p->y*p->y + p->z*p->z);
+		double ir3h = 1./(r*r*r);
+		if (i==1) ir3h=0.;
+
+		p->ax += axh0 - mass0*p->x*ir3h;
+		p->ay += ayh0 - mass0*p->y*ir3h;
+		p->az += azh0 - mass0*p->z*ir3h;
+	}
+	// Test particles
+	struct particle p = particles[1];
+	double r = sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
+	double ir3h = 1./(r*r*r);
+	double fac = p.m*ir3h;
+	axh0 -= fac*p.x;
+	ayh0 -= fac*p.y;
+	azh0 -= fac*p.z;
+
+	for(int i=_N_active;i<N;i++){
+		struct particle* p = &(particles[i]);
+
+		p->ax += axh0;
+		p->ay += ayh0;
+		p->az += azh0;
+	}
+}
+
+// Assumes position in Jacobi coordinates
+void integrator_wh_aj(){
+	// Massive particles (No need to calculate this for test particles)
+	double mass0 = particles[0].m;
+	double etaj = mass0;
+	double axh2 = 0;
+	double ayh2 = 0;
+	double azh2 = 0;
+	for(int i=2;i<_N_active;i++){
+		struct particle* p = &(particles[i]);
+		double rj = sqrt(p->x*p->x + p->y*p->y + p->z*p->z);
+		double ir3j = 1./(rj*rj*rj);
+		
+		etaj = etaj + particles[i-1].m;
+		double fac = p->m*mass0*ir3j/etaj;
+		axh2 += fac*p->x;
+		ayh2 += fac*p->y;
+		azh2 += fac*p->z;
+
+		p->ax += mass0*p->x*ir3j + axh2;
+		p->ay += mass0*p->y*ir3j + ayh2;
+		p->az += mass0*p->z*ir3j + azh2;
 	}
 }
 
@@ -97,25 +247,49 @@ void integrator_part2(){
  * @param _dt Timestep.
  */
 void drift_wh(double _dt){
+	double mass0 = particles[0].m;
+	double etajm1 = mass0;
+	// Massive particles
 #pragma omp parallel for schedule(guided)
-	for (int i=1;i<N;i++){
+	for (int i=1;i<_N_active;i++){
 		struct particle* p = &(particles[i]);
+		double etaj = etajm1 + p->m;
+		double mu = G*mass0*etaj/etajm1;
+		if (wh_check_normal(p)!=0){
+			etaj = etajm1;
+			continue;
+		}
 		int iflag = 0;
-		drift_dan(p,_dt,&iflag);
+		drift_dan(p,mu,_dt,&iflag);
 		if (iflag != 0){ // Try again with 10 times smaller timestep.
 			for (int j=0;j<10;j++){
-				drift_dan(&(particles[i]),_dt/10.,&iflag);
+				drift_dan(p,mu,_dt/10.,&iflag);
+				if (iflag != 0) break;
+			}
+		}
+		etaj = etajm1;
+	}
+	// Testparticles
+#pragma omp parallel for schedule(guided)
+	for (int i=_N_active;i<N;i++){
+		struct particle* p = &(particles[i]);
+		if (wh_check_normal(p)!=0) continue;
+		int iflag = 0;
+		drift_dan(p,G*mass0,_dt,&iflag);
+		if (iflag != 0){ // Try again with 10 times smaller timestep.
+			for (int j=0;j<10;j++){
+				drift_dan(p,G*mass0,_dt/10.,&iflag);
 				if (iflag != 0) break;
 			}
 		}
 	}
 }
 
-void drift_dan(struct particle* pv, double dt0, int* iflag){
+void drift_dan(struct particle* pv, double mu, double dt0, int* iflag){
 	double dt1 = dt0;
-	double x0 = pv->x-particles[0].x;
-	double y0 = pv->y-particles[0].y;
-	double z0 = pv->z-particles[0].z;
+	double x0 = pv->x;
+	double y0 = pv->y;
+	double z0 = pv->z;
 	double vx0 = pv->vx;
 	double vy0 = pv->vy;
 	double vz0 = pv->vz;
@@ -123,7 +297,6 @@ void drift_dan(struct particle* pv, double dt0, int* iflag){
 	double r0 = sqrt(x0*x0 + y0*y0 + z0*z0);
 	double v0s = vx0*vx0 + vy0*vy0 + vz0*vz0;
 	double u = x0*vx0 + y0*vy0 + z0*vz0;
-	double mu = G*(particles[0].m+pv->m);
 	double alpha = 2.0*mu/r0 - v0s;
 
 	if (alpha > 0.0){
@@ -174,9 +347,9 @@ void drift_dan(struct particle* pv, double dt0, int* iflag){
 		double fdot = -(mu/(fp*r0))*c1;
 		double gdot = 1.0 - (mu/fp)*c2;
 
-		pv->x = x0*f + vx0*g + particles[0].x;
-		pv->y = y0*f + vy0*g + particles[0].y;
-		pv->z = z0*f + vz0*g + particles[0].z;
+		pv->x = x0*f + vx0*g;
+		pv->y = y0*f + vy0*g;
+		pv->z = z0*f + vz0*g;
 		
 		pv->vx = x0*fdot + vx0*gdot;
 		pv->vy = y0*fdot + vy0*gdot;
