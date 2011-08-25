@@ -54,6 +54,10 @@ void drift_kepu_lag(double* s, double dt0, double r0, double mu, double alpha, d
 void drift_kepu_stumpff(double x, double* c0, double* c1, double* c2, double* c3);
 void drift_kepu_fchk(double dt0, double r0, double mu, double alpha, double u, double s, double* f);
 void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* c);
+void integrator_wh_aj();
+void integrator_wh_ah();
+void integrator_wh_to_jacobi();
+void integrator_wh_from_jacobi();
 
 int _N_active;
 void integrator_part1(){
