@@ -212,12 +212,13 @@ void integrator_wh_ah(){
 	ayh0 -= fac*p.y;
 	azh0 -= fac*p.z;
 
+#pragma omp parallel for schedule(guided)
 	for(int i=_N_active;i<N;i++){
-		struct particle* p = &(particles[i]);
+		struct particle* pt = &(particles[i]);
 
-		p->ax += axh0;
-		p->ay += ayh0;
-		p->az += azh0;
+		pt->ax += axh0;
+		pt->ay += ayh0;
+		pt->az += azh0;
 	}
 }
 
@@ -254,7 +255,6 @@ void drift_wh(double _dt){
 	double mass0 = particles[0].m;
 	double etajm1 = mass0;
 	// Massive particles
-#pragma omp parallel for schedule(guided)
 	for (int i=1;i<_N_active;i++){
 		struct particle* p = &(particles[i]);
 		double etaj = etajm1 + p->m;
