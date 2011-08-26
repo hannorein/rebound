@@ -37,6 +37,14 @@
 int output_check(double interval);
 
 /**
+ * This function checks if a new output is required at this time.
+ * @return The return value is 1 if an output is required and 0 otherwise.
+ * @param interval Output interval.
+ * @param phase Phase (if 0, then this function is equal to output_check()).
+ */
+int output_check_phase(double interval,double phase);
+
+/**
  * Outputs the current number of particles, the time and the time difference since the last output to the screen.
  */
 

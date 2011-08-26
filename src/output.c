@@ -54,7 +54,12 @@ extern double OMEGA;
 // Check if output is needed
 
 int output_check(double interval){
-	if (floor(t/interval)!=floor((t-dt)/interval)){
+	return output_check_phase(interval,0);
+}
+
+int output_check_phase(double interval,double phase){
+	double shift = t+interval*phase;
+	if (floor(shift/interval)!=floor((shift-dt)/interval)){
 		return 1;
 	}
 	// Output at beginning or end of simulation
