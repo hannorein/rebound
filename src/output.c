@@ -180,7 +180,7 @@ void output_orbits(char* filename){
 	for (int i=1;i<N;i++){
 		struct particle* p = &(particles[i]);
 		struct opv_orbit o;
-		posvel2orbit(&o,p,1.);
+		posvel2orbit(&o,p,G*particles[0].m);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",o.a,o.e,o.inc,o.Omega,o.omega,o.M,o.E,o.f);
 	}
 	fclose(of);
