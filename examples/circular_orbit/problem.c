@@ -3,7 +3,7 @@
  * @brief 	Example problem: circular orbit.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @detail 	This example uses the Wisdom Holman integrator
- * to integrate a particle on a circular orbit in a fixed 
+ * to integrate particles on a circular orbit in a fixed 
  * potential.
  * 
  * @section 	LICENSE
@@ -31,6 +31,7 @@
 #include <math.h>
 #include <time.h>
 #include "main.h"
+#include "output.h"
 #include "particle.h"
 #include "boundaries.h"
 
@@ -38,8 +39,7 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 		= 1e-3;
 	boxsize 	= 3;
-	N_active_first 	= 1; // Do not integrate star
-	nghostx = 0; nghosty = 0; nghostz = 0;
+	N_active 	= 1; // Only star is massive
 	init_box();
 
 	// Initial conditions
@@ -65,14 +65,12 @@ void problem_init(int argc, char* argv[]){
 		p.m  = 0;
 		particles_add(p); // Test particle
 	}
-	if(N==1){
-		printf("1 test particle is created.\n");
-	} else {
-		printf("%d test particles are created.\n", N);
-	}
 }
 
 void problem_inloop(){
+	if(output_check(100.*dt)){
+		output_timing();
+	}
 }
 
 void problem_output(){
