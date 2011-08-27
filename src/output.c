@@ -152,6 +152,23 @@ void output_ascii(char* filename){
 	fclose(of);
 }
 
+void output_orbits_append(char* filename){
+#ifdef MPI
+	char filename_mpi[1024];
+	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
+	FILE* of = fopen(filename_mpi,"a"); 
+#else // MPI
+	FILE* of = fopen(filename,"a"); 
+#endif // MPI
+	for (int i=1;i<N;i++){
+		struct particle* p = &(particles[i]);
+		struct opv_orbit o;
+		posvel2orbit(&o,p,G*particles[0].m);
+		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,o.a,o.e,o.inc,o.Omega,o.omega,o.M,o.E,o.f);
+	}
+	fclose(of);
+}
+
 void output_orbits(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];

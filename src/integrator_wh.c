@@ -188,7 +188,7 @@ void integrator_wh_ah(){
 		struct particle p = particles[i];
 		double r = sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
 		double ir3h = 1./(r*r*r);
-		double fac = p.m*ir3h;
+		double fac = G*p.m*ir3h;
 		axh0 -= fac*p.x;
 		ayh0 -= fac*p.y;
 		azh0 -= fac*p.z;
@@ -199,15 +199,15 @@ void integrator_wh_ah(){
 		double ir3h = 1./(r*r*r);
 		if (i==1) ir3h=0.;
 
-		p->ax += axh0 - mass0*p->x*ir3h;
-		p->ay += ayh0 - mass0*p->y*ir3h;
-		p->az += azh0 - mass0*p->z*ir3h;
+		p->ax += axh0 - G*mass0*p->x*ir3h;
+		p->ay += ayh0 - G*mass0*p->y*ir3h;
+		p->az += azh0 - G*mass0*p->z*ir3h;
 	}
 	// Test particles
 	struct particle p = particles[1];
 	double r = sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
 	double ir3h = 1./(r*r*r);
-	double fac = p.m*ir3h;
+	double fac = G*p.m*ir3h;
 	axh0 -= fac*p.x;
 	ayh0 -= fac*p.y;
 	azh0 -= fac*p.z;
@@ -236,14 +236,14 @@ void integrator_wh_aj(){
 		double ir3j = 1./(rj*rj*rj);
 		
 		etaj = etaj + particles[i-1].m;
-		double fac = p->m*mass0*ir3j/etaj;
+		double fac = G*p->m*mass0*ir3j/etaj;
 		axh2 += fac*p->x;
 		ayh2 += fac*p->y;
 		azh2 += fac*p->z;
 
-		p->ax += mass0*p->x*ir3j + axh2;
-		p->ay += mass0*p->y*ir3j + ayh2;
-		p->az += mass0*p->z*ir3j + azh2;
+		p->ax += G*mass0*p->x*ir3j + axh2;
+		p->ay += G*mass0*p->y*ir3j + ayh2;
+		p->az += G*mass0*p->z*ir3j + azh2;
 	}
 }
 
