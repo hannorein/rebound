@@ -13,8 +13,8 @@ void problem_init(int argc, char* argv[]){
 	boxsize 		= 8; 
 	softening		= 1e-6;
 	dt 			= 1.0e-2*2.*M_PI;
-	N_active 		= 2; 	// Only the planet's gravity is felt by all other particles
-	init_box(); 		// Init simulation box.
+	N_active 		= 2; 	// Only the star and the planet have non-zero mass
+	init_box();
 	
 	// Initial conditions for star
 	struct particle star;
@@ -50,6 +50,7 @@ void problem_init(int argc, char* argv[]){
 		testparticle.ax = 0; 
 		testparticle.ay = 0; 
 		testparticle.az = 0;
+		testparticle.m  = 0;
 		particles_add(testparticle);
 	}
 }
