@@ -73,6 +73,7 @@ void problem_init(int argc, char* argv[]){
 	boxsize 	= 200;			// astronomical units
 	dt 		= 40;			// days
 	N_active	= 5;
+	tmax		= 7.3e10;		// 200 Myr
 	G		= k*k;
 	init_box();
 
