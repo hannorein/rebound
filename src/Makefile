@@ -1,4 +1,7 @@
 OPT+= -std=c99
+ifndef OS
+	OS=$(shell uname)
+endif
 ifeq ($(OS), Linux)
 	OPT+= -Wall  -g 
 	LIB+= -lm
