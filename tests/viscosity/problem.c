@@ -5,6 +5,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include "main.h"
+#include "tree.h"
 #include "particle.h"
 #include "boundaries.h"
 #include "output.h"
@@ -15,6 +16,8 @@ extern double minimum_collision_velocity;
 double particle_radius = 1;
 double r_hstar 		= 0.5;
 double lambda_crit;
+double sx2;
+double sy2;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -29,12 +32,14 @@ void problem_init(int argc, char* argv[]){
 	double tau 		= 0.5;
 	double surface_density 	= tau/(M_PI*particle_radius*particle_radius)*particle_mass;
 	lambda_crit	 	= 4.*M_PI*M_PI*G*surface_density/OMEGA/OMEGA;
+	sx2 			= 3.*lambda_crit/2.;
+	sy2 			= 3.*lambda_crit/2.;
 	boxsize 		= 12.*lambda_crit;
 	int _N 			= (int)round(tau*boxsize*boxsize/(M_PI*particle_radius*particle_radius));
 	coefficient_of_restitution = 0.5;
 	minimum_collision_velocity = 0.01*OMEGA*particle_radius;
 	dt 			= 1e-2*2.*M_PI;
-	tmax			= 20.*2.*M_PI;
+	tmax			= 40.*2.*M_PI;
 	softening 		= 0.1*particle_radius;
 	// Nothing needs to be changes below.
 	init_box();
@@ -63,91 +68,127 @@ void problem_init(int argc, char* argv[]){
 
 extern double collisions_plog;
 double collisions_plog_last =0;
-void calculate_viscosity(double* nutrans, double* nucoll, double* nugrav){
-	double _nutrans =0;
-	double _nugrav  =0;
+
+
+double calculate_viscosity_trans(){
+	double nu = 0;
 	double mtot = 0;
-	double sx2 = 3.*lambda_crit/2.;
-	double sy2 = 3.*lambda_crit/2.;
 	for (int i=0;i<N;i++){
 		struct particle p = particles[i];
-		mtot += p.m;
+		mtot	+= p.m;
 		double vyr = p.vy + 1.5 * OMEGA * p.x;
-		_nutrans += p.m*p.vx*vyr;
-		for (int gbx=0; gbx<=1; gbx++){
-			for (int gby=-2; gby<=2; gby++){
-				struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,0);
-				for (int j=0;j<N;j++){
-					struct particle p2 = particles[j];
-					if (p2.x<=p.x) continue;
-					if (p2.x-p.x>sx2) continue;
-					if (p.x-p2.x>sx2) continue;
-					if (p2.y-p.y>sy2) continue;
-					if (p.y-p2.y>sy2) continue;
-					double dx = p2.x+gb.shiftx - p.x;
-					double dy = p2.y+gb.shifty - p.y;
-					double dz = p2.z - p.z;
-					double r = sqrt(dx*dx + dy*dy + dz*dz);
-					_nugrav += p.m*p2.m*dy*dx/(r*r*r);
+		nu	+= p.m*p.vx*vyr;
+	}
+	return 2./(3.*OMEGA*mtot)*nu;
+}
+
+double calculate_viscosity_coll(){
+	if (t-collisions_plog_last==0 || collisions_plog==0){
+		return 0;
+	}
+	double mtot = 0;
+	for (int i=0;i<N;i++){
+		mtot	+= particles[i].m;
+	}
+	double tmp_dt 		= (t-collisions_plog_last);
+	double tmp_plog 	= collisions_plog;
+	return 2./(3.*OMEGA*mtot*tmp_dt)*tmp_plog;
+}
+		
+double calculate_viscosity_grav_for_particle_from_cell(int i, struct ghostbox gb,struct cell* node){
+	double nu = 0;
+	double dx = gb.shiftx - node->mx;
+	double dy = gb.shifty - node->my;
+	double dz = gb.shiftz - node->mz;
+	if (node->pt<0){
+		if (fabs(dx)-node->w/2. < sx2 && fabs(dy)-node->w/2. < sy2){
+			for(int o=0;o<8;o++){
+				if (node->oct[o]!=NULL){
+					nu += calculate_viscosity_grav_for_particle_from_cell(i,gb,node->oct[o]);
 				}
 			}
+		} 
+	}else{
+		if (fabs(dx) < sx2 && fabs(dy) < sy2 && dx > 0 && i!=node->pt){
+			double r = sqrt(dx*dx + dy*dy + dz*dz);
+			nu += particles[i].m*particles[node->pt].m*dy*dx/(r*r*r);
 		}
 	}
-	*nutrans = 2./(3.*OMEGA*mtot)*_nutrans;
-	*nugrav  = 2./(3.*OMEGA*mtot)*_nugrav * (-G);
-	*nucoll  = 2./(3.*OMEGA*mtot)*1./(t-collisions_plog_last)*collisions_plog;
+	return nu;
+}
+
+double calculate_viscosity_grav_for_particle(int pt, struct ghostbox gb) {
+	double nu =0;
+	for(int i=0;i<root_n;i++){
+		struct cell* node = tree_root[i];
+		if (node!=NULL){
+			nu += calculate_viscosity_grav_for_particle_from_cell(pt, gb, node);
+		}
+	}
+	return nu;
+}
+
+double calculate_viscosity_grav(){
+	double nu  	= 0;
+	double mtot 	= 0;
+	for (int i=0;i<N;i++){
+		mtot	+= particles[i].m;
+	}
+
+	// Summing over all Ghost Boxes
+	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
+	for (int gby=-nghosty; gby<=nghosty; gby++){
+		struct ghostbox gb_cache = boundaries_get_ghostbox(gbx,gby,0);
+		// Summing over all particle pairs
+		for (int i=0; i<N; i++){
+			struct ghostbox gb = gb_cache;
+			// Precalculated shifted position
+			gb.shiftx += particles[i].x;
+			gb.shifty += particles[i].y;
+			gb.shiftz += particles[i].z;
+			nu += calculate_viscosity_grav_for_particle(i, gb);
+		}
+	}}
+	return 2./(3.*OMEGA*mtot)*nu * (-G);
 }
 
 double nutrans_tot=0, nucoll_tot=0, nugrav_tot=0; int nuN=0;
-
 int reset = 1;
-void problem_inloop(){
-}
-void calculate_viscosity_tot(){
-	double nutrans,nucoll,nugrav;
-	calculate_viscosity(&nutrans,&nucoll,&nugrav);
-	nutrans_tot +=nutrans;
-	nucoll_tot  +=nucoll;
-	nugrav_tot  +=nugrav;
-	collisions_plog_last=t;
-	collisions_plog = 0;
+
+void calculate_viscosity(){
+	nutrans_tot 	+= calculate_viscosity_trans();
+	nugrav_tot 	+= calculate_viscosity_grav();
+	nucoll_tot	 = calculate_viscosity_coll();
 	nuN++;
 }
 
+void problem_inloop(){
+}
 
 void problem_output(){
 	output_timing();
-	if (t>10.*2.*M_PI&&reset==1){
-		collisions_plog_last 	= t;
-		collisions_plog		= 0;
-		nuN 			= 0;
-		nutrans_tot 		= 0;
-		nucoll_tot  		= 0; 
-		nugrav_tot  		= 0;
-		reset 			= 0;
-	}
-	if (output_check(1e-1*2.*M_PI/OMEGA)&&t>10.*2.*M_PI){
-		calculate_viscosity_tot();
+	if (t>tmax/2.){
+      		if(reset==1){
+			collisions_plog_last 	= t;
+			collisions_plog		= 0;
+			nuN 			= 0;
+			nutrans_tot 		= 0;
+			nucoll_tot  		= 0; 
+			nugrav_tot  		= 0;
+			reset 			= 0;
+		}else{
+			calculate_viscosity();
+		}
 	}
 }
 
 
 void problem_finish(){
-	calculate_viscosity_tot();
-	FILE* of = fopen("error.txt","a+"); 
-	double error= 1;  // TODO!
-	struct timeval tim;
-	gettimeofday(&tim, NULL);
-	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
-	double error_limit = 0.1;
-	int pass = (error>error_limit?0:1);
-	fprintf(of,"%d\t%e\t%e\t%e\t%d\t%e\t",N,dt,error,error_limit,pass,timing_final-timing_initial);
-	fprintf(of,"N_init = %d",0);
-	fprintf(of,"\n");
-	fclose(of);
-	
 	FILE* ofv = fopen("viscosity.txt","a"); 
-	fprintf(ofv,"%e\t%e\t%e\t%e\t%e\n",t,r_hstar,nutrans_tot/(particle_radius*particle_radius*OMEGA)/(double)nuN,nucoll_tot/(particle_radius*particle_radius*OMEGA)/(double)nuN,nugrav_tot/(particle_radius*particle_radius*OMEGA)/(double)nuN);
+	double nu_trans = nutrans_tot/(particle_radius*particle_radius*OMEGA)/(double)nuN;
+	double nu_coll 	= nucoll_tot/(particle_radius*particle_radius*OMEGA)/(double)nuN;
+	double nu_grav	= nugrav_tot/(particle_radius*particle_radius*OMEGA)/(double)nuN;
+	fprintf(ofv,"%e\t%e\t%e\t%e\t%e\n",t,r_hstar,nu_trans,nu_coll,nu_grav);
 	fclose(ofv);
 
 }
