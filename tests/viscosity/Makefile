@@ -18,13 +18,16 @@ all:
 
 test: all 
 	rm -f error.txt
-	./nbody 0.5
-	./nbody 0.6
-	./nbody 0.65
-	./nbody 0.7
-	./nbody 0.75
-	./nbody 0.8
-	./nbody 0.85
-	./nbody 0.9
-	./nbody 0.95
-	./nbody 1
+	./nbody 0.3 88.50 
+	./nbody 0.5 19.10
+	./nbody 0.6 11.05
+	./nbody 0.65 8.69
+	./nbody 0.675 8.0
+	./nbody 0.7 6.97
+	./nbody 0.75 3.14
+	./nbody 0.8 6.01
+	./nbody 0.82 6.01
+	./nbody 0.85 6.04
+	./nbody 0.9 6.0
+	./nbody 0.95 6.04
+	./nbody 1 6.04

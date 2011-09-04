@@ -34,7 +34,9 @@ void problem_init(int argc, char* argv[]){
 	lambda_crit	 	= 4.*M_PI*M_PI*G*surface_density/OMEGA/OMEGA;
 	sx2 			= 3.*lambda_crit/2.;
 	sy2 			= 3.*lambda_crit/2.;
-	boxsize 		= 12.*lambda_crit;
+	if (argc>2){
+		boxsize 	=lambda_crit*atof(argv[2]);
+	}
 	int _N 			= (int)round(tau*boxsize*boxsize/(M_PI*particle_radius*particle_radius));
 	coefficient_of_restitution = 0.5;
 	minimum_collision_velocity = 0.01*OMEGA*particle_radius;
@@ -186,7 +188,7 @@ void problem_output(){
 void problem_finish(){
 	FILE* ofv = fopen("viscosity.txt","a"); 
 	double nu_trans = nutrans_tot/(particle_radius*particle_radius*OMEGA)/(double)nuN;
-	double nu_coll 	= nucoll_tot/(particle_radius*particle_radius*OMEGA)/(double)nuN;
+	double nu_coll 	= nucoll_tot/(particle_radius*particle_radius*OMEGA);
 	double nu_grav	= nugrav_tot/(particle_radius*particle_radius*OMEGA)/(double)nuN;
 	fprintf(ofv,"%e\t%e\t%e\t%e\t%e\n",t,r_hstar,nu_trans,nu_coll,nu_grav);
 	fclose(ofv);
