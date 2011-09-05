@@ -13,6 +13,7 @@
 extern double OMEGA;
 extern double coefficient_of_restitution;
 extern double minimum_collision_velocity;
+extern double opening_angle2;
 double particle_radius = 1;
 double r_hstar 		= 0.5;
 double lambda_crit;
@@ -38,14 +39,14 @@ void problem_init(int argc, char* argv[]){
 		boxsize 	=lambda_crit*atof(argv[2]);
 	}
 	int _N 			= (int)round(tau*boxsize*boxsize/(M_PI*particle_radius*particle_radius));
-	coefficient_of_restitution = 0.5;
-	minimum_collision_velocity = 0.01*OMEGA*particle_radius;
-	dt 			= 1e-2*2.*M_PI;
+	dt 			= 2e-3*2.*M_PI;
 	tmax			= 40.*2.*M_PI;
 	softening 		= 0.1*particle_radius;
-	// Nothing needs to be changes below.
-	init_box();
+	opening_angle2		= 0.9;
+	coefficient_of_restitution = 0.5;
+	minimum_collision_velocity = 2.*dt*particle_radius;
 	printf("lambda_crit = %f\nsurface_density = %f\nboxsize = %f\nparticle_mass = %f\n",lambda_crit,surface_density,boxsize,particle_mass);
+	init_box();
 	// Initial conditions
 	while(N<_N){
 		struct particle p;
