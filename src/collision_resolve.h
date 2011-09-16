@@ -62,7 +62,9 @@ extern double (*coefficient_of_restitution_for_velocity) (double); /**< Function
 void collision_resolve_single_direct(struct collision c);	
 
 /**
- * Function pointer to collision resolution model. Allows for implementation of super-particles.
+ * Function pointer to collision resolve function. 
+ * This can be overwritten by the user to allow for implementation of super-particles
+ * or anything where collisions are not resolved exactly.
  * @param c Collision to resolve.
  */
 extern void (*collision_resolve_single) (struct collision);
