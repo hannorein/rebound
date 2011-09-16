@@ -37,6 +37,7 @@
 #ifdef TREE
 
 struct cell** tree_root;
+int N_tree_fixed=0;
 
 /**
   * Given the index of a particle and a pointer to a node cell, the function returns the index
@@ -183,10 +184,14 @@ struct cell *tree_update_cell(struct cell *node){
 	if (tree_particle_is_inside_cell(node) == 0) {
 		int oldpos = node->pt;
 		struct particle reinsertme = particles[oldpos];
-		N--;
-		particles[oldpos] = particles[N];
-		particles[oldpos].c->pt = oldpos;
-		particles_add(reinsertme);
+		if (oldpos<N_tree_fixed){
+			particles_add_fixed(reinsertme,oldpos);
+		}else{
+			N--;
+			particles[oldpos] = particles[N];
+			particles[oldpos].c->pt = oldpos;
+			particles_add(reinsertme);
+		}
 		free(node);
 		return NULL; 
 	} else {

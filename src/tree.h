@@ -97,6 +97,10 @@ void tree_prepare_essential_tree_for_collisions();
 #endif //COLLISIONS_TREE
 #endif // MPI
 
+/**
+ * Particle between 0 and N_tree_fixed will not be shuffled around during tree-reconstruction.
+ */
+extern int N_tree_fixed;
 
 #endif // TREE
 #endif // _TREE_H

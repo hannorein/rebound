@@ -85,6 +85,20 @@ void particles_add(struct particle pt){
 	particles_add_local(pt);
 }
 
+void particles_add_fixed(struct particle pt,int pos){
+	// Only works for non-MPI simulations or when the particles does not move to another node.
+#ifdef BOUNDARIES_OPEN
+	if (boundaries_particle_is_in_box(pt)==0){
+		// Particle has left the box. Do not add.
+		return;
+	}
+#endif // BOUNDARIES_OPEN
+	particles[pos] = pt;
+#ifdef TREE
+	tree_add_particle_to_tree(pos);
+#endif // TREE
+}
+
 
 int particles_get_rootbox_for_particle(struct particle pt){
 	int i = ((int)floor((pt.x + boxsize_x/2.)/boxsize)+root_nx)%root_nx;

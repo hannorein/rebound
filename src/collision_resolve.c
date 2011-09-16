@@ -37,9 +37,10 @@ double coefficient_of_restitution = 1;
 double minimum_collision_velocity = 0;
 double collisions_constant_coefficient_of_restitution_for_velocity(double v);
 double (*coefficient_of_restitution_for_velocity) (double) = collisions_constant_coefficient_of_restitution_for_velocity;
+void (*collision_resolve_single) (struct collision) = collision_resolve_single_direct;
 double collisions_plog =0;	/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
 
-void collision_resolve_single(struct collision c){
+void collision_resolve_single_direct(struct collision c){
 #ifndef COLLISIONS_NONE
 	struct particle p1 = particles[c.p1];
 	struct particle p2;
