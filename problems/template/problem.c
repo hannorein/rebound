@@ -37,8 +37,9 @@
 #include "tools.h"
 
 void problem_init(int argc, char* argv[]){
-	if (argc>1 && (boxsize=atof(argv[1]))){}						// Try to read boxsize from command line
-	else{
+	if (argc>1){ 						// Try to read boxsize from command line
+		boxsize = atof(argv[1]);
+	}else{
 		boxsize = 100;
 	}
 	init_box();
