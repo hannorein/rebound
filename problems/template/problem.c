@@ -42,7 +42,6 @@ void problem_init(int argc, char* argv[]){
 		boxsize = 100;
 	}
 	init_box();
-	printf("boxsize is %f\n", boxsize);
 	
 	struct particle pt;
 	pt.x 	= 0; 	pt.y 	= 0; 	pt.z 	= 0;
