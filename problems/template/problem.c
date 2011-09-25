@@ -37,12 +37,12 @@
 #include "tools.h"
 
 void problem_init(int argc, char* argv[]){
-	if (argc>1){						// Try to read boxsize from command line
-		boxsize = atof(argv[1]);
-	}else{
+	if (argc>1 && (boxsize=atof(argv[1]))){}						// Try to read boxsize from command line
+	else{
 		boxsize = 100;
 	}
 	init_box();
+	printf("boxsize is %f\n", boxsize);
 	
 	struct particle pt;
 	pt.x 	= 0; 	pt.y 	= 0; 	pt.z 	= 0;

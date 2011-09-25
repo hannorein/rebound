@@ -71,7 +71,6 @@ void input_binary(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
-	printf("%s is opened.\n", filename_mpi);
 	FILE* inf = fopen(filename_mpi,"rb"); 
 #else // MPI
 	FILE* inf = fopen(filename,"rb"); 
