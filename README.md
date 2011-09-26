@@ -78,7 +78,7 @@ Other features worth mentioning
 * The code is written entirely in C. It conforms to the ISO standard C99.
 * Parallelized with OpenMP (for shared memory systems).
 * Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems).
-* No libraries are needed. The use of OpenGL/GLUT/libpng for visualization is optional.
+* No libraries are needed. The use of OpenGL/GLUT/libpng for visualization is optional. 
 * The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound.
 * No configuration is needed to run any of the example problems. Just type `make && ./nbody` in the problem directory to run them.
 * Standard ASCII or binary output routines. 
@@ -127,6 +127,9 @@ To finally run the code, simply type
 A window should open and you will see a simulation running in real time. The setup simulates the rings of Saturn and uses a local shearing sheet approximation. Have a look at the other examples too and you will quickly get an impression of what REBOUND can do. 
 
 If you want to create your own problem, just copy one of the example directories or the template in the `problems` directory. Then simply modify `problem.c` and `Makefile` accordingly.  
+
+### How to install GLUT ###
+The OpenGL Utility Toolkit (GLUT) comes preinstalled as a framework on Mac OSX. If you are working on another operating system, you might have to install GLUT yourself. Go to http://freeglut.sourceforge.net/ download the latest version, configure it with `./configure` and compile it with `make`. Finally install the library and header files with `make install`. Unless you specified a non-default installation directory during configuration, you have to be a super-user.  
 
 ### Environment variables ###
 The makefile in each problem directory sets various environment variables. These determine the compiler optimization flags, the libraries included and basic code settings. Let us look at one of the examples `shearing_sheet` in more detail. 
