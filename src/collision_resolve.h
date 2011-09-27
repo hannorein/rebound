@@ -33,6 +33,7 @@
 #ifndef _COLLISION_RESOLVE_H
 #define _COLLISION_RESOLVE_H
 #include "boundaries.h"
+#include "collisions.h"
 
 /**
  * Collision structure of one single collisions
@@ -55,10 +56,18 @@ extern double (*coefficient_of_restitution_for_velocity) (double); /**< Function
 
 
 /**
- * Resolve a single collision.
+ * Resolve a single collision assuming a direct collision model (no super-particle).
  * @param c Collision to resolve.
  */
-void collision_resolve_single(struct collision c);	
+void collision_resolve_single_direct(struct collision c);	
+
+/**
+ * Function pointer to collision resolve function. 
+ * This can be overwritten by the user to allow for implementation of super-particles
+ * or anything where collisions are not resolved exactly.
+ * @param c Collision to resolve.
+ */
+extern void (*collision_resolve_single) (struct collision);
 
 #endif // _COLLISION_RESOLVE_H
 

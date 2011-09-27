@@ -70,6 +70,13 @@ extern struct particle* particles;
  */
 void particles_add(struct particle pt);
 
+/** 
+ * Same as particles_add() but inserts particles at given position. 
+ * @param pt Particle to be added.
+ * @param pos New position.
+ */
+void particles_add_fixed(struct particle pt,int pos);
+
 /**
  * Returns the index of the rootbox for the current particles based on its position.
  * @return Index of the rootbox.

@@ -66,9 +66,9 @@ This setup allows you to work on multiple projects at the same time using differ
   <tr><td><pre>boundaries_open.c    </pre></td>
      <td>Particles are removed from the simulation if they leaves the box.</td></tr>
   <tr><td><pre>boundaries_periodic.c</pre></td>
-     <td>Periodic boundary conditions. Particles are reinserted on the other side if they cross the box boundaries. You can use an arbitrary number of ghostboxes with this module.</td></tr>
+     <td>Periodic boundary conditions. Particles are reinserted on the other side if they cross the box boundaries. You can use an arbitrary number of ghost-boxes with this module.</td></tr>
   <tr><td><pre>boundaries_shear.c   </pre></td>
-     <td>Shear periodic bounary conditions. Similar to periodic boundary conditions, but ghostboxes are moving with constant speed, set by the shear.</td></tr>
+     <td>Shear periodic boundary conditions. Similar to periodic boundary conditions, but ghost-boxes are moving with constant speed, set by the shear.</td></tr>
 </table>
 
 
@@ -78,7 +78,7 @@ Other features worth mentioning
 * The code is written entirely in C. It conforms to the ISO standard C99.
 * Parallelized with OpenMP (for shared memory systems).
 * Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems).
-* No libraries are needed. The use of OpenGL/GLUT/libpng for visualization is optional.
+* No libraries are needed. The use of OpenGL/GLUT/libpng for visualization is optional. 
 * The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound.
 * No configuration is needed to run any of the example problems. Just type `make && ./nbody` in the problem directory to run them.
 * Standard ASCII or binary output routines. 
@@ -127,6 +127,11 @@ To finally run the code, simply type
 A window should open and you will see a simulation running in real time. The setup simulates the rings of Saturn and uses a local shearing sheet approximation. Have a look at the other examples too and you will quickly get an impression of what REBOUND can do. 
 
 If you want to create your own problem, just copy one of the example directories or the template in the `problems` directory. Then simply modify `problem.c` and `Makefile` accordingly.  
+
+### How to install GLUT ###
+The OpenGL Utility Toolkit (GLUT) comes pre-installed as a framework on Mac OSX. If you are working on another operating system, you might have to install GLUT yourself if you see an error message such as `error: GL/glut.h: No such file or directory`. Go to http://freeglut.sourceforge.net/ download the latest version, configure it with `./configure` and compile it with `make`. Finally install the library and header files with `make install`. Unless you specified a non-default installation directory during configuration, you have to be a super-user.  
+
+You can still compile and run REBOUND if you do not have GLUT installed. Simple set `OPENGL=0` in the makefile (see below). 
 
 ### Environment variables ###
 The makefile in each problem directory sets various environment variables. These determine the compiler optimization flags, the libraries included and basic code settings. Let us look at one of the examples `shearing_sheet` in more detail. 
@@ -192,7 +197,7 @@ This function is called at the end of the simulation, when t >= tmax. This is th
 
 OpenGL keyboard command
 -----------------------
-You can use the following keybard command to alter the OpenGL real-time visualtiations.
+You can use the following keyboard command to alter the OpenGL real-time visualizations.
 <table>
   <tr><th>Key</th>
      <th>Description</th></tr>

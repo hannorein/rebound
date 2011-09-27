@@ -70,7 +70,7 @@ int input_check_restart(int argc, char** argv){
 void input_binary(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
-	sprintf("%s_%d",filename,mpi_id);
+	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
 	FILE* inf = fopen(filename_mpi,"rb"); 
 #else // MPI
 	FILE* inf = fopen(filename,"rb"); 
@@ -79,7 +79,11 @@ void input_binary(char* filename){
 	int _N;
 	bytes += fread(&_N,sizeof(int),1,inf);
 	bytes += fread(&t,sizeof(double),1,inf);
+#ifdef MPI
+	printf("Found %d particles in file '%s'. ",_N,filename_mpi);
+#else // MPI
 	printf("Found %d particles in file '%s'. ",_N,filename);
+#endif // MPI
 	for (int i=0;i<_N;i++){
 		struct particle p;
 		bytes += fread(&p,sizeof(struct particle),1,inf);
