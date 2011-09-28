@@ -39,26 +39,6 @@
 #error GRAVITY_FFT not compatible with MPI yet
 #endif
 
-int gravity_fft_init_done = 0;
-void gravity_fft_init();
-
-void gravity_calculate_acceleration(){
-#pragma omp parallel for schedule(guided)
-	for (int i=0; i<N; i++){
-		particles[i].ax = 0; 
-		particles[i].ay = 0; 
-		particles[i].az = 0; 
-	}
-	if (gravity_fft_init_done==0){
-		gravity_fft_init();
-		gravity_fft_init_done=1;
-	}
-	cleanup();
-	for(int i=0;i<N;i++){
-		get_force(&(particles[i]));
-	}
-}
-
 int grid_NX_COMPLEX;
 int grid_NY_COMPLEX;
 int grid_NCOMPLEX;
@@ -76,6 +56,73 @@ fftw_plan r2cfft;
 fftw_plan c2rfft;
 fftw_plan for1dfft;
 fftw_plan bac1dfft;
+
+int gravity_fft_init_done = 0;
+void gravity_fft_init();
+void gravity_fft_grid2p(struct particle* p);
+void gravity_fft_p2grid();
+void remap(double* wi, const double direction);
+double shift_shear = 0;
+
+void gravity_calculate_acceleration(){
+#pragma omp parallel for schedule(guided)
+	for (int i=0; i<N; i++){
+		particles[i].ax = 0; 
+		particles[i].ay = 0; 
+		particles[i].az = 0; 
+	}
+	if (gravity_fft_init_done==0){
+		gravity_fft_init();
+		gravity_fft_init_done=1;
+	}
+#ifdef INTEGRATOR_SEI
+	struct ghostbox gb = boundaries_get_ghostbox(1,0,0);
+	shift_shear = gb.shifty;
+#endif 	// INTEGRATOR_SEI
+	gravity_fft_p2grid();
+	
+#ifdef INTEGRATOR_SEI
+	remap(density_r, 1);
+#endif 	// INTEGRATOR_SEI
+	// Transform the density
+	fftw_execute_dft_r2c(r2cfft, density_r, (fftw_complex*)density);
+	
+	// Compute time-dependant wave-vectors
+	for(int i = 0 ; i < grid_NCOMPLEX ; i++) {
+		kxt[i] = kx[i] + shift_shear/boxsize_y * ky[i];
+		k[i]  = pow( kxt[i]*kxt[i] + ky[i] * ky[i], 0.5);
+			
+		// we will use 1/k, that prevents singularity 
+		// (the k=0 is set to zero by renormalization...)
+		if ( k[i] == 0.0 ) k[i] = 1.0; 
+	}
+	
+	// Inverse Poisson equation
+	double q0[2];
+	
+	
+	for(int i = 0 ; i < grid_NCOMPLEX ; i++) {
+		q0[0] = -2.0 * M_PI * density[2*i] / (k[i] * root_nx * root_ny);
+		q0[1] = -2.0 * M_PI * density[2*i+1] / (k[i] * root_nx * root_ny);
+		fx[2*i]	=   q0[1] * sin(kxt[i] * dx) / dx;		// Real part of Fx
+		fx[2*i+1] = - q0[0] * sin(kxt[i] * dx) / dx;		// Imaginary part of FX
+		fy[2*i]	=   q0[1] * sin(ky[i] * dy) / dy;	
+		fy[2*i+1] = - q0[0] * sin(ky[i] * dy) / dy;
+	}
+	
+	// Transform back the force field
+	fftw_execute_dft_c2r(c2rfft, (fftw_complex*)fx, fx);
+	fftw_execute_dft_c2r(c2rfft, (fftw_complex*)fy, fy);
+	
+#ifdef INTEGRATOR_SEI
+	remap(fx, -1);
+	remap(fy, -1);
+#endif	// INTEGRATOR_SEI
+
+	for(int i=0;i<N;i++){
+		gravity_fft_grid2p(&(particles[i]));
+	}
+}
 
 void gravity_fft_init() {
 
@@ -142,16 +189,13 @@ double W(double x){
 	if (fabs(x)>=0.5 && fabs(x)<=3./2.) return 0.5*(3./2.-fabs(x))*(3./2.-fabs(x));
 	return 0; 
 }
-double q = 3./2.;
 
-void remap(double* wi, const double direction, double shift_shear) {
-	// If q=0 then there is no shear and the boxes are not shifted and we do not need to remap anything.
-	if (q==0) return;  
-	int i,j;
+#ifdef INTEGRATOR_SEI
+void remap(double* wi, const double direction) {
 	double phase, rew, imw;
 	
-	for( i = 0 ; i < root_nx ; i++) {
-		for( j = 0 ; j < root_ny ; j++) {
+	for(int i = 0 ; i < root_nx ; i++) {
+		for(int j = 0 ; j < root_ny ; j++) {
 			w1d[ 2 * j ] = wi[j + (root_ny + 2) * i];		// w1d is supposed to be a complex array. Thanks to c++, I have to use
 															// confusing indices...
 			w1d[ 2 * j + 1 ] = 0.0;
@@ -160,7 +204,7 @@ void remap(double* wi, const double direction, double shift_shear) {
 		// Transform w1d, which will be stored in w2d
 		fftw_execute(for1dfft);
 					
-		for( j = 0 ; j < root_ny ; j++) {
+		for(int j = 0 ; j < root_ny ; j++) {
 			// phase = ky * (-shift_shear)
 			phase =  - direction * (2.0 * M_PI) / boxsize_y * ((j + (root_ny / 2)) % root_ny - root_ny / 2) * shift_shear * ((double) i) / ((double) root_nx);
 			
@@ -182,25 +226,21 @@ void remap(double* wi, const double direction, double shift_shear) {
 		
 		fftw_execute(bac1dfft);
 		
-		for( j = 0 ; j < root_ny ; j++) {
+		for(int j = 0 ; j < root_ny ; j++) {
 			wi[j + (root_ny + 2) * i] = w1d[ 2 * j ] / root_ny;
 		}
 	}
 	return;
 }
+#endif // INTEGRATOR_SEI
 extern double OMEGA;
 
-void cleanup(){
+void gravity_fft_p2grid(){
 		
 	// clean the current density
 	for(int i = 0 ; i < root_nx * (root_ny + 2) ; i++) {
 		density_r[i] = 0.0;			// density is used to store the surface density
 	}
-	
-	double shift_shear=0.0;		// If q=0 then there is no shear and the boxes are not shifted.
-	
-	if (q!=0) shift_shear = boxsize_x*(-0.5+fmod(q*OMEGA*t,1.));	
-	
 	
 	for (int i=0; i<N; i++){
 		struct particle p = particles[i];
@@ -307,49 +347,12 @@ void cleanup(){
 
 	}
 
-	remap(density_r, 1, shift_shear);
-	// Transform the density
-	fftw_execute_dft_r2c(r2cfft, density_r, (fftw_complex*)density);
-	
-	// Compute time-dependant wave-vectors
-	for(int i = 0 ; i < grid_NCOMPLEX ; i++) {
-		kxt[i] = kx[i] + shift_shear/boxsize_x * ky[i];
-		k[i]  = pow( kxt[i]*kxt[i] + ky[i] * ky[i], 0.5);
-			
-		// we will use 1/k, that prevents singularity 
-		// (the k=0 is set to zero by renormalization...)
-		if ( k[i] == 0.0 ) k[i] = 1.0; 
-	}
-	
-	// Inverse Poisson equation
-	double q0[2];
-	
-	
-	for(int i = 0 ; i < grid_NCOMPLEX ; i++) {
-		q0[0] = -2.0 * M_PI * density[2*i] / (k[i] * root_nx * root_ny);
-		q0[1] = -2.0 * M_PI * density[2*i+1] / (k[i] * root_nx * root_ny);
-		fx[2*i]	=   q0[1] * sin(kxt[i] * dx) / dx;		// Real part of Fx
-		fx[2*i+1] = - q0[0] * sin(kxt[i] * dx) / dx;		// Imaginary part of FX
-		fy[2*i]	=   q0[1] * sin(ky[i] * dy) / dy;	
-		fy[2*i+1] = - q0[0] * sin(ky[i] * dy) / dy;
-	}
-	
-	// Transform back the force field
-	fftw_execute_dft_c2r(c2rfft, (fftw_complex*)fx, fx);
-	fftw_execute_dft_c2r(c2rfft, (fftw_complex*)fy, fy);
-	
-	remap(fx, -1, shift_shear);
-	remap(fy, -1, shift_shear);
 	
 }
 
 
-void get_force(struct particle* p){
+void gravity_fft_grid2p(struct particle* p){
 	
-	double shift_shear=0.0;		// If q=0 then there is no shear and the boxes are not shifted.
-	
-	if (q!=0) shift_shear = boxsize_y*(-0.5+fmod(q*OMEGA*t,1.));	
-
 	// I'm sorry to say I have to keep these traps. Something's wrong if these traps are called.
 		
 	int x = (int) floor((p->x / boxsize_x + 0.5) * root_nx);

@@ -53,28 +53,36 @@ void problem_init(int argc, char* argv[]){
 #ifdef GRAVITY_TREE
 	opening_angle2	= .5;
 #endif
+#ifdef INTEGRATOR_SEI
 	OMEGA 				= 0.00013143527;	// 1/s
+#endif 	// INTEGRATOR_SEI
 	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
 	softening 			= 0.1;			// m
+#ifdef INTEGRATOR_SEI
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
-	root_nx = 20; root_ny = 20; root_nz = 10;
-	nghostx = 2; nghosty = 2; nghostz = 0; 			// Use three ghost rings
+#else 	// INTEGRATOR_SEI
+	dt 				= 4e-4;		// s
+#endif 	// INTEGRATOR_SEI
+	int ngrid = 16;
+	root_nx = ngrid; root_ny = ngrid; root_nz = ngrid/2;
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3
 	double particle_radius_min 	= 1;			// m
 	double particle_radius_max 	= 4;			// m
 	double particle_radius_slope 	= -3;	
-	boxsize 			= 10;
+	boxsize 			= 200/(double)ngrid;
 	if (argc>1){						// Try to read boxsize from command line
 		boxsize = atof(argv[1]);
 	}
 	init_box();
 	
-	// Initial conditions
-	printf("Toomre wavelength: %f\n",2.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*G);
 	// Use Bridges et al coefficient of restitution.
 	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
+#ifdef INTEGRATOR_SEI
 	minimum_collision_velocity = particle_radius_min*OMEGA*0.001;  // small fraction of the shear
+#else	// INTEGRATOR_SEI
+	minimum_collision_velocity = particle_radius_min/dt*0.001;  // small fraction of the shear
+#endif	// INTEGRATOR_SEI
 	double total_mass = surfacedensity*boxsize_x*boxsize_y;
 #ifdef MPI
 	// Only initialise particles on master. This should also be parallelied but the details depend on the individual problem.
@@ -87,7 +95,11 @@ void problem_init(int argc, char* argv[]){
 			pt.y 		= tools_uniform(-boxsize_y/2.,boxsize_y/2.);
 			pt.z 		= tools_normal(1.);					// m
 			pt.vx 		= 0;
+#ifdef INTEGRATOR_SEI
 			pt.vy 		= -1.5*pt.x*OMEGA;
+#else	// INTEGRATOR_SEI
+			pt.vy 		= 0;
+#endif 	// INTEGRATOR_SEI
 			pt.vz 		= 0;
 			pt.ax 		= 0;
 			pt.ay 		= 0;
@@ -123,6 +135,7 @@ void problem_output(){
 		output_png("png/");
 	}
 #endif //LIBPNG
+#ifdef INTEGRATOR_SEI
 	if (output_check(1e-3*2.*M_PI/OMEGA)){
 		output_timing();
 		//output_append_velocity_dispersion("veldisp.txt");
@@ -130,6 +143,9 @@ void problem_output(){
 	if (output_check(2.*M_PI/OMEGA)){
 		//output_ascii("position.txt");
 	}
+#else 	// INTEGRATOR_SEI
+	output_timing();
+#endif 	// INTEGRATOR_SEI
 }
 
 void problem_finish(){
