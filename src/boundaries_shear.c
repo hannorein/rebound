@@ -96,9 +96,9 @@ struct ghostbox boundaries_get_ghostbox(int i, int j, int k){
 		shift = -fmod(gb.shiftvy*t,boxsize_y); 
 	}else{
 		if (i>0){
-			shift = -fmod(gb.shiftvy*t+boxsize_y/2.,boxsize_y)-boxsize_y/2.; 
+			shift = -fmod(gb.shiftvy*t-boxsize_y/2.,boxsize_y)-boxsize_y/2.; 
 		}else{
-			shift = -fmod(gb.shiftvy*t-boxsize_y/2.,boxsize_y)+boxsize_y/2.; 
+			shift = -fmod(gb.shiftvy*t+boxsize_y/2.,boxsize_y)+boxsize_y/2.; 
 		}	
 	}
 	gb.shiftx = boxsize_x*(double)i;
