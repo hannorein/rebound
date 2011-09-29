@@ -39,7 +39,10 @@
 #include "tree.h"
 #include "tools.h"
 
+#ifdef INTEGRATOR_SEI
 extern double OMEGA;
+extern double OMEGAZ;
+#endif 	// INTEGRATOR_SEI
 extern double coefficient_of_restitution;
 extern double minimum_collision_velocity;
 
@@ -55,6 +58,7 @@ void problem_init(int argc, char* argv[]){
 #endif
 #ifdef INTEGRATOR_SEI
 	OMEGA 				= 0.00013143527;	// 1/s
+	OMEGAZ 				= 3.6*0.00013143527;	// 1/s
 #endif 	// INTEGRATOR_SEI
 	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
 	softening 			= 0.1;			// m
@@ -63,7 +67,7 @@ void problem_init(int argc, char* argv[]){
 #else 	// INTEGRATOR_SEI
 	dt 				= 4e-4;		// s
 #endif 	// INTEGRATOR_SEI
-	int ngrid = 16;
+	int ngrid = 32;
 	root_nx = ngrid; root_ny = ngrid; root_nz = ngrid/2;
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3

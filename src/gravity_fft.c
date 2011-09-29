@@ -233,7 +233,6 @@ void remap(double* wi, const double direction) {
 	return;
 }
 #endif // INTEGRATOR_SEI
-extern double OMEGA;
 
 void gravity_fft_p2grid(){
 		
@@ -281,7 +280,7 @@ void gravity_fft_p2grid(){
 		int yp1_xp1Target = yp1_xm1Target;
 		
 		double tx, ty;
-		double q0 =  p.m /(dx*dy);
+		double q0 =  G*p.m /(dx*dy);
 		
 		// Shearing patch trick
 		// This is only an **approximate** mapping
@@ -471,7 +470,7 @@ void gravity_fft_grid2p(struct particle* p){
 
 	p->ax += fx[(root_ny+2) * xp1Target + yp1_xp1Target] * W(-tx/dx)*W(-ty/dy);
 	p->ay += fy[(root_ny+2) * xp1Target + yp1_xp1Target] * W(-tx/dx)*W(-ty/dy);  
-
+	
 }
 
 
