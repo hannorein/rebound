@@ -65,9 +65,9 @@ void problem_init(int argc, char* argv[]){
 #ifdef INTEGRATOR_SEI
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
 #else 	// INTEGRATOR_SEI
-	dt 				= 4e-4;		// s
+	dt 				= 1e2;			// s
 #endif 	// INTEGRATOR_SEI
-	int ngrid = 32;
+	int ngrid = 64;
 	root_nx = ngrid; root_ny = ngrid; root_nz = ngrid/2;
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3

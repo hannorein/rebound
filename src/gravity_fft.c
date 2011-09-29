@@ -65,49 +65,48 @@ void remap(double* wi, const double direction);
 double shift_shear = 0;
 
 void gravity_calculate_acceleration(){
+	// Setting up the grid
+	if (gravity_fft_init_done==0){
+		gravity_fft_init();
+		gravity_fft_init_done=1;
+	}
 #pragma omp parallel for schedule(guided)
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 
 		particles[i].ay = 0; 
 		particles[i].az = 0; 
 	}
-	if (gravity_fft_init_done==0){
-		gravity_fft_init();
-		gravity_fft_init_done=1;
-	}
 #ifdef INTEGRATOR_SEI
 	struct ghostbox gb = boundaries_get_ghostbox(1,0,0);
 	shift_shear = gb.shifty;
-#endif 	// INTEGRATOR_SEI
-	gravity_fft_p2grid();
-	
-#ifdef INTEGRATOR_SEI
-	remap(density_r, 1);
-#endif 	// INTEGRATOR_SEI
-	// Transform the density
-	fftw_execute_dft_r2c(r2cfft, density_r, (fftw_complex*)density);
-	
 	// Compute time-dependant wave-vectors
 	for(int i = 0 ; i < grid_NCOMPLEX ; i++) {
 		kxt[i] = kx[i] + shift_shear/boxsize_y * ky[i];
 		k[i]  = pow( kxt[i]*kxt[i] + ky[i] * ky[i], 0.5);
-			
 		// we will use 1/k, that prevents singularity 
 		// (the k=0 is set to zero by renormalization...)
 		if ( k[i] == 0.0 ) k[i] = 1.0; 
 	}
+#endif 	// INTEGRATOR_SEI
+	gravity_fft_p2grid();
+	
+#ifdef INTEGRATOR_SEI
+	// Remap in fourier space to deal with shearing sheet boundary conditions.
+	remap(density_r, 1);
+#endif 	// INTEGRATOR_SEI
+	
+	fftw_execute_dft_r2c(r2cfft, density_r, (fftw_complex*)density);
+	
 	
 	// Inverse Poisson equation
-	double q0[2];
-	
 	
 	for(int i = 0 ; i < grid_NCOMPLEX ; i++) {
-		q0[0] = -2.0 * M_PI * density[2*i] / (k[i] * root_nx * root_ny);
-		q0[1] = -2.0 * M_PI * density[2*i+1] / (k[i] * root_nx * root_ny);
-		fx[2*i]	=   q0[1] * sin(kxt[i] * dx) / dx;		// Real part of Fx
-		fx[2*i+1] = - q0[0] * sin(kxt[i] * dx) / dx;		// Imaginary part of FX
-		fy[2*i]	=   q0[1] * sin(ky[i] * dy) / dy;	
-		fy[2*i+1] = - q0[0] * sin(ky[i] * dy) / dy;
+		double q0 = - 2.0 * M_PI * density[2*i] / (k[i] * root_nx * root_ny);
+		double q1 = - 2.0 * M_PI * density[2*i+1] / (k[i] * root_nx * root_ny);
+		fx[2*i]		=   q1 * sin(kxt[i] * dx) / dx;		// Real part of Fx
+		fx[2*i+1] 	= - q0 * sin(kxt[i] * dx) / dx;		// Imaginary part of Fx
+		fy[2*i]		=   q1 * sin(ky[i]  * dy) / dy;	
+		fy[2*i+1] 	= - q0 * sin(ky[i]  * dy) / dy;
 	}
 	
 	// Transform back the force field
@@ -115,6 +114,7 @@ void gravity_calculate_acceleration(){
 	fftw_execute_dft_c2r(c2rfft, (fftw_complex*)fy, fy);
 	
 #ifdef INTEGRATOR_SEI
+	// Remap in fourier space to deal with shearing sheet boundary conditions.
 	remap(fx, -1);
 	remap(fy, -1);
 #endif	// INTEGRATOR_SEI
@@ -136,7 +136,11 @@ void gravity_fft_init() {
 	// Array allocation
 	kx = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
 	ky = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
+#ifdef INTEGRATOR_SEI
 	kxt= (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
+#else	// INTEGRATOR_SEI
+	kxt = kx; 	// No time dependent wave vectors.
+#endif 	// INTEGRATOR_SEI
 	k  = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
 	density = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX * 2);
 	density_r = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX * 2);
@@ -149,36 +153,24 @@ void gravity_fft_init() {
 	for(int i = 0; i < grid_NX_COMPLEX; i++) {
 		for(int j =0; j < grid_NY_COMPLEX; j++) {
 			int IDX2D = i * grid_NY_COMPLEX + j;
-			// TODO:
-			// We don't really need kx and ky yet, do we?
 			kx[IDX2D] = (2.0 * M_PI) / boxsize_x * (
 					fmod( (double) (i + (grid_NX_COMPLEX/2.0 )), (double) grid_NX_COMPLEX)
 					 - (double) grid_NX_COMPLEX / 2.0 );
-						   
-			kxt[IDX2D] = (2.0 * M_PI) / boxsize_x * (
-					fmod( (double) (i + (grid_NX_COMPLEX/2.0 )), (double) grid_NX_COMPLEX)
-					 - (double) grid_NX_COMPLEX / 2.0 );
-					 
 			ky[IDX2D] = (2.0 * M_PI) / boxsize_y * ((double) j);
-			k[IDX2D]  = pow( kxt[IDX2D]*kxt[IDX2D] + ky[IDX2D] * ky[IDX2D], 0.5);
+#ifndef INTEGRATOR_SEI
+			k[IDX2D]  = pow( kx[IDX2D]*kx[IDX2D] + ky[IDX2D] * ky[IDX2D], 0.5);
 			
 			// we will use 1/k, that prevents singularity 
 			// (the k=0 is set to zero by renormalization...)
 			if ( k[IDX2D] == 0.0 ) k[IDX2D] = 1.0; 
+#endif	// INTEGRATOR_SEI
 		}
 	}
 	
 	// Init ffts (use in place fourier transform for efficient memory usage)
-	//fftw_init_threads();
-	//fftw_plan_with_nthreads( NUMTHRDS );
-	r2cfft = fftw_plan_dft_r2c_2d( root_nx, root_ny, 
-		density, (fftw_complex*)density,  
-		FFTW_MEASURE);
-	c2rfft = fftw_plan_dft_c2r_2d( root_nx, root_ny, 
-		(fftw_complex*)(density), density,
-		FFTW_MEASURE);
+	r2cfft = fftw_plan_dft_r2c_2d( root_nx, root_ny, density, (fftw_complex*)density, FFTW_MEASURE);
+	c2rfft = fftw_plan_dft_c2r_2d( root_nx, root_ny, (fftw_complex*)density, density, FFTW_MEASURE);
 	for1dfft = fftw_plan_dft_1d(root_ny, (fftw_complex*)w1d, (fftw_complex*)w1d, FFTW_FORWARD, FFTW_MEASURE);
-										 
 	bac1dfft = fftw_plan_dft_1d(root_ny, (fftw_complex*)w1d, (fftw_complex*)w1d, FFTW_BACKWARD, FFTW_MEASURE);
 }
 
@@ -196,8 +188,7 @@ void remap(double* wi, const double direction) {
 	
 	for(int i = 0 ; i < root_nx ; i++) {
 		for(int j = 0 ; j < root_ny ; j++) {
-			w1d[ 2 * j ] = wi[j + (root_ny + 2) * i];		// w1d is supposed to be a complex array. Thanks to c++, I have to use
-															// confusing indices...
+			w1d[ 2 * j ] = wi[j + (root_ny + 2) * i];		// w1d is supposed to be a complex array. 
 			w1d[ 2 * j + 1 ] = 0.0;
 		}
 		
@@ -217,7 +208,6 @@ void remap(double* wi, const double direction) {
 			w1d[2 * j + 1] = rew * sin(phase) + imw * cos(phase);
 			
 			// Throw the Nyquist Frequency (should be useless anyway)
-			
 			if(j==root_ny/2) {
 				w1d[2 * j    ] =0.0;
 				w1d[2 * j + 1] = 0.0;
@@ -230,7 +220,6 @@ void remap(double* wi, const double direction) {
 			wi[j + (root_ny + 2) * i] = w1d[ 2 * j ] / root_ny;
 		}
 	}
-	return;
 }
 #endif // INTEGRATOR_SEI
 
@@ -280,7 +269,7 @@ void gravity_fft_p2grid(){
 		int yp1_xp1Target = yp1_xm1Target;
 		
 		double tx, ty;
-		double q0 =  G*p.m /(dx*dy);
+		double q0 =  G* p.m /(dx*dy);
 		
 		// Shearing patch trick
 		// This is only an **approximate** mapping
@@ -343,10 +332,7 @@ void gravity_fft_p2grid(){
 		tx = ((double)xp1 +0.5) * boxsize_x / root_nx -0.5*boxsize_x - p.x;
 		ty = ((double)yp1 +0.5) * boxsize_y / root_ny -0.5*boxsize_y - p.y;
 		density_r[(root_ny+2) * xp1Target + yp1_xp1Target] += q0 * W(tx/dx)*W(ty/dy); 
-
 	}
-
-	
 }
 
 
@@ -361,7 +347,6 @@ void gravity_fft_grid2p(struct particle* p){
 		
 	
 	// xp1, xm1... might be out of bound. They are however the relevant coordinates for the interpolation.
-	
 	int xp1 = x + 1;
 	int xm1 = x - 1;
 	int ym1 = y - 1;
@@ -399,7 +384,7 @@ void gravity_fft_grid2p(struct particle* p){
 	if(xp1Target>=root_nx) {
 		xp1Target -= root_nx;							// X periodicity
 		y_xp1Target = y_xp1Target + round((shift_shear/boxsize_y) * root_ny);
-		y_xp1Target = (y_xp1Target + root_ny) % root_ny;		// Y periodicity
+		y_xp1Target = (y_xp1Target + root_ny) % root_ny;			// Y periodicity
 		yp1_xp1Target = yp1_xp1Target + round((shift_shear/boxsize_y) * root_ny);
 		yp1_xp1Target = (yp1_xp1Target + root_ny) % root_ny;
 		ym1_xp1Target = ym1_xp1Target + round((shift_shear/boxsize_y) * root_ny);
@@ -409,7 +394,7 @@ void gravity_fft_grid2p(struct particle* p){
 	if(xm1Target<0) {
 		xm1Target += root_nx;
 		y_xm1Target = y_xm1Target - round((shift_shear/boxsize_y) * root_ny);
-		y_xm1Target = (y_xm1Target + root_ny) % root_ny;		// Y periodicity
+		y_xm1Target = (y_xm1Target + root_ny) % root_ny;			// Y periodicity
 		yp1_xm1Target = yp1_xm1Target - round((shift_shear/boxsize_y) * root_ny);
 		yp1_xm1Target = (yp1_xm1Target + root_ny) % root_ny;
 		ym1_xm1Target = ym1_xm1Target - round((shift_shear/boxsize_y) * root_ny);
