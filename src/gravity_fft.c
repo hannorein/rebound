@@ -1,13 +1,16 @@
 /**
  * @file 	gravity.c
  * @brief 	Gravity calculation on a grid using an FFT.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @author 	Hanno Rein <hanno@hanno-rein.de>, Geoffroy Lesur <geoffroy.lesur@obs.ujf-grenoble.fr>
  *
- * @details 	TBD	
+ * @details 	This is a 2D FFT poisson solver for periodic and shearing sheet boxes.
+ * 		It has not been well tested yet, so use with caution.
+ *		Furthermore, it is not parallelized yet.
+ *		The number of grid points is set by root_nx and root_ny. 
  *
  * 
  * @section LICENSE
- * Copyright (c) 2011 Hanno Rein, Shangfei Liu, Geoffory Lesur
+ * Copyright (c) 2011 Hanno Rein, Shangfei Liu, Geoffroy Lesur
  *
  * This file is part of rebound.
  *
@@ -42,26 +45,28 @@
 int grid_NX_COMPLEX;
 int grid_NY_COMPLEX;
 int grid_NCOMPLEX;
-double dx,dy;
-double* kx;
-double* ky;
-double* kxt;
-double* k;
-double* density;
-double* density_r;
-double* fx;
-double* fy;
-double* w1d;
-fftw_plan r2cfft;
-fftw_plan c2rfft;
-fftw_plan for1dfft;
-fftw_plan bac1dfft;
+double dx,dy;		/**< Grid spacing */
+double* kx;		/**< Wave vector */
+double* ky;		/**< Wave vector */
+double* kxt;		/**< Time dependent wave vector (shearing sheet only) */
+double* k;		/**< Magnitude of wave vector */
+double* density;	/**< Complex density field */
+double* density_r;	/**< Real density field  */
+double* fx;		/**< Force in x direction */
+double* fy;		/**< Force in y direction */
+fftw_plan r2cfft;	/**< FFT plan real to complex */
+fftw_plan c2rfft;	/**< FFT plan complex to real */
+#ifdef INTEGRATOR_SEI
+double* w1d;		/**< Temporary 1D arrary for remapping (shearing sheet only) */
+fftw_plan for1dfft;	/**< FFT plan for remapping (1D, shearing sheet only) */
+fftw_plan bac1dfft;	/**< FFT plan for remapping (1D, shearing sheet only) */
+#endif 	// INTEGRATOR_SEI
 
-int gravity_fft_init_done = 0;
+int gravity_fft_init_done = 0;	/**< Flag if arrays and plans are initialized */
 void gravity_fft_init();
 void gravity_fft_grid2p(struct particle* p);
 void gravity_fft_p2grid();
-void remap(double* wi, const double direction);
+void gravity_fft_remap(double* wi, const double direction);
 double shift_shear = 0;
 
 void gravity_calculate_acceleration(){
@@ -79,20 +84,12 @@ void gravity_calculate_acceleration(){
 #ifdef INTEGRATOR_SEI
 	struct ghostbox gb = boundaries_get_ghostbox(1,0,0);
 	shift_shear = gb.shifty;
-	// Compute time-dependant wave-vectors
-	for(int i = 0 ; i < grid_NCOMPLEX ; i++) {
-		kxt[i] = kx[i] + shift_shear/boxsize_y * ky[i];
-		k[i]  = pow( kxt[i]*kxt[i] + ky[i] * ky[i], 0.5);
-		// we will use 1/k, that prevents singularity 
-		// (the k=0 is set to zero by renormalization...)
-		if ( k[i] == 0.0 ) k[i] = 1.0; 
-	}
 #endif 	// INTEGRATOR_SEI
 	gravity_fft_p2grid();
 	
 #ifdef INTEGRATOR_SEI
 	// Remap in fourier space to deal with shearing sheet boundary conditions.
-	remap(density_r, 1);
+	gravity_fft_remap(density_r, 1);
 #endif 	// INTEGRATOR_SEI
 	
 	fftw_execute_dft_r2c(r2cfft, density_r, (fftw_complex*)density);
@@ -101,12 +98,22 @@ void gravity_calculate_acceleration(){
 	// Inverse Poisson equation
 	
 	for(int i = 0 ; i < grid_NCOMPLEX ; i++) {
+#ifdef INTEGRATOR_SEI
+		// Compute time-dependant wave-vectors
+		kxt[i] = kx[i] + shift_shear/boxsize_y * ky[i];
+		k[i]  = sqrt( kxt[i]*kxt[i] + ky[i] * ky[i]);
+		// we will use 1/k, that prevents singularity 
+		// (the k=0 is set to zero by renormalization...)
+		if ( k[i] == 0.0 ) k[i] = 1.0; 
+#endif 	// INTEGRATOR_SEI
 		double q0 = - 2.0 * M_PI * density[2*i] / (k[i] * root_nx * root_ny);
 		double q1 = - 2.0 * M_PI * density[2*i+1] / (k[i] * root_nx * root_ny);
-		fx[2*i]		=   q1 * sin(kxt[i] * dx) / dx;		// Real part of Fx
-		fx[2*i+1] 	= - q0 * sin(kxt[i] * dx) / dx;		// Imaginary part of Fx
-		fy[2*i]		=   q1 * sin(ky[i]  * dy) / dy;	
-		fy[2*i+1] 	= - q0 * sin(ky[i]  * dy) / dy;
+		double sinkxt = sin(kxt[i] * dx);
+		double sinky  = sin(ky[i] * dy);
+		fx[2*i]		=   q1 * sinkxt / dx;		// Real part of Fx
+		fx[2*i+1] 	= - q0 * sinkxt / dx;		// Imaginary part of Fx
+		fy[2*i]		=   q1 * sinky  / dy;	
+		fy[2*i+1] 	= - q0 * sinky  / dy;
 	}
 	
 	// Transform back the force field
@@ -115,8 +122,8 @@ void gravity_calculate_acceleration(){
 	
 #ifdef INTEGRATOR_SEI
 	// Remap in fourier space to deal with shearing sheet boundary conditions.
-	remap(fx, -1);
-	remap(fy, -1);
+	gravity_fft_remap(fx, -1);
+	gravity_fft_remap(fy, -1);
 #endif	// INTEGRATOR_SEI
 
 	for(int i=0;i<N;i++){
@@ -134,19 +141,19 @@ void gravity_fft_init() {
 	dy		= boxsize_y / root_ny;	
 	
 	// Array allocation
-	kx = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
-	ky = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
+	kx  = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
+	ky  = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
 #ifdef INTEGRATOR_SEI
-	kxt= (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
+	kxt = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
+	w1d = (double *) fftw_malloc( sizeof(double) * root_ny * 2 );
 #else	// INTEGRATOR_SEI
 	kxt = kx; 	// No time dependent wave vectors.
 #endif 	// INTEGRATOR_SEI
-	k  = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
+	k   = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
 	density = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX * 2);
 	density_r = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX * 2);
-	fx = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX * 2);
-	fy = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX * 2);
-	w1d = (double *) fftw_malloc( sizeof(double) * root_ny * 2 );
+	fx  = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX * 2);
+	fy  = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX * 2);
 	
 	// Init wavevectors
 	
@@ -170,8 +177,10 @@ void gravity_fft_init() {
 	// Init ffts (use in place fourier transform for efficient memory usage)
 	r2cfft = fftw_plan_dft_r2c_2d( root_nx, root_ny, density, (fftw_complex*)density, FFTW_MEASURE);
 	c2rfft = fftw_plan_dft_c2r_2d( root_nx, root_ny, (fftw_complex*)density, density, FFTW_MEASURE);
+#ifdef INTEGRATOR_SEI
 	for1dfft = fftw_plan_dft_1d(root_ny, (fftw_complex*)w1d, (fftw_complex*)w1d, FFTW_FORWARD, FFTW_MEASURE);
 	bac1dfft = fftw_plan_dft_1d(root_ny, (fftw_complex*)w1d, (fftw_complex*)w1d, FFTW_BACKWARD, FFTW_MEASURE);
+#endif	// INTEGRATOR_SEI
 }
 
 // Assignement function (TSC Scheme) 
@@ -183,7 +192,7 @@ double W(double x){
 }
 
 #ifdef INTEGRATOR_SEI
-void remap(double* wi, const double direction) {
+void gravity_fft_remap(double* wi, const double direction) {
 	double phase, rew, imw;
 	
 	for(int i = 0 ; i < root_nx ; i++) {

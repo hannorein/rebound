@@ -134,11 +134,6 @@ void problem_inloop(){
 }
 
 void problem_output(){
-#ifdef LIBPNG
-	if (output_check(1e-3*2.*M_PI/OMEGA)){
-		output_png("png/");
-	}
-#endif //LIBPNG
 #ifdef INTEGRATOR_SEI
 	if (output_check(1e-3*2.*M_PI/OMEGA)){
 		output_timing();
