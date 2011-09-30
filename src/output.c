@@ -30,6 +30,7 @@
 #include <sys/time.h>
 #include "particle.h"
 #include "main.h"
+#include "tools.h"
 #include "output.h"
 #include "communication_mpi.h"
 #ifdef OPENGL
@@ -79,21 +80,6 @@ struct vec3 {
 	double z;
 };
 
-/**
- * Struct representing a Keplerian orbit.
- */
-struct opv_orbit {
-	double a;
-	double e;
-	double inc;
-	double Omega; 	// longitude of ascending node
-	double omega; 	// argument of perihelion
-	double M;  	// mean anomaly
-	double E;  	// eccentric anomaly
-	double f; 	// true anomaly
-};
-
-void posvel2orbit(struct opv_orbit* o, struct particle* pv, double gmsum);
 
 
 double output_timing_last = -1; 	/**< Time when output_timing() was called the last time. */
@@ -161,9 +147,7 @@ void output_orbits_append(char* filename){
 	FILE* of = fopen(filename,"a"); 
 #endif // MPI
 	for (int i=1;i<N;i++){
-		struct particle* p = &(particles[i]);
-		struct opv_orbit o;
-		posvel2orbit(&o,p,G*particles[0].m);
+		struct orbit o = tools_p2orbit(particles[i],particles[0].m);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,o.a,o.e,o.inc,o.Omega,o.omega,o.M,o.E,o.f);
 	}
 	fclose(of);
@@ -178,9 +162,7 @@ void output_orbits(char* filename){
 	FILE* of = fopen(filename,"w"); 
 #endif // MPI
 	for (int i=1;i<N;i++){
-		struct particle* p = &(particles[i]);
-		struct opv_orbit o;
-		posvel2orbit(&o,p,G*particles[0].m);
+		struct orbit o = tools_p2orbit(particles[i],particles[0].m);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",o.a,o.e,o.inc,o.Omega,o.omega,o.M,o.E,o.f);
 	}
 	fclose(of);
@@ -360,149 +342,3 @@ void output_png_single(char* filename){
 #endif
 #endif
 
-#define TINY 1.0e-12
-void posvel2orbit(struct opv_orbit* o, struct particle* pv, double gmsum){
-	// Compute the angular momentum H, and thereby the inclination INC.
-	double Omega, a, e, M, E=0, f=0, omega, inc; 	// orbital paramaers
-
-	double u; int ialpha;			// internals
-	
-	double hx = pv->y*pv->vz - pv->z*pv->vy;
-	double hy = pv->z*pv->vx - pv->x*pv->vz;
-	double hz = pv->x*pv->vy - pv->y*pv->vx;
-	double h2 = hx*hx + hy*hy +hz*hz;
-	double h  = sqrt(h2);
-	inc = acos(hz/h);
-
-	// Compute longitude of ascending node CAPOM and the argument of latitude u.
-	double fac = sqrt(hx*hx + hy*hy)/h;
-	
-	if(fac < TINY ){
-	  	Omega = 0.;
-	  	u = atan2(pv->y,pv->x);
-	  	if(fabs(inc - M_PI) < 10.*TINY){
-			u = -u;
-	  	}
-	}else{
-	  	Omega = atan2(hx,-hy); 
-	  	u = atan2 ( pv->z/sin(inc) , pv->x*cos(Omega) + pv->y*sin(Omega));
-	}
-
-	while(Omega < 0.) Omega = Omega + 2.*M_PI;
-	
-	while(u < 0.) u = u + 2.*M_PI;
-	
-
-	//  Compute the radius R and velocity squared V2, and the dot product RDOTV, the energy per unit mass ENERGY .
-
-	double r = sqrt(pv->x*pv->x + pv->y*pv->y + pv->z*pv->z);
-	double v2 = pv->vx*pv->vx + pv->vy*pv->vy + pv->vz*pv->vz;
-	double vdotr = pv->x*pv->vx + pv->y*pv->vy + pv->z*pv->vz;
-	double energy = 0.5*v2 - gmsum/r;
-
-	//  Determine type of conic section and label it via IALPHA
-	if(fabs(energy*r/gmsum) < sqrt(TINY)){
-		ialpha = 0;
-	}else{
-	   	if(energy < 0.) ialpha = -1;
-	   	if(energy > 0.) ialpha = +1;
-	}
-
-	// Depending on the conic type, determine the remaining elements
-
-	// ELLIPSE :
-	if(ialpha == -1){
-		a = -0.5*gmsum/energy;
-	  	fac = 1. - h2/(gmsum*a);
-		double cape, w;
-		if (fac > TINY){
-			e = sqrt ( fac );
-             		double face =(a-r)/(a*e);
-
-			//... Apr. 16/93 : watch for case where face is slightly outside unity
-             		if ( face > 1.){
-                		cape = 0.;
-             		}else{
-                		if ( face > -1.){
-                   			cape = acos( face );
-				}else{
-                   			cape = M_PI;
-				}
-			}
-			
-            		if ( vdotr < 0. ) cape = 2.*M_PI - cape;
-			double cw, sw;
-	    		cw = (cos( cape) -e)/(1. - e*cos(cape));
-	    		sw = sqrt(1. - e*e)*sin(cape)/(1. - e*cos(cape));
-	    		w = atan2(sw,cw);
-	    		while(w < 0.) w = w + 2.*M_PI;
-	  	}else{
-	    		e = 0.;
-	    		w = u;
-	    		cape = u;
-		}
-		f = w;
-		E = cape;
-	  	M = cape - e*sin (cape);
-	  	omega = u - w;
-	  	while(omega < 0.) omega = omega + 2.*M_PI;
-	  	omega = omega - floor(omega/(2.*M_PI))*2.*M_PI;
-	}
-	// HYPERBOLA :
-	if(ialpha == 1){
-	  	a = 0.5*gmsum/energy;
-	  	fac = h2/(gmsum*a);
-		double w, capf;
-          	if (fac > TINY){
- 	    		e = sqrt ( 1. + fac );
-	    		double tmpf = (a+r)/(a*e);
-            		if (tmpf < 1.0){
-              			 tmpf = 1.0;
-			}
-	    		capf = log(tmpf + sqrt(tmpf*tmpf -1.));
-	    		if ( vdotr < 0. ) capf = - capf;
-			double cw,sw;
-	    		cw = (e - cosh(capf))/(e*cosh(capf) - 1. );
-	    		sw = sqrt(e*e - 1.)*sinh(capf)/(e*cosh(capf) - 1. );
-	    		w = atan2(sw,cw);
-	    		if(w < 0.) w = w + 2.*M_PI;
-	  	}else{
-	// we only get here if a hyperbola is essentially a parabola so we calculate e and w accordingly to avoid singularities
-	    		e = 1.;
-	    		double tmpf = 0.5*h2/gmsum;
-	    		w = acos(2.*tmpf/r -1.);
-	    		if ( vdotr < 0.) w = 2.*M_PI - w;
-	    		tmpf = (a+r)/(a*e);
-	    		capf = log(tmpf + sqrt(tmpf*tmpf -1.));
-	  	}
-
-	  	M = e * sinh(capf) - capf;
-	  	omega = u - w;
-	  	if(omega < 0.) omega = omega + 2.*M_PI;
-		omega = omega - floor(omega/(2.*M_PI))*2.*M_PI;
-	}
-
-	// PARABOLA : ( NOTE - in this case we use "a" to mean pericentric distance)
-
-	if(ialpha == 0){
-		double w;
-		a =  0.5*h2/gmsum;
-	  	e = 1.;
-	  	w = acos(2.*a/r -1.);
-	  	if ( vdotr < 0.) w = 2.*M_PI - w;
-	  	double tmpf = tan(0.5 * w);
-	  	M = tmpf* (1. + tmpf*tmpf/3.);
-	  	omega = u - w;
-	  	if(omega < 0.) omega = omega + 2.*M_PI;
-	  	omega = omega - floor(omega/(2.*M_PI))*2.*M_PI; 	 
-	}
-	
-	o->Omega 	= Omega;
-	o->omega 	= omega;
-	o->M		= M;
-	o->f		= f;
-	o->E		= E;
-	o->inc		= inc;
-	o->e		= e;
-	o->a		= a;
-}
