@@ -50,16 +50,16 @@ void problem_init(int argc, char* argv[]){
 	p.m  = 1;
 	particles_add(p); // Star
 	
-	int N = 100; // Number of test particles
+	int _N = 100; // Number of test particles
 	if(argc>1){
-		N = atoi(argv[1]);
+		_N = atoi(argv[1]);
 	}
-	for(int n=0; n<N; n++){
-		p.x  = cos(2.*M_PI/(double)(N)*(double)(n));
-		p.y  = sin(2.*M_PI/(double)(N)*(double)(n));
+	for(int n=0; n<_N; n++){
+		p.x  = cos(2.*M_PI/(double)(_N)*(double)(n));
+		p.y  = sin(2.*M_PI/(double)(_N)*(double)(n));
 		p.z  = 0;
-		p.vx = cos(2.*M_PI/(double)(N)*(double)(n)+M_PI/2.);
-		p.vy = sin(2.*M_PI/(double)(N)*(double)(n)+M_PI/2.);
+		p.vx = cos(2.*M_PI/(double)(_N)*(double)(n)+M_PI/2.);
+		p.vy = sin(2.*M_PI/(double)(_N)*(double)(n)+M_PI/2.);
 		p.vz = 0;
 		p.ax = 0; p.ay = 0; p.az = 0;
 		p.m  = 0;
