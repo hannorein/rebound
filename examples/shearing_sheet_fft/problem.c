@@ -49,13 +49,8 @@ extern double minimum_collision_velocity;
 extern double (*coefficient_of_restitution_for_velocity)(double); 
 double coefficient_of_restitution_bridges(double v); 
 
-extern double opening_angle2;
-
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-#ifdef GRAVITY_TREE
-	opening_angle2	= .5;
-#endif
 #ifdef INTEGRATOR_SEI
 	OMEGA 				= 0.00013143527;	// 1/s
 	OMEGAZ 				= 3.6*0.00013143527;	// 1/s
@@ -67,7 +62,7 @@ void problem_init(int argc, char* argv[]){
 #else 	// INTEGRATOR_SEI
 	dt 				= 1e2;			// s
 #endif 	// INTEGRATOR_SEI
-	int ngrid = 64;
+	int ngrid 			= 64;
 	root_nx = ngrid; root_ny = ngrid; root_nz = ngrid/2;
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3
@@ -134,17 +129,9 @@ void problem_inloop(){
 }
 
 void problem_output(){
-#ifdef INTEGRATOR_SEI
-	if (output_check(1e-3*2.*M_PI/OMEGA)){
+	if (output_check(10.0*dt)){
 		output_timing();
-		//output_append_velocity_dispersion("veldisp.txt");
 	}
-	if (output_check(2.*M_PI/OMEGA)){
-		//output_ascii("position.txt");
-	}
-#else 	// INTEGRATOR_SEI
-	output_timing();
-#endif 	// INTEGRATOR_SEI
 }
 
 void problem_finish(){
