@@ -64,6 +64,59 @@ double tools_normal(double variance){
 
 #define TINY 1.0e-12
 struct orbit tools_p2orbit(struct particle p, double cmass){
+	struct orbit o;
+	double h0,h1,h2,e0,e1,e2,n0,n1,n,er,vr,mu,ea;
+	mu = G*(p.m+cmass);
+	h0 = (p.y*p.vz - p.z*p.vy); 			//angular momentum vector
+	h1 = (p.z*p.vx - p.x*p.vz);
+	h2 = (p.x*p.vy - p.y*p.vx);
+	o.h = sqrt ( h0*h0 + h1*h1 + h2*h2 );		// abs value of angular moment 
+	double v = sqrt ( p.vx*p.vx + p.vy*p.vy + p.vz*p.vz );
+	o.r = sqrt ( p.x*p.x + p.y*p.y + p.z*p.z );
+	vr = (p.x*p.vx + p.y*p.vy + p.z*p.vz)/o.r;
+	e0 = 1./mu*( (v*v-mu/o.r)*p.x - o.r*vr*p.vx );
+	e1 = 1./mu*( (v*v-mu/o.r)*p.y - o.r*vr*p.vy );
+	e2 = 1./mu*( (v*v-mu/o.r)*p.z - o.r*vr*p.vz );
+ 	o.e = sqrt( e0*e0 + e1*e1 + e2*e2 );		// eccentricity
+	o.a = -mu/( v*v - 2.*mu/o.r );			// semi major axis
+	o.P = 2.*M_PI*sqrt( o.a*o.a*o.a/mu );		// period
+	o.inc = acos( h2/o.h ) ;				// inclination (wrt xy-plane)   -  Note if pi/2 < i < pi then the orbit is retrograde
+	n0 = -h1;					// vector of nodes lies in xy plane => no z component
+	n1 =  h0;		
+	n = sqrt( n0*n0 + n1*n1 );
+	er = p.x*e0 + p.y*e1 + p.z*e2;
+	if (n<=1.e-30||o.inc<=1.e-30){			// we are in the xy plane
+		o.Omega=0.;
+		if (e1>=0.) { o.omega=acos(e0/o.e); }else{ o.omega = 2.*M_PI-acos(e0/o.e); }
+	}else{
+		if (e2>=0.) { o.omega=acos(( n0*e0 + n1*e1 )/(n*o.e)); }else{ o.omega=2.*M_PI-acos(( n0*e0 + n1*e1 )/(n*o.e)); }// pericenter = 0 if pericenter = ascending node
+		if (n1>=0.) { o.Omega = acos(n0/n); }else{  o.Omega=2.*M_PI-acos(n0/n);} 					// longitude of ascending node in xy plane, measured from x axis
+	//	if (isnan(o.Omega)||isinf(o.Omega)) o.Omega=0.;
+	}
+	o.f = er/(o.e*o.r);
+	ea = (1.-o.r/o.a)/o.e;
+	if (o.f>1.||o.f<-1.){				// failsafe
+		o.f = M_PI - M_PI * o.f;
+		ea  = M_PI - M_PI * ea;
+	}else{
+		o.f = acos(o.f);			// true anomaly = 0 if planet at pericenter
+		ea  = acos(ea);				// eccentric anomaly
+	}
+	
+	if (vr<0.) { 
+		o.f=2.*M_PI-o.f;	
+		ea =2.*M_PI-ea;
+	}
+	o.l = ea -o.e*sin(ea)+o.omega;			// mean longitude
+	if (o.e<=1.e-10){ 				//circular orbit
+		o.omega=0.;
+		o.f=0.; 				// f has no meaning
+		o.l=0.;
+	}
+
+	return o;
+
+	/*
 	// Compute the angular momentum H, and thereby the inclination INC.
 	double Omega, a, e, M, E=0, f=0, omega, inc; 	// orbital paramaers
 
@@ -211,4 +264,5 @@ struct orbit tools_p2orbit(struct particle p, double cmass){
 	o.e		= e;
 	o.a		= a;
 	return o;
+	*/
 }

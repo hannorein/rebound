@@ -32,6 +32,8 @@ struct orbit {
 	double a;
 	double r;	// Radial distance from central object
 	double h;	// Angular momentum
+	double P;	// Orbital period
+	double l;
 	double e;
 	double inc;
 	double Omega; 	// longitude of ascending node
