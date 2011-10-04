@@ -37,6 +37,7 @@
 int input_check_restart(int argc, char** argv){
 	char filename[1024];
 	int restart = 0;
+	opterr = 0;
   	while (1) {
       		static struct option long_options[] = {
 	  		{"restart", required_argument, 0, 'r'},
@@ -68,6 +69,7 @@ int input_check_restart(int argc, char** argv){
 }
 
 char* input_get_argument(int argc, char** argv, const char* argument){
+	opterr = 0;
   	while (1) {
       		struct option long_options[] = {
 	  		{NULL, required_argument, 0, 'a'},
