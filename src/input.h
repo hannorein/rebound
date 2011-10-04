@@ -39,4 +39,14 @@ int input_check_restart(int argc, char** argv);
  */
 void input_binary(char* filename);
 
+/**
+ * Reads arguments from the command line.
+ * @param argc Number of command line arguments.
+ * @param argv Array of command line arguments.
+ * @param argument Argument to look for.
+ * @return Returns NULL if argument was not given. Return the argument otherwise.
+ */
+char* input_get_argument(int argc, char** argv, const char* argument);
+
+
 #endif

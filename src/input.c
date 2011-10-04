@@ -67,6 +67,35 @@ int input_check_restart(int argc, char** argv){
 	return restart;
 }
 
+char* input_get_argument(int argc, char** argv, const char* argument){
+  	while (1) {
+      		struct option long_options[] = {
+	  		{NULL, required_argument, 0, 'a'},
+			{0,0,0,0}
+		};
+
+		long_options[0].name = argument;
+
+      		/* getopt_long stores the option index here.   */
+      		int option_index = 0;
+		//				short options. format abc:d::
+      		int c = getopt_long (argc, argv, "", long_options, &option_index);
+
+      		/* Detect the end of the options.   */
+      		if (c == -1) break;
+
+      		switch (c)
+		{
+			case 'a':
+				return optarg;
+				break;
+			default:
+				break;
+		}
+  	}
+	return NULL;
+}
+
 void input_binary(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
