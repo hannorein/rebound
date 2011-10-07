@@ -41,7 +41,7 @@ double* tau_e; 	/**< Eccentricity damping timescale in years for all particles *
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= 1e-3;
+	dt 		= 1e-3*2.*M_PI;
 	boxsize 	= 3;
 	init_box();
 
@@ -72,13 +72,15 @@ void problem_init(int argc, char* argv[]){
 	tau_a = calloc(sizeof(double),N);
 	tau_e = calloc(sizeof(double),N);
 
-	//tau_a[1] = 1000;
-	//tau_a[2] = 1000;
-	//tau_e[2] = 1000;
+	tau_a[2] = 125663.;
+	tau_e[2] = 125663./100.;
+//	tau_e[1] = 125663./100.;
+
+	system("rm -f orbits.txt");
 }
 
 void problem_adot(){
-	for(int i=0;i<N;i++){
+	for(int i=1;i<N;i++){
 		if (tau_a[i]!=0){
 			double tmpfac = dt/tau_a[i];
 			// position
@@ -96,40 +98,44 @@ void problem_adot(){
 
 
 void problem_edot(){
-	for(int i=0;i<N;i++){
+	for(int i=1;i<N;i++){
 		if (tau_e[i]!=0){
+			double d = dt/tau_e[i];
 			struct particle* p = &(particles[i]);
 			struct orbit o = tools_p2orbit(*p,particles[0].m);
 			double rdot  = o.h/o.a/( 1. - o.e*o.e ) * o.e * sin(o.f);
 			double rfdote = o.h/o.a/( 1. - o.e*o.e ) * ( 1. + o.e*cos(o.f) ) * (o.e + cos(o.f)) / (1.-o.e*o.e) / (1.+o.e*cos(o.f));
 			//position
-			double tmpfac =   o.r/(o.a*(1.-o.e*o.e)) - (1.+o.e*o.e)/(1.-o.e*o.e);
+			double tmpfac = d * (  o.r/(o.a*(1.-o.e*o.e)) - (1.+o.e*o.e)/(1.-o.e*o.e));
 			p->x -= tmpfac * p->x;
 			p->y -= tmpfac * p->y;
 			p->z -= tmpfac * p->z;
 			//vx
 			tmpfac = rdot/(o.e*(1.-o.e*o.e));
-			p->vx -= o.e * ( cos(o.Omega) *      (tmpfac * cos(o.omega+o.f) - rfdote*sin(o.omega+o.f) )
-					-cos(o.inc) * sin(o.Omega) * (tmpfac * sin(o.omega+o.f) + rfdote*cos(o.omega+o.f) ));
+			p->vx -= d * o.e * (   cos(o.Omega) *      (tmpfac * cos(o.omega+o.f) - rfdote*sin(o.omega+o.f) )
+						-cos(o.inc) * sin(o.Omega) * (tmpfac * sin(o.omega+o.f) + rfdote*cos(o.omega+o.f) ));
 			//vy
-			p->vy -= o.e * ( sin(o.Omega) *      (tmpfac * cos(o.omega+o.f) - rfdote*sin(o.omega+o.f) )
-					+cos(o.inc) * cos(o.Omega) * (tmpfac * sin(o.omega+o.f) + rfdote*cos(o.omega+o.f) ));
+			p->vy -= d * o.e * (   sin(o.Omega) *      (tmpfac * cos(o.omega+o.f) - rfdote*sin(o.omega+o.f) )
+						+cos(o.inc) * cos(o.Omega) * (tmpfac * sin(o.omega+o.f) + rfdote*cos(o.omega+o.f) ));
 			//vz
-			p->vz -= o.e * ( sin(o.inc) *        (tmpfac * sin(o.omega+o.f) + rfdote*cos(o.omega+o.f) ));
+			p->vz -= d * o.e * (     sin(o.inc) *      (tmpfac * sin(o.omega+o.f) + rfdote*cos(o.omega+o.f) ));
 		}
 	}
 }
 
 void problem_inloop(){
-	if(output_check(100.*dt)){
-		output_timing();
-	}
 }
 
 void problem_output(){
 	if (t>0){
 		problem_adot();
 		problem_edot();
+	}
+	if(output_check(10000.*dt)){
+		output_timing();
+	}
+	if(output_check(10.)){
+		output_orbits_append("orbits.txt");
 	}
 }
 
