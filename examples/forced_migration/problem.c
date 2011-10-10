@@ -46,6 +46,7 @@ void problem_init(int argc, char* argv[]){
 	init_box();
 
 	// Initial conditions
+	// Parameters are those of Lee & Peale 2002, Figure 4. 
 	struct particle star;
 	star.x  = 0; star.y  = 0; star.z  = 0;
 	star.vx = 0; star.vy = 0; star.vz = 0;
@@ -74,11 +75,11 @@ void problem_init(int argc, char* argv[]){
 
 	tau_a[2] = 125663.;
 	tau_e[2] = 125663./100.;
-//	tau_e[1] = 125663./100.;
 
 	system("rm -f orbits.txt");
 }
 
+// Semi-major axis damping
 void problem_adot(){
 	for(int i=1;i<N;i++){
 		if (tau_a[i]!=0){
@@ -96,7 +97,8 @@ void problem_adot(){
 	}
 }
 
-
+// Eccentricity damping
+// This one is more complicated as it needs orbital elements to compute the forces.
 void problem_edot(){
 	for(int i=1;i<N;i++){
 		if (tau_e[i]!=0){
@@ -128,6 +130,8 @@ void problem_inloop(){
 
 void problem_output(){
 	if (t>0){
+		// This is done at the end of the timestep because we need the position and velocities at the same time to calculate orbital elements.
+		// We also update both the positions and velocities.
 		problem_adot();
 		problem_edot();
 	}
