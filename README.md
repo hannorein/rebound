@@ -29,6 +29,8 @@ This setup allows you to work on multiple projects at the same time using differ
      <td>Direct summation, O(N^2)</td></tr>
   <tr><td><pre>gravity_tree.c       </pre></td>
      <td>Oct tree, Barnes & Hut 1986, O(N log(N))</td></tr>
+  <tr><td><pre>gravity_fft.c       </pre></td>
+     <td>Two dimensional gravity solver using FFTW, works in a periodic box and the shearing sheet. (Not well tested yet.)</td></tr>
 </table>
 
 ### Collision detection ###
@@ -43,6 +45,8 @@ This setup allows you to work on multiple projects at the same time using differ
      <td>Oct tree, O(N log(N))</td></tr>
   <tr><td><pre>collisions_sweep.c   </pre></td>
      <td>Plane sweep algorithm, ideal for low dimensional problems, O(N) or O(N^1.5) depending on geometry</td></tr>
+  <tr><td><pre>collisions_sweepphi.c   </pre></td>
+     <td>Plane sweep algorithm along the azimuthal angle, ideal for narrow rings in global simulations, O(N) or O(N^1.5) depending on geometry</td></tr>
 </table>
 
 ### Integrators ###
