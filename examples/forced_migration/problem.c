@@ -1,10 +1,15 @@
 /**
  * @file 	problem.c
- * @brief 	Example problem: circular orbit.
+ * @brief 	Example problem: forced migration of GJ876.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example uses the Wisdom Holman integrator
- * to integrate particles on a circular orbit in a fixed 
- * potential.
+ * @detail 	This example applies disipative forces to two
+ * bodies orbiting a central object. The forces are specified
+ * in terms of damping timescales for the semi-major axis and
+ * eccentricity. This mimics planetary micration in a proto-
+ * stellar disc. The example reproduces the study of Lee & 
+ * Peale (2002) on the formation of the planetary system 
+ * GJ876. For a comparison, see figure 4 in their paper.
+ *
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
@@ -51,7 +56,7 @@ void problem_init(int argc, char* argv[]){
 	star.x  = 0; star.y  = 0; star.z  = 0;
 	star.vx = 0; star.vy = 0; star.vz = 0;
 	star.ax = 0; star.ay = 0; star.az = 0;
-	star.m  = 0.32;
+	star.m  = 0.32;		// This is a sub-solar mass star
 	particles_add(star); 
 	
 	struct particle p1;
@@ -73,8 +78,8 @@ void problem_init(int argc, char* argv[]){
 	tau_a = calloc(sizeof(double),N);
 	tau_e = calloc(sizeof(double),N);
 
-	tau_a[2] = 125663.;
-	tau_e[2] = 125663./100.;
+	tau_a[2] = 125663.;		// This is 20000 years
+	tau_e[2] = tau_a[2]/100.; 	// K=100
 
 	system("rm -f orbits.txt");
 }
@@ -130,8 +135,10 @@ void problem_inloop(){
 
 void problem_output(){
 	if (t>0){
-		// This is done at the end of the timestep because we need the position and velocities at the same time to calculate orbital elements.
-		// We also update both the positions and velocities.
+		// This is done at the end of the timestep rather than in the loop
+		// because we need the position and velocities at the same time to 
+		// calculate orbital elements. We also update both the positions 
+		// and velocities in these routines.
 		problem_adot();
 		problem_edot();
 	}
