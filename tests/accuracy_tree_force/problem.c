@@ -74,7 +74,7 @@ double average_relative_force_error(){
 		for (int gby=-nghosty; gby<=nghosty; gby++){
 		for (int gbz=-nghostz; gbz<=nghostz; gbz++){
 			struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
-			for (int j=N_active_first; j<(N_active_last==-1?N:N_active_last); j++){
+			for (int j=0; j<N; j++){
 				if (i==j) continue;
 				double dx = (gb.shiftx+particles[i].x) - particles[j].x;
 				double dy = (gb.shifty+particles[i].y) - particles[j].y;
@@ -109,11 +109,15 @@ void problem_finish(){
 	FILE* of = fopen("error.txt","a+"); 
 	tree_update();
 	tree_update_gravity_data();
-	gravity_calculate_acceleration();
-	double error= average_relative_force_error();
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
+	double timing_initloc = tim.tv_sec+(tim.tv_usec/1000000.0);
+	for (int i=0;i<10;i++){
+		gravity_calculate_acceleration();
+	}
+	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
+	double error= average_relative_force_error();
 	// These errors limits are empirical 
 #ifdef QUADRUPOLE
 	double error_limit = 0.03*pow(opening_angle2,4./2.);
@@ -121,7 +125,7 @@ void problem_finish(){
 	double error_limit = 0.054*pow(opening_angle2,3./2.);
 #endif // QUADRUPOLE
 	int pass = (error>error_limit?0:1);
-	fprintf(of,"%d\t%e\t%e\t%e\t%d\t%e\t",N,dt,error,error_limit,pass,timing_final-timing_initial);
+	fprintf(of,"%d\t%e\t%e\t%e\t%d\t%e\t",N,dt,error,error_limit,pass,timing_final-timing_initloc);
 #ifdef QUADRUPOLE
 	fprintf(of,"Quadrupole, N = %d, opening_angle = %f",N,sqrt(opening_angle2));
 #else

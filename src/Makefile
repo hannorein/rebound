@@ -20,6 +20,11 @@ else
 	CC?=gcc
 endif
 
+ifeq ($(FFTW), 1)
+	PREDEF+= -DFFTW
+	LIB+= -lfftw3
+endif
+
 ifeq ($(OPENGL), 1)
 ifeq ($(OS), Linux)
 	PREDEF+= -DOPENGL

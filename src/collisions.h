@@ -50,4 +50,8 @@ void collisions_resolve();
  */
 extern double collisions_max_r; 
 
+/**
+ * Particle between 0 and N_collisions (excluding) will not be searched for collisions and not shuffled around.
+ */
+extern int N_collisions;
 #endif // _COLLISIONS_H
