@@ -38,8 +38,6 @@ struct orbit {
 	double inc;
 	double Omega; 	// longitude of ascending node
 	double omega; 	// argument of perihelion
-	double M;  	// mean anomaly
-	double E;  	// eccentric anomaly
 	double f; 	// true anomaly
 };
 

@@ -148,7 +148,7 @@ void output_orbits_append(char* filename){
 #endif // MPI
 	for (int i=1;i<N;i++){
 		struct orbit o = tools_p2orbit(particles[i],particles[0].m);
-		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,o.a,o.e,o.inc,o.Omega,o.omega,o.M,o.E,o.f);
+		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
 	}
 	fclose(of);
 }
@@ -163,7 +163,7 @@ void output_orbits(char* filename){
 #endif // MPI
 	for (int i=1;i<N;i++){
 		struct orbit o = tools_p2orbit(particles[i],particles[0].m);
-		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",o.a,o.e,o.inc,o.Omega,o.omega,o.M,o.E,o.f);
+		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
 	}
 	fclose(of);
 }
