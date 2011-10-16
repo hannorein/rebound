@@ -38,7 +38,8 @@ double minimum_collision_velocity = 0;
 double collisions_constant_coefficient_of_restitution_for_velocity(double v);
 double (*coefficient_of_restitution_for_velocity) (double) = collisions_constant_coefficient_of_restitution_for_velocity;
 void (*collision_resolve_single) (struct collision) = collision_resolve_single_direct;
-double collisions_plog =0;	/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
+double 	collisions_plog =0;	/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
+long	collisions_Nlog =0;	/**< Keep track of Number of collisions. */
 
 void collision_resolve_single_direct(struct collision c){
 #ifndef COLLISIONS_NONE
@@ -97,6 +98,7 @@ void collision_resolve_single_direct(struct collision c){
 
 	// Log y-momentum change
 	collisions_plog += fabs(dvy2nn*p1.m*x21);
+	collisions_Nlog++;
 
 	// Applying the changes to the particles.
 #ifdef MPI
