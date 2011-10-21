@@ -6,6 +6,10 @@ Contributors
 * Hanno Rein, Institute for Advanced Study (IAS), Princeton, <hanno@hanno-rein.de>
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University (KIAA-PKU), Beijing, <liushangfei@pku.edu.cn>
 
+Paper
+----- 
+
+A paper describing this code has been submitted to A&A. A preprint can be found on the arXiv at http://arxiv.org/a/rein_h_1.
 
 Screenshot
 ---------- 
@@ -133,9 +137,20 @@ A window should open and you will see a simulation running in real time. The set
 If you want to create your own problem, just copy one of the example directories or the template in the `problems` directory. Then simply modify `problem.c` and `Makefile` accordingly.  
 
 ### How to install GLUT ###
-The OpenGL Utility Toolkit (GLUT) comes pre-installed as a framework on Mac OSX. If you are working on another operating system, you might have to install GLUT yourself if you see an error message such as `error: GL/glut.h: No such file or directory`. Go to http://freeglut.sourceforge.net/ download the latest version, configure it with `./configure` and compile it with `make`. Finally install the library and header files with `make install`. Unless you specified a non-default installation directory during configuration, you have to be a super-user.  
+The OpenGL Utility Toolkit (GLUT) comes pre-installed as a framework on Mac OSX. If you are working on another operating system, you might have to install GLUT yourself if you see an error message such as `error: GL/glut.h: No such file or directory`. Go to http://freeglut.sourceforge.net/ download the latest version, configure it with `./configure` and compile it with `make`. Finally install the library and header files with `make install`. 
 
-You can still compile and run REBOUND if you do not have GLUT installed. Simple set `OPENGL=0` in the makefile (see below). 
+You can also install freeglut in a non-default installation directory if you do not have super-user rights by running the freeglut installation script with the prefix option:
+
+    mkdir ${HOME}/local
+    ./configure --prefix=${HOME}/local
+    make all && make install
+
+Then, add the following lines to the REBOUND Makefile
+
+    OPT += $(HOME)/local/include
+    LIB += $(HOME)/local/lib
+
+Note that you can still compile and run REBOUND even if you do not have GLUT installed. Simple set `OPENGL=0` in the makefile (see below). 
 
 ### Environment variables ###
 The makefile in each problem directory sets various environment variables. These determine the compiler optimization flags, the libraries included and basic code settings. Let us look at one of the examples `shearing_sheet` in more detail. 
