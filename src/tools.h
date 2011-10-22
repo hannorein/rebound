@@ -22,6 +22,25 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#ifndef TOOLS_H
+#define TOOLS_H
+#include "particle.h"
+/**
+ * Struct representing a Keplerian orbit.
+ */
+struct orbit {
+	double a;
+	double r;	// Radial distance from central object
+	double h;	// Angular momentum
+	double P;	// Orbital period
+	double l;
+	double e;
+	double inc;
+	double Omega; 	// longitude of ascending node
+	double omega; 	// argument of perihelion
+	double f; 	// true anomaly
+};
+
 
 /**
  * Calculates a random variable in a given range.
@@ -45,3 +64,15 @@ double tools_powerlaw(double min, double max, double slope);
  * @return Random number with normal distribution (mean 0). 
  */
 double tools_normal(double variance);
+
+/**
+ * This function calculated orbital elements for a given particle. The center of
+ * mass is assumed to be at the origin.
+ * @param p Particle.
+ * @param cmass Mass of the central object.
+ * @return Orbital parameters. 
+ */
+struct orbit tools_p2orbit(struct particle p, double cmass);
+
+
+#endif 	// TOOLS_H
