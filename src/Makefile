@@ -83,7 +83,7 @@ all:
 	$(CC) $(OPT) $(PREDEF) zpr.c -c
 	$(CC) $(OPT) $(PREDEF) display.c -c
 	$(CC) $(OPT) $(PREDEF) tools.c -c
-	$(CC) $(LIB) *.o -o nbody
+	$(CC) *.o -o nbody $(LIB)
 
 clean:
 	rm -vf *.o
