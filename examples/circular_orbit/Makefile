@@ -4,7 +4,7 @@ export QUADRUPOLE=1
 
 all:
 	# Setup link to different modules
-	ln -fs gravity_none.c ../../src/gravity.c
+	ln -fs gravity_direct.c ../../src/gravity.c
 	ln -fs boundaries_open.c ../../src/boundaries.c
 	ln -fs integrator_wh.c ../../src/integrator.c
 	ln -fs collisions_none.c ../../src/collisions.c
