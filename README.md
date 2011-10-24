@@ -9,7 +9,7 @@ Contributors
 Paper
 ----- 
 
-A paper describing this code has been submitted to A&A. A preprint can be found on the arXiv at http://arxiv.org/a/rein_h_1.
+A paper describing this code has been submitted to A&A. A preprint can be found on the arXiv at http://arxiv.org/abs/1110.4876.
 
 Screenshot
 ---------- 
