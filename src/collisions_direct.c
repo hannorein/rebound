@@ -53,6 +53,7 @@ int 	collisions_NMAX 	= 0;		/**< Size allocated for collisions.*/
 int 	collisions_N 		= 0;		/**< Number of elements in collisions. */
 
 double 	collisions_max_r	= 0;
+double 	collisions_max2_r	= 0;
 
 void collisions_search(){
 	// Loop over ghost boxes, but only the inner most ring.

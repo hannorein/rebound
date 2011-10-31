@@ -67,8 +67,16 @@ void particles_add_local(struct particle pt){
 
 void particles_add(struct particle pt){
 #ifndef COLLISIONS_NONE
-	if (pt.r>collisions_max_r){
+	if (pt.r>=collisions_max_r){
+		collisions_max2_r = collisions_max_r;
 		collisions_max_r = pt.r;
+	}else{
+		if (pt.r>=collisions_max2_r){
+			collisions_max2_r = pt.r;
+		}
+	}
+	if (collisions_max2_r<=0){
+		collisions_max2_r = pt.r;
 	}
 #endif // COLLISIONS_NONE
 #ifdef MPI

@@ -45,10 +45,17 @@ void collisions_resolve();
 
 /**
  * Maximum radius of the particles in this simulation.
- * The maximum radius is needed to decide if a tree cell needs to
- * be opened or not. It should be set in problem_init().
+ * The value is set automatically in problem_init().
  */
 extern double collisions_max_r; 
+
+/**
+ * Radius of the second largest particle in this simulation.
+ * This radius is needed to decide if a tree cell needs to
+ * be opened or not.
+ * The value is set automatically in problem_init().
+ */
+extern double collisions_max2_r; 
 
 /**
  * Particle between 0 and N_collisions (excluding) will not be searched for collisions and not shuffled around.
