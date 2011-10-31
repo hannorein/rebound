@@ -43,19 +43,23 @@ void problem_init(int argc, char* argv[]){
 	init_box();
 
 	// Initial conditions
-	struct particle p;
-	p.x  = 0; p.y  = 0; p.z  = 0;
+	struct particle p; // Star
+	// The WH integrator assumes a heliocentric coordinate system. 
+	// Therefore the star has to be at the origin. 
+	p.x  = 0; p.y  = 0; p.z  = 0; 
 	p.vx = 0; p.vy = 0; p.vz = 0;
 	p.ax = 0; p.ay = 0; p.az = 0;
 	p.m  = 1;
-	particles_add(p); // Star
+	particles_add(p); 
 	
 	int _N = 100; // Number of test particles
 	if(argc>1){
 		_N = atoi(argv[1]);
 	}
+
+	const double shift = 0.0; // Change this number to put particles on eccetric orbits.
 	for(int n=0; n<_N; n++){
-		p.x  = cos(2.*M_PI/(double)(_N)*(double)(n));
+		p.x  = cos(2.*M_PI/(double)(_N)*(double)(n)) + shift;
 		p.y  = sin(2.*M_PI/(double)(_N)*(double)(n));
 		p.z  = 0;
 		p.vx = cos(2.*M_PI/(double)(_N)*(double)(n)+M_PI/2.);
