@@ -34,6 +34,7 @@
 #include "problem.h"
 #include "collisions.h"
 #include "tree.h"
+#include "particle.h"
 #include "main.h"
 #include "communication_mpi.h"
 #ifdef OPENGL
@@ -61,6 +62,11 @@ int root_nz		= 1;
 int root_n		= 1;
 
 void init_box(){	
+	// Remove all particles
+	free(particles);
+	particles = NULL;
+
+	// Setup box sizes
 	boxsize_x = boxsize *(double)root_nx;
 	boxsize_y = boxsize *(double)root_ny;
 	boxsize_z = boxsize *(double)root_nz;
