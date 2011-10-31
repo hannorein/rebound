@@ -75,9 +75,6 @@ void particles_add(struct particle pt){
 			collisions_max2_r = pt.r;
 		}
 	}
-	if (collisions_max2_r<=0){
-		collisions_max2_r = pt.r;
-	}
 #endif // COLLISIONS_NONE
 #ifdef MPI
 	int rootbox = particles_get_rootbox_for_particle(pt);
