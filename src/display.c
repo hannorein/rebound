@@ -248,16 +248,11 @@ void display(){
 				}
 				struct orbit o = tools_p2orbit(p,particles[0].m);
 				glPushMatrix();
-				// DSSPIEGEL_COMMENT 25 October 2011:
-				// I think we want to rotate by -omega around the z axis,
-				// then -inc around the x axis, then -Omega around the z axis.
-				//if (i == 1)
-				//  printf("%5.5f %5.5f %5.5f %5.5f\n",o.omega/DEG2RAD,o.inc/DEG2RAD,o.Omega/DEG2RAD,o.a);
-				glRotatef(o.omega/DEG2RAD,0,0,1);
-				glRotatef(o.inc/DEG2RAD,cos(o.omega),-sin(o.omega),0);
+				
 				glRotatef(o.Omega/DEG2RAD,0,0,1);
-				//				glRotatef(-o.inc/DEG2RAD,  1,0,0);
-				//				glRotatef(-o.Omega/DEG2RAD,0,0,1);
+				glRotatef(o.inc/DEG2RAD,1,0,0);
+				glRotatef(o.omega/DEG2RAD,0,0,1);
+				
 				glBegin(GL_LINE_LOOP);
 				for (int j=0; j < 360; j++) {
 					//convert degrees into radians
