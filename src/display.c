@@ -62,8 +62,9 @@ int display_pause = 0;		/**< Pauses visualization, but keep simulation running *
 int display_tree = 0;		/**< Shows/hides tree structure. */
 int display_mass = 0;		/**< Shows/hides centre of mass in tree structure. */
 int display_wire = 0;		/**< Shows/hides orbit wires. */
-int display_clear = 0;		/**< Toggles clearing the display on each draw. */
+int display_clear = 1;		/**< Toggles clearing the display on each draw. */
 int display_ghostboxes = 0;	/**< Shows/hides ghost boxes. */
+#define DEG2RAD (M_PI/180.)
 
 /**
  * This function is called when the user presses a key. 
@@ -106,22 +107,19 @@ void displayKey(unsigned char key, int x, int y){
 		case 'm': case 'M':
 			display_mass = !display_mass;
 			break;
-			// DSSPIEGEL addition 24 Oct 2011
-			// 'w' = draw "wire"
 		case 'w': case 'W':
-		  display_wire = !display_wire;
+			display_wire = !display_wire;
 			break;
 		case 'c': case 'C':
-		  display_clear = !display_clear;
+			display_clear = !display_clear;
 			break;
-			// DSSPIEGEL end of addition 24 Oct 2011
 		case 'p': case 'P':
 #ifdef LIBPNG
 			output_png_single("screenshot.png");
 			printf("\nScreenshot saved as 'screenshot.png'.\n");
-#else // LIBPNG
+#else 	// LIBPNG
 			printf("\nNeed LIBPNG to save screenshot.\n");
-#endif // LIBPNG
+#endif 	// LIBPNG
 			break;
 	}
 	display();
@@ -177,8 +175,9 @@ void display(){
 #endif
 	}
 #endif
-	if ((!display_wire) | display_clear)
+	if (display_clear){
 	        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	}
 	if (!display_wire) {
 	if (display_spheres){
 		glDisable(GL_BLEND);                    
@@ -205,46 +204,55 @@ void display(){
 	for (int k=-display_ghostboxes*nghostz;k<=display_ghostboxes*nghostz;k++){
 		struct ghostbox gb = boundaries_get_ghostbox(i,j,k);
 		glTranslatef(gb.shiftx,gb.shifty,gb.shiftz);
-		if (!display_wire||display_clear){
-		if (display_spheres){
-			// Drawing Spheres
-			glColor4f(1.0,1.0,1.0,1.0);
+		if (!(!display_clear&&display_wire)){
+			if (display_spheres){
+				// Drawing Spheres
+				glColor4f(1.0,1.0,1.0,1.0);
 #ifndef COLLISIONS_NONE
-			for (int i=0;i<N;i++){
-				struct particle p = particles[i];
-				glTranslatef(p.x,p.y,p.z);
-				glScalef(p.r,p.r,p.r);
+				for (int i=0;i<N;i++){
+					struct particle p = particles[i];
+					glTranslatef(p.x,p.y,p.z);
+					glScalef(p.r,p.r,p.r);
 #ifdef _APPLE
-				glCallList(display_dlist_sphere);
+					glCallList(display_dlist_sphere);
 #else //_APPLE
-				glutSolidSphere(1,40,10);
+					glutSolidSphere(1,40,10);
 #endif //_APPLE
-				glScalef(1./p.r,1./p.r,1./p.r);
-				glTranslatef(-p.x,-p.y,-p.z);
-			}
+					glScalef(1./p.r,1./p.r,1./p.r);
+					glTranslatef(-p.x,-p.y,-p.z);
+				}
 #endif // COLLISIONS_NONE
-		}else{
-			// Drawing Points
-			glEnableClientState(GL_VERTEX_ARRAY);
-			glPointSize(3.);
-			glColor4f(1.0,1.0,1.0,0.5);
-			glDrawArrays(GL_POINTS, _N_active, N-_N_active);
-			glColor4f(1.0,1.0,0.0,0.9);
-			glPointSize(5.);
-			glDrawArrays(GL_POINTS, 0, _N_active);
-			glDisableClientState(GL_VERTEX_ARRAY);
+			}else{
+				// Drawing Points
+				glEnableClientState(GL_VERTEX_ARRAY);
+				glPointSize(3.);
+				glColor4f(1.0,1.0,1.0,0.5);
+				glDrawArrays(GL_POINTS, _N_active, N-_N_active);
+				glColor4f(1.0,1.0,0.0,0.9);
+				glPointSize(5.);
+				glDrawArrays(GL_POINTS, 0, _N_active);
+				glDisableClientState(GL_VERTEX_ARRAY);
+			}
 		}
-		}
-		// DSSPIEGEL addition 24 October 2011
+		// Drawing wires
 		if (display_wire){
-			double DEG2RAD=M_PI/180.;
 			double radius = 0;
 			for (int i=1;i<N;i++){
 				struct particle p = particles[i];
-				if (i%2 == 1){
-					glColor4f(0.0,1.0,0.0,0.9);
+				if (N_active>0){
+					// Different colors for active/test particles
+					if (i>=N_active){
+						glColor4f(0.9,1.0,0.9,0.9);
+					}else{
+						glColor4f(1.0,0.9,0.0,0.9);
+					}
 				}else{
-					glColor4f(0.0,0.0,1.0,0.9);
+					// Alternating colors
+					if (i%2 == 1){
+						glColor4f(0.0,1.0,0.0,0.9);
+					}else{
+						glColor4f(0.0,0.0,1.0,0.9);
+					}
 				}
 				struct orbit o = tools_p2orbit(p,particles[0].m);
 				glPushMatrix();
@@ -254,17 +262,15 @@ void display(){
 				glRotatef(o.omega/DEG2RAD,0,0,1);
 				
 				glBegin(GL_LINE_LOOP);
-				for (int j=0; j < 360; j++) {
+				for (double trueAnom=0; trueAnom < 2.*M_PI; trueAnom+=M_PI/100.) {
 					//convert degrees into radians
-					double truAnom = j*DEG2RAD;
-					radius = o.a * (1. - o.e*o.e) / (1. + o.e*cos(truAnom));
-					glVertex3f(radius*cos(truAnom),radius*sin(truAnom),0);
+					radius = o.a * (1. - o.e*o.e) / (1. + o.e*cos(trueAnom));
+					glVertex3f(radius*cos(trueAnom),radius*sin(trueAnom),0);
 				}
 				glEnd();
 				glPopMatrix();
 			}
 		}
-		// DSSPIEGEL end of addition
 		// Drawing Tree
 		glColor4f(1.0,0.0,0.0,0.4);
 #ifdef TREE

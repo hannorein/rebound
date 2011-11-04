@@ -44,10 +44,17 @@
 double* tau_a; 	/**< Migration timescale in years for all particles */
 double* tau_e; 	/**< Eccentricity damping timescale in years for all particles */
 
+#ifdef OPENGL
+extern int display_wire;
+#endif 	// OPENGL
+
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 		= 1e-3*2.*M_PI;
 	boxsize 	= 3;
+#ifdef OPENGL
+	display_wire 	= 1;
+#endif 	// OPENGL
 	init_box();
 
 	// Initial conditions
