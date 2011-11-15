@@ -50,6 +50,7 @@ double t		= 0;
 double tmax		= 0; 
 double dt 		= 0.001;
 double timing_initial 	= -1;
+int    exit_simulation	= 0;
 
 double boxsize 		= -1;
 double boxsize_x 	= -1;
@@ -167,13 +168,21 @@ void iterate(){
 #endif // OPENGL
 	problem_output();
 	// Check if the simulation finished.
+#ifdef MPI
+	int _exit_simulation = 0;
+	MPI_Allreduce(&exit_simulation, &_exit_simulation,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
+	exit_simulation = _exit_simulation;
+#endif // MPI
 	// @TODO: Adjust timestep so that t==tmax exaclty at the end.
-	if(t+dt>tmax && tmax!=0.0){
+	if((t+dt>tmax && tmax!=0.0) || exit_simulation==1){
 		problem_finish();
 		struct timeval tim;
 		gettimeofday(&tim, NULL);
 		double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
 		printf("\nComputation finished. Total runtime: %f s\n",timing_final-timing_initial);
+#ifdef MPI
+		MPI_Finalize();
+#endif // MPI
 		exit(0);
 	}
 }
