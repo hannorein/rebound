@@ -9,7 +9,7 @@ Contributors
 Paper
 ----- 
 
-A paper describing this code has been submitted to A&A. A preprint can be found on the arXiv at http://arxiv.org/abs/1110.4876.
+The paper describing this code has been accepted for publication by Astronomy and Astrophysics on 6 November 2011. A preprint can be found on the arXiv at http://arxiv.org/abs/1110.4876 and at http://www.aanda.org/articles/aa/pdf/forth/aa18085-11.pdf.
 
 Screenshot
 ---------- 
@@ -242,24 +242,32 @@ REBOUND is open source and you are strongly encouraged to contribute to this pro
 
 License
 -------
-REBOUND is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+REBOUND is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-REBOUND is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+REBOUND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with REBOUND.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with REBOUND.  If not, see <http://www.gnu.org/licenses/>.
 
 
 Acknowledgments
 ---------------
-When you use this code or parts of this code for results presented in a scientific publication, we would greatly appreciate a citation to Rein and Liu (in preparation) and an acknowledgment of the form: 
+When you use this code or parts of this code for results presented in a scientific publication, please send us a copy of your paper so that we can keep track of all publications that made use of the code. We would greatly appreciate a citation to Rein and Liu (2011) and an acknowledgment of the form: 
 
 _Simulations in this paper made use of the collisional N-body code REBOUND which can be downloaded freely at http://github.com/hannorein/rebound._
 
-Also, please send us a copy of your paper so that we can keep track of all publications that made use of the code.
+Reference in BibTeX format:
+
+    @ARTICLE{2011arXiv1110.4876R,
+       author = {{Rein}, H. and {Liu}, S.-F.},
+        title = "{REBOUND: An open-source multi-purpose N-body code for collisional dynamics}",
+      journal = {ArXiv e-prints},
+    archivePrefix = "arXiv",
+       eprint = {1110.4876},
+     primaryClass = "astro-ph.EP",
+     keywords = {Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Mathematics - Dynamical Systems, Physics - Computational Physics},
+         year = 2011,
+        month = oct,
+       adsurl = {http://adsabs.harvard.edu/abs/2011arXiv1110.4876R},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+    }
+
