@@ -43,10 +43,6 @@ int N_active 	= -1;
 int boundaries_particle_is_in_box(struct particle p);
 #endif // BOUNDARIES_OPEN
 
-/**
- * Add a particle to the particle structure on the current node.
- * @param pt Particle to be added.
- */
 void particles_add_local(struct particle pt){
 #ifdef BOUNDARIES_OPEN
 	if (boundaries_particle_is_in_box(pt)==0){

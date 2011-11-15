@@ -83,7 +83,7 @@ void gravity_calculate_acceleration(){
 #ifdef MPI
 	// Distribute active particles from root to all other nodes.
 	// This assures that round-off errors do not accumulate and 
-	// the copies of active particles diverge. 
+	// the copies of active particles do not diverge. 
 	MPI_Bcast(particles, N_active, mpi_particle, 0, MPI_COMM_WORLD); 
 #endif
 

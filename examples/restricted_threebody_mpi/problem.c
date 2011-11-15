@@ -1,3 +1,32 @@
+/**
+ * @file 	problem.c
+ * @brief 	Example problem: Restricted three body problem and MPI.
+ * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @detail 	This problem uses MPI to calculate the restricted three
+ * body problem. Active particles are copied to all nodes. All other 
+ * particles only exist on one node and are not automatically (re-)
+ * distributed. There is not domain decomposition used in this example.
+ * Run with 'mpirun -np 4 nbody'.
+ * 
+ * @section 	LICENSE
+ * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ *
+ * This file is part of rebound.
+ *
+ * rebound is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * rebound is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -31,9 +60,10 @@ void problem_init(int argc, char* argv[]){
 	planet.vx = 0; 			planet.vy = sqrt(2./(1.-planet_e)-1.); 	planet.vz = 0;
 	planet.m  = 1e-2;
 	
-	int _N = 10000;
+	int _N = 40000;
 
-	// Move to centre of mass frame
+#ifdef INTEGRATOR_LEAPFROG
+	// Move to centre of mass frame (otherwise planet and star drift out of box)
 	double com_x  = (star.x*star.m  + planet.x*planet.m) /(star.m+planet.m);
 	double com_y  = (star.y*star.m  + planet.y*planet.m) /(star.m+planet.m);
 	double com_z  = (star.z*star.m  + planet.z*planet.m) /(star.m+planet.m);
@@ -44,14 +74,17 @@ void problem_init(int argc, char* argv[]){
 	planet.vx -= com_vx; 	planet.vy -= com_vy; 	planet.vz -= com_vz;
 	star.x    -= com_x; 	star.y    -= com_y; 	star.z    -= com_z;
 	star.vx   -= com_vx; 	star.vy   -= com_vy; 	star.vz   -= com_vz;
+#endif	// INTEGRATOR_LEAP_FROG
+
 	// Add active particles on all nodes
 	particles_add(star);
 	particles_add(planet);
 #ifdef MPI
+	// Create _N particles in total.
 	_N /= mpi_num;
 #endif	// MPI
 	
-	while(N<_N){
+	while(N<_N+2){
 		double x 	= ((double)rand()/(double)RAND_MAX-0.5)*boxsize*0.9;
 		double y 	= ((double)rand()/(double)RAND_MAX-0.5)*boxsize*0.9;
 		double a 	= sqrt(x*x+y*y);
@@ -71,17 +104,9 @@ void problem_init(int argc, char* argv[]){
 		testparticle.ay = 0; 
 		testparticle.az = 0;
 		testparticle.m  = 0;
-
-		// Only add local particles. This is quick and dirty. 
-		// Definitely not the most efficient way.
-#ifdef MPI
-		int rootbox = particles_get_rootbox_for_particle(testparticle);
-		int root_n_per_node = root_n/mpi_num;
-		int proc_id = rootbox/root_n_per_node;
-		if (proc_id != mpi_id) continue;
-#endif	//MPI
 		
-		particles_add(testparticle);
+		// Add particles locally. This does not distribute particles.
+		particles_add_local(testparticle);
 	}
 }
 
