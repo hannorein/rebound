@@ -71,8 +71,14 @@ void tree_add_particle_to_tree(int pt){
 		tree_root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
 	}
 	struct particle p = particles[pt];
-	int root_index = particles_get_rootbox_for_particle(p);
-	tree_root[root_index] = tree_add_particle_to_cell(tree_root[root_index],pt,NULL,0);
+	int rootbox = particles_get_rootbox_for_particle(p);
+#ifdef MPI
+	// Do not add particles that do not belong to this tree (avoid removing active particles)
+	int root_n_per_node = root_n/mpi_num;
+	int proc_id = rootbox/root_n_per_node;
+	if (proc_id!=mpi_id) return;
+#endif 	// MPI
+	tree_root[rootbox] = tree_add_particle_to_cell(tree_root[rootbox],pt,NULL,0);
 }
 
 struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *parent, int o){
