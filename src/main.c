@@ -245,5 +245,6 @@ static char* logo[] = {
 "                                               \n",   
 "    Copyright (C) 2011 Hanno Rein, Shangfei Liu\n",  
 "       http://github.com/hannorein/rebound/    \n",    
+"       http://arxiv.org/abs/1110.4876          \n",    
 "                                               \n", 
 NULL};
