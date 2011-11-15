@@ -5,7 +5,9 @@
  *
  * @details 	This is the crudest implementation of an N-body code
  * which sums up every pair of particles. It is only useful very small 
- * particle numbers (N<~100) as it scales as O(N^2). 
+ * particle numbers (N<~100) as it scales as O(N^2). Note that the MPI
+ * implementation is not well tested and only works for very specific
+ * problems. This should be resolved in the future. 
  *
  * 
  * @section LICENSE
@@ -35,9 +37,11 @@
 #include "particle.h"
 #include "main.h"
 #include "boundaries.h"
+#include "communication_mpi.h"
 
 #ifdef MPI
-#error GRAVITY_DIRECT not compatible with MPI
+#warning GRAVITY_DIRECT might not work with MPI for your problem. 
+#warning Make sure you know what the code is doing. Have a look at the example restricted_threebody_mpi.
 #endif
 
 void gravity_calculate_acceleration(){
@@ -76,4 +80,11 @@ void gravity_calculate_acceleration(){
 	}
 	}
 	}
+#ifdef MPI
+	// Distribute active particles from root to all other nodes.
+	// This assures that round-off errors do not accumulate and 
+	// the copies of active particles diverge. 
+	MPI_Bcast(particles, N_active, mpi_particle, 0, MPI_COMM_WORLD); 
+#endif
+
 }
