@@ -78,6 +78,13 @@ void particles_add(struct particle pt);
 void particles_add_fixed(struct particle pt,int pos);
 
 /**
+ * Add a particle to the particle structure on the current node.
+ * Do not distribute particles.
+ * @param pt Particle to be added.
+ */
+void particles_add_local(struct particle pt);
+
+/**
  * Returns the index of the rootbox for the current particles based on its position.
  * @return Index of the rootbox.
  * @param pt Particle to be checked.

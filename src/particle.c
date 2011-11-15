@@ -43,10 +43,6 @@ int N_active 	= -1;
 int boundaries_particle_is_in_box(struct particle p);
 #endif // BOUNDARIES_OPEN
 
-/**
- * Add a particle to the particle structure on the current node.
- * @param pt Particle to be added.
- */
 void particles_add_local(struct particle pt){
 #ifdef BOUNDARIES_OPEN
 	if (boundaries_particle_is_in_box(pt)==0){
@@ -75,12 +71,12 @@ void particles_add(struct particle pt){
 			collisions_max2_r = pt.r;
 		}
 	}
-#endif // COLLISIONS_NONE
+#endif 	// COLLISIONS_NONE
 #ifdef MPI
 	int rootbox = particles_get_rootbox_for_particle(pt);
 	int root_n_per_node = root_n/mpi_num;
 	int proc_id = rootbox/root_n_per_node;
-	if (proc_id != mpi_id){
+	if (proc_id != mpi_id && N >= N_active){
 		// Add particle to array and send them to proc_id later. 
 		communication_mpi_add_particle_to_send_queue(pt,proc_id);
 		return;
