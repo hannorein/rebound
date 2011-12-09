@@ -318,6 +318,7 @@ void collisions_search(){
 				}
 			}
 		}
+		free(sweepl.xvalues);
 	}
 
 }
