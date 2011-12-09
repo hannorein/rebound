@@ -310,6 +310,7 @@ void collisions_search(){
 				}
 			}
 		}
+		free(sweepl.phivalues);
 	}
 
 }
