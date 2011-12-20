@@ -66,6 +66,21 @@ double tools_powerlaw(double min, double max, double slope);
 double tools_normal(double variance);
 
 /**
+ * This function sets up a Plummer sphere.
+ * @details This function is based on a routine from the NEMO package, P. Teuben (1995).
+ * For details on the implementation see the Appendix of Aarseth, Henon and Wielen (1974). 
+ * @param _N Number of particles in the plummer sphere.
+ * @param mlow Lower mass fraction cutoff (can be 0).
+ * @param rfrac Upper radius cutoff (the Plummer sphere is formally an inifitely large object).
+ * @param quiet Noisyness of the model, 0=noise, 1=medium, 2=quiet.
+ * @param scale Scales the final model before adding it to the simulation.
+ * @param shift Shift the entire sphere in position and velocity space (6 values). 
+ */
+
+void tools_init_plummer(int _N, double mlow, double rfrac, int quiet, double scale, double* shift);
+
+
+/**
  * This function calculated orbital elements for a given particle. The center of
  * mass is assumed to be at the origin.
  * @param p Particle.
