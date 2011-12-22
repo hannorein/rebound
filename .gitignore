@@ -15,4 +15,3 @@ tests/*/nbody*
 doc/html/*
 doc/latex/*
 doc/Doxyfile
-problems/
