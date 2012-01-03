@@ -7,7 +7,10 @@
  * systems where there is one dominant mass and all particles are nearly on 
  * Keplerian orbits. Note that the scheme is formally only first order 
  * accurate when velocity dependend forces are present.
- * The code is based on the SWIFT code. 
+ * Particles should be sorted by increasing semi-major axis because the 
+ * integrator transforms the positions and velocities to Jacobi coordinates
+ * during the timestep and assumes that the particles are sorted.
+ * The code is based on SWIFT. 
  * References: AJ, vol. 102, Oct. 1991, p. 1528-1538.
  *
  * The central mass is fixed at the origin (x,y,z)=(0,0,0). The indirect term
