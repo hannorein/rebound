@@ -41,12 +41,17 @@ int N_active 	= -1;
 
 #ifdef BOUNDARIES_OPEN
 int boundaries_particle_is_in_box(struct particle p);
+int particles_warning_is_not_in_box = 0;
 #endif // BOUNDARIES_OPEN
 
 void particles_add_local(struct particle pt){
 #ifdef BOUNDARIES_OPEN
 	if (boundaries_particle_is_in_box(pt)==0){
 		// Particle has left the box. Do not add.
+		if (particles_warning_is_not_in_box == 0){
+			particles_warning_is_not_in_box = 1;
+			printf("\nWarning: Trying to add particle which is outside box boundaries.\n");
+		}
 		return;
 	}
 #endif // BOUNDARIES_OPEN
