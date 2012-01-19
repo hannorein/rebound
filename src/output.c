@@ -116,6 +116,10 @@ void output_append_ascii(char* filename){
 #else // MPI
 	FILE* of = fopen(filename,"a"); 
 #endif // MPI
+	if (of==NULL){
+		printf("\n\nError while opening file '%s'.\n",filename);
+		return;
+	}
 	for (int i=0;i<N;i++){
 		struct particle p = particles[i];
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\n",p.x,p.y,p.z,p.vx,p.vy,p.vz);
@@ -131,6 +135,10 @@ void output_ascii(char* filename){
 #else // MPI
 	FILE* of = fopen(filename,"w"); 
 #endif // MPI
+	if (of==NULL){
+		printf("\n\nError while opening file '%s'.\n",filename);
+		return;
+	}
 	for (int i=0;i<N;i++){
 		struct particle p = particles[i];
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\n",p.x,p.y,p.z,p.vx,p.vy,p.vz);
@@ -146,6 +154,10 @@ void output_orbits_append(char* filename){
 #else // MPI
 	FILE* of = fopen(filename,"a"); 
 #endif // MPI
+	if (of==NULL){
+		printf("\n\nError while opening file '%s'.\n",filename);
+		return;
+	}
 	for (int i=1;i<N;i++){
 		struct orbit o = tools_p2orbit(particles[i],particles[0].m);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
@@ -161,6 +173,10 @@ void output_orbits(char* filename){
 #else // MPI
 	FILE* of = fopen(filename,"w"); 
 #endif // MPI
+	if (of==NULL){
+		printf("\n\nError while opening file '%s'.\n",filename);
+		return;
+	}
 	for (int i=1;i<N;i++){
 		struct orbit o = tools_p2orbit(particles[i],particles[0].m);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
@@ -177,6 +193,10 @@ void output_binary(char* filename){
 #else // MPI
 	FILE* of = fopen(filename,"wb"); 
 #endif // MPI
+	if (of==NULL){
+		printf("\n\nError while opening file '%s'.\n",filename);
+		return;
+	}
 	fwrite(&N,sizeof(int),1,of);
 	fwrite(&t,sizeof(double),1,of);
 	for (int i=0;i<N;i++){
@@ -194,6 +214,10 @@ void output_binary_positions(char* filename){
 #else // MPI
 	FILE* of = fopen(filename,"wb"); 
 #endif // MPI
+	if (of==NULL){
+		printf("\n\nError while opening file '%s'.\n",filename);
+		return;
+	}
 	for (int i=0;i<N;i++){
 		struct vec3 v;
 		v.x = particles[i].x;
@@ -243,6 +267,10 @@ void output_append_velocity_dispersion(char* filename){
 	Q_tot.y = sqrt(Q_tot.y/(double)N_tot);
 	Q_tot.z = sqrt(Q_tot.z/(double)N_tot);
 	FILE* of = fopen(filename,"a"); 
+	if (of==NULL){
+		printf("\n\nError while opening file '%s'.\n",filename);
+		return;
+	}
 	fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,A_tot.x,A_tot.y,A_tot.z,Q_tot.x,Q_tot.y,Q_tot.z);
 	fclose(of);
 }
@@ -282,7 +310,10 @@ void output_png_single(char* filename){
 	png_structp png_ptr;
 	png_infop info_ptr;
 	fp = fopen(filename, "wb");
-	if (fp == NULL) return;
+	if (fp==NULL){
+		printf("\n\nError while opening file '%s'.\n",filename);
+		return;
+	}
 
 	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 
