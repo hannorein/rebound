@@ -9,7 +9,7 @@ Contributors
 Paper
 ----- 
 
-The paper describing this code has been accepted for publication by Astronomy and Astrophysics on 6 November 2011. A preprint can be found on the arXiv at http://arxiv.org/abs/1110.4876 and at http://www.aanda.org/articles/aa/pdf/forth/aa18085-11.pdf.
+The paper Rein & Liu 2012 describing this code has been accepted for publication by Astronomy and Astrophysics on 6 November 2011 and has been published as article A128 in A&A Volume 537 2012. A freely available preprint can be found on the arXiv at http://arxiv.org/abs/1110.4876.
 
 Screenshot
 ---------- 
@@ -251,22 +251,26 @@ You should have received a copy of the GNU General Public License along with REB
 
 Acknowledgments
 ---------------
-When you use this code or parts of this code for results presented in a scientific publication, please send us a copy of your paper so that we can keep track of all publications that made use of the code. We would greatly appreciate a citation to Rein and Liu (2011) and an acknowledgment of the form: 
+When you use this code or parts of this code for results presented in a scientific publication, please send us a copy of your paper so that we can keep track of all publications that made use of the code. We would greatly appreciate a citation to Rein and Liu (2012) and an acknowledgment of the form: 
 
 _Simulations in this paper made use of the collisional N-body code REBOUND which can be downloaded freely at http://github.com/hannorein/rebound._
 
 Reference in BibTeX format:
 
-    @ARTICLE{2011arXiv1110.4876R,
+    @ARTICLE{ReinLiu2012,
        author = {{Rein}, H. and {Liu}, S.-F.},
         title = "{REBOUND: An open-source multi-purpose N-body code for collisional dynamics}",
-      journal = {ArXiv e-prints},
+      journal = {A\&A},
     archivePrefix = "arXiv",
        eprint = {1110.4876},
+          DOI = "10.1051/0004-6361/201118085",
+          url = "http://dx.doi.org/10.1051/0004-6361/201118085",
      primaryClass = "astro-ph.EP",
      keywords = {Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Mathematics - Dynamical Systems, Physics - Computational Physics},
-         year = 2011,
-        month = oct,
+         year = 2012,
+        month = "",
+       volume = 537,
+        pages = "A128",
        adsurl = {http://adsabs.harvard.edu/abs/2011arXiv1110.4876R},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
     }
