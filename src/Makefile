@@ -32,7 +32,7 @@ ifeq ($(OS), Linux)
 endif
 ifeq ($(OS), Darwin)
 	PREDEF+= -DOPENGL
-	LIB+= -framework OPENGL -framework GLUT
+	LIB+= -framework OpenGL -framework GLUT
 endif
 
 ifeq ($(LIBPNG), 1)
