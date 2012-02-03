@@ -73,7 +73,7 @@ void tools_init_plummer(int _N, double mlow, double rfrac, int quiet, double sca
 	// Setup particles
 	for (int i = 0; i < _N; i++) {
 		_particles[i].m = 1.0/ (double) _N;
-		double radius;
+		double radius = 0;
 		if (quiet==0){
 			radius = 1.0 / sqrt( pow (tools_uniform(mlow,mfrac), -2.0/3.0) - 1.0);
 		} else if (quiet==1) {
