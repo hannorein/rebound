@@ -1,4 +1,4 @@
-PROBLEMDIR=examples/$(shell basename `pwd`)
+PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
 export OPENGL=0
 export OPT=-O3
 export MPI=1
