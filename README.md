@@ -11,6 +11,8 @@ Paper
 
 The paper Rein & Liu 2012 describing this code has been accepted for publication by Astronomy and Astrophysics on 6 November 2011 and has been published as article A128 in A&A Volume 537 2012. A freely available preprint can be found on the arXiv at http://arxiv.org/abs/1110.4876.
 
+On YouTube, http://youtu.be/gaExPGW1WzI?hd=1, you can find a promo video on how to download and install REBOUND. 
+
 Screenshot
 ---------- 
  
