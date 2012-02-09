@@ -72,6 +72,21 @@ double 	collisions_max2_r	= 0;
 void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, struct ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct cell* c);
 
 void collisions_search(){
+	// Update and simplify tree. 
+	// Prepare particles for distribution to other nodes. 
+	tree_update();          
+
+#ifdef MPI
+	// Distribute particles and add newly received particles to tree.
+	communication_mpi_distribute_particles();
+	
+	// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
+	tree_prepare_essential_tree_for_collisions();
+
+	// Transfer essential tree and particles needed for collisions.
+	communication_mpi_distribute_essential_tree_for_collisions();
+#endif // MPI
+
 	// Loop over ghost boxes, but only the inner most ring.
 	int nghostxcol = (nghostx>1?1:nghostx);
 	int nghostycol = (nghosty>1?1:nghosty);

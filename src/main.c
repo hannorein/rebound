@@ -139,23 +139,6 @@ void iterate(){
 	// Check for root crossings.
 	boundaries_check();     
 
-#ifdef COLLISIONS_TREE
-	// Update and simplify tree. 
-	// Prepare particles for distribution to other nodes. 
-	tree_update();          
-
-#ifdef MPI
-	// Distribute particles and add newly received particles to tree.
-	communication_mpi_distribute_particles();
-	
-	// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
-	tree_prepare_essential_tree_for_collisions();
-
-	// Transfer essential tree and particles needed for collisions.
-	communication_mpi_distribute_essential_tree_for_collisions();
-#endif // MPI
-#endif // COLLISIONS_TREE
-
 	// Search for collisions using local and essential tree.
 	collisions_search();
 
