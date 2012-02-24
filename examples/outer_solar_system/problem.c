@@ -107,7 +107,7 @@ void problem_output(){
 		output_timing();
 	}
 	if (output_check(3652422.)){ 	// output heliocentric orbital elements every 10000 years
-		output_orbits_append("orbits.txt");
+		output_append_orbits("orbits.txt");
 	}
 }
 

@@ -151,7 +151,7 @@ void problem_output(){
 		output_timing();
 	}
 	if(output_check(10.)){
-		output_orbits_append("orbits.txt");
+		output_append_orbits("orbits.txt");
 	}
 }
 

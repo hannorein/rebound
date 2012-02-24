@@ -146,7 +146,7 @@ void output_ascii(char* filename){
 	fclose(of);
 }
 
-void output_orbits_append(char* filename){
+void output_append_orbits(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);

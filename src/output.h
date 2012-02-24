@@ -69,7 +69,7 @@ void output_orbits(char* filename);
  * and assume a stellar mass of 1.
  * @param filename Output filename.
  */
-void output_orbits_append(char* filename);
+void output_append_orbits(char* filename);
 
 /**
  * Appends the positions and velocities of all particles to an ASCII file.
