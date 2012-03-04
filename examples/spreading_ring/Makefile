@@ -1,9 +1,6 @@
 PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
 export OPENGL=1
 export OPT=-O3
-export QUADRUPOLE=0
-export MPI=0
-export OPENMP=1
 
 all:
 	# Setup link to different modules
