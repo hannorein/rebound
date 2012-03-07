@@ -53,6 +53,7 @@ int grape_open	= 0;
 int jmemsize 	= 0;
 
 void gravity_calculate_acceleration(){
+	// Initialize grape
 	if (grape_open==0){
 		grape_open=1;
 		printf("\n************** GRAPE START ***************\n");
@@ -63,6 +64,7 @@ void gravity_calculate_acceleration(){
 
 	g5_set_range(-boxsize/2., boxsize/2., 1e-6);
 	
+	// Initialize or increase memory if needed.
 	int	nj = (N_active==-1)?N:N_active;		// Massive particles
 	int 	ni = N;					// All particles
 	if (_nj_MAX<nj){
@@ -70,17 +72,18 @@ void gravity_calculate_acceleration(){
 		mj 	= realloc(mj,sizeof(double)*nj);
 		xj	= realloc(xj,sizeof(double)*nj*3);
 	}
-	for(int i=0;i<nj;i++){
-		mj[i] 		= particles[i].m;
-		xj[i][0] 	= particles[i].x;
-		xj[i][1] 	= particles[i].y;
-		xj[i][2] 	= particles[i].z;
-	}
 	if (_ni_MAX<ni){
 		_ni_MAX = ni;
 		xi	= realloc(xi,sizeof(double)*ni*3);	// position
 		ai	= realloc(ai,sizeof(double)*ni*3);	// acceleration
 		pi 	= realloc(pi,sizeof(double));  		// potential
+	}
+	// Copy particle mass and positions
+	for(int i=0;i<nj;i++){
+		mj[i] 		= particles[i].m;
+		xj[i][0] 	= particles[i].x;
+		xj[i][1] 	= particles[i].y;
+		xj[i][2] 	= particles[i].z;
 	}
 	for(int i=0;i<ni;i++){
 		xi[i][0] 	= particles[i].x;
@@ -94,7 +97,6 @@ void gravity_calculate_acceleration(){
 	int nj_cur = 0;
 	while (nj_cur<nj){	
 		int nj_tmp = nj-nj_cur>jmemsize?jmemsize:nj-nj_cur;
-		printf("\nnj_tmp = %d \tnj_cur = %d\n",nj_tmp,nj_cur);	
 		g5_set_jp(0, nj_tmp, &(mj[nj_cur]), &(xj[nj_cur])); 
 		g5_set_n(nj_tmp); 
 		g5_set_eps_to_all(softening);

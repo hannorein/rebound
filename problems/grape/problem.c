@@ -59,7 +59,11 @@ void problem_init(int argc, char* argv[]){
 
 	// Setup particles
 	double disc_mass = 2e-1;
-	int _N = 20000;
+	if (argc<2){
+		printf("ERROR. Usage: ./nbody NUMBER_OF_PARTICLES\n");
+		exit(1);
+	}
+	int _N = atoi(argv[1]);
 	// Initial conditions
 	struct particle star;
 	star.x 		= 0; star.y 	= 0; star.z	= 0;
