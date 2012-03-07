@@ -315,7 +315,7 @@ int particles_get_rootbox_for_node(struct cell* node){
 	int i = ((int)floor((node->x + boxsize_x/2.)/boxsize)+root_nx)%root_nx;
 	int j = ((int)floor((node->y + boxsize_y/2.)/boxsize)+root_ny)%root_ny;
 	int k = ((int)floor((node->z + boxsize_z/2.)/boxsize)+root_nz)%root_nz;
-	int index = (k*root_ny+j)*root_nx+i;
+	int index = (i*root_ny+j)*root_nz+k;
 	return index;
 }
 

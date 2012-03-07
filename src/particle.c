@@ -110,7 +110,7 @@ int particles_get_rootbox_for_particle(struct particle pt){
 	int i = ((int)floor((pt.x + boxsize_x/2.)/boxsize)+root_nx)%root_nx;
 	int j = ((int)floor((pt.y + boxsize_y/2.)/boxsize)+root_ny)%root_ny;
 	int k = ((int)floor((pt.z + boxsize_z/2.)/boxsize)+root_nz)%root_nz;
-	int index = (k*root_ny+j)*root_nx+i;
+	int index = (i*root_ny+j)*root_nz+k;
 	return index;
 }
 
