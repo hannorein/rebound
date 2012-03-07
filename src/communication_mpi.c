@@ -229,15 +229,6 @@ void communication_mpi_add_particle_to_send_queue(struct particle pt, int proc_i
 /** 
  * This is the data structure for an axis aligned bounding box.
  */
-struct aabb{
-	double xmin;
-	double xmax;
-	double ymin;
-	double ymax;
-	double zmin;
-	double zmax;
-};
-
 struct aabb communication_boundingbox_for_root(int index){
 	int i = index%root_nx;
 	int j = ((index-i)/root_nx)%root_ny;

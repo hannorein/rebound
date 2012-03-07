@@ -1,13 +1,12 @@
-OPT+= -std=c99
 ifndef OS
 	OS=$(shell uname)
 endif
 ifeq ($(OS), Linux)
-	OPT+= -Wall  -g 
+	OPT+= -g 
 	LIB+= -lm
 endif
 ifeq ($(OS), Darwin)
-	OPT+= -I/usr/local/include  -Wall -g
+	OPT+= -I/usr/local/include -g
 	PREDEF+= -D_APPLE
 	LIB+= -L/usr/local/lib
 endif
@@ -55,7 +54,6 @@ else
 	LIB+= -fopenmp
 endif
 else
-	OPT+= -Wno-unknown-pragmas
 endif
 
 

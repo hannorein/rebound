@@ -37,6 +37,19 @@
 
 #ifndef _COMMUNICATION_MPI_H
 #define _COMMUNICATION_MPI_H
+
+/**
+ * Bounding box structure.
+ */
+struct aabb{
+	double xmin;
+	double xmax;
+	double ymin;
+	double ymax;
+	double zmin;
+	double zmax;
+};
+
 #ifdef MPI
 #include "mpi.h"
 
@@ -130,6 +143,18 @@ void communication_mpi_distribute_essential_tree_for_collisions();
  */
 void communication_mpi_prepare_essential_tree_for_collisions(struct cell* root);
 #endif //COLLISIONS_TREE
+
+/**
+ * Calculate the bounding box for root box index.
+ * @param index Root box for which bounding box is calculated.
+ */
+struct aabb communication_boundingbox_for_root(int index);
+
+/**
+ * Calculate the bounding box for all root boxes on node proc_id.
+ * @param proc_id Node for which bounding box is calculated.
+ */
+struct aabb communication_boundingbox_for_proc(int proc_id);
 
 
 #endif // MPI
