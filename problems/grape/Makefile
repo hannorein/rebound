@@ -1,6 +1,5 @@
 PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
-export OPENGL=0
-export OPT=-O3 -I/misc/local/g7pkg2.1/include
+export OPT=-g -O3 -I/misc/local/g7pkg2.1/include
 export LIB=-L/misc/local/g7pkg2.1/lib -lg75 -lhib
 
 all:
