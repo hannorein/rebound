@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <signal.h>
 #include <sys/time.h>
 #include "integrator.h"
 #include "boundaries.h"
@@ -176,6 +177,13 @@ void iterate(){
 	}
 }
 
+void interruptHandler(int var) {
+	// This will try to quit the simulation nicely
+	// at the end of the current timestep.
+	printf("\nInterrupt received. Will try to exit.\n");
+	exit_simulation=1;
+}
+
 
 int main(int argc, char* argv[]) {
 #ifdef MPI
@@ -197,7 +205,9 @@ int main(int argc, char* argv[]) {
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
-	// Initialiase random numbers, problem, box and OpengL
+	// Initialiase interrupts, random numbers, problem, box and OpengL
+	signal(SIGINT, interruptHandler);
+	signal(SIGKILL, interruptHandler);
 	srand ( tim.tv_usec + getpid());
 	problem_init(argc, argv);
 	problem_output();
