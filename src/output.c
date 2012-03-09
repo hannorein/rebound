@@ -108,6 +108,10 @@ void output_timing(){
 	output_timing_last = temp;
 }
 
+#ifdef PROFILING
+#else // PROFILING
+#endif // PROFILING
+
 void output_append_ascii(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];

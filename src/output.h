@@ -111,6 +111,17 @@ void output_png(char* dirname);
  * @param filename Output filename.
  */
 void output_png_single(char* filename);
+
+#ifdef PROFILING
+/**
+ * Profiling categories
+ */
+enum profiling_categories {
+	PROFILING_CAT_INTEGRATOR,
+	PROFILING_CAT_GRAVITY,
+	PROFILING_CAT_COLLISION,
+}
+#endif // PROFILING
 #endif
 
 #endif
