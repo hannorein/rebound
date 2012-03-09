@@ -178,6 +178,8 @@ void interruptHandler(int var) {
 	exit_simulation=1;
 }
 
+#ifdef PROFILING
+#endif // PROFILING
 
 int main(int argc, char* argv[]) {
 #ifdef MPI
