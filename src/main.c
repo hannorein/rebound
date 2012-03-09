@@ -33,6 +33,7 @@
 #include "boundaries.h"
 #include "gravity.h"
 #include "problem.h"
+#include "output.h"
 #include "collisions.h"
 #include "tree.h"
 #include "particle.h"
@@ -96,17 +97,29 @@ void init_box(){
 #endif // MPI
 }
 
+#ifdef PROFILING
+#define PROFILING_START() profiling_start();
+#define PROFILING_STOP(C) profiling_stop(C);
+#else // PROFILING
+#define PROFILING_START()	// Dummy, do nothing 
+#define PROFILING_STOP(C)	
+#endif // PROFILING
 
 void iterate(){	
 	// A 'DKD'-like integrator will do the first 'D' part.
+	PROFILING_START()
 	integrator_part1();
+	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
 	// Check for root crossings.
+	PROFILING_START()
 	boundaries_check();     
+	PROFILING_STOP(PROFILING_CAT_BOUNDARY)
 
 	// Update and simplify tree. 
 	// Prepare particles for distribution to other nodes. 
 	// This function also creates the tree if called for the first time.
+	PROFILING_START()
 #ifdef TREE
 	tree_update();          
 #endif //TREE
@@ -131,27 +144,36 @@ void iterate(){
 
 	// Calculate accelerations. 
 	gravity_calculate_acceleration();
+	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 
 	// Call problem specific function (e.g. to add additional forces). 
 	problem_inloop();
 
 	// A 'DKD'-like integrator will do the 'KD' part.
+	PROFILING_START()
 	integrator_part2();
+	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
 	// Do collisions here. We need both the positions and velocities at the same time.
 #ifndef COLLISIONS_NONE
 	// Check for root crossings.
+	PROFILING_START()
 	boundaries_check();     
+	PROFILING_STOP(PROFILING_CAT_BOUNDARY)
 
 	// Search for collisions using local and essential tree.
+	PROFILING_START()
 	collisions_search();
 
 	// Resolve collisions (only local particles are affected).
 	collisions_resolve();
+	PROFILING_STOP(PROFILING_CAT_COLLISION)
 #endif  // COLLISIONS_NONE
 
 #ifdef OPENGL
+	PROFILING_START()
 	display();
+	PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
 #endif // OPENGL
 	problem_output();
 	// Check if the simulation finished.
