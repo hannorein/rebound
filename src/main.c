@@ -67,6 +67,8 @@ int root_ny		= 1;
 int root_nz		= 1;
 int root_n		= 1;
 
+static char* 	logo[];		/**< Logo of rebound. */
+
 void init_box(){	
 	// Remove all particles
 	free(particles);

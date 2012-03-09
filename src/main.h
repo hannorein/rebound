@@ -50,7 +50,6 @@ extern double 	boxsize_max;	/**< Maximum size of the entire box in any direction
 
 extern double 	timing_initial;	/**< System time at start. Used to meassure total cpu time. */
 
-static char* 	logo[];		/**< Logo of rebound. */
 
 /**
  * Initializes the box. 
