@@ -1,10 +1,10 @@
 /**
  * @file 	problem.c
- * @brief 	Example problem: self-gravity disc.
+ * @brief 	Example problem: shearing sheet.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	A self-gravitating disc is integrated using
- * the leap frog integrator. This example is also compatible with 
- * the Wisdom Holman integrator. Collisions are not resolved.
+ * @detail 	This problem uses shearing sheet boundary
+ * conditions. Particle properties resemble those found in 
+ * Saturn's rings. 
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
@@ -39,63 +39,70 @@
 #include "tree.h"
 #include "tools.h"
 
-extern int Nmax;
-#ifdef GRAVITY_TREE
-extern double opening_angle2;
-#endif //GRAVITY_TREE
+extern double OMEGA;
+
+#ifndef COLLISIONS_NONE
+extern double coefficient_of_restitution;
+extern double minimum_collision_velocity;
+extern double (*coefficient_of_restitution_for_velocity)(double); 
+double coefficient_of_restitution_bridges(double v){
+	// assumes v in units of [m/s]
+	double eps = 0.32*pow(fabs(v)*100.,-0.234);
+	if (eps>1) eps=1;
+	if (eps<0) eps=0;
+	return eps;
+}
+#endif // COLLISIONS_NONE
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-#ifdef GRAVITY_TREE
-	opening_angle2	= 1.5;
-#endif //GRAVITY_TREE
-	G 		= 1;		
-	softening 	= 0.01;		
-	dt 		= 3e-3;
-	boxsize 	= 1.2;
-	root_nx = 1; root_ny = 1; root_nz = 1;
-	nghostx = 0; nghosty = 0; nghostz = 0; 		
-	init_box();
-
-	// Setup particles
-	double disc_mass = 2e-1;
-	if (argc<2){
-		printf("ERROR. Usage: ./nbody NUMBER_OF_PARTICLES\n");
-		exit(1);
+	OMEGA 				= 0.00013143527;	// 1/s
+	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
+	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
+	root_nx = 2; root_ny = 2; root_nz = 1;
+	nghostx = 2; nghosty = 2; nghostz = 0; 			// Use two ghost rings
+	double surfacedensity 		= 400; 			// kg/m^2
+	double particle_density		= 400;			// kg/m^3
+	double particle_radius_min 	= 1;			// m
+	double particle_radius_max 	= 4;			// m
+	double particle_radius_slope 	= -3;	
+	boxsize 			= 100;
+	if (argc>1){						// Try to read boxsize from command line
+		boxsize = atof(argv[1]);
 	}
-	int _N = atoi(argv[1]);
+	init_box();
+	
 	// Initial conditions
-	struct particle star;
-	star.x 		= 0; star.y 	= 0; star.z	= 0;
-	star.vx 	= 0; star.vy 	= 0; star.vz 	= 0;
-	star.ax 	= 0; star.ay 	= 0; star.az 	= 0;
-	star.m 		= 1;
-#ifdef INTEGRATOR_WH
-	// Insert particle manually. Don't add it to tree.
-	Nmax 			+= 128;
-	particles 		= realloc(particles,sizeof(struct particle)*Nmax);
-	particles[N] 		= star;
-	N++;
-#else // INTEGRATOR_WH
-	particles_add(star);
-#endif // INTEGRATOR_WH
-	while(N<_N){
+	printf("Toomre wavelength: %f\n",2.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*G);
+#ifndef COLLISIONS_NONE
+	// Use Bridges et al coefficient of restitution.
+	coefficient_of_restitution_for_velocity	= coefficient_of_restitution_bridges;
+	minimum_collision_velocity		= particle_radius_min*OMEGA*0.001;  // small fraction of the shear
+	softening 				= 0.1;			// m
+#else  // COLLISIONS_NONE
+	softening				= 0.5*particle_radius_max;
+#endif // COLLISIONS_NONE
+	double total_mass = surfacedensity*boxsize_x*boxsize_y;
+	double mass = 0;
+	while(mass<total_mass){
 		struct particle pt;
-		double a	= tools_powerlaw(boxsize/10.,boxsize/2./1.2,-1.5);
-		double phi 	= tools_uniform(0,2.*M_PI);
-		pt.x 		= a*cos(phi);
-		pt.y 		= a*sin(phi);
-		pt.z 		= a*tools_normal(0.001);
-		double mu 	= star.m + disc_mass * (pow(a,-3./2.)-pow(boxsize/10.,-3./2.))/(pow(boxsize/2./1.2,-3./2.)-pow(boxsize/10.,-3./2.));
-		double vkep 	= sqrt(G*mu/a);
-		pt.vx 		=  vkep * sin(phi);
-		pt.vy 		= -vkep * cos(phi);
+		pt.x 		= tools_uniform(-boxsize_x/2.,boxsize_x/2.);
+		pt.y 		= tools_uniform(-boxsize_y/2.,boxsize_y/2.);
+		pt.z 		= tools_normal(1.);					// m
+		pt.vx 		= 0;
+		pt.vy 		= -1.5*pt.x*OMEGA;
 		pt.vz 		= 0;
 		pt.ax 		= 0;
 		pt.ay 		= 0;
 		pt.az 		= 0;
-		pt.m 		= disc_mass/(double)_N;
+		double radius 	= tools_powerlaw(particle_radius_min,particle_radius_max,particle_radius_slope);
+#ifndef COLLISIONS_NONE
+		pt.r 		= radius;						// m
+#endif
+		double		particle_mass = particle_density*4./3.*M_PI*radius*radius*radius;
+		pt.m 		= particle_mass; 	// kg
 		particles_add(pt);
+		mass += particle_mass;
 	}
 }
 
@@ -103,8 +110,10 @@ void problem_inloop(){
 }
 
 void problem_output(){
-	if (output_check(10.0*dt)) output_timing();
-	if (output_check(1)){
+	if (output_check(1e-1*2.*M_PI/OMEGA)){
+		output_timing();
+	}
+	if (output_check(2.*M_PI/OMEGA)){
 		output_ascii("ascii.txt");
 	}
 }

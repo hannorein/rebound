@@ -1,13 +1,11 @@
 /**
  * @file 	gravity.c
- * @brief 	Direct gravity calculation, O(N^2).
+ * @brief 	Gravity calculation using GRAPE.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  *
- * @details 	This is the crudest implementation of an N-body code
- * which sums up every pair of particles. It is only useful very small 
- * particle numbers (N<~100) as it scales as O(N^2). Note that the MPI
- * implementation is not well tested and only works for very specific
- * problems. This should be resolved in the future. 
+ * @details 	GRAPE is a special purpose hardware to accelerate
+ * N-body simulations. This routine calculates self gravity using
+ * a GRAPE 7 card. 
  *
  * 
  * @section LICENSE
@@ -51,22 +49,31 @@ double (*ai)[3]	= NULL;
 
 int grape_open	= 0;
 int jmemsize 	= 0;
+double gravity_minimum_mass = 1e300;
 
 void gravity_calculate_acceleration(){
 	// Initialize grape
 	if (grape_open==0){
 		grape_open=1;
-		printf("\n************** GRAPE START ***************\n");
+		printf("\n************** GRAPE STARTING ***************\n");
 		g5_open();
 		jmemsize = g5_get_jmemsize();
-		printf("************** GRAPE START ***************\n");
+		printf("************** GRAPE STARTED  ***************\n");
 	}
 
-	g5_set_range(-boxsize/2., boxsize/2., 1e-6);
+	g5_set_range(-boxsize/2., boxsize/2., gravity_minimum_mass);
+	
+#ifdef INTEGRATOR_WH
+	const int firstParticle = 1;
+#else //INTEGRATOR_WH
+	const int firstParticle = 0;
+#endif //INTEGRATOR_WH
 	
 	// Initialize or increase memory if needed.
 	int	nj = (N_active==-1)?N:N_active;		// Massive particles
 	int 	ni = N;					// All particles
+	nj -= firstParticle;				// Do not sum over central object for WH	
+		
 	if (_nj_MAX<nj){
 		_nj_MAX = nj;
 		mj 	= realloc(mj,sizeof(double)*nj);
@@ -78,39 +85,53 @@ void gravity_calculate_acceleration(){
 		ai	= realloc(ai,sizeof(double)*ni*3);	// acceleration
 		pi 	= realloc(pi,sizeof(double)*ni);	// potential
 	}
-	// Copy particle mass and positions
-	for(int i=0;i<nj;i++){
-		mj[i] 		= particles[i].m;
-		xj[i][0] 	= particles[i].x;
-		xj[i][1] 	= particles[i].y;
-		xj[i][2] 	= particles[i].z;
+	// Copy active (j) particle mass and positions
+	for(int j=0;j<nj;j++){
+		mj[j] 		= particles[j+firstParticle].m;
+		xj[j][0] 	= particles[j+firstParticle].x;
+		xj[j][1] 	= particles[j+firstParticle].y;
+		xj[j][2] 	= particles[j+firstParticle].z;
 	}
 	for(int i=0;i<ni;i++){
-		xi[i][0] 	= particles[i].x;
-		xi[i][1] 	= particles[i].y;
-		xi[i][2] 	= particles[i].z;
 		particles[i].ax = 0;
 		particles[i].ay = 0;
 		particles[i].az = 0;
 	}
 
-	int nj_cur = 0;
-	while (nj_cur<nj){	
-		int nj_tmp = nj-nj_cur>jmemsize?jmemsize:nj-nj_cur;
-		g5_set_jp(0, nj_tmp, &(mj[nj_cur]), &(xj[nj_cur])); 
-		g5_set_n(nj_tmp); 
-		g5_set_eps_to_all(softening);
-		g5_calculate_force_on_x(xi, ai, pi, ni); 
-		
+	// Summing over all Ghost Boxes
+	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
+	for (int gby=-nghosty; gby<=nghosty; gby++){
+	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
+		struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
+		// Copy passive (i) particle mass and positions
 		for(int i=0;i<ni;i++){
-			particles[i].ax += ai[i][0];
-			particles[i].ay += ai[i][1];
-			particles[i].az += ai[i][2];
+			xi[i][0] 	= gb.shiftx+particles[i].x;
+			xi[i][1] 	= gb.shifty+particles[i].y;
+			xi[i][2] 	= gb.shiftz+particles[i].z;
 		}
-		nj_cur+=nj_tmp;
+		// Summing over all particle pairs
+		int nj_cur = 0;
+		while (nj_cur<nj){	
+			int nj_tmp = nj-nj_cur>jmemsize?jmemsize:nj-nj_cur;
+			g5_set_jp(0, nj_tmp, &(mj[nj_cur]), &(xj[nj_cur])); 
+			g5_set_n(nj_tmp); 
+			g5_set_eps_to_all(softening);
+			g5_calculate_force_on_x(xi, ai, pi, ni); 
+		
+			// Updateing acceleration	
+			for(int i=0;i<ni;i++){
+				particles[i].ax += G*ai[i][0];
+				particles[i].ay += G*ai[i][1];
+				particles[i].az += G*ai[i][2];
+			}
+			nj_cur+=nj_tmp;
+		}
+	}
+	}
 	}
 }
 
+// Try to close GRAPE
 void gravity_finish(){
 	if (grape_open==1){
 		grape_open=0;
