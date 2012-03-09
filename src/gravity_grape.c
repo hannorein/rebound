@@ -47,22 +47,33 @@ double (*xi)[3]	= NULL;
 double (*ai)[3]	= NULL;
 
 
-int grape_open	= 0;
-int jmemsize 	= 0;
-double gravity_minimum_mass = 1e300;
+int gravity_grape_open	= 0;
+int gravity_grape_jmemsize 	= 0;
+double gravity_minimum_mass 	= 1e300;
+double gravity_range 		= 0;
 
 void gravity_calculate_acceleration(){
-	// Initialize grape
-	if (grape_open==0){
-		grape_open=1;
+	// Initialize GRAPE.
+	if (gravity_grape_open==0){
+		gravity_grape_open=1;
 		printf("\n************** GRAPE STARTING ***************\n");
 		g5_open();
-		jmemsize = g5_get_jmemsize();
+		gravity_grape_jmemsize = g5_get_jmemsize();
 		printf("************** GRAPE STARTED  ***************\n");
 	}
 
-	g5_set_range(-boxsize/2., boxsize/2., gravity_minimum_mass);
+	// Set domain size and minimum mass for GRAPE.
+	// This could be made more precise.
+	double gravity_boxsize 	= 0;
+	if (boxsize_x*((double)nghostx+1.)>gravity_boxsize) gravity_boxsize = boxsize_x*((double)nghostx+1.);
+	if (boxsize_y*((double)nghosty+1.)>gravity_boxsize) gravity_boxsize = boxsize_y*((double)nghosty+1.);
+	if (boxsize_z*((double)nghostz+1.)>gravity_boxsize) gravity_boxsize = boxsize_z*((double)nghostz+1.);
+	g5_set_range(-gravity_boxsize,gravity_boxsize, gravity_minimum_mass);
+	if (gravity_range){
+		g5_set_eta(gravity_range);
+	}
 	
+	// Do not sum over central object for WH	
 #ifdef INTEGRATOR_WH
 	const int firstParticle = 1;
 #else //INTEGRATOR_WH
@@ -72,7 +83,7 @@ void gravity_calculate_acceleration(){
 	// Initialize or increase memory if needed.
 	int	nj = (N_active==-1)?N:N_active;		// Massive particles
 	int 	ni = N;					// All particles
-	nj -= firstParticle;				// Do not sum over central object for WH	
+	nj -= firstParticle;			
 		
 	if (_nj_MAX<nj){
 		_nj_MAX = nj;
@@ -112,7 +123,7 @@ void gravity_calculate_acceleration(){
 		// Summing over all particle pairs
 		int nj_cur = 0;
 		while (nj_cur<nj){	
-			int nj_tmp = nj-nj_cur>jmemsize?jmemsize:nj-nj_cur;
+			int nj_tmp = nj-nj_cur>gravity_grape_jmemsize?gravity_grape_jmemsize:nj-nj_cur;
 			g5_set_jp(0, nj_tmp, &(mj[nj_cur]), &(xj[nj_cur])); 
 			g5_set_n(nj_tmp); 
 			g5_set_eps_to_all(softening);
@@ -133,8 +144,8 @@ void gravity_calculate_acceleration(){
 
 // Try to close GRAPE
 void gravity_finish(){
-	if (grape_open==1){
-		grape_open=0;
+	if (gravity_grape_open==1){
+		gravity_grape_open=0;
 		g5_close();
 	}
 }

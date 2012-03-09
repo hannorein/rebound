@@ -53,14 +53,18 @@ double coefficient_of_restitution_bridges(double v){
 	return eps;
 }
 #endif // COLLISIONS_NONE
+#ifdef GRAVITY_GRAPE
+extern double gravity_range;
+#endif // GRAVITY_GRAPE
+
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	OMEGA 				= 0.00013143527;	// 1/s
 	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
-	root_nx = 2; root_ny = 2; root_nz = 1;
-	nghostx = 2; nghosty = 2; nghostz = 0; 			// Use two ghost rings
+	root_nx = 10; root_ny = 1; root_nz = 1;
+	nghostx = 1; nghosty = 1; nghostz = 0; 			// Use two ghost rings
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3
 	double particle_radius_min 	= 1;			// m
@@ -71,6 +75,9 @@ void problem_init(int argc, char* argv[]){
 		boxsize = atof(argv[1]);
 	}
 	init_box();
+#ifdef GRAVITY_GRAPE
+	gravity_range = boxsize/2.;
+#endif // GRAVITY_GRAPE
 	
 	// Initial conditions
 	printf("Toomre wavelength: %f\n",2.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*G);
@@ -80,7 +87,7 @@ void problem_init(int argc, char* argv[]){
 	minimum_collision_velocity		= particle_radius_min*OMEGA*0.001;  // small fraction of the shear
 	softening 				= 0.1;			// m
 #else  // COLLISIONS_NONE
-	softening				= 0.5*particle_radius_max;
+	softening				= particle_radius_max;
 #endif // COLLISIONS_NONE
 	double total_mass = surfacedensity*boxsize_x*boxsize_y;
 	double mass = 0;
@@ -109,12 +116,31 @@ void problem_init(int argc, char* argv[]){
 void problem_inloop(){
 }
 
+void output_ascii_mod(char* filename){
+#ifdef MPI
+	char filename_mpi[1024];
+	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
+	FILE* of = fopen(filename_mpi,"w"); 
+#else // MPI
+	FILE* of = fopen(filename,"w"); 
+#endif // MPI
+	if (of==NULL){
+		printf("\n\nError while opening file '%s'.\n",filename);
+		return;
+	}
+	for (int i=0;i<N;i++){
+		struct particle p = particles[i];
+		fprintf(of,"%e\t%e\t%e\t%e\n",p.x,p.y,p.z,p.r);
+	}
+	fclose(of);
+}
+
 void problem_output(){
 	if (output_check(1e-1*2.*M_PI/OMEGA)){
 		output_timing();
 	}
-	if (output_check(2.*M_PI/OMEGA)){
-		output_ascii("ascii.txt");
+	if (output_check(.2*M_PI/OMEGA)){
+		output_ascii_mod("ascii.txt");
 	}
 }
 

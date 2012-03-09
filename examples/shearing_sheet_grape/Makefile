@@ -7,7 +7,7 @@ all:
 	ln -fs gravity_grape.c ../../src/gravity.c
 	ln -fs boundaries_shear.c ../../src/boundaries.c
 	ln -fs integrator_sei.c ../../src/integrator.c
-	ln -fs collisions_none.c ../../src/collisions.c
+	ln -fs collisions_sweep.c ../../src/collisions.c
 	# Setup link to problem file
 	ln -fs ../$(PROBLEMDIR)/problem.c ../../src/problem.c
 	# Compile
