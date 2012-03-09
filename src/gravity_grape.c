@@ -76,7 +76,7 @@ void gravity_calculate_acceleration(){
 		_ni_MAX = ni;
 		xi	= realloc(xi,sizeof(double)*ni*3);	// position
 		ai	= realloc(ai,sizeof(double)*ni*3);	// acceleration
-		pi 	= realloc(pi,sizeof(double));  		// potential
+		pi 	= realloc(pi,sizeof(double)*ni);	// potential
 	}
 	// Copy particle mass and positions
 	for(int i=0;i<nj;i++){
