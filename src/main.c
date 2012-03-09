@@ -44,6 +44,9 @@
 #ifdef OPENMP
 #include <omp.h>
 #endif
+#ifdef GRAVITY_GRAPE
+void gravity_finish();
+#endif // GRAVITY_GRAPE
 
 double softening 	= 0;
 double G		= 1;
@@ -159,6 +162,9 @@ void iterate(){
 #endif // MPI
 	// @TODO: Adjust timestep so that t==tmax exaclty at the end.
 	if((t+dt>tmax && tmax!=0.0) || exit_simulation==1){
+#ifdef GRAVITY_GRAPE
+		gravity_finish();
+#endif // GRAVITY_GRAPE
 		problem_finish();
 		struct timeval tim;
 		gettimeofday(&tim, NULL);

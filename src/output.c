@@ -99,10 +99,15 @@ void output_timing(){
 	}else{
 		printf("\r");
 	}
+	printf("N_tot= %- 9d  ",N_tot);
+#ifdef BOUNDARIES_SHEAR
+	printf("t= %- 9f [orb]  ",t*OMEGA/2./M_PI);
+#else // BOUNDARIES_SHEAR
+	printf("t= %- 9f  ",t);
+#endif // BOUNDARIES_SHEAR
+	printf("cpu= %- 9f [s]  ",temp-output_timing_last);
 	if (tmax>0){
-		printf("N_tot= %- 9d  t= %- 9f  cpu= %- 9f s  t/tmax= %5.2f%%",N_tot,t,temp-output_timing_last,t/tmax*100);
-	}else{
-		printf("N_tot= %- 9d  t= %- 9f  cpu= %- 9f s ",N_tot,t,temp-output_timing_last);
+		printf("t/tmax= %5.2f%%",t/tmax*100.0);
 	}
 	fflush(stdout);
 	output_timing_last = temp;
