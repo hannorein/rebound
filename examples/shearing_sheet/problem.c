@@ -58,7 +58,7 @@ void problem_init(int argc, char* argv[]){
 	softening 			= 0.1;			// m
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
 	root_nx = 2; root_ny = 2; root_nz = 1;
-	nghostx = 2; nghosty = 2; nghostz = 0; 			// Use three ghost rings
+	nghostx = 2; nghosty = 2; nghostz = 0; 			// Use two ghost rings
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3
 	double particle_radius_min 	= 1;			// m

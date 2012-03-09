@@ -64,7 +64,7 @@ void problem_init(int argc, char* argv[]){
 	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
 	root_nx = 10; root_ny = 1; root_nz = 1;
-	nghostx = 1; nghosty = 1; nghostz = 0; 			// Use two ghost rings
+	nghostx = 1; nghosty = 1; nghostz = 0; 			// Use two one ring (+cutoff, see below)
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3
 	double particle_radius_min 	= 1;			// m
