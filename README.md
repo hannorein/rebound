@@ -35,7 +35,9 @@ This setup allows you to work on multiple projects at the same time using differ
      <td>Direct summation, O(N^2)</td></tr>
   <tr><td><pre>gravity_tree.c       </pre></td>
      <td>Oct tree, Barnes & Hut 1986, O(N log(N))</td></tr>
-  <tr><td><pre>gravity_fft.c       </pre></td>
+  <tr><td><pre>gravity_grape.c      </pre></td>
+     <td>GRAPE, hardware accelerated direct summation, Sugimoto et al. 1990 </td></tr>
+  <tr><td><pre>gravity_fft.c        </pre></td>
      <td>Two dimensional gravity solver using FFTW, works in a periodic box and the shearing sheet. (Not well tested yet.)</td></tr>
 </table>
 
@@ -157,6 +159,7 @@ Note that you can still compile and run REBOUND even if you do not have GLUT ins
 ### Environment variables ###
 The makefile in each problem directory sets various environment variables. These determine the compiler optimization flags, the libraries included and basic code settings. Let us look at one of the examples `shearing_sheet` in more detail. 
 
+- `export PROFILING=1`. This enables profiling. You can see how much time is spend in the collision, gravity, integrator and visualization modules. This is useful to get an idea about the computational bottleneck.
 - `export QUADRUPOLE=0`. This disables the calculation of quadrupole moments for each cell in the tree. The simulation is faster, but less accurate.
 - `export OPENGL=1`. This enables real-time OpenGL visualizations and requires both OpenGL and GLUT libraries to be installed. This should work without any further adjustments on any Mac which has Xcode installed. On Linux both libraries must be installed in `/usr/local/`. You can change the default search paths for libraries in the file `src/Makefile`. 
 - `export MPI=0`. This disables parallelization with MPI.
