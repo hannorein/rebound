@@ -201,11 +201,20 @@ void iterate(){
 	}
 }
 
+int interrupt_counter = 0;
 void interruptHandler(int var) {
 	// This will try to quit the simulation nicely
 	// at the end of the current timestep.
-	printf("\nInterrupt received. Will try to exit.\n");
-	exit_simulation=1;
+	switch(interrupt_counter){
+		case 0:
+			printf("\nInterrupt received. Will try to exit.\n");
+			exit_simulation=1;
+			break;
+		default:
+			printf("\nInterrupt received. Will exit immediately.\n");
+			exit(-1);
+	}
+	interrupt_counter++;
 }
 
 int main(int argc, char* argv[]) {
