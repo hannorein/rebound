@@ -38,7 +38,9 @@
 #include "communication_mpi.h"
 #include "tree.h"
 #include "tools.h"
+#include "collision_resolve.h"
 
+void collision_resolve_hardsphere_withborder(struct collision c);
 extern double coefficient_of_restitution;
 int N_border;
 
@@ -47,12 +49,14 @@ void problem_init(int argc, char* argv[]){
 	double radius 	= 1;
 	double mass	= 1;
 	dt 		= 1e-1;	
-	coefficient_of_restitution 	= 0.5;
-	root_nx = 1; root_ny = 1; root_nz = 1;
+	// Override default collision handling to account for border particles
+	coefficient_of_restitution 	= 0.15;
+	collision_resolve = collision_resolve_hardsphere_withborder;
+	root_nx = 1; root_ny = 1; root_nz = 4;
 	nghostx = 1; nghosty = 1; nghostz = 0; 	
-	boxsize = 40;
+	boxsize = 20;
 	init_box();
-	double N_part 	= 600;
+	double N_part 	= 0.00937*boxsize_x*boxsize_y*boxsize_z;
 
 	// Add Border Particles
 	double border_spacing_x = boxsize_x/(floor(boxsize_x/radius/2.)-1.);
@@ -117,4 +121,60 @@ void problem_output(){
 }
 
 void problem_finish(){
+}
+
+void collision_resolve_hardsphere_withborder(struct collision c){
+	struct particle p1 = particles[c.p1];
+	struct particle p2 = particles[c.p2];
+	struct ghostbox gb = c.gb;
+	double m21  = p1.m  /  p2.m; 
+	double x21  = p1.x + gb.shiftx  - p2.x; 
+	double y21  = p1.y + gb.shifty  - p2.y; 
+	double z21  = p1.z + gb.shiftz  - p2.z; 
+	double rp   = p1.r+p2.r;
+	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return;
+	double vx21 = p1.vx + gb.shiftvx - p2.vx; 
+	double vy21 = p1.vy + gb.shiftvy - p2.vy; 
+	double vz21 = p1.vz + gb.shiftvz - p2.vz; 
+	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return; // not approaching
+	// Bring the to balls in the xy plane.
+	// NOTE: this could probabely be an atan (which is faster than atan2)
+	double theta = atan2(z21,y21);
+	double stheta = sin(theta);
+	double ctheta = cos(theta);
+	double vy21n = ctheta * vy21 + stheta * vz21;	
+	double y21n = ctheta * y21 + stheta * z21;	
+	
+	// Bring the two balls onto the positive x axis.
+	double phi = atan2(y21n,x21);
+	double cphi = cos(phi);
+	double sphi = sin(phi);
+	double vx21nn = cphi * vx21  + sphi * vy21n;		
+
+	// Coefficient of restitution
+	double eps= coefficient_of_restitution_for_velocity(vx21nn);
+	double dvx2 = -(1.0+eps)*vx21nn/(1.0+m21) ;
+	if (dvx2<minimum_collision_velocity){
+		dvx2 = minimum_collision_velocity;
+	}
+
+	// Now we are rotating backwards
+	double dvx2n = cphi * dvx2;		
+	double dvy2n = sphi * dvx2;		
+	double dvy2nn = ctheta * dvy2n;	
+	double dvz2nn = stheta * dvy2n;	
+
+	// Applying the changes to the particles.
+	if (c.p2>N_border){
+		particles[c.p2].vx -=	m21*dvx2n;
+		particles[c.p2].vy -=	m21*dvy2nn;
+		particles[c.p2].vz -=	m21*dvz2nn;
+		particles[c.p2].lastcollision = t;
+	}
+	if (c.p1>N_border){
+		particles[c.p1].vx +=	dvx2n; 
+		particles[c.p1].vy +=	dvy2nn; 
+		particles[c.p1].vz +=	dvz2nn; 
+		particles[c.p1].lastcollision = t;
+	}
 }
