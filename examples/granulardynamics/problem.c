@@ -1,10 +1,11 @@
 /**
  * @file 	problem.c
- * @brief 	Example problem: shearing sheet.
+ * @brief 	Example problem: Granular dynamics.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This problem uses shearing sheet boundary
- * conditions. Particle properties resemble those found in 
- * Saturn's rings. 
+ * @detail 	This problem uses two boundary layers made of 
+ * particles to simulate shearing walls. These walls are heating
+ * up the particles, create a dense and cool layer in the middle.
+ * This example shows how to use REBOUND for granular dynamics.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
