@@ -61,7 +61,6 @@ void problem_init(int argc, char* argv[]){
 
 	// Add Border Particles
 	double border_spacing_x = boxsize_x/(floor(boxsize_x/radius/2.)-1.);
-	printf("x: %f",border_spacing_x);
 	double border_spacing_y = boxsize_y/(floor(boxsize_y/radius/2.)-1.);
 	struct particle pt;
 	pt.vx 		= 0;
