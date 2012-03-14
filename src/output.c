@@ -115,7 +115,7 @@ void output_timing(){
 		printf("\r");
 #ifdef PROFILING
 		fputs("\033[A\033[2K",stdout);
-		for (int i=0;i<PROFILING_CAT_NUM;i++){
+		for (int i=0;i<=PROFILING_CAT_NUM;i++){
 			fputs("\033[A\033[2K",stdout);
 		}
 #endif // PROFILING
@@ -132,7 +132,8 @@ void output_timing(){
 	}
 #ifdef PROFILING
 	printf("\nCATEGORY       TIME \n");
-	for (int i=0;i<PROFILING_CAT_NUM;i++){
+	double _sum = 0;
+	for (int i=0;i<=PROFILING_CAT_NUM;i++){
 		switch (i){
 			case PROFILING_CAT_INTEGRATOR:
 				printf("Integrator     ");
@@ -151,9 +152,16 @@ void output_timing(){
 				printf("Visualization  ");
 				break;
 #endif // OPENGL
+			case PROFILING_CAT_NUM:
+				printf("Other          ");
+				break;
 		}
-		printf("%5.2f%%",profiling_time_sum[i]/(profiling_time_final - timing_initial)*100.);
-		if (i!=PROFILING_CAT_NUM-1) printf("\n");
+		if (i==PROFILING_CAT_NUM){
+			printf("%5.2f%%",(1.-_sum/(profiling_time_final - timing_initial))*100.);
+		}else{
+			printf("%5.2f%%\n",profiling_time_sum[i]/(profiling_time_final - timing_initial)*100.);
+			_sum += profiling_time_sum[i];
+		}
 	}
 #endif // PROFILING
 	fflush(stdout);
