@@ -43,6 +43,7 @@
 #include "boundaries.h"
 
 double opening_angle2 = 0.25; /**< Square of the cell opening angle \f$ \theta \f$. */
+double softening2;	/**< Used to accelerate calculation */
 
 /**
   * The function loops over all trees to call calculate_forces_for_particle_from_cell() tree to calculate forces for each particle.
@@ -50,7 +51,7 @@ double opening_angle2 = 0.25; /**< Square of the cell opening angle \f$ \theta \
   * @param pt Index of the particle the force is calculated for.
   * @param gb Ghostbox plus position of the particle (precalculated). 
   */
-void gravity_calculate_acceleration_for_particle(int pt, struct ghostbox gb);
+void gravity_calculate_acceleration_for_particle(const int pt, const struct ghostbox gb);
 
 /**
   * The function calls itself recursively using cell breaking criterion to check whether it can use center of mass (and mass quadrupole tensor) to calculate forces.
@@ -60,9 +61,10 @@ void gravity_calculate_acceleration_for_particle(int pt, struct ghostbox gb);
   * @param node Pointer to the cell the force is calculated from.
   * @param gb Ghostbox plus position of the particle (precalculated). 
   */
-void gravity_calculate_acceleration_for_particle_from_cell(int pt, struct cell const *node, struct ghostbox const gb);
+void gravity_calculate_acceleration_for_particle_from_cell(const int pt, const struct cell const *node, const struct ghostbox const gb);
 
 void gravity_calculate_acceleration(){
+	softening2 = softening*softening;
 #pragma omp parallel for schedule(guided)
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 
@@ -88,7 +90,7 @@ void gravity_calculate_acceleration(){
 	}
 }
 
-void gravity_calculate_acceleration_for_particle(int pt, struct ghostbox gb) {
+void gravity_calculate_acceleration_for_particle(const int pt, const struct ghostbox gb) {
 	for(int i=0;i<root_n;i++){
 		struct cell* node = tree_root[i];
 		if (node!=NULL){
@@ -97,7 +99,7 @@ void gravity_calculate_acceleration_for_particle(int pt, struct ghostbox gb) {
 	}
 }
 
-void gravity_calculate_acceleration_for_particle_from_cell(int pt, struct cell const *node, struct ghostbox const gb) {
+void gravity_calculate_acceleration_for_particle_from_cell(const int pt, const struct cell const *node, const struct ghostbox const gb) {
 	double dx = gb.shiftx - node->mx;
 	double dy = gb.shifty - node->my;
 	double dz = gb.shiftz - node->mz;
@@ -110,7 +112,7 @@ void gravity_calculate_acceleration_for_particle_from_cell(int pt, struct cell c
 				}
 			}
 		} else {
-			double r = sqrt(r2 + softening*softening);
+			double r = sqrt(r2 + softening2);
 			double prefact = -G/(r*r*r)*node->m;
 #ifdef QUADRUPOLE
 			double qprefact = G/(r*r*r*r*r);
@@ -131,7 +133,7 @@ void gravity_calculate_acceleration_for_particle_from_cell(int pt, struct cell c
 		}
 	} else { // It's a leaf node
 		if (node->pt == pt) return;
-		double r = sqrt(r2 + softening*softening);
+		double r = sqrt(r2 + softening2);
 		double prefact = -G/(r*r*r)*node->m;
 		particles[pt].ax += prefact*dx; 
 		particles[pt].ay += prefact*dy; 
