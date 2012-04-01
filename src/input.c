@@ -69,6 +69,14 @@ int input_check_restart(int argc, char** argv){
 	return restart;
 }
 
+double input_get_double(int argc, char** argv, const char* argument, double _default){
+	char* value = input_get_argument(argc,argv,argument);
+	if (value){
+		return atof(value);
+	}
+	return _default;
+}
+
 char* input_get_argument(int argc, char** argv, const char* argument){
 	opterr = 0;
 	optind = 1;
