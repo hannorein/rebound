@@ -66,7 +66,9 @@ double ss_mass[6] =
 };
 
 const double k	 	= 0.01720209895;	// Gaussian constant 
-
+#ifdef OPENGL
+extern int display_wire;
+#endif // OPENGL
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -75,6 +77,9 @@ void problem_init(int argc, char* argv[]){
 	N_active	= 5;
 	tmax		= 7.3e10;		// 200 Myr
 	G		= k*k;
+#ifdef OPENGL
+	display_wire	= 1;			// Show orbits.
+#endif // OPENGL
 	init_box();
 
 	// Initial conditions
