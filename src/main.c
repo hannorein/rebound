@@ -69,6 +69,9 @@ int root_n		= 1;
 
 static char* 	logo[];		/**< Logo of rebound. */
 
+void init_boxwidth(double _boxwidth){
+	boxsize = _boxwidth;
+}
 void init_box(){	
 	// Remove all particles
 	free(particles);
