@@ -72,7 +72,6 @@ extern int display_wire;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	boxsize 	= 200;			// astronomical units
 	dt 		= 40;			// days
 	N_active	= 5;
 	tmax		= 7.3e10;		// 200 Myr
@@ -80,7 +79,7 @@ void problem_init(int argc, char* argv[]){
 #ifdef OPENGL
 	display_wire	= 1;			// Show orbits.
 #endif // OPENGL
-	init_box();
+	init_boxwidth(200); 			// Init box with width 200 astronomical units
 
 	// Initial conditions
 	for (int i=0;i<6;i++){
