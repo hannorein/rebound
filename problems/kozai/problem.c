@@ -32,14 +32,18 @@
 #include "particle.h"
 #include "boundaries.h"
 
+#ifdef OPENGL
 extern int display_wire;
+#endif // OPENGL
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 		= M_PI*1e-2*1.1234125235345; // The long random number makes sure that the time step is not a multiple of any orbital frequency.
 	boxsize 	= 25;
 	tmax		= 2e4;
+#ifdef OPENGL
 	display_wire	= 1; // Show istantaneous orbits..
+#endif // OPENGL
 	init_box();
 
 	// Initial conditions
