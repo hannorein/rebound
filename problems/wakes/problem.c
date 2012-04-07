@@ -38,6 +38,7 @@
 #include "communication_mpi.h"
 #include "tree.h"
 #include "tools.h"
+#include "input.h"
 
 extern double OMEGA;
 extern double coefficient_of_restitution;
@@ -57,20 +58,21 @@ void problem_init(int argc, char* argv[]){
 	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
 	softening 			= 0.1;			// m
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
-	root_nx = 24; root_ny = 24; root_nz = 3;
-	nghostx = 2; nghosty = 2; nghostz = 0; 			// Use three ghost rings
+
+	root_nx = input_get_int(argc,argv,"root_nx",24);
+	root_ny = input_get_int(argc,argv,"root_ny",24);
+	root_nz = input_get_int(argc,argv,"root_nz",3);
+	
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3
 	double particle_radius_min 	= 0.1;			// m
 	double particle_radius_max 	= 1;			// m
 	double particle_radius_slope 	= -3;	
-	if (argc>1){						// Try to read boxsize from command line
-		boxsize = atof(argv[1]);
-	}else{
-		printf("\nERROR. Usage: ./nbody BOXSIZE\n");
-		exit(-1);
-	}
+
+	boxsize = input_get_double(argc,argv,"boxsize",-1);
+	
 	init_box();
+	
 	struct aabb bb = { .xmin = -boxsize_x/2., .xmax = boxsize_x/2., .ymin = -boxsize_y/2., .ymax = boxsize_y/2., .zmin = -boxsize_z/2., .zmax = boxsize_z/2.};
 	
 
@@ -156,14 +158,9 @@ void output_ascii_mod(char* filename){
 
 int position_id=0;
 void problem_output(){
-#ifdef LIBPNG
-	if (output_check(1e-3*2.*M_PI/OMEGA)){
-		output_png("png/");
-	}
-#endif //LIBPNG
-//	if (output_check(1e-2*2.*M_PI/OMEGA)){
+	if (output_check(10.*dt)){
 		output_timing();
-//	}
+	}
 	if (output_check(2.*M_PI/OMEGA)){
 		char filename[256];
 		sprintf(filename,"out/position_%08d.txt",position_id);
