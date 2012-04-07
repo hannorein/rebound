@@ -44,6 +44,10 @@ ifeq ($(QUADRUPOLE), 1)
 	PREDEF+= -DQUADRUPOLE
 endif
 
+ifeq ($(PROFILING), 1)
+	PREDEF+= -DPROFILING
+endif
+
 ifeq ($(OPENMP), 1)
 	PREDEF+= -DOPENMP
 ifeq ($(CC), icc)

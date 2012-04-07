@@ -50,13 +50,19 @@ extern double 	boxsize_max;	/**< Maximum size of the entire box in any direction
 
 extern double 	timing_initial;	/**< System time at start. Used to meassure total cpu time. */
 
-static char* 	logo[];		/**< Logo of rebound. */
 
 /**
  * Initializes the box. 
  * This function needs to be called from problem_init() before any particles are added.
  */
 void init_box();
+
+/**
+ * Initializes one rootbox with width _boxwidth. 
+ * This function needs to be called from problem_init() before any particles are added.
+ * @param _boxwidth Size of the box.
+ */
+void init_boxwidth(double _boxwidth);
 
 /**
  * Main iteration loop.

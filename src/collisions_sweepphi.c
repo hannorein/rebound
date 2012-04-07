@@ -396,7 +396,7 @@ void collisions_resolve(){
 				omp_set_lock(&boundarylock);
 			}
 #endif //OPENMP
-			collision_resolve_single(c1);
+			collision_resolve(c1);
 #ifdef OPENMP
 			if (c1.crossing){
 				omp_unset_lock(&boundarylock);

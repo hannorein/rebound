@@ -80,7 +80,22 @@ struct vec3 {
 	double z;
 };
 
-
+#ifdef PROFILING
+double profiling_time_sum[PROFILING_CAT_NUM];
+double profiling_time_initial 	= 0;
+double profiling_time_final 	= 0;
+void profiling_start(){
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	profiling_time_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
+}
+void profiling_stop(int cat){
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	profiling_time_final = tim.tv_sec+(tim.tv_usec/1000000.0);
+	profiling_time_sum[cat] += profiling_time_final - profiling_time_initial;
+}
+#endif // PROFILING
 
 double output_timing_last = -1; 	/**< Time when output_timing() was called the last time. */
 void output_timing(){
@@ -98,15 +113,61 @@ void output_timing(){
 		output_timing_last = temp;
 	}else{
 		printf("\r");
+#ifdef PROFILING
+		fputs("\033[A\033[2K",stdout);
+		for (int i=0;i<=PROFILING_CAT_NUM;i++){
+			fputs("\033[A\033[2K",stdout);
+		}
+#endif // PROFILING
 	}
+	printf("N_tot= %- 9d  ",N_tot);
+#ifdef BOUNDARIES_SHEAR
+	printf("t= %- 9f [orb]  ",t*OMEGA/2./M_PI);
+#else // BOUNDARIES_SHEAR
+	printf("t= %- 9f  ",t);
+#endif // BOUNDARIES_SHEAR
+	printf("cpu= %- 9f [s]  ",temp-output_timing_last);
 	if (tmax>0){
-		printf("N_tot= %- 9d  t= %- 9f  cpu= %- 9f s  t/tmax= %5.2f%%",N_tot,t,temp-output_timing_last,t/tmax*100);
-	}else{
-		printf("N_tot= %- 9d  t= %- 9f  cpu= %- 9f s ",N_tot,t,temp-output_timing_last);
+		printf("t/tmax= %5.2f%%",t/tmax*100.0);
 	}
+#ifdef PROFILING
+	printf("\nCATEGORY       TIME \n");
+	double _sum = 0;
+	for (int i=0;i<=PROFILING_CAT_NUM;i++){
+		switch (i){
+			case PROFILING_CAT_INTEGRATOR:
+				printf("Integrator     ");
+				break;
+			case PROFILING_CAT_BOUNDARY:
+				printf("Boundary check ");
+				break;
+			case PROFILING_CAT_GRAVITY:
+				printf("Gravity        ");
+				break;
+			case PROFILING_CAT_COLLISION:
+				printf("Collision      ");
+				break;
+#ifdef OPENGL
+			case PROFILING_CAT_VISUALIZATION:
+				printf("Visualization  ");
+				break;
+#endif // OPENGL
+			case PROFILING_CAT_NUM:
+				printf("Other          ");
+				break;
+		}
+		if (i==PROFILING_CAT_NUM){
+			printf("%5.2f%%",(1.-_sum/(profiling_time_final - timing_initial))*100.);
+		}else{
+			printf("%5.2f%%\n",profiling_time_sum[i]/(profiling_time_final - timing_initial)*100.);
+			_sum += profiling_time_sum[i];
+		}
+	}
+#endif // PROFILING
 	fflush(stdout);
 	output_timing_last = temp;
 }
+
 
 void output_append_ascii(char* filename){
 #ifdef MPI

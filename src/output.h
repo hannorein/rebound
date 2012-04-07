@@ -111,6 +111,24 @@ void output_png(char* dirname);
  * @param filename Output filename.
  */
 void output_png_single(char* filename);
-#endif
+#endif // OPENGL && LIBPNG
+
+#ifdef PROFILING
+/**
+ * Profiling categories
+ */
+enum profiling_categories {
+	PROFILING_CAT_INTEGRATOR,
+	PROFILING_CAT_BOUNDARY,
+	PROFILING_CAT_GRAVITY,
+	PROFILING_CAT_COLLISION,
+#ifdef OPENGL
+	PROFILING_CAT_VISUALIZATION,
+#endif // OPENGL
+	PROFILING_CAT_NUM,
+};
+void profiling_start();
+void profiling_stop(int cat);
+#endif // PROFILING
 
 #endif

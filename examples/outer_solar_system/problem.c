@@ -66,16 +66,20 @@ double ss_mass[6] =
 };
 
 const double k	 	= 0.01720209895;	// Gaussian constant 
-
+#ifdef OPENGL
+extern int display_wire;
+#endif // OPENGL
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	boxsize 	= 200;			// astronomical units
 	dt 		= 40;			// days
 	N_active	= 5;
 	tmax		= 7.3e10;		// 200 Myr
 	G		= k*k;
-	init_box();
+#ifdef OPENGL
+	display_wire	= 1;			// Show orbits.
+#endif // OPENGL
+	init_boxwidth(200); 			// Init box with width 200 astronomical units
 
 	// Initial conditions
 	for (int i=0;i<6;i++){

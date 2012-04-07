@@ -114,7 +114,7 @@ void collisions_resolve(){
 	// Loop over all collisions previously found in collisions_search().
 	for (int i=0;i<collisions_N;i++){
 		// Resolve collision
-		collision_resolve_single(collisions[i]);
+		collision_resolve(collisions[i]);
 	}
 	// Mark all collisions as resolved.
 	collisions_N=0;

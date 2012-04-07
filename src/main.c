@@ -27,11 +27,13 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <signal.h>
 #include <sys/time.h>
 #include "integrator.h"
 #include "boundaries.h"
 #include "gravity.h"
 #include "problem.h"
+#include "output.h"
 #include "collisions.h"
 #include "tree.h"
 #include "particle.h"
@@ -43,6 +45,9 @@
 #ifdef OPENMP
 #include <omp.h>
 #endif
+#ifdef GRAVITY_GRAPE
+void gravity_finish();
+#endif // GRAVITY_GRAPE
 
 double softening 	= 0;
 double G		= 1;
@@ -62,6 +67,12 @@ int root_ny		= 1;
 int root_nz		= 1;
 int root_n		= 1;
 
+static char* 	logo[];		/**< Logo of rebound. */
+
+void init_boxwidth(double _boxwidth){
+	boxsize = _boxwidth;
+	init_box();
+}
 void init_box(){	
 	// Remove all particles
 	free(particles);
@@ -92,17 +103,29 @@ void init_box(){
 #endif // MPI
 }
 
+#ifdef PROFILING
+#define PROFILING_START() profiling_start();
+#define PROFILING_STOP(C) profiling_stop(C);
+#else // PROFILING
+#define PROFILING_START()	// Dummy, do nothing 
+#define PROFILING_STOP(C)	
+#endif // PROFILING
 
 void iterate(){	
 	// A 'DKD'-like integrator will do the first 'D' part.
+	PROFILING_START()
 	integrator_part1();
+	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
 	// Check for root crossings.
+	PROFILING_START()
 	boundaries_check();     
+	PROFILING_STOP(PROFILING_CAT_BOUNDARY)
 
 	// Update and simplify tree. 
 	// Prepare particles for distribution to other nodes. 
 	// This function also creates the tree if called for the first time.
+	PROFILING_START()
 #ifdef TREE
 	tree_update();          
 #endif //TREE
@@ -127,27 +150,36 @@ void iterate(){
 
 	// Calculate accelerations. 
 	gravity_calculate_acceleration();
+	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 
 	// Call problem specific function (e.g. to add additional forces). 
 	problem_inloop();
 
 	// A 'DKD'-like integrator will do the 'KD' part.
+	PROFILING_START()
 	integrator_part2();
+	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
 	// Do collisions here. We need both the positions and velocities at the same time.
 #ifndef COLLISIONS_NONE
 	// Check for root crossings.
+	PROFILING_START()
 	boundaries_check();     
+	PROFILING_STOP(PROFILING_CAT_BOUNDARY)
 
 	// Search for collisions using local and essential tree.
+	PROFILING_START()
 	collisions_search();
 
 	// Resolve collisions (only local particles are affected).
 	collisions_resolve();
+	PROFILING_STOP(PROFILING_CAT_COLLISION)
 #endif  // COLLISIONS_NONE
 
 #ifdef OPENGL
+	PROFILING_START()
 	display();
+	PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
 #endif // OPENGL
 	problem_output();
 	// Check if the simulation finished.
@@ -158,6 +190,9 @@ void iterate(){
 #endif // MPI
 	// @TODO: Adjust timestep so that t==tmax exaclty at the end.
 	if((t+dt>tmax && tmax!=0.0) || exit_simulation==1){
+#ifdef GRAVITY_GRAPE
+		gravity_finish();
+#endif // GRAVITY_GRAPE
 		problem_finish();
 		struct timeval tim;
 		gettimeofday(&tim, NULL);
@@ -170,6 +205,21 @@ void iterate(){
 	}
 }
 
+int interrupt_counter = 0;
+void interruptHandler(int var) {
+	// This will try to quit the simulation nicely
+	// at the end of the current timestep.
+	switch(interrupt_counter){
+		case 0:
+			printf("\nInterrupt received. Will try to exit.\n");
+			exit_simulation=1;
+			break;
+		default:
+			printf("\nInterrupt received. Will exit immediately.\n");
+			exit(-1);
+	}
+	interrupt_counter++;
+}
 
 int main(int argc, char* argv[]) {
 #ifdef MPI
@@ -191,7 +241,9 @@ int main(int argc, char* argv[]) {
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
-	// Initialiase random numbers, problem, box and OpengL
+	// Initialiase interrupts, random numbers, problem, box and OpengL
+	signal(SIGINT, interruptHandler);
+	signal(SIGKILL, interruptHandler);
 	srand ( tim.tv_usec + getpid());
 	problem_init(argc, argv);
 	problem_output();
