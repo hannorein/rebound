@@ -70,6 +70,7 @@ void problem_init(int argc, char* argv[]){
 	double particle_radius_slope 	= -3;	
 
 	boxsize = input_get_double(argc,argv,"boxsize",-1);
+	printf("%d  %f", argc, boxsize);
 	
 	init_box();
 	
