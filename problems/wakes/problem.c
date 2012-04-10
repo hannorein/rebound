@@ -63,6 +63,8 @@ void problem_init(int argc, char* argv[]){
 	root_nx = input_get_int(argc,argv,"root_nx",1);
 	root_ny = input_get_int(argc,argv,"root_ny",1);
 	root_nz = input_get_int(argc,argv,"root_nz",1);
+	boxsize = input_get_double(argc,argv,"boxsize",-1);
+	init_box();
 	
 	// Setup particle and disk properties
 	double surfacedensity 		= 400; 			// kg/m^2
@@ -70,11 +72,9 @@ void problem_init(int argc, char* argv[]){
 	double particle_radius_min 	= 0.1;			// m
 	double particle_radius_max 	= 1;			// m
 	double particle_radius_slope 	= -3;	
-	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
-	minimum_collision_velocity = particle_radius_min*OMEGA*0.001;  // small fraction of the shear
+	coefficient_of_restitution_for_velocity	= coefficient_of_restitution_bridges;
+	minimum_collision_velocity 		= particle_radius_min*OMEGA*0.001;  // small fraction of the shear
 
-	boxsize = input_get_double(argc,argv,"boxsize",-1);
-	init_box();
 	
 	struct 	aabb bb	= { .xmin = -boxsize_x/2., .xmax = boxsize_x/2., .ymin = -boxsize_y/2., .ymax = boxsize_y/2., .zmin = -boxsize_z/2., .zmax = boxsize_z/2.};
 	long	_N	= round(surfacedensity*boxsize_x*boxsize_y/(4./3.*M_PI*particle_density* (pow(particle_radius_max,4.+particle_radius_slope) - pow(particle_radius_min,4.+particle_radius_slope)) / (pow(particle_radius_max,1.+particle_radius_slope) - pow(particle_radius_min,1.+particle_radius_slope)) * (1.+particle_radius_slope)/(4.+particle_radius_slope)));
