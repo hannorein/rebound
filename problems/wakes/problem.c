@@ -59,9 +59,9 @@ void problem_init(int argc, char* argv[]){
 	softening 			= 0.1;			// m
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
 
-	root_nx = input_get_int(argc,argv,"root_nx",24);
-	root_ny = input_get_int(argc,argv,"root_ny",24);
-	root_nz = input_get_int(argc,argv,"root_nz",3);
+	root_nx = input_get_int(argc,argv,"root_nx",1);
+	root_ny = input_get_int(argc,argv,"root_ny",1);
+	root_nz = input_get_int(argc,argv,"root_nz",1);
 	
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3
