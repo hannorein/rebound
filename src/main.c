@@ -74,8 +74,12 @@ void init_boxwidth(double _boxwidth){
 	init_box();
 }
 void init_box(){	
-	if (boxsize<=0 || boxsize_x <=0 || boxsize_y <=0 || boxsize_z <= 0){
+	if (boxsize<=0 ){
 		fprintf(stderr,"ERROR: Size of boxsize has to be set and be positive.\n");
+		exit(-1);
+	}
+	if (root_nx <=0 || root_ny <=0 || root_nz <= 0){
+		fprintf(stderr,"ERROR: Number of root boxes must be greater or equal to 1 in each direction.\n");
 		exit(-1);
 	}
 
