@@ -59,31 +59,28 @@ void problem_init(int argc, char* argv[]){
 	softening 			= 0.1;			// m
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
 
+	// Setup domain dimensions
 	root_nx = input_get_int(argc,argv,"root_nx",1);
 	root_ny = input_get_int(argc,argv,"root_ny",1);
 	root_nz = input_get_int(argc,argv,"root_nz",1);
 	
+	// Setup particle and disk properties
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3
 	double particle_radius_min 	= 0.1;			// m
 	double particle_radius_max 	= 1;			// m
 	double particle_radius_slope 	= -3;	
-
-	boxsize = input_get_double(argc,argv,"boxsize",-1);
-	printf("%d  %f", argc, boxsize);
-	
-	init_box();
-	
-	struct aabb bb = { .xmin = -boxsize_x/2., .xmax = boxsize_x/2., .ymin = -boxsize_y/2., .ymax = boxsize_y/2., .zmin = -boxsize_z/2., .zmax = boxsize_z/2.};
-	
-
-	// Use Bridges et al coefficient of restitution.
 	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
 	minimum_collision_velocity = particle_radius_min*OMEGA*0.001;  // small fraction of the shear
-	double mass = surfacedensity*boxsize_x*boxsize_y;
+
+	boxsize = input_get_double(argc,argv,"boxsize",-1);
+	init_box();
+	
+	struct 	aabb bb	= { .xmin = -boxsize_x/2., .xmax = boxsize_x/2., .ymin = -boxsize_y/2., .ymax = boxsize_y/2., .zmin = -boxsize_z/2., .zmax = boxsize_z/2.};
+	long	_N	= round(surfacedensity*boxsize_x*boxsize_y/(4./3.*M_PI*particle_density* (pow(particle_radius_max,4.+particle_radius_slope) - pow(particle_radius_min,4.+particle_radius_slope)) / (pow(particle_radius_max,1.+particle_radius_slope) - pow(particle_radius_min,1.+particle_radius_slope)) * (1.+particle_radius_slope)/(4.+particle_radius_slope)));
 
 #ifdef MPI
-	mass /= (double)mpi_num;
+	_N   /= mpi_num;
 	if (mpi_id==0){
 #endif // MPI
 		system("rm -rf out");
@@ -93,7 +90,7 @@ void problem_init(int argc, char* argv[]){
 	MPI_Barrier(MPI_COMM_WORLD);
 	bb = communication_boundingbox_for_proc(mpi_id);
 #endif // MPI
-	while(mass>0.){
+	for(int i=0;i<_N;i++){
 		struct particle pt;
 		pt.z 		= tools_normal(1.);	
 		if (fabs(pt.z)>=boxsize_z/2.) pt.z = 0;
@@ -119,7 +116,6 @@ void problem_init(int argc, char* argv[]){
 		pt.r 		= tools_powerlaw(particle_radius_min,particle_radius_max,particle_radius_slope);
 		pt.m 		= particle_density*4./3.*M_PI*pt.r*pt.r*pt.r;
 		
-		mass -= pt.m;
 		particles_add(pt);
 	}
 #ifdef MPI
