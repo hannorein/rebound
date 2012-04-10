@@ -74,6 +74,11 @@ void init_boxwidth(double _boxwidth){
 	init_box();
 }
 void init_box(){	
+	if (boxsize<=0 || boxsize_x <=0 || boxsize_y <=0 || boxsize_z <= 0){
+		fprintf(stderr,"ERROR: Size of boxsize has to be set and be positive.\n");
+		exit(-1);
+	}
+
 	// Remove all particles
 	free(particles);
 	particles = NULL;
