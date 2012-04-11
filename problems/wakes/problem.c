@@ -49,6 +49,36 @@ double coefficient_of_restitution_bridges(double v);
 
 extern double opening_angle2;
 
+int logfile_first = 1;
+void logfile(char* data){
+	if (logfile_first){
+		logfile_first = 0;
+		system("rm -fv config.log");
+	}
+	FILE* file = fopen("config.log","a+");
+	fputs(data,file);
+	fclose(file);
+}
+
+void logfile_double(char* name, double value){
+	char data[2048];
+	if (value>1e7){
+		sprintf(data,"%-35s =         %10e\n",name,value);
+	}else{
+		if (fabs(fmod(value,1.))>1e-9){
+			sprintf(data,"%-35s = %20.10f\n",name,value);
+		}else{
+			sprintf(data,"%-35s = %11.1f\n",name,value);
+		}
+	}
+	logfile(data);
+}
+void logfile_int(char* name, int value){
+	char data[2048];
+	sprintf(data,"%-35s = %9d\n",name,value);
+	logfile(data);
+}
+
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 #ifdef GRAVITY_TREE
@@ -80,6 +110,7 @@ void problem_init(int argc, char* argv[]){
 	long	_N	= round(surfacedensity*boxsize_x*boxsize_y/(4./3.*M_PI*particle_density* (pow(particle_radius_max,4.+particle_radius_slope) - pow(particle_radius_min,4.+particle_radius_slope)) / (pow(particle_radius_max,1.+particle_radius_slope) - pow(particle_radius_min,1.+particle_radius_slope)) * (1.+particle_radius_slope)/(4.+particle_radius_slope)));
 
 #ifdef MPI
+	bb = communication_boundingbox_for_proc(mpi_id);
 	_N   /= mpi_num;
 	if (mpi_id==0){
 #endif // MPI
@@ -88,7 +119,18 @@ void problem_init(int argc, char* argv[]){
 #ifdef MPI
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
-	bb = communication_boundingbox_for_proc(mpi_id);
+#endif // MPI
+	chdir("out");
+#ifdef MPI
+	if (mpi_id==0){
+#endif // MPI
+		logfile_double("boxsize",boxsize);
+#ifdef MPI
+		logfile_int("mpi_num",mpi_num);
+#endif // MPI
+		system("cat config.log");
+#ifdef MPI
+	}
 #endif // MPI
 	for(int i=0;i<_N;i++){
 		struct particle pt;
@@ -160,7 +202,7 @@ void problem_output(){
 	}
 	if (output_check(2.*M_PI/OMEGA)){
 		char filename[256];
-		sprintf(filename,"out/position_%08d.txt",position_id);
+		sprintf(filename,"position_%08d.txt",position_id);
 		output_ascii_mod(filename);
 		position_id++;
 	}
