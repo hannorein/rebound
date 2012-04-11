@@ -88,11 +88,15 @@ void problem_init(int argc, char* argv[]){
 	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
 	softening 			= 0.1;			// m
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
+	tmax				= 10.*2.*M_PI/OMEGA;
 
 	// Setup domain dimensions
 	root_nx = input_get_int(argc,argv,"root_nx",1);
 	root_ny = input_get_int(argc,argv,"root_ny",1);
 	root_nz = input_get_int(argc,argv,"root_nz",1);
+	nghostx = 2;
+	nghosty = 2;
+	nghostz = 0;
 	boxsize = input_get_double(argc,argv,"boxsize",-1);
 	init_box();
 	
@@ -125,9 +129,17 @@ void problem_init(int argc, char* argv[]){
 	if (mpi_id==0){
 #endif // MPI
 		logfile_double("boxsize",boxsize);
+		logfile_int("root_nx",root_nx);
+		logfile_int("root_ny",root_ny);
+		logfile_int("root_nz",root_nz);
+		logfile_int("N",_N);
 #ifdef MPI
+		logfile_int("N_total",_N*mpi_num);
 		logfile_int("mpi_num",mpi_num);
 #endif // MPI
+		logfile("----------------\n");
+		logfile_double("tmax [orbits]",tmax/(2.*M_PI/OMEGA));
+		logfile_int("number of timesteps",ceil(tmax/dt));
 		system("cat config.log");
 #ifdef MPI
 	}
@@ -197,7 +209,7 @@ void output_ascii_mod(char* filename){
 
 int position_id=0;
 void problem_output(){
-	if (output_check(10.*dt)){
+	if (output_check(100.*dt)){
 		output_timing();
 	}
 	if (output_check(2.*M_PI/OMEGA)){
@@ -209,4 +221,15 @@ void problem_output(){
 }
 
 void problem_finish(){
+#ifdef MPI
+	if (mpi_id==0){
+#endif // MPI
+		struct timeval tim;
+		gettimeofday(&tim, NULL);
+		double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
+		logfile_double("runtime [s]",timing_final-timing_initial);
+		system("cat config.log");
+#ifdef MPI
+	}
+#endif // MPI
 }
