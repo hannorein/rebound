@@ -117,12 +117,12 @@ void problem_init(int argc, char* argv[]){
 
 	char dirname[4096];
 	strcat(dirname,"out__");
-	strcat(dirname,input_arguments);
 	char tmpsystem[4096];
 #ifdef MPI
 	sprintf(tmpsystem,"mpinum_%d__",mpi_num);
 	strcat(dirname,tmpsystem);
 #endif // MPI
+	strcat(dirname,input_arguments);
 #ifdef MPI
 	bb = communication_boundingbox_for_proc(mpi_id);
 	_N   /= mpi_num;
