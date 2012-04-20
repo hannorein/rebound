@@ -31,6 +31,7 @@
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
+#include <string.h>
 #include "main.h"
 #include "particle.h"
 #include "boundaries.h"
@@ -113,18 +114,29 @@ void problem_init(int argc, char* argv[]){
 	struct 	aabb bb	= { .xmin = -boxsize_x/2., .xmax = boxsize_x/2., .ymin = -boxsize_y/2., .ymax = boxsize_y/2., .zmin = -boxsize_z/2., .zmax = boxsize_z/2.};
 	long	_N	= round(surfacedensity*boxsize_x*boxsize_y/(4./3.*M_PI*particle_density* (pow(particle_radius_max,4.+particle_radius_slope) - pow(particle_radius_min,4.+particle_radius_slope)) / (pow(particle_radius_max,1.+particle_radius_slope) - pow(particle_radius_min,1.+particle_radius_slope)) * (1.+particle_radius_slope)/(4.+particle_radius_slope)));
 
+
+	char dirname[4096];
+	strcat(dirname,"out__");
+	strcat(dirname,input_arguments);
+	char tmpsystem[4096];
+#ifdef MPI
+	sprintf(tmpsystem,"mpinum_%d__",mpi_num);
+	strcat(dirname,tmpsystem);
+#endif // MPI
 #ifdef MPI
 	bb = communication_boundingbox_for_proc(mpi_id);
 	_N   /= mpi_num;
 	if (mpi_id==0){
 #endif // MPI
-		system("rm -rf out");
-		system("mkdir out");
+		sprintf(tmpsystem,"rm -rf %s",dirname);
+		system(tmpsystem);
+		sprintf(tmpsystem,"mkdir %s",dirname);
+		system(tmpsystem);
 #ifdef MPI
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif // MPI
-	chdir("out");
+	chdir(dirname);
 #ifdef MPI
 	if (mpi_id==0){
 #endif // MPI
