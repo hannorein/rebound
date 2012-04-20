@@ -34,6 +34,26 @@
 #include "input.h"
 #include "communication_mpi.h"
 
+char input_arguments[4096]; // This is a bit of an arbitrary number. Should be dynamic.
+
+void input_append_input_arguments_with_int(const char* argument, int value){
+	if (strlen(input_arguments)){
+		strcat(input_arguments,"__");
+	}
+	char addition[2048];
+	sprintf(addition,"%s_%d",argument,value);
+	strcat(input_arguments,addition);
+}
+
+void input_append_input_arguments_with_double(const char* argument, double value){
+	if (strlen(input_arguments)){
+		strcat(input_arguments,"__");
+	}
+	char addition[2048];
+	sprintf(addition,"%s_%.3e",argument,value);
+	strcat(input_arguments,addition);
+}
+
 int input_check_restart(int argc, char** argv){
 	char filename[1024];
 	int restart = 0;
@@ -72,6 +92,7 @@ int input_check_restart(int argc, char** argv){
 double input_get_double(int argc, char** argv, const char* argument, double _default){
 	char* value = input_get_argument(argc,argv,argument);
 	if (value){
+		input_append_input_arguments_with_double(argument,atof(value));
 		return atof(value);
 	}
 	return _default;
@@ -80,6 +101,7 @@ double input_get_double(int argc, char** argv, const char* argument, double _def
 int input_get_int(int argc, char** argv, const char* argument, int _default){
 	char* value = input_get_argument(argc,argv,argument);
 	if (value){
+		input_append_input_arguments_with_int(argument,atoi(value));
 		return atoi(value);
 	}
 	return _default;
