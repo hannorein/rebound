@@ -1,3 +1,4 @@
+OPT+= -std=c99
 ifndef OS
 	OS=$(shell uname)
 endif
