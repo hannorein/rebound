@@ -1,3 +1,4 @@
+#ifndef ZPR_H
 /**
  * @file 	zpr.h
  * @brief 	Zoom-Pan-Rotate mouse manipulation module for GLUT.
@@ -26,18 +27,29 @@
  *
  *
  */
+#define ZPR_H
 
-#ifndef _ZPR_H
-#define _ZPR_H
 
-/**
- * Initialize the zoom/pan/rotating module.
- */
+#ifdef _APPLE
+#include <GLUT/glut.h>
+#else // _APPLE
+#include <GL/glut.h>
+#endif // _APPLE
+
+/* Mouse Manipulation API */
+
 void zprInit();
+extern GLfloat zprReferencePoint[4];
 
 /**
  * Reset the viewing angle, zooming scale.
  */
 void zprReset();
 
-#endif // _ZPR_H
+
+/* Picking API (Optional) */
+
+extern void zprSelectionFunc(void (*f)(void));      /* Selection-mode draw function */
+extern void zprPickFunc(void (*f)(GLint name));     /* Pick event handling function */
+
+#endif
