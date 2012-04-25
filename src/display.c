@@ -195,7 +195,6 @@ void display(){
 		glDisable(GL_LIGHT0);
 	}
 	}
-	glTranslatef(0,0,-boxsize_max);
 	glEnable(GL_POINT_SMOOTH);
 	glVertexPointer(3, GL_DOUBLE, sizeof(struct particle), particles);
 	int _N_active = (N_active==-1)?N:N_active;
@@ -302,7 +301,6 @@ void display(){
 	glutWireCube(1);
 	glScalef(1./boxsize_x,1./boxsize_y,1./boxsize_z);
 	glutSwapBuffers();
-	glTranslatef(0,0,boxsize_max);
 }
 
 void display_init(int argc, char* argv[]){

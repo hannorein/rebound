@@ -1,47 +1,11 @@
-/**
- * @file 	zpr.c
- * @brief 	Zoom-Pan-Rotate mouse manipulation module for GLUT.
- * @author 	Nigel Stewart
- * 		School of Computer Science and Information Technology
- * 		RMIT University
- * 		nigels@cs.rmit.edu.au
- * @details	In the current version panning is not working. There 
- * seem to be differences between the Mac and Linux implementation of GLUT.
- * 
- * @section 	LICENSE
- * Copyright (c) 2003,2011 Nigel Stewart, Hanno Rein
- *
- * This file is part of rebound.
- *
- * rebound is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * rebound is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
-#ifdef OPENGL
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
 #include <math.h>
 
 #include "zpr.h"
-#include "main.h"
-#include "particle.h"
 
-#ifdef _APPLE
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif 
+/* This code was originally C++ :-) */
 
 #define bool int
 #define true 1
@@ -51,8 +15,8 @@ static double _left   = 0.0;
 static double _right  = 0.0;
 static double _bottom = 0.0;
 static double _top    = 0.0;
-static double _zNear  = 0.1;
-static double _zFar   = 100.0;
+static double _zNear  = -10.0;
+static double _zFar   = 10.0;
 
 static int  _mouseX      = 0;
 static int  _mouseY      = 0;
@@ -70,18 +34,20 @@ static double _matrixInverse[16];
 static double vlen(double x,double y,double z);
 static void   pos(double *px,double *py,double *pz,const int x,const int y,const int *viewport);
 static void   getMatrix();
-static void   invertMatrix(const GLdouble *me, GLdouble *out );
+static void   invertMatrix(const GLdouble *m, GLdouble *out );
 
 static void zprReshape(int w,int h);
 static void zprMouse(int button, int state, int x, int y);
 static void zprMotion(int x, int y);
 
+static void zprPick(GLdouble x, GLdouble y,GLdouble delX, GLdouble delY);
 
 /* Configurable center point for zooming and rotation */
 
 GLfloat zprReferencePoint[4] = { 0,0,0,0 };
 double glscale = 1;
 int resetOrientation = 0;
+extern double boxsize_max;
 
 void
 zprReset()
@@ -90,7 +56,6 @@ zprReset()
     glLoadIdentity();
     double initscale = 1.5/boxsize_max;
     glScalef(initscale,initscale,initscale);
-    glTranslatef( 0, 0, -boxsize_max*2.);
     switch(resetOrientation){
 	    case 1:
 	    	glRotatef(90,1.,0.,0.);
@@ -100,7 +65,6 @@ zprReset()
 	    	glRotatef(90,0.,0.,1.);
 		break;
     }
-    glTranslatef(0, 0, boxsize_max);
     glscale = 1.0;
     resetOrientation++;
     if (resetOrientation>2){
@@ -112,6 +76,7 @@ void
 zprInit()
 {
     getMatrix();
+
     glutReshapeFunc(zprReshape);
     glutMouseFunc(zprMouse);
     glutMotionFunc(zprMotion);
@@ -139,7 +104,10 @@ static void
 zprMouse(int button, int state, int x, int y)
 {
    GLint viewport[4];
-   resetOrientation=0;
+
+   /* Do picking */
+   if (state==GLUT_DOWN)
+      zprPick(x,glutGet(GLUT_WINDOW_HEIGHT)-1-y,3,3);
 
     _mouseX = x;
     _mouseY = y;
@@ -178,14 +146,13 @@ zprMotion(int x, int y)
     if (dx==0 && dy==0)
         return;
 
-    if (_mouseMiddle || _mouseRight)
+    if (_mouseMiddle || (_mouseLeft && _mouseRight))
     {
         double s = exp((double)dy*0.01);
 
-        glTranslatef(0, 0, -boxsize_max);
-	glscale *=s;
+        glTranslatef( zprReferencePoint[0], zprReferencePoint[1], zprReferencePoint[2]);
         glScalef(s,s,s);
-        glTranslatef(0, 0,  boxsize_max);
+        glTranslatef(-zprReferencePoint[0],-zprReferencePoint[1],-zprReferencePoint[2]);
 
         changed = true;
     }
@@ -207,14 +174,14 @@ zprMotion(int x, int y)
             by = _matrixInverse[1]*ax + _matrixInverse[5]*ay + _matrixInverse[9] *az;
             bz = _matrixInverse[2]*ax + _matrixInverse[6]*ay + _matrixInverse[10]*az;
 
-            glTranslatef( 0, 0,-boxsize_max);
+            glTranslatef( zprReferencePoint[0], zprReferencePoint[1], zprReferencePoint[2]);
             glRotatef(angle,bx,by,bz);
-            glTranslatef( 0, 0, boxsize_max);
+            glTranslatef(-zprReferencePoint[0],-zprReferencePoint[1],-zprReferencePoint[2]);
 
             changed = true;
         }
         else
-            if (0&&_mouseRight)
+            if (_mouseRight)
             {
                 double px,py,pz;
 
@@ -236,7 +203,6 @@ zprMotion(int x, int y)
 
     if (changed)
     {
-   	resetOrientation=0;
         getMatrix();
         glutPostRedisplay();
     }
@@ -283,29 +249,29 @@ getMatrix()
  */
 
 static void
-invertMatrix(const GLdouble *me, GLdouble *out )
+invertMatrix(const GLdouble *m, GLdouble *out )
 {
 
 /* NB. OpenGL Matrices are COLUMN major. */
-#define MAT(me,r,c) (me)[(c)*4+(r)]
+#define MAT(m,r,c) (m)[(c)*4+(r)]
 
 /* Here's some shorthand converting standard (row,column) to index. */
-#define m11 MAT(me,0,0)
-#define m12 MAT(me,0,1)
-#define m13 MAT(me,0,2)
-#define m14 MAT(me,0,3)
-#define m21 MAT(me,1,0)
-#define m22 MAT(me,1,1)
-#define m23 MAT(me,1,2)
-#define m24 MAT(me,1,3)
-#define m31 MAT(me,2,0)
-#define m32 MAT(me,2,1)
-#define m33 MAT(me,2,2)
-#define m34 MAT(me,2,3)
-#define m41 MAT(me,3,0)
-#define m42 MAT(me,3,1)
-#define m43 MAT(me,3,2)
-#define m44 MAT(me,3,3)
+#define m11 MAT(m,0,0)
+#define m12 MAT(m,0,1)
+#define m13 MAT(m,0,2)
+#define m14 MAT(m,0,3)
+#define m21 MAT(m,1,0)
+#define m22 MAT(m,1,1)
+#define m23 MAT(m,1,2)
+#define m24 MAT(m,1,3)
+#define m31 MAT(m,2,0)
+#define m32 MAT(m,2,1)
+#define m33 MAT(m,2,2)
+#define m34 MAT(m,2,3)
+#define m41 MAT(m,3,0)
+#define m42 MAT(m,3,1)
+#define m43 MAT(m,3,2)
+#define m44 MAT(m,3,3)
 
    GLdouble det;
    GLdouble d12, d13, d23, d24, d34, d41;
@@ -388,4 +354,103 @@ invertMatrix(const GLdouble *me, GLdouble *out )
 #undef MAT
 }
 
-#endif
+/***************************************** Picking ****************************************************/
+
+static void (*selection)(void) = NULL;
+static void (*pick)(GLint name) = NULL;
+
+void zprSelectionFunc(void (*f)(void))
+{
+    selection = f;
+}
+
+void zprPickFunc(void (*f)(GLint name))
+{
+    pick = f;
+}
+
+/* Draw in selection mode */
+
+static void
+zprPick(GLdouble x, GLdouble y,GLdouble delX, GLdouble delY)
+{
+   GLuint buffer[1024];
+   const int bufferSize = sizeof(buffer)/sizeof(GLuint);
+
+   GLint    viewport[4];
+   GLdouble projection[16];
+
+   GLint hits;
+   GLint i,j,k;
+
+   GLint  min  = -1;
+   GLuint minZ = -1;
+
+   glSelectBuffer(bufferSize,buffer);              /* Selection buffer for hit records */
+   glRenderMode(GL_SELECT);                        /* OpenGL selection mode            */
+   glInitNames();                                  /* Clear OpenGL name stack          */
+
+   glMatrixMode(GL_PROJECTION);
+   glPushMatrix();                                 /* Push current projection matrix   */
+   glGetIntegerv(GL_VIEWPORT,viewport);            /* Get the current viewport size    */
+   glGetDoublev(GL_PROJECTION_MATRIX,projection);  /* Get the projection matrix        */
+   glLoadIdentity();                               /* Reset the projection matrix      */
+   gluPickMatrix(x,y,delX,delY,viewport);          /* Set the picking matrix           */
+   glMultMatrixd(projection);                      /* Apply projection matrix          */
+
+   glMatrixMode(GL_MODELVIEW);
+
+   if (selection)
+      selection();                                 /* Draw the scene in selection mode */
+
+   hits = glRenderMode(GL_RENDER);                 /* Return to normal rendering mode  */
+
+   /* Diagnostic output to stdout */
+
+   #ifndef NDEBUG
+   if (hits!=0)
+   {
+      printf("hits = %d\n",hits);
+
+      for (i=0,j=0; i<hits; i++)
+      {
+         printf("\tsize = %u, min = %u, max = %u : ",buffer[j],buffer[j+1],buffer[j+2]);
+         for (k=0; k < (GLint) buffer[j]; k++)
+            printf("%u ",buffer[j+3+k]);
+         printf("\n");
+
+         j += 3 + buffer[j];
+      }
+   }
+   #endif
+
+   /* Determine the nearest hit */
+
+   if (hits)
+   {
+      for (i=0,j=0; i<hits; i++)
+      {
+         if (buffer[j+1]<minZ)
+         {
+            /* If name stack is empty, return -1                */
+            /* If name stack is not empty, return top-most name */
+
+            if (buffer[j]==0)
+               min = -1;
+            else
+               min  = buffer[j+2+buffer[j]];
+
+            minZ = buffer[j+1];
+         }
+
+         j += buffer[j] + 3;
+      }
+   }
+
+   glMatrixMode(GL_PROJECTION);
+   glPopMatrix();                         /* Restore projection matrix           */
+   glMatrixMode(GL_MODELVIEW);
+
+   if (pick)
+      pick(min);                          /* Pass pick event back to application */
+}
