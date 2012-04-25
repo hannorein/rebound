@@ -94,7 +94,7 @@ void communication_mpi_init(int argc, char** argv){
 #ifdef TREE
 	struct particle p;
 	blen[bnum] 	= 1; 
-	indices[bnum] 	= (void*)&p.c - (void*)&p; 
+	indices[bnum] 	= (char*)&p.c - (char*)&p; 
 	oldtypes[bnum] 	= MPI_CHAR;
 	bnum++;
 #endif // TREE
@@ -120,11 +120,11 @@ void communication_mpi_init(int argc, char** argv){
 	oldtypes[bnum] 	= MPI_DOUBLE;
 	bnum++;
 	blen[bnum] 	= 8; 
-	indices[bnum] 	= (void*)&c.oct - (void*)&c; 
+	indices[bnum] 	= (char*)&c.oct - (char*)&c; 
 	oldtypes[bnum] 	= MPI_CHAR;
 	bnum++;
 	blen[bnum] 	= 1; 
-	indices[bnum] 	= (void*)&c.pt - (void*)&c; 
+	indices[bnum] 	= (char*)&c.pt - (char*)&c; 
 	oldtypes[bnum] 	= MPI_INT;
 	bnum++;
 	blen[bnum] 	= 1; 
