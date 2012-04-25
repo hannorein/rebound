@@ -64,6 +64,7 @@ int display_mass = 0;		/**< Shows/hides centre of mass in tree structure. */
 int display_wire = 0;		/**< Shows/hides orbit wires. */
 int display_clear = 1;		/**< Toggles clearing the display on each draw. */
 int display_ghostboxes = 0;	/**< Shows/hides ghost boxes. */
+int display_reference = -1;	/**< Particle used as a reference for rotation. */
 #define DEG2RAD (M_PI/180.)
 
 /**
@@ -112,6 +113,16 @@ void displayKey(unsigned char key, int x, int y){
 			break;
 		case 'c': case 'C':
 			display_clear = !display_clear;
+			break;
+		case 'x': 
+			display_reference++;
+			if (display_reference>N) display_reference = -1;
+			printf("Reference particle: %d.\n",display_reference);
+			break;
+		case 'X': 
+			display_reference--;
+			if (display_reference<-1) display_reference = N-1;
+			printf("Reference particle: %d.\n",display_reference);
 			break;
 		case 'p': case 'P':
 #ifdef LIBPNG
@@ -198,6 +209,9 @@ void display(){
 	glEnable(GL_POINT_SMOOTH);
 	glVertexPointer(3, GL_DOUBLE, sizeof(struct particle), particles);
 	int _N_active = (N_active==-1)?N:N_active;
+	if (display_reference>=0){
+		glTranslatef(particles[display_reference].x,particles[display_reference].y,particles[display_reference].z);
+	}
 	for (int i=-display_ghostboxes*nghostx;i<=display_ghostboxes*nghostx;i++){
 	for (int j=-display_ghostboxes*nghosty;j<=display_ghostboxes*nghosty;j++){
 	for (int k=-display_ghostboxes*nghostz;k<=display_ghostboxes*nghostz;k++){
@@ -300,6 +314,9 @@ void display(){
 	glScalef(boxsize_x,boxsize_y,boxsize_z);
 	glutWireCube(1);
 	glScalef(1./boxsize_x,1./boxsize_y,1./boxsize_z);
+	if (display_reference>=0){
+		glTranslatef(-particles[display_reference].x,-particles[display_reference].y,-particles[display_reference].z);
+	}
 	glutSwapBuffers();
 }
 
