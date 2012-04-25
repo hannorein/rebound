@@ -38,7 +38,7 @@
 void problem_init(int argc, char* argv[]){
   // Setup constants
   dt 		= M_PI*1e-3*1.1234125235345;
-  boxsize 	= 2.2;
+  boxsize 	= 2.8;
   N_active      = 2;
   init_box();
 
@@ -65,16 +65,15 @@ void problem_init(int argc, char* argv[]){
   particles_add(planet);
 
   // Ring particles
-  double inner_R =  2./800.;
-  double outer_R =  6./800.;
-  int NumParticles = 20000;
+  double inner_R =  2./200.;
+  double outer_R =  6./200.;
+  int NumParticles = 5000;
   for (int ii = 1; ii <= NumParticles; ++ii) {
     double dr = 0.;
     if (NumParticles == 1)
       dr = (inner_R + outer_R)/2.;
     else
       dr = inner_R + ((ii-1.)/(NumParticles-1)) * (outer_R-inner_R);
-    printf("NumParticles: %d; dr: %1.5e\n",NumParticles,dr);
     double vr = sqrt(planet.m / dr);
     struct particle ringparticle;
     ringparticle.x  = planet.x + dr;
