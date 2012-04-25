@@ -210,7 +210,7 @@ void display(){
 	glVertexPointer(3, GL_DOUBLE, sizeof(struct particle), particles);
 	int _N_active = (N_active==-1)?N:N_active;
 	if (display_reference>=0){
-		glTranslatef(particles[display_reference].x,particles[display_reference].y,particles[display_reference].z);
+		glTranslatef(-particles[display_reference].x,-particles[display_reference].y,-particles[display_reference].z);
 	}
 	for (int i=-display_ghostboxes*nghostx;i<=display_ghostboxes*nghostx;i++){
 	for (int j=-display_ghostboxes*nghosty;j<=display_ghostboxes*nghosty;j++){
@@ -315,7 +315,7 @@ void display(){
 	glutWireCube(1);
 	glScalef(1./boxsize_x,1./boxsize_y,1./boxsize_z);
 	if (display_reference>=0){
-		glTranslatef(-particles[display_reference].x,-particles[display_reference].y,-particles[display_reference].z);
+		glTranslatef(particles[display_reference].x,particles[display_reference].y,particles[display_reference].z);
 	}
 	glutSwapBuffers();
 }

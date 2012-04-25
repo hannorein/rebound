@@ -8,7 +8,7 @@
  * 		nigels@cs.rmit.edu.au
  * 
  * @section 	LICENSE
- * Copyright (c) 2003,2011 Nigel Stewart, Hanno Rein
+ * Copyright (c) 2003,2012 Nigel Stewart, Hanno Rein
  *
  * This file is part of rebound.
  *
