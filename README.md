@@ -231,6 +231,7 @@ You can use the following keyboard command to alter the OpenGL real-time visuali
   <tr><td>s</td><td>Toggle three dimensional spheres (looks better)/points (draws faster)</td></tr>
   <tr><td>g</td><td>Toggle ghost boxes</td></tr>
   <tr><td>r</td><td>Reset view. Press multiple times to change orientation.</td></tr>
+  <tr><td>x/X</td><td>Move to a coordinate system centered on a particle (note: does not work if particle array is constantly resorted, i.e. in a tree.)</td></tr>
   <tr><td>t</td><td>Show tree structure.</td></tr>
   <tr><td>m</td><td>Show center of mass in tree structure (only available when t is toggled on).</td></tr>
   <tr><td>p</td><td>Save screen shot to file.</td></tr>
