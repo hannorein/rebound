@@ -26,6 +26,7 @@
  *
  *
  */
+#ifdef OPENGL
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
@@ -480,3 +481,4 @@ zprPick(GLdouble x, GLdouble y,GLdouble delX, GLdouble delY)
    if (pick)
       pick(min);                          /* Pass pick event back to application */
 }
+#endif // OPENGL

@@ -30,6 +30,7 @@
 #define ZPR_H
 
 
+#ifdef OPENGL
 #ifdef _APPLE
 #include <GLUT/glut.h>
 #else // _APPLE
@@ -52,4 +53,5 @@ void zprReset();
 extern void zprSelectionFunc(void (*f)(void));      /* Selection-mode draw function */
 extern void zprPickFunc(void (*f)(GLint name));     /* Pick event handling function */
 
+#endif // OPENGL
 #endif
