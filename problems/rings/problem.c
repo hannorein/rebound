@@ -65,8 +65,8 @@ void problem_init(int argc, char* argv[]){
   particles_add(planet);
 
   // Ring particles
-  double inner_R =  2./200.;
-  double outer_R =  6./200.;
+  double inner_R =  1./20.;
+  double outer_R =  2./20.;
   int NumParticles = 5000;
   for (int ii = 1; ii <= NumParticles; ++ii) {
     double dr = 0.;
