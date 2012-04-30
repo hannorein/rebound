@@ -30,16 +30,20 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <string.h>
 #include "main.h"
+#include "tools.h"
 #include "output.h"
 #include "particle.h"
 #include "boundaries.h"
+
+
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 		= M_PI*1e-3*1.1234125235345;
 	boxsize 	= 2.8;
-	N_active      = 2;
+	N_active      	= 2;
 	init_box();
 
 	// Initial conditions
@@ -61,30 +65,37 @@ void problem_init(int argc, char* argv[]){
 	planet.vy = sqrt(G*(star.m+planet.m)/planet.x);
 	planet.vz = 0;
 	particles_add(planet);
+	logfile_double("planet mass", planet.m);
+	logfile_double("planet a", planet.x);
+	logfile_double("planet hill", planet.x*pow(planet.m/3./star.m,1./3.));
 
 	// Ring particles
 	double inner_R =  1./40.;
 	double outer_R =  2./40.;
 	int _N = 5000;
 	for (int i = 0; i < _N; i++) {
-		double dr = inner_R + (double)i/(double)(_N-1) * (outer_R-inner_R);
-		double dvr = sqrt(planet.m / dr);
 		struct particle ringparticle = planet;
-		ringparticle.x  += dr;
-		ringparticle.vy += dvr;
 		ringparticle.m  = 0;
+		double r = inner_R + (double)i/(double)(_N-1) * (outer_R-inner_R);
+		double v = sqrt(G*planet.m / r);
+		double phi = tools_uniform(0,M_2_PI);
+		ringparticle.x  +=  r*cos(phi);
+		ringparticle.y  +=  r*sin(phi);
+		ringparticle.vx += -v*sin(phi);
+		ringparticle.vy +=  v*cos(phi);
 		particles_add(ringparticle);
 	}
+	system("cat config.log");
 }
 
 void problem_inloop(){
-  if(output_check(1000.*dt)){
-    output_timing();
-  }
-  if(output_check(124.)){
-    //output_append_ascii("position.txt");
-    output_append_orbits("orbits.txt");
-  }
+	if(output_check(1000.*dt)){
+		output_timing();
+	}
+	if(output_check(124.)){
+		//output_append_ascii("position.txt");
+		//output_append_orbits("orbits.txt");
+	}
 }
 
 void problem_output(){
