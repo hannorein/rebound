@@ -193,7 +193,6 @@ zprMotion(int x, int y)
         glTranslatef( zprReferencePoint[0], zprReferencePoint[1], zprReferencePoint[2]);
         glScalef(s,s,s);
         glTranslatef(-zprReferencePoint[0],-zprReferencePoint[1],-zprReferencePoint[2]);
-	printf("size\m");
         changed = true;
     }
     else
