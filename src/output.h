@@ -95,6 +95,20 @@ void output_binary_positions(char* filename);
  */
 void output_append_velocity_dispersion(char* filename);
 
+/**
+ * Output a string to the default log file 'config.log'
+ * @param name Description of value
+ * @param value Value to be outputted
+ */
+void output_double(char* name, double value);
+
+/**
+ * Output a string to the default log file 'config.log'
+ * @param name Description of value
+ * @param value Value to be outputted
+ */
+void output_int(char* name, int value);
+
 #if defined(OPENGL) && defined(LIBPNG)
 /**
  * Outputs a screenshot of the current OpenGL view.
