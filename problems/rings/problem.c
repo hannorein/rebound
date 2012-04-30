@@ -65,20 +65,23 @@ void problem_init(int argc, char* argv[]){
 	planet.vy = sqrt(G*(star.m+planet.m)/planet.x);
 	planet.vz = 0;
 	particles_add(planet);
-	logfile_double("planet mass", planet.m);
-	logfile_double("planet a", planet.x);
-	logfile_double("planet hill", planet.x*pow(planet.m/3./star.m,1./3.));
+	output_double("planet mass", planet.m);
+	output_double("planet a", planet.x);
+	output_double("planet hill", planet.x*pow(planet.m/3./star.m,1./3.));
 
 	// Ring particles
-	double inner_R =  1./40.;
-	double outer_R =  2./40.;
+	double r_inner =  0.01;
+	double r_outer =  0.04;
+	output_double("ring inner", r_inner);
+	output_double("ring outer", r_outer);
 	int _N = 5000;
 	for (int i = 0; i < _N; i++) {
 		struct particle ringparticle = planet;
 		ringparticle.m  = 0;
-		double r = inner_R + (double)i/(double)(_N-1) * (outer_R-inner_R);
-		double v = sqrt(G*planet.m / r);
-		double phi = tools_uniform(0,M_2_PI);
+		double r 	= tools_uniform(r_inner,r_outer);
+		double v	= sqrt(G*planet.m / r);
+		double phi	= tools_uniform(0,2.*M_PI);
+		printf("%f\n",phi);
 		ringparticle.x  +=  r*cos(phi);
 		ringparticle.y  +=  r*sin(phi);
 		ringparticle.vx += -v*sin(phi);

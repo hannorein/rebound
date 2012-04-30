@@ -1,4 +1,4 @@
-OPT+= -std=c99
+OPT+= -std=c99 -Wpointer-arith
 ifndef OS
 	OS=$(shell uname)
 endif
