@@ -37,7 +37,9 @@
 #include "particle.h"
 #include "boundaries.h"
 
-
+// Star and planet (note, those wont be updated after they have been inserted)
+struct particle star;
+struct particle planet;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -49,7 +51,6 @@ void problem_init(int argc, char* argv[]){
 	// Initial conditions
 	// The WH integrator assumes a heliocentric coordinate system.
 	// Therefore the star has to be at the origin.
-	struct particle star;
 	star.x  = 0; star.y  = 0; star.z  = 0;
 	star.vx = 0; star.vy = 0; star.vz = 0;
 	star.ax = 0; star.ay = 0; star.az = 0;
@@ -57,7 +58,6 @@ void problem_init(int argc, char* argv[]){
 	particles_add(star);
 
 	// Planet 1 at 1 AU
-	struct particle planet;
 	planet.m  = 1.e-3;
 	planet.x  = 1.; planet.y  = 0.; planet.z  = 0.;
 	planet.ax = 0; planet.ay = 0; planet.az = 0;
@@ -81,7 +81,6 @@ void problem_init(int argc, char* argv[]){
 		double r 	= tools_uniform(r_inner,r_outer);
 		double v	= sqrt(G*planet.m / r);
 		double phi	= tools_uniform(0,2.*M_PI);
-		printf("%f\n",phi);
 		ringparticle.x  +=  r*cos(phi);
 		ringparticle.y  +=  r*sin(phi);
 		ringparticle.vx += -v*sin(phi);
@@ -92,6 +91,9 @@ void problem_init(int argc, char* argv[]){
 }
 
 void problem_inloop(){
+}
+
+void problem_output(){
 	if(output_check(1000.*dt)){
 		output_timing();
 	}
@@ -99,9 +101,37 @@ void problem_inloop(){
 		//output_append_ascii("position.txt");
 		//output_append_orbits("orbits.txt");
 	}
-}
+	// Star 
+	const double sx = particles[0].x;
+	const double sy = particles[0].y;
+	const double sz = particles[0].z;
+	const double svx = particles[0].vx;
+	const double svy = particles[0].vy;
+	const double svz = particles[0].vz;
+	for (int i=2;i<N;i++){
+		const double px = particles[i].x;
+		const double py = particles[i].y;
+		const double pz = particles[i].z;
+		const double pvx = particles[i].vx;
+		const double pvy = particles[i].vy;
+		const double pvz = particles[i].vz;
+		const double prx = px-sx;
+		const double pry = py-sy;
+		const double prz = pz-sz;
+		const double prvx = pvx-svx;
+		const double prvy = pvy-svy;
+		const double prvz = pvz-svz;
 
-void problem_output(){
+		const double beta = 0.12;
+		const double pr = sqrt(prx*prx + pry*pry + prz*prz); // distance relative to star
+		const double c = 10064.915; // speed of light.
+		const double rdot = (prvx*prx + prvy*pry + prvz*prz)/pr; // radial velocity relative to  star
+		const double F_r = beta*G*star.m/(pr*pr);
+
+		particles[i].vx += F_r*((1.-rdot/c)*prx/pr - prvx/c)*dt;
+		particles[i].vy += F_r*((1.-rdot/c)*pry/pr - prvy/c)*dt;
+		particles[i].vz += F_r*((1.-rdot/c)*prz/pr - prvz/c)*dt;
+	}
 }
 
 void problem_finish(){
