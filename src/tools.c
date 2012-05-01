@@ -62,6 +62,40 @@ double tools_normal(double variance){
 	return 	v1*sqrt(-2.*log(rsq)/rsq*variance);
 }
 
+void tools_move_to_center_of_momentum(){
+	double m = 0;
+	double x = 0;
+	double y = 0;
+	double z = 0;
+	double vx = 0;
+	double vy = 0;
+	double vz = 0;
+	for (int i=0;i<N;i++){
+		struct particle p = particles[i];
+		m  += p.m;
+		x  += p.x*p.m;
+		y  += p.y*p.m;
+		z  += p.z*p.m;
+		vx += p.vx*p.m;
+		vy += p.vy*p.m;
+		vz += p.vz*p.m;
+	}
+	x /= m;
+	y /= m;
+	z /= m;
+	vx /= m;
+	vy /= m;
+	vz /= m;
+	for (int i=0;i<N;i++){
+		particles[i].x  -= x;
+		particles[i].y  -= y;
+		particles[i].z  -= z;
+		particles[i].vx -= vx;
+		particles[i].vy -= vy;
+		particles[i].vz -= vz;
+	}
+}
+
 void tools_init_plummer(int _N, double mlow, double rfrac, int quiet, double scale, double* shift) {
 	struct particle* _particles = calloc(_N,sizeof(struct particle));
 	double scalefactor = (scale < 0 ?  16.0 / (3.0 * M_PI)  : scale);

@@ -89,5 +89,9 @@ void tools_init_plummer(int _N, double mlow, double rfrac, int quiet, double sca
  */
 struct orbit tools_p2orbit(struct particle p, double cmass);
 
+/**
+ * Move to center of momentum and center of mass frame.
+ */
+void tools_move_to_center_of_momentum();
 
 #endif 	// TOOLS_H

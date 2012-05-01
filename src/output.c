@@ -336,6 +336,36 @@ void output_append_velocity_dispersion(char* filename){
 	fclose(of);
 }
 
+int output_logfile_first = 1;
+void output_logfile(char* data){
+	if (output_logfile_first){
+		output_logfile_first = 0;
+		system("rm -fv config.log");
+	}
+	FILE* file = fopen("config.log","a+");
+	fputs(data,file);
+	fclose(file);
+}
+
+void output_double(char* name, double value){
+	char data[2048];
+	if (value>1e7){
+		sprintf(data,"%-35s =         %10e\n",name,value);
+	}else{
+		if (fabs(fmod(value,1.))>1e-9){
+			sprintf(data,"%-35s = %20.10f\n",name,value);
+		}else{
+			sprintf(data,"%-35s = %11.1f\n",name,value);
+		}
+	}
+	output_logfile(data);
+}
+void output_int(char* name, int value){
+	char data[2048];
+	sprintf(data,"%-35s = %9d\n",name,value);
+	output_logfile(data);
+}
+
 #ifdef OPENGL
 #ifdef LIBPNG
 unsigned char* 	imgdata = NULL;

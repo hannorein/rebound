@@ -79,8 +79,12 @@ extern double boxsize_max;
 void
 zprReset()
 {
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(_left,_right,_bottom,_top,_zNear,_zFar);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    glGetDoublev(GL_MODELVIEW_MATRIX,_matrix);
     double initscale = 1.5/boxsize_max;
     glScalef(initscale,initscale,initscale);
     switch(resetOrientation){
@@ -103,7 +107,8 @@ void
 zprInit()
 {
     getMatrix();
-
+    _zNear  =-1.5*boxsize_max;
+    _zFar   = 1.5*boxsize_max;
     glutReshapeFunc(zprReshape);
     glutMouseFunc(zprMouse);
     glutMotionFunc(zprMotion);
@@ -135,24 +140,32 @@ zprMouse(int button, int state, int x, int y)
    /* Do picking */
    if (state==GLUT_DOWN)
       zprPick(x,glutGet(GLUT_WINDOW_HEIGHT)-1-y,3,3);
+   
 
     _mouseX = x;
     _mouseY = y;
 
-    if (state==GLUT_UP)
-        switch (button)
-        {
-            case GLUT_LEFT_BUTTON:   _mouseLeft   = false; break;
-            case GLUT_MIDDLE_BUTTON: _mouseMiddle = false; break;
-            case GLUT_RIGHT_BUTTON:  _mouseRight  = false; break;
-        }
-    else
-        switch (button)
-        {
-            case GLUT_LEFT_BUTTON:   _mouseLeft   = true; break;
-            case GLUT_MIDDLE_BUTTON: _mouseMiddle = true; break;
-            case GLUT_RIGHT_BUTTON:  _mouseRight  = true; break;
-        }
+    if (glutGetModifiers() == GLUT_ACTIVE_SHIFT){
+	    if (state==GLUT_UP)
+		    _mouseMiddle = false;
+	    else
+		    _mouseMiddle = true;
+    }else{
+	    if (state==GLUT_UP)
+		switch (button)
+		{
+		    case GLUT_LEFT_BUTTON:   _mouseLeft   = false; break;
+		    case GLUT_MIDDLE_BUTTON: _mouseMiddle = false; break;
+		    case GLUT_RIGHT_BUTTON:  _mouseRight  = false; break;
+		}
+	    else
+		switch (button)
+		{
+		    case GLUT_LEFT_BUTTON:   _mouseLeft   = true; break;
+		    case GLUT_MIDDLE_BUTTON: _mouseMiddle = true; break;
+		    case GLUT_RIGHT_BUTTON:  _mouseRight  = true; break;
+		}
+    }
 
     glGetIntegerv(GL_VIEWPORT,viewport);
     pos(&_dragPosX,&_dragPosY,&_dragPosZ,x,y,viewport);
@@ -180,7 +193,6 @@ zprMotion(int x, int y)
         glTranslatef( zprReferencePoint[0], zprReferencePoint[1], zprReferencePoint[2]);
         glScalef(s,s,s);
         glTranslatef(-zprReferencePoint[0],-zprReferencePoint[1],-zprReferencePoint[2]);
-
         changed = true;
     }
     else
