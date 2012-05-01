@@ -108,7 +108,7 @@ void problem_init(int argc, char* argv[]){
 	double particle_radius_max 	= 1;			// m
 	double particle_radius_slope 	= -3;	
 	coefficient_of_restitution_for_velocity	= coefficient_of_restitution_bridges;
-	minimum_collision_velocity 		= particle_radius_min*OMEGA*0.05;  // small fraction of the shear
+	minimum_collision_velocity 		= particle_radius_max*OMEGA*0.1;  // small fraction of the shear
 
 	
 	struct 	aabb bb	= { .xmin = -boxsize_x/2., .xmax = boxsize_x/2., .ymin = -boxsize_y/2., .ymax = boxsize_y/2., .zmin = -boxsize_z/2., .zmax = boxsize_z/2.};

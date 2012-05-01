@@ -97,8 +97,6 @@ zprReset()
 		break;
     }
     glscale = 1.0;
-    _mouseX      = 0;
-    _mouseY      = 0;
     resetOrientation++;
     if (resetOrientation>2){
 	    resetOrientation=0;
