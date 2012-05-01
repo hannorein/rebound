@@ -32,6 +32,7 @@
 #include <time.h>
 #include <string.h>
 #include "main.h"
+#include "input.h"
 #include "tools.h"
 #include "output.h"
 #include "particle.h"
@@ -67,11 +68,12 @@ void problem_init(int argc, char* argv[]){
 	particles_add(planet);
 	output_double("planet mass", planet.m);
 	output_double("planet a", planet.x);
-	output_double("planet hill", planet.x*pow(planet.m/3./star.m,1./3.));
 
 	// Ring particles
-	double r_inner =  0.01;
-	double r_outer =  0.04;
+	double planet_hill = planet.x*pow(planet.m/3./star.m,1./3.);
+	output_double("planet hill", planet_hill);
+	double r_inner =  planet_hill*input_get_double(argc, argv, "r_inner", 0.1);
+	double r_outer =  planet_hill*input_get_double(argc, argv, "r_outer", 0.2);
 	output_double("ring inner", r_inner);
 	output_double("ring outer", r_outer);
 	int _N = 5000;
