@@ -93,8 +93,6 @@ void problem_init(int argc, char* argv[]){
 	tools_move_to_center_of_momentum();
 }
 
-void problem_inloop(){
-}
 
 void problem_output(){
 	if(output_check(1000.*dt)){
@@ -104,6 +102,8 @@ void problem_output(){
 		//output_append_ascii("position.txt");
 		//output_append_orbits("orbits.txt");
 	}
+}
+void problem_inloop(){
 	// Star 
 	const double sx = particles[0].x;
 	const double sy = particles[0].y;
