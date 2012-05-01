@@ -182,6 +182,7 @@ zprMotion(int x, int y)
 
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT,viewport);
+    getMatrix();
 
     if (dx==0 && dy==0)
         return;
@@ -242,7 +243,6 @@ zprMotion(int x, int y)
 
     if (changed)
     {
-        getMatrix();
         glutPostRedisplay();
     }
 }
