@@ -92,6 +92,6 @@ struct orbit tools_p2orbit(struct particle p, double cmass);
 /**
  * Move to center of momentum and center of mass frame.
  */
-double tools_move_to_center_of_momentum();
+void tools_move_to_center_of_momentum();
 
 #endif 	// TOOLS_H

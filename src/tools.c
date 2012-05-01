@@ -62,7 +62,7 @@ double tools_normal(double variance){
 	return 	v1*sqrt(-2.*log(rsq)/rsq*variance);
 }
 
-double tools_move_to_center_of_momentum(){
+void tools_move_to_center_of_momentum(){
 	double m = 0;
 	double x = 0;
 	double y = 0;
