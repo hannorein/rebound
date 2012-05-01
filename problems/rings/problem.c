@@ -90,6 +90,7 @@ void problem_init(int argc, char* argv[]){
 		particles_add(ringparticle);
 	}
 	system("cat config.log");
+	tools_move_to_center_of_momentum();
 }
 
 void problem_inloop(){
