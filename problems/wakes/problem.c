@@ -50,36 +50,6 @@ double coefficient_of_restitution_bridges(double v);
 
 extern double opening_angle2;
 
-int logfile_first = 1;
-void logfile(char* data){
-	if (logfile_first){
-		logfile_first = 0;
-		system("rm -fv config.log");
-	}
-	FILE* file = fopen("config.log","a+");
-	fputs(data,file);
-	fclose(file);
-}
-
-void logfile_double(char* name, double value){
-	char data[2048];
-	if (value>1e7){
-		sprintf(data,"%-35s =         %10e\n",name,value);
-	}else{
-		if (fabs(fmod(value,1.))>1e-9){
-			sprintf(data,"%-35s = %20.10f\n",name,value);
-		}else{
-			sprintf(data,"%-35s = %11.1f\n",name,value);
-		}
-	}
-	logfile(data);
-}
-void logfile_int(char* name, int value){
-	char data[2048];
-	sprintf(data,"%-35s = %9d\n",name,value);
-	logfile(data);
-}
-
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 #ifdef GRAVITY_TREE
@@ -115,7 +85,7 @@ void problem_init(int argc, char* argv[]){
 	long	_N	= round(surfacedensity*boxsize_x*boxsize_y/(4./3.*M_PI*particle_density* (pow(particle_radius_max,4.+particle_radius_slope) - pow(particle_radius_min,4.+particle_radius_slope)) / (pow(particle_radius_max,1.+particle_radius_slope) - pow(particle_radius_min,1.+particle_radius_slope)) * (1.+particle_radius_slope)/(4.+particle_radius_slope)));
 
 
-	char dirname[4096];
+	char dirname[4096] = "";
 	strcat(dirname,"out__");
 	char tmpsystem[4096];
 #ifdef MPI
@@ -134,24 +104,24 @@ void problem_init(int argc, char* argv[]){
 		system(tmpsystem);
 #ifdef MPI
 	}
+	sleep(5);
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif // MPI
 	chdir(dirname);
 #ifdef MPI
 	if (mpi_id==0){
 #endif // MPI
-		logfile_double("boxsize",boxsize);
-		logfile_int("root_nx",root_nx);
-		logfile_int("root_ny",root_ny);
-		logfile_int("root_nz",root_nz);
-		logfile_int("N",_N);
+		output_double("boxsize",boxsize);
+		output_int("root_nx",root_nx);
+		output_int("root_ny",root_ny);
+		output_int("root_nz",root_nz);
+		output_int("N",_N);
 #ifdef MPI
-		logfile_int("N_total",_N*mpi_num);
-		logfile_int("mpi_num",mpi_num);
+		output_int("N_total",_N*mpi_num);
+		output_int("mpi_num",mpi_num);
 #endif // MPI
-		logfile("----------------\n");
-		logfile_double("tmax [orbits]",tmax/(2.*M_PI/OMEGA));
-		logfile_int("number of timesteps",ceil(tmax/dt));
+		output_double("tmax [orbits]",tmax/(2.*M_PI/OMEGA));
+		output_int("number of timesteps",ceil(tmax/dt));
 		system("cat config.log");
 #ifdef MPI
 	}
@@ -239,7 +209,7 @@ void problem_finish(){
 		struct timeval tim;
 		gettimeofday(&tim, NULL);
 		double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
-		logfile_double("runtime [s]",timing_final-timing_initial);
+		output_double("runtime [s]",timing_final-timing_initial);
 		system("cat config.log");
 #ifdef MPI
 	}
