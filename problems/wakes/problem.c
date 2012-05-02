@@ -104,11 +104,11 @@ void problem_init(int argc, char* argv[]){
 	// Setup particle and disk properties
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3
-	double particle_radius_min 	= 0.1;			// m
+	double particle_radius_min 	= 0.05;			// m
 	double particle_radius_max 	= 1;			// m
 	double particle_radius_slope 	= -3;	
 	coefficient_of_restitution_for_velocity	= coefficient_of_restitution_bridges;
-	minimum_collision_velocity 		= particle_radius_max*OMEGA*0.1;  // small fraction of the shear
+	minimum_collision_velocity 		= OMEGA*0.01;  // small fraction of the shear (will be multiplied by p1.r+p2.r)
 
 	
 	struct 	aabb bb	= { .xmin = -boxsize_x/2., .xmax = boxsize_x/2., .ymin = -boxsize_y/2., .ymax = boxsize_y/2., .zmin = -boxsize_z/2., .zmax = boxsize_z/2.};
