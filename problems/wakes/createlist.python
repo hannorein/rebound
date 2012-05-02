@@ -1,0 +1,21 @@
+#!/bin/python
+import os, glob
+
+for sim in glob.glob('out__*'):
+	mpinum = 0
+	runtime = 0
+	parameters = sim.split("__")
+	for parameter in parameters:
+		p = parameter.split("_")
+		if p[0]=="mpinum":
+			mpinum = int(p[1])
+	configlog = file(sim+"/config.log")
+	for line in configlog:
+		columns = [x.strip() for x in line.split('=')]
+		if columns[0]=="runtime [s]":
+			runtime = columns[1]
+		if columns[0]=="N_total":
+			N = columns[1]
+	configlog.close()
+	if mpinum and runtime:
+		print N, mpinum, runtime
