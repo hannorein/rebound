@@ -86,7 +86,7 @@ void problem_init(int argc, char* argv[]){
 	// Setup particle and disk properties
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3
-	double particle_radius_min 	= 0.05;			// m
+	double particle_radius_min 	= 0.15;			// m
 	double particle_radius_max 	= 1;			// m
 	double particle_radius_slope 	= -3;	
 	coefficient_of_restitution_for_velocity	= coefficient_of_restitution_bridges;
