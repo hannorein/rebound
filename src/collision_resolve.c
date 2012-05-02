@@ -85,10 +85,11 @@ void collision_resolve_hardsphere(struct collision c){
 
 	// Coefficient of restitution
 	double eps= coefficient_of_restitution_for_velocity(vx21nn);
-	double dvx2 = -(1.0+eps)*vx21nn/(1.0+m21) ;
-	if (dvx2<minimum_collision_velocity){
-		dvx2 = minimum_collision_velocity;
+	double dvx2 = -(1.0+eps)*vx21nn;
+	if (dvx2<rp*minimum_collision_velocity){
+		dvx2 = rp*minimum_collision_velocity;
 	}
+	dvx2 /= (1.+m21);
 
 	// Now we are rotating backwards
 	double dvx2n = cphi * dvx2;		
