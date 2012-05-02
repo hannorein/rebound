@@ -62,9 +62,21 @@ void problem_init(int argc, char* argv[]){
 	tmax				= 10.*2.*M_PI/OMEGA;
 
 	// Setup domain dimensions
-	root_nx = input_get_int(argc,argv,"root_nx",1);
-	root_ny = input_get_int(argc,argv,"root_ny",1);
-	root_nz = input_get_int(argc,argv,"root_nz",1);
+	int _root_n = 1;
+#ifdef MPI
+	do{
+		_root_n++;
+	}while(_root_n*_root_n <= mpi_num);
+	_root_n--;
+	if (_root_n*_root_n!=mpi_num){
+		printf("\n\nError. mpi_num must be square of integer.\n");
+		exit(-1);
+	}
+#endif // MPI
+
+	root_nx = _root_n;
+	root_ny = _root_n;
+	root_nz = 1;
 	nghostx = 2;
 	nghosty = 2;
 	nghostz = 0;
