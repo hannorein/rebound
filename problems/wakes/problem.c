@@ -90,7 +90,6 @@ void problem_init(int argc, char* argv[]){
 	double particle_radius_max 	= 1;			// m
 	double particle_radius_slope 	= -3;	
 	coefficient_of_restitution_for_velocity	= coefficient_of_restitution_bridges;
-	minimum_collision_velocity 		= OMEGA*0.01;  // small fraction of the shear (will be multiplied by p1.r+p2.r)
 
 	
 	struct 	aabb bb	= { .xmin = -boxsize_x/2., .xmax = boxsize_x/2., .ymin = -boxsize_y/2., .ymax = boxsize_y/2., .zmin = -boxsize_z/2., .zmax = boxsize_z/2.};
@@ -140,8 +139,9 @@ void problem_init(int argc, char* argv[]){
 #endif // MPI
 	for(int i=0;i<_N;i++){
 		struct particle pt;
-		pt.z 		= tools_normal(1.);	
-		if (fabs(pt.z)>=boxsize_z/2.) pt.z = 0;
+		do{
+			pt.z 		= particle_radius_max*tools_normal(2.);	
+		}while(fabs(pt.z)>=boxsize_z/2.);
 #ifdef MPI
 		int proc_id;
 		do{
@@ -180,6 +180,12 @@ double coefficient_of_restitution_bridges(double v){
 }
 
 void problem_inloop(){
+	//Slowly turn on the minimum collision velocity.
+	const double t_init = 1./OMEGA;
+	minimum_collision_velocity 	= 0.5/dt;
+	if (t<t_init){
+		minimum_collision_velocity 	*= t/t_init;
+	}
 }
 
 void output_ascii_mod(char* filename){

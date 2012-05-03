@@ -33,6 +33,9 @@
 #include "boundaries.h"
 #include "communication_mpi.h"
 
+#define MAX(a, b) ((a) < (b) ? (b) : (a))
+
+
 double coefficient_of_restitution = 1;
 double minimum_collision_velocity = 0;
 double collisions_constant_coefficient_of_restitution_for_velocity(double v);
@@ -86,11 +89,13 @@ void collision_resolve_hardsphere(struct collision c){
 	// Coefficient of restitution
 	double eps= coefficient_of_restitution_for_velocity(vx21nn);
 	double dvx2 = -(1.0+eps)*vx21nn;
-	if (dvx2<rp*minimum_collision_velocity){
-		dvx2 = rp*minimum_collision_velocity;
-	}
-	dvx2 /= (1.+m21);
-
+	double minr = (p1.r>p2.r)?p2.r:p1.r;
+	double maxr = (p1.r<p2.r)?p2.r:p1.r;
+	double mindv= minr*minimum_collision_velocity;
+	double r = sqrt(x21*x21 + y21*y21 + z21*z21);
+	mindv *= 1.-(r - maxr)/minr;
+	if (mindv>maxr*minimum_collision_velocity)mindv = maxr*minimum_collision_velocity;
+	if (dvx2<mindv) dvx2 = mindv;
 	// Now we are rotating backwards
 	double dvx2n = cphi * dvx2;		
 	double dvy2n = sphi * dvx2;		
@@ -98,6 +103,7 @@ void collision_resolve_hardsphere(struct collision c){
 	double dvz2nn = stheta * dvy2n;	
 
 	// Log y-momentum change
+	// This is not correct anymore!!
 	collisions_plog += fabs(dvy2nn*p1.m*x21);
 	collisions_Nlog++;
 
@@ -105,16 +111,18 @@ void collision_resolve_hardsphere(struct collision c){
 #ifdef MPI
 	if (isloc==1){
 #endif // MPI
-		particles[c.p2].vx -=	m21*dvx2n;
-		particles[c.p2].vy -=	m21*dvy2nn;
-		particles[c.p2].vz -=	m21*dvz2nn;
-		particles[c.p2].lastcollision = t;
+	const double p2pf = p1.m/(p1.m+p2.m);
+	particles[c.p2].vx -=	p2pf*dvx2n;
+	particles[c.p2].vy -=	p2pf*dvy2nn;
+	particles[c.p2].vz -=	p2pf*dvz2nn;
+	particles[c.p2].lastcollision = t;
 #ifdef MPI
 	}
 #endif // MPI
-	particles[c.p1].vx +=	dvx2n; 
-	particles[c.p1].vy +=	dvy2nn; 
-	particles[c.p1].vz +=	dvz2nn; 
+	const double p1pf = p2.m/(p1.m+p2.m);
+	particles[c.p1].vx +=	p1pf*dvx2n; 
+	particles[c.p1].vy +=	p1pf*dvy2nn; 
+	particles[c.p1].vz +=	p1pf*dvz2nn; 
 	particles[c.p1].lastcollision = t;
 #endif // COLLISIONS_NONE
 }
