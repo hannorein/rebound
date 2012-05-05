@@ -2,6 +2,9 @@
 import subprocess,glob,os,struct,math,sys
 
 sim="out__root_nx_100"
+if (len(sys.argv) > 1):
+	sim = sys.argv[1]
+
 xbins_N = 256
 ymax_N = 256
 
@@ -11,6 +14,10 @@ for line in configlog:
 	columns = [x.strip() for x in line.split('=')]
 	if columns[0]=="boxsize_x":
 		boxsize_x = float(columns[1])
+	if columns[0]=="boxsize_y":
+		boxsize_y = float(columns[1])
+	if columns[0]=="particle_r":
+		particle_r = float(columns[1])
 	if columns[0]=="N":
 		N = int(columns[1])
 configlog.close()
@@ -44,10 +51,11 @@ print ""
 print "Saving data."
 f = open("spacetime.txt","w")
 i = 0
+normalize = math.pi*particle_r*particle_r/(boxsize_y*boxsize_x/xbins_N)
 for data_row in data:
 	j = 0
 	for data_value in data_row:
-		print >>f, j, i*boxsize_x/xbins_N, data_value  
+		print >>f, j, i*boxsize_x/xbins_N, data_value*normalize
 		j += 1
 	i += 1
 	print >>f, " "
@@ -55,11 +63,12 @@ f.close()
 
 print "Calling gnuplot."
 plot = subprocess.Popen(['gnuplot'], stdin=subprocess.PIPE)
-print >>plot.stdin, "set terminal pdf"
+print >>plot.stdin, "set terminal pdf size 6in,5in"
 print >>plot.stdin, "set output 'spacetime.pdf'"
 print >>plot.stdin, "set autoscale fix"
 print >>plot.stdin, "set ylabel 'time'"
 print >>plot.stdin, "set xlabel 'radial direction'"
+print >>plot.stdin, "set cblabel 'optical depth'"
 print >>plot.stdin, "plot 'spacetime.txt' with image"
-
+plot.communicate("quit")
 print "Done."
