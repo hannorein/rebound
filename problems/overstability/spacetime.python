@@ -1,0 +1,65 @@
+#!/bin/python
+import subprocess,glob,os,struct,math,sys
+
+sim="out__root_nx_100"
+xbins_N = 256
+ymax_N = 256
+
+print "Reading config file."
+configlog = file(sim+"/config.log")
+for line in configlog:
+	columns = [x.strip() for x in line.split('=')]
+	if columns[0]=="boxsize_x":
+		boxsize_x = float(columns[1])
+	if columns[0]=="N":
+		N = int(columns[1])
+configlog.close()
+
+print "Looking for output files."
+xbin_files = []
+for xbin_file in glob.glob(sim+"/x.bin_*"):
+	xbin_files.append(xbin_file)
+step = len(xbin_files)/ymax_N
+if step<0: step=1
+xbin_files = xbin_files[::step]
+
+
+print "Reading output files (%d) "%len(xbin_files)
+data = []
+for xbin_file in xbin_files:
+	sys.stdout.write(".")
+	sys.stdout.flush()
+	data_row = [0]*xbins_N
+	f = open(xbin_file,"rb")
+	while 1:
+		d = f.read(8)
+		if not d:
+			break
+		value = struct.unpack('d',d)[0]
+		bin = int(math.floor((value+boxsize_x/2.)/boxsize_x*float(xbins_N)))
+		data_row[bin]+=1
+	data.append(data_row)
+print ""
+
+print "Saving data."
+f = open("spacetime.txt","w")
+i = 0
+for data_row in data:
+	j = 0
+	for data_value in data_row:
+		print >>f, j, i*boxsize_x/xbins_N, data_value  
+		j += 1
+	i += 1
+	print >>f, " "
+f.close()
+
+print "Calling gnuplot."
+plot = subprocess.Popen(['gnuplot'], stdin=subprocess.PIPE)
+print >>plot.stdin, "set terminal pdf"
+print >>plot.stdin, "set output 'spacetime.pdf'"
+print >>plot.stdin, "set autoscale fix"
+print >>plot.stdin, "set ylabel 'time'"
+print >>plot.stdin, "set xlabel 'radial direction'"
+print >>plot.stdin, "plot 'spacetime.txt' with image"
+
+print "Done."
