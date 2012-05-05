@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
-#include <fftw3.h>
 #include <string.h>
 #include "main.h"
 #include "tools.h"
@@ -18,43 +17,37 @@ extern double OMEGA;
 extern double OMEGAZ;
 extern double coefficient_of_restitution; 
 extern double minimum_collision_velocity;
-double buffer_zone = 1000;
-char	dirname[256];
-double	tau = 1.3;
+double buffer_zone = 0;
+double	tau;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	OMEGA 				= 1.;
 	OMEGAZ 				= 3.6;
-	dt				= 4e-3*2.*M_PI/OMEGA;
+	dt				= 2.*M_PI/OMEGA*input_get_double(argc, argv, "dtorb",4e-3);
+	tmax 				= 2.*M_PI/OMEGA*input_get_double(argc, argv, "tmaxorb",10000.);
 	
-	sprintf(dirname,"out");	
-	char* argument;
-	if ((argument = input_get_argument(argc, argv, "tau"))){
-		tau = atof(argument);
-		sprintf(dirname,"%s_tau%e",dirname,tau);
-	}
-	
-	if ((argument = input_get_argument(argc, argv, "eps"))){
-		coefficient_of_restitution 	= atof(argument);
-		sprintf(dirname,"%s_eps%e",dirname,coefficient_of_restitution);
-	}else{
-		coefficient_of_restitution 	= 0.5;
-	}
+	tau 				= input_get_double(argc, argv, "tau",1.3);
+	coefficient_of_restitution 	= input_get_double(argc, argv, "eps",0.5);
+	root_nx 			= input_get_int(argc,argv,"root_nx",500);
+	root_ny 			= 1;
+	root_nz 			= 8;
+	nghostx 			= 1; 	
+	nghosty 			= 1; 	
+	nghostz 			= 0;
 
-	// reduced by 2
-	root_nx 	= 500;
-	root_ny 	= 1;
-	root_nz 	= 8;
-
-	double particle_r 	= 1;
-	boxsize 		= 15.534876239824986;
-	nghostx = 1; 	nghosty = 1; 	nghostz = 0;
-	tmax = 2.*M_PI*10000.;
+	double particle_r 		= input_get_double(argc, argv, "particle_r",1);
+	boxsize 			= input_get_double(argc, argv, "boxsize",15.534876239824986);
 	init_box();
-	minimum_collision_velocity = OMEGA*particle_r*0.005;
-
-
+	
+	char dirname[4096] = "out__";
+	strcat(dirname,input_arguments);
+	char tmpsystem[4096];
+	sprintf(tmpsystem,"rm -rf %s",dirname);
+	system(tmpsystem);
+	sprintf(tmpsystem,"mkdir %s",dirname);
+	system(tmpsystem);
+	chdir(dirname);
 
 	// Initial conditions
 #ifdef MPI
@@ -92,17 +85,17 @@ void problem_init(int argc, char* argv[]){
 		particles_add(p);
 	}
 
-#ifdef MPI
-	if (mpi_id==0){
-#endif // MPI
+	output_int("N",N);
+	output_double("dt",dt);
+	output_double("tau",tau);
+	output_double("coefficient_of_restitution",coefficient_of_restitution);
+	output_double("boxsize",boxsize);
+	output_double("boxsize_x",boxsize_x);
+	output_double("boxsize_y",boxsize_y);
+	output_double("boxsize_z",boxsize_z);
+	output_double("particle_r",particle_r);
 
-	char tmp[512];
-	sprintf(tmp, "rm -rf %s", dirname);
-	system(tmp);
-	sprintf(tmp, "mkdir %s", dirname);
-	system(tmp);
 #ifdef MPI
-	}
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif // MPI
 }
@@ -128,6 +121,12 @@ void output_x(char* filename){
 }
 
 void problem_inloop(){
+	//Slowly turn on the minimum collision velocity.
+	const double t_init = 1./OMEGA;
+	minimum_collision_velocity 	= 0.5/dt;
+	if (t<t_init){
+		minimum_collision_velocity 	*= t/t_init;
+	}
 }
 
 int x_counter = 0;
@@ -137,14 +136,12 @@ void problem_output(){
 	}
 	if (output_check(2.*M_PI)){
 		char tmp[1024];
-		sprintf(tmp,"%s/x.bin_%09d",dirname,x_counter);
+		sprintf(tmp,"x.bin_%09d",x_counter);
 		output_x(tmp);
 		x_counter++;
 	}
 }
 
 void problem_finish(){
-	char tmp[256];
-	sprintf(tmp,"%s/position.txt",dirname);
-	output_ascii(tmp);
+	output_ascii("position_end.txt");
 }
