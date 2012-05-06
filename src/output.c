@@ -32,6 +32,7 @@
 #include "main.h"
 #include "tools.h"
 #include "output.h"
+#include "input.h"
 #include "communication_mpi.h"
 #ifdef OPENGL
 #include "display.h"
@@ -364,6 +365,25 @@ void output_int(char* name, int value){
 	char data[2048];
 	sprintf(data,"%-35s = %9d\n",name,value);
 	output_logfile(data);
+}
+	
+void output_prepare_directory(){
+	char dirname[4096] = "out__";
+	strcat(dirname,input_arguments);
+#ifdef MPI
+	if (mpi_num==0){
+#endif // MPI
+	char tmpsystem[4096];
+	sprintf(tmpsystem,"rm -rf %s",dirname);
+	system(tmpsystem);
+	sprintf(tmpsystem,"mkdir %s",dirname);
+	system(tmpsystem);
+#ifdef MPI
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
+	sleep(5); // Wait because the filesystem might be slow to respond.
+#endif // MPI
+	chdir(dirname);
 }
 
 #ifdef OPENGL
