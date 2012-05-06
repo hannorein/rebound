@@ -121,16 +121,15 @@ void problem_inloop(){
 	}
 }
 
-int x_counter = 0;
 void problem_output(){
 	if (output_check(2.*M_PI)){
 		output_timing();
 	}
 	if (output_check(2.*M_PI)){
 		char tmp[1024];
-		sprintf(tmp,"x.bin_%09d",x_counter);
+		sprintf(tmp,"x.bin_%09.3f",t);
 		output_x(tmp);
-		x_counter++;
+		output_append_velocity_dispersion("vdisp.txt");
 	}
 }
 

@@ -44,7 +44,8 @@ for xbin_file in xbin_files:
 			break
 		value = struct.unpack('d',d)[0]
 		bin = int(math.floor((value+boxsize_x/2.)/boxsize_x*float(xbins_N)))
-		data_row[bin]+=1
+		if bin<xbins_N and bin>0:
+			data_row[bin]+=1
 	data.append(data_row)
 print ""
 
