@@ -27,7 +27,7 @@ xbin_files = []
 for xbin_file in glob.glob(sim+"/x.bin_*"):
 	xbin_files.append(xbin_file)
 step = len(xbin_files)/ymax_N
-if step<0: step=1
+if step<=0: step=1
 xbin_files = xbin_files[::step]
 
 

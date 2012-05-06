@@ -39,16 +39,8 @@ void problem_init(int argc, char* argv[]){
 	double particle_r 		= input_get_double(argc, argv, "particle_r",1);
 	boxsize 			= input_get_double(argc, argv, "boxsize",15.534876239824986);
 	init_box();
+	output_prepare_directory();
 	
-	char dirname[4096] = "out__";
-	strcat(dirname,input_arguments);
-	char tmpsystem[4096];
-	sprintf(tmpsystem,"rm -rf %s",dirname);
-	system(tmpsystem);
-	sprintf(tmpsystem,"mkdir %s",dirname);
-	system(tmpsystem);
-	chdir(dirname);
-
 	// Initial conditions
 #ifdef MPI
 	double xmin = -boxsize_x/2.+(double)mpi_id*boxsize_x/(double)mpi_num;
