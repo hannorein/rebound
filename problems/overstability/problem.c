@@ -27,7 +27,7 @@ void problem_init(int argc, char* argv[]){
 	dt				= 2.*M_PI/OMEGA*input_get_double(argc, argv, "dtorb",4e-3);
 	tmax 				= 2.*M_PI/OMEGA*input_get_double(argc, argv, "tmaxorb",10000.);
 	
-	tau 				= input_get_double(argc, argv, "tau",1.3);
+	tau 				= input_get_double(argc, argv, "tau",1.64);
 	coefficient_of_restitution 	= input_get_double(argc, argv, "eps",0.5);
 	root_nx 			= input_get_int(argc,argv,"root_nx",500);
 	root_ny 			= 1;
@@ -127,7 +127,7 @@ void problem_output(){
 	}
 	if (output_check(2.*M_PI)){
 		char tmp[1024];
-		sprintf(tmp,"x.bin_%09.3f",t);
+		sprintf(tmp,"x.bin_%015.3f",t);
 		output_x(tmp);
 		output_append_velocity_dispersion("vdisp.txt");
 	}

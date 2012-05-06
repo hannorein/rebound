@@ -1,7 +1,7 @@
 PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
 #export CC=mpicc
 #export MPI=0
-export OPENGL=1
+#export OPENGL=1
 #export OPENMP=1
 export OPT=-O3
 
