@@ -19,6 +19,7 @@ extern double coefficient_of_restitution;
 extern double minimum_collision_velocity;
 double buffer_zone = 0;
 double	tau;
+double particle_r;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -36,7 +37,7 @@ void problem_init(int argc, char* argv[]){
 	nghosty 			= 1; 	
 	nghostz 			= 0;
 
-	double particle_r 		= input_get_double(argc, argv, "particle_r",1);
+	particle_r 			= input_get_double(argc, argv, "particle_r",1);
 	boxsize 			= input_get_double(argc, argv, "boxsize",15.534876239824986);
 	init_box();
 	output_prepare_directory();
@@ -120,7 +121,56 @@ void problem_inloop(){
 		minimum_collision_velocity 	*= t/t_init;
 	}
 }
+int particle_close_to(double x){
+	int i_min = 0;
+	int i_max = N-1;
+	while(i_min < i_max-1){
+		int i_middle = (i_min+i_max)/2;
+		if (x <= particles[i_middle].x){
+			i_max = i_middle;
+		}else{
+			i_min = i_middle;
+		}
+	}
+	return i_min;
+}
 
+void output_append_tau(char* filename){
+	FILE* of = fopen(filename,"a"); 
+	if (of==NULL){
+		printf("\n\nError while opening file '%s'.\n",filename);
+		return;
+	}
+	long _N = 100000; // Number of Monte Carlo samples.
+	double tau_geometric 	= 0;
+	double tau_photometric 	= 0;
+#pragma omp parallel for reduction(+:tau_geometric) reduction(+:tau_photometric)
+	for (int i=0;i<_N;i++){
+		double x = tools_uniform(-boxsize_x/2.+particle_r,boxsize_x/2.-particle_r); // random position
+		double y = tools_uniform(-boxsize_y/2.+particle_r,boxsize_y/2.-particle_r); // random position
+		int i1 = particle_close_to(x-particle_r)-1;
+		i1 = i1<0?0:i1;
+		int i2 = particle_close_to(x+particle_r)+1;
+		i2 = i2>=N?N-1:i2;
+		int tau = 0;
+		for(int j=i1; j<i2; j++){
+			struct particle p = particles[j];
+			double distance2 = (p.y-y)*(p.y-y)+(p.x-x)*(p.x-x);
+			if (distance2<particle_r*particle_r){
+				tau+=1;
+			}
+		}
+		tau_photometric	+= tau?1.0:0.0;
+		tau_geometric	+= (double)tau;
+	}
+	tau_geometric	/= (double)_N;
+	tau_photometric	/= (double)_N;
+	fprintf(of,"%e\t%e\t%e\n",t,tau_geometric, tau_photometric);
+	fclose(of);
+
+}
+
+extern void collisions_sweep_insertionsort_particles();
 void problem_output(){
 	if (output_check(2.*M_PI)){
 		output_timing();
@@ -130,6 +180,11 @@ void problem_output(){
 		sprintf(tmp,"x.bin_%015.3f",t);
 		output_x(tmp);
 		output_append_velocity_dispersion("vdisp.txt");
+	}
+	if (output_check(.2*M_PI)){
+		// Optical depth
+		collisions_sweep_insertionsort_particles();
+		output_append_tau("tau.txt");
 	}
 }
 
