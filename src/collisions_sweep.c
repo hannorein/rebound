@@ -214,16 +214,29 @@ void collisions_sweep_insertionsort_xvaluelist(struct xvaluelist* xvl){
 /**
  * Sorts the particle array with insertion sort.
  */
-void collisions_sweep_insertionsort_particles(){
-	for(int j=1;j<N;j++){
-		struct particle key = particles[j];
-		int i = j - 1;
-		while(i >= 0 && particles[i].x > key.x){
-		    particles[i+1] = particles[i];
-		    i--;
+void collisions_sweep_insertionsort_particles(struct particle* ps, int n, int stride){
+	for(int j=stride;j<n;j+=stride){
+		struct particle key = ps[j];
+		int i = j - stride;
+		while(i >= 0 && ps[i].x > key.x){
+		    ps[i+stride] = ps[i];
+		    i-=stride;
 		}
-		particles[i+1] = key;
+		ps[i+stride] = key;
 	}
+}
+void collisions_sweep_shellsort_particles(){
+#ifdef OPENMP
+	// Presort using all cores
+	int m = sweeps_proc;
+	if (m<=N/2){
+#pragma omp parallel for schedule (static,1)
+		for(int i=0; i<m; i++){
+			collisions_sweep_insertionsort_particles(&(particles[i]), N-i, m);
+		}
+	}
+#endif // OPENMP
+	collisions_sweep_insertionsort_particles(particles, N, 1);
 }
 
 
@@ -243,7 +256,7 @@ void collisions_search(){
 		qsort (particles, N, sizeof(struct particle), compare_particle);
 	}else{
 		// Keep particles sorted according to their x position to speed up sorting of lines.
-		collisions_sweep_insertionsort_particles();
+		collisions_sweep_shellsort_particles();
 #endif //TREE
 	}
 	for (int i=0;i<N;i++){
