@@ -170,7 +170,7 @@ void output_append_tau(char* filename){
 
 }
 
-extern void collisions_sweep_insertionsort_particles();
+extern void collisions_sweep_shellsort_particles();
 void problem_output(){
 	if (output_check(2.*M_PI)){
 		output_timing();
@@ -183,7 +183,7 @@ void problem_output(){
 	}
 	if (output_check(.2*M_PI)){
 		// Optical depth
-		collisions_sweep_insertionsort_particles();
+		collisions_sweep_shellsort_particles();
 		output_append_tau("tau.txt");
 	}
 }
