@@ -4,6 +4,7 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
+#include <fftw3.h>
 #include "main.h"
 #include "tools.h"
 #include "particle.h"
@@ -20,6 +21,7 @@ extern double minimum_collision_velocity;
 double buffer_zone = 0;
 double	tau;
 double particle_r;
+const int fft_N = 1024;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -170,6 +172,104 @@ void output_append_tau(char* filename){
 
 }
 
+fftw_complex* fft_in;
+double* fft_in_N;
+fftw_complex* fft_out;
+int	fft_init = 0;
+fftw_plan fft_p;
+
+void fft_empty_data(){
+	for (int i=0;i<fft_N;i++){
+		fft_in[i][0] = 0;
+		fft_in[i][1] = 0;
+	}
+}
+void fft_output_power(char* filename){
+	FILE* of = fopen(filename,"a+"); 
+	for (int i=1;i<fft_N/2;i++){
+		double power = fft_out[i][0]*fft_out[i][0] + fft_out[i][1]*fft_out[i][1];
+		fprintf(of,"%e\t%e\t",t,boxsize_x/(double)i);
+		fprintf(of,"%e\n",power);
+	}
+	fprintf(of,"\n");
+	fclose(of);
+}
+
+void fft(){
+	if (fft_init==0){
+		fft_in_N 		= calloc(fft_N,sizeof(double));
+		fft_in 			= (fftw_complex*)malloc(sizeof(double)*2*fft_N);
+		fft_out 		= (fftw_complex*)malloc(sizeof(double)*2*fft_N);
+		fft_p			= fftw_plan_dft_1d(fft_N, fft_in, fft_out, FFTW_FORWARD, FFTW_ESTIMATE);
+	}
+	fft_init++;
+
+	fft_empty_data();
+	for (int i=0;i<N;i++){
+		struct particle p = particles[i];
+		int j = ((int)(floor((p.x + boxsize_x/2.)/boxsize_x*(double)fft_N))+fft_N)%fft_N;
+		fft_in[j][0] += 1;
+	}
+	for (int i=0;i<fft_N;i++){
+		fft_in[i][0] *= 1./(double)N * (double)(fft_N)/sqrt((double)fft_N);
+		fft_in_N[i] = 0;
+	}
+	fftw_execute(fft_p);
+	fft_output_power("fft_density.txt");
+
+	fft_empty_data();
+	for (int i=0;i<N;i++){
+		struct particle p = particles[i];
+		int j = ((int)(floor((p.x + boxsize_x/2.)/boxsize_x*(double)fft_N))+fft_N)%fft_N;
+		fft_in[j][0] += fabs(p.z);
+		fft_in_N[j]  += 1.0;
+	}
+	for (int i=0;i<fft_N;i++){
+		if (fft_in_N[i]>0){
+			fft_in[i][0] /= fft_in_N[i] * sqrt(fft_N);
+			fft_in_N[i] = 0;
+		}
+	}
+	fftw_execute(fft_p);
+	fft_output_power("fft_height.txt");
+
+	fft_empty_data();
+	for (int i=0;i<N;i++){
+		struct particle p = particles[i];
+		int j = ((int)(floor((p.x + boxsize_x/2.)/boxsize_x*(double)fft_N))+fft_N)%fft_N;
+		fft_in[j][0] += sqrt(p.vx*p.vx + (p.vy+1.5*OMEGA*p.x)*(p.vy+1.5*OMEGA*p.x) + p.vz*p.vz);
+		fft_in_N[j]  += 1.0;
+	}
+	for (int i=0;i<fft_N;i++){
+		if (fft_in_N[i]>0){
+			fft_in[i][0] /= fft_in_N[i] * sqrt(fft_N);
+			fft_in_N[i] = 0;
+		}
+	}
+	fftw_execute(fft_p);
+	fft_output_power("fft_velocity.txt");
+	
+	fft_empty_data();
+	for (int i=0;i<N;i++){
+		struct particle p = particles[i];
+		int j = ((int)(floor((p.x + boxsize_x/2.)/boxsize_x*(double)fft_N))+fft_N)%fft_N;
+		const double aO = 2.*p.vy + 4.*p.x*OMEGA;	// Center of epicyclic motion
+		const double bO = p.y*OMEGA - 2.*p.vx;	
+		const double ys = (p.y*OMEGA-bO)/2.; 		// Epicycle vector
+		const double xs = (p.x*OMEGA-aO); 
+		fft_in[j][0] += sqrt(xs*xs+ys*ys);
+		fft_in_N[j]  += 1.0;
+	}
+	for (int i=0;i<fft_N;i++){
+		if (fft_in_N[i]>0){
+			fft_in[i][0] /= fft_in_N[i] * sqrt(fft_N);
+			fft_in_N[i] = 0;
+		}
+	}
+	fftw_execute(fft_p);
+	fft_output_power("fft_amplitude.txt");
+}
+
 extern void collisions_sweep_shellsort_particles();
 void problem_output(){
 	if (output_check(2.*M_PI)){
@@ -183,8 +283,9 @@ void problem_output(){
 	}
 	if (output_check(.2*M_PI)){
 		// Optical depth
-		collisions_sweep_shellsort_particles();
+		//collisions_sweep_shellsort_particles();
 		output_append_tau("tau.txt");
+		fft();
 	}
 }
 
