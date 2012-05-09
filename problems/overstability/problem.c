@@ -200,19 +200,30 @@ void fft_empty_data(){
 		fft_in_N[i] 	= 0;
 	}
 }
+struct fft_output{
+	double power;
+	double lambda;	
+};
+
+int compare_fft_output (const void * a, const void * b){
+	const double diff = ((struct fft_output*)a)->power - ((struct fft_output*)b)->power;
+	if (diff < 0) return 1;
+	if (diff > 0) return -1;
+	return 0;
+}
+
 void fft_write_to_file(char* filename){
-	double max_lambda=0;
-	double max_power=0;
+	struct fft_output* fft_outputs = malloc(sizeof(struct fft_output)*(fft_N/2-1));
 	for (int i=1;i<fft_N/2;i++){
-		double power 	= fft_out[i][0]*fft_out[i][0] + fft_out[i][1]*fft_out[i][1];
-		double lambda 	= boxsize_x/(double)i;
-		if (power>max_power && lambda >2.*particle_r){
-			max_power	= power;
-			max_lambda	= lambda;
-		}
+		fft_outputs[i-1].power	= fft_out[i][0]*fft_out[i][0] + fft_out[i][1]*fft_out[i][1];
+		fft_outputs[i-1].lambda	= boxsize_x/(double)i;
 	}
+	qsort (fft_outputs, fft_N/2-1, sizeof(struct fft_output), compare_fft_output);
 	FILE* of = fopen(filename,"a+"); 
-	fprintf(of,"%e\t%e\t%e\n",t,max_lambda,max_power);
+	// Output ten highest power modes
+	for (int i=0;i<10;i++){
+		fprintf(of,"%e\t%e\t%e\n",t,fft_outputs[i].lambda,fft_outputs[i].power);
+	}
 	fclose(of);
 }
 
