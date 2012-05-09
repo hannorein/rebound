@@ -96,8 +96,22 @@ void problem_init(int argc, char* argv[]){
 #endif // MPI
 }
 
+void output_append_energy(char* filename){
+	double energy = 0; 
+#pragma omp parallel for reduction(+:energy)
+	for (int i=0;i<N;i++){
+		struct particle p = particles[i];
+		const double vy = p.vy + 1.5*p.x*OMEGA;
+		energy += vy*vy + p.vx*p.vx;
+	}
+	FILE* of = fopen(filename,"a+"); 
+	fprintf(of,"%e\t%e\n",t,energy);
+	fclose(of);
+}
 
-void output_x(char* filename){
+void output_x(char* filename1){
+	char filename[1024];
+	sprintf(filename,"%s_%015.3f",filename1,t);
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -124,6 +138,7 @@ void problem_inloop(){
 		minimum_collision_velocity 	*= t/t_init;
 	}
 }
+
 int particle_close_to(double x){
 	int i_min = 0;
 	int i_max = N-1;
@@ -173,19 +188,19 @@ void output_append_tau(char* filename){
 
 }
 
-fftw_complex* fft_in;
-double* fft_in_N;
-fftw_complex* fft_out;
-int	fft_init = 0;
-fftw_plan fft_p;
+fftw_complex* fft_in 	= NULL;
+double* fft_in_N 	= NULL;
+fftw_complex* fft_out	= NULL;
+fftw_plan fft_p		= NULL;
 
 void fft_empty_data(){
 	for (int i=0;i<fft_N;i++){
-		fft_in[i][0] = 0;
-		fft_in[i][1] = 0;
+		fft_in[i][0] 	= 0;
+		fft_in[i][1] 	= 0;
+		fft_in_N[i] 	= 0;
 	}
 }
-void fft_output_power(char* filename){
+void fft_write_to_file(char* filename){
 	double max_lambda=0;
 	double max_power=0;
 	for (int i=1;i<fft_N/2;i++){
@@ -201,15 +216,16 @@ void fft_output_power(char* filename){
 	fclose(of);
 }
 
-void fft(){
-	if (fft_init==0){
-		fft_init = 1;
+void output_fft(){
+	if (fft_in==NULL){
 		fft_in_N 		= calloc(fft_N,sizeof(double));
 		fft_in 			= (fftw_complex*)malloc(sizeof(double)*2*fft_N);
 		fft_out 		= (fftw_complex*)malloc(sizeof(double)*2*fft_N);
 		fft_p			= fftw_plan_dft_1d(fft_N, fft_in, fft_out, FFTW_FORWARD, FFTW_ESTIMATE);
 	}
+	const double sqrt_fft_N = sqrt(fft_N);
 
+	// ******* Density ********
 	fft_empty_data();
 	for (int i=0;i<N;i++){
 		struct particle p = particles[i];
@@ -217,28 +233,12 @@ void fft(){
 		fft_in[j][0] += 1;
 	}
 	for (int i=0;i<fft_N;i++){
-		fft_in[i][0] *= 1./(double)N * (double)(fft_N)/sqrt((double)fft_N);
-		fft_in_N[i] = 0;
+		fft_in[i][0] *= 1./(double)N * (double)(fft_N)/sqrt_fft_N;
 	}
 	fftw_execute(fft_p);
-	fft_output_power("fft_density.txt");
+	fft_write_to_file("fft_density.txt");
 
-	fft_empty_data();
-	for (int i=0;i<N;i++){
-		struct particle p = particles[i];
-		int j = ((int)(floor((p.x + boxsize_x/2.)/boxsize_x*(double)fft_N))+fft_N)%fft_N;
-		fft_in[j][0] += fabs(p.z);
-		fft_in_N[j]  += 1.0;
-	}
-	for (int i=0;i<fft_N;i++){
-		if (fft_in_N[i]>0){
-			fft_in[i][0] /= fft_in_N[i] * sqrt(fft_N);
-			fft_in_N[i] = 0;
-		}
-	}
-	fftw_execute(fft_p);
-	fft_output_power("fft_height.txt");
-
+	// ******* Velocity ********
 	fft_empty_data();
 	for (int i=0;i<N;i++){
 		struct particle p = particles[i];
@@ -248,13 +248,13 @@ void fft(){
 	}
 	for (int i=0;i<fft_N;i++){
 		if (fft_in_N[i]>0){
-			fft_in[i][0] /= fft_in_N[i] * sqrt(fft_N);
-			fft_in_N[i] = 0;
+			fft_in[i][0] /= fft_in_N[i] * sqrt_fft_N;
 		}
 	}
 	fftw_execute(fft_p);
-	fft_output_power("fft_velocity.txt");
+	fft_write_to_file("fft_velocity.txt");
 	
+	// ******* Epicyclic amplitude ********
 	fft_empty_data();
 	for (int i=0;i<N;i++){
 		struct particle p = particles[i];
@@ -268,12 +268,11 @@ void fft(){
 	}
 	for (int i=0;i<fft_N;i++){
 		if (fft_in_N[i]>0){
-			fft_in[i][0] /= fft_in_N[i] * sqrt(fft_N);
-			fft_in_N[i] = 0;
+			fft_in[i][0] /= fft_in_N[i] * sqrt_fft_N;
 		}
 	}
 	fftw_execute(fft_p);
-	fft_output_power("fft_amplitude.txt");
+	fft_write_to_file("fft_amplitude.txt");
 }
 
 extern void collisions_sweep_shellsort_particles();
@@ -282,16 +281,13 @@ void problem_output(){
 		output_timing();
 	}
 	if (output_check(2.*M_PI)){
-		char tmp[1024];
-		sprintf(tmp,"x.bin_%015.3f",t);
-		output_x(tmp);
+		output_x("x.bin");
 		output_append_velocity_dispersion("vdisp.txt");
 	}
 	if (output_check(.2*M_PI)){
-		// Optical depth
-		//collisions_sweep_shellsort_particles();
 		output_append_tau("tau.txt");
-		fft();
+		output_fft();
+		output_append_energy("energy.txt");
 	}
 }
 
