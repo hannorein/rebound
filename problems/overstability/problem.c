@@ -89,6 +89,7 @@ void problem_init(int argc, char* argv[]){
 	output_double("boxsize_y",boxsize_y);
 	output_double("boxsize_z",boxsize_z);
 	output_double("particle_r",particle_r);
+	output_double("fft_lamda_min",boxsize_x/(double)fft_N);
 
 #ifdef MPI
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -185,24 +186,29 @@ void fft_empty_data(){
 	}
 }
 void fft_output_power(char* filename){
-	FILE* of = fopen(filename,"a+"); 
+	double max_lambda=0;
+	double max_power=0;
 	for (int i=1;i<fft_N/2;i++){
-		double power = fft_out[i][0]*fft_out[i][0] + fft_out[i][1]*fft_out[i][1];
-		fprintf(of,"%e\t%e\t",t,boxsize_x/(double)i);
-		fprintf(of,"%e\n",power);
+		double power 	= fft_out[i][0]*fft_out[i][0] + fft_out[i][1]*fft_out[i][1];
+		double lambda 	= boxsize_x/(double)i;
+		if (power>max_power && lambda >2.*particle_r){
+			max_power	= power;
+			max_lambda	= lambda;
+		}
 	}
-	fprintf(of,"\n");
+	FILE* of = fopen(filename,"a+"); 
+	fprintf(of,"%e\t%e\t%e\n",t,max_lambda,max_power);
 	fclose(of);
 }
 
 void fft(){
 	if (fft_init==0){
+		fft_init = 1;
 		fft_in_N 		= calloc(fft_N,sizeof(double));
 		fft_in 			= (fftw_complex*)malloc(sizeof(double)*2*fft_N);
 		fft_out 		= (fftw_complex*)malloc(sizeof(double)*2*fft_N);
 		fft_p			= fftw_plan_dft_1d(fft_N, fft_in, fft_out, FFTW_FORWARD, FFTW_ESTIMATE);
 	}
-	fft_init++;
 
 	fft_empty_data();
 	for (int i=0;i<N;i++){
