@@ -2,8 +2,11 @@ PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
 export CC=gcc
 #export MPI=0
 #export OPENGL=1
-#export OPENMP=1
+export OPENMP=1
 export OPT=-O3 -g 
+#-I/Users/rein/localinstalls/include
+export LIB=-lfftw3_omp
+#-L/Users/rein/localinstalls/lib -lfftw3_threads -lpthread 
 export FFTW=1
 
 all:

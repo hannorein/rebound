@@ -5,6 +5,9 @@
 #include <time.h>
 #include <string.h>
 #include <fftw3.h>
+#ifdef OPENMP
+#include <omp.h>
+#endif //OPENMP
 #include "main.h"
 #include "tools.h"
 #include "particle.h"
@@ -194,6 +197,7 @@ fftw_complex* fft_out	= NULL;
 fftw_plan fft_p		= NULL;
 
 void fft_empty_data(){
+#pragma omp parallel for 
 	for (int i=0;i<fft_N;i++){
 		fft_in[i][0] 	= 0;
 		fft_in[i][1] 	= 0;
@@ -232,6 +236,9 @@ void output_fft(){
 		fft_in_N 		= calloc(fft_N,sizeof(double));
 		fft_in 			= (fftw_complex*)malloc(sizeof(double)*2*fft_N);
 		fft_out 		= (fftw_complex*)malloc(sizeof(double)*2*fft_N);
+#if OPENMP
+		fftw_plan_with_nthreads(omp_get_num_threads());
+#endif // OPENMP
 		fft_p			= fftw_plan_dft_1d(fft_N, fft_in, fft_out, FFTW_FORWARD, FFTW_ESTIMATE);
 	}
 	const double sqrt_fft_N = sqrt(fft_N);
@@ -243,6 +250,7 @@ void output_fft(){
 		int j = ((int)(floor((p.x + boxsize_x/2.)/boxsize_x*(double)fft_N))+fft_N)%fft_N;
 		fft_in[j][0] += 1;
 	}
+#pragma omp parallel for 
 	for (int i=0;i<fft_N;i++){
 		fft_in[i][0] *= 1./(double)N * (double)(fft_N)/sqrt_fft_N;
 	}
@@ -257,6 +265,7 @@ void output_fft(){
 		fft_in[j][0] += sqrt(p.vx*p.vx + (p.vy+1.5*OMEGA*p.x)*(p.vy+1.5*OMEGA*p.x) + p.vz*p.vz);
 		fft_in_N[j]  += 1.0;
 	}
+#pragma omp parallel for 
 	for (int i=0;i<fft_N;i++){
 		if (fft_in_N[i]>0){
 			fft_in[i][0] /= fft_in_N[i] * sqrt_fft_N;
@@ -271,9 +280,14 @@ void problem_output(){
 	if (output_check(2.*M_PI)){
 		output_timing();
 	}
-	if (output_check(2.*M_PI)){
+	if (output_check(20.*M_PI)){
 		output_x("x.bin");
 		output_append_velocity_dispersion("vdisp.txt");
+	}
+	if (output_check(50.*M_PI)){
+		char filename[1024];
+		sprintf(filename,"ascii_%05d.txt",(int)round(t/2./M_PI));
+		output_ascii(filename);
 	}
 	if (output_check(.2*M_PI)){
 		output_append_tau("tau.txt");
