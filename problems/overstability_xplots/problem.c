@@ -4,7 +4,6 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
-#include <fftw3.h>
 #include "main.h"
 #include "tools.h"
 #include "particle.h"
@@ -21,7 +20,6 @@ extern double minimum_collision_velocity;
 double buffer_zone = 0;
 double	tau;
 double particle_r;
-const int fft_N = 1024;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -89,7 +87,6 @@ void problem_init(int argc, char* argv[]){
 	output_double("boxsize_y",boxsize_y);
 	output_double("boxsize_z",boxsize_z);
 	output_double("particle_r",particle_r);
-	output_double("fft_lamda_min",boxsize_x/(double)fft_N);
 
 #ifdef MPI
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -188,97 +185,15 @@ void output_append_tau(char* filename){
 
 }
 
-fftw_complex* fft_in 	= NULL;
-double* fft_in_N 	= NULL;
-fftw_complex* fft_out	= NULL;
-fftw_plan fft_p		= NULL;
-
-void fft_empty_data(){
-	for (int i=0;i<fft_N;i++){
-		fft_in[i][0] 	= 0;
-		fft_in[i][1] 	= 0;
-		fft_in_N[i] 	= 0;
-	}
-}
-struct fft_output{
-	double power;
-	double lambda;	
-};
-
-int compare_fft_output (const void * a, const void * b){
-	const double diff = ((struct fft_output*)a)->power - ((struct fft_output*)b)->power;
-	if (diff < 0) return 1;
-	if (diff > 0) return -1;
-	return 0;
-}
-
-void fft_write_to_file(char* filename){
-	struct fft_output* fft_outputs = malloc(sizeof(struct fft_output)*(fft_N/2-1));
-	for (int i=1;i<fft_N/2;i++){
-		fft_outputs[i-1].power	= fft_out[i][0]*fft_out[i][0] + fft_out[i][1]*fft_out[i][1];
-		fft_outputs[i-1].lambda	= boxsize_x/(double)i;
-	}
-	qsort (fft_outputs, fft_N/2-1, sizeof(struct fft_output), compare_fft_output);
-	FILE* of = fopen(filename,"a+"); 
-	// Output ten highest power modes
-	for (int i=0;i<10;i++){
-		fprintf(of,"%e\t%e\t%e\n",t,fft_outputs[i].lambda,fft_outputs[i].power);
-	}
-	fclose(of);
-}
-
-void output_fft(){
-	if (fft_in==NULL){
-		fft_in_N 		= calloc(fft_N,sizeof(double));
-		fft_in 			= (fftw_complex*)malloc(sizeof(double)*2*fft_N);
-		fft_out 		= (fftw_complex*)malloc(sizeof(double)*2*fft_N);
-		fft_p			= fftw_plan_dft_1d(fft_N, fft_in, fft_out, FFTW_FORWARD, FFTW_ESTIMATE);
-	}
-	const double sqrt_fft_N = sqrt(fft_N);
-
-	// ******* Density ********
-	fft_empty_data();
-	for (int i=0;i<N;i++){
-		struct particle p = particles[i];
-		int j = ((int)(floor((p.x + boxsize_x/2.)/boxsize_x*(double)fft_N))+fft_N)%fft_N;
-		fft_in[j][0] += 1;
-	}
-	for (int i=0;i<fft_N;i++){
-		fft_in[i][0] *= 1./(double)N * (double)(fft_N)/sqrt_fft_N;
-	}
-	fftw_execute(fft_p);
-	fft_write_to_file("fft_density.txt");
-
-	// ******* Velocity ********
-	fft_empty_data();
-	for (int i=0;i<N;i++){
-		struct particle p = particles[i];
-		int j = ((int)(floor((p.x + boxsize_x/2.)/boxsize_x*(double)fft_N))+fft_N)%fft_N;
-		fft_in[j][0] += sqrt(p.vx*p.vx + (p.vy+1.5*OMEGA*p.x)*(p.vy+1.5*OMEGA*p.x) + p.vz*p.vz);
-		fft_in_N[j]  += 1.0;
-	}
-	for (int i=0;i<fft_N;i++){
-		if (fft_in_N[i]>0){
-			fft_in[i][0] /= fft_in_N[i] * sqrt_fft_N;
-		}
-	}
-	fftw_execute(fft_p);
-	fft_write_to_file("fft_velocity.txt");
-}
-
 extern void collisions_sweep_shellsort_particles();
 void problem_output(){
 	if (output_check(2.*M_PI)){
 		output_timing();
 	}
-	if (output_check(2.*M_PI)){
-		output_x("x.bin");
-		output_append_velocity_dispersion("vdisp.txt");
-	}
 	if (output_check(.2*M_PI)){
-		output_append_tau("tau.txt");
-		output_fft();
-		output_append_energy("energy.txt");
+		char filename[1024];
+		sprintf(filename,"position_%012.3f.txt",t/2./M_PI);
+		output_ascii(filename);
 	}
 }
 
