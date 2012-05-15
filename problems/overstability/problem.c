@@ -258,6 +258,7 @@ void output_fft(){
 	fft_write_to_file("fft_density.txt");
 
 	// ******* Velocity ********
+	/*
 	fft_empty_data();
 	for (int i=0;i<N;i++){
 		struct particle p = particles[i];
@@ -273,6 +274,7 @@ void output_fft(){
 	}
 	fftw_execute(fft_p);
 	fft_write_to_file("fft_velocity.txt");
+	*/
 }
 
 extern void collisions_sweep_shellsort_particles();
@@ -280,19 +282,19 @@ void problem_output(){
 	if (output_check(2.*M_PI)){
 		output_timing();
 	}
-	if (output_check(20.*M_PI)){
+	if (output_check(10.*2.*M_PI)){
 		output_x("x.bin");
 		output_append_velocity_dispersion("vdisp.txt");
+		output_append_energy("energy.txt");
 	}
-	if (output_check(50.*M_PI)){
+	if (output_check(50.*2.*M_PI)){
 		char filename[1024];
 		sprintf(filename,"ascii_%05d.txt",(int)round(t/2./M_PI));
 		output_ascii(filename);
 	}
-	if (output_check(.2*M_PI)){
+	if (output_check(12.242342345*2.*M_PI)){
 		output_append_tau("tau.txt");
 		output_fft();
-		output_append_energy("energy.txt");
 	}
 }
 
