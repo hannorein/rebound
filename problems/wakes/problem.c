@@ -92,7 +92,12 @@ void problem_init(int argc, char* argv[]){
 	coefficient_of_restitution_for_velocity	= coefficient_of_restitution_bridges;
 
 	
-	struct 	aabb bb	= { .xmin = -boxsize_x/2., .xmax = boxsize_x/2., .ymin = -boxsize_y/2., .ymax = boxsize_y/2., .zmin = -boxsize_z/2., .zmax = boxsize_z/2.};
+	struct 	aabb bb	= {	.xmin = -boxsize_x/2., 
+				.xmax =  boxsize_x/2., 
+				.ymin = -boxsize_y/2., 
+				.ymax =  boxsize_y/2., 
+				.zmin = -boxsize_z/2., 
+				.zmax =  boxsize_z/2.	};
 	long	_N	= round(surfacedensity*boxsize_x*boxsize_y/(4./3.*M_PI*particle_density* (pow(particle_radius_max,4.+particle_radius_slope) - pow(particle_radius_min,4.+particle_radius_slope)) / (pow(particle_radius_max,1.+particle_radius_slope) - pow(particle_radius_min,1.+particle_radius_slope)) * (1.+particle_radius_slope)/(4.+particle_radius_slope)));
 
 
