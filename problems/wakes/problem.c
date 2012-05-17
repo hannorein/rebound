@@ -84,9 +84,9 @@ void problem_init(int argc, char* argv[]){
 	init_box();
 	
 	// Setup particle and disk properties
-	double surfacedensity 		= 400; 			// kg/m^2
+	double surfacedensity 		= 800; 			// kg/m^2
 	double particle_density		= input_get_double(argc,argv,"rho",400);			// kg/m^3
-	double particle_radius_min 	= 0.15;			// m
+	double particle_radius_min 	= 0.5;			// m
 	double particle_radius_max 	= 1;			// m
 	double particle_radius_slope 	= -3;	
 	coefficient_of_restitution_for_velocity	= coefficient_of_restitution_bridges;
@@ -132,6 +132,7 @@ void problem_init(int argc, char* argv[]){
 		output_int("root_ny",root_ny);
 		output_int("root_nz",root_nz);
 		output_int("N",_N);
+		output_double("tau (r_max)",_N*M_PI*particle_radius_max*particle_radius_max/(boxsize*boxsize));
 #ifdef MPI
 		output_int("N_total",_N*mpi_num);
 		output_int("mpi_num",mpi_num);
