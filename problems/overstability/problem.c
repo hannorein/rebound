@@ -83,6 +83,10 @@ void problem_init(int argc, char* argv[]){
 		particles_add(p);
 	}
 
+#ifdef MPI
+	if (mpi_id==0){
+	output_int("mpi_num",mpi_num);
+#endif // MPI
 	output_int("N",N);
 	output_double("dt",dt);
 	output_double("tau",tau);
@@ -95,6 +99,7 @@ void problem_init(int argc, char* argv[]){
 	output_double("fft_lamda_min",boxsize_x/(double)fft_N);
 
 #ifdef MPI
+	}
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif // MPI
 }
