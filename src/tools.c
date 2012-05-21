@@ -180,6 +180,27 @@ void tools_init_plummer(int _N, double mlow, double rfrac, int quiet, double sca
 	free(_particles);
 }
 
+struct particle tools_init_orbit2d(double M, double m, double a, double e, double omega, double f){
+	struct particle p;
+	p.m = m;
+	double r = a*(1.-e*e)/(1.+e*cos(f));
+	double n = sqrt(G*(m+M)/(a*a*a));
+	double tx = r*cos(f);
+	double ty = r*sin(f);
+	p.z = 0;
+	double tvx = -n*a/sqrt(1.-e*e)*sin(f);
+	double tvy =  n*a/sqrt(1.-e*e)*(e+cos(f));
+	p.vz = 0;
+	p.ax = 0; p.ay = 0; p.az = 0;
+	
+	p.x  =  cos(omega)*tx  - sin(omega)*ty;
+	p.y  =  sin(omega)*tx  + cos(omega)*ty;
+	
+	p.vx =  cos(omega)*tvx - sin(omega)*tvy;
+	p.vy =  sin(omega)*tvx + cos(omega)*tvy;
+
+	return p;
+}
 
 #define TINY 1.0e-12
 struct orbit tools_p2orbit(struct particle p, double cmass){
