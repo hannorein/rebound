@@ -76,7 +76,7 @@ void problem_init(int argc, char* argv[]){
 	double r_outer =  planet_hill*input_get_double(argc, argv, "r_outer", 0.2);
 	output_double("ring inner", r_inner);
 	output_double("ring outer", r_outer);
-	int _N = 15000;
+	int _N = 1000;
 	for (int i = 0; i < _N; i++) {
 		struct particle ringparticle = planet;
 		ringparticle.m  = 0;
