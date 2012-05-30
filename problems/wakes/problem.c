@@ -47,6 +47,8 @@ extern double minimum_collision_velocity;
 
 extern double (*coefficient_of_restitution_for_velocity)(double); 
 double coefficient_of_restitution_bridges(double v); 
+void input_append_input_arguments_with_int(const char* argument, int value);
+
 
 extern double opening_angle2;
 
@@ -55,8 +57,8 @@ void problem_init(int argc, char* argv[]){
 #ifdef GRAVITY_TREE
 	opening_angle2	= .5;
 #endif
-	OMEGA 				= 0.00013143527;	// 1/s
-	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
+	OMEGA 				= 0.0001948170;		// 1/s corresponds to a=100e6 m
+	G 				= 6.67428e-11;		// N m^2 / kg^2 
 	softening 			= 0.1;			// m
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
 	tmax				= 10.*2.*M_PI/OMEGA;
@@ -80,14 +82,14 @@ void problem_init(int argc, char* argv[]){
 	nghostx = 2;
 	nghosty = 2;
 	nghostz = 0;
-	boxsize = input_get_double(argc,argv,"boxsize",-1);
+	boxsize = input_get_double(argc,argv,"boxsize",250);
 	init_box();
 	
 	// Setup particle and disk properties
-	double surfacedensity 		= 800; 			// kg/m^2
-	double particle_density		= input_get_double(argc,argv,"rho",400);			// kg/m^3
-	double particle_radius_min 	= 0.5;			// m
-	double particle_radius_max 	= 1;			// m
+	double surfacedensity 		= input_get_double(argc,argv,"sigma",1200); 			// kg/m^2
+	double particle_density		= input_get_double(argc,argv,"rho",450);			// kg/m^3
+	double particle_radius_min 	= 0.99;		// m
+	double particle_radius_max 	= 1.01;		// m
 	double particle_radius_slope 	= -3;	
 	coefficient_of_restitution_for_velocity	= coefficient_of_restitution_bridges;
 
@@ -101,30 +103,13 @@ void problem_init(int argc, char* argv[]){
 	long	_N	= round(surfacedensity*boxsize_x*boxsize_y/(4./3.*M_PI*particle_density* (pow(particle_radius_max,4.+particle_radius_slope) - pow(particle_radius_min,4.+particle_radius_slope)) / (pow(particle_radius_max,1.+particle_radius_slope) - pow(particle_radius_min,1.+particle_radius_slope)) * (1.+particle_radius_slope)/(4.+particle_radius_slope)));
 
 
-	char dirname[4096] = "";
-	strcat(dirname,"out__");
-	char tmpsystem[4096];
 #ifdef MPI
-	sprintf(tmpsystem,"mpinum_%d__",mpi_num);
-	strcat(dirname,tmpsystem);
+	input_append_input_arguments_with_int("mpinum",mpi_num);
 #endif // MPI
-	strcat(dirname,input_arguments);
+	output_prepare_directory();
 #ifdef MPI
 	bb = communication_boundingbox_for_proc(mpi_id);
 	_N   /= mpi_num;
-	if (mpi_id==0){
-#endif // MPI
-		sprintf(tmpsystem,"rm -rf %s",dirname);
-		system(tmpsystem);
-		sprintf(tmpsystem,"mkdir %s",dirname);
-		system(tmpsystem);
-#ifdef MPI
-	}
-	sleep(5);
-	MPI_Barrier(MPI_COMM_WORLD);
-#endif // MPI
-	chdir(dirname);
-#ifdef MPI
 	if (mpi_id==0){
 #endif // MPI
 		output_double("boxsize",boxsize);
