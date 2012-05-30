@@ -118,6 +118,8 @@ void problem_init(int argc, char* argv[]){
 		output_int("root_nz",root_nz);
 		output_int("N",_N);
 		output_double("tau (r_max)",_N*M_PI*particle_radius_max*particle_radius_max/(boxsize*boxsize));
+		output_double("sigma [kg/m^2]",surfacedensity);
+		output_double("rho [kg/m^3]",particle_density);
 #ifdef MPI
 		output_int("N_total",_N*mpi_num);
 		output_int("mpi_num",mpi_num);
