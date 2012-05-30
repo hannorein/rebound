@@ -372,7 +372,7 @@ void output_prepare_directory(){
 	char dirname[4096] = "out__";
 	strcat(dirname,input_arguments);
 #ifdef MPI
-	if (mpi_num==0){
+	if (mpi_id==0){
 #endif // MPI
 	char tmpsystem[4096];
 	sprintf(tmpsystem,"rm -rf %s",dirname);
