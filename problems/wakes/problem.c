@@ -82,14 +82,14 @@ void problem_init(int argc, char* argv[]){
 	nghostx = 2;
 	nghosty = 2;
 	nghostz = 0;
-	boxsize = input_get_double(argc,argv,"boxsize",250);
+	boxsize = input_get_double(argc,argv,"length",500)/(double)root_nx;
 	init_box();
 	
 	// Setup particle and disk properties
-	double surfacedensity 		= input_get_double(argc,argv,"sigma",1200); 			// kg/m^2
-	double particle_density		= input_get_double(argc,argv,"rho",450);			// kg/m^3
-	double particle_radius_min 	= 0.99;		// m
-	double particle_radius_max 	= 1.01;		// m
+	double sigma 			= input_get_double(argc,argv,"sigma",1200); 			// kg/m^2
+	double rho			= input_get_double(argc,argv,"rho",450);			// kg/m^3
+	double particle_radius_min 	= input_get_double(argc,argv,"rmin",1);				// m
+	double particle_radius_max 	= input_get_double(argc,argv,"rmax",1);				// m
 	double particle_radius_slope 	= -3;	
 	coefficient_of_restitution_for_velocity	= coefficient_of_restitution_bridges;
 
@@ -100,7 +100,12 @@ void problem_init(int argc, char* argv[]){
 				.ymax =  boxsize_y/2., 
 				.zmin = -boxsize_z/2., 
 				.zmax =  boxsize_z/2.	};
-	long	_N	= round(surfacedensity*boxsize_x*boxsize_y/(4./3.*M_PI*particle_density* (pow(particle_radius_max,4.+particle_radius_slope) - pow(particle_radius_min,4.+particle_radius_slope)) / (pow(particle_radius_max,1.+particle_radius_slope) - pow(particle_radius_min,1.+particle_radius_slope)) * (1.+particle_radius_slope)/(4.+particle_radius_slope)));
+	long	_N;
+	if (particle_radius_min==particle_radius_max){
+		_N = round(sigma*boxsize_x*boxsize_y/(4./3.*M_PI*rho*  pow(particle_radius_max,3.)));
+	}else{
+		_N = round(sigma*boxsize_x*boxsize_y/(4./3.*M_PI*rho* (pow(particle_radius_max,4.+particle_radius_slope) - pow(particle_radius_min,4.+particle_radius_slope)) / (pow(particle_radius_max,1.+particle_radius_slope) - pow(particle_radius_min,1.+particle_radius_slope)) * (1.+particle_radius_slope)/(4.+particle_radius_slope)));
+	}
 
 
 #ifdef MPI
@@ -112,14 +117,18 @@ void problem_init(int argc, char* argv[]){
 	_N   /= mpi_num;
 	if (mpi_id==0){
 #endif // MPI
-		output_double("boxsize",boxsize);
+		output_double("boxsize [m]",boxsize);
 		output_int("root_nx",root_nx);
 		output_int("root_ny",root_ny);
 		output_int("root_nz",root_nz);
-		output_int("N",_N);
 		output_double("tau (r_max)",_N*M_PI*particle_radius_max*particle_radius_max/(boxsize*boxsize));
-		output_double("sigma [kg/m^2]",surfacedensity);
-		output_double("rho [kg/m^3]",particle_density);
+		output_double("sigma [kg/m^2]",sigma);
+		output_double("rho [kg/m^3]",rho);
+		output_double("OMEGA [1/s]",OMEGA);
+		output_double("lambda_crit [m]",4.*M_PI*M_PI*G*sigma/OMEGA/OMEGA);
+		output_double("length [m]",boxsize*(double)root_nx);
+		output_double("length/lambda_crit",boxsize*(double)root_nx/(4.*M_PI*M_PI*G*sigma/OMEGA/OMEGA));
+		output_int("N",_N);
 #ifdef MPI
 		output_int("N_total",_N*mpi_num);
 		output_int("mpi_num",mpi_num);
@@ -155,7 +164,7 @@ void problem_init(int argc, char* argv[]){
 		pt.ay 		= 0;
 		pt.az 		= 0;
 		pt.r 		= tools_powerlaw(particle_radius_min,particle_radius_max,particle_radius_slope);
-		pt.m 		= particle_density*4./3.*M_PI*pt.r*pt.r*pt.r;
+		pt.m 		= rho*4./3.*M_PI*pt.r*pt.r*pt.r;
 		
 		particles_add(pt);
 	}
