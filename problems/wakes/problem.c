@@ -211,7 +211,7 @@ void output_ascii_mod(char* filename){
 
 int position_id=0;
 void problem_output(){
-	if (output_check(100.*dt)){
+	if (output_check(10.*dt)){
 		output_timing();
 	}
 	if (output_check(2.*M_PI/OMEGA)){
