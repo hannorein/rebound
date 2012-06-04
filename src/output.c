@@ -29,6 +29,7 @@
 #include <time.h>
 #include <string.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include "particle.h"
 #include "main.h"
 #include "tools.h"
@@ -367,6 +368,27 @@ void output_int(char* name, int value){
 	sprintf(data,"%-35s = %9d\n",name,value);
 	output_logfile(data);
 }
+int output_check_directory(){
+	char dirname[4096] = "out__";
+	strcat(dirname,input_arguments);
+	int directory_exists = 0;
+#ifdef MPI
+	if (mpi_id==0){
+#endif // MPI
+		struct stat sb;
+		if (stat(dirname, &sb)==0 && S_ISDIR(sb.st_mode)){
+			// Directory exists
+			directory_exists = 1;
+		}
+#ifdef MPI
+	}
+	MPI_Bcast(&directory_exists,1,MPI_INT,0,MPI_COMM_WORLD);
+#endif // MPI
+	if (directory_exists){
+		chdir(dirname);
+	}
+	return directory_exists;
+}
 	
 void output_prepare_directory(){
 	char dirname[4096] = "out__";
@@ -374,11 +396,15 @@ void output_prepare_directory(){
 #ifdef MPI
 	if (mpi_id==0){
 #endif // MPI
-	char tmpsystem[4096];
-	sprintf(tmpsystem,"rm -rf %s",dirname);
-	system(tmpsystem);
-	sprintf(tmpsystem,"mkdir %s",dirname);
-	system(tmpsystem);
+		struct stat sb;
+		char tmpsystem[4096];
+		if (stat(dirname, &sb)==0 && S_ISDIR(sb.st_mode)){
+			// Directory exists
+			sprintf(tmpsystem,"rm -rf %s",dirname);
+			system(tmpsystem);
+		}
+		sprintf(tmpsystem,"mkdir %s",dirname);
+		system(tmpsystem);
 #ifdef MPI
 	}
 	MPI_Barrier(MPI_COMM_WORLD);

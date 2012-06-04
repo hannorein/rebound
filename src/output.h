@@ -115,6 +115,12 @@ void output_int(char* name, int value);
  */
 void output_prepare_directory();
 
+/**
+ * Check if the default output directory exists.
+ * @return Returns 1 and changes to the directory if it exists, return 0 outherwise.
+ */
+int output_check_directory();
+
 #if defined(OPENGL) && defined(LIBPNG)
 /**
  * Outputs a screenshot of the current OpenGL view.

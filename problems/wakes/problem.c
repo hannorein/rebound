@@ -48,9 +48,12 @@ extern double minimum_collision_velocity;
 extern double (*coefficient_of_restitution_for_velocity)(double); 
 double coefficient_of_restitution_bridges(double v); 
 void input_append_input_arguments_with_int(const char* argument, int value);
+void problem_find_restartfile();
+int position_id=0;	// output number
 
 
 extern double opening_angle2;
+extern int output_logfile_first;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -111,66 +114,102 @@ void problem_init(int argc, char* argv[]){
 #ifdef MPI
 	input_append_input_arguments_with_int("mpinum",mpi_num);
 #endif // MPI
-	output_prepare_directory();
+	if (output_check_directory()==1){
+		// Restart simulation
+		problem_find_restartfile();
+		output_logfile_first = 0;
 #ifdef MPI
-	bb = communication_boundingbox_for_proc(mpi_id);
-	_N   /= mpi_num;
-	if (mpi_id==0){
+		if (mpi_id==0){
 #endif // MPI
-		output_double("boxsize [m]",boxsize);
-		output_int("root_nx",root_nx);
-		output_int("root_ny",root_ny);
-		output_int("root_nz",root_nz);
-		output_double("tau (r_max)",_N*M_PI*particle_radius_max*particle_radius_max/(boxsize*boxsize));
-		output_double("sigma [kg/m^2]",sigma);
-		output_double("rho [kg/m^3]",rho);
-		output_double("OMEGA [1/s]",OMEGA);
-		output_double("lambda_crit [m]",4.*M_PI*M_PI*G*sigma/OMEGA/OMEGA);
-		output_double("length [m]",boxsize*(double)root_nx);
-		output_double("length/lambda_crit",boxsize*(double)root_nx/(4.*M_PI*M_PI*G*sigma/OMEGA/OMEGA));
-		output_int("N",_N);
+		output_double("Restarted at time",t);
 #ifdef MPI
-		output_int("N_total",_N*mpi_num);
-		output_int("mpi_num",mpi_num);
+		}
 #endif // MPI
-		output_double("tmax [orbits]",tmax/(2.*M_PI/OMEGA));
-		output_int("number of timesteps",ceil(tmax/dt));
-		system("cat config.log");
+	}else{
+		// Start from scratch and prepare directory
+		output_prepare_directory();
 #ifdef MPI
-	}
+		bb = communication_boundingbox_for_proc(mpi_id);
+		_N   /= mpi_num;
+		if (mpi_id==0){
 #endif // MPI
-	for(int i=0;i<_N;i++){
-		struct particle pt;
-		do{
-			pt.z 		= particle_radius_max*tools_normal(2.);	
-		}while(fabs(pt.z)>=boxsize_z/2.);
+			output_double("boxsize [m]",boxsize);
+			output_int("root_nx",root_nx);
+			output_int("root_ny",root_ny);
+			output_int("root_nz",root_nz);
+			output_double("tau (r_max)",_N*M_PI*particle_radius_max*particle_radius_max/(boxsize*boxsize));
+			output_double("sigma [kg/m^2]",sigma);
+			output_double("rho [kg/m^3]",rho);
+			output_double("OMEGA [1/s]",OMEGA);
+			output_double("lambda_crit [m]",4.*M_PI*M_PI*G*sigma/OMEGA/OMEGA);
+			output_double("length [m]",boxsize*(double)root_nx);
+			output_double("length/lambda_crit",boxsize*(double)root_nx/(4.*M_PI*M_PI*G*sigma/OMEGA/OMEGA));
+			output_int("N",_N);
 #ifdef MPI
-		int proc_id;
-		do{
+			output_int("N_total",_N*mpi_num);
+			output_int("mpi_num",mpi_num);
 #endif // MPI
-			pt.x 		= tools_uniform(bb.xmin,bb.xmax);
-			pt.y 		= tools_uniform(bb.ymin,bb.ymax);
+			output_double("tmax [orbits]",tmax/(2.*M_PI/OMEGA));
+			output_int("number of timesteps",ceil(tmax/dt));
+			system("cat config.log");
 #ifdef MPI
-			int rootbox = particles_get_rootbox_for_particle(pt);
-			int root_n_per_node = root_n/mpi_num;
-			proc_id = rootbox/root_n_per_node;
-		}while(proc_id != mpi_id );
+		}
 #endif // MPI
-		
-		pt.vx 		= 0;
-		pt.vy 		= -1.5*pt.x*OMEGA;
-		pt.vz 		= 0;
-		pt.ax 		= 0;
-		pt.ay 		= 0;
-		pt.az 		= 0;
-		pt.r 		= tools_powerlaw(particle_radius_min,particle_radius_max,particle_radius_slope);
-		pt.m 		= rho*4./3.*M_PI*pt.r*pt.r*pt.r;
-		
-		particles_add(pt);
+		for(int i=0;i<_N;i++){
+			struct particle pt;
+			do{
+				pt.z 		= particle_radius_max*tools_normal(2.);	
+			}while(fabs(pt.z)>=boxsize_z/2.);
+#ifdef MPI
+			int proc_id;
+			do{
+#endif // MPI
+				pt.x 		= tools_uniform(bb.xmin,bb.xmax);
+				pt.y 		= tools_uniform(bb.ymin,bb.ymax);
+#ifdef MPI
+				int rootbox = particles_get_rootbox_for_particle(pt);
+				int root_n_per_node = root_n/mpi_num;
+				proc_id = rootbox/root_n_per_node;
+			}while(proc_id != mpi_id );
+#endif // MPI
+			
+			pt.vx 		= 0;
+			pt.vy 		= -1.5*pt.x*OMEGA;
+			pt.vz 		= 0;
+			pt.ax 		= 0;
+			pt.ay 		= 0;
+			pt.az 		= 0;
+			pt.r 		= tools_powerlaw(particle_radius_min,particle_radius_max,particle_radius_slope);
+			pt.m 		= rho*4./3.*M_PI*pt.r*pt.r*pt.r;
+			
+			particles_add(pt);
+		}
 	}
 #ifdef MPI
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif // MPI
+}
+
+void problem_find_restartfile(){
+	int latest = -1;
+	for (int i=0;i<1000;i++){
+		char filename[256];
+#ifdef MPI
+		sprintf(filename,"binary_%08d.txt_0",i);
+#else // MPI
+		sprintf(filename,"binary_%08d.txt",i);
+#endif // MPI
+		if( access( filename, F_OK ) != -1 ) {
+			latest = i;
+		}
+	}
+	if (latest ==-1){
+		printf("Cannot find a restart file in directory.\n");
+		exit(-1);
+	}
+	char filename[256];
+	sprintf(filename,"binary_%08d.txt",latest);
+	input_binary(filename);	
 }
 
 double coefficient_of_restitution_bridges(double v){
@@ -209,7 +248,6 @@ void output_ascii_mod(char* filename){
 	fclose(of);
 }
 
-int position_id=0;
 void problem_output(){
 	if (output_check(10.*dt)){
 		output_timing();
@@ -218,6 +256,8 @@ void problem_output(){
 		char filename[256];
 		sprintf(filename,"position_%08d.txt",position_id);
 		output_ascii_mod(filename);
+		sprintf(filename,"binary_%08d.txt",position_id);
+		output_binary(filename);
 		position_id++;
 	}
 }
