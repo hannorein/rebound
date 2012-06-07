@@ -375,7 +375,10 @@ void output_transparency(double B, double phi){
 			int proc_id = i/root_n_per_node;
 			if (proc_id!=mpi_id) continue;
 #endif //MPI
-			transparency += tree_get_transparency(tree_root[i]);	
+			struct cell* c = tree_root[i];
+			if(tree_get_intersection(c)==1){
+				transparency += tree_get_transparency(c);	
+			}
 		}
 		if (transparency>0) _t[j]++;
 	}
@@ -406,12 +409,14 @@ void output_transparency(double B, double phi){
 }
 
 void problem_output(){
-	for (double phi = 0; phi<M_PI; phi+=M_PI/10.){
-		output_transparency(M_PI/2.,phi); //Normal to ring plane
-		for (double B = M_PI/4.; B<M_PI/2.; B+=M_PI/20.){
-			output_transparency(B,phi);
-		}
+	if (output_check(10.*dt)){
+		for (double phi = 0; phi<M_PI; phi+=M_PI/10.){
+			output_transparency(M_PI/2.,phi); //Normal to ring plane
+			for (double B = M_PI/4.; B<M_PI/2.; B+=M_PI/20.){
+				output_transparency(B,phi);
+			}
 
+		}
 	}
 	if (output_check(10.*dt)){
 		output_timing();
