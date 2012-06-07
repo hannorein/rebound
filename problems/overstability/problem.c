@@ -287,8 +287,13 @@ void problem_output(){
 	if (output_check(2.*M_PI)){
 		output_timing();
 	}
-	if (output_check(10.*2.*M_PI)){
+	if (t>2.*M_PI*300&&t<2.*M_PI*400.&&output_check(.2*M_PI)){
+		output_x("xfine.bin");
+	}
+	if (output_check(20.*M_PI)){
 		output_x("x.bin");
+	}
+	if (output_check(2.*M_PI)){
 		output_append_velocity_dispersion("vdisp.txt");
 		output_append_energy("energy.txt");
 	}
