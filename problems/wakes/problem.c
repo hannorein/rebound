@@ -38,6 +38,7 @@
 #include "output.h"
 #include "communication_mpi.h"
 #include "tree.h"
+#include "collisions.h"
 #include "tools.h"
 #include "input.h"
 
@@ -247,8 +248,171 @@ void output_ascii_mod(char* filename){
 	}
 	fclose(of);
 }
+	
+double a[3];
+double b[3];
+
+int tree_get_intersection(struct cell* c){
+	double xmin = c->x-c->w/2.-collisions_max_r;
+	double xmax = c->x+c->w/2.+collisions_max_r;
+	double ymin = c->y-c->w/2.-collisions_max_r;
+	double ymax = c->y+c->w/2.+collisions_max_r;
+	double zmin = c->z-c->w/2.-collisions_max_r;
+	double zmax = c->z+c->w/2.+collisions_max_r;
+
+	if (b[0]!=0){
+		double d,y,z;
+		d = (xmin-a[0])/b[0];
+		y = a[1]+d*b[1];
+		z = a[2]+d*b[2];
+		if (y<ymax && y>ymin && z<zmax && z>zmin) return 1;
+		d = (xmax-a[0])/b[0];
+		y = a[1]+d*b[1];
+		z = a[2]+d*b[2];
+		if (y<ymax && y>ymin && z<zmax && z>zmin) return 1;
+	}
+	
+	if (b[1]!=0){
+		double d,x,z;
+		d = (ymin-a[1])/b[1];
+		x = a[0]+d*b[0];
+		z = a[2]+d*b[2];
+		if (x<xmax && x>xmin && z<zmax && z>zmin) return 1;
+		d = (ymax-a[1])/b[1];
+		x = a[0]+d*b[0];
+		z = a[2]+d*b[2];
+		if (x<xmax && x>xmin && z<zmax && z>zmin) return 1;
+	}
+	
+	if (b[2]!=0){
+		double d,x,y;
+		d = (zmin-a[2])/b[2];
+		x = a[0]+d*b[0];
+		y = a[1]+d*b[1];
+		if (x<xmax && x>xmin && y<ymax && y>ymin) return 1;
+		d = (zmax-a[2])/b[2];
+		x = a[0]+d*b[0];
+		y = a[1]+d*b[1];
+		if (x<xmax && x>xmin && y<ymax && y>ymin) return 1;
+	}
+
+	return 0;
+}
+
+int tree_get_transparency(struct cell* c){
+	if (c->pt<0){
+		for(int i=0;i<8;i++){
+			struct cell* o = c->oct[i];
+			if (o!=NULL){
+				if(tree_get_intersection(o)){
+					if (tree_get_transparency(o)==1) return 1;
+				}
+			}
+		}
+		return 0;
+	}else{
+		struct particle p = particles[c->pt];
+		double t1 = b[1]*(a[2]-p.z)-b[2]*(a[1]-p.y);
+		double t2 = b[2]*(a[0]-p.x)-b[0]*(a[2]-p.z);
+		double t3 = b[0]*(a[1]-p.y)-b[1]*(a[0]-p.x);
+		double bot2 = b[0]*b[0]+b[1]*b[1]+b[2]*b[2];
+		double distance2 = (t1*t1+t2*t2+t3*t3)/bot2;
+		if (distance2<p.r*p.r) return 1;
+		return 0;
+	}
+}
+
+void output_transparency(double B, double phi){
+	if (fabs(B-M_PI/2.)>M_PI/4.){
+		printf("ERROR: Cannot calculate ray. B has to be in the range [M_PI/4.:3.*M_PI/4.].\n");
+		return;
+	}
+	
+	if (B!=M_PI/2.){
+		b[0] = cos(phi)*cos(B)/sin(B);
+		b[1] = sin(phi)*cos(B)/sin(B);
+	}else{
+		b[0] = 0;
+		b[1] = 0;
+	}
+	a[2] = 0;
+	b[2] = 1;
+
+
+	int num_rays 		= 10000;
+
+	double* _a = malloc(sizeof(double)*num_rays*3);
+	int*   _t = calloc(num_rays,sizeof(int));
+#ifdef MPI
+	if (mpi_id==0){
+#endif //MPI
+		for(int j=0;j<num_rays;j++){
+			int allinbox = 1;
+			do{
+				_a[3*j+0] = tools_uniform(-boxsize_x/2.,boxsize_x/2.);
+				_a[3*j+1] = tools_uniform(-boxsize_x/2.,boxsize_x/2.);
+				// Make sure line in completely in box.
+				if (fabs(a[0]+b[0])>boxsize_x/2.) allinbox=0;
+				if (fabs(a[0]-b[0])>boxsize_x/2.) allinbox=0;
+				if (fabs(a[1]+b[1])>boxsize_y/2.) allinbox=0;
+				if (fabs(a[1]-b[1])>boxsize_y/2.) allinbox=0;
+			}while(allinbox=0);
+			_a[3*j+2] = 0;
+		}
+#ifdef MPI
+	}
+	MPI_Bcast(_a,3*num_rays,MPI_DOUBLE,0,MPI_COMM_WORLD);
+#endif //MPI
+
+	for(int j=0;j<num_rays;j++){
+		a[0] = _a[3*j+0];
+		a[1] = _a[3*j+1];
+		a[2] = _a[3*j+2];
+		int transparency = 0;
+		for (int i=0;i<root_n;i++){
+#ifdef MPI
+			int root_n_per_node = root_n/mpi_num;
+			int proc_id = i/root_n_per_node;
+			if (proc_id!=mpi_id) continue;
+#endif //MPI
+			transparency += tree_get_transparency(tree_root[i]);	
+		}
+		if (transparency>0) _t[j]++;
+	}
+	
+#ifdef MPI
+	int*   _tmax = malloc(num_rays*sizeof(int));
+	MPI_Reduce(_t,_tmax,num_rays,MPI_INT,MPI_MAX,0,MPI_COMM_WORLD);
+	free(_t);
+	_t = _tmax;
+	if (mpi_id==0){
+#endif //MPI
+		int num_intersecting = 0;
+		for(int j=0;j<num_rays;j++){
+			if (_t[j]>0) num_intersecting++;
+		}
+		FILE* of = fopen("transparency.txt","a+"); 
+		if (of==NULL){
+			printf("\n\nError while opening file.\n");
+			return;
+		}
+		fprintf(of,"%e\t%e\t%e\t%0.8f\n",t,B,phi,(double)num_intersecting/(double)num_rays);
+		fclose(of);
+#ifdef MPI
+	}
+#endif //MPI
+	free(_a);
+	free(_t);
+}
 
 void problem_output(){
+	for (double phi = 0; phi<M_PI; phi+=M_PI/10.){
+		output_transparency(M_PI/2.,phi); //Normal to ring plane
+		for (double B = M_PI/4.; B<M_PI/2.; B+=M_PI/20.){
+			output_transparency(B,phi);
+		}
+
+	}
 	if (output_check(10.*dt)){
 		output_timing();
 	}
