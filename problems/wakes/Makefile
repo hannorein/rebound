@@ -1,8 +1,8 @@
 PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
 export OPT=-O3 -std=c99
-export OPENGL=0
-export MPI=1
-export OPENMP=1
+export OPENGL=1
+export MPI=0
+export OPENMP=0
 export CC=mpicc
 #export CC=/Users/rein/localinstalls/src/gcc-lion/usr/local/bin/gcc
 

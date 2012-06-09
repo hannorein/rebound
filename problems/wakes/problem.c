@@ -249,84 +249,78 @@ void output_ascii_mod(char* filename){
 	fclose(of);
 }
 	
-double a[3];
-double b[3];
 
-int tree_get_intersection(struct cell* c){
+int tree_does_ray_hit_particle(struct cell* c, double a[3], double b[3]){
 	double xmin = c->x-c->w/2.-collisions_max_r;
 	double xmax = c->x+c->w/2.+collisions_max_r;
 	double ymin = c->y-c->w/2.-collisions_max_r;
 	double ymax = c->y+c->w/2.+collisions_max_r;
 	double zmin = c->z-c->w/2.-collisions_max_r;
 	double zmax = c->z+c->w/2.+collisions_max_r;
+	int intersections = 0;
 
 	if (b[0]!=0){
 		double d,y,z;
 		d = (xmin-a[0])/b[0];
 		y = a[1]+d*b[1];
 		z = a[2]+d*b[2];
-		if (y<ymax && y>ymin && z<zmax && z>zmin) return 1;
+		if (y<ymax && y>ymin && z<zmax && z>zmin) intersections++;
 		d = (xmax-a[0])/b[0];
 		y = a[1]+d*b[1];
 		z = a[2]+d*b[2];
-		if (y<ymax && y>ymin && z<zmax && z>zmin) return 1;
+		if (y<ymax && y>ymin && z<zmax && z>zmin) intersections++;
 	}
-	
 	if (b[1]!=0){
 		double d,x,z;
 		d = (ymin-a[1])/b[1];
 		x = a[0]+d*b[0];
 		z = a[2]+d*b[2];
-		if (x<xmax && x>xmin && z<zmax && z>zmin) return 1;
+		if (x<xmax && x>xmin && z<zmax && z>zmin) intersections++;
 		d = (ymax-a[1])/b[1];
 		x = a[0]+d*b[0];
 		z = a[2]+d*b[2];
-		if (x<xmax && x>xmin && z<zmax && z>zmin) return 1;
+		if (x<xmax && x>xmin && z<zmax && z>zmin) intersections++;
 	}
-	
 	if (b[2]!=0){
 		double d,x,y;
 		d = (zmin-a[2])/b[2];
 		x = a[0]+d*b[0];
 		y = a[1]+d*b[1];
-		if (x<xmax && x>xmin && y<ymax && y>ymin) return 1;
+		if (x<xmax && x>xmin && y<ymax && y>ymin) intersections++;
 		d = (zmax-a[2])/b[2];
 		x = a[0]+d*b[0];
 		y = a[1]+d*b[1];
-		if (x<xmax && x>xmin && y<ymax && y>ymin) return 1;
+		if (x<xmax && x>xmin && y<ymax && y>ymin) intersections++;
 	}
-
+	if (intersections){
+		if (c->pt<0){
+			for(int i=0;i<8;i++){
+				struct cell* o = c->oct[i];
+				if(o){
+					if (tree_does_ray_hit_particle(o,a,b)) return 1;
+				}
+			}
+		}else{
+			struct particle p = particles[c->pt];
+			double t1 = b[1]*(a[2]-p.z)-b[2]*(a[1]-p.y);
+			double t2 = b[2]*(a[0]-p.x)-b[0]*(a[2]-p.z);
+			double t3 = b[0]*(a[1]-p.y)-b[1]*(a[0]-p.x);
+			double bot2 = b[0]*b[0]+b[1]*b[1]+b[2]*b[2];
+			double distance2 = (t1*t1+t2*t2+t3*t3)/bot2;
+			if (distance2<p.r*p.r) return 1;
+		}
+	}
 	return 0;
 }
 
-int tree_get_transparency(struct cell* c){
-	if (c->pt<0){
-		for(int i=0;i<8;i++){
-			struct cell* o = c->oct[i];
-			if (o!=NULL){
-				if(tree_get_intersection(o)){
-					if (tree_get_transparency(o)==1) return 1;
-				}
-			}
-		}
-		return 0;
-	}else{
-		struct particle p = particles[c->pt];
-		double t1 = b[1]*(a[2]-p.z)-b[2]*(a[1]-p.y);
-		double t2 = b[2]*(a[0]-p.x)-b[0]*(a[2]-p.z);
-		double t3 = b[0]*(a[1]-p.y)-b[1]*(a[0]-p.x);
-		double bot2 = b[0]*b[0]+b[1]*b[1]+b[2]*b[2];
-		double distance2 = (t1*t1+t2*t2+t3*t3)/bot2;
-		if (distance2<p.r*p.r) return 1;
-		return 0;
-	}
-}
-
-void output_transparency(double B, double phi){
+void tree_get_transparency(double B, double phi){
 	if (fabs(B-M_PI/2.)>M_PI/4.){
 		printf("ERROR: Cannot calculate ray. B has to be in the range [M_PI/4.:3.*M_PI/4.].\n");
 		return;
 	}
+	
+	double a[3]; // ray
+	double b[3];
 	
 	if (B!=M_PI/2.){
 		b[0] = cos(phi)*cos(B)/sin(B);
@@ -376,11 +370,9 @@ void output_transparency(double B, double phi){
 			if (proc_id!=mpi_id) continue;
 #endif //MPI
 			struct cell* c = tree_root[i];
-			if(tree_get_intersection(c)==1){
-				transparency += tree_get_transparency(c);	
-			}
+			transparency += tree_does_ray_hit_particle(c,a,b);	
 		}
-		if (transparency>0) _t[j]++;
+		if (transparency>0) _t[j]=1;
 	}
 	
 #ifdef MPI
@@ -408,15 +400,20 @@ void output_transparency(double B, double phi){
 	free(_t);
 }
 
+void output_transparency(){
+	tree_get_transparency(M_PI/2.,0); //Normal to ring plane
+	for (double phi = 0; phi<M_PI; phi+=M_PI/10.){
+		for (double B = M_PI/4.; B<M_PI/2.; B+=M_PI/20.){
+			tree_get_transparency(B,phi);
+		}
+
+	}
+}
+
+
 void problem_output(){
 	if (output_check(10.*dt)){
-		for (double phi = 0; phi<M_PI; phi+=M_PI/10.){
-			output_transparency(M_PI/2.,phi); //Normal to ring plane
-			for (double B = M_PI/4.; B<M_PI/2.; B+=M_PI/20.){
-				output_transparency(B,phi);
-			}
-
-		}
+		output_transparency();
 	}
 	if (output_check(10.*dt)){
 		output_timing();
