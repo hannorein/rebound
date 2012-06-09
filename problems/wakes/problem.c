@@ -251,48 +251,13 @@ void output_ascii_mod(char* filename){
 	
 
 int tree_does_ray_hit_particle(struct cell* c, double a[3], double b[3]){
-	double xmin = c->x-c->w/2.-collisions_max_r;
-	double xmax = c->x+c->w/2.+collisions_max_r;
-	double ymin = c->y-c->w/2.-collisions_max_r;
-	double ymax = c->y+c->w/2.+collisions_max_r;
-	double zmin = c->z-c->w/2.-collisions_max_r;
-	double zmax = c->z+c->w/2.+collisions_max_r;
-	int intersections = 0;
-
-	if (b[0]!=0){
-		double d,y,z;
-		d = (xmin-a[0])/b[0];
-		y = a[1]+d*b[1];
-		z = a[2]+d*b[2];
-		if (y<ymax && y>ymin && z<zmax && z>zmin) intersections++;
-		d = (xmax-a[0])/b[0];
-		y = a[1]+d*b[1];
-		z = a[2]+d*b[2];
-		if (y<ymax && y>ymin && z<zmax && z>zmin) intersections++;
-	}
-	if (b[1]!=0){
-		double d,x,z;
-		d = (ymin-a[1])/b[1];
-		x = a[0]+d*b[0];
-		z = a[2]+d*b[2];
-		if (x<xmax && x>xmin && z<zmax && z>zmin) intersections++;
-		d = (ymax-a[1])/b[1];
-		x = a[0]+d*b[0];
-		z = a[2]+d*b[2];
-		if (x<xmax && x>xmin && z<zmax && z>zmin) intersections++;
-	}
-	if (b[2]!=0){
-		double d,x,y;
-		d = (zmin-a[2])/b[2];
-		x = a[0]+d*b[0];
-		y = a[1]+d*b[1];
-		if (x<xmax && x>xmin && y<ymax && y>ymin) intersections++;
-		d = (zmax-a[2])/b[2];
-		x = a[0]+d*b[0];
-		y = a[1]+d*b[1];
-		if (x<xmax && x>xmin && y<ymax && y>ymin) intersections++;
-	}
-	if (intersections){
+	double t1 = b[1]*(a[2]-c->z)-b[2]*(a[1]-c->y);
+	double t2 = b[2]*(a[0]-c->x)-b[0]*(a[2]-c->z);
+	double t3 = b[0]*(a[1]-c->y)-b[1]*(a[0]-c->x);
+	double bot2 = b[0]*b[0]+b[1]*b[1]+b[2]*b[2];
+	double distance2 = (t1*t1+t2*t2+t3*t3)/bot2;
+	double width=c->w*0.86602540378+collisions_max_r;
+	if (distance2<width*width){
 		if (c->pt<0){
 			for(int i=0;i<8;i++){
 				struct cell* o = c->oct[i];
@@ -314,26 +279,29 @@ int tree_does_ray_hit_particle(struct cell* c, double a[3], double b[3]){
 }
 
 void tree_get_transparency(double B, double phi){
-	if (fabs(B-M_PI/2.)>M_PI/4.){
-		printf("ERROR: Cannot calculate ray. B has to be in the range [M_PI/4.:3.*M_PI/4.].\n");
-		return;
-	}
-	
-	double a[3]; // ray
-	double b[3];
-	
+	double taninv = 1./tan(B);
+	double a[3] = {0,0,0}; // ray position in xy plane
+	double b[3] = {0,0,1}; // ray vector
 	if (B!=M_PI/2.){
-		b[0] = cos(phi)*cos(B)/sin(B);
-		b[1] = sin(phi)*cos(B)/sin(B);
+		b[0] = cos(phi)*taninv;
+		b[1] = sin(phi)*taninv;
 	}else{
 		b[0] = 0;
 		b[1] = 0;
 	}
-	a[2] = 0;
-	b[2] = 1;
+	double raylength = taninv * boxsize_x/2.+2.*collisions_max_r; 
+	int nghostray=0;
+	double boxlengthray = 0;
+	while(boxlengthray<raylength){
+		if (nghostray==0){
+			boxlengthray += boxsize_x/2.;
+		}else{
+			boxlengthray += boxsize_x;
+		}
+		nghostray++;
+	}
 
-
-	int num_rays 		= 10000;
+	int num_rays 		= 1000;
 
 	double* _a = malloc(sizeof(double)*num_rays*3);
 	int*   _t = calloc(num_rays,sizeof(int));
@@ -341,16 +309,8 @@ void tree_get_transparency(double B, double phi){
 	if (mpi_id==0){
 #endif //MPI
 		for(int j=0;j<num_rays;j++){
-			int allinbox = 1;
-			do{
-				_a[3*j+0] = tools_uniform(-boxsize_x/2.,boxsize_x/2.);
-				_a[3*j+1] = tools_uniform(-boxsize_x/2.,boxsize_x/2.);
-				// Make sure line in completely in box.
-				if (fabs(a[0]+b[0])>boxsize_x/2.) allinbox=0;
-				if (fabs(a[0]-b[0])>boxsize_x/2.) allinbox=0;
-				if (fabs(a[1]+b[1])>boxsize_y/2.) allinbox=0;
-				if (fabs(a[1]-b[1])>boxsize_y/2.) allinbox=0;
-			}while(allinbox=0);
+			_a[3*j+0] = tools_uniform(-boxsize_x/2.,boxsize_x/2.);
+			_a[3*j+1] = tools_uniform(-boxsize_y/2.,boxsize_y/2.); // Only really works in square boxes.
 			_a[3*j+2] = 0;
 		}
 #ifdef MPI
@@ -359,18 +319,23 @@ void tree_get_transparency(double B, double phi){
 #endif //MPI
 
 	for(int j=0;j<num_rays;j++){
-		a[0] = _a[3*j+0];
-		a[1] = _a[3*j+1];
-		a[2] = _a[3*j+2];
 		int transparency = 0;
-		for (int i=0;i<root_n;i++){
+		for (int gbx=-nghostray; gbx<=nghostray; gbx++){
+			for (int gby=-nghostray; gby<=nghostray; gby++){
+				struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,0);
+				a[0] = _a[3*j+0]+gb.shiftx;
+				a[1] = _a[3*j+1]+gb.shifty;
+				a[2] = _a[3*j+2];
+				for (int i=0;i<root_n;i++){
 #ifdef MPI
-			int root_n_per_node = root_n/mpi_num;
-			int proc_id = i/root_n_per_node;
-			if (proc_id!=mpi_id) continue;
+					int root_n_per_node = root_n/mpi_num;
+					int proc_id = i/root_n_per_node;
+					if (proc_id!=mpi_id) continue;
 #endif //MPI
-			struct cell* c = tree_root[i];
-			transparency += tree_does_ray_hit_particle(c,a,b);	
+					struct cell* c = tree_root[i];
+					transparency += tree_does_ray_hit_particle(c,a,b);	
+				}
+			}
 		}
 		if (transparency>0) _t[j]=1;
 	}
@@ -403,7 +368,10 @@ void tree_get_transparency(double B, double phi){
 void output_transparency(){
 	tree_get_transparency(M_PI/2.,0); //Normal to ring plane
 	for (double phi = 0; phi<M_PI; phi+=M_PI/10.){
-		for (double B = M_PI/4.; B<M_PI/2.; B+=M_PI/20.){
+		double lowB = M_PI/8.;
+		double numB = 20.;
+		for (int i=0;i<numB;i++){
+			double B = lowB+(M_PI/2.-lowB)/numB*(double)i;
 			tree_get_transparency(B,phi);
 		}
 
