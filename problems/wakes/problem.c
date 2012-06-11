@@ -318,6 +318,7 @@ void tree_get_transparency(double B, double phi){
 	MPI_Bcast(_a,3*num_rays,MPI_DOUBLE,0,MPI_COMM_WORLD);
 #endif //MPI
 
+#pragma omp parallel for 
 	for(int j=0;j<num_rays;j++){
 		int transparency = 0;
 		for (int gbx=-nghostray; gbx<=nghostray; gbx++){

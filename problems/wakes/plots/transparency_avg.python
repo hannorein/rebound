@@ -1,0 +1,40 @@
+#!/bin/python
+import subprocess,glob,os,struct,math,sys
+
+filename = sys.argv[1]
+f = file(filename).readlines()
+num_avg=201
+num_out=len(f)/num_avg
+num_start=int(num_out*0.5)
+avg=[0.0]*num_avg
+for i in range(num_start,num_out):
+	for j in range(0,num_avg):
+		avg[j] += float(f[i*num_avg+j].split()[3])
+
+last = f[1].split()[2]
+for j in range(1,num_avg):
+	second = f[j].split()[2]
+	if last!=second:
+		print f[0].split()[1],f[0].split()[2],avg[0]/(num_out-num_start)
+		print ""
+	last = second
+	print f[j].split()[1],second,avg[j]/(num_out-num_start)
+
+for j in range(1,num_avg):
+	second = float(f[j].split()[2])+math.pi
+	if last!=second:
+		print f[0].split()[1],f[0].split()[2],avg[0]/(num_out-num_start)
+		print ""
+	last = second
+	print f[j].split()[1],second,avg[j]/(num_out-num_start)
+
+print f[0].split()[1],f[0].split()[2],avg[0]/(num_out-num_start)
+print ""
+last = f[1].split()[2]
+for j in range(1,num_avg):
+	second = f[j].split()[2]
+	if last!=second:
+		print f[0].split()[1],f[0].split()[2],avg[0]/(num_out-num_start)
+		break
+	last = second
+	print f[j].split()[1],second,avg[j]/(num_out-num_start)
