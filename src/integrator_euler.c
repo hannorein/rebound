@@ -36,6 +36,7 @@
 #include "main.h"
 #include "gravity.h"
 
+
 /**
  * This part has no function, as the euler scheme does not have any sub-
  * timestep.

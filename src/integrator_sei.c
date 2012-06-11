@@ -39,6 +39,7 @@
 #include "main.h"
 #include "boundaries.h"
 
+
 double OMEGA 	= 1.; 	/**< Epicyclic/orbital frequency. */
 double OMEGAZ 	= -1.; 	/**< Epicyclic frequency in vertical direction. */
 
