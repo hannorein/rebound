@@ -68,7 +68,7 @@ This setup allows you to work on multiple projects at the same time using differ
   <tr><td><pre>integrator_wh.c      </pre></td>
      <td>Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991</td></tr>
   <tr><td><pre>integrator_radau15.c </pre></td>
-     <td>15th order, non-symplectic integrator, can handle arbitrary (velocity dependend) forces, Everhart 1985</td></tr>
+     <td>15th order, non-symplectic integrator, can handle arbitrary (velocity dependent) forces, Everhart 1985</td></tr>
   <tr><td><pre>integrator_sei.c     </pre></td>
      <td>Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011</td></tr>
 </table>
