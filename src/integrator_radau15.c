@@ -47,7 +47,7 @@
 #endif
 
 int integrator_radau_init_done = 0;
-double integrator_radau_accuracy = 1e-12;
+double integrator_radau_accuracy = 1e-4;
 void integrator_radau_init();
 void integrator_radau_step();
 
@@ -230,7 +230,6 @@ void integrator_radau_step() {
 		g[5][k] = b[6][k]*d[20] + b[5][k];
 		g[6][k] = b[6][k];
 	}
-	double tmp;
 
 	for (int main_loop_counter=0;main_loop_counter<niter;++main_loop_counter) {
 		for(int j=1;j<8;++j) {
@@ -315,13 +314,13 @@ void integrator_radau_step() {
 			switch (j) {
 				case 1: 
 					for(int k=0;k<nv;++k) {
-						tmp = g[0][k];
+						double tmp = g[0][k];
 						g[0][k]  = (a[k] - a1[k]) * r[0];
 						b[0][k] += g[0][k] - tmp;
 					} break;
 				case 2: 
 					for(int k=0;k<nv;++k) {
-						tmp = g[1][k];
+						double tmp = g[1][k];
 						double gk = a[k] - a1[k];
 						g[1][k] = (gk*r[1] - g[0][k])*r[2];
 						tmp = g[1][k] - tmp;
@@ -330,7 +329,7 @@ void integrator_radau_step() {
 					} break;
 				case 3: 
 					for(int k=0;k<nv;++k) {
-						tmp = g[2][k];
+						double tmp = g[2][k];
 						double gk = a[k] - a1[k];
 						g[2][k] = ((gk*r[3] - g[0][k])*r[4] - g[1][k])*r[5];
 						tmp = g[2][k] - tmp;
@@ -340,7 +339,7 @@ void integrator_radau_step() {
 					} break;
 				case 4:
 					for(int k=0;k<nv;++k) {
-						tmp = g[3][k];
+						double tmp = g[3][k];
 						double gk = a[k] - a1[k];
 						g[3][k] = (((gk*r[6] - g[0][k])*r[7] - g[1][k])*r[8] - g[2][k])*r[9];
 						tmp = g[3][k] - tmp;
@@ -351,7 +350,7 @@ void integrator_radau_step() {
 					} break;
 				case 5:
 					for(int k=0;k<nv;++k) {
-						tmp = g[4][k];
+						double tmp = g[4][k];
 						double gk = a[k] - a1[k];
 						g[4][k] = ((((gk*r[10] - g[0][k])*r[11] - g[1][k])*r[12] - g[2][k])*r[13] - g[3][k])*r[14];
 						tmp = g[4][k] - tmp;
@@ -363,7 +362,7 @@ void integrator_radau_step() {
 					} break;
 				case 6:
 					for(int k=0;k<nv;++k) {
-						tmp = g[5][k];
+						double tmp = g[5][k];
 						double gk = a[k] - a1[k];
 						g[5][k] = (((((gk*r[15] - g[0][k])*r[16] - g[1][k])*r[17] - g[2][k])*r[18] - g[3][k])*r[19] - g[4][k])*r[20];
 						tmp = g[5][k] - tmp;
@@ -376,7 +375,7 @@ void integrator_radau_step() {
 					} break;
 				case 7:
 					for(int k=0;k<nv;++k) {
-						tmp = g[6][k];
+						double tmp = g[6][k];
 						double gk = a[k] - a1[k];
 						g[6][k] = ((((((gk*r[21] - g[0][k])*r[22] - g[1][k])*r[23] - g[2][k])*r[24] - g[3][k])*r[25] - g[4][k])*r[26] - g[5][k])*r[27];
 						tmp = g[6][k] - tmp;
@@ -397,7 +396,7 @@ void integrator_radau_step() {
 	double dt_done = dt;
 
 	// Estimate suitable sequence size for the next call
-	tmp = 0.0;
+	double tmp = 0.0;
 	for(int k=0;k<nv;++k) {
 		double _fabsb6k = fabs(b[6][k]);
 		if (_fabsb6k>tmp) tmp = _fabsb6k;
