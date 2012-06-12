@@ -65,7 +65,7 @@ void problem_init(int argc, char* argv[]){
 	G 				= 6.67428e-11;		// N m^2 / kg^2 
 	softening 			= 0.1;			// m
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
-	tmax				= 10.*2.*M_PI/OMEGA;
+	tmax				= 10.*2.*M_PI/OMEGA+dt;
 
 	// Setup domain dimensions
 	int _root_n = 1;
