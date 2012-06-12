@@ -199,11 +199,9 @@ void integrator_radau_step() {
 		x1[3*k]   = frame_in[k].x;
 		x1[3*k+1] = frame_in[k].y;
 		x1[3*k+2] = frame_in[k].z;
-		//
 		v1[3*k]   = frame_in[k].vx;
 		v1[3*k+1] = frame_in[k].vy;
 		v1[3*k+2] = frame_in[k].vz;
-		//
 		a1[3*k]   = frame_out[k].ax;
 		a1[3*k+1] = frame_out[k].ay;  
 		a1[3*k+2] = frame_out[k].az;
@@ -235,8 +233,7 @@ void integrator_radau_step() {
 			for(int k=0;k<N3;++k) {
 				x[k] = 	s[8]*b[6][k] + s[7]*b[5][k] + s[6]*b[4][k] + s[5]*b[3][k] + s[4]*b[2][k] + s[3]*b[1][k] + s[2]*b[0][k] + s[1]*a1[k] + s[0]*v1[k] + x1[k];
 			}
-			// This should be made optional
-#define VELOCITYDEPENDENDFORCE
+#define VELOCITYDEPENDENDFORCE // This should be made optional
 #ifdef VELOCITYDEPENDENDFORCE
 			s[0] = dt * h[j];
 			s[1] = s[0] * h[j] * 0.5;
@@ -265,13 +262,14 @@ void integrator_radau_step() {
 			}
 
 			/*
-			HR: I do not understadn this.:
+			// HR: I do not understand where this is coming from. 
+			// I assume it is another way to calculate the forces.
+			// I'll just ignore it. For now. 
 
 			if (interaction->IsSkippingJPLPlanets()) {
 				frame_out.SetTime(frame_in+dt*h[j]);
 				frame_out.ForceJPLEphemerisData();
 			}
-			//
 			*/
 			particles = frame_out;
 			integrator_update_acceleration();
@@ -357,8 +355,6 @@ void integrator_radau_step() {
 						b[5][k] += tmp * c[20];
 						b[6][k] += tmp;
 					} break;
-				default:
-					printf("Error\n");
 			}
 
 		}
@@ -371,57 +367,33 @@ void integrator_radau_step() {
 		double _fabsb6k = fabs(b[6][k]);
 		if (_fabsb6k>tmp) tmp = _fabsb6k;
 	}
-	// if (tmp!=0.0) tmp /= (72.0 * secure_pow(fabs(dt),7));
-	// if (tmp!=0.0) tmp /= (72.0 * secure_pow(fabs(dt.GetDouble()),7));
 	if (tmp!=0.0) tmp /= (72.0 * pow(fabs(dt),7));
 
 	if (tmp < 1.0e-50) { // is equal to zero?
-		// dt = dt_done * 1.4;
 		dt = dt_done * 1.4;
 	} else {
-
-		// old rule...
-		// dt = copysign(secure_pow(accuracy/tmp,0.1111111111111111),dt_done); // 1/9=0.111...
-		// dt = copysign(secure_pow(accuracy/tmp,0.1111111111111111),dt_done.GetDouble()); // 1/9=0.111...
 		dt = copysign(pow(integrator_radau_accuracy/tmp,0.1111111111111111),dt_done); // 1/9=0.111...
-
 	}
-	//
-	// if (fabs(dt/dt_done) < 1.0) {
+	
 	if (fabs(dt/dt_done) < 1.0) {
 		dt = dt_done * 0.8;
-		printf("Radau: step rejected! New proposed dt: %f\n",dt);
-		// HR TODO COPY!!
-		particles = _frame_orig;
-		memcpy(particles,frame_in,N*sizeof(struct particle));
+		//printf("Radau: step rejected! New proposed dt: %f\n",dt);
+		particles = frame_in;
+		frame_in = _frame_orig;
 		niter = 6;
 		return;
 	}
-	//
+	
 	if (fabs(dt/dt_done) > 1.4) dt = dt_done * 1.4;
-
-	// std::cerr << "RA15: new dt: " << dt.GetDouble() << std::endl;
 
 	// Find new position and velocity values at end of the sequence
 	tmp = dt_done * dt_done;
 	for(int k=0;k<N3;++k) {
-		x1[k] = ( xc[7]*b[6][k] +
-				xc[6]*b[5][k] + 
-				xc[5]*b[4][k] + 
-				xc[4]*b[3][k] + 
-				xc[3]*b[2][k] + 
-				xc[2]*b[1][k] + 
-				xc[1]*b[0][k] + 
-				xc[0]*a1[k]   ) * tmp + v1[k]*dt_done + x1[k];
+		x1[k] = (xc[7]*b[6][k] + xc[6]*b[5][k] + xc[5]*b[4][k] + xc[4]*b[3][k] + xc[3]*b[2][k] + xc[2]*b[1][k] + xc[1]*b[0][k] + xc[0]*a1[k]) 
+			* tmp + v1[k] * dt_done + x1[k];
 
-		v1[k] = ( vc[6]*b[6][k] + 
-				vc[5]*b[5][k] + 
-				vc[4]*b[4][k] +
-				vc[3]*b[3][k] + 
-				vc[2]*b[2][k] + 
-				vc[1]*b[1][k] +
-				vc[0]*b[0][k] + 
-				a1[k])        * dt_done + v1[k];
+		v1[k] = (vc[6]*b[6][k] + vc[5]*b[5][k] + vc[4]*b[4][k] + vc[3]*b[3][k] + vc[2]*b[2][k] + vc[1]*b[1][k] + vc[0]*b[0][k] + a1[k])
+			* dt_done + v1[k];
 	}
 
 	for(int k=0;k<N;++k) {
@@ -438,23 +410,23 @@ void integrator_radau_step() {
 
 	t += dt_done;
 	niter = 2;
-	particles = _frame_orig;
-	memcpy(particles,frame_out,N*sizeof(struct particle));
+	// Swap particle buffers
+	particles = frame_out;
+	frame_out = _frame_orig;
 
 	// Predict new B values to use at the start of the next sequence. The predicted
 	// values from the last call are saved as E. The correction, BD, between the
 	// actual and predicted values of B is applied in advance as a correction.
 	//
-	double q1 = dt / dt_done;
-	double q2 = q1 * q1;
-	double q3 = q1 * q2;
-	double q4 = q2 * q2;
-	double q5 = q2 * q3;
-	double q6 = q3 * q3;
-	double q7 = q3 * q4;
+	const double q1 = dt / dt_done;
+	const double q2 = q1 * q1;
+	const double q3 = q1 * q2;
+	const double q4 = q2 * q2;
+	const double q5 = q2 * q3;
+	const double q6 = q3 * q3;
+	const double q7 = q3 * q4;
 
 	for(int k=0;k<N3;++k) {
-
 		s[0] = b[0][k] - e[0][k];
 		s[1] = b[1][k] - e[1][k];
 		s[2] = b[2][k] - e[2][k];
@@ -480,7 +452,5 @@ void integrator_radau_step() {
 		b[4][k] = e[4][k] + s[4];
 		b[5][k] = e[5][k] + s[5];
 		b[6][k] = e[6][k] + s[6];
-
 	}
-
 }
