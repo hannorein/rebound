@@ -1,14 +1,14 @@
 /**
  * @file 	problem.c
- * @brief 	Example problem: circular orbit.
+ * @brief 	Example problem: radau15.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example uses the Wisdom Holman integrator
+ * @detail 	This example uses the 15th order RADAU15 integrator
  * to integrate the outer planets of the solar system. The initial 
  * conditions are taken from Applegate et al 1986. Pluto is a test
  * particle.
  * 
  * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ * Copyright (c) 2012 Hanno Rein, Shangfei Liu, Dave Spiegel
  *
  * This file is part of rebound.
  *
@@ -73,13 +73,19 @@ const double k	 	= 0.01720209895;	// Gaussian constant
 extern int display_wire;
 #endif // OPENGL
 
+#ifdef INTEGRATOR_RADAU15
+extern int integrator_adaptive_timestep;	
+extern int integrator_force_is_velocitydependend;
+extern double integrator_accuracy;
+#endif // INTEGRATOR_RADAU15
+
 void velocity_dependend_force();
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= input_get_double(argc,argv,"dt",40);			// days
+	dt 		= input_get_double(argc,argv,"dt",40);	// Inital timestep in days
 	N_active	= 5;
-	tmax		= 7.3e6;		// 200 Myr
+	tmax		= 7.3e10;		// 200 Myr
 	G		= k*k;
 	problem_additional_forces = velocity_dependend_force;
 #ifdef OPENGL
@@ -96,6 +102,11 @@ void problem_init(int argc, char* argv[]){
 		p.m  = ss_mass[i];
 		particles_add(p); 
 	}
+#ifdef INTEGRATOR_RADAU15
+	integrator_adaptive_timestep 		= 1;	
+	integrator_force_is_velocitydependend	= 0;
+	integrator_accuracy			= 1e-5;
+#endif // INTEGRATOR_RADAU15
 #ifdef INTEGRATOR_WH
 	// Move to heliocentric frame (required by WHM)
 	for (int i=1;i<N;i++){
@@ -110,18 +121,18 @@ void problem_init(int argc, char* argv[]){
 }
 
 void velocity_dependend_force(){
-	return;
-	// Some additional velocity dependend forces
-	for (int i=1;i<N;i++){
-		particles[i].ax -= 0.0000001*particles[i].vx;
-		particles[i].ay -= 0.0000001*particles[i].vy;
-		particles[i].az -= 0.0000001*particles[i].vz;
-	}
+	//RADAU15 can handle arbitrary velocity dependend forces such as these:
+	//for (int i=1;i<N;i++){
+	//	particles[i].ax -= 0.0000001*particles[i].vx;
+	//	particles[i].ay -= 0.0000001*particles[i].vy;
+	//	particles[i].az -= 0.0000001*particles[i].vz;
+	//}
 }
 
 void problem_inloop(){
 }
 
+// Calculate the relative energy error as a diagnostic tool.
 double energy_init = 0;
 void output_energy(){
 	double energy_kin = 0;
@@ -139,22 +150,20 @@ void output_energy(){
 	}
 	if (energy_init==0){
 		energy_init = energy_kin + energy_grav;
-	}else{
-		FILE* of = fopen("energy.txt","a+"); 
-		if (of==NULL){
-			printf("\n\nError while opening file.\n");
-			return;
-		}
-		fprintf(of,"%e\t%e\t%e\t%e\n",t, dt, fabs((energy_kin + energy_grav - energy_init)/energy_init), energy_kin+energy_grav);
-		fclose(of);
 	}
+	
+	FILE* of = fopen("energy.txt","a+"); 
+	if (of==NULL){
+		printf("\n\nError while opening file.\n");
+		return;
+	}
+	fprintf(of,"%e\t%e\t%e\n",t, fabs((energy_kin + energy_grav - energy_init)/energy_init), energy_kin+energy_grav);
+	fclose(of);
 }
 
 void problem_output(){
-	if (t==0){
+	if (output_check(10000.)){
 		output_energy();
-	}
-	if (output_check(1000.*dt)){
 		output_timing();
 	}
 	if (output_check(3652422.)){ 	// output heliocentric orbital elements every 10000 years
@@ -163,5 +172,4 @@ void problem_output(){
 }
 
 void problem_finish(){
-	output_energy();
 }

@@ -9,6 +9,13 @@
  * Comets, Their Origin and Evolution, 185.
  * Part of this code is based a function from the ORSE package.
  * See orsa.sourceforge.net for more details on their implementation.
+ *
+ * The user might want to change the following variables in the 
+ * problem.c file:
+ * extern int integrator_adaptive_timestep;	
+ * extern int integrator_force_is_velocitydependend;
+ * extern double integrator_accuracy;
+ * 
  * 
  * @section 	LICENSE
  * Copyright (c) 2011-2012 Hanno Rein, Dave Spiegel.
@@ -49,9 +56,9 @@
 #error RADAU15 integrator not working with MPI.
 #endif
 
-int 	integrator_radau_init_done 	= 0;
-int 	integrator_adaptive_timestep 	= 1;	// Turn this of to use a fixed timestep
-double 	integrator_accuracy 		= 1e-6;	// Desired accuracy.
+int 	integrator_adaptive_timestep 		= 1;	// Turn this off to use a fixed timestep.
+int 	integrator_force_is_velocitydependend	= 1;	// Turn this off to safe some time if the force is not velocity dependend.
+double 	integrator_accuracy 			= 1e-6;	// Desired accuracy. Play with this, make sure you get a converged results.
 
 
 const double h[8]	= { 0.0, 0.05626256053692215, 0.18024069173689236, 0.35262471711316964, 0.54715362633055538, 0.73421017721541053, 0.88532094683909577, 0.97752061356128750}; // Gauss Radau spacings
@@ -60,9 +67,9 @@ const double vc[7] 	= { 0.5, 0.3333333333333333, 0.25, 0.2, 0.1666666666666667, 
 
 double r[28],c[21],d[21],s[9]; // These constants will be set dynamically.
 
-unsigned int niter 	= 6;	// Number of iterations (6 initially and if timestep was rejected, 2 otherwise)
-int N3 			= 0; 	// This is just N*3
-int N3allocated 	= 0; 	// Allocated memory size
+unsigned int niter 		= 6;	// Number of iterations (6 initially and if timestep was rejected, 2 otherwise)
+int N3allocated 		= 0; 	// Size of allocated arrays.
+int integrator_radau_init_done 	= 0;	// Calculate coefficients once.
 
 double* x   = NULL;	// Temporary buffer for position
 double* v   = NULL;	//                      velocity
@@ -89,9 +96,10 @@ void integrator_update_acceleration(){
 	if (problem_additional_forces) problem_additional_forces();
 }
 
-int integrator_radau_step();
+int integrator_radau_step(); // Does the actual timestep.
+
 void integrator_part2(){
-	if (!integrator_radau_init_done){
+	if (!integrator_radau_init_done){ 	// Generate coefficients.
 		int l=0;
 		for (int j=1;j<8;++j) {
 			for(int k=0;k<j;++k) {
@@ -122,7 +130,7 @@ void integrator_part2(){
 }
   
 int integrator_radau_step() {
-	N3 = 3*N;
+	const int N3 = 3*N;
 	if (N3 > N3allocated) {
 		for (int l=0;l<7;++l) {
 			g[l] = realloc(g[l],sizeof(double)*N3);
@@ -186,21 +194,21 @@ int integrator_radau_step() {
 			for(int k=0;k<N3;++k) {
 				x[k] = 	s[8]*b[6][k] + s[7]*b[5][k] + s[6]*b[4][k] + s[5]*b[3][k] + s[4]*b[2][k] + s[3]*b[1][k] + s[2]*b[0][k] + s[1]*a1[k] + s[0]*v1[k] + x1[k];
 			}
-#define VELOCITYDEPENDENDFORCE // This should be made optional
-#ifdef VELOCITYDEPENDENDFORCE
-			s[0] = dt * h[j];
-			s[1] = s[0] * h[j] * 0.5;
-			s[2] = s[1] * h[j] * 0.6666666666666667;
-			s[3] = s[2] * h[j] * 0.75;
-			s[4] = s[3] * h[j] * 0.8;
-			s[5] = s[4] * h[j] * 0.8333333333333333;
-			s[6] = s[5] * h[j] * 0.8571428571428571;
-			s[7] = s[6] * h[j] * 0.875;
+			
+			if (integrator_force_is_velocitydependend){
+				s[0] = dt * h[j];
+				s[1] = s[0] * h[j] * 0.5;
+				s[2] = s[1] * h[j] * 0.6666666666666667;
+				s[3] = s[2] * h[j] * 0.75;
+				s[4] = s[3] * h[j] * 0.8;
+				s[5] = s[4] * h[j] * 0.8333333333333333;
+				s[6] = s[5] * h[j] * 0.8571428571428571;
+				s[7] = s[6] * h[j] * 0.875;
 
-			for(int k=0;k<N3;++k) {
-				v[k] =  s[7]*b[6][k] + s[6]*b[5][k] + s[5]*b[4][k] + s[4]*b[3][k] + s[3]*b[2][k] + s[2]*b[1][k] + s[1]*b[0][k] + s[0]*a1[k] + v1[k];
+				for(int k=0;k<N3;++k) {
+					v[k] =  s[7]*b[6][k] + s[6]*b[5][k] + s[5]*b[4][k] + s[4]*b[3][k] + s[3]*b[2][k] + s[2]*b[1][k] + s[1]*b[0][k] + s[0]*a1[k] + v1[k];
+				}
 			}
-#endif // VELOCITYDEPENDENDFORCE
 
 			for(int k=0;k<N;++k) {
 				particles_out[k] = particles_in[k];
@@ -214,16 +222,6 @@ int integrator_radau_step() {
 				particles_out[k].vz = v[3*k+2];
 			}
 
-			/*
-			// HR: I do not understand where this is coming from. 
-			// I assume it is another way to calculate the forces.
-			// I'll just ignore it. For now. 
-
-			if (interaction->IsSkippingJPLPlanets()) {
-				particles_out.SetTime(particles_in+dt*h[j]);
-				particles_out.ForceJPLEphemerisData();
-			}
-			*/
 			particles = particles_out;
 			integrator_update_acceleration();
 
@@ -311,7 +309,7 @@ int integrator_radau_step() {
 			}
 		}
 	}
-	double dt_done = dt;
+	const double dt_done = dt;
 
 	if (integrator_adaptive_timestep){
 		// Estimate suitable sequence size for the next call
@@ -354,11 +352,11 @@ int integrator_radau_step() {
 	particles = particles_in;
 	
 	for(int k=0;k<N;++k) {
-		particles[k].x = x1[3*k+0];
+		particles[k].x = x1[3*k+0];	// Set final position
 		particles[k].y = x1[3*k+1];
 		particles[k].z = x1[3*k+2];
 
-		particles[k].vx = v1[3*k+0];
+		particles[k].vx = v1[3*k+0];	// Set final velocity
 		particles[k].vy = v1[3*k+1];
 		particles[k].vz = v1[3*k+2];
 	}
@@ -384,8 +382,6 @@ int integrator_radau_step() {
 		s[4] = b[4][k] - e[4][k];
 		s[5] = b[5][k] - e[5][k];
 		s[6] = b[6][k] - e[6][k];
-
-		// Estimate B values for the next sequence
 
 		e[0][k] = q1*(b[6][k]* 7.0 + b[5][k]* 6.0 + b[4][k]* 5.0 + b[3][k]* 4.0 + b[2][k]* 3.0 + b[1][k]*2.0 + b[0][k]);
 		e[1][k] = q2*(b[6][k]*21.0 + b[5][k]*15.0 + b[4][k]*10.0 + b[3][k]* 6.0 + b[2][k]* 3.0 + b[1][k]);
