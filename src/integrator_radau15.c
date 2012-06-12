@@ -179,9 +179,6 @@ void integrator_radau_realloc_memory(){
 }
   
 void integrator_radau_step() {
-	printf("radau step %e\n",dt);
-
-	niter = 2;
 	N3 = 3*N;
 	if (N3 > N3allocated) {
 		integrator_radau_realloc_memory();
@@ -477,6 +474,7 @@ void integrator_radau_step() {
 	}
 
 	t += dt_done;
+	niter = 2;
 	particles = _frame_orig;
 	memcpy(particles,frame_out,N*sizeof(struct particle));
 
