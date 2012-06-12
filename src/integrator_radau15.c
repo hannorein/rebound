@@ -71,11 +71,12 @@ void integrator_part2(){
 
 	integrator_radau_step();
 }
-double h[8], xc[8],vc[7];
-double r[28],c[21],d[21],s[9];
+double h[8], xc[8],vc[7], r[28],c[21],d[21],s[9];
 
 
-unsigned int nv,niter,size;
+unsigned int niter 	= 6;
+int N3 			= 0; 	// This is just N*3
+int N3allocated 	= 0; 	// Allocated memory size
 
 double* x  = NULL;
 double* v  = NULL;
@@ -83,7 +84,6 @@ double* a  = NULL;
 double* x1  = NULL;
 double* v1  = NULL;
 double* a1  = NULL;
-double _xN = 0;
 
 double* g[7];
 double* b[7];
@@ -152,49 +152,40 @@ void integrator_radau_init() {
 		b[j] = NULL;
 		e[j] = NULL;
 	}
-
-	nv    = 0;
-	niter = 6;
-
-	size = 0;
 }
   
 void integrator_radau_realloc_memory(){
-	nv = 3*N;
-	if (nv > _xN) {
-		_xN = nv;
-		for (int l=0;l<7;++l) {
-			g[l] = realloc(g[l],sizeof(double)*nv);
-			b[l] = realloc(b[l],sizeof(double)*nv);
-			e[l] = realloc(e[l],sizeof(double)*nv);
-			for (int k=0;k<nv;k++){
-				b[l][k] = 0;
-				e[l][k] = 0;
-			}
-
+	for (int l=0;l<7;++l) {
+		g[l] = realloc(g[l],sizeof(double)*N3);
+		b[l] = realloc(b[l],sizeof(double)*N3);
+		e[l] = realloc(e[l],sizeof(double)*N3);
+		for (int k=0;k<N3;k++){
+			b[l][k] = 0;
+			e[l][k] = 0;
 		}
-		//
-		x = realloc(x,sizeof(double)*nv);
-		v = realloc(v,sizeof(double)*nv);
-		a = realloc(a,sizeof(double)*nv);
-		//
-		x1 = realloc(x1,sizeof(double)*nv);
-		v1 = realloc(v1,sizeof(double)*nv);
-		a1 = realloc(a1,sizeof(double)*nv);
-		//
- 		frame_out = realloc(frame_out,sizeof(struct particle)*N);
- 		frame_in  = realloc(frame_in, sizeof(struct particle)*N);
-	}
 
-	size = N;
+	}
+	//
+	x = realloc(x,sizeof(double)*N3);
+	v = realloc(v,sizeof(double)*N3);
+	a = realloc(a,sizeof(double)*N3);
+	//
+	x1 = realloc(x1,sizeof(double)*N3);
+	v1 = realloc(v1,sizeof(double)*N3);
+	a1 = realloc(a1,sizeof(double)*N3);
+	//
+	frame_out = realloc(frame_out,sizeof(struct particle)*N);
+	frame_in  = realloc(frame_in, sizeof(struct particle)*N);
 }
   
 void integrator_radau_step() {
 	printf("radau step %e\n",dt);
 
 	niter = 2;
-	if (N != size) {
+	N3 = 3*N;
+	if (N3 > N3allocated) {
 		integrator_radau_realloc_memory();
+		N3allocated = N3;
 		niter = 6;
 	}
 	
@@ -221,7 +212,7 @@ void integrator_radau_step() {
 		a1[3*k+2] = frame_out[k].az;
 	}
 
-	for(int k=0;k<nv;++k) {
+	for(int k=0;k<N3;++k) {
 		g[0][k] = b[6][k]*d[15] + b[5][k]*d[10] + b[4][k]*d[6] + b[3][k]*d[3]  + b[2][k]*d[1]  + b[1][k]*d[0]  + b[0][k];
 		g[1][k] = b[6][k]*d[16] + b[5][k]*d[11] + b[4][k]*d[7] + b[3][k]*d[4]  + b[2][k]*d[2]  + b[1][k];
 		g[2][k] = b[6][k]*d[17] + b[5][k]*d[12] + b[4][k]*d[8] + b[3][k]*d[5]  + b[2][k];
@@ -244,7 +235,7 @@ void integrator_radau_step() {
 			s[7] = s[6] * h[j] * 0.75;
 			s[8] = s[7] * h[j] * 0.7777777777777778;
 
-			for(int k=0;k<nv;++k) {
+			for(int k=0;k<N3;++k) {
 				x[k] = 	s[8]*b[6][k] + s[7]*b[5][k] + s[6]*b[4][k] + s[5]*b[3][k] + s[4]*b[2][k] + s[3]*b[1][k] + s[2]*b[0][k] + s[1]*a1[k] + s[0]*v1[k] + x1[k];
 			}
 			// This should be made optional
@@ -259,7 +250,7 @@ void integrator_radau_step() {
 			s[6] = s[5] * h[j] * 0.8571428571428571;
 			s[7] = s[6] * h[j] * 0.875;
 
-			for(int k=0;k<nv;++k) {
+			for(int k=0;k<N3;++k) {
 				v[k] =  s[7]*b[6][k] + s[6]*b[5][k] + s[5]*b[4][k] + s[4]*b[3][k] + s[3]*b[2][k] + s[2]*b[1][k] + s[1]*b[0][k] + s[0]*a1[k] + v1[k];
 			}
 #endif // VELOCITYDEPENDENDFORCE
@@ -313,13 +304,13 @@ void integrator_radau_step() {
 			}
 			switch (j) {
 				case 1: 
-					for(int k=0;k<nv;++k) {
+					for(int k=0;k<N3;++k) {
 						double tmp = g[0][k];
 						g[0][k]  = (a[k] - a1[k]) * r[0];
 						b[0][k] += g[0][k] - tmp;
 					} break;
 				case 2: 
-					for(int k=0;k<nv;++k) {
+					for(int k=0;k<N3;++k) {
 						double tmp = g[1][k];
 						double gk = a[k] - a1[k];
 						g[1][k] = (gk*r[1] - g[0][k])*r[2];
@@ -328,7 +319,7 @@ void integrator_radau_step() {
 						b[1][k] += tmp;
 					} break;
 				case 3: 
-					for(int k=0;k<nv;++k) {
+					for(int k=0;k<N3;++k) {
 						double tmp = g[2][k];
 						double gk = a[k] - a1[k];
 						g[2][k] = ((gk*r[3] - g[0][k])*r[4] - g[1][k])*r[5];
@@ -338,7 +329,7 @@ void integrator_radau_step() {
 						b[2][k] += tmp;
 					} break;
 				case 4:
-					for(int k=0;k<nv;++k) {
+					for(int k=0;k<N3;++k) {
 						double tmp = g[3][k];
 						double gk = a[k] - a1[k];
 						g[3][k] = (((gk*r[6] - g[0][k])*r[7] - g[1][k])*r[8] - g[2][k])*r[9];
@@ -349,7 +340,7 @@ void integrator_radau_step() {
 						b[3][k] += tmp;
 					} break;
 				case 5:
-					for(int k=0;k<nv;++k) {
+					for(int k=0;k<N3;++k) {
 						double tmp = g[4][k];
 						double gk = a[k] - a1[k];
 						g[4][k] = ((((gk*r[10] - g[0][k])*r[11] - g[1][k])*r[12] - g[2][k])*r[13] - g[3][k])*r[14];
@@ -361,7 +352,7 @@ void integrator_radau_step() {
 						b[4][k] += tmp;
 					} break;
 				case 6:
-					for(int k=0;k<nv;++k) {
+					for(int k=0;k<N3;++k) {
 						double tmp = g[5][k];
 						double gk = a[k] - a1[k];
 						g[5][k] = (((((gk*r[15] - g[0][k])*r[16] - g[1][k])*r[17] - g[2][k])*r[18] - g[3][k])*r[19] - g[4][k])*r[20];
@@ -374,7 +365,7 @@ void integrator_radau_step() {
 						b[5][k] += tmp;
 					} break;
 				case 7:
-					for(int k=0;k<nv;++k) {
+					for(int k=0;k<N3;++k) {
 						double tmp = g[6][k];
 						double gk = a[k] - a1[k];
 						g[6][k] = ((((((gk*r[21] - g[0][k])*r[22] - g[1][k])*r[23] - g[2][k])*r[24] - g[3][k])*r[25] - g[4][k])*r[26] - g[5][k])*r[27];
@@ -397,7 +388,7 @@ void integrator_radau_step() {
 
 	// Estimate suitable sequence size for the next call
 	double tmp = 0.0;
-	for(int k=0;k<nv;++k) {
+	for(int k=0;k<N3;++k) {
 		double _fabsb6k = fabs(b[6][k]);
 		if (_fabsb6k>tmp) tmp = _fabsb6k;
 	}
@@ -434,7 +425,7 @@ void integrator_radau_step() {
 
 	// Find new position and velocity values at end of the sequence
 	tmp = dt_done * dt_done;
-	for(int k=0;k<nv;++k) {
+	for(int k=0;k<N3;++k) {
 		x1[k] = ( xc[7]*b[6][k] +
 				xc[6]*b[5][k] + 
 				xc[5]*b[4][k] + 
@@ -501,7 +492,7 @@ void integrator_radau_step() {
 	double q6 = q3 * q3;
 	double q7 = q3 * q4;
 
-	for(int k=0;k<nv;++k) {
+	for(int k=0;k<N3;++k) {
 
 		s[0] = b[0][k] - e[0][k];
 		s[1] = b[1][k] - e[1][k];
