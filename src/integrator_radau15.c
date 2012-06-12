@@ -7,9 +7,12 @@
  * high accuracy orbit integration with non-conservative forces.
  * See Everhart, 1985, ASSL Vol. 115, IAU Colloq. 83, Dynamics of 
  * Comets, Their Origin and Evolution, 185.
+ * Part of this code is based a function from the ORSE package.
+ * See orsa.sourceforge.net for more details on their implementation.
  * 
  * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Dave Spiegel.
+ * Copyright (c) 2011-2012 Hanno Rein, Dave Spiegel.
+ * Copyright (c) 2002-2004 Pasquale Tricarico.
  *
  * This file is part of rebound.
  *
@@ -46,146 +49,115 @@
 #error RADAU15 integrator not working with MPI.
 #endif
 
-int integrator_radau_init_done = 0;
-double integrator_radau_accuracy = 1e-7;
-void integrator_radau_init();
-void integrator_radau_step();
+int 	integrator_radau_init_done 	= 0;
+int 	integrator_adaptive_timestep 	= 1;	// Turn this of to use a fixed timestep
+double 	integrator_accuracy 		= 1e-6;	// Desired accuracy.
+
+
+const double h[8]	= { 0.0, 0.05626256053692215, 0.18024069173689236, 0.35262471711316964, 0.54715362633055538, 0.73421017721541053, 0.88532094683909577, 0.97752061356128750}; // Gauss Radau spacings
+const double xc[8] 	= { 0.5, 0.16666666666666667, 0.08333333333333333, 0.05, 0.03333333333333333, 0.02380952380952381, 0.01785714285714286, 0.01388888888888889}; // 1/2,  1/6,  1/12, 1/20, 1/30, 1/42, 1/56, 1/72
+const double vc[7] 	= { 0.5, 0.3333333333333333, 0.25, 0.2, 0.1666666666666667, 0.1428571428571429, 0.125}; // 1/2,  1/3,  1/4,  1/5,  1/6,  1/7,  1/8
+
+double r[28],c[21],d[21],s[9]; // These constants will be set dynamically.
+
+unsigned int niter 	= 6;	// Number of iterations (6 initially and if timestep was rejected, 2 otherwise)
+int N3 			= 0; 	// This is just N*3
+int N3allocated 	= 0; 	// Allocated memory size
+
+double* x   = NULL;	// Temporary buffer for position
+double* v   = NULL;	//                      velocity
+double* a   = NULL;	//                      acceleration
+double* x1  = NULL;	// Temporary buffer for position
+double* v1  = NULL;	//                      velocity
+double* a1  = NULL;	//                      acceleration
+
+double* g[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
+double* b[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
+double* e[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
+
+struct particle* particles_out = NULL; // Temporary particle buffer.
 
 void integrator_part1(){
-	// Do nothing here. This is for the first drift part in a leapfrog-like DKD integrator.
+	// Do nothing here. This is only used in a leapfrog-like DKD integrator.
 }
 
 // This function updates the acceleration on all particles. 
 // It uses the current position and velocity data in the (struct particle*) particles structure.
 // Note: this does currently not work with MPI or any TREE module.
 void integrator_update_acceleration(){
-  gravity_calculate_acceleration();
-  if (problem_additional_forces) problem_additional_forces();
+	gravity_calculate_acceleration();
+	if (problem_additional_forces) problem_additional_forces();
 }
 
+int integrator_radau_step();
 void integrator_part2(){
 	if (!integrator_radau_init_done){
-		integrator_radau_init();
+		int l=0;
+		for (int j=1;j<8;++j) {
+			for(int k=0;k<j;++k) {
+				r[l] = 1.0 / (h[j] - h[k]);
+				++l;
+			}
+		}
+		c[0] = -h[1];
+		d[0] =  h[1];
+		l=0;
+		for (int j=2;j<7;++j) {
+			++l;
+			c[l] = -h[j] * c[l-j+1];
+			d[l] =  h[1] * d[l-j+1];
+			for(int k=2;k<j;++k) {
+				++l;
+				c[l] = c[l-j] - h[j] * c[l-j+1];
+				d[l] = d[l-j] + h[k] * d[l-j+1];
+			}
+			++l;
+			c[l] = c[l-j] - h[j];
+			d[l] = d[l-j] + h[j]; 
+		}
 		integrator_radau_init_done = 1;
 	}
-
-	integrator_radau_step();
-}
-
-// Gauss Radau spacings
-const double h[8] = { 0.0, 0.05626256053692215, 0.18024069173689236, 0.35262471711316964, 0.54715362633055538, 0.73421017721541053, 0.88532094683909577, 0.97752061356128750};
-//  XC: 1/2,  1/6,  1/12, 1/20, 1/30, 1/42, 1/56, 1/72
-const double xc[8] = { 0.5, 0.16666666666666667, 0.08333333333333333, 0.05, 0.03333333333333333, 0.02380952380952381, 0.01785714285714286, 0.01388888888888889};
-//  VC: 1/2,  1/3,  1/4,  1/5,  1/6,  1/7,  1/8
-const double vc[7] = { 0.5, 0.3333333333333333, 0.25, 0.2, 0.1666666666666667, 0.1428571428571429, 0.125};
-
-double r[28],c[21],d[21],s[9];
-
-
-unsigned int niter 	= 6;
-int N3 			= 0; 	// This is just N*3
-int N3allocated 	= 0; 	// Allocated memory size
-
-double* x  = NULL;
-double* v  = NULL;
-double* a  = NULL;
-double* x1  = NULL;
-double* v1  = NULL;
-double* a1  = NULL;
-
-double* g[7];
-double* b[7];
-double* e[7];
-
-struct particle* frame_out = NULL;
-struct particle* frame_in  = NULL;
-
-void integrator_radau_init() {
-
-
-	int l=0;
-	for (int j=1;j<8;++j) {
-		for(int k=0;k<j;++k) {
-			r[l] = 1.0 / (h[j] - h[k]);
-			++l;
-		}
-	}
-
-	c[0] = -h[1];
-	d[0] =  h[1];
-	l=0;
-	for (int j=2;j<7;++j) {
-		++l;
-		c[l] = -h[j] * c[l-j+1];
-		d[l] =  h[1] * d[l-j+1];
-		for(int k=2;k<j;++k) {
-			++l;
-			c[l] = c[l-j] - h[j] * c[l-j+1];
-			d[l] = d[l-j] + h[k] * d[l-j+1];
-		}
-		++l;
-		c[l] = c[l-j] - h[j];
-		d[l] = d[l-j] + h[j]; 
-	}
-
-	for (int j=0;j<7;++j) {
-		g[j] = NULL;
-		b[j] = NULL;
-		e[j] = NULL;
-	}
+	// Try until a step was successful.
+	while(!integrator_radau_step());
 }
   
-void integrator_radau_realloc_memory(){
-	for (int l=0;l<7;++l) {
-		g[l] = realloc(g[l],sizeof(double)*N3);
-		b[l] = realloc(b[l],sizeof(double)*N3);
-		e[l] = realloc(e[l],sizeof(double)*N3);
-		for (int k=0;k<N3;k++){
-			b[l][k] = 0;
-			e[l][k] = 0;
-		}
-
-	}
-	//
-	x = realloc(x,sizeof(double)*N3);
-	v = realloc(v,sizeof(double)*N3);
-	a = realloc(a,sizeof(double)*N3);
-	//
-	x1 = realloc(x1,sizeof(double)*N3);
-	v1 = realloc(v1,sizeof(double)*N3);
-	a1 = realloc(a1,sizeof(double)*N3);
-	//
-	frame_out = realloc(frame_out,sizeof(struct particle)*N);
-	frame_in  = realloc(frame_in, sizeof(struct particle)*N);
-}
-  
-void integrator_radau_step() {
+int integrator_radau_step() {
 	N3 = 3*N;
 	if (N3 > N3allocated) {
-		integrator_radau_realloc_memory();
+		for (int l=0;l<7;++l) {
+			g[l] = realloc(g[l],sizeof(double)*N3);
+			b[l] = realloc(b[l],sizeof(double)*N3);
+			e[l] = realloc(e[l],sizeof(double)*N3);
+			for (int k=0;k<N3;k++){
+				b[l][k] = 0;
+				e[l][k] = 0;
+			}
+		}
+		x = realloc(x,sizeof(double)*N3);
+		v = realloc(v,sizeof(double)*N3);
+		a = realloc(a,sizeof(double)*N3);
+		x1 = realloc(x1,sizeof(double)*N3);
+		v1 = realloc(v1,sizeof(double)*N3);
+		a1 = realloc(a1,sizeof(double)*N3);
+		particles_out = realloc(particles_out,sizeof(struct particle)*N);
+		
 		N3allocated = N3;
 		niter = 6;
 	}
 	
-	// frame_out = frame_in;
-	memcpy(frame_in ,particles,N*sizeof(struct particle));
-	memcpy(frame_out,particles,N*sizeof(struct particle));
-	struct particle* _frame_orig = particles;
-
-
-
-	particles = frame_out;
+	struct particle* particles_in  = particles;
 	integrator_update_acceleration();
+
 	for(int k=0;k<N;++k) {
-		x1[3*k]   = frame_in[k].x;
-		x1[3*k+1] = frame_in[k].y;
-		x1[3*k+2] = frame_in[k].z;
-		v1[3*k]   = frame_in[k].vx;
-		v1[3*k+1] = frame_in[k].vy;
-		v1[3*k+2] = frame_in[k].vz;
-		a1[3*k]   = frame_out[k].ax;
-		a1[3*k+1] = frame_out[k].ay;  
-		a1[3*k+2] = frame_out[k].az;
+		x1[3*k]   = particles[k].x;
+		x1[3*k+1] = particles[k].y;
+		x1[3*k+2] = particles[k].z;
+		v1[3*k]   = particles[k].vx;
+		v1[3*k+1] = particles[k].vy;
+		v1[3*k+2] = particles[k].vz;
+		a1[3*k]   = particles[k].ax;
+		a1[3*k+1] = particles[k].ay;  
+		a1[3*k+2] = particles[k].az;
 	}
 
 	for(int k=0;k<N3;++k) {
@@ -231,15 +203,15 @@ void integrator_radau_step() {
 #endif // VELOCITYDEPENDENDFORCE
 
 			for(int k=0;k<N;++k) {
-				frame_out[k] = frame_in[k];
+				particles_out[k] = particles_in[k];
 
-				frame_out[k].x = x[3*k+0];
-				frame_out[k].y = x[3*k+1];
-				frame_out[k].z = x[3*k+2];
+				particles_out[k].x = x[3*k+0];
+				particles_out[k].y = x[3*k+1];
+				particles_out[k].z = x[3*k+2];
 
-				frame_out[k].vx = v[3*k+0];
-				frame_out[k].vy = v[3*k+1];
-				frame_out[k].vz = v[3*k+2];
+				particles_out[k].vx = v[3*k+0];
+				particles_out[k].vy = v[3*k+1];
+				particles_out[k].vz = v[3*k+2];
 			}
 
 			/*
@@ -248,17 +220,17 @@ void integrator_radau_step() {
 			// I'll just ignore it. For now. 
 
 			if (interaction->IsSkippingJPLPlanets()) {
-				frame_out.SetTime(frame_in+dt*h[j]);
-				frame_out.ForceJPLEphemerisData();
+				particles_out.SetTime(particles_in+dt*h[j]);
+				particles_out.ForceJPLEphemerisData();
 			}
 			*/
-			particles = frame_out;
+			particles = particles_out;
 			integrator_update_acceleration();
 
 			for(int k=0;k<N;++k) {
-				a[3*k]   = frame_out[k].ax;
-				a[3*k+1] = frame_out[k].ay;  
-				a[3*k+2] = frame_out[k].az;
+				a[3*k]   = particles[k].ax;
+				a[3*k+1] = particles[k].ay;  
+				a[3*k+2] = particles[k].az;
 			}
 			switch (j) {
 				case 1: 
@@ -337,63 +309,60 @@ void integrator_radau_step() {
 						b[6][k] += tmp;
 					} break;
 			}
-
 		}
 	}
 	double dt_done = dt;
 
-	// Estimate suitable sequence size for the next call
-	double tmp = 0.0;
-	for(int k=0;k<N3;++k) {
-		double _fabsb6k = fabs(b[6][k]);
-		if (_fabsb6k>tmp) tmp = _fabsb6k;
-	}
-	if (tmp!=0.0) tmp /= (72.0 * pow(fabs(dt),7));
+	if (integrator_adaptive_timestep){
+		// Estimate suitable sequence size for the next call
+		double tmp = 0.0;
+		for(int k=0;k<N3;++k) {
+			double _fabsb6k = fabs(b[6][k]);
+			if (_fabsb6k>tmp) tmp = _fabsb6k;
+		}
+		if (tmp!=0.0) tmp /= (72.0 * pow(fabs(dt),7));
 
-	if (tmp < 1.0e-50) { // is equal to zero?
-		dt = dt_done * 1.4;
-	} else {
-		dt = copysign(pow(integrator_radau_accuracy/tmp,0.1111111111111111),dt_done); // 1/9=0.111...
+		if (tmp < 1.0e-50) { // is equal to zero?
+			dt = dt_done * 1.4;
+		}else{
+			dt = copysign(pow(integrator_accuracy/tmp,0.1111111111111111),dt_done); // 1/9=0.111...
+		}
+
+		if (fabs(dt/dt_done) < 1.0) {
+			dt = dt_done * 0.8;
+			particles = particles_in;
+			niter = 6;
+			return 0; // Step rejected. Do again. 
+		}
+
+		if (fabs(dt/dt_done) > 1.4) dt = dt_done * 1.4;
 	}
-	
-	if (fabs(dt/dt_done) < 1.0) {
-		dt = dt_done * 0.8;
-		//printf("Radau: step rejected! New proposed dt: %f\n",dt);
-		particles = frame_in;
-		frame_in = _frame_orig;
-		niter = 6;
-		return;
-	}
-	
-	if (fabs(dt/dt_done) > 1.4) dt = dt_done * 1.4;
 
 	// Find new position and velocity values at end of the sequence
-	tmp = dt_done * dt_done;
+	const double dt_done2 = dt_done * dt_done;
 	for(int k=0;k<N3;++k) {
-		x1[k] = (xc[7]*b[6][k] + xc[6]*b[5][k] + xc[5]*b[4][k] + xc[4]*b[3][k] + xc[3]*b[2][k] + xc[2]*b[1][k] + xc[1]*b[0][k] + xc[0]*a1[k]) 
-			* tmp + v1[k] * dt_done + x1[k];
+		x1[k] += (xc[7]*b[6][k] + xc[6]*b[5][k] + xc[5]*b[4][k] + xc[4]*b[3][k] + xc[3]*b[2][k] + xc[2]*b[1][k] + xc[1]*b[0][k] + xc[0]*a1[k]) 
+			* dt_done2 + v1[k] * dt_done;
 
-		v1[k] = (vc[6]*b[6][k] + vc[5]*b[5][k] + vc[4]*b[4][k] + vc[3]*b[3][k] + vc[2]*b[2][k] + vc[1]*b[1][k] + vc[0]*b[0][k] + a1[k])
-			* dt_done + v1[k];
-	}
-
-	for(int k=0;k<N;++k) {
-		frame_out[k] = frame_in[k];
-
-		frame_out[k].x = x1[3*k+0];
-		frame_out[k].y = x1[3*k+1];
-		frame_out[k].z = x1[3*k+2];
-
-		frame_out[k].vx = v1[3*k+0];
-		frame_out[k].vy = v1[3*k+1];
-		frame_out[k].vz = v1[3*k+2];
+		v1[k] += (vc[6]*b[6][k] + vc[5]*b[5][k] + vc[4]*b[4][k] + vc[3]*b[3][k] + vc[2]*b[2][k] + vc[1]*b[1][k] + vc[0]*b[0][k] + a1[k])
+			* dt_done;
 	}
 
 	t += dt_done;
 	niter = 2;
 	// Swap particle buffers
-	particles = frame_out;
-	frame_out = _frame_orig;
+	particles = particles_in;
+	
+	for(int k=0;k<N;++k) {
+		particles[k].x = x1[3*k+0];
+		particles[k].y = x1[3*k+1];
+		particles[k].z = x1[3*k+2];
+
+		particles[k].vx = v1[3*k+0];
+		particles[k].vy = v1[3*k+1];
+		particles[k].vz = v1[3*k+2];
+	}
+
 
 	// Predict new B values to use at the start of the next sequence. The predicted
 	// values from the last call are saved as E. The correction, BD, between the
@@ -434,4 +403,5 @@ void integrator_radau_step() {
 		b[5][k] = e[5][k] + s[5];
 		b[6][k] = e[6][k] + s[6];
 	}
+	return 1; // Success.
 }

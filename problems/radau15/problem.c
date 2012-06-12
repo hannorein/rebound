@@ -33,6 +33,7 @@
 #include <time.h>
 #include "problem.h"
 #include "main.h"
+#include "input.h"
 #include "output.h"
 #include "particle.h"
 #include "boundaries.h"
@@ -76,9 +77,9 @@ void velocity_dependend_force();
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= 40;			// days
+	dt 		= input_get_double(argc,argv,"dt",40);			// days
 	N_active	= 5;
-	tmax		= 7.3e10;		// 200 Myr
+	tmax		= 7.3e6;		// 200 Myr
 	G		= k*k;
 	problem_additional_forces = velocity_dependend_force;
 #ifdef OPENGL
@@ -121,7 +122,38 @@ void velocity_dependend_force(){
 void problem_inloop(){
 }
 
+double energy_init = 0;
+void output_energy(){
+	double energy_kin = 0;
+	double energy_grav = 0; 
+	for (int i=0;i<N;i++){
+		struct particle p = particles[i];
+		energy_kin += 1./2.*p.m*(p.vx*p.vx + p.vy*p.vy + p.vz*p.vz); 
+		for (int j=i+1;j<N;j++){
+			struct particle p2 = particles[j];
+			double dx = p.x - p2.x;
+			double dy = p.y - p2.y;
+			double dz = p.z - p2.z;
+			energy_grav += -G*p.m*p2.m/sqrt(dx*dx + dy*dy + dz*dz);
+		}
+	}
+	if (energy_init==0){
+		energy_init = energy_kin + energy_grav;
+	}else{
+		FILE* of = fopen("energy.txt","a+"); 
+		if (of==NULL){
+			printf("\n\nError while opening file.\n");
+			return;
+		}
+		fprintf(of,"%e\t%e\t%e\t%e\n",t, dt, fabs((energy_kin + energy_grav - energy_init)/energy_init), energy_kin+energy_grav);
+		fclose(of);
+	}
+}
+
 void problem_output(){
+	if (t==0){
+		output_energy();
+	}
 	if (output_check(1000.*dt)){
 		output_timing();
 	}
@@ -131,4 +163,5 @@ void problem_output(){
 }
 
 void problem_finish(){
+	output_energy();
 }
