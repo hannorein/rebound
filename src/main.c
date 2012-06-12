@@ -67,6 +67,8 @@ int root_ny		= 1;
 int root_nz		= 1;
 int root_n		= 1;
 
+void (*problem_additional_forces) () = NULL;
+
 static char* 	logo[];		/**< Logo of rebound. */
 
 void init_boxwidth(double _boxwidth){
@@ -159,9 +161,11 @@ void iterate(){
 
 	// Calculate accelerations. 
 	gravity_calculate_acceleration();
+	// Calculate non-gravity accelerations. 
+	if (problem_additional_forces) problem_additional_forces();
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 
-	// Call problem specific function (e.g. to add additional forces). 
+	// Call problem specific function. 
 	problem_inloop();
 
 	// A 'DKD'-like integrator will do the 'KD' part.

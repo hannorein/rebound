@@ -79,6 +79,15 @@ double tools_normal(double variance);
 
 void tools_init_plummer(int _N, double mlow, double rfrac, int quiet, double scale, double* shift);
 
+/**
+ * Initialize a particle on an orbit in the xy plane.
+ * @param M Mass of the central object.
+ * @param m Mass of the particle.
+ * @param a Semi-major axis of the particle.
+ * @param e Eccentricity of the particle.
+ * @param omega Pericenter of the particle.
+ */
+struct particle tools_init_orbit2d(double M, double m, double a, double e, double omega, double f);
 
 /**
  * This function calculated orbital elements for a given particle. The center of

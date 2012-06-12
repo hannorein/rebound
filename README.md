@@ -67,6 +67,8 @@ This setup allows you to work on multiple projects at the same time using differ
      <td>Leap frog, second order, symplectic</td></tr>
   <tr><td><pre>integrator_wh.c      </pre></td>
      <td>Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991</td></tr>
+  <tr><td><pre>integrator_radau15.c </pre></td>
+     <td>15th order, non-symplectic integrator, can handle arbitrary (velocity dependent) forces, Everhart 1985</td></tr>
   <tr><td><pre>integrator_sei.c     </pre></td>
      <td>Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011</td></tr>
 </table>
@@ -189,22 +191,25 @@ if (argc>1){
 
 If you are still convinced that you need a configuration file, you are welcome to implement it yourself. This function is where you want to do that.    
 
-#### void problem_inloop() ####
-This function is called once per time-step. It is called at the end of the K part of the DKD time-stepping scheme. This is where you can implement all kind of things such as additional forces onto particles. 
+#### void problem_additional_forces() ####
+This is a function pointer which is called one or more times per time-step whenever the forces are updated. This is where you can implement all kind of things such as additional forces onto particles. 
 
-The following lines of code, for example, implement the Poynting Robertson drag force on each particle except the first one (which is the star in this example):
+The following lines of code implement a simple velocity dependend force.  `integrator_radau15.c` is best suited for this (see `examples/radau15`):
 
 ```c
-double alpha = 1e-4;
-for (int i=1;i<N;i++){
-	double x = particles[i].x;
-	double y = particles[i].y;
-	double z = particles[i].z;
-	double r2 = (x*x + y*y + z*z); 
-	particles[i].vx -= dt * particles[i].vx*alpha/r2;
-	particles[i].vy -= dt * particles[i].vy*alpha/r2;
-	particles[i].vz -= dt * particles[i].vz*alpha/r2;
+void velocity_dependent_force(){
+	for (int i=1;i<N;i++){
+		particles[i].ax -= 0.0000001 * particles[i].vx;
+		particles[i].ay -= 0.0000001 * particles[i].vy;
+		particles[i].az -= 0.0000001 * particles[i].vz;
+	}
 }
+```
+
+Make sure you set the function pointer in the `problem_init()` routine:
+
+```c
+	problem_additional_forces = velocity_dependent_force;
 ```
 
 #### void problem_output() ####
