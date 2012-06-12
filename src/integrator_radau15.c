@@ -254,32 +254,14 @@ void integrator_radau_step() {
 
 			for(int k=0;k<N;++k) {
 				frame_out[k] = frame_in[k];
-				double rr[3];
-				double vv[3];
-				double drr[3];
-				double dvv[3];
 
-				rr[0] = x[3*k];
-				rr[1] = x[3*k+1];
-				rr[2] = x[3*k+2];
+				frame_out[k].x = x[3*k+0];
+				frame_out[k].y = x[3*k+1];
+				frame_out[k].z = x[3*k+2];
 
-				drr[0] = rr[0] - frame_in[k].x;
-				drr[1] = rr[1] - frame_in[k].y;
-				drr[2] = rr[2] - frame_in[k].z;
-				frame_out[k].x += drr[0];
-				frame_out[k].y += drr[1];
-				frame_out[k].z += drr[2];
-
-				vv[0] = v[3*k];
-				vv[1] = v[3*k+1];
-				vv[2] = v[3*k+2];
-
-				dvv[0] = vv[0] - frame_in[k].vx;
-				dvv[1] = vv[1] - frame_in[k].vy;
-				dvv[2] = vv[2] - frame_in[k].vz;
-				frame_out[k].vx += dvv[0];
-				frame_out[k].vy += dvv[1];
-				frame_out[k].vz += dvv[2];
+				frame_out[k].vx = v[3*k+0];
+				frame_out[k].vy = v[3*k+1];
+				frame_out[k].vz = v[3*k+2];
 			}
 
 			/*
@@ -443,34 +425,15 @@ void integrator_radau_step() {
 	}
 
 	for(int k=0;k<N;++k) {
-		double rr[3];
-		double vv[3];
-		double drr[3];
-		double dvv[3];
-
 		frame_out[k] = frame_in[k];
 
-		rr[0] = x1[3*k];
-		rr[1] = x1[3*k+1];
-		rr[2] = x1[3*k+2];
+		frame_out[k].x = x1[3*k+0];
+		frame_out[k].y = x1[3*k+1];
+		frame_out[k].z = x1[3*k+2];
 
-		drr[0] = rr[0] - frame_in[k].x;  
-		drr[1] = rr[1] - frame_in[k].y;  
-		drr[2] = rr[2] - frame_in[k].z;  
-		frame_out[k].x += drr[0];
-		frame_out[k].y += drr[1];
-		frame_out[k].z += drr[2];
-
-		vv[0] = v1[3*k];
-		vv[1] = v1[3*k+1];
-		vv[2] = v1[3*k+2];
-
-		dvv[0] = vv[0] - frame_in[k].vx;
-		dvv[1] = vv[1] - frame_in[k].vy;
-		dvv[2] = vv[2] - frame_in[k].vz;
-		frame_out[k].vx += dvv[0];
-		frame_out[k].vy += dvv[1];
-		frame_out[k].vz += dvv[2];
+		frame_out[k].vx = v1[3*k+0];
+		frame_out[k].vy = v1[3*k+1];
+		frame_out[k].vz = v1[3*k+2];
 	}
 
 	t += dt_done;
