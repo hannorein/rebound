@@ -41,12 +41,14 @@
 // Star and planet (note, those wont be updated after they have been inserted)
 struct particle star;
 struct particle planet;
+extern double 	integrator_accuracy;	// Desired accuracy. Play with this, make sure you get a converged results.
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 		= M_PI*1.e-3*1.1234125235345;
 	boxsize 	= 2.8;
 	N_active      	= 2;
+	integrator_accuracy = 1e-4;
 	init_box();
 
 	// Initial conditions
