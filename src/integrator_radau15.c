@@ -154,7 +154,7 @@ int integrator_radau_step() {
 	}
 	
 	struct particle* particles_in  = particles;
-	integrator_update_acceleration();
+	// integrator_update_acceleration(); // Not needed. Forces are already calculated in main routine.
 
 	for(int k=0;k<N;++k) {
 		x1[3*k]   = particles[k].x;

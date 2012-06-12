@@ -120,7 +120,7 @@ void problem_init(int argc, char* argv[]){
 	system("rm -f orbits.txt");
 }
 
-void velocity_dependend_force(){
+void velocity_dependent_force(){
 	//RADAU15 can handle arbitrary velocity dependend forces such as these:
 	//for (int i=1;i<N;i++){
 	//	particles[i].ax -= 0.0000001*particles[i].vx;
