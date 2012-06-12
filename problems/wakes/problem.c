@@ -279,8 +279,7 @@ int tree_does_ray_hit_particle(struct cell* c, double a[3], double b[3]){
 }
 
 void tree_get_transparency(double B, double phi){
-	double taninv = 1./tan(B);
-	double a[3] = {0,0,0}; // ray position in xy plane
+	const double taninv = 1./tan(B);
 	double b[3] = {0,0,1}; // ray vector
 	if (B!=M_PI/2.){
 		b[0] = cos(phi)*taninv;
@@ -301,7 +300,7 @@ void tree_get_transparency(double B, double phi){
 		nghostray++;
 	}
 
-	int num_rays 		= 1000;
+	const int num_rays 		= 1000;
 
 	double* _a = malloc(sizeof(double)*num_rays*3);
 	int*   _t = calloc(num_rays,sizeof(int));
@@ -324,6 +323,7 @@ void tree_get_transparency(double B, double phi){
 		for (int gbx=-nghostray; gbx<=nghostray; gbx++){
 			for (int gby=-nghostray; gby<=nghostray; gby++){
 				struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,0);
+				double a[3]; // ray position in xy plane
 				a[0] = _a[3*j+0]+gb.shiftx;
 				a[1] = _a[3*j+1]+gb.shifty;
 				a[2] = _a[3*j+2];

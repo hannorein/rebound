@@ -1,5 +1,5 @@
 #!/bin/gnuplot
-set terminal pdf enhanced color size 6in,5in
+set terminal pdf enhanced color size 6in,5.4in
 set output "transparency_avg.pdf"
 set palette defined ( 0 '#000090',\
                       1 '#000fff',\
@@ -23,6 +23,8 @@ psi(B)=.12*r(B)+2
 set hidden3d
 set pm3d map 
 set pm3d corners2color mean
+set tmargin 0
+set bmargin 0
 
 
 len = 70.
