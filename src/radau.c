@@ -1,150 +1,84 @@
-/**
- * @file 	integrator.c
- * @brief 	RADAU15 integration scheme.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This file implements the radau15 integration scheme.  
- * This scheme is a fifteenth order integrator well suited for 
- * high accuracy orbit integration with non-conservative forces.
- * See Everhart, 1985, ASSL Vol. 115, IAU Colloq. 83, Dynamics of 
- * Comets, Their Origin and Evolution, 185.
- * 
- * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Dave Spiegel.
- *
- * This file is part of rebound.
- *
- * rebound is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * rebound is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <math.h>
-#include <time.h>
-#include "particle.h"
-#include "main.h"
-#include "gravity.h"
-#include "boundaries.h"
-#include "problem.h"
-#ifdef TREE
-#error RADAU15 integrator not working with TREE module.
-#endif
-#ifdef MPI
-#error RADAU15 integrator not working with MPI.
-#endif
-
-int integrator_radau_init_done = 0;
-void integrator_radau_init();
-
-void integrator_part1(){
-	// Do nothing here. This is for the first drift part in a leapfrog-like DKD integrator.
-}
-
-// This function updates the acceleration on all particles. 
-// It uses the current position and velocity data in the (struct particle*) particles structure.
-// Note: this does currently not work with MPI or any TREE module.
-void integrator_update_acceleration(){
-  gravity_calculate_acceleration();
-  if (problem_additional_forces) problem_additional_forces();
-}
-
-void integrator_part2(){
-	if (!integrator_radau_init_done){
-		integrator_radau_init();
-		integrator_radau_init_done = 1;
-	}
-
-	t += dt;
-
-}
-double h[8], xc[8],vc[7];
-double r[28],c[21],d[21],s[9];
-
-//std::vector< std::vector<double> > g,b,e;
-// double g[7][3000],b[7][3000],e[7][3000];
-
-unsigned int nv,niter,size;
-
-void integrator_radau_init() {
-	h[0] = 0.0;
-	h[1] = 0.05626256053692215;
-	h[2] = 0.18024069173689236;
-	h[3] = 0.35262471711316964;
-	h[4] = 0.54715362633055538;
-	h[5] = 0.73421017721541053;
-	h[6] = 0.88532094683909577;
-	h[7] = 0.97752061356128750;
-
-	//  XC: 1/2,  1/6,  1/12, 1/20, 1/30, 1/42, 1/56, 1/72
-	xc[0] = 0.5;
-	xc[1] = 0.16666666666666667;
-	xc[2] = 0.08333333333333333;
-	xc[3] = 0.05;
-	xc[4] = 0.03333333333333333;
-	xc[5] = 0.02380952380952381;
-	xc[6] = 0.01785714285714286;
-	xc[7] = 0.01388888888888889;
-
-	//  VC: 1/2,  1/3,  1/4,  1/5,  1/6,  1/7,  1/8
-	vc[0] = 0.5;
-	vc[1] = 0.3333333333333333;
-	vc[2] = 0.25;
-	vc[3] = 0.2;
-	vc[4] = 0.1666666666666667;
-	vc[5] = 0.1428571428571429;
-	vc[6] = 0.125;
-
-	int l=0;
-	for (int j=1;j<8;++j) {
-		for(int k=0;k<j;++k) {
-			r[l] = 1.0 / (h[j] - h[k]);
-			++l;
-		}
-	}
-
-	c[0] = -h[1];
-	d[0] =  h[1];
-	l=0;
-	for (int j=2;j<7;++j) {
-		++l;
-		c[l] = -h[j] * c[l-j+1];
-		d[l] =  h[1] * d[l-j+1];
-		for(int k=2;k<j;++k) {
-			++l;
-			c[l] = c[l-j] - h[j] * c[l-j+1];
-			d[l] = d[l-j] + h[k] * d[l-j+1];
-		}
-		++l;
-		c[l] = c[l-j] - h[j];
-		d[l] = d[l-j] + h[j]; 
-	}
-
-	nv    = 0;
-	niter = 6;
-
-	size = 0;
-}
-/*  
-std::vector<double> x,v,a,x1,v1,a1;
-// double x[3000],v[3000],a[3000],x1[3000],v1[3000],a1[3000];
-
-std::vector<double> mass;
-// double mass[1000];
-
-std::vector<Vector> acc;
-  // Vector acc[1000];
+  void Radau15::init() {
+    
+    type = RA15;
+    
+    h[0] = 0.0;
+    h[1] = 0.05626256053692215;
+    h[2] = 0.18024069173689236;
+    h[3] = 0.35262471711316964;
+    h[4] = 0.54715362633055538;
+    h[5] = 0.73421017721541053;
+    h[6] = 0.88532094683909577;
+    h[7] = 0.97752061356128750;
+    
+    xc[0] = 0.5;
+    xc[1] = 0.16666666666666667;
+    xc[2] = 0.08333333333333333;
+    xc[3] = 0.05;
+    xc[4] = 0.03333333333333333;
+    xc[5] = 0.02380952380952381;
+    xc[6] = 0.01785714285714286;
+    xc[7] = 0.01388888888888889;
+    
+    vc[0] = 0.5;
+    vc[1] = 0.3333333333333333;
+    vc[2] = 0.25;
+    vc[3] = 0.2;
+    vc[4] = 0.1666666666666667;
+    vc[5] = 0.1428571428571429;
+    vc[6] = 0.125;
+    
+    // r.resize(28);
+    //
+    int j,k,l;
+    l=0;
+    for (j=1;j<8;++j) {
+      for(k=0;k<j;++k) {
+      r[l] = 1.0 / (h[j] - h[k]);
+      ++l;
+      }
+    }
+    
+    /* 
+       for(k=0;k<28;++k) {
+       printf("r[%02i]= %e\n",k,r[k]);
+       }
+    */
+    
+    // c.resize(21);
+    // d.resize(21);
+    //
+    c[0] = -h[1];
+    d[0] =  h[1];
+    l=0;
+    for (j=2;j<7;++j) {
+      ++l;
+      c[l] = -h[j] * c[l-j+1];
+      d[l] =  h[1] * d[l-j+1];
+      for(k=2;k<j;++k) {
+      ++l;
+      c[l] = c[l-j] - h[j] * c[l-j+1];
+      d[l] = d[l-j] + h[k] * d[l-j+1];
+      }
+      ++l;
+      c[l] = c[l-j] - h[j];
+      d[l] = d[l-j] + h[j]; 
+    }
+    
+    /*
+      for(k=0;k<21;++k) {
+      printf("c[%02i]= %e    d[%02i]= %e\n",k,c[k],k,d[k]);
+      }
+    */
+    
+    nv    = 0;
+    niter = 6;
+    
+    // s.resize(9);
+    
+    size = 0;
+  }
+  
   Radau15::~Radau15() {
     
   }
@@ -179,11 +113,29 @@ std::vector<Vector> acc;
       mass.resize(frame.size());
     }
     // reset (long... bad style... may use memset...)
-     // better
+    /* unsigned int j,k;
+       for (j=0;j<7;++j) {
+       for(k=0;k<nv;++k) {
+       b[j][k] = 0.0;
+       e[j][k] = 0.0;
+       }    
+       }
+    */
+    // better
     memset(&b[0][0],0,7*nv);
     memset(&e[0][0],0,7*nv);
     
-     
+    /* 
+       {
+       // test
+       for (unsigned int j=0;j<7;++j) {
+       for(unsigned int k=0;k<nv;++k) {
+       std::cerr << "zero? j:" << j << " k:" << k << " b:" << b[j][k] << " e:" << e[j][k] << std::endl;
+       }    
+       }
+       }
+    */
+    
     for(unsigned int k=0;k<frame.size();++k) {
       mass[k] = frame[k].mass();
     }
@@ -554,4 +506,4 @@ std::vector<Vector> acc;
   }
   
 } // namespace orsa
-i*/
+
