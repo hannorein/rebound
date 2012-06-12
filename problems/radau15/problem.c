@@ -109,6 +109,7 @@ void problem_init(int argc, char* argv[]){
 }
 
 void velocity_dependend_force(){
+	return;
 	// Some additional velocity dependend forces
 	for (int i=1;i<N;i++){
 		particles[i].ax -= 0.0000001*particles[i].vx;
