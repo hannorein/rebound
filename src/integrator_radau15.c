@@ -15,6 +15,7 @@
  * extern int integrator_adaptive_timestep;	
  * extern int integrator_force_is_velocitydependend;
  * extern double integrator_accuracy;
+ * extern double integrator_min_dt;
  * 
  * 
  * @section 	LICENSE
@@ -59,6 +60,7 @@
 int 	integrator_adaptive_timestep 		= 1;	// Turn this off to use a fixed timestep.
 int 	integrator_force_is_velocitydependend	= 1;	// Turn this off to safe some time if the force is not velocity dependend.
 double 	integrator_accuracy 			= 1e-6;	// Desired accuracy. Play with this, make sure you get a converged results.
+double 	integrator_min_dt 			= 0;	// Minimum timestep used as a floor when adaptive timestepping is enabled.
 
 
 const double h[8]	= { 0.0, 0.05626256053692215, 0.18024069173689236, 0.35262471711316964, 0.54715362633055538, 0.73421017721541053, 0.88532094683909577, 0.97752061356128750}; // Gauss Radau spacings
@@ -328,12 +330,16 @@ int integrator_radau_step() {
 
 		if (fabs(dt/dt_done) < 1.0) {
 			dt = dt_done * 0.8;
-			particles = particles_in;
-			niter = 6;
-			return 0; // Step rejected. Do again. 
+			if (dt<integrator_min_dt) dt = integrator_min_dt;
+			if (dt_done>integrator_min_dt){
+				particles = particles_in;
+				niter = 6;
+				return 0; // Step rejected. Do again. 
+			}
 		}
 
 		if (fabs(dt/dt_done) > 1.4) dt = dt_done * 1.4;
+		if (dt<integrator_min_dt) dt = integrator_min_dt;
 	}
 
 	// Find new position and velocity values at end of the sequence
