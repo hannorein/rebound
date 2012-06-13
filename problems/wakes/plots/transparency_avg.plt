@@ -1,5 +1,5 @@
 #!/bin/gnuplot
-set terminal pdf enhanced color size 6in,5.4in
+set terminal pdf enhanced color size 6in,5.0in
 set output "transparency_avg.pdf"
 set palette defined ( 0 '#000090',\
                       1 '#000fff',\
@@ -23,8 +23,10 @@ psi(B)=.12*r(B)+2
 set hidden3d
 set pm3d map 
 set pm3d corners2color mean
-set tmargin 0
-set bmargin 0
+set lmargin at screen 0.02
+set rmargin at screen 0.85
+set tmargin at screen 0.99
+set bmargin at screen 0.01
 
 
 len = 70.
@@ -47,5 +49,16 @@ set label "{/Symbol f} = 216{/Symbol \260}" at len*sin(6.*pi/5),len*cos(6.*pi/5)
 set label "{/Symbol f} = 252{/Symbol \260}" at len*sin(7.*pi/5),len*cos(7.*pi/5) front
 set label "{/Symbol f} = 288{/Symbol \260}" at len*sin(8.*pi/5),len*cos(8.*pi/5) front
 set label "{/Symbol f} = 324{/Symbol \260}" at len*sin(9.*pi/5),len*cos(9.*pi/5) front
+
+set label "B = 90{/Symbol \260}" at 5,0 front tc rgb 'white' 
+set arrow from -5,15 to 5,15 nohead lc rgb 'gray' front
+set label "B = 75{/Symbol \260}" at 5,15 front tc rgb 'white' 
+set arrow from -5,30 to 5,30 nohead lc rgb 'gray' front
+set label "B = 60{/Symbol \260}" at 5,30 front tc rgb 'white' 
+set arrow from -5,45 to 5,45 nohead lc rgb 'gray' front
+set label "B = 45{/Symbol \260}" at 5,45 front tc rgb 'white' 
+set arrow from -5,60 to 5,60 nohead lc rgb 'gray' front
+set label "B = 30{/Symbol \260}" at 5,60 front tc rgb 'white' 
+
 
 splot "transparency_avg.txt" u (r($1)*cos($2)):(r($1)*sin($2)):(psi($1)):3   notit
