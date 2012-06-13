@@ -1,5 +1,5 @@
 PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
-export CC=/Users/rein/localinstalls/src/gcc-lion/usr/local/bin/gcc
+#export CC=/Users/rein/localinstalls/src/gcc-lion/usr/local/bin/gcc
 #export MPI=0
 #export OPENGL=1
 export OPENMP=1
