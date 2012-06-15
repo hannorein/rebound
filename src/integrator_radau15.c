@@ -94,8 +94,12 @@ void integrator_part1(){
 // It uses the current position and velocity data in the (struct particle*) particles structure.
 // Note: this does currently not work with MPI or any TREE module.
 void integrator_update_acceleration(){
+	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
+	PROFILING_START()
 	gravity_calculate_acceleration();
 	if (problem_additional_forces) problem_additional_forces();
+	PROFILING_STOP(PROFILING_CAT_GRAVITY)
+	PROFILING_START()
 }
 
 int integrator_radau_step(); // Does the actual timestep.
