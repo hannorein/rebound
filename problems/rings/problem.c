@@ -127,8 +127,11 @@ void radiation_forces(){
 		    if (pr < plr)
 		      IN_SHADOW = 0;
 		    else {
+		      // If the angle between the particle's position vector relative to the star and the center of
+		      // the planet's position vector relative to the center of the star is bigger than Rplanet/pr, then
+		      // the planet is not in shadow.  Otherwise, it is.
 		      const double max_angle_from_planet_center = planet.r / pr; // planet radius / distance from star
-		      // Call vector to planet center Pl and vector to particle p
+		      // Call vector to planet center "Pl" and vector to particle "p"
 		      // angle from planet center is arccos[Pl dot p / (plr * pr)]
 		      const dotprod = prx*plrx + pry*plry + prz*plrz;
 		      const cos_angle_from_planet_center = dotprod / (plr*pr);
