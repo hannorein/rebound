@@ -32,6 +32,7 @@
 #include <time.h>
 #include <string.h>
 #include "main.h"
+#include "problem.h"
 #include "input.h"
 #include "tools.h"
 #include "output.h"
@@ -42,6 +43,7 @@
 struct particle star;
 struct particle planet;
 extern double 	integrator_accuracy;	// Desired accuracy. Play with this, make sure you get a converged results.
+void radiation_forces();
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -93,6 +95,41 @@ void problem_init(int argc, char* argv[]){
 	}
 	system("cat config.log");
 	tools_move_to_center_of_momentum();
+	problem_additional_forces = radiation_forces;
+}
+
+void radiation_forces(){
+	// Star 
+	const double sx = particles[0].x;
+	const double sy = particles[0].y;
+	const double sz = particles[0].z;
+	const double svx = particles[0].vx;
+	const double svy = particles[0].vy;
+	const double svz = particles[0].vz;
+	for (int i=2;i<N;i++){
+		const double px = particles[i].x;
+		const double py = particles[i].y;
+		const double pz = particles[i].z;
+		const double pvx = particles[i].vx;
+		const double pvy = particles[i].vy;
+		const double pvz = particles[i].vz;
+		const double prx = px-sx;
+		const double pry = py-sy;
+		const double prz = pz-sz;
+		const double prvx = pvx-svx;
+		const double prvy = pvy-svy;
+		const double prvz = pvz-svz;
+
+		const double beta = 0.012;
+		const double pr = sqrt(prx*prx + pry*pry + prz*prz); // distance relative to star
+		const double c = 10064.915; // speed of light.
+		const double rdot = (prvx*prx + prvy*pry + prvz*prz)/pr; // radial velocity relative to  star
+		const double F_r = beta*G*star.m/(pr*pr);
+
+		particles[i].ax += F_r*((1.-rdot/c)*prx/pr - prvx/c);
+		particles[i].ay += F_r*((1.-rdot/c)*pry/pr - prvy/c);
+		particles[i].az += F_r*((1.-rdot/c)*prz/pr - prvz/c);
+	}
 }
 
 
