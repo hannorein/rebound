@@ -144,10 +144,10 @@ void output_timing(){
 				printf("Boundary check ");
 				break;
 			case PROFILING_CAT_GRAVITY:
-				printf("Gravity        ");
+				printf("Gravity/Forces ");
 				break;
 			case PROFILING_CAT_COLLISION:
-				printf("Collision      ");
+				printf("Collisions     ");
 				break;
 #ifdef OPENGL
 			case PROFILING_CAT_VISUALIZATION:
