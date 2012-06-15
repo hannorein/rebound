@@ -79,7 +79,7 @@ extern int integrator_force_is_velocitydependend;
 extern double integrator_accuracy;
 #endif // INTEGRATOR_RADAU15
 
-void velocity_dependend_force();
+void velocity_dependent_force();
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -87,7 +87,7 @@ void problem_init(int argc, char* argv[]){
 	N_active	= 5;
 	tmax		= 7.3e10;		// 200 Myr
 	G		= k*k;
-	problem_additional_forces = velocity_dependend_force;
+	problem_additional_forces = velocity_dependent_force;
 #ifdef OPENGL
 	display_wire	= 1;			// Show orbits.
 #endif // OPENGL

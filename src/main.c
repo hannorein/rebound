@@ -114,14 +114,6 @@ void init_box(){
 #endif // MPI
 }
 
-#ifdef PROFILING
-#define PROFILING_START() profiling_start();
-#define PROFILING_STOP(C) profiling_stop(C);
-#else // PROFILING
-#define PROFILING_START()	// Dummy, do nothing 
-#define PROFILING_STOP(C)	
-#endif // PROFILING
-
 void iterate(){	
 	// A 'DKD'-like integrator will do the first 'D' part.
 	PROFILING_START()

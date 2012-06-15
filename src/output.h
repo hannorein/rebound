@@ -149,6 +149,11 @@ enum profiling_categories {
 };
 void profiling_start();
 void profiling_stop(int cat);
+#define PROFILING_START() profiling_start();
+#define PROFILING_STOP(C) profiling_stop(C);
+#else // PROFILING
+#define PROFILING_START()	// Dummy, do nothing 
+#define PROFILING_STOP(C)	
 #endif // PROFILING
 
 #endif
