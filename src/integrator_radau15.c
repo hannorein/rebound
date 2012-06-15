@@ -50,6 +50,7 @@
 #include "gravity.h"
 #include "boundaries.h"
 #include "problem.h"
+#include "output.h"
 #ifdef TREE
 #error RADAU15 integrator not working with TREE module.
 #endif
