@@ -43,19 +43,20 @@
 struct particle star;
 struct particle planet;
 extern double 	integrator_accuracy;	// Desired accuracy. Play with this, make sure you get a converged results.
+extern double 	integrator_min_dt;	// Timestep floor.
 void radiation_forces();
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= M_PI*1.e-3*1.1234125235345;
-	boxsize 	= 2.8;
-	N_active      	= 2;
-	integrator_accuracy = 1e-4;
+	dt 				= 1e-1;
+	// integrator_min_dt		= 1e-2;		// Set a timestep floor.
+	integrator_accuracy 		= 1e-4;
+	boxsize 			= 2.8;
+	N_active      			= 2;
+	problem_additional_forces 	= radiation_forces;
 	init_box();
 
 	// Initial conditions
-	// The WH integrator assumes a heliocentric coordinate system.
-	// Therefore the star has to be at the origin.
 	star.x  = 0; star.y  = 0; star.z  = 0;
 	star.vx = 0; star.vy = 0; star.vz = 0;
 	star.ax = 0; star.ay = 0; star.az = 0;
@@ -77,7 +78,7 @@ void problem_init(int argc, char* argv[]){
 	double planet_hill = planet.x*pow(planet.m/3./star.m,1./3.);
 	output_double("planet hill", planet_hill);
 	double r_inner =  planet_hill*input_get_double(argc, argv, "r_inner", 0.1);
-	double r_outer =  planet_hill*input_get_double(argc, argv, "r_outer", 0.2);
+	double r_outer =  planet_hill*input_get_double(argc, argv, "r_outer", 0.4);
 	output_double("ring inner", r_inner);
 	output_double("ring outer", r_outer);
 	int _N = 1000;
@@ -95,36 +96,26 @@ void problem_init(int argc, char* argv[]){
 	}
 	system("cat config.log");
 	tools_move_to_center_of_momentum();
-	problem_additional_forces = radiation_forces;
 }
 
 void radiation_forces(){
 	// Star 
-	const double sx = particles[0].x;
-	const double sy = particles[0].y;
-	const double sz = particles[0].z;
-	const double svx = particles[0].vx;
-	const double svy = particles[0].vy;
-	const double svz = particles[0].vz;
+	const struct particle star = particles[0];				// cache
+#pragma omp parallel for
 	for (int i=2;i<N;i++){
-		const double px = particles[i].x;
-		const double py = particles[i].y;
-		const double pz = particles[i].z;
-		const double pvx = particles[i].vx;
-		const double pvy = particles[i].vy;
-		const double pvz = particles[i].vz;
-		const double prx = px-sx;
-		const double pry = py-sy;
-		const double prz = pz-sz;
-		const double prvx = pvx-svx;
-		const double prvy = pvy-svy;
-		const double prvz = pvz-svz;
+		const struct particle p = particles[i]; 			// cache
+		const double prx  = p.x-star.x;
+		const double pry  = p.y-star.y;
+		const double prz  = p.z-star.z;
+		const double prvx = p.vx-star.vx;
+		const double prvy = p.vy-star.vy;
+		const double prvz = p.vz-star.vz;
 
-		const double beta = 0.012;
-		const double pr = sqrt(prx*prx + pry*pry + prz*prz); // distance relative to star
-		const double c = 10064.915; // speed of light.
-		const double rdot = (prvx*prx + prvy*pry + prvz*prz)/pr; // radial velocity relative to  star
-		const double F_r = beta*G*star.m/(pr*pr);
+		const double beta	= 0.012;
+		const double pr 	= sqrt(prx*prx + pry*pry + prz*prz); 	// distance relative to star
+		const double c 		= 10064.915; 				// speed of light.
+		const double rdot 	= (prvx*prx + prvy*pry + prvz*prz)/pr; 	// radial velocity relative to  star
+		const double F_r 	= beta*G*star.m/(pr*pr);
 
 		particles[i].ax += F_r*((1.-rdot/c)*prx/pr - prvx/c);
 		particles[i].ay += F_r*((1.-rdot/c)*pry/pr - prvy/c);
@@ -134,7 +125,7 @@ void radiation_forces(){
 
 
 void problem_output(){
-	if(output_check(10.*dt)){
+	if(output_check(2.*M_PI)){
 		output_timing();
 	}
 	if(output_check(124.)){

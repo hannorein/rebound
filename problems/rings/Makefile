@@ -1,11 +1,9 @@
 PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
 export OPENGL=1
 export OPT+=-O3
-export PROFILING=1
 
 all:
 	# Setup link to different modules
-#	ln -fs gravity_none.c ../../src/gravity.c
 	ln -fs gravity_direct.c ../../src/gravity.c
 	ln -fs boundaries_open.c ../../src/boundaries.c
 	ln -fs integrator_radau15.c ../../src/integrator.c
