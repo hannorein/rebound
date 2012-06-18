@@ -3,9 +3,16 @@ import subprocess,glob,os,struct,math,sys
 
 filename = sys.argv[1]
 f = file(filename).readlines()
-num_avg=201
+num_avg=0
+row1=f[0].split()[0]
+for line in f:
+	if line.split()[0]==row1:
+		num_avg = num_avg + 1
+	else:
+		break
+		
 num_out=len(f)/num_avg
-num_start=int(num_out*0.5)
+num_start=int(num_out*0.85)  #fraction of datapoints to be used
 avg=[0.0]*num_avg
 for i in range(num_start,num_out):
 	for j in range(0,num_avg):
