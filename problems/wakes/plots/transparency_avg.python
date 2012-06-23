@@ -12,7 +12,7 @@ for line in f:
 		break
 		
 num_out=len(f)/num_avg
-num_start=int(num_out*0.85)  #fraction of datapoints to be used
+num_start=int(num_out*0.75)  #fraction of datapoints to be used
 avg=[0.0]*num_avg
 for i in range(num_start,num_out):
 	for j in range(0,num_avg):
