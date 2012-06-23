@@ -44,16 +44,23 @@ struct particle star;
 struct particle planet;
 extern double 	integrator_accuracy;	// Desired accuracy. Play with this, make sure you get a converged results.
 extern double 	integrator_min_dt;	// Timestep floor.
-void radiation_forces();
+extern int 	integrator_adaptive_timestep;
+void additional_forces();
+const double   Rjup   = 0.00046732617; // Radius of Jupiter in AU
+const double   J2jup  = 14736e-6; 	// J2 of Jupiter 
+
+const double Rplanet = Rjup;
+const double J2planet = J2jup;
+int Nmoon = 0;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 				= 1e-1;
-	// integrator_min_dt		= 1e-2;		// Set a timestep floor.
-	integrator_accuracy 		= 1e-4;
-	boxsize 			= 2.8;
+	dt 				= 1e-2;
+	//integrator_accuracy 		= 1e-4;
+	integrator_adaptive_timestep	= 0;
+	boxsize 			= 12.;
 	N_active      			= 2;
-	problem_additional_forces 	= radiation_forces;
+	problem_additional_forces 	= additional_forces;
 	init_box();
 
 	// Initial conditions
@@ -65,7 +72,7 @@ void problem_init(int argc, char* argv[]){
 
 	// Planet 1 at 1 AU
 	planet.m  = 1.e-3;
-	planet.x  = 1.; planet.y  = 0.; planet.z  = 0.;
+	planet.x  = 5.2; planet.y  = 0.; planet.z  = 0.;
 	planet.ax = 0; planet.ay = 0; planet.az = 0;
 	planet.vx = 0;
 	planet.vy = sqrt(G*(star.m+planet.m)/planet.x);
@@ -74,47 +81,71 @@ void problem_init(int argc, char* argv[]){
 	output_double("planet mass", planet.m);
 	output_double("planet a", planet.x);
 
-	// Ring particles
-	double planet_hill = planet.x*pow(planet.m/3./star.m,1./3.);
-	output_double("planet hill", planet_hill);
-	double r_inner =  planet_hill*input_get_double(argc, argv, "r_inner", 0.1);
-	double r_outer =  planet_hill*input_get_double(argc, argv, "r_outer", 0.4);
-	output_double("ring inner", r_inner);
-	output_double("ring outer", r_outer);
-	int _N = 1000;
-	for (int i = 0; i < _N; i++) {
-		struct particle ringparticle = planet;
-		ringparticle.m  = 0;
-		double r 	= tools_uniform(r_inner,r_outer);
-		double v	= sqrt(G*planet.m / r);
-		double phi	= tools_uniform(0,2.*M_PI);
-		ringparticle.x  +=  r*cos(phi);
-		ringparticle.y  +=  r*sin(phi);
-		ringparticle.vx += -v*sin(phi);
-		ringparticle.vy +=  v*cos(phi);
-		particles_add(ringparticle);
-	}
+	// Moon 1 Amalthea
+	struct particle moon1 = planet;
+	moon1.m  = 0;
+	double r 	= 0.0012122499*.5;
+	double v	= sqrt(G*planet.m / r);
+	double inclination = 0.37/180.*M_PI;
+	moon1.x  +=  r;
+	moon1.vy +=  v*cos(inclination);
+	moon1.vz +=  v*sin(inclination);
+	particles_add(moon1);
+	Nmoon++;
+	
+	// Moon 2 Thebe
+	struct particle moon2 = planet;
+	moon2.m  = 0;
+	r 	  =  0.0014833099*.5;
+	v	  = sqrt(G*planet.m / r);
+	inclination = 1.09/180.*M_PI;
+	moon2.x  +=  r;
+	moon2.vy +=  v*cos(inclination);
+	moon2.vz +=  v*sin(inclination);
+	particles_add(moon2);
+	Nmoon++;
+
 	system("cat config.log");
 	tools_move_to_center_of_momentum();
 }
-
-void radiation_forces(){
+		
+void force_J2(){
 	// Star 
-	const struct particle star = particles[0];				// cache
 	const struct particle planet = particles[1];				// cache
 #pragma omp parallel for
 	for (int i=2;i<N;i++){
+		const struct particle p = particles[i]; 			// cache
+		const double prx  = p.x-planet.x;
+		const double pry  = p.y-planet.y;
+		const double prz  = p.z-planet.z;
+		const double pr2   = prx*prx + pry*pry + prz*prz; 	// distance^2 relative to planet
+		const double fac  = 3.*G*J2planet*planet.m*Rplanet*Rplanet/2./pow(pr2,3.5);
+		particles[i].ax += fac*prx*(prx*prx + pry*pry - 4.*prz*prz);
+		particles[i].ay += fac*pry*(prx*prx + pry*pry - 4.*prz*prz);
+		particles[i].az += fac*prz*(3.*(prx*prx + pry*pry) - 2.*prz*prz);
+	}
+}
+
+
+void force_radiation(){
+	// Star 
+	const struct particle star = particles[0];				// cache
+//#define SHADOW
+#ifdef SHADOW
+	const struct particle planet = particles[1];				// cache
+#endif // SHADOW
+#pragma omp parallel for
+	for (int i=2+Nmoon;i<N;i++){
 		const struct particle p = particles[i]; 			// cache
 		const double prx  = p.x-star.x;
 		const double pry  = p.y-star.y;
 		const double prz  = p.z-star.z;
 		const double pr   = sqrt(prx*prx + pry*pry + prz*prz); 	// distance relative to star
+
+#ifdef SHADOW
 		const double plrx = planet.x-star.x;
 		const double plry = planet.y-star.y;
 		const double plrz = planet.z-star.z;
-
-//#define SHADOW
-#ifdef SHADOW
 		const double plr  = sqrt(plrx*plrx + plry*plry + plrz*plrz); 	// distance relative to star
 		int IN_SHADOW = 0;
 		// Find out if particle is in the shadow of the planet
@@ -126,7 +157,6 @@ void radiation_forces(){
 			// If the angle between the particle's position vector relative to the star and the center of
 			// the planet's position vector relative to the center of the star is bigger than Rplanet/pr, then
 			// the planet is not in shadow.  Otherwise, it is.
-			double   Rjup   = 0.00046732617; // Radius of Jupiter in AU
 			const double max_angle_from_planet_center = Rjup / pr; // planet radius / distance from star
 			// Call vector to planet center "Pl" and vector to particle "p"
 			// angle from planet center is arccos[Pl dot p / (plr * pr)]
@@ -149,12 +179,12 @@ void radiation_forces(){
 		const double rdot 	= (prvx*prx + prvy*pry + prvz*prz)/pr; 	// radial velocity relative to star
 		const double F_r 	= beta*G*star.m/(pr*pr);
 
-		// Old:
+		// Old: Equation (5) of Burns, Lamy, Soter (1979)
 		particles[i].ax += F_r*((1.-rdot/c)*prx/pr - prvx/c);
 		particles[i].ay += F_r*((1.-rdot/c)*pry/pr - prvy/c);
 		particles[i].az += F_r*((1.-rdot/c)*prz/pr - prvz/c);
 
-		// New:
+		// New: TODO: Why this is not the same as above. 
 		// Set up tangential velocity
 		// vtan + vr = v so vtan = v - vr
 		/*
@@ -170,9 +200,9 @@ void radiation_forces(){
 		const double doppler_term_y = modify_mass_term_y * (-rdot/c);
 		const double doppler_term_z = modify_mass_term_z * (-rdot/c);
 
-		const double tangential_term_x = F_r * (vtan_x/c);
-		const double tangential_term_y = F_r * (vtan_y/c);
-		const double tangential_term_z = F_r * (vtan_z/c);
+		const double tangential_term_x = -F_r * (vtan_x/c);
+		const double tangential_term_y = -F_r * (vtan_y/c);
+		const double tangential_term_z = -F_r * (vtan_z/c);
 
 		const double radiation_force_x = modify_mass_term_x + doppler_term_x + tangential_term_x;
 		const double radiation_force_y = modify_mass_term_y + doppler_term_y + tangential_term_y;
@@ -184,14 +214,57 @@ void radiation_forces(){
 	}
 }
 
+void additional_forces(){
+	force_J2();
+//	force_radiation();
+}
+						
+void output_a(){
+	FILE* of = fopen("a.txt","w"); 
+	struct particle planet = particles[1];
+	for (int i=2+Nmoon;i<N;i++){
+		struct particle p = particles[i];
+		const double prx  = p.x-planet.x;
+		const double pry  = p.y-planet.y;
+		const double prz  = p.z-planet.z;
+		const double pr2   = prx*prx + pry*pry + prz*prz; 	// distance^2 relative to planet
+		fprintf(of,"%e\n",sqrt(pr2));
+	}
+	fclose(of);
+}
 
 void problem_output(){
+	// Ring particles
+	const int Nringparticlemax = 1000;
+	if (N-2-Nmoon < Nringparticlemax) {
+		printf("adding particls\n");
+		struct particle ringparticle;
+		double vesc;
+
+		// Amalthea
+		ringparticle = particles[2];
+		vesc = 0.002954419;
+		ringparticle.vx += vesc * tools_normal(1.);
+		ringparticle.vy += vesc * tools_normal(1.);
+		ringparticle.vz += vesc * tools_normal(1.);
+		particles_add(ringparticle);
+
+		// Thebe
+		ringparticle = particles[3];
+		vesc = 0.001745793;
+		ringparticle.vx += vesc * tools_normal(1.);
+		ringparticle.vy += vesc * tools_normal(1.);
+		ringparticle.vz += vesc * tools_normal(1.);
+		particles_add(ringparticle);
+	}
+	
+	
+	// Output stuff
 	if(output_check(2.*M_PI)){
 		output_timing();
 	}
-	if(output_check(124.)){
-		//output_append_ascii("position.txt");
-		//output_append_orbits("orbits.txt");
+	if(output_check(.5)){
+		output_a();
 	}
 }
 void problem_inloop(){
