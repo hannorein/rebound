@@ -44,8 +44,6 @@ struct particle star;
 struct particle planet;
 extern double 	integrator_accuracy;	// Desired accuracy. Play with this, make sure you get a converged results.
 extern double 	integrator_min_dt;	// Timestep floor.
-extern double   Rjup   = 7.1492e9; // Radius of Jupiter in cm
-extern double   Rearth = 6.3781e8; // Radius of Earth in cm
 void radiation_forces();
 
 void problem_init(int argc, char* argv[]){
@@ -67,7 +65,6 @@ void problem_init(int argc, char* argv[]){
 
 	// Planet 1 at 1 AU
 	planet.m  = 1.e-3;
-	planet.r  = Rjup; // set the planet's radius
 	planet.x  = 1.; planet.y  = 0.; planet.z  = 0.;
 	planet.ax = 0; planet.ay = 0; planet.az = 0;
 	planet.vx = 0;
@@ -115,46 +112,52 @@ void radiation_forces(){
 		const double plrx = planet.x-star.x;
 		const double plry = planet.y-star.y;
 		const double plrz = planet.z-star.z;
-		const double plr  = sqrt(plrx*plrx + plry*plry + plrz*plrz); 	// distance relative to star
 
-		const int USE_SHADOW = 1;
+//#define SHADOW
+#ifdef SHADOW
+		const double plr  = sqrt(plrx*plrx + plry*plry + plrz*plrz); 	// distance relative to star
 		int IN_SHADOW = 0;
-		if (USE_SHADOW == 1)
-		  {
-		    // Find out if particle is in the shadow of the planet
-		    // i.e., find out if the radial vector to the particle passes through the planet
-		    // If the particle isn't as far as the planet's center, it's definitely not in shadow.
-		    if (pr < plr)
-		      IN_SHADOW = 0;
-		    else {
-		      // If the angle between the particle's position vector relative to the star and the center of
-		      // the planet's position vector relative to the center of the star is bigger than Rplanet/pr, then
-		      // the planet is not in shadow.  Otherwise, it is.
-		      const double max_angle_from_planet_center = planet.r / pr; // planet radius / distance from star
-		      // Call vector to planet center "Pl" and vector to particle "p"
-		      // angle from planet center is arccos[Pl dot p / (plr * pr)]
-		      const dotprod = prx*plrx + pry*plry + prz*plrz;
-		      const cos_angle_from_planet_center = dotprod / (plr*pr);
-		      const double angle_from_planet_center = acos(cos_angle_from_planet_center);
-		      if (angle_from_planet_center < max_angle_from_planet_center)
-			IN_SHADOW = 1;
-		    }
-		  }
-		if (IN_SHADOW == 1) return;
+		// Find out if particle is in the shadow of the planet
+		// i.e., find out if the radial vector to the particle passes through the planet
+		// If the particle isn't as far as the planet's center, it's definitely not in shadow.
+		if (pr < plr)
+			IN_SHADOW = 0;
+		else {
+			// If the angle between the particle's position vector relative to the star and the center of
+			// the planet's position vector relative to the center of the star is bigger than Rplanet/pr, then
+			// the planet is not in shadow.  Otherwise, it is.
+			double   Rjup   = 0.00046732617; // Radius of Jupiter in AU
+			const double max_angle_from_planet_center = Rjup / pr; // planet radius / distance from star
+			// Call vector to planet center "Pl" and vector to particle "p"
+			// angle from planet center is arccos[Pl dot p / (plr * pr)]
+			const double dotprod = prx*plrx + pry*plry + prz*plrz;
+			const double cos_angle_from_planet_center = dotprod / (plr*pr);
+			const double angle_from_planet_center = acos(cos_angle_from_planet_center);
+			if (angle_from_planet_center < max_angle_from_planet_center)
+				IN_SHADOW = 1;
+		}
+		if (IN_SHADOW == 1) continue;
+#endif // SHADOW
 
 		// No shadow; calculate force modification:
 		const double prvx = p.vx-star.vx;
 		const double prvy = p.vy-star.vy;
 		const double prvz = p.vz-star.vz;
 
-		const double beta	= 0.012;     // appropriate for 100-micron dust
+		const double beta	= 0.012;    				 // appropriate for 100-micron dust
 		const double c 		= 10064.915; 				// speed of light.
 		const double rdot 	= (prvx*prx + prvy*pry + prvz*prz)/pr; 	// radial velocity relative to star
-		// why does rdot divide by pr?
 		const double F_r 	= beta*G*star.m/(pr*pr);
 
+		// Old:
+		particles[i].ax += F_r*((1.-rdot/c)*prx/pr - prvx/c);
+		particles[i].ay += F_r*((1.-rdot/c)*pry/pr - prvy/c);
+		particles[i].az += F_r*((1.-rdot/c)*prz/pr - prvz/c);
+
+		// New:
 		// Set up tangential velocity
 		// vtan + vr = v so vtan = v - vr
+		/*
 		const double vtan_x = prvx - (rdot * (prx/pr));
 		const double vtan_y = prvy - (rdot * (pry/pr));
 		const double vtan_z = prvz - (rdot * (prz/pr));
@@ -174,15 +177,10 @@ void radiation_forces(){
 		const double radiation_force_x = modify_mass_term_x + doppler_term_x + tangential_term_x;
 		const double radiation_force_y = modify_mass_term_y + doppler_term_y + tangential_term_y;
 		const double radiation_force_z = modify_mass_term_z + doppler_term_z + tangential_term_z;
-		// Old:
-		//particles[i].ax += F_r*((1.-rdot/c)*prx/pr - prvx/c);
-		//particles[i].ay += F_r*((1.-rdot/c)*pry/pr - prvy/c);
-		//particles[i].az += F_r*((1.-rdot/c)*prz/pr - prvz/c);
-
-		// New:
 		particles[i].ax += radiation_force_x;
 		particles[i].ay += radiation_force_y;
 		particles[i].az += radiation_force_z;
+		*/
 	}
 }
 
