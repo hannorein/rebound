@@ -387,7 +387,7 @@ void problem_output(){
 	if (output_check(10.*dt)){
 		output_timing();
 	}
-	if (output_check(2.*M_PI/OMEGA)){
+	if (output_check(.2*M_PI/OMEGA)){
 		char filename[256];
 		sprintf(filename,"position_%08d.txt",position_id);
 		output_ascii_mod(filename);
