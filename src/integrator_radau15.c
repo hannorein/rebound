@@ -320,24 +320,24 @@ int integrator_radau_step() {
 
 	if (integrator_adaptive_timestep){
 		// Estimate suitable sequence size for the next call
-		double tmp = 0.0;
-		for(int k=0;k<N3;++k) {
-			double minak = 1e-10;
-			if (a[k]>minak) minak = a[k];
-			//double _fabsb6k = fabs(b[6][k]);
-			double _fabsb6k = fabs(b[6][k]/minak);
-			if (_fabsb6k>tmp) tmp = _fabsb6k;
-		}
-		dt = pow(integrator_accuracy / tmp,1./13.)* dt_done;
-		/*
-		if (tmp!=0.0) tmp /= (72.0 * pow(fabs(dt),7));
+	//	double tmp = 0.0;
+	//	for(int k=0;k<N3;++k) {
+	//		double _fabsb6k = fabs(b[6][k]);
+	//		if (_fabsb6k>tmp) tmp = _fabsb6k;
+	//	}
+	//	if (tmp!=0.0) tmp /= (72.0 * pow(fabs(dt),7));
 
-		if (tmp < 1.0e-50) { // is equal to zero?
-			dt = dt_done * 1.4;
-		}else{
-			dt = copysign(pow(integrator_accuracy/tmp,0.1111111111111111),dt_done); // 1/9=0.111...
+	//	if (tmp < 1.0e-50) { // is equal to zero?
+	//		dt = dt_done * 1.4;
+	//	}else{
+	//		dt = copysign(pow(integrator_accuracy/tmp,0.1111111111111111),dt_done); // 1/9=0.111...
+	//	}
+		double tmp = fabs(a[0]/b[6][0]);
+		for(int k=1;k<N3;++k) {
+			double _fabsb6k = fabs(a[k]/b[6][k]);
+			if (_fabsb6k<tmp) tmp = _fabsb6k;
 		}
-		*/
+		dt = pow(integrator_accuracy*tmp,1./15.)*dt_done; // 1/9=0.111...
 
 		if (fabs(dt/dt_done) < 1.0) {
 			dt = dt_done * 0.8;

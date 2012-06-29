@@ -46,15 +46,15 @@ extern double 	integrator_min_dt;	// Timestep floor.
 extern int 	integrator_adaptive_timestep;
 #endif // INTEGRATOR_RADAU15
 
-double massfac = 1;
-double distancefac = 1;
+double massfac = 10;
+double distancefac = 10;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G				= 1;
 	dt 				= 1e-3;
 #ifdef INTEGRATOR_RADAU15
-	integrator_accuracy 		= 1e1;
+	integrator_accuracy 		= 1e-3;
 	integrator_adaptive_timestep	= 1;
 #endif // INTEGRATOR_RADAU15
 	boxsize 			= 10.*distancefac;
