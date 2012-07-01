@@ -386,6 +386,18 @@ void problem_output(){
 	if (output_check(.2*M_PI/OMEGA)){
 		output_binary("binary.txt");
 	}
+#ifdef MPI
+	if (mpi_id==0){
+#endif // MPI
+		struct timeval tim;
+		gettimeofday(&tim, NULL);
+		double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
+		FILE* of = fopen("timing.txt","a+"); 
+		fprintf(of,"%e\t%.4f\n",t,timing_final-timing_initial);
+		fclose(of);
+#ifdef MPI
+	}
+#endif // MPI
 }
 
 void problem_finish(){
