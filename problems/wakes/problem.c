@@ -32,6 +32,9 @@
 #include <time.h>
 #include <sys/time.h>
 #include <string.h>
+#ifdef OPENMP
+#include <omp.h>
+#endif
 #include "main.h"
 #include "particle.h"
 #include "boundaries.h"
@@ -111,6 +114,9 @@ void problem_init(int argc, char* argv[]){
 		_N = round(sigma*boxsize_x*boxsize_y/(4./3.*M_PI*rho* (pow(particle_radius_max,4.+particle_radius_slope) - pow(particle_radius_min,4.+particle_radius_slope)) / (pow(particle_radius_max,1.+particle_radius_slope) - pow(particle_radius_min,1.+particle_radius_slope)) * (1.+particle_radius_slope)/(4.+particle_radius_slope)));
 	}
 
+#ifdef OPENMP
+	input_append_input_arguments_with_int("openmp",omp_get_max_threads());
+#endif // OPENMP
 
 #ifdef MPI
 	input_append_input_arguments_with_int("mpinum",mpi_num);
