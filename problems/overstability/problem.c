@@ -31,7 +31,7 @@ void problem_init(int argc, char* argv[]){
 	OMEGA 				= 1.;
 	OMEGAZ 				= 3.6;
 	dt				= 2.*M_PI/OMEGA*input_get_double(argc, argv, "dtorb",4e-3);
-	tmax 				= 2.*M_PI/OMEGA*input_get_double(argc, argv, "tmaxorb",10000.);
+	tmax 				= 2.*M_PI/OMEGA*input_get_double(argc, argv, "tmaxorb",500.);
 	
 	tau 				= input_get_double(argc, argv, "tau",1.64);
 	coefficient_of_restitution 	= input_get_double(argc, argv, "eps",0.5);
@@ -287,7 +287,7 @@ void problem_output(){
 	if (output_check(2.*M_PI)){
 		output_timing();
 	}
-	if (t>2.*M_PI*300&&t<2.*M_PI*4000.&&output_check(.2*M_PI)){
+	if (t>2.*M_PI*400&&t<2.*M_PI*500.&&output_check(.02*M_PI)){
 		output_x("xfine.bin");
 	}
 	if (output_check(20.*M_PI)){
