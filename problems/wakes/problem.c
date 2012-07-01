@@ -192,25 +192,15 @@ void problem_init(int argc, char* argv[]){
 }
 
 void problem_find_restartfile(){
-	int latest = -1;
-	for (int i=0;i<1000;i++){
-		char filename[256];
 #ifdef MPI
-		sprintf(filename,"binary_%08d.txt_0",i);
+	if( access( "binary_0.txt", F_OK ) == -1 ) {
 #else // MPI
-		sprintf(filename,"binary_%08d.txt",i);
+	if( access( "binary.txt", F_OK ) == -1 ) {
 #endif // MPI
-		if( access( filename, F_OK ) != -1 ) {
-			latest = i;
-		}
-	}
-	if (latest ==-1){
 		printf("Cannot find a restart file in directory.\n");
 		exit(-1);
 	}
-	char filename[256];
-	sprintf(filename,"binary_%08d.txt",latest);
-	input_binary(filename);	
+	input_binary("binary.txt");	
 }
 
 double coefficient_of_restitution_bridges(double v){
@@ -387,13 +377,14 @@ void problem_output(){
 	if (output_check(10.*dt)){
 		output_timing();
 	}
-	if (output_check(.2*M_PI/OMEGA)){
+	if (output_check(2.*M_PI/OMEGA)){
 		char filename[256];
 		sprintf(filename,"position_%08d.txt",position_id);
 		output_ascii_mod(filename);
-		sprintf(filename,"binary_%08d.txt",position_id);
-		output_binary(filename);
 		position_id++;
+	}
+	if (output_check(.2*M_PI/OMEGA)){
+		output_binary("binary.txt");
 	}
 }
 
