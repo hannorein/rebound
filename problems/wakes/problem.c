@@ -370,6 +370,7 @@ void output_transparency(){
 }
 
 
+double timing_laststep = 0;
 void problem_output(){
 	if (output_check(10.*dt)){
 		output_transparency();
@@ -389,12 +390,16 @@ void problem_output(){
 #ifdef MPI
 	if (mpi_id==0){
 #endif // MPI
+		if (timing_laststep==0){
+			timing_laststep = timing_initial;
+		}
 		struct timeval tim;
 		gettimeofday(&tim, NULL);
 		double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
 		FILE* of = fopen("timing.txt","a+"); 
-		fprintf(of,"%e\t%.4f\n",t,timing_final-timing_initial);
+		fprintf(of,"%e\t%.4f\n",t,timing_final-timing_laststep);
 		fclose(of);
+		timing_laststep = timing_final;
 #ifdef MPI
 	}
 #endif // MPI
