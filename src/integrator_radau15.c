@@ -322,14 +322,14 @@ int integrator_radau_step() {
 
 	if (integrator_adaptive_timestep){
 		// Estimate error (given by last term in series expansion) 
-		double error = fabs(a[0]/b[6][0]);
+		double inverror = fabs(a[0]/b[6][0]);
 		for(int k=1;k<N3;++k) {
 			double _fabsb6k = fabs(a[k]/b[6][k]);
-			if (_fabsb6k>0.0 && (_fabsb6k<error || error<=0.0)) error = _fabsb6k;
+			if (_fabsb6k>0.0 && (_fabsb6k<inverror || inverror<=0.0)) inverror = _fabsb6k;
 		}
 		// Do not change timestep if all accelerations equal to zero.
-		if  (error>0.0){
-			double dt_new = pow(integrator_accuracy*error,1./15.)*dt_done; // 15 is the order of the scheme
+		if  (inverror>0.0){
+			double dt_new = pow(integrator_accuracy*inverror,1./15.)*dt_done; // 15 is the order of the scheme
 			const double safety_factor = 0.75;  // Empirically chosen so that timestep are occasionally rejected but not too often.
 			// New timestep is smaller.
 			if (fabs(dt_new/dt_done) < 1.0) {

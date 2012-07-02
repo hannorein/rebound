@@ -54,7 +54,7 @@ void problem_init(int argc, char* argv[]){
 	G				= 1;
 	dt 				= 1e2;
 #ifdef INTEGRATOR_RADAU15
-	integrator_accuracy 		= 1e-3;
+	integrator_accuracy 		= 1e-10;
 	integrator_adaptive_timestep	= 1;
 #endif // INTEGRATOR_RADAU15
 	boxsize 			= 10.*distancefac;
