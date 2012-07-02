@@ -137,6 +137,8 @@ void integrator_part2(){
 	// Try until a step was successful.
 	while(!integrator_radau_step());
 }
+ 
+double steps = 0;
   
 int integrator_radau_step() {
 	const int N3 = 3*N;
@@ -321,15 +323,24 @@ int integrator_radau_step() {
 	const double dt_done = dt;
 
 	if (integrator_adaptive_timestep){
-		// Estimate error (given by last term in series expansion) 
-		double inverror = fabs(a[0]/b[6][0]);
-		for(int k=1;k<N3;++k) {
-			double _fabsb6k = fabs(a[k]/b[6][k]);
-			if (_fabsb6k>0.0 && (_fabsb6k<inverror || inverror<=0.0)) inverror = _fabsb6k;
+		steps++;
+		FILE* of = fopen("a.txt","a+"); 
+		for(int k=1;k<N;k++) {
+			double ac = sqrt( a[k*3+0]*a[k*3+0] + a[k*3+1]*a[k*3+1] + a[k*3+2]*a[k*3+2] ); 
+			double rc2 = particles_in[k].x*particles_in[k].x + particles_in[k].y*particles_in[k].y + particles_in[k].z*particles_in[k].z  ; 
+			fprintf(of,"%e\t%e\n",steps,fabs(ac-1./rc2)*rc2);
 		}
+		fclose(of);
+		// Estimate error (given by last term in series expansion) 
+		double error = 0.0;
+		for(int k=0;k<N3;++k) {
+			double errork = fabs(b[6][k]/a[k]);
+			if (!isnan(errork) && !isinf(errork) && errork>error) error = errork;
+		}
+	//	printf("%e\n",error);
 		// Do not change timestep if all accelerations equal to zero.
-		if  (inverror>0.0){
-			double dt_new = pow(integrator_accuracy*inverror,1./15.)*dt_done; // 15 is the order of the scheme
+		if  (error>0.0){
+			double dt_new = pow(integrator_accuracy/error,1./15.)*dt_done; // 15 is the order of the scheme
 			const double safety_factor = 0.75;  // Empirically chosen so that timestep are occasionally rejected but not too often.
 			// New timestep is smaller.
 			if (fabs(dt_new/dt_done) < 1.0) {
