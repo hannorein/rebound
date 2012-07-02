@@ -46,13 +46,13 @@ extern double 	integrator_min_dt;	// Timestep floor.
 extern int 	integrator_adaptive_timestep;
 #endif // INTEGRATOR_RADAU15
 
-double massfac = 10;
-double distancefac = 10;
+double massfac = 1;
+double distancefac = 1;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G				= 1;
-	dt 				= 1e-3;
+	dt 				= 1e2;
 #ifdef INTEGRATOR_RADAU15
 	integrator_accuracy 		= 1e-3;
 	integrator_adaptive_timestep	= 1;
@@ -83,6 +83,8 @@ void output_dt(){
 	fprintf(of,"%e\t%e\n",t/period,dt/period);
 	fclose(of);
 }
+
+double tlast = 0;
 		
 void problem_output(){
 	// Output stuff

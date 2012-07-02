@@ -51,6 +51,8 @@
 #include "boundaries.h"
 #include "problem.h"
 #include "output.h"
+#include "tools.h"
+
 #ifdef TREE
 #error RADAU15 integrator not working with TREE module.
 #endif
@@ -319,38 +321,33 @@ int integrator_radau_step() {
 	const double dt_done = dt;
 
 	if (integrator_adaptive_timestep){
-		// Estimate suitable sequence size for the next call
-	//	double tmp = 0.0;
-	//	for(int k=0;k<N3;++k) {
-	//		double _fabsb6k = fabs(b[6][k]);
-	//		if (_fabsb6k>tmp) tmp = _fabsb6k;
-	//	}
-	//	if (tmp!=0.0) tmp /= (72.0 * pow(fabs(dt),7));
-
-	//	if (tmp < 1.0e-50) { // is equal to zero?
-	//		dt = dt_done * 1.4;
-	//	}else{
-	//		dt = copysign(pow(integrator_accuracy/tmp,0.1111111111111111),dt_done); // 1/9=0.111...
-	//	}
-		double tmp = fabs(a[0]/b[6][0]);
+		// Estimate error (given by last term in series expansion) 
+		double error = fabs(a[0]/b[6][0]);
 		for(int k=1;k<N3;++k) {
 			double _fabsb6k = fabs(a[k]/b[6][k]);
-			if (_fabsb6k<tmp) tmp = _fabsb6k;
+			if (_fabsb6k>0.0 && (_fabsb6k<error || error<=0.0)) error = _fabsb6k;
 		}
-		dt = pow(integrator_accuracy*tmp,1./15.)*dt_done; // 1/9=0.111...
-
-		if (fabs(dt/dt_done) < 1.0) {
-			dt = dt_done * 0.8;
-			if (dt<integrator_min_dt) dt = integrator_min_dt;
-			if (dt_done>integrator_min_dt){
-				particles = particles_in;
-				niter = 6;
-				return 0; // Step rejected. Do again. 
+		// Do not change timestep if all accelerations equal to zero.
+		if  (error>0.0){
+			double dt_new = pow(integrator_accuracy*error,1./15.)*dt_done; // 15 is the order of the scheme
+			const double safety_factor = 0.75;  // Empirically chosen so that timestep are occasionally rejected but not too often.
+			// New timestep is smaller.
+			if (fabs(dt_new/dt_done) < 1.0) {
+				dt_new = dt_done * safety_factor;
+				if (dt_new<integrator_min_dt) dt_new = integrator_min_dt;
+				if (dt_done>integrator_min_dt){
+					particles = particles_in;
+					niter = 6;
+					dt = dt_new;
+					return 0; // Step rejected. Do again. 
+				}
 			}
+			// New timestep is larger.
+			dt_new *= safety_factor;	// This safety_factor doesn't necesarily have to be the same as above
+			if (fabs(dt_new/dt_done) > 1./safety_factor) dt_new = dt_done /safety_factor;	// Don't increase the timestep by too much compared to the last one.
+			if (dt_new<integrator_min_dt) dt_new = integrator_min_dt;
+			dt = dt_new;
 		}
-
-		if (fabs(dt/dt_done) > 1.4) dt = dt_done * 1.4;
-		if (dt<integrator_min_dt) dt = integrator_min_dt;
 	}
 
 	// Find new position and velocity values at end of the sequence
