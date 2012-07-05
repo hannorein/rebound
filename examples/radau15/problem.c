@@ -69,14 +69,10 @@ double ss_mass[6] =
 };
 
 const double k	 	= 0.01720209895;	// Gaussian constant 
-#ifdef OPENGL
-extern int display_wire;
-#endif // OPENGL
 
 #ifdef INTEGRATOR_RADAU15
-extern int integrator_adaptive_timestep;	
 extern int integrator_force_is_velocitydependend;
-extern double integrator_accuracy;
+extern double integrator_epsilon;
 #endif // INTEGRATOR_RADAU15
 
 void velocity_dependent_force();
@@ -88,9 +84,6 @@ void problem_init(int argc, char* argv[]){
 	tmax		= 7.3e10;		// 200 Myr
 	G		= k*k;
 	problem_additional_forces = velocity_dependent_force;
-#ifdef OPENGL
-	display_wire	= 1;			// Show orbits.
-#endif // OPENGL
 	init_boxwidth(200); 			// Init box with width 200 astronomical units
 
 	// Initial conditions
@@ -103,9 +96,8 @@ void problem_init(int argc, char* argv[]){
 		particles_add(p); 
 	}
 #ifdef INTEGRATOR_RADAU15
-	integrator_adaptive_timestep 		= 1;	
 	integrator_force_is_velocitydependend	= 0;
-	integrator_accuracy			= 1e-5;
+	integrator_epsilon			= 1e-5;
 #endif // INTEGRATOR_RADAU15
 #ifdef INTEGRATOR_WH
 	// Move to heliocentric frame (required by WHM)
