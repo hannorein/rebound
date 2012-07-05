@@ -12,9 +12,8 @@
  *
  * The user might want to change the following variables in the 
  * problem.c file:
- * extern int integrator_adaptive_timestep;	
  * extern int integrator_force_is_velocitydependend;
- * extern double integrator_accuracy;
+ * extern double integrator_epsilon;
  * extern double integrator_min_dt;
  * 
  * 
@@ -60,9 +59,11 @@
 #error RADAU15 integrator not working with MPI.
 #endif
 
-int 	integrator_adaptive_timestep 		= 1;	// Turn this off to use a fixed timestep.
 int 	integrator_force_is_velocitydependend	= 1;	// Turn this off to safe some time if the force is not velocity dependend.
-double 	integrator_accuracy 			= 1e-6;	// Desired accuracy. Play with this, make sure you get a converged results.
+double 	integrator_epsilon 			= 0;	// Magnitude of last term in series expansion devided by the acceleration is smaller than this value or timestep is rejected. 
+							// Play with integrator_epsilon to make sure you get a converged results. 
+							// The true fractional error is often many orders of magnitude smaller.
+							// If it is zero, then a constant timestep is used (default). 
 double 	integrator_min_dt 			= 0;	// Minimum timestep used as a floor when adaptive timestepping is enabled.
 
 
@@ -322,7 +323,7 @@ int integrator_radau_step() {
 	}
 	const double dt_done = dt;
 
-	if (integrator_adaptive_timestep){
+	if (integrator_epsilon>0){
 		steps++;
 		FILE* of = fopen("a.txt","a+"); 
 		for(int k=1;k<N;k++) {
@@ -337,10 +338,9 @@ int integrator_radau_step() {
 			double errork = fabs(b[6][k]/a[k]);
 			if (!isnan(errork) && !isinf(errork) && errork>error) error = errork;
 		}
-	//	printf("%e\n",error);
 		// Do not change timestep if all accelerations equal to zero.
 		if  (error>0.0){
-			double dt_new = pow(integrator_accuracy/error,1./15.)*dt_done; // 15 is the order of the scheme
+			double dt_new = pow(integrator_epsilon/error,1./15.)*dt_done; // 15 is the order of the scheme
 			const double safety_factor = 0.75;  // Empirically chosen so that timestep are occasionally rejected but not too often.
 			// New timestep is smaller.
 			if (fabs(dt_new/dt_done) < 1.0) {
