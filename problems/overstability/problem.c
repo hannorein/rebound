@@ -76,7 +76,7 @@ void problem_init(int argc, char* argv[]){
 		double x,prob;
 		do{
 			x 	= tools_uniform(xmin,xmax);
-			prob 	= tools_uniform(0,tau+delta_tau/2.);
+			prob 	= tools_uniform(0,tau+delta_tau);
 		}while(prob> x/(xmax-xmin)*2.*delta_tau+tau);
 		p.x 	= x;
 		p.y 	= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
