@@ -33,7 +33,9 @@ void problem_init(int argc, char* argv[]){
 	dt				= 2.*M_PI/OMEGA*input_get_double(argc, argv, "dtorb",4e-3);
 	tmax 				= 2.*M_PI/OMEGA*input_get_double(argc, argv, "tmaxorb",500.);
 	
+	buffer_zone			= input_get_double(argc, argv, "buffer_zone",0);
 	tau 				= input_get_double(argc, argv, "tau",1.64);
+	double delta_tau		= input_get_double(argc, argv, "delta_tau",0);
 	coefficient_of_restitution 	= input_get_double(argc, argv, "eps",0.5);
 	root_nx 			= input_get_int(argc,argv,"root_nx",500);
 	root_ny 			= 1;
@@ -71,7 +73,12 @@ void problem_init(int argc, char* argv[]){
 	double _N = tau * (xmax-xmin) * boxsize_y/(M_PI*particle_r *particle_r);
 	while (N<_N&&xmax>xmin){
 		struct particle p;
-		p.x 	= tools_uniform(xmin,xmax);
+		double x,prob;
+		do{
+			x 	= tools_uniform(xmin,xmax);
+			prob 	= tools_uniform(0,tau+delta_tau/2.);
+		}while(prob> x/boxsize_x*delta_tau+tau);
+		p.x 	= x;
 		p.y 	= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
 		p.z 	= 10.0*((double)rand()/(double)RAND_MAX-0.5)*particle_r;
 		p.vx 	= 0;
@@ -90,12 +97,14 @@ void problem_init(int argc, char* argv[]){
 	output_int("N",N);
 	output_double("dt",dt);
 	output_double("tau",tau);
+	output_double("delta_tau",delta_tau);
 	output_double("coefficient_of_restitution",coefficient_of_restitution);
 	output_double("boxsize",boxsize);
 	output_double("boxsize_x",boxsize_x);
 	output_double("boxsize_y",boxsize_y);
 	output_double("boxsize_z",boxsize_z);
 	output_double("particle_r",particle_r);
+	output_double("buffer_zone",buffer_zone);
 	output_double("fft_lamda_min",boxsize_x/(double)fft_N);
 
 #ifdef MPI
