@@ -77,7 +77,7 @@ void problem_init(int argc, char* argv[]){
 		do{
 			x 	= tools_uniform(xmin,xmax);
 			prob 	= tools_uniform(0,tau+delta_tau/2.);
-		}while(prob> x/boxsize_x*delta_tau+tau);
+		}while(prob> x/(xmax-xmin)*2.*delta_tau+tau);
 		p.x 	= x;
 		p.y 	= ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
 		p.z 	= 10.0*((double)rand()/(double)RAND_MAX-0.5)*particle_r;
