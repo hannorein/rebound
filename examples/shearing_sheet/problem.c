@@ -52,13 +52,15 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 #ifdef GRAVITY_TREE
 	opening_angle2	= .5;
-#endif
+#endif // GRAVITY_TREE
 	OMEGA 				= 0.00013143527;	// 1/s
 	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
 	softening 			= 0.1;			// m
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
+#ifdef OPENGL
 	display_rotate_z		= 20;			// Rotate the box by 20 around the z axis, then 
 	display_rotate_x		= 60;			// rotate the box by 60 degrees around the x axis	
+#endif // OPENGL
 	root_nx = 2; root_ny = 2; root_nz = 1;
 	nghostx = 2; nghosty = 2; nghostz = 0; 			// Use two ghost rings
 	double surfacedensity 		= 400; 			// kg/m^2

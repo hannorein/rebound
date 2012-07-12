@@ -38,6 +38,8 @@ void display();
 void display_init(int argc, char* argv[]);
 
 extern int display_init_done;	/**< Is set to one when the display is initialized and can be drawn. This prevents errors when output_png() is called, but display not initialized yet. */
+#ifdef OPENGL
 extern double display_rotate_x;	/**< Rotate everything around the x-axis. */
 extern double display_rotate_z;	/**< Rotate everything around the z-axis. */
+#endif  // OPENGL
 #endif
