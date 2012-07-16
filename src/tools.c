@@ -203,10 +203,16 @@ struct particle tools_init_orbit2d(double M, double m, double a, double e, doubl
 }
 
 #define TINY 1.0e-12
-struct orbit tools_p2orbit(struct particle p, double cmass){
+struct orbit tools_p2orbit(struct particle p, struct particle star){
 	struct orbit o;
 	double h0,h1,h2,e0,e1,e2,n0,n1,n,er,vr,mu,ea;
-	mu = G*(p.m+cmass);
+	mu = G*(p.m+star.m);
+	p.x -= star.x;
+	p.y -= star.y;
+	p.z -= star.z;
+	p.vx -= star.vx;
+	p.vy -= star.vy;
+	p.vz -= star.vz;
 	h0 = (p.y*p.vz - p.z*p.vy); 			//angular momentum vector
 	h1 = (p.z*p.vx - p.x*p.vz);
 	h2 = (p.x*p.vy - p.y*p.vx);
