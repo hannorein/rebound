@@ -12,7 +12,7 @@
  *
  * The user might want to change the following variables in the 
  * problem.c file:
- * extern int integrator_force_is_velocitydependend;
+ * extern int integrator_force_is_velocitydependent;
  * extern double integrator_epsilon;
  * extern double integrator_min_dt;
  * 
@@ -59,7 +59,7 @@
 #error RADAU15 integrator not working with MPI.
 #endif
 
-int 	integrator_force_is_velocitydependend	= 1;	// Turn this off to safe some time if the force is not velocity dependend.
+int 	integrator_force_is_velocitydependent	= 1;	// Turn this off to safe some time if the force is not velocity dependent.
 double 	integrator_epsilon 			= 0;	// Magnitude of last term in series expansion devided by the acceleration is smaller than this value or timestep is rejected. 
 							// Play with integrator_epsilon to make sure you get a converged results. 
 							// The true fractional error is often many orders of magnitude smaller.
@@ -207,7 +207,7 @@ int integrator_radau_step() {
 				x[k] = 	s[8]*b[6][k] + s[7]*b[5][k] + s[6]*b[4][k] + s[5]*b[3][k] + s[4]*b[2][k] + s[3]*b[1][k] + s[2]*b[0][k] + s[1]*a1[k] + s[0]*v1[k] + x1[k];
 			}
 			
-			if (integrator_force_is_velocitydependend){
+			if (integrator_force_is_velocitydependent){
 				s[0] = dt * h[j];
 				s[1] = s[0] * h[j] * 0.5;
 				s[2] = s[1] * h[j] * 0.6666666666666667;

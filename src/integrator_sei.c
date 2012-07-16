@@ -127,7 +127,7 @@ void operator_H012(struct particle* p){
 /**
  * This function applies the acceleration.
  * It is only exact if the forces are velocity independet (i.e. gravity).
- * If the forces are velocity dependend, it breaks the symmetry of the scheme,
+ * If the forces are velocity dependent, it breaks the symmetry of the scheme,
  * making it firsr-order and non-symplectic. As long as these forces are small,
  * this should not be visible. However, it is worth keeping in mind. 
  * @param p Particle to evolve.

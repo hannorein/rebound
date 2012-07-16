@@ -99,7 +99,7 @@ void gravity_calculate_acceleration(){
 	
 	for(int i = 0 ; i < grid_NCOMPLEX ; i++) {
 #ifdef INTEGRATOR_SEI
-		// Compute time-dependant wave-vectors
+		// Compute time-dependent wave-vectors
 		kxt[i] = kx[i] + shift_shear/boxsize_y * ky[i];
 		k[i]  = sqrt( kxt[i]*kxt[i] + ky[i] * ky[i]);
 		// we will use 1/k, that prevents singularity 
