@@ -102,4 +102,9 @@ struct orbit tools_p2orbit(struct particle p, struct particle star);
  */
 void tools_move_to_center_of_momentum();
 
+/**
+ * Returns the center of mass of particle p1 and p2.
+ */
+struct particle tools_get_center_of_mass(struct particle p1, struct particle p2);
+
 #endif 	// TOOLS_H

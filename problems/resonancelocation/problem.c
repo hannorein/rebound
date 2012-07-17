@@ -50,7 +50,7 @@ void problem_migration_forces();
 void problem_init(int argc, char* argv[]){
 	system("rm -v *.txt");
 	// Setup constants
-	dt 		= 1e-3*2.*M_PI;
+	dt 		= 1.1234567e-3*2.*M_PI;
 	boxsize 	= 5;
 	init_box();
 
@@ -73,7 +73,7 @@ void problem_init(int argc, char* argv[]){
 	struct particle p2;	// Planet 2
 	p2.x 	= 1.62;	p2.y = 0; 	p2.z = 0;
 	p2.ax 	= 0;	p2.ay = 0; 	p2.az = 0;
-	p2.m  	= 1.e-6;
+	p2.m  	= 1.e-3;
 	p2.vy 	= sqrt(G*(star.m+p2.m+p1.m)/p2.x);
 	p2.vx 	= 0;	p2.vz = 0;
 	particles_add(p2); 
@@ -104,19 +104,7 @@ void problem_adot(){
 			p->vy  += 0.5 * (p->vx-com.vy)*tmpfac;
 			p->vz  += 0.5 * (p->vx-com.vz)*tmpfac;
 		}
-		com.x = com.x*com.m + particles[i].x*particles[i].m;		// This stuff ensures that the damping rates are calculated with respect to the center of mass
-		com.y = com.y*com.m + particles[i].y*particles[i].m;
-		com.z = com.z*com.m + particles[i].z*particles[i].m;
-		com.vx = com.vx*com.m + particles[i].vx*particles[i].m;
-		com.vy = com.vy*com.m + particles[i].vy*particles[i].m;
-		com.vz = com.vz*com.m + particles[i].vz*particles[i].m;
-		com.m += particles[i].m;
-		com.x /= com.m;
-		com.y /= com.m;
-		com.z /= com.m;
-		com.vx /= com.m;
-		com.vy /= com.m;
-		com.vz /= com.m;
+		com =tools_get_center_of_mass(com,particles[i]);
 	}
 }
 
@@ -146,19 +134,7 @@ void problem_edot(){
 			//vz
 			p->vz -= d * o.e * (     sin(o.inc) *      (tmpfac * sin(o.omega+o.f) + rfdote*cos(o.omega+o.f) ));
 		}
-		com.x = com.x*com.m + particles[i].x*particles[i].m;
-		com.y = com.y*com.m + particles[i].y*particles[i].m;
-		com.z = com.z*com.m + particles[i].z*particles[i].m;
-		com.vx = com.vx*com.m + particles[i].vx*particles[i].m;
-		com.vy = com.vy*com.m + particles[i].vy*particles[i].m;
-		com.vz = com.vz*com.m + particles[i].vz*particles[i].m;
-		com.m += particles[i].m;
-		com.x /= com.m;
-		com.y /= com.m;
-		com.z /= com.m;
-		com.vx /= com.m;
-		com.vy /= com.m;
-		com.vz /= com.m;
+		com =tools_get_center_of_mass(com,particles[i]);
 	}
 }
 
@@ -172,29 +148,10 @@ void problem_inloop(){
 }
 
 void output_period_ratio(char* filename){
-	struct particle com = particles[0];
-	double period1, period2;
-	for(int i=1;i<2;i++){
-		struct orbit o = tools_p2orbit(particles[i],com);
-		if (i==1) period1=o.P;
-		if (i==2) period2=o.P;
-		com.x = com.x*com.m + particles[i].x*particles[i].m;
-		com.y = com.y*com.m + particles[i].y*particles[i].m;
-		com.z = com.z*com.m + particles[i].z*particles[i].m;
-		com.vx = com.vx*com.m + particles[i].vx*particles[i].m;
-		com.vy = com.vy*com.m + particles[i].vy*particles[i].m;
-		com.vz = com.vz*com.m + particles[i].vz*particles[i].m;
-		com.m += particles[i].m;
-		com.x /= com.m;
-		com.y /= com.m;
-		com.z /= com.m;
-		com.vx /= com.m;
-		com.vy /= com.m;
-		com.vz /= com.m;
-	}
-	
+	struct orbit o1 = tools_p2orbit(particles[1],particles[0]);
+	struct orbit o2 = tools_p2orbit(particles[2],tools_get_center_of_mass(particles[0],particles[1]));
 	FILE* of = fopen(filename,"a+"); 
-	fprintf(of,"%e\t%e\n",t,period2/period1);
+	fprintf(of,"%e\t%e\n",t,o2.P/o1.P);
 	fclose(of);
 }
 
@@ -202,7 +159,7 @@ void problem_output(){
 	if(output_check(10000.*dt)){
 		output_timing();
 	}
-	if(output_check(5.)){
+	if(output_check(5.436542264)){
 		output_append_orbits("orbits.txt");
 		output_period_ratio("period_ratio.txt");
 	}

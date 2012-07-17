@@ -96,6 +96,23 @@ void tools_move_to_center_of_momentum(){
 	}
 }
 
+struct particle tools_get_center_of_mass(struct particle p1, struct particle p2){
+	p1.x   = p1.x*p1.m + p2.x*p2.m;		
+	p1.y   = p1.y*p1.m + p2.y*p2.m;
+	p1.z   = p1.z*p1.m + p2.z*p2.m;
+	p1.vx  = p1.vx*p1.m + p2.vx*p2.m;
+	p1.vy  = p1.vy*p1.m + p2.vy*p2.m;
+	p1.vz  = p1.vz*p1.m + p2.vz*p2.m;
+	p1.m  += p2.m;
+	p1.x  /= p1.m;
+	p1.y  /= p1.m;
+	p1.z  /= p1.m;
+	p1.vx /= p1.m;
+	p1.vy /= p1.m;
+	p1.vz /= p1.m;
+	return p1;
+}
+
 void tools_init_plummer(int _N, double mlow, double rfrac, int quiet, double scale, double* shift) {
 	struct particle* _particles = calloc(_N,sizeof(struct particle));
 	double scalefactor = (scale < 0 ?  16.0 / (3.0 * M_PI)  : scale);

@@ -221,23 +221,11 @@ void output_append_orbits(char* filename){
 		printf("\n\nError while opening file '%s'.\n",filename);
 		return;
 	}
-	struct particle star = particles[0];
+	struct particle com = particles[0];
 	for (int i=1;i<N;i++){
-		struct orbit o = tools_p2orbit(particles[i],star);
+		struct orbit o = tools_p2orbit(particles[i],com);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
-		star.x = star.x*star.m + particles[i].x*particles[i].m;
-		star.y = star.y*star.m + particles[i].y*particles[i].m;
-		star.z = star.z*star.m + particles[i].z*particles[i].m;
-		star.vx = star.vx*star.m + particles[i].vx*particles[i].m;
-		star.vy = star.vy*star.m + particles[i].vy*particles[i].m;
-		star.vz = star.vz*star.m + particles[i].vz*particles[i].m;
-		star.m += particles[i].m;
-		star.x /= star.m;
-		star.y /= star.m;
-		star.z /= star.m;
-		star.vx /= star.m;
-		star.vy /= star.m;
-		star.vz /= star.m;
+		tools_get_center_of_mass(com,particles[i]);
 	}
 	fclose(of);
 }
@@ -254,23 +242,11 @@ void output_orbits(char* filename){
 		printf("\n\nError while opening file '%s'.\n",filename);
 		return;
 	}
-	struct particle star = particles[0];
+	struct particle com = particles[0];
 	for (int i=1;i<N;i++){
-		struct orbit o = tools_p2orbit(particles[i],star);
-		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
-		star.x = star.x*star.m + particles[i].x*particles[i].m;
-		star.y = star.y*star.m + particles[i].y*particles[i].m;
-		star.z = star.z*star.m + particles[i].z*particles[i].m;
-		star.vx = star.vx*star.m + particles[i].vx*particles[i].m;
-		star.vy = star.vy*star.m + particles[i].vy*particles[i].m;
-		star.vz = star.vz*star.m + particles[i].vz*particles[i].m;
-		star.m += particles[i].m;
-		star.x /= star.m;
-		star.y /= star.m;
-		star.z /= star.m;
-		star.vx /= star.m;
-		star.vy /= star.m;
-		star.vz /= star.m;
+		struct orbit o = tools_p2orbit(particles[i],com);
+		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
+		tools_get_center_of_mass(com,particles[i]);
 	}
 	fclose(of);
 }
