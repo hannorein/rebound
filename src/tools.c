@@ -96,6 +96,25 @@ void tools_move_to_center_of_momentum(){
 	}
 }
 
+struct particle tools_get_center_of_mass(struct particle p1, struct particle p2){
+	p1.x   = p1.x*p1.m + p2.x*p2.m;		
+	p1.y   = p1.y*p1.m + p2.y*p2.m;
+	p1.z   = p1.z*p1.m + p2.z*p2.m;
+	p1.vx  = p1.vx*p1.m + p2.vx*p2.m;
+	p1.vy  = p1.vy*p1.m + p2.vy*p2.m;
+	p1.vz  = p1.vz*p1.m + p2.vz*p2.m;
+	p1.m  += p2.m;
+	if (p1.m>0.){
+		p1.x  /= p1.m;
+		p1.y  /= p1.m;
+		p1.z  /= p1.m;
+		p1.vx /= p1.m;
+		p1.vy /= p1.m;
+		p1.vz /= p1.m;
+	}
+	return p1;
+}
+
 void tools_init_plummer(int _N, double mlow, double rfrac, int quiet, double scale, double* shift) {
 	struct particle* _particles = calloc(_N,sizeof(struct particle));
 	double scalefactor = (scale < 0 ?  16.0 / (3.0 * M_PI)  : scale);
@@ -203,10 +222,16 @@ struct particle tools_init_orbit2d(double M, double m, double a, double e, doubl
 }
 
 #define TINY 1.0e-12
-struct orbit tools_p2orbit(struct particle p, double cmass){
+struct orbit tools_p2orbit(struct particle p, struct particle star){
 	struct orbit o;
 	double h0,h1,h2,e0,e1,e2,n0,n1,n,er,vr,mu,ea;
-	mu = G*(p.m+cmass);
+	mu = G*(p.m+star.m);
+	p.x -= star.x;
+	p.y -= star.y;
+	p.z -= star.z;
+	p.vx -= star.vx;
+	p.vy -= star.vy;
+	p.vz -= star.vz;
 	h0 = (p.y*p.vz - p.z*p.vy); 			//angular momentum vector
 	h1 = (p.z*p.vx - p.x*p.vz);
 	h2 = (p.x*p.vy - p.y*p.vx);

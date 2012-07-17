@@ -90,17 +90,21 @@ void tools_init_plummer(int _N, double mlow, double rfrac, int quiet, double sca
 struct particle tools_init_orbit2d(double M, double m, double a, double e, double omega, double f);
 
 /**
- * This function calculated orbital elements for a given particle. The center of
- * mass is assumed to be at the origin.
- * @param p Particle.
- * @param cmass Mass of the central object.
+ * This function calculated orbital elements for a given particle. 
+ * @param p Particle for which the orbit is calculated.
+ * @param star Star or central object particle
  * @return Orbital parameters. 
  */
-struct orbit tools_p2orbit(struct particle p, double cmass);
+struct orbit tools_p2orbit(struct particle p, struct particle star);
 
 /**
  * Move to center of momentum and center of mass frame.
  */
 void tools_move_to_center_of_momentum();
+
+/**
+ * Returns the center of mass of particle p1 and p2.
+ */
+struct particle tools_get_center_of_mass(struct particle p1, struct particle p2);
 
 #endif 	// TOOLS_H

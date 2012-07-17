@@ -9,8 +9,6 @@
  * stellar disc. The example reproduces the study of Lee & 
  * Peale (2002) on the formation of the planetary system 
  * GJ876. For a comparison, see figure 4 in their paper.
- * The RADAU15 integrator is used because the forces are
- * velocity dependent.
  *
  * 
  * @section 	LICENSE
@@ -39,71 +37,63 @@
 #include <time.h>
 #include "main.h"
 #include "tools.h"
-#include "problem.h"
 #include "output.h"
+#include "problem.h"
 #include "particle.h"
 #include "boundaries.h"
 
 double* tau_a; 	/**< Migration timescale in years for all particles */
 double* tau_e; 	/**< Eccentricity damping timescale in years for all particles */
+
 void problem_migration_forces();
 
-#ifdef OPENGL
-extern int display_wire;
-#endif 	// OPENGL
-
 void problem_init(int argc, char* argv[]){
+	system("rm -v *.txt");
 	// Setup constants
-	dt 		= 1e-2*2.*M_PI;
-	boxsize 	= 3;
-#ifdef OPENGL
-	display_wire 	= 1;
-#endif 	// OPENGL
+	dt 		= 1.1234567e-3*2.*M_PI;
+	boxsize 	= 5;
 	init_box();
 
 	// Initial conditions
-	// Parameters are those of Lee & Peale 2002, Figure 4. 
 	struct particle star;
 	star.x  = 0; star.y  = 0; star.z  = 0;
 	star.vx = 0; star.vy = 0; star.vz = 0;
 	star.ax = 0; star.ay = 0; star.az = 0;
-	star.m  = 0.32;		// This is a sub-solar mass star
+	star.m  = 1;
 	particles_add(star); 
 	
 	struct particle p1;	// Planet 1
-	p1.x 	= 0.5;	p1.y = 0;	p1.z = 0;
+	p1.x 	= 1;	p1.y = 0;	p1.z = 0;
 	p1.ax 	= 0;	p1.ay = 0; 	p1.az = 0;
-	p1.m  	= 0.56e-3;
+	p1.m  	= 1.e-3;
 	p1.vy 	= sqrt(G*(star.m+p1.m)/p1.x);
 	p1.vx 	= 0;	p1.vz = 0;
 	particles_add(p1); 
 	
-	struct particle p2;	// Planet 1
-	p2.x 	= 1;	p2.y = 0; 	p2.z = 0;
+	struct particle p2;	// Planet 2
+	p2.x 	= 1.62;	p2.y = 0; 	p2.z = 0;
 	p2.ax 	= 0;	p2.ay = 0; 	p2.az = 0;
-	p2.m  	= 1.89e-3;
-	p2.vy 	= sqrt(G*(star.m+p2.m)/p2.x);
+	p2.m  	= 1.e-3;
+	p2.vy 	= sqrt(G*(star.m+p2.m+p1.m)/p2.x);
 	p2.vx 	= 0;	p2.vz = 0;
 	particles_add(p2); 
 
 	tau_a = calloc(sizeof(double),N);
 	tau_e = calloc(sizeof(double),N);
 
-	tau_a[2] = 2.*M_PI*5000;	// Migration timescale of planet 2 is 5000 years.
-	tau_e[2] = tau_a[2]/10.; 	// Eccentricity damping timescale is 500 years (K=10). 
+	tau_a[2] = 2.*M_PI*40000.;	// Migration timescale of planet 2.
+	tau_e[2] = tau_a[2]/100.; 	// Eccentricity damping timescale of planet 2 (K=100). 
 
-	problem_additional_forces = problem_migration_forces; //Set function pointer to add dissipative forces.
-#ifndef INTEGRATOR_WH
-	tools_move_to_center_of_momentum();  	// The WH integrator assumes a heliocentric coordinate system.
-#endif // INTEGRATOR_WH
+	tools_move_to_center_of_momentum();
+	problem_additional_forces = problem_migration_forces;
 }
 
 // Semi-major axis damping
 void problem_adot(){
-	struct particle com = particles[0]; // calculate migration forces with respect to center of mass;
+	struct particle com = particles[0];
 	for(int i=1;i<N;i++){
 		if (tau_a[i]!=0){
-			const double tmpfac = dt/tau_a[i];
+			double tmpfac = dt/tau_a[i];
 			// position
 			struct particle* p = &(particles[i]);
 			p->x  -= (p->x-com.x)*tmpfac;
@@ -111,25 +101,25 @@ void problem_adot(){
 			p->z  -= (p->z-com.z)*tmpfac;
 			// velocity
 			p->vx  += 0.5 * (p->vx-com.vx)*tmpfac;
-			p->vy  += 0.5 * (p->vy-com.vy)*tmpfac;
-			p->vz  += 0.5 * (p->vz-com.vz)*tmpfac;
+			p->vy  += 0.5 * (p->vx-com.vy)*tmpfac;
+			p->vz  += 0.5 * (p->vx-com.vz)*tmpfac;
 		}
-		com = tools_get_center_of_mass(com,particles[i]);
+		com =tools_get_center_of_mass(com,particles[i]);
 	}
 }
 
 // Eccentricity damping
 // This one is more complicated as it needs orbital elements to compute the forces.
 void problem_edot(){
-	struct particle com = particles[0]; // calculate migration forces with respect to center of mass;
+	struct particle com = particles[0];
 	for(int i=1;i<N;i++){
 		if (tau_e[i]!=0){
+			double d = dt/tau_e[i];
 			struct particle* p = &(particles[i]);
 			struct orbit o = tools_p2orbit(*p,com);
 			double rdot  = o.h/o.a/( 1. - o.e*o.e ) * o.e * sin(o.f);
 			double rfdote = o.h/o.a/( 1. - o.e*o.e ) * ( 1. + o.e*cos(o.f) ) * (o.e + cos(o.f)) / (1.-o.e*o.e) / (1.+o.e*cos(o.f));
 			//position
-			const double d = dt/tau_e[i];
 			double tmpfac = d * (  o.r/(o.a*(1.-o.e*o.e)) - (1.+o.e*o.e)/(1.-o.e*o.e));
 			p->x -= tmpfac * (p->x-com.x);
 			p->y -= tmpfac * (p->y-com.y);
@@ -144,10 +134,12 @@ void problem_edot(){
 			//vz
 			p->vz -= d * o.e * (     sin(o.inc) *      (tmpfac * sin(o.omega+o.f) + rfdote*cos(o.omega+o.f) ));
 		}
-		com = tools_get_center_of_mass(com,particles[i]);
+		com =tools_get_center_of_mass(com,particles[i]);
 	}
 }
+
 void problem_migration_forces(){
+	if (t>4683.) return; // switch off migration
 	problem_adot();
 	problem_edot();
 }
@@ -155,12 +147,21 @@ void problem_migration_forces(){
 void problem_inloop(){
 }
 
+void output_period_ratio(char* filename){
+	struct orbit o1 = tools_p2orbit(particles[1],particles[0]);
+	struct orbit o2 = tools_p2orbit(particles[2],tools_get_center_of_mass(particles[0],particles[1]));
+	FILE* of = fopen(filename,"a+"); 
+	fprintf(of,"%e\t%e\n",t,o2.P/o1.P);
+	fclose(of);
+}
+
 void problem_output(){
 	if(output_check(10000.*dt)){
 		output_timing();
 	}
-	if(output_check(10.)){
+	if(output_check(5.436542264)){
 		output_append_orbits("orbits.txt");
+		output_period_ratio("period_ratio.txt");
 	}
 }
 
