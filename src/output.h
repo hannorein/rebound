@@ -57,16 +57,16 @@ void output_ascii(char* filename);
 
 /**
  * Outputs an ASCII file with orbital paramters of all particles.
- * @details The orbital parameters are calculated with respect to (x,y,z)=(0,0,0) 
- * and assume a stellar mass of 1.
+ * @details The orbital parameters are calculated with respect the center of mass.
+ * Particles are assumed to be sorted from the inside out, the central object having index 0.
  * @param filename Output filename.
  */
 void output_orbits(char* filename);
 
 /**
  * Appends an ASCII file with orbital paramters of all particles.
- * @details The orbital parameters are calculated with respect to (x,y,z)=(0,0,0) 
- * and assume a stellar mass of 1.
+ * @details The orbital parameters are calculated with respect the center of mass.
+ * Particles are assumed to be sorted from the inside out, the central object having index 0. 
  * @param filename Output filename.
  */
 void output_append_orbits(char* filename);

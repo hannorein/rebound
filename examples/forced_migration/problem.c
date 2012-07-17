@@ -9,6 +9,8 @@
  * stellar disc. The example reproduces the study of Lee & 
  * Peale (2002) on the formation of the planetary system 
  * GJ876. For a comparison, see figure 4 in their paper.
+ * The RADAU15 integrator is used because the forces are
+ * velocity dependent.
  *
  * 
  * @section 	LICENSE
@@ -37,12 +39,14 @@
 #include <time.h>
 #include "main.h"
 #include "tools.h"
+#include "problem.h"
 #include "output.h"
 #include "particle.h"
 #include "boundaries.h"
 
 double* tau_a; 	/**< Migration timescale in years for all particles */
 double* tau_e; 	/**< Eccentricity damping timescale in years for all particles */
+void problem_migration_forces();
 
 #ifdef OPENGL
 extern int display_wire;
@@ -50,7 +54,7 @@ extern int display_wire;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= 1e-3*2.*M_PI;
+	dt 		= 1e-2*2.*M_PI;
 	boxsize 	= 3;
 #ifdef OPENGL
 	display_wire 	= 1;
@@ -85,43 +89,51 @@ void problem_init(int argc, char* argv[]){
 	tau_a = calloc(sizeof(double),N);
 	tau_e = calloc(sizeof(double),N);
 
-	tau_a[2] = 125663.;		// Migration timescale of planet 2 is 20000 years.
-	tau_e[2] = tau_a[2]/100.; 	// Eccentricity damping timescale is 200 years (K=100). 
+	tau_a[2] = 2.*M_PI*5000;	// Migration timescale of planet 2 is 5000 years.
+	tau_e[2] = tau_a[2]/10.; 	// Eccentricity damping timescale is 500 years (K=10). 
+
+	problem_additional_forces = problem_migration_forces; //Set function pointer to add dissipative forces.
+#ifndef INTEGRATOR_WH
+	tools_move_to_center_of_momentum();  	// The WH integrator assumes a heliocentric coordinate system.
+#endif // INTEGRATOR_WH
 }
 
 // Semi-major axis damping
 void problem_adot(){
+	struct particle com = particles[0]; // calculate migration forces with respect to center of mass;
 	for(int i=1;i<N;i++){
 		if (tau_a[i]!=0){
-			double tmpfac = dt/tau_a[i];
+			const double tmpfac = dt/tau_a[i];
 			// position
 			struct particle* p = &(particles[i]);
-			p->x  -= p->x*tmpfac;
-			p->y  -= p->y*tmpfac;
-			p->z  -= p->z*tmpfac;
+			p->x  -= (p->x-com.x)*tmpfac;
+			p->y  -= (p->y-com.y)*tmpfac;
+			p->z  -= (p->z-com.z)*tmpfac;
 			// velocity
-			p->vx  += 0.5 * p->vx*tmpfac;
-			p->vy  += 0.5 * p->vy*tmpfac;
-			p->vz  += 0.5 * p->vz*tmpfac;
+			p->vx  += 0.5 * (p->vx-com.vx)*tmpfac;
+			p->vy  += 0.5 * (p->vy-com.vy)*tmpfac;
+			p->vz  += 0.5 * (p->vz-com.vz)*tmpfac;
 		}
+		com = tools_get_center_of_mass(com,particles[i]);
 	}
 }
 
 // Eccentricity damping
 // This one is more complicated as it needs orbital elements to compute the forces.
 void problem_edot(){
+	struct particle com = particles[0]; // calculate migration forces with respect to center of mass;
 	for(int i=1;i<N;i++){
 		if (tau_e[i]!=0){
-			double d = dt/tau_e[i];
 			struct particle* p = &(particles[i]);
-			struct orbit o = tools_p2orbit(*p,particles[0].m);
+			struct orbit o = tools_p2orbit(*p,com);
 			double rdot  = o.h/o.a/( 1. - o.e*o.e ) * o.e * sin(o.f);
 			double rfdote = o.h/o.a/( 1. - o.e*o.e ) * ( 1. + o.e*cos(o.f) ) * (o.e + cos(o.f)) / (1.-o.e*o.e) / (1.+o.e*cos(o.f));
 			//position
+			const double d = dt/tau_e[i];
 			double tmpfac = d * (  o.r/(o.a*(1.-o.e*o.e)) - (1.+o.e*o.e)/(1.-o.e*o.e));
-			p->x -= tmpfac * p->x;
-			p->y -= tmpfac * p->y;
-			p->z -= tmpfac * p->z;
+			p->x -= tmpfac * (p->x-com.x);
+			p->y -= tmpfac * (p->y-com.y);
+			p->z -= tmpfac * (p->z-com.z);
 			//vx
 			tmpfac = rdot/(o.e*(1.-o.e*o.e));
 			p->vx -= d * o.e * (   cos(o.Omega) *      (tmpfac * cos(o.omega+o.f) - rfdote*sin(o.omega+o.f) )
@@ -132,21 +144,18 @@ void problem_edot(){
 			//vz
 			p->vz -= d * o.e * (     sin(o.inc) *      (tmpfac * sin(o.omega+o.f) + rfdote*cos(o.omega+o.f) ));
 		}
+		com = tools_get_center_of_mass(com,particles[i]);
 	}
+}
+void problem_migration_forces(){
+	problem_adot();
+	problem_edot();
 }
 
 void problem_inloop(){
 }
 
 void problem_output(){
-	if (t>0){
-		// The damping is done at the end of the timestep rather than in the loop
-		// because we need the position and velocities at the same time to 
-		// calculate orbital elements. We also update both the positions 
-		// and velocities in these routines.
-		problem_adot();
-		problem_edot();
-	}
 	if(output_check(10000.*dt)){
 		output_timing();
 	}

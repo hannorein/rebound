@@ -104,12 +104,14 @@ struct particle tools_get_center_of_mass(struct particle p1, struct particle p2)
 	p1.vy  = p1.vy*p1.m + p2.vy*p2.m;
 	p1.vz  = p1.vz*p1.m + p2.vz*p2.m;
 	p1.m  += p2.m;
-	p1.x  /= p1.m;
-	p1.y  /= p1.m;
-	p1.z  /= p1.m;
-	p1.vx /= p1.m;
-	p1.vy /= p1.m;
-	p1.vz /= p1.m;
+	if (p1.m>0.){
+		p1.x  /= p1.m;
+		p1.y  /= p1.m;
+		p1.z  /= p1.m;
+		p1.vx /= p1.m;
+		p1.vy /= p1.m;
+		p1.vz /= p1.m;
+	}
 	return p1;
 }
 
