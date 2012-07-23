@@ -274,7 +274,7 @@ void drift_wh(double _dt){
 				if (iflag != 0) break;
 			}
 		}
-		etajm1 = etaj;
+		etajm1 = etaj;  // Fixed by Subo
 	}
 	// Testparticles
 #pragma omp parallel for schedule(guided)
