@@ -24,6 +24,8 @@ extern double minimum_collision_velocity;
 double buffer_zone = 0;
 double	tau;
 double particle_r;
+double particle_min_r;
+double particle_max_r;
 const int fft_N = 1024;
 
 void problem_init(int argc, char* argv[]){
@@ -44,7 +46,9 @@ void problem_init(int argc, char* argv[]){
 	nghosty 			= 1; 	
 	nghostz 			= 0;
 
-	particle_r 			= input_get_double(argc, argv, "particle_r",1);
+	particle_min_r 			= input_get_double(argc, argv, "particle_min_r",1);
+	particle_max_r			= input_get_double(argc, argv, "particle_max_r",1);
+	particle_r 			= (particle_max_r+particle_min_r)/2.;
 	boxsize 			= input_get_double(argc, argv, "boxsize",15.534876239824986);
 	init_box();
 	output_prepare_directory();
@@ -70,8 +74,10 @@ void problem_init(int argc, char* argv[]){
 		xmax = boxsize_x/2.-buffer_zone;
 	}
 
-	double _N = tau * (xmax-xmin) * boxsize_y/(M_PI*particle_r *particle_r);
-	while (N<_N&&xmax>xmin){
+	double area_total = tau * (xmax-xmin) * boxsize_y;
+	double area_added = 0;
+
+	while (area_added<area_total&&xmax>xmin){
 		struct particle p;
 		double x,prob;
 		do{
@@ -86,7 +92,8 @@ void problem_init(int argc, char* argv[]){
 		p.vz 	= 0;
 		p.ax 	= 0; p.ay 	= 0; p.az 	= 0;
 		p.m 	= 1.;
-		p.r 	= particle_r;
+		p.r 	= tools_powerlaw(particle_min_r, particle_max_r,-3);
+		area_added += p.r*p.r*M_PI;
 		particles_add(p);
 	}
 
@@ -103,7 +110,8 @@ void problem_init(int argc, char* argv[]){
 	output_double("boxsize_x",boxsize_x);
 	output_double("boxsize_y",boxsize_y);
 	output_double("boxsize_z",boxsize_z);
-	output_double("particle_r",particle_r);
+	output_double("particle_min_r",particle_min_r);
+	output_double("particle_max_r",particle_max_r);
 	output_double("buffer_zone",buffer_zone);
 	output_double("fft_lamda_min",boxsize_x/(double)fft_N);
 
@@ -181,17 +189,17 @@ void output_append_tau(char* filename){
 	double tau_photometric 	= 0;
 #pragma omp parallel for reduction(+:tau_geometric) reduction(+:tau_photometric)
 	for (int i=0;i<_N;i++){
-		double x = tools_uniform(-boxsize_x/2.+particle_r,boxsize_x/2.-particle_r); // random position
-		double y = tools_uniform(-boxsize_y/2.+particle_r,boxsize_y/2.-particle_r); // random position
-		int i1 = particle_close_to(x-particle_r)-1;
+		double x = tools_uniform(-boxsize_x/2.+particle_max_r,boxsize_x/2.-particle_max_r); // random position
+		double y = tools_uniform(-boxsize_y/2.+particle_max_r,boxsize_y/2.-particle_max_r); // random position
+		int i1 = particle_close_to(x-particle_max_r)-1;
 		i1 = i1<0?0:i1;
-		int i2 = particle_close_to(x+particle_r)+1;
+		int i2 = particle_close_to(x+particle_max_r)+1;
 		i2 = i2>=N?N-1:i2;
 		int tau = 0;
 		for(int j=i1; j<i2; j++){
 			struct particle p = particles[j];
 			double distance2 = (p.y-y)*(p.y-y)+(p.x-x)*(p.x-x);
-			if (distance2<particle_r*particle_r){
+			if (distance2<p.r*p.r){
 				tau+=1;
 			}
 		}
