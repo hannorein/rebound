@@ -37,7 +37,7 @@ void problem_init(int argc, char* argv[]){
 	tau 				= input_get_double(argc, argv, "tau",1.64);
 	double delta_tau		= input_get_double(argc, argv, "delta_tau",0);
 	coefficient_of_restitution 	= input_get_double(argc, argv, "eps",0.5);
-	root_nx 			= input_get_int(argc,argv,"root_nx",500);
+	root_nx 			= input_get_int(argc,argv,"root_nx",1200);
 	root_ny 			= 1;
 	root_nz 			= 8;
 	nghostx 			= 1; 	
