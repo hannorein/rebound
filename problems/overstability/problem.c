@@ -21,6 +21,8 @@ extern double OMEGA;
 extern double OMEGAZ;
 extern double coefficient_of_restitution; 
 extern double minimum_collision_velocity;
+extern double (*coefficient_of_restitution_for_velocity)(double); 
+double coefficient_of_restitution_bridges(double v); 
 double buffer_zone = 0;
 double	tau;
 double particle_r;
@@ -38,7 +40,12 @@ void problem_init(int argc, char* argv[]){
 	buffer_zone			= input_get_double(argc, argv, "buffer_zone",0);
 	tau 				= input_get_double(argc, argv, "tau",1.64);
 	double delta_tau		= input_get_double(argc, argv, "delta_tau",0);
-	coefficient_of_restitution 	= input_get_double(argc, argv, "eps",0.5);
+	if (input_get_int(argc,argv,"bridges",0)){
+		coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
+	}else{
+		coefficient_of_restitution 		= input_get_double(argc, argv, "eps",0.5);
+	}
+	
 	root_nx 			= input_get_int(argc,argv,"root_nx",1200);
 	root_ny 			= 1;
 	root_nz 			= 8;
@@ -119,6 +126,15 @@ void problem_init(int argc, char* argv[]){
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif // MPI
+}
+
+double coefficient_of_restitution_bridges(double v){
+	v *= 0.00013143527;	
+	// assumes v in units of [m/s]
+	double eps = 0.32*pow(fabs(v)*100.,-0.234);
+	if (eps>1) eps=1;
+	if (eps<0) eps=0;
+	return eps;
 }
 
 void output_append_energy(char* filename){
