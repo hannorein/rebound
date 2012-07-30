@@ -91,8 +91,8 @@ void problem_init(int argc, char* argv[]){
 		p.vy 	= -1.5*p.x*OMEGA;
 		p.vz 	= 0;
 		p.ax 	= 0; p.ay 	= 0; p.az 	= 0;
-		p.m 	= 1.;
 		p.r 	= tools_powerlaw(particle_min_r, particle_max_r,-3);
+		p.m 	= p.r*p.r*p.r;
 		area_added += p.r*p.r*M_PI;
 		particles_add(p);
 	}
