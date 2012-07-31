@@ -42,9 +42,9 @@ double collisions_constant_coefficient_of_restitution_for_velocity(double v);
 double (*coefficient_of_restitution_for_velocity) (double) = collisions_constant_coefficient_of_restitution_for_velocity;
 double 	collisions_plog =0;	/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
 long	collisions_Nlog =0;	/**< Keep track of Number of collisions. */
-void (*collision_resolve) (struct collision) = collision_resolve_hardsphere;
+double (*collision_resolve) (struct collision) = collision_resolve_hardsphere;
 
-void collision_resolve_hardsphere(struct collision c){
+double collision_resolve_hardsphere(struct collision c){
 #ifndef COLLISIONS_NONE
 	struct particle p1 = particles[c.p1];
 	struct particle p2;
@@ -66,11 +66,11 @@ void collision_resolve_hardsphere(struct collision c){
 	double y21  = p1.y + gb.shifty  - p2.y; 
 	double z21  = p1.z + gb.shiftz  - p2.z; 
 	double rp   = p1.r+p2.r;
-	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return;
+	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return 0;
 	double vx21 = p1.vx + gb.shiftvx - p2.vx; 
 	double vy21 = p1.vy + gb.shiftvy - p2.vy; 
 	double vz21 = p1.vz + gb.shiftvz - p2.vz; 
-	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return; // not approaching
+	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return 0; // not approaching
 	// Bring the to balls in the xy plane.
 	// NOTE: this could probabely be an atan (which is faster than atan2)
 	double theta = atan2(z21,y21);
@@ -103,8 +103,8 @@ void collision_resolve_hardsphere(struct collision c){
 
 	// Log y-momentum change
 	// This is not correct anymore!!
-	collisions_plog += fabs(dvy2nn*p1.m*x21);
-	collisions_Nlog++;
+	double _collisions_plog = fabs(dvy2nn*p1.m*x21);
+	//collisions_Nlog++;
 
 	// Applying the changes to the particles.
 #ifdef MPI
@@ -124,6 +124,7 @@ void collision_resolve_hardsphere(struct collision c){
 	particles[c.p1].vz +=	p1pf*dvz2nn; 
 	particles[c.p1].lastcollision = t;
 #endif // COLLISIONS_NONE
+	return _collisions_plog;
 }
 
 double collisions_constant_coefficient_of_restitution_for_velocity(double v){

@@ -47,7 +47,8 @@
 #include <omp.h>
 #endif
 
-
+extern double collisions_plog;
+extern long collisions_Nlog;
 double 	collisions_max_r	= 0;
 double 	collisions_max2_r	= 0;
 int	sweeps_proc		= 1;	/**< Number of processors used for seeping algorithm. */
@@ -389,8 +390,9 @@ void collisions_resolve(){
 	omp_lock_t boundarylock;
 	omp_init_lock(&boundarylock);
 #endif //OPENMP
-
-#pragma omp parallel for schedule (static,1)
+	double _collisions_plog = 0;
+	long _collisions_Nlog = 0;
+#pragma omp parallel for schedule (static,1) reduction(+,_collisions_plog,_collisions_Nlog)
 	for (int proci=0;proci<sweeps_proc;proci++){
 		struct collision* c = clist[proci].collisions;
 		int colN = clist[proci].N;
@@ -417,7 +419,11 @@ void collisions_resolve(){
 				omp_set_lock(&boundarylock);
 			}
 #endif //OPENMP
-			collision_resolve(c1);
+			double _plog = collision_resolve(c1);
+			if (_plog!=0){
+				_collisions_plog += _plog;
+				_collisions_Nlog += 1;
+			}
 #ifdef OPENMP
 			if (c1.crossing){
 				omp_unset_lock(&boundarylock);
@@ -433,6 +439,8 @@ void collisions_resolve(){
 		clist[proci].N = 0;
 		sweepx[proci].N = 0;
 	}
+	collisions_plog += _collisions_plog;
+	collisions_Nlog += _collisions_Nlog;
 #ifdef OPENMP
 	omp_destroy_lock(&boundarylock);
 #endif //OPENMP

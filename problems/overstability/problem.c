@@ -21,6 +21,8 @@ extern double OMEGA;
 extern double OMEGAZ;
 extern double coefficient_of_restitution; 
 extern double minimum_collision_velocity;
+extern double collisions_plog;
+extern long   collisions_Nlog;
 extern double (*coefficient_of_restitution_for_velocity)(double); 
 double coefficient_of_restitution_bridges(double v); 
 double buffer_zone = 0;
@@ -135,6 +137,27 @@ double coefficient_of_restitution_bridges(double v){
 	if (eps>1) eps=1;
 	if (eps<0) eps=0;
 	return eps;
+}
+
+double viscosity_last_output = 0;
+void output_append_viscosity(char* filename){
+	double viscosity_trans = 0;
+	double mass = 0;
+#pragma omp parallel for reduction(+:viscosity_trans,mass)
+	for (int i=0;i<N;i++){
+		struct particle p = particles[i];
+		const double vy = p.vy + 1.5*p.x*OMEGA;
+		viscosity_trans += p.m*p.vx*vy;
+		mass += p.m ;
+	}
+	viscosity_trans *= 2./3./OMEGA/mass;
+
+	double viscosity_coll = 2./3./OMEGA/mass/(t-viscosity_last_output)*collisions_plog;
+	viscosity_last_output=t;
+
+	FILE* of = fopen(filename,"a+"); 
+	fprintf(of,"%e\t%e\t%e\t%ld\n",t,viscosity_trans, viscosity_coll,collisions_Nlog);
+	fclose(of);
 }
 
 void output_append_energy(char* filename){
@@ -329,6 +352,7 @@ void problem_output(){
 	if (output_check(2.*M_PI)){
 		output_append_velocity_dispersion("vdisp.txt");
 		output_append_energy("energy.txt");
+		output_append_viscosity("viscosity.txt");
 	}
 	if (output_check(50.*2.*M_PI)){
 		char filename[1024];
