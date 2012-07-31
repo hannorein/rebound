@@ -392,7 +392,7 @@ void collisions_resolve(){
 #endif //OPENMP
 	double _collisions_plog = 0;
 	long _collisions_Nlog = 0;
-#pragma omp parallel for schedule (static,1) reduction(+,_collisions_plog,_collisions_Nlog)
+#pragma omp parallel for schedule (static,1) reduction(+:_collisions_plog,_collisions_Nlog)
 	for (int proci=0;proci<sweeps_proc;proci++){
 		struct collision* c = clist[proci].collisions;
 		int colN = clist[proci].N;

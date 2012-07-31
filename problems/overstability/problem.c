@@ -153,11 +153,13 @@ void output_append_viscosity(char* filename){
 	viscosity_trans *= 2./3./OMEGA/mass;
 
 	double viscosity_coll = 2./3./OMEGA/mass/(t-viscosity_last_output)*collisions_plog;
-	viscosity_last_output=t;
 
 	FILE* of = fopen(filename,"a+"); 
 	fprintf(of,"%e\t%e\t%e\t%ld\n",t,viscosity_trans, viscosity_coll,collisions_Nlog);
 	fclose(of);
+	
+	viscosity_last_output = t;
+	collisions_Nlog = 0;
 }
 
 void output_append_energy(char* filename){
