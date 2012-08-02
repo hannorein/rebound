@@ -160,6 +160,8 @@ void output_append_viscosity(char* filename){
 	
 	viscosity_last_output = t;
 	collisions_Nlog = 0;
+	collisions_plog = 0;
+	
 }
 
 void output_append_energy(char* filename){
