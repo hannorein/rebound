@@ -116,9 +116,9 @@ void problem_migration_forces(){
 				const double dx = p->x-com.x;
 				const double dy = p->y-com.y;
 				const double r  = sqrt(dx*dx + dy*dy);
-				double gamma = G*com.m;
-				p->ax +=    (p->vx-com.vx)/(1.-o.e*o.e) /tau_e[i] + dy/r * sqrt(gamma/o.a/(1.-o.e*o.e)) /tau_e[i];
-				p->ay +=    (p->vy-com.vy)/(1.-o.e*o.e) /tau_e[i] - dx/r * sqrt(gamma/o.a/(1.-o.e*o.e)) /tau_e[i];
+				double gamma = G*(com.m+p->m);
+				p->ax +=  ( (p->vx-com.vx)/(1.-o.e*o.e) + dy/r * sqrt(gamma/o.a/(1.-o.e*o.e)) ) /tau_e[i];
+				p->ay +=  ( (p->vy-com.vy)/(1.-o.e*o.e) - dx/r * sqrt(gamma/o.a/(1.-o.e*o.e)) ) /tau_e[i];
 				
 			}
 		}
