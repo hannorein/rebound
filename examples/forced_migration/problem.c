@@ -56,6 +56,7 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 		= 1e-2*2.*M_PI;
 	boxsize 	= 3;
+	tmax		= 5000.*2.*M_PI;
 #ifdef OPENGL
 	display_wire 	= 1;
 #endif 	// OPENGL
@@ -96,60 +97,33 @@ void problem_init(int argc, char* argv[]){
 #ifndef INTEGRATOR_WH
 	tools_move_to_center_of_momentum();  	// The WH integrator assumes a heliocentric coordinate system.
 #endif // INTEGRATOR_WH
+
+	system("rm -v orbits.txt"); // delete previous output file
 }
 
-// Semi-major axis damping
-void problem_adot(){
+void problem_migration_forces(){
 	struct particle com = particles[0]; // calculate migration forces with respect to center of mass;
 	for(int i=1;i<N;i++){
-		if (tau_a[i]!=0){
-			const double tmpfac = dt/tau_a[i];
-			// position
-			struct particle* p = &(particles[i]);
-			p->x  -= (p->x-com.x)*tmpfac;
-			p->y  -= (p->y-com.y)*tmpfac;
-			p->z  -= (p->z-com.z)*tmpfac;
-			// velocity
-			p->vx  += 0.5 * (p->vx-com.vx)*tmpfac;
-			p->vy  += 0.5 * (p->vy-com.vy)*tmpfac;
-			p->vz  += 0.5 * (p->vz-com.vz)*tmpfac;
-		}
-		com = tools_get_center_of_mass(com,particles[i]);
-	}
-}
-
-// Eccentricity damping
-// This one is more complicated as it needs orbital elements to compute the forces.
-void problem_edot(){
-	struct particle com = particles[0]; // calculate migration forces with respect to center of mass;
-	for(int i=1;i<N;i++){
-		if (tau_e[i]!=0){
+		if (tau_e[i]!=0||tau_a[i]!=0){
 			struct particle* p = &(particles[i]);
 			struct orbit o = tools_p2orbit(*p,com);
-			double rdot  = o.h/o.a/( 1. - o.e*o.e ) * o.e * sin(o.f);
-			double rfdote = o.h/o.a/( 1. - o.e*o.e ) * ( 1. + o.e*cos(o.f) ) * (o.e + cos(o.f)) / (1.-o.e*o.e) / (1.+o.e*cos(o.f));
-			//position
-			const double d = dt/tau_e[i];
-			double tmpfac = d * (  o.r/(o.a*(1.-o.e*o.e)) - (1.+o.e*o.e)/(1.-o.e*o.e));
-			p->x -= tmpfac * (p->x-com.x);
-			p->y -= tmpfac * (p->y-com.y);
-			p->z -= tmpfac * (p->z-com.z);
-			//vx
-			tmpfac = rdot/(o.e*(1.-o.e*o.e));
-			p->vx -= d * o.e * (   cos(o.Omega) *      (tmpfac * cos(o.omega+o.f) - rfdote*sin(o.omega+o.f) )
-						-cos(o.inc) * sin(o.Omega) * (tmpfac * sin(o.omega+o.f) + rfdote*cos(o.omega+o.f) ));
-			//vy
-			p->vy -= d * o.e * (   sin(o.Omega) *      (tmpfac * cos(o.omega+o.f) - rfdote*sin(o.omega+o.f) )
-						+cos(o.inc) * cos(o.Omega) * (tmpfac * sin(o.omega+o.f) + rfdote*cos(o.omega+o.f) ));
-			//vz
-			p->vz -= d * o.e * (     sin(o.inc) *      (tmpfac * sin(o.omega+o.f) + rfdote*cos(o.omega+o.f) ));
+			if (tau_a[i]!=0){ 	// Migration
+				p->ax +=  -(p->vx-com.vx)/(2.*tau_a[i]);
+				p->ay +=  -(p->vy-com.vy)/(2.*tau_a[i]);
+				p->az +=  -(p->vz-com.vz)/(2.*tau_a[i]);
+			}
+			if (tau_e[i]!=0){ 	// Eccentricity damping
+				const double dx = p->x-com.x;
+				const double dy = p->y-com.y;
+				const double r  = sqrt(dx*dx + dy*dy);
+				double gamma = G*com.m;
+				p->ax +=    (p->vx-com.vx)/(1.-o.e*o.e) /tau_e[i] + dy/r * sqrt(gamma/o.a/(1.-o.e*o.e)) /tau_e[i];
+				p->ay +=    (p->vy-com.vy)/(1.-o.e*o.e) /tau_e[i] - dx/r * sqrt(gamma/o.a/(1.-o.e*o.e)) /tau_e[i];
+				
+			}
 		}
 		com = tools_get_center_of_mass(com,particles[i]);
 	}
-}
-void problem_migration_forces(){
-	problem_adot();
-	problem_edot();
 }
 
 void problem_inloop(){
