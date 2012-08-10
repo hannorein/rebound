@@ -2,6 +2,7 @@
  * @file 	problem.c
  * @brief 	Example problem: forced migration of GJ876.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * 		Willy Kley <kley@uni-tuebingen.de>
  * @detail 	This example applies dissipative forces to two
  * bodies orbiting a central object. The forces are specified
  * in terms of damping timescales for the semi-major axis and
@@ -11,6 +12,8 @@
  * GJ876. For a comparison, see figure 4 in their paper.
  * The RADAU15 integrator is used because the forces are
  * velocity dependent.
+ * Special thanks goes to Willy Kley for helping me to implement
+ * the damping terms as actual forces. 
  *
  * 
  * @section 	LICENSE
@@ -56,7 +59,7 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 		= 1e-2*2.*M_PI;
 	boxsize 	= 3;
-	tmax		= 5000.*2.*M_PI;
+	tmax		= 4.5e4*2.*M_PI;
 #ifdef OPENGL
 	display_wire 	= 1;
 #endif 	// OPENGL
@@ -72,31 +75,30 @@ void problem_init(int argc, char* argv[]){
 	particles_add(star); 
 	
 	struct particle p1;	// Planet 1
-	double p1e = 0.;
-	p1.x 	= 0.5*(1.-p1e);	p1.y = 0;	p1.z = 0;
+	p1.x 	= 0.5;	p1.y = 0;	p1.z = 0;
 	p1.ax 	= 0;	p1.ay = 0; 	p1.az = 0;
 	p1.m  	= 0.56e-3;
-	p1.vy 	= sqrt(G*(star.m+p1.m)/p1.x*(1.+p1e));
-	p1.vx 	= 0;	p1.vz = 0;
+	p1.vz 	= sqrt(G*(star.m+p1.m)/p1.x);
+	p1.vx 	= 0;	p1.vy = 0;
 	particles_add(p1); 
 	
-	struct particle p2;	// Planet 1
+	struct particle p2;	// Planet 2
 	p2.x 	= 1;	p2.y = 0; 	p2.z = 0;
 	p2.ax 	= 0;	p2.ay = 0; 	p2.az = 0;
 	p2.m  	= 1.89e-3;
-	p2.vy 	= sqrt(G*(star.m+p2.m)/p2.x);
-	p2.vx 	= 0;	p2.vz = 0;
+	p2.vz 	= sqrt(G*(star.m+p2.m)/p2.x);
+	p2.vx 	= 0;	p2.vy = 0;
 	particles_add(p2); 
 
 	tau_a = calloc(sizeof(double),N);
 	tau_e = calloc(sizeof(double),N);
 
-	tau_a[2] = 2.*M_PI*5000;	// Migration timescale of planet 2 is 5000 years.
-	tau_e[2] = 2.*M_PI*500; 	// Eccentricity damping timescale is 500 years (K=10). 
+	tau_a[2] = 2.*M_PI*20000.0;	// Migration timescale of planet 2 is 20000 years.
+	tau_e[2] = 2.*M_PI*200.0; 	// Eccentricity damping timescale is 200 years (K=100). 
 
-	problem_additional_forces = problem_migration_forces; //Set function pointer to add dissipative forces.
+	problem_additional_forces = problem_migration_forces; 	//Set function pointer to add dissipative forces.
 #ifndef INTEGRATOR_WH
-	tools_move_to_center_of_momentum();  	// The WH integrator assumes a heliocentric coordinate system.
+	tools_move_to_center_of_momentum();  			// The WH integrator assumes a heliocentric coordinate system.
 #endif // INTEGRATOR_WH
 
 	system("rm -v orbits.txt"); // delete previous output file
@@ -152,8 +154,11 @@ void problem_output(){
 	if(output_check(10000.*dt)){
 		output_timing();
 	}
-	if(output_check(10.)){
+	if(output_check(40.)){
 		output_append_orbits("orbits.txt");
+#ifndef INTEGRATOR_WH
+		tools_move_to_center_of_momentum();  			// The WH integrator assumes a heliocentric coordinate system.
+#endif // INTEGRATOR_WH
 	}
 }
 
