@@ -72,10 +72,11 @@ void problem_init(int argc, char* argv[]){
 	particles_add(star); 
 	
 	struct particle p1;	// Planet 1
-	p1.x 	= 0.5;	p1.y = 0;	p1.z = 0;
+	double p1e = 0.;
+	p1.x 	= 0.5*(1.-p1e);	p1.y = 0;	p1.z = 0;
 	p1.ax 	= 0;	p1.ay = 0; 	p1.az = 0;
 	p1.m  	= 0.56e-3;
-	p1.vy 	= sqrt(G*(star.m+p1.m)/p1.x);
+	p1.vy 	= sqrt(G*(star.m+p1.m)/p1.x*(1.+p1e));
 	p1.vx 	= 0;	p1.vz = 0;
 	particles_add(p1); 
 	
@@ -91,7 +92,7 @@ void problem_init(int argc, char* argv[]){
 	tau_e = calloc(sizeof(double),N);
 
 	tau_a[2] = 2.*M_PI*5000;	// Migration timescale of planet 2 is 5000 years.
-	tau_e[2] = tau_a[2]/10.; 	// Eccentricity damping timescale is 500 years (K=10). 
+	tau_e[2] = 2.*M_PI*500; 	// Eccentricity damping timescale is 500 years (K=10). 
 
 	problem_additional_forces = problem_migration_forces; //Set function pointer to add dissipative forces.
 #ifndef INTEGRATOR_WH
@@ -106,20 +107,38 @@ void problem_migration_forces(){
 	for(int i=1;i<N;i++){
 		if (tau_e[i]!=0||tau_a[i]!=0){
 			struct particle* p = &(particles[i]);
-			struct orbit o = tools_p2orbit(*p,com);
+			const double dvx = p->vx-com.vx;
+			const double dvy = p->vy-com.vy;
+			const double dvz = p->vz-com.vz;
+
 			if (tau_a[i]!=0){ 	// Migration
-				p->ax +=  -(p->vx-com.vx)/(2.*tau_a[i]);
-				p->ay +=  -(p->vy-com.vy)/(2.*tau_a[i]);
-				p->az +=  -(p->vz-com.vz)/(2.*tau_a[i]);
+				p->ax -=  dvx/(2.*tau_a[i]);
+				p->ay -=  dvy/(2.*tau_a[i]);
+				p->az -=  dvz/(2.*tau_a[i]);
 			}
 			if (tau_e[i]!=0){ 	// Eccentricity damping
+				const double mu = G*(com.m + p->m);
 				const double dx = p->x-com.x;
 				const double dy = p->y-com.y;
-				const double r  = sqrt(dx*dx + dy*dy);
-				double gamma = G*(com.m+p->m);
-				p->ax +=  ( (p->vx-com.vx)/(1.-o.e*o.e) + dy/r * sqrt(gamma/o.a/(1.-o.e*o.e)) ) /tau_e[i];
-				p->ay +=  ( (p->vy-com.vy)/(1.-o.e*o.e) - dx/r * sqrt(gamma/o.a/(1.-o.e*o.e)) ) /tau_e[i];
-				
+				const double dz = p->z-com.z;
+
+				const double hx = dy*dvz - dz*dvy; 
+				const double hy = dz*dvx - dx*dvz;
+				const double hz = dx*dvy - dy*dvx;
+				const double h = sqrt ( hx*hx + hy*hy + hz*hz );
+				const double v = sqrt ( dvx*dvx + dvy*dvy + dvz*dvz );
+				const double r = sqrt ( dx*dx + dy*dy + dz*dz );
+				const double vr = (dx*dvx + dy*dvy + dz*dvz)/r;
+				const double ex = 1./mu*( (v*v-mu/r)*dx - r*vr*dvx );
+				const double ey = 1./mu*( (v*v-mu/r)*dy - r*vr*dvy );
+				const double ez = 1./mu*( (v*v-mu/r)*dz - r*vr*dvz );
+				const double e = sqrt( ex*ex + ey*ey + ez*ez );		// eccentricity
+				const double a = -mu/( v*v - 2.*mu/r );			// semi major axis
+				const double prefac1 = 1./(1.-e*e) /tau_e[i]/1.5;
+				const double prefac2 = 1./(r*h) * sqrt(mu/a/(1.-e*e))  /tau_e[i]/1.5;
+				p->ax += -dvx*prefac1 + (hy*dz-hz*dy)*prefac2;
+				p->ay += -dvy*prefac1 + (hz*dx-hx*dz)*prefac2;
+				p->az += -dvz*prefac1 + (hx*dy-hy*dx)*prefac2;
 			}
 		}
 		com = tools_get_center_of_mass(com,particles[i]);
