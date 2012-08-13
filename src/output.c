@@ -225,7 +225,7 @@ void output_append_orbits(char* filename){
 	for (int i=1;i<N;i++){
 		struct orbit o = tools_p2orbit(particles[i],com);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
-		tools_get_center_of_mass(com,particles[i]);
+		com = tools_get_center_of_mass(com,particles[i]);
 	}
 	fclose(of);
 }
@@ -246,7 +246,7 @@ void output_orbits(char* filename){
 	for (int i=1;i<N;i++){
 		struct orbit o = tools_p2orbit(particles[i],com);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
-		tools_get_center_of_mass(com,particles[i]);
+		com = tools_get_center_of_mass(com,particles[i]);
 	}
 	fclose(of);
 }
