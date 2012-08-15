@@ -1,9 +1,9 @@
 #!/bin/bash
 #$ -t 1-256
-#$ -N kepler
+#$ -N overarray
 #$ -cwd
 #$ -V
-#$ -l h_rt=6:00:00
+#$ -l h_rt=48:00:00
 #$ -R y 
 #$ -w w
 #$ -o pbs.out

@@ -53,7 +53,7 @@ void problem_init(int argc, char* argv[]){
 	OMEGA 				= 1.;
 	OMEGAZ 				= 3.6;
 	dt				= 2.*M_PI/OMEGA*input_get_double(argc, argv, "dtorb",4e-3);
-	tmax 				= 2.*M_PI/OMEGA*input_get_double(argc, argv, "tmaxorb",333);
+	tmax 				= 2.*M_PI/OMEGA*input_get_double(argc, argv, "tmaxorb",10000);
 	
 	buffer_zone			= input_get_double(argc, argv, "buffer_zone",0);
 	double delta_tau		= input_get_double(argc, argv, "delta_tau",0);
