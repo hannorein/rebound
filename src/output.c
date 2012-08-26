@@ -144,10 +144,10 @@ void output_timing(){
 				printf("Boundary check ");
 				break;
 			case PROFILING_CAT_GRAVITY:
-				printf("Gravity        ");
+				printf("Gravity/Forces ");
 				break;
 			case PROFILING_CAT_COLLISION:
-				printf("Collision      ");
+				printf("Collisions     ");
 				break;
 #ifdef OPENGL
 			case PROFILING_CAT_VISUALIZATION:
@@ -221,9 +221,11 @@ void output_append_orbits(char* filename){
 		printf("\n\nError while opening file '%s'.\n",filename);
 		return;
 	}
+	struct particle com = particles[0];
 	for (int i=1;i<N;i++){
-		struct orbit o = tools_p2orbit(particles[i],particles[0].m);
+		struct orbit o = tools_p2orbit(particles[i],com);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
+		com = tools_get_center_of_mass(com,particles[i]);
 	}
 	fclose(of);
 }
@@ -240,9 +242,11 @@ void output_orbits(char* filename){
 		printf("\n\nError while opening file '%s'.\n",filename);
 		return;
 	}
+	struct particle com = particles[0];
 	for (int i=1;i<N;i++){
-		struct orbit o = tools_p2orbit(particles[i],particles[0].m);
-		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
+		struct orbit o = tools_p2orbit(particles[i],com);
+		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
+		com = tools_get_center_of_mass(com,particles[i]);
 	}
 	fclose(of);
 }
@@ -372,7 +376,7 @@ void output_prepare_directory(){
 	char dirname[4096] = "out__";
 	strcat(dirname,input_arguments);
 #ifdef MPI
-	if (mpi_num==0){
+	if (mpi_id==0){
 #endif // MPI
 	char tmpsystem[4096];
 	sprintf(tmpsystem,"rm -rf %s",dirname);

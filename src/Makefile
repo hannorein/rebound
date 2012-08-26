@@ -1,4 +1,4 @@
-OPT+= -std=c99
+OPT+= -std=c99 -Wpointer-arith
 ifndef OS
 	OS=$(shell uname)
 endif
@@ -26,13 +26,11 @@ ifeq ($(FFTW), 1)
 endif
 
 ifeq ($(OPENGL), 1)
-ifeq ($(OS), Linux)
-	PREDEF+= -DOPENGL
-	LIB+= -lglut 
-endif
+PREDEF+= -DOPENGL
 ifeq ($(OS), Darwin)
-	PREDEF+= -DOPENGL
 	LIB+= -framework OpenGL -framework GLUT
+else
+	LIB+= -lGL -lGLU -lglut 
 endif
 
 ifeq ($(LIBPNG), 1)
