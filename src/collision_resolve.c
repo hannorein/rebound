@@ -130,9 +130,9 @@ double collision_resolve_hardsphere(struct collision c){
 	
 	// Return y-momentum change
 	if (x21>0){
-		return -(oldvyouter-particles[c.p1].vy) * p1.m;
+		return -fabs(x21)*(oldvyouter-particles[c.p1].vy) * p1.m;
 	}else{
-		return -(oldvyouter-particles[c.p2].vy) * p2.m;
+		return -fabs(x21)*(oldvyouter-particles[c.p2].vy) * p2.m;
 	}
 }
 
