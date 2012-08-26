@@ -1,0 +1,12 @@
+#!/bin/bash
+
+rm heights.txt
+
+for dir in out_tau* 
+do
+	echo $dir
+	cd $dir 
+	gnuplot ../makeheight.plt
+	cat fit.log | tail -n 7 | head -n 1 | awk "{print `echo ${dir:7}`,\$3}" >> ../heights.txt
+	cd ..
+done
