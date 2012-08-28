@@ -1,6 +1,6 @@
 #!/bin/bash
 #$ -t 1-256
-#$ -N kepler
+#$ -N overstabilityarray
 #$ -cwd
 #$ -V
 #$ -l h_rt=6:00:00
