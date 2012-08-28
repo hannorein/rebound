@@ -22,14 +22,17 @@ plot "Kinetic-0.5-1.dat" u 2:1 t "kinetic theory" w l, "<cat heights.txt | sort 
 set origin 0.33,0.5
 set lmargin at screen 0.33+0.05
 set rmargin at screen 0.66-0.01
-set ylabel "viscosity {/Symbol n}"
+set ylabel "viscosity {/Symbol n}_{total}"
 plot \
-'Kinetic-0.5-1.dat' 		u 2:($7) 			t "{/Symbol n}_{col} kinetic theory" w l ls 1, \
-'Kinetic-0.5-1.dat' 		u 2:(-2./3.*$5) 		t "{/Symbol n}_{trans} kinetic theory" w l ls 2, \
-"<cat out*/data.txt | sort -g" 	u 1:($7) 			t "{/Symbol n}_{col} simulation" ls 3 w p, \
-"<cat out*/data.txt | sort -g" 	u 1:(2./3.*$12) 		t "{/Symbol n}_{trans} simulation" ls 4 w p
-#"<cat out*/data.txt | sort -g" u 1:($7+2./3.*$12) t "{/Symbol n}_{total} simulation" ls 1, \
-#"Kinetic-0.5-1.dat" u 2:($7-2./3.*$5) t "{/Symbol n}_{total} kinetic theory" w l, \
+"Kinetic-0.5-1.dat" 		u 2:(2./3.*$7-2./3.*$5) 	t "kinetic theory" w l, \
+"<cat out*/data.txt | sort -g" 	u 1:($7+2./3.*$12) 		t "simulation" ls 1 
+
+# 'Kinetic-0.5-1.dat' 		u 2:(2./3.*$7) 			t "{/Symbol n}_{col} kinetic theory" w l ls 1, \
+# 'Kinetic-0.5-1.dat' 		u 2:(-2./3.*$5) 		t "{/Symbol n}_{trans} kinetic theory" w l ls 2, \
+# "Kinetic-0.5-1.dat" 		u 2:(2./3.*$7-2./3.*$5) 	t "{/Symbol n}_{total} kinetic theory" w l, \
+# "<cat out*/data.txt | sort -g" 	u 1:($7) 			t "{/Symbol n}_{col} simulation" ls 3 w p, \
+# "<cat out*/data.txt | sort -g" 	u 1:(2./3.*$12) 		t "{/Symbol n}_{trans} simulation" ls 4 w p, \
+# "<cat out*/data.txt | sort -g" 	u 1:($7+2./3.*$12) 		t "{/Symbol n}_{total} simulation" ls 1 w p
 
 set origin 0.66,0.5
 set lmargin at screen 0.66+0.05
