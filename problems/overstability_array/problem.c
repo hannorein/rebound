@@ -40,6 +40,7 @@ void problem_init(int argc, char* argv[]){
 		tau 					= input_get_double(argc, argv, "tau",1.64);
 		coefficient_of_restitution 		= input_get_double(argc, argv, "eps",0.5);
 	}else{
+		// Setup a grid of 16x16 simulations
 		int ntau = 16;
 		int neps = 16;
 		int itau = id%neps;

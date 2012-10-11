@@ -31,6 +31,7 @@
 #include <math.h>
 #include <time.h>
 #include "main.h"
+#include "tools.h"
 #include "output.h"
 #include "particle.h"
 #include "boundaries.h"
@@ -57,16 +58,9 @@ void problem_init(int argc, char* argv[]){
 		_N = atoi(argv[1]);
 	}
 
-	const double shift = 0.0; // Change this number to put particles on eccetric orbits.
+	double eccentricity = 0.4;
 	for(int n=0; n<_N; n++){
-		p.x  = cos(2.*M_PI/(double)(_N)*(double)(n)) + shift;
-		p.y  = sin(2.*M_PI/(double)(_N)*(double)(n));
-		p.z  = 0;
-		p.vx = cos(2.*M_PI/(double)(_N)*(double)(n)+M_PI/2.);
-		p.vy = sin(2.*M_PI/(double)(_N)*(double)(n)+M_PI/2.);
-		p.vz = 0;
-		p.ax = 0; p.ay = 0; p.az = 0;
-		p.m  = 0;
+		struct particle p = tools_init_orbit2d(1., 0., 1., eccentricity, 0.,2.*M_PI/(double)(_N)*(double)(n));
 		particles_add(p); // Test particle
 	}
 }

@@ -65,6 +65,8 @@ int display_wire = 0;		/**< Shows/hides orbit wires. */
 int display_clear = 1;		/**< Toggles clearing the display on each draw. */
 int display_ghostboxes = 0;	/**< Shows/hides ghost boxes. */
 int display_reference = -1;	/**< Particle used as a reference for rotation. */
+double display_rotate_x = 0;	/**< Rotate everything around the x-axis. */
+double display_rotate_z = 0;	/**< Rotate everything around the z-axis. */
 #define DEG2RAD (M_PI/180.)
 
 /**
@@ -212,6 +214,8 @@ void display(){
 	if (display_reference>=0){
 		glTranslatef(-particles[display_reference].x,-particles[display_reference].y,-particles[display_reference].z);
 	}
+	glRotatef(display_rotate_x,1,0,0);
+	glRotatef(display_rotate_z,0,0,1);
 	for (int i=-display_ghostboxes*nghostx;i<=display_ghostboxes*nghostx;i++){
 	for (int j=-display_ghostboxes*nghosty;j<=display_ghostboxes*nghosty;j++){
 	for (int k=-display_ghostboxes*nghostz;k<=display_ghostboxes*nghostz;k++){
@@ -249,8 +253,9 @@ void display(){
 		}
 		// Drawing wires
 		if (display_wire){
-#ifdef INTEGRATOR_WH
+#ifndef INTEGRATOR_SEI
 			double radius = 0;
+			struct particle com = particles[0];
 			for (int i=1;i<N;i++){
 				struct particle p = particles[i];
 				if (N_active>0){
@@ -268,9 +273,10 @@ void display(){
 						glColor4f(0.0,0.0,1.0,0.9);
 					}
 				}
-				struct orbit o = tools_p2orbit(p,particles[0].m);
+				struct orbit o = tools_p2orbit(p,com);
 				glPushMatrix();
 				
+				glTranslatef(com.x,com.y,com.z);
 				glRotatef(o.Omega/DEG2RAD,0,0,1);
 				glRotatef(o.inc/DEG2RAD,1,0,0);
 				glRotatef(o.omega/DEG2RAD,0,0,1);
@@ -283,8 +289,9 @@ void display(){
 				}
 				glEnd();
 				glPopMatrix();
+				com = tools_get_center_of_mass(p,com);
 			}
-#else 	// INTEGRATOR_WH
+#else 	// INTEGRATOR_SEI
 			for (int i=1;i<N;i++){
 				struct particle p = particles[i];
 				glBegin(GL_LINE_LOOP);
@@ -296,7 +303,7 @@ void display(){
 				glEnd();
 			}
 
-#endif 	// INTEGRATOR_WH
+#endif 	// INTEGRATOR_SEI
 		}
 		// Drawing Tree
 		glColor4f(1.0,0.0,0.0,0.4);
@@ -314,6 +321,8 @@ void display(){
 	glScalef(boxsize_x,boxsize_y,boxsize_z);
 	glutWireCube(1);
 	glScalef(1./boxsize_x,1./boxsize_y,1./boxsize_z);
+	glRotatef(-display_rotate_z,0,0,1);
+	glRotatef(-display_rotate_x,1,0,0);
 	if (display_reference>=0){
 		glTranslatef(particles[display_reference].x,particles[display_reference].y,particles[display_reference].z);
 	}

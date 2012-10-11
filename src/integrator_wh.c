@@ -6,7 +6,7 @@
  * This scheme is second order accurate, symplectic and well suited for 
  * systems where there is one dominant mass and all particles are nearly on 
  * Keplerian orbits. Note that the scheme is formally only first order 
- * accurate when velocity dependend forces are present.
+ * accurate when velocity dependent forces are present.
  * Particles should be sorted by increasing semi-major axis because the 
  * integrator transforms the positions and velocities to Jacobi coordinates
  * during the timestep and assumes that the particles are sorted.
@@ -274,7 +274,7 @@ void drift_wh(double _dt){
 				if (iflag != 0) break;
 			}
 		}
-		etaj = etajm1;
+		etajm1 = etaj;  // Fixed by Subo
 	}
 	// Testparticles
 #pragma omp parallel for schedule(guided)

@@ -58,4 +58,9 @@ void problem_inloop();
  * reason (e.g. user interaction or crash). 
  */ 
 void problem_finish();
+
+/*
+ * This function allows the user to add additional (non-gravitational) forces.
+ */
+extern void (*problem_additional_forces) ();
 #endif //_PROBLEM_H

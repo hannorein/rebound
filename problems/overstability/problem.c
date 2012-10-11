@@ -4,7 +4,9 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
+#ifdef FFTW
 #include <fftw3.h>
+#endif //FFTW
 #ifdef OPENMP
 #include <omp.h>
 #endif //OPENMP
@@ -256,6 +258,7 @@ void output_append_tau(char* filename){
 
 }
 
+#ifdef FFTW
 fftw_complex* fft_in 	= NULL;
 double* fft_in_N 	= NULL;
 fftw_complex* fft_out	= NULL;
@@ -321,26 +324,8 @@ void output_fft(){
 	}
 	fftw_execute(fft_p);
 	fft_write_to_file("fft_density.txt");
-
-	// ******* Velocity ********
-	/*
-	fft_empty_data();
-	for (int i=0;i<N;i++){
-		struct particle p = particles[i];
-		int j = ((int)(floor((p.x + boxsize_x/2.)/boxsize_x*(double)fft_N))+fft_N)%fft_N;
-		fft_in[j][0] += sqrt(p.vx*p.vx + (p.vy+1.5*OMEGA*p.x)*(p.vy+1.5*OMEGA*p.x) + p.vz*p.vz);
-		fft_in_N[j]  += 1.0;
-	}
-#pragma omp parallel for 
-	for (int i=0;i<fft_N;i++){
-		if (fft_in_N[i]>0){
-			fft_in[i][0] /= fft_in_N[i] * sqrt_fft_N;
-		}
-	}
-	fftw_execute(fft_p);
-	fft_write_to_file("fft_velocity.txt");
-	*/
 }
+#endif //FFTW
 
 extern void collisions_sweep_shellsort_particles();
 void problem_output(){
@@ -365,7 +350,9 @@ void problem_output(){
 	}
 	if (output_check(12.242342345*2.*M_PI)){
 		output_append_tau("tau.txt");
+#ifdef FFTW
 		output_fft();
+#endif //FFTW
 	}
 }
 
