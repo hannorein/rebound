@@ -33,6 +33,9 @@
 #include "boundaries.h"
 #include "communication_mpi.h"
 
+#define MAX(a, b) ((a) < (b) ? (b) : (a))
+
+
 double coefficient_of_restitution = 1;
 double minimum_collision_velocity = 0;
 double collisions_constant_coefficient_of_restitution_for_velocity(double v);
@@ -59,11 +62,16 @@ void collision_resolve_hardsphere(struct collision c){
 #endif // MPI
 //	if (p1.lastcollision==t || p2.lastcollision==t) return;
 	struct ghostbox gb = c.gb;
-	double m21  = p1.m  /  p2.m; 
 	double x21  = p1.x + gb.shiftx  - p2.x; 
 	double y21  = p1.y + gb.shifty  - p2.y; 
 	double z21  = p1.z + gb.shiftz  - p2.z; 
 	double rp   = p1.r+p2.r;
+	double oldvyouter;
+	if (x21>0){
+	 	oldvyouter = p1.vy;
+	}else{
+		oldvyouter = p2.vy;
+	}
 	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return;
 	double vx21 = p1.vx + gb.shiftvx - p2.vx; 
 	double vy21 = p1.vy + gb.shiftvy - p2.vy; 
@@ -85,37 +93,49 @@ void collision_resolve_hardsphere(struct collision c){
 
 	// Coefficient of restitution
 	double eps= coefficient_of_restitution_for_velocity(vx21nn);
-	double dvx2 = -(1.0+eps)*vx21nn/(1.0+m21) ;
-	if (dvx2<minimum_collision_velocity){
-		dvx2 = minimum_collision_velocity;
-	}
-
+	double dvx2 = -(1.0+eps)*vx21nn;
+	double minr = (p1.r>p2.r)?p2.r:p1.r;
+	double maxr = (p1.r<p2.r)?p2.r:p1.r;
+	double mindv= minr*minimum_collision_velocity;
+	double r = sqrt(x21*x21 + y21*y21 + z21*z21);
+	mindv *= 1.-(r - maxr)/minr;
+	if (mindv>maxr*minimum_collision_velocity)mindv = maxr*minimum_collision_velocity;
+	if (dvx2<mindv) dvx2 = mindv;
 	// Now we are rotating backwards
 	double dvx2n = cphi * dvx2;		
 	double dvy2n = sphi * dvx2;		
 	double dvy2nn = ctheta * dvy2n;	
 	double dvz2nn = stheta * dvy2n;	
 
-	// Log y-momentum change
-	collisions_plog += fabs(dvy2nn*p1.m*x21);
-	collisions_Nlog++;
 
 	// Applying the changes to the particles.
 #ifdef MPI
 	if (isloc==1){
 #endif // MPI
-		particles[c.p2].vx -=	m21*dvx2n;
-		particles[c.p2].vy -=	m21*dvy2nn;
-		particles[c.p2].vz -=	m21*dvz2nn;
-		particles[c.p2].lastcollision = t;
+	const double p2pf = p1.m/(p1.m+p2.m);
+	particles[c.p2].vx -=	p2pf*dvx2n;
+	particles[c.p2].vy -=	p2pf*dvy2nn;
+	particles[c.p2].vz -=	p2pf*dvz2nn;
+	particles[c.p2].lastcollision = t;
 #ifdef MPI
 	}
 #endif // MPI
-	particles[c.p1].vx +=	dvx2n; 
-	particles[c.p1].vy +=	dvy2nn; 
-	particles[c.p1].vz +=	dvz2nn; 
+	const double p1pf = p2.m/(p1.m+p2.m);
+	particles[c.p1].vx +=	p1pf*dvx2n; 
+	particles[c.p1].vy +=	p1pf*dvy2nn; 
+	particles[c.p1].vz +=	p1pf*dvz2nn; 
 	particles[c.p1].lastcollision = t;
 #endif // COLLISIONS_NONE
+	
+	
+	// Return y-momentum change
+	if (x21>0){
+		collisions_plog += -fabs(x21)*(oldvyouter-particles[c.p1].vy) * p1.m;
+		collisions_Nlog ++;
+	}else{
+		collisions_plog += -fabs(x21)*(oldvyouter-particles[c.p2].vy) * p2.m;
+		collisions_Nlog ++;
+	}
 }
 
 double collisions_constant_coefficient_of_restitution_for_velocity(double v){
