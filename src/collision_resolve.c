@@ -125,9 +125,7 @@ void collision_resolve_hardsphere(struct collision c){
 	particles[c.p1].vy +=	p1pf*dvy2nn; 
 	particles[c.p1].vz +=	p1pf*dvz2nn; 
 	particles[c.p1].lastcollision = t;
-#endif // COLLISIONS_NONE
-	
-	
+		
 	// Return y-momentum change
 	if (x21>0){
 		collisions_plog += -fabs(x21)*(oldvyouter-particles[c.p1].vy) * p1.m;
@@ -136,6 +134,8 @@ void collision_resolve_hardsphere(struct collision c){
 		collisions_plog += -fabs(x21)*(oldvyouter-particles[c.p2].vy) * p2.m;
 		collisions_Nlog ++;
 	}
+
+#endif // COLLISIONS_NONE
 }
 
 double collisions_constant_coefficient_of_restitution_for_velocity(double v){
