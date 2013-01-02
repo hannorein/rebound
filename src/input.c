@@ -147,10 +147,10 @@ void input_binary(char* filename){
 #else // MPI
 	FILE* inf = fopen(filename,"rb"); 
 #endif // MPI
-	long bytes = 0;
+	long objects = 0;
 	int _N;
-	bytes += fread(&_N,sizeof(int),1,inf);
-	bytes += fread(&t,sizeof(double),1,inf);
+	objects += fread(&_N,sizeof(int),1,inf);
+	objects += fread(&t,sizeof(double),1,inf);
 #ifdef MPI
 	printf("Found %d particles in file '%s'. ",_N,filename_mpi);
 #else // MPI
@@ -158,10 +158,10 @@ void input_binary(char* filename){
 #endif // MPI
 	for (int i=0;i<_N;i++){
 		struct particle p;
-		bytes += fread(&p,sizeof(struct particle),1,inf);
+		objects += fread(&p,sizeof(struct particle),1,inf);
 		particles_add(p);
 	}
 	fclose(inf);
-	printf("%ld bytes read. Restarting at time t=%f\n",bytes,t);
+	printf("%ld objects read. Restarting at time t=%f\n",objects,t);
 }
 
