@@ -16,7 +16,7 @@ On YouTube, http://youtu.be/gaExPGW1WzI?hd=1, you can find a promo video on how 
 Screenshot
 ---------- 
  
-![Tree structure in REBOUND](/hannorein/rebound/raw/master/doc/images/screenshot_shearingsheet.png) 
+![Tree structure in REBOUND](./raw/master/doc/images/screenshot_shearingsheet.png) 
 
 Available modules
 -----------------
