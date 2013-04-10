@@ -1,6 +1,7 @@
 PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
 export OPT=-O3 
 export OPENGL=1
+export LIBPNG=0
 
 all:
 	# Setup link to different modules

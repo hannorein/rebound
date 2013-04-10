@@ -60,6 +60,9 @@ void problem_init(int argc, char* argv[]){
 #ifdef OPENGL
 	display_rotate_z		= 20;			// Rotate the box by 20 around the z axis, then 
 	display_rotate_x		= 60;			// rotate the box by 60 degrees around the x axis	
+#ifdef LIBPNG
+	system("mkdir png");
+#endif // LIBPNG
 #endif // OPENGL
 	root_nx = 2; root_ny = 2; root_nz = 1;
 	nghostx = 2; nghosty = 2; nghostz = 0; 			// Use two ghost rings
