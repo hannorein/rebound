@@ -67,17 +67,12 @@ double tools_normal(double variance);
 
 /**
  * This function sets up a Plummer sphere.
- * @details This function is based on a routine from the NEMO package, P. Teuben (1995).
- * For details on the implementation see the Appendix of Aarseth, Henon and Wielen (1974). 
  * @param _N Number of particles in the plummer sphere.
- * @param mlow Lower mass fraction cutoff (can be 0).
- * @param rfrac Upper radius cutoff (the Plummer sphere is formally an inifitely large object).
- * @param quiet Noisyness of the model, 0=noise, 1=medium, 2=quiet.
- * @param scale Scales the final model before adding it to the simulation.
- * @param shift Shift the entire sphere in position and velocity space (6 values). 
+ * @param M Total mass of the cluster.
+ * @param R Characteristic radius of the cluster.
  */
 
-void tools_init_plummer(int _N, double mlow, double rfrac, int quiet, double scale, double* shift);
+void tools_init_plummer(int _N, double M, double R);
 
 /**
  * Initialize a particle on an orbit in the xy plane.

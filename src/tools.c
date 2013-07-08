@@ -115,88 +115,46 @@ struct particle tools_get_center_of_mass(struct particle p1, struct particle p2)
 	return p1;
 }
 
-void tools_init_plummer(int _N, double mlow, double rfrac, int quiet, double scale, double* shift) {
-	struct particle* _particles = calloc(_N,sizeof(struct particle));
-	double scalefactor = (scale < 0 ?  16.0 / (3.0 * M_PI)  : scale);
-	double inv_scalefactor = 1.0 / scalefactor;
-	double sqrt_scalefactor = sqrt( scalefactor );
-	rfrac *= scalefactor;          /* from VIRIAL to STRUCTURAL units */
-	double mfrac = rfrac*rfrac*rfrac / pow(1.0 + rfrac*rfrac, 1.5);
+void tools_init_plummer(int _N, double M, double R) {
+	// Algorithm from:	
+	// http://adsabs.harvard.edu/abs/1974A%26A....37..183A
+	
+	double E = 3./64.*M_PI*M*M/R;
+	for (int i=0;i<_N;i++){
+		struct particle star;
+		double r = pow(pow(tools_uniform(0,1),-2./3.)-1.,-1./2.);
+		double x2 = tools_uniform(0,1);
+		double x3 = tools_uniform(0,2.*M_PI);
+		star.z = (1.-2.*x2)*r;
+		star.x = sqrt(r*r-star.z*star.z)*cos(x3);
+		star.y = sqrt(r*r-star.z*star.z)*sin(x3);
+		double x5,g,q;
+		do{
+			x5 = tools_uniform(0.,1.);
+			q = tools_uniform(0.,1.);
+			g = q*q*pow(1.-q*q,7./2.);
+		}while(0.1*x5>g);
+		double ve = pow(2.,1./2.)*pow(1.+r*r,-1./4.);
+		double v = q*ve;
+		double x6 = tools_uniform(0.,1.);
+		double x7 = tools_uniform(0.,2.*M_PI);
+		star.vz = (1.-2.*x6)*v;
+		star.vx = sqrt(v*v-star.vz*star.vz)*cos(x7);
+		star.vy = sqrt(v*v-star.vz*star.vz)*sin(x7);
+		
+		star.x *= 3.*M_PI/64.*M*M/E;
+		star.y *= 3.*M_PI/64.*M*M/E;
+		star.z *= 3.*M_PI/64.*M*M/E;
+		
+		star.vx *= sqrt(E*64./3./M_PI/M);
+		star.vy *= sqrt(E*64./3./M_PI/M);
+		star.vz *= sqrt(E*64./3./M_PI/M);
 
-	// Setup particles
-	for (int i = 0; i < _N; i++) {
-		_particles[i].m = 1.0/ (double) _N;
-		double radius = 0;
-		if (quiet==0){
-			radius = 1.0 / sqrt( pow (tools_uniform(mlow,mfrac), -2.0/3.0) - 1.0);
-		} else if (quiet==1) {
-			double m_min = (i * mfrac)/(double)_N;
-			double m_max = ((i+1) * mfrac)/(double)_N;
-			radius = 1.0 / sqrt( pow (tools_uniform(m_min,m_max), -2.0/3.0) - 1.0);
-		} else if (quiet==2) {
-			double m_med = ((i+0.5) * mfrac)/(double)_N;
-			radius = 1.0 / sqrt( pow (m_med, -2.0/3.0) - 1.0);
-		} 	
-		double theta = acos(tools_uniform(-1.0, 1.0));
-		double phi = tools_uniform(0.0, 2.*M_PI);
-		_particles[i].x = radius * sin( theta ) * cos( phi );
-		_particles[i].y = radius * sin( theta ) * sin( phi );
-		_particles[i].z = radius * cos( theta );
-		double x = 0.0;
-		double y = 0.1;
-		while (y > x*x*pow( 1.0 - x*x, 3.5)) {
-			x = tools_uniform(0.0,1.0);
-			y = tools_uniform(0.0,0.1);
-		}
-		double velocity = x * sqrt(2.0) * pow( 1.0 + radius*radius, -0.25);
-		theta = acos(tools_uniform(-1.0, 1.0));
-		phi = tools_uniform(0.0,2.*M_PI);
-		_particles[i].vx = velocity * sin( theta ) * cos( phi );
-		_particles[i].vy = velocity * sin( theta ) * sin( phi );
-		_particles[i].vz = velocity * cos( theta );
+		star.m = M/(double)_N;
 
-	}
 
-	// Scale model and calculate center of mass.
-	double w_x  = 0, w_y  = 0, w_z  = 0;
-	double w_vx = 0, w_vy = 0, w_vz = 0;
-	for (int i = 0; i < _N; i++) {
-		_particles[i].x  *= inv_scalefactor;
-		_particles[i].y  *= inv_scalefactor;
-		_particles[i].z  *= inv_scalefactor;
-		_particles[i].vx *= sqrt_scalefactor;
-		_particles[i].vy *= sqrt_scalefactor;
-		_particles[i].vz *= sqrt_scalefactor;
-		w_x  += _particles[i].x;
-		w_y  += _particles[i].y;
-		w_z  += _particles[i].z;
-		w_vx += _particles[i].vx;
-		w_vy += _particles[i].vy;
-		w_vz += _particles[i].vz;
+		particles_add(star);
 	}
-	double w_ins = 1./(double)_N;
-	w_x *= w_ins;
-	w_y *= w_ins;
-	w_z *= w_ins;
-	w_x -= shift[0];
-	w_y -= shift[1];
-	w_z -= shift[2];
-	w_vx *= w_ins;
-	w_vy *= w_ins;
-	w_vz *= w_ins;
-	w_vx -= shift[3];
-	w_vy -= shift[4];
-	w_vz -= shift[5];
-	for (int i = 0; i < _N; i++) {
-		_particles[i].x -= w_x;
-		_particles[i].y -= w_y;
-		_particles[i].z -= w_z;
-		_particles[i].vx -= w_vx;
-		_particles[i].vy -= w_vy;
-		_particles[i].vz -= w_vz;
-		particles_add(_particles[i]);
-	}
-	free(_particles);
 }
 
 struct particle tools_init_orbit2d(double M, double m, double a, double e, double omega, double f){
