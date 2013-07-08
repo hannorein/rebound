@@ -61,7 +61,7 @@ void gravity_calculate_acceleration_for_particle(const int pt, const struct ghos
   * @param node Pointer to the cell the force is calculated from.
   * @param gb Ghostbox plus position of the particle (precalculated). 
   */
-void gravity_calculate_acceleration_for_particle_from_cell(const int pt, const struct cell const *node, const struct ghostbox const gb);
+void gravity_calculate_acceleration_for_particle_from_cell(const int pt, const struct cell *node, const struct ghostbox gb);
 
 void gravity_calculate_acceleration(){
 	softening2 = softening*softening;
@@ -99,7 +99,7 @@ void gravity_calculate_acceleration_for_particle(const int pt, const struct ghos
 	}
 }
 
-void gravity_calculate_acceleration_for_particle_from_cell(const int pt, const struct cell const *node, const struct ghostbox const gb) {
+void gravity_calculate_acceleration_for_particle_from_cell(const int pt, const struct cell *node, const struct ghostbox gb) {
 	double dx = gb.shiftx - node->mx;
 	double dy = gb.shifty - node->my;
 	double dz = gb.shiftz - node->mz;
