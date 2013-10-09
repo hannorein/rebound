@@ -325,13 +325,6 @@ int integrator_radau_step() {
 
 	if (integrator_epsilon>0){
 		steps++;
-		FILE* of = fopen("a.txt","a+"); 
-		for(int k=1;k<N;k++) {
-			double ac = sqrt( a[k*3+0]*a[k*3+0] + a[k*3+1]*a[k*3+1] + a[k*3+2]*a[k*3+2] ); 
-			double rc2 = particles_in[k].x*particles_in[k].x + particles_in[k].y*particles_in[k].y + particles_in[k].z*particles_in[k].z  ; 
-			fprintf(of,"%e\t%e\n",steps,fabs(ac-1./rc2)*rc2);
-		}
-		fclose(of);
 		// Estimate error (given by last term in series expansion) 
 		double error = 0.0;
 		for(int k=0;k<N3;++k) {
