@@ -323,7 +323,6 @@ int integrator_radau_step() {
 	const double dt_done = dt;
 
 	if (integrator_epsilon>0){
-		steps++;
 		// Estimate error (given by last term in series expansion) 
 		double error = 0.0;
 		for(int k=0;k<N3;++k) {
