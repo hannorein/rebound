@@ -139,7 +139,6 @@ void integrator_part2(){
 	while(!integrator_radau_step());
 }
  
-double steps = 0;
   
 int integrator_radau_step() {
 	const int N3 = 3*N;
