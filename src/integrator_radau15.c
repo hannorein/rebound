@@ -65,6 +65,9 @@ double 	integrator_epsilon 			= 0;	// Magnitude of last term in series expansion
 							// The true fractional error is often many orders of magnitude smaller.
 							// If it is zero, then a constant timestep is used (default). 
 double 	integrator_min_dt 			= 0;	// Minimum timestep used as a floor when adaptive timestepping is enabled.
+double	integrator_error			= 0;	// Error estimate in last timestep (used for debugging only)
+unsigned int integrator_iterations_max		= 10;	// Maximum number of iterations in predictor/corrector loop
+unsigned long integrator_iterations_max_exceeded= 0;	// Count how many times the iteration did not converge
 
 
 const double h[8]	= { 0.0, 0.05626256053692215, 0.18024069173689236, 0.35262471711316964, 0.54715362633055538, 0.73421017721541053, 0.88532094683909577, 0.97752061356128750}; // Gauss Radau spacings
@@ -73,7 +76,6 @@ const double vc[7] 	= { 0.5, 0.3333333333333333, 0.25, 0.2, 0.1666666666666667, 
 
 double r[28],c[21],d[21],s[9]; // These constants will be set dynamically.
 
-unsigned int niter 		= 6;	// Number of iterations (6 initially and if timestep was rejected, 2 otherwise)
 int N3allocated 		= 0; 	// Size of allocated arrays.
 int integrator_radau_init_done 	= 0;	// Calculate coefficients once.
 
@@ -139,7 +141,6 @@ void integrator_part2(){
 	while(!integrator_radau_step());
 }
  
-  
 int integrator_radau_step() {
 	const int N3 = 3*N;
 	if (N3 > N3allocated) {
@@ -159,15 +160,13 @@ int integrator_radau_step() {
 		v1 = realloc(v1,sizeof(double)*N3);
 		a1 = realloc(a1,sizeof(double)*N3);
 		particles_out = realloc(particles_out,sizeof(struct particle)*N);
-		
 		N3allocated = N3;
-		niter = 6;
 	}
 	
 	struct particle* particles_in  = particles;
 	// integrator_update_acceleration(); // Not needed. Forces are already calculated in main routine.
 
-	for(int k=0;k<N;++k) {
+	for(int k=0;k<N;k++) {
 		x1[3*k]   = particles[k].x;
 		x1[3*k+1] = particles[k].y;
 		x1[3*k+2] = particles[k].z;
@@ -179,7 +178,7 @@ int integrator_radau_step() {
 		a1[3*k+2] = particles[k].az;
 	}
 
-	for(int k=0;k<N3;++k) {
+	for(int k=0;k<N3;k++) {
 		g[0][k] = b[6][k]*d[15] + b[5][k]*d[10] + b[4][k]*d[6] + b[3][k]*d[3]  + b[2][k]*d[1]  + b[1][k]*d[0]  + b[0][k];
 		g[1][k] = b[6][k]*d[16] + b[5][k]*d[11] + b[4][k]*d[7] + b[3][k]*d[4]  + b[2][k]*d[2]  + b[1][k];
 		g[2][k] = b[6][k]*d[17] + b[5][k]*d[12] + b[4][k]*d[8] + b[3][k]*d[5]  + b[2][k];
@@ -189,39 +188,52 @@ int integrator_radau_step() {
 		g[6][k] = b[6][k];
 	}
 
-	for (int main_loop_counter=0;main_loop_counter<niter;++main_loop_counter) {
-		for(int j=1;j<8;++j) {
+	double predictor_corrector_error = 1;
+	int iterations = 0;
+	while(predictor_corrector_error>1e-10){						// Predictor corrector loop
+		if (iterations>=integrator_iterations_max){
+			integrator_iterations_max_exceeded++;
+			if (integrator_iterations_max_exceeded==1){
+				fprintf(stderr,"\n\033[1mWarning!\033[0m A large number (>100) of predictor corrector loops in integrator_radau15.c did not converge. This is typically an indication of the timestep being too large.\n");
+			}
+			break;								// Quit predictor corrector loop
+		}
+		predictor_corrector_error = 0;
+		iterations++;
 
-			s[0] = dt * h[j];
+		for(int n=1;n<8;n++) {							// Loop over interval using Gauss-Radau spacings
+
+			s[0] = dt * h[n];
 			s[1] = s[0] * s[0] * 0.5;
-			s[2] = s[1] * h[j] * 0.3333333333333333;
-			s[3] = s[2] * h[j] * 0.5;
-			s[4] = s[3] * h[j] * 0.6;
-			s[5] = s[4] * h[j] * 0.6666666666666667;
-			s[6] = s[5] * h[j] * 0.7142857142857143;
-			s[7] = s[6] * h[j] * 0.75;
-			s[8] = s[7] * h[j] * 0.7777777777777778;
+			s[2] = s[1] * h[n] * 0.3333333333333333;
+			s[3] = s[2] * h[n] * 0.5;
+			s[4] = s[3] * h[n] * 0.6;
+			s[5] = s[4] * h[n] * 0.6666666666666667;
+			s[6] = s[5] * h[n] * 0.7142857142857143;
+			s[7] = s[6] * h[n] * 0.75;
+			s[8] = s[7] * h[n] * 0.7777777777777778;
 
-			for(int k=0;k<N3;++k) {
+			for(int k=0;k<N3;k++) {						// Predict positions at interval n using b values
 				x[k] = 	s[8]*b[6][k] + s[7]*b[5][k] + s[6]*b[4][k] + s[5]*b[3][k] + s[4]*b[2][k] + s[3]*b[1][k] + s[2]*b[0][k] + s[1]*a1[k] + s[0]*v1[k] + x1[k];
 			}
 			
 			if (integrator_force_is_velocitydependent){
-				s[0] = dt * h[j];
-				s[1] = s[0] * h[j] * 0.5;
-				s[2] = s[1] * h[j] * 0.6666666666666667;
-				s[3] = s[2] * h[j] * 0.75;
-				s[4] = s[3] * h[j] * 0.8;
-				s[5] = s[4] * h[j] * 0.8333333333333333;
-				s[6] = s[5] * h[j] * 0.8571428571428571;
-				s[7] = s[6] * h[j] * 0.875;
+				s[0] = dt * h[n];
+				s[1] = s[0] * h[n] * 0.5;
+				s[2] = s[1] * h[n] * 0.6666666666666667;
+				s[3] = s[2] * h[n] * 0.75;
+				s[4] = s[3] * h[n] * 0.8;
+				s[5] = s[4] * h[n] * 0.8333333333333333;
+				s[6] = s[5] * h[n] * 0.8571428571428571;
+				s[7] = s[6] * h[n] * 0.875;
 
-				for(int k=0;k<N3;++k) {
+				for(int k=0;k<N3;k++) {					// Predict velocities at interval n using b values
 					v[k] =  s[7]*b[6][k] + s[6]*b[5][k] + s[5]*b[4][k] + s[4]*b[3][k] + s[3]*b[2][k] + s[2]*b[1][k] + s[1]*b[0][k] + s[0]*a1[k] + v1[k];
 				}
 			}
 
-			for(int k=0;k<N;++k) {
+			// Prepare particles arrays for force calculation
+			for(int k=0;k<N;k++) {
 				particles_out[k] = particles_in[k];
 
 				particles_out[k].x = x[3*k+0];
@@ -234,14 +246,14 @@ int integrator_radau_step() {
 			}
 
 			particles = particles_out;
-			integrator_update_acceleration();
+			integrator_update_acceleration();				// Calculate forces at interval n
 
 			for(int k=0;k<N;++k) {
 				a[3*k]   = particles[k].ax;
 				a[3*k+1] = particles[k].ay;  
 				a[3*k+2] = particles[k].az;
 			}
-			switch (j) {
+			switch (n) {							// Improve b and g values
 				case 1: 
 					for(int k=0;k<N3;++k) {
 						double tmp = g[0][k];
@@ -308,7 +320,7 @@ int integrator_radau_step() {
 						double tmp = g[6][k];
 						double gk = a[k] - a1[k];
 						g[6][k] = ((((((gk*r[21] - g[0][k])*r[22] - g[1][k])*r[23] - g[2][k])*r[24] - g[3][k])*r[25] - g[4][k])*r[26] - g[5][k])*r[27];
-						tmp = g[6][k] - tmp;
+						tmp = g[6][k] - tmp;	
 						b[0][k] += tmp * c[15];
 						b[1][k] += tmp * c[16];
 						b[2][k] += tmp * c[17];
@@ -316,12 +328,19 @@ int integrator_radau_step() {
 						b[4][k] += tmp * c[19];
 						b[5][k] += tmp * c[20];
 						b[6][k] += tmp;
+						
+						// Monitor change in b[6][k]/a[k]. The iteration is converged if it is close to 0.
+						double fabstmp = fabs(tmp/a[k]);
+						if (fabstmp>predictor_corrector_error && isfinite(fabstmp)){
+							predictor_corrector_error = fabstmp;
+						}
 					} break;
 			}
+		//	if (n==7 && iterations>7)printf("%d %e\n",iterations,predictor_corrector_error);
 		}
 	}
+		//	printf("\n");
 	const double dt_done = dt;
-
 	if (integrator_epsilon>0){
 		// Estimate error (given by last term in series expansion) 
 		double error = 0.0;
@@ -329,9 +348,10 @@ int integrator_radau_step() {
 			double errork = fabs(b[6][k]/a[k]);
 			if (!isnan(errork) && !isinf(errork) && errork>error) error = errork;
 		}
+		integrator_error = error; // Only used for debugging and monitoring
 		// Do not change timestep if all accelerations equal to zero.
 		if  (error>0.0){
-			double dt_new = pow(integrator_epsilon/error,1./15.)*dt_done; // 15 is the order of the scheme
+			double dt_new = pow(integrator_epsilon/error,1./7.)*dt_done; 
 			const double safety_factor = 0.75;  // Empirically chosen so that timestep are occasionally rejected but not too often.
 			// New timestep is smaller.
 			if (fabs(dt_new/dt_done) < 1.0) {
@@ -339,15 +359,15 @@ int integrator_radau_step() {
 				if (dt_new<integrator_min_dt) dt_new = integrator_min_dt;
 				if (dt_done>integrator_min_dt){
 					particles = particles_in;
-					niter = 6;
 					dt = dt_new;
 					return 0; // Step rejected. Do again. 
 				}
+			}else{
+				// New timestep is larger.
+				dt_new *= safety_factor;	// This safety_factor doesn't necesarily have to be the same as above
+				if (dt_new<integrator_min_dt) dt_new = integrator_min_dt;
+				if (fabs(dt_new/dt_done) > 1./safety_factor) dt_new = dt_done /safety_factor;	// Don't increase the timestep by too much compared to the last one.
 			}
-			// New timestep is larger.
-			dt_new *= safety_factor;	// This safety_factor doesn't necesarily have to be the same as above
-			if (fabs(dt_new/dt_done) > 1./safety_factor) dt_new = dt_done /safety_factor;	// Don't increase the timestep by too much compared to the last one.
-			if (dt_new<integrator_min_dt) dt_new = integrator_min_dt;
 			dt = dt_new;
 		}
 	}
@@ -363,10 +383,9 @@ int integrator_radau_step() {
 	}
 
 	t += dt_done;
-	niter = 2;
 	// Swap particle buffers
 	particles = particles_in;
-	
+
 	for(int k=0;k<N;++k) {
 		particles[k].x = x1[3*k+0];	// Set final position
 		particles[k].y = x1[3*k+1];
@@ -391,13 +410,13 @@ int integrator_radau_step() {
 	const double q7 = q3 * q4;
 
 	for(int k=0;k<N3;++k) {
-		s[0] = b[0][k] - e[0][k];
-		s[1] = b[1][k] - e[1][k];
-		s[2] = b[2][k] - e[2][k];
-		s[3] = b[3][k] - e[3][k];
-		s[4] = b[4][k] - e[4][k];
-		s[5] = b[5][k] - e[5][k];
-		s[6] = b[6][k] - e[6][k];
+		double be0 = b[0][k] - e[0][k];
+		double be1 = b[1][k] - e[1][k];
+		double be2 = b[2][k] - e[2][k];
+		double be3 = b[3][k] - e[3][k];
+		double be4 = b[4][k] - e[4][k];
+		double be5 = b[5][k] - e[5][k];
+		double be6 = b[6][k] - e[6][k];
 
 		e[0][k] = q1*(b[6][k]* 7.0 + b[5][k]* 6.0 + b[4][k]* 5.0 + b[3][k]* 4.0 + b[2][k]* 3.0 + b[1][k]*2.0 + b[0][k]);
 		e[1][k] = q2*(b[6][k]*21.0 + b[5][k]*15.0 + b[4][k]*10.0 + b[3][k]* 6.0 + b[2][k]* 3.0 + b[1][k]);
@@ -407,13 +426,13 @@ int integrator_radau_step() {
 		e[5][k] = q6*(b[6][k]* 7.0 + b[5][k]);
 		e[6][k] = q7* b[6][k];
 
-		b[0][k] = e[0][k] + s[0];
-		b[1][k] = e[1][k] + s[1];
-		b[2][k] = e[2][k] + s[2];
-		b[3][k] = e[3][k] + s[3];
-		b[4][k] = e[4][k] + s[4];
-		b[5][k] = e[5][k] + s[5];
-		b[6][k] = e[6][k] + s[6];
+		b[0][k] = e[0][k] + be0;
+		b[1][k] = e[1][k] + be1;
+		b[2][k] = e[2][k] + be2;
+		b[3][k] = e[3][k] + be3;
+		b[4][k] = e[4][k] + be4;
+		b[5][k] = e[5][k] + be5;
+		b[6][k] = e[6][k] + be6;
 	}
 	return 1; // Success.
 }
