@@ -107,8 +107,8 @@ void
 zprInit()
 {
     getMatrix();
-    _zNear  =-1.5*boxsize_max;
-    _zFar   = 1.5*boxsize_max;
+    //_zNear  =-1.5*boxsize_max;
+    //_zFar   = 1.5*boxsize_max;
     glutReshapeFunc(zprReshape);
     glutMouseFunc(zprMouse);
     glutMotionFunc(zprMotion);
