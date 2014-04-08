@@ -6,7 +6,7 @@
  * @details 	These functions resolve a single collision
  * of two colliding particles using momentum und energy conservation.
  * The coefficient resitution can be set with the variable 
- * coefficient_of_restitution or, when a velocity dependend 
+ * coefficient_of_restitution or, when a velocity dependent 
  * coefficient of restitution is required with the function pointer
  * coefficient_of_restitution_for_velocity.
  * 

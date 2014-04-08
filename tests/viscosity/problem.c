@@ -52,7 +52,7 @@ double sy2;				// Number of critical wavelengths in y direction (*0.5)
 void problem_init(int argc, char* argv[]){
 	// Check for command line arguments
 	if (argc<3){
-		printf("Error. Please specify two command line arguments: r_h^* and s_x"\n);
+		printf("Error. Please specify two command line arguments: r_h^* and s_x\n");
 		exit(1);
 	}
 

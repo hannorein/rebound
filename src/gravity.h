@@ -5,7 +5,7 @@
  *
  * @details 	The code supports different methods for calculating the
  * gravitational forces. They all use this common interface. It is assumed
- * that the gravitational forces are independend of velocity. They are 
+ * that the gravitational forces are independent of velocity. They are 
  * calculated by gravity_calculate_acceleration() which is called in the 
  * middle (K) part of the DKD timestepping scheme.  
  * 

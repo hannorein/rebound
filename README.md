@@ -16,7 +16,7 @@ On YouTube, http://youtu.be/gaExPGW1WzI?hd=1, you can find a promo video on how 
 Screenshot
 ---------- 
  
-![Tree structure in REBOUND](/hannorein/rebound/raw/master/doc/images/screenshot_shearingsheet.png) 
+![Tree structure in REBOUND](https://raw.github.com/hannorein/rebound/master/doc/images/screenshot_shearingsheet.png) 
 
 Available modules
 -----------------
@@ -67,6 +67,8 @@ This setup allows you to work on multiple projects at the same time using differ
      <td>Leap frog, second order, symplectic</td></tr>
   <tr><td><pre>integrator_wh.c      </pre></td>
      <td>Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991</td></tr>
+  <tr><td><pre>integrator_radau15.c </pre></td>
+     <td>15th order, non-symplectic integrator, can handle arbitrary (velocity dependent) forces, Everhart 1985</td></tr>
   <tr><td><pre>integrator_sei.c     </pre></td>
      <td>Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011</td></tr>
 </table>
@@ -101,14 +103,15 @@ How to download, compile and run REBOUND
 ----------------------------------------
 
 ### For the impatient ###
-Simply copy and paste this line to your terminal and press enter
+If you are using a Mac, make sure you have a compiler suite installed. Open a terminal and type `make`. If it is not installed, go to the AppStore and download Xcode (it is free). Once installed, open Xcode, go to Settings, then Downloads and install the Command Line Tools. 
+
+Then, simply copy and paste this line to your terminal and press enter
 
     git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./nbody
 
 or if you do not have git installed
 
     wget --no-check-certificate https://github.com/hannorein/rebound/tarball/master -O- | tar xvz && cd hannorein-rebound-*/examples/shearing_sheet/ && make && ./nbody
-
 
 ### For the patient ###
 REBOUND is very easy to install and use. To get started, download the latest version of the code from github. If you are familiar with `git`, you can clone the project and keep up-to-date with the latest developments. Otherwise, you can also simply download a snapshot of the repository as a tar or zip file at http://github.com/hannorein/rebound. There is a download bottom at the top right. 
@@ -141,7 +144,7 @@ A window should open and you will see a simulation running in real time. The set
 If you want to create your own problem, just copy one of the example directories or the template in the `problems` directory. Then simply modify `problem.c` and `Makefile` accordingly.  
 
 ### How to install GLUT ###
-The OpenGL Utility Toolkit (GLUT) comes pre-installed as a framework on Mac OSX. If you are working on another operating system, you might have to install GLUT yourself if you see an error message such as `error: GL/glut.h: No such file or directory`. Go to http://freeglut.sourceforge.net/ download the latest version, configure it with `./configure` and compile it with `make`. Finally install the library and header files with `make install`. 
+The OpenGL Utility Toolkit (GLUT) comes pre-installed as a framework on Mac OSX. If you are working on another operating system, you might have to install GLUT yourself if you see an error message such as `error: GL/glut.h: No such file or directory`. On Debian and Ubuntu, simply make sure the `freeglut3-dev` package is installed. If glut is not available in your package manager, go to http://freeglut.sourceforge.net/ download the latest version, configure it with `./configure` and compile it with `make`. Finally install the library and header files with `make install`. 
 
 You can also install freeglut in a non-default installation directory if you do not have super-user rights by running the freeglut installation script with the prefix option:
 
@@ -189,22 +192,25 @@ if (argc>1){
 
 If you are still convinced that you need a configuration file, you are welcome to implement it yourself. This function is where you want to do that.    
 
-#### void problem_inloop() ####
-This function is called once per time-step. It is called at the end of the K part of the DKD time-stepping scheme. This is where you can implement all kind of things such as additional forces onto particles. 
+#### void problem_additional_forces() ####
+This is a function pointer which is called one or more times per time-step whenever the forces are updated. This is where you can implement all kind of things such as additional forces onto particles. 
 
-The following lines of code, for example, implement the Poynting Robertson drag force on each particle except the first one (which is the star in this example):
+The following lines of code implement a simple velocity dependent force.  `integrator_radau15.c` is best suited for this (see `examples/radau15`):
 
 ```c
-double alpha = 1e-4;
-for (int i=1;i<N;i++){
-	double x = particles[i].x;
-	double y = particles[i].y;
-	double z = particles[i].z;
-	double r2 = (x*x + y*y + z*z); 
-	particles[i].vx -= dt * particles[i].vx*alpha/r2;
-	particles[i].vy -= dt * particles[i].vy*alpha/r2;
-	particles[i].vz -= dt * particles[i].vz*alpha/r2;
+void velocity_dependent_force(){
+	for (int i=1;i<N;i++){
+		particles[i].ax -= 0.0000001 * particles[i].vx;
+		particles[i].ay -= 0.0000001 * particles[i].vy;
+		particles[i].az -= 0.0000001 * particles[i].vz;
+	}
 }
+```
+
+Make sure you set the function pointer in the `problem_init()` routine:
+
+```c
+	problem_additional_forces = velocity_dependent_force;
 ```
 
 #### void problem_output() ####

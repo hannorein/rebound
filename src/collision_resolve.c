@@ -62,11 +62,16 @@ void collision_resolve_hardsphere(struct collision c){
 #endif // MPI
 //	if (p1.lastcollision==t || p2.lastcollision==t) return;
 	struct ghostbox gb = c.gb;
-	double m21  = p1.m  /  p2.m; 
 	double x21  = p1.x + gb.shiftx  - p2.x; 
 	double y21  = p1.y + gb.shifty  - p2.y; 
 	double z21  = p1.z + gb.shiftz  - p2.z; 
 	double rp   = p1.r+p2.r;
+	double oldvyouter;
+	if (x21>0){
+	 	oldvyouter = p1.vy;
+	}else{
+		oldvyouter = p2.vy;
+	}
 	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return;
 	double vx21 = p1.vx + gb.shiftvx - p2.vx; 
 	double vy21 = p1.vy + gb.shiftvy - p2.vy; 
@@ -102,11 +107,6 @@ void collision_resolve_hardsphere(struct collision c){
 	double dvy2nn = ctheta * dvy2n;	
 	double dvz2nn = stheta * dvy2n;	
 
-	// Log y-momentum change
-	// This is not correct anymore!!
-	collisions_plog += fabs(dvy2nn*p1.m*x21);
-	collisions_Nlog++;
-
 	// Applying the changes to the particles.
 #ifdef MPI
 	if (isloc==1){
@@ -124,6 +124,16 @@ void collision_resolve_hardsphere(struct collision c){
 	particles[c.p1].vy +=	p1pf*dvy2nn; 
 	particles[c.p1].vz +=	p1pf*dvz2nn; 
 	particles[c.p1].lastcollision = t;
+		
+	// Return y-momentum change
+	if (x21>0){
+		collisions_plog += -fabs(x21)*(oldvyouter-particles[c.p1].vy) * p1.m;
+		collisions_Nlog ++;
+	}else{
+		collisions_plog += -fabs(x21)*(oldvyouter-particles[c.p2].vy) * p2.m;
+		collisions_Nlog ++;
+	}
+
 #endif // COLLISIONS_NONE
 }
 

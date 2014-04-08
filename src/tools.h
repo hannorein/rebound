@@ -67,17 +67,12 @@ double tools_normal(double variance);
 
 /**
  * This function sets up a Plummer sphere.
- * @details This function is based on a routine from the NEMO package, P. Teuben (1995).
- * For details on the implementation see the Appendix of Aarseth, Henon and Wielen (1974). 
  * @param _N Number of particles in the plummer sphere.
- * @param mlow Lower mass fraction cutoff (can be 0).
- * @param rfrac Upper radius cutoff (the Plummer sphere is formally an inifitely large object).
- * @param quiet Noisyness of the model, 0=noise, 1=medium, 2=quiet.
- * @param scale Scales the final model before adding it to the simulation.
- * @param shift Shift the entire sphere in position and velocity space (6 values). 
+ * @param M Total mass of the cluster.
+ * @param R Characteristic radius of the cluster.
  */
 
-void tools_init_plummer(int _N, double mlow, double rfrac, int quiet, double scale, double* shift);
+void tools_init_plummer(int _N, double M, double R);
 
 /**
  * Initialize a particle on an orbit in the xy plane.
@@ -90,17 +85,21 @@ void tools_init_plummer(int _N, double mlow, double rfrac, int quiet, double sca
 struct particle tools_init_orbit2d(double M, double m, double a, double e, double omega, double f);
 
 /**
- * This function calculated orbital elements for a given particle. The center of
- * mass is assumed to be at the origin.
- * @param p Particle.
- * @param cmass Mass of the central object.
+ * This function calculated orbital elements for a given particle. 
+ * @param p Particle for which the orbit is calculated.
+ * @param star Star or central object particle
  * @return Orbital parameters. 
  */
-struct orbit tools_p2orbit(struct particle p, double cmass);
+struct orbit tools_p2orbit(struct particle p, struct particle star);
 
 /**
  * Move to center of momentum and center of mass frame.
  */
 void tools_move_to_center_of_momentum();
+
+/**
+ * Returns the center of mass of particle p1 and p2.
+ */
+struct particle tools_get_center_of_mass(struct particle p1, struct particle p2);
 
 #endif 	// TOOLS_H
