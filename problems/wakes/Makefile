@@ -1,8 +1,8 @@
 PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
 export OPT=-O3 -std=c99
-export MPI=1
+export MPI=0
 export OPENMP=1
-export CC=mpicc
+#export CC=mpicc
 
 all:
 	# Setup link to different modules
