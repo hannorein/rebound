@@ -64,8 +64,10 @@ void problem_init(int argc, char* argv[]){
 #ifdef GRAVITY_TREE
 	opening_angle2	= .5;
 #endif
-	OMEGA 				= 0.0001948170;		// 1/s corresponds to a=100e6 m
 	G 				= 6.67428e-11;		// N m^2 / kg^2 
+	double a			= 391e3;		// m 
+	double chariklo_m		= 1e19; 		// kg
+	OMEGA 				= sqrt(G*chariklo_m/(a*a*a));	// 1/s
 	softening 			= 0.1;			// m
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
 	tmax				= 10.*2.*M_PI/OMEGA+dt;
@@ -98,6 +100,7 @@ void problem_init(int argc, char* argv[]){
 	double particle_radius_min 	= input_get_double(argc,argv,"rmin",1);				// m
 	double particle_radius_max 	= input_get_double(argc,argv,"rmax",1);				// m
 	double particle_radius_slope 	= -3;	
+	minimum_collision_velocity 	= 0.05*particle_radius_min*OMEGA;
 	coefficient_of_restitution_for_velocity	= coefficient_of_restitution_bridges;
 
 	
@@ -218,12 +221,6 @@ double coefficient_of_restitution_bridges(double v){
 }
 
 void problem_inloop(){
-	//Slowly turn on the minimum collision velocity.
-	const double t_init = 1./OMEGA;
-	minimum_collision_velocity 	= 0.5/dt;
-	if (t<t_init){
-		minimum_collision_velocity 	*= t/t_init;
-	}
 }
 
 void output_ascii_mod(char* filename){

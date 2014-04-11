@@ -96,10 +96,11 @@ void collision_resolve_hardsphere(struct collision c){
 	double dvx2 = -(1.0+eps)*vx21nn;
 	double minr = (p1.r>p2.r)?p2.r:p1.r;
 	double maxr = (p1.r<p2.r)?p2.r:p1.r;
-	double mindv= minr*minimum_collision_velocity;
-	double r = sqrt(x21*x21 + y21*y21 + z21*z21);
-	mindv *= 1.-(r - maxr)/minr;
-	if (mindv>maxr*minimum_collision_velocity)mindv = maxr*minimum_collision_velocity;
+	double mindv= minimum_collision_velocity;
+	// Warning: minimum_collision_velocity changed to default.
+	//double r = sqrt(x21*x21 + y21*y21 + z21*z21);
+	//mindv *= minr-(r - maxr);
+	//if (mindv>maxr*minimum_collision_velocity)mindv = maxr*minimum_collision_velocity;
 	if (dvx2<mindv) dvx2 = mindv;
 	// Now we are rotating backwards
 	double dvx2n = cphi * dvx2;		

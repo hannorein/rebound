@@ -1,8 +1,9 @@
 PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
 export OPT=-O3 -std=c99
-export MPI=0
+export OPENGL=1
+#export MPI=1
 export OPENMP=1
-#export CC=mpicc
+export CC=gcc-4.9
 
 all:
 	# Setup link to different modules
@@ -24,4 +25,5 @@ clean:
 	rm -f wakes.o*
 	rm -f wakes.e*
 	rm -f log.txt
+	rm -rf out__*
 
