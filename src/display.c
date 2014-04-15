@@ -48,6 +48,10 @@
 #include "display.h"
 #include "output.h"
 
+// Ignore deprecated warnings
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"#
+
 #ifdef _APPLE
 GLuint display_dlist_sphere;	/**< Precalculated display list of a sphere. */
 #endif // APPLE
