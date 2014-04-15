@@ -150,6 +150,9 @@ void problem_init(int argc, char* argv[]){
 			output_double("tau (r_max)",_N*M_PI*particle_radius_max*particle_radius_max/(boxsize*boxsize));
 			output_double("sigma [kg/m^2]",sigma);
 			output_double("rho [kg/m^3]",rho);
+			output_double("particle_radius_min [m]",particle_radius_min);
+			output_double("particle_radius_max [m]",particle_radius_max);
+			output_double("particle_radius_slope",particle_radius_slope);
 			output_double("OMEGA [1/s]",OMEGA);
 			output_double("lambda_crit [m]",4.*M_PI*M_PI*G*sigma/OMEGA/OMEGA);
 			output_double("length [m]",boxsize*(double)root_nx);
