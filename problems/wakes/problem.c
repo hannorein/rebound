@@ -54,6 +54,7 @@ double coefficient_of_restitution_bridges(double v);
 void input_append_input_arguments_with_int(const char* argument, int value);
 void problem_find_restartfile();
 int position_id=0;	// output number
+int check_transparency;
 
 
 extern double opening_angle2;
@@ -71,6 +72,7 @@ void problem_init(int argc, char* argv[]){
 	softening 			= 0.1;			// m
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
 	tmax				= 10.*2.*M_PI/OMEGA+dt;
+	check_transparency		= input_get_int(argc,argv,"check_transparency",0);
 
 	// Setup domain dimensions
 	int _root_n = 1;
@@ -91,14 +93,14 @@ void problem_init(int argc, char* argv[]){
 	nghostx = 2;
 	nghosty = 2;
 	nghostz = 0;
-	boxsize = input_get_double(argc,argv,"length",500)/(double)root_nx;
+	boxsize = input_get_double(argc,argv,"length",250)/(double)root_nx;
 	init_box();
 	
 	// Setup particle and disk properties
-	double sigma 			= input_get_double(argc,argv,"sigma",1200); 			// kg/m^2
-	double rho			= input_get_double(argc,argv,"rho",450);			// kg/m^3
-	double particle_radius_min 	= input_get_double(argc,argv,"rmin",1);				// m
-	double particle_radius_max 	= input_get_double(argc,argv,"rmax",1);				// m
+	double sigma 			= input_get_double(argc,argv,"sigma",400); 			// kg/m^2
+	double rho			= input_get_double(argc,argv,"rho",250);			// kg/m^3
+	double particle_radius_min 	= input_get_double(argc,argv,"rmin",.3);				// m
+	double particle_radius_max 	= input_get_double(argc,argv,"rmax",3);				// m
 	double particle_radius_slope 	= -3;	
 	minimum_collision_velocity 	= 0.05*particle_radius_min*OMEGA;
 	coefficient_of_restitution_for_velocity	= coefficient_of_restitution_bridges;
@@ -141,33 +143,9 @@ void problem_init(int argc, char* argv[]){
 #ifdef MPI
 		bb = communication_boundingbox_for_proc(mpi_id);
 		_N   /= mpi_num;
-		if (mpi_id==0){
 #endif // MPI
-			output_double("boxsize [m]",boxsize);
-			output_int("root_nx",root_nx);
-			output_int("root_ny",root_ny);
-			output_int("root_nz",root_nz);
-			output_double("tau (r_max)",_N*M_PI*particle_radius_max*particle_radius_max/(boxsize*boxsize));
-			output_double("sigma [kg/m^2]",sigma);
-			output_double("rho [kg/m^3]",rho);
-			output_double("particle_radius_min [m]",particle_radius_min);
-			output_double("particle_radius_max [m]",particle_radius_max);
-			output_double("particle_radius_slope",particle_radius_slope);
-			output_double("OMEGA [1/s]",OMEGA);
-			output_double("lambda_crit [m]",4.*M_PI*M_PI*G*sigma/OMEGA/OMEGA);
-			output_double("length [m]",boxsize*(double)root_nx);
-			output_double("length/lambda_crit",boxsize*(double)root_nx/(4.*M_PI*M_PI*G*sigma/OMEGA/OMEGA));
-			output_int("N",_N);
-#ifdef MPI
-			output_int("N_total",_N*mpi_num);
-			output_int("mpi_num",mpi_num);
-#endif // MPI
-			output_double("tmax [orbits]",tmax/(2.*M_PI/OMEGA));
-			output_int("number of timesteps",ceil(tmax/dt));
-			system("cat config.log");
-#ifdef MPI
-		}
-#endif // MPI
+		double mass = 0;
+		double area = 0;
 		for(int i=0;i<_N;i++){
 			struct particle pt;
 			do{
@@ -194,9 +172,40 @@ void problem_init(int argc, char* argv[]){
 			pt.az 		= 0;
 			pt.r 		= tools_powerlaw(particle_radius_min,particle_radius_max,particle_radius_slope);
 			pt.m 		= rho*4./3.*M_PI*pt.r*pt.r*pt.r;
+			mass		+= pt.m;
+			area		+= M_PI*pt.r*pt.r;
+
 			
 			particles_add(pt);
 		}
+#ifdef MPI
+		if (mpi_id==0){
+#endif // MPI
+			output_double("boxsize [m]",boxsize);
+			output_int("root_nx",root_nx);
+			output_int("root_ny",root_ny);
+			output_int("root_nz",root_nz);
+			output_double("tau_geom",area/(boxsize*boxsize));
+			output_double("sigma [kg/m^2]",sigma);
+			output_double("rho [kg/m^3]",rho);
+			output_double("particle_radius_min [m]",particle_radius_min);
+			output_double("particle_radius_max [m]",particle_radius_max);
+			output_double("particle_radius_slope",particle_radius_slope);
+			output_double("OMEGA [1/s]",OMEGA);
+			output_double("lambda_crit [m]",4.*M_PI*M_PI*G*sigma/OMEGA/OMEGA);
+			output_double("length [m]",boxsize*(double)root_nx);
+			output_double("length/lambda_crit",boxsize*(double)root_nx/(4.*M_PI*M_PI*G*sigma/OMEGA/OMEGA));
+			output_int("N",_N);
+#ifdef MPI
+			output_int("N_total",_N*mpi_num);
+			output_int("mpi_num",mpi_num);
+#endif // MPI
+			output_double("tmax [orbits]",tmax/(2.*M_PI/OMEGA));
+			output_int("number of timesteps",ceil(tmax/dt));
+			system("cat config.log");
+#ifdef MPI
+		}
+#endif // MPI
 	}
 #ifdef MPI
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -378,7 +387,7 @@ void output_transparency(){
 
 double timing_laststep = 0;
 void problem_output(){
-	if (output_check(10.*dt)){
+	if (output_check(10.*dt)&&check_transparency){
 		output_transparency();
 	}
 	if (output_check(10.*dt)){
