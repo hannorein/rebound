@@ -60,6 +60,9 @@ int check_transparency;
 extern double opening_angle2;
 extern int output_logfile_first;
 
+double sun_B;
+double sun_phi;
+
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 #ifdef GRAVITY_TREE
@@ -72,7 +75,7 @@ void problem_init(int argc, char* argv[]){
 	softening 			= 0.1;			// m
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
 	tmax				= 10.*2.*M_PI/OMEGA+dt;
-	check_transparency		= input_get_int(argc,argv,"check_transparency",0);
+	check_transparency		= input_get_int(argc,argv,"check_transparency",1);
 
 	// Setup domain dimensions
 	int _root_n = 1;
@@ -93,8 +96,12 @@ void problem_init(int argc, char* argv[]){
 	nghostx = 2;
 	nghosty = 2;
 	nghostz = 0;
-	boxsize = input_get_double(argc,argv,"length",250)/(double)root_nx;
+	boxsize = input_get_double(argc,argv,"boxsize",25)/(double)root_nx;
 	init_box();
+	//
+	sun_B 			= input_get_double(argc,argv,"sun_B",M_PI/2.); 			// Sun elevation angle, default: normal to ring plane
+	sun_phi 			= input_get_double(argc,argv,"sun_phi",0.); 			// Sun azimuthal angle
+
 	
 	// Setup particle and disk properties
 	double sigma 			= input_get_double(argc,argv,"sigma",400); 			// kg/m^2
@@ -254,8 +261,9 @@ void output_ascii_mod(char* filename){
 	fclose(of);
 }
 	
+double sun_b[3];
 
-int tree_does_ray_hit_particle(struct cell* c, double a[3], double b[3]){
+double  tree_does_ray_hit_particle_above(struct cell* c, double a[3], double b[3]){
 	double t1 = b[1]*(a[2]-c->z)-b[2]*(a[1]-c->y);
 	double t2 = b[2]*(a[0]-c->x)-b[0]*(a[2]-c->z);
 	double t3 = b[0]*(a[1]-c->y)-b[1]*(a[0]-c->x);
@@ -267,32 +275,106 @@ int tree_does_ray_hit_particle(struct cell* c, double a[3], double b[3]){
 			for(int i=0;i<8;i++){
 				struct cell* o = c->oct[i];
 				if(o){
-					if (tree_does_ray_hit_particle(o,a,b)) return 1;
+					double F = tree_does_ray_hit_particle_above(o,a,b);
+					if (F>0) return F;
 				}
 			}
 		}else{
 			struct particle p = particles[c->pt];
-			double t1 = b[1]*(a[2]-p.z)-b[2]*(a[1]-p.y);
-			double t2 = b[2]*(a[0]-p.x)-b[0]*(a[2]-p.z);
-			double t3 = b[0]*(a[1]-p.y)-b[1]*(a[0]-p.x);
-			double bot2 = b[0]*b[0]+b[1]*b[1]+b[2]*b[2];
-			double distance2 = (t1*t1+t2*t2+t3*t3)/bot2;
-			if (distance2<p.r*p.r) return 1;
+			double u  = b[0]*(a[0]-p.x) + b[1]*(a[1]-p.y) + b[2]*(a[2]-p.z);
+			double v  = (p.x-a[0])*(p.x-a[0]) + (p.y-a[1])*(p.y-a[1]) + (p.z-a[2])*(p.z-a[2]);
+			double s  = u*u - v + p.r*p.r;
+			if (s>0){ // line intersects sphere
+				double d  = -u + sqrt(s); // other intersection at -u-sqrt(s). Choosing the one with larger z value.
+				//double cx = a[0] + d*b[0];	// intersection point 
+				//double cy = a[1] + d*b[1];
+				double cz = a[2] + d*b[2];
+				if (cz>a[2]){
+					return 1; 	// ray hits other sphere above scattering sphere
+				}
+			}
 		}
 	}
 	return 0;
 }
 
-void tree_get_transparency(double B, double phi){
-	const double taninv = 1./tan(B);
-	double b[3] = {0,0,1}; // ray vector
-	if (B!=M_PI/2.){
-		b[0] = cos(phi)*taninv;
-		b[1] = sin(phi)*taninv;
-	}else{
-		b[0] = 0;
-		b[1] = 0;
+double  tree_does_ray_hit_particle(struct cell* c, double a[3], double b[3]){
+	double t1 = b[1]*(a[2]-c->z)-b[2]*(a[1]-c->y);
+	double t2 = b[2]*(a[0]-c->x)-b[0]*(a[2]-c->z);
+	double t3 = b[0]*(a[1]-c->y)-b[1]*(a[0]-c->x);
+	double bot2 = b[0]*b[0]+b[1]*b[1]+b[2]*b[2];
+	double distance2 = (t1*t1+t2*t2+t3*t3)/bot2;
+	double width=c->w*0.86602540378+collisions_max_r;
+	if (distance2<width*width){
+		if (c->pt<0){
+			for(int i=0;i<8;i++){
+				struct cell* o = c->oct[i];
+				if(o){
+					double F = tree_does_ray_hit_particle(o,a,b);
+					if (F>0) return F;
+				}
+			}
+		}else{
+			struct particle p = particles[c->pt];
+			double u  = b[0]*(a[0]-p.x) + b[1]*(a[1]-p.y) + b[2]*(a[2]-p.z);
+			double v  = (p.x-a[0])*(p.x-a[0]) + (p.y-a[1])*(p.y-a[1]) + (p.z-a[2])*(p.z-a[2]);
+			double s  = u*u - v + p.r*p.r;
+			if (s>0){ // line intersects sphere
+				// TODO: Make a list of all intersections, select the closet one to the pbserver (z sorting)
+				double d  = -u + sqrt(s); // other intersection at -u-sqrt(s). Choosing the one with larger z value.
+				double cx = a[0] + d*b[0];	// intersection point 
+				double cy = a[1] + d*b[1];
+				double cz = a[2] + d*b[2];
+
+
+				double nx = cx - p.x; 		// normal to sphere
+				double ny = cy - p.y;
+				double nz = cz - p.z;
+				double n  = sqrt(nx*nx + ny*ny + nz*nz);
+				nx /= n;
+				ny /= n;
+				nz /= n;
+			
+				double cosNB = nx*sun_b[0] + ny*sun_b[1] + nz*sun_b[2];
+				if (cosNB>0){ // dayside of particle
+					// Check for shadow.
+					int nghostray = 1; // check only one ghost box for now. TODO
+					for (int gbx=-nghostray; gbx<=nghostray; gbx++){
+						for (int gby=-nghostray; gby<=nghostray; gby++){
+							struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,0);
+							double inters[3]; // ray position in xy plane
+							inters[0] = cx+gb.shiftx;
+							inters[1] = cy+gb.shifty;
+							inters[2] = cz+1e-6*p.r; // avoid floating point issues
+							for (int i=0;i<root_n;i++){
+								struct cell* ce = tree_root[i];
+								if (tree_does_ray_hit_particle_above(ce,inters,sun_b)){
+									printf("in shadow\n");
+									return 0; // sphere in the shadow
+									
+								}
+							}
+						}
+					}
+									printf("not in in shadow\n");
+					return cosNB; // Lambert Sphere
+				}
+			}
+		}
 	}
+	return 0.;
+}
+
+void tree_get_transparency(double B, double phi){
+	double b[3]; // incoming ray vector
+	b[0] 		= cos(phi)*cos(B);
+	b[1] 		= sin(phi)*cos(B);
+	b[2] 		= sin(B);
+	// light ray vector
+	sun_b[0] 	= cos(sun_phi)*cos(sun_B);
+	sun_b[1] 	= sin(sun_phi)*cos(sun_B);
+	sun_b[2] 	= sin(sun_B);
+	const double taninv = 1./tan(B);
 	double raylength = taninv * boxsize_x/2.+2.*collisions_max_r; 
 	int nghostray=0;
 	double boxlengthray = 0;
@@ -309,22 +391,17 @@ void tree_get_transparency(double B, double phi){
 
 	double* _a = malloc(sizeof(double)*num_rays*3);
 	int*   _t = calloc(num_rays,sizeof(int));
-#ifdef MPI
-	if (mpi_id==0){
-#endif //MPI
-		for(int j=0;j<num_rays;j++){
-			_a[3*j+0] = tools_uniform(-boxsize_x/2.,boxsize_x/2.);
-			_a[3*j+1] = tools_uniform(-boxsize_y/2.,boxsize_y/2.); // Only really works in square boxes.
-			_a[3*j+2] = 0;
-		}
-#ifdef MPI
+	double*   _F = calloc(num_rays,sizeof(double));
+	for(int j=0;j<num_rays;j++){
+		_a[3*j+0] = tools_uniform(-boxsize_x/2.,boxsize_x/2.);
+		_a[3*j+1] = tools_uniform(-boxsize_y/2.,boxsize_y/2.); // Only really works in square boxes.
+		_a[3*j+2] = 0;
 	}
-	MPI_Bcast(_a,3*num_rays,MPI_DOUBLE,0,MPI_COMM_WORLD);
-#endif //MPI
 
 #pragma omp parallel for 
 	for(int j=0;j<num_rays;j++){
 		int transparency = 0;
+		double flux = 0;
 		for (int gbx=-nghostray; gbx<=nghostray; gbx++){
 			for (int gby=-nghostray; gby<=nghostray; gby++){
 				struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,0);
@@ -333,55 +410,49 @@ void tree_get_transparency(double B, double phi){
 				a[1] = _a[3*j+1]+gb.shifty;
 				a[2] = _a[3*j+2];
 				for (int i=0;i<root_n;i++){
-#ifdef MPI
-					int root_n_per_node = root_n/mpi_num;
-					int proc_id = i/root_n_per_node;
-					if (proc_id!=mpi_id) continue;
-#endif //MPI
 					struct cell* c = tree_root[i];
-					transparency += tree_does_ray_hit_particle(c,a,b);	
+					flux = tree_does_ray_hit_particle(c,a,b);	
+					if (flux>0.){
+						goto raydone;
+					}
 				}
 			}
 		}
-		if (transparency>0) _t[j]=1;
-	}
-	
-#ifdef MPI
-	int*   _tmax = malloc(num_rays*sizeof(int));
-	MPI_Reduce(_t,_tmax,num_rays,MPI_INT,MPI_MAX,0,MPI_COMM_WORLD);
-	free(_t);
-	_t = _tmax;
-	if (mpi_id==0){
-#endif //MPI
-		int num_intersecting = 0;
-		for(int j=0;j<num_rays;j++){
-			if (_t[j]>0) num_intersecting++;
+		raydone:;
+		if (flux>0){
+			_t[j] = 1;
+			_F[j] = flux;
 		}
-		FILE* of = fopen("transparency.txt","a+"); 
-		if (of==NULL){
-			printf("\n\nError while opening file.\n");
-			return;
-		}
-		fprintf(of,"%e\t%e\t%e\t%0.8f\n",t,B,phi,(double)num_intersecting/(double)num_rays);
-		fclose(of);
-#ifdef MPI
 	}
-#endif //MPI
+
+	int num_intersecting = 0;
+	double F_sum = 0;
+	for(int j=0;j<num_rays;j++){
+		if (_t[j]>0) num_intersecting++;
+		F_sum += _F[j];
+	}
+	FILE* of = fopen("transparency.txt","a+"); 
+	if (of==NULL){
+		printf("\n\nError while opening file.\n");
+		return;
+	}
+	fprintf(of,"%e\t%e\t%e\t%0.8f\n",t,B,phi,(double)num_intersecting/(double)num_rays,(double)F_sum/(double)num_rays);
+	fclose(of);
 	free(_a);
 	free(_t);
 }
 
 void output_transparency(){
 	tree_get_transparency(M_PI/2.,0); //Normal to ring plane
-	for (double phi = 0; phi<M_PI; phi+=M_PI/10.){
-		double lowB = M_PI/8.;
-		double numB = 20.;
-		for (int i=0;i<numB;i++){
-			double B = lowB+(M_PI/2.-lowB)/numB*(double)i;
-			tree_get_transparency(B,phi);
-		}
-
-	}
+//	for (double phi = 0; phi<M_PI; phi+=M_PI/10.){
+//		double lowB = M_PI/8.;
+//		double numB = 20.;
+//		for (int i=0;i<numB;i++){
+//			double B = lowB+(M_PI/2.-lowB)/numB*(double)i;
+//			tree_get_transparency(B,phi);
+//		}
+//
+//	}
 }
 
 
