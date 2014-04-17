@@ -400,6 +400,7 @@ void tree_get_transparency(double B, double phi){
 
 	int N_ray_hit_particle 	= 0;	// Number of rays that hit a particle
 	double F_reflected 	= 0.;	// Integrated flux. 
+	FILE* ofg = fopen("transparency_grid.txt","w"); 
 #pragma omp parallel for 
 	for(int j=0;j<N_rays;j++){
 		double a[3]; // ray position in xy plane
@@ -422,12 +423,13 @@ void tree_get_transparency(double B, double phi){
 				}
 			}
 		}
-		printf("%f      %f\n",height, flux);
 		if (flux>=0.){
 			N_ray_hit_particle 	+= 1;
 			F_reflected 		+= flux;
 		}
+		fprintf(ofg,"%f\t%f\t%0.8f\n",a[0],a[1],flux);
 	}
+	fclose(ofg);
 
 
 	FILE* of = fopen("transparency.txt","a+"); 
