@@ -99,8 +99,8 @@ void problem_init(int argc, char* argv[]){
 	boxsize = input_get_double(argc,argv,"boxsize",25)/(double)root_nx;
 	init_box();
 	//
-	sun_B 			= input_get_double(argc,argv,"sun_B",M_PI/2.); 			// Sun elevation angle, default: normal to ring plane
-	sun_phi 			= input_get_double(argc,argv,"sun_phi",0.); 			// Sun azimuthal angle
+	sun_B 		= input_get_double(argc,argv,"sun_B",M_PI/2.); 			// Sun elevation angle, default: normal to ring plane
+	sun_phi 	= input_get_double(argc,argv,"sun_phi",0.); 			// Sun azimuthal angle
 
 	
 	// Setup particle and disk properties
@@ -263,7 +263,7 @@ void output_ascii_mod(char* filename){
 	
 double sun_b[3];
 
-double  tree_does_ray_hit_particle_above(struct cell* c, double a[3], double b[3],int pr){
+int tree_does_ray_hit_particle_above(struct cell* c, double a[3], double b[3],int pr){
 	double t1 = b[1]*(a[2]-c->z)-b[2]*(a[1]-c->y);
 	double t2 = b[2]*(a[0]-c->x)-b[0]*(a[2]-c->z);
 	double t3 = b[0]*(a[1]-c->y)-b[1]*(a[0]-c->x);
@@ -275,8 +275,9 @@ double  tree_does_ray_hit_particle_above(struct cell* c, double a[3], double b[3
 			for(int i=0;i<8;i++){
 				struct cell* o = c->oct[i];
 				if(o){
-					double F = tree_does_ray_hit_particle_above(o,a,b,pr);
-					if (F>0) return F;
+					if(tree_does_ray_hit_particle_above(o,a,b,pr)){
+						return 1;
+					}
 				}
 			}
 		}else{
@@ -345,7 +346,7 @@ void  tree_does_ray_hit_particle(struct cell* c, double a[3], double b[3], doubl
 								double inters[3]; // ray position in xy plane
 								inters[0] = cx+gb.shiftx;
 								inters[1] = cy+gb.shifty;
-								inters[2] = cz+; 
+								inters[2] = cz; 
 								for (int i=0;i<root_n;i++){
 									struct cell* ce = tree_root[i];
 									if (tree_does_ray_hit_particle_above(ce,inters,sun_b,c->pt)){
@@ -368,7 +369,6 @@ void  tree_does_ray_hit_particle(struct cell* c, double a[3], double b[3], doubl
 			}
 		}
 	}
-	return 0.;
 }
 
 void tree_get_transparency(double B, double phi){
@@ -422,6 +422,7 @@ void tree_get_transparency(double B, double phi){
 				}
 			}
 		}
+		printf("%f      %f\n",height, flux);
 		if (flux>=0.){
 			N_ray_hit_particle 	+= 1;
 			F_reflected 		+= flux;
@@ -434,7 +435,7 @@ void tree_get_transparency(double B, double phi){
 		printf("\n\nError while opening file.\n");
 		return;
 	}
-	fprintf(of,"%e\t%e\t%e\t%0.8f\n",t,B,phi,(double)N_ray_hit_particle/(double)N_rays,(double)F_reflected/(double)N_rays);
+	fprintf(of,"%e\t%e\t%e\t%0.8f\t%0.8f\n",t,B,phi,(double)N_ray_hit_particle/(double)N_rays,(double)F_reflected/(double)N_rays);
 	fclose(of);
 }
 

@@ -178,6 +178,9 @@ void display_entire_tree(){
 }
 #endif
 
+extern double sun_B;
+extern double sun_phi;
+
 void display(){
 	if (display_pause) return;
 #ifdef TREE
@@ -198,8 +201,14 @@ void display(){
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_LIGHTING);
 		glEnable(GL_LIGHT0);
-		GLfloat lightpos[] = {0, boxsize_max, boxsize_max, 0.f};
-		glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
+		{
+			GLfloat sun_b[] = {0,0,0,0};
+			sun_b[0] 	= 100.*boxsize_max*cos(sun_phi)*cos(sun_B);
+			sun_b[1] 	= 100.*boxsize_max*sin(sun_phi)*cos(sun_B);
+			sun_b[2] 	= 100.*boxsize_max*sin(sun_B);
+			sun_b[3] 	= 0;
+			glLightfv(GL_LIGHT0, GL_POSITION, sun_b);
+		}
 	}else{
 		glEnable(GL_BLEND);                    
 		glDepthMask(GL_FALSE);
@@ -358,19 +367,19 @@ void display_init(int argc, char* argv[]){
 	glShadeModel ( GL_SMOOTH );
 	glEnable( GL_NORMALIZE );
 	glEnable(GL_COLOR_MATERIAL);
-	static GLfloat light[] = {0.7f, 0.7f, 0.7f, 1.f};
-	static GLfloat lightspec[] = {0.2f, 0.2f, 0.2f, 1.f};
-	static GLfloat lmodel_ambient[] = { 0.15, 0.14, 0.13, 1.0 };
+	static GLfloat light[] = {1.f, 1.f, 1.f, 1.f};
+	//static GLfloat lightspec[] = {0.2f, 0.2f, 0.2f, 1.f};
+	static GLfloat lmodel_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
 
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light );
-	glLightfv(GL_LIGHT0, GL_SPECULAR, lightspec );
+	//glLightfv(GL_LIGHT0, GL_SPECULAR, lightspec );
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
 
-	static GLfloat sphere_mat[] = {0.8f, 0.8f, 0.8f, 1.f};
-	static GLfloat sphere_spec[] = {1.0f, 1.0f, 1.0f, 1.f};
+	static GLfloat sphere_mat[] = {1.f, 1.f, 1.f, 1.f};
+//	static GLfloat sphere_spec[] = {1.0f, 1.0f, 1.0f, 1.f};
 	glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, sphere_mat);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, sphere_spec);
-	glMaterialf(GL_FRONT, GL_SHININESS, 80);
+//	glMaterialfv(GL_FRONT, GL_SPECULAR, sphere_spec);
+//	glMaterialf(GL_FRONT, GL_SHININESS, 80);
 
 	// Enter glut run loop and never come back.
 	display_init_done =1; 
