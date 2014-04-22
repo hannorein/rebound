@@ -51,7 +51,7 @@ void problem_init(int argc, char* argv[]){
 
 	// Setup particles
 	double disc_mass = 2e-1;
-	int _N = 1000;
+	int _N = 1024*8;
 	// Initial conditions
 	struct particle star;
 	star.x 		= 0; star.y 	= 0; star.z	= 0;

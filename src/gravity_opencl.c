@@ -49,6 +49,39 @@
 #warning GRAVITY_OPENCL might not work with MPI for your problem. 
 #endif
 
+
+#define CONFIG_USE_DOUBLE 1
+#if CONFIG_USE_DOUBLE
+
+#if defined(cl_khr_fp64)  // Khronos extension available?
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#define DOUBLE_SUPPORT_AVAILABLE
+#elif defined(cl_amd_fp64)  // AMD extension available?
+#pragma OPENCL EXTENSION cl_amd_fp64 : enable
+#define DOUBLE_SUPPORT_AVAILABLE
+#endif
+
+#endif // CONFIG_USE_DOUBLE
+
+#if defined(DOUBLE_SUPPORT_AVAILABLE)
+
+// double
+typedef double real_t;
+#define PI 3.14159265358979323846
+
+#else
+
+#warning Using single precission.
+// float
+typedef float real_t;
+#define PI 3.14159265359f
+
+#endif
+
+
+
+
+
 const char *src_kernel = 
 "__kernel    \n"
 "void gravity_opencl_kernel(				\n"
@@ -92,26 +125,46 @@ const char *src_kernel =
 
 cl_int 			clStatus;
 cl_platform_id*		platforms 	= NULL;
+cl_uint			num_devices	= 0;
 cl_device_id*		device_list	= NULL;
 cl_context		context;
 cl_command_queue	command_queue;
 cl_program		program;
 cl_kernel		kernel;
+size_t 			wgs;
+size_t 			preferred_wgs_multiple;
 cl_mem			R_clmem;
 cl_mem			A_clmem;
 cl_mem			M_clmem;
 cl_event 		gravity_event;
-float* 			r_host;
-float* 			a_host;
-float* 			m_host;
+real_t* 			r_host;
+real_t* 			a_host;
+real_t* 			m_host;
 
 void gravity_calculate_acceleration(){
 	if (platforms==NULL){
-		r_host = malloc(3*N*sizeof(float));
-		a_host = malloc(3*N*sizeof(float));
-		m_host = malloc(N*sizeof(float));
+		r_host = malloc(3*N*sizeof(real_t));
+		a_host = malloc(3*N*sizeof(real_t));
+		m_host = malloc(N*sizeof(real_t));
 		OCL_CREATE_PLATFORMS(platforms);
 		OCL_CREATE_DEVICE(platforms[0],CL_DEVICE_TYPE_GPU,device_list);
+		clGetDeviceIDs(platforms[0],CL_DEVICE_TYPE_DEFAULT,0,NULL,&num_devices);
+		device_list = malloc(sizeof(cl_device_id)*num_devices);
+		clGetDeviceIDs(platforms[0],CL_DEVICE_TYPE_DEFAULT,num_devices,device_list,NULL);
+		
+	
+		printf("\n\nOpenCL Setup.\n----------\n");
+		for (int i=0;i<num_devices;i++){	
+			char buffer[10240];
+			clGetDeviceInfo(device_list[0], CL_DEVICE_NAME, sizeof(buffer), buffer, NULL);
+			printf("(device %d)\t Name:                  \t%s\n",i, buffer);
+			clGetDeviceInfo(device_list[0], CL_DEVICE_VENDOR, sizeof(buffer), buffer, NULL);
+			printf("(device %d)\t Vendor:                \t%s\n",i, buffer);
+			clGetDeviceInfo(device_list[0], CL_DEVICE_VERSION, sizeof(buffer), buffer, NULL);
+			printf("(device %d)\t Version:               \t%s\n",i, buffer);
+			clGetDeviceInfo(device_list[0], CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, NULL);
+			printf("(device %d)\t Extensions:            \t%s\n",i, buffer);
+		}
 		cl_context_properties props[3] = {
 			CL_CONTEXT_PLATFORM,
 			(cl_context_properties)platforms[0],
@@ -121,10 +174,12 @@ void gravity_calculate_acceleration(){
 		LOG_OCL_ERROR(clStatus, "clCreateContext failed.");
 		command_queue = clCreateCommandQueue(context, device_list[0],0,&clStatus);
 		LOG_OCL_ERROR(clStatus, "clCreateCommandQueue failed.");
+		
 
-		R_clmem = clCreateBuffer(context, CL_MEM_READ_ONLY, 3*N*sizeof(float), NULL, &clStatus);
-		M_clmem = clCreateBuffer(context, CL_MEM_READ_ONLY, N*sizeof(float), NULL, &clStatus);
-		A_clmem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 3*N*sizeof(float), NULL, &clStatus);
+
+		R_clmem = clCreateBuffer(context, CL_MEM_READ_ONLY, 3*N*sizeof(real_t), NULL, &clStatus);
+		M_clmem = clCreateBuffer(context, CL_MEM_READ_ONLY, N*sizeof(real_t), NULL, &clStatus);
+		A_clmem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 3*N*sizeof(real_t), NULL, &clStatus);
 		LOG_OCL_ERROR(clStatus, "clEnqueueWriteBuffer failed.");
 		program = clCreateProgramWithSource(context, 1, (const char**)&src_kernel, NULL, &clStatus);
 		LOG_OCL_ERROR(clStatus, "clCreateProgramWithSource failed.");
@@ -133,14 +188,24 @@ void gravity_calculate_acceleration(){
 			LOG_OCL_COMPILER_ERROR(program, device_list[0]);
 		}
 		kernel = clCreateKernel(program,"gravity_opencl_kernel",&clStatus);
-		float f_G = G;
-		float f_softening = softening;
-		clStatus  = clSetKernelArg(kernel, 0, sizeof(float), (void*)&f_G);
-		clStatus  = clSetKernelArg(kernel, 1, sizeof(float), (void*)&f_softening);
+		real_t f_G = G;
+		real_t f_softening = softening;
+		clStatus  = clSetKernelArg(kernel, 0, sizeof(real_t), (void*)&f_G);
+		clStatus |= clSetKernelArg(kernel, 1, sizeof(real_t), (void*)&f_softening);
 		clStatus |= clSetKernelArg(kernel, 2, sizeof(cl_mem), (void*)&R_clmem);
 		clStatus |= clSetKernelArg(kernel, 3, sizeof(cl_mem), (void*)&A_clmem);
 		clStatus |= clSetKernelArg(kernel, 4, sizeof(cl_mem), (void*)&M_clmem);
 		LOG_OCL_ERROR(clStatus, "clSetKernelArg failed.");
+
+
+		clGetKernelWorkGroupInfo(kernel, device_list[0], CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof(wgs), &wgs, NULL);
+		clGetKernelWorkGroupInfo(kernel, device_list[0], CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof(preferred_wgs_multiple), &preferred_wgs_multiple, NULL);
+		
+		
+		printf("(kernel)\t Work group size:                    \t%d\n", wgs);
+		printf("(kernel)\t Preferred Work group size multiple: \t%d\n", preferred_wgs_multiple);
+
+		printf("----------\n\n");
 	}
 
 	// Setting up host memory
@@ -151,16 +216,16 @@ void gravity_calculate_acceleration(){
 		r_host[i*3+2] 	= particles[i].z;
 		m_host[i] 	= particles[i].m;
 	}
-	clStatus = clEnqueueWriteBuffer(command_queue, R_clmem, CL_TRUE, 0, 3*N*sizeof(float), r_host, 0,NULL,NULL); 
-	clStatus = clEnqueueWriteBuffer(command_queue, M_clmem, CL_TRUE, 0, N*sizeof(float), m_host, 0,NULL,NULL); 
+	clStatus = clEnqueueWriteBuffer(command_queue, R_clmem, CL_TRUE, 0, 3*N*sizeof(real_t), r_host, 0,NULL,NULL); 
+	clStatus = clEnqueueWriteBuffer(command_queue, M_clmem, CL_TRUE, 0, N*sizeof(real_t), m_host, 0,NULL,NULL); 
 
 	size_t global_size 	= N;
-	size_t local_size 	= 4;
+	size_t local_size 	= preferred_wgs_multiple;
 	
 	clStatus = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, &gravity_event);
 	LOG_OCL_ERROR(clStatus, "clEnqueueNDRangeKernel failed.");
 	
-	clStatus = clEnqueueReadBuffer(command_queue, A_clmem, CL_TRUE, 0, 3*N*sizeof(float), a_host, 1, &gravity_event, NULL);
+	clStatus = clEnqueueReadBuffer(command_queue, A_clmem, CL_TRUE, 0, 3*N*sizeof(real_t), a_host, 1, &gravity_event, NULL);
 	clStatus = clFinish(command_queue);
 
 	for (int i=0; i<N; i++){
