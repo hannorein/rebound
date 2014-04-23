@@ -30,6 +30,7 @@
  *
  */
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
@@ -165,11 +166,6 @@ void gravity_calculate_acceleration(){
 			clGetDeviceInfo(device_list[0], CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, NULL);
 			printf("(device %d)\t Extensions:            \t%s\n",i, buffer);
 		}
-		cl_context_properties props[3] = {
-			CL_CONTEXT_PLATFORM,
-			(cl_context_properties)platforms[0],
-			0
-		};
 		context = clCreateContext(NULL, num_devices, device_list, NULL, NULL, &clStatus);
 		LOG_OCL_ERROR(clStatus, "clCreateContext failed.");
 		command_queue = clCreateCommandQueue(context, device_list[0],0,&clStatus);
@@ -202,8 +198,8 @@ void gravity_calculate_acceleration(){
 		clGetKernelWorkGroupInfo(kernel, device_list[0], CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof(preferred_wgs_multiple), &preferred_wgs_multiple, NULL);
 		
 		
-		printf("(kernel)\t Work group size:                    \t%d\n", wgs);
-		printf("(kernel)\t Preferred Work group size multiple: \t%d\n", preferred_wgs_multiple);
+		printf("(kernel)\t Work group size:                    \t%zu\n", wgs);
+		printf("(kernel)\t Preferred Work group size multiple: \t%zu\n", preferred_wgs_multiple);
 
 		printf("----------\n\n");
 	}

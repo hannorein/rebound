@@ -4,6 +4,19 @@
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @detail 	A self-gravitating disc is integrated using
  * the OpenCL direct gravity summation module.
+ *
+ * This is a very simple implementation (see gravity_opencl.c). 
+ * Currently it only supports floating point precission. It also
+ * transfers the data back and forth from the GPU every timestep.
+ * There are considerable improvements to be made. This is just a 
+ * proof of concept. Also note that the code required N to be a 
+ * multiple of the workgrop size.
+ *
+ * You can test the performance increase by running:
+ * make direct && ./nbody       this will run on the CPU
+ * make && ./nbody              this will run on the GPU
+ *
+ *
  * 
  * @section 	LICENSE
  * Copyright (c) 2014 Hanno Rein
@@ -44,37 +57,30 @@ void problem_init(int argc, char* argv[]){
 	G 		= 1;		
 	softening 	= 0.01;		
 	dt 		= 3e-3;
-	boxsize 	= 1.2;
+	boxsize 	= 2.4;
 	root_nx = 1; root_ny = 1; root_nz = 1;
 	nghostx = 0; nghosty = 0; nghostz = 0; 		
 	init_box();
 
-	// Setup particles
-	double disc_mass = 2e-1;
-	int _N = 1024*8;
 	// Initial conditions
 	struct particle star;
 	star.x 		= 0; star.y 	= 0; star.z	= 0;
 	star.vx 	= 0; star.vy 	= 0; star.vz 	= 0;
 	star.ax 	= 0; star.ay 	= 0; star.az 	= 0;
 	star.m 		= 1;
-#ifdef INTEGRATOR_WH
-	// Insert particle manually. Don't add it to tree.
-	Nmax 			+= 128;
-	particles 		= realloc(particles,sizeof(struct particle)*Nmax);
-	particles[N] 		= star;
-	N++;
-#else // INTEGRATOR_WH
 	particles_add(star);
-#endif // INTEGRATOR_WH
+	
+	// Setup disk particles
+	double disc_mass = 2e-1;
+	int _N = 1024*4;
 	while(N<_N){
 		struct particle pt;
-		double a	= tools_powerlaw(boxsize/10.,boxsize/2./1.2,-1.5);
+		double a	= tools_powerlaw(boxsize/20.,boxsize/4./1.2,-1.5);
 		double phi 	= tools_uniform(0,2.*M_PI);
 		pt.x 		= a*cos(phi);
 		pt.y 		= a*sin(phi);
 		pt.z 		= a*tools_normal(0.001);
-		double mu 	= star.m + disc_mass * (pow(a,-3./2.)-pow(boxsize/10.,-3./2.))/(pow(boxsize/2./1.2,-3./2.)-pow(boxsize/10.,-3./2.));
+		double mu 	= star.m + disc_mass * (pow(a,-3./2.)-pow(boxsize/20.,-3./2.))/(pow(boxsize/4./1.2,-3./2.)-pow(boxsize/20.,-3./2.));
 		double vkep 	= sqrt(G*mu/a);
 		pt.vx 		=  vkep * sin(phi);
 		pt.vy 		= -vkep * cos(phi);
