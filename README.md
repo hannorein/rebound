@@ -156,8 +156,8 @@ You can also install freeglut in a non-default installation directory if you do 
 
 Then, add the following lines to the REBOUND Makefile
 
-    OPT += $(HOME)/local/include
-    LIB += $(HOME)/local/lib
+    OPT += -I$(HOME)/local/include
+    LIB += -L$(HOME)/local/lib
 
 Note that you can still compile and run REBOUND even if you do not have GLUT installed. Simple set `OPENGL=0` in the makefile (see below). 
 
