@@ -38,9 +38,9 @@
 #include "collisions.h"
 
 int tree_does_ray_hit_particle_above(struct cell* c, double a[3], double b[3],int pr);
-void  tree_does_ray_hit_particle(struct cell* c, double a[3], double b[3], double sun_b[3], double* flux, double* height);
+void tree_does_ray_hit_particle(struct cell* c, double a[3], double b[3], double sun_b[3], double* flux, double* height);
 
-void tree_get_transparency(double B, double phi, double sun_B, double sun_phi){
+void tree_raytrace(int N_rays, double B, double phi, double sun_B, double sun_phi, double* flux, double* opacity ){
 	double b[3]; // incoming ray vector
 	b[0] 		= cos(phi)*cos(B);
 	b[1] 		= sin(phi)*cos(B);
@@ -61,10 +61,6 @@ void tree_get_transparency(double B, double phi, double sun_B, double sun_phi){
 		}
 		nghostray++;
 	}
-
-	const int N_rays 		= 1000;
-
-	double*   _F = calloc(N_rays,sizeof(double));
 
 
 	int N_ray_hit_particle 	= 0;	// Number of rays that hit a particle
@@ -96,15 +92,10 @@ void tree_get_transparency(double B, double phi, double sun_B, double sun_phi){
 			F_reflected 		+= flux;
 		}
 	}
+	
 
-
-	FILE* of = fopen("transparency.txt","a+"); 
-	if (of==NULL){
-		printf("\n\nError while opening file.\n");
-		return;
-	}
-	fprintf(of,"%e\t%e\t%e\t%0.8f\t%0.8f\n",t,B,phi,(double)N_ray_hit_particle/(double)N_rays,(double)F_reflected/(double)N_rays);
-	fclose(of);
+	*opacity	= (double)N_ray_hit_particle	/(double)N_rays;
+	*flux		= (double)F_reflected		/(double)N_rays;
 }
 
 int tree_does_ray_hit_particle_above(struct cell* c, double a[3], double b[3],int pr){
@@ -126,9 +117,9 @@ int tree_does_ray_hit_particle_above(struct cell* c, double a[3], double b[3],in
 			}
 		}else{
 			struct particle p = particles[c->pt];
-			double u  = b[0]*(a[0]-p.x) + b[1]*(a[1]-p.y) + b[2]*(a[2]-p.z);
-			double v  = (p.x-a[0])*(p.x-a[0]) + (p.y-a[1])*(p.y-a[1]) + (p.z-a[2])*(p.z-a[2]);
-			double s  = u*u - v + p.r*p.r;
+			double u = b[0]*(a[0]-p.x) + b[1]*(a[1]-p.y) + b[2]*(a[2]-p.z);
+			double v = (p.x-a[0])*(p.x-a[0]) + (p.y-a[1])*(p.y-a[1]) + (p.z-a[2])*(p.z-a[2]);
+			double s = u*u - v + p.r*p.r;
 			if (s>0){ // line intersects sphere
 				double d  = -u + sqrt(s); // other intersection at -u-sqrt(s). Choosing the one with larger z value.
 				//double cx = a[0] + d*b[0];	// intersection point 
@@ -143,7 +134,7 @@ int tree_does_ray_hit_particle_above(struct cell* c, double a[3], double b[3],in
 	return 0;
 }
 
-void  tree_does_ray_hit_particle(struct cell* c, double a[3], double b[3], double sun_b[3], double* flux, double* height){
+void tree_does_ray_hit_particle(struct cell* c, double a[3], double b[3], double sun_b[3], double* flux, double* height){
 	double t1 = b[1]*(a[2]-c->z)-b[2]*(a[1]-c->y);
 	double t2 = b[2]*(a[0]-c->x)-b[0]*(a[2]-c->z);
 	double t3 = b[0]*(a[1]-c->y)-b[1]*(a[0]-c->x);
@@ -160,12 +151,11 @@ void  tree_does_ray_hit_particle(struct cell* c, double a[3], double b[3], doubl
 			}
 		}else{
 			struct particle p = particles[c->pt];
-			double u  = b[0]*(a[0]-p.x) + b[1]*(a[1]-p.y) + b[2]*(a[2]-p.z);
-			double v  = (p.x-a[0])*(p.x-a[0]) + (p.y-a[1])*(p.y-a[1]) + (p.z-a[2])*(p.z-a[2]);
-			double s  = u*u - v + p.r*p.r;
+			double u = b[0]*(a[0]-p.x) + b[1]*(a[1]-p.y) + b[2]*(a[2]-p.z);
+			double v = (p.x-a[0])*(p.x-a[0]) + (p.y-a[1])*(p.y-a[1]) + (p.z-a[2])*(p.z-a[2]);
+			double s = u*u - v + p.r*p.r;
 			if (s>0){ // line intersects sphere
-				// TODO: Make a list of all intersections, select the closet one to the pbserver (z sorting)
-				double d  = -u + sqrt(s); // other intersection at -u-sqrt(s). Choosing the one with larger z value.
+				double d  = -u + sqrt(s); 	// There's another intersection at -u-sqrt(s). Choosing the one with larger z value.
 				double cx = a[0] + d*b[0];	// intersection point 
 				double cy = a[1] + d*b[1];
 				double cz = a[2] + d*b[2];

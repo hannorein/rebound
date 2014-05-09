@@ -178,8 +178,6 @@ void display_entire_tree(){
 }
 #endif
 
-extern double sun_B;
-extern double sun_phi;
 
 void display(){
 	if (display_pause) return;
@@ -202,6 +200,9 @@ void display(){
 		glEnable(GL_LIGHTING);
 		glEnable(GL_LIGHT0);
 		{
+			// Assumes fixed sun.
+			double sun_B = M_PI_2;
+			double sun_phi = 0;
 			GLfloat sun_b[] = {0,0,0,0};
 			sun_b[0] 	= 100.*boxsize_max*cos(sun_phi)*cos(sun_B);
 			sun_b[1] 	= 100.*boxsize_max*sin(sun_phi)*cos(sun_B);

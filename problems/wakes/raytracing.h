@@ -26,13 +26,17 @@
 #define _RAYTRACING_H
 
 /**
- * Calculates the flux f. 
- * @return Returns 1 if simulation was restarted. 0 otherwise.
- * @param argc Number of command line arguments.
- * @param argv Array of command line arguments.
+ * Calculates the opacity and the flux of reflexted light for a given geometry. 
+ * @param N_rays Number of rays shot.
+ * @param B elevation angle of observer (radians).
+ * @param phi azimuthal angle of observer (radians).
+ * @param sun_B elevation angle of light source (radians).
+ * @param sun_phi azimuthal angle of light source (radians).
+ * @param flux pointer to a double where the flux is written to
+ * @param opacity pointer to a double where the opacity is written to
  */ 
 
-void tree_get_transparency(double B, double phi, double sun_B, double sun_phi);
+void tree_raytrace(int N_rays, double B, double phi, double sun_B, double sun_phi, double* flux, double* opacity );
 
 
-#endif _RAYTRACING_H
+#endif // _RAYTRACING_H

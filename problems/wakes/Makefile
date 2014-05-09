@@ -13,6 +13,7 @@ all:
 	ln -fs collisions_tree.c ../../src/collisions.c
 	# Setup link to problem file
 	ln -fs ../$(PROBLEMDIR)/raytracing.c ../../src/raytracing.c
+	ln -fs ../$(PROBLEMDIR)/raytracing.h ../../src/raytracing.h
 	ln -fs ../$(PROBLEMDIR)/problem.c ../../src/problem.c
 	# Compile
 	$(MAKE) -C ../../src/
