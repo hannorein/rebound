@@ -77,6 +77,7 @@ all:
 	$(CC) $(OPT) $(PREDEF) integrator.c -c
 	$(CC) $(OPT) $(PREDEF) boundaries.c -c
 	$(CC) $(OPT) $(PREDEF) input.c -c
+	$(CC) $(OPT) $(PREDEF) raytracing.c -c
 	$(CC) $(OPT) $(PREDEF) output.c -c
 	$(CC) $(OPT) $(PREDEF) collisions.c -c
 	$(CC) $(OPT) $(PREDEF) collision_resolve.c -c
