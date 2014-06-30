@@ -60,7 +60,6 @@ else
 	OPT+= -Wno-unknown-pragmas
 endif
 
-OPT += -Wno-deprecated
 
 # Create precompiler definitions from links
 PREDEF+= -D$(shell basename `readlink gravity.c` '.c' | tr '[a-z]' '[A-Z]')

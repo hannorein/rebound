@@ -58,18 +58,18 @@ void problem_init(int argc, char* argv[]){
 	softening 			= 0.1;			// m
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
 #ifdef OPENGL
-	display_rotate_z		= 0.;			// Rotate the box by 20 around the z axis, then 
-	display_rotate_x		= 0.;			// rotate the box by 60 degrees around the x axis	
+	display_rotate_z		= 20;			// Rotate the box by 20 around the z axis, then 
+	display_rotate_x		= 60;			// rotate the box by 60 degrees around the x axis	
 #ifdef LIBPNG
 	system("mkdir png");
 #endif // LIBPNG
 #endif // OPENGL
 	root_nx = 2; root_ny = 2; root_nz = 1;
 	nghostx = 2; nghosty = 2; nghostz = 0; 			// Use two ghost rings
-	double surfacedensity 		= 840; 			// kg/m^2
-	double particle_density		= 900;			// kg/m^3
-	double particle_radius_min 	= 1.;			// m
-	double particle_radius_max 	= 1.;			// m
+	double surfacedensity 		= 400; 			// kg/m^2
+	double particle_density		= 400;			// kg/m^3
+	double particle_radius_min 	= 1;			// m
+	double particle_radius_max 	= 4;			// m
 	double particle_radius_slope 	= -3;	
 	boxsize 			= 100;			// m
 	if (argc>1){						// Try to read boxsize from command line
@@ -118,9 +118,8 @@ void problem_inloop(){
 }
 
 void problem_output(){
-
 #ifdef LIBPNG
-	if (output_check(2.*1e-2*2.*M_PI/OMEGA)){
+	if (output_check(1e-3*2.*M_PI/OMEGA)){
 		output_png("png/");
 	}
 #endif //LIBPNG
