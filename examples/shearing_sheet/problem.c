@@ -78,7 +78,7 @@ void problem_init(int argc, char* argv[]){
 	init_box();
 	
 	// Initial conditions
-	printf("Toomre wavelength: %f\n",2.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*G);
+	printf("Toomre wavelength: %f\n",4.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*G);
 	// Use Bridges et al coefficient of restitution.
 	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
 	minimum_collision_velocity = particle_radius_min*OMEGA*0.001;  // small fraction of the shear
