@@ -250,6 +250,8 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
 *  **examples/bouncing_balls**
 
+This example is using the following modules: `gravity_direct.c` `boundaries_periodic.c` `integrator_leapfrog.c` `collisions_direct.c`.
+
   This example tests collision detection methods.
   To change the collision detection algorithm, change the module
   collisions_direct.c to either collisions_tree.c or
@@ -258,15 +260,21 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
 *  **examples/bouncing_balls_corners**
 
+This example is using the following modules: `gravity_direct.c` `boundaries_periodic.c` `integrator_leapfrog.c` `collisions_tree.c`.
+
   This example tests collision detection methon near box boundaries.
   
 
 *  **examples/bouncing_string**
 
+This example is using the following modules: `gravity_none.c` `boundaries_periodic.c` `integrator_leapfrog.c` `collisions_direct.c`.
+
   This example tests collision detection methods.
   
 
 *  **examples/circular_orbit**
+
+This example is using the following modules: `gravity_direct.c` `boundaries_open.c` `integrator_wh.c` `collisions_none.c`.
 
   This example uses the Wisdom Holman integrator
   to integrate particles on a circular orbit in a fixed
@@ -274,6 +282,8 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   
 
 *  **examples/forced_migration**
+
+This example is using the following modules: `gravity_direct.c` `boundaries_open.c` `integrator_radau15.c` `collisions_none.c`.
 
   This example applies dissipative forces to two
   bodies orbiting a central object. The forces are specified
@@ -291,6 +301,8 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
 *  **examples/granulardynamics**
 
+This example is using the following modules: `gravity_none.c` `boundaries_periodic.c` `integrator_leapfrog.c` `collisions_tree.c`.
+
   This problem uses two boundary layers made of
   particles to simulate shearing walls. These walls are heating
   up the particles, create a dense and cool layer in the middle.
@@ -298,6 +310,8 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   
 
 *  **examples/opencl**
+
+This example is using the following modules: `gravity_opencl.c` `boundaries_open.c` `integrator_leapfrog.c` `collisions_none.c` `gravity_direct.c` `boundaries_open.c` `integrator_leapfrog.c` `collisions_none.c`.
 
   A self-gravitating disc is integrated using
   the OpenCL direct gravity summation module.
@@ -318,6 +332,8 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
 *  **examples/outer_solar_system**
 
+This example is using the following modules: `gravity_direct.c` `boundaries_open.c` `integrator_wh.c` `collisions_none.c`.
+
   This example uses the Wisdom Holman integrator
   to integrate the outer planets of the solar system. The initial
   conditions are taken from Applegate et al 1986. Pluto is a test
@@ -326,12 +342,16 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
 *  **examples/overstability**
 
+This example is using the following modules: `gravity_none.c` `boundaries_shear.c` `integrator_sei.c` `collisions_sweep.c`.
+
   A narrow box of Saturn's rings is simulated to
   study the viscous overstability. Collisions are resolved using
   the plane-sweep method.
   
 
 *  **examples/restarting_simulation**
+
+This example is using the following modules: `gravity_direct.c` `boundaries_shear.c` `integrator_sei.c` `collisions_direct.c`.
 
   This example demonstrates how to restart a simulation
   using a binary file.
@@ -346,6 +366,8 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
 *  **examples/restricted_threebody_mpi**
 
+This example is using the following modules: `gravity_direct.c` `boundaries_open.c` `integrator_leapfrog.c` `collisions_none.c`.
+
   This problem uses MPI to calculate the restricted three
   body problem. Active particles are copied to all nodes. All other
   particles only exist on one node and are not automatically (re-)
@@ -355,12 +377,16 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
 *  **examples/selfgravity_disc**
 
+This example is using the following modules: `gravity_tree.c` `boundaries_open.c` `integrator_leapfrog.c` `collisions_none.c`.
+
   A self-gravitating disc is integrated using
   the leap frog integrator. This example is also compatible with
   the Wisdom Holman integrator. Collisions are not resolved.
   
 
 *  **examples/selfgravity_disc_grape**
+
+This example is using the following modules: `gravity_grape.c` `boundaries_open.c` `integrator_leapfrog.c` `collisions_none.c`.
 
   A self-gravitating disc is integrated using
   the leap frog integrator. This example is also compatible with
@@ -369,11 +395,15 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
 *  **examples/selfgravity_plummer**
 
+This example is using the following modules: `gravity_tree.c` `boundaries_open.c` `integrator_leapfrog.c` `collisions_none.c`.
+
   A self-gravitating plummer sphere is integrated using
   the leap frog integrator. Collisions are not resolved.
   
 
 *  **examples/shearing_sheet**
+
+This example is using the following modules: `gravity_tree.c` `boundaries_shear.c` `integrator_sei.c` `collisions_tree.c`.
 
   This problem uses shearing sheet boundary
   conditions. Particle properties resemble those found in
@@ -381,6 +411,8 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   
 
 *  **examples/shearing_sheet_2**
+
+This example is using the following modules: `gravity_tree.c` `boundaries_shear.c` `integrator_sei.c` `collisions_tree.c`.
 
   This problem uses shearing sheet boundary
   conditions. Particle properties resemble those found in
@@ -390,12 +422,16 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
 *  **examples/shearing_sheet_fft**
 
+This example is using the following modules: `gravity_fft.c` `boundaries_shear.c` `integrator_sei.c` `collisions_sweep.c`.
+
   This problem uses shearing sheet boundary
   conditions. Particle properties resemble those found in
   Saturn's rings.
   
 
 *  **examples/shearing_sheet_grape**
+
+This example is using the following modules: `gravity_grape.c` `boundaries_shear.c` `integrator_sei.c` `collisions_sweep.c`.
 
   This problem uses shearing sheet boundary
   conditions. Particle properties resemble those found in
@@ -404,6 +440,8 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
 *  **examples/shearing_sheet_profiling**
 
+This example is using the following modules: `gravity_tree.c` `boundaries_shear.c` `integrator_sei.c` `collisions_tree.c`.
+
   This problem uses shearing sheet boundary
   conditions. Particle properties resemble those found in
   Saturn's rings.
@@ -411,12 +449,16 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
 *  **examples/spreading_ring**
 
+This example is using the following modules: `gravity_direct.c` `boundaries_open.c` `integrator_wh.c` `collisions_sweepphi.c`.
+
   A narrow ring is spreading due to collisions.
   We use the Wisdom Holman integrator and a plane-sweep algorithm
   in the phi direction.
   
 
 *  **examples/viewer**
+
+This example is using the following modules: `gravity_none.c` `boundaries_periodic.c` `integrator_dummy.c` `collisions_dummy.c`.
 
   This viewer can display data in the form
   x, y, z, r.

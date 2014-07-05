@@ -21,6 +21,15 @@ with open("README.md","w") as f:
                             will_output = 1
                             line = " * " + line[10:]
                             f.write("\n*  **examples/"+problemc.split("/")[2]+"**\n\n")
+                            f.write("This example is using the following modules:");
+                            with open("examples/"+problemc.split("/")[2]+"/Makefile") as mf:
+                                for linem in mf:
+                                    if linem.strip()[0:6] == "ln -fs":
+                                        sourcefile = linem.strip().split(" ")[2].split("/")[-1]
+                                        if sourcefile!="problem.c":
+                                            f.write(" `"+sourcefile+"`")
+                            f.write(".\n\n");
+                    
                         if line[0:11] == " * @section":
                             will_output = 0
                         if will_output==1:
