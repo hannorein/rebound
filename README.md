@@ -241,6 +241,14 @@ if (output_check(10.*dt)){
 #### void problem_finish() ####
 This function is called at the end of the simulation, when t >= tmax. This is the last chance to output any quantities before the program ends.
 
+
+Examples
+-----------------------
+The following examples can all be found in the `examples` directory. 
+Whatever you plan to do with REBOUND, chances are there is already an example available which you can use as a starting point.
+
+
+
 OpenGL keyboard command
 -----------------------
 You can use the following keyboard command to alter the OpenGL real-time visualizations.
