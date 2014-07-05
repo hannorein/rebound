@@ -248,7 +248,7 @@ The following examples can all be found in the `examples` directory.
 Whatever you plan to do with REBOUND, chances are there is already an example available which you can use as a starting point.
 
 
-##### examples/bouncing_balls
+*  **examples/bouncing_balls**
 
 This example tests collision detection methods.
 To change the collision detection algorithm, change the module
@@ -256,24 +256,24 @@ collisions_direct.c to either collisions_tree.c or
 collisions_sweep.c in the Makefile.
 
 
-##### examples/bouncing_balls_corners
+*  **examples/bouncing_balls_corners**
 
 This example tests collision detection methon near box boundaries.
 
 
-##### examples/bouncing_string
+*  **examples/bouncing_string**
 
 This example tests collision detection methods.
 
 
-##### examples/circular_orbit
+*  **examples/circular_orbit**
 
 This example uses the Wisdom Holman integrator
 to integrate particles on a circular orbit in a fixed
 potential.
 
 
-##### examples/forced_migration
+*  **examples/forced_migration**
 
 This example applies dissipative forces to two
 bodies orbiting a central object. The forces are specified
@@ -289,7 +289,7 @@ the damping terms as actual forces.
 
 
 
-##### examples/granulardynamics
+*  **examples/granulardynamics**
 
 This problem uses two boundary layers made of
 particles to simulate shearing walls. These walls are heating
@@ -297,7 +297,7 @@ up the particles, create a dense and cool layer in the middle.
 This example shows how to use REBOUND for granular dynamics.
 
 
-##### examples/opencl
+*  **examples/opencl**
 
 A self-gravitating disc is integrated using
 the OpenCL direct gravity summation module.
@@ -316,7 +316,7 @@ make && ./nbody              this will run on the GPU
 
 
 
-##### examples/outer_solar_system
+*  **examples/outer_solar_system**
 
 This example uses the Wisdom Holman integrator
 to integrate the outer planets of the solar system. The initial
@@ -324,14 +324,14 @@ conditions are taken from Applegate et al 1986. Pluto is a test
 particle.
 
 
-##### examples/overstability
+*  **examples/overstability**
 
 A narrow box of Saturn's rings is simulated to
 study the viscous overstability. Collisions are resolved using
 the plane-sweep method.
 
 
-##### examples/restarting_simulation
+*  **examples/restarting_simulation**
 
 This example demonstrates how to restart a simulation
 using a binary file.
@@ -344,7 +344,7 @@ program with './nbody --restart restart.bin'.
 
 
 
-##### examples/restricted_threebody_mpi
+*  **examples/restricted_threebody_mpi**
 
 This problem uses MPI to calculate the restricted three
 body problem. Active particles are copied to all nodes. All other
@@ -353,34 +353,34 @@ distributed. There is not domain decomposition used in this example.
 Run with 'mpirun -np 4 nbody'.
 
 
-##### examples/selfgravity_disc
+*  **examples/selfgravity_disc**
 
 A self-gravitating disc is integrated using
 the leap frog integrator. This example is also compatible with
 the Wisdom Holman integrator. Collisions are not resolved.
 
 
-##### examples/selfgravity_disc_grape
+*  **examples/selfgravity_disc_grape**
 
 A self-gravitating disc is integrated using
 the leap frog integrator. This example is also compatible with
 the Wisdom Holman integrator. Collisions are not resolved.
 
 
-##### examples/selfgravity_plummer
+*  **examples/selfgravity_plummer**
 
 A self-gravitating plummer sphere is integrated using
 the leap frog integrator. Collisions are not resolved.
 
 
-##### examples/shearing_sheet
+*  **examples/shearing_sheet**
 
 This problem uses shearing sheet boundary
 conditions. Particle properties resemble those found in
 Saturn's rings.
 
 
-##### examples/shearing_sheet_2
+*  **examples/shearing_sheet_2**
 
 This problem uses shearing sheet boundary
 conditions. Particle properties resemble those found in
@@ -388,35 +388,35 @@ Saturn's rings. The collision resolve method has been changed
 such that particle clumps behave more realistically.
 
 
-##### examples/shearing_sheet_fft
+*  **examples/shearing_sheet_fft**
 
 This problem uses shearing sheet boundary
 conditions. Particle properties resemble those found in
 Saturn's rings.
 
 
-##### examples/shearing_sheet_grape
+*  **examples/shearing_sheet_grape**
 
 This problem uses shearing sheet boundary
 conditions. Particle properties resemble those found in
 Saturn's rings.
 
 
-##### examples/shearing_sheet_profiling
+*  **examples/shearing_sheet_profiling**
 
 This problem uses shearing sheet boundary
 conditions. Particle properties resemble those found in
 Saturn's rings.
 
 
-##### examples/spreading_ring
+*  **examples/spreading_ring**
 
 A narrow ring is spreading due to collisions.
 We use the Wisdom Holman integrator and a plane-sweep algorithm
 in the phi direction.
 
 
-##### examples/viewer
+*  **examples/viewer**
 
 This viewer can display data in the form
 x, y, z, r.
