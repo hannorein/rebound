@@ -248,6 +248,180 @@ The following examples can all be found in the `examples` directory.
 Whatever you plan to do with REBOUND, chances are there is already an example available which you can use as a starting point.
 
 
+##### examples/bouncing_balls
+
+This example tests collision detection methods.
+To change the collision detection algorithm, change the module
+collisions_direct.c to either collisions_tree.c or
+collisions_sweep.c in the Makefile.
+
+
+##### examples/bouncing_balls_corners
+
+This example tests collision detection methon near box boundaries.
+
+
+##### examples/bouncing_string
+
+This example tests collision detection methods.
+
+
+##### examples/circular_orbit
+
+This example uses the Wisdom Holman integrator
+to integrate particles on a circular orbit in a fixed
+potential.
+
+
+##### examples/forced_migration
+
+This example applies dissipative forces to two
+bodies orbiting a central object. The forces are specified
+in terms of damping timescales for the semi-major axis and
+eccentricity. This mimics planetary micration in a proto-
+stellar disc. The example reproduces the study of Lee &
+Peale (2002) on the formation of the planetary system
+GJ876. For a comparison, see figure 4 in their paper.
+The RADAU15 integrator is used because the forces are
+velocity dependent.
+Special thanks goes to Willy Kley for helping me to implement
+the damping terms as actual forces.
+
+
+
+##### examples/granulardynamics
+
+This problem uses two boundary layers made of
+particles to simulate shearing walls. These walls are heating
+up the particles, create a dense and cool layer in the middle.
+This example shows how to use REBOUND for granular dynamics.
+
+
+##### examples/opencl
+
+A self-gravitating disc is integrated using
+the OpenCL direct gravity summation module.
+
+This is a very simple implementation (see gravity_opencl.c).
+Currently it only supports floating point precission. It also
+transfers the data back and forth from the GPU every timestep.
+There are considerable improvements to be made. This is just a
+proof of concept. Also note that the code required N to be a
+multiple of the workgrop size.
+
+You can test the performance increase by running:
+make direct && ./nbody       this will run on the CPU
+make && ./nbody              this will run on the GPU
+
+
+
+
+##### examples/outer_solar_system
+
+This example uses the Wisdom Holman integrator
+to integrate the outer planets of the solar system. The initial
+conditions are taken from Applegate et al 1986. Pluto is a test
+particle.
+
+
+##### examples/overstability
+
+A narrow box of Saturn's rings is simulated to
+study the viscous overstability. Collisions are resolved using
+the plane-sweep method.
+
+
+##### examples/restarting_simulation
+
+This example demonstrates how to restart a simulation
+using a binary file.
+
+First, run the program with './nbody'.
+Random initial conditions are created and
+a restart file is written once per orbit.
+Then, to restart the simulation, run the
+program with './nbody --restart restart.bin'.
+
+
+
+##### examples/restricted_threebody_mpi
+
+This problem uses MPI to calculate the restricted three
+body problem. Active particles are copied to all nodes. All other
+particles only exist on one node and are not automatically (re-)
+distributed. There is not domain decomposition used in this example.
+Run with 'mpirun -np 4 nbody'.
+
+
+##### examples/selfgravity_disc
+
+A self-gravitating disc is integrated using
+the leap frog integrator. This example is also compatible with
+the Wisdom Holman integrator. Collisions are not resolved.
+
+
+##### examples/selfgravity_disc_grape
+
+A self-gravitating disc is integrated using
+the leap frog integrator. This example is also compatible with
+the Wisdom Holman integrator. Collisions are not resolved.
+
+
+##### examples/selfgravity_plummer
+
+A self-gravitating plummer sphere is integrated using
+the leap frog integrator. Collisions are not resolved.
+
+
+##### examples/shearing_sheet
+
+This problem uses shearing sheet boundary
+conditions. Particle properties resemble those found in
+Saturn's rings.
+
+
+##### examples/shearing_sheet_2
+
+This problem uses shearing sheet boundary
+conditions. Particle properties resemble those found in
+Saturn's rings. The collision resolve method has been changed
+such that particle clumps behave more realistically.
+
+
+##### examples/shearing_sheet_fft
+
+This problem uses shearing sheet boundary
+conditions. Particle properties resemble those found in
+Saturn's rings.
+
+
+##### examples/shearing_sheet_grape
+
+This problem uses shearing sheet boundary
+conditions. Particle properties resemble those found in
+Saturn's rings.
+
+
+##### examples/shearing_sheet_profiling
+
+This problem uses shearing sheet boundary
+conditions. Particle properties resemble those found in
+Saturn's rings.
+
+
+##### examples/spreading_ring
+
+A narrow ring is spreading due to collisions.
+We use the Wisdom Holman integrator and a plane-sweep algorithm
+in the phi direction.
+
+
+##### examples/viewer
+
+This viewer can display data in the form
+x, y, z, r.
+
+This viewer can display data in the form x, y, z, r.  
 OpenGL keyboard command
 -----------------------
 You can use the following keyboard command to alter the OpenGL real-time visualizations.
