@@ -37,6 +37,12 @@
 #include "gravity.h"
 
 
+// These variables have no effect for euler.
+int integrator_force_is_velocitydependent 	= 1;
+double integrator_epsilon 			= 0;
+extern double integrator_min_dt 		= 0;
+
+
 /**
  * This part has no function, as the euler scheme does not have any sub-
  * timestep.

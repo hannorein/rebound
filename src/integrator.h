@@ -39,5 +39,25 @@ void integrator_part1();
  * sync which is needed for collision detection.
  */
 void integrator_part2();
+ 
+
+/* 
+ * Flag determining if the integrator needs to consider velocity 
+ * dependent forces. This is only relevant for IAS15.
+ * Default is 1.
+ **/ 
+extern int integrator_force_is_velocitydependent;
+
+/*
+ * This parameter controls the accuracy of an adaptive integrator.
+ * Default is 0 (non-adaptive).
+ **/
+extern double integrator_epsilon;
+
+/*
+ * The minimum timestep to be used in an adaptive integrator.
+ * Default is 0 (no minimal timestep).
+ **/
+extern double integrator_min_dt;
 
 #endif

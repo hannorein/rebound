@@ -7,7 +7,7 @@ ifeq ($(OS), Linux)
 	LIB+= -lm
 endif
 ifeq ($(OS), Darwin)
-	OPT+= -I/usr/local/include  -Wall -g
+	OPT+= -I/usr/local/include  -Wall -Wno-deprecated -g
 	PREDEF+= -D_APPLE
 	LIB+= -L/usr/local/lib
 endif
@@ -70,6 +70,9 @@ PREDEF+= -D$(shell basename `readlink collisions.c` '.c' | tr '[a-z]' '[A-Z]')
 PREDEFLIST= $(shell echo "$(PREDEF)" | sed 's/-D//g')
 
 all:
+	# Remove old object files
+	rm -f *.o
+	# Compile all source files 
 	$(CC) $(OPT) $(PREDEF) main.c -c
 	$(CC) $(OPT) $(PREDEF) problem.c -c
 	$(CC) $(OPT) $(PREDEF) tree.c -c

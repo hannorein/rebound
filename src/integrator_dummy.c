@@ -32,6 +32,10 @@
 #include "main.h"
 #include "gravity.h"
 
+int integrator_force_is_velocitydependent 	= 1;
+double integrator_epsilon 			= 0;
+extern double integrator_min_dt 		= 0;
+
 
 void integrator_part1(){
 	// Do nothing.
