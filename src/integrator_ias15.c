@@ -396,12 +396,14 @@ int integrator_ias15_step() {
 			}
 		}
 
-		double dt_new = dt_done/safety_factor; // By default, increase timestep a little
-		if  (isnormal(integrator_error)){
+		double dt_new;
+		if  (isnormal(integrator_error)){ 	
 			// if error estimate is available increase by more educated guess
 		 	dt_new = pow(integrator_epsilon/integrator_error,1./7.)*dt_done;
 			// Add a safety factor to make sure we do not need to repeat timestep
 			dt_new *= safety_factor;  
+		}else{					// In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
+		 	dt_new = dt_done/safety_factor; // by default, increase timestep a little
 		}
 		
 		if (dt_new<integrator_min_dt) dt_new = integrator_min_dt;
