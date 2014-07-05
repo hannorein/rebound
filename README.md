@@ -250,7 +250,11 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
 *  **examples/bouncing_balls**
 
-This example is using the following modules: `gravity_direct.c` `boundaries_periodic.c` `integrator_leapfrog.c` `collisions_direct.c`.
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_periodic.c`
+  `integrator_leapfrog.c`
+  `collisions_direct.c`
 
   This example tests collision detection methods.
   To change the collision detection algorithm, change the module
@@ -260,21 +264,33 @@ This example is using the following modules: `gravity_direct.c` `boundaries_peri
 
 *  **examples/bouncing_balls_corners**
 
-This example is using the following modules: `gravity_direct.c` `boundaries_periodic.c` `integrator_leapfrog.c` `collisions_tree.c`.
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_periodic.c`
+  `integrator_leapfrog.c`
+  `collisions_tree.c`
 
   This example tests collision detection methon near box boundaries.
   
 
 *  **examples/bouncing_string**
 
-This example is using the following modules: `gravity_none.c` `boundaries_periodic.c` `integrator_leapfrog.c` `collisions_direct.c`.
+  This example is using the following modules:  
+  `gravity_none.c`
+  `boundaries_periodic.c`
+  `integrator_leapfrog.c`
+  `collisions_direct.c`
 
   This example tests collision detection methods.
   
 
 *  **examples/circular_orbit**
 
-This example is using the following modules: `gravity_direct.c` `boundaries_open.c` `integrator_wh.c` `collisions_none.c`.
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_wh.c`
+  `collisions_none.c`
 
   This example uses the Wisdom Holman integrator
   to integrate particles on a circular orbit in a fixed
@@ -283,7 +299,11 @@ This example is using the following modules: `gravity_direct.c` `boundaries_open
 
 *  **examples/forced_migration**
 
-This example is using the following modules: `gravity_direct.c` `boundaries_open.c` `integrator_radau15.c` `collisions_none.c`.
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_radau15.c`
+  `collisions_none.c`
 
   This example applies dissipative forces to two
   bodies orbiting a central object. The forces are specified
@@ -301,7 +321,11 @@ This example is using the following modules: `gravity_direct.c` `boundaries_open
 
 *  **examples/granulardynamics**
 
-This example is using the following modules: `gravity_none.c` `boundaries_periodic.c` `integrator_leapfrog.c` `collisions_tree.c`.
+  This example is using the following modules:  
+  `gravity_none.c`
+  `boundaries_periodic.c`
+  `integrator_leapfrog.c`
+  `collisions_tree.c`
 
   This problem uses two boundary layers made of
   particles to simulate shearing walls. These walls are heating
@@ -311,7 +335,15 @@ This example is using the following modules: `gravity_none.c` `boundaries_period
 
 *  **examples/opencl**
 
-This example is using the following modules: `gravity_opencl.c` `boundaries_open.c` `integrator_leapfrog.c` `collisions_none.c` `gravity_direct.c` `boundaries_open.c` `integrator_leapfrog.c` `collisions_none.c`.
+  This example is using the following modules:  
+  `gravity_opencl.c`
+  `boundaries_open.c`
+  `integrator_leapfrog.c`
+  `collisions_none.c`
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_leapfrog.c`
+  `collisions_none.c`
 
   A self-gravitating disc is integrated using
   the OpenCL direct gravity summation module.
@@ -332,7 +364,11 @@ This example is using the following modules: `gravity_opencl.c` `boundaries_open
 
 *  **examples/outer_solar_system**
 
-This example is using the following modules: `gravity_direct.c` `boundaries_open.c` `integrator_wh.c` `collisions_none.c`.
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_wh.c`
+  `collisions_none.c`
 
   This example uses the Wisdom Holman integrator
   to integrate the outer planets of the solar system. The initial
@@ -342,7 +378,11 @@ This example is using the following modules: `gravity_direct.c` `boundaries_open
 
 *  **examples/overstability**
 
-This example is using the following modules: `gravity_none.c` `boundaries_shear.c` `integrator_sei.c` `collisions_sweep.c`.
+  This example is using the following modules:  
+  `gravity_none.c`
+  `boundaries_shear.c`
+  `integrator_sei.c`
+  `collisions_sweep.c`
 
   A narrow box of Saturn's rings is simulated to
   study the viscous overstability. Collisions are resolved using
@@ -351,7 +391,11 @@ This example is using the following modules: `gravity_none.c` `boundaries_shear.
 
 *  **examples/restarting_simulation**
 
-This example is using the following modules: `gravity_direct.c` `boundaries_shear.c` `integrator_sei.c` `collisions_direct.c`.
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_shear.c`
+  `integrator_sei.c`
+  `collisions_direct.c`
 
   This example demonstrates how to restart a simulation
   using a binary file.
@@ -366,7 +410,11 @@ This example is using the following modules: `gravity_direct.c` `boundaries_shea
 
 *  **examples/restricted_threebody_mpi**
 
-This example is using the following modules: `gravity_direct.c` `boundaries_open.c` `integrator_leapfrog.c` `collisions_none.c`.
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_leapfrog.c`
+  `collisions_none.c`
 
   This problem uses MPI to calculate the restricted three
   body problem. Active particles are copied to all nodes. All other
@@ -377,7 +425,11 @@ This example is using the following modules: `gravity_direct.c` `boundaries_open
 
 *  **examples/selfgravity_disc**
 
-This example is using the following modules: `gravity_tree.c` `boundaries_open.c` `integrator_leapfrog.c` `collisions_none.c`.
+  This example is using the following modules:  
+  `gravity_tree.c`
+  `boundaries_open.c`
+  `integrator_leapfrog.c`
+  `collisions_none.c`
 
   A self-gravitating disc is integrated using
   the leap frog integrator. This example is also compatible with
@@ -386,7 +438,11 @@ This example is using the following modules: `gravity_tree.c` `boundaries_open.c
 
 *  **examples/selfgravity_disc_grape**
 
-This example is using the following modules: `gravity_grape.c` `boundaries_open.c` `integrator_leapfrog.c` `collisions_none.c`.
+  This example is using the following modules:  
+  `gravity_grape.c`
+  `boundaries_open.c`
+  `integrator_leapfrog.c`
+  `collisions_none.c`
 
   A self-gravitating disc is integrated using
   the leap frog integrator. This example is also compatible with
@@ -395,7 +451,11 @@ This example is using the following modules: `gravity_grape.c` `boundaries_open.
 
 *  **examples/selfgravity_plummer**
 
-This example is using the following modules: `gravity_tree.c` `boundaries_open.c` `integrator_leapfrog.c` `collisions_none.c`.
+  This example is using the following modules:  
+  `gravity_tree.c`
+  `boundaries_open.c`
+  `integrator_leapfrog.c`
+  `collisions_none.c`
 
   A self-gravitating plummer sphere is integrated using
   the leap frog integrator. Collisions are not resolved.
@@ -403,7 +463,11 @@ This example is using the following modules: `gravity_tree.c` `boundaries_open.c
 
 *  **examples/shearing_sheet**
 
-This example is using the following modules: `gravity_tree.c` `boundaries_shear.c` `integrator_sei.c` `collisions_tree.c`.
+  This example is using the following modules:  
+  `gravity_tree.c`
+  `boundaries_shear.c`
+  `integrator_sei.c`
+  `collisions_tree.c`
 
   This problem uses shearing sheet boundary
   conditions. Particle properties resemble those found in
@@ -412,7 +476,11 @@ This example is using the following modules: `gravity_tree.c` `boundaries_shear.
 
 *  **examples/shearing_sheet_2**
 
-This example is using the following modules: `gravity_tree.c` `boundaries_shear.c` `integrator_sei.c` `collisions_tree.c`.
+  This example is using the following modules:  
+  `gravity_tree.c`
+  `boundaries_shear.c`
+  `integrator_sei.c`
+  `collisions_tree.c`
 
   This problem uses shearing sheet boundary
   conditions. Particle properties resemble those found in
@@ -422,7 +490,11 @@ This example is using the following modules: `gravity_tree.c` `boundaries_shear.
 
 *  **examples/shearing_sheet_fft**
 
-This example is using the following modules: `gravity_fft.c` `boundaries_shear.c` `integrator_sei.c` `collisions_sweep.c`.
+  This example is using the following modules:  
+  `gravity_fft.c`
+  `boundaries_shear.c`
+  `integrator_sei.c`
+  `collisions_sweep.c`
 
   This problem uses shearing sheet boundary
   conditions. Particle properties resemble those found in
@@ -431,7 +503,11 @@ This example is using the following modules: `gravity_fft.c` `boundaries_shear.c
 
 *  **examples/shearing_sheet_grape**
 
-This example is using the following modules: `gravity_grape.c` `boundaries_shear.c` `integrator_sei.c` `collisions_sweep.c`.
+  This example is using the following modules:  
+  `gravity_grape.c`
+  `boundaries_shear.c`
+  `integrator_sei.c`
+  `collisions_sweep.c`
 
   This problem uses shearing sheet boundary
   conditions. Particle properties resemble those found in
@@ -440,7 +516,11 @@ This example is using the following modules: `gravity_grape.c` `boundaries_shear
 
 *  **examples/shearing_sheet_profiling**
 
-This example is using the following modules: `gravity_tree.c` `boundaries_shear.c` `integrator_sei.c` `collisions_tree.c`.
+  This example is using the following modules:  
+  `gravity_tree.c`
+  `boundaries_shear.c`
+  `integrator_sei.c`
+  `collisions_tree.c`
 
   This problem uses shearing sheet boundary
   conditions. Particle properties resemble those found in
@@ -449,7 +529,11 @@ This example is using the following modules: `gravity_tree.c` `boundaries_shear.
 
 *  **examples/spreading_ring**
 
-This example is using the following modules: `gravity_direct.c` `boundaries_open.c` `integrator_wh.c` `collisions_sweepphi.c`.
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_wh.c`
+  `collisions_sweepphi.c`
 
   A narrow ring is spreading due to collisions.
   We use the Wisdom Holman integrator and a plane-sweep algorithm
@@ -458,7 +542,11 @@ This example is using the following modules: `gravity_direct.c` `boundaries_open
 
 *  **examples/viewer**
 
-This example is using the following modules: `gravity_none.c` `boundaries_periodic.c` `integrator_dummy.c` `collisions_dummy.c`.
+  This example is using the following modules:  
+  `gravity_none.c`
+  `boundaries_periodic.c`
+  `integrator_dummy.c`
+  `collisions_dummy.c`
 
   This viewer can display data in the form
   x, y, z, r.
