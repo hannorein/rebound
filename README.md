@@ -8,17 +8,22 @@ Contributors
 * David S. Spiegel, Institute for Advanced Study (IAS), Princeton, <dave@ias.edu>
 * Akihiko Fujii, National Astronomical Observatory of Japan/University of Tokyo, Tokyo, <akihiko.fujii@nao.ac.jp>
 
-Paper
+Papers
 ----- 
 
-The paper Rein & Liu 2012 describing this code has been accepted for publication by Astronomy and Astrophysics on 6 November 2011 and has been published as article A128 in A&A Volume 537 2012. A freely available preprint can be found on the arXiv at http://arxiv.org/abs/1110.4876.
+There are two papers describing the functionality of REBOUND. 
 
-On YouTube, http://youtu.be/gaExPGW1WzI?hd=1, you can find a promo video on how to download and install REBOUND. 
+The first one, Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012, http://arxiv.org/abs/1110.4876), describes the code structure and the main feature including the gravity and collision routines. 
+
+The second paper, Rein & Spiegel (in preparation) describes versatile high order integrator IAS15 which is now part of REBOUND. 
+
 
 Screenshot
 ---------- 
  
 ![Tree structure in REBOUND](https://raw.github.com/hannorein/rebound/master/doc/images/screenshot_shearingsheet.png) 
+
+You can also find a video on YouTube, http://youtu.be/gaExPGW1WzI?hd=1, that shows how to download and install REBOUND. 
 
 Available modules
 -----------------
@@ -71,8 +76,8 @@ This setup allows you to work on multiple projects at the same time using differ
      <td>Leap frog, second order, symplectic</td></tr>
   <tr><td><pre>integrator_wh.c      </pre></td>
      <td>Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991</td></tr>
-  <tr><td><pre>integrator_radau15.c </pre></td>
-     <td>15th order, non-symplectic integrator, can handle arbitrary (velocity dependent) forces, Everhart 1985</td></tr>
+  <tr><td><pre>integrator_ias15.c </pre></td>
+     <td>IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precission. Rein & Spiegel 2014, Everhart 1985</td></tr>
   <tr><td><pre>integrator_sei.c     </pre></td>
      <td>Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011</td></tr>
 </table>
@@ -143,7 +148,7 @@ To finally run the code, simply type
 
     ./nbody
 
-A window should open and you will see a simulation running in real time. The setup simulates the rings of Saturn and uses a local shearing sheet approximation. Have a look at the other examples too and you will quickly get an impression of what REBOUND can do. 
+A window should open and you will see a simulation running in real time. The problem in the directory `examples/shearing_sheet/` simulates the rings of Saturn and uses a local shearing sheet approximation. Have a look at the other examples as well and you will quickly get an idea of what REBOUND can do. 
 
 If you want to create your own problem, just copy one of the example directories or the template in the `problems` directory. Then simply modify `problem.c` and `Makefile` accordingly.  
 
@@ -199,7 +204,7 @@ If you are still convinced that you need a configuration file, you are welcome t
 #### void problem_additional_forces() ####
 This is a function pointer which is called one or more times per time-step whenever the forces are updated. This is where you can implement all kind of things such as additional forces onto particles. 
 
-The following lines of code implement a simple velocity dependent force.  `integrator_radau15.c` is best suited for this (see `examples/radau15`):
+The following lines of code implement a simple velocity dependent force.  `integrator_ias15.c` is best suited for this (see `examples/ias15_dragforce`):
 
 ```c
 void velocity_dependent_force(){
@@ -216,6 +221,13 @@ Make sure you set the function pointer in the `problem_init()` routine:
 ```c
 	problem_additional_forces = velocity_dependent_force;
 ```
+
+By default, all integrators assume that the forces are velocity dependent. If all forces acting on particles only depend on positions, you can set the following variable (defined in `integrator.h`) to `0` to speed up the calculation:
+
+```c
+	integrator_force_is_velocitydependent = 0;
+```
+
 
 #### void problem_output() ####
 This function is called at the beginning of the simulation and at the end of each time-step. You can implement your output routines here. Many basic output functions are already implemented in REBOUND. See `output.h` for more details. The function `output_check(odt)` can be used to easily check if an output is needed after a regular interval. For example, the following code snippet outputs some timing statistics to the console every 10 time-steps:
