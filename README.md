@@ -248,7 +248,6 @@ The following examples can all be found in the `examples` directory.
 Whatever you plan to do with REBOUND, chances are there is already an example available which you can use as a starting point.
 
 
-
 OpenGL keyboard command
 -----------------------
 You can use the following keyboard command to alter the OpenGL real-time visualizations.
