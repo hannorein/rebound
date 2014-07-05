@@ -325,6 +325,114 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   up the particles, create a dense and cool layer in the middle.
   
 
+*  **examples/ias15_circumplanetarydust**
+
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_ias15.c`
+  `collisions_none.c`
+
+  This example shows how to integrate circumplanetary
+  dust particles using the `integrator_ias15.c` module.
+  The example sets the function pointer `problem_additional_forces`
+  to its own function that describes the radiation forces.
+  The example uses a beta parameter of 0.01.
+  The output is custom too, outputting the semi-major axis of
+  every dust particle relative to the planet.
+  Only one dust particle is used in this example, but there could be
+  many.
+  
+
+*  **examples/ias15_closeencounter**
+
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_ias15.c`
+  `collisions_none.c`
+
+  This example integrates a densly packed planetary system
+  which becomes unstable on a timescale of only a few orbits. The IAS15
+  integrator with adaptive timestepping is used. This integrator
+  automatically decreases the timestep whenever a close
+  enocunter happens. IAS15 is very high order and ideally suited for the
+  detection of these kind of encounters.
+  
+
+*  **examples/ias15_dragforce**
+
+  This example is using the following modules:  
+  `gravity_none.c`
+  `boundaries_open.c`
+  `collisions_none.c`
+  `integrator_ias15.c`
+
+  This is a very simple example on how to implement a velocity
+  dependent drag force. The example uses the IAS15 integrator, which
+  is ideally suited to handle non-conservative forces.
+  No gravitational forces or collisions are present.
+  
+
+*  **examples/ias15_eccentric**
+
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_ias15.c`
+  `collisions_none.c`
+
+  This example uses the IAS15 integrator to simulate
+  a very eccentric planetary orbit. The integrator
+  automatically adjusts the timestep so that the pericentre passages
+  resovled with high accuracy.
+  
+  
+
+*  **examples/ias15_J2**
+
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_ias15.c`
+  `collisions_none.c`
+
+  This example presents an implementation of the J2
+  gravitational moment. The equation of motions are integrated with
+  the 15th order IAS15 integrator. The parameters in this examples
+  have been chosen to represent those of Saturn, but you can easily
+  change them or even include higher order terms in the multipole
+  expansion.
+  
+
+*  **examples/ias15_kozai**
+
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_ias15.c`
+  `collisions_none.c`
+
+  This example uses the IAS15 integrator to simulate
+  a Lidov Kozai cycle of a planet perturbed by a distant star. The integrator
+  automatically adjusts the timestep so that even very high
+  eccentricity encounters are resovled with high accuracy.
+  
+  
+
+*  **examples/ias15_prdrag**
+
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_ias15.c`
+  `collisions_none.c`
+
+  This example provides an implementation of the
+  Poynting-Robertson effect. The code is using the IAS15 integrator
+  which is ideally suited for this velocity dependent force.
+  
+
 *  **examples/opencl**
 
   This example is using the following modules:  
@@ -416,6 +524,18 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   Then, to restart the simulation, run the
   program with `./nbody --restart restart.bin`.
   
+  
+
+*  **examples/restricted_threebody**
+
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_wh.c`
+  `collisions_none.c`
+
+  This example simulates a disk of test particles around
+  a central object, being perturbed by a planet.
   
 
 *  **examples/restricted_threebody_mpi**

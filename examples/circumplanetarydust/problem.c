@@ -2,7 +2,16 @@
  * @file 	problem.c
  * @brief 	Example problem: Radiation forces
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * 
+ * @detail	This example shows how to integrate circumplanetary
+ * dust particles using the `integrator_ias15.c` module.
+ * The example sets the function pointer `problem_additional_forces`
+ * to its own function that describes the radiation forces.
+ * The example uses a beta parameter of 0.01. 
+ * The output is custom too, outputting the semi-major axis of 
+ * every dust particle relative to the planet. 
+ * Only one dust particle is used in this example, but there could be
+ * many.
+ *
  * @section 	LICENSE
  * Copyright (c) 2013 Hanno Rein, Dave Spiegel
  *
@@ -34,18 +43,17 @@
 #include "integrator.h"
 #include "problem.h"
 
-void additional_forces();
+void force_radiation();
 double betaparticles = 0.01; 	// Beta parameter. 
 				// Defined as the ratio of radiation pressure over gravity.
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 			= 1e-3;	// Initial timestep.
-	integrator_epsilon 	= 1e-3;	// Accuracy parameter.
 	boxsize 		= 10;	
 	tmax			= 1e6;
 	N_active		= 2; 	// Only the star and the planet are massive.
-	problem_additional_forces 	= additional_forces;
+	problem_additional_forces 	= force_radiation;
 	init_box();
 	
 	
@@ -112,10 +120,6 @@ void force_radiation(){
 		particles[i].ay += F_r*((1.-rdot/c)*pry/pr - prvy/c);
 		particles[i].az += F_r*((1.-rdot/c)*prz/pr - prvz/c);
 	}
-}
-
-void additional_forces(){
-	force_radiation();
 }
 
 void problem_inloop(){

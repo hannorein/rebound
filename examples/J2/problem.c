@@ -2,9 +2,12 @@
  * @file 	problem.c
  * @brief 	Example problem: J2 precession
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @descrtipion	This example presents an implementation of the J2
+ * @detail	This example presents an implementation of the J2
  * gravitational moment. The equation of motions are integrated with
- * the 15th order IAS15 integrator.
+ * the 15th order IAS15 integrator. The parameters in this examples 
+ * have been chosen to represent those of Saturn, but you can easily
+ * change them or even include higher order terms in the multipole 
+ * expansion.
  * 
  * @section 	LICENSE
  * Copyright (c) 2013 Hanno Rein, Dave Spiegel
@@ -38,7 +41,7 @@
 #include "integrator.h"
 #include "problem.h"
 
-void additional_forces();
+void force_J2();
 const double J2saturn			= 16298e-6; 		// J2 of Saturn (Murray and Dermott p 531) 
 const double Msaturn			= 0.00028588598; 	// mass of Saturn in solar masses 
 const double Rsaturn			= 0.00038925688; 	// radius of Saturn in AU
@@ -50,11 +53,10 @@ double ObliquityPlanet;						// obliquity of the planet
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 				= 1e-3;			// initial timestep
-	integrator_epsilon 		= 1e-3;			// Accuracy parameter.
 	boxsize 			= 0.01;	
 	tmax				= 3e1;
 	N_active			= 2; 			// only the star and the planet are massive.
-	problem_additional_forces 	= additional_forces;
+	problem_additional_forces 	= force_J2;
 	init_box();
 	
 	
@@ -112,10 +114,6 @@ void force_J2(){
 		particles[i].ay += pay;
 		particles[i].az +=-pax*sin(ObliquityPlanet) + paz*cos(ObliquityPlanet);
 	}
-}
-
-void additional_forces(){
-	force_J2();
 }
 
 void problem_inloop(){

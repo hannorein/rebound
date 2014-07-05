@@ -2,9 +2,10 @@
  * @file 	problem.c
  * @brief 	Example problem: Velocity dependent drag force
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @description	This is a simple example how to implement a velocity 
+ * @detail	This is a very simple example on how to implement a velocity 
  * dependent drag force. The example uses the IAS15 integrator, which 
  * is ideally suited to handle non-conservative forces.
+ * No gravitational forces or collisions are present.
  * 
  * @section 	LICENSE
  * Copyright (c) 2013 Hanno Rein, Dave Spiegel
@@ -42,7 +43,6 @@ void additional_forces();
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 			= 1e-2;		// initial timestep.
-	integrator_epsilon 	= 1e-6;		// accuracy parameter.
 	boxsize 		= 10;	
 	tmax			= 40;
 

@@ -2,8 +2,8 @@
  * @file 	problem.c
  * @brief 	Example problem: Radiation forces
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @description	This example provides an implementation of the 
- * Poynting-Robertson effect. The example is using the IAS15 integrator
+ * @detail	This example provides an implementation of the 
+ * Poynting-Robertson effect. The code is using the IAS15 integrator
  * which is ideally suited for this velocity dependent force.
  * 
  * @section 	LICENSE

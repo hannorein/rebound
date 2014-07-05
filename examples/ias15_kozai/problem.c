@@ -2,8 +2,8 @@
  * @file 	problem.c
  * @brief 	Example problem: Kozai.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @description	This example uses the IAS15 integrator to simulate
- * Kozai cycles of a planet perturbed by a distant star. The integrator
+ * @detail	This example uses the IAS15 integrator to simulate
+ * a Lidov Kozai cycle of a planet perturbed by a distant star. The integrator
  * automatically adjusts the timestep so that even very high 
  * eccentricity encounters are resovled with high accuracy.
  *
@@ -45,7 +45,6 @@ extern int display_wire;
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 			= M_PI*1e-2; 	// initial timestep
-	integrator_epsilon 	= 1e-2;		// accuracy patameter
 	boxsize 		= 25;
 	tmax			= 1.6e4;
 #ifdef OPENGL

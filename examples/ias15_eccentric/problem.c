@@ -2,10 +2,10 @@
  * @file 	problem.c
  * @brief 	Example problem: Kozai.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @description	This example uses the IAS15 integrator to simulate
- * Kozai cycles of a planet perturbed by a distant star. The integrator
- * automatically adjusts the timestep so that even very high 
- * eccentricity encounters are resovled with high accuracy.
+ * @detail 	This example uses the IAS15 integrator to simulate
+ * a very eccentric planetary orbit. The integrator
+ * automatically adjusts the timestep so that the pericentre passages
+ * resovled with high accuracy.
  *
  * 
  * @section 	LICENSE
@@ -44,16 +44,15 @@ extern int display_wire;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	integrator_epsilon 	= 1e-3;		// accuracy patameter
-	
+	G			= 1;		// Gravitational constant
 #ifdef OPENGL
-	display_wire	= 1; 			// show istantaneous orbits.
+	display_wire		= 1; 		// show istantaneous orbits.
 #endif // OPENGL
 
 
-	double e_testparticle = 1.-1e-3;
-	double mass_scale	= 0.001;
-	double size_scale	= 1;
+	double e_testparticle 	= 1.-1e-3;	
+	double mass_scale	= 1.;		// Some integrators have problems when changing the mass scale, IAS15 does not. 
+	double size_scale	= 1;		// Some integrators have problems when changing the size scale, IAS15 does not.
 
 
 	boxsize 		= 25.*size_scale;
@@ -73,6 +72,7 @@ void problem_init(int argc, char* argv[]){
 	
 	tools_move_to_center_of_momentum();
 	
+	// initial timestep
 	dt 			= 1e-4*sqrt(size_scale*size_scale*size_scale/mass_scale); 
 	tmax			= 1e2*2.*M_PI*sqrt(size_scale*size_scale*size_scale/mass_scale);
 	
@@ -85,6 +85,7 @@ void problem_inloop(){
 }
 
 void problem_output(){
+	// Output the time and the current timestep. Plot it to see how IAS15 automatically reduces the timestep at pericentre. 
 	FILE* of = fopen("timestep.txt","a"); 
 	fprintf(of,"%e\t%e\t\n",t/tmax,dt/tmax);
 	fclose(of);

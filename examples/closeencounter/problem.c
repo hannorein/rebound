@@ -2,11 +2,12 @@
  * @file 	problem.c
  * @brief 	Example problem: Close Encounter.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @description This example integrates a densly packed planetary system 
- * which becomes unstable. At the end only two planets remain in the 
- * system. The IAS15 integrator with adaptive timestepping is used.
- * The integrator automaticall decreases the timestep whenever a close 
- * enocunter happens. 
+ * @detail	This example integrates a densly packed planetary system 
+ * which becomes unstable on a timescale of only a few orbits. The IAS15 
+ * integrator with adaptive timestepping is used. This integrator 
+ * automatically decreases the timestep whenever a close 
+ * enocunter happens. IAS15 is very high order and ideally suited for the 
+ * detection of these kind of encounters.
  * 
  * @section 	LICENSE
  * Copyright (c) 2013 Hanno Rein, Dave Spiegel
@@ -44,7 +45,7 @@ extern int display_wire;
 
 void problem_init(int argc, char* argv[]){
 	dt = 0.1*2.*M_PI;						// initial timestep
-	integrator_epsilon = 1e-3;					// accuracy parameter
+	// integrator_epsilon = 1e-2;					// accuracy parameter, default is 1e-2 and should work in most cases.
 
 #ifdef OPENGL
 	display_wire	= 1;						// show instantaneous orbits
@@ -68,7 +69,7 @@ void problem_init(int argc, char* argv[]){
 		planet.vx = 0; 	planet.vy = v; 	planet.vz = 0;
 		particles_add(planet); 
 	}
-	tools_move_to_center_of_momentum();
+	tools_move_to_center_of_momentum();				// This makes sure the planetary systems stays within the computational domain and doesn't drift.
 }
 
 void problem_inloop(){
@@ -77,7 +78,6 @@ void problem_inloop(){
 void problem_output(){
 	if (output_check(10.*2.*M_PI)){  
 		output_timing();
-		tools_move_to_center_of_momentum();			// Make sure the system doesn't drift out of the box
 	}
 }
 
