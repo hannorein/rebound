@@ -204,7 +204,7 @@ If you are still convinced that you need a configuration file, you are welcome t
 #### void problem_additional_forces() ####
 This is a function pointer which is called one or more times per time-step whenever the forces are updated. This is where you can implement all kind of things such as additional forces onto particles. 
 
-The following lines of code implement a simple velocity dependent force.  `integrator_ias15.c` is best suited for this (see `examples/ias15_dragforce`):
+The following lines of code implement a simple velocity dependent force.  `integrator_ias15.c` is best suited for this (see `examples/dragforce`):
 
 ```c
 void velocity_dependent_force(){
