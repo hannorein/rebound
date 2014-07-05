@@ -2,8 +2,10 @@
  * @file 	problem.c
  * @brief 	Example problem: shearing sheet.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This problem uses shearing sheet boundary
- * conditions. Particle properties resemble those found in 
+ * @detail 	This is yet another shearing sheet example, 
+ * it uses a GRAPE to calculate gravity. Note that you need to have 
+ * a physical GRAPE card installed in your computer to run this 
+ * simulation. Particle properties resemble those found in 
  * Saturn's rings. 
  * 
  * @section 	LICENSE

@@ -3,13 +3,14 @@
  * @brief 	Example problem: restarting simulation.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @detail 	This example demonstrates how to restart a simulation
- * using a binary file.
+ * using a binary file. A shearing sheet ring simulation is used, but
+ * the same method can be applied to any other type of simulation.
  * 
- * First, run the program with './nbody'.
+ * First, run the program with `./nbody`.
  * Random initial conditions are created and
  * a restart file is written once per orbit.
  * Then, to restart the simulation, run the 
- * program with './nbody --restart restart.bin'.
+ * program with `./nbody --restart restart.bin`.
  * 
  * 
  * @section 	LICENSE
@@ -49,7 +50,7 @@ extern double minimum_collision_velocity;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	OMEGA 		= 1.;
+	OMEGA 		= 1.;	
 	dt 		= 1e-4*2.*M_PI; 
 	boxsize 	= 1;
 	coefficient_of_restitution = 0.5;

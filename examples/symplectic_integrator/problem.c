@@ -1,10 +1,10 @@
 /**
  * @file 	problem.c
- * @brief 	Example problem: circular orbit.
+ * @brief 	Example problem: symplectic_integrator.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example uses the Wisdom Holman integrator
- * to integrate particles on a circular orbit in a fixed 
- * potential.
+ * @detail 	This example uses the symplectic Wisdom Holman (WH) integrator
+ * to integrate test particles on eccentric orbits in a fixed potential.
+ * Note that the WH integrator assumes that the central object is at the origin.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
@@ -38,9 +38,9 @@
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= 1e-3;
-	boxsize 	= 3;
-	N_active 	= 1; // Only star is massive
+	dt 		= 1e-3;	// in year/(2*pi)
+	boxsize 	= 3;	// in AU
+	N_active 	= 1; 	// Only star has non-zero mass. If all particles have mass, delete this line.
 	init_box();
 
 	// Initial conditions
@@ -50,7 +50,7 @@ void problem_init(int argc, char* argv[]){
 	p.x  = 0; p.y  = 0; p.z  = 0; 
 	p.vx = 0; p.vy = 0; p.vz = 0;
 	p.ax = 0; p.ay = 0; p.az = 0;
-	p.m  = 1;
+	p.m  = 1;		// in Solar Masses
 	particles_add(p); 
 	
 	int _N = 100; // Number of test particles

@@ -2,9 +2,9 @@
  * @file 	problem.c
  * @brief 	Example problem: bouncing balls.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example tests collision detection methods.
- * To change the collision detection algorithm, change the module
- * collisions_direct.c to either collisions_tree.c or 
+ * @detail 	This example is a simple test of collision detection 
+ * methods. To change the collision detection algorithm, you can replace
+ * the module collisions_direct.c to either collisions_tree.c or 
  * collisions_sweep.c in the Makefile. 
  * 
  * @section 	LICENSE
@@ -39,7 +39,7 @@ extern double coefficient_of_restitution;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt = 1e-3;
+	dt = 1e-2;
 	tmax = 10000;
 	boxsize = 3;
 	coefficient_of_restitution = 1; // elastic collisions

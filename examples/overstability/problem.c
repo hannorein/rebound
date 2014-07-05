@@ -5,6 +5,13 @@
  * @detail 	A narrow box of Saturn's rings is simulated to
  * study the viscous overstability. Collisions are resolved using
  * the plane-sweep method.
+ *
+ * It takes about 30 orbits for the overstability to occur. You can 
+ * speed up the calculation by turning off the visualization. Just press
+ * `d` while the simulation is running. Press `d` again to turn it back on.
+ *
+ * You can change the viewing angle of the camera with your mouse or by pressing
+ * the `r` key. 
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu

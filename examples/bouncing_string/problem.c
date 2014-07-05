@@ -3,6 +3,9 @@
  * @brief 	Example problem: bouncing string.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @detail 	This example tests collision detection methods.
+ * The example uses a non-square, rectangular box. 10 particles are placed
+ * along a line. All except one of the particles are at rest 
+ * initially.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu

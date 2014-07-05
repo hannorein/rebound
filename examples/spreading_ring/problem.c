@@ -2,9 +2,9 @@
  * @file 	problem.c
  * @brief 	Example problem: spreading ring.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	A narrow ring is spreading due to collisions.
- * We use the Wisdom Holman integrator and a plane-sweep algorithm 
- * in the phi direction.
+ * @detail 	A narrow ring of collisional particles is spreading.
+ * The example uses the Wisdom Holman integrator. A plane-sweep algorithm 
+ * in the phi direction is used to detect collisions.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu

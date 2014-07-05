@@ -2,8 +2,12 @@
  * @file 	problem.c
  * @brief 	Example problem: viewer.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This viewer can display data in the form 
- * x, y, z, r. 
+ * @detail 	This example doesn't simulate anything. It's just a
+ * visualization toll that can display data in the form x, y, z, r. 
+ * This might be useful when large simulations have been run and you want
+ * to look (at parts of) it at a later time.
+ *
+ * Note that this example uses only dummy modules.
  * 
  * @section 	LICENSE
  * Copyright (c) 2012 Hanno Rein, Shangfei Liu

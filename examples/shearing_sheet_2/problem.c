@@ -3,10 +3,16 @@
  * @brief 	Example problem: shearing sheet.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 		Akihiko Fujii <akihiko.fujii@nao.ac.jp>
- * @detail 	This problem uses shearing sheet boundary
- * conditions. Particle properties resemble those found in 
- * Saturn's rings. The collision resolve method has been changed
- * such that particle clumps behave more realistically.
+ * @detail 	This example is identical to the shearing_sheet
+ * example but uses a different algorithm for resolving individual 
+ * collisions. In some cases, this might give more realistic results.
+ * Particle properties resemble those found in Saturn's rings. 
+ *
+ * In this collision resolve method, particles are displaced if they 
+ * overlap. This example also shows how to implement your own collision
+ * routine. This is where one could add fragmentation, or merging of
+ * particles.
+ *
  * 
  * @section 	LICENSE
  * Copyright (c) 2014 Hanno Rein, Shangfei Liu, Akihiko Fujii

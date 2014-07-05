@@ -2,7 +2,9 @@
  * @file 	problem.c
  * @brief 	Example problem: bouncing balls at corner.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example tests collision detection methon near box boundaries.
+ * @detail 	This example tests collision detection methods accros box boundaries.
+ * There are four particles, one in each corner. To see the ghost boxes in OpenGL
+ * press `g` while the simulation is running.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu

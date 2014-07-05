@@ -3,8 +3,10 @@
  * @brief 	Example problem: self-gravity disc.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @detail 	A self-gravitating disc is integrated using
- * the leap frog integrator. This example is also compatible with 
- * the Wisdom Holman integrator. Collisions are not resolved.
+ * the leap frog integrator. This example is using the GRAPE
+ * module to calculate the self-gravity. You need to have a physical
+ * GRAPE card in your computer to run this example.
+ * Collisions are not resolved.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu

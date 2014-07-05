@@ -5,7 +5,7 @@
  * @detail 	A self-gravitating disc is integrated using
  * the OpenCL direct gravity summation module.
  *
- * This is a very simple implementation (see gravity_opencl.c). 
+ * This is a very simple implementation (see `gravity_opencl.c`). 
  * Currently it only supports floating point precission. It also
  * transfers the data back and forth from the GPU every timestep.
  * There are considerable improvements to be made. This is just a 
@@ -13,11 +13,13 @@
  * multiple of the workgrop size.
  *
  * You can test the performance increase by running:
- * make direct && ./nbody       this will run on the CPU
- * make && ./nbody              this will run on the GPU
+ * `make direct && ./nbody`, which will run on the CPU and
+ * `make && ./nbody`, which will run on the GPU.
  *
- *
+ * The Makefile is working with the Apple LLVM compiler. Changes
+ * might be necessary for other compilers such as gcc.
  * 
+ *
  * @section 	LICENSE
  * Copyright (c) 2014 Hanno Rein
  *

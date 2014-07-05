@@ -2,10 +2,18 @@
  * @file 	problem.c
  * @brief 	Example problem: circular orbit.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example uses the Wisdom Holman integrator
+ * @detail 	This example uses the symplectic Wisdom Holman integrator
  * to integrate the outer planets of the solar system. The initial 
  * conditions are taken from Applegate et al 1986. Pluto is a test
- * particle.
+ * particle. This example is a good starting point for any long term orbit
+ * integrations.
+ *
+ * You probably want to turn off the visualization for any serious runs.
+ * Just go to the makefile and set `OPENGL=0`. 
+ *
+ * You might also want to change the integrator in the Makefile to 
+ * `integrator_ias15.c` which is an extremly high order accurate integrator
+ * that can handle close encounters really well.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
@@ -72,10 +80,10 @@ extern int display_wire;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= 40;			// days
-	N_active	= 5;
+	dt 		= 40;			// in days
+	N_active	= 5;			// we treat pluto as a test particle. If all your particles have mass, remove this line.
 	tmax		= 7.3e10;		// 200 Myr
-	G		= k*k;
+	G		= k*k;			// These are the same units as used by the mercury6 code.
 #ifdef OPENGL
 	display_wire	= 1;			// Show orbits.
 #endif // OPENGL
@@ -91,7 +99,7 @@ void problem_init(int argc, char* argv[]){
 		particles_add(p); 
 	}
 #ifdef INTEGRATOR_WH
-	// Move to heliocentric frame (required by WHM)
+	// Move to heliocentric frame (required by WH integrator)
 	for (int i=1;i<N;i++){
 		particles[i].x -= particles[0].x;	particles[i].y -= particles[0].y;	particles[i].z -= particles[0].z;
 		particles[i].vx -= particles[0].vx;	particles[i].vy -= particles[0].vy;	particles[i].vz -= particles[0].vz;

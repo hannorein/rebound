@@ -6,7 +6,7 @@
  * body problem. Active particles are copied to all nodes. All other 
  * particles only exist on one node and are not automatically (re-)
  * distributed. There is not domain decomposition used in this example.
- * Run with 'mpirun -np 4 nbody'.
+ * Run with `mpirun -np 4 nbody`.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu

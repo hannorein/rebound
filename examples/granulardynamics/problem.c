@@ -2,10 +2,11 @@
  * @file 	problem.c
  * @brief 	Example problem: Granular dynamics.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This problem uses two boundary layers made of 
- * particles to simulate shearing walls. These walls are heating
+ * @detail 	This example is about granular dynamics. No gravitational 
+ * forces are present in this example, which is why the module 
+ * `gravity_none.c` is used. Two boundary layers made of 
+ * particles simulate shearing walls. These walls are heating
  * up the particles, create a dense and cool layer in the middle.
- * This example shows how to use REBOUND for granular dynamics.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu

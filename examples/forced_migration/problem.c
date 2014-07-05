@@ -6,12 +6,11 @@
  * @detail 	This example applies dissipative forces to two
  * bodies orbiting a central object. The forces are specified
  * in terms of damping timescales for the semi-major axis and
- * eccentricity. This mimics planetary micration in a proto-
- * stellar disc. The example reproduces the study of Lee & 
- * Peale (2002) on the formation of the planetary system 
- * GJ876. For a comparison, see figure 4 in their paper.
- * The RADAU15 integrator is used because the forces are
- * velocity dependent.
+ * eccentricity. This mimics planetary micration in a protostellar disc. 
+ * The example reproduces the study of Lee & Peale (2002) on the 
+ * formation of the planetary system GJ876. For a comparison, 
+ * see figure 4 in their paper. The IAS15 integrator is used 
+ * because the forces are velocity dependent.
  * Special thanks goes to Willy Kley for helping me to implement
  * the damping terms as actual forces. 
  *
@@ -57,11 +56,11 @@ extern int display_wire;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= 1e-2*2.*M_PI;
-	boxsize 	= 3;
-	tmax		= 4.5e4*2.*M_PI;
+	dt 		= 1e-2*2.*M_PI;		// in year/(2*pi)
+	boxsize 	= 3;			// in AU
+	tmax		= 4.5e4*2.*M_PI;	// in yeat/(2*pi)
 #ifdef OPENGL
-	display_wire 	= 1;
+	display_wire 	= 1;			
 #endif 	// OPENGL
 	init_box();
 
@@ -71,10 +70,10 @@ void problem_init(int argc, char* argv[]){
 	star.x  = 0; star.y  = 0; star.z  = 0;
 	star.vx = 0; star.vy = 0; star.vz = 0;
 	star.ax = 0; star.ay = 0; star.az = 0;
-	star.m  = 0.32;		// This is a sub-solar mass star
+	star.m  = 0.32;			// This is a sub-solar mass star
 	particles_add(star); 
 	
-	struct particle p1;	// Planet 1
+	struct particle p1;		// Planet 1
 	p1.x 	= 0.5;	p1.y = 0;	p1.z = 0;
 	p1.ax 	= 0;	p1.ay = 0; 	p1.az = 0;
 	p1.m  	= 0.56e-3;
@@ -82,7 +81,7 @@ void problem_init(int argc, char* argv[]){
 	p1.vx 	= 0;	p1.vy = 0;
 	particles_add(p1); 
 	
-	struct particle p2;	// Planet 2
+	struct particle p2;		// Planet 2
 	p2.x 	= 1;	p2.y = 0; 	p2.z = 0;
 	p2.ax 	= 0;	p2.ay = 0; 	p2.az = 0;
 	p2.m  	= 1.89e-3;
@@ -97,8 +96,8 @@ void problem_init(int argc, char* argv[]){
 	tau_e[2] = 2.*M_PI*200.0; 	// Eccentricity damping timescale is 200 years (K=100). 
 
 	problem_additional_forces = problem_migration_forces; 	//Set function pointer to add dissipative forces.
-#ifndef INTEGRATOR_WH
-	tools_move_to_center_of_momentum();  			// The WH integrator assumes a heliocentric coordinate system.
+#ifndef INTEGRATOR_WH			// The WH integrator assumes a heliocentric coordinate system.
+	tools_move_to_center_of_momentum();  		
 #endif // INTEGRATOR_WH
 
 	system("rm -v orbits.txt"); // delete previous output file

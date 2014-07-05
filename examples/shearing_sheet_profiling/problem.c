@@ -2,9 +2,10 @@
  * @file 	problem.c
  * @brief 	Example problem: shearing sheet.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This problem uses shearing sheet boundary
- * conditions. Particle properties resemble those found in 
- * Saturn's rings. 
+ * @detail 	This example demonstrates how to use the
+ * profiling tool that comes with REBOUND to find out which parts
+ * of your code are slow. To turn on this option, simple set 
+ * `PROFILING=1` in the Makefile.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu

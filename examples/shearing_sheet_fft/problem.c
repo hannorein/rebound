@@ -2,9 +2,11 @@
  * @file 	problem.c
  * @brief 	Example problem: shearing sheet.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This problem uses shearing sheet boundary
- * conditions. Particle properties resemble those found in 
- * Saturn's rings. 
+ * @detail 	This problem is identical to the other shearing
+ * sheet examples but uses an FFT based gravity solver. 
+ * To run this example, you need to install the FFTW library. 
+ * Collisions are detected using a plane sweep algorithm. 
+ * There is no tree present in this simulation.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
