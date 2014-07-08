@@ -324,6 +324,24 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   detection of these kind of encounters.
   
 
+*  **examples/closeencounter_record**
+
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_ias15.c`
+  `collisions_direct.c`
+
+  This example integrates a densly packed planetary system
+  which becomes unstable on a timescale of only a few orbits.
+  The example is identical to the `close_encounter` sample, except that
+  the collisions are recorded and written to a file. What kind of collisions
+  are recorded can be easily modified. It is also possible to implement some
+  additional physics whenever a collision has been detection (e.g. fragmentation).
+  The collision search is by default a direct search, i.e. O(N^2) but can be
+  changed to a tree by using the `collisions_tree.c` module.
+  
+
 *  **examples/dragforce**
 
   This example is using the following modules:  
