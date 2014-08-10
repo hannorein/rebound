@@ -230,7 +230,7 @@ struct orbit tools_p2orbit(struct particle p, struct particle star){
 		o.f=2.*M_PI-o.f;	
 		ea =2.*M_PI-ea;
 	}
-	o.l = ea -o.e*sin(ea)+o.omega;			// mean longitude
+	o.l = ea -o.e*sin(ea)+o.omega+o.Omega;		// mean longitude = M+omega+Omega
 	if (o.e<=1.e-10){ 				//circular orbit
 		o.omega=0.;
 		o.f=0.; 				// f has no meaning
