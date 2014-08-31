@@ -275,6 +275,7 @@ struct orbit tools_p2orbit(struct particle p, struct particle star){
 	o.omega = o.p - o.Omega;
 	if (o.l < 0 && o.e < 1) o.l = o.l + TWOPI;
 	if (o.l > TWOPI && o.e < 1) o.l = fmod(o.l, TWOPI);
+	o.a = o.q/(1-o.e);
 	
 	return o;
 }
