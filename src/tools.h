@@ -36,6 +36,7 @@ struct orbit {
 	double omega; // argument of pericentre
 	double l; // mean anomaly (or mean longitude if e < 1.e-8)
 	double p; // longitude of pericentre
+	double a; // semimajor (inf if parabola, a<0 if hyperbola)
 };
 
 
