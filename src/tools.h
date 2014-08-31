@@ -33,9 +33,9 @@ struct orbit {
 	double e; 
 	double inc;
 	double Omega; // longitude of ascending node
-	double omega; // argument of perihelion
+	double omega; // argument of pericentre
 	double l; // mean anomaly (or mean longitude if e < 1.e-8)
-	double p; // longitude of perihelion
+	double p; // longitude of pericentre
 };
 
 
