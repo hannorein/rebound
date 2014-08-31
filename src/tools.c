@@ -181,7 +181,7 @@ struct particle tools_init_orbit2d(double M, double m, double a, double e, doubl
 }
 
 struct orbit tools_p2orbit(struct particle p, struct particle star){
-	// Algorithm from: mercury6 by  John E. Chambers
+	// Algorithm from: mercury6 by John E. Chambers
 	
 	struct orbit o;
 	double hx, hy, hz, h2, h, v2, r, rv, s, tru, mu;
