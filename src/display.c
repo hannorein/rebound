@@ -284,7 +284,7 @@ void display(){
 				glBegin(GL_LINE_LOOP);
 				for (double trueAnom=0; trueAnom < 2.*M_PI; trueAnom+=M_PI/100.) {
 					//convert degrees into radians
-					radius = o.a * (1. - o.e*o.e) / (1. + o.e*cos(trueAnom));
+					radius = o.q*(1.+o.e) / (1. + o.e*cos(trueAnom));
 					glVertex3f(radius*cos(trueAnom),radius*sin(trueAnom),0);
 				}
 				glEnd();
