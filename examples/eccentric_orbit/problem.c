@@ -73,7 +73,7 @@ void problem_init(int argc, char* argv[]){
 	tools_move_to_center_of_momentum();
 	
 	// initial timestep
-	dt 			= 1e-4*sqrt(size_scale*size_scale*size_scale/mass_scale); 
+	dt 			= 1e-8*sqrt(size_scale*size_scale*size_scale/mass_scale); 
 	tmax			= 1e2*2.*M_PI*sqrt(size_scale*size_scale*size_scale/mass_scale);
 	
 }
