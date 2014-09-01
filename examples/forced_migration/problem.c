@@ -58,7 +58,7 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 		= 1e-2*2.*M_PI;		// in year/(2*pi)
 	boxsize 	= 3;			// in AU
-	tmax		= 4.5e4*2.*M_PI;	// in yeat/(2*pi)
+	tmax		= 2.0e4*2.*M_PI;	// in year/(2*pi)
 #ifdef OPENGL
 	display_wire 	= 1;			
 #endif 	// OPENGL
@@ -150,7 +150,7 @@ void problem_inloop(){
 }
 
 void problem_output(){
-	if(output_check(10000.*dt)){
+	if(output_check(20.*M_PI)){
 		output_timing();
 	}
 	if(output_check(40.)){

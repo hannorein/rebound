@@ -44,7 +44,7 @@ extern int display_wire;
 #endif // OPENGL
 
 void problem_init(int argc, char* argv[]){
-	dt = 0.1*2.*M_PI;						// initial timestep
+	dt = 0.01*2.*M_PI;						// initial timestep
 	// integrator_epsilon = 1e-2;					// accuracy parameter, default is 1e-2 and should work in most cases.
 
 #ifdef OPENGL

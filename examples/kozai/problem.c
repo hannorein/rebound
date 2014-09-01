@@ -84,7 +84,7 @@ void problem_init(int argc, char* argv[]){
 }
 
 void problem_inloop(){
-	if(output_check(4000.*dt)){		// outputs to the screen
+	if(output_check(20.*M_PI)){		// outputs to the screen
 		output_timing();
 	}
 	if(output_check(12.)){			// outputs to a file

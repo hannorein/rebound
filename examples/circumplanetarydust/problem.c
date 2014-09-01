@@ -49,7 +49,7 @@ double betaparticles = 0.01; 	// Beta parameter.
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 			= 1e-3;	// Initial timestep.
+	dt 			= 1e-4;	// Initial timestep.
 	boxsize 		= 10;	
 	tmax			= 1e6;
 	N_active		= 2; 	// Only the star and the planet are massive.
@@ -123,7 +123,7 @@ void force_radiation(){
 }
 
 void problem_inloop(){
-	if(output_check(4000.*dt)){
+	if(output_check(M_PI*2.)){
 		output_timing();
 	}
 	if(output_check(M_PI*2.*100.)){ // output every 100 years
