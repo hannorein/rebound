@@ -52,7 +52,7 @@ double ObliquityPlanet;						// obliquity of the planet
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 				= 1e-3;			// initial timestep
+	dt 				= 1e-6;			// initial timestep
 	boxsize 			= 0.01;	
 	tmax				= 3e1;
 	N_active			= 2; 			// only the star and the planet are massive.
