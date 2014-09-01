@@ -61,9 +61,15 @@ void gravity_calculate_acceleration(){
 #pragma omp parallel for schedule(guided)
 #ifdef INTEGRATOR_WH
 		for (int i=1; i<N; i++){
+			double csx = 0;
+			double csy = 0;
+			double csz = 0;
 		for (int j=1; j<_N_active; j++){
 #else //INTEGRATOR_WH
 		for (int i=0; i<N; i++){
+			double csx = 0;
+			double csy = 0;
+			double csz = 0;
 		for (int j=0; j<_N_active; j++){
 #endif //INTEGRATOR_WH
 			if (i==j) continue;
@@ -72,9 +78,22 @@ void gravity_calculate_acceleration(){
 			double dz = (gb.shiftz+particles[i].z) - particles[j].z;
 			double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
 			double prefact = -G/(r*r*r)*particles[j].m;
-			particles[i].ax += prefact*dx; 
-			particles[i].ay += prefact*dy; 
-			particles[i].az += prefact*dz; 
+			
+			double ax = particles[i].ax;
+			csx  +=	prefact*dx; 
+			particles[i].ax    = ax + csx;
+			csx  += ax - particles[i].ax; 
+			
+			double ay = particles[i].ay;
+			csy  +=	prefact*dy; 
+			particles[i].ay    = ay + csy;
+			csy  += ay - particles[i].ay; 
+			
+			double az = particles[i].az;
+			csz  +=	prefact*dz; 
+			particles[i].az    = az + csz;
+			csz  += az - particles[i].az; 
+			
 		}
 		}
 	}
