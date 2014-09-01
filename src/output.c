@@ -33,6 +33,7 @@
 #include "main.h"
 #include "tools.h"
 #include "output.h"
+#include "integrator.h"
 #include "input.h"
 #include "communication_mpi.h"
 #ifdef OPENGL
@@ -128,6 +129,9 @@ void output_timing(){
 #else // BOUNDARIES_SHEAR
 	printf("t= %- 9f  ",t);
 #endif // BOUNDARIES_SHEAR
+	if(integrator_epsilon>0.){
+		printf("dt= %- 9e  ",dt);
+	}
 	printf("cpu= %- 9f [s]  ",temp-output_timing_last);
 	if (tmax>0){
 		printf("t/tmax= %5.2f%%",t/tmax*100.0);
