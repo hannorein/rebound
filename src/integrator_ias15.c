@@ -192,7 +192,7 @@ int integrator_ias15_step() {
 		if(predictor_corrector_error<1e-16){
 			break;
 		}
-		if(iterations > 2 && predictor_corrector_error_last < predictor_corrector_error){
+		if(iterations > 2 && predictor_corrector_error_last <= predictor_corrector_error){
 			break;
 		}
 		if (iterations>=12){
