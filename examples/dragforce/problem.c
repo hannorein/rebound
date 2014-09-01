@@ -42,7 +42,7 @@ void additional_forces();
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 			= 1e-2;		// initial timestep.
+	dt 			= 1e-4;		// initial timestep.
 	boxsize 		= 10;	
 	tmax			= 40;
 
