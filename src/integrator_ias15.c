@@ -388,14 +388,20 @@ int integrator_ias15_step() {
 		if (integrator_epsilon_global){
 			double maxak = 0.0;
 			double maxb6k = 0.0;
-			for(int k=0;k<N3;k++) {  // Looping over all particles and all 3 components of the acceleration. 
-				const double ak  = fabs(at[k]);
-				if (isnormal(ak) && ak>maxak){
-					maxak = ak;
-				}
-				const double b6k = fabs(b[6][k]); 
-				if (isnormal(b6k) && b6k>maxb6k){
-					maxb6k = b6k;
+			for(int i=0;i<N;i++){ // Looping over all particles and all 3 components of the acceleration. 
+				double v2 = particles[i].vx*particles[i].vx+particles[i].vy*particles[i].vy+particles[i].vz*particles[i].vz;
+				double x2 = particles[i].x*particles[i].x+particles[i].y*particles[i].y+particles[i].z*particles[i].z;
+				if (fabs(v2*dt*dt/x2) < 1e-16) continue;
+				for(int k=3*i;k<3*(i+1);k++) { 
+					// Skip slowly varying accelerations
+					const double ak  = fabs(at[k]);
+					if (isnormal(ak) && ak>maxak){
+						maxak = ak;
+					}
+					const double b6k = fabs(b[6][k]); 
+					if (isnormal(b6k) && b6k>maxb6k){
+						maxb6k = b6k;
+					}
 				}
 			}
 			integrator_error = maxb6k/maxak;
