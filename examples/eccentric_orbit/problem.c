@@ -50,7 +50,7 @@ void problem_init(int argc, char* argv[]){
 #endif // OPENGL
 
 
-	double e_testparticle 	= 1.-1e-3;	
+	double e_testparticle 	= 1.-1e-7;	
 	double mass_scale	= 1.;		// Some integrators have problems when changing the mass scale, IAS15 does not. 
 	double size_scale	= 1;		// Some integrators have problems when changing the size scale, IAS15 does not.
 
@@ -73,13 +73,13 @@ void problem_init(int argc, char* argv[]){
 	tools_move_to_center_of_momentum();
 	
 	// initial timestep
-	dt 			= 1e-8*sqrt(size_scale*size_scale*size_scale/mass_scale); 
+	dt 			= 1e-13*sqrt(size_scale*size_scale*size_scale/mass_scale); 
 	tmax			= 1e2*2.*M_PI*sqrt(size_scale*size_scale*size_scale/mass_scale);
 	
 }
 
 void problem_inloop(){
-	if(output_check(tmax/100.)){		// outputs to the screen
+	if(output_check(tmax/10000.)){		// outputs to the screen
 		output_timing();
 	}
 }
