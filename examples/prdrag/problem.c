@@ -46,7 +46,7 @@ void problem_init(int argc, char* argv[]){
 	dt 				= 1e-3;			// initial timestep
 	integrator_epsilon 		= 1e-4;			// accuracy parameter
 	boxsize 			= 10;	
-	tmax				= 1e6;
+	tmax				= 1e5;
 	N_active			= 1; 			// the star is the only massive particle
 	problem_additional_forces	= additional_forces;	// setup callback function for velocity dependent forces
 	init_box();
@@ -107,7 +107,7 @@ void problem_inloop(){
 }
 
 void problem_output(){
-	if(output_check(4000.*dt)){						// print some information to screen
+	if(output_check(400.)){						// print some information to screen
 		output_timing();
 	}
 	if(output_check(M_PI*2.*1000.)){ 					// output radial distance every 1000 years
