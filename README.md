@@ -474,10 +474,10 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   This example is using the following modules:  
   `gravity_direct.c`
   `boundaries_open.c`
-  `integrator_wh.c`
+  `integrator_ias15.c`
   `collisions_none.c`
 
-  This example uses the symplectic Wisdom Holman integrator
+  This example uses the IAS15 integrator
   to integrate the outer planets of the solar system. The initial
   conditions are taken from Applegate et al 1986. Pluto is a test
   particle. This example is a good starting point for any long term orbit
@@ -486,9 +486,8 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   You probably want to turn off the visualization for any serious runs.
   Just go to the makefile and set `OPENGL=0`.
   
-  You might also want to change the integrator in the Makefile to
-  `integrator_ias15.c` which is an extremly high order accurate integrator
-  that can handle close encounters really well.
+  The example also works with the Wisdom-Holman symplectic integrator.
+  Simply change the integrator to `integrator_wh.c` in the Makefile.
   
 
 *  **examples/overstability**
