@@ -2,7 +2,7 @@
  * @file 	problem.c
  * @brief 	Example problem: circular orbit.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example uses the symplectic Wisdom Holman integrator
+ * @detail 	This example uses the IAS15 integrator
  * to integrate the outer planets of the solar system. The initial 
  * conditions are taken from Applegate et al 1986. Pluto is a test
  * particle. This example is a good starting point for any long term orbit
@@ -11,12 +11,11 @@
  * You probably want to turn off the visualization for any serious runs.
  * Just go to the makefile and set `OPENGL=0`. 
  *
- * You might also want to change the integrator in the Makefile to 
- * `integrator_ias15.c` which is an extremly high order accurate integrator
- * that can handle close encounters really well.
+ * The example also works with the Wisdom-Holman symplectic integrator.
+ * Simply change the integrator to `integrator_wh.c` in the Makefile.
  * 
  * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ * Copyright (c) 2014 Hanno Rein, Shangfei Liu, Dave Spiegel
  *
  * This file is part of rebound.
  *
@@ -41,6 +40,7 @@
 #include <time.h>
 #include "main.h"
 #include "output.h"
+#include "tools.h"
 #include "particle.h"
 #include "boundaries.h"
 
@@ -106,6 +106,8 @@ void problem_init(int argc, char* argv[]){
 	}
 	particles[0].x = 0;	particles[0].y = 0;	particles[0].z = 0;
 	particles[0].vx= 0;	particles[0].vy= 0;	particles[0].vz= 0;
+#else
+	tools_move_to_center_of_momentum();
 #endif // INTEGRATOR_WH
 
 	system("rm -f orbits.txt");
