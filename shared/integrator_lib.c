@@ -5,10 +5,12 @@
 #include <time.h>
 #include <string.h>
 #include "particle.h"
+#include "integrator.h"
+#include "gravity.h"
+#include "particle.h"
+#include "main.h"
 
-int N 		= 0;
-int N_active 	= -1; 	// All particles have mass
-double dt 	= 0.1;	// Default values
+double dt 	= 0.01;	// Default values
 double t 	= 0;
 double G 	= 1;
 double softening = 0;
@@ -17,13 +19,50 @@ void (*problem_additional_forces) () = NULL;
 
 struct particle* particles = NULL;
 void setp(struct particle* _p){
+	free(particles);
 	particles = malloc(sizeof(struct particle)*N);
 	memcpy(particles,_p,sizeof(struct particle)*N);
 }
-struct particle* getp(){
-	return particles;
+struct particle particle_get(int i){
+	return particles[i];
 }
 
+void step(){
+	if (N<=0){
+		fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
+		return;
+	}
+	integrator_part1();
+	gravity_calculate_acceleration();
+	integrator_part2();
+}
+
+void integrate(double tmax){
+	while(t<tmax){
+		if (N<=0){
+			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
+			return;
+		}
+		step();
+		if (t+dt>=tmax){
+			dt = tmax-t;
+		}
+	}
+}
+	 
+
+// Infinite box size
+int root_nx = 1;
+int root_ny = 1;
+int root_nz = 1;
+double boxsize = 0;
+double boxsize_x = 0;
+double boxsize_y = 0;
+double boxsize_z = 0;
+
+int boundaries_particle_is_in_box(struct particle p){
+	return 1;
+}
 
 // No ghost boxes for now.
 int nghostx = 0;	

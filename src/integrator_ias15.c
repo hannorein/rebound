@@ -157,9 +157,8 @@ int integrator_ias15_step() {
 		}
 		N3allocated = N3;
 	}
-#ifdef PYTHON	// Only needed for python wrapper. Forces are already calculated in main c routine.
-	integrator_update_acceleration(); 
-#endif // PYTHON	
+	
+	// integrator_update_acceleration(); // Not needed. Forces are already calculated in main routine.
 
 	for(int k=0;k<N;k++) {
 		x0[3*k]   = particles[k].x;

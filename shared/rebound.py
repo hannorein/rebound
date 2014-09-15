@@ -30,19 +30,36 @@ def set_particles(particles):
     arr = (Particle * len(particles))(*particles)
     libias15.setp(byref(arr))
 
+def particles_add(particles):
+    if isinstance(particles,list):
+        for particle in particles:
+            libias15.particles_add(particle)
+    else:
+       libias15.particles_add(particles)
+
+def move_to_center_of_momentum():
+    libias15.tools_move_to_center_of_momentum()
 
 def step():
-    libias15.integrator_ias15_step()
+    libias15.step()
+
+def integrate(tmax):
+    libias15.integrate(c_double(tmax))
+
+def get_particle(i):
+    N = c_int.in_dll(libias15,"N").value 
+    if i>=N:
+        return None
+    getp = libias15.particle_get
+    getp.restype = Particle
+    _p = getp(c_int(i))
+    return _p
 
 def get_particles():
     N = c_int.in_dll(libias15,"N").value 
-    getp = libias15.getp
-    getp.restype = POINTER(Particle)
-    _p = getp()
     particles = []
     for i in xrange(0,N):
-        particles.append(_p[i])
-
+        particles.append(get_particle(i))
     return particles
 
 
