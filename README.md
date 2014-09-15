@@ -28,7 +28,9 @@ You can also find a video on YouTube, http://youtu.be/gaExPGW1WzI?hd=1, that sho
 
 Python 
 -----------------
-REBOUND is written in C. We provide simple python wrapper for the new IAS15 integrator. For details, please look at the README in the `python` directory.
+REBOUND is written in C. However, we provide simple python wrapper for the new IAS15 integrator. Most of the features that make REBOUND great are not available in the python wrapper, it is purely for accessing the high order integrator IAS15 in an efficient way. If you're using the python wrapper you can only run a simulation using the `IAS15`, `GRAVITY_DIRECT` and `COLLISIONS_NONE` modules. There is no visualization and no helper function to setup particles. 
+
+The wrapper might appeal to people who want to setup their problem in python and then call IAS15 to integrate particles forward in time. For details, please look at the README in the `python` directory. 
 
 
 Available modules
