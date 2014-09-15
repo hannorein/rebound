@@ -12,7 +12,7 @@ from rebound import Particle
 rebound.particle_add( Particle(m=1.) )                  # Star
 rebound.particle_add( Particle(m=1e-3,x=1.,vy=1.) )     # Planet
 
-# Set the center of momentum to be at the origin  
+# Move particles so that the center of mass is (and stays) at the origin  
 rebound.move_to_center_of_momentum()
 
 # Integrate until t=100 (roughly 16 orbits) 
@@ -29,7 +29,9 @@ for i in range(rebound.get_N()):
 # Integrate another 100 time units, until t=100
 rebound.integrate(200.)
 
-# Get particles back and print positions
-particles = rebound.particles_get()
+# Get particles back and print positions 
+# Since we're integrating forward and then backward we end up with the 
+# particles exactly where they started out from (note that we moved to the
+# center of momentum frame)
 for i in range(rebound.get_N()):
     print particles[i].x, particles[i].y, particles[i].z
