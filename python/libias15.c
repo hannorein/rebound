@@ -12,12 +12,14 @@
 
 double dt 	= 0.01;	// Default values
 double t 	= 0;
+double tmax	= 0;
 double G 	= 1;
 double softening = 0;
 
 void (*problem_additional_forces) () = NULL;
 
 struct particle* particles = NULL;
+
 void setp(struct particle* _p){
 	free(particles);
 	particles = malloc(sizeof(struct particle)*N);
@@ -25,6 +27,9 @@ void setp(struct particle* _p){
 }
 struct particle particle_get(int i){
 	return particles[i];
+}
+struct particle* particles_get(){
+	return particles;
 }
 
 void step(){
@@ -37,7 +42,9 @@ void step(){
 	integrator_part2();
 }
 
-void integrate(double tmax){
+void integrate(double _tmax){
+	tmax = _tmax;
+	double dt_last_done = dt;
 	while(t<tmax){
 		if (N<=0){
 			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
@@ -46,8 +53,11 @@ void integrate(double tmax){
 		step();
 		if (t+dt>=tmax){
 			dt = tmax-t;
+		}else{
+			dt_last_done = dt;
 		}
 	}
+	dt = dt_last_done;
 }
 	 
 
