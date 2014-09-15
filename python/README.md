@@ -11,7 +11,7 @@ Workflow
 This folder contains python bindings for the high order, high accurate IAS15 integrator. 
 It does not support all features of REBOUND. These bindings are for those users who would
 like to use python instead of C. Since the backend of the integrator is running in C (the 
-exact same code that REBOUND uses, one can expect C-like performance.
+exact same code that REBOUND uses) one can expect C-like performance.
 
 The work flow is very simple. 
 
