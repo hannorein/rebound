@@ -1,5 +1,5 @@
 from ctypes import *
-libias15 = CDLL('./libias15.so', RTLD_GLOBAL)
+libias15 = CDLL('../libias15.so', RTLD_GLOBAL)
 
 class Particle(Structure):
     _fields_ = [("x", c_double),

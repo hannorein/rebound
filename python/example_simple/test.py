@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from rebound import *
 
 particles_add( Particle(m=1.) )

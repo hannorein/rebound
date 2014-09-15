@@ -23,6 +23,10 @@ The work flow is very simple, everything more complicted is left up to you an ex
 
 Installation
 ------------
-The python module makes use of a shared dynamic library and ctypes.
+The python module makes use of a shared dynamic library and ctypes. You only need to 
+compile the shared library (this will generate libias15.so):
 
+    make
 
+Then, look at the examples in the differen folders. All examples use the rebound module 
+(rebound.py) which encapsulates the interface to the code.
