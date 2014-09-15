@@ -25,6 +25,12 @@ Screenshot
 
 You can also find a video on YouTube, http://youtu.be/gaExPGW1WzI?hd=1, that shows how to download and install REBOUND. 
 
+
+Python 
+-----------------
+REBOUND is written in C. We provide simple python wrapper for the new IAS15 integrator. For details, please look at the README in the `python` directory.
+
+
 Available modules
 -----------------
 
