@@ -11,5 +11,8 @@ all:
 	$(CC) $(OPT) -shared -o libias15.so particle.o tools.o integrator_ias15.o gravity_direct.o libias15.o
 
 	@echo ""	
-	@echo "The shared library libias15.so has been created."
+	@echo "The shared library libias15.so has been created. Cleaning up"
+	@echo ""	
+
+	rm -f *.o
 
