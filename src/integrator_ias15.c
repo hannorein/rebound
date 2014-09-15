@@ -129,13 +129,6 @@ void integrator_part2(){
 }
  
 int integrator_ias15_step() {
-	printf("N          = %d particles\n",N);
-	printf("particles  = %p \n",particles);
-	printf("G          = %f \n",G);
-	for (int i=0;i<N;i++){
-		printf("x = %f\n",particles[i].x);
-		printf("m = %f\n",particles[i].m);
-	}
 	const int N3 = 3*N;
 	if (N3 > N3allocated) {
 		for (int l=0;l<7;++l) {
@@ -164,8 +157,9 @@ int integrator_ias15_step() {
 		}
 		N3allocated = N3;
 	}
-	
-	// integrator_update_acceleration(); // Not needed. Forces are already calculated in main routine.
+#ifdef PYTHON	// Only needed for python wrapper. Forces are already calculated in main c routine.
+	integrator_update_acceleration(); 
+#endif // PYTHON	
 
 	for(int k=0;k<N;k++) {
 		x0[3*k]   = particles[k].x;

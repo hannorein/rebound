@@ -3,22 +3,32 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <string.h>
 #include "particle.h"
 
-int N;
-int N_active = 0;
-double dt;
-double t = 0;
-double G = 1;
+int N 		= 0;
+int N_active 	= -1; 	// All particles have mass
+double dt 	= 0.1;	// Default values
+double t 	= 0;
+double G 	= 1;
 double softening = 0;
-struct particle* particles = NULL;
-int nghostx = 0;
-int nghosty = 0;
-int nghostz = 0;
 
 void (*problem_additional_forces) () = NULL;
 
+struct particle* particles = NULL;
+void setp(struct particle* _p){
+	particles = malloc(sizeof(struct particle)*N);
+	memcpy(particles,_p,sizeof(struct particle)*N);
+}
+struct particle* getp(){
+	return particles;
+}
 
+
+// No ghost boxes for now.
+int nghostx = 0;	
+int nghosty = 0;
+int nghostz = 0;
 struct ghostbox{
 	double shiftx;		/**< Relative x position */
 	double shifty;		/**< Relative y position */

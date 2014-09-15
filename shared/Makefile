@@ -1,6 +1,6 @@
 
 CC= gcc 
-OPT= -g -DCOLLISIONS_NONE
+OPT= -g -DPYTHON -DCOLLISIONS_NONE
 
 all: 
 	 $(CC) $(OPT) -c -fPIC -Wall -Werror ../src/integrator_ias15.c
