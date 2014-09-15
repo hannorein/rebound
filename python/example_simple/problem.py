@@ -26,7 +26,7 @@ for i in range(rebound.get_N()):
     particles[i].vy *= -1.
     particles[i].vz *= -1.
 
-# Integrate another 100 time units, until t=100
+# Integrate another 100 time units, until t=200
 rebound.integrate(200.)
 
 # Get particles back and print positions 

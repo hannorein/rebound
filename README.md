@@ -15,7 +15,7 @@ There are two papers describing the functionality of REBOUND.
 
 The first one, Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012, http://arxiv.org/abs/1110.4876), describes the code structure and the main feature including the gravity and collision routines. 
 
-The second paper, Rein & Spiegel (in preparation) describes versatile high order integrator IAS15 which is now part of REBOUND. 
+The second paper, Rein & Spiegel (in preparation) describes the versatile high order integrator IAS15 which is now part of REBOUND. 
 
 
 Screenshot
@@ -28,7 +28,7 @@ You can also find a video on YouTube, http://youtu.be/gaExPGW1WzI?hd=1, that sho
 
 Python 
 -----------------
-REBOUND is written in C. However, we provide simple python wrapper for the new IAS15 integrator. Most of the features that make REBOUND great are not available in the python wrapper, it is purely for accessing the high order integrator IAS15 in an efficient way. If you're using the python wrapper you can only run a simulation using the `IAS15`, `GRAVITY_DIRECT` and `COLLISIONS_NONE` modules. There is no visualization and no helper function to setup particles. 
+REBOUND is written in C. However, we provide a simple python wrapper for the new IAS15 integrator. Most of the features that make REBOUND great are not available in the python wrapper, it is purely for accessing the high order integrator IAS15 in an efficient way. If you're using the python wrapper you can only run a simulation using the `IAS15`, `GRAVITY_DIRECT` and `COLLISIONS_NONE` modules. There is no visualization and no helper function to setup particles. 
 
 The wrapper might appeal to people who want to setup their problem in python and then call IAS15 to integrate particles forward in time. For details, please look at the README in the `python` directory. 
 
