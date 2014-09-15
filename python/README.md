@@ -30,3 +30,7 @@ compile the shared library (this will generate libias15.so):
 
 Then, look at the examples in the differen folders. All examples use the rebound module 
 (rebound.py) which encapsulates the interface to the code.
+
+To run the examples, simply go into a directory and type:
+
+    python problem.py

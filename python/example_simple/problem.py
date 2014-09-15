@@ -6,7 +6,7 @@ from rebound import Particle
 # Set variables (defaults are G=1, t=0, dt=0.01)
 #rebound.set_G(1.)  
 #rebound.set_t(0.)  
-#rebound.set_G(0.001)  
+#rebound.set_dt(0.01)  
 
 # Add particles
 rebound.particle_add( Particle(m=1.) )                  # Star
