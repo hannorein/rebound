@@ -129,6 +129,13 @@ void integrator_part2(){
 }
  
 int integrator_ias15_step() {
+	printf("N          = %d particles\n",N);
+	printf("particles  = %p \n",particles);
+	printf("G          = %f \n",G);
+	for (int i=0;i<N;i++){
+		printf("x = %f\n",particles[i].x);
+		printf("m = %f\n",particles[i].m);
+	}
 	const int N3 = 3*N;
 	if (N3 > N3allocated) {
 		for (int l=0;l<7;++l) {
