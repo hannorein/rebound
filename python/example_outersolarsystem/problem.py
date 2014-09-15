@@ -24,7 +24,7 @@ rebound.move_to_center_of_momentum()
 particles = rebound.particles_get()
 # timestep counter
 steps = 0 
-# Integrate until t=1e6 (units of time in this example is days)
+# Integrate until t=1e6 (unit of time in this example is days)
 while rebound.get_t()<1e6:
     rebound.step()
     steps += 1
