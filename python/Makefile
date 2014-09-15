@@ -1,5 +1,5 @@
 
-CC= gcc 
+CC= cc 
 OPT= -O3 -DCOLLISIONS_NONE
 
 all: 
