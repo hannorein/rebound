@@ -28,9 +28,9 @@ You can also find a video on YouTube, http://youtu.be/gaExPGW1WzI?hd=1, that sho
 
 Python and other programming languages 
 -----------------
-REBOUND is written in C. However, we provide a simple dynamic library `libias15` for the new IAS15 integrator. Most of the features that make REBOUND great are not available in this library. It is purely for accessing the high order integrator IAS15 efficiently. There is no visualization and no helper function to setup particles. To compile this library, go to the `shared` folder and type `make`.
+REBOUND is written in C. However, we provide a simple dynamic library `libias15` for the new IAS15 integrator. Most of the features that make REBOUND great are not available in this library. It is purely for efficiently accessing the high order integrator IAS15. There is no visualization and no helper function to setup particles. To compile this library, go to the `shared` folder and type `make`.
 
-The most interesting use case for `libias15` is a python wrapper that we provide. This wrapper can be used to very easily access `libias15.so`. The wrapper (module) might appeal to people who want to setup their problem in python and then call IAS15 to efficiently integrate particles with very high precision. The following listing show a complete pythong script to run an N-body simulation with IAS15 and `libias15`:
+The most interesting use case for `libias15` is a python wrapper that we provide. This wrapper can be used to very easily access `libias15.so`. The wrapper (module) might appeal to people who want to setup their problem in python and then call IAS15 to efficiently integrate particles with very high precision. The following listing show a complete python script to run an N-body simulation with IAS15 and `libias15`:
  
 ```c
 # Import the rebound module
