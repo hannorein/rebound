@@ -26,11 +26,29 @@ Screenshot
 You can also find a video on YouTube, http://youtu.be/gaExPGW1WzI?hd=1, that shows how to download and install REBOUND. 
 
 
-Python 
+Python and other programming languages 
 -----------------
-REBOUND is written in C. However, we provide a simple python wrapper for the new IAS15 integrator. Most of the features that make REBOUND great are not available in the python wrapper, it is purely for accessing the high order integrator IAS15 in an efficient way. If you're using the python wrapper you can only run a simulation using the `IAS15`, `GRAVITY_DIRECT` and `COLLISIONS_NONE` modules. There is no visualization and no helper function to setup particles. 
+REBOUND is written in C. However, we provide a simple dynamic library `libias15` for the new IAS15 integrator. Most of the features that make REBOUND great are not available in this library. It is purely for accessing the high order integrator IAS15 efficiently. There is no visualization and no helper function to setup particles. To compile this library, go to the `shared` folder and type `make`.
 
-The wrapper might appeal to people who want to setup their problem in python and then call IAS15 to integrate particles forward in time. For details, please look at the README in the `python` directory. 
+The most interesting use case for `libias15` is a python wrapper that we provide. This wrapper can be used to very easily access `libias15.so`. The wrapper (module) might appeal to people who want to setup their problem in python and then call IAS15 to efficiently integrate particles with very high precision. The following listing show a complete pythong script to run an N-body simulation with IAS15 and `libias15`:
+ 
+```c
+# Import the rebound module
+import sys; sys.path.append('../')
+import rebound
+
+# Add particles
+rebound.particle_add( rebound.Particle(m=1.) )                  # Star
+rebound.particle_add( rebound.Particle(m=1e-3,x=1.,vy=1.) )     # Planet
+
+# Move particles so that the center of mass is (and stays) at the origin  
+rebound.move_to_center_of_momentum()
+
+# Integrate until t=100 (roughly 16 orbits) 
+rebound.integrate(100.)
+```
+
+For details, please look at the README file in the `python_examples` directory. 
 
 
 Available modules
