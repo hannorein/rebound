@@ -1,6 +1,19 @@
 from ctypes import *
-libias15 = CDLL('../libias15.so', RTLD_GLOBAL)
+# Try to load libias15 from the obvioud places it could be in.
+try:
+    libias15 = CDLL('../../shared/libias15.so', RTLD_GLOBAL)
+except:
+    try:
+        libias15 = CDLL('../shared/libias15.so', RTLD_GLOBAL)
+    except:
+        try:
+            libias15 = CDLL('shared/libias15.so', RTLD_GLOBAL)
+        except:
+            print "Cannot find library 'libias15.so'. Check path set in 'rebound.py'."
+            raise
 
+
+# Defines the same datastructure as in particle.h
 class Particle(Structure):
     _fields_ = [("x", c_double),
                 ("y", c_double),
@@ -13,6 +26,8 @@ class Particle(Structure):
                 ("az", c_double),
                 ("m", c_double) ]
 
+
+# Setter/getter of parameters and constants
 def set_G(G):
     c_double.in_dll(libias15, "G").value = G
 
@@ -28,6 +43,8 @@ def get_t():
 def get_N():
     return c_int.in_dll(libias15,"N").value 
 
+
+# Setter/getter of particle data
 def set_particles(particles):
     c_int.in_dll(libias15,"N").value = len(particles)
     arr = (Particle * len(particles))(*particles)
@@ -42,15 +59,6 @@ def particle_add(particles):
             libias15.particles_add(particle)
     else:
        libias15.particles_add(particles)
-
-def move_to_center_of_momentum():
-    libias15.tools_move_to_center_of_momentum()
-
-def step():
-    libias15.step()
-
-def integrate(tmax):
-    libias15.integrate(c_double(tmax))
 
 def particle_get(i):
     N = get_N() 
@@ -75,5 +83,16 @@ def particles_get():
     getp.restype = POINTER(Particle)
     return getp()
 
+
+# Tools
+def move_to_center_of_momentum():
+    libias15.tools_move_to_center_of_momentum()
+
+# Integration
+def step():
+    libias15.step()
+
+def integrate(tmax):
+    libias15.integrate(c_double(tmax))
 
 
