@@ -26,6 +26,14 @@ class Particle(Structure):
                 ("az", c_double),
                 ("m", c_double) ]
 
+# Set function pointer for additional forces
+
+AFF = CFUNCTYPE(None)
+fp = None
+def set_additional_forces(func):
+    global fp  # keep references
+    fp = AFF(func)
+    libias15.set_additional_forces(fp)
 
 # Setter/getter of parameters and constants
 def set_G(G):

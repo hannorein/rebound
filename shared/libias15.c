@@ -63,6 +63,9 @@ struct particle particle_get(int i){
 struct particle* particles_get(){
 	return particles;
 }
+void set_additional_forces(void (* _cb)()){
+	problem_additional_forces = _cb;
+}
 
 // Integrate for 1 step
 void step(){ 
@@ -72,6 +75,7 @@ void step(){
 	}
 	integrator_part1();
 	gravity_calculate_acceleration();
+	if (problem_additional_forces) problem_additional_forces();
 	integrator_part2();
 }
 
