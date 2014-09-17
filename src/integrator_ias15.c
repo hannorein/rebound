@@ -235,7 +235,7 @@ int integrator_ias15_step() {
 				particles[i].z = xk2 + x0[k2];
 			}
 			
-			if (integrator_force_is_velocitydependent){
+			if (problem_additional_forces && integrator_force_is_velocitydependent){
 				s[0] = dt * h[n];
 				s[1] =      s[0] * h[n] / 2.;
 				s[2] = 2. * s[1] * h[n] / 3.;
