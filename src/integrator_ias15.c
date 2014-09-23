@@ -97,7 +97,7 @@ double* e[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
 // The following values are used for resetting the b and e coefficients if a timestep gets rejected
 double* br[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
 double* er[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
-double dt_last_success;			// Last accepted timestep (corresponding to br and er)
+double dt_last_success = 0.;			// Last accepted timestep (corresponding to br and er)
 // Helper functions for resetting the b and e coefficients
 void copybuffers(double* _a[7], double* _b[7], int N3);
 void predict_next_step(double ratio, int N3, double* _e[7], double* _b[7]);
@@ -440,8 +440,11 @@ int integrator_ias15_step() {
 				particles[k].vz = v0[3*k+2];
 			}
 			dt = dt_new;
-			double ratio = dt/dt_last_success;
-			predict_next_step(ratio, N3, er, br);
+			double ratio = dt;
+			if (dt_last_success!=0.){		// Do not predict next e/b values if this is the first time step.
+				dt = dt/dt_last_success;
+				predict_next_step(ratio, N3, er, br);
+			}
 			
 			return 0; // Step rejected. Do again. 
 		}		
