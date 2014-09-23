@@ -440,9 +440,8 @@ int integrator_ias15_step() {
 				particles[k].vz = v0[3*k+2];
 			}
 			dt = dt_new;
-			double ratio = dt;
 			if (dt_last_success!=0.){		// Do not predict next e/b values if this is the first time step.
-				dt = dt/dt_last_success;
+				double ratio = dt/dt_last_success;
 				predict_next_step(ratio, N3, er, br);
 			}
 			
