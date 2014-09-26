@@ -464,6 +464,21 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   
   
 
+*  **examples/mergers**
+
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_ias15.c`
+  `collisions_direct.c`
+
+  This example integrates a densly packed planetary system
+  which becomes unstable on a timescale of only a few orbits. The IAS15
+  integrator with adaptive timestepping is used. The bodies have a finite
+  size and merge if they collide. Note that the size is unphysically large
+  in this example.
+  
+
 *  **examples/opencl**
 
   This example is using the following modules:  
