@@ -26,6 +26,19 @@ class Particle(Structure):
                 ("az", c_double),
                 ("m", c_double) ]
 
+# Defines the same datastructure as in orbit.h
+class Orbit(Structure):
+    _fields_ = [("a", c_double),
+                ("r", c_double), # Radial distance from central object
+                ("h", c_double), # Angular momentum
+                ("P", c_double), # Orbital period
+                ("l", c_double),
+                ("e", c_double),
+                ("inc", c_double),
+                ("Omega", c_double), # longitude of ascending node
+                ("omega", c_double), # argument of perihelion
+                ("f", c_double) ]    # true anomaly
+
 # Set function pointer for additional forces
 
 AFF = CFUNCTYPE(None)
@@ -49,7 +62,7 @@ def get_t():
     return c_double.in_dll(libias15, "t").value
 
 def get_N():
-    return c_int.in_dll(libias15,"N").value 
+    return c_int.in_dll(libias15,"N").value
 
 
 # Setter/getter of particle data
@@ -69,7 +82,7 @@ def particle_add(particles):
        libias15.particles_add(particles)
 
 def particle_get(i):
-    N = get_N() 
+    N = get_N()
     if i>=N:
         return None
     getp = libias15.particle_get
@@ -78,7 +91,7 @@ def particle_get(i):
     return _p
 
 def particles_get_array():
-    N = get_N() 
+    N = get_N()
     particles = []
     for i in xrange(0,N):
         particles.append(particle_get(i))
@@ -86,13 +99,25 @@ def particles_get_array():
 
 
 def particles_get():
-    N = c_int.in_dll(libias15,"N").value 
+    N = c_int.in_dll(libias15,"N").value
     getp = libias15.particles_get
     getp.restype = POINTER(Particle)
     return getp()
 
 
 # Tools
+def tools_p2orbit(p, star):
+    tools_p2orbit = libias15.tools_p2orbit
+    tools_p2orbit.restype = Orbit
+    orbit = libias15.tools_p2orbit(p, star)
+    return orbit
+
+def tools_get_center_of_mass(p1, p2):
+    tools_get_center_of_mass = libias15.tools_get_center_of_mass
+    tools_get_center_of_mass.restype = Particle
+    particle = libias15.tools_get_center_of_mass(p1, p2)
+    return particle
+
 def move_to_center_of_momentum():
     libias15.tools_move_to_center_of_momentum()
 
