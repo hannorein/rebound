@@ -182,6 +182,7 @@ int integrator_ias15_step() {
 		g[6][k] = b[6][k];
 	}
 
+	double t_beginning = t;
 	double predictor_corrector_error = 1e300;
 	double predictor_corrector_error_last = 2;
 	int iterations = 0;	
@@ -220,6 +221,8 @@ int integrator_ias15_step() {
 			s[6] = 5. * s[5] * h[n] / 7.;
 			s[7] = 3. * s[6] * h[n] / 4.;
 			s[8] = 7. * s[7] * h[n] / 9.;
+			
+			t = t_beginning + s[0];
 
 			// Prepare particles arrays for force calculation
 			for(int i=0;i<N;i++) {						// Predict positions at interval n using b values
@@ -374,6 +377,8 @@ int integrator_ias15_step() {
 			}
 		}
 	}
+	// Set time back to initial value (will be updated below) 
+	t = t_beginning;
 	// Find new timestep
 	const double dt_done = dt;
 	
