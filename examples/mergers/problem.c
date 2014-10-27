@@ -99,14 +99,14 @@ void collision_resolve_merger(struct collision c){
 	// Note: We assume only one collision per timestep. 
 	// Setup new particle (in position of particle p1. Particle p2 will be discarded.
 	struct particle cm = tools_get_center_of_mass(p1, p2);
-	p1.x = cm.x;
-	p1.y = cm.y;
-	p1.z = cm.z;
-	p1.vx = cm.vx;
-	p1.vy = cm.vy;
-	p1.vz = cm.vz;
-	p1.r = p1.r*pow(cm.m/p1.m,1./3.);	// Assume a constant density
-	p1.m = cm.m;
+	particles[c.p1].x = cm.x;
+	particles[c.p1].y = cm.y;
+	particles[c.p1].z = cm.z;
+	particles[c.p1].vx = cm.vx;
+	particles[c.p1].vy = cm.vy;
+	particles[c.p1].vz = cm.vz;
+	particles[c.p1].r = p1.r*pow(cm.m/p1.m,1./3.);	// Assume a constant density
+	particles[c.p1].m = cm.m;
 	// Remove one particle.
 	N--;
 	particles[c.p2] = particles[N];
