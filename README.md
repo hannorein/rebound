@@ -1,12 +1,9 @@
 REBOUND - An open-source multi-purpose N-body code for collisional dynamics
 ===========================================================================
 
-.. image:: http://img.shields.io/badge/license-GPL-green.svg?style=flat
-        :target: https://github.com/dfm/emcee/blob/master/LICENSE
-.. image:: http://img.shields.io/badge/arXiv-1110.4876-orange.svg?style=flat
-	:target: http://arxiv.org/abs/1110.4876
-.. image:: http://img.shields.io/badge/arXiv-1409.4779-orange.svg?style=flat
-	:target: http://arxiv.org/abs/1409.4779
+[!(http://img.shields.io/badge/license-GPL-green.svg?style=flat)](https://github.com/hannorein/rebound/blob/master/LICENSE)
+[!(http://img.shields.io/badge/arXiv-1110.4876-orange.svg?style=flat)](http://arxiv.org/abs/1110.4876)
+[!(http://img.shields.io/badge/arXiv-1409.4779-orange.svg?style=flat)](http://arxiv.org/abs/1409.4779)
 
 
 Contributors
