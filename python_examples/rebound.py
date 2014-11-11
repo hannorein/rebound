@@ -42,6 +42,9 @@ def set_G(G):
 def set_dt(dt):
     c_double.in_dll(libias15, "dt").value = dt
 
+def get_dt():
+    return c_double.in_dll(libias15, "dt").value
+
 def set_t(t):
     c_double.in_dll(libias15, "t").value = t
 
@@ -95,6 +98,9 @@ def particles_get():
 # Tools
 def move_to_center_of_momentum():
     libias15.tools_move_to_center_of_momentum()
+
+def reset():
+    libias15.reset()
 
 # Integration
 def step():
