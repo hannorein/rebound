@@ -29,16 +29,14 @@
  * Struct representing a Keplerian orbit.
  */
 struct orbit {
-	double a;
-	double r;	// Radial distance from central object
-	double h;	// Angular momentum
-	double P;	// Orbital period
-	double l;
-	double e;
+	double q; // pericentre
+	double e; 
 	double inc;
-	double Omega; 	// longitude of ascending node
-	double omega; 	// argument of perihelion
-	double f; 	// true anomaly
+	double Omega; // longitude of ascending node
+	double omega; // argument of pericentre
+	double l; // mean anomaly (or mean longitude if e < 1.e-8)
+	double p; // longitude of pericentre
+	double a; // semimajor (inf if parabola, a<0 if hyperbola)
 };
 
 

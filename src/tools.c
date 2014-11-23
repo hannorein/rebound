@@ -30,6 +30,7 @@
 #include "particle.h"
 #include "main.h"
 #include "tools.h"
+#define TWOPI 6.283185307179586
 
 double	tools_normaldistribution2_rsq;		/**< Used for speedup**/ 
 double 	tools_normaldistribution2_v2;		/**< Used for speedup**/
@@ -179,63 +180,102 @@ struct particle tools_init_orbit2d(double M, double m, double a, double e, doubl
 	return p;
 }
 
-#define TINY 1.0e-12
 struct orbit tools_p2orbit(struct particle p, struct particle star){
+	// Algorithm from: mercury6 by John E. Chambers
+	
 	struct orbit o;
-	double h0,h1,h2,e0,e1,e2,n0,n1,n,er,vr,mu,ea;
+	double hx, hy, hz, h2, h, v2, r, rv, s, tru, mu;
+	double ci, to, temp, tmp2, bige, f, cf, ce;
 	mu = G*(p.m+star.m);
+	
 	p.x -= star.x;
 	p.y -= star.y;
 	p.z -= star.z;
 	p.vx -= star.vx;
 	p.vy -= star.vy;
 	p.vz -= star.vz;
-	h0 = (p.y*p.vz - p.z*p.vy); 			//angular momentum vector
-	h1 = (p.z*p.vx - p.x*p.vz);
-	h2 = (p.x*p.vy - p.y*p.vx);
-	o.h = sqrt ( h0*h0 + h1*h1 + h2*h2 );		// abs value of angular moment 
-	double v = sqrt ( p.vx*p.vx + p.vy*p.vy + p.vz*p.vz );
-	o.r = sqrt ( p.x*p.x + p.y*p.y + p.z*p.z );
-	vr = (p.x*p.vx + p.y*p.vy + p.z*p.vz)/o.r;
-	e0 = 1./mu*( (v*v-mu/o.r)*p.x - o.r*vr*p.vx );
-	e1 = 1./mu*( (v*v-mu/o.r)*p.y - o.r*vr*p.vy );
-	e2 = 1./mu*( (v*v-mu/o.r)*p.z - o.r*vr*p.vz );
- 	o.e = sqrt( e0*e0 + e1*e1 + e2*e2 );		// eccentricity
-	o.a = -mu/( v*v - 2.*mu/o.r );			// semi major axis
-	o.P = 2.*M_PI*sqrt( o.a*o.a*o.a/mu );		// period
-	o.inc = acos( h2/o.h ) ;				// inclination (wrt xy-plane)   -  Note if pi/2 < i < pi then the orbit is retrograde
-	n0 = -h1;					// vector of nodes lies in xy plane => no z component
-	n1 =  h0;		
-	n = sqrt( n0*n0 + n1*n1 );
-	er = p.x*e0 + p.y*e1 + p.z*e2;
-	if (n<=1.e-30||o.inc<=1.e-30){			// we are in the xy plane
-		o.Omega=0.;
-		if (e1>=0.) { o.omega=acos(e0/o.e); }else{ o.omega = 2.*M_PI-acos(e0/o.e); }
-	}else{
-		if (e2>=0.) { o.omega=acos(( n0*e0 + n1*e1 )/(n*o.e)); }else{ o.omega=2.*M_PI-acos(( n0*e0 + n1*e1 )/(n*o.e)); }// pericenter = 0 if pericenter = ascending node
-		if (n1>=0.) { o.Omega = acos(n0/n); }else{  o.Omega=2.*M_PI-acos(n0/n);} 					// longitude of ascending node in xy plane, measured from x axis
-	//	if (isnan(o.Omega)||isinf(o.Omega)) o.Omega=0.;
-	}
-	o.f = er/(o.e*o.r);
-	ea = (1.-o.r/o.a)/o.e;
-	if (o.f>1.||o.f<-1.){				// failsafe
-		o.f = M_PI - M_PI * o.f;
-		ea  = M_PI - M_PI * ea;
-	}else{
-		o.f = acos(o.f);			// true anomaly = 0 if planet at pericenter
-		ea  = acos(ea);				// eccentric anomaly
-	}
+
+	hx = p.y*p.vz - p.z*p.vy; // angular momentum vector
+	hy = p.z*p.vx - p.x*p.vz;
+	hz = p.x*p.vy - p.y*p.vx;
+	h2 = hx*hx + hy*hy + hz*hz;
 	
-	if (vr<0.) { 
-		o.f=2.*M_PI-o.f;	
-		ea =2.*M_PI-ea;
+	v2 = p.vx*p.vx + p.vy*p.vy + p.vz*p.vz;
+	rv = p.x*p.vx + p.y*p.vy + p.z*p.vz;
+	
+	r = sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
+	h = sqrt(h2);
+	s = h2/mu;
+
+	// Inclination and ascending node
+	ci = hz/h;
+	if (fabs(ci) < 1){
+		o.inc = acos(ci);
+		o.Omega = atan2(hx, -hy);
+		if (o.Omega < 0) o.Omega = o.Omega + TWOPI;
 	}
-	o.l = ea -o.e*sin(ea)+o.omega;			// mean longitude
-	if (o.e<=1.e-10){ 				//circular orbit
-		o.omega=0.;
-		o.f=0.; 				// f has no meaning
-		o.l=0.;
+	else{
+		if (ci > 0) o.inc = 0;
+		if (ci < 0) o.inc = M_PI;
+		o.Omega = 0;
 	}
 
+	// Eccentricity and pericentre distance
+	temp = 1 + s*(v2/mu - 2/r);
+	if (temp<0){
+		o.e = 0;
+	}
+	else{
+		o.e = sqrt(temp);
+	}
+	o.q = s/(1 + o.e);
+
+	// True longitude
+	if (hy != 0){
+		to = -hx/hy;
+		temp = (1 - ci)*to;
+		tmp2 = to*to;
+		tru = atan2((p.y*(1 + tmp2*ci) - p.x*temp), (p.x*(tmp2 + ci) - p.y*temp));
+	}
+	else{
+		tru = atan2(p.y*ci, p.x);
+	}
+	if (ci<0) tru = tru + M_PI;
+
+	if (o.e < 3.e-8){
+		o.p = 0.0;
+		o.l = tru; // mean longitude if "circular"
+	}
+	else{
+		ce = (v2*r - mu)/(o.e*mu);
+		
+		// Mean anomaly for ellipse
+		if (o.e < 1){
+			if (fabs(ce) > 1) ce = copysign(1.0, ce);
+			bige = acos(ce);
+			if (rv<0) bige = TWOPI - bige;
+			o.l = bige - o.e*sin(bige);
+		}
+		else{ // Mean anomaly for hyperbola
+			if (ce < 1.0) ce = 1.0;
+			bige = log(ce + sqrt(ce*ce - 1));
+			if (rv < 0) bige = -bige;
+			o.l = o.e*sinh(bige) - bige;
+		}
+
+		// Longitude of pericentre 
+		cf = (s-r)/(o.e*r);
+		if (fabs(cf)>1) cf = copysign(1.0, cf);
+		f = acos(cf);
+		if (rv<0) f = TWOPI - f;
+		o.p = tru - f;
+		o.p = fmod(o.p + TWOPI + TWOPI, TWOPI);
+	}
+
+	o.omega = o.p - o.Omega;
+	if (o.l < 0 && o.e < 1) o.l = o.l + TWOPI;
+	if (o.l > TWOPI && o.e < 1) o.l = fmod(o.l, TWOPI);
+	o.a = o.q/(1-o.e);
+	
 	return o;
 }
