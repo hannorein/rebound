@@ -148,11 +148,8 @@ void gravity_calculate_acceleration(){
 		a_host = malloc(3*N*sizeof(real_t));
 		m_host = malloc(N*sizeof(real_t));
 		OCL_CREATE_PLATFORMS(platforms);
-		OCL_CREATE_DEVICE(platforms[0],CL_DEVICE_TYPE_GPU,device_list);
-		clGetDeviceIDs(platforms[0],CL_DEVICE_TYPE_DEFAULT,0,NULL,&num_devices);
-		device_list = malloc(sizeof(cl_device_id)*num_devices);
-		clGetDeviceIDs(platforms[0],CL_DEVICE_TYPE_DEFAULT,num_devices,device_list,NULL);
-		
+		OCL_CREATE_DEVICE(platforms[0],CL_DEVICE_TYPE_GPU|CL_DEVICE_TYPE_ACCELERATOR,device_list);
+
 	
 		printf("\n\nOpenCL Setup.\n----------\n");
 		for (int i=0;i<num_devices;i++){	
