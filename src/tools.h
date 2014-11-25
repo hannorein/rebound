@@ -66,6 +66,12 @@ double tools_powerlaw(double min, double max, double slope);
 double tools_normal(double variance);
 
 /**
+ * Calculates a random variable drawn form a Rayleigh distribution.  Calculated as described on Rayleigh distribution wikipedia page
+ * @param sigma Scale parameter.
+ */
+double tools_rayleigh(double sigma);
+
+/**
  * This function sets up a Plummer sphere.
  * @param _N Number of particles in the plummer sphere.
  * @param M Total mass of the cluster.
@@ -81,8 +87,23 @@ void tools_init_plummer(int _N, double M, double R);
  * @param a Semi-major axis of the particle.
  * @param e Eccentricity of the particle.
  * @param omega Pericenter of the particle.
+ * @param f true anomaly of the particle.
  */
 struct particle tools_init_orbit2d(double M, double m, double a, double e, double omega, double f);
+
+/**
+ * Initialize a particle on a 3D orbit.  See Fig. 2.13 of Murray & Dermott Solar System Dynamics for diagram.
+ * @param M Mass of the central object.
+ * @param m Mass of the particle.
+ * @param a Semi-major axis of the particle.
+ * @param e Eccentricity of the particle.
+ * @param i inclination of the particle to the reference plane.
+ * @param Omega Longitude of the ascending node of the particle.
+ * @param omega argument of pericenter of the particle.
+ * @param f true anomaly of the particle.
+ */
+
+struct particle tools_init_orbit3d(double M, double m, double a, double e, double i, double Omega, double omega, double f);
 
 /**
  * This function calculated orbital elements for a given particle. 
