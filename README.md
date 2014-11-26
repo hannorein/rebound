@@ -64,22 +64,15 @@ REBOUND is extremely modular. You have the choice between different gravity, col
 This setup allows you to work on multiple projects at the same time using different modules. When switching to another problem, nothing has to be set-up and the problem can by compiled by simply typing `make` in the corresponding directory (see below).
 
 ### Gravity ###
-<table>
-  <tr><th>Module name</th>
-     <th>Description</th></tr>
-  <tr><td><pre>gravity_none.c       </pre></td>
-     <td>No self-gravity</td></tr>
-  <tr><td><pre>gravity_direct.c     </pre></td>
-     <td>Direct summation, O(N^2)</td></tr>
-  <tr><td><pre>gravity_opencl.c     </pre></td>
-     <td>Direct summation, O(N^2), but accelerated using the OpenCL framework. </td></tr>
-  <tr><td><pre>gravity_tree.c       </pre></td>
-     <td>Oct tree, Barnes & Hut 1986, O(N log(N))</td></tr>
-  <tr><td><pre>gravity_grape.c      </pre></td>
-     <td>GRAPE, hardware accelerated direct summation, Sugimoto et al. 1990 </td></tr>
-  <tr><td><pre>gravity_fft.c        </pre></td>
-     <td>Two dimensional gravity solver using FFTW, works in a periodic box and the shearing sheet. (Not well tested yet.)</td></tr>
-</table>
+  
+Module name        | Description
+------------------ | -----------
+`gravity_none.c`   | No self-gravity
+`gravity_direct.c` | Direct summation, O(N^2)
+`gravity_opencl.c` | Direct summation, O(N^2), but accelerated using the OpenCL framework.
+`gravity_tree.c`   | Oct tree, Barnes & Hut 1986, O(N log(N))
+`gravity_grape.c`  | GRAPE, hardware accelerated direct summation, Sugimoto et al. 1990
+`gravity_fft.c`    | Two dimensional gravity solver using FFTW, works in a periodic box and the shearing sheet. (Not well tested yet.)
 
 ### Collision detection ###
 <table>
