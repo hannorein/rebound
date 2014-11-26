@@ -114,6 +114,8 @@ This setup allows you to work on multiple projects at the same time using differ
      <th>Description</th></tr>
   <tr><td><pre>boundaries_open.c    </pre></td>
      <td>Particles are removed from the simulation if they leaves the box.</td></tr>
+  <tr><td><pre>boundaries_none.c    </pre></td>
+     <td>Dummy. Particles are not affected by boundary conditions.</td></tr>
   <tr><td><pre>boundaries_periodic.c</pre></td>
      <td>Periodic boundary conditions. Particles are reinserted on the other side if they cross the box boundaries. You can use an arbitrary number of ghost-boxes with this module.</td></tr>
   <tr><td><pre>boundaries_shear.c   </pre></td>
