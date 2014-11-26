@@ -44,6 +44,21 @@ double t 	= 0;
 double tmax	= 0;
 double G 	= 1;
 double softening = 0;
+extern int Nmax;	
+
+extern int N3allocated;
+extern double dt_last_success;
+extern double* at;
+extern double* x0;
+extern double* v0;
+extern double* a0;
+extern double* csx;
+extern double* csv;
+extern double* g[7];
+extern double* b[7];
+extern double* e[7];
+extern double* br[7];
+extern double* er[7];
 
 // Function pointer to additional forces
 void (*problem_additional_forces) () = NULL;
@@ -77,6 +92,45 @@ void step(){
 	gravity_calculate_acceleration();
 	if (problem_additional_forces) problem_additional_forces();
 	integrator_part2();
+}
+
+// Integrate for 1 step
+void reset(){ 
+	dt 	= 0.01;	
+	t 	= 0;
+	tmax	= 0;
+	G 	= 1;
+	softening = 0;
+	N = 0;
+	Nmax = 0;
+	free(particles);
+	particles = NULL;
+	N3allocated = 0;
+	dt_last_success = 0;
+	for (int l=0;l<7;++l) {
+		free(g[l]);
+		g[l] = NULL;
+		free(b[l]);
+		b[l] = NULL;
+		free(e[l]);
+		e[l] = NULL;
+		free(br[l]);
+		br[l] = NULL;
+		free(er[l]);
+		er[l] = NULL;
+	}
+	free(at);
+	at =  NULL;
+	free(x0);
+	x0 =  NULL;
+	free(v0);
+	v0 =  NULL;
+	free(a0);
+	a0 =  NULL;
+	free(csx);
+	csx=  NULL;
+	free(csv);
+	csv=  NULL;
 }
 
 // Integrate until t=_tmax

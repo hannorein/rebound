@@ -1,6 +1,11 @@
 REBOUND - An open-source multi-purpose N-body code for collisional dynamics
 ===========================================================================
 
+[![GPL](http://img.shields.io/badge/license-GPL-green.svg?style=flat)](https://github.com/hannorein/rebound/blob/master/LICENSE)
+[![arXiv](http://img.shields.io/badge/arXiv-1110.4876-orange.svg?style=flat)](http://arxiv.org/abs/1110.4876)
+[![arXiv](http://img.shields.io/badge/arXiv-1409.4779-orange.svg?style=flat)](http://arxiv.org/abs/1409.4779)
+
+
 Contributors
 ------------
 * Hanno Rein, University of Toronto, <hanno@hanno-rein.de>
@@ -15,7 +20,7 @@ There are two papers describing the functionality of REBOUND.
 
 The first one, Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012, http://arxiv.org/abs/1110.4876), describes the code structure and the main feature including the gravity and collision routines. 
 
-The second paper, Rein & Spiegel (in preparation) describes the versatile high order integrator IAS15 which is now part of REBOUND. 
+The second paper, Rein & Spiegel (MNRAS, in press, http://arxiv.org/abs/1409.4779) describes the versatile high order integrator IAS15 which is now part of REBOUND. 
 
 
 Screenshot
@@ -821,23 +826,40 @@ When you use this code or parts of this code for results presented in a scientif
 
 _Simulations in this paper made use of the collisional N-body code REBOUND which can be downloaded freely at http://github.com/hannorein/rebound._
 
-Reference in BibTeX format:
+If you use the IAS15 integrator, please cite Rein and Spiegel (2014).
+
+References in BibTeX format:
 
     @ARTICLE{ReinLiu2012,
        author = {{Rein}, H. and {Liu}, S.-F.},
-        title = "{REBOUND: An open-source multi-purpose N-body code for collisional dynamics}",
-      journal = {A\&A},
+        title = "{REBOUND: an open-source multi-purpose N-body code for collisional dynamics}",
+      journal = {\aap},
     archivePrefix = "arXiv",
        eprint = {1110.4876},
-          DOI = "10.1051/0004-6361/201118085",
-          url = "http://dx.doi.org/10.1051/0004-6361/201118085",
      primaryClass = "astro-ph.EP",
-     keywords = {Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Mathematics - Dynamical Systems, Physics - Computational Physics},
+     keywords = {methods: numerical, planets and satellites: rings, protoplanetary disks},
          year = 2012,
-        month = "",
+        month = jan,
        volume = 537,
-        pages = "A128",
-       adsurl = {http://adsabs.harvard.edu/abs/2011arXiv1110.4876R},
+          eid = {A128},
+        pages = {A128},
+          doi = {10.1051/0004-6361/201118085},
+       adsurl = {http://adsabs.harvard.edu/abs/2012A%26A...537A.128R},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
     }
+
+    @ARTICLE{ReinSpiegel2014,
+       author = {{Rein}, H. and {Spiegel}, D.~S.},
+        title = "{IAS15: A fast, adaptive, high-order integrator for gravitational dynamics, accurate to machine precision over a billion orbits}",
+      journal = {ArXiv e-prints},
+    archivePrefix = "arXiv",
+       eprint = {1409.4779},
+     primaryClass = "astro-ph.EP",
+     keywords = {Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Astrophysics - Solar and Stellar Astrophysics, Mathematics - Numerical Analysis},
+         year = 2014,
+        month = sep,
+       adsurl = {http://adsabs.harvard.edu/abs/2014arXiv1409.4779R},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+    }
+
 
