@@ -86,7 +86,7 @@ void gravity_calculate_acceleration(){
 		const double dz = particles[i-N/2].z - particles[j-N/2].z;
 		const double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
 		const double r3inv = 1./(r*r*r);
-		const double r5inv = 1./(r*r*r*r*r);
+		const double r5inv = 3./(r*r*r*r*r);
 		const double ddx = particles[i].x - particles[j].x;
 		const double ddy = particles[i].y - particles[j].y;
 		const double ddz = particles[i].z - particles[j].z;
@@ -94,21 +94,21 @@ void gravity_calculate_acceleration(){
 		
 		// Variational equations
 		particles[i].ax += Gm * (
-			+ ddx * ( + 3.*dx*dx*r5inv - 1.*r3inv)
-			+ ddy * ( + 3.*dx*dy*r5inv)
-			+ ddz * ( + 3.*dx*dz*r5inv)
+			+ ddx * ( dx*dx*r5inv - r3inv )
+			+ ddy * ( dx*dy*r5inv )
+			+ ddz * ( dx*dz*r5inv )
 			);
 
 		particles[i].ay += Gm * (
-			+ ddx * ( + 3.*dy*dx*r5inv)
-			+ ddy * ( + 3.*dy*dy*r5inv - 1.*r3inv)
-			+ ddz * ( + 3.*dy*dz*r5inv)
+			+ ddx * ( dy*dx*r5inv )
+			+ ddy * ( dy*dy*r5inv - r3inv )
+			+ ddz * ( dy*dz*r5inv )
 			);
 
 		particles[i].az += Gm * (
-			+ ddx * ( + 3.*dz*dx*r5inv)
-			+ ddy * ( + 3.*dz*dy*r5inv)
-			+ ddz * ( + 3.*dz*dz*r5inv - 1.*r3inv)
+			+ ddx * ( dz*dx*r5inv )
+			+ ddy * ( dz*dy*r5inv )
+			+ ddz * ( dz*dz*r5inv - r3inv )
 			);
 		
 	}
