@@ -37,4 +37,17 @@
   * Different methods implement this function in a different way.
   */
 void gravity_calculate_acceleration();
+
+#ifdef GRAVITY_MEGNO
+// Init the MEGNO particles
+void gravity_megno_init();
+
+// Integrate the Megno coefficient
+void gravity_megno_update();
+
+// Returns the current value of <Y>
+double gravity_megno();
+
+#endif // GRAVITY_MEGNO
+
 #endif

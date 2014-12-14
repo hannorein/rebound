@@ -69,58 +69,6 @@ double tools_rayleigh(double sigma){
 	return sigma*sqrt(-2*log(y));
 }
 
-/// MEGNO helper routines
-double tools_megno_Ys;
-double tools_megno_Yss;
-void tools_megno_init(){
-	int Nreal = N;
-	tools_megno_Ys = 0.;
-	tools_megno_Yss = 0.;
-        for (int i=0;i<Nreal;i++){ 
-                struct particle megno;
-                megno.m = particles[i].m;
-                megno.x  = 1e-16*tools_normal(1.);
-                megno.y  = 1e-16*tools_normal(1.);
-                megno.z  = 1e-16*tools_normal(1.);
-                megno.vx = 1e-16*tools_normal(1.);
-                megno.vy = 1e-16*tools_normal(1.);
-                megno.vz = 1e-16*tools_normal(1.);
-                particles_add(megno);
-        }
-}
-
-double tools_megno_delta{
-        double delta = 0;
-        for (int i=N/2;i<N;i++){
-                delta += particles[i].x * particles[i].x; 
-                delta += particles[i].y * particles[i].y;
-                delta += particles[i].z * particles[i].z;
-                delta += particles[i].vx * particles[i].vx; 
-                delta += particles[i].vy * particles[i].vy;
-                delta += particles[i].vz * particles[i].vz;
-        }
-        return sqrt(delta);
-}
-double tools_megno_deltad(){
-        double deltad = 0;
-        for (int i=N/2;i<N;i++){
-                deltad += particles[i].vx * particles[i].x; 
-                deltad += particles[i].vy * particles[i].y; 
-                deltad += particles[i].vz * particles[i].z; 
-                deltad += particles[i].ax * particles[i].vx; 
-                deltad += particles[i].ay * particles[i].vy; 
-                deltad += particles[i].az * particles[i].vz; 
-        }
-        return deltad;
-}
-double tools_megno_update(){
-	double d = tools_megno_delta();
- 	tools_megno_Ys  += dt_last_success * t * toold_megno_deltad()/(d*d);
-	double Y = tools_megno_Ys*2./t; 
-	tools_megno_Yss += Y * dt_last_success;
-	return tools_megno_Yss/t;
-}
-	
 
 
 /// Other helper routines

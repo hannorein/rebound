@@ -36,8 +36,15 @@
 #include <time.h>
 #include "particle.h"
 #include "main.h"
+#include "tools.h"
 #include "boundaries.h"
 #include "communication_mpi.h"
+
+#ifndef INTEGRATOR_IAS15
+#error GRAVITY_MEGNO requires INTERGRATOR_IAS15
+#endif
+
+extern double dt_last_success;
 
 void gravity_calculate_acceleration(){
 #pragma omp parallel for schedule(guided)
@@ -114,3 +121,59 @@ void gravity_calculate_acceleration(){
 	}
 	}
 }
+
+/// MEGNO helper routines
+double gravity_megno_Ys;
+double gravity_megno_Yss;
+void gravity_megno_init(){
+	int Nreal = N;
+	gravity_megno_Ys = 0.;
+	gravity_megno_Yss = 0.;
+        for (int i=0;i<Nreal;i++){ 
+                struct particle megno;
+                megno.m = particles[i].m;
+                megno.x  = 1e-16*tools_normal(1.);
+                megno.y  = 1e-16*tools_normal(1.);
+                megno.z  = 1e-16*tools_normal(1.);
+                megno.vx = 1e-16*tools_normal(1.);
+                megno.vy = 1e-16*tools_normal(1.);
+                megno.vz = 1e-16*tools_normal(1.);
+                particles_add(megno);
+        }
+}
+
+double gravity_megno_delta(){
+        double delta = 0;
+        for (int i=N/2;i<N;i++){
+                delta += particles[i].x * particles[i].x; 
+                delta += particles[i].y * particles[i].y;
+                delta += particles[i].z * particles[i].z;
+                delta += particles[i].vx * particles[i].vx; 
+                delta += particles[i].vy * particles[i].vy;
+                delta += particles[i].vz * particles[i].vz;
+        }
+        return sqrt(delta);
+}
+double gravity_megno_deltad(){
+        double deltad = 0;
+        for (int i=N/2;i<N;i++){
+                deltad += particles[i].vx * particles[i].x; 
+                deltad += particles[i].vy * particles[i].y; 
+                deltad += particles[i].vz * particles[i].z; 
+                deltad += particles[i].ax * particles[i].vx; 
+                deltad += particles[i].ay * particles[i].vy; 
+                deltad += particles[i].az * particles[i].vz; 
+        }
+        return deltad;
+}
+void gravity_megno_update(){
+	if (t<=0.) return;
+	double d = gravity_megno_delta();
+ 	gravity_megno_Ys  += dt_last_success * t * gravity_megno_deltad()/(d*d);
+	double Y = gravity_megno_Ys*2./t; 
+	gravity_megno_Yss += Y * dt_last_success;
+}
+double gravity_megno(){
+	return gravity_megno_Yss/t;
+}
+	
