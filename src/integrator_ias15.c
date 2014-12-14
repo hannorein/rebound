@@ -70,7 +70,6 @@ double 	integrator_min_dt 			= 0;	// Minimum timestep used as a floor when adapt
 unsigned long integrator_iterations_max_exceeded= 0;	// Count how many times the iteration did not converge
 const double safety_factor 			= 0.25;	// Maximum increase/deacrease of consecutve timesteps.
 
-
 // Gauss Radau spacings
 const double h[8]	= { 0.0, 0.0562625605369221464656521910, 0.1802406917368923649875799428, 0.3526247171131696373739077702, 0.5471536263305553830014485577, 0.7342101772154105410531523211, 0.8853209468390957680903597629, 0.9775206135612875018911745004}; 
 // Other constants
@@ -101,6 +100,60 @@ double dt_last_success = 0.;			// Last accepted timestep (corresponding to br an
 // Helper functions for resetting the b and e coefficients
 void copybuffers(double* _a[7], double* _b[7], int N3);
 void predict_next_step(double ratio, int N3, double* _e[7], double* _b[7]);
+
+#ifdef GRAVITY_MEGNO
+// MEGNO helper routines
+// Weights for integration of a first order differential equation (Note: interval length = 2) 
+const double w[8]	= { 0.03125, 0.185358154802979278540728972807180754479812609, 0.304130620646785128975743291458180383736715043, 0.376517545389118556572129261157225608762708603, 0.391572167452493593082499533303669362149363727, 0.347014795634501068709955597003528601733139176, 0.249647901329864963257869294715235590174262844, 0.114508814744257199342353731044292225247093225};
+
+double integrator_megno_thisdt = 0.;
+double integrator_megno_Ys;
+double integrator_megno_Yss;
+void integrator_megno_init(){
+	int Nreal = N;
+	integrator_megno_Ys = 0.;
+	integrator_megno_Yss = 0.;
+        for (int i=0;i<Nreal;i++){ 
+                struct particle megno;
+                megno.m = particles[i].m;
+                megno.x  = 1e-16*tools_normal(1.);
+                megno.y  = 1e-16*tools_normal(1.);
+                megno.z  = 1e-16*tools_normal(1.);
+                megno.vx = 1e-16*tools_normal(1.);
+                megno.vy = 1e-16*tools_normal(1.);
+                megno.vz = 1e-16*tools_normal(1.);
+                particles_add(megno);
+        }
+}
+double integrator_megno(){
+	if (t==0.) return 0.;
+	return integrator_megno_Yss/t;
+}
+double integrator_megno_delta2(){
+        double delta2 = 0;
+        for (int i=N/2;i<N;i++){
+                delta2 += particles[i].x * particles[i].x; 
+                delta2 += particles[i].y * particles[i].y;
+                delta2 += particles[i].z * particles[i].z;
+                delta2 += particles[i].vx * particles[i].vx; 
+                delta2 += particles[i].vy * particles[i].vy;
+                delta2 += particles[i].vz * particles[i].vz;
+        }
+        return delta2;
+}
+double integrator_megno_deltad(){
+        double deltad = 0;
+        for (int i=N/2;i<N;i++){
+                deltad += particles[i].vx * particles[i].x; 
+                deltad += particles[i].vy * particles[i].y; 
+                deltad += particles[i].vz * particles[i].z; 
+                deltad += particles[i].ax * particles[i].vx; 
+                deltad += particles[i].ay * particles[i].vy; 
+                deltad += particles[i].az * particles[i].vz; 
+        }
+        return deltad;
+}
+#endif // GRAVITY_MEGNO
 
 // Do nothing here. This is only used in a leapfrog-like DKD integrator. IAS15 performs one complete timestep.
 void integrator_part1(){
@@ -181,6 +234,7 @@ int integrator_ias15_step() {
 		g[5][k] = b[6][k]*d[20] + b[5][k];
 		g[6][k] = b[6][k];
 	}
+		
 
 	double t_beginning = t;
 	double predictor_corrector_error = 1e300;
@@ -209,6 +263,10 @@ int integrator_ias15_step() {
 		predictor_corrector_error_last = predictor_corrector_error;
 		predictor_corrector_error = 0;
 		iterations++;
+
+#ifdef GRAVITY_MEGNO
+		integrator_megno_thisdt = w[0]/2.*(t+dt*h[0]) * integrator_megno_deltad()/integrator_megno_delta2();
+#endif // GRAVITY_MEGNO
 
 		for(int n=1;n<8;n++) {							// Loop over interval using Gauss-Radau spacings
 
@@ -264,6 +322,9 @@ int integrator_ias15_step() {
 
 
 			integrator_update_acceleration();				// Calculate forces at interval n
+#ifdef GRAVITY_MEGNO
+			integrator_megno_thisdt += w[n]/2.*(t+dt*h[n]) * integrator_megno_deltad()/integrator_megno_delta2();
+#endif // GRAVITY_MEGNO
 
 			for(int k=0;k<N;++k) {
 				at[3*k]   = particles[k].ax;
@@ -478,6 +539,13 @@ int integrator_ias15_step() {
 	}
 
 	t += dt_done;
+
+#ifdef GRAVITY_MEGNO
+	integrator_megno_Ys += dt_done*integrator_megno_thisdt;
+	double Y = integrator_megno_Ys*2./t;
+	integrator_megno_Yss += Y * dt_done;
+#endif // GRAVITY_MEGNO
+
 	// Swap particle buffers
 
 	for(int k=0;k<N;++k) {
