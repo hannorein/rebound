@@ -29,8 +29,8 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _GRAVITY_DIRECT_H
-#define _GRAVITY_DIRECT_H
+#ifndef _GRAVITY_H
+#define _GRAVITY_H
 /**
   * The function loops over all ghostboxs and calls calculate_forces_for_particle() to sum up the forces on each particle.
   * Calculate all the gravitational acceleration for all particles.
