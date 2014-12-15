@@ -104,6 +104,8 @@ void reset(){
 	softening = 0;
 	N = 0;
 	Nmax = 0;
+	N_active = -1;
+	N_megno = 0;
 	free(particles);
 	particles = NULL;
 	N3allocated = 0;
