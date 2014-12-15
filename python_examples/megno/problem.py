@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # Import the rebound module
 import sys; sys.path.append('../')
 import rebound
@@ -48,6 +49,7 @@ def setup_planet(com, mass, period, M, omega, eccentricity):
         vy = sinomega*_vx + cosomega*_vy,
         vz = 0.)
 
+# Runs one simulation.
 def megno(par):
     saturn_P, saturn_e = par
     rebound.reset()
@@ -68,31 +70,33 @@ def megno(par):
 
     return rebound.get_megno()
 
-N = 4   # Grid size
-a = np.linspace(150.,200.,N)
+
+### Setup grid and run many simulations in parallel
+N = 154   # Grid size
+P = np.linspace(150.,200.,N)
 e = np.linspace(0.,0.5,N)
 v = []
 for _e in e:
-    for _a in a:
-        v.append([_a,_e])
+    for _P in P:
+        v.append([_P,_e])
 
-pool = InterruptiblePool(4) # 4 threads
-res = pool.map(megno,v)     # Run simulations in parallel
+pool = InterruptiblePool(24)    # 4 threads
+res = pool.map(megno,v)         # Run simulations in parallel
 
 ### Create plot and save as pdf 
 import matplotlib
 matplotlib.use("pdf")
 import matplotlib.pyplot as pl
 
-extent = [a.min(), a.max(), e.min(), e.max()]
+extent = [P.min()/TWOPI, P.max()/TWOPI, e.min(), e.max()]
 
 pl.imshow(np.array(res).reshape((N,N)), vmin=0., vmax=4., aspect='auto', interpolation='nearest', cmap="Blues", extent=extent)
 cb1 = pl.colorbar()
 cb1.solids.set_rasterized(True)
 cb1.set_label("MEGNO stability indicator $\\langle Y \\rangle$")
-pl.xlim(extent[0],extent[1])
+pl.xlim(extent[0]/TWOPI,extent[1]/TWOPI)
 pl.ylim(extent[2],extent[3])
-pl.xlabel("$P$")
+pl.xlabel("$P$ [yrs]")
 pl.ylabel("$e$")
 
 pl.savefig("megno.pdf")
