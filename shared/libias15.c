@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <sys/time.h>
 #include <string.h>
 #include "particle.h"
 #include "integrator.h"
@@ -131,6 +132,9 @@ void reset(){
 	csx=  NULL;
 	free(csv);
 	csv=  NULL;
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	srand ( tim.tv_usec + getpid());
 }
 
 // Integrate until t=_tmax
