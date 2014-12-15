@@ -4,6 +4,9 @@ import rebound
 import numpy as np
 from rebound import Particle
 import math
+import matplotlib.mlab as mlab
+import matplotlib.pyplot as plt
+
 from interruptible_pool import InterruptiblePool
 
 TWOPI = 2.*math.pi
@@ -64,32 +67,61 @@ def megno(par):
 
     return rebound.get_megno()
 
+pool = InterruptiblePool(4)  # 2 threads
+plt.ion()
+plt.figure()
+
 N = 128
 xmin = 150.
 xmax = 200.
-xi = np.linspace(xmin,xmax,N)
 ymin = 0.0
 ymax = 0.5
+def normalize_x(data):
+    data = data.astype(np.float)
+    return (data - xmin) / (xmax - xmin)
+
+def normalize_y(data):
+    data = data.astype(np.float)
+    return (data - ymin) / (ymax - ymin)
+
+xi = np.linspace(xmin,xmax,N)
 yi = np.linspace(ymin,ymax,N)
-
 xi, yi = np.meshgrid(xi, yi)
+    
+xi_new = normalize_x(xi)
+yi_new = normalize_y(yi)
 
-for i in xrange(10): # random samples
-    exit(0)
+x = np.array([])
+y = np.array([])
+z = np.array([])
 
-grid = np.empty([N*N,2])
-v = []
-for 
-v.append([_a,_e])
+first = 1
+for j in xrange(100):
+    v = []
+    for i in xrange(16): # random samples
+        a = np.random.uniform(xmin,xmax)
+        e = np.random.uniform(ymin,ymax)
+        v.append([a,e])
+
+    res = pool.map(megno,v)
+
+    x = np.hstack((x,np.array(v)[:,0]))
+    y = np.hstack((y,np.array(v)[:,1]))
+    z = np.hstack((z,np.array(res)))
 
 
-pool = InterruptiblePool(4)  # 2 threads
-res = pool.map(megno,v)
+    x_new = normalize_x(x)
+    y_new = normalize_y(y)
+    zi = mlab.griddata(x_new, y_new, z, xi_new, yi_new)
 
-heatmap = np.zeros((N,N,3))
-for i, _a in enumerate(a):
-    for j, _e in enumerate(e):
-        heatmap[i][j][0] = _e
-        heatmap[i][j][1] = _a
-        heatmap[i][j][2] = res[j*N+i]
-np.save("megno.npy",heatmap)
+    plt.pcolormesh(xi,yi,zi,vmin=0,vmax=4.,cmap="Blues")
+    if first:
+        first = 0
+        plt.colorbar()
+        plt.axis([xmin, xmax, ymin, ymax])
+    plt.draw()
+plt.show()
+
+
+plt.show()
+
