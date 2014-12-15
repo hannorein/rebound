@@ -104,9 +104,7 @@ void predict_next_step(double ratio, int N3, double* _e[7], double* _b[7]);
 #ifdef GRAVITY_MEGNO
 // MEGNO helper routines
 // Weights for integration of a first order differential equation (Note: interval length = 2) 
-const double w[8]	= { 0.03125, 0.185358154802979278540728972807180754479812609, 0.304130620646785128975743291458180383736715043, 0.376517545389118556572129261157225608762708603, 0.391572167452493593082499533303669362149363727, 0.347014795634501068709955597003528601733139176, 0.249647901329864963257869294715235590174262844, 0.114508814744257199342353731044292225247093225};
-
-double integrator_megno_thisdt = 0.;
+const double w[8] = {0.03125, 0.185358154802979278540728972807180754479812609, 0.304130620646785128975743291458180383736715043, 0.376517545389118556572129261157225608762708603, 0.391572167452493593082499533303669362149363727, 0.347014795634501068709955597003528601733139176, 0.249647901329864963257869294715235590174262844, 0.114508814744257199342353731044292225247093225};
 double integrator_megno_Ys;
 double integrator_megno_Yss;
 void integrator_megno_init(){
@@ -114,14 +112,14 @@ void integrator_megno_init(){
 	integrator_megno_Ys = 0.;
 	integrator_megno_Yss = 0.;
         for (int i=0;i<Nreal;i++){ 
-                struct particle megno;
-                megno.m = particles[i].m;
-                megno.x  = 1e-16*tools_normal(1.);
-                megno.y  = 1e-16*tools_normal(1.);
-                megno.z  = 1e-16*tools_normal(1.);
-                megno.vx = 1e-16*tools_normal(1.);
-                megno.vy = 1e-16*tools_normal(1.);
-                megno.vz = 1e-16*tools_normal(1.);
+                struct particle megno = {
+			.m  = particles[i].m,
+			.x  = 1e-16*tools_normal(1.),
+			.y  = 1e-16*tools_normal(1.),
+			.z  = 1e-16*tools_normal(1.),
+			.vx = 1e-16*tools_normal(1.),
+			.vy = 1e-16*tools_normal(1.),
+			.vz = 1e-16*tools_normal(1.) };
                 particles_add(megno);
         }
 }
@@ -129,20 +127,9 @@ double integrator_megno(){
 	if (t==0.) return 0.;
 	return integrator_megno_Yss/t;
 }
-double integrator_megno_delta2(){
-        double delta2 = 0;
-        for (int i=N/2;i<N;i++){
-                delta2 += particles[i].x * particles[i].x; 
-                delta2 += particles[i].y * particles[i].y;
-                delta2 += particles[i].z * particles[i].z;
-                delta2 += particles[i].vx * particles[i].vx; 
-                delta2 += particles[i].vy * particles[i].vy;
-                delta2 += particles[i].vz * particles[i].vz;
-        }
-        return delta2;
-}
-double integrator_megno_deltad(){
+double integrator_megno_deltad_delta2(){
         double deltad = 0;
+        double delta2 = 0;
         for (int i=N/2;i<N;i++){
                 deltad += particles[i].vx * particles[i].x; 
                 deltad += particles[i].vy * particles[i].y; 
@@ -150,8 +137,14 @@ double integrator_megno_deltad(){
                 deltad += particles[i].ax * particles[i].vx; 
                 deltad += particles[i].ay * particles[i].vy; 
                 deltad += particles[i].az * particles[i].vz; 
+                delta2 += particles[i].x  * particles[i].x; 
+                delta2 += particles[i].y  * particles[i].y;
+                delta2 += particles[i].z  * particles[i].z;
+                delta2 += particles[i].vx * particles[i].vx; 
+                delta2 += particles[i].vy * particles[i].vy;
+                delta2 += particles[i].vz * particles[i].vz;
         }
-        return deltad;
+        return deltad/delta2;
 }
 #endif // GRAVITY_MEGNO
 
@@ -234,6 +227,11 @@ int integrator_ias15_step() {
 		g[5][k] = b[6][k]*d[20] + b[5][k];
 		g[6][k] = b[6][k];
 	}
+
+#ifdef GRAVITY_MEGNO
+	double integrator_megno_thisdt;
+	double integrator_megno_thisdt_init = w[0]* t * integrator_megno_deltad_delta2();
+#endif // GRAVITY_MEGNO
 		
 
 	double t_beginning = t;
@@ -265,7 +263,7 @@ int integrator_ias15_step() {
 		iterations++;
 
 #ifdef GRAVITY_MEGNO
-		integrator_megno_thisdt = w[0]/2.*(t+dt*h[0]) * integrator_megno_deltad()/integrator_megno_delta2();
+		integrator_megno_thisdt = integrator_megno_thisdt_init;
 #endif // GRAVITY_MEGNO
 
 		for(int n=1;n<8;n++) {							// Loop over interval using Gauss-Radau spacings
@@ -295,8 +293,12 @@ int integrator_ias15_step() {
 				double xk2  = csx[k2] + (s[8]*b[6][k2] + s[7]*b[5][k2] + s[6]*b[4][k2] + s[5]*b[3][k2] + s[4]*b[2][k2] + s[3]*b[1][k2] + s[2]*b[0][k2] + s[1]*a0[k2] + s[0]*v0[k2] );
 				particles[i].z = xk2 + x0[k2];
 			}
-			
+#ifdef GRAVITY_MEGNO	
+			// If MEGNO is calculated, we need velocity estimates to calculate deltad/delta2
+			if (1){
+#else // GRAVITY_MEGNO	
 			if (problem_additional_forces && integrator_force_is_velocitydependent){
+#endif // GRAVITY_MEGNO	
 				s[0] = dt * h[n];
 				s[1] =      s[0] * h[n] / 2.;
 				s[2] = 2. * s[1] * h[n] / 3.;
@@ -323,7 +325,7 @@ int integrator_ias15_step() {
 
 			integrator_update_acceleration();				// Calculate forces at interval n
 #ifdef GRAVITY_MEGNO
-			integrator_megno_thisdt += w[n]/2.*(t+dt*h[n]) * integrator_megno_deltad()/integrator_megno_delta2();
+			integrator_megno_thisdt += w[n] * t * integrator_megno_deltad_delta2();
 #endif // GRAVITY_MEGNO
 
 			for(int k=0;k<N;++k) {
@@ -541,8 +543,10 @@ int integrator_ias15_step() {
 	t += dt_done;
 
 #ifdef GRAVITY_MEGNO
+	// Calculate running Y(t)
 	integrator_megno_Ys += dt_done*integrator_megno_thisdt;
-	double Y = integrator_megno_Ys*2./t;
+	double Y = integrator_megno_Ys/t;
+	// Calculate averge <Y> 
 	integrator_megno_Yss += Y * dt_done;
 #endif // GRAVITY_MEGNO
 
