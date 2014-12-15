@@ -61,16 +61,14 @@ extern double integrator_epsilon;
 extern double integrator_min_dt;
 
 
-#ifdef GRAVITY_MEGNO
 /* 
  * Init the MEGNO particles
  **/
-void integrator_megno_init();
+void integrator_megno_init(double delta);
 
 /*
  * Returns the current value of <Y>
  **/
 double integrator_megno();
-#endif // GRAVITY_MEGNO
 
 #endif

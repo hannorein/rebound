@@ -6,6 +6,7 @@ from rebound import Particle
 import math
 from interruptible_pool import InterruptiblePool
 
+# mod2pi helper function.
 TWOPI = 2.*math.pi
 def mod2pi(f):
     while f<0.:
@@ -14,6 +15,7 @@ def mod2pi(f):
         f -= TWOPI
     return f
 
+# Convert from orbital parameters to cartesian coordinates
 def setup_planet(com, mass, period, M, omega, eccentricity):
     mu = com.m+mass
     n = TWOPI/period
@@ -50,7 +52,9 @@ def megno(par):
     saturn_P, saturn_e = par
     rebound.reset()
     rebound.set_min_dt(0.1)
-    sun = Particle( m=1.,x=0.,y=0.,z=0.,vx=0.,vy=0.,vz=0.)
+    
+    # These parameters are only approximately those od Jupiter and Saturn.
+    sun     = Particle( m=1.,x=0.,y=0.,z=0.,vx=0.,vy=0.,vz=0.)
     jupiter = setup_planet(sun,0.00095479194, 74.5366, 0.600331, 0.2570604, 0.04838624)
     saturn  = setup_planet(sun,0.00028588598, saturn_P, 0.871866, 1.6161553, saturn_e)
 
@@ -58,29 +62,41 @@ def megno(par):
     rebound.particle_add(jupiter) 
     rebound.particle_add(saturn) 
     rebound.move_to_center_of_momentum()
-    rebound.megno_init()
+    rebound.megno_init(1e-16)
 
     rebound.integrate(1e3*2.*math.pi)
 
     return rebound.get_megno()
 
-N = 128
-grid = np.empty([N*N,2])
-v = []
+N = 4   # Grid size
 a = np.linspace(150.,200.,N)
 e = np.linspace(0.,0.5,N)
-for _a in a:
-    for _e in e:
+v = []
+for _e in e:
+    for _a in a:
         v.append([_a,_e])
 
+pool = InterruptiblePool(4) # 4 threads
+res = pool.map(megno,v)     # Run simulations in parallel
 
-pool = InterruptiblePool(4)  # 2 threads
-res = pool.map(megno,v)
+### Create plot and save as pdf 
+import matplotlib
+matplotlib.use("pdf")
+import matplotlib.pyplot as pl
 
-heatmap = np.zeros((N,N,3))
-for i, _a in enumerate(a):
-    for j, _e in enumerate(e):
-        heatmap[i][j][0] = _e
-        heatmap[i][j][1] = _a
-        heatmap[i][j][2] = res[j*N+i]
-np.save("megno.npy",heatmap)
+extent = [a.min(), a.max(), e.min(), e.max()]
+
+pl.imshow(np.array(res).reshape((N,N)), vmin=0., vmax=4., aspect='auto', interpolation='nearest', cmap="Blues", extent=extent)
+cb1 = pl.colorbar()
+cb1.solids.set_rasterized(True)
+cb1.set_label("MEGNO stability indicator $\\langle Y \\rangle$")
+pl.xlim(extent[0],extent[1])
+pl.ylim(extent[2],extent[3])
+pl.xlabel("$P$")
+pl.ylabel("$e$")
+
+pl.savefig("megno.pdf")
+
+### Show plot (OSX only)
+import os
+os.system("open megno.pdf")

@@ -54,8 +54,8 @@ def set_min_dt(t):
 def get_t():
     return c_double.in_dll(libias15, "t").value
 
-def megno_init():
-    libias15.integrator_megno_init()
+def megno_init(delta):
+    libias15.integrator_megno_init(c_double(delta))
 
 def get_megno():
     libias15.integrator_megno.restype = c_double

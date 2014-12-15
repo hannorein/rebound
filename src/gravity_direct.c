@@ -52,7 +52,8 @@ void gravity_calculate_acceleration(){
 		particles[i].az = 0; 
 	}
 	// Summing over all Ghost Boxes
-	int _N_active = (N_active==-1)?N:N_active;
+	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
+	const int _N_real   = N - N_megno;
 	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
 	for (int gby=-nghosty; gby<=nghosty; gby++){
 	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
@@ -60,13 +61,13 @@ void gravity_calculate_acceleration(){
 		// Summing over all particle pairs
 #pragma omp parallel for schedule(guided)
 #ifdef INTEGRATOR_WH
-		for (int i=1; i<N; i++){
+		for (int i=1; i<_N_real; i++){
 			double csx = 0;
 			double csy = 0;
 			double csz = 0;
 		for (int j=1; j<_N_active; j++){
 #else //INTEGRATOR_WH
-		for (int i=0; i<N; i++){
+		for (int i=0; i<_N_real; i++){
 			double csx = 0;
 			double csy = 0;
 			double csz = 0;
