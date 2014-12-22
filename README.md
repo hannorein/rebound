@@ -449,7 +449,7 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   automatically adjusts the timestep so that even very high
   eccentricity encounters are resovled with high accuracy.
   
-  
+
 *  **examples/mergers**
 
   This example is using the following modules:  
@@ -744,9 +744,10 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
   This example uses the IAS15 integrator
   to integrate the "Star od David", a four body system consisting of two
-  binaries orbiting each other.
-  Initial conditions by Robert Vanderbei. For more information see
-  http://www.princeton.edu/%7Ervdb/WebGL/New.html
+  binaries orbiting each other. Note that the time is running backwards,
+  which illustrates that IAS15 can handle both forward and backward in time
+  integrations. The initial conditions are by Robert Vanderbei. For more
+  information see http://www.princeton.edu/%7Ervdb/WebGL/New.html
   
 
 *  **examples/symplectic_integrator**
