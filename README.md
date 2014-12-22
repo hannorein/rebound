@@ -450,7 +450,6 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   eccentricity encounters are resovled with high accuracy.
   
   
-
 *  **examples/mergers**
 
   This example is using the following modules:  
@@ -733,6 +732,21 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   A narrow ring of collisional particles is spreading.
   The example uses the Wisdom Holman integrator. A plane-sweep algorithm
   in the phi direction is used to detect collisions.
+  
+
+*  **examples/star_of_david**
+
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_none.c`
+  `integrator_ias15.c`
+  `collisions_none.c`
+
+  This example uses the IAS15 integrator
+  to integrate the "Star od David", a four body system consisting of two
+  binaries orbiting each other.
+  Initial conditions by Robert Vanderbei. For more information see
+  http://www.princeton.edu/%7Ervdb/WebGL/New.html
   
 
 *  **examples/symplectic_integrator**
