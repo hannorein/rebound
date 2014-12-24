@@ -104,7 +104,7 @@ def reset():
 
 # Integration
 def step():
-    libias15.step()
+    libias15.ias15_step()
 
 def integrate(tmax):
     libias15.integrate(c_double(tmax))
