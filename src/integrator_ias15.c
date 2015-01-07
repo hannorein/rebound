@@ -110,17 +110,36 @@ void integrator_megno_init(double delta){
 	N_megno = N;
 	integrator_megno_Ys = 0.;
 	integrator_megno_Yss = 0.;
-        for (int i=0;i<N_megno;i++){ 
-                struct particle megno = {
-			.m  = particles[i].m,
-			.x  = delta*tools_normal(1.),
-			.y  = delta*tools_normal(1.),
-			.z  = delta*tools_normal(1.),
-			.vx = delta*tools_normal(1.),
-			.vy = delta*tools_normal(1.),
-			.vz = delta*tools_normal(1.) };
-                particles_add(megno);
-        }
+	// track sum of m_i*x_i and m_i*v_i to set the delta for the index 0 particle such that center of mass and its velocity are unchanged in the shadow system
+	// in the case of a massive central body, setting the zero particle last ensures that all the smaller bodies have comparable deltas and central body has smaller delta
+	double mass0 = particles[0].m;
+	struct particle p0 = {.m = mass0, .x = 0., .y = 0., .z = 0., .vx = 0., .vy = 0., .vz = 0.};
+	particles_add(p0); // add dummy in so delta[i] = particles[i+N] for all particles, i.e. for particle 0
+	double dx = 0.; double dy = 0.; double dz = 0.; double dvx = 0.; double dvy = 0.; double dvz = 0.;
+    for (int i=1;i<N_megno;i++){
+        struct particle megno = {
+            .m  = particles[i].m,
+            .x  = delta*tools_normal(1.),
+            .y  = delta*tools_normal(1.),
+            .z  = delta*tools_normal(1.),
+            .vx = delta*tools_normal(1.),
+            .vy = delta*tools_normal(1.),
+            .vz = delta*tools_normal(1.) };
+        particles_add(megno);
+        dx += megno.m*megno.x;
+        dy += megno.m*megno.y;
+        dz += megno.m*megno.z;
+        dvx += megno.m*megno.vx;
+        dvy += megno.m*megno.vy;
+        dvz += megno.m*megno.vz;
+    }
+    
+    particles[N].x = -dx/mass0;
+    particles[N].y = -dy/mass0;
+    particles[N].z = -dz/mass0;
+    particles[N].vx = -dvx/mass0;
+    particles[N].vy = -dvy/mass0;
+    particles[N].vz = -dvz/mass0;
 }
 double integrator_megno(){
 	if (t==0.) return 0.;
