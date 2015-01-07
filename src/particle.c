@@ -38,6 +38,7 @@ struct particle* 	particles;
 int N 		= 0;	
 int Nmax	= 0;	
 int N_active 	= -1; 	
+int N_megno 	= 0; 	
 
 #ifdef BOUNDARIES_OPEN
 int boundaries_particle_is_in_box(struct particle p);

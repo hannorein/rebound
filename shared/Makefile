@@ -1,6 +1,6 @@
 # This Makefile compiles the shared dynamic library to access the IAS15 integrator.
 CC=cc 
-OPT=-std=c99 -O3 -DCOLLISIONS_NONE
+OPT=-std=c99 -O3 -DCOLLISIONS_NONE -DGRAVITY_MEGNO -DINTEGRATOR_IAS15
 
 all: 
 	$(CC) $(OPT) -c -fPIC -Wall ../src/integrator_ias15.c

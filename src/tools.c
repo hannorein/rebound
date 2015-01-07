@@ -31,6 +31,8 @@
 #include "main.h"
 #include "tools.h"
 
+
+// Random number helper routines
 double	tools_normaldistribution2_rsq;		/**< Used for speedup**/ 
 double 	tools_normaldistribution2_v2;		/**< Used for speedup**/
 int 	tools_normaldistribution2_ready = 0;	/**< Used for speedup**/
@@ -66,6 +68,10 @@ double tools_rayleigh(double sigma){
 	double y = tools_uniform(0.,1.);
 	return sigma*sqrt(-2*log(y));
 }
+
+
+
+/// Other helper routines
 
 void tools_move_to_center_of_momentum(){
 	double m = 0;
