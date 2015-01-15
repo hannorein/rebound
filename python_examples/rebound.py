@@ -65,7 +65,6 @@ def particles_add(particles):
     particle_add(particles)
 
 def particle_add(particles=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None):
-    print "adding", m
     if any([m,x,y,z,vx,vy,vz]):
         if particles is not None:
             raise ValueError("You cannot have a particle structure and float values at the same time.")
