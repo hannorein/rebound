@@ -65,7 +65,10 @@ def particles_add(particles):
     particle_add(particles)
 
 def particle_add(particles=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None):
+    print "adding", m
     if any([m,x,y,z,vx,vy,vz]):
+        if particles is not None:
+            raise ValueError("You cannot have a particle structure and float values at the same time.")
         if m is None:
             m = 0.
         if x is None:
@@ -80,7 +83,7 @@ def particle_add(particles=None, m=None, x=None, y=None, z=None, vx=None, vy=Non
             vy = 0.
         if vz is None:
             vz = 0.
-        particle_add(Particle(m=m,x=x,y=y,z=z,vx=vx,vy=vy,vz=vz))
+        particles = Particle(m=m,x=x,y=y,z=z,vx=vx,vy=vy,vz=vz)
     if isinstance(particles,list):
         for particle in particles:
             libias15.particles_add(particle)
