@@ -63,67 +63,49 @@ REBOUND is extremely modular. You have the choice between different gravity, col
 
 This setup allows you to work on multiple projects at the same time using different modules. When switching to another problem, nothing has to be set-up and the problem can by compiled by simply typing `make` in the corresponding directory (see below).
 
+
 ### Gravity ###
-<table>
-  <tr><th>Module name</th>
-     <th>Description</th></tr>
-  <tr><td><pre>gravity_none.c       </pre></td>
-     <td>No self-gravity</td></tr>
-  <tr><td><pre>gravity_direct.c     </pre></td>
-     <td>Direct summation, O(N^2)</td></tr>
-  <tr><td><pre>gravity_opencl.c     </pre></td>
-     <td>Direct summation, O(N^2), but accelerated using the OpenCL framework. </td></tr>
-  <tr><td><pre>gravity_tree.c       </pre></td>
-     <td>Oct tree, Barnes & Hut 1986, O(N log(N))</td></tr>
-  <tr><td><pre>gravity_grape.c      </pre></td>
-     <td>GRAPE, hardware accelerated direct summation, Sugimoto et al. 1990 </td></tr>
-  <tr><td><pre>gravity_fft.c        </pre></td>
-     <td>Two dimensional gravity solver using FFTW, works in a periodic box and the shearing sheet. (Not well tested yet.)</td></tr>
-</table>
+  
+Module name        | Description
+------------------ | -----------
+`gravity_none.c`   | No self-gravity
+`gravity_direct.c` | Direct summation, O(N^2)
+`gravity_opencl.c` | Direct summation, O(N^2), but accelerated using the OpenCL framework.
+`gravity_tree.c`   | Oct tree, Barnes & Hut 1986, O(N log(N))
+`gravity_grape.c`  | GRAPE, hardware accelerated direct summation, Sugimoto et al. 1990
+`gravity_fft.c`    | Two dimensional gravity solver using FFTW, works in a periodic box and the shearing sheet. (Not well tested yet.)
+
 
 ### Collision detection ###
-<table>
-  <tr><th>Module name</th>
-     <th>Description</th></tr>
-  <tr><td><pre>collisions_none.c    </pre></td>
-     <td>No collision detection</td></tr>
-  <tr><td><pre>collisions_direct.c  </pre></td>
-     <td>Direct nearest neighbor search, O(N^2)</td></tr>
-  <tr><td><pre>collisions_tree.c    </pre></td>
-     <td>Oct tree, O(N log(N))</td></tr>
-  <tr><td><pre>collisions_sweep.c   </pre></td>
-     <td>Plane sweep algorithm, ideal for low dimensional problems, O(N) or O(N^1.5) depending on geometry</td></tr>
-  <tr><td><pre>collisions_sweepphi.c   </pre></td>
-     <td>Plane sweep algorithm along the azimuthal angle, ideal for narrow rings in global simulations, O(N) or O(N^1.5) depending on geometry</td></tr>
-</table>
+
+Module name            | Description
+---------------------- | -----------
+`collisions_none.c`    |  No collision detection
+`collisions_direct.c`  | Direct nearest neighbor search, O(N^2)
+`collisions_tree.c`    | Oct tree, O(N log(N))
+`collisions_sweep.c`   | Plane sweep algorithm, ideal for low dimensional problems, O(N) or O(N^1.5) depending on geometry
+`collisions_sweepphi.c`| Plane sweep algorithm along the azimuthal angle, ideal for narrow rings in global simulations, O(N) or O(N^1.5) depending on geometry
+
 
 ### Integrators ###
-<table>
-  <tr><th>Module name</th>
-     <th>Description</th></tr>
-  <tr><td><pre>integrator_euler.c   </pre></td>
-     <td>Euler scheme, first order</td></tr>
-  <tr><td><pre>integrator_leapfrog.c</pre></td>
-     <td>Leap frog, second order, symplectic</td></tr>
-  <tr><td><pre>integrator_wh.c      </pre></td>
-     <td>Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991</td></tr>
-  <tr><td><pre>integrator_ias15.c </pre></td>
-     <td>IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precission. Rein & Spiegel 2014, Everhart 1985</td></tr>
-  <tr><td><pre>integrator_sei.c     </pre></td>
-     <td>Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011</td></tr>
-</table>
+
+Module name            | Description
+---------------------- | -----------
+`integrator_euler.c`   |  Euler scheme, first order
+`integrator_leapfrog.c`| Leap frog, second order, symplectic
+`integrator_wh.c`      | Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991
+`integrator_ias15.c`   | IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precission. Rein & Spiegel 2014, Everhart 1985
+`integrator_sei.c`     | Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
+
 
 ### Boundaries ###
-<table>
-  <tr><th>Module name</th>
-     <th>Description</th></tr>
-  <tr><td><pre>boundaries_open.c    </pre></td>
-     <td>Particles are removed from the simulation if they leaves the box.</td></tr>
-  <tr><td><pre>boundaries_periodic.c</pre></td>
-     <td>Periodic boundary conditions. Particles are reinserted on the other side if they cross the box boundaries. You can use an arbitrary number of ghost-boxes with this module.</td></tr>
-  <tr><td><pre>boundaries_shear.c   </pre></td>
-     <td>Shear periodic boundary conditions. Similar to periodic boundary conditions, but ghost-boxes are moving with constant speed, set by the shear.</td></tr>
-</table>
+
+Module name            | Description
+---------------------- | -----------
+`boundaries_open.c`    | Particles are removed from the simulation if they leaves the box.
+`boundaries_none.c`    | Dummy. Particles are not affected by boundary conditions.
+`boundaries_periodic.c`| Periodic boundary conditions. Particles are reinserted on the other side if they cross the box boundaries. You can use an arbitrary number of ghost-boxes with this module.
+`boundaries_shear.c`   | Shear periodic boundary conditions. Similar to periodic boundary conditions, but ghost-boxes are moving with constant speed, set by the shear.
 
 
 Other features worth mentioning
@@ -467,7 +449,6 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   automatically adjusts the timestep so that even very high
   eccentricity encounters are resovled with high accuracy.
   
-  
 
 *  **examples/mergers**
 
@@ -751,6 +732,22 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   A narrow ring of collisional particles is spreading.
   The example uses the Wisdom Holman integrator. A plane-sweep algorithm
   in the phi direction is used to detect collisions.
+  
+
+*  **examples/star_of_david**
+
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_none.c`
+  `integrator_ias15.c`
+  `collisions_none.c`
+
+  This example uses the IAS15 integrator
+  to integrate the "Star od David", a four body system consisting of two
+  binaries orbiting each other. Note that the time is running backwards,
+  which illustrates that IAS15 can handle both forward and backward in time
+  integrations. The initial conditions are by Robert Vanderbei. For more
+  information see http://www.princeton.edu/%7Ervdb/WebGL/New.html
   
 
 *  **examples/symplectic_integrator**

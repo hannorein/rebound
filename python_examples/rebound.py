@@ -64,7 +64,25 @@ def set_particles(particles):
 def particles_add(particles):
     particle_add(particles)
 
-def particle_add(particles):
+def particle_add(particles=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None):
+    if any([m,x,y,z,vx,vy,vz]):
+        if particles is not None:
+            raise ValueError("You cannot have a particle structure and float values at the same time.")
+        if m is None:
+            m = 0.
+        if x is None:
+            x = 0.
+        if y is None:
+            y = 0.
+        if z is None:
+            z = 0.
+        if vx is None:
+            vx = 0.
+        if vy is None:
+            vy = 0.
+        if vz is None:
+            vz = 0.
+        particles = Particle(m=m,x=x,y=y,z=z,vx=vx,vy=vy,vz=vz)
     if isinstance(particles,list):
         for particle in particles:
             libias15.particles_add(particle)
@@ -104,7 +122,7 @@ def reset():
 
 # Integration
 def step():
-    libias15.step()
+    libias15.ias15_step()
 
 def integrate(tmax):
     libias15.integrate(c_double(tmax))
