@@ -49,9 +49,9 @@ Note: Make sure you have a compiler suite installed. Open a terminal and type `m
 
 ### C or Python?
 
-REBOUND is written in C because C is very fast and highly portable (REBOUND runs on everything from mobile phones to super computers and special purpose accelerator cards).  However, we also provide a simple dynamic library `libias15` for the new IAS15 integrator. This shared library can be called from many programming languages. We provide a python module which makes calling REBOUND from python particularly easy. Whether you want to use REBOUND in C or python depends on what you specific application.
+REBOUND is written in C because C is very fast and highly portable (REBOUND runs on everything from mobile phones to super computers and special purpose accelerator cards).  However, we also provide a simple dynamic library `libias15` for the new IAS15 integrator. This shared library can be called from many programming languages. We provide a python module which makes calling REBOUND from python particularly easy. Whether you want to use REBOUND in C or python depends on your specific application.
 
-In short: If you simply want to integrate a few particle system such as a planetary system with the high order integrator IAS15, use python. If you want to run large, many particle systems (with millions of particles) and use an integrator other than IAS15 or make use of the distributed tree code of REBOUND, you want to use the C version.
+In short: If you simply want to integrate a few particle system such as a planetary system with the high order integrator IAS15, use python. If you want to run large, many particle systems (with millions of particles) and use an integrator other than IAS15 or make use of the distributed tree code of REBOUND, use the C version.
 
 
 ### Python and libias15
@@ -83,10 +83,11 @@ Most of the features that make REBOUND great are not available in `libias15` and
 
 #### Available modules
 
-REBOUND is extremely modular. You have the choice between different gravity, collision, boundary and integration modules. It is also possible to implement completely new modules with minimal effort. Modules are chosen by setting up symbolic links in the Makefile. There is no need to run a configure script. For example, the Makefile might create a link `gravity.c` that points to one of the gravity modules, `gravity_tree.c`. This tells the code to use a tree code to do the gravity calculation.
+REBOUND is extremely modular. You have the choice between different gravity, collision, boundary and integration modules. It is also possible to implement completely new modules with minimal effort. Modules are chosen by setting up symbolic links in the Makefile. There is no need to run a configure script. For example, the Makefile might create a link `gravity.c` that points to one of the gravity modules, say `gravity_tree.c`. This tells the code to use a tree code to do the gravity calculation.
 
 This setup allows you to work on multiple projects at the same time using different modules. When switching to another problem, nothing has to be set-up and the problem can by compiled by simply typing `make` in the corresponding directory (see below).
 
+The following sections list the available modules that come with REBOUND.
 
 ##### Gravity 
   
@@ -205,7 +206,7 @@ When you type make in your problem directory, all of these variables are read an
 The problem.c file must contain at least four functions. You do not need to implement all of them, but a dummy (doing nothing) needs to be present to successfully link the object files. The following documentation describes what these functions do.
 
 
-- void problem_init(int argc, char* argv[]) 
+- `void problem_init(int argc, char* argv[]) `
 
     This routine is where you read command line arguments and set up your initial conditions. REBOUND does not come with a built-in functionality to read configuration files at run-time. We consider this not a missing feature. In REBOUND, you have one `problem.c` file for each problem. Thus, everything can be set within this file. There are, of course, situation in which you want to do something like a parameter space survey. In almost all cases, you vary only a few parameters. You can easily read these parameters from the command line.
  
@@ -218,7 +219,7 @@ The problem.c file must contain at least four functions. You do not need to impl
     boxsize = input_get_double(argc,argv,"boxsize",100.);
     ```
 
-- void problem_output()
+- `void problem_output()`
 
     This function is called at the beginning of the simulation and at the end of each time-step. You can implement your output routines here. Many basic output functions are already implemented in REBOUND. See `output.h` for more details. The function `output_check(odt)` can be used to easily check if an output is needed if you want to trigger and output once per time interval `odt`. For example, the following code snippet outputs some timing statistics to the console every 10 time-steps:
     
@@ -228,12 +229,12 @@ The problem.c file must contain at least four functions. You do not need to impl
     }
     ```    
  
-- void problem_finish()
+- `void problem_finish()`
 
     This function is called at the end of the simulation, when t >= tmax. This is the last chance to output any quantities before the program ends.
 
 
-- void problem_inloop()
+- `void problem_inloop()`
 
     This function is called once per timestep, just after the forces on all particles have been calculated, but before the integrator got called. This function will be removed in a future version of REBOUND.
 
