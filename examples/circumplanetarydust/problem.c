@@ -123,6 +123,9 @@ void force_radiation(){
 }
 
 void problem_inloop(){
+}
+
+void problem_output(){
 	if(output_check(M_PI*2.)){
 		output_timing();
 	}
@@ -147,9 +150,6 @@ void problem_inloop(){
 		}
 		fclose(f);
 	}
-}
-
-void problem_output(){
 }
 
 void problem_finish(){
