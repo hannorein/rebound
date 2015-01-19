@@ -239,7 +239,7 @@ The problem.c file must contain at least four functions. You do not need to impl
     This function is called once per timestep, just after the forces on all particles have been calculated, but before the integrator got called. This function will be removed in a future version of REBOUND.
 
 
-- void problem_additional_forces()
+- `void problem_additional_forces()`
 
     In addition to the four mandatory functions that need to be present, you can also define some other functions and make them callable by setting a function pointer. The function pointer `problem_additional_forces()` which is called one or more times per time-step whenever the forces are updated. This is where you can implement all kind of things such as additional forces onto particles. 
     
