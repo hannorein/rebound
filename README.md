@@ -5,6 +5,10 @@ REBOUND - An open-source multi-purpose N-body code for collisional dynamics
 [![arXiv](http://img.shields.io/badge/arXiv-1110.4876-orange.svg?style=flat)](http://arxiv.org/abs/1110.4876)
 [![arXiv](http://img.shields.io/badge/arXiv-1409.4779-orange.svg?style=flat)](http://arxiv.org/abs/1409.4779)
 
+![Tree structure in the shearing sheet example of REBOUND](https://raw.github.com/hannorein/rebound/master/screenshots/shearingsheet.png) 
+![Very dense rings in the sheering sheet](https://raw.github.com/hannorein/rebound/master/screenshots/dense.png) 
+![Orbits in the outer solar system example in REBOUND](https://raw.github.com/hannorein/rebound/master/screenshots/outersolarsystem.png) 
+![The selfgravitating disc example in REBOUND](https://raw.github.com/hannorein/rebound/master/screenshots/disc.png) 
 
 Contributors
 ------------
@@ -26,19 +30,6 @@ There are two papers describing the functionality of REBOUND.
 The first one, Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012, http://arxiv.org/abs/1110.4876), describes the code structure and the main feature including the gravity and collision routines for many particle systems.   
 
 The second paper, Rein & Spiegel (MNRAS, in press, http://arxiv.org/abs/1409.4779) describes the versatile high order integrator IAS15 which is now part of REBOUND. 
-
-
-Screenshots
------------
-
-The following screenshots give you a rough idea what REBOUND is about.
- 
-![Tree structure in the shearing sheet example of REBOUND](https://raw.github.com/hannorein/rebound/master/screenshots/shearingsheet.png) 
-![Very dense rings in the sheering sheet](https://raw.github.com/hannorein/rebound/master/screenshots/dense.png) 
-![Orbits in the outer solar system example in REBOUND](https://raw.github.com/hannorein/rebound/master/screenshots/outersolarsystem.png) 
-![The selfgravitating disc example in REBOUND](https://raw.github.com/hannorein/rebound/master/screenshots/disc.png) 
-
-You can also find a video on YouTube, http://youtu.be/gaExPGW1WzI?hd=1, that shows how to download and install REBOUND. 
 
 
 How to us REBOUND
@@ -216,7 +207,7 @@ When you type make in your problem directory, all of these variables are read an
 The problem.c file must contain at least four functions. You do not need to implement all of them, but a dummy (doing nothing) needs to be present to successfully link the object files. The following documentation describes what these functions do.
 
 
-#### void problem_init(int argc, char* argv[]) 
+- void problem_init(int argc, char* argv[]) 
 
 This routine is where you read command line arguments and set up your initial conditions. REBOUND does not come with a built-in functionality to read configuration files at run-time. We consider this not a missing feature. In REBOUND, you have one `problem.c` file for each problem. Thus, everything can be set within this file. There are, of course, situation in which you want to do something like a parameter space survey. In almost all cases, you vary only a few parameters. You can easily read these parameters from the command line.
  
@@ -228,9 +219,7 @@ Here is an example that reads in a command line argument given to rebound in the
 // In problem_init() add
 boxsize = input_get_double(argc,argv,"boxsize",100.);
 ```
-
-
-#### void problem_output()
+- void problem_output()
 
 This function is called at the beginning of the simulation and at the end of each time-step. You can implement your output routines here. Many basic output functions are already implemented in REBOUND. See `output.h` for more details. The function `output_check(odt)` can be used to easily check if an output is needed if you want to trigger and output once per time interval `odt`. For example, the following code snippet outputs some timing statistics to the console every 10 time-steps:
 
@@ -240,17 +229,17 @@ if (output_check(10.*dt)){
 }
 ```    
  
-#### void problem_finish()
+- void problem_finish()
 
 This function is called at the end of the simulation, when t >= tmax. This is the last chance to output any quantities before the program ends.
 
 
-#### void problem_inloop()
+- void problem_inloop()
 
 This function is called once per timestep, just after the forces on all particles have been calculated, but before the integrator got called. This function will be removed in a future version of REBOUND.
 
 
-#### void problem_additional_forces()
+- void problem_additional_forces()
 
 In addition to the four mandatory functions that need to be present, you can also define some other functions and make them callable by setting a function pointer. The function pointer `problem_additional_forces()` which is called one or more times per time-step whenever the forces are updated. This is where you can implement all kind of things such as additional forces onto particles. 
 
