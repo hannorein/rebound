@@ -30,7 +30,7 @@ def setup_planet(com, mass, period, M, omega, eccentricity):
     a = pow(mu/(n*n),1./3.)
     E = M
     if eccentricity>0.8:
-        E = np.pi
+        E = math.pi
     F = E - eccentricity*math.sin(M) - M
     for i in xrange(100):
         E = E - F/(1.0-eccentricity*math.cos(E))
