@@ -27,18 +27,16 @@ Papers
 
 There are two papers describing the functionality of REBOUND. 
 
-The first one, Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012, http://arxiv.org/abs/1110.4876), describes the code structure and the main feature including the gravity and collision routines for many particle systems.   
+1. Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012, http://arxiv.org/abs/1110.4876) describe the code structure and the main feature including the gravity and collision routines for many particle systems.   
 
-The second paper, Rein & Spiegel (MNRAS, in press, http://arxiv.org/abs/1409.4779) describes the versatile high order integrator IAS15 which is now part of REBOUND. 
+2. Rein & Spiegel (MNRAS, in press, http://arxiv.org/abs/1409.4779) describe the versatile high order integrator IAS15 which is now part of REBOUND. 
 
 
-How to us REBOUND
------------------
+How to us REBOUND - an overview
+-------------------------------
 
 ### For the impatient 
-This section let's you download, compile and run REBOUND on almost any modern operating system within seconds. 
-
-Simply copy and paste this line to your terminal and press enter
+You can download, compile and run REBOUND on almost any modern operating system within seconds.  Simply copy and paste this line to your terminal and press enter
 
     git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./nbody
 
@@ -209,64 +207,65 @@ The problem.c file must contain at least four functions. You do not need to impl
 
 - void problem_init(int argc, char* argv[]) 
 
-This routine is where you read command line arguments and set up your initial conditions. REBOUND does not come with a built-in functionality to read configuration files at run-time. We consider this not a missing feature. In REBOUND, you have one `problem.c` file for each problem. Thus, everything can be set within this file. There are, of course, situation in which you want to do something like a parameter space survey. In almost all cases, you vary only a few parameters. You can easily read these parameters from the command line.
+    This routine is where you read command line arguments and set up your initial conditions. REBOUND does not come with a built-in functionality to read configuration files at run-time. We consider this not a missing feature. In REBOUND, you have one `problem.c` file for each problem. Thus, everything can be set within this file. There are, of course, situation in which you want to do something like a parameter space survey. In almost all cases, you vary only a few parameters. You can easily read these parameters from the command line.
  
-Here is an example that reads in a command line argument given to rebound in the standard unix format `./nbody --boxsize=200.`. A default value of 100 is used if no parameter is passed to REBOUND. 
+    Here is an example that reads in a command line argument given to rebound in the standard unix format `./nbody --boxsize=200.`. A default value of 100 is used if no parameter is passed to REBOUND. 
 
-```c
-// At the top of the problem.c file add
-#include "input.h"
-// In problem_init() add
-boxsize = input_get_double(argc,argv,"boxsize",100.);
-```
+    ```c
+    // At the top of the problem.c file add
+    #include "input.h"
+    // In problem_init() add
+    boxsize = input_get_double(argc,argv,"boxsize",100.);
+    ```
+
 - void problem_output()
 
-This function is called at the beginning of the simulation and at the end of each time-step. You can implement your output routines here. Many basic output functions are already implemented in REBOUND. See `output.h` for more details. The function `output_check(odt)` can be used to easily check if an output is needed if you want to trigger and output once per time interval `odt`. For example, the following code snippet outputs some timing statistics to the console every 10 time-steps:
-
-```c
-if (output_check(10.*dt)){
-	output_timing();
-}
-```    
+    This function is called at the beginning of the simulation and at the end of each time-step. You can implement your output routines here. Many basic output functions are already implemented in REBOUND. See `output.h` for more details. The function `output_check(odt)` can be used to easily check if an output is needed if you want to trigger and output once per time interval `odt`. For example, the following code snippet outputs some timing statistics to the console every 10 time-steps:
+    
+    ```c
+    if (output_check(10.*dt)){
+    	output_timing();
+    }
+    ```    
  
 - void problem_finish()
 
-This function is called at the end of the simulation, when t >= tmax. This is the last chance to output any quantities before the program ends.
+    This function is called at the end of the simulation, when t >= tmax. This is the last chance to output any quantities before the program ends.
 
 
 - void problem_inloop()
 
-This function is called once per timestep, just after the forces on all particles have been calculated, but before the integrator got called. This function will be removed in a future version of REBOUND.
+    This function is called once per timestep, just after the forces on all particles have been calculated, but before the integrator got called. This function will be removed in a future version of REBOUND.
 
 
 - void problem_additional_forces()
 
-In addition to the four mandatory functions that need to be present, you can also define some other functions and make them callable by setting a function pointer. The function pointer `problem_additional_forces()` which is called one or more times per time-step whenever the forces are updated. This is where you can implement all kind of things such as additional forces onto particles. 
+    In addition to the four mandatory functions that need to be present, you can also define some other functions and make them callable by setting a function pointer. The function pointer `problem_additional_forces()` which is called one or more times per time-step whenever the forces are updated. This is where you can implement all kind of things such as additional forces onto particles. 
+    
+    The following lines of code implement a simple velocity dependent force.  `integrator_ias15.c` is best suited for this (see `examples/dragforce`):
+    
+    ```c
+    void velocity_dependent_force(){
+    	for (int i=1;i<N;i++){
+    		particles[i].ax -= 0.0000001 * particles[i].vx;
+    		particles[i].ay -= 0.0000001 * particles[i].vy;
+    		particles[i].az -= 0.0000001 * particles[i].vz;
+    	}
+    }
+    ```
 
-The following lines of code implement a simple velocity dependent force.  `integrator_ias15.c` is best suited for this (see `examples/dragforce`):
-
-```c
-void velocity_dependent_force(){
-	for (int i=1;i<N;i++){
-		particles[i].ax -= 0.0000001 * particles[i].vx;
-		particles[i].ay -= 0.0000001 * particles[i].vy;
-		particles[i].az -= 0.0000001 * particles[i].vz;
-	}
-}
-```
-
-Make sure you set the function pointer in the `problem_init()` routine:
-
-```c
-problem_additional_forces = velocity_dependent_force;
-```
-
-By default, all integrators assume that the forces are velocity dependent. If all forces acting on particles only depend on positions, you can set the following variable (defined in `integrator.h`) to `0` to speed up the calculation:
-
-```c
-// Add to problem_init()
-integrator_force_is_velocitydependent = 0;
-```
+    Make sure you set the function pointer in the `problem_init()` routine:
+    
+    ```c
+    problem_additional_forces = velocity_dependent_force;
+    ```
+    
+    By default, all integrators assume that the forces are velocity dependent. If all forces acting on particles only depend on positions, you can set the following variable (defined in `integrator.h`) to `0` to speed up the calculation:
+    
+    ```c
+    // Add to problem_init()
+    integrator_force_is_velocitydependent = 0;
+    ```
 
 
 ### How to install GLUT 
