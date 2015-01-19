@@ -71,6 +71,9 @@ void particles_add_local(struct particle pt){
 }
 
 void particles_add(struct particle pt){
+	if (N_megno){
+		printf("\nWarning: Trying to add particle after calling megno_init().\n");
+	}
 #ifndef COLLISIONS_NONE
 	if (pt.r>=collisions_max_r){
 		collisions_max2_r = collisions_max_r;
