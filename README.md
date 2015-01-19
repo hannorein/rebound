@@ -5,6 +5,10 @@ REBOUND - An open-source multi-purpose N-body code for collisional dynamics
 [![arXiv](http://img.shields.io/badge/arXiv-1110.4876-orange.svg?style=flat)](http://arxiv.org/abs/1110.4876)
 [![arXiv](http://img.shields.io/badge/arXiv-1409.4779-orange.svg?style=flat)](http://arxiv.org/abs/1409.4779)
 
+![Tree structure in the shearing sheet example of REBOUND](https://raw.github.com/hannorein/rebound/master/screenshots/shearingsheet.png) 
+![Very dense rings in the sheering sheet](https://raw.github.com/hannorein/rebound/master/screenshots/dense.png) 
+![Orbits in the outer solar system example in REBOUND](https://raw.github.com/hannorein/rebound/master/screenshots/outersolarsystem.png) 
+![The selfgravitating disc example in REBOUND](https://raw.github.com/hannorein/rebound/master/screenshots/disc.png) 
 
 Contributors
 ------------
@@ -12,28 +16,46 @@ Contributors
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University (KIAA-PKU), Beijing, <liushangfei@pku.edu.cn>
 * David S. Spiegel, Institute for Advanced Study (IAS), Princeton, <dave@ias.edu>
 * Akihiko Fujii, National Astronomical Observatory of Japan/University of Tokyo, Tokyo, <akihiko.fujii@nao.ac.jp>
+* Dan Tamayo, University of Toronto, <dtamayo@cita.utoronto.ca>
+
+
+REBOUND is open source. You are invited to contribute to this project if you are using it. Please contact any of the authors above if you have any questions.
+
 
 Papers
------ 
+------
 
 There are two papers describing the functionality of REBOUND. 
 
-The first one, Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012, http://arxiv.org/abs/1110.4876), describes the code structure and the main feature including the gravity and collision routines. 
+1. [Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012)](http://adsabs.harvard.edu/abs/2012A%26A...537A.128R) describe the code structure and the main feature including the gravity and collision routines for many particle systems.   
 
-The second paper, Rein & Spiegel (MNRAS, in press, http://arxiv.org/abs/1409.4779) describes the versatile high order integrator IAS15 which is now part of REBOUND. 
-
-
-Screenshot
----------- 
- 
-![Tree structure in REBOUND](https://raw.github.com/hannorein/rebound/master/doc/images/screenshot_shearingsheet.png) 
-
-You can also find a video on YouTube, http://youtu.be/gaExPGW1WzI?hd=1, that shows how to download and install REBOUND. 
+2. [Rein & Spiegel (Monthly Notices of the Royal Astronomical Society, Volume 446, Issue 2, p.1424-1437)](http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R) describe the versatile high order integrator IAS15 which is now part of REBOUND. 
 
 
-Python and other programming languages 
------------------
-REBOUND is written in C. However, we provide a simple dynamic library `libias15` for the new IAS15 integrator. Most of the features that make REBOUND great are not available in this library. It is purely for efficiently accessing the high order integrator IAS15. There is no visualization and no helper function to setup particles. To compile this library, go to the `shared` folder and type `make`.
+How to us REBOUND - an overview
+-------------------------------
+
+### For the impatient 
+You can download, compile and run REBOUND on almost any modern operating system within seconds.  Simply copy and paste this line to your terminal and press enter
+
+    git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./nbody
+
+or if you do not have git installed
+
+    wget --no-check-certificate https://github.com/hannorein/rebound/tarball/master -O- | tar xvz && cd hannorein-rebound-*/examples/shearing_sheet/ && make && ./nbody
+
+Note: Make sure you have a compiler suite installed. Open a terminal and type `make` and `cc` to test if your installation is complete. If you are on OSX, you can download Xcode from the AppStore (for free). Once installed, open Xcode, go to Settings, then Downloads and install the Command Line Tools. 
+
+
+### C or Python?
+
+REBOUND is written in C because C is very fast and highly portable (REBOUND runs on everything from mobile phones to super computers and special purpose accelerator cards).  However, we also provide a simple dynamic library `libias15` for the new IAS15 integrator. This shared library can be called from many programming languages. We provide a python module which makes calling REBOUND from python particularly easy. Whether you want to use REBOUND in C or python depends on your specific application.
+
+In short: If you simply want to integrate a few particle system such as a planetary system with the high order integrator IAS15, use python. If you want to run large, many particle systems (with millions of particles) and use an integrator other than IAS15 or make use of the distributed tree code of REBOUND, use the C version.
+
+
+### Python and libias15
+To access REBOUND from python, you first need to compile the dynamic library `libias15`. Go to the `shared` folder and type `make`. This should work on most operating systems without any user intervention. Note that having the computationally intensive kernel of the integrator in C retains the high speed of IAS15. 
 
 The most interesting use case for `libias15` is a python wrapper that we provide. This wrapper can be used to very easily access `libias15`. The wrapper (module) might appeal to people who want to setup their problem in python and then call IAS15 to efficiently integrate particles with very high precision. The following listing shows a complete python script to run an N-body simulation with IAS15 and `libias15`:
  
@@ -42,9 +64,9 @@ The most interesting use case for `libias15` is a python wrapper that we provide
 import sys; sys.path.append('../')
 import rebound
 
-# Add particles
-rebound.particle_add( rebound.Particle(m=1.) )                  # Star
-rebound.particle_add( rebound.Particle(m=1e-3,x=1.,vy=1.) )     # Planet
+# Add particles (all omitted parameters default to 0)
+rebound.particle_add( m=1. )                   # Star
+rebound.particle_add( m=1e-3, x=1., vy=1. )    # Planet
 
 # Move particles so that the center of mass is (and stays) at the origin  
 rebound.move_to_center_of_momentum()
@@ -55,16 +77,19 @@ rebound.integrate(100.)
 
 For details, please look at the README file in the `python_examples` directory. 
 
+### C version
+Most of the features that make REBOUND great are not available in `libias15` and python. If you use the C version of REBOUND, you can use different integrators, accelerated gravity routines, OpenGL visualization, helper functions to setup particles, collision detection routines and many more. 
 
-Available modules
------------------
 
-REBOUND is extremely modular. You have the choice between different gravity, collision, boundary and integration modules. It is also possible to implement completely new modules with minimal effort. Modules are chosen by setting symbolic links. Thus, there is no need to run a configure script. For example, there is one link `gravity.c` that points to one of the gravity modules `gravity_*.c`. The symbolic links are set in the problem makefile (see below).
+#### Available modules
+
+REBOUND is extremely modular. You have the choice between different gravity, collision, boundary and integration modules. It is also possible to implement completely new modules with minimal effort. Modules are chosen by setting up symbolic links in the Makefile. There is no need to run a configure script. For example, the Makefile might create a link `gravity.c` that points to one of the gravity modules, say `gravity_tree.c`. This tells the code to use a tree code to do the gravity calculation.
 
 This setup allows you to work on multiple projects at the same time using different modules. When switching to another problem, nothing has to be set-up and the problem can by compiled by simply typing `make` in the corresponding directory (see below).
 
+The following sections list the available modules that come with REBOUND.
 
-### Gravity ###
+##### Gravity 
   
 Module name        | Description
 ------------------ | -----------
@@ -76,7 +101,7 @@ Module name        | Description
 `gravity_fft.c`    | Two dimensional gravity solver using FFTW, works in a periodic box and the shearing sheet. (Not well tested yet.)
 
 
-### Collision detection ###
+##### Collision detection
 
 Module name            | Description
 ---------------------- | -----------
@@ -87,7 +112,7 @@ Module name            | Description
 `collisions_sweepphi.c`| Plane sweep algorithm along the azimuthal angle, ideal for narrow rings in global simulations, O(N) or O(N^1.5) depending on geometry
 
 
-### Integrators ###
+##### Integrators
 
 Module name            | Description
 ---------------------- | -----------
@@ -98,7 +123,7 @@ Module name            | Description
 `integrator_sei.c`     | Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
 
 
-### Boundaries ###
+##### Boundaries
 
 Module name            | Description
 ---------------------- | -----------
@@ -108,8 +133,8 @@ Module name            | Description
 `boundaries_shear.c`   | Shear periodic boundary conditions. Similar to periodic boundary conditions, but ghost-boxes are moving with constant speed, set by the shear.
 
 
-Other features worth mentioning
--------------------------------
+#### Other features worth mentioning
+
 * Real-time, 3D OpenGL visualization.
 * The code is written entirely in C. It conforms to the ISO standard C99.
 * Parallelized with OpenMP (for shared memory systems).
@@ -121,22 +146,15 @@ Other features worth mentioning
 * Different modules are easily interchangeable by one line in the Makefile.
   
 
-How to download, compile and run REBOUND
+REBOUND Documentation
 ----------------------------------------
 
-### For the impatient ###
-If you are using a Mac, make sure you have a compiler suite installed. Open a terminal and type `make`. If it is not installed, go to the AppStore and download Xcode (it is free). Once installed, open Xcode, go to Settings, then Downloads and install the Command Line Tools. 
+### Installation
 
-Then, simply copy and paste this line to your terminal and press enter
-
-    git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./nbody
-
-or if you do not have git installed
-
-    wget --no-check-certificate https://github.com/hannorein/rebound/tarball/master -O- | tar xvz && cd hannorein-rebound-*/examples/shearing_sheet/ && make && ./nbody
-
-### For the patient ###
 REBOUND is very easy to install and use. To get started, download the latest version of the code from github. If you are familiar with `git`, you can clone the project and keep up-to-date with the latest developments. Otherwise, you can also simply download a snapshot of the repository as a tar or zip file at http://github.com/hannorein/rebound. There is a download bottom at the top right. 
+
+
+### Directory structure and compilation
 
 In the main directory, you find a sub-directory called `src` which contains the bulk parts of the  source code and a directory called `examples` with various example problems. To compile one of the example, you have to go to that directory, for example:
 
@@ -153,19 +171,106 @@ This will do the following things
 * It creates a symbolic link to the current problem file. Each problem file contains the initial conditions and the output routines for the current problem. You do not need to change any file in `src/` to create a new problem unless you want to do something very special. This keeps the initial conditions and the code itself cleanly separated.
 * It compiles the code and copies the binary into the current directory.
 
-If something goes wrong, it is most likely the visualization module. You can turn it off by deleting the line which contains `OPENGL` in the makefile. Of course, you will not see much unless you put in some extra work to visualize the results.
+If something goes wrong, it is most likely the visualization module. You can turn it off by deleting the line which contains `OPENGL` in the makefile. Of course, you will not see the visualization in real time anymore. See below on how to install GLUT and fix this issue.
 
-You can also create a documentation based on the current choice of modules by typing `make doc`. However, this requires the documentation generator `doxygen` to be installed. The documentation will be generated in the directory `doc/html/`.
+If you want to start working on your own problem, simply copy one of the example directories or the template in the `problems` directory. Then modify `problem.c` and `Makefile` according to your application.  
 
-To finally run the code, simply type
+
+### Running REBOUND
+
+To run the code, simply type
 
     ./nbody
 
 A window should open and you will see a simulation running in real time. The problem in the directory `examples/shearing_sheet/` simulates the rings of Saturn and uses a local shearing sheet approximation. Have a look at the other examples as well and you will quickly get an idea of what REBOUND can do. 
 
-If you want to create your own problem, just copy one of the example directories or the template in the `problems` directory. Then simply modify `problem.c` and `Makefile` accordingly.  
 
-### How to install GLUT ###
+### Environment variables
+
+The makefile in each problem directory sets various environment variables. These determine the compiler optimization flags, the libraries included and basic code settings. Let us look at one of the examples `shearing_sheet` in more detail. 
+
+- `export PROFILING=1`. This enables profiling. You can see how much time is spend in the collision, gravity, integrator and visualization modules. This is useful to get an idea about the computational bottleneck.
+- `export QUADRUPOLE=0`. This disables the calculation of quadrupole moments for each cell in the tree. The simulation is faster, but less accurate.
+- `export OPENGL=1`. This enables real-time OpenGL visualizations and requires both OpenGL and GLUT libraries to be installed. This should work without any further adjustments on any Mac which has Xcode installed. On Linux both libraries must be installed in `/usr/local/`. You can change the default search paths for libraries in the file `src/Makefile`. 
+- `export MPI=0`. This disables parallelization with MPI.
+- `export OPENMP=1`. This enables parallelization with OpenMP. The number of threads can be set with an environment variable at runtime, e.g.: `export OMP_NUM_THREADS=8`.
+- `export CC=gcc`. This flag can be used to override the default compiler. The default compilers are `gcc` for the sequential and `mpicc` for the parallel version. 
+- `export LIB=`. Additional search paths for external libraries (such as OpenGL, GLUT and LIBPNG) can be set up using this variable. 
+- `export OPT=-O3`. This sets the additional compiler flag `-O3` and optimizes the code for speed. Additional search paths to header files for external libraries (such as OpenGL, GLUT and LIBPNG) can be set up using this variable. 
+
+When you type make in your problem directory, all of these variables are read and passed on to the makefile in the `src/` directory. The `OPENGL` variable, for example, is used to determine if the OpenGL and GLUT libraries should be included. If the variable is `1` the makefile also sets a pre-compiler macro with `-DOPENGL`. Note that because OPENGL is incompatible with MPI, when MPI is turned on (set to 1), OPENGL is automatically turned off (set to 0) in the main makefile. You rarely should have to work directly with the makefile in the `src/` directory yourself.
+
+
+### User-defined functions in the problem.c file 
+
+The problem.c file must contain at least four functions. You do not need to implement all of them, but a dummy (doing nothing) needs to be present to successfully link the object files. The following documentation describes what these functions do.
+
+
+- `void problem_init(int argc, char* argv[]) `
+
+    This routine is where you read command line arguments and set up your initial conditions. REBOUND does not come with a built-in functionality to read configuration files at run-time. We consider this not a missing feature. In REBOUND, you have one `problem.c` file for each problem. Thus, everything can be set within this file. There are, of course, situation in which you want to do something like a parameter space survey. In almost all cases, you vary only a few parameters. You can easily read these parameters from the command line.
+ 
+    Here is an example that reads in a command line argument given to rebound in the standard unix format `./nbody --boxsize=200.`. A default value of 100 is used if no parameter is passed to REBOUND. 
+
+    ```c
+    // At the top of the problem.c file add
+    #include "input.h"
+    // In problem_init() add
+    boxsize = input_get_double(argc,argv,"boxsize",100.);
+    ```
+
+- `void problem_output()`
+
+    This function is called at the beginning of the simulation and at the end of each time-step. You can implement your output routines here. Many basic output functions are already implemented in REBOUND. See `output.h` for more details. The function `output_check(odt)` can be used to easily check if an output is needed if you want to trigger and output once per time interval `odt`. For example, the following code snippet outputs some timing statistics to the console every 10 time-steps:
+    
+    ```c
+    if (output_check(10.*dt)){
+    	output_timing();
+    }
+    ```    
+ 
+- `void problem_finish()`
+
+    This function is called at the end of the simulation, when t >= tmax. This is the last chance to output any quantities before the program ends.
+
+
+- `void problem_inloop()`
+
+    This function is called once per timestep, just after the forces on all particles have been calculated, but before the integrator got called. This function will be removed in a future version of REBOUND.
+
+
+- `void problem_additional_forces()`
+
+    In addition to the four mandatory functions that need to be present, you can also define some other functions and make them callable by setting a function pointer. The function pointer `problem_additional_forces()` which is called one or more times per time-step whenever the forces are updated. This is where you can implement all kind of things such as additional forces onto particles. 
+    
+    The following lines of code implement a simple velocity dependent force.  `integrator_ias15.c` is best suited for this (see `examples/dragforce`):
+    
+    ```c
+    void velocity_dependent_force(){
+    	for (int i=1;i<N;i++){
+    		particles[i].ax -= 0.0000001 * particles[i].vx;
+    		particles[i].ay -= 0.0000001 * particles[i].vy;
+    		particles[i].az -= 0.0000001 * particles[i].vz;
+    	}
+    }
+    ```
+
+    Make sure you set the function pointer in the `problem_init()` routine:
+    
+    ```c
+    problem_additional_forces = velocity_dependent_force;
+    ```
+    
+    By default, all integrators assume that the forces are velocity dependent. If all forces acting on particles only depend on positions, you can set the following variable (defined in `integrator.h`) to `0` to speed up the calculation:
+    
+    ```c
+    // Add to problem_init()
+    integrator_force_is_velocitydependent = 0;
+    ```
+
+
+### How to install GLUT 
+
 The OpenGL Utility Toolkit (GLUT) comes pre-installed as a framework on Mac OSX. If you are working on another operating system, you might have to install GLUT yourself if you see an error message such as `error: GL/glut.h: No such file or directory`. On Debian and Ubuntu, simply make sure the `freeglut3-dev` package is installed. If glut is not available in your package manager, go to http://freeglut.sourceforge.net/ download the latest version, configure it with `./configure` and compile it with `make`. Finally install the library and header files with `make install`. 
 
 You can also install freeglut in a non-default installation directory if you do not have super-user rights by running the freeglut installation script with the prefix option:
@@ -180,79 +285,6 @@ Then, add the following lines to the REBOUND Makefile
     LIB += -L$(HOME)/local/lib
 
 Note that you can still compile and run REBOUND even if you do not have GLUT installed. Simple set `OPENGL=0` in the makefile (see below). 
-
-### Environment variables ###
-The makefile in each problem directory sets various environment variables. These determine the compiler optimization flags, the libraries included and basic code settings. Let us look at one of the examples `shearing_sheet` in more detail. 
-
-- `export PROFILING=1`. This enables profiling. You can see how much time is spend in the collision, gravity, integrator and visualization modules. This is useful to get an idea about the computational bottleneck.
-- `export QUADRUPOLE=0`. This disables the calculation of quadrupole moments for each cell in the tree. The simulation is faster, but less accurate.
-- `export OPENGL=1`. This enables real-time OpenGL visualizations and requires both OpenGL and GLUT libraries to be installed. This should work without any further adjustments on any Mac which has Xcode installed. On Linux both libraries must be installed in `/usr/local/`. You can change the default search paths for libraries in the file `src/Makefile`. 
-- `export MPI=0`. This disables parallelization with MPI.
-- `export OPENMP=1`. This enables parallelization with OpenMP. The number of threads can be set with an environment variable at runtime, e.g.: `export OMP_NUM_THREADS=8`.
-- `export CC=icc`. This flag can be used to override the default compiler. The default compilers are `gcc` for the sequential and `mpicc` for the parallel version. 
-- `export LIB=`. Additional search paths for external libraries (such as OpenGL, GLUT and LIBPNG) can be set up using this variable. 
-- `export OPT=-O3`. This sets the additional compiler flag `-O3` and optimizes the code for speed. Additional search paths to header files for external libraries (such as OpenGL, GLUT and LIBPNG) can be set up using this variable. 
-
-All of these variables are read by the main makefile in the `src/` directory. The `OPENGL` variable, for example, is used to determine if the OpenGL and GLUT libraries should be included. If the variable is `1` the makefile also sets a pre-compiler macro with `-DOPENGL`. Note that because OPENGL is incompatible with MPI, when MPI is turned on (set to 1), OPENGL is automatically turned off (set to 0) in the main makefile.
-
-
-### User-defined functions in the problem.c file ###
-The problem.c file contains at least four functions. You do not need to implement all of them, a dummy might be enough. 
-
-#### void problem_init(int argc, char* argv[]) ####
-This routine is where you read command line arguments and set up your initial conditions. REBOUND does not come with a built-in functionality to read configuration files at run-time. You should see this as a feature. In REBOUND, you have one `problem.c` file for each problem. Thus, everything can be set within this file. There are, of course, situation in which you want to do something like a parameter space survey. In almost all cases, you vary a few parameters but rarely more, say 5. You can easily read these parameters from the command line.
- 
-Here is one example that reads in the first argument given to rebound as the box-size and sets a default value when no value is given:
-
-```c
-if (argc>1){
-	boxsize = atof(argv[1]);
-}else{
-	boxsize = 100;
-}
-```
-
-If you are still convinced that you need a configuration file, you are welcome to implement it yourself. This function is where you want to do that.    
-
-#### void problem_additional_forces() ####
-This is a function pointer which is called one or more times per time-step whenever the forces are updated. This is where you can implement all kind of things such as additional forces onto particles. 
-
-The following lines of code implement a simple velocity dependent force.  `integrator_ias15.c` is best suited for this (see `examples/dragforce`):
-
-```c
-void velocity_dependent_force(){
-	for (int i=1;i<N;i++){
-		particles[i].ax -= 0.0000001 * particles[i].vx;
-		particles[i].ay -= 0.0000001 * particles[i].vy;
-		particles[i].az -= 0.0000001 * particles[i].vz;
-	}
-}
-```
-
-Make sure you set the function pointer in the `problem_init()` routine:
-
-```c
-	problem_additional_forces = velocity_dependent_force;
-```
-
-By default, all integrators assume that the forces are velocity dependent. If all forces acting on particles only depend on positions, you can set the following variable (defined in `integrator.h`) to `0` to speed up the calculation:
-
-```c
-	integrator_force_is_velocitydependent = 0;
-```
-
-
-#### void problem_output() ####
-This function is called at the beginning of the simulation and at the end of each time-step. You can implement your output routines here. Many basic output functions are already implemented in REBOUND. See `output.h` for more details. The function `output_check(odt)` can be used to easily check if an output is needed after a regular interval. For example, the following code snippet outputs some timing statistics to the console every 10 time-steps:
-
-```c
-if (output_check(10.*dt)){
-	output_timing();
-}
-```    
- 
-#### void problem_finish() ####
-This function is called at the end of the simulation, when t >= tmax. This is the last chance to output any quantities before the program ends.
 
 
 Examples
@@ -448,7 +480,6 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   a Lidov Kozai cycle of a planet perturbed by a distant star. The integrator
   automatically adjusts the timestep so that even very high
   eccentricity encounters are resovled with high accuracy.
-  
   
 
 *  **examples/mergers**
@@ -735,6 +766,22 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   in the phi direction is used to detect collisions.
   
 
+*  **examples/star_of_david**
+
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_none.c`
+  `integrator_ias15.c`
+  `collisions_none.c`
+
+  This example uses the IAS15 integrator
+  to integrate the "Star od David", a four body system consisting of two
+  binaries orbiting each other. Note that the time is running backwards,
+  which illustrates that IAS15 can handle both forward and backward in time
+  integrations. The initial conditions are by Robert Vanderbei. For more
+  information see http://www.princeton.edu/%7Ervdb/WebGL/New.html
+  
+
 *  **examples/symplectic_integrator**
 
   This example is using the following modules:  
@@ -784,12 +831,6 @@ You can use the following keyboard command to alter the OpenGL real-time visuali
   <tr><td>w</td><td>Draw orbits as wires (particle with index 0 is central object).</td></tr>
 </table>
 
-Support and contributions
--------------------------
-We offer limited support for REBOUND. If you encounter any problems, just send us an e-mail with as much details as possible and include your problem.c and makefile. Please make sure you are using the latest version of REBOUND that is available on github. 
-
-REBOUND is open source and you are strongly encouraged to contribute to this project if you are using it. Please contact us and we will give you permission to push directly to the public repository. 
-
 
 License
 -------
@@ -828,18 +869,22 @@ References in BibTeX format:
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
     }
 
-    @ARTICLE{ReinSpiegel2014,
+    @ARTICLE{2015MNRAS.446.1424R,
        author = {{Rein}, H. and {Spiegel}, D.~S.},
-        title = "{IAS15: A fast, adaptive, high-order integrator for gravitational dynamics, accurate to machine precision over a billion orbits}",
-      journal = {ArXiv e-prints},
+        title = "{IAS15: a fast, adaptive, high-order integrator for gravitational dynamics, accurate to machine precision over a billion orbits}",
+      journal = {\mnras},
     archivePrefix = "arXiv",
        eprint = {1409.4779},
      primaryClass = "astro-ph.EP",
-     keywords = {Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Astrophysics - Solar and Stellar Astrophysics, Mathematics - Numerical Analysis},
-         year = 2014,
-        month = sep,
-       adsurl = {http://adsabs.harvard.edu/abs/2014arXiv1409.4779R},
+     keywords = {gravitation, methods: numerical, planets and satellites: dynamical evolution and stability},
+         year = 2015,
+        month = jan,
+       volume = 446,
+        pages = {1424-1437},
+          doi = {10.1093/mnras/stu2164},
+       adsurl = {http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
     }
+
 
 

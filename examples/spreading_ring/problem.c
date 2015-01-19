@@ -86,6 +86,12 @@ void problem_init(int argc, char* argv[]){
 }
 
 void problem_inloop(){
+}
+
+void problem_output(){
+	if (output_check(10.0*dt)){
+		output_timing();
+	}
 	for (int i=N_active;i<N;i++){
 		struct particle p = particles[i];
 		double r = sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
@@ -96,10 +102,6 @@ void problem_inloop(){
 			N--;
 		}
 	}
-}
-
-void problem_output(){
-	if (output_check(10.0*dt)) output_timing();
 }
 
 void problem_finish(){

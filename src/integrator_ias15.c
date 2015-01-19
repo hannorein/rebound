@@ -528,7 +528,7 @@ int integrator_ias15_step() {
 		 	dt_new = dt_done/safety_factor; // by default, increase timestep a little
 		}
 		
-		if (dt_new<integrator_min_dt) dt_new = integrator_min_dt;
+		if (fabs(dt_new)<integrator_min_dt) dt_new = copysign(integrator_min_dt,dt_new);
 		
 		if (fabs(dt_new/dt_done) < safety_factor) {	// New timestep is significantly smaller.
 			// Reset particles

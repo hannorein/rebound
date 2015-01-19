@@ -117,6 +117,9 @@ void force_J2(){
 }
 
 void problem_inloop(){
+}
+
+void problem_output(){
 	if(output_check(4000.*dt)){				// output something to screen	
 		output_timing();
 	}
@@ -129,9 +132,6 @@ void problem_inloop(){
 		}
 		fclose(f);
 	}
-}
-
-void problem_output(){
 }
 
 void problem_finish(){

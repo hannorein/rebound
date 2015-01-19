@@ -84,7 +84,7 @@ void set_additional_forces(void (* _cb)()){
 }
 
 // Integrate for 1 step
-void step(){ 
+void ias15_step(){ 
 	if (N<=0){
 		fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
 		return;
@@ -148,7 +148,7 @@ void integrate(double _tmax){
 			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
 			return;
 		}
-		step();
+		ias15_step();
 		if (t+dt>=tmax){
 			dt = tmax-t;
 		}else{

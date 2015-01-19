@@ -1,7 +1,6 @@
 # Import the rebound module
 import sys; sys.path.append('../')
 import rebound
-from rebound import Particle
 
 # Set variables (defaults are G=1, t=0, dt=0.01)
 #rebound.set_G(1.)  
@@ -9,8 +8,9 @@ from rebound import Particle
 #rebound.set_dt(0.01)  
 
 # Add particles
-rebound.particle_add( Particle(m=1.) )                  # Star
-rebound.particle_add( Particle(m=1e-3,x=1.,vy=1.) )     # Planet
+# All parameters omitted are set to 0 by default.
+rebound.particle_add( m=1. )                  # Star
+rebound.particle_add( m=1e-3, x=1., vy=1. )   # Planet
 
 # Move particles so that the center of mass is (and stays) at the origin  
 rebound.move_to_center_of_momentum()
