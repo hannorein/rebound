@@ -27,9 +27,9 @@ Papers
 
 There are two papers describing the functionality of REBOUND. 
 
-1. Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012, http://arxiv.org/abs/1110.4876) describe the code structure and the main feature including the gravity and collision routines for many particle systems.   
+1. [Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012)](http://adsabs.harvard.edu/abs/2012A%26A...537A.128R) describe the code structure and the main feature including the gravity and collision routines for many particle systems.   
 
-2. Rein & Spiegel (MNRAS, in press, http://arxiv.org/abs/1409.4779) describe the versatile high order integrator IAS15 which is now part of REBOUND. 
+2. [Rein & Spiegel (Monthly Notices of the Royal Astronomical Society, Volume 446, Issue 2, p.1424-1437)](http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R) describe the versatile high order integrator IAS15 which is now part of REBOUND. 
 
 
 How to us REBOUND - an overview
@@ -868,18 +868,22 @@ References in BibTeX format:
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
     }
 
-    @ARTICLE{ReinSpiegel2014,
+    @ARTICLE{2015MNRAS.446.1424R,
        author = {{Rein}, H. and {Spiegel}, D.~S.},
-        title = "{IAS15: A fast, adaptive, high-order integrator for gravitational dynamics, accurate to machine precision over a billion orbits}",
-      journal = {ArXiv e-prints},
+        title = "{IAS15: a fast, adaptive, high-order integrator for gravitational dynamics, accurate to machine precision over a billion orbits}",
+      journal = {\mnras},
     archivePrefix = "arXiv",
        eprint = {1409.4779},
      primaryClass = "astro-ph.EP",
-     keywords = {Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Astrophysics - Solar and Stellar Astrophysics, Mathematics - Numerical Analysis},
-         year = 2014,
-        month = sep,
-       adsurl = {http://adsabs.harvard.edu/abs/2014arXiv1409.4779R},
+     keywords = {gravitation, methods: numerical, planets and satellites: dynamical evolution and stability},
+         year = 2015,
+        month = jan,
+       volume = 446,
+        pages = {1424-1437},
+          doi = {10.1093/mnras/stu2164},
+       adsurl = {http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
     }
+
 
 
