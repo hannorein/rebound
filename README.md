@@ -30,9 +30,7 @@ Screenshots
 The following screenshots give you a rough idea what REBOUND is about.
  
 ![Tree structure in the shearing sheet example of REBOUND](https://raw.github.com/hannorein/rebound/master/screenshots/shearingsheet.png) 
-
 ![Very dense rings in the sheering sheet](https://raw.github.com/hannorein/rebound/master/screenshots/dense.png) 
-
 ![Orbits in the outer solar system example in REBOUND](https://raw.github.com/hannorein/rebound/master/screenshots/outersolarsystem.png) 
 
 You can also find a video on YouTube, http://youtu.be/gaExPGW1WzI?hd=1, that shows how to download and install REBOUND. 
