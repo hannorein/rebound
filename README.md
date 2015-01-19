@@ -12,21 +12,28 @@ Contributors
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University (KIAA-PKU), Beijing, <liushangfei@pku.edu.cn>
 * David S. Spiegel, Institute for Advanced Study (IAS), Princeton, <dave@ias.edu>
 * Akihiko Fujii, National Astronomical Observatory of Japan/University of Tokyo, Tokyo, <akihiko.fujii@nao.ac.jp>
+* Dan Tamayo, University of Toronto, <dtamayo@cita.utoronto.ca>
 
 Papers
 ----- 
 
 There are two papers describing the functionality of REBOUND. 
 
-The first one, Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012, http://arxiv.org/abs/1110.4876), describes the code structure and the main feature including the gravity and collision routines. 
+The first one, Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012, http://arxiv.org/abs/1110.4876), describes the code structure and the main feature including the gravity and collision routines for many particle systems.   
 
 The second paper, Rein & Spiegel (MNRAS, in press, http://arxiv.org/abs/1409.4779) describes the versatile high order integrator IAS15 which is now part of REBOUND. 
 
 
-Screenshot
+Screenshots
 ---------- 
+
+The following screenshots give you a rough idea what REBOUND is about.
  
-![Tree structure in REBOUND](https://raw.github.com/hannorein/rebound/master/doc/images/screenshot_shearingsheet.png) 
+![Tree structure in the shearing sheet example of REBOUND](https://raw.github.com/hannorein/rebound/master/screenshots/shearingsheet.png) 
+
+![Very dense rings in the sheering sheet](https://raw.github.com/hannorein/rebound/master/screenshots/dense.png) 
+
+![Orbits in the outer solar system example in REBOUND](https://raw.github.com/hannorein/rebound/master/screenshots/outersolarsystem.png) 
 
 You can also find a video on YouTube, http://youtu.be/gaExPGW1WzI?hd=1, that shows how to download and install REBOUND. 
 
@@ -42,9 +49,9 @@ The most interesting use case for `libias15` is a python wrapper that we provide
 import sys; sys.path.append('../')
 import rebound
 
-# Add particles
-rebound.particle_add( rebound.Particle(m=1.) )                  # Star
-rebound.particle_add( rebound.Particle(m=1e-3,x=1.,vy=1.) )     # Planet
+# Add particles (all omitted parameters default to 0)
+rebound.particle_add( m=1. )                   # Star
+rebound.particle_add( m=1e-3, x=1., vy=1. )    # Planet
 
 # Move particles so that the center of mass is (and stays) at the origin  
 rebound.move_to_center_of_momentum()
