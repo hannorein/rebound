@@ -12,7 +12,7 @@ import rebound
 import numpy as np
 import math
 import os
-from interruptible_pool import InterruptiblePool
+import multiprocessing
 
 # mod2pi helper function.
 TWOPI = 2.*math.pi
@@ -83,8 +83,8 @@ for _e in e:
     for _P in P:
         v.append([_P,_e])
 
-pool = InterruptiblePool(24)    # Number of threads
-res = pool.map(megno,v)         # Run simulations in parallel
+pool = multiprocessing.Pool(24)    # Number of threads
+res = pool.map(megno,v)            # Run simulations in parallel
 
 ### Create plot and save as pdf 
 import matplotlib; matplotlib.use("pdf")

@@ -60,7 +60,7 @@ extern double integrator_epsilon;
  **/
 extern double integrator_min_dt;
 
-
+#ifdef INTEGRATOR_IAS15 // MEGNO Routines are currently only implemented for IAS15
 /* 
  * Init the MEGNO particles
  **/
@@ -70,5 +70,7 @@ void integrator_megno_init(double delta);
  * Returns the current value of <Y>
  **/
 double integrator_megno();
+
+#endif // INTEGRATOR_IAS15
 
 #endif
