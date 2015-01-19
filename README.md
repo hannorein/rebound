@@ -14,6 +14,10 @@ Contributors
 * Akihiko Fujii, National Astronomical Observatory of Japan/University of Tokyo, Tokyo, <akihiko.fujii@nao.ac.jp>
 * Dan Tamayo, University of Toronto, <dtamayo@cita.utoronto.ca>
 
+
+REBOUND is open source. You are invited to contribute to this project if you are using it. Please contact any of the authors above if you have any questions.
+
+
 Papers
 ------
 
@@ -837,12 +841,6 @@ You can use the following keyboard command to alter the OpenGL real-time visuali
   <tr><td>c</td><td>Toggle clear screen after each time-step.</td></tr>
   <tr><td>w</td><td>Draw orbits as wires (particle with index 0 is central object).</td></tr>
 </table>
-
-Support and contributions
--------------------------
-We offer limited support for REBOUND. If you encounter any problems, just send us an e-mail with as much details as possible and include your problem.c and makefile. Please make sure you are using the latest version of REBOUND that is available on github. 
-
-REBOUND is open source and you are strongly encouraged to contribute to this project if you are using it. Please contact us and we will give you permission to push directly to the public repository. 
 
 
 License
