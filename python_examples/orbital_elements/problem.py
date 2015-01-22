@@ -1,7 +1,5 @@
 import sys; sys.path.append('../')
 import rebound
-import random
-import math
 
 # Add a particle at the origin with mass 1
 rebound.particle_add(m=1.)  
@@ -13,7 +11,8 @@ rebound.particle_add(m=1e-3, a=1.)
 
 # Add a test particle (mass=0) on a Keplerian orbit 
 # around the center of mass (both particles added above)
-# with a semi-major axis of 2 and eccentricity of 0.1
+# with a semi-major axis of 2 and eccentricity of 0.1.
+# This corresponds to Jacobi coordinates.
 rebound.particle_add(a=1., e=0.1)
 
 # Move all particles to the-center-of-momentum frame.
