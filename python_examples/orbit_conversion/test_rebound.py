@@ -1,3 +1,5 @@
+# This script test the orbit conversion routines of REBOUND.
+import sys; sys.path.append('../')
 import unittest
 import rebound
 import random
@@ -33,14 +35,14 @@ class cartesian_to_orbital(unittest.TestCase):
             # E & M match at 0,pi, so if M is in range 0<M<pi (or pi<M<2pi), so should E
             # Also check that Kepler's equation is satisfied to abs precision of 1e-15
             for M in zero_to_pi:
-                E = rebound.get_E(ecc,M)
+                E = rebound.eccentricAnomaly(ecc,M)
                 err = E-ecc*math.sin(E)-M
                 self.assertTrue(0.<= E <= math.pi, 
                                 "E & M not in same half-plane: E=%.3f, M=%.3f"%(E,M))
                 self.assertAlmostEqual(math.fabs(err),0.,places=14,msg=
                 "Kepler's Eq not satisfied: e=%.3f, M=%.3f, abs. error=%.3e"%(ecc,M,err))
             for M in pi_to_2pi:
-                E = rebound.get_E(ecc,M)
+                E = rebound.eccentricAnomaly(ecc,M)
                 err = E-ecc*math.sin(E)-M
                 self.assertTrue(math.pi<= E <= 2*math.pi,
                                 "E & M not in same half-plane: E=%.3f, M=%.3f"%(E,M))       

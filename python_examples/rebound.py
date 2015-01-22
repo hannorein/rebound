@@ -162,13 +162,20 @@ def integrate(tmax):
 
 TWOPI = 2.*math.pi
 def mod2pi(f):
+    """Returns the angle f modulo 2 pi."""
     while f<0.:
         f += TWOPI
     while f>TWOPI:
         f -= TWOPI
     return f
 
-def get_E(e,M):
+def eccentricAnomaly(e,M):
+    """Returns the eccentric anomaly given the eccentricity and mean anomaly of a Keplerian orbit.
+
+    Keyword arguments:
+    e -- the eccentricity
+    M -- the mean anomaly
+    """
     E = M if e<0.8 else math.pi
     
     F = E - e*math.sin(M) - M
@@ -232,7 +239,7 @@ def kepler_particle(m,
     if not(0.<=inc<=math.pi): raise ValueError('inc must be in range [0,pi]')
     
     if MEAN is True: # need to calculate f
-        E = get_E(e,anom)
+        E = eccentricAnomaly(e,anom)
         f = mod2pi(2.*math.atan(math.sqrt((1.+ e)/(1. - e))*math.tan(0.5*E)))
     else:
         f = anom
