@@ -64,9 +64,11 @@ The most interesting use case for `libias15` is a python wrapper that we provide
 import sys; sys.path.append('../')
 import rebound
 
-# Add particles (all omitted parameters default to 0)
+# Add particles 
 rebound.particle_add( m=1. )                   # Star
-rebound.particle_add( m=1e-3, x=1., vy=1. )    # Planet
+rebound.particle_add( x=1., vy=1. )            # Test particle at a=1
+rebound.particle_add( m=1e-3, a=2., e=0.1 )    # Planet at a=2
+rebound.particle_add( m=1e-3, a=3. )           # Planet at a=3 (Jacobi coordinates)
 
 # Move particles so that the center of mass is (and stays) at the origin  
 rebound.move_to_center_of_momentum()
