@@ -1,8 +1,9 @@
 from ctypes import *
-import numpy
-import sys
-if sys.version_info < (3,):
-    range = xrange
+import math
+try:
+    range = xrange  # this means we're using python 2.x
+except NameError:
+    pass            # this means we're using python >2.x
 
 # Try to load libias15 from the obvioud places it could be in.
 try:
@@ -149,7 +150,7 @@ def step():
 def integrate(tmax):
     libias15.integrate(c_double(tmax))
 
-TWOPI = 2.*numpy.pi
+TWOPI = 2.*math.pi
 def mod2pi(f):
     while f<0.:
         f += TWOPI
@@ -158,149 +159,214 @@ def mod2pi(f):
     return f
 
 def get_E(e,M):
-    E = M if e<0.8 else numpy.pi
+    E = M if e<0.8 else math.pi
     
-    F = E - e*numpy.sin(M) - M
+    F = E - e*math.sin(M) - M
     for i in range(100):
-        E = E - F/(1.0-e*numpy.cos(E))
-        F = E - e*numpy.sin(E) - M
-        if numpy.fabs(F)<1e-16:
+        E = E - F/(1.0-e*math.cos(E))
+        F = E - e*math.sin(E) - M
+        if math.fabs(F)<1e-16:
             break
     E = mod2pi(E)
     return E
 
-def init_planet(star,       # central object (rebound.Particle object)
-                a,          # semimajor axis
-                e=None,     # eccentricity
-                omega=None, # argument of pericenter
-                f=None,     # true anomaly
-                inc=None,   # inclination
-                Omega=None, # longitude of ascending node
-                mass=None,  # planet mass
-                M=None):    # mean anomaly
-    '''Returns a particle structure to add into rebound for a given set of
-        orbital elements. 'star' and 'a' are required, others will default to zero
-        (with a warning). Only f OR M should be passed to specify the location of
-        the particle on its orbit.'''
+def kepler_particle(m,
+                    primary,    # central body (rebound.Particle object)
+                    a,          # semimajor axis
+                    anom=0.,  # anomaly
+                    e=0.,     # eccentricity
+                    omega=0., # argument of pericenter
+                    inc=0.,   # inclination
+                    Omega=0., # longitude of ascending node
+                    MEAN=False):    # mean anomaly
+    """Returns a particle structure initialized with the passed set of
+        orbital elements. Mass (m), primary and 'a' are required (see Parameters
+        below, and any orbital mechanics text, e.g., Murray & Dermott
+        Solar System Dynamics for definitions). Other values default to zero.
+        All angles should be passed in radians. Units are set by the
+        gravitational constant G (default = 1.). If MEAN is set to True, anom is
+        taken as the mean anomaly, rather than the true anomaly.
+        
+        Usage
+        _____
+        primary = rebound.Particle(m=1.) # particle with unit mass at origin & v=0
+        
+        # test particle (m=0) with specified elements using mean anomaly
+        p = kepler_particle(m=0.,primary=primary,a=2.5, anom=math.pi/2,e=0.3,
+        omega=math.pi/6,inc=math.pi/3,Omega=0.,MEAN=True)
+        
+        # m=0.1 particle on circular orbit math.pi/4 from x axis in xy plane
+        p = kepler_particle(0.1,primary,2.5,math.pi/4)
+        
+        Parameters
+        __________
+        m       : (float)            Mass of the particle
+        primary : (rebound.Particle) Particle structure for the central body
+        a       : (float)            Semimajor axis
+        anom    : (float)            True anomaly (default).
+        Mean anomaly if MEAN is set to True
+        e       : (float)            Eccentricity
+        omega   : (float)            Argument of pericenter
+        inc     : (float)            Inclination (to xy plane)
+        Omega   : (float)            Longitude of the ascending node
+        MEAN    : (boolean)          If False (default), anom = true anomaly
+        If True, anom = mean anomaly
+        
+        Returns
+        _______
+        A rebound.Particle structure initialized with the given orbital parameters
+        """
     
-    # first check for valid inputs and give warnings on defaults
-    if e == None: e = 0.; print('e not passed, setting to 0... (circular)')
-    if omega == None:
-        omega = 0. # only warn if orbit is non-circular
-        if e != 0.: print('omega not passed, setting to 0... (pericenter at ascending node)')
-    if inc == None: inc = 0.; print('inc not passed, setting to 0... (in xy plane)')
-    if Omega == None:
-        Omega = 0. # only warn if orbit is inclined
-        if inc != 0.: print('Omega not passed, setting to 0... (ascending node along x axis)')
-    if f != None and M != None: raise ValueError('Can only pass EITHER the true (f) or the mean (M) anomaly')
-    if f == None and M == None:
-        f = 0.;
-        if e != 0.:
-            print('Neither f nor M passed, setting initial angle from pericenter to 0...')
-        else:
-            print('Neither f nor M passed, setting particle on x axis...')
-    if mass == None: mass = 0.; print('mass not passed, setting to 0...')
+    if not(0.<=e<1.): raise ValueError('e must be in range [0,1)')
+    # not sure if these equations work for parabolic/hyperbolic obits
+    if not(0.<=inc<=math.pi): raise ValueError('inc must be in range [0,pi]')
     
-    if not(0. <= e < 1.): raise ValueError('e must be in range [0,1)') # not sure if these equations work for parabolic/hyperbolic obits
-    if not(0. <= inc <= numpy.pi): raise ValueError('inc must be in range [0,pi]')
+    if MEAN is True: # need to calculate f
+        E = get_E(e,anom)
+        f = mod2pi(2.*math.atan(math.sqrt((1.+ e)/(1. - e))*math.tan(0.5*E)))
+    else:
+        f = anom
     
-    if f == None: # need to calculate f
-        E = get_E(e,M)
-        f = mod2pi(2.*numpy.arctan(numpy.sqrt((1. + e)/(1. - e))*numpy.tan(0.5*E)))
+    cO = math.cos(Omega)
+    sO = math.sin(Omega)
+    co = math.cos(omega)
+    so = math.sin(omega)
+    cf = math.cos(f)
+    sf = math.sin(f)
+    ci = math.cos(inc)
+    si = math.sin(inc)
     
-    r = a*(1-e**2)/(1 + e*numpy.cos(f))
+    r = a*(1.-e**2)/(1.+e*cf)
     
     # Murray & Dermott Eq. 2.122
-    _x  = star.x + r*(numpy.cos(Omega)*numpy.cos(omega+f) - numpy.sin(Omega)*numpy.sin(omega+f)*numpy.cos(inc))
-    _y  = star.y + r*(numpy.sin(Omega)*numpy.cos(omega+f) + numpy.cos(Omega)*numpy.sin(omega+f)*numpy.cos(inc))
-    _z  = star.z + r*numpy.sin(omega+f)*numpy.sin(inc)
+    x  = primary.x + r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci)
+    y  = primary.y + r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci)
+    z  = primary.z + r*(so*cf+co*sf)*si
     
-    n = numpy.sqrt(get_G()*(star.m+mass)/(a**3))
+    n = math.sqrt(get_G()*(primary.m+m)/(a**3))
+    v0 = n*a/math.sqrt(1.-e**2)
     
     # Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
-    _vx = star.vx + (n*a/numpy.sqrt(1-e*e))*((e+numpy.cos(f))*(-numpy.cos(inc)*numpy.cos(omega)*numpy.sin(Omega) - numpy.cos(Omega)*numpy.sin(omega)) - numpy.sin(f)*(numpy.cos(omega)*numpy.cos(Omega) - numpy.cos(inc)*numpy.sin(omega)*numpy.sin(Omega)))
-    _vy = star.vy + (n*a/numpy.sqrt(1-e*e))*((e+numpy.cos(f))*(numpy.cos(inc)*numpy.cos(omega)*numpy.cos(Omega) - numpy.sin(omega)*numpy.sin(Omega)) - numpy.sin(f)*(numpy.cos(omega)*numpy.sin(Omega) + numpy.cos(inc)*numpy.cos(Omega)*numpy.sin(omega)))
-    _vz = star.vz + (n*a/numpy.sqrt(1-e*e))*((e+numpy.cos(f))*numpy.cos(omega)*numpy.sin(inc) - numpy.sin(f)*numpy.sin(inc)*numpy.sin(omega))
+    vx = primary.vx + v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO))
+    vy = primary.vy + v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO))
+    vz = primary.vz + v0*((e+cf)*co*si - sf*si*so)
     
-    return Particle(m  = mass, x = _x, y = _y, z = _z, vx = _vx, vy = _vy, vz = _vz)
+    return Particle(m=m, x=x, y=y, z=z, vx=vx, vy=vy, vz=vz)
 
-def p2orbit(p, star):
-    '''Takes 2 Particle objects (one for object and one for central body,
-        which hold Cartesian elements) and returns a Orbit object
-        with all the orbital elements'''
-    
-    if star.m <= 1.e-30: raise ValueError('Star has no mass.')
+TINY=1.e-308
+MIN_REL_ERROR = 1.e-12
+# from tools.c.  Converts cartesian elements to orbital elements.
+
+def p2orbit(p, primary,verbose=False):
+    """ Returns a rebound.Orbit object with the keplerian orbital elements
+        corresponding to p (rebound.Particle) around the central body primary
+        (rebound.Particle). Edge cases will return values set to None. If
+        verbose is set to True (default=False), error messages are printed
+        when a breakout condition is met.
+        
+        Usage
+        _____
+        orbit = p2orbit(p,primary)
+        print(orbit.e) # gives the eccentricity
+        
+        orbit = p2orbit(p,primary,verbose=True) # will print out error msgs
+        
+        Parameters
+        __________
+        p        : (rebound.Particle) particle for which orbital elements are sought
+        primary  : (rebound.Particle) central body
+        verbose  : (boolean)          If set to True, will print out error msgs
+        
+        Returns
+        _______
+        A rebound.Orbit object (with member variables for the orbital elements)
+        """
     o = Orbit()
-    mu = get_G()*(p.m+star.m)
-    p.x -= star.x
-    p.y -= star.y
-    p.z -= star.z
-    p.vx -= star.vx
-    p.vy -= star.vy
-    p.vz -= star.vz
-    h0 = (p.y*p.vz - p.z*p.vy)                  # angular momentum vector
-    h1 = (p.z*p.vx - p.x*p.vz)
-    h2 = (p.x*p.vy - p.y*p.vx)
-    o.h = numpy.sqrt ( h0*h0 + h1*h1 + h2*h2 )  # abs value of angular moment
-    if o.h <= 1.e-30: raise ValueError('Particle orbit is radial.')
-    v = numpy.sqrt ( p.vx*p.vx + p.vy*p.vy + p.vz*p.vz )
-    o.r = numpy.sqrt ( p.x*p.x + p.y*p.y + p.z*p.z )
-    if o.r <= 1.e-30: raise ValueError('Particle and star positions are the same.')
-    vr = (p.x*p.vx + p.y*p.vy + p.z*p.vz)/o.r
-    e0 = 1./mu*( (v*v-mu/o.r)*p.x - o.r*vr*p.vx )
-    e1 = 1./mu*( (v*v-mu/o.r)*p.y - o.r*vr*p.vy )
-    e2 = 1./mu*( (v*v-mu/o.r)*p.z - o.r*vr*p.vz )
-    o.e = numpy.sqrt( e0*e0 + e1*e1 + e2*e2 )   # eccentricity
+    if primary.m <= TINY:
+        if verbose is True:
+            print("Star has no mass.")
+        return o                            # all values set to None
+    
+    dx = p.x - primary.x
+    dy = p.y - primary.y
+    dz = p.z - primary.z
+    o.r = math.sqrt ( dx*dx + dy*dy + dz*dz )
+    if o.r <= TINY:
+        if verbose is True:
+            print('Particle and primary positions are the same.')
+        return o
+    
+    dvx = p.vx - primary.vx
+    dvy = p.vy - primary.vy
+    dvz = p.vz - primary.vz
+    v = math.sqrt ( dvx*dvx + dvy*dvy + dvz*dvz )
+    
+    mu = get_G()*(p.m+primary.m)
     o.a = -mu/( v*v - 2.*mu/o.r )               # semi major axis
-    o.P = 2.*numpy.pi*numpy.sqrt( o.a*o.a*o.a/mu )  # period
-    o.inc = numpy.arccos( h2/o.h )              # inclination (wrt xy-plane)
+    
+    h0 = (dy*dvz - dz*dvy)                      # angular momentum vector
+    h1 = (dz*dvx - dx*dvz)
+    h2 = (dx*dvy - dy*dvx)
+    o.h = math.sqrt ( h0*h0 + h1*h1 + h2*h2 )   # abs value of angular momentum
+    if o.h/o.r/v <= MIN_REL_ERROR:
+        if verbose is True:
+            print('Particle orbit is radial.')
+        return o
+    
+    vr = (dx*dvx + dy*dvy + dz*dvz)/o.r
+    e0 = 1./mu*( (v*v-mu/o.r)*dx - o.r*vr*dvx )
+    e1 = 1./mu*( (v*v-mu/o.r)*dy - o.r*vr*dvy )
+    e2 = 1./mu*( (v*v-mu/o.r)*dz - o.r*vr*dvz )
+    o.e = math.sqrt( e0*e0 + e1*e1 + e2*e2 )   # eccentricity
+    
+    o.P = 2.*math.pi*math.sqrt( o.a*o.a*o.a/mu )  # period
+    o.inc = math.acos( h2/o.h )               # inclination (wrt xy-plane)
     # if pi/2<i<pi it's retrograde
     n0 = -h1                                    # node vector
     n1 =  h0                                    # in xy plane => no z component
-    n = numpy.sqrt( n0*n0 + n1*n1 )
-    er = p.x*e0 + p.y*e1 + p.z*e2
-    if (n<=1.e-30 or o.inc<=1.e-30):            # we are in the xy plane
+    n = math.sqrt( n0*n0 + n1*n1 )
+    er = dx*e0 + dy*e1 + dz*e2
+    if (n/o.r/v<=MIN_REL_ERROR or o.inc<=MIN_REL_ERROR):# we are in the xy plane
         o.Omega=0.
-        if (o.e <= 1.e-10):                     # omega not defined for circular orbit
+        if (o.e <= MIN_REL_ERROR):              # omega not defined for circular orbit
             o.omega = 0.
         else:
             if (e1>=0.):
-                o.omega=numpy.arccos(e0/o.e)
+                o.omega=math.acos(e0/o.e)
             else:
-                o.omega = 2.*numpy.pi-numpy.arccos(e0/o.e)
+                o.omega = 2.*math.pi-math.acos(e0/o.e)
     else:
-        if (o.e <= 1.e-10):
+        if (o.e <= MIN_REL_ERROR):
             o.omega = 0.
         else:
             if (e2>=0.):                        # omega=0 if perictr at asc node
-                o.omega=numpy.arccos(( n0*e0 + n1*e1 )/(n*o.e))
+                o.omega=math.acos(( n0*e0 + n1*e1 )/(n*o.e))
             else:
-                o.omega=2.*numpy.pi-numpy.arccos(( n0*e0 + n1*e1 )/(n*o.e))
+                o.omega=2.*math.pi-math.acos(( n0*e0 + n1*e1 )/(n*o.e))
         if (n1>=0.):
-            o.Omega = numpy.arccos(n0/n)
+            o.Omega = math.acos(n0/n)
         else:
-            o.Omega=2.*numpy.pi-numpy.arccos(n0/n)  # Omega=longitude of asc node
+            o.Omega=2.*math.pi-math.acos(n0/n)# Omega=longitude of asc node
     # taken in xy plane from x axis
     
-    if (o.e<=1.e-10):                           # circular orbit
+    if (o.e<=MIN_REL_ERROR):                           # circular orbit
         o.f=0.                                  # f has no meaning
         o.l=0.
     else:
         o.f = er/(o.e*o.r)
         ea = (1.-o.r/o.a)/o.e
         if (o.f>1. or o.f<-1.):                 # failsafe
-            o.f = numpy.pi - numpy.pi * o.f
-            ea  = numpy.pi - numpy.pi * ea
+            o.f = math.pi/2. - math.pi/2.*o.f
+            ea  = math.pi/2. - math.pi/2.*ea
         else:
-            o.f = numpy.arccos(o.f)             # true anom=0 if obj at perictr
-            ea  = numpy.arccos(ea)              # eccentric anomaly
+            o.f = math.acos(o.f)             # true anom=0 if obj at perictr
+            ea  = math.acos(ea)              # eccentric anomaly
         
         if (vr<0.):
-            o.f=2.*numpy.pi-o.f
-            ea =2.*numpy.pi-ea
+            o.f=2.*math.pi-o.f
+            ea =2.*math.pi-ea
         
-        o.l = ea -o.e*numpy.sin(ea) + o.omega+ o.Omega  # mean longitude
+        o.l = ea -o.e*math.sin(ea) + o.omega+ o.Omega  # mean longitude
     
     return o
-
 
