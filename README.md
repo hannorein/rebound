@@ -77,7 +77,7 @@ rebound.move_to_center_of_momentum()
 rebound.integrate(100.)
 ```
 
-For details, please look at the README file in the `python_examples` directory. 
+For details on the available function of the REBOUND module in python, have a look at the docstrings in the file [`rebound.py`](python_examples/rebound.py) and the examples provided in the `python_examples` directory. 
 
 ### C version
 Most of the features that make REBOUND great are not available in `libias15` and python. If you use the C version of REBOUND, you can use different integrators, accelerated gravity routines, OpenGL visualization, helper functions to setup particles, collision detection routines and many more. 
