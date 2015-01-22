@@ -97,25 +97,55 @@ def set_particles(particles):
 def particles_add(particles):
     particle_add(particles)
 
-def particle_add(particles=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None):
-    if any([m,x,y,z,vx,vy,vz]):
-        if particles is not None:
-            raise ValueError("You cannot have a particle structure and float values at the same time.")
-        if m is None:
+def particle_add(particles=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None):   
+    """Adds a particle to REBOUND. Accepts one of the following four sets of arguments:
+    1) A single Particle structure.
+    2) A list of Particle structures.
+    3) The particle's mass and a set of cartesian coordinates: m,x,y,z,vx,vy,vz.
+    3) The primary as a Particle structure, the particle's mass and a set of orbital elements primary,a,anom,e,omega,inv,Omega,MEAN (see kepler_particle() for the definition of orbital elements). 
+    """
+    cart = [x,y,z,vx,vy,vz]
+    orbi = [primary,a,anom,e,omega,inc,Omega,MEAN]
+    if particles is not None:
+        if notNone(cart) or notNone(orbi):
+            raise ValueError("You cannot pass a particle structure and orbital elements or cartesian coordinates at the same time.")
+    else:
+        if m is None:   #default value for mass
             m = 0.
-        if x is None:
-            x = 0.
-        if y is None:
-            y = 0.
-        if z is None:
-            z = 0.
-        if vx is None:
-            vx = 0.
-        if vy is None:
-            vy = 0.
-        if vz is None:
-            vz = 0.
-        particles = Particle(m=m,x=x,y=y,z=z,vx=vx,vy=vy,vz=vz)
+        if notNone(cart) and notNone(orbi):
+                raise ValueError("You cannot pass cartesian coordinates and orbital elements at the same time.")
+        if notNone(orbi):
+            if primary is None:
+                primary = get_center_of_momentum()
+            if a is None:
+                raise ValueError("You need to pass a semi major axis to initialize the particle using orbital elements.")
+            if anom is None:
+                anom = 0.
+            if e is None:
+                e = 0.
+            if omega is None:
+                omega = 0.
+            if inc is None:
+                inc = 0.
+            if Omega is None:
+                Omega = 0.
+            if MEAN is None:
+                MEAN = False
+            particles = kepler_particle(m=m,primary=primary,a=a,anom=anom,e=e,omega=omega,inc=inc,Omega=Omega,MEAN=MEAN)
+        else:
+            if x is None:
+                x = 0.
+            if y is None:
+                y = 0.
+            if z is None:
+                z = 0.
+            if vx is None:
+                vx = 0.
+            if vy is None:
+                vy = 0.
+            if vz is None:
+                vz = 0.
+            particles = Particle(m=m,x=x,y=y,z=z,vx=vx,vy=vy,vz=vz)
     if isinstance(particles,list):
         for particle in particles:
             libias15.particles_add(particle)
@@ -169,6 +199,10 @@ def mod2pi(f):
         f -= TWOPI
     return f
 
+def notNone(a):
+    """Returns True if array a contains at least one element that is not None. Returns False otherwise."""
+    return a.count(None) != len(a)
+
 def eccentricAnomaly(e,M):
     """Returns the eccentric anomaly given the eccentricity and mean anomaly of a Keplerian orbit.
 
@@ -186,6 +220,32 @@ def eccentricAnomaly(e,M):
             break
     E = mod2pi(E)
     return E
+
+def get_center_of_momentum():
+    """Returns the center of momentum for all particles in the simulation"""
+    m = 0.
+    x = 0.
+    y = 0.
+    z = 0.
+    vx = 0.
+    vy = 0.
+    vz = 0.
+    ps = particles_get()    # particle pointer
+    for i in range(get_N()):
+    	m  += ps[i].m
+    	x  += ps[i].x*ps[i].m
+    	y  += ps[i].y*ps[i].m
+    	z  += ps[i].z*ps[i].m
+    	vx += ps[i].vx*ps[i].m
+    	vy += ps[i].vy*ps[i].m
+    	vz += ps[i].vz*ps[i].m
+    x /= m
+    y /= m
+    z /= m
+    vx /= m
+    vy /= m
+    vz /= m
+    return Particle(m=m, x=x, y=y, z=z, vx=vx, vy=vy, vz=vz)
 
 def kepler_particle(m,
                     primary,    # central body (rebound.Particle object)
