@@ -404,47 +404,47 @@ def p2orbit(p, primary,verbose=False):
     n1 =  h0                                    # in xy plane => no z component
     n = math.sqrt( n0*n0 + n1*n1 )
     er = dx*e0 + dy*e1 + dz*e2
-    if (n/o.r/v<=MIN_REL_ERROR or o.inc<=MIN_REL_ERROR):# we are in the xy plane
+    if n/o.r/v<=MIN_REL_ERROR or o.inc<=MIN_REL_ERROR:# we are in the xy plane
         o.Omega=0.
-        if (o.e <= MIN_REL_ERROR):              # omega not defined for circular orbit
+        if o.e <= MIN_REL_ERROR:              # omega not defined for circular orbit
             o.omega = 0.
         else:
-            if (e1>=0.):
+            if e1>=0.:
                 o.omega=math.acos(e0/o.e)
             else:
                 o.omega = 2.*math.pi-math.acos(e0/o.e)
     else:
-        if (o.e <= MIN_REL_ERROR):
+        if o.e <= MIN_REL_ERROR:
             o.omega = 0.
         else:
-            if (e2>=0.):                        # omega=0 if perictr at asc node
+            if e2>=0.:                        # omega=0 if perictr at asc node
                 o.omega=math.acos(( n0*e0 + n1*e1 )/(n*o.e))
             else:
                 o.omega=2.*math.pi-math.acos(( n0*e0 + n1*e1 )/(n*o.e))
-        if (n1>=0.):
+        if n1>=0.:
             o.Omega = math.acos(n0/n)
         else:
             o.Omega=2.*math.pi-math.acos(n0/n)# Omega=longitude of asc node
     # taken in xy plane from x axis
     
-    if (o.e<=MIN_REL_ERROR):                           # circular orbit
+    if o.e<=MIN_REL_ERROR:                           # circular orbit
         o.f=0.                                  # f has no meaning
         o.l=0.
     else:
         cosf = er/(o.e*o.r)
         cosea = (1.-o.r/o.a)/o.e
         
-        if -1.<=cosf<=1.:                       # failsafe
+        if -1.<=cosf and cosf<=1.:                       # failsafe
             o.f = math.acos(cosf)
         else:
             o.f = math.pi/2.*(1.-cosf)
         
-        if -1.<=cosea<=1.:
+        if -1.<=cosea and cosea<=1.:
             ea  = math.acos(cosea)
         else:
             ea = math.pi/2.*(1.-cosea)
         
-        if (vr<0.):
+        if vr<0.:
             o.f=2.*math.pi-o.f
             ea =2.*math.pi-ea
         
