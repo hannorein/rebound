@@ -1,9 +1,10 @@
 from ctypes import *
 import math
+
 try:
-    range = xrange  # this means we're using python 2.x
+    xrange          # If there's a name error we're using python 3.x
 except NameError:
-    pass            # this means we're using python >2.x
+    xrange = range  # xrange = range in python 3.x
 
 # Try to load libias15 from the obvioud places it could be in.
 try:
@@ -164,7 +165,7 @@ def particle_get(i):
 def particles_get_array():
     N = get_N() 
     particles = []
-    for i in range(0,N):
+    for i in xrange(0,N):
         particles.append(particle_get(i))
     return particles
 
@@ -430,14 +431,18 @@ def p2orbit(p, primary,verbose=False):
         o.f=0.                                  # f has no meaning
         o.l=0.
     else:
-        o.f = er/(o.e*o.r)
-        ea = (1.-o.r/o.a)/o.e
-        if (o.f>1. or o.f<-1.):                 # failsafe
-            o.f = math.pi/2. - math.pi/2.*o.f
-            ea  = math.pi/2. - math.pi/2.*ea
+        cosf = er/(o.e*o.r)
+        cosea = (1.-o.r/o.a)/o.e
+        
+        if -1.<=cosf<=1.:                       # failsafe
+            o.f = math.acos(cosf)
         else:
-            o.f = math.acos(o.f)             # true anom=0 if obj at perictr
-            ea  = math.acos(ea)              # eccentric anomaly
+            o.f = math.pi/2.*(1.-cosf)
+        
+        if -1.<=cosea<=1.:
+            ea  = math.acos(cosea)
+        else:
+            ea = math.pi/2.*(1.-cosea)
         
         if (vr<0.):
             o.f=2.*math.pi-o.f
