@@ -214,7 +214,7 @@ def eccentricAnomaly(e,M):
     E = M if e<0.8 else math.pi
     
     F = E - e*math.sin(M) - M
-    for i in range(100):
+    for i in xrange(100):
         E = E - F/(1.0-e*math.cos(E))
         F = E - e*math.sin(E) - M
         if math.fabs(F)<1e-16:
@@ -232,7 +232,7 @@ def get_center_of_momentum():
     vy = 0.
     vz = 0.
     ps = particles_get()    # particle pointer
-    for i in range(get_N()):
+    for i in xrange(get_N()):
     	m  += ps[i].m
     	x  += ps[i].x*ps[i].m
     	y  += ps[i].y*ps[i].m
