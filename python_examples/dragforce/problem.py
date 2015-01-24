@@ -33,4 +33,4 @@ rebound.integrate(100.)
 
 # Output something at the end (the planet will be at ~0.1 AU)
 for i in range(N):
-    print particles[i].x, particles[i].y, particles[i].z
+    print(particles[i].x, particles[i].y, particles[i].z)

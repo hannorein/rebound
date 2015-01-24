@@ -32,5 +32,5 @@ while rebound.get_t()<1e6:
     if steps%100==0:
         for i in range(rebound.get_N()):
             #     time             particle id   x               y               z 
-            print rebound.get_t(), i,            particles[i].x, particles[i].y, particles[i].z
+            print(rebound.get_t(), i,            particles[i].x, particles[i].y, particles[i].z)
 

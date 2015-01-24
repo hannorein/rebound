@@ -32,7 +32,7 @@ def setup_planet(com, mass, period, M, omega, eccentricity):
     if eccentricity>0.8:
         E = math.pi
     F = E - eccentricity*math.sin(M) - M
-    for i in xrange(100):
+    for i in range(100):
         E = E - F/(1.0-eccentricity*math.cos(E))
         F = E - eccentricity*math.sin(E) - M
         if math.fabs(F)<1e-16:

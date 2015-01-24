@@ -34,4 +34,4 @@ rebound.integrate(200.)
 # particles exactly where they started out from (note that we moved to the
 # center of momentum frame)
 for i in range(rebound.get_N()):
-    print particles[i].x, particles[i].y, particles[i].z
+    print(particles[i].x, particles[i].y, particles[i].z)
