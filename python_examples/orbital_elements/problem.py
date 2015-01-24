@@ -20,8 +20,8 @@ rebound.move_to_center_of_momentum()
 
 # Print the resulting cartesian coordinates.
 p = rebound.particles_get()
-for i in xrange(rebound.get_N()):
-    print p[i].m, p[i].x, p[i].y, p[i].z, p[i].vx, p[i].vy, p[i].vz
+for i in range(rebound.get_N()):
+    print(p[i].m, p[i].x, p[i].y, p[i].z, p[i].vx, p[i].vy, p[i].vz)
 
 # Integrate for 100 time units
 rebound.integrate(100.)

@@ -2,9 +2,9 @@ from ctypes import *
 import math
 
 try:
-    xrange          # If there's a name error we're using python 3.x
+    range = xrange          # this means python 2.x
 except NameError:
-    xrange = range  # xrange = range in python 3.x
+    pass                    # this means python 3.x
 
 # Try to load libias15 from the obvioud places it could be in.
 try:
@@ -165,7 +165,7 @@ def particle_get(i):
 def particles_get_array():
     N = get_N() 
     particles = []
-    for i in xrange(0,N):
+    for i in range(0,N):
         particles.append(particle_get(i))
     return particles
 
@@ -214,7 +214,7 @@ def eccentricAnomaly(e,M):
     E = M if e<0.8 else math.pi
     
     F = E - e*math.sin(M) - M
-    for i in xrange(100):
+    for i in range(100):
         E = E - F/(1.0-e*math.cos(E))
         F = E - e*math.sin(E) - M
         if math.fabs(F)<1e-16:
@@ -232,7 +232,7 @@ def get_center_of_momentum():
     vy = 0.
     vz = 0.
     ps = particles_get()    # particle pointer
-    for i in xrange(get_N()):
+    for i in range(get_N()):
     	m  += ps[i].m
     	x  += ps[i].x*ps[i].m
     	y  += ps[i].y*ps[i].m
