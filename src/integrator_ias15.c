@@ -106,10 +106,20 @@ void predict_next_step(double ratio, int N3, double* _e[7], double* _b[7]);
 const double w[8] = {0.03125, 0.185358154802979278540728972807180754479812609, 0.304130620646785128975743291458180383736715043, 0.376517545389118556572129261157225608762708603, 0.391572167452493593082499533303669362149363727, 0.347014795634501068709955597003528601733139176, 0.249647901329864963257869294715235590174262844, 0.114508814744257199342353731044292225247093225};
 double integrator_megno_Ys;
 double integrator_megno_Yss;
+double integrator_megno_cov_Yt;	// covariance of <Y> and t
+double integrator_megno_var_t;  // variance of t 
+double integrator_megno_mean_t; // mean of t
+double integrator_megno_mean_Y; // mean of Y
+long   integrator_megno_n; 	// number of covariance updates
 void integrator_megno_init(double delta){
 	int _N_megno = N;
 	integrator_megno_Ys = 0.;
 	integrator_megno_Yss = 0.;
+	integrator_megno_cov_Yt = 0.;
+	integrator_megno_var_t = 0.;
+	integrator_megno_n = 0;
+	integrator_megno_mean_Y = 0;
+	integrator_megno_mean_t = 0;
         for (int i=0;i<_N_megno;i++){ 
                 struct particle megno = {
 			.m  = particles[i].m,
@@ -123,9 +133,13 @@ void integrator_megno_init(double delta){
         }
 	N_megno = _N_megno;
 }
-double integrator_megno(){
+double integrator_megno(){ // Returns the MEGNO <Y>
 	if (t==0.) return 0.;
 	return integrator_megno_Yss/t;
+}
+double integrator_lyapunov(){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
+	if (t==0.) return 0.;
+	return integrator_megno_cov_Yt/integrator_megno_var_t;
 }
 double integrator_megno_deltad_delta2(){
         double deltad = 0;
@@ -583,6 +597,18 @@ int integrator_ias15_step() {
 		double Y = integrator_megno_Ys/t;
 		// Calculate averge <Y> 
 		integrator_megno_Yss += Y * dt_done;
+		// Update covariance of (Y,t) and variance of t
+		integrator_megno_n++;
+		double _d_t = t - integrator_megno_mean_t;
+		integrator_megno_mean_t += _d_t/(double)integrator_megno_n;
+		double _d_Y = integrator_megno() - integrator_megno_mean_Y;
+		integrator_megno_mean_Y += _d_Y/(double)integrator_megno_n;
+		integrator_megno_cov_Yt += ((double)integrator_megno_n-1.)/(double)integrator_megno_n 
+						*(t-integrator_megno_mean_t)
+						*(integrator_megno()-integrator_megno_mean_Y);
+		integrator_megno_var_t  += ((double)integrator_megno_n-1.)/(double)integrator_megno_n 
+						*(t-integrator_megno_mean_t)
+						*(t-integrator_megno_mean_t);
 	}
 
 	// Swap particle buffers

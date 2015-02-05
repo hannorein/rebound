@@ -85,6 +85,10 @@ def get_megno():
     libias15.integrator_megno.restype = c_double
     return libias15.integrator_megno()
 
+def get_lyapunov():
+    libias15.integrator_lyapunov.restype = c_double
+    return libias15.integrator_lyapunov()
+
 def get_N():
     return c_int.in_dll(libias15,"N").value 
 

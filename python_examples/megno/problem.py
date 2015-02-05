@@ -14,7 +14,7 @@ import os
 import multiprocessing
 
 # Runs one simulation.
-def megno(par):
+def simulation(par):
     saturn_a, saturn_e = par
     rebound.reset()
     rebound.set_min_dt(0.1)
@@ -30,7 +30,7 @@ def megno(par):
 
     rebound.integrate(1e3*2.*np.pi)
 
-    return rebound.get_megno()
+    return [rebound.get_megno(),1./(rebound.get_lyapunov()*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
 
 
 ### Setup grid and run many simulations in parallel
@@ -43,24 +43,34 @@ for _e in e:
         v.append([_a,_e])
 
 pool = multiprocessing.Pool(24)    # Number of threads
-res = pool.map(megno,v)            # Run simulations in parallel
+res = pool.map(simulation,v)       # Run simulations in parallel
 
 ### Create plot and save as pdf 
 import matplotlib; matplotlib.use("pdf")
-import matplotlib.pyplot as pl
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 
+# Setup plots
+f, axarr = plt.subplots(2, sharex=True,figsize=(10,10))
 extent = [a.min(), a.max(), e.min(), e.max()]
+plt.xlim(extent[0],extent[1])
+plt.ylim(extent[2],extent[3])
+plt.xlabel("$a_{\mathrm{Saturn}}$ [AU]")
+plt.ylabel("$e_{\mathrm{Saturn}}$")
 
-pl.imshow(np.array(res).reshape((N,N)), vmin=1.8, vmax=4., aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
-cb1 = pl.colorbar()
+# Plot MEGNO 
+im1 = axarr[0].imshow(np.array(res)[:,0].reshape((N,N)), vmin=1.8, vmax=4., aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
+cb1 = plt.colorbar(im1, ax=axarr[0])
 cb1.solids.set_rasterized(True)
-cb1.set_label("MEGNO stability indicator $\\langle Y \\rangle$")
-pl.xlim(extent[0],extent[1])
-pl.ylim(extent[2],extent[3])
-pl.xlabel("$a_{\mathrm{Saturn}}$ [AU]")
-pl.ylabel("$e_{\mathrm{Saturn}}$")
+cb1.set_label("MEGNO $\\langle Y \\rangle$")
 
-pl.savefig("megno.pdf")
+# Plot Lyapunov timescale
+im2 = axarr[1].imshow(np.array(res)[:,1].reshape((N,N)), vmin=1e1, vmax=1e5, aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent, norm=LogNorm())
+cb2 = plt.colorbar(im2, ax=axarr[1])
+cb2.solids.set_rasterized(True)
+cb2.set_label("Lyapunov timescale [years]")
+
+plt.savefig("megno.pdf")
 
 ### Show plot (OSX only)
 os.system("open megno.pdf")

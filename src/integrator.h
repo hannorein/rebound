@@ -71,6 +71,11 @@ void integrator_megno_init(double delta);
  **/
 double integrator_megno();
 
+/*
+ * Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
+ **/
+double integrator_lyapunov();
+
 #endif // INTEGRATOR_IAS15
 
 #endif
