@@ -107,10 +107,10 @@ const double w[8] = {0.03125, 0.185358154802979278540728972807180754479812609, 0
 double integrator_megno_Ys;
 double integrator_megno_Yss;
 void integrator_megno_init(double delta){
-	N_megno = N;
+	int _N_megno = N;
 	integrator_megno_Ys = 0.;
 	integrator_megno_Yss = 0.;
-        for (int i=0;i<N_megno;i++){ 
+        for (int i=0;i<_N_megno;i++){ 
                 struct particle megno = {
 			.m  = particles[i].m,
 			.x  = delta*tools_normal(1.),
@@ -121,6 +121,7 @@ void integrator_megno_init(double delta){
 			.vz = delta*tools_normal(1.) };
                 particles_add(megno);
         }
+	N_megno = _N_megno;
 }
 double integrator_megno(){
 	if (t==0.) return 0.;

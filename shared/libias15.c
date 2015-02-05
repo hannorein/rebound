@@ -97,18 +97,18 @@ void ias15_step(){
 
 // Integrate for 1 step
 void reset(){ 
-	dt 	= 0.01;	
-	t 	= 0;
-	tmax	= 0;
-	G 	= 1;
-	softening = 0;
-	N = 0;
-	Nmax = 0;
-	N_active = -1;
-	N_megno = 0;
+	dt 		= 0.01;
+	t 		= 0;
+	tmax		= 0;
+	G 		= 1;
+	softening 	= 0;
+	N 		= 0;
+	Nmax 		= 0;
+	N_active 	= -1;
+	N_megno 	= 0;
 	free(particles);
-	particles = NULL;
-	N3allocated = 0;
+	particles 	= NULL;
+	N3allocated 	= 0;
 	dt_last_success = 0;
 	for (int l=0;l<7;++l) {
 		free(g[l]);
