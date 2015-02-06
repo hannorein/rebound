@@ -10,7 +10,6 @@ import sys; sys.path.append('../')
 import rebound
 # Import other modules
 import numpy as np
-import os
 import multiprocessing
 
 # Runs one simulation.
@@ -36,15 +35,16 @@ def simulation(par):
 N = 12                      # Grid size, increase this number to see more detail
 a = np.linspace(7.,10.,N)   # range of saturn semi-major axis in AU
 e = np.linspace(0.,0.5,N)   # range of saturn eccentricity
-v = []
+parameters = []
 for _e in e:
     for _a in a:
-        v.append([_a,_e])
+        parameters.append([_a,_e])
 
-pool = multiprocessing.Pool(24)    # Number of threads
 
 # Run simulations in parallel
-res = np.nan_to_num(np.array(pool.map(simulation,v))) 
+pool = multiprocessing.Pool()    # Number of threads default to the number of CPUs on the system
+print("Running %d simulations on %d threads..." % (len(parameters), pool._processes))
+res = np.nan_to_num(np.array(pool.map(simulation,parameters))) 
 
 ### Create plot and save as pdf 
 import matplotlib; matplotlib.use("pdf")
@@ -52,26 +52,28 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
 # Setup plots
-f, axarr = plt.subplots(2, sharex=True,figsize=(10,10))
+f, axarr = plt.subplots(2,figsize=(10,10))
 extent = [a.min(), a.max(), e.min(), e.max()]
-plt.xlim(extent[0],extent[1])
-plt.ylim(extent[2],extent[3])
-plt.xlabel("$a_{\mathrm{Saturn}}$ [AU]")
-plt.ylabel("$e_{\mathrm{Saturn}}$")
+for ax in axarr:
+    ax.set_xlim(extent[0],extent[1])
+    ax.set_ylim(extent[2],extent[3])
+    ax.set_xlabel("$a_{\mathrm{Saturn}}$ [AU]")
+    ax.set_ylabel("$e_{\mathrm{Saturn}}$")
 
 # Plot MEGNO 
-im1 = axarr[0].imshow(np.array(res)[:,0].reshape((N,N)), vmin=1.8, vmax=4., aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
+im1 = axarr[0].imshow(res[:,0].reshape((N,N)), vmin=1.8, vmax=4., aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
 cb1 = plt.colorbar(im1, ax=axarr[0])
 cb1.solids.set_rasterized(True)
 cb1.set_label("MEGNO $\\langle Y \\rangle$")
 
 # Plot Lyapunov timescale
-im2 = axarr[1].imshow(np.array(res)[:,1].reshape((N,N)), vmin=1e1, vmax=1e5, aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent, norm=LogNorm())
+im2 = axarr[1].imshow(res[:,1].reshape((N,N)), vmin=1e1, vmax=1e5, norm=LogNorm(), aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn", extent=extent)
 cb2 = plt.colorbar(im2, ax=axarr[1])
 cb2.solids.set_rasterized(True)
 cb2.set_label("Lyapunov timescale [years]")
 
 plt.savefig("megno.pdf")
 
-### Show plot (OSX only)
+### Automatically open plot (OSX only)
+import os
 os.system("open megno.pdf")
