@@ -27,8 +27,7 @@ def simulation(par):
 
     rebound.move_to_center_of_momentum()
     rebound.megno_init(1e-16)
-
-    rebound.integrate(1e3*2.*np.pi)
+    rebound.integrate(1e4*2.*np.pi)
 
     return [rebound.get_megno(),1./(rebound.get_lyapunov()*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
 
@@ -43,7 +42,9 @@ for _e in e:
         v.append([_a,_e])
 
 pool = multiprocessing.Pool(24)    # Number of threads
-res = pool.map(simulation,v)       # Run simulations in parallel
+
+# Run simulations in parallel
+res = np.nan_to_num(np.array(pool.map(simulation,v))) 
 
 ### Create plot and save as pdf 
 import matplotlib; matplotlib.use("pdf")
