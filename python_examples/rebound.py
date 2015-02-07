@@ -32,6 +32,8 @@ class Particle(Structure):
                 ("ay", c_double),
                 ("az", c_double),
                 ("m", c_double) ]
+    def __str__(self):
+        return "<rebound.Particle object, x=%f y=%f z=%f vx=%f vy=%f vz=%f>"%(self.x,self.y,self.z,self.vx,self.vy,self.vz)
 
 # Defines the same data structure as in tools.h
 class Orbit():
@@ -46,6 +48,10 @@ class Orbit():
         self.Omega  =   None    # longitude of ascending node
         self.omega  =   None    # argument of perihelion
         self.f      =   None    # true anomaly
+
+    def __str__(self):
+        return "<rebound.Orbit instance, a=%f e=%f>"%(self.a,self.e)
+        
 
 # Set function pointer for additional forces
 
