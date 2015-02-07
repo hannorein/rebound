@@ -77,9 +77,6 @@ void problem_init(int argc, char* argv[]){
 	}
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 	// Outputs a restartfile once per orbit.
 	output_timing();

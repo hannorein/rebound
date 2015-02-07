@@ -74,9 +74,6 @@ void additional_forces(){
 	}
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 	// Output some information to the screen every 100th timestep
 	if(output_check(100.*dt)){

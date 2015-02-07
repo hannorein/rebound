@@ -113,9 +113,6 @@ void problem_init(int argc, char* argv[]){
 	system("rm -f orbits.txt");
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 	if (output_check(1000.*dt)){
 		output_timing();

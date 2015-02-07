@@ -70,9 +70,6 @@ void problem_init(int argc, char* argv[]){
 	tools_move_to_center_of_momentum(); // Move to rest frame 
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 	if (output_check(10.0*dt)) output_timing();
 }

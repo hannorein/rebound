@@ -66,9 +66,6 @@ void problem_init(int argc, char* argv[]){
 	tools_move_to_center_of_momentum();
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 	if (output_check(1.)){
 		output_timing();

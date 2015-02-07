@@ -114,9 +114,6 @@ void collision_resolve_merger(struct collision c){
 	tools_move_to_center_of_momentum();	
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 	if (output_check(10.*2.*M_PI)){  
 		output_timing();

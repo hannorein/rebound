@@ -83,9 +83,6 @@ void problem_init(int argc, char* argv[]){
 	system("rm -v orbits.txt");		// delete previous output file
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 	if(output_check(20.*M_PI)){		// outputs to the screen
 		output_timing();

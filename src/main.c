@@ -157,9 +157,6 @@ void iterate(){
 	if (problem_additional_forces) problem_additional_forces();
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 
-	// Call problem specific function. 
-	problem_inloop();
-
 	// A 'DKD'-like integrator will do the 'KD' part.
 	PROFILING_START()
 	integrator_part2();

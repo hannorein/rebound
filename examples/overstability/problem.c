@@ -78,9 +78,6 @@ void problem_init(int argc, char* argv[]){
 	}
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 	if (output_check(2.*M_PI)){
 		output_timing();

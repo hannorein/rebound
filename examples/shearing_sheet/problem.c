@@ -126,9 +126,6 @@ double coefficient_of_restitution_bridges(double v){
 	return eps;
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 #ifdef LIBPNG
 	if (output_check(1e-3*2.*M_PI/OMEGA)){

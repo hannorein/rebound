@@ -91,9 +91,6 @@ void problem_init(int argc, char* argv[]){
 	}
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 	if (output_check(10.0*dt)) output_timing();
 	if (output_check(1.)) output_ascii("ascii.txt");

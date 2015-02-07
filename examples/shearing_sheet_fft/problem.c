@@ -127,9 +127,6 @@ double coefficient_of_restitution_bridges(double v){
 	return eps;
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 	if (output_check(10.0*dt)){
 		output_timing();

@@ -125,9 +125,6 @@ void problem_init(int argc, char* argv[]){
 	}
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 }
 

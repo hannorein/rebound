@@ -146,9 +146,6 @@ void problem_migration_forces(){
 	}
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 	if(output_check(20.*M_PI)){
 		output_timing();

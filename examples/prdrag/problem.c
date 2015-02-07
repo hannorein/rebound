@@ -103,9 +103,6 @@ void additional_forces(){
 	force_radiation();							// PR drag (see above)
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 	if(output_check(400.)){						// print some information to screen
 		output_timing();

@@ -52,9 +52,6 @@ void problem_init(int argc, char* argv[]){
 	particles_add(pt);
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 	output_timing();
 }

@@ -47,12 +47,6 @@ void problem_init(int argc, char* argv[]);
  */
 void problem_output();
 /**
- * This function is called in the middle of each timestep (after the gravitational
- * acceleration is added to the particles. The user may add 
- * any problem specific work (additional forces, etc) here.
- */
-void problem_inloop();
-/**
  * This function is called at the end of the simulation when t>=tmax.
  * Note that it is not called when the simulation stopped for another 
  * reason (e.g. user interaction or crash). 

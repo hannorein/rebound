@@ -78,9 +78,6 @@ void problem_init(int argc, char* argv[]){
 	
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 	if(output_check(tmax/10000.)){		// outputs to the screen
 		output_timing();

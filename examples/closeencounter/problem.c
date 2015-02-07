@@ -72,9 +72,6 @@ void problem_init(int argc, char* argv[]){
 	tools_move_to_center_of_momentum();				// This makes sure the planetary systems stays within the computational domain and doesn't drift.
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 	if (output_check(10.*2.*M_PI)){  
 		output_timing();

@@ -122,6 +122,3 @@ void problem_output(){
 void problem_finish(){
 }
 
-void problem_inloop(){
-}
-

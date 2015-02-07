@@ -115,9 +115,6 @@ void problem_init(int argc, char* argv[]){
 	}
 }
 
-void problem_inloop(){
-}
-
 void output_ascii_mod(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];

@@ -65,9 +65,6 @@ void problem_init(int argc, char* argv[]){
 	particles[0].vx = 20;
 }
 
-void problem_inloop(){
-}
-
 void problem_output(){
 }
 
