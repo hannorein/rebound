@@ -205,7 +205,7 @@ When you type make in your problem directory, all of these variables are read an
 
 ### User-defined functions in the problem.c file 
 
-The problem.c file must contain at least four functions. You do not need to implement all of them, but a dummy (doing nothing) needs to be present to successfully link the object files. The following documentation describes what these functions do.
+The problem.c file must contain at least three functions. You do need to implement all of them, but a dummy (doing nothing) is sufficient to successfully link the object files. The following documentation describes what these functions do.
 
 
 - `void problem_init(int argc, char* argv[]) `
@@ -236,7 +236,7 @@ The problem.c file must contain at least four functions. You do not need to impl
     This function is called at the end of the simulation, when t >= tmax. This is the last chance to output any quantities before the program ends.
 
 
-- `void problem_additional_forces()`
+- `void problem_additional_forces()` (optional function pointer)
 
     In addition to the four mandatory functions that need to be present, you can also define some other functions and make them callable by setting a function pointer. The function pointer `problem_additional_forces()` which is called one or more times per time-step whenever the forces are updated. This is where you can implement all kind of things such as additional forces onto particles. 
     
