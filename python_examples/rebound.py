@@ -407,7 +407,7 @@ def p2orbit(p, primary,verbose=False):
     e2 = 1./mu*( (v*v-mu/o.r)*dz - o.r*vr*dvz )
     o.e = math.sqrt( e0*e0 + e1*e1 + e2*e2 )   # eccentricity
     
-    o.P = 2.*math.pi*math.sqrt( o.a*o.a*o.a/mu )  # period
+    o.P = math.copysign(2.*math.pi*math.sqrt( math.fabs(o.a*o.a*o.a/mu) ), o.a)  # period
     o.inc = math.acos( h2/o.h )               # inclination (wrt xy-plane)
     # if pi/2<i<pi it's retrograde
     n0 = -h1                                    # node vector
