@@ -18,7 +18,7 @@ def simulation(par):
     rebound.reset()
     rebound.set_min_dt(0.1)
     
-    # These parameters are only approximately those od Jupiter and Saturn.
+    # These parameters are only approximately those of Jupiter and Saturn.
     sun     = rebound.Particle(m=1.)
     rebound.particle_add(sun)
     jupiter = rebound.particle_add(primary=sun,m=0.000954, a=5.204, anom=0.600, omega=0.257, e=0.048)
@@ -45,6 +45,8 @@ for _e in e:
 pool = multiprocessing.Pool()    # Number of threads default to the number of CPUs on the system
 print("Running %d simulations on %d threads..." % (len(parameters), pool._processes))
 res = np.nan_to_num(np.array(pool.map(simulation,parameters))) 
+megno = np.clip(res[:,0].reshape((N,N)),1.8,4.)             # clip arrays to plot saturated 
+lyaptimescale = np.clip(np.absolute(res[:,1].reshape((N,N))),1e1,1e5)
 
 ### Create plot and save as pdf 
 import matplotlib; matplotlib.use("pdf")
@@ -60,14 +62,15 @@ for ax in axarr:
     ax.set_xlabel("$a_{\mathrm{Saturn}}$ [AU]")
     ax.set_ylabel("$e_{\mathrm{Saturn}}$")
 
+
 # Plot MEGNO 
-im1 = axarr[0].imshow(res[:,0].reshape((N,N)), vmin=1.8, vmax=4., aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
+im1 = axarr[0].imshow(megno, vmin=1.8, vmax=4., aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
 cb1 = plt.colorbar(im1, ax=axarr[0])
 cb1.solids.set_rasterized(True)
 cb1.set_label("MEGNO $\\langle Y \\rangle$")
 
 # Plot Lyapunov timescale
-im2 = axarr[1].imshow(res[:,1].reshape((N,N)), vmin=1e1, vmax=1e5, norm=LogNorm(), aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn", extent=extent)
+im2 = axarr[1].imshow(lyaptimescale, vmin=1e1, vmax=1e5, norm=LogNorm(), aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn", extent=extent)
 cb2 = plt.colorbar(im2, ax=axarr[1])
 cb2.solids.set_rasterized(True)
 cb2.set_label("Lyapunov timescale [years]")
