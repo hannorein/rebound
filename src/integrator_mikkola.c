@@ -42,13 +42,13 @@ int integrator_force_is_velocitydependent 	= 1;
 double integrator_epsilon 			= 0;
 double integrator_min_dt 			= 0;
 
-// Fast factorial lookup table
-static const double factorial[] = {1., 1., 2., 6., 24., 120., 720., 5040., 40320., 362880., 3628800., 39916800., 479001600., 6227020800., 87178291200., 1307674368000., 20922789888000., 355687428096000., 6402373705728000., 121645100408832000., 2432902008176640000., 51090942171709440000., 1124000727777607680000., 25852016738884976640000., 620448401733239439360000., 15511210043330985984000000., 403291461126605635584000000., 10888869450418352160768000000., 304888344611713860501504000000., 8841761993739701954543616000000., 265252859812191058636308480000000., 8222838654177922817725562880000000., 263130836933693530167218012160000000., 8683317618811886495518194401280000000., 295232799039604140847618609643520000000.};
+// Fast inverse factorial lookup table
+static const double invfactorial[] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
 
 double c_n_series(unsigned int n, double z){
 	double c_n = 0.;
 	for (unsigned int j=0;j<13;j++){
-		double term = pow(-z,j)/factorial[n+2*j];
+		double term = pow(-z,j)*invfactorial[n+2*j];
 		c_n += term;
 		if (fabs(term/c_n) < 1e-17) break; // Stop if new term smaller than machine precision
 	}
@@ -68,7 +68,7 @@ double c(unsigned int n, double z){
 			}
 			case 1:
 			{
-				double cn5 = (c(5,z/4.)+c(4,z/4.)+c(3,z/4.)*c(2,z/4))/16.;
+				double cn5 = (c(5,z/4.)+c(4,z/4.)+c(3,z/4.)*c(2,z/4.))/16.;
 				double cn3 = 1./6.-z*cn5;
 				double cn1 = 1.-z*cn3;
 				return cn1;
@@ -81,7 +81,7 @@ double c(unsigned int n, double z){
 			}
 			case 3:
 			{
-				double cn5 = (c(5,z/4.)+c(4,z/4.)+c(3,z/4.)*c(2,z/4))/16.;
+				double cn5 = (c(5,z/4.)+c(4,z/4.)+c(3,z/4.)*c(2,z/4.))/16.;
 				double cn3 = 1./6.-z*cn5;
 				return cn3;
 			}
@@ -92,7 +92,7 @@ double c(unsigned int n, double z){
 			}
 			case 5:
 			{
-				double cn5 = (c(5,z/4.)+c(4,z/4.)+c(3,z/4.)*c(2,z/4))/16.;
+				double cn5 = (c(5,z/4.)+c(4,z/4.)+c(3,z/4.)*c(2,z/4.))/16.;
 				return cn5;
 			}
 		}
@@ -105,43 +105,41 @@ double integrator_G(unsigned int n, double beta, double X){
 }
 
 void kepler_step(int i){
-	struct particle p0 = particles[0];
+	double M = particles[0].m;
 	struct particle p1 = particles[i];
 
 	double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
 	double v2 =  p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz;
-	double beta = 2.*p0.m/r0 - v2;
+	double beta = 2.*M/r0 - v2;
 	double eta = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
-	double zeta = p0.m - beta*r0;
+	double zeta = M - beta*r0;
 	
 
-	// Find solution for X using bisection method. Not good because:
-	// 1) slow
-	// 2) only work if period = 2pi (as of now)
-	// 3) probably doesn't work for hyperbolic orbits
-	// 4) might not work for retrograde orbits
-	
-	double X_min = 0;
-	double X_max = 2.*M_PI;
-	while (X_max-X_min>1e-17){
-		double X = (X_max + X_min)/2.;
-		double s= r0*X + eta*integrator_G(2,beta,X) + zeta*integrator_G(3,beta,X)-dt;
-		if (s<0.){
-			X_min = X;
-		}else{
-			X_max = X;
-		}
-	}
-	double X = X_min;
+	double X = 0;
+	do{
+		double G1 = integrator_G(1,beta,X);
+		double G2 = integrator_G(2,beta,X);
+		double G3 = integrator_G(3,beta,X);
+		double s   = r0*X + eta*G2 + zeta*G3-dt;
+		double sp  = r0 + eta*G1 + zeta*G2;
+		double dX  = -s/sp; // Newton's method
+		
+		//double G0 = integrator_G(0,beta,X);
+		//double spp = r0 + eta*G0 + zeta*G1;
+		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
+		X+=dX;
+		if (fabs(dX/X)<1e-15) break;
+	}while (1);
+
 	double G1 = integrator_G(1,beta,X);
 	double G2 = integrator_G(2,beta,X);
 	double G3 = integrator_G(3,beta,X);
 
 	double r = r0 + eta*G1 + zeta*G2;
-	double f = 1.-p0.m*G2/r0;
-	double g = dt - p0.m*G3;
-	double fd = -p0.m*G1/(r0*r); 
-	double gd = 1.-p0.m*G2/r; 
+	double f = 1.-M*G2/r0;
+	double g = dt - M*G3;
+	double fd = -M*G1/(r0*r); 
+	double gd = 1.-M*G2/r; 
 
 	particles[i].x = f*particles[i].x + g*particles[i].vx;
 	particles[i].y = f*particles[i].y + g*particles[i].vy;
