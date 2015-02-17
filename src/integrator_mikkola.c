@@ -103,9 +103,9 @@ double integrator_G(unsigned int n, double beta, double X){
 	return pow(X,n)*c(n,beta*X*X);
 }
 
-void kepler_step(){
+void kepler_step(int i){
 	struct particle p0 = particles[0];
-	struct particle p1 = particles[1];
+	struct particle p1 = particles[i];
 
 	double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
 	double v2 =  p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz;
@@ -133,38 +133,32 @@ void kepler_step(){
 	}
 	double X = X_min;
 
-	FILE* f = fopen("tmp.txt","w");
-	fclose(f);
-	exit(0);
+	double r = r0 + eta*integrator_G(1,beta,X) + zeta*integrator_G(2,beta,X);
+	double f = 1.-p0.m * integrator_G(2,beta,X)/r0;
+	double g = dt - p0.m * integrator_G(3,beta,X);
+	double fd = -p0.m*integrator_G(1,beta,X)/(r0*r); 
+	double gd = 1.-p0.m*integrator_G(2,beta,X)/r; 
 
-	
+	particles[i].x = f*particles[i].x + g*particles[i].vx;
+	particles[i].y = f*particles[i].y + g*particles[i].vy;
+	particles[i].z = f*particles[i].z + g*particles[i].vz;
+
+	particles[i].vx = fd*particles[i].x + gd*particles[i].vx;
+	particles[i].vy = fd*particles[i].y + gd*particles[i].vy;
+	particles[i].vz = fd*particles[i].z + gd*particles[i].vz;
+
 }
 
 
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
 void integrator_part1(){
-	kepler_step();
-	printf("\n C(t)=%f",c_n_series(2,t));
-#pragma omp parallel for schedule(guided)
-	for (int i=0;i<N;i++){
-		particles[i].x  += 0.5* dt * particles[i].vx;
-		particles[i].y  += 0.5* dt * particles[i].vy;
-		particles[i].z  += 0.5* dt * particles[i].vz;
-	}
-	t+=dt/2.;
 }
 void integrator_part2(){
-#pragma omp parallel for schedule(guided)
-	for (int i=0;i<N;i++){
-		particles[i].vx += dt * particles[i].ax;
-		particles[i].vy += dt * particles[i].ay;
-		particles[i].vz += dt * particles[i].az;
-		particles[i].x  += 0.5* dt * particles[i].vx;
-		particles[i].y  += 0.5* dt * particles[i].vy;
-		particles[i].z  += 0.5* dt * particles[i].vz;
+	for (int i=1;i<N;i++){
+		kepler_step(i);
 	}
-	t+=dt/2.;
+	t+=dt;
 }
 	
 
