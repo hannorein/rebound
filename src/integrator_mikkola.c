@@ -57,6 +57,7 @@ double c_n_series(unsigned int n, double z){
 
 double c(unsigned int n, double z){
 	if (z>0.5){
+		// Speed up conversion with 4-folding formula
 		switch(n){
 			case 0:
 			{
@@ -132,12 +133,15 @@ void kepler_step(int i){
 		}
 	}
 	double X = X_min;
+	double G1 = integrator_G(1,beta,X);
+	double G2 = integrator_G(2,beta,X);
+	double G3 = integrator_G(3,beta,X);
 
-	double r = r0 + eta*integrator_G(1,beta,X) + zeta*integrator_G(2,beta,X);
-	double f = 1.-p0.m * integrator_G(2,beta,X)/r0;
-	double g = dt - p0.m * integrator_G(3,beta,X);
-	double fd = -p0.m*integrator_G(1,beta,X)/(r0*r); 
-	double gd = 1.-p0.m*integrator_G(2,beta,X)/r; 
+	double r = r0 + eta*G1 + zeta*G2;
+	double f = 1.-p0.m*G2/r0;
+	double g = dt - p0.m*G3;
+	double fd = -p0.m*G1/(r0*r); 
+	double gd = 1.-p0.m*G2/r; 
 
 	particles[i].x = f*particles[i].x + g*particles[i].vx;
 	particles[i].y = f*particles[i].y + g*particles[i].vy;
