@@ -1,14 +1,11 @@
 /**
  * @file 	integrator.c
- * @brief 	Leap-frog integration scheme.
+ * @brief 	Mikkola integration scheme.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This file implements the leap-frog integration scheme.  
- * This scheme is second order accurate, symplectic and well suited for 
- * non-rotating coordinate systems. Note that the scheme is formally only
- * first order accurate when velocity dependent forces are present.
+ * @detail	This file implements the Mikkola integration scheme.  
  * 
  * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ * Copyright (c) 2015 Hanno Rein
  *
  * This file is part of rebound.
  *
@@ -116,24 +113,21 @@ void kepler_step(int i){
 	
 
 	double X = 0;
+	double G1,G2,G3;
 	do{
-		double G1 = integrator_G(1,beta,X);
-		double G2 = integrator_G(2,beta,X);
-		double G3 = integrator_G(3,beta,X);
+		G2 = integrator_G(2,beta,X);
+		G3 = integrator_G(3,beta,X);
+		G1 = X-beta*G3;
 		double s   = r0*X + eta*G2 + zeta*G3-dt;
 		double sp  = r0 + eta*G1 + zeta*G2;
 		double dX  = -s/sp; // Newton's method
 		
-		//double G0 = integrator_G(0,beta,X);
+		//double G0 = 1.-beta*G2;
 		//double spp = r0 + eta*G0 + zeta*G1;
 		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
 		X+=dX;
-		if (fabs(dX/X)<1e-15) break;
+		if (fabs(dX/X)<1e-15) break; // TODO: Make sure loop does not get stuck (add maximum number of iterations) 
 	}while (1);
-
-	double G1 = integrator_G(1,beta,X);
-	double G2 = integrator_G(2,beta,X);
-	double G3 = integrator_G(3,beta,X);
 
 	double r = r0 + eta*G1 + zeta*G2;
 	double f = 1.-M*G2/r0;
@@ -141,19 +135,17 @@ void kepler_step(int i){
 	double fd = -M*G1/(r0*r); 
 	double gd = 1.-M*G2/r; 
 
-	particles[i].x = f*particles[i].x + g*particles[i].vx;
-	particles[i].y = f*particles[i].y + g*particles[i].vy;
-	particles[i].z = f*particles[i].z + g*particles[i].vz;
+	particles[i].x = f*p1.x + g*p1.vx;
+	particles[i].y = f*p1.y + g*p1.vy;
+	particles[i].z = f*p1.z + g*p1.vz;
 
-	particles[i].vx = fd*particles[i].x + gd*particles[i].vx;
-	particles[i].vy = fd*particles[i].y + gd*particles[i].vy;
-	particles[i].vz = fd*particles[i].z + gd*particles[i].vz;
+	particles[i].vx = fd*p1.x + gd*p1.vx;
+	particles[i].vy = fd*p1.y + gd*p1.vy;
+	particles[i].vz = fd*p1.z + gd*p1.vz;
 
 }
 
 
-// Leapfrog integrator (Drift-Kick-Drift)
-// for non-rotating frame.
 void integrator_part1(){
 }
 void integrator_part2(){
