@@ -61,27 +61,27 @@ double c(unsigned int n, double z){
 			case 0:
 			{
 				double cn4 = c(3,z/4.)*(1.+c(1,z/4.))/8.;
-				double cn2 = 1.-z*cn4;
+				double cn2 = 1./2.-z*cn4;
 				double cn0 = 1.-z*cn2;
 				return cn0;
 			}
 			case 1:
 			{
 				double cn5 = (c(5,z/4.)+c(4,z/4.)+c(3,z/4.)*c(2,z/4))/16.;
-				double cn3 = 1.-z*cn5;
+				double cn3 = 1./6.-z*cn5;
 				double cn1 = 1.-z*cn3;
 				return cn1;
 			}
 			case 2:
 			{
 				double cn4 = c(3,z/4.)*(1.+c(1,z/4.))/8.;
-				double cn2 = 1.-z*cn4;
+				double cn2 = 1./2.-z*cn4;
 				return cn2;
 			}
 			case 3:
 			{
 				double cn5 = (c(5,z/4.)+c(4,z/4.)+c(3,z/4.)*c(2,z/4))/16.;
-				double cn3 = 1.-z*cn5;
+				double cn3 = 1./6.-z*cn5;
 				return cn3;
 			}
 			case 4:
@@ -99,10 +99,52 @@ double c(unsigned int n, double z){
 	return c_n_series(n,z);
 }
 
+double integrator_G(unsigned int n, double beta, double X){
+	return pow(X,n)*c(n,beta*X*X);
+}
+
+void kepler_step(){
+	struct particle p0 = particles[0];
+	struct particle p1 = particles[1];
+
+	double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
+	double v2 =  p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz;
+	double beta = 2.*p0.m/r0 - v2;
+	double eta = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
+	double zeta = p0.m - beta*r0;
+	
+
+	// Find solution for X using bisection method. Not good because:
+	// 1) slow
+	// 2) only work if period = 2pi (as of now)
+	// 3) probably doesn't work for hyperbolic orbits
+	// 4) might not work for retrograde orbits
+	
+	double X_min = 0;
+	double X_max = 2.*M_PI;
+	while (X_max-X_min>1e-17){
+		double X = (X_max + X_min)/2.;
+		double s= r0*X + eta*integrator_G(2,beta,X) + zeta*integrator_G(3,beta,X)-dt;
+		if (s<0.){
+			X_min = X;
+		}else{
+			X_max = X;
+		}
+	}
+	double X = X_min;
+
+	FILE* f = fopen("tmp.txt","w");
+	fclose(f);
+	exit(0);
+
+	
+}
+
 
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
 void integrator_part1(){
+	kepler_step();
 	printf("\n C(t)=%f",c_n_series(2,t));
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
