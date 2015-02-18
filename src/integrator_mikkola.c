@@ -112,9 +112,9 @@ void kepler_step(int i){
 	double zeta = M - beta*r0;
 	
 
-	double X = 0;
+	double X = 0;  // TODO: find a better initial estimate.
 	double G1,G2,G3;
-	do{
+	for (int n_hg=0;n_hg<20;n_hg++){
 		G2 = integrator_G(2,beta,X);
 		G3 = integrator_G(3,beta,X);
 		G1 = X-beta*G3;
@@ -127,7 +127,7 @@ void kepler_step(int i){
 		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
 		X+=dX;
 		if (fabs(dX/X)<1e-15) break; // TODO: Make sure loop does not get stuck (add maximum number of iterations) 
-	}while (1);
+	}
 
 	double r = r0 + eta*G1 + zeta*G2;
 	double f = 1.-M*G2/r0;
@@ -148,7 +148,40 @@ void kepler_step(int i){
 
 void integrator_part1(){
 }
+void integrator_to_jacobi(){
+	double M = 0.;
+	double capx  = 0.; 
+	double capy  = 0.; 
+	double capz  = 0.; 
+	double capvx = 0.; 
+	double capvy = 0.; 
+	double capvz = 0.; 
+
+	for (int i=0;i<N;i++){
+		double m = particles[i].m;
+		M += m;
+		if (i>0){
+			particles[i].x  -= capx;
+			particles[i].y  -= capy;
+			particles[i].z  -= capz;
+			particles[i].vx -= capvx;
+			particles[i].vy -= capvy;
+			particles[i].vz -= capvz;
+		}
+		capx  = (capx *M+particles[i].x* m)/M;
+		capy  = (capy *M+particles[i].y* m)/M;
+		capz  = (capz *M+particles[i].z* m)/M;
+		capvx = (capvx*M+particles[i].vx*m)/M;
+		capvy = (capvy*M+particles[i].vy*m)/M;
+		capvz = (capvz*M+particles[i].vz*m)/M;
+	}
+}
+void integrator_to_heliocentric(){
+}
+
 void integrator_part2(){
+	integrator_to_jacobi();
+	integrator_to_heliocentric();
 	for (int i=1;i<N;i++){
 		kepler_step(i);
 	}
