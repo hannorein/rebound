@@ -148,7 +148,69 @@ void kepler_step(int i){
 
 void integrator_part1(){
 }
+
+struct particle* p_j = NULL;
+double* eta = NULL;
+double* m_j = NULL;
+
 void integrator_to_jacobi(){
+	if (p_j==NULL){
+		p_j = malloc(sizeof(struct particle)*N);
+		eta = malloc(sizeof(double)*N);
+		m_j = malloc(sizeof(double)*N);
+	}
+	eta[0] = particles[0].m;
+	for (int i=1;i<N;i++){
+		eta[i] = eta[i-1] + particles[i].m;
+	}
+	m_j[0] = eta[N-1];
+	for (int i=1;i<N;i++){
+		m_j[i] = eta[i-1]/eta[i]*particles[i].m;
+	}
+
+	p_j[0].x = 0.;
+	p_j[0].y = 0.;
+	p_j[0].z = 0.;
+	for (int j=0;j<N;j++){
+		p_j[0].x += 1./eta[N-1] * particles[j].m * particles[j].x;
+		p_j[0].y += 1./eta[N-1] * particles[j].m * particles[j].y;
+		p_j[0].z += 1./eta[N-1] * particles[j].m * particles[j].z;
+	}
+	for (int i=1;i<N;i++){
+		p_j[i].x = particles[i].x;
+		p_j[i].y = particles[i].y;
+		p_j[i].z = particles[i].z;
+		for (int j=0;j<i;j++){
+			p_j[i].x -= 1./eta[i] * particles[j].m * particles[j].x;
+			p_j[i].y -= 1./eta[i] * particles[j].m * particles[j].y;
+			p_j[i].z -= 1./eta[i] * particles[j].m * particles[j].z;
+		}
+	}
+
+
+	p_j[0].vx = 0.;
+	p_j[0].vy = 0.;
+	p_j[0].vz = 0.;
+	for (int j=0;j<N;j++){
+		p_j[0].vx += 1./m_j[0] * particles[j].m * particles[j].vx;
+		p_j[0].vy += 1./m_j[0] * particles[j].m * particles[j].vy;
+		p_j[0].vz += 1./m_j[0] * particles[j].m * particles[j].vz;
+	}
+	for (int i=1;i<N;i++){
+		p_j[i].vx = eta[i-1]/eta[i] * particles[i].m * particles[i].vx;
+		p_j[i].vy = eta[i-1]/eta[i] * particles[i].m * particles[i].vy;
+		p_j[i].vz = eta[i-1]/eta[i] * particles[i].m * particles[i].vz;
+		for (int j=0;j<i;j++){
+			p_j[i].x -= particles[i].m/eta[i] * particles[j].m * particles[j].vx;
+			p_j[i].y -= particles[i].m/eta[i] * particles[j].m * particles[j].vy;
+			p_j[i].z -= particles[i].m/eta[i] * particles[j].m * particles[j].vz;
+		}
+		p_j[i].vx /= m_j[i];
+		p_j[i].vy /= m_j[i];
+		p_j[i].vz /= m_j[i];
+	}
+
+
 	double M = 0.;
 	double capx  = 0.; 
 	double capy  = 0.; 
