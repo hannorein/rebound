@@ -168,15 +168,49 @@ void integrator_to_jacobi(){
 			particles[i].vy -= capvy;
 			particles[i].vz -= capvz;
 		}
-		capx  = (capx *M+particles[i].x* m)/M;
-		capy  = (capy *M+particles[i].y* m)/M;
-		capz  = (capz *M+particles[i].z* m)/M;
-		capvx = (capvx*M+particles[i].vx*m)/M;
-		capvy = (capvy*M+particles[i].vy*m)/M;
-		capvz = (capvz*M+particles[i].vz*m)/M;
+		capx  += particles[i].x* m/M;
+		capy  += particles[i].y* m/M;
+		capz  += particles[i].z* m/M;
+		capvx += particles[i].vx*m/M;
+		capvy += particles[i].vy*m/M;
+		capvz += particles[i].vz*m/M;
 	}
 }
 void integrator_to_heliocentric(){
+	double M = 0.;
+	double capx  = 0.; 
+	double capy  = 0.; 
+	double capz  = 0.; 
+	double capvx = 0.; 
+	double capvy = 0.; 
+	double capvz = 0.; 
+	for (int i=0;i<N;i++){
+		double m = particles[i].m;
+		M += m;
+		capx  += particles[i].x* m/M;  
+		capy  += particles[i].y* m/M;
+		capz  += particles[i].z* m/M;
+		capvx += particles[i].vx*m/M;
+		capvy += particles[i].vy*m/M;
+		capvz += particles[i].vz*m/M;
+	}
+	for (int i=N-1;i>0;i--){
+		double m = particles[i].m;
+		capx  -= particles[i].x* m/M; 
+		capy  -= particles[i].y* m/M;
+		capz  -= particles[i].z* m/M;
+		capvx -= particles[i].vx*m/M;
+		capvy -= particles[i].vy*m/M;
+		capvz -= particles[i].vz*m/M;
+		M -= m;
+			
+		particles[i].x  += capx;
+		particles[i].y  += capy;
+		particles[i].z  += capz;
+		particles[i].vx += capvx;
+		particles[i].vy += capvy;
+		particles[i].vz += capvz;
+	}
 }
 
 void integrator_part2(){
