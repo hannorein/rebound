@@ -50,17 +50,35 @@ void problem_init(int argc, char* argv[]){
 	p.x  = 0; p.y  = 0; p.z  = 0; 
 	p.vx = 0; p.vy = 0; p.vz = 0;
 	p.ax = 0; p.ay = 0; p.az = 0;
-	p.m  = 1;		// in Solar Masses
+	p.m  = 1.;		// in Solar Masses
 	particles_add(p); 
 	
-	int _N = 100; // Number of test particles
+	int _N = 10; // Number of test particles
 	if(argc>1){
 		_N = atoi(argv[1]);
 	}
 
+	{
+	struct particle p; 
+	p.x  = 1; p.y  = 1; p.z  = 0; 
+	p.vx = 0; p.vy = 0; p.vz = 0;
+	p.ax = 0; p.ay = 0; p.az = 0;
+	p.m  = 0.1;	
+//	particles_add(p); 
+	}
+	
+	{
+	struct particle p; 
+	p.x  = 2; p.y  = 1; p.z  = 1; 
+	p.vx = 0; p.vy = 0; p.vz = 0;
+	p.ax = 0; p.ay = 0; p.az = 0;
+	p.m  = 0.1;	
+//	particles_add(p); 
+	}
+
 	double eccentricity = 0.4;
 	for(int n=0; n<_N; n++){
-		struct particle p = tools_init_orbit2d(1., 0., 1., eccentricity, 0.,2.*M_PI/(double)(_N)*(double)(n));
+		struct particle p = tools_init_orbit2d(1., 1e-3, 1., eccentricity, 0.,2.*M_PI/(double)(_N)*(double)(n));
 		particles_add(p); // Test particle
 	}
 }
