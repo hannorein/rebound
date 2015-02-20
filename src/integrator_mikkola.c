@@ -107,7 +107,8 @@ double* eta = NULL;
 double* m_j = NULL;
 
 void kepler_step(int i){
-	double M = G*eta[i]/eta[i-1]*particles[0].m;
+	double M = G*(eta[i]/eta[i-1]*particles[0].m);
+	printf("\n %d %e\n",i,M);
 	struct particle p1 = p_j[i];
 
 	double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
@@ -216,18 +217,18 @@ void integrator_to_jacobi(){
 
 }
 void integrator_to_heliocentric(){
-	particles[0].x = p_j[0].x;
-	particles[0].y = p_j[0].y;
-	particles[0].z = p_j[0].z;
+	particles[0].x = p_jn[0].x;
+	particles[0].y = p_jn[0].y;
+	particles[0].z = p_jn[0].z;
 	for (int j=1;j<N;j++){
 		particles[0].x -= particles[j].m/eta[j]*p_jn[j].x;
 		particles[0].y -= particles[j].m/eta[j]*p_jn[j].y;
 		particles[0].z -= particles[j].m/eta[j]*p_jn[j].z;
 	}
 	for (int i=1;i<N;i++){
-		particles[i].x = p_j[0].x + eta[i-1]/eta[i] * p_jn[i].x;
-		particles[i].y = p_j[0].y + eta[i-1]/eta[i] * p_jn[i].y;
-		particles[i].z = p_j[0].z + eta[i-1]/eta[i] * p_jn[i].z;
+		particles[i].x = p_jn[0].x + eta[i-1]/eta[i] * p_jn[i].x;
+		particles[i].y = p_jn[0].y + eta[i-1]/eta[i] * p_jn[i].y;
+		particles[i].z = p_jn[0].z + eta[i-1]/eta[i] * p_jn[i].z;
 		for (int j=i+1;j<N;j++){
 			particles[i].x -= particles[j].m/eta[j] * p_jn[j].x;
 			particles[i].y -= particles[j].m/eta[j] * p_jn[j].y;
@@ -263,11 +264,17 @@ void integrator_to_heliocentric(){
 
 void integrator_part2(){
 	integrator_to_jacobi();
-	// DEBGUG
-	p_jn = p_j;
+	
 	for (int i=1;i<N;i++){
 		kepler_step(i);
 	}
+	p_jn[0].x = p_j[0].x + dt*p_j[0].vx;
+	p_jn[0].y = p_j[0].y + dt*p_j[0].vy;
+	p_jn[0].z = p_j[0].z + dt*p_j[0].vz;
+	p_jn[0].vx = p_j[0].vx;
+	p_jn[0].vy = p_j[0].vy;
+	p_jn[0].vz = p_j[0].vz;
+	
 	integrator_to_heliocentric();
 	t+=dt;
 }

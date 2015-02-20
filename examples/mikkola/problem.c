@@ -38,9 +38,8 @@
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= 1e-3;	// in year/(2*pi)
+	dt 		= 1e-2;	// in year/(2*pi)
 	boxsize 	= 3;	// in AU
-	N_active 	= 1; 	// Only star has non-zero mass. If all particles have mass, delete this line.
 	init_box();
 
 	// Initial conditions
@@ -48,9 +47,9 @@ void problem_init(int argc, char* argv[]){
 	// The WH integrator assumes a heliocentric coordinate system. 
 	// Therefore the star has to be at the origin. 
 	p.x  = 0; p.y  = 0; p.z  = 0; 
-	p.vx = 0; p.vy = 0; p.vz = 0;
+	p.vx = 0; p.vy = -0.5; p.vz = 0;
 	p.ax = 0; p.ay = 0; p.az = 0;
-	p.m  = 1.;		// in Solar Masses
+	p.m  = 0.5;		// in Solar Masses
 	particles_add(p); 
 	
 	int _N = 10; // Number of test particles
@@ -60,26 +59,26 @@ void problem_init(int argc, char* argv[]){
 
 	{
 	struct particle p; 
-	p.x  = 1; p.y  = 1; p.z  = 0; 
-	p.vx = 0; p.vy = 0; p.vz = 0;
+	p.x  = 1; p.y  = 0; p.z  = 0; 
+	p.vx = 0.; p.vy = 0.5; p.vz = 0;
 	p.ax = 0; p.ay = 0; p.az = 0;
-	p.m  = 0.1;	
-//	particles_add(p); 
+	p.m  = .5;	
+	particles_add(p); 
 	}
 	
 	{
 	struct particle p; 
-	p.x  = 2; p.y  = 1; p.z  = 1; 
-	p.vx = 0; p.vy = 0; p.vz = 0;
+	p.x  = 4; p.y  = 0; p.z  = 0; 
+	p.vx = 0; p.vy = sqrt(1./3.5); p.vz = 0;
 	p.ax = 0; p.ay = 0; p.az = 0;
-	p.m  = 0.1;	
-//	particles_add(p); 
+	p.m  = .0105;	
+	particles_add(p); 
 	}
 
 	double eccentricity = 0.4;
 	for(int n=0; n<_N; n++){
 		struct particle p = tools_init_orbit2d(1., 1e-3, 1., eccentricity, 0.,2.*M_PI/(double)(_N)*(double)(n));
-		particles_add(p); // Test particle
+//		particles_add(p); // Test particle
 	}
 }
 
