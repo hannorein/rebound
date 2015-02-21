@@ -156,7 +156,6 @@ void integrator_part1(){
 
 
 void integrator_to_jacobi(){
-
 	p_j[0].x = 0.;
 	p_j[0].y = 0.;
 	p_j[0].z = 0.;
@@ -198,9 +197,8 @@ void integrator_to_jacobi(){
 		p_j[i].vy /= m_j[i];
 		p_j[i].vz /= m_j[i];
 	}
-
-
 }
+
 void integrator_to_heliocentric(){
 	particles[0].x = p_j[0].x;
 	particles[0].y = p_j[0].y;
@@ -298,14 +296,14 @@ void integrator_part2(){
 		p_j = malloc(sizeof(struct particle)*N);
 		eta = malloc(sizeof(double)*N);
 		m_j = malloc(sizeof(double)*N);
-	}
-	eta[0] = particles[0].m;
-	for (int i=1;i<N;i++){
-		eta[i] = eta[i-1] + particles[i].m;
-	}
-	m_j[0] = eta[N-1];
-	for (int i=1;i<N;i++){
-		m_j[i] = eta[i-1]/eta[i]*particles[i].m;
+		eta[0] = particles[0].m;
+		for (int i=1;i<N;i++){
+			eta[i] = eta[i-1] + particles[i].m;
+		}
+		m_j[0] = eta[N-1];
+		for (int i=1;i<N;i++){
+			m_j[i] = eta[i-1]/eta[i]*particles[i].m;
+		}
 	}
 
 

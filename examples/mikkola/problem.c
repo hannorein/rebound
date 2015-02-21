@@ -80,6 +80,7 @@ void problem_init(int argc, char* argv[]){
 		struct particle p = tools_init_orbit2d(1., 1e-3, 1., eccentricity, 0.,2.*M_PI/(double)(_N)*(double)(n));
 //		particles_add(p); // Test particle
 	}
+	tools_move_to_center_of_momentum();
 }
 
 void problem_output(){
