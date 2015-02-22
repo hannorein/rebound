@@ -218,13 +218,13 @@ void integrator_to_heliocentric(){
 			particles[i].z -= particles[j].m/eta[j] * p_j[j].z;
 		}
 	}
-	particles[0].vx = particles[0].m/eta[N-1] * p_j[0].vx*m_j[0];
-	particles[0].vy = particles[0].m/eta[N-1] * p_j[0].vy*m_j[0];
-	particles[0].vz = particles[0].m/eta[N-1] * p_j[0].vz*m_j[0];
+	particles[0].vx = p_j[0].vx*m_j[N-1];
+	particles[0].vy = p_j[0].vy*m_j[N-1];
+	particles[0].vz = p_j[0].vz*m_j[N-1];
 	for (int j=1;j<N;j++){
-		particles[0].vx -= particles[0].m/eta[j-1]*p_j[j].vx*m_j[j];
-		particles[0].vy -= particles[0].m/eta[j-1]*p_j[j].vy*m_j[j];
-		particles[0].vz -= particles[0].m/eta[j-1]*p_j[j].vz*m_j[j];
+		particles[0].vx -= p_j[j].vx*m_j[j];
+		particles[0].vy -= p_j[j].vy*m_j[j];
+		particles[0].vz -= p_j[j].vz*m_j[j];
 	}
 	particles[0].vx /= particles[0].m;
 	particles[0].vy /= particles[0].m;
@@ -245,49 +245,47 @@ void integrator_to_heliocentric(){
 	}
 }
 
-void acceleration_jacobi(double _dt){
+void acceleration_jacobi(){
 	for (int i=1;i<N;i++){
 		// Eq 132
-		double rj3 = pow(p_j[i].x*p_j[i].x+p_j[i].y*p_j[i].y+p_j[i].z*p_j[i].z,3./2.);
-		p_j[i].vx += _dt * G*eta[i]/rj3 * p_j[i].x;
-		p_j[i].vy += _dt * G*eta[i]/rj3 * p_j[i].y;
-		p_j[i].vz += _dt * G*eta[i]/rj3 * p_j[i].z;
+		double rj3 = pow(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z,3./2.);
+		double M = G*(eta[i]);
+		p_j[i].ax = M/rj3 * p_j[i].x;
+		p_j[i].ay = M/rj3 * p_j[i].y;
+		p_j[i].az = M/rj3 * p_j[i].z;
 	}
 }
 
-void acceleration_heliocentric(double _dt){
+void acceleration_cartesian(double _dt){
 	for (int i=1;i<N;i++){
 		// Eq 132
-		particles[i].ax = 0.;
-		particles[i].ay = 0.;
-		particles[i].az = 0.;
 		for (int k=0;k<N;k++){
 			if (k!=i){
-				double rikx = particles[k].x-particles[i].x;
-				double riky = particles[k].y-particles[i].y;
-				double rikz = particles[k].z-particles[i].z;
+				double rikx = particles[i].x-particles[k].x;
+				double riky = particles[i].y-particles[k].y;
+				double rikz = particles[i].z-particles[k].z;
 				double rik3 = pow(rikx*rikx + riky*riky + rikz*rikz,3./2.);
-				particles[i].ax += G*particles[k].m/rik3 * rikx;
-				particles[i].ay += G*particles[k].m/rik3 * riky;
-				particles[i].az += G*particles[k].m/rik3 * rikz;
+				p_j[i].ax -= G*particles[k].m/rik3 * rikx;
+				p_j[i].ay -= G*particles[k].m/rik3 * riky;
+				p_j[i].az -= G*particles[k].m/rik3 * rikz;
 			}
 		}
 		for (int j=0;j<i;j++){
 			for (int k=0;k<N;k++){
 				if (k!=j){
-					double rjkx = particles[k].x-particles[j].x;
-					double rjky = particles[k].y-particles[j].y;
-					double rjkz = particles[k].z-particles[j].z;
+					double rjkx = particles[j].x-particles[k].x;
+					double rjky = particles[j].y-particles[k].y;
+					double rjkz = particles[j].z-particles[k].z;
 					double rjk3 = pow(rjkx*rjkx + rjky*rjky + rjkz*rjkz,3./2.);
-					particles[i].ax += 1./eta[i-1]*G*particles[j].m*particles[k].m/rjk3 * rjkx;
-					particles[i].ay += 1./eta[i-1]*G*particles[j].m*particles[k].m/rjk3 * rjky;
-					particles[i].az += 1./eta[i-1]*G*particles[j].m*particles[k].m/rjk3 * rjkz;
+					p_j[i].ax += 1./eta[i-1]*G*particles[j].m*particles[k].m/rjk3 * rjkx;
+					p_j[i].ay += 1./eta[i-1]*G*particles[j].m*particles[k].m/rjk3 * rjky;
+					p_j[i].az += 1./eta[i-1]*G*particles[j].m*particles[k].m/rjk3 * rjkz;
 				}
 			}
 		}
-		particles[i].vx += _dt * particles[i].ax;
-		particles[i].vy += _dt * particles[i].ay;
-		particles[i].vz += _dt * particles[i].az;
+		p_j[i].vx += _dt * p_j[i].ax;
+		p_j[i].vy += _dt * p_j[i].ay;
+		p_j[i].vz += _dt * p_j[i].az;
 	}
 }
 
@@ -309,20 +307,21 @@ void integrator_part2(){
 
 
 
-	acceleration_heliocentric(dt/2.);
 	integrator_to_jacobi();
-	acceleration_jacobi(dt/2.);
+	acceleration_jacobi();
+	acceleration_cartesian(dt/2.);
 
-	for (int i=1;i<N;i++){
+	for (int i=N-1;i>0;i--){
 		kepler_step(i);
 	}
 	p_j[0].x += dt*p_j[0].vx;
 	p_j[0].y += dt*p_j[0].vy;
 	p_j[0].z += dt*p_j[0].vz;
 
-	acceleration_jacobi(dt/2.);
 	integrator_to_heliocentric();
-	acceleration_heliocentric(dt/2.);
+	acceleration_jacobi();
+	acceleration_cartesian(dt/2.);
+	integrator_to_heliocentric();
 
 	t+=dt;
 }
