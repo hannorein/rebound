@@ -104,7 +104,7 @@ double integrator_G(unsigned int n, double beta, double X){
 struct particle* p_j  = NULL;
 double* eta = NULL;
 
-void kepler_step(int i){
+void kepler_step(int i,double _dt){
 	//double M = G*(eta[i]);
 	double M = G*(eta[i]/eta[i-1]*particles[0].m);
 	struct particle p1 = p_j[i];
@@ -122,7 +122,7 @@ void kepler_step(int i){
 		G2 = integrator_G(2,beta,X);
 		G3 = integrator_G(3,beta,X);
 		G1 = X-beta*G3;
-		double s   = r0*X + eta_*G2 + zeta*G3-dt;
+		double s   = r0*X + eta_*G2 + zeta*G3-_dt;
 		double sp  = r0 + eta_*G1 + zeta*G2;
 		double dX  = -s/sp; // Newton's method
 		
@@ -135,7 +135,7 @@ void kepler_step(int i){
 
 	double r = r0 + eta_*G1 + zeta*G2;
 	double f = 1.-M*G2/r0;
-	double g = dt - M*G3;
+	double g = _dt - M*G3;
 	double fd = -M*G1/(r0*r); 
 	double gd = 1.-M*G2/r; 
 
@@ -149,9 +149,6 @@ void kepler_step(int i){
 
 }
 
-
-void integrator_part1(){
-}
 
 
 void integrator_to_jacobi(){
@@ -239,20 +236,7 @@ void integrator_interaction(double _dt){
 		//double M = G*(eta[i]);
 		double M = G*(eta[i]/eta[i-1]*particles[0].m);
 		double prefac1 = M/rj3;
-		p_j[i].ax = prefac1 * p_j[i].x;
-		p_j[i].ay = prefac1 * p_j[i].y;
-		p_j[i].az = prefac1 * p_j[i].z;
 		for (int k=0;k<N;k++){
-			if (k!=i){
-				double rikx = particles[i].x-particles[k].x;
-				double riky = particles[i].y-particles[k].y;
-				double rikz = particles[i].z-particles[k].z;
-				double rik3 = pow(rikx*rikx + riky*riky + rikz*rikz,3./2.);
-				double prefac = G*particles[k].m/rik3;
-				p_j[i].ax -= prefac * rikx;
-				p_j[i].ay -= prefac * riky;
-				p_j[i].az -= prefac * rikz;
-			}
 			if (k+1!=i){
 				double rjkx = particles[i-1].x-particles[k].x;
 				double rjky = particles[i-1].y-particles[k].y;
@@ -264,16 +248,13 @@ void integrator_interaction(double _dt){
 				s_z += prefac * rjkz;
 			}
 		}
-		p_j[i].ax += s_x/eta[i-1];
-		p_j[i].ay += s_y/eta[i-1];
-		p_j[i].az += s_z/eta[i-1];
-		p_j[i].vx += _dt * p_j[i].ax;
-		p_j[i].vy += _dt * p_j[i].ay;
-		p_j[i].vz += _dt * p_j[i].az;
+		p_j[i].vx += _dt * (particles[i].ax + prefac1*p_j[i].x + s_x/eta[i-1]);
+		p_j[i].vy += _dt * (particles[i].ay + prefac1*p_j[i].y + s_y/eta[i-1]);
+		p_j[i].vz += _dt * (particles[i].az + prefac1*p_j[i].z + s_z/eta[i-1]);
 	}
 }
 
-void integrator_part2(){
+void integrator_part1(){
 	if (p_j==NULL){
 		p_j = malloc(sizeof(struct particle)*N);
 		eta = malloc(sizeof(double)*N);
@@ -282,22 +263,31 @@ void integrator_part2(){
 			eta[i] = eta[i-1] + particles[i].m;
 		}
 	}
-
 	integrator_to_jacobi();
-	integrator_interaction(dt/2.);
 
 	for (int i=1;i<N;i++){
-		kepler_step(i);
+		kepler_step(i, dt/2.);
 	}
-	p_j[0].x += dt*p_j[0].vx;
-	p_j[0].y += dt*p_j[0].vy;
-	p_j[0].z += dt*p_j[0].vz;
+	p_j[0].x += dt/2.*p_j[0].vx;
+	p_j[0].y += dt/2.*p_j[0].vy;
+	p_j[0].z += dt/2.*p_j[0].vz;
+	
+	integrator_to_heliocentric_positiononly(); // assumes force not velocity dependent
+	t+=dt/2.;
+}
 
-	integrator_to_heliocentric_positiononly();
-	integrator_interaction(dt/2.);
+void integrator_part2(){
+	integrator_interaction(dt);
+
+	for (int i=1;i<N;i++){
+		kepler_step(i, dt/2.);
+	}
+	p_j[0].x += dt/2.*p_j[0].vx;
+	p_j[0].y += dt/2.*p_j[0].vy;
+	p_j[0].z += dt/2.*p_j[0].vz;
+
+	t+=dt/2.;
 	integrator_to_heliocentric();
-
-	t+=dt;
 }
 	
 
