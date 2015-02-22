@@ -36,9 +36,12 @@
 #include "particle.h"
 #include "boundaries.h"
 
+double energy();
+double energy_init;
+
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= 1e-2;	// in year/(2*pi)
+	dt 		= 1e-3;	// in year/(2*pi)
 	boxsize 	= 3;	// in AU
 	init_box();
 
@@ -71,7 +74,7 @@ void problem_init(int argc, char* argv[]){
 	p.x  = 4; p.y  = 0; p.z  = 0; 
 	p.vx = 0; p.vy = sqrt(1./3.5); p.vz = 0;
 	p.ax = 0; p.ay = 0; p.az = 0;
-	p.m  = .0105;	
+	p.m  = .00105;	
 	particles_add(p); 
 	}
 
@@ -80,11 +83,30 @@ void problem_init(int argc, char* argv[]){
 		struct particle p = tools_init_orbit2d(1., 1e-3, 1., eccentricity, 0.,2.*M_PI/(double)(_N)*(double)(n));
 //		particles_add(p); // Test particle
 	}
-	tools_move_to_center_of_momentum();
+//	tools_move_to_center_of_momentum();
+	energy_init = energy();
+}
+double energy(){
+	double e_kin = 0.;
+	double e_pot = 0.;
+	for (int i=0;i<N;i++){
+		struct particle pi = particles[i];
+		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
+		for (int j=i+1;j<N;j++){
+			struct particle pj = particles[j];
+			double dx = pi.x - pj.x;
+			double dy = pi.y - pj.y;
+			double dz = pi.z - pj.z;
+			e_pot -= G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
+		}
+	}
+	return e_kin +e_pot;
 }
 
 void problem_output(){
 	output_timing();
+	double e = energy();
+	printf("\t DeltaE/E = %e", fabs((e-energy_init)/energy_init));
 }
 
 void problem_finish(){

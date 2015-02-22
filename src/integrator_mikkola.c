@@ -106,8 +106,8 @@ double* eta = NULL;
 double* m_j = NULL;
 
 void kepler_step(int i){
-	double M = G*(eta[i]);
-	printf("\n %d %e\n",i,M);
+	//double M = G*(eta[i]);
+	double M = G*(eta[i]/eta[i-1]*particles[0].m);
 	struct particle p1 = p_j[i];
 
 	double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
@@ -218,30 +218,27 @@ void integrator_to_heliocentric(){
 			particles[i].z -= particles[j].m/eta[j] * p_j[j].z;
 		}
 	}
-	particles[0].vx = p_j[0].vx*m_j[N-1];
-	particles[0].vy = p_j[0].vy*m_j[N-1];
-	particles[0].vz = p_j[0].vz*m_j[N-1];
+	particles[0].vx = p_j[0].vx;
+	particles[0].vy = p_j[0].vy;
+	particles[0].vz = p_j[0].vz;
 	for (int j=1;j<N;j++){
-		particles[0].vx -= p_j[j].vx*m_j[j];
-		particles[0].vy -= p_j[j].vy*m_j[j];
-		particles[0].vz -= p_j[j].vz*m_j[j];
+		particles[0].vx -= p_j[j].vx/eta[j-1]*m_j[j];
+		particles[0].vy -= p_j[j].vy/eta[j-1]*m_j[j];
+		particles[0].vz -= p_j[j].vz/eta[j-1]*m_j[j];
 	}
-	particles[0].vx /= particles[0].m;
-	particles[0].vy /= particles[0].m;
-	particles[0].vz /= particles[0].m;
+//	printf( "\n                           %f %f %f\n",p_j[0].vx,p_j[0].vy,p_j[0].vz);
+//	printf( "\n                           %f %f %f\n",particles[0].vx,particles[0].vy,particles[0].vz);
+//	exit(0);
 
 	for (int i=1;i<N;i++){
-		particles[i].vx = particles[i].m/eta[N-1] * p_j[0].vx*m_j[0] + p_j[i].vx*m_j[i];
-		particles[i].vy = particles[i].m/eta[N-1] * p_j[0].vy*m_j[0] + p_j[i].vy*m_j[i];
-		particles[i].vz = particles[i].m/eta[N-1] * p_j[0].vz*m_j[0] + p_j[i].vz*m_j[i];
+		particles[i].vx = p_j[0].vx + p_j[i].vx*m_j[i]/particles[i].m;
+		particles[i].vy = p_j[0].vy + p_j[i].vy*m_j[i]/particles[i].m;
+		particles[i].vz = p_j[0].vz + p_j[i].vz*m_j[i]/particles[i].m;
 		for (int j=i+1;j<N;j++){
-			particles[i].vx -= particles[i].m/eta[j-1]*p_j[j].vx*m_j[j];
-			particles[i].vy -= particles[i].m/eta[j-1]*p_j[j].vy*m_j[j];
-			particles[i].vz -= particles[i].m/eta[j-1]*p_j[j].vz*m_j[j];
+			particles[i].vx -= 1./eta[j-1]*p_j[j].vx*m_j[j];
+			particles[i].vy -= 1./eta[j-1]*p_j[j].vy*m_j[j];
+			particles[i].vz -= 1./eta[j-1]*p_j[j].vz*m_j[j];
 		}
-		particles[i].vx /= particles[i].m;
-		particles[i].vy /= particles[i].m;
-		particles[i].vz /= particles[i].m;
 	}
 }
 
@@ -249,7 +246,8 @@ void acceleration_jacobi(){
 	for (int i=1;i<N;i++){
 		// Eq 132
 		double rj3 = pow(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z,3./2.);
-		double M = G*(eta[i]);
+		//double M = G*(eta[i]);
+		double M = G*(eta[i]/eta[i-1]*particles[0].m);
 		p_j[i].ax = M/rj3 * p_j[i].x;
 		p_j[i].ay = M/rj3 * p_j[i].y;
 		p_j[i].az = M/rj3 * p_j[i].z;
@@ -305,6 +303,9 @@ void integrator_part2(){
 	}
 
 
+//	integrator_to_jacobi();
+//	integrator_to_heliocentric();
+//	return;
 
 
 	integrator_to_jacobi();
