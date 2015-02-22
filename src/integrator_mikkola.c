@@ -271,8 +271,12 @@ void integrator_part1(){
 	p_j[0].x += dt/2.*p_j[0].vx;
 	p_j[0].y += dt/2.*p_j[0].vy;
 	p_j[0].z += dt/2.*p_j[0].vz;
-	
-	integrator_to_heliocentric_positiononly(); // assumes force not velocity dependent
+
+	if (integrator_force_is_velocitydependent){
+		integrator_to_heliocentric();
+	}else{
+		integrator_to_heliocentric_positiononly();
+	}
 	t+=dt/2.;
 }
 
