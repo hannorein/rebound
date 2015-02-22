@@ -156,40 +156,32 @@ void integrator_part1(){
 
 
 void integrator_to_jacobi(){
-	double s_x = 0.;
-	double s_y = 0.;
-	double s_z = 0.;
+	double s_x = particles[0].m * particles[0].x;
+	double s_y = particles[0].m * particles[0].y;
+	double s_z = particles[0].m * particles[0].z;
 	for (int i=1;i<N;i++){
-		s_x += particles[i-1].m * particles[i-1].x;
-		s_y += particles[i-1].m * particles[i-1].y;
-		s_z += particles[i-1].m * particles[i-1].z;
 		p_j[i].x = particles[i].x - s_x/eta[i-1];
 		p_j[i].y = particles[i].y - s_y/eta[i-1];
 		p_j[i].z = particles[i].z - s_z/eta[i-1];
+		s_x += particles[i].m * particles[i].x;
+		s_y += particles[i].m * particles[i].y;
+		s_z += particles[i].m * particles[i].z;
 	}
-	s_x += particles[N-1].m * particles[N-1].x;
-	s_y += particles[N-1].m * particles[N-1].y;
-	s_z += particles[N-1].m * particles[N-1].z;
-	
 	p_j[0].x = s_x / eta[N-1];
 	p_j[0].y = s_y / eta[N-1];
 	p_j[0].z = s_z / eta[N-1];
 
-	double s_vx = 0.;
-	double s_vy = 0.;
-	double s_vz = 0.;
+	double s_vx = particles[0].m * particles[0].vx;
+	double s_vy = particles[0].m * particles[0].vy;
+	double s_vz = particles[0].m * particles[0].vz;
 	for (int i=1;i<N;i++){
-		s_vx += particles[i-1].m * particles[i-1].vx;
-		s_vy += particles[i-1].m * particles[i-1].vy;
-		s_vz += particles[i-1].m * particles[i-1].vz;
 		p_j[i].vx = particles[i].vx - s_vx/eta[i-1];
 		p_j[i].vy = particles[i].vy - s_vy/eta[i-1];
 		p_j[i].vz = particles[i].vz - s_vz/eta[i-1];
+		s_vx += particles[i].m * particles[i].vx;
+		s_vy += particles[i].m * particles[i].vy;
+		s_vz += particles[i].m * particles[i].vz;
 	}
-	s_vx += particles[N-1].m * particles[N-1].vx;
-	s_vy += particles[N-1].m * particles[N-1].vy;
-	s_vz += particles[N-1].m * particles[N-1].vz;
-
 	p_j[0].vx = s_vx / eta[N-1];
 	p_j[0].vy = s_vy / eta[N-1];
 	p_j[0].vz = s_vz / eta[N-1];
@@ -289,7 +281,7 @@ void integrator_part2(){
 	integrator_to_jacobi();
 	integrator_interaction(dt/2.);
 
-	for (int i=N-1;i>0;i--){
+	for (int i=1;i<N;i++){
 		kepler_step(i);
 	}
 	p_j[0].x += dt*p_j[0].vx;
