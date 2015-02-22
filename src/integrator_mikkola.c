@@ -156,14 +156,6 @@ void integrator_part1(){
 
 
 void integrator_to_jacobi(){
-	p_j[0].x = 0.;
-	p_j[0].y = 0.;
-	p_j[0].z = 0.;
-	for (int j=0;j<N;j++){
-		p_j[0].x += 1./eta[N-1] * particles[j].m * particles[j].x;
-		p_j[0].y += 1./eta[N-1] * particles[j].m * particles[j].y;
-		p_j[0].z += 1./eta[N-1] * particles[j].m * particles[j].z;
-	}
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
@@ -175,15 +167,14 @@ void integrator_to_jacobi(){
 		p_j[i].y = particles[i].y - s_y/eta[i-1];
 		p_j[i].z = particles[i].z - s_z/eta[i-1];
 	}
+	s_x += particles[N-1].m * particles[N-1].x;
+	s_y += particles[N-1].m * particles[N-1].y;
+	s_z += particles[N-1].m * particles[N-1].z;
+	
+	p_j[0].x = s_x / eta[N-1];
+	p_j[0].y = s_y / eta[N-1];
+	p_j[0].z = s_z / eta[N-1];
 
-	p_j[0].vx = 0.;
-	p_j[0].vy = 0.;
-	p_j[0].vz = 0.;
-	for (int j=0;j<N;j++){
-		p_j[0].vx += 1./eta[N-1] * particles[j].m * particles[j].vx;
-		p_j[0].vy += 1./eta[N-1] * particles[j].m * particles[j].vy;
-		p_j[0].vz += 1./eta[N-1] * particles[j].m * particles[j].vz;
-	}
 	double s_vx = 0.;
 	double s_vy = 0.;
 	double s_vz = 0.;
@@ -191,13 +182,17 @@ void integrator_to_jacobi(){
 		s_vx += particles[i-1].m * particles[i-1].vx;
 		s_vy += particles[i-1].m * particles[i-1].vy;
 		s_vz += particles[i-1].m * particles[i-1].vz;
-		p_j[i].vx = eta[i-1]/eta[i] * particles[i].m * particles[i].vx - s_vx * particles[i].m/eta[i];
-		p_j[i].vy = eta[i-1]/eta[i] * particles[i].m * particles[i].vy - s_vy * particles[i].m/eta[i];
-		p_j[i].vz = eta[i-1]/eta[i] * particles[i].m * particles[i].vz - s_vz * particles[i].m/eta[i];
-		p_j[i].vx /= m_j[i];
-		p_j[i].vy /= m_j[i];
-		p_j[i].vz /= m_j[i];
+		p_j[i].vx = particles[i].vx - s_vx/eta[i-1];
+		p_j[i].vy = particles[i].vy - s_vy/eta[i-1];
+		p_j[i].vz = particles[i].vz - s_vz/eta[i-1];
 	}
+	s_vx += particles[N-1].m * particles[N-1].vx;
+	s_vy += particles[N-1].m * particles[N-1].vy;
+	s_vz += particles[N-1].m * particles[N-1].vz;
+
+	p_j[0].vx = s_vx / eta[N-1];
+	p_j[0].vy = s_vy / eta[N-1];
+	p_j[0].vz = s_vz / eta[N-1];
 }
 
 void integrator_to_heliocentric(){
