@@ -112,7 +112,7 @@ void kepler_step(int i){
 	double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
 	double v2 =  p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz;
 	double beta = 2.*M/r0 - v2;
-	double eta = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
+	double eta_ = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
 	double zeta = M - beta*r0;
 	
 
@@ -122,18 +122,18 @@ void kepler_step(int i){
 		G2 = integrator_G(2,beta,X);
 		G3 = integrator_G(3,beta,X);
 		G1 = X-beta*G3;
-		double s   = r0*X + eta*G2 + zeta*G3-dt;
-		double sp  = r0 + eta*G1 + zeta*G2;
+		double s   = r0*X + eta_*G2 + zeta*G3-dt;
+		double sp  = r0 + eta_*G1 + zeta*G2;
 		double dX  = -s/sp; // Newton's method
 		
 		//double G0 = 1.-beta*G2;
-		//double spp = r0 + eta*G0 + zeta*G1;
+		//double spp = r0 + eta_*G0 + zeta*G1;
 		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
 		X+=dX;
 		if (fabs(dX/X)<1e-15) break; // TODO: Make sure loop does not get stuck (add maximum number of iterations) 
 	}
 
-	double r = r0 + eta*G1 + zeta*G2;
+	double r = r0 + eta_*G1 + zeta*G2;
 	double f = 1.-M*G2/r0;
 	double g = dt - M*G3;
 	double fd = -M*G1/(r0*r); 
