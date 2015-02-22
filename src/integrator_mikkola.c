@@ -103,7 +103,6 @@ double integrator_G(unsigned int n, double beta, double X){
 
 struct particle* p_j  = NULL;
 double* eta = NULL;
-double* m_j = NULL;
 
 void kepler_step(int i){
 	//double M = G*(eta[i]);
@@ -261,14 +260,9 @@ void integrator_part2(){
 	if (p_j==NULL){
 		p_j = malloc(sizeof(struct particle)*N);
 		eta = malloc(sizeof(double)*N);
-		m_j = malloc(sizeof(double)*N);
 		eta[0] = particles[0].m;
 		for (int i=1;i<N;i++){
 			eta[i] = eta[i-1] + particles[i].m;
-		}
-		m_j[0] = eta[N-1];
-		for (int i=1;i<N;i++){
-			m_j[i] = eta[i-1]/eta[i]*particles[i].m;
 		}
 	}
 
