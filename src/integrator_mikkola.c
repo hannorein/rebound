@@ -159,29 +159,26 @@ void integrator_to_jacobi(){
 	double s_x = particles[0].m * particles[0].x;
 	double s_y = particles[0].m * particles[0].y;
 	double s_z = particles[0].m * particles[0].z;
-	for (int i=1;i<N;i++){
-		p_j[i].x = particles[i].x - s_x/eta[i-1];
-		p_j[i].y = particles[i].y - s_y/eta[i-1];
-		p_j[i].z = particles[i].z - s_z/eta[i-1];
-		s_x += particles[i].m * particles[i].x;
-		s_y += particles[i].m * particles[i].y;
-		s_z += particles[i].m * particles[i].z;
-	}
-	p_j[0].x = s_x / eta[N-1];
-	p_j[0].y = s_y / eta[N-1];
-	p_j[0].z = s_z / eta[N-1];
-
 	double s_vx = particles[0].m * particles[0].vx;
 	double s_vy = particles[0].m * particles[0].vy;
 	double s_vz = particles[0].m * particles[0].vz;
 	for (int i=1;i<N;i++){
+		p_j[i].x = particles[i].x - s_x/eta[i-1];
+		p_j[i].y = particles[i].y - s_y/eta[i-1];
+		p_j[i].z = particles[i].z - s_z/eta[i-1];
 		p_j[i].vx = particles[i].vx - s_vx/eta[i-1];
 		p_j[i].vy = particles[i].vy - s_vy/eta[i-1];
 		p_j[i].vz = particles[i].vz - s_vz/eta[i-1];
+		s_x += particles[i].m * particles[i].x;
+		s_y += particles[i].m * particles[i].y;
+		s_z += particles[i].m * particles[i].z;
 		s_vx += particles[i].m * particles[i].vx;
 		s_vy += particles[i].m * particles[i].vy;
 		s_vz += particles[i].m * particles[i].vz;
 	}
+	p_j[0].x = s_x / eta[N-1];
+	p_j[0].y = s_y / eta[N-1];
+	p_j[0].z = s_z / eta[N-1];
 	p_j[0].vx = s_vx / eta[N-1];
 	p_j[0].vy = s_vy / eta[N-1];
 	p_j[0].vz = s_vz / eta[N-1];
@@ -191,29 +188,26 @@ void integrator_to_heliocentric(){
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
-	for (int i=N-1;i>0;i--){
-		particles[i].x = p_j[0].x + eta[i-1]/eta[i] * p_j[i].x - s_x;
-		particles[i].y = p_j[0].y + eta[i-1]/eta[i] * p_j[i].y - s_y;
-		particles[i].z = p_j[0].z + eta[i-1]/eta[i] * p_j[i].z - s_z;
-		s_x += particles[i].m/eta[i] * p_j[i].x;
-		s_y += particles[i].m/eta[i] * p_j[i].y;
-		s_z += particles[i].m/eta[i] * p_j[i].z;
-	}
-	particles[0].x = p_j[0].x - s_x;
-	particles[0].y = p_j[0].y - s_y;
-	particles[0].z = p_j[0].z - s_z;
-	
 	double s_vx = 0.;
 	double s_vy = 0.;
 	double s_vz = 0.;
 	for (int i=N-1;i>0;i--){
-		particles[i].vx = p_j[0].vx + p_j[i].vx*eta[i-1]/eta[i] - s_vx;
-		particles[i].vy = p_j[0].vy + p_j[i].vy*eta[i-1]/eta[i] - s_vy;
-		particles[i].vz = p_j[0].vz + p_j[i].vz*eta[i-1]/eta[i] - s_vz;
-		s_vx += m_j[i]/eta[i-1]*p_j[i].vx;
-		s_vy += m_j[i]/eta[i-1]*p_j[i].vy;
-		s_vz += m_j[i]/eta[i-1]*p_j[i].vz;
+		particles[i].x = p_j[0].x + eta[i-1]/eta[i] * p_j[i].x - s_x;
+		particles[i].y = p_j[0].y + eta[i-1]/eta[i] * p_j[i].y - s_y;
+		particles[i].z = p_j[0].z + eta[i-1]/eta[i] * p_j[i].z - s_z;
+		particles[i].vx = p_j[0].vx + eta[i-1]/eta[i] * p_j[i].vx- s_vx;
+		particles[i].vy = p_j[0].vy + eta[i-1]/eta[i] * p_j[i].vy- s_vy;
+		particles[i].vz = p_j[0].vz + eta[i-1]/eta[i] * p_j[i].vz- s_vz;
+		s_x += particles[i].m/eta[i] * p_j[i].x;
+		s_y += particles[i].m/eta[i] * p_j[i].y;
+		s_z += particles[i].m/eta[i] * p_j[i].z;
+		s_vx += particles[i].m/eta[i] * p_j[i].vx;
+		s_vy += particles[i].m/eta[i] * p_j[i].vy;
+		s_vz += particles[i].m/eta[i] * p_j[i].vz;
 	}
+	particles[0].x = p_j[0].x - s_x;
+	particles[0].y = p_j[0].y - s_y;
+	particles[0].z = p_j[0].z - s_z;
 	particles[0].vx = p_j[0].vx - s_vx;
 	particles[0].vy = p_j[0].vy - s_vy;
 	particles[0].vz = p_j[0].vz - s_vz;
