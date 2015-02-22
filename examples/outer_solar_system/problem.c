@@ -114,11 +114,8 @@ void problem_init(int argc, char* argv[]){
 }
 
 void problem_output(){
-	if (output_check(1000.*dt)){
+	if (output_check(10000.*dt)){
 		output_timing();
-	}
-	if (output_check(3652422.)){ 	// output heliocentric orbital elements every 10000 years
-		output_append_orbits("orbits.txt");
 	}
 }
 
