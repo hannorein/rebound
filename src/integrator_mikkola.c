@@ -212,6 +212,23 @@ void integrator_to_heliocentric(){
 	particles[0].vz = p_j[0].vz - s_vz;
 }
 
+void integrator_to_heliocentric_positiononly(){
+	double s_x = 0.;
+	double s_y = 0.;
+	double s_z = 0.;
+	for (int i=N-1;i>0;i--){
+		particles[i].x = p_j[0].x + eta[i-1]/eta[i] * p_j[i].x - s_x;
+		particles[i].y = p_j[0].y + eta[i-1]/eta[i] * p_j[i].y - s_y;
+		particles[i].z = p_j[0].z + eta[i-1]/eta[i] * p_j[i].z - s_z;
+		s_x += particles[i].m/eta[i] * p_j[i].x;
+		s_y += particles[i].m/eta[i] * p_j[i].y;
+		s_z += particles[i].m/eta[i] * p_j[i].z;
+	}
+	particles[0].x = p_j[0].x - s_x;
+	particles[0].y = p_j[0].y - s_y;
+	particles[0].z = p_j[0].z - s_z;
+}
+
 void integrator_interaction(double _dt){
 	double s_x = 0.;
 	double s_y = 0.;
@@ -236,7 +253,7 @@ void integrator_interaction(double _dt){
 				p_j[i].ay -= prefac * riky;
 				p_j[i].az -= prefac * rikz;
 			}
-			if (k!=i-1){
+			if (k+1!=i){
 				double rjkx = particles[i-1].x-particles[k].x;
 				double rjky = particles[i-1].y-particles[k].y;
 				double rjkz = particles[i-1].z-particles[k].z;
@@ -276,7 +293,7 @@ void integrator_part2(){
 	p_j[0].y += dt*p_j[0].vy;
 	p_j[0].z += dt*p_j[0].vz;
 
-	integrator_to_heliocentric();
+	integrator_to_heliocentric_positiononly();
 	integrator_interaction(dt/2.);
 	integrator_to_heliocentric();
 
