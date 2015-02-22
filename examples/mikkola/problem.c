@@ -41,7 +41,7 @@ double energy_init;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= 1e-3;	// in year/(2*pi)
+	dt 		= 1e-1;	// in year/(2*pi)
 	boxsize 	= 3;	// in AU
 	init_box();
 
@@ -71,10 +71,19 @@ void problem_init(int argc, char* argv[]){
 	
 	{
 	struct particle p; 
-	p.x  = 4; p.y  = 0; p.z  = 0; 
-	p.vx = 0; p.vy = sqrt(1./3.5); p.vz = 0;
+	p.x  = 3; p.y  = 0; p.z  = 0; 
+	p.m  = .105;	
+	p.vx = 0; p.vy = sqrt((1.+p.m)/2.5); p.vz = 0;
 	p.ax = 0; p.ay = 0; p.az = 0;
-	p.m  = .00105;	
+	particles_add(p); 
+	}
+	
+	{
+	struct particle p; 
+	p.x  = 6; p.y  = 0; p.z  = 0; 
+	p.m  = .105;	
+	p.vx = 0; p.vy = sqrt((1.105+p.m)/5.5); p.vz = 0;
+	p.ax = 0; p.ay = 0; p.az = 0;
 	particles_add(p); 
 	}
 
@@ -106,7 +115,9 @@ double energy(){
 void problem_output(){
 	output_timing();
 	double e = energy();
-	printf("\t DeltaE/E = %e", fabs((e-energy_init)/energy_init));
+	//FILE* f = fopen("energy.txt","a");
+	printf(" %e\n", fabs((e-energy_init)/energy_init));
+	//fclose(f);
 }
 
 void problem_finish(){
