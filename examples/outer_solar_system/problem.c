@@ -43,7 +43,6 @@
 #include "tools.h"
 #include "particle.h"
 #include "boundaries.h"
-#include "integrator.h"
 
 double ss_pos[6][3] = 
 {
@@ -105,7 +104,7 @@ void problem_init(int argc, char* argv[]){
 #else
 	tools_move_to_center_of_momentum();
 #endif // INTEGRATOR_WH
-	integrator_megno_init(1e-16);
+	tools_megno_init(1e-16);
 	e_init = energy();
 	system("rm -f energy.txt");
 	system("rm -f pos.txt");
@@ -129,14 +128,14 @@ double energy(){
 }
 
 void problem_output(){
-	//if (output_check(1000.*dt)){
+	if (output_check(1000.)){
 		output_timing();
 		FILE* f = fopen("energy.txt","a");
 		double e = energy();
-		fprintf(f,"%e %e\n",t, fabs((e-e_init)/e_init));
+		fprintf(f,"%e %e %e\n",t, fabs((e-e_init)/e_init), tools_megno());
 		fclose(f);
-		printf("  Y = %.3f",integrator_megno());
-	//}
+		printf("  Y = %.3f",tools_megno());
+	}
 }
 
 void problem_finish(){
