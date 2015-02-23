@@ -40,7 +40,7 @@ void additional_forces();
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= 20;			// initial timestep (in days)
+	dt 		= 0.0020;			// initial timestep (in days)
 	init_boxwidth(200); 		
 
 	// Initial conditions
@@ -56,16 +56,19 @@ void problem_init(int argc, char* argv[]){
 	problem_additional_forces 	= additional_forces;
 	// Add megno particles 
 	integrator_megno_init(1e-16);  // N = 6 after this function call. 
+	system("rm -f Y.txt");
 }
 
 void additional_forces(){
-	particles[1].ax += 0.001;
+	particles[1].ax += 0.01;
 }
 
 void problem_output(){
 	if (output_check(10.)){
 		output_timing();
-		printf("\n<Y> = %.2f\n",integrator_megno());
+		FILE* f = fopen("Y.txt","a+");
+		fprintf(f,"%e %e\n",t,integrator_megno());
+		fclose(f);
 	}
 }
 
