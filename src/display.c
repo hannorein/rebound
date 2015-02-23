@@ -210,7 +210,7 @@ void display(){
 	}
 	glEnable(GL_POINT_SMOOTH);
 	glVertexPointer(3, GL_DOUBLE, sizeof(struct particle), particles);
-	int _N_active = (N_active==-1)?N:N_active;
+	//int _N_active = ((N_active==-1)?N:N_active);
 	if (display_reference>=0){
 		glTranslatef(-particles[display_reference].x,-particles[display_reference].y,-particles[display_reference].z);
 	}
@@ -244,10 +244,10 @@ void display(){
 				glEnableClientState(GL_VERTEX_ARRAY);
 				glPointSize(3.);
 				glColor4f(1.0,1.0,1.0,0.5);
-				glDrawArrays(GL_POINTS, _N_active, N-_N_active-N_megno);
+				//glDrawArrays(GL_POINTS, _N_active, N-_N_active);
 				glColor4f(1.0,1.0,0.0,0.9);
 				glPointSize(5.);
-				glDrawArrays(GL_POINTS, 0, _N_active-N_megno);
+				glDrawArrays(GL_POINTS, 0, N-N_megno);
 				glDisableClientState(GL_VERTEX_ARRAY);
 			}
 		}

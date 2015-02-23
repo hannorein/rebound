@@ -426,8 +426,8 @@ void integrator_to_heliocentric_posvel(){
 	particles[0].vy = p_j[0].vy - s_vy;
 	particles[0].vz = p_j[0].vz - s_vz;
 }
+
 void integrator_var_to_heliocentric_posvel(){
-	return;;
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
@@ -566,9 +566,9 @@ void integrator_part1(){
 }
 
 void integrator_part2(){
-	integrator_megno_calculate_acceleration();
 	integrator_to_jacobi_acc();
 	if (N_megno){
+		integrator_megno_calculate_acceleration();
 		integrator_var_to_jacobi_acc();
 	}
 	integrator_interaction(dt);
