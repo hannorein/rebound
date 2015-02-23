@@ -43,6 +43,7 @@
 #include "tools.h"
 #include "particle.h"
 #include "boundaries.h"
+#include "integrator.h"
 
 double ss_pos[6][3] = 
 {
@@ -80,7 +81,6 @@ double e_init;
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 		= 40;			// in days
-	N_active	= 5;			// we treat pluto as a test particle. If all your particles have mass, remove this line.
 	tmax		= 7.3e10;		// 200 Myr
 	G		= k*k;			// These are the same units as used by the mercury6 code.
 	init_boxwidth(200); 			// Init box with width 200 astronomical units
@@ -105,7 +105,7 @@ void problem_init(int argc, char* argv[]){
 #else
 	tools_move_to_center_of_momentum();
 #endif // INTEGRATOR_WH
-	//integrator_init_megno();
+	integrator_megno_init(1e-16);
 	e_init = energy();
 	system("rm -f energy.txt");
 }

@@ -22,8 +22,8 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _INTEGRATOR_EULER_H
-#define _INTEGRATOR_EULER_H
+#ifndef _INTEGRATOR_H
+#define _INTEGRATOR_H
 /*
  * The first half of the integrator step.
  * This function is called at the beginning of the timestep. It 
@@ -60,7 +60,9 @@ extern double integrator_epsilon;
  **/
 extern double integrator_min_dt;
 
-#ifdef INTEGRATOR_IAS15 // MEGNO Routines are currently only implemented for IAS15
+// MEGNO Routines are currently only implemented for IAS15 and MIKKOLA
+#if defined(INTEGRATOR_IAS15) || defined(INTEGRATOR_MIKKOLA) 
+
 /* 
  * Init the MEGNO particles
  **/
