@@ -295,9 +295,7 @@ void kepler_step(int i,double _dt){
 
 }
 
-
-
-void integrator_to_jacobi(){
+void integrator_to_jacobi_posvel(){
 	double s_x = particles[0].m * particles[0].x;
 	double s_y = particles[0].m * particles[0].y;
 	double s_z = particles[0].m * particles[0].z;
@@ -326,7 +324,25 @@ void integrator_to_jacobi(){
 	p_j[0].vz = s_vz / eta[N-1];
 }
 
-void integrator_to_heliocentric(){
+
+void integrator_to_jacobi_acc(){
+	double s_ax = particles[0].m * particles[0].ax;
+	double s_ay = particles[0].m * particles[0].ay;
+	double s_az = particles[0].m * particles[0].az;
+	for (int i=1;i<N;i++){
+		p_j[i].ax = particles[i].ax - s_ax/eta[i-1];
+		p_j[i].ay = particles[i].ay - s_ay/eta[i-1];
+		p_j[i].az = particles[i].az - s_az/eta[i-1];
+		s_ax += particles[i].m * particles[i].ax;
+		s_ay += particles[i].m * particles[i].ay;
+		s_az += particles[i].m * particles[i].az;
+	}
+	p_j[0].ax = s_ax / eta[N-1];
+	p_j[0].ay = s_ay / eta[N-1];
+	p_j[0].az = s_az / eta[N-1];
+}
+
+void integrator_to_heliocentric_posvel(){
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
@@ -355,7 +371,7 @@ void integrator_to_heliocentric(){
 	particles[0].vz = p_j[0].vz - s_vz;
 }
 
-void integrator_to_heliocentric_positiononly(){
+void integrator_to_heliocentric_pos(){
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
@@ -373,29 +389,14 @@ void integrator_to_heliocentric_positiononly(){
 }
 
 void integrator_interaction(double _dt){
-	double s_x = 0.;
-	double s_y = 0.;
-	double s_z = 0.;
 	for (int i=1;i<N;i++){
 		// Eq 132
 		double rj3 = pow(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z,3./2.);
 		double M = _M(i);
 		double prefac1 = M/rj3;
-		for (int k=0;k<N;k++){
-			if (k+1!=i){
-				double rjkx = particles[i-1].x-particles[k].x;
-				double rjky = particles[i-1].y-particles[k].y;
-				double rjkz = particles[i-1].z-particles[k].z;
-				double rjk3 = pow(rjkx*rjkx + rjky*rjky + rjkz*rjkz,3./2.);
-				double prefac = G*particles[i-1].m*particles[k].m/rjk3;
-				s_x += prefac * rjkx;
-				s_y += prefac * rjky;
-				s_z += prefac * rjkz;
-			}
-		}
-		p_j[i].vx += _dt * (particles[i].ax + prefac1*p_j[i].x + s_x/eta[i-1]);
-		p_j[i].vy += _dt * (particles[i].ay + prefac1*p_j[i].y + s_y/eta[i-1]);
-		p_j[i].vz += _dt * (particles[i].az + prefac1*p_j[i].z + s_z/eta[i-1]);
+		p_j[i].vx += _dt * (p_j[i].ax + prefac1*p_j[i].x);
+		p_j[i].vy += _dt * (p_j[i].ay + prefac1*p_j[i].y);
+		p_j[i].vz += _dt * (p_j[i].az + prefac1*p_j[i].z);
 	}
 }
 
@@ -408,7 +409,7 @@ void integrator_part1(){
 			eta[i] = eta[i-1] + particles[i].m;
 		}
 	}
-	integrator_to_jacobi();
+	integrator_to_jacobi_posvel();
 
 	for (int i=1;i<N;i++){
 		kepler_step(i, dt/2.);
@@ -418,14 +419,15 @@ void integrator_part1(){
 	p_j[0].z += dt/2.*p_j[0].vz;
 
 	if (integrator_force_is_velocitydependent){
-		integrator_to_heliocentric();
+		integrator_to_heliocentric_posvel();
 	}else{
-		integrator_to_heliocentric_positiononly();
+		integrator_to_heliocentric_pos();
 	}
 	t+=dt/2.;
 }
 
 void integrator_part2(){
+	integrator_to_jacobi_acc();
 	integrator_interaction(dt);
 
 	for (int i=1;i<N;i++){
@@ -436,7 +438,7 @@ void integrator_part2(){
 	p_j[0].z += dt/2.*p_j[0].vz;
 
 	t+=dt/2.;
-	integrator_to_heliocentric();
+	integrator_to_heliocentric_posvel();
 }
 	
 

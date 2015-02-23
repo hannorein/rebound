@@ -105,7 +105,7 @@ void problem_init(int argc, char* argv[]){
 #else
 	tools_move_to_center_of_momentum();
 #endif // INTEGRATOR_WH
-	integrator_init_megno();
+	//integrator_init_megno();
 	e_init = energy();
 	system("rm -f energy.txt");
 }
