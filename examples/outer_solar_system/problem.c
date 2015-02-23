@@ -71,7 +71,7 @@ double ss_mass[6] =
 	1./3501.6,	// Saturn
 	1./22869.,	// Uranus
 	1./19314.,	// Neptune
-	0.		// Pluto
+	7.4074074e-09	// Pluto
 };
 
 const double k	 	= 0.01720209895;	// Gaussian constant 

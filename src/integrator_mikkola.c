@@ -427,13 +427,14 @@ void integrator_to_heliocentric_posvel(){
 	particles[0].vz = p_j[0].vz - s_vz;
 }
 void integrator_var_to_heliocentric_posvel(){
+	return;;
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
 	double s_vx = 0.;
 	double s_vy = 0.;
 	double s_vz = 0.;
-	for (int i=N_megno-1;i>N_megno;i--){
+	for (int i=N-1;i>N_megno;i--){
 		particles[i].x = p_j[N_megno].x + eta[i-1-N_megno]/eta[i-N_megno] * p_j[i].x - s_x;
 		particles[i].y = p_j[N_megno].y + eta[i-1-N_megno]/eta[i-N_megno] * p_j[i].y - s_y;
 		particles[i].z = p_j[N_megno].z + eta[i-1-N_megno]/eta[i-N_megno] * p_j[i].z - s_z;
@@ -475,7 +476,7 @@ void integrator_var_to_heliocentric_pos(){
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
-	for (int i=N_megno-1;i>N_megno;i--){
+	for (int i=N-1;i>N_megno;i--){
 		particles[i].x = p_j[N_megno].x + eta[i-1-N_megno]/eta[i-N_megno] * p_j[i].x - s_x;
 		particles[i].y = p_j[N_megno].y + eta[i-1-N_megno]/eta[i-N_megno] * p_j[i].y - s_y;
 		particles[i].z = p_j[N_megno].z + eta[i-1-N_megno]/eta[i-N_megno] * p_j[i].z - s_z;
@@ -501,10 +502,12 @@ void integrator_interaction(double _dt){
 		p_j[i].vy += _dt * (p_j[i].ay + prefac1*p_j[i].y);
 		p_j[i].vz += _dt * (p_j[i].az + prefac1*p_j[i].z);
 	}
+	if (N_megno){
 	for (int i=1;i<N-N_megno;i++){
 		// Eq 132
-		double rj3 = pow(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z,-3./2.);
-		double rj5 = pow(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z,-5./2.);
+		double rj  = pow(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z,1./2.);
+		double rj3 = rj*rj*rj;
+		double rj5 = rj3*rj*rj;
 		
 		double rdr = p_j[i+N_megno].x*p_j[i].x + p_j[i+N_megno].y*p_j[i].y + p_j[i+N_megno].z*p_j[i].z;
 		
@@ -514,6 +517,7 @@ void integrator_interaction(double _dt){
 		p_j[i+N_megno].vx += _dt * (p_j[i+N_megno].ax + prefac1*p_j[i+N_megno].x + prefac2*p_j[i].x);
 		p_j[i+N_megno].vy += _dt * (p_j[i+N_megno].ay + prefac1*p_j[i+N_megno].y + prefac2*p_j[i].y);
 		p_j[i+N_megno].vz += _dt * (p_j[i+N_megno].az + prefac1*p_j[i+N_megno].z + prefac2*p_j[i].z);
+	}
 	}
 }
 
@@ -531,7 +535,9 @@ void integrator_part1(){
 		Mtotal = eta[N-N_megno-1];
 	}
 	integrator_to_jacobi_posvel();
-	integrator_var_to_jacobi_posvel();
+	if (N_megno){
+		integrator_var_to_jacobi_posvel();
+	}
 
 	for (int i=1;i<N-N_megno;i++){
 		kepler_step(i, dt/2.);
@@ -539,21 +545,32 @@ void integrator_part1(){
 	p_j[0].x += dt/2.*p_j[0].vx;
 	p_j[0].y += dt/2.*p_j[0].vy;
 	p_j[0].z += dt/2.*p_j[0].vz;
-
 	if (integrator_force_is_velocitydependent){
 		integrator_to_heliocentric_posvel();
-		integrator_var_to_heliocentric_posvel();
 	}else{
 		integrator_to_heliocentric_pos();
-		integrator_var_to_heliocentric_pos();
 	}
+	
+	if (N_megno){
+		p_j[N_megno].x += dt/2.*p_j[N_megno].vx;
+		p_j[N_megno].y += dt/2.*p_j[N_megno].vy;
+		p_j[N_megno].z += dt/2.*p_j[N_megno].vz;
+		if (integrator_force_is_velocitydependent){
+			integrator_var_to_heliocentric_posvel();
+		}else{
+			integrator_var_to_heliocentric_pos();
+		}
+	}
+
 	t+=dt/2.;
 }
 
 void integrator_part2(){
 	integrator_megno_calculate_acceleration();
 	integrator_to_jacobi_acc();
-	integrator_var_to_jacobi_acc();
+	if (N_megno){
+		integrator_var_to_jacobi_acc();
+	}
 	integrator_interaction(dt);
 
 	for (int i=1;i<N-N_megno;i++){
@@ -563,7 +580,13 @@ void integrator_part2(){
 	p_j[0].y += dt/2.*p_j[0].vy;
 	p_j[0].z += dt/2.*p_j[0].vz;
 	integrator_to_heliocentric_posvel();
-	integrator_var_to_heliocentric_posvel();
+	
+	if (N_megno){
+		p_j[N_megno].x += dt/2.*p_j[N_megno].vx;
+		p_j[N_megno].y += dt/2.*p_j[N_megno].vy;
+		p_j[N_megno].z += dt/2.*p_j[N_megno].vz;
+		integrator_var_to_heliocentric_posvel();
+	}
 
 	t+=dt/2.;
 	
