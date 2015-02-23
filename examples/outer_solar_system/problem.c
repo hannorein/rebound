@@ -134,6 +134,7 @@ void problem_output(){
 		double e = energy();
 		fprintf(f,"%e %e\n",t, fabs((e-e_init)/e_init));
 		fclose(f);
+		printf("  Y = %.3f",integrator_megno());
 	}
 }
 

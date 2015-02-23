@@ -226,7 +226,7 @@ void display(){
 				// Drawing Spheres
 				glColor4f(1.0,1.0,1.0,1.0);
 #ifndef COLLISIONS_NONE
-				for (int i=0;i<N;i++){
+				for (int i=0;i<N-N_megno;i++){
 					struct particle p = particles[i];
 					glTranslatef(p.x,p.y,p.z);
 					glScalef(p.r,p.r,p.r);
@@ -244,10 +244,10 @@ void display(){
 				glEnableClientState(GL_VERTEX_ARRAY);
 				glPointSize(3.);
 				glColor4f(1.0,1.0,1.0,0.5);
-				glDrawArrays(GL_POINTS, _N_active, N-_N_active);
+				glDrawArrays(GL_POINTS, _N_active, N-_N_active-N_megno);
 				glColor4f(1.0,1.0,0.0,0.9);
 				glPointSize(5.);
-				glDrawArrays(GL_POINTS, 0, _N_active);
+				glDrawArrays(GL_POINTS, 0, _N_active-N_megno);
 				glDisableClientState(GL_VERTEX_ARRAY);
 			}
 		}
@@ -256,7 +256,7 @@ void display(){
 #ifndef INTEGRATOR_SEI
 			double radius = 0;
 			struct particle com = particles[0];
-			for (int i=1;i<N;i++){
+			for (int i=1;i<N-N_megno;i++){
 				struct particle p = particles[i];
 				if (N_active>0){
 					// Different colors for active/test particles
