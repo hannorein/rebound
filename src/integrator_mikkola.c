@@ -129,8 +129,8 @@ void kepler_step(int i,double _dt){
 	double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
 	double v2 =  p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz;
 	double beta = 2.*M/r0 - v2;
-	double eta_ = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
-	double zeta = M - beta*r0;
+	double eta0 = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
+	double zeta0 = M - beta*r0;
 	
 
 	double X = 0;  // TODO: find a better initial estimate.
@@ -139,18 +139,18 @@ void kepler_step(int i,double _dt){
 		G2 = integrator_G(2,beta,X);
 		G3 = integrator_G(3,beta,X);
 		G1 = X-beta*G3;
-		double s   = r0*X + eta_*G2 + zeta*G3-_dt;
-		double sp  = r0 + eta_*G1 + zeta*G2;
+		double s   = r0*X + eta0*G2 + zeta0*G3-_dt;
+		double sp  = r0 + eta0*G1 + zeta0*G2;
 		double dX  = -s/sp; // Newton's method
 		
 		//double G0 = 1.-beta*G2;
-		//double spp = r0 + eta_*G0 + zeta*G1;
+		//double spp = r0 + eta0*G0 + zeta0*G1;
 		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
 		X+=dX;
 		if (fabs(dX/X)<1e-15) break; // TODO: Make sure loop does not get stuck (add maximum number of iterations) 
 	}
 
-	double r = r0 + eta_*G1 + zeta*G2;
+	double r = r0 + eta0*G1 + zeta0*G2;
 	double f = 1.-M*G2/r0;
 	double g = _dt - M*G3;
 	double fd = -M*G1/(r0*r); 
@@ -163,6 +163,40 @@ void kepler_step(int i,double _dt){
 	p_j[i].vx = fd*p1.x + gd*p1.vx;
 	p_j[i].vy = fd*p1.y + gd*p1.vy;
 	p_j[i].vz = fd*p1.z + gd*p1.vz;
+	
+	//Variations
+	if (N_megno){
+		struct particle dp1 = p_j[i+N_megno];
+		double dr0 = (dp1.x*p1.x + dp1.y*p1.y + dp1.z*p1.z)/r0;
+		double dbeta = -2.*M*dr0/(r0*r0) - 2.* (dp1.vx*p1.vx + dp1.vy*p1.vy + dp1.vz*p1.vz);
+		double deta0 = dp1.x*p1.vx + dp1.y*p1.vy + dp1.z*p1.vz
+			     + p1.x*dp1.vx + p1.y*dp1.vy + p1.z*dp1.vz;
+		double dzeta0 = -beta*dr0 - r0*dbeta;
+		double G0 = integrator_G(0,beta,X);
+		double G4 = integrator_G(4,beta,X);
+		double G5 = integrator_G(5,beta,X);
+		double G3beta = 0.5*(3.*G5-X*G4);
+		double G2beta = 0.5*(2.*G4-X*G3);
+		double G1beta = 0.5*(G3-X*G2);
+		double tbeta = eta0*G2beta + zeta0*G3beta;
+		double dX = -1./r*(X*dr0 + G2*deta0+G3*dzeta0+tbeta*dbeta);
+		double dG1 = G0*dX + G1beta*dbeta; 
+		double dG2 = G1*dX + G2beta*dbeta;
+		double dG3 = G2*dX + G3beta*dbeta;
+		double dr = dr0 + G1*deta0 + G2*dzeta0 + eta0*dG1 + zeta0*dG2;
+		double df = M*G2*dr0/(r0*r0) - M*dG2/r0;
+		double dg = -M*dG3;
+		double dfd = -M*dG1/(r0*r) + M*G1*(dr0/r0+dr/r)/(r*r0);
+		double dgd = -M*dG2/r + M*G2*dr/(r*r);
+		
+		p_j[i+N_megno].x = f*dp1.x + g*dp1.vx + df*p1.x + dg*p1.vx;
+		p_j[i+N_megno].y = f*dp1.y + g*dp1.vy + df*p1.y + dg*p1.vy;
+		p_j[i+N_megno].z = f*dp1.z + g*dp1.vz + df*p1.z + dg*p1.vz;
+
+		p_j[i+N_megno].vx = fd*dp1.x + gd*dp1.vx + dfd*p1.x + dgd*p1.vx;
+		p_j[i+N_megno].vy = fd*dp1.y + gd*dp1.vy + dfd*p1.y + dgd*p1.vy;
+		p_j[i+N_megno].vz = fd*dp1.z + gd*dp1.vz + dfd*p1.z + dgd*p1.vz;
+	}
 
 }
 
