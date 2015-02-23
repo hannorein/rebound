@@ -31,6 +31,7 @@
 #include <time.h>
 #include "particle.h"
 #include "main.h"
+#include "tools.h"
 #include "gravity.h"
 #include "boundaries.h"
 
@@ -210,6 +211,7 @@ double integrator_G(unsigned int n, double beta, double X){
 
 struct particle* p_j  = NULL;
 double* eta = NULL;
+double Mtotal;
 double _M(int i){
 	return G*(eta[i]); // Hanno 1
 	//return G*(eta[i-1]); // Hanno2 
@@ -295,6 +297,10 @@ void kepler_step(int i,double _dt){
 
 }
 
+/***************************** 
+ * Coordinate transformations
+ */
+
 void integrator_to_jacobi_posvel(){
 	double s_x = particles[0].m * particles[0].x;
 	double s_y = particles[0].m * particles[0].y;
@@ -302,7 +308,7 @@ void integrator_to_jacobi_posvel(){
 	double s_vx = particles[0].m * particles[0].vx;
 	double s_vy = particles[0].m * particles[0].vy;
 	double s_vz = particles[0].m * particles[0].vz;
-	for (int i=1;i<N;i++){
+	for (int i=1;i<N-N_megno;i++){
 		p_j[i].x = particles[i].x - s_x/eta[i-1];
 		p_j[i].y = particles[i].y - s_y/eta[i-1];
 		p_j[i].z = particles[i].z - s_z/eta[i-1];
@@ -316,12 +322,12 @@ void integrator_to_jacobi_posvel(){
 		s_vy += particles[i].m * particles[i].vy;
 		s_vz += particles[i].m * particles[i].vz;
 	}
-	p_j[0].x = s_x / eta[N-1];
-	p_j[0].y = s_y / eta[N-1];
-	p_j[0].z = s_z / eta[N-1];
-	p_j[0].vx = s_vx / eta[N-1];
-	p_j[0].vy = s_vy / eta[N-1];
-	p_j[0].vz = s_vz / eta[N-1];
+	p_j[0].x = s_x / Mtotal;
+	p_j[0].y = s_y / Mtotal;
+	p_j[0].z = s_z / Mtotal;
+	p_j[0].vx = s_vx / Mtotal;
+	p_j[0].vy = s_vy / Mtotal;
+	p_j[0].vz = s_vz / Mtotal;
 }
 
 
@@ -329,7 +335,7 @@ void integrator_to_jacobi_acc(){
 	double s_ax = particles[0].m * particles[0].ax;
 	double s_ay = particles[0].m * particles[0].ay;
 	double s_az = particles[0].m * particles[0].az;
-	for (int i=1;i<N;i++){
+	for (int i=1;i<N-N_megno;i++){
 		p_j[i].ax = particles[i].ax - s_ax/eta[i-1];
 		p_j[i].ay = particles[i].ay - s_ay/eta[i-1];
 		p_j[i].az = particles[i].az - s_az/eta[i-1];
@@ -337,9 +343,9 @@ void integrator_to_jacobi_acc(){
 		s_ay += particles[i].m * particles[i].ay;
 		s_az += particles[i].m * particles[i].az;
 	}
-	p_j[0].ax = s_ax / eta[N-1];
-	p_j[0].ay = s_ay / eta[N-1];
-	p_j[0].az = s_az / eta[N-1];
+	p_j[0].ax = s_ax / Mtotal;
+	p_j[0].ay = s_ay / Mtotal;
+	p_j[0].az = s_az / Mtotal;
 }
 
 void integrator_to_heliocentric_posvel(){
@@ -349,7 +355,7 @@ void integrator_to_heliocentric_posvel(){
 	double s_vx = 0.;
 	double s_vy = 0.;
 	double s_vz = 0.;
-	for (int i=N-1;i>0;i--){
+	for (int i=N-N_megno-1;i>0;i--){
 		particles[i].x = p_j[0].x + eta[i-1]/eta[i] * p_j[i].x - s_x;
 		particles[i].y = p_j[0].y + eta[i-1]/eta[i] * p_j[i].y - s_y;
 		particles[i].z = p_j[0].z + eta[i-1]/eta[i] * p_j[i].z - s_z;
@@ -375,7 +381,7 @@ void integrator_to_heliocentric_pos(){
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
-	for (int i=N-1;i>0;i--){
+	for (int i=N-N_megno-1;i>0;i--){
 		particles[i].x = p_j[0].x + eta[i-1]/eta[i] * p_j[i].x - s_x;
 		particles[i].y = p_j[0].y + eta[i-1]/eta[i] * p_j[i].y - s_y;
 		particles[i].z = p_j[0].z + eta[i-1]/eta[i] * p_j[i].z - s_z;
@@ -388,8 +394,12 @@ void integrator_to_heliocentric_pos(){
 	particles[0].z = p_j[0].z - s_z;
 }
 
+/***************************** 
+ * Interaction Hamiltonian
+ */
+
 void integrator_interaction(double _dt){
-	for (int i=1;i<N;i++){
+	for (int i=1;i<N-N_megno;i++){
 		// Eq 132
 		double rj3 = pow(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z,3./2.);
 		double M = _M(i);
@@ -400,14 +410,19 @@ void integrator_interaction(double _dt){
 	}
 }
 
+/***************************** 
+ * KDK Scheme
+ */
+
 void integrator_part1(){
 	if (p_j==NULL){
 		p_j = malloc(sizeof(struct particle)*N);
 		eta = malloc(sizeof(double)*N);
 		eta[0] = particles[0].m;
-		for (int i=1;i<N;i++){
+		for (int i=1;i<N-N_megno;i++){
 			eta[i] = eta[i-1] + particles[i].m;
 		}
+		Mtotal = eta[N-N_megno-1];
 	}
 	integrator_to_jacobi_posvel();
 
