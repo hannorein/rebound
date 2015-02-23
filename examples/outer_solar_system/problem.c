@@ -105,6 +105,7 @@ void problem_init(int argc, char* argv[]){
 #else
 	tools_move_to_center_of_momentum();
 #endif // INTEGRATOR_WH
+	integrator_init_megno();
 	e_init = energy();
 	system("rm -f energy.txt");
 }
@@ -112,10 +113,10 @@ void problem_init(int argc, char* argv[]){
 double energy(){
 	double e_kin = 0.;
 	double e_pot = 0.;
-	for (int i=0;i<N;i++){
+	for (int i=0;i<N-N_megno;i++){
 		struct particle pi = particles[i];
 		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
-		for (int j=i+1;j<N;j++){
+		for (int j=i+1;j<N-N_megno;j++){
 			struct particle pj = particles[j];
 			double dx = pi.x - pj.x;
 			double dy = pi.y - pj.y;
