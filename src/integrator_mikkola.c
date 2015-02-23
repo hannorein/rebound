@@ -100,43 +100,6 @@ double integrator_megno_deltad_delta2(){
         }
         return deltad/delta2;
 }
-void integrator_megno_calculate_acceleration(){
-#pragma omp parallel for schedule(guided)
-	for (int i=N-N_megno; i<N; i++){
-	for (int j=N-N_megno; j<N; j++){
-		if (i==j) continue;
-		const double dx = particles[i-N/2].x - particles[j-N/2].x;
-		const double dy = particles[i-N/2].y - particles[j-N/2].y;
-		const double dz = particles[i-N/2].z - particles[j-N/2].z;
-		const double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
-		const double r3inv = 1./(r*r*r);
-		const double r5inv = 3./(r*r*r*r*r);
-		const double ddx = particles[i].x - particles[j].x;
-		const double ddy = particles[i].y - particles[j].y;
-		const double ddz = particles[i].z - particles[j].z;
-		const double Gm = G * particles[j].m;
-		
-		// Variational equations
-		particles[i].ax += Gm * (
-			+ ddx * ( dx*dx*r5inv - r3inv )
-			+ ddy * ( dx*dy*r5inv )
-			+ ddz * ( dx*dz*r5inv )
-			);
-
-		particles[i].ay += Gm * (
-			+ ddx * ( dy*dx*r5inv )
-			+ ddy * ( dy*dy*r5inv - r3inv )
-			+ ddz * ( dy*dz*r5inv )
-			);
-
-		particles[i].az += Gm * (
-			+ ddx * ( dz*dx*r5inv )
-			+ ddy * ( dz*dy*r5inv )
-			+ ddz * ( dz*dz*r5inv - r3inv )
-			);
-	}
-	}
-}
 
 // Fast inverse factorial lookup table
 static const double invfactorial[] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
@@ -495,29 +458,22 @@ void integrator_var_to_heliocentric_pos(){
 void integrator_interaction(double _dt){
 	for (int i=1;i<N-N_megno;i++){
 		// Eq 132
-		double rj3 = pow(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z,-3./2.);
+		double rj  = pow(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z,-1./2.);
+		double rj3 = rj*rj*rj;
 		double M = _M(i);
 		double prefac1 = M*rj3;
 		p_j[i].vx += _dt * (p_j[i].ax + prefac1*p_j[i].x);
 		p_j[i].vy += _dt * (p_j[i].ay + prefac1*p_j[i].y);
 		p_j[i].vz += _dt * (p_j[i].az + prefac1*p_j[i].z);
-	}
-	if (N_megno){
-	for (int i=1;i<N-N_megno;i++){
-		// Eq 132
-		double rj  = pow(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z,-1./2.);
-		double rj3 = rj*rj*rj;
-		double rj5 = rj3*rj*rj;
-		
-		double rdr = p_j[i+N_megno].x*p_j[i].x + p_j[i+N_megno].y*p_j[i].y + p_j[i+N_megno].z*p_j[i].z;
-		
-		double M = _M(i);
-		double prefac1 = M*rj3;
-		double prefac2 = -M*3.*rdr*rj5;
-		p_j[i+N_megno].vx += _dt * (p_j[i+N_megno].ax + prefac1*p_j[i+N_megno].x + prefac2*p_j[i].x);
-		p_j[i+N_megno].vy += _dt * (p_j[i+N_megno].ay + prefac1*p_j[i+N_megno].y + prefac2*p_j[i].y);
-		p_j[i+N_megno].vz += _dt * (p_j[i+N_megno].az + prefac1*p_j[i+N_megno].z + prefac2*p_j[i].z);
-	}
+		if (N_megno){
+			// Eq 132
+			double rj5 = rj3*rj*rj;
+			double rdr = p_j[i+N_megno].x*p_j[i].x + p_j[i+N_megno].y*p_j[i].y + p_j[i+N_megno].z*p_j[i].z;
+			double prefac2 = -M*3.*rdr*rj5;
+			p_j[i+N_megno].vx += _dt * (p_j[i+N_megno].ax + prefac1*p_j[i+N_megno].x + prefac2*p_j[i].x);
+			p_j[i+N_megno].vy += _dt * (p_j[i+N_megno].ay + prefac1*p_j[i+N_megno].y + prefac2*p_j[i].y);
+			p_j[i+N_megno].vz += _dt * (p_j[i+N_megno].az + prefac1*p_j[i+N_megno].z + prefac2*p_j[i].z);
+		}
 	}
 }
 
@@ -568,7 +524,6 @@ void integrator_part1(){
 void integrator_part2(){
 	integrator_to_jacobi_acc();
 	if (N_megno){
-		integrator_megno_calculate_acceleration();
 		integrator_var_to_jacobi_acc();
 	}
 	integrator_interaction(dt);
