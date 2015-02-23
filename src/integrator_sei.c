@@ -146,3 +146,6 @@ void operator_phi1(struct particle* p){
 	p->vz += p->az * dt;
 }
 
+void integrator_reset(){
+	lastdt = 0;	
+}

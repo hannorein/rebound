@@ -60,4 +60,9 @@ extern double integrator_epsilon;
  **/
 extern double integrator_min_dt;
 
+/* 
+ * Cleanup all temporarily stored values.
+ **/
+void integrator_reset();
+
 #endif

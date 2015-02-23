@@ -63,4 +63,7 @@ void integrator_part2(){
 	t+=dt;
 }
 	
+void integrator_reset(){
+	// Do nothing.
+}
 

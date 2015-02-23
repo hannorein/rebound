@@ -45,4 +45,7 @@ void integrator_part2(){
 	// Do nothing.
 }
 	
+void integrator_reset(){
+	// Do nothing.
+}
 

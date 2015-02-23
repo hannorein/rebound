@@ -565,3 +565,6 @@ void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* 
 	*s = (*x)*(A0-y*(A1-y*(A2-y*(A3-y*(A4-y)))))/A0;
 	*c = sqrt(1. - (*s)*(*s));
 }
+void integrator_reset(){
+	// Do nothing.
+}

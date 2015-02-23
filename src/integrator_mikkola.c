@@ -496,3 +496,9 @@ void integrator_part2(){
 }
 	
 
+void integrator_reset(){
+	free(p_j);
+	p_j = NULL;
+	free(eta);
+	eta = NULL;
+}

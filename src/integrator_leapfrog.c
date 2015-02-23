@@ -68,3 +68,6 @@ void integrator_part2(){
 }
 	
 
+void integrator_reset(){
+	// Do nothing.
+}

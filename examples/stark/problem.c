@@ -32,7 +32,6 @@
 #include "main.h"
 #include "output.h"
 #include "tools.h"
-#include "integrator.h"
 #include "particle.h"
 #include "problem.h"
 
@@ -49,27 +48,25 @@ void problem_init(int argc, char* argv[]){
 		particles_add(p); 
 	}
 	{
-		struct particle p = {.m=0.,.x=1,.y=0.,.z=0.,.vx=0,.vy=1.,.vz=0.};
+		struct particle p = {.m=0.,.x=1,.y=0.,.z=0.,.vx=0,.vy=1.2,.vz=0.};
 		particles_add(p); 
 	}
 	tools_move_to_center_of_momentum();
 	problem_additional_forces 	= additional_forces;
 	// Add megno particles 
-	integrator_megno_init(1e-16);  // N = 6 after this function call. 
+	tools_megno_init(1e-16);  // N = 6 after this function call. 
 	system("rm -f Y.txt");
 }
 
 void additional_forces(){
-	particles[1].ax += 0.01;
+	particles[1].ax += 0.12/6.;
 }
 
 void problem_output(){
-	if (output_check(10.)){
-		output_timing();
-		FILE* f = fopen("Y.txt","a+");
-		fprintf(f,"%e %e\n",t,integrator_megno());
-		fclose(f);
-	}
+	output_timing();
+	FILE* f = fopen("Y.txt","a+");
+	fprintf(f,"%e %e\n",t,tools_megno());
+	fclose(f);
 }
 
 void problem_finish(){

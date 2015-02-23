@@ -576,6 +576,35 @@ void copybuffers(double* _a[7], double* _b[7], int N3){
 //	}
 }
 
+void integrator_reset(){
+	N3allocated 	= 0;
+	dt_last_success = 0;
+	for (int l=0;l<7;++l) {
+		free(g[l]);
+		g[l] = NULL;
+		free(b[l]);
+		b[l] = NULL;
+		free(e[l]);
+		e[l] = NULL;
+		free(br[l]);
+		br[l] = NULL;
+		free(er[l]);
+		er[l] = NULL;
+	}
+	free(at);
+	at =  NULL;
+	free(x0);
+	x0 =  NULL;
+	free(v0);
+	v0 =  NULL;
+	free(a0);
+	a0 =  NULL;
+	free(csx);
+	csx=  NULL;
+	free(csv);
+	csv=  NULL;
+}
+
 #ifdef GENERATE_CONSTANTS
 void integrator_generate_constants(){
 	printf("Generaring constants.\n\n");

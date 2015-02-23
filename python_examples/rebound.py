@@ -8,13 +8,13 @@ except NameError:
 
 # Try to load libias15 from the obvioud places it could be in.
 try:
-    libias15 = CDLL('../../shared/libias15.so', RTLD_GLOBAL)
+    libias15 = CDLL('../../shared/libmikkola.so', RTLD_GLOBAL)
 except:
     try:
-        libias15 = CDLL('../shared/libias15.so', RTLD_GLOBAL)
+        libias15 = CDLL('../shared/libmikkola.so', RTLD_GLOBAL)
     except:
         try:
-            libias15 = CDLL('shared/libias15.so', RTLD_GLOBAL)
+            libias15 = CDLL('shared/libmikkola.so', RTLD_GLOBAL)
         except:
             print("Cannot find library 'libias15.so'. Check path set in 'rebound.py'.")
             raise
@@ -85,15 +85,15 @@ def get_t():
     return c_double.in_dll(libias15, "t").value
 
 def megno_init(delta):
-    libias15.integrator_megno_init(c_double(delta))
+    libias15.tools_megno_init(c_double(delta))
 
 def get_megno():
-    libias15.integrator_megno.restype = c_double
-    return libias15.integrator_megno()
+    libias15.tools_megno.restype = c_double
+    return libias15.tools_megno()
 
 def get_lyapunov():
-    libias15.integrator_lyapunov.restype = c_double
-    return libias15.integrator_lyapunov()
+    libias15.tools_lyapunov.restype = c_double
+    return libias15.tools_lyapunov()
 
 def get_N():
     return c_int.in_dll(libias15,"N").value 
