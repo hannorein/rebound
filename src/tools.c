@@ -272,3 +272,83 @@ struct orbit tools_p2orbit(struct particle p, struct particle star){
 
 	return o;
 }
+
+/**************************
+ * MEGNO Routines         */
+
+double tools_megno_Ys;
+double tools_megno_Yss;
+double tools_megno_cov_Yt;	// covariance of <Y> and t
+double tools_megno_var_t;  // variance of t 
+double tools_megno_mean_t; // mean of t
+double tools_megno_mean_Y; // mean of Y
+long   tools_megno_n; 	// number of covariance updates
+void tools_megno_init(double delta){
+	int _N_megno = N;
+	tools_megno_Ys = 0.;
+	tools_megno_Yss = 0.;
+	tools_megno_cov_Yt = 0.;
+	tools_megno_var_t = 0.;
+	tools_megno_n = 0;
+	tools_megno_mean_Y = 0;
+	tools_megno_mean_t = 0;
+        for (int i=0;i<_N_megno;i++){ 
+                struct particle megno = {
+			.m  = particles[i].m,
+			.x  = delta*tools_normal(1.),
+			.y  = delta*tools_normal(1.),
+			.z  = delta*tools_normal(1.),
+			.vx = delta*tools_normal(1.),
+			.vy = delta*tools_normal(1.),
+			.vz = delta*tools_normal(1.) };
+                particles_add(megno);
+        }
+	N_megno = _N_megno;
+}
+double tools_megno(){ // Returns the MEGNO <Y>
+	if (t==0.) return 0.;
+	return tools_megno_Yss/t;
+}
+double tools_lyapunov(){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
+	if (t==0.) return 0.;
+	return tools_megno_cov_Yt/tools_megno_var_t;
+}
+double tools_megno_deltad_delta(){
+        double deltad = 0;
+        double delta2 = 0;
+        for (int i=N-N_megno;i<N;i++){
+                deltad += particles[i].vx * particles[i].x; 
+                deltad += particles[i].vy * particles[i].y; 
+                deltad += particles[i].vz * particles[i].z; 
+                deltad += particles[i].ax * particles[i].vx; 
+                deltad += particles[i].ay * particles[i].vy; 
+                deltad += particles[i].az * particles[i].vz; 
+                delta2 += particles[i].x  * particles[i].x; 
+                delta2 += particles[i].y  * particles[i].y;
+                delta2 += particles[i].z  * particles[i].z;
+                delta2 += particles[i].vx * particles[i].vx; 
+                delta2 += particles[i].vy * particles[i].vy;
+                delta2 += particles[i].vz * particles[i].vz;
+        }
+        return deltad/delta2;
+}
+
+void tools_megno_update(double dY){
+		// Calculate running Y(t)
+		tools_megno_Ys += dY;
+		double Y = tools_megno_Ys/t;
+		// Calculate averge <Y> 
+		tools_megno_Yss += Y * dt;
+		// Update covariance of (Y,t) and variance of t
+		tools_megno_n++;
+		double _d_t = t - tools_megno_mean_t;
+		tools_megno_mean_t += _d_t/(double)tools_megno_n;
+		double _d_Y = tools_megno() - tools_megno_mean_Y;
+		tools_megno_mean_Y += _d_Y/(double)tools_megno_n;
+		tools_megno_cov_Yt += ((double)tools_megno_n-1.)/(double)tools_megno_n 
+						*(t-tools_megno_mean_t)
+						*(tools_megno()-tools_megno_mean_Y);
+		tools_megno_var_t  += ((double)tools_megno_n-1.)/(double)tools_megno_n 
+						*(t-tools_megno_mean_t)
+						*(t-tools_megno_mean_t);
+}

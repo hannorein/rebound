@@ -123,4 +123,30 @@ void tools_move_to_center_of_momentum();
  */
 struct particle tools_get_center_of_mass(struct particle p1, struct particle p2);
 
+/* 
+ * Init the MEGNO particles
+ **/
+void tools_megno_init(double delta);
+
+/*
+ * Returns the current value of <Y>
+ **/
+double tools_megno();
+
+/*
+ * Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
+ **/
+double tools_lyapunov();
+
+/*
+ * Returns deltad/delta (Note, there is a typo in Gozdziewski et al 2001).
+ **/
+
+double tools_megno_deltad_delta();
+
+/*
+ * Update MEGNO after a successful timestep by adding dY (=ddelta/delta*dt)
+ **/
+void tools_megno_update(double dY);
+
 #endif 	// TOOLS_H

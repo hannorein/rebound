@@ -44,62 +44,6 @@ struct particle* p_j  = NULL;
 double* eta = NULL;
 double Mtotal;
 
-double integrator_megno_Ys;
-double integrator_megno_Yss;
-double integrator_megno_cov_Yt;	// covariance of <Y> and t
-double integrator_megno_var_t;  // variance of t 
-double integrator_megno_mean_t; // mean of t
-double integrator_megno_mean_Y; // mean of Y
-long   integrator_megno_n; 	// number of covariance updates
-void integrator_megno_init(double delta){
-	int _N_megno = N;
-	integrator_megno_Ys = 0.;
-	integrator_megno_Yss = 0.;
-	integrator_megno_cov_Yt = 0.;
-	integrator_megno_var_t = 0.;
-	integrator_megno_n = 0;
-	integrator_megno_mean_Y = 0;
-	integrator_megno_mean_t = 0;
-        for (int i=0;i<_N_megno;i++){ 
-                struct particle megno = {
-			.m  = particles[i].m,
-			.x  = delta*tools_normal(1.),
-			.y  = delta*tools_normal(1.),
-			.z  = delta*tools_normal(1.),
-			.vx = delta*tools_normal(1.),
-			.vy = delta*tools_normal(1.),
-			.vz = delta*tools_normal(1.) };
-                particles_add(megno);
-        }
-	N_megno = _N_megno;
-}
-double integrator_megno(){ // Returns the MEGNO <Y>
-	if (t==0.) return 0.;
-	return integrator_megno_Yss/t;
-}
-double integrator_lyapunov(){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
-	if (t==0.) return 0.;
-	return integrator_megno_cov_Yt/integrator_megno_var_t;
-}
-double integrator_megno_deltad_delta2(){
-        double deltad = 0;
-        double delta2 = 0;
-        for (int i=N-N_megno;i<N;i++){
-                deltad += particles[i].vx * particles[i].x; 
-                deltad += particles[i].vy * particles[i].y; 
-                deltad += particles[i].vz * particles[i].z; 
-                deltad += particles[i].ax * particles[i].vx; 
-                deltad += particles[i].ay * particles[i].vy; 
-                deltad += particles[i].az * particles[i].vz; 
-                delta2 += particles[i].x  * particles[i].x; 
-                delta2 += particles[i].y  * particles[i].y;
-                delta2 += particles[i].z  * particles[i].z;
-                delta2 += particles[i].vx * particles[i].vx; 
-                delta2 += particles[i].vy * particles[i].vy;
-                delta2 += particles[i].vz * particles[i].vz;
-        }
-        return deltad/delta2;
-}
 
 // Fast inverse factorial lookup table
 static const double invfactorial[] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
@@ -546,25 +490,9 @@ void integrator_part2(){
 	t+=dt/2.;
 	
 	if (N_megno){
-		// Calculate running Y(t)
-		integrator_megno_Ys += dt * 2. * t * integrator_megno_deltad_delta2();
-		double Y = integrator_megno_Ys/t;
-		// Calculate averge <Y> 
-		integrator_megno_Yss += Y * dt;
-		// Update covariance of (Y,t) and variance of t
-		integrator_megno_n++;
-		double _d_t = t - integrator_megno_mean_t;
-		integrator_megno_mean_t += _d_t/(double)integrator_megno_n;
-		double _d_Y = integrator_megno() - integrator_megno_mean_Y;
-		integrator_megno_mean_Y += _d_Y/(double)integrator_megno_n;
-		integrator_megno_cov_Yt += ((double)integrator_megno_n-1.)/(double)integrator_megno_n 
-						*(t-integrator_megno_mean_t)
-						*(integrator_megno()-integrator_megno_mean_Y);
-		integrator_megno_var_t  += ((double)integrator_megno_n-1.)/(double)integrator_megno_n 
-						*(t-integrator_megno_mean_t)
-						*(t-integrator_megno_mean_t);
+		double dY = dt * 2. * t * tools_megno_deltad_delta();
+		tools_megno_update(dY);
 	}
-
 }
 	
 

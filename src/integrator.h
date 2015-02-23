@@ -60,24 +60,4 @@ extern double integrator_epsilon;
  **/
 extern double integrator_min_dt;
 
-// MEGNO Routines are currently only implemented for IAS15 and MIKKOLA
-#if defined(INTEGRATOR_IAS15) || defined(INTEGRATOR_MIKKOLA) 
-
-/* 
- * Init the MEGNO particles
- **/
-void integrator_megno_init(double delta);
-
-/*
- * Returns the current value of <Y>
- **/
-double integrator_megno();
-
-/*
- * Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
- **/
-double integrator_lyapunov();
-
-#endif // INTEGRATOR_IAS15
-
 #endif
