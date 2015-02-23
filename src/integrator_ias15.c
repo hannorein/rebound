@@ -160,43 +160,6 @@ double integrator_megno_deltad_delta2(){
         }
         return deltad/delta2;
 }
-void integrator_megno_calculate_acceleration(){
-#pragma omp parallel for schedule(guided)
-	for (int i=N-N_megno; i<N; i++){
-	for (int j=N-N_megno; j<N; j++){
-		if (i==j) continue;
-		const double dx = particles[i-N/2].x - particles[j-N/2].x;
-		const double dy = particles[i-N/2].y - particles[j-N/2].y;
-		const double dz = particles[i-N/2].z - particles[j-N/2].z;
-		const double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
-		const double r3inv = 1./(r*r*r);
-		const double r5inv = 3./(r*r*r*r*r);
-		const double ddx = particles[i].x - particles[j].x;
-		const double ddy = particles[i].y - particles[j].y;
-		const double ddz = particles[i].z - particles[j].z;
-		const double Gm = G * particles[j].m;
-		
-		// Variational equations
-		particles[i].ax += Gm * (
-			+ ddx * ( dx*dx*r5inv - r3inv )
-			+ ddy * ( dx*dy*r5inv )
-			+ ddz * ( dx*dz*r5inv )
-			);
-
-		particles[i].ay += Gm * (
-			+ ddx * ( dy*dx*r5inv )
-			+ ddy * ( dy*dy*r5inv - r3inv )
-			+ ddz * ( dy*dz*r5inv )
-			);
-
-		particles[i].az += Gm * (
-			+ ddx * ( dz*dx*r5inv )
-			+ ddy * ( dz*dy*r5inv )
-			+ ddz * ( dz*dz*r5inv - r3inv )
-			);
-	}
-	}
-}
 
 // Do nothing here. This is only used in a leapfrog-like DKD integrator. IAS15 performs one complete timestep.
 void integrator_part1(){
@@ -210,7 +173,7 @@ void integrator_update_acceleration(){
 	PROFILING_START()
 	gravity_calculate_acceleration();
 	if (N_megno){
-		integrator_megno_calculate_acceleration();
+		gravity_calculate_variational_acceleration();
 	}
 	if (problem_additional_forces) problem_additional_forces();
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
@@ -258,9 +221,6 @@ int integrator_ias15_step() {
 	}
 	
 	// integrator_update_acceleration(); // Not needed. Forces are already calculated in main routine.
-	if (N_megno){
-		integrator_megno_calculate_acceleration();
-	}
 
 	for(int k=0;k<N;k++) {
 		x0[3*k]   = particles[k].x;
