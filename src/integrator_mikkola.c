@@ -65,42 +65,43 @@ double c_n_series(unsigned int n, double z){
 
 double c(unsigned int n, double z){
 	if (z>0.5){
+		double z4 = z/4.;
 		// Speed up conversion with 4-folding formula
 		switch(n){
 			case 0:
 			{
-				double cn4 = c(3,z/4.)*(1.+c(1,z/4.))/8.;
+				double cn4 = c(3,z4)*(1.+c(1,z4))/8.;
 				double cn2 = 1./2.-z*cn4;
 				double cn0 = 1.-z*cn2;
 				return cn0;
 			}
 			case 1:
 			{
-				double cn5 = (c(5,z/4.)+c(4,z/4.)+c(3,z/4.)*c(2,z/4.))/16.;
+				double cn5 = (c(5,z4)+c(4,z4)+c(3,z4)*c(2,z4))/16.;
 				double cn3 = 1./6.-z*cn5;
 				double cn1 = 1.-z*cn3;
 				return cn1;
 			}
 			case 2:
 			{
-				double cn4 = c(3,z/4.)*(1.+c(1,z/4.))/8.;
+				double cn4 = c(3,z4)*(1.+c(1,z4))/8.;
 				double cn2 = 1./2.-z*cn4;
 				return cn2;
 			}
 			case 3:
 			{
-				double cn5 = (c(5,z/4.)+c(4,z/4.)+c(3,z/4.)*c(2,z/4.))/16.;
+				double cn5 = (c(5,z4)+c(4,z4)+c(3,z4)*c(2,z4))/16.;
 				double cn3 = 1./6.-z*cn5;
 				return cn3;
 			}
 			case 4:
 			{
-				double cn4 = c(3,z/4.)*(1.+c(1,z/4.))/8.;
+				double cn4 = c(3,z4)*(1.+c(1,z4))/8.;
 				return cn4;
 			}
 			case 5:
 			{
-				double cn5 = (c(5,z/4.)+c(4,z/4.)+c(3,z/4.)*c(2,z/4.))/16.;
+				double cn5 = (c(5,z4)+c(4,z4)+c(3,z4)*c(2,z4))/16.;
 				return cn5;
 			}
 		}
@@ -114,10 +115,15 @@ double integrator_G(unsigned int n, double beta, double X){
 
 struct particle* p_j  = NULL;
 double* eta = NULL;
-
+double _M(int i){
+	return G*(eta[i]); // Hanno 1
+	//return G*(eta[i-1]); // Hanno2 
+	//return G*(eta[i-1]*particles[i].m*eta[i-1]/eta[i]/(eta[i-1]+particles[i].m*eta[i-1]/eta[i])); // reduced mass jacobi
+	//return G*(eta[i-1]*particles[i].m/(eta[i-1]+particles[i].m)); // reduced mass
+	//return G*(eta[i]/eta[i-1]*particles[0].m);   // SSD
+}
 void kepler_step(int i,double _dt){
-	//double M = G*(eta[i]);
-	double M = G*(eta[i]/eta[i-1]*particles[0].m);
+	double M = _M(i);
 	struct particle p1 = p_j[i];
 
 	double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
@@ -244,8 +250,7 @@ void integrator_interaction(double _dt){
 	for (int i=1;i<N;i++){
 		// Eq 132
 		double rj3 = pow(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z,3./2.);
-		//double M = G*(eta[i]);
-		double M = G*(eta[i]/eta[i-1]*particles[0].m);
+		double M = _M(i);
 		double prefac1 = M/rj3;
 		for (int k=0;k<N;k++){
 			if (k+1!=i){

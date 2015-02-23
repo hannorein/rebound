@@ -74,9 +74,8 @@ double ss_mass[6] =
 };
 
 const double k	 	= 0.01720209895;	// Gaussian constant 
-#ifdef OPENGL
-extern int display_wire;
-#endif // OPENGL
+double energy();
+double e_init;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -84,9 +83,6 @@ void problem_init(int argc, char* argv[]){
 	N_active	= 5;			// we treat pluto as a test particle. If all your particles have mass, remove this line.
 	tmax		= 7.3e10;		// 200 Myr
 	G		= k*k;			// These are the same units as used by the mercury6 code.
-#ifdef OPENGL
-	display_wire	= 1;			// Show orbits.
-#endif // OPENGL
 	init_boxwidth(200); 			// Init box with width 200 astronomical units
 
 	// Initial conditions
@@ -109,13 +105,34 @@ void problem_init(int argc, char* argv[]){
 #else
 	tools_move_to_center_of_momentum();
 #endif // INTEGRATOR_WH
+	e_init = energy();
+	system("rm -f energy.txt");
+}
 
-	system("rm -f orbits.txt");
+double energy(){
+	double e_kin = 0.;
+	double e_pot = 0.;
+	for (int i=0;i<N;i++){
+		struct particle pi = particles[i];
+		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
+		for (int j=i+1;j<N;j++){
+			struct particle pj = particles[j];
+			double dx = pi.x - pj.x;
+			double dy = pi.y - pj.y;
+			double dz = pi.z - pj.z;
+			e_pot -= G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
+		}
+	}
+	return e_kin +e_pot;
 }
 
 void problem_output(){
-	if (output_check(10000.*dt)){
+	if (output_check(1000.*dt)){
 		output_timing();
+		FILE* f = fopen("energy.txt","a");
+		double e = energy();
+		fprintf(f,"%e %e\n",t, fabs((e-e_init)/e_init));
+		fclose(f);
 	}
 }
 
