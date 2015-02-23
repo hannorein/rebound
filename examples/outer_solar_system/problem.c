@@ -129,14 +129,14 @@ double energy(){
 }
 
 void problem_output(){
-	if (output_check(1000.*dt)){
+	//if (output_check(1000.*dt)){
 		output_timing();
 		FILE* f = fopen("energy.txt","a");
 		double e = energy();
 		fprintf(f,"%e %e\n",t, fabs((e-e_init)/e_init));
 		fclose(f);
 		printf("  Y = %.3f",integrator_megno());
-	}
+	//}
 }
 
 void problem_finish(){

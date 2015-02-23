@@ -505,7 +505,7 @@ void integrator_interaction(double _dt){
 	if (N_megno){
 	for (int i=1;i<N-N_megno;i++){
 		// Eq 132
-		double rj  = pow(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z,1./2.);
+		double rj  = pow(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z,-1./2.);
 		double rj3 = rj*rj*rj;
 		double rj5 = rj3*rj*rj;
 		
@@ -513,7 +513,7 @@ void integrator_interaction(double _dt){
 		
 		double M = _M(i);
 		double prefac1 = M*rj3;
-		double prefac2 = -3.*rdr*rj5;
+		double prefac2 = -M*3.*rdr*rj5;
 		p_j[i+N_megno].vx += _dt * (p_j[i+N_megno].ax + prefac1*p_j[i+N_megno].x + prefac2*p_j[i].x);
 		p_j[i+N_megno].vy += _dt * (p_j[i+N_megno].ay + prefac1*p_j[i+N_megno].y + prefac2*p_j[i].y);
 		p_j[i+N_megno].vz += _dt * (p_j[i+N_megno].az + prefac1*p_j[i+N_megno].z + prefac2*p_j[i].z);
