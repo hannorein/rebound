@@ -251,3 +251,7 @@ void gravity_calculate_acceleration(){
 		particles[i].az = a_host[i*3+2]; 
 	}
 }
+
+void gravity_calculate_variational_acceleration(){
+	// Not yet implemented 
+}

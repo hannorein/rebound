@@ -149,3 +149,7 @@ void gravity_finish(){
 		g5_close();
 	}
 }
+
+void gravity_calculate_variational_acceleration(){
+	// Not yet implemented 
+}

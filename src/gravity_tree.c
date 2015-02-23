@@ -140,3 +140,7 @@ void gravity_calculate_acceleration_for_particle_from_cell(const int pt, const s
 		particles[pt].az += prefact*dz; 
 	}
 }
+
+void gravity_calculate_variational_acceleration(){
+	// Not yet implemented 
+}

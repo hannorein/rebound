@@ -468,3 +468,6 @@ void gravity_fft_grid2p(struct particle* p){
 }
 
 
+void gravity_calculate_variational_acceleration(){
+	// Not yet implemented 
+}
