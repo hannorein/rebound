@@ -133,7 +133,8 @@ void reset(){
 void integrate(double _tmax){
 	tmax = _tmax;
 	double dt_last_done = dt;
-	while(t<tmax){
+	int last_step = 0;
+	while(t<tmax && last_step<2){
 		if (N<=0){
 			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
 			return;
@@ -141,6 +142,7 @@ void integrate(double _tmax){
 		rebound_step();
 		if (t+dt>=tmax){
 			dt = tmax-t;
+			last_step++;
 		}else{
 			dt_last_done = dt;
 		}
