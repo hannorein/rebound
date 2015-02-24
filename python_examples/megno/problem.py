@@ -17,7 +17,7 @@ def simulation(par):
     saturn_a, saturn_e = par
     rebound.reset()
     rebound.set_min_dt(0.1)
-    rebound.set_dt(100.)
+    rebound.set_dt(0.1)
     
     # These parameters are only approximately those of Jupiter and Saturn.
     sun     = rebound.Particle(m=1.)
@@ -33,7 +33,7 @@ def simulation(par):
 
 
 ### Setup grid and run many simulations in parallel
-N = 10                       # Grid size, increase this number to see more detail
+N = 4                       # Grid size, increase this number to see more detail
 a = np.linspace(7.,10.,N)   # range of saturn semi-major axis in AU
 e = np.linspace(0.,0.5,N)   # range of saturn eccentricity
 parameters = []

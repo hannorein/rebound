@@ -1,6 +1,6 @@
 /**
- * @file 	libias15.c
- * @brief 	Declarations and functions for shared library access to the IAS15 integrator.
+ * @file 	librebound.c
+ * @brief 	Declarations and functions for shared library access to the IAS15 and MIKKOLA integrators.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 		Dave Spiegel <dave@ias.edu>
  * 
@@ -33,7 +33,6 @@
 #include <sys/time.h>
 #include <string.h>
 #include "particle.h"
-#include "integrator.h"
 #include "gravity.h"
 #include "particle.h"
 #include "main.h"
@@ -46,6 +45,18 @@ double tmax	= 0;
 double G 	= 1;
 double softening = 0;
 extern int Nmax;	
+
+// Chooses which integrator to use.
+// 0: IAS15 (default)
+// 1: MIKKOLA
+int integrator_choice = 0; 
+
+extern void integrator_ias15_part1();
+extern void integrator_ias15_part2();
+extern void integrator_ias15_reset();
+extern void integrator_mikkola_part1();
+extern void integrator_mikkola_part2();
+extern void integrator_mikkola_reset();
 
 // Function pointer to additional forces
 void (*problem_additional_forces) () = NULL;
@@ -70,15 +81,29 @@ void set_additional_forces(void (* _cb)()){
 }
 
 // Integrate for 1 step
-void ias15_step(){ 
+void rebound_step(){ 
 	if (N<=0){
 		fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
 		return;
 	}
-	integrator_part1();
+	switch(integrator_choice){
+		case 1:
+			integrator_mikkola_part1();
+			break;
+		default:
+			integrator_ias15_part1();
+			break;
+	}
 	gravity_calculate_acceleration();
 	if (problem_additional_forces) problem_additional_forces();
-	integrator_part2();
+	switch(integrator_choice){
+		case 1:
+			integrator_mikkola_part2();
+			break;
+		default:
+			integrator_ias15_part2();
+			break;
+	}
 }
 
 // Integrate for 1 step
@@ -94,7 +119,8 @@ void reset(){
 	N_megno 	= 0;
 	free(particles);
 	particles 	= NULL;
-	integrator_reset();
+	integrator_mikkola_reset();
+	integrator_ias15_reset();
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	srand ( tim.tv_usec + getpid());
@@ -109,7 +135,7 @@ void integrate(double _tmax){
 			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
 			return;
 		}
-		ias15_step();
+		rebound_step();
 		if (t+dt>=tmax){
 			dt = tmax-t;
 		}else{
@@ -120,7 +146,7 @@ void integrate(double _tmax){
 }
 	 
 // The following code is needed to leave the original REBOUND files unchanged. 
-// Currently the libias15 library only supports an infinitely large box.
+// Currently the librebound library only supports an infinitely large box.
 // Infinite box size
 int root_nx = 1;
 int root_ny = 1;

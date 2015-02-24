@@ -54,6 +54,17 @@ void integrator_generate_constants();
 #include "output.h"
 #include "tools.h"
 
+// Slightly dirty trick to rename function for librebound use
+#ifdef LIBREBOUND
+#define integrator_part1                      integrator_ias15_part1
+#define integrator_part2                      integrator_ias15_part2
+#define integrator_force_is_velocitydependent integrator_ias15_force_is_velocitydependent
+#define integrator_epsilon                    integrator_ias15_epsilon
+#define integrator_min_dt                     integrator_ias15_min_dt
+#define integrator_reset                      integrator_ias15_reset
+#endif // LIBREBOUND
+
+
 #ifdef TREE
 #error IAS15 integrator not working with TREE module.
 #endif

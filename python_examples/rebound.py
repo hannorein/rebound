@@ -6,17 +6,17 @@ try:
 except NameError:
     pass                    # this means python 3.x
 
-# Try to load libias15 from the obvioud places it could be in.
+# Try to load librebound from the obvioud places it could be in.
 try:
-    libias15 = CDLL('../../shared/libmikkola.so', RTLD_GLOBAL)
+    librebound = CDLL('../../shared/librebound.so', RTLD_GLOBAL)
 except:
     try:
-        libias15 = CDLL('../shared/libmikkola.so', RTLD_GLOBAL)
+        librebound = CDLL('../shared/librebound.so', RTLD_GLOBAL)
     except:
         try:
-            libias15 = CDLL('shared/libmikkola.so', RTLD_GLOBAL)
+            librebound = CDLL('shared/librebound.so', RTLD_GLOBAL)
         except:
-            print("Cannot find library 'libias15.so'. Check path set in 'rebound.py'.")
+            print("Cannot find library 'librebound.so'. Check path set in 'rebound.py'.")
             raise
 
 
@@ -60,50 +60,51 @@ fp = None
 def set_additional_forces(func):
     global fp  # keep references
     fp = AFF(func)
-    libias15.set_additional_forces(fp)
+    librebound.set_additional_forces(fp)
 
 # Setter/getter of parameters and constants
 def set_G(G):
-    c_double.in_dll(libias15, "G").value = G
+    c_double.in_dll(librebound, "G").value = G
 
 def get_G():
-    return c_double.in_dll(libias15, "G").value
+    return c_double.in_dll(librebound, "G").value
 
 def set_dt(dt):
-    c_double.in_dll(libias15, "dt").value = dt
+    c_double.in_dll(librebound, "dt").value = dt
 
 def get_dt():
-    return c_double.in_dll(libias15, "dt").value
+    return c_double.in_dll(librebound, "dt").value
 
 def set_t(t):
-    c_double.in_dll(libias15, "t").value = t
+    c_double.in_dll(librebound, "t").value = t
 
 def set_min_dt(t):
-    c_double.in_dll(libias15, "integrator_min_dt").value = t
+    c_double.in_dll(librebound, "integrator_ias15_min_dt").value = t
+    c_double.in_dll(librebound, "integrator_mikkola_min_dt").value = t
 
 def get_t():
-    return c_double.in_dll(libias15, "t").value
+    return c_double.in_dll(librebound, "t").value
 
 def megno_init(delta):
-    libias15.tools_megno_init(c_double(delta))
+    librebound.tools_megno_init(c_double(delta))
 
 def get_megno():
-    libias15.tools_megno.restype = c_double
-    return libias15.tools_megno()
+    librebound.tools_megno.restype = c_double
+    return librebound.tools_megno()
 
 def get_lyapunov():
-    libias15.tools_lyapunov.restype = c_double
-    return libias15.tools_lyapunov()
+    librebound.tools_lyapunov.restype = c_double
+    return librebound.tools_lyapunov()
 
 def get_N():
-    return c_int.in_dll(libias15,"N").value 
+    return c_int.in_dll(librebound,"N").value 
 
 
 # Setter/getter of particle data
 def set_particles(particles):
-    c_int.in_dll(libias15,"N").value = len(particles)
+    c_int.in_dll(librebound,"N").value = len(particles)
     arr = (Particle * len(particles))(*particles)
-    libias15.setp(byref(arr))
+    librebound.setp(byref(arr))
 
 def particles_add(particles):
     particle_add(particles)
@@ -159,15 +160,15 @@ def particle_add(particles=None, m=None, x=None, y=None, z=None, vx=None, vy=Non
             particles = Particle(m=m,x=x,y=y,z=z,vx=vx,vy=vy,vz=vz)
     if isinstance(particles,list):
         for particle in particles:
-            libias15.particles_add(particle)
+            librebound.particles_add(particle)
     else:
-       libias15.particles_add(particles)
+       librebound.particles_add(particles)
 
 def particle_get(i):
     N = get_N() 
     if i>=N:
         return None
-    getp = libias15.particle_get
+    getp = librebound.particle_get
     getp.restype = Particle
     _p = getp(c_int(i))
     return _p
@@ -181,25 +182,39 @@ def particles_get_array():
 
 
 def particles_get():
-    N = c_int.in_dll(libias15,"N").value 
-    getp = libias15.particles_get
+    N = c_int.in_dll(librebound,"N").value 
+    getp = librebound.particles_get
     getp.restype = POINTER(Particle)
     return getp()
 
 
 # Tools
 def move_to_center_of_momentum():
-    libias15.tools_move_to_center_of_momentum()
+    librebound.tools_move_to_center_of_momentum()
 
 def reset():
-    libias15.reset()
+    librebound.reset()
+
+def set_integrator(integrator="IAS15"):
+    if isinstance(integrator, int):
+        c_int.in_dll(librebound, "integrator_choice").value = integrator
+        return
+    if isinstance(integrator, basestring):
+        if integrator.lower() == "ias15":
+            set_integrator(0)
+            return
+        if integrator.lower() == "mikkola":
+            set_integrator(1)
+            return
+    print "Warning. Intergrator not found.\n"
+
 
 # Integration
 def step():
-    libias15.ias15_step()
+    librebound.rebound_step()
 
 def integrate(tmax):
-    libias15.integrate(c_double(tmax))
+    librebound.integrate(c_double(tmax))
 
 TWOPI = 2.*math.pi
 def mod2pi(f):
