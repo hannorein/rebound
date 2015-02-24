@@ -95,6 +95,9 @@ void rebound_step(){
 			break;
 	}
 	gravity_calculate_acceleration();
+	if (N_megno){
+		gravity_calculate_variational_acceleration();
+	}
 	if (problem_additional_forces) problem_additional_forces();
 	switch(integrator_choice){
 		case 1:
