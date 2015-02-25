@@ -49,15 +49,15 @@ Note: Make sure you have a compiler suite installed. Open a terminal and type `m
 
 ### C or Python?
 
-REBOUND is written in C because C is very fast and highly portable (REBOUND runs on everything from mobile phones to super computers and special purpose accelerator cards).  However, we also provide a simple dynamic library `libias15` for the new IAS15 integrator. This shared library can be called from many programming languages. We provide a python module which makes calling REBOUND from python particularly easy. Whether you want to use REBOUND in C or python depends on your specific application.
+REBOUND is written in C because C is very fast and highly portable (REBOUND runs on everything from mobile phones to super computers and special purpose accelerator cards).  However, we also provide a simple dynamic library `librebound` for the new IAS15 and Wisdom-Holman type MIKKOLA integrators. This shared library can be called from many programming languages. We provide a python module which makes calling REBOUND from python particularly easy. Whether you want to use REBOUND in C or python depends on your specific application.
 
-In short: If you simply want to integrate a few particle system such as a planetary system with the high order integrator IAS15, use python. If you want to run large, many particle systems (with millions of particles) and use an integrator other than IAS15 or make use of the distributed tree code of REBOUND, use the C version.
+In short: If you simply want to integrate a few particle system such as a planetary system with the high order integrator IAS15 or a symplectic integrator, use python. If you want to run large, many particle systems (with millions of particles), use another integrator or make use of the distributed tree code of REBOUND, use the C version.
 
 
-### Python and libias15
-To access REBOUND from python, you first need to compile the dynamic library `libias15`. Go to the `shared` folder and type `make`. This should work on most operating systems without any user intervention. Note that having the computationally intensive kernel of the integrator in C retains the high speed of IAS15. 
+### Python and librebound15
+To access REBOUND from python, you first need to compile the dynamic library `librebound`. Go to the `shared` folder and type `make`. This should work on most operating systems without any user intervention. Note that having the computationally intensive kernel of the integrator in C retains the high speed of IAS15 and MIKKOLA. 
 
-The most interesting use case for `libias15` is a python wrapper that we provide. This wrapper can be used to very easily access `libias15`. The wrapper (module) might appeal to people who want to setup their problem in python and then call IAS15 to efficiently integrate particles with very high precision. The following listing shows a complete python script to run an N-body simulation with IAS15 and `libias15`:
+The most interesting use case for `librebound` is a python wrapper that we provide. This wrapper can be used to very easily access `librebound`. The wrapper (module) might appeal to people who want to setup their problem in python and then call IAS15/MIKKOLA to efficiently integrate particles with very high precision. The following listing shows a complete python script to run an N-body simulation with IAS15 and `librebound`:
  
 ```python
 # Import the rebound module
@@ -77,10 +77,19 @@ rebound.move_to_center_of_momentum()
 rebound.integrate(100.)
 ```
 
+To use the Wisdom-Holman type MIKKOLA integrator instead, simply call
+
+```python
+rebound.set_integrator("mikkola")
+rebound.set_dt(0.01)                           # Fixed timestep needed (MIKKOLA is not adaptive)
+```
+
+before calling `rebound.integrate()`.
+
 For details on the available function of the REBOUND module in python, have a look at the docstrings in the file [`rebound.py`](python_examples/rebound.py) and the examples provided in the `python_examples` directory. 
 
 ### C version
-Most of the features that make REBOUND great are not available in `libias15` and python. If you use the C version of REBOUND, you can use different integrators, accelerated gravity routines, OpenGL visualization, helper functions to setup particles, collision detection routines and many more. 
+Most of the features that make REBOUND great are not available in `librebound` and python. If you use the C version of REBOUND, you can use different integrators, accelerated gravity routines, OpenGL visualization, helper functions to setup particles, collision detection routines and many more. 
 
 
 #### Available modules
@@ -120,8 +129,10 @@ Module name            | Description
 ---------------------- | -----------
 `integrator_euler.c`   |  Euler scheme, first order
 `integrator_leapfrog.c`| Leap frog, second order, symplectic
-`integrator_wh.c`      | Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991
-`integrator_ias15.c`   | IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precission. Rein & Spiegel 2014, Everhart 1985
+`integrator_ias15.c`   | IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precission. IAS15 can integrate variational equations. Rein & Spiegel 2014, Everhart 1985
+`integrator_mikkola.c` | Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, uses Gauss f and g functions to solve Kepler motion, can integrate variational equations, follows Mikkola and Innanen (1999)
+`integrator_wh.c`      | SWIFT-style Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, note that `integrator_mikkola.c` almost always offers better characteristics, Wisdom & Holman 1991, Kinoshita et al 1991
+
 `integrator_sei.c`     | Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
 
 
