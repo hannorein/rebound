@@ -206,7 +206,7 @@ def set_integrator(integrator="IAS15"):
         if integrator.lower() == "mikkola":
             set_integrator(1)
             return
-    print "Warning. Intergrator not found.\n"
+    print("Warning. Intergrator not found.\n")
 
 
 # Integration
