@@ -54,7 +54,7 @@ REBOUND is written in C because C is very fast and highly portable (REBOUND runs
 In short: If you simply want to integrate a few particle system such as a planetary system with the high order integrator IAS15 or a symplectic integrator, use python. If you want to run large, many particle systems (with millions of particles), use another integrator or make use of the distributed tree code of REBOUND, use the C version.
 
 
-### Python and librebound15
+### Python and librebound
 To access REBOUND from python, you first need to compile the dynamic library `librebound`. Go to the `shared` folder and type `make`. This should work on most operating systems without any user intervention. Note that having the computationally intensive kernel of the integrator in C retains the high speed of IAS15 and MIKKOLA. 
 
 The most interesting use case for `librebound` is a python wrapper that we provide. This wrapper can be used to very easily access `librebound`. The wrapper (module) might appeal to people who want to setup their problem in python and then call IAS15/MIKKOLA to efficiently integrate particles with very high precision. The following listing shows a complete python script to run an N-body simulation with IAS15 and `librebound`:
