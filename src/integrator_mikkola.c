@@ -167,7 +167,7 @@ void kepler_step(int i,double _dt){
 		//double spp = r0 + eta0*G0 + zeta0*G1;
 		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
 		X+=dX;
-		if (fabs(dX/X)<1e-15) break; // TODO: Make sure loop does not get stuck (add maximum number of iterations) 
+		if (fabs(dX/X)<1e-15 || X<0.) break; 
 	}
 
 	double r = r0 + eta0*G1 + zeta0*G2;
