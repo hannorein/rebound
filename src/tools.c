@@ -344,39 +344,39 @@ double tools_megno_deltad_delta(){
 }
 
 // Automatically rescale megno particles if their size grew by more then 10 orders of magnitude.
-void tools_megno_rescale(){
-	int rescale_flag = 0;
-	double delta2_limit = 1e100*tools_megno_delta0*tools_megno_delta0;
-        for (int i=N-N_megno;i<N;i++){
-		double delta2 = 0;
-		delta2 += particles[i].x  * particles[i].x; 
-		delta2 += particles[i].y  * particles[i].y;
-		delta2 += particles[i].z  * particles[i].z;
-		delta2 += particles[i].vx * particles[i].vx; 
-		delta2 += particles[i].vy * particles[i].vy;
-		delta2 += particles[i].vz * particles[i].vz;
-		if (delta2>delta2_limit){
-			rescale_flag = 1;
-		}
-        }
-	if (rescale_flag){
-		for (int i=N-N_megno;i<N;i++){
-			//particles[i].x  = tools_normal(1.);
-			//particles[i].y  = tools_normal(1.);
-			//particles[i].z  = tools_normal(1.);
-			//particles[i].vx = tools_normal(1.);
-			//particles[i].vy = tools_normal(1.);
-			//particles[i].vz = tools_normal(1.);
-			double deltad = tools_megno_delta0/sqrt(particles[i].x*particles[i].x + particles[i].y*particles[i].y + particles[i].z*particles[i].z + particles[i].vx*particles[i].vx + particles[i].vy*particles[i].vy + particles[i].vz*particles[i].vz); // rescale factor
-			particles[i].x *= deltad;
-			particles[i].y *= deltad;
-			particles[i].z *= deltad;
-			particles[i].vx *= deltad;
-			particles[i].vy *= deltad;
-			particles[i].vz *= deltad;
-		}
-	}
-}
+//void tools_megno_rescale(){
+//	int rescale_flag = 0;
+//	double delta2_limit = 1e100*tools_megno_delta0*tools_megno_delta0;
+//        for (int i=N-N_megno;i<N;i++){
+//		double delta2 = 0;
+//		delta2 += particles[i].x  * particles[i].x; 
+//		delta2 += particles[i].y  * particles[i].y;
+//		delta2 += particles[i].z  * particles[i].z;
+//		delta2 += particles[i].vx * particles[i].vx; 
+//		delta2 += particles[i].vy * particles[i].vy;
+//		delta2 += particles[i].vz * particles[i].vz;
+//		if (delta2>delta2_limit){
+//			rescale_flag = 1;
+//		}
+//        }
+//	if (rescale_flag){
+//		for (int i=N-N_megno;i<N;i++){
+//			//particles[i].x  = tools_normal(1.);
+//			//particles[i].y  = tools_normal(1.);
+//			//particles[i].z  = tools_normal(1.);
+//			//particles[i].vx = tools_normal(1.);
+//			//particles[i].vy = tools_normal(1.);
+//			//particles[i].vz = tools_normal(1.);
+//			double deltad = tools_megno_delta0/sqrt(particles[i].x*particles[i].x + particles[i].y*particles[i].y + particles[i].z*particles[i].z + particles[i].vx*particles[i].vx + particles[i].vy*particles[i].vy + particles[i].vz*particles[i].vz); // rescale factor
+//			particles[i].x *= deltad;
+//			particles[i].y *= deltad;
+//			particles[i].z *= deltad;
+//			particles[i].vx *= deltad;
+//			particles[i].vy *= deltad;
+//			particles[i].vz *= deltad;
+//		}
+//	}
+//}
 
 void tools_megno_update(double dY){
 	// Calculate running Y(t)
@@ -396,8 +396,8 @@ void tools_megno_update(double dY){
 	tools_megno_var_t  += ((double)tools_megno_n-1.)/(double)tools_megno_n 
 					*(t-tools_megno_mean_t)
 					*(t-tools_megno_mean_t);
-	// Check to see if we need to rescale
-	if (tools_megno_delta0!=0){
-		tools_megno_rescale();
-	}
+//	// Check to see if we need to rescale
+//	if (tools_megno_delta0!=0){
+//		tools_megno_rescale();
+//	}
 }
