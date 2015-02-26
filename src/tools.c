@@ -361,12 +361,12 @@ void tools_megno_rescale(){
         }
 	if (rescale_flag){
 		for (int i=N-N_megno;i<N;i++){
-			particles[i].x  = tools_normal(1.);
-			particles[i].y  = tools_normal(1.);
-			particles[i].z  = tools_normal(1.);
-			particles[i].vx = tools_normal(1.);
-			particles[i].vy = tools_normal(1.);
-			particles[i].vz = tools_normal(1.);
+			//particles[i].x  = tools_normal(1.);
+			//particles[i].y  = tools_normal(1.);
+			//particles[i].z  = tools_normal(1.);
+			//particles[i].vx = tools_normal(1.);
+			//particles[i].vy = tools_normal(1.);
+			//particles[i].vz = tools_normal(1.);
 			double deltad = tools_megno_delta0/sqrt(particles[i].x*particles[i].x + particles[i].y*particles[i].y + particles[i].z*particles[i].z + particles[i].vx*particles[i].vx + particles[i].vy*particles[i].vy + particles[i].vz*particles[i].vz); // rescale factor
 			particles[i].x *= deltad;
 			particles[i].y *= deltad;
