@@ -418,17 +418,27 @@ void integrator_interaction(double _dt){
 		double rj3 = rj*rj*rj;
 		double M = _M(i);
 		double prefac1 = M*rj3;
-		p_j[i].vx += _dt * (p_j[i].ax + prefac1*p_j[i].x);
-		p_j[i].vy += _dt * (p_j[i].ay + prefac1*p_j[i].y);
-		p_j[i].vz += _dt * (p_j[i].az + prefac1*p_j[i].z);
+		p_j[i].vx += _dt * p_j[i].ax;
+		p_j[i].vy += _dt * p_j[i].ay;
+		p_j[i].vz += _dt * p_j[i].az;
+		if (i>1){
+			p_j[i].vx += _dt * prefac1*p_j[i].x;
+			p_j[i].vy += _dt * prefac1*p_j[i].y;
+			p_j[i].vz += _dt * prefac1*p_j[i].z;
+		}
 		if (N_megno){
 			// Eq 132
 			double rj5 = rj3*rj*rj;
 			double rdr = p_j[i+N_megno].x*p_j[i].x + p_j[i+N_megno].y*p_j[i].y + p_j[i+N_megno].z*p_j[i].z;
 			double prefac2 = -M*3.*rdr*rj5;
-			p_j[i+N_megno].vx += _dt * (p_j[i+N_megno].ax + prefac1*p_j[i+N_megno].x + prefac2*p_j[i].x);
-			p_j[i+N_megno].vy += _dt * (p_j[i+N_megno].ay + prefac1*p_j[i+N_megno].y + prefac2*p_j[i].y);
-			p_j[i+N_megno].vz += _dt * (p_j[i+N_megno].az + prefac1*p_j[i+N_megno].z + prefac2*p_j[i].z);
+			p_j[i+N_megno].vx += _dt * p_j[i+N_megno].ax;
+			p_j[i+N_megno].vy += _dt * p_j[i+N_megno].ay;
+			p_j[i+N_megno].vz += _dt * p_j[i+N_megno].az;
+			if (i>1){
+				p_j[i+N_megno].vx += _dt * (prefac1*p_j[i+N_megno].x + prefac2*p_j[i].x);
+				p_j[i+N_megno].vy += _dt * (prefac1*p_j[i+N_megno].y + prefac2*p_j[i].y);
+				p_j[i+N_megno].vz += _dt * (prefac1*p_j[i+N_megno].z + prefac2*p_j[i].z);
+			}
 		}
 	}
 }
