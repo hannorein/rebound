@@ -6,55 +6,52 @@ import numpy as np
 from interruptible_pool import InterruptiblePool
 
 def simulation(par):
-	S, dt,e0 = par
-	
-	rebound.reset()
-	rebound.set_integrator("mikkola")
-	rebound.set_dt(dt)
+    S, dt,e0 = par
 
-	r0 = 1.-e0 # assumes the orbit has oculating a = 1 and we start at pericenter
-	vy = np.sqrt(2./(1.-e0)-1.)
-	
-	rebound.particle_add(m=1.)
-	rebound.particle_add(m=0.,a=1.,e=e0,omega=0.,inc=0.,Omega=0.,MEAN=True)
-	
-	rebound.move_to_center_of_momentum()
-	rebound.megno_init(1.e-16)
-	
-	particles = rebound.particles_get()
+    rebound.reset()
+    rebound.set_integrator("mikkola")
+    rebound.set_dt(dt)
 
-	def starkforce(): # need to put inside simulation(par) to have access to S and particles
-		particles[1].ax += S
-	
-	rebound.set_additional_forces(starkforce)
-	
-	rebound.integrate(50.*np.pi)
+    rebound.particle_add(m=1.)
+    rebound.particle_add(m=0.,a=1.,e=e0)
 
-	'''	
-	xs = []
-	ys = []	
-	steps = 0
-	while rebound.get_t()<14*np.pi:
-		rebound.step()
-		steps += 1
-		if steps % 1 == 0:
-			xs.append(particles[1].x)
-			ys.append(particles[1].y)
-	
-	n=4000
-	fig, ax = plt.subplots()
-	ax.plot(xs[::],ys[::])
-	plt.show()
-	'''
-	
-	return [rebound.get_megno(), rebound.get_t()]
+    #rebound.move_to_center_of_momentum()
+    #rebound.megno_init(1.e-16)
+
+
+    particles = rebound.particles_get()
+    def starkforce(): # need to put inside simulation(par) to have access to S and particles
+        particles[1].ax += -S
+
+    rebound.set_additional_forces(starkforce)
+
+    rebound.integrate(50.*np.pi)
+
+    '''	
+    xs = []
+    ys = []	
+    steps = 0
+    while rebound.get_t()<14*np.pi:
+        rebound.step()
+        steps += 1
+        if steps % 1 == 0:
+            xs.append(particles[1].x)
+            ys.append(particles[1].y)
+
+    n=4000
+    fig, ax = plt.subplots()
+    ax.plot(xs[::],ys[::])
+    plt.show()
+    '''
+
+    return [2., rebound.get_t()]
 
 #I always set the (osculating) semimajor axis to 1, you can pass different initial e values
 
 e0 = 0.9 # Rauch uses 0.9 for Fig 4
 Scrit = 0.25 # always true if you use G=M=a=1
 
-N = 200
+N = 80
 dts = np.linspace(0.01,1.,N)
 Ss = np.linspace(0,0.5,N)
 parameters = [(Ss[i]*Scrit,dts[j]*2.*np.pi,e0) for i in range(N) for j in range(N)]
