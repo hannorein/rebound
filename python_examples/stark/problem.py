@@ -12,12 +12,11 @@ def simulation(par):
 	rebound.set_integrator("mikkola")
 	rebound.set_dt(dt)
 
-	r0 = 1-e0 # assumes the orbit has oculating a = 1 and we start at pericenter
-	vy = np.sqrt(2/(1-e0)-1.)
+	r0 = 1.-e0 # assumes the orbit has oculating a = 1 and we start at pericenter
+	vy = np.sqrt(2./(1.-e0)-1.)
 	
-	sun = Particle(m=1.,x=0.,y=0.,z=0.,vx=0.,vy=0.,vz=0.)
-	rebound.particle_add(sun)
-	rebound.particle_add(primary=sun,m=0.,a=1.,anom=0.,e=e0,omega=0.,inc=0.,Omega=0.,MEAN=True)
+	rebound.particle_add(m=1.)
+	rebound.particle_add(m=0.,a=1.,e=e0,omega=0.,inc=0.,Omega=0.,MEAN=True)
 	
 	rebound.move_to_center_of_momentum()
 	rebound.megno_init(1.e-16)
@@ -29,7 +28,7 @@ def simulation(par):
 	
 	rebound.set_additional_forces(starkforce)
 	
-	rebound.integrate(50*np.pi)
+	rebound.integrate(50.*np.pi)
 
 	'''	
 	xs = []
@@ -48,23 +47,23 @@ def simulation(par):
 	plt.show()
 	'''
 	
-	return [rebound.get_megno(), 1./(rebound.get_lyapunov()*2.*np.pi)]
+	return [rebound.get_megno(), rebound.get_t()]
 
 #I always set the (osculating) semimajor axis to 1, you can pass different initial e values
 
 e0 = 0.9 # Rauch uses 0.9 for Fig 4
 Scrit = 0.25 # always true if you use G=M=a=1
 
-N = 100
+N = 200
 dts = np.linspace(0.01,1.,N)
 Ss = np.linspace(0,0.5,N)
-parameters = [(Ss[i]*Scrit,dts[j]*2*np.pi,e0) for i in range(N) for j in range(N)]
+parameters = [(Ss[i]*Scrit,dts[j]*2.*np.pi,e0) for i in range(N) for j in range(N)]
 
 pool = InterruptiblePool()
 res = pool.map(simulation,parameters)
 res = np.nan_to_num(res)
 megno = np.clip(res[:,0].reshape((N,N)),1.8,4.)
-lyaptime = np.clip(np.absolute(res[:,1].reshape((N,N))),1.,1.e5)/2/np.pi # divide by 2pi to get in units of orbital period
+lyaptime = np.clip(np.absolute(res[:,1].reshape((N,N))),1.,1.e5)/2./np.pi # divide by 2pi to get in units of orbital period
 
 import matplotlib; matplotlib.use("pdf")
 import matplotlib.pyplot as plt
