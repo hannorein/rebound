@@ -129,6 +129,15 @@ void reset(){
 	srand ( tim.tv_usec + getpid());
 }
 
+int check_eject(){
+	double x = particles[1].x;
+	double y = particles[1].y;
+	double z = particles[1].z;
+	if (sqrt(x*x + y*y + z*z)>100.){
+		return 1;
+	}
+	return 0;
+}
 // Integrate until t=_tmax
 void integrate(double _tmax){
 	tmax = _tmax;
@@ -140,6 +149,9 @@ void integrate(double _tmax){
 			return;
 		}
 		rebound_step();
+		if (check_eject()){
+			return;
+		}
 		if (t+dt>=tmax){
 			dt = tmax-t;
 			last_step++;
