@@ -49,7 +49,9 @@ extern int Nmax;
 // Chooses which integrator to use.
 // 0: IAS15 (default)
 // 1: MIKKOLA
-int integrator_choice = 0; 
+// 2: WH
+// 3: Leap-frog
+int selected_integrator = 0; 
 
 extern void integrator_ias15_part1();
 extern void integrator_ias15_part2();
@@ -57,6 +59,12 @@ extern void integrator_ias15_reset();
 extern void integrator_mikkola_part1();
 extern void integrator_mikkola_part2();
 extern void integrator_mikkola_reset();
+extern void integrator_wh_part1();
+extern void integrator_wh_part2();
+extern void integrator_wh_reset();
+extern void integrator_leapfrog_part1();
+extern void integrator_leapfrog_part2();
+extern void integrator_leapfrog_reset();
 
 // Function pointer to additional forces
 void (*problem_additional_forces) () = NULL;
@@ -86,9 +94,15 @@ void rebound_step(){
 		fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
 		return;
 	}
-	switch(integrator_choice){
+	switch(selected_integrator){
 		case 1:
 			integrator_mikkola_part1();
+			break;
+		case 2:
+			integrator_wh_part1();
+			break;
+		case 3:
+			integrator_leapfrog_part1();
 			break;
 		default:
 			integrator_ias15_part1();
@@ -99,9 +113,15 @@ void rebound_step(){
 		gravity_calculate_variational_acceleration();
 	}
 	if (problem_additional_forces) problem_additional_forces();
-	switch(integrator_choice){
+	switch(selected_integrator){
 		case 1:
 			integrator_mikkola_part2();
+			break;
+		case 2:
+			integrator_wh_part2();
+			break;
+		case 3:
+			integrator_leapfrog_part2();
 			break;
 		default:
 			integrator_ias15_part2();
@@ -122,8 +142,10 @@ void reset(){
 	N_megno 	= 0;
 	free(particles);
 	particles 	= NULL;
-	integrator_mikkola_reset();
 	integrator_ias15_reset();
+	integrator_mikkola_reset();
+	integrator_wh_reset();
+	integrator_leapfrog_reset();
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	srand ( tim.tv_usec + getpid());
