@@ -54,7 +54,7 @@ double integrator_min_dt 			= 0;
 struct particle* p_j  = NULL;
 double* eta = NULL;
 double Mtotal;
-
+double Xprev = 0.;
 
 // Fast inverse factorial lookup table
 static const double invfactorial[] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
@@ -153,7 +153,7 @@ void kepler_step(int i,double _dt){
 	double zeta0 = M - beta*r0;
 	
 
-	double X = 0;  // TODO: find a better initial estimate.
+	double X = Xprev;  // TODO: find a better initial estimate.
 	double G1,G2,G3;
 	for (int n_hg=0;n_hg<20;n_hg++){
 		G2 = integrator_G(2,beta,X);
@@ -167,10 +167,14 @@ void kepler_step(int i,double _dt){
 		//double spp = r0 + eta0*G0 + zeta0*G1;
 		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
 		X+=dX;
-		if (fabs(dX/X)<1e-15) break; 
+		if (fabs(dX/X)<1e-15){
+			printf("Broke\n");
+			break;
+		}
 		if (X<0.) X=0.; // Failsafe
 	}
 
+	Xprev = X;
 	double r = r0 + eta0*G1 + zeta0*G2;
 	double f = 1.-M*G2/r0;
 	double g = _dt - M*G3;

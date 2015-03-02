@@ -14,15 +14,11 @@ def energy():
 	particles = rebound.particles_get()
 	G = rebound.get_G()
 
-	for i in range(N-N_megno):
-		p = particles[i]
-		kin += 0.5*p.m * (p.vx**2 + p.vy**2 + p.vz**2)
-		for j in range(i+1,N-N_megno):
-			pj = particles[j]
-			dx = p.x - pj.x
-			dy = p.y - pj.y
-			dz = p.z - pj.z
-			pot -= G*pj.m*p.m/np.sqrt(dx**2 + dy**2 + dz**2)
+	p = particles[1]
+	star = particles[0]
+	
+	kin = 0.5*(	p.vx**2 + p.vy**2 + p.vz**2)
+	pot = -G*star.m/np.sqrt((p.x-star.x)**2 + (p.y-star.y)**2 + (p.z-star.z)**2)
 	
 	return kin + pot
 
@@ -52,17 +48,27 @@ def simulation(par):
 	
 	#rebound.integrate(50*np.pi)
 
+	E0 = energy()
+	
 	xs = []
 	ys = []	
+	E_error = []
 	ener = []
+	ts = []
+
 	steps = 0
-	while rebound.get_t()<14*np.pi:
+	while rebound.get_t()<1000*np.pi:
 		rebound.step()
 		steps += 1
+		#print(particles[1].x, particles[1].y, particles[0].x, particles[0].y)
 		if steps % 1 == 0:
+			ts.append(rebound.get_t())
 			ener.append(energy())
+			rel_E_error = (energy() - E0)/np.fabs(E0) # > 0 if energy increased (came closer to unbound E = 0)
+			signed_log_E_error = np.log10(np.fabs(rel_E_error)) if rel_E_error > 0 else -np.log10(np.fabs(rel_E_error)) # hold log, but with sign
+			E_error.append(signed_log_E_error)
 			if np.sqrt(particles[1].x**2 + particles[1].y**2) > 10:
-				return [rebound.get_megno(), rebound.get_t(), ener]
+				return [rebound.get_megno(), ts, E_error, ener]
 			#xs.append(particles[1].x)
 			#ys.append(particles[1].y)
 	'''	
@@ -73,7 +79,7 @@ def simulation(par):
 	'''
 	
 	#return [rebound.get_megno(), 1./(rebound.get_lyapunov()*2.*np.pi)]
-	return [rebound.get_megno(), rebound.get_t(), ener]
+	return [rebound.get_megno(), ts, E_error, ener]
 #I always set the (osculating) semimajor axis to 1, you can pass different initial e values
 
 e0 = 0.9 # Rauch uses 0.9 for Fig 4
@@ -83,39 +89,27 @@ N = 100
 
 res = simulation((0.1*Scrit, 0.18, 0.9))
 
-print(res[1]/2./2/np.pi)
-print(res[0])
+ts = [i/2./np.pi for i in res[1]]
+E_error = res[2]
+energy = res[3]
 
-'''
-res = np.nan_to_num(res)
-megno = np.clip(res[:,0].reshape((N,N)),1.8,4.)
-lyaptime = np.clip(np.absolute(res[:,1].reshape((N,N))),1.,1.e5)/2./np.pi # divide by 2pi to get in units of orbital period
+print("t = ", ts[-1])
+print("MEGNO = ", res[0])
 
 import matplotlib; matplotlib.use("pdf")
 import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
 
 f,axarr = plt.subplots(2)
-extent=[dts.min(), dts.max(), Ss.min(), Ss.max()]
 
-for ax in axarr:
-	ax.set_xlim(extent[0], extent[1])
-	ax.set_ylim(extent[2], extent[3])
-	ax.set_xlabel(r"$\Delta t / t_{orb}$")
-	ax.set_ylabel(r"$S/S_{crit}$")
+axarr[0].plot(ts, E_error, 'b.')
+axarr[0].set_xlabel("Time (orbits)")
+axarr[0].set_ylabel(r"Signed $Log_{10}$ Relative energy error")
 
-im1 = axarr[0].imshow(megno, vmin=1.8, vmax=4., aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
-cb1 = plt.colorbar(im1, ax=axarr[0])
-cb1.solids.set_rasterized(True)
-cb1.set_label("MEGNO $\\langle Y \\rangle$")
+axarr[1].plot(ts,energy, 'b.')
+axarr[1].set_xlabel("Time (orbits)")
+axarr[1].set_ylabel("Energy")
 
-im2 = axarr[1].imshow(lyaptime, vmin=1., vmax=lyaptime.max(), norm=LogNorm(), aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn", extent=extent)
-cb2 = plt.colorbar(im2, ax=axarr[1])
-cb2.solids.set_rasterized(True)
-cb2.set_label("Lyapunov timescale (orbital periods)")
-
-plt.savefig("stark.pdf")
+plt.savefig("energyerror.pdf")
 
 import os
-os.system("open stark.pdf")
-'''
+os.system("open energyerror.pdf")
