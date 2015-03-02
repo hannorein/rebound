@@ -64,7 +64,7 @@ parameters = [(Ss[i]*Scrit,dts[j]*2*np.pi,e0) for i in range(N) for j in range(N
 pool = InterruptiblePool()
 res = pool.map(simulation,parameters)
 res = np.nan_to_num(res)
-megno = np.clip(res[:,0].reshape((N,N)),1.8,4.)
+megno = np.clip(res[:,0].reshape((N,N)),0.,4.)
 lyaptime = np.clip(np.absolute(res[:,1].reshape((N,N))),1.,1.e5)/2./np.pi # divide by 2pi to get in units of orbital period
 
 import matplotlib; matplotlib.use("pdf")
@@ -80,7 +80,7 @@ for ax in axarr:
 	ax.set_xlabel(r"$\Delta t / t_{orb}$")
 	ax.set_ylabel(r"$S/S_{crit}$")
 
-im1 = axarr[0].imshow(megno, vmin=1.8, vmax=4., aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
+im1 = axarr[0].imshow(megno, vmin=0., vmax=4., aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
 cb1 = plt.colorbar(im1, ax=axarr[0])
 cb1.solids.set_rasterized(True)
 cb1.set_label("MEGNO $\\langle Y \\rangle$")

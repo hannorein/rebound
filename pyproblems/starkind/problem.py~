@@ -1,0 +1,32 @@
+# Import the rebound module
+import sys; sys.path.append('../')
+import rebound
+from rebound import Particle
+import numpy as np
+
+def simulation(par):
+	S, dt = par
+	
+	rebound.reset()
+	rebound.set_integrator("mikkola")
+	rebound.set_dt(dt)
+	
+	rebound.particle_add( Particle(m=1.,x=0.,y=0.,z=0.,vx=0.,vy=0.,vz=0.) )
+	rebound.particle_add( Particle(m=0.,x=1.,y=0.,z=0.,vx=0.,vy=1.2,vz=0.) )
+
+	rebound.move_to_center_of_momentum()
+	rebound.megno_init(1.e-16)
+	
+	particles = rebound.particles_get()
+
+	def starkforce():
+		particles[1].ax += S*particles[1].x
+	
+	rebound.set_additional_forces(starkforce)
+	
+	rebound.integrate(1.e4*2*np.pi)
+	
+	return [rebound.get_megno(), 1./(rebound.get_lyapunov()*2.*np.pi)]
+
+res = simulation((0.01, 0.002))
+print(res)
