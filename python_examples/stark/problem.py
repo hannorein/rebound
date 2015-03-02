@@ -29,27 +29,28 @@ def simulation(par):
 	
 	rebound.set_additional_forces(starkforce)
 	
-	rebound.integrate(50*np.pi)
+	#rebound.integrate(50*np.pi)
 
-	'''	
 	xs = []
 	ys = []	
 	steps = 0
 	while rebound.get_t()<14*np.pi:
 		rebound.step()
 		steps += 1
-		if steps % 1 == 0:
-			xs.append(particles[1].x)
-			ys.append(particles[1].y)
-	
+		if steps % 100 == 0:
+			if np.sqrt(particles[1].x**2 + particles[1].y**2) > 10:
+				return [rebound.get_megno(), rebound.get_t()]
+			#xs.append(particles[1].x)
+			#ys.append(particles[1].y)
+	'''	
 	n=4000
 	fig, ax = plt.subplots()
 	ax.plot(xs[::],ys[::])
 	plt.show()
 	'''
 	
-	return [rebound.get_megno(), 1./(rebound.get_lyapunov()*2.*np.pi)]
-
+	#return [rebound.get_megno(), 1./(rebound.get_lyapunov()*2.*np.pi)]
+	return [rebound.get_megno(), rebound.get_t()]
 #I always set the (osculating) semimajor axis to 1, you can pass different initial e values
 
 e0 = 0.9 # Rauch uses 0.9 for Fig 4
