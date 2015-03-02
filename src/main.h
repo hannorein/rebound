@@ -72,4 +72,8 @@ void init_boxwidth(double _boxwidth);
  * When OpenGL is used, this function is called by OpenGL directly. 
  */
 void iterate();
+
+// Integer flag that determines what kind of integrator is used.
+extern int selected_integrator; 
+
 #endif

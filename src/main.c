@@ -67,6 +67,15 @@ int root_ny		= 1;
 int root_nz		= 1;
 int root_n		= 1;
 
+
+#if   defined(INTEGRATOR_MIKKOLA)
+int selected_integrator = 1;
+#elif defined(INTEGRATOR_WH)
+int selected_integrator = 2;
+#else
+int selected_integrator = 0; //IAS15
+#endif 
+
 void (*problem_additional_forces) () = NULL;
 
 static char* 	logo[];		/**< Logo of rebound. */

@@ -81,6 +81,8 @@ def set_t(t):
 def set_min_dt(t):
     c_double.in_dll(librebound, "integrator_ias15_min_dt").value = t
     c_double.in_dll(librebound, "integrator_mikkola_min_dt").value = t
+    c_double.in_dll(librebound, "integrator_wh_min_dt").value = t
+    c_double.in_dll(librebound, "integrator_leapfrog_min_dt").value = t
 
 def get_t():
     return c_double.in_dll(librebound, "t").value
@@ -197,7 +199,7 @@ def reset():
 
 def set_integrator(integrator="IAS15"):
     if isinstance(integrator, int):
-        c_int.in_dll(librebound, "integrator_choice").value = integrator
+        c_int.in_dll(librebound, "selected_integrator").value = integrator
         return
     if isinstance(integrator, basestring):
         if integrator.lower() == "ias15":
@@ -205,6 +207,15 @@ def set_integrator(integrator="IAS15"):
             return
         if integrator.lower() == "mikkola":
             set_integrator(1)
+            return
+        if integrator.lower() == "wh":
+            set_integrator(2)
+            return
+        if integrator.lower() == "leapfrog":
+            set_integrator(3)
+            return
+        if integrator.lower() == "leap-frog":
+            set_integrator(3)
             return
     print("Warning. Intergrator not found.\n")
 

@@ -47,6 +47,16 @@
 #include "gravity.h"
 #include "boundaries.h"
 
+// Slightly dirty trick to rename function for librebound use
+#ifdef LIBREBOUND
+#define integrator_part1                      integrator_wh_part1
+#define integrator_part2                      integrator_wh_part2
+#define integrator_force_is_velocitydependent integrator_wh_force_is_velocitydependent
+#define integrator_epsilon                    integrator_wh_epsilon
+#define integrator_min_dt                     integrator_wh_min_dt
+#define integrator_reset                      integrator_wh_reset
+#endif // LIBREBOUND
+
 // These variables have no effect for wh.
 int integrator_force_is_velocitydependent 	= 1;
 double integrator_epsilon 			= 0;

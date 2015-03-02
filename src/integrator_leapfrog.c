@@ -37,6 +37,16 @@
 #include "gravity.h"
 #include "boundaries.h"
 
+// Slightly dirty trick to rename function for librebound use
+#ifdef LIBREBOUND
+#define integrator_part1                      integrator_leapfrog_part1
+#define integrator_part2                      integrator_leapfrog_part2
+#define integrator_force_is_velocitydependent integrator_leapfrog_force_is_velocitydependent
+#define integrator_epsilon                    integrator_leapfrog_epsilon
+#define integrator_min_dt                     integrator_leapfrog_min_dt
+#define integrator_reset                      integrator_leapfrog_reset
+#endif // LIBREBOUND
+
 // These variables have no effect for leapfrog.
 int integrator_force_is_velocitydependent 	= 1;
 double integrator_epsilon 			= 0;

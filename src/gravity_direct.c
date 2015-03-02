@@ -36,6 +36,7 @@
 #include <time.h>
 #include "particle.h"
 #include "main.h"
+#include "integrator.h"
 #include "boundaries.h"
 #include "communication_mpi.h"
 
@@ -43,16 +44,6 @@
 #warning GRAVITY_DIRECT might not work with MPI for your problem. 
 #warning Make sure you know what the code is doing. Have a look at the example restricted_threebody_mpi.
 #endif
-
-#ifdef LIBREBOUND
-extern int integrator_choice; //TODO fix dirty hack
-#else //LIBREBOUND
-#ifdef INTEGRATOR_MIKKOLA
-const int integrator_choice =1;//TODO fix dirty hack
-#else // INTEGRATOR_MIKKOLA
-const int integrator_choice =0;//TODO fix dirty hack
-#endif // INTEGRATOR_MIKKOLA
-#endif // LIBREBOUND
 
 void gravity_calculate_acceleration(){
 #pragma omp parallel for schedule(guided)
@@ -70,21 +61,13 @@ void gravity_calculate_acceleration(){
 		struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
 		// Summing over all particle pairs
 #pragma omp parallel for schedule(guided)
-#ifdef INTEGRATOR_WH
-		for (int i=1; i<_N_real; i++){
+		for (int i=(selected_integrator==2?1:0); i<_N_real; i++){
 			double csx = 0;
 			double csy = 0;
 			double csz = 0;
-		for (int j=1; j<_N_active; j++){
-#else //INTEGRATOR_WH
-		for (int i=0; i<_N_real; i++){
-			double csx = 0;
-			double csy = 0;
-			double csz = 0;
-		for (int j=0; j<_N_active; j++){
-#endif //INTEGRATOR_WH
-			if (integrator_choice==1 && i==1 && j==0) continue;
-			if (integrator_choice==1 && j==1 && i==0) continue;
+		for (int j=(selected_integrator==2?1:0); j<_N_active; j++){
+			if (selected_integrator==1 && i==1 && j==0) continue;
+			if (selected_integrator==1 && j==1 && i==0) continue;
 			if (i==j) continue;
 			double dx = (gb.shiftx+particles[i].x) - particles[j].x;
 			double dy = (gb.shifty+particles[i].y) - particles[j].y;
@@ -125,8 +108,8 @@ void gravity_calculate_variational_acceleration(){
 #pragma omp parallel for schedule(guided)
 	for (int i=N-N_megno+0; i<N; i++){
 	for (int j=N-N_megno+0; j<N; j++){
-		if (integrator_choice==1 && i==N-N_megno+1 && j==N-N_megno) continue;
-		if (integrator_choice==1 && j==N-N_megno+1 && i==N-N_megno) continue;
+		if (selected_integrator==1 && i==N-N_megno+1 && j==N-N_megno) continue;
+		if (selected_integrator==1 && j==N-N_megno+1 && i==N-N_megno) continue;
 		if (i==j) continue;
 		const double dx = particles[i-N/2].x - particles[j-N/2].x;
 		const double dy = particles[i-N/2].y - particles[j-N/2].y;

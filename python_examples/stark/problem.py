@@ -64,7 +64,7 @@ pool = InterruptiblePool()
 res = pool.map(simulation,parameters)
 res = np.nan_to_num(res)
 megno = np.clip(res[:,0].reshape((N,N)),1.8,4.)
-lyaptime = np.clip(np.absolute(res[:,1].reshape((N,N))),1.,1.e5)/2/np.pi # divide by 2pi to get in units of orbital period
+lyaptime = np.clip(np.absolute(res[:,1].reshape((N,N))),1.,1.e5)/2./np.pi # divide by 2pi to get in units of orbital period
 
 import matplotlib; matplotlib.use("pdf")
 import matplotlib.pyplot as plt
