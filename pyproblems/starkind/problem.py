@@ -66,7 +66,7 @@ def simulation(par):
 			ener.append(energy())
 			rel_E_error = (energy() - E0)/np.fabs(E0) # > 0 if energy increased (came closer to unbound E = 0)
 			signed_log_E_error = np.log10(np.fabs(rel_E_error)) if rel_E_error > 0 else -np.log10(np.fabs(rel_E_error)) # hold log, but with sign
-			E_error.append(signed_log_E_error)
+			E_error.append(rel_E_error)#signed_log_E_error)
 			if np.sqrt(particles[1].x**2 + particles[1].y**2) > 10:
 				return [rebound.get_megno(), ts, E_error, ener]
 			#xs.append(particles[1].x)
@@ -103,12 +103,12 @@ f,axarr = plt.subplots(2)
 
 axarr[0].plot(ts, E_error, 'b.')
 axarr[0].set_xlabel("Time (orbits)")
-axarr[0].set_ylabel(r"Signed $Log_{10}$ Relative energy error")
-
+axarr[0].set_ylabel("Relative energy error")
+'''
 axarr[1].plot(ts,energy, 'b.')
 axarr[1].set_xlabel("Time (orbits)")
 axarr[1].set_ylabel("Energy")
-
+'''
 plt.savefig("energyerror.pdf")
 
 import os
