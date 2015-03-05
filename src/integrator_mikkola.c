@@ -35,6 +35,8 @@
 #include "gravity.h"
 #include "boundaries.h"
 
+#define MAX(a, b) ((a) < (b) ? (b) : (a))
+#define MIN(a, b) ((a) > (b) ? (b) : (a))
 
 // Slightly dirty trick to rename function for librebound use
 #ifdef LIBREBOUND
@@ -141,7 +143,6 @@ double _M(int i){
 
 /****************************** 
  * Keplerian motion           */
-
 void kepler_step(int i,double _dt){
 	double M = _M(i);
 	struct particle p1 = p_j[i];
@@ -151,24 +152,80 @@ void kepler_step(int i,double _dt){
 	double beta = 2.*M/r0 - v2;
 	double eta0 = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
 	double zeta0 = M - beta*r0;
-	
 
-	double X = 0;  // TODO: find a better initial estimate.
+	double X;
 	double G1,G2,G3;
-	for (int n_hg=0;n_hg<20;n_hg++){
-		G2 = integrator_G(2,beta,X);
-		G3 = integrator_G(3,beta,X);
-		G1 = X-beta*G3;
-		double s   = r0*X + eta0*G2 + zeta0*G3-_dt;
-		double sp  = r0 + eta0*G1 + zeta0*G2;
-		double dX  = -s/sp; // Newton's method
 		
-		//double G0 = 1.-beta*G2;
-		//double spp = r0 + eta0*G0 + zeta0*G1;
-		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
-		X+=dX;
-		if (fabs(dX/X)<1e-15) break; 
-		if (X<0.) X=0.; // Failsafe
+	if (beta>0.){
+		double period = 2.*M_PI*M*pow(beta,-3./2.);
+		double X_per_period = 2.*M_PI/sqrt(beta);
+		double X_min = X_per_period*floor(_dt/period);
+		double X_max = X_per_period*ceil(_dt/period);
+		X = _dt/period*X_per_period; // Initial guess 
+		double guess = X;
+		for (int n_hg=0;n_hg<20;n_hg++){
+			G2 = integrator_G(2,beta,X);
+			G3 = integrator_G(3,beta,X);
+			G1 = X-beta*G3;
+			double s   = r0*X + eta0*G2 + zeta0*G3-_dt;
+			double sp  = r0 + eta0*G1 + zeta0*G2;
+			double dX  = -s/sp; // Newton's method
+			
+			X+=dX;
+			X = MAX(X,X_min);
+			X = MIN(X,X_max);
+			if (fabs(dX/X)<1e-15) break; 
+		}
+		if (X<=X_min || X >=X_max){ // Fallback
+			X = (X_max + X_min)/2.;
+			printf("\n%e    %e    %e ",X, X_min, X_max);
+			do{
+				G2 = integrator_G(2,beta,X);
+				G3 = integrator_G(3,beta,X);
+				G1 = X-beta*G3;
+				double s   = r0*X + eta0*G2 + zeta0*G3-_dt;
+				if (s>=0.){
+					X_max = X;
+				}else{
+					X_min = X;
+				}
+				X = (X_max + X_min)/2.;
+			}while (fabs((X_max-X_min)/X_max)>1e-15 && X_max != X_min);
+			printf("\n%e    %e    %e \n",X, X_min, X_max);
+		
+		}
+	}else{
+
+		X = 0;  // TODO: find a better initial estimate.
+		for (int n_hg=0;n_hg<20;n_hg++){
+		FILE* ff = fopen("X.txt","w");
+			for(X=0.;X<10.;X+=0.01){
+			G2 = integrator_G(2,beta,X);
+			G3 = integrator_G(3,beta,X);
+			G1 = X-beta*G3;
+			double s   = r0*X + eta0*G2 + zeta0*G3-_dt;
+		
+			double Y = 1./(X+1.);	
+			G2 = integrator_G(2,beta,Y);
+			G3 = integrator_G(3,beta,Y);
+			G1 = Y-beta*G3;
+			double sY   = r0*Y + eta0*G2 + zeta0*G3-_dt;
+		fprintf(ff,"%e %e %e\n",X,s,sY);
+			}
+		fclose(ff);
+		exit(0);
+	//		double sp  = r0 + eta0*G1 + zeta0*G2;
+	//		double dX  = -s/sp; // Newton's method
+	//		
+	//		//double G0 = 1.-beta*G2;
+	//		//double spp = r0 + eta0*G0 + zeta0*G1;
+	//		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
+	//		X+=dX;
+	//		if (fabs(dX/X)<1e-15) break; 
+	//		if (X<0.) {X=0.; // Failsafe
+	////			printf("\n\nBREAKKKKK %e %e %e\n\n",s,sp,X);
+	//		}
+		}
 	}
 
 	double r = r0 + eta0*G1 + zeta0*G2;

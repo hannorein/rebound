@@ -25,7 +25,7 @@ def simulation(par):
 
     rebound.set_additional_forces(starkforce)
 
-    rebound.integrate(50.*np.pi)
+    rebound.integrate(5000.*np.pi)
 
     '''	
     xs = []
