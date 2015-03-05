@@ -52,7 +52,7 @@ void problem_init(int argc, char* argv[]){
 	}
 	{
 		double e = 0.999;
-		struct particle p = {.m=0.,.x=0.1,.y=0.,.z=0.,.vx=0,.vy=0.*sqrt((1.+e)/(1.-e)),.vz=0.};
+		struct particle p = {.m=0.,.x=0.01,.y=0.,.z=0.,.vx=0,.vy=0.*sqrt((1.+e)/(1.-e)),.vz=0.};
 		particles_add(p); 
 	}
 	tools_move_to_center_of_momentum();

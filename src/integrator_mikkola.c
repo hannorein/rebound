@@ -48,7 +48,7 @@
 #define integrator_reset                      integrator_mikkola_reset
 #endif // LIBREBOUND
 
-// These variables have no effect for leapfrog.
+// These variables have no effect for constant timestep integrators.
 int integrator_force_is_velocitydependent 	= 1;
 double integrator_epsilon 			= 0;
 double integrator_min_dt 			= 0;
@@ -56,6 +56,7 @@ double integrator_min_dt 			= 0;
 struct particle* p_j  = NULL;
 double* eta = NULL;
 double Mtotal;
+int integrator_timestep_warning = 0;
 
 
 // Fast inverse factorial lookup table
@@ -160,6 +161,10 @@ void kepler_step(int i,double _dt){
 		// Elliptic orbit
 		double period = 2.*M_PI*M*pow(beta,-3./2.);
 		double X_per_period = 2.*M_PI/sqrt(beta);
+		if (dt>period && integrator_timestep_warning == 0){
+			integrator_timestep_warning++;
+			fprintf(stderr,"\n\033[1mWarning!\033[0m Timestep is larger than at least one orbital period.\n");
+		}
 		X_min = X_per_period*floor(_dt/period);
 		X_max = X_per_period*ceil(_dt/period);
 		X = _dt/period*X_per_period; // Initial guess 
