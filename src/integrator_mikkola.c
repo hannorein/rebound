@@ -157,12 +157,14 @@ void kepler_step(int i,double _dt){
 	double G1,G2,G3;
 		
 	if (beta>0.){
+		// Elliptic orbit
 		double period = 2.*M_PI*M*pow(beta,-3./2.);
 		double X_per_period = 2.*M_PI/sqrt(beta);
 		X_min = X_per_period*floor(_dt/period);
 		X_max = X_per_period*ceil(_dt/period);
 		X = _dt/period*X_per_period; // Initial guess 
 	}else{
+		// Hyperbolic orbit
 		double h2 = r0*r0*v2-eta0*eta0;
 		double q = h2/M/(1.+sqrt(1.-h2*beta/(M*M)));
 		double vq = sqrt(h2)/q;
@@ -195,6 +197,7 @@ void kepler_step(int i,double _dt){
 	if (n_hg == 10){ // Fallback to bisection 
 		X = (X_max + X_min)/2.;
 		do{
+			n_hg++;
 			G2 = integrator_G(2,beta,X);
 			G3 = integrator_G(3,beta,X);
 			G1 = X-beta*G3;

@@ -52,7 +52,7 @@ void problem_init(int argc, char* argv[]){
 	}
 	{
 		double e = 0.999;
-		struct particle p = {.m=0.,.x=(1.-e),.y=0.,.z=0.,.vx=0,.vy=1.3*sqrt((1.+e)/(1.-e)),.vz=0.};
+		struct particle p = {.m=0.,.x=0.1,.y=0.,.z=0.,.vx=0,.vy=0.*sqrt((1.+e)/(1.-e)),.vz=0.};
 		particles_add(p); 
 	}
 	tools_move_to_center_of_momentum();
@@ -82,11 +82,13 @@ double energy(){
 int no =0;
 void problem_output(){
 	no++;
-	printf("%d\n", no);
-	output_timing();
-	FILE* f = fopen("Y.txt","a+");
-	fprintf(f,"%e %e %e\n",t,(energy()-ei)/ei,tools_megno());
-	fclose(f);
+//	printf("%d\n", no);
+	if (output_check(1000.*dt)){
+		output_timing();
+	}
+//	FILE* f = fopen("Y.txt","a+");
+//	fprintf(f,"%e %e %e\n",t,(energy()-ei)/ei,tools_megno());
+//	fclose(f);
 }
 
 void problem_finish(){

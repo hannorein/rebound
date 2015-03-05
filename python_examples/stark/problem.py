@@ -9,14 +9,15 @@ def simulation(par):
     S, dt,e0 = par
 
     rebound.reset()
-    rebound.set_integrator("mikkola")
+    rebound.set_integrator("wh")
+    #rebound.set_integrator("mikkola")
     rebound.set_dt(dt)
 
     rebound.particle_add(m=1.)
     rebound.particle_add(m=0.,a=1.,e=e0)
 
     #rebound.move_to_center_of_momentum()
-    rebound.megno_init(1.e-16)
+    #rebound.megno_init(1.e-16)
 
 
     particles = rebound.particles_get()
@@ -25,7 +26,7 @@ def simulation(par):
 
     rebound.set_additional_forces(starkforce)
 
-    rebound.integrate(50.*np.pi)
+    rebound.integrate(50000.*np.pi)
 
     return [rebound.get_megno(), rebound.get_t()]
 
