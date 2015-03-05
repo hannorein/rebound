@@ -16,7 +16,7 @@ def simulation(par):
     rebound.particle_add(m=0.,a=1.,e=e0)
 
     #rebound.move_to_center_of_momentum()
-    #rebound.megno_init(1.e-16)
+    rebound.megno_init(1.e-16)
 
 
     particles = rebound.particles_get()
@@ -25,26 +25,9 @@ def simulation(par):
 
     rebound.set_additional_forces(starkforce)
 
-    rebound.integrate(5000.*np.pi)
+    rebound.integrate(50.*np.pi)
 
-    '''	
-    xs = []
-    ys = []	
-    steps = 0
-    while rebound.get_t()<14*np.pi:
-        rebound.step()
-        steps += 1
-        if steps % 1 == 0:
-            xs.append(particles[1].x)
-            ys.append(particles[1].y)
-
-    n=4000
-    fig, ax = plt.subplots()
-    ax.plot(xs[::],ys[::])
-    plt.show()
-    '''
-
-    return [2., rebound.get_t()]
+    return [rebound.get_megno(), rebound.get_t()]
 
 #I always set the (osculating) semimajor axis to 1, you can pass different initial e values
 
@@ -52,7 +35,7 @@ e0 = 0.9 # Rauch uses 0.9 for Fig 4
 Scrit = 0.25 # always true if you use G=M=a=1
 
 N = 80
-dts = np.linspace(0.01,1.,N)
+dts = np.linspace(0.1,2.,N)
 Ss = np.linspace(0,0.5,N)
 parameters = [(Ss[i]*Scrit,dts[j]*2.*np.pi,e0) for i in range(N) for j in range(N)]
 

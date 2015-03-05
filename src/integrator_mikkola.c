@@ -153,55 +153,60 @@ void kepler_step(int i,double _dt){
 	double eta0 = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
 	double zeta0 = M - beta*r0;
 
-	double X;
+	double X, X_min, X_max;
 	double G1,G2,G3;
 		
 	if (beta>0.){
 		double period = 2.*M_PI*M*pow(beta,-3./2.);
 		double X_per_period = 2.*M_PI/sqrt(beta);
-		double X_min = X_per_period*floor(_dt/period);
-		double X_max = X_per_period*ceil(_dt/period);
+		X_min = X_per_period*floor(_dt/period);
+		X_max = X_per_period*ceil(_dt/period);
 		X = _dt/period*X_per_period; // Initial guess 
-		double guess = X;
-		int n_hg;
-		for (n_hg=0;n_hg<10;n_hg++){
+	}else{
+		double h2 = r0*r0*v2-eta0*eta0;
+		double q = h2/M/(1.+sqrt(1.-h2*beta/(M*M)));
+		double vq = sqrt(h2)/q;
+		X_min = 1./(vq+r0/_dt);
+		X_max = _dt/q;
+		X = 0.; // Initial guess 
+	}
+
+	int n_hg;
+	for (n_hg=0;n_hg<10;n_hg++){
+		G2 = integrator_G(2,beta,X);
+		G3 = integrator_G(3,beta,X);
+		G1 = X-beta*G3;
+		double s   = r0*X + eta0*G2 + zeta0*G3-_dt;
+		double sp  = r0 + eta0*G1 + zeta0*G2;
+		double dX  = -s/sp; // Newton's method
+		
+		X+=dX;
+		if (X>X_max || X < X_min){
+			// Did not converged.
+			n_hg=10;
+			break;
+		}
+		if (fabs(dX/X)<1e-15){
+			// Converged. Exit.
+			n_hg=0;
+			break; 
+		}
+	}
+	if (n_hg == 10){ // Fallback to bisection 
+		X = (X_max + X_min)/2.;
+		do{
 			G2 = integrator_G(2,beta,X);
 			G3 = integrator_G(3,beta,X);
 			G1 = X-beta*G3;
 			double s   = r0*X + eta0*G2 + zeta0*G3-_dt;
-			double sp  = r0 + eta0*G1 + zeta0*G2;
-			double dX  = -s/sp; // Newton's method
-			
-			X+=dX;
-			if (X>X_max || X < X_min){
-				// Did not converged.
-				n_hg=10;
-				break;
+			if (s>=0.){
+				X_max = X;
+			}else{
+				X_min = X;
 			}
-			if (fabs(dX/X)<1e-15){
-				// Converged. Exit.
-				n_hg=0;
-				break; 
-			}
-		}
-		if (n_hg == 10){ // Fallback to bisection 
 			X = (X_max + X_min)/2.;
-			do{
-				G2 = integrator_G(2,beta,X);
-				G3 = integrator_G(3,beta,X);
-				G1 = X-beta*G3;
-				double s   = r0*X + eta0*G2 + zeta0*G3-_dt;
-				if (s>=0.){
-					X_max = X;
-				}else{
-					X_min = X;
-				}
-				X = (X_max + X_min)/2.;
-			}while (fabs((X_max-X_min)/X_max)>1e-15 && X_max != X_min);
-		}
-	}else{
-		printf("hyperbolic");
-		exit(0);
+		}while (fabs((X_max-X_min)/X_max)>1e-15);
+	}
 			//printf("\n%e    %e    %e ",X, X_min, X_max);
 			//FILE* ff = fopen("X.txt","w");
 			//for(X=0.;X<10.;X+=0.01){
@@ -213,28 +218,6 @@ void kepler_step(int i,double _dt){
 			//	fprintf(ff,"%e %e \n",X,s);
 			//}
 			//fclose(ff);
-
-		X = 0;  // TODO: find a better initial estimate.
-		for (int n_hg=0;n_hg<20;n_hg++){
-		FILE* ff = fopen("X.txt","w");
-			G2 = integrator_G(2,beta,X);
-			G3 = integrator_G(3,beta,X);
-			G1 = X-beta*G3;
-			double s   = r0*X + eta0*G2 + zeta0*G3-_dt;
-		
-	//		double sp  = r0 + eta0*G1 + zeta0*G2;
-	//		double dX  = -s/sp; // Newton's method
-	//		
-	//		//double G0 = 1.-beta*G2;
-	//		//double spp = r0 + eta0*G0 + zeta0*G1;
-	//		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
-	//		X+=dX;
-	//		if (fabs(dX/X)<1e-15) break; 
-	//		if (X<0.) {X=0.; // Failsafe
-	////			printf("\n\nBREAKKKKK %e %e %e\n\n",s,sp,X);
-	//		}
-		}
-	}
 
 	double r = r0 + eta0*G1 + zeta0*G2;
 	double f = 1.-M*G2/r0;
