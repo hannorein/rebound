@@ -41,7 +41,7 @@ double ei;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= 2.1*2.*M_PI;			// initial timestep (in days)
+	dt 		= 0.001*2.*M_PI;			// initial timestep (in days)
 	init_boxwidth(200); 		
 
 	// Initial conditions
@@ -51,7 +51,7 @@ void problem_init(int argc, char* argv[]){
 		particles_add(p); 
 	}
 	{
-		double e = 0.9999999999;
+		double e = 0.9999999999999;
 		struct particle p = {.m=0.,.x=(1.-e),.y=0.,.z=0.,.vx=0,.vy=sqrt((1.+e)/(1.-e)),.vz=0.};
 		particles_add(p); 
 	}
@@ -79,8 +79,10 @@ double energy(){
 	e_pot -= G*pj.m/sqrt(dx*dx + dy*dy + dz*dz);
 	return e_kin +e_pot;
 }
-
+int no =0;
 void problem_output(){
+	no++;
+	printf("%d\n", no);
 	output_timing();
 	FILE* f = fopen("Y.txt","a+");
 	fprintf(f,"%e %e %e\n",t,(energy()-ei)/ei,tools_megno());

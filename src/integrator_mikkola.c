@@ -155,7 +155,6 @@ void kepler_step(int i,double _dt){
 
 	double X;
 	double G1,G2,G3;
-	//printf("\n%e\n",beta);
 		
 	if (beta>0.){
 		double period = 2.*M_PI*M*pow(beta,-3./2.);
@@ -174,11 +173,18 @@ void kepler_step(int i,double _dt){
 			double dX  = -s/sp; // Newton's method
 			
 			X+=dX;
-			X = MAX(X,X_min);
-			X = MIN(X,X_max);
-			if (fabs(dX/X)<1e-15) break; 
+			if (X>X_max || X < X_min){
+				// Did not converged.
+				n_hg=10;
+				break;
+			}
+			if (fabs(dX/X)<1e-15){
+				// Converged. Exit.
+				n_hg=0;
+				break; 
+			}
 		}
-		if (n_hg == 10 || X<=X_min || X >=X_max){ // Fallback to bisection 
+		if (n_hg == 10){ // Fallback to bisection 
 			X = (X_max + X_min)/2.;
 			do{
 				G2 = integrator_G(2,beta,X);
@@ -192,7 +198,6 @@ void kepler_step(int i,double _dt){
 				}
 				X = (X_max + X_min)/2.;
 			}while (fabs((X_max-X_min)/X_max)>1e-15 && X_max != X_min);
-			printf("\n%e    %e    %e \n",X, X_min, X_max);
 		}
 	}else{
 		printf("hyperbolic");
