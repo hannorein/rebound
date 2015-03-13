@@ -88,9 +88,12 @@ struct particle* particles_get(){
 void set_additional_forces(void (* _cb)()){
 	problem_additional_forces = _cb;
 }
-
+double timing;
 // Integrate for 1 step
 void rebound_step(){ 
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 	if (N<=0){
 		fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
 		return;
@@ -128,6 +131,9 @@ void rebound_step(){
 			integrator_ias15_part2();
 			break;
 	}
+	gettimeofday(&tim, NULL);
+	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
+	timing = timing_final-timing_initial;
 }
 
 // Integrate for 1 step

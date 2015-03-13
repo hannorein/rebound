@@ -130,7 +130,7 @@ double mikkola_c(unsigned int n, double z){
 }
 
 double integrator_G(unsigned int n, double beta, double X){
-	return pow(X,n)*mikkola_c(n,beta*X*X);
+	return ipow(X,n)*mikkola_c(n,beta*X*X);
 }
 
 

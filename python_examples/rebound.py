@@ -104,6 +104,9 @@ def get_N():
 def get_iter():
     return c_int.in_dll(librebound,"iter").value 
 
+def get_timing():
+    return c_double.in_dll(librebound,"timing").value 
+
 
 
 # Setter/getter of particle data
