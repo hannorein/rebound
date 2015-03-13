@@ -2,9 +2,9 @@ from ctypes import *
 import math
 
 try:
-    range = xrange          # this means python 2.x
+    range = xrange          	# this means python 2.x
 except NameError:
-    pass                    # this means python 3.x
+    basestring = (str,bytes)	# this means python 3.x
 
 # Try to load librebound from the obvioud places it could be in.
 try:

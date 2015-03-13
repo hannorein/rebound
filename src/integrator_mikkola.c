@@ -152,10 +152,16 @@ void kepler_step(int i,double _dt){
 	double eta0 = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
 	double zeta0 = M - beta*r0;
 	
-
+	double X2,X3;
 	double X = Xprev;  // TODO: find a better initial estimate.
 	double G1,G2,G3;
-	for (int n_hg=0;n_hg<20;n_hg++){
+	int flag = 0;
+	/*if (X > 0.5){
+		flag = 1;
+		printf("%f\t%f\t%f\t%f\t%f\t%f\n", r0,beta,eta0,zeta0,_dt,X);
+	}*/
+	int n_hg;
+	for (n_hg=0;n_hg<20;n_hg++){
 		G2 = integrator_G(2,beta,X);
 		G3 = integrator_G(3,beta,X);
 		G1 = X-beta*G3;
@@ -163,16 +169,65 @@ void kepler_step(int i,double _dt){
 		double sp  = r0 + eta0*G1 + zeta0*G2;
 		double dX  = -s/sp; // Newton's method
 		
-		//double G0 = 1.-beta*G2;
-		//double spp = r0 + eta0*G0 + zeta0*G1;
-		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
+		double G0 = 1.-beta*G2;
+		double spp = r0 + eta0*G0 + zeta0*G1;
+		double dX2  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
+
+		double dX3 = -s/(sp + 0.5*dX*(spp-r0));
 		X+=dX;
+		X2 = X+dX2;
+		X3 = X+dX3;
+
+		if(flag==0){
+			printf("%d\t%f\n",n_hg, X);
+		}
 		if (fabs(dX/X)<1e-15){
-			printf("Broke\n");
 			break;
 		}
 		if (X<0.) X=0.; // Failsafe
 	}
+
+	if (n_hg == 20){
+		printf("Exceeded max number of iterations\n");
+		int Npts = 10000;
+		double x;
+		FILE* of = fopen("/Users/dtamayo/desktop/xs.txt", "w");
+		for (int j=0;j<Npts;j++){
+			x = 3*X*j/Npts;
+			fprintf(of,"%.16f\t%.16f\n", x, r0*x + eta0*integrator_G(2,beta,x) + zeta0*integrator_G(3,beta,x)-_dt);
+		}
+		printf("%.16f\t%.16f\t%.16f\t%.16f\t%.16f\t%.16e\n", r0, eta0, zeta0, beta, _dt, r0*X + eta0*integrator_G(2,beta,X) + zeta0*integrator_G(3,beta,X)-_dt);
+		fclose(of);
+		exit(1);
+	}
+	printf("******\n");
+	//printf("%e\t%e\n", G2/(r0*X), G3/(r0*X));
+	//printf("%f\t%f\t%f\t%f\t%f\t%f\n", r0,beta,eta0,zeta0,_dt,X);
+	double mu = G*(p1.m + particles[0].m);
+	double dx,dy,dz,dvx,dvy,dvz;
+	dx = p1.x - particles[0].x;
+	dy = p1.y - particles[0].y;
+	dz = p1.z - particles[0].z;
+	dvx = p1.vx - particles[0].vx;
+	dvy = p1.vy - particles[0].vy;
+	dvz = p1.vz - particles[0].vz;
+
+	double v = sqrt(dvx*dvx + dvy*dvy + dvz*dvz);
+	double r1 = sqrt(dx*dx + dy*dy + dz*dz);
+	double vr = (dx*dvx + dy*dvy + dz*dvz)/r1;
+	double e0 = 1./mu*((v*v-mu/r1)*p1.x - r1*vr*p1.vx);
+	double e1 = 1./mu*((v*v-mu/r1)*p1.y - r1*vr*p1.vy);
+	double e2 = 1./mu*((v*v-mu/r1)*p1.z - r1*vr*p1.vz);
+	double e = sqrt(e0*e0 + e1*e1 + e2*e2);
+	double a = -mu/(v*v-2.*mu/r1);
+	double X1 = 2.*sqrt(a/mu)*atan(sqrt((1.-e)/(1.+e))*tan(_dt/2.));
+	double etest = 0.05;
+	double atest = 1.;
+	double Xtest = 2.*sqrt(atest/mu)*atan2(sqrt((1.-etest)/(1.+etest))*tan(_dt/2.),1.);
+	
+	//	printf("%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5f\n", X, X1-X, a-atest, e-etest, Xtest-X, _dt/r1-X, _dt/a/(1.-e*e)-X, r1);
+	
+	//printf("%.5e\t%.5e\n", X2-X,X3-X);
 
 	Xprev = X;
 	double r = r0 + eta0*G1 + zeta0*G2;
@@ -189,6 +244,24 @@ void kepler_step(int i,double _dt){
 	p_j[i].vy = fd*p1.y + gd*p1.vy;
 	p_j[i].vz = fd*p1.z + gd*p1.vz;
 	
+	v = sqrt(dvx*dvx + dvy*dvy + dvz*dvz);
+	r1 = sqrt(dx*dx + dy*dy + dz*dz);
+	
+	double energy = 0.5*v*v - mu/r1;
+
+	if (energy > 0.){
+		printf("Energy > 0\n");
+		int Npts = 10000;
+		double x;
+		FILE* of = fopen("/Users/dtamayo/desktop/xs.txt", "w");
+		for (int j=0;j<Npts;j++){
+			x = 3*X*j/Npts;
+			fprintf(of,"%.16f\t%.16f\n", x, r0*x + eta0*integrator_G(2,beta,x) + zeta0*integrator_G(3,beta,x)-_dt);
+		}
+		printf("%.16f\t%.16f\t%.16f\t%.16f\t%.16f\n", r0, eta0, zeta0, beta, _dt);
+		fclose(of);
+		exit(1);
+	}
 	//Variations
 	if (N_megno){
 		struct particle dp1 = p_j[i+N_megno];

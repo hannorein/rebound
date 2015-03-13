@@ -4,6 +4,7 @@ import rebound
 from rebound import Particle
 import numpy as np
 from interruptible_pool import InterruptiblePool
+import time
 
 def energy():
 	kin = 0.
@@ -34,7 +35,7 @@ def simulation(par):
 	
 	sun = Particle(m=1.,x=0.,y=0.,z=0.,vx=0.,vy=0.,vz=0.)
 	rebound.particle_add(sun)
-	rebound.particle_add(primary=sun,m=0.,a=1.,anom=0.,e=e0,omega=0.,inc=0.,Omega=0.,MEAN=True)
+	rebound.particle_add(primary=sun,m=0.,a=1.,anom=np.pi,e=e0)
 	
 	rebound.move_to_center_of_momentum()
 	rebound.megno_init(1.e-16)
@@ -82,12 +83,14 @@ def simulation(par):
 	return [rebound.get_megno(), ts, E_error, ener]
 #I always set the (osculating) semimajor axis to 1, you can pass different initial e values
 
-e0 = 0.9 # Rauch uses 0.9 for Fig 4
+e0 = 0.99999999999
 Scrit = 0.25 # always true if you use G=M=a=1
 
 N = 100
 
-res = simulation((0.1*Scrit, 0.18, 0.9))
+start_time = time.time()
+res = simulation((0.*Scrit,0.01*2*np.pi,e0))
+print("Took {0} seconds".format(time.time()-start_time))
 
 ts = [i/2./np.pi for i in res[1]]
 E_error = res[2]
