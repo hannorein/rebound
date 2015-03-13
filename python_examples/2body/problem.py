@@ -30,7 +30,7 @@ def simulation(par):
 
 N = 200
 anoms = np.linspace(-np.pi,np.pi,N)
-e0s = np.linspace(0,12,N)
+e0s = np.linspace(0,14,N)
 
 parameters = [(anoms[i], 0.01*2.*np.pi, e0s[j]) for j in range(N) for i in range(N)]
 
@@ -38,28 +38,29 @@ pool = InterruptiblePool()
 res = pool.map(simulation,parameters)
 res = np.nan_to_num(res)
 niter = res[:,0].reshape((N,N))
+energyerror = res[:,1].reshape((N,N))
 
 import matplotlib; matplotlib.use("pdf")
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
-f,axarr = plt.subplots(1)
+f,axarr = plt.subplots(2,figsize=(10,10))
 extent=[anoms.min(), anoms.max(), e0s.min(), e0s.max()]
 
-#for ax in axarr
-ax = axarr
-ax.set_xlim(extent[0], extent[1])
-ax.set_ylim(extent[2], extent[3])
-ax.set_xlabel(r"true anomly")
-ax.set_ylabel(r"$\xi$  defined as  $e=1-10^{-\xi}$")
+for ax in axarr:
+    # ax = axarr
+    ax.set_xlim(extent[0], extent[1])
+    ax.set_ylim(extent[2], extent[3])
+    ax.set_xlabel(r"true anomly")
+    ax.set_ylabel(r"$\xi$  defined as  $e=1-10^{-\xi}$")
 
-#im1 = axarr[0].imshow(megno, vmin=1.8, vmax=4., aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
-#cb1 = plt.colorbar(im1, ax=axarr[0])
-#cb1.solids.set_rasterized(True)
-#cb1.set_label("MEGNO $\\langle Y \\rangle$")
+im1 = axarr[0].imshow(energyerror, norm=LogNorm(), aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
+cb1 = plt.colorbar(im1, ax=axarr[0])
+cb1.solids.set_rasterized(True)
+cb1.set_label("Relative energy error")
 
-im2 = axarr.imshow(niter, vmin=-3, aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn", extent=extent)
-cb2 = plt.colorbar(im2, ax=axarr)
+im2 = axarr[1].imshow(niter, vmin=-3, aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn", extent=extent)
+cb2 = plt.colorbar(im2, ax=axarr[1])
 cb2.solids.set_rasterized(True)
 cb2.set_label("Number of iterations (neg = bisection)")
 
