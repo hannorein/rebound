@@ -101,6 +101,10 @@ def get_lyapunov():
 def get_N():
     return c_int.in_dll(librebound,"N").value 
 
+def get_iter():
+    return c_int.in_dll(librebound,"iter").value 
+
+
 
 # Setter/getter of particle data
 def set_particles(particles):

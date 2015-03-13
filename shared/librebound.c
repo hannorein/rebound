@@ -45,6 +45,7 @@ double tmax	= 0;
 double G 	= 1;
 double softening = 0;
 extern int Nmax;	
+extern int iter;  // TODO DEBUG
 
 // Chooses which integrator to use.
 // 0: IAS15 (default)

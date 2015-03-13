@@ -144,6 +144,8 @@ double _M(int i){
 
 /****************************** 
  * Keplerian motion           */
+int iter;
+
 void kepler_step(int i,double _dt){
 	double M = _M(i);
 	struct particle p1 = p_j[i];
@@ -179,6 +181,7 @@ void kepler_step(int i,double _dt){
 	}
 
 	int n_hg;
+	iter = 0;
 	for (n_hg=0;n_hg<10;n_hg++){
 		G2 = integrator_G(2,beta,X);
 		G3 = integrator_G(3,beta,X);
@@ -190,11 +193,13 @@ void kepler_step(int i,double _dt){
 		X+=dX;
 		if (X>X_max || X < X_min){
 			// Did not converged.
+			iter = 10;
 			n_hg=10;
 			break;
 		}
 		if (fabs(dX/X)<1e-15){
 			// Converged. Exit.
+			iter = n_hg;
 			n_hg=0;
 			break; 
 		}
@@ -214,6 +219,7 @@ void kepler_step(int i,double _dt){
 			}
 			X = (X_max + X_min)/2.;
 		}while (fabs((X_max-X_min)/X_max)>1e-15);
+		iter = -n_hg;
 	}
 			//printf("\n%e    %e    %e ",X, X_min, X_max);
 			//FILE* ff = fopen("X.txt","w");

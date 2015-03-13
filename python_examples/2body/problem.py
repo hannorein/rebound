@@ -19,26 +19,25 @@ def simulation(par):
 
     Ei = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
 
-    while rebound.get_t()<0.02*np.pi:
-        rebound.step()
+    #while rebound.get_t()<0.2*np.pi:
+    rebound.step()
     
     Ef = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
 
 
-    return [rebound.get_t(), np.fabs((Ef-Ei)/Ei)+1e-16]
+    return [rebound.get_iter(), np.fabs((Ef-Ei)/Ei)+1e-16]
 
 
 N = 200
 anoms = np.linspace(-np.pi,np.pi,N)
-e0s = np.linspace(0,16,N)
+e0s = np.linspace(0,12,N)
 
-parameters = [(anoms[i], 0.001, e0s[j]) for j in range(N) for i in range(N)]
+parameters = [(anoms[i], 0.01*2.*np.pi, e0s[j]) for j in range(N) for i in range(N)]
 
 pool = InterruptiblePool()
 res = pool.map(simulation,parameters)
 res = np.nan_to_num(res)
-megno = np.clip(res[:,0].reshape((N,N)),1.8,4.)
-lyaptime = np.absolute(res[:,1].reshape((N,N)))
+niter = res[:,0].reshape((N,N))
 
 import matplotlib; matplotlib.use("pdf")
 import matplotlib.pyplot as plt
@@ -59,10 +58,10 @@ ax.set_ylabel(r"$\xi$  defined as  $e=1-10^{-\xi}$")
 #cb1.solids.set_rasterized(True)
 #cb1.set_label("MEGNO $\\langle Y \\rangle$")
 
-im2 = axarr.imshow(lyaptime, vmax=1, norm=LogNorm(),aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn", extent=extent)
+im2 = axarr.imshow(niter, vmin=-3, aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn", extent=extent)
 cb2 = plt.colorbar(im2, ax=axarr)
 cb2.solids.set_rasterized(True)
-cb2.set_label("Energy error")
+cb2.set_label("Number of iterations (neg = bisection)")
 
 plt.savefig("2body.pdf")
 
