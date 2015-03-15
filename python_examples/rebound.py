@@ -254,16 +254,29 @@ def eccentricAnomaly(e,M):
     e -- the eccentricity
     M -- the mean anomaly
     """
-    E = M if e<0.8 else math.pi
-    
-    F = E - e*math.sin(M) - M
-    for i in range(100):
-        E = E - F/(1.0-e*math.cos(E))
-        F = E - e*math.sin(E) - M
-        if math.fabs(F)<1e-16:
-            break
-    E = mod2pi(E)
-    return E
+    if e<1.:
+        E = M if e<0.8 else math.pi
+        
+        F = E - e*math.sin(M) - M
+        for i in range(100):
+            E = E - F/(1.0-e*math.cos(E))
+            F = E - e*math.sin(E) - M
+            if math.fabs(F)<1e-16:
+                break
+        E = mod2pi(E)
+        return E
+    else:
+        E = M 
+        
+        F = E - e*math.sinh(E) - M
+        for i in range(100):
+            E = E - F/(1.0-e*math.cosh(E))
+            F = E - e*math.sinh(E) - M
+            if math.fabs(F)<1e-16:
+                break
+        E = mod2pi(E)
+        return E
+
 
 def get_center_of_momentum():
     """Returns the center of momentum for all particles in the simulation"""
@@ -338,13 +351,18 @@ def kepler_particle(m,
         A rebound.Particle structure initialized with the given orbital parameters
         """
     
-    if not(0.<=e<1.): raise ValueError('e must be in range [0,1)')
+    #if not(0.<=e<1.): raise ValueError('e must be in range [0,1)')
     # not sure if these equations work for parabolic/hyperbolic obits
     if not(0.<=inc<=math.pi): raise ValueError('inc must be in range [0,pi]')
     
     if MEAN is True: # need to calculate f
         E = eccentricAnomaly(e,anom)
-        f = mod2pi(2.*math.atan(math.sqrt((1.+ e)/(1. - e))*math.tan(0.5*E)))
+        if e>1.:
+            print("not working yet")
+            exit(1)
+            f = 2.*math.atan(math.sqrt(-(1.+ e)/(1. - e))*math.tanh(0.5*E))
+        else:
+            f = mod2pi(2.*math.atan(math.sqrt((1.+ e)/(1. - e))*math.tan(0.5*E)))
     else:
         f = anom
     
@@ -365,7 +383,10 @@ def kepler_particle(m,
     z  = primary.z + r*(so*cf+co*sf)*si
     
     n = math.sqrt(get_G()*(primary.m+m)/(a**3))
-    v0 = n*a/math.sqrt(1.-e**2)
+    if e>1.:
+        v0 = n*a/math.sqrt(-(1.-e**2))
+    else:
+        v0 = n*a/math.sqrt(1.-e**2)
     
     # Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
     vx = primary.vx + v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO))

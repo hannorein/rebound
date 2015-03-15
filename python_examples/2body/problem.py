@@ -10,7 +10,7 @@ def simulation(par):
 
     e = 1.-pow(10.,-e);
     rebound.reset()
-    rebound.set_integrator("mikkola")
+    rebound.set_integrator("wh")
     rebound.set_dt(dt)
 
     rebound.particle_add(m=1.)
