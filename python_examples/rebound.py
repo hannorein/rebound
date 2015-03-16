@@ -354,6 +354,8 @@ def kepler_particle(m,
     #if not(0.<=e<1.): raise ValueError('e must be in range [0,1)')
     # not sure if these equations work for parabolic/hyperbolic obits
     if not(0.<=inc<=math.pi): raise ValueError('inc must be in range [0,pi]')
+    if e>1.:
+        if math.fabs(anom)>math.acos(-1./e): raise ValueError('hyperbolic orbit with anomaly larger than angle of asymptotes')
     
     if MEAN is True: # need to calculate f
         E = eccentricAnomaly(e,anom)
