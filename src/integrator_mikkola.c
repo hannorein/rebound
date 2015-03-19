@@ -58,7 +58,6 @@ double* eta = NULL;
 double Mtotal;
 int integrator_timestep_warning = 0;
 
-
 // Fast inverse factorial lookup table
 static const double invfactorial[] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
 
@@ -81,6 +80,39 @@ double c_n_series(unsigned int n, double z){
 		if (fabs(term/c_n) < 1e-17) break; // Stop if new term smaller than machine precision
 	}
 	return c_n;
+}
+
+
+void stumpff_cs(double *cs, double z) {
+	if (z<0.5){
+		cs[5] = c_n_series(5,z);
+		cs[4] = c_n_series(4,z);
+		cs[3] = 1./6.-z*cs[5];
+		cs[2] = 1./2.-z*cs[4];
+		cs[1] = 1.-z*cs[3];
+		cs[0] = 1.-z*cs[2];
+		return; 
+	}
+	else {
+		double z4 = z/4.;
+		stumpff_cs(cs, z4);
+		cs[5] = (cs[5]+cs[4]+cs[3]*cs[2])/16.;
+		cs[4] = (1.+cs[1])*cs[3]/8.;
+		cs[3] = 1./6.-z*cs[5];
+		cs[2] = 1./2.-z*cs[4];
+		cs[1] = 1.-z*cs[3];
+		cs[0] = 1.-z*cs[2];
+		return;
+	}
+}
+
+void stiefel_Gs(double *Gs, double beta, double X) {
+	double cs[6];
+	stumpff_cs(cs, beta*X*X);
+	for(int n=0;n<6;n++) {
+		Gs[n] = ipow(X,n)*cs[n];
+	}
+	return;
 }
 
 double mikkola_c(unsigned int n, double z){
@@ -135,11 +167,11 @@ double integrator_G(unsigned int n, double beta, double X){
 
 
 double _M(int i){
-	return G*(eta[i]); // Hanno 1
+  //return G*(eta[i]); // Hanno 1
 	//return G*(eta[i-1]); // Hanno2 
 	//return G*(eta[i-1]*particles[i].m*eta[i-1]/eta[i]/(eta[i-1]+particles[i].m*eta[i-1]/eta[i])); // reduced mass jacobi
 	//return G*(eta[i-1]*particles[i].m/(eta[i-1]+particles[i].m)); // reduced mass
-	//return G*(eta[i]/eta[i-1]*particles[0].m);   // SSD
+	return G*(eta[i]/eta[i-1]*particles[0].m);   // SSD
 }
 
 /****************************** 
@@ -156,8 +188,10 @@ void kepler_step(int i,double _dt){
 	double eta0 = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
 	double zeta0 = M - beta*r0;
 
+	double h2 = r0*r0*v2 - eta0*eta0;
+	printf("%.16f\n", h2);
 	double X, X_min, X_max;
-	double G1,G2,G3;
+	double Gs[6]; 
 		
 	if (beta>0.){
 		// Elliptic orbit
@@ -183,11 +217,9 @@ void kepler_step(int i,double _dt){
 	int n_hg;
 	iter = 0;
 	for (n_hg=0;n_hg<10;n_hg++){
-		G2 = integrator_G(2,beta,X);
-		G3 = integrator_G(3,beta,X);
-		G1 = X-beta*G3;
-		double s   = r0*X + eta0*G2 + zeta0*G3-_dt;
-		double sp  = r0 + eta0*G1 + zeta0*G2;
+		stiefel_Gs(Gs, beta, X);
+		double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-_dt;
+		double sp  = r0 + eta0*Gs[1] + zeta0*Gs[2];
 		double dX  = -s/sp; // Newton's method
 		
 		X+=dX;
@@ -208,10 +240,8 @@ void kepler_step(int i,double _dt){
 		X = (X_max + X_min)/2.;
 		do{
 			n_hg++;
-			G2 = integrator_G(2,beta,X);
-			G3 = integrator_G(3,beta,X);
-			G1 = X-beta*G3;
-			double s   = r0*X + eta0*G2 + zeta0*G3-_dt;
+			stiefel_Gs(Gs, beta, X);
+			double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-_dt;
 			if (s>=0.){
 				X_max = X;
 			}else{
@@ -233,11 +263,53 @@ void kepler_step(int i,double _dt){
 			//}
 			//fclose(ff);
 
-	double r = r0 + eta0*G1 + zeta0*G2;
-	double f = 1.-M*G2/r0;
-	double g = _dt - M*G3;
-	double fd = -M*G1/(r0*r); 
-	double gd = 1.-M*G2/r; 
+	if (n_hg == 20){
+		printf("Exceeded max number of iterations\n");
+		int Npts = 10000;
+		double x;
+		FILE* of = fopen("/Users/dtamayo/desktop/xs.txt", "w");
+		for (int j=0;j<Npts;j++){
+			x = 3*X*j/Npts;
+			fprintf(of,"%.16f\t%.16f\n", x, r0*x + eta0*integrator_G(2,beta,x) + zeta0*integrator_G(3,beta,x)-_dt);
+		}
+		printf("%.16f\t%.16f\t%.16f\t%.16f\t%.16f\t%.16e\n", r0, eta0, zeta0, beta, _dt, r0*X + eta0*integrator_G(2,beta,X) + zeta0*integrator_G(3,beta,X)-_dt);
+		fclose(of);
+		exit(1);
+	}
+	printf("******\n");
+	//printf("%e\t%e\n", G2/(r0*X), G3/(r0*X));
+	//printf("%f\t%f\t%f\t%f\t%f\t%f\n", r0,beta,eta0,zeta0,_dt,X);
+	double mu = G*(p1.m + particles[0].m);
+	double dx,dy,dz,dvx,dvy,dvz;
+	dx = p1.x - particles[0].x;
+	dy = p1.y - particles[0].y;
+	dz = p1.z - particles[0].z;
+	dvx = p1.vx - particles[0].vx;
+	dvy = p1.vy - particles[0].vy;
+	dvz = p1.vz - particles[0].vz;
+
+	double v = sqrt(dvx*dvx + dvy*dvy + dvz*dvz);
+	double r1 = sqrt(dx*dx + dy*dy + dz*dz);
+	double vr = (dx*dvx + dy*dvy + dz*dvz)/r1;
+	double e0 = 1./mu*((v*v-mu/r1)*p1.x - r1*vr*p1.vx);
+	double e1 = 1./mu*((v*v-mu/r1)*p1.y - r1*vr*p1.vy);
+	double e2 = 1./mu*((v*v-mu/r1)*p1.z - r1*vr*p1.vz);
+	double e = sqrt(e0*e0 + e1*e1 + e2*e2);
+	double a = -mu/(v*v-2.*mu/r1);
+	double X1 = 2.*sqrt(a/mu)*atan(sqrt((1.-e)/(1.+e))*tan(_dt/2.));
+	double etest = 0.05;
+	double atest = 1.;
+	double Xtest = 2.*sqrt(atest/mu)*atan2(sqrt((1.-etest)/(1.+etest))*tan(_dt/2.),1.);
+	
+	//	printf("%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5f\n", X, X1-X, a-atest, e-etest, Xtest-X, _dt/r1-X, _dt/a/(1.-e*e)-X, r1);
+	
+	//printf("%.5e\t%.5e\n", X2-X,X3-X);
+
+	double r = r0 + eta0*Gs[1] + zeta0*Gs[2];
+	double f = 1.-M*Gs[2]/r0;
+	double g = _dt - M*Gs[3];
+	double fd = -M*Gs[1]/(r0*r); 
+	double gd = 1.-M*Gs[2]/r; 
 
 	p_j[i].x = f*p1.x + g*p1.vx;
 	p_j[i].y = f*p1.y + g*p1.vy;
@@ -247,6 +319,24 @@ void kepler_step(int i,double _dt){
 	p_j[i].vy = fd*p1.y + gd*p1.vy;
 	p_j[i].vz = fd*p1.z + gd*p1.vz;
 	
+	v = sqrt(dvx*dvx + dvy*dvy + dvz*dvz);
+	r1 = sqrt(dx*dx + dy*dy + dz*dz);
+	
+	double energy = 0.5*v*v - mu/r1;
+
+	if (energy > 0.){
+		printf("Energy > 0\n");
+		int Npts = 10000;
+		double x;
+		FILE* of = fopen("/Users/dtamayo/desktop/xs.txt", "w");
+		for (int j=0;j<Npts;j++){
+			x = 3*X*j/Npts;
+			fprintf(of,"%.16f\t%.16f\n", x, r0*x + eta0*integrator_G(2,beta,x) + zeta0*integrator_G(3,beta,x)-_dt);
+		}
+		printf("%.16f\t%.16f\t%.16f\t%.16f\t%.16f\n", r0, eta0, zeta0, beta, _dt);
+		fclose(of);
+		exit(1);
+	}
 	//Variations
 	if (N_megno){
 		struct particle dp1 = p_j[i+N_megno];
@@ -255,23 +345,20 @@ void kepler_step(int i,double _dt){
 		double deta0 = dp1.x*p1.vx + dp1.y*p1.vy + dp1.z*p1.vz
 			     + p1.x*dp1.vx + p1.y*dp1.vy + p1.z*dp1.vz;
 		double dzeta0 = -beta*dr0 - r0*dbeta;
-		double G0 = integrator_G(0,beta,X);
-		double G4 = integrator_G(4,beta,X);
-		double G5 = integrator_G(5,beta,X);
-		double G3beta = 0.5*(3.*G5-X*G4);
-		double G2beta = 0.5*(2.*G4-X*G3);
-		double G1beta = 0.5*(G3-X*G2);
+		double G3beta = 0.5*(3.*Gs[5]-X*Gs[4]);
+		double G2beta = 0.5*(2.*Gs[4]-X*Gs[3]);
+		double G1beta = 0.5*(Gs[3]-X*Gs[2]);
 		double tbeta = eta0*G2beta + zeta0*G3beta;
-		double dX = -1./r*(X*dr0 + G2*deta0+G3*dzeta0+tbeta*dbeta);
-		double dG1 = G0*dX + G1beta*dbeta; 
-		double dG2 = G1*dX + G2beta*dbeta;
-		double dG3 = G2*dX + G3beta*dbeta;
-		double dr = dr0 + G1*deta0 + G2*dzeta0 + eta0*dG1 + zeta0*dG2;
-		double df = M*G2*dr0/(r0*r0) - M*dG2/r0;
+		double dX = -1./r*(X*dr0 + Gs[2]*deta0+Gs[3]*dzeta0+tbeta*dbeta);
+		double dG1 = Gs[0]*dX + G1beta*dbeta; 
+		double dG2 = Gs[1]*dX + G2beta*dbeta;
+		double dG3 = Gs[2]*dX + G3beta*dbeta;
+		double dr = dr0 + Gs[1]*deta0 + Gs[2]*dzeta0 + eta0*dG1 + zeta0*dG2;
+		double df = M*Gs[2]*dr0/(r0*r0) - M*dG2/r0;
 		double dg = -M*dG3;
-		double dfd = -M*dG1/(r0*r) + M*G1*(dr0/r0+dr/r)/(r*r0);
-		double dgd = -M*dG2/r + M*G2*dr/(r*r);
-		
+		double dfd = -M*dG1/(r0*r) + M*Gs[1]*(dr0/r0+dr/r)/(r*r0);
+		double dgd = -M*dG2/r + M*Gs[2]*dr/(r*r);
+	
 		p_j[i+N_megno].x = f*dp1.x + g*dp1.vx + df*p1.x + dg*p1.vx;
 		p_j[i+N_megno].y = f*dp1.y + g*dp1.vy + df*p1.y + dg*p1.vy;
 		p_j[i+N_megno].z = f*dp1.z + g*dp1.vz + df*p1.z + dg*p1.vz;
