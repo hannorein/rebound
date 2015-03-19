@@ -91,9 +91,7 @@ void stumpff_cs(double *cs, double z) {
 		cs[2] = 1./2.-z*cs[4];
 		cs[1] = 1.-z*cs[3];
 		cs[0] = 1.-z*cs[2];
-		return; 
-	}
-	else {
+	}else{
 		double z4 = z/4.;
 		stumpff_cs(cs, z4);
 		cs[5] = (cs[5]+cs[4]+cs[3]*cs[2])/16.;
@@ -102,15 +100,14 @@ void stumpff_cs(double *cs, double z) {
 		cs[2] = 1./2.-z*cs[4];
 		cs[1] = 1.-z*cs[3];
 		cs[0] = 1.-z*cs[2];
-		return;
 	}
 }
 
+double mikkola_c(unsigned int n, double z);
 void stiefel_Gs(double *Gs, double beta, double X) {
-	double cs[6];
-	stumpff_cs(cs, beta*X*X);
+	stumpff_cs(Gs, beta*X*X);
 	for(int n=0;n<6;n++) {
-		Gs[n] = ipow(X,n)*cs[n];
+		Gs[n] = ipow(X,n)*Gs[n];
 	}
 	return;
 }
@@ -167,11 +164,11 @@ double integrator_G(unsigned int n, double beta, double X){
 
 
 double _M(int i){
-  //return G*(eta[i]); // Hanno 1
+  	return G*(eta[i]); // Hanno 1
 	//return G*(eta[i-1]); // Hanno2 
 	//return G*(eta[i-1]*particles[i].m*eta[i-1]/eta[i]/(eta[i-1]+particles[i].m*eta[i-1]/eta[i])); // reduced mass jacobi
 	//return G*(eta[i-1]*particles[i].m/(eta[i-1]+particles[i].m)); // reduced mass
-	return G*(eta[i]/eta[i-1]*particles[0].m);   // SSD
+	//return G*(eta[i]/eta[i-1]*particles[0].m);   // SSD
 }
 
 /****************************** 
@@ -254,14 +251,6 @@ void kepler_step(int i,double _dt){
 		printf("Exceeded max number of iterations\n");
 	}
 	
-	double dx,dy,dz,dvx,dvy,dvz;
-	dx = p1.x - particles[0].x;
-	dy = p1.y - particles[0].y;
-	dz = p1.z - particles[0].z;
-	dvx = p1.vx - particles[0].vx;
-	dvy = p1.vy - particles[0].vy;
-	dvz = p1.vz - particles[0].vz;
-
 	double r = r0 + eta0*Gs[1] + zeta0*Gs[2];
 	double f = 1.-M*Gs[2]/r0;
 	double g = _dt - M*Gs[3];
