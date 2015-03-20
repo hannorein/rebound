@@ -33,7 +33,7 @@ class Particle(Structure):
                 ("az", c_double),
                 ("m", c_double) ]
     def __str__(self):
-        return "<rebound.Particle object, x=%f y=%f z=%f vx=%f vy=%f vz=%f>"%(self.x,self.y,self.z,self.vx,self.vy,self.vz)
+        return "<rebound.Particle object, m=%f x=%f y=%f z=%f vx=%f vy=%f vz=%f>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
 
 # Defines the same data structure as in tools.h
 class Orbit():
