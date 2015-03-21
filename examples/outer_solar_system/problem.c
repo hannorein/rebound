@@ -128,13 +128,13 @@ double energy(){
 }
 
 void problem_output(){
-	if (output_check(1000.)){
+	if (output_check(100000.)){
 		output_timing();
-		FILE* f = fopen("energy.txt","a");
-		double e = energy();
-		fprintf(f,"%e %e %e\n",t, fabs((e-e_init)/e_init), tools_megno());
-		fclose(f);
-		printf("  Y = %.3f",tools_megno());
+//		FILE* f = fopen("energy.txt","a");
+//		double e = energy();
+//		fprintf(f,"%e %e %e\n",t, fabs((e-e_init)/e_init), tools_megno());
+//		fclose(f);
+//		printf("  Y = %.3f",tools_megno());
 	}
 }
 

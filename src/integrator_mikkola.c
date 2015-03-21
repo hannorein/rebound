@@ -74,8 +74,11 @@ double ipow(double base, unsigned int exp) {
 
 double c_n_series(unsigned int n, double z){
 	double c_n = 0.;
+	z *= -1.0;
+	double _pow = 1.0;
 	for (unsigned int j=0;j<13;j++){
-		double term = ipow(-z,j)*invfactorial[n+2*j];
+		double term = _pow*invfactorial[n+2*j];
+		_pow *= z;
 		c_n += term;
 		if (fabs(term/c_n) < 1e-17) break; // Stop if new term smaller than machine precision
 	}
@@ -106,8 +109,10 @@ void stumpff_cs(double *cs, double z) {
 double mikkola_c(unsigned int n, double z);
 void stiefel_Gs(double *Gs, double beta, double X) {
 	stumpff_cs(Gs, beta*X*X);
+	double _pow = 1.;
 	for(int n=0;n<6;n++) {
-		Gs[n] = ipow(X,n)*Gs[n];
+		Gs[n] = _pow*Gs[n];
+		_pow *= X;
 	}
 	return;
 }
