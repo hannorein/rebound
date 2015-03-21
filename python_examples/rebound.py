@@ -56,8 +56,8 @@ class Particle(Structure):
     def __str__(self):
         return "<rebound.Particle object, m=%f x=%f y=%f z=%f vx=%f vy=%f vz=%f>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
-    def __init__(self, particles=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None):   
-        if particles is not None:
+    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None):   
+        if particle is not None:
             raise ValueError("Cannot initialise particle from other particles.")
         cart = [x,y,z,vx,vy,vz]
         orbi = [primary,a,anom,e,omega,inc,Omega,MEAN]
@@ -352,7 +352,7 @@ def set_min_dt(t):
 def get_t():
     return c_double.in_dll(librebound, "t").value
 
-def megno_init(delta):
+def init_megno(delta):
     librebound.tools_megno_init(c_double(delta))
 
 def get_megno():
@@ -380,25 +380,25 @@ def set_particles(particles):
     arr = (Particle * len(particles))(*particles)
     librebound.setp(byref(arr))
 
-def particles_add(particles):
-    particle_add(particles)
+def add_particles(particles):
+    add_particle(particle=particles)
 
-def particle_add(particles=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None):   
+def add_particle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None):   
     """Adds a particle to REBOUND. Accepts one of the following four sets of arguments:
     1) A single Particle structure.
     2) A list of Particle structures.
     3) The particle's mass and a set of cartesian coordinates: m,x,y,z,vx,vy,vz.
     3) The primary as a Particle structure, the particle's mass and a set of orbital elements primary,a,anom,e,omega,inv,Omega,MEAN (see kepler_particle() for the definition of orbital elements). 
     """
-    if particles is None:
-        particles = Particle(**locals())
-    if isinstance(particles,list):
-        for particle in particles:
+    if particle is None:
+        particle = Particle(**locals())
+    if isinstance(particle,list):
+        for particle in particle:
             librebound.particles_add(particle)
     else:
-       librebound.particles_add(particles)
+       librebound.particles_add(particle)
 
-def particle_get(i):
+def get_particle(i):
     N = get_N() 
     if i>=N:
         return None
@@ -407,7 +407,7 @@ def particle_get(i):
     _p = getp(c_int(i))
     return _p
 
-def particles_get_array():
+def get_particles_array():
     N = get_N() 
     particles = []
     for i in range(0,N):
@@ -415,7 +415,7 @@ def particles_get_array():
     return particles
 
 
-def particles_get():
+def get_particles():
     N = c_int.in_dll(librebound,"N").value 
     getp = librebound.particles_get
     getp.restype = POINTER(Particle)
@@ -512,7 +512,7 @@ def get_center_of_momentum():
     vx = 0.
     vy = 0.
     vz = 0.
-    ps = particles_get()    # particle pointer
+    ps = get_particles()    # particle pointer
     for i in range(get_N()):
     	m  += ps[i].m
     	x  += ps[i].x*ps[i].m
