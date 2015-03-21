@@ -72,8 +72,9 @@ void gravity_calculate_acceleration(){
 			double dx = (gb.shiftx+particles[i].x) - particles[j].x;
 			double dy = (gb.shifty+particles[i].y) - particles[j].y;
 			double dz = (gb.shiftz+particles[i].z) - particles[j].z;
-			double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
-			double prefact = -G/(r*r*r)*particles[j].m;
+			double r2 = dx*dx + dy*dy + dz*dz + softening*softening;
+			double r = sqrt(r2);
+			double prefact = -G/(r2*r)*particles[j].m;
 			
 			double ax = particles[i].ax;
 			csx  +=	prefact*dx; 

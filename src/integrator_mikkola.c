@@ -208,8 +208,9 @@ static void kepler_step(int i,double _dt){
 			integrator_timestep_warning++;
 			fprintf(stderr,"\n\033[1mWarning!\033[0m Timestep is larger than at least one orbital period.\n");
 		}
-		X_min = X_per_period*floor(_dt/period);
-		X_max = X_per_period*ceil(_dt/period);
+		double _floor_dt_period = floor(_dt/period);
+		X_min = X_per_period* _floor_dt_period;
+		X_max = X_per_period*(_floor_dt_period+1.);
 		X = _dt/period*X_per_period; // Initial guess 
 	}else{
 		// Hyperbolic orbit
