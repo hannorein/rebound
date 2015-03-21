@@ -202,7 +202,7 @@ static void kepler_step(int i,double _dt){
 	if (beta>0.){
 		// Elliptic orbit
 		double sqrt_beta = sqrt(beta);
-		double period = 2.*M_PI*M/ipow(sqrt_beta,3);
+		double period = 2.*M_PI*M/(sqrt_beta*beta);
 		double X_per_period = 2.*M_PI/sqrt_beta;
 		if (dt>period && integrator_timestep_warning == 0){
 			integrator_timestep_warning++;
