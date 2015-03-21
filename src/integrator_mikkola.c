@@ -201,8 +201,9 @@ static void kepler_step(int i,double _dt){
 		
 	if (beta>0.){
 		// Elliptic orbit
-		double period = 2.*M_PI*M*pow(beta,-3./2.);
-		double X_per_period = 2.*M_PI/sqrt(beta);
+		double sqrt_beta = sqrt(beta);
+		double period = 2.*M_PI*M/ipow(sqrt_beta,3);
+		double X_per_period = 2.*M_PI/sqrt_beta;
 		if (dt>period && integrator_timestep_warning == 0){
 			integrator_timestep_warning++;
 			fprintf(stderr,"\n\033[1mWarning!\033[0m Timestep is larger than at least one orbital period.\n");
