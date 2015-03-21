@@ -14,13 +14,20 @@ import multiprocessing
 
 rebound.reset()
 rebound.set_integrator("mikkola")
-rebound.set_dt(0.1)
+rebound.set_dt(0.01)
     
-rebound.particle_add(m=1.)
-rebound.particle_add(m=0.0000, a=5.204, anom=0.600, omega=0.257, e=0.048)
+sun = rebound.Particle(m=1)
+rebound.add_particle(sun)
+planet = rebound.Particle(m=0.01,a=1,e=0.1)
+rebound.add_particle(planet)
+
+rebound.add_particle(a=2.)
 
 rebound.move_to_center_of_momentum()
-rebound.megno_init(1e-16)
-rebound.integrate(1e4*2.*np.pi)
+rebound.init_megno(1e-10)
+particles = rebound.get_particles()
+for x in xrange(100000):
+    rebound.step()
 
-print(rebound.get_megno())
+print rebound.get_t(),rebound.get_megno(), particles[3].x
+print particles[2].get_orbit(primary=sun)
