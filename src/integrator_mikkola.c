@@ -61,7 +61,7 @@ int integrator_timestep_warning = 0;
 // Fast inverse factorial lookup table
 static const double invfactorial[] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
 
-double ipow(double base, unsigned int exp) {
+static double ipow(double base, unsigned int exp) {
 	double result = 1;
 	while (exp) {
 		if (exp & 1)
@@ -72,11 +72,11 @@ double ipow(double base, unsigned int exp) {
 	return result;
 }
 
-inline double fastabs(double x){
+static inline double fastabs(double x){
 	    return (x > 0.) ? x : -x;
 }
 
-double c_n_series(unsigned int n, double z){
+static double c_n_series(unsigned int n, double z){
 	double c_n = 0.;
 	z *= -1.0;
 	double _pow = 1.0;
@@ -91,7 +91,7 @@ double c_n_series(unsigned int n, double z){
 }
 
 
-void stumpff_cs(double *cs, double z) {
+static void stumpff_cs(double *cs, double z) {
 	if (z<0.5){
 		cs[5] = c_n_series(5,z);
 		cs[4] = c_n_series(4,z);
@@ -111,8 +111,7 @@ void stumpff_cs(double *cs, double z) {
 	}
 }
 
-double mikkola_c(unsigned int n, double z);
-void stiefel_Gs(double *Gs, double beta, double X) {
+static void stiefel_Gs(double *Gs, double beta, double X) {
 	stumpff_cs(Gs, beta*X*X);
 	double _pow = 1.;
 	for(int n=0;n<6;n++) {
@@ -122,7 +121,7 @@ void stiefel_Gs(double *Gs, double beta, double X) {
 	return;
 }
 
-double mikkola_c(unsigned int n, double z){
+static double mikkola_c(unsigned int n, double z){
 	if (z>0.5){
 		double z4 = z/4.;
 		// Speed up convergence with 4-folding formula
@@ -168,12 +167,12 @@ double mikkola_c(unsigned int n, double z){
 	return c_n_series(n,z);
 }
 
-double integrator_G(unsigned int n, double beta, double X){
+static double integrator_G(unsigned int n, double beta, double X){
 	return ipow(X,n)*mikkola_c(n,beta*X*X);
 }
 
 
-double _M(int i){
+static inline double _M(int i){
   	return G*(eta[i]); // Hanno 1
 	//return G*(eta[i-1]); // Hanno2 
 	//return G*(eta[i-1]*particles[i].m*eta[i-1]/eta[i]/(eta[i-1]+particles[i].m*eta[i-1]/eta[i])); // reduced mass jacobi
@@ -185,7 +184,7 @@ double _M(int i){
  * Keplerian motion           */
 int iter;
 
-void kepler_step(int i,double _dt){
+static void kepler_step(int i,double _dt){
 	double M = _M(i);
 	struct particle p1 = p_j[i];
 
@@ -311,7 +310,7 @@ void kepler_step(int i,double _dt){
 /****************************** 
  * Coordinate transformations */
 
-void integrator_to_jacobi_posvel(){
+static void integrator_to_jacobi_posvel(){
 	double s_x = particles[0].m * particles[0].x;
 	double s_y = particles[0].m * particles[0].y;
 	double s_z = particles[0].m * particles[0].z;
@@ -340,7 +339,7 @@ void integrator_to_jacobi_posvel(){
 	p_j[0].vz = s_vz / Mtotal;
 }
 
-void integrator_var_to_jacobi_posvel(){
+static void integrator_var_to_jacobi_posvel(){
 	double s_x = particles[N_megno].m * particles[N_megno].x;
 	double s_y = particles[N_megno].m * particles[N_megno].y;
 	double s_z = particles[N_megno].m * particles[N_megno].z;
@@ -370,7 +369,7 @@ void integrator_var_to_jacobi_posvel(){
 }
 
 
-void integrator_to_jacobi_acc(){
+static void integrator_to_jacobi_acc(){
 	double s_ax = particles[0].m * particles[0].ax;
 	double s_ay = particles[0].m * particles[0].ay;
 	double s_az = particles[0].m * particles[0].az;
@@ -387,7 +386,7 @@ void integrator_to_jacobi_acc(){
 	p_j[0].az = s_az / Mtotal;
 }
 
-void integrator_var_to_jacobi_acc(){
+static void integrator_var_to_jacobi_acc(){
 	double s_ax = particles[N_megno].m * particles[N_megno].ax;
 	double s_ay = particles[N_megno].m * particles[N_megno].ay;
 	double s_az = particles[N_megno].m * particles[N_megno].az;
@@ -404,7 +403,7 @@ void integrator_var_to_jacobi_acc(){
 	p_j[N_megno].az = s_az / Mtotal;
 }
 
-void integrator_to_heliocentric_posvel(){
+static void integrator_to_heliocentric_posvel(){
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
@@ -433,7 +432,7 @@ void integrator_to_heliocentric_posvel(){
 	particles[0].vz = p_j[0].vz - s_vz;
 }
 
-void integrator_var_to_heliocentric_posvel(){
+static void integrator_var_to_heliocentric_posvel(){
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
@@ -462,7 +461,7 @@ void integrator_var_to_heliocentric_posvel(){
 	particles[N_megno].vz = p_j[N_megno].vz - s_vz;
 }
 
-void integrator_to_heliocentric_pos(){
+static void integrator_to_heliocentric_pos(){
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
@@ -478,7 +477,7 @@ void integrator_to_heliocentric_pos(){
 	particles[0].y = p_j[0].y - s_y;
 	particles[0].z = p_j[0].z - s_z;
 }
-void integrator_var_to_heliocentric_pos(){
+static void integrator_var_to_heliocentric_pos(){
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
@@ -498,7 +497,7 @@ void integrator_var_to_heliocentric_pos(){
 /***************************** 
  * Interaction Hamiltonian  */
 
-void integrator_interaction(double _dt){
+static void integrator_interaction(double _dt){
 	for (int i=1;i<N-N_megno;i++){
 		// Eq 132
 		double rj  = pow(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z,-1./2.);
