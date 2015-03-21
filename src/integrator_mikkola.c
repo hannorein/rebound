@@ -80,8 +80,8 @@ double c_n_series(unsigned int n, double z){
 	double c_n = 0.;
 	z *= -1.0;
 	double _pow = 1.0;
-	for (unsigned int j=0;j<16;j++){
-		const double term = _pow*invfactorial[n+2*j];
+	for (unsigned int j=n;j<n+26;j+=2){
+		const double term = _pow*invfactorial[j];
 		_pow *= z;
 		const double old_c_n = c_n;
 		c_n += term;
