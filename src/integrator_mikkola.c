@@ -61,26 +61,24 @@ int integrator_timestep_warning = 0;
 // Fast inverse factorial lookup table
 static const double invfactorial[] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
 
-static double ipow(double base, unsigned int exp) {
-	double result = 1;
-	while (exp) {
-		if (exp & 1)
-		    result *= base;
-		exp >>= 1;
-		base *= base;
-	}
-	return result;
-}
+//static double ipow(double base, unsigned int exp) {
+//	double result = 1;
+//	while (exp) {
+//		if (exp & 1)
+//		    result *= base;
+//		exp >>= 1;
+//		base *= base;
+//	}
+//	return result;
+//}
 
 static inline double fastabs(double x){
 	    return (x > 0.) ? x : -x;
 }
 
 static double c_n_series(unsigned int n, double z){
-	double c_n = 0.;
 	z *= -1.0;
-	c_n += invfactorial[n];			// always calculate first two terms
-	c_n += z*invfactorial[n+2];
+	double c_n = invfactorial[n] + z*invfactorial[n+2]; // always calculate first two terms
 	double _pow = z*z;
 	for (unsigned int j=n+4;j<n+26;j+=2){	// Calculate rest of terms until converged
 		const double term = _pow*invfactorial[j];
@@ -123,55 +121,55 @@ static void stiefel_Gs(double *Gs, double beta, double X) {
 	return;
 }
 
-static double mikkola_c(unsigned int n, double z){
-	if (z>0.5){
-		double z4 = z/4.;
-		// Speed up convergence with 4-folding formula
-		switch(n){
-			case 0:
-			{
-				double cn4 = mikkola_c(3,z4)*(1.+mikkola_c(1,z4))/8.;
-				double cn2 = 1./2.-z*cn4;
-				double cn0 = 1.-z*cn2;
-				return cn0;
-			}
-			case 1:
-			{
-				double cn5 = (mikkola_c(5,z4)+mikkola_c(4,z4)+mikkola_c(3,z4)*mikkola_c(2,z4))/16.;
-				double cn3 = 1./6.-z*cn5;
-				double cn1 = 1.-z*cn3;
-				return cn1;
-			}
-			case 2:
-			{
-				double cn4 = mikkola_c(3,z4)*(1.+mikkola_c(1,z4))/8.;
-				double cn2 = 1./2.-z*cn4;
-				return cn2;
-			}
-			case 3:
-			{
-				double cn5 = (mikkola_c(5,z4)+mikkola_c(4,z4)+mikkola_c(3,z4)*mikkola_c(2,z4))/16.;
-				double cn3 = 1./6.-z*cn5;
-				return cn3;
-			}
-			case 4:
-			{
-				double cn4 = mikkola_c(3,z4)*(1.+mikkola_c(1,z4))/8.;
-				return cn4;
-			}
-			case 5:
-			{
-				double cn5 = (mikkola_c(5,z4)+mikkola_c(4,z4)+mikkola_c(3,z4)*mikkola_c(2,z4))/16.;
-				return cn5;
-			}
-		}
-	}
-	return c_n_series(n,z);
-}
+//static double mikkola_c(unsigned int n, double z){
+//	if (z>0.5){
+//		double z4 = z/4.;
+//		// Speed up convergence with 4-folding formula
+//		switch(n){
+//			case 0:
+//			{
+//				double cn4 = mikkola_c(3,z4)*(1.+mikkola_c(1,z4))/8.;
+//				double cn2 = 1./2.-z*cn4;
+//				double cn0 = 1.-z*cn2;
+//				return cn0;
+//			}
+//			case 1:
+//			{
+//				double cn5 = (mikkola_c(5,z4)+mikkola_c(4,z4)+mikkola_c(3,z4)*mikkola_c(2,z4))/16.;
+//				double cn3 = 1./6.-z*cn5;
+//				double cn1 = 1.-z*cn3;
+//				return cn1;
+//			}
+//			case 2:
+//			{
+//				double cn4 = mikkola_c(3,z4)*(1.+mikkola_c(1,z4))/8.;
+//				double cn2 = 1./2.-z*cn4;
+//				return cn2;
+//			}
+//			case 3:
+//			{
+//				double cn5 = (mikkola_c(5,z4)+mikkola_c(4,z4)+mikkola_c(3,z4)*mikkola_c(2,z4))/16.;
+//				double cn3 = 1./6.-z*cn5;
+//				return cn3;
+//			}
+//			case 4:
+//			{
+//				double cn4 = mikkola_c(3,z4)*(1.+mikkola_c(1,z4))/8.;
+//				return cn4;
+//			}
+//			case 5:
+//			{
+//				double cn5 = (mikkola_c(5,z4)+mikkola_c(4,z4)+mikkola_c(3,z4)*mikkola_c(2,z4))/16.;
+//				return cn5;
+//			}
+//		}
+//	}
+//	return c_n_series(n,z);
+//}
 
-static double integrator_G(unsigned int n, double beta, double X){
-	return ipow(X,n)*mikkola_c(n,beta*X*X);
-}
+//static double integrator_G(unsigned int n, double beta, double X){
+//	return ipow(X,n)*mikkola_c(n,beta*X*X);
+//}
 
 
 static inline double _M(int i){
