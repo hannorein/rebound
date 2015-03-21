@@ -79,13 +79,15 @@ static inline double fastabs(double x){
 static double c_n_series(unsigned int n, double z){
 	double c_n = 0.;
 	z *= -1.0;
-	double _pow = 1.0;
-	for (unsigned int j=n;j<n+26;j+=2){
+	c_n += invfactorial[n];			// always calculate first two terms
+	c_n += z*invfactorial[n+2];
+	double _pow = z*z;
+	for (unsigned int j=n+4;j<n+26;j+=2){	// Calculate rest of terms until converged
 		const double term = _pow*invfactorial[j];
 		_pow *= z;
 		const double old_c_n = c_n;
 		c_n += term;
-		if (c_n == old_c_n) break; // Stop if new term smaller than machine precision
+		if (c_n == old_c_n) break; 	// Stop if new term smaller than machine precision
 	}
 	return c_n;
 }
@@ -100,7 +102,7 @@ static void stumpff_cs(double *cs, double z) {
 		cs[1] = 1.-z*cs[3];
 		cs[0] = 1.-z*cs[2];
 	}else{
-		double z4 = z/4.;
+		const double z4 = z/4.;
 		stumpff_cs(cs, z4);
 		cs[5] = (cs[5]+cs[4]+cs[3]*cs[2])/16.;
 		cs[4] = (1.+cs[1])*cs[3]/8.;
@@ -225,7 +227,6 @@ static void kepler_step(int i,double _dt){
 		double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-_dt;
 		double sp  = r0 + eta0*Gs[1] + zeta0*Gs[2];
 		double dX  = -s/sp; // Newton's method
-		
 		X+=dX;
 		if (X>X_max || X < X_min){
 			// Did not converged.
@@ -233,7 +234,7 @@ static void kepler_step(int i,double _dt){
 			n_hg=10;
 			break;
 		}
-		if (fabs(dX/X)<1e-15){
+		if (fastabs(dX)<fastabs(X)*1e-15){
 			// Converged. Exit.
 			iter = n_hg;
 			n_hg=0;
@@ -252,7 +253,7 @@ static void kepler_step(int i,double _dt){
 				X_min = X;
 			}
 			X = (X_max + X_min)/2.;
-		}while (fabs((X_max-X_min)/X_max)>1e-15);
+		}while (fastabs((X_max-X_min)/X_max)>1e-15);
 		iter = -n_hg;
 	}
 
