@@ -76,17 +76,18 @@ static inline double fastabs(double x){
 	    return (x > 0.) ? x : -x;
 }
 
-static double c_n_series(unsigned int n, double z){
+static double c_n_series(unsigned const int n, double z){
 	z *= -1.0;
-	double c_n = invfactorial[n] + z*invfactorial[n+2]; // always calculate first two terms
+	double c_n = invfactorial[n] + z*invfactorial[n+2]; 	// always calculate first two terms
+	double old_c_n;
 	double _pow = z*z;
-	for (unsigned int j=n+4;j<n+26;j+=2){	// Calculate rest of terms until converged
-		const double term = _pow*invfactorial[j];
+	int j=n+4;
+	do{
+		old_c_n = c_n;
+		c_n += _pow*invfactorial[j];
 		_pow *= z;
-		const double old_c_n = c_n;
-		c_n += term;
-		if (c_n == old_c_n) break; 	// Stop if new term smaller than machine precision
-	}
+		j+=2;
+	}while(c_n!=old_c_n && j<n+26);				// Stop if new term smaller than machine precision
 	return c_n;
 }
 
@@ -100,8 +101,7 @@ static void stumpff_cs(double *cs, double z) {
 		cs[1] = 1.-z*cs[3];
 		cs[0] = 1.-z*cs[2];
 	}else{
-		const double z4 = z/4.;
-		stumpff_cs(cs, z4);
+		stumpff_cs(cs, z/4.);
 		cs[5] = (cs[5]+cs[4]+cs[3]*cs[2])/16.;
 		cs[4] = (1.+cs[1])*cs[3]/8.;
 		cs[3] = 1./6.-z*cs[5];
