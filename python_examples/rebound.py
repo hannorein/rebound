@@ -34,6 +34,148 @@ class Particle(Structure):
                 ("m", c_double) ]
     def __str__(self):
         return "<rebound.Particle object, m=%f x=%f y=%f z=%f vx=%f vy=%f vz=%f>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
+    
+    def __init__(self, particles=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None):   
+        if particles is not None:
+            raise ValueError("Cannot initialise particle from other particles.")
+        cart = [x,y,z,vx,vy,vz]
+        orbi = [primary,a,anom,e,omega,inc,Omega,MEAN]
+        if m is None:   #default value for mass
+            m = 0.
+        if notNone(cart) and notNone(orbi):
+                raise ValueError("You cannot pass cartesian coordinates and orbital elements at the same time.")
+        if notNone(orbi):
+            if primary is None:
+                primary = get_center_of_momentum()
+            if a is None:
+                raise ValueError("You need to pass a semi major axis to initialize the particle using orbital elements.")
+            if anom is None:
+                anom = 0.
+            if e is None:
+                e = 0.
+            if omega is None:
+                omega = 0.
+            if inc is None:
+                inc = 0.
+            if Omega is None:
+                Omega = 0.
+            if MEAN is None:
+                MEAN = False
+            self.init_kepler(m=m,primary=primary,a=a,anom=anom,e=e,omega=omega,inc=inc,Omega=Omega,MEAN=MEAN)
+        else:
+            if x is None:
+                x = 0.
+            if y is None:
+                y = 0.
+            if z is None:
+                z = 0.
+            if vx is None:
+                vx = 0.
+            if vy is None:
+                vy = 0.
+            if vz is None:
+                vz = 0.
+            self.m = m
+            self.x = x
+            self.y = y
+            self.z = z
+            self.vx = vx
+            self.vy = vy
+            self.vz = vz
+
+    def init_kepler(self,
+                    m,          # mass
+                    primary,    # central body (rebound.Particle object)
+                    a,          # semimajor axis
+                    anom=0.,    # anomaly
+                    e=0.,       # eccentricity
+                    omega=0.,   # argument of pericenter
+                    inc=0.,     # inclination
+                    Omega=0.,   # longitude of ascending node
+                    MEAN=False):    # mean anomaly
+        """Initialises a particle structure with the passed set of
+            orbital elements. Mass (m), primary and 'a' are required (see Parameters
+            below, and any orbital mechanics text, e.g., Murray & Dermott
+            Solar System Dynamics for definitions). Other values default to zero.
+            All angles should be passed in radians. Units are set by the
+            gravitational constant G (default = 1.). If MEAN is set to True, anom is
+            taken as the mean anomaly, rather than the true anomaly.
+            
+            Usage
+            _____
+            TODO: UPDATE
+            primary = rebound.Particle(m=1.) # particle with unit mass at origin & v=0
+            
+            # test particle (m=0) with specified elements using mean anomaly
+            p = kepler_particle(m=0.,primary=primary,a=2.5, anom=math.pi/2,e=0.3,
+            omega=math.pi/6,inc=math.pi/3,Omega=0.,MEAN=True)
+            
+            # m=0.1 particle on circular orbit math.pi/4 from x axis in xy plane
+            p = kepler_particle(0.1,primary,2.5,math.pi/4)
+            
+            Parameters
+            __________
+            m       : (float)            Mass of the particle
+            primary : (rebound.Particle) Particle structure for the central body
+            a       : (float)            Semimajor axis
+            anom    : (float)            True anomaly (default).
+            Mean anomaly if MEAN is set to True
+            e       : (float)            Eccentricity
+            omega   : (float)            Argument of pericenter
+            inc     : (float)            Inclination (to xy plane)
+            Omega   : (float)            Longitude of the ascending node
+            MEAN    : (boolean)          If False (default), anom = true anomaly
+            If True, anom = mean anomaly
+            
+            Returns
+            _______
+            A rebound.Particle structure initialized with the given orbital parameters
+            """
+        
+        self.m = m
+
+        if not(0.<=inc<=math.pi): raise ValueError('inc must be in range [0,pi]')
+        if e>1.:
+            if math.fabs(anom)>math.acos(-1./e): raise ValueError('hyperbolic orbit with anomaly larger than angle of asymptotes')
+        
+        if MEAN is True: # need to calculate f
+            E = eccentricAnomaly(e,anom)
+            if e>1.:
+                print("not working yet")
+                exit(1)
+                f = 2.*math.atan(math.sqrt(-(1.+ e)/(1. - e))*math.tanh(0.5*E))
+            else:
+                f = mod2pi(2.*math.atan(math.sqrt((1.+ e)/(1. - e))*math.tan(0.5*E)))
+        else:
+            f = anom
+        
+        cO = math.cos(Omega)
+        sO = math.sin(Omega)
+        co = math.cos(omega)
+        so = math.sin(omega)
+        cf = math.cos(f)
+        sf = math.sin(f)
+        ci = math.cos(inc)
+        si = math.sin(inc)
+        
+        r = a*(1.-e**2)/(1.+e*cf)
+        
+        # Murray & Dermott Eq. 2.122
+        self.x  = primary.x + r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci)
+        self.y  = primary.y + r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci)
+        self.z  = primary.z + r*(so*cf+co*sf)*si
+        
+        n = math.sqrt(get_G()*(primary.m+m)/(a**3))
+        if e>1.:
+            v0 = n*a/math.sqrt(-(1.-e**2))
+        else:
+            v0 = n*a/math.sqrt(1.-e**2)
+        
+        # Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+        self.vx = primary.vx + v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO))
+        self.vy = primary.vy + v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO))
+        self.vz = primary.vz + v0*((e+cf)*co*si - sf*si*so)
+        
 
 # Defines the same data structure as in tools.h
 class Orbit():
@@ -51,7 +193,6 @@ class Orbit():
 
     def __str__(self):
         return "<rebound.Orbit instance, a=%f e=%f>"%(self.a,self.e)
-        
 
 # Set function pointer for additional forces
 
@@ -125,48 +266,8 @@ def particle_add(particles=None, m=None, x=None, y=None, z=None, vx=None, vy=Non
     3) The particle's mass and a set of cartesian coordinates: m,x,y,z,vx,vy,vz.
     3) The primary as a Particle structure, the particle's mass and a set of orbital elements primary,a,anom,e,omega,inv,Omega,MEAN (see kepler_particle() for the definition of orbital elements). 
     """
-    cart = [x,y,z,vx,vy,vz]
-    orbi = [primary,a,anom,e,omega,inc,Omega,MEAN]
-    if particles is not None:
-        if notNone(cart) or notNone(orbi):
-            raise ValueError("You cannot pass a particle structure and orbital elements or cartesian coordinates at the same time.")
-    else:
-        if m is None:   #default value for mass
-            m = 0.
-        if notNone(cart) and notNone(orbi):
-                raise ValueError("You cannot pass cartesian coordinates and orbital elements at the same time.")
-        if notNone(orbi):
-            if primary is None:
-                primary = get_center_of_momentum()
-            if a is None:
-                raise ValueError("You need to pass a semi major axis to initialize the particle using orbital elements.")
-            if anom is None:
-                anom = 0.
-            if e is None:
-                e = 0.
-            if omega is None:
-                omega = 0.
-            if inc is None:
-                inc = 0.
-            if Omega is None:
-                Omega = 0.
-            if MEAN is None:
-                MEAN = False
-            particles = kepler_particle(m=m,primary=primary,a=a,anom=anom,e=e,omega=omega,inc=inc,Omega=Omega,MEAN=MEAN)
-        else:
-            if x is None:
-                x = 0.
-            if y is None:
-                y = 0.
-            if z is None:
-                z = 0.
-            if vx is None:
-                vx = 0.
-            if vy is None:
-                vy = 0.
-            if vz is None:
-                vz = 0.
-            particles = Particle(m=m,x=x,y=y,z=z,vx=vx,vy=vy,vz=vz)
+    if particles is None:
+        particles = Particle(**locals())
     if isinstance(particles,list):
         for particle in particles:
             librebound.particles_add(particle)
@@ -304,98 +405,6 @@ def get_center_of_momentum():
     vz /= m
     return Particle(m=m, x=x, y=y, z=z, vx=vx, vy=vy, vz=vz)
 
-def kepler_particle(m,
-                    primary,    # central body (rebound.Particle object)
-                    a,          # semimajor axis
-                    anom=0.,  # anomaly
-                    e=0.,     # eccentricity
-                    omega=0., # argument of pericenter
-                    inc=0.,   # inclination
-                    Omega=0., # longitude of ascending node
-                    MEAN=False):    # mean anomaly
-    """Returns a particle structure initialized with the passed set of
-        orbital elements. Mass (m), primary and 'a' are required (see Parameters
-        below, and any orbital mechanics text, e.g., Murray & Dermott
-        Solar System Dynamics for definitions). Other values default to zero.
-        All angles should be passed in radians. Units are set by the
-        gravitational constant G (default = 1.). If MEAN is set to True, anom is
-        taken as the mean anomaly, rather than the true anomaly.
-        
-        Usage
-        _____
-        primary = rebound.Particle(m=1.) # particle with unit mass at origin & v=0
-        
-        # test particle (m=0) with specified elements using mean anomaly
-        p = kepler_particle(m=0.,primary=primary,a=2.5, anom=math.pi/2,e=0.3,
-        omega=math.pi/6,inc=math.pi/3,Omega=0.,MEAN=True)
-        
-        # m=0.1 particle on circular orbit math.pi/4 from x axis in xy plane
-        p = kepler_particle(0.1,primary,2.5,math.pi/4)
-        
-        Parameters
-        __________
-        m       : (float)            Mass of the particle
-        primary : (rebound.Particle) Particle structure for the central body
-        a       : (float)            Semimajor axis
-        anom    : (float)            True anomaly (default).
-        Mean anomaly if MEAN is set to True
-        e       : (float)            Eccentricity
-        omega   : (float)            Argument of pericenter
-        inc     : (float)            Inclination (to xy plane)
-        Omega   : (float)            Longitude of the ascending node
-        MEAN    : (boolean)          If False (default), anom = true anomaly
-        If True, anom = mean anomaly
-        
-        Returns
-        _______
-        A rebound.Particle structure initialized with the given orbital parameters
-        """
-    
-    #if not(0.<=e<1.): raise ValueError('e must be in range [0,1)')
-    # not sure if these equations work for parabolic/hyperbolic obits
-    if not(0.<=inc<=math.pi): raise ValueError('inc must be in range [0,pi]')
-    if e>1.:
-        if math.fabs(anom)>math.acos(-1./e): raise ValueError('hyperbolic orbit with anomaly larger than angle of asymptotes')
-    
-    if MEAN is True: # need to calculate f
-        E = eccentricAnomaly(e,anom)
-        if e>1.:
-            print("not working yet")
-            exit(1)
-            f = 2.*math.atan(math.sqrt(-(1.+ e)/(1. - e))*math.tanh(0.5*E))
-        else:
-            f = mod2pi(2.*math.atan(math.sqrt((1.+ e)/(1. - e))*math.tan(0.5*E)))
-    else:
-        f = anom
-    
-    cO = math.cos(Omega)
-    sO = math.sin(Omega)
-    co = math.cos(omega)
-    so = math.sin(omega)
-    cf = math.cos(f)
-    sf = math.sin(f)
-    ci = math.cos(inc)
-    si = math.sin(inc)
-    
-    r = a*(1.-e**2)/(1.+e*cf)
-    
-    # Murray & Dermott Eq. 2.122
-    x  = primary.x + r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci)
-    y  = primary.y + r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci)
-    z  = primary.z + r*(so*cf+co*sf)*si
-    
-    n = math.sqrt(get_G()*(primary.m+m)/(a**3))
-    if e>1.:
-        v0 = n*a/math.sqrt(-(1.-e**2))
-    else:
-        v0 = n*a/math.sqrt(1.-e**2)
-    
-    # Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
-    vx = primary.vx + v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO))
-    vy = primary.vy + v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO))
-    vz = primary.vz + v0*((e+cf)*co*si - sf*si*so)
-    
-    return Particle(m=m, x=x, y=y, z=z, vx=vx, vy=vy, vz=vz)
 
 TINY=1.e-308
 MIN_REL_ERROR = 1.e-12
