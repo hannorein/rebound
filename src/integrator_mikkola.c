@@ -72,6 +72,10 @@ double ipow(double base, unsigned int exp) {
 	return result;
 }
 
+inline double fastabs(double x){
+	    return (x > 0.) ? x : -x;
+}
+
 double c_n_series(unsigned int n, double z){
 	double c_n = 0.;
 	z *= -1.0;
@@ -80,7 +84,7 @@ double c_n_series(unsigned int n, double z){
 		double term = _pow*invfactorial[n+2*j];
 		_pow *= z;
 		c_n += term;
-		if (fabs(term/c_n) < 1e-17) break; // Stop if new term smaller than machine precision
+		if (fastabs(term) < fastabs(c_n)*1e-17) break; // Stop if new term smaller than machine precision
 	}
 	return c_n;
 }
