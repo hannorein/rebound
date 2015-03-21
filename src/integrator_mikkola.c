@@ -80,11 +80,12 @@ double c_n_series(unsigned int n, double z){
 	double c_n = 0.;
 	z *= -1.0;
 	double _pow = 1.0;
-	for (unsigned int j=0;j<13;j++){
-		double term = _pow*invfactorial[n+2*j];
+	for (unsigned int j=0;j<16;j++){
+		const double term = _pow*invfactorial[n+2*j];
 		_pow *= z;
+		const double old_c_n = c_n;
 		c_n += term;
-		if (fastabs(term) < fastabs(c_n)*1e-17) break; // Stop if new term smaller than machine precision
+		if (c_n == old_c_n) break; // Stop if new term smaller than machine precision
 	}
 	return c_n;
 }
