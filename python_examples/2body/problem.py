@@ -6,16 +6,16 @@ import numpy as np
 from interruptible_pool import InterruptiblePool
 
 def simulation(par):
-    anom, dt, e = par
+    anom, dt, e, integrator = par
 
     e = 1.-pow(10.,-e);
     rebound.reset()
-    rebound.set_integrator("wh")
+    rebound.set_integrator(integrator)
     rebound.set_dt(dt)
 
-    rebound.particle_add(m=1.)
-    rebound.particle_add(m=0., a=1., e=e, anom=anom)
-    particles = rebound.particles_get()
+    rebound.add_particle(m=1.)
+    rebound.add_particle(m=0., a=1., e=e, anom=anom)
+    particles = rebound.get_particles()
 
     Ei = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
 
@@ -31,44 +31,53 @@ def simulation(par):
 N = 200
 anoms = np.linspace(-np.pi,np.pi,N)
 e0s = np.linspace(0,14,N)
+integrators= ["wh","mikkola"]
 
-parameters = [(anoms[i], 0.01*2.*np.pi, e0s[j]) for j in range(N) for i in range(N)]
+niter = []
+energyerror = []
+timing = []
 
-pool = InterruptiblePool()
-res = pool.map(simulation,parameters)
-res = np.nan_to_num(res)
-niter = res[:,0].reshape((N,N))
-energyerror = res[:,1].reshape((N,N))
-timing = res[:,2].reshape((N,N))
+for integrator in integrators:
+    parameters = [(anoms[i], 0.01*2.*np.pi, e0s[j], integrator) for j in range(N) for i in range(N)]
+
+    pool = InterruptiblePool()
+    res = pool.map(simulation,parameters)
+    res = np.nan_to_num(res)
+    niter.append(res[:,0].reshape((N,N)))
+    energyerror.append(res[:,1].reshape((N,N)))
+    timing.append(res[:,2].reshape((N,N)))
 
 import matplotlib; matplotlib.use("pdf")
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
-f,axarr = plt.subplots(3,figsize=(10,15))
+f,axarr = plt.subplots(3,2,figsize=(15,15))
 extent=[anoms.min(), anoms.max(), e0s.min(), e0s.max()]
 
-for ax in axarr:
-    # ax = axarr
-    ax.set_xlim(extent[0], extent[1])
-    ax.set_ylim(extent[2], extent[3])
-    ax.set_xlabel(r"true anomly")
-    ax.set_ylabel(r"$\xi$  defined as  $e=1-10^{-\xi}$")
+for ay in axarr:
+    for ax in ay:
+        # ax = axarr
+        ax.set_xlim(extent[0], extent[1])
+        ax.set_ylim(extent[2], extent[3])
+        ax.set_xlabel(r"true anomly")
+        ax.set_ylabel(r"$\xi$, where $e=1-10^{-\xi}$")
 
-im1 = axarr[0].imshow(energyerror, norm=LogNorm(), aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
-cb1 = plt.colorbar(im1, ax=axarr[0])
-cb1.solids.set_rasterized(True)
-cb1.set_label("Relative energy error")
+for i, integrator in enumerate(integrators):
+    im1 = axarr[0,i].imshow(energyerror[i], norm=LogNorm(), aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
+    cb1 = plt.colorbar(im1, ax=axarr[0,i])
+    cb1.solids.set_rasterized(True)
+    cb1.set_label("Relative energy error, " +integrator)
 
-im2 = axarr[1].imshow(niter, vmin=-3, aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn", extent=extent)
-cb2 = plt.colorbar(im2, ax=axarr[1])
-cb2.solids.set_rasterized(True)
-cb2.set_label("Number of iterations (neg = bisection)")
+    im2 = axarr[1,i].imshow(niter[i], vmin=-3, aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn", extent=extent)
+    cb2 = plt.colorbar(im2, ax=axarr[1,i])
+    cb2.solids.set_rasterized(True)
+    cb2.set_label("Number of iterations (neg = bisection), " +integrator)
 
-im3 = axarr[2].imshow(timing, vmax=0.0001, norm=LogNorm(), aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn", extent=extent)
-cb3 = plt.colorbar(im3, ax=axarr[2])
-cb3.solids.set_rasterized(True)
-cb3.set_label("Runtime for one step (s)")
+    im3 = axarr[2,i].imshow(timing[i], vmax=0.00001, norm=LogNorm(), aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn_r", extent=extent)
+    cb3 = plt.colorbar(im3, ax=axarr[2,i])
+    cb3.solids.set_rasterized(True)
+    cb3.set_label("Runtime for one step (s), " +integrator)
+
 
 plt.savefig("2body.pdf")
 
