@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <sys/time.h>
 #include "particle.h"
 #include "main.h"
 #include "tools.h"
@@ -56,7 +57,7 @@ double integrator_min_dt 			= 0;
 struct particle* restrict p_j  = NULL;
 double* restrict eta = NULL;
 double Mtotal;
-int integrator_timestep_warning = 0;
+unsigned int integrator_timestep_warning = 0;
 
 // Fast inverse factorial lookup table
 static const double invfactorial[35] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
@@ -176,7 +177,7 @@ static void stiefel_Gs(double *Gs, double beta, double X) {
 //}
 
 
-static inline double _M(int i){
+static inline double _M(unsigned int i){
   	return G*(eta[i]); // Hanno 1
 	//return G*(eta[i-1]); // Hanno2 
 	//return G*(eta[i-1]*particles[i].m*eta[i-1]/eta[i]/(eta[i-1]+particles[i].m*eta[i-1]/eta[i])); // reduced mass jacobi
@@ -188,7 +189,7 @@ static inline double _M(int i){
  * Keplerian motion           */
 int iter;
 
-static void kepler_step(int i,double _dt){
+static void kepler_step(unsigned int i,double _dt){
 	double M = _M(i);
 	struct particle p1 = p_j[i];
 
@@ -224,7 +225,7 @@ static void kepler_step(int i,double _dt){
 		X = 0.; // Initial guess 
 	}
 
-	int n_hg;
+	unsigned int n_hg;
 	iter = 0;
 	for (n_hg=0;n_hg<10;n_hg++){
 		stiefel_Gs(Gs, beta, X);
@@ -322,7 +323,8 @@ static void integrator_to_jacobi_posvel(){
 	double s_vx = particles[0].m * particles[0].vx;
 	double s_vy = particles[0].m * particles[0].vy;
 	double s_vz = particles[0].m * particles[0].vz;
-	for (int i=1;i<N-N_megno;i++){
+	p_j[0].m = particles[0].m;
+	for (unsigned int i=1;i<N-N_megno;i++){
 		const double ei = 1./eta[i-1];
 		const struct particle pi = particles[i];
 		p_j[i].x = pi.x - s_x*ei;
@@ -337,6 +339,7 @@ static void integrator_to_jacobi_posvel(){
 		s_vx += pi.m * pi.vx;
 		s_vy += pi.m * pi.vy;
 		s_vz += pi.m * pi.vz;
+		p_j[i].m = pi.m;
 	}
 	p_j[0].x = s_x / Mtotal;
 	p_j[0].y = s_y / Mtotal;
@@ -353,7 +356,7 @@ static void integrator_var_to_jacobi_posvel(){
 	double s_vx = particles[N_megno].m * particles[N_megno].vx;
 	double s_vy = particles[N_megno].m * particles[N_megno].vy;
 	double s_vz = particles[N_megno].m * particles[N_megno].vz;
-	for (int i=1+N_megno;i<N;i++){
+	for (unsigned int i=1+N_megno;i<N;i++){
 		const double ei = 1./eta[i-1-N_megno];
 		const struct particle pi = particles[i];
 		p_j[i].x = pi.x - s_x*ei;
@@ -382,7 +385,7 @@ static void integrator_to_jacobi_acc(){
 	double s_ax = particles[0].m * particles[0].ax;
 	double s_ay = particles[0].m * particles[0].ay;
 	double s_az = particles[0].m * particles[0].az;
-	for (int i=1;i<N-N_megno;i++){
+	for (unsigned int i=1;i<N-N_megno;i++){
 		const double ei = 1./eta[i-1];
 		const struct particle pi = particles[i];
 		p_j[i].ax = pi.ax - s_ax*ei;
@@ -401,7 +404,7 @@ static void integrator_var_to_jacobi_acc(){
 	double s_ax = particles[N_megno].m * particles[N_megno].ax;
 	double s_ay = particles[N_megno].m * particles[N_megno].ay;
 	double s_az = particles[N_megno].m * particles[N_megno].az;
-	for (int i=1+N_megno;i<N;i++){
+	for (unsigned int i=1+N_megno;i<N;i++){
 		const double ei = 1./eta[i-1-N_megno];
 		const struct particle pi = particles[i];
 		p_j[i].ax = pi.ax - s_ax*ei;
@@ -423,7 +426,7 @@ static void integrator_to_heliocentric_posvel(){
 	double s_vx = 0.;
 	double s_vy = 0.;
 	double s_vz = 0.;
-	for (int i=N-N_megno-1;i>0;i--){
+	for (unsigned int i=N-N_megno-1;i>0;i--){
 		const double ei = 1./eta[i];
 		const double ee = eta[i-1]*ei;
 		struct particle pji = p_j[i];
@@ -455,7 +458,7 @@ static void integrator_var_to_heliocentric_posvel(){
 	double s_vx = 0.;
 	double s_vy = 0.;
 	double s_vz = 0.;
-	for (int i=N-1;i>N_megno;i--){
+	for (unsigned int i=N-1;i>N_megno;i--){
 		const double ee = eta[i-1-N_megno]/eta[i-N_megno];
 		const double ei = 1./eta[i-N_megno];
 		struct particle pji = p_j[i];
@@ -484,7 +487,7 @@ static void integrator_to_heliocentric_pos(){
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
-	for (int i=N-N_megno-1;i>0;i--){
+	for (unsigned int i=N-N_megno-1;i>0;i--){
 		const double ei = 1./eta[i];
 		const double ee = eta[i-1]*ei;
 		struct particle pji = p_j[i];
@@ -503,7 +506,7 @@ static void integrator_var_to_heliocentric_pos(){
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
-	for (int i=N-1;i>N_megno;i--){
+	for (unsigned int i=N-1;i>N_megno;i--){
 		const double ei = 1./eta[i-N_megno];
 		const double ee = eta[i-1-N_megno]*ei;
 		struct particle pji = p_j[i];
@@ -523,7 +526,7 @@ static void integrator_var_to_heliocentric_pos(){
  * Interaction Hamiltonian  */
 
 static void integrator_interaction(double _dt){
-	for (int i=1;i<N-N_megno;i++){
+	for (unsigned int i=1;i<N-N_megno;i++){
 		// Eq 132
 		struct particle pji = p_j[i];
 		double rj  = pow(pji.x*pji.x + pji.y*pji.y + pji.z*pji.z,-1./2.);
@@ -557,25 +560,24 @@ static void integrator_interaction(double _dt){
 
 /***************************** 
  * KDK Scheme                */
-
+unsigned int integrator_allocated_N = 0;
 void integrator_part1(){
-	if (p_j==NULL){
-		p_j = malloc(sizeof(struct particle)*N);
-		eta = malloc(sizeof(double)*(N-N_megno));
-		eta[0] = particles[0].m;
-		p_j[0].m = particles[0].m;
-		for (int i=1;i<N-N_megno;i++){
-			p_j[i].m = particles[i].m;
-			eta[i] = eta[i-1] + particles[i].m;
-		}
-		Mtotal = eta[N-N_megno-1];
+	if (integrator_allocated_N != N){
+		integrator_allocated_N = N;
+		p_j = realloc(p_j,sizeof(struct particle)*N);
+		eta = realloc(eta,sizeof(double)*(N-N_megno));
 	}
+	eta[0] = particles[0].m;
+	for (unsigned int i=1;i<N-N_megno;i++){
+		eta[i] = eta[i-1] + particles[i].m;
+	}
+	Mtotal = eta[N-N_megno-1];
 	integrator_to_jacobi_posvel();
 	if (N_megno){
 		integrator_var_to_jacobi_posvel();
 	}
 
-	for (int i=1;i<N-N_megno;i++){
+	for (unsigned int i=1;i<N-N_megno;i++){
 		kepler_step(i, dt/2.);
 	}
 	p_j[0].x += dt/2.*p_j[0].vx;
@@ -608,7 +610,7 @@ void integrator_part2(){
 	}
 	integrator_interaction(dt);
 
-	for (int i=1;i<N-N_megno;i++){
+	for (unsigned int i=1;i<N-N_megno;i++){
 		kepler_step(i, dt/2.);
 	}
 	p_j[0].x += dt/2.*p_j[0].vx;
@@ -633,6 +635,7 @@ void integrator_part2(){
 	
 
 void integrator_reset(){
+	integrator_allocated_N = 0;
 	free(p_j);
 	p_j = NULL;
 	free(eta);

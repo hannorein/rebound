@@ -16,10 +16,9 @@ def simulation(par):
     rebound.add_particle(m=1.)
     rebound.add_particle(m=0., a=1., e=e, anom=anom)
     particles = rebound.get_particles()
-
+    
     Ei = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
 
-    #while rebound.get_t()<0.2*np.pi:
     rebound.step()
     
     Ef = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
@@ -28,9 +27,9 @@ def simulation(par):
     return [rebound.get_iter(), np.fabs((Ef-Ei)/Ei)+1e-16, rebound.get_timing()]
 
 
-N = 200
+N = 400
 anoms = np.linspace(-np.pi,np.pi,N)
-e0s = np.linspace(0,14,N)
+e0s = np.linspace(0,2,N)
 integrators= ["wh","mikkola"]
 
 niter = []
@@ -38,7 +37,7 @@ energyerror = []
 timing = []
 
 for integrator in integrators:
-    parameters = [(anoms[i], 0.01*2.*np.pi, e0s[j], integrator) for j in range(N) for i in range(N)]
+    parameters = [(anoms[i], 0.001*2.*np.pi, e0s[j], integrator) for j in range(N) for i in range(N)]
 
     pool = InterruptiblePool()
     res = pool.map(simulation,parameters)
@@ -63,17 +62,17 @@ for ay in axarr:
         ax.set_ylabel(r"$\xi$, where $e=1-10^{-\xi}$")
 
 for i, integrator in enumerate(integrators):
-    im1 = axarr[0,i].imshow(energyerror[i], norm=LogNorm(), aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
+    im1 = axarr[0,i].imshow(energyerror[i], norm=LogNorm(), vmax=np.max(energyerror), vmin=1e-16, aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
     cb1 = plt.colorbar(im1, ax=axarr[0,i])
     cb1.solids.set_rasterized(True)
     cb1.set_label("Relative energy error, " +integrator)
 
-    im2 = axarr[1,i].imshow(niter[i], vmin=-3, aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn", extent=extent)
+    im2 = axarr[1,i].imshow(niter[i], vmin=-3, vmax=np.max(niter), aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn", extent=extent)
     cb2 = plt.colorbar(im2, ax=axarr[1,i])
     cb2.solids.set_rasterized(True)
     cb2.set_label("Number of iterations (neg = bisection), " +integrator)
 
-    im3 = axarr[2,i].imshow(timing[i], vmax=0.00001, norm=LogNorm(), aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn_r", extent=extent)
+    im3 = axarr[2,i].imshow(timing[i], vmin=1e-6, vmax=1e-5, aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn_r", extent=extent)
     cb3 = plt.colorbar(im3, ax=axarr[2,i])
     cb3.solids.set_rasterized(True)
     cb3.set_label("Runtime for one step (s), " +integrator)

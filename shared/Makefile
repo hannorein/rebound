@@ -1,6 +1,6 @@
 # This Makefile compiles the shared dynamic library to access the IAS15 and MIKKOLA integrators.
 CC=cc 
-OPT=-std=c99 -O3 -DLIBREBOUND -DCOLLISIONS_NONE -DINTEGRATOR_NOTWH
+OPT=-std=c99 -O3 -march=native -DLIBREBOUND -DCOLLISIONS_NONE -DINTEGRATOR_NOTWH
 
 all: 
 	$(CC) $(OPT) -c -fPIC -Wall ../src/integrator_ias15.c
