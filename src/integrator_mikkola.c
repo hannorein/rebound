@@ -232,6 +232,9 @@ static void kepler_step(unsigned int i,double _dt){
 		double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-_dt;
 		double sp  = r0 + eta0*Gs[1] + zeta0*Gs[2];
 		double dX  = -s/sp; // Newton's method
+		//double spp = eta0*Gs[0] + zeta0*Gs[1];
+		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
+		 
 		X+=dX;
 		if (X>X_max || X < X_min){
 			// Did not converged.
