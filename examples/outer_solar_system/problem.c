@@ -128,7 +128,7 @@ double energy(){
 }
 
 void problem_output(){
-	if (output_check(1000000.)){
+	if (output_check(10000000.)){
 		output_timing();
 //		FILE* f = fopen("energy.txt","a");
 //		double e = energy();
