@@ -78,9 +78,19 @@ void integrator_wh_to_jacobi();
 void integrator_wh_from_jacobi();
 
 int _N_active;
+int integrator_wh_N = 0;
+static double* eta;
 void integrator_part1(){
 	// DRIFT
 	_N_active = (N_active==-1)?N:N_active;
+	if (_N_active!=integrator_wh_N){
+		eta = realloc(eta,sizeof(double)*_N_active);
+		integrator_wh_N = _N_active;
+	}
+	eta[0] = particles[0].m;
+	for(int i=1;i<_N_active;i++){
+	  eta[i] = eta[i-1] + particles[i].m;
+	}
 	integrator_wh_to_jacobi();
 	drift_wh(dt/2.);
 	integrator_wh_from_jacobi();
@@ -115,11 +125,6 @@ int wh_check_normal(struct particle* p){
 }
 
 void integrator_wh_to_jacobi(){
-	double* eta = malloc(sizeof(double)*_N_active);
-	eta[0] = particles[0].m;
-	for(int i=1;i<_N_active;i++){
-	  eta[i] = eta[i-1] + particles[i].m;
-	}
 
 	double sumx  = particles[1].m * particles[1].x;
 	double sumy  = particles[1].m * particles[1].y;
@@ -158,16 +163,9 @@ void integrator_wh_to_jacobi(){
 		capvy = sumvy/eta[i];
 		capvz = sumvz/eta[i];
 	}
-	free(eta);
 }
 
 void integrator_wh_from_jacobi(){
-	double* eta = malloc(sizeof(double)*_N_active);
-	eta[0] = particles[0].m;
-	for(int i=1;i<_N_active;i++){
-	  eta[i] = eta[i-1] + particles[i].m;
-	}
-
 	double sumx  = particles[1].m*particles[1].x /eta[1];
 	double sumy  = particles[1].m*particles[1].y /eta[1];
 	double sumz  = particles[1].m*particles[1].z /eta[1];
@@ -192,7 +190,6 @@ void integrator_wh_from_jacobi(){
 		sumvy += p.m*p.vy / eta[i];
 		sumvz += p.m*p.vz / eta[i];
 	}
-	free(eta);
 }
 
 // Assumes positions in heliocentric coordinates
