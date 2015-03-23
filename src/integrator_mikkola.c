@@ -160,9 +160,8 @@ static void kepler_step(unsigned int i,double _dt){
 			integrator_timestep_warning++;
 			fprintf(stderr,"\n\033[1mWarning!\033[0m Timestep is larger than at least one orbital period.\n");
 		}
-		double _floor_dt_period = floor(_dt*invperiod);
-		X_min = X_per_period* _floor_dt_period;
-		X_max = X_per_period*(_floor_dt_period+1.);
+		X_min = X_per_period * floor(_dt*invperiod);
+		X_max = X_min + X_per_period;
 		//X = _dt*invperiod*X_per_period; // first order guess 
 		double dtr0i = _dt*r0i;
 		//X = dtr0i - dtr0i*dtr0i*eta0*0.5*r0i; // second order guess
