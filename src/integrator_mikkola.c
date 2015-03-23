@@ -130,7 +130,7 @@ static void stumpff_cs3(double *restrict cs, double z) {
 		k+=1;
 		cs[3] += _pow*invfactorial[k];
 		k+=1;
-	}while(cs[2]!=old_c_2 && k<35);			// Stop if new term smaller than machine precision (cs[3] converges faster than cs[2])
+	}while(cs[2]!=old_c_2 && k<34);			// Stop if new term smaller than machine precision (cs[3] converges faster than cs[2])
 	cs[1] = 1.-z*cs[3];
 	cs[0] = 1.-z*cs[2];
 	for (;n>0;n--){	
