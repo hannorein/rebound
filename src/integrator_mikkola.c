@@ -183,26 +183,19 @@ static void kepler_step(unsigned int i,double _dt){
 	for (n_hg=0;n_hg<10;n_hg++){
 		stiefel_Gs(Gs, beta, X);
 		double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-_dt;
-		double s1 = r0 + eta0*Gs[1] + zeta0*Gs[2];
-		double s2 = eta0*Gs[0] + zeta0*Gs[1];
-		double s3 = -eta0*beta*Gs[1] + zeta0*Gs[0];
-		
-		ri          = 1./s1; // 1./(r0 + eta0*Gs[1] + zeta0*Gs[2]);
-		double dX  = -s/s1; // Newton's method
-		double dX2 = -s/(s1 + 0.5*dX*s2); // Halley's method (3rd order)
-		double dX3 = -s/(s1 + 0.5*dX2*s2 + dX2*dX2*s3/6.); // 4th order
-		
+		ri          = 1./(r0 + eta0*Gs[1] + zeta0*Gs[2]);
+		double dX  = -s*ri; // Newton's method
 		//double spp = eta0*Gs[0] + zeta0*Gs[1];
 		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
 		 
-		X+=dX3;
+		X+=dX;
 		if (X>X_max || X < X_min){
 			// Did not converged.
 			iter = 10;
 			n_hg=10;
 			break;
 		}
-		if (fastabs(dX3)<fastabs(X)*1e-15){
+		if (fastabs(dX)<fastabs(X)*1e-15){
 			// Converged. Exit.
 			iter = n_hg;
 			n_hg=0;
