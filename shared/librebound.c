@@ -159,6 +159,7 @@ void reset(){
 	Nmax 		= 0;
 	N_active 	= -1;
 	N_megno 	= 0;
+	iter		= 0;
 	free(particles);
 	particles 	= NULL;
 	integrator_ias15_reset();

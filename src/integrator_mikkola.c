@@ -178,7 +178,7 @@ static void kepler_step(unsigned int i,double _dt){
 	}
 
 	unsigned int n_hg;
-	iter = 0;
+	//iter = 0;
 	double ri;
 	for (n_hg=0;n_hg<10;n_hg++){
 		stiefel_Gs(Gs, beta, X);
@@ -199,13 +199,13 @@ static void kepler_step(unsigned int i,double _dt){
 		X+=dX;
 		if (X>X_max || X < X_min){
 			// Did not converged.
-			iter = 10;
+			iter += n_hg+1;
 			n_hg=10;
 			break;
 		}
 		if (fastabs(dX)<fastabs(X)*1e-15){
 			// Converged. Exit.
-			iter = n_hg+1;
+			iter += n_hg+1;
 			n_hg=0;
 			break; 
 		}
@@ -224,7 +224,7 @@ static void kepler_step(unsigned int i,double _dt){
 			X = (X_max + X_min)/2.;
 		}while (fastabs((X_max-X_min)/X_max)>1e-15);
 		ri          = 1./(r0 + eta0*Gs[1] + zeta0*Gs[2]);
-		iter = -n_hg;
+		iter += n_hg-10;
 	}
 
 	if (n_hg == 20){
