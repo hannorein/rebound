@@ -355,6 +355,9 @@ def get_t():
 def init_megno(delta):
     librebound.tools_megno_init(c_double(delta))
 
+def init_integrator():
+    librebound.init_integrator()
+
 def get_megno():
     librebound.tools_megno.restype = c_double
     return librebound.tools_megno()

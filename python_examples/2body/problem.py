@@ -17,6 +17,8 @@ def simulation(par):
     rebound.add_particle(m=0., a=1., e=e, anom=anom)
     particles = rebound.get_particles()
     
+    rebound.init_integrator()
+    
     Ei = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
 
     rebound.step()
@@ -72,7 +74,7 @@ for i, integrator in enumerate(integrators):
     cb2.solids.set_rasterized(True)
     cb2.set_label("Number of iterations (neg = bisection), " +integrator)
 
-    im3 = axarr[2,i].imshow(timing[i], vmin=1e-6, vmax=1e-5, aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn_r", extent=extent)
+    im3 = axarr[2,i].imshow(timing[i], norm=LogNorm(), vmin=5e-7, vmax=1e-5, aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn_r", extent=extent)
     cb3 = plt.colorbar(im3, ax=axarr[2,i])
     cb3.solids.set_rasterized(True)
     cb3.set_label("Runtime for one step (s), " +integrator)

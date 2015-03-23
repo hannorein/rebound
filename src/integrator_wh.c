@@ -80,13 +80,18 @@ void integrator_wh_from_jacobi();
 int _N_active;
 int integrator_wh_N = 0;
 static double* eta;
-void integrator_part1(){
-	// DRIFT
+
+void integrator_wh_init(){
 	_N_active = (N_active==-1)?N:N_active;
 	if (_N_active!=integrator_wh_N){
 		eta = realloc(eta,sizeof(double)*_N_active);
 		integrator_wh_N = _N_active;
 	}
+}
+
+void integrator_part1(){
+	integrator_wh_init();
+	// DRIFT
 	eta[0] = particles[0].m;
 	for(int i=1;i<_N_active;i++){
 	  eta[i] = eta[i-1] + particles[i].m;

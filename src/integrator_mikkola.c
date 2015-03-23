@@ -81,19 +81,19 @@ static double c_n_series(unsigned int n, double z){
 	z *= -1.0;
 	double c_n = invfactorial[n] + z*invfactorial[n+2]; 	// always calculate first two terms
 	double old_c_n;
-	double _pow = z*z;
+	double _pow = z;
 	n+=4;
 	do{
 		old_c_n = c_n;
-		c_n += _pow*invfactorial[n];
 		_pow *= z;
+		c_n += _pow*invfactorial[n];
 		n+=2;
 	}while(c_n!=old_c_n && n<35);				// Stop if new term smaller than machine precision
 	return c_n;
 }
 
 
-static void stumpff_cs(double *cs, double z) {
+static void stumpff_cs(double *restrict cs, double z) {
 	if (z<0.5){
 		cs[5] = c_n_series(5,z);
 		cs[4] = c_n_series(4,z);
@@ -126,63 +126,12 @@ static void stiefel_Gs(double *Gs, double beta, double X) {
 	return;
 }
 
-//static double mikkola_c(unsigned int n, double z){
-//	if (z>0.5){
-//		double z4 = z/4.;
-//		// Speed up convergence with 4-folding formula
-//		switch(n){
-//			case 0:
-//			{
-//				double cn4 = mikkola_c(3,z4)*(1.+mikkola_c(1,z4))/8.;
-//				double cn2 = 1./2.-z*cn4;
-//				double cn0 = 1.-z*cn2;
-//				return cn0;
-//			}
-//			case 1:
-//			{
-//				double cn5 = (mikkola_c(5,z4)+mikkola_c(4,z4)+mikkola_c(3,z4)*mikkola_c(2,z4))/16.;
-//				double cn3 = 1./6.-z*cn5;
-//				double cn1 = 1.-z*cn3;
-//				return cn1;
-//			}
-//			case 2:
-//			{
-//				double cn4 = mikkola_c(3,z4)*(1.+mikkola_c(1,z4))/8.;
-//				double cn2 = 1./2.-z*cn4;
-//				return cn2;
-//			}
-//			case 3:
-//			{
-//				double cn5 = (mikkola_c(5,z4)+mikkola_c(4,z4)+mikkola_c(3,z4)*mikkola_c(2,z4))/16.;
-//				double cn3 = 1./6.-z*cn5;
-//				return cn3;
-//			}
-//			case 4:
-//			{
-//				double cn4 = mikkola_c(3,z4)*(1.+mikkola_c(1,z4))/8.;
-//				return cn4;
-//			}
-//			case 5:
-//			{
-//				double cn5 = (mikkola_c(5,z4)+mikkola_c(4,z4)+mikkola_c(3,z4)*mikkola_c(2,z4))/16.;
-//				return cn5;
-//			}
-//		}
-//	}
-//	return c_n_series(n,z);
-//}
-
-//static double integrator_G(unsigned int n, double beta, double X){
-//	return ipow(X,n)*mikkola_c(n,beta*X*X);
-//}
-
-
 static inline double _M(unsigned int i){
-  	return G*(eta[i]); // Hanno 1
+  	//return G*(eta[i]); // Hanno 1
 	//return G*(eta[i-1]); // Hanno2 
 	//return G*(eta[i-1]*particles[i].m*eta[i-1]/eta[i]/(eta[i-1]+particles[i].m*eta[i-1]/eta[i])); // reduced mass jacobi
 	//return G*(eta[i-1]*particles[i].m/(eta[i-1]+particles[i].m)); // reduced mass
-	//return G*(eta[i]/eta[i-1]*particles[0].m);   // SSD
+	return G*(eta[i]/eta[i-1]*particles[0].m);   // SSD
 }
 
 /****************************** 
@@ -194,8 +143,9 @@ static void kepler_step(unsigned int i,double _dt){
 	struct particle p1 = p_j[i];
 
 	double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
+	double r0i = 1./r0;
 	double v2 =  p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz;
-	double beta = 2.*M/r0 - v2;
+	double beta = 2.*M*r0i - v2;
 	double eta0 = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
 	double zeta0 = M - beta*r0;
 
@@ -269,11 +219,11 @@ static void kepler_step(unsigned int i,double _dt){
 		printf("Exceeded max number of iterations\n");
 	}
 	
-	double r = r0 + eta0*Gs[1] + zeta0*Gs[2];
-	double f = 1.-M*Gs[2]/r0;
+	double ri = 1./(r0 + eta0*Gs[1] + zeta0*Gs[2]);
+	double f = 1.-M*Gs[2]*r0i;
 	double g = _dt - M*Gs[3];
-	double fd = -M*Gs[1]/(r0*r); 
-	double gd = 1.-M*Gs[2]/r; 
+	double fd = -M*Gs[1]*r0i*ri; 
+	double gd = 1.-M*Gs[2]*ri; 
 
 	p_j[i].x = f*p1.x + g*p1.vx;
 	p_j[i].y = f*p1.y + g*p1.vy;
@@ -286,8 +236,8 @@ static void kepler_step(unsigned int i,double _dt){
 	//Variations
 	if (N_megno){
 		struct particle dp1 = p_j[i+N_megno];
-		double dr0 = (dp1.x*p1.x + dp1.y*p1.y + dp1.z*p1.z)/r0;
-		double dbeta = -2.*M*dr0/(r0*r0) - 2.* (dp1.vx*p1.vx + dp1.vy*p1.vy + dp1.vz*p1.vz);
+		double dr0 = (dp1.x*p1.x + dp1.y*p1.y + dp1.z*p1.z)*r0i;
+		double dbeta = -2.*M*dr0*r0i*r0i - 2.* (dp1.vx*p1.vx + dp1.vy*p1.vy + dp1.vz*p1.vz);
 		double deta0 = dp1.x*p1.vx + dp1.y*p1.vy + dp1.z*p1.vz
 			     + p1.x*dp1.vx + p1.y*dp1.vy + p1.z*dp1.vz;
 		double dzeta0 = -beta*dr0 - r0*dbeta;
@@ -295,15 +245,15 @@ static void kepler_step(unsigned int i,double _dt){
 		double G2beta = 0.5*(2.*Gs[4]-X*Gs[3]);
 		double G1beta = 0.5*(Gs[3]-X*Gs[2]);
 		double tbeta = eta0*G2beta + zeta0*G3beta;
-		double dX = -1./r*(X*dr0 + Gs[2]*deta0+Gs[3]*dzeta0+tbeta*dbeta);
+		double dX = -1.*ri*(X*dr0 + Gs[2]*deta0+Gs[3]*dzeta0+tbeta*dbeta);
 		double dG1 = Gs[0]*dX + G1beta*dbeta; 
 		double dG2 = Gs[1]*dX + G2beta*dbeta;
 		double dG3 = Gs[2]*dX + G3beta*dbeta;
 		double dr = dr0 + Gs[1]*deta0 + Gs[2]*dzeta0 + eta0*dG1 + zeta0*dG2;
-		double df = M*Gs[2]*dr0/(r0*r0) - M*dG2/r0;
+		double df = M*Gs[2]*dr0*r0i*r0i - M*dG2*r0i;
 		double dg = -M*dG3;
-		double dfd = -M*dG1/(r0*r) + M*Gs[1]*(dr0/r0+dr/r)/(r*r0);
-		double dgd = -M*dG2/r + M*Gs[2]*dr/(r*r);
+		double dfd = -M*dG1*r0i*ri + M*Gs[1]*(dr0*r0i+dr*ri)*r0i*ri;
+		double dgd = -M*dG2*ri + M*Gs[2]*dr*ri*ri;
 	
 		p_j[i+N_megno].x = f*dp1.x + g*dp1.vx + df*p1.x + dg*p1.vx;
 		p_j[i+N_megno].y = f*dp1.y + g*dp1.vy + df*p1.y + dg*p1.vy;
@@ -561,15 +511,18 @@ static void integrator_interaction(double _dt){
 	}
 }
 
-/***************************** 
- * KDK Scheme                */
 unsigned int integrator_allocated_N = 0;
-void integrator_part1(){
+void integrator_mikkola_init(){
 	if (integrator_allocated_N != N){
 		integrator_allocated_N = N;
 		p_j = realloc(p_j,sizeof(struct particle)*N);
 		eta = realloc(eta,sizeof(double)*(N-N_megno));
 	}
+}
+/***************************** 
+ * KDK Scheme                */
+void integrator_part1(){
+	integrator_mikkola_init();
 	eta[0] = particles[0].m;
 	for (unsigned int i=1;i<N-N_megno;i++){
 		eta[i] = eta[i-1] + particles[i].m;
