@@ -160,8 +160,7 @@ static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
 	stumpff_cs3(Gs, beta*X2);
 	Gs[1] *= X; 
 	Gs[2] *= X2; 
-	double _pow = X2*X;
-	Gs[3] *= _pow; 
+	Gs[3] *= X2*X;
 	return;
 }
 
@@ -279,7 +278,7 @@ static void kepler_step(unsigned int i,double _dt){
 
 	//Variations
 	if (N_megno){
-		stiefel_Gs(Gs, beta, X);
+		stiefel_Gs(Gs, beta, X);	// Recalculate (to get Gs[4] and Gs[5])
 		struct particle dp1 = p_j[i+N_megno];
 		double dr0 = (dp1.x*p1.x + dp1.y*p1.y + dp1.z*p1.z)*r0i;
 		double dbeta = -2.*M*dr0*r0i*r0i - 2.* (dp1.vx*p1.vx + dp1.vy*p1.vy + dp1.vz*p1.vz);
