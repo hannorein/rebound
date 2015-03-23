@@ -111,6 +111,36 @@ static void stumpff_cs(double *restrict cs, double z) {
 	cs[0] = 1.-z*cs[2];
 }
 
+static void stumpff_cs3(double *restrict cs, double z) {
+	unsigned int n = 0;
+	while(z>0.1){
+		z = z/4.;
+		n++;
+	}
+	double zm = -z;
+	cs[2] = invfactorial[2] - z*invfactorial[4]; 	// always calculate first two terms
+	cs[3] = invfactorial[3] - z*invfactorial[5]; 	// always calculate first two terms
+	double old_c_2;
+	double _pow = zm;
+	unsigned int k=6;
+	do{
+		old_c_2 = cs[2];
+		_pow *= zm;
+		cs[2] += _pow*invfactorial[k];
+		k+=1;
+		cs[3] += _pow*invfactorial[k];
+		k+=1;
+	}while(cs[2]!=old_c_2 && k<35);			// Stop if new term smaller than machine precision (cs[5] converges faster than cs[4])
+	cs[1] = 1.-z*cs[3];
+	cs[0] = 1.-z*cs[2];
+	for (;n>0;n--){	
+		cs[3] = (cs[2]+cs[0]*cs[3])*0.25;
+		cs[2] = cs[1]*cs[1]*0.5;
+		cs[1] = cs[0]*cs[1];
+		cs[0] = 2.*cs[1]*cs[1]-1.;
+	}
+}
+
 static void stiefel_Gs(double *restrict Gs, double beta, double X) {
 	double X2 = X*X;
 	stumpff_cs(Gs, beta*X2);
@@ -122,6 +152,16 @@ static void stiefel_Gs(double *restrict Gs, double beta, double X) {
 	Gs[4] *= _pow; 
 	_pow *= X;
 	Gs[5] *= _pow; 
+	return;
+}
+
+static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
+	double X2 = X*X;
+	stumpff_cs3(Gs, beta*X2);
+	Gs[1] *= X; 
+	Gs[2] *= X2; 
+	double _pow = X2*X;
+	Gs[3] *= _pow; 
 	return;
 }
 
@@ -179,7 +219,7 @@ static void kepler_step(unsigned int i,double _dt){
 	unsigned int n_hg;
 	double ri;
 	for (n_hg=0;n_hg<10;n_hg++){
-		stiefel_Gs(Gs, beta, X);
+		stiefel_Gs3(Gs, beta, X);
 		double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-_dt;
 		ri          = 1./(r0 + eta0*Gs[1] + zeta0*Gs[2]);
 		double dX  = -s*ri; // Newton's method
@@ -239,6 +279,7 @@ static void kepler_step(unsigned int i,double _dt){
 
 	//Variations
 	if (N_megno){
+		stiefel_Gs(Gs, beta, X);
 		struct particle dp1 = p_j[i+N_megno];
 		double dr0 = (dp1.x*p1.x + dp1.y*p1.y + dp1.z*p1.z)*r0i;
 		double dbeta = -2.*M*dr0*r0i*r0i - 2.* (dp1.vx*p1.vx + dp1.vy*p1.vy + dp1.vz*p1.vz);
