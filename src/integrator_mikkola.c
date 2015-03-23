@@ -98,15 +98,15 @@ static void stumpff_cs(double *restrict cs, double z) {
 		cs[5] = c_n_series(5,z);
 		cs[4] = c_n_series(4,z);
 		cs[3] = 1./6.-z*cs[5];
-		cs[2] = 1./2.-z*cs[4];
+		cs[2] = 0.5-z*cs[4];
 		cs[1] = 1.-z*cs[3];
 		cs[0] = 1.-z*cs[2];
 	}else{
-		stumpff_cs(cs, z/4.);
-		cs[5] = (cs[5]+cs[4]+cs[3]*cs[2])/16.;
-		cs[4] = (1.+cs[1])*cs[3]/8.;
+		stumpff_cs(cs, z*0.25);
+		cs[5] = (cs[5]+cs[4]+cs[3]*cs[2])*0.0625;
+		cs[4] = (1.+cs[1])*cs[3]*0.125;
 		cs[3] = 1./6.-z*cs[5];
-		cs[2] = 1./2.-z*cs[4];
+		cs[2] = 0.5-z*cs[4];
 		cs[1] = 1.-z*cs[3];
 		cs[0] = 1.-z*cs[2];
 	}
@@ -127,11 +127,11 @@ static void stiefel_Gs(double *Gs, double beta, double X) {
 }
 
 static inline double _M(unsigned int i){
-  	//return G*(eta[i]); // Hanno 1
+  	return G*(eta[i]); // Hanno 1
 	//return G*(eta[i-1]); // Hanno2 
 	//return G*(eta[i-1]*particles[i].m*eta[i-1]/eta[i]/(eta[i-1]+particles[i].m*eta[i-1]/eta[i])); // reduced mass jacobi
 	//return G*(eta[i-1]*particles[i].m/(eta[i-1]+particles[i].m)); // reduced mass
-	return G*(eta[i]/eta[i-1]*particles[0].m);   // SSD
+	//return G*(eta[i]/eta[i-1]*particles[0].m);   // SSD
 }
 
 /****************************** 

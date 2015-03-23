@@ -39,7 +39,7 @@ energyerror = []
 timing = []
 
 for integrator in integrators:
-    parameters = [(anoms[i], 0.1*2.*np.pi, e0s[j], integrator) for j in range(N) for i in range(N)]
+    parameters = [(anoms[i], 0.01*2.*np.pi, e0s[j], integrator) for j in range(N) for i in range(N)]
 
     pool = InterruptiblePool()
     res = pool.map(simulation,parameters)
