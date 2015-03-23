@@ -499,15 +499,12 @@ void drift_kepu_stumpff(double x, double* c0, double* c1, double* c2, double* c3
 	*c3 = (1.-x*(1.-x*(1.-x*(1.-x*(1.-x*(1.-x/210.)/156.)/110.)/72.)/42.)/20.)/6.;
 	*c1 = 1. - x*(*c3);
 	*c0 = 1. - x*(*c2);
-	if (n!=0){  // TODO: This loop structure is overly complicated
-		int i;
-		for (i=n;i>=1;i--){
-			*c3 = ((*c2) + (*c0)*(*c3))/4.;
-			*c2 = (*c1)*(*c1)/2.;
-			*c1 = (*c0)*(*c1);
-			*c0 = 2.*(*c0)*(*c0) - 1.;
-			x = x * 4.; 
-		}
+	for (int i=n;i>=1;i--){
+		*c3 = ((*c2) + (*c0)*(*c3))/4.;
+		*c2 = (*c1)*(*c1)/2.;
+		*c1 = (*c0)*(*c1);
+		*c0 = 2.*(*c0)*(*c0) - 1.;
+		x = x * 4.; 
 	}
 }
 
