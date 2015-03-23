@@ -164,7 +164,8 @@ static void kepler_step(unsigned int i,double _dt){
 		double _floor_dt_period = floor(_dt*invperiod);
 		X_min = X_per_period* _floor_dt_period;
 		X_max = X_per_period*(_floor_dt_period+1.);
-		X = _dt*invperiod*X_per_period; // Initial guess 
+		//X = _dt*invperiod*X_per_period; // Initial guess 
+		X = _dt*r0i - (_dt*_dt*eta0)*0.5*r0i*r0i*r0i;
 	}else{
 		// Hyperbolic orbit
 		double h2 = r0*r0*v2-eta0*eta0;
