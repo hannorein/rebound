@@ -94,7 +94,7 @@ static double c_n_series(unsigned int n, double z){
 
 
 static void stumpff_cs(double *restrict cs, double z) {
-	if (z<0.5){
+	if (z<0.1){
 		cs[5] = c_n_series(5,z);
 		cs[4] = c_n_series(4,z);
 		cs[3] = 1./6.-z*cs[5];
@@ -165,7 +165,8 @@ static void kepler_step(unsigned int i,double _dt){
 		X_min = X_per_period* _floor_dt_period;
 		X_max = X_per_period*(_floor_dt_period+1.);
 		//X = _dt*invperiod*X_per_period; // Initial guess 
-		X = _dt*r0i - (_dt*_dt*eta0)*0.5*r0i*r0i*r0i;
+		double dtr0i = _dt*r0i;
+		X = dtr0i - dtr0i*dtr0i*eta0*0.5*r0i;
 	}else{
 		// Hyperbolic orbit
 		double h2 = r0*r0*v2-eta0*eta0;
@@ -178,11 +179,12 @@ static void kepler_step(unsigned int i,double _dt){
 
 	unsigned int n_hg;
 	iter = 0;
+	double ri;
 	for (n_hg=0;n_hg<10;n_hg++){
 		stiefel_Gs(Gs, beta, X);
 		double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-_dt;
-		double sp  = r0 + eta0*Gs[1] + zeta0*Gs[2];
-		double dX  = -s/sp; // Newton's method
+		ri          = 1./(r0 + eta0*Gs[1] + zeta0*Gs[2]);
+		double dX  = -s*ri; // Newton's method
 		//double spp = eta0*Gs[0] + zeta0*Gs[1];
 		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
 		 
@@ -213,6 +215,7 @@ static void kepler_step(unsigned int i,double _dt){
 			}
 			X = (X_max + X_min)/2.;
 		}while (fastabs((X_max-X_min)/X_max)>1e-15);
+		ri          = 1./(r0 + eta0*Gs[1] + zeta0*Gs[2]);
 		iter = -n_hg;
 	}
 
@@ -220,7 +223,6 @@ static void kepler_step(unsigned int i,double _dt){
 		printf("Exceeded max number of iterations\n");
 	}
 	
-	double ri = 1./(r0 + eta0*Gs[1] + zeta0*Gs[2]);
 	double f = 1.-M*Gs[2]*r0i;
 	double g = _dt - M*Gs[3];
 	double fd = -M*Gs[1]*r0i*ri; 
