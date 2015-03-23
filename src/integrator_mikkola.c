@@ -94,22 +94,25 @@ static double c_n_series(unsigned int n, double z){
 
 
 static void stumpff_cs(double *restrict cs, double z) {
-	if (z<0.1){
-		cs[5] = c_n_series(5,z);
-		cs[4] = c_n_series(4,z);
-		cs[3] = 1./6.-z*cs[5];
-		cs[2] = 0.5-z*cs[4];
-		cs[1] = 1.-z*cs[3];
-		cs[0] = 1.-z*cs[2];
-	}else{
-		stumpff_cs(cs, z*0.25);
+	unsigned int n = 0;
+	while(z>0.1){
+		z = z/4.;
+		n++;
+	}
+	cs[5] = c_n_series(5,z);
+	cs[4] = c_n_series(4,z);
+	cs[3] = 1./6.-z*cs[5];
+	cs[2] = 0.5-z*cs[4];
+	cs[1] = 1.-z*cs[3];
+	for (;n>0;n--){	
+		z = z*4.;
 		cs[5] = (cs[5]+cs[4]+cs[3]*cs[2])*0.0625;
 		cs[4] = (1.+cs[1])*cs[3]*0.125;
 		cs[3] = 1./6.-z*cs[5];
 		cs[2] = 0.5-z*cs[4];
 		cs[1] = 1.-z*cs[3];
-		cs[0] = 1.-z*cs[2];
 	}
+	cs[0] = 1.-z*cs[2];
 }
 
 static void stiefel_Gs(double *Gs, double beta, double X) {
