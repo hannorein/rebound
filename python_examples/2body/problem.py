@@ -21,15 +21,14 @@ def simulation(par):
     
     Ei = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
 
-    rebound.step()
+    rebound.integrate(2.*np.pi)
     
     Ef = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
-
 
     return [rebound.get_iter(), np.fabs((Ef-Ei)/Ei)+1e-16, rebound.get_timing()]
 
 
-N = 400
+N = 200
 anoms = np.linspace(-np.pi,np.pi,N)
 e0s = np.linspace(0,2,N)
 integrators= ["wh","mikkola"]
@@ -39,7 +38,7 @@ energyerror = []
 timing = []
 
 for integrator in integrators:
-    parameters = [(anoms[i], 0.01*2.*np.pi, e0s[j], integrator) for j in range(N) for i in range(N)]
+    parameters = [(anoms[i], 0.001*2.*np.pi, e0s[j], integrator) for j in range(N) for i in range(N)]
 
     pool = InterruptiblePool()
     res = pool.map(simulation,parameters)
@@ -74,7 +73,7 @@ for i, integrator in enumerate(integrators):
     cb2.solids.set_rasterized(True)
     cb2.set_label("Number of iterations (neg = bisection), " +integrator)
 
-    im3 = axarr[2,i].imshow(timing[i], norm=LogNorm(), vmin=5e-7, vmax=1e-5, aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn_r", extent=extent)
+    im3 = axarr[2,i].imshow(timing[i], norm=LogNorm(), vmin=np.mean(timing)/3., vmax=3.*np.median(timing), aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn_r", extent=extent)
     cb3 = plt.colorbar(im3, ax=axarr[2,i])
     cb3.solids.set_rasterized(True)
     cb3.set_label("Runtime for one step (s), " +integrator)

@@ -181,6 +181,9 @@ int check_eject(){
 }
 // Integrate until t=_tmax
 void integrate(double _tmax){
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 	tmax = _tmax;
 	double dt_last_done = dt;
 	int last_step = 0;
@@ -201,6 +204,9 @@ void integrate(double _tmax){
 		}
 	}
 	dt = dt_last_done;
+	gettimeofday(&tim, NULL);
+	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
+	timing = timing_final-timing_initial;
 }
 	 
 // The following code is needed to leave the original REBOUND files unchanged. 
