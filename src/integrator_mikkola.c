@@ -54,7 +54,7 @@ int integrator_force_is_velocitydependent 	= 1;
 double integrator_epsilon 			= 0;
 double integrator_min_dt 			= 0;
 
-static struct particle* restrict restrict p_j  = NULL;
+static struct particle* restrict p_j  = NULL;
 static double* restrict eta = NULL;
 static double Mtotali;
 static unsigned int integrator_timestep_warning = 0;
