@@ -5,32 +5,38 @@ from rebound import Particle
 import numpy as np
 from interruptible_pool import InterruptiblePool
 
+
+torb = 2.*np.pi
+tmax = 200.34476128*torb
+
 def simulation(par):
     anom, dt, e, integrator = par
 
-    e = 1.-pow(10.,-e);
+    e = 1.-pow(10.,-e)
+    dt = pow(10.,dt)*torb
+
     rebound.reset()
     rebound.set_integrator(integrator)
     rebound.set_dt(dt)
 
     rebound.add_particle(m=1.)
-    rebound.add_particle(m=0., a=1., e=e, anom=anom)
+    rebound.add_particle(m=0., x=(1.-e), vy=np.sqrt((1.+e)/(1.-e)))
     particles = rebound.get_particles()
     
     rebound.init_integrator()
     
     Ei = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
 
-    rebound.integrate(2.*np.pi)
+    rebound.integrate(tmax,0)
     
     Ef = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
 
-    return [float(rebound.get_iter())/rebound.get_t()*dt, np.fabs((Ef-Ei)/Ei)+1e-16, rebound.get_timing()]
+    return [float(rebound.get_iter())/rebound.get_t()*dt, np.fabs((Ef-Ei)/Ei)+1e-16, rebound.get_timing()/rebound.get_t()*dt]
 
 
-N = 200
-anoms = np.linspace(-np.pi,np.pi,N)
-e0s = np.linspace(0,6,N)
+N = 20
+dts = np.linspace(-4,-0.1,N)
+e0s = np.linspace(0,3,N)
 integrators= ["wh","mikkola"]
 
 niter = []
@@ -38,7 +44,7 @@ energyerror = []
 timing = []
 
 for integrator in integrators:
-    parameters = [(anoms[i], 0.00123456*2.*np.pi, e0s[j], integrator) for j in range(N) for i in range(N)]
+    parameters = [(0., dts[i], e0s[j], integrator) for j in range(N) for i in range(N)]
 
     pool = InterruptiblePool()
     res = pool.map(simulation,parameters)
@@ -49,17 +55,18 @@ for integrator in integrators:
 
 import matplotlib; matplotlib.use("pdf")
 import matplotlib.pyplot as plt
+from matplotlib import ticker
 from matplotlib.colors import LogNorm
 
 f,axarr = plt.subplots(3,2,figsize=(15,15))
-extent=[anoms.min(), anoms.max(), e0s.min(), e0s.max()]
+extent=[dts.min(), dts.max(), e0s.min(), e0s.max()]
 
 for ay in axarr:
     for ax in ay:
         # ax = axarr
         ax.set_xlim(extent[0], extent[1])
         ax.set_ylim(extent[2], extent[3])
-        ax.set_xlabel(r"true anomly")
+        ax.set_xlabel(r"log10$(dt/t_{orb})$")
         ax.set_ylabel(r"$\xi$, where $e=1-10^{-\xi}$")
 
 for i, integrator in enumerate(integrators):
@@ -73,10 +80,14 @@ for i, integrator in enumerate(integrators):
     cb2.solids.set_rasterized(True)
     cb2.set_label("Number of iterations (neg = bisection), " +integrator)
 
-    im3 = axarr[2,i].imshow(timing[i], norm=LogNorm(), vmin=np.mean(timing)/3., vmax=3.*np.median(timing), aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn_r", extent=extent)
+    im3 = axarr[2,i].imshow(timing[i], norm=LogNorm(), vmin=np.mean(timing)/4., vmax=4.*np.median(timing), aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn_r", extent=extent)
     cb3 = plt.colorbar(im3, ax=axarr[2,i])
     cb3.solids.set_rasterized(True)
-    cb3.set_label("Runtime (s), " +integrator)
+    cb3.set_label("Runtime per step (s), " +integrator)
+    tick_locator = ticker.LogLocator(base=2.)
+    cb3.locator = tick_locator
+    cb3.update_ticks()
+    plt.show()
 
 
 plt.savefig("2body.pdf")
