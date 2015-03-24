@@ -38,7 +38,7 @@ energyerror = []
 timing = []
 
 for integrator in integrators:
-    parameters = [(anoms[i], 0.0123456*2.*np.pi, e0s[j], integrator) for j in range(N) for i in range(N)]
+    parameters = [(anoms[i], 0.00123456*2.*np.pi, e0s[j], integrator) for j in range(N) for i in range(N)]
 
     pool = InterruptiblePool()
     res = pool.map(simulation,parameters)
@@ -68,7 +68,7 @@ for i, integrator in enumerate(integrators):
     cb1.solids.set_rasterized(True)
     cb1.set_label("Relative energy error, " +integrator)
 
-    im2 = axarr[1,i].imshow(niter[i], vmin=-3, vmax=np.max(niter), aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn", extent=extent)
+    im2 = axarr[1,i].imshow(niter[i], vmin=0, vmax=np.max(niter), aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn", extent=extent)
     cb2 = plt.colorbar(im2, ax=axarr[1,i])
     cb2.solids.set_rasterized(True)
     cb2.set_label("Number of iterations (neg = bisection), " +integrator)
@@ -80,6 +80,6 @@ for i, integrator in enumerate(integrators):
 
 
 plt.savefig("2body.pdf")
-
+print "Average speedup (WH/Mikkola): %.4f" %(np.mean(timing[0])/np.mean(timing[1]))
 import os
 os.system("open 2body.pdf")
