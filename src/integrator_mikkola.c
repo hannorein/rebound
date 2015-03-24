@@ -187,35 +187,22 @@ static void kepler_step(unsigned int i,double _dt){
 	double eta0 = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
 	double zeta0 = M - beta*r0;
 
-	double X, X_min, X_max;
+	double X;
 	double Gs[6]; 
 		
 	if (beta>0.){
 		// Elliptic orbit
-		double sqrt_beta = sqrt(beta);
-		double invperiod = sqrt_beta*beta/(2.*M_PI*M);
-		double X_per_period = 2.*M_PI/sqrt_beta;
-		if (dt*invperiod>1. && integrator_timestep_warning == 0){
-			integrator_timestep_warning++;
-			fprintf(stderr,"\n\033[1mWarning!\033[0m Timestep is larger than at least one orbital period.\n");
-		}
-		X_min = X_per_period * floor(_dt*invperiod);
-		X_max = X_min + X_per_period;
 		//X = _dt*invperiod*X_per_period; // first order guess 
 		double dtr0i = _dt*r0i;
 		X = dtr0i * (1. - dtr0i*eta0*0.5*r0i); // second order guess
 		//X = dtr0i *(1.- 0.5*dtr0i*r0i*(eta0-dtr0i*(eta0*eta0*r0i-1./3.*zeta0))); // third order guess
 	}else{
 		// Hyperbolic orbit
-		double h2 = r0*r0*v2-eta0*eta0;
-		double q = h2/M/(1.+sqrt(1.-h2*beta/(M*M)));
-		double vq = sqrt(h2)/q;
-		X_min = 1./(vq+r0/_dt);
-		X_max = _dt/q;
 		X = 0.; // Initial guess 
 	}
 
 	unsigned int n_hg;
+	unsigned int converged = 0;
 	double ri;
 	for (n_hg=0;n_hg<10;n_hg++){
 		stiefel_Gs3(Gs, beta, X);
@@ -234,22 +221,43 @@ static void kepler_step(unsigned int i,double _dt){
 		//double dX3 = -s/(s1 + 0.5*dX2*s2 + dX2*dX2*s3/6.); // 4th order
 		 
 		X+=dX;
-		if (X>X_max || X < X_min){
-			// Did not converged.
-			n_hg=10;
-			break;
-		}
+		//if (X>X_max || X < X_min){
+		//	// Did not converged.
+		//	n_hg=10;
+		//	break;
+		//}
 		if (fastabs(dX)<fastabs(X)*1e-15){
 			// Converged. Exit.
-			n_hg=0;
+			n_hg++;
+			converged = 1;
 			break; 
 		}
 	}
-	if (n_hg == 10){ // Fallback to bisection 
+	if (converged == 0){ // Fallback to bisection 
+		double X_min, X_max;
+		if (beta>0.){
+			//Elliptic
+			double sqrt_beta = sqrt(beta);
+			double invperiod = sqrt_beta*beta/(2.*M_PI*M);
+			double X_per_period = 2.*M_PI/sqrt_beta;
+			if (dt*invperiod>1. && integrator_timestep_warning == 0){
+				integrator_timestep_warning++;
+				fprintf(stderr,"\n\033[1mWarning!\033[0m Timestep is larger than at least one orbital period.\n");
+			}
+			X_min = X_per_period * floor(_dt*invperiod);
+			X_max = X_min + X_per_period;
+		}else{
+			//Hyperbolic
+			double h2 = r0*r0*v2-eta0*eta0;
+			double q = h2/M/(1.+sqrt(1.-h2*beta/(M*M)));
+			double vq = sqrt(h2)/q;
+			X_min = 1./(vq+r0/_dt);
+			X_max = _dt/q;
+		}
 		X = (X_max + X_min)/2.;
 		do{
 			n_hg++;
-			stiefel_Gs(Gs, beta, X);
+			stiefel_Gs3(Gs, beta, X);
 			double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-_dt;
 			if (s>=0.){
 				X_max = X;
@@ -261,7 +269,7 @@ static void kepler_step(unsigned int i,double _dt){
 		ri          = 1./(r0 + eta0*Gs[1] + zeta0*Gs[2]);
 	}
 	
-	iter += n_hg+1;
+	iter += n_hg;
 
 	double f = 1.-M*Gs[2]*r0i;
 	double g = _dt - M*Gs[3];
