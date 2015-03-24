@@ -203,8 +203,8 @@ static void kepler_step(unsigned int i,double _dt){
 		X_max = X_min + X_per_period;
 		//X = _dt*invperiod*X_per_period; // first order guess 
 		double dtr0i = _dt*r0i;
-		//X = dtr0i - dtr0i*dtr0i*eta0*0.5*r0i; // second order guess
-		X = dtr0i *(1.- 0.5*dtr0i*r0i*(eta0-dtr0i*(eta0*eta0*r0i-1./3.*zeta0))); // third order guess
+		X = dtr0i * (1. - dtr0i*eta0*0.5*r0i); // second order guess
+		//X = dtr0i *(1.- 0.5*dtr0i*r0i*(eta0-dtr0i*(eta0*eta0*r0i-1./3.*zeta0))); // third order guess
 	}else{
 		// Hyperbolic orbit
 		double h2 = r0*r0*v2-eta0*eta0;
