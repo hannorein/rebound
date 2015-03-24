@@ -205,11 +205,17 @@ static void kepler_step(unsigned int i,double _dt){
 	unsigned int n_hg;
 	unsigned int converged = 0;
 	double ri;
+	double oldX;
 	for (n_hg=0;n_hg<10;n_hg++){
+		oldX = X;
 		stiefel_Gs3(Gs, beta, X);
-		double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-_dt;
+		//double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-_dt;
 		ri          = 1./(r0 + eta0*Gs[1] + zeta0*Gs[2]);
-		double dX  = -s*ri; // Newton's method
+
+		X = ri*(X*eta0*Gs[1]+Gs[2]*(X*zeta0-eta0)-zeta0*Gs[3]+_dt);
+		
+
+		//double dX  = -s*ri; // Newton's method
 		//double spp = eta0*Gs[0] + zeta0*Gs[1];
 		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
 		//double s1 = r0 + eta0*Gs[1] + zeta0*Gs[2];
@@ -221,13 +227,14 @@ static void kepler_step(unsigned int i,double _dt){
 		//double dX2 = -s/(s1 + 0.5*dX*s2); // Halley's method (3rd order)
 		//double dX3 = -s/(s1 + 0.5*dX2*s2 + dX2*dX2*s3/6.); // 4th order
 		 
-		X+=dX;
+		//X+=dX;
 		//if (X>X_max || X < X_min){
 		//	// Did not converged.
 		//	n_hg=10;
 		//	break;
 		//}
-		if (fastabs(dX)<fastabs(X)*1e-15){
+		//if (fabs((X-oldX)/X)<1e-16){
+		if (X==oldX){
 			// Converged. Exit.
 			n_hg++;
 			converged = 1;

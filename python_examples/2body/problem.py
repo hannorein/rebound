@@ -35,7 +35,7 @@ def simulation(par):
 
 
 N = 20
-dts = np.linspace(-4,1,N)
+dts = np.linspace(-3,1,N)
 e0s = np.linspace(0,3,N)
 integrators= ["wh","mikkola"]
 
