@@ -459,8 +459,8 @@ def set_integrator(integrator="IAS15"):
 def step():
     librebound.rebound_step()
 
-def integrate(tmax):
-    librebound.integrate(c_double(tmax))
+def integrate(tmax,exactFinishTime=1):
+    librebound.integrate(c_double(tmax),c_int(exactFinishTime))
 
 TWOPI = 2.*math.pi
 def mod2pi(f):

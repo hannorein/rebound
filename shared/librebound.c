@@ -181,7 +181,7 @@ int check_eject(){
 	return 0;
 }
 // Integrate until t=_tmax
-void integrate(double _tmax){
+void integrate(double _tmax, int exactFinishTime){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
@@ -197,7 +197,7 @@ void integrate(double _tmax){
 		if (check_eject()){
 			return;
 		}
-		if (t+dt>=tmax){
+		if (t+dt>=tmax && exactFinishTime==1){
 			dt = tmax-t;
 			last_step++;
 		}else{
