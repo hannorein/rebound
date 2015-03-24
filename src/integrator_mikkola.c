@@ -210,9 +210,10 @@ static void kepler_step(unsigned int i,double _dt){
 		oldX = X;
 		stiefel_Gs3(Gs, beta, X);
 		//double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-_dt;
-		ri          = 1./(r0 + eta0*Gs[1] + zeta0*Gs[2]);
+		const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
+		ri          = 1./(r0 + eta0Gs1zeta0Gs2);
 
-		X = ri*(X*eta0*Gs[1]+Gs[2]*(X*zeta0-eta0)-zeta0*Gs[3]+_dt);
+		X = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+_dt);
 		
 
 		//double dX  = -s*ri; // Newton's method
@@ -233,7 +234,7 @@ static void kepler_step(unsigned int i,double _dt){
 		//	n_hg=10;
 		//	break;
 		//}
-		//if (fabs((X-oldX)/X)<1e-16){
+		//if (fabs((X-oldX))<1e-15*fabs(X)){
 		if (X==oldX){
 			// Converged. Exit.
 			n_hg++;
