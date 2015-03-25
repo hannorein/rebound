@@ -165,11 +165,11 @@ static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
 }
 
 static inline double _M(unsigned int i){
-  	return G*(eta[i]); // Hanno 1
+  	//return G*(eta[i]); // Hanno 1
 	//return G*(eta[i-1]); // Hanno2 
 	//return G*(eta[i-1]*particles[i].m*eta[i-1]/eta[i]/(eta[i-1]+particles[i].m*eta[i-1]/eta[i])); // reduced mass jacobi
 	//return G*(eta[i-1]*particles[i].m/(eta[i-1]+particles[i].m)); // reduced mass
-	//return G*(eta[i]/eta[i-1]*particles[0].m);   // SSD
+	return G*(eta[i]/eta[i-1]*particles[0].m);   // SSD
 }
 
 /****************************** 
