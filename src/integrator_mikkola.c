@@ -165,11 +165,11 @@ static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
 }
 
 static inline double _M(unsigned int i){
-  	//return G*(eta[i]); // Hanno 1
+  	return G*(eta[i]); // Hanno 1
 	//return G*(eta[i-1]); // Hanno2 
 	//return G*(eta[i-1]*particles[i].m*eta[i-1]/eta[i]/(eta[i-1]+particles[i].m*eta[i-1]/eta[i])); // reduced mass jacobi
 	//return G*(eta[i-1]*particles[i].m/(eta[i-1]+particles[i].m)); // reduced mass
-	return G*(eta[i]/eta[i-1]*particles[0].m);   // SSD
+	//return G*(eta[i]/eta[i-1]*particles[0].m);   // SSD
 }
 
 /****************************** 
@@ -452,9 +452,9 @@ static void integrator_to_heliocentric_posvel(){
 		particles[i].vx = pji.vx + p_j[0].vx - ee * pji.vx - s_vx;
 		particles[i].vy = pji.vy + p_j[0].vy - ee * pji.vy - s_vy;
 		particles[i].vz = pji.vz + p_j[0].vz - ee * pji.vz - s_vz;
-		s_x += pjimei * pji.x;
-		s_y += pjimei * pji.y;
-		s_z += pjimei * pji.z;
+		s_x  += pjimei * pji.x;
+		s_y  += pjimei * pji.y;
+		s_z  += pjimei * pji.z;
 		s_vx += pjimei * pji.vx;
 		s_vy += pjimei * pji.vy;
 		s_vz += pjimei * pji.vz;
