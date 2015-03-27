@@ -5,9 +5,11 @@ TINY=1.e-308
 MIN_REL_ERROR = 1.e-12
 
 try:
-    range = xrange          # this means python 2.x
-except NameError:
-    pass                    # this means python 3.x
+    import builtins      # if this succeeds it's python 3.x
+    builtins.xrange = range
+    builtins.basestring = (str,bytes)
+except ImportError:
+    pass                 # python 2.x
 
 # Try to load librebound from the obvioud places it could be in.
 try:
@@ -368,6 +370,9 @@ def get_lyapunov():
 
 def get_N():
     return c_int.in_dll(librebound,"N").value 
+
+def get_N_megno():
+    return c_int.in_dll(librebound,"N_megno").value 
 
 def get_iter():
     return c_int.in_dll(librebound,"iter").value 
