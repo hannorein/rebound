@@ -99,7 +99,7 @@ plt.yscale('log', nonposy='clip')
 
 
 for i in xrange(len(res)):
-    print res[i]
+    print(res[i])
     im1 = axarr.plot(masses,res[i], label=integrators[i])
 
 plt.legend(loc='upper left')
