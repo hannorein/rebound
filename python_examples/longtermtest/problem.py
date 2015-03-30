@@ -23,19 +23,17 @@ def simulation(par):
     particles = rebound.get_particles()
     np.random.seed(run)
     for i in xrange(N):
-        particles[i].x *= 1.+1e-8*np.random.rand()
-        particles[i].y *= 1.+1e-8*np.random.rand()
+        particles[i].m *= 1.+1e-3*np.random.rand()
+        particles[i].x *= 1.+1e-3*np.random.rand()
+        particles[i].y *= 1.+1e-3*np.random.rand()
+        particles[i].z *= 1.+1e-3*np.random.rand()
+        particles[i].vx *= 1.+1e-3*np.random.rand()
+        particles[i].vy *= 1.+1e-3*np.random.rand()
+        particles[i].vz *= 1.+1e-3*np.random.rand()
 
     def move_to_heliocentric():
         particles = rebound.get_particles()
         
-        for i in xrange(1,N):
-            particles[i].x -= particles[0].x
-            particles[i].y -= particles[0].y
-            particles[i].z -= particles[0].z
-            particles[i].vx -= particles[0].vx
-            particles[i].vy -= particles[0].vy
-            particles[i].vz -= particles[0].vz
         particles[0].x  = 0.
         particles[0].y  = 0. 
         particles[0].z  = 0. 
@@ -45,31 +43,49 @@ def simulation(par):
 
 
     def energy():
-        if integrator=="wh":
-            rebound.move_to_center_of_momentum()
         particles = rebound.get_particles()
+        com_vx = 0.
+        com_vy = 0.
+        com_vz = 0.
+        if integrator=="wh":
+            mtot = 0.
+            for i in xrange(0,N):
+                com_vx += particles[i].vx*particles[i].m 
+                com_vy += particles[i].vy*particles[i].m 
+                com_vz += particles[i].vz*particles[i].m 
+                mtot += particles[i].m
+            com_vx /= mtot
+            com_vy /= mtot
+            com_vz /= mtot
         E_kin = 0.
         E_pot = 0.
         for i in xrange(N):
-            E_kin += 0.5*particles[i].m*(particles[i].vx*particles[i].vx + particles[i].vy*particles[i].vy + particles[i].vz*particles[i].vz)
+            dvx = particles[i].vx - com_vx
+            dvy = particles[i].vy - com_vy
+            dvz = particles[i].vz - com_vz
+            E_kin += 0.5*particles[i].m*(dvx*dvx + dvy*dvy + dvz*dvz)
             for j in xrange(i+1,N):
                 dx = particles[i].x-particles[j].x
                 dy = particles[i].y-particles[j].y
                 dz = particles[i].z-particles[j].z
                 r2 = dx*dx + dy*dy + dz*dz
                 E_pot -= G*particles[i].m*particles[j].m/np.sqrt(r2)
-        if integrator=="wh":
-            move_to_heliocentric()
         return E_kin+E_pot
 
     times = np.logspace(np.log10(1.*dt),np.log10(tmax),1000)
-    rebound.move_to_center_of_momentum()
+    if integrator=="wh":
+        move_to_heliocentric()
+    else:
+        rebound.move_to_center_of_momentum()
     ei = energy()
 
     es = []
 
     for time in times:
-        rebound.integrate(time,exactFinishTime=0)
+        if integrator=="ias15":
+            rebound.integrate(time,exactFinishTime=1)
+        else:
+            rebound.integrate(time,exactFinishTime=0)
         ef = energy()
         e = np.fabs((ei-ef)/ei)+1.1e-16
         es.append(e)
@@ -79,13 +95,14 @@ def simulation(par):
     return [times, es]
 
 #3dt = 100.23
-dt = 1.
-tmax = 365.*1e2
+dt = 10.
+tmax = 365.*4e7
 integrators = ["wh","mikkola","ias15"]
 colors = ["b","r","g"]
 trials = 10
     
 parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]
+print "Running %d simulations" % (len(parameters))
 
 pool = InterruptiblePool()
 res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),trials,2,1000)
@@ -102,7 +119,7 @@ extent=[res[:,:,0,:].min()/365., res[:,:,0,:].max()/365., 1e-16, 1e-5]
 
 axarr.set_xlim(extent[0], extent[1])
 axarr.set_ylim(extent[2], extent[3])
-axarr.set_xlabel(r"time [days]")
+axarr.set_xlabel(r"time [years]")
 axarr.set_ylabel(r"rel energy error")
 plt.xscale('log', nonposy='clip')
 plt.yscale('log', nonposy='clip')
