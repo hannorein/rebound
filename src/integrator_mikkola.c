@@ -343,18 +343,19 @@ static void integrator_to_jacobi_posvel(){
 	for (unsigned int i=1;i<N-N_megno;i++){
 		const double ei = 1./eta[i-1];
 		const struct particle pi = particles[i];
+		const double pme = 1.+pi.m/eta[i-1];
 		p_j[i].x = pi.x - s_x*ei;
 		p_j[i].y = pi.y - s_y*ei;
 		p_j[i].z = pi.z - s_z*ei;
 		p_j[i].vx = pi.vx - s_vx*ei;
 		p_j[i].vy = pi.vy - s_vy*ei;
 		p_j[i].vz = pi.vz - s_vz*ei;
-		s_x  = s_x  *(1.+pi.m/eta[i-1]) + pi.m*p_j[i].x ; 
-		s_y  = s_y  *(1.+pi.m/eta[i-1]) + pi.m*p_j[i].y ; 
-		s_z  = s_z  *(1.+pi.m/eta[i-1]) + pi.m*p_j[i].z ; 
-		s_vx = s_vx *(1.+pi.m/eta[i-1]) + pi.m*p_j[i].vx; 
-		s_vy = s_vy *(1.+pi.m/eta[i-1]) + pi.m*p_j[i].vy; 
-		s_vz = s_vz *(1.+pi.m/eta[i-1]) + pi.m*p_j[i].vz; 
+		s_x  = s_x  * pme + pi.m*p_j[i].x ;
+		s_y  = s_y  * pme + pi.m*p_j[i].y ;
+		s_z  = s_z  * pme + pi.m*p_j[i].z ;
+		s_vx = s_vx * pme + pi.m*p_j[i].vx;
+		s_vy = s_vy * pme + pi.m*p_j[i].vy;
+		s_vz = s_vz * pme + pi.m*p_j[i].vz;
 		p_j[i].m = pi.m;
 	}
 	p_j[0].x = s_x * Mtotali;
@@ -366,6 +367,7 @@ static void integrator_to_jacobi_posvel(){
 }
 
 static void integrator_var_to_jacobi_posvel(){
+	// TODO Update (to make consistent with the above)
 	double s_x = particles[N_megno].m * particles[N_megno].x;
 	double s_y = particles[N_megno].m * particles[N_megno].y;
 	double s_z = particles[N_megno].m * particles[N_megno].z;
@@ -404,12 +406,13 @@ static void integrator_to_jacobi_acc(){
 	for (unsigned int i=1;i<N-N_megno;i++){
 		const double ei = 1./eta[i-1];
 		const struct particle pi = particles[i];
+		const double pme = 1.+pi.m/eta[i-1];
 		p_j[i].ax = pi.ax - s_ax*ei;
 		p_j[i].ay = pi.ay - s_ay*ei;
 		p_j[i].az = pi.az - s_az*ei;
-		s_ax = s_ax *(1.+pi.m/eta[i-1]) + pi.m*p_j[i].ax; 
-		s_ay = s_ay *(1.+pi.m/eta[i-1]) + pi.m*p_j[i].ay; 
-		s_az = s_az *(1.+pi.m/eta[i-1]) + pi.m*p_j[i].az; 
+		s_ax = s_ax * pme + pi.m*p_j[i].ax;
+		s_ay = s_ay * pme + pi.m*p_j[i].ay;
+		s_az = s_az * pme + pi.m*p_j[i].az;
 	}
 	p_j[0].ax = s_ax * Mtotali;
 	p_j[0].ay = s_ay * Mtotali;
@@ -417,6 +420,7 @@ static void integrator_to_jacobi_acc(){
 }
 
 static void integrator_var_to_jacobi_acc(){
+	// TODO Update (to make consistent with the above)
 	double s_ax = particles[N_megno].m * particles[N_megno].ax;
 	double s_ay = particles[N_megno].m * particles[N_megno].ay;
 	double s_az = particles[N_megno].m * particles[N_megno].az;
