@@ -74,8 +74,8 @@ def simulation(par):
     return [times, es]
 
 #3dt = 100.23
-dt = .01
-tmax = 365.*1e2
+dt = 1.
+tmax = 365.*1e6
 integrators = ["wh","mikkola","ias15"]
     
 parameters = [(i) for i in integrators]
