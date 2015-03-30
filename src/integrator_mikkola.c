@@ -284,14 +284,32 @@ static void kepler_step(unsigned int i,double _dt){
 	double g = _dt - M*Gs[3];
 	double fd = -M*Gs[1]*r0i*ri; 
 	double gd = 1.-M*Gs[2]*ri; 
-
+	// TODO!!! Changed meaning of f and g functions. Need to do same for megno particles
+        
 	p_j[i].x = f*p1.x + g*p1.vx;
 	p_j[i].y = f*p1.y + g*p1.vy;
 	p_j[i].z = f*p1.z + g*p1.vz;
-
+        
 	p_j[i].vx = fd*p1.x + gd*p1.vx;
 	p_j[i].vy = fd*p1.y + gd*p1.vy;
 	p_j[i].vz = fd*p1.z + gd*p1.vz;
+	
+	
+	//double f = -M*Gs[2]*r0i;
+	//double g = _dt - M*Gs[3];
+	//double fd = -M*Gs[1]*r0i*ri; 
+	//double gd = -M*Gs[2]*ri; 
+	//// TODO!!! Changed meaning of f and g functions. Need to do same for megno particles
+        //
+	//p_j[i].x += f*p1.x + g*p1.vx;
+	//p_j[i].y += f*p1.y + g*p1.vy;
+	//p_j[i].z += f*p1.z + g*p1.vz;
+        //
+	//p_j[i].vx += fd*p1.x + gd*p1.vx;
+	//p_j[i].vy += fd*p1.y + gd*p1.vy;
+	//p_j[i].vz += fd*p1.z + gd*p1.vz;
+
+//	printf("%.10e\t%.10e\t%.10e\t%.20e\n",f+gd,fd*fd+gd*gd,f*fd+g*gd,f*gd-fd*g);
 
 	//Variations
 	if (N_megno){

@@ -74,7 +74,7 @@ def simulation(par):
     return [es]
 
 Nsteps = 10000
-dt = .00102839712987319
+dt = 0.00102839712987319
 integrators = ["wh","mikkola"]
     
 parameters = [(i) for i in integrators]
@@ -106,7 +106,7 @@ plt.gca().set_color_cycle(None)
 for i in xrange(len(res)):
     mean = res[i].mean()
     std = np.std(res[i])
-    im1 = axarr.plot([extent[0],extent[1]],[mean,mean], label=integrators[i]+" mean", alpha=0.75, lw=3)
+    im1 = axarr.plot([extent[0],extent[1]],[mean,mean], label=integrators[i]+" mean", alpha=0.5, lw=9)
 
     print integrators[i], res[i].mean(), np.std(res[i])
 
