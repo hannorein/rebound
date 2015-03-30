@@ -5,7 +5,7 @@ import numpy as np
 from interruptible_pool import InterruptiblePool
 
 def simulation(par):
-    integrator = par
+    integrator, run, trial = par
     rebound.reset()
     k = 0.01720209895    
     G = k*k
@@ -20,6 +20,11 @@ def simulation(par):
     rebound.add_particle(m=1./19314.,     x=-3.01777243405203e+1, y=+1.91155314998064e+0, z=-1.53887595621042e-1, vx=-2.17471785045538e-4, vy=-3.11361111025884e-3, vz=+3.58344705491441e-5)   # Neptune
 #    rebound.add_particle(m=0,             x=-2.13858977531573e+1, y=+3.20719104739886e+1, z=+2.49245689556096e+0, vx=-1.76936577252484e-3, vy=-2.06720938381724e-3, vz=+6.58091931493844e-4)   # Pluto
     N = rebound.get_N()
+    particles = rebound.get_particles()
+    np.random.seed(run)
+    for i in xrange(N):
+        particles[i].x *= 1.+1e-8*np.random.rand()
+        particles[i].y *= 1.+1e-8*np.random.rand()
 
     def move_to_heliocentric():
         particles = rebound.get_particles()
@@ -75,13 +80,16 @@ def simulation(par):
 
 #3dt = 100.23
 dt = 1.
-tmax = 365.*1e6
+tmax = 365.*1e2
 integrators = ["wh","mikkola","ias15"]
+colors = ["b","r","g"]
+trials = 10
     
-parameters = [(i) for i in integrators]
+parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]
 
 pool = InterruptiblePool()
-res = pool.map(simulation,parameters)
+res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),trials,2,1000)
+print res.shape
 
 import matplotlib; matplotlib.use("pdf")
 import matplotlib.pyplot as plt
@@ -90,7 +98,7 @@ from matplotlib.colors import LogNorm
 
 
 f,axarr = plt.subplots(1,1,figsize=(7,5))
-extent=[res[0][0].min()/365., res[0][0].max()/365., 1e-16, 1e-5]
+extent=[res[:,:,0,:].min()/365., res[:,:,0,:].max()/365., 1e-16, 1e-5]
 
 axarr.set_xlim(extent[0], extent[1])
 axarr.set_ylim(extent[2], extent[3])
@@ -100,8 +108,12 @@ plt.xscale('log', nonposy='clip')
 plt.yscale('log', nonposy='clip')
 
 
+res_mean = np.mean(res,axis=1)
 for i in xrange(len(res)):
-    im1 = axarr.plot(res[i][0]/365.,res[i][1], label=integrators[i])
+    for j in xrange(trials):
+        res_trial = res[i,j,:,:]
+        im1 = axarr.plot(res_trial[0]/365.,res_trial[1], color=colors[i],alpha=0.1)
+    im1 = axarr.plot(res_mean[i][0]/365.,res_mean[i][1], label=integrators[i],color=colors[i])
 
 plt.legend(loc='upper left')
 plt.savefig("longtermtest.pdf")
