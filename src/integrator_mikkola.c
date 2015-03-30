@@ -57,6 +57,7 @@ double integrator_min_dt 			= 0;
 static struct particle* restrict p_j  = NULL;
 static double* restrict eta = NULL;
 static double Mtotali;
+static double Mtotal;
 static unsigned int integrator_timestep_warning = 0;
 
 // Fast inverse factorial lookup table
@@ -400,7 +401,6 @@ static void integrator_to_jacobi_acc(){
 	double s_ax = particles[0].m * particles[0].ax;
 	double s_ay = particles[0].m * particles[0].ay;
 	double s_az = particles[0].m * particles[0].az;
-	p_j[0].m = particles[0].m;
 	for (unsigned int i=1;i<N-N_megno;i++){
 		const double ei = 1./eta[i-1];
 		const struct particle pi = particles[i];
@@ -410,7 +410,6 @@ static void integrator_to_jacobi_acc(){
 		s_ax = s_ax *(1.+pi.m/eta[i-1]) + pi.m*p_j[i].ax; 
 		s_ay = s_ay *(1.+pi.m/eta[i-1]) + pi.m*p_j[i].ay; 
 		s_az = s_az *(1.+pi.m/eta[i-1]) + pi.m*p_j[i].az; 
-		p_j[i].m = pi.m;
 	}
 	p_j[0].ax = s_ax * Mtotali;
 	p_j[0].ay = s_ay * Mtotali;
@@ -436,69 +435,46 @@ static void integrator_var_to_jacobi_acc(){
 	p_j[N_megno].az = s_az * Mtotali;
 }
 
-static void integrator_to_heliocentric_posvel(){
-	double s_x  = p_j[0].x / Mtotali; 
-	double s_y  = p_j[0].y / Mtotali; 
-	double s_z  = p_j[0].z / Mtotali; 
-	double s_vx = p_j[0].vx / Mtotali; 
-	double s_vy = p_j[0].vy / Mtotali; 
-	double s_vz = p_j[0].vz / Mtotali; 
+static void integrator_to_inertial_posvel(){
+	double s_x  = p_j[0].x  * Mtotal; 
+	double s_y  = p_j[0].y  * Mtotal; 
+	double s_z  = p_j[0].z  * Mtotal; 
+	double s_vx = p_j[0].vx * Mtotal; 
+	double s_vy = p_j[0].vy * Mtotal; 
+	double s_vz = p_j[0].vz * Mtotal; 
 	for (unsigned int i=N-N_megno-1;i>0;i--){
 		const struct particle pji = p_j[i];
-		// s_(i-1)
-		s_x  = (s_x  - pji.m * pji.x ) *eta[i-1]/eta[i];
-		s_y  = (s_y  - pji.m * pji.y ) *eta[i-1]/eta[i];
-		s_z  = (s_z  - pji.m * pji.z ) *eta[i-1]/eta[i];
-		s_vx = (s_vx - pji.m * pji.vx) *eta[i-1]/eta[i];
-		s_vy = (s_vy - pji.m * pji.vy) *eta[i-1]/eta[i];
-		s_vz = (s_vz - pji.m * pji.vz) *eta[i-1]/eta[i];
-		particles[i].x  = pji.x  + s_x /eta[i-1];
-		particles[i].y  = pji.y  + s_y /eta[i-1];
-		particles[i].z  = pji.z  + s_z /eta[i-1];
-		particles[i].vx = pji.vx + s_vx/eta[i-1];
-		particles[i].vy = pji.vy + s_vy/eta[i-1];
-		particles[i].vz = pji.vz + s_vz/eta[i-1];
+		const double ei = 1./eta[i];
+		s_x  = (s_x  - pji.m * pji.x ) * ei;
+		s_y  = (s_y  - pji.m * pji.y ) * ei;
+		s_z  = (s_z  - pji.m * pji.z ) * ei;
+		s_vx = (s_vx - pji.m * pji.vx) * ei;
+		s_vy = (s_vy - pji.m * pji.vy) * ei;
+		s_vz = (s_vz - pji.m * pji.vz) * ei;
+		particles[i].x  = pji.x  + s_x ;
+		particles[i].y  = pji.y  + s_y ;
+		particles[i].z  = pji.z  + s_z ;
+		particles[i].vx = pji.vx + s_vx;
+		particles[i].vy = pji.vy + s_vy;
+		particles[i].vz = pji.vz + s_vz;
+		s_x  *= eta[i-1];
+		s_y  *= eta[i-1];
+		s_z  *= eta[i-1];
+		s_vx *= eta[i-1];
+		s_vy *= eta[i-1];
+		s_vz *= eta[i-1];
 	}
-	particles[0].x = s_x / particles[0].m;
-	particles[0].y = s_y / particles[0].m;
-	particles[0].z = s_z / particles[0].m;
-	particles[0].vx = s_vx / particles[0].m;
-	particles[0].vy = s_vy / particles[0].m;
-	particles[0].vz = s_vz / particles[0].m;
-//	double s_x = 0.;
-//	double s_y = 0.;
-//	double s_z = 0.;
-//	double s_vx = 0.;
-//	double s_vy = 0.;
-//	double s_vz = 0.;
-//	for (unsigned int i=N-N_megno-1;i>0;i--){
-//		struct particle pji = p_j[i];
-//		const double ei = 1./eta[i];
-//		const double pjimei = pji.m*ei;
-//		const double ee = 1./(eta[i-1]/pji.m+1.);
-//		// Do not attempt to simply the expressions below. Simplifying them would result in a biased error growth.
-//		particles[i].x  = pji.x  + p_j[0].x  - ee * pji.x  - s_x;
-//		particles[i].y  = pji.y  + p_j[0].y  - ee * pji.y  - s_y;
-//		particles[i].z  = pji.z  + p_j[0].z  - ee * pji.z  - s_z;
-//		particles[i].vx = pji.vx + p_j[0].vx - ee * pji.vx - s_vx;
-//		particles[i].vy = pji.vy + p_j[0].vy - ee * pji.vy - s_vy;
-//		particles[i].vz = pji.vz + p_j[0].vz - ee * pji.vz - s_vz;
-//		s_x  += pjimei * pji.x;
-//		s_y  += pjimei * pji.y;
-//		s_z  += pjimei * pji.z;
-//		s_vx += pjimei * pji.vx;
-//		s_vy += pjimei * pji.vy;
-//		s_vz += pjimei * pji.vz;
-//	}
-//	particles[0].x = p_j[0].x - s_x;
-//	particles[0].y = p_j[0].y - s_y;
-//	particles[0].z = p_j[0].z - s_z;
-//	particles[0].vx = p_j[0].vx - s_vx;
-//	particles[0].vy = p_j[0].vy - s_vy;
-//	particles[0].vz = p_j[0].vz - s_vz;
+	const double mi = 1./particles[0].m;
+	particles[0].x  = s_x  * mi;
+	particles[0].y  = s_y  * mi;
+	particles[0].z  = s_z  * mi;
+	particles[0].vx = s_vx * mi;
+	particles[0].vy = s_vy * mi;
+	particles[0].vz = s_vz * mi;
 }
 
-static void integrator_var_to_heliocentric_posvel(){
+static void integrator_var_to_inertial_posvel(){
+	// TODO Update.
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
@@ -531,27 +507,30 @@ static void integrator_var_to_heliocentric_posvel(){
 	particles[N_megno].vz = p_j[N_megno].vz - s_vz;
 }
 
-static void integrator_to_heliocentric_pos(){
-	double s_x = 0.;
-	double s_y = 0.;
-	double s_z = 0.;
+static void integrator_to_inertial_pos(){
+	double s_x  = p_j[0].x  * Mtotal; 
+	double s_y  = p_j[0].y  * Mtotal; 
+	double s_z  = p_j[0].z  * Mtotal; 
 	for (unsigned int i=N-N_megno-1;i>0;i--){
-		const double ei = 1./eta[i];
 		const struct particle pji = p_j[i];
-		const double ee = 1./(eta[i-1]/pji.m+1.);
-		// Do not attempt to simply the expressions below. Simplifying them would result in a biased error growth.
-		particles[i].x  = pji.x  + p_j[0].x  - ee * pji.x  - s_x;
-		particles[i].y  = pji.y  + p_j[0].y  - ee * pji.y  - s_y;
-		particles[i].z  = pji.z  + p_j[0].z  - ee * pji.z  - s_z;
-		s_x += pji.m*ei * pji.x;
-		s_y += pji.m*ei * pji.y;
-		s_z += pji.m*ei * pji.z;
+		const double ei = 1./eta[i];
+		s_x  = (s_x  - pji.m * pji.x ) * ei;
+		s_y  = (s_y  - pji.m * pji.y ) * ei;
+		s_z  = (s_z  - pji.m * pji.z ) * ei;
+		particles[i].x  = pji.x  + s_x ;
+		particles[i].y  = pji.y  + s_y ;
+		particles[i].z  = pji.z  + s_z ;
+		s_x  *= eta[i-1];
+		s_y  *= eta[i-1];
+		s_z  *= eta[i-1];
 	}
-	particles[0].x = p_j[0].x - s_x;
-	particles[0].y = p_j[0].y - s_y;
-	particles[0].z = p_j[0].z - s_z;
+	const double mi = 1./particles[0].m;
+	particles[0].x  = s_x  * mi;
+	particles[0].y  = s_y  * mi;
+	particles[0].z  = s_z  * mi;
 }
-static void integrator_var_to_heliocentric_pos(){
+static void integrator_var_to_inertial_pos(){
+	// TODO Update.
 	double s_x = 0.;
 	double s_y = 0.;
 	double s_z = 0.;
@@ -623,7 +602,8 @@ void integrator_part1(){
 	for (unsigned int i=1;i<N-N_megno;i++){
 		eta[i] = eta[i-1] + particles[i].m;
 	}
-	Mtotali = 1./eta[N-N_megno-1];
+	Mtotal  = eta[N-N_megno-1];
+	Mtotali = 1./Mtotal;
 	integrator_to_jacobi_posvel();
 	if (N_megno){
 		integrator_var_to_jacobi_posvel();
@@ -636,9 +616,9 @@ void integrator_part1(){
 	p_j[0].y += dt/2.*p_j[0].vy;
 	p_j[0].z += dt/2.*p_j[0].vz;
 	if (integrator_force_is_velocitydependent){
-		integrator_to_heliocentric_posvel();
+		integrator_to_inertial_posvel();
 	}else{
-		integrator_to_heliocentric_pos();
+		integrator_to_inertial_pos();
 	}
 	
 	if (N_megno){
@@ -646,9 +626,9 @@ void integrator_part1(){
 		p_j[N_megno].y += dt/2.*p_j[N_megno].vy;
 		p_j[N_megno].z += dt/2.*p_j[N_megno].vz;
 		if (integrator_force_is_velocitydependent){
-			integrator_var_to_heliocentric_posvel();
+			integrator_var_to_inertial_posvel();
 		}else{
-			integrator_var_to_heliocentric_pos();
+			integrator_var_to_inertial_pos();
 		}
 	}
 
@@ -668,13 +648,13 @@ void integrator_part2(){
 	p_j[0].x += dt/2.*p_j[0].vx;
 	p_j[0].y += dt/2.*p_j[0].vy;
 	p_j[0].z += dt/2.*p_j[0].vz;
-	integrator_to_heliocentric_posvel();
+	integrator_to_inertial_posvel();
 	
 	if (N_megno){
 		p_j[N_megno].x += dt/2.*p_j[N_megno].vx;
 		p_j[N_megno].y += dt/2.*p_j[N_megno].vy;
 		p_j[N_megno].z += dt/2.*p_j[N_megno].vz;
-		integrator_var_to_heliocentric_posvel();
+		integrator_var_to_inertial_posvel();
 	}
 
 	t+=dt/2.;
