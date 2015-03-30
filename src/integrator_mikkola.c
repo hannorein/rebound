@@ -280,36 +280,19 @@ static void kepler_step(unsigned int i,double _dt){
 	
 	iter += n_hg;
 
-	double f = 1.-M*Gs[2]*r0i;
+	// Note: These are not the traditional f and g functions.
+	double f = -M*Gs[2]*r0i;
 	double g = _dt - M*Gs[3];
 	double fd = -M*Gs[1]*r0i*ri; 
-	double gd = 1.-M*Gs[2]*ri; 
-	// TODO!!! Changed meaning of f and g functions. Need to do same for megno particles
+	double gd = -M*Gs[2]*ri; 
         
-	p_j[i].x = f*p1.x + g*p1.vx;
-	p_j[i].y = f*p1.y + g*p1.vy;
-	p_j[i].z = f*p1.z + g*p1.vz;
+	p_j[i].x += f*p1.x + g*p1.vx;
+	p_j[i].y += f*p1.y + g*p1.vy;
+	p_j[i].z += f*p1.z + g*p1.vz;
         
-	p_j[i].vx = fd*p1.x + gd*p1.vx;
-	p_j[i].vy = fd*p1.y + gd*p1.vy;
-	p_j[i].vz = fd*p1.z + gd*p1.vz;
-	
-	
-	//double f = -M*Gs[2]*r0i;
-	//double g = _dt - M*Gs[3];
-	//double fd = -M*Gs[1]*r0i*ri; 
-	//double gd = -M*Gs[2]*ri; 
-	//// TODO!!! Changed meaning of f and g functions. Need to do same for megno particles
-        //
-	//p_j[i].x += f*p1.x + g*p1.vx;
-	//p_j[i].y += f*p1.y + g*p1.vy;
-	//p_j[i].z += f*p1.z + g*p1.vz;
-        //
-	//p_j[i].vx += fd*p1.x + gd*p1.vx;
-	//p_j[i].vy += fd*p1.y + gd*p1.vy;
-	//p_j[i].vz += fd*p1.z + gd*p1.vz;
-
-//	printf("%.10e\t%.10e\t%.10e\t%.20e\n",f+gd,fd*fd+gd*gd,f*fd+g*gd,f*gd-fd*g);
+	p_j[i].vx += fd*p1.x + gd*p1.vx;
+	p_j[i].vy += fd*p1.y + gd*p1.vy;
+	p_j[i].vz += fd*p1.z + gd*p1.vz;
 
 	//Variations
 	if (N_megno){
@@ -334,13 +317,13 @@ static void kepler_step(unsigned int i,double _dt){
 		double dfd = -M*dG1*r0i*ri + M*Gs[1]*(dr0*r0i+dr*ri)*r0i*ri;
 		double dgd = -M*dG2*ri + M*Gs[2]*dr*ri*ri;
 	
-		p_j[i+N_megno].x = f*dp1.x + g*dp1.vx + df*p1.x + dg*p1.vx;
-		p_j[i+N_megno].y = f*dp1.y + g*dp1.vy + df*p1.y + dg*p1.vy;
-		p_j[i+N_megno].z = f*dp1.z + g*dp1.vz + df*p1.z + dg*p1.vz;
+		p_j[i+N_megno].x += f*dp1.x + g*dp1.vx + df*p1.x + dg*p1.vx;
+		p_j[i+N_megno].y += f*dp1.y + g*dp1.vy + df*p1.y + dg*p1.vy;
+		p_j[i+N_megno].z += f*dp1.z + g*dp1.vz + df*p1.z + dg*p1.vz;
 
-		p_j[i+N_megno].vx = fd*dp1.x + gd*dp1.vx + dfd*p1.x + dgd*p1.vx;
-		p_j[i+N_megno].vy = fd*dp1.y + gd*dp1.vy + dfd*p1.y + dgd*p1.vy;
-		p_j[i+N_megno].vz = fd*dp1.z + gd*dp1.vz + dfd*p1.z + dgd*p1.vz;
+		p_j[i+N_megno].vx += fd*dp1.x + gd*dp1.vx + dfd*p1.x + dgd*p1.vx;
+		p_j[i+N_megno].vy += fd*dp1.y + gd*dp1.vy + dfd*p1.y + dgd*p1.vy;
+		p_j[i+N_megno].vz += fd*dp1.z + gd*dp1.vz + dfd*p1.z + dgd*p1.vz;
 	}
 
 }
