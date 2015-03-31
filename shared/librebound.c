@@ -37,6 +37,7 @@
 #include "particle.h"
 #include "main.h"
 #include "boundaries.h"
+#include "libmigration.c"
 
 // Default values of parameters and constants
 double dt 	= 0.01;	
