@@ -285,6 +285,7 @@ double tools_megno_mean_Y; 	// mean of Y
 double tools_megno_delta0; 	// initial scale of delta (for one particle)
 long   tools_megno_n; 		// number of covariance updates
 void tools_megno_init(double delta){
+	srand(0.);
 	int _N_megno = N;
 	tools_megno_Ys = 0.;
 	tools_megno_Yss = 0.;
