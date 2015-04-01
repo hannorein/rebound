@@ -1,12 +1,12 @@
 # Import the rebound module
-import sys; sys.path.append('../')
+import sys; sys.path.append('../../libraries/python_modules/')
 import rebound
 from rebound import Particle
 
 # Add particles
 # We work in units where G=1.  
-rebound.particle_add( Particle(m=1.) )                  # Test particle
-rebound.particle_add( Particle(m=1e-3,x=1.,vy=1.) )     # Planet
+rebound.add_particle( Particle(m=1.) )                  # Test particle
+rebound.add_particle( Particle(m=1e-3,x=1.,vy=1.) )     # Planet
 
 # Move particles so that the center of mass is (and stays) at the origin  
 rebound.move_to_center_of_momentum()
@@ -16,7 +16,7 @@ rebound.move_to_center_of_momentum()
 # Simple add any any additional (non-gravitational) forces to the 
 # particle accelerations. Here, we add a simple drag force. This 
 # will make the planet spiral into the star.
-particles = rebound.particles_get()                     # Pointer to the particle structure
+particles = rebound.get_particles()                     # Pointer to the particle structure
 N = rebound.get_N()                 
 def dragforce():
     dragcoefficient = 1e-2
