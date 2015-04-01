@@ -1,5 +1,5 @@
 # Import the rebound module
-import sys; sys.path.append('../')
+import sys; sys.path.append('../../python_modules')
 import rebound
 from rebound import Particle
 import numpy as np
