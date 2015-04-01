@@ -6,15 +6,16 @@
 # to regular quasi-periodic orbits. Higher values of <Y> correspond to chaotic orbits.
  
 # Import the rebound module
-import sys; sys.path.append('../')
+import sys; sys.path.append('../../python_modules')
 import rebound
+from interruptible_pool import InterruptiblePool
 # Import other modules
 import numpy as np
-import multiprocessing
 
 rebound.reset()
+#rebound.set_integrator("ias15")
 rebound.set_integrator("mikkola")
-rebound.set_dt(0.01)
+rebound.set_dt(0.001)
     
 sun = rebound.Particle(m=1)
 rebound.add_particle(sun)
@@ -28,6 +29,5 @@ rebound.init_megno(1e-10)
 particles = rebound.get_particles()
 for x in xrange(100000):
     rebound.step()
+    print rebound.get_t(), particles[4].x 
 
-print rebound.get_t(),rebound.get_megno(), particles[3].x
-print particles[2].get_orbit(primary=sun)
