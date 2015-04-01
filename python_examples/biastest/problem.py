@@ -1,5 +1,5 @@
 # Import the rebound module
-import sys; sys.path.append('../')
+import sys; sys.path.append('../../python_modules')
 import rebound
 import numpy as np
 from interruptible_pool import InterruptiblePool
