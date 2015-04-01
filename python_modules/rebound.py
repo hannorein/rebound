@@ -1,9 +1,16 @@
 from ctypes import *
 import math
+import os
 
-TINY=1.e-308
-MIN_REL_ERROR = 1.e-12
+#Find the rebound C library
+pymodulespath = os.path.dirname(__file__)
+try:
+    librebound = CDLL(pymodulespath + '/../shared/librebound/librebound.so', RTLD_GLOBAL)
+except:
+    print("Cannot find library 'librebound.so'. Try typing make in rebound/shared/ and/or check path set in 'rebound/python_modules/rebound.py'.")
+    raise
 
+#Make changes for python 2 and 3 compatibility
 try:
     import builtins      # if this succeeds it's python 3.x
     builtins.xrange = range
@@ -11,19 +18,8 @@ try:
 except ImportError:
     pass                 # python 2.x
 
-# Try to load librebound from the obvioud places it could be in.
-try:
-    librebound = CDLL('../../shared/librebound.so', RTLD_GLOBAL)
-except:
-    try:
-        librebound = CDLL('../shared/librebound.so', RTLD_GLOBAL)
-    except:
-        try:
-            librebound = CDLL('shared/librebound.so', RTLD_GLOBAL)
-        except:
-            print("Cannot find library 'librebound.so'. Check path set in 'rebound.py'.")
-            raise
-
+TINY=1.e-308
+MIN_REL_ERROR = 1.e-12
 
 class Orbit():
     """Defines the same data structure as in tools.h"""
@@ -380,8 +376,6 @@ def get_iter():
 def get_timing():
     return c_double.in_dll(librebound,"timing").value 
 
-
-
 # Setter/getter of particle data
 def set_particles(particles):
     c_int.in_dll(librebound,"N").value = len(particles)
@@ -536,6 +530,5 @@ def get_center_of_momentum():
     vy /= m
     vz /= m
     return Particle(m=m, x=x, y=y, z=z, vx=vx, vy=vy, vz=vz)
-
 
 

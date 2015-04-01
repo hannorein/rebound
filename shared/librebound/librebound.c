@@ -44,8 +44,25 @@ double t 	= 0;
 double tmax	= 0;
 double G 	= 1;
 double softening = 0;
+
 extern int Nmax;	
-extern int iter;  // TODO DEBUG
+// The following code is needed to leave the original REBOUND files unchanged. 
+// Currently the librebound library only supports an infinitely large box.
+// Infinite box size
+int root_nx = 1;
+int root_ny = 1;
+int root_nz = 1;
+double boxsize = 0;
+double boxsize_x = 0;
+double boxsize_y = 0;
+double boxsize_z = 0;
+int exit_simulation = 0;
+double timing_initial = -1;
+
+// No ghost boxes for now.  In boundaries.h
+int nghostx = 0;	
+int nghosty = 0;
+int nghostz = 0;
 
 // Chooses which integrator to use.
 // 0: IAS15 (default)
@@ -60,11 +77,9 @@ extern void integrator_ias15_reset();
 extern void integrator_mikkola_part1();
 extern void integrator_mikkola_part2();
 extern void integrator_mikkola_reset();
-extern void integrator_mikkola_init();
 extern void integrator_wh_part1();
 extern void integrator_wh_part2();
 extern void integrator_wh_reset();
-extern void integrator_wh_init();
 extern void integrator_leapfrog_part1();
 extern void integrator_leapfrog_part2();
 extern void integrator_leapfrog_reset();
@@ -90,22 +105,9 @@ struct particle* particles_get(){
 void set_additional_forces(void (* _cb)()){
 	problem_additional_forces = _cb;
 }
-void init_integrator(){
-	switch(selected_integrator){
-		case 1:
-			integrator_mikkola_init();
-			break;
-		case 2:
-			integrator_wh_init();
-			break;
-	}
-}
-double timing;
+
 // Integrate for 1 step
 void rebound_step(){ 
-	struct timeval tim;
-	gettimeofday(&tim, NULL);
-	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 	if (N<=0){
 		fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
 		return;
@@ -143,9 +145,6 @@ void rebound_step(){
 			integrator_ias15_part2();
 			break;
 	}
-	gettimeofday(&tim, NULL);
-	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
-	timing = timing_final-timing_initial;
 }
 
 // Integrate for 1 step
@@ -159,7 +158,6 @@ void reset(){
 	Nmax 		= 0;
 	N_active 	= -1;
 	N_megno 	= 0;
-	iter		= 0;
 	free(particles);
 	particles 	= NULL;
 	integrator_ias15_reset();
@@ -181,10 +179,7 @@ int check_eject(){
 	return 0;
 }
 // Integrate until t=_tmax
-void integrate(double _tmax, int exactFinishTime){
-	struct timeval tim;
-	gettimeofday(&tim, NULL);
-	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
+void integrate(double _tmax){
 	tmax = _tmax;
 	double dt_last_done = dt;
 	int last_step = 0;
@@ -197,7 +192,7 @@ void integrate(double _tmax, int exactFinishTime){
 		if (check_eject()){
 			return;
 		}
-		if (t+dt>=tmax && exactFinishTime==1){
+		if (t+dt>=tmax){
 			dt = tmax-t;
 			last_step++;
 		}else{
@@ -205,30 +200,12 @@ void integrate(double _tmax, int exactFinishTime){
 		}
 	}
 	dt = dt_last_done;
-	gettimeofday(&tim, NULL);
-	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
-	timing = timing_final-timing_initial;
 }
 	 
-// The following code is needed to leave the original REBOUND files unchanged. 
-// Currently the librebound library only supports an infinitely large box.
-// Infinite box size
-int root_nx = 1;
-int root_ny = 1;
-int root_nz = 1;
-double boxsize = 0;
-double boxsize_x = 0;
-double boxsize_y = 0;
-double boxsize_z = 0;
 
 int boundaries_particle_is_in_box(struct particle p){
 	return 1;
 }
-
-// No ghost boxes for now.
-int nghostx = 0;	
-int nghosty = 0;
-int nghostz = 0;
 
 struct ghostbox boundaries_get_ghostbox(int i, int j, int k){
 	struct ghostbox gb;
