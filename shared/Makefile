@@ -1,5 +1,5 @@
-REB = clibrebound
-MIG = clibmigration
+REB = librebound
+MIG = libmigration
 
 TARGETS = $(REB) $(MIG)
 

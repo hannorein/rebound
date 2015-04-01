@@ -5,9 +5,9 @@ import os
 #Find the rebound C library
 pymodulespath = os.path.dirname(__file__)
 try:
-    librebound = CDLL(pymodulespath + '/../clibrebound/librebound.so', RTLD_GLOBAL)
+    librebound = CDLL(pymodulespath + '/../shared/librebound/librebound.so', RTLD_GLOBAL)
 except:
-    print("Cannot find library 'librebound.so'. Try typing make in rebound/libraries/ and/or check path set in 'libraries/python_modules/rebound.py'.")
+    print("Cannot find library 'librebound.so'. Try typing make in rebound/shared/ and/or check path set in 'rebound/python_modules/rebound.py'.")
     raise
 
 #Make changes for python 2 and 3 compatibility

@@ -3,9 +3,9 @@ from ctypes import *
 #Find the migration C library
 pymodulespath = os.path.dirname(__file__)
 try:
-    libmigration = CDLL(pymodulespath + '/../clibmigration/libmigration.so', RTLD_GLOBAL)
+    libmigration = CDLL(pymodulespath + '/../shared/libmigration/libmigration.so', RTLD_GLOBAL)
 except:
-    print("Cannot find library 'libmigration.so'. Try typing make in rebound/libraries/ and/or check path set in 'libraries/python_modules/migration.py'.")
+    print("Cannot find library 'libmigration.so'. Try typing make in rebound/shared/ and/or check path set in 'rebound/python_modules/migration.py'.")
     raise
 
 try:
@@ -14,12 +14,6 @@ try:
     builtins.basestring = (str,bytes)
 except ImportError:
     pass                 # python 2.x
-
-try:
-    libmigration = CDLL('../libmigration/libmigration.so', RTLD_GLOBAL)
-except:
-    print("Cannot find library 'libmigration.so'. Check path set in 'migration.py'.")
-    raise
 
 def add_migration(tau_a):
     arr = (c_double * get_N())(*tau_a)
