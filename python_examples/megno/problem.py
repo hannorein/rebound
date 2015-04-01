@@ -6,8 +6,9 @@
 # to regular quasi-periodic orbits. Higher values of <Y> correspond to chaotic orbits.
  
 # Import the rebound module
-import sys; sys.path.append('../')
+import sys; sys.path.append('../../python_modules')
 import rebound
+from interruptible_pool import InterruptiblePool
 # Import other modules
 import numpy as np
 import multiprocessing
@@ -16,7 +17,7 @@ import multiprocessing
 def simulation(par):
     saturn_a, saturn_e = par
     rebound.reset()
-    rebound.set_integrator("ias15")
+    rebound.set_integrator("mikkola")
     rebound.set_min_dt(0.1)
     rebound.set_dt(0.1)
     
@@ -28,7 +29,7 @@ def simulation(par):
 
     rebound.move_to_center_of_momentum()
     rebound.init_megno(1e-16)
-    rebound.integrate(1e4*2.*np.pi)
+    rebound.integrate(1e3*2.*np.pi)
 
     return [rebound.get_megno(),1./(rebound.get_lyapunov()*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
 
@@ -44,7 +45,7 @@ for _e in e:
 
 
 # Run simulations in parallel
-pool = multiprocessing.Pool()    # Number of threads default to the number of CPUs on the system
+pool = InterruptiblePool()    # Number of threads default to the number of CPUs on the system
 print("Running %d simulations on %d threads..." % (len(parameters), pool._processes))
 res = np.nan_to_num(np.array(pool.map(simulation,parameters))) 
 megno = np.clip(res[:,0].reshape((N,N)),1.8,4.)             # clip arrays to plot saturated 
