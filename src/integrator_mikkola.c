@@ -56,6 +56,7 @@ double integrator_min_dt 			= 0;
 
 static struct particle* restrict p_j  = NULL;
 static double* restrict eta = NULL;
+static double* restrict etai = NULL;
 static double Mtotali;
 static double Mtotal;
 static unsigned int integrator_timestep_warning = 0;
@@ -198,6 +199,8 @@ static void kepler_step(unsigned int i,double _dt){
 		//X = dtr0i; // first order guess
 		X = dtr0i * (1. - dtr0i*eta0*0.5*r0i); // second order guess
 		//X = dtr0i *(1.- 0.5*dtr0i*r0i*(eta0-dtr0i*(eta0*eta0*r0i-1./3.*zeta0))); // third order guess
+		//X = _dt*beta/M + eta0/M*(0.85*sqrt(1.+zeta0*zeta0/beta/eta0/eta0) - 1.);  // Dan's version 
+
 	}else{
 		// Hyperbolic orbit
 		X = 0.; // Initial guess 
@@ -210,32 +213,10 @@ static void kepler_step(unsigned int i,double _dt){
 	for (n_hg=0;n_hg<10;n_hg++){
 		oldX = X;
 		stiefel_Gs3(Gs, beta, X);
-		//double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-_dt;
 		const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
-		ri          = 1./(r0 + eta0Gs1zeta0Gs2);
-
-		X = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+_dt);
+		ri = 1./(r0 + eta0Gs1zeta0Gs2);
+		X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+_dt);
 		
-
-		//double dX  = -s*ri; // Newton's method
-		//double spp = eta0*Gs[0] + zeta0*Gs[1];
-		//double dX  = -(s*sp)/(sp*sp-0.5*s*spp); // Householder 2nd order formula
-		//double s1 = r0 + eta0*Gs[1] + zeta0*Gs[2];
-		//double s2 = eta0*Gs[0] + zeta0*Gs[1];
-		//double s3 = -eta0*beta*Gs[1] + zeta0*Gs[0];
-		
-		//ri          = 1./s1; // 1./(r0 + eta0*Gs[1] + zeta0*Gs[2]);
-		//double dX  = -s*ri; // Newton's method
-		//double dX2 = -s/(s1 + 0.5*dX*s2); // Halley's method (3rd order)
-		//double dX3 = -s/(s1 + 0.5*dX2*s2 + dX2*dX2*s3/6.); // 4th order
-		 
-		//X+=dX;
-		//if (X>X_max || X < X_min){
-		//	// Did not converged.
-		//	n_hg=10;
-		//	break;
-		//}
-		//if (fabs((X-oldX))<1e-15*fabs(X)){
 		if (X==oldX){
 			// Converged. Exit.
 			n_hg++;
@@ -341,9 +322,9 @@ static void integrator_to_jacobi_posvel(){
 	double s_vz = particles[0].m * particles[0].vz;
 	p_j[0].m = particles[0].m;
 	for (unsigned int i=1;i<N-N_megno;i++){
-		const double ei = 1./eta[i-1];
+		const double ei = etai[i-1];
 		const struct particle pi = particles[i];
-		const double pme = 1.+pi.m/eta[i-1];
+		const double pme = eta[i]*etai[i-1];
 		p_j[i].x = pi.x - s_x*ei;
 		p_j[i].y = pi.y - s_y*ei;
 		p_j[i].z = pi.z - s_z*ei;
@@ -375,7 +356,7 @@ static void integrator_var_to_jacobi_posvel(){
 	double s_vy = particles[N_megno].m * particles[N_megno].vy;
 	double s_vz = particles[N_megno].m * particles[N_megno].vz;
 	for (unsigned int i=1+N_megno;i<N;i++){
-		const double ei = 1./eta[i-1-N_megno];
+		const double ei = etai[i-1-N_megno];
 		const struct particle pi = particles[i];
 		p_j[i].x = pi.x - s_x*ei;
 		p_j[i].y = pi.y - s_y*ei;
@@ -404,9 +385,9 @@ static void integrator_to_jacobi_acc(){
 	double s_ay = particles[0].m * particles[0].ay;
 	double s_az = particles[0].m * particles[0].az;
 	for (unsigned int i=1;i<N-N_megno;i++){
-		const double ei = 1./eta[i-1];
+		const double ei = etai[i-1];
 		const struct particle pi = particles[i];
-		const double pme = 1.+pi.m/eta[i-1];
+		const double pme = eta[i]*etai[i-1];
 		p_j[i].ax = pi.ax - s_ax*ei;
 		p_j[i].ay = pi.ay - s_ay*ei;
 		p_j[i].az = pi.az - s_az*ei;
@@ -425,7 +406,7 @@ static void integrator_var_to_jacobi_acc(){
 	double s_ay = particles[N_megno].m * particles[N_megno].ay;
 	double s_az = particles[N_megno].m * particles[N_megno].az;
 	for (unsigned int i=1+N_megno;i<N;i++){
-		const double ei = 1./eta[i-1-N_megno];
+		const double ei = etai[i-1-N_megno];
 		const struct particle pi = particles[i];
 		p_j[i].ax = pi.ax - s_ax*ei;
 		p_j[i].ay = pi.ay - s_ay*ei;
@@ -448,7 +429,7 @@ static void integrator_to_inertial_posvel(){
 	double s_vz = p_j[0].vz * Mtotal; 
 	for (unsigned int i=N-N_megno-1;i>0;i--){
 		const struct particle pji = p_j[i];
-		const double ei = 1./eta[i];
+		const double ei = etai[i];
 		s_x  = (s_x  - pji.m * pji.x ) * ei;
 		s_y  = (s_y  - pji.m * pji.y ) * ei;
 		s_z  = (s_z  - pji.m * pji.z ) * ei;
@@ -488,7 +469,7 @@ static void integrator_var_to_inertial_posvel(){
 	for (unsigned int i=N-1;i>N_megno;i--){
 		const double ee = 1./(eta[i-1-N_megno]/particles[i-N_megno].m+1.);
 		// Do not attempt to simply the expressions below. Simplifying them would result in a biased error growth.
-		const double ei = 1./eta[i-N_megno];
+		const double ei = etai[i-N_megno];
 		struct particle pji = p_j[i];
 		particles[i].x  = pji.x  + p_j[N_megno].x  - ee * pji.x - s_x;
 		particles[i].y  = pji.y  + p_j[N_megno].y  - ee * pji.y - s_y;
@@ -517,7 +498,7 @@ static void integrator_to_inertial_pos(){
 	double s_z  = p_j[0].z  * Mtotal; 
 	for (unsigned int i=N-N_megno-1;i>0;i--){
 		const struct particle pji = p_j[i];
-		const double ei = 1./eta[i];
+		const double ei = etai[i];
 		s_x  = (s_x  - pji.m * pji.x ) * ei;
 		s_y  = (s_y  - pji.m * pji.y ) * ei;
 		s_z  = (s_z  - pji.m * pji.z ) * ei;
@@ -539,7 +520,7 @@ static void integrator_var_to_inertial_pos(){
 	double s_y = 0.;
 	double s_z = 0.;
 	for (unsigned int i=N-1;i>N_megno;i--){
-		const double ei = 1./eta[i-N_megno];
+		const double ei = etai[i-N_megno];
 		const double ee = 1./(eta[i-1-N_megno]/particles[i-N_megno].m+1.);
 		const struct particle pji = p_j[i];
 		particles[i].x  = pji.x  + p_j[N_megno].x  - ee * pji.x - s_x;
@@ -596,6 +577,7 @@ void integrator_mikkola_init(){
 		integrator_allocated_N = N;
 		p_j = realloc(p_j,sizeof(struct particle)*N);
 		eta = realloc(eta,sizeof(double)*(N-N_megno));
+		etai= realloc(etai,sizeof(double)*(N-N_megno));
 	}
 }
 /***************************** 
@@ -603,11 +585,13 @@ void integrator_mikkola_init(){
 void integrator_part1(){
 	integrator_mikkola_init();
 	eta[0] = particles[0].m;
+	etai[0] = 1./eta[0];
 	for (unsigned int i=1;i<N-N_megno;i++){
 		eta[i] = eta[i-1] + particles[i].m;
+		etai[i] = 1./eta[i];
 	}
 	Mtotal  = eta[N-N_megno-1];
-	Mtotali = 1./Mtotal;
+	Mtotali = etai[N-N_megno-1];
 	integrator_to_jacobi_posvel();
 	if (N_megno){
 		integrator_var_to_jacobi_posvel();
@@ -672,8 +656,11 @@ void integrator_part2(){
 
 void integrator_reset(){
 	integrator_allocated_N = 0;
+	integrator_timestep_warning = 0;
 	free(p_j);
 	p_j = NULL;
 	free(eta);
 	eta = NULL;
+	free(etai);
+	etai = NULL;
 }
