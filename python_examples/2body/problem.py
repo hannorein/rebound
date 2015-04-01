@@ -36,7 +36,7 @@ def simulation(par):
 
 N = 20
 dts = np.linspace(-4,-1,N)
-e0s = np.linspace(0,3,N)
+e0s = np.linspace(0,6,N)
 integrators= ["wh","mikkola"]
 
 niter = []
@@ -46,7 +46,7 @@ timing = []
 for integrator in integrators:
     parameters = [(0., dts[i], e0s[j], integrator) for j in range(N) for i in range(N)]
 
-    pool = InterruptiblePool()
+    pool = InterruptiblePool(16)
     res = pool.map(simulation,parameters)
     res = np.nan_to_num(res)
     niter.append(res[:,0].reshape((N,N)))
@@ -75,7 +75,7 @@ for i, integrator in enumerate(integrators):
     cb1.solids.set_rasterized(True)
     cb1.set_label("Relative energy error, " +integrator)
 
-    im2 = axarr[1,i].imshow(niter[i], vmin=0, vmax=np.max(niter), aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn", extent=extent)
+    im2 = axarr[1,i].imshow(niter[i], vmin=0, vmax=np.max(niter), aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn_r", extent=extent)
     cb2 = plt.colorbar(im2, ax=axarr[1,i])
     cb2.solids.set_rasterized(True)
     cb2.set_label("Number of iterations (neg = bisection), " +integrator)
