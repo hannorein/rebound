@@ -330,6 +330,7 @@ static void integrator_to_jacobi_posvel(){
 		p_j[i].vx = pi.vx - s_vx*ei;
 		p_j[i].vy = pi.vy - s_vy*ei;
 		p_j[i].vz = pi.vz - s_vz*ei;
+		p_j[i].m = pi.m;
 		s_x  = s_x  * pme + pi.m*p_j[i].x ;
 		s_y  = s_y  * pme + pi.m*p_j[i].y ;
 		s_z  = s_z  * pme + pi.m*p_j[i].z ;
@@ -343,6 +344,7 @@ static void integrator_to_jacobi_posvel(){
 	p_j[0].vx = s_vx * Mtotali;
 	p_j[0].vy = s_vy * Mtotali;
 	p_j[0].vz = s_vz * Mtotali;
+	p_j[0].m = particles[0].m;
 }
 
 static void integrator_var_to_jacobi_posvel(){
@@ -362,6 +364,7 @@ static void integrator_var_to_jacobi_posvel(){
 		p_j[i].vx = pi.vx - s_vx*ei;
 		p_j[i].vy = pi.vy - s_vy*ei;
 		p_j[i].vz = pi.vz - s_vz*ei;
+		p_j[i].m = pi.m;
 		s_x  = s_x  * pme + pi.m*p_j[i].x ;
 		s_y  = s_y  * pme + pi.m*p_j[i].y ;
 		s_z  = s_z  * pme + pi.m*p_j[i].z ;
@@ -375,6 +378,7 @@ static void integrator_var_to_jacobi_posvel(){
 	p_j[N_megno].vx = s_vx * Mtotali;
 	p_j[N_megno].vy = s_vy * Mtotali;
 	p_j[N_megno].vz = s_vz * Mtotali;
+	p_j[N_megno].m = particles[N_megno].m;
 }
 
 
