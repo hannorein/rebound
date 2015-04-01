@@ -348,28 +348,30 @@ static void integrator_to_jacobi_posvel(){
 }
 
 static void integrator_var_to_jacobi_posvel(){
-	// TODO Update (to make consistent with the above)
 	double s_x = particles[N_megno].m * particles[N_megno].x;
 	double s_y = particles[N_megno].m * particles[N_megno].y;
 	double s_z = particles[N_megno].m * particles[N_megno].z;
 	double s_vx = particles[N_megno].m * particles[N_megno].vx;
 	double s_vy = particles[N_megno].m * particles[N_megno].vy;
 	double s_vz = particles[N_megno].m * particles[N_megno].vz;
+	p_j[N_megno].m = particles[N_megno].m;
 	for (unsigned int i=1+N_megno;i<N;i++){
 		const double ei = etai[i-1-N_megno];
 		const struct particle pi = particles[i];
+		const double pme = eta[i-N_megno]*etai[i-1-N_megno];
 		p_j[i].x = pi.x - s_x*ei;
 		p_j[i].y = pi.y - s_y*ei;
 		p_j[i].z = pi.z - s_z*ei;
 		p_j[i].vx = pi.vx - s_vx*ei;
 		p_j[i].vy = pi.vy - s_vy*ei;
 		p_j[i].vz = pi.vz - s_vz*ei;
-		s_x += pi.m * pi.x;
-		s_y += pi.m * pi.y;
-		s_z += pi.m * pi.z;
-		s_vx += pi.m * pi.vx;
-		s_vy += pi.m * pi.vy;
-		s_vz += pi.m * pi.vz;
+		s_x  = s_x  * pme + pi.m*p_j[i].x ;
+		s_y  = s_y  * pme + pi.m*p_j[i].y ;
+		s_z  = s_z  * pme + pi.m*p_j[i].z ;
+		s_vx = s_vx * pme + pi.m*p_j[i].vx;
+		s_vy = s_vy * pme + pi.m*p_j[i].vy;
+		s_vz = s_vz * pme + pi.m*p_j[i].vz;
+		p_j[i].m = pi.m;
 	}
 	p_j[N_megno].x = s_x * Mtotali;
 	p_j[N_megno].y = s_y * Mtotali;
@@ -401,19 +403,21 @@ static void integrator_to_jacobi_acc(){
 }
 
 static void integrator_var_to_jacobi_acc(){
-	// TODO Update (to make consistent with the above)
 	double s_ax = particles[N_megno].m * particles[N_megno].ax;
 	double s_ay = particles[N_megno].m * particles[N_megno].ay;
 	double s_az = particles[N_megno].m * particles[N_megno].az;
+	p_j[N_megno].m = particles[N_megno].m;
 	for (unsigned int i=1+N_megno;i<N;i++){
 		const double ei = etai[i-1-N_megno];
 		const struct particle pi = particles[i];
+		const double pme = eta[i-N_megno]*etai[i-1-N_megno];
 		p_j[i].ax = pi.ax - s_ax*ei;
 		p_j[i].ay = pi.ay - s_ay*ei;
 		p_j[i].az = pi.az - s_az*ei;
-		s_ax += pi.m * pi.ax;
-		s_ay += pi.m * pi.ay;
-		s_az += pi.m * pi.az;
+		s_ax = s_ax * pme + pi.m*p_j[i].ax;
+		s_ay = s_ay * pme + pi.m*p_j[i].ay;
+		s_az = s_az * pme + pi.m*p_j[i].az;
+		p_j[i].m = pi.m;
 	}
 	p_j[N_megno].ax = s_ax * Mtotali;
 	p_j[N_megno].ay = s_ay * Mtotali;
@@ -459,37 +463,41 @@ static void integrator_to_inertial_posvel(){
 }
 
 static void integrator_var_to_inertial_posvel(){
-	// TODO Update.
-	double s_x = 0.;
-	double s_y = 0.;
-	double s_z = 0.;
-	double s_vx = 0.;
-	double s_vy = 0.;
-	double s_vz = 0.;
+	double s_x  = p_j[N_megno].x  * Mtotal; 
+	double s_y  = p_j[N_megno].y  * Mtotal; 
+	double s_z  = p_j[N_megno].z  * Mtotal; 
+	double s_vx = p_j[N_megno].vx * Mtotal; 
+	double s_vy = p_j[N_megno].vy * Mtotal; 
+	double s_vz = p_j[N_megno].vz * Mtotal; 
 	for (unsigned int i=N-1;i>N_megno;i--){
-		const double ee = 1./(eta[i-1-N_megno]/particles[i-N_megno].m+1.);
-		// Do not attempt to simply the expressions below. Simplifying them would result in a biased error growth.
+		const struct particle pji = p_j[i];
 		const double ei = etai[i-N_megno];
-		struct particle pji = p_j[i];
-		particles[i].x  = pji.x  + p_j[N_megno].x  - ee * pji.x - s_x;
-		particles[i].y  = pji.y  + p_j[N_megno].y  - ee * pji.y - s_y;
-		particles[i].z  = pji.z  + p_j[N_megno].z  - ee * pji.z - s_z;
-		particles[i].vx = pji.vx + p_j[N_megno].vx - ee * pji.vx - s_vx;
-		particles[i].vy = pji.vy + p_j[N_megno].vy - ee * pji.vy - s_vy;
-		particles[i].vz = pji.vz + p_j[N_megno].vz - ee * pji.vz - s_vz;
-		s_x += pji.m*ei * pji.x;
-		s_y += pji.m*ei * pji.y;
-		s_z += pji.m*ei * pji.z;
-		s_vx += pji.m*ei * pji.vx;
-		s_vy += pji.m*ei * pji.vy;
-		s_vz += pji.m*ei * pji.vz;
+		s_x  = (s_x  - pji.m * pji.x ) * ei;
+		s_y  = (s_y  - pji.m * pji.y ) * ei;
+		s_z  = (s_z  - pji.m * pji.z ) * ei;
+		s_vx = (s_vx - pji.m * pji.vx) * ei;
+		s_vy = (s_vy - pji.m * pji.vy) * ei;
+		s_vz = (s_vz - pji.m * pji.vz) * ei;
+		particles[i].x  = pji.x  + s_x ;
+		particles[i].y  = pji.y  + s_y ;
+		particles[i].z  = pji.z  + s_z ;
+		particles[i].vx = pji.vx + s_vx;
+		particles[i].vy = pji.vy + s_vy;
+		particles[i].vz = pji.vz + s_vz;
+		s_x  *= eta[i-1];
+		s_y  *= eta[i-1];
+		s_z  *= eta[i-1];
+		s_vx *= eta[i-1];
+		s_vy *= eta[i-1];
+		s_vz *= eta[i-1];
 	}
-	particles[N_megno].x = p_j[N_megno].x - s_x;
-	particles[N_megno].y = p_j[N_megno].y - s_y;
-	particles[N_megno].z = p_j[N_megno].z - s_z;
-	particles[N_megno].vx = p_j[N_megno].vx - s_vx;
-	particles[N_megno].vy = p_j[N_megno].vy - s_vy;
-	particles[N_megno].vz = p_j[N_megno].vz - s_vz;
+	const double mi = 1./particles[N_megno].m;
+	particles[N_megno].x  = s_x  * mi;
+	particles[N_megno].y  = s_y  * mi;
+	particles[N_megno].z  = s_z  * mi;
+	particles[N_megno].vx = s_vx * mi;
+	particles[N_megno].vy = s_vy * mi;
+	particles[N_megno].vz = s_vz * mi;
 }
 
 static void integrator_to_inertial_pos(){
@@ -515,24 +523,26 @@ static void integrator_to_inertial_pos(){
 	particles[0].z  = s_z  * mi;
 }
 static void integrator_var_to_inertial_pos(){
-	// TODO Update.
-	double s_x = 0.;
-	double s_y = 0.;
-	double s_z = 0.;
+	double s_x  = p_j[N_megno].x  * Mtotal; 
+	double s_y  = p_j[N_megno].y  * Mtotal; 
+	double s_z  = p_j[N_megno].z  * Mtotal; 
 	for (unsigned int i=N-1;i>N_megno;i--){
-		const double ei = etai[i-N_megno];
-		const double ee = 1./(eta[i-1-N_megno]/particles[i-N_megno].m+1.);
 		const struct particle pji = p_j[i];
-		particles[i].x  = pji.x  + p_j[N_megno].x  - ee * pji.x - s_x;
-		particles[i].y  = pji.y  + p_j[N_megno].y  - ee * pji.y - s_y;
-		particles[i].z  = pji.z  + p_j[N_megno].z  - ee * pji.z - s_z;
-		s_x += pji.m*ei * pji.x;
-		s_y += pji.m*ei * pji.y;
-		s_z += pji.m*ei * pji.z;
+		const double ei = etai[i-N_megno];
+		s_x  = (s_x  - pji.m * pji.x ) * ei;
+		s_y  = (s_y  - pji.m * pji.y ) * ei;
+		s_z  = (s_z  - pji.m * pji.z ) * ei;
+		particles[i].x  = pji.x  + s_x ;
+		particles[i].y  = pji.y  + s_y ;
+		particles[i].z  = pji.z  + s_z ;
+		s_x  *= eta[i-1];
+		s_y  *= eta[i-1];
+		s_z  *= eta[i-1];
 	}
-	particles[N_megno].x = p_j[N_megno].x - s_x;
-	particles[N_megno].y = p_j[N_megno].y - s_y;
-	particles[N_megno].z = p_j[N_megno].z - s_z;
+	const double mi = 1./particles[N_megno].m;
+	particles[N_megno].x  = s_x  * mi;
+	particles[N_megno].y  = s_y  * mi;
+	particles[N_megno].z  = s_z  * mi;
 }
 
 /***************************** 
