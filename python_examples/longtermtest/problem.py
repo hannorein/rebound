@@ -82,10 +82,11 @@ def simulation(par):
     es = []
 
     for time in times:
-        if integrator=="ias15":
-            rebound.integrate(time,exactFinishTime=1)
-        else:
-            rebound.integrate(time,exactFinishTime=0)
+        #if integrator=="ias15":
+        #    rebound.integrate(time,exactFinishTime=1)
+        #else:
+        #    rebound.integrate(time,exactFinishTime=0)
+        rebound.integrate(time,exactFinishTime=0)
         ef = energy()
         e = np.fabs((ei-ef)/ei)+1.1e-16
         es.append(e)
