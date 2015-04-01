@@ -482,12 +482,12 @@ static void integrator_var_to_inertial_posvel(){
 		particles[i].vx = pji.vx + s_vx;
 		particles[i].vy = pji.vy + s_vy;
 		particles[i].vz = pji.vz + s_vz;
-		s_x  *= eta[i-1];
-		s_y  *= eta[i-1];
-		s_z  *= eta[i-1];
-		s_vx *= eta[i-1];
-		s_vy *= eta[i-1];
-		s_vz *= eta[i-1];
+		s_x  *= eta[i-N_megno-1];
+		s_y  *= eta[i-N_megno-1];
+		s_z  *= eta[i-N_megno-1];
+		s_vx *= eta[i-N_megno-1];
+		s_vy *= eta[i-N_megno-1];
+		s_vz *= eta[i-N_megno-1];
 	}
 	const double mi = etai[0];
 	particles[N_megno].x  = s_x  * mi;
@@ -521,9 +521,9 @@ static void integrator_to_inertial_pos(){
 	particles[0].z  = s_z  * mi;
 }
 static void integrator_var_to_inertial_pos(){
-	double s_x  = p_j[N_megno].x  * Mtotal; 
-	double s_y  = p_j[N_megno].y  * Mtotal; 
-	double s_z  = p_j[N_megno].z  * Mtotal; 
+	double s_x  = p_j[0].x  * Mtotal; 
+	double s_y  = p_j[0].y  * Mtotal; 
+	double s_z  = p_j[0].z  * Mtotal; 
 	for (unsigned int i=N-1;i>N_megno;i--){
 		const struct particle pji = p_j[i];
 		const double ei = etai[i-N_megno];
@@ -533,9 +533,9 @@ static void integrator_var_to_inertial_pos(){
 		particles[i].x  = pji.x  + s_x ;
 		particles[i].y  = pji.y  + s_y ;
 		particles[i].z  = pji.z  + s_z ;
-		s_x  *= eta[i-1];
-		s_y  *= eta[i-1];
-		s_z  *= eta[i-1];
+		s_x  *= eta[i-N_megno-1];
+		s_y  *= eta[i-N_megno-1];
+		s_z  *= eta[i-N_megno-1];
 	}
 	const double mi = etai[0];
 	particles[N_megno].x  = s_x  * mi;
