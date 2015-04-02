@@ -117,7 +117,11 @@ void particles_add_fixed(struct particle pt,int pos){
 #endif // TREE
 }
 
-
+#ifdef LIBREBOUND
+int particles_get_rootbox_for_particle(struct particle pt){
+	return 0;
+}
+#else // LIBREBOUND
 int particles_get_rootbox_for_particle(struct particle pt){
 	int i = ((int)floor((pt.x + boxsize_x/2.)/boxsize)+root_nx)%root_nx;
 	int j = ((int)floor((pt.y + boxsize_y/2.)/boxsize)+root_ny)%root_ny;
@@ -125,4 +129,4 @@ int particles_get_rootbox_for_particle(struct particle pt){
 	int index = (k*root_ny+j)*root_nx+i;
 	return index;
 }
-
+#endif // LIBREBOUND

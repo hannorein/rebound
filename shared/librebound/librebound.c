@@ -210,33 +210,3 @@ void integrate(double _tmax, int exactFinishTime){
 	timing = timing_final-timing_initial;
 }
 	 
-// The following code is needed to leave the original REBOUND files unchanged. 
-// Currently the librebound library only supports an infinitely large box.
-// Infinite box size
-int root_nx = 1;
-int root_ny = 1;
-int root_nz = 1;
-double boxsize = 0;
-double boxsize_x = 0;
-double boxsize_y = 0;
-double boxsize_z = 0;
-
-int boundaries_particle_is_in_box(struct particle p){
-	return 1;
-}
-
-// No ghost boxes for now.
-int nghostx = 0;	
-int nghosty = 0;
-int nghostz = 0;
-
-struct ghostbox boundaries_get_ghostbox(int i, int j, int k){
-	struct ghostbox gb;
-	gb.shiftx = 0;
-	gb.shifty = 0;
-	gb.shiftz = 0;
-	gb.shiftvx = 0;
-	gb.shiftvy = 0;
-	gb.shiftvz = 0;
-	return gb;
-}
