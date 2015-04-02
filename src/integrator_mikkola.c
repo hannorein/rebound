@@ -51,6 +51,7 @@
 
 // These variables have no effect for constant timestep integrators.
 int integrator_force_is_velocitydependent 	= 1;
+int integrator_masses_are_constant		= 0;
 double integrator_epsilon 			= 0;
 double integrator_min_dt 			= 0;
 
@@ -323,14 +324,13 @@ static void integrator_to_jacobi_posvel(){
 	for (unsigned int i=1;i<N-N_megno;i++){
 		const double ei = etai[i-1];
 		const struct particle pi = particles[i];
-		const double pme = eta[i]*etai[i-1];
+		const double pme = eta[i]*ei;
 		p_j[i].x = pi.x - s_x*ei;
 		p_j[i].y = pi.y - s_y*ei;
 		p_j[i].z = pi.z - s_z*ei;
 		p_j[i].vx = pi.vx - s_vx*ei;
 		p_j[i].vy = pi.vy - s_vy*ei;
 		p_j[i].vz = pi.vz - s_vz*ei;
-		p_j[i].m = pi.m;
 		s_x  = s_x  * pme + pi.m*p_j[i].x ;
 		s_y  = s_y  * pme + pi.m*p_j[i].y ;
 		s_z  = s_z  * pme + pi.m*p_j[i].z ;
@@ -344,7 +344,6 @@ static void integrator_to_jacobi_posvel(){
 	p_j[0].vx = s_vx * Mtotali;
 	p_j[0].vy = s_vy * Mtotali;
 	p_j[0].vz = s_vz * Mtotali;
-	p_j[0].m = particles[0].m;
 }
 
 static void integrator_var_to_jacobi_posvel(){
@@ -357,14 +356,13 @@ static void integrator_var_to_jacobi_posvel(){
 	for (unsigned int i=1+N_megno;i<N;i++){
 		const double ei = etai[i-1-N_megno];
 		const struct particle pi = particles[i];
-		const double pme = eta[i-N_megno]*etai[i-1-N_megno];
+		const double pme = eta[i-N_megno]*ei;
 		p_j[i].x = pi.x - s_x*ei;
 		p_j[i].y = pi.y - s_y*ei;
 		p_j[i].z = pi.z - s_z*ei;
 		p_j[i].vx = pi.vx - s_vx*ei;
 		p_j[i].vy = pi.vy - s_vy*ei;
 		p_j[i].vz = pi.vz - s_vz*ei;
-		p_j[i].m = pi.m;
 		s_x  = s_x  * pme + pi.m*p_j[i].x ;
 		s_y  = s_y  * pme + pi.m*p_j[i].y ;
 		s_z  = s_z  * pme + pi.m*p_j[i].z ;
@@ -378,7 +376,6 @@ static void integrator_var_to_jacobi_posvel(){
 	p_j[N_megno].vx = s_vx * Mtotali;
 	p_j[N_megno].vy = s_vy * Mtotali;
 	p_j[N_megno].vz = s_vz * Mtotali;
-	p_j[N_megno].m = particles[N_megno].m;
 }
 
 
@@ -389,7 +386,7 @@ static void integrator_to_jacobi_acc(){
 	for (unsigned int i=1;i<N-N_megno;i++){
 		const double ei = etai[i-1];
 		const struct particle pi = particles[i];
-		const double pme = eta[i]*etai[i-1];
+		const double pme = eta[i]*ei;
 		p_j[i].ax = pi.ax - s_ax*ei;
 		p_j[i].ay = pi.ay - s_ay*ei;
 		p_j[i].az = pi.az - s_az*ei;
@@ -409,7 +406,7 @@ static void integrator_var_to_jacobi_acc(){
 	for (unsigned int i=1+N_megno;i<N;i++){
 		const double ei = etai[i-1-N_megno];
 		const struct particle pi = particles[i];
-		const double pme = eta[i-N_megno]*etai[i-1-N_megno];
+		const double pme = eta[i-N_megno]*ei;
 		p_j[i].ax = pi.ax - s_ax*ei;
 		p_j[i].ay = pi.ay - s_ay*ei;
 		p_j[i].az = pi.az - s_az*ei;
@@ -582,25 +579,34 @@ static void integrator_interaction(double _dt){
 
 unsigned int integrator_allocated_N = 0;
 void integrator_mikkola_init(){
+	int recalculate_masses = !integrator_masses_are_constant;
 	if (integrator_allocated_N != N){
 		integrator_allocated_N = N;
 		p_j = realloc(p_j,sizeof(struct particle)*N);
 		eta = realloc(eta,sizeof(double)*(N-N_megno));
 		etai= realloc(etai,sizeof(double)*(N-N_megno));
+		recalculate_masses = 1;
+	}
+	if (recalculate_masses){
+		eta[0] = particles[0].m;
+		etai[0] = 1./eta[0];
+		p_j[0].m = particles[0].m;
+		for (unsigned int i=1;i<N-N_megno;i++){
+			eta[i] = eta[i-1] + particles[i].m;
+			etai[i] = 1./eta[i];
+			p_j[i].m = particles[i].m;
+		}
+		for (unsigned int i=N_megno;i<N;i++){
+			p_j[i].m = particles[i].m;
+		}
+		Mtotal  = eta[N-N_megno-1];
+		Mtotali = etai[N-N_megno-1];
 	}
 }
 /***************************** 
  * KDK Scheme                */
 void integrator_part1(){
 	integrator_mikkola_init();
-	eta[0] = particles[0].m;
-	etai[0] = 1./eta[0];
-	for (unsigned int i=1;i<N-N_megno;i++){
-		eta[i] = eta[i-1] + particles[i].m;
-		etai[i] = 1./eta[i];
-	}
-	Mtotal  = eta[N-N_megno-1];
-	Mtotali = etai[N-N_megno-1];
 	integrator_to_jacobi_posvel();
 	if (N_megno){
 		integrator_var_to_jacobi_posvel();
@@ -695,6 +701,7 @@ void integrator_part2(){
 	
 
 void integrator_reset(){
+	integrator_masses_are_constant = 0;
 	integrator_allocated_N = 0;
 	integrator_timestep_warning = 0;
 	free(p_j);

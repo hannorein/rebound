@@ -18,6 +18,7 @@ def simulation(par):
     saturn_a, saturn_e = par
     rebound.reset()
     rebound.set_integrator("mikkola")
+    rebound.set_masses_are_constant(1)
     rebound.set_min_dt(5.)
     rebound.set_dt(1.)
     

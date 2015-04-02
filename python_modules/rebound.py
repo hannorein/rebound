@@ -451,7 +451,13 @@ def set_integrator(integrator="IAS15"):
         if integrator.lower() == "leap-frog":
             set_integrator(3)
             return
-    print("Warning. Intergrator not found.\n")
+    raise ValueError("Warning. Intergrator not found.")
+
+def set_masses_are_constant(constant=0):
+    if isinstance(constant, int):
+        c_int.in_dll(librebound, "integrator_masses_are_constant").value = constant
+        return
+    raise ValueError("Expecting integer.")
 
 
 # Integration
