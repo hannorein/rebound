@@ -79,14 +79,14 @@ void gravity_calculate_acceleration(){
 	for (int i=_N_start; i<_N_active; i++){
 	for (int j=i+1; j<_N_active; j++){
 		if (selected_integrator==1 && j==1 && i==0 ) continue;
-		if (i==j) continue;
-		double dx = particles[i].x - particles[j].x;
-		double dy = particles[i].y - particles[j].y;
-		double dz = particles[i].z - particles[j].z;
-		double r2 = dx*dx + dy*dy + dz*dz + softening*softening;
-		double r = sqrt(r2);
-		double prefacti = -G/(r2*r)*particles[i].m;
-		double prefactj = -G/(r2*r)*particles[j].m;
+		const double dx = particles[i].x - particles[j].x;
+		const double dy = particles[i].y - particles[j].y;
+		const double dz = particles[i].z - particles[j].z;
+		const double r2 = dx*dx + dy*dy + dz*dz + softening*softening;
+		const double r = sqrt(r2);
+		const double prefact  = -G/(r2*r);
+		const double prefacti = prefact*particles[i].m;
+		const double prefactj = prefact*particles[j].m;
 		
 		{
 		double ax = particles[i].ax;
@@ -128,13 +128,12 @@ void gravity_calculate_acceleration(){
 	for (int i=_N_active; i<_N_real; i++){
 	for (int j=_N_start; j<_N_active; j++){
 		if (selected_integrator==1 && ((i==1 && j==0) || (j==1 && i==0)) ) continue;
-		if (i==j) continue;
-		double dx = particles[i].x - particles[j].x;
-		double dy = particles[i].y - particles[j].y;
-		double dz = particles[i].z - particles[j].z;
-		double r2 = dx*dx + dy*dy + dz*dz + softening*softening;
-		double r = sqrt(r2);
-		double prefact = -G/(r2*r)*particles[j].m;
+		const double dx = particles[i].x - particles[j].x;
+		const double dy = particles[i].y - particles[j].y;
+		const double dz = particles[i].z - particles[j].z;
+		const double r2 = dx*dx + dy*dy + dz*dz + softening*softening;
+		const double r = sqrt(r2);
+		const double prefact = -G/(r2*r)*particles[j].m;
 		
 		double ax = particles[i].ax;
 		cs[i].x  +=	prefact*dx; 
