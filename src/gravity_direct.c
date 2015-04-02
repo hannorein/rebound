@@ -71,7 +71,6 @@ void gravity_calculate_acceleration(){
 		cs[i].y = 0.;
 		cs[i].z = 0.;
 	}
-	// Summing over all Ghost Boxes
 	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
 	const int _N_start  = (selected_integrator==2?1:0);
 	// Summing over all massive particle pairs
@@ -125,6 +124,7 @@ void gravity_calculate_acceleration(){
 	}
 	}
 	// Testparticles
+#pragma omp parallel for schedule(guided)
 	for (int i=_N_active; i<_N_real; i++){
 	for (int j=_N_start; j<_N_active; j++){
 		if (selected_integrator==1 && ((i==1 && j==0) || (j==1 && i==0)) ) continue;
