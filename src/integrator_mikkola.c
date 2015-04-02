@@ -520,6 +520,7 @@ static void integrator_to_inertial_pos(){
 	particles[0].y  = s_y  * mi;
 	particles[0].z  = s_z  * mi;
 }
+
 static void integrator_var_to_inertial_pos(){
 	double s_x  = p_j[0].x  * Mtotal; 
 	double s_y  = p_j[0].y  * Mtotal; 
@@ -646,16 +647,53 @@ void integrator_part2(){
 	p_j[0].z += dt/2.*p_j[0].vz;
 	integrator_to_inertial_posvel();
 	
+	t+=dt/2.;
+
 	if (N_megno){
 		p_j[N_megno].x += dt/2.*p_j[N_megno].vx;
 		p_j[N_megno].y += dt/2.*p_j[N_megno].vy;
 		p_j[N_megno].z += dt/2.*p_j[N_megno].vz;
 		integrator_var_to_inertial_posvel();
-	}
+		
+		for (int i=N_megno;i<N;i++){
+			particles[i].ax = 0;
+			particles[i].ay = 0;
+			particles[i].az = 0;
+		}
+		gravity_calculate_variational_acceleration();
+		// Add additional acceleration term for MEGNO calculation
+		int i = N-N_megno;
+		int j = N-N_megno+1;
+		const double dx = particles[i-N/2].x - particles[j-N/2].x;
+		const double dy = particles[i-N/2].y - particles[j-N/2].y;
+		const double dz = particles[i-N/2].z - particles[j-N/2].z;
+		const double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
+		const double r3inv = 1./(r*r*r);
+		const double r5inv = 3./(r*r*r*r*r);
+		const double ddx = particles[i].x - particles[j].x;
+		const double ddy = particles[i].y - particles[j].y;
+		const double ddz = particles[i].z - particles[j].z;
+		const double Gmi = G * particles[i].m;
+		const double Gmj = G * particles[j].m;
+		const double dax =   ddx * ( dx*dx*r5inv - r3inv )
+				   + ddy * ( dx*dy*r5inv )
+				   + ddz * ( dx*dz*r5inv );
+		const double day =   ddx * ( dy*dx*r5inv )
+				   + ddy * ( dy*dy*r5inv - r3inv )
+				   + ddz * ( dy*dz*r5inv );
+		const double daz =   ddx * ( dz*dx*r5inv )
+				   + ddy * ( dz*dy*r5inv )
+				   + ddz * ( dz*dz*r5inv - r3inv );
+		
+		particles[i].ax += Gmj * dax;
+		particles[i].ay += Gmj * day;
+		particles[i].az += Gmj * daz;
+		
+		particles[j].ax -= Gmi * dax;
+		particles[j].ay -= Gmi * day;
+		particles[j].az -= Gmi * daz;
 
-	t+=dt/2.;
-	
-	if (N_megno){
+		// Update MEGNO in middle of timestep as we need synchonized x/v/a.
 		double dY = dt * 2. * t * tools_megno_deltad_delta();
 		tools_megno_update(dY);
 	}
