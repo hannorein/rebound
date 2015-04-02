@@ -17,7 +17,7 @@ def simulation(integrator):
     f = open(integrator+".txt","w")
     rebound.reset()
     rebound.set_integrator(integrator)
-    rebound.set_dt(0.01)
+    rebound.set_dt(0.2)
         
     rebound.add_particle(m=1.)
     rebound.add_particle(m=0.01, a=1,e=0.1)
