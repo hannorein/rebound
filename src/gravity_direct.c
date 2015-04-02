@@ -46,15 +46,15 @@
 #endif
 
 void gravity_calculate_acceleration(){
+	const int _N_real   = N - N_megno;
 #pragma omp parallel for schedule(guided)
-	for (int i=0; i<N; i++){
+	for (int i=0; i<_N_real; i++){
 		particles[i].ax = 0; 
 		particles[i].ay = 0; 
 		particles[i].az = 0; 
 	}
 	// Summing over all Ghost Boxes
 	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
-	const int _N_real   = N - N_megno;
 	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
 	for (int gby=-nghosty; gby<=nghosty; gby++){
 	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
@@ -106,11 +106,18 @@ void gravity_calculate_acceleration(){
 }
 
 void gravity_calculate_variational_acceleration(){
+	const int _N_real   = N - N_megno;
 #pragma omp parallel for schedule(guided)
-	for (int i=N-N_megno+0; i<N; i++){
-	for (int j=N-N_megno+0; j<N; j++){
-		if (selected_integrator==1 && i==N-N_megno+1 && j==N-N_megno) continue;
-		if (selected_integrator==1 && j==N-N_megno+1 && i==N-N_megno) continue;
+	for (int i=_N_real; i<N; i++){
+		particles[i].ax = 0; 
+		particles[i].ay = 0; 
+		particles[i].az = 0; 
+	}
+#pragma omp parallel for schedule(guided)
+	for (int i=_N_real; i<N; i++){
+	for (int j=_N_real; j<N; j++){
+		if (selected_integrator==1 && i==_N_real+1 && j==_N_real) continue;
+		if (selected_integrator==1 && j==_N_real+1 && i==_N_real) continue;
 		if (i==j) continue;
 		const double dx = particles[i-N/2].x - particles[j-N/2].x;
 		const double dy = particles[i-N/2].y - particles[j-N/2].y;

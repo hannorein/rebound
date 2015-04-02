@@ -654,12 +654,6 @@ void integrator_part2(){
 		p_j[N_megno].y += dt/2.*p_j[N_megno].vy;
 		p_j[N_megno].z += dt/2.*p_j[N_megno].vz;
 		integrator_var_to_inertial_posvel();
-		
-		for (int i=N_megno;i<N;i++){
-			particles[i].ax = 0;
-			particles[i].ay = 0;
-			particles[i].az = 0;
-		}
 		gravity_calculate_variational_acceleration();
 		// Add additional acceleration term for MEGNO calculation
 		int i = N-N_megno;
