@@ -45,6 +45,118 @@
 #warning Make sure you know what the code is doing. Have a look at the example restricted_threebody_mpi.
 #endif
 
+struct cs_3d {
+	double x;
+	double y;
+	double z;
+};
+
+
+#ifdef LIBREBOUND
+static struct cs_3d* restrict cs = NULL;
+static int N_cs = 0;
+
+void gravity_calculate_acceleration(){
+	const int _N_real   = N - N_megno;
+	if (N_cs<_N_real){
+		cs = realloc(cs,_N_real*sizeof(struct cs_3d));
+		N_cs = _N_real;
+	}
+#pragma omp parallel for schedule(guided)
+	for (int i=0; i<_N_real; i++){
+		particles[i].ax = 0.; 
+		particles[i].ay = 0.; 
+		particles[i].az = 0.; 
+		cs[i].x = 0.;
+		cs[i].y = 0.;
+		cs[i].z = 0.;
+	}
+	// Summing over all Ghost Boxes
+	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
+	const int _N_start  = (selected_integrator==2?1:0);
+	// Summing over all massive particle pairs
+#pragma omp parallel for schedule(guided)
+	for (int i=_N_start; i<_N_active; i++){
+	for (int j=i+1; j<_N_active; j++){
+		if (selected_integrator==1 && j==1 && i==0 ) continue;
+		if (i==j) continue;
+		double dx = particles[i].x - particles[j].x;
+		double dy = particles[i].y - particles[j].y;
+		double dz = particles[i].z - particles[j].z;
+		double r2 = dx*dx + dy*dy + dz*dz + softening*softening;
+		double r = sqrt(r2);
+		double prefacti = -G/(r2*r)*particles[i].m;
+		double prefactj = -G/(r2*r)*particles[j].m;
+		
+		{
+		double ax = particles[i].ax;
+		cs[i].x  +=	prefactj*dx; 
+		particles[i].ax    = ax + cs[i].x;
+		cs[i].x  += ax - particles[i].ax; 
+		
+		double ay = particles[i].ay;
+		cs[i].y  +=	prefactj*dy; 
+		particles[i].ay    = ay + cs[i].y;
+		cs[i].y  += ay - particles[i].ay; 
+		
+		double az = particles[i].az;
+		cs[i].z  +=	prefactj*dz; 
+		particles[i].az    = az + cs[i].z;
+		cs[i].z  += az - particles[i].az; 
+		}
+		
+		{
+		double ax = particles[j].ax;
+		cs[j].x  -=	prefacti*dx; 
+		particles[j].ax    = ax + cs[j].x;
+		cs[j].x  += ax - particles[j].ax; 
+		
+		double ay = particles[j].ay;
+		cs[j].y  -=	prefacti*dy; 
+		particles[j].ay    = ay + cs[j].y;
+		cs[j].y  += ay - particles[j].ay; 
+		
+		double az = particles[j].az;
+		cs[j].z  -=	prefacti*dz; 
+		particles[j].az    = az + cs[j].z;
+		cs[j].z  += az - particles[j].az; 
+		}
+		
+	}
+	}
+	// Testparticles
+	for (int i=_N_active; i<_N_real; i++){
+	for (int j=_N_start; j<_N_active; j++){
+		if (selected_integrator==1 && ((i==1 && j==0) || (j==1 && i==0)) ) continue;
+		if (i==j) continue;
+		double dx = particles[i].x - particles[j].x;
+		double dy = particles[i].y - particles[j].y;
+		double dz = particles[i].z - particles[j].z;
+		double r2 = dx*dx + dy*dy + dz*dz + softening*softening;
+		double r = sqrt(r2);
+		double prefact = -G/(r2*r)*particles[j].m;
+		
+		double ax = particles[i].ax;
+		cs[i].x  +=	prefact*dx; 
+		particles[i].ax    = ax + cs[i].x;
+		cs[i].x  += ax - particles[i].ax; 
+		
+		double ay = particles[i].ay;
+		cs[i].y  +=	prefact*dy; 
+		particles[i].ay    = ay + cs[i].y;
+		cs[i].y  += ay - particles[i].ay; 
+		
+		double az = particles[i].az;
+		cs[i].z  +=	prefact*dz; 
+		particles[i].az    = az + cs[i].z;
+		cs[i].z  += az - particles[i].az; 
+	}
+	}
+		
+}
+
+#else // LIBREBOUND
+
 void gravity_calculate_acceleration(){
 	const int _N_real   = N - N_megno;
 #pragma omp parallel for schedule(guided)
@@ -56,12 +168,10 @@ void gravity_calculate_acceleration(){
 	// Summing over all Ghost Boxes
 	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
 	const int _N_start  = (selected_integrator==2?1:0);
-#ifndef LIBREBOUND
 	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
 	for (int gby=-nghosty; gby<=nghosty; gby++){
 	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
 		struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
-#endif // LIBREBOUND
 		// Summing over all particle pairs
 #pragma omp parallel for schedule(guided)
 		for (int i=_N_start; i<_N_real; i++){
@@ -71,15 +181,9 @@ void gravity_calculate_acceleration(){
 		for (int j=_N_start; j<_N_active; j++){
 			if (selected_integrator==1 && ((i==1 && j==0) || (j==1 && i==0)) ) continue;
 			if (i==j) continue;
-#ifdef LIBREBOUND
-			double dx = particles[i].x - particles[j].x;
-			double dy = particles[i].y - particles[j].y;
-			double dz = particles[i].z - particles[j].z;
-#else // LIBREBOUND
 			double dx = (gb.shiftx+particles[i].x) - particles[j].x;
 			double dy = (gb.shifty+particles[i].y) - particles[j].y;
 			double dz = (gb.shiftz+particles[i].z) - particles[j].z;
-#endif // LIBREBOUND
 			double r2 = dx*dx + dy*dy + dz*dz + softening*softening;
 			double r = sqrt(r2);
 			double prefact = -G/(r2*r)*particles[j].m;
@@ -101,11 +205,9 @@ void gravity_calculate_acceleration(){
 			
 		}
 		}
-#ifndef LIBREBOUND
 	}
 	}
 	}
-#endif // LIBREBOUND
 #ifdef MPI
 	// Distribute active particles from root to all other nodes.
 	// This assures that round-off errors do not accumulate and 
@@ -114,6 +216,8 @@ void gravity_calculate_acceleration(){
 #endif
 
 }
+
+#endif // LIBREBOUND
 
 void gravity_calculate_variational_acceleration(){
 	const int _N_real   = N - N_megno;
