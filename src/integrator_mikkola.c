@@ -667,9 +667,10 @@ void integrator_part2(){
 		const double dx = particles[i-N/2].x - particles[j-N/2].x;
 		const double dy = particles[i-N/2].y - particles[j-N/2].y;
 		const double dz = particles[i-N/2].z - particles[j-N/2].z;
-		const double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
-		const double r3inv = 1./(r*r*r);
-		const double r5inv = 3./(r*r*r*r*r);
+		const double r2 = dx*dx + dy*dy + dz*dz + softening*softening;
+		const double r  = sqrt(r2);
+		const double r3inv = 1./(r2*r);
+		const double r5inv = 3.*r3inv/r2;
 		const double ddx = particles[i].x - particles[j].x;
 		const double ddy = particles[i].y - particles[j].y;
 		const double ddz = particles[i].z - particles[j].z;
