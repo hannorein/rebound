@@ -51,7 +51,7 @@
 
 // These variables have no effect for constant timestep integrators.
 int integrator_force_is_velocitydependent 	= 1;
-int integrator_masses_are_constant		= 0;
+int integrator_inertial_frame			= 0;
 double integrator_epsilon 			= 0;
 double integrator_min_dt 			= 0;
 
@@ -575,8 +575,10 @@ static void integrator_interaction(double _dt){
 }
 
 unsigned int integrator_allocated_N = 0;
-void integrator_mikkola_init(){
-	int recalculate_masses = !integrator_masses_are_constant;
+/***************************** 
+ * KDK Scheme                */
+void integrator_part1(){
+	int recalculate_masses = !integrator_inertial_frame;
 	if (integrator_allocated_N != N){
 		integrator_allocated_N = N;
 		p_j = realloc(p_j,sizeof(struct particle)*N);
@@ -598,15 +600,11 @@ void integrator_mikkola_init(){
 		}
 		Mtotal  = eta[N-N_megno-1];
 		Mtotali = etai[N-N_megno-1];
-	}
-}
-/***************************** 
- * KDK Scheme                */
-void integrator_part1(){
-	integrator_mikkola_init();
-	integrator_to_jacobi_posvel();
-	if (N_megno){
-		integrator_var_to_jacobi_posvel();
+		// Only recalculate Jacobi coordinates if needed
+		integrator_to_jacobi_posvel();
+		if (N_megno){
+			integrator_var_to_jacobi_posvel();
+		}
 	}
 
 	for (unsigned int i=1;i<N-N_megno;i++){
@@ -699,7 +697,7 @@ void integrator_part2(){
 	
 
 void integrator_reset(){
-	integrator_masses_are_constant = 0;
+	integrator_inertial_frame = 0;
 	integrator_allocated_N = 0;
 	integrator_timestep_warning = 0;
 	free(p_j);

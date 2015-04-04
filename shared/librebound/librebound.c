@@ -60,11 +60,9 @@ extern void integrator_ias15_reset();
 extern void integrator_mikkola_part1();
 extern void integrator_mikkola_part2();
 extern void integrator_mikkola_reset();
-extern void integrator_mikkola_init();
 extern void integrator_wh_part1();
 extern void integrator_wh_part2();
 extern void integrator_wh_reset();
-extern void integrator_wh_init();
 extern void integrator_leapfrog_part1();
 extern void integrator_leapfrog_part2();
 extern void integrator_leapfrog_reset();
@@ -89,16 +87,6 @@ struct particle* particles_get(){
 }
 void set_additional_forces(void (* _cb)()){
 	problem_additional_forces = _cb;
-}
-void init_integrator(){
-	switch(selected_integrator){
-		case 1:
-			integrator_mikkola_init();
-			break;
-		case 2:
-			integrator_wh_init();
-			break;
-	}
 }
 double timing;
 // Integrate for 1 step

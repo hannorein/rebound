@@ -49,13 +49,15 @@ void integrator_part2();
 extern int integrator_force_is_velocitydependent;
 
 /* 
- * Flag determining if the integrator needs to reevaluate the mass of 
- * each particle at every timestep. This is only relevant for MIKKOLA 
- * as of now. Set this to 1 if the masses of all particles stay constant
- * during the entire simulation.
+ * Flag determining if the integrator needs to recalculate the Jacobi
+ * coordinates of each particle at every timestep. This is only relevant 
+ * for MIKKOLA as of now. Set this to 1 if the masses of all particles 
+ * stay constant during the entire simulation and the positions and 
+ * velocity of particles are not changed between timesteps.
+ * Setting this to 1 results in a speed and accuracy increase.
  * Default is 0.
  **/ 
-extern int integrator_masses_are_constant;
+extern int integrator_intertial_frame;
 
 /*
  * This parameter controls the accuracy of an adaptive integrator.
