@@ -559,7 +559,7 @@ static void integrator_interaction(double _dt){
 		}
 		if (N_megno){
 			// Eq 132
-			double rj5 = rj3i*r2i;
+			double rj5 = rj3i*rj2i;
 			double rdr = p_j[i+N_megno].x*pji.x + p_j[i+N_megno].y*pji.y + p_j[i+N_megno].z*pji.z;
 			double prefac2 = -_dt*M*3.*rdr*rj5;
 			p_j[i+N_megno].vx += _dt * p_j[i+N_megno].ax;
