@@ -39,7 +39,7 @@ a = np.array([7.,10.])   # range of saturn semi-major axis in AU
 e = np.array([0.,0.5])   # range of saturn eccentricity
 
 # Setup plots
-f, axarr = plt.subplots(2,figsize=(10,10))
+f, axarr = plt.subplots(2,figsize=(10,8))
 extent = [a.min(), a.max(), e.min(), e.max()]
 for ax in axarr:
     ax.set_xlim(extent[0],extent[1])
