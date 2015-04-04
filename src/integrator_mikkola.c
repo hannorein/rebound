@@ -394,9 +394,7 @@ static void integrator_to_jacobi_acc(){
 		s_ay = s_ay * pme + pi.m*p_j[i].ay;
 		s_az = s_az * pme + pi.m*p_j[i].az;
 	}
-	p_j[0].ax = s_ax * Mtotali;
-	p_j[0].ay = s_ay * Mtotali;
-	p_j[0].az = s_az * Mtotali;
+	// p_j[0].a is not needed and thus not calculated 
 }
 
 static void integrator_var_to_jacobi_acc(){
@@ -414,9 +412,7 @@ static void integrator_var_to_jacobi_acc(){
 		s_ay = s_ay * pme + pi.m*p_j[i].ay;
 		s_az = s_az * pme + pi.m*p_j[i].az;
 	}
-	p_j[N_megno].ax = s_ax * Mtotali;
-	p_j[N_megno].ay = s_ay * Mtotali;
-	p_j[N_megno].az = s_az * Mtotali;
+	// p_j[N_megno].a is not needed and thus not calculated 
 }
 
 static void integrator_to_inertial_posvel(){
