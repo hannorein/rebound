@@ -544,10 +544,11 @@ static void integrator_interaction(double _dt){
 	for (unsigned int i=1;i<N-N_megno;i++){
 		// Eq 132
 		struct particle pji = p_j[i];
-		double rj  = pow(pji.x*pji.x + pji.y*pji.y + pji.z*pji.z,-1./2.);
-		double rj3 = rj*rj*rj;
+		double rj2i  = 1./(pji.x*pji.x + pji.y*pji.y + pji.z*pji.z);
+		double rji  = sqrt(rj2i);
+		double rj3i = rji*rj2i;
 		double M = _M(i);
-		double prefac1 = _dt*M*rj3;
+		double prefac1 = _dt*M*rj3i;
 		p_j[i].vx += _dt * pji.ax;
 		p_j[i].vy += _dt * pji.ay;
 		p_j[i].vz += _dt * pji.az;
@@ -558,7 +559,7 @@ static void integrator_interaction(double _dt){
 		}
 		if (N_megno){
 			// Eq 132
-			double rj5 = rj3*rj*rj;
+			double rj5 = rj3i*r2i;
 			double rdr = p_j[i+N_megno].x*pji.x + p_j[i+N_megno].y*pji.y + p_j[i+N_megno].z*pji.z;
 			double prefac2 = -_dt*M*3.*rdr*rj5;
 			p_j[i+N_megno].vx += _dt * p_j[i+N_megno].ax;
