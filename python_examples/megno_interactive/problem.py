@@ -16,7 +16,7 @@ def simulation(par):
     rebound.reset()
     rebound.set_integrator("mikkola")
     rebound.set_masses_are_constant(1)
-    rebound.set_min_dt(5.)
+    rebound.set_min_dt(10.)
     rebound.set_dt(1.)
     
     # These parameters are only approximately those of Jupiter and Saturn.
@@ -27,7 +27,7 @@ def simulation(par):
 
     rebound.move_to_center_of_momentum()
     rebound.init_megno(1e-16)
-    rebound.integrate(1e3*2.*np.pi)
+    rebound.integrate(5e2*2.*np.pi)
 
     return [rebound.get_megno(),1./(rebound.get_lyapunov()*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
 
