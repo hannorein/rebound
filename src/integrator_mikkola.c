@@ -598,29 +598,28 @@ void integrator_part1(){
 		etai= realloc(etai,sizeof(double)*(N-N_megno));
 		recalculate_masses = 1;
 	}
-	if (recalculate_masses){
-		eta[0] = particles[0].m;
-		etai[0] = 1./eta[0];
-		p_j[0].m = particles[0].m;
-		for (unsigned int i=1;i<N-N_megno;i++){
-			eta[i] = eta[i-1] + particles[i].m;
-			etai[i] = 1./eta[i];
-			p_j[i].m = particles[i].m;
-		}
-		for (unsigned int i=N_megno;i<N;i++){
-			p_j[i].m = particles[i].m;
-		}
-		Mtotal  = eta[N-N_megno-1];
-		Mtotali = etai[N-N_megno-1];
-		// Only recalculate Jacobi coordinates if needed
-		integrator_to_jacobi_posvel();
-		if (N_megno){
-			integrator_var_to_jacobi_posvel();
-		}
-	}
-	
 	double _dt = dt/2.;
 	if (integrator_synchronized){
+		if (recalculate_masses){
+			eta[0] = particles[0].m;
+			etai[0] = 1./eta[0];
+			p_j[0].m = particles[0].m;
+			for (unsigned int i=1;i<N-N_megno;i++){
+				eta[i] = eta[i-1] + particles[i].m;
+				etai[i] = 1./eta[i];
+				p_j[i].m = particles[i].m;
+			}
+			for (unsigned int i=N_megno;i<N;i++){
+				p_j[i].m = particles[i].m;
+			}
+			Mtotal  = eta[N-N_megno-1];
+			Mtotali = etai[N-N_megno-1];
+			// Only recalculate Jacobi coordinates if needed
+			integrator_to_jacobi_posvel();
+			if (N_megno){
+				integrator_var_to_jacobi_posvel();
+			}
+		}
 		integrator_kepler_drift(_dt);
 	}
 	if (integrator_force_is_velocitydependent){

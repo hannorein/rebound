@@ -168,16 +168,6 @@ void reset(){
 	srand ( tim.tv_usec + getpid());
 }
 
-int check_eject(){
-	// TODO: Remove this.
-	double x = particles[1].x;
-	double y = particles[1].y;
-	double z = particles[1].z;
-	if (sqrt(x*x + y*y + z*z)>100.){
-		return 1;
-	}
-	return 0;
-}
 // Integrate until t=_tmax
 void integrate(double _tmax, int exactFinishTime){
 	struct timeval tim;
@@ -193,21 +183,18 @@ void integrate(double _tmax, int exactFinishTime){
 		}
 		double t_beginning = t;	
 		integrator_part1();
-		if (t_beginning+dt>=tmax || last_step){
-			integrator_synchronized = 1;
-		}else{
-			integrator_synchronized = 0;
-		}
 		gravity_calculate_acceleration();
 		if (N_megno){
 			gravity_calculate_variational_acceleration();
 		}
 		if (problem_additional_forces) problem_additional_forces();
+		if (t_beginning+dt>=tmax || last_step){
+			integrator_synchronized = 1;
+		}else{
+			integrator_synchronized = 0;
+		}
 		integrator_part2();
 		
-		if (check_eject()){
-			return;
-		}
 		if (t+dt>=tmax && exactFinishTime==1){
 			dt = tmax-t;
 			last_step++;

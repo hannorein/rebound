@@ -7,7 +7,7 @@ from interruptible_pool import InterruptiblePool
 
 
 torb = 2.*np.pi
-tmax = 200.34476128*torb
+tmax = 20.34476128*torb
 
 def simulation(par):
     anom, dt, e, integrator = par
@@ -23,8 +23,6 @@ def simulation(par):
     rebound.add_particle(m=0., x=(1.-e), vy=np.sqrt((1.+e)/(1.-e)))
     particles = rebound.get_particles()
     
-    rebound.init_integrator()
-    
     Ei = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
 
     rebound.integrate(tmax,0)
@@ -36,7 +34,7 @@ def simulation(par):
 
 N = 20
 dts = np.linspace(-4,-1,N)
-e0s = np.linspace(0,6,N)
+e0s = np.linspace(0,4,N)
 integrators= ["wh","mikkola"]
 
 niter = []
@@ -44,9 +42,10 @@ energyerror = []
 timing = []
 
 for integrator in integrators:
+    print("Running "+ integrator)
     parameters = [(0., dts[i], e0s[j], integrator) for j in range(N) for i in range(N)]
 
-    pool = InterruptiblePool(16)
+    pool = InterruptiblePool(1)
     res = pool.map(simulation,parameters)
     res = np.nan_to_num(res)
     niter.append(res[:,0].reshape((N,N)))
