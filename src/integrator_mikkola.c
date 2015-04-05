@@ -51,7 +51,7 @@
 
 // These variables have no effect for constant timestep integrators.
 int integrator_force_is_velocitydependent 	= 1;
-int integrator_masses_are_constant		= 0;
+int integrator_inertial_frame			= 0;
 double integrator_epsilon 			= 0;
 double integrator_min_dt 			= 0;
 
@@ -394,9 +394,7 @@ static void integrator_to_jacobi_acc(){
 		s_ay = s_ay * pme + pi.m*p_j[i].ay;
 		s_az = s_az * pme + pi.m*p_j[i].az;
 	}
-	p_j[0].ax = s_ax * Mtotali;
-	p_j[0].ay = s_ay * Mtotali;
-	p_j[0].az = s_az * Mtotali;
+	// p_j[0].a is not needed and thus not calculated 
 }
 
 static void integrator_var_to_jacobi_acc(){
@@ -414,9 +412,7 @@ static void integrator_var_to_jacobi_acc(){
 		s_ay = s_ay * pme + pi.m*p_j[i].ay;
 		s_az = s_az * pme + pi.m*p_j[i].az;
 	}
-	p_j[N_megno].ax = s_ax * Mtotali;
-	p_j[N_megno].ay = s_ay * Mtotali;
-	p_j[N_megno].az = s_az * Mtotali;
+	// p_j[N_megno].a is not needed and thus not calculated 
 }
 
 static void integrator_to_inertial_posvel(){
@@ -548,10 +544,11 @@ static void integrator_interaction(double _dt){
 	for (unsigned int i=1;i<N-N_megno;i++){
 		// Eq 132
 		struct particle pji = p_j[i];
-		double rj  = pow(pji.x*pji.x + pji.y*pji.y + pji.z*pji.z,-1./2.);
-		double rj3 = rj*rj*rj;
+		double rj2i  = 1./(pji.x*pji.x + pji.y*pji.y + pji.z*pji.z);
+		double rji  = sqrt(rj2i);
+		double rj3i = rji*rj2i;
 		double M = _M(i);
-		double prefac1 = _dt*M*rj3;
+		double prefac1 = _dt*M*rj3i;
 		p_j[i].vx += _dt * pji.ax;
 		p_j[i].vy += _dt * pji.ay;
 		p_j[i].vz += _dt * pji.az;
@@ -562,7 +559,7 @@ static void integrator_interaction(double _dt){
 		}
 		if (N_megno){
 			// Eq 132
-			double rj5 = rj3*rj*rj;
+			double rj5 = rj3i*rj2i;
 			double rdr = p_j[i+N_megno].x*pji.x + p_j[i+N_megno].y*pji.y + p_j[i+N_megno].z*pji.z;
 			double prefac2 = -_dt*M*3.*rdr*rj5;
 			p_j[i+N_megno].vx += _dt * p_j[i+N_megno].ax;
@@ -578,8 +575,22 @@ static void integrator_interaction(double _dt){
 }
 
 unsigned int integrator_allocated_N = 0;
-void integrator_mikkola_init(){
-	int recalculate_masses = !integrator_masses_are_constant;
+unsigned int integrator_synchronized = 1;
+/***************************** 
+ * DKD Scheme                */
+
+void integrator_kepler_drift(double _dt){
+	for (unsigned int i=1;i<N-N_megno;i++){
+		kepler_step(i, _dt);
+	}
+	p_j[0].x += _dt*p_j[0].vx;
+	p_j[0].y += _dt*p_j[0].vy;
+	p_j[0].z += _dt*p_j[0].vz;
+}
+
+
+void integrator_part1(){
+	int recalculate_masses = !integrator_inertial_frame;
 	if (integrator_allocated_N != N){
 		integrator_allocated_N = N;
 		p_j = realloc(p_j,sizeof(struct particle)*N);
@@ -601,23 +612,17 @@ void integrator_mikkola_init(){
 		}
 		Mtotal  = eta[N-N_megno-1];
 		Mtotali = etai[N-N_megno-1];
+		// Only recalculate Jacobi coordinates if needed
+		integrator_to_jacobi_posvel();
+		if (N_megno){
+			integrator_var_to_jacobi_posvel();
+		}
 	}
-}
-/***************************** 
- * KDK Scheme                */
-void integrator_part1(){
-	integrator_mikkola_init();
-	integrator_to_jacobi_posvel();
-	if (N_megno){
-		integrator_var_to_jacobi_posvel();
+	
+	double _dt = dt/2.;
+	if (integrator_synchronized){
+		integrator_kepler_drift(_dt);
 	}
-
-	for (unsigned int i=1;i<N-N_megno;i++){
-		kepler_step(i, dt/2.);
-	}
-	p_j[0].x += dt/2.*p_j[0].vx;
-	p_j[0].y += dt/2.*p_j[0].vy;
-	p_j[0].z += dt/2.*p_j[0].vz;
 	if (integrator_force_is_velocitydependent){
 		integrator_to_inertial_posvel();
 	}else{
@@ -625,9 +630,9 @@ void integrator_part1(){
 	}
 	
 	if (N_megno){
-		p_j[N_megno].x += dt/2.*p_j[N_megno].vx;
-		p_j[N_megno].y += dt/2.*p_j[N_megno].vy;
-		p_j[N_megno].z += dt/2.*p_j[N_megno].vz;
+		p_j[N_megno].x += _dt*p_j[N_megno].vx;
+		p_j[N_megno].y += _dt*p_j[N_megno].vy;
+		p_j[N_megno].z += _dt*p_j[N_megno].vz;
 		if (integrator_force_is_velocitydependent){
 			integrator_var_to_inertial_posvel();
 		}else{
@@ -635,7 +640,7 @@ void integrator_part1(){
 		}
 	}
 
-	t+=dt/2.;
+	t+=_dt;
 }
 
 void integrator_part2(){
@@ -645,20 +650,20 @@ void integrator_part2(){
 	}
 	integrator_interaction(dt);
 
-	for (unsigned int i=1;i<N-N_megno;i++){
-		kepler_step(i, dt/2.);
+	double _dt = dt/2.;
+	if (integrator_synchronized){
+		integrator_kepler_drift(_dt);
+		integrator_to_inertial_posvel();
+	}else{
+		integrator_kepler_drift(dt);
 	}
-	p_j[0].x += dt/2.*p_j[0].vx;
-	p_j[0].y += dt/2.*p_j[0].vy;
-	p_j[0].z += dt/2.*p_j[0].vz;
-	integrator_to_inertial_posvel();
 	
-	t+=dt/2.;
+	t+=_dt;
 
 	if (N_megno){
-		p_j[N_megno].x += dt/2.*p_j[N_megno].vx;
-		p_j[N_megno].y += dt/2.*p_j[N_megno].vy;
-		p_j[N_megno].z += dt/2.*p_j[N_megno].vz;
+		p_j[N_megno].x += _dt*p_j[N_megno].vx;
+		p_j[N_megno].y += _dt*p_j[N_megno].vy;
+		p_j[N_megno].z += _dt*p_j[N_megno].vz;
 		integrator_var_to_inertial_posvel();
 		gravity_calculate_variational_acceleration();
 		// Add additional acceleration term for MEGNO calculation
@@ -702,7 +707,8 @@ void integrator_part2(){
 	
 
 void integrator_reset(){
-	integrator_masses_are_constant = 0;
+	integrator_synchronized = 1;
+	integrator_inertial_frame = 0;
 	integrator_allocated_N = 0;
 	integrator_timestep_warning = 0;
 	free(p_j);

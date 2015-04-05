@@ -12,6 +12,7 @@ def simulation(par):
     rebound.set_G(G)     
     rebound.set_dt(dt)
     rebound.set_integrator(integrator)
+    rebound.set_inertial_frame(1)
 
     rebound.add_particle(m=1.00000597682, x=-4.06428567034226e-3, y=-6.08813756435987e-3, z=-1.66162304225834e-6, vx=+6.69048890636161e-6, vy=-6.33922479583593e-6, vz=-3.13202145590767e-9)   # Sun
     rebound.add_particle(m=1./1047.355,   x=+3.40546614227466e+0, y=+3.62978190075864e+0, z=+3.42386261766577e-2, vx=-5.59797969310664e-3, vy=+5.51815399480116e-3, vz=-2.66711392865591e-6)   # Jupiter
@@ -97,10 +98,10 @@ def simulation(par):
 
 #3dt = 100.23
 dt = .1
-tmax = 365.*8e3
+tmax = 365.*1e3
 integrators = ["wh","mikkola","ias15"]
 colors = ["b","r","g"]
-trials = 10
+trials = 4
     
 parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]
 print "Running %d simulations" % (len(parameters))

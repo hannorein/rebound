@@ -37,6 +37,7 @@
 #include "particle.h"
 #include "main.h"
 #include "boundaries.h"
+#include "integrator.h"
 
 // Default values of parameters and constants
 double dt 	= 0.01;	
@@ -60,11 +61,9 @@ extern void integrator_ias15_reset();
 extern void integrator_mikkola_part1();
 extern void integrator_mikkola_part2();
 extern void integrator_mikkola_reset();
-extern void integrator_mikkola_init();
 extern void integrator_wh_part1();
 extern void integrator_wh_part2();
 extern void integrator_wh_reset();
-extern void integrator_wh_init();
 extern void integrator_leapfrog_part1();
 extern void integrator_leapfrog_part2();
 extern void integrator_leapfrog_reset();
@@ -90,26 +89,10 @@ struct particle* particles_get(){
 void set_additional_forces(void (* _cb)()){
 	problem_additional_forces = _cb;
 }
-void init_integrator(){
-	switch(selected_integrator){
-		case 1:
-			integrator_mikkola_init();
-			break;
-		case 2:
-			integrator_wh_init();
-			break;
-	}
-}
 double timing;
 // Integrate for 1 step
-void rebound_step(){ 
-	struct timeval tim;
-	gettimeofday(&tim, NULL);
-	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
-	if (N<=0){
-		fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
-		return;
-	}
+
+void integrator_part1(){
 	switch(selected_integrator){
 		case 1:
 			integrator_mikkola_part1();
@@ -124,11 +107,8 @@ void rebound_step(){
 			integrator_ias15_part1();
 			break;
 	}
-	gravity_calculate_acceleration();
-	if (N_megno){
-		gravity_calculate_variational_acceleration();
-	}
-	if (problem_additional_forces) problem_additional_forces();
+}
+void integrator_part2(){
 	switch(selected_integrator){
 		case 1:
 			integrator_mikkola_part2();
@@ -143,6 +123,23 @@ void rebound_step(){
 			integrator_ias15_part2();
 			break;
 	}
+}
+
+void rebound_step(){ 
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
+	if (N<=0){
+		fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
+		return;
+	}
+	integrator_part1();
+	gravity_calculate_acceleration();
+	if (N_megno){
+		gravity_calculate_variational_acceleration();
+	}
+	if (problem_additional_forces) problem_additional_forces();
+	integrator_part2();
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
 	timing = timing_final-timing_initial;
@@ -172,6 +169,7 @@ void reset(){
 }
 
 int check_eject(){
+	// TODO: Remove this.
 	double x = particles[1].x;
 	double y = particles[1].y;
 	double z = particles[1].z;
@@ -193,7 +191,20 @@ void integrate(double _tmax, int exactFinishTime){
 			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
 			return;
 		}
-		rebound_step();
+		double t_beginning = t;	
+		integrator_part1();
+		if (t_beginning+dt>=tmax || last_step){
+			integrator_synchronized = 1;
+		}else{
+			integrator_synchronized = 0;
+		}
+		gravity_calculate_acceleration();
+		if (N_megno){
+			gravity_calculate_variational_acceleration();
+		}
+		if (problem_additional_forces) problem_additional_forces();
+		integrator_part2();
+		
 		if (check_eject()){
 			return;
 		}

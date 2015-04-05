@@ -353,9 +353,6 @@ def get_t():
 def init_megno(delta):
     librebound.tools_megno_init(c_double(delta))
 
-def init_integrator():
-    librebound.init_integrator()
-
 def get_megno():
     librebound.tools_megno.restype = c_double
     return librebound.tools_megno()
@@ -453,9 +450,9 @@ def set_integrator(integrator="IAS15"):
             return
     raise ValueError("Warning. Intergrator not found.")
 
-def set_masses_are_constant(constant=0):
-    if isinstance(constant, int):
-        c_int.in_dll(librebound, "integrator_masses_are_constant").value = constant
+def set_inertial_frame(is_inertial_frame=0):
+    if isinstance(is_inertial_frame, int):
+        c_int.in_dll(librebound, "integrator_inertial_frame").value = is_inertial_frame
         return
     raise ValueError("Expecting integer.")
 
