@@ -35,6 +35,7 @@
 #include "tools.h"
 #include "gravity.h"
 #include "boundaries.h"
+#include "integrator.h"
 
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
@@ -43,24 +44,27 @@
 #ifdef LIBREBOUND
 #define integrator_part1                      integrator_mikkola_part1
 #define integrator_part2                      integrator_mikkola_part2
-#define integrator_force_is_velocitydependent integrator_mikkola_force_is_velocitydependent
-#define integrator_epsilon                    integrator_mikkola_epsilon
-#define integrator_min_dt                     integrator_mikkola_min_dt
 #define integrator_reset                      integrator_mikkola_reset
+#define integrator_synchronize                integrator_mikkola_synchronize
 #endif // LIBREBOUND
 
-// These variables have no effect for constant timestep integrators.
-int integrator_force_is_velocitydependent 	= 1;
-int integrator_inertial_frame			= 0;
-double integrator_epsilon 			= 0;
-double integrator_min_dt 			= 0;
+#ifndef LIBREBOUND
+unsigned int integrator_force_is_velocitydependent 	= 1;
+unsigned int integrator_inertial_frame			= 0;
+unsigned int integrator_synchronize_manually 		= 0;
+double integrator_epsilon 				= 0;
+double integrator_min_dt 				= 0;
+#endif // LIBREBOUND
 
+static unsigned int integrator_is_synchronized = 1;
+static unsigned int integrator_allocated_N = 0;
 static struct particle* restrict p_j  = NULL;
 static double* restrict eta = NULL;
 static double* restrict etai = NULL;
 static double Mtotali;
 static double Mtotal;
 static unsigned int integrator_timestep_warning = 0;
+static unsigned int integrator_synchronized_megno_warning = 0;
 
 // Fast inverse factorial lookup table
 static const double invfactorial[35] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
@@ -574,8 +578,6 @@ static void integrator_interaction(double _dt){
 	}
 }
 
-unsigned int integrator_allocated_N = 0;
-unsigned int integrator_synchronized = 1;
 /***************************** 
  * DKD Scheme                */
 
@@ -599,7 +601,7 @@ void integrator_part1(){
 		recalculate_masses = 1;
 	}
 	double _dt = dt/2.;
-	if (integrator_synchronized){
+	if (integrator_is_synchronized){
 		if (recalculate_masses){
 			eta[0] = particles[0].m;
 			etai[0] = 1./eta[0];
@@ -620,8 +622,13 @@ void integrator_part1(){
 				integrator_var_to_jacobi_posvel();
 			}
 		}
-		integrator_kepler_drift(_dt);
+		// First half DRIFT step
+		integrator_kepler_drift(_dt);	// half timestep
+	}else{
+		// Combined DRIFT step
+		integrator_kepler_drift(dt);	// full timestep
 	}
+	// Prepare coordinates for KICK step
 	if (integrator_force_is_velocitydependent){
 		integrator_to_inertial_posvel();
 	}else{
@@ -642,6 +649,14 @@ void integrator_part1(){
 	t+=_dt;
 }
 
+void integrator_synchronize(){
+	if (integrator_is_synchronized == 0){
+		integrator_kepler_drift(dt/2.);
+		integrator_to_inertial_posvel();
+		integrator_is_synchronized = 1;
+	}
+}
+
 void integrator_part2(){
 	integrator_to_jacobi_acc();
 	if (N_megno){
@@ -650,16 +665,21 @@ void integrator_part2(){
 	integrator_interaction(dt);
 
 	double _dt = dt/2.;
-	if (integrator_synchronized){
+	if (integrator_synchronize_manually){
+		integrator_is_synchronized = 0;
+	}else{
 		integrator_kepler_drift(_dt);
 		integrator_to_inertial_posvel();
-	}else{
-		integrator_kepler_drift(dt);
+		integrator_is_synchronized = 1;
 	}
 	
 	t+=_dt;
 
 	if (N_megno){
+		if (integrator_is_synchronized==0 && integrator_synchronized_megno_warning==0){
+			integrator_synchronized_megno_warning++;
+			fprintf(stderr,"\n\033[1mWarning!\033[0m MEGNO requires synchronized output at every timestep.\n");
+		}
 		p_j[N_megno].x += _dt*p_j[N_megno].vx;
 		p_j[N_megno].y += _dt*p_j[N_megno].vy;
 		p_j[N_megno].z += _dt*p_j[N_megno].vz;
@@ -706,10 +726,12 @@ void integrator_part2(){
 	
 
 void integrator_reset(){
-	integrator_synchronized = 1;
+	integrator_is_synchronized = 1;
+	integrator_synchronize_manually = 0;
 	integrator_inertial_frame = 0;
 	integrator_allocated_N = 0;
 	integrator_timestep_warning = 0;
+	integrator_synchronized_megno_warning = 0;
 	free(p_j);
 	p_j = NULL;
 	free(eta);

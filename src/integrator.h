@@ -46,7 +46,7 @@ void integrator_part2();
  * dependent forces. This is only relevant for IAS15.
  * Default is 1.
  **/ 
-extern int integrator_force_is_velocitydependent;
+extern unsigned int integrator_force_is_velocitydependent;
 
 /* 
  * Flag determining if the integrator needs to recalculate the Jacobi
@@ -57,25 +57,26 @@ extern int integrator_force_is_velocitydependent;
  * Setting this to 1 results in a speed and accuracy increase.
  * Default is 0.
  **/ 
-extern int integrator_intertial_frame;
+extern unsigned int integrator_inertial_frame;
 
 /*
  * Flag determining if the integrator produces synchronized outputs at
- * the end of the timestep. Setting this to 0 results in a speedup.
+ * the end of the timestep. Setting this to 1 results in a speedup.
  * The general procedure to use this is:
- *   set integrator_synchronized = 1
- *   run integrator_part1()
- *   set integrator_synchronized = 0
- *   run integrator_part2()
- *   run integrator_part1()
- *   (repeat last two steps many times until output is required)
- *   set integrator_synchronized = 1
- *   run integrator_part2()
- *   output
+ *   set integrator_synchronize_manually = 1
+ *   run integrator for many steps.
+ *   call integrator_synchronize()
+ *   call output routines
+ *   (continue with integration)
  *  
- * Default is 1 (produces synchronized outputs at every timestep).
+ * Default is 0 (produces synchronized outputs at every timestep).
  **/
-extern unsigned int integrator_synchronized;
+extern unsigned int integrator_synchronize_manually;
+
+/*
+ * Synchronize particles manually at end of timestep.
+ */
+void integrator_synchronize();
 
 /*
  * This parameter controls the accuracy of an adaptive integrator.

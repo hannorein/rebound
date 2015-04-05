@@ -31,10 +31,15 @@
 #include "particle.h"
 #include "main.h"
 #include "gravity.h"
+#include "integrator.h"
 
-int integrator_force_is_velocitydependent 	= 1;
-double integrator_epsilon 			= 0;
-double integrator_min_dt 		= 0;
+#ifndef LIBREBOUND
+unsigned int integrator_force_is_velocitydependent 	= 1;
+unsigned int integrator_inertial_frame	 		= 0;
+unsigned int integrator_synchronize_manually		= 0;
+double integrator_epsilon 				= 0;
+double integrator_min_dt 				= 0;
+#endif
 
 
 void integrator_part1(){
@@ -46,6 +51,10 @@ void integrator_part2(){
 }
 	
 void integrator_reset(){
+	// Do nothing.
+}
+
+void integrator_synchronize(){
 	// Do nothing.
 }
 

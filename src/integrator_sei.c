@@ -38,12 +38,16 @@
 #include "gravity.h"
 #include "main.h"
 #include "boundaries.h"
+#include "integrator.h"
 
 
-// These variables have no effect for sei.
-int integrator_force_is_velocitydependent 	= 1;
+#ifndef LIBREBOUND
+unsigned int integrator_force_is_velocitydependent 	= 1;
+unsigned int integrator_inertial_frame			= 0;
+unsigned int integrator_synchronize_manually 		= 0;
 double integrator_epsilon 			= 0;
 double integrator_min_dt 			= 0;
+#endif
 
 
 double OMEGA 	= 1.; 	/**< Epicyclic/orbital frequency. */
@@ -144,6 +148,10 @@ void operator_phi1(struct particle* p){
 	p->vx += p->ax * dt;
 	p->vy += p->ay * dt;
 	p->vz += p->az * dt;
+}
+
+void integrator_synchronize(){
+	// Do nothing.
 }
 
 void integrator_reset(){

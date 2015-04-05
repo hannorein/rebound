@@ -46,21 +46,23 @@
 #include "main.h"
 #include "gravity.h"
 #include "boundaries.h"
+#include "integrator.h"
 
 // Slightly dirty trick to rename function for librebound use
 #ifdef LIBREBOUND
 #define integrator_part1                      integrator_wh_part1
 #define integrator_part2                      integrator_wh_part2
-#define integrator_force_is_velocitydependent integrator_wh_force_is_velocitydependent
-#define integrator_epsilon                    integrator_wh_epsilon
-#define integrator_min_dt                     integrator_wh_min_dt
 #define integrator_reset                      integrator_wh_reset
+#define integrator_synchronize                integrator_wh_synchronize
 #endif // LIBREBOUND
 
-// These variables have no effect for wh.
-int integrator_force_is_velocitydependent 	= 1;
+#ifndef LIBREBOUND
+unsigned int integrator_force_is_velocitydependent 	= 1;
+unsigned int integrator_inertial_frame			= 0;
+unsigned int integrator_synchronize_manually 		= 0;
 double integrator_epsilon 			= 0;
 double integrator_min_dt 			= 0;
+#endif
 
 void drift_wh(double _dt);
 void drift_dan(struct particle* pv, double mu, double dt, int* iflag);
@@ -569,6 +571,9 @@ void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* 
 	y = (*x)*(*x);
 	*s = (*x)*(A0-y*(A1-y*(A2-y*(A3-y*(A4-y)))))/A0;
 	*c = sqrt(1. - (*s)*(*s));
+}
+void integrator_synchronize(){
+	// Do nothing.
 }
 void integrator_reset(){
 	// Do nothing.

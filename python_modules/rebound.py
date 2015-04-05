@@ -456,6 +456,18 @@ def set_inertial_frame(is_inertial_frame=0):
         return
     raise ValueError("Expecting integer.")
 
+def set_synchronize_manually(synchronize_manually=0):
+    if isinstance(synchronize_manually, int):
+        c_int.in_dll(librebound, "integrator_synchronize_manually").value = synchronize_manually
+        return
+    raise ValueError("Expecting integer.")
+
+def set_force_is_velocitydependent(force_is_velocitydependent=1):
+    if isinstance(force_is_velocitydependent, int):
+        c_int.in_dll(librebound, "integrator_force_is_velocitydependent").value = force_is_velocitydependent
+        return
+    raise ValueError("Expecting integer.")
+
 
 # Integration
 def step():

@@ -53,15 +53,14 @@ void integrator_generate_constants();
 #include "problem.h"
 #include "output.h"
 #include "tools.h"
+#include "integrator.h"
 
 // Slightly dirty trick to rename function for librebound use
 #ifdef LIBREBOUND
 #define integrator_part1                      integrator_ias15_part1
 #define integrator_part2                      integrator_ias15_part2
-#define integrator_force_is_velocitydependent integrator_ias15_force_is_velocitydependent
-#define integrator_epsilon                    integrator_ias15_epsilon
-#define integrator_min_dt                     integrator_ias15_min_dt
 #define integrator_reset                      integrator_ias15_reset
+#define integrator_synchronize                integrator_ias15_synchronize
 #endif // LIBREBOUND
 
 
@@ -72,12 +71,16 @@ void integrator_generate_constants();
 #error IAS15 integrator not working with MPI.
 #endif
 
-int 	integrator_force_is_velocitydependent	= 1;	// Turn this off to safe some time if the force is not velocity dependent.
+#ifndef LIBREBOUND
+unsigned int integrator_inertial_frame	 		= 0;
+unsigned int integrator_synchronize_manually		= 0;
+unsigned int integrator_force_is_velocitydependent	= 1;	// Turn this off to safe some time if the force is not velocity dependent.
 double 	integrator_epsilon 			= 1e-9;	// Precision parameter 
 							// If it is zero, then a constant timestep is used. 
+double 	integrator_min_dt 			= 0;	// Minimum timestep used as a floor when adaptive timestepping is enabled.
+#endif
 int	integrator_epsilon_global		= 1;	// if 1: estimate the fractional error by max(acceleration_error)/max(acceleration), where max is take over all particles.
 							// if 0: estimate the fractional error by max(acceleration_error/acceleration).
-double 	integrator_min_dt 			= 0;	// Minimum timestep used as a floor when adaptive timestepping is enabled.
 unsigned long integrator_iterations_max_exceeded= 0;	// Count how many times the iteration did not converge
 const double safety_factor 			= 0.25;	// Maximum increase/deacrease of consecutve timesteps.
 
@@ -585,6 +588,8 @@ void copybuffers(double* _a[7], double* _b[7], int N3){
 //	for (int i=0;i<7;i++){	
 //		memcpy(_b[i],_a[i], sizeof(double)*N3);
 //	}
+}
+void integrator_synchronize(){
 }
 
 void integrator_reset(){

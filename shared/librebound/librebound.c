@@ -48,6 +48,12 @@ double softening = 0;
 extern int Nmax;	
 extern int iter;  // TODO DEBUG
 
+unsigned int integrator_force_is_velocitydependent 	= 1;
+unsigned int integrator_inertial_frame			= 0;
+unsigned int integrator_synchronize_manually 		= 0;
+double integrator_epsilon = 1e-9;
+double integrator_min_dt = 0.;
+
 // Chooses which integrator to use.
 // 0: IAS15 (default)
 // 1: MIKKOLA
@@ -58,15 +64,19 @@ int selected_integrator = 0;
 extern void integrator_ias15_part1();
 extern void integrator_ias15_part2();
 extern void integrator_ias15_reset();
+extern void integrator_ias15_synchronize();
 extern void integrator_mikkola_part1();
 extern void integrator_mikkola_part2();
 extern void integrator_mikkola_reset();
+extern void integrator_mikkola_synchronize();
 extern void integrator_wh_part1();
 extern void integrator_wh_part2();
 extern void integrator_wh_reset();
+extern void integrator_wh_synchronize();
 extern void integrator_leapfrog_part1();
 extern void integrator_leapfrog_part2();
 extern void integrator_leapfrog_reset();
+extern void integrator_leapfrog_synchronize();
 
 // Function pointer to additional forces
 void (*problem_additional_forces) () = NULL;
@@ -124,6 +134,22 @@ void integrator_part2(){
 			break;
 	}
 }
+void integrator_synchronize(){
+	switch(selected_integrator){
+		case 1:
+			integrator_mikkola_synchronize();
+			break;
+		case 2:
+			integrator_wh_synchronize();
+			break;
+		case 3:
+			integrator_leapfrog_synchronize();
+			break;
+		default:
+			integrator_ias15_synchronize();
+			break;
+	}
+}
 
 void rebound_step(){ 
 	struct timeval tim;
@@ -176,33 +202,34 @@ void integrate(double _tmax, int exactFinishTime){
 	tmax = _tmax;
 	double dt_last_done = dt;
 	int last_step = 0;
+	int integrator_synchronize_manually_init = integrator_synchronize_manually;
+	if (!N_megno){
+		integrator_synchronize_manually = 1;
+	}
 	while(t<tmax && last_step<2){
 		if (N<=0){
 			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
 			return;
 		}
-		double t_beginning = t;	
 		integrator_part1();
 		gravity_calculate_acceleration();
 		if (N_megno){
 			gravity_calculate_variational_acceleration();
 		}
 		if (problem_additional_forces) problem_additional_forces();
-		if (t_beginning+dt>=tmax || last_step){
-			integrator_synchronized = 1;
-		}else{
-			integrator_synchronized = 0;
-		}
 		integrator_part2();
 		
 		if (t+dt>=tmax && exactFinishTime==1){
+			integrator_synchronize();
 			dt = tmax-t;
 			last_step++;
 		}else{
 			dt_last_done = dt;
 		}
 	}
+	integrator_synchronize();
 	dt = dt_last_done;
+	integrator_synchronize_manually = integrator_synchronize_manually_init;
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
 	timing = timing_final-timing_initial;
