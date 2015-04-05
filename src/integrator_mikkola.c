@@ -575,8 +575,20 @@ static void integrator_interaction(double _dt){
 }
 
 unsigned int integrator_allocated_N = 0;
+unsigned int integrator_synchronized = 1;
 /***************************** 
- * KDK Scheme                */
+ * DKD Scheme                */
+
+void integrator_kepler_drift(double _dt){
+	for (unsigned int i=1;i<N-N_megno;i++){
+		kepler_step(i, _dt);
+	}
+	p_j[0].x += _dt*p_j[0].vx;
+	p_j[0].y += _dt*p_j[0].vy;
+	p_j[0].z += _dt*p_j[0].vz;
+}
+
+
 void integrator_part1(){
 	int recalculate_masses = !integrator_inertial_frame;
 	if (integrator_allocated_N != N){
@@ -606,13 +618,11 @@ void integrator_part1(){
 			integrator_var_to_jacobi_posvel();
 		}
 	}
-
-	for (unsigned int i=1;i<N-N_megno;i++){
-		kepler_step(i, dt/2.);
+	
+	double _dt = dt/2.;
+	if (integrator_synchronized){
+		integrator_kepler_drift(_dt);
 	}
-	p_j[0].x += dt/2.*p_j[0].vx;
-	p_j[0].y += dt/2.*p_j[0].vy;
-	p_j[0].z += dt/2.*p_j[0].vz;
 	if (integrator_force_is_velocitydependent){
 		integrator_to_inertial_posvel();
 	}else{
@@ -620,9 +630,9 @@ void integrator_part1(){
 	}
 	
 	if (N_megno){
-		p_j[N_megno].x += dt/2.*p_j[N_megno].vx;
-		p_j[N_megno].y += dt/2.*p_j[N_megno].vy;
-		p_j[N_megno].z += dt/2.*p_j[N_megno].vz;
+		p_j[N_megno].x += _dt*p_j[N_megno].vx;
+		p_j[N_megno].y += _dt*p_j[N_megno].vy;
+		p_j[N_megno].z += _dt*p_j[N_megno].vz;
 		if (integrator_force_is_velocitydependent){
 			integrator_var_to_inertial_posvel();
 		}else{
@@ -630,7 +640,7 @@ void integrator_part1(){
 		}
 	}
 
-	t+=dt/2.;
+	t+=_dt;
 }
 
 void integrator_part2(){
@@ -640,20 +650,20 @@ void integrator_part2(){
 	}
 	integrator_interaction(dt);
 
-	for (unsigned int i=1;i<N-N_megno;i++){
-		kepler_step(i, dt/2.);
+	double _dt = dt/2.;
+	if (integrator_synchronized){
+		integrator_kepler_drift(_dt);
+		integrator_to_inertial_posvel();
+	}else{
+		integrator_kepler_drift(dt);
 	}
-	p_j[0].x += dt/2.*p_j[0].vx;
-	p_j[0].y += dt/2.*p_j[0].vy;
-	p_j[0].z += dt/2.*p_j[0].vz;
-	integrator_to_inertial_posvel();
 	
-	t+=dt/2.;
+	t+=_dt;
 
 	if (N_megno){
-		p_j[N_megno].x += dt/2.*p_j[N_megno].vx;
-		p_j[N_megno].y += dt/2.*p_j[N_megno].vy;
-		p_j[N_megno].z += dt/2.*p_j[N_megno].vz;
+		p_j[N_megno].x += _dt*p_j[N_megno].vx;
+		p_j[N_megno].y += _dt*p_j[N_megno].vy;
+		p_j[N_megno].z += _dt*p_j[N_megno].vz;
 		integrator_var_to_inertial_posvel();
 		gravity_calculate_variational_acceleration();
 		// Add additional acceleration term for MEGNO calculation
@@ -697,6 +707,7 @@ void integrator_part2(){
 	
 
 void integrator_reset(){
+	integrator_synchronized = 1;
 	integrator_inertial_frame = 0;
 	integrator_allocated_N = 0;
 	integrator_timestep_warning = 0;

@@ -60,6 +60,24 @@ extern int integrator_force_is_velocitydependent;
 extern int integrator_intertial_frame;
 
 /*
+ * Flag determining if the integrator produces synchronized outputs at
+ * the end of the timestep. Setting this to 0 results in a speedup.
+ * The general procedure to use this is:
+ *   set integrator_synchronized = 1
+ *   run integrator_part1()
+ *   set integrator_synchronized = 0
+ *   run integrator_part2()
+ *   run integrator_part1()
+ *   (repeat last two steps many times until output is required)
+ *   set integrator_synchronized = 1
+ *   run integrator_part2()
+ *   output
+ *  
+ * Default is 1 (produces synchronized outputs at every timestep).
+ **/
+extern unsigned int integrator_synchronized;
+
+/*
  * This parameter controls the accuracy of an adaptive integrator.
  * Default is 0 (non-adaptive).
  **/
