@@ -43,6 +43,7 @@
 #include "tools.h"
 #include "particle.h"
 #include "boundaries.h"
+#include "integrator.h"
 
 double ss_pos[6][3] = 
 {
@@ -79,10 +80,12 @@ double e_init;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= 40;			// in days
-	tmax		= 7.3e10;		// 200 Myr
-	G		= k*k;			// These are the same units as used by the mercury6 code.
-	init_boxwidth(200); 			// Init box with width 200 astronomical units
+	dt 		= 40;				// in days
+	tmax		= 7.3e10;			// 200 Myr
+	G		= k*k;				// These are the same units as used by the mercury6 code.
+	init_boxwidth(200); 				// Init box with width 200 astronomical units
+	integrator_synchronize_manually = 1;		// Need to call integrator_synchronize() before outputs. 
+	integrator_force_is_velocitydependent = 0;	// Force only depends on positions. 
 
 	// Initial conditions
 	for (int i=0;i<6;i++){
@@ -130,6 +133,7 @@ double energy(){
 void problem_output(){
 	if (output_check(10000000.)){
 		output_timing();
+		integrator_synchronize();
 //		FILE* f = fopen("energy.txt","a");
 //		double e = energy();
 //		fprintf(f,"%e %e %e\n",t, fabs((e-e_init)/e_init), tools_megno());
