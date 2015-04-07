@@ -214,15 +214,17 @@ static void kepler_step(unsigned int i,double _dt){
 	unsigned int n_hg;
 	unsigned int converged = 0;
 	double ri;
-	double oldX;
+	double oldX=NAN; // NAN might be a GNU extension
+	double oldX2;
 	for (n_hg=0;n_hg<10;n_hg++){
+		oldX2 = oldX;
 		oldX = X;
 		stiefel_Gs3(Gs, beta, X);
 		const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
 		ri = 1./(r0 + eta0Gs1zeta0Gs2);
 		X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+_dt);
 		
-		if (X==oldX){
+		if (X==oldX||X==oldX2){
 			// Converged. Exit.
 			n_hg++;
 			converged = 1;
