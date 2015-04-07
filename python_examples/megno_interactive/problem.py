@@ -64,13 +64,13 @@ def updatePlot():
     res = toArray(resd)
     # Run simulations in parallel
     megno = np.clip(res[:,:,0],1.8,4.)             # clip arrays to plot saturated 
-    lyaptimescale = np.clip(np.absolute(res[:,:,1]),1e1,1e4)
+    lyaptimescale = np.clip(np.absolute(res[:,:,1]),1e1,4e3)
 
     # Plot MEGNO 
     im1 = axarr[0].imshow(megno, vmin=1.8, vmax=4., aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
 
     # Plot Lyapunov timescale
-    im2 = axarr[1].imshow(lyaptimescale, vmin=1e1, vmax=1e4, norm=LogNorm(), aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn", extent=extent)
+    im2 = axarr[1].imshow(lyaptimescale, vmin=1e1, vmax=4e3, norm=LogNorm(), aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn", extent=extent)
 
     if first:
         first = False

@@ -204,8 +204,7 @@ void integrate(double _tmax, int exactFinishTime){
 	int last_step = 0;
 	int integrator_synchronize_manually_init = integrator_synchronize_manually;
 	if (!N_megno){
-		// TODO Readd next line
-		//integrator_synchronize_manually = 1;
+		integrator_synchronize_manually = 1;
 	}
 	while(t<tmax && last_step<2){
 		if (N<=0){
