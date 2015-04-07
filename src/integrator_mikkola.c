@@ -216,7 +216,7 @@ static void kepler_step(unsigned int i,double _dt){
 	double ri;
 	double oldX=NAN; // NAN might be a GNU extension
 	double oldX2;
-	for (n_hg=0;n_hg<10;n_hg++){
+	for (n_hg=0;n_hg<32;n_hg++){
 		oldX2 = oldX;
 		oldX = X;
 		stiefel_Gs3(Gs, beta, X);
