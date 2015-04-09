@@ -626,6 +626,25 @@ void integrator_kepler_drift(double _dt){
 	p_j[0].z += _dt*p_j[0].vz;
 }
 
+const double alpha = 4.183300132670377813e-01;
+const double beta = 4.980119205559973422e-02;
+const double a_1 = -alpha;
+const double a_2 = alpha;
+const double b_1 = -0.5*beta;
+const double b_2 = 0.5*beta;
+
+void Z(double a, double b){
+}
+
+void integrator_corrector(){
+	Z(a_1*dt,b_1*dt);
+	Z(a_2*dt,b_2*dt);
+}
+void integrator_corrector_inv(){
+	Z(a_2*dt,-b_2*dt);
+	Z(a_1*dt,-b_1*dt);
+}
+
 
 void integrator_part1(){
 	int recalculate_masses = !integrator_inertial_frame;
@@ -653,6 +672,7 @@ void integrator_part1(){
 			Mtotal  = eta[N-N_megno-1];
 			Mtotali = etai[N-N_megno-1];
 			// Only recalculate Jacobi coordinates if needed
+			integrator_corrector();
 			integrator_to_jacobi_posvel();
 			if (N_megno){
 				integrator_var_to_jacobi_posvel();
@@ -690,6 +710,7 @@ void integrator_synchronize(){
 		integrator_kepler_drift(dt/2.);
 		integrator_to_inertial_posvel();
 		integrator_is_synchronized = 1;
+		integrator_corrector_inv();
 	}
 }
 
@@ -704,9 +725,7 @@ void integrator_part2(){
 	if (integrator_synchronize_manually){
 		integrator_is_synchronized = 0;
 	}else{
-		integrator_kepler_drift(_dt);
-		integrator_to_inertial_posvel();
-		integrator_is_synchronized = 1;
+		integrator_synchronize();
 	}
 	
 	t+=_dt;
