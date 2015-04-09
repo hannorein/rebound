@@ -433,6 +433,9 @@ def reset():
         tmpdir = None
     librebound.reset()
 
+def set_integrator_corrector_on(on=0):
+    c_int.in_dll(librebound, "integrator_corrector_on").value = on
+
 integrator_package = "REBOUND"
 
 def set_integrator(integrator="IAS15"):

@@ -12,6 +12,11 @@ def simulation(par):
     G = k*k
     rebound.set_G(G)     
     rebound.set_dt(dt)
+    if integrator=="mikkola-cor":
+        integrator="mikkola"
+        rebound.set_integrator_corrector_on(1)
+    else:
+        rebound.set_integrator_corrector_on(0)
     rebound.set_integrator(integrator)
     rebound.set_force_is_velocitydependent(0)
 
@@ -98,10 +103,10 @@ def simulation(par):
     return [times, es]
 
 #3dt = 100.23
-dt = .1
-tmax = 365.*4e2
-integrators = ["wh","mikkola","ias15"]
-colors = ["b","r","g"]
+dt = 2.
+tmax = 365.*4e5
+integrators = ["wh","mikkola","ias15","mikkola-cor"]
+colors = ["b","r","g","y"]
 trials = 4
     
 parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]
