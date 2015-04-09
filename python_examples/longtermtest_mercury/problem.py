@@ -83,26 +83,25 @@ def simulation(par):
 
     es = []
 
-    starttime = time.clock()
+    timing = 0.
 
     for t in times:
         rebound.integrate(t,exactFinishTime=0)
         ef = energy()
         e = np.fabs((ei-ef)/ei)+1.1e-16
         es.append(e)
-    
-    endtime = time.clock()
+        timing += rebound.get_timing()
 
     es = np.array(es)
-    print integrator + " done. %.5fs"%(endtime-starttime)
+    print integrator + " done. %.5fs"%(timing)
     return [times, es]
 
 #3dt = 100.23
 dt = .1
 tmax = 365.*4e1
-#integrators = ["wh","mikkola","ias15","mercury"]
-integrators = ["mercury"]
-colors = ["b","r","g"]
+integrators = ["wh","mikkola","ias15","mercury"]
+#integrators = ["mercury"]
+colors = ["b","r","g","y"]
 trials = 4
     
 parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]

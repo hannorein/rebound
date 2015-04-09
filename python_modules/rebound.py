@@ -3,6 +3,7 @@ import math
 import os
 import tempfile
 import shutil
+import time
 
 #Find the rebound C library
 pymodulespath = os.path.dirname(__file__)
@@ -551,7 +552,10 @@ def integrate(tmax,exactFinishTime=1):
 """ %(i, particles[i].m, particles[i].x, particles[i].y, particles[i].z, particles[i].vx/facTime, particles[i].vy/facTime, particles[i].vz/facTime)
         with open("big.in", "w") as f:
             f.write(bigin)
+        starttime = time.time()    
         os.system("./mercury >/dev/null")
+        endtime = time.time()    
+        c_double.in_dll(librebound,"timing").value = endtime-starttime
         with open("big.dmp", "r") as f:
             lines = f.readlines()
             t= float(lines[4].split("=")[1].strip())
