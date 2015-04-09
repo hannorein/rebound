@@ -1,6 +1,8 @@
 from ctypes import *
 import math
 import os
+import tempfile
+import shutil
 
 #Find the rebound C library
 pymodulespath = os.path.dirname(__file__)
@@ -425,7 +427,11 @@ def move_to_center_of_momentum():
 def reset():
     librebound.reset()
 
+integrator_package = "REBOUND"
+
 def set_integrator(integrator="IAS15"):
+    global integrator_package
+    intergrator_package = "REBOUND"
     if isinstance(integrator, int):
         c_int.in_dll(librebound, "selected_integrator").value = integrator
         return
@@ -444,6 +450,9 @@ def set_integrator(integrator="IAS15"):
             return
         if integrator.lower() == "leap-frog":
             set_integrator(3)
+            return
+        if integrator.lower() == "mercury":
+            integrator_package = "MERCURY"
             return
     raise ValueError("Warning. Intergrator not found.")
 
@@ -471,7 +480,98 @@ def step():
     librebound.rebound_step()
 
 def integrate(tmax,exactFinishTime=1):
-    librebound.integrate(c_double(tmax),c_int(exactFinishTime))
+    if integrator_package == "MERCURY":
+        facTime = 1. #58.130101
+        particles = get_particles()
+        tmpdir = tempfile.mkdtemp()
+        oldwd = os.getcwd()
+        for f in ["mercury", "message.in","files.in"]:
+            os.symlink(oldwd+"/../../others/mercury6/"+f,tmpdir+"/"+f)
+        os.chdir(tmpdir)
+        paramin = """)O+_06 Integration parameters  (WARNING: Do not delete this line!!)
+) Lines beginning with `)' are ignored.
+)---------------------------------------------------------------------
+) Important integration parameters:
+)---------------------------------------------------------------------
+ algorithm (MVS, BS, BS2, RADAU, HYBRID etc) = mvs
+ start time (days)= %.16e
+ stop time (days) = %.16e
+ output interval (days) = 36500.25d0
+ timestep (days) = %.16e
+ accuracy parameter=1.d-12
+)---------------------------------------------------------------------
+) Integration options:
+)---------------------------------------------------------------------
+ stop integration after a close encounter = no
+ allow collisions to occur = no
+ include collisional fragmentation = no
+ express time in days or years = years
+ express time relative to integration start time = no
+ output precision = high
+ < not used at present >
+ include relativity in integration= no
+ include user-defined force = no
+)---------------------------------------------------------------------
+) These parameters do not need to be adjusted often:
+)---------------------------------------------------------------------
+ ejection distance (AU)= 100
+ radius of central body (AU) = 0.005
+ central mass (solar) = %.16e
+ central J2 = 0
+ central J4 = 0
+ central J6 = 0
+ < not used at present >
+ < not used at present >
+ Hybrid integrator changeover (Hill radii) = 3.
+ number of timesteps between data dumps = 500
+ number of timesteps between periodic effects = 100
+""" % (get_t()*facTime, tmax*facTime, get_dt()*facTime,particles[0].m)
+        with open("param.in", "w") as f:
+            f.write(paramin)
+        smallin = """)O+_06 Small-body initial data  (WARNING: Do not delete this line!!)
+) Lines beginning with `)' are ignored.
+)---------------------------------------------------------------------
+ style (Cartesian, Asteroidal, Cometary) = Ast
+)---------------------------------------------------------------------
+"""
+        with open("small.in", "w") as f:
+            f.write(smallin)
+        bigin = """)O+_06 Big-body initial data  (WARNING: Do not delete this line!!)
+) Lines beginning with `)' are ignored.
+)---------------------------------------------------------------------
+ style (Cartesian, Asteroidal, Cometary) = Cartesian
+ epoch (in days) = %.16e
+)---------------------------------------------------------------------
+""" %(get_t()*facTime)
+        for i in xrange(1,get_N()):
+            bigin += """PART%03d    m=%.18e r=20.D0 d=5.43
+ %.18e %.18e %.18e
+ %.18e %.18e %.18e
+  0. 0. 0.
+""" %(i, particles[i].m, particles[i].x, particles[i].y, particles[i].z, particles[i].vx/facTime, particles[i].vy/facTime, particles[i].vz/facTime)
+        with open("big.in", "w") as f:
+            f.write(bigin)
+        os.system("./mercury >/dev/null")
+        with open("big.dmp", "r") as f:
+            lines = f.readlines()
+            t= float(lines[4].split("=")[1].strip())
+            set_t(t/facTime)
+            j = 1
+            for i in xrange(6,len(lines),4):
+                pos = lines[i+1].split()
+                particles[j].x = float(pos[0])
+                particles[j].y = float(pos[1])
+                particles[j].z = float(pos[2])
+                vel = lines[i+2].split()
+                particles[j].vx = float(vel[0])
+                particles[j].vy = float(vel[1])
+                particles[j].vz = float(vel[2])
+                j += 1
+
+        os.chdir(oldwd)
+        shutil.rmtree(tmpdir)
+    if integrator_package =="REBOUND":
+        librebound.integrate(c_double(tmax),c_int(exactFinishTime))
 
 TWOPI = 2.*math.pi
 def mod2pi(f):
