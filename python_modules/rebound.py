@@ -425,7 +425,12 @@ def get_particles():
 def move_to_center_of_momentum():
     librebound.tools_move_to_center_of_momentum()
 
+tmpdir = None
 def reset():
+    global tmpdir
+    if tmpdir:
+        shutil.rmtree(tmpdir)
+        tmpdir = None
     librebound.reset()
 
 integrator_package = "REBOUND"
@@ -481,23 +486,20 @@ def step():
     librebound.rebound_step()
 
 def integrate(tmax,exactFinishTime=1):
+    global tmpdir
     if integrator_package == "MERCURY":
         facTime = 1. #58.130101
         particles = get_particles()
-        tmpdir = tempfile.mkdtemp()
         oldwd = os.getcwd()
-        for f in ["mercury", "message.in","files.in"]:
-            os.symlink(oldwd+"/../../others/mercury6/"+f,tmpdir+"/"+f)
-        os.chdir(tmpdir)
         paramin = """)O+_06 Integration parameters  (WARNING: Do not delete this line!!)
 ) Lines beginning with `)' are ignored.
 )---------------------------------------------------------------------
 ) Important integration parameters:
 )---------------------------------------------------------------------
  algorithm (MVS, BS, BS2, RADAU, HYBRID etc) = mvs
- start time (days)= %.16e
+ start time (days)= 0.
  stop time (days) = %.16e
- output interval (days) = 36500.25d0
+ output interval (days) = 1000000.1d0
  timestep (days) = %.16e
  accuracy parameter=1.d-12
 )---------------------------------------------------------------------
@@ -506,8 +508,8 @@ def integrate(tmax,exactFinishTime=1):
  stop integration after a close encounter = no
  allow collisions to occur = no
  include collisional fragmentation = no
- express time in days or years = years
- express time relative to integration start time = no
+ express time in days or years = days
+ express time relative to integration start time = yes
  output precision = high
  < not used at present >
  include relativity in integration= no
@@ -524,35 +526,47 @@ def integrate(tmax,exactFinishTime=1):
  < not used at present >
  < not used at present >
  Hybrid integrator changeover (Hill radii) = 3.
- number of timesteps between data dumps = 500
- number of timesteps between periodic effects = 100
-""" % (get_t()*facTime, tmax*facTime, get_dt()*facTime,particles[0].m)
-        with open("param.in", "w") as f:
-            f.write(paramin)
-        smallin = """)O+_06 Small-body initial data  (WARNING: Do not delete this line!!)
+ number of timesteps between data dumps = 50000000
+ number of timesteps between periodic effects = 100000000
+""" % ( tmax*facTime, get_dt()*facTime,particles[0].m)
+        if not tmpdir:
+            # first call
+            tmpdir = tempfile.mkdtemp()
+            for f in ["mercury", "message.in","files.in"]:
+                os.symlink(oldwd+"/../../others/mercury6/"+f,tmpdir+"/"+f)
+            os.chdir(tmpdir)
+            smallin = """)O+_06 Small-body initial data  (WARNING: Do not delete this line!!)
 ) Lines beginning with `)' are ignored.
 )---------------------------------------------------------------------
  style (Cartesian, Asteroidal, Cometary) = Ast
 )---------------------------------------------------------------------
 """
-        with open("small.in", "w") as f:
-            f.write(smallin)
-        bigin = """)O+_06 Big-body initial data  (WARNING: Do not delete this line!!)
+            with open("small.in", "w") as f:
+                f.write(smallin)
+            bigin = """)O+_06 Big-body initial data  (WARNING: Do not delete this line!!)
 ) Lines beginning with `)' are ignored.
 )---------------------------------------------------------------------
  style (Cartesian, Asteroidal, Cometary) = Cartesian
  epoch (in days) = %.16e
 )---------------------------------------------------------------------
 """ %(get_t()*facTime)
-        for i in xrange(1,get_N()):
-            bigin += """PART%03d    m=%.18e r=20.D0 d=5.43
+            for i in xrange(1,get_N()):
+                bigin += """PART%03d    m=%.18e r=20.D0 d=5.43
  %.18e %.18e %.18e
  %.18e %.18e %.18e
   0. 0. 0.
 """ %(i, particles[i].m, particles[i].x, particles[i].y, particles[i].z, particles[i].vx/facTime, particles[i].vy/facTime, particles[i].vz/facTime)
-        with open("big.in", "w") as f:
-            f.write(bigin)
+            with open("big.in", "w") as f:
+                f.write(bigin)
+            with open("param.in", "w") as f:
+                f.write(paramin)
+        else:
+            # Not first call
+            os.chdir(tmpdir)
+            with open("param.dmp", "w") as f:
+                f.write(paramin)
         starttime = time.time()    
+        #os.system("./mercury ")
         os.system("./mercury >/dev/null")
         endtime = time.time()    
         c_double.in_dll(librebound,"timing").value = endtime-starttime
@@ -573,7 +587,6 @@ def integrate(tmax,exactFinishTime=1):
                 j += 1
 
         os.chdir(oldwd)
-        shutil.rmtree(tmpdir)
     if integrator_package =="REBOUND":
         librebound.integrate(c_double(tmax),c_int(exactFinishTime))
 

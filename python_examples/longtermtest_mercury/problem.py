@@ -97,8 +97,8 @@ def simulation(par):
     return [times, es]
 
 #3dt = 100.23
-dt = .1
-tmax = 365.*4e1
+dt = 10.
+tmax = 365.*1e7
 integrators = ["wh","mikkola","ias15","mercury"]
 #integrators = ["mercury"]
 colors = ["b","r","g","y"]
