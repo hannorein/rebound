@@ -626,15 +626,16 @@ void integrator_kepler_drift(double _dt){
 	p_j[0].z += _dt*p_j[0].vz;
 }
 
-const double alpha = 4.183300132670377813e-01;
-const double beta = 4.980119205559973422e-02;
-const double a_1 = -alpha;
-const double a_2 = alpha;
-const double b_1 = -0.5*beta;
-const double b_2 = 0.5*beta;
+const static double alpha = 4.183300132670377813e-01;
+const static double beta = 4.980119205559973422e-02;
 
-void X(double a, double b){
-	integrator_kepler_drift(-a);
+void Z(double a, double b){
+	integrator_kepler_drift(a);
+	integrator_to_inertial_pos();
+	gravity_calculate_acceleration();
+	integrator_to_jacobi_acc();
+	integrator_interaction(-b);
+	integrator_kepler_drift(-2.*a);
 	integrator_to_inertial_pos();
 	gravity_calculate_acceleration();
 	integrator_to_jacobi_acc();
@@ -642,21 +643,103 @@ void X(double a, double b){
 	integrator_kepler_drift(a);
 }
 
-void Z(double a, double b){
-	X(-a,-b);
-	X(a,b);
-}
+int integrator_corrector_on = 0;
 
 void integrator_corrector(){
-	Z(a_2*dt,b_2*dt);
-	Z(a_1*dt,b_1*dt);
+	if (integrator_corrector_on==3){
+		// Third order corrector
+		const double a_1 = -alpha;
+		const double a_2 = -a_1;
+		const double b_1 = -0.5*beta;
+		const double b_2 = -b_1;
+		Z(a_2*dt,b_2*dt);
+		Z(a_1*dt,b_1*dt);
+	}
+	if (integrator_corrector_on==5){
+		// Fifth order corrector
+		const double a_1 = 2.*alpha;
+		const double a_2 = alpha;
+		const double a_3 = -a_2;
+		const double a_4 = -a_1;
+		const double b_1 = -1./6.*beta;
+		const double b_2 = 5./6.*beta;
+		const double b_3 = -b_2;
+		const double b_4 = -b_1;
+		Z(a_4*dt,b_4*dt);
+		Z(a_3*dt,b_3*dt);
+		Z(a_2*dt,b_2*dt);
+		Z(a_1*dt,b_1*dt);
+	}
+	if (integrator_corrector_on==7){
+		// Seventh order corrector
+		const double a_1 = 3.*alpha;
+		const double a_2 = 2.*alpha;
+		const double a_3 = alpha;
+		const double a_4 = -a_3;
+		const double a_5 = -a_2;
+		const double a_6 = -a_1;
+		const double b_1 = 12361./246960.*beta;
+		const double b_2 = -22651./61740.*beta;
+		const double b_3 = 53521./49392.*beta;
+		const double b_4 = -b_3;
+		const double b_5 = -b_2;
+		const double b_6 = -b_1;
+		Z(a_6*dt,b_6*dt);
+		Z(a_5*dt,b_5*dt);
+		Z(a_4*dt,b_4*dt);
+		Z(a_3*dt,b_3*dt);
+		Z(a_2*dt,b_2*dt);
+		Z(a_1*dt,b_1*dt);
+	}
 }
 void integrator_corrector_inv(){
-	Z(a_1*dt,-b_1*dt);
-	Z(a_2*dt,-b_2*dt);
+	if (integrator_corrector_on==3){
+		// Third order corrector
+		const double a_1 = -alpha;
+		const double a_2 = -a_1;
+		const double b_1 = -0.5*beta;
+		const double b_2 = -b_1;
+		Z(a_1*dt,-b_1*dt);
+		Z(a_2*dt,-b_2*dt);
+	}
+	if (integrator_corrector_on==5){
+		// Fifth order corrector
+		const double a_1 = 2.*alpha;
+		const double a_2 = alpha;
+		const double a_3 = -a_2;
+		const double a_4 = -a_1;
+		const double b_1 = -1./6.*beta;
+		const double b_2 = 5./6.*beta;
+		const double b_3 = -b_2;
+		const double b_4 = -b_1;
+		Z(a_1*dt,-b_1*dt);
+		Z(a_2*dt,-b_2*dt);
+		Z(a_3*dt,-b_3*dt);
+		Z(a_4*dt,-b_4*dt);
+	}
+	if (integrator_corrector_on==7){
+		// Seventh order corrector
+		const double a_1 = 3.*alpha;
+		const double a_2 = 2.*alpha;
+		const double a_3 = alpha;
+		const double a_4 = -a_3;
+		const double a_5 = -a_2;
+		const double a_6 = -a_1;
+		const double b_1 = 12361./246960.*beta;
+		const double b_2 = -22651./61740.*beta;
+		const double b_3 = 53521./49392.*beta;
+		const double b_4 = -b_3;
+		const double b_5 = -b_2;
+		const double b_6 = -b_1;
+		Z(a_1*dt,-b_1*dt);
+		Z(a_2*dt,-b_2*dt);
+		Z(a_3*dt,-b_3*dt);
+		Z(a_4*dt,-b_4*dt);
+		Z(a_5*dt,-b_5*dt);
+		Z(a_6*dt,-b_6*dt);
+	}
 }
 
-int integrator_corrector_on = 0;
 
 void integrator_part1(){
 	int recalculate_masses = !integrator_inertial_frame;
