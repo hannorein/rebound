@@ -74,7 +74,7 @@ def simulation(par):
                 E_pot -= G*particles[i].m*particles[j].m/np.sqrt(r2)
         return E_kin+E_pot
 
-    times = np.logspace(np.log10(1.*dt),np.log10(tmax),1000)
+    times = np.logspace(np.log10(100.*dt),np.log10(tmax),1000)
     if integrator=="wh" or integrator=="mercury":
         move_to_heliocentric()
     else:
@@ -97,8 +97,8 @@ def simulation(par):
     return [times, es]
 
 #3dt = 100.23
-dt = 10.
-tmax = 365.*1e7
+dt = 2.
+tmax = 365.*1e8
 integrators = ["wh","mikkola","ias15","mercury"]
 #integrators = ["mercury"]
 colors = ["b","r","g","y"]
