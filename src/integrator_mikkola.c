@@ -44,6 +44,7 @@
 unsigned int integrator_mikkola_persistent_particles		= 0;
 unsigned int integrator_mikkola_synchronize_manually 		= 0;
 unsigned int integrator_mikkola_corrector 			= 0;
+unsigned int integrator_mikkola_particles_modified		= 0;
 
 static unsigned int integrator_is_synchronized = 1;
 static unsigned int integrator_allocated_N = 0;
@@ -695,7 +696,7 @@ static void integrator_apply_corrector(double inv){
 
 
 void integrator_mikkola_part1(){
-	int recalculate_jacobi = !(integrator_mikkola_persistent_particles || integrator_mikkola_synchronize_manually);
+	unsigned int recalculate_jacobi = (!(integrator_mikkola_persistent_particles || integrator_mikkola_synchronize_manually)) || integrator_mikkola_particles_modified ;
 	if (integrator_allocated_N != N){
 		integrator_allocated_N = N;
 		p_j = realloc(p_j,sizeof(struct particle)*N);
@@ -721,6 +722,7 @@ void integrator_mikkola_part1(){
 		}
 		Mtotal  = eta[N-N_megno-1];
 		Mtotali = etai[N-N_megno-1];
+		integrator_mikkola_particles_modified = 0;
 		// Only recalculate Jacobi coordinates if needed
 		integrator_to_jacobi_posvel();
 		if (N_megno){
@@ -840,6 +842,7 @@ void integrator_mikkola_reset(){
 	integrator_is_synchronized = 1;
 	integrator_mikkola_synchronize_manually = 0;
 	integrator_mikkola_persistent_particles = 0;
+	integrator_mikkola_particles_modified = 0;
 	integrator_allocated_N = 0;
 	integrator_timestep_warning = 0;
 	integrator_synchronized_megno_warning = 0;

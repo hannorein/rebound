@@ -129,9 +129,13 @@ void integrate(double _tmax, int exactFinishTime){
 	int last_step = 0;
 	int integrator_mikkola_synchronize_manually_init = integrator_mikkola_synchronize_manually;
 	int integrator_mikkola_persistent_particles_init = integrator_mikkola_persistent_particles;
+	integrator_mikkola_particles_modified = 1;
 	if (!N_megno){
 		integrator_mikkola_synchronize_manually = 1;
 		integrator_mikkola_persistent_particles = 1;
+	}
+	if (problem_additional_forces==NULL){
+		integrator_force_is_velocitydependent = 0;
 	}
 	while(t<tmax && last_step<2){
 		if (N<=0){

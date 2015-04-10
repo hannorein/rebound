@@ -49,6 +49,15 @@ extern unsigned int integrator_mikkola_corrector;
  **/ 
 extern unsigned int integrator_mikkola_persistent_particles;
 
+/* 
+ * Flag overwriting the effect of integrator_mikkola_persistent_particle
+ * for the next step only. Setting this flaf to one will recalculate 
+ * Jacobi coordinates from the particle structure in the next timestep
+ * only. 
+ * Default is 0.
+ **/ 
+extern unsigned int integrator_mikkola_particles_modified;
+
 /*
  * Flag determining if the integrator produces synchronized outputs at
  * the end of the timestep. Setting this to 1 results in a speedup.

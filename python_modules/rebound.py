@@ -39,7 +39,7 @@ class Orbit():
         self.f      =   None    # true anomaly
 
     def __str__(self):
-        return "<rebound.Orbit instance, a=%f e=%f>"%(self.a,self.e)
+        return "<rebound.Orbit instance, a=%s e=%s>"%(str(self.a),str(self.e))
 
 
 class Particle(Structure):
@@ -199,7 +199,7 @@ class Particle(Structure):
         self.vz = primary.vz + v0*((e+cf)*co*si - sf*si*so)
 
 
-    def get_orbit(self, primary, verbose=False):
+    def get_orbit(self, primary=None, verbose=False):
         """ Returns a rebound.Orbit object with the keplerian orbital elements
             corresponding to the particle around the central body primary
             (rebound.Particle). Edge cases will return values set to None. If
@@ -224,6 +224,9 @@ class Particle(Structure):
             _______
             A rebound.Orbit object (with member variables for the orbital elements)
             """
+        if primary is None:
+            primary = get_particles()[0]
+
         o = Orbit()
         if primary.m <= TINY:
             if verbose is True:
