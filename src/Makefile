@@ -81,6 +81,8 @@ all:
 	$(CC) $(OPT) $(PREDEF) integrator_mikkola.c -c
 	$(CC) $(OPT) $(PREDEF) integrator_ias15.c -c
 	$(CC) $(OPT) $(PREDEF) integrator_sei.c -c
+	$(CC) $(OPT) $(PREDEF) integrator_wh.c -c
+	$(CC) $(OPT) $(PREDEF) integrator_leapfrog.c -c
 	$(CC) $(OPT) $(PREDEF) boundaries.c -c
 	$(CC) $(OPT) $(PREDEF) input.c -c
 	$(CC) $(OPT) $(PREDEF) output.c -c

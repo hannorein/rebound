@@ -683,7 +683,7 @@ static void integrator_corrector(double inv){
 void integrator_mikkola_part1(){
 	if (integrator_synchronize_manually && integrator_persistent_particles==0 && integrator_synchronized_persistent_warning==0){
 		integrator_synchronized_persistent_warning++;
-		fprintf(stderr,"\n\033[1mWarning!\033[0m To use integrator_syncrhonize_manually you need to turn on integrator_persistent_particles as well.\n");
+		fprintf(stderr,"\n\033[1mWarning!\033[0m To use integrator_synchronize_manually you need to turn on integrator_persistent_particles as well.\n");
 	}
 	int recalculate_masses = !integrator_persistent_particles;
 	if (integrator_allocated_N != N){

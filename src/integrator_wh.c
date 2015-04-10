@@ -47,22 +47,7 @@
 #include "gravity.h"
 #include "boundaries.h"
 #include "integrator.h"
-
-// Slightly dirty trick to rename function for librebound use
-#ifdef LIBREBOUND
-#define integrator_part1                      integrator_wh_part1
-#define integrator_part2                      integrator_wh_part2
-#define integrator_reset                      integrator_wh_reset
-#define integrator_synchronize                integrator_wh_synchronize
-#endif // LIBREBOUND
-
-#ifndef LIBREBOUND
-unsigned int integrator_force_is_velocitydependent 	= 1;
-unsigned int integrator_inertial_frame			= 0;
-unsigned int integrator_synchronize_manually 		= 0;
-double integrator_epsilon 			= 0;
-double integrator_min_dt 			= 0;
-#endif
+#include "integrator_wh.h"
 
 void drift_wh(double _dt);
 void drift_dan(struct particle* pv, double mu, double dt, int* iflag);
@@ -83,7 +68,7 @@ int _N_active;
 int integrator_wh_N = 0;
 static double* eta;
 
-void integrator_part1(){
+void integrator_wh_part1(){
 	_N_active = (N_active==-1)?N:N_active;
 	if (_N_active!=integrator_wh_N){
 		eta = realloc(eta,sizeof(double)*_N_active);
@@ -100,7 +85,7 @@ void integrator_part1(){
 	t+=dt/2.;
 }
 
-void integrator_part2(){
+void integrator_wh_part2(){
 	// KICK
 	_N_active = (N_active==-1)?N:N_active;
 	// Calculate terms in Heliocentric coordinates
@@ -572,9 +557,9 @@ void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* 
 	*s = (*x)*(A0-y*(A1-y*(A2-y*(A3-y*(A4-y)))))/A0;
 	*c = sqrt(1. - (*s)*(*s));
 }
-void integrator_synchronize(){
+void integrator_wh_synchronize(){
 	// Do nothing.
 }
-void integrator_reset(){
+void integrator_wh_reset(){
 	// Do nothing.
 }

@@ -32,6 +32,8 @@ typedef enum {
 	IAS15,
 	MIKKOLA,
 	SEI,
+	WH,
+	LEAPFROG,
 	} integrator_t;
 /*
  * Variable setting the current integrator.

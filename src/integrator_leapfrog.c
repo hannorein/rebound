@@ -38,26 +38,9 @@
 #include "boundaries.h"
 #include "integrator.h"
 
-// Slightly dirty trick to rename function for librebound use
-#ifdef LIBREBOUND
-#define integrator_part1                      integrator_leapfrog_part1
-#define integrator_part2                      integrator_leapfrog_part2
-#define integrator_reset                      integrator_leapfrog_reset
-#define integrator_synchronize                integrator_leapfrog_synchronize
-#endif // LIBREBOUND
-
-#ifndef LIBREBOUND
-unsigned int integrator_force_is_velocitydependent	= 1;	
-unsigned int integrator_inertial_frame	 		= 0;
-unsigned int integrator_synchronize_manually		= 0;
-double integrator_epsilon 			= 0;
-double integrator_min_dt 			= 0;
-#endif
-
-
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
-void integrator_part1(){
+void integrator_leapfrog_part1(){
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		particles[i].x  += 0.5* dt * particles[i].vx;
@@ -66,7 +49,7 @@ void integrator_part1(){
 	}
 	t+=dt/2.;
 }
-void integrator_part2(){
+void integrator_leapfrog_part2(){
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		particles[i].vx += dt * particles[i].ax;
@@ -79,10 +62,10 @@ void integrator_part2(){
 	t+=dt/2.;
 }
 	
-void integrator_synchronize(){
+void integrator_leapfrog_synchronize(){
 	// Do nothing.
 }
 
-void integrator_reset(){
+void integrator_leapfrog_reset(){
 	// Do nothing.
 }
