@@ -3,7 +3,6 @@
 nbody
 gravity.c
 boundaries.c
-integrator.c
 collisions.c
 src/problem.c
 .DS_Store
