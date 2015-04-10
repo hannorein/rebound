@@ -52,7 +52,6 @@ struct cs_3d {
 };
 
 
-#ifdef LIBREBOUND
 static struct cs_3d* restrict cs = NULL;
 static int N_cs = 0;
 
@@ -72,12 +71,12 @@ void gravity_calculate_acceleration(){
 		cs[i].z = 0.;
 	}
 	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
-	const int _N_start  = (selected_integrator==2?1:0);
+	const int _N_start  = (integrator==WH?1:0);
 	// Summing over all massive particle pairs
 #pragma omp parallel for schedule(guided)
 	for (int i=_N_start; i<_N_active; i++){
 	for (int j=i+1; j<_N_active; j++){
-		if (selected_integrator==1 && j==1 && i==0 ) continue;
+		if (integrator==MIKKOLA && j==1 && i==0 ) continue;
 		const double dx = particles[i].x - particles[j].x;
 		const double dy = particles[i].y - particles[j].y;
 		const double dz = particles[i].z - particles[j].z;
@@ -127,7 +126,7 @@ void gravity_calculate_acceleration(){
 #pragma omp parallel for schedule(guided)
 	for (int i=_N_active; i<_N_real; i++){
 	for (int j=_N_start; j<_N_active; j++){
-		if (selected_integrator==1 && ((i==1 && j==0) || (j==1 && i==0)) ) continue;
+		if (integrator==MIKKOLA && ((i==1 && j==0) || (j==1 && i==0)) ) continue;
 		const double dx = particles[i].x - particles[j].x;
 		const double dy = particles[i].y - particles[j].y;
 		const double dz = particles[i].z - particles[j].z;
@@ -154,70 +153,6 @@ void gravity_calculate_acceleration(){
 		
 }
 
-#else // LIBREBOUND
-
-void gravity_calculate_acceleration(){
-	const int _N_real   = N - N_megno;
-#pragma omp parallel for schedule(guided)
-	for (int i=0; i<_N_real; i++){
-		particles[i].ax = 0; 
-		particles[i].ay = 0; 
-		particles[i].az = 0; 
-	}
-	// Summing over all Ghost Boxes
-	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
-	const int _N_start  = (selected_integrator==2?1:0);
-	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
-	for (int gby=-nghosty; gby<=nghosty; gby++){
-	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
-		struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
-		// Summing over all particle pairs
-#pragma omp parallel for schedule(guided)
-		for (int i=_N_start; i<_N_real; i++){
-			double csx = 0;
-			double csy = 0;
-			double csz = 0;
-		for (int j=_N_start; j<_N_active; j++){
-			if (selected_integrator==1 && ((i==1 && j==0) || (j==1 && i==0)) ) continue;
-			if (i==j) continue;
-			double dx = (gb.shiftx+particles[i].x) - particles[j].x;
-			double dy = (gb.shifty+particles[i].y) - particles[j].y;
-			double dz = (gb.shiftz+particles[i].z) - particles[j].z;
-			double r2 = dx*dx + dy*dy + dz*dz + softening*softening;
-			double r = sqrt(r2);
-			double prefact = -G/(r2*r)*particles[j].m;
-			
-			double ax = particles[i].ax;
-			csx  +=	prefact*dx; 
-			particles[i].ax    = ax + csx;
-			csx  += ax - particles[i].ax; 
-			
-			double ay = particles[i].ay;
-			csy  +=	prefact*dy; 
-			particles[i].ay    = ay + csy;
-			csy  += ay - particles[i].ay; 
-			
-			double az = particles[i].az;
-			csz  +=	prefact*dz; 
-			particles[i].az    = az + csz;
-			csz  += az - particles[i].az; 
-			
-		}
-		}
-	}
-	}
-	}
-#ifdef MPI
-	// Distribute active particles from root to all other nodes.
-	// This assures that round-off errors do not accumulate and 
-	// the copies of active particles do not diverge. 
-	MPI_Bcast(particles, N_active, mpi_particle, 0, MPI_COMM_WORLD); 
-#endif
-
-}
-
-#endif // LIBREBOUND
-
 void gravity_calculate_variational_acceleration(){
 	const int _N_real   = N - N_megno;
 #pragma omp parallel for schedule(guided)
@@ -229,7 +164,7 @@ void gravity_calculate_variational_acceleration(){
 #pragma omp parallel for schedule(guided)
 	for (int i=_N_real; i<N; i++){
 	for (int j=i+1; j<N; j++){
-		if (selected_integrator==1 && ((i==_N_real+1 && j==_N_real) || (j==_N_real+1 && i==_N_real)) ) continue;
+		if (integrator==WH && ((i==_N_real+1 && j==_N_real) || (j==_N_real+1 && i==_N_real)) ) continue;
 		const double dx = particles[i-N/2].x - particles[j-N/2].x;
 		const double dy = particles[i-N/2].y - particles[j-N/2].y;
 		const double dz = particles[i-N/2].z - particles[j-N/2].z;
