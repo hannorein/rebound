@@ -46,7 +46,7 @@ unsigned int integrator_mikkola_synchronize_manually 		= 0;
 unsigned int integrator_mikkola_corrector 			= 0;
 unsigned int integrator_mikkola_particles_modified		= 0;
 
-static unsigned int integrator_is_synchronized = 1;
+static unsigned int integrator_mikkola_is_synchronized = 1;
 static unsigned int integrator_allocated_N = 0;
 static struct particle* restrict p_j  = NULL;
 static double* restrict eta = NULL;
@@ -705,7 +705,7 @@ void integrator_mikkola_part1(){
 		recalculate_jacobi = 1;		// Recalculate masses/Jacobi coordinates if first timestep or if N changes.
 	}
 	if (recalculate_jacobi){
-		if (integrator_is_synchronized==0){
+		if (integrator_mikkola_is_synchronized==0){
 			integrator_mikkola_synchronize();
 			fprintf(stderr,"\n\033[1mWarning!\033[0m Need to recalculate Jacobi coordinates but pos/vel were not synchronized.\n");
 		}
@@ -730,7 +730,7 @@ void integrator_mikkola_part1(){
 		}
 	}
 	double _dt2 = dt/2.;
-	if (integrator_is_synchronized){
+	if (integrator_mikkola_is_synchronized){
 		// First half DRIFT step
 		if (integrator_mikkola_corrector){
 			integrator_apply_corrector(1.);
@@ -762,13 +762,13 @@ void integrator_mikkola_part1(){
 }
 
 void integrator_mikkola_synchronize(){
-	if (integrator_is_synchronized == 0){
+	if (integrator_mikkola_is_synchronized == 0){
 		integrator_kepler_drift(dt/2.);
 		if (integrator_mikkola_corrector){
 			integrator_apply_corrector(-1.);
 		}
 		integrator_to_inertial_posvel();
-		integrator_is_synchronized = 1;
+		integrator_mikkola_is_synchronized = 1;
 	}
 }
 
@@ -780,6 +780,7 @@ void integrator_mikkola_part2(){
 	integrator_interaction(dt);
 
 	double _dt2 = dt/2.;
+	integrator_mikkola_is_synchronized = 0;
 	if (!integrator_mikkola_synchronize_manually){
 		integrator_mikkola_synchronize();
 	}
@@ -787,7 +788,7 @@ void integrator_mikkola_part2(){
 	t+=_dt2;
 
 	if (N_megno){
-		if (integrator_is_synchronized==0 && integrator_synchronized_megno_warning==0){
+		if (integrator_mikkola_is_synchronized==0 && integrator_synchronized_megno_warning==0){
 			integrator_synchronized_megno_warning++;
 			fprintf(stderr,"\n\033[1mWarning!\033[0m MEGNO requires synchronized output at every timestep.\n");
 		}
@@ -838,7 +839,7 @@ void integrator_mikkola_part2(){
 
 void integrator_mikkola_reset(){
 	integrator_mikkola_corrector = 0;
-	integrator_is_synchronized = 1;
+	integrator_mikkola_is_synchronized = 1;
 	integrator_mikkola_synchronize_manually = 0;
 	integrator_mikkola_persistent_particles = 0;
 	integrator_mikkola_particles_modified = 0;
