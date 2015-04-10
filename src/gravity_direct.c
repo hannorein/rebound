@@ -54,8 +54,10 @@ struct cs_3d {
 
 static struct cs_3d* restrict cs = NULL;
 static int N_cs = 0;
+unsigned int gravity_ignore_10;
 
 void gravity_calculate_acceleration(){
+	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
 	const int _N_real   = N - N_megno;
 	if (N_cs<_N_real){
 		cs = realloc(cs,_N_real*sizeof(struct cs_3d));
@@ -76,7 +78,7 @@ void gravity_calculate_acceleration(){
 #pragma omp parallel for schedule(guided)
 	for (int i=_N_start; i<_N_active; i++){
 	for (int j=i+1; j<_N_active; j++){
-		if (integrator==MIKKOLA && j==1 && i==0 ) continue;
+		if (_gravity_ignore_10 && j==1 && i==0 ) continue;
 		const double dx = particles[i].x - particles[j].x;
 		const double dy = particles[i].y - particles[j].y;
 		const double dz = particles[i].z - particles[j].z;
@@ -126,7 +128,7 @@ void gravity_calculate_acceleration(){
 #pragma omp parallel for schedule(guided)
 	for (int i=_N_active; i<_N_real; i++){
 	for (int j=_N_start; j<_N_active; j++){
-		if (integrator==MIKKOLA && ((i==1 && j==0) || (j==1 && i==0)) ) continue;
+		if (_gravity_ignore_10 && ((i==1 && j==0) || (j==1 && i==0)) ) continue;
 		const double dx = particles[i].x - particles[j].x;
 		const double dy = particles[i].y - particles[j].y;
 		const double dz = particles[i].z - particles[j].z;
@@ -154,6 +156,7 @@ void gravity_calculate_acceleration(){
 }
 
 void gravity_calculate_variational_acceleration(){
+	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
 	const int _N_real   = N - N_megno;
 #pragma omp parallel for schedule(guided)
 	for (int i=_N_real; i<N; i++){
@@ -164,7 +167,7 @@ void gravity_calculate_variational_acceleration(){
 #pragma omp parallel for schedule(guided)
 	for (int i=_N_real; i<N; i++){
 	for (int j=i+1; j<N; j++){
-		if (integrator==MIKKOLA && ((i==_N_real+1 && j==_N_real) || (j==_N_real+1 && i==_N_real)) ) continue;
+		if (_gravity_ignore_10 && ((i==_N_real+1 && j==_N_real) || (j==_N_real+1 && i==_N_real)) ) continue;
 		const double dx = particles[i-N/2].x - particles[j-N/2].x;
 		const double dy = particles[i-N/2].y - particles[j-N/2].y;
 		const double dz = particles[i-N/2].z - particles[j-N/2].z;

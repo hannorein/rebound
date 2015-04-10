@@ -40,73 +40,59 @@
 #include "integrator_mikkola.h"
 #include "integrator_ias15.h"
 
-double integrator_hybrid_switch_radius = 10.; // In units of Hill Radii
+double integrator_hybrid_switch_ratio = 10.; // Switch to non-symplectic integrator if force_form_star/force_from_other_particle < integrator_hybrid_switch_ratio 
 static double initial_dt = 0;
 
 
-static double get_min_distance(){
-	const double M0 = particles[0].m;
+static double get_min_ratio(){
+	struct particle p0 = particles[0];
 	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
 	const int _N_real   = N - N_megno;
-	double min_distance = 1e308;
+	double min_ratio = 1e308;
 	for (int i=1; i<_N_active; i++){
-	for (int j=i+1; j<_N_real; j++){
-		double Msum = particles[i].m+particles[j].m;
-		if (Msum == 0.) continue; // Two testparticles
-		const double dxi = particles[0].x - particles[i].x;
-		const double dyi = particles[0].y - particles[i].y;
-		const double dzi = particles[0].z - particles[i].z;
-		const double dvxi = particles[0].vx - particles[i].vx;
-		const double dvyi = particles[0].vy - particles[i].vy;
-		const double dvzi = particles[0].vz - particles[i].vz;
-		const double ri = sqrt(dxi*dxi + dyi*dyi + dzi*dzi);
-		const double vi2 = (dvxi*dvxi + dvyi*dvyi + dvzi*dvzi);
-		const double dxj = particles[0].x - particles[j].x;
-		const double dyj = particles[0].y - particles[j].y;
-		const double dzj = particles[0].z - particles[j].z;
-		const double dvxj = particles[0].vx - particles[j].vx;
-		const double dvyj = particles[0].vy - particles[j].vy;
-		const double dvzj = particles[0].vz - particles[j].vz;
-		const double rj = sqrt(dxj*dxj + dyj*dyj + dzj*dzj);
-		const double vj2 = (dvxj*dvxj + dvyj*dvyj + dvzj*dvzj);
+		struct particle pi = particles[i];
+	for (int j=1; j<_N_real; j++){
+		if (i==j) continue;
+		const double dxj = p0.x - particles[j].x;
+		const double dyj = p0.y - particles[j].y;
+		const double dzj = p0.z - particles[j].z;
+		const double r0j2 = dxj*dxj + dyj*dyj + dzj*dzj;
 
-		const double dx = particles[i].x - particles[j].x;
-		const double dy = particles[i].y - particles[j].y;
-		const double dz = particles[i].z - particles[j].z;
-		const double r2 = dx*dx + dy*dy + dz*dz;
-		const double r = sqrt(r2);
+		const double dx = pi.x - particles[j].x;
+		const double dy = pi.y - particles[j].y;
+		const double dz = pi.z - particles[j].z;
+		const double rij2 = dx*dx + dy*dy + dz*dz;
+		
+		const double F0j = p0.m/r0j2;
+		const double Fij = pi.m/rij2;
+
+		const double ratio = F0j/Fij;
 			
-		const double mui = G*(M0+particles[i].m);
-		const double ai = -mui/( vi2 - 2.*mui/ri );
-		const double muj = G*(M0+particles[j].m);
-		const double aj = -muj/( vj2 - 2.*muj/rj );
-		// Mutual Hill Radius
-		const double rHill = pow((particles[i].m+particles[j].m)/(3.*M0),1./3.)*(ai+aj)/2.;
-		const double distance = r/rHill;
-		if (distance<min_distance){
-			min_distance = distance;
+		if (ratio<min_ratio){
+			min_ratio = ratio;
 		}
 	}
 	}
-	return min_distance;
+	return min_ratio;
 }
 
 
-static double distance;
+static double ratio;
 unsigned int integrator_hybrid_mode = 0; // 0 = symplectic; 1 = IAS15
 void integrator_hybrid_part1(){
-	distance = get_min_distance();
+	ratio = get_min_ratio();
 	if (initial_dt==0.){
 		initial_dt = dt;
 	}
-	if (distance<integrator_hybrid_switch_radius){
+	if (ratio<integrator_hybrid_switch_ratio){
 		if (integrator_hybrid_mode==0){
-			integrator_ias15_reset();
+			integrator_ias15_reset(); //previous guesses no good anymore
+			gravity_ignore_10 = 0;
 		}
 		integrator_hybrid_mode = 1;
 	}else{
 		if (integrator_hybrid_mode==1){
-			integrator_mikkola_reset();
+			//integrator_mikkola_reset(); 
 			dt = initial_dt;
 		}
 		integrator_hybrid_mode = 0;
@@ -139,6 +125,6 @@ void integrator_hybrid_reset(){
 	integrator_hybrid_mode = 0;
 	integrator_mikkola_reset();
 	integrator_ias15_reset();
-	integrator_hybrid_switch_radius = 10.;
+	integrator_hybrid_switch_ratio = 10.;
 	initial_dt = 0.;
 }

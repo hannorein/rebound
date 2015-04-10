@@ -8,12 +8,13 @@ all:
 	$(CC) $(OPT) -c -fPIC -Wall ../../src/integrator_wh.c
 	$(CC) $(OPT) -c -fPIC -Wall ../../src/integrator_leapfrog.c
 	$(CC) $(OPT) -c -fPIC -Wall ../../src/integrator_sei.c
+	$(CC) $(OPT) -c -fPIC -Wall ../../src/integrator_hybrid.c
 	$(CC) $(OPT) -c -fPIC -Wall ../../src/integrator.c
 	$(CC) $(OPT) -c -fPIC -Wall ../../src/gravity_direct.c
 	$(CC) $(OPT) -c -fPIC -Wall ../../src/tools.c
 	$(CC) $(OPT) -c -fPIC -Wall ../../src/particle.c
 	$(CC) $(OPT) -c -fPIC -I../../src/ -Wall librebound.c
-	$(CC) $(OPT) -shared -o librebound.so particle.o tools.o integrator_sei.o integrator.o integrator_ias15.o integrator_mikkola.o integrator_wh.o integrator_leapfrog.o gravity_direct.o librebound.o 
+	$(CC) $(OPT) -shared -o librebound.so particle.o tools.o integrator_hybrid.o integrator_sei.o integrator.o integrator_ias15.o integrator_mikkola.o integrator_wh.o integrator_leapfrog.o gravity_direct.o librebound.o 
 	
 	@echo ""	
 	@echo "The shared library librebound.so has been created. Cleaning up"

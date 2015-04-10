@@ -43,4 +43,9 @@ void gravity_calculate_acceleration();
   * Note that this is currently only implemented for GRAVITY_DIRECT
   */
 void gravity_calculate_variational_acceleration();
+
+/*
+ * Ignore i=1, j=0 pair (used for MIKKOLA);
+ */
+unsigned int gravity_ignore_10;
 #endif

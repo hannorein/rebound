@@ -696,6 +696,7 @@ static void integrator_apply_corrector(double inv){
 
 
 void integrator_mikkola_part1(){
+	gravity_ignore_10 = 1;
 	unsigned int recalculate_jacobi = (!(integrator_mikkola_persistent_particles || integrator_mikkola_synchronize_manually)) || integrator_mikkola_particles_modified;
 	if (integrator_allocated_N != N){
 		integrator_allocated_N = N;
