@@ -40,9 +40,12 @@
 #include "integrator_mikkola.h"
 #include "integrator_ias15.h"
 
-double integrator_hybrid_switch_ratio = 10.; // Switch to non-symplectic integrator if force_form_star/force_from_other_particle < integrator_hybrid_switch_ratio 
-static double initial_dt = 0;
+// Switch to non-symplectic integrator if force_form_star/force_from_other_particle < integrator_hybrid_switch_ratio.
+// Default corresponds to about 20 Hill Radii 
+double integrator_hybrid_switch_ratio = 400; 
 
+static double initial_dt = 0;
+static unsigned int integrator_hybrid_switch_warning = 0;
 
 static double get_min_ratio(){
 	struct particle p0 = particles[0];
@@ -87,6 +90,10 @@ void integrator_hybrid_part1(){
 	if (ratio<integrator_hybrid_switch_ratio){
 		if (integrator_hybrid_mode==0){
 			integrator_ias15_reset(); //previous guesses no good anymore
+			if (integrator_hybrid_switch_warning==0.){
+				integrator_hybrid_switch_warning++;
+				fprintf(stderr,"\n\033[1mInfo!\033[0m Switching to IAS15 for the first time at t=%.9e.\n",t);
+			}
 			gravity_ignore_10 = 0;
 		}
 		integrator_hybrid_mode = 1;
@@ -123,8 +130,9 @@ void integrator_hybrid_synchronize(){
 
 void integrator_hybrid_reset(){
 	integrator_hybrid_mode = 0;
+	integrator_hybrid_switch_warning = 0;
 	integrator_mikkola_reset();
 	integrator_ias15_reset();
-	integrator_hybrid_switch_ratio = 10.;
+	integrator_hybrid_switch_ratio = 400.;
 	initial_dt = 0.;
 }

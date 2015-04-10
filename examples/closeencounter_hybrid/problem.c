@@ -38,6 +38,7 @@
 #include "output.h"
 #include "particle.h"
 #include "integrator.h"
+#include "integrator_mikkola.h"
 
 #ifdef OPENGL
 extern int display_wire;
@@ -47,6 +48,7 @@ double e_init;
 void problem_init(int argc, char* argv[]){
 	dt = 0.01*2.*M_PI;						// initial timestep
 	integrator = HYBRID;
+	softening = 0.001;
 	//integrator = IAS15;
 	//integrator = MIKKOLA;
 	// integrator_ias15_epsilon = 1e-2;					// accuracy parameter, default is 1e-2 and should work in most cases.
@@ -68,7 +70,7 @@ void problem_init(int argc, char* argv[]){
 		double a = 1.+(double)i/(double)(N_planets-1);		// semi major axis
 		double v = sqrt(1./a); 					// velocity (circular orbit)
 		struct particle planet;
-		planet.m = 2e-5; 
+		planet.m = 1e-5; 
 		planet.x = a; 	planet.y = 0; 	planet.z = 0;
 		planet.vx = 0; 	planet.vy = v; 	planet.vz = 0;
 		particles_add(planet); 
@@ -79,9 +81,9 @@ void problem_init(int argc, char* argv[]){
 }
 
 void problem_output(){
-//	if (output_check(10.*2.*M_PI)){  
+	if (output_check(10.*2.*M_PI)){  
 		output_timing();
-//	}
+	}
 	if (output_check(2.*M_PI)){  
 		FILE* f = fopen("energy.txt","a");
 		double e = tools_energy();
