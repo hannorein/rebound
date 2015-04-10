@@ -60,6 +60,10 @@ extern unsigned int integrator_mikkola_persistent_particles;
  *   (continue with integration)
  *  
  * Default is 0 (produces synchronized outputs at every timestep).
+ * Note that setting this flag to 1 implicitly also sets
+ * integrator_mikkola_persistent_particles=1. 
+ * This means you cannot change the particle mass/positions 
+ * between timesteps unless you call integrator_synchronize();
  **/
 extern unsigned int integrator_mikkola_synchronize_manually;
 #endif
