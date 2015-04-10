@@ -49,7 +49,7 @@ extern int Nmax;
 extern int iter;  // TODO DEBUG
 
 unsigned int integrator_force_is_velocitydependent 	= 1;
-unsigned int integrator_inertial_frame			= 0;
+unsigned int integrator_persistent_particles		= 0;
 unsigned int integrator_synchronize_manually 		= 0;
 double integrator_epsilon = 1e-9;
 double integrator_min_dt = 0.;

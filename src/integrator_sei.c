@@ -39,15 +39,7 @@
 #include "main.h"
 #include "boundaries.h"
 #include "integrator.h"
-
-
-#ifndef LIBREBOUND
-unsigned int integrator_force_is_velocitydependent 	= 1;
-unsigned int integrator_inertial_frame			= 0;
-unsigned int integrator_synchronize_manually 		= 0;
-double integrator_epsilon 			= 0;
-double integrator_min_dt 			= 0;
-#endif
+#include "integrator_sei.h"
 
 
 double OMEGA 	= 1.; 	/**< Epicyclic/orbital frequency. */
@@ -77,7 +69,7 @@ void integrator_cache_coefficients(){
 	}
 }
 
-void integrator_part1(){
+void integrator_sei_part1(){
 	integrator_cache_coefficients();
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
@@ -86,7 +78,7 @@ void integrator_part1(){
 	t+=dt/2.;
 }
 
-void integrator_part2(){
+void integrator_sei_part2(){
 	integrator_cache_coefficients();
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
@@ -150,10 +142,10 @@ void operator_phi1(struct particle* p){
 	p->vz += p->az * dt;
 }
 
-void integrator_synchronize(){
+void integrator_sei_synchronize(){
 	// Do nothing.
 }
 
-void integrator_reset(){
+void integrator_sei_reset(){
 	lastdt = 0;	
 }

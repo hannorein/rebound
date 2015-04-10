@@ -34,6 +34,7 @@
 #include "tools.h"
 #include "output.h"
 #include "integrator.h"
+#include "integrator_sei.h"
 #include "input.h"
 #include "communication_mpi.h"
 #ifdef OPENGL
@@ -50,10 +51,6 @@
 #ifdef MPI
 #include "mpi.h"
 #endif // MPI
-
-#ifdef INTEGRATOR_SEI 	// Shearing sheet
-extern double OMEGA;
-#endif
 
 // Check if output is needed
 
@@ -307,18 +304,18 @@ void output_append_velocity_dispersion(char* filename){
 		struct vec3 Aim1 = A;
 		struct particle p = particles[i];
 		A.x = A.x + (p.vx-A.x)/(double)(i+1);
-#ifdef INTEGRATOR_SEI 	// Shearing sheet
-		A.y = A.y + (p.vy+1.5*OMEGA*p.x-A.y)/(double)(i+1);
-#else
-		A.y = A.y + (p.vy-A.y)/(double)(i+1);
-#endif
+		if (integrator==SEI){
+			A.y = A.y + (p.vy+1.5*OMEGA*p.x-A.y)/(double)(i+1);
+		}else{
+			A.y = A.y + (p.vy-A.y)/(double)(i+1);
+		}
 		A.z = A.z + (p.vz-A.z)/(double)(i+1);
 		Q.x = Q.x + (p.vx-Aim1.x)*(p.vx-A.x);
-#ifdef INTEGRATOR_SEI 	// Shearing sheet
-		Q.y = Q.y + (p.vy+1.5*OMEGA*p.x-Aim1.y)*(p.vy+1.5*OMEGA*p.x-A.y);
-#else
-		Q.y = Q.y + (p.vy-Aim1.y)*(p.vy-A.y);
-#endif
+		if (integrator==SEI){
+			Q.y = Q.y + (p.vy+1.5*OMEGA*p.x-Aim1.y)*(p.vy+1.5*OMEGA*p.x-A.y);
+		}else{
+			Q.y = Q.y + (p.vy-Aim1.y)*(p.vy-A.y);
+		}
 		Q.z = Q.z + (p.vz-Aim1.z)*(p.vz-A.z);
 	}
 #ifdef MPI

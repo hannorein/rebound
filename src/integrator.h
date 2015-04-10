@@ -24,6 +24,21 @@
  */
 #ifndef _INTEGRATOR_H
 #define _INTEGRATOR_H
+
+/*
+ * Available integrator.
+ */
+typedef enum {
+	IAS15,
+	MIKKOLA,
+	SEI,
+	} integrator_t;
+/*
+ * Variable setting the current integrator.
+ */
+extern integrator_t integrator;
+
+
 /*
  * The first half of the integrator step.
  * This function is called at the beginning of the timestep. It 
@@ -53,11 +68,11 @@ extern unsigned int integrator_force_is_velocitydependent;
  * coordinates of each particle at every timestep. This is only relevant 
  * for MIKKOLA as of now. Set this to 1 if the masses of all particles 
  * stay constant during the entire simulation and the positions and 
- * velocities of particles are not changed between timesteps.
+ * velocities of particles are not changed by the user between timesteps.
  * Setting this to 1 results in a speed and accuracy increase.
  * Default is 0.
  **/ 
-extern unsigned int integrator_inertial_frame;
+extern unsigned int integrator_persistent_particles;
 
 /*
  * Flag determining if the integrator produces synchronized outputs at

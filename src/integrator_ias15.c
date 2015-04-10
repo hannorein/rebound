@@ -54,15 +54,7 @@ void integrator_generate_constants();
 #include "output.h"
 #include "tools.h"
 #include "integrator.h"
-
-// Slightly dirty trick to rename function for librebound use
-#ifdef LIBREBOUND
-#define integrator_part1                      integrator_ias15_part1
-#define integrator_part2                      integrator_ias15_part2
-#define integrator_reset                      integrator_ias15_reset
-#define integrator_synchronize                integrator_ias15_synchronize
-#endif // LIBREBOUND
-
+#include "integrator_ias15.h"
 
 #ifdef TREE
 #error IAS15 integrator not working with TREE module.
@@ -71,14 +63,6 @@ void integrator_generate_constants();
 #error IAS15 integrator not working with MPI.
 #endif
 
-#ifndef LIBREBOUND
-unsigned int integrator_inertial_frame	 		= 0;
-unsigned int integrator_synchronize_manually		= 0;
-unsigned int integrator_force_is_velocitydependent	= 1;	// Turn this off to safe some time if the force is not velocity dependent.
-double 	integrator_epsilon 			= 1e-9;	// Precision parameter 
-							// If it is zero, then a constant timestep is used. 
-double 	integrator_min_dt 			= 0;	// Minimum timestep used as a floor when adaptive timestepping is enabled.
-#endif
 int	integrator_epsilon_global		= 1;	// if 1: estimate the fractional error by max(acceleration_error)/max(acceleration), where max is take over all particles.
 							// if 0: estimate the fractional error by max(acceleration_error/acceleration).
 unsigned long integrator_iterations_max_exceeded= 0;	// Count how many times the iteration did not converge
@@ -120,7 +104,7 @@ void predict_next_step(double ratio, int N3, double* _e[7], double* _b[7]);
 const double w[8] = {0.03125, 0.185358154802979278540728972807180754479812609, 0.304130620646785128975743291458180383736715043, 0.376517545389118556572129261157225608762708603, 0.391572167452493593082499533303669362149363727, 0.347014795634501068709955597003528601733139176, 0.249647901329864963257869294715235590174262844, 0.114508814744257199342353731044292225247093225};
 
 // Do nothing here. This is only used in a leapfrog-like DKD integrator. IAS15 performs one complete timestep.
-void integrator_part1(){
+void integrator_ias15_part1(){
 }
 
 // This function updates the acceleration on all particles. 
@@ -140,7 +124,7 @@ void integrator_update_acceleration(){
 
 int integrator_ias15_step(); // Does the actual timestep.
 
-void integrator_part2(){
+void integrator_ias15_part2(){
 #ifdef GENERATE_CONSTANTS
 	integrator_generate_constants();
 #endif  // GENERATE_CONSTANTS
@@ -589,10 +573,10 @@ void copybuffers(double* _a[7], double* _b[7], int N3){
 //		memcpy(_b[i],_a[i], sizeof(double)*N3);
 //	}
 }
-void integrator_synchronize(){
+void integrator_ias15_synchronize(){
 }
 
-void integrator_reset(){
+void integrator_ias15_reset(){
 	N3allocated 	= 0;
 	dt_last_success = 0;
 	for (int l=0;l<7;++l) {

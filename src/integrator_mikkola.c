@@ -36,25 +36,10 @@
 #include "gravity.h"
 #include "boundaries.h"
 #include "integrator.h"
+#include "integrator_mikkola.h"
 
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
-
-// Slightly dirty trick to rename function for librebound use
-#ifdef LIBREBOUND
-#define integrator_part1                      integrator_mikkola_part1
-#define integrator_part2                      integrator_mikkola_part2
-#define integrator_reset                      integrator_mikkola_reset
-#define integrator_synchronize                integrator_mikkola_synchronize
-#endif // LIBREBOUND
-
-#ifndef LIBREBOUND
-unsigned int integrator_force_is_velocitydependent 	= 1;
-unsigned int integrator_inertial_frame			= 0;
-unsigned int integrator_synchronize_manually 		= 0;
-double integrator_epsilon 				= 0;
-double integrator_min_dt 				= 0;
-#endif // LIBREBOUND
 
 static unsigned int integrator_is_synchronized = 1;
 static unsigned int integrator_allocated_N = 0;
@@ -65,6 +50,7 @@ static double Mtotali;
 static double Mtotal;
 static unsigned int integrator_timestep_warning = 0;
 static unsigned int integrator_synchronized_megno_warning = 0;
+static unsigned int integrator_synchronized_persistent_warning = 0;
 
 // Fast inverse factorial lookup table
 static const double invfactorial[35] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
@@ -617,7 +603,7 @@ static void integrator_interaction(double _dt){
 /***************************** 
  * DKD Scheme                */
 
-void integrator_kepler_drift(double _dt){
+static void integrator_kepler_drift(double _dt){
 	for (unsigned int i=1;i<N-N_megno;i++){
 		kepler_step(i, _dt);
 	}
@@ -628,8 +614,34 @@ void integrator_kepler_drift(double _dt){
 
 const static double alpha = 4.183300132670377813e-01;
 const static double beta = 4.980119205559973422e-02;
+const static double a_31 = -alpha;
+const static double a_32 = -a_31;
+const static double b_31 = -0.5*beta;
+const static double b_32 = -b_31;
+const static double a_51 = 2.*alpha;
+const static double a_52 = alpha;
+const static double a_53 = -a_52;
+const static double a_54 = -a_51;
+const static double b_51 = -1./6.*beta;
+const static double b_52 = 5./6.*beta;
+const static double b_53 = -b_52;
+const static double b_54 = -b_51;
+const static double a_71 = 3.*alpha;
+const static double a_72 = 2.*alpha;
+const static double a_73 = alpha;
+const static double a_74 = -a_73;
+const static double a_75 = -a_72;
+const static double a_76 = -a_71;
+const static double b_71 = 12361./246960.*beta;
+const static double b_72 = -22651./61740.*beta;
+const static double b_73 = 53521./49392.*beta;
+const static double b_74 = -b_73;
+const static double b_75 = -b_72;
+const static double b_76 = -b_71;
 
-void Z(double a, double b){
+int integrator_corrector_on = 0;
+
+static void Z(double a, double b){
 	integrator_kepler_drift(a);
 	integrator_to_inertial_pos();
 	gravity_calculate_acceleration();
@@ -643,106 +655,37 @@ void Z(double a, double b){
 	integrator_kepler_drift(a);
 }
 
-int integrator_corrector_on = 0;
-
-void integrator_corrector(){
+static void integrator_corrector(double inv){
 	if (integrator_corrector_on==3){
 		// Third order corrector
-		const double a_1 = -alpha;
-		const double a_2 = -a_1;
-		const double b_1 = -0.5*beta;
-		const double b_2 = -b_1;
-		Z(a_2*dt,b_2*dt);
-		Z(a_1*dt,b_1*dt);
+		Z(a_32*dt,inv*b_32*dt);
+		Z(a_31*dt,inv*b_31*dt);
 	}
 	if (integrator_corrector_on==5){
 		// Fifth order corrector
-		const double a_1 = 2.*alpha;
-		const double a_2 = alpha;
-		const double a_3 = -a_2;
-		const double a_4 = -a_1;
-		const double b_1 = -1./6.*beta;
-		const double b_2 = 5./6.*beta;
-		const double b_3 = -b_2;
-		const double b_4 = -b_1;
-		Z(a_4*dt,b_4*dt);
-		Z(a_3*dt,b_3*dt);
-		Z(a_2*dt,b_2*dt);
-		Z(a_1*dt,b_1*dt);
+		Z(a_54*dt,inv*b_54*dt);
+		Z(a_53*dt,inv*b_53*dt);
+		Z(a_52*dt,inv*b_52*dt);
+		Z(a_51*dt,inv*b_51*dt);
 	}
 	if (integrator_corrector_on==7){
 		// Seventh order corrector
-		const double a_1 = 3.*alpha;
-		const double a_2 = 2.*alpha;
-		const double a_3 = alpha;
-		const double a_4 = -a_3;
-		const double a_5 = -a_2;
-		const double a_6 = -a_1;
-		const double b_1 = 12361./246960.*beta;
-		const double b_2 = -22651./61740.*beta;
-		const double b_3 = 53521./49392.*beta;
-		const double b_4 = -b_3;
-		const double b_5 = -b_2;
-		const double b_6 = -b_1;
-		Z(a_6*dt,b_6*dt);
-		Z(a_5*dt,b_5*dt);
-		Z(a_4*dt,b_4*dt);
-		Z(a_3*dt,b_3*dt);
-		Z(a_2*dt,b_2*dt);
-		Z(a_1*dt,b_1*dt);
-	}
-}
-void integrator_corrector_inv(){
-	if (integrator_corrector_on==3){
-		// Third order corrector
-		const double a_1 = -alpha;
-		const double a_2 = -a_1;
-		const double b_1 = -0.5*beta;
-		const double b_2 = -b_1;
-		Z(a_1*dt,-b_1*dt);
-		Z(a_2*dt,-b_2*dt);
-	}
-	if (integrator_corrector_on==5){
-		// Fifth order corrector
-		const double a_1 = 2.*alpha;
-		const double a_2 = alpha;
-		const double a_3 = -a_2;
-		const double a_4 = -a_1;
-		const double b_1 = -1./6.*beta;
-		const double b_2 = 5./6.*beta;
-		const double b_3 = -b_2;
-		const double b_4 = -b_1;
-		Z(a_1*dt,-b_1*dt);
-		Z(a_2*dt,-b_2*dt);
-		Z(a_3*dt,-b_3*dt);
-		Z(a_4*dt,-b_4*dt);
-	}
-	if (integrator_corrector_on==7){
-		// Seventh order corrector
-		const double a_1 = 3.*alpha;
-		const double a_2 = 2.*alpha;
-		const double a_3 = alpha;
-		const double a_4 = -a_3;
-		const double a_5 = -a_2;
-		const double a_6 = -a_1;
-		const double b_1 = 12361./246960.*beta;
-		const double b_2 = -22651./61740.*beta;
-		const double b_3 = 53521./49392.*beta;
-		const double b_4 = -b_3;
-		const double b_5 = -b_2;
-		const double b_6 = -b_1;
-		Z(a_1*dt,-b_1*dt);
-		Z(a_2*dt,-b_2*dt);
-		Z(a_3*dt,-b_3*dt);
-		Z(a_4*dt,-b_4*dt);
-		Z(a_5*dt,-b_5*dt);
-		Z(a_6*dt,-b_6*dt);
+		Z(a_76*dt,inv*b_76*dt);
+		Z(a_75*dt,inv*b_75*dt);
+		Z(a_74*dt,inv*b_74*dt);
+		Z(a_73*dt,inv*b_73*dt);
+		Z(a_72*dt,inv*b_72*dt);
+		Z(a_71*dt,inv*b_71*dt);
 	}
 }
 
 
-void integrator_part1(){
-	int recalculate_masses = !integrator_inertial_frame;
+void integrator_mikkola_part1(){
+	if (integrator_synchronize_manually && integrator_persistent_particles==0 && integrator_synchronized_persistent_warning==0){
+		integrator_synchronized_persistent_warning++;
+		fprintf(stderr,"\n\033[1mWarning!\033[0m To use integrator_syncrhonize_manually you need to turn on integrator_persistent_particles as well.\n");
+	}
+	int recalculate_masses = !integrator_persistent_particles;
 	if (integrator_allocated_N != N){
 		integrator_allocated_N = N;
 		p_j = realloc(p_j,sizeof(struct particle)*N);
@@ -774,7 +717,7 @@ void integrator_part1(){
 		}
 		// First half DRIFT step
 		if (integrator_corrector_on){
-			integrator_corrector();
+			integrator_corrector(1.);
 		}
 		integrator_kepler_drift(_dt);	// half timestep
 	}else{
@@ -802,18 +745,18 @@ void integrator_part1(){
 	t+=_dt;
 }
 
-void integrator_synchronize(){
+void integrator_mikkola_synchronize(){
 	if (integrator_is_synchronized == 0){
 		integrator_kepler_drift(dt/2.);
 		if (integrator_corrector_on){
-			integrator_corrector_inv();
+			integrator_corrector(-1.);
 		}
 		integrator_to_inertial_posvel();
 		integrator_is_synchronized = 1;
 	}
 }
 
-void integrator_part2(){
+void integrator_mikkola_part2(){
 	integrator_to_jacobi_acc();
 	if (N_megno){
 		integrator_var_to_jacobi_acc();
@@ -879,13 +822,14 @@ void integrator_part2(){
 }
 	
 
-void integrator_reset(){
+void integrator_mikkola_reset(){
 	integrator_is_synchronized = 1;
 	integrator_synchronize_manually = 0;
-	integrator_inertial_frame = 0;
+	integrator_persistent_particles = 0;
 	integrator_allocated_N = 0;
 	integrator_timestep_warning = 0;
 	integrator_synchronized_megno_warning = 0;
+	integrator_synchronized_persistent_warning = 0;
 	free(p_j);
 	p_j = NULL;
 	free(eta);

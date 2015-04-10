@@ -465,9 +465,9 @@ def set_integrator(integrator="IAS15"):
             return
     raise ValueError("Warning. Intergrator not found.")
 
-def set_inertial_frame(is_inertial_frame=0):
-    if isinstance(is_inertial_frame, int):
-        c_int.in_dll(librebound, "integrator_inertial_frame").value = is_inertial_frame
+def set_persistent_particles(is_per=0):
+    if isinstance(is_per, int):
+        c_int.in_dll(librebound, "integrator_persistent_particles").value = is_per
         return
     raise ValueError("Expecting integer.")
 
