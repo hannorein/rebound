@@ -15,12 +15,25 @@ extern int 	N;		/**< Current number of particles on this node. Ns set in particl
 extern int 	N_active;	/**< Number of massive particles included in force calculation. Default: N.*/
 extern int 	N_megno;	/**< Number of megno particles. Default: 0.*/
 
-extern double 	timing_initial;	/**< System time at start. Used to meassure total cpu time. */
+extern double 	timing;		/**< Time for last step/integration in s. */
 
 /*
  * This functions sets the current integrator.
  * Default is IAS15. See integrator.h for options.
  */
 void		integrator_set(int i);
+
+
+/*
+ * Integrate for one step.
+ */
+void rebound_step();
+
+/* Integrate until t=_tmax.
+ * The integration finisheds exactly at _tmax if 
+ * exactFinishTime=1, otherwise REBOUND will overshoot slightly
+ * depending on the current timestep.
+ */
+void integrate(double _tmax, int exactFinishTime);
 
 #endif

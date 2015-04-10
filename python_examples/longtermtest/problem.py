@@ -25,7 +25,6 @@ def simulation(par):
         rebound.set_integrator_mikkola_corrector(0)
     rebound.set_integrator(integrator)
     rebound.set_force_is_velocitydependent(0)
-    rebound.set_persistent_particles(1)
 
     rebound.add_particle(m=1.00000597682, x=-4.06428567034226e-3, y=-6.08813756435987e-3, z=-1.66162304225834e-6, vx=+6.69048890636161e-6, vy=-6.33922479583593e-6, vz=-3.13202145590767e-9)   # Sun
     rebound.add_particle(m=1./1407.355,   x=+3.40546614227466e+0, y=+3.62978190075864e+0, z=+3.42386261766577e-2, vx=-5.59797969310664e-3, vy=+5.51815399480116e-3, vz=-2.66711392865591e-6)   # Jupiter
@@ -95,18 +94,16 @@ def simulation(par):
 
     es = []
 
-    starttime = time.clock()
-
+    runtime = 0.
     for t in times:
         rebound.integrate(t,exactFinishTime=0)
         ef = energy()
         e = np.fabs((ei-ef)/ei)+1.1e-16
         es.append(e)
+        runtime += rebound.get_timing()
     
-    endtime = time.clock()
-
     es = np.array(es)
-    print integrator + " done. %.5fs"%(endtime-starttime)
+    print integrator + " done. %.5fs"%(runtime)
     return [times, es]
 
 #3dt = 100.23

@@ -36,6 +36,7 @@
 #include "gravity.h"
 #include "particle.h"
 #include "main.h"
+#include "librebound.h"
 #include "boundaries.h"
 #include "integrator.h"
 #include "integrator_mikkola.h"
@@ -46,6 +47,7 @@ double t 	= 0;
 double tmax	= 0;
 double G 	= 1;
 double softening = 0;
+double timing 	= 0;
 extern int Nmax;	
 extern int iter;  // TODO DEBUG
 
@@ -70,9 +72,8 @@ struct particle* particles_get(){
 void set_additional_forces(void (* _cb)()){
 	problem_additional_forces = _cb;
 }
-double timing;
-// Integrate for 1 step
 
+// Integrate for 1 step
 void rebound_step(){ 
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
@@ -109,6 +110,7 @@ void reset(){
 	N_active 	= -1;
 	N_megno 	= 0;
 	iter		= 0;
+	timing		= 0.;
 	free(particles);
 	particles 	= NULL;
 	integrator_reset();
@@ -117,7 +119,7 @@ void reset(){
 	srand ( tim.tv_usec + getpid());
 }
 
-// Integrate until t=_tmax
+// Integrate until t=_tmax (or slightly more if exactFinishTime=0)
 void integrate(double _tmax, int exactFinishTime){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
@@ -126,8 +128,10 @@ void integrate(double _tmax, int exactFinishTime){
 	double dt_last_done = dt;
 	int last_step = 0;
 	int integrator_mikkola_synchronize_manually_init = integrator_mikkola_synchronize_manually;
+	int integrator_mikkola_persistent_particles_init = integrator_mikkola_persistent_particles;
 	if (!N_megno){
 		integrator_mikkola_synchronize_manually = 1;
+		integrator_mikkola_persistent_particles = 1;
 	}
 	while(t<tmax && last_step<2){
 		if (N<=0){
@@ -153,6 +157,7 @@ void integrate(double _tmax, int exactFinishTime){
 	integrator_mikkola_synchronize();
 	dt = dt_last_done;
 	integrator_mikkola_synchronize_manually = integrator_mikkola_synchronize_manually_init;
+	integrator_mikkola_persistent_particles = integrator_mikkola_persistent_particles_init;
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
 	timing = timing_final-timing_initial;
