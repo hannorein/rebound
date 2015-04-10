@@ -36,6 +36,7 @@
 #include "particle.h"
 #include "main.h"
 #include "boundaries.h"
+#include "integrator.h"
 #include <fftw3.h>
 
 #ifdef MPI
@@ -70,6 +71,10 @@ void gravity_fft_remap(double* wi, const double direction);
 double shift_shear = 0;
 
 void gravity_calculate_acceleration(){
+	if (integrator==SEI){
+		printf("ERROR. Not implemented.\n");
+		exit(0);
+	}
 	// Setting up the grid
 	if (gravity_fft_init_done==0){
 		gravity_fft_init();

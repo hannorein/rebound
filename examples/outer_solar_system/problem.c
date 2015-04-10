@@ -97,17 +97,17 @@ void problem_init(int argc, char* argv[]){
 		p.m  = ss_mass[i];
 		particles_add(p); 
 	}
-#ifdef INTEGRATOR_WH
-	// Move to heliocentric frame (required by WH integrator)
-	for (int i=1;i<N;i++){
-		particles[i].x -= particles[0].x;	particles[i].y -= particles[0].y;	particles[i].z -= particles[0].z;
-		particles[i].vx -= particles[0].vx;	particles[i].vy -= particles[0].vy;	particles[i].vz -= particles[0].vz;
+	if (integrator==WH){
+		// Move to heliocentric frame (required by WH integrator)
+		for (int i=1;i<N;i++){
+			particles[i].x -= particles[0].x;	particles[i].y -= particles[0].y;	particles[i].z -= particles[0].z;
+			particles[i].vx -= particles[0].vx;	particles[i].vy -= particles[0].vy;	particles[i].vz -= particles[0].vz;
+		}
+		particles[0].x = 0;	particles[0].y = 0;	particles[0].z = 0;
+		particles[0].vx= 0;	particles[0].vy= 0;	particles[0].vz= 0;
+	}else{
+		tools_move_to_center_of_momentum();
 	}
-	particles[0].x = 0;	particles[0].y = 0;	particles[0].z = 0;
-	particles[0].vx= 0;	particles[0].vy= 0;	particles[0].vz= 0;
-#else
-	tools_move_to_center_of_momentum();
-#endif // INTEGRATOR_WH
 	//tools_megno_init(1e-16);
 	e_init = energy();
 	system("rm -f energy.txt");
