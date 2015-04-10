@@ -19,9 +19,9 @@ def simulation(par):
     #rebound.set_mikkola_persistent_particles(1)
     #rebound.set_mikkola_persistent_particles(1)
     #rebound.set_integrator_mikkola_synchronize_manually(1)
+    #rebound.set_integrator_mikkola_corrector(3)
     rebound.set_dt(5.)
     rebound.set_min_dt(5.)
-    rebound.set_integrator_mikkola_corrector(3)
     
     # These parameters are only approximately those of Jupiter and Saturn.
     sun     = rebound.Particle(m=1.)
