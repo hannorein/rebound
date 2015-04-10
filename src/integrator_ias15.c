@@ -63,7 +63,9 @@ void integrator_generate_constants();
 #error IAS15 integrator not working with MPI.
 #endif
 
-int	integrator_epsilon_global		= 1;	// if 1: estimate the fractional error by max(acceleration_error)/max(acceleration), where max is take over all particles.
+unsigned int integrator_ias15_epsilon_global	= 1;	// if 1: estimate the fractional error by max(acceleration_error)/max(acceleration), where max is take over all particles.
+double integrator_ias15_epsilon 		= 1e-9;
+double integrator_ias15_min_dt 			= 0;
 							// if 0: estimate the fractional error by max(acceleration_error/acceleration).
 unsigned long integrator_iterations_max_exceeded= 0;	// Count how many times the iteration did not converge
 const double safety_factor 			= 0.25;	// Maximum increase/deacrease of consecutve timesteps.
@@ -349,7 +351,7 @@ int integrator_ias15_step() {
 						b[6][k] += tmp;
 						
 						// Monitor change in b[6][k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
-						if (integrator_epsilon_global){
+						if (integrator_ias15_epsilon_global){
 							const double ak  = fabs(at[k]);
 							if (isnormal(ak) && ak>maxak){
 								maxak = ak;
@@ -367,7 +369,7 @@ int integrator_ias15_step() {
 							}
 						}
 					} 
-					if (integrator_epsilon_global){
+					if (integrator_ias15_epsilon_global){
 						predictor_corrector_error = maxb6ktmp/maxak;
 					}
 					
@@ -381,17 +383,17 @@ int integrator_ias15_step() {
 	// Find new timestep
 	const double dt_done = dt;
 	
-	if (integrator_epsilon>0){
+	if (integrator_ias15_epsilon>0){
 		// Estimate error (given by last term in series expansion) 
 		// There are two options:
-		// integrator_epsilon_global==1  (default)
+		// integrator_ias15_epsilon_global==1  (default)
 		//   First, we determine the maximum acceleration and the maximum of the last term in the series. 
 		//   Then, the two are divided.
-		// integrator_epsilon_global==0
+		// integrator_ias15_epsilon_global==0
 		//   Here, the fractional error is calculated for each particle individually and we use the maximum of the fractional error.
 		//   This might fail in cases where a particle does not experience any (physical) acceleration besides roundoff errors. 
 		double integrator_error = 0.0;
-		if (integrator_epsilon_global){
+		if (integrator_ias15_epsilon_global){
 			double maxak = 0.0;
 			double maxb6k = 0.0;
 			for(int i=0;i<N;i++){ // Looping over all particles and all 3 components of the acceleration. 
@@ -425,12 +427,12 @@ int integrator_ias15_step() {
 		double dt_new;
 		if  (isnormal(integrator_error)){ 	
 			// if error estimate is available increase by more educated guess
-		 	dt_new = pow(integrator_epsilon/integrator_error,1./7.)*dt_done;
+		 	dt_new = pow(integrator_ias15_epsilon/integrator_error,1./7.)*dt_done;
 		}else{					// In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
 		 	dt_new = dt_done/safety_factor; // by default, increase timestep a little
 		}
 		
-		if (fabs(dt_new)<integrator_min_dt) dt_new = copysign(integrator_min_dt,dt_new);
+		if (fabs(dt_new)<integrator_ias15_min_dt) dt_new = copysign(integrator_ias15_min_dt,dt_new);
 		
 		if (fabs(dt_new/dt_done) < safety_factor) {	// New timestep is significantly smaller.
 			// Reset particles

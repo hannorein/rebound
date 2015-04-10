@@ -88,6 +88,7 @@ void problem_init(int argc, char* argv[]){
 	integrator_mikkola_synchronize_manually = 1;	// Need to call integrator_synchronize() before outputs. 
 	integrator_force_is_velocitydependent = 0;	// Force only depends on positions. 
 	integrator	= MIKKOLA;
+	integrator	= IAS15;
 
 	// Initial conditions
 	for (int i=0;i<6;i++){

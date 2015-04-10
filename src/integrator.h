@@ -71,18 +71,6 @@ extern unsigned int integrator_force_is_velocitydependent;
  */
 void integrator_synchronize();
 
-/*
- * This parameter controls the accuracy of an adaptive integrator.
- * Default is 0 (non-adaptive).
- **/
-extern double integrator_epsilon;
-
-/*
- * The minimum timestep to be used in an adaptive integrator.
- * Default is 0 (no minimal timestep).
- **/
-extern double integrator_min_dt;
-
 /* 
  * Cleanup all temporarily stored values.
  **/

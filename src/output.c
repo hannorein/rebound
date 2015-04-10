@@ -121,14 +121,12 @@ void output_timing(){
 #endif // PROFILING
 	}
 	printf("N_tot= %- 9d  ",N_tot);
-#ifdef BOUNDARIES_SHEAR
-	printf("t= %- 9f [orb]  ",t*OMEGA/2./M_PI);
-#else // BOUNDARIES_SHEAR
-	printf("t= %- 9f  ",t);
-#endif // BOUNDARIES_SHEAR
-	if(integrator_epsilon>0.){
-		printf("dt= %- 9e  ",dt);
+	if (integrator==SEI){
+		printf("t= %- 9f [orb]  ",t*OMEGA/2./M_PI);
+	}else{
+		printf("t= %- 9f  ",t);
 	}
+	printf("dt= %- 9f  ",dt);
 	printf("cpu= %- 9f [s]  ",temp-output_timing_last);
 	if (tmax>0){
 		printf("t/tmax= %5.2f%%",t/tmax*100.0);
