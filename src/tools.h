@@ -149,4 +149,11 @@ double tools_megno_deltad_delta();
  **/
 void tools_megno_update(double dY);
 
+/**
+ * Calculate the total energy (potential and kinetic).
+ * Might not work for WH.
+ * @return Total energy. 
+ */
+double tools_energy();
+
 #endif 	// TOOLS_H

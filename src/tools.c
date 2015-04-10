@@ -72,6 +72,22 @@ double tools_rayleigh(double sigma){
 
 
 /// Other helper routines
+double tools_energy(){
+	double e_kin = 0.;
+	double e_pot = 0.;
+	for (int i=0;i<N-N_megno;i++){
+		struct particle pi = particles[i];
+		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
+		for (int j=i+1;j<N-N_megno;j++){
+			struct particle pj = particles[j];
+			double dx = pi.x - pj.x;
+			double dy = pi.y - pj.y;
+			double dz = pi.z - pj.z;
+			e_pot -= G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
+		}
+	}
+	return e_kin +e_pot;
+}
 
 void tools_move_to_center_of_momentum(){
 	double m = 0;
