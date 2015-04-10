@@ -27,10 +27,10 @@ def simulation(par):
     rebound.set_force_is_velocitydependent(0)
 
     rebound.add_particle(m=1.00000597682, x=-4.06428567034226e-3, y=-6.08813756435987e-3, z=-1.66162304225834e-6, vx=+6.69048890636161e-6, vy=-6.33922479583593e-6, vz=-3.13202145590767e-9)   # Sun
-    rebound.add_particle(m=1./1047.355,   x=+3.40546614227466e+0, y=+3.62978190075864e+0, z=+3.42386261766577e-2, vx=-5.59797969310664e-3, vy=+5.51815399480116e-3, vz=-2.66711392865591e-6)   # Jupiter
-    rebound.add_particle(m=1./3501.6,     x=+6.60801554403466e+0, y=+6.38084674585064e+0, z=-1.36145963724542e-1, vx=-4.17354020307064e-3, vy=+3.99723751748116e-3, vz=+1.67206320571441e-5)   # Saturn
-    rebound.add_particle(m=1./22869.,     x=+1.11636331405597e+1, y=+1.60373479057256e+1, z=+3.61783279369958e-1, vx=-3.25884806151064e-3, vy=+2.06438412905916e-3, vz=-2.17699042180559e-5)   # Uranus
-    rebound.add_particle(m=1./19314.,     x=-3.01777243405203e+1, y=+1.91155314998064e+0, z=-1.53887595621042e-1, vx=-2.17471785045538e-4, vy=-3.11361111025884e-3, vz=+3.58344705491441e-5)   # Neptune
+    rebound.add_particle(m=1./100407.355,   x=+3.40546614227466e+0, y=+3.62978190075864e+0, z=+3.42386261766577e-2, vx=-5.59797969310664e-3, vy=+5.51815399480116e-3, vz=-2.66711392865591e-6)   # Jupiter
+    rebound.add_particle(m=1./350001.6,     x=+6.60801554403466e+0, y=+6.38084674585064e+0, z=-1.36145963724542e-1, vx=-4.17354020307064e-3, vy=+3.99723751748116e-3, vz=+1.67206320571441e-5)   # Saturn
+    rebound.add_particle(m=1./2280069.,     x=+1.11636331405597e+1, y=+1.60373479057256e+1, z=+3.61783279369958e-1, vx=-3.25884806151064e-3, vy=+2.06438412905916e-3, vz=-2.17699042180559e-5)   # Uranus
+    rebound.add_particle(m=1./1930014.,     x=-3.01777243405203e+1, y=+1.91155314998064e+0, z=-1.53887595621042e-1, vx=-2.17471785045538e-4, vy=-3.11361111025884e-3, vz=+3.58344705491441e-5)   # Neptune
 #    rebound.add_particle(m=0,             x=-2.13858977531573e+1, y=+3.20719104739886e+1, z=+2.49245689556096e+0, vx=-1.76936577252484e-3, vy=-2.06720938381724e-3, vz=+6.58091931493844e-4)   # Pluto
     N = rebound.get_N()
     particles = rebound.get_particles()
@@ -60,7 +60,7 @@ def simulation(par):
         com_vx = 0.
         com_vy = 0.
         com_vz = 0.
-        if integrator=="wh":
+        if integrator=="wh" or integrator=="mercury":
             mtot = 0.
             for i in xrange(0,N):
                 com_vx += particles[i].vx*particles[i].m 
@@ -85,8 +85,8 @@ def simulation(par):
                 E_pot -= G*particles[i].m*particles[j].m/np.sqrt(r2)
         return E_kin+E_pot
 
-    times = np.logspace(np.log10(1.*dt),np.log10(tmax),1000)
-    if integrator=="wh":
+    times = np.logspace(np.log10(10000.*dt),np.log10(tmax),1000)
+    if integrator=="wh" or integrator=="mercury":
         move_to_heliocentric()
     else:
         rebound.move_to_center_of_momentum()
@@ -109,10 +109,10 @@ def simulation(par):
     return [times, es]
 
 #3dt = 100.23
-dt = 20.
-tmax = 365.*4e4
-integrators = ["wh","mikkola","ias15","mikkola-cor3","mikkola-cor5","mikkola-cor7"]
-colors = ["b","r","g","y","m","c"]
+dt = 100.
+tmax = 365.*4e5
+integrators = ["wh","mikkola","ias15","mikkola-cor3","mikkola-cor5","mikkola-cor7","mercury"]
+colors = ["b","r","g","y","m","c","k"]
 trials = 4
     
 parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]
