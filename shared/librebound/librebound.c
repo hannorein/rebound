@@ -154,7 +154,7 @@ void integrate(double _tmax, int exactFinishTime){
 			dt_last_done = dt;
 		}
 	}
-	integrator_mikkola_synchronize();
+	integrator_synchronize();
 	dt = dt_last_done;
 	integrator_mikkola_synchronize_manually = integrator_mikkola_synchronize_manually_init;
 	integrator_mikkola_persistent_particles = integrator_mikkola_persistent_particles_init;

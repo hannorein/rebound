@@ -164,7 +164,7 @@ void gravity_calculate_variational_acceleration(){
 #pragma omp parallel for schedule(guided)
 	for (int i=_N_real; i<N; i++){
 	for (int j=i+1; j<N; j++){
-		if (integrator==WH && ((i==_N_real+1 && j==_N_real) || (j==_N_real+1 && i==_N_real)) ) continue;
+		if (integrator==MIKKOLA && ((i==_N_real+1 && j==_N_real) || (j==_N_real+1 && i==_N_real)) ) continue;
 		const double dx = particles[i-N/2].x - particles[j-N/2].x;
 		const double dy = particles[i-N/2].y - particles[j-N/2].y;
 		const double dz = particles[i-N/2].z - particles[j-N/2].z;

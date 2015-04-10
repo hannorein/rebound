@@ -107,21 +107,6 @@ const double w[8] = {0.03125, 0.185358154802979278540728972807180754479812609, 0
 void integrator_ias15_part1(){
 }
 
-// This function updates the acceleration on all particles. 
-// It uses the current position and velocity data in the (struct particle*) particles structure.
-// Note: this does currently not work with MPI or any TREE module.
-void integrator_update_acceleration(){
-	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
-	PROFILING_START()
-	gravity_calculate_acceleration();
-	if (N_megno){
-		gravity_calculate_variational_acceleration();
-	}
-	if (problem_additional_forces) problem_additional_forces();
-	PROFILING_STOP(PROFILING_CAT_GRAVITY)
-	PROFILING_START()
-}
-
 int integrator_ias15_step(); // Does the actual timestep.
 
 void integrator_ias15_part2(){

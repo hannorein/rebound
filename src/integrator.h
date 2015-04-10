@@ -29,11 +29,11 @@
  * Available integrator.
  */
 typedef enum {
-	IAS15,
-	MIKKOLA,
-	SEI,
-	WH,
-	LEAPFROG,
+	IAS15 = 0,
+	MIKKOLA = 1,
+	SEI = 2,
+	WH = 3,
+	LEAPFROG = 4,
 	} integrator_t;
 /*
  * Variable setting the current integrator.
@@ -87,5 +87,12 @@ extern double integrator_min_dt;
  * Cleanup all temporarily stored values.
  **/
 void integrator_reset();
+
+/* This function updates the acceleration on all particles. 
+ * It uses the current position and velocity data in the 
+ * (struct particle*) particles structure.
+ * Note: this does currently not work with MPI or any TREE module.
+ */
+void integrator_update_acceleration();
 
 #endif

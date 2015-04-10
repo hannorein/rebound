@@ -647,18 +647,18 @@ const static double b_76 = -b_71;
 static void Z(double a, double b){
 	integrator_kepler_drift(a);
 	integrator_to_inertial_pos();
-	gravity_calculate_acceleration();
+	integrator_update_acceleration();
 	integrator_to_jacobi_acc();
 	integrator_interaction(-b);
 	integrator_kepler_drift(-2.*a);
 	integrator_to_inertial_pos();
-	gravity_calculate_acceleration();
+	integrator_update_acceleration();
 	integrator_to_jacobi_acc();
 	integrator_interaction(b);
 	integrator_kepler_drift(a);
 }
 
-static void integrator_corrector(double inv){
+static void integrator_apply_corrector(double inv){
 	if (integrator_mikkola_corrector==3){
 		// Third order corrector
 		Z(a_32*dt,inv*b_32*dt);
@@ -720,7 +720,7 @@ void integrator_mikkola_part1(){
 		}
 		// First half DRIFT step
 		if (integrator_mikkola_corrector){
-			integrator_corrector(1.);
+			integrator_apply_corrector(1.);
 		}
 		integrator_kepler_drift(_dt);	// half timestep
 	}else{
@@ -752,7 +752,7 @@ void integrator_mikkola_synchronize(){
 	if (integrator_is_synchronized == 0){
 		integrator_kepler_drift(dt/2.);
 		if (integrator_mikkola_corrector){
-			integrator_corrector(-1.);
+			integrator_apply_corrector(-1.);
 		}
 		integrator_to_inertial_posvel();
 		integrator_is_synchronized = 1;

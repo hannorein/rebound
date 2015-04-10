@@ -468,9 +468,9 @@ def set_integrator(integrator="IAS15"):
             return
     raise ValueError("Warning. Intergrator not found.")
 
-def set_persistent_particles(is_per=0):
+def set_mikkola_persistent_particles(is_per=0):
     if isinstance(is_per, int):
-        c_int.in_dll(librebound, "integrator_persistent_particles").value = is_per
+        c_int.in_dll(librebound, "integrator_mikkola_persistent_particles").value = is_per
         return
     raise ValueError("Expecting integer.")
 
