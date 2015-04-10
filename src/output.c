@@ -98,6 +98,7 @@ void profiling_stop(int cat){
 #endif // PROFILING
 
 double output_timing_last = -1; 	/**< Time when output_timing() was called the last time. */
+extern unsigned int integrator_hybrid_mode;
 void output_timing(){
 #ifdef MPI
 	int N_tot = 0;
@@ -127,6 +128,9 @@ void output_timing(){
 		printf("t= %- 9f  ",t);
 	}
 	printf("dt= %- 9f  ",dt);
+	if (integrator==HYBRID){
+		printf("INT= %- 1d  ",integrator_hybrid_mode);
+	}
 	printf("cpu= %- 9f [s]  ",temp-output_timing_last);
 	if (tmax>0){
 		printf("t/tmax= %5.2f%%",t/tmax*100.0);

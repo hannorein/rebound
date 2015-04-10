@@ -40,7 +40,7 @@
 #include "integrator_mikkola.h"
 #include "integrator_ias15.h"
 
-double integrator_hybrid_switch_radius = 1.; // In units of Hill Radii
+double integrator_hybrid_switch_radius = 10.; // In units of Hill Radii
 static double initial_dt = 0;
 
 
@@ -93,26 +93,25 @@ static double get_min_distance(){
 
 
 static double distance;
-static unsigned int mode = 0; // 0 = symplectic; 1 = IAS15
+unsigned int integrator_hybrid_mode = 0; // 0 = symplectic; 1 = IAS15
 void integrator_hybrid_part1(){
 	distance = get_min_distance();
 	if (initial_dt==0.){
 		initial_dt = dt;
 	}
 	if (distance<integrator_hybrid_switch_radius){
-		if (mode==0){
+		if (integrator_hybrid_mode==0){
 			integrator_ias15_reset();
 		}
-		mode = 1;
+		integrator_hybrid_mode = 1;
 	}else{
-		if (mode==1){
+		if (integrator_hybrid_mode==1){
 			integrator_mikkola_reset();
 			dt = initial_dt;
 		}
-		mode = 0;
+		integrator_hybrid_mode = 0;
 	}
-	printf("rmode %d\n",mode);
-	switch(mode){
+	switch(integrator_hybrid_mode){
 		case 0:
 			integrator_mikkola_part1();
 			break;
@@ -122,7 +121,7 @@ void integrator_hybrid_part1(){
 	}
 }
 void integrator_hybrid_part2(){
-	switch(mode){
+	switch(integrator_hybrid_mode){
 		case 0:
 			integrator_mikkola_part2();
 			break;
@@ -137,7 +136,7 @@ void integrator_hybrid_synchronize(){
 }
 
 void integrator_hybrid_reset(){
-	mode = 0;
+	integrator_hybrid_mode = 0;
 	integrator_mikkola_reset();
 	integrator_ias15_reset();
 	integrator_hybrid_switch_radius = 10.;
