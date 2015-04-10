@@ -696,7 +696,7 @@ void integrator_mikkola_part1(){
 		etai= realloc(etai,sizeof(double)*(N-N_megno));
 		recalculate_masses = 1;
 	}
-	double _dt = dt/2.;
+	double _dt2 = dt/2.;
 	if (integrator_is_synchronized){
 		if (recalculate_masses){
 			eta[0] = particles[0].m;
@@ -722,7 +722,7 @@ void integrator_mikkola_part1(){
 		if (integrator_mikkola_corrector){
 			integrator_apply_corrector(1.);
 		}
-		integrator_kepler_drift(_dt);	// half timestep
+		integrator_kepler_drift(_dt2);	// half timestep
 	}else{
 		// Combined DRIFT step
 		integrator_kepler_drift(dt);	// full timestep
@@ -735,9 +735,9 @@ void integrator_mikkola_part1(){
 	}
 	
 	if (N_megno){
-		p_j[N_megno].x += _dt*p_j[N_megno].vx;
-		p_j[N_megno].y += _dt*p_j[N_megno].vy;
-		p_j[N_megno].z += _dt*p_j[N_megno].vz;
+		p_j[N_megno].x += _dt2*p_j[N_megno].vx;
+		p_j[N_megno].y += _dt2*p_j[N_megno].vy;
+		p_j[N_megno].z += _dt2*p_j[N_megno].vz;
 		if (integrator_force_is_velocitydependent){
 			integrator_var_to_inertial_posvel();
 		}else{
@@ -745,7 +745,7 @@ void integrator_mikkola_part1(){
 		}
 	}
 
-	t+=_dt;
+	t+=_dt2;
 }
 
 void integrator_mikkola_synchronize(){
@@ -766,23 +766,22 @@ void integrator_mikkola_part2(){
 	}
 	integrator_interaction(dt);
 
-	double _dt = dt/2.;
-	if (integrator_mikkola_synchronize_manually){
-		integrator_is_synchronized = 0;
-	}else{
+	double _dt2 = dt/2.;
+	integrator_is_synchronized = 0;
+	if (!integrator_mikkola_synchronize_manually){
 		integrator_synchronize();
 	}
 	
-	t+=_dt;
+	t+=_dt2;
 
 	if (N_megno){
 		if (integrator_is_synchronized==0 && integrator_synchronized_megno_warning==0){
 			integrator_synchronized_megno_warning++;
 			fprintf(stderr,"\n\033[1mWarning!\033[0m MEGNO requires synchronized output at every timestep.\n");
 		}
-		p_j[N_megno].x += _dt*p_j[N_megno].vx;
-		p_j[N_megno].y += _dt*p_j[N_megno].vy;
-		p_j[N_megno].z += _dt*p_j[N_megno].vz;
+		p_j[N_megno].x += _dt2*p_j[N_megno].vx;
+		p_j[N_megno].y += _dt2*p_j[N_megno].vy;
+		p_j[N_megno].z += _dt2*p_j[N_megno].vz;
 		integrator_var_to_inertial_posvel();
 		gravity_calculate_variational_acceleration();
 		// Add additional acceleration term for MEGNO calculation

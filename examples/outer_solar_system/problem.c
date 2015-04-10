@@ -85,7 +85,7 @@ void problem_init(int argc, char* argv[]){
 	tmax		= 7.3e10;			// 200 Myr
 	G		= k*k;				// These are the same units as used by the mercury6 code.
 	init_boxwidth(200); 				// Init box with width 200 astronomical units
-	integrator_mikkola_synchronize_manually = 1;	// Need to call integrator_synchronize() before outputs. 
+	//integrator_mikkola_synchronize_manually = 1;	// Need to call integrator_synchronize() before outputs. 
 	integrator_force_is_velocitydependent = 0;	// Force only depends on positions. 
 	integrator	= MIKKOLA;
 

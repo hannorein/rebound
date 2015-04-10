@@ -15,8 +15,10 @@ def simulation(par):
     #/return [saturn_a, saturn_e]
     rebound.reset()
     rebound.set_integrator("mikkola")
-    rebound.set_mikkola_persistent_particles(1)
-    rebound.set_dt(5.)
+    #rebound.set_integrator("ias15")
+    #rebound.set_mikkola_persistent_particles(1)
+    rebound.set_dt(1.)
+    rebound.set_min_dt(1.)
     
     # These parameters are only approximately those of Jupiter and Saturn.
     sun     = rebound.Particle(m=1.)
