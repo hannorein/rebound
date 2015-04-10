@@ -706,7 +706,7 @@ void integrator_mikkola_part1(){
 	}
 	if (recalculate_jacobi){
 		if (integrator_is_synchronized==0){
-			integrator_synchronize();
+			integrator_mikkola_synchronize();
 			fprintf(stderr,"\n\033[1mWarning!\033[0m Need to recalculate Jacobi coordinates but pos/vel were not synchronized.\n");
 		}
 		eta[0] = particles[0].m;
@@ -780,9 +780,8 @@ void integrator_mikkola_part2(){
 	integrator_interaction(dt);
 
 	double _dt2 = dt/2.;
-	integrator_is_synchronized = 0;
 	if (!integrator_mikkola_synchronize_manually){
-		integrator_synchronize();
+		integrator_mikkola_synchronize();
 	}
 	
 	t+=_dt2;
