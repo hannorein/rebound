@@ -17,7 +17,10 @@ extern int 	N_megno;	/**< Number of megno particles. Default: 0.*/
 
 extern double 	timing_initial;	/**< System time at start. Used to meassure total cpu time. */
 
-// Integer flag that determines what kind of integrator is used.
-extern int selected_integrator; 
+/*
+ * This functions sets the current integrator.
+ * Default is IAS15. See integrator.h for options.
+ */
+void		integrator_set(int i);
 
 #endif

@@ -14,15 +14,15 @@ def simulation(par):
     rebound.set_dt(dt)
     if integrator=="mikkola-cor3":
         integrator="mikkola"
-        rebound.set_integrator_corrector_on(3)
+        rebound.set_integrator_mikkola_corrector(3)
     elif integrator=="mikkola-cor5":
         integrator="mikkola"
-        rebound.set_integrator_corrector_on(5)
+        rebound.set_integrator_mikkola_corrector(5)
     elif integrator=="mikkola-cor7":
         integrator="mikkola"
-        rebound.set_integrator_corrector_on(7)
+        rebound.set_integrator_mikkola_corrector(7)
     else:
-        rebound.set_integrator_corrector_on(0)
+        rebound.set_integrator_mikkola_corrector(0)
     rebound.set_integrator(integrator)
     rebound.set_force_is_velocitydependent(0)
     rebound.set_persistent_particles(1)
@@ -110,8 +110,8 @@ def simulation(par):
     return [times, es]
 
 #3dt = 100.23
-dt = .3
-tmax = 365.*3e5
+dt = 1.3
+tmax = 365.*3e3
 integrators = ["wh","mikkola","ias15","mikkola-cor3","mikkola-cor5","mikkola-cor7","mercury"]
 colors = ["b","r","g","y","m","c","k"]
 trials = 4

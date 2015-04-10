@@ -38,6 +38,7 @@
 #include "main.h"
 #include "boundaries.h"
 #include "integrator.h"
+#include "integrator_mikkola.h"
 
 // Default values of parameters and constants
 double dt 	= 0.01;	
@@ -47,36 +48,6 @@ double G 	= 1;
 double softening = 0;
 extern int Nmax;	
 extern int iter;  // TODO DEBUG
-
-unsigned int integrator_force_is_velocitydependent 	= 1;
-unsigned int integrator_persistent_particles		= 0;
-unsigned int integrator_synchronize_manually 		= 0;
-double integrator_epsilon = 1e-9;
-double integrator_min_dt = 0.;
-
-// Chooses which integrator to use.
-// 0: IAS15 (default)
-// 1: MIKKOLA
-// 2: WH
-// 3: Leap-frog
-int selected_integrator = 0; 
-
-extern void integrator_ias15_part1();
-extern void integrator_ias15_part2();
-extern void integrator_ias15_reset();
-extern void integrator_ias15_synchronize();
-extern void integrator_mikkola_part1();
-extern void integrator_mikkola_part2();
-extern void integrator_mikkola_reset();
-extern void integrator_mikkola_synchronize();
-extern void integrator_wh_part1();
-extern void integrator_wh_part2();
-extern void integrator_wh_reset();
-extern void integrator_wh_synchronize();
-extern void integrator_leapfrog_part1();
-extern void integrator_leapfrog_part2();
-extern void integrator_leapfrog_reset();
-extern void integrator_leapfrog_synchronize();
 
 // Function pointer to additional forces
 void (*problem_additional_forces) () = NULL;
@@ -102,55 +73,6 @@ void set_additional_forces(void (* _cb)()){
 double timing;
 // Integrate for 1 step
 
-void integrator_part1(){
-	switch(selected_integrator){
-		case 1:
-			integrator_mikkola_part1();
-			break;
-		case 2:
-			integrator_wh_part1();
-			break;
-		case 3:
-			integrator_leapfrog_part1();
-			break;
-		default:
-			integrator_ias15_part1();
-			break;
-	}
-}
-void integrator_part2(){
-	switch(selected_integrator){
-		case 1:
-			integrator_mikkola_part2();
-			break;
-		case 2:
-			integrator_wh_part2();
-			break;
-		case 3:
-			integrator_leapfrog_part2();
-			break;
-		default:
-			integrator_ias15_part2();
-			break;
-	}
-}
-void integrator_synchronize(){
-	switch(selected_integrator){
-		case 1:
-			integrator_mikkola_synchronize();
-			break;
-		case 2:
-			integrator_wh_synchronize();
-			break;
-		case 3:
-			integrator_leapfrog_synchronize();
-			break;
-		default:
-			integrator_ias15_synchronize();
-			break;
-	}
-}
-
 void rebound_step(){ 
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
@@ -171,6 +93,10 @@ void rebound_step(){
 	timing = timing_final-timing_initial;
 }
 
+void integrator_set(int i){
+	integrator = i;
+}
+
 // Integrate for 1 step
 void reset(){ 
 	dt 		= 0.01;
@@ -185,10 +111,7 @@ void reset(){
 	iter		= 0;
 	free(particles);
 	particles 	= NULL;
-	integrator_ias15_reset();
-	integrator_mikkola_reset();
-	integrator_wh_reset();
-	integrator_leapfrog_reset();
+	integrator_reset();
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	srand ( tim.tv_usec + getpid());
@@ -202,9 +125,9 @@ void integrate(double _tmax, int exactFinishTime){
 	tmax = _tmax;
 	double dt_last_done = dt;
 	int last_step = 0;
-	int integrator_synchronize_manually_init = integrator_synchronize_manually;
+	int integrator_mikkola_synchronize_manually_init = integrator_mikkola_synchronize_manually;
 	if (!N_megno){
-		integrator_synchronize_manually = 1;
+		integrator_mikkola_synchronize_manually = 1;
 	}
 	while(t<tmax && last_step<2){
 		if (N<=0){
@@ -227,9 +150,9 @@ void integrate(double _tmax, int exactFinishTime){
 			dt_last_done = dt;
 		}
 	}
-	integrator_synchronize();
+	integrator_mikkola_synchronize();
 	dt = dt_last_done;
-	integrator_synchronize_manually = integrator_synchronize_manually_init;
+	integrator_mikkola_synchronize_manually = integrator_mikkola_synchronize_manually_init;
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
 	timing = timing_final-timing_initial;

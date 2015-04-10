@@ -28,4 +28,38 @@ void integrator_mikkola_part1();
 void integrator_mikkola_part2();
 void integrator_mikkola_synchronize();
 void integrator_mikkola_reset();
+
+/*
+ * This variable turns on/off various symplectic correctors.
+ * 0 (default): turns off all correctors
+ * 3: uses third order (two-stage) corrector 
+ * 5: uses fifth order (four-stage) corrector 
+ * 7: uses seventh order (six-stage) corrector 
+ */
+extern unsigned int integrator_mikkola_corrector;
+
+/* 
+ * Flag determining if the integrator needs to recalculate the Jacobi
+ * coordinates of each particle at every timestep. Set this to 1 if 
+ * the masses of all particles stay constant during the entire simulation 
+ * and the positions and velocities of particles are not changed by 
+ * the user between timesteps.
+ * Setting this to 1 results in a speed and accuracy increase.
+ * Default is 0.
+ **/ 
+extern unsigned int integrator_mikkola_persistent_particles;
+
+/*
+ * Flag determining if the integrator produces synchronized outputs at
+ * the end of the timestep. Setting this to 1 results in a speedup.
+ * The general procedure to use this is:
+ *   set integrator_synchronize_manually = 1
+ *   run integrator for many steps.
+ *   call integrator_synchronize()
+ *   call output routines
+ *   (continue with integration)
+ *  
+ * Default is 0 (produces synchronized outputs at every timestep).
+ **/
+extern unsigned int integrator_mikkola_synchronize_manually;
 #endif

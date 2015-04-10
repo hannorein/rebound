@@ -433,8 +433,8 @@ def reset():
         tmpdir = None
     librebound.reset()
 
-def set_integrator_corrector_on(on=0):
-    c_int.in_dll(librebound, "integrator_corrector_on").value = on
+def set_integrator_mikkola_corrector(on=0):
+    c_int.in_dll(librebound, "integrator_mikkola_corrector").value = on
 
 integrator_package = "REBOUND"
 
@@ -442,7 +442,7 @@ def set_integrator(integrator="IAS15"):
     global integrator_package
     intergrator_package = "REBOUND"
     if isinstance(integrator, int):
-        c_int.in_dll(librebound, "selected_integrator").value = integrator
+        librebound.integrator_set(c_int(integrator))
         return
     if isinstance(integrator, basestring):
         if integrator.lower() == "ias15":
@@ -451,14 +451,17 @@ def set_integrator(integrator="IAS15"):
         if integrator.lower() == "mikkola":
             set_integrator(1)
             return
-        if integrator.lower() == "wh":
+        if integrator.lower() == "sei":
             set_integrator(2)
             return
-        if integrator.lower() == "leapfrog":
+        if integrator.lower() == "wh":
             set_integrator(3)
             return
+        if integrator.lower() == "leapfrog":
+            set_integrator(4)
+            return
         if integrator.lower() == "leap-frog":
-            set_integrator(3)
+            set_integrator(4)
             return
         if integrator.lower() == "mercury":
             integrator_package = "MERCURY"

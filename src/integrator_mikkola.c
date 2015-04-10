@@ -41,6 +41,10 @@
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
 
+unsigned int integrator_mikkola_persistent_particles		= 0;
+unsigned int integrator_mikkola_synchronize_manually 		= 0;
+unsigned int integrator_mikkola_corrector 			= 0;
+
 static unsigned int integrator_is_synchronized = 1;
 static unsigned int integrator_allocated_N = 0;
 static struct particle* restrict p_j  = NULL;
@@ -639,7 +643,6 @@ const static double b_74 = -b_73;
 const static double b_75 = -b_72;
 const static double b_76 = -b_71;
 
-int integrator_corrector_on = 0;
 
 static void Z(double a, double b){
 	integrator_kepler_drift(a);
@@ -656,19 +659,19 @@ static void Z(double a, double b){
 }
 
 static void integrator_corrector(double inv){
-	if (integrator_corrector_on==3){
+	if (integrator_mikkola_corrector==3){
 		// Third order corrector
 		Z(a_32*dt,inv*b_32*dt);
 		Z(a_31*dt,inv*b_31*dt);
 	}
-	if (integrator_corrector_on==5){
+	if (integrator_mikkola_corrector==5){
 		// Fifth order corrector
 		Z(a_54*dt,inv*b_54*dt);
 		Z(a_53*dt,inv*b_53*dt);
 		Z(a_52*dt,inv*b_52*dt);
 		Z(a_51*dt,inv*b_51*dt);
 	}
-	if (integrator_corrector_on==7){
+	if (integrator_mikkola_corrector==7){
 		// Seventh order corrector
 		Z(a_76*dt,inv*b_76*dt);
 		Z(a_75*dt,inv*b_75*dt);
@@ -681,11 +684,11 @@ static void integrator_corrector(double inv){
 
 
 void integrator_mikkola_part1(){
-	if (integrator_synchronize_manually && integrator_persistent_particles==0 && integrator_synchronized_persistent_warning==0){
+	if (integrator_mikkola_synchronize_manually && integrator_mikkola_persistent_particles==0 && integrator_synchronized_persistent_warning==0){
 		integrator_synchronized_persistent_warning++;
-		fprintf(stderr,"\n\033[1mWarning!\033[0m To use integrator_synchronize_manually you need to turn on integrator_persistent_particles as well.\n");
+		fprintf(stderr,"\n\033[1mWarning!\033[0m To use integrator_mikkola_synchronize_manually you need to turn on integrator_mikkola_persistent_particles as well.\n");
 	}
-	int recalculate_masses = !integrator_persistent_particles;
+	int recalculate_masses = !integrator_mikkola_persistent_particles;
 	if (integrator_allocated_N != N){
 		integrator_allocated_N = N;
 		p_j = realloc(p_j,sizeof(struct particle)*N);
@@ -716,7 +719,7 @@ void integrator_mikkola_part1(){
 			}
 		}
 		// First half DRIFT step
-		if (integrator_corrector_on){
+		if (integrator_mikkola_corrector){
 			integrator_corrector(1.);
 		}
 		integrator_kepler_drift(_dt);	// half timestep
@@ -748,7 +751,7 @@ void integrator_mikkola_part1(){
 void integrator_mikkola_synchronize(){
 	if (integrator_is_synchronized == 0){
 		integrator_kepler_drift(dt/2.);
-		if (integrator_corrector_on){
+		if (integrator_mikkola_corrector){
 			integrator_corrector(-1.);
 		}
 		integrator_to_inertial_posvel();
@@ -764,7 +767,7 @@ void integrator_mikkola_part2(){
 	integrator_interaction(dt);
 
 	double _dt = dt/2.;
-	if (integrator_synchronize_manually){
+	if (integrator_mikkola_synchronize_manually){
 		integrator_is_synchronized = 0;
 	}else{
 		integrator_synchronize();
@@ -823,9 +826,10 @@ void integrator_mikkola_part2(){
 	
 
 void integrator_mikkola_reset(){
+	integrator_mikkola_corrector = 0;
 	integrator_is_synchronized = 1;
-	integrator_synchronize_manually = 0;
-	integrator_persistent_particles = 0;
+	integrator_mikkola_synchronize_manually = 0;
+	integrator_mikkola_persistent_particles = 0;
 	integrator_allocated_N = 0;
 	integrator_timestep_warning = 0;
 	integrator_synchronized_megno_warning = 0;
