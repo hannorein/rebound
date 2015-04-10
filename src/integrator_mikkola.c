@@ -643,16 +643,28 @@ const static double b_75 = -b_72;
 const static double b_76 = -b_71;
 
 
-static void Z(double a, double b){
+static void integrator_mikkola_corrector_Z(double a, double b){
 	integrator_kepler_drift(a);
 	integrator_to_inertial_pos();
+	if (N_megno){
+		integrator_var_to_inertial_pos();
+	}
 	integrator_update_acceleration();
 	integrator_to_jacobi_acc();
+	if (N_megno){
+		integrator_var_to_jacobi_acc();
+	}
 	integrator_interaction(-b);
 	integrator_kepler_drift(-2.*a);
 	integrator_to_inertial_pos();
+	if (N_megno){
+		integrator_var_to_inertial_pos();
+	}
 	integrator_update_acceleration();
 	integrator_to_jacobi_acc();
+	if (N_megno){
+		integrator_var_to_jacobi_acc();
+	}
 	integrator_interaction(b);
 	integrator_kepler_drift(a);
 }
@@ -660,24 +672,24 @@ static void Z(double a, double b){
 static void integrator_apply_corrector(double inv){
 	if (integrator_mikkola_corrector==3){
 		// Third order corrector
-		Z(a_32*dt,inv*b_32*dt);
-		Z(a_31*dt,inv*b_31*dt);
+		integrator_mikkola_corrector_Z(a_32*dt,inv*b_32*dt);
+		integrator_mikkola_corrector_Z(a_31*dt,inv*b_31*dt);
 	}
 	if (integrator_mikkola_corrector==5){
 		// Fifth order corrector
-		Z(a_54*dt,inv*b_54*dt);
-		Z(a_53*dt,inv*b_53*dt);
-		Z(a_52*dt,inv*b_52*dt);
-		Z(a_51*dt,inv*b_51*dt);
+		integrator_mikkola_corrector_Z(a_54*dt,inv*b_54*dt);
+		integrator_mikkola_corrector_Z(a_53*dt,inv*b_53*dt);
+		integrator_mikkola_corrector_Z(a_52*dt,inv*b_52*dt);
+		integrator_mikkola_corrector_Z(a_51*dt,inv*b_51*dt);
 	}
 	if (integrator_mikkola_corrector==7){
 		// Seventh order corrector
-		Z(a_76*dt,inv*b_76*dt);
-		Z(a_75*dt,inv*b_75*dt);
-		Z(a_74*dt,inv*b_74*dt);
-		Z(a_73*dt,inv*b_73*dt);
-		Z(a_72*dt,inv*b_72*dt);
-		Z(a_71*dt,inv*b_71*dt);
+		integrator_mikkola_corrector_Z(a_76*dt,inv*b_76*dt);
+		integrator_mikkola_corrector_Z(a_75*dt,inv*b_75*dt);
+		integrator_mikkola_corrector_Z(a_74*dt,inv*b_74*dt);
+		integrator_mikkola_corrector_Z(a_73*dt,inv*b_73*dt);
+		integrator_mikkola_corrector_Z(a_72*dt,inv*b_72*dt);
+		integrator_mikkola_corrector_Z(a_71*dt,inv*b_71*dt);
 	}
 }
 
