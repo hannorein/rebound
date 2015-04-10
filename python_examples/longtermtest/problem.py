@@ -108,7 +108,7 @@ def simulation(par):
 
 #3dt = 100.23
 dt = 1.3
-tmax = 365.*11.8618*1e5
+tmax = 365.*11.8618*1e3
 integrators = ["wh","mikkola","ias15","mikkola-cor3","mikkola-cor5","mikkola-cor7","mercury"]
 colors = ["b","r","g","y","m","c","k"]
 trials = 4

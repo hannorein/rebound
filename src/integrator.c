@@ -42,6 +42,7 @@
 #include "integrator_leapfrog.h"
 #include "integrator_sei.h"
 #include "integrator_wh.h"
+#include "integrator_hybrid.h"
 
 integrator_t integrator = IAS15;
 unsigned int integrator_force_is_velocitydependent = 1;
@@ -63,6 +64,9 @@ void integrator_part1(){
 		case MIKKOLA:
 			integrator_mikkola_part1();
 			break;
+		case HYBRID:
+			integrator_hybrid_part1();
+			break;
 	}
 }
 
@@ -82,6 +86,9 @@ void integrator_part2(){
 			break;
 		case MIKKOLA:
 			integrator_mikkola_part2();
+			break;
+		case HYBRID:
+			integrator_hybrid_part2();
 			break;
 	}
 }
@@ -103,6 +110,9 @@ void integrator_synchronize(){
 		case MIKKOLA:
 			integrator_mikkola_synchronize();
 			break;
+		case HYBRID:
+			integrator_hybrid_synchronize();
+			break;
 	}
 }
 
@@ -112,6 +122,7 @@ void integrator_reset(){
 	integrator_leapfrog_reset();
 	integrator_sei_reset();
 	integrator_mikkola_reset();
+	integrator_hybrid_reset();
 }
 
 void integrator_update_acceleration(){
