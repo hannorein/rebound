@@ -51,7 +51,7 @@ extern unsigned int integrator_mikkola_persistent_particles;
 
 /* 
  * Flag overwriting the effect of integrator_mikkola_persistent_particle
- * for the next step only. Setting this flaf to one will recalculate 
+ * for the next step only. Setting this flag to one will recalculate 
  * Jacobi coordinates from the particle structure in the next timestep
  * only. 
  * Default is 0.

@@ -574,7 +574,7 @@ static void integrator_interaction(double _dt){
 	for (unsigned int i=1;i<N-N_megno;i++){
 		// Eq 132
 		struct particle pji = p_j[i];
-		double rj2i  = 1./(pji.x*pji.x + pji.y*pji.y + pji.z*pji.z);
+		double rj2i  = 1./(pji.x*pji.x + pji.y*pji.y + pji.z*pji.z + softening*softening);
 		double rji  = sqrt(rj2i);
 		double rj3i = rji*rj2i;
 		double M = _M(i);

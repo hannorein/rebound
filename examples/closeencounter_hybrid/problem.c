@@ -46,17 +46,19 @@ extern int display_wire;
 double e_init;
 
 void problem_init(int argc, char* argv[]){
-	dt = 0.01*2.*M_PI;						// initial timestep
+	dt = 0.012*2.*M_PI;						// initial timestep
 	integrator = HYBRID;
-	softening = 0.001;
+	//softening = 0.001;
 	//integrator = IAS15;
 	//integrator = MIKKOLA;
 	// integrator_ias15_epsilon = 1e-2;					// accuracy parameter, default is 1e-2 and should work in most cases.
+	integrator_mikkola_corrector = 5;
+	integrator_mikkola_synchronize_manually = 1;
 
 #ifdef OPENGL
 	display_wire	= 1;						// show instantaneous orbits
 #endif // OPENGL
-	init_boxwidth(10); 					
+	init_boxwidth(20); 					
 
 	struct particle star;
 	star.m = 1;
@@ -65,12 +67,12 @@ void problem_init(int argc, char* argv[]){
 	particles_add(star);
 	
 	// Add planets
-	int N_planets = 7;
+	int N_planets = 3;
 	for (int i=0;i<N_planets;i++){
-		double a = 1.+(double)i/(double)(N_planets-1);		// semi major axis
+		double a = 1.+.1*(double)i;		// semi major axis
 		double v = sqrt(1./a); 					// velocity (circular orbit)
 		struct particle planet;
-		planet.m = 1e-5; 
+		planet.m = 2e-5; 
 		planet.x = a; 	planet.y = 0; 	planet.z = 0;
 		planet.vx = 0; 	planet.vy = v; 	planet.vz = 0;
 		particles_add(planet); 
@@ -86,6 +88,7 @@ void problem_output(){
 	}
 	if (output_check(2.*M_PI)){  
 		FILE* f = fopen("energy.txt","a");
+		integrator_synchronize();
 		double e = tools_energy();
 		fprintf(f,"%e %e\n",t, fabs((e-e_init)/e_init));
 		fclose(f);

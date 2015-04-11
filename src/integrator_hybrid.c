@@ -81,55 +81,61 @@ static double get_min_ratio(){
 
 
 static double ratio;
-unsigned int integrator_hybrid_mode = 0; // 0 = symplectic; 1 = IAS15
+integrator_t integrator_hybrid_mode = MIKKOLA; // 0 = symplectic; 1 = IAS15
 void integrator_hybrid_part1(){
 	ratio = get_min_ratio();
 	if (initial_dt==0.){
 		initial_dt = dt;
 	}
 	if (ratio<integrator_hybrid_switch_ratio){
-		if (integrator_hybrid_mode==0){
+		if (integrator_hybrid_mode==MIKKOLA){
 			integrator_ias15_reset(); //previous guesses no good anymore
 			if (integrator_hybrid_switch_warning==0.){
 				integrator_hybrid_switch_warning++;
 				fprintf(stderr,"\n\033[1mInfo!\033[0m Switching to IAS15 for the first time at t=%.9e.\n",t);
 			}
+			integrator_mikkola_synchronize();
 			gravity_ignore_10 = 0;
 		}
-		integrator_hybrid_mode = 1;
+		integrator_hybrid_mode = IAS15;
 	}else{
-		if (integrator_hybrid_mode==1){
+		if (integrator_hybrid_mode==IAS15){
 			//integrator_mikkola_reset(); 
+			integrator_mikkola_particles_modified = 1;
 			dt = initial_dt;
 		}
-		integrator_hybrid_mode = 0;
+		integrator_hybrid_mode = MIKKOLA;
 	}
 	switch(integrator_hybrid_mode){
-		case 0:
+		case MIKKOLA:
 			integrator_mikkola_part1();
 			break;
-		case 1:
+		case IAS15:
 			integrator_ias15_part1();
 			break;
 	}
 }
 void integrator_hybrid_part2(){
 	switch(integrator_hybrid_mode){
-		case 0:
+		case MIKKOLA:
 			integrator_mikkola_part2();
 			break;
-		case 1:
+		case IAS15:
 			integrator_ias15_part2();
 			break;
 	}
 }
 	
 void integrator_hybrid_synchronize(){
-	//integrator_mikkola_synchronize();
+	switch(integrator_hybrid_mode){
+		case MIKKOLA:
+			integrator_mikkola_synchronize();
+			break;
+	}
 }
 
 void integrator_hybrid_reset(){
-	integrator_hybrid_mode = 0;
+	integrator_hybrid_mode = MIKKOLA;
 	integrator_hybrid_switch_warning = 0;
 	integrator_mikkola_reset();
 	integrator_ias15_reset();
