@@ -1,4 +1,6 @@
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
+from codecs import open
+from os import path
 
 libreboundmodule = Extension('librebound',
                     sources = [ 'librebound/librebound.c',
@@ -17,9 +19,14 @@ libreboundmodule = Extension('librebound',
                     extra_compile_args=['-O3','-std=c99'],
                                     )
 
+here = path.abspath(path.dirname(__file__))
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+    long_description = f.read()
+
 setup(name='rebound',
-    version='0.1',
+    version='0.1.3',
     description='The N-body integrator REBOUND',
+    long_description=long_description,
     url='http://github.com/hannorein/rebound',
     author='Hanno Rein',
     author_email='hanno@hanno-rein.de',

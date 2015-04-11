@@ -1,2 +1,3 @@
 include librebound/*.c
 include librebound/*.h
+include README.rst

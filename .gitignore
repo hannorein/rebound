@@ -1,5 +1,7 @@
 *.o
+*.so
 *.pyc
+*.pdf
 *.bin
 nbody
 gravity.c
@@ -17,3 +19,5 @@ doc/latex/*
 doc/Doxyfile
 others/mercury6
 others/mercury6.tar
+python_package/librebound/
+python_package/MANIFEST
