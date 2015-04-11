@@ -22,3 +22,6 @@ others/mercury6.tar
 python_package/librebound/
 python_package/MANIFEST
 python_package/README.rst
+python_package/rebound.egg-info
+python_package/venv
+python_package/dist
