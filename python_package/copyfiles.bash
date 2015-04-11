@@ -1,5 +1,5 @@
 #/bin/bash
-cp ../README.md .
+cp ../README.rst .
 cp ../shared/librebound/librebound.c librebound/
 cp ../shared/librebound/librebound.h librebound/
 cp ../src/*.c librebound/
