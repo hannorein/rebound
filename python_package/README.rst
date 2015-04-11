@@ -107,14 +107,14 @@ The following sections list the available modules that come with REBOUND.
 
 **Gravity**::
   
-Module name        | Description
------------------- | -----------
-`gravity_none.c`   | No self-gravity
-`gravity_direct.c` | Direct summation, O(N^2)
-`gravity_opencl.c` | Direct summation, O(N^2), but accelerated using the OpenCL framework.
-`gravity_tree.c`   | Oct tree, Barnes & Hut 1986, O(N log(N))
-`gravity_grape.c`  | GRAPE, hardware accelerated direct summation, Sugimoto et al. 1990
-`gravity_fft.c`    | Two dimensional gravity solver using FFTW, works in a periodic box and the shearing sheet. (Not well tested yet.)
+ Module name        | Description
+ ------------------ | -----------
+ `gravity_none.c`   | No self-gravity
+ `gravity_direct.c` | Direct summation, O(N^2)
+ `gravity_opencl.c` | Direct summation, O(N^2), but accelerated using the OpenCL framework.
+ `gravity_tree.c`   | Oct tree, Barnes & Hut 1986, O(N log(N))
+ `gravity_grape.c`  | GRAPE, hardware accelerated direct summation, Sugimoto et al. 1990
+ `gravity_fft.c`    | Two dimensional gravity solver using FFTW, works in a periodic box and the shearing sheet. (Not well tested yet.)
 
 
 **Collision detection**::
@@ -230,7 +230,7 @@ When you type make in your problem directory, all of these variables are read an
 The problem.c file must contain at least three functions. You do need to implement all of them, but a dummy (doing nothing) is sufficient to successfully link the object files. The following documentation describes what these functions do.
 
 
-- `void problem_init(int argc, char* argv[]) `
+- `void problem_init(int argc, char* argv[])`
 
     This routine is where you read command line arguments and set up your initial conditions. REBOUND does not come with a built-in functionality to read configuration files at run-time. We consider this not a missing feature. In REBOUND, you have one `problem.c` file for each problem. Thus, everything can be set within this file. There are, of course, situation in which you want to do something like a parameter space survey. In almost all cases, you vary only a few parameters. You can easily read these parameters from the command line.
  
@@ -246,7 +246,7 @@ The problem.c file must contain at least three functions. You do need to impleme
     This function is called at the beginning of the simulation and at the end of each time-step. You can implement your output routines here. Many basic output functions are already implemented in REBOUND. See `output.h` for more details. The function `output_check(odt)` can be used to easily check if an output is needed if you want to trigger and output once per time interval `odt`. For example, the following code snippet outputs some timing statistics to the console every 10 time-steps::
     
         if (output_check(10.*dt)){
-        	output_timing();
+            output_timing();
         }
  
 - `void problem_finish()`
@@ -261,11 +261,11 @@ The problem.c file must contain at least three functions. You do need to impleme
     The following lines of code implement a simple velocity dependent force.  `integrator_ias15.c` is best suited for this (see `examples/dragforce`)::
     
         void velocity_dependent_force(){
-        	for (int i=1;i<N;i++){
-        		particles[i].ax -= 0.0000001 * particles[i].vx;
-        		particles[i].ay -= 0.0000001 * particles[i].vy;
-        		particles[i].az -= 0.0000001 * particles[i].vz;
-        	}
+            for (int i=1;i<N;i++){
+               particles[i].ax -= 0.0000001 * particles[i].vx;
+               particles[i].ay -= 0.0000001 * particles[i].vy;
+               particles[i].az -= 0.0000001 * particles[i].vz;
+            }
         }
     
     Make sure you set the function pointer in the `problem_init()` routine::
