@@ -466,6 +466,9 @@ def set_integrator(integrator="IAS15"):
         if integrator.lower() == "leap-frog":
             set_integrator(4)
             return
+        if integrator.lower() == "hybrid":
+            set_integrator(5)
+            return
         if integrator.lower() == "mercury":
             integrator_package = "MERCURY"
             return
