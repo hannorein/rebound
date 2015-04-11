@@ -113,6 +113,8 @@ void integrator_hybrid_part1(){
 		case IAS15:
 			integrator_ias15_part1();
 			break;
+		default:
+			break;
 	}
 }
 void integrator_hybrid_part2(){
@@ -123,6 +125,8 @@ void integrator_hybrid_part2(){
 		case IAS15:
 			integrator_ias15_part2();
 			break;
+		default:
+			break;
 	}
 }
 	
@@ -130,6 +134,8 @@ void integrator_hybrid_synchronize(){
 	switch(integrator_hybrid_mode){
 		case MIKKOLA:
 			integrator_mikkola_synchronize();
+			break;
+		default:
 			break;
 	}
 }
