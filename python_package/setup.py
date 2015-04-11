@@ -1,7 +1,18 @@
 from distutils.core import setup, Extension
 
 libreboundmodule = Extension('librebound',
-                    sources = ['librebound/librebound.c'],
+                    sources = [ 'librebound/librebound.c',
+                                'librebound/integrator_ias15.c',
+                                'librebound/integrator_mikkola.c',
+                                'librebound/integrator_wh.c',
+                                'librebound/integrator_leapfrog.c',
+                                'librebound/integrator_sei.c',
+                                'librebound/integrator_hybrid.c',
+                                'librebound/integrator.c',
+                                'librebound/gravity_direct.c',
+                                'librebound/tools.c',
+                                'librebound/particle.c',
+                                ],
                     define_macros=[ ('LIBREBOUND', None), ('COLLISIONS_NONE',None) ],
                     extra_compile_args=['-O3','-std=c99'],
                                     )

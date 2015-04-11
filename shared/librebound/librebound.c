@@ -54,9 +54,6 @@ extern int iter;  // TODO DEBUG
 // Function pointer to additional forces
 void (*problem_additional_forces) () = NULL;
 
-// Particle structure
-struct particle* particles = NULL;
-
 // Particle getter/setter methods.
 void setp(struct particle* _p){
 	free(particles);
