@@ -1,4 +1,10 @@
-from setuptools import setup
+from distutils.core import setup, Extension
+
+libreboundmodule = Extension('librebound',
+                    sources = ['librebound/librebound.c'],
+                    define_macros=[ ('LIBREBOUND', None), ('COLLISIONS_NONE',None) ],
+                    extra_compile_args=['-O3','-std=c99'],
+                                    )
 
 setup(name='rebound',
     version='0.1',
@@ -30,4 +36,5 @@ setup(name='rebound',
     keywords='astronomy astrophysics nbody integrator symplectic wisdom-holman',
     packages=['rebound'],
     install_requires=[],
+    ext_modules = [libreboundmodule],
     zip_safe=False)

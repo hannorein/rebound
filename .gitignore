@@ -1,4 +1,5 @@
 *.o
+*.pyc
 *.bin
 nbody
 gravity.c
