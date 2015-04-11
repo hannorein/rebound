@@ -102,16 +102,21 @@ def simulation(par):
     return [runtime, e]
 
 #3dt = 100.23
-dts = np.logspace(0,2,16)
-tmax = 365.*11.8618*1e3
+dts = np.logspace(0,2,256)
+tmax = 365.*11.8618*1e4
 integrators = ["wh","mikkola","ias15","mikkola-cor3","mikkola-cor5","mikkola-cor7","mercury"]
 colors = ["b","r","g","y","m","c","k"]
-    
 parameters = [(inte,dt,i*len(dts)+j) for i,inte in enumerate(integrators) for j, dt in enumerate(dts)]
-print "Running %d simulations" % (len(parameters))
+   
+if len(sys.argv)!=2:
+    pool = InterruptiblePool()
+    print "Running %d simulations" % (len(parameters))
+    res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),len(dts),2)
+else:
+    print "Loading %d simulations" % (len(parameters))
+    print sys.argv[1]
+    res = np.load(sys.argv[1])
 
-pool = InterruptiblePool()
-res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),len(dts),2)
 print res.shape
 
 import matplotlib; matplotlib.use("pdf")
@@ -119,7 +124,7 @@ import matplotlib.pyplot as plt
 from matplotlib import ticker
 from matplotlib.colors import LogNorm
 
-
+np.save("res.npy",res)
 f,axarr = plt.subplots(1,1,figsize=(7,5))
 extent=[res[:,:,0].min(), res[:,:,0].max(), 1e-16, 1e-5]
 
