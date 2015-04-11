@@ -6,7 +6,7 @@ import time
 from interruptible_pool import InterruptiblePool
 
 def simulation(par):
-    integrator, run, trial = par
+    integrator, dt, run = par
     rebound.reset()
     k = 0.01720209895    
     G = k*k
@@ -85,39 +85,33 @@ def simulation(par):
                 E_pot -= G*particles[i].m*particles[j].m/np.sqrt(r2)
         return E_kin+E_pot
 
-    times = np.logspace(np.log10(100.*dt),np.log10(tmax),1000)
     if integrator=="wh" or integrator=="mercury":
         move_to_heliocentric()
     else:
         rebound.move_to_center_of_momentum()
     ei = energy()
 
-    es = []
 
     runtime = 0.
-    for t in times:
-        rebound.integrate(t,exactFinishTime=0)
-        ef = energy()
-        e = np.fabs((ei-ef)/ei)+1.1e-16
-        es.append(e)
-        runtime += rebound.get_timing()
+    rebound.integrate(tmax,exactFinishTime=0)
+    ef = energy()
+    e = np.fabs((ei-ef)/ei)+1.1e-16
+    runtime += rebound.get_timing()
     
-    es = np.array(es)
     print integrator + " done. %.5fs"%(runtime)
-    return [times, es]
+    return [runtime, e]
 
 #3dt = 100.23
-dt = 1.3
-tmax = 365.*11.8618*1e2
+dts = np.logspace(0,2,16)
+tmax = 365.*11.8618*1e3
 integrators = ["wh","mikkola","ias15","mikkola-cor3","mikkola-cor5","mikkola-cor7","mercury"]
 colors = ["b","r","g","y","m","c","k"]
-trials = 4
     
-parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]
+parameters = [(inte,dt,i*len(dts)+j) for i,inte in enumerate(integrators) for j, dt in enumerate(dts)]
 print "Running %d simulations" % (len(parameters))
 
 pool = InterruptiblePool()
-res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),trials,2,1000)
+res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),len(dts),2)
 print res.shape
 
 import matplotlib; matplotlib.use("pdf")
@@ -127,24 +121,25 @@ from matplotlib.colors import LogNorm
 
 
 f,axarr = plt.subplots(1,1,figsize=(7,5))
-extent=[res[:,:,0,:].min()/365./11.8618, res[:,:,0,:].max()/365./11.8618, 1e-16, 1e-5]
+extent=[res[:,:,0].min(), res[:,:,0].max(), 1e-16, 1e-5]
 
 axarr.set_xlim(extent[0], extent[1])
 axarr.set_ylim(extent[2], extent[3])
-axarr.set_xlabel(r"time [Jupiter years]")
 axarr.set_ylabel(r"rel energy error")
+axarr.set_xlabel(r"runtime [s]")
 plt.xscale('log', nonposy='clip')
 plt.yscale('log', nonposy='clip')
 
 
 res_mean = np.mean(res,axis=1)
-for i in xrange(len(res)):
-    for j in xrange(trials):
-        res_trial = res[i,j,:,:]
-        im1 = axarr.plot(res_trial[0]/365./11.8618,res_trial[1], color=colors[i],alpha=0.1)
-    im1 = axarr.plot(res_mean[i][0]/365./11.8618,res_mean[i][1], label=integrators[i],color=colors[i])
+for i in xrange(len(integrators)):
+    res_i = res[i,:,:]
+    im1 = axarr.scatter(res_i[:,0], res_i[:,1], label=integrators[i],color=colors[i])
 
-plt.legend(loc='upper left')
-plt.savefig("longtermtest.pdf")
+from matplotlib.font_manager import FontProperties
+fontP = FontProperties()
+fontP.set_size('small')
+plt.legend(loc='upper right', prop = fontP)
+plt.savefig("speed.pdf")
 import os
-os.system("open longtermtest.pdf")
+os.system("open speed.pdf")
