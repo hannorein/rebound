@@ -65,7 +65,7 @@ In short: If you simply want to integrate a few particle system such as a planet
 
 **Python and librebound**
 
-To access REBOUND from python, simple install it via pip. Simple go to a new directory where you want to have rebound installed.::
+To access REBOUND from python, simple install it via pip. Go to an empty directory where you want to have rebound installed, then type the following::
 
     # Optionally, create a virtual environment to keep your python
     # installation clean.
@@ -312,7 +312,7 @@ Then, add the following lines to the REBOUND Makefile::
     OPT += -I$(HOME)/local/include
     LIB += -L$(HOME)/local/lib
 
-Note that you can still compile and run REBOUND even if you do not have GLUT installed. Simple set `OPENGL=0` in the makefile (see below). 
+Note that you can still compile and run REBOUND even if you do not have GLUT installed. Simply set `OPENGL=0` in the makefile (see below). 
 
 
 Examples
