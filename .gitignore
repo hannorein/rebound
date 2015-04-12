@@ -19,6 +19,7 @@ doc/latex/*
 doc/Doxyfile
 others/mercury6
 others/mercury6.tar
+others/*/
 MANIFEST
 rebound.egg-info
 venv/
