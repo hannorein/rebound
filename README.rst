@@ -71,15 +71,15 @@ To access REBOUND from python, simple install it via pip. Simple go to a new dir
     # installation clean.
     virtualenv venv && source venv/bin/activate
 
-    # Then, simple insall rebound using pip
+    # Then, simple install rebound using pip
     pip install rebound
 
-That's it. It really can't get much simpler. The python module of REBOUND does not depend on any non-standard python libraries, but you probably want to install numpy and matplotlib to do something with your outputs.::
+That's it. In the background pip download the source code, compiles and and puts everything in its right place in your filesystem. It really can't get much simpler. The python module of REBOUND does not depend on any non-standard python libraries. However, you probably want to install numpy and matplotlib to do something nice with your outputs.::
 
     # This installs numpy and matplotlib
     pip install numpy matplotlib
 
-Now try running an N-body simulation with REBOUND. Create a file with the following contents. This example uses the 15-th order integrator IAS15 to simulate a four particle (3 planets + 1 star) system::
+Now try running an N-body simulation with REBOUND. Create a file `test.py` with the following contents. This example uses the 15-th order integrator IAS15 to simulate a four particle (3 planets + 1 star) system::
 
     # Import the rebound module
     import rebound
@@ -99,16 +99,13 @@ Now try running an N-body simulation with REBOUND. Create a file with the follow
     # Output final positions to screen
     print(rebound.status())
 
-To use the Wisdom-Holman type MIKKOLA integrator (Rein & Tamayo, in prep), simply call::
+You can now run the program by executing `python test.py`. If you want to use the Wisdom-Holman type MIKKOLA integrator (Rein & Tamayo, in prep), simply set it before calling `rebound.integrate()`.::
 
     rebound.set_integrator("mikkola")
     rebound.set_dt(0.01)                           # Fixed timestep needed (MIKKOLA is not adaptive)
 
-
-before calling `rebound.integrate()`.
-
-For details on the available function of the REBOUND module in python, have a look at the docstrings in the file [`rebound.py`](rebound/rebound.py) and the examples provided in the `python_examples` directory. 
-More details on the possible functions will be provided here.
+For details on the available function of the REBOUND python-module, have a look at the docstrings in the file [`rebound.py`](rebound/rebound.py) and the examples provided in the `python_examples` directory. 
+We will add more examples and documentation shortly.
 
 -------------
 
