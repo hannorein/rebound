@@ -38,9 +38,9 @@
 #include "main.h"
 #include "integrator.h"
 #include "boundaries.h"
-#include "communication_mpi.h"
 
 #ifdef MPI
+#include "communication_mpi.h"
 #warning GRAVITY_DIRECT might not work with MPI for your problem. 
 #warning Make sure you know what the code is doing. Have a look at the example restricted_threebody_mpi.
 #endif

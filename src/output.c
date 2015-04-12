@@ -35,8 +35,9 @@
 #include "output.h"
 #include "integrator.h"
 #include "integrator_sei.h"
+#ifndef LIBREBOUND	
 #include "input.h"
-#include "communication_mpi.h"
+#endif // LIBREBOUND	
 #ifdef OPENGL
 #include "display.h"
 #ifdef LIBPNG
@@ -49,6 +50,7 @@
 #endif  // _APPLE
 #endif  // OPENGL
 #ifdef MPI
+#include "communication_mpi.h"
 #include "mpi.h"
 #endif // MPI
 
@@ -375,6 +377,7 @@ void output_int(char* name, int value){
 	output_logfile(data);
 }
 	
+#ifndef LIBREBOUND	
 void output_prepare_directory(){
 	char dirname[4096] = "out__";
 	strcat(dirname,input_arguments);
@@ -393,6 +396,7 @@ void output_prepare_directory(){
 #endif // MPI
 	chdir(dirname);
 }
+#endif // LIBREBOUND	
 
 #ifdef OPENGL
 #ifdef LIBPNG

@@ -14,6 +14,7 @@ libreboundmodule = Extension('librebound',
                                 'src/gravity_direct.c',
                                 'src/tools.c',
                                 'src/particle.c',
+                                'src/output.c',
                                 ],
                     include_dirs = ['src'],
                     define_macros=[ ('LIBREBOUND', None), ('COLLISIONS_NONE',None) ],
@@ -25,7 +26,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='0.1.10',
+    version='0.1.23',
     description='The N-body integrator REBOUND',
     long_description=long_description,
     url='http://github.com/hannorein/rebound',

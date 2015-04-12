@@ -29,9 +29,15 @@
 #include <time.h>
 #include "particle.h"
 #include "main.h"
+#ifdef TREE
 #include "tree.h"
+#endif // TREE
+#ifndef COLLISIONS_NONE
 #include "collisions.h"
+#endif // COLLISIONS_NONE
+#ifdef MPI
 #include "communication_mpi.h"
+#endif // MPI
 
 struct particle* 	particles;	
 
