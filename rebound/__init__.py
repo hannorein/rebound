@@ -353,7 +353,7 @@ def set_t(t):
     c_double.in_dll(librebound, "t").value = t
 
 def set_min_dt(t):
-    c_double.in_dll(librebound, "integrator_min_dt").value = t
+    c_double.in_dll(librebound, "integrator_ias15_min_dt").value = t
 
 def get_t():
     return c_double.in_dll(librebound, "t").value

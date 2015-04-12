@@ -1,8 +1,6 @@
 #!/usr/bin/python
-# Import the rebound module
-import sys; sys.path.append('../../python_modules')
 import rebound
-from interruptible_pool import InterruptiblePool
+from rebound.interruptible_pool import InterruptiblePool
 # Import other modules
 import numpy as np
 import matplotlib.pyplot as plt
