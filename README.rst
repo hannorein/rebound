@@ -28,11 +28,13 @@ REBOUND is open source. You are invited to contribute to this project if you are
 Papers
 ------
 
-There are two papers describing the functionality of REBOUND. 
+There are three papers describing the functionality of REBOUND. 
 
 1. [Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012)](http://adsabs.harvard.edu/abs/2012A%26A...537A.128R) describe the code structure and the main feature including the gravity and collision routines for many particle systems.   
 
 2. [Rein & Spiegel (Monthly Notices of the Royal Astronomical Society, Volume 446, Issue 2, p.1424-1437)](http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R) describe the versatile high order integrator IAS15 which is now part of REBOUND. 
+
+3. Rein & Tamayo (in prep)
 
 
 How to us REBOUND - an overview
@@ -54,7 +56,8 @@ or if you do not have git installed::
 
 **C or Python?**
 
-REBOUND is written in C because C is very fast and highly portable (REBOUND runs on everything from mobile phones to super computers and special purpose accelerator cards).  However, we also provide a simple dynamic library `librebound` for the new IAS15 and Wisdom-Holman type MIKKOLA integrators. This shared library can be called from many programming languages. We provide a python module which makes calling REBOUND from python particularly easy. Whether you want to use REBOUND in C or python depends on your specific application.
+REBOUND is written in C because C is very fast and highly portable (REBOUND runs on everything from mobile phones to super computers and special purpose accelerator cards).  However, we also provide a shared library `librebound`. 
+This shared library can be called from many programming languages. We provide a python module which makes calling REBOUND from python particularly easy. Whether you want to use REBOUND in C or python depends on your specific application.
 
 In short: If you simply want to integrate a few particle system such as a planetary system with the high order integrator IAS15 or a symplectic integrator, use python. If you want to run large, many particle systems (with millions of particles), use another integrator or make use of the distributed tree code of REBOUND, use the C version.
 
@@ -62,18 +65,30 @@ In short: If you simply want to integrate a few particle system such as a planet
 
 **Python and librebound**
 
-To access REBOUND from python, you first need to compile the dynamic library `librebound`. Go to the `shared` folder and type `make`. This should work on most operating systems without any user intervention. Note that having the computationally intensive kernel of the integrator in C retains the high speed of IAS15 and MIKKOLA. 
+To access REBOUND from python, simple install it via pip. Simple go to a new directory where you want to have rebound installed.::
 
-The most interesting use case for `librebound` is a python wrapper that we provide. This wrapper can be used to very easily access `librebound`. The wrapper (module) might appeal to people who want to setup their problem in python and then call IAS15/MIKKOLA to efficiently integrate particles with very high precision. The following listing shows a complete python script to run an N-body simulation with IAS15 and `librebound`::
+    # Optionally, create a virtual environment to keep your python
+    # installation clean.
+    virtualenv venv && source venv/bin/activate
 
-     # Import the rebound module
+    # Then, simple insall rebound using pip
+    pip install rebound
+
+That's it. It really can't get much simpler. The python module of REBOUND does not depend on any non-standard python libraries, but you probably want to install numpy and matplotlib to do something with your outputs.::
+
+    # This installs numpy and matplotlib
+    pip install numpy matplotlib
+
+Now try running an N-body simulation with REBOUND. Create a file with the following contents. This example uses the 15-th order integrator IAS15 to simulate a four particle (3 planets + 1 star) system::
+
+    # Import the rebound module
     import rebound
 
     # Add particles 
-    rebound.particle_add( m=1. )                   # Star
-    rebound.particle_add( x=1., vy=1. )            # Test particle at a=1
-    rebound.particle_add( m=1e-3, a=2., e=0.1 )    # Planet at a=2
-    rebound.particle_add( m=1e-3, a=3. )           # Planet at a=3 (Jacobi coordinates)
+    rebound.add_particle( m=1. )                   # Star
+    rebound.add_particle( x=1., vy=1. )            # Test particle at a=1
+    rebound.add_particle( m=1e-3, a=2., e=0.1 )    # Planet at a=2
+    rebound.add_particle( m=1e-3, a=3. )           # Planet at a=3 (Jacobi coordinates)
 
     # Move particles so that the center of mass is (and stays) at the origin  
     rebound.move_to_center_of_momentum()
@@ -81,7 +96,10 @@ The most interesting use case for `librebound` is a python wrapper that we provi
     # Integrate until t=100 (roughly 16 orbits) 
     rebound.integrate(100.)
 
-To use the Wisdom-Holman type MIKKOLA integrator instead, simply call::
+    # Output final positions to screen
+    print(rebound.status())
+
+To use the Wisdom-Holman type MIKKOLA integrator (Rein & Tamayo, in prep), simply call::
 
     rebound.set_integrator("mikkola")
     rebound.set_dt(0.01)                           # Fixed timestep needed (MIKKOLA is not adaptive)
@@ -89,7 +107,8 @@ To use the Wisdom-Holman type MIKKOLA integrator instead, simply call::
 
 before calling `rebound.integrate()`.
 
-For details on the available function of the REBOUND module in python, have a look at the docstrings in the file [`rebound.py`](python_examples/rebound.py) and the examples provided in the `python_examples` directory. 
+For details on the available function of the REBOUND module in python, have a look at the docstrings in the file [`rebound.py`](rebound/rebound.py) and the examples provided in the `python_examples` directory. 
+More details on the possible functions will be provided here.
 
 -------------
 
