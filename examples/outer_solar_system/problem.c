@@ -88,7 +88,7 @@ void problem_init(int argc, char* argv[]){
 	integrator_mikkola_synchronize_manually = 1;	// Need to call integrator_synchronize() before outputs. 
 	integrator_force_is_velocitydependent = 0;	// Force only depends on positions. 
 	integrator	= MIKKOLA;
-	integrator	= IAS15;
+	//integrator	= IAS15;
 
 	// Initial conditions
 	for (int i=0;i<6;i++){
@@ -136,7 +136,7 @@ double energy(){
 void problem_output(){
 	if (output_check(10000000.)){
 		output_timing();
-		integrator_synchronize();
+//		integrator_synchronize();
 //		FILE* f = fopen("energy.txt","a");
 //		double e = energy();
 //		fprintf(f,"%e %e %e\n",t, fabs((e-e_init)/e_init), tools_megno());

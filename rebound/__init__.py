@@ -324,8 +324,23 @@ class Particle(Structure):
             o.l = ea -o.e*math.sin(ea) + o.omega+ o.Omega  # mean longitude
         
         return o
-        
 
+def status():
+    """ Returns a string with a summary of the current status 
+        of the simulation
+        """
+    s= ""
+    N = get_N()
+    s += "---------------------------------\n"
+    s += "Number of particles: \t%d\n" %N       
+    s += "Simulation time:     \t%f\n" %get_t()
+    if N>0:
+        s += "---------------------------------\n"
+        p = get_particles()
+        for i in xrange(N):
+            s += str(p[i]) + "\n"
+    s += "---------------------------------"
+    return s
 
 # Set function pointer for additional forces
 
