@@ -16,7 +16,7 @@ include src/integrator_leapfrog.h
 include src/integrator_sei.h
 include src/integrator_hybrid.h
 include src/integrator.h
-include src/gravity_direct.h
+include src/gravity.h
 include src/tools.h
 include src/particle.h
 include shared/librebound/librebound.h
