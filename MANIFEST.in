@@ -8,7 +8,7 @@ include src/integrator.c
 include src/gravity_direct.c
 include src/tools.c
 include src/particle.c
-include shared/librebound/librebound.c
+include src/librebound.c
 include src/integrator_ias15.h
 include src/integrator_mikkola.h
 include src/integrator_wh.h
@@ -19,6 +19,6 @@ include src/integrator.h
 include src/gravity.h
 include src/tools.h
 include src/particle.h
-include shared/librebound/librebound.h
+include src/librebound.h
 include README.rst
 include LICENSE

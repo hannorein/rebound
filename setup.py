@@ -3,7 +3,7 @@ from codecs import open
 from os import path
 
 libreboundmodule = Extension('librebound',
-                    sources = [ 'shared/librebound/librebound.c',
+                    sources = [ 'src/librebound/librebound.c',
                                 'src/integrator_ias15.c',
                                 'src/integrator_mikkola.c',
                                 'src/integrator_wh.c',
@@ -15,7 +15,7 @@ libreboundmodule = Extension('librebound',
                                 'src/tools.c',
                                 'src/particle.c',
                                 ],
-                    include_dirs = ['src','shared/librebound'],
+                    include_dirs = ['src'],
                     define_macros=[ ('LIBREBOUND', None), ('COLLISIONS_NONE',None) ],
                     extra_compile_args=['-O3','-std=c99'],
                                     )
