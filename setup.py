@@ -1,6 +1,7 @@
 from setuptools import setup, Extension
+import distutils
 from codecs import open
-from os import path
+import os
 
 libreboundmodule = Extension('librebound',
                     sources = [ 'src/librebound.c',
@@ -18,11 +19,11 @@ libreboundmodule = Extension('librebound',
                                 ],
                     include_dirs = ['src'],
                     define_macros=[ ('LIBREBOUND', None), ('COLLISIONS_NONE',None) ],
-                    extra_compile_args=['-O3','-std=c99'],
+                    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-march=native'],
                                     )
 
-here = path.abspath(path.dirname(__file__))
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+here = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',

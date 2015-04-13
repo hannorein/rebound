@@ -104,7 +104,7 @@ doc:
 	cd ../doc/ && doxygen
 
 # This part of the Makefile compiles the shared dynamic library librebound.
-librebound: OPT+=-std=c99 -O3 -DCOLLISIONS_NONE -DLIBREBOUND
+librebound: OPT+=-DCOLLISIONS_NONE -DLIBREBOUND
 librebound:
 	$(CC) $(OPT) -c -fPIC -Wall integrator_ias15.c
 	$(CC) $(OPT) -c -fPIC -Wall integrator_mikkola.c
