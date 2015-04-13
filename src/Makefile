@@ -103,4 +103,24 @@ doc:
 	sed 's!PREDEFINED             =.*!PREDEFINED             = $(PREDEFLIST)!' ../doc/Doxyfile.input > ../doc/Doxyfile 
 	cd ../doc/ && doxygen
 
-
+# This part of the Makefile compiles the shared dynamic library librebound.
+librebound: OPT+=-std=c99 -O3 -DCOLLISIONS_NONE -DLIBREBOUND
+librebound:
+	$(CC) $(OPT) -c -fPIC -Wall integrator_ias15.c
+	$(CC) $(OPT) -c -fPIC -Wall integrator_mikkola.c
+	$(CC) $(OPT) -c -fPIC -Wall integrator_leapfrog.c
+	$(CC) $(OPT) -c -fPIC -Wall integrator_hybrid.c
+	$(CC) $(OPT) -c -fPIC -Wall integrator_sei.c
+	$(CC) $(OPT) -c -fPIC -Wall integrator_wh.c
+	$(CC) $(OPT) -c -fPIC -Wall integrator.c
+	$(CC) $(OPT) -c -fPIC -Wall gravity_direct.c
+	$(CC) $(OPT) -c -fPIC -Wall tools.c
+	$(CC) $(OPT) -c -fPIC -Wall particle.c
+	$(CC) $(OPT) -c -fPIC -Wall librebound.c
+	$(CC) $(OPT) -shared -o librebound.so particle.o tools.o integrator.o integrator_ias15.o integrator_mikkola.o integrator_leapfrog.o integrator_sei.o integrator_hybrid.o integrator_wh.o gravity_direct.o librebound.o
+	
+	@echo ""        
+	@echo "The shared library librebound.so has been created successfully."
+	@echo ""        
+	
+	
