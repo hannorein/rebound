@@ -102,8 +102,8 @@ def simulation(par):
     return [runtime, e]
 
 #3dt = 100.23
-dts = np.logspace(0,2,256)
-tmax = 365.*11.8618*1e4
+dts = np.logspace(-2,2,55)
+tmax = 365.*11.8618*1e3
 integrators = ["wh","mikkola","ias15","mikkola-cor3","mikkola-cor5","mikkola-cor7","mercury"]
 colors = ["b","r","g","y","m","c","k"]
 parameters = [(inte,dt,i*len(dts)+j) for i,inte in enumerate(integrators) for j, dt in enumerate(dts)]
@@ -125,21 +125,36 @@ from matplotlib import ticker
 from matplotlib.colors import LogNorm
 
 np.save("res.npy",res)
-f,axarr = plt.subplots(1,1,figsize=(7,5))
-extent=[res[:,:,0].min(), res[:,:,0].max(), 1e-16, 1e-5]
-
-axarr.set_xlim(extent[0], extent[1])
-axarr.set_ylim(extent[2], extent[3])
-axarr.set_ylabel(r"rel energy error")
-axarr.set_xlabel(r"runtime [s]")
-plt.xscale('log', nonposy='clip')
-plt.yscale('log', nonposy='clip')
-
+fig = plt.figure(figsize=(7,9))
 
 res_mean = np.mean(res,axis=1)
+extent=[res[:,:,0].min(), res[:,:,0].max(), 1e-16, 1e-5]
+
+ax = plt.subplot(2,1,1)
+ax.set_xlim(extent[0], extent[1])
+ax.set_ylim(extent[2], extent[3])
+ax.set_ylabel(r"rel energy error")
+ax.set_xlabel(r"runtime [s]")
+plt.yscale('log', nonposy='clip')
+plt.xscale('log', nonposy='clip')
+plt.grid(True)
 for i in xrange(len(integrators)):
     res_i = res[i,:,:]
-    im1 = axarr.scatter(res_i[:,0], res_i[:,1], label=integrators[i],color=colors[i])
+    im1 = ax.scatter(res_i[:,0], res_i[:,1], label=integrators[i],color=colors[i])
+    #im1 = axarr.scatter(dts, res_i[:,1], label=integrators[i],color=colors[i])
+
+orbit = 365.*11.8618
+ax = plt.subplot(2,1,2)
+ax.set_xlim(dts.min()/orbit, dt.max()/orbit)
+ax.set_ylim(extent[2], extent[3])
+ax.set_ylabel(r"rel energy error")
+ax.set_xlabel(r"timestep [orbits]")
+plt.yscale('log', nonposy='clip')
+plt.xscale('log', nonposy='clip')
+plt.grid(True)
+for i in xrange(len(integrators)):
+    res_i = res[i,:,:]
+    im1 = ax.scatter(dts/orbit, res_i[:,1], label=integrators[i],color=colors[i])
 
 from matplotlib.font_manager import FontProperties
 fontP = FontProperties()

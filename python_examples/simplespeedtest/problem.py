@@ -19,9 +19,12 @@ rebound.add_particle( m=1./19314.,     x=-3.01777243405203e+1, y=+1.911553149980
 # Set the center of momentum to be at the origin
 rebound.move_to_center_of_momentum()
 
-rebound.set_integrator("mikkola")
+rebound.set_integrator("mercury")
+#rebound.set_integrator("mikkola")
 rebound.set_dt(40.)
 rebound.integrate(1e7)
 print(rebound.get_timing())
+print(rebound.status())
 rebound.integrate(2e7)
 print(rebound.get_timing())
+print(rebound.status())
