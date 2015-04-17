@@ -5,6 +5,7 @@ import tempfile
 import shutil
 import time
 import ctypes.util
+import pkg_resources
 
 pymodulespath = os.path.dirname(__file__)
 #Find the rebound C library
@@ -332,6 +333,7 @@ def status():
     s= ""
     N = get_N()
     s += "---------------------------------\n"
+    s += "Rebound version: "+ pkg_resources.require("rebound")[0].version +"\n"
     s += "Number of particles: \t%d\n" %N       
     s += "Simulation time:     \t%f\n" %get_t()
     if N>0:
