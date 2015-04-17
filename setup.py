@@ -1,5 +1,7 @@
-from setuptools import setup, Extension
-import distutils
+try:
+    from setuptools import setup, Extension
+except ImportError:
+    from distutils.core import setup, Extension
 from codecs import open
 import os
 
@@ -27,7 +29,7 @@ with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='0.1.25',
+    version='0.1.27',
     description='The N-body integrator REBOUND',
     long_description=long_description,
     url='http://github.com/hannorein/rebound',
