@@ -514,6 +514,14 @@ def set_force_is_velocitydependent(force_is_velocitydependent=1):
         return
     raise ValueError("Expecting integer.")
 
+# Input/Output routines
+
+def output_binary(filename):
+    librebound.output_binary(c_char_p(filename))
+    
+def input_binary(filename):
+    librebound.input_binary(c_char_p(filename))
+    
 
 # Integration
 def step():
