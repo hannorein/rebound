@@ -27,3 +27,4 @@ rebound.egg-info
 venv/
 dist/
 build/
+src/rebound
