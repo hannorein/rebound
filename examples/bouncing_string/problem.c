@@ -34,6 +34,7 @@
 #include "main.h"
 #include "particle.h"
 #include "boundaries.h"
+#include "integrator.h"
 
 extern double coefficient_of_restitution; 
 void problem_init(int argc, char* argv[]){
@@ -42,6 +43,7 @@ void problem_init(int argc, char* argv[]){
 	tmax 				= 10000;
 	boxsize 			= 10;
 	coefficient_of_restitution 	= 1; // elastic collisions
+	integrator			= LEAPFROG;
 	root_nx = 3; root_ny = 1; root_nz = 1;
 	nghostx = 1; nghosty = 1; nghostz = 0;
 	init_box();

@@ -309,7 +309,7 @@ static void kepler_step(unsigned int i,double _dt){
 
 /****************************** 
  * Coordinate transformations */
-
+int first = 1;
 static void integrator_to_jacobi_posvel(){
 	double s_x = particles[0].m * particles[0].x;
 	double s_y = particles[0].m * particles[0].y;
@@ -334,12 +334,15 @@ static void integrator_to_jacobi_posvel(){
 		s_vy = s_vy * pme + pi.m*p_j[i].vy;
 		s_vz = s_vz * pme + pi.m*p_j[i].vz;
 	}
-	p_j[0].x = s_x * Mtotali;
-	p_j[0].y = s_y * Mtotali;
-	p_j[0].z = s_z * Mtotali;
-	p_j[0].vx = s_vx * Mtotali;
-	p_j[0].vy = s_vy * Mtotali;
-	p_j[0].vz = s_vz * Mtotali;
+	if (first){
+		first = 0;
+		p_j[0].x = s_x * Mtotali;
+		p_j[0].y = s_y * Mtotali;
+		p_j[0].z = s_z * Mtotali;
+		p_j[0].vx = s_vx * Mtotali;
+		p_j[0].vy = s_vy * Mtotali;
+		p_j[0].vz = s_vz * Mtotali;
+	}
 }
 
 static void integrator_var_to_jacobi_posvel(){
