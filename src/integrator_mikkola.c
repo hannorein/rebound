@@ -616,32 +616,30 @@ static void integrator_kepler_drift(double _dt){
 	p_j[0].z += _dt*p_j[0].vz;
 }
 
-const static double alpha = 4.183300132670377813e-01;
-const static double beta = 4.980119205559973422e-02;
-const static double a_31 = -alpha;
-const static double a_32 = -a_31;
-const static double b_31 = -0.5*beta;
-const static double b_32 = -b_31;
-const static double a_51 = 2.*alpha;
-const static double a_52 = alpha;
-const static double a_53 = -a_52;
-const static double a_54 = -a_51;
-const static double b_51 = -1./6.*beta;
-const static double b_52 = 5./6.*beta;
-const static double b_53 = -b_52;
-const static double b_54 = -b_51;
-const static double a_71 = 3.*alpha;
-const static double a_72 = 2.*alpha;
-const static double a_73 = alpha;
-const static double a_74 = -a_73;
-const static double a_75 = -a_72;
-const static double a_76 = -a_71;
-const static double b_71 = 12361./246960.*beta;
-const static double b_72 = -22651./61740.*beta;
-const static double b_73 = 53521./49392.*beta;
-const static double b_74 = -b_73;
-const static double b_75 = -b_72;
-const static double b_76 = -b_71;
+const static double a_31 = -4.183300132670377813e-01;
+const static double a_32 = 4.183300132670377813e-01;
+const static double b_31 = -0.5*4.980119205559973422e-02;
+const static double b_32 = 0.5*4.980119205559973422e-02;
+const static double a_51 = 2.*4.183300132670377813e-01;
+const static double a_52 = 4.183300132670377813e-01;
+const static double a_53 = -4.183300132670377813e-01;
+const static double a_54 = -2.*4.183300132670377813e-01;
+const static double b_51 = -1./6.*4.980119205559973422e-02;
+const static double b_52 = 5./6.*4.980119205559973422e-02;
+const static double b_53 = -5./6.*4.980119205559973422e-02;
+const static double b_54 = 1./6.*4.980119205559973422e-02;
+const static double a_71 = 3.*4.183300132670377813e-01;
+const static double a_72 = 2.*4.183300132670377813e-01;
+const static double a_73 = 4.183300132670377813e-01;
+const static double a_74 = -4.183300132670377813e-01;
+const static double a_75 = -2.*4.183300132670377813e-01;
+const static double a_76 = -3.*4.183300132670377813e-01;
+const static double b_71 = 12361./246960.*4.980119205559973422e-02;
+const static double b_72 = -22651./61740.*4.980119205559973422e-02;
+const static double b_73 = 53521./49392.*4.980119205559973422e-02;
+const static double b_74 = -53521./49392.*4.980119205559973422e-02;
+const static double b_75 = 22651./61740.*4.980119205559973422e-02;
+const static double b_76 = -12361./246960.*4.980119205559973422e-02;
 
 
 static void integrator_mikkola_corrector_Z(double a, double b){
