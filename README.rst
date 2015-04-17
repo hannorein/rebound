@@ -65,13 +65,18 @@ In short: If you simply want to integrate a few particle system such as a planet
 
 **Python and librebound**
 
-To access REBOUND from python, simple install it via pip. Go to an empty directory where you want to have rebound installed, then type the following::
+To access REBOUND from python, simply install it via pip. Go to an empty directory where you want to have rebound installed, then type the following (you may have to pip install virtualenv first)::
 
     # Optionally, create a virtual environment to keep your python
-    # installation clean.
+    # installation clean (recommended if you are unsure).
     virtualenv venv && source venv/bin/activate
 
     # Then, simple install rebound using pip
+    pip install rebound
+
+If you use the Anaconda distribution, the above likely will not work.  Instead create a conda environment (in your anaconda/envs directory) with::
+
+    conda create -n venv pip && source activate venv
     pip install rebound
 
 That's it. In the background pip download the source code, compiles and and puts everything in its right place in your filesystem. It really can't get much simpler. The python module of REBOUND does not depend on any non-standard python libraries. However, you probably want to install numpy and matplotlib to do something nice with your outputs.::
@@ -98,6 +103,11 @@ Now try running an N-body simulation with REBOUND. Create a file `test.py` with 
 
     # Output final positions to screen
     print(rebound.status())
+
+Whenever you want to use the rebound library, you have to make sure you first switch to the virtual/conda environment in which you installed it (assuming you created one).  You can tell if you are in that environment by looking to see if venv is shown in parentheses in front of your command prompt.  If not, switch to it with::
+
+    source venv/bin/activate # if you used virtualenv
+    source activate venv # if you used conda
 
 You can now run the program by executing `python test.py`. If you want to use the Wisdom-Holman type MIKKOLA integrator (Rein & Tamayo, in prep), simply set it before calling `rebound.integrate()`.::
 
