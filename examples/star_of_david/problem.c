@@ -38,10 +38,12 @@
 #include "tools.h"
 #include "particle.h"
 #include "boundaries.h"
+#include "integrator.h"
 
 
 
 void problem_init(int argc, char* argv[]){
+	integrator = IAS15;
 	init_boxwidth(6.); 			
 	dt = -1;
 

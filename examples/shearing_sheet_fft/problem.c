@@ -40,11 +40,10 @@
 #include "communication_mpi.h"
 #include "tree.h"
 #include "tools.h"
+#include "integrator.h"
 
-#ifdef INTEGRATOR_SEI
 extern double OMEGA;
 extern double OMEGAZ;
-#endif 	// INTEGRATOR_SEI
 extern double coefficient_of_restitution;
 extern double minimum_collision_velocity;
 
@@ -53,17 +52,12 @@ double coefficient_of_restitution_bridges(double v);
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-#ifdef INTEGRATOR_SEI
+	integrator			= SEI;
 	OMEGA 				= 0.00013143527;	// 1/s
 	OMEGAZ 				= 3.6*0.00013143527;	// 1/s
-#endif 	// INTEGRATOR_SEI
 	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
 	softening 			= 0.1;			// m
-#ifdef INTEGRATOR_SEI
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
-#else 	// INTEGRATOR_SEI
-	dt 				= 1e2;			// s
-#endif 	// INTEGRATOR_SEI
 	int ngrid 			= 64;
 	root_nx = ngrid; root_ny = ngrid; root_nz = ngrid/2;
 	double surfacedensity 		= 400; 			// kg/m^2
@@ -79,11 +73,7 @@ void problem_init(int argc, char* argv[]){
 	
 	// Use Bridges et al coefficient of restitution.
 	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
-#ifdef INTEGRATOR_SEI
 	minimum_collision_velocity = particle_radius_min*OMEGA*0.001;  // small fraction of the shear
-#else	// INTEGRATOR_SEI
-	minimum_collision_velocity = particle_radius_min/dt*0.001;  // small fraction of the shear
-#endif	// INTEGRATOR_SEI
 	double total_mass = surfacedensity*boxsize_x*boxsize_y;
 #ifdef MPI
 	// Only initialise particles on master. This should also be parallelied but the details depend on the individual problem.
@@ -96,11 +86,7 @@ void problem_init(int argc, char* argv[]){
 			pt.y 		= tools_uniform(-boxsize_y/2.,boxsize_y/2.);
 			pt.z 		= tools_normal(1.);					// m
 			pt.vx 		= 0;
-#ifdef INTEGRATOR_SEI
 			pt.vy 		= -1.5*pt.x*OMEGA;
-#else	// INTEGRATOR_SEI
-			pt.vy 		= 0;
-#endif 	// INTEGRATOR_SEI
 			pt.vz 		= 0;
 			pt.ax 		= 0;
 			pt.ay 		= 0;

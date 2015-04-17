@@ -34,11 +34,13 @@
 #include "tools.h"
 #include "particle.h"
 #include "problem.h"
+#include "integrator.h"
 
 void additional_forces();
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
+	integrator	= MIKKOLA;
 	dt 		= 0.0020;			// initial timestep (in days)
 	init_boxwidth(200); 		
 

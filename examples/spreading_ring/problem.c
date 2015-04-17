@@ -39,12 +39,14 @@
 #include "tree.h"
 #include "collisions.h"
 #include "tools.h"
+#include "integrator.h"
 
 extern double opening_angle2;
 extern int Nmax;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
+	integrator	= WH;
 	G 		= 1;		
 	N_active	= 1;
 	N_collisions	= 1; 	// Don't detect collisions for the star.
