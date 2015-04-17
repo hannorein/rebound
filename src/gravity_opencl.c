@@ -80,6 +80,7 @@ typedef float real_t;
 #endif
 
 
+unsigned int gravity_ignore_10;
 
 
 

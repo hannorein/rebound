@@ -40,12 +40,14 @@
 #include "communication_mpi.h"
 #include "tree.h"
 #include "tools.h"
+#include "integrator.h"
 
 extern int Nmax;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G 		= 1;		
+	integrator	= LEAPFROG;
 	softening 	= 0.01;		
 	dt 		= 3e-3;
 	boxsize 	= 1.2;

@@ -42,6 +42,7 @@
 #include "boundaries.h"
 #include "output.h"
 #include "collisions.h"
+#include "integrator.h"
 
 extern double OMEGA;
 extern double OMEGAZ;
@@ -57,6 +58,7 @@ void problem_init(int argc, char* argv[]){
 	double tau			= 1.64;
 	coefficient_of_restitution 	= 0.5;
 	boxsize 			= 1;
+	integrator			= SEI;
 	root_nx = 200; 	root_ny = 5; 	root_nz = 20;
 	nghostx = 1; 	nghosty = 1; 	nghostz = 0;
 	init_box();
