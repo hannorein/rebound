@@ -93,11 +93,11 @@ all:
 	$(CC) $(OPT) $(PREDEF) zpr.c -c
 	$(CC) $(OPT) $(PREDEF) display.c -c
 	$(CC) $(OPT) $(PREDEF) tools.c -c
-	$(CC) *.o -o nbody $(LIB)
+	$(CC) *.o -o rebound $(LIB)
 
 clean:
 	rm -vf *.o
-	rm -vf nbody
+	rm -vf rebound
 
 doc:
 	sed 's!PREDEFINED             =.*!PREDEFINED             = $(PREDEFLIST)!' ../doc/Doxyfile.input > ../doc/Doxyfile 
