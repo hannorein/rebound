@@ -47,6 +47,7 @@ void collision_resolve_merger(struct collision c);
 
 void problem_init(int argc, char* argv[]){
 	dt = 0.01*2.*M_PI;						// initial timestep
+	integrator = IAS15;
 
 #ifdef OPENGL
 	display_wire	= 1;						// show instantaneous orbits

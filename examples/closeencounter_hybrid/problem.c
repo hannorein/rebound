@@ -51,7 +51,6 @@ void problem_init(int argc, char* argv[]){
 	//softening = 0.001;
 	//integrator = IAS15;
 	//integrator = MIKKOLA;
-	// integrator_ias15_epsilon = 1e-2;					// accuracy parameter, default is 1e-2 and should work in most cases.
 	integrator_mikkola_corrector = 5;
 	integrator_mikkola_synchronize_manually = 1;
 

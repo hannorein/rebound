@@ -12,11 +12,11 @@ all:
 	# Compile
 	$(MAKE) -C ../../src/
 	# Copy result
-	cp ../../src/nbody .
+	cp ../../src/rebound .
 
 doc: all
 	$(MAKE) -C ../../src/ doc
 
 clean:
 	$(MAKE) -C ../../src/ clean
-	rm -vf nbody
+	rm -vf rebound
