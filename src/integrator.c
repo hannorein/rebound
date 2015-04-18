@@ -67,6 +67,8 @@ void integrator_part1(){
 		case HYBRID:
 			integrator_hybrid_part1();
 			break;
+		default:
+			break;
 	}
 }
 
@@ -90,6 +92,8 @@ void integrator_part2(){
 		case HYBRID:
 			integrator_hybrid_part2();
 			break;
+		default:
+			break;
 	}
 }
 	
@@ -112,6 +116,8 @@ void integrator_synchronize(){
 			break;
 		case HYBRID:
 			integrator_hybrid_synchronize();
+			break;
+		default:
 			break;
 	}
 }

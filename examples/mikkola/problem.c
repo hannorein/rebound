@@ -35,12 +35,14 @@
 #include "output.h"
 #include "particle.h"
 #include "boundaries.h"
+#include "integrator.h"
 
 double energy();
 double e_init;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
+	integrator	= MIKKOLA;
 	dt 		= 1e-2;	// in year/(2*pi)
 	boxsize 	= 3;	// in AU
 	init_box();

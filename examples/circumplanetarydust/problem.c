@@ -49,6 +49,7 @@ double betaparticles = 0.01; 	// Beta parameter.
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
+	integrator		= IAS15;
 	dt 			= 1e-4;	// Initial timestep.
 	boxsize 		= 10;	
 	tmax			= 1e6;

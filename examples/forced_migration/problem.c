@@ -45,6 +45,7 @@
 #include "output.h"
 #include "particle.h"
 #include "boundaries.h"
+#include "integrator.h"
 
 double* tau_a; 	/**< Migration timescale in years for all particles */
 double* tau_e; 	/**< Eccentricity damping timescale in years for all particles */
@@ -56,6 +57,7 @@ extern int display_wire;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
+	integrator	= IAS15;
 	dt 		= 1e-2*2.*M_PI;		// in year/(2*pi)
 	boxsize 	= 3;			// in AU
 	tmax		= 2.0e4*2.*M_PI;	// in year/(2*pi)

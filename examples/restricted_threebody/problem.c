@@ -33,9 +33,11 @@
 #include "particle.h"
 #include "boundaries.h"
 #include "output.h"
+#include "integrator.h"
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
+	integrator		= WH;
 	boxsize 		= 8; 
 	softening		= 1e-6;
 	dt 			= 1.0e-2*2.*M_PI;

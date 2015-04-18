@@ -67,6 +67,7 @@ void collision_record_only(struct collision c){
 
 void problem_init(int argc, char* argv[]){
 	dt = 0.1*2.*M_PI;						// initial timestep
+	integrator = IAS15;
 	// integrator_epsilon = 1e-2;					// accuracy parameter, default is 1e-2 and should work in most cases.
 
 #ifdef OPENGL

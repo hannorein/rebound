@@ -93,11 +93,11 @@ all:
 	$(CC) $(OPT) $(PREDEF) zpr.c -c
 	$(CC) $(OPT) $(PREDEF) display.c -c
 	$(CC) $(OPT) $(PREDEF) tools.c -c
-	$(CC) *.o -o nbody $(LIB)
+	$(CC) *.o -o rebound $(LIB)
 
 clean:
 	rm -vf *.o
-	rm -vf nbody
+	rm -vf rebound
 
 doc:
 	sed 's!PREDEFINED             =.*!PREDEFINED             = $(PREDEFLIST)!' ../doc/Doxyfile.input > ../doc/Doxyfile 
@@ -117,6 +117,8 @@ librebound:
 	$(CC) $(OPT) -c -fPIC -Wall tools.c
 	$(CC) $(OPT) -c -fPIC -Wall particle.c
 	$(CC) $(OPT) -c -fPIC -Wall librebound.c
+	$(CC) $(OPT) -c -fPIC -Wall output.c
+	$(CC) $(OPT) -c -fPIC -Wall input.c
 	$(CC) $(OPT) -shared -o librebound.so particle.o tools.o integrator.o integrator_ias15.o integrator_mikkola.o integrator_leapfrog.o integrator_sei.o integrator_hybrid.o integrator_wh.o gravity_direct.o librebound.o
 	
 	@echo ""        

@@ -42,6 +42,7 @@
 #include "tree.h"
 #include "boundaries.h"
 
+unsigned int gravity_ignore_10;
 double opening_angle2 = 0.25; /**< Square of the cell opening angle \f$ \theta \f$. */
 double softening2;	/**< Used to accelerate calculation */
 

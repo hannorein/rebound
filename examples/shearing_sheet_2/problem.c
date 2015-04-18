@@ -48,6 +48,7 @@
 #include "tree.h"
 #include "tools.h"
 #include "display.h"
+#include "integrator.h"
 
 extern double OMEGA;
 extern double minimum_collision_velocity;
@@ -63,6 +64,7 @@ void problem_init(int argc, char* argv[]){
 #ifdef GRAVITY_TREE
 	opening_angle2	= .5;
 #endif // GRAVITY_TREE
+	integrator			= SEI;
 	OMEGA 				= 0.00013143527;	// 1/s
 	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
 	softening 			= 0.1;			// m

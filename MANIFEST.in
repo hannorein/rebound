@@ -7,6 +7,7 @@ include src/integrator_hybrid.c
 include src/integrator.c
 include src/gravity_direct.c
 include src/output.c
+include src/input.c
 include src/tools.c
 include src/particle.c
 include src/librebound.c
@@ -24,6 +25,6 @@ include src/librebound.h
 include src/main.h
 include src/boundaries.h
 include src/problem.h
-include src/output.h
+include src/input.h
 include README.rst
 include LICENSE

@@ -309,7 +309,7 @@ static void kepler_step(unsigned int i,double _dt){
 
 /****************************** 
  * Coordinate transformations */
-
+int first = 1;
 static void integrator_to_jacobi_posvel(){
 	double s_x = particles[0].m * particles[0].x;
 	double s_y = particles[0].m * particles[0].y;
@@ -334,12 +334,15 @@ static void integrator_to_jacobi_posvel(){
 		s_vy = s_vy * pme + pi.m*p_j[i].vy;
 		s_vz = s_vz * pme + pi.m*p_j[i].vz;
 	}
-	p_j[0].x = s_x * Mtotali;
-	p_j[0].y = s_y * Mtotali;
-	p_j[0].z = s_z * Mtotali;
-	p_j[0].vx = s_vx * Mtotali;
-	p_j[0].vy = s_vy * Mtotali;
-	p_j[0].vz = s_vz * Mtotali;
+	if (first){
+		first = 0;
+		p_j[0].x = s_x * Mtotali;
+		p_j[0].y = s_y * Mtotali;
+		p_j[0].z = s_z * Mtotali;
+		p_j[0].vx = s_vx * Mtotali;
+		p_j[0].vy = s_vy * Mtotali;
+		p_j[0].vz = s_vz * Mtotali;
+	}
 }
 
 static void integrator_var_to_jacobi_posvel(){
@@ -616,32 +619,22 @@ static void integrator_kepler_drift(double _dt){
 	p_j[0].z += _dt*p_j[0].vz;
 }
 
-const static double alpha = 4.183300132670377813e-01;
-const static double beta = 4.980119205559973422e-02;
-const static double a_31 = -alpha;
-const static double a_32 = -a_31;
-const static double b_31 = -0.5*beta;
-const static double b_32 = -b_31;
-const static double a_51 = 2.*alpha;
-const static double a_52 = alpha;
-const static double a_53 = -a_52;
-const static double a_54 = -a_51;
-const static double b_51 = -1./6.*beta;
-const static double b_52 = 5./6.*beta;
-const static double b_53 = -b_52;
-const static double b_54 = -b_51;
-const static double a_71 = 3.*alpha;
-const static double a_72 = 2.*alpha;
-const static double a_73 = alpha;
-const static double a_74 = -a_73;
-const static double a_75 = -a_72;
-const static double a_76 = -a_71;
-const static double b_71 = 12361./246960.*beta;
-const static double b_72 = -22651./61740.*beta;
-const static double b_73 = 53521./49392.*beta;
-const static double b_74 = -b_73;
-const static double b_75 = -b_72;
-const static double b_76 = -b_71;
+const static double a_1 = 4.183300132670377813e-01;
+const static double a_2 = 2.*4.183300132670377813e-01;
+const static double a_3 = 3.*4.183300132670377813e-01;
+const static double a_4 = 4.*4.183300132670377813e-01;
+const static double a_5 = 5.*4.183300132670377813e-01;
+const static double b_31 = -0.5*4.980119205559973422e-02;
+const static double b_51 = -1./6.*4.980119205559973422e-02;
+const static double b_52 = 5./6.*4.980119205559973422e-02;
+const static double b_71 = 12361./246960.*4.980119205559973422e-02;
+const static double b_72 = -22651./61740.*4.980119205559973422e-02;
+const static double b_73 = 53521./49392.*4.980119205559973422e-02;
+const static double b_111 = 2798927./684573120.*4.980119205559973422e-02;
+const static double b_112 = -329447./6985440.*4.980119205559973422e-02;
+const static double b_113 = 895249./3622080.*4.980119205559973422e-02;
+const static double b_114 = -14556229./19015920.*4.980119205559973422e-02;
+const static double b_115 = 3394141./2328480.*4.980119205559973422e-02;
 
 
 static void integrator_mikkola_corrector_Z(double a, double b){
@@ -673,24 +666,37 @@ static void integrator_mikkola_corrector_Z(double a, double b){
 static void integrator_apply_corrector(double inv){
 	if (integrator_mikkola_corrector==3){
 		// Third order corrector
-		integrator_mikkola_corrector_Z(a_32*dt,inv*b_32*dt);
-		integrator_mikkola_corrector_Z(a_31*dt,inv*b_31*dt);
+		integrator_mikkola_corrector_Z(a_1*dt,-inv*b_31*dt);
+		integrator_mikkola_corrector_Z(-a_1*dt,inv*b_31*dt);
 	}
 	if (integrator_mikkola_corrector==5){
 		// Fifth order corrector
-		integrator_mikkola_corrector_Z(a_54*dt,inv*b_54*dt);
-		integrator_mikkola_corrector_Z(a_53*dt,inv*b_53*dt);
-		integrator_mikkola_corrector_Z(a_52*dt,inv*b_52*dt);
-		integrator_mikkola_corrector_Z(a_51*dt,inv*b_51*dt);
+		integrator_mikkola_corrector_Z(-a_2*dt,-inv*b_51*dt);
+		integrator_mikkola_corrector_Z(-a_1*dt,-inv*b_52*dt);
+		integrator_mikkola_corrector_Z(a_1*dt,inv*b_52*dt);
+		integrator_mikkola_corrector_Z(a_2*dt,inv*b_51*dt);
 	}
 	if (integrator_mikkola_corrector==7){
 		// Seventh order corrector
-		integrator_mikkola_corrector_Z(a_76*dt,inv*b_76*dt);
-		integrator_mikkola_corrector_Z(a_75*dt,inv*b_75*dt);
-		integrator_mikkola_corrector_Z(a_74*dt,inv*b_74*dt);
-		integrator_mikkola_corrector_Z(a_73*dt,inv*b_73*dt);
-		integrator_mikkola_corrector_Z(a_72*dt,inv*b_72*dt);
-		integrator_mikkola_corrector_Z(a_71*dt,inv*b_71*dt);
+		integrator_mikkola_corrector_Z(-a_3*dt,-inv*b_71*dt);
+		integrator_mikkola_corrector_Z(-a_2*dt,-inv*b_72*dt);
+		integrator_mikkola_corrector_Z(-a_1*dt,-inv*b_73*dt);
+		integrator_mikkola_corrector_Z(a_1*dt,inv*b_73*dt);
+		integrator_mikkola_corrector_Z(a_2*dt,inv*b_72*dt);
+		integrator_mikkola_corrector_Z(a_3*dt,inv*b_71*dt);
+	}
+	if (integrator_mikkola_corrector==11){
+		// Eleventh order corrector
+		integrator_mikkola_corrector_Z(-a_5*dt,-inv*b_111*dt);
+		integrator_mikkola_corrector_Z(-a_4*dt,-inv*b_112*dt);
+		integrator_mikkola_corrector_Z(-a_3*dt,-inv*b_113*dt);
+		integrator_mikkola_corrector_Z(-a_2*dt,-inv*b_114*dt);
+		integrator_mikkola_corrector_Z(-a_1*dt,-inv*b_115*dt);
+		integrator_mikkola_corrector_Z(a_1*dt,inv*b_115*dt);
+		integrator_mikkola_corrector_Z(a_2*dt,inv*b_114*dt);
+		integrator_mikkola_corrector_Z(a_3*dt,inv*b_113*dt);
+		integrator_mikkola_corrector_Z(a_4*dt,inv*b_112*dt);
+		integrator_mikkola_corrector_Z(a_5*dt,inv*b_111*dt);
 	}
 }
 

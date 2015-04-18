@@ -39,12 +39,14 @@
 #include "communication_mpi.h"
 #include "tree.h"
 #include "tools.h"
+#include "integrator.h"
 
 extern double opening_angle2;
 extern int Nmax;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
+	integrator	= LEAPFROG;
 	opening_angle2	= 1.5;		// This constant determines the accuracy of the tree code gravity estimate.
 	G 		= 1;		
 	softening 	= 0.01;		// Gravitational softening length

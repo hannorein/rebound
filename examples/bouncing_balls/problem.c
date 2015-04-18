@@ -34,11 +34,13 @@
 #include "main.h"
 #include "particle.h"
 #include "boundaries.h"
+#include "integrator.h"
 
 extern double coefficient_of_restitution; 
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
+	integrator = LEAPFROG;
 	dt = 1e-2;
 	tmax = 10000;
 	boxsize = 3;

@@ -147,21 +147,25 @@ void input_binary(char* filename){
 #else // MPI
 	FILE* inf = fopen(filename,"rb"); 
 #endif // MPI
-	long objects = 0;
-	int _N;
-	objects += fread(&_N,sizeof(int),1,inf);
-	objects += fread(&t,sizeof(double),1,inf);
+	if (inf){
+		long objects = 0;
+		int _N;
+		objects += fread(&_N,sizeof(int),1,inf);
+		objects += fread(&t,sizeof(double),1,inf);
 #ifdef MPI
-	printf("Found %d particles in file '%s'. ",_N,filename_mpi);
+		printf("Found %d particles in file '%s'. ",_N,filename_mpi);
 #else // MPI
-	printf("Found %d particles in file '%s'. ",_N,filename);
+		printf("Found %d particles in file '%s'. ",_N,filename);
 #endif // MPI
-	for (int i=0;i<_N;i++){
-		struct particle p;
-		objects += fread(&p,sizeof(struct particle),1,inf);
-		particles_add(p);
+		for (int i=0;i<_N;i++){
+			struct particle p;
+			objects += fread(&p,sizeof(struct particle),1,inf);
+			particles_add(p);
+		}
+		fclose(inf);
+		printf("%ld objects read. Restarting at time t=%f\n",objects,t);
+	}else{
+		printf("Can not open file '%s'\n.",filename);
 	}
-	fclose(inf);
-	printf("%ld objects read. Restarting at time t=%f\n",objects,t);
 }
 

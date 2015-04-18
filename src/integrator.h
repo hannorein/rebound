@@ -35,6 +35,7 @@ typedef enum {
 	WH = 3,
 	LEAPFROG = 4,
 	HYBRID = 5,
+	NONE = 6,
 	} integrator_t;
 /*
  * Variable setting the current integrator.

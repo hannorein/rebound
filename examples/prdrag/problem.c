@@ -36,6 +36,7 @@
 #include "particle.h"
 #include "problem.h"
 #include "integrator.h"
+#include "integrator_ias15.h"
 
 void additional_forces();
 double betaparticles = 0.01; 	// beta parameter
@@ -44,7 +45,8 @@ double betaparticles = 0.01; 	// beta parameter
 void problem_init(int argc, char* argv[]){
 	// setup constants
 	dt 				= 1e-3;			// initial timestep
-	integrator_epsilon 		= 1e-4;			// accuracy parameter
+	integrator			= IAS15;
+	integrator_ias15_epsilon 	= 1e-4;			// accuracy parameter
 	boxsize 			= 10;	
 	tmax				= 1e5;
 	N_active			= 1; 			// the star is the only massive particle
