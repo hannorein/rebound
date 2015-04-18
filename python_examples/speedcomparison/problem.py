@@ -102,7 +102,7 @@ def simulation(par):
     return [runtime, e]
 
 #3dt = 100.23
-dts = np.logspace(-2,2,55)
+dts = np.logspace(-3,2,155)
 tmax = 365.*11.8618*1e3
 integrators = ["wh","mikkola","ias15","mikkola-cor3","mikkola-cor5","mikkola-cor7","mercury"]
 colors = ["b","r","g","y","m","c","k"]
