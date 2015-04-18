@@ -619,18 +619,22 @@ static void integrator_kepler_drift(double _dt){
 	p_j[0].z += _dt*p_j[0].vz;
 }
 
-const static double a_31 = -4.183300132670377813e-01;
+const static double a_1 = 4.183300132670377813e-01;
+const static double a_2 = 2.*4.183300132670377813e-01;
+const static double a_3 = 3.*4.183300132670377813e-01;
+const static double a_4 = 4.*4.183300132670377813e-01;
+const static double a_5 = 5.*4.183300132670377813e-01;
 const static double b_31 = -0.5*4.980119205559973422e-02;
-const static double a_51 = 2.*4.183300132670377813e-01;
-const static double a_52 = 4.183300132670377813e-01;
 const static double b_51 = -1./6.*4.980119205559973422e-02;
 const static double b_52 = 5./6.*4.980119205559973422e-02;
-const static double a_71 = 3.*4.183300132670377813e-01;
-const static double a_72 = 2.*4.183300132670377813e-01;
-const static double a_73 = 4.183300132670377813e-01;
 const static double b_71 = 12361./246960.*4.980119205559973422e-02;
 const static double b_72 = -22651./61740.*4.980119205559973422e-02;
 const static double b_73 = 53521./49392.*4.980119205559973422e-02;
+const static double b_111 = 2798927./684573120.*4.980119205559973422e-02;
+const static double b_112 = -329447./6985440.*4.980119205559973422e-02;
+const static double b_113 = 895249./3622080.*4.980119205559973422e-02;
+const static double b_114 = -14556229./19015920.*4.980119205559973422e-02;
+const static double b_115 = 3394141./2328480.*4.980119205559973422e-02;
 
 
 static void integrator_mikkola_corrector_Z(double a, double b){
@@ -662,27 +666,37 @@ static void integrator_mikkola_corrector_Z(double a, double b){
 static void integrator_apply_corrector(double inv){
 	if (integrator_mikkola_corrector==3){
 		// Third order corrector
-		integrator_mikkola_corrector_Z(-a_31*dt,-inv*b_31*dt);
-		integrator_mikkola_corrector_Z(a_31*dt,inv*b_31*dt);
+		integrator_mikkola_corrector_Z(a_1*dt,-inv*b_31*dt);
+		integrator_mikkola_corrector_Z(-a_1*dt,inv*b_31*dt);
 	}
 	if (integrator_mikkola_corrector==5){
 		// Fifth order corrector
-		integrator_mikkola_corrector_Z(-a_51*dt,-inv*b_51*dt);
-		integrator_mikkola_corrector_Z(-a_52*dt,-inv*b_52*dt);
-		integrator_mikkola_corrector_Z(a_52*dt,inv*b_52*dt);
-		integrator_mikkola_corrector_Z(a_51*dt,inv*b_51*dt);
+		integrator_mikkola_corrector_Z(-a_2*dt,-inv*b_51*dt);
+		integrator_mikkola_corrector_Z(-a_1*dt,-inv*b_52*dt);
+		integrator_mikkola_corrector_Z(a_1*dt,inv*b_52*dt);
+		integrator_mikkola_corrector_Z(a_2*dt,inv*b_51*dt);
 	}
 	if (integrator_mikkola_corrector==7){
 		// Seventh order corrector
-		integrator_mikkola_corrector_Z(-a_71*dt,-inv*b_71*dt);
-		integrator_mikkola_corrector_Z(-a_72*dt,-inv*b_72*dt);
-		integrator_mikkola_corrector_Z(-a_73*dt,-inv*b_73*dt);
-		integrator_mikkola_corrector_Z(a_73*dt,inv*b_73*dt);
-		integrator_mikkola_corrector_Z(a_72*dt,inv*b_72*dt);
-		integrator_mikkola_corrector_Z(a_71*dt,inv*b_71*dt);
+		integrator_mikkola_corrector_Z(-a_3*dt,-inv*b_71*dt);
+		integrator_mikkola_corrector_Z(-a_2*dt,-inv*b_72*dt);
+		integrator_mikkola_corrector_Z(-a_1*dt,-inv*b_73*dt);
+		integrator_mikkola_corrector_Z(a_1*dt,inv*b_73*dt);
+		integrator_mikkola_corrector_Z(a_2*dt,inv*b_72*dt);
+		integrator_mikkola_corrector_Z(a_3*dt,inv*b_71*dt);
 	}
-	if (integrator_mikkola_corrector==17){
-		// Seventeenth order corrector
+	if (integrator_mikkola_corrector==11){
+		// Eleventh order corrector
+		integrator_mikkola_corrector_Z(-a_5*dt,-inv*b_111*dt);
+		integrator_mikkola_corrector_Z(-a_4*dt,-inv*b_112*dt);
+		integrator_mikkola_corrector_Z(-a_3*dt,-inv*b_113*dt);
+		integrator_mikkola_corrector_Z(-a_2*dt,-inv*b_114*dt);
+		integrator_mikkola_corrector_Z(-a_1*dt,-inv*b_115*dt);
+		integrator_mikkola_corrector_Z(a_1*dt,inv*b_115*dt);
+		integrator_mikkola_corrector_Z(a_2*dt,inv*b_114*dt);
+		integrator_mikkola_corrector_Z(a_3*dt,inv*b_113*dt);
+		integrator_mikkola_corrector_Z(a_4*dt,inv*b_112*dt);
+		integrator_mikkola_corrector_Z(a_5*dt,inv*b_111*dt);
 	}
 }
 

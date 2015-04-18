@@ -35,6 +35,7 @@ void integrator_mikkola_reset();
  * 3: uses third order (two-stage) corrector 
  * 5: uses fifth order (four-stage) corrector 
  * 7: uses seventh order (six-stage) corrector 
+ * 11: uses eleventh order (ten-stage) corrector 
  */
 extern unsigned int integrator_mikkola_corrector;
 
