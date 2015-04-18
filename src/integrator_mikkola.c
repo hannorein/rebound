@@ -711,6 +711,7 @@ void integrator_mikkola_part1(){
 		etai= realloc(etai,sizeof(double)*(N-N_megno));
 		recalculate_jacobi = 1;		// Recalculate masses/Jacobi coordinates if first timestep or if N changes.
 	}
+	// Only recalculate Jacobi coordinates if needed
 	if (recalculate_jacobi){
 		if (integrator_mikkola_is_synchronized==0){
 			integrator_mikkola_synchronize();
@@ -730,7 +731,6 @@ void integrator_mikkola_part1(){
 		Mtotal  = eta[N-N_megno-1];
 		Mtotali = etai[N-N_megno-1];
 		integrator_mikkola_particles_modified = 0;
-		// Only recalculate Jacobi coordinates if needed
 		integrator_to_jacobi_posvel();
 		if (N_megno){
 			integrator_var_to_jacobi_posvel();
