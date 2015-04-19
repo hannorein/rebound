@@ -112,8 +112,8 @@ def simulation(par):
     return [times, es]
 
 #3dt = 100.23
-dt = 1.3
-tmax = 365.*11.8618*1e2
+dt = 40.
+tmax = 365.*11.8618*1e7
 integrators = ["wh","mikkola","ias15","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mercury"]
 colors = {
     'mikkola':      "#FF0000",
