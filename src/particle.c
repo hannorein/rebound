@@ -37,7 +37,7 @@
 #include "communication_mpi.h"
 #endif // MPI
 
-struct particle* 	particles;	
+struct particle* 	particles = NULL;	
 
 int N 		= 0;	
 int Nmax	= 0;	

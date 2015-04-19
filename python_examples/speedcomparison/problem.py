@@ -1,9 +1,9 @@
 # Import the rebound module
-import sys; sys.path.append('../../python_modules')
 import rebound
 import numpy as np
 import time
-from interruptible_pool import InterruptiblePool
+import sys
+from rebound.interruptible_pool import InterruptiblePool
 
 def simulation(par):
     integrator, dt, run = par
@@ -12,6 +12,7 @@ def simulation(par):
     G = k*k
     rebound.set_G(G)     
     rebound.set_dt(dt)
+    rebound.set_libsync(0)
     if integrator=="mikkola-cor3":
         integrator="mikkola"
         rebound.set_integrator_mikkola_corrector(3)
@@ -21,6 +22,13 @@ def simulation(par):
     elif integrator=="mikkola-cor7":
         integrator="mikkola"
         rebound.set_integrator_mikkola_corrector(7)
+    elif integrator=="mikkola-cor11":
+        integrator="mikkola"
+        rebound.set_integrator_mikkola_corrector(11)
+    elif integrator=="mikkola-jac":
+        integrator="mikkola"
+        rebound.set_libsync(1)
+        rebound.set_integrator_mikkola_corrector(0)
     else:
         rebound.set_integrator_mikkola_corrector(0)
     rebound.set_integrator(integrator)
@@ -98,14 +106,15 @@ def simulation(par):
     e = np.fabs((ei-ef)/ei)+1.1e-16
     runtime += rebound.get_timing()
     
-    print integrator + " done. %.5fs"%(runtime)
+    integrator, dt, run = par
+    print integrator.ljust(13) + " %.5fs"%(runtime) + "\t Error: %e"  %( e)
     return [runtime, e]
 
-#3dt = 100.23
-dts = np.logspace(-2,2,55)
+dts = np.logspace(-2,1,128)
+#dts = np.logspace(-3,2,155)
 tmax = 365.*11.8618*1e3
-integrators = ["wh","mikkola","ias15","mikkola-cor3","mikkola-cor5","mikkola-cor7","mercury"]
-colors = ["b","r","g","y","m","c","k"]
+integrators = ["mikkola","mikkola","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mikkola-jac","mercury"]
+colors = ["b","r","g","y","m","c",'#00aaff','#40FF00', "k"]
 parameters = [(inte,dt,i*len(dts)+j) for i,inte in enumerate(integrators) for j, dt in enumerate(dts)]
    
 if len(sys.argv)!=2:

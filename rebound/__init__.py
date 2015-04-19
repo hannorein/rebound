@@ -514,6 +514,10 @@ def set_force_is_velocitydependent(force_is_velocitydependent=1):
         return
     raise ValueError("Expecting integer.")
 
+#DEBUG TODO REMOVE FOLLOWING
+def set_libsync(libsync):
+    c_int.in_dll(librebound, "libsync").value = libsync
+
 # Input/Output routines
 
 def output_binary(filename):

@@ -123,6 +123,7 @@ void integrator_synchronize(){
 }
 
 void integrator_reset(){
+	integrator = IAS15;
 	gravity_ignore_10 = 0;
 	integrator_ias15_reset();
 	integrator_wh_reset();

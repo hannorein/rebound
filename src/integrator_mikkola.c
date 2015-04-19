@@ -309,7 +309,6 @@ static void kepler_step(unsigned int i,double _dt){
 
 /****************************** 
  * Coordinate transformations */
-int first = 1;
 static void integrator_to_jacobi_posvel(){
 	double s_x = particles[0].m * particles[0].x;
 	double s_y = particles[0].m * particles[0].y;
@@ -334,15 +333,12 @@ static void integrator_to_jacobi_posvel(){
 		s_vy = s_vy * pme + pi.m*p_j[i].vy;
 		s_vz = s_vz * pme + pi.m*p_j[i].vz;
 	}
-	if (first){
-		first = 0;
-		p_j[0].x = s_x * Mtotali;
-		p_j[0].y = s_y * Mtotali;
-		p_j[0].z = s_z * Mtotali;
-		p_j[0].vx = s_vx * Mtotali;
-		p_j[0].vy = s_vy * Mtotali;
-		p_j[0].vz = s_vz * Mtotali;
-	}
+	p_j[0].x = s_x * Mtotali;
+	p_j[0].y = s_y * Mtotali;
+	p_j[0].z = s_z * Mtotali;
+	p_j[0].vx = s_vx * Mtotali;
+	p_j[0].vy = s_vy * Mtotali;
+	p_j[0].vz = s_vz * Mtotali;
 }
 
 static void integrator_var_to_jacobi_posvel(){
@@ -711,6 +707,7 @@ void integrator_mikkola_part1(){
 		etai= realloc(etai,sizeof(double)*(N-N_megno));
 		recalculate_jacobi = 1;		// Recalculate masses/Jacobi coordinates if first timestep or if N changes.
 	}
+	// Only recalculate Jacobi coordinates if needed
 	if (recalculate_jacobi){
 		if (integrator_mikkola_is_synchronized==0){
 			integrator_mikkola_synchronize();
@@ -730,7 +727,6 @@ void integrator_mikkola_part1(){
 		Mtotal  = eta[N-N_megno-1];
 		Mtotali = etai[N-N_megno-1];
 		integrator_mikkola_particles_modified = 0;
-		// Only recalculate Jacobi coordinates if needed
 		integrator_to_jacobi_posvel();
 		if (N_megno){
 			integrator_var_to_jacobi_posvel();

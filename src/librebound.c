@@ -116,6 +116,9 @@ void reset(){
 	srand ( tim.tv_usec + getpid());
 }
 
+int libsync = 0; // TODO DEBUG
+
+
 // Integrate until t=_tmax (or slightly more if exactFinishTime=0)
 void integrate(double _tmax, int exactFinishTime){
 	struct timeval tim;
@@ -127,9 +130,12 @@ void integrate(double _tmax, int exactFinishTime){
 	int integrator_mikkola_synchronize_manually_init = integrator_mikkola_synchronize_manually;
 	int integrator_mikkola_persistent_particles_init = integrator_mikkola_persistent_particles;
 	integrator_mikkola_particles_modified = 1;
-	if (!N_megno){
+	if (!N_megno && !libsync){
 		integrator_mikkola_synchronize_manually = 1;
 		integrator_mikkola_persistent_particles = 1;
+	}else{
+		integrator_mikkola_synchronize_manually = 0;
+		integrator_mikkola_persistent_particles = 0;
 	}
 	if (problem_additional_forces==NULL){
 		integrator_force_is_velocitydependent = 0;
