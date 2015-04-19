@@ -3,7 +3,7 @@ import sys; sys.path.append('../../python_modules')
 import rebound
 import numpy as np
 import time
-from interruptible_pool import InterruptiblePool
+from rebound.interruptible_pool import InterruptiblePool
 
 def simulation(par):
     integrator, run, trial = par
@@ -105,15 +105,27 @@ def simulation(par):
         es.append(e)
         runtime += rebound.get_timing()
     
+    integrator, dt, run = par
+    print integrator.ljust(13) + " %9.5fs"%(runtime) + "\t Error: %e"  %( e)
+    
     es = np.array(es)
-    print integrator + " done. %.5fs"%(runtime)
     return [times, es]
 
 #3dt = 100.23
 dt = 1.3
 tmax = 365.*11.8618*1e2
-integrators = ["wh","mikkola","ias15","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor-11","mercury"]
-colors = ["b","r","g","y","m","c","k"]
+integrators = ["wh","mikkola","ias15","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mercury"]
+colors = {
+    'mikkola':      "#FF0000",
+    'mikkola-cor3': "#FF7700",
+    'mikkola-cor5': "#FF9D00",
+    'mikkola-cor7': "#FFC400",
+    'mikkola-cor11':"#FFDD00",
+    'mikkola-jac':  "#D4FF00",
+    'mercury':      "#6E6E6E",
+    'wh':           "b",
+    'ias15':        "g",
+    }
 trials = 4
     
 parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]
@@ -129,7 +141,7 @@ from matplotlib import ticker
 from matplotlib.colors import LogNorm
 
 
-f,axarr = plt.subplots(1,1,figsize=(7,5))
+f,axarr = plt.subplots(1,1,figsize=(13,4))
 extent=[res[:,:,0,:].min()/365./11.8618, res[:,:,0,:].max()/365./11.8618, 1e-16, 1e-5]
 
 axarr.set_xlim(extent[0], extent[1])
@@ -144,10 +156,11 @@ res_mean = np.mean(res,axis=1)
 for i in xrange(len(res)):
     for j in xrange(trials):
         res_trial = res[i,j,:,:]
-        im1 = axarr.plot(res_trial[0]/365./11.8618,res_trial[1], color=colors[i],alpha=0.1)
-    im1 = axarr.plot(res_mean[i][0]/365./11.8618,res_mean[i][1], label=integrators[i],color=colors[i])
+        im1 = axarr.plot(res_trial[0]/365./11.8618,res_trial[1], color=colors[integrators[i]],alpha=0.1)
+    im1 = axarr.plot(res_mean[i][0]/365./11.8618,res_mean[i][1], label=integrators[i],color=colors[integrators[i]])
 
-plt.legend(loc='upper left')
-plt.savefig("longtermtest.pdf")
+fontP.set_size('small')
+lgd = plt.legend(loc="upper center",  bbox_to_anchor=(0.5, -0.2),  prop = fontP,ncol=5,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = -0.5, markerscale=2.)
+plt.savefig("longtermtest.pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
 import os
 os.system("open longtermtest.pdf")

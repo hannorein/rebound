@@ -130,6 +130,7 @@ colors = {
     'mikkola-jac':  "#D4FF00",
     'mercury':      "#6E6E6E",
     'wh':           "b",
+    'ias15':        "g",
     }
 parameters = [(inte,dt,i*len(dts)+j) for i,inte in enumerate(integrators) for j, dt in enumerate(dts)]
    
