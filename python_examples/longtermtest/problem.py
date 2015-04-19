@@ -105,7 +105,7 @@ def simulation(par):
         es.append(e)
         runtime += rebound.get_timing()
     
-    integrator, dt, run = par
+    integrator, run, trial = par
     print integrator.ljust(13) + " %9.5fs"%(runtime) + "\t Error: %e"  %( e)
     
     es = np.array(es)
@@ -129,11 +129,17 @@ colors = {
 trials = 4
     
 parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]
-print "Running %d simulations" % (len(parameters))
 
-pool = InterruptiblePool()
-res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),trials,2,1000)
-print res.shape
+
+if len(sys.argv)!=2:
+    pool = InterruptiblePool()
+    print "Running %d simulations" % (len(parameters))
+    res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),trials,2,1000)
+    np.save("res.npy",res)
+else:
+    print "Loading %d simulations" % (len(parameters))
+    print sys.argv[1]
+    res = np.load(sys.argv[1])
 
 import matplotlib; matplotlib.use("pdf")
 import matplotlib.pyplot as plt
@@ -159,8 +165,10 @@ for i in xrange(len(res)):
         im1 = axarr.plot(res_trial[0]/365./11.8618,res_trial[1], color=colors[integrators[i]],alpha=0.1)
     im1 = axarr.plot(res_mean[i][0]/365./11.8618,res_mean[i][1], label=integrators[i],color=colors[integrators[i]])
 
+from matplotlib.font_manager import FontProperties
+fontP = FontProperties()
 fontP.set_size('small')
-lgd = plt.legend(loc="upper center",  bbox_to_anchor=(0.5, -0.2),  prop = fontP,ncol=5,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = -0.5, markerscale=2.)
+lgd = plt.legend(loc="upper center",  bbox_to_anchor=(0.5, -0.2),  prop = fontP,ncol=4,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = 0.2, markerscale=2.)
 plt.savefig("longtermtest.pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
 import os
 os.system("open longtermtest.pdf")
