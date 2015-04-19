@@ -152,8 +152,8 @@ extent=[res[:,:,0,:].min()/365./11.8618, res[:,:,0,:].max()/365./11.8618, 1e-16,
 
 axarr.set_xlim(extent[0], extent[1])
 axarr.set_ylim(extent[2], extent[3])
-axarr.set_xlabel(r"time [Jupiter years]")
-axarr.set_ylabel(r"rel energy error")
+axarr.set_xlabel(r"time [orbits]")
+axarr.set_ylabel(r"relative energy error")
 plt.xscale('log', nonposy='clip')
 plt.yscale('log', nonposy='clip')
 
