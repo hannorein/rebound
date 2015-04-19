@@ -13,6 +13,7 @@ def simulation(par):
     rebound.set_G(G)     
     rebound.set_dt(dt)
     rebound.set_libsync(0)
+    rebound.set_biased(0)
     if integrator=="mikkola-cor3":
         integrator="mikkola"
         rebound.set_integrator_mikkola_corrector(3)
@@ -28,6 +29,11 @@ def simulation(par):
     elif integrator=="mikkola-jac":
         integrator="mikkola"
         rebound.set_libsync(1)
+        rebound.set_integrator_mikkola_corrector(0)
+    elif integrator=="mikkola-jacb":
+        integrator="mikkola"
+        rebound.set_libsync(1)
+        rebound.set_biased(1)
         rebound.set_integrator_mikkola_corrector(0)
     else:
         rebound.set_integrator_mikkola_corrector(0)
@@ -107,14 +113,14 @@ def simulation(par):
     runtime += rebound.get_timing()
     
     integrator, dt, run = par
-    print integrator.ljust(13) + " %.5fs"%(runtime) + "\t Error: %e"  %( e)
+    print integrator.ljust(13) + " %9.5fs"%(runtime) + "\t Error: %e"  %( e)
     return [runtime, e]
 
 dts = np.logspace(-2,1,128)
 #dts = np.logspace(-3,2,155)
 tmax = 365.*11.8618*1e3
-integrators = ["mikkola","mikkola","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mikkola-jac","mercury"]
-colors = ["b","r","g","y","m","c",'#00aaff','#40FF00', "k"]
+integrators = ["mikkola","mikkola","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mikkola-jac","mikkola-jacb","mercury"]
+colors = ["b","r","g","y","m","c",'#00aaff','#40FF00', '#FFA600', "k"]
 parameters = [(inte,dt,i*len(dts)+j) for i,inte in enumerate(integrators) for j, dt in enumerate(dts)]
    
 if len(sys.argv)!=2:
@@ -134,15 +140,15 @@ from matplotlib import ticker
 from matplotlib.colors import LogNorm
 
 np.save("res.npy",res)
-fig = plt.figure(figsize=(7,9))
+fig = plt.figure(figsize=(13,4))
 
 res_mean = np.mean(res,axis=1)
 extent=[res[:,:,0].min(), res[:,:,0].max(), 1e-16, 1e-5]
 
-ax = plt.subplot(2,1,1)
+ax = plt.subplot(1,2,1)
 ax.set_xlim(extent[0], extent[1])
 ax.set_ylim(extent[2], extent[3])
-ax.set_ylabel(r"rel energy error")
+ax.set_ylabel(r"relative energy error")
 ax.set_xlabel(r"runtime [s]")
 plt.yscale('log', nonposy='clip')
 plt.xscale('log', nonposy='clip')
@@ -153,7 +159,7 @@ for i in xrange(len(integrators)):
     #im1 = axarr.scatter(dts, res_i[:,1], label=integrators[i],color=colors[i])
 
 orbit = 365.*11.8618
-ax = plt.subplot(2,1,2)
+ax = plt.subplot(1,2,2)
 ax.set_xlim(dts.min()/orbit, dt.max()/orbit)
 ax.set_ylim(extent[2], extent[3])
 ax.set_ylabel(r"rel energy error")
@@ -168,7 +174,7 @@ for i in xrange(len(integrators)):
 from matplotlib.font_manager import FontProperties
 fontP = FontProperties()
 fontP.set_size('small')
-plt.legend(loc='upper right', prop = fontP)
-plt.savefig("speed.pdf")
+lgd = plt.legend(loc="upper center",  bbox_to_anchor=(-0.1, -0.2),  prop = fontP,ncol=5,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = -0.5)
+plt.savefig("speed.pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
 import os
 os.system("open speed.pdf")
