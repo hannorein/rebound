@@ -35,8 +35,10 @@
 #include "communication_mpi.h"
 #include "tree.h"
 #include "tools.h"
+#include "integrator.h"
 
 void problem_init(int argc, char* argv[]){
+	integrator = IAS15;
 	if (argc>1){ 						// Try to read boxsize from command line
 		boxsize = atof(argv[1]);
 	}else{
