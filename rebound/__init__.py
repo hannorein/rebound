@@ -534,7 +534,6 @@ def step():
 def integrate(tmax,exactFinishTime=1):
     global tmpdir
     if integrator_package == "SWIFTER":
-        facTime = 1. #58.130101
         particles = get_particles()
         oldwd = os.getcwd()
         paramin = """!
@@ -542,18 +541,18 @@ def integrate(tmax,exactFinishTime=1):
 !
 !NPLMAX         -1                 ! not used
 !NTPMAX         -1                 ! not used
-T0             0.0E0
-TSTOP          3.6525E8            ! simulation length is 1 Myr
-DT             365.25E0            ! stepsize is 1 year
+T0             %.16e
+TSTOP          %.16e               ! simulation length is 1 Myr
+DT             %.16e               ! stepsize is 1 year
 PL_IN          pl.in
 TP_IN          tp.in
 IN_TYPE        ASCII
-ISTEP_OUT      10000               ! output every 10K years
+ISTEP_OUT      100000000000        ! output every 10K years
 BIN_OUT        bin.dat
-OUT_TYPE       XDR4                ! 4-byte XDR formatted output
-OUT_FORM       EL                  ! osculating element output
+OUT_TYPE       REAL8                ! 4-byte XDR formatted output
+OUT_FORM       XV                  ! osculating element output
 OUT_STAT       NEW
-ISTEP_DUMP     10000               ! system dump also every 10K years
+ISTEP_DUMP     100000000000        ! system dump also every 10K years
 J2             0.0E0               ! no J2 term
 J4             0.0E0               ! no J4 term
 CHK_CLOSE      no                  ! don't check for planetary close encounters
@@ -567,35 +566,24 @@ ENC_OUT        enc.dat
 EXTRA_FORCE    no                  ! no extra user-defined forces
 BIG_DISCARD    yes                 ! output all planets if anything discarded
 RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
-""" % ( tmax*facTime, get_dt()*facTime,particles[0].m)
+""" % ( get_t(), tmax, get_dt())
         if not tmpdir:
             # first call
             tmpdir = tempfile.mkdtemp()
-            for f in ["mercury", "message.in","files.in"]:
-                os.symlink(oldwd+"/../../others/mercury6/"+f,tmpdir+"/"+f)
+            for f in ["swifter_whm", "swifter_tu4","swifter_symba"]:
+                os.symlink(oldwd+"/../../others/swifter/bin/"+f,tmpdir+"/"+f)
             os.chdir(tmpdir)
-            smallin = """)O+_06 Small-body initial data  (WARNING: Do not delete this line!!)
-) Lines beginning with `)' are ignored.
-)---------------------------------------------------------------------
- style (Cartesian, Asteroidal, Cometary) = Ast
-)---------------------------------------------------------------------
-"""
-            with open("small.in", "w") as f:
+            smallin = """0\n"""
+            with open("tp.in", "w") as f:
                 f.write(smallin)
-            bigin = """)O+_06 Big-body initial data  (WARNING: Do not delete this line!!)
-) Lines beginning with `)' are ignored.
-)---------------------------------------------------------------------
- style (Cartesian, Asteroidal, Cometary) = Cartesian
- epoch (in days) = %.16e
-)---------------------------------------------------------------------
-""" %(get_t()*facTime)
-            for i in xrange(1,get_N()):
-                bigin += """PART%03d    m=%.18e r=20.D0 d=5.43
+            bigin = """ %d
+""" %(get_N())
+            for i in xrange(0,get_N()):
+                bigin += """%d    %.18e 
  %.18e %.18e %.18e
  %.18e %.18e %.18e
-  0. 0. 0.
-""" %(i, particles[i].m, particles[i].x, particles[i].y, particles[i].z, particles[i].vx/facTime, particles[i].vy/facTime, particles[i].vz/facTime)
-            with open("big.in", "w") as f:
+""" %(i+1, particles[i].m/math.sqrt(get_G()), particles[i].x, particles[i].y, particles[i].z, particles[i].vx, particles[i].vy, particles[i].vz)
+            with open("pl.in", "w") as f:
                 f.write(bigin)
             with open("param.in", "w") as f:
                 f.write(paramin)
@@ -605,8 +593,8 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
             with open("param.dmp", "w") as f:
                 f.write(paramin)
         starttime = time.time()    
-        #os.system("./mercury ")
-        os.system("./mercury >/dev/null")
+        os.system("./swifter_whm ")
+        #os.system("./mercury >/dev/null")
         endtime = time.time()    
         c_double.in_dll(librebound,"timing").value = endtime-starttime
         with open("big.dmp", "r") as f:
