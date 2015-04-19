@@ -116,11 +116,21 @@ def simulation(par):
     print integrator.ljust(13) + " %9.5fs"%(runtime) + "\t Error: %e"  %( e)
     return [runtime, e]
 
-dts = np.logspace(-2,1,128)
+dts = np.logspace(-2,2,128)
 #dts = np.logspace(-3,2,155)
 tmax = 365.*11.8618*1e3
-integrators = ["mikkola","mikkola","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mikkola-jac","mikkola-jacb","mercury"]
-colors = ["b","r","g","y","m","c",'#00aaff','#40FF00', '#FFA600', "k"]
+integrators = ["wh","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mikkola-jac","mercury"]
+#integrators = ["mikkola","mikkola","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mikkola-jac","mikkola-jacb","mercury"]
+colors = {
+    'mikkola':      "#FF0000",
+    'mikkola-cor3': "#FF7700",
+    'mikkola-cor5': "#FF9D00",
+    'mikkola-cor7': "#FFC400",
+    'mikkola-cor11':"#FFDD00",
+    'mikkola-jac':  "#D4FF00",
+    'mercury':      "#6E6E6E",
+    'wh':           "b",
+    }
 parameters = [(inte,dt,i*len(dts)+j) for i,inte in enumerate(integrators) for j, dt in enumerate(dts)]
    
 if len(sys.argv)!=2:
@@ -155,26 +165,26 @@ plt.xscale('log', nonposy='clip')
 plt.grid(True)
 for i in xrange(len(integrators)):
     res_i = res[i,:,:]
-    im1 = ax.scatter(res_i[:,0], res_i[:,1], label=integrators[i],color=colors[i])
+    im1 = ax.scatter(res_i[:,0], res_i[:,1], label=integrators[i],color=colors[integrators[i]],s=10)
     #im1 = axarr.scatter(dts, res_i[:,1], label=integrators[i],color=colors[i])
 
 orbit = 365.*11.8618
 ax = plt.subplot(1,2,2)
 ax.set_xlim(dts.min()/orbit, dt.max()/orbit)
 ax.set_ylim(extent[2], extent[3])
-ax.set_ylabel(r"rel energy error")
+ax.set_ylabel(r"relative energy error")
 ax.set_xlabel(r"timestep [orbits]")
 plt.yscale('log', nonposy='clip')
 plt.xscale('log', nonposy='clip')
 plt.grid(True)
 for i in xrange(len(integrators)):
     res_i = res[i,:,:]
-    im1 = ax.scatter(dts/orbit, res_i[:,1], label=integrators[i],color=colors[i])
+    im1 = ax.scatter(dts/orbit, res_i[:,1], label=integrators[i],color=colors[integrators[i]],s=10)
 
 from matplotlib.font_manager import FontProperties
 fontP = FontProperties()
 fontP.set_size('small')
-lgd = plt.legend(loc="upper center",  bbox_to_anchor=(-0.1, -0.2),  prop = fontP,ncol=5,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = -0.5)
+lgd = plt.legend(loc="upper center",  bbox_to_anchor=(-0.1, -0.2),  prop = fontP,ncol=5,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = -0.5, markerscale=2.)
 plt.savefig("speed.pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
 import os
 os.system("open speed.pdf")
