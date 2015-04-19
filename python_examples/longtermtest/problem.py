@@ -21,6 +21,9 @@ def simulation(par):
     elif integrator=="mikkola-cor7":
         integrator="mikkola"
         rebound.set_integrator_mikkola_corrector(7)
+    elif integrator=="mikkola-cor11":
+        integrator="mikkola"
+        rebound.set_integrator_mikkola_corrector(11)
     else:
         rebound.set_integrator_mikkola_corrector(0)
     rebound.set_integrator(integrator)
@@ -109,7 +112,7 @@ def simulation(par):
 #3dt = 100.23
 dt = 1.3
 tmax = 365.*11.8618*1e2
-integrators = ["wh","mikkola","ias15","mikkola-cor3","mikkola-cor5","mikkola-cor7","mercury"]
+integrators = ["wh","mikkola","ias15","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor-11","mercury"]
 colors = ["b","r","g","y","m","c","k"]
 trials = 4
     
