@@ -61,7 +61,7 @@ class Particle(Structure):
                 ("az", c_double),
                 ("m", c_double) ]
     def __str__(self):
-        return "<rebound.Particle object, m=%f x=%f y=%f z=%f vx=%f vy=%f vz=%f>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
+        return "<rebound.Particle object, m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
     def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None):   
         if particle is not None:

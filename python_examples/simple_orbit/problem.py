@@ -11,3 +11,8 @@ for o in rebound.get_orbits(): print(o)
 
 # Output orbits in Heliocentric coordinates
 for o in rebound.get_orbits(heliocentric=True): print(o)
+
+# Output cartesian coordinates
+particles = rebound.particles() # Pointer to the particle structure
+for i in range(rebound.get_N()): 
+    print(particles[i])
