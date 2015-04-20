@@ -64,7 +64,7 @@ class Particle(Structure):
                 ("az", c_double),
                 ("m", c_double) ]
     def __str__(self):
-        return "<rebound.Particle object, m=%f x=%f y=%f z=%f vx=%f vy=%f vz=%f>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
+        return "<rebound.Particle object, m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
     def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None):   
         if particle is not None:
@@ -342,7 +342,7 @@ def status():
     if N>0:
         s += "---------------------------------\n"
         p = get_particles()
-        for i in xrange(N):
+        for i in range(N):
             s += str(p[i]) + "\n"
     s += "---------------------------------"
     return s
@@ -401,14 +401,11 @@ def get_iter():
 def get_timing():
     return c_double.in_dll(librebound,"timing").value 
 
-# Setter/getter of particle data
-def set_particles(particles):
-    c_int.in_dll(librebound,"N").value = len(particles)
-    arr = (Particle * len(particles))(*particles)
+# Setter functions, particle data
+def set_particles(_particles):
+    c_int.in_dll(librebound,"N").value = len(_particles)
+    arr = (Particle * len(_particles))(*_particles)
     librebound.setp(byref(arr))
-
-def add_particles(particles):
-    add_particle(particle=particles)
 
 def add_particle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None):   
     """Adds a particle to REBOUND. Accepts one of the following four sets of arguments:
@@ -425,6 +422,11 @@ def add_particle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None
     else:
        librebound.particles_add(particle)
 
+# Aliases
+add_particles = add_particle
+add = add_particle
+
+# Particle getter functions
 def get_particle(i):
     N = get_N() 
     if i>=N:
@@ -436,18 +438,47 @@ def get_particle(i):
 
 def get_particles_array():
     N = get_N() 
-    particles = []
+    _particles = []
     for i in range(0,N):
-        particles.append(particle_get(i))
-    return particles
+        _particles.append(particle_get(i))
+    return _particles
 
 
 def get_particles():
+    """Return an array that points to the particle structure.
+    This is a pointer and thus the contents of the array update 
+    as the simulation progresses. Note that the pointer could change,
+    for example when a particle is added or removed from the simulation. 
+    In that case, get a fresh pointer with get_particles().
+
+    particles() is an alias of this function.
+    """
     N = c_int.in_dll(librebound,"N").value 
     getp = librebound.particles_get
     getp.restype = POINTER(Particle)
     return getp()
+# Alias
+particles = get_particles
 
+# Orbit getter
+def get_orbits(heliocentric=False):
+    """ Returns an array of Orbits of length N-1.
+
+    Parameters
+    __________
+
+    By default this functions returns the orbits in Jacobi coordinates. 
+    Set the parameter heliocentric to True to return orbits in heliocentric coordinates.
+    """
+    _particles = get_particles()
+    orbits = []
+    for i in range(1,get_N()):
+        if heliocentric:
+            com = _particles[0]
+        else:
+            com = get_center_of_momentum(i)
+        orbits.append(_particles[i].get_orbit(primary=com))
+    return orbits
 
 # Tools
 def move_to_center_of_momentum():
@@ -476,8 +507,17 @@ def set_integrator(integrator="IAS15"):
         if integrator.lower() == "ias15":
             set_integrator(0)
             return
-        if integrator.lower() == "mikkola":
+        if integrator[0:7].lower() == "mikkola":
             set_integrator(1)
+            set_integrator_mikkola_corrector(0)
+            if integrator[9:] == "cor3":
+                set_integrator_mikkola_corrector(3)
+            if integrator[9:] == "cor5":
+                set_integrator_mikkola_corrector(5)
+            if integrator[9:] == "cor7":
+                set_integrator_mikkola_corrector(7)
+            if integrator[9:] == "cor11":
+                set_integrator_mikkola_corrector(11)
             return
         if integrator.lower() == "sei":
             set_integrator(2)
@@ -536,9 +576,91 @@ def step():
 
 def integrate(tmax,exactFinishTime=1):
     global tmpdir
+    if integrator_package == "SWIFTER":
+        _particles = get_particles()
+        oldwd = os.getcwd()
+        paramin = """!
+! Parameter file for the CHO run of the 4 giant planets and Pluto.
+!
+!NPLMAX         -1                 ! not used
+!NTPMAX         -1                 ! not used
+T0             %.16e
+TSTOP          %.16e               ! simulation length is 1 Myr
+DT             %.16e               ! stepsize is 1 year
+PL_IN          pl.in
+TP_IN          tp.in
+IN_TYPE        ASCII
+ISTEP_OUT      100000000000        ! output every 10K years
+BIN_OUT        bin.dat
+OUT_TYPE       REAL8                ! 4-byte XDR formatted output
+OUT_FORM       XV                  ! osculating element output
+OUT_STAT       NEW
+ISTEP_DUMP     100000000000        ! system dump also every 10K years
+J2             0.0E0               ! no J2 term
+J4             0.0E0               ! no J4 term
+CHK_CLOSE      no                  ! don't check for planetary close encounters
+CHK_RMIN       -1.0                ! don't check for close solar encounters
+CHK_RMAX       1000.0              ! discard outside of 1000 AU
+CHK_EJECT      -1.0                ! ignore this check
+CHK_QMIN       -1.0                ! ignore this check
+!CHK_QMIN_COORD HELIO               ! commented out here
+!CHK_QMIN_RANGE 1.0 1000.0          ! commented out here
+ENC_OUT        enc.dat
+EXTRA_FORCE    no                  ! no extra user-defined forces
+BIG_DISCARD    yes                 ! output all planets if anything discarded
+RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
+""" % ( get_t(), tmax, get_dt())
+        if not tmpdir:
+            # first call
+            tmpdir = tempfile.mkdtemp()
+            for f in ["swifter_whm", "swifter_tu4","swifter_symba"]:
+                os.symlink(oldwd+"/../../others/swifter/bin/"+f,tmpdir+"/"+f)
+            os.chdir(tmpdir)
+            smallin = """0\n"""
+            with open("tp.in", "w") as f:
+                f.write(smallin)
+            bigin = """ %d
+""" %(get_N())
+            for i in range(0,get_N()):
+                bigin += """%d    %.18e 
+ %.18e %.18e %.18e
+ %.18e %.18e %.18e
+""" %(i+1, _particles[i].m/math.sqrt(get_G()), _particles[i].x, _particles[i].y, _particles[i].z, _particles[i].vx, _particles[i].vy, _particles[i].vz)
+            with open("pl.in", "w") as f:
+                f.write(bigin)
+            with open("param.in", "w") as f:
+                f.write(paramin)
+        else:
+            # Not first call
+            os.chdir(tmpdir)
+            with open("param.dmp", "w") as f:
+                f.write(paramin)
+        starttime = time.time()    
+        os.system("./swifter_whm ")
+        #os.system("./mercury >/dev/null")
+        endtime = time.time()    
+        c_double.in_dll(librebound,"timing").value = endtime-starttime
+        # TODO: READ IN DATA!!
+        #with open("big.dmp", "r") as f:
+        #    lines = f.readlines()
+        #    t= float(lines[4].split("=")[1].strip())
+        #    set_t(t/facTime)
+        #    j = 1
+        #    for i in range(6,len(lines),4):
+        #        pos = lines[i+1].split()
+        #        _particles[j].x = float(pos[0])
+        #        _particles[j].y = float(pos[1])
+        #        _particles[j].z = float(pos[2])
+        #        vel = lines[i+2].split()
+        #        _particles[j].vx = float(vel[0])
+        #        _particles[j].vy = float(vel[1])
+        #        _particles[j].vz = float(vel[2])
+        #        j += 1
+
+        os.chdir(oldwd)
     if integrator_package == "MERCURY":
         facTime = 1. #58.130101
-        particles = get_particles()
+        _particles = get_particles()
         oldwd = os.getcwd()
         paramin = """)O+_06 Integration parameters  (WARNING: Do not delete this line!!)
 ) Lines beginning with `)' are ignored.
@@ -577,7 +699,7 @@ def integrate(tmax,exactFinishTime=1):
  Hybrid integrator changeover (Hill radii) = 3.
  number of timesteps between data dumps = 50000000
  number of timesteps between periodic effects = 100000000
-""" % ( tmax*facTime, get_dt()*facTime,particles[0].m)
+""" % ( tmax*facTime, get_dt()*facTime,_particles[0].m)
         if not tmpdir:
             # first call
             tmpdir = tempfile.mkdtemp()
@@ -599,12 +721,12 @@ def integrate(tmax,exactFinishTime=1):
  epoch (in days) = %.16e
 )---------------------------------------------------------------------
 """ %(get_t()*facTime)
-            for i in xrange(1,get_N()):
+            for i in range(1,get_N()):
                 bigin += """PART%03d    m=%.18e r=20.D0 d=5.43
  %.18e %.18e %.18e
  %.18e %.18e %.18e
   0. 0. 0.
-""" %(i, particles[i].m, particles[i].x, particles[i].y, particles[i].z, particles[i].vx/facTime, particles[i].vy/facTime, particles[i].vz/facTime)
+""" %(i, _particles[i].m, _particles[i].x, _particles[i].y, _particles[i].z, _particles[i].vx/facTime, _particles[i].vy/facTime, _particles[i].vz/facTime)
             with open("big.in", "w") as f:
                 f.write(bigin)
             with open("param.in", "w") as f:
@@ -624,15 +746,15 @@ def integrate(tmax,exactFinishTime=1):
             t= float(lines[4].split("=")[1].strip())
             set_t(t/facTime)
             j = 1
-            for i in xrange(6,len(lines),4):
+            for i in range(6,len(lines),4):
                 pos = lines[i+1].split()
-                particles[j].x = float(pos[0])
-                particles[j].y = float(pos[1])
-                particles[j].z = float(pos[2])
+                _particles[j].x = float(pos[0])
+                _particles[j].y = float(pos[1])
+                _particles[j].z = float(pos[2])
                 vel = lines[i+2].split()
-                particles[j].vx = float(vel[0])
-                particles[j].vy = float(vel[1])
-                particles[j].vz = float(vel[2])
+                _particles[j].vx = float(vel[0])
+                _particles[j].vy = float(vel[1])
+                _particles[j].vz = float(vel[2])
                 j += 1
 
         os.chdir(oldwd)
@@ -683,7 +805,7 @@ def eccentricAnomaly(e,M):
         return E
 
 
-def get_center_of_momentum():
+def get_center_of_momentum(last=None):
     """Returns the center of momentum for all particles in the simulation"""
     m = 0.
     x = 0.
@@ -693,7 +815,11 @@ def get_center_of_momentum():
     vy = 0.
     vz = 0.
     ps = get_particles()    # particle pointer
-    for i in range(get_N()):
+    if last is not None:
+        last = min(last,get_N())
+    else:
+        last = get_N()
+    for i in range(last):
     	m  += ps[i].m
     	x  += ps[i].x*ps[i].m
     	y  += ps[i].y*ps[i].m
@@ -701,12 +827,13 @@ def get_center_of_momentum():
     	vx += ps[i].vx*ps[i].m
     	vy += ps[i].vy*ps[i].m
     	vz += ps[i].vz*ps[i].m
-    x /= m
-    y /= m
-    z /= m
-    vx /= m
-    vy /= m
-    vz /= m
+    if m>0.:
+        x /= m
+        y /= m
+        z /= m
+        vx /= m
+        vy /= m
+        vz /= m
     return Particle(m=m, x=x, y=y, z=z, vx=vx, vy=vy, vz=vz)
 
 
