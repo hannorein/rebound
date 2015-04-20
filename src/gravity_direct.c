@@ -57,6 +57,7 @@ unsigned int gravity_ignore_10;
 // Gravity calculation for periodic boundary conditions
 
 void gravity_calculate_acceleration(){
+	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
 #pragma omp parallel for schedule(guided)
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 
@@ -86,6 +87,7 @@ void gravity_calculate_acceleration(){
 			double csz = 0;
 		for (int j=_N_start; j<_N_active; j++){
 #endif //INTEGRATOR_WH
+			if (_gravity_ignore_10 && ((i==_N_real+1 && j==_N_real) || (j==_N_real+1 && i==_N_real)) ) continue;
 			if (i==j) continue;
 			double dx = (gb.shiftx+particles[i].x) - particles[j].x;
 			double dy = (gb.shifty+particles[i].y) - particles[j].y;
