@@ -119,7 +119,7 @@ void reset(){
 
 
 // Integrate until t=_tmax (or slightly more if exactFinishTime=0)
-void integrate(double _tmax, int exactFinishTime){
+void integrate(double _tmax, int exactFinishTime, int keepSynchronized){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
@@ -129,12 +129,12 @@ void integrate(double _tmax, int exactFinishTime){
 	int integrator_mikkola_synchronize_manually_init = integrator_mikkola_synchronize_manually;
 	int integrator_mikkola_persistent_particles_init = integrator_mikkola_persistent_particles;
 	integrator_mikkola_particles_modified = 1;
-	if (!N_megno){
-		integrator_mikkola_synchronize_manually = 1;
-		integrator_mikkola_persistent_particles = 1;
-	}else{
+	if (N_megno || keepSynchronized){
 		integrator_mikkola_synchronize_manually = 0;
 		integrator_mikkola_persistent_particles = 0;
+	}else{
+		integrator_mikkola_synchronize_manually = 1;
+		integrator_mikkola_persistent_particles = 1;
 	}
 	if (problem_additional_forces==NULL){
 		integrator_force_is_velocitydependent = 0;

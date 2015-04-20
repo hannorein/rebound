@@ -571,7 +571,7 @@ def input_binary(filename):
 def step():
     librebound.rebound_step()
 
-def integrate(tmax,exactFinishTime=1):
+def integrate(tmax,exactFinishTime=1,keepSynchronized=0):
     global tmpdir
     if integrator_package == "SWIFTER":
         _particles = get_particles()
@@ -757,7 +757,7 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
 
         os.chdir(oldwd)
     if integrator_package =="REBOUND":
-        librebound.integrate(c_double(tmax),c_int(exactFinishTime))
+        librebound.integrate(c_double(tmax),c_int(exactFinishTime),c_int(keepSynchronized))
 
 TWOPI = 2.*math.pi
 def mod2pi(f):

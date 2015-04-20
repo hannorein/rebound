@@ -33,7 +33,10 @@ void rebound_step();
  * The integration finisheds exactly at _tmax if 
  * exactFinishTime=1, otherwise REBOUND will overshoot slightly
  * depending on the current timestep.
+ * If the keepSynchronized flag is set to 1, then the integrator
+ * will synchronized the positions and velocities after every timestep.
+ * This will cause the integrator to be slower and less accurate.
  */
-void integrate(double _tmax, int exactFinishTime);
+void integrate(double _tmax, int exactFinishTime, int keepSynchronized);
 
 #endif
