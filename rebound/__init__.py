@@ -448,14 +448,22 @@ def get_particles():
     return getp()
 
 # Orbit getter
-def get_orbits():
+def get_orbits(heliocentric=False):
     """ Returns an array of Orbits of length N-1.
-    Uses Jacobi coordinates.
+
+    Parameters
+    __________
+
+    By default this functions returns the orbits in Jacobi coordinates. 
+    Set the parameter heliocentric to True to return orbits in heliocentric coordinates.
     """
     particles = get_particles()
     orbits = []
     for i in range(1,get_N()):
-        com = get_center_of_momentum(i)
+        if heliocentric:
+            com = particles[0]
+        else:
+            com = get_center_of_momentum(i)
         orbits.append(particles[i].get_orbit(primary=com))
     return orbits
 
