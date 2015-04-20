@@ -399,9 +399,9 @@ def get_timing():
     return c_double.in_dll(librebound,"timing").value 
 
 # Setter functions, particle data
-def set_particles(particles):
-    c_int.in_dll(librebound,"N").value = len(particles)
-    arr = (Particle * len(particles))(*particles)
+def set_particles(_particles):
+    c_int.in_dll(librebound,"N").value = len(_particles)
+    arr = (Particle * len(_particles))(*_particles)
     librebound.setp(byref(arr))
 
 def add_particle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None):   
@@ -435,17 +435,27 @@ def get_particle(i):
 
 def get_particles_array():
     N = get_N() 
-    particles = []
+    _particles = []
     for i in range(0,N):
-        particles.append(particle_get(i))
-    return particles
+        _particles.append(particle_get(i))
+    return _particles
 
 
 def get_particles():
+    """Return an array that points to the particle structure.
+    This is a pointer and thus the contents of the array update 
+    as the simulation progresses. Note that the pointer could change,
+    for example when a particle is added or removed from the simulation. 
+    In that case, get a fresh pointer with get_particles().
+
+    particles() is an alias of this function.
+    """
     N = c_int.in_dll(librebound,"N").value 
     getp = librebound.particles_get
     getp.restype = POINTER(Particle)
     return getp()
+# Alias
+particles = get_particles
 
 # Orbit getter
 def get_orbits(heliocentric=False):
@@ -457,14 +467,14 @@ def get_orbits(heliocentric=False):
     By default this functions returns the orbits in Jacobi coordinates. 
     Set the parameter heliocentric to True to return orbits in heliocentric coordinates.
     """
-    particles = get_particles()
+    _particles = get_particles()
     orbits = []
     for i in range(1,get_N()):
         if heliocentric:
-            com = particles[0]
+            com = _particles[0]
         else:
             com = get_center_of_momentum(i)
-        orbits.append(particles[i].get_orbit(primary=com))
+        orbits.append(_particles[i].get_orbit(primary=com))
     return orbits
 
 # Tools
@@ -555,7 +565,7 @@ def step():
 def integrate(tmax,exactFinishTime=1):
     global tmpdir
     if integrator_package == "SWIFTER":
-        particles = get_particles()
+        _particles = get_particles()
         oldwd = os.getcwd()
         paramin = """!
 ! Parameter file for the CHO run of the 4 giant planets and Pluto.
@@ -603,7 +613,7 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
                 bigin += """%d    %.18e 
  %.18e %.18e %.18e
  %.18e %.18e %.18e
-""" %(i+1, particles[i].m/math.sqrt(get_G()), particles[i].x, particles[i].y, particles[i].z, particles[i].vx, particles[i].vy, particles[i].vz)
+""" %(i+1, _particles[i].m/math.sqrt(get_G()), _particles[i].x, _particles[i].y, _particles[i].z, _particles[i].vx, _particles[i].vy, _particles[i].vz)
             with open("pl.in", "w") as f:
                 f.write(bigin)
             with open("param.in", "w") as f:
@@ -626,19 +636,19 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         #    j = 1
         #    for i in range(6,len(lines),4):
         #        pos = lines[i+1].split()
-        #        particles[j].x = float(pos[0])
-        #        particles[j].y = float(pos[1])
-        #        particles[j].z = float(pos[2])
+        #        _particles[j].x = float(pos[0])
+        #        _particles[j].y = float(pos[1])
+        #        _particles[j].z = float(pos[2])
         #        vel = lines[i+2].split()
-        #        particles[j].vx = float(vel[0])
-        #        particles[j].vy = float(vel[1])
-        #        particles[j].vz = float(vel[2])
+        #        _particles[j].vx = float(vel[0])
+        #        _particles[j].vy = float(vel[1])
+        #        _particles[j].vz = float(vel[2])
         #        j += 1
 
         os.chdir(oldwd)
     if integrator_package == "MERCURY":
         facTime = 1. #58.130101
-        particles = get_particles()
+        _particles = get_particles()
         oldwd = os.getcwd()
         paramin = """)O+_06 Integration parameters  (WARNING: Do not delete this line!!)
 ) Lines beginning with `)' are ignored.
@@ -677,7 +687,7 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
  Hybrid integrator changeover (Hill radii) = 3.
  number of timesteps between data dumps = 50000000
  number of timesteps between periodic effects = 100000000
-""" % ( tmax*facTime, get_dt()*facTime,particles[0].m)
+""" % ( tmax*facTime, get_dt()*facTime,_particles[0].m)
         if not tmpdir:
             # first call
             tmpdir = tempfile.mkdtemp()
@@ -704,7 +714,7 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
  %.18e %.18e %.18e
  %.18e %.18e %.18e
   0. 0. 0.
-""" %(i, particles[i].m, particles[i].x, particles[i].y, particles[i].z, particles[i].vx/facTime, particles[i].vy/facTime, particles[i].vz/facTime)
+""" %(i, _particles[i].m, _particles[i].x, _particles[i].y, _particles[i].z, _particles[i].vx/facTime, _particles[i].vy/facTime, _particles[i].vz/facTime)
             with open("big.in", "w") as f:
                 f.write(bigin)
             with open("param.in", "w") as f:
@@ -726,13 +736,13 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
             j = 1
             for i in range(6,len(lines),4):
                 pos = lines[i+1].split()
-                particles[j].x = float(pos[0])
-                particles[j].y = float(pos[1])
-                particles[j].z = float(pos[2])
+                _particles[j].x = float(pos[0])
+                _particles[j].y = float(pos[1])
+                _particles[j].z = float(pos[2])
                 vel = lines[i+2].split()
-                particles[j].vx = float(vel[0])
-                particles[j].vy = float(vel[1])
-                particles[j].vz = float(vel[2])
+                _particles[j].vx = float(vel[0])
+                _particles[j].vy = float(vel[1])
+                _particles[j].vz = float(vel[2])
                 j += 1
 
         os.chdir(oldwd)
