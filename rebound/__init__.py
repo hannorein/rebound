@@ -558,10 +558,6 @@ def set_force_is_velocitydependent(force_is_velocitydependent=1):
         return
     raise ValueError("Expecting integer.")
 
-#DEBUG TODO REMOVE FOLLOWING
-def set_libsync(libsync):
-    c_int.in_dll(librebound, "libsync").value = libsync
-
 # Input/Output routines
 
 def output_binary(filename):
@@ -660,7 +656,8 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
 
         os.chdir(oldwd)
     if integrator_package == "MERCURY":
-        facTime = 1. #58.130101
+        k = 0.01720209895    
+        facTime = 1./(math.sqrt(get_G())*k)
         _particles = get_particles()
         oldwd = os.getcwd()
         paramin = """)O+_06 Integration parameters  (WARNING: Do not delete this line!!)
@@ -753,9 +750,9 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
                 _particles[j].y = float(pos[1])
                 _particles[j].z = float(pos[2])
                 vel = lines[i+2].split()
-                _particles[j].vx = float(vel[0])
-                _particles[j].vy = float(vel[1])
-                _particles[j].vz = float(vel[2])
+                _particles[j].vx = float(vel[0])*facTime
+                _particles[j].vy = float(vel[1])*facTime
+                _particles[j].vz = float(vel[2])*facTime
                 j += 1
 
         os.chdir(oldwd)

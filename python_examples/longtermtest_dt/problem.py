@@ -11,7 +11,7 @@ def simulation(par):
     rebound.reset()
     k = 0.01720209895    
     Gfac = 1./k
-    rebound.set_dt(dt)
+    rebound.set_dt(dt*pow(2.,trial))
     rebound.set_integrator(integrator)
     rebound.set_force_is_velocitydependent(0)
 
@@ -98,11 +98,13 @@ def simulation(par):
     return [times, es]
 
 Ngrid = 500
+trials = 8
 #3dt = 100.23
 orbit = 11.8618*2.*np.pi
-dt = orbit/3000.
-tmax = orbit*2e5
-integrators = ["mercury","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11"]
+dt = orbit/1000.
+tmax = orbit*2e6
+integrators = ["mikkola","mikkola-cor3"]
+#integrators = ["mercury","mikkola","mikkola-cor3"]
 #integrators = ["mercury","ias15","wh","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11"]
 colors = {
     'mikkola':      "#FF0000",
@@ -115,7 +117,6 @@ colors = {
     'wh':           "b",
     'ias15':        "g",
     }
-trials = 4
     
 parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]
 
@@ -135,30 +136,31 @@ import matplotlib.pyplot as plt
 from matplotlib import ticker
 from matplotlib.colors import LogNorm
 
+fig = plt.figure(figsize=(13,4*len(integrators)))
 
-f,axarr = plt.subplots(1,1,figsize=(13,4))
+
 extent=[res[:,:,0,:].min()/orbit, res[:,:,0,:].max()/orbit, 1e-16, 1e-5]
 
-axarr.set_xlim(extent[0], extent[1])
-axarr.set_ylim(extent[2], extent[3])
-axarr.set_xlabel(r"time [orbits]")
-axarr.set_ylabel(r"relative energy error")
-plt.xscale('log', nonposy='clip')
-plt.yscale('log', nonposy='clip')
-plt.grid(True)
+for i in xrange(len(integrators)):
+    ax = plt.subplot(len(integrators),1,1+i)
+    ax.set_xlim(extent[0], extent[1])
+    ax.set_ylim(extent[2], extent[3])
+    ax.set_ylabel(r"relative energy error")
+    ax.set_xlabel(r"time [orbits]")
+    ax.set_title(integrators[i],loc="left")
+    plt.yscale('log', nonposy='clip')
+    plt.xscale('log', nonposy='clip')
+    plt.grid(True)
 
-
-res_mean = np.mean(res,axis=1)
-for i in xrange(len(res)):
     for j in xrange(trials):
         res_trial = res[i,j,:,:]
-        im1 = axarr.plot(res_trial[0]/orbit,res_trial[1], color=colors[integrators[i]],alpha=0.1)
-    im1 = axarr.plot(res_mean[i][0]/orbit,res_mean[i][1], label=integrators[i],color=colors[integrators[i]])
+        fig = ax.plot(res_trial[0]/orbit,res_trial[1], color=colors[integrators[i]])
 
 from matplotlib.font_manager import FontProperties
 fontP = FontProperties()
 fontP.set_size('small')
-lgd = plt.legend(loc="upper center",  bbox_to_anchor=(0.5, -0.2),  prop = fontP,ncol=4,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = 0.2, markerscale=2.)
-plt.savefig("longtermtest.pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
+#lgd = plt.legend(loc="upper center",  bbox_to_anchor=(0.5, -0.2),  prop = fontP,ncol=4,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = 0.2, markerscale=2.)
+plt.savefig("longtermtest.pdf")
+#plt.savefig("longtermtest.pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
 import os
 os.system("open longtermtest.pdf")
