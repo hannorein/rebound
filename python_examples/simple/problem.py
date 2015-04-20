@@ -1,5 +1,4 @@
 # Import the rebound module
-import sys; sys.path.append('../../python_modules/')
 import rebound
 
 def print_orbits(): 

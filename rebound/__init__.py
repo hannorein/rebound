@@ -30,7 +30,7 @@ except ImportError:
 TINY=1.e-308
 MIN_REL_ERROR = 1.e-12
 
-class Orbit():
+class Orbit(object):
     """Defines the same data structure as in tools.h"""
     def __init__(self):
         self.a      =   None    # semimajor axis
@@ -339,7 +339,7 @@ def status():
     if N>0:
         s += "---------------------------------\n"
         p = get_particles()
-        for i in xrange(N):
+        for i in range(N):
             s += str(p[i]) + "\n"
     s += "---------------------------------"
     return s
@@ -398,14 +398,11 @@ def get_iter():
 def get_timing():
     return c_double.in_dll(librebound,"timing").value 
 
-# Setter/getter of particle data
+# Setter functions, particle data
 def set_particles(particles):
     c_int.in_dll(librebound,"N").value = len(particles)
     arr = (Particle * len(particles))(*particles)
     librebound.setp(byref(arr))
-
-def add_particles(particles):
-    add_particle(particle=particles)
 
 def add_particle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None):   
     """Adds a particle to REBOUND. Accepts one of the following four sets of arguments:
@@ -422,6 +419,11 @@ def add_particle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None
     else:
        librebound.particles_add(particle)
 
+# Aliases
+add_particles = add_particle
+add = add_particle
+
+# Particle getter functions
 def get_particle(i):
     N = get_N() 
     if i>=N:
@@ -445,6 +447,17 @@ def get_particles():
     getp.restype = POINTER(Particle)
     return getp()
 
+# Orbit getter
+def get_orbits():
+    """ Returns an array of Orbits of length N-1.
+    Uses Jacobi coordinates.
+    """
+    particles = get_particles()
+    orbits = []
+    for i in range(1,get_N()):
+        com = get_center_of_momentum(i)
+        orbits.append(particles[i].get_orbit(primary=com))
+    return orbits
 
 # Tools
 def move_to_center_of_momentum():
@@ -578,7 +591,7 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
                 f.write(smallin)
             bigin = """ %d
 """ %(get_N())
-            for i in xrange(0,get_N()):
+            for i in range(0,get_N()):
                 bigin += """%d    %.18e 
  %.18e %.18e %.18e
  %.18e %.18e %.18e
@@ -597,21 +610,22 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         #os.system("./mercury >/dev/null")
         endtime = time.time()    
         c_double.in_dll(librebound,"timing").value = endtime-starttime
-        with open("big.dmp", "r") as f:
-            lines = f.readlines()
-            t= float(lines[4].split("=")[1].strip())
-            set_t(t/facTime)
-            j = 1
-            for i in xrange(6,len(lines),4):
-                pos = lines[i+1].split()
-                particles[j].x = float(pos[0])
-                particles[j].y = float(pos[1])
-                particles[j].z = float(pos[2])
-                vel = lines[i+2].split()
-                particles[j].vx = float(vel[0])
-                particles[j].vy = float(vel[1])
-                particles[j].vz = float(vel[2])
-                j += 1
+        # TODO: READ IN DATA!!
+        #with open("big.dmp", "r") as f:
+        #    lines = f.readlines()
+        #    t= float(lines[4].split("=")[1].strip())
+        #    set_t(t/facTime)
+        #    j = 1
+        #    for i in range(6,len(lines),4):
+        #        pos = lines[i+1].split()
+        #        particles[j].x = float(pos[0])
+        #        particles[j].y = float(pos[1])
+        #        particles[j].z = float(pos[2])
+        #        vel = lines[i+2].split()
+        #        particles[j].vx = float(vel[0])
+        #        particles[j].vy = float(vel[1])
+        #        particles[j].vz = float(vel[2])
+        #        j += 1
 
         os.chdir(oldwd)
     if integrator_package == "MERCURY":
@@ -677,7 +691,7 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
  epoch (in days) = %.16e
 )---------------------------------------------------------------------
 """ %(get_t()*facTime)
-            for i in xrange(1,get_N()):
+            for i in range(1,get_N()):
                 bigin += """PART%03d    m=%.18e r=20.D0 d=5.43
  %.18e %.18e %.18e
  %.18e %.18e %.18e
@@ -702,7 +716,7 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
             t= float(lines[4].split("=")[1].strip())
             set_t(t/facTime)
             j = 1
-            for i in xrange(6,len(lines),4):
+            for i in range(6,len(lines),4):
                 pos = lines[i+1].split()
                 particles[j].x = float(pos[0])
                 particles[j].y = float(pos[1])
@@ -761,7 +775,7 @@ def eccentricAnomaly(e,M):
         return E
 
 
-def get_center_of_momentum():
+def get_center_of_momentum(last=None):
     """Returns the center of momentum for all particles in the simulation"""
     m = 0.
     x = 0.
@@ -771,7 +785,11 @@ def get_center_of_momentum():
     vy = 0.
     vz = 0.
     ps = get_particles()    # particle pointer
-    for i in range(get_N()):
+    if last is not None:
+        last = min(last,get_N())
+    else:
+        last = get_N()
+    for i in range(last):
     	m  += ps[i].m
     	x  += ps[i].x*ps[i].m
     	y  += ps[i].y*ps[i].m
@@ -779,12 +797,13 @@ def get_center_of_momentum():
     	vx += ps[i].vx*ps[i].m
     	vy += ps[i].vy*ps[i].m
     	vz += ps[i].vz*ps[i].m
-    x /= m
-    y /= m
-    z /= m
-    vx /= m
-    vy /= m
-    vz /= m
+    if m>0.:
+        x /= m
+        y /= m
+        z /= m
+        vx /= m
+        vy /= m
+        vz /= m
     return Particle(m=m, x=x, y=y, z=z, vx=vx, vy=vy, vz=vz)
 
 
