@@ -504,8 +504,17 @@ def set_integrator(integrator="IAS15"):
         if integrator.lower() == "ias15":
             set_integrator(0)
             return
-        if integrator.lower() == "mikkola":
+        if integrator[0:7].lower() == "mikkola":
             set_integrator(1)
+            set_integrator_mikkola_corrector(0)
+            if integrator[9:] == "cor3":
+                set_integrator_mikkola_corrector(3)
+            if integrator[9:] == "cor5":
+                set_integrator_mikkola_corrector(5)
+            if integrator[9:] == "cor7":
+                set_integrator_mikkola_corrector(7)
+            if integrator[9:] == "cor11":
+                set_integrator_mikkola_corrector(11)
             return
         if integrator.lower() == "sei":
             set_integrator(2)
