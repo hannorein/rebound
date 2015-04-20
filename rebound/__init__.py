@@ -30,6 +30,9 @@ except ImportError:
 TINY=1.e-308
 MIN_REL_ERROR = 1.e-12
 
+def get_build_str():
+    return c_char_p.in_dll(librebound, "build_str").value
+
 class Orbit():
     """Defines the same data structure as in tools.h"""
     def __init__(self):

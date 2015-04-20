@@ -50,6 +50,7 @@ double softening = 0;
 double timing 	= 0;
 extern int Nmax;	
 extern int iter;  // TODO DEBUG
+const char *build_str = "Built on: " __DATE__ " " __TIME__;
 
 // Function pointer to additional forces
 void (*problem_additional_forces) () = NULL;
