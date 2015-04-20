@@ -5,6 +5,7 @@ import numpy as np
 import time
 from rebound.interruptible_pool import InterruptiblePool
 
+print(rebound.get_build_str())
 def simulation(par):
     integrator, run, trial = par
     rebound.reset()
@@ -12,20 +13,6 @@ def simulation(par):
     G = k*k
     rebound.set_G(G)     
     rebound.set_dt(dt)
-    if integrator=="mikkola-cor3":
-        integrator="mikkola"
-        rebound.set_integrator_mikkola_corrector(3)
-    elif integrator=="mikkola-cor5":
-        integrator="mikkola"
-        rebound.set_integrator_mikkola_corrector(5)
-    elif integrator=="mikkola-cor7":
-        integrator="mikkola"
-        rebound.set_integrator_mikkola_corrector(7)
-    elif integrator=="mikkola-cor11":
-        integrator="mikkola"
-        rebound.set_integrator_mikkola_corrector(11)
-    else:
-        rebound.set_integrator_mikkola_corrector(0)
     rebound.set_integrator(integrator)
     rebound.set_force_is_velocitydependent(0)
 
@@ -89,7 +76,7 @@ def simulation(par):
                 E_pot -= G*particles[i].m*particles[j].m/np.sqrt(r2)
         return E_kin+E_pot
 
-    times = np.logspace(np.log10(100.*dt),np.log10(tmax),1000)
+    times = np.logspace(np.log10(100.*dt),np.log10(tmax),Ngrid)
     if integrator=="wh" or integrator=="mercury":
         move_to_heliocentric()
     else:
@@ -112,9 +99,10 @@ def simulation(par):
     es = np.array(es)
     return [times, es]
 
+Ngrid = 500
 #3dt = 100.23
 dt = 80.
-tmax = 365.*11.8618*1e7
+tmax = 365.*11.8618*2e5
 integrators = ["mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11"]
 #integrators = ["mercury","ias15","wh","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11"]
 colors = {
@@ -136,7 +124,7 @@ parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in 
 if len(sys.argv)!=2:
     pool = InterruptiblePool()
     print "Running %d simulations" % (len(parameters))
-    res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),trials,2,1000)
+    res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),trials,2,Ngrid)
     np.save("res.npy",res)
 else:
     print "Loading %d simulations" % (len(parameters))
