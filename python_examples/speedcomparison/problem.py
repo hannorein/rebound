@@ -105,7 +105,7 @@ def simulation(par):
     print integrator.ljust(13) + " %9.5fs"%(runtime) + "\t Error: %e"  %( e)
     return [runtime, e]
 
-dts = np.logspace(0,2,3)
+dts = np.logspace(-1,2,64)
 #dts = np.logspace(-2,2,128)
 #dts = np.logspace(-3,2,155)
 tmax = 365.*11.8618*1e3

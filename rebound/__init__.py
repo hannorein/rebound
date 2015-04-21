@@ -640,11 +640,6 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         endtime = time.time()    
         c_double.in_dll(librebound,"timing").value = endtime-starttime
     
-        with open("dump_param1.dat","r") as f:
-            lines = f.readlines()
-            t = float(lines[2].split()[1].strip())
-            set_t(t)
-
         for i in range(1,get_N()):
             with open("outputparams.txt", "w") as f:
                 f.write("dump_param1.dat\n")
@@ -654,6 +649,8 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
             with open("follow.out", "r") as f:
                 lines = f.readlines()
                 line = lines[-1].split()
+                t = float(line[0].strip())
+                set_t(t)
                 _particles[i].x = float(line[2].strip())
                 _particles[i].y = float(line[3].strip())
                 _particles[i].z = float(line[4].strip())
