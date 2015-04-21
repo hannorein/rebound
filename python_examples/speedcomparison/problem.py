@@ -12,20 +12,6 @@ def simulation(par):
     G = k*k
     rebound.set_G(G)     
     rebound.set_dt(dt)
-    if integrator=="mikkola-cor3":
-        integrator="mikkola"
-        rebound.set_integrator_mikkola_corrector(3)
-    elif integrator=="mikkola-cor5":
-        integrator="mikkola"
-        rebound.set_integrator_mikkola_corrector(5)
-    elif integrator=="mikkola-cor7":
-        integrator="mikkola"
-        rebound.set_integrator_mikkola_corrector(7)
-    elif integrator=="mikkola-cor11":
-        integrator="mikkola"
-        rebound.set_integrator_mikkola_corrector(11)
-    else:
-        rebound.set_integrator_mikkola_corrector(0)
     rebound.set_integrator(integrator)
     rebound.set_force_is_velocitydependent(0)
 
@@ -106,9 +92,9 @@ def simulation(par):
     return [runtime, e]
 
 orbit = 365.*11.8618
-dts = np.logspace(-1,2,64)
+dts = np.logspace(-2,2,64)
 #dts = np.logspace(-3,2,155)
-tmax = orbit*1e3
+tmax = orbit*1e2
 integrators = ["wh","mikkola","swifter-whm","swifter-tu4","swifter-helio","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mercury"]
 colors = {
     'mikkola':      "#FF0000",
@@ -146,11 +132,11 @@ np.save("res.npy",res)
 fig = plt.figure(figsize=(13,4))
 
 res_mean = np.mean(res,axis=1)
-extent=[res[:,:,0].min(), res[:,:,0].max(), 1e-16, 1e-5]
+extent=[1e-16, 1e-5]
 
 ax = plt.subplot(1,2,1)
-ax.set_xlim(extent[0], extent[1])
-ax.set_ylim(extent[2], extent[3])
+ax.set_xlim(res[:,:,0].min(), res[:,:,0].max())
+ax.set_ylim(extent[0], extent[1])
 ax.set_ylabel(r"relative energy error")
 ax.set_xlabel(r"runtime [s]")
 plt.yscale('log', nonposy='clip')
@@ -163,12 +149,13 @@ for i in xrange(len(integrators)):
 
 ax = plt.subplot(1,2,2)
 ax.set_xlim(dts.min()/orbit, dt.max()/orbit)
-ax.set_ylim(extent[2], extent[3])
+ax.set_ylim(extent[0], extent[1])
 ax.set_ylabel(r"relative energy error")
 ax.set_xlabel(r"timestep [orbits]")
 plt.yscale('log', nonposy='clip')
 plt.xscale('log', nonposy='clip')
 plt.grid(True)
+ax.set_xlim(ax.get_xlim()[::-1])
 for i in xrange(len(integrators)):
     res_i = res[i,:,:]
     im1 = ax.scatter(dts/orbit, res_i[:,1], label=integrators[i],color=colors[integrators[i]],s=10)
