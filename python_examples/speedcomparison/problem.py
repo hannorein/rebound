@@ -12,8 +12,6 @@ def simulation(par):
     G = k*k
     rebound.set_G(G)     
     rebound.set_dt(dt)
-    rebound.set_libsync(0)
-    rebound.set_biased(0)
     if integrator=="mikkola-cor3":
         integrator="mikkola"
         rebound.set_integrator_mikkola_corrector(3)
@@ -26,15 +24,6 @@ def simulation(par):
     elif integrator=="mikkola-cor11":
         integrator="mikkola"
         rebound.set_integrator_mikkola_corrector(11)
-    elif integrator=="mikkola-jac":
-        integrator="mikkola"
-        rebound.set_libsync(1)
-        rebound.set_integrator_mikkola_corrector(0)
-    elif integrator=="mikkola-jacb":
-        integrator="mikkola"
-        rebound.set_libsync(1)
-        rebound.set_biased(1)
-        rebound.set_integrator_mikkola_corrector(0)
     else:
         rebound.set_integrator_mikkola_corrector(0)
     rebound.set_integrator(integrator)
@@ -74,7 +63,7 @@ def simulation(par):
         com_vx = 0.
         com_vy = 0.
         com_vz = 0.
-        if integrator=="wh" or integrator=="mercury":
+        if integrator=="wh" or integrator=="mercury" or integrator[0:7]=="swifter":
             mtot = 0.
             for i in xrange(0,N):
                 com_vx += particles[i].vx*particles[i].m 
@@ -99,7 +88,7 @@ def simulation(par):
                 E_pot -= G*particles[i].m*particles[j].m/np.sqrt(r2)
         return E_kin+E_pot
 
-    if integrator=="wh" or integrator=="mercury":
+    if integrator=="wh" or integrator=="mercury" or integrator[0:7]=="swifter":
         move_to_heliocentric()
     else:
         rebound.move_to_center_of_momentum()
@@ -116,11 +105,12 @@ def simulation(par):
     print integrator.ljust(13) + " %9.5fs"%(runtime) + "\t Error: %e"  %( e)
     return [runtime, e]
 
-dts = np.logspace(-2,2,128)
+dts = np.logspace(0,2,3)
+#dts = np.logspace(-2,2,128)
 #dts = np.logspace(-3,2,155)
 tmax = 365.*11.8618*1e3
-integrators = ["wh","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mikkola-jac","mercury"]
-#integrators = ["mikkola","mikkola","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mikkola-jac","mikkola-jacb","mercury"]
+integrators = ["wh","mikkola","swifter-whm"]
+#integrators = ["wh","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mikkola-jac","mercury"]
 colors = {
     'mikkola':      "#FF0000",
     'mikkola-cor3': "#FF7700",
@@ -130,6 +120,7 @@ colors = {
     'mikkola-jac':  "#D4FF00",
     'mercury':      "#6E6E6E",
     'wh':           "b",
+    'swifter-whm':  "#444444",
     'ias15':        "g",
     }
 parameters = [(inte,dt,i*len(dts)+j) for i,inte in enumerate(integrators) for j, dt in enumerate(dts)]
