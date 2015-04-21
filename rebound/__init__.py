@@ -541,6 +541,12 @@ def set_integrator(integrator="IAS15"):
         if integrator.lower() == "swifter-whm":
             integrator_package = "SWIFTER"
             return
+        if integrator.lower() == "swifter-symba":
+            integrator_package = "SWIFTER"
+            return
+        if integrator.lower() == "swifter-tu4":
+            integrator_package = "SWIFTER"
+            return
     raise ValueError("Warning. Intergrator not found.")
 
 def set_integrator_mikkola_persistent_particles(is_per=0):
@@ -636,7 +642,12 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         #with open("param.dmp", "w") as f:
         #    f.write(paramin)
         starttime = time.time()    
-        os.system("echo param.in | ./swifter_whm > /dev/null")
+        if integrator.lower() == "swifter-whm":
+            os.system("echo param.in | ./swifter_whm > /dev/null")
+        if integrator.lower() == "swifter-symba":
+            os.system("echo param.in | ./swifter_symba > /dev/null")
+        if integrator.lower() == "swifter-tu4":
+            os.system("echo param.in | ./swifter_tu4 > /dev/null")
         endtime = time.time()    
         c_double.in_dll(librebound,"timing").value = endtime-starttime
     
