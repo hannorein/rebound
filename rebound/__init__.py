@@ -538,6 +538,9 @@ def set_integrator(integrator="IAS15"):
         if integrator.lower() == "mercury":
             integrator_package = "MERCURY"
             return
+        if integrator.lower() == "swifter-whm":
+            integrator_package = "SWIFTER"
+            return
     raise ValueError("Warning. Intergrator not found.")
 
 def set_integrator_mikkola_persistent_particles(is_per=0):
@@ -582,17 +585,17 @@ def integrate(tmax,exactFinishTime=1,keepSynchronized=0):
 !NPLMAX         -1                 ! not used
 !NTPMAX         -1                 ! not used
 T0             %.16e
-TSTOP          %.16e               ! simulation length is 1 Myr
-DT             %.16e               ! stepsize is 1 year
+TSTOP          %.16e               ! length of simulation 
+DT             %.16e               ! stepsize
 PL_IN          pl.in
 TP_IN          tp.in
 IN_TYPE        ASCII
-ISTEP_OUT      100000000000        ! output every 10K years
+ISTEP_OUT      %d                   ! output every 10K years
 BIN_OUT        bin.dat
 OUT_TYPE       REAL8                ! 4-byte XDR formatted output
-OUT_FORM       XV                  ! osculating element output
+OUT_FORM       XV                  ! cartesian output 
 OUT_STAT       NEW
-ISTEP_DUMP     100000000000        ! system dump also every 10K years
+ISTEP_DUMP     1000000000        ! system dump also every 10K years
 J2             0.0E0               ! no J2 term
 J4             0.0E0               ! no J4 term
 CHK_CLOSE      no                  ! don't check for planetary close encounters
@@ -606,54 +609,58 @@ ENC_OUT        enc.dat
 EXTRA_FORCE    no                  ! no extra user-defined forces
 BIG_DISCARD    yes                 ! output all planets if anything discarded
 RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
-""" % ( get_t(), tmax, get_dt())
+""" % ( get_t(), tmax, get_dt(),max(1,int((tmax-get_t())/get_dt())))
+
         if not tmpdir:
-            # first call
+        # first call
             tmpdir = tempfile.mkdtemp()
             for f in ["swifter_whm", "swifter_tu4","swifter_symba"]:
                 os.symlink(oldwd+"/../../others/swifter/bin/"+f,tmpdir+"/"+f)
-            os.chdir(tmpdir)
-            smallin = """0\n"""
-            with open("tp.in", "w") as f:
-                f.write(smallin)
-            bigin = """ %d
+            os.symlink(oldwd+"/../../others/swifter/bin/tool_follow",tmpdir+"/tool_follow")
+        os.chdir(tmpdir)
+        smallin = """0\n"""
+        with open("tp.in", "w") as f:
+            f.write(smallin)
+        bigin = """ %d
 """ %(get_N())
-            for i in range(0,get_N()):
-                bigin += """%d    %.18e 
- %.18e %.18e %.18e
- %.18e %.18e %.18e
-""" %(i+1, _particles[i].m/math.sqrt(get_G()), _particles[i].x, _particles[i].y, _particles[i].z, _particles[i].vx, _particles[i].vy, _particles[i].vz)
-            with open("pl.in", "w") as f:
-                f.write(bigin)
-            with open("param.in", "w") as f:
-                f.write(paramin)
-        else:
-            # Not first call
-            os.chdir(tmpdir)
-            with open("param.dmp", "w") as f:
-                f.write(paramin)
+        _G = get_G() 
+        for i in range(0,get_N()):
+            bigin += """%d    %.18e 
+%.18e %.18e %.18e
+%.18e %.18e %.18e
+""" %(i+1, _G*_particles[i].m,_particles[i].x, _particles[i].y, _particles[i].z, _particles[i].vx, _particles[i].vy, _particles[i].vz)
+        with open("pl.in", "w") as f:
+            f.write(bigin)
+        with open("param.in", "w") as f:
+            f.write(paramin)
+        #with open("param.dmp", "w") as f:
+        #    f.write(paramin)
         starttime = time.time()    
-        os.system("./swifter_whm ")
-        #os.system("./mercury >/dev/null")
+        os.system("echo param.in | ./swifter_whm > /dev/null")
         endtime = time.time()    
         c_double.in_dll(librebound,"timing").value = endtime-starttime
-        # TODO: READ IN DATA!!
-        #with open("big.dmp", "r") as f:
-        #    lines = f.readlines()
-        #    t= float(lines[4].split("=")[1].strip())
-        #    set_t(t/facTime)
-        #    j = 1
-        #    for i in range(6,len(lines),4):
-        #        pos = lines[i+1].split()
-        #        _particles[j].x = float(pos[0])
-        #        _particles[j].y = float(pos[1])
-        #        _particles[j].z = float(pos[2])
-        #        vel = lines[i+2].split()
-        #        _particles[j].vx = float(vel[0])
-        #        _particles[j].vy = float(vel[1])
-        #        _particles[j].vz = float(vel[2])
-        #        j += 1
+    
+        with open("dump_param1.dat","r") as f:
+            lines = f.readlines()
+            t = float(lines[2].split()[1].strip())
+            set_t(t)
 
+        for i in range(1,get_N()):
+            with open("outputparams.txt", "w") as f:
+                f.write("dump_param1.dat\n")
+                f.write("{0}\n".format(i+1))
+                f.write("1\n")
+            os.system("./tool_follow < outputparams.txt > /dev/null")
+            with open("follow.out", "r") as f:
+                lines = f.readlines()
+                line = lines[-1].split()
+                _particles[i].x = float(line[2].strip())
+                _particles[i].y = float(line[3].strip())
+                _particles[i].z = float(line[4].strip())
+                _particles[i].vx = float(line[5].strip())
+                _particles[i].vy = float(line[6].strip())
+                _particles[i].vz = float(line[7].strip())
+        os.system("rm bin.dat")
         os.chdir(oldwd)
     if integrator_package == "MERCURY":
         k = 0.01720209895    
