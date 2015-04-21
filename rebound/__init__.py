@@ -496,15 +496,19 @@ def reset():
 def set_integrator_mikkola_corrector(on=0):
     c_int.in_dll(librebound, "integrator_mikkola_corrector").value = on
 
+#REMOVE Following variables
 integrator_package = "REBOUND"
+integrator_debug = ""    
 
 def set_integrator(integrator="IAS15"):
     global integrator_package
+    global integrator_debug
     intergrator_package = "REBOUND"
     if isinstance(integrator, int):
         librebound.integrator_set(c_int(integrator))
         return
     if isinstance(integrator, basestring):
+        integrator_debug = integrator
         if integrator.lower() == "ias15":
             set_integrator(0)
             return
@@ -542,6 +546,9 @@ def set_integrator(integrator="IAS15"):
             integrator_package = "SWIFTER"
             return
         if integrator.lower() == "swifter-symba":
+            integrator_package = "SWIFTER"
+            return
+        if integrator.lower() == "swifter-helio":
             integrator_package = "SWIFTER"
             return
         if integrator.lower() == "swifter-tu4":
@@ -620,7 +627,7 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         if not tmpdir:
         # first call
             tmpdir = tempfile.mkdtemp()
-            for f in ["swifter_whm", "swifter_tu4","swifter_symba"]:
+            for f in ["swifter_whm", "swifter_tu4","swifter_symba","swifter_helio"]:
                 os.symlink(oldwd+"/../../others/swifter/bin/"+f,tmpdir+"/"+f)
             os.symlink(oldwd+"/../../others/swifter/bin/tool_follow",tmpdir+"/tool_follow")
         os.chdir(tmpdir)
@@ -642,11 +649,13 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         #with open("param.dmp", "w") as f:
         #    f.write(paramin)
         starttime = time.time()    
-        if integrator.lower() == "swifter-whm":
+        if integrator_debug.lower() == "swifter-whm":
             os.system("echo param.in | ./swifter_whm > /dev/null")
-        if integrator.lower() == "swifter-symba":
+        if integrator_debug.lower() == "swifter-symba":
             os.system("echo param.in | ./swifter_symba > /dev/null")
-        if integrator.lower() == "swifter-tu4":
+        if integrator_debug.lower() == "swifter-helio":
+            os.system("echo param.in | ./swifter_helio > /dev/null")
+        if integrator_debug.lower() == "swifter-tu4":
             os.system("echo param.in | ./swifter_tu4 > /dev/null")
         endtime = time.time()    
         c_double.in_dll(librebound,"timing").value = endtime-starttime
