@@ -105,7 +105,7 @@ def simulation(par):
     print integrator.ljust(13) + " %9.5fs"%(runtime) + "\t Error: %e"  %( e)
     return [runtime, e]
 
-dts = np.logspace(-2,2,3)
+dts = np.logspace(0,2,3)
 #dts = np.logspace(-2,2,128)
 #dts = np.logspace(-3,2,155)
 tmax = 365.*11.8618*1e3
@@ -120,6 +120,7 @@ colors = {
     'mikkola-jac':  "#D4FF00",
     'mercury':      "#6E6E6E",
     'wh':           "b",
+    'swifter-whm':  "#444444",
     'ias15':        "g",
     }
 parameters = [(inte,dt,i*len(dts)+j) for i,inte in enumerate(integrators) for j, dt in enumerate(dts)]

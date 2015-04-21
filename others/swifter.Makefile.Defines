@@ -37,7 +37,7 @@ INSTALL_DATA    = $(INSTALL) -m 644
 
 # Swifter definitions
 
-SWIFTER_HOME    = /Users/rein/git/rebound/others/swifter/swifter
+SWIFTER_HOME    = /Users/rein/git/rebound/others/swifter
 USER_MODULES    =
 
 # Compiler definitions
@@ -48,7 +48,7 @@ USER_MODULES    =
 #FORTRAN         = ifort
 #FFLAGS          = -O -w -pc 64
 FORTRAN         = gfortran
-FFLAGS          = -O 
+FFLAGS          = -O3 
 
 # DO NOT include in CFLAGS the "-c" option to compile object only
 # this is done explicitly as needed in the Makefile
