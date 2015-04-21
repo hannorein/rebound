@@ -105,12 +105,10 @@ def simulation(par):
     print integrator.ljust(13) + " %9.5fs"%(runtime) + "\t Error: %e"  %( e)
     return [runtime, e]
 
-dts = np.logspace(-1,2,64)
-#dts = np.logspace(-2,2,128)
+dts = np.logspace(-2,2,128)
 #dts = np.logspace(-3,2,155)
 tmax = 365.*11.8618*1e3
-integrators = ["wh","mikkola","swifter-whm","swifter-tu4","swifter-helio"]
-#integrators = ["wh","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mikkola-jac","mercury"]
+integrators = ["wh","mikkola","swifter-whm","swifter-tu4","swifter-helio","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mercury"]
 colors = {
     'mikkola':      "#FF0000",
     'mikkola-cor3': "#FF7700",

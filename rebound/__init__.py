@@ -665,18 +665,22 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
                 f.write("dump_param1.dat\n")
                 f.write("{0}\n".format(i+1))
                 f.write("1\n")
-            os.system("./tool_follow < outputparams.txt > /dev/null")
-            with open("follow.out", "r") as f:
-                lines = f.readlines()
-                line = lines[-1].split()
-                t = float(line[0].strip())
-                set_t(t)
-                _particles[i].x = float(line[2].strip())
-                _particles[i].y = float(line[3].strip())
-                _particles[i].z = float(line[4].strip())
-                _particles[i].vx = float(line[5].strip())
-                _particles[i].vy = float(line[6].strip())
-                _particles[i].vz = float(line[7].strip())
+            try:
+                os.system("./tool_follow < outputparams.txt > /dev/null")
+                with open("follow.out", "r") as f:
+                    lines = f.readlines()
+                    line = lines[-1].split()
+                    t = float(line[0].strip())
+                    set_t(t)
+                    _particles[i].x = float(line[2].strip())
+                    _particles[i].y = float(line[3].strip())
+                    _particles[i].z = float(line[4].strip())
+                    _particles[i].vx = float(line[5].strip())
+                    _particles[i].vy = float(line[6].strip())
+                    _particles[i].vz = float(line[7].strip())
+            except:
+                print("Something went wrong. Ignoring it for now.")
+                pass
         os.system("rm bin.dat")
         os.chdir(oldwd)
     if integrator_package == "MERCURY":
