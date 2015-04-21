@@ -1,11 +1,11 @@
 # Import the rebound module
-import rebound
 import numpy as np
 import time
 import sys
 from rebound.interruptible_pool import InterruptiblePool
 
 def simulation(par):
+    import rebound
     integrator, dt, run = par
     rebound.reset()
     k = 0.01720209895    
@@ -105,9 +105,10 @@ def simulation(par):
     print integrator.ljust(13) + " %9.5fs"%(runtime) + "\t Error: %e"  %( e)
     return [runtime, e]
 
-dts = np.logspace(-2,2,128)
+orbit = 365.*11.8618
+dts = np.logspace(-1,2,64)
 #dts = np.logspace(-3,2,155)
-tmax = 365.*11.8618*1e3
+tmax = orbit*1e3
 integrators = ["wh","mikkola","swifter-whm","swifter-tu4","swifter-helio","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mercury"]
 colors = {
     'mikkola':      "#FF0000",
@@ -160,7 +161,6 @@ for i in xrange(len(integrators)):
     im1 = ax.scatter(res_i[:,0], res_i[:,1], label=integrators[i],color=colors[integrators[i]],s=10)
     #im1 = axarr.scatter(dts, res_i[:,1], label=integrators[i],color=colors[i])
 
-orbit = 365.*11.8618
 ax = plt.subplot(1,2,2)
 ax.set_xlim(dts.min()/orbit, dt.max()/orbit)
 ax.set_ylim(extent[2], extent[3])
