@@ -685,7 +685,7 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         os.chdir(oldwd)
     if integrator_package == "MERCURY":
         k = 0.01720209895    
-        facTime = 1./(math.sqrt(get_G())*k)
+        facTime = math.sqrt(get_G()/k
         _particles = get_particles()
         oldwd = os.getcwd()
         paramin = """)O+_06 Integration parameters  (WARNING: Do not delete this line!!)
