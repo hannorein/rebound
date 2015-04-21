@@ -18,5 +18,6 @@ swifter.tar.gz:
 compileswifter:
 	rm -rf swifter
 	tar xvfz swifter.tar.gz
+	patch swifter/tool/tool_follow.f90 swifter.patch
 	cp swifter.Makefile.Defines swifter/Makefile.Defines
 	cd swifter && make clean && make
