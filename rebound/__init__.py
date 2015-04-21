@@ -503,12 +503,12 @@ integrator_debug = ""
 def set_integrator(integrator="IAS15"):
     global integrator_package
     global integrator_debug
-    intergrator_package = "REBOUND"
     if isinstance(integrator, int):
         librebound.integrator_set(c_int(integrator))
         return
     if isinstance(integrator, basestring):
         integrator_debug = integrator
+        integrator_package = "REBOUND"
         if integrator.lower() == "ias15":
             set_integrator(0)
             return
@@ -651,12 +651,14 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         starttime = time.time()    
         if integrator_debug.lower() == "swifter-whm":
             os.system("echo param.in | ./swifter_whm > /dev/null")
-        if integrator_debug.lower() == "swifter-symba":
+        elif integrator_debug.lower() == "swifter-symba":
             os.system("echo param.in | ./swifter_symba > /dev/null")
-        if integrator_debug.lower() == "swifter-helio":
+        elif integrator_debug.lower() == "swifter-helio":
             os.system("echo param.in | ./swifter_helio > /dev/null")
-        if integrator_debug.lower() == "swifter-tu4":
+        elif integrator_debug.lower() == "swifter-tu4":
             os.system("echo param.in | ./swifter_tu4 > /dev/null")
+        else:
+            print("Integrator not found! %s"%integrator_debug)
         endtime = time.time()    
         c_double.in_dll(librebound,"timing").value = endtime-starttime
     
@@ -679,13 +681,13 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
                     _particles[i].vy = float(line[6].strip())
                     _particles[i].vz = float(line[7].strip())
             except:
-                print("Something went wrong. Ignoring it for now.")
+                print("Something went wrong. Ignoring it for now. (%s)"%integrator_debug)
                 pass
         os.system("rm bin.dat")
         os.chdir(oldwd)
     if integrator_package == "MERCURY":
         k = 0.01720209895    
-        facTime = math.sqrt(get_G()/k
+        facTime = math.sqrt(get_G())/k
         _particles = get_particles()
         oldwd = os.getcwd()
         paramin = """)O+_06 Integration parameters  (WARNING: Do not delete this line!!)
