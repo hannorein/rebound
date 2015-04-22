@@ -92,7 +92,7 @@ def simulation(par):
     return [runtime, e]
 
 orbit = 365.*11.8618
-dts = np.logspace(-2,2,64)
+dts = np.logspace(-2.5,2,128)
 #dts = np.logspace(-3,2,155)
 tmax = orbit*1e2
 integrators = ["wh","mikkola","swifter-whm","swifter-tu4","swifter-helio","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mercury"]
@@ -113,7 +113,7 @@ colors = {
 parameters = [(inte,dt,i*len(dts)+j) for i,inte in enumerate(integrators) for j, dt in enumerate(dts)]
    
 if len(sys.argv)!=2:
-    pool = InterruptiblePool()
+    pool = InterruptiblePool(12)
     print "Running %d simulations" % (len(parameters))
     res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),len(dts),2)
 else:
@@ -148,17 +148,16 @@ for i in xrange(len(integrators)):
     #im1 = axarr.scatter(dts, res_i[:,1], label=integrators[i],color=colors[i])
 
 ax = plt.subplot(1,2,2)
-ax.set_xlim(dts.min()/orbit, dt.max()/orbit)
+ax.set_xlim(orbit/dts.max(), orbit/dts.min())
 ax.set_ylim(extent[0], extent[1])
 ax.set_ylabel(r"relative energy error")
-ax.set_xlabel(r"timestep [orbits]")
+ax.set_xlabel(r"steps per orbit")
 plt.yscale('log', nonposy='clip')
 plt.xscale('log', nonposy='clip')
 plt.grid(True)
-ax.set_xlim(ax.get_xlim()[::-1])
 for i in xrange(len(integrators)):
     res_i = res[i,:,:]
-    im1 = ax.scatter(dts/orbit, res_i[:,1], label=integrators[i],color=colors[integrators[i]],s=10)
+    im1 = ax.scatter(orbit/dts, res_i[:,1], label=integrators[i],color=colors[integrators[i]],s=10)
 
 from matplotlib.font_manager import FontProperties
 fontP = FontProperties()
