@@ -337,7 +337,7 @@ def status():
     N = get_N()
     s += "---------------------------------\n"
     s += "Rebound version: "+ pkg_resources.require("rebound")[0].version +"\n"
-    s += fet_build_str() + "\n"
+    s += get_build_str() + "\n"
     s += "Number of particles: \t%d\n" %N       
     s += "Simulation time:     \t%f\n" %get_t()
     if N>0:
