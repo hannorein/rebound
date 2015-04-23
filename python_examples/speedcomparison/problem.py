@@ -1,31 +1,17 @@
 # Import the rebound module
-import rebound
 import numpy as np
 import time
 import sys
 from rebound.interruptible_pool import InterruptiblePool
 
 def simulation(par):
+    import rebound
     integrator, dt, run = par
     rebound.reset()
     k = 0.01720209895    
     G = k*k
     rebound.set_G(G)     
     rebound.set_dt(dt)
-    if integrator=="mikkola-cor3":
-        integrator="mikkola"
-        rebound.set_integrator_mikkola_corrector(3)
-    elif integrator=="mikkola-cor5":
-        integrator="mikkola"
-        rebound.set_integrator_mikkola_corrector(5)
-    elif integrator=="mikkola-cor7":
-        integrator="mikkola"
-        rebound.set_integrator_mikkola_corrector(7)
-    elif integrator=="mikkola-cor11":
-        integrator="mikkola"
-        rebound.set_integrator_mikkola_corrector(11)
-    else:
-        rebound.set_integrator_mikkola_corrector(0)
     rebound.set_integrator(integrator)
     rebound.set_force_is_velocitydependent(0)
 
@@ -105,12 +91,11 @@ def simulation(par):
     print integrator.ljust(13) + " %9.5fs"%(runtime) + "\t Error: %e"  %( e)
     return [runtime, e]
 
-dts = np.logspace(0,2,3)
-#dts = np.logspace(-2,2,128)
+orbit = 365.*11.8618
+dts = np.logspace(-2,2,64)
 #dts = np.logspace(-3,2,155)
-tmax = 365.*11.8618*1e3
-integrators = ["wh","mikkola","swifter-whm"]
-#integrators = ["wh","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mikkola-jac","mercury"]
+tmax = orbit*1e2
+integrators = ["wh","mikkola","swifter-whm","swifter-tu4","swifter-helio","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mercury"]
 colors = {
     'mikkola':      "#FF0000",
     'mikkola-cor3': "#FF7700",
@@ -121,6 +106,8 @@ colors = {
     'mercury':      "#6E6E6E",
     'wh':           "b",
     'swifter-whm':  "#444444",
+    'swifter-helio':"#AABBBB",
+    'swifter-tu4':  "#FFAAAA",
     'ias15':        "g",
     }
 parameters = [(inte,dt,i*len(dts)+j) for i,inte in enumerate(integrators) for j, dt in enumerate(dts)]
@@ -145,11 +132,11 @@ np.save("res.npy",res)
 fig = plt.figure(figsize=(13,4))
 
 res_mean = np.mean(res,axis=1)
-extent=[res[:,:,0].min(), res[:,:,0].max(), 1e-16, 1e-5]
+extent=[1e-16, 1e-5]
 
 ax = plt.subplot(1,2,1)
-ax.set_xlim(extent[0], extent[1])
-ax.set_ylim(extent[2], extent[3])
+ax.set_xlim(res[:,:,0].min(), res[:,:,0].max())
+ax.set_ylim(extent[0], extent[1])
 ax.set_ylabel(r"relative energy error")
 ax.set_xlabel(r"runtime [s]")
 plt.yscale('log', nonposy='clip')
@@ -160,15 +147,15 @@ for i in xrange(len(integrators)):
     im1 = ax.scatter(res_i[:,0], res_i[:,1], label=integrators[i],color=colors[integrators[i]],s=10)
     #im1 = axarr.scatter(dts, res_i[:,1], label=integrators[i],color=colors[i])
 
-orbit = 365.*11.8618
 ax = plt.subplot(1,2,2)
 ax.set_xlim(dts.min()/orbit, dt.max()/orbit)
-ax.set_ylim(extent[2], extent[3])
+ax.set_ylim(extent[0], extent[1])
 ax.set_ylabel(r"relative energy error")
 ax.set_xlabel(r"timestep [orbits]")
 plt.yscale('log', nonposy='clip')
 plt.xscale('log', nonposy='clip')
 plt.grid(True)
+ax.set_xlim(ax.get_xlim()[::-1])
 for i in xrange(len(integrators)):
     res_i = res[i,:,:]
     im1 = ax.scatter(dts/orbit, res_i[:,1], label=integrators[i],color=colors[integrators[i]],s=10)

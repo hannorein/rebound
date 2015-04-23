@@ -496,15 +496,19 @@ def reset():
 def set_integrator_mikkola_corrector(on=0):
     c_int.in_dll(librebound, "integrator_mikkola_corrector").value = on
 
+#REMOVE Following variables
 integrator_package = "REBOUND"
+integrator_debug = ""    
 
 def set_integrator(integrator="IAS15"):
     global integrator_package
-    intergrator_package = "REBOUND"
+    global integrator_debug
     if isinstance(integrator, int):
         librebound.integrator_set(c_int(integrator))
         return
     if isinstance(integrator, basestring):
+        integrator_debug = integrator
+        integrator_package = "REBOUND"
         if integrator.lower() == "ias15":
             set_integrator(0)
             return
@@ -539,6 +543,15 @@ def set_integrator(integrator="IAS15"):
             integrator_package = "MERCURY"
             return
         if integrator.lower() == "swifter-whm":
+            integrator_package = "SWIFTER"
+            return
+        if integrator.lower() == "swifter-symba":
+            integrator_package = "SWIFTER"
+            return
+        if integrator.lower() == "swifter-helio":
+            integrator_package = "SWIFTER"
+            return
+        if integrator.lower() == "swifter-tu4":
             integrator_package = "SWIFTER"
             return
     raise ValueError("Warning. Intergrator not found.")
@@ -614,7 +627,7 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         if not tmpdir:
         # first call
             tmpdir = tempfile.mkdtemp()
-            for f in ["swifter_whm", "swifter_tu4","swifter_symba"]:
+            for f in ["swifter_whm", "swifter_tu4","swifter_symba","swifter_helio"]:
                 os.symlink(oldwd+"/../../others/swifter/bin/"+f,tmpdir+"/"+f)
             os.symlink(oldwd+"/../../others/swifter/bin/tool_follow",tmpdir+"/tool_follow")
         os.chdir(tmpdir)
@@ -636,35 +649,45 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         #with open("param.dmp", "w") as f:
         #    f.write(paramin)
         starttime = time.time()    
-        os.system("echo param.in | ./swifter_whm > /dev/null")
+        if integrator_debug.lower() == "swifter-whm":
+            os.system("echo param.in | ./swifter_whm > /dev/null")
+        elif integrator_debug.lower() == "swifter-symba":
+            os.system("echo param.in | ./swifter_symba > /dev/null")
+        elif integrator_debug.lower() == "swifter-helio":
+            os.system("echo param.in | ./swifter_helio > /dev/null")
+        elif integrator_debug.lower() == "swifter-tu4":
+            os.system("echo param.in | ./swifter_tu4 > /dev/null")
+        else:
+            print("Integrator not found! %s"%integrator_debug)
         endtime = time.time()    
         c_double.in_dll(librebound,"timing").value = endtime-starttime
     
-        with open("dump_param1.dat","r") as f:
-            lines = f.readlines()
-            t = float(lines[2].split()[1].strip())
-            set_t(t)
-
         for i in range(1,get_N()):
             with open("outputparams.txt", "w") as f:
                 f.write("dump_param1.dat\n")
                 f.write("{0}\n".format(i+1))
                 f.write("1\n")
-            os.system("./tool_follow < outputparams.txt > /dev/null")
-            with open("follow.out", "r") as f:
-                lines = f.readlines()
-                line = lines[-1].split()
-                _particles[i].x = float(line[2].strip())
-                _particles[i].y = float(line[3].strip())
-                _particles[i].z = float(line[4].strip())
-                _particles[i].vx = float(line[5].strip())
-                _particles[i].vy = float(line[6].strip())
-                _particles[i].vz = float(line[7].strip())
+            try:
+                os.system("./tool_follow < outputparams.txt > /dev/null")
+                with open("follow.out", "r") as f:
+                    lines = f.readlines()
+                    line = lines[-1].split()
+                    t = float(line[0].strip())
+                    set_t(t)
+                    _particles[i].x = float(line[2].strip())
+                    _particles[i].y = float(line[3].strip())
+                    _particles[i].z = float(line[4].strip())
+                    _particles[i].vx = float(line[5].strip())
+                    _particles[i].vy = float(line[6].strip())
+                    _particles[i].vz = float(line[7].strip())
+            except:
+                print("Something went wrong. Ignoring it for now. (%s)"%integrator_debug)
+                pass
         os.system("rm bin.dat")
         os.chdir(oldwd)
     if integrator_package == "MERCURY":
         k = 0.01720209895    
-        facTime = 1./(math.sqrt(get_G())*k)
+        facTime = math.sqrt(get_G())/k
         _particles = get_particles()
         oldwd = os.getcwd()
         paramin = """)O+_06 Integration parameters  (WARNING: Do not delete this line!!)
