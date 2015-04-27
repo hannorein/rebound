@@ -32,7 +32,9 @@
 #include "particle.h"
 #include "main.h"
 #include "input.h"
+#ifdef MPI
 #include "communication_mpi.h"
+#endif
 
 char input_arguments[4096]; // This is a bit of an arbitrary number. Should be dynamic.
 
