@@ -144,7 +144,7 @@ plt.xscale('log', nonposy='clip')
 plt.grid(True)
 for i in xrange(len(integrators)):
     res_i = res[i,:,:]
-    im1 = ax.scatter(res_i[:,0], res_i[:,1], label=integrators[i],color=colors[integrators[i]],s=10)
+    im1 = ax.scatter(res_i[:,0], res_i[:,1], label=integrators[i].upper(),color=colors[integrators[i]],s=10)
     #im1 = axarr.scatter(dts, res_i[:,1], label=integrators[i],color=colors[i])
 
 ax = plt.subplot(1,2,2)
@@ -157,7 +157,7 @@ plt.xscale('log', nonposy='clip')
 plt.grid(True)
 for i in xrange(len(integrators)):
     res_i = res[i,:,:]
-    im1 = ax.scatter(orbit/dts, res_i[:,1], label=integrators[i],color=colors[integrators[i]],s=10)
+    im1 = ax.scatter(orbit/dts, res_i[:,1], label=integrators[i].upper(),color=colors[integrators[i]],s=10)
 
 from matplotlib.font_manager import FontProperties
 fontP = FontProperties()
