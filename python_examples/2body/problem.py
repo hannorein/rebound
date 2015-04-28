@@ -31,8 +31,8 @@ def simulation(par):
     return [float(rebound.get_iter())/rebound.get_t()*dt, np.fabs((Ef-Ei)/Ei)+1e-16, rebound.get_timing()/rebound.get_t()*dt*1e6/2.]
 
 
-N = 100
-dts = np.linspace(-4,-1.5,N)
+N = 20
+dts = np.linspace(-3,0,N)
 e0s = np.linspace(0,-4,N)
 integrators= ["wh","mikkola"]
 
@@ -44,7 +44,7 @@ for integrator in integrators:
     print("Running "+ integrator)
     parameters = [(0., dts[i], e0s[j], integrator) for j in range(N) for i in range(N)]
 
-    pool = InterruptiblePool(12)
+    pool = InterruptiblePool()
     res = pool.map(simulation,parameters)
     res = np.nan_to_num(res)
     niter.append(res[:,0].reshape((N,N)))
@@ -69,12 +69,12 @@ for ay in axarr:
         ax.set_ylabel(r"log10$(1-e)$")
 
 for i, integrator in enumerate(integrators):
-    im1 = axarr[0,i].imshow(energyerror[i], norm=LogNorm(), vmax=np.max(energyerror), vmin=1e-16, aspect='auto', origin="lower", interpolation='hanning', cmap="RdYlGn_r", extent=extent)
+    im1 = axarr[0,i].imshow(energyerror[i], norm=LogNorm(), vmax=np.max(energyerror), vmin=1e-16, aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
     cb1 = plt.colorbar(im1, ax=axarr[0,i])
     cb1.solids.set_rasterized(True)
     cb1.set_label("Relative energy error, " +integrator)
 
-    im3 = axarr[1,i].imshow(timing[i], vmin=0., vmax=3.*np.median(timing), aspect='auto', origin="lower", interpolation="hanning", cmap="RdYlGn_r", extent=extent)
+    im3 = axarr[1,i].imshow(timing[i], vmin=0., vmax=3.*np.median(timing), aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn_r", extent=extent)
     cb3 = plt.colorbar(im3, ax=axarr[1,i])
     cb3.solids.set_rasterized(True)
     cb3.set_label("Runtime per timestep [$\mu$s], " +integrator)

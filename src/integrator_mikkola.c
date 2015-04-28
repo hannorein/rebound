@@ -183,8 +183,7 @@ static void kepler_step(unsigned int i,double _dt){
 	double beta = 2.*M*r0i - v2;
 	double eta0 = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
 	double zeta0 = M - beta*r0;
-
-	double X;
+double X;
 	double Gs[6]; 
 		
 	if (beta>0.){
@@ -201,26 +200,72 @@ static void kepler_step(unsigned int i,double _dt){
 		X = 0.; // Initial guess 
 	}
 
-	unsigned int n_hg;
+	unsigned int n_hg = 0;
+	unsigned int n_lag = 0;
 	unsigned int converged = 0;
-	double ri;
-	double oldX=NAN; // NAN might be a GNU extension
-	double oldX2;
-	for (n_hg=0;n_hg<32;n_hg++){
-		oldX2 = oldX;
-		oldX = X;
-		stiefel_Gs3(Gs, beta, X);
+	double oldX=X; // NAN might be a GNU extension
+
+	stiefel_Gs3(Gs, beta, X);
+	const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
+	double ri = 1./(r0 + eta0Gs1zeta0Gs2);
+	X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+_dt);
+	double X_per_period = 2.*M_PI/sqrt(beta);
+
+	if(fastabs(X-oldX) > 0.01*X_per_period){
+		
+		
+		X = beta*_dt/M;
+		
+		double nlag = 5.;
+	
+		unsigned int nmax = 16;
+		static double prevX[16];
+		
+		for(n_lag=1; n_lag < nmax; n_lag++){
+			stiefel_Gs3(Gs, beta, X);
+			double f = r0*X + eta0*Gs[2] + zeta0*Gs[3] - _dt;
+			double fp = r0 + eta0*Gs[1] + zeta0*Gs[2];
+			double fpp = eta0*Gs[0] + zeta0*Gs[1];
+			double denom = fp + sqrt(fabs(16.*fp*fp - 20.*f*fpp));
+
+			X = (X*denom - 5.*f)/denom;
+			
+			for(int i=1;i<n_lag;i++){
+				if(X==prevX[i]){
+					// Converged. Exit.
+					n_lag++;
+					converged =1;
+					break;
+				}
+			}
+			if(converged){ break;}
+			prevX[n_lag] = X;
+			
+		}
 		const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
 		ri = 1./(r0 + eta0Gs1zeta0Gs2);
-		X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+_dt);
+	} else{
+		double oldX2=NAN;
+		const int nmax = 32;
+		static double prevX[nmax];
 		
-		if (X==oldX||X==oldX2){
-			// Converged. Exit.
-			n_hg++;
-			converged = 1;
-			break; 
+		for (n_hg=1;n_hg<nmax;n_hg++){
+			oldX2 = oldX;
+			oldX = X;
+			stiefel_Gs3(Gs, beta, X);
+			const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
+			ri = 1./(r0 + eta0Gs1zeta0Gs2);
+			X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+_dt);
+			
+			if (X==oldX||X==oldX2){
+				// Converged. Exit.
+				n_hg++;
+				converged = 1;
+				break; 
+			}
 		}
 	}
+
 	if (converged == 0){ // Fallback to bisection 
 		double X_min, X_max;
 		if (beta>0.){
@@ -254,10 +299,12 @@ static void kepler_step(unsigned int i,double _dt){
 			}
 			X = (X_max + X_min)/2.;
 		}while (fastabs((X_max-X_min)/X_max)>1e-15);
-		ri          = 1./(r0 + eta0*Gs[1] + zeta0*Gs[2]);
+		const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
+		ri = 1./(r0 + eta0Gs1zeta0Gs2);
 	}
-	
+
 	iter += n_hg;
+	iter += n_lag;
 
 	// Note: These are not the traditional f and g functions.
 	double f = -M*Gs[2]*r0i;
