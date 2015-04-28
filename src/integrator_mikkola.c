@@ -200,8 +200,6 @@ double X;
 		X = 0.; // Initial guess 
 	}
 
-	unsigned int n_hg = 0;
-	unsigned int n_lag = 0;
 	unsigned int converged = 0;
 	double oldX=X; // NAN might be a GNU extension
 
@@ -212,28 +210,22 @@ double X;
 	double X_per_period = 2.*M_PI/sqrt(beta);
 
 	if(fastabs(X-oldX) > 0.01*X_per_period){
-		
-		
+		// Linear guess
 		X = beta*_dt/M;
-		
-		double nlag = 5.;
-	
-		unsigned int nmax = 16;
-		static double prevX[16];
-		
-		for(n_lag=1; n_lag < nmax; n_lag++){
+		const unsigned int nmax = 64;
+		static double prevX[nmax];
+		for(int n_lag=1; n_lag < nmax; n_lag++){
 			stiefel_Gs3(Gs, beta, X);
-			double f = r0*X + eta0*Gs[2] + zeta0*Gs[3] - _dt;
-			double fp = r0 + eta0*Gs[1] + zeta0*Gs[2];
-			double fpp = eta0*Gs[0] + zeta0*Gs[1];
-			double denom = fp + sqrt(fabs(16.*fp*fp - 20.*f*fpp));
-
+			const double f = r0*X + eta0*Gs[2] + zeta0*Gs[3] - _dt;
+			const double fp = r0 + eta0*Gs[1] + zeta0*Gs[2];
+			const double fpp = eta0*Gs[0] + zeta0*Gs[1];
+			const double denom = fp + sqrt(fabs(16.*fp*fp - 20.*f*fpp));
 			X = (X*denom - 5.*f)/denom;
+			iter++;	// DEBUG
 			
 			for(int i=1;i<n_lag;i++){
 				if(X==prevX[i]){
 					// Converged. Exit.
-					n_lag++;
 					converged =1;
 					break;
 				}
@@ -244,22 +236,21 @@ double X;
 		}
 		const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
 		ri = 1./(r0 + eta0Gs1zeta0Gs2);
-	} else{
+	}else{
 		double oldX2=NAN;
-		const int nmax = 32;
-		static double prevX[nmax];
+		const unsigned int nmax = 32;
 		
-		for (n_hg=1;n_hg<nmax;n_hg++){
+		for (int n_hg=1;n_hg<nmax;n_hg++){
 			oldX2 = oldX;
 			oldX = X;
 			stiefel_Gs3(Gs, beta, X);
 			const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
 			ri = 1./(r0 + eta0Gs1zeta0Gs2);
 			X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+_dt);
+			iter++;	// DEBUG
 			
 			if (X==oldX||X==oldX2){
 				// Converged. Exit.
-				n_hg++;
 				converged = 1;
 				break; 
 			}
@@ -289,7 +280,7 @@ double X;
 		}
 		X = (X_max + X_min)/2.;
 		do{
-			n_hg++;
+			iter++;	// DEBUG
 			stiefel_Gs3(Gs, beta, X);
 			double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-_dt;
 			if (s>=0.){
@@ -302,9 +293,6 @@ double X;
 		const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
 		ri = 1./(r0 + eta0Gs1zeta0Gs2);
 	}
-
-	iter += n_hg;
-	iter += n_lag;
 
 	// Note: These are not the traditional f and g functions.
 	double f = -M*Gs[2]*r0i;
