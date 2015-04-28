@@ -5,7 +5,7 @@ from rebound.interruptible_pool import InterruptiblePool
 
 
 torb = 2.*np.pi
-tmax = 1000.34476128*torb
+tmax = 100.34476128*torb
 
 def simulation(par):
     anom, dt, e, integrator = par
@@ -33,7 +33,7 @@ def simulation(par):
 
 N = 200
 dts = np.linspace(-3,-0.1,N)
-e0s = np.linspace(0,-10,N)
+e0s = np.linspace(0,-1,N)
 integrators= ["wh","mikkola"]
 
 niter = []

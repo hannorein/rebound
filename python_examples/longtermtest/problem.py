@@ -49,7 +49,7 @@ def simulation(par):
         com_vx = 0.
         com_vy = 0.
         com_vz = 0.
-        if integrator=="wh" or integrator=="mercury":
+        if integrator=="wh" or integrator=="mercury" or integrator[0:7]=="swifter":
             mtot = 0.
             for i in xrange(0,N):
                 com_vx += particles[i].vx*particles[i].m 
@@ -75,7 +75,7 @@ def simulation(par):
         return E_kin+E_pot
 
     times = np.logspace(np.log10(100.*dt),np.log10(tmax),Ngrid)
-    if integrator=="wh" or integrator=="mercury":
+    if integrator=="wh" or integrator=="mercury" or integrator[0:7]=="swifter":
         move_to_heliocentric()
     else:
         rebound.move_to_center_of_momentum()
@@ -85,7 +85,7 @@ def simulation(par):
 
     runtime = 0.
     for t in times:
-        rebound.integrate(t,exactFinishTime=0)
+        rebound.integrate(t,exactFinishTime=0,keepSynchronized=0)
         ef = energy()
         e = np.fabs((ei-ef)/ei)+1.1e-16
         es.append(e)
@@ -101,8 +101,8 @@ Ngrid = 500
 #3dt = 100.23
 orbit = 11.8618*2.*np.pi
 dt = orbit/3000.
-tmax = orbit*2e5
-integrators = ["mercury","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11"]
+tmax = orbit*2e6
+integrators = ["mercury","mikkola","wh","mikkola-cor11","swifter-whm"]
 #integrators = ["mercury","ias15","wh","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11"]
 colors = {
     'mikkola':      "#FF0000",
@@ -113,8 +113,11 @@ colors = {
     'mikkola-jac':  "#D4FF00",
     'mercury':      "#6E6E6E",
     'wh':           "b",
+    'swifter-whm':  "#444444",
+    'swifter-helio':"#AABBBB",
+    'swifter-tu4':  "#FFAAAA",
     'ias15':        "g",
-    }
+}
 trials = 4
     
 parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]

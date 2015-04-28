@@ -113,7 +113,7 @@ colors = {
 parameters = [(inte,dt,i*len(dts)+j) for i,inte in enumerate(integrators) for j, dt in enumerate(dts)]
    
 if len(sys.argv)!=2:
-    pool = InterruptiblePool(1)
+    pool = InterruptiblePool()
     print "Running %d simulations" % (len(parameters))
     res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),len(dts),2)
 else:
