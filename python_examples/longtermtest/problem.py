@@ -74,7 +74,7 @@ def simulation(par):
                 E_pot -= particles[i].m*particles[j].m/np.sqrt(r2)
         return E_kin+E_pot
 
-    times = np.logspace(np.log10(100.*dt),np.log10(tmax),Ngrid)
+    times = np.logspace(np.log10(orbit),np.log10(tmax),Ngrid)
     if integrator=="wh" or integrator=="mercury" or integrator[0:7]=="swifter":
         move_to_heliocentric()
     else:
@@ -99,9 +99,9 @@ def simulation(par):
 
 Ngrid = 500
 #3dt = 100.23
-orbit = 11.8618*2.*np.pi
+orbit = 11.8618*1.*np.pi
 dt = orbit/3000.
-tmax = orbit*2e6
+tmax = orbit*2e5
 integrators = ["mercury","mikkola","wh","mikkola-cor11","swifter-whm"]
 #integrators = ["mercury","ias15","wh","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11"]
 colors = {
@@ -156,12 +156,12 @@ for i in xrange(len(res)):
     for j in xrange(trials):
         res_trial = res[i,j,:,:]
         im1 = axarr.plot(res_trial[0]/orbit,res_trial[1], color=colors[integrators[i]],alpha=0.1)
-    im1 = axarr.plot(res_mean[i][0]/orbit,res_mean[i][1], label=integrators[i],color=colors[integrators[i]])
+    im1 = axarr.plot(res_mean[i][0]/orbit,res_mean[i][1], label=integrators[i].upper(),color=colors[integrators[i]])
 
 from matplotlib.font_manager import FontProperties
 fontP = FontProperties()
 fontP.set_size('small')
-lgd = plt.legend(loc="upper center",  bbox_to_anchor=(0.5, -0.2),  prop = fontP,ncol=4,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = 0.2, markerscale=2.)
+lgd = plt.legend(loc="upper center",  bbox_to_anchor=(0.5, -0.2),  prop = fontP,ncol=3,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = 0.2, markerscale=2.)
 plt.savefig("longtermtest.pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
 import os
 os.system("open longtermtest.pdf")
