@@ -1,21 +1,12 @@
 /**
  * @file 	problem.c
- * @brief 	Example problem: circular orbit.
+ * @brief 	Example problem: solar system.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example uses the IAS15 integrator
- * to integrate the outer planets of the solar system. The initial 
- * conditions are taken from Applegate et al 1986. Pluto is a test
- * particle. This example is a good starting point for any long term orbit
- * integrations.
- *
- * You probably want to turn off the visualization for any serious runs.
- * Just go to the makefile and set `OPENGL=0`. 
- *
- * The example also works with the Wisdom-Holman symplectic integrator.
- * Simply change the integrator to `integrator_wh.c` in the Makefile.
+ * @detail 	This example integrates all planets of the Solar
+ * System. The data comes from the NASA HORIZONS system. 
  * 
  * @section 	LICENSE
- * Copyright (c) 2014 Hanno Rein, Shangfei Liu, Dave Spiegel
+ * Copyright (c) 2015 Hanno Rein, Shangfei Liu, Dave Spiegel
  *
  * This file is part of rebound.
  *
@@ -93,17 +84,18 @@ double e_init;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= 40;				// in days
+	dt 		= 4;				// in days
 	tmax		= 7.3e10;			// 200 Myr
 	G		= 1.4880826e-34;		// in AU^3 / kg / day^2.
 	init_boxwidth(200); 				// Init box with width 200 astronomical units
 	integrator_mikkola_synchronize_manually = 1;	// Need to call integrator_synchronize() before outputs. 
 	integrator_force_is_velocitydependent = 0;	// Force only depends on positions. 
-	integrator	= MIKKOLA;
+	integrator	= WH;
+	//integrator	= MIKKOLA;
 	//integrator	= IAS15;
 
 	// Initial conditions
-	for (int i=0;i<6;i++){
+	for (int i=0;i<10;i++){
 		struct particle p;
 		p.x  = ss_pos[i][0]; 		p.y  = ss_pos[i][1];	 	p.z  = ss_pos[i][2];
 		p.vx = ss_vel[i][0]; 		p.vy = ss_vel[i][1];	 	p.vz = ss_vel[i][2];
@@ -146,14 +138,14 @@ double energy(){
 }
 
 void problem_output(){
-	if (output_check(10000000.)){
+	if (output_check(10000.)){
 		output_timing();
-//		integrator_synchronize();
-//		FILE* f = fopen("energy.txt","a");
-//		double e = energy();
-//		fprintf(f,"%e %e %e\n",t, fabs((e-e_init)/e_init), tools_megno());
-//		fclose(f);
-//		printf("  Y = %.3f",tools_megno());
+		integrator_synchronize();
+		FILE* f = fopen("energy.txt","a");
+		double e = energy();
+		fprintf(f,"%e %e %e\n",t, fabs((e-e_init)/e_init), tools_megno());
+		fclose(f);
+		printf("  Y = %.3f",tools_megno());
 	}
 }
 
