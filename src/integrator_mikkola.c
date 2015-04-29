@@ -174,15 +174,15 @@ static inline double _M(unsigned int i){
 int iter;
 
 static void kepler_step(unsigned int i,double _dt){
-	double M = _M(i);
-	struct particle p1 = p_j[i];
+	const double M = _M(i);
+	const struct particle p1 = p_j[i];
 
-	double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
-	double r0i = 1./r0;
-	double v2 =  p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz;
-	double beta = 2.*M*r0i - v2;
-	double eta0 = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
-	double zeta0 = M - beta*r0;
+	const double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
+	const double r0i = 1./r0;
+	const double v2 =  p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz;
+	const double beta = 2.*M*r0i - v2;
+	const double eta0 = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
+	const double zeta0 = M - beta*r0;
 double X;
 	double Gs[6]; 
 		
@@ -201,7 +201,7 @@ double X;
 	}
 
 	unsigned int converged = 0;
-	double oldX=X; // NAN might be a GNU extension
+	double oldX = X; 
 
 	stiefel_Gs3(Gs, beta, X);
 	const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
@@ -226,18 +226,18 @@ double X;
 			for(int i=1;i<n_lag;i++){
 				if(X==prevX[i]){
 					// Converged. Exit.
-					converged =1;
+					n_lag = nmax;
+					converged = 1;
 					break;
 				}
 			}
-			if(converged){ break;}
 			prevX[n_lag] = X;
 			
 		}
 		const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
 		ri = 1./(r0 + eta0Gs1zeta0Gs2);
 	}else{
-		double oldX2=NAN;
+		double oldX2 = NAN; // NAN might be a GNU extension, any value other than X works.
 		const unsigned int nmax = 32;
 		
 		for (int n_hg=1;n_hg<nmax;n_hg++){
