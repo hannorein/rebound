@@ -20,22 +20,23 @@ with open("README.rst","w") as f:
                     for line in pf:
                         if line[0:10] == " * @detail":
                             will_output = 1
-                            did_output = 1
                             line = " * " + line[10:]
-                            f.write("\n-  **examples/"+problemc.split("/")[2]+"**\n\n")
-                            f.write("  This example is using the following modules:  \n");
+                            f.write("\nexamples/"+problemc.split("/")[2]+"\n")
+                    
+                        if line[0:11] == " * @section":
+                            will_output = 2
+                        if will_output==1:
+                            f.write("  "+line[3:].strip()+"\n")
+                        if will_output==2 and did_output==0:
+                            did_output = 1
+                            f.write("  Modules used: ");
                             with open("examples/"+problemc.split("/")[2]+"/Makefile") as mf:
                                 for linem in mf:
                                     if linem.strip()[0:6] == "ln -fs":
                                         sourcefile = linem.strip().split(" ")[2].split("/")[-1]
                                         if sourcefile!="problem.c":
-                                            f.write("  ``"+sourcefile+"``\n")
+                                            f.write("  ``"+sourcefile+"``")
                             f.write("\n");
-                    
-                        if line[0:11] == " * @section":
-                            will_output = 0
-                        if will_output==1:
-                            f.write("  "+line[3:].strip()+"\n")
                     if did_output==0:
                         print "Warning: Did not find description in "+problemc
             start_delete = -1
