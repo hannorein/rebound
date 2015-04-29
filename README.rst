@@ -331,13 +331,12 @@ The following examples can all be found in the `examples` directory.
 Whatever you plan to do with REBOUND, chances are there is already an example available which you can use as a starting point.
 
 
-*  **examples/bouncing_balls**
+-  **examples/bouncing_balls**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_periodic.c`
-  `integrator_leapfrog.c`
-  `collisions_direct.c`
+  ``gravity_direct.c``
+  ``boundaries_periodic.c``
+  ``collisions_direct.c``
 
   This example is a simple test of collision detection
   methods. To change the collision detection algorithm, you can replace
@@ -345,26 +344,24 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   collisions_sweep.c in the Makefile.
   
 
-*  **examples/bouncing_balls_corners**
+-  **examples/bouncing_balls_corners**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_periodic.c`
-  `integrator_leapfrog.c`
-  `collisions_tree.c`
+  ``gravity_direct.c``
+  ``boundaries_periodic.c``
+  ``collisions_tree.c``
 
   This example tests collision detection methods accros box boundaries.
   There are four particles, one in each corner. To see the ghost boxes in OpenGL
   press `g` while the simulation is running.
   
 
-*  **examples/bouncing_string**
+-  **examples/bouncing_string**
 
   This example is using the following modules:  
-  `gravity_none.c`
-  `boundaries_periodic.c`
-  `integrator_leapfrog.c`
-  `collisions_direct.c`
+  ``gravity_none.c``
+  ``boundaries_periodic.c``
+  ``collisions_direct.c``
 
   This example tests collision detection methods.
   The example uses a non-square, rectangular box. 10 particles are placed
@@ -372,13 +369,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   initially.
   
 
-*  **examples/circumplanetarydust**
+-  **examples/circumplanetarydust**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_open.c`
-  `integrator_ias15.c`
-  `collisions_none.c`
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
 
   This example shows how to integrate circumplanetary
   dust particles using the `integrator_ias15.c` module.
@@ -391,13 +387,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   many.
   
 
-*  **examples/closeencounter**
+-  **examples/closeencounter**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_open.c`
-  `integrator_ias15.c`
-  `collisions_none.c`
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
 
   This example integrates a densly packed planetary system
   which becomes unstable on a timescale of only a few orbits. The IAS15
@@ -407,13 +402,27 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   detection of these kind of encounters.
   
 
-*  **examples/closeencounter_record**
+-  **examples/closeencounter_hybrid**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_open.c`
-  `integrator_ias15.c`
-  `collisions_direct.c`
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
+
+  This example integrates a densly packed planetary system
+  which becomes unstable on a timescale of only a few orbits. The IAS15
+  integrator with adaptive timestepping is used. This integrator
+  automatically decreases the timestep whenever a close
+  enocunter happens. IAS15 is very high order and ideally suited for the
+  detection of these kind of encounters.
+  
+
+-  **examples/closeencounter_record**
+
+  This example is using the following modules:  
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_direct.c``
 
   This example integrates a densly packed planetary system
   which becomes unstable on a timescale of only a few orbits.
@@ -425,13 +434,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   changed to a tree by using the `collisions_tree.c` module.
   
 
-*  **examples/dragforce**
+-  **examples/dragforce**
 
   This example is using the following modules:  
-  `gravity_none.c`
-  `boundaries_open.c`
-  `collisions_none.c`
-  `integrator_ias15.c`
+  ``gravity_none.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
 
   This is a very simple example on how to implement a velocity
   dependent drag force. The example uses the IAS15 integrator, which
@@ -439,13 +447,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   No gravitational forces or collisions are present.
   
 
-*  **examples/eccentric_orbit**
+-  **examples/eccentric_orbit**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_open.c`
-  `integrator_ias15.c`
-  `collisions_none.c`
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
 
   This example uses the IAS15 integrator to simulate
   a very eccentric planetary orbit. The integrator
@@ -454,13 +461,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   
   
 
-*  **examples/forced_migration**
+-  **examples/forced_migration**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_open.c`
-  `integrator_ias15.c`
-  `collisions_none.c`
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
 
   This example applies dissipative forces to two
   bodies orbiting a central object. The forces are specified
@@ -475,13 +481,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   
   
 
-*  **examples/granulardynamics**
+-  **examples/granulardynamics**
 
   This example is using the following modules:  
-  `gravity_none.c`
-  `boundaries_periodic.c`
-  `integrator_leapfrog.c`
-  `collisions_tree.c`
+  ``gravity_none.c``
+  ``boundaries_periodic.c``
+  ``collisions_tree.c``
 
   This example is about granular dynamics. No gravitational
   forces are present in this example, which is why the module
@@ -490,13 +495,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   up the particles, create a dense and cool layer in the middle.
   
 
-*  **examples/J2**
+-  **examples/J2**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_open.c`
-  `integrator_ias15.c`
-  `collisions_none.c`
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
 
   This example presents an implementation of the J2
   gravitational moment. The equation of motions are integrated with
@@ -506,27 +510,37 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   expansion.
   
 
-*  **examples/kozai**
+-  **examples/kozai**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_open.c`
-  `integrator_ias15.c`
-  `collisions_none.c`
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
 
   This example uses the IAS15 integrator to simulate
   a Lidov Kozai cycle of a planet perturbed by a distant star. The integrator
   automatically adjusts the timestep so that even very high
   eccentricity encounters are resovled with high accuracy.
   
+  
 
-*  **examples/mergers**
+-  **examples/megno**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_open.c`
-  `integrator_ias15.c`
-  `collisions_direct.c`
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
+
+  This example uses the IAS15 integrator
+  to calculate the MEGNO of a two planet system.
+  
+
+-  **examples/mergers**
+
+  This example is using the following modules:  
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_direct.c``
 
   This example integrates a densly packed planetary system
   which becomes unstable on a timescale of only a few orbits. The IAS15
@@ -535,17 +549,27 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   in this example.
   
 
-*  **examples/opencl**
+-  **examples/mikkola**
 
   This example is using the following modules:  
-  `gravity_opencl.c`
-  `boundaries_open.c`
-  `integrator_leapfrog.c`
-  `collisions_none.c`
-  `gravity_direct.c`
-  `boundaries_open.c`
-  `integrator_leapfrog.c`
-  `collisions_none.c`
+  ``gravity_direct.c``
+  ``boundaries_none.c``
+  ``collisions_none.c``
+
+  This example uses the symplectic Wisdom Holman (WH) integrator
+  to integrate test particles on eccentric orbits in a fixed potential.
+  Note that the WH integrator assumes that the central object is at the origin.
+  
+
+-  **examples/opencl**
+
+  This example is using the following modules:  
+  ``gravity_opencl.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
 
   A self-gravitating disc is integrated using
   the OpenCL direct gravity summation module.
@@ -558,21 +582,20 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   multiple of the workgrop size.
   
   You can test the performance increase by running:
-  `make direct && ./nbody`, which will run on the CPU and
-  `make && ./nbody`, which will run on the GPU.
+  `make direct && ./rebound`, which will run on the CPU and
+  `make && ./rebound`, which will run on the GPU.
   
   The Makefile is working with the Apple LLVM compiler. Changes
   might be necessary for other compilers such as gcc.
   
   
 
-*  **examples/outer_solar_system**
+-  **examples/outer_solar_system**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_open.c`
-  `integrator_ias15.c`
-  `collisions_none.c`
+  ``gravity_direct.c``
+  ``boundaries_none.c``
+  ``collisions_none.c``
 
   This example uses the IAS15 integrator
   to integrate the outer planets of the solar system. The initial
@@ -587,13 +610,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   Simply change the integrator to `integrator_wh.c` in the Makefile.
   
 
-*  **examples/overstability**
+-  **examples/overstability**
 
   This example is using the following modules:  
-  `gravity_none.c`
-  `boundaries_shear.c`
-  `integrator_sei.c`
-  `collisions_sweep.c`
+  ``gravity_none.c``
+  ``boundaries_shear.c``
+  ``collisions_sweep.c``
 
   A narrow box of Saturn's rings is simulated to
   study the viscous overstability. Collisions are resolved using
@@ -607,58 +629,54 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   the `r` key.
   
 
-*  **examples/prdrag**
+-  **examples/prdrag**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_open.c`
-  `integrator_ias15.c`
-  `collisions_none.c`
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
 
   This example provides an implementation of the
   Poynting-Robertson effect. The code is using the IAS15 integrator
   which is ideally suited for this velocity dependent force.
   
 
-*  **examples/restarting_simulation**
+-  **examples/restarting_simulation**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_shear.c`
-  `integrator_sei.c`
-  `collisions_direct.c`
+  ``gravity_direct.c``
+  ``boundaries_shear.c``
+  ``collisions_direct.c``
 
   This example demonstrates how to restart a simulation
   using a binary file. A shearing sheet ring simulation is used, but
   the same method can be applied to any other type of simulation.
   
-  First, run the program with `./nbody`.
+  First, run the program with `./rebound`.
   Random initial conditions are created and
   a restart file is written once per orbit.
   Then, to restart the simulation, run the
-  program with `./nbody --restart restart.bin`.
+  program with `./rebound --restart restart.bin`.
   
   
 
-*  **examples/restricted_threebody**
+-  **examples/restricted_threebody**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_open.c`
-  `integrator_wh.c`
-  `collisions_none.c`
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
 
   This example simulates a disk of test particles around
   a central object, being perturbed by a planet.
   
 
-*  **examples/restricted_threebody_mpi**
+-  **examples/restricted_threebody_mpi**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_open.c`
-  `integrator_leapfrog.c`
-  `collisions_none.c`
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
 
   This problem uses MPI to calculate the restricted three
   body problem. Active particles are copied to all nodes. All other
@@ -667,13 +685,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   Run with `mpirun -np 4 nbody`.
   
 
-*  **examples/selfgravity_disc**
+-  **examples/selfgravity_disc**
 
   This example is using the following modules:  
-  `gravity_tree.c`
-  `boundaries_open.c`
-  `integrator_leapfrog.c`
-  `collisions_none.c`
+  ``gravity_tree.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
 
   A self-gravitating disc is integrated using
   the leap frog integrator. This example is also compatible with
@@ -681,13 +698,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   are not resolved.
   
 
-*  **examples/selfgravity_disc_grape**
+-  **examples/selfgravity_disc_grape**
 
   This example is using the following modules:  
-  `gravity_grape.c`
-  `boundaries_open.c`
-  `integrator_leapfrog.c`
-  `collisions_none.c`
+  ``gravity_grape.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
 
   A self-gravitating disc is integrated using
   the leap frog integrator. This example is using the GRAPE
@@ -696,13 +712,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   Collisions are not resolved.
   
 
-*  **examples/selfgravity_plummer**
+-  **examples/selfgravity_plummer**
 
   This example is using the following modules:  
-  `gravity_tree.c`
-  `boundaries_open.c`
-  `integrator_leapfrog.c`
-  `collisions_none.c`
+  ``gravity_tree.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
 
   A self-gravitating plummer sphere is integrated using
   the leap frog integrator. Collisions are not resolved. Note that the
@@ -711,13 +726,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   comes with adaptive timestepping.
   
 
-*  **examples/shearing_sheet**
+-  **examples/shearing_sheet**
 
   This example is using the following modules:  
-  `gravity_tree.c`
-  `boundaries_shear.c`
-  `integrator_sei.c`
-  `collisions_tree.c`
+  ``gravity_tree.c``
+  ``boundaries_shear.c``
+  ``collisions_tree.c``
 
   This example simulates a small patch of Saturn's
   Rings in shearing sheet coordinates. If you have OpenGL enabled,
@@ -727,13 +741,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   
   
 
-*  **examples/shearing_sheet_2**
+-  **examples/shearing_sheet_2**
 
   This example is using the following modules:  
-  `gravity_tree.c`
-  `boundaries_shear.c`
-  `integrator_sei.c`
-  `collisions_tree.c`
+  ``gravity_tree.c``
+  ``boundaries_shear.c``
+  ``collisions_tree.c``
 
   This example is identical to the shearing_sheet
   example but uses a different algorithm for resolving individual
@@ -747,13 +760,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   
   
 
-*  **examples/shearing_sheet_fft**
+-  **examples/shearing_sheet_fft**
 
   This example is using the following modules:  
-  `gravity_fft.c`
-  `boundaries_shear.c`
-  `integrator_sei.c`
-  `collisions_sweep.c`
+  ``gravity_fft.c``
+  ``boundaries_shear.c``
+  ``collisions_sweep.c``
 
   This problem is identical to the other shearing
   sheet examples but uses an FFT based gravity solver.
@@ -762,13 +774,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   There is no tree present in this simulation.
   
 
-*  **examples/shearing_sheet_grape**
+-  **examples/shearing_sheet_grape**
 
   This example is using the following modules:  
-  `gravity_grape.c`
-  `boundaries_shear.c`
-  `integrator_sei.c`
-  `collisions_sweep.c`
+  ``gravity_grape.c``
+  ``boundaries_shear.c``
+  ``collisions_sweep.c``
 
   This is yet another shearing sheet example,
   it uses a GRAPE to calculate gravity. Note that you need to have
@@ -777,13 +788,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   Saturn's rings.
   
 
-*  **examples/shearing_sheet_profiling**
+-  **examples/shearing_sheet_profiling**
 
   This example is using the following modules:  
-  `gravity_tree.c`
-  `boundaries_shear.c`
-  `integrator_sei.c`
-  `collisions_tree.c`
+  ``gravity_tree.c``
+  ``boundaries_shear.c``
+  ``collisions_tree.c``
 
   This example demonstrates how to use the
   profiling tool that comes with REBOUND to find out which parts
@@ -791,26 +801,46 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   `PROFILING=1` in the Makefile.
   
 
-*  **examples/spreading_ring**
+-  **examples/simple**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_open.c`
-  `integrator_wh.c`
-  `collisions_sweepphi.c`
+  ``gravity_direct.c``
+  ``boundaries_none.c``
+  ``collisions_none.c``
+
+  This example uses the IAS15 integrator
+  to calculate the MEGNO of a two planet system.
+  
+
+-  **examples/solar_system**
+
+  This example is using the following modules:  
+  ``gravity_direct.c``
+  ``boundaries_none.c``
+  ``collisions_none.c``
+
+  This example integrates all planets of the Solar
+  System. The data comes from the NASA HORIZONS system.
+  
+
+-  **examples/spreading_ring**
+
+  This example is using the following modules:  
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_sweepphi.c``
 
   A narrow ring of collisional particles is spreading.
   The example uses the Wisdom Holman integrator. A plane-sweep algorithm
   in the phi direction is used to detect collisions.
   
 
-*  **examples/star_of_david**
+-  **examples/star_of_david**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_none.c`
-  `integrator_ias15.c`
-  `collisions_none.c`
+  ``gravity_direct.c``
+  ``boundaries_none.c``
+  ``collisions_none.c``
 
   This example uses the IAS15 integrator
   to integrate the "Star od David", a four body system consisting of two
@@ -820,26 +850,46 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   information see http://www.princeton.edu/%7Ervdb/WebGL/New.html
   
 
-*  **examples/symplectic_integrator**
+-  **examples/stark**
 
   This example is using the following modules:  
-  `gravity_direct.c`
-  `boundaries_open.c`
-  `integrator_wh.c`
-  `collisions_none.c`
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
+
+  This example uses the IAS15 integrator
+  to calculate the MEGNO of a two planet system.
+  
+
+-  **examples/stark_radial**
+
+  This example is using the following modules:  
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
+
+  This example uses the IAS15 integrator
+  to calculate the MEGNO of a two planet system.
+  
+
+-  **examples/symplectic_integrator**
+
+  This example is using the following modules:  
+  ``gravity_direct.c``
+  ``boundaries_open.c``
+  ``collisions_none.c``
 
   This example uses the symplectic Wisdom Holman (WH) integrator
   to integrate test particles on eccentric orbits in a fixed potential.
   Note that the WH integrator assumes that the central object is at the origin.
   
 
-*  **examples/viewer**
+-  **examples/viewer**
 
   This example is using the following modules:  
-  `gravity_none.c`
-  `boundaries_periodic.c`
-  `integrator_dummy.c`
-  `collisions_dummy.c`
+  ``gravity_none.c``
+  ``boundaries_periodic.c``
+  ``collisions_dummy.c``
 
   This example doesn't simulate anything. It's just a
   visualization toll that can display data in the form x, y, z, r.
@@ -848,8 +898,6 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   
   Note that this example uses only dummy modules.
   
-  This viewer can display data in the form x, y, z, r.  
-
 
 OpenGL keyboard command
 -----------------------
