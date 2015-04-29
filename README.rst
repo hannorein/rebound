@@ -337,14 +337,14 @@ examples/bouncing_balls
   the module collisions_direct.c to either collisions_tree.c or
   collisions_sweep.c in the Makefile.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_periodic.c``  ``collisions_direct.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_periodic.c`` ``collisions_direct.c``.
 
 examples/bouncing_balls_corners
   This example tests collision detection methods accros box boundaries.
   There are four particles, one in each corner. To see the ghost boxes in OpenGL
   press `g` while the simulation is running.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_periodic.c``  ``collisions_tree.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_periodic.c`` ``collisions_tree.c``.
 
 examples/bouncing_string
   This example tests collision detection methods.
@@ -352,7 +352,7 @@ examples/bouncing_string
   along a line. All except one of the particles are at rest
   initially.
   
-  Modules used:   ``gravity_none.c``  ``boundaries_periodic.c``  ``collisions_direct.c``
+  Modules used: ``gravity_none.c`` ``boundaries_periodic.c`` ``collisions_direct.c``.
 
 examples/circumplanetarydust
   This example shows how to integrate circumplanetary
@@ -365,7 +365,7 @@ examples/circumplanetarydust
   Only one dust particle is used in this example, but there could be
   many.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/closeencounter
   This example integrates a densly packed planetary system
@@ -375,7 +375,7 @@ examples/closeencounter
   enocunter happens. IAS15 is very high order and ideally suited for the
   detection of these kind of encounters.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/closeencounter_hybrid
   This example integrates a densly packed planetary system
@@ -385,7 +385,7 @@ examples/closeencounter_hybrid
   enocunter happens. IAS15 is very high order and ideally suited for the
   detection of these kind of encounters.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/closeencounter_record
   This example integrates a densly packed planetary system
@@ -397,7 +397,7 @@ examples/closeencounter_record
   The collision search is by default a direct search, i.e. O(N^2) but can be
   changed to a tree by using the `collisions_tree.c` module.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_direct.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_direct.c``.
 
 examples/dragforce
   This is a very simple example on how to implement a velocity
@@ -405,7 +405,7 @@ examples/dragforce
   is ideally suited to handle non-conservative forces.
   No gravitational forces or collisions are present.
   
-  Modules used:   ``gravity_none.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_none.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/eccentric_orbit
   This example uses the IAS15 integrator to simulate
@@ -414,7 +414,7 @@ examples/eccentric_orbit
   resovled with high accuracy.
   
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/forced_migration
   This example applies dissipative forces to two
@@ -429,7 +429,7 @@ examples/forced_migration
   the damping terms as actual forces.
   
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/granulardynamics
   This example is about granular dynamics. No gravitational
@@ -438,7 +438,7 @@ examples/granulardynamics
   particles simulate shearing walls. These walls are heating
   up the particles, create a dense and cool layer in the middle.
   
-  Modules used:   ``gravity_none.c``  ``boundaries_periodic.c``  ``collisions_tree.c``
+  Modules used: ``gravity_none.c`` ``boundaries_periodic.c`` ``collisions_tree.c``.
 
 examples/J2
   This example presents an implementation of the J2
@@ -448,7 +448,7 @@ examples/J2
   change them or even include higher order terms in the multipole
   expansion.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/kozai
   This example uses the IAS15 integrator to simulate
@@ -457,13 +457,13 @@ examples/kozai
   eccentricity encounters are resovled with high accuracy.
   
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/megno
   This example uses the IAS15 integrator
   to calculate the MEGNO of a two planet system.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/mergers
   This example integrates a densly packed planetary system
@@ -472,14 +472,14 @@ examples/mergers
   size and merge if they collide. Note that the size is unphysically large
   in this example.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_direct.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_direct.c``.
 
 examples/mikkola
   This example uses the symplectic Wisdom Holman (WH) integrator
   to integrate test particles on eccentric orbits in a fixed potential.
   Note that the WH integrator assumes that the central object is at the origin.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_none.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_none.c`` ``collisions_none.c``.
 
 examples/opencl
   A self-gravitating disc is integrated using
@@ -500,7 +500,7 @@ examples/opencl
   might be necessary for other compilers such as gcc.
   
   
-  Modules used:   ``gravity_opencl.c``  ``boundaries_open.c``  ``collisions_none.c``  ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_opencl.c`` ``boundaries_open.c`` ``collisions_none.c`` ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/outer_solar_system
   This example uses the IAS15 integrator
@@ -515,7 +515,7 @@ examples/outer_solar_system
   The example also works with the Wisdom-Holman symplectic integrator.
   Simply change the integrator to `integrator_wh.c` in the Makefile.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_none.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_none.c`` ``collisions_none.c``.
 
 examples/overstability
   A narrow box of Saturn's rings is simulated to
@@ -529,14 +529,14 @@ examples/overstability
   You can change the viewing angle of the camera with your mouse or by pressing
   the `r` key.
   
-  Modules used:   ``gravity_none.c``  ``boundaries_shear.c``  ``collisions_sweep.c``
+  Modules used: ``gravity_none.c`` ``boundaries_shear.c`` ``collisions_sweep.c``.
 
 examples/prdrag
   This example provides an implementation of the
   Poynting-Robertson effect. The code is using the IAS15 integrator
   which is ideally suited for this velocity dependent force.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/restarting_simulation
   This example demonstrates how to restart a simulation
@@ -550,13 +550,13 @@ examples/restarting_simulation
   program with `./rebound --restart restart.bin`.
   
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_shear.c``  ``collisions_direct.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_shear.c`` ``collisions_direct.c``.
 
 examples/restricted_threebody
   This example simulates a disk of test particles around
   a central object, being perturbed by a planet.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/restricted_threebody_mpi
   This problem uses MPI to calculate the restricted three
@@ -565,7 +565,7 @@ examples/restricted_threebody_mpi
   distributed. There is not domain decomposition used in this example.
   Run with `mpirun -np 4 nbody`.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/selfgravity_disc
   A self-gravitating disc is integrated using
@@ -573,7 +573,7 @@ examples/selfgravity_disc
   the Wisdom Holman integrator or the IAS15 integrator. Collisions
   are not resolved.
   
-  Modules used:   ``gravity_tree.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_tree.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/selfgravity_disc_grape
   A self-gravitating disc is integrated using
@@ -582,7 +582,7 @@ examples/selfgravity_disc_grape
   GRAPE card in your computer to run this example.
   Collisions are not resolved.
   
-  Modules used:   ``gravity_grape.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_grape.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/selfgravity_plummer
   A self-gravitating plummer sphere is integrated using
@@ -591,7 +591,7 @@ examples/selfgravity_plummer
   encounters. An alternative integrator is `integrator_ias15.c` which
   comes with adaptive timestepping.
   
-  Modules used:   ``gravity_tree.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_tree.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/shearing_sheet
   This example simulates a small patch of Saturn's
@@ -601,7 +601,7 @@ examples/shearing_sheet
   Particle properties resemble those found in Saturn's rings.
   
   
-  Modules used:   ``gravity_tree.c``  ``boundaries_shear.c``  ``collisions_tree.c``
+  Modules used: ``gravity_tree.c`` ``boundaries_shear.c`` ``collisions_tree.c``.
 
 examples/shearing_sheet_2
   This example is identical to the shearing_sheet
@@ -615,7 +615,7 @@ examples/shearing_sheet_2
   particles.
   
   
-  Modules used:   ``gravity_tree.c``  ``boundaries_shear.c``  ``collisions_tree.c``
+  Modules used: ``gravity_tree.c`` ``boundaries_shear.c`` ``collisions_tree.c``.
 
 examples/shearing_sheet_fft
   This problem is identical to the other shearing
@@ -624,7 +624,7 @@ examples/shearing_sheet_fft
   Collisions are detected using a plane sweep algorithm.
   There is no tree present in this simulation.
   
-  Modules used:   ``gravity_fft.c``  ``boundaries_shear.c``  ``collisions_sweep.c``
+  Modules used: ``gravity_fft.c`` ``boundaries_shear.c`` ``collisions_sweep.c``.
 
 examples/shearing_sheet_grape
   This is yet another shearing sheet example,
@@ -633,7 +633,7 @@ examples/shearing_sheet_grape
   simulation. Particle properties resemble those found in
   Saturn's rings.
   
-  Modules used:   ``gravity_grape.c``  ``boundaries_shear.c``  ``collisions_sweep.c``
+  Modules used: ``gravity_grape.c`` ``boundaries_shear.c`` ``collisions_sweep.c``.
 
 examples/shearing_sheet_profiling
   This example demonstrates how to use the
@@ -641,26 +641,26 @@ examples/shearing_sheet_profiling
   of your code are slow. To turn on this option, simple set
   `PROFILING=1` in the Makefile.
   
-  Modules used:   ``gravity_tree.c``  ``boundaries_shear.c``  ``collisions_tree.c``
+  Modules used: ``gravity_tree.c`` ``boundaries_shear.c`` ``collisions_tree.c``.
 
 examples/simple
   This example uses the IAS15 integrator
   to calculate the MEGNO of a two planet system.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_none.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_none.c`` ``collisions_none.c``.
 
 examples/solar_system
   This example integrates all planets of the Solar
   System. The data comes from the NASA HORIZONS system.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_none.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_none.c`` ``collisions_none.c``.
 
 examples/spreading_ring
   A narrow ring of collisional particles is spreading.
   The example uses the Wisdom Holman integrator. A plane-sweep algorithm
   in the phi direction is used to detect collisions.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_sweepphi.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_sweepphi.c``.
 
 examples/star_of_david
   This example uses the IAS15 integrator
@@ -670,26 +670,26 @@ examples/star_of_david
   integrations. The initial conditions are by Robert Vanderbei. For more
   information see http://www.princeton.edu/%7Ervdb/WebGL/New.html
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_none.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_none.c`` ``collisions_none.c``.
 
 examples/stark
   This example uses the IAS15 integrator
   to calculate the MEGNO of a two planet system.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/stark_radial
   This example uses the IAS15 integrator
   to calculate the MEGNO of a two planet system.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/symplectic_integrator
   This example uses the symplectic Wisdom Holman (WH) integrator
   to integrate test particles on eccentric orbits in a fixed potential.
   Note that the WH integrator assumes that the central object is at the origin.
   
-  Modules used:   ``gravity_direct.c``  ``boundaries_open.c``  ``collisions_none.c``
+  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/viewer
   This example doesn't simulate anything. It's just a
@@ -699,7 +699,7 @@ examples/viewer
   
   Note that this example uses only dummy modules.
   
-  Modules used:   ``gravity_none.c``  ``boundaries_periodic.c``  ``collisions_dummy.c``
+  Modules used: ``gravity_none.c`` ``boundaries_periodic.c`` ``collisions_dummy.c``.
 
 OpenGL keyboard command
 -----------------------

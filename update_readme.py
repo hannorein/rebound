@@ -29,14 +29,14 @@ with open("README.rst","w") as f:
                             f.write("  "+line[3:].strip()+"\n")
                         if will_output==2 and did_output==0:
                             did_output = 1
-                            f.write("  Modules used: ");
+                            f.write("  Modules used:");
                             with open("examples/"+problemc.split("/")[2]+"/Makefile") as mf:
                                 for linem in mf:
                                     if linem.strip()[0:6] == "ln -fs":
                                         sourcefile = linem.strip().split(" ")[2].split("/")[-1]
                                         if sourcefile!="problem.c":
-                                            f.write("  ``"+sourcefile+"``")
-                            f.write("\n");
+                                            f.write(" ``"+sourcefile+"``")
+                            f.write(".\n");
                     if did_output==0:
                         print "Warning: Did not find description in "+problemc
             start_delete = -1
