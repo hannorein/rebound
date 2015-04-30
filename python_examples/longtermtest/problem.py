@@ -101,7 +101,7 @@ Ngrid = 500
 #3dt = 100.23
 orbit = 11.8618*1.*np.pi
 dt = orbit/3000.
-tmax = orbit*2e5
+tmax = orbit*2e6
 integrators = ["mercury","mikkola","wh","mikkola-cor11","swifter-whm"]
 #integrators = ["mercury","ias15","wh","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11"]
 colors = {
@@ -155,8 +155,8 @@ res_mean = np.mean(res,axis=1)
 for i in xrange(len(res)):
     for j in xrange(trials):
         res_trial = res[i,j,:,:]
-        im1 = axarr.plot(res_trial[0]/orbit,res_trial[1], color=colors[integrators[i]],alpha=0.1)
-    im1 = axarr.plot(res_mean[i][0]/orbit,res_mean[i][1], label=integrators[i].upper(),color=colors[integrators[i]])
+        im1 = axarr.plot(res_trial[0]/orbit,res_trial[1], color=colors[integrators[i]],alpha=0.2)
+    im1 = axarr.plot(res_mean[i][0]/orbit,res_mean[i][1], label=integrators[i].upper(),color=colors[integrators[i]], linewidth=2.0)
 
 from matplotlib.font_manager import FontProperties
 fontP = FontProperties()

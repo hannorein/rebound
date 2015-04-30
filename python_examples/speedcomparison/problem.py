@@ -92,10 +92,11 @@ def simulation(par):
     return [runtime, e]
 
 orbit = 365.*11.8618
-dts = np.logspace(-2.5,2,128)
+dts = np.logspace(-2.5,2,100)
 #dts = np.logspace(-3,2,155)
-tmax = orbit*1e2
-integrators = ["wh","mikkola","swifter-whm","swifter-tu4","swifter-helio","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mercury"]
+tmax = orbit*1e3
+integrators = ["wh","mikkola","swifter-whm","swifter-tu4","swifter-helio","mikkola-cor11","mercury"]
+#integrators = ["wh","mikkola","swifter-whm","swifter-tu4","swifter-helio","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mercury"]
 colors = {
     'mikkola':      "#FF0000",
     'mikkola-cor3': "#FF7700",
@@ -162,7 +163,7 @@ for i in xrange(len(integrators)):
 from matplotlib.font_manager import FontProperties
 fontP = FontProperties()
 fontP.set_size('small')
-lgd = plt.legend(loc="upper center",  bbox_to_anchor=(-0.1, -0.2),  prop = fontP,ncol=5,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = -0.5, markerscale=2.)
+lgd = plt.legend(loc="upper center",  bbox_to_anchor=(-0.1, -0.2),  prop = fontP,ncol=4,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = -0.5, markerscale=2.)
 plt.savefig("speed.pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
 import os
 os.system("open speed.pdf")
