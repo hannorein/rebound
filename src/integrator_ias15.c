@@ -171,8 +171,8 @@ int integrator_ias15_step() {
 		g[6][k] = b[6][k];
 	}
 
-	double integrator_megno_thisdt;
-	double integrator_megno_thisdt_init;
+	double integrator_megno_thisdt = 0.;
+	double integrator_megno_thisdt_init = 0.;
 	if (N_megno){
 		integrator_megno_thisdt_init = w[0]* t * tools_megno_deltad_delta();
 	}

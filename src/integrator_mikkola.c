@@ -212,9 +212,9 @@ double X;
 	if(fastabs(X-oldX) > 0.01*X_per_period){
 		// Linear guess
 		X = beta*_dt/M;
-		const unsigned int nmax = 64;
-		static double prevX[nmax];
-		for(int n_lag=1; n_lag < nmax; n_lag++){
+#define MIK_NMAX_QUART 64
+		static double prevX[MIK_NMAX_QUART+1];
+		for(int n_lag=1; n_lag < MIK_NMAX_QUART; n_lag++){
 			stiefel_Gs3(Gs, beta, X);
 			const double f = r0*X + eta0*Gs[2] + zeta0*Gs[3] - _dt;
 			const double fp = r0 + eta0*Gs[1] + zeta0*Gs[2];
@@ -226,7 +226,7 @@ double X;
 			for(int i=1;i<n_lag;i++){
 				if(X==prevX[i]){
 					// Converged. Exit.
-					n_lag = nmax;
+					n_lag = MIK_NMAX_QUART;
 					converged = 1;
 					break;
 				}
@@ -238,9 +238,8 @@ double X;
 		ri = 1./(r0 + eta0Gs1zeta0Gs2);
 	}else{
 		double oldX2 = NAN; // NAN might be a GNU extension, any value other than X works.
-		const unsigned int nmax = 32;
-		
-		for (int n_hg=1;n_hg<nmax;n_hg++){
+#define MIK_NMAX_NEWT 32
+		for (int n_hg=1;n_hg<MIK_NMAX_NEWT;n_hg++){
 			oldX2 = oldX;
 			oldX = X;
 			stiefel_Gs3(Gs, beta, X);
