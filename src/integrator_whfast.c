@@ -43,7 +43,7 @@
 
 unsigned int integrator_whfast_persistent_particles		= 0;
 unsigned int integrator_whfast_synchronize_manually 		= 0;
-unsigned int integrator_whfast_corrector 			= 0;
+unsigned int integrator_whfast_corrector 			= 11;
 unsigned int integrator_whfast_particles_modified		= 0;
 
 static unsigned int integrator_whfast_is_synchronized = 1;
