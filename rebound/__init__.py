@@ -524,6 +524,10 @@ def set_integrator(integrator="IAS15"):
             if integrator[8:] == "cor11":
                 set_integrator_mikkola_corrector(11)
             return
+        if integrator.lower() == "whfast":
+            set_integrator(1)
+            set_integrator_mikkola_corrector(11)
+            return
         if integrator.lower() == "sei":
             set_integrator(2)
             return
