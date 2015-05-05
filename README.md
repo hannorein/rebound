@@ -1,6 +1,9 @@
 REBOUND - An open-source multi-purpose N-body code for collisional dynamics
 ===========================================================================
 
+*Note:* The current development branch is [whfast](https://github.com/hannorein/rebound/tree/whfast). Check it out if you're interested in the fast, accurate and unbiased Wisdom-Holman integrator WHFAST that we are currently developing. It will be merged in the master branch when the corresponding paper is out. Any comments or bug reports are welcome!
+
+
 [![GPL](http://img.shields.io/badge/license-GPL-green.svg?style=flat)](https://github.com/hannorein/rebound/blob/master/LICENSE)
 [![arXiv](http://img.shields.io/badge/arXiv-1110.4876-orange.svg?style=flat)](http://arxiv.org/abs/1110.4876)
 [![arXiv](http://img.shields.io/badge/arXiv-1409.4779-orange.svg?style=flat)](http://arxiv.org/abs/1409.4779)
