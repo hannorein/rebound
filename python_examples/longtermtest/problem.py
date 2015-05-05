@@ -105,7 +105,7 @@ tmax = orbit*2e6
 integrators = ["mercury","wh","swifter-whm","whfast-nocor", "whfast"]
 colors = {
     'whfast-nocor': "#FF0000",
-    'whfast':       "#FFDD00",
+    'whfast':       "#00AA00",
     'mercury':      "#6E6E6E",
     'wh':           "b",
     'swifter-whm':  "#444444",
