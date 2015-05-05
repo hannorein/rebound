@@ -875,7 +875,7 @@ void integrator_whfast_part2(){
 	
 
 void integrator_whfast_reset(){
-	integrator_whfast_corrector = 0;
+	integrator_whfast_corrector = 11;
 	integrator_whfast_is_synchronized = 1;
 	integrator_whfast_synchronize_manually = 0;
 	integrator_whfast_persistent_particles = 0;
