@@ -109,10 +109,10 @@ Whenever you want to use the rebound library, you have to make sure you first sw
     source venv/bin/activate # if you used virtualenv
     source activate venv # if you used conda
 
-You can now run the program by executing `python test.py`. If you want to use the Wisdom-Holman type MIKKOLA integrator (Rein & Tamayo, in prep), simply set it before calling `rebound.integrate()`.::
+You can now run the program by executing `python test.py`. If you want to use the Wisdom-Holman type WHFAST integrator (Rein & Tamayo, in prep), simply set it before calling `rebound.integrate()`.::
 
-    rebound.set_integrator("mikkola")
-    rebound.set_dt(0.01)                           # Fixed timestep needed (MIKKOLA is not adaptive)
+    rebound.set_integrator("whfast")
+    rebound.set_dt(0.01)                           # Fixed timestep needed (WHFAST is not adaptive)
 
 For details on the available function of the REBOUND python-module, have a look at the docstrings in the file [`rebound.py`](rebound/rebound.py) and the examples provided in the `python_examples` directory. 
 We will add more examples and documentation shortly.
@@ -163,8 +163,8 @@ The following sections list the available modules that come with REBOUND.
  `integrator_euler.c`   |  Euler scheme, first order
  `integrator_leapfrog.c`| Leap frog, second order, symplectic
  `integrator_ias15.c`   | IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precission. IAS15 can integrate variational equations. Rein & Spiegel 2014, Everhart 1985
- `integrator_mikkola.c` | Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, uses Gauss f and g functions to solve Kepler motion, can integrate variational equations, follows Mikkola and Innanen (1999)
- `integrator_wh.c`      | SWIFT-style Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, note that  `integrator_mikkola.c` almost always offers better characteristics, Wisdom & Holman 1991, Kinoshita et al 1991
+ `integrator_whfast.c`  | Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, uses Gauss f and g functions to solve Kepler motion, can integrate variational equations, follows Mikkola and Innanen (1999)
+ `integrator_wh.c`      | SWIFT-style Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, note that  `integrator_whfast.c` almost always offers better characteristics, Wisdom & Holman 1991, Kinoshita et al 1991
  `integrator_sei.c`     | Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
 
 
