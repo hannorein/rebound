@@ -2,11 +2,10 @@
  * @file 	problem.c
  * @brief 	Example problem: MEGNO.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example uses the IAS15 integrator
- * to calculate the MEGNO of a two planet system.
+ * @detail 	This example calculates the Stark problem.
  * 
  * @section 	LICENSE
- * Copyright (c) 2014 Hanno Rein, Shangfei Liu, Dave Spiegel
+ * Copyright (c) 2015 Hanno Rein, Daniel Tamayo 
  *
  * This file is part of rebound.
  *
@@ -40,7 +39,7 @@ void additional_forces();
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	integrator	= MIKKOLA;
+	integrator	= WHFAST;
 	dt 		= 0.0020;			// initial timestep (in days)
 	init_boxwidth(200); 		
 

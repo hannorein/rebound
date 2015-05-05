@@ -42,7 +42,7 @@ double ei;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	integrator	= MIKKOLA;
+	integrator	= WHFAST;
 	dt 		= 0.001*2.*M_PI;			// initial timestep (in days)
 	init_boxwidth(200); 		
 

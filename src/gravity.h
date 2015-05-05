@@ -45,7 +45,7 @@ void gravity_calculate_acceleration();
 void gravity_calculate_variational_acceleration();
 
 /*
- * Ignore i=1, j=0 pair (used for MIKKOLA);
+ * Ignore i=1, j=0 pair (used for WHFAST);
  */
 extern unsigned int gravity_ignore_10;
 #endif

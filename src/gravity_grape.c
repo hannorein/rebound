@@ -80,7 +80,7 @@ void gravity_calculate_acceleration(){
 		case WH:
 			firstParticle = 1;
 			break;
-		case MIKKOLA:
+		case WHFAST:
 			printf("ERROR. Not implemented.\n");
 			exit(0);
 			break;

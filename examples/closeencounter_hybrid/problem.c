@@ -3,14 +3,11 @@
  * @brief 	Example problem: Close Encounter.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @detail	This example integrates a densly packed planetary system 
- * which becomes unstable on a timescale of only a few orbits. The IAS15 
- * integrator with adaptive timestepping is used. This integrator 
- * automatically decreases the timestep whenever a close 
- * enocunter happens. IAS15 is very high order and ideally suited for the 
- * detection of these kind of encounters.
+ * which becomes unstable on a timescale of only a few orbits. 
+ * This is a test case for the HYBRID integrator.
  * 
  * @section 	LICENSE
- * Copyright (c) 2013 Hanno Rein, Dave Spiegel
+ * Copyright (c) 2015 Hanno Rein
  *
  * This file is part of rebound.
  *
@@ -38,7 +35,7 @@
 #include "output.h"
 #include "particle.h"
 #include "integrator.h"
-#include "integrator_mikkola.h"
+#include "integrator_whfast.h"
 
 #ifdef OPENGL
 extern int display_wire;
@@ -50,9 +47,9 @@ void problem_init(int argc, char* argv[]){
 	integrator = HYBRID;
 	//softening = 0.001;
 	//integrator = IAS15;
-	//integrator = MIKKOLA;
-	integrator_mikkola_corrector = 5;
-	integrator_mikkola_synchronize_manually = 1;
+	//integrator = WHFAST;
+	integrator_whfast_corrector = 5;
+	integrator_whfast_synchronize_manually = 1;
 
 #ifdef OPENGL
 	display_wire	= 1;						// show instantaneous orbits

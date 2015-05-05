@@ -35,7 +35,7 @@
 #include "particle.h"
 #include "boundaries.h"
 #include "integrator.h"
-#include "integrator_mikkola.h"
+#include "integrator_whfast.h"
 
 double ss_pos[10][3] = 
 {
@@ -88,10 +88,10 @@ void problem_init(int argc, char* argv[]){
 	tmax		= 7.3e10;			// 200 Myr
 	G		= 1.4880826e-34;		// in AU^3 / kg / day^2.
 	init_boxwidth(200); 				// Init box with width 200 astronomical units
-	integrator_mikkola_synchronize_manually = 1;	// Need to call integrator_synchronize() before outputs. 
+	integrator_whfast_synchronize_manually = 1;	// Need to call integrator_synchronize() before outputs. 
 	integrator_force_is_velocitydependent = 0;	// Force only depends on positions. 
-	integrator	= WH;
-	//integrator	= MIKKOLA;
+	//integrator	= WH;
+	integrator	= WHFAST;
 	//integrator	= IAS15;
 
 	// Initial conditions

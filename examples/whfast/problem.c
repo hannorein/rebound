@@ -42,7 +42,7 @@ double e_init;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	integrator	= MIKKOLA;
+	integrator	= WHFAST;
 	dt 		= 1e-2;	// in year/(2*pi)
 	boxsize 	= 3;	// in AU
 	init_box();
