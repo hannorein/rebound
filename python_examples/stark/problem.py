@@ -10,7 +10,7 @@ def simulation(par):
 
     rebound.reset()
     rebound.set_integrator("wh")
-    #rebound.set_integrator("mikkola")
+    #rebound.set_integrator("whfast")
     rebound.set_dt(dt)
 
     rebound.particle_add(m=1.)

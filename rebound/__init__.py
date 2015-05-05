@@ -528,6 +528,10 @@ def set_integrator(integrator="IAS15"):
             set_integrator(1)
             set_integrator_whfast_corrector(11)
             return
+        if integrator.lower() == "whfast-nocor":
+            set_integrator(1)
+            set_integrator_whfast_corrector(0)
+            return
         if integrator.lower() == "sei":
             set_integrator(2)
             return

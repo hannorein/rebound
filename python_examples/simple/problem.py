@@ -15,10 +15,7 @@ def print_orbits():
 #rebound.set_dt(0.5)  
 
 # Choose integrator (default is IAS15)
-#rebound.set_integrator("mikkola")
-
-# Set integrator options
-#rebound.set_integrator_mikkola_corrector(7) # This enables a 7th order symplectic corrector.
+#rebound.set_integrator("whfast")
 
 # Add particles
 # This example shows two different ways to add particles.

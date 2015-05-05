@@ -8,7 +8,7 @@ from interruptible_pool import InterruptiblePool
 
 for i in np.linspace(-2.*np.pi,2.*np.pi,1000):
     rebound.reset()
-    rebound.set_integrator("mikkola")
+    rebound.set_integrator("whfast-nocor")
     rebound.set_dt(0.01*2.*np.pi)
 
     try:

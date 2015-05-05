@@ -75,7 +75,7 @@ def simulation(par):
 
 Nsteps = 10000
 dt = 0.00102839712987319
-integrators = ["wh","mikkola"]
+integrators = ["wh","whfast-nocor"]
     
 parameters = [(i) for i in integrators]
 

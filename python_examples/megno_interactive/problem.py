@@ -11,7 +11,7 @@ from matplotlib.colors import LogNorm
 def simulation(par):
     saturn_a, saturn_e = par
     rebound.reset()
-    rebound.set_integrator("mikkola")
+    rebound.set_integrator("whfast-nocor")
     rebound.set_dt(5.)
     
     # These parameters are only approximately those of Jupiter and Saturn.

@@ -72,7 +72,7 @@ def simulation(par):
     return es
 N=54
 masses = np.linspace(-10.,0.,N)
-integrators = ["wh","mikkola"]
+integrators = ["wh","whfast-nocor"]
 parameters = [(i,m) for i in integrators for m in masses]
 
 pool = InterruptiblePool()

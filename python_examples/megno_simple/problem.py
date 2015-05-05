@@ -31,7 +31,5 @@ def simulation(integrator):
             print("%e %e %e %e %e %e %e %e\n" %(rebound.get_t(), rebound.get_megno(), particles[0].x, particles[1].x, particles[2].x, particles[3].x, particles[4].x, particles[5].x),file=f)
 
 simulation("ias15")
-simulation("mikkola")
-simulation("mikkola-cor3")
-simulation("mikkola-cor5")
-simulation("mikkola-cor11")
+simulation("whfast-nocor")
+simulation("whfast")

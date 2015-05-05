@@ -95,15 +95,10 @@ orbit = 365.*11.8618
 dts = np.logspace(-2.5,2,100)
 #dts = np.logspace(-3,2,155)
 tmax = orbit*1e3
-integrators = ["wh","mikkola","swifter-whm","swifter-tu4","swifter-helio","mikkola-cor11","mercury"]
-#integrators = ["wh","mikkola","swifter-whm","swifter-tu4","swifter-helio","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11","mercury"]
+integrators = ["wh","swifter-whm","swifter-tu4","swifter-helio","mercury","whfast-nocor","whfast"]
 colors = {
-    'mikkola':      "#FF0000",
-    'mikkola-cor3': "#FF7700",
-    'mikkola-cor5': "#FF9D00",
-    'mikkola-cor7': "#FFC400",
-    'mikkola-cor11':"#FFDD00",
-    'mikkola-jac':  "#D4FF00",
+    'whfast-nocor': "#FF0000",
+    'whfast':       "#FFDD00",
     'mercury':      "#6E6E6E",
     'wh':           "b",
     'swifter-whm':  "#444444",

@@ -8,7 +8,7 @@
 # Import the rebound module
 import sys; sys.path.append('../../python_modules')
 import rebound
-from interruptible_pool import InterruptiblePool
+from rebound.interruptible_pool import InterruptiblePool
 # Import other modules
 import numpy as np
 import multiprocessing
@@ -17,8 +17,7 @@ import multiprocessing
 def simulation(par):
     saturn_a, saturn_e = par
     rebound.reset()
-    rebound.set_integrator("mikkola")
-    rebound.set_masses_are_constant(1)
+    rebound.set_integrator("whfast-nocor")
     rebound.set_min_dt(5.)
     rebound.set_dt(1.)
     

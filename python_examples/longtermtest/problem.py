@@ -102,15 +102,10 @@ Ngrid = 500
 orbit = 11.8618*1.*np.pi
 dt = orbit/3000.
 tmax = orbit*2e6
-integrators = ["mercury","mikkola","wh","mikkola-cor11","swifter-whm"]
-#integrators = ["mercury","ias15","wh","mikkola","mikkola-cor3","mikkola-cor5","mikkola-cor7","mikkola-cor11"]
+integrators = ["mercury","wh","swifter-whm","whfast-nocor", "whfast"]
 colors = {
-    'mikkola':      "#FF0000",
-    'mikkola-cor3': "#FF7700",
-    'mikkola-cor5': "#FF9D00",
-    'mikkola-cor7': "#FFC400",
-    'mikkola-cor11':"#FFDD00",
-    'mikkola-jac':  "#D4FF00",
+    'whfast-nocor': "#FF0000",
+    'whfast':       "#FFDD00",
     'mercury':      "#6E6E6E",
     'wh':           "b",
     'swifter-whm':  "#444444",

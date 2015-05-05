@@ -7,8 +7,8 @@ from rebound import Particle
 k = 0.01720209895       # Gaussian constant 
 rebound.set_G(k*k)      # Gravitational constant
 
-# Choose the symplectic Wisdom-Holman/Mikkola integrator 
-rebound.set_integrator("mikkola")
+# Choose the symplectic WHFast integrator 
+rebound.set_integrator("whfast")
 
 # This integrator is not adaptive, so we need to set the timestep
 rebound.set_dt(40.)     # 40 days (the time unit depends on the unit of G, see above).

@@ -34,7 +34,7 @@ def simulation(par):
 N = 20
 dts = np.linspace(-3,-0.1,N)
 e0s = np.linspace(0,-1,N)
-integrators= ["wh","mikkola"]
+integrators= ["wh","whfast-nocor"]
 
 niter = []
 energyerror = []
