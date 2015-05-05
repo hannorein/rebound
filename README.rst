@@ -379,11 +379,8 @@ examples/closeencounter
 
 examples/closeencounter_hybrid
   This example integrates a densly packed planetary system
-  which becomes unstable on a timescale of only a few orbits. The IAS15
-  integrator with adaptive timestepping is used. This integrator
-  automatically decreases the timestep whenever a close
-  enocunter happens. IAS15 is very high order and ideally suited for the
-  detection of these kind of encounters.
+  which becomes unstable on a timescale of only a few orbits.
+  This is a test case for the HYBRID integrator.
   
   Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
@@ -473,13 +470,6 @@ examples/mergers
   in this example.
   
   Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_direct.c``.
-
-examples/mikkola
-  This example uses the symplectic Wisdom Holman (WH) integrator
-  to integrate test particles on eccentric orbits in a fixed potential.
-  Note that the WH integrator assumes that the central object is at the origin.
-  
-  Modules used: ``gravity_direct.c`` ``boundaries_none.c`` ``collisions_none.c``.
 
 examples/opencl
   A self-gravitating disc is integrated using
@@ -673,8 +663,7 @@ examples/star_of_david
   Modules used: ``gravity_direct.c`` ``boundaries_none.c`` ``collisions_none.c``.
 
 examples/stark
-  This example uses the IAS15 integrator
-  to calculate the MEGNO of a two planet system.
+  This example calculates the Stark problem.
   
   Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
@@ -700,6 +689,13 @@ examples/viewer
   Note that this example uses only dummy modules.
   
   Modules used: ``gravity_none.c`` ``boundaries_periodic.c`` ``collisions_dummy.c``.
+
+examples/whfast
+  This example uses the symplectic Wisdom Holman (WH) integrator
+  to integrate test particles on eccentric orbits in a fixed potential.
+  Note that the WH integrator assumes that the central object is at the origin.
+  
+  Modules used: ``gravity_direct.c`` ``boundaries_none.c`` ``collisions_none.c``.
 
 OpenGL keyboard command
 -----------------------
