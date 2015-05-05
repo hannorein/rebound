@@ -493,8 +493,8 @@ def reset():
         tmpdir = None
     librebound.reset()
 
-def set_integrator_mikkola_corrector(on=0):
-    c_int.in_dll(librebound, "integrator_mikkola_corrector").value = on
+def set_integrator_whfast_corrector(on=11):
+    c_int.in_dll(librebound, "integrator_whfast_corrector").value = on
 
 #REMOVE Following variables
 integrator_package = "REBOUND"
@@ -514,19 +514,19 @@ def set_integrator(integrator="IAS15"):
             return
         if integrator[0:7].lower() == "mikkola":
             set_integrator(1)
-            set_integrator_mikkola_corrector(0)
+            set_integrator_whfast_corrector(0)
             if integrator[8:] == "cor3":
-                set_integrator_mikkola_corrector(3)
+                set_integrator_whfast_corrector(3)
             if integrator[8:] == "cor5":
-                set_integrator_mikkola_corrector(5)
+                set_integrator_whfast_corrector(5)
             if integrator[8:] == "cor7":
-                set_integrator_mikkola_corrector(7)
+                set_integrator_whfast_corrector(7)
             if integrator[8:] == "cor11":
-                set_integrator_mikkola_corrector(11)
+                set_integrator_whfast_corrector(11)
             return
         if integrator.lower() == "whfast":
             set_integrator(1)
-            set_integrator_mikkola_corrector(11)
+            set_integrator_whfast_corrector(11)
             return
         if integrator.lower() == "sei":
             set_integrator(2)
@@ -560,15 +560,15 @@ def set_integrator(integrator="IAS15"):
             return
     raise ValueError("Warning. Intergrator not found.")
 
-def set_integrator_mikkola_persistent_particles(is_per=0):
+def set_integrator_whfast_persistent_particles(is_per=0):
     if isinstance(is_per, int):
-        c_int.in_dll(librebound, "integrator_mikkola_persistent_particles").value = is_per
+        c_int.in_dll(librebound, "integrator_whfast_persistent_particles").value = is_per
         return
     raise ValueError("Expecting integer.")
 
-def set_integrator_mikkola_synchronize_manually(synchronize_manually=0):
+def set_integrator_whfast_synchronize_manually(synchronize_manually=0):
     if isinstance(synchronize_manually, int):
-        c_int.in_dll(librebound, "integrator_mikkola_synchronize_manually").value = synchronize_manually
+        c_int.in_dll(librebound, "integrator_whfast_synchronize_manually").value = synchronize_manually
         return
     raise ValueError("Expecting integer.")
 
