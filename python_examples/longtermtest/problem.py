@@ -101,7 +101,7 @@ Ngrid = 500
 #3dt = 100.23
 orbit = 11.8618*1.*np.pi
 dt = orbit/3000.
-tmax = orbit*2e6
+tmax = orbit*1e8
 integrators = ["mercury","wh","swifter-whm","whfast-nocor", "whfast"]
 colors = {
     'whfast-nocor': "#FF0000",

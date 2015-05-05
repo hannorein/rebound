@@ -158,7 +158,7 @@ for i in xrange(len(integrators)):
 from matplotlib.font_manager import FontProperties
 fontP = FontProperties()
 fontP.set_size('small')
-lgd = plt.legend(loc="upper center",  bbox_to_anchor=(-0.1, -0.2),  prop = fontP,ncol=4,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = -0.5, markerscale=2.)
+lgd = plt.legend(loc="upper center",  bbox_to_anchor=(-0.1, -0.2),  prop = fontP,ncol=5,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = -0.5, markerscale=2.)
 plt.savefig("speed.pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
 import os
 os.system("open speed.pdf")

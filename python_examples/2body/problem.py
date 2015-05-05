@@ -5,7 +5,7 @@ from rebound.interruptible_pool import InterruptiblePool
 
 
 torb = 2.*np.pi
-tmax = 20.34476128*torb
+tmax = 100.34476128*torb
 
 def simulation(par):
     anom, dt, e, integrator = par
@@ -31,9 +31,9 @@ def simulation(par):
     return [float(rebound.get_iter())/rebound.get_t()*dt, np.fabs((Ef-Ei)/Ei)+1e-16, rebound.get_timing()/rebound.get_t()*dt*1e6/2., (Ef-Ei)/Ei]
 
 
-N = 20
-dts = np.linspace(-3,-0.1,N)
-e0s = np.linspace(0,-1,N)
+N = 250
+dts = np.linspace(-3.1,-0.1,N)
+e0s = np.linspace(0,-8,N)
 integrators= ["wh","whfast-nocor"]
 
 niter = []
@@ -58,9 +58,10 @@ import matplotlib.pyplot as plt
 from matplotlib import ticker
 from matplotlib.colors import LogNorm
 
-f,axarr = plt.subplots(3,2,figsize=(13,12),sharex='col', sharey='row')
+f,axarr = plt.subplots(3,2,figsize=(13,14),sharex='col', sharey='row')
 extent=[dts.min(), dts.max(), e0s.max(), e0s.min()]
-plt.subplots_adjust(wspace = 0.4)
+plt.subplots_adjust(wspace = 0.05)
+plt.subplots_adjust(hspace = 0.05)
 
 for ay in axarr:
     for ax in ay:
@@ -68,13 +69,15 @@ for ay in axarr:
         ax.set_xlim(extent[0], extent[1])
         ax.set_ylim(extent[2], extent[3])
         if ax.is_last_row():
-            ax.set_xlabel(r"log10$(dt/t_{orb})$")
+            ax.set_xlabel(r"timestep, log10$(dt/t_{orb})$")
         if ax.is_first_col():
-            ax.set_ylabel(r"log10$(1-e)$")
+            ax.set_ylabel(r"eccentricity, log10$(1-e)$")
 
 
 for i, integrator in enumerate(integrators):
-    im1 = axarr[0,i].imshow(energyerror[i], norm=LogNorm(), vmax=np.max(energyerror), vmin=1e-16, aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
+    if axarr[0,i].is_first_row():
+        axarr[0,i].set_title(integrator.upper(),fontsize = 16)
+    im1 = axarr[0,i].imshow(energyerror[i], norm=LogNorm(), vmax=1e-6, vmin=1e-16, aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn_r", extent=extent)
     
     im2 = axarr[1,i].imshow(np.sign(energyerror_sign[i]), vmax=1, vmin=-1, aspect='auto', origin="lower", interpolation='nearest', cmap="bwr", extent=extent)
 
@@ -85,20 +88,20 @@ cax1,kw1 = matplotlib.colorbar.make_axes([ax for ax in axarr[0,:]])
 cax2,kw2 = matplotlib.colorbar.make_axes([ax for ax in axarr[1,:]])
 cax3,kw3 = matplotlib.colorbar.make_axes([ax for ax in axarr[2,:]])
 
-cb1 = plt.colorbar(im1, ax=cax1, **kw1)
+cb1 = plt.colorbar(im1, cax=cax1, **kw1)
 cb1.solids.set_rasterized(True)
-cb1.set_label("Relative energy error")
+cb1.set_label("relative energy error")
 
-cb2 = plt.colorbar(im2, ax=cax2, **kw2)
+cb2 = plt.colorbar(im2, cax=cax2, **kw2)
 cb2.solids.set_rasterized(True)
 t = ticker.MaxNLocator(nbins=3)
 cb2.locator = t
 cb2.update_ticks()
-cb2.set_label("Sign of energy error")
+cb2.set_label("sign of energy error")
 
-cb3 = plt.colorbar(im3, ax=cax3, **kw3)
+cb3 = plt.colorbar(im3, cax=cax3, **kw3)
 cb3.solids.set_rasterized(True)
-cb3.set_label("Runtime per timestep [$\mu$s]")
+cb3.set_label("runtime per timestep [$\mu$s]")
 cb3.update_ticks()
 
 
