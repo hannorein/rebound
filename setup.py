@@ -8,7 +8,7 @@ import os
 libreboundmodule = Extension('librebound',
                     sources = [ 'src/librebound.c',
                                 'src/integrator_ias15.c',
-                                'src/integrator_mikkola.c',
+                                'src/integrator_whfast.c',
                                 'src/integrator_wh.c',
                                 'src/integrator_leapfrog.c',
                                 'src/integrator_sei.c',
