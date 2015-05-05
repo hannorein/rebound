@@ -1,11 +1,11 @@
 /**
  * @file 	librebound.c
- * @brief 	Declarations and functions for shared library access to the IAS15 and MIKKOLA integrators.
+ * @brief 	Declarations and functions for shared library.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 		Dave Spiegel <dave@ias.edu>
  * 
  * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Dave Spiegel
+ * Copyright (c) 2015 Hanno Rein, Dave Spiegel, Daniel Tamayo
  *
  * This file is part of rebound.
  *
@@ -39,7 +39,7 @@
 #include "librebound.h"
 #include "boundaries.h"
 #include "integrator.h"
-#include "integrator_mikkola.h"
+#include "integrator_whfast.h"
 
 // Default values of parameters and constants
 double dt 	= 0.01;	
@@ -126,15 +126,15 @@ void integrate(double _tmax, int exactFinishTime, int keepSynchronized){
 	tmax = _tmax;
 	double dt_last_done = dt;
 	int last_step = 0;
-	int integrator_mikkola_synchronize_manually_init = integrator_mikkola_synchronize_manually;
-	int integrator_mikkola_persistent_particles_init = integrator_mikkola_persistent_particles;
-	integrator_mikkola_particles_modified = 1;
+	int integrator_whfast_synchronize_manually_init = integrator_whfast_synchronize_manually;
+	int integrator_whfast_persistent_particles_init = integrator_whfast_persistent_particles;
+	integrator_whfast_particles_modified = 1;
 	if (N_megno || keepSynchronized){
-		integrator_mikkola_synchronize_manually = 0;
-		integrator_mikkola_persistent_particles = 0;
+		integrator_whfast_synchronize_manually = 0;
+		integrator_whfast_persistent_particles = 0;
 	}else{
-		integrator_mikkola_synchronize_manually = 1;
-		integrator_mikkola_persistent_particles = 1;
+		integrator_whfast_synchronize_manually = 1;
+		integrator_whfast_persistent_particles = 1;
 	}
 	if (problem_additional_forces==NULL){
 		integrator_force_is_velocitydependent = 0;
@@ -162,8 +162,8 @@ void integrate(double _tmax, int exactFinishTime, int keepSynchronized){
 	}
 	integrator_synchronize();
 	dt = dt_last_done;
-	integrator_mikkola_synchronize_manually = integrator_mikkola_synchronize_manually_init;
-	integrator_mikkola_persistent_particles = integrator_mikkola_persistent_particles_init;
+	integrator_whfast_synchronize_manually = integrator_whfast_synchronize_manually_init;
+	integrator_whfast_persistent_particles = integrator_whfast_persistent_particles_init;
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
 	timing = timing_final-timing_initial;

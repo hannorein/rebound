@@ -30,7 +30,7 @@
  */
 typedef enum {
 	IAS15 = 0,
-	MIKKOLA = 1,
+	WHFAST = 1,
 	SEI = 2,
 	WH = 3,
 	LEAPFROG = 4,

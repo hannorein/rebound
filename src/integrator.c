@@ -37,7 +37,7 @@
 #include "problem.h"
 #include "output.h"
 #include "integrator.h"
-#include "integrator_mikkola.h"
+#include "integrator_whfast.h"
 #include "integrator_ias15.h"
 #include "integrator_leapfrog.h"
 #include "integrator_sei.h"
@@ -61,8 +61,8 @@ void integrator_part1(){
 		case SEI:
 			integrator_sei_part1();
 			break;
-		case MIKKOLA:
-			integrator_mikkola_part1();
+		case WHFAST:
+			integrator_whfast_part1();
 			break;
 		case HYBRID:
 			integrator_hybrid_part1();
@@ -86,8 +86,8 @@ void integrator_part2(){
 		case SEI:
 			integrator_sei_part2();
 			break;
-		case MIKKOLA:
-			integrator_mikkola_part2();
+		case WHFAST:
+			integrator_whfast_part2();
 			break;
 		case HYBRID:
 			integrator_hybrid_part2();
@@ -111,8 +111,8 @@ void integrator_synchronize(){
 		case SEI:
 			integrator_sei_synchronize();
 			break;
-		case MIKKOLA:
-			integrator_mikkola_synchronize();
+		case WHFAST:
+			integrator_whfast_synchronize();
 			break;
 		case HYBRID:
 			integrator_hybrid_synchronize();
@@ -129,7 +129,7 @@ void integrator_reset(){
 	integrator_wh_reset();
 	integrator_leapfrog_reset();
 	integrator_sei_reset();
-	integrator_mikkola_reset();
+	integrator_whfast_reset();
 	integrator_hybrid_reset();
 }
 

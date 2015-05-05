@@ -37,7 +37,7 @@
 #include "gravity.h"
 #include "boundaries.h"
 #include "integrator.h"
-#include "integrator_mikkola.h"
+#include "integrator_whfast.h"
 #include "integrator_ias15.h"
 
 // Switch to non-symplectic integrator if force_form_star/force_from_other_particle < integrator_hybrid_switch_ratio.
@@ -81,34 +81,34 @@ static double get_min_ratio(){
 
 
 static double ratio;
-integrator_t integrator_hybrid_mode = MIKKOLA; // 0 = symplectic; 1 = IAS15
+integrator_t integrator_hybrid_mode = WHFAST; // 0 = symplectic; 1 = IAS15
 void integrator_hybrid_part1(){
 	ratio = get_min_ratio();
 	if (initial_dt==0.){
 		initial_dt = dt;
 	}
 	if (ratio<integrator_hybrid_switch_ratio){
-		if (integrator_hybrid_mode==MIKKOLA){
+		if (integrator_hybrid_mode==WHFAST){
 			integrator_ias15_reset(); //previous guesses no good anymore
 			if (integrator_hybrid_switch_warning==0.){
 				integrator_hybrid_switch_warning++;
 				fprintf(stderr,"\n\033[1mInfo!\033[0m Switching to IAS15 for the first time at t=%.9e.\n",t);
 			}
-			integrator_mikkola_synchronize();
+			integrator_whfast_synchronize();
 			gravity_ignore_10 = 0;
 		}
 		integrator_hybrid_mode = IAS15;
 	}else{
 		if (integrator_hybrid_mode==IAS15){
-			//integrator_mikkola_reset(); 
-			integrator_mikkola_particles_modified = 1;
+			//integrator_whfast_reset(); 
+			integrator_whfast_particles_modified = 1;
 			dt = initial_dt;
 		}
-		integrator_hybrid_mode = MIKKOLA;
+		integrator_hybrid_mode = WHFAST;
 	}
 	switch(integrator_hybrid_mode){
-		case MIKKOLA:
-			integrator_mikkola_part1();
+		case WHFAST:
+			integrator_whfast_part1();
 			break;
 		case IAS15:
 			integrator_ias15_part1();
@@ -119,8 +119,8 @@ void integrator_hybrid_part1(){
 }
 void integrator_hybrid_part2(){
 	switch(integrator_hybrid_mode){
-		case MIKKOLA:
-			integrator_mikkola_part2();
+		case WHFAST:
+			integrator_whfast_part2();
 			break;
 		case IAS15:
 			integrator_ias15_part2();
@@ -132,8 +132,8 @@ void integrator_hybrid_part2(){
 	
 void integrator_hybrid_synchronize(){
 	switch(integrator_hybrid_mode){
-		case MIKKOLA:
-			integrator_mikkola_synchronize();
+		case WHFAST:
+			integrator_whfast_synchronize();
 			break;
 		default:
 			break;
@@ -141,9 +141,9 @@ void integrator_hybrid_synchronize(){
 }
 
 void integrator_hybrid_reset(){
-	integrator_hybrid_mode = MIKKOLA;
+	integrator_hybrid_mode = WHFAST;
 	integrator_hybrid_switch_warning = 0;
-	integrator_mikkola_reset();
+	integrator_whfast_reset();
 	integrator_ias15_reset();
 	integrator_hybrid_switch_ratio = 400.;
 	initial_dt = 0.;

@@ -2,10 +2,10 @@
  * @file 	integrator.c
  * @brief 	Mikkola integration scheme.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This file implements the Mikkola integration scheme.  
+ * @detail	This file implements the WHFast integration scheme.  
  * 
  * @section 	LICENSE
- * Copyright (c) 2015 Hanno Rein
+ * Copyright (c) 2015 Hanno Rein, Daniel Tamayo
  *
  * This file is part of rebound.
  *
@@ -36,17 +36,17 @@
 #include "gravity.h"
 #include "boundaries.h"
 #include "integrator.h"
-#include "integrator_mikkola.h"
+#include "integrator_whfast.h"
 
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
 
-unsigned int integrator_mikkola_persistent_particles		= 0;
-unsigned int integrator_mikkola_synchronize_manually 		= 0;
-unsigned int integrator_mikkola_corrector 			= 0;
-unsigned int integrator_mikkola_particles_modified		= 0;
+unsigned int integrator_whfast_persistent_particles		= 0;
+unsigned int integrator_whfast_synchronize_manually 		= 0;
+unsigned int integrator_whfast_corrector 			= 0;
+unsigned int integrator_whfast_particles_modified		= 0;
 
-static unsigned int integrator_mikkola_is_synchronized = 1;
+static unsigned int integrator_whfast_is_synchronized = 1;
 static unsigned int integrator_allocated_N = 0;
 static struct particle* restrict p_j  = NULL;
 static double* restrict eta = NULL;
@@ -667,7 +667,7 @@ const static double b_114 = -14556229./19015920.*4.980119205559973422e-02;
 const static double b_115 = 3394141./2328480.*4.980119205559973422e-02;
 
 
-static void integrator_mikkola_corrector_Z(double a, double b){
+static void integrator_whfast_corrector_Z(double a, double b){
 	integrator_kepler_drift(a);
 	integrator_to_inertial_pos();
 	if (N_megno){
@@ -694,46 +694,46 @@ static void integrator_mikkola_corrector_Z(double a, double b){
 }
 
 static void integrator_apply_corrector(double inv){
-	if (integrator_mikkola_corrector==3){
+	if (integrator_whfast_corrector==3){
 		// Third order corrector
-		integrator_mikkola_corrector_Z(a_1*dt,-inv*b_31*dt);
-		integrator_mikkola_corrector_Z(-a_1*dt,inv*b_31*dt);
+		integrator_whfast_corrector_Z(a_1*dt,-inv*b_31*dt);
+		integrator_whfast_corrector_Z(-a_1*dt,inv*b_31*dt);
 	}
-	if (integrator_mikkola_corrector==5){
+	if (integrator_whfast_corrector==5){
 		// Fifth order corrector
-		integrator_mikkola_corrector_Z(-a_2*dt,-inv*b_51*dt);
-		integrator_mikkola_corrector_Z(-a_1*dt,-inv*b_52*dt);
-		integrator_mikkola_corrector_Z(a_1*dt,inv*b_52*dt);
-		integrator_mikkola_corrector_Z(a_2*dt,inv*b_51*dt);
+		integrator_whfast_corrector_Z(-a_2*dt,-inv*b_51*dt);
+		integrator_whfast_corrector_Z(-a_1*dt,-inv*b_52*dt);
+		integrator_whfast_corrector_Z(a_1*dt,inv*b_52*dt);
+		integrator_whfast_corrector_Z(a_2*dt,inv*b_51*dt);
 	}
-	if (integrator_mikkola_corrector==7){
+	if (integrator_whfast_corrector==7){
 		// Seventh order corrector
-		integrator_mikkola_corrector_Z(-a_3*dt,-inv*b_71*dt);
-		integrator_mikkola_corrector_Z(-a_2*dt,-inv*b_72*dt);
-		integrator_mikkola_corrector_Z(-a_1*dt,-inv*b_73*dt);
-		integrator_mikkola_corrector_Z(a_1*dt,inv*b_73*dt);
-		integrator_mikkola_corrector_Z(a_2*dt,inv*b_72*dt);
-		integrator_mikkola_corrector_Z(a_3*dt,inv*b_71*dt);
+		integrator_whfast_corrector_Z(-a_3*dt,-inv*b_71*dt);
+		integrator_whfast_corrector_Z(-a_2*dt,-inv*b_72*dt);
+		integrator_whfast_corrector_Z(-a_1*dt,-inv*b_73*dt);
+		integrator_whfast_corrector_Z(a_1*dt,inv*b_73*dt);
+		integrator_whfast_corrector_Z(a_2*dt,inv*b_72*dt);
+		integrator_whfast_corrector_Z(a_3*dt,inv*b_71*dt);
 	}
-	if (integrator_mikkola_corrector==11){
+	if (integrator_whfast_corrector==11){
 		// Eleventh order corrector
-		integrator_mikkola_corrector_Z(-a_5*dt,-inv*b_111*dt);
-		integrator_mikkola_corrector_Z(-a_4*dt,-inv*b_112*dt);
-		integrator_mikkola_corrector_Z(-a_3*dt,-inv*b_113*dt);
-		integrator_mikkola_corrector_Z(-a_2*dt,-inv*b_114*dt);
-		integrator_mikkola_corrector_Z(-a_1*dt,-inv*b_115*dt);
-		integrator_mikkola_corrector_Z(a_1*dt,inv*b_115*dt);
-		integrator_mikkola_corrector_Z(a_2*dt,inv*b_114*dt);
-		integrator_mikkola_corrector_Z(a_3*dt,inv*b_113*dt);
-		integrator_mikkola_corrector_Z(a_4*dt,inv*b_112*dt);
-		integrator_mikkola_corrector_Z(a_5*dt,inv*b_111*dt);
+		integrator_whfast_corrector_Z(-a_5*dt,-inv*b_111*dt);
+		integrator_whfast_corrector_Z(-a_4*dt,-inv*b_112*dt);
+		integrator_whfast_corrector_Z(-a_3*dt,-inv*b_113*dt);
+		integrator_whfast_corrector_Z(-a_2*dt,-inv*b_114*dt);
+		integrator_whfast_corrector_Z(-a_1*dt,-inv*b_115*dt);
+		integrator_whfast_corrector_Z(a_1*dt,inv*b_115*dt);
+		integrator_whfast_corrector_Z(a_2*dt,inv*b_114*dt);
+		integrator_whfast_corrector_Z(a_3*dt,inv*b_113*dt);
+		integrator_whfast_corrector_Z(a_4*dt,inv*b_112*dt);
+		integrator_whfast_corrector_Z(a_5*dt,inv*b_111*dt);
 	}
 }
 
 
-void integrator_mikkola_part1(){
+void integrator_whfast_part1(){
 	gravity_ignore_10 = 1;
-	unsigned int recalculate_jacobi = (!(integrator_mikkola_persistent_particles || integrator_mikkola_synchronize_manually)) || integrator_mikkola_particles_modified;
+	unsigned int recalculate_jacobi = (!(integrator_whfast_persistent_particles || integrator_whfast_synchronize_manually)) || integrator_whfast_particles_modified;
 	if (integrator_allocated_N != N){
 		integrator_allocated_N = N;
 		p_j = realloc(p_j,sizeof(struct particle)*N);
@@ -743,8 +743,8 @@ void integrator_mikkola_part1(){
 	}
 	// Only recalculate Jacobi coordinates if needed
 	if (recalculate_jacobi){
-		if (integrator_mikkola_is_synchronized==0){
-			integrator_mikkola_synchronize();
+		if (integrator_whfast_is_synchronized==0){
+			integrator_whfast_synchronize();
 			fprintf(stderr,"\n\033[1mWarning!\033[0m Need to recalculate Jacobi coordinates but pos/vel were not synchronized.\n");
 		}
 		eta[0] = particles[0].m;
@@ -760,16 +760,16 @@ void integrator_mikkola_part1(){
 		}
 		Mtotal  = eta[N-N_megno-1];
 		Mtotali = etai[N-N_megno-1];
-		integrator_mikkola_particles_modified = 0;
+		integrator_whfast_particles_modified = 0;
 		integrator_to_jacobi_posvel();
 		if (N_megno){
 			integrator_var_to_jacobi_posvel();
 		}
 	}
 	double _dt2 = dt/2.;
-	if (integrator_mikkola_is_synchronized){
+	if (integrator_whfast_is_synchronized){
 		// First half DRIFT step
-		if (integrator_mikkola_corrector){
+		if (integrator_whfast_corrector){
 			integrator_apply_corrector(1.);
 		}
 		integrator_kepler_drift(_dt2);	// half timestep
@@ -798,18 +798,18 @@ void integrator_mikkola_part1(){
 	t+=_dt2;
 }
 
-void integrator_mikkola_synchronize(){
-	if (integrator_mikkola_is_synchronized == 0){
+void integrator_whfast_synchronize(){
+	if (integrator_whfast_is_synchronized == 0){
 		integrator_kepler_drift(dt/2.);
-		if (integrator_mikkola_corrector){
+		if (integrator_whfast_corrector){
 			integrator_apply_corrector(-1.);
 		}
 		integrator_to_inertial_posvel();
-		integrator_mikkola_is_synchronized = 1;
+		integrator_whfast_is_synchronized = 1;
 	}
 }
 
-void integrator_mikkola_part2(){
+void integrator_whfast_part2(){
 	integrator_to_jacobi_acc();
 	if (N_megno){
 		integrator_var_to_jacobi_acc();
@@ -817,15 +817,15 @@ void integrator_mikkola_part2(){
 	integrator_interaction(dt);
 
 	double _dt2 = dt/2.;
-	integrator_mikkola_is_synchronized = 0;
-	if (!integrator_mikkola_synchronize_manually){
-		integrator_mikkola_synchronize();
+	integrator_whfast_is_synchronized = 0;
+	if (!integrator_whfast_synchronize_manually){
+		integrator_whfast_synchronize();
 	}
 	
 	t+=_dt2;
 
 	if (N_megno){
-		if (integrator_mikkola_is_synchronized==0 && integrator_synchronized_megno_warning==0){
+		if (integrator_whfast_is_synchronized==0 && integrator_synchronized_megno_warning==0){
 			integrator_synchronized_megno_warning++;
 			fprintf(stderr,"\n\033[1mWarning!\033[0m MEGNO requires synchronized output at every timestep.\n");
 		}
@@ -874,12 +874,12 @@ void integrator_mikkola_part2(){
 }
 	
 
-void integrator_mikkola_reset(){
-	integrator_mikkola_corrector = 0;
-	integrator_mikkola_is_synchronized = 1;
-	integrator_mikkola_synchronize_manually = 0;
-	integrator_mikkola_persistent_particles = 0;
-	integrator_mikkola_particles_modified = 0;
+void integrator_whfast_reset(){
+	integrator_whfast_corrector = 0;
+	integrator_whfast_is_synchronized = 1;
+	integrator_whfast_synchronize_manually = 0;
+	integrator_whfast_persistent_particles = 0;
+	integrator_whfast_particles_modified = 0;
 	integrator_allocated_N = 0;
 	integrator_timestep_warning = 0;
 	integrator_synchronized_megno_warning = 0;

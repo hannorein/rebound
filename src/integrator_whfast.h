@@ -1,10 +1,10 @@
 /**
- * @file 	integrator_mikkola.h
+ * @file 	integrator_whfast.h
  * @brief 	Interface for numerical particle integrator
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
- * Copyright (c) 2015 Hanno Rein
+ * Copyright (c) 2015 Hanno Rein, Daniel Tamayo
  *
  * This file is part of rebound.
  *
@@ -22,12 +22,12 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _INTEGRATOR_MIKKOLA_H
-#define _INTEGRATOR_MIKKOLA_H
-void integrator_mikkola_part1();
-void integrator_mikkola_part2();
-void integrator_mikkola_synchronize();
-void integrator_mikkola_reset();
+#ifndef _INTEGRATOR_WHFAST_H
+#define _INTEGRATOR_WHFAST_H
+void integrator_whfast_part1();
+void integrator_whfast_part2();
+void integrator_whfast_synchronize();
+void integrator_whfast_reset();
 
 /*
  * This variable turns on/off various symplectic correctors.
@@ -37,7 +37,7 @@ void integrator_mikkola_reset();
  * 7: uses seventh order (six-stage) corrector 
  * 11: uses eleventh order (ten-stage) corrector 
  */
-extern unsigned int integrator_mikkola_corrector;
+extern unsigned int integrator_whfast_corrector;
 
 /* 
  * Flag determining if the integrator needs to recalculate the Jacobi
@@ -48,16 +48,16 @@ extern unsigned int integrator_mikkola_corrector;
  * Setting this to 1 results in a speed and accuracy increase.
  * Default is 0.
  **/ 
-extern unsigned int integrator_mikkola_persistent_particles;
+extern unsigned int integrator_whfast_persistent_particles;
 
 /* 
- * Flag overwriting the effect of integrator_mikkola_persistent_particle
+ * Flag overwriting the effect of integrator_whfast_persistent_particle
  * for the next step only. Setting this flag to one will recalculate 
  * Jacobi coordinates from the particle structure in the next timestep
  * only. 
  * Default is 0.
  **/ 
-extern unsigned int integrator_mikkola_particles_modified;
+extern unsigned int integrator_whfast_particles_modified;
 
 /*
  * Flag determining if the integrator produces synchronized outputs at
@@ -71,9 +71,9 @@ extern unsigned int integrator_mikkola_particles_modified;
  *  
  * Default is 0 (produces synchronized outputs at every timestep).
  * Note that setting this flag to 1 implicitly also sets
- * integrator_mikkola_persistent_particles=1. 
+ * integrator_whfast_persistent_particles=1. 
  * This means you cannot change the particle mass/positions 
  * between timesteps unless you call integrator_synchronize();
  **/
-extern unsigned int integrator_mikkola_synchronize_manually;
+extern unsigned int integrator_whfast_synchronize_manually;
 #endif
