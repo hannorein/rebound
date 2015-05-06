@@ -109,9 +109,10 @@ colors = {
 parameters = [(inte,dt,i*len(dts)+j) for i,inte in enumerate(integrators) for j, dt in enumerate(dts)]
    
 if len(sys.argv)!=2:
-    pool = InterruptiblePool()
+    pool = InterruptiblePool(8)
     print "Running %d simulations" % (len(parameters))
     res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),len(dts),2)
+    np.save("res.npy",res)
 else:
     print "Loading %d simulations" % (len(parameters))
     print sys.argv[1]
@@ -123,14 +124,16 @@ import matplotlib; matplotlib.use("pdf")
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 from matplotlib.colors import LogNorm
+from matplotlib.font_manager import FontProperties
+fontP = FontProperties()
+fontP.set_size('small')
 
-np.save("res.npy",res)
-fig = plt.figure(figsize=(13,4))
+fig = plt.figure(figsize=(6.5,4))
 
 res_mean = np.mean(res,axis=1)
 extent=[1e-16, 1e-5]
 
-ax = plt.subplot(1,2,1)
+ax = plt.subplot(1,1,1)
 ax.set_xlim(res[:,:,0].min(), res[:,:,0].max())
 ax.set_ylim(extent[0], extent[1])
 ax.set_ylabel(r"relative energy error")
@@ -143,7 +146,13 @@ for i in xrange(len(integrators)):
     im1 = ax.scatter(res_i[:,0], res_i[:,1], label=integrators[i].upper(),color=colors[integrators[i]],s=10)
     #im1 = axarr.scatter(dts, res_i[:,1], label=integrators[i],color=colors[i])
 
-ax = plt.subplot(1,2,2)
+
+lgd = plt.legend(loc="upper center",  bbox_to_anchor=(0.5, -0.15),  prop = fontP,ncol=3,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = -0.5, markerscale=2.)
+plt.savefig("speed.pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
+plt.close(0)
+
+fig = plt.figure(figsize=(6.5,4))
+ax = plt.subplot(1,1,1)
 ax.set_xlim(orbit/dts.max(), orbit/dts.min())
 ax.set_ylim(extent[0], extent[1])
 ax.set_ylabel(r"relative energy error")
@@ -155,10 +164,6 @@ for i in xrange(len(integrators)):
     res_i = res[i,:,:]
     im1 = ax.scatter(orbit/dts, res_i[:,1], label=integrators[i].upper(),color=colors[integrators[i]],s=10)
 
-from matplotlib.font_manager import FontProperties
-fontP = FontProperties()
-fontP.set_size('small')
-lgd = plt.legend(loc="upper center",  bbox_to_anchor=(-0.1, -0.2),  prop = fontP,ncol=5,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = -0.5, markerscale=2.)
-plt.savefig("speed.pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
-import os
-os.system("open speed.pdf")
+lgd = plt.legend(loc="upper center",  bbox_to_anchor=(0.5, -0.15),  prop = fontP,ncol=3,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = -0.5, markerscale=2.)
+
+plt.savefig("shorttermenergy.pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
