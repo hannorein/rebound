@@ -346,7 +346,7 @@ def status():
         for i in range(N):
             s += str(p[i]) + "\n"
     s += "---------------------------------"
-    return s
+    print(s)
 # Alias
 get_status = status
 
