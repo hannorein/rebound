@@ -1,0 +1,19 @@
+Jinja2==2.7.3
+MarkupSafe==0.23
+backports.ssl-match-hostname==3.4.0.2
+certifi==2015.04.28
+gnureadline==6.3.3
+ipython==3.1.0
+jsonschema==2.4.0
+matplotlib==1.4.3
+mock==1.0.1
+nose==1.3.6
+numpy==1.9.2
+pyparsing==2.0.3
+python-dateutil==2.4.2
+pytz==2015.2
+pyzmq==14.6.0
+-e git+git@github.com:hannorein/rebound.git@83f03dc64f176a486f9feb156a1140f373818faf#egg=rebound-ipython
+six==1.9.0
+tornado==4.1
+wsgiref==0.1.2
