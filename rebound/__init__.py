@@ -486,6 +486,7 @@ def get_orbits(heliocentric=False):
 # Tools
 def move_to_center_of_momentum():
     librebound.tools_move_to_center_of_momentum()
+move_to_barycentric_fram = move_to_center_of_momentum
 
 tmpdir = None
 def reset():
