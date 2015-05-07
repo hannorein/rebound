@@ -336,8 +336,8 @@ def status():
     s= ""
     N = get_N()
     s += "---------------------------------\n"
-    s += "Rebound version: "+ pkg_resources.require("rebound")[0].version +"\n"
-    s += get_build_str() + "\n"
+    s += "Rebound version:     \t" + pkg_resources.require("rebound")[0].version +"\n"
+    s += "Build on:            \t" +get_build_str() + "\n"
     s += "Number of particles: \t%d\n" %N       
     s += "Simulation time:     \t%f\n" %get_t()
     if N>0:
@@ -347,6 +347,8 @@ def status():
             s += str(p[i]) + "\n"
     s += "---------------------------------"
     return s
+# Alias
+get_status = status
 
 # Set function pointer for additional forces
 
