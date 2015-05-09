@@ -6,6 +6,8 @@ import shutil
 import time
 import ctypes.util
 import pkg_resources
+import telnetlib
+import datetime
 
 pymodulespath = os.path.dirname(__file__)
 #Find the rebound C library
@@ -29,6 +31,8 @@ except ImportError:
 
 TINY=1.e-308
 MIN_REL_ERROR = 1.e-12
+INITTIME = datetime.datetime.today()
+
 
 def get_build_str():
     return c_char_p.in_dll(librebound, "build_str").value
@@ -422,6 +426,54 @@ def add_particle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None
     if isinstance(particle,list):
         for particle in particle:
             librebound.particles_add(particle)
+    elif isinstance(particle,str):
+        print("Trying to get data from NASA Horizons...")
+        
+
+        t = telnetlib.Telnet()
+        t.open('horizons.jpl.nasa.gov', 6775)
+
+        expect = ( ( r'Horizons>', particle+'\n' ),
+                   ( r'Continue.*:', 'y\n' ),
+                   ( r'Select.*E.phemeris.*:', 'E\n'),
+                   ( r'Observe.*:', 'v\n' ),
+                   ( r'Coordinate center.*:', '@Sun\n' ),
+                   ( r'Reference plane.*:', 'eclip\n' ),
+                   ( r'Starting.* :', INITTIME.strftime("%Y-%m-%d %H:%M")+'\n' ),
+                   ( r'Ending.* :', (INITTIME + datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M")+'\n' ),
+                   ( r'Output interval.*:', '1d\n' ),
+                   ( r'Accept default output.*:', 'y\n' ),
+                   ( r'Scroll . Page: .*%', ' '),
+                   ( r'Select\.\.\. .A.gain.* :', 'X\n' )
+        )
+        p = Particle()
+        while True:
+            try:
+                answer = t.expect(list(i[0] for i in expect), 4)
+            except EOFError:
+                break
+            if "$$SOE" in answer[2]:
+                lines = answer[2].split("\n")
+                startdata = 0
+                for line in lines:
+                    if line.strip() == "$$EOE":
+                        break
+                    if startdata == 2:
+                        pos = [float(i) for i in line.split()]
+                        p.x = pos[0]
+                        p.y = pos[1]
+                        p.z = pos[2]
+                    if startdata == 3:
+                        vel = [float(i) for i in line.split()]
+                        p.vx = vel[0]
+                        p.vy = vel[1]
+                        p.vz = vel[2]
+                    if startdata > 0:
+                        startdata += 1
+                    if line.strip() == "$$SOE":
+                        startdata = 1
+            t.write(expect[answer[0]][1])
+        add_particle(p)
     else:
        librebound.particles_add(particle)
 
