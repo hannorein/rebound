@@ -7,5 +7,6 @@ rebound.add("Jupiter Barycenter",m=0.0009547919)
 rebound.add("C/2014 Q2") # Comets!
 rebound.status()
 rebound.set_integrator("whfast")
+rebound.set_dt("0.01")
 rebound.integrate(100.)
 rebound.status()
