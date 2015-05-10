@@ -120,7 +120,6 @@ def add_particle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None
     3) The particle's mass and a set of cartesian coordinates: m,x,y,z,vx,vy,vz.
     3) The primary as a Particle structure, the particle's mass and a set of orbital elements primary,a,anom,e,omega,inv,Omega,MEAN (see kepler_particle() for the definition of orbital elements). 
     """
-    print particle
     if isinstance(particle,Particle):
         clibrebound.particles_add(particle)
     elif isinstance(particle,list):
