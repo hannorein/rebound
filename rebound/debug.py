@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+
+"""
+This file contains routines to interface with MERCURY and SWIFTER.
+It is not recommended to use these functions for anything other than testing.
+
+Hanno Rein, Daniel Tamayo
+2015
+
+"""
 import os
 import tempfile
 import shutil
@@ -14,7 +24,6 @@ def reset():
     if tmpdir:
         shutil.rmtree(tmpdir)
         tmpdir = None
-    global tmpdir
 
 def integrate_other_package(tmax,exactFinishTime=1,keepSynchronized=0):
     global tmpdir

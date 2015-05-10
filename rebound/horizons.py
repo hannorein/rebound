@@ -1,9 +1,17 @@
+# -*- coding: utf-8 -*-
+
+"""
+Pull data from HORIZONS and format it for use as a REBOUND particle. 
+
+"""
 import telnetlib
 import datetime
 
 __all__ = ["getParticle"]
 
-INITDATE = datetime.datetime.today()
+# Default date for orbital elements is the current time.
+# Cached at the beginning to ensure that all particles are synchronized.
+INITDATE = datetime.datetime.today() 
 
 def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None):   
     if date is not None:
