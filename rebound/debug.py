@@ -1,4 +1,8 @@
-
+import os
+import tempfile
+import shutil
+import time
+import math
 
 
 integrator_package = "REBOUND"
@@ -12,7 +16,8 @@ def reset():
         tmpdir = None
     global tmpdir
 
-def integrate(tmax,exactFinishTime=1,keepSynchronized=0):
+def integrate_other_package(tmax,exactFinishTime=1,keepSynchronized=0):
+    global tmpdir
     if integrator_package == "SWIFTER":
         _particles = get_particles()
         oldwd = os.getcwd()
@@ -210,3 +215,7 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
                 j += 1
 
         os.chdir(oldwd)
+
+
+# Import at the end to avoid circular dependence
+from .librebound import *

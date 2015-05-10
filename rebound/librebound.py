@@ -1,9 +1,6 @@
 from ctypes import *
 import math
 import os
-import tempfile
-import shutil
-import time
 import ctypes.util
 import pkg_resources
 
@@ -288,7 +285,7 @@ def integrate(tmax,exactFinishTime=1,keepSynchronized=0):
     if debug.integrator_package =="REBOUND":
         clibrebound.integrate(c_double(tmax),c_int(exactFinishTime),c_int(keepSynchronized))
     else:
-        debug.integrate(tmax,exactFinishTime,keepSynchronized)
+        debug.integrate_other_package(tmax,exactFinishTime,keepSynchronized)
 
 TWOPI = 2.*math.pi
 def mod2pi(f):
