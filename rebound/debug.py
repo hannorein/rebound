@@ -14,12 +14,11 @@ import shutil
 import time
 import math
 
-
 integrator_package = "REBOUND"
 integrator_fullname = ""    
 
 tmpdir = None
-def reset():
+def reset_debug():
     global tmpdir
     if tmpdir:
         shutil.rmtree(tmpdir)

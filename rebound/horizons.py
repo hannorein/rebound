@@ -92,7 +92,10 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
                 try:
                     idn = answer[2].split("ID#")[1].split("\n")[2].split()[0]
                 except:
-                    raise Exception("Error trying to find object.")
+                    try:
+                        idn = answer[2].split("Record #")[1].split("\n")[2].split()[0]
+                    except:
+                        raise Exception("Error while trying to find object.")
                 t.write(idn+"\n")
             else:
                 t.write(expect[answer[0]][1])

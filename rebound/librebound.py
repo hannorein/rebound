@@ -197,7 +197,7 @@ move_to_center_of_mass = move_to_center_of_momentum
 move_to_com = move_to_center_of_momentum
 
 def reset():
-    debug.reset()
+    debug.reset_debug()
     clibrebound.reset()
 
 def set_integrator_whfast_corrector(on=11):
