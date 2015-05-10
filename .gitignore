@@ -28,3 +28,6 @@ venv/
 dist/
 build/
 src/rebound
+.ipynb_checkpoints
+others/*.tar.gz
+others/*.tar
