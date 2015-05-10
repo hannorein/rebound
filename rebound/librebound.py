@@ -6,15 +6,14 @@ import shutil
 import time
 import ctypes.util
 import pkg_resources
-from .particle import *
 
-pymodulespath = os.path.dirname(__file__)
+_pymodulespath = os.path.dirname(__file__)
 #Find the rebound C library
 try:
-    librebound = CDLL(pymodulespath+"/../librebound.so", RTLD_GLOBAL)
+    clibrebound = CDLL(_pymodulespath+"/../librebound.so", RTLD_GLOBAL)
 except:
     try:
-        librebound = CDLL(pymodulespath + '/../shared/librebound/librebound.so', RTLD_GLOBAL)
+        clibrebound = CDLL(_pymodulespath + '/../shared/librebound/librebound.so', RTLD_GLOBAL)
     except:
         print("Cannot find library 'librebound.so'.")
         raise
@@ -33,7 +32,7 @@ MIN_REL_ERROR = 1.e-12
 
 
 def get_build_str():
-    return c_char_p.in_dll(librebound, "build_str").value
+    return c_char_p.in_dll(clibrebound, "build_str").value
 
 
 def status():
@@ -64,58 +63,58 @@ fp = None
 def set_additional_forces(func):
     global fp  # keep references
     fp = AFF(func)
-    librebound.set_additional_forces(fp)
+    clibrebound.set_additional_forces(fp)
 
 # Setter/getter of parameters and constants
 def set_G(G):
-    c_double.in_dll(librebound, "G").value = G
+    c_double.in_dll(clibrebound, "G").value = G
 
 def get_G():
-    return c_double.in_dll(librebound, "G").value
+    return c_double.in_dll(clibrebound, "G").value
 
 def set_dt(dt):
-    c_double.in_dll(librebound, "dt").value = dt
+    c_double.in_dll(clibrebound, "dt").value = dt
 
 def get_dt():
-    return c_double.in_dll(librebound, "dt").value
+    return c_double.in_dll(clibrebound, "dt").value
 
 def set_t(t):
-    c_double.in_dll(librebound, "t").value = t
+    c_double.in_dll(clibrebound, "t").value = t
 
 def set_min_dt(t):
-    c_double.in_dll(librebound, "integrator_ias15_min_dt").value = t
+    c_double.in_dll(clibrebound, "integrator_ias15_min_dt").value = t
 
 def get_t():
-    return c_double.in_dll(librebound, "t").value
+    return c_double.in_dll(clibrebound, "t").value
 
 def init_megno(delta):
-    librebound.tools_megno_init(c_double(delta))
+    clibrebound.tools_megno_init(c_double(delta))
 
 def get_megno():
-    librebound.tools_megno.restype = c_double
-    return librebound.tools_megno()
+    clibrebound.tools_megno.restype = c_double
+    return clibrebound.tools_megno()
 
 def get_lyapunov():
-    librebound.tools_lyapunov.restype = c_double
-    return librebound.tools_lyapunov()
+    clibrebound.tools_lyapunov.restype = c_double
+    return clibrebound.tools_lyapunov()
 
 def get_N():
-    return c_int.in_dll(librebound,"N").value 
+    return c_int.in_dll(clibrebound,"N").value 
 
 def get_N_megno():
-    return c_int.in_dll(librebound,"N_megno").value 
+    return c_int.in_dll(clibrebound,"N_megno").value 
 
 def get_iter():
-    return c_int.in_dll(librebound,"iter").value 
+    return c_int.in_dll(clibrebound,"iter").value 
 
 def get_timing():
-    return c_double.in_dll(librebound,"timing").value 
+    return c_double.in_dll(clibrebound,"timing").value 
 
 # Setter functions, particle data
 def set_particles(_particles):
-    c_int.in_dll(librebound,"N").value = len(_particles)
+    c_int.in_dll(clibrebound,"N").value = len(_particles)
     arr = (Particle * len(_particles))(*_particles)
-    librebound.setp(byref(arr))
+    clibrebound.setp(byref(arr))
 
 def add_particle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None):   
     """Adds a particle to REBOUND. Accepts one of the following four sets of arguments:
@@ -128,11 +127,11 @@ def add_particle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None
         particle = Particle(**locals())
     if isinstance(particle,list):
         for particle in particle:
-            librebound.particles_add(particle)
+            clibrebound.particles_add(particle)
     elif isinstance(particle,str):
-        librebound.particles_add(getParticleFromHorizons(**locals()))
+        clibrebound.particles_add(horizons.getParticle(**locals()))
     else:
-        librebound.particles_add(particle)
+        clibrebound.particles_add(particle)
 
 # Aliases
 add_particles = add_particle
@@ -143,7 +142,7 @@ def get_particle(i):
     N = get_N() 
     if i>=N:
         return None
-    getp = librebound.particle_get
+    getp = clibrebound.particle_get
     getp.restype = Particle
     _p = getp(c_int(i))
     return _p
@@ -165,8 +164,8 @@ def get_particles():
 
     particles() is an alias of this function.
     """
-    N = c_int.in_dll(librebound,"N").value 
-    getp = librebound.particles_get
+    N = c_int.in_dll(clibrebound,"N").value 
+    getp = clibrebound.particles_get
     getp.restype = POINTER(Particle)
     return getp()
 # Alias
@@ -194,7 +193,7 @@ def get_orbits(heliocentric=False):
 
 # Tools
 def move_to_center_of_momentum():
-    librebound.tools_move_to_center_of_momentum()
+    clibrebound.tools_move_to_center_of_momentum()
 move_to_barycentric_fram = move_to_center_of_momentum
 
 tmpdir = None
@@ -203,24 +202,24 @@ def reset():
     if tmpdir:
         shutil.rmtree(tmpdir)
         tmpdir = None
-    librebound.reset()
+    clibrebound.reset()
 
 def set_integrator_whfast_corrector(on=11):
-    c_int.in_dll(librebound, "integrator_whfast_corrector").value = on
+    c_int.in_dll(clibrebound, "integrator_whfast_corrector").value = on
 
 #REMOVE Following variables
-integrator_package = "REBOUND"
-integrator_debug = ""    
+_integrator_package = "REBOUND"
+_integrator_debug = ""    
 
 def set_integrator(integrator="IAS15"):
-    global integrator_package
-    global integrator_debug
+    global _integrator_package
+    global _integrator_debug
     if isinstance(integrator, int):
-        librebound.integrator_set(c_int(integrator))
+        clibrebound.integrator_set(c_int(integrator))
         return
     if isinstance(integrator, basestring):
-        integrator_debug = integrator
-        integrator_package = "REBOUND"
+        _integrator_debug = integrator
+        _integrator_package = "REBOUND"
         if integrator.lower() == "ias15":
             set_integrator(0)
             return
@@ -260,56 +259,56 @@ def set_integrator(integrator="IAS15"):
             set_integrator(5)
             return
         if integrator.lower() == "mercury":
-            integrator_package = "MERCURY"
+            _integrator_package = "MERCURY"
             return
         if integrator.lower() == "swifter-whm":
-            integrator_package = "SWIFTER"
+            _integrator_package = "SWIFTER"
             return
         if integrator.lower() == "swifter-symba":
-            integrator_package = "SWIFTER"
+            _integrator_package = "SWIFTER"
             return
         if integrator.lower() == "swifter-helio":
-            integrator_package = "SWIFTER"
+            _integrator_package = "SWIFTER"
             return
         if integrator.lower() == "swifter-tu4":
-            integrator_package = "SWIFTER"
+            _integrator_package = "SWIFTER"
             return
     raise ValueError("Warning. Intergrator not found.")
 
 def set_integrator_whfast_persistent_particles(is_per=0):
     if isinstance(is_per, int):
-        c_int.in_dll(librebound, "integrator_whfast_persistent_particles").value = is_per
+        c_int.in_dll(clibrebound, "integrator_whfast_persistent_particles").value = is_per
         return
     raise ValueError("Expecting integer.")
 
 def set_integrator_whfast_synchronize_manually(synchronize_manually=0):
     if isinstance(synchronize_manually, int):
-        c_int.in_dll(librebound, "integrator_whfast_synchronize_manually").value = synchronize_manually
+        c_int.in_dll(clibrebound, "integrator_whfast_synchronize_manually").value = synchronize_manually
         return
     raise ValueError("Expecting integer.")
 
 def set_force_is_velocitydependent(force_is_velocitydependent=1):
     if isinstance(force_is_velocitydependent, int):
-        c_int.in_dll(librebound, "integrator_force_is_velocitydependent").value = force_is_velocitydependent
+        c_int.in_dll(clibrebound, "integrator_force_is_velocitydependent").value = force_is_velocitydependent
         return
     raise ValueError("Expecting integer.")
 
 # Input/Output routines
 
 def output_binary(filename):
-    librebound.output_binary(c_char_p(filename))
+    clibrebound.output_binary(c_char_p(filename))
     
 def input_binary(filename):
-    librebound.input_binary(c_char_p(filename))
+    clibrebound.input_binary(c_char_p(filename))
     
 
 # Integration
 def step():
-    librebound.rebound_step()
+    clibrebound.rebound_step()
 
 def integrate(tmax,exactFinishTime=1,keepSynchronized=0):
     global tmpdir
-    if integrator_package == "SWIFTER":
+    if _integrator_package == "SWIFTER":
         _particles = get_particles()
         oldwd = os.getcwd()
         paramin = """!
@@ -369,18 +368,18 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         #with open("param.dmp", "w") as f:
         #    f.write(paramin)
         starttime = time.time()    
-        if integrator_debug.lower() == "swifter-whm":
+        if _integrator_debug.lower() == "swifter-whm":
             os.system("echo param.in | ./swifter_whm > /dev/null")
-        elif integrator_debug.lower() == "swifter-symba":
+        elif _integrator_debug.lower() == "swifter-symba":
             os.system("echo param.in | ./swifter_symba > /dev/null")
-        elif integrator_debug.lower() == "swifter-helio":
+        elif _integrator_debug.lower() == "swifter-helio":
             os.system("echo param.in | ./swifter_helio > /dev/null")
-        elif integrator_debug.lower() == "swifter-tu4":
+        elif _integrator_debug.lower() == "swifter-tu4":
             os.system("echo param.in | ./swifter_tu4 > /dev/null")
         else:
-            print("Integrator not found! %s"%integrator_debug)
+            print("Integrator not found! %s"%_integrator_debug)
         endtime = time.time()    
-        c_double.in_dll(librebound,"timing").value = endtime-starttime
+        c_double.in_dll(clibrebound,"timing").value = endtime-starttime
     
         for i in range(1,get_N()):
             with open("outputparams.txt", "w") as f:
@@ -401,11 +400,11 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
                     _particles[i].vy = float(line[6].strip())
                     _particles[i].vz = float(line[7].strip())
             except:
-                print("Something went wrong. Ignoring it for now. (%s)"%integrator_debug)
+                print("Something went wrong. Ignoring it for now. (%s)"%_integrator_debug)
                 pass
         os.system("rm bin.dat")
         os.chdir(oldwd)
-    if integrator_package == "MERCURY":
+    if _integrator_package == "MERCURY":
         k = 0.01720209895    
         facTime = math.sqrt(get_G())/k
         _particles = get_particles()
@@ -488,7 +487,7 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         #os.system("./mercury ")
         os.system("./mercury >/dev/null")
         endtime = time.time()    
-        c_double.in_dll(librebound,"timing").value = endtime-starttime
+        c_double.in_dll(clibrebound,"timing").value = endtime-starttime
         with open("big.dmp", "r") as f:
             lines = f.readlines()
             t= float(lines[4].split("=")[1].strip())
@@ -506,8 +505,8 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
                 j += 1
 
         os.chdir(oldwd)
-    if integrator_package =="REBOUND":
-        librebound.integrate(c_double(tmax),c_int(exactFinishTime),c_int(keepSynchronized))
+    if _integrator_package =="REBOUND":
+        clibrebound.integrate(c_double(tmax),c_int(exactFinishTime),c_int(keepSynchronized))
 
 TWOPI = 2.*math.pi
 def mod2pi(f):
@@ -580,6 +579,9 @@ def get_com(last=None):
         vz /= m
     return Particle(m=m, x=x, y=y, z=z, vx=vx, vy=vy, vz=vz)
 
-#Alias
+# Alias
 get_center_of_momentum = get_com
 
+# Import at the end to avoid circular dependence
+from .particle import *
+from . import horizons

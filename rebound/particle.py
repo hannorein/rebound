@@ -1,11 +1,6 @@
 from ctypes import *
 import math
-import os
-import tempfile
-import shutil
-import time
 import ctypes.util
-from .librebound import *
 
 __all__ = ["Orbit", "Particle"]
 
@@ -309,3 +304,6 @@ class Particle(Structure):
             o.l = ea -o.e*math.sin(ea) + o.omega+ o.Omega  # mean longitude
         
         return o
+
+# Import at the end to avoid circular dependence
+from .librebound import *

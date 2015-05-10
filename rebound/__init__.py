@@ -1,4 +1,3 @@
-from .horizons import getParticleFromHorizons
 from .particle import Particle
 from .librebound import *
 

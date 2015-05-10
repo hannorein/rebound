@@ -1,9 +1,11 @@
 import telnetlib
 import datetime
 
+__all__ = ["getParticle"]
+
 INITDATE = datetime.datetime.today()
 
-def getParticleFromHorizons(date=None,m=None):
+def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None):   
     if date is not None:
         date = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M")
     else:
@@ -65,3 +67,6 @@ def getParticleFromHorizons(date=None,m=None):
     else:
         print("Mass cannot be retrieved from NASA HORIZONS. Please add manually.")
     return p
+
+# Import at the end to avoid circular dependence
+from .particle import *
