@@ -65,57 +65,7 @@ In short: If you simply want to integrate a few particle system such as a planet
 
 **Python and librebound**
 
-To access REBOUND from python, simply install it via pip. Go to an empty directory where you want to have rebound installed, then type the following (you may have to pip install virtualenv first)::
-
-    # Optionally, create a virtual environment to keep your python
-    # installation clean (recommended if you are unsure).
-    virtualenv venv && source venv/bin/activate
-
-    # Then, simple install rebound using pip
-    pip install rebound
-
-If you use the Anaconda distribution, the above likely will not work.  Instead create a conda environment (in your anaconda/envs directory) with::
-
-    conda create -n venv pip && source activate venv
-    pip install rebound
-
-That's it. In the background pip download the source code, compiles and and puts everything in its right place in your filesystem. It really can't get much simpler. The python module of REBOUND does not depend on any non-standard python libraries. However, you probably want to install numpy and matplotlib to do something nice with your outputs.::
-
-    # This installs numpy and matplotlib
-    pip install numpy matplotlib
-
-Now try running an N-body simulation with REBOUND. Create a file `test.py` with the following contents. This example uses the 15-th order integrator IAS15 to simulate a four particle (3 planets + 1 star) system::
-
-    # Import the rebound module
-    import rebound
-
-    # Add particles 
-    rebound.add_particle( m=1. )                   # Star
-    rebound.add_particle( x=1., vy=1. )            # Test particle at a=1
-    rebound.add_particle( m=1e-3, a=2., e=0.1 )    # Planet at a=2
-    rebound.add_particle( m=1e-3, a=3. )           # Planet at a=3 (Jacobi coordinates)
-
-    # Move particles so that the center of mass is (and stays) at the origin  
-    rebound.move_to_center_of_momentum()
-
-    # Integrate until t=100 (roughly 16 orbits) 
-    rebound.integrate(100.)
-
-    # Output final positions to screen
-    print(rebound.status())
-
-Whenever you want to use the rebound library, you have to make sure you first switch to the virtual/conda environment in which you installed it (assuming you created one).  You can tell if you are in that environment by looking to see if venv is shown in parentheses in front of your command prompt.  If not, switch to it with::
-
-    source venv/bin/activate # if you used virtualenv
-    source activate venv # if you used conda
-
-You can now run the program by executing `python test.py`. If you want to use the Wisdom-Holman type WHFAST integrator (Rein & Tamayo, in prep), simply set it before calling `rebound.integrate()`.::
-
-    rebound.set_integrator("whfast")
-    rebound.set_dt(0.01)                           # Fixed timestep needed (WHFAST is not adaptive)
-
-For details on the available function of the REBOUND python-module, have a look at the docstrings in the file [`rebound.py`](rebound/rebound.py) and the examples provided in the `python_examples` directory. 
-We will add more examples and documentation shortly.
+See ipython notebook.
 
 -------------
 
