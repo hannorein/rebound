@@ -196,44 +196,22 @@ def move_to_center_of_momentum():
     clibrebound.tools_move_to_center_of_momentum()
 move_to_barycentric_fram = move_to_center_of_momentum
 
-tmpdir = None
 def reset():
-    global tmpdir
-    if tmpdir:
-        shutil.rmtree(tmpdir)
-        tmpdir = None
+    debug.reset()
     clibrebound.reset()
 
 def set_integrator_whfast_corrector(on=11):
     c_int.in_dll(clibrebound, "integrator_whfast_corrector").value = on
 
-#REMOVE Following variables
-_integrator_package = "REBOUND"
-_integrator_debug = ""    
-
 def set_integrator(integrator="IAS15"):
-    global _integrator_package
-    global _integrator_debug
     if isinstance(integrator, int):
         clibrebound.integrator_set(c_int(integrator))
         return
     if isinstance(integrator, basestring):
-        _integrator_debug = integrator
-        _integrator_package = "REBOUND"
+        debug.integrator_fullname = integrator
+        debug.integrator_package = "REBOUND"
         if integrator.lower() == "ias15":
             set_integrator(0)
-            return
-        if integrator[0:7].lower() == "mikkola":
-            set_integrator(1)
-            set_integrator_whfast_corrector(0)
-            if integrator[8:] == "cor3":
-                set_integrator_whfast_corrector(3)
-            if integrator[8:] == "cor5":
-                set_integrator_whfast_corrector(5)
-            if integrator[8:] == "cor7":
-                set_integrator_whfast_corrector(7)
-            if integrator[8:] == "cor11":
-                set_integrator_whfast_corrector(11)
             return
         if integrator.lower() == "whfast":
             set_integrator(1)
@@ -259,19 +237,19 @@ def set_integrator(integrator="IAS15"):
             set_integrator(5)
             return
         if integrator.lower() == "mercury":
-            _integrator_package = "MERCURY"
+            debug.integrator_package = "MERCURY"
             return
         if integrator.lower() == "swifter-whm":
-            _integrator_package = "SWIFTER"
+            debug.integrator_package = "SWIFTER"
             return
         if integrator.lower() == "swifter-symba":
-            _integrator_package = "SWIFTER"
+            debug.integrator_package = "SWIFTER"
             return
         if integrator.lower() == "swifter-helio":
-            _integrator_package = "SWIFTER"
+            debug.integrator_package = "SWIFTER"
             return
         if integrator.lower() == "swifter-tu4":
-            _integrator_package = "SWIFTER"
+            debug.integrator_package = "SWIFTER"
             return
     raise ValueError("Warning. Intergrator not found.")
 
@@ -307,206 +285,10 @@ def step():
     clibrebound.rebound_step()
 
 def integrate(tmax,exactFinishTime=1,keepSynchronized=0):
-    global tmpdir
-    if _integrator_package == "SWIFTER":
-        _particles = get_particles()
-        oldwd = os.getcwd()
-        paramin = """!
-! Parameter file for the CHO run of the 4 giant planets and Pluto.
-!
-!NPLMAX         -1                 ! not used
-!NTPMAX         -1                 ! not used
-T0             %.16e
-TSTOP          %.16e               ! length of simulation 
-DT             %.16e               ! stepsize
-PL_IN          pl.in
-TP_IN          tp.in
-IN_TYPE        ASCII
-ISTEP_OUT      %d                   ! output every 10K years
-BIN_OUT        bin.dat
-OUT_TYPE       REAL8                ! 4-byte XDR formatted output
-OUT_FORM       XV                  ! cartesian output 
-OUT_STAT       NEW
-ISTEP_DUMP     1000000000        ! system dump also every 10K years
-J2             0.0E0               ! no J2 term
-J4             0.0E0               ! no J4 term
-CHK_CLOSE      no                  ! don't check for planetary close encounters
-CHK_RMIN       -1.0                ! don't check for close solar encounters
-CHK_RMAX       1000.0              ! discard outside of 1000 AU
-CHK_EJECT      -1.0                ! ignore this check
-CHK_QMIN       -1.0                ! ignore this check
-!CHK_QMIN_COORD HELIO               ! commented out here
-!CHK_QMIN_RANGE 1.0 1000.0          ! commented out here
-ENC_OUT        enc.dat
-EXTRA_FORCE    no                  ! no extra user-defined forces
-BIG_DISCARD    yes                 ! output all planets if anything discarded
-RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
-""" % ( get_t(), tmax, get_dt(),max(1,int((tmax-get_t())/get_dt())))
-
-        if not tmpdir:
-        # first call
-            tmpdir = tempfile.mkdtemp()
-            for f in ["swifter_whm", "swifter_tu4","swifter_symba","swifter_helio"]:
-                os.symlink(oldwd+"/../../others/swifter/bin/"+f,tmpdir+"/"+f)
-            os.symlink(oldwd+"/../../others/swifter/bin/tool_follow",tmpdir+"/tool_follow")
-        os.chdir(tmpdir)
-        smallin = """0\n"""
-        with open("tp.in", "w") as f:
-            f.write(smallin)
-        bigin = """ %d
-""" %(get_N())
-        _G = get_G() 
-        for i in range(0,get_N()):
-            bigin += """%d    %.18e 
-%.18e %.18e %.18e
-%.18e %.18e %.18e
-""" %(i+1, _G*_particles[i].m,_particles[i].x, _particles[i].y, _particles[i].z, _particles[i].vx, _particles[i].vy, _particles[i].vz)
-        with open("pl.in", "w") as f:
-            f.write(bigin)
-        with open("param.in", "w") as f:
-            f.write(paramin)
-        #with open("param.dmp", "w") as f:
-        #    f.write(paramin)
-        starttime = time.time()    
-        if _integrator_debug.lower() == "swifter-whm":
-            os.system("echo param.in | ./swifter_whm > /dev/null")
-        elif _integrator_debug.lower() == "swifter-symba":
-            os.system("echo param.in | ./swifter_symba > /dev/null")
-        elif _integrator_debug.lower() == "swifter-helio":
-            os.system("echo param.in | ./swifter_helio > /dev/null")
-        elif _integrator_debug.lower() == "swifter-tu4":
-            os.system("echo param.in | ./swifter_tu4 > /dev/null")
-        else:
-            print("Integrator not found! %s"%_integrator_debug)
-        endtime = time.time()    
-        c_double.in_dll(clibrebound,"timing").value = endtime-starttime
-    
-        for i in range(1,get_N()):
-            with open("outputparams.txt", "w") as f:
-                f.write("dump_param1.dat\n")
-                f.write("{0}\n".format(i+1))
-                f.write("1\n")
-            try:
-                os.system("./tool_follow < outputparams.txt > /dev/null")
-                with open("follow.out", "r") as f:
-                    lines = f.readlines()
-                    line = lines[-1].split()
-                    t = float(line[0].strip())
-                    set_t(t)
-                    _particles[i].x = float(line[2].strip())
-                    _particles[i].y = float(line[3].strip())
-                    _particles[i].z = float(line[4].strip())
-                    _particles[i].vx = float(line[5].strip())
-                    _particles[i].vy = float(line[6].strip())
-                    _particles[i].vz = float(line[7].strip())
-            except:
-                print("Something went wrong. Ignoring it for now. (%s)"%_integrator_debug)
-                pass
-        os.system("rm bin.dat")
-        os.chdir(oldwd)
-    if _integrator_package == "MERCURY":
-        k = 0.01720209895    
-        facTime = math.sqrt(get_G())/k
-        _particles = get_particles()
-        oldwd = os.getcwd()
-        paramin = """)O+_06 Integration parameters  (WARNING: Do not delete this line!!)
-) Lines beginning with `)' are ignored.
-)---------------------------------------------------------------------
-) Important integration parameters:
-)---------------------------------------------------------------------
- algorithm (MVS, BS, BS2, RADAU, HYBRID etc) = mvs
- start time (days)= 0.
- stop time (days) = %.16e
- output interval (days) = 1000000.1d0
- timestep (days) = %.16e
- accuracy parameter=1.d-12
-)---------------------------------------------------------------------
-) Integration options:
-)---------------------------------------------------------------------
- stop integration after a close encounter = no
- allow collisions to occur = no
- include collisional fragmentation = no
- express time in days or years = days
- express time relative to integration start time = yes
- output precision = high
- < not used at present >
- include relativity in integration= no
- include user-defined force = no
-)---------------------------------------------------------------------
-) These parameters do not need to be adjusted often:
-)---------------------------------------------------------------------
- ejection distance (AU)= 100
- radius of central body (AU) = 0.005
- central mass (solar) = %.16e
- central J2 = 0
- central J4 = 0
- central J6 = 0
- < not used at present >
- < not used at present >
- Hybrid integrator changeover (Hill radii) = 3.
- number of timesteps between data dumps = 50000000
- number of timesteps between periodic effects = 100000000
-""" % ( tmax*facTime, get_dt()*facTime,_particles[0].m)
-        if not tmpdir:
-            # first call
-            tmpdir = tempfile.mkdtemp()
-            for f in ["mercury", "message.in","files.in"]:
-                os.symlink(oldwd+"/../../others/mercury6/"+f,tmpdir+"/"+f)
-            os.chdir(tmpdir)
-            smallin = """)O+_06 Small-body initial data  (WARNING: Do not delete this line!!)
-) Lines beginning with `)' are ignored.
-)---------------------------------------------------------------------
- style (Cartesian, Asteroidal, Cometary) = Ast
-)---------------------------------------------------------------------
-"""
-            with open("small.in", "w") as f:
-                f.write(smallin)
-            bigin = """)O+_06 Big-body initial data  (WARNING: Do not delete this line!!)
-) Lines beginning with `)' are ignored.
-)---------------------------------------------------------------------
- style (Cartesian, Asteroidal, Cometary) = Cartesian
- epoch (in days) = %.16e
-)---------------------------------------------------------------------
-""" %(get_t()*facTime)
-            for i in range(1,get_N()):
-                bigin += """PART%03d    m=%.18e r=20.D0 d=5.43
- %.18e %.18e %.18e
- %.18e %.18e %.18e
-  0. 0. 0.
-""" %(i, _particles[i].m, _particles[i].x, _particles[i].y, _particles[i].z, _particles[i].vx/facTime, _particles[i].vy/facTime, _particles[i].vz/facTime)
-            with open("big.in", "w") as f:
-                f.write(bigin)
-            with open("param.in", "w") as f:
-                f.write(paramin)
-        else:
-            # Not first call
-            os.chdir(tmpdir)
-            with open("param.dmp", "w") as f:
-                f.write(paramin)
-        starttime = time.time()    
-        #os.system("./mercury ")
-        os.system("./mercury >/dev/null")
-        endtime = time.time()    
-        c_double.in_dll(clibrebound,"timing").value = endtime-starttime
-        with open("big.dmp", "r") as f:
-            lines = f.readlines()
-            t= float(lines[4].split("=")[1].strip())
-            set_t(t/facTime)
-            j = 1
-            for i in range(6,len(lines),4):
-                pos = lines[i+1].split()
-                _particles[j].x = float(pos[0])
-                _particles[j].y = float(pos[1])
-                _particles[j].z = float(pos[2])
-                vel = lines[i+2].split()
-                _particles[j].vx = float(vel[0])*facTime
-                _particles[j].vy = float(vel[1])*facTime
-                _particles[j].vz = float(vel[2])*facTime
-                j += 1
-
-        os.chdir(oldwd)
-    if _integrator_package =="REBOUND":
+    if debug.integrator_package =="REBOUND":
         clibrebound.integrate(c_double(tmax),c_int(exactFinishTime),c_int(keepSynchronized))
+    else:
+        debug.integrate(tmax,exactFinishTime,keepSynchronized)
 
 TWOPI = 2.*math.pi
 def mod2pi(f):
@@ -581,7 +363,9 @@ def get_com(last=None):
 
 # Alias
 get_center_of_momentum = get_com
+get_center_of_mass = get_com
 
 # Import at the end to avoid circular dependence
 from .particle import *
 from . import horizons
+from . import debug
