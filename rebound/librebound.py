@@ -122,12 +122,12 @@ def add_particle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None
     """
     if particle is None:
         particle = Particle(**locals())
-    if isinstance(particle,list):
-        for particle in particle:
-            clibrebound.particles_add(particle)
+    elif isinstance(particle,list):
+        for p in particle:
+            add_particle(p)
     elif isinstance(particle,str):
         clibrebound.particles_add(horizons.getParticle(**locals()))
-    else:
+    else: # Assume it's a particle
         clibrebound.particles_add(particle)
 
 # Aliases
