@@ -191,7 +191,10 @@ def get_orbits(heliocentric=False):
 # Tools
 def move_to_center_of_momentum():
     clibrebound.tools_move_to_center_of_momentum()
-move_to_barycentric_fram = move_to_center_of_momentum
+# Alias
+move_to_barycentric_frame = move_to_center_of_momentum
+move_to_center_of_mass = move_to_center_of_momentum
+move_to_com = move_to_center_of_momentum
 
 def reset():
     debug.reset()
@@ -272,9 +275,11 @@ def set_force_is_velocitydependent(force_is_velocitydependent=1):
 
 def output_binary(filename):
     clibrebound.output_binary(c_char_p(filename))
+save=output_binary
     
 def input_binary(filename):
     clibrebound.input_binary(c_char_p(filename))
+load=input_binary
     
 
 # Integration

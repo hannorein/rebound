@@ -19,7 +19,7 @@ INITDATE = datetime.datetime.today()
 
 AU2KM      = 149597870.7  #exactly
 KM2AU      = 1./AU2KM
-YR2S       = 31556925.97467840090394020081
+YR2S       = 31557600.0   #exactly (Julian year)
 S2YRTWOPI  = 2.*math.pi/YR2S
 
 def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None):   
@@ -27,7 +27,7 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
         date = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M")
     else:
         date = INITDATE
-    print("Getting data from NASA Horizons for body '%s'... "%(particle),end="")
+    print("Searching NASA Horizons for '%s'... "%(particle),end="")
     sys.stdout.flush()
 
     t = telnetlib.Telnet()
@@ -73,10 +73,9 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
                     p.z = pos[2]*KM2AU
                 if startdata == 3:
                     vel = [float(i) for i in line.split()]
-                    auperday2auperyeartwopi = 58.130101
                     p.vx = vel[0]*KM2AU/S2YRTWOPI 
-                    p.vx = vel[1]*KM2AU/S2YRTWOPI 
-                    p.vx = vel[2]*KM2AU/S2YRTWOPI 
+                    p.vy = vel[1]*KM2AU/S2YRTWOPI 
+                    p.vz = vel[2]*KM2AU/S2YRTWOPI 
                 if startdata > 0:
                     startdata += 1
                 if "Target body name:" in line:
@@ -84,7 +83,6 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
                     try:
                         idn = re.search(r"\(([0-9]+)\)", line).group(1)
                     except:
-                        print("Warning: Cannot find object ID#")
                         pass
                 if line.strip() == "$$SOE":
                     startdata = 1
