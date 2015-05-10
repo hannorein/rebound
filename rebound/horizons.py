@@ -4,9 +4,12 @@
 Pull data from HORIZONS and format it for use as a REBOUND particle. 
 
 """
+from __future__ import print_function
 import telnetlib
 import datetime
 import re
+import sys
+import math
 
 __all__ = ["getParticle"]
 
@@ -14,12 +17,18 @@ __all__ = ["getParticle"]
 # Cached at the beginning to ensure that all particles are synchronized.
 INITDATE = datetime.datetime.today() 
 
+AU2KM      = 149597870.7  #exactly
+KM2AU      = 1./AU2KM
+YR2S       = 31556925.97467840090394020081
+S2YRTWOPI  = 2.*math.pi/YR2S
+
 def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None):   
     if date is not None:
         date = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M")
     else:
         date = INITDATE
-    print("Trying to get data from NASA Horizons for body '%s' at date '%s'..."%(particle,date.strftime("%Y-%m-%d %H:%M")))
+    print("Getting data from NASA Horizons for body '%s'... "%(particle),end="")
+    sys.stdout.flush()
 
     t = telnetlib.Telnet()
     t.open('horizons.jpl.nasa.gov', 6775)
@@ -32,7 +41,13 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
                ( r'Starting.* :', date.strftime("%Y-%m-%d %H:%M")+'\n' ),
                ( r'Ending.* :', (date + datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M")+'\n' ),
                ( r'Output interval.*:', '1d\n' ),
-               ( r'Accept default output.*:', 'y\n' ),
+               ( r'Accept default output \[.*:', 'n\n' ),
+               ( r'Output reference frame \[.*:', '\n' ),
+               ( r'Corrections \[.*:', '\n' ),
+               ( r'Output units \[.*:', '1\n' ),
+               ( r'Spreadsheet CSV format.*\[.*:', 'NO\n' ),
+               ( r'Label cartesian output.*\[.*:', 'NO\n' ),
+               ( r'Select output table type.*\[.*:', '3\n' ),
                ( r'Scroll . Page: .*%', ' '),
                ( r'Select\.\.\. .A.gain.* :', 'X\n' ),
                ( r'Select \.\.\. .F.tp.*:', 'selectID' )
@@ -53,19 +68,19 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
                     break
                 if startdata == 2:
                     pos = [float(i) for i in line.split()]
-                    p.x = pos[0]
-                    p.y = pos[1]
-                    p.z = pos[2]
+                    p.x = pos[0]*KM2AU
+                    p.y = pos[1]*KM2AU
+                    p.z = pos[2]*KM2AU
                 if startdata == 3:
                     vel = [float(i) for i in line.split()]
                     auperday2auperyeartwopi = 58.130101
-                    p.vx = vel[0]*auperday2auperyeartwopi 
-                    p.vy = vel[1]*auperday2auperyeartwopi 
-                    p.vz = vel[2]*auperday2auperyeartwopi 
+                    p.vx = vel[0]*KM2AU/S2YRTWOPI 
+                    p.vx = vel[1]*KM2AU/S2YRTWOPI 
+                    p.vx = vel[2]*KM2AU/S2YRTWOPI 
                 if startdata > 0:
                     startdata += 1
-                if line[0:18] == "Target body name: ":
-                    print("Found: %s" % line[18:50].strip())
+                if "Target body name:" in line:
+                    print("Found: %s." % line[18:50].strip())
                     try:
                         idn = re.search(r"\(([0-9]+)\)", line).group(1)
                     except:
@@ -95,6 +110,7 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
     elif idn is not None:
         try:
             p.m = float(re.search(r"BODY%d\_GM .* \( *([\.E\+\-0-9]+ *)\)"%int(idn), HORIZONS_MASS_DATA).group(1))
+            p.m *= KM2AU*KM2AU*KM2AU/(S2YRTWOPI*S2YRTWOPI)
         except:
             print("Warning: Mass cannot be retrieved from NASA HORIZONS. Set to 0.")
             p.m = 0
