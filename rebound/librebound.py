@@ -286,9 +286,19 @@ load=input_binary
 def step():
     clibrebound.rebound_step()
 
-def integrate(tmax,exactFinishTime=1,keepSynchronized=0):
+class IntegratorException(Exception):
+    pass
+
+def integrate(tmax,exactFinishTime=1,keepSynchronized=0,maxR=0.,minD=0.):
     if debug.integrator_package =="REBOUND":
-        clibrebound.integrate(c_double(tmax),c_int(exactFinishTime),c_int(keepSynchronized))
+        clibrebound.integrate.restype = c_int
+        ret_value = clibrebound.integrate(c_double(tmax),c_int(exactFinishTime),c_int(keepSynchronized),c_double(maxR),c_double(minD))
+        if ret_value == 1:
+            raise IntegratorException("No more particles left in simulation.")
+        if ret_value == 2:
+            raise IntegratorException("At least one particle has a radius > maxR.")
+        if ret_value == 3:
+            raise IntegratorException("At least one particle pair has a distance < minD.")
     else:
         debug.integrate_other_package(tmax,exactFinishTime,keepSynchronized)
 

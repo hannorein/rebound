@@ -119,7 +119,12 @@ void reset(){
 
 
 // Integrate until t=_tmax (or slightly more if exactFinishTime=0)
-void integrate(double _tmax, int exactFinishTime, int keepSynchronized){
+// Return values:
+//   0 = All good
+//   1 = No particles left
+//   2 = Particle distance exceeds maxR
+//   3 = Close encounter closer than minD
+int integrate(double _tmax, int exactFinishTime, int keepSynchronized, double maxR, double minD){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
@@ -139,10 +144,12 @@ void integrate(double _tmax, int exactFinishTime, int keepSynchronized){
 	if (problem_additional_forces==NULL){
 		integrator_force_is_velocitydependent = 0;
 	}
-	while(t<tmax && last_step<2){
+	int ret_value = 0;
+	while(t<tmax && last_step<2 && ret_value==0){
 		if (N<=0){
 			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
-			return;
+			ret_value = 1;
+			break;
 		}
 		integrator_part1();
 		gravity_calculate_acceleration();
@@ -159,6 +166,34 @@ void integrate(double _tmax, int exactFinishTime, int keepSynchronized){
 		}else{
 			dt_last_done = dt;
 		}
+		if (maxR){
+			// Check for escaping particles
+			const double maxR2 = maxR*maxR;
+			for (int i=0;i<N-N_megno;i++){
+				struct particle p = particles[i];
+				double r2 = p.x*p.x + p.y*p.y + p.z*p.z;
+				if (r2>maxR2){
+					ret_value = 2;
+				}
+			}
+		}
+		if (minD){
+			// Check for close encounters
+			const double minD2 = minD*minD;
+			for (int i=0;i<N-N_megno;i++){
+				struct particle pi = particles[i];
+				for (int j=0;j<i;j++){
+					struct particle pj = particles[j];
+					const double x = pi.x-pj.x;
+					const double y = pi.y-pj.y;
+					const double z = pi.z-pj.z;
+					const double r2 = x*x + y*y + z*z;
+					if (r2<minD2){
+						ret_value = 3;
+					}
+				}
+			}
+		}
 	}
 	integrator_synchronize();
 	dt = dt_last_done;
@@ -167,5 +202,6 @@ void integrate(double _tmax, int exactFinishTime, int keepSynchronized){
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
 	timing = timing_final-timing_initial;
+	return ret_value;
 }
 	 

@@ -38,7 +38,17 @@ void rebound_step();
  * If the keepSynchronized flag is set to 1, then the integrator
  * will synchronized the positions and velocities after every timestep.
  * This will cause the integrator to be slower and less accurate.
+ *
+ * If maxR or minD are set to a value other than 0, then after every
+ * timetep, REBOUND checks if a particle escaped or if two  particles
+ * collided. Note that this can be a slowdown
+ *
+ * Return values:
+ *   0 = All good
+ *   1 = No particles left
+ *   2 = Particle distance exceeds maxR
+ *   3 = Close encounter closer than minD
  */
-void integrate(double _tmax, int exactFinishTime, int keepSynchronized);
+int integrate(double _tmax, int exactFinishTime, int keepSynchronized, double maxR, double minD);
 
 #endif
