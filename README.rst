@@ -80,9 +80,9 @@ You should have received a copy of the GNU General Public License along with REB
 
 Acknowledgments
 ---------------
-When you use this code or parts of this code for results presented in a scientific publication, please send us a copy of your paper so that we can keep track of all publications that made use of the code. We would greatly appreciate a citation to Rein and Liu (2012) and an acknowledgment of the form::
+When you use this code or parts of this code for results presented in a scientific publication, please send us a copy of your paper so that we can keep track of all publications that made use of the code. We would greatly appreciate a citation to Rein and Liu (2012) and an acknowledgment of the form:
 
-    Simulations in this paper made use of the REBOUND code which can be downloaded freely at http://github.com/hannorein/rebound.
+"Simulations in this paper made use of the REBOUND code which can be downloaded freely at http://github.com/hannorein/rebound."
 
 If you use the IAS15 integrator, please cite Rein and Spiegel (2015).
 
@@ -152,7 +152,7 @@ The following sections list the available modules that come with REBOUND.
 Available integrators
 ---------------------
 
-The following integrators are available within REBOUND. Since May 2015, the integrator can be changed at runtime. Thus, the integrator appears no longer in the MAKEFILE. To set the integrator, set the `integrator` variable in the `probelm_init()` function (see below) to one of the integrator names (it's a C enum)::
+The following integrators are available within REBOUND. Since May 2015, the integrator can be changed at runtime. Thus, the integrator appears no longer in the Makefile. To set the integrator, set the `integrator` variable in the `probelm_init()` function (see below) to one of the integrator names (it's a C enum)::
 
  Integrator name        | Description
  ---------------------- | -----------
@@ -252,7 +252,7 @@ The problem.c file must contain at least three functions. You do need to impleme
 
     In addition to the four mandatory functions that need to be present, you can also define some other functions and make them callable by setting a function pointer. The function pointer `problem_additional_forces()` which is called one or more times per time-step whenever the forces are updated. This is where you can implement all kind of things such as additional forces onto particles. 
     
-    The following lines of code implement a simple velocity dependent force.  `integrator_ias15.c` is best suited for this (see `examples/dragforce`)::
+    The following lines of code implement a simple velocity dependent force.  `IAS15` is best suited for this (see `examples/dragforce`)::
     
         void velocity_dependent_force(){
             for (int i=1;i<N;i++){
