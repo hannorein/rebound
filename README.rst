@@ -59,13 +59,18 @@ or if you do not have git installed::
 REBOUND is written in C because C is very fast and highly portable (REBOUND runs on everything from mobile phones to super computers and special purpose accelerator cards).  However, we also provide a shared library `librebound`. 
 This shared library can be called from many programming languages. We provide a python module which makes calling REBOUND from python particularly easy. Whether you want to use REBOUND in C or python depends on your specific application.
 
-In short: If you simply want to integrate a few particle system such as a planetary system with the high order integrator IAS15 or a symplectic integrator, use python. If you want to run large, many particle systems (with millions of particles), use another integrator or make use of the distributed tree code of REBOUND, use the C version.
+In short: If you simply want to integrate a few particle system such as a planetary system with the high order integrator IAS15 or the symplectic integrator WHFast, use python. If you want to run large, many particle systems (with millions of particles), use an exotic integrator, make use of the distributed tree code of REBOUND or want to contribute to the development of REBOUND, use the C version.
 
 -----------------------
 
 **Python and librebound**
 
-See ipython notebook.
+To learn how to install REBOUND for python have a look at the iPython notebooks at https://github.com/hannorein/rebound/tree/python_tutorials/index.ipynb.
+
+In short::
+
+    pip install rebound
+
 
 -------------
 
