@@ -40,8 +40,6 @@ There are three papers describing the functionality of REBOUND.
 How to us REBOUND - an overview
 -------------------------------
 
-**C or Python?**
-
 REBOUND is written in C because C is very fast and highly portable (REBOUND runs on everything from mobile phones to super computers and special purpose accelerator cards).  However, we also provide a shared library `librebound`. 
 This shared library can be called from many programming languages. We provide a python module which makes calling REBOUND from python particularly easy. Whether you want to use REBOUND in C or python depends on your specific application.
 
@@ -62,6 +60,26 @@ Feature list
 * No configuration is needed to run any of the example problems. Just type `make && ./nbody` in the problem directory to run them.
 * Standard ASCII or binary output routines. 
 * Different modules are easily interchangeable by one line in the Makefile.
+
+
+License
+-------
+REBOUND is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+REBOUND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with REBOUND.  If not, see <http://www.gnu.org/licenses/>.
+
+
+Acknowledgments
+---------------
+When you use this code or parts of this code for results presented in a scientific publication, please send us a copy of your paper so that we can keep track of all publications that made use of the code. We would greatly appreciate a citation to Rein and Liu (2012) and an acknowledgment of the form: 
+
+_Simulations in this paper made use of the REBOUND code which can be downloaded freely at http://github.com/hannorein/rebound._
+
+If you use the IAS15 integrator, please cite Rein and Spiegel (2015).
+
+If you use the WHFast integrator, please cite Rein and Tamayo (2015).
 
 
 The C version of REBOUND
@@ -85,7 +103,7 @@ or if you do not have git installed::
 Available modules
 -----------------
 
-REBOUND is extremely modular. You have the choice between different gravity, collision, boundary and integration modules. It is also possible to implement completely new modules with minimal effort. Modules are chosen by setting up symbolic links in the Makefile. There is no need to run a configure script. For example, the Makefile might create a link `gravity.c` that points to one of the gravity modules, say `gravity_tree.c`. This tells the code to use a tree code to do the gravity calculation.
+REBOUND is extremely modular. You have the choice between different gravity, collision, boundary modules. It is also possible to implement completely new modules with minimal effort. Modules are chosen by setting up symbolic links in the Makefile. There is no need to run a configure script. For example, the Makefile might create a link `gravity.c` that points to one of the gravity modules, say `gravity_tree.c`. This tells the code to use a tree code to do the gravity calculation.
 
 This setup allows you to work on multiple projects at the same time using different modules. When switching to another problem, nothing has to be set-up and the problem can by compiled by simply typing `make` in the corresponding directory (see below).
 
@@ -107,23 +125,11 @@ The following sections list the available modules that come with REBOUND.
 
  Module name            | Description
  ---------------------- | -----------
- `collisions_none.c`    |  No collision detection
+ `collisions_none.c`    | No collision detection
  `collisions_direct.c`  | Direct nearest neighbor search, O(N^2)
  `collisions_tree.c`    | Oct tree, O(N log(N))
  `collisions_sweep.c`   | Plane sweep algorithm, ideal for low dimensional  problems, O(N) or O(N^1.5) depending on geometry 
  `collisions_sweepphi.c`| Plane sweep algorithm along the azimuthal angle, ideal for narrow rings in global simulations, O(N) or O(N 1.5) depending on geometry
-
-
-**Integrators**::
-
- Module name            | Description
- ---------------------- | -----------
- `integrator_euler.c`   |  Euler scheme, first order
- `integrator_leapfrog.c`| Leap frog, second order, symplectic
- `integrator_ias15.c`   | IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precission. IAS15 can integrate variational equations. Rein & Spiegel 2014, Everhart 1985
- `integrator_whfast.c`  | Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, uses Gauss f and g functions to solve Kepler motion, can integrate variational equations, follows Mikkola and Innanen (1999)
- `integrator_wh.c`      | SWIFT-style Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, note that  `integrator_whfast.c` almost always offers better characteristics, Wisdom & Holman 1991, Kinoshita et al 1991
- `integrator_sei.c`     | Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
 
 
 **Boundaries**::
@@ -135,6 +141,22 @@ The following sections list the available modules that come with REBOUND.
  `boundaries_periodic.c`| Periodic boundary conditions. Particles are reinserted on the other side if they cross the box boundaries. You can use an arbitrary number of ghost-boxes with this module.
  `boundaries_shear.c`   | Shear periodic boundary conditions. Similar to periodic boundary conditions, but ghost-boxes are moving with constant speed, set by the shear.
   
+
+Available integrators
+---------------------
+
+The following integrators are available within REBOUND. Since May 2015, the integrator can be changed at runtime. Thus, the integrator appears no longer in the MAKEFILE. To set the integrator, set the `integrator` variable in the `probelm_init()` function (see below) to one of the integrator names (it's a C enum)::
+
+ Integrator name        | Description
+ ---------------------- | -----------
+ `IAS15`   | IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precission. IAS15 can integrate variational equations. Rein & Spiegel 2015, Everhart 1985
+ `WHFAST`  | WHFast is the integrator described in Rein & Tamayo 2015, it's a second order symplectic Wisdom Holman integrator with 11th order symplectic correctors. It is extremely fast and accurate. 
+ `EULER`   | Euler scheme, first order
+ `LEAPFROG`| Leap frog, second order, symplectic
+ `integrator_whfast.c`  | Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, uses Gauss f and g functions to solve Kepler motion, can integrate variational equations, follows Mikkola and Innanen (1999)
+ `WH`      | SWIFT-style Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, note that  `integrator_whfast.c` almost always offers better characteristics, Wisdom & Holman 1991, Kinoshita et al 1991
+ `SEI`     | Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
+
 
 
 Directory structure and compilation
@@ -151,7 +173,7 @@ Then, type
 This will do the following things    
 
 * It sets various environment variables. These determine settings like the compiler optimization flags and which libraries are included (see below). 
-* It creates symbolic links to the active modules. This allows you to choose from different gravity solvers, boundary conditions, integrators and collision solvers. For example, to change the gravity solver from using a tree to direct summation you could change `gravity_tree.c` to `gravity_direct.c`. 
+* It creates symbolic links to the active modules. This allows you to choose from different gravity solvers, boundary conditions and collision solvers. For example, to change the gravity solver from using a tree to direct summation you could change `gravity_tree.c` to `gravity_direct.c`. 
 * It creates a symbolic link to the current problem file. Each problem file contains the initial conditions and the output routines for the current problem. You do not need to change any file in `src/` to create a new problem unless you want to do something very special. This keeps the initial conditions and the code itself cleanly separated.
 * It compiles the code and copies the binary into the current directory.
 
@@ -655,57 +677,3 @@ You can use the following keyboard command to alter the OpenGL real-time visuali
   <tr><td>w</td><td>Draw orbits as wires (particle with index 0 is central object).  </td></tr>
  </table>
 
-
-License
-======-
-REBOUND is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-
-REBOUND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with REBOUND.  If not, see <http://www.gnu.org/licenses/>.
-
-
-Acknowledgments
-===============
-When you use this code or parts of this code for results presented in a scientific publication, please send us a copy of your paper so that we can keep track of all publications that made use of the code. We would greatly appreciate a citation to Rein and Liu (2012) and an acknowledgment of the form: 
-
-_Simulations in this paper made use of the collisional N-body code REBOUND which can be downloaded freely at http://github.com/hannorein/rebound._
-
-If you use the IAS15 integrator, please cite Rein and Spiegel (2014).
-
-References in BibTeX format::
-
-    @ARTICLE{ReinLiu2012,
-       author = {{Rein}, H. and {Liu}, S.-F.},
-        title = "{REBOUND: an open-source multi-purpose N-body code for collisional dynamics}",
-      journal = {\aap},
-    archivePrefix = "arXiv",
-       eprint = {1110.4876},
-     primaryClass = "astro-ph.EP",
-     keywords = {methods: numerical, planets and satellites: rings, protoplanetary disks},
-         year = 2012,
-        month = jan,
-       volume = 537,
-          eid = {A128},
-        pages = {A128},
-          doi = {10.1051/0004-6361/201118085},
-       adsurl = {http://adsabs.harvard.edu/abs/2012A%26A...537A.128R},
-      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
-    }
-
-    @ARTICLE{2015MNRAS.446.1424R,
-       author = {{Rein}, H. and {Spiegel}, D.~S.},
-        title = "{IAS15: a fast, adaptive, high-order integrator for gravitational dynamics, accurate to machine precision over a billion orbits}",
-      journal = {\mnras},
-    archivePrefix = "arXiv",
-       eprint = {1409.4779},
-     primaryClass = "astro-ph.EP",
-     keywords = {gravitation, methods: numerical, planets and satellites: dynamical evolution and stability},
-         year = 2015,
-        month = jan,
-       volume = 446,
-        pages = {1424-1437},
-          doi = {10.1093/mnras/stu2164},
-       adsurl = {http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R},
-      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
-    }
