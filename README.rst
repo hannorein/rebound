@@ -51,13 +51,20 @@ This file explains how to use the C version of rebound. To learn how to install 
 Feature list 
 ------------
 
-* Real-time, 3D OpenGL visualization.
-* The code is written entirely in C. It conforms to the ISO standard C99.
-* Parallelized with OpenMP (for shared memory systems).
-* Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems).
-* No libraries are needed. The use of OpenGL/GLUT/libpng for visualization is optional. 
-* The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound.
-* No configuration is needed to run any of the example problems. Just type `make && ./nbody` in the problem directory to run them.
+An incomplete feature list of REBOUND:
+
+* Several symplectic integrators (WHFast, WH, SEI, LEAPFROG)
+* High accuracy non-symplectic integrator with adaptive timestepping (IAS15)
+* Support for collisional/granular dynamics, various collision detection routines
+* The code is written entirely in C, conforms to the ISO standard C99
+* Easy-to-use python module, installation in 3 words: `pip install rebound`
+* Extensive set of example problems in both C and python.
+* Real-time, 3D OpenGL visualization (C version)
+* Parallelized with OpenMP (for shared memory systems)
+* Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems)
+* No libraries are needed, use of OpenGL/GLUT/libpng for visualization is optional
+* The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound
+* No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them.
 * Standard ASCII or binary output routines. 
 * Different modules are easily interchangeable by one line in the Makefile.
 
@@ -73,9 +80,9 @@ You should have received a copy of the GNU General Public License along with REB
 
 Acknowledgments
 ---------------
-When you use this code or parts of this code for results presented in a scientific publication, please send us a copy of your paper so that we can keep track of all publications that made use of the code. We would greatly appreciate a citation to Rein and Liu (2012) and an acknowledgment of the form: 
+When you use this code or parts of this code for results presented in a scientific publication, please send us a copy of your paper so that we can keep track of all publications that made use of the code. We would greatly appreciate a citation to Rein and Liu (2012) and an acknowledgment of the form::
 
-_Simulations in this paper made use of the REBOUND code which can be downloaded freely at http://github.com/hannorein/rebound._
+    Simulations in this paper made use of the REBOUND code which can be downloaded freely at http://github.com/hannorein/rebound.
 
 If you use the IAS15 integrator, please cite Rein and Spiegel (2015).
 
@@ -90,11 +97,11 @@ Installation
 
 You can download, compile and run REBOUND on almost any modern operating system within seconds.  Simply copy and paste this line to your terminal and press enter::
 
-    git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./nbody
+    git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./rebound
 
 or if you do not have git installed::
 
-    wget --no-check-certificate https://github.com/hannorein/rebound/tarball/master -O- | tar xvz && cd hannorein-rebound-*/examples/shearing_sheet/ && make && ./nbody
+    wget --no-check-certificate https://github.com/hannorein/rebound/tarball/master -O- | tar xvz && cd hannorein-rebound-*/examples/shearing_sheet/ && make && ./rebound
 
 *Note:* Make sure you have a compiler suite installed. Open a terminal and type `make` and `cc` to test if your installation is complete. If you are on OSX, you can download Xcode from the AppStore (for free). Once installed, open Xcode, go to Settings, then Downloads and install the Command Line Tools. 
 
@@ -187,7 +194,7 @@ Running REBOUND
 
 To run the code, simply type
 
-    ./nbody
+    ./rebound
 
 A window should open and you will see a simulation running in real time. The problem in the directory `examples/shearing_sheet/` simulates the rings of Saturn and uses a local shearing sheet approximation. Have a look at the other examples as well and you will quickly get an idea of what REBOUND can do. 
 
@@ -221,7 +228,7 @@ The problem.c file must contain at least three functions. You do need to impleme
 
     This routine is where you read command line arguments and set up your initial conditions. REBOUND does not come with a built-in functionality to read configuration files at run-time. We consider this not a missing feature. In REBOUND, you have one `problem.c` file for each problem. Thus, everything can be set within this file. There are, of course, situation in which you want to do something like a parameter space survey. In almost all cases, you vary only a few parameters. You can easily read these parameters from the command line.
  
-    Here is an example that reads in a command line argument given to rebound in the standard unix format `./nbody --boxsize=200.`. A default value of 100 is used if no parameter is passed to REBOUND.::
+    Here is an example that reads in a command line argument given to rebound in the standard unix format `./rebound --boxsize=200.`. A default value of 100 is used if no parameter is passed to REBOUND.::
 
         // At the top of the problem.c file add
         #include "input.h"
@@ -512,7 +519,7 @@ examples/restricted_threebody_mpi
   body problem. Active particles are copied to all nodes. All other
   particles only exist on one node and are not automatically (re-)
   distributed. There is not domain decomposition used in this example.
-  Run with `mpirun -np 4 nbody`.
+  Run with `mpirun -np 4 rebound`.
   
   Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
