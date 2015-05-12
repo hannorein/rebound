@@ -30,9 +30,9 @@ Papers
 
 There are three papers describing the functionality of REBOUND. 
 
-1. [Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012)](http://adsabs.harvard.edu/abs/2012A%26A...537A.128R) describe the code structure and the main feature including the gravity and collision routines for many particle systems.   
+1. Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012) describe the code structure and the main feature including the gravity and collision routines for many particle systems. http://adsabs.harvard.edu/abs/2012A%26A...537A.128R 
 
-2. [Rein & Spiegel (Monthly Notices of the Royal Astronomical Society, Volume 446, Issue 2, p.1424-1437)](http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R) describe the versatile high order integrator IAS15 which is now part of REBOUND. 
+2. Rein & Spiegel (Monthly Notices of the Royal Astronomical Society, Volume 446, Issue 2, p.1424-1437) describe the versatile high order integrator IAS15 which is now part of REBOUND. http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R
 
 3. Rein & Tamayo (in prep)
 
@@ -40,7 +40,35 @@ There are three papers describing the functionality of REBOUND.
 How to us REBOUND - an overview
 -------------------------------
 
-**For the impatient**
+**C or Python?**
+
+REBOUND is written in C because C is very fast and highly portable (REBOUND runs on everything from mobile phones to super computers and special purpose accelerator cards).  However, we also provide a shared library `librebound`. 
+This shared library can be called from many programming languages. We provide a python module which makes calling REBOUND from python particularly easy. Whether you want to use REBOUND in C or python depends on your specific application.
+
+In short: If you simply want to integrate a few particle system such as a planetary system with the high order integrator IAS15 or the symplectic integrator WHFast, use python. If you want to run large, many particle systems (with millions of particles), use an exotic integrator, use OpenGL visualization, make use of the distributed tree code of REBOUND or want to contribute to the development of REBOUND, use the C version.
+
+This file explains how to use the C version of rebound. To learn how to install REBOUND for python have a look at the iPython/Jupiter notebooks at https://github.com/hannorein/rebound/tree/python_tutorials/index.ipynb. Hint: It's super easy! All you'll have to do is `pip install rebound`.
+
+
+Feature list 
+------------
+
+* Real-time, 3D OpenGL visualization.
+* The code is written entirely in C. It conforms to the ISO standard C99.
+* Parallelized with OpenMP (for shared memory systems).
+* Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems).
+* No libraries are needed. The use of OpenGL/GLUT/libpng for visualization is optional. 
+* The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound.
+* No configuration is needed to run any of the example problems. Just type `make && ./nbody` in the problem directory to run them.
+* Standard ASCII or binary output routines. 
+* Different modules are easily interchangeable by one line in the Makefile.
+
+
+The C version of REBOUND
+========================
+
+Installation
+------------
 
 You can download, compile and run REBOUND on almost any modern operating system within seconds.  Simply copy and paste this line to your terminal and press enter::
 
@@ -52,31 +80,6 @@ or if you do not have git installed::
 
 *Note:* Make sure you have a compiler suite installed. Open a terminal and type `make` and `cc` to test if your installation is complete. If you are on OSX, you can download Xcode from the AppStore (for free). Once installed, open Xcode, go to Settings, then Downloads and install the Command Line Tools. 
 
-----------------
-
-**C or Python?**
-
-REBOUND is written in C because C is very fast and highly portable (REBOUND runs on everything from mobile phones to super computers and special purpose accelerator cards).  However, we also provide a shared library `librebound`. 
-This shared library can be called from many programming languages. We provide a python module which makes calling REBOUND from python particularly easy. Whether you want to use REBOUND in C or python depends on your specific application.
-
-In short: If you simply want to integrate a few particle system such as a planetary system with the high order integrator IAS15 or the symplectic integrator WHFast, use python. If you want to run large, many particle systems (with millions of particles), use an exotic integrator, make use of the distributed tree code of REBOUND or want to contribute to the development of REBOUND, use the C version.
-
------------------------
-
-**Python and librebound**
-
-To learn how to install REBOUND for python have a look at the iPython notebooks at https://github.com/hannorein/rebound/tree/python_tutorials/index.ipynb.
-
-In short::
-
-    pip install rebound
-
-
--------------
-
-**C version**
-
-Most of the features that make REBOUND great are not available in `librebound` and python. If you use the C version of REBOUND, you can use different integrators, accelerated gravity routines, OpenGL visualization, helper functions to setup particles, collision detection routines and many more. 
 
 
 Available modules
@@ -131,32 +134,11 @@ The following sections list the available modules that come with REBOUND.
  `boundaries_none.c`    | Dummy. Particles are not affected by boundary conditions.
  `boundaries_periodic.c`| Periodic boundary conditions. Particles are reinserted on the other side if they cross the box boundaries. You can use an arbitrary number of ghost-boxes with this module.
  `boundaries_shear.c`   | Shear periodic boundary conditions. Similar to periodic boundary conditions, but ghost-boxes are moving with constant speed, set by the shear.
-
-Other features worth mentioning
--------------------------------
-
-* Real-time, 3D OpenGL visualization.
-* The code is written entirely in C. It conforms to the ISO standard C99.
-* Parallelized with OpenMP (for shared memory systems).
-* Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems).
-* No libraries are needed. The use of OpenGL/GLUT/libpng for visualization is optional. 
-* The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound.
-* No configuration is needed to run any of the example problems. Just type `make && ./nbody` in the problem directory to run them.
-* Standard ASCII or binary output routines. 
-* Different modules are easily interchangeable by one line in the Makefile.
   
 
-REBOUND Documentation
-=====================
 
-Installation
-------------
-
-REBOUND is very easy to install and use. To get started, download the latest version of the code from github. If you are familiar with `git`, you can clone the project and keep up-to-date with the latest developments. Otherwise, you can also simply download a snapshot of the repository as a tar or zip file at http://github.com/hannorein/rebound. There is a download bottom at the top right. 
-
----------------------------------------
-
-**Directory structure and compilation**
+Directory structure and compilation
+-----------------------------------
 
 In the main directory, you find a sub-directory called `src` which contains the bulk parts of the  source code and a directory called `examples` with various example problems. To compile one of the example, you have to go to that directory, for example:
 
@@ -177,9 +159,9 @@ If something goes wrong, it is most likely the visualization module. You can tur
 
 If you want to start working on your own problem, simply copy one of the example directories or the template in the `problems` directory. Then modify `problem.c` and `Makefile` according to your application.  
 
--------------------
 
-**Running REBOUND**
+Running REBOUND
+---------------
 
 To run the code, simply type
 
@@ -188,9 +170,9 @@ To run the code, simply type
 A window should open and you will see a simulation running in real time. The problem in the directory `examples/shearing_sheet/` simulates the rings of Saturn and uses a local shearing sheet approximation. Have a look at the other examples as well and you will quickly get an idea of what REBOUND can do. 
 
 
---------------------------
 
-**Environment variables**
+Environment variables
+---------------------
 
 The makefile in each problem directory sets various environment variables. These determine the compiler optimization flags, the libraries included and basic code settings. Let us look at one of the examples `shearing_sheet` in more detail. 
 
@@ -206,9 +188,9 @@ The makefile in each problem directory sets various environment variables. These
 When you type make in your problem directory, all of these variables are read and passed on to the makefile in the `src/` directory. The `OPENGL` variable, for example, is used to determine if the OpenGL and GLUT libraries should be included. If the variable is `1` the makefile also sets a pre-compiler macro with `-DOPENGL`. Note that because OPENGL is incompatible with MPI, when MPI is turned on (set to 1), OPENGL is automatically turned off (set to 0) in the main makefile. You rarely should have to work directly with the makefile in the `src/` directory yourself.
 
 
-------------------------------------------------
 
-**User-defined functions in the problem.c file** 
+User-defined functions in the problem.c file
+--------------------------------------------
 
 The problem.c file must contain at least three functions. You do need to implement all of them, but a dummy (doing nothing) is sufficient to successfully link the object files. The following documentation describes what these functions do.
 
@@ -675,7 +657,7 @@ You can use the following keyboard command to alter the OpenGL real-time visuali
 
 
 License
--------
+======-
 REBOUND is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 REBOUND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
@@ -684,7 +666,7 @@ You should have received a copy of the GNU General Public License along with REB
 
 
 Acknowledgments
----------------
+===============
 When you use this code or parts of this code for results presented in a scientific publication, please send us a copy of your paper so that we can keep track of all publications that made use of the code. We would greatly appreciate a citation to Rein and Liu (2012) and an acknowledgment of the form: 
 
 _Simulations in this paper made use of the collisional N-body code REBOUND which can be downloaded freely at http://github.com/hannorein/rebound._
