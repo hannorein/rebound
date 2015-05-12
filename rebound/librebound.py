@@ -168,6 +168,10 @@ def get_particles():
 # Alias
 particles = get_particles
 
+def remove_all_particles():
+    clibrebound.particles_remove_all()
+
+
 # Orbit getter
 def get_orbits(heliocentric=False):
     """ Returns an array of Orbits of length N-1.
