@@ -48,6 +48,8 @@ double tmax	= 0;
 double G 	= 1;
 double softening = 0;
 double timing 	= 0;
+int closeEncounterPi = -1;
+int closeEncounterPj = -1;
 extern int Nmax;	
 extern int iter;  // TODO DEBUG
 const char *build_str = __DATE__ " " __TIME__;
@@ -190,6 +192,8 @@ int integrate(double _tmax, int exactFinishTime, int keepSynchronized, double ma
 					const double r2 = x*x + y*y + z*z;
 					if (r2<minD2){
 						ret_value = 3;
+						closeEncounterPi = i;
+						closeEncounterPj = j;
 					}
 				}
 			}

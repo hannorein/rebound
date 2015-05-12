@@ -287,9 +287,15 @@ def step():
     clibrebound.rebound_step()
 
 class CloseEncounter(Exception):
-    pass
+    def __init__(self, id1, id2):
+            self.id1 = id1
+            self.id2 = id2
+    def __str__(self):
+            return "A close encounter occured between particles %d and %d."%(self.id1,self.id2)
+
 class ParticleEscaping(Exception):
     pass
+
 class NoParticleLeft(Exception):
     pass
 
@@ -302,7 +308,8 @@ def integrate(tmax,exactFinishTime=1,keepSynchronized=0,maxR=0.,minD=0.):
         if ret_value == 2:
             raise ParticleEscaping("At least one particle has a radius > maxR.")
         if ret_value == 3:
-            raise CloseEncounter("At least one particle pair has a distance < minD.")
+            raise CloseEncounter(c_int.in_dll(clibrebound, "closeEncounterPi").value,
+                                 c_int.in_dll(clibrebound, "closeEncounterPj").value)
     else:
         debug.integrate_other_package(tmax,exactFinishTime,keepSynchronized)
 
