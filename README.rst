@@ -186,7 +186,7 @@ This will do the following things
 
 If something goes wrong, it is most likely the visualization module. You can turn it off by deleting the line which contains `OPENGL` in the makefile. Of course, you will not see the visualization in real time anymore. See below on how to install GLUT and fix this issue.
 
-If you want to start working on your own problem, simply copy one of the example directories or the template in the `problems` directory. Then modify `problem.c` and `Makefile` according to your application.  
+If you want to start working on your own problem, simply copy one of the example directories. Then modify `problem.c` and `Makefile` according to your application.  
 
 
 Running REBOUND
