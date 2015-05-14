@@ -40,6 +40,7 @@
 #include "communication_mpi.h"
 #include "tree.h"
 #include "tools.h"
+#include "integrator.h"
 
 extern double opening_angle2;
 extern int Nmax;
@@ -47,6 +48,7 @@ extern int Nmax;
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G 		= 1;		
+	integrator	= LEAPFROG;
 
 	// Setup particles
 	int _N = 100; 			// Number of particles

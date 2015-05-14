@@ -46,11 +46,8 @@
 #include "main.h"
 #include "gravity.h"
 #include "boundaries.h"
-
-// These variables have no effect for wh.
-int integrator_force_is_velocitydependent 	= 1;
-double integrator_epsilon 			= 0;
-double integrator_min_dt 			= 0;
+#include "integrator.h"
+#include "integrator_wh.h"
 
 void drift_wh(double _dt);
 void drift_dan(struct particle* pv, double mu, double dt, int* iflag);
@@ -68,16 +65,27 @@ void integrator_wh_to_jacobi();
 void integrator_wh_from_jacobi();
 
 int _N_active;
-void integrator_part1(){
-	// DRIFT
+int integrator_wh_N = 0;
+static double* eta;
+
+void integrator_wh_part1(){
 	_N_active = (N_active==-1)?N:N_active;
+	if (_N_active!=integrator_wh_N){
+		eta = realloc(eta,sizeof(double)*_N_active);
+		integrator_wh_N = _N_active;
+	}
+	// DRIFT
+	eta[0] = particles[0].m;
+	for(int i=1;i<_N_active;i++){
+	  eta[i] = eta[i-1] + particles[i].m;
+	}
 	integrator_wh_to_jacobi();
 	drift_wh(dt/2.);
 	integrator_wh_from_jacobi();
 	t+=dt/2.;
 }
 
-void integrator_part2(){
+void integrator_wh_part2(){
 	// KICK
 	_N_active = (N_active==-1)?N:N_active;
 	// Calculate terms in Heliocentric coordinates
@@ -105,11 +113,6 @@ int wh_check_normal(struct particle* p){
 }
 
 void integrator_wh_to_jacobi(){
-	double* eta = malloc(sizeof(double)*_N_active);
-	eta[0] = particles[0].m;
-	for(int i=1;i<_N_active;i++){
-	  eta[i] = eta[i-1] + particles[i].m;
-	}
 
 	double sumx  = particles[1].m * particles[1].x;
 	double sumy  = particles[1].m * particles[1].y;
@@ -148,16 +151,9 @@ void integrator_wh_to_jacobi(){
 		capvy = sumvy/eta[i];
 		capvz = sumvz/eta[i];
 	}
-	free(eta);
 }
 
 void integrator_wh_from_jacobi(){
-	double* eta = malloc(sizeof(double)*_N_active);
-	eta[0] = particles[0].m;
-	for(int i=1;i<_N_active;i++){
-	  eta[i] = eta[i-1] + particles[i].m;
-	}
-
 	double sumx  = particles[1].m*particles[1].x /eta[1];
 	double sumy  = particles[1].m*particles[1].y /eta[1];
 	double sumz  = particles[1].m*particles[1].z /eta[1];
@@ -182,7 +178,6 @@ void integrator_wh_from_jacobi(){
 		sumvy += p.m*p.vy / eta[i];
 		sumvz += p.m*p.vz / eta[i];
 	}
-	free(eta);
 }
 
 // Assumes positions in heliocentric coordinates
@@ -487,15 +482,12 @@ void drift_kepu_stumpff(double x, double* c0, double* c1, double* c2, double* c3
 	*c3 = (1.-x*(1.-x*(1.-x*(1.-x*(1.-x*(1.-x/210.)/156.)/110.)/72.)/42.)/20.)/6.;
 	*c1 = 1. - x*(*c3);
 	*c0 = 1. - x*(*c2);
-	if (n!=0){  // TODO: This loop structure is overly complicated
-		int i;
-		for (i=n;i>=1;i--){
-			*c3 = ((*c2) + (*c0)*(*c3))/4.;
-			*c2 = (*c1)*(*c1)/2.;
-			*c1 = (*c0)*(*c1);
-			*c0 = 2.*(*c0)*(*c0) - 1.;
-			x = x * 4.; 
-		}
+	for (int i=n;i>=1;i--){
+		*c3 = ((*c2) + (*c0)*(*c3))/4.;
+		*c2 = (*c1)*(*c1)/2.;
+		*c1 = (*c0)*(*c1);
+		*c0 = 2.*(*c0)*(*c0) - 1.;
+		x = x * 4.; 
 	}
 }
 
@@ -564,4 +556,10 @@ void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* 
 	y = (*x)*(*x);
 	*s = (*x)*(A0-y*(A1-y*(A2-y*(A3-y*(A4-y)))))/A0;
 	*c = sqrt(1. - (*s)*(*s));
+}
+void integrator_wh_synchronize(){
+	// Do nothing.
+}
+void integrator_wh_reset(){
+	// Do nothing.
 }

@@ -53,8 +53,8 @@ double 	collisions_max2_r	= 0;
 int	sweeps_proc		= 1;	/**< Number of processors used for seeping algorithm. */
 int 	sweeps_init_done 	= 0;	/**< Used for initialisation of data structures. */
 
-static inline double min(double a, double b){ return (a>b)?b:a;}
-static inline double max(double a, double b){ return (b>a)?b:a;}
+//static inline double min(double a, double b){ return (a>b)?b:a;}
+//static inline double max(double a, double b){ return (b>a)?b:a;}
 static inline double sgn(const double a){ return (a>=0 ? 1. : -1); }
 
 /** 

@@ -35,9 +35,11 @@
 #include "output.h"
 #include "particle.h"
 #include "boundaries.h"
+#include "integrator.h"
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
+	integrator	= WH;
 	dt 		= 1e-3;	// in year/(2*pi)
 	boxsize 	= 3;	// in AU
 	N_active 	= 1; 	// Only star has non-zero mass. If all particles have mass, delete this line.

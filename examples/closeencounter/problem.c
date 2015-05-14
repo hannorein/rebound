@@ -45,7 +45,7 @@ extern int display_wire;
 
 void problem_init(int argc, char* argv[]){
 	dt = 0.01*2.*M_PI;						// initial timestep
-	// integrator_epsilon = 1e-2;					// accuracy parameter, default is 1e-2 and should work in most cases.
+	integrator = IAS15;
 
 #ifdef OPENGL
 	display_wire	= 1;						// show instantaneous orbits

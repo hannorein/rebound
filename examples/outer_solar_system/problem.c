@@ -43,6 +43,8 @@
 #include "tools.h"
 #include "particle.h"
 #include "boundaries.h"
+#include "integrator.h"
+#include "integrator_whfast.h"
 
 double ss_pos[6][3] = 
 {
@@ -70,24 +72,23 @@ double ss_mass[6] =
 	1./3501.6,	// Saturn
 	1./22869.,	// Uranus
 	1./19314.,	// Neptune
-	0.		// Pluto
+	7.4074074e-09	// Pluto
 };
 
 const double k	 	= 0.01720209895;	// Gaussian constant 
-#ifdef OPENGL
-extern int display_wire;
-#endif // OPENGL
+double energy();
+double e_init;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= 40;			// in days
-	N_active	= 5;			// we treat pluto as a test particle. If all your particles have mass, remove this line.
-	tmax		= 7.3e10;		// 200 Myr
-	G		= k*k;			// These are the same units as used by the mercury6 code.
-#ifdef OPENGL
-	display_wire	= 1;			// Show orbits.
-#endif // OPENGL
-	init_boxwidth(200); 			// Init box with width 200 astronomical units
+	dt 		= 40;				// in days
+	tmax		= 7.3e10;			// 200 Myr
+	G		= k*k;				// These are the same units as used by the mercury6 code.
+	init_boxwidth(200); 				// Init box with width 200 astronomical units
+	integrator_whfast_synchronize_manually = 1;	// Need to call integrator_synchronize() before outputs. 
+	integrator_force_is_velocitydependent = 0;	// Force only depends on positions. 
+	integrator	= WHFAST;
+	//integrator	= IAS15;
 
 	// Initial conditions
 	for (int i=0;i<6;i++){
@@ -98,27 +99,49 @@ void problem_init(int argc, char* argv[]){
 		p.m  = ss_mass[i];
 		particles_add(p); 
 	}
-#ifdef INTEGRATOR_WH
-	// Move to heliocentric frame (required by WH integrator)
-	for (int i=1;i<N;i++){
-		particles[i].x -= particles[0].x;	particles[i].y -= particles[0].y;	particles[i].z -= particles[0].z;
-		particles[i].vx -= particles[0].vx;	particles[i].vy -= particles[0].vy;	particles[i].vz -= particles[0].vz;
+	if (integrator==WH){
+		// Move to heliocentric frame (required by WH integrator)
+		for (int i=1;i<N;i++){
+			particles[i].x -= particles[0].x;	particles[i].y -= particles[0].y;	particles[i].z -= particles[0].z;
+			particles[i].vx -= particles[0].vx;	particles[i].vy -= particles[0].vy;	particles[i].vz -= particles[0].vz;
+		}
+		particles[0].x = 0;	particles[0].y = 0;	particles[0].z = 0;
+		particles[0].vx= 0;	particles[0].vy= 0;	particles[0].vz= 0;
+	}else{
+		tools_move_to_center_of_momentum();
 	}
-	particles[0].x = 0;	particles[0].y = 0;	particles[0].z = 0;
-	particles[0].vx= 0;	particles[0].vy= 0;	particles[0].vz= 0;
-#else
-	tools_move_to_center_of_momentum();
-#endif // INTEGRATOR_WH
+	//tools_megno_init(1e-16);
+	e_init = energy();
+	system("rm -f energy.txt");
+	system("rm -f pos.txt");
+}
 
-	system("rm -f orbits.txt");
+double energy(){
+	double e_kin = 0.;
+	double e_pot = 0.;
+	for (int i=0;i<N-N_megno;i++){
+		struct particle pi = particles[i];
+		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
+		for (int j=i+1;j<N-N_megno;j++){
+			struct particle pj = particles[j];
+			double dx = pi.x - pj.x;
+			double dy = pi.y - pj.y;
+			double dz = pi.z - pj.z;
+			e_pot -= G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
+		}
+	}
+	return e_kin +e_pot;
 }
 
 void problem_output(){
-	if (output_check(1000.*dt)){
+	if (output_check(10000000.)){
 		output_timing();
-	}
-	if (output_check(3652422.)){ 	// output heliocentric orbital elements every 10000 years
-		output_append_orbits("orbits.txt");
+//		integrator_synchronize();
+//		FILE* f = fopen("energy.txt","a");
+//		double e = energy();
+//		fprintf(f,"%e %e %e\n",t, fabs((e-e_init)/e_init), tools_megno());
+//		fclose(f);
+//		printf("  Y = %.3f",tools_megno());
 	}
 }
 

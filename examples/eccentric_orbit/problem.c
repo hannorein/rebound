@@ -45,6 +45,7 @@ extern int display_wire;
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G			= 1;		// Gravitational constant
+	integrator		= IAS15;
 #ifdef OPENGL
 	display_wire		= 1; 		// show istantaneous orbits.
 #endif // OPENGL

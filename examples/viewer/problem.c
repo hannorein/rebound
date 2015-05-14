@@ -37,11 +37,13 @@
 #include "main.h"
 #include "particle.h"
 #include "tools.h"
+#include "integrator.h"
 
 extern int display_pause_sim;
 void particles_add_local(struct particle pt);
 
 void problem_init(int argc, char* argv[]){
+	integrator = NONE;
 	dt 	= 0;
 	display_pause_sim = 1;
 	boxsize	= 100;

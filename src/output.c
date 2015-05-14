@@ -34,8 +34,10 @@
 #include "tools.h"
 #include "output.h"
 #include "integrator.h"
+#include "integrator_sei.h"
+#ifndef LIBREBOUND	
 #include "input.h"
-#include "communication_mpi.h"
+#endif // LIBREBOUND	
 #ifdef OPENGL
 #include "display.h"
 #ifdef LIBPNG
@@ -48,12 +50,9 @@
 #endif  // _APPLE
 #endif  // OPENGL
 #ifdef MPI
+#include "communication_mpi.h"
 #include "mpi.h"
 #endif // MPI
-
-#ifdef INTEGRATOR_SEI 	// Shearing sheet
-extern double OMEGA;
-#endif
 
 // Check if output is needed
 
@@ -101,6 +100,7 @@ void profiling_stop(int cat){
 #endif // PROFILING
 
 double output_timing_last = -1; 	/**< Time when output_timing() was called the last time. */
+extern unsigned int integrator_hybrid_mode;
 void output_timing(){
 #ifdef MPI
 	int N_tot = 0;
@@ -124,13 +124,14 @@ void output_timing(){
 #endif // PROFILING
 	}
 	printf("N_tot= %- 9d  ",N_tot);
-#ifdef BOUNDARIES_SHEAR
-	printf("t= %- 9f [orb]  ",t*OMEGA/2./M_PI);
-#else // BOUNDARIES_SHEAR
-	printf("t= %- 9f  ",t);
-#endif // BOUNDARIES_SHEAR
-	if(integrator_epsilon>0.){
-		printf("dt= %- 9e  ",dt);
+	if (integrator==SEI){
+		printf("t= %- 9f [orb]  ",t*OMEGA/2./M_PI);
+	}else{
+		printf("t= %- 9f  ",t);
+	}
+	printf("dt= %- 9f  ",dt);
+	if (integrator==HYBRID){
+		printf("INT= %- 1d  ",integrator_hybrid_mode);
 	}
 	printf("cpu= %- 9f [s]  ",temp-output_timing_last);
 	if (tmax>0){
@@ -307,18 +308,18 @@ void output_append_velocity_dispersion(char* filename){
 		struct vec3 Aim1 = A;
 		struct particle p = particles[i];
 		A.x = A.x + (p.vx-A.x)/(double)(i+1);
-#ifdef INTEGRATOR_SEI 	// Shearing sheet
-		A.y = A.y + (p.vy+1.5*OMEGA*p.x-A.y)/(double)(i+1);
-#else
-		A.y = A.y + (p.vy-A.y)/(double)(i+1);
-#endif
+		if (integrator==SEI){
+			A.y = A.y + (p.vy+1.5*OMEGA*p.x-A.y)/(double)(i+1);
+		}else{
+			A.y = A.y + (p.vy-A.y)/(double)(i+1);
+		}
 		A.z = A.z + (p.vz-A.z)/(double)(i+1);
 		Q.x = Q.x + (p.vx-Aim1.x)*(p.vx-A.x);
-#ifdef INTEGRATOR_SEI 	// Shearing sheet
-		Q.y = Q.y + (p.vy+1.5*OMEGA*p.x-Aim1.y)*(p.vy+1.5*OMEGA*p.x-A.y);
-#else
-		Q.y = Q.y + (p.vy-Aim1.y)*(p.vy-A.y);
-#endif
+		if (integrator==SEI){
+			Q.y = Q.y + (p.vy+1.5*OMEGA*p.x-Aim1.y)*(p.vy+1.5*OMEGA*p.x-A.y);
+		}else{
+			Q.y = Q.y + (p.vy-Aim1.y)*(p.vy-A.y);
+		}
 		Q.z = Q.z + (p.vz-Aim1.z)*(p.vz-A.z);
 	}
 #ifdef MPI
@@ -376,6 +377,7 @@ void output_int(char* name, int value){
 	output_logfile(data);
 }
 	
+#ifndef LIBREBOUND	
 void output_prepare_directory(){
 	char dirname[4096] = "out__";
 	strcat(dirname,input_arguments);
@@ -394,6 +396,7 @@ void output_prepare_directory(){
 #endif // MPI
 	chdir(dirname);
 }
+#endif // LIBREBOUND	
 
 #ifdef OPENGL
 #ifdef LIBPNG

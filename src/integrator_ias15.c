@@ -49,10 +49,10 @@ void integrator_generate_constants();
 #include "particle.h"
 #include "main.h"
 #include "gravity.h"
-#include "boundaries.h"
 #include "problem.h"
-#include "output.h"
 #include "tools.h"
+#include "integrator.h"
+#include "integrator_ias15.h"
 
 #ifdef TREE
 #error IAS15 integrator not working with TREE module.
@@ -61,12 +61,10 @@ void integrator_generate_constants();
 #error IAS15 integrator not working with MPI.
 #endif
 
-int 	integrator_force_is_velocitydependent	= 1;	// Turn this off to safe some time if the force is not velocity dependent.
-double 	integrator_epsilon 			= 1e-9;	// Precision parameter 
-							// If it is zero, then a constant timestep is used. 
-int	integrator_epsilon_global		= 1;	// if 1: estimate the fractional error by max(acceleration_error)/max(acceleration), where max is take over all particles.
+unsigned int integrator_ias15_epsilon_global	= 1;	// if 1: estimate the fractional error by max(acceleration_error)/max(acceleration), where max is take over all particles.
+double integrator_ias15_epsilon 		= 1e-9;
+double integrator_ias15_min_dt 			= 0;
 							// if 0: estimate the fractional error by max(acceleration_error/acceleration).
-double 	integrator_min_dt 			= 0;	// Minimum timestep used as a floor when adaptive timestepping is enabled.
 unsigned long integrator_iterations_max_exceeded= 0;	// Count how many times the iteration did not converge
 const double safety_factor 			= 0.25;	// Maximum increase/deacrease of consecutve timesteps.
 
@@ -104,122 +102,14 @@ void predict_next_step(double ratio, int N3, double* _e[7], double* _b[7]);
 // MEGNO helper routines
 // Weights for integration of a first order differential equation (Note: interval length = 2) 
 const double w[8] = {0.03125, 0.185358154802979278540728972807180754479812609, 0.304130620646785128975743291458180383736715043, 0.376517545389118556572129261157225608762708603, 0.391572167452493593082499533303669362149363727, 0.347014795634501068709955597003528601733139176, 0.249647901329864963257869294715235590174262844, 0.114508814744257199342353731044292225247093225};
-double integrator_megno_Ys;
-double integrator_megno_Yss;
-double integrator_megno_cov_Yt;	// covariance of <Y> and t
-double integrator_megno_var_t;  // variance of t 
-double integrator_megno_mean_t; // mean of t
-double integrator_megno_mean_Y; // mean of Y
-long   integrator_megno_n; 	// number of covariance updates
-void integrator_megno_init(double delta){
-	int _N_megno = N;
-	integrator_megno_Ys = 0.;
-	integrator_megno_Yss = 0.;
-	integrator_megno_cov_Yt = 0.;
-	integrator_megno_var_t = 0.;
-	integrator_megno_n = 0;
-	integrator_megno_mean_Y = 0;
-	integrator_megno_mean_t = 0;
-        for (int i=0;i<_N_megno;i++){ 
-                struct particle megno = {
-			.m  = particles[i].m,
-			.x  = delta*tools_normal(1.),
-			.y  = delta*tools_normal(1.),
-			.z  = delta*tools_normal(1.),
-			.vx = delta*tools_normal(1.),
-			.vy = delta*tools_normal(1.),
-			.vz = delta*tools_normal(1.) };
-                particles_add(megno);
-        }
-	N_megno = _N_megno;
-}
-double integrator_megno(){ // Returns the MEGNO <Y>
-	if (t==0.) return 0.;
-	return integrator_megno_Yss/t;
-}
-double integrator_lyapunov(){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
-	if (t==0.) return 0.;
-	return integrator_megno_cov_Yt/integrator_megno_var_t;
-}
-double integrator_megno_deltad_delta2(){
-        double deltad = 0;
-        double delta2 = 0;
-        for (int i=N-N_megno;i<N;i++){
-                deltad += particles[i].vx * particles[i].x; 
-                deltad += particles[i].vy * particles[i].y; 
-                deltad += particles[i].vz * particles[i].z; 
-                deltad += particles[i].ax * particles[i].vx; 
-                deltad += particles[i].ay * particles[i].vy; 
-                deltad += particles[i].az * particles[i].vz; 
-                delta2 += particles[i].x  * particles[i].x; 
-                delta2 += particles[i].y  * particles[i].y;
-                delta2 += particles[i].z  * particles[i].z;
-                delta2 += particles[i].vx * particles[i].vx; 
-                delta2 += particles[i].vy * particles[i].vy;
-                delta2 += particles[i].vz * particles[i].vz;
-        }
-        return deltad/delta2;
-}
-void integrator_megno_calculate_acceleration(){
-#pragma omp parallel for schedule(guided)
-	for (int i=N-N_megno; i<N; i++){
-	for (int j=N-N_megno; j<N; j++){
-		if (i==j) continue;
-		const double dx = particles[i-N/2].x - particles[j-N/2].x;
-		const double dy = particles[i-N/2].y - particles[j-N/2].y;
-		const double dz = particles[i-N/2].z - particles[j-N/2].z;
-		const double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
-		const double r3inv = 1./(r*r*r);
-		const double r5inv = 3./(r*r*r*r*r);
-		const double ddx = particles[i].x - particles[j].x;
-		const double ddy = particles[i].y - particles[j].y;
-		const double ddz = particles[i].z - particles[j].z;
-		const double Gm = G * particles[j].m;
-		
-		// Variational equations
-		particles[i].ax += Gm * (
-			+ ddx * ( dx*dx*r5inv - r3inv )
-			+ ddy * ( dx*dy*r5inv )
-			+ ddz * ( dx*dz*r5inv )
-			);
-
-		particles[i].ay += Gm * (
-			+ ddx * ( dy*dx*r5inv )
-			+ ddy * ( dy*dy*r5inv - r3inv )
-			+ ddz * ( dy*dz*r5inv )
-			);
-
-		particles[i].az += Gm * (
-			+ ddx * ( dz*dx*r5inv )
-			+ ddy * ( dz*dy*r5inv )
-			+ ddz * ( dz*dz*r5inv - r3inv )
-			);
-	}
-	}
-}
 
 // Do nothing here. This is only used in a leapfrog-like DKD integrator. IAS15 performs one complete timestep.
-void integrator_part1(){
-}
-
-// This function updates the acceleration on all particles. 
-// It uses the current position and velocity data in the (struct particle*) particles structure.
-// Note: this does currently not work with MPI or any TREE module.
-void integrator_update_acceleration(){
-	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
-	PROFILING_START()
-	gravity_calculate_acceleration();
-	if (N_megno){
-		integrator_megno_calculate_acceleration();
-	}
-	if (problem_additional_forces) problem_additional_forces();
-	PROFILING_STOP(PROFILING_CAT_GRAVITY)
-	PROFILING_START()
+void integrator_ias15_part1(){
 }
 
 int integrator_ias15_step(); // Does the actual timestep.
 
-void integrator_part2(){
+void integrator_ias15_part2(){
 #ifdef GENERATE_CONSTANTS
 	integrator_generate_constants();
 #endif  // GENERATE_CONSTANTS
@@ -258,9 +148,6 @@ int integrator_ias15_step() {
 	}
 	
 	// integrator_update_acceleration(); // Not needed. Forces are already calculated in main routine.
-	if (N_megno){
-		integrator_megno_calculate_acceleration();
-	}
 
 	for(int k=0;k<N;k++) {
 		x0[3*k]   = particles[k].x;
@@ -284,10 +171,10 @@ int integrator_ias15_step() {
 		g[6][k] = b[6][k];
 	}
 
-	double integrator_megno_thisdt;
-	double integrator_megno_thisdt_init;
+	double integrator_megno_thisdt = 0.;
+	double integrator_megno_thisdt_init = 0.;
 	if (N_megno){
-		integrator_megno_thisdt_init = w[0]* t * integrator_megno_deltad_delta2();
+		integrator_megno_thisdt_init = w[0]* t * tools_megno_deltad_delta();
 	}
 
 	double t_beginning = t;
@@ -374,7 +261,7 @@ int integrator_ias15_step() {
 
 			integrator_update_acceleration();				// Calculate forces at interval n
 			if (N_megno){
-				integrator_megno_thisdt += w[n] * t * integrator_megno_deltad_delta2();
+				integrator_megno_thisdt += w[n] * t * tools_megno_deltad_delta();
 			}
 
 			for(int k=0;k<N;++k) {
@@ -462,7 +349,7 @@ int integrator_ias15_step() {
 						b[6][k] += tmp;
 						
 						// Monitor change in b[6][k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
-						if (integrator_epsilon_global){
+						if (integrator_ias15_epsilon_global){
 							const double ak  = fabs(at[k]);
 							if (isnormal(ak) && ak>maxak){
 								maxak = ak;
@@ -480,7 +367,7 @@ int integrator_ias15_step() {
 							}
 						}
 					} 
-					if (integrator_epsilon_global){
+					if (integrator_ias15_epsilon_global){
 						predictor_corrector_error = maxb6ktmp/maxak;
 					}
 					
@@ -494,17 +381,17 @@ int integrator_ias15_step() {
 	// Find new timestep
 	const double dt_done = dt;
 	
-	if (integrator_epsilon>0){
+	if (integrator_ias15_epsilon>0){
 		// Estimate error (given by last term in series expansion) 
 		// There are two options:
-		// integrator_epsilon_global==1  (default)
+		// integrator_ias15_epsilon_global==1  (default)
 		//   First, we determine the maximum acceleration and the maximum of the last term in the series. 
 		//   Then, the two are divided.
-		// integrator_epsilon_global==0
+		// integrator_ias15_epsilon_global==0
 		//   Here, the fractional error is calculated for each particle individually and we use the maximum of the fractional error.
 		//   This might fail in cases where a particle does not experience any (physical) acceleration besides roundoff errors. 
 		double integrator_error = 0.0;
-		if (integrator_epsilon_global){
+		if (integrator_ias15_epsilon_global){
 			double maxak = 0.0;
 			double maxb6k = 0.0;
 			for(int i=0;i<N;i++){ // Looping over all particles and all 3 components of the acceleration. 
@@ -538,12 +425,12 @@ int integrator_ias15_step() {
 		double dt_new;
 		if  (isnormal(integrator_error)){ 	
 			// if error estimate is available increase by more educated guess
-		 	dt_new = pow(integrator_epsilon/integrator_error,1./7.)*dt_done;
+		 	dt_new = pow(integrator_ias15_epsilon/integrator_error,1./7.)*dt_done;
 		}else{					// In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
 		 	dt_new = dt_done/safety_factor; // by default, increase timestep a little
 		}
 		
-		if (fabs(dt_new)<integrator_min_dt) dt_new = copysign(integrator_min_dt,dt_new);
+		if (fabs(dt_new)<integrator_ias15_min_dt) dt_new = copysign(integrator_ias15_min_dt,dt_new);
 		
 		if (fabs(dt_new/dt_done) < safety_factor) {	// New timestep is significantly smaller.
 			// Reset particles
@@ -592,23 +479,8 @@ int integrator_ias15_step() {
 	t += dt_done;
 
 	if (N_megno){
-		// Calculate running Y(t)
-		integrator_megno_Ys += dt_done*integrator_megno_thisdt;
-		double Y = integrator_megno_Ys/t;
-		// Calculate averge <Y> 
-		integrator_megno_Yss += Y * dt_done;
-		// Update covariance of (Y,t) and variance of t
-		integrator_megno_n++;
-		double _d_t = t - integrator_megno_mean_t;
-		integrator_megno_mean_t += _d_t/(double)integrator_megno_n;
-		double _d_Y = integrator_megno() - integrator_megno_mean_Y;
-		integrator_megno_mean_Y += _d_Y/(double)integrator_megno_n;
-		integrator_megno_cov_Yt += ((double)integrator_megno_n-1.)/(double)integrator_megno_n 
-						*(t-integrator_megno_mean_t)
-						*(integrator_megno()-integrator_megno_mean_Y);
-		integrator_megno_var_t  += ((double)integrator_megno_n-1.)/(double)integrator_megno_n 
-						*(t-integrator_megno_mean_t)
-						*(t-integrator_megno_mean_t);
+		double dY = dt_done*integrator_megno_thisdt;
+		tools_megno_update(dY);
 	}
 
 	// Swap particle buffers
@@ -685,6 +557,37 @@ void copybuffers(double* _a[7], double* _b[7], int N3){
 //	for (int i=0;i<7;i++){	
 //		memcpy(_b[i],_a[i], sizeof(double)*N3);
 //	}
+}
+void integrator_ias15_synchronize(){
+}
+
+void integrator_ias15_reset(){
+	N3allocated 	= 0;
+	dt_last_success = 0;
+	for (int l=0;l<7;++l) {
+		free(g[l]);
+		g[l] = NULL;
+		free(b[l]);
+		b[l] = NULL;
+		free(e[l]);
+		e[l] = NULL;
+		free(br[l]);
+		br[l] = NULL;
+		free(er[l]);
+		er[l] = NULL;
+	}
+	free(at);
+	at =  NULL;
+	free(x0);
+	x0 =  NULL;
+	free(v0);
+	v0 =  NULL;
+	free(a0);
+	a0 =  NULL;
+	free(csx);
+	csx=  NULL;
+	free(csv);
+	csv=  NULL;
 }
 
 #ifdef GENERATE_CONSTANTS

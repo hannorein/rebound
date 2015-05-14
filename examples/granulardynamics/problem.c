@@ -36,6 +36,7 @@
 #include "main.h"
 #include "particle.h"
 #include "boundaries.h"
+#include "integrator.h"
 #include "output.h"
 #include "communication_mpi.h"
 #include "tree.h"
@@ -51,6 +52,7 @@ void problem_init(int argc, char* argv[]){
 	double radius 	= 1;
 	double mass	= 1;
 	dt 		= 1e-1;	
+	integrator	= LEAPFROG;
 	// Override default collision handling to account for border particles
 	coefficient_of_restitution 	= 0.15;
 	collision_resolve = collision_resolve_hardsphere_withborder;

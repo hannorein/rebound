@@ -30,10 +30,14 @@
 #include "particle.h"
 #include "main.h"
 #include "tree.h"
+#ifndef COLLISIONS_NONE
 #include "collisions.h"
+#endif // COLLISIONS_NONE
+#ifdef MPI
 #include "communication_mpi.h"
+#endif // MPI
 
-struct particle* 	particles;	
+struct particle* 	particles = NULL;	
 
 int N 		= 0;	
 int Nmax	= 0;	
@@ -117,7 +121,11 @@ void particles_add_fixed(struct particle pt,int pos){
 #endif // TREE
 }
 
-
+#ifdef LIBREBOUND
+int particles_get_rootbox_for_particle(struct particle pt){
+	return 0;
+}
+#else // LIBREBOUND
 int particles_get_rootbox_for_particle(struct particle pt){
 	int i = ((int)floor((pt.x + boxsize_x/2.)/boxsize)+root_nx)%root_nx;
 	int j = ((int)floor((pt.y + boxsize_y/2.)/boxsize)+root_ny)%root_ny;
@@ -125,4 +133,13 @@ int particles_get_rootbox_for_particle(struct particle pt){
 	int index = (k*root_ny+j)*root_nx+i;
 	return index;
 }
+#endif // LIBREBOUND
 
+void particles_remove_all(){
+	N 		= 0;
+	Nmax 		= 0;
+	N_active 	= -1;
+	N_megno 	= 0;
+	free(particles);
+	particles 	= NULL;
+}

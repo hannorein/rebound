@@ -22,8 +22,27 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _INTEGRATOR_EULER_H
-#define _INTEGRATOR_EULER_H
+#ifndef _INTEGRATOR_H
+#define _INTEGRATOR_H
+
+/*
+ * Available integrator.
+ */
+typedef enum {
+	IAS15 = 0,
+	WHFAST = 1,
+	SEI = 2,
+	WH = 3,
+	LEAPFROG = 4,
+	HYBRID = 5,
+	NONE = 6,
+	} integrator_t;
+/*
+ * Variable setting the current integrator.
+ */
+extern integrator_t integrator;
+
+
 /*
  * The first half of the integrator step.
  * This function is called at the beginning of the timestep. It 
@@ -46,36 +65,24 @@ void integrator_part2();
  * dependent forces. This is only relevant for IAS15.
  * Default is 1.
  **/ 
-extern int integrator_force_is_velocitydependent;
+extern unsigned int integrator_force_is_velocitydependent;
+
 
 /*
- * This parameter controls the accuracy of an adaptive integrator.
- * Default is 0 (non-adaptive).
- **/
-extern double integrator_epsilon;
+ * Synchronize particles manually at end of timestep.
+ */
+void integrator_synchronize();
 
-/*
- * The minimum timestep to be used in an adaptive integrator.
- * Default is 0 (no minimal timestep).
- **/
-extern double integrator_min_dt;
-
-#ifdef INTEGRATOR_IAS15 // MEGNO Routines are currently only implemented for IAS15
 /* 
- * Init the MEGNO particles
+ * Cleanup all temporarily stored values.
  **/
-void integrator_megno_init(double delta);
+void integrator_reset();
 
-/*
- * Returns the current value of <Y>
- **/
-double integrator_megno();
-
-/*
- * Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
- **/
-double integrator_lyapunov();
-
-#endif // INTEGRATOR_IAS15
+/* This function updates the acceleration on all particles. 
+ * It uses the current position and velocity data in the 
+ * (struct particle*) particles structure.
+ * Note: this does currently not work with MPI or any TREE module.
+ */
+void integrator_update_acceleration();
 
 #endif

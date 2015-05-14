@@ -45,6 +45,7 @@ void problem_init(int argc, char* argv[]){
 	dt 			= 1e-4;		// initial timestep.
 	boxsize 		= 10;	
 	tmax			= 40;
+	integrator		= IAS15;
 
 	// Setup callback function for velocity dependent forces.
 	problem_additional_forces 	= additional_forces;

@@ -63,7 +63,6 @@ endif
 
 # Create precompiler definitions from links
 PREDEF+= -D$(shell basename `readlink gravity.c` '.c' | tr '[a-z]' '[A-Z]')
-PREDEF+= -D$(shell basename `readlink integrator.c` '.c' | tr '[a-z]' '[A-Z]')
 PREDEF+= -D$(shell basename `readlink boundaries.c` '.c' | tr '[a-z]' '[A-Z]')
 PREDEF+= -D$(shell basename `readlink collisions.c` '.c' | tr '[a-z]' '[A-Z]')
 
@@ -79,6 +78,12 @@ all:
 	$(CC) $(OPT) $(PREDEF) particle.c -c
 	$(CC) $(OPT) $(PREDEF) gravity.c -c
 	$(CC) $(OPT) $(PREDEF) integrator.c -c
+	$(CC) $(OPT) $(PREDEF) integrator_whfast.c -c
+	$(CC) $(OPT) $(PREDEF) integrator_ias15.c -c
+	$(CC) $(OPT) $(PREDEF) integrator_sei.c -c
+	$(CC) $(OPT) $(PREDEF) integrator_wh.c -c
+	$(CC) $(OPT) $(PREDEF) integrator_leapfrog.c -c
+	$(CC) $(OPT) $(PREDEF) integrator_hybrid.c -c
 	$(CC) $(OPT) $(PREDEF) boundaries.c -c
 	$(CC) $(OPT) $(PREDEF) input.c -c
 	$(CC) $(OPT) $(PREDEF) output.c -c
@@ -88,14 +93,36 @@ all:
 	$(CC) $(OPT) $(PREDEF) zpr.c -c
 	$(CC) $(OPT) $(PREDEF) display.c -c
 	$(CC) $(OPT) $(PREDEF) tools.c -c
-	$(CC) *.o -o nbody $(LIB)
+	$(CC) *.o -o rebound $(LIB)
 
 clean:
 	rm -vf *.o
-	rm -vf nbody
+	rm -vf rebound
 
 doc:
 	sed 's!PREDEFINED             =.*!PREDEFINED             = $(PREDEFLIST)!' ../doc/Doxyfile.input > ../doc/Doxyfile 
 	cd ../doc/ && doxygen
 
-
+# This part of the Makefile compiles the shared dynamic library librebound.
+librebound: OPT+=-DCOLLISIONS_NONE -DLIBREBOUND
+librebound:
+	$(CC) $(OPT) -c -fPIC -Wall integrator_ias15.c
+	$(CC) $(OPT) -c -fPIC -Wall integrator_whfast.c
+	$(CC) $(OPT) -c -fPIC -Wall integrator_leapfrog.c
+	$(CC) $(OPT) -c -fPIC -Wall integrator_hybrid.c
+	$(CC) $(OPT) -c -fPIC -Wall integrator_sei.c
+	$(CC) $(OPT) -c -fPIC -Wall integrator_wh.c
+	$(CC) $(OPT) -c -fPIC -Wall integrator.c
+	$(CC) $(OPT) -c -fPIC -Wall gravity_direct.c
+	$(CC) $(OPT) -c -fPIC -Wall tools.c
+	$(CC) $(OPT) -c -fPIC -Wall particle.c
+	$(CC) $(OPT) -c -fPIC -Wall librebound.c
+	$(CC) $(OPT) -c -fPIC -Wall output.c
+	$(CC) $(OPT) -c -fPIC -Wall input.c
+	$(CC) $(OPT) -shared -o librebound.so particle.o tools.o integrator.o integrator_ias15.o integrator_whfast.o integrator_leapfrog.o integrator_sei.o integrator_hybrid.o integrator_wh.o gravity_direct.o librebound.o input.o output.o
+	
+	@echo ""        
+	@echo "The shared library librebound.so has been created successfully."
+	@echo ""        
+	
+	

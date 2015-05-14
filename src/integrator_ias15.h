@@ -1,10 +1,10 @@
 /**
- * @file 	integrator.c
- * @brief 	Dummy integration scheme. Does nothing.
+ * @file 	integrator_ias15.h
+ * @brief 	Interface for numerical particle integrator
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ * Copyright (c) 2015 Hanno Rein
  *
  * This file is part of rebound.
  *
@@ -22,27 +22,23 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#ifndef _INTEGRATOR_IAS15_H
+#define _INTEGRATOR_IAS15_H
+void integrator_ias15_part1();
+void integrator_ias15_part2();
+void integrator_ias15_synchronize();
+void integrator_ias15_reset();
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <math.h>
-#include <time.h>
-#include "particle.h"
-#include "main.h"
-#include "gravity.h"
+/*
+ * This parameter controls the accuracy of the integrator.
+ * Set to 0 to make IAS15 a non-adaptive integrator.
+ * Default: 1e-9.
+ **/
+extern double integrator_ias15_epsilon;
 
-int integrator_force_is_velocitydependent 	= 1;
-double integrator_epsilon 			= 0;
-double integrator_min_dt 		= 0;
-
-
-void integrator_part1(){
-	// Do nothing.
-}
-
-void integrator_part2(){
-	// Do nothing.
-}
-	
-
+/*
+ * The minimum timestep to be used in the adaptive integrator.
+ * Default is 0 (no minimal timestep).
+ **/
+extern double integrator_ias15_min_dt;
+#endif

@@ -72,6 +72,22 @@ double tools_rayleigh(double sigma){
 
 
 /// Other helper routines
+double tools_energy(){
+	double e_kin = 0.;
+	double e_pot = 0.;
+	for (int i=0;i<N-N_megno;i++){
+		struct particle pi = particles[i];
+		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
+		for (int j=i+1;j<N-N_megno;j++){
+			struct particle pj = particles[j];
+			double dx = pi.x - pj.x;
+			double dy = pi.y - pj.y;
+			double dz = pi.z - pj.z;
+			e_pot -= G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
+		}
+	}
+	return e_kin +e_pot;
+}
 
 void tools_move_to_center_of_momentum(){
 	double m = 0;
@@ -271,4 +287,133 @@ struct orbit tools_p2orbit(struct particle p, struct particle star){
 	}
 
 	return o;
+}
+
+/**************************
+ * MEGNO Routines         */
+
+double tools_megno_Ys;
+double tools_megno_Yss;
+double tools_megno_cov_Yt;	// covariance of <Y> and t
+double tools_megno_var_t;  	// variance of t 
+double tools_megno_mean_t; 	// mean of t
+double tools_megno_mean_Y; 	// mean of Y
+double tools_megno_delta0; 	// initial scale of delta (for one particle)
+long   tools_megno_n; 		// number of covariance updates
+void tools_megno_init(double delta){
+	int _N_megno = N;
+	tools_megno_Ys = 0.;
+	tools_megno_Yss = 0.;
+	tools_megno_cov_Yt = 0.;
+	tools_megno_var_t = 0.;
+	tools_megno_n = 0;
+	tools_megno_mean_Y = 0;
+	tools_megno_mean_t = 0;
+	tools_megno_delta0 = delta;
+        for (int i=0;i<_N_megno;i++){ 
+                struct particle megno = {
+			.m  = particles[i].m,
+			.x  = tools_normal(1.),
+			.y  = tools_normal(1.),
+			.z  = tools_normal(1.),
+			.vx = tools_normal(1.),
+			.vy = tools_normal(1.),
+			.vz = tools_normal(1.) };
+		double deltad = delta/sqrt(megno.x*megno.x + megno.y*megno.y + megno.z*megno.z + megno.vx*megno.vx + megno.vy*megno.vy + megno.vz*megno.vz); // rescale
+		megno.x *= deltad;
+		megno.y *= deltad;
+		megno.z *= deltad;
+		megno.vx *= deltad;
+		megno.vy *= deltad;
+		megno.vz *= deltad;
+
+                particles_add(megno);
+        }
+	N_megno = _N_megno;
+}
+double tools_megno(){ // Returns the MEGNO <Y>
+	if (t==0.) return 0.;
+	return tools_megno_Yss/t;
+}
+double tools_lyapunov(){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
+	if (t==0.) return 0.;
+	return tools_megno_cov_Yt/tools_megno_var_t;
+}
+double tools_megno_deltad_delta(){
+        double deltad = 0;
+        double delta2 = 0;
+        for (int i=N-N_megno;i<N;i++){
+                deltad += particles[i].vx * particles[i].x; 
+                deltad += particles[i].vy * particles[i].y; 
+                deltad += particles[i].vz * particles[i].z; 
+                deltad += particles[i].ax * particles[i].vx; 
+                deltad += particles[i].ay * particles[i].vy; 
+                deltad += particles[i].az * particles[i].vz; 
+                delta2 += particles[i].x  * particles[i].x; 
+                delta2 += particles[i].y  * particles[i].y;
+                delta2 += particles[i].z  * particles[i].z;
+                delta2 += particles[i].vx * particles[i].vx; 
+                delta2 += particles[i].vy * particles[i].vy;
+                delta2 += particles[i].vz * particles[i].vz;
+        }
+        return deltad/delta2;
+}
+
+// Automatically rescale megno particles if their size grew by more then 10 orders of magnitude.
+//void tools_megno_rescale(){
+//	int rescale_flag = 0;
+//	double delta2_limit = 1e100*tools_megno_delta0*tools_megno_delta0;
+//        for (int i=N-N_megno;i<N;i++){
+//		double delta2 = 0;
+//		delta2 += particles[i].x  * particles[i].x; 
+//		delta2 += particles[i].y  * particles[i].y;
+//		delta2 += particles[i].z  * particles[i].z;
+//		delta2 += particles[i].vx * particles[i].vx; 
+//		delta2 += particles[i].vy * particles[i].vy;
+//		delta2 += particles[i].vz * particles[i].vz;
+//		if (delta2>delta2_limit){
+//			rescale_flag = 1;
+//		}
+//        }
+//	if (rescale_flag){
+//		for (int i=N-N_megno;i<N;i++){
+//			//particles[i].x  = tools_normal(1.);
+//			//particles[i].y  = tools_normal(1.);
+//			//particles[i].z  = tools_normal(1.);
+//			//particles[i].vx = tools_normal(1.);
+//			//particles[i].vy = tools_normal(1.);
+//			//particles[i].vz = tools_normal(1.);
+//			double deltad = tools_megno_delta0/sqrt(particles[i].x*particles[i].x + particles[i].y*particles[i].y + particles[i].z*particles[i].z + particles[i].vx*particles[i].vx + particles[i].vy*particles[i].vy + particles[i].vz*particles[i].vz); // rescale factor
+//			particles[i].x *= deltad;
+//			particles[i].y *= deltad;
+//			particles[i].z *= deltad;
+//			particles[i].vx *= deltad;
+//			particles[i].vy *= deltad;
+//			particles[i].vz *= deltad;
+//		}
+//	}
+//}
+
+void tools_megno_update(double dY){
+	// Calculate running Y(t)
+	tools_megno_Ys += dY;
+	double Y = tools_megno_Ys/t;
+	// Calculate averge <Y> 
+	tools_megno_Yss += Y * dt;
+	// Update covariance of (Y,t) and variance of t
+	tools_megno_n++;
+	double _d_t = t - tools_megno_mean_t;
+	tools_megno_mean_t += _d_t/(double)tools_megno_n;
+	double _d_Y = tools_megno() - tools_megno_mean_Y;
+	tools_megno_mean_Y += _d_Y/(double)tools_megno_n;
+	tools_megno_cov_Yt += ((double)tools_megno_n-1.)/(double)tools_megno_n 
+					*(t-tools_megno_mean_t)
+					*(tools_megno()-tools_megno_mean_Y);
+	tools_megno_var_t  += ((double)tools_megno_n-1.)/(double)tools_megno_n 
+					*(t-tools_megno_mean_t)
+					*(t-tools_megno_mean_t);
+//	// Check to see if we need to rescale
+//	if (tools_megno_delta0!=0){
+//		tools_megno_rescale();
+//	}
 }

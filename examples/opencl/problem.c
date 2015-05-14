@@ -13,8 +13,8 @@
  * multiple of the workgrop size.
  *
  * You can test the performance increase by running:
- * `make direct && ./nbody`, which will run on the CPU and
- * `make && ./nbody`, which will run on the GPU.
+ * `make direct && ./rebound`, which will run on the CPU and
+ * `make && ./rebound`, which will run on the GPU.
  *
  * The Makefile is working with the Apple LLVM compiler. Changes
  * might be necessary for other compilers such as gcc.
@@ -51,6 +51,7 @@
 #include "output.h"
 #include "tree.h"
 #include "tools.h"
+#include "integrator.h"
 
 extern int Nmax;
 
@@ -60,6 +61,7 @@ void problem_init(int argc, char* argv[]){
 	softening 	= 0.01;		
 	dt 		= 3e-3;
 	boxsize 	= 2.4;
+	integrator	= LEAPFROG;
 	root_nx = 1; root_ny = 1; root_nz = 1;
 	nghostx = 0; nghosty = 0; nghostz = 0; 		
 	init_box();

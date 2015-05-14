@@ -91,4 +91,9 @@ void particles_add_local(struct particle pt);
  */
 int particles_get_rootbox_for_particle(struct particle pt);
 
+/**
+ * Remove all particles
+ */
+void particles_remove_all();
+
 #endif // _PARTICLE_H

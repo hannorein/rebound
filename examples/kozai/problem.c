@@ -45,6 +45,7 @@ extern int display_wire;
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 			= M_PI*1e-2; 	// initial timestep
+	integrator		= IAS15;
 	boxsize 		= 25;
 	tmax			= 1.6e4;
 #ifdef OPENGL

@@ -80,6 +80,7 @@ typedef float real_t;
 #endif
 
 
+unsigned int gravity_ignore_10;
 
 
 
@@ -250,4 +251,8 @@ void gravity_calculate_acceleration(){
 		particles[i].ay = a_host[i*3+1]; 
 		particles[i].az = a_host[i*3+2]; 
 	}
+}
+
+void gravity_calculate_variational_acceleration(){
+	// Not yet implemented 
 }

@@ -47,6 +47,7 @@
 #include "tree.h"
 #include "display.h"
 #include "output.h"
+#include "integrator.h"
 
 #ifdef _APPLE
 GLuint display_dlist_sphere;	/**< Precalculated display list of a sphere. */
@@ -210,7 +211,7 @@ void display(){
 	}
 	glEnable(GL_POINT_SMOOTH);
 	glVertexPointer(3, GL_DOUBLE, sizeof(struct particle), particles);
-	int _N_active = (N_active==-1)?N:N_active;
+	//int _N_active = ((N_active==-1)?N:N_active);
 	if (display_reference>=0){
 		glTranslatef(-particles[display_reference].x,-particles[display_reference].y,-particles[display_reference].z);
 	}
@@ -226,7 +227,7 @@ void display(){
 				// Drawing Spheres
 				glColor4f(1.0,1.0,1.0,1.0);
 #ifndef COLLISIONS_NONE
-				for (int i=0;i<N;i++){
+				for (int i=0;i<N-N_megno;i++){
 					struct particle p = particles[i];
 					glTranslatef(p.x,p.y,p.z);
 					glScalef(p.r,p.r,p.r);
@@ -244,66 +245,65 @@ void display(){
 				glEnableClientState(GL_VERTEX_ARRAY);
 				glPointSize(3.);
 				glColor4f(1.0,1.0,1.0,0.5);
-				glDrawArrays(GL_POINTS, _N_active, N-_N_active);
+				//glDrawArrays(GL_POINTS, _N_active, N-_N_active);
 				glColor4f(1.0,1.0,0.0,0.9);
 				glPointSize(5.);
-				glDrawArrays(GL_POINTS, 0, _N_active);
+				glDrawArrays(GL_POINTS, 0, N-N_megno);
 				glDisableClientState(GL_VERTEX_ARRAY);
 			}
 		}
 		// Drawing wires
 		if (display_wire){
-#ifndef INTEGRATOR_SEI
-			double radius = 0;
-			struct particle com = particles[0];
-			for (int i=1;i<N;i++){
-				struct particle p = particles[i];
-				if (N_active>0){
-					// Different colors for active/test particles
-					if (i>=N_active){
-						glColor4f(0.9,1.0,0.9,0.9);
+			if(integrator!=SEI){
+				double radius = 0;
+				struct particle com = particles[0];
+				for (int i=1;i<N-N_megno;i++){
+					struct particle p = particles[i];
+					if (N_active>0){
+						// Different colors for active/test particles
+						if (i>=N_active){
+							glColor4f(0.9,1.0,0.9,0.9);
+						}else{
+							glColor4f(1.0,0.9,0.0,0.9);
+						}
 					}else{
-						glColor4f(1.0,0.9,0.0,0.9);
+						// Alternating colors
+						if (i%2 == 1){
+							glColor4f(0.0,1.0,0.0,0.9);
+						}else{
+							glColor4f(0.0,0.0,1.0,0.9);
+						}
 					}
-				}else{
-					// Alternating colors
-					if (i%2 == 1){
-						glColor4f(0.0,1.0,0.0,0.9);
-					}else{
-						glColor4f(0.0,0.0,1.0,0.9);
+					struct orbit o = tools_p2orbit(p,com);
+					glPushMatrix();
+					
+					glTranslatef(com.x,com.y,com.z);
+					glRotatef(o.Omega/DEG2RAD,0,0,1);
+					glRotatef(o.inc/DEG2RAD,1,0,0);
+					glRotatef(o.omega/DEG2RAD,0,0,1);
+					
+					glBegin(GL_LINE_LOOP);
+					for (double trueAnom=0; trueAnom < 2.*M_PI; trueAnom+=M_PI/100.) {
+						//convert degrees into radians
+						radius = o.a * (1. - o.e*o.e) / (1. + o.e*cos(trueAnom));
+						glVertex3f(radius*cos(trueAnom),radius*sin(trueAnom),0);
 					}
+					glEnd();
+					glPopMatrix();
+					com = tools_get_center_of_mass(p,com);
 				}
-				struct orbit o = tools_p2orbit(p,com);
-				glPushMatrix();
-				
-				glTranslatef(com.x,com.y,com.z);
-				glRotatef(o.Omega/DEG2RAD,0,0,1);
-				glRotatef(o.inc/DEG2RAD,1,0,0);
-				glRotatef(o.omega/DEG2RAD,0,0,1);
-				
-				glBegin(GL_LINE_LOOP);
-				for (double trueAnom=0; trueAnom < 2.*M_PI; trueAnom+=M_PI/100.) {
-					//convert degrees into radians
-					radius = o.a * (1. - o.e*o.e) / (1. + o.e*cos(trueAnom));
-					glVertex3f(radius*cos(trueAnom),radius*sin(trueAnom),0);
+			}else{
+				for (int i=1;i<N;i++){
+					struct particle p = particles[i];
+					glBegin(GL_LINE_LOOP);
+					for (double _t=-100.*dt;_t<=100.*dt;_t+=20.*dt){
+						double frac = 1.-fabs(_t/(120.*dt));
+						glColor4f(1.0,(_t+100.*dt)/(200.*dt),0.0,frac);
+						glVertex3f(p.x+p.vx*_t, p.y+p.vy*_t, p.z+p.vz*_t);
+					}
+					glEnd();
 				}
-				glEnd();
-				glPopMatrix();
-				com = tools_get_center_of_mass(p,com);
 			}
-#else 	// INTEGRATOR_SEI
-			for (int i=1;i<N;i++){
-				struct particle p = particles[i];
-				glBegin(GL_LINE_LOOP);
-				for (double _t=-100.*dt;_t<=100.*dt;_t+=20.*dt){
-					double frac = 1.-fabs(_t/(120.*dt));
-					glColor4f(1.0,(_t+100.*dt)/(200.*dt),0.0,frac);
-					glVertex3f(p.x+p.vx*_t, p.y+p.vy*_t, p.z+p.vz*_t);
-				}
-				glEnd();
-			}
-
-#endif 	// INTEGRATOR_SEI
 		}
 		// Drawing Tree
 		glColor4f(1.0,0.0,0.0,0.4);

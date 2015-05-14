@@ -37,4 +37,15 @@
   * Different methods implement this function in a different way.
   */
 void gravity_calculate_acceleration();
+
+/**
+  * The function calculates the acceleration for the variational equations.
+  * Note that this is currently only implemented for GRAVITY_DIRECT
+  */
+void gravity_calculate_variational_acceleration();
+
+/*
+ * Ignore i=1, j=0 pair (used for WHFAST);
+ */
+extern unsigned int gravity_ignore_10;
 #endif

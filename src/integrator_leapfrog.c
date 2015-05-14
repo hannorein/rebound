@@ -36,16 +36,11 @@
 #include "main.h"
 #include "gravity.h"
 #include "boundaries.h"
-
-// These variables have no effect for leapfrog.
-int integrator_force_is_velocitydependent 	= 1;
-double integrator_epsilon 			= 0;
-double integrator_min_dt 			= 0;
-
+#include "integrator.h"
 
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
-void integrator_part1(){
+void integrator_leapfrog_part1(){
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		particles[i].x  += 0.5* dt * particles[i].vx;
@@ -54,7 +49,7 @@ void integrator_part1(){
 	}
 	t+=dt/2.;
 }
-void integrator_part2(){
+void integrator_leapfrog_part2(){
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		particles[i].vx += dt * particles[i].ax;
@@ -67,4 +62,10 @@ void integrator_part2(){
 	t+=dt/2.;
 }
 	
+void integrator_leapfrog_synchronize(){
+	// Do nothing.
+}
 
+void integrator_leapfrog_reset(){
+	// Do nothing.
+}

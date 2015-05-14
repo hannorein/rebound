@@ -6,11 +6,11 @@
  * using a binary file. A shearing sheet ring simulation is used, but
  * the same method can be applied to any other type of simulation.
  * 
- * First, run the program with `./nbody`.
+ * First, run the program with `./rebound`.
  * Random initial conditions are created and
  * a restart file is written once per orbit.
  * Then, to restart the simulation, run the 
- * program with `./nbody --restart restart.bin`.
+ * program with `./rebound --restart restart.bin`.
  * 
  * 
  * @section 	LICENSE
@@ -42,6 +42,7 @@
 #include "boundaries.h"
 #include "output.h"
 #include "input.h"
+#include "integrator.h"
 
 
 extern double OMEGA;
@@ -50,6 +51,7 @@ extern double minimum_collision_velocity;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
+	integrator	= SEI;
 	OMEGA 		= 1.;	
 	dt 		= 1e-4*2.*M_PI; 
 	boxsize 	= 1;
@@ -82,7 +84,7 @@ void problem_output(){
 	output_timing();
 	if (output_check(1e-0*2.*M_PI&&t!=0)){
 		output_binary("restart.bin");
-		printf("\nSaved binary file. Restart simulation with './nbody --restart restart.bin'.\n");
+		printf("\nSaved binary file. Restart simulation with './rebound --restart restart.bin'.\n");
 	}
 }
 

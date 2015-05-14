@@ -42,6 +42,7 @@
 #include "tree.h"
 #include "boundaries.h"
 
+unsigned int gravity_ignore_10;
 double opening_angle2 = 0.25; /**< Square of the cell opening angle \f$ \theta \f$. */
 double softening2;	/**< Used to accelerate calculation */
 
@@ -139,4 +140,8 @@ void gravity_calculate_acceleration_for_particle_from_cell(const int pt, const s
 		particles[pt].ay += prefact*dy; 
 		particles[pt].az += prefact*dz; 
 	}
+}
+
+void gravity_calculate_variational_acceleration(){
+	// Not yet implemented 
 }

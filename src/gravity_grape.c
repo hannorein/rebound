@@ -36,6 +36,7 @@
 #include "particle.h"
 #include "main.h"
 #include "boundaries.h"
+#include "integrator.h"
 #include "communication_mpi.h"
 
 int _nj_MAX 	= 0;
@@ -74,11 +75,18 @@ void gravity_calculate_acceleration(){
 	}
 	
 	// Do not sum over central object for WH	
-#ifdef INTEGRATOR_WH
-	const int firstParticle = 1;
-#else //INTEGRATOR_WH
-	const int firstParticle = 0;
-#endif //INTEGRATOR_WH
+	int firstParticle = 0;
+	switch(integrator){
+		case WH:
+			firstParticle = 1;
+			break;
+		case WHFAST:
+			printf("ERROR. Not implemented.\n");
+			exit(0);
+			break;
+		default:
+			break;
+	}
 	
 	// Initialize or increase memory if needed.
 	int	nj = (N_active==-1)?N:N_active;		// Massive particles
@@ -148,4 +156,8 @@ void gravity_finish(){
 		gravity_grape_open=0;
 		g5_close();
 	}
+}
+
+void gravity_calculate_variational_acceleration(){
+	// Not yet implemented 
 }

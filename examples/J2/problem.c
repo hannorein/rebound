@@ -52,6 +52,7 @@ double ObliquityPlanet;						// obliquity of the planet
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
+	integrator			= IAS15;
 	dt 				= 1e-6;			// initial timestep
 	boxsize 			= 0.01;	
 	tmax				= 3e1;

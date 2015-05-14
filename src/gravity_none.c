@@ -35,6 +35,12 @@
 #include "main.h"
 #include "boundaries.h"
 
+unsigned int gravity_ignore_10;
+
 void gravity_calculate_acceleration(){
+	// Does nothing. 
+}
+
+void gravity_calculate_variational_acceleration(){
 	// Does nothing. 
 }
