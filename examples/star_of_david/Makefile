@@ -14,9 +14,6 @@ all:
 	# Copy result
 	cp ../../src/rebound .
 
-doc: all
-	$(MAKE) -C ../../src/ doc
-
 clean:
 	$(MAKE) -C ../../src/ clean
 	rm -vf rebound

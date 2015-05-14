@@ -99,9 +99,6 @@ clean:
 	rm -vf *.o
 	rm -vf rebound
 
-doc:
-	sed 's!PREDEFINED             =.*!PREDEFINED             = $(PREDEFLIST)!' ../doc/Doxyfile.input > ../doc/Doxyfile 
-	cd ../doc/ && doxygen
 
 # This part of the Makefile compiles the shared dynamic library librebound.
 librebound: OPT+=-DCOLLISIONS_NONE -DLIBREBOUND
