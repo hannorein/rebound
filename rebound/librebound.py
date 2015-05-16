@@ -7,8 +7,7 @@ import types
 
 class ReboundModule(types.ModuleType):
     _pymodulespath = os.path.dirname(__file__)
-#Find the rebound C library
-    clibrebound = None
+    clibrebound = None   # Class variable
     try:
         clibrebound = CDLL(_pymodulespath+"/../librebound.so", RTLD_GLOBAL)
     except:
@@ -19,35 +18,34 @@ class ReboundModule(types.ModuleType):
     fp = None
 
     @property
-    def build_str():
+    def build_str(self):
         return c_char_p.in_dll(self.clibrebound, "build_str").value
 
-    def status():
+    def status(self):
         """ Returns a string with a summary of the current status 
             of the simulation
             """
         s= ""
-        N = get_N()
         s += "---------------------------------\n"
         s += "Rebound version:     \t" + pkg_resources.require("rebound")[0].version +"\n"
-        s += "Build on:            \t" +get_build_str() + "\n"
-        s += "Number of particles: \t%d\n" %N       
-        s += "Simulation time:     \t%f\n" %get_t()
-        if N>0:
+        s += "Build on:            \t" + self.build_str + "\n"
+        s += "Number of particles: \t%d\n" %self.N       
+        s += "Simulation time:     \t%f\n" %self.t
+        if self.N>0:
             s += "---------------------------------\n"
-            p = self.particles()
-            for i in range(N):
+            p = self.particles
+            for i in range(self.N):
                 s += str(p[i]) + "\n"
         s += "---------------------------------"
         print(s)
 
 # Set function pointer for additional forces
-    def set_additional_forces(func):
+    @property
+    def additional_forces(self,func):
         if(isinstance(func,types.FunctionType)):
             # Python function pointer
-            global fp  # keep references
-            fp = AFF(func)
-            self.clibrebound.set_additional_forces(fp)
+            self.fp = AFF(func)
+            self.clibrebound.set_additional_forces(self.fp)
         else:
             # C function pointer
             self.clibrebound.set_additional_forces_with_parameters(func)
@@ -132,33 +130,29 @@ class ReboundModule(types.ModuleType):
             self.add(Particle(**kwargs))
 
 # Particle getter functions
-    def get_particle(self,i):
-        N = get_N() 
-        if i>=N:
-            return None
-        getp = self.clibrebound.particle_get
-        getp.restype = Particle
-        _p = getp(c_int(i))
-        return _p
-
     @property
     def particles(self):
         """Return an array that points to the particle structure.
-        This is a pointer and thus the contents of the array update 
-        as the simulation progresses. Note that the pointer could change,
+        This is an array of pointers and thus the contents of the array update 
+        as the simulation progresses. Note that the pointers could change,
         for example when a particle is added or removed from the simulation. 
         """
+        ps = []
         N = c_int.in_dll(self.clibrebound,"N").value 
         getp = self.clibrebound.particles_get
         getp.restype = POINTER(Particle)
-        return getp()
+        ps_a = getp()
+        for i in range(0,N):
+            ps.append(ps_a[i])
+        return ps
 
-    def remove_all_particles(self):
+    @particles.deleter
+    def particles(self):
         self.clibrebound.particles_remove_all()
 
 
-# Orbit getter
-    def get_orbits(self,heliocentric=False):
+# Orbit calculation
+    def orbits(self,heliocentric=False):
         """ Returns an array of Orbits of length N-1.
 
         Parameters
@@ -167,13 +161,13 @@ class ReboundModule(types.ModuleType):
         By default this functions returns the orbits in Jacobi coordinates. 
         Set the parameter heliocentric to True to return orbits in heliocentric coordinates.
         """
-        _particles = self.particles()
+        _particles = self.particles
         orbits = []
-        for i in range(1,get_N()):
+        for i in range(1,self.N):
             if heliocentric:
                 com = _particles[0]
             else:
-                com = get_com(i)
+                com = self.calculate_com(i)
             orbits.append(_particles[i].get_orbit(primary=com))
         return orbits
 
@@ -285,8 +279,7 @@ class ReboundModule(types.ModuleType):
         else:
             debug.integrate_other_package(tmax,exactFinishTime,keepSynchronized)
 
-    @property
-    def com(self,last=None):
+    def calculate_com(self,last=None):
         """Returns the center of momentum for all particles in the simulation"""
         m = 0.
         x = 0.
@@ -295,11 +288,11 @@ class ReboundModule(types.ModuleType):
         vx = 0.
         vy = 0.
         vz = 0.
-        ps = self.particles()    # particle pointer
+        ps = self.particles    # particle pointer
         if last is not None:
-            last = min(last,get_N())
+            last = min(last,self.N)
         else:
-            last = get_N()
+            last = self.N
         for i in range(last):
             m  += ps[i].m
             x  += ps[i].x*ps[i].m
@@ -330,46 +323,6 @@ class ParticleEscaping(Exception):
 
 class NoParticleLeft(Exception):
     pass
-
-# Helper functions
-TWOPI = 2.*math.pi
-def mod2pi(f):
-    """Returns the angle f modulo 2 pi."""
-    while f<0.:
-        f += TWOPI
-    while f>TWOPI:
-        f -= TWOPI
-    return f
-
-def eccentricAnomaly(e,M):
-    """Returns the eccentric anomaly given the eccentricity and mean anomaly of a Keplerian orbit.
-
-    Keyword arguments:
-    e -- the eccentricity
-    M -- the mean anomaly
-    """
-    if e<1.:
-        E = M if e<0.8 else math.pi
-        
-        F = E - e*math.sin(M) - M
-        for i in range(100):
-            E = E - F/(1.0-e*math.cos(E))
-            F = E - e*math.sin(E) - M
-            if math.fabs(F)<1e-16:
-                break
-        E = mod2pi(E)
-        return E
-    else:
-        E = M 
-        
-        F = E - e*math.sinh(E) - M
-        for i in range(100):
-            E = E - F/(1.0-e*math.cosh(E))
-            F = E - e*math.sinh(E) - M
-            if math.fabs(F)<1e-16:
-                break
-        E = mod2pi(E)
-        return E
 
 
 

@@ -1,10 +1,51 @@
 from ctypes import *
 import math
 import ctypes.util
+import rebound
 
 __all__ = ["Orbit", "Particle"]
 TINY=1.e-308
 MIN_REL_ERROR = 1.e-12
+
+# Helper functions
+TWOPI = 2.*math.pi
+def mod2pi(f):
+    """Returns the angle f modulo 2 pi."""
+    while f<0.:
+        f += TWOPI
+    while f>TWOPI:
+        f -= TWOPI
+    return f
+
+def eccentricAnomaly(e,M):
+    """Returns the eccentric anomaly given the eccentricity and mean anomaly of a Keplerian orbit.
+
+    Keyword arguments:
+    e -- the eccentricity
+    M -- the mean anomaly
+    """
+    if e<1.:
+        E = M if e<0.8 else math.pi
+        
+        F = E - e*math.sin(M) - M
+        for i in range(100):
+            E = E - F/(1.0-e*math.cos(E))
+            F = E - e*math.sin(E) - M
+            if math.fabs(F)<1e-16:
+                break
+        E = mod2pi(E)
+        return E
+    else:
+        E = M 
+        
+        F = E - e*math.sinh(E) - M
+        for i in range(100):
+            E = E - F/(1.0-e*math.cosh(E))
+            F = E - e*math.sinh(E) - M
+            if math.fabs(F)<1e-16:
+                break
+        E = mod2pi(E)
+        return E
 
 
 
@@ -57,7 +98,7 @@ class Particle(Structure):
                 raise ValueError("You cannot pass cartesian coordinates and orbital elements at the same time.")
         if notNone(orbi):
             if primary is None:
-                primary = get_com()
+                primary = rebound.module.calculate_com()
             if a is None:
                 raise ValueError("You need to pass a semi major axis to initialize the particle using orbital elements.")
             if anom is None:
@@ -176,7 +217,7 @@ class Particle(Structure):
         self.y  = primary.y + r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci)
         self.z  = primary.z + r*(so*cf+co*sf)*si
         
-        n = math.sqrt(get_G()*(primary.m+m)/(a**3))
+        n = math.sqrt(rebound.module.G*(primary.m+m)/(a**3))
         if e>1.:
             v0 = n*a/math.sqrt(-(1.-e**2))
         else:
@@ -214,7 +255,7 @@ class Particle(Structure):
             A rebound.Orbit object (with member variables for the orbital elements)
             """
         if primary is None:
-            primary = get_particles()[0]
+            primary = rebound.module.particles[0]
 
         o = Orbit()
         if primary.m <= TINY:
@@ -236,7 +277,7 @@ class Particle(Structure):
         dvz = self.vz - primary.vz
         v = math.sqrt ( dvx*dvx + dvy*dvy + dvz*dvz )
         
-        mu = get_G()*(self.m+primary.m)
+        mu = rebound.module.G*(self.m+primary.m)
         o.a = -mu/( v*v - 2.*mu/o.r )               # semi major axis
         
         h0 = (dy*dvz - dz*dvy)                      # angular momentum vector
@@ -309,5 +350,3 @@ class Particle(Structure):
         
         return o
 
-# Import at the end to avoid circular dependence
-from .librebound import *

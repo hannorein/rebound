@@ -16,6 +16,5 @@ except ImportError:
 from .librebound import ReboundModule
 
 import sys
-print __name__
-sys.modules[__name__] = ReboundModule(__name__)
-
+module = ReboundModule(__name__)
+sys.modules[__name__] = module
