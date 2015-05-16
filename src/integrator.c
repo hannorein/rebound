@@ -141,6 +141,7 @@ void integrator_update_acceleration(){
 		gravity_calculate_variational_acceleration();
 	}
 	if (problem_additional_forces) problem_additional_forces();
+	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles,t,dt,G,N,N_megno);
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 	PROFILING_START()
 }
