@@ -15,20 +15,20 @@ rebound.add( m=1./19314.,     x=-3.01777243405203e+1, y=+1.91155314998064e+0, z=
 rebound.add( m=0,             x=-2.13858977531573e+1, y=+3.20719104739886e+1, z=+2.49245689556096e+0, vx=-1.76936577252484e-3, vy=-2.06720938381724e-3, vz=+6.58091931493844e-4)   # Pluto
 
 # Set the center of momentum to be at the origin
-rebound.move_to_center_of_momentum()
+rebound.move_to_com()
 
 # Get the particle data
 # Note: this is a pointer and will automatically update as the simulation progresses
-particles = rebound.get_particles()
+particles = rebound.particles
 # timestep counter
 steps = 0 
 # Integrate until t=1e6 (unit of time in this example is days)
-while rebound.get_t()<1e6:
+while rebound.t < 1e6:
     rebound.step()
     steps += 1
     # Print particle positions every 100 timesteps
     if steps%100==0:
-        for i in range(rebound.get_N()):
+        for i in range(rebound.N):
             #     time             particle id   x               y               z 
-            print(rebound.get_t(), i,            particles[i].x, particles[i].y, particles[i].z)
+            print(rebound.t, i,            particles[i].x, particles[i].y, particles[i].z)
 

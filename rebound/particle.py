@@ -3,6 +3,10 @@ import math
 import ctypes.util
 
 __all__ = ["Orbit", "Particle"]
+TINY=1.e-308
+MIN_REL_ERROR = 1.e-12
+
+
 
 def notNone(a):
     """Returns True if array a contains at least one element that is not None. Returns False otherwise."""
