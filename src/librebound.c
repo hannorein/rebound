@@ -118,6 +118,8 @@ void reset(){
 	timing		= 0.;
 	free(particles);
 	particles 	= NULL;
+	problem_additional_forces = NULL;
+	problem_additional_forces_with_parameters = NULL;
 	integrator_reset();
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
@@ -148,7 +150,7 @@ int integrate(double _tmax, int exactFinishTime, int keepSynchronized, double ma
 		integrator_whfast_synchronize_manually = 1;
 		integrator_whfast_persistent_particles = 1;
 	}
-	if (problem_additional_forces==NULL && problem_additional_forces_with_parameters){
+	if (problem_additional_forces==NULL && problem_additional_forces_with_parameters==NULL){
 		integrator_force_is_velocitydependent = 0;
 	}
 	int ret_value = 0;

@@ -54,4 +54,14 @@ void rebound_step();
  */
 int integrate(double _tmax, int exactFinishTime, int keepSynchronized, double maxR, double minD);
 
+/*
+ * This function allows the user to add additional (non-gravitational) forces.
+ */
+extern void (*problem_additional_forces) ();
+
+/*
+ * This function allows the user to add additional (non-gravitational) forces.
+ */
+extern void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno);
+
 #endif
