@@ -56,7 +56,7 @@ const char *build_str = __DATE__ " " __TIME__;
 
 // Function pointer to additional forces
 void (*problem_additional_forces) () = NULL;
-void (*problem_additional_forces_with_parameters) () = NULL;
+void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;
 
 // Particle getter/setter methods.
 void setp(struct particle* _p){

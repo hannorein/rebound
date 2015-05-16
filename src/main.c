@@ -68,7 +68,7 @@ int root_nz		= 1;
 int root_n		= 1;
 
 void (*problem_additional_forces) () = NULL;
-void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, int N, int N_megno) = NULL;
+void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;
 
 static char* 	logo[];		/**< Logo of rebound. */
 
