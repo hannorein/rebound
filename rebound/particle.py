@@ -229,7 +229,7 @@ class Particle(Structure):
         self.vz = primary.vz + v0*((e+cf)*co*si - sf*si*so)
 
 
-    def get_orbit(self, primary=None, verbose=False):
+    def calculate_orbit(self, primary=None, verbose=False):
         """ Returns a rebound.Orbit object with the keplerian orbital elements
             corresponding to the particle around the central body primary
             (rebound.Particle). Edge cases will return values set to None. If

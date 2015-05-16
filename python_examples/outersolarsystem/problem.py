@@ -17,9 +17,6 @@ rebound.add( m=0,             x=-2.13858977531573e+1, y=+3.20719104739886e+1, z=
 # Set the center of momentum to be at the origin
 rebound.move_to_com()
 
-# Get the particle data
-# Note: this is a pointer and will automatically update as the simulation progresses
-particles = rebound.particles
 # timestep counter
 steps = 0 
 # Integrate until t=1e6 (unit of time in this example is days)
@@ -28,7 +25,7 @@ while rebound.t < 1e6:
     steps += 1
     # Print particle positions every 100 timesteps
     if steps%100==0:
-        for i in range(rebound.N):
-            #     time             particle id   x               y               z 
-            print(rebound.t, i,            particles[i].x, particles[i].y, particles[i].z)
+        for p in rebound.particles:
+            #     time       x    y    z 
+            print(rebound.t, p.x, p.y, p.z)
 

@@ -4,6 +4,8 @@ import os
 import ctypes.util
 import pkg_resources
 import types
+        
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "wh": 3, "leapfrog": 4, "hybrid": 5, "none": 6}
 
 class ReboundModule(types.ModuleType):
     _pymodulespath = os.path.dirname(__file__)
@@ -33,9 +35,8 @@ class ReboundModule(types.ModuleType):
         s += "Simulation time:     \t%f\n" %self.t
         if self.N>0:
             s += "---------------------------------\n"
-            p = self.particles
-            for i in range(self.N):
-                s += str(p[i]) + "\n"
+            for p in self.particles:
+                s += str(p) + "\n"
         s += "---------------------------------"
         print(s)
 
@@ -44,7 +45,7 @@ class ReboundModule(types.ModuleType):
     def additional_forces(self,func):
         if(isinstance(func,types.FunctionType)):
             # Python function pointer
-            self.fp = AFF(func)
+            self.fp = self.AFF(func)
             self.clibrebound.set_additional_forces(self.fp)
         else:
             # C function pointer
@@ -94,10 +95,83 @@ class ReboundModule(types.ModuleType):
     @property
     def timing(self):
         return c_double.in_dll(self.clibrebound,"timing").value 
+   
+    @property 
+    def integrator_whfast_corrector(self):
+        return c_int.in_dll(self.clibrebound, "integrator_whfast_corrector").value
     
+    @integrator_whfast_corrector.setter 
+    def integrator_whfast_corrector(self, value):
+        c_int.in_dll(self.clibrebound, "integrator_whfast_corrector").value = value
+
+    @property
+    def integrator(self):
+        i = c_int.in_dll(self.clibrebound, "integrator").value
+        for name, _i in list.iteritems():
+            if i==_i:
+                return name
+        return i
+
+    @integrator.setter
+    def integrator(self,value):
+        if isinstance(value, int):
+            self.clibrebound.integrator_set(c_int(value))
+        elif isinstance(value, basestring):
+            debug.integrator_fullname = value
+            debug.integrator_package = "REBOUND"
+            value = value.lower()
+            if value in INTEGRATORS: 
+                self.set_integrator(INTEGRATORS[value])
+            elif value.lower() == "whfast-nocor":
+                self.set_integrator(INTEGRATORS["whfast"])
+                self.set_integrator_whfast_corrector(0)
+            elif value.lower() == "mercury":
+                debug.integrator_package = "MERCURY"
+            elif value.lower() == "swifter-whm":
+                debug.integrator_package = "SWIFTER"
+            elif value.lower() == "swifter-symba":
+                debug.integrator_package = "SWIFTER"
+            elif value.lower() == "swifter-helio":
+                debug.integrator_package = "SWIFTER"
+            elif value.lower() == "swifter-tu4":
+                debug.integrator_package = "SWIFTER"
+            else:
+                raise ValueError("Warning. Intergrator not found.")
+
+    @property
+    def integrator_whfast_persistent_particles(self):
+        return c_int.in_dll(self.clibrebound, "integrator_whfast_persistent_particles").value
+    
+    @integrator_whfast_persistent_particles.setter
+    def integrator_whfast_persistent_particles(self, value):
+        if isinstance(value, int):
+            c_int.in_dll(self.clibrebound, "integrator_whfast_persistent_particles").value = value
+            return
+        raise ValueError("Expecting integer.")
+
+    @property
+    def integrator_whfast_synchronize_manually(self):
+        return c_int.in_dll(self.clibrebound, "integrator_whfast_synchronize_manually").value
+    @integrator_whfast_synchronize_manually.setter
+    def integrator_whfast_synchronize_manually(self, value):
+        if isinstance(value, int):
+            c_int.in_dll(self.clibrebound, "integrator_whfast_synchronize_manually").value = value
+            return
+        raise ValueError("Expecting integer.")
+    
+    @property
+    def force_is_velocitydependent(self):
+        return c_int.in_dll(self.clibrebound, "integrator_force_is_velocitydependent").value
+
+    @force_is_velocitydependent.setter
+    def force_is_velocitydependent(self,value):
+        if isinstance(value, int):
+            c_int.in_dll(self.clibrebound, "integrator_force_is_velocitydependent").value = value
+            return
+        raise ValueError("Expecting integer.")
     
 # MEGNO
-    def init_megno(self,delta):
+    def init_megno(self, delta):
         self.clibrebound.tools_megno_init(c_double(delta))
     
     @property
@@ -152,7 +226,7 @@ class ReboundModule(types.ModuleType):
 
 
 # Orbit calculation
-    def orbits(self,heliocentric=False):
+    def calculate_orbits(self,heliocentric=False):
         """ Returns an array of Orbits of length N-1.
 
         Parameters
@@ -168,117 +242,10 @@ class ReboundModule(types.ModuleType):
                 com = _particles[0]
             else:
                 com = self.calculate_com(i)
-            orbits.append(_particles[i].get_orbit(primary=com))
+            orbits.append(_particles[i].calculate_orbit(primary=com))
         return orbits
 
-# Tools
-    def move_to_com(self):
-        self.clibrebound.tools_move_to_center_of_momentum()
-
-    def reset(self):
-        debug.reset_debug()
-        self.clibrebound.reset()
-
-    def set_integrator_whfast_corrector(self,on=11):
-        c_int.in_dll(self.clibrebound, "integrator_whfast_corrector").value = on
-
-    def set_integrator(self,integrator="IAS15"):
-        if isinstance(integrator, int):
-            self.clibrebound.integrator_set(c_int(integrator))
-            return
-        if isinstance(integrator, basestring):
-            debug.integrator_fullname = integrator
-            debug.integrator_package = "REBOUND"
-            if integrator.lower() == "ias15":
-                set_integrator(0)
-                return
-            if integrator.lower() == "whfast":
-                set_integrator(1)
-                set_integrator_whfast_corrector(11)
-                return
-            if integrator.lower() == "whfast-nocor":
-                set_integrator(1)
-                set_integrator_whfast_corrector(0)
-                return
-            if integrator.lower() == "sei":
-                set_integrator(2)
-                return
-            if integrator.lower() == "wh":
-                set_integrator(3)
-                return
-            if integrator.lower() == "leapfrog":
-                set_integrator(4)
-                return
-            if integrator.lower() == "leap-frog":
-                set_integrator(4)
-                return
-            if integrator.lower() == "hybrid":
-                set_integrator(5)
-                return
-            if integrator.lower() == "mercury":
-                debug.integrator_package = "MERCURY"
-                return
-            if integrator.lower() == "swifter-whm":
-                debug.integrator_package = "SWIFTER"
-                return
-            if integrator.lower() == "swifter-symba":
-                debug.integrator_package = "SWIFTER"
-                return
-            if integrator.lower() == "swifter-helio":
-                debug.integrator_package = "SWIFTER"
-                return
-            if integrator.lower() == "swifter-tu4":
-                debug.integrator_package = "SWIFTER"
-                return
-        raise ValueError("Warning. Intergrator not found.")
-
-    def set_integrator_whfast_persistent_particles(self,is_per=0):
-        if isinstance(is_per, int):
-            c_int.in_dll(self.clibrebound, "integrator_whfast_persistent_particles").value = is_per
-            return
-        raise ValueError("Expecting integer.")
-
-    def set_integrator_whfast_synchronize_manually(self,synchronize_manually=0):
-        if isinstance(synchronize_manually, int):
-            c_int.in_dll(self.clibrebound, "integrator_whfast_synchronize_manually").value = synchronize_manually
-            return
-        raise ValueError("Expecting integer.")
-
-    def set_force_is_velocitydependent(self,force_is_velocitydependent=1):
-        if isinstance(force_is_velocitydependent, int):
-            c_int.in_dll(self.clibrebound, "integrator_force_is_velocitydependent").value = force_is_velocitydependent
-            return
-        raise ValueError("Expecting integer.")
-
-# Input/Output routines
-
-    def output_binary(self,filename):
-        self.clibrebound.output_binary(c_char_p(filename))
-    save=output_binary
-        
-    def input_binary(self,filename):
-        self.clibrebound.input_binary(c_char_p(filename))
-    load=input_binary
-        
-
-# Integration
-    def step(self):
-        self.clibrebound.rebound_step()
-
-    def integrate(self,tmax,exactFinishTime=1,keepSynchronized=0,maxR=0.,minD=0.):
-        if debug.integrator_package =="REBOUND":
-            self.clibrebound.integrate.restype = c_int
-            ret_value = self.clibrebound.integrate(c_double(tmax),c_int(exactFinishTime),c_int(keepSynchronized),c_double(maxR),c_double(minD))
-            if ret_value == 1:
-                raise NoParticleLeft("No more particles left in simulation.")
-            if ret_value == 2:
-                raise ParticleEscaping("At least one particle has a radius > maxR.")
-            if ret_value == 3:
-                raise CloseEncounter(c_int.in_dll(self.clibrebound, "closeEncounterPi").value,
-                                     c_int.in_dll(self.clibrebound, "closeEncounterPj").value)
-        else:
-            debug.integrate_other_package(tmax,exactFinishTime,keepSynchronized)
-
+# COM calculation 
     def calculate_com(self,last=None):
         """Returns the center of momentum for all particles in the simulation"""
         m = 0.
@@ -310,6 +277,44 @@ class ReboundModule(types.ModuleType):
             vz /= m
         return Particle(m=m, x=x, y=y, z=z, vx=vx, vy=vy, vz=vz)
     
+
+# Tools
+    def move_to_com(self):
+        self.clibrebound.tools_move_to_center_of_momentum()
+
+    def reset(self):
+        debug.reset_debug()
+        self.clibrebound.reset()
+
+
+# Input/Output routines
+    def output_binary(self, filename):
+        self.clibrebound.output_binary(c_char_p(filename))
+    save=output_binary
+        
+    def input_binary(self, filename):
+        self.clibrebound.input_binary(c_char_p(filename))
+    load=input_binary
+        
+
+# Integration
+    def step(self):
+        self.clibrebound.rebound_step()
+
+    def integrate(self, tmax, exactFinishTime=1, keepSynchronized=0, maxR=0., minD=0.):
+        if debug.integrator_package =="REBOUND":
+            self.clibrebound.integrate.restype = c_int
+            ret_value = self.clibrebound.integrate(c_double(tmax),c_int(exactFinishTime),c_int(keepSynchronized),c_double(maxR),c_double(minD))
+            if ret_value == 1:
+                raise NoParticleLeft("No more particles left in simulation.")
+            if ret_value == 2:
+                raise ParticleEscaping("At least one particle has a radius > maxR.")
+            if ret_value == 3:
+                raise CloseEncounter(c_int.in_dll(self.clibrebound, "closeEncounterPi").value,
+                                     c_int.in_dll(self.clibrebound, "closeEncounterPj").value)
+        else:
+            debug.integrate_other_package(tmax,exactFinishTime,keepSynchronized)
+
 # Exceptions    
 class CloseEncounter(Exception):
     def __init__(self, id1, id2):
