@@ -3,6 +3,7 @@ import math
 import os
 import ctypes.util
 import pkg_resources
+import types
 
 _pymodulespath = os.path.dirname(__file__)
 #Find the rebound C library
@@ -58,9 +59,14 @@ get_status = status
 AFF = CFUNCTYPE(None)
 fp = None
 def set_additional_forces(func):
-    global fp  # keep references
-    fp = AFF(func)
-    clibrebound.set_additional_forces(fp)
+    if(isinstance(func,types.FunctionType)):
+        # Python function pointer
+        global fp  # keep references
+        fp = AFF(func)
+        clibrebound.set_additional_forces(fp)
+    else:
+        # C function pointer
+        clibrebound.set_additional_forces_with_parameters(func)
 
 # Setter/getter of parameters and constants
 def set_G(G):

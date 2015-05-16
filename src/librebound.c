@@ -56,6 +56,7 @@ const char *build_str = __DATE__ " " __TIME__;
 
 // Function pointer to additional forces
 void (*problem_additional_forces) () = NULL;
+void (*problem_additional_forces_with_parameters) () = NULL;
 
 // Particle getter/setter methods.
 void setp(struct particle* _p){
@@ -71,6 +72,9 @@ struct particle* particles_get(){
 }
 void set_additional_forces(void (* _cb)()){
 	problem_additional_forces = _cb;
+}
+void set_additional_forces_with_parameters(void (* _cb)(struct particle* particles, double t, double dt, double G, int N, int N_megno)){
+	problem_additional_forces_with_parameters = _cb;
 }
 
 // Integrate for 1 step
@@ -88,6 +92,7 @@ void rebound_step(){
 		gravity_calculate_variational_acceleration();
 	}
 	if (problem_additional_forces) problem_additional_forces();
+	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles, t, dt, G, N, N_megno);
 	integrator_part2();
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
@@ -143,7 +148,7 @@ int integrate(double _tmax, int exactFinishTime, int keepSynchronized, double ma
 		integrator_whfast_synchronize_manually = 1;
 		integrator_whfast_persistent_particles = 1;
 	}
-	if (problem_additional_forces==NULL){
+	if (problem_additional_forces==NULL && problem_additional_forces_with_parameters){
 		integrator_force_is_velocitydependent = 0;
 	}
 	int ret_value = 0;
@@ -159,6 +164,7 @@ int integrate(double _tmax, int exactFinishTime, int keepSynchronized, double ma
 			gravity_calculate_variational_acceleration();
 		}
 		if (problem_additional_forces) problem_additional_forces();
+		if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles, t, dt, G, N, N_megno);
 		integrator_part2();
 		
 		if (t+dt>=tmax && exactFinishTime==1){

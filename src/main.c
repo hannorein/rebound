@@ -68,6 +68,7 @@ int root_nz		= 1;
 int root_n		= 1;
 
 void (*problem_additional_forces) () = NULL;
+void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, int N, int N_megno) = NULL;
 
 static char* 	logo[];		/**< Logo of rebound. */
 
@@ -158,6 +159,7 @@ void iterate(){
 	}
 	// Calculate non-gravity accelerations. 
 	if (problem_additional_forces) problem_additional_forces();
+	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles, t, dt, G, N, N_megno);
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 
 	// A 'DKD'-like integrator will do the 'KD' part.

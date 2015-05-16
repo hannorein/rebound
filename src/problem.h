@@ -29,6 +29,8 @@
  */
 #ifndef _PROBLEM_H
 #define _PROBLEM_H
+#include "particle.h"
+
 /**
  * Main initialization function.
  * In this function, the user should set the timestep, the boxsize and
@@ -57,4 +59,9 @@ void problem_finish();
  * This function allows the user to add additional (non-gravitational) forces.
  */
 extern void (*problem_additional_forces) ();
+
+/*
+ * This function allows the user to add additional (non-gravitational) forces.
+ */
+extern void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno);
 #endif //_PROBLEM_H
