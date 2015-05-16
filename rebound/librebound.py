@@ -2,7 +2,11 @@ from ctypes import *
 import math
 import os
 import ctypes.util
-import pkg_resources
+try:
+    import pkg_resources
+except: 
+    # Fails on python3, but not important
+    pass
 import types
         
 INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "wh": 3, "leapfrog": 4, "hybrid": 5, "none": 6}
@@ -21,7 +25,7 @@ class ReboundModule(types.ModuleType):
 
     @property
     def build_str(self):
-        return c_char_p.in_dll(self.clibrebound, "build_str").value
+        return str(c_char_p.in_dll(self.clibrebound, "build_str").value)
 
     def status(self):
         """ Returns a string with a summary of the current status 
@@ -29,7 +33,11 @@ class ReboundModule(types.ModuleType):
             """
         s= ""
         s += "---------------------------------\n"
-        s += "Rebound version:     \t" + pkg_resources.require("rebound")[0].version +"\n"
+        try:
+            s += "Rebound version:     \t" + pkg_resources.require("rebound")[0].version +"\n"
+        except:
+            # Fails on python3, but not important
+            pass
         s += "Build on:            \t" + self.build_str + "\n"
         s += "Number of particles: \t%d\n" %self.N       
         s += "Simulation time:     \t%f\n" %self.t
@@ -294,13 +302,11 @@ class ReboundModule(types.ModuleType):
 
 
 # Input/Output routines
-    def output_binary(self, filename):
-        self.clibrebound.output_binary(c_char_p(filename))
-    save=output_binary
+    def save(self, filename):
+        self.clibrebound.output_binary(c_char_p(filename.encode("ascii")))
         
-    def input_binary(self, filename):
-        self.clibrebound.input_binary(c_char_p(filename))
-    load=input_binary
+    def load(self, filename):
+        self.clibrebound.input_binary(c_char_p(filename.encode("ascii")))
         
 
 # Integration

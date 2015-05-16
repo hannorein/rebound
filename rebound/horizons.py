@@ -32,25 +32,25 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
 
     t = telnetlib.Telnet()
     t.open('horizons.jpl.nasa.gov', 6775)
-    expect = ( ( r'Horizons>', particle+'\n' ),
-               ( r'Continue.*:', 'y\n' ),
-               ( r'Select.*E.phemeris.*:', 'E\n'),
-               ( r'Observe.*:', 'v\n' ),
-               ( r'Coordinate center.*:', '@Sun\n' ),
-               ( r'Reference plane.*:', 'eclip\n' ),
-               ( r'Starting.* :', date.strftime("%Y-%m-%d %H:%M")+'\n' ),
-               ( r'Ending.* :', (date + datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M")+'\n' ),
-               ( r'Output interval.*:', '1d\n' ),
-               ( r'Accept default output \[.*:', 'n\n' ),
-               ( r'Output reference frame \[.*:', '\n' ),
-               ( r'Corrections \[.*:', '\n' ),
-               ( r'Output units \[.*:', '1\n' ),
-               ( r'Spreadsheet CSV format.*\[.*:', 'NO\n' ),
-               ( r'Label cartesian output.*\[.*:', 'NO\n' ),
-               ( r'Select output table type.*\[.*:', '3\n' ),
-               ( r'Scroll . Page: .*%', ' '),
-               ( r'Select\.\.\. .A.gain.* :', 'X\n' ),
-               ( r'Select \.\.\. .F.tp.*:', 'selectID' )
+    expect = ( ( b'Horizons>', particle+'\n' ),
+               ( b'Continue.*:', 'y\n' ),
+               ( b'Select.*E.phemeris.*:', 'E\n'),
+               ( b'Observe.*:', 'v\n' ),
+               ( b'Coordinate center.*:', '@Sun\n' ),
+               ( b'Reference plane.*:', 'eclip\n' ),
+               ( b'Starting.* :', date.strftime("%Y-%m-%d %H:%M")+'\n' ),
+               ( b'Ending.* :', (date + datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M")+'\n' ),
+               ( b'Output interval.*:', '1d\n' ),
+               ( b'Accept default output \[.*:', 'n\n' ),
+               ( b'Output reference frame \[.*:', '\n' ),
+               ( b'Corrections \[.*:', '\n' ),
+               ( b'Output units \[.*:', '1\n' ),
+               ( b'Spreadsheet CSV format.*\[.*:', 'NO\n' ),
+               ( b'Label cartesian output.*\[.*:', 'NO\n' ),
+               ( b'Select output table type.*\[.*:', '3\n' ),
+               ( b'Scroll . Page: .*%', ' '),
+               ( b'Select\.\.\. .A.gain.* :', 'X\n' ),
+               ( b'Select \.\.\. .F.tp.*:', 'selectID' )
     )
     p = Particle()
     startdata = 0
@@ -61,8 +61,9 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
             answer = t.expect(list(i[0] for i in expect), 4)
         except EOFError:
             break
-        if "$$SOE" in answer[2]:
-            lines = answer[2].split("\n")
+        a = answer[2].decode()
+        if "$$SOE" in a:
+            lines = a.split("\n")
             for line in lines:
                 if line.strip() == "$$EOE":
                     break
@@ -86,19 +87,19 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
                         pass
                 if line.strip() == "$$SOE":
                     startdata = 1
-        message += answer[2].replace(chr(27)+"[H","")
+        message += a.replace(chr(27)+"[H","")
         if answer[0] != -1:
             if expect[answer[0]][1] == "selectID":
                 try:
-                    idn = answer[2].split("ID#")[1].split("\n")[2].split()[0]
+                    idn = a.split("ID#")[1].split("\n")[2].split()[0]
                 except:
                     try:
-                        idn = answer[2].split("Record #")[1].split("\n")[2].split()[0]
+                        idn = a.split("Record #")[1].split("\n")[2].split()[0]
                     except:
                         raise Exception("Error while trying to find object.")
-                t.write(idn+"\n")
+                t.write((idn+"\n").encode())
             else:
-                t.write(expect[answer[0]][1])
+                t.write(expect[answer[0]][1].encode())
         else:
             pass
             #print "NOT FOUND!!"
