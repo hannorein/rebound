@@ -3,7 +3,7 @@ import rebound
 
 # Set variables (defaults are G=1, t=0, dt=0.01)
 k = 0.01720209895       # Gaussian constant 
-rebound.set_G(k*k)      # Gravitational constant
+rebound.G = k*k         # Gravitational constant
 
 # Setup particles (data taken from NASA Horizons)
 # This could also be easily read in from a file.

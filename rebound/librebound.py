@@ -69,11 +69,14 @@ def set_additional_forces(func):
         clibrebound.set_additional_forces_with_parameters(func)
 
 # Setter/getter of parameters and constants
-def set_G(G):
+@property
+def G():
+    return c_double.in_dll(clibrebound, "G").value
+
+@G.setter
+def G(G):
     c_double.in_dll(clibrebound, "G").value = G
 
-def get_G():
-    return c_double.in_dll(clibrebound, "G").value
 
 def set_dt(dt):
     c_double.in_dll(clibrebound, "dt").value = dt
