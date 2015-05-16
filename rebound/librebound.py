@@ -121,10 +121,11 @@ class ReboundModule(types.ModuleType):
             debug.integrator_package = "REBOUND"
             value = value.lower()
             if value in INTEGRATORS: 
-                self.set_integrator(INTEGRATORS[value])
+                self.integrator = INTEGRATORS[value]
+                self.integrator_whfast_corrector = 11
             elif value.lower() == "whfast-nocor":
-                self.set_integrator(INTEGRATORS["whfast"])
-                self.set_integrator_whfast_corrector(0)
+                self.integrator = INTEGRATORS["whfast"]
+                self.integrator_whfast_corrector = 0
             elif value.lower() == "mercury":
                 debug.integrator_package = "MERCURY"
             elif value.lower() == "swifter-whm":
@@ -194,10 +195,15 @@ class ReboundModule(types.ModuleType):
         1) A single Particle structure.
         2) The particle's mass and a set of cartesian coordinates: m,x,y,z,vx,vy,vz.
         3) The primary as a Particle structure, the particle's mass and a set of orbital elements primary,a,anom,e,omega,inv,Omega,MEAN (see kepler_particle() for the definition of orbital elements). 
+        4) A name of an object (uses NASA Horizons to look up coordinates)
+        5) A list of particles or names.
         """
         if particle is not None:
             if isinstance(particle,Particle):
                 self.clibrebound.particles_add(particle)
+            elif isinstance(particle,list):
+                for p in particle:
+                    self.add(p)
             elif isinstance(particle,str):
                 self.add(horizons.getParticle(particle,**kwargs))
         else: 
@@ -306,28 +312,28 @@ class ReboundModule(types.ModuleType):
             self.clibrebound.integrate.restype = c_int
             ret_value = self.clibrebound.integrate(c_double(tmax),c_int(exactFinishTime),c_int(keepSynchronized),c_double(maxR),c_double(minD))
             if ret_value == 1:
-                raise NoParticleLeft("No more particles left in simulation.")
+                raise self.NoParticleLeft("No more particles left in simulation.")
             if ret_value == 2:
-                raise ParticleEscaping("At least one particle has a radius > maxR.")
+                raise self.ParticleEscaping("At least one particle has a radius > maxR.")
             if ret_value == 3:
-                raise CloseEncounter(c_int.in_dll(self.clibrebound, "closeEncounterPi").value,
+                raise self.CloseEncounter(c_int.in_dll(self.clibrebound, "closeEncounterPi").value,
                                      c_int.in_dll(self.clibrebound, "closeEncounterPj").value)
         else:
             debug.integrate_other_package(tmax,exactFinishTime,keepSynchronized)
 
 # Exceptions    
-class CloseEncounter(Exception):
-    def __init__(self, id1, id2):
-            self.id1 = id1
-            self.id2 = id2
-    def __str__(self):
-            return "A close encounter occured between particles %d and %d."%(self.id1,self.id2)
+    class CloseEncounter(Exception):
+        def __init__(self, id1, id2):
+                self.id1 = id1
+                self.id2 = id2
+        def __str__(self):
+                return "A close encounter occured between particles %d and %d."%(self.id1,self.id2)
 
-class ParticleEscaping(Exception):
-    pass
+    class ParticleEscaping(Exception):
+        pass
 
-class NoParticleLeft(Exception):
-    pass
+    class NoParticleLeft(Exception):
+        pass
 
 
 
