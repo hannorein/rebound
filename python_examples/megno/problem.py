@@ -6,9 +6,7 @@
 # to regular quasi-periodic orbits. Higher values of <Y> correspond to chaotic orbits.
  
 # Import the rebound module
-import sys; sys.path.append('../../python_modules')
 import rebound
-from rebound.interruptible_pool import InterruptiblePool
 # Import other modules
 import numpy as np
 import multiprocessing
@@ -17,21 +15,21 @@ import multiprocessing
 def simulation(par):
     saturn_a, saturn_e = par
     rebound.reset()
-    rebound.set_integrator("whfast-nocor")
-    rebound.set_min_dt(5.)
-    rebound.set_dt(1.)
+    rebound.integrator = "whfast-nocor"
+    rebound.min_dt = 5.
+    rebound.dt = 1.
     
     # These parameters are only approximately those of Jupiter and Saturn.
     sun     = rebound.Particle(m=1.)
-    rebound.add_particle(sun)
-    jupiter = rebound.add_particle(primary=sun,m=0.000954, a=5.204, anom=0.600, omega=0.257, e=0.048)
-    saturn  = rebound.add_particle(primary=sun,m=0.000285, a=saturn_a, anom=0.871, omega=1.616, e=saturn_e)
+    rebound.add(sun)
+    jupiter = rebound.add(primary=sun,m=0.000954, a=5.204, anom=0.600, omega=0.257, e=0.048)
+    saturn  = rebound.add(primary=sun,m=0.000285, a=saturn_a, anom=0.871, omega=1.616, e=saturn_e)
 
-    rebound.move_to_center_of_momentum()
+    rebound.move_to_com()
     rebound.init_megno(1e-16)
     rebound.integrate(1e3*2.*np.pi)
 
-    return [rebound.get_megno(),1./(rebound.get_lyapunov()*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
+    return [rebound.megno,1./(rebound.lyapunov*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
 
 
 ### Setup grid and run many simulations in parallel
@@ -45,7 +43,7 @@ for _e in e:
 
 
 # Run simulations in parallel
-pool = InterruptiblePool()    # Number of threads default to the number of CPUs on the system
+pool = rebound.InterruptiblePool()    # Number of threads default to the number of CPUs on the system
 print("Running %d simulations on %d threads..." % (len(parameters), pool._processes))
 res = np.nan_to_num(np.array(pool.map(simulation,parameters))) 
 megno = np.clip(res[:,0].reshape((N,N)),1.8,4.)             # clip arrays to plot saturated 

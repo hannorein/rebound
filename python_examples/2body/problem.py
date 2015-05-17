@@ -1,8 +1,6 @@
 # Import the rebound module
 import rebound
 import numpy as np
-from rebound.interruptible_pool import InterruptiblePool
-
 
 torb = 2.*np.pi
 tmax = 100.34476128*torb
@@ -14,13 +12,13 @@ def simulation(par):
     dt = pow(10.,dt)*torb
 
     rebound.reset()
-    rebound.set_integrator(integrator)
-    rebound.set_force_is_velocitydependent(0)
-    rebound.set_dt(dt)
+    rebound.integrator = integrator
+    rebound.force_is_velocitydependent = 0
+    rebound.dt = dt
 
-    rebound.add_particle(m=1.)
-    rebound.add_particle(m=0., x=(1.-e), vy=np.sqrt((1.+e)/(1.-e)))
-    particles = rebound.get_particles()
+    rebound.add(m=1.)
+    rebound.add(m=0., x=(1.-e), vy=np.sqrt((1.+e)/(1.-e)))
+    particles = rebound.particles
     
     Ei = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
 
@@ -28,10 +26,10 @@ def simulation(par):
     
     Ef = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
 
-    return [float(rebound.get_iter())/rebound.get_t()*dt, np.fabs((Ef-Ei)/Ei)+1e-16, rebound.get_timing()/rebound.get_t()*dt*1e6/2., (Ef-Ei)/Ei]
+    return [float(rebound.iter)/rebound.t*dt, np.fabs((Ef-Ei)/Ei)+1e-16, rebound.timing/rebound.t*dt*1e6/2., (Ef-Ei)/Ei]
 
 
-N = 250
+N = 25
 dts = np.linspace(-3.1,-0.1,N)
 e0s = np.linspace(0,-8,N)
 integrators= ["wh","whfast-nocor"]
@@ -45,7 +43,7 @@ for integrator in integrators:
     print("Running "+ integrator)
     parameters = [(1.732, dts[i], e0s[j], integrator) for j in range(N) for i in range(N)]
 
-    pool = InterruptiblePool(12)
+    pool = rebound.InterruptiblePool(12)
     res = pool.map(simulation,parameters)
     res = np.nan_to_num(res)
     niter.append(res[:,0].reshape((N,N)))

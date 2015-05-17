@@ -15,20 +15,20 @@ def simulation(integrator):
     print("Running "+integrator)
     with open(integrator+".txt","w") as f:
         rebound.reset()
-        rebound.set_integrator(integrator)
-        rebound.set_dt(0.2)
+        rebound.integrator = integrator
+        rebound.dt = 0.2
             
-        rebound.add_particle(m=1.)
-        rebound.add_particle(m=0.01, a=1,e=0.1)
-        rebound.add_particle(m=0.01, a=2.)
+        rebound.add(m=1.)
+        rebound.add(m=0.01, a=1,e=0.1)
+        rebound.add(m=0.01, a=2.)
 
-        rebound.move_to_center_of_momentum()
+        rebound.move_to_com()
         rebound.init_megno(1e-10)
-        particles = rebound.get_particles()
+        particles = rebound.particles
         times = np.logspace(2,5,num=1000)
         for t in times:
             rebound.integrate(t,0)
-            print("%e %e %e %e %e %e %e %e\n" %(rebound.get_t(), rebound.get_megno(), particles[0].x, particles[1].x, particles[2].x, particles[3].x, particles[4].x, particles[5].x),file=f)
+            print("%e %e %e %e %e %e %e %e\n" %(rebound.t, rebound.megno, particles[0].x, particles[1].x, particles[2].x, particles[3].x, particles[4].x, particles[5].x),file=f)
 
 simulation("ias15")
 simulation("whfast-nocor")

@@ -11,19 +11,19 @@ from matplotlib.colors import LogNorm
 def simulation(par):
     saturn_a, saturn_e = par
     rebound.reset()
-    rebound.set_integrator("whfast-nocor")
-    rebound.set_dt(5.)
+    rebound.integrator = "whfast-nocor"
+    rebound.dt = 5.
     
     # These parameters are only approximately those of Jupiter and Saturn.
-    rebound.add_particle(m=1.)
-    rebound.add_particle(m=0.000954, a=5.204, anom=0.600, omega=0.257, e=0.048)
-    rebound.add_particle(m=0.000285, a=saturn_a, anom=0.871, omega=1.616, e=saturn_e)
+    rebound.add(m=1.)
+    rebound.add(m=0.000954, a=5.204, anom=0.600, omega=0.257, e=0.048)
+    rebound.add(m=0.000285, a=saturn_a, anom=0.871, omega=1.616, e=saturn_e)
 
-    rebound.move_to_center_of_momentum()
+    rebound.move_to_com()
     rebound.init_megno(1e-16)
     rebound.integrate(5e2*2.*np.pi) # integrator for 500 years
 
-    return [rebound.get_megno(),1./(rebound.get_lyapunov()*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
+    return [rebound.megno,1./(rebound.lyapunov*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
 
 
 def updatePlot(first=False):

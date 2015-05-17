@@ -13,6 +13,7 @@ import tempfile
 import shutil
 import time
 import math
+import rebound
 
 integrator_package = "REBOUND"
 integrator_fullname = ""    
@@ -27,7 +28,7 @@ def reset_debug():
 def integrate_other_package(tmax,exactFinishTime=1,keepSynchronized=0):
     global tmpdir
     if integrator_package == "SWIFTER":
-        _particles = get_particles()
+        _particles = rebound.module.particles
         oldwd = os.getcwd()
         paramin = """!
 ! Parameter file for the CHO run of the 4 giant planets and Pluto.
@@ -59,7 +60,7 @@ ENC_OUT        enc.dat
 EXTRA_FORCE    no                  ! no extra user-defined forces
 BIG_DISCARD    yes                 ! output all planets if anything discarded
 RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
-""" % ( get_t(), tmax, get_dt(),max(1,int((tmax-get_t())/get_dt())))
+""" % ( rebound.module.t, tmax, rebound.module.dt,max(1,int((tmax-rebound.module.t)/rebound.module.dt)))
 
         if not tmpdir:
         # first call
@@ -72,9 +73,9 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         with open("tp.in", "w") as f:
             f.write(smallin)
         bigin = """ %d
-""" %(get_N())
-        _G = get_G() 
-        for i in range(0,get_N()):
+""" %(rebound.module.N)
+        _G = rebound.module.G 
+        for i in range(0,rebound.module.N):
             bigin += """%d    %.18e 
 %.18e %.18e %.18e
 %.18e %.18e %.18e
@@ -97,9 +98,9 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         else:
             print("Integrator not found! %s"%integrator_fullname)
         endtime = time.time()    
-        c_double.in_dll(clibrebound,"timing").value = endtime-starttime
+        c_double.in_dll(rebound.module.clibrebound,"timing").value = endtime-starttime
     
-        for i in range(1,get_N()):
+        for i in range(1,rebound.module.N):
             with open("outputparams.txt", "w") as f:
                 f.write("dump_param1.dat\n")
                 f.write("{0}\n".format(i+1))
@@ -110,7 +111,7 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
                     lines = f.readlines()
                     line = lines[-1].split()
                     t = float(line[0].strip())
-                    set_t(t)
+                    rebound.module.t = t
                     _particles[i].x = float(line[2].strip())
                     _particles[i].y = float(line[3].strip())
                     _particles[i].z = float(line[4].strip())
@@ -124,8 +125,8 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         os.chdir(oldwd)
     if integrator_package == "MERCURY":
         k = 0.01720209895    
-        facTime = math.sqrt(get_G())/k
-        _particles = get_particles()
+        facTime = math.sqrt(rebound.module.G)/k
+        _particles = rebound.module.particles
         oldwd = os.getcwd()
         paramin = """)O+_06 Integration parameters  (WARNING: Do not delete this line!!)
 ) Lines beginning with `)' are ignored.
@@ -164,7 +165,7 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
  Hybrid integrator changeover (Hill radii) = 3.
  number of timesteps between data dumps = 50000000
  number of timesteps between periodic effects = 100000000
-""" % ( tmax*facTime, get_dt()*facTime,_particles[0].m)
+""" % ( tmax*facTime, rebound.module.dt*facTime,_particles[0].m)
         if not tmpdir:
             # first call
             tmpdir = tempfile.mkdtemp()
@@ -185,8 +186,8 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
  style (Cartesian, Asteroidal, Cometary) = Cartesian
  epoch (in days) = %.16e
 )---------------------------------------------------------------------
-""" %(get_t()*facTime)
-            for i in range(1,get_N()):
+""" %(rebound.module.t*facTime)
+            for i in range(1,rebound.module.N):
                 bigin += """PART%03d    m=%.18e r=20.D0 d=5.43
  %.18e %.18e %.18e
  %.18e %.18e %.18e
@@ -205,11 +206,11 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
         #os.system("./mercury ")
         os.system("./mercury >/dev/null")
         endtime = time.time()    
-        c_double.in_dll(clibrebound,"timing").value = endtime-starttime
+        c_double.in_dll(rebound.module.clibrebound,"timing").value = endtime-starttime
         with open("big.dmp", "r") as f:
             lines = f.readlines()
             t= float(lines[4].split("=")[1].strip())
-            set_t(t/facTime)
+            rebound.module.t = t/facTime
             j = 1
             for i in range(6,len(lines),4):
                 pos = lines[i+1].split()

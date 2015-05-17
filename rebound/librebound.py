@@ -50,6 +50,10 @@ class ReboundModule(types.ModuleType):
 
 # Set function pointer for additional forces
     @property
+    def additional_forces(self):
+        return self.fp   # might not be needed
+
+    @additional_forces.setter
     def additional_forces(self,func):
         if(isinstance(func,types.FunctionType)):
             # Python function pointer

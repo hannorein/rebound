@@ -5,37 +5,35 @@ import numpy as np
 import time
 from rebound.interruptible_pool import InterruptiblePool
 
-print(rebound.get_build_str())
+print(rebound.build_str)
 def simulation(par):
     integrator, run, trial = par
     rebound.reset()
     k = 0.01720209895    
     Gfac = 1./k
-    rebound.set_dt(dt)
-    rebound.set_integrator(integrator)
-    rebound.set_force_is_velocitydependent(0)
+    rebound.dt = dt
+    rebound.integrator = integrator 
+    rebound.force_is_velocitydependent = 0
 
     massfac = 1.
-    rebound.add_particle(m=1.00000597682, x=-4.06428567034226e-3, y=-6.08813756435987e-3, z=-1.66162304225834e-6,      vx=+6.69048890636161e-6*Gfac, vy=-6.33922479583593e-6*Gfac, vz=-3.13202145590767e-9*Gfac)   # Sun
-    rebound.add_particle(m=massfac/1407.355,   x=+3.40546614227466e+0, y=+3.62978190075864e+0, z=+3.42386261766577e-2, vx=-5.59797969310664e-3*Gfac, vy=+5.51815399480116e-3*Gfac, vz=-2.66711392865591e-6*Gfac)   # Jupiter
-    rebound.add_particle(m=massfac/3501.6,     x=+6.60801554403466e+0, y=+6.38084674585064e+0, z=-1.36145963724542e-1, vx=-4.17354020307064e-3*Gfac, vy=+3.99723751748116e-3*Gfac, vz=+1.67206320571441e-5*Gfac)   # Saturn
-    rebound.add_particle(m=massfac/22869.,     x=+1.11636331405597e+1, y=+1.60373479057256e+1, z=+3.61783279369958e-1, vx=-3.25884806151064e-3*Gfac, vy=+2.06438412905916e-3*Gfac, vz=-2.17699042180559e-5*Gfac)   # Uranus
-    rebound.add_particle(m=massfac/19314.,     x=-3.01777243405203e+1, y=+1.91155314998064e+0, z=-1.53887595621042e-1, vx=-2.17471785045538e-4*Gfac, vy=-3.11361111025884e-3*Gfac, vz=+3.58344705491441e-5*Gfac)   # Neptune
-    N = rebound.get_N()
-    particles = rebound.get_particles()
+    rebound.add(m=1.00000597682, x=-4.06428567034226e-3, y=-6.08813756435987e-3, z=-1.66162304225834e-6,      vx=+6.69048890636161e-6*Gfac, vy=-6.33922479583593e-6*Gfac, vz=-3.13202145590767e-9*Gfac)   # Sun
+    rebound.add(m=massfac/1407.355,   x=+3.40546614227466e+0, y=+3.62978190075864e+0, z=+3.42386261766577e-2, vx=-5.59797969310664e-3*Gfac, vy=+5.51815399480116e-3*Gfac, vz=-2.66711392865591e-6*Gfac)   # Jupiter
+    rebound.add(m=massfac/3501.6,     x=+6.60801554403466e+0, y=+6.38084674585064e+0, z=-1.36145963724542e-1, vx=-4.17354020307064e-3*Gfac, vy=+3.99723751748116e-3*Gfac, vz=+1.67206320571441e-5*Gfac)   # Saturn
+    rebound.add(m=massfac/22869.,     x=+1.11636331405597e+1, y=+1.60373479057256e+1, z=+3.61783279369958e-1, vx=-3.25884806151064e-3*Gfac, vy=+2.06438412905916e-3*Gfac, vz=-2.17699042180559e-5*Gfac)   # Uranus
+    rebound.add(m=massfac/19314.,     x=-3.01777243405203e+1, y=+1.91155314998064e+0, z=-1.53887595621042e-1, vx=-2.17471785045538e-4*Gfac, vy=-3.11361111025884e-3*Gfac, vz=+3.58344705491441e-5*Gfac)   # Neptune
+    N = rebound.N
+    particles = rebound.particles
     np.random.seed(run)
-    for i in xrange(N):
-        particles[i].m *= 1.+1e-3*np.random.rand()
-        particles[i].x *= 1.+1e-3*np.random.rand()
-        particles[i].y *= 1.+1e-3*np.random.rand()
-        particles[i].z *= 1.+1e-3*np.random.rand()
-        particles[i].vx *= 1.+1e-3*np.random.rand()
-        particles[i].vy *= 1.+1e-3*np.random.rand()
-        particles[i].vz *= 1.+1e-3*np.random.rand()
+    for p in particles:
+        p.m *= 1.+1e-3*np.random.rand()
+        p.x *= 1.+1e-3*np.random.rand()
+        p.y *= 1.+1e-3*np.random.rand()
+        p.z *= 1.+1e-3*np.random.rand()
+        p.vx *= 1.+1e-3*np.random.rand()
+        p.vy *= 1.+1e-3*np.random.rand()
+        p.vz *= 1.+1e-3*np.random.rand()
 
     def move_to_heliocentric():
-        particles = rebound.get_particles()
-        
         particles[0].x  = 0.
         particles[0].y  = 0. 
         particles[0].z  = 0. 
@@ -45,17 +43,16 @@ def simulation(par):
 
 
     def energy():
-        particles = rebound.get_particles()
         com_vx = 0.
         com_vy = 0.
         com_vz = 0.
         if integrator=="wh" or integrator=="mercury" or integrator[0:7]=="swifter":
             mtot = 0.
-            for i in xrange(0,N):
-                com_vx += particles[i].vx*particles[i].m 
-                com_vy += particles[i].vy*particles[i].m 
-                com_vz += particles[i].vz*particles[i].m 
-                mtot += particles[i].m
+            for p in particles:
+                com_vx += p.vx*p.m 
+                com_vy += p.vy*p.m 
+                com_vz += p.vz*p.m 
+                mtot += p.m
             com_vx /= mtot
             com_vy /= mtot
             com_vz /= mtot
@@ -78,7 +75,7 @@ def simulation(par):
     if integrator=="wh" or integrator=="mercury" or integrator[0:7]=="swifter":
         move_to_heliocentric()
     else:
-        rebound.move_to_center_of_momentum()
+        rebound.move_to_com()
     ei = energy()
 
     es = []
@@ -89,7 +86,7 @@ def simulation(par):
         ef = energy()
         e = np.fabs((ei-ef)/ei)+1.1e-16
         es.append(e)
-        runtime += rebound.get_timing()
+        runtime += rebound.timing
     
     integrator, run, trial = par
     print integrator.ljust(13) + " %9.5fs"%(runtime) + "\t Error: %e"  %( e)
@@ -101,7 +98,7 @@ Ngrid = 500
 #3dt = 100.23
 orbit = 11.8618*1.*np.pi
 dt = orbit/3000.
-tmax = orbit*1e8
+tmax = orbit*1e2
 integrators = ["mercury","wh","swifter-whm","whfast-nocor", "whfast"]
 colors = {
     'whfast-nocor': "#FF0000",
@@ -116,7 +113,6 @@ colors = {
 trials = 4
     
 parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]
-
 
 if len(sys.argv)!=2:
     pool = InterruptiblePool()

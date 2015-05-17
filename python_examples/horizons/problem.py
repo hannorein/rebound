@@ -14,23 +14,22 @@ else:
     # Note: rebound.save() only saves the particle data, not the integrator settings, etc.
     rebound.save("cache.bin")  
 
-rebound.set_integrator("whfast")
-rebound.set_dt(0.01)
+rebound.integrator = "whfast"
+rebound.set_dt = 0.01
 rebound.status()
 
 import numpy as np
 Nout = 1000
 times = np.linspace(0,16.*np.pi,Nout) # 8 years
-N = rebound.get_N()
-x = np.zeros((N,Nout))
-y = np.zeros((N,Nout))
+x = np.zeros((rebound.N,Nout))
+y = np.zeros((rebound.N,Nout))
 
-p = rebound.get_particles()
+ps = rebound.particles
 for ti,t in enumerate(times):
     rebound.integrate(t)
-    for i in xrange(0,N):
-        x[i][ti] = p[i].x
-        y[i][ti] = p[i].y
+    for i, p in enumerate(ps):
+        x[i][ti] = p.x
+        y[i][ti] = p.y
 
 import matplotlib; matplotlib.use("pdf")
 import matplotlib.pyplot as plt
@@ -42,7 +41,7 @@ def plot(zoom):
     ax.set_ylim([-zoom,zoom])
     ax.set_xlabel("x [AU]")
     ax.set_ylabel("y [AU]")
-    for i in xrange(0,N):
+    for i in xrange(0,rebound.N):
         plt.plot(x[i],y[i])
         if x[i][-1]*x[i][-1]+y[i][-1]*y[i][-1]>0.01*zoom*zoom or i==0:
             ax.annotate(solar_system_objects[i], xy=(x[i][-1], y[i][-1]),horizontalalignment="center")
