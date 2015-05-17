@@ -45,7 +45,7 @@ This shared library can be called from many programming languages. We provide a 
 
 In short: If you simply want to integrate a few particle system such as a planetary system with the high order integrator IAS15 or the symplectic integrator WHFast, use python. If you want to run large, many particle systems (with millions of particles), use an exotic integrator, use OpenGL visualization, make use of the distributed tree code of REBOUND or want to contribute to the development of REBOUND, use the C version.
 
-This file explains how to use the C version of rebound. To learn how to install REBOUND for python have a look at the iPython/Jupiter notebooks at https://github.com/hannorein/rebound/tree/python_tutorials/index.ipynb. Hint: It's super easy! All you'll have to do is `pip install rebound`.
+This file explains how to use the C version of rebound. To learn how to install REBOUND for python have a look at the iPython/Jupiter notebooks at https://github.com/hannorein/rebound/blob/master/python_tutorials/index.ipynb. Hint: It's super easy! All you'll have to do is `pip install rebound`.
 
 
 Feature list 
