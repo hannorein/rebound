@@ -154,15 +154,14 @@ Available integrators
 
 The following integrators are available within REBOUND. Since May 2015, the integrator can be changed at runtime. Thus, the integrator appears no longer in the Makefile. To set the integrator, set the `integrator` variable in the `probelm_init()` function (see below) to one of the integrator names (it's a C enum)::
 
- Integrator name        | Description
- ---------------------- | -----------
- `IAS15`   | IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precission. IAS15 can integrate variational equations. Rein & Spiegel 2015, Everhart 1985
- `WHFAST`  | WHFast is the integrator described in Rein & Tamayo 2015, it's a second order symplectic Wisdom Holman integrator with 11th order symplectic correctors. It is extremely fast and accurate. 
- `EULER`   | Euler scheme, first order
- `LEAPFROG`| Leap frog, second order, symplectic
- `integrator_whfast.c`  | Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, uses Gauss f and g functions to solve Kepler motion, can integrate variational equations, follows Mikkola and Innanen (1999)
- `WH`      | SWIFT-style Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, note that  `integrator_whfast.c` almost always offers better characteristics, Wisdom & Holman 1991, Kinoshita et al 1991
- `SEI`     | Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
+ Integrator name   | Description
+ ----------------- | -----------
+ IAS15             | IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precission. IAS15 can integrate variational equations. Rein & Spiegel 2015, Everhart 1985
+ WHFAST            | WHFast is the integrator described in Rein & Tamayo 2015, it's a second order symplectic Wisdom Holman integrator with 11th order symplectic correctors. It is extremely fast and accurate, uses Gauss f and g functions to solve the Kepler motion and can integrate variational equations.
+ EULER             | Euler scheme, first order
+ LEAPFROG          | Leap frog, second order, symplectic
+ WH                | SWIFT-style Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, note that  `integrator_whfast.c` almost always offers better characteristics, Wisdom & Holman 1991, Kinoshita et al 1991
+ SEI               | Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
 
 
 
