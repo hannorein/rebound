@@ -665,22 +665,20 @@ examples/whfast
 
 OpenGL keyboard command
 -----------------------
-You can use the following keyboard command to alter the OpenGL real-time visualizations.::
+You can use the following keyboard commands to alter the OpenGL real-time visualizations.::
 
- <table>
-  <tr><th>Key</th>
-     <th>Description</th></tr>
-  <tr><td>(space)</td><td>Pause simulation.</td></tr>
-  <tr><td>d</td><td>Pause real-time visualization (simulation continues).</td></tr>
-  <tr><td>q</td><td>Quit simulation.</td></tr>
-  <tr><td>s</td><td>Toggle three dimensional spheres (looks better)/points (draws faster)</td></tr>
-  <tr><td>g</td><td>Toggle ghost boxes</td></tr>
-  <tr><td>r</td><td>Reset view. Press multiple times to change orientation.</td></tr>
-  <tr><td>x/X</td><td>Move to a coordinate system centered on a particle (note: does not work if particle array is constantly resorted, i.e. in a tree.)</td></tr>
-  <tr><td>t</td><td>Show tree structure.</td></tr>
-  <tr><td>m</td><td>Show center of mass in tree structure (only available when t is toggled on).</td></tr>
-  <tr><td>p</td><td>Save screen shot to file.</td></tr>
-  <tr><td>c</td><td>Toggle clear screen after each time-step.</td></tr>
-  <tr><td>w</td><td>Draw orbits as wires (particle with index 0 is central object).  </td></tr>
- </table>
+ Key     | Function
+ -------------------------
+ (space) | Pause simulation.
+ d       | Pause real-time visualization (simulation continues).
+ q       | Quit simulation.
+ s       | Toggle three dimensional spheres (looks better)/points (draws faster)
+ g       | Toggle ghost boxes
+ r       | Reset view. Press multiple times to change orientation.
+ x/X     | Move to a coordinate system centered on a particle (note: does not work if particle array is constantly resorted, i.e. in a tree.)
+ t       | Show tree structure.
+ m       | Show center of mass in tree structure (only available when t is toggled on).
+ p       | Save screen shot to file.
+ c       | Toggle clear screen after each time-step.
+ w       | Draw orbits as wires (particle with index 0 is central object).  
 
