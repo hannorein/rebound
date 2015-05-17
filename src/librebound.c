@@ -148,9 +148,6 @@ int integrate(double _tmax, int exactFinishTime, int keepSynchronized, double ma
 		integrator_whfast_synchronize_manually = 1;
 		integrator_whfast_persistent_particles = 1;
 	}
-	if (problem_additional_forces==NULL && problem_additional_forces_with_parameters==NULL){
-		integrator_force_is_velocitydependent = 0;
-	}
 	int ret_value = 0;
 	const double dtsign = copysign(1.,dt); // Used to determine integration direction
 	while(t*dtsign<tmax*dtsign && last_step<2 && ret_value==0){

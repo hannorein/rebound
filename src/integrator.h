@@ -62,8 +62,8 @@ void integrator_part2();
 
 /* 
  * Flag determining if the integrator needs to consider velocity 
- * dependent forces. This is only relevant for IAS15.
- * Default is 1.
+ * dependent forces. 
+ * Default is 0.
  **/ 
 extern unsigned int integrator_force_is_velocitydependent;
 

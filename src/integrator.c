@@ -45,7 +45,7 @@
 #include "integrator_hybrid.h"
 
 integrator_t integrator = IAS15;
-unsigned int integrator_force_is_velocitydependent = 1;
+unsigned int integrator_force_is_velocitydependent = 0;
 
 void integrator_part1(){
 	switch(integrator){
@@ -125,6 +125,7 @@ void integrator_synchronize(){
 void integrator_reset(){
 	integrator = IAS15;
 	gravity_ignore_10 = 0;
+	integrator_force_is_velocitydependent = 0;
 	integrator_ias15_reset();
 	integrator_wh_reset();
 	integrator_leapfrog_reset();
