@@ -162,6 +162,7 @@ The following integrators are available within REBOUND. Since May 2015, the inte
  LEAPFROG          | Leap frog, second order, symplectic
  WH                | SWIFT-style Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, note that  `integrator_whfast.c` almost always offers better characteristics, Wisdom & Holman 1991, Kinoshita et al 1991
  SEI               | Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
+ HYBRID            | An experimental hybrid symplectic integrator that uses WHFast for long term integrations but switches over to IAS15 for close encounters.
 
 
 
