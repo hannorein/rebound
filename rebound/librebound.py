@@ -152,27 +152,6 @@ class ReboundModule(types.ModuleType):
                 raise ValueError("Warning. Intergrator not found.")
 
     @property
-    def integrator_whfast_persistent_particles(self):
-        return c_int.in_dll(self.clibrebound, "integrator_whfast_persistent_particles").value
-    
-    @integrator_whfast_persistent_particles.setter
-    def integrator_whfast_persistent_particles(self, value):
-        if isinstance(value, int):
-            c_int.in_dll(self.clibrebound, "integrator_whfast_persistent_particles").value = value
-            return
-        raise ValueError("Expecting integer.")
-
-    @property
-    def integrator_whfast_synchronize_manually(self):
-        return c_int.in_dll(self.clibrebound, "integrator_whfast_synchronize_manually").value
-    @integrator_whfast_synchronize_manually.setter
-    def integrator_whfast_synchronize_manually(self, value):
-        if isinstance(value, int):
-            c_int.in_dll(self.clibrebound, "integrator_whfast_synchronize_manually").value = value
-            return
-        raise ValueError("Expecting integer.")
-    
-    @property
     def force_is_velocitydependent(self):
         return c_int.in_dll(self.clibrebound, "integrator_force_is_velocitydependent").value
 

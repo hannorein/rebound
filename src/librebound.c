@@ -140,8 +140,6 @@ int integrate(double _tmax, int exactFinishTime, int keepSynchronized, double ma
 	tmax = _tmax;
 	double dt_last_done = dt;
 	int last_step = 0;
-	int integrator_whfast_synchronize_manually_init = integrator_whfast_synchronize_manually;
-	int integrator_whfast_persistent_particles_init = integrator_whfast_persistent_particles;
 	integrator_whfast_particles_modified = 1;
 	if (N_megno || keepSynchronized){
 		integrator_whfast_synchronize_manually = 0;
@@ -210,8 +208,6 @@ int integrate(double _tmax, int exactFinishTime, int keepSynchronized, double ma
 	}
 	integrator_synchronize();
 	dt = dt_last_done;
-	integrator_whfast_synchronize_manually = integrator_whfast_synchronize_manually_init;
-	integrator_whfast_persistent_particles = integrator_whfast_persistent_particles_init;
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
 	timing = timing_final-timing_initial;
