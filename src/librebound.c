@@ -154,7 +154,8 @@ int integrate(double _tmax, int exactFinishTime, int keepSynchronized, double ma
 		integrator_force_is_velocitydependent = 0;
 	}
 	int ret_value = 0;
-	while(t<tmax && last_step<2 && ret_value==0){
+	const double dtsign = copysign(1.,dt); // Used to determine integration direction
+	while(t*dtsign<tmax*dtsign && last_step<2 && ret_value==0){
 		if (N<=0){
 			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
 			ret_value = 1;
@@ -169,7 +170,7 @@ int integrate(double _tmax, int exactFinishTime, int keepSynchronized, double ma
 		if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles, t, dt, G, N, N_megno);
 		integrator_part2();
 		
-		if (t+dt>=tmax && exactFinishTime==1){
+		if ((t+dt)*dtsign>=tmax*dtsign && exactFinishTime==1){
 			integrator_synchronize();
 			dt = tmax-t;
 			last_step++;
