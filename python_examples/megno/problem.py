@@ -29,7 +29,7 @@ def simulation(par):
     rebound.init_megno(1e-16)
     rebound.integrate(1e3*2.*np.pi)
 
-    return [rebound.megno,1./(rebound.lyapunov*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
+    return [rebound.calculate_megno(),1./(rebound.calculate_lyapunov()*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
 
 
 ### Setup grid and run many simulations in parallel
