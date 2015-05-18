@@ -23,6 +23,7 @@ class ReboundModule(types.ModuleType):
     AFF = CFUNCTYPE(None)
     fp = None
 
+# Status functions
     @property
     def build_str(self):
         return str(c_char_p.in_dll(self.clibrebound, "build_str").value)
@@ -100,14 +101,6 @@ class ReboundModule(types.ModuleType):
     def N(self):
         return c_int.in_dll(self.clibrebound,"N").value 
 
-    @property
-    def iter(self):
-        return c_int.in_dll(self.clibrebound,"iter").value 
-
-    @property
-    def timing(self):
-        return c_double.in_dll(self.clibrebound,"timing").value 
-   
     @property 
     def integrator_whfast_corrector(self):
         return c_int.in_dll(self.clibrebound, "integrator_whfast_corrector").value
@@ -162,17 +155,26 @@ class ReboundModule(types.ModuleType):
             return
         raise ValueError("Expecting integer.")
     
+
+# Debug tools
+    @property
+    def iter(self):
+        return c_int.in_dll(self.clibrebound,"iter").value 
+
+    @property
+    def timing(self):
+        return c_double.in_dll(self.clibrebound,"timing").value 
+   
+    
 # MEGNO
     def init_megno(self, delta):
         self.clibrebound.tools_megno_init(c_double(delta))
     
-    @property
-    def megno(self):
+    def calculate_megno(self):
         self.clibrebound.tools_megno.restype = c_double
         return self.clibrebound.tools_megno()
     
-    @property
-    def lyapunov(self):
+    def calculate_lyapunov(self):
         self.clibrebound.tools_lyapunov.restype = c_double
         return self.clibrebound.tools_lyapunov()
     
