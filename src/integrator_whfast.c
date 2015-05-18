@@ -606,25 +606,27 @@ static void integrator_var_to_inertial_pos(){
 static void integrator_interaction(double _dt){
 	for (unsigned int i=1;i<N-N_megno;i++){
 		// Eq 132
-		struct particle pji = p_j[i];
-		double rj2i  = 1./(pji.x*pji.x + pji.y*pji.y + pji.z*pji.z + softening*softening);
-		double rji  = sqrt(rj2i);
-		double rj3i = rji*rj2i;
-		double M = _M(i);
-		double prefac1 = _dt*M*rj3i;
+		const struct particle pji = p_j[i];
+		double rj2i;
+		double rj3iM;
+		double prefac1;
 		p_j[i].vx += _dt * pji.ax;
 		p_j[i].vy += _dt * pji.ay;
 		p_j[i].vz += _dt * pji.az;
 		if (i>1){
+			rj2i = 1./(pji.x*pji.x + pji.y*pji.y + pji.z*pji.z + softening*softening);
+			const double rji  = sqrt(rj2i);
+			rj3iM = rji*rj2i*_M(i);
+		 	prefac1 = _dt*rj3iM;
 			p_j[i].vx += prefac1*pji.x;
 			p_j[i].vy += prefac1*pji.y;
 			p_j[i].vz += prefac1*pji.z;
 		}
 		if (N_megno){
 			// Eq 132
-			double rj5 = rj3i*rj2i;
+			double rj5M = rj3iM*rj2i;
 			double rdr = p_j[i+N_megno].x*pji.x + p_j[i+N_megno].y*pji.y + p_j[i+N_megno].z*pji.z;
-			double prefac2 = -_dt*M*3.*rdr*rj5;
+			double prefac2 = -_dt*3.*rdr*rj5M;
 			p_j[i+N_megno].vx += _dt * p_j[i+N_megno].ax;
 			p_j[i+N_megno].vy += _dt * p_j[i+N_megno].ay;
 			p_j[i+N_megno].vz += _dt * p_j[i+N_megno].az;
