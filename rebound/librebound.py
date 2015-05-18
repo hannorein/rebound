@@ -100,6 +100,14 @@ class ReboundModule(types.ModuleType):
     @property
     def N(self):
         return c_int.in_dll(self.clibrebound,"N").value 
+    
+    @property
+    def N_active(self,t):
+        return c_int.in_dll(self.clibrebound, "N_active")
+
+    @N_active.setter
+    def N_active(self, value):
+        c_int.in_dll(self.clibrebound, "N_active").value = value
 
     @property 
     def integrator_whfast_corrector(self):
