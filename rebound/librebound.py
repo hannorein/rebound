@@ -288,6 +288,10 @@ class ReboundModule(types.ModuleType):
 # Tools
     def move_to_com(self):
         self.clibrebound.tools_move_to_center_of_momentum()
+    
+    def calculate_energy(self):
+        self.clibrebound.tools_energy.restype = c_double
+        return self.clibrebound.tools_energy()
 
     def reset(self):
         debug.reset_debug()
