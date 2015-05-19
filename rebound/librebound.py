@@ -96,6 +96,15 @@ class ReboundModule(types.ModuleType):
     @min_dt.setter
     def min_dt(self, value):
         c_double.in_dll(self.clibrebound, "integrator_ias15_min_dt").value = value
+    
+    @property
+    def integrator_ias15_epsilon(self,t):
+        return c_double.in_dll(self.clibrebound, "integrator_ias15_epsilon")
+
+    @integrator_ias15_epsilon.setter
+    def min_dt(self, value):
+        c_double.in_dll(self.clibrebound, "integrator_ias15_epsilon").value = value
+
 
     @property
     def N(self):
