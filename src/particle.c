@@ -135,7 +135,7 @@ int particles_get_rootbox_for_particle(struct particle pt){
 }
 #endif // LIBREBOUND
 
-void particles_remove_all(){
+void particles_remove_all(void){
 	N 		= 0;
 	Nmax 		= 0;
 	N_active 	= -1;

@@ -55,7 +55,7 @@ extern int iter;  // TODO DEBUG
 const char *build_str = __DATE__ " " __TIME__;
 
 // Function pointer to additional forces
-void (*problem_additional_forces) () = NULL;
+void (*problem_additional_forces) (void) = NULL;
 void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;
 
 // Particle getter/setter methods.
@@ -67,10 +67,10 @@ void setp(struct particle* _p){
 struct particle particle_get(int i){
 	return particles[i];
 }
-struct particle* particles_get(){
+struct particle* particles_get(void){
 	return particles;
 }
-void set_additional_forces(void (* _cb)()){
+void set_additional_forces(void (* _cb)(void)){
 	problem_additional_forces = _cb;
 }
 void set_additional_forces_with_parameters(void (* _cb)(struct particle* particles, double t, double dt, double G, int N, int N_megno)){
@@ -78,7 +78,7 @@ void set_additional_forces_with_parameters(void (* _cb)(struct particle* particl
 }
 
 // Integrate for 1 step
-void rebound_step(){ 
+void rebound_step(void){ 
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
@@ -104,7 +104,7 @@ void integrator_set(int i){
 }
 
 // Integrate for 1 step
-void reset(){ 
+void reset(void){ 
 	dt 		= 0.01;
 	t 		= 0;
 	tmax		= 0;

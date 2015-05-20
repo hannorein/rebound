@@ -36,12 +36,12 @@
  * This routine searches for all collisions and stores them to 
  * resolve them when called collisions_resolve().
  */
-void collisions_search();
+void collisions_search(void);
 /**
  * Resolve all collisions.
  * This function resolve all previously found collisions.
  */
-void collisions_resolve();
+void collisions_resolve(void);
 
 /**
  * Maximum radius of the particles in this simulation.

@@ -47,7 +47,7 @@ double integrator_hybrid_switch_ratio = 400;
 static double initial_dt = 0;
 static unsigned int integrator_hybrid_switch_warning = 0;
 
-static double get_min_ratio(){
+static double get_min_ratio(void){
 	struct particle p0 = particles[0];
 	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
 	const int _N_real   = N - N_megno;
@@ -82,7 +82,7 @@ static double get_min_ratio(){
 
 static double ratio;
 integrator_t integrator_hybrid_mode = WHFAST; // 0 = symplectic; 1 = IAS15
-void integrator_hybrid_part1(){
+void integrator_hybrid_part1(void){
 	ratio = get_min_ratio();
 	if (initial_dt==0.){
 		initial_dt = dt;
@@ -117,7 +117,7 @@ void integrator_hybrid_part1(){
 			break;
 	}
 }
-void integrator_hybrid_part2(){
+void integrator_hybrid_part2(void){
 	switch(integrator_hybrid_mode){
 		case WHFAST:
 			integrator_whfast_part2();
@@ -130,7 +130,7 @@ void integrator_hybrid_part2(){
 	}
 }
 	
-void integrator_hybrid_synchronize(){
+void integrator_hybrid_synchronize(void){
 	switch(integrator_hybrid_mode){
 		case WHFAST:
 			integrator_whfast_synchronize();
@@ -140,7 +140,7 @@ void integrator_hybrid_synchronize(){
 	}
 }
 
-void integrator_hybrid_reset(){
+void integrator_hybrid_reset(void){
 	integrator_hybrid_mode = WHFAST;
 	integrator_hybrid_switch_warning = 0;
 	integrator_whfast_reset();

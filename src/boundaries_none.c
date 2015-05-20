@@ -43,7 +43,7 @@ int nghostx = 0;
 int nghosty = 0;
 int nghostz = 0;
 
-void boundaries_check(){
+void boundaries_check(void){
 }
 
 struct ghostbox boundaries_get_ghostbox(int i, int j, int k){

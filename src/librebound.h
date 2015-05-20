@@ -32,7 +32,7 @@ void		integrator_set(int i);
 /*
  * Integrate for one step.
  */
-void rebound_step();
+void rebound_step(void);
 
 /* Integrate until t=_tmax.
  * The integration finisheds exactly at _tmax if 
@@ -57,7 +57,7 @@ int integrate(double _tmax, int exactFinishTime, int keepSynchronized, double ma
 /*
  * This function allows the user to add additional (non-gravitational) forces.
  */
-extern void (*problem_additional_forces) ();
+extern void (*problem_additional_forces) (void);
 
 /*
  * This function allows the user to add additional (non-gravitational) forces.

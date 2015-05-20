@@ -64,7 +64,7 @@ void gravity_calculate_acceleration_for_particle(const int pt, const struct ghos
   */
 void gravity_calculate_acceleration_for_particle_from_cell(const int pt, const struct cell *node, const struct ghostbox gb);
 
-void gravity_calculate_acceleration(){
+void gravity_calculate_acceleration(void){
 	softening2 = softening*softening;
 #pragma omp parallel for schedule(guided)
 	for (int i=0; i<N; i++){
@@ -142,6 +142,6 @@ void gravity_calculate_acceleration_for_particle_from_cell(const int pt, const s
 	}
 }
 
-void gravity_calculate_variational_acceleration(){
+void gravity_calculate_variational_acceleration(void){
 	// Not yet implemented 
 }

@@ -72,7 +72,7 @@ double tools_rayleigh(double sigma){
 
 
 /// Other helper routines
-double tools_energy(){
+double tools_energy(void){
 	double e_kin = 0.;
 	double e_pot = 0.;
 	for (int i=0;i<N-N_megno;i++){
@@ -89,7 +89,7 @@ double tools_energy(){
 	return e_kin +e_pot;
 }
 
-void tools_move_to_center_of_momentum(){
+void tools_move_to_center_of_momentum(void){
 	double m = 0;
 	double x = 0;
 	double y = 0;
@@ -331,15 +331,15 @@ void tools_megno_init(double delta){
         }
 	N_megno = _N_megno;
 }
-double tools_megno(){ // Returns the MEGNO <Y>
+double tools_megno(void){ // Returns the MEGNO <Y>
 	if (t==0.) return 0.;
 	return tools_megno_Yss/t;
 }
-double tools_lyapunov(){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
+double tools_lyapunov(void){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
 	if (t==0.) return 0.;
 	return tools_megno_cov_Yt/tools_megno_var_t;
 }
-double tools_megno_deltad_delta(){
+double tools_megno_deltad_delta(void){
         double deltad = 0;
         double delta2 = 0;
         for (int i=N-N_megno;i<N;i++){
@@ -360,7 +360,7 @@ double tools_megno_deltad_delta(){
 }
 
 // Automatically rescale megno particles if their size grew by more then 10 orders of magnitude.
-//void tools_megno_rescale(){
+//void tools_megno_rescale(void){
 //	int rescale_flag = 0;
 //	double delta2_limit = 1e100*tools_megno_delta0*tools_megno_delta0;
 //        for (int i=N-N_megno;i<N;i++){

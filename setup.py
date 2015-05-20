@@ -22,7 +22,7 @@ libreboundmodule = Extension('librebound',
                                 ],
                     include_dirs = ['src'],
                     define_macros=[ ('LIBREBOUND', None), ('COLLISIONS_NONE',None) ],
-                    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-march=native'],
+                    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-march=native','-Wno-unknown-pragmas'],
                                     )
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -30,7 +30,7 @@ with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='0.3.2',
+    version='0.3.3',
     description='The N-body integrator REBOUND',
     long_description=long_description,
     url='http://github.com/hannorein/rebound',

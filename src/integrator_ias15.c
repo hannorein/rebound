@@ -44,7 +44,7 @@
 //#define GENERATE_CONSTANTS
 #ifdef GENERATE_CONSTANTS
 #include <gmp.h>
-void integrator_generate_constants();
+void integrator_generate_constants(void);
 #endif // GENERATE_CONSTANTS
 #include "particle.h"
 #include "main.h"
@@ -104,12 +104,12 @@ void predict_next_step(double ratio, int N3, double* _e[7], double* _b[7]);
 const double w[8] = {0.03125, 0.185358154802979278540728972807180754479812609, 0.304130620646785128975743291458180383736715043, 0.376517545389118556572129261157225608762708603, 0.391572167452493593082499533303669362149363727, 0.347014795634501068709955597003528601733139176, 0.249647901329864963257869294715235590174262844, 0.114508814744257199342353731044292225247093225};
 
 // Do nothing here. This is only used in a leapfrog-like DKD integrator. IAS15 performs one complete timestep.
-void integrator_ias15_part1(){
+void integrator_ias15_part1(void){
 }
 
-int integrator_ias15_step(); // Does the actual timestep.
+int integrator_ias15_step(void); // Does the actual timestep.
 
-void integrator_ias15_part2(){
+void integrator_ias15_part2(void){
 #ifdef GENERATE_CONSTANTS
 	integrator_generate_constants();
 #endif  // GENERATE_CONSTANTS
@@ -117,7 +117,7 @@ void integrator_ias15_part2(){
 	while(!integrator_ias15_step());
 }
  
-int integrator_ias15_step() {
+int integrator_ias15_step(void) {
 	const int N3 = 3*N;
 	if (N3 > N3allocated) {
 		for (int l=0;l<7;++l) {
@@ -558,10 +558,10 @@ void copybuffers(double* _a[7], double* _b[7], int N3){
 //		memcpy(_b[i],_a[i], sizeof(double)*N3);
 //	}
 }
-void integrator_ias15_synchronize(){
+void integrator_ias15_synchronize(void){
 }
 
-void integrator_ias15_reset(){
+void integrator_ias15_reset(void){
 	N3allocated 	= 0;
 	dt_last_success = 0;
 	for (int l=0;l<7;++l) {
@@ -591,7 +591,7 @@ void integrator_ias15_reset(){
 }
 
 #ifdef GENERATE_CONSTANTS
-void integrator_generate_constants(){
+void integrator_generate_constants(void){
 	printf("Generaring constants.\n\n");
 	mpf_set_default_prec(512);
 	mpf_t* _h = malloc(sizeof(mpf_t)*8);

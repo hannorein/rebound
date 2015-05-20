@@ -64,13 +64,13 @@ fftw_plan bac1dfft;	/**< FFT plan for remapping (1D, shearing sheet only) */
 #endif 	// INTEGRATOR_SEI
 
 int gravity_fft_init_done = 0;	/**< Flag if arrays and plans are initialized */
-void gravity_fft_init();
+void gravity_fft_init(void);
 void gravity_fft_grid2p(struct particle* p);
-void gravity_fft_p2grid();
+void gravity_fft_p2grid(void);
 void gravity_fft_remap(double* wi, const double direction);
 double shift_shear = 0;
 
-void gravity_calculate_acceleration(){
+void gravity_calculate_acceleration(void){
 	if (integrator==SEI){
 		printf("ERROR. Not implemented.\n");
 		exit(0);
@@ -136,7 +136,7 @@ void gravity_calculate_acceleration(){
 	}
 }
 
-void gravity_fft_init() {
+void gravity_fft_init(void) {
 
 	// dimension definition
 	grid_NX_COMPLEX	= root_nx;		
@@ -237,7 +237,7 @@ void gravity_fft_remap(double* wi, const double direction) {
 }
 #endif // INTEGRATOR_SEI
 
-void gravity_fft_p2grid(){
+void gravity_fft_p2grid(void){
 		
 	// clean the current density
 	for(int i = 0 ; i < root_nx * (root_ny + 2) ; i++) {
@@ -473,6 +473,6 @@ void gravity_fft_grid2p(struct particle* p){
 }
 
 
-void gravity_calculate_variational_acceleration(){
+void gravity_calculate_variational_acceleration(void){
 	// Not yet implemented 
 }

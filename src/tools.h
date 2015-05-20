@@ -116,7 +116,7 @@ struct orbit tools_p2orbit(struct particle p, struct particle star);
 /**
  * Move to center of momentum and center of mass frame.
  */
-void tools_move_to_center_of_momentum();
+void tools_move_to_center_of_momentum(void);
 
 /**
  * Returns the center of mass of particle p1 and p2.
@@ -131,18 +131,18 @@ void tools_megno_init(double delta);
 /*
  * Returns the current value of <Y>
  **/
-double tools_megno();
+double tools_megno(void);
 
 /*
  * Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
  **/
-double tools_lyapunov();
+double tools_lyapunov(void);
 
 /*
  * Returns deltad/delta (Note, there is a typo in Gozdziewski et al 2001).
  **/
 
-double tools_megno_deltad_delta();
+double tools_megno_deltad_delta(void);
 
 /*
  * Update MEGNO after a successful timestep by adding dY (=ddelta/delta*dt)
@@ -154,6 +154,6 @@ void tools_megno_update(double dY);
  * Might not work for WH.
  * @return Total energy. 
  */
-double tools_energy();
+double tools_energy(void);
 
 #endif 	// TOOLS_H

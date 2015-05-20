@@ -24,8 +24,8 @@
  */
 #ifndef _INTEGRATOR_HYBRID_H
 #define _INTEGRATOR_HYBRID_H
-void integrator_hybrid_part1();
-void integrator_hybrid_part2();
-void integrator_hybrid_synchronize();
-void integrator_hybrid_reset();
+void integrator_hybrid_part1(void);
+void integrator_hybrid_part2(void);
+void integrator_hybrid_synchronize(void);
+void integrator_hybrid_reset(void);
 #endif

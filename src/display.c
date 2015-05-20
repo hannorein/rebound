@@ -172,14 +172,14 @@ void display_cell(struct cell* node){
 /**
  * Draws the entire tree structure.
  */
-void display_entire_tree(){
+void display_entire_tree(void){
 	for(int i=0;i<root_n;i++){
 		display_cell(tree_root[i]);
 	}
 }
 #endif
 
-void display(){
+void display(void){
 	if (display_pause) return;
 #ifdef TREE
 	if (display_tree){

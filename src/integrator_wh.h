@@ -24,8 +24,8 @@
  */
 #ifndef _INTEGRATOR_WH_H
 #define _INTEGRATOR_WH_H
-void integrator_wh_part1();
-void integrator_wh_part2();
-void integrator_wh_synchronize();
-void integrator_wh_reset();
+void integrator_wh_part1(void);
+void integrator_wh_part2(void);
+void integrator_wh_synchronize(void);
+void integrator_wh_reset(void);
 #endif
