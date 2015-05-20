@@ -46,7 +46,7 @@
 #include <omp.h>
 #endif
 #ifdef GRAVITY_GRAPE
-void gravity_finish();
+void gravity_finish(void);
 #endif // GRAVITY_GRAPE
 
 double softening 	= 0;
@@ -67,7 +67,7 @@ int root_ny		= 1;
 int root_nz		= 1;
 int root_n		= 1;
 
-void (*problem_additional_forces) () = NULL;
+void (*problem_additional_forces) (void) = NULL;
 void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;
 
 static char* 	logo[];		/**< Logo of rebound. */
@@ -76,7 +76,7 @@ void init_boxwidth(double _boxwidth){
 	boxsize = _boxwidth;
 	init_box();
 }
-void init_box(){	
+void init_box(void){	
 	if (boxsize<=0 ){
 		fprintf(stderr,"ERROR: Size of boxsize has to be set and be positive.\n");
 		exit(-1);
@@ -115,7 +115,7 @@ void init_box(){
 #endif // MPI
 }
 
-void iterate(){	
+void iterate(void){	
 	// A 'DKD'-like integrator will do the first 'D' part.
 	PROFILING_START()
 	integrator_part1();

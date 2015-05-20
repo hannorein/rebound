@@ -214,7 +214,7 @@ void collisions_sweep_insertionsort_xvaluelist(struct xvaluelist* xvl){
 /**
  * Sorts the particle array with insertion sort.
  */
-void collisions_sweep_insertionsort_particles(){
+void collisions_sweep_insertionsort_particles(void){
 	for(int j=1;j<N;j++){
 		struct particle key = particles[j];
 		int i = j - 1;
@@ -228,7 +228,7 @@ void collisions_sweep_insertionsort_particles(){
 
 
 
-void collisions_search(){
+void collisions_search(void){
 	if (sweeps_init_done!=1){
 		sweeps_init_done = 1;
 #ifdef OPENMP
@@ -371,7 +371,7 @@ void detect_collision_of_pair(int pt1, int pt2, int proci, int crossing, struct 
 	}
 }
 
-void collisions_resolve(){
+void collisions_resolve(void){
 #ifdef OPENMP
 	omp_lock_t boundarylock;
 	omp_init_lock(&boundarylock);

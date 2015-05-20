@@ -94,6 +94,6 @@ int particles_get_rootbox_for_particle(struct particle pt);
 /**
  * Remove all particles
  */
-void particles_remove_all();
+void particles_remove_all(void);
 
 #endif // _PARTICLE_H

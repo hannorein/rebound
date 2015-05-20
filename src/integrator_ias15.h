@@ -24,10 +24,10 @@
  */
 #ifndef _INTEGRATOR_IAS15_H
 #define _INTEGRATOR_IAS15_H
-void integrator_ias15_part1();
-void integrator_ias15_part2();
-void integrator_ias15_synchronize();
-void integrator_ias15_reset();
+void integrator_ias15_part1(void);
+void integrator_ias15_part2(void);
+void integrator_ias15_synchronize(void);
+void integrator_ias15_reset(void);
 
 /*
  * This parameter controls the accuracy of the integrator.

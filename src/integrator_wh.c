@@ -59,16 +59,16 @@ void drift_kepu_lag(double* s, double dt0, double r0, double mu, double alpha, d
 void drift_kepu_stumpff(double x, double* c0, double* c1, double* c2, double* c3);
 void drift_kepu_fchk(double dt0, double r0, double mu, double alpha, double u, double s, double* f);
 void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* c);
-void integrator_wh_aj();
-void integrator_wh_ah();
-void integrator_wh_to_jacobi();
-void integrator_wh_from_jacobi();
+void integrator_wh_aj(void);
+void integrator_wh_ah(void);
+void integrator_wh_to_jacobi(void);
+void integrator_wh_from_jacobi(void);
 
 int _N_active;
 int integrator_wh_N = 0;
 static double* eta;
 
-void integrator_wh_part1(){
+void integrator_wh_part1(void){
 	_N_active = (N_active==-1)?N:N_active;
 	if (_N_active!=integrator_wh_N){
 		eta = realloc(eta,sizeof(double)*_N_active);
@@ -85,7 +85,7 @@ void integrator_wh_part1(){
 	t+=dt/2.;
 }
 
-void integrator_wh_part2(){
+void integrator_wh_part2(void){
 	// KICK
 	_N_active = (N_active==-1)?N:N_active;
 	// Calculate terms in Heliocentric coordinates
@@ -112,7 +112,7 @@ int wh_check_normal(struct particle* p){
 	return 0;
 }
 
-void integrator_wh_to_jacobi(){
+void integrator_wh_to_jacobi(void){
 
 	double sumx  = particles[1].m * particles[1].x;
 	double sumy  = particles[1].m * particles[1].y;
@@ -153,7 +153,7 @@ void integrator_wh_to_jacobi(){
 	}
 }
 
-void integrator_wh_from_jacobi(){
+void integrator_wh_from_jacobi(void){
 	double sumx  = particles[1].m*particles[1].x /eta[1];
 	double sumy  = particles[1].m*particles[1].y /eta[1];
 	double sumz  = particles[1].m*particles[1].z /eta[1];
@@ -181,7 +181,7 @@ void integrator_wh_from_jacobi(){
 }
 
 // Assumes positions in heliocentric coordinates
-void integrator_wh_ah(){
+void integrator_wh_ah(void){
 	// Massive particles
 	double mass0 = particles[0].m;
 	double axh0 = 0.0;
@@ -226,7 +226,7 @@ void integrator_wh_ah(){
 }
 
 // Assumes position in Jacobi coordinates
-void integrator_wh_aj(){
+void integrator_wh_aj(void){
 	// Massive particles (No need to calculate this for test particles)
 	double mass0 = particles[0].m;
 	double etaj = mass0;
@@ -557,9 +557,9 @@ void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* 
 	*s = (*x)*(A0-y*(A1-y*(A2-y*(A3-y*(A4-y)))))/A0;
 	*c = sqrt(1. - (*s)*(*s));
 }
-void integrator_wh_synchronize(){
+void integrator_wh_synchronize(void){
 	// Do nothing.
 }
-void integrator_wh_reset(){
+void integrator_wh_reset(void){
 	// Do nothing.
 }

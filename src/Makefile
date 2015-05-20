@@ -3,11 +3,11 @@ ifndef OS
 	OS=$(shell uname)
 endif
 ifeq ($(OS), Linux)
-	OPT+= -Wall  -g 
+	OPT+= -Wall -g 
 	LIB+= -lm
 endif
 ifeq ($(OS), Darwin)
-	OPT+= -I/usr/local/include  -Wall -Wno-deprecated -g
+	OPT+= -I/usr/local/include -Wall -Wno-deprecated -g
 	PREDEF+= -D_APPLE
 	LIB+= -L/usr/local/lib
 endif

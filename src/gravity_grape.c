@@ -53,7 +53,7 @@ int gravity_grape_jmemsize 	= 0;
 double gravity_minimum_mass 	= 1e300;
 double gravity_range 		= 0;
 
-void gravity_calculate_acceleration(){
+void gravity_calculate_acceleration(void){
 	// Initialize GRAPE.
 	if (gravity_grape_open==0){
 		gravity_grape_open=1;
@@ -151,13 +151,13 @@ void gravity_calculate_acceleration(){
 }
 
 // Try to close GRAPE
-void gravity_finish(){
+void gravity_finish(void){
 	if (gravity_grape_open==1){
 		gravity_grape_open=0;
 		g5_close();
 	}
 }
 
-void gravity_calculate_variational_acceleration(){
+void gravity_calculate_variational_acceleration(void){
 	// Not yet implemented 
 }

@@ -50,7 +50,7 @@ int nghostx = 1;
 int nghosty = 1;
 int nghostz = 0;	/**< The boundary condition is periodic in z, but usually we don't need any ghostboxed as the disc is stratified */
 
-void boundaries_check(){
+void boundaries_check(void){
 	// The offset of ghostcell is time dependent.
 	double offsetp1 = -fmod(-1.5*OMEGA*boxsize_x*t+boxsize_y/2.,boxsize_y)-boxsize_y/2.; 
 	double offsetm1 = -fmod( 1.5*OMEGA*boxsize_x*t-boxsize_y/2.,boxsize_y)+boxsize_y/2.; 

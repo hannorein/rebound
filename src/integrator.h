@@ -48,7 +48,7 @@ extern integrator_t integrator;
  * This function is called at the beginning of the timestep. It 
  * advances the positions by 1/2 timestep.
  */
-void integrator_part1();
+void integrator_part1(void);
 /*
  * The second half of the integrator step.
  * This function is called after gravitational (and non-gravitational) 
@@ -57,7 +57,7 @@ void integrator_part1();
  * At the end of this function, the positions and velocities are in
  * sync which is needed for collision detection.
  */
-void integrator_part2();
+void integrator_part2(void);
  
 
 /* 
@@ -71,18 +71,18 @@ extern unsigned int integrator_force_is_velocitydependent;
 /*
  * Synchronize particles manually at end of timestep.
  */
-void integrator_synchronize();
+void integrator_synchronize(void);
 
 /* 
  * Cleanup all temporarily stored values.
  **/
-void integrator_reset();
+void integrator_reset(void);
 
 /* This function updates the acceleration on all particles. 
  * It uses the current position and velocity data in the 
  * (struct particle*) particles structure.
  * Note: this does currently not work with MPI or any TREE module.
  */
-void integrator_update_acceleration();
+void integrator_update_acceleration(void);
 
 #endif

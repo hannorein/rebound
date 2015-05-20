@@ -43,7 +43,7 @@ int nghostx = 0;
 int nghosty = 0;
 int nghostz = 0;
 
-void boundaries_check(){
+void boundaries_check(void){
 	for (int i=0;i<N;i++){
 		int removep = 0;
 		if(particles[i].x>boxsize_x/2.){

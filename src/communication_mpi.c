@@ -165,7 +165,7 @@ int communication_mpi_rootbox_is_local(int i){
 }
 
 
-void communication_mpi_distribute_particles(){
+void communication_mpi_distribute_particles(void){
 	// Distribute the number of particles to be transferred.
 	for (int i=0;i<mpi_num;i++){
 		MPI_Scatter(particles_send_N, 1, MPI_INT, &(particles_recv_N[i]), 1, MPI_INT, i, MPI_COMM_WORLD);
@@ -381,7 +381,7 @@ void communication_mpi_prepare_essential_tree_for_gravity(struct cell* root){
 	}
 }
 
-void communication_mpi_distribute_essential_tree_for_gravity(){
+void communication_mpi_distribute_essential_tree_for_gravity(void){
 	///////////////////////////////////////////////////////////////
 	// Distribute essential tree needed for gravity and collisions
 	///////////////////////////////////////////////////////////////
@@ -436,7 +436,7 @@ void communication_mpi_distribute_essential_tree_for_gravity(){
 }
 #endif // GRAVITY_TREE
 
-void communication_mpi_distribute_essential_tree_for_collisions(){
+void communication_mpi_distribute_essential_tree_for_collisions(void){
 	///////////////////////////////////////////////////////////////
 	// Distribute essential tree needed for gravity and collisions
 	///////////////////////////////////////////////////////////////

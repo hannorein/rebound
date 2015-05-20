@@ -56,7 +56,7 @@ extern double 	timing_initial;	/**< System time at start. Used to meassure total
  * Initializes the box. 
  * This function needs to be called from problem_init() before any particles are added.
  */
-void init_box();
+void init_box(void);
 
 /**
  * Initializes one rootbox with width _boxwidth. 
@@ -71,5 +71,5 @@ void init_boxwidth(double _boxwidth);
  * When OpenGL is not used, this function is called by a loop in main(). 
  * When OpenGL is used, this function is called by OpenGL directly. 
  */
-void iterate();
+void iterate(void);
 #endif

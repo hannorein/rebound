@@ -86,7 +86,7 @@ struct vec3 {
 double profiling_time_sum[PROFILING_CAT_NUM];
 double profiling_time_initial 	= 0;
 double profiling_time_final 	= 0;
-void profiling_start(){
+void profiling_start(void){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	profiling_time_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
@@ -101,7 +101,7 @@ void profiling_stop(int cat){
 
 double output_timing_last = -1; 	/**< Time when output_timing() was called the last time. */
 extern unsigned int integrator_hybrid_mode;
-void output_timing(){
+void output_timing(void){
 #ifdef MPI
 	int N_tot = 0;
 	MPI_Reduce(&N, &N_tot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD); 
@@ -378,7 +378,7 @@ void output_int(char* name, int value){
 }
 	
 #ifndef LIBREBOUND	
-void output_prepare_directory(){
+void output_prepare_directory(void){
 	char dirname[4096] = "out__";
 	strcat(dirname,input_arguments);
 #ifdef MPI

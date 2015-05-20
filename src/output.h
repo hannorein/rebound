@@ -48,7 +48,7 @@ int output_check_phase(double interval,double phase);
  * Outputs the current number of particles, the time and the time difference since the last output to the screen.
  */
 
-void output_timing();
+void output_timing(void);
 /**
  * Outputs an ASCII file with the positions and velocities of all particles.
  * @param filename Output filename.
@@ -113,7 +113,7 @@ void output_int(char* name, int value);
  * Delete a directory if it exists, create it and chdir to it. 
  * The name consists of 'out__' appended by all nondefault command line arguments received by input_get_double(), etc.
  */
-void output_prepare_directory();
+void output_prepare_directory(void);
 
 #if defined(OPENGL) && defined(LIBPNG)
 /**
@@ -147,7 +147,7 @@ enum profiling_categories {
 #endif // OPENGL
 	PROFILING_CAT_NUM,
 };
-void profiling_start();
+void profiling_start(void);
 void profiling_stop(int cat);
 #define PROFILING_START() profiling_start();
 #define PROFILING_STOP(C) profiling_stop(C);
