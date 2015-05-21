@@ -99,7 +99,7 @@ void displayKey(unsigned char key, int x, int y){
 			display_ghostboxes = !display_ghostboxes;
 			break;
 		case 'r': case 'R':
-			zprReset(0.85/boxsize_max);
+			zprReset();
 			break;
 		case 't': case 'T':
 			display_mass = 0;
@@ -334,7 +334,7 @@ void display_init(int argc, char* argv[]){
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
 	glutInitWindowSize(700,700);
 	glutCreateWindow("rebound");
-	zprInit(0.85/boxsize_max);
+	zprInit();
 	glutDisplayFunc(display);
 	glutIdleFunc(iterate);
 	glutKeyboardFunc(displayKey);

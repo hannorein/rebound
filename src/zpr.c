@@ -76,9 +76,7 @@ double glscale = 1;
 int resetOrientation = 0;
 extern double boxsize_max;
 
-void
-zprReset()
-{
+void zprReset() {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(_left,_right,_bottom,_top,_zNear,_zFar);
@@ -103,9 +101,7 @@ zprReset()
     }
 }
 
-void
-zprInit()
-{
+void zprInit() {
     getMatrix();
     //_zNear  =-1.5*boxsize_max;
     //_zFar   = 1.5*boxsize_max;
