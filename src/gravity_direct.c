@@ -74,19 +74,11 @@ void gravity_calculate_acceleration(void){
 		struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
 		// Summing over all particle pairs
 #pragma omp parallel for schedule(guided)
-#ifdef INTEGRATOR_WH
 		for (int i=_N_start; i<_N_real; i++){
 			double csx = 0;
 			double csy = 0;
 			double csz = 0;
 		for (int j=_N_start; j<_N_active; j++){
-#else //INTEGRATOR_WH
-		for (int i=_N_start; i<_N_real; i++){
-			double csx = 0;
-			double csy = 0;
-			double csz = 0;
-		for (int j=_N_start; j<_N_active; j++){
-#endif //INTEGRATOR_WH
 			if (_gravity_ignore_10 && ((i==_N_real+1 && j==_N_real) || (j==_N_real+1 && i==_N_real)) ) continue;
 			if (i==j) continue;
 			double dx = (gb.shiftx+particles[i].x) - particles[j].x;

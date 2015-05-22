@@ -43,6 +43,8 @@
 #error GRAVITY_FFT not compatible with MPI yet
 #endif
 
+unsigned int gravity_ignore_10;
+
 int grid_NX_COMPLEX;
 int grid_NY_COMPLEX;
 int grid_NCOMPLEX;
@@ -57,11 +59,9 @@ double* fx;		/**< Force in x direction */
 double* fy;		/**< Force in y direction */
 fftw_plan r2cfft;	/**< FFT plan real to complex */
 fftw_plan c2rfft;	/**< FFT plan complex to real */
-#ifdef INTEGRATOR_SEI
 double* w1d;		/**< Temporary 1D arrary for remapping (shearing sheet only) */
 fftw_plan for1dfft;	/**< FFT plan for remapping (1D, shearing sheet only) */
 fftw_plan bac1dfft;	/**< FFT plan for remapping (1D, shearing sheet only) */
-#endif 	// INTEGRATOR_SEI
 
 int gravity_fft_init_done = 0;	/**< Flag if arrays and plans are initialized */
 void gravity_fft_init(void);
@@ -71,10 +71,6 @@ void gravity_fft_remap(double* wi, const double direction);
 double shift_shear = 0;
 
 void gravity_calculate_acceleration(void){
-	if (integrator==SEI){
-		printf("ERROR. Not implemented.\n");
-		exit(0);
-	}
 	// Setting up the grid
 	if (gravity_fft_init_done==0){
 		gravity_fft_init();
@@ -86,16 +82,16 @@ void gravity_calculate_acceleration(void){
 		particles[i].ay = 0; 
 		particles[i].az = 0; 
 	}
-#ifdef INTEGRATOR_SEI
-	struct ghostbox gb = boundaries_get_ghostbox(1,0,0);
-	shift_shear = gb.shifty;
-#endif 	// INTEGRATOR_SEI
+	if (integrator == SEI){
+		struct ghostbox gb = boundaries_get_ghostbox(1,0,0);
+		shift_shear = gb.shifty;
+	}
 	gravity_fft_p2grid();
 	
-#ifdef INTEGRATOR_SEI
-	// Remap in fourier space to deal with shearing sheet boundary conditions.
-	gravity_fft_remap(density_r, 1);
-#endif 	// INTEGRATOR_SEI
+	if (integrator == SEI){
+		// Remap in fourier space to deal with shearing sheet boundary conditions.
+		gravity_fft_remap(density_r, 1);
+	}
 	
 	fftw_execute_dft_r2c(r2cfft, density_r, (fftw_complex*)density);
 	
@@ -103,14 +99,14 @@ void gravity_calculate_acceleration(void){
 	// Inverse Poisson equation
 	
 	for(int i = 0 ; i < grid_NCOMPLEX ; i++) {
-#ifdef INTEGRATOR_SEI
-		// Compute time-dependent wave-vectors
-		kxt[i] = kx[i] + shift_shear/boxsize_y * ky[i];
-		k[i]  = sqrt( kxt[i]*kxt[i] + ky[i] * ky[i]);
-		// we will use 1/k, that prevents singularity 
-		// (the k=0 is set to zero by renormalization...)
-		if ( k[i] == 0.0 ) k[i] = 1.0; 
-#endif 	// INTEGRATOR_SEI
+		if (integrator == SEI){
+			// Compute time-dependent wave-vectors
+			kxt[i] = kx[i] + shift_shear/boxsize_y * ky[i];
+			k[i]  = sqrt( kxt[i]*kxt[i] + ky[i] * ky[i]);
+			// we will use 1/k, that prevents singularity 
+			// (the k=0 is set to zero by renormalization...)
+			if ( k[i] == 0.0 ) k[i] = 1.0; 
+		}
 		double q0 = - 2.0 * M_PI * density[2*i] / (k[i] * root_nx * root_ny);
 		double q1 = - 2.0 * M_PI * density[2*i+1] / (k[i] * root_nx * root_ny);
 		double sinkxt = sin(kxt[i] * dx);
@@ -125,11 +121,11 @@ void gravity_calculate_acceleration(void){
 	fftw_execute_dft_c2r(c2rfft, (fftw_complex*)fx, fx);
 	fftw_execute_dft_c2r(c2rfft, (fftw_complex*)fy, fy);
 	
-#ifdef INTEGRATOR_SEI
-	// Remap in fourier space to deal with shearing sheet boundary conditions.
-	gravity_fft_remap(fx, -1);
-	gravity_fft_remap(fy, -1);
-#endif	// INTEGRATOR_SEI
+	if (integrator == SEI){
+		// Remap in fourier space to deal with shearing sheet boundary conditions.
+		gravity_fft_remap(fx, -1);
+		gravity_fft_remap(fy, -1);
+	}
 
 	for(int i=0;i<N;i++){
 		gravity_fft_grid2p(&(particles[i]));
@@ -148,12 +144,12 @@ void gravity_fft_init(void) {
 	// Array allocation
 	kx  = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
 	ky  = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
-#ifdef INTEGRATOR_SEI
-	kxt = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
-	w1d = (double *) fftw_malloc( sizeof(double) * root_ny * 2 );
-#else	// INTEGRATOR_SEI
-	kxt = kx; 	// No time dependent wave vectors.
-#endif 	// INTEGRATOR_SEI
+	if (integrator == SEI){
+		kxt = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
+		w1d = (double *) fftw_malloc( sizeof(double) * root_ny * 2 );
+	}else{
+		kxt = kx; 	// No time dependent wave vectors.
+	}
 	k   = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
 	density = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX * 2);
 	density_r = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX * 2);
@@ -169,23 +165,23 @@ void gravity_fft_init(void) {
 					fmod( (double) (i + (grid_NX_COMPLEX/2.0 )), (double) grid_NX_COMPLEX)
 					 - (double) grid_NX_COMPLEX / 2.0 );
 			ky[IDX2D] = (2.0 * M_PI) / boxsize_y * ((double) j);
-#ifndef INTEGRATOR_SEI
-			k[IDX2D]  = pow( kx[IDX2D]*kx[IDX2D] + ky[IDX2D] * ky[IDX2D], 0.5);
+			if (integrator != SEI){
+				k[IDX2D]  = pow( kx[IDX2D]*kx[IDX2D] + ky[IDX2D] * ky[IDX2D], 0.5);
 			
-			// we will use 1/k, that prevents singularity 
-			// (the k=0 is set to zero by renormalization...)
-			if ( k[IDX2D] == 0.0 ) k[IDX2D] = 1.0; 
-#endif	// INTEGRATOR_SEI
+				// we will use 1/k, that prevents singularity 
+				// (the k=0 is set to zero by renormalization...)
+				if ( k[IDX2D] == 0.0 ) k[IDX2D] = 1.0; 
+			}
 		}
 	}
 	
 	// Init ffts (use in place fourier transform for efficient memory usage)
 	r2cfft = fftw_plan_dft_r2c_2d( root_nx, root_ny, density, (fftw_complex*)density, FFTW_MEASURE);
 	c2rfft = fftw_plan_dft_c2r_2d( root_nx, root_ny, (fftw_complex*)density, density, FFTW_MEASURE);
-#ifdef INTEGRATOR_SEI
-	for1dfft = fftw_plan_dft_1d(root_ny, (fftw_complex*)w1d, (fftw_complex*)w1d, FFTW_FORWARD, FFTW_MEASURE);
-	bac1dfft = fftw_plan_dft_1d(root_ny, (fftw_complex*)w1d, (fftw_complex*)w1d, FFTW_BACKWARD, FFTW_MEASURE);
-#endif	// INTEGRATOR_SEI
+	if (integrator == SEI){
+		for1dfft = fftw_plan_dft_1d(root_ny, (fftw_complex*)w1d, (fftw_complex*)w1d, FFTW_FORWARD, FFTW_MEASURE);
+		bac1dfft = fftw_plan_dft_1d(root_ny, (fftw_complex*)w1d, (fftw_complex*)w1d, FFTW_BACKWARD, FFTW_MEASURE);
+	}
 }
 
 // Assignement function (TSC Scheme) 
@@ -196,7 +192,6 @@ double W(double x){
 	return 0; 
 }
 
-#ifdef INTEGRATOR_SEI
 void gravity_fft_remap(double* wi, const double direction) {
 	double phase, rew, imw;
 	
@@ -235,7 +230,6 @@ void gravity_fft_remap(double* wi, const double direction) {
 		}
 	}
 }
-#endif // INTEGRATOR_SEI
 
 void gravity_fft_p2grid(void){
 		
