@@ -3,9 +3,7 @@
  * @brief 	Example problem: self-gravity disc.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @detail 	A self-gravitating disc is integrated using
- * the leap frog integrator. This example is also compatible with 
- * the Wisdom Holman integrator or the IAS15 integrator. Collisions 
- * are not resolved.
+ * the leap frog integrator. Collisions are not resolved.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
@@ -40,6 +38,7 @@
 #include "tree.h"
 #include "tools.h"
 #include "integrator.h"
+#include "integrator_whfast.h"
 
 extern double opening_angle2;
 extern int Nmax;
@@ -47,9 +46,10 @@ extern int Nmax;
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	integrator	= LEAPFROG;
+	integrator_whfast_synchronize_manually = 1;
 	opening_angle2	= 1.5;		// This constant determines the accuracy of the tree code gravity estimate.
 	G 		= 1;		
-	softening 	= 0.01;		// Gravitational softening length
+	softening 	= 0.02;		// Gravitational softening length
 	dt 		= 3e-3;		// Timestep
 	boxsize 	= 1.2;		// Particles outside the box are removed
 	root_nx = 1; root_ny = 1; root_nz = 1;
@@ -65,15 +65,7 @@ void problem_init(int argc, char* argv[]){
 	star.vx 	= 0; star.vy 	= 0; star.vz 	= 0;
 	star.ax 	= 0; star.ay 	= 0; star.az 	= 0;
 	star.m 		= 1;
-#ifdef INTEGRATOR_WH
-	// Insert particle manually. Don't add it to tree.
-	Nmax 			+= 128;
-	particles 		= realloc(particles,sizeof(struct particle)*Nmax);
-	particles[N] 		= star;
-	N++;
-#else // INTEGRATOR_WH
 	particles_add(star);
-#endif // INTEGRATOR_WH
 	while(N<_N){
 		struct particle pt;
 		double a	= tools_powerlaw(boxsize/10.,boxsize/2./1.2,-1.5);

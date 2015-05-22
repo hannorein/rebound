@@ -64,7 +64,6 @@ void problem_init(int argc, char* argv[]){
 	
 	int _N = 40000;
 
-#ifdef INTEGRATOR_LEAPFROG
 	// Move to centre of mass frame (otherwise planet and star drift out of box)
 	double com_x  = (star.x*star.m  + planet.x*planet.m) /(star.m+planet.m);
 	double com_y  = (star.y*star.m  + planet.y*planet.m) /(star.m+planet.m);
@@ -76,7 +75,6 @@ void problem_init(int argc, char* argv[]){
 	planet.vx -= com_vx; 	planet.vy -= com_vy; 	planet.vz -= com_vz;
 	star.x    -= com_x; 	star.y    -= com_y; 	star.z    -= com_z;
 	star.vx   -= com_vx; 	star.vy   -= com_vy; 	star.vz   -= com_vz;
-#endif	// INTEGRATOR_LEAP_FROG
 
 	// Add active particles on all nodes
 	particles_add(star);

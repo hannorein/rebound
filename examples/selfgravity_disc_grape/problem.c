@@ -64,15 +64,7 @@ void problem_init(int argc, char* argv[]){
 	star.vx 	= 0; star.vy 	= 0; star.vz 	= 0;
 	star.ax 	= 0; star.ay 	= 0; star.az 	= 0;
 	star.m 		= 1;
-#ifdef INTEGRATOR_WH
-	// Insert particle manually. Don't add it to tree.
-	Nmax 			+= 128;
-	particles 		= realloc(particles,sizeof(struct particle)*Nmax);
-	particles[N] 		= star;
-	N++;
-#else // INTEGRATOR_WH
 	particles_add(star);
-#endif // INTEGRATOR_WH
 	while(N<_N){
 		struct particle pt;
 		double a	= tools_powerlaw(boxsize/10.,boxsize/2./1.2,-1.5);
