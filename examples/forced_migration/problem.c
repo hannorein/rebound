@@ -46,6 +46,7 @@
 #include "particle.h"
 #include "boundaries.h"
 #include "integrator.h"
+#include "integrator_whfast.h"
 
 double* tau_a; 	/**< Migration timescale in years for all particles */
 double* tau_e; 	/**< Eccentricity damping timescale in years for all particles */
@@ -57,7 +58,11 @@ extern int display_wire;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	integrator	= IAS15;
+	// Choose WHFAST integrator
+	integrator	= WHFAST;
+	integrator_whfast_synchronize_manually = 1;
+	// Choose IAS15 integrator
+	//integrator	= IAS15;
 	dt 		= 1e-2*2.*M_PI;		// in year/(2*pi)
 	boxsize 	= 3;			// in AU
 	tmax		= 2.0e4*2.*M_PI;	// in year/(2*pi)
@@ -98,9 +103,10 @@ void problem_init(int argc, char* argv[]){
 	tau_e[2] = 2.*M_PI*200.0; 	// Eccentricity damping timescale is 200 years (K=100). 
 
 	problem_additional_forces = problem_migration_forces; 	//Set function pointer to add dissipative forces.
-#ifndef INTEGRATOR_WH			// The WH integrator assumes a heliocentric coordinate system.
-	tools_move_to_center_of_momentum();  		
-#endif // INTEGRATOR_WH
+	integrator_force_is_velocitydependent = 1;
+	if (integrator != WH){	// The WH integrator assumes a heliocentric coordinate system.
+		tools_move_to_center_of_momentum();  		
+	}
 
 	system("rm -v orbits.txt"); // delete previous output file
 }
@@ -153,10 +159,11 @@ void problem_output(){
 		output_timing();
 	}
 	if(output_check(40.)){
+		integrator_synchronize();
 		output_append_orbits("orbits.txt");
-#ifndef INTEGRATOR_WH
-		tools_move_to_center_of_momentum();  			// The WH integrator assumes a heliocentric coordinate system.
-#endif // INTEGRATOR_WH
+		if (integrator != WH){	// The WH integrator assumes a heliocentric coordinate system.
+			tools_move_to_center_of_momentum(); 
+		}
 	}
 }
 
