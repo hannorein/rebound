@@ -38,10 +38,10 @@
 double collisions_max_r = 0;
 double collisions_max2_r = 0;
 
-void collisions_search(){
+void collisions_search(void){
 
 }
 
-void collisions_resolve(){
+void collisions_resolve(void){
 
 }

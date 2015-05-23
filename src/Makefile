@@ -3,11 +3,11 @@ ifndef OS
 	OS=$(shell uname)
 endif
 ifeq ($(OS), Linux)
-	OPT+= -Wall  -g 
+	OPT+= -Wall -g
 	LIB+= -lm
 endif
 ifeq ($(OS), Darwin)
-	OPT+= -I/usr/local/include  -Wall -Wno-deprecated -g
+	OPT+= -I/usr/local/include -Wall -Wno-deprecated -g
 	PREDEF+= -D_APPLE
 	LIB+= -L/usr/local/lib
 endif
@@ -61,6 +61,7 @@ else
 endif
 
 
+
 # Create precompiler definitions from links
 PREDEF+= -D$(shell basename `readlink gravity.c` '.c' | tr '[a-z]' '[A-Z]')
 PREDEF+= -D$(shell basename `readlink boundaries.c` '.c' | tr '[a-z]' '[A-Z]')
@@ -72,6 +73,7 @@ all:
 	# Remove old object files
 	rm -f *.o
 	# Compile all source files 
+	@if test -L integrator.c; then { echo "\n\nERROR! The file integrator.c seems to be a symbolic link. In this version of REBOUND you can choose the integrator in your problem.c file and no longer have to overwrite the integrator.c file. Please check the README file and update your Makefile accordingly. Exiting...\n\n"; exit 1;}; else exit 0; fi
 	$(CC) $(OPT) $(PREDEF) main.c -c
 	$(CC) $(OPT) $(PREDEF) problem.c -c
 	$(CC) $(OPT) $(PREDEF) tree.c -c
@@ -103,19 +105,19 @@ clean:
 # This part of the Makefile compiles the shared dynamic library librebound.
 librebound: OPT+=-DCOLLISIONS_NONE -DLIBREBOUND
 librebound:
-	$(CC) $(OPT) -c -fPIC -Wall integrator_ias15.c
-	$(CC) $(OPT) -c -fPIC -Wall integrator_whfast.c
-	$(CC) $(OPT) -c -fPIC -Wall integrator_leapfrog.c
-	$(CC) $(OPT) -c -fPIC -Wall integrator_hybrid.c
-	$(CC) $(OPT) -c -fPIC -Wall integrator_sei.c
-	$(CC) $(OPT) -c -fPIC -Wall integrator_wh.c
-	$(CC) $(OPT) -c -fPIC -Wall integrator.c
-	$(CC) $(OPT) -c -fPIC -Wall gravity_direct.c
-	$(CC) $(OPT) -c -fPIC -Wall tools.c
-	$(CC) $(OPT) -c -fPIC -Wall particle.c
-	$(CC) $(OPT) -c -fPIC -Wall librebound.c
-	$(CC) $(OPT) -c -fPIC -Wall output.c
-	$(CC) $(OPT) -c -fPIC -Wall input.c
+	$(CC) $(OPT) -c -fPIC integrator_ias15.c
+	$(CC) $(OPT) -c -fPIC integrator_whfast.c
+	$(CC) $(OPT) -c -fPIC integrator_leapfrog.c
+	$(CC) $(OPT) -c -fPIC integrator_hybrid.c
+	$(CC) $(OPT) -c -fPIC integrator_sei.c
+	$(CC) $(OPT) -c -fPIC integrator_wh.c
+	$(CC) $(OPT) -c -fPIC integrator.c
+	$(CC) $(OPT) -c -fPIC gravity_direct.c
+	$(CC) $(OPT) -c -fPIC tools.c
+	$(CC) $(OPT) -c -fPIC particle.c
+	$(CC) $(OPT) -c -fPIC librebound.c
+	$(CC) $(OPT) -c -fPIC output.c
+	$(CC) $(OPT) -c -fPIC input.c
 	$(CC) $(OPT) -shared -o librebound.so particle.o tools.o integrator.o integrator_ias15.o integrator_whfast.o integrator_leapfrog.o integrator_sei.o integrator_hybrid.o integrator_wh.o gravity_direct.o librebound.o input.o output.o
 	
 	@echo ""        

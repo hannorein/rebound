@@ -24,8 +24,8 @@
  */
 #ifndef _INTEGRATOR_LEAPFROG_H
 #define _INTEGRATOR_LEAPFROG_H
-void integrator_leapfrog_part1();
-void integrator_leapfrog_part2();
-void integrator_leapfrog_synchronize();
-void integrator_leapfrog_reset();
+void integrator_leapfrog_part1(void);
+void integrator_leapfrog_part2(void);
+void integrator_leapfrog_synchronize(void);
+void integrator_leapfrog_reset(void);
 #endif

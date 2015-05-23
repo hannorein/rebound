@@ -28,7 +28,7 @@
 /**
  * This routine is called by the glut run loop or manually, whenever the screen has to be redrawn 
  */
-void display();
+void display(void);
 
 /**
  * This function initializes OpenGL and starts the run loop. It will never return.

@@ -42,7 +42,7 @@ int nghostx = 1;
 int nghosty = 1;
 int nghostz = 1;
 
-void boundaries_check(){
+void boundaries_check(void){
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		while(particles[i].x>boxsize_x/2.){

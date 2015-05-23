@@ -51,7 +51,7 @@ struct ghostbox{
  * If a particle left the box, it is shifted back in the box
  * for periodic boundary conditions or remove from the simulation.
  */
-void boundaries_check();
+void boundaries_check(void);
 
 /**
  * Creates a ghostbox.

@@ -47,7 +47,7 @@
 integrator_t integrator = IAS15;
 unsigned int integrator_force_is_velocitydependent = 0;
 
-void integrator_part1(){
+void integrator_part1(void){
 	switch(integrator){
 		case IAS15:
 			integrator_ias15_part1();
@@ -72,7 +72,7 @@ void integrator_part1(){
 	}
 }
 
-void integrator_part2(){
+void integrator_part2(void){
 	switch(integrator){
 		case IAS15:
 			integrator_ias15_part2();
@@ -97,7 +97,7 @@ void integrator_part2(){
 	}
 }
 	
-void integrator_synchronize(){
+void integrator_synchronize(void){
 	switch(integrator){
 		case IAS15:
 			integrator_ias15_synchronize();
@@ -122,7 +122,7 @@ void integrator_synchronize(){
 	}
 }
 
-void integrator_reset(){
+void integrator_reset(void){
 	integrator = IAS15;
 	gravity_ignore_10 = 0;
 	integrator_force_is_velocitydependent = 0;
@@ -134,7 +134,7 @@ void integrator_reset(){
 	integrator_hybrid_reset();
 }
 
-void integrator_update_acceleration(){
+void integrator_update_acceleration(void){
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 	PROFILING_START()
 	gravity_calculate_acceleration();

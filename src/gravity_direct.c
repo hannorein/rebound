@@ -56,7 +56,7 @@ unsigned int gravity_ignore_10;
 #if defined(BOUNDARIES_SHEAR) || defined(BOUNDARIES_PERIODIC) || defined(BOUNDARIES_SHEARY)
 // Gravity calculation for periodic boundary conditions
 
-void gravity_calculate_acceleration(){
+void gravity_calculate_acceleration(void){
 	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
 #pragma omp parallel for schedule(guided)
 	for (int i=0; i<N; i++){
@@ -74,19 +74,11 @@ void gravity_calculate_acceleration(){
 		struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
 		// Summing over all particle pairs
 #pragma omp parallel for schedule(guided)
-#ifdef INTEGRATOR_WH
 		for (int i=_N_start; i<_N_real; i++){
 			double csx = 0;
 			double csy = 0;
 			double csz = 0;
 		for (int j=_N_start; j<_N_active; j++){
-#else //INTEGRATOR_WH
-		for (int i=_N_start; i<_N_real; i++){
-			double csx = 0;
-			double csy = 0;
-			double csz = 0;
-		for (int j=_N_start; j<_N_active; j++){
-#endif //INTEGRATOR_WH
 			if (_gravity_ignore_10 && ((i==_N_real+1 && j==_N_real) || (j==_N_real+1 && i==_N_real)) ) continue;
 			if (i==j) continue;
 			double dx = (gb.shiftx+particles[i].x) - particles[j].x;
@@ -124,7 +116,7 @@ void gravity_calculate_acceleration(){
 
 }
 
-void gravity_calculate_variational_acceleration(){
+void gravity_calculate_variational_acceleration(void){
 	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
 	const int _N_real   = N - N_megno;
 #pragma omp parallel for schedule(guided)
@@ -185,7 +177,7 @@ void gravity_calculate_variational_acceleration(){
 static struct cs_3d* restrict cs = NULL;
 static int N_cs = 0;
 
-void gravity_calculate_acceleration(){
+void gravity_calculate_acceleration(void){
 	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
 	const int _N_real   = N - N_megno;
 	if (N_cs<_N_real){
@@ -284,7 +276,7 @@ void gravity_calculate_acceleration(){
 		
 }
 
-void gravity_calculate_variational_acceleration(){
+void gravity_calculate_variational_acceleration(void){
 	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
 	const int _N_real   = N - N_megno;
 #pragma omp parallel for schedule(guided)

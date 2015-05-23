@@ -47,18 +47,18 @@ void problem_init(int argc, char* argv[]);
  * generic output routines such as output_ascii() or create their own problem
  * specific output routines.
  */
-void problem_output();
+void problem_output(void);
 /**
  * This function is called at the end of the simulation when t>=tmax.
  * Note that it is not called when the simulation stopped for another 
  * reason (e.g. user interaction or crash). 
  */ 
-void problem_finish();
+void problem_finish(void);
 
 /*
  * This function allows the user to add additional (non-gravitational) forces.
  */
-extern void (*problem_additional_forces) ();
+extern void (*problem_additional_forces) (void);
 
 /*
  * This function allows the user to add additional (non-gravitational) forces.

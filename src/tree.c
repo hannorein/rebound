@@ -272,7 +272,7 @@ void tree_update_gravity_data_in_cell(struct cell *node){
 	}
 }
 
-void tree_update_gravity_data(){
+void tree_update_gravity_data(void){
 	for(int i=0;i<root_n;i++){
 #ifdef MPI
 		if (communication_mpi_rootbox_is_local(i)==1){
@@ -287,7 +287,7 @@ void tree_update_gravity_data(){
 }
 #endif // GRAVITY_TREE
 
-void tree_update(){
+void tree_update(void){
 	if (tree_root==NULL){
 		tree_root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
 	}
@@ -361,7 +361,7 @@ void tree_add_essential_node(struct cell* node){
 	}
 }
 #ifdef GRAVITY_TREE
-void tree_prepare_essential_tree_for_gravity(){
+void tree_prepare_essential_tree_for_gravity(void){
 	for(int i=0;i<root_n;i++){
 		if (communication_mpi_rootbox_is_local(i)==1){
 			communication_mpi_prepare_essential_tree_for_gravity(tree_root[i]);
@@ -374,7 +374,7 @@ void tree_prepare_essential_tree_for_gravity(){
 	}
 }
 #endif // GRAVITY_TREE
-void tree_prepare_essential_tree_for_collisions(){
+void tree_prepare_essential_tree_for_collisions(void){
 	for(int i=0;i<root_n;i++){
 		if (communication_mpi_rootbox_is_local(i)==1){
 			communication_mpi_prepare_essential_tree_for_collisions(tree_root[i]);

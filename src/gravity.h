@@ -36,13 +36,13 @@
   * Calculate all the gravitational acceleration for all particles.
   * Different methods implement this function in a different way.
   */
-void gravity_calculate_acceleration();
+void gravity_calculate_acceleration(void);
 
 /**
   * The function calculates the acceleration for the variational equations.
   * Note that this is currently only implemented for GRAVITY_DIRECT
   */
-void gravity_calculate_variational_acceleration();
+void gravity_calculate_variational_acceleration(void);
 
 /*
  * Ignore i=1, j=0 pair (used for WHFAST);

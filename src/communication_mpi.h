@@ -85,7 +85,7 @@ void communication_mpi_init(int argc, char** argv);
  * Receives particles from all nodes in buffer particles_recv and adds them
  * to the current simulation.
  */
-void communication_mpi_distribute_particles();
+void communication_mpi_distribute_particles(void);
 
 /**
  * Places a particle in the send queue.  
@@ -106,7 +106,7 @@ int  communication_mpi_rootbox_is_local(int i);
  * Receives cells from all nodes in buffer tree_essential_recv and adds them
  * to the non-local root boxes.
  */
-void communication_mpi_distribute_essential_tree_for_gravity();
+void communication_mpi_distribute_essential_tree_for_gravity(void);
 
 /**
  * Prepares the essential tree of a root box for communication with other nodes.
@@ -121,7 +121,7 @@ void communication_mpi_prepare_essential_tree_for_gravity(struct cell* root);
  * Receives cells/particles from all nodes in buffers. Does not insert particles 
  * into local tree.
  */
-void communication_mpi_distribute_essential_tree_for_collisions();
+void communication_mpi_distribute_essential_tree_for_collisions(void);
 
 /**
  * Prepares the essential tree/particles of a root box for communication with other nodes.

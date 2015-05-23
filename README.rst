@@ -37,7 +37,7 @@ There are three papers describing the functionality of REBOUND.
 3. Rein & Tamayo (in prep)
 
 
-How to us REBOUND - an overview
+How to use REBOUND - an overview
 -------------------------------
 
 REBOUND is written in C because C is very fast and highly portable (REBOUND runs on everything from mobile phones to super computers and special purpose accelerator cards).  However, we also provide a shared library `librebound`. 

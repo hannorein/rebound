@@ -71,7 +71,7 @@ double 	collisions_max2_r	= 0;
  */
 void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, struct ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct cell* c);
 
-void collisions_search(){
+void collisions_search(void){
 	// Update and simplify tree. 
 	// Prepare particles for distribution to other nodes. 
 	tree_update();          
@@ -214,7 +214,7 @@ void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, struct ghostbox gbun
 	}
 }
 
-void collisions_resolve(){
+void collisions_resolve(void){
 	// randomize
 	for (int i=0;i<collisions_N;i++){
 		int new = rand()%collisions_N;

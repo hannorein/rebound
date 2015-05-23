@@ -60,13 +60,13 @@ extern struct cell** tree_root; /**< A public pointer to the roots of the trees.
 /**
   * The wrap function corresponds to initializing the trees when they don't exist and updating the structures of the trees by calling tree_update_cell. 
   */
-void tree_update();
+void tree_update(void);
 
 #ifdef GRAVITY_TREE
 /**
   * The wrap function calls tree_update_gravity_data_in_cell() to for each tree.
   */
-void tree_update_gravity_data();
+void tree_update_gravity_data(void);
 #endif // GRAVITY_TREE
 
 /**
@@ -87,13 +87,13 @@ void tree_add_essential_node(struct cell* node);
 /**
   * Needs more comments!
   */
-void tree_prepare_essential_tree_for_gravity();
+void tree_prepare_essential_tree_for_gravity(void);
 #endif //GRAVITY_TREE
 #ifdef COLLISIONS_TREE
 /**
   * Needs more comments!
   */
-void tree_prepare_essential_tree_for_collisions();
+void tree_prepare_essential_tree_for_collisions(void);
 #endif //COLLISIONS_TREE
 #endif // MPI
 
