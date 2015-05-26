@@ -45,7 +45,7 @@ This shared library can be called from many programming languages. We provide a 
 
 In short: If you simply want to integrate a few particle system such as a planetary system with the high order integrator IAS15 or the symplectic integrator WHFast, use python. If you want to run large, many particle systems (with millions of particles), use an exotic integrator, use OpenGL visualization, make use of the distributed tree code of REBOUND or want to contribute to the development of REBOUND, use the C version.
 
-This file explains how to use the C version of rebound. To learn how to install REBOUND for python have a look at the iPython/Jupiter notebooks at https://github.com/hannorein/rebound/blob/master/python_tutorials/index.ipynb. Hint: It's super easy! All you'll have to do is `pip install rebound`.
+This file explains how to use the C version of REBOUND. To learn how to install REBOUND for python have a look at the iPython/Jupiter notebooks at https://github.com/hannorein/rebound/blob/master/python_tutorials/index.ipynb. Hint: It's super easy! All you'll have to do is `pip install rebound`.
 
 
 Feature list 
@@ -228,7 +228,7 @@ The problem.c file must contain at least three functions. You do need to impleme
 
     This routine is where you read command line arguments and set up your initial conditions. REBOUND does not come with a built-in functionality to read configuration files at run-time. We consider this not a missing feature. In REBOUND, you have one `problem.c` file for each problem. Thus, everything can be set within this file. There are, of course, situation in which you want to do something like a parameter space survey. In almost all cases, you vary only a few parameters. You can easily read these parameters from the command line.
  
-    Here is an example that reads in a command line argument given to rebound in the standard unix format `./rebound --boxsize=200.`. A default value of 100 is used if no parameter is passed to REBOUND.::
+    Here is an example that reads in a command line argument given to REBOUND in the standard unix format `./rebound --boxsize=200.`. A default value of 100 is used if no parameter is passed to REBOUND.::
 
         // At the top of the problem.c file add
         #include "input.h"
