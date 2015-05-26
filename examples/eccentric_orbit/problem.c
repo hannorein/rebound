@@ -5,7 +5,7 @@
  * @detail 	This example uses the IAS15 integrator to simulate
  * a very eccentric planetary orbit. The integrator
  * automatically adjusts the timestep so that the pericentre passages
- * resovled with high accuracy.
+ * resolved with high accuracy.
  *
  * 
  * @section 	LICENSE

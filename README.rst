@@ -34,7 +34,7 @@ There are three papers describing the functionality of REBOUND.
 
 2. Rein & Spiegel (Monthly Notices of the Royal Astronomical Society, Volume 446, Issue 2, p.1424-1437) describe the versatile high order integrator IAS15 which is now part of REBOUND. http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R
 
-3. Rein & Tamayo (in prep)
+3. Rein & Tamayo (submitted), WHFast: A fast and unbiased implementation of a symplectic Wisdom-Holman integrator for long term gravitational simulations
 
 
 How to use REBOUND - an overview
@@ -133,7 +133,7 @@ The following sections list the available modules that come with REBOUND.
  Module name            | Description
  ---------------------- | -----------
  `collisions_none.c`    | No collision detection
- `collisions_direct.c`  | Direct nearest neighbor search, O(N^2)
+ `collisions_direct.c`  | Direct nearest neighbour search, O(N^2)
  `collisions_tree.c`    | Oct tree, O(N log(N))
  `collisions_sweep.c`   | Plane sweep algorithm, ideal for low dimensional  problems, O(N) or O(N^1.5) depending on geometry 
  `collisions_sweepphi.c`| Plane sweep algorithm along the azimuthal angle, ideal for narrow rings in global simulations, O(N) or O(N 1.5) depending on geometry
@@ -156,7 +156,7 @@ The following integrators are available within REBOUND. Since May 2015, the inte
 
  Integrator name   | Description
  ----------------- | -----------
- IAS15             | IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precission. IAS15 can integrate variational equations. Rein & Spiegel 2015, Everhart 1985
+ IAS15             | IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precision. IAS15 can integrate variational equations. Rein & Spiegel 2015, Everhart 1985
  WHFAST            | WHFast is the integrator described in Rein & Tamayo 2015, it's a second order symplectic Wisdom Holman integrator with 11th order symplectic correctors. It is extremely fast and accurate, uses Gauss f and g functions to solve the Kepler motion and can integrate variational equations.
  EULER             | Euler scheme, first order
  LEAPFROG          | Leap frog, second order, symplectic
@@ -306,7 +306,7 @@ examples/bouncing_balls
   Modules used: ``gravity_direct.c`` ``boundaries_periodic.c`` ``collisions_direct.c``.
 
 examples/bouncing_balls_corners
-  This example tests collision detection methods accros box boundaries.
+  This example tests collision detection methods across box boundaries.
   There are four particles, one in each corner. To see the ghost boxes in OpenGL
   press `g` while the simulation is running.
   
@@ -334,24 +334,24 @@ examples/circumplanetarydust
   Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/closeencounter
-  This example integrates a densly packed planetary system
+  This example integrates a densely packed planetary system
   which becomes unstable on a timescale of only a few orbits. The IAS15
   integrator with adaptive timestepping is used. This integrator
   automatically decreases the timestep whenever a close
-  enocunter happens. IAS15 is very high order and ideally suited for the
+  encounter happens. IAS15 is very high order and ideally suited for the
   detection of these kind of encounters.
   
   Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/closeencounter_hybrid
-  This example integrates a densly packed planetary system
+  This example integrates a densely packed planetary system
   which becomes unstable on a timescale of only a few orbits.
   This is a test case for the HYBRID integrator.
   
   Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/closeencounter_record
-  This example integrates a densly packed planetary system
+  This example integrates a densely packed planetary system
   which becomes unstable on a timescale of only a few orbits.
   The example is identical to the `close_encounter` sample, except that
   the collisions are recorded and written to a file. What kind of collisions
@@ -374,7 +374,7 @@ examples/eccentric_orbit
   This example uses the IAS15 integrator to simulate
   a very eccentric planetary orbit. The integrator
   automatically adjusts the timestep so that the pericentre passages
-  resovled with high accuracy.
+  resolved with high accuracy.
   
   
   Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
@@ -383,7 +383,7 @@ examples/forced_migration
   This example applies dissipative forces to two
   bodies orbiting a central object. The forces are specified
   in terms of damping timescales for the semi-major axis and
-  eccentricity. This mimics planetary micration in a protostellar disc.
+  eccentricity. This mimics planetary migration in a protostellar disc.
   The example reproduces the study of Lee & Peale (2002) on the
   formation of the planetary system GJ876. For a comparison,
   see figure 4 in their paper. The IAS15 integrator is used
@@ -417,7 +417,7 @@ examples/kozai
   This example uses the IAS15 integrator to simulate
   a Lidov Kozai cycle of a planet perturbed by a distant star. The integrator
   automatically adjusts the timestep so that even very high
-  eccentricity encounters are resovled with high accuracy.
+  eccentricity encounters are resolved with high accuracy.
   
   
   Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
@@ -429,7 +429,7 @@ examples/megno
   Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/mergers
-  This example integrates a densly packed planetary system
+  This example integrates a densely packed planetary system
   which becomes unstable on a timescale of only a few orbits. The IAS15
   integrator with adaptive timestepping is used. The bodies have a finite
   size and merge if they collide. Note that the size is unphysically large
@@ -442,11 +442,11 @@ examples/opencl
   the OpenCL direct gravity summation module.
   
   This is a very simple implementation (see `gravity_opencl.c`).
-  Currently it only supports floating point precission. It also
+  Currently it only supports floating point precision. It also
   transfers the data back and forth from the GPU every timestep.
   There are considerable improvements to be made. This is just a
   proof of concept. Also note that the code required N to be a
-  multiple of the workgrop size.
+  multiple of the workgroup size.
   
   You can test the performance increase by running:
   `make direct && ./rebound`, which will run on the CPU and
@@ -519,15 +519,13 @@ examples/restricted_threebody_mpi
   body problem. Active particles are copied to all nodes. All other
   particles only exist on one node and are not automatically (re-)
   distributed. There is not domain decomposition used in this example.
-  Run with `mpirun -np 4 rebound`.
+  Run with `mpirun -np 4 nbody`.
   
   Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/selfgravity_disc
   A self-gravitating disc is integrated using
-  the leap frog integrator. This example is also compatible with
-  the Wisdom Holman integrator or the IAS15 integrator. Collisions
-  are not resolved.
+  the leap frog integrator. Collisions are not resolved.
   
   Modules used: ``gravity_tree.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
@@ -541,7 +539,7 @@ examples/selfgravity_disc_grape
   Modules used: ``gravity_grape.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/selfgravity_plummer
-  A self-gravitating plummer sphere is integrated using
+  A self-gravitating Plummer sphere is integrated using
   the leap frog integrator. Collisions are not resolved. Note that the
   fixed timestep might not allow you to resolve individual two-body
   encounters. An alternative integrator is `integrator_ias15.c` which
@@ -675,9 +673,9 @@ You can use the following keyboard commands to alter the OpenGL real-time visual
  s       | Toggle three dimensional spheres (looks better)/points (draws faster)
  g       | Toggle ghost boxes
  r       | Reset view. Press multiple times to change orientation.
- x/X     | Move to a coordinate system centered on a particle (note: does not work if particle array is constantly resorted, i.e. in a tree.)
+ x/X     | Move to a coordinate system centred on a particle (note: does not work if particle array is constantly resorted, i.e. in a tree.)
  t       | Show tree structure.
- m       | Show center of mass in tree structure (only available when t is toggled on).
+ m       | Show centre of mass in tree structure (only available when t is toggled on).
  p       | Save screen shot to file.
  c       | Toggle clear screen after each time-step.
  w       | Draw orbits as wires (particle with index 0 is central object).  

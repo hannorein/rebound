@@ -6,11 +6,11 @@
  * the OpenCL direct gravity summation module.
  *
  * This is a very simple implementation (see `gravity_opencl.c`). 
- * Currently it only supports floating point precission. It also
+ * Currently it only supports floating point precision. It also
  * transfers the data back and forth from the GPU every timestep.
  * There are considerable improvements to be made. This is just a 
  * proof of concept. Also note that the code required N to be a 
- * multiple of the workgrop size.
+ * multiple of the workgroup size.
  *
  * You can test the performance increase by running:
  * `make direct && ./rebound`, which will run on the CPU and
