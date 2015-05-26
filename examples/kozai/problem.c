@@ -5,7 +5,7 @@
  * @detail	This example uses the IAS15 integrator to simulate
  * a Lidov Kozai cycle of a planet perturbed by a distant star. The integrator
  * automatically adjusts the timestep so that even very high 
- * eccentricity encounters are resovled with high accuracy.
+ * eccentricity encounters are resolved with high accuracy.
  *
  * 
  * @section 	LICENSE

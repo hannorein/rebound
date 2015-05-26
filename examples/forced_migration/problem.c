@@ -6,7 +6,7 @@
  * @detail 	This example applies dissipative forces to two
  * bodies orbiting a central object. The forces are specified
  * in terms of damping timescales for the semi-major axis and
- * eccentricity. This mimics planetary micration in a protostellar disc. 
+ * eccentricity. This mimics planetary migration in a protostellar disc. 
  * The example reproduces the study of Lee & Peale (2002) on the 
  * formation of the planetary system GJ876. For a comparison, 
  * see figure 4 in their paper. The IAS15 integrator is used 

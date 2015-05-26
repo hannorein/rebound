@@ -2,7 +2,7 @@
  * @file 	problem.c
  * @brief 	Example problem: Close Encounter with output.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This example integrates a densly packed planetary system 
+ * @detail	This example integrates a densely packed planetary system 
  * which becomes unstable on a timescale of only a few orbits. 
  * The example is identical to the `close_encounter` sample, except that 
  * the collisions are recorded and written to a file. What kind of collisions

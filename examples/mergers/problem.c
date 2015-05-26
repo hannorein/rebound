@@ -2,7 +2,7 @@
  * @file 	problem.c
  * @brief 	Example problem: Mergers.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This example integrates a densly packed planetary system 
+ * @detail	This example integrates a densely packed planetary system 
  * which becomes unstable on a timescale of only a few orbits. The IAS15 
  * integrator with adaptive timestepping is used. The bodies have a finite
  * size and merge if they collide. Note that the size is unphysically large

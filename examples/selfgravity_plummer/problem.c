@@ -2,7 +2,7 @@
  * @file 	problem.c
  * @brief 	Example problem: self-gravity disc.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	A self-gravitating plummer sphere is integrated using
+ * @detail 	A self-gravitating Plummer sphere is integrated using
  * the leap frog integrator. Collisions are not resolved. Note that the
  * fixed timestep might not allow you to resolve individual two-body
  * encounters. An alternative integrator is `integrator_ias15.c` which
