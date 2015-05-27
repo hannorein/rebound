@@ -15,9 +15,11 @@ except ImportError:
 
 from .librebound import ReboundModule
 from .particle import Particle
+from .particle import Orbit
 from .interruptible_pool import InterruptiblePool
 import sys
 module = ReboundModule(__name__)
 module.Particle = Particle
+module.Orbit = Orbit
 module.InterruptiblePool = InterruptiblePool
 sys.modules[__name__] = module
