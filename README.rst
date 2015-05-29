@@ -1,5 +1,5 @@
-REBOUND - An open-source multi-purpose N-body code for collisional dynamics
-===========================================================================
+REBOUND - An open-source multi-purpose N-body code
+==================================================
 
 .. image:: http://img.shields.io/badge/license-GPL-green.svg?style=flat :target: https://github.com/hannorein/rebound/blob/master/LICENSE>`_
 .. image:: http://img.shields.io/badge/arXiv-1110.4876-orange.svg?style=flat :target: http://arxiv.org/abs/1110.4876
