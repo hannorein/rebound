@@ -40,17 +40,6 @@ void integrator_whfast_reset(void);
 extern unsigned int integrator_whfast_corrector;
 
 /* 
- * Flag determining if the integrator needs to recalculate the Jacobi
- * coordinates of each particle at every timestep. Set this to 1 if 
- * the masses of all particles stay constant during the entire simulation 
- * and the positions and velocities of particles are not changed by 
- * the user between timesteps.
- * Setting this to 1 results in a speed and accuracy increase.
- * Default is 0.
- **/ 
-extern unsigned int integrator_whfast_persistent_particles;
-
-/* 
  * Flag overwriting the effect of integrator_whfast_persistent_particle
  * for the next step only. Setting this flag to one will recalculate 
  * Jacobi coordinates from the particle structure in the next timestep

@@ -41,7 +41,6 @@
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
 
-unsigned int integrator_whfast_persistent_particles		= 0;
 unsigned int integrator_whfast_synchronize_manually 		= 0;
 unsigned int integrator_whfast_corrector 			= 11;
 unsigned int integrator_whfast_particles_modified		= 0;
@@ -735,7 +734,7 @@ static void integrator_apply_corrector(double inv){
 
 void integrator_whfast_part1(void){
 	gravity_ignore_10 = 1;
-	unsigned int recalculate_jacobi = (!(integrator_whfast_persistent_particles || integrator_whfast_synchronize_manually)) || integrator_whfast_particles_modified;
+	unsigned int recalculate_jacobi = (!integrator_whfast_synchronize_manually) || integrator_whfast_particles_modified;
 	if (integrator_allocated_N != N){
 		integrator_allocated_N = N;
 		p_j = realloc(p_j,sizeof(struct particle)*N);
@@ -880,7 +879,6 @@ void integrator_whfast_reset(void){
 	integrator_whfast_corrector = 11;
 	integrator_whfast_is_synchronized = 1;
 	integrator_whfast_synchronize_manually = 0;
-	integrator_whfast_persistent_particles = 0;
 	integrator_whfast_particles_modified = 0;
 	integrator_allocated_N = 0;
 	integrator_timestep_warning = 0;
