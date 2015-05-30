@@ -20,17 +20,38 @@ You can call REBOUND from C or Python. Which programming language you want to us
 
 All the computationally expensive parts of REBOUND are written in C. So even if you use the Python version, you'll end up with a very fast code.
 
-To install the Python version, simply use type the following command into a terminal::
+To install the Python version, simply type the following command into a terminal::
 
     pip install rebound
 
 To learn more about how to use REBOUND with Python have a look at the iPython/Jupyter tutorials at https://github.com/hannorein/rebound/blob/master/python_tutorials/
 
-To install the C version, simply copy and paste the following command::
+To install the C version, simply copy and paste the following command into your terminal::
     
     git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./rebound
 
 To learn more about how to use REBOUND with C, continue reading this file.
+
+
+Feature list 
+------------
+
+An incomplete feature list of REBOUND:
+
+* Several symplectic integrators (WHFast, WH, SEI, LEAPFROG)
+* High accuracy non-symplectic integrator with adaptive timestepping (IAS15)
+* Support for collisional/granular dynamics, various collision detection routines
+* The code is written entirely in C, conforms to the ISO standard C99
+* Easy-to-use Python module, installation in 3 words: `pip install rebound`
+* Extensive set of example problems in both C and Python
+* Real-time, 3D OpenGL visualization (C version)
+* Parallelized with OpenMP (for shared memory systems)
+* Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems)
+* No libraries are needed, use of OpenGL/GLUT/libpng for visualization is optional
+* The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound
+* No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
+* Standard ASCII or binary output routines 
+* Different modules are easily interchangeable by one line in the Makefile
 
 
 Contributors
@@ -40,7 +61,6 @@ Contributors
 * David S. Spiegel, Institute for Advanced Study (IAS), Princeton, <dave@ias.edu>
 * Akihiko Fujii, National Astronomical Observatory of Japan/University of Tokyo, Tokyo, <akihiko.fujii@nao.ac.jp>
 * Dan Tamayo, University of Toronto, <dtamayo@cita.utoronto.ca>
-
 
 REBOUND is open source. You are invited to contribute to this project if you are using it. Please contact any of the authors above if you have any questions.
 
@@ -55,27 +75,6 @@ There are three papers describing the functionality of REBOUND.
 2. Rein & Spiegel (Monthly Notices of the Royal Astronomical Society, Volume 446, Issue 2, p.1424-1437) describe the versatile high order integrator IAS15 which is now part of REBOUND. http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R
 
 3. Rein & Tamayo (submitted), WHFast: A fast and unbiased implementation of a symplectic Wisdom-Holman integrator for long term gravitational simulations
-
-
-Feature list 
-------------
-
-An incomplete feature list of REBOUND:
-
-* Several symplectic integrators (WHFast, WH, SEI, LEAPFROG)
-* High accuracy non-symplectic integrator with adaptive timestepping (IAS15)
-* Support for collisional/granular dynamics, various collision detection routines
-* The code is written entirely in C, conforms to the ISO standard C99
-* Easy-to-use Python module, installation in 3 words: `pip install rebound`
-* Extensive set of example problems in both C and Python.
-* Real-time, 3D OpenGL visualization (C version)
-* Parallelized with OpenMP (for shared memory systems)
-* Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems)
-* No libraries are needed, use of OpenGL/GLUT/libpng for visualization is optional
-* The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound
-* No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them.
-* Standard ASCII or binary output routines. 
-* Different modules are easily interchangeable by one line in the Makefile.
 
 
 License
