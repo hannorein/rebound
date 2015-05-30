@@ -13,6 +13,26 @@ REBOUND - An open-source multi-purpose N-body code
 .. image:: https://raw.github.com/hannorein/rebound/master/screenshots/disc.png
 
 
+How to use REBOUND - a quick introduction
+-----------------------------------------
+    
+You can call REBOUND from C or Python. Which programming language you want to use depends on your taste and your specific application. In short: If you simply want to integrate a few particles such as a planetary system with the high order integrator IAS15 or the new symplectic integrator WHFast then use the Python version. If you want to run large simulations with millions of particles, use an exotic integrator, use OpenGL visualizations, or make use of the distributed tree code then use the C version. 
+
+The good new is that all the computationally expensive parts of REBOUND are written in C. So even if you use the Python version, you'll end up with a very fast code.
+
+To install the python version, simply use type the following command into a terminal::
+
+    pip install rebound
+
+To learn more about how to use REBOUND with Python have a look at the iPython/Jupyter tutorials at https://github.com/hannorein/rebound/blob/master/python_tutorials/
+
+To install the C version, simply copy and paste the following command::
+    
+    git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./rebound
+
+To learn more about how to use REBOUND with C, continue reading this file.
+
+
 Contributors
 ------------
 * Hanno Rein, University of Toronto, <hanno@hanno-rein.de>
@@ -35,17 +55,6 @@ There are three papers describing the functionality of REBOUND.
 2. Rein & Spiegel (Monthly Notices of the Royal Astronomical Society, Volume 446, Issue 2, p.1424-1437) describe the versatile high order integrator IAS15 which is now part of REBOUND. http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R
 
 3. Rein & Tamayo (submitted), WHFast: A fast and unbiased implementation of a symplectic Wisdom-Holman integrator for long term gravitational simulations
-
-
-How to use REBOUND - an overview
--------------------------------
-
-REBOUND is written in C because C is very fast and highly portable (REBOUND runs on everything from mobile phones to super computers and special purpose accelerator cards).  However, we also provide a shared library `librebound`. 
-This shared library can be called from many programming languages. We provide a python module which makes calling REBOUND from python particularly easy. Whether you want to use REBOUND in C or python depends on your specific application.
-
-In short: If you simply want to integrate a few particle system such as a planetary system with the high order integrator IAS15 or the symplectic integrator WHFast, use python. If you want to run large, many particle systems (with millions of particles), use an exotic integrator, use OpenGL visualization, make use of the distributed tree code of REBOUND or want to contribute to the development of REBOUND, use the C version.
-
-This file explains how to use the C version of REBOUND. To learn how to install REBOUND for python have a look at the iPython/Jupiter notebooks at https://github.com/hannorein/rebound/blob/master/python_tutorials/index.ipynb. Hint: It's super easy! All you'll have to do is `pip install rebound`.
 
 
 Feature list 
@@ -91,6 +100,8 @@ If you use the WHFast integrator, please cite Rein and Tamayo (2015).
 
 The C version of REBOUND
 ========================
+
+This section describes the C version of REBOUND. To learn how to install REBOUND for python have a look at the iPython/Jupiter notebooks at https://github.com/hannorein/rebound/blob/master/python_tutorials/index.ipynb. Hint: It's super easy!
 
 Installation
 ------------
