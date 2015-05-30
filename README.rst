@@ -18,9 +18,9 @@ How to use REBOUND - a quick introduction
     
 You can call REBOUND from C or Python. Which programming language you want to use depends on your taste and your specific application. In short: If you simply want to integrate a few particles such as a planetary system with the high order integrator IAS15 or the new symplectic integrator WHFast then use the Python version. If you want to run large simulations with millions of particles, use an exotic integrator, use OpenGL visualizations, or make use of the distributed tree code then use the C version. 
 
-The good new is that all the computationally expensive parts of REBOUND are written in C. So even if you use the Python version, you'll end up with a very fast code.
+All the computationally expensive parts of REBOUND are written in C. So even if you use the Python version, you'll end up with a very fast code.
 
-To install the python version, simply use type the following command into a terminal::
+To install the Python version, simply use type the following command into a terminal::
 
     pip install rebound
 
@@ -66,8 +66,8 @@ An incomplete feature list of REBOUND:
 * High accuracy non-symplectic integrator with adaptive timestepping (IAS15)
 * Support for collisional/granular dynamics, various collision detection routines
 * The code is written entirely in C, conforms to the ISO standard C99
-* Easy-to-use python module, installation in 3 words: `pip install rebound`
-* Extensive set of example problems in both C and python.
+* Easy-to-use Python module, installation in 3 words: `pip install rebound`
+* Extensive set of example problems in both C and Python.
 * Real-time, 3D OpenGL visualization (C version)
 * Parallelized with OpenMP (for shared memory systems)
 * Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems)
@@ -101,7 +101,7 @@ If you use the WHFast integrator, please cite Rein and Tamayo (2015).
 The C version of REBOUND
 ========================
 
-This section describes the C version of REBOUND. To learn how to install REBOUND for python have a look at the iPython/Jupiter notebooks at https://github.com/hannorein/rebound/blob/master/python_tutorials/index.ipynb. Hint: It's super easy!
+This section describes the C version of REBOUND. To learn how to install REBOUND for Python have a look at the iPython/Jupiter notebooks at https://github.com/hannorein/rebound/blob/master/python_tutorials/index.ipynb. Hint: It's super easy!
 
 Installation
 ------------
