@@ -133,20 +133,18 @@ void reset(void){
 //   1 = No particles left
 //   2 = Particle distance exceeds maxR
 //   3 = Close encounter closer than minD
-int integrate(double _tmax, int exactFinishTime, int keepSynchronized, double maxR, double minD){
+int integrate(double _tmax, int exactFinishTime, int keepSynchronized, int particlesModified, double maxR, double minD){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 	tmax = _tmax;
 	double dt_last_done = dt;
 	int last_step = 0;
-	integrator_whfast_particles_modified = 1;
+	integrator_whfast_particles_modified = particlesModified;
 	if (N_megno || keepSynchronized){
 		integrator_whfast_synchronize_manually = 0;
-		integrator_whfast_persistent_particles = 0;
 	}else{
 		integrator_whfast_synchronize_manually = 1;
-		integrator_whfast_persistent_particles = 1;
 	}
 	int ret_value = 0;
 	const double dtsign = copysign(1.,dt); // Used to determine integration direction

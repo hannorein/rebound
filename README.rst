@@ -1,5 +1,5 @@
-REBOUND - An open-source multi-purpose N-body code for collisional dynamics
-===========================================================================
+REBOUND - An open-source multi-purpose N-body code
+==================================================
 
 .. image:: http://img.shields.io/badge/license-GPL-green.svg?style=flat :target: https://github.com/hannorein/rebound/blob/master/LICENSE>`_
 .. image:: http://img.shields.io/badge/arXiv-1110.4876-orange.svg?style=flat :target: http://arxiv.org/abs/1110.4876
@@ -13,6 +13,47 @@ REBOUND - An open-source multi-purpose N-body code for collisional dynamics
 .. image:: https://raw.github.com/hannorein/rebound/master/screenshots/disc.png
 
 
+How to use REBOUND - a quick introduction
+-----------------------------------------
+    
+You can call REBOUND from C or Python. Which programming language you want to use depends on your taste and your specific application. In short: If you simply want to integrate a few particles such as a planetary system with the high order integrator IAS15 or the new symplectic integrator WHFast then use the Python version. If you want to run large simulations with millions of particles, use an exotic integrator, use OpenGL visualizations, or make use of the distributed tree code then use the C version. 
+
+All the computationally expensive parts of REBOUND are written in C. So even if you use the Python version, you'll end up with a very fast code.
+
+To install the Python version, simply type the following command into a terminal::
+
+    pip install rebound
+
+To learn more about how to use REBOUND with Python have a look at the iPython/Jupyter tutorials at https://github.com/hannorein/rebound/blob/master/python_tutorials/
+
+To install the C version, simply copy and paste the following command into your terminal::
+    
+    git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./rebound
+
+To learn more about how to use REBOUND with C, continue reading this file.
+
+
+Feature list 
+------------
+
+An incomplete feature list of REBOUND:
+
+* Several symplectic integrators (WHFast, WH, SEI, LEAPFROG)
+* High accuracy non-symplectic integrator with adaptive timestepping (IAS15)
+* Support for collisional/granular dynamics, various collision detection routines
+* The code is written entirely in C, conforms to the ISO standard C99
+* Easy-to-use Python module, installation in 3 words: `pip install rebound`
+* Extensive set of example problems in both C and Python
+* Real-time, 3D OpenGL visualization (C version)
+* Parallelized with OpenMP (for shared memory systems)
+* Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems)
+* No libraries are needed, use of OpenGL/GLUT/libpng for visualization is optional
+* The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound
+* No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
+* Standard ASCII or binary output routines 
+* Different modules are easily interchangeable by one line in the Makefile
+
+
 Contributors
 ------------
 * Hanno Rein, University of Toronto, <hanno@hanno-rein.de>
@@ -20,7 +61,6 @@ Contributors
 * David S. Spiegel, Institute for Advanced Study (IAS), Princeton, <dave@ias.edu>
 * Akihiko Fujii, National Astronomical Observatory of Japan/University of Tokyo, Tokyo, <akihiko.fujii@nao.ac.jp>
 * Dan Tamayo, University of Toronto, <dtamayo@cita.utoronto.ca>
-
 
 REBOUND is open source. You are invited to contribute to this project if you are using it. Please contact any of the authors above if you have any questions.
 
@@ -35,38 +75,6 @@ There are three papers describing the functionality of REBOUND.
 2. Rein & Spiegel (Monthly Notices of the Royal Astronomical Society, Volume 446, Issue 2, p.1424-1437) describe the versatile high order integrator IAS15 which is now part of REBOUND. http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R
 
 3. Rein & Tamayo (submitted), WHFast: A fast and unbiased implementation of a symplectic Wisdom-Holman integrator for long term gravitational simulations
-
-
-How to use REBOUND - an overview
--------------------------------
-
-REBOUND is written in C because C is very fast and highly portable (REBOUND runs on everything from mobile phones to super computers and special purpose accelerator cards).  However, we also provide a shared library `librebound`. 
-This shared library can be called from many programming languages. We provide a python module which makes calling REBOUND from python particularly easy. Whether you want to use REBOUND in C or python depends on your specific application.
-
-In short: If you simply want to integrate a few particle system such as a planetary system with the high order integrator IAS15 or the symplectic integrator WHFast, use python. If you want to run large, many particle systems (with millions of particles), use an exotic integrator, use OpenGL visualization, make use of the distributed tree code of REBOUND or want to contribute to the development of REBOUND, use the C version.
-
-This file explains how to use the C version of rebound. To learn how to install REBOUND for python have a look at the iPython/Jupiter notebooks at https://github.com/hannorein/rebound/blob/master/python_tutorials/index.ipynb. Hint: It's super easy! All you'll have to do is `pip install rebound`.
-
-
-Feature list 
-------------
-
-An incomplete feature list of REBOUND:
-
-* Several symplectic integrators (WHFast, WH, SEI, LEAPFROG)
-* High accuracy non-symplectic integrator with adaptive timestepping (IAS15)
-* Support for collisional/granular dynamics, various collision detection routines
-* The code is written entirely in C, conforms to the ISO standard C99
-* Easy-to-use python module, installation in 3 words: `pip install rebound`
-* Extensive set of example problems in both C and python.
-* Real-time, 3D OpenGL visualization (C version)
-* Parallelized with OpenMP (for shared memory systems)
-* Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems)
-* No libraries are needed, use of OpenGL/GLUT/libpng for visualization is optional
-* The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound
-* No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them.
-* Standard ASCII or binary output routines. 
-* Different modules are easily interchangeable by one line in the Makefile.
 
 
 License
@@ -91,6 +99,8 @@ If you use the WHFast integrator, please cite Rein and Tamayo (2015).
 
 The C version of REBOUND
 ========================
+
+This section describes the C version of REBOUND. To learn how to install REBOUND for Python have a look at the iPython/Jupiter notebooks at https://github.com/hannorein/rebound/blob/master/python_tutorials/index.ipynb. Hint: It's super easy!
 
 Installation
 ------------
@@ -228,7 +238,7 @@ The problem.c file must contain at least three functions. You do need to impleme
 
     This routine is where you read command line arguments and set up your initial conditions. REBOUND does not come with a built-in functionality to read configuration files at run-time. We consider this not a missing feature. In REBOUND, you have one `problem.c` file for each problem. Thus, everything can be set within this file. There are, of course, situation in which you want to do something like a parameter space survey. In almost all cases, you vary only a few parameters. You can easily read these parameters from the command line.
  
-    Here is an example that reads in a command line argument given to rebound in the standard unix format `./rebound --boxsize=200.`. A default value of 100 is used if no parameter is passed to REBOUND.::
+    Here is an example that reads in a command line argument given to REBOUND in the standard unix format `./rebound --boxsize=200.`. A default value of 100 is used if no parameter is passed to REBOUND.::
 
         // At the top of the problem.c file add
         #include "input.h"

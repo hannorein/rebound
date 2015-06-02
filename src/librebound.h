@@ -52,7 +52,7 @@ void rebound_step(void);
  *   2 = Particle distance exceeds maxR
  *   3 = Close encounter closer than minD
  */
-int integrate(double _tmax, int exactFinishTime, int keepSynchronized, double maxR, double minD);
+int integrate(double _tmax, int exactFinishTime, int keepSynchronized, int particlesModified, double maxR, double minD);
 
 /*
  * This function allows the user to add additional (non-gravitational) forces.

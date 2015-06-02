@@ -30,8 +30,8 @@ with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='0.3.3',
-    description='The N-body integrator REBOUND',
+    version='0.4.2',
+    description='An open-source multi-purpose N-body code',
     long_description=long_description,
     url='http://github.com/hannorein/rebound',
     author='Hanno Rein',

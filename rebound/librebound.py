@@ -319,10 +319,10 @@ class ReboundModule(types.ModuleType):
     def step(self):
         self.clibrebound.rebound_step()
 
-    def integrate(self, tmax, exactFinishTime=1, keepSynchronized=0, maxR=0., minD=0.):
+    def integrate(self, tmax, exactFinishTime=1, keepSynchronized=0, particlesModified=1, maxR=0., minD=0.):
         if debug.integrator_package =="REBOUND":
             self.clibrebound.integrate.restype = c_int
-            ret_value = self.clibrebound.integrate(c_double(tmax),c_int(exactFinishTime),c_int(keepSynchronized),c_double(maxR),c_double(minD))
+            ret_value = self.clibrebound.integrate(c_double(tmax),c_int(exactFinishTime),c_int(keepSynchronized),c_int(particlesModified),c_double(maxR),c_double(minD))
             if ret_value == 1:
                 raise self.NoParticleLeft("No more particles left in simulation.")
             if ret_value == 2:
