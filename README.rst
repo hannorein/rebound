@@ -4,6 +4,7 @@ REBOUND - An open-source multi-purpose N-body code
 .. image:: http://img.shields.io/badge/license-GPL-green.svg?style=flat :target: https://github.com/hannorein/rebound/blob/master/LICENSE>`_
 .. image:: http://img.shields.io/badge/arXiv-1110.4876-orange.svg?style=flat :target: http://arxiv.org/abs/1110.4876
 .. image:: http://img.shields.io/badge/arXiv-1409.4779-orange.svg?style=flat :target: http://arxiv.org/abs/1409.4779
+.. image:: http://img.shields.io/badge/arXiv-1506.01084-orange.svg?style=flat :target: http://arxiv.org/abs/1506.01084
 
 -------------------
 
@@ -74,7 +75,7 @@ There are three papers describing the functionality of REBOUND.
 
 2. Rein & Spiegel (Monthly Notices of the Royal Astronomical Society, Volume 446, Issue 2, p.1424-1437) describe the versatile high order integrator IAS15 which is now part of REBOUND. http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R
 
-3. Rein & Tamayo (submitted), WHFast: A fast and unbiased implementation of a symplectic Wisdom-Holman integrator for long term gravitational simulations
+3. Rein & Tamayo (Monthly Notices of the Royal Astronomical Society, in press) describe WHFast, the fast and unbiased implementation of a symplectic Wisdom-Holman integrator for long term gravitational simulations. http://arxiv.org/abs/1506.01084
 
 
 License
