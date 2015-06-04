@@ -22,6 +22,7 @@ class ReboundModule(types.ModuleType):
 
     AFF = CFUNCTYPE(None)
     fp = None
+    _units = {'length':None, 'time':None, 'mass':None}
 
 # Status functions
     @property
@@ -172,7 +173,62 @@ class ReboundModule(types.ModuleType):
             return
         raise ValueError("Expecting integer.")
     
+# Units
 
+    @property
+    def units(self):
+        return self._units
+
+    @units.setter
+    def units(self, newunits):
+        l_unit, t_unit, m_unit = newunits
+        if self.particles: # some particles are loaded
+            print("Error:  You must initialize the units before populating the particles array.  See Units.ipynb in python_tutorials.")
+            import sys
+            sys.exit()
+
+        self._units['length'] = l_unit.lower()
+        self._units['time'] = t_unit.lower()
+        self._units['mass'] = m_unit.lower()
+        self.G = self.convert_G()
+    
+    def convert_units(self, l_unit, t_unit, m_unit): 
+        for p in self.particles:
+            p.m = self.convert_mass(p.m, m_unit.lower())
+            p.x = self.convert_length(p.x, l_unit.lower()) 
+            p.y = self.convert_length(p.y, l_unit.lower()) 
+            p.z = self.convert_length(p.z, l_unit.lower())
+            p.vx = self.convert_vel(p.vx, l_unit.lower(), t_unit.lower()) 
+            p.vy = self.convert_vel(p.vy, l_unit.lower(), t_unit.lower()) 
+            p.vz = self.convert_vel(p.vz, l_unit.lower(), t_unit.lower())
+            p.ax = self.convert_vel(p.ax, l_unit.lower(), t_unit.lower())
+            p.ay = self.convert_vel(p.ay, l_unit.lower(), t_unit.lower())
+            p.az = self.convert_vel(p.az, l_unit.lower(), t_unit.lower())
+
+        self.sim_units['length'] = l_unit.lower()
+        self.sim_units['time'] = t_unit.lower()
+        self.sim_units['mass'] = m_unit.lower()
+
+        rebound.G = self.convert_G()
+
+    def convert_mass(self, mass, m_unit):
+        return mass*masses_SI[self._units['mass']]/masses_SI[m_unit.lower()]
+
+    def convert_length(self, length, l_unit):
+        return length*lengths_SI[self._units['length']]/lengths_SI[l_unit.lower()]
+
+    def convert_vel(self, vel, l_unit, t_unit):
+        in_SI=vel*lengths_SI[self._units['length']]/self.times_SI[self._units['time']]
+        return in_SI*times_SI[self._units['time']]/lengths_SI[self._units['length']]
+
+    def convert_acc(self, acc, l_unit, t_unit):
+        in_SI=acc*lengths_SI[self._units['length']]/self.times_SI[self._units['time']]**2
+        return in_SI*times_SI[self._units['time']]**2/lengths_SI[self._units['length']]
+    
+    def convert_G(self):
+        return G_SI*masses_SI[self._units['mass']]*times_SI[self._units['time']]**2/lengths_SI[self._units['length']]**3
+
+       
 # Debug tools
     @property
     def iter(self):
@@ -346,6 +402,33 @@ class ReboundModule(types.ModuleType):
 
     class NoParticleLeft(Exception):
         pass
+
+# Unit constants
+G_SI = 6.674e-11
+times_SI = {'s':1.,
+    'hr':3600.,
+    'yr':31557600., # Julian year (exact)
+    'kyr':31557600.*1.e3,
+    'myr':31557600.*1.e6,
+    'gyr':31557600.*1.e9}
+lengths_SI =  {'m':1.,
+    'cm':0.01,
+    'km':1000.,
+    'au':149597870700.}
+
+    #What we measure accurately is GM, so set mass units such that G*M gives the value of GM in horizons.py (in the list at the end of horizons.py, the NAIF codes ending in 99 refer to the planets, single digits to the total mass of the planet plus its moons).  Have to multiply by 10**9 since that list has G in kg^-1km^3/s^2 and we use SI.
+
+masses_SI = {'kg':1.,
+    'msun':1.3271244004193938E+11/G_SI*10**9,
+    'mmercury':2.2031780000000021E+04/G_SI*10**9,
+    'mvenus':3.2485859200000006E+05/G_SI*10**9,
+    'mearth':3.9860043543609598E+05/G_SI*10**9,
+    'mmars':4.282837362069909E+04/G_SI*10**9,
+    'mjupiter':1.266865349218008E+08/G_SI*10**9,
+    'msaturn':3.793120749865224E+07/G_SI*10**9,
+    'muranus':5.793951322279009E+06/G_SI*10**9,
+    'mneptune':6.835099502439672E+06/G_SI*10**9,
+    'mpluto':8.696138177608748E+02/G_SI*10**9}
 
 
 

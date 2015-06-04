@@ -17,6 +17,7 @@ from .librebound import ReboundModule
 from .particle import Particle
 from .particle import Orbit
 from .interruptible_pool import InterruptiblePool
+from .units import Units
 import sys
 module = ReboundModule(__name__)
 module.Particle = Particle
