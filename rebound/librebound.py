@@ -205,25 +205,25 @@ class ReboundModule(types.ModuleType):
             p.ay = self.convert_vel(p.ay, l_unit.lower(), t_unit.lower())
             p.az = self.convert_vel(p.az, l_unit.lower(), t_unit.lower())
 
-        self.sim_units['length'] = l_unit.lower()
-        self.sim_units['time'] = t_unit.lower()
-        self.sim_units['mass'] = m_unit.lower()
+        self._units['length'] = l_unit.lower()
+        self._units['time'] = t_unit.lower()
+        self._units['mass'] = m_unit.lower()
 
-        rebound.G = self.convert_G()
+        self.G = self.convert_G()
 
     def convert_mass(self, mass, m_unit):
-        return mass*masses_SI[self._units['mass']]/masses_SI[m_unit.lower()]
+        return mass*masses_SI[self._units['mass']]/masses_SI[m_unit]
 
     def convert_length(self, length, l_unit):
-        return length*lengths_SI[self._units['length']]/lengths_SI[l_unit.lower()]
+        return length*lengths_SI[self._units['length']]/lengths_SI[l_unit]
 
     def convert_vel(self, vel, l_unit, t_unit):
-        in_SI=vel*lengths_SI[self._units['length']]/self.times_SI[self._units['time']]
-        return in_SI*times_SI[self._units['time']]/lengths_SI[self._units['length']]
+        in_SI=vel*lengths_SI[self._units['length']]/times_SI[self._units['time']]
+        return in_SI*times_SI[t_unit]/lengths_SI[l_unit]
 
     def convert_acc(self, acc, l_unit, t_unit):
-        in_SI=acc*lengths_SI[self._units['length']]/self.times_SI[self._units['time']]**2
-        return in_SI*times_SI[self._units['time']]**2/lengths_SI[self._units['length']]
+        in_SI=acc*lengths_SI[self._units['length']]/times_SI[self._units['time']]**2
+        return in_SI*times_SI[t_unit]**2/lengths_SI[l_unit]
     
     def convert_G(self):
         return G_SI*masses_SI[self._units['mass']]*times_SI[self._units['time']]**2/lengths_SI[self._units['length']]**3
