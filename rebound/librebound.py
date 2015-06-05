@@ -199,6 +199,14 @@ class ReboundModule(types.ModuleType):
     def N_megno(self):
         return c_int.in_dll(self.clibrebound,"N_megno").value 
     
+    @property
+    def N_megnopp(self):
+        return c_int.in_dll(self.clibrebound,"N_megnopp").value 
+    
+    @N_megnopp.setter
+    def N_megnopp(self, value):
+        c_int.in_dll(self.clibrebound,"N_megnopp").value = value
+    
 # Particle add function, used to be called particle_add() and add_particle() 
     def add(self, particle=None, **kwargs):   
         """Adds a particle to REBOUND. Accepts one of the following:

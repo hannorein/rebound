@@ -310,26 +310,28 @@ void tools_megno_init(double delta){
 	tools_megno_mean_Y = 0;
 	tools_megno_mean_t = 0;
 	tools_megno_delta0 = delta;
-        for (int i=0;i<_N_megno;i++){ 
-                struct particle megno = {
-			.m  = particles[i].m,
-			.x  = tools_normal(1.),
-			.y  = tools_normal(1.),
-			.z  = tools_normal(1.),
-			.vx = tools_normal(1.),
-			.vy = tools_normal(1.),
-			.vz = tools_normal(1.) };
-		double deltad = delta/sqrt(megno.x*megno.x + megno.y*megno.y + megno.z*megno.z + megno.vx*megno.vx + megno.vy*megno.vy + megno.vz*megno.vz); // rescale
-		megno.x *= deltad;
-		megno.y *= deltad;
-		megno.z *= deltad;
-		megno.vx *= deltad;
-		megno.vy *= deltad;
-		megno.vz *= deltad;
+	for (int k=0; k<N_megnopp; k++){
+		for (int i=0;i<_N_megno;i++){ 
+			struct particle megno = {
+				.m  = particles[i].m,
+				.x  = tools_normal(1.),
+				.y  = tools_normal(1.),
+				.z  = tools_normal(1.),
+				.vx = tools_normal(1.),
+				.vy = tools_normal(1.),
+				.vz = tools_normal(1.) };
+			double deltad = delta/sqrt(megno.x*megno.x + megno.y*megno.y + megno.z*megno.z + megno.vx*megno.vx + megno.vy*megno.vy + megno.vz*megno.vz); // rescale
+			megno.x *= deltad;
+			megno.y *= deltad;
+			megno.z *= deltad;
+			megno.vx *= deltad;
+			megno.vy *= deltad;
+			megno.vz *= deltad;
 
-                particles_add(megno);
-        }
-	N_megno = _N_megno;
+			particles_add(megno);
+		}
+	}
+	N_megno = _N_megno*N_megnopp;
 }
 double tools_megno(void){ // Returns the MEGNO <Y>
 	if (t==0.) return 0.;
@@ -342,7 +344,8 @@ double tools_lyapunov(void){ // Returns the largest Lyapunov characteristic numb
 double tools_megno_deltad_delta(void){
         double deltad = 0;
         double delta2 = 0;
-        for (int i=N-N_megno;i<N;i++){
+	const int _N_real   = N - N_megno;
+        for (int i=_N_real;i<_N_real*2;i++){
                 deltad += particles[i].vx * particles[i].x; 
                 deltad += particles[i].vy * particles[i].y; 
                 deltad += particles[i].vz * particles[i].z; 
