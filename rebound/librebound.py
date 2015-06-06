@@ -181,34 +181,56 @@ class ReboundModule(types.ModuleType):
 
     @units.setter
     def units(self, newunits):
-        l_unit, t_unit, m_unit = newunits
+        newunits = self.check_units(newunits)        
         if self.particles: # some particles are loaded
             print("Error:  You must initialize the units before populating the particles array.  See Units.ipynb in python_tutorials.")
             import sys
             sys.exit()
+        self.update_units(newunits) 
 
-        self._units['length'] = l_unit.lower()
-        self._units['time'] = t_unit.lower()
-        self._units['mass'] = m_unit.lower()
-        self.G = self.convert_G()
-    
-    def convert_units(self, l_unit, t_unit, m_unit): 
+    def convert_IC_units(self, *args): 
+        l_unit, t_unit, m_unit = self.check_units(args)
         for p in self.particles:
-            p.m = self.convert_mass(p.m, m_unit.lower())
-            p.x = self.convert_length(p.x, l_unit.lower()) 
-            p.y = self.convert_length(p.y, l_unit.lower()) 
-            p.z = self.convert_length(p.z, l_unit.lower())
-            p.vx = self.convert_vel(p.vx, l_unit.lower(), t_unit.lower()) 
-            p.vy = self.convert_vel(p.vy, l_unit.lower(), t_unit.lower()) 
-            p.vz = self.convert_vel(p.vz, l_unit.lower(), t_unit.lower())
-            p.ax = self.convert_vel(p.ax, l_unit.lower(), t_unit.lower())
-            p.ay = self.convert_vel(p.ay, l_unit.lower(), t_unit.lower())
-            p.az = self.convert_vel(p.az, l_unit.lower(), t_unit.lower())
+            p.m = self.convert_mass(p.m, m_unit)
+            p.x = self.convert_length(p.x, l_unit) 
+            p.y = self.convert_length(p.y, l_unit) 
+            p.z = self.convert_length(p.z, l_unit)
+            p.vx = self.convert_vel(p.vx, l_unit, t_unit) 
+            p.vy = self.convert_vel(p.vy, l_unit, t_unit) 
+            p.vz = self.convert_vel(p.vz, l_unit, t_unit)
+            p.ax = self.convert_vel(p.ax, l_unit, t_unit)
+            p.ay = self.convert_vel(p.ay, l_unit, t_unit)
+            p.az = self.convert_vel(p.az, l_unit, t_unit)
+        self.update_units((l_unit, t_unit, m_unit))
+        
+    def check_units(self, newunits):   
+        import sys
+        print(newunits)
+        print(type(newunits))
+        if len(newunits) is not 3:
+            print("Error: Need to pass exactly 3 units for length, time, and mass (any order), see python_tutorials/Units.ipynb")
+            sys.exit()
+        
+        l_unit = t_unit = m_unit = None
+        for unit in newunits:
+            unit = unit.lower()
+            if unit in lengths_SI:
+                l_unit = unit
+            if unit in times_SI:
+                t_unit = unit
+            if unit in masses_SI:
+                m_unit = unit
 
-        self._units['length'] = l_unit.lower()
-        self._units['time'] = t_unit.lower()
-        self._units['mass'] = m_unit.lower()
+        if l_unit is None or t_unit is None or m_unit is None:
+            print("Error: Need to assign rebound.units a tuple consisting of 3 units for length, time, and mass (any order).  If you did this, your unit isn't in our list.  Please update the dictionaries at the bottom of rebound/rebound/librebound.py and send a pull request!")
+            sys.exit()
 
+        return (l_unit, t_unit, m_unit)
+
+    def update_units(self, newunits): 
+        self._units['length'] = newunits[0] 
+        self._units['time'] = newunits[1] 
+        self._units['mass'] = newunits[2] 
         self.G = self.convert_G()
 
     def convert_mass(self, mass, m_unit):
