@@ -1,4 +1,4 @@
-include("../../src/librebound.jl")
+include("librebound.jl")
 using Distributions
 using Lora
 # using PyPlot
@@ -23,8 +23,8 @@ function setup_rv_simulation( param::Array{Float64,1} )
   # integrator_set(1)
   # set_dt(1.e-3)        # in year/(2*pi)
 
-  particles_add( rebound_particle_basic(1.0) )
-  particles_add( tools_init_orbit2d(star_mass, m_pl, a, ecc, omega, anom) )
+  add( rebound_particle_basic(1.0) )
+  add( tools_init_orbit2d(star_mass, m_pl, a, ecc, omega, anom) )
 end
 
 # Calc RVs
@@ -51,8 +51,8 @@ function calc_rvs_chisq_grad( param::Array{Float64,1} )
   # integrator_set(1)
   # set_dt(1.e-3)        # in year/(2*pi)
 
-  particles_add( rebound_particle_basic(star_mass) )
-  particles_add( tools_init_orbit2d(star_mass, m_pl, param[1], param[2], param[3], param[4]) )
+  add( rebound_particle_basic(star_mass) )
+  add( tools_init_orbit2d(star_mass, m_pl, param[1], param[2], param[3], param[4]) )
   ps = get_particles()
   N = get_N()
   for k in [1:4]
@@ -78,7 +78,7 @@ function calc_rvs_chisq_grad( param::Array{Float64,1} )
      sim_rv[i] = ps[2].vx
 	 chisq += (ps[2].vx-data_rv[i])^2
 	 for k in 1:4
-	   d_chisq[k] += (ps[2].vx+ps[k*N+2].vx-data_rv[i]))^2
+	   d_chisq[k] += (ps[2].vx+ps[k*N+2].vx-data_rv[i])^2
 	 end
   end
   

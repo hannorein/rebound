@@ -1,8 +1,7 @@
 if !isdefined(:LIB_REBOUND_INITIALIZED)
-const global LIBREBOUND = find_library(["librebound.so"],["/home/ebf11/Code/rebound/","/usr/local/lib",".","../../"])
-
-  # WARNING: rebound has ifdefs that can add additional members and make this type incompatible.
-  #          Note that ifdefs will most likely never be turned on for use with librebound.
+  const global LIBREBOUND = find_library(["librebound.so"],["/home/ebf11/Code/rebound/","/usr/local/lib",".","../../"])
+  
+  # REBOUND particle structure
   immutable rebound_particle_basic
     x::Cdouble
     y::Cdouble
@@ -15,6 +14,8 @@ const global LIBREBOUND = find_library(["librebound.so"],["/home/ebf11/Code/rebo
     az::Cdouble
     m::Cdouble
   end
+
+  # Integrator lookup dictionary
   INTEGRATORS = {"ias15" => 0, "whfast" => 1, "sei" => 2, "wh" => 3, "leapfrog" => 4, "hybrid" => 5, "none" => 6}
 
   LIB_REBOUND_INITIALIZED = true
@@ -28,23 +29,6 @@ function rebound_particle_basic(_m::Real)
   return rebound_particle_basic(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,_m)
 end
 
-# librebound
-
-function setp(p::Array{rebound_particle_basic,1})
-  ccall( (:setp, LIBREBOUND), Void, (Ptr{rebound_particle_basic},), p )
-end
-
-# Account for different indexing
-function particle_get(id::Integer)
-  @assert(1<=id<=get_N())
-  retval = ccall( (:particle_get, LIBREBOUND), rebound_particle_basic, (Cint,), convert(Cint,id-1) )
-  return convert(rebound_particle_basic, retval)
-end
-
-function particles_get()
-  retval = ccall( (:particles_get, LIBREBOUND), Ptr{rebound_particle_basic}, (Void,) )
-  return pointer_to_array(retval)
-end
 
 # TODO: Need to relearn how to pass pointers to functions between C and julia
 #void set_additional_forces(void (* _cb)(void)){
@@ -59,8 +43,7 @@ function rebound_step()
   ccall( (:rebound_step, LIBREBOUND), Void, (Void,) )
 end
 
-# Should do something so Julia doesn't need to use magic numbers here
-function integrator_set(integrator_name::ASCIIString)
+function set_integrator(integrator_name::ASCIIString)
   local integrator_id = INTEGRATORS[integrator_name]
   ccall( (:integrator_set, LIBREBOUND), Void, (Cint,), convert(Cint,integrator_id) )
 end
@@ -76,40 +59,31 @@ function integrate(tmax::Real, exactFinishTime::Integer=0, keepSynchronized::Int
   return convert(Cint,retval)
 end
 
-# particle
-# accesor/mutator functions
-get_N() = ccall( (:get_N, LIBREBOUND), Cint, () )
-get_Nmax() = ccall( (:get_Nmax, LIBREBOUND), Cint, () )
-get_N_active() = ccall( (:get_N_active, LIBREBOUND), Cint, () )
-get_N_mengo() = ccall( (:get_N_mengo, LIBREBOUND), Cint, () )
-set_N(n::Integer) = ccall( (:set_N, LIBREBOUND), Void, (Cint,), convert(Cint, n) )
-set_Nmax(n::Integer) = ccall( (:set_Nmax, LIBREBOUND), Void, (Cint,), convert(Cint, n) )
-set_N_active(n::Integer) = ccall( (:set_N_active, LIBREBOUND), Void, (Cint,), convert(Cint, n) )
-set_N_mengo(n::Integer) = ccall( (:set_N_mengo, LIBREBOUND), Void, (Cint,), convert(Cint, n) )
-
-function get_particles()
- num_part = get_N()
- #p = ccall( (:get_particles, LIBREBOUND), Ptr{Any}, () )
- #particles = pointer_to_array(convert(Ptr{rebound_particle_basic},p),num_part)
- p = ccall( (:get_particles, LIBREBOUND), Ptr{rebound_particle_basic}, () )
- particles = pointer_to_array(p,num_part)
- return particles
-end
-
-# WARNING: Trying direct/unsafe access w/o access functions, before deciding whether to use these instead of C accessor functions
-get_N_direct() = unsafe_load(convert(Ptr{Cint},cglobal((:N,LIBREBOUND))))
-set_N_direct(n::Integer) = unsafe_store!(convert(Ptr{Cint},cglobal((:N,LIBREBOUND))),convert(Cint,n))
+get_N() = unsafe_load(convert(Ptr{Cint},cglobal((:N,LIBREBOUND))))
+set_N(n::Integer) = unsafe_store!(convert(Ptr{Cint},cglobal((:N,LIBREBOUND))),convert(Cint,n))
+set_N_megnopp(n::Integer) = unsafe_store!(convert(Ptr{Cint},cglobal((:N_megnopp,LIBREBOUND))),convert(Cint,n))
 
 get_dt() = unsafe_load(convert(Ptr{Cdouble},cglobal((:dt,LIBREBOUND))))
 set_dt(dt::Real) = unsafe_store!(convert(Ptr{Cdouble},cglobal((:dt,LIBREBOUND))),convert(Cdouble,dt))
 
-particles_add(p::rebound_particle_basic)  = ccall( (:particles_add_jl, LIBREBOUND), Void, (Ptr{rebound_particle_basic},), &p )
+function get_particles()
+ num_part = get_N()
+ p = unsafe_load(cglobal((:particles,LIBREBOUND), Ptr{rebound_particle_basic}))
+ particles = pointer_to_array(p,num_part)
+ return particles
+end
+
+function get_particle(id::Integer)
+  return get_particles(id)
+end
+
+add(p::rebound_particle_basic)  = ccall( (:particles_add_ptr, LIBREBOUND), Void, (Ptr{rebound_particle_basic},), &p )
 particles_remove_all() = ccall( (:particles_remove_all, LIBREBOUND), Void, () )
 
 # WARNING:  Most everything below here is totally untested
 # tools
 tools_energy() = ccall( (:tools_energy, LIBREBOUND), Cdouble, () )
-tools_move_to_center_of_momentum() = ccall( (:tools_move_to_center_of_momentum, LIBREBOUND), Void, () )
+tools_move_to_com() = ccall( (:tools_move_to_center_of_momentum, LIBREBOUND), Void, () )
 tools_init_orbit2d(M::Real, m::Real, a::Real, e::Real, omega::Real, f::Real) =
  ccall( (:tools_init_orbit2d, LIBREBOUND), rebound_particle_basic, (Cdouble,Cdouble,Cdouble,Cdouble,Cdouble,Cdouble), convert(Cdouble,M), convert(Cdouble,m), convert(Cdouble,a), convert(Cdouble,e), convert(Cdouble,omega), convert(Cdouble,f) )
  
@@ -140,7 +114,5 @@ output_orbits(filename::Cstring) =  ccall( (:output_orbits, LIBREBOUND), Void, (
 output_append_orbits(filename::Cstring) =  ccall( (:output_append_orbits, LIBREBOUND), Void, (filename,) )
 output_binary(filename::Cstring) =  ccall( (:output_binary, LIBREBOUND), Void, (filename,) )
 output_logfile(filename::Cstring) =  ccall( (:output_logfile, LIBREBOUND), Void, (filename,) )
-output_png(dirname::Cstring) =  ccall( (:output_png, LIBREBOUND), Void, (dirname,) )
-output_png_single(filename::Cstring) =  ccall( (:output_png_single, LIBREBOUND), Void, (filename,) )
 
 

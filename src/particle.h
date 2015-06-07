@@ -71,6 +71,11 @@ extern struct particle* particles;
 void particles_add(struct particle pt);
 
 /** 
+ * Simple wrapper to add particle by pointer
+ */
+void particles_add_ptr(struct particle* pt);
+
+/** 
  * Same as particles_add() but inserts particles at given position. 
  * @param pt Particle to be added.
  * @param pos New position.

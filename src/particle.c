@@ -44,19 +44,6 @@ int Nmax	= 0;
 int N_active 	= -1; 	
 int N_megno 	= 0; 	
 
-
-// Accessor/mutator functions for accessing beyond library
-void set_N(int _N) { N=_N; }
-void set_Nmax(int _N) { Nmax=_N; }
-void set_N_active(int _N) { N_active=_N; }
-void set_N_megno(int _N) { N_megno=_N; }
-int get_N() { return N; }
-int get_Nmax() { return Nmax; }
-int get_N_active() { return N_active; }
-int get_N_megno() { return N_megno; }
-
-struct particle* get_particles() { return particles; }
-
 #ifdef BOUNDARIES_OPEN
 int boundaries_particle_is_in_box(struct particle p);
 int particles_warning_is_not_in_box = 0;
@@ -87,9 +74,6 @@ void particles_add_local(struct particle pt){
 	N++;
 }
 
-void particles_add_jl(struct particle* pt){
-particles_add(*pt);
-}
 
 void particles_add(struct particle pt){
 	if (N_megno){
@@ -122,6 +106,10 @@ void particles_add(struct particle pt){
 #endif // MPI
 	// Add particle to local partical array.
 	particles_add_local(pt);
+}
+
+void particles_add_ptr(struct particle* pt){
+	particles_add(*pt);
 }
 
 void particles_add_fixed(struct particle pt,int pos){
