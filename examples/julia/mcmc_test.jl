@@ -47,14 +47,14 @@ function calc_rvs_chisq_grad( param::Array{Float64,1} )
   m_pl = 1e-3
   rebound_reset()
   set_N_megnopp(4)
-  tool_megno_init(0.)
+  tools_megno_init(0.)
   # integrator_set(1)
   # set_dt(1.e-3)        # in year/(2*pi)
 
   add( rebound_particle_basic(star_mass) )
   add( tools_init_orbit2d(star_mass, m_pl, param[1], param[2], param[3], param[4]) )
   ps = get_particles()
-  N = get_N()
+  N = get_N() # this is the total number of particles (incl variational particles)
   for k in [1:4]
     delta = 1e-6
 	param2 = param

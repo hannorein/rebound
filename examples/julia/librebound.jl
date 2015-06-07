@@ -90,7 +90,7 @@ tools_init_orbit2d(M::Real, m::Real, a::Real, e::Real, omega::Real, f::Real) =
 tools_init_orbit3d(M::Real, m::Real, a::Real, e::Real, i::Real, Omega::Real, omega::Real, f::Real) =
  ccall( (:tools_init_orbit2d, LIBREBOUND), rebound_particle_basic, (Cdouble,Cdouble,Cdouble,Cdouble,Cdouble,Cdouble,Cdouble,Cdouble), convert(Cdouble,M), convert(Cdouble,m), convert(Cdouble,a), convert(Cdouble,e), convert(Cdouble,i),convert(Cdouble,Omega),convert(Cdouble,omega), convert(Cdouble,f) )
 
-tools_megno_init(delta::Real) = ccall( (:tool_megno_init, LIBREBOUND), Void, (Cdouble,), convert(Cdoubl, delta) )
+tools_megno_init(delta::Real) = ccall( (:tools_megno_init, LIBREBOUND), Void, (Cdouble,), convert(Cdouble, delta) )
 
 
 # integrator
