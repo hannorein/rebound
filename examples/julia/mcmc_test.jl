@@ -54,14 +54,15 @@ function calc_rvs_chisq_grad( param::Array{Float64,1} )
   add( rebound_particle_basic(star_mass) )
   add( tools_init_orbit2d(star_mass, m_pl, param[1], param[2], param[3], param[4]) )
   ps = get_particles()
-  N = get_N() # this is the total number of particles (incl variational particles)
+  N = 2
+  #N = get_N() # this is the total number of particles (incl variational particles)
   for k in [1:4]
     delta = 1e-6
 	param2 = param
 	param2[k] += delta
 
 	mp = tools_init_orbit2d(star_mass, m_pl, param2[1], param2[2], param2[3], param2[4]) 
-	vari = (N*k)+2
+	vari = (N*k)
 	ps[vari].x = ps[1].x - mp.x
 	ps[vari].y = ps[1].y - mp.y
 	ps[vari].z = ps[1].z - mp.z
