@@ -295,6 +295,7 @@ double X;
 	// Note: These are not the traditional f and g functions.
 	double f = -M*Gs[2]*r0i;
 	double g = _dt - M*Gs[3];
+	//double g = eta0*Gs[2] + r0*Gs[1]; // Jack's version (might slightly improve accuracy)
 	double fd = -M*Gs[1]*r0i*ri; 
 	double gd = -M*Gs[2]*ri; 
         
@@ -309,33 +310,37 @@ double X;
 	//Variations
 	if (N_megno){
 		stiefel_Gs(Gs, beta, X);	// Recalculate (to get Gs[4] and Gs[5])
-		struct particle dp1 = p_j[i+N_megno];
-		double dr0 = (dp1.x*p1.x + dp1.y*p1.y + dp1.z*p1.z)*r0i;
-		double dbeta = -2.*M*dr0*r0i*r0i - 2.* (dp1.vx*p1.vx + dp1.vy*p1.vy + dp1.vz*p1.vz);
-		double deta0 = dp1.x*p1.vx + dp1.y*p1.vy + dp1.z*p1.vz
-			     + p1.x*dp1.vx + p1.y*dp1.vy + p1.z*dp1.vz;
-		double dzeta0 = -beta*dr0 - r0*dbeta;
 		double G3beta = 0.5*(3.*Gs[5]-X*Gs[4]);
 		double G2beta = 0.5*(2.*Gs[4]-X*Gs[3]);
 		double G1beta = 0.5*(Gs[3]-X*Gs[2]);
 		double tbeta = eta0*G2beta + zeta0*G3beta;
-		double dX = -1.*ri*(X*dr0 + Gs[2]*deta0+Gs[3]*dzeta0+tbeta*dbeta);
-		double dG1 = Gs[0]*dX + G1beta*dbeta; 
-		double dG2 = Gs[1]*dX + G2beta*dbeta;
-		double dG3 = Gs[2]*dX + G3beta*dbeta;
-		double dr = dr0 + Gs[1]*deta0 + Gs[2]*dzeta0 + eta0*dG1 + zeta0*dG2;
-		double df = M*Gs[2]*dr0*r0i*r0i - M*dG2*r0i;
-		double dg = -M*dG3;
-		double dfd = -M*dG1*r0i*ri + M*Gs[1]*(dr0*r0i+dr*ri)*r0i*ri;
-		double dgd = -M*dG2*ri + M*Gs[2]*dr*ri*ri;
-	
-		p_j[i+N_megno].x += f*dp1.x + g*dp1.vx + df*p1.x + dg*p1.vx;
-		p_j[i+N_megno].y += f*dp1.y + g*dp1.vy + df*p1.y + dg*p1.vy;
-		p_j[i+N_megno].z += f*dp1.z + g*dp1.vz + df*p1.z + dg*p1.vz;
+		const int _N_real   = N - N_megno;
+		for (int k=0; k<N_megnopp; k++){
+			const int _N_shift = _N_real*(k+1);
+			struct particle dp1 = p_j[i+_N_shift];
+			double dr0 = (dp1.x*p1.x + dp1.y*p1.y + dp1.z*p1.z)*r0i;
+			double dbeta = -2.*M*dr0*r0i*r0i - 2.* (dp1.vx*p1.vx + dp1.vy*p1.vy + dp1.vz*p1.vz);
+			double deta0 = dp1.x*p1.vx + dp1.y*p1.vy + dp1.z*p1.vz
+				     + p1.x*dp1.vx + p1.y*dp1.vy + p1.z*dp1.vz;
+			double dzeta0 = -beta*dr0 - r0*dbeta;
+			double dX = -1.*ri*(X*dr0 + Gs[2]*deta0+Gs[3]*dzeta0+tbeta*dbeta);
+			double dG1 = Gs[0]*dX + G1beta*dbeta; 
+			double dG2 = Gs[1]*dX + G2beta*dbeta;
+			double dG3 = Gs[2]*dX + G3beta*dbeta;
+			double dr = dr0 + Gs[1]*deta0 + Gs[2]*dzeta0 + eta0*dG1 + zeta0*dG2;
+			double df = M*Gs[2]*dr0*r0i*r0i - M*dG2*r0i;
+			double dg = -M*dG3;
+			double dfd = -M*dG1*r0i*ri + M*Gs[1]*(dr0*r0i+dr*ri)*r0i*ri;
+			double dgd = -M*dG2*ri + M*Gs[2]*dr*ri*ri;
+		
+			p_j[i+_N_shift].x += f*dp1.x + g*dp1.vx + df*p1.x + dg*p1.vx;
+			p_j[i+_N_shift].y += f*dp1.y + g*dp1.vy + df*p1.y + dg*p1.vy;
+			p_j[i+_N_shift].z += f*dp1.z + g*dp1.vz + df*p1.z + dg*p1.vz;
 
-		p_j[i+N_megno].vx += fd*dp1.x + gd*dp1.vx + dfd*p1.x + dgd*p1.vx;
-		p_j[i+N_megno].vy += fd*dp1.y + gd*dp1.vy + dfd*p1.y + dgd*p1.vy;
-		p_j[i+N_megno].vz += fd*dp1.z + gd*dp1.vz + dfd*p1.z + dgd*p1.vz;
+			p_j[i+_N_shift].vx += fd*dp1.x + gd*dp1.vx + dfd*p1.x + dgd*p1.vx;
+			p_j[i+_N_shift].vy += fd*dp1.y + gd*dp1.vy + dfd*p1.y + dgd*p1.vy;
+			p_j[i+_N_shift].vz += fd*dp1.z + gd*dp1.vz + dfd*p1.z + dgd*p1.vz;
+		}
 	}
 
 }
@@ -375,35 +380,39 @@ static void integrator_to_jacobi_posvel(void){
 }
 
 static void integrator_var_to_jacobi_posvel(void){
-	double s_x = particles[N_megno].m * particles[N_megno].x;
-	double s_y = particles[N_megno].m * particles[N_megno].y;
-	double s_z = particles[N_megno].m * particles[N_megno].z;
-	double s_vx = particles[N_megno].m * particles[N_megno].vx;
-	double s_vy = particles[N_megno].m * particles[N_megno].vy;
-	double s_vz = particles[N_megno].m * particles[N_megno].vz;
-	for (unsigned int i=1+N_megno;i<N;i++){
-		const double ei = etai[i-1-N_megno];
-		const struct particle pi = particles[i];
-		const double pme = eta[i-N_megno]*ei;
-		p_j[i].x = pi.x - s_x*ei;
-		p_j[i].y = pi.y - s_y*ei;
-		p_j[i].z = pi.z - s_z*ei;
-		p_j[i].vx = pi.vx - s_vx*ei;
-		p_j[i].vy = pi.vy - s_vy*ei;
-		p_j[i].vz = pi.vz - s_vz*ei;
-		s_x  = s_x  * pme + pi.m*p_j[i].x ;
-		s_y  = s_y  * pme + pi.m*p_j[i].y ;
-		s_z  = s_z  * pme + pi.m*p_j[i].z ;
-		s_vx = s_vx * pme + pi.m*p_j[i].vx;
-		s_vy = s_vy * pme + pi.m*p_j[i].vy;
-		s_vz = s_vz * pme + pi.m*p_j[i].vz;
+	const int _N_real   = N - N_megno;
+	for (int k=0; k<N_megnopp; k++){
+		const int _N_shift = _N_real*(k+1);
+		double s_x = particles[_N_shift].m * particles[_N_shift].x;
+		double s_y = particles[_N_shift].m * particles[_N_shift].y;
+		double s_z = particles[_N_shift].m * particles[_N_shift].z;
+		double s_vx = particles[_N_shift].m * particles[_N_shift].vx;
+		double s_vy = particles[_N_shift].m * particles[_N_shift].vy;
+		double s_vz = particles[_N_shift].m * particles[_N_shift].vz;
+		for (unsigned int i=1+_N_shift;i<_N_shift+_N_real;i++){
+			const double ei = etai[i-1-_N_shift];
+			const struct particle pi = particles[i];
+			const double pme = eta[i-_N_shift]*ei;
+			p_j[i].x = pi.x - s_x*ei;
+			p_j[i].y = pi.y - s_y*ei;
+			p_j[i].z = pi.z - s_z*ei;
+			p_j[i].vx = pi.vx - s_vx*ei;
+			p_j[i].vy = pi.vy - s_vy*ei;
+			p_j[i].vz = pi.vz - s_vz*ei;
+			s_x  = s_x  * pme + pi.m*p_j[i].x ;
+			s_y  = s_y  * pme + pi.m*p_j[i].y ;
+			s_z  = s_z  * pme + pi.m*p_j[i].z ;
+			s_vx = s_vx * pme + pi.m*p_j[i].vx;
+			s_vy = s_vy * pme + pi.m*p_j[i].vy;
+			s_vz = s_vz * pme + pi.m*p_j[i].vz;
+		}
+		p_j[_N_shift].x = s_x * Mtotali;
+		p_j[_N_shift].y = s_y * Mtotali;
+		p_j[_N_shift].z = s_z * Mtotali;
+		p_j[_N_shift].vx = s_vx * Mtotali;
+		p_j[_N_shift].vy = s_vy * Mtotali;
+		p_j[_N_shift].vz = s_vz * Mtotali;
 	}
-	p_j[N_megno].x = s_x * Mtotali;
-	p_j[N_megno].y = s_y * Mtotali;
-	p_j[N_megno].z = s_z * Mtotali;
-	p_j[N_megno].vx = s_vx * Mtotali;
-	p_j[N_megno].vy = s_vy * Mtotali;
-	p_j[N_megno].vz = s_vz * Mtotali;
 }
 
 
@@ -426,21 +435,25 @@ static void integrator_to_jacobi_acc(void){
 }
 
 static void integrator_var_to_jacobi_acc(void){
-	double s_ax = particles[N_megno].m * particles[N_megno].ax;
-	double s_ay = particles[N_megno].m * particles[N_megno].ay;
-	double s_az = particles[N_megno].m * particles[N_megno].az;
-	for (unsigned int i=1+N_megno;i<N;i++){
-		const double ei = etai[i-1-N_megno];
-		const struct particle pi = particles[i];
-		const double pme = eta[i-N_megno]*ei;
-		p_j[i].ax = pi.ax - s_ax*ei;
-		p_j[i].ay = pi.ay - s_ay*ei;
-		p_j[i].az = pi.az - s_az*ei;
-		s_ax = s_ax * pme + pi.m*p_j[i].ax;
-		s_ay = s_ay * pme + pi.m*p_j[i].ay;
-		s_az = s_az * pme + pi.m*p_j[i].az;
+	const int _N_real   = N - N_megno;
+	for (int k=0; k<N_megnopp; k++){
+		const int _N_shift = _N_real*(k+1);
+		double s_ax = particles[_N_shift].m * particles[_N_shift].ax;
+		double s_ay = particles[_N_shift].m * particles[_N_shift].ay;
+		double s_az = particles[_N_shift].m * particles[_N_shift].az;
+		for (unsigned int i=1+_N_shift;i<_N_shift+_N_real;i++){
+			const double ei = etai[i-1-_N_shift];
+			const struct particle pi = particles[i];
+			const double pme = eta[i-_N_shift]*ei;
+			p_j[i].ax = pi.ax - s_ax*ei;
+			p_j[i].ay = pi.ay - s_ay*ei;
+			p_j[i].az = pi.az - s_az*ei;
+			s_ax = s_ax * pme + pi.m*p_j[i].ax;
+			s_ay = s_ay * pme + pi.m*p_j[i].ay;
+			s_az = s_az * pme + pi.m*p_j[i].az;
+		}
+		// p_j[_N_shift].a is not needed and thus not calculated 
 	}
-	// p_j[N_megno].a is not needed and thus not calculated 
 }
 
 //OLD biased!
@@ -516,41 +529,45 @@ static void integrator_to_inertial_posvel(void){
 }
 
 static void integrator_var_to_inertial_posvel(void){
-	double s_x  = p_j[N_megno].x  * Mtotal; 
-	double s_y  = p_j[N_megno].y  * Mtotal; 
-	double s_z  = p_j[N_megno].z  * Mtotal; 
-	double s_vx = p_j[N_megno].vx * Mtotal; 
-	double s_vy = p_j[N_megno].vy * Mtotal; 
-	double s_vz = p_j[N_megno].vz * Mtotal; 
-	for (unsigned int i=N-1;i>N_megno;i--){
-		const struct particle pji = p_j[i];
-		const double ei = etai[i-N_megno];
-		s_x  = (s_x  - pji.m * pji.x ) * ei;
-		s_y  = (s_y  - pji.m * pji.y ) * ei;
-		s_z  = (s_z  - pji.m * pji.z ) * ei;
-		s_vx = (s_vx - pji.m * pji.vx) * ei;
-		s_vy = (s_vy - pji.m * pji.vy) * ei;
-		s_vz = (s_vz - pji.m * pji.vz) * ei;
-		particles[i].x  = pji.x  + s_x ;
-		particles[i].y  = pji.y  + s_y ;
-		particles[i].z  = pji.z  + s_z ;
-		particles[i].vx = pji.vx + s_vx;
-		particles[i].vy = pji.vy + s_vy;
-		particles[i].vz = pji.vz + s_vz;
-		s_x  *= eta[i-N_megno-1];
-		s_y  *= eta[i-N_megno-1];
-		s_z  *= eta[i-N_megno-1];
-		s_vx *= eta[i-N_megno-1];
-		s_vy *= eta[i-N_megno-1];
-		s_vz *= eta[i-N_megno-1];
+	const int _N_real   = N - N_megno;
+	for (int k=0; k<N_megnopp; k++){
+		const int _N_shift = _N_real*(k+1);
+		double s_x  = p_j[_N_shift].x  * Mtotal; 
+		double s_y  = p_j[_N_shift].y  * Mtotal; 
+		double s_z  = p_j[_N_shift].z  * Mtotal; 
+		double s_vx = p_j[_N_shift].vx * Mtotal; 
+		double s_vy = p_j[_N_shift].vy * Mtotal; 
+		double s_vz = p_j[_N_shift].vz * Mtotal; 
+		for (unsigned int i=_N_shift+_N_real-1;i>_N_shift;i--){
+			const struct particle pji = p_j[i];
+			const double ei = etai[i-_N_shift];
+			s_x  = (s_x  - pji.m * pji.x ) * ei;
+			s_y  = (s_y  - pji.m * pji.y ) * ei;
+			s_z  = (s_z  - pji.m * pji.z ) * ei;
+			s_vx = (s_vx - pji.m * pji.vx) * ei;
+			s_vy = (s_vy - pji.m * pji.vy) * ei;
+			s_vz = (s_vz - pji.m * pji.vz) * ei;
+			particles[i].x  = pji.x  + s_x ;
+			particles[i].y  = pji.y  + s_y ;
+			particles[i].z  = pji.z  + s_z ;
+			particles[i].vx = pji.vx + s_vx;
+			particles[i].vy = pji.vy + s_vy;
+			particles[i].vz = pji.vz + s_vz;
+			s_x  *= eta[i-_N_shift-1];
+			s_y  *= eta[i-_N_shift-1];
+			s_z  *= eta[i-_N_shift-1];
+			s_vx *= eta[i-_N_shift-1];
+			s_vy *= eta[i-_N_shift-1];
+			s_vz *= eta[i-_N_shift-1];
+		}
+		const double mi = etai[0];
+		particles[_N_shift].x  = s_x  * mi;
+		particles[_N_shift].y  = s_y  * mi;
+		particles[_N_shift].z  = s_z  * mi;
+		particles[_N_shift].vx = s_vx * mi;
+		particles[_N_shift].vy = s_vy * mi;
+		particles[_N_shift].vz = s_vz * mi;
 	}
-	const double mi = etai[0];
-	particles[N_megno].x  = s_x  * mi;
-	particles[N_megno].y  = s_y  * mi;
-	particles[N_megno].z  = s_z  * mi;
-	particles[N_megno].vx = s_vx * mi;
-	particles[N_megno].vy = s_vy * mi;
-	particles[N_megno].vz = s_vz * mi;
 }
 
 static void integrator_to_inertial_pos(void){
@@ -577,26 +594,30 @@ static void integrator_to_inertial_pos(void){
 }
 
 static void integrator_var_to_inertial_pos(void){
-	double s_x  = p_j[0].x  * Mtotal; 
-	double s_y  = p_j[0].y  * Mtotal; 
-	double s_z  = p_j[0].z  * Mtotal; 
-	for (unsigned int i=N-1;i>N_megno;i--){
-		const struct particle pji = p_j[i];
-		const double ei = etai[i-N_megno];
-		s_x  = (s_x  - pji.m * pji.x ) * ei;
-		s_y  = (s_y  - pji.m * pji.y ) * ei;
-		s_z  = (s_z  - pji.m * pji.z ) * ei;
-		particles[i].x  = pji.x  + s_x ;
-		particles[i].y  = pji.y  + s_y ;
-		particles[i].z  = pji.z  + s_z ;
-		s_x  *= eta[i-N_megno-1];
-		s_y  *= eta[i-N_megno-1];
-		s_z  *= eta[i-N_megno-1];
+	const int _N_real   = N - N_megno;
+	for (int k=0; k<N_megnopp; k++){
+		const int _N_shift = _N_real*(k+1);
+		double s_x  = p_j[0].x  * Mtotal; 
+		double s_y  = p_j[0].y  * Mtotal; 
+		double s_z  = p_j[0].z  * Mtotal; 
+		for (unsigned int i=_N_shift+_N_real-1;i>_N_shift;i--){
+			const struct particle pji = p_j[i];
+			const double ei = etai[i-_N_shift];
+			s_x  = (s_x  - pji.m * pji.x ) * ei;
+			s_y  = (s_y  - pji.m * pji.y ) * ei;
+			s_z  = (s_z  - pji.m * pji.z ) * ei;
+			particles[i].x  = pji.x  + s_x ;
+			particles[i].y  = pji.y  + s_y ;
+			particles[i].z  = pji.z  + s_z ;
+			s_x  *= eta[i-_N_shift-1];
+			s_y  *= eta[i-_N_shift-1];
+			s_z  *= eta[i-_N_shift-1];
+		}
+		const double mi = etai[0];
+		particles[_N_shift].x  = s_x  * mi;
+		particles[_N_shift].y  = s_y  * mi;
+		particles[_N_shift].z  = s_z  * mi;
 	}
-	const double mi = etai[0];
-	particles[N_megno].x  = s_x  * mi;
-	particles[N_megno].y  = s_y  * mi;
-	particles[N_megno].z  = s_z  * mi;
 }
 
 /***************************** 
@@ -624,15 +645,19 @@ static void integrator_interaction(double _dt){
 		if (N_megno){
 			// Eq 132
 			double rj5M = rj3iM*rj2i;
-			double rdr = p_j[i+N_megno].x*pji.x + p_j[i+N_megno].y*pji.y + p_j[i+N_megno].z*pji.z;
-			double prefac2 = -_dt*3.*rdr*rj5M;
-			p_j[i+N_megno].vx += _dt * p_j[i+N_megno].ax;
-			p_j[i+N_megno].vy += _dt * p_j[i+N_megno].ay;
-			p_j[i+N_megno].vz += _dt * p_j[i+N_megno].az;
-			if (i>1){
-				p_j[i+N_megno].vx += prefac1*p_j[i+N_megno].x + prefac2*pji.x;
-				p_j[i+N_megno].vy += prefac1*p_j[i+N_megno].y + prefac2*pji.y;
-				p_j[i+N_megno].vz += prefac1*p_j[i+N_megno].z + prefac2*pji.z;
+			const int _N_real   = N - N_megno;
+			for (int k=0; k<N_megnopp; k++){
+				const int _N_shift = _N_real*(k+1);
+				double rdr = p_j[i+_N_shift].x*pji.x + p_j[i+_N_shift].y*pji.y + p_j[i+_N_shift].z*pji.z;
+				double prefac2 = -_dt*3.*rdr*rj5M;
+				p_j[i+_N_shift].vx += _dt * p_j[i+_N_shift].ax;
+				p_j[i+_N_shift].vy += _dt * p_j[i+_N_shift].ay;
+				p_j[i+_N_shift].vz += _dt * p_j[i+_N_shift].az;
+				if (i>1){
+					p_j[i+_N_shift].vx += prefac1*p_j[i+_N_shift].x + prefac2*pji.x;
+					p_j[i+_N_shift].vy += prefac1*p_j[i+_N_shift].y + prefac2*pji.y;
+					p_j[i+_N_shift].vz += prefac1*p_j[i+_N_shift].z + prefac2*pji.z;
+				}
 			}
 		}
 	}
@@ -786,9 +811,13 @@ void integrator_whfast_part1(void){
 	}
 	
 	if (N_megno){
-		p_j[N_megno].x += _dt2*p_j[N_megno].vx;
-		p_j[N_megno].y += _dt2*p_j[N_megno].vy;
-		p_j[N_megno].z += _dt2*p_j[N_megno].vz;
+		const int _N_real   = N - N_megno;
+		for (int k=0; k<N_megnopp; k++){
+			const int _N_shift = _N_real*(k+1);
+			p_j[_N_shift].x += _dt2*p_j[_N_shift].vx;
+			p_j[_N_shift].y += _dt2*p_j[_N_shift].vy;
+			p_j[_N_shift].z += _dt2*p_j[_N_shift].vz;
+		}
 		if (integrator_force_is_velocitydependent){
 			integrator_var_to_inertial_posvel();
 		}else{
@@ -830,43 +859,50 @@ void integrator_whfast_part2(void){
 			integrator_synchronized_megno_warning++;
 			fprintf(stderr,"\n\033[1mWarning!\033[0m MEGNO requires synchronized output at every timestep.\n");
 		}
-		p_j[N_megno].x += _dt2*p_j[N_megno].vx;
-		p_j[N_megno].y += _dt2*p_j[N_megno].vy;
-		p_j[N_megno].z += _dt2*p_j[N_megno].vz;
+		const int _N_real   = N - N_megno;
+		for (int k=0; k<N_megnopp; k++){
+			const int _N_shift = _N_real*(k+1);
+			p_j[_N_shift].x += _dt2*p_j[_N_shift].vx;
+			p_j[_N_shift].y += _dt2*p_j[_N_shift].vy;
+			p_j[_N_shift].z += _dt2*p_j[_N_shift].vz;
+		}
 		integrator_var_to_inertial_posvel();
 		gravity_calculate_variational_acceleration();
 		// Add additional acceleration term for MEGNO calculation
-		int i = N-N_megno;
-		int j = N-N_megno+1;
-		const double dx = particles[i-N/2].x - particles[j-N/2].x;
-		const double dy = particles[i-N/2].y - particles[j-N/2].y;
-		const double dz = particles[i-N/2].z - particles[j-N/2].z;
-		const double r2 = dx*dx + dy*dy + dz*dz + softening*softening;
-		const double r  = sqrt(r2);
-		const double r3inv = 1./(r2*r);
-		const double r5inv = 3.*r3inv/r2;
-		const double ddx = particles[i].x - particles[j].x;
-		const double ddy = particles[i].y - particles[j].y;
-		const double ddz = particles[i].z - particles[j].z;
-		const double Gmi = G * particles[i].m;
-		const double Gmj = G * particles[j].m;
-		const double dax =   ddx * ( dx*dx*r5inv - r3inv )
-				   + ddy * ( dx*dy*r5inv )
-				   + ddz * ( dx*dz*r5inv );
-		const double day =   ddx * ( dy*dx*r5inv )
-				   + ddy * ( dy*dy*r5inv - r3inv )
-				   + ddz * ( dy*dz*r5inv );
-		const double daz =   ddx * ( dz*dx*r5inv )
-				   + ddy * ( dz*dy*r5inv )
-				   + ddz * ( dz*dz*r5inv - r3inv );
-		
-		particles[i].ax += Gmj * dax;
-		particles[i].ay += Gmj * day;
-		particles[i].az += Gmj * daz;
-		
-		particles[j].ax -= Gmi * dax;
-		particles[j].ay -= Gmi * day;
-		particles[j].az -= Gmi * daz;
+		for (int k=0; k<N_megnopp; k++){
+			const int _N_shift = _N_real*(k+1);
+			int i = N-_N_shift;
+			int j = N-_N_shift+1;
+			const double dx = particles[i-N/2].x - particles[j-N/2].x;
+			const double dy = particles[i-N/2].y - particles[j-N/2].y;
+			const double dz = particles[i-N/2].z - particles[j-N/2].z;
+			const double r2 = dx*dx + dy*dy + dz*dz + softening*softening;
+			const double r  = sqrt(r2);
+			const double r3inv = 1./(r2*r);
+			const double r5inv = 3.*r3inv/r2;
+			const double ddx = particles[i].x - particles[j].x;
+			const double ddy = particles[i].y - particles[j].y;
+			const double ddz = particles[i].z - particles[j].z;
+			const double Gmi = G * particles[i].m;
+			const double Gmj = G * particles[j].m;
+			const double dax =   ddx * ( dx*dx*r5inv - r3inv )
+					   + ddy * ( dx*dy*r5inv )
+					   + ddz * ( dx*dz*r5inv );
+			const double day =   ddx * ( dy*dx*r5inv )
+					   + ddy * ( dy*dy*r5inv - r3inv )
+					   + ddz * ( dy*dz*r5inv );
+			const double daz =   ddx * ( dz*dx*r5inv )
+					   + ddy * ( dz*dy*r5inv )
+					   + ddz * ( dz*dz*r5inv - r3inv );
+			
+			particles[i].ax += Gmj * dax;
+			particles[i].ay += Gmj * day;
+			particles[i].az += Gmj * daz;
+			
+			particles[j].ax -= Gmi * dax;
+			particles[j].ay -= Gmi * day;
+			particles[j].az -= Gmi * daz;
+		}
 
 		// Update MEGNO in middle of timestep as we need synchonized x/v/a.
 		double dY = dt * 2. * t * tools_megno_deltad_delta();

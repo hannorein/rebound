@@ -43,19 +43,7 @@ int N 		= 0;
 int Nmax	= 0;	
 int N_active 	= -1; 	
 int N_megno 	= 0; 	
-
-
-// Accessor/mutator functions for accessing beyond library
-void set_N(int _N) { N=_N; }
-void set_Nmax(int _N) { Nmax=_N; }
-void set_N_active(int _N) { N_active=_N; }
-void set_N_megno(int _N) { N_megno=_N; }
-int get_N() { return N; }
-int get_Nmax() { return Nmax; }
-int get_N_active() { return N_active; }
-int get_N_megno() { return N_megno; }
-
-struct particle* get_particles() { return particles; }
+int N_megnopp 	= 1; 	
 
 #ifdef BOUNDARIES_OPEN
 int boundaries_particle_is_in_box(struct particle p);
@@ -81,19 +69,14 @@ void particles_add_local(struct particle pt){
 		particles = realloc(particles,sizeof(struct particle)*Nmax);
 	}
 	particles[N] = pt;
-	//        printf("# added particle:  x=(%g,%g,%g) v=(%g,%g,%g) a=(%g,%g,%g) m=%g\n",particles[N].x,particles[N].y,particles[N].z,particles[N].vx,particles[N].vy,particles[N].vz,particles[N].ax,particles[N].ay,particles[N].az,particles[N].m);
 #ifdef TREE
 	tree_add_particle_to_tree(N);
 #endif // TREE
 	N++;
 }
 
-void particles_add_jl(struct particle* pt){
-particles_add(*pt);
-}
 
 void particles_add(struct particle pt){
-        // printf("# adding particle: x=(%g,%g,%g) v=(%g,%g,%g) a=(%g,%g,%g) m=%g\n",pt.x,pt.y,pt.z,pt.vx,pt.vy,pt.vz,pt.ax,pt.ay,pt.az,pt.m);
 	if (N_megno){
 		printf("\nWarning: Trying to add particle after calling megno_init().\n");
 	}
@@ -124,6 +107,10 @@ void particles_add(struct particle pt){
 #endif // MPI
 	// Add particle to local partical array.
 	particles_add_local(pt);
+}
+
+void particles_add_ptr(struct particle* pt){
+	particles_add(*pt);
 }
 
 void particles_add_fixed(struct particle pt,int pos){
