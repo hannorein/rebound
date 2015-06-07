@@ -183,33 +183,31 @@ class ReboundModule(types.ModuleType):
     def units(self, newunits):
         newunits = self.check_units(newunits)        
         if self.particles: # some particles are loaded
-            print("Error:  You must initialize the units before populating the particles array.  See Units.ipynb in python_tutorials.")
-            import sys
-            sys.exit()
+            raise Exception("Error:  You must initialize the units before populating the particles array.  See Units.ipynb in python_tutorials.")
         self.update_units(newunits) 
 
-    def convert_IC_units(self, *args): 
-        l_unit, t_unit, m_unit = self.check_units(args)
+    def convert_particle_units(self, *args): 
+        new_l, new_t, new_m = self.check_units(args)
         for p in self.particles:
-            p.m = self.convert_mass(p.m, m_unit)
-            p.x = self.convert_length(p.x, l_unit) 
-            p.y = self.convert_length(p.y, l_unit) 
-            p.z = self.convert_length(p.z, l_unit)
-            p.vx = self.convert_vel(p.vx, l_unit, t_unit) 
-            p.vy = self.convert_vel(p.vy, l_unit, t_unit) 
-            p.vz = self.convert_vel(p.vz, l_unit, t_unit)
-            p.ax = self.convert_vel(p.ax, l_unit, t_unit)
-            p.ay = self.convert_vel(p.ay, l_unit, t_unit)
-            p.az = self.convert_vel(p.az, l_unit, t_unit)
-        self.update_units((l_unit, t_unit, m_unit))
-        
+            self.convert_p(p, self._units['length'], self._units['time'], self._units['mass'], new_l, new_t, new_m)
+        self.update_units((new_l, new_t, new_m))
+
+    def convert_p(self, p, old_l, old_t, old_m, new_l, new_t, new_m):
+        p.m = self.convert_mass(p.m, old_m, new_m)
+        p.x = self.convert_length(p.x, old_l, new_l) 
+        p.y = self.convert_length(p.y, old_l, new_l)
+        p.z = self.convert_length(p.z, old_l, new_l)
+        p.vx = self.convert_vel(p.vx, old_l, old_t, new_l, new_t)
+        p.vy = self.convert_vel(p.vy, old_l, old_t, new_l, new_t)
+        p.vz = self.convert_vel(p.vz, old_l, old_t, new_l, new_t)
+        p.ax = self.convert_vel(p.ax, old_l, old_t, new_l, new_t)
+        p.ay = self.convert_vel(p.ay, old_l, old_t, new_l, new_t)
+        p.az = self.convert_vel(p.az, old_l, old_t, new_l, new_t)
+        return p
+
     def check_units(self, newunits):   
-        import sys
-        print(newunits)
-        print(type(newunits))
         if len(newunits) is not 3:
-            print("Error: Need to pass exactly 3 units for length, time, and mass (any order), see python_tutorials/Units.ipynb")
-            sys.exit()
+            raise Exception("Error: Need to pass exactly 3 units for length, time, and mass (any order), see python_tutorials/Units.ipynb")
         
         l_unit = t_unit = m_unit = None
         for unit in newunits:
@@ -222,8 +220,7 @@ class ReboundModule(types.ModuleType):
                 m_unit = unit
 
         if l_unit is None or t_unit is None or m_unit is None:
-            print("Error: Need to assign rebound.units a tuple consisting of 3 units for length, time, and mass (any order).  If you did this, your unit isn't in our list.  Please update the dictionaries at the bottom of rebound/rebound/librebound.py and send a pull request!")
-            sys.exit()
+            raise Exception("Error: Need to assign rebound.units a tuple consisting of 3 units for length, time, and mass (any order).  See python_tutorials/Units.ipynb.  If you did this, your unit isn't in our list.  Please update the dictionaries at the bottom of rebound/rebound/librebound.py and send a pull request!")
 
         return (l_unit, t_unit, m_unit)
 
@@ -231,24 +228,28 @@ class ReboundModule(types.ModuleType):
         self._units['length'] = newunits[0] 
         self._units['time'] = newunits[1] 
         self._units['mass'] = newunits[2] 
-        self.G = self.convert_G()
+        self.G = self.convert_G(self._units['length'], self._units['time'], self._units['mass'])
 
-    def convert_mass(self, mass, m_unit):
-        return mass*masses_SI[self._units['mass']]/masses_SI[m_unit]
+    def convert_mass(self, mass, old_m, new_m):
+        return mass*masses_SI[old_m]/masses_SI[new_m]
 
-    def convert_length(self, length, l_unit):
-        return length*lengths_SI[self._units['length']]/lengths_SI[l_unit]
+    def convert_length(self, length, old_l, new_l):
+        return length*lengths_SI[old_l]/lengths_SI[new_l]
 
-    def convert_vel(self, vel, l_unit, t_unit):
-        in_SI=vel*lengths_SI[self._units['length']]/times_SI[self._units['time']]
-        return in_SI*times_SI[t_unit]/lengths_SI[l_unit]
+    def convert_vel(self, vel, old_l, old_t, new_l, new_t):
+        in_SI=vel*lengths_SI[old_l]/times_SI[old_t]
+        return in_SI*times_SI[new_t]/lengths_SI[new_l]
+    
+    def convert_acc(self, acc, old_l, old_t, new_l, new_t):
+        in_SI=acc*lengths_SI[old_l]/times_SI[old_t]**2
+        return in_SI*times_SI[new_t]**2/lengths_SI[new_l]
 
     def convert_acc(self, acc, l_unit, t_unit):
         in_SI=acc*lengths_SI[self._units['length']]/times_SI[self._units['time']]**2
         return in_SI*times_SI[t_unit]**2/lengths_SI[l_unit]
     
-    def convert_G(self):
-        return G_SI*masses_SI[self._units['mass']]*times_SI[self._units['time']]**2/lengths_SI[self._units['length']]**3
+    def convert_G(self, new_l, new_t, new_m):
+        return G_SI*masses_SI[new_m]*times_SI[new_t]**2/lengths_SI[new_l]**3
 
        
 # Debug tools
@@ -294,6 +295,10 @@ class ReboundModule(types.ModuleType):
                     self.add(p)
             elif isinstance(particle,str):
                 self.add(horizons.getParticle(particle,**kwargs))
+                for key, unit in rebound.units.items(): # check if units aren't set, and set default values s.t. G is approximately 1
+                    if unit is None:
+                        self.units = ('AU', 'yr2pi', 'Msun')
+                self.convert_p(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass']
         else: 
             self.add(Particle(**kwargs))
 
@@ -430,6 +435,7 @@ G_SI = 6.674e-11
 times_SI = {'s':1.,
     'hr':3600.,
     'yr':31557600., # Julian year (exact)
+    'yr2pi':31557600./(2.*math.pi),
     'kyr':31557600.*1.e3,
     'myr':31557600.*1.e6,
     'gyr':31557600.*1.e9}
