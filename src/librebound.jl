@@ -1,7 +1,8 @@
 if !isdefined(:LIB_REBOUND_INITIALIZED)
 const global LIBREBOUND = find_library(["librebound.so"],["/home/ebf11/Code/rebound/","/usr/local/lib",".","../../"])
 
-  # WARNING: rebound has ifdefs that can add additional members and make this type incompatible
+  # WARNING: rebound has ifdefs that can add additional members and make this type incompatible.
+  #          Note that ifdefs will most likely never be turned on for use with librebound.
   immutable rebound_particle_basic
     x::Cdouble
     y::Cdouble
@@ -14,6 +15,7 @@ const global LIBREBOUND = find_library(["librebound.so"],["/home/ebf11/Code/rebo
     az::Cdouble
     m::Cdouble
   end
+  INTEGRATORS = {"ias15" => 0, "whfast" => 1, "sei" => 2, "wh" => 3, "leapfrog" => 4, "hybrid" => 5, "none" => 6}
 
   LIB_REBOUND_INITIALIZED = true
 end
@@ -58,8 +60,8 @@ function rebound_step()
 end
 
 # Should do something so Julia doesn't need to use magic numbers here
-function integrator_set(integrator_id::Integer)
-  @assert(0<=integrator_id<=6)
+function integrator_set(integrator_name::ASCIIString)
+  local integrator_id = INTEGRATORS[integrator_name]
   ccall( (:integrator_set, LIBREBOUND), Void, (Cint,), convert(Cint,integrator_id) )
 end
 

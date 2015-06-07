@@ -2,9 +2,10 @@ include("../../src/librebound.jl")
 
 function test_rebound_julia()
        rebound_reset()
-       integrator_set(1)
+       integrator_set("whfast")
        set_dt(1.e-3)        # in year/(2*pi)
        # WARNING:  I don't know if we need to set these
+       # No, you don't need to set the boxsize. librebound only support "infinite" box sizes for now (no periodic or sheer periodic boxes).
        # boxsize         = 3;    // in AU
        # N_active        = 1;    // Only star has non-zero mass. If all particles have mass, delete this line.
        # init_box();

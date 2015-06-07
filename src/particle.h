@@ -47,12 +47,10 @@ struct particle {
 	double az;	/**< z-acceleration of the particle. */
 	double m;	/**< Mass of the particle. */
 #ifndef COLLISIONS_NONE
-#warning particle includes r & lastcollision
 	double r; 	/**< Radius of the particle. */
 	double lastcollision;	/**< Last time the particle had a physical collision. */
 #endif // COLLISIONS_NONE
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
-#warning particle includes c
 	struct cell* c;		/**< Pointer to the cell the particle is currently in. */
 #endif // TREE
 };
