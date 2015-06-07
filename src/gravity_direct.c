@@ -286,40 +286,43 @@ void gravity_calculate_variational_acceleration(void){
 		particles[i].az = 0; 
 	}
 #pragma omp parallel for schedule(guided)
-	for (int i=_N_real; i<N; i++){
-	for (int j=i+1; j<N; j++){
-		if (_gravity_ignore_10 && ((i==_N_real+1 && j==_N_real) || (j==_N_real+1 && i==_N_real)) ) continue;
-		const double dx = particles[i-N/2].x - particles[j-N/2].x;
-		const double dy = particles[i-N/2].y - particles[j-N/2].y;
-		const double dz = particles[i-N/2].z - particles[j-N/2].z;
-		const double r2 = dx*dx + dy*dy + dz*dz + softening*softening;
-		const double r  = sqrt(r2);
-		const double r3inv = 1./(r2*r);
-		const double r5inv = 3.*r3inv/r2;
-		const double ddx = particles[i].x - particles[j].x;
-		const double ddy = particles[i].y - particles[j].y;
-		const double ddz = particles[i].z - particles[j].z;
-		const double Gmi = G * particles[i].m;
-		const double Gmj = G * particles[j].m;
-		
-		// Variational equations
-		const double dax =   ddx * ( dx*dx*r5inv - r3inv )
-				   + ddy * ( dx*dy*r5inv )
-				   + ddz * ( dx*dz*r5inv );
-		const double day =   ddx * ( dy*dx*r5inv )
-				   + ddy * ( dy*dy*r5inv - r3inv )
-				   + ddz * ( dy*dz*r5inv );
-		const double daz =   ddx * ( dz*dx*r5inv )
-				   + ddy * ( dz*dy*r5inv )
-				   + ddz * ( dz*dz*r5inv - r3inv );
-		
-		particles[i].ax += Gmj * dax;
-		particles[i].ay += Gmj * day;
-		particles[i].az += Gmj * daz;
-		
-		particles[j].ax -= Gmi * dax;
-		particles[j].ay -= Gmi * day;
-		particles[j].az -= Gmi * daz;
+	for (int i=0; i<_N_real; i++){
+	for (int j=i+1; j<_N_real; j++){
+		if (_gravity_ignore_10 && ((i==1 && j==0) || (j==1 && i==0)) ) continue;
+		for (int k=0; k<N_megnopp; k++){
+			const double dx = particles[i].x - particles[j].x;
+			const double dy = particles[i].y - particles[j].y;
+			const double dz = particles[i].z - particles[j].z;
+			const double r2 = dx*dx + dy*dy + dz*dz + softening*softening;
+			const double r  = sqrt(r2);
+			const double r3inv = 1./(r2*r);
+			const double r5inv = 3.*r3inv/r2;
+			const int _N_shift = _N_real*(k+1);
+			const double ddx = particles[i+_N_shift].x - particles[j+_N_shift].x;
+			const double ddy = particles[i+_N_shift].y - particles[j+_N_shift].y;
+			const double ddz = particles[i+_N_shift].z - particles[j+_N_shift].z;
+			const double Gmi = G * particles[i+_N_shift].m;
+			const double Gmj = G * particles[j+_N_shift].m;
+			
+			// Variational equations
+			const double dax =   ddx * ( dx*dx*r5inv - r3inv )
+					   + ddy * ( dx*dy*r5inv )
+					   + ddz * ( dx*dz*r5inv );
+			const double day =   ddx * ( dy*dx*r5inv )
+					   + ddy * ( dy*dy*r5inv - r3inv )
+					   + ddz * ( dy*dz*r5inv );
+			const double daz =   ddx * ( dz*dx*r5inv )
+					   + ddy * ( dz*dy*r5inv )
+					   + ddz * ( dz*dz*r5inv - r3inv );
+			
+			particles[i+_N_shift].ax += Gmj * dax;
+			particles[i+_N_shift].ay += Gmj * day;
+			particles[i+_N_shift].az += Gmj * daz;
+			
+			particles[j+_N_shift].ax -= Gmi * dax;
+			particles[j+_N_shift].ay -= Gmi * day;
+			particles[j+_N_shift].az -= Gmi * daz;
+		}
 	}
 	}
 }
