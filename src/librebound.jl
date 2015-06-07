@@ -1,5 +1,5 @@
 if !isdefined(:LIB_REBOUND_INITIALIZED)
-const global LIBREBOUND = find_library(["librebound.so"],["/home/ebf11/Code/rebound/","/usr/local/lib","."])
+const global LIBREBOUND = find_library(["librebound.so"],["/home/ebf11/Code/rebound/","/usr/local/lib",".","../../"])
 
   # WARNING: rebound has ifdefs that can add additional members and make this type incompatible
   immutable rebound_particle_basic
