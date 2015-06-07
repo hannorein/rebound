@@ -262,7 +262,7 @@ double X;
 			double sqrt_beta = sqrt(beta);
 			double invperiod = sqrt_beta*beta/(2.*M_PI*M);
 			double X_per_period = 2.*M_PI/sqrt_beta;
-			if (dt*invperiod>1. && integrator_timestep_warning == 0){
+			if (fabs(_dt)*invperiod>1. && integrator_timestep_warning == 0){
 				integrator_timestep_warning++;
 				fprintf(stderr,"\n\033[1mWarning!\033[0m Timestep is larger than at least one orbital period.\n");
 			}
