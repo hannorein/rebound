@@ -294,11 +294,11 @@ class ReboundModule(types.ModuleType):
                 for p in particle:
                     self.add(p)
             elif isinstance(particle,str):
-                self.add(horizons.getParticle(particle,**kwargs))
-                for key, unit in rebound.units.items(): # check if units aren't set, and set default values s.t. G is approximately 1
+                for key, unit in self.units.items(): # check if units aren't set to set defaults
                     if unit is None:
                         self.units = ('AU', 'yr2pi', 'Msun')
-                self.convert_p(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass']
+                self.add(horizons.getParticle(particle,**kwargs))
+                self.convert_p(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass'])
         else: 
             self.add(Particle(**kwargs))
 
@@ -435,7 +435,9 @@ G_SI = 6.674e-11
 times_SI = {'s':1.,
     'hr':3600.,
     'yr':31557600., # Julian year (exact)
-    'yr2pi':31557600./(2.*math.pi),
+    'jyr':31557600.,
+    'sidereal_yr':31558149.7635,
+    'yr2pi':math.sqrt(149597870700.**3/1.3271244004193938e20), # chosen to make G=1
     'kyr':31557600.*1.e3,
     'myr':31557600.*1.e6,
     'gyr':31557600.*1.e9}
