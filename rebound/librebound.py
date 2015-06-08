@@ -183,7 +183,7 @@ class ReboundModule(types.ModuleType):
     def units(self, newunits):
         newunits = self.check_units(newunits)        
         if self.particles: # some particles are loaded
-            raise Exception("Error:  You must initialize the units before populating the particles array.  See Units.ipynb in python_tutorials.")
+            raise Exception("Error:  You cannot set the units after populating the particles array.  See Units.ipynb in python_tutorials.")
         self.update_units(newunits) 
 
     def convert_particle_units(self, *args): 
@@ -200,9 +200,9 @@ class ReboundModule(types.ModuleType):
         p.vx = self.convert_vel(p.vx, old_l, old_t, new_l, new_t)
         p.vy = self.convert_vel(p.vy, old_l, old_t, new_l, new_t)
         p.vz = self.convert_vel(p.vz, old_l, old_t, new_l, new_t)
-        p.ax = self.convert_vel(p.ax, old_l, old_t, new_l, new_t)
-        p.ay = self.convert_vel(p.ay, old_l, old_t, new_l, new_t)
-        p.az = self.convert_vel(p.az, old_l, old_t, new_l, new_t)
+        p.ax = self.convert_acc(p.ax, old_l, old_t, new_l, new_t)
+        p.ay = self.convert_acc(p.ay, old_l, old_t, new_l, new_t)
+        p.az = self.convert_acc(p.az, old_l, old_t, new_l, new_t)
         return p
 
     def check_units(self, newunits):   
@@ -220,7 +220,7 @@ class ReboundModule(types.ModuleType):
                 m_unit = unit
 
         if l_unit is None or t_unit is None or m_unit is None:
-            raise Exception("Error: Need to assign rebound.units a tuple consisting of 3 units for length, time, and mass (any order).  See python_tutorials/Units.ipynb.  If you did this, your unit isn't in our list.  Please update the dictionaries at the bottom of rebound/rebound/librebound.py and send a pull request!")
+            raise Exception("Error: Need to assign rebound.units a tuple consisting of 3 units for length, time, and mass (any order).  See python_tutorials/Units.ipynb.  If you passed such a tuple, at least one of your units isn't in our list.  Please update the dictionaries at the bottom of rebound/rebound/librebound.py and send a pull request!")
 
         return (l_unit, t_unit, m_unit)
 
