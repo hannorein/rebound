@@ -294,9 +294,8 @@ class ReboundModule(types.ModuleType):
                 for p in particle:
                     self.add(p)
             elif isinstance(particle,str):
-                for key, unit in self.units.items(): # check if units aren't set to set defaults
-                    if unit is None:
-                        self.units = ('AU', 'yr2pi', 'Msun')
+                if None in self.units.values():
+                    self.units = ('AU', 'yr2pi', 'Msun')
                 self.add(horizons.getParticle(particle,**kwargs))
                 self.convert_p(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass'])
         else: 
