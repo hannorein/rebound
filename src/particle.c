@@ -113,6 +113,12 @@ void particles_add_ptr(struct particle* pt){
 	particles_add(*pt);
 }
 
+const unsigned int sizeof_particle = sizeof(struct particle);
+
+/*unsigned int sizeof_particle(){
+	return sizeof(struct particle);
+} */
+
 void particles_add_fixed(struct particle pt,int pos){
 	// Only works for non-MPI simulations or when the particles does not move to another node.
 #ifdef BOUNDARIES_OPEN

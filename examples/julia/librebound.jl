@@ -44,7 +44,7 @@ end
 
 export INTEGRATORS
 export rebound_particle_basic, integrate, rebound_step
-export set_integrator, get_N, set_N, set_N_megnopp, get_dt, set_dt
+export set_integrator, get_N, set_N, set_N_megnopp, get_dt, set_dt, get_t, set_t, get_G, set_G
 #export get_particles, get_particle, particles_remove_all, add # is add too generic for exporting?
 #export tools_energy, tools_move_to_com, tools_init_orbit2d, tools_init_orbit3d
 #export integrator_reset, integrator_update_acceleration, gravity_calculate_acceleration, gravity_calculate_variational_acceleration 
@@ -88,6 +88,12 @@ set_N_megnopp(n::Integer) = unsafe_store!(convert(Ptr{Cint},cglobal((:N_megnopp,
 
 get_dt() = unsafe_load(convert(Ptr{Cdouble},cglobal((:dt,LIBREBOUND))))
 set_dt(dt::Real) = unsafe_store!(convert(Ptr{Cdouble},cglobal((:dt,LIBREBOUND))),convert(Cdouble,dt))
+
+get_t() = unsafe_load(convert(Ptr{Cdouble},cglobal((:t,LIBREBOUND))))
+set_t(t::Real) = unsafe_store!(convert(Ptr{Cdouble},cglobal((:t,LIBREBOUND))),convert(Cdouble,t))
+
+get_G() = unsafe_load(convert(Ptr{Cdouble},cglobal((:G,LIBREBOUND))))
+set_G(G::Real) = unsafe_store!(convert(Ptr{Cdouble},cglobal((:G,LIBREBOUND))),convert(Cdouble,G))
 
 function get_particles()
  num_part = get_N()
