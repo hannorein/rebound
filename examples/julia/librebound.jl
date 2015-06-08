@@ -1,6 +1,18 @@
-if !isdefined(:LIB_REBOUND_INITIALIZED)
+#if !isdefined(:LIB_REBOUND_INITIALIZED)
+#    const global LIBREBOUND = find_library(["librebound.so"],["/home/ebf11/Code/rebound/","/usr/local/lib",".","../../"])
+#    println("# Located librebound: ",LIBREBOUND)
+#    LIB_REBOUND_INITIALIZED = true
+#end
+
+module Rebound
+
+function __init__()
   const global LIBREBOUND = find_library(["librebound.so"],["/home/ebf11/Code/rebound/","/usr/local/lib",".","../../"])
-  
+end
+
+  # Integrator lookup dictionary
+  INTEGRATORS = {"ias15" => 0, "whfast" => 1, "sei" => 2, "wh" => 3, "leapfrog" => 4, "hybrid" => 5, "none" => 6}
+
   # REBOUND particle structure
   immutable rebound_particle_basic
     x::Cdouble
@@ -15,20 +27,28 @@ if !isdefined(:LIB_REBOUND_INITIALIZED)
     m::Cdouble
   end
 
-  # Integrator lookup dictionary
-  INTEGRATORS = {"ias15" => 0, "whfast" => 1, "sei" => 2, "wh" => 3, "leapfrog" => 4, "hybrid" => 5, "none" => 6}
+  function rebound_particle_basic(_x::Real,_y::Real,_z::Real, _vx::Real,_vy::Real,_vz::Real; m::Real = 0.0)
+    return rebound_particle_basic(_x,_y,_z,_vx,_vy,_vz,0.0,0.0,0.0,m)
+  end
 
-  LIB_REBOUND_INITIALIZED = true
+  function rebound_particle_basic(m::Real)
+    return rebound_particle_basic(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,m)
+  end
+
+function check_particle_struct()
+  sizeof_rebound_particle_c = unsafe_load(convert(Ptr{Cuint},cglobal((:sizeof_particle,LIBREBOUND))))
+
+  sizeof_rebound_particle_jl = sizeof(rebound_particle_basic)
+  @assert( sizeof_rebound_particle_c ==  sizeof_rebound_particle_jl )
 end
 
-function rebound_particle_basic(_x::Real,_y::Real,_z::Real, _vx::Real,_vy::Real,_vz::Real; _m::Real = 0.0)
-  return rebound_particle_basic(_x,_y,_z,_vx,_vy,_vz,0.0,0.0,0.0,_m)
-end
-
-function rebound_particle_basic(_m::Real)
-  return rebound_particle_basic(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,_m)
-end
-
+export INTEGRATORS
+export rebound_particle_basic, integrate, rebound_step
+export set_integrator, get_N, set_N, set_N_megnopp, get_dt, set_dt
+#export get_particles, get_particle, particles_remove_all, add # is add too generic for exporting?
+#export tools_energy, tools_move_to_com, tools_init_orbit2d, tools_init_orbit3d
+#export integrator_reset, integrator_update_acceleration, gravity_calculate_acceleration, gravity_calculate_variational_acceleration 
+#export input_binary, output_binary, output_scii, output_append_ascii, output_orbits, output_append_orbits, output_logfile
 
 # TODO: Need to relearn how to pass pointers to functions between C and julia
 #void set_additional_forces(void (* _cb)(void)){
@@ -44,13 +64,16 @@ function rebound_step()
 end
 
 function set_integrator(integrator_name::ASCIIString)
+  @assert(haskey(INTEGRATORS,integrator_name))
   local integrator_id = INTEGRATORS[integrator_name]
   ccall( (:integrator_set, LIBREBOUND), Void, (Cint,), convert(Cint,integrator_id) )
 end
 
-function rebound_reset()
+function reset()
+  check_particle_struct()
   ccall( (:reset, LIBREBOUND), Void, () )
 end
+
 
 function integrate(tmax::Real, exactFinishTime::Integer=0, keepSynchronized::Integer=0, particlesModified::Integer=0, maxR::Real=0.0, minD::Real=0.0 )
   retval = ccall( (:integrate, LIBREBOUND), Cint, 
@@ -74,7 +97,8 @@ function get_particles()
 end
 
 function get_particle(id::Integer)
-  return get_particles(id)
+  @assert(1<=id<=get_N())
+  return get_particles()[id]
 end
 
 add(p::rebound_particle_basic)  = ccall( (:particles_add_ptr, LIBREBOUND), Void, (Ptr{rebound_particle_basic},), &p )
@@ -115,4 +139,6 @@ output_append_orbits(filename::Cstring) =  ccall( (:output_append_orbits, LIBREB
 output_binary(filename::Cstring) =  ccall( (:output_binary, LIBREBOUND), Void, (filename,) )
 output_logfile(filename::Cstring) =  ccall( (:output_logfile, LIBREBOUND), Void, (filename,) )
 
+
+end # module Rebound
 
