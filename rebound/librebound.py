@@ -186,25 +186,6 @@ class ReboundModule(types.ModuleType):
             raise Exception("Error:  You cannot set the units after populating the particles array.  See Units.ipynb in python_tutorials.")
         self.update_units(newunits) 
 
-    def convert_particle_units(self, *args): 
-        new_l, new_t, new_m = self.check_units(args)
-        for p in self.particles:
-            self.convert_p(p, self._units['length'], self._units['time'], self._units['mass'], new_l, new_t, new_m)
-        self.update_units((new_l, new_t, new_m))
-
-    def convert_p(self, p, old_l, old_t, old_m, new_l, new_t, new_m):
-        p.m = self.convert_mass(p.m, old_m, new_m)
-        p.x = self.convert_length(p.x, old_l, new_l) 
-        p.y = self.convert_length(p.y, old_l, new_l)
-        p.z = self.convert_length(p.z, old_l, new_l)
-        p.vx = self.convert_vel(p.vx, old_l, old_t, new_l, new_t)
-        p.vy = self.convert_vel(p.vy, old_l, old_t, new_l, new_t)
-        p.vz = self.convert_vel(p.vz, old_l, old_t, new_l, new_t)
-        p.ax = self.convert_acc(p.ax, old_l, old_t, new_l, new_t)
-        p.ay = self.convert_acc(p.ay, old_l, old_t, new_l, new_t)
-        p.az = self.convert_acc(p.az, old_l, old_t, new_l, new_t)
-        return p
-
     def check_units(self, newunits):   
         if len(newunits) is not 3:
             raise Exception("Error: Need to pass exactly 3 units for length, time, and mass (any order), see python_tutorials/Units.ipynb")
@@ -229,6 +210,25 @@ class ReboundModule(types.ModuleType):
         self._units['time'] = newunits[1] 
         self._units['mass'] = newunits[2] 
         self.G = self.convert_G(self._units['length'], self._units['time'], self._units['mass'])
+
+    def convert_particle_units(self, *args): 
+        new_l, new_t, new_m = self.check_units(args)
+        for p in self.particles:
+            self.convert_p(p, self._units['length'], self._units['time'], self._units['mass'], new_l, new_t, new_m)
+        self.update_units((new_l, new_t, new_m))
+
+    def convert_p(self, p, old_l, old_t, old_m, new_l, new_t, new_m):
+        p.m = self.convert_mass(p.m, old_m, new_m)
+        p.x = self.convert_length(p.x, old_l, new_l) 
+        p.y = self.convert_length(p.y, old_l, new_l)
+        p.z = self.convert_length(p.z, old_l, new_l)
+        p.vx = self.convert_vel(p.vx, old_l, old_t, new_l, new_t)
+        p.vy = self.convert_vel(p.vy, old_l, old_t, new_l, new_t)
+        p.vz = self.convert_vel(p.vz, old_l, old_t, new_l, new_t)
+        p.ax = self.convert_acc(p.ax, old_l, old_t, new_l, new_t)
+        p.ay = self.convert_acc(p.ay, old_l, old_t, new_l, new_t)
+        p.az = self.convert_acc(p.az, old_l, old_t, new_l, new_t)
+        return p
 
     def convert_mass(self, mass, old_m, new_m):
         return mass*masses_SI[old_m]/masses_SI[new_m]
@@ -385,6 +385,7 @@ class ReboundModule(types.ModuleType):
         return self.clibrebound.tools_energy()
 
     def reset(self):
+        self._units = {'length':None, 'time':None, 'mass':None}
         debug.reset_debug()
         self.clibrebound.reset()
 
