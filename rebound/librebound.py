@@ -64,6 +64,14 @@ class ReboundModule(types.ModuleType):
             # C function pointer
             self.clibrebound.set_additional_forces_with_parameters(func)
 
+    @property
+    def post_timestep_modifications(self):
+        return self.fp   # might not be needed
+
+    @post_timestep_modifications.setter
+    def post_timestep_modifications(self,func):
+        self.clibrebound.set_post_timestep_modifications(func)
+
 # Setter/getter of parameters and constants
     @property
     def G(self):
@@ -137,7 +145,7 @@ class ReboundModule(types.ModuleType):
     @integrator.setter
     def integrator(self,value):
         if isinstance(value, int):
-            self.clibrebound.integrator_set(c_int(value))
+            self.clibrebound.set_integrator(c_int(value))
         elif isinstance(value, basestring):
             debug.integrator_fullname = value
             debug.integrator_package = "REBOUND"
@@ -314,15 +322,40 @@ class ReboundModule(types.ModuleType):
     def load(self, filename):
         self.clibrebound.input_binary(c_char_p(filename.encode("ascii")))
         
+# Integrator Flags
+    @property
+    def recalculate_jacobi_every_timestep(self):
+        return self.clibrebound.get_recalculate_jacobi_every_timestep()
 
+    @recalculate_jacobi_every_timestep.setter
+    def recalculate_jacobi_every_timestep(self, value):
+        self.clibrebound.set_recalculate_jacobi_every_timestep(c_int(value))
+
+    @property
+    def synchronize_every_timestep(self):
+        return self.clibrebound.get_synchronize_every_timestep()
+
+    @synchronize_every_timestep.setter
+    def synchronize_every_timestep(self, value):
+        self.clibrebound.set_recalculate_jacobi_every_timestep(c_int(value))
+
+    @property
+    def particles_modified(self):
+        return self.clibrebound.get_particles_modified()
+
+    @particles_modified.setter
+    def particles_modified(self, value):
+        self.clibrebound.set_particles_modified(c_int(value))
+    
 # Integration
-    def step(self):
-        self.clibrebound.rebound_step()
 
-    def integrate(self, tmax, exactFinishTime=1, keepSynchronized=0, particlesModified=1, maxR=0., minD=0.):
+    def step(self, do_timing = 1):
+        self.clibrebound.rebound_step(c_int(do_timing))
+
+    def integrate(self, tmax, exact_finish_time=1, maxR=0., minD=0.):
         if debug.integrator_package =="REBOUND":
             self.clibrebound.integrate.restype = c_int
-            ret_value = self.clibrebound.integrate(c_double(tmax),c_int(exactFinishTime),c_int(keepSynchronized),c_int(particlesModified),c_double(maxR),c_double(minD))
+            ret_value = self.clibrebound.integrate(c_double(tmax),c_int(exact_finish_time),c_double(maxR),c_double(minD))
             if ret_value == 1:
                 raise self.NoParticleLeft("No more particles left in simulation.")
             if ret_value == 2:
@@ -331,7 +364,7 @@ class ReboundModule(types.ModuleType):
                 raise self.CloseEncounter(c_int.in_dll(self.clibrebound, "closeEncounterPi").value,
                                      c_int.in_dll(self.clibrebound, "closeEncounterPj").value)
         else:
-            debug.integrate_other_package(tmax,exactFinishTime,keepSynchronized)
+            debug.integrate_other_package(tmax,exact_finish_time,synchronize_each_timestep)
 
 # Exceptions    
     class CloseEncounter(Exception):

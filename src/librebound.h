@@ -32,7 +32,7 @@ void		integrator_set(int i);
 /*
  * Integrate for one step.
  */
-void rebound_step(void);
+void rebound_step(int first_timestep, int sync, int particles_modified, int do_timing);
 
 /* Integrate until t=_tmax.
  * The integration finisheds exactly at _tmax if 
@@ -52,7 +52,7 @@ void rebound_step(void);
  *   2 = Particle distance exceeds maxR
  *   3 = Close encounter closer than minD
  */
-int integrate(double _tmax, int exactFinishTime, int keepSynchronized, int particlesModified, double maxR, double minD);
+int integrate(double _tmax, int exact_finish_time, int synchronize_each_timestep, int particles_modified, double maxR, double minD);
 
 /*
  * This function allows the user to add additional (non-gravitational) forces.
@@ -63,5 +63,10 @@ extern void (*problem_additional_forces) (void);
  * This function allows the user to add additional (non-gravitational) forces.
  */
 extern void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno);
+
+/*
+ * This function allows the user to modify particles after a timestep is completed. 
+ */
+extern void (*post_timestep_modifications) (struct particle* particles, double t, double dt, double G, int N, int N_megno);
 
 #endif

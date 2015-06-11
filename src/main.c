@@ -69,7 +69,7 @@ int root_n		= 1;
 
 void (*problem_additional_forces) (void) = NULL;
 void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;
-
+void (*post_timestep_modifications) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;  
 static char* 	logo[];		/**< Logo of rebound. */
 
 void init_boxwidth(double _boxwidth){

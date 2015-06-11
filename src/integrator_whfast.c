@@ -6,7 +6,7 @@
  * 
  * @section 	LICENSE
  * Copyright (c) 2015 Hanno Rein, Daniel Tamayo
- *
+ *l
  * This file is part of rebound.
  *
  * rebound is free software: you can redistribute it and/or modify
@@ -41,9 +41,12 @@
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
 
-unsigned int integrator_whfast_synchronize_manually 		= 0;
-unsigned int integrator_whfast_corrector 			= 11;
-unsigned int integrator_whfast_particles_modified		= 0;
+// the defaults below are chosen to safeguard the user against spurious results, but
+// will be slower and less accurate
+unsigned int integrator_whfast_recalculate_jacobi_every_timestep = 1;
+unsigned int integrator_whfast_synchronize_every_timestep 		= 1;
+unsigned int integrator_whfast_corrector 						= 0;
+unsigned int integrator_whfast_particles_modified				= 1;
 
 static unsigned int integrator_whfast_is_synchronized = 1;
 static unsigned int integrator_allocated_N = 0;
@@ -731,19 +734,17 @@ static void integrator_apply_corrector(double inv){
 	}
 }
 
-
-void integrator_whfast_part1(void){
+void integrator_whfast_part1(){
 	gravity_ignore_10 = 1;
-	unsigned int recalculate_jacobi = (!integrator_whfast_synchronize_manually) || integrator_whfast_particles_modified;
 	if (integrator_allocated_N != N){
 		integrator_allocated_N = N;
 		p_j = realloc(p_j,sizeof(struct particle)*N);
 		eta = realloc(eta,sizeof(double)*(N-N_megno));
 		etai= realloc(etai,sizeof(double)*(N-N_megno));
-		recalculate_jacobi = 1;		// Recalculate masses/Jacobi coordinates if first timestep or if N changes.
+		integrator_whfast_particles_modified = 1;
 	}
 	// Only recalculate Jacobi coordinates if needed
-	if (recalculate_jacobi){
+	if (integrator_whfast_recalculate_jacobi_every_timestep || integrator_whfast_particles_modified){
 		if (integrator_whfast_is_synchronized==0){
 			integrator_whfast_synchronize();
 			fprintf(stderr,"\n\033[1mWarning!\033[0m Need to recalculate Jacobi coordinates but pos/vel were not synchronized.\n");
@@ -819,17 +820,13 @@ void integrator_whfast_part2(void){
 
 	double _dt2 = dt/2.;
 	integrator_whfast_is_synchronized = 0;
-	if (!integrator_whfast_synchronize_manually){
+	if (integrator_whfast_synchronize_every_timestep || N_megno){
 		integrator_whfast_synchronize();
 	}
 	
 	t+=_dt2;
 
 	if (N_megno){
-		if (integrator_whfast_is_synchronized==0 && integrator_synchronized_megno_warning==0){
-			integrator_synchronized_megno_warning++;
-			fprintf(stderr,"\n\033[1mWarning!\033[0m MEGNO requires synchronized output at every timestep.\n");
-		}
 		p_j[N_megno].x += _dt2*p_j[N_megno].vx;
 		p_j[N_megno].y += _dt2*p_j[N_megno].vy;
 		p_j[N_megno].z += _dt2*p_j[N_megno].vz;
@@ -874,12 +871,12 @@ void integrator_whfast_part2(void){
 	}
 }
 	
-
 void integrator_whfast_reset(void){
 	integrator_whfast_corrector = 11;
 	integrator_whfast_is_synchronized = 1;
-	integrator_whfast_synchronize_manually = 0;
+	integrator_whfast_synchronize_every_timestep = 1;
 	integrator_whfast_particles_modified = 0;
+	integrator_whfast_recalculate_jacobi_every_timestep = 1;
 	integrator_allocated_N = 0;
 	integrator_timestep_warning = 0;
 	integrator_synchronized_megno_warning = 0;

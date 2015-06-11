@@ -59,9 +59,11 @@ extern unsigned int integrator_whfast_particles_modified;
  *   call output routines
  *   (continue with integration)
  *  
- * Default is 0 (produces synchronized outputs at every timestep).
+ * Default is 1 (produces synchronized outputs at every timestep).
  * Note that whenever you change particles manually, you need to
  * set integrator_whfast_particles_modified to 1.
  **/
-extern unsigned int integrator_whfast_synchronize_manually;
+extern unsigned int integrator_whfast_sync;
+
+extern unsigned int integrator_whfast_first_timestep;
 #endif
