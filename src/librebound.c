@@ -104,7 +104,7 @@ void step(int do_timing){
 	if (problem_post_timestep_modifications){
 		integrator_synchronize();
 		problem_post_timestep_modifications(particles, t, dt, G, N, N_megno);
-		set_particles_modified(1);
+		integrator_whfast_particles_modified = 1;
 	}
 	if (do_timing){
 		gettimeofday(&tim, NULL);
