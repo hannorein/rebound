@@ -57,7 +57,7 @@ const char *build_str = __DATE__ " " __TIME__;
 // Function pointer to additional forces
 void (*problem_additional_forces) (void) = NULL;
 void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;
-void (*post_timestep_modifications) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;  
+void (*problem_post_timestep_modifications) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;  
 
 // Particle getter/setter methods.
 void setp(struct particle* _p){
@@ -78,7 +78,7 @@ void set_additional_forces_with_parameters(void (* _cb)(struct particle* particl
 	problem_additional_forces_with_parameters = _cb;
 }
 void set_post_timestep_modifications(void (* _cb)(struct particle* particles, double t, double dt, double G, int N, int N_megno)){
-	post_timestep_modifications = _cb;
+	problem_post_timestep_modifications = _cb;
 }
 
 void set_integrator(int i){
@@ -96,7 +96,7 @@ void set_synchronize_every_timestep(int val){
 	integrator_whfast_synchronize_every_timestep = val;
 }
 
-void get_synchronize_every_timestep(){
+int get_synchronize_every_timestep(){
 	return(integrator_whfast_synchronize_every_timestep);
 }
 
@@ -104,16 +104,8 @@ void set_particles_modified(int val){
 	integrator_whfast_particles_modified = val;
 }
 
-void get_particles_modified(){
+int get_particles_modified(){
 	return(integrator_whfast_particles_modified);
-}
-
-void set_corrector(int val){
-	integrator_whfast_corrector = val;
-}
-
-void get_corrector(){
-	return(integrator_whfast_corrector);
 }
 
 // Integrate for 1 step
@@ -163,7 +155,7 @@ int integrate(double _tmax, int exact_finish_time, double maxR, double minD){
 	while(t*dtsign<tmax*dtsign && last_step<2 && ret_value==0){
 		if (N<=0){
 			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
-			return;
+			return(1);
 		}
 		rebound_step(0); 								// 0 to not do timing within step
 		if ((t+dt)*dtsign>=tmax*dtsign && exact_finish_time==1){
@@ -228,7 +220,7 @@ void reset(void){
 	particles 	= NULL;
 	problem_additional_forces = NULL;
 	problem_additional_forces_with_parameters = NULL;
-	post_timestep_modifications = NULL;
+	problem_post_timestep_modifications = NULL;
 	integrator_reset();
 	struct timeval tim;
 	gettimeofday(&tim, NULL);

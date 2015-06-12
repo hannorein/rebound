@@ -63,7 +63,7 @@ extern unsigned int integrator_whfast_particles_modified;
  * Note that whenever you change particles manually, you need to
  * set integrator_whfast_particles_modified to 1.
  **/
-extern unsigned int integrator_whfast_sync;
+extern unsigned int integrator_whfast_synchronize_every_timestep;
 
-extern unsigned int integrator_whfast_first_timestep;
+extern unsigned int integrator_whfast_recalculate_jacobi_every_timestep;
 #endif
