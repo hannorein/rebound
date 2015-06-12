@@ -126,14 +126,6 @@ class ReboundModule(types.ModuleType):
     def N_active(self, value):
         c_int.in_dll(self.clibrebound, "N_active").value = value
 
-    @property 
-    def integrator_whfast_corrector(self):
-        return c_int.in_dll(self.clibrebound, "integrator_whfast_corrector").value
-    
-    @integrator_whfast_corrector.setter 
-    def integrator_whfast_corrector(self, value):
-        c_int.in_dll(self.clibrebound, "integrator_whfast_corrector").value = value
-
     @property
     def integrator(self):
         i = c_int.in_dll(self.clibrebound, "integrator").value
@@ -152,9 +144,10 @@ class ReboundModule(types.ModuleType):
             value = value.lower()
             if value in INTEGRATORS: 
                 self.integrator = INTEGRATORS[value]
-                self.integrator_whfast_corrector = 11
-            elif value.lower() == "whfast-nocor":
-                self.integrator = INTEGRATORS["whfast"]
+            elif value.lower() == "whfast": 
+                self.recalculate_jacobi_every_timestep = 1
+                self.synchronize_every_timestep = 1
+                self.particles_modified = 1
                 self.integrator_whfast_corrector = 0
             elif value.lower() == "mercury":
                 debug.integrator_package = "MERCURY"
@@ -167,7 +160,7 @@ class ReboundModule(types.ModuleType):
             elif value.lower() == "swifter-tu4":
                 debug.integrator_package = "SWIFTER"
             else:
-                raise ValueError("Warning. Intergrator not found.")
+                raise ValueError("Warning. Integrator not found.")
 
     @property
     def force_is_velocitydependent(self):
@@ -323,34 +316,42 @@ class ReboundModule(types.ModuleType):
         self.clibrebound.input_binary(c_char_p(filename.encode("ascii")))
         
 # Integrator Flags
+    @property 
+    def integrator_whfast_corrector(self):
+        return c_int.in_dll(self.clibrebound, "integrator_whfast_corrector").value
+    
+    @integrator_whfast_corrector.setter 
+    def integrator_whfast_corrector(self, value):
+        c_int.in_dll(self.clibrebound, "integrator_whfast_corrector").value = value
+
     @property
     def recalculate_jacobi_every_timestep(self):
-        return self.clibrebound.get_recalculate_jacobi_every_timestep()
+        return c_int.in_dll(self.clibrebound, "integrator_whfast_recalculate_jacobi_every_timestep").value
 
     @recalculate_jacobi_every_timestep.setter
     def recalculate_jacobi_every_timestep(self, value):
-        self.clibrebound.set_recalculate_jacobi_every_timestep(c_int(value))
+        c_int.in_dll(self.clibrebound, "integrator_whfast_recalculate_jacobi_every_timestep").value = value
 
     @property
     def synchronize_every_timestep(self):
-        return self.clibrebound.get_synchronize_every_timestep()
+        return c_int.in_dll(self.clibrebound, "integrator_whfast_synchronize_every_timestep").value
 
     @synchronize_every_timestep.setter
     def synchronize_every_timestep(self, value):
-        self.clibrebound.set_recalculate_jacobi_every_timestep(c_int(value))
+        c_int.in_dll(self.clibrebound, "integrator_whfast_synchronize_every_timestep").value = value
 
     @property
     def particles_modified(self):
-        return self.clibrebound.get_particles_modified()
+        return c_int.in_dll(self.clibrebound, "integrator_whfast_particles_modified").value
 
     @particles_modified.setter
     def particles_modified(self, value):
-        self.clibrebound.set_particles_modified(c_int(value))
+        c_int.in_dll(self.clibrebound, "integrator_whfast_particles_modified").value = value
     
 # Integration
 
     def step(self, do_timing = 1):
-        self.clibrebound.rebound_step(c_int(do_timing))
+        self.clibrebound.step(c_int(do_timing))
 
     def integrate(self, tmax, exact_finish_time=1, maxR=0., minD=0.):
         if debug.integrator_package =="REBOUND":

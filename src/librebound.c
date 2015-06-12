@@ -85,29 +85,6 @@ void set_integrator(int i){
 	integrator = i;
 }
 
-void set_recalculate_jacobi_every_timestep(int val){
-	integrator_whfast_recalculate_jacobi_every_timestep= val;
-}
-int get_recalculate_jacobi_every_timestep(){
-	return(integrator_whfast_recalculate_jacobi_every_timestep);
-}
-
-void set_synchronize_every_timestep(int val){
-	integrator_whfast_synchronize_every_timestep = val;
-}
-
-int get_synchronize_every_timestep(){
-	return(integrator_whfast_synchronize_every_timestep);
-}
-
-void set_particles_modified(int val){
-	integrator_whfast_particles_modified = val;
-}
-
-int get_particles_modified(){
-	return(integrator_whfast_particles_modified);
-}
-
 // Integrate for 1 step
 void step(int do_timing){
     struct timeval tim;
@@ -157,7 +134,7 @@ int integrate(double _tmax, int exact_finish_time, double maxR, double minD){
 			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
 			return(1);
 		}
-		rebound_step(0); 								// 0 to not do timing within step
+		step(0); 								// 0 to not do timing within step
 		if ((t+dt)*dtsign>=tmax*dtsign && exact_finish_time==1){
 			integrator_synchronize();
 			dt = tmax-t;
