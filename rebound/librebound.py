@@ -351,7 +351,7 @@ class ReboundModule(types.ModuleType):
 # Integration
 
     def step(self, do_timing = 1):
-        self.clibrebound.step(c_int(do_timing))
+        self.clibrebound.rebound_step(c_int(do_timing))
 
     def integrate(self, tmax, exact_finish_time=1, maxR=0., minD=0.):
         if debug.integrator_package =="REBOUND":

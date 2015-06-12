@@ -86,7 +86,7 @@ void set_integrator(int i){
 }
 
 // Integrate for 1 step
-void step(int do_timing){
+void rebound_step(int do_timing){
     struct timeval tim;
 	double timing_initial, timing_final;
 	if (do_timing){
