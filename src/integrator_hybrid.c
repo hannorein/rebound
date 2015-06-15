@@ -101,7 +101,7 @@ void integrator_hybrid_part1(void){
 	}else{
 		if (integrator_hybrid_mode==IAS15){
 			//integrator_whfast_reset(); 
-			integrator_whfast_particles_modified = 1;
+			integrator_whfast_recalculate_jacobi_this_timestep = 1;
 			dt = initial_dt;
 		}
 		integrator_hybrid_mode = WHFAST;

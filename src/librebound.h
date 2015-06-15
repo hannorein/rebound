@@ -64,9 +64,10 @@ extern void (*problem_additional_forces) (void);
  */
 extern void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno);
 
+extern void (*post_timestep_modifications) (void);
 /*
  * This function allows the user to modify particles after a timestep is completed. 
  */
-extern void (*post_timestep_modifications) (struct particle* particles, double t, double dt, double G, int N, int N_megno);
+extern void (*post_timestep_modifications_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno);
 
 #endif

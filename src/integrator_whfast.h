@@ -47,7 +47,7 @@ extern unsigned int integrator_whfast_corrector;
  * flag to 1 before every timestep.
  * Default is 0.
  **/ 
-extern unsigned int integrator_whfast_particles_modified;
+extern unsigned int integrator_whfast_recalculate_jacobi_this_timestep;
 
 /*
  * Flag determining if the integrator produces synchronized outputs at
@@ -61,7 +61,7 @@ extern unsigned int integrator_whfast_particles_modified;
  *  
  * Default is 1 (produces synchronized outputs at every timestep).
  * Note that whenever you change particles manually, you need to
- * set integrator_whfast_particles_modified to 1.
+ * set integrator_whfast_recalculate_jacobi_this_timestep to 1.
  **/
 extern unsigned int integrator_whfast_synchronize_every_timestep;
 

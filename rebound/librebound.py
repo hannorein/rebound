@@ -21,7 +21,8 @@ class ReboundModule(types.ModuleType):
         raise
 
     AFF = CFUNCTYPE(None)
-    fp = None
+    afp = None # additional forces pointer
+    ptmp = None # post timestep modifications pointer 
 
 # Status functions
     @property
@@ -52,25 +53,33 @@ class ReboundModule(types.ModuleType):
 # Set function pointer for additional forces
     @property
     def additional_forces(self):
-        return self.fp   # might not be needed
+        return self.afp   # might not be needed
 
     @additional_forces.setter
     def additional_forces(self,func):
         if(isinstance(func,types.FunctionType)):
             # Python function pointer
-            self.fp = self.AFF(func)
-            self.clibrebound.set_additional_forces(self.fp)
+            self.afp = self.AFF(func)
+            self.clibrebound.set_additional_forces(self.afp)
         else:
             # C function pointer
             self.clibrebound.set_additional_forces_with_parameters(func)
+            self.afp = "C function pointer value currently not accessible from python.  Edit librebound.py"
 
     @property
     def post_timestep_modifications(self):
-        return self.fp   # might not be needed
+        return self.ptmp
 
     @post_timestep_modifications.setter
     def post_timestep_modifications(self,func):
-        self.clibrebound.set_post_timestep_modifications(func)
+        if(isinstance(func, types.FunctionType)):
+            # Python function pointer
+            self.ptmp = self.AFF(func)
+            self.clibrebound.set_post_timestep_modifications(self.ptmp)
+        else:
+            # C function pointer
+            self.clibrebound.set_post_timestep_modifications_with_parameters(func)
+            self.ptmp = "C function pointer value currently not accessible from python.  Edit librebound.py" 
 
 # Setter/getter of parameters and constants
     @property
@@ -147,7 +156,7 @@ class ReboundModule(types.ModuleType):
             elif value.lower() == "whfast": 
                 self.recalculate_jacobi_every_timestep = 1
                 self.synchronize_every_timestep = 1
-                self.particles_modified = 1
+                self.recalculate_jacobi_this_timestep = 1
                 self.integrator_whfast_corrector = 0
             elif value.lower() == "mercury":
                 debug.integrator_package = "MERCURY"
@@ -341,12 +350,12 @@ class ReboundModule(types.ModuleType):
         c_int.in_dll(self.clibrebound, "integrator_whfast_synchronize_every_timestep").value = value
 
     @property
-    def particles_modified(self):
-        return c_int.in_dll(self.clibrebound, "integrator_whfast_particles_modified").value
+    def recalculate_jacobi_this_timestep(self):
+        return c_int.in_dll(self.clibrebound, "integrator_whfast_recalculate_jacobi_this_timestep").value
 
-    @particles_modified.setter
-    def particles_modified(self, value):
-        c_int.in_dll(self.clibrebound, "integrator_whfast_particles_modified").value = value
+    @recalculate_jacobi_this_timestep.setter
+    def recalculate_jacobi_this_timestep(self, value):
+        c_int.in_dll(self.clibrebound, "integrator_whfast_recalculate_jacobi_this_timestep").value = value
     
 # Integration
 
@@ -355,8 +364,8 @@ class ReboundModule(types.ModuleType):
 
     def integrate(self, tmax, exact_finish_time=1, maxR=0., minD=0.):
         if debug.integrator_package =="REBOUND":
-            self.clibrebound.integrate.restype = c_int
-            ret_value = self.clibrebound.integrate(c_double(tmax),c_int(exact_finish_time),c_double(maxR),c_double(minD))
+            self.clibrebound.rebound_integrate.restype = c_int
+            ret_value = self.clibrebound.rebound_integrate(c_double(tmax),c_int(exact_finish_time),c_double(maxR),c_double(minD))
             if ret_value == 1:
                 raise self.NoParticleLeft("No more particles left in simulation.")
             if ret_value == 2:

@@ -6,7 +6,7 @@
  * 
  * @section 	LICENSE
  * Copyright (c) 2015 Hanno Rein, Daniel Tamayo
- *l
+ *
  * This file is part of rebound.
  *
  * rebound is free software: you can redistribute it and/or modify
@@ -46,7 +46,7 @@
 unsigned int integrator_whfast_recalculate_jacobi_every_timestep = 1;
 unsigned int integrator_whfast_synchronize_every_timestep 		= 1;
 unsigned int integrator_whfast_corrector 						= 0;
-unsigned int integrator_whfast_particles_modified				= 1;
+unsigned int integrator_whfast_recalculate_jacobi_this_timestep				= 1;
 
 static unsigned int integrator_whfast_is_synchronized = 1;
 static unsigned int integrator_allocated_N = 0;
@@ -741,10 +741,10 @@ void integrator_whfast_part1(){
 		p_j = realloc(p_j,sizeof(struct particle)*N);
 		eta = realloc(eta,sizeof(double)*(N-N_megno));
 		etai= realloc(etai,sizeof(double)*(N-N_megno));
-		integrator_whfast_particles_modified = 1;
+		integrator_whfast_recalculate_jacobi_this_timestep = 1;
 	}
 	// Only recalculate Jacobi coordinates if needed
-	if (integrator_whfast_recalculate_jacobi_every_timestep || integrator_whfast_particles_modified){
+	if (integrator_whfast_recalculate_jacobi_every_timestep || integrator_whfast_recalculate_jacobi_this_timestep){
 		if (integrator_whfast_is_synchronized==0){
 			integrator_whfast_synchronize();
 			fprintf(stderr,"\n\033[1mWarning!\033[0m Need to recalculate Jacobi coordinates but pos/vel were not synchronized.\n");
@@ -762,7 +762,7 @@ void integrator_whfast_part1(){
 		}
 		Mtotal  = eta[N-N_megno-1];
 		Mtotali = etai[N-N_megno-1];
-		integrator_whfast_particles_modified = 0;
+		integrator_whfast_recalculate_jacobi_this_timestep = 0;
 		integrator_to_jacobi_posvel();
 		if (N_megno){
 			integrator_var_to_jacobi_posvel();
@@ -875,7 +875,7 @@ void integrator_whfast_reset(void){
 	integrator_whfast_corrector = 11;
 	integrator_whfast_is_synchronized = 1;
 	integrator_whfast_synchronize_every_timestep = 1;
-	integrator_whfast_particles_modified = 0;
+	integrator_whfast_recalculate_jacobi_this_timestep = 0;
 	integrator_whfast_recalculate_jacobi_every_timestep = 1;
 	integrator_allocated_N = 0;
 	integrator_timestep_warning = 0;

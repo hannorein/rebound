@@ -57,7 +57,8 @@ const char *build_str = __DATE__ " " __TIME__;
 // Function pointer to additional forces
 void (*problem_additional_forces) (void) = NULL;
 void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;
-void (*problem_post_timestep_modifications) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;  
+void (*problem_post_timestep_modifications) (void) = NULL;
+void (*problem_post_timestep_modifications_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;  
 
 // Particle getter/setter methods.
 void setp(struct particle* _p){
@@ -77,8 +78,11 @@ void set_additional_forces(void (* _cb)(void)){
 void set_additional_forces_with_parameters(void (* _cb)(struct particle* particles, double t, double dt, double G, int N, int N_megno)){
 	problem_additional_forces_with_parameters = _cb;
 }
-void set_post_timestep_modifications(void (* _cb)(struct particle* particles, double t, double dt, double G, int N, int N_megno)){
+void set_post_timestep_modifications(void (* _cb)(void)){
 	problem_post_timestep_modifications = _cb;
+}
+void set_post_timestep_modifications_with_parameters(void (* _cb)(struct particle* particles, double t, double dt, double G, int N, int N_megno)){
+	problem_post_timestep_modifications_with_parameters = _cb;
 }
 
 void set_integrator(int i){
@@ -103,8 +107,13 @@ void rebound_step(int do_timing){
 	integrator_part2();
 	if (problem_post_timestep_modifications){
 		integrator_synchronize();
-		problem_post_timestep_modifications(particles, t, dt, G, N, N_megno);
-		integrator_whfast_particles_modified = 1;
+		problem_post_timestep_modifications();
+		integrator_whfast_recalculate_jacobi_this_timestep = 1;
+	}
+	if (problem_post_timestep_modifications_with_parameters){
+		integrator_synchronize();
+		problem_post_timestep_modifications_with_parameters(particles, t, dt, G, N, N_megno);
+		integrator_whfast_recalculate_jacobi_this_timestep = 1;
 	}
 	if (do_timing){
 		gettimeofday(&tim, NULL);
@@ -119,7 +128,7 @@ void rebound_step(int do_timing){
 //   1 = No particles left
 //   2 = Particle distance exceeds maxR
 //   3 = Close encounter closer than minD
-int integrate(double _tmax, int exact_finish_time, double maxR, double minD){
+int rebound_integrate(double _tmax, int exact_finish_time, double maxR, double minD){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
@@ -134,7 +143,7 @@ int integrate(double _tmax, int exact_finish_time, double maxR, double minD){
 			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
 			return(1);
 		}
-		step(0); 								// 0 to not do timing within step
+		rebound_step(0); 								// 0 to not do timing within step
 		if ((t+dt)*dtsign>=tmax*dtsign && exact_finish_time==1){
 			integrator_synchronize();
 			dt = tmax-t;
@@ -198,6 +207,7 @@ void reset(void){
 	problem_additional_forces = NULL;
 	problem_additional_forces_with_parameters = NULL;
 	problem_post_timestep_modifications = NULL;
+	problem_post_timestep_modifications_with_parameters = NULL;
 	integrator_reset();
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
