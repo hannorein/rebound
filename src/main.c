@@ -165,6 +165,16 @@ void iterate(void){
 	// A 'DKD'-like integrator will do the 'KD' part.
 	PROFILING_START()
 	integrator_part2();
+	if (problem_post_timestep_modifications){
+		integrator_synchronize();
+		problem_post_timestep_modifications();
+		integrator_whfast_recalculate_jacobi_this_timestep = 1;
+	}
+	if (problem_post_timestep_modifications_with_parameters){
+		integrator_synchronize();
+		problem_post_timestep_modifications_with_parameters(particles, t, dt, G, N, N_megno);
+		integrator_whfast_recalculate_jacobi_this_timestep = 1;
+	}
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
 	// Do collisions here. We need both the positions and velocities at the same time.

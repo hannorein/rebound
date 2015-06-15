@@ -44,9 +44,9 @@
 // the defaults below are chosen to safeguard the user against spurious results, but
 // will be slower and less accurate
 unsigned int integrator_whfast_recalculate_jacobi_every_timestep = 1;
-unsigned int integrator_whfast_synchronize_every_timestep 		= 1;
-unsigned int integrator_whfast_corrector 						= 0;
-unsigned int integrator_whfast_recalculate_jacobi_this_timestep				= 1;
+unsigned int integrator_whfast_synchronize_every_timestep = 1;
+unsigned int integrator_whfast_corrector = 0;
+unsigned int integrator_whfast_recalculate_jacobi_this_timestep	= 1;
 
 static unsigned int integrator_whfast_is_synchronized = 1;
 static unsigned int integrator_allocated_N = 0;

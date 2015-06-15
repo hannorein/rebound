@@ -56,7 +56,7 @@ class ReboundModule(types.ModuleType):
         return self.afp   # might not be needed
 
     @additional_forces.setter
-    def additional_forces(self,func):
+    def additional_forces(self, func):
         if(isinstance(func,types.FunctionType)):
             # Python function pointer
             self.afp = self.AFF(func)
@@ -71,7 +71,7 @@ class ReboundModule(types.ModuleType):
         return self.ptmp
 
     @post_timestep_modifications.setter
-    def post_timestep_modifications(self,func):
+    def post_timestep_modifications(self, func):
         if(isinstance(func, types.FunctionType)):
             # Python function pointer
             self.ptmp = self.AFF(func)
@@ -87,7 +87,7 @@ class ReboundModule(types.ModuleType):
         return c_double.in_dll(self.clibrebound, "G").value
 
     @G.setter
-    def G(self,value):
+    def G(self, value):
         c_double.in_dll(self.clibrebound, "G").value = value
 
     @property
@@ -125,7 +125,7 @@ class ReboundModule(types.ModuleType):
 
     @property
     def N(self):
-        return c_int.in_dll(self.clibrebound,"N").value 
+        return c_int.in_dll(self.clibrebound, "N").value 
     
     @property
     def N_active(self):
@@ -144,7 +144,7 @@ class ReboundModule(types.ModuleType):
         return i
 
     @integrator.setter
-    def integrator(self,value):
+    def integrator(self, value):
         if isinstance(value, int):
             self.clibrebound.set_integrator(c_int(value))
         elif isinstance(value, basestring):
@@ -176,7 +176,7 @@ class ReboundModule(types.ModuleType):
         return c_int.in_dll(self.clibrebound, "integrator_force_is_velocitydependent").value
 
     @force_is_velocitydependent.setter
-    def force_is_velocitydependent(self,value):
+    def force_is_velocitydependent(self, value):
         if isinstance(value, int):
             c_int.in_dll(self.clibrebound, "integrator_force_is_velocitydependent").value = value
             return
@@ -219,12 +219,12 @@ class ReboundModule(types.ModuleType):
         5) A list of particles or names.
         """
         if particle is not None:
-            if isinstance(particle,Particle):
+            if isinstance(particle, Particle):
                 self.clibrebound.particles_add(particle)
-            elif isinstance(particle,list):
+            elif isinstance(particle, list):
                 for p in particle:
                     self.add(p)
-            elif isinstance(particle,str):
+            elif isinstance(particle, str):
                 self.add(horizons.getParticle(particle,**kwargs))
         else: 
             self.add(Particle(**kwargs))
@@ -252,7 +252,7 @@ class ReboundModule(types.ModuleType):
 
 
 # Orbit calculation
-    def calculate_orbits(self,heliocentric=False):
+    def calculate_orbits(self, heliocentric=False):
         """ Returns an array of Orbits of length N-1.
 
         Parameters
@@ -272,7 +272,7 @@ class ReboundModule(types.ModuleType):
         return orbits
 
 # COM calculation 
-    def calculate_com(self,last=None):
+    def calculate_com(self, last=None):
         """Returns the center of momentum for all particles in the simulation"""
         m = 0.
         x = 0.
@@ -283,7 +283,7 @@ class ReboundModule(types.ModuleType):
         vz = 0.
         ps = self.particles    # particle pointer
         if last is not None:
-            last = min(last,self.N)
+            last = min(last, self.N)
         else:
             last = self.N
         for i in range(last):
