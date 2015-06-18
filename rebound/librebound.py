@@ -138,7 +138,7 @@ class ReboundModule(types.ModuleType):
     @property
     def integrator(self):
         i = c_int.in_dll(self.clibrebound, "integrator").value
-        for name, _i in list.iteritems():
+        for name, _i in INTEGRATORS.items():
             if i==_i:
                 return name
         return i
@@ -153,11 +153,6 @@ class ReboundModule(types.ModuleType):
             value = value.lower()
             if value in INTEGRATORS: 
                 self.integrator = INTEGRATORS[value]
-            elif value.lower() == "whfast": 
-                self.recalculate_jacobi_every_timestep = 1
-                self.synchronize_every_timestep = 1
-                self.recalculate_jacobi_this_timestep = 1
-                self.integrator_whfast_corrector = 0
             elif value.lower() == "mercury":
                 debug.integrator_package = "MERCURY"
             elif value.lower() == "swifter-whm":
@@ -334,20 +329,12 @@ class ReboundModule(types.ModuleType):
         c_int.in_dll(self.clibrebound, "integrator_whfast_corrector").value = value
 
     @property
-    def recalculate_jacobi_every_timestep(self):
-        return c_int.in_dll(self.clibrebound, "integrator_whfast_recalculate_jacobi_every_timestep").value
+    def integrator_whfast_safe_mode(self):
+        return c_int.in_dll(self.clibrebound, "integrator_whfast_safe_mode").value
 
-    @recalculate_jacobi_every_timestep.setter
-    def recalculate_jacobi_every_timestep(self, value):
-        c_int.in_dll(self.clibrebound, "integrator_whfast_recalculate_jacobi_every_timestep").value = value
-
-    @property
-    def synchronize_every_timestep(self):
-        return c_int.in_dll(self.clibrebound, "integrator_whfast_synchronize_every_timestep").value
-
-    @synchronize_every_timestep.setter
-    def synchronize_every_timestep(self, value):
-        c_int.in_dll(self.clibrebound, "integrator_whfast_synchronize_every_timestep").value = value
+    @integrator_whfast_safe_mode.setter
+    def integrator_whfast_safe_mode(self, value):
+        c_int.in_dll(self.clibrebound, "integrator_whfast_safe_mode").value = value
 
     @property
     def recalculate_jacobi_this_timestep(self):
@@ -374,7 +361,10 @@ class ReboundModule(types.ModuleType):
                 raise self.CloseEncounter(c_int.in_dll(self.clibrebound, "closeEncounterPi").value,
                                      c_int.in_dll(self.clibrebound, "closeEncounterPj").value)
         else:
-            debug.integrate_other_package(tmax,exact_finish_time,synchronize_each_timestep)
+            debug.integrate_other_package(tmax,exact_finish_time)
+
+    def integrator_synchronize(self):
+        self.clibrebound.integrator_synchronize()
 
 # Exceptions    
     class CloseEncounter(Exception):

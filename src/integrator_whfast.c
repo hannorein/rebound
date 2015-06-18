@@ -43,10 +43,9 @@
 
 // the defaults below are chosen to safeguard the user against spurious results, but
 // will be slower and less accurate
-unsigned int integrator_whfast_recalculate_jacobi_every_timestep = 1;
-unsigned int integrator_whfast_synchronize_every_timestep = 1;
+unsigned int integrator_whfast_safe_mode = 1;
 unsigned int integrator_whfast_corrector = 0;
-unsigned int integrator_whfast_recalculate_jacobi_this_timestep	= 1;
+unsigned int integrator_whfast_recalculate_jacobi_this_timestep	= 0;
 
 static unsigned int integrator_whfast_is_synchronized = 1;
 static unsigned int integrator_allocated_N = 0;
@@ -744,10 +743,10 @@ void integrator_whfast_part1(){
 		integrator_whfast_recalculate_jacobi_this_timestep = 1;
 	}
 	// Only recalculate Jacobi coordinates if needed
-	if (integrator_whfast_recalculate_jacobi_every_timestep || integrator_whfast_recalculate_jacobi_this_timestep){
+	if (integrator_whfast_safe_mode || integrator_whfast_recalculate_jacobi_this_timestep){
 		if (integrator_whfast_is_synchronized==0){
 			integrator_whfast_synchronize();
-			fprintf(stderr,"\n\033[1mWarning!\033[0m Need to recalculate Jacobi coordinates but pos/vel were not synchronized.\n");
+			//fprintf(stderr,"\n\033[1mWarning!\033[0m Need to recalculate Jacobi coordinates but pos/vel were not synchronized.\n");
 		}
 		eta[0] = particles[0].m;
 		etai[0] = 1./eta[0];
@@ -820,7 +819,7 @@ void integrator_whfast_part2(void){
 
 	double _dt2 = dt/2.;
 	integrator_whfast_is_synchronized = 0;
-	if (integrator_whfast_synchronize_every_timestep || N_megno){
+	if (integrator_whfast_safe_mode || N_megno){
 		integrator_whfast_synchronize();
 	}
 	
@@ -872,11 +871,10 @@ void integrator_whfast_part2(void){
 }
 	
 void integrator_whfast_reset(void){
-	integrator_whfast_corrector = 11;
+	integrator_whfast_corrector = 0;
 	integrator_whfast_is_synchronized = 1;
-	integrator_whfast_synchronize_every_timestep = 1;
+	integrator_whfast_safe_mode = 1;
 	integrator_whfast_recalculate_jacobi_this_timestep = 0;
-	integrator_whfast_recalculate_jacobi_every_timestep = 1;
 	integrator_allocated_N = 0;
 	integrator_timestep_warning = 0;
 	integrator_synchronized_megno_warning = 0;
