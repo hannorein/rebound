@@ -11,8 +11,10 @@
  * You probably want to turn off the visualization for any serious runs.
  * Just go to the makefile and set `OPENGL=0`. 
  *
- * The example also works with the Wisdom-Holman symplectic integrator.
- * Simply change the integrator to `integrator_wh.c` in the Makefile.
+ * The example also works with the WHFAST symplectic integrator. We turn
+ * off safe-mode to allow fast and accurate simulations with the symplectic
+ * corrector. If an output is required, you need to call integrator_synchronize()
+ * before accessing the particle structure.
  * 
  * @section 	LICENSE
  * Copyright (c) 2014 Hanno Rein, Shangfei Liu, Dave Spiegel
