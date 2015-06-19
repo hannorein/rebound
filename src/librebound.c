@@ -54,6 +54,10 @@ extern int Nmax;
 extern int iter;  // TODO DEBUG
 const char *build_str = __DATE__ " " __TIME__;
 
+
+breaking travis test 
+
+
 // Function pointer to additional forces
 void (*problem_additional_forces) (void) = NULL;
 void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;
