@@ -5,7 +5,7 @@
  * @detail	This file implements the Symplectic Epicycle Integrator 
  * (SEI). The integrator is described in detail in Rein & Tremaine 2011. 
  * It solves epicyclic motion exactly and is therefore exact up to machine
- * precission in the limit of no perturbing forces. When perturbing-forces
+ * precision in the limit of no perturbing forces. When perturbing-forces
  * are of order eps, then the error of the scheme is O(eps dt^3). It also
  * makes use of two shear operators instead of a rotation to minimize 
  * systematic numerical round-off errors.

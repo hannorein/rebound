@@ -47,21 +47,17 @@ extern unsigned int integrator_whfast_corrector;
  * flag to 1 before every timestep.
  * Default is 0.
  **/ 
-extern unsigned int integrator_whfast_particles_modified;
+extern unsigned int integrator_whfast_recalculate_jacobi_this_timestep;
 
 /*
- * Flag determining if the integrator produces synchronized outputs at
- * the end of the timestep. Setting this to 1 results in a speedup.
- * The general procedure to use this is:
- *   set integrator_synchronize_manually = 1
- *   run integrator for many steps.
- *   call integrator_synchronize()
- *   call output routines
- *   (continue with integration)
- *  
- * Default is 0 (produces synchronized outputs at every timestep).
- * Note that whenever you change particles manually, you need to
- * set integrator_whfast_particles_modified to 1.
+ * If this flag is set (the default), whfast will recalculate jacobi coordinates and synchronize
+ * every timestep, to avoid problems with outputs or particle modifications
+ * between timesteps. Setting it to 0 will result in a speedup, but care
+ * must be taken to synchronize and recalculate jacobi coordinates when needed.
+ * See AdvWHFast.ipynb in the python_tutorials folder (navigate to it on github
+ * if you don't have ipython notebook installed).  The explanation is general, and
+ * the python and C flags have the same names.
  **/
-extern unsigned int integrator_whfast_synchronize_manually;
+extern unsigned int integrator_whfast_safe_mode;
+
 #endif
