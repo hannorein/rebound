@@ -30,6 +30,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include "integrator.h"
+#include "integrator_whfast.h"
 #include "boundaries.h"
 #include "gravity.h"
 #include "problem.h"
@@ -169,12 +170,16 @@ void iterate(void){
 	if (problem_post_timestep_modifications){
 		integrator_synchronize();
 		problem_post_timestep_modifications();
-		integrator_whfast_recalculate_jacobi_this_timestep = 1;
+		if (integrator == WHFAST || integrator == HYBRID){
+			integrator_whfast_recalculate_jacobi_this_timestep = 1;
+		}
 	}
 	if (problem_post_timestep_modifications_with_parameters){
 		integrator_synchronize();
 		problem_post_timestep_modifications_with_parameters(particles, t, dt, G, N, N_megno);
-		integrator_whfast_recalculate_jacobi_this_timestep = 1;
+		if (integrator == WHFAST || integrator == HYBRID){
+			integrator_whfast_recalculate_jacobi_this_timestep = 1;
+		}
 	}
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
