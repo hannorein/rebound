@@ -1,4 +1,5 @@
-install: true
+install:
+    - sudo apt-get install freeglut3-dev
 compiler:
     - clang
     - gcc
