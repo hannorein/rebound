@@ -3,7 +3,7 @@ os:
     - linux
     - osx
 install:
-    - sudo apt-get install freeglut3-dev
+    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install freeglut3-dev; fi
 compiler:
     - clang
     - gcc
