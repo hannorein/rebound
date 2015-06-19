@@ -1,3 +1,7 @@
+language: c
+os:
+    - linux
+    - osx
 install:
     - sudo apt-get install freeglut3-dev
 compiler:
@@ -20,7 +24,6 @@ script:
     - cd $TRAVIS_BUILD_DIR/examples/kozai/ && make
     - cd $TRAVIS_BUILD_DIR/examples/megno/ && make
     - cd $TRAVIS_BUILD_DIR/examples/mergers/ && make
-    - cd $TRAVIS_BUILD_DIR/examples/opencl/ && make
     - cd $TRAVIS_BUILD_DIR/examples/outer_solar_system/ && make
     - cd $TRAVIS_BUILD_DIR/examples/overstability/ && make
     - cd $TRAVIS_BUILD_DIR/examples/prdrag/ && make
@@ -38,6 +41,7 @@ script:
     - cd $TRAVIS_BUILD_DIR/examples/viewer/ && make
 
 # Ignoring examples with complicated dependencies
+#    - cd $TRAVIS_BUILD_DIR/examples/opencl/ && make
 #    - cd examples/restricted_threebody_mpi/ && make
 #    - cd examples/shearing_sheet_fft/ && make
 #    - cd examples/selfgravity_disc_grape/ && make
