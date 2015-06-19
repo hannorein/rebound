@@ -88,7 +88,8 @@ void problem_init(int argc, char* argv[]){
 	tmax		= 7.3e10;			// 200 Myr
 	G		= 1.4880826e-34;		// in AU^3 / kg / day^2.
 	init_boxwidth(200); 				// Init box with width 200 astronomical units
-	integrator_whfast_synchronize_manually = 1;	// Need to call integrator_synchronize() before outputs. 
+	integrator_whfast_safe_mode = 0;		// Turn off safe mode. Need to call integrator_synchronize() before outputs. 
+	integrator_whfast_corrector = 11;		// 11th order symplectic corrector
 	integrator_force_is_velocitydependent = 0;	// Force only depends on positions. 
 	//integrator	= WH;
 	integrator	= WHFAST;
@@ -117,7 +118,6 @@ void problem_init(int argc, char* argv[]){
 	//tools_megno_init(1e-16);
 	e_init = energy();
 	system("rm -f energy.txt");
-	system("rm -f pos.txt");
 }
 
 double energy(){
@@ -145,7 +145,6 @@ void problem_output(){
 		double e = energy();
 		fprintf(f,"%e %e %e\n",t, fabs((e-e_init)/e_init), tools_megno());
 		fclose(f);
-		printf("  Y = %.3f",tools_megno());
 	}
 }
 
