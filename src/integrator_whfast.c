@@ -445,40 +445,6 @@ static void integrator_var_to_jacobi_acc(void){
 	// p_j[N_megno].a is not needed and thus not calculated 
 }
 
-//OLD biased!
-//static void integrator_to_inertial_posvel(void){
-//	double s_x  = 0.; 
-//	double s_y  = 0.; 
-//	double s_z  = 0.; 
-//	double s_vx = 0.; 
-//	double s_vy = 0.; 
-//	double s_vz = 0.; 
-//	for (unsigned int i=N-N_megno-1;i>0;i--){
-//		const struct particle pji = p_j[i];
-//		const double ei = etai[i];
-//		particles[i].x  =-s_x +eta[i-1]/eta[i]* pji.x +p_j[0].x ;
-//		particles[i].y  =-s_y +eta[i-1]/eta[i]* pji.y +p_j[0].y ;
-//		particles[i].z  =-s_z +eta[i-1]/eta[i]* pji.z +p_j[0].z ;
-//		particles[i].vx =-s_vx+eta[i-1]/eta[i]* pji.vx+p_j[0].vx;
-//		particles[i].vy =-s_vy+eta[i-1]/eta[i]* pji.vy+p_j[0].vy;
-//		particles[i].vz =-s_vz+eta[i-1]/eta[i]* pji.vz+p_j[0].vz;
-//		s_x  += pji.m/eta[i] * pji.x ;
-//		s_y  += pji.m/eta[i] * pji.y ;
-//		s_z  += pji.m/eta[i] * pji.z ;
-//		s_vx += pji.m/eta[i] * pji.vx;
-//		s_vy += pji.m/eta[i] * pji.vy;
-//		s_vz += pji.m/eta[i] * pji.vz;
-//	}
-//	const double mi = etai[0];
-//	particles[0].x  = p_j[0].x -s_x ;
-//	particles[0].y  = p_j[0].y -s_y ;
-//	particles[0].z  = p_j[0].z -s_z ;
-//	particles[0].vx = p_j[0].vx-s_vx;
-//	particles[0].vy = p_j[0].vy-s_vy;
-//	particles[0].vz = p_j[0].vz-s_vz;
-//}
-
-//NEW
 static void integrator_to_inertial_posvel(void){
 	double s_x  = p_j[0].x  * Mtotal; 
 	double s_y  = p_j[0].y  * Mtotal; 
