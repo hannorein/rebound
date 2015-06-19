@@ -1,0 +1,6 @@
+install: true
+compiler:
+    - clang
+    - gcc
+script:
+    - make
