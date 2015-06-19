@@ -4,3 +4,4 @@ compiler:
     - gcc
 script:
     - make
+    - cd examples/outer_solar_system/ && make
