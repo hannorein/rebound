@@ -51,9 +51,6 @@ void problem_init(int argc, char* argv[]){
 	integrator_whfast_safe_mode = 0;
 	integrator_whfast_corrector = 11;
 
-#ifdef OPENGL
-	display_wire	= 1;						// show instantaneous orbits
-#endif // OPENGL
 	init_boxwidth(20); 					
 
 	struct particle star;

@@ -41,8 +41,8 @@
 #include "integrator_ias15.h"
 
 // Switch to non-symplectic integrator if force_form_star/force_from_other_particle < integrator_hybrid_switch_ratio.
-// Default corresponds to about 20 Hill Radii 
-double integrator_hybrid_switch_ratio = 400; 
+// Default corresponds to about 10 Hill Radii 
+double integrator_hybrid_switch_ratio = 100; 
 
 static double initial_dt = 0;
 static unsigned int integrator_hybrid_switch_warning = 0;
