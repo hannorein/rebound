@@ -3,7 +3,7 @@ os:
     - linux
     - osx
 install:
-    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install freeglut3-dev; fi
+    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install freeglut3-dev python-virtualenv; fi
     - virtualenv venv && source venv/bin/activate
     - pip install -e .
 compiler:
