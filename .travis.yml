@@ -4,10 +4,12 @@ os:
     - osx
 install:
     - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install freeglut3-dev; fi
+    - pip install -e .
 compiler:
     - clang
     - gcc
 script:
+    - cd $TRAVIS_BUILD_DIR/python_examples/simple_orbit/ && python problem.py
     - make
     - cd $TRAVIS_BUILD_DIR/examples/J2/ && make
     - cd $TRAVIS_BUILD_DIR/examples/bouncing_balls/ && make
