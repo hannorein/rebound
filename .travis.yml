@@ -5,12 +5,14 @@ os:
 install:
     - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install freeglut3-dev python-virtualenv; fi
     - virtualenv venv && source venv/bin/activate
+    - pip install matplotlib numpy
     - pip install -e .
 compiler:
     - clang
     - gcc
 script:
     - cd $TRAVIS_BUILD_DIR/python_examples/simple_orbit/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/megno/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/examples/J2/ && make
     - cd $TRAVIS_BUILD_DIR/examples/bouncing_balls/ && make
     - cd $TRAVIS_BUILD_DIR/examples/bouncing_balls_corners/ && make
