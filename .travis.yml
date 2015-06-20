@@ -13,6 +13,7 @@ compiler:
 script:
     - cd $TRAVIS_BUILD_DIR/python_examples/simple_orbit/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/megno/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/horizons/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/examples/J2/ && make
     - cd $TRAVIS_BUILD_DIR/examples/bouncing_balls/ && make
     - cd $TRAVIS_BUILD_DIR/examples/bouncing_balls_corners/ && make
