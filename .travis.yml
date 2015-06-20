@@ -4,8 +4,8 @@ os:
     - osx
 install:
     - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install freeglut3-dev python-virtualenv; fi
-    - virtualenv venv && source venv/bin/activate
-    - pip install matplotlib numpy
+    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install -qq python-numpy python-matplotlib; fi
+    - virtualenv --system-site-packages venv && source venv/bin/activate
     - pip install -e .
 compiler:
     - clang
