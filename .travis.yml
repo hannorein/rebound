@@ -11,7 +11,6 @@ compiler:
     - gcc
 script:
     - cd $TRAVIS_BUILD_DIR/python_examples/simple_orbit/ && python problem.py
-    - make
     - cd $TRAVIS_BUILD_DIR/examples/J2/ && make
     - cd $TRAVIS_BUILD_DIR/examples/bouncing_balls/ && make
     - cd $TRAVIS_BUILD_DIR/examples/bouncing_balls_corners/ && make
@@ -42,6 +41,7 @@ script:
     - cd $TRAVIS_BUILD_DIR/examples/star_of_david/ && make
     - cd $TRAVIS_BUILD_DIR/examples/stark/ && make
     - cd $TRAVIS_BUILD_DIR/examples/viewer/ && make
+    - cd $TRAVIS_BUILD_DIR && make
 
 # Ignoring examples with complicated dependencies
 #    - cd $TRAVIS_BUILD_DIR/examples/opencl/ && make
