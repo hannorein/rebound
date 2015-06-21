@@ -5,7 +5,7 @@ install:
     - sudo add-apt-repository ppa:jtaylor/ipython-dev -y
     - sudo apt-get update
     - sudo apt-get install freeglut3-dev python-virtualenv
-    - sudo apt-get install -qq python-numpy python-matplotlib ipython 
+    - sudo apt-get install -qq python-numpy python-matplotlib ipython ipython-notebook 
     - virtualenv --system-site-packages venv && source venv/bin/activate
     - pip install mistune  
     - pip install -e .
