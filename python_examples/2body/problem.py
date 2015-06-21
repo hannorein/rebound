@@ -13,7 +13,7 @@ def simulation(par):
 
     rebound.reset()
     rebound.integrator = integrator
-    rebound.whfast_safe_mode = 0
+    rebound.integrator_whfast_safe_mode = 0
     rebound.force_is_velocitydependent = 0
     rebound.dt = dt
 
@@ -111,5 +111,7 @@ fontP = FontProperties()
 fontP.set_size('small')
 plt.savefig("2body.pdf",prop=fontP, bbox_inches='tight')
 print "Average speedup (WH/Mikkola): %.4f" %(np.mean(timing[0])/np.mean(timing[1]))
-import os
-os.system("open 2body.pdf")
+from sys import platform as _platform
+if _platform == "darwin":
+    import os
+    os.system("open 2body.pdf")

@@ -70,7 +70,7 @@ def simulation(par):
     return es
 N=54
 masses = np.linspace(-10.,0.,N)
-integrators = ["wh","whfast-nocor"]
+integrators = ["wh","whfast"]
 parameters = [(i,m) for i in integrators for m in masses]
 
 pool = rebound.InterruptiblePool()
@@ -102,5 +102,7 @@ for i in xrange(len(res)):
 
 plt.legend(loc='upper left')
 plt.savefig("longtermtest.pdf")
-import os
-os.system("open longtermtest.pdf")
+from sys import platform as _platform
+if _platform == "darwin":
+    import os
+    os.system("open longtermtest.pdf")
