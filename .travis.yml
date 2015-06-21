@@ -4,14 +4,13 @@ os:
 install:
     - sudo apt-get update
     - sudo apt-get install freeglut3-dev python-virtualenv
+    - sudo apt-get install -qq python-numpy python-matplotlib 
     - virtualenv --system-site-packages venv && source venv/bin/activate
     - pip install -e .
 compiler:
     - clang
     - gcc
 script:
-    - ipython --version 
-    - ipython notebook --version 
     - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Megno.ipynb 
     - cd $TRAVIS_BUILD_DIR/python_examples/simple_orbit/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/megno/ && python problem.py
