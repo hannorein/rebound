@@ -16,4 +16,4 @@ for c in ipynb["cells"]:
         for s in source:
             if s[0] != "%":
                 code += s.rstrip('\n')+"\n"
-exec code
+print code
