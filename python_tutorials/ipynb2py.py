@@ -1,7 +1,5 @@
 import json
 import sys
-import matplotlib
-print matplotlib.matplotlib_fname()
 
 if len(sys.argv)!=2:
     print "Usage: ipynb2py.py FILENAME"
