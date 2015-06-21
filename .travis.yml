@@ -7,7 +7,6 @@ install:
     - sudo apt-get install -qq python-numpy python-matplotlib 
     - virtualenv --system-site-packages venv && source venv/bin/activate
     - pip install -e .
-    - "sudo echo \"backend: Agg\" >> /etc/matplotlibrc "
 compiler:
     - clang
     - gcc

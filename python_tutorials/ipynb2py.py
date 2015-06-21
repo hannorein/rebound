@@ -1,5 +1,7 @@
 import json
 import sys
+import matplotlib as mpl
+mpl.use('Agg')
 
 if len(sys.argv)!=2:
     print "Usage: ipynb2py.py FILENAME"
