@@ -12,7 +12,7 @@ compiler:
     - clang
     - gcc
 script:
-    - cd $TRAVIS_BUILD_DIR/python_tutorial/ && awk 'index($0,"%matplotlib")==0' Megno.ipynb > stripped.ipynb &&  ipython nbconvert --to=python stripped.ipynb --stdout | python
+    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && awk 'index($0,"%matplotlib")==0' Megno.ipynb > stripped.ipynb &&  ipython nbconvert --to=python stripped.ipynb --stdout | python
     - cd $TRAVIS_BUILD_DIR/python_examples/simple_orbit/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/megno/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/horizons/ && python problem.py
