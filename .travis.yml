@@ -16,6 +16,7 @@ script:
     - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Checkpoints.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Churyumov-Gerasimenko.ipynb | python 
     #- cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Exceptions.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Forces.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/python_examples/simple_orbit/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/megno/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/horizons/ && python problem.py
