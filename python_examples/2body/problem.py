@@ -13,6 +13,7 @@ def simulation(par):
 
     rebound.reset()
     rebound.integrator = integrator
+    rebound.whfast_safe_mode = 0
     rebound.force_is_velocitydependent = 0
     rebound.dt = dt
 
@@ -21,8 +22,8 @@ def simulation(par):
     particles = rebound.particles
     
     Ei = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
-
-    rebound.integrate(tmax,exactFinishTime=0,keepSynchronized=1)
+    
+    rebound.integrate(tmax,exact_finish_time=0)
     
     Ef = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
 
@@ -32,7 +33,7 @@ def simulation(par):
 N = 25
 dts = np.linspace(-3.1,-0.1,N)
 e0s = np.linspace(0,-8,N)
-integrators= ["wh","whfast-nocor"]
+integrators= ["wh","whfast"]
 
 niter = []
 energyerror = []
@@ -43,7 +44,7 @@ for integrator in integrators:
     print("Running "+ integrator)
     parameters = [(1.732, dts[i], e0s[j], integrator) for j in range(N) for i in range(N)]
 
-    pool = rebound.InterruptiblePool(12)
+    pool = rebound.InterruptiblePool(2)
     res = pool.map(simulation,parameters)
     res = np.nan_to_num(res)
     niter.append(res[:,0].reshape((N,N)))
