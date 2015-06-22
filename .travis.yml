@@ -1,0 +1,71 @@
+language: c
+os:
+    - linux
+install:
+    - sudo apt-get update
+    - sudo apt-get install freeglut3-dev python-virtualenv
+    - sudo apt-get install -qq python-numpy python-matplotlib 
+    - virtualenv --system-site-packages venv && source venv/bin/activate
+    - pip install -e .
+compiler:
+    - clang
+    - gcc
+script:
+    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py AdvWHFast.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Checkpoints.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Churyumov-Gerasimenko.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Forces.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Installation.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Testparticles.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Twitter.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py WHfast.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/python_examples/simple_orbit/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/megno/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/horizons/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/2body/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/biastest/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/dragforce/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/longtermtest/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/megno_simple/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/orbital_elements/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/outersolarsystem/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/examples/J2/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/bouncing_balls/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/bouncing_balls_corners/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/bouncing_string/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/circumplanetarydust/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/closeencounter/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/closeencounter_hybrid/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/closeencounter_record/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/dragforce/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/eccentric_orbit/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/forced_migration/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/granulardynamics/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/kozai/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/megno/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/mergers/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/outer_solar_system/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/overstability/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/prdrag/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/restarting_simulation/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/restricted_threebody/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/selfgravity_disc/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/selfgravity_plummer/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/shearing_sheet/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/shearing_sheet_2/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/shearing_sheet_profiling/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/solar_system/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/spreading_ring/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/star_of_david/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/stark/ && make
+    - cd $TRAVIS_BUILD_DIR/examples/viewer/ && make
+    - cd $TRAVIS_BUILD_DIR && make
+
+# Ignoring examples with complicated dependencies
+#    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Megno.ipynb | python 
+#    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Exceptions.ipynb | python 
+#    - cd $TRAVIS_BUILD_DIR/examples/opencl/ && make
+#    - cd examples/restricted_threebody_mpi/ && make
+#    - cd examples/shearing_sheet_fft/ && make
+#    - cd examples/selfgravity_disc_grape/ && make
+#    - cd examples/shearing_sheet_grape/ && make

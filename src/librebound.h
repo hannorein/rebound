@@ -32,15 +32,19 @@ void		integrator_set(int i);
 /*
  * Integrate for one step.
  */
-void rebound_step(void);
+void rebound_step(int do_timing);
 
 /* Integrate until t=_tmax.
  * The integration finisheds exactly at _tmax if 
  * exactFinishTime=1, otherwise REBOUND will overshoot slightly
  * depending on the current timestep.
- * If the keepSynchronized flag is set to 1, then the integrator
- * will synchronized the positions and velocities after every timestep.
- * This will cause the integrator to be slower and less accurate.
+ * If the integrator_whfast_safe_mode flag is set to 1 (default), then the integrator
+ * will synchronize the positions and velocities after every timestep.
+ * This will cause the integrator to be slower and less accurate. To turn off 
+ * safe_mode, and take the appropriate steps manually, see AdvWHFast.ipynb
+ * in the python_tutorials folder (navigate to it on github
+ * if you don't have ipython notebook installed).  The explanation is general, and
+ * the python and C flags have the same names.
  *
  * If maxR or minD are set to a value other than 0, then after every
  * timetep, REBOUND checks if a particle escaped or if two  particles
@@ -52,7 +56,7 @@ void rebound_step(void);
  *   2 = Particle distance exceeds maxR
  *   3 = Close encounter closer than minD
  */
-int integrate(double _tmax, int exactFinishTime, int keepSynchronized, int particlesModified, double maxR, double minD);
+int integrate(double _tmax, int exact_finish_time, double maxR, double minD);
 
 /*
  * This function allows the user to add additional (non-gravitational) forces.
@@ -63,5 +67,15 @@ extern void (*problem_additional_forces) (void);
  * This function allows the user to add additional (non-gravitational) forces.
  */
 extern void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno);
+
+/*
+ * This function allows the user to modify particles after a timestep is completed.
+ */
+
+extern void (*problem_post_timestep_modifications) (void);
+/*
+ * This function allows the user to modify particles after a timestep is completed. 
+ */
+extern void (*problem_post_timestep_modifications_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno);
 
 #endif

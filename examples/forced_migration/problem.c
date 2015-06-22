@@ -9,8 +9,8 @@
  * eccentricity. This mimics planetary migration in a protostellar disc. 
  * The example reproduces the study of Lee & Peale (2002) on the 
  * formation of the planetary system GJ876. For a comparison, 
- * see figure 4 in their paper. The IAS15 integrator is used 
- * because the forces are velocity dependent.
+ * see figure 4 in their paper. The IAS15 or WHFAST integrators
+ * can be used. Note that the forces are velocity dependent.
  * Special thanks goes to Willy Kley for helping me to implement
  * the damping terms as actual forces. 
  *
@@ -60,7 +60,6 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	// Choose WHFAST integrator
 	integrator	= WHFAST;
-	integrator_whfast_synchronize_manually = 1;
 	// Choose IAS15 integrator
 	//integrator	= IAS15;
 	dt 		= 1e-2*2.*M_PI;		// in year/(2*pi)

@@ -24,7 +24,7 @@
  */
 #ifndef _MAIN_H
 #define _MAIN_H
-
+#include "particle.h" // Needed for struct particle.
 #ifndef M_PI
 // Make sure M_PI is defined. 
 #define M_PI           3.14159265358979323846
@@ -72,4 +72,11 @@ void init_boxwidth(double _boxwidth);
  * When OpenGL is used, this function is called by OpenGL directly. 
  */
 void iterate(void);
+
+
+/** Function pointer definitions 
+ *
+ */
+extern void (*problem_post_timestep_modifications) (void);
+extern void (*problem_post_timestep_modifications_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno);  
 #endif

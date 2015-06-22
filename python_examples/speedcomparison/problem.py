@@ -12,6 +12,10 @@ def simulation(par):
     G = k*k
     rebound.G = G     
     rebound.dt = dt
+    if integrator == "whfast-nocor":
+        integrator = "whfast"
+    else:
+        rebound.integrator_whfast_corrector = 11
     rebound.integrator = integrator
     rebound.force_is_velocitydependent = 0
 
@@ -78,7 +82,7 @@ def simulation(par):
 
 
     runtime = 0.
-    rebound.integrate(tmax,exactFinishTime=0)
+    rebound.integrate(tmax,exact_finish_time=0)
     ef = energy()
     e = np.fabs((ei-ef)/ei)+1.1e-16
     runtime += rebound.timing

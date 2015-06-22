@@ -42,12 +42,10 @@
 #include "problem.h"
 
 void force_J2();
-const double J2saturn			= 16298e-6; 		// J2 of Saturn (Murray and Dermott p 531) 
-const double Msaturn			= 0.00028588598; 	// mass of Saturn in solar masses 
-const double Rsaturn			= 0.00038925688; 	// radius of Saturn in AU
+const double J2planet			= 16298e-6; 		// J2 of Saturn (Murray and Dermott p 531) 
+const double Mplanet			= 0.00028588598; 	// mass of Saturn in solar masses 
+const double Rplanet			= 0.00038925688; 	// radius of Saturn in AU
 
-double J2planet = J2saturn;
-double Rplanet	= Rsaturn;
 double ObliquityPlanet;						// obliquity of the planet
 
 void problem_init(int argc, char* argv[]){
@@ -63,7 +61,7 @@ void problem_init(int argc, char* argv[]){
 	
 	// Planet
 	struct particle planet;
-	planet.m  = Msaturn;
+	planet.m  = Mplanet;
 	planet.x  = 0; planet.y  = 0; planet.z  = 0;
 	planet.vx = 0; planet.vy = 0; planet.vz = 0;
 	particles_add(planet);

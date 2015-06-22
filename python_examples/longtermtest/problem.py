@@ -12,7 +12,12 @@ def simulation(par):
     k = 0.01720209895    
     Gfac = 1./k
     rebound.dt = dt
+    if integrator == "whfast-nocor":
+        integrator = "whfast"
+    else:
+        rebound.integrator_whfast_corrector = 11
     rebound.integrator = integrator 
+    rebound.integrator_whfast_safe_mode = 0
     rebound.force_is_velocitydependent = 0
 
     massfac = 1.
@@ -82,7 +87,7 @@ def simulation(par):
 
     runtime = 0.
     for t in times:
-        rebound.integrate(t,exactFinishTime=0,keepSynchronized=0)
+        rebound.integrate(t,exact_finish_time=0)
         ef = energy()
         e = np.fabs((ei-ef)/ei)+1.1e-16
         es.append(e)
@@ -99,7 +104,8 @@ Ngrid = 500
 orbit = 11.8618*1.*np.pi
 dt = orbit/3000.
 tmax = orbit*1e2
-integrators = ["mercury","wh","swifter-whm","whfast-nocor", "whfast"]
+integrators = ["wh","whfast-nocor", "whfast"]
+#integrators = ["mercury","wh","swifter-whm","whfast-nocor", "whfast"]
 colors = {
     'whfast-nocor': "#FF0000",
     'whfast':       "#00AA00",
@@ -154,5 +160,7 @@ fontP = FontProperties()
 fontP.set_size('small')
 lgd = plt.legend(loc="upper center",  bbox_to_anchor=(0.5, -0.2),  prop = fontP,ncol=3,frameon=False, numpoints=1, scatterpoints=1 , handletextpad = 0.2, markerscale=2.)
 plt.savefig("longtermtest.pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
-import os
-os.system("open longtermtest.pdf")
+from sys import platform as _platform
+if _platform == "darwin":
+    import os
+    os.system("open longtermtest.pdf")

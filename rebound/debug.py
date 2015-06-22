@@ -25,7 +25,7 @@ def reset_debug():
         shutil.rmtree(tmpdir)
         tmpdir = None
 
-def integrate_other_package(tmax,exactFinishTime=1,keepSynchronized=0):
+def integrate_other_package(tmax,exactFinishTime=1):
     global tmpdir
     if integrator_package == "SWIFTER":
         _particles = rebound.module.particles

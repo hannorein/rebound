@@ -41,9 +41,11 @@
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
 
-unsigned int integrator_whfast_synchronize_manually 		= 0;
-unsigned int integrator_whfast_corrector 			= 11;
-unsigned int integrator_whfast_particles_modified		= 0;
+// the defaults below are chosen to safeguard the user against spurious results, but
+// will be slower and less accurate
+unsigned int integrator_whfast_safe_mode = 1;
+unsigned int integrator_whfast_corrector = 0;
+unsigned int integrator_whfast_recalculate_jacobi_this_timestep	= 0;
 
 static unsigned int integrator_whfast_is_synchronized = 1;
 static unsigned int integrator_allocated_N = 0;
@@ -53,7 +55,7 @@ static double* restrict etai = NULL;
 static double Mtotali;
 static double Mtotal;
 static unsigned int integrator_timestep_warning = 0;
-static unsigned int integrator_synchronized_megno_warning = 0;
+static unsigned int integrator_whfast_recalculate_jacobi_but_not_synchronized_warning = 0;
 
 // Fast inverse factorial lookup table
 static const double invfactorial[35] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
@@ -443,40 +445,6 @@ static void integrator_var_to_jacobi_acc(void){
 	// p_j[N_megno].a is not needed and thus not calculated 
 }
 
-//OLD biased!
-//static void integrator_to_inertial_posvel(void){
-//	double s_x  = 0.; 
-//	double s_y  = 0.; 
-//	double s_z  = 0.; 
-//	double s_vx = 0.; 
-//	double s_vy = 0.; 
-//	double s_vz = 0.; 
-//	for (unsigned int i=N-N_megno-1;i>0;i--){
-//		const struct particle pji = p_j[i];
-//		const double ei = etai[i];
-//		particles[i].x  =-s_x +eta[i-1]/eta[i]* pji.x +p_j[0].x ;
-//		particles[i].y  =-s_y +eta[i-1]/eta[i]* pji.y +p_j[0].y ;
-//		particles[i].z  =-s_z +eta[i-1]/eta[i]* pji.z +p_j[0].z ;
-//		particles[i].vx =-s_vx+eta[i-1]/eta[i]* pji.vx+p_j[0].vx;
-//		particles[i].vy =-s_vy+eta[i-1]/eta[i]* pji.vy+p_j[0].vy;
-//		particles[i].vz =-s_vz+eta[i-1]/eta[i]* pji.vz+p_j[0].vz;
-//		s_x  += pji.m/eta[i] * pji.x ;
-//		s_y  += pji.m/eta[i] * pji.y ;
-//		s_z  += pji.m/eta[i] * pji.z ;
-//		s_vx += pji.m/eta[i] * pji.vx;
-//		s_vy += pji.m/eta[i] * pji.vy;
-//		s_vz += pji.m/eta[i] * pji.vz;
-//	}
-//	const double mi = etai[0];
-//	particles[0].x  = p_j[0].x -s_x ;
-//	particles[0].y  = p_j[0].y -s_y ;
-//	particles[0].z  = p_j[0].z -s_z ;
-//	particles[0].vx = p_j[0].vx-s_vx;
-//	particles[0].vy = p_j[0].vy-s_vy;
-//	particles[0].vz = p_j[0].vz-s_vz;
-//}
-
-//NEW
 static void integrator_to_inertial_posvel(void){
 	double s_x  = p_j[0].x  * Mtotal; 
 	double s_y  = p_j[0].y  * Mtotal; 
@@ -731,22 +699,23 @@ static void integrator_apply_corrector(double inv){
 	}
 }
 
-
-void integrator_whfast_part1(void){
+void integrator_whfast_part1(){
 	gravity_ignore_10 = 1;
-	unsigned int recalculate_jacobi = (!integrator_whfast_synchronize_manually) || integrator_whfast_particles_modified;
 	if (integrator_allocated_N != N){
 		integrator_allocated_N = N;
 		p_j = realloc(p_j,sizeof(struct particle)*N);
 		eta = realloc(eta,sizeof(double)*(N-N_megno));
 		etai= realloc(etai,sizeof(double)*(N-N_megno));
-		recalculate_jacobi = 1;		// Recalculate masses/Jacobi coordinates if first timestep or if N changes.
+		integrator_whfast_recalculate_jacobi_this_timestep = 1;
 	}
 	// Only recalculate Jacobi coordinates if needed
-	if (recalculate_jacobi){
+	if (integrator_whfast_safe_mode || integrator_whfast_recalculate_jacobi_this_timestep){
 		if (integrator_whfast_is_synchronized==0){
 			integrator_whfast_synchronize();
-			fprintf(stderr,"\n\033[1mWarning!\033[0m Need to recalculate Jacobi coordinates but pos/vel were not synchronized.\n");
+			if (integrator_whfast_recalculate_jacobi_but_not_synchronized_warning==0){
+				fprintf(stderr,"\n\033[1mWarning!\033[0m Recalculating Jacobi coordinates but pos/vel were not synchronized before.\n");
+				integrator_whfast_recalculate_jacobi_but_not_synchronized_warning++;
+			}
 		}
 		eta[0] = particles[0].m;
 		etai[0] = 1./eta[0];
@@ -761,7 +730,7 @@ void integrator_whfast_part1(void){
 		}
 		Mtotal  = eta[N-N_megno-1];
 		Mtotali = etai[N-N_megno-1];
-		integrator_whfast_particles_modified = 0;
+		integrator_whfast_recalculate_jacobi_this_timestep = 0;
 		integrator_to_jacobi_posvel();
 		if (N_megno){
 			integrator_var_to_jacobi_posvel();
@@ -819,17 +788,13 @@ void integrator_whfast_part2(void){
 
 	double _dt2 = dt/2.;
 	integrator_whfast_is_synchronized = 0;
-	if (!integrator_whfast_synchronize_manually){
+	if (integrator_whfast_safe_mode || N_megno){
 		integrator_whfast_synchronize();
 	}
 	
 	t+=_dt2;
 
 	if (N_megno){
-		if (integrator_whfast_is_synchronized==0 && integrator_synchronized_megno_warning==0){
-			integrator_synchronized_megno_warning++;
-			fprintf(stderr,"\n\033[1mWarning!\033[0m MEGNO requires synchronized output at every timestep.\n");
-		}
 		p_j[N_megno].x += _dt2*p_j[N_megno].vx;
 		p_j[N_megno].y += _dt2*p_j[N_megno].vy;
 		p_j[N_megno].z += _dt2*p_j[N_megno].vz;
@@ -874,15 +839,14 @@ void integrator_whfast_part2(void){
 	}
 }
 	
-
 void integrator_whfast_reset(void){
-	integrator_whfast_corrector = 11;
+	integrator_whfast_corrector = 0;
 	integrator_whfast_is_synchronized = 1;
-	integrator_whfast_synchronize_manually = 0;
-	integrator_whfast_particles_modified = 0;
+	integrator_whfast_safe_mode = 1;
+	integrator_whfast_recalculate_jacobi_this_timestep = 0;
 	integrator_allocated_N = 0;
 	integrator_timestep_warning = 0;
-	integrator_synchronized_megno_warning = 0;
+	integrator_whfast_recalculate_jacobi_but_not_synchronized_warning = 0;
 	free(p_j);
 	p_j = NULL;
 	free(eta);

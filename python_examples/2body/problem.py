@@ -13,6 +13,7 @@ def simulation(par):
 
     rebound.reset()
     rebound.integrator = integrator
+    rebound.integrator_whfast_safe_mode = 0
     rebound.force_is_velocitydependent = 0
     rebound.dt = dt
 
@@ -21,8 +22,8 @@ def simulation(par):
     particles = rebound.particles
     
     Ei = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
-
-    rebound.integrate(tmax,exactFinishTime=0,keepSynchronized=1)
+    
+    rebound.integrate(tmax,exact_finish_time=0)
     
     Ef = -1./np.sqrt(particles[1].x*particles[1].x+particles[1].y*particles[1].y+particles[1].z*particles[1].z) + 0.5 * (particles[1].vx*particles[1].vx+particles[1].vy*particles[1].vy+particles[1].vz*particles[1].vz)
 
@@ -32,7 +33,7 @@ def simulation(par):
 N = 25
 dts = np.linspace(-3.1,-0.1,N)
 e0s = np.linspace(0,-8,N)
-integrators= ["wh","whfast-nocor"]
+integrators= ["wh","whfast"]
 
 niter = []
 energyerror = []
@@ -43,7 +44,7 @@ for integrator in integrators:
     print("Running "+ integrator)
     parameters = [(1.732, dts[i], e0s[j], integrator) for j in range(N) for i in range(N)]
 
-    pool = rebound.InterruptiblePool(12)
+    pool = rebound.InterruptiblePool(2)
     res = pool.map(simulation,parameters)
     res = np.nan_to_num(res)
     niter.append(res[:,0].reshape((N,N)))
@@ -82,25 +83,28 @@ for i, integrator in enumerate(integrators):
     im3 = axarr[2,i].imshow(timing[i], vmin=0., vmax=3.*np.median(timing), aspect='auto', origin="lower", interpolation="nearest", cmap="RdYlGn_r", extent=extent)
         
 
-cax1,kw1 = matplotlib.colorbar.make_axes([ax for ax in axarr[0,:]])
-cax2,kw2 = matplotlib.colorbar.make_axes([ax for ax in axarr[1,:]])
-cax3,kw3 = matplotlib.colorbar.make_axes([ax for ax in axarr[2,:]])
+try:  # Trips travis
+    cax1,kw1 = matplotlib.colorbar.make_axes([ax for ax in axarr[0,:]])
+    cax2,kw2 = matplotlib.colorbar.make_axes([ax for ax in axarr[1,:]])
+    cax3,kw3 = matplotlib.colorbar.make_axes([ax for ax in axarr[2,:]])
 
-cb1 = plt.colorbar(im1, cax=cax1, **kw1)
-cb1.solids.set_rasterized(True)
-cb1.set_label("relative energy error")
+    cb1 = plt.colorbar(im1, cax=cax1, **kw1)
+    cb1.solids.set_rasterized(True)
+    cb1.set_label("relative energy error")
 
-cb2 = plt.colorbar(im2, cax=cax2, **kw2)
-cb2.solids.set_rasterized(True)
-t = ticker.MaxNLocator(nbins=3)
-cb2.locator = t
-cb2.update_ticks()
-cb2.set_label("sign of energy error")
+    cb2 = plt.colorbar(im2, cax=cax2, **kw2)
+    cb2.solids.set_rasterized(True)
+    t = ticker.MaxNLocator(nbins=3)
+    cb2.locator = t
+    cb2.update_ticks()
+    cb2.set_label("sign of energy error")
 
-cb3 = plt.colorbar(im3, cax=cax3, **kw3)
-cb3.solids.set_rasterized(True)
-cb3.set_label("runtime per timestep [$\mu$s]")
-cb3.update_ticks()
+    cb3 = plt.colorbar(im3, cax=cax3, **kw3)
+    cb3.solids.set_rasterized(True)
+    cb3.set_label("runtime per timestep [$\mu$s]")
+    cb3.update_ticks()
+except:
+    pass
 
 
 plt.show()
@@ -110,5 +114,7 @@ fontP = FontProperties()
 fontP.set_size('small')
 plt.savefig("2body.pdf",prop=fontP, bbox_inches='tight')
 print "Average speedup (WH/Mikkola): %.4f" %(np.mean(timing[0])/np.mean(timing[1]))
-import os
-os.system("open 2body.pdf")
+from sys import platform as _platform
+if _platform == "darwin":
+    import os
+    os.system("open 2body.pdf")

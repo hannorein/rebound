@@ -30,6 +30,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include "integrator.h"
+#include "integrator_whfast.h"
 #include "boundaries.h"
 #include "gravity.h"
 #include "problem.h"
@@ -69,7 +70,8 @@ int root_n		= 1;
 
 void (*problem_additional_forces) (void) = NULL;
 void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;
-
+void (*problem_post_timestep_modifications) (void) = NULL;
+void (*problem_post_timestep_modifications_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;  
 static char* 	logo[];		/**< Logo of rebound. */
 
 void init_boxwidth(double _boxwidth){
@@ -165,6 +167,20 @@ void iterate(void){
 	// A 'DKD'-like integrator will do the 'KD' part.
 	PROFILING_START()
 	integrator_part2();
+	if (problem_post_timestep_modifications){
+		integrator_synchronize();
+		problem_post_timestep_modifications();
+		if (integrator == WHFAST || integrator == HYBRID){
+			integrator_whfast_recalculate_jacobi_this_timestep = 1;
+		}
+	}
+	if (problem_post_timestep_modifications_with_parameters){
+		integrator_synchronize();
+		problem_post_timestep_modifications_with_parameters(particles, t, dt, G, N, N_megno);
+		if (integrator == WHFAST || integrator == HYBRID){
+			integrator_whfast_recalculate_jacobi_this_timestep = 1;
+		}
+	}
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
 	// Do collisions here. We need both the positions and velocities at the same time.

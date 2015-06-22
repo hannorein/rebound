@@ -15,7 +15,7 @@ import multiprocessing
 def simulation(par):
     saturn_a, saturn_e = par
     rebound.reset()
-    rebound.integrator = "whfast-nocor"
+    rebound.integrator = "whfast"
     rebound.min_dt = 5.
     rebound.dt = 1.
     
@@ -79,5 +79,7 @@ cb2.set_label("Lyapunov timescale [years]")
 plt.savefig("megno.pdf")
 
 ### Automatically open plot (OSX only)
-import os
-os.system("open megno.pdf")
+from sys import platform as _platform
+if _platform == "darwin":
+    import os
+    os.system("open megno.pdf")

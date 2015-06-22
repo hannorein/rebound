@@ -21,8 +21,8 @@ class ReboundModule(types.ModuleType):
         raise
 
     AFF = CFUNCTYPE(None)
-    fp = None
-    _units = {'length':None, 'time':None, 'mass':None}
+    afp = None # additional forces pointer
+    ptmp = None # post timestep modifications pointer 
 
 # Status functions
     @property
@@ -53,17 +53,33 @@ class ReboundModule(types.ModuleType):
 # Set function pointer for additional forces
     @property
     def additional_forces(self):
-        return self.fp   # might not be needed
+        return self.afp   # might not be needed
 
     @additional_forces.setter
-    def additional_forces(self,func):
+    def additional_forces(self, func):
         if(isinstance(func,types.FunctionType)):
             # Python function pointer
-            self.fp = self.AFF(func)
-            self.clibrebound.set_additional_forces(self.fp)
+            self.afp = self.AFF(func)
+            self.clibrebound.set_additional_forces(self.afp)
         else:
             # C function pointer
             self.clibrebound.set_additional_forces_with_parameters(func)
+            self.afp = "C function pointer value currently not accessible from python.  Edit librebound.py"
+
+    @property
+    def post_timestep_modifications(self):
+        return self.ptmp
+
+    @post_timestep_modifications.setter
+    def post_timestep_modifications(self, func):
+        if(isinstance(func, types.FunctionType)):
+            # Python function pointer
+            self.ptmp = self.AFF(func)
+            self.clibrebound.set_post_timestep_modifications(self.ptmp)
+        else:
+            # C function pointer
+            self.clibrebound.set_post_timestep_modifications_with_parameters(func)
+            self.ptmp = "C function pointer value currently not accessible from python.  Edit librebound.py" 
 
 # Setter/getter of parameters and constants
     @property
@@ -71,7 +87,7 @@ class ReboundModule(types.ModuleType):
         return c_double.in_dll(self.clibrebound, "G").value
 
     @G.setter
-    def G(self,value):
+    def G(self, value):
         c_double.in_dll(self.clibrebound, "G").value = value
 
     @property
@@ -109,7 +125,7 @@ class ReboundModule(types.ModuleType):
 
     @property
     def N(self):
-        return c_int.in_dll(self.clibrebound,"N").value 
+        return c_int.in_dll(self.clibrebound, "N").value 
     
     @property
     def N_active(self):
@@ -119,36 +135,24 @@ class ReboundModule(types.ModuleType):
     def N_active(self, value):
         c_int.in_dll(self.clibrebound, "N_active").value = value
 
-    @property 
-    def integrator_whfast_corrector(self):
-        return c_int.in_dll(self.clibrebound, "integrator_whfast_corrector").value
-    
-    @integrator_whfast_corrector.setter 
-    def integrator_whfast_corrector(self, value):
-        c_int.in_dll(self.clibrebound, "integrator_whfast_corrector").value = value
-
     @property
     def integrator(self):
         i = c_int.in_dll(self.clibrebound, "integrator").value
-        for name, _i in list.iteritems():
+        for name, _i in INTEGRATORS.items():
             if i==_i:
                 return name
         return i
 
     @integrator.setter
-    def integrator(self,value):
+    def integrator(self, value):
         if isinstance(value, int):
-            self.clibrebound.integrator_set(c_int(value))
+            self.clibrebound.set_integrator(c_int(value))
         elif isinstance(value, basestring):
             debug.integrator_fullname = value
             debug.integrator_package = "REBOUND"
             value = value.lower()
             if value in INTEGRATORS: 
                 self.integrator = INTEGRATORS[value]
-                self.integrator_whfast_corrector = 11
-            elif value.lower() == "whfast-nocor":
-                self.integrator = INTEGRATORS["whfast"]
-                self.integrator_whfast_corrector = 0
             elif value.lower() == "mercury":
                 debug.integrator_package = "MERCURY"
             elif value.lower() == "swifter-whm":
@@ -160,14 +164,14 @@ class ReboundModule(types.ModuleType):
             elif value.lower() == "swifter-tu4":
                 debug.integrator_package = "SWIFTER"
             else:
-                raise ValueError("Warning. Intergrator not found.")
+                raise ValueError("Warning. Integrator not found.")
 
     @property
     def force_is_velocitydependent(self):
         return c_int.in_dll(self.clibrebound, "integrator_force_is_velocitydependent").value
 
     @force_is_velocitydependent.setter
-    def force_is_velocitydependent(self,value):
+    def force_is_velocitydependent(self, value):
         if isinstance(value, int):
             c_int.in_dll(self.clibrebound, "integrator_force_is_velocitydependent").value = value
             return
@@ -288,17 +292,13 @@ class ReboundModule(types.ModuleType):
         5) A list of particles or names.
         """
         if particle is not None:
-            if isinstance(particle,Particle):
+            if isinstance(particle, Particle):
                 self.clibrebound.particles_add(particle)
-            elif isinstance(particle,list):
+            elif isinstance(particle, list):
                 for p in particle:
                     self.add(p)
-            elif isinstance(particle,str):
-                for key, unit in self.units.items(): # check if units aren't set to set defaults
-                    if unit is None:
-                        self.units = ('AU', 'yr2pi', 'Msun')
+            elif isinstance(particle, str):
                 self.add(horizons.getParticle(particle,**kwargs))
-                self.convert_p(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass'])
         else: 
             self.add(Particle(**kwargs))
 
@@ -325,7 +325,7 @@ class ReboundModule(types.ModuleType):
 
 
 # Orbit calculation
-    def calculate_orbits(self,heliocentric=False):
+    def calculate_orbits(self, heliocentric=False):
         """ Returns an array of Orbits of length N-1.
 
         Parameters
@@ -345,7 +345,7 @@ class ReboundModule(types.ModuleType):
         return orbits
 
 # COM calculation 
-    def calculate_com(self,last=None):
+    def calculate_com(self, last=None):
         """Returns the center of momentum for all particles in the simulation"""
         m = 0.
         x = 0.
@@ -356,7 +356,7 @@ class ReboundModule(types.ModuleType):
         vz = 0.
         ps = self.particles    # particle pointer
         if last is not None:
-            last = min(last,self.N)
+            last = min(last, self.N)
         else:
             last = self.N
         for i in range(last):
@@ -398,15 +398,40 @@ class ReboundModule(types.ModuleType):
     def load(self, filename):
         self.clibrebound.input_binary(c_char_p(filename.encode("ascii")))
         
+# Integrator Flags
+    @property 
+    def integrator_whfast_corrector(self):
+        return c_int.in_dll(self.clibrebound, "integrator_whfast_corrector").value
+    
+    @integrator_whfast_corrector.setter 
+    def integrator_whfast_corrector(self, value):
+        c_int.in_dll(self.clibrebound, "integrator_whfast_corrector").value = value
 
+    @property
+    def integrator_whfast_safe_mode(self):
+        return c_int.in_dll(self.clibrebound, "integrator_whfast_safe_mode").value
+
+    @integrator_whfast_safe_mode.setter
+    def integrator_whfast_safe_mode(self, value):
+        c_int.in_dll(self.clibrebound, "integrator_whfast_safe_mode").value = value
+
+    @property
+    def recalculate_jacobi_this_timestep(self):
+        return c_int.in_dll(self.clibrebound, "integrator_whfast_recalculate_jacobi_this_timestep").value
+
+    @recalculate_jacobi_this_timestep.setter
+    def recalculate_jacobi_this_timestep(self, value):
+        c_int.in_dll(self.clibrebound, "integrator_whfast_recalculate_jacobi_this_timestep").value = value
+    
 # Integration
-    def step(self):
-        self.clibrebound.rebound_step()
 
-    def integrate(self, tmax, exactFinishTime=1, keepSynchronized=0, particlesModified=1, maxR=0., minD=0.):
+    def step(self, do_timing = 1):
+        self.clibrebound.rebound_step(c_int(do_timing))
+
+    def integrate(self, tmax, exact_finish_time=1, maxR=0., minD=0.):
         if debug.integrator_package =="REBOUND":
-            self.clibrebound.integrate.restype = c_int
-            ret_value = self.clibrebound.integrate(c_double(tmax),c_int(exactFinishTime),c_int(keepSynchronized),c_int(particlesModified),c_double(maxR),c_double(minD))
+            self.clibrebound.rebound_integrate.restype = c_int
+            ret_value = self.clibrebound.rebound_integrate(c_double(tmax),c_int(exact_finish_time),c_double(maxR),c_double(minD))
             if ret_value == 1:
                 raise self.NoParticleLeft("No more particles left in simulation.")
             if ret_value == 2:
@@ -415,7 +440,10 @@ class ReboundModule(types.ModuleType):
                 raise self.CloseEncounter(c_int.in_dll(self.clibrebound, "closeEncounterPi").value,
                                      c_int.in_dll(self.clibrebound, "closeEncounterPj").value)
         else:
-            debug.integrate_other_package(tmax,exactFinishTime,keepSynchronized)
+            debug.integrate_other_package(tmax,exact_finish_time)
+
+    def integrator_synchronize(self):
+        self.clibrebound.integrator_synchronize()
 
 # Exceptions    
     class CloseEncounter(Exception):

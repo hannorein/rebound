@@ -1,7 +1,8 @@
 REBOUND - An open-source multi-purpose N-body code
 ==================================================
 
-.. image:: http://img.shields.io/badge/license-GPL-green.svg?style=flat :target: https://github.com/hannorein/rebound/blob/master/LICENSE>`_
+.. image:: http://img.shields.io/badge/license-GPL-green.svg?style=flat :target: https://github.com/hannorein/rebound/blob/master/LICENSE
+.. image:: http://img.shields.io/travis/hannorein/rebound/master.svg?style=flat :target: https://travis-ci.org/hannorein/rebound/
 .. image:: http://img.shields.io/badge/arXiv-1110.4876-orange.svg?style=flat :target: http://arxiv.org/abs/1110.4876
 .. image:: http://img.shields.io/badge/arXiv-1409.4779-orange.svg?style=flat :target: http://arxiv.org/abs/1409.4779
 .. image:: http://img.shields.io/badge/arXiv-1506.01084-orange.svg?style=flat :target: http://arxiv.org/abs/1506.01084
@@ -397,8 +398,8 @@ examples/forced_migration
   eccentricity. This mimics planetary migration in a protostellar disc.
   The example reproduces the study of Lee & Peale (2002) on the
   formation of the planetary system GJ876. For a comparison,
-  see figure 4 in their paper. The IAS15 integrator is used
-  because the forces are velocity dependent.
+  see figure 4 in their paper. The IAS15 or WHFAST integrators
+  can be used. Note that the forces are velocity dependent.
   Special thanks goes to Willy Kley for helping me to implement
   the damping terms as actual forces.
   
@@ -434,7 +435,7 @@ examples/kozai
   Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
 examples/megno
-  This example uses the IAS15 integrator
+  This example uses the IAS15 or WHFAST integrator
   to calculate the MEGNO of a two planet system.
   
   Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
@@ -479,8 +480,10 @@ examples/outer_solar_system
   You probably want to turn off the visualization for any serious runs.
   Just go to the makefile and set `OPENGL=0`.
   
-  The example also works with the Wisdom-Holman symplectic integrator.
-  Simply change the integrator to `integrator_wh.c` in the Makefile.
+  The example also works with the WHFAST symplectic integrator. We turn
+  off safe-mode to allow fast and accurate simulations with the symplectic
+  corrector. If an output is required, you need to call integrator_synchronize()
+  before accessing the particle structure.
   
   Modules used: ``gravity_direct.c`` ``boundaries_none.c`` ``collisions_none.c``.
 
@@ -608,12 +611,6 @@ examples/shearing_sheet_profiling
   
   Modules used: ``gravity_tree.c`` ``boundaries_shear.c`` ``collisions_tree.c``.
 
-examples/simple
-  This example uses the IAS15 integrator
-  to calculate the MEGNO of a two planet system.
-  
-  Modules used: ``gravity_direct.c`` ``boundaries_none.c`` ``collisions_none.c``.
-
 examples/solar_system
   This example integrates all planets of the Solar
   System. The data comes from the NASA HORIZONS system.
@@ -642,12 +639,6 @@ examples/stark
   
   Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 
-examples/stark_radial
-  This example uses the IAS15 integrator
-  to calculate the MEGNO of a two planet system.
-  
-  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
-
 examples/symplectic_integrator
   This example uses the symplectic Wisdom Holman (WH) integrator
   to integrate test particles on eccentric orbits in a fixed potential.
@@ -664,13 +655,6 @@ examples/viewer
   Note that this example uses only dummy modules.
   
   Modules used: ``gravity_none.c`` ``boundaries_periodic.c`` ``collisions_dummy.c``.
-
-examples/whfast
-  This example uses the symplectic Wisdom Holman (WH) integrator
-  to integrate test particles on eccentric orbits in a fixed potential.
-  Note that the WH integrator assumes that the central object is at the origin.
-  
-  Modules used: ``gravity_direct.c`` ``boundaries_none.c`` ``collisions_none.c``.
 
 OpenGL keyboard command
 -----------------------
