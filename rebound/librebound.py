@@ -215,7 +215,10 @@ class ReboundModule(types.ModuleType):
         """
         if particle is not None:
             if isinstance(particle, Particle):
-                self.clibrebound.particles_add(particle)
+                if kwargs == {}: # copy particle
+                    self.clibrebound.particles_add(particle)
+                else: # use particle as primary
+                    self.add(Particle(particle, **kwargs))
             elif isinstance(particle, list):
                 for p in particle:
                     self.add(p)
