@@ -43,6 +43,7 @@ int N 		= 0;
 int Nmax	= 0;	
 int N_active 	= -1; 	
 int N_megno 	= 0; 	
+int lastID = 0;
 
 #ifdef BOUNDARIES_OPEN
 int boundaries_particle_is_in_box(struct particle p);
@@ -67,7 +68,10 @@ void particles_add_local(struct particle pt){
 		Nmax += 128;
 		particles = realloc(particles,sizeof(struct particle)*Nmax);
 	}
+	pt.ID = lastID;
+	lastID++;
 	particles[N] = pt;
+
 #ifdef TREE
 	tree_add_particle_to_tree(N);
 #endif // TREE
@@ -115,7 +119,7 @@ void particles_add_fixed(struct particle pt,int pos){
 		return;
 	}
 #endif // BOUNDARIES_OPEN
-	particles[pos] = pt;
+	particles[pos] = pt; 
 #ifdef TREE
 	tree_add_particle_to_tree(pos);
 #endif // TREE
@@ -140,6 +144,7 @@ void particles_remove_all(void){
 	Nmax 		= 0;
 	N_active 	= -1;
 	N_megno 	= 0;
+	lastID 		= 0;
 	free(particles);
 	particles 	= NULL;
 }

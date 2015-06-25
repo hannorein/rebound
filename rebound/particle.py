@@ -83,7 +83,8 @@ class Particle(Structure):
                 ("ax", c_double),
                 ("ay", c_double),
                 ("az", c_double),
-                ("m", c_double) ]
+                ("m", c_double),
+                ("ID", c_int) ]
     def __str__(self):
         return "<rebound.Particle object, m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     

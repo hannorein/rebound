@@ -126,7 +126,11 @@ class ReboundModule(types.ModuleType):
     @property
     def N(self):
         return c_int.in_dll(self.clibrebound, "N").value 
-    
+   
+    @N.setter
+    def N(self, value):
+        c_int.in_dll(self.clibrebound, "N").value = value
+
     @property
     def N_active(self):
         return c_int.in_dll(self.clibrebound, "N_active").value
@@ -234,7 +238,7 @@ class ReboundModule(types.ModuleType):
         """
         ps = []
         N = c_int.in_dll(self.clibrebound,"N").value 
-        getp = self.clibrebound.particles_get
+        getp = self.clibrebound.get_particles
         getp.restype = POINTER(Particle)
         ps_a = getp()
         for i in range(0,N):
@@ -245,6 +249,8 @@ class ReboundModule(types.ModuleType):
     def particles(self):
         self.clibrebound.particles_remove_all()
 
+    def remove_particle(self, id1):
+        self.clibrebound.remove_particle(c_int(id1))
 
 # Orbit calculation
     def calculate_orbits(self, heliocentric=False):
@@ -356,7 +362,7 @@ class ReboundModule(types.ModuleType):
             if ret_value == 1:
                 raise self.NoParticleLeft("No more particles left in simulation.")
             if ret_value == 2:
-                raise self.ParticleEscaping("At least one particle has a radius > maxR.")
+                raise self.ParticleEscaping(c_int.in_dll(self.clibrebound, "escapedParticle").value)
             if ret_value == 3:
                 raise self.CloseEncounter(c_int.in_dll(self.clibrebound, "closeEncounterPi").value,
                                      c_int.in_dll(self.clibrebound, "closeEncounterPj").value)
@@ -375,7 +381,10 @@ class ReboundModule(types.ModuleType):
                 return "A close encounter occured between particles %d and %d."%(self.id1,self.id2)
 
     class ParticleEscaping(Exception):
-        pass
+        def __init__(self, id1):
+            self.id1 = id1
+        def __str__(self):
+            return "At least one particle's distance > maxR."
 
     class NoParticleLeft(Exception):
         pass

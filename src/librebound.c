@@ -50,12 +50,10 @@ double softening = 0;
 double timing 	= 0;
 int closeEncounterPi = -1;
 int closeEncounterPj = -1;
+int escapedParticle = -1;
 extern int Nmax;	
 extern int iter;  // TODO DEBUG
 const char *build_str = __DATE__ " " __TIME__;
-
-
-
 
 // Function pointer to additional forces
 void (*problem_additional_forces) (void) = NULL;
@@ -69,10 +67,10 @@ void setp(struct particle* _p){
 	particles = malloc(sizeof(struct particle)*N);
 	memcpy(particles,_p,sizeof(struct particle)*N);
 }
-struct particle particle_get(int i){
+struct particle get_particle(int i){
 	return particles[i];
 }
-struct particle* particles_get(void){
+struct particle* get_particles(void){
 	return particles;
 }
 void set_additional_forces(void (* _cb)(void)){
@@ -90,6 +88,11 @@ void set_post_timestep_modifications_with_parameters(void (* _cb)(struct particl
 
 void set_integrator(int i){
 	integrator = i;
+}
+
+void remove_particle(int i){
+	particles[i] = particles[N-1];
+	N--;
 }
 
 // Integrate for 1 step
@@ -161,6 +164,7 @@ int rebound_integrate(double _tmax, int exact_finish_time, double maxR, double m
 				double r2 = p.x*p.x + p.y*p.y + p.z*p.z;
 				if (r2>maxR2){
 					ret_value = 2;
+					escapedParticle = i;
 				}
 			}
 		}
@@ -202,6 +206,7 @@ void reset(void){
 	Nmax 		= 0;
 	N_active 	= -1;
 	N_megno 	= 0;
+	lastID 		= 0;
 	iter		= 0;
 	timing		= 0.;
 	free(particles);

@@ -46,6 +46,7 @@ struct particle {
 	double ay;	/**< y-acceleration of the particle. */
 	double az;	/**< z-acceleration of the particle. */
 	double m;	/**< Mass of the particle. */
+	int ID;		/**< Unique ID to identify particle. */
 #ifndef COLLISIONS_NONE
 	double r; 	/**< Radius of the particle. */
 	double lastcollision;	/**< Last time the particle had a physical collision. */

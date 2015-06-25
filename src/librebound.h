@@ -15,13 +15,15 @@ extern int 	N;		/**< Current number of particles on this node. Ns set in particl
 extern int 	N_active;	/**< Number of massive particles included in force calculation. Default: N.*/
 extern int 	N_megno;	/**< Number of megno particles. Default: 0.*/
 
+extern int lastID;		/**< last particle ID assigned (to ensure unique values).*/
 extern double 	timing;		/**< Time for last step/integration in s. */
 
 extern const char *build_str;	/**< Contains last compile date/time information. */
 
-extern int closeEncounterPi; 	/**< IDs of the particles which had a close encounter */
+extern int closeEncounterPi; 	/**< IDs of the particles which had a close encounter. */
 extern int closeEncounterPj;
 
+extern int escapedParticle;		/**< lowest ID of particles that escaped in a given timestep.*/
 /*
  * This functions sets the current integrator.
  * Default is IAS15. See integrator.h for options.
