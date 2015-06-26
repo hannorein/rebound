@@ -249,6 +249,21 @@ class ReboundModule(types.ModuleType):
     def particles(self):
         self.clibrebound.particles_remove_all()
 
+    @property
+    def IDs(self):
+        """Returns an array that points to the integer IDs corresponding
+        to the particles array.  This will update as the simulation progresses
+        if particles are added or removed from the simulation.
+        """
+        IDs = []
+        N = c_int.in_dll(self.clibrebound,"N").value
+        getp = self.clibrebound.get_IDs
+        getp.restype = POINTER(int)
+        IDs_a = getp()
+        for i in range(N):
+           IDs.append(IDs_a[i])
+        return ps
+    
     def remove_particle(self, id1):
         self.clibrebound.remove_particle(c_int(id1))
 
