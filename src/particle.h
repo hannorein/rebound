@@ -62,15 +62,6 @@ struct particle {
  */
 extern struct particle* particles;
 
-/**
- * This array stores the IDs of the particles in the particles array. Initially
- * the IDs will match the array indices, but if particles are removed from the
- * simulation they will start to get jumbled.  This is implemented so that output can
- * be ordered by particle ID without sorting the particles array by ID at each
- * output. See EscapingParticles.ipynb in python_tutorials.
- */
-
-extern int* IDs;
 /** 
  * Adds a particle to the simulation. 
  * @details If a tree is used, it also adds the particle to the tree.

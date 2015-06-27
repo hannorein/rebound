@@ -73,9 +73,6 @@ struct particle get_particle(int i){
 struct particle* get_particles(void){
 	return particles;
 }
-int* get_IDs(void){
-	return IDs;
-}
 void set_additional_forces(void (* _cb)(void)){
 	problem_additional_forces = _cb;
 }
@@ -94,9 +91,10 @@ void set_integrator(int i){
 }
 
 void remove_particle(int i){
-	particles[i] = particles[N-1];
-	IDs[i] = particles[i].ID;
 	N--;
+	for(int j=i; j<N; j++){
+		particles[j] = particles[j+1];
+	}
 }
 
 // Integrate for 1 step

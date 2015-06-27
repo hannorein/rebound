@@ -71,7 +71,6 @@ void boundaries_check(void){
 			}
 #ifndef TREE
 			particles[i] = particles[N-1];
-			IDs[i] = particles[i].ID;
 			i--;
 			N--;
 #endif

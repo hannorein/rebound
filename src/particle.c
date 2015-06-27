@@ -38,7 +38,6 @@
 #endif // MPI
 
 struct particle* 	particles = NULL;	
-int* IDs = NULL;
 int N 		= 0;	
 int Nmax	= 0;	
 int N_active 	= -1; 	
@@ -67,11 +66,9 @@ void particles_add_local(struct particle pt){
 	while (Nmax<=N){
 		Nmax += 128;
 		particles = realloc(particles,sizeof(struct particle)*Nmax);
-		IDs = realloc(IDs,sizeof(int)*Nmax);
 	}
 	pt.ID = lastID;
 	particles[N] = pt;
-	IDs[N] = particles[N].ID;
 
 #ifdef TREE
 	tree_add_particle_to_tree(N);
