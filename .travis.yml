@@ -11,6 +11,7 @@ compiler:
     - clang
     - gcc
 script:
+    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipnbdoctest.py WHFast.ipynb | python
     - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py AdvWHFast.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Checkpoints.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Churyumov-Gerasimenko.ipynb | python 
