@@ -430,8 +430,25 @@ if __name__ == '__main__':
 
                 failed = False
                 diff = False
+
+                if outs != [] and cell.outputs == []: # check case where ref has no output
+                    for out in outs:
+                        if out.output_type in ('pyerr', 'error'): 
+                            # An python error occurred. Cell is not completed correctly
+                            tv.write_result('error')
+                            tv.fold_open('ipynb.fail')
+                            tv.write('>>> ' + out.ename + ' ("' + out.evalue + '")')
+                            for idx, trace in enumerate(out.traceback):
+                                tv.writeln(trace, indent=4)
+                            tv.fold_close('ipynb.fail')
+                            failed = True
+                        else:
+                            if not ipy.compare_outputs(out, ref):
+                                # Output is different than the one in the notebook. This might be okay.
+                                diff = True
+
                 for out, ref in zip(outs, cell.outputs):
-                    if out.output_type == 'pyerr':
+                    if out.output_type in ('pyerr', 'error'): 
                         # An python error occurred. Cell is not completed correctly
                         tv.write_result('error')
                         tv.fold_open('ipynb.fail')
@@ -444,7 +461,7 @@ if __name__ == '__main__':
                         if not ipy.compare_outputs(out, ref):
                             # Output is different than the one in the notebook. This might be okay.
                             diff = True
-
+                
                 if diff:
                     if 'strict' in commands:
                         # strict mode means a difference will fail the test
