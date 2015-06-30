@@ -293,9 +293,11 @@ class IPyKernel(object):
                 s1 = self.sanitize(test[key])
                 s2 = self.sanitize(ref[key])
                 if s1 != s2:
+                    expected=s1.splitlines(1)
+                    if expected[0].split()[0] == "<matplotlib.figure.Figure": # for some reason figures get different hex codes in python 2 and 3, so ignore these differences
+                        return True
                     if printdiffs:
                         print("mismatch %s:" % key)
-                    expected=s1.splitlines(1)
                     actual=s2.splitlines(1)
                     if printdiffs:
                         diff=difflib.unified_diff(expected, actual)
