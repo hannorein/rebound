@@ -88,8 +88,8 @@ class Particle(Structure):
         return "<rebound.Particle object, m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
     def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None):   
-        #if particle is not None:
-        #    raise ValueError("Cannot initialise particle from other particles.")
+        if particle is not None:
+            raise ValueError("Cannot initialise particle from other particles.")
         cart = [x,y,z,vx,vy,vz]
         orbi = [primary,a,anom,e,omega,inc,Omega,MEAN]
         if m is None:   #default value for mass

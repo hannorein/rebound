@@ -218,7 +218,7 @@ class ReboundModule(types.ModuleType):
                 if kwargs == {}: # copy particle
                     self.clibrebound.particles_add(particle)
                 else: # use particle as primary
-                    self.add(Particle(particle, **kwargs))
+                    self.add(Particle(primary=particle, **kwargs))
             elif isinstance(particle, list):
                 for p in particle:
                     self.add(p)
