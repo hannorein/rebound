@@ -140,6 +140,10 @@ int rebound_integrate(double _tmax, int exact_finish_time, double maxR, double m
 	int last_step = 0;
 	int ret_value = 0;
 	const double dtsign = copysign(1.,dt); 				// Used to determine integration direction
+	if ((t+dt)*dtsign>=tmax*dtsign && exact_finish_time==1){
+		dt = tmax-t;
+		last_step++;
+	}
 	while(t*dtsign<tmax*dtsign && last_step<2 && ret_value==0){
 		if (N<=0){
 			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
