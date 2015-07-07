@@ -147,3 +147,29 @@ void particles_remove_all(void){
 	free(particles);
 	particles 	= NULL;
 }
+
+void particles_remove(int pos, int keepSorted){
+	N--;
+	if(keepSorted){
+		for(int j=pos; j<N; j++){
+			particles[j] = particles[j+1];
+		}
+	}
+	else{
+		particles[pos] = particles[N];
+	}
+}
+
+void particles_remove_ID(int ID, int keepSorted){
+	if(particles[ID].ID == ID){ // check initial case where position in array = ID
+		particles_remove(ID, keepSorted); 
+	}
+	else{
+		for(int i=0;i<N;i++){
+			if(particles[i].ID == ID){
+				particles_remove(i, keepSorted);
+				break;
+			}
+		}
+	}
+}
