@@ -99,7 +99,7 @@ void init_box(void){
 	root_n = root_nx*root_ny*root_nz;
 
 #ifdef MPI
-#ifdef PARTICLE_IDS
+#ifdef PARTICLEIDS
 	fprintf(stderr, "Particle IDs not currently supported with MPI.");
 	exit(0);
 #endif
