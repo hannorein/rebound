@@ -42,7 +42,6 @@ int N 		= 0;
 int Nmax	= 0;	
 int N_active 	= -1; 	
 int N_megno 	= 0; 	
-int lastID = 0;
 
 #ifdef BOUNDARIES_OPEN
 int boundaries_particle_is_in_box(struct particle p);
@@ -142,18 +141,21 @@ void particles_remove_all(void){
 	Nmax 		= 0;
 	N_active 	= -1;
 	N_megno 	= 0;
-	lastID 		= 0;
 	free(particles);
 	particles 	= NULL;
 }
 
 int particles_remove(int index, int keepSorted){
 	if (N==1){
-		printf("Last particle removed.  Exiting.\n");
-		exit(0);
+		fprintf(stderr, "Last particle removed.\n");
+		return 1;
 	}
 	if (index >= N){
-		fprintf(stderr, "\nIndex %d passed to particles_remove was out of range (N=%d).  Did not remove particle\n");
+		fprintf(stderr, "\nIndex %d passed to particles_remove was out of range (N=%d).  Did not remove particle.\n", index, N);
+		return 0;
+	}
+	if (N_megno){
+		fprintf(stderr, "\nRemoving particles not supported when calculating MEGNO.  Did not remove particle.\n");
 		return 0;
 	}
 	N--;

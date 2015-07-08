@@ -11,6 +11,7 @@ compiler:
     - clang
     - gcc
 script:
+    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py IDs.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py EscapingParticless.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py CloseEncounters.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py AdvWHFast.ipynb | python 

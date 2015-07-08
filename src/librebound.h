@@ -15,7 +15,6 @@ extern int 	N;		/**< Current number of particles on this node. Ns set in particl
 extern int 	N_active;	/**< Number of massive particles included in force calculation. Default: N.*/
 extern int 	N_megno;	/**< Number of megno particles. Default: 0.*/
 
-extern int lastID;		/**< last particle ID assigned (to ensure unique values).*/
 extern double 	timing;		/**< Time for last step/integration in s. */
 
 extern const char *build_str;	/**< Contains last compile date/time information. */

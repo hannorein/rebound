@@ -136,10 +136,7 @@ class Particle(Structure):
             self.vy = vy
             self.vz = vz
 
-        if ID is None:
-            self.ID = rebound.module.lastID
-        else:
-            self.ID = ID
+        self.ID = -1 if ID is None else ID
 
     def set_orbit(self,
                     m,          # mass
