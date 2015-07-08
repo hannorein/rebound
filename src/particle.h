@@ -46,7 +46,9 @@ struct particle {
 	double ay;	/**< y-acceleration of the particle. */
 	double az;	/**< z-acceleration of the particle. */
 	double m;	/**< Mass of the particle. */
+#ifdef PARTICLE_IDS
 	int ID;		/**< Unique ID to identify particle. */
+#endif
 #ifndef COLLISIONS_NONE
 	double r; 	/**< Radius of the particle. */
 	double lastcollision;	/**< Last time the particle had a physical collision. */
@@ -99,11 +101,11 @@ void particles_remove_all(void);
 
 /**
  * Remove particle by position in particles array
- * if keepSorted is set, then particles with indices higher than pos
+ * if keepSorted is set, then particles with indices higher than index
  * are all shifted down one position, ensuring the ordering remains
  */
 
-void particles_remove(int pos, int keepSorted);
+void particles_remove(int index, int keepSorted);
 
 /**
  * Remove particle by ID.
@@ -112,5 +114,7 @@ void particles_remove(int pos, int keepSorted);
  * ensuring the ordering remains.
  */
 
+#ifdef PARTICLE_IDS
 void particles_remove_ID(int ID, int keepSorted);
+#endif
 #endif // _PARTICLE_H

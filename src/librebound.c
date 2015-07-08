@@ -90,13 +90,6 @@ void set_integrator(int i){
 	integrator = i;
 }
 
-void remove_particle(int i){
-	N--;
-	for(int j=i; j<N; j++){
-		particles[j] = particles[j+1];
-	}
-}
-
 // Integrate for 1 step
 void rebound_step(int do_timing){
     struct timeval tim;

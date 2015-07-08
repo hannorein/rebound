@@ -44,7 +44,7 @@ int nghosty = 0;
 int nghostz = 0;
 
 void boundaries_check(void){
-	for (int i=0;i<N;i++){
+	for (int i=N-1;i>=0;i--){ // run through loop backwards so we don't have to recheck same index after removing
 		int removep = 0;
 		if(particles[i].x>boxsize_x/2.){
 			removep = 1;
@@ -65,14 +65,8 @@ void boundaries_check(void){
 			removep = 1;
 		}
 		if (removep==1){
-			if (N==1){
-				printf("Last particle removed. Exiting.\n");
-				exit(0);
-			}
 #ifndef TREE
-			particles[i] = particles[N-1];
-			i--;
-			N--;
+			particles_remove(i,0); // keepSorted=0 by default in C version
 #endif
 		}
 	}

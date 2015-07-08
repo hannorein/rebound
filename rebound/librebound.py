@@ -249,23 +249,23 @@ class ReboundModule(types.ModuleType):
     def particles(self):
         self.clibrebound.particles_remove_all()
 
-    @property
-    def IDs(self):
-        """Returns an array that points to the integer IDs corresponding
-        to the particles array.  This will update as the simulation progresses
-        if particles are added or removed from the simulation.
+    def remove_particle(self, index=None, ID=None, keepSorted=1):
+        """ Removes a particle from the simulation.
+
+        Parameters
+
+        ----------
+
+        Either the index in the particles array to remove, or the ID of the particle to
+        remove.  The keepSorted flag ensures the particles array remains sorted
+        in order of increasing IDs.  One might set it to zero in cases with many
+        particles and many removals to speed things up.
         """
-        IDs = []
-        N = c_int.in_dll(self.clibrebound,"N").value
-        getp = self.clibrebound.get_IDs
-        getp.restype = POINTER(int)
-        IDs_a = getp()
-        for i in range(N):
-           IDs.append(IDs_a[i])
-        return ps
-    
-    def remove_particle(self, id1):
-        self.clibrebound.remove_particle(c_int(id1))
+        if index is not None:
+            self.clibrebound.particles_remove(c_int(index), keepSorted)
+            return
+        if ID is not None:
+            self.clibrebound.particles_remove_ID(c_int(ID), keepSorted)
 
 # Orbit calculation
     def calculate_orbits(self, heliocentric=False):
