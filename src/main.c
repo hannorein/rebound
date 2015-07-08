@@ -99,6 +99,10 @@ void init_box(void){
 	root_n = root_nx*root_ny*root_nz;
 
 #ifdef MPI
+#ifdef PARTICLE_IDS
+	fprintf(stderr, "Particle IDs not currently supported with MPI.");
+	exit(0);
+#endif
 	// Make sure domain can be decomposed into equal number of root boxes per node.
 	if ((root_n/mpi_num)*mpi_num != root_n){
 		if (mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",root_n,mpi_num);

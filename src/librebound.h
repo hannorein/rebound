@@ -19,9 +19,10 @@ extern double 	timing;		/**< Time for last step/integration in s. */
 
 extern const char *build_str;	/**< Contains last compile date/time information. */
 
-extern int closeEncounterPi; 	/**< IDs of the particles which had a close encounter */
+extern int closeEncounterPi; 	/**< IDs of the particles which had a close encounter. */
 extern int closeEncounterPj;
 
+extern int escapedParticle;		/**< lowest ID of particles that escaped in a given timestep.*/
 /*
  * This functions sets the current integrator.
  * Default is IAS15. See integrator.h for options.

@@ -21,7 +21,7 @@ libreboundmodule = Extension('librebound',
                                 'src/input.c',
                                 ],
                     include_dirs = ['src'],
-                    define_macros=[ ('LIBREBOUND', None), ('COLLISIONS_NONE',None) ],
+                    define_macros=[ ('LIBREBOUND', None), ('COLLISIONS_NONE', None), ('PARTICLE_IDS', None)],
                     extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-march=native','-Wno-unknown-pragmas'],
                                     )
 

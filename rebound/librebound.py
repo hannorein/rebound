@@ -126,7 +126,11 @@ class ReboundModule(types.ModuleType):
     @property
     def N(self):
         return c_int.in_dll(self.clibrebound, "N").value 
-    
+   
+    @N.setter
+    def N(self, value):
+        c_int.in_dll(self.clibrebound, "N").value = value
+
     @property
     def N_active(self):
         return c_int.in_dll(self.clibrebound, "N_active").value
@@ -234,7 +238,7 @@ class ReboundModule(types.ModuleType):
         """
         ps = []
         N = c_int.in_dll(self.clibrebound,"N").value 
-        getp = self.clibrebound.particles_get
+        getp = self.clibrebound.get_particles
         getp.restype = POINTER(Particle)
         ps_a = getp()
         for i in range(0,N):
@@ -244,6 +248,28 @@ class ReboundModule(types.ModuleType):
     @particles.deleter
     def particles(self):
         self.clibrebound.particles_remove_all()
+
+    def remove_particle(self, index=None, ID=None, keepSorted=1):
+        """ Removes a particle from the simulation.
+
+        Parameters
+
+        ----------
+
+        Either the index in the particles array to remove, or the ID of the particle to
+        remove.  The keepSorted flag ensures the particles array remains sorted
+        in order of increasing IDs.  One might set it to zero in cases with many
+        particles and many removals to speed things up.
+        """
+        if index is not None:
+            success = self.clibrebound.particles_remove(c_int(index), keepSorted)
+            if not success:
+                print("Index %d passed to remove_particle was out of range (N=%d). Did not remove particle.\n"%(index, self.N))
+            return
+        if ID is not None:
+            success = self.clibrebound.particles_remove_ID(c_int(ID), keepSorted)
+            if not success:
+                print("ID %d passed to remove_particle was not found.  Did not remove particle.\n"%(ID))
 
 
 # Orbit calculation
@@ -356,10 +382,10 @@ class ReboundModule(types.ModuleType):
             if ret_value == 1:
                 raise self.NoParticleLeft("No more particles left in simulation.")
             if ret_value == 2:
-                raise self.ParticleEscaping("At least one particle has a radius > maxR.")
+                raise self.ParticleEscaping(c_int.in_dll(self.clibrebound, "escapedParticle").value, self.t)
             if ret_value == 3:
                 raise self.CloseEncounter(c_int.in_dll(self.clibrebound, "closeEncounterPi").value,
-                                     c_int.in_dll(self.clibrebound, "closeEncounterPj").value)
+                                     c_int.in_dll(self.clibrebound, "closeEncounterPj").value, self.t)
         else:
             debug.integrate_other_package(tmax,exact_finish_time)
 
@@ -368,14 +394,19 @@ class ReboundModule(types.ModuleType):
 
 # Exceptions    
     class CloseEncounter(Exception):
-        def __init__(self, id1, id2):
-                self.id1 = id1
-                self.id2 = id2
+        def __init__(self, index1, index2, t):
+                self.index1 = index1
+                self.index2 = index2
+                self.t = t
         def __str__(self):
-                return "A close encounter occured between particles %d and %d."%(self.id1,self.id2)
+                return "A close encounter occured at time %f between particles with indices %d and %d."%(self.t, self.index1,self.index2)
 
     class ParticleEscaping(Exception):
-        pass
+        def __init__(self, index, t):
+            self.index = index
+            self.t = t
+        def __str__(self):
+            return "At least one particle's distance > maxR at time %f (index = %d)."%(self.t, self.index)
 
     class NoParticleLeft(Exception):
         pass

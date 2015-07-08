@@ -11,6 +11,9 @@ compiler:
     - clang
     - gcc
 script:
+    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py IDs.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py EscapingParticless.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py CloseEncounters.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py AdvWHFast.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Checkpoints.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Churyumov-Gerasimenko.ipynb | python 
@@ -63,7 +66,6 @@ script:
 
 # Ignoring examples with complicated dependencies
 #    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Megno.ipynb | python 
-#    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Exceptions.ipynb | python 
 #    - cd $TRAVIS_BUILD_DIR/examples/opencl/ && make
 #    - cd examples/restricted_threebody_mpi/ && make
 #    - cd examples/shearing_sheet_fft/ && make
