@@ -132,6 +132,14 @@ class ReboundModule(types.ModuleType):
         c_int.in_dll(self.clibrebound, "N").value = value
 
     @property
+    def lastID(self):
+        return c_int.in_dll(self.clibrebound, "lastID").value
+
+    @lastID.setter
+    def lastID(self, value):
+        c_int.in_dll(self.clibrebound, "lastID").value = value
+
+    @property
     def N_active(self):
         return c_int.in_dll(self.clibrebound, "N_active").value
 
@@ -220,6 +228,7 @@ class ReboundModule(types.ModuleType):
         if particle is not None:
             if isinstance(particle, Particle):
                 self.clibrebound.particles_add(particle)
+                self.lastID += 1
             elif isinstance(particle, list):
                 for p in particle:
                     self.add(p)
@@ -262,10 +271,15 @@ class ReboundModule(types.ModuleType):
         particles and many removals to speed things up.
         """
         if index is not None:
-            self.clibrebound.particles_remove(c_int(index), keepSorted)
+            success = self.clibrebound.particles_remove(c_int(index), keepSorted)
+            if not success:
+                print("Index %d passed to remove_particle was out of range (N=%d). Did not remove particle.\n"%(index, self.N))
             return
         if ID is not None:
-            self.clibrebound.particles_remove_ID(c_int(ID), keepSorted)
+            success = self.clibrebound.particles_remove_ID(c_int(ID), keepSorted)
+            if not success:
+                print("ID %d passed to remove_particle was not found.  Did not remove particle.\n"%(ID))
+
 
 # Orbit calculation
     def calculate_orbits(self, heliocentric=False):
@@ -377,10 +391,10 @@ class ReboundModule(types.ModuleType):
             if ret_value == 1:
                 raise self.NoParticleLeft("No more particles left in simulation.")
             if ret_value == 2:
-                raise self.ParticleEscaping(c_int.in_dll(self.clibrebound, "escapedParticle").value)
+                raise self.ParticleEscaping(c_int.in_dll(self.clibrebound, "escapedParticle").value, self.t, self.particles)
             if ret_value == 3:
                 raise self.CloseEncounter(c_int.in_dll(self.clibrebound, "closeEncounterPi").value,
-                                     c_int.in_dll(self.clibrebound, "closeEncounterPj").value)
+                                     c_int.in_dll(self.clibrebound, "closeEncounterPj").value, self.t, self.particles)
         else:
             debug.integrate_other_package(tmax,exact_finish_time)
 
@@ -389,17 +403,21 @@ class ReboundModule(types.ModuleType):
 
 # Exceptions    
     class CloseEncounter(Exception):
-        def __init__(self, id1, id2):
-                self.id1 = id1
-                self.id2 = id2
+        def __init__(self, index1, index2, t, ps):
+                self.index1 = index1
+                self.index2 = index2
+                self.t = t
+                self.ps = ps
         def __str__(self):
-                return "A close encounter occured between particles %d and %d."%(self.id1,self.id2)
+                return "A close encounter occured at time %f between particles with IDs %d and %d."%(self.t, self.ps[self.index1].ID,self.ps[self.index2].ID)
 
     class ParticleEscaping(Exception):
-        def __init__(self, id1):
-            self.id1 = id1
+        def __init__(self, index1, t, ps):
+            self.index1 = index1
+            self.t = t
+            self.ps = ps
         def __str__(self):
-            return "At least one particle's distance > maxR."
+            return "At least one particle's distance > maxR at time %f (ID = %d)."%(self.t, self.ps[self.index1].ID)
 
     class NoParticleLeft(Exception):
         pass

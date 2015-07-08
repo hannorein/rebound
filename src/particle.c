@@ -68,11 +68,6 @@ void particles_add_local(struct particle pt){
 		particles = realloc(particles,sizeof(struct particle)*Nmax);
 	}
 
-#ifdef PARTICLE_IDS
-	pt.ID = lastID;
-	lastID++;
-#endif
-
 	particles[N] = pt;
 
 #ifdef TREE
@@ -152,10 +147,14 @@ void particles_remove_all(void){
 	particles 	= NULL;
 }
 
-void particles_remove(int index, int keepSorted){
+int particles_remove(int index, int keepSorted){
 	if (N==1){
 		printf("Last particle removed.  Exiting.\n");
 		exit(0);
+	}
+	if (index >= N){
+		fprintf(stderr, "\nIndex %d passed to particles_remove was out of range (N=%d).  Did not remove particle\n");
+		return 0;
 	}
 	N--;
 	if(keepSorted){
@@ -166,20 +165,19 @@ void particles_remove(int index, int keepSorted){
 	else{
 		particles[index] = particles[N];
 	}
+
+	return 1;
 }
 
 #ifdef PARTICLE_IDS
-void particles_remove_ID(int ID, int keepSorted){
-	if(particles[ID].ID == ID){ // check initial case where position in array = ID
-		particles_remove(ID, keepSorted); 
-	}
-	else{
-		for(int i=0;i<N;i++){
-			if(particles[i].ID == ID){
-				particles_remove(i, keepSorted);
-				break;
-			}
+int particles_remove_ID(int ID, int keepSorted){
+	int success = 0;
+	for(int i=0;i<N;i++){
+		if(particles[i].ID == ID){
+			success = particles_remove(i, keepSorted);
+			break;
 		}
 	}
+	return success;
 }
 #endif

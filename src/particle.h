@@ -102,19 +102,22 @@ void particles_remove_all(void);
 /**
  * Remove particle by position in particles array
  * if keepSorted is set, then particles with indices higher than index
- * are all shifted down one position, ensuring the ordering remains
+ * are all shifted down one position, ensuring the ordering remains.
+ * Returns 1 if particle was successfully removed, 0 if index passed was 
+ * out of range.
  */
 
-void particles_remove(int index, int keepSorted);
+int particles_remove(int index, int keepSorted);
 
 /**
  * Remove particle by ID.
  * if keepSorted is set, the particles with indices in the particles array
  * higher than the one with the passed ID are all shifted down one position,
- * ensuring the ordering remains.
+ * ensuring the ordering remains. Returns 1 if particle successfully removed,
+ * 0 if ID was not found in the particles array.
  */
 
 #ifdef PARTICLE_IDS
-void particles_remove_ID(int ID, int keepSorted);
+int particles_remove_ID(int ID, int keepSorted);
 #endif
 #endif // _PARTICLE_H
