@@ -171,7 +171,7 @@ int particles_remove(int index, int keepSorted){
 	return 1;
 }
 
-#ifdef PARTICLE_IDS
+#ifdef PARTICLEIDS
 int particles_remove_ID(int ID, int keepSorted){
 	int success = 0;
 	for(int i=0;i<N;i++){

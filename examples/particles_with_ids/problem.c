@@ -37,12 +37,11 @@
 #include "integrator.h"
 #include "integrator_whfast.h"
 
-double print_IDs();
+void print_IDs(void);
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	tmax		= 0.;			
-#ifdef PARTICLE_IDS
 	// Just demonstrating IDs, so set initial conditions arbitrarily (and IDs in the order they are added)
 	for (int i=0;i<10;i++){
 		struct particle p;
@@ -50,11 +49,11 @@ void problem_init(int argc, char* argv[]){
 		p.vx = i; 		p.vy = i;	 	p.vz = i;
 		p.ax = 0; 			p.ay = 0; 			p.az = 0;
 		p.m  = i;
-		p.ID = i; // IDs only work if you export PARTICLE_IDS = 1 in the Makefile
+		p.ID = i; // IDs only work if you export PARTICLEIDS = 1 in the Makefile
 		particles_add(p); 
 	}
 
-	print_IDS();
+	print_IDs();
 
 	int success;
 	int index = 3;
@@ -74,18 +73,15 @@ void problem_init(int argc, char* argv[]){
 
 	success = particles_remove(15, keepSorted);
 	success = particles_remove_ID(3, keepSorted);
-#endif
-	exit(0);
 }
-#ifdef PARTICLE_IDS
-void print_IDs(){
+
+void print_IDs(void){
 	printf("IDs = ");
 	for (int i=0;i<10;i++){
 		printf("%d ", particles[i].ID);
 	}
 	printf("\n");
 }
-#endif
 
 void problem_output(){
 }
