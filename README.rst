@@ -501,6 +501,12 @@ examples/overstability
   
   Modules used: ``gravity_none.c`` ``boundaries_shear.c`` ``collisions_sweep.c``.
 
+examples/particle_IDs_and_removal
+  This example shows how to assign IDs to particles, and demonstrates different
+  options for removing particles from the simulation.
+  
+  Modules used: ``gravity_direct.c`` ``boundaries_none.c`` ``collisions_none.c``.
+
 examples/prdrag
   This example provides an implementation of the
   Poynting-Robertson effect. The code is using the IAS15 integrator
@@ -636,13 +642,6 @@ examples/star_of_david
 
 examples/stark
   This example calculates the Stark problem.
-  
-  Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
-
-examples/symplectic_integrator
-  This example uses the symplectic Wisdom Holman (WH) integrator
-  to integrate test particles on eccentric orbits in a fixed potential.
-  Note that the WH integrator assumes that the central object is at the origin.
   
   Modules used: ``gravity_direct.c`` ``boundaries_open.c`` ``collisions_none.c``.
 

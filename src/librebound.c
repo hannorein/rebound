@@ -50,12 +50,10 @@ double softening = 0;
 double timing 	= 0;
 int closeEncounterPi = -1;
 int closeEncounterPj = -1;
+int escapedParticle = -1;
 extern int Nmax;	
 extern int iter;  // TODO DEBUG
 const char *build_str = __DATE__ " " __TIME__;
-
-
-
 
 // Function pointer to additional forces
 void (*problem_additional_forces) (void) = NULL;
@@ -69,10 +67,10 @@ void setp(struct particle* _p){
 	particles = malloc(sizeof(struct particle)*N);
 	memcpy(particles,_p,sizeof(struct particle)*N);
 }
-struct particle particle_get(int i){
+struct particle get_particle(int i){
 	return particles[i];
 }
-struct particle* particles_get(void){
+struct particle* get_particles(void){
 	return particles;
 }
 void set_additional_forces(void (* _cb)(void)){
@@ -140,6 +138,10 @@ int rebound_integrate(double _tmax, int exact_finish_time, double maxR, double m
 	int last_step = 0;
 	int ret_value = 0;
 	const double dtsign = copysign(1.,dt); 				// Used to determine integration direction
+	if ((t+dt)*dtsign>=tmax*dtsign && exact_finish_time==1){
+		dt = tmax-t;
+		last_step++;
+	}
 	while(t*dtsign<tmax*dtsign && last_step<2 && ret_value==0){
 		if (N<=0){
 			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
@@ -161,6 +163,7 @@ int rebound_integrate(double _tmax, int exact_finish_time, double maxR, double m
 				double r2 = p.x*p.x + p.y*p.y + p.z*p.z;
 				if (r2>maxR2){
 					ret_value = 2;
+					escapedParticle = i;
 				}
 			}
 		}
