@@ -69,14 +69,14 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
                     break
                 if startdata == 2:
                     pos = [float(i) for i in line.split()]
-                    p.x = pos[0]*KM2AU
-                    p.y = pos[1]*KM2AU
-                    p.z = pos[2]*KM2AU
+                    p.x = pos[0]
+                    p.y = pos[1]
+                    p.z = pos[2]
                 if startdata == 3:
                     vel = [float(i) for i in line.split()]
-                    p.vx = vel[0]*KM2AU/S2YRTWOPI 
-                    p.vy = vel[1]*KM2AU/S2YRTWOPI 
-                    p.vz = vel[2]*KM2AU/S2YRTWOPI 
+                    p.vx = vel[0]
+                    p.vy = vel[1]
+                    p.vz = vel[2]
                 if startdata > 0:
                     startdata += 1
                 if "Target body name:" in line:
@@ -112,7 +112,7 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
     elif idn is not None:
         try:
             p.m = float(re.search(r"BODY%d\_GM .* \( *([\.E\+\-0-9]+ *)\)"%int(idn), HORIZONS_MASS_DATA).group(1))
-            p.m *= KM2AU*KM2AU*KM2AU/(S2YRTWOPI*S2YRTWOPI)
+            p.m /= G # divide by G (horizons masses give GM)
         except:
             print("Warning: Mass cannot be retrieved from NASA HORIZONS. Set to 0.")
             p.m = 0
@@ -125,7 +125,9 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
 # There is currently no way to get mass data from HORIZONS.
 # The following data was provided by Jon Giorgini (10 May 2015)
 # Units: km^3/s^2
- 
+
+G = 6.674e-20 # units of km^3/kg/s^2
+
 HORIZONS_MASS_DATA = """
     BODY1_GM       = ( 2.2031780000000021E+04 )
     BODY2_GM       = ( 3.2485859200000006E+05 )
