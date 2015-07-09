@@ -228,64 +228,112 @@ struct particle tools_init_orbit3d(double M, double m, double a, double e, doubl
 	return p;
 }
 
-#define TINY 1.0e-12
-struct orbit tools_p2orbit(struct particle p, struct particle star){
+const struct orbit orbit_nan = {.a = NAN, .r = NAN, .h = NAN, .P = NAN, .l = NAN, .e = NAN, .inc = NAN, .Omega = NAN, .omega = NAN, .f = NAN};
+
+#define MIN_REL_ERROR 1.0e-12
+#define TINY 1.E-308
+
+struct orbit tools_p2orbit(struct particle p, struct particle primary){
 	struct orbit o;
-	double h0,h1,h2,e0,e1,e2,n0,n1,n,er,vr,mu,ea;
-	mu = G*(p.m+star.m);
-	p.x -= star.x;
-	p.y -= star.y;
-	p.z -= star.z;
-	p.vx -= star.vx;
-	p.vy -= star.vy;
-	p.vz -= star.vz;
-	h0 = (p.y*p.vz - p.z*p.vy); 			//angular momentum vector
-	h1 = (p.z*p.vx - p.x*p.vz);
-	h2 = (p.x*p.vy - p.y*p.vx);
+	if (primary.m <= TINY){	
+		return orbit_nan;
+	}
+	double h0,h1,h2,e0,e1,e2,n0,n1,n,er,vr,mu,ea,dx,dy,dz,dvx,dvy,dvz,v,cosf,cosea;
+	mu = G*(p.m+primary.m);
+	dx = p.x - primary.x;
+	dy = p.y - primary.y;
+	dz = p.z - primary.z;
+	dvx = p.vx - primary.vx;
+	dvy = p.vy - primary.vy;
+	dvz = p.vz - primary.vz;
+	h0 = (dy*dvz - dz*dvy); 			//angular momentum vector
+	h1 = (dz*dvx - dx*dvz);
+	h2 = (dx*dvy - dy*dvx);
 	o.h = sqrt ( h0*h0 + h1*h1 + h2*h2 );		// abs value of angular moment 
-	double v = sqrt ( p.vx*p.vx + p.vy*p.vy + p.vz*p.vz );
-	o.r = sqrt ( p.x*p.x + p.y*p.y + p.z*p.z );
-	vr = (p.x*p.vx + p.y*p.vy + p.z*p.vz)/o.r;
-	e0 = 1./mu*( (v*v-mu/o.r)*p.x - o.r*vr*p.vx );
-	e1 = 1./mu*( (v*v-mu/o.r)*p.y - o.r*vr*p.vy );
-	e2 = 1./mu*( (v*v-mu/o.r)*p.z - o.r*vr*p.vz );
+	v = sqrt ( dvx*dvx + dvy*dvy + dvz*dvz );
+	o.r = sqrt ( dx*dx + dy*dy + dz*dz );
+	if(o.r <= TINY){
+		return orbit_nan;
+	}
+	if (o.h/(o.r*v) <= MIN_REL_ERROR){
+		return orbit_nan;
+	}
+	vr = (dx*dvx + dy*dvy + dz*dvz)/o.r;
+	e0 = 1./mu*( (v*v-mu/o.r)*dx - o.r*vr*dvx );
+	e1 = 1./mu*( (v*v-mu/o.r)*dy - o.r*vr*dvy );
+	e2 = 1./mu*( (v*v-mu/o.r)*dz - o.r*vr*dvz );
  	o.e = sqrt( e0*e0 + e1*e1 + e2*e2 );		// eccentricity
 	o.a = -mu/( v*v - 2.*mu/o.r );			// semi major axis
-	o.P = 2.*M_PI*sqrt( o.a*o.a*o.a/mu );		// period
+
+	o.P = o.a/fabs(o.a)*2.*M_PI*sqrt(fabs(o.a*o.a*o.a/mu));		// period (negative if hyperbolic)
 	o.inc = acos( h2/o.h ) ;				// inclination (wrt xy-plane)   -  Note if pi/2 < i < pi then the orbit is retrograde
 	n0 = -h1;					// vector of nodes lies in xy plane => no z component
 	n1 =  h0;		
 	n = sqrt( n0*n0 + n1*n1 );
-	er = p.x*e0 + p.y*e1 + p.z*e2;
-	if (n<=1.e-30||o.inc<=1.e-30){			// we are in the xy plane
+	er = dx*e0 + dy*e1 + dz*e2;
+	if (n/(o.r*v) <= MIN_REL_ERROR || o.inc <= MIN_REL_ERROR){			// we are in the xy plane
 		o.Omega=0.;
-		if (e1>=0.) { o.omega=acos(e0/o.e); }else{ o.omega = 2.*M_PI-acos(e0/o.e); }
-	}else{
-		if (e2>=0.) { o.omega=acos(( n0*e0 + n1*e1 )/(n*o.e)); }else{ o.omega=2.*M_PI-acos(( n0*e0 + n1*e1 )/(n*o.e)); }// pericenter = 0 if pericenter = ascending node
-		if (n1>=0.) { o.Omega = acos(n0/n); }else{  o.Omega=2.*M_PI-acos(n0/n);} 					// longitude of ascending node in xy plane, measured from x axis
-	//	if (isnan(o.Omega)||isinf(o.Omega)) o.Omega=0.;
+		if (o.e <= MIN_REL_ERROR){              // omega not defined for circular orbit
+			o.omega = 0.;
+		}
+		else{
+			if (e1>=0.){
+				o.omega=acos(e0/o.e);
+			}
+			else{
+				o.omega = 2.*M_PI-acos(e0/o.e);
+			}
+		}
 	}
-	o.f = er/(o.e*o.r);
-	ea = (1.-o.r/o.a)/o.e;
-	if (o.f>1.||o.f<-1.){				// failsafe
-		o.f = M_PI - M_PI * o.f;
-		ea  = M_PI - M_PI * ea;
-	}else{
-		o.f = acos(o.f);			// true anomaly = 0 if planet at pericenter
-		ea  = acos(ea);				// eccentric anomaly
-	}
-	
-	if (vr<0.) { 
-		o.f=2.*M_PI-o.f;	
-		ea =2.*M_PI-ea;
-	}
-	o.l = ea -o.e*sin(ea)+o.omega + o.Omega;	// mean longitude
-	if (o.e<=1.e-10){ 				//circular orbit
-		o.omega=0.;
-		o.f=0.; 				// f has no meaning
+	else{
+		if (o.e <= MIN_REL_ERROR){
+			o.omega = 0.;
+		}
+		else{
+			if (e2>=0.){                        // omega=0 if perictr at asc node
+				o.omega=acos(( n0*e0 + n1*e1 )/(n*o.e));
+			}
+			else{
+				o.omega=2.*M_PI-acos(( n0*e0 + n1*e1 )/(n*o.e));
+			}
+		}
+
+		if (n1>=0.){
+			o.Omega = acos(n0/n);
+		}
+		else{
+			o.Omega=2.*M_PI-acos(n0/n); // Omega=longitude of asc node
+		}								// taken in xy plane from x axis
+	}	
+	if (o.e<=MIN_REL_ERROR){            // circular orbit
+		o.f=0.;                         // f has no meaning
 		o.l=0.;
 	}
-
+	else{
+		cosf = er/(o.e*o.r);
+		cosea = (1.-o.r/o.a)/o.e;
+		
+		if (-1.<=cosf && cosf<=1.){     // failsafe
+			o.f = acos(cosf);
+		}
+		else{
+			o.f = M_PI/2.*(1.-cosf);
+		}
+		
+		if (-1.<=cosea && cosea<=1.){
+			ea  = acos(cosea);
+		}
+		else{
+			ea = M_PI/2.*(1.-cosea);
+		}
+		
+		if (vr<0.){
+			o.f=2.*M_PI-o.f;
+			ea =2.*M_PI-ea;
+		}
+		
+		o.l = ea -o.e*sin(ea) + o.omega+ o.Omega;  // mean longitude
+	}
 	return o;
 }
 
