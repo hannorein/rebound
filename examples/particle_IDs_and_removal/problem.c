@@ -1,12 +1,12 @@
 /**
  * @file 	problem.c
- * @brief 	Example problem: solar system.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @brief 	How to use unique ids to identify particles
+ * @author 	Daniel Tamayo <d.tamayo@utoronto.ca>
  * @detail  This example shows how to assign IDs to particles, and demonstrates different 
  * options for removing particles from the simulation.
  * 
  * @section 	LICENSE
- * Copyright (c) 2015 Hanno Rein, Shangfei Liu, Dave Spiegel
+ * Copyright (c) 2015 Dan Tamayo
  *
  * This file is part of rebound.
  *
@@ -58,31 +58,41 @@ void problem_init(int argc, char* argv[]){
 	print_IDs();
 
 	int success;
-	int index = 3;
 	int keepSorted = 0;
-	printf("\nTry to remove index %d...\n", index);
-	success = particles_remove(index, keepSorted);
+	printf("\nTry to remove index 3...\n");
+	success = particles_remove(3, keepSorted);
 	if (success){
 		printf("Particle successfully removed\n");
 	}
 	print_IDs();
 	printf("Because keepSorted = 0, last particle replaced removed particle and indices got scrambled:\n\n");
 
-	index = 6;
 	keepSorted = 1;
-	printf("Try to remove index %d while preserving the order with keepSorted=1...\n", index);
-	success = particles_remove(7, keepSorted);
+	printf("Try to remove index 6 while preserving the order with keepSorted=1...\n");
+	success = particles_remove(6, keepSorted);
+	if (success){
+		printf("Particle successfully removed\n");
+	}
 	print_IDs();
 
 	printf("\nWe can also remove particles by ID.  Try to remove ID=5...\n");
 	success = particles_remove_ID(5, keepSorted);
+	if (success){
+		printf("Particle successfully removed\n");
+	}
 	print_IDs();
 	
 	printf("\nIf we try to remove an index > N or an ID that doesn't exist, we get a warning and no particle is removed:\n");
 	printf("Try to remove index 15...\n");
 	success = particles_remove(15, keepSorted);
+	if (success){
+		printf("Particle successfully removed\n");
+	}
 	printf("Try to remove ID=3...\n");
 	success = particles_remove_ID(3, keepSorted);
+	if (success){
+		printf("Particle successfully removed\n");
+	}
 	exit(0);
 }
 
