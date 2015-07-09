@@ -180,6 +180,10 @@ int particles_remove_ID(int ID, int keepSorted){
 			break;
 		}
 	}
+
+	if(!success){
+		fprintf(stderr, "\nIndex passed to particles_remove_ID (ID = %d) not found in particles array.  Did not remove particle.\n", ID);
+	}
 	return success;
 }
 #endif

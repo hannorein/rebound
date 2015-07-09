@@ -43,41 +43,52 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	tmax		= 0.;			
 	// Just demonstrating IDs, so set initial conditions arbitrarily (and IDs in the order they are added)
+	// IDs can be set to any integer
 	for (int i=0;i<10;i++){
 		struct particle p;
 		p.x  = i; 		p.y  = i;	 	p.z  = i;
 		p.vx = i; 		p.vy = i;	 	p.vz = i;
 		p.ax = 0; 			p.ay = 0; 			p.az = 0;
 		p.m  = i;
-		p.ID = i; // IDs only work if you export PARTICLEIDS = 1 in the Makefile
+		p.ID = i; // IDs only work if you export PARTICLEIDS=1 in the Makefile
 		particles_add(p); 
 	}
 
+	printf("Initial IDs:\n");
 	print_IDs();
 
 	int success;
 	int index = 3;
 	int keepSorted = 0;
+	printf("\nTry to remove index %d...\n", index);
 	success = particles_remove(index, keepSorted);
 	if (success){
 		printf("Particle successfully removed\n");
 	}
-	print_IDs(); // if keepSorted = 0, last particle replaces removed particle, and indices get scrambled
-	
+	print_IDs();
+	printf("Because keepSorted = 0, last particle replaced removed particle and indices got scrambled:\n\n");
+
+	index = 6;
 	keepSorted = 1;
+	printf("Try to remove index %d while preserving the order with keepSorted=1...\n", index);
 	success = particles_remove(7, keepSorted);
 	print_IDs();
 
+	printf("\nWe can also remove particles by ID.  Try to remove ID=5...\n");
 	success = particles_remove_ID(5, keepSorted);
 	print_IDs();
-
+	
+	printf("\nIf we try to remove an index > N or an ID that doesn't exist, we get a warning and no particle is removed:\n");
+	printf("Try to remove index 15...\n");
 	success = particles_remove(15, keepSorted);
+	printf("Try to remove ID=3...\n");
 	success = particles_remove_ID(3, keepSorted);
+	exit(0);
 }
 
 void print_IDs(void){
 	printf("IDs = ");
-	for (int i=0;i<10;i++){
+	for (int i=0;i<N;i++){
 		printf("%d ", particles[i].ID);
 	}
 	printf("\n");
