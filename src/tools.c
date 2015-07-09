@@ -228,20 +228,7 @@ struct particle tools_init_orbit3d(double M, double m, double a, double e, doubl
 	return p;
 }
 
-struct orbit tools_orbit_nan(void){
-	struct orbit o;
-	o.a = NAN;
-	o.r = NAN;
-	o.h = NAN;
-	o.P = NAN;
-	o.l = NAN;
-	o.e = NAN;
-	o.inc = NAN;
-	o.Omega = NAN;
-	o.omega = NAN;
-	o.f = NAN;
-	return o;
-}
+const struct orbit orbit_nan = {.a = NAN, .r = NAN, .h = NAN, .P = NAN, .l = NAN, .e = NAN, .inc = NAN, .Omega = NAN, .omega = NAN, .f = NAN};
 
 #define MIN_REL_ERROR 1.0e-12
 #define TINY 1.E-308
@@ -249,7 +236,7 @@ struct orbit tools_orbit_nan(void){
 struct orbit tools_p2orbit(struct particle p, struct particle primary){
 	struct orbit o;
 	if (primary.m <= TINY){	
-		return tools_orbit_nan();
+		return orbit_nan;
 	}
 	double h0,h1,h2,e0,e1,e2,n0,n1,n,er,vr,mu,ea,dx,dy,dz,dvx,dvy,dvz,v,cosf,cosea;
 	mu = G*(p.m+primary.m);
@@ -266,10 +253,10 @@ struct orbit tools_p2orbit(struct particle p, struct particle primary){
 	v = sqrt ( dvx*dvx + dvy*dvy + dvz*dvz );
 	o.r = sqrt ( dx*dx + dy*dy + dz*dz );
 	if(o.r <= TINY){
-		return tools_orbit_nan();
+		return orbit_nan;
 	}
 	if (o.h/(o.r*v) <= MIN_REL_ERROR){
-		return tools_orbit_nan();
+		return orbit_nan;
 	}
 	vr = (dx*dvx + dy*dvy + dz*dvz)/o.r;
 	e0 = 1./mu*( (v*v-mu/o.r)*dx - o.r*vr*dvx );
