@@ -38,7 +38,6 @@
 #endif // MPI
 
 struct particle* 	particles = NULL;	
-
 int N 		= 0;	
 int Nmax	= 0;	
 int N_active 	= -1; 	
@@ -67,7 +66,9 @@ void particles_add_local(struct particle pt){
 		Nmax += 128;
 		particles = realloc(particles,sizeof(struct particle)*Nmax);
 	}
+
 	particles[N] = pt;
+
 #ifdef TREE
 	tree_add_particle_to_tree(N);
 #endif // TREE
@@ -115,7 +116,7 @@ void particles_add_fixed(struct particle pt,int pos){
 		return;
 	}
 #endif // BOUNDARIES_OPEN
-	particles[pos] = pt;
+	particles[pos] = pt; 
 #ifdef TREE
 	tree_add_particle_to_tree(pos);
 #endif // TREE
@@ -143,3 +144,46 @@ void particles_remove_all(void){
 	free(particles);
 	particles 	= NULL;
 }
+
+int particles_remove(int index, int keepSorted){
+	if (N==1){
+		fprintf(stderr, "Last particle removed.\n");
+		return 1;
+	}
+	if (index >= N){
+		fprintf(stderr, "\nIndex %d passed to particles_remove was out of range (N=%d).  Did not remove particle.\n", index, N);
+		return 0;
+	}
+	if (N_megno){
+		fprintf(stderr, "\nRemoving particles not supported when calculating MEGNO.  Did not remove particle.\n");
+		return 0;
+	}
+	N--;
+	if(keepSorted){
+		for(int j=index; j<N; j++){
+			particles[j] = particles[j+1];
+		}
+	}
+	else{
+		particles[index] = particles[N];
+	}
+
+	return 1;
+}
+
+#ifdef PARTICLEIDS
+int particles_remove_ID(int ID, int keepSorted){
+	int success = 0;
+	for(int i=0;i<N;i++){
+		if(particles[i].ID == ID){
+			success = particles_remove(i, keepSorted);
+			break;
+		}
+	}
+
+	if(!success){
+		fprintf(stderr, "\nIndex passed to particles_remove_ID (ID = %d) not found in particles array.  Did not remove particle.\n", ID);
+	}
+	return success;
+}
+#endif
