@@ -501,12 +501,6 @@ examples/overstability
   
   Modules used: ``gravity_none.c`` ``boundaries_shear.c`` ``collisions_sweep.c``.
 
-examples/particle_IDs_and_removal
-  This example shows how to assign IDs to particles, and demonstrates different 
-  options for removing particles from the simulation.
-
-  Modules used: ``gravity_direct.c`` ``boundaries_none.c`` ``collisions_none.c``.
-
 examples/prdrag
   This example provides an implementation of the
   Poynting-Robertson effect. The code is using the IAS15 integrator

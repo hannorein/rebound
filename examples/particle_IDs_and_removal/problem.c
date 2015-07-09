@@ -2,8 +2,8 @@
  * @file 	problem.c
  * @brief 	Example problem: solar system.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example integrates all planets of the Solar
- * System. The data comes from the NASA HORIZONS system. 
+ * @detail  This example shows how to assign IDs to particles, and demonstrates different 
+ * options for removing particles from the simulation.
  * 
  * @section 	LICENSE
  * Copyright (c) 2015 Hanno Rein, Shangfei Liu, Dave Spiegel
