@@ -43,6 +43,10 @@ ifeq ($(QUADRUPOLE), 1)
 	PREDEF+= -DQUADRUPOLE
 endif
 
+ifeq ($(PARTICLEIDS), 1)
+	PREDEF+= -DPARTICLEIDS
+endif
+
 ifeq ($(PROFILING), 1)
 	PREDEF+= -DPROFILING
 endif
