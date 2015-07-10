@@ -253,10 +253,6 @@ class ReboundModule(types.ModuleType):
         in_SI=acc*lengths_SI[old_l]/times_SI[old_t]**2
         return in_SI*times_SI[new_t]**2/lengths_SI[new_l]
 
-    def convert_acc(self, acc, l_unit, t_unit):
-        in_SI=acc*lengths_SI[self._units['length']]/times_SI[self._units['time']]**2
-        return in_SI*times_SI[t_unit]**2/lengths_SI[l_unit]
-    
     def convert_G(self, new_l, new_t, new_m):
         return G_SI*masses_SI[new_m]*times_SI[new_t]**2/lengths_SI[new_l]**3
 
