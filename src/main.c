@@ -273,6 +273,10 @@ int main(int argc, char* argv[]) {
 	signal(SIGINT, interruptHandler);
 	signal(SIGKILL, interruptHandler);
 	srand ( tim.tv_usec + getpid());
+	
+	r = calloc(1,sizeof(struct Rebound));
+	r->t = 0;
+
 	problem_init(argc, argv, r);
 	problem_output(r);
 #ifdef OPENGL

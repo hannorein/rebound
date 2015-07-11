@@ -53,19 +53,19 @@ void integrator_part1(struct Rebound* r){
 			integrator_ias15_part1(r);
 			break;
 		case WH:
-			integrator_wh_part1();
+			integrator_wh_part1(r);
 			break;
 		case LEAPFROG:
-			integrator_leapfrog_part1();
+			integrator_leapfrog_part1(r);
 			break;
 		case SEI:
-			integrator_sei_part1();
+			integrator_sei_part1(r);
 			break;
 		case WHFAST:
 			integrator_whfast_part1(r);
 			break;
 		case HYBRID:
-			integrator_hybrid_part1();
+			integrator_hybrid_part1(r);
 			break;
 		default:
 			break;
@@ -78,19 +78,19 @@ void integrator_part2(struct Rebound* r){
 			integrator_ias15_part2(r);
 			break;
 		case WH:
-			integrator_wh_part2();
+			integrator_wh_part2(r);
 			break;
 		case LEAPFROG:
-			integrator_leapfrog_part2();
+			integrator_leapfrog_part2(r);
 			break;
 		case SEI:
-			integrator_sei_part2();
+			integrator_sei_part2(r);
 			break;
 		case WHFAST:
 			integrator_whfast_part2(r);
 			break;
 		case HYBRID:
-			integrator_hybrid_part2();
+			integrator_hybrid_part2(r);
 			break;
 		default:
 			break;
@@ -103,19 +103,19 @@ void integrator_synchronize(struct Rebound* r){
 			integrator_ias15_synchronize(r);
 			break;
 		case WH:
-			integrator_wh_synchronize();
+			integrator_wh_synchronize(r);
 			break;
 		case LEAPFROG:
-			integrator_leapfrog_synchronize();
+			integrator_leapfrog_synchronize(r);
 			break;
 		case SEI:
-			integrator_sei_synchronize();
+			integrator_sei_synchronize(r);
 			break;
 		case WHFAST:
 			integrator_whfast_synchronize(r);
 			break;
 		case HYBRID:
-			integrator_hybrid_synchronize();
+			integrator_hybrid_synchronize(r);
 			break;
 		default:
 			break;
@@ -127,11 +127,11 @@ void integrator_reset(struct Rebound* r){
 	gravity_ignore_10 = 0;
 	integrator_force_is_velocitydependent = 0;
 	integrator_ias15_reset(r);
-	integrator_wh_reset();
-	integrator_leapfrog_reset();
-	integrator_sei_reset();
+	integrator_wh_reset(r);
+	integrator_leapfrog_reset(r);
+	integrator_sei_reset(r);
 	integrator_whfast_reset(r);
-	integrator_hybrid_reset();
+	integrator_hybrid_reset(r);
 }
 
 void integrator_update_acceleration(struct Rebound* r){

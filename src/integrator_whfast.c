@@ -835,7 +835,7 @@ void integrator_whfast_part2(struct Rebound* r){
 
 		// Update MEGNO in middle of timestep as we need synchonized x/v/a.
 		double dY = dt * 2. * r->t * tools_megno_deltad_delta();
-		tools_megno_update(dY);
+		tools_megno_update(r, dY);
 	}
 }
 	

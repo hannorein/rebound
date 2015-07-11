@@ -379,12 +379,12 @@ void tools_megno_init(double delta){
         }
 	N_megno = _N_megno;
 }
-double tools_megno(void){ // Returns the MEGNO <Y>
-	if (t==0.) return 0.;
-	return tools_megno_Yss/t;
+double tools_megno(struct Rebound* r){ // Returns the MEGNO <Y>
+	if (r->t==0.) return 0.;
+	return tools_megno_Yss/r->t;
 }
-double tools_lyapunov(void){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
-	if (t==0.) return 0.;
+double tools_lyapunov(struct Rebound* r){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
+	if (r->t==0.) return 0.;
 	return tools_megno_cov_Yt/tools_megno_var_t;
 }
 double tools_megno_deltad_delta(void){
@@ -442,24 +442,24 @@ double tools_megno_deltad_delta(void){
 //	}
 //}
 
-void tools_megno_update(double dY){
+void tools_megno_update(struct Rebound* r, double dY){
 	// Calculate running Y(t)
 	tools_megno_Ys += dY;
-	double Y = tools_megno_Ys/t;
+	double Y = tools_megno_Ys/r->t;
 	// Calculate averge <Y> 
 	tools_megno_Yss += Y * dt;
 	// Update covariance of (Y,t) and variance of t
 	tools_megno_n++;
-	double _d_t = t - tools_megno_mean_t;
+	double _d_t = r->t - tools_megno_mean_t;
 	tools_megno_mean_t += _d_t/(double)tools_megno_n;
-	double _d_Y = tools_megno() - tools_megno_mean_Y;
+	double _d_Y = tools_megno(r) - tools_megno_mean_Y;
 	tools_megno_mean_Y += _d_Y/(double)tools_megno_n;
 	tools_megno_cov_Yt += ((double)tools_megno_n-1.)/(double)tools_megno_n 
-					*(t-tools_megno_mean_t)
-					*(tools_megno()-tools_megno_mean_Y);
+					*(r->t-tools_megno_mean_t)
+					*(tools_megno(r)-tools_megno_mean_Y);
 	tools_megno_var_t  += ((double)tools_megno_n-1.)/(double)tools_megno_n 
-					*(t-tools_megno_mean_t)
-					*(t-tools_megno_mean_t);
+					*(r->t-tools_megno_mean_t)
+					*(r->t-tools_megno_mean_t);
 //	// Check to see if we need to rescale
 //	if (tools_megno_delta0!=0){
 //		tools_megno_rescale();

@@ -55,7 +55,7 @@ double sindtz, tandtz;
 /**
  * This function pre-calculates sin() and tan() needed for SEI. 
  */
-void integrator_cache_coefficients(void){
+void integrator_cache_coefficients(){
 	if (lastdt!=dt){
 		// Only calculate sin() and tan() if timestep changed
 		if (OMEGAZ==-1){
@@ -69,23 +69,23 @@ void integrator_cache_coefficients(void){
 	}
 }
 
-void integrator_sei_part1(void){
+void integrator_sei_part1(struct Rebound* r){
 	integrator_cache_coefficients();
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		operator_H012(&(particles[i]));
 	}
-	t+=dt/2.;
+	r->t+=dt/2.;
 }
 
-void integrator_sei_part2(void){
+void integrator_sei_part2(struct Rebound* r){
 	integrator_cache_coefficients();
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		operator_phi1(&(particles[i]));
 		operator_H012(&(particles[i]));
 	}
-	t+=dt/2.;
+	r->t+=dt/2.;
 }
 
 /**
@@ -142,10 +142,10 @@ void operator_phi1(struct particle* p){
 	p->vz += p->az * dt;
 }
 
-void integrator_sei_synchronize(void){
+void integrator_sei_synchronize(struct Rebound* r){
 	// Do nothing.
 }
 
-void integrator_sei_reset(void){
+void integrator_sei_reset(struct Rebound* r){
 	lastdt = 0;	
 }

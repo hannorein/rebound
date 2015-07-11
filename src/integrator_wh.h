@@ -24,8 +24,9 @@
  */
 #ifndef _INTEGRATOR_WH_H
 #define _INTEGRATOR_WH_H
-void integrator_wh_part1(void);
-void integrator_wh_part2(void);
-void integrator_wh_synchronize(void);
-void integrator_wh_reset(void);
+struct Rebound;
+void integrator_wh_part1(struct Rebound* r);
+void integrator_wh_part2(struct Rebound* r);
+void integrator_wh_synchronize(struct Rebound* r);
+void integrator_wh_reset(struct Rebound* r);
 #endif

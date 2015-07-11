@@ -24,8 +24,9 @@
  */
 #ifndef _INTEGRATOR_HYBRID_H
 #define _INTEGRATOR_HYBRID_H
-void integrator_hybrid_part1(void);
-void integrator_hybrid_part2(void);
-void integrator_hybrid_synchronize(void);
-void integrator_hybrid_reset(void);
+struct Rebound;
+void integrator_hybrid_part1(struct Rebound* r);
+void integrator_hybrid_part2(struct Rebound* r);
+void integrator_hybrid_synchronize(struct Rebound* r);
+void integrator_hybrid_reset(struct Rebound* r);
 #endif

@@ -24,10 +24,11 @@
  */
 #ifndef _INTEGRATOR_SEI_H
 #define _INTEGRATOR_SEI_H
-void integrator_sei_part1(void);
-void integrator_sei_part2(void);
-void integrator_sei_synchronize(void);
-void integrator_sei_reset(void);
+struct Rebound;
+void integrator_sei_part1(struct Rebound* r);
+void integrator_sei_part2(struct Rebound* r);
+void integrator_sei_synchronize(struct Rebound* r);
+void integrator_sei_reset(struct Rebound* r);
 
 /* 
  * Epicyclic/orbital frequency. 

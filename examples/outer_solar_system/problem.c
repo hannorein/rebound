@@ -140,8 +140,8 @@ double energy(){
 }
 
 void problem_output(struct Rebound* r){
-	if (output_check(10000000.)){
-		output_timing();
+	if (output_check(r, 10000000.)){
+		output_timing(r);
 //		integrator_synchronize();
 //		FILE* f = fopen("energy.txt","a");
 //		double e = energy();

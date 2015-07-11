@@ -82,25 +82,25 @@ static double get_min_ratio(void){
 
 static double ratio;
 integrator_t integrator_hybrid_mode = WHFAST; // 0 = symplectic; 1 = IAS15
-void integrator_hybrid_part1(void){
+void integrator_hybrid_part1(struct Rebound* r){
 	ratio = get_min_ratio();
 	if (initial_dt==0.){
 		initial_dt = dt;
 	}
 	if (ratio<integrator_hybrid_switch_ratio){
 		if (integrator_hybrid_mode==WHFAST){
-			integrator_ias15_reset(); //previous guesses no good anymore
+			integrator_ias15_reset(r); //previous guesses no good anymore
 			if (integrator_hybrid_switch_warning==0.){
 				integrator_hybrid_switch_warning++;
-				fprintf(stderr,"\n\033[1mInfo!\033[0m Switching to IAS15 for the first time at t=%.9e.\n",t);
+				fprintf(stderr,"\n\033[1mInfo!\033[0m Switching to IAS15 for the first time at t=%.9e.\n",r->t);
 			}
-			integrator_whfast_synchronize();
+			integrator_whfast_synchronize(r);
 			gravity_ignore_10 = 0;
 		}
 		integrator_hybrid_mode = IAS15;
 	}else{
 		if (integrator_hybrid_mode==IAS15){
-			//integrator_whfast_reset(); 
+			//integrator_whfast_reset(r); 
 			integrator_whfast_recalculate_jacobi_this_timestep = 1;
 			dt = initial_dt;
 		}
@@ -108,43 +108,43 @@ void integrator_hybrid_part1(void){
 	}
 	switch(integrator_hybrid_mode){
 		case WHFAST:
-			integrator_whfast_part1();
+			integrator_whfast_part1(r);
 			break;
 		case IAS15:
-			integrator_ias15_part1();
+			integrator_ias15_part1(r);
 			break;
 		default:
 			break;
 	}
 }
-void integrator_hybrid_part2(void){
+void integrator_hybrid_part2(struct Rebound* r){
 	switch(integrator_hybrid_mode){
 		case WHFAST:
-			integrator_whfast_part2();
+			integrator_whfast_part2(r);
 			break;
 		case IAS15:
-			integrator_ias15_part2();
+			integrator_ias15_part2(r);
 			break;
 		default:
 			break;
 	}
 }
 	
-void integrator_hybrid_synchronize(void){
+void integrator_hybrid_synchronize(struct Rebound* r){
 	switch(integrator_hybrid_mode){
 		case WHFAST:
-			integrator_whfast_synchronize();
+			integrator_whfast_synchronize(r);
 			break;
 		default:
 			break;
 	}
 }
 
-void integrator_hybrid_reset(void){
+void integrator_hybrid_reset(struct Rebound* r){
 	integrator_hybrid_mode = WHFAST;
 	integrator_hybrid_switch_warning = 0;
-	integrator_whfast_reset();
-	integrator_ias15_reset();
+	integrator_whfast_reset(r);
+	integrator_ias15_reset(r);
 	integrator_hybrid_switch_ratio = 400.;
 	initial_dt = 0.;
 }

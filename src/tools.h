@@ -25,6 +25,7 @@
 #ifndef TOOLS_H
 #define TOOLS_H
 #include "particle.h"
+struct Rebound;
 /**
  * Struct representing a Keplerian orbit.
  */
@@ -131,12 +132,12 @@ void tools_megno_init(double delta);
 /*
  * Returns the current value of <Y>
  **/
-double tools_megno(void);
+double tools_megno(struct Rebound* r);
 
 /*
  * Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
  **/
-double tools_lyapunov(void);
+double tools_lyapunov(struct Rebound* r);
 
 /*
  * Returns deltad/delta (Note, there is a typo in Gozdziewski et al 2001).
@@ -147,7 +148,7 @@ double tools_megno_deltad_delta(void);
 /*
  * Update MEGNO after a successful timestep by adding dY (=ddelta/delta*dt)
  **/
-void tools_megno_update(double dY);
+void tools_megno_update(struct Rebound* r, double dY);
 
 /**
  * Calculate the total energy (potential and kinetic).

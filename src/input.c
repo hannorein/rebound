@@ -142,6 +142,8 @@ char* input_get_argument(int argc, char** argv, const char* argument){
 }
 
 void input_binary(char* filename){
+#warning TODO!!
+#if 0 
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -169,5 +171,6 @@ void input_binary(char* filename){
 	}else{
 		printf("Can not open file '%s'\n.",filename);
 	}
+#endif 
 }
 

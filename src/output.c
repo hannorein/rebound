@@ -56,17 +56,17 @@
 
 // Check if output is needed
 
-int output_check(double interval){
-	return output_check_phase(interval,0);
+int output_check(struct Rebound* r, double interval){
+	return output_check_phase(r, interval,0);
 }
 
-int output_check_phase(double interval,double phase){
-	double shift = t+interval*phase;
+int output_check_phase(struct Rebound* r, double interval,double phase){
+	double shift = r->t+interval*phase;
 	if (floor(shift/interval)!=floor((shift-dt)/interval)){
 		return 1;
 	}
 	// Output at beginning or end of simulation
-	if (t==0||t==tmax){
+	if (r->t==0||r->t==r->tmax){
 		return 1;
 	}
 	return 0;
@@ -101,7 +101,7 @@ void profiling_stop(int cat){
 
 double output_timing_last = -1; 	/**< Time when output_timing() was called the last time. */
 extern unsigned int integrator_hybrid_mode;
-void output_timing(void){
+void output_timing(struct Rebound* r){
 #ifdef MPI
 	int N_tot = 0;
 	MPI_Reduce(&N, &N_tot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD); 
@@ -125,17 +125,17 @@ void output_timing(void){
 	}
 	printf("N_tot= %- 9d  ",N_tot);
 	if (integrator==SEI){
-		printf("t= %- 9f [orb]  ",t*OMEGA/2./M_PI);
+		printf("t= %- 9f [orb]  ",r->t*OMEGA/2./M_PI);
 	}else{
-		printf("t= %- 9f  ",t);
+		printf("t= %- 9f  ",r->t);
 	}
 	printf("dt= %- 9f  ",dt);
 	if (integrator==HYBRID){
 		printf("INT= %- 1d  ",integrator_hybrid_mode);
 	}
 	printf("cpu= %- 9f [s]  ",temp-output_timing_last);
-	if (tmax>0){
-		printf("t/tmax= %5.2f%%",t/tmax*100.0);
+	if (r->tmax>0){
+		printf("t/tmax= %5.2f%%",r->t/r->tmax*100.0);
 	}
 #ifdef PROFILING
 	printf("\nCATEGORY       TIME \n");
@@ -176,7 +176,7 @@ void output_timing(void){
 }
 
 
-void output_append_ascii(char* filename){
+void output_append_ascii(struct Rebound* r, char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -195,7 +195,7 @@ void output_append_ascii(char* filename){
 	fclose(of);
 }
 
-void output_ascii(char* filename){
+void output_ascii(struct Rebound* r, char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -214,7 +214,7 @@ void output_ascii(char* filename){
 	fclose(of);
 }
 
-void output_append_orbits(char* filename){
+void output_append_orbits(struct Rebound* r, char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -229,13 +229,13 @@ void output_append_orbits(char* filename){
 	struct particle com = particles[0];
 	for (int i=1;i<N;i++){
 		struct orbit o = tools_p2orbit(particles[i],com);
-		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
+		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",r->t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
 		com = tools_get_center_of_mass(com,particles[i]);
 	}
 	fclose(of);
 }
 
-void output_orbits(char* filename){
+void output_orbits(struct Rebound* r, char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -250,14 +250,14 @@ void output_orbits(char* filename){
 	struct particle com = particles[0];
 	for (int i=1;i<N;i++){
 		struct orbit o = tools_p2orbit(particles[i],com);
-		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
+		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",r->t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
 		com = tools_get_center_of_mass(com,particles[i]);
 	}
 	fclose(of);
 }
 
 
-void output_binary(char* filename){
+void output_binary(struct Rebound* r, char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -270,7 +270,7 @@ void output_binary(char* filename){
 		return;
 	}
 	fwrite(&N,sizeof(int),1,of);
-	fwrite(&t,sizeof(double),1,of);
+	fwrite(&(r->t),sizeof(double),1,of);
 	for (int i=0;i<N;i++){
 		struct particle p = particles[i];
 		fwrite(&(p),sizeof(struct particle),1,of);
@@ -278,7 +278,7 @@ void output_binary(char* filename){
 	fclose(of);
 }
 
-void output_binary_positions(char* filename){
+void output_binary_positions(struct Rebound* r, char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -300,7 +300,7 @@ void output_binary_positions(char* filename){
 	fclose(of);
 }
 
-void output_append_velocity_dispersion(char* filename){
+void output_append_velocity_dispersion(struct Rebound* r, char* filename){
 	// Algorithm with reduced roundoff errors (see wikipedia)
 	struct vec3 A = {.x=0, .y=0, .z=0};
 	struct vec3 Q = {.x=0, .y=0, .z=0};
@@ -343,7 +343,7 @@ void output_append_velocity_dispersion(char* filename){
 		printf("\n\nError while opening file '%s'.\n",filename);
 		return;
 	}
-	fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,A_tot.x,A_tot.y,A_tot.z,Q_tot.x,Q_tot.y,Q_tot.z);
+	fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\n",r->t,A_tot.x,A_tot.y,A_tot.z,Q_tot.x,Q_tot.y,Q_tot.z);
 	fclose(of);
 }
 
@@ -358,7 +358,7 @@ void output_logfile(char* data){
 	fclose(file);
 }
 
-void output_double(char* name, double value){
+void output_double(struct Rebound* r, char* name, double value){
 	char data[2048];
 	if (value>1e7){
 		sprintf(data,"%-35s =         %10e\n",name,value);
@@ -371,7 +371,7 @@ void output_double(char* name, double value){
 	}
 	output_logfile(data);
 }
-void output_int(char* name, int value){
+void output_int(struct Rebound* r, char* name, int value){
 	char data[2048];
 	sprintf(data,"%-35s = %9d\n",name,value);
 	output_logfile(data);

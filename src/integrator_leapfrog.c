@@ -40,16 +40,16 @@
 
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
-void integrator_leapfrog_part1(void){
+void integrator_leapfrog_part1(struct Rebound* r){
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		particles[i].x  += 0.5* dt * particles[i].vx;
 		particles[i].y  += 0.5* dt * particles[i].vy;
 		particles[i].z  += 0.5* dt * particles[i].vz;
 	}
-	t+=dt/2.;
+	r->t+=dt/2.;
 }
-void integrator_leapfrog_part2(void){
+void integrator_leapfrog_part2(struct Rebound* r){
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		particles[i].vx += dt * particles[i].ax;
@@ -59,13 +59,13 @@ void integrator_leapfrog_part2(void){
 		particles[i].y  += 0.5* dt * particles[i].vy;
 		particles[i].z  += 0.5* dt * particles[i].vz;
 	}
-	t+=dt/2.;
+	r->t+=dt/2.;
 }
 	
-void integrator_leapfrog_synchronize(void){
+void integrator_leapfrog_synchronize(struct Rebound* r){
 	// Do nothing.
 }
 
-void integrator_leapfrog_reset(void){
+void integrator_leapfrog_reset(struct Rebound* r){
 	// Do nothing.
 }

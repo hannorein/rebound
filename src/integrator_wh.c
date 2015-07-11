@@ -68,7 +68,7 @@ int _N_active;
 int integrator_wh_N = 0;
 static double* eta;
 
-void integrator_wh_part1(void){
+void integrator_wh_part1(struct Rebound* r){
 	_N_active = (N_active==-1)?N:N_active;
 	if (_N_active!=integrator_wh_N){
 		eta = realloc(eta,sizeof(double)*_N_active);
@@ -82,10 +82,10 @@ void integrator_wh_part1(void){
 	integrator_wh_to_jacobi();
 	drift_wh(dt/2.);
 	integrator_wh_from_jacobi();
-	t+=dt/2.;
+	r->t+=dt/2.;
 }
 
-void integrator_wh_part2(void){
+void integrator_wh_part2(struct Rebound* r){
 	// KICK
 	_N_active = (N_active==-1)?N:N_active;
 	// Calculate terms in Heliocentric coordinates
@@ -103,7 +103,7 @@ void integrator_wh_part2(void){
 	integrator_wh_to_jacobi();
 	drift_wh(dt/2.);
 	integrator_wh_from_jacobi();
-	t+=dt/2.;
+	r->t+=dt/2.;
 }
 
 int wh_check_normal(struct particle* p){
@@ -557,9 +557,9 @@ void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* 
 	*s = (*x)*(A0-y*(A1-y*(A2-y*(A3-y*(A4-y)))))/A0;
 	*c = sqrt(1. - (*s)*(*s));
 }
-void integrator_wh_synchronize(void){
+void integrator_wh_synchronize(struct Rebound* r){
 	// Do nothing.
 }
-void integrator_wh_reset(void){
+void integrator_wh_reset(struct Rebound* r){
 	// Do nothing.
 }
