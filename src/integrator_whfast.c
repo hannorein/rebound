@@ -638,29 +638,30 @@ const static double b_115 = 3394141./2328480.*4.980119205559973422e-02;
 
 
 static void integrator_whfast_corrector_Z(struct Rebound* r, double a, double b){
-	integrator_kepler_drift(r->ri_whfast->p_j, r->ri_whfast->eta,  r->G, a, &(r->ri_whfast->timestep_warning));
-	integrator_to_inertial_pos(r->ri_whfast->p_j, r->ri_whfast->eta);
+	struct ReboundIntegratorWHFast* const ri_whfast = r->ri_whfast;
+	integrator_kepler_drift(ri_whfast->p_j, ri_whfast->eta,  r->G, a, &(ri_whfast->timestep_warning));
+	integrator_to_inertial_pos(ri_whfast->p_j, ri_whfast->eta);
 	if (N_megno){
-		integrator_var_to_inertial_pos(r->ri_whfast->p_j, r->ri_whfast->eta);
+		integrator_var_to_inertial_pos(ri_whfast->p_j, ri_whfast->eta);
 	}
 	integrator_update_acceleration(r);
-	integrator_to_jacobi_acc(r->ri_whfast->p_j, r->ri_whfast->eta);
+	integrator_to_jacobi_acc(ri_whfast->p_j, ri_whfast->eta);
 	if (N_megno){
-		integrator_var_to_jacobi_acc(r->ri_whfast->p_j, r->ri_whfast->eta);
+		integrator_var_to_jacobi_acc(ri_whfast->p_j, ri_whfast->eta);
 	}
-	integrator_interaction(r->ri_whfast->p_j, r->ri_whfast->eta, r->G, -b);
-	integrator_kepler_drift(r->ri_whfast->p_j, r->ri_whfast->eta, r->G, -2.*a, &(r->ri_whfast->timestep_warning));
-	integrator_to_inertial_pos(r->ri_whfast->p_j, r->ri_whfast->eta);
+	integrator_interaction(ri_whfast->p_j, ri_whfast->eta, r->G, -b);
+	integrator_kepler_drift(ri_whfast->p_j, ri_whfast->eta, r->G, -2.*a, &(ri_whfast->timestep_warning));
+	integrator_to_inertial_pos(ri_whfast->p_j, ri_whfast->eta);
 	if (N_megno){
-		integrator_var_to_inertial_pos(r->ri_whfast->p_j, r->ri_whfast->eta);
+		integrator_var_to_inertial_pos(ri_whfast->p_j, ri_whfast->eta);
 	}
 	integrator_update_acceleration(r);
-	integrator_to_jacobi_acc(r->ri_whfast->p_j, r->ri_whfast->eta);
+	integrator_to_jacobi_acc(ri_whfast->p_j, ri_whfast->eta);
 	if (N_megno){
-		integrator_var_to_jacobi_acc(r->ri_whfast->p_j, r->ri_whfast->eta);
+		integrator_var_to_jacobi_acc(ri_whfast->p_j, ri_whfast->eta);
 	}
-	integrator_interaction(r->ri_whfast->p_j, r->ri_whfast->eta, r->G, b);
-	integrator_kepler_drift(r->ri_whfast->p_j, r->ri_whfast->eta, r->G, a, &(r->ri_whfast->timestep_warning));
+	integrator_interaction(ri_whfast->p_j, ri_whfast->eta, r->G, b);
+	integrator_kepler_drift(ri_whfast->p_j, ri_whfast->eta, r->G, a, &(ri_whfast->timestep_warning));
 }
 
 static void integrator_apply_corrector(struct Rebound* r, double inv){
