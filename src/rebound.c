@@ -33,7 +33,6 @@
 #include "integrator_whfast.h"
 #include "boundaries.h"
 #include "gravity.h"
-#include "problem.h"
 #include "output.h"
 #include "collisions.h"
 #include "tree.h"

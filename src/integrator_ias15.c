@@ -49,7 +49,6 @@ void integrator_generate_constants(void);
 #include "particle.h"
 #include "rebound.h"
 #include "gravity.h"
-#include "problem.h"
 #include "tools.h"
 #include "integrator.h"
 #include "integrator_ias15.h"
