@@ -33,10 +33,10 @@
 struct Rebound {
 	double 	t;		/**< Current simulation time. */
 	double 	tmax;		/**< Maximum simulation time. Simulation stops if t>=tmax. Simulation runs forever if t==0.*/
+	double 	G;		/**< Gravitational constant. Default: 1. */
 };
 
 extern double 	softening;	/**< Gravitational softening parameter. Default: 0. */
-extern double 	G;		/**< Gravitational constant. Default: 1. */
 extern double 	dt;		/**< Current timestep. */
 extern int 	exit_simulation;/**< Set to 1 to exit the simulation at the end of the timestep. */
 extern int 	N;		/**< Current number of particles on this node. */

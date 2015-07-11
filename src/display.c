@@ -179,6 +179,8 @@ void display_entire_tree(void){
 }
 #endif
 
+struct Rebound* display_r = NULL;
+
 void display(void){
 	if (display_pause) return;
 #ifdef TREE
@@ -274,7 +276,7 @@ void display(void){
 							glColor4f(0.0,0.0,1.0,0.9);
 						}
 					}
-					struct orbit o = tools_p2orbit(p,com);
+					struct orbit o = tools_p2orbit(display_r->G, p,com);
 					glPushMatrix();
 					
 					glTranslatef(com.x,com.y,com.z);

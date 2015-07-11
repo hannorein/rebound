@@ -79,14 +79,14 @@ double ss_mass[6] =
 };
 
 const double k	 	= 0.01720209895;	// Gaussian constant 
-double energy();
+double energy(double G);
 double e_init;
 
 void problem_init(int argc, char* argv[], struct Rebound* r){
 	// Setup constants
 	dt 		= 40;				// in days
 	r->tmax		= 7.3e10;			// 200 Myr
-	G		= k*k;				// These are the same units as used by the mercury6 code.
+	r->G		= k*k;				// These are the same units as used by the mercury6 code.
 	init_boxwidth(200); 				// Init box with width 200 astronomical units
 	integrator_whfast_safe_mode = 0;		// Turn of safe mode. Need to call integrator_synchronize() before outputs. 
 	integrator_whfast_corrector = 11;		// Turn on symplectic correctors (11th order).
@@ -117,12 +117,12 @@ void problem_init(int argc, char* argv[], struct Rebound* r){
 
 	N_active = N-1;
 
-	e_init = energy();
+	e_init = energy(r->G);
 	system("rm -f energy.txt");
 	system("rm -f pos.txt");
 }
 
-double energy(){
+double energy(double G){
 	double e_kin = 0.;
 	double e_pot = 0.;
 	for (int i=0;i<N-N_megno;i++){

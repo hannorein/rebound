@@ -162,7 +162,7 @@ static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
 	return;
 }
 
-static inline double _M(unsigned int i){
+static inline double _M(const double G, unsigned int i){
   	return G*(eta[i]); // Hanno 1
 	//return G*(eta[i-1]); // Hanno2 
 	//return G*(eta[i-1]*particles[i].m*eta[i-1]/eta[i]/(eta[i-1]+particles[i].m*eta[i-1]/eta[i])); // reduced mass jacobi
@@ -174,8 +174,8 @@ static inline double _M(unsigned int i){
  * Keplerian motion           */
 int iter;
 
-static void kepler_step(unsigned int i,double _dt){
-	const double M = _M(i);
+static void kepler_step(const double G, unsigned int i, double _dt){
+	const double M = _M(G, i);
 	const struct particle p1 = p_j[i];
 
 	const double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
@@ -570,7 +570,7 @@ static void integrator_var_to_inertial_pos(void){
 /***************************** 
  * Interaction Hamiltonian  */
 
-static void integrator_interaction(double _dt){
+static void integrator_interaction(const double G, double _dt){
 	for (unsigned int i=1;i<N-N_megno;i++){
 		// Eq 132
 		const struct particle pji = p_j[i];
@@ -583,7 +583,7 @@ static void integrator_interaction(double _dt){
 		if (i>1){
 			rj2i = 1./(pji.x*pji.x + pji.y*pji.y + pji.z*pji.z + softening*softening);
 			const double rji  = sqrt(rj2i);
-			rj3iM = rji*rj2i*_M(i);
+			rj3iM = rji*rj2i*_M(G, i);
 		 	prefac1 = _dt*rj3iM;
 			p_j[i].vx += prefac1*pji.x;
 			p_j[i].vy += prefac1*pji.y;
@@ -609,9 +609,9 @@ static void integrator_interaction(double _dt){
 /***************************** 
  * DKD Scheme                */
 
-static void integrator_kepler_drift(double _dt){
+static void integrator_kepler_drift(const double G, double _dt){
 	for (unsigned int i=1;i<N-N_megno;i++){
-		kepler_step(i, _dt);
+		kepler_step(G, i, _dt);
 	}
 	p_j[0].x += _dt*p_j[0].vx;
 	p_j[0].y += _dt*p_j[0].vy;
@@ -637,7 +637,7 @@ const static double b_115 = 3394141./2328480.*4.980119205559973422e-02;
 
 
 static void integrator_whfast_corrector_Z(struct Rebound* r, double a, double b){
-	integrator_kepler_drift(a);
+	integrator_kepler_drift(r->G, a);
 	integrator_to_inertial_pos();
 	if (N_megno){
 		integrator_var_to_inertial_pos();
@@ -647,8 +647,8 @@ static void integrator_whfast_corrector_Z(struct Rebound* r, double a, double b)
 	if (N_megno){
 		integrator_var_to_jacobi_acc();
 	}
-	integrator_interaction(-b);
-	integrator_kepler_drift(-2.*a);
+	integrator_interaction(r->G, -b);
+	integrator_kepler_drift(r->G, -2.*a);
 	integrator_to_inertial_pos();
 	if (N_megno){
 		integrator_var_to_inertial_pos();
@@ -658,8 +658,8 @@ static void integrator_whfast_corrector_Z(struct Rebound* r, double a, double b)
 	if (N_megno){
 		integrator_var_to_jacobi_acc();
 	}
-	integrator_interaction(b);
-	integrator_kepler_drift(a);
+	integrator_interaction(r->G, b);
+	integrator_kepler_drift(r->G, a);
 }
 
 static void integrator_apply_corrector(struct Rebound* r, double inv){
@@ -742,10 +742,10 @@ void integrator_whfast_part1(struct Rebound* r){
 		if (integrator_whfast_corrector){
 			integrator_apply_corrector(r, 1.);
 		}
-		integrator_kepler_drift(_dt2);	// half timestep
+		integrator_kepler_drift(r->G, _dt2);	// half timestep
 	}else{
 		// Combined DRIFT step
-		integrator_kepler_drift(dt);	// full timestep
+		integrator_kepler_drift(r->G, dt);	// full timestep
 	}
 	// Prepare coordinates for KICK step
 	if (integrator_force_is_velocitydependent){
@@ -770,7 +770,7 @@ void integrator_whfast_part1(struct Rebound* r){
 
 void integrator_whfast_synchronize(struct Rebound* r){
 	if (integrator_whfast_is_synchronized == 0){
-		integrator_kepler_drift(dt/2.);
+		integrator_kepler_drift(r->G, dt/2.);
 		if (integrator_whfast_corrector){
 			integrator_apply_corrector(r, -1.);
 		}
@@ -784,7 +784,7 @@ void integrator_whfast_part2(struct Rebound* r){
 	if (N_megno){
 		integrator_var_to_jacobi_acc();
 	}
-	integrator_interaction(dt);
+	integrator_interaction(r->G, dt);
 
 	double _dt2 = dt/2.;
 	integrator_whfast_is_synchronized = 0;
@@ -799,7 +799,7 @@ void integrator_whfast_part2(struct Rebound* r){
 		p_j[N_megno].y += _dt2*p_j[N_megno].vy;
 		p_j[N_megno].z += _dt2*p_j[N_megno].vz;
 		integrator_var_to_inertial_posvel();
-		gravity_calculate_variational_acceleration();
+		gravity_calculate_variational_acceleration(r);
 		// Add additional acceleration term for MEGNO calculation
 		int i = N-N_megno;
 		int j = N-N_megno+1;
@@ -813,8 +813,8 @@ void integrator_whfast_part2(struct Rebound* r){
 		const double ddx = particles[i].x - particles[j].x;
 		const double ddy = particles[i].y - particles[j].y;
 		const double ddz = particles[i].z - particles[j].z;
-		const double Gmi = G * particles[i].m;
-		const double Gmj = G * particles[j].m;
+		const double Gmi = r->G * particles[i].m;
+		const double Gmj = r->G * particles[j].m;
 		const double dax =   ddx * ( dx*dx*r5inv - r3inv )
 				   + ddy * ( dx*dy*r5inv )
 				   + ddz * ( dx*dz*r5inv );

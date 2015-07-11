@@ -228,7 +228,7 @@ void output_append_orbits(struct Rebound* r, char* filename){
 	}
 	struct particle com = particles[0];
 	for (int i=1;i<N;i++){
-		struct orbit o = tools_p2orbit(particles[i],com);
+		struct orbit o = tools_p2orbit(r->G, particles[i],com);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",r->t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
 		com = tools_get_center_of_mass(com,particles[i]);
 	}
@@ -249,7 +249,7 @@ void output_orbits(struct Rebound* r, char* filename){
 	}
 	struct particle com = particles[0];
 	for (int i=1;i<N;i++){
-		struct orbit o = tools_p2orbit(particles[i],com);
+		struct orbit o = tools_p2orbit(r->G, particles[i],com);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",r->t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
 		com = tools_get_center_of_mass(com,particles[i]);
 	}

@@ -72,7 +72,7 @@ double tools_rayleigh(double sigma){
 
 
 /// Other helper routines
-double tools_energy(void){
+double tools_energy(struct Rebound* r){
 	double e_kin = 0.;
 	double e_pot = 0.;
 	for (int i=0;i<N-N_megno;i++){
@@ -83,7 +83,7 @@ double tools_energy(void){
 			double dx = pi.x - pj.x;
 			double dy = pi.y - pj.y;
 			double dz = pi.z - pj.z;
-			e_pot -= G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
+			e_pot -= r->G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
 		}
 	}
 	return e_kin +e_pot;
@@ -184,7 +184,7 @@ void tools_init_plummer(int _N, double M, double R) {
 	}
 }
 
-struct particle tools_init_orbit2d(double M, double m, double a, double e, double omega, double f){
+struct particle tools_init_orbit2d(double G, double M, double m, double a, double e, double omega, double f){
 	struct particle p;
 	p.m = m;
 	double r = a*(1.-e*e)/(1.+e*cos(f));
@@ -206,7 +206,7 @@ struct particle tools_init_orbit2d(double M, double m, double a, double e, doubl
 	return p;
 }
 
-struct particle tools_init_orbit3d(double M, double m, double a, double e, double i, double Omega, double omega, double f){
+struct particle tools_init_orbit3d(double G, double M, double m, double a, double e, double i, double Omega, double omega, double f){
 	struct particle p;
 	p.m = m;
 	double r = a*(1-e*e)/(1 + e*cos(f));
@@ -233,7 +233,7 @@ const struct orbit orbit_nan = {.a = NAN, .r = NAN, .h = NAN, .P = NAN, .l = NAN
 #define MIN_REL_ERROR 1.0e-12
 #define TINY 1.E-308
 
-struct orbit tools_p2orbit(struct particle p, struct particle primary){
+struct orbit tools_p2orbit(double G, struct particle p, struct particle primary){
 	struct orbit o;
 	if (primary.m <= TINY){	
 		return orbit_nan;

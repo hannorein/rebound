@@ -51,7 +51,6 @@ void gravity_finish(void);
 #endif // GRAVITY_GRAPE
 
 double softening 	= 0;
-double G		= 1;
 double dt 		= 0.001;
 double timing_initial 	= -1;
 int    exit_simulation	= 0;
@@ -160,13 +159,13 @@ void iterate(void){
 #endif // GRAVITY_TREE
 
 	// Calculate accelerations. 
-	gravity_calculate_acceleration();
+	gravity_calculate_acceleration(r);
 	if (N_megno){
-		gravity_calculate_variational_acceleration();
+		gravity_calculate_variational_acceleration(r);
 	}
 	// Calculate non-gravity accelerations. 
 	if (problem_additional_forces) problem_additional_forces();
-	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles, r->t, dt, G, N, N_megno);
+	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles, r->t, dt, r->G, N, N_megno);
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 
 	// A 'DKD'-like integrator will do the 'KD' part.
@@ -181,7 +180,7 @@ void iterate(void){
 	}
 	if (problem_post_timestep_modifications_with_parameters){
 		integrator_synchronize(r);
-		problem_post_timestep_modifications_with_parameters(particles, r->t, dt, G, N, N_megno);
+		problem_post_timestep_modifications_with_parameters(particles, r->t, dt, r->G, N, N_megno);
 		if (integrator == WHFAST || integrator == HYBRID){
 			integrator_whfast_recalculate_jacobi_this_timestep = 1;
 		}
@@ -275,7 +274,9 @@ int main(int argc, char* argv[]) {
 	srand ( tim.tv_usec + getpid());
 	
 	r = calloc(1,sizeof(struct Rebound));
-	r->t = 0;
+	r->t = 0; 
+	r->G = 1;
+	display_r = r;
 
 	problem_init(argc, argv, r);
 	problem_output(r);

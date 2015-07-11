@@ -56,7 +56,8 @@ unsigned int gravity_ignore_10;
 #if defined(BOUNDARIES_SHEAR) || defined(BOUNDARIES_PERIODIC) || defined(BOUNDARIES_SHEARY)
 // Gravity calculation for periodic boundary conditions
 
-void gravity_calculate_acceleration(void){
+void gravity_calculate_acceleration(struct Rebound* r){
+	const double G = r->G;
 	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
 #pragma omp parallel for schedule(guided)
 	for (int i=0; i<N; i++){
@@ -116,7 +117,8 @@ void gravity_calculate_acceleration(void){
 
 }
 
-void gravity_calculate_variational_acceleration(void){
+void gravity_calculate_variational_acceleration(struct Rebound* r){
+	const double G = r->G;
 	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
 	const int _N_real   = N - N_megno;
 #pragma omp parallel for schedule(guided)
@@ -177,7 +179,8 @@ void gravity_calculate_variational_acceleration(void){
 static struct cs_3d* restrict cs = NULL;
 static int N_cs = 0;
 
-void gravity_calculate_acceleration(void){
+void gravity_calculate_acceleration(struct Rebound* r){
+	const double G = r->G;
 	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
 	const int _N_real   = N - N_megno;
 	if (N_cs<_N_real){
@@ -276,7 +279,8 @@ void gravity_calculate_acceleration(void){
 		
 }
 
-void gravity_calculate_variational_acceleration(void){
+void gravity_calculate_variational_acceleration(struct Rebound* r){
+	const double G = r->G;
 	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
 	const int _N_real   = N - N_megno;
 #pragma omp parallel for schedule(guided)
