@@ -735,7 +735,7 @@ void integrator_whfast_part1(struct Rebound* const r){
 		integrator_kepler_drift(ri_whfast->p_j, ri_whfast->eta, r->G, r->dt, &(ri_whfast->timestep_warning), N, N_megno);	// full timestep
 	}
 	// Prepare coordinates for KICK step
-	if (integrator_force_is_velocitydependent){
+	if (r->force_is_velocitydependent){
 		integrator_to_inertial_posvel(particles, ri_whfast->p_j, ri_whfast->eta, N-N_megno);
 	}else{
 		integrator_to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, N-N_megno);
@@ -745,7 +745,7 @@ void integrator_whfast_part1(struct Rebound* const r){
 		ri_whfast->p_j[N_megno].x += _dt2*ri_whfast->p_j[N_megno].vx;
 		ri_whfast->p_j[N_megno].y += _dt2*ri_whfast->p_j[N_megno].vy;
 		ri_whfast->p_j[N_megno].z += _dt2*ri_whfast->p_j[N_megno].vz;
-		if (integrator_force_is_velocitydependent){
+		if (r->force_is_velocitydependent){
 			integrator_var_to_inertial_posvel(particles, ri_whfast->p_j, ri_whfast->eta, N, N_megno);
 		}else{
 			integrator_var_to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, N, N_megno);

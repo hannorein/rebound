@@ -37,6 +37,7 @@
 #include "output.h"
 #include "collisions.h"
 #include "tree.h"
+#include "tools.h"
 #include "particle.h"
 #include "rebound.h"
 #include "communication_mpi.h"
@@ -50,7 +51,8 @@
 void gravity_finish(void);
 #endif // GRAVITY_GRAPE
 
-static const char* logo[];		/**< Logo of rebound. */
+static const char* logo[];				/**< Logo of rebound. */
+static const char* build_str = __DATE__ " " __TIME__;	/**< Date and time build string. */
 
 
 // Global (non-thread safe) variables:
@@ -128,28 +130,15 @@ void rebound_step(struct Rebound* const r){
 	collisions_resolve();
 	PROFILING_STOP(PROFILING_CAT_COLLISION)
 #endif  // COLLISIONS_NONE
-
-#ifdef OPENGL
-	PROFILING_START()
-	display();
-	PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
-#endif // OPENGL
-	if (r->post_timestep){
-		r->post_timestep(r);
-	}
-	// Check if the simulation finished.
-#ifdef MPI
-	int _exit_simulation = 0;
-	MPI_Allreduce(&exit_simulation, &_exit_simulation,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
-	r->exit_simulation = _exit_simulation;
-#endif // MPI
 }
 
 struct Rebound* rebound_init(){
 	if (rebound_show_logo==1){
 		int i =0;
 		while (logo[i]!=NULL){ printf("%s",logo[i++]); }
+		printf("Built: %s\n\n",build_str);
 	}
+	tools_init_srand();
 	struct Rebound* r = calloc(1,sizeof(struct Rebound));
 	r->t 		= 0; 
 	r->G 		= 1;
@@ -169,8 +158,16 @@ struct Rebound* rebound_init(){
 	r->N_active 	= -1; 	
 	r->N_megno 	= 0; 	
 	r->exit_simulation	= 0;
+	r->exact_finish_time 	= 0;
 	r->particles	= NULL;
-	r->additional_forces = NULL;
+	r->integrator = IAS15;
+	r->force_is_velocitydependent = 0;
+
+	// Function pointers 
+	r->additional_forces 		= NULL;
+	r->finished			= NULL;
+	r->post_timestep		= NULL;
+	r->post_timestep_modifications	= NULL;
 	
 	r->ri_whfast = integrator_whfast_init(r);
 	
@@ -206,7 +203,7 @@ struct Rebound* rebound_init(){
 	return r;
 }
 
-int rebound_integrate(struct Rebound* const r, double tmax, int exact_finish_time, double maxR, double minD){
+int rebound_integrate(struct Rebound* const r, double tmax, double maxR, double minD){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
@@ -214,7 +211,8 @@ int rebound_integrate(struct Rebound* const r, double tmax, int exact_finish_tim
 	int last_step = 0;
 	int ret_value = 0;
 	const double dtsign = copysign(1.,r->dt); 				// Used to determine integration direction
-	if ((r->t+r->dt)*dtsign>=tmax*dtsign && exact_finish_time==1){
+	if (r->post_timestep){ r->post_timestep(r); }
+	if ((r->t+r->dt)*dtsign>=tmax*dtsign && r->exact_finish_time==1){
 		r->dt = tmax-r->t;
 		last_step++;
 	}
@@ -224,13 +222,19 @@ int rebound_integrate(struct Rebound* const r, double tmax, int exact_finish_tim
 			return(1);
 		}
 		rebound_step(r); 								// 0 to not do timing within step
-		if ((r->t+r->dt)*dtsign>=tmax*dtsign && exact_finish_time==1){
+#ifdef OPENGL
+		PROFILING_START()
+		display();
+		PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
+#endif // OPENGL
+		if ((r->t+r->dt)*dtsign>=tmax*dtsign && r->exact_finish_time==1){
 			integrator_synchronize(r);
 			r->dt = tmax-r->t;
 			last_step++;
 		}else{
 			dt_last_done = r->dt;
 		}
+		if (r->post_timestep){ r->post_timestep(r); }
 		if (maxR){
 			// Check for escaping particles
 			const double maxR2 = maxR*maxR;
@@ -277,38 +281,37 @@ int rebound_integrate(struct Rebound* const r, double tmax, int exact_finish_tim
 	return ret_value;
 }
 
-
 static const char* logo[] = {
-"              _                           _  \n",   
-"             | |                         | | \n",  
-"     _ __ ___| |__   ___  _   _ _ __   __| | \n", 
-"    | '__/ _ \\ '_ \\ / _ \\| | | | '_ \\ / _` | \n", 
-"    | | |  __/ |_) | (_) | |_| | | | | (_| | \n", 
-"    |_|  \\___|_.__/ \\___/ \\__,_|_| |_|\\__,_| \n", 
-"                                             \n",   
-"                  `-:://::.`                 \n",
-"              `/oshhoo+++oossso+:`           \n", 
-"           `/ssooys++++++ossssssyyo:`        \n", 
-"         `+do++oho+++osssso++++++++sy/`      \n", 
-"        :yoh+++ho++oys+++++++++++++++ss.     \n", 
-"       /y++hooyyooshooo+++++++++++++++oh-    \n", 
-"      -dsssdssdsssdssssssssssooo+++++++oh`   \n", 
-"      ho++ys+oy+++ho++++++++oosssssooo++so   \n", 
-"     .d++oy++ys+++oh+++++++++++++++oosssod   \n", 
-"     -h+oh+++yo++++oyo+++++++++++++++++oom   \n", 
-"     `d+ho+++ys+++++oys++++++++++++++++++d   \n", 
-"      yys++++oy+++++++oys+++++++++++++++s+   \n", 
-"      .m++++++h+++++++++oys++++++++++++oy`   \n", 
-"       -yo++++ss++++++++++oyso++++++++oy.    \n", 
-"        .ss++++ho+++++++++++osys+++++yo`     \n", 
-"          :ss+++ho+++++++++++++osssss-       \n", 
-"            -ossoys++++++++++++osso.         \n", 
-"              `-/oyyyssosssyso+/.            \n", 
-"                    ``....`                  \n", 
-"                                             \n",   
-"    Written by Hanno Rein, Shangfei Liu,     \n",
-"    David Spiegel, Daniel Tamayo and many    \n",
-"    other.                                   \n",  
-"    http://github.com/hannorein/rebound/     \n",    
-"                                             \n", 
+"          _                           _  \n",   
+"         | |                         | | \n",  
+" _ __ ___| |__   ___  _   _ _ __   __| | \n", 
+"| '__/ _ \\ '_ \\ / _ \\| | | | '_ \\ / _` | \n", 
+"| | |  __/ |_) | (_) | |_| | | | | (_| | \n", 
+"|_|  \\___|_.__/ \\___/ \\__,_|_| |_|\\__,_| \n", 
+"                                         \n",   
+"              `-:://::.`                 \n",
+"          `/oshhoo+++oossso+:`           \n", 
+"       `/ssooys++++++ossssssyyo:`        \n", 
+"     `+do++oho+++osssso++++++++sy/`      \n", 
+"    :yoh+++ho++oys+++++++++++++++ss.     \n", 
+"   /y++hooyyooshooo+++++++++++++++oh-    \n", 
+"  -dsssdssdsssdssssssssssooo+++++++oh`   \n", 
+"  ho++ys+oy+++ho++++++++oosssssooo++so   \n", 
+" .d++oy++ys+++oh+++++++++++++++oosssod   \n", 
+" -h+oh+++yo++++oyo+++++++++++++++++oom   \n", 
+" `d+ho+++ys+++++oys++++++++++++++++++d   \n", 
+"  yys++++oy+++++++oys+++++++++++++++s+   \n", 
+"  .m++++++h+++++++++oys++++++++++++oy`   \n", 
+"   -yo++++ss++++++++++oyso++++++++oy.    \n", 
+"    .ss++++ho+++++++++++osys+++++yo`     \n", 
+"      :ss+++ho+++++++++++++osssss-       \n", 
+"        -ossoys++++++++++++osso.         \n", 
+"          `-/oyyyssosssyso+/.            \n", 
+"                ``....`                  \n", 
+"                                         \n",   
+"Written by Hanno Rein, Shangfei Liu,     \n",
+"David Spiegel, Daniel Tamayo and many    \n",
+"other. REBOUND project website:          \n",  
+"http://github.com/hannorein/rebound/     \n",    
+"                                         \n", 
 NULL};

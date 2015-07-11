@@ -44,11 +44,8 @@
 #include "integrator_wh.h"
 #include "integrator_hybrid.h"
 
-integrator_t integrator = IAS15;
-unsigned int integrator_force_is_velocitydependent = 0;
-
 void integrator_part1(struct Rebound* r){
-	switch(integrator){
+	switch(r->integrator){
 		case IAS15:
 			integrator_ias15_part1(r);
 			break;
@@ -73,7 +70,7 @@ void integrator_part1(struct Rebound* r){
 }
 
 void integrator_part2(struct Rebound* r){
-	switch(integrator){
+	switch(r->integrator){
 		case IAS15:
 			integrator_ias15_part2(r);
 			break;
@@ -98,7 +95,7 @@ void integrator_part2(struct Rebound* r){
 }
 	
 void integrator_synchronize(struct Rebound* r){
-	switch(integrator){
+	switch(r->integrator){
 		case IAS15:
 			integrator_ias15_synchronize(r);
 			break;
@@ -123,9 +120,8 @@ void integrator_synchronize(struct Rebound* r){
 }
 
 void integrator_reset(struct Rebound* r){
-	integrator = IAS15;
+	r->integrator = IAS15;
 	gravity_ignore_10 = 0;
-	integrator_force_is_velocitydependent = 0;
 	integrator_ias15_reset(r);
 	integrator_wh_reset(r);
 	integrator_leapfrog_reset(r);

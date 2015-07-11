@@ -45,8 +45,6 @@
 #include "tools.h"
 #include "particle.h"
 #include "boundaries.h"
-#include "integrator.h"
-#include "problem.h"
 #include "integrator_whfast.h"
 
 double ss_pos[6][3] = 
@@ -123,8 +121,8 @@ int main(int argc, char* argv[]) {
 	// Setup callbacks:
 	r->post_timestep = post_timestep;
 	r->finished = finished;
-	integrator_force_is_velocitydependent = 0;	// Force only depends on positions. 
-	integrator	= WHFAST;
+	r->force_is_velocitydependent = 0;		// Force only depends on positions. 
+	r->integrator	= WHFAST;
 	//integrator	= IAS15;
 
 	// Initial conditions
@@ -136,7 +134,7 @@ int main(int argc, char* argv[]) {
 		p.m  = ss_mass[i];
 		particles_add(r, p); 
 	}
-	if (integrator==WH){
+	if (r->integrator==WH){
 		struct Particle* const particles = r->particles;
 		// Move to heliocentric frame (required by WH integrator)
 		for (int i=1;i<r->N;i++){
@@ -157,5 +155,5 @@ int main(int argc, char* argv[]) {
 
 
 	// Start integration
-	rebound_integrate(r, tmax, 0, 0., 0.);
+	rebound_integrate(r, tmax, 0., 0.);
 }

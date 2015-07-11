@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <sys/time.h>
 #include "particle.h"
 #include "rebound.h"
 #include "tools.h"

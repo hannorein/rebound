@@ -36,7 +36,6 @@
 #include <time.h>
 #include "particle.h"
 #include "rebound.h"
-#include "integrator.h"
 #include "boundaries.h"
 
 #ifdef MPI
@@ -70,7 +69,7 @@ void gravity_calculate_acceleration(struct Rebound* r){
 		particles[i].az = 0; 
 	}
 	// Summing over all Ghost Boxes
-	const int _N_start  = (integrator==WH?1:0);
+	const int _N_start  = (r->integrator==WH?1:0);
 	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
 	const int _N_real   = N - N_megno;
 	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
@@ -207,7 +206,7 @@ void gravity_calculate_acceleration(struct Rebound* r){
 		cs[i].z = 0.;
 	}
 	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
-	const int _N_start  = (integrator==WH?1:0);
+	const int _N_start  = (r->integrator==WH?1:0);
 	// Summing over all massive particle pairs
 #pragma omp parallel for schedule(guided)
 	for (int i=_N_start; i<_N_active; i++){

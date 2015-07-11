@@ -27,24 +27,6 @@
 struct Rebound;
 
 /*
- * Available integrator.
- */
-typedef enum {
-	IAS15 = 0,
-	WHFAST = 1,
-	SEI = 2,
-	WH = 3,
-	LEAPFROG = 4,
-	HYBRID = 5,
-	NONE = 6,
-	} integrator_t;
-/*
- * Variable setting the current integrator.
- */
-extern integrator_t integrator;
-
-
-/*
  * The first half of the integrator step.
  * This function is called at the beginning of the timestep. It 
  * advances the positions by 1/2 timestep.
@@ -59,14 +41,6 @@ void integrator_part1(struct Rebound* r);
  * sync which is needed for collision detection.
  */
 void integrator_part2(struct Rebound* r);
- 
-
-/* 
- * Flag determining if the integrator needs to consider velocity 
- * dependent forces. 
- * Default is 0.
- **/ 
-extern unsigned int integrator_force_is_velocitydependent;
 
 
 /*

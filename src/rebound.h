@@ -30,6 +30,18 @@
 #define M_PI           3.14159265358979323846
 #endif
 struct ReboundIntegratorWHFast;
+/*
+ * Available integrators.
+ */
+typedef enum {
+	IAS15 = 0,
+	WHFAST = 1,
+	SEI = 2,
+	WH = 3,
+	LEAPFROG = 4,
+	HYBRID = 5,
+	NONE = 6,
+	} integrator_t;
 
 struct Rebound {
 	double 	t;		/**< Current simulation time. */
@@ -50,6 +62,10 @@ struct Rebound {
 	int 	root_nz;	/**< Number of root boxes in z direction. Default: 1. */
 	int 	root_n;		/**< Total number of root boxes in all directions, root_nx*root_ny*root_nz. Default: 1. Set in box_init().*/
 	int 	exit_simulation;/**< Set to 1 to exit the simulation at the end of the next timestep. */
+	int 	exact_finish_time; /**< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. */
+	integrator_t integrator; /**< Variable setting the current integrator.  */
+
+	unsigned int force_is_velocitydependent; /**< Set to 1 if integrator needs to consider velocity dependent forces. */ 
 
 
 	/**
@@ -102,7 +118,7 @@ struct Rebound* rebound_init();
  */
 void iterate(struct Rebound* const r);
 
-int rebound_integrate(struct Rebound* const r, double tmax, int exact_finish_time, double maxR, double minD);
+int rebound_integrate(struct Rebound* const r, double tmax, double maxR, double minD);
 
 /** Function pointer definitions 
  *
