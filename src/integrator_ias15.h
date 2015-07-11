@@ -30,16 +30,32 @@ void integrator_ias15_part2(struct Rebound* r);
 void integrator_ias15_synchronize(struct Rebound* r);
 void integrator_ias15_reset(struct Rebound* r);
 
-/*
- * This parameter controls the accuracy of the integrator.
- * Set to 0 to make IAS15 a non-adaptive integrator.
- * Default: 1e-9.
- **/
-extern double integrator_ias15_epsilon;
+struct Rebound;
+struct Particle; 
 
-/*
- * The minimum timestep to be used in the adaptive integrator.
- * Default is 0 (no minimal timestep).
- **/
-extern double integrator_ias15_min_dt;
+struct ReboundIntegratorIAS15 {
+	/**
+	 * This parameter controls the accuracy of the integrator.
+	 * Set to 0 to make IAS15 a non-adaptive integrator.
+	 * Default: 1e-9.
+	 **/
+	double epsilon;
+
+	/**
+	 * The minimum timestep to be used in the adaptive integrator.
+	 * Default is 0 (no minimal timestep).
+	 **/
+	double min_dt;
+	
+	/** 
+	 * If 1: estimate the fractional error by max(acceleration_error)/max(acceleration), where max is take over all particles.
+	 * If 0: estimate the fractional error by max(acceleration_error/acceleration).
+	 **/
+	unsigned int epsilon_global;
+
+	/**
+	 * Count how many times the iteration did not converge. 
+	 **/
+	unsigned long iterations_max_exceeded;
+};
 #endif

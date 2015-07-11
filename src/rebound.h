@@ -29,6 +29,7 @@
 // Make sure M_PI is defined. 
 #define M_PI           3.14159265358979323846
 #endif
+#include "integrator_ias15.h"
 #include "integrator_whfast.h"
 
 /*
@@ -69,15 +70,14 @@ struct Rebound {
 	unsigned int force_is_velocitydependent; /**< Set to 1 if integrator needs to consider velocity dependent forces. */ 
 
 
-	/**
-	 * Main particle array.
-	 * This contains all particles on this node.
-	 */
-	struct Particle* particles;
+	//////////////////////////////////////////////
+	/// Particles
+	struct Particle* particles; 			/**< Main particle array. This contains all particles on this node.  */
 	
 	//////////////////////////////////////////////
 	/// Integrators
 	struct ReboundIntegratorWHFast ri_whfast;	/**< The WHFast struct */
+	struct ReboundIntegratorIAS15 ri_ias15;		/**< The WHFast struct */
 
 
 	//////////////////////////////////////////////

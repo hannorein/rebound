@@ -180,6 +180,12 @@ struct Rebound* rebound_init(){
 	r->ri_whfast.timestep_warning = 0;
 	r->ri_whfast.recalculate_jacobi_but_not_synchronized_warning = 0;
 	
+	// ********** IAS15
+	r->ri_ias15.epsilon 		= 1e-9;
+	r->ri_ias15.min_dt 		= 0;
+	r->ri_ias15.epsilon_global	= 1;
+	r->ri_ias15.iterations_max_exceeded= 0;	
+
 	if (r->root_nx <=0 || r->root_ny <=0 || r->root_nz <= 0){
 		fprintf(stderr,"ERROR: Number of root boxes must be greater or equal to 1 in each direction.\n");
 		exit(-1);
