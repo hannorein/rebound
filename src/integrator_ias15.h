@@ -24,10 +24,11 @@
  */
 #ifndef _INTEGRATOR_IAS15_H
 #define _INTEGRATOR_IAS15_H
-void integrator_ias15_part1(void);
-void integrator_ias15_part2(void);
-void integrator_ias15_synchronize(void);
-void integrator_ias15_reset(void);
+struct Rebound;
+void integrator_ias15_part1(struct Rebound* r);
+void integrator_ias15_part2(struct Rebound* r);
+void integrator_ias15_synchronize(struct Rebound* r);
+void integrator_ias15_reset(struct Rebound* r);
 
 /*
  * This parameter controls the accuracy of the integrator.

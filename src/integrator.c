@@ -50,7 +50,7 @@ unsigned int integrator_force_is_velocitydependent = 0;
 void integrator_part1(struct Rebound* r){
 	switch(integrator){
 		case IAS15:
-			integrator_ias15_part1();
+			integrator_ias15_part1(r);
 			break;
 		case WH:
 			integrator_wh_part1();
@@ -75,7 +75,7 @@ void integrator_part1(struct Rebound* r){
 void integrator_part2(struct Rebound* r){
 	switch(integrator){
 		case IAS15:
-			integrator_ias15_part2();
+			integrator_ias15_part2(r);
 			break;
 		case WH:
 			integrator_wh_part2();
@@ -100,7 +100,7 @@ void integrator_part2(struct Rebound* r){
 void integrator_synchronize(struct Rebound* r){
 	switch(integrator){
 		case IAS15:
-			integrator_ias15_synchronize();
+			integrator_ias15_synchronize(r);
 			break;
 		case WH:
 			integrator_wh_synchronize();
@@ -126,7 +126,7 @@ void integrator_reset(struct Rebound* r){
 	integrator = IAS15;
 	gravity_ignore_10 = 0;
 	integrator_force_is_velocitydependent = 0;
-	integrator_ias15_reset();
+	integrator_ias15_reset(r);
 	integrator_wh_reset();
 	integrator_leapfrog_reset();
 	integrator_sei_reset();
