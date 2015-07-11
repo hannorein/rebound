@@ -65,6 +65,18 @@ struct ReboundIntegratorWHFast {
 	 */
 	struct particle* restrict p_j;
 
+	/* Struct containg Jacobi eta parameters */
+	double* restrict eta;
+
+	/* Total mass, used for Jacobi coordinates */
+	double Mtotal;
+
+
+	unsigned int is_synchronized;
+	unsigned int allocated_N;
+	unsigned int timestep_warning;
+	unsigned int recalculate_jacobi_but_not_synchronized_warning;
+
 };
 
 void integrator_whfast_part1(struct Rebound* r);
