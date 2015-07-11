@@ -282,7 +282,9 @@ int main(int argc, char* argv[]) {
 	srand ( tim.tv_usec + getpid());
 	
 	r = rebound_init();
-	display_r = r;
+#ifdef OPENGL
+	display_r = r;  // singleton for vizualization
+#endif // OPENGL
 
 	problem_init(argc, argv, r);
 	problem_output(r);
