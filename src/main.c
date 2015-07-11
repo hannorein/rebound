@@ -50,77 +50,14 @@
 void gravity_finish(void);
 #endif // GRAVITY_GRAPE
 
-double softening 	= 0;
-double timing_initial 	= -1;
-int    exit_simulation	= 0;
-
-double boxsize 		= -1;
-double boxsize_x 	= -1;
-double boxsize_y 	= -1;
-double boxsize_z 	= -1;
-double boxsize_max 	= -1;
-int root_nx		= 1;
-int root_ny		= 1;
-int root_nz		= 1;
-int root_n		= 1;
-
 void (*problem_additional_forces) (void) = NULL;
 void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;
 void (*problem_post_timestep_modifications) (void) = NULL;
 void (*problem_post_timestep_modifications_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;  
-static char* 	logo[];		/**< Logo of rebound. */
+static const char* logo[];		/**< Logo of rebound. */
 
 
-struct Rebound* r;
-
-void init_boxwidth(double _boxwidth){
-	boxsize = _boxwidth;
-	init_box();
-}
-void init_box(void){	
-	if (boxsize<=0 ){
-		fprintf(stderr,"ERROR: Size of boxsize has to be set and be positive.\n");
-		exit(-1);
-	}
-	if (root_nx <=0 || root_ny <=0 || root_nz <= 0){
-		fprintf(stderr,"ERROR: Number of root boxes must be greater or equal to 1 in each direction.\n");
-		exit(-1);
-	}
-
-	// Remove all particles
-	free(particles);
-	particles = NULL;
-
-	// Setup box sizes
-	boxsize_x = boxsize *(double)root_nx;
-	boxsize_y = boxsize *(double)root_ny;
-	boxsize_z = boxsize *(double)root_nz;
-	root_n = root_nx*root_ny*root_nz;
-
-#ifdef MPI
-#ifdef PARTICLEIDS
-	fprintf(stderr, "Particle IDs not currently supported with MPI.");
-	exit(0);
-#endif
-	// Make sure domain can be decomposed into equal number of root boxes per node.
-	if ((root_n/mpi_num)*mpi_num != root_n){
-		if (mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",root_n,mpi_num);
-		exit(-1);
-	}
-#endif // MPI
-
-	boxsize_max = boxsize_x;
-	if (boxsize_max<boxsize_y) boxsize_max = boxsize_y;
-	if (boxsize_max<boxsize_z) boxsize_max = boxsize_z;
-	
-#ifdef MPI
-	printf("Initialized %d*%d*%d root boxes. MPI-node: %d. Process id: %d.\n",root_nx,root_ny,root_nz,mpi_id, getpid());
-#else // MPI
-	printf("Initialized %d*%d*%d root boxes. Process id: %d.\n",root_nx,root_ny,root_nz, getpid());
-#endif // MPI
-}
-
-void iterate(void){	
+void iterate(struct Rebound* const r){
 	// A 'DKD'-like integrator will do the first 'D' part.
 	PROFILING_START()
 	integrator_part1(r);
@@ -159,12 +96,12 @@ void iterate(void){
 
 	// Calculate accelerations. 
 	gravity_calculate_acceleration(r);
-	if (N_megno){
+	if (r->N_megno){
 		gravity_calculate_variational_acceleration(r);
 	}
 	// Calculate non-gravity accelerations. 
 	if (problem_additional_forces) problem_additional_forces();
-	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles, r->t, r->dt, r->G, N, N_megno);
+	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles, r->t, r->dt, r->G, r->N, r->N_megno);
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 
 	// A 'DKD'-like integrator will do the 'KD' part.
@@ -177,7 +114,7 @@ void iterate(void){
 	}
 	if (problem_post_timestep_modifications_with_parameters){
 		integrator_synchronize(r);
-		problem_post_timestep_modifications_with_parameters(particles, r->t, r->dt, r->G, N, N_megno);
+		problem_post_timestep_modifications_with_parameters(particles, r->t, r->dt, r->G, r->N, r->N_megno);
 		r->ri_whfast->recalculate_jacobi_this_timestep = 1;
 	}
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
@@ -211,7 +148,7 @@ void iterate(void){
 	exit_simulation = _exit_simulation;
 #endif // MPI
 	// @TODO: Adjust timestep so that t==tmax exaclty at the end.
-	if((r->t+r->dt>r->tmax && r->tmax!=0.0) || exit_simulation==1){
+	if((r->t+r->dt>r->tmax && r->tmax!=0.0) || r->exit_simulation==1){
 #ifdef GRAVITY_GRAPE
 		gravity_finish();
 #endif // GRAVITY_GRAPE
@@ -219,7 +156,7 @@ void iterate(void){
 		struct timeval tim;
 		gettimeofday(&tim, NULL);
 		double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
-		printf("\nComputation finished. Total runtime: %f s\n",timing_final-timing_initial);
+		printf("\nComputation finished. Total runtime: %f s\n",timing_final-r->timing_initial);
 #ifdef MPI
 		MPI_Finalize();
 #endif // MPI
@@ -227,28 +164,67 @@ void iterate(void){
 	}
 }
 
-int interrupt_counter = 0;
 void interruptHandler(int var) {
-	// This will try to quit the simulation nicely
-	// at the end of the current timestep.
-	switch(interrupt_counter){
-		case 0:
-			printf("\nInterrupt received. Will try to exit.\n");
-			exit_simulation=1;
-			break;
-		default:
-			printf("\nInterrupt received. Will exit immediately.\n");
-			exit(-1);
-	}
-	interrupt_counter++;
+	printf("\nInterrupt received. Will exit immediately.\n");
+	exit(-1);
 }
 
 struct Rebound* rebound_init(){
 	struct Rebound* r = calloc(1,sizeof(struct Rebound));
-	r->t 	= 0; 
-	r->G 	= 1;
-	r->dt	= 0.001;
+	r->t 		= 0; 
+	r->G 		= 1;
+	r->softening 	= 0;
+	r->dt		= 0.001;
+	r->boxsize 	= -1;
+	r->boxsize_x 	= -1;
+	r->boxsize_y 	= -1;
+	r->boxsize_z 	= -1;
+	r->boxsize_max 	= -1;
+	r->root_nx	= 1;
+	r->root_ny	= 1;
+	r->root_nz	= 1;
+	r->root_n	= 1;
+	r->N 		= 0;	
+	r->Nmax		= 0;	
+	r->N_active 	= -1; 	
+	r->N_megno 	= 0; 	
+	r->timing_initial 	= -1;
+	r->exit_simulation	= 0;
+	
+	// Save initial time to calculate total runtime.
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	r->timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
+
+
 	r->ri_whfast = integrator_whfast_init(r);
+	
+	if (r->root_nx <=0 || r->root_ny <=0 || r->root_nz <= 0){
+		fprintf(stderr,"ERROR: Number of root boxes must be greater or equal to 1 in each direction.\n");
+		exit(-1);
+	}
+
+	// Setup box sizes
+	//boxsize_x = boxsize *(double)root_nx;
+	//boxsize_y = boxsize *(double)root_ny;
+	//boxsize_z = boxsize *(double)root_nz;
+	//root_n = root_nx*root_ny*root_nz;
+
+	// Make sure domain can be decomposed into equal number of root boxes per node.
+	//if ((root_n/mpi_num)*mpi_num != root_n){
+	//	if (mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",root_n,mpi_num);
+	//	exit(-1);
+	//}
+
+	//boxsize_max = boxsize_x;
+	//if (boxsize_max<boxsize_y) boxsize_max = boxsize_y;
+	//if (boxsize_max<boxsize_z) boxsize_max = boxsize_z;
+	
+#ifdef MPI
+	printf("Initialized %d*%d*%d root boxes. MPI-node: %d. Process id: %d.\n",r->root_nx,r->root_ny,r->root_nz,mpi_id, getpid());
+#else // MPI
+	printf("Initialized %d*%d*%d root boxes. Process id: %d.\n",r->root_nx,r->root_ny,r->root_nz, getpid());
+#endif // MPI
 	return r;
 }
 
@@ -271,13 +247,12 @@ int main(int argc, char* argv[]) {
 	// Store time to calculate total runtime.
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
-	timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 	// Initialiase interrupts, random numbers, problem, box and OpengL
 	signal(SIGINT, interruptHandler);
 	signal(SIGKILL, interruptHandler);
 	srand ( tim.tv_usec + getpid());
 	
-	r = rebound_init();
+	struct Rebound* r = rebound_init();
 #ifdef OPENGL
 	display_r = r;  // singleton for vizualization
 #endif // OPENGL
@@ -289,14 +264,14 @@ int main(int argc, char* argv[]) {
 #else // OPENGL
 	while(1){
 		// Main run loop.
-		iterate();
+		iterate(r);
 	}
 #endif // OPENGL
 	return 0;
 }
 
 
-static char* logo[] = {
+static const char* logo[] = {
 "              _                           _  \n",   
 "             | |                         | | \n",  
 "     _ __ ___| |__   ___  _   _ _ __   __| | \n", 

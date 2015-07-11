@@ -118,6 +118,8 @@ void integrator_ias15_part2(struct Rebound* r){
 }
  
 int integrator_ias15_step(struct Rebound* r) {
+	const int N = r->N;
+	const int N_megno  = r->N_megno;
 	const int N3 = 3*N;
 	if (N3 > N3allocated) {
 		for (int l=0;l<7;++l) {
@@ -174,7 +176,7 @@ int integrator_ias15_step(struct Rebound* r) {
 	double integrator_megno_thisdt = 0.;
 	double integrator_megno_thisdt_init = 0.;
 	if (N_megno){
-		integrator_megno_thisdt_init = w[0]* r->t * tools_megno_deltad_delta();
+		integrator_megno_thisdt_init = w[0]* r->t * tools_megno_deltad_delta(r);
 	}
 
 	double t_beginning = r->t;
@@ -261,7 +263,7 @@ int integrator_ias15_step(struct Rebound* r) {
 
 			integrator_update_acceleration(r);				// Calculate forces at interval n
 			if (N_megno){
-				integrator_megno_thisdt += w[n] * r->t * tools_megno_deltad_delta();
+				integrator_megno_thisdt += w[n] * r->t * tools_megno_deltad_delta(r);
 			}
 
 			for(int k=0;k<N;++k) {

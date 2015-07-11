@@ -117,7 +117,7 @@ struct orbit tools_p2orbit(double G, struct particle p, struct particle star);
 /**
  * Move to center of momentum and center of mass frame.
  */
-void tools_move_to_center_of_momentum(void);
+void tools_move_to_center_of_momentum(struct Rebound* const r);
 
 /**
  * Returns the center of mass of particle p1 and p2.
@@ -127,7 +127,7 @@ struct particle tools_get_center_of_mass(struct particle p1, struct particle p2)
 /* 
  * Init the MEGNO particles
  **/
-void tools_megno_init(double delta);
+void tools_megno_init(struct Rebound* const r, double delta);
 
 /*
  * Returns the current value of <Y>
@@ -143,7 +143,7 @@ double tools_lyapunov(struct Rebound* r);
  * Returns deltad/delta (Note, there is a typo in Gozdziewski et al 2001).
  **/
 
-double tools_megno_deltad_delta(void);
+double tools_megno_deltad_delta(struct Rebound* const r);
 
 /*
  * Update MEGNO after a successful timestep by adding dY (=ddelta/delta*dt)

@@ -24,6 +24,7 @@
  */
 #ifndef _PARTICLE_H
 #define _PARTICLE_H
+struct Rebound;
 
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
 struct cell;
@@ -71,33 +72,33 @@ extern struct particle* particles;
  *          put into the corresponding send queue particles_send.
  * @param pt Particle to be added.
  */
-void particles_add(struct particle pt);
+void particles_add(struct Rebound* const r, struct particle pt);
 
 /** 
  * Same as particles_add() but inserts particles at given position. 
  * @param pt Particle to be added.
  * @param pos New position.
  */
-void particles_add_fixed(struct particle pt,int pos);
+void particles_add_fixed(struct Rebound* const r, struct particle pt,int pos);
 
 /**
  * Add a particle to the particle structure on the current node.
  * Do not distribute particles.
  * @param pt Particle to be added.
  */
-void particles_add_local(struct particle pt);
+void particles_add_local(struct Rebound* const r, struct particle pt);
 
 /**
  * Returns the index of the rootbox for the current particles based on its position.
  * @return Index of the rootbox.
  * @param pt Particle to be checked.
  */
-int particles_get_rootbox_for_particle(struct particle pt);
+int particles_get_rootbox_for_particle(const struct Rebound* const r, struct particle pt);
 
 /**
  * Remove all particles
  */
-void particles_remove_all(void);
+void particles_remove_all(struct Rebound* const r);
 
 /**
  * Remove particle by position in particles array
@@ -106,7 +107,7 @@ void particles_remove_all(void);
  * Returns 1 if particle was successfully removed, 0 if index passed was 
  * out of range.
  */
-int particles_remove(int index, int keepSorted);
+int particles_remove(struct Rebound* const rindex, int ID, int keepSorted);
 
 #ifdef PARTICLEIDS
 /**
@@ -116,6 +117,6 @@ int particles_remove(int index, int keepSorted);
  * ensuring the ordering remains. Returns 1 if particle successfully removed,
  * 0 if ID was not found in the particles array.
  */
-int particles_remove_ID(int ID, int keepSorted);
+int particles_remove_ID(struct Rebound* const r, int ID, int keepSorted);
 #endif
 #endif // _PARTICLE_H

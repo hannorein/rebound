@@ -73,6 +73,8 @@ double tools_rayleigh(double sigma){
 
 /// Other helper routines
 double tools_energy(struct Rebound* r){
+	const int N = r->N;
+	const int N_megno = r->N_megno;
 	double e_kin = 0.;
 	double e_pot = 0.;
 	for (int i=0;i<N-N_megno;i++){
@@ -89,7 +91,8 @@ double tools_energy(struct Rebound* r){
 	return e_kin +e_pot;
 }
 
-void tools_move_to_center_of_momentum(void){
+void tools_move_to_center_of_momentum(struct Rebound* const r){
+	const int N = r->N;
 	double m = 0;
 	double x = 0;
 	double y = 0;
@@ -179,8 +182,8 @@ void tools_init_plummer(int _N, double M, double R) {
 
 		star.m = M/(double)_N;
 
-
-		particles_add(star);
+#warning TODO!
+	//	particles_add(star);
 	}
 }
 
@@ -348,8 +351,8 @@ double tools_megno_mean_t; 	// mean of t
 double tools_megno_mean_Y; 	// mean of Y
 double tools_megno_delta0; 	// initial scale of delta (for one particle)
 long   tools_megno_n; 		// number of covariance updates
-void tools_megno_init(double delta){
-	int _N_megno = N;
+void tools_megno_init(struct Rebound* const r, double delta){
+	int _N_megno = r->N;
 	tools_megno_Ys = 0.;
 	tools_megno_Yss = 0.;
 	tools_megno_cov_Yt = 0.;
@@ -375,9 +378,9 @@ void tools_megno_init(double delta){
 		megno.vy *= deltad;
 		megno.vz *= deltad;
 
-                particles_add(megno);
+                particles_add(r, megno);
         }
-	N_megno = _N_megno;
+	r->N_megno = _N_megno;
 }
 double tools_megno(struct Rebound* r){ // Returns the MEGNO <Y>
 	if (r->t==0.) return 0.;
@@ -387,7 +390,9 @@ double tools_lyapunov(struct Rebound* r){ // Returns the largest Lyapunov charac
 	if (r->t==0.) return 0.;
 	return tools_megno_cov_Yt/tools_megno_var_t;
 }
-double tools_megno_deltad_delta(void){
+double tools_megno_deltad_delta(struct Rebound* const r){
+	const int N = r->N;
+	const int N_megno = r->N;
         double deltad = 0;
         double delta2 = 0;
         for (int i=N-N_megno;i<N;i++){

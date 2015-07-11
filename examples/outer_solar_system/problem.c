@@ -79,7 +79,7 @@ double ss_mass[6] =
 };
 
 const double k	 	= 0.01720209895;	// Gaussian constant 
-double energy(double G);
+double energy(double const G, const int N);
 double e_init;
 
 void problem_init(int argc, char* argv[], struct Rebound* r){
@@ -87,7 +87,6 @@ void problem_init(int argc, char* argv[], struct Rebound* r){
 	r->dt 		= 40;				// in days
 	r->tmax		= 7.3e10;			// 200 Myr
 	r->G		= k*k;				// These are the same units as used by the mercury6 code.
-	init_boxwidth(200); 				// Init box with width 200 astronomical units
 	r->ri_whfast->safe_mode = 0;			// Turn of safe mode. Need to call integrator_synchronize() before outputs. 
 	r->ri_whfast->corrector = 11;			// Turn on symplectic correctors (11th order).
 	integrator_force_is_velocitydependent = 0;	// Force only depends on positions. 
@@ -101,34 +100,34 @@ void problem_init(int argc, char* argv[], struct Rebound* r){
 		p.vx = ss_vel[i][0]; 		p.vy = ss_vel[i][1];	 	p.vz = ss_vel[i][2];
 		p.ax = 0; 			p.ay = 0; 			p.az = 0;
 		p.m  = ss_mass[i];
-		particles_add(p); 
+		particles_add(r, p); 
 	}
 	if (integrator==WH){
 		// Move to heliocentric frame (required by WH integrator)
-		for (int i=1;i<N;i++){
+		for (int i=1;i<r->N;i++){
 			particles[i].x -= particles[0].x;	particles[i].y -= particles[0].y;	particles[i].z -= particles[0].z;
 			particles[i].vx -= particles[0].vx;	particles[i].vy -= particles[0].vy;	particles[i].vz -= particles[0].vz;
 		}
 		particles[0].x = 0;	particles[0].y = 0;	particles[0].z = 0;
 		particles[0].vx= 0;	particles[0].vy= 0;	particles[0].vz= 0;
 	}else{
-		tools_move_to_center_of_momentum();
+		tools_move_to_center_of_momentum(r);
 	}
 
-	N_active = N-1;
+	r->N_active = r->N-1;
 
-	e_init = energy(r->G);
+	e_init = energy(r->G, r->N - r->N_megno);
 	system("rm -f energy.txt");
 	system("rm -f pos.txt");
 }
 
-double energy(double G){
+double energy(const double G, const int N){
 	double e_kin = 0.;
 	double e_pot = 0.;
-	for (int i=0;i<N-N_megno;i++){
+	for (int i=0;i<N;i++){
 		struct particle pi = particles[i];
 		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
-		for (int j=i+1;j<N-N_megno;j++){
+		for (int j=i+1;j<N;j++){
 			struct particle pj = particles[j];
 			double dx = pi.x - pj.x;
 			double dy = pi.y - pj.y;

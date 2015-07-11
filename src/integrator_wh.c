@@ -49,7 +49,7 @@
 #include "integrator.h"
 #include "integrator_wh.h"
 
-void drift_wh(const double G, double _dt);
+void drift_wh(const double G, double _dt, const int N, const int N_active);
 void drift_dan(struct particle* pv, double mu, double dt, int* iflag);
 void drift_kepu(double dt, double r0, double mu, double alpha, double u, double* fp, double* c1, double* c2, double* c3, int* iflag);
 void drift_kepu_guess(double dt0, double r0, double mu, double alpha, double u, double* s);
@@ -59,17 +59,18 @@ void drift_kepu_lag(double* s, double dt0, double r0, double mu, double alpha, d
 void drift_kepu_stumpff(double x, double* c0, double* c1, double* c2, double* c3);
 void drift_kepu_fchk(double dt0, double r0, double mu, double alpha, double u, double s, double* f);
 void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* c);
-void integrator_wh_aj(const double G);
-void integrator_wh_ah(const double G);
-void integrator_wh_to_jacobi(void);
-void integrator_wh_from_jacobi(void);
+void integrator_wh_aj(const double G, const int N, const int N_active);
+void integrator_wh_ah(const double G, const int N, const int N_active);
+void integrator_wh_to_jacobi(const int N, const int N_active);
+void integrator_wh_from_jacobi(const int N, const int N_active);
 
-int _N_active;
 int integrator_wh_N = 0;
 static double* eta;
 
 void integrator_wh_part1(struct Rebound* r){
-	_N_active = (N_active==-1)?N:N_active;
+	const int N = r->N;
+	const int N_active = r->N_active;
+	int _N_active = (N_active==-1)?N:N_active;
 	if (_N_active!=integrator_wh_N){
 		eta = realloc(eta,sizeof(double)*_N_active);
 		integrator_wh_N = _N_active;
@@ -79,30 +80,31 @@ void integrator_wh_part1(struct Rebound* r){
 	for(int i=1;i<_N_active;i++){
 	  eta[i] = eta[i-1] + particles[i].m;
 	}
-	integrator_wh_to_jacobi();
-	drift_wh(r->G, r->dt/2.);
-	integrator_wh_from_jacobi();
+	integrator_wh_to_jacobi(N, N_active);
+	drift_wh(r->G, r->dt/2., N, N_active);
+	integrator_wh_from_jacobi(N, N_active);
 	r->t+=r->dt/2.;
 }
 
 void integrator_wh_part2(struct Rebound* r){
+	const int N = r->N;
+	const int N_active = r->N_active;
 	// KICK
-	_N_active = (N_active==-1)?N:N_active;
 	// Calculate terms in Heliocentric coordinates
-	integrator_wh_ah(r->G);
-	integrator_wh_to_jacobi();
+	integrator_wh_ah(r->G, N, N_active);
+	integrator_wh_to_jacobi(N, N_active);
 	// Calculate terms in Jacobi coordinates
-	integrator_wh_aj(r->G);
-	integrator_wh_from_jacobi();
+	integrator_wh_aj(r->G, N, N_active);
+	integrator_wh_from_jacobi(N, N_active);
 	for (int i=1;i<N;i++){
 		particles[i].vx += r->dt*particles[i].ax;
 		particles[i].vy += r->dt*particles[i].ay;
 		particles[i].vz += r->dt*particles[i].az;
 	}
 	// DRIFT
-	integrator_wh_to_jacobi();
-	drift_wh(r->G, r->dt/2.);
-	integrator_wh_from_jacobi();
+	integrator_wh_to_jacobi(N, N_active);
+	drift_wh(r->G, r->dt/2., N, N_active);
+	integrator_wh_from_jacobi(N, N_active);
 	r->t+=r->dt/2.;
 }
 
@@ -112,7 +114,8 @@ int wh_check_normal(struct particle* p){
 	return 0;
 }
 
-void integrator_wh_to_jacobi(void){
+void integrator_wh_to_jacobi(const int N, const int N_active){
+	int _N_active = (N_active==-1)?N:N_active;
 
 	double sumx  = particles[1].m * particles[1].x;
 	double sumy  = particles[1].m * particles[1].y;
@@ -153,7 +156,8 @@ void integrator_wh_to_jacobi(void){
 	}
 }
 
-void integrator_wh_from_jacobi(void){
+void integrator_wh_from_jacobi(const int N, const int N_active){
+	int _N_active = (N_active==-1)?N:N_active;
 	double sumx  = particles[1].m*particles[1].x /eta[1];
 	double sumy  = particles[1].m*particles[1].y /eta[1];
 	double sumz  = particles[1].m*particles[1].z /eta[1];
@@ -181,7 +185,8 @@ void integrator_wh_from_jacobi(void){
 }
 
 // Assumes positions in heliocentric coordinates
-void integrator_wh_ah(const double G){
+void integrator_wh_ah(const double G, const int N, const int N_active){
+	int _N_active = (N_active==-1)?N:N_active;
 	// Massive particles
 	double mass0 = particles[0].m;
 	double axh0 = 0.0;
@@ -226,7 +231,8 @@ void integrator_wh_ah(const double G){
 }
 
 // Assumes position in Jacobi coordinates
-void integrator_wh_aj(const double G){
+void integrator_wh_aj(const double G, const int N, const int N_active){
+	int _N_active = (N_active==-1)?N:N_active;
 	// Massive particles (No need to calculate this for test particles)
 	double mass0 = particles[0].m;
 	double etaj = mass0;
@@ -254,7 +260,8 @@ void integrator_wh_aj(const double G){
  * This function integrates the Keplerian motion of all particles.
  * @param _dt Timestep.
  */
-void drift_wh(const double G, double _dt){
+void drift_wh(const double G, double _dt, const int N, const int N_active){
+	int _N_active = (N_active==-1)?N:N_active;
 	double mass0 = particles[0].m;
 	double etajm1 = mass0;
 	// Massive particles

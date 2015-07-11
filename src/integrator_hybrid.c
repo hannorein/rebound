@@ -47,7 +47,10 @@ double integrator_hybrid_switch_ratio = 100;
 static double initial_dt = 0;
 static unsigned int integrator_hybrid_switch_warning = 0;
 
-static double get_min_ratio(void){
+static double get_min_ratio(struct Rebound* const r){
+	const int N = r->N;
+	const int N_active = r->N_active;
+	const int N_megno = r->N_megno;
 	struct particle p0 = particles[0];
 	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
 	const int _N_real   = N - N_megno;
@@ -83,7 +86,7 @@ static double get_min_ratio(void){
 static double ratio;
 integrator_t integrator_hybrid_mode = WHFAST; // 0 = symplectic; 1 = IAS15
 void integrator_hybrid_part1(struct Rebound* r){
-	ratio = get_min_ratio();
+	ratio = get_min_ratio(r);
 	if (initial_dt==0.){
 		initial_dt = r->dt;
 	}

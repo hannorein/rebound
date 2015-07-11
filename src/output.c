@@ -102,6 +102,7 @@ void profiling_stop(int cat){
 double output_timing_last = -1; 	/**< Time when output_timing() was called the last time. */
 extern unsigned int integrator_hybrid_mode;
 void output_timing(struct Rebound* r){
+	const int N = r->N;
 #ifdef MPI
 	int N_tot = 0;
 	MPI_Reduce(&N, &N_tot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD); 
@@ -177,6 +178,7 @@ void output_timing(struct Rebound* r){
 
 
 void output_append_ascii(struct Rebound* r, char* filename){
+	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -196,6 +198,7 @@ void output_append_ascii(struct Rebound* r, char* filename){
 }
 
 void output_ascii(struct Rebound* r, char* filename){
+	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -215,6 +218,7 @@ void output_ascii(struct Rebound* r, char* filename){
 }
 
 void output_append_orbits(struct Rebound* r, char* filename){
+	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -236,6 +240,7 @@ void output_append_orbits(struct Rebound* r, char* filename){
 }
 
 void output_orbits(struct Rebound* r, char* filename){
+	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -258,6 +263,7 @@ void output_orbits(struct Rebound* r, char* filename){
 
 
 void output_binary(struct Rebound* r, char* filename){
+	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -279,6 +285,7 @@ void output_binary(struct Rebound* r, char* filename){
 }
 
 void output_binary_positions(struct Rebound* r, char* filename){
+	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -301,6 +308,7 @@ void output_binary_positions(struct Rebound* r, char* filename){
 }
 
 void output_append_velocity_dispersion(struct Rebound* r, char* filename){
+	const int N = r->N;
 	// Algorithm with reduced roundoff errors (see wikipedia)
 	struct vec3 A = {.x=0, .y=0, .z=0};
 	struct vec3 Q = {.x=0, .y=0, .z=0};

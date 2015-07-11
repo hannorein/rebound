@@ -138,11 +138,11 @@ void integrator_update_acceleration(struct Rebound* r){
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 	PROFILING_START()
 	gravity_calculate_acceleration(r);
-	if (N_megno){
+	if (r->N_megno){
 		gravity_calculate_variational_acceleration(r);
 	}
 	if (problem_additional_forces) problem_additional_forces();
-	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles,r->t,r->dt,r->G,N,N_megno);
+	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles,r->t,r->dt,r->G,r->N,r->N_megno);
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 	PROFILING_START()
 }

@@ -38,10 +38,6 @@
 #endif // MPI
 
 struct particle* 	particles = NULL;	
-int N 		= 0;	
-int Nmax	= 0;	
-int N_active 	= -1; 	
-int N_megno 	= 0; 	
 
 #ifdef BOUNDARIES_OPEN
 int boundaries_particle_is_in_box(struct particle p);
@@ -51,7 +47,7 @@ int particles_warning_is_not_in_box = 0;
 extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
-void particles_add_local(struct particle pt){
+void particles_add_local(struct Rebound* const r, struct particle pt){
 #ifdef BOUNDARIES_OPEN
 	if (boundaries_particle_is_in_box(pt)==0){
 		// Particle has left the box. Do not add.
@@ -62,21 +58,21 @@ void particles_add_local(struct particle pt){
 		return;
 	}
 #endif // BOUNDARIES_OPEN
-	while (Nmax<=N){
-		Nmax += 128;
-		particles = realloc(particles,sizeof(struct particle)*Nmax);
+	while (r->Nmax<=r->N){
+		r->Nmax += 128;
+		particles = realloc(particles,sizeof(struct particle)*r->Nmax);
 	}
 
-	particles[N] = pt;
+	particles[r->N] = pt;
 
 #ifdef TREE
-	tree_add_particle_to_tree(N);
+	tree_add_particle_to_tree(r->N);
 #endif // TREE
-	N++;
+	(r->N)++;
 }
 
-void particles_add(struct particle pt){
-	if (N_megno){
+void particles_add(struct Rebound* const r, struct particle pt){
+	if (r->N_megno){
 		printf("\nWarning: Trying to add particle after calling megno_init().\n");
 	}
 #ifndef COLLISIONS_NONE
@@ -95,20 +91,20 @@ void particles_add(struct particle pt){
 	}
 #endif // GRAVITY_GRAPE
 #ifdef MPI
-	int rootbox = particles_get_rootbox_for_particle(pt);
+	int rootbox = particles_get_rootbox_for_particle(r, pt);
 	int root_n_per_node = root_n/mpi_num;
 	int proc_id = rootbox/root_n_per_node;
-	if (proc_id != mpi_id && N >= N_active){
+	if (proc_id != mpi_id && r->N >= r->N_active){
 		// Add particle to array and send them to proc_id later. 
 		communication_mpi_add_particle_to_send_queue(pt,proc_id);
 		return;
 	}
 #endif // MPI
 	// Add particle to local partical array.
-	particles_add_local(pt);
+	particles_add_local(r, pt);
 }
 
-void particles_add_fixed(struct particle pt,int pos){
+void particles_add_fixed(struct Rebound* const r, struct particle pt,int pos){
 	// Only works for non-MPI simulations or when the particles does not move to another node.
 #ifdef BOUNDARIES_OPEN
 	if (boundaries_particle_is_in_box(pt)==0){
@@ -122,59 +118,54 @@ void particles_add_fixed(struct particle pt,int pos){
 #endif // TREE
 }
 
-#ifdef LIBREBOUND
-int particles_get_rootbox_for_particle(struct particle pt){
-	return 0;
-}
-#else // LIBREBOUND
-int particles_get_rootbox_for_particle(struct particle pt){
-	int i = ((int)floor((pt.x + boxsize_x/2.)/boxsize)+root_nx)%root_nx;
-	int j = ((int)floor((pt.y + boxsize_y/2.)/boxsize)+root_ny)%root_ny;
-	int k = ((int)floor((pt.z + boxsize_z/2.)/boxsize)+root_nz)%root_nz;
-	int index = (k*root_ny+j)*root_nx+i;
+int particles_get_rootbox_for_particle(const struct Rebound* const r, struct particle pt){
+	if (r->boxsize==-1) return 0;
+	int i = ((int)floor((pt.x + r->boxsize_x/2.)/r->boxsize)+r->root_nx)%r->root_nx;
+	int j = ((int)floor((pt.y + r->boxsize_y/2.)/r->boxsize)+r->root_ny)%r->root_ny;
+	int k = ((int)floor((pt.z + r->boxsize_z/2.)/r->boxsize)+r->root_nz)%r->root_nz;
+	int index = (k*r->root_ny+j)*r->root_nx+i;
 	return index;
 }
-#endif // LIBREBOUND
 
-void particles_remove_all(void){
-	N 		= 0;
-	Nmax 		= 0;
-	N_active 	= -1;
-	N_megno 	= 0;
+void particles_remove_all(struct Rebound* const r){
+	r->N 		= 0;
+	r->Nmax 	= 0;
+	r->N_active 	= -1;
+	r->N_megno 	= 0;
 	free(particles);
 	particles 	= NULL;
 }
 
-int particles_remove(int index, int keepSorted){
-	if (N==1){
+int particles_remove(struct Rebound* const r, int index, int keepSorted){
+	if (r->N==1){
 		fprintf(stderr, "Last particle removed.\n");
 		return 1;
 	}
-	if (index >= N){
-		fprintf(stderr, "\nIndex %d passed to particles_remove was out of range (N=%d).  Did not remove particle.\n", index, N);
+	if (index >= r->N){
+		fprintf(stderr, "\nIndex %d passed to particles_remove was out of range (N=%d).  Did not remove particle.\n", index, r->N);
 		return 0;
 	}
-	if (N_megno){
+	if (r->N_megno){
 		fprintf(stderr, "\nRemoving particles not supported when calculating MEGNO.  Did not remove particle.\n");
 		return 0;
 	}
-	N--;
+	(r->N)--;
 	if(keepSorted){
-		for(int j=index; j<N; j++){
+		for(int j=index; j<r->N; j++){
 			particles[j] = particles[j+1];
 		}
 	}
 	else{
-		particles[index] = particles[N];
+		particles[index] = particles[r->N];
 	}
 
 	return 1;
 }
 
 #ifdef PARTICLEIDS
-int particles_remove_ID(int ID, int keepSorted){
+int particles_remove_ID(struct Rebound* const r, int ID, int keepSorted){
 	int success = 0;
-	for(int i=0;i<N;i++){
+	for(int i=0;i<r->N;i++){
 		if(particles[i].ID == ID){
 			success = particles_remove(i, keepSorted);
 			break;
