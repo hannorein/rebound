@@ -41,21 +41,6 @@
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
 
-struct ReboundIntegratorWHFast* integrator_whfast_init(struct Rebound* r){
-	struct ReboundIntegratorWHFast* ri_whfast = calloc(1,sizeof(struct ReboundIntegratorWHFast));
-	// the defaults below are chosen to safeguard the user against spurious results, but
-	// will be slower and less accurate
-	ri_whfast->corrector = 0;
-	ri_whfast->safe_mode = 1;
-	ri_whfast->recalculate_jacobi_this_timestep = 0;
-	ri_whfast->is_synchronized = 1;
-	ri_whfast->allocated_N = 0;
-	ri_whfast->timestep_warning = 0;
-	ri_whfast->recalculate_jacobi_but_not_synchronized_warning = 0;
-	return ri_whfast;
-}
-
-
 
 // Fast inverse factorial lookup table
 static const double invfactorial[35] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
@@ -622,7 +607,7 @@ const static double b_115 = 3394141./2328480.*4.980119205559973422e-02;
 
 
 static void integrator_whfast_corrector_Z(struct Rebound* r, double a, double b){
-	struct ReboundIntegratorWHFast* const ri_whfast = r->ri_whfast;
+	struct ReboundIntegratorWHFast* const ri_whfast = &(r->ri_whfast);
 	struct Particle* restrict const particles = r->particles;
 	integrator_kepler_drift(ri_whfast->p_j, ri_whfast->eta,  r->G, a, &(ri_whfast->timestep_warning), r->N, r->N_megno);
 	integrator_to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, r->N-r->N_megno);
@@ -651,19 +636,19 @@ static void integrator_whfast_corrector_Z(struct Rebound* r, double a, double b)
 
 static void integrator_apply_corrector(struct Rebound* r, double inv){
 	const double dt = r->dt;
-	if (r->ri_whfast->corrector==3){
+	if (r->ri_whfast.corrector==3){
 		// Third order corrector
 		integrator_whfast_corrector_Z(r, a_1*dt,-inv*b_31*dt);
 		integrator_whfast_corrector_Z(r, -a_1*dt,inv*b_31*dt);
 	}
-	if (r->ri_whfast->corrector==5){
+	if (r->ri_whfast.corrector==5){
 		// Fifth order corrector
 		integrator_whfast_corrector_Z(r, -a_2*dt,-inv*b_51*dt);
 		integrator_whfast_corrector_Z(r, -a_1*dt,-inv*b_52*dt);
 		integrator_whfast_corrector_Z(r, a_1*dt,inv*b_52*dt);
 		integrator_whfast_corrector_Z(r, a_2*dt,inv*b_51*dt);
 	}
-	if (r->ri_whfast->corrector==7){
+	if (r->ri_whfast.corrector==7){
 		// Seventh order corrector
 		integrator_whfast_corrector_Z(r, -a_3*dt,-inv*b_71*dt);
 		integrator_whfast_corrector_Z(r, -a_2*dt,-inv*b_72*dt);
@@ -672,7 +657,7 @@ static void integrator_apply_corrector(struct Rebound* r, double inv){
 		integrator_whfast_corrector_Z(r, a_2*dt,inv*b_72*dt);
 		integrator_whfast_corrector_Z(r, a_3*dt,inv*b_71*dt);
 	}
-	if (r->ri_whfast->corrector==11){
+	if (r->ri_whfast.corrector==11){
 		// Eleventh order corrector
 		integrator_whfast_corrector_Z(r, -a_5*dt,-inv*b_111*dt);
 		integrator_whfast_corrector_Z(r, -a_4*dt,-inv*b_112*dt);
@@ -688,7 +673,7 @@ static void integrator_apply_corrector(struct Rebound* r, double inv){
 }
 
 void integrator_whfast_part1(struct Rebound* const r){
-	struct ReboundIntegratorWHFast* const ri_whfast = r->ri_whfast;
+	struct ReboundIntegratorWHFast* const ri_whfast = &(r->ri_whfast);
 	struct Particle* restrict const particles = r->particles;
 	const int N = r->N;
 	const int N_megno = r->N_megno;
@@ -756,7 +741,7 @@ void integrator_whfast_part1(struct Rebound* const r){
 }
 
 void integrator_whfast_synchronize(struct Rebound* const r){
-	struct ReboundIntegratorWHFast* const ri_whfast = r->ri_whfast;
+	struct ReboundIntegratorWHFast* const ri_whfast = &(r->ri_whfast);
 	const int N = r->N;
 	const int N_megno = r->N_megno;
 	if (ri_whfast->is_synchronized == 0){
@@ -771,7 +756,7 @@ void integrator_whfast_synchronize(struct Rebound* const r){
 
 void integrator_whfast_part2(struct Rebound* const r){
 	struct Particle* restrict const particles = r->particles;
-	struct ReboundIntegratorWHFast* const ri_whfast = r->ri_whfast;
+	struct ReboundIntegratorWHFast* const ri_whfast = &(r->ri_whfast);
 	const int N = r->N;
 	const int N_megno = r->N_megno;
 	integrator_to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, N-N_megno);
@@ -834,7 +819,7 @@ void integrator_whfast_part2(struct Rebound* const r){
 }
 	
 void integrator_whfast_reset(struct Rebound* const r){
-	struct ReboundIntegratorWHFast* const ri_whfast = r->ri_whfast;
+	struct ReboundIntegratorWHFast* const ri_whfast = &(r->ri_whfast);
 	ri_whfast->corrector = 0;
 	ri_whfast->is_synchronized = 1;
 	ri_whfast->safe_mode = 1;

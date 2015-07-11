@@ -29,7 +29,8 @@
 // Make sure M_PI is defined. 
 #define M_PI           3.14159265358979323846
 #endif
-struct ReboundIntegratorWHFast;
+#include "integrator_whfast.h"
+
 /*
  * Available integrators.
  */
@@ -76,7 +77,7 @@ struct Rebound {
 	
 	//////////////////////////////////////////////
 	/// Integrators
-	struct ReboundIntegratorWHFast* ri_whfast;	/**< Pointer to the WHFast struct */
+	struct ReboundIntegratorWHFast ri_whfast;	/**< The WHFast struct */
 
 
 	//////////////////////////////////////////////

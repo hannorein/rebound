@@ -115,8 +115,8 @@ int main(int argc, char* argv[]) {
 	// Setup constants
 	r->dt 		= 40;				// in days
 	r->G		= k*k;				// These are the same units as used by the mercury6 code.
-	r->ri_whfast->safe_mode = 0;			// Turn of safe mode. Need to call integrator_synchronize() before outputs. 
-	r->ri_whfast->corrector = 11;			// Turn on symplectic correctors (11th order).
+	r->ri_whfast.safe_mode = 0;			// Turn of safe mode. Need to call integrator_synchronize() before outputs. 
+	r->ri_whfast.corrector = 11;			// Turn on symplectic correctors (11th order).
 
 	// Setup callbacks:
 	r->post_timestep = post_timestep;

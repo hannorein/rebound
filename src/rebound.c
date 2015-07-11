@@ -110,7 +110,7 @@ void rebound_step(struct Rebound* const r){
 	if (r->post_timestep_modifications){
 		integrator_synchronize(r);
 		r->post_timestep_modifications(r);
-		r->ri_whfast->recalculate_jacobi_this_timestep = 1;
+		r->ri_whfast.recalculate_jacobi_this_timestep = 1;
 	}
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
@@ -167,8 +167,18 @@ struct Rebound* rebound_init(){
 	r->finished			= NULL;
 	r->post_timestep		= NULL;
 	r->post_timestep_modifications	= NULL;
-	
-	r->ri_whfast = integrator_whfast_init(r);
+
+	// Integrators	
+	// ********** WHFAST
+	// the defaults below are chosen to safeguard the user against spurious results, but
+	// will be slower and less accurate
+	r->ri_whfast.corrector = 0;
+	r->ri_whfast.safe_mode = 1;
+	r->ri_whfast.recalculate_jacobi_this_timestep = 0;
+	r->ri_whfast.is_synchronized = 1;
+	r->ri_whfast.allocated_N = 0;
+	r->ri_whfast.timestep_warning = 0;
+	r->ri_whfast.recalculate_jacobi_but_not_synchronized_warning = 0;
 	
 	if (r->root_nx <=0 || r->root_ny <=0 || r->root_nz <= 0){
 		fprintf(stderr,"ERROR: Number of root boxes must be greater or equal to 1 in each direction.\n");
