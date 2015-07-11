@@ -45,8 +45,8 @@
 double OMEGA 	= 1.; 	/**< Epicyclic/orbital frequency. */
 double OMEGAZ 	= -1.; 	/**< Epicyclic frequency in vertical direction. */
 
-void operator_H012(double dt, struct particle* p);
-void operator_phi1(double dt, struct particle* p);
+void operator_H012(double dt, struct Particle* p);
+void operator_phi1(double dt, struct Particle* p);
 // Cache sin() tan() values.
 double lastdt=0;	/**< Cached sin(), tan() for this value of dt.*/
 double sindt,  tandt;
@@ -71,7 +71,7 @@ void integrator_cache_coefficients(double dt){
 
 void integrator_sei_part1(struct Rebound* const r){
 	const int N = r->N;
-	struct particle* const particles = r->particles;
+	struct Particle* const particles = r->particles;
 	integrator_cache_coefficients(r->dt);
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
@@ -82,7 +82,7 @@ void integrator_sei_part1(struct Rebound* const r){
 
 void integrator_sei_part2(struct Rebound* r){
 	const int N = r->N;
-	struct particle* const particles = r->particles;
+	struct Particle* const particles = r->particles;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		operator_phi1(r->dt, &(particles[i]));
@@ -96,7 +96,7 @@ void integrator_sei_part2(struct Rebound* r){
  * Hamiltonian H0 exactly up to machine precission.
  * @param p Particle to evolve.
  */
-void operator_H012(double dt, struct particle* p){
+void operator_H012(double dt, struct Particle* p){
 		
 	// Integrate vertical motion
 	const double zx = p->z * OMEGAZ;
@@ -137,7 +137,7 @@ void operator_H012(double dt, struct particle* p){
  * this should not be visible. However, it is worth keeping in mind. 
  * @param p Particle to evolve.
  */
-void operator_phi1(double dt, struct particle* p){
+void operator_phi1(double dt, struct Particle* p){
 	// The force used here is for test cases 2 and 3 
 	// in Rein & Tremaine 2011. 
 	p->vx += p->ax * dt;

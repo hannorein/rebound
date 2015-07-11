@@ -51,13 +51,13 @@ static double get_min_ratio(struct Rebound* const r){
 	const int N = r->N;
 	const int N_active = r->N_active;
 	const int N_megno = r->N_megno;
-	struct particle* restrict const particles = r->particles;
-	struct particle p0 = particles[0];
+	struct Particle* restrict const particles = r->particles;
+	struct Particle p0 = particles[0];
 	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
 	const int _N_real   = N - N_megno;
 	double min_ratio = 1e308;
 	for (int i=1; i<_N_active; i++){
-		struct particle pi = particles[i];
+		struct Particle pi = particles[i];
 	for (int j=1; j<_N_real; j++){
 		if (i==j) continue;
 		const double dxj = p0.x - particles[j].x;

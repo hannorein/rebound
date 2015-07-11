@@ -38,13 +38,13 @@
 #endif // MPI
 
 #ifdef BOUNDARIES_OPEN
-int boundaries_particle_is_in_box(struct particle p);
+int boundaries_particle_is_in_box(struct Particle p);
 #endif // BOUNDARIES_OPEN
 #ifdef GRAVITY_GRAPE
 extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
-void particles_add_local(struct Rebound* const r, struct particle pt){
+void particles_add_local(struct Rebound* const r, struct Particle pt){
 #ifdef BOUNDARIES_OPEN
 	if (boundaries_particle_is_in_box(pt)==0){
 		// Particle has left the box. Do not add.
@@ -54,7 +54,7 @@ void particles_add_local(struct Rebound* const r, struct particle pt){
 #endif // BOUNDARIES_OPEN
 	while (r->Nmax<=r->N){
 		r->Nmax += 128;
-		r->particles = realloc(r->particles,sizeof(struct particle)*r->Nmax);
+		r->particles = realloc(r->particles,sizeof(struct Particle)*r->Nmax);
 	}
 
 	r->particles[r->N] = pt;
@@ -65,7 +65,7 @@ void particles_add_local(struct Rebound* const r, struct particle pt){
 	(r->N)++;
 }
 
-void particles_add(struct Rebound* const r, struct particle pt){
+void particles_add(struct Rebound* const r, struct Particle pt){
 	if (r->N_megno){
 		fprintf(stderr,"\n\033[1mWarning!\033[0m Trying to add particle after calling megno_init().\n");
 	}
@@ -98,7 +98,7 @@ void particles_add(struct Rebound* const r, struct particle pt){
 	particles_add_local(r, pt);
 }
 
-void particles_add_fixed(struct Rebound* const r, struct particle pt,int pos){
+void particles_add_fixed(struct Rebound* const r, struct Particle pt,int pos){
 	// Only works for non-MPI simulations or when the particles does not move to another node.
 #ifdef BOUNDARIES_OPEN
 	if (boundaries_particle_is_in_box(pt)==0){
@@ -112,7 +112,7 @@ void particles_add_fixed(struct Rebound* const r, struct particle pt,int pos){
 #endif // TREE
 }
 
-int particles_get_rootbox_for_particle(const struct Rebound* const r, struct particle pt){
+int particles_get_rootbox_for_particle(const struct Rebound* const r, struct Particle pt){
 	if (r->boxsize==-1) return 0;
 	int i = ((int)floor((pt.x + r->boxsize_x/2.)/r->boxsize)+r->root_nx)%r->root_nx;
 	int j = ((int)floor((pt.y + r->boxsize_y/2.)/r->boxsize)+r->root_ny)%r->root_ny;

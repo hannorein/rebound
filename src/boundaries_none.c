@@ -57,7 +57,7 @@ struct ghostbox boundaries_get_ghostbox(int i, int j, int k){
 	return gb;
 }
 
-int boundaries_particle_is_in_box(struct particle p){
+int boundaries_particle_is_in_box(struct Particle p){
 	return 1;
 }
 

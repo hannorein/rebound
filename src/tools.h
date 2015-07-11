@@ -90,7 +90,7 @@ void tools_init_plummer(int _N, double M, double R);
  * @param omega Pericenter of the particle.
  * @param f true anomaly of the particle.
  */
-struct particle tools_init_orbit2d(double G, double M, double m, double a, double e, double omega, double f);
+struct Particle tools_init_orbit2d(double G, double M, double m, double a, double e, double omega, double f);
 
 /**
  * Initialize a particle on a 3D orbit.  See Fig. 2.13 of Murray & Dermott Solar System Dynamics for diagram.
@@ -104,7 +104,7 @@ struct particle tools_init_orbit2d(double G, double M, double m, double a, doubl
  * @param f true anomaly of the particle.
  */
 
-struct particle tools_init_orbit3d(double G, double M, double m, double a, double e, double i, double Omega, double omega, double f);
+struct Particle tools_init_orbit3d(double G, double M, double m, double a, double e, double i, double Omega, double omega, double f);
 
 /**
  * This function calculated orbital elements for a given particle. 
@@ -112,7 +112,7 @@ struct particle tools_init_orbit3d(double G, double M, double m, double a, doubl
  * @param star Star or central object particle
  * @return Orbital parameters. 
  */
-struct orbit tools_p2orbit(double G, struct particle p, struct particle star);
+struct orbit tools_p2orbit(double G, struct Particle p, struct Particle star);
 
 /**
  * Move to center of momentum and center of mass frame.
@@ -122,7 +122,7 @@ void tools_move_to_center_of_momentum(struct Rebound* const r);
 /**
  * Returns the center of mass of particle p1 and p2.
  */
-struct particle tools_get_center_of_mass(struct particle p1, struct particle p2);
+struct Particle tools_get_center_of_mass(struct Particle p1, struct Particle p2);
 
 /* 
  * Init the MEGNO particles

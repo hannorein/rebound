@@ -51,9 +51,9 @@ void gravity_finish(void);
 #endif // GRAVITY_GRAPE
 
 void (*problem_additional_forces) (void) = NULL;
-void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;
+void (*problem_additional_forces_with_parameters) (struct Particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;
 void (*problem_post_timestep_modifications) (void) = NULL;
-void (*problem_post_timestep_modifications_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;  
+void (*problem_post_timestep_modifications_with_parameters) (struct Particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;  
 static const char* logo[];		/**< Logo of rebound. */
 
 

@@ -74,15 +74,15 @@ double tools_rayleigh(double sigma){
 /// Other helper routines
 double tools_energy(struct Rebound* r){
 	const int N = r->N;
-	const struct particle* restrict const particles = r->particles;
+	const struct Particle* restrict const particles = r->particles;
 	const int N_megno = r->N_megno;
 	double e_kin = 0.;
 	double e_pot = 0.;
 	for (int i=0;i<N-N_megno;i++){
-		struct particle pi = particles[i];
+		struct Particle pi = particles[i];
 		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
 		for (int j=i+1;j<N-N_megno;j++){
-			struct particle pj = particles[j];
+			struct Particle pj = particles[j];
 			double dx = pi.x - pj.x;
 			double dy = pi.y - pj.y;
 			double dz = pi.z - pj.z;
@@ -94,7 +94,7 @@ double tools_energy(struct Rebound* r){
 
 void tools_move_to_center_of_momentum(struct Rebound* const r){
 	const int N = r->N;
-	struct particle* restrict const particles = r->particles;
+	struct Particle* restrict const particles = r->particles;
 	double m = 0;
 	double x = 0;
 	double y = 0;
@@ -103,7 +103,7 @@ void tools_move_to_center_of_momentum(struct Rebound* const r){
 	double vy = 0;
 	double vz = 0;
 	for (int i=0;i<N;i++){
-		struct particle p = particles[i];
+		struct Particle p = particles[i];
 		m  += p.m;
 		x  += p.x*p.m;
 		y  += p.y*p.m;
@@ -128,7 +128,7 @@ void tools_move_to_center_of_momentum(struct Rebound* const r){
 	}
 }
 
-struct particle tools_get_center_of_mass(struct particle p1, struct particle p2){
+struct Particle tools_get_center_of_mass(struct Particle p1, struct Particle p2){
 	p1.x   = p1.x*p1.m + p2.x*p2.m;		
 	p1.y   = p1.y*p1.m + p2.y*p2.m;
 	p1.z   = p1.z*p1.m + p2.z*p2.m;
@@ -153,7 +153,7 @@ void tools_init_plummer(int _N, double M, double R) {
 	
 	double E = 3./64.*M_PI*M*M/R;
 	for (int i=0;i<_N;i++){
-		struct particle star;
+		struct Particle star;
 		double r = pow(pow(tools_uniform(0,1),-2./3.)-1.,-1./2.);
 		double x2 = tools_uniform(0,1);
 		double x3 = tools_uniform(0,2.*M_PI);
@@ -189,8 +189,8 @@ void tools_init_plummer(int _N, double M, double R) {
 	}
 }
 
-struct particle tools_init_orbit2d(double G, double M, double m, double a, double e, double omega, double f){
-	struct particle p;
+struct Particle tools_init_orbit2d(double G, double M, double m, double a, double e, double omega, double f){
+	struct Particle p;
 	p.m = m;
 	double r = a*(1.-e*e)/(1.+e*cos(f));
 	double n = sqrt(G*(m+M)/(a*a*a));
@@ -211,8 +211,8 @@ struct particle tools_init_orbit2d(double G, double M, double m, double a, doubl
 	return p;
 }
 
-struct particle tools_init_orbit3d(double G, double M, double m, double a, double e, double i, double Omega, double omega, double f){
-	struct particle p;
+struct Particle tools_init_orbit3d(double G, double M, double m, double a, double e, double i, double Omega, double omega, double f){
+	struct Particle p;
 	p.m = m;
 	double r = a*(1-e*e)/(1 + e*cos(f));
 
@@ -238,7 +238,7 @@ const struct orbit orbit_nan = {.a = NAN, .r = NAN, .h = NAN, .P = NAN, .l = NAN
 #define MIN_REL_ERROR 1.0e-12
 #define TINY 1.E-308
 
-struct orbit tools_p2orbit(double G, struct particle p, struct particle primary){
+struct orbit tools_p2orbit(double G, struct Particle p, struct Particle primary){
 	struct orbit o;
 	if (primary.m <= TINY){	
 		return orbit_nan;
@@ -364,7 +364,7 @@ void tools_megno_init(struct Rebound* const r, double delta){
 	tools_megno_mean_t = 0;
 	tools_megno_delta0 = delta;
         for (int i=0;i<_N_megno;i++){ 
-                struct particle megno = {
+                struct Particle megno = {
 			.m  = r->particles[i].m,
 			.x  = tools_normal(1.),
 			.y  = tools_normal(1.),
@@ -393,7 +393,7 @@ double tools_lyapunov(struct Rebound* r){ // Returns the largest Lyapunov charac
 	return tools_megno_cov_Yt/tools_megno_var_t;
 }
 double tools_megno_deltad_delta(struct Rebound* const r){
-	const struct particle* restrict const particles = r->particles;
+	const struct Particle* restrict const particles = r->particles;
 	const int N = r->N;
 	const int N_megno = r->N;
         double deltad = 0;

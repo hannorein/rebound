@@ -36,7 +36,7 @@ struct cell;
  * properties should be added here. Note that when the data structure is changed, 
  * one must also update the equivalent declaration for MPI in communications_mpi.c.
  */
-struct particle {
+struct Particle {
 	double x;	/**< x-position of the particle. */
 	double y;	/**< y-position of the particle. */
 	double z;	/**< z-position of the particle. */
@@ -66,28 +66,28 @@ struct particle {
  *          put into the corresponding send queue particles_send.
  * @param pt Particle to be added.
  */
-void particles_add(struct Rebound* const r, struct particle pt);
+void particles_add(struct Rebound* const r, struct Particle pt);
 
 /** 
  * Same as particles_add() but inserts particles at given position. 
  * @param pt Particle to be added.
  * @param pos New position.
  */
-void particles_add_fixed(struct Rebound* const r, struct particle pt,int pos);
+void particles_add_fixed(struct Rebound* const r, struct Particle pt,int pos);
 
 /**
  * Add a particle to the particle structure on the current node.
  * Do not distribute particles.
  * @param pt Particle to be added.
  */
-void particles_add_local(struct Rebound* const r, struct particle pt);
+void particles_add_local(struct Rebound* const r, struct Particle pt);
 
 /**
  * Returns the index of the rootbox for the current particles based on its position.
  * @return Index of the rootbox.
  * @param pt Particle to be checked.
  */
-int particles_get_rootbox_for_particle(const struct Rebound* const r, struct particle pt);
+int particles_get_rootbox_for_particle(const struct Rebound* const r, struct Particle pt);
 
 /**
  * Remove all particles

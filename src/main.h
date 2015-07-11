@@ -58,7 +58,7 @@ struct Rebound {
 	 * Main particle array.
 	 * This contains all particles on this node.
 	 */
-	struct particle* particles;
+	struct Particle* particles;
 	
 	/// Integrators
 	struct ReboundIntegratorWHFast* ri_whfast;	/**< Pointer to the WHFast struct */
@@ -84,5 +84,5 @@ void iterate(struct Rebound* const r);
  *
  */
 extern void (*problem_post_timestep_modifications) (void);
-extern void (*problem_post_timestep_modifications_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno);  
+extern void (*problem_post_timestep_modifications_with_parameters) (struct Particle* particles, double t, double dt, double G, int N, int N_megno);  
 #endif
