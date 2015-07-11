@@ -60,29 +60,9 @@ void integrator_generate_constants(void);
 #error IAS15 integrator not working with MPI.
 #endif
 
-// The following values will be set dynamically.
-double s[9];				// Summation coefficients 
-
-int N3allocated	= 0; 			// Size of allocated arrays.
-
-double* at   	= NULL;			// Temporary buffer for acceleration
-double* x0  	= NULL;			// Temporary buffer for position (used for initial values at h=0) 
-double* v0  	= NULL;			//                      velocity
-double* a0  	= NULL;			//                      acceleration
-double* csx  	= NULL;			//                      compensated summation
-double* csv  	= NULL;			//                      compensated summation
-
-double* g[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
-double* b[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
-double* e[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
-
-// The following values are used for resetting the b and e coefficients if a timestep gets rejected
-double* br[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
-double* er[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
-double dt_last_success = 0.;			// Last accepted timestep (corresponding to br and er)
 // Helper functions for resetting the b and e coefficients
-void copybuffers(double* _a[7], double* _b[7], int N3);
-void predict_next_step(double ratio, int N3, double* _e[7], double* _b[7]);
+void copybuffers(double* const _a[7], double* const _b[7], int N3);
+void predict_next_step(double ratio, int N3, double* restrict _e[7], double* restrict _b[7], double* restrict e[7], double* restrict b[7]);
 
 
 /////////////////////////
@@ -119,36 +99,59 @@ int integrator_ias15_step(struct Rebound* r) {
 	const int N = r->N;
 	const int N_megno  = r->N_megno;
 	const int N3 = 3*N;
-	if (N3 > N3allocated) {
+	if (N3 > r->ri_ias15.N3allocated) {
 		for (int l=0;l<7;++l) {
-			g[l] = realloc(g[l],sizeof(double)*N3);
-			b[l] = realloc(b[l],sizeof(double)*N3);
-			e[l] = realloc(e[l],sizeof(double)*N3);
-			br[l] = realloc(br[l],sizeof(double)*N3);
-			er[l] = realloc(er[l],sizeof(double)*N3);
+			r->ri_ias15.g[l] = realloc(r->ri_ias15.g[l],sizeof(double)*N3);
+			r->ri_ias15.b[l] = realloc(r->ri_ias15.b[l],sizeof(double)*N3);
+			r->ri_ias15.e[l] = realloc(r->ri_ias15.e[l],sizeof(double)*N3);
+			r->ri_ias15.br[l] = realloc(r->ri_ias15.br[l],sizeof(double)*N3);
+			r->ri_ias15.er[l] = realloc(r->ri_ias15.er[l],sizeof(double)*N3);
+			double* restrict const b = r->ri_ias15.b[l]; 
+			double* restrict const e = r->ri_ias15.b[l]; 
+			double* restrict const br = r->ri_ias15.b[l]; 
+			double* restrict const er = r->ri_ias15.b[l]; 
 			for (int k=0;k<N3;k++){
-				b[l][k] = 0;
-				e[l][k] = 0;
-				br[l][k] = 0;
-				er[l][k] = 0;
+				b[k] = 0;
+				e[k] = 0;
+				br[k] = 0;
+				er[k] = 0;
 			}
 		}
-		at = realloc(at,sizeof(double)*N3);
-		x0 = realloc(x0,sizeof(double)*N3);
-		v0 = realloc(v0,sizeof(double)*N3);
-		a0 = realloc(a0,sizeof(double)*N3);
-		csx= realloc(csx,sizeof(double)*N3);
-		csv= realloc(csv,sizeof(double)*N3);
+		r->ri_ias15.at = realloc(r->ri_ias15.at,sizeof(double)*N3);
+		r->ri_ias15.x0 = realloc(r->ri_ias15.x0,sizeof(double)*N3);
+		r->ri_ias15.v0 = realloc(r->ri_ias15.v0,sizeof(double)*N3);
+		r->ri_ias15.a0 = realloc(r->ri_ias15.a0,sizeof(double)*N3);
+		r->ri_ias15.csx= realloc(r->ri_ias15.csx,sizeof(double)*N3);
+		r->ri_ias15.csv= realloc(r->ri_ias15.csv,sizeof(double)*N3);
+		double* restrict const csx = r->ri_ias15.csx; 
+		double* restrict const csv = r->ri_ias15.csv; 
 		for (int i=0;i<N3;i++){
 			// Kill compensated summation coefficients
 			csx[i] = 0;
 			csv[i] = 0;
 		}
-		N3allocated = N3;
+		r->ri_ias15.N3allocated = N3;
 	}
 	
 	// integrator_update_acceleration(); // Not needed. Forces are already calculated in main routine.
-
+	
+	double* restrict const csx = r->ri_ias15.csx; 
+	double* restrict const csv = r->ri_ias15.csv; 
+	double* restrict const s = r->ri_ias15.s; 
+	double* restrict const at = r->ri_ias15.at; 
+	double* restrict const x0 = r->ri_ias15.x0; 
+	double* restrict const v0 = r->ri_ias15.v0; 
+	double* restrict const a0 = r->ri_ias15.a0; 
+	double* g[7];
+	memcpy(&g,r->ri_ias15.g,sizeof(double*)*7);
+	double* b[7];
+	memcpy(&b,r->ri_ias15.b,sizeof(double*)*7);
+	double* e[7];
+	memcpy(&e,r->ri_ias15.e,sizeof(double*)*7);
+	double* br[7];
+	memcpy(&br,r->ri_ias15.br,sizeof(double*)*7);
+	double* er[7];
+	memcpy(&er,r->ri_ias15.er,sizeof(double*)*7);
 	for(int k=0;k<N;k++) {
 		x0[3*k]   = particles[k].x;
 		x0[3*k+1] = particles[k].y;
@@ -444,9 +447,9 @@ int integrator_ias15_step(struct Rebound* r) {
 				particles[k].vz = v0[3*k+2];
 			}
 			r->dt = dt_new;
-			if (dt_last_success!=0.){		// Do not predict next e/b values if this is the first time step.
-				double ratio = r->dt/dt_last_success;
-				predict_next_step(ratio, N3, er, br);
+			if (r->ri_ias15.dt_last_success!=0.){		// Do not predict next e/b values if this is the first time step.
+				double ratio = r->dt/r->ri_ias15.dt_last_success;
+				predict_next_step(ratio, N3, er, br, e, b);
 			}
 			
 			return 0; // Step rejected. Do again. 
@@ -493,15 +496,15 @@ int integrator_ias15_step(struct Rebound* r) {
 		particles[k].vy = v0[3*k+1];
 		particles[k].vz = v0[3*k+2];
 	}
-	dt_last_success = dt_done;
+	r->ri_ias15.dt_last_success = dt_done;
 	copybuffers(e,er,N3);		
 	copybuffers(b,br,N3);		
 	double ratio = r->dt/dt_done;
-	predict_next_step(ratio, N3, e, b);
+	predict_next_step(ratio, N3, e, b, e, b);
 	return 1; // Success.
 }
 
-void predict_next_step(double ratio, int N3, double* _e[7], double* _b[7]){
+void predict_next_step(double ratio, int N3, double* restrict _e[7], double* restrict _b[7], double* restrict e[7], double* restrict b[7]){
 	// Predict new B values to use at the start of the next sequence. The predicted
 	// values from the last call are saved as E. The correction, BD, between the
 	// actual and predicted values of B is applied in advance as a correction.
@@ -543,7 +546,7 @@ void predict_next_step(double ratio, int N3, double* _e[7], double* _b[7]){
 	}
 }
 
-void copybuffers(double* _a[7], double* _b[7], int N3){
+void copybuffers(double* const _a[7], double* const _b[7], int N3){
 	for (int i=0;i<N3;i++){	
 		_b[0][i] = _a[0][i];
 		_b[1][i] = _a[1][i];
@@ -562,32 +565,32 @@ void integrator_ias15_synchronize(struct Rebound* r){
 }
 
 void integrator_ias15_reset(struct Rebound* r){
-	N3allocated 	= 0;
-	dt_last_success = 0;
+	r->ri_ias15.N3allocated 	= 0;
+	r->ri_ias15.dt_last_success = 0;
 	for (int l=0;l<7;++l) {
-		free(g[l]);
-		g[l] = NULL;
-		free(b[l]);
-		b[l] = NULL;
-		free(e[l]);
-		e[l] = NULL;
-		free(br[l]);
-		br[l] = NULL;
-		free(er[l]);
-		er[l] = NULL;
+		free(r->ri_ias15.g[l]);
+		r->ri_ias15.g[l] = NULL;
+		free(r->ri_ias15.b[l]);
+		r->ri_ias15.b[l] = NULL;
+		free(r->ri_ias15.e[l]);
+		r->ri_ias15.e[l] = NULL;
+		free(r->ri_ias15.br[l]);
+		r->ri_ias15.br[l] = NULL;
+		free(r->ri_ias15.er[l]);
+		r->ri_ias15.er[l] = NULL;
 	}
-	free(at);
-	at =  NULL;
-	free(x0);
-	x0 =  NULL;
-	free(v0);
-	v0 =  NULL;
-	free(a0);
-	a0 =  NULL;
-	free(csx);
-	csx=  NULL;
-	free(csv);
-	csv=  NULL;
+	free(r->ri_ias15.at);
+	r->ri_ias15.at =  NULL;
+	free(r->ri_ias15.x0);
+	r->ri_ias15.x0 =  NULL;
+	free(r->ri_ias15.v0);
+	r->ri_ias15.v0 =  NULL;
+	free(r->ri_ias15.a0);
+	r->ri_ias15.a0 =  NULL;
+	free(r->ri_ias15.csx);
+	r->ri_ias15.csx=  NULL;
+	free(r->ri_ias15.csv);
+	r->ri_ias15.csv=  NULL;
 }
 
 #ifdef GENERATE_CONSTANTS

@@ -185,6 +185,19 @@ struct Rebound* rebound_init(){
 	r->ri_ias15.min_dt 		= 0;
 	r->ri_ias15.epsilon_global	= 1;
 	r->ri_ias15.iterations_max_exceeded= 0;	
+	r->ri_ias15.N3allocated		= 0; 	
+	r->ri_ias15.at   	= NULL;
+	r->ri_ias15.x0  	= NULL;
+	r->ri_ias15.v0  	= NULL;
+	r->ri_ias15.a0  	= NULL;
+	r->ri_ias15.csx  	= NULL;
+	r->ri_ias15.csv  	= NULL;
+	memset(&(r->ri_ias15.g),0,sizeof(double)*7);
+	memset(&(r->ri_ias15.b),0,sizeof(double)*7);
+	memset(&(r->ri_ias15.e),0,sizeof(double)*7);
+	memset(&(r->ri_ias15.br),0,sizeof(double)*7);
+	memset(&(r->ri_ias15.er),0,sizeof(double)*7);
+	r->ri_ias15.dt_last_success = 0.;
 
 	if (r->root_nx <=0 || r->root_ny <=0 || r->root_nz <= 0){
 		fprintf(stderr,"ERROR: Number of root boxes must be greater or equal to 1 in each direction.\n");

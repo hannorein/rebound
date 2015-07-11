@@ -53,9 +53,34 @@ struct ReboundIntegratorIAS15 {
 	 **/
 	unsigned int epsilon_global;
 
+
+	// Internal data structures below. Nothing to be changed by the user.
+	
 	/**
 	 * Count how many times the iteration did not converge. 
 	 **/
 	unsigned long iterations_max_exceeded;
+
+
+
+	int N3allocated; 			// Size of allocated arrays.
+
+	double* at;				// Temporary buffer for acceleration
+	double* x0;				// Temporary buffer for position (used for initial values at h=0) 
+	double* v0;				//                      velocity
+	double* a0;				//                      acceleration
+	double* csx;				//                      compensated summation
+	double* csv;				//                      compensated summation
+	double s[9];				// Summation coefficients 
+
+	double* g[7];
+	double* b[7];
+	double* e[7];
+
+	// The following values are used for resetting the b and e coefficients if a timestep gets rejected
+	double* br[7];
+	double* er[7];
+	double dt_last_success;			// Last accepted timestep (corresponding to br and er)
+
 };
 #endif
