@@ -30,6 +30,7 @@
 #ifndef _PROBLEM_H
 #define _PROBLEM_H
 #include "particle.h"
+struct Rebound;
 
 /**
  * Main initialization function.
@@ -40,20 +41,20 @@
  * @param argc Number of command line arguments.
  * @param argv Array of command line arguments.
  */ 
-void problem_init(int argc, char* argv[]);
+void problem_init(int argc, char* argv[], struct Rebound* r);
 /**
  * This function is called at the beginning of the simulation, at the end of
  * each timestep and at the end of the simulation. The user can call either
  * generic output routines such as output_ascii() or create their own problem
  * specific output routines.
  */
-void problem_output(void);
+void problem_output(struct Rebound* r);
 /**
  * This function is called at the end of the simulation when t>=tmax.
  * Note that it is not called when the simulation stopped for another 
  * reason (e.g. user interaction or crash). 
  */ 
-void problem_finish(void);
+void problem_finish(struct Rebound* r);
 
 /*
  * This function allows the user to add additional (non-gravitational) forces.

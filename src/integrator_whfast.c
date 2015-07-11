@@ -636,13 +636,13 @@ const static double b_114 = -14556229./19015920.*4.980119205559973422e-02;
 const static double b_115 = 3394141./2328480.*4.980119205559973422e-02;
 
 
-static void integrator_whfast_corrector_Z(double a, double b){
+static void integrator_whfast_corrector_Z(struct Rebound* r, double a, double b){
 	integrator_kepler_drift(a);
 	integrator_to_inertial_pos();
 	if (N_megno){
 		integrator_var_to_inertial_pos();
 	}
-	integrator_update_acceleration();
+	integrator_update_acceleration(r);
 	integrator_to_jacobi_acc();
 	if (N_megno){
 		integrator_var_to_jacobi_acc();
@@ -653,7 +653,7 @@ static void integrator_whfast_corrector_Z(double a, double b){
 	if (N_megno){
 		integrator_var_to_inertial_pos();
 	}
-	integrator_update_acceleration();
+	integrator_update_acceleration(r);
 	integrator_to_jacobi_acc();
 	if (N_megno){
 		integrator_var_to_jacobi_acc();
@@ -662,44 +662,44 @@ static void integrator_whfast_corrector_Z(double a, double b){
 	integrator_kepler_drift(a);
 }
 
-static void integrator_apply_corrector(double inv){
+static void integrator_apply_corrector(struct Rebound* r, double inv){
 	if (integrator_whfast_corrector==3){
 		// Third order corrector
-		integrator_whfast_corrector_Z(a_1*dt,-inv*b_31*dt);
-		integrator_whfast_corrector_Z(-a_1*dt,inv*b_31*dt);
+		integrator_whfast_corrector_Z(r, a_1*dt,-inv*b_31*dt);
+		integrator_whfast_corrector_Z(r, -a_1*dt,inv*b_31*dt);
 	}
 	if (integrator_whfast_corrector==5){
 		// Fifth order corrector
-		integrator_whfast_corrector_Z(-a_2*dt,-inv*b_51*dt);
-		integrator_whfast_corrector_Z(-a_1*dt,-inv*b_52*dt);
-		integrator_whfast_corrector_Z(a_1*dt,inv*b_52*dt);
-		integrator_whfast_corrector_Z(a_2*dt,inv*b_51*dt);
+		integrator_whfast_corrector_Z(r, -a_2*dt,-inv*b_51*dt);
+		integrator_whfast_corrector_Z(r, -a_1*dt,-inv*b_52*dt);
+		integrator_whfast_corrector_Z(r, a_1*dt,inv*b_52*dt);
+		integrator_whfast_corrector_Z(r, a_2*dt,inv*b_51*dt);
 	}
 	if (integrator_whfast_corrector==7){
 		// Seventh order corrector
-		integrator_whfast_corrector_Z(-a_3*dt,-inv*b_71*dt);
-		integrator_whfast_corrector_Z(-a_2*dt,-inv*b_72*dt);
-		integrator_whfast_corrector_Z(-a_1*dt,-inv*b_73*dt);
-		integrator_whfast_corrector_Z(a_1*dt,inv*b_73*dt);
-		integrator_whfast_corrector_Z(a_2*dt,inv*b_72*dt);
-		integrator_whfast_corrector_Z(a_3*dt,inv*b_71*dt);
+		integrator_whfast_corrector_Z(r, -a_3*dt,-inv*b_71*dt);
+		integrator_whfast_corrector_Z(r, -a_2*dt,-inv*b_72*dt);
+		integrator_whfast_corrector_Z(r, -a_1*dt,-inv*b_73*dt);
+		integrator_whfast_corrector_Z(r, a_1*dt,inv*b_73*dt);
+		integrator_whfast_corrector_Z(r, a_2*dt,inv*b_72*dt);
+		integrator_whfast_corrector_Z(r, a_3*dt,inv*b_71*dt);
 	}
 	if (integrator_whfast_corrector==11){
 		// Eleventh order corrector
-		integrator_whfast_corrector_Z(-a_5*dt,-inv*b_111*dt);
-		integrator_whfast_corrector_Z(-a_4*dt,-inv*b_112*dt);
-		integrator_whfast_corrector_Z(-a_3*dt,-inv*b_113*dt);
-		integrator_whfast_corrector_Z(-a_2*dt,-inv*b_114*dt);
-		integrator_whfast_corrector_Z(-a_1*dt,-inv*b_115*dt);
-		integrator_whfast_corrector_Z(a_1*dt,inv*b_115*dt);
-		integrator_whfast_corrector_Z(a_2*dt,inv*b_114*dt);
-		integrator_whfast_corrector_Z(a_3*dt,inv*b_113*dt);
-		integrator_whfast_corrector_Z(a_4*dt,inv*b_112*dt);
-		integrator_whfast_corrector_Z(a_5*dt,inv*b_111*dt);
+		integrator_whfast_corrector_Z(r, -a_5*dt,-inv*b_111*dt);
+		integrator_whfast_corrector_Z(r, -a_4*dt,-inv*b_112*dt);
+		integrator_whfast_corrector_Z(r, -a_3*dt,-inv*b_113*dt);
+		integrator_whfast_corrector_Z(r, -a_2*dt,-inv*b_114*dt);
+		integrator_whfast_corrector_Z(r, -a_1*dt,-inv*b_115*dt);
+		integrator_whfast_corrector_Z(r, a_1*dt,inv*b_115*dt);
+		integrator_whfast_corrector_Z(r, a_2*dt,inv*b_114*dt);
+		integrator_whfast_corrector_Z(r, a_3*dt,inv*b_113*dt);
+		integrator_whfast_corrector_Z(r, a_4*dt,inv*b_112*dt);
+		integrator_whfast_corrector_Z(r, a_5*dt,inv*b_111*dt);
 	}
 }
 
-void integrator_whfast_part1(){
+void integrator_whfast_part1(struct Rebound* r){
 	gravity_ignore_10 = 1;
 	if (integrator_allocated_N != N){
 		integrator_allocated_N = N;
@@ -711,7 +711,7 @@ void integrator_whfast_part1(){
 	// Only recalculate Jacobi coordinates if needed
 	if (integrator_whfast_safe_mode || integrator_whfast_recalculate_jacobi_this_timestep){
 		if (integrator_whfast_is_synchronized==0){
-			integrator_whfast_synchronize();
+			integrator_whfast_synchronize(r);
 			if (integrator_whfast_recalculate_jacobi_but_not_synchronized_warning==0){
 				fprintf(stderr,"\n\033[1mWarning!\033[0m Recalculating Jacobi coordinates but pos/vel were not synchronized before.\n");
 				integrator_whfast_recalculate_jacobi_but_not_synchronized_warning++;
@@ -740,7 +740,7 @@ void integrator_whfast_part1(){
 	if (integrator_whfast_is_synchronized){
 		// First half DRIFT step
 		if (integrator_whfast_corrector){
-			integrator_apply_corrector(1.);
+			integrator_apply_corrector(r, 1.);
 		}
 		integrator_kepler_drift(_dt2);	// half timestep
 	}else{
@@ -765,21 +765,21 @@ void integrator_whfast_part1(){
 		}
 	}
 
-	t+=_dt2;
+	r->t+=_dt2;
 }
 
-void integrator_whfast_synchronize(void){
+void integrator_whfast_synchronize(struct Rebound* r){
 	if (integrator_whfast_is_synchronized == 0){
 		integrator_kepler_drift(dt/2.);
 		if (integrator_whfast_corrector){
-			integrator_apply_corrector(-1.);
+			integrator_apply_corrector(r, -1.);
 		}
 		integrator_to_inertial_posvel();
 		integrator_whfast_is_synchronized = 1;
 	}
 }
 
-void integrator_whfast_part2(void){
+void integrator_whfast_part2(struct Rebound* r){
 	integrator_to_jacobi_acc();
 	if (N_megno){
 		integrator_var_to_jacobi_acc();
@@ -789,10 +789,10 @@ void integrator_whfast_part2(void){
 	double _dt2 = dt/2.;
 	integrator_whfast_is_synchronized = 0;
 	if (integrator_whfast_safe_mode || N_megno){
-		integrator_whfast_synchronize();
+		integrator_whfast_synchronize(r);
 	}
 	
-	t+=_dt2;
+	r->t+=_dt2;
 
 	if (N_megno){
 		p_j[N_megno].x += _dt2*p_j[N_megno].vx;
@@ -807,8 +807,8 @@ void integrator_whfast_part2(void){
 		const double dy = particles[i-N/2].y - particles[j-N/2].y;
 		const double dz = particles[i-N/2].z - particles[j-N/2].z;
 		const double r2 = dx*dx + dy*dy + dz*dz + softening*softening;
-		const double r  = sqrt(r2);
-		const double r3inv = 1./(r2*r);
+		const double _r  = sqrt(r2);
+		const double r3inv = 1./(r2*_r);
 		const double r5inv = 3.*r3inv/r2;
 		const double ddx = particles[i].x - particles[j].x;
 		const double ddy = particles[i].y - particles[j].y;
@@ -834,12 +834,12 @@ void integrator_whfast_part2(void){
 		particles[j].az -= Gmi * daz;
 
 		// Update MEGNO in middle of timestep as we need synchonized x/v/a.
-		double dY = dt * 2. * t * tools_megno_deltad_delta();
+		double dY = dt * 2. * r->t * tools_megno_deltad_delta();
 		tools_megno_update(dY);
 	}
 }
 	
-void integrator_whfast_reset(void){
+void integrator_whfast_reset(struct Rebound* r){
 	integrator_whfast_corrector = 0;
 	integrator_whfast_is_synchronized = 1;
 	integrator_whfast_safe_mode = 1;

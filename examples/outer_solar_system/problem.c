@@ -46,6 +46,7 @@
 #include "particle.h"
 #include "boundaries.h"
 #include "integrator.h"
+#include "problem.h"
 #include "integrator_whfast.h"
 
 double ss_pos[6][3] = 
@@ -81,10 +82,10 @@ const double k	 	= 0.01720209895;	// Gaussian constant
 double energy();
 double e_init;
 
-void problem_init(int argc, char* argv[]){
+void problem_init(int argc, char* argv[], struct Rebound* r){
 	// Setup constants
 	dt 		= 40;				// in days
-	tmax		= 7.3e10;			// 200 Myr
+	r->tmax		= 7.3e10;			// 200 Myr
 	G		= k*k;				// These are the same units as used by the mercury6 code.
 	init_boxwidth(200); 				// Init box with width 200 astronomical units
 	integrator_whfast_safe_mode = 0;		// Turn of safe mode. Need to call integrator_synchronize() before outputs. 
@@ -138,7 +139,7 @@ double energy(){
 	return e_kin +e_pot;
 }
 
-void problem_output(){
+void problem_output(struct Rebound* r){
 	if (output_check(10000000.)){
 		output_timing();
 //		integrator_synchronize();
@@ -150,5 +151,5 @@ void problem_output(){
 	}
 }
 
-void problem_finish(){
+void problem_finish(struct Rebound* r){
 }

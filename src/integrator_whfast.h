@@ -24,10 +24,12 @@
  */
 #ifndef _INTEGRATOR_WHFAST_H
 #define _INTEGRATOR_WHFAST_H
-void integrator_whfast_part1(void);
-void integrator_whfast_part2(void);
-void integrator_whfast_synchronize(void);
-void integrator_whfast_reset(void);
+struct Rebound;
+
+void integrator_whfast_part1(struct Rebound* r);
+void integrator_whfast_part2(struct Rebound* r);
+void integrator_whfast_synchronize(struct Rebound* r);
+void integrator_whfast_reset(struct Rebound* r);
 
 /*
  * This variable turns on/off various symplectic correctors.

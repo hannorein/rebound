@@ -47,7 +47,7 @@
 integrator_t integrator = IAS15;
 unsigned int integrator_force_is_velocitydependent = 0;
 
-void integrator_part1(void){
+void integrator_part1(struct Rebound* r){
 	switch(integrator){
 		case IAS15:
 			integrator_ias15_part1();
@@ -62,7 +62,7 @@ void integrator_part1(void){
 			integrator_sei_part1();
 			break;
 		case WHFAST:
-			integrator_whfast_part1();
+			integrator_whfast_part1(r);
 			break;
 		case HYBRID:
 			integrator_hybrid_part1();
@@ -72,7 +72,7 @@ void integrator_part1(void){
 	}
 }
 
-void integrator_part2(void){
+void integrator_part2(struct Rebound* r){
 	switch(integrator){
 		case IAS15:
 			integrator_ias15_part2();
@@ -87,7 +87,7 @@ void integrator_part2(void){
 			integrator_sei_part2();
 			break;
 		case WHFAST:
-			integrator_whfast_part2();
+			integrator_whfast_part2(r);
 			break;
 		case HYBRID:
 			integrator_hybrid_part2();
@@ -97,7 +97,7 @@ void integrator_part2(void){
 	}
 }
 	
-void integrator_synchronize(void){
+void integrator_synchronize(struct Rebound* r){
 	switch(integrator){
 		case IAS15:
 			integrator_ias15_synchronize();
@@ -112,7 +112,7 @@ void integrator_synchronize(void){
 			integrator_sei_synchronize();
 			break;
 		case WHFAST:
-			integrator_whfast_synchronize();
+			integrator_whfast_synchronize(r);
 			break;
 		case HYBRID:
 			integrator_hybrid_synchronize();
@@ -122,7 +122,7 @@ void integrator_synchronize(void){
 	}
 }
 
-void integrator_reset(void){
+void integrator_reset(struct Rebound* r){
 	integrator = IAS15;
 	gravity_ignore_10 = 0;
 	integrator_force_is_velocitydependent = 0;
@@ -130,11 +130,11 @@ void integrator_reset(void){
 	integrator_wh_reset();
 	integrator_leapfrog_reset();
 	integrator_sei_reset();
-	integrator_whfast_reset();
+	integrator_whfast_reset(r);
 	integrator_hybrid_reset();
 }
 
-void integrator_update_acceleration(void){
+void integrator_update_acceleration(struct Rebound* r){
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 	PROFILING_START()
 	gravity_calculate_acceleration();
@@ -142,7 +142,7 @@ void integrator_update_acceleration(void){
 		gravity_calculate_variational_acceleration();
 	}
 	if (problem_additional_forces) problem_additional_forces();
-	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles,t,dt,G,N,N_megno);
+	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles,r->t,dt,G,N,N_megno);
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 	PROFILING_START()
 }

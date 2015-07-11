@@ -52,8 +52,6 @@ void gravity_finish(void);
 
 double softening 	= 0;
 double G		= 1;
-double t		= 0;
-double tmax		= 0; 
 double dt 		= 0.001;
 double timing_initial 	= -1;
 int    exit_simulation	= 0;
@@ -73,6 +71,9 @@ void (*problem_additional_forces_with_parameters) (struct particle* particles, d
 void (*problem_post_timestep_modifications) (void) = NULL;
 void (*problem_post_timestep_modifications_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;  
 static char* 	logo[];		/**< Logo of rebound. */
+
+
+struct Rebound* r;
 
 void init_boxwidth(double _boxwidth){
 	boxsize = _boxwidth;
@@ -124,7 +125,7 @@ void init_box(void){
 void iterate(void){	
 	// A 'DKD'-like integrator will do the first 'D' part.
 	PROFILING_START()
-	integrator_part1();
+	integrator_part1(r);
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
 	// Check for root crossings.
@@ -165,22 +166,22 @@ void iterate(void){
 	}
 	// Calculate non-gravity accelerations. 
 	if (problem_additional_forces) problem_additional_forces();
-	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles, t, dt, G, N, N_megno);
+	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles, r->t, dt, G, N, N_megno);
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 
 	// A 'DKD'-like integrator will do the 'KD' part.
 	PROFILING_START()
-	integrator_part2();
+	integrator_part2(r);
 	if (problem_post_timestep_modifications){
-		integrator_synchronize();
+		integrator_synchronize(r);
 		problem_post_timestep_modifications();
 		if (integrator == WHFAST || integrator == HYBRID){
 			integrator_whfast_recalculate_jacobi_this_timestep = 1;
 		}
 	}
 	if (problem_post_timestep_modifications_with_parameters){
-		integrator_synchronize();
-		problem_post_timestep_modifications_with_parameters(particles, t, dt, G, N, N_megno);
+		integrator_synchronize(r);
+		problem_post_timestep_modifications_with_parameters(particles, r->t, dt, G, N, N_megno);
 		if (integrator == WHFAST || integrator == HYBRID){
 			integrator_whfast_recalculate_jacobi_this_timestep = 1;
 		}
@@ -208,7 +209,7 @@ void iterate(void){
 	display();
 	PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
 #endif // OPENGL
-	problem_output();
+	problem_output(r);
 	// Check if the simulation finished.
 #ifdef MPI
 	int _exit_simulation = 0;
@@ -216,11 +217,11 @@ void iterate(void){
 	exit_simulation = _exit_simulation;
 #endif // MPI
 	// @TODO: Adjust timestep so that t==tmax exaclty at the end.
-	if((t+dt>tmax && tmax!=0.0) || exit_simulation==1){
+	if((r->t+dt>r->tmax && r->tmax!=0.0) || exit_simulation==1){
 #ifdef GRAVITY_GRAPE
 		gravity_finish();
 #endif // GRAVITY_GRAPE
-		problem_finish();
+		problem_finish(r);
 		struct timeval tim;
 		gettimeofday(&tim, NULL);
 		double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
@@ -272,8 +273,8 @@ int main(int argc, char* argv[]) {
 	signal(SIGINT, interruptHandler);
 	signal(SIGKILL, interruptHandler);
 	srand ( tim.tv_usec + getpid());
-	problem_init(argc, argv);
-	problem_output();
+	problem_init(argc, argv, r);
+	problem_output(r);
 #ifdef OPENGL
 	display_init(argc, argv);
 #else // OPENGL
