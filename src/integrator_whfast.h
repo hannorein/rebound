@@ -39,6 +39,27 @@ struct ReboundIntegratorWHFast {
 	 */
 	unsigned int corrector;
 
+	/* 
+	 * Setting this flag to one will recalculate Jacobi coordinates 
+	 * from the particle structure in the next timestep only. 
+	 * Then the flag gets set back to 0. If you want to change 
+	 * particles after every timestep, you also need to set this 
+	 * flag to 1 before every timestep.
+	 * Default is 0.
+	 **/ 
+	unsigned int recalculate_jacobi_this_timestep;
+
+	/*
+	 * If this flag is set (the default), whfast will recalculate jacobi coordinates and synchronize
+	 * every timestep, to avoid problems with outputs or particle modifications
+	 * between timesteps. Setting it to 0 will result in a speedup, but care
+	 * must be taken to synchronize and recalculate jacobi coordinates when needed.
+	 * See AdvWHFast.ipynb in the python_tutorials folder (navigate to it on github
+	 * if you don't have ipython notebook installed).  The explanation is general, and
+	 * the python and C flags have the same names.
+	 **/
+	unsigned int safe_mode;
+
 	/*
 	 * This array contains the Jacobi coordinates of all particles.
 	 */
@@ -52,25 +73,5 @@ void integrator_whfast_synchronize(struct Rebound* r);
 void integrator_whfast_reset(struct Rebound* r);
 struct ReboundIntegratorWHFast* integrator_whfast_init(struct Rebound* r);
 
-/* 
- * Setting this flag to one will recalculate Jacobi coordinates 
- * from the particle structure in the next timestep only. 
- * Then the flag gets set back to 0. If you want to change 
- * particles after every timestep, you also need to set this 
- * flag to 1 before every timestep.
- * Default is 0.
- **/ 
-extern unsigned int integrator_whfast_recalculate_jacobi_this_timestep;
-
-/*
- * If this flag is set (the default), whfast will recalculate jacobi coordinates and synchronize
- * every timestep, to avoid problems with outputs or particle modifications
- * between timesteps. Setting it to 0 will result in a speedup, but care
- * must be taken to synchronize and recalculate jacobi coordinates when needed.
- * See AdvWHFast.ipynb in the python_tutorials folder (navigate to it on github
- * if you don't have ipython notebook installed).  The explanation is general, and
- * the python and C flags have the same names.
- **/
-extern unsigned int integrator_whfast_safe_mode;
 
 #endif

@@ -173,16 +173,12 @@ void iterate(void){
 	if (problem_post_timestep_modifications){
 		integrator_synchronize(r);
 		problem_post_timestep_modifications();
-		if (integrator == WHFAST || integrator == HYBRID){
-			integrator_whfast_recalculate_jacobi_this_timestep = 1;
-		}
+		r->ri_whfast->recalculate_jacobi_this_timestep = 1;
 	}
 	if (problem_post_timestep_modifications_with_parameters){
 		integrator_synchronize(r);
 		problem_post_timestep_modifications_with_parameters(particles, r->t, r->dt, r->G, N, N_megno);
-		if (integrator == WHFAST || integrator == HYBRID){
-			integrator_whfast_recalculate_jacobi_this_timestep = 1;
-		}
+		r->ri_whfast->recalculate_jacobi_this_timestep = 1;
 	}
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 

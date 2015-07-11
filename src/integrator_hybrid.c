@@ -101,7 +101,7 @@ void integrator_hybrid_part1(struct Rebound* r){
 	}else{
 		if (integrator_hybrid_mode==IAS15){
 			//integrator_whfast_reset(r); 
-			integrator_whfast_recalculate_jacobi_this_timestep = 1;
+			r->ri_whfast->recalculate_jacobi_this_timestep = 1;
 			r->dt = initial_dt;
 		}
 		integrator_hybrid_mode = WHFAST;
