@@ -32,7 +32,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
-#include "main.h"
+#include "rebound.h"
 #include "gravity.h"
 #include "problem.h"
 #include "output.h"
@@ -141,8 +141,7 @@ void integrator_update_acceleration(struct Rebound* r){
 	if (r->N_megno){
 		gravity_calculate_variational_acceleration(r);
 	}
-	if (problem_additional_forces) problem_additional_forces();
-	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(r->particles,r->t,r->dt,r->G,r->N,r->N_megno);
+	if (r->additional_forces) r->additional_forces(r);
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 	PROFILING_START()
 }

@@ -45,7 +45,7 @@
 #include "particle.h"
 #include "collisions.h"
 #include "collision_resolve.h"
-#include "main.h"
+#include "rebound.h"
 #include "tree.h"
 #include "boundaries.h"
 #include "communication_mpi.h"

@@ -33,7 +33,7 @@
 #include <time.h>
 #include "particle.h"
 #include "collisions.h"
-#include "main.h"
+#include "rebound.h"
 
 double collisions_max_r = 0;
 double collisions_max2_r = 0;

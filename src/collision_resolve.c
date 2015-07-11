@@ -29,7 +29,7 @@
 #include <time.h>
 #include "particle.h"
 #include "collision_resolve.h"
-#include "main.h"
+#include "rebound.h"
 #include "boundaries.h"
 #include "communication_mpi.h"
 

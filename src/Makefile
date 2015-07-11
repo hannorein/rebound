@@ -78,7 +78,7 @@ all:
 	rm -f *.o
 	# Compile all source files 
 	@if test -L integrator.c; then { echo "\n\nERROR! The file integrator.c seems to be a symbolic link. In this version of REBOUND you can choose the integrator in your problem.c file and no longer have to overwrite the integrator.c file. Please check the README file and update your Makefile accordingly. Exiting...\n\n"; exit 1;}; else exit 0; fi
-	$(CC) $(OPT) $(PREDEF) main.c -c
+	$(CC) $(OPT) $(PREDEF) rebound.c -c
 	$(CC) $(OPT) $(PREDEF) problem.c -c
 	$(CC) $(OPT) $(PREDEF) tree.c -c
 	$(CC) $(OPT) $(PREDEF) particle.c -c

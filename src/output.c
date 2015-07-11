@@ -30,7 +30,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include "particle.h"
-#include "main.h"
+#include "rebound.h"
 #include "tools.h"
 #include "output.h"
 #include "integrator.h"
@@ -65,8 +65,8 @@ int output_check_phase(struct Rebound* r, double interval,double phase){
 	if (floor(shift/interval)!=floor((shift-r->dt)/interval)){
 		return 1;
 	}
-	// Output at beginning or end of simulation
-	if (r->t==0||r->t==r->tmax){
+	// Output at beginning 
+	if (r->t==0){
 		return 1;
 	}
 	return 0;
@@ -101,7 +101,7 @@ void profiling_stop(int cat){
 
 double output_timing_last = -1; 	/**< Time when output_timing() was called the last time. */
 extern unsigned int integrator_hybrid_mode;
-void output_timing(struct Rebound* r){
+void output_timing(struct Rebound* r, const double tmax){
 	const int N = r->N;
 #ifdef MPI
 	int N_tot = 0;
@@ -135,8 +135,8 @@ void output_timing(struct Rebound* r){
 		printf("INT= %- 1d  ",integrator_hybrid_mode);
 	}
 	printf("cpu= %- 9f [s]  ",temp-output_timing_last);
-	if (r->tmax>0){
-		printf("t/tmax= %5.2f%%",r->t/r->tmax*100.0);
+	if (tmax>0){
+		printf("t/tmax= %5.2f%%",r->t/tmax*100.0);
 	}
 #ifdef PROFILING
 	printf("\nCATEGORY       TIME \n");

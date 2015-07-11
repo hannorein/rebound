@@ -41,7 +41,7 @@
 #endif // _APPLE
 #include "tools.h"
 #include "zpr.h"
-#include "main.h"
+#include "rebound.h"
 #include "particle.h"
 #include "boundaries.h"
 #include "tree.h"

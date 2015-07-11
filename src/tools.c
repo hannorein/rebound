@@ -28,7 +28,7 @@
 #include <math.h>
 #include <time.h>
 #include "particle.h"
-#include "main.h"
+#include "rebound.h"
 #include "tools.h"
 
 
@@ -36,6 +36,12 @@
 double	tools_normaldistribution2_rsq;		/**< Used for speedup**/ 
 double 	tools_normaldistribution2_v2;		/**< Used for speedup**/
 int 	tools_normaldistribution2_ready = 0;	/**< Used for speedup**/
+
+void tools_init_srand(){
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	srand ( tim.tv_usec + getpid());
+}
 
 double tools_uniform(double min, double max){
 	return ((double)rand())/((double)(RAND_MAX))*(max-min)+min;

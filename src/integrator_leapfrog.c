@@ -33,7 +33,7 @@
 #include <math.h>
 #include <time.h>
 #include "particle.h"
-#include "main.h"
+#include "rebound.h"
 #include "gravity.h"
 #include "boundaries.h"
 #include "integrator.h"

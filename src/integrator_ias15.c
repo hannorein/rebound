@@ -47,7 +47,7 @@
 void integrator_generate_constants(void);
 #endif // GENERATE_CONSTANTS
 #include "particle.h"
-#include "main.h"
+#include "rebound.h"
 #include "gravity.h"
 #include "problem.h"
 #include "tools.h"
@@ -237,7 +237,7 @@ int integrator_ias15_step(struct Rebound* r) {
 				double xk2  = csx[k2] + (s[8]*b[6][k2] + s[7]*b[5][k2] + s[6]*b[4][k2] + s[5]*b[3][k2] + s[4]*b[2][k2] + s[3]*b[1][k2] + s[2]*b[0][k2] + s[1]*a0[k2] + s[0]*v0[k2] );
 				particles[i].z = xk2 + x0[k2];
 			}
-			if (N_megno || ((problem_additional_forces || problem_additional_forces_with_parameters)&& integrator_force_is_velocitydependent)){
+			if (N_megno || (r->additional_forces && integrator_force_is_velocitydependent)){
 				s[0] = r->dt * h[n];
 				s[1] =      s[0] * h[n] / 2.;
 				s[2] = 2. * s[1] * h[n] / 3.;

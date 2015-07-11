@@ -30,7 +30,7 @@
 #include <getopt.h>
 #include <string.h>
 #include "particle.h"
-#include "main.h"
+#include "rebound.h"
 #include "input.h"
 #ifdef MPI
 #include "communication_mpi.h"

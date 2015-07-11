@@ -40,7 +40,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
-#include "main.h"
+#include "rebound.h"
 #include "output.h"
 #include "tools.h"
 #include "particle.h"
@@ -82,13 +82,47 @@ const double k	 	= 0.01720209895;	// Gaussian constant
 double energy(double const G, const int N, const struct Particle* const particles);
 double e_init;
 
-void problem_init(int argc, char* argv[], struct Rebound* r){
+
+double energy(const double G, const int N, const struct Particle* const particles){
+	double e_kin = 0.;
+	double e_pot = 0.;
+	for (int i=0;i<N;i++){
+		struct Particle pi = particles[i];
+		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
+		for (int j=i+1;j<N;j++){
+			struct Particle pj = particles[j];
+			double dx = pi.x - pj.x;
+			double dy = pi.y - pj.y;
+			double dz = pi.z - pj.z;
+			e_pot -= G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
+		}
+	}
+	return e_kin +e_pot;
+}
+
+double tmax = 7.3e8;
+void post_timestep(struct Rebound* const r){
+	if (output_check(r, 10000000.)){
+		output_timing(r, tmax);
+	}
+}
+
+void finished(struct Rebound* r){
+	printf("Done.\n");
+}
+
+
+int main(int argc, char* argv[]) {
+	struct Rebound* r = rebound_init();
 	// Setup constants
 	r->dt 		= 40;				// in days
-	r->tmax		= 7.3e10;			// 200 Myr
 	r->G		= k*k;				// These are the same units as used by the mercury6 code.
 	r->ri_whfast->safe_mode = 0;			// Turn of safe mode. Need to call integrator_synchronize() before outputs. 
 	r->ri_whfast->corrector = 11;			// Turn on symplectic correctors (11th order).
+
+	// Setup callbacks:
+	r->post_timestep = post_timestep;
+	r->finished = finished;
 	integrator_force_is_velocitydependent = 0;	// Force only depends on positions. 
 	integrator	= WHFAST;
 	//integrator	= IAS15;
@@ -120,36 +154,8 @@ void problem_init(int argc, char* argv[], struct Rebound* r){
 	e_init = energy(r->G, r->N - r->N_megno, r->particles);
 	system("rm -f energy.txt");
 	system("rm -f pos.txt");
-}
 
-double energy(const double G, const int N, const struct Particle* const particles){
-	double e_kin = 0.;
-	double e_pot = 0.;
-	for (int i=0;i<N;i++){
-		struct Particle pi = particles[i];
-		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
-		for (int j=i+1;j<N;j++){
-			struct Particle pj = particles[j];
-			double dx = pi.x - pj.x;
-			double dy = pi.y - pj.y;
-			double dz = pi.z - pj.z;
-			e_pot -= G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
-		}
-	}
-	return e_kin +e_pot;
-}
 
-void problem_output(struct Rebound* r){
-	if (output_check(r, 10000000.)){
-		output_timing(r);
-//		integrator_synchronize();
-//		FILE* f = fopen("energy.txt","a");
-//		double e = energy();
-//		fprintf(f,"%e %e %e\n",t, fabs((e-e_init)/e_init), tools_megno());
-//		fclose(f);
-//		printf("  Y = %.3f",tools_megno());
-	}
-}
-
-void problem_finish(struct Rebound* r){
+	// Start integration
+	rebound_integrate(r, tmax, 0, 0., 0.);
 }

@@ -48,7 +48,7 @@ int output_check_phase(struct Rebound* r, double interval,double phase);
  * Outputs the current number of particles, the time and the time difference since the last output to the screen.
  */
 
-void output_timing(struct Rebound* r);
+void output_timing(struct Rebound* r, const double tmax);
 /**
  * Outputs an ASCII file with the positions and velocities of all particles.
  * @param filename Output filename.

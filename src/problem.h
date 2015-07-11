@@ -42,27 +42,5 @@ struct Rebound;
  * @param argv Array of command line arguments.
  */ 
 void problem_init(int argc, char* argv[], struct Rebound* r);
-/**
- * This function is called at the beginning of the simulation, at the end of
- * each timestep and at the end of the simulation. The user can call either
- * generic output routines such as output_ascii() or create their own problem
- * specific output routines.
- */
-void problem_output(struct Rebound* r);
-/**
- * This function is called at the end of the simulation when t>=tmax.
- * Note that it is not called when the simulation stopped for another 
- * reason (e.g. user interaction or crash). 
- */ 
-void problem_finish(struct Rebound* r);
 
-/*
- * This function allows the user to add additional (non-gravitational) forces.
- */
-extern void (*problem_additional_forces) (void);
-
-/*
- * This function allows the user to add additional (non-gravitational) forces.
- */
-extern void (*problem_additional_forces_with_parameters) (struct Particle* particles, double t, double dt, double G, int N, int N_megno);
 #endif //_PROBLEM_H

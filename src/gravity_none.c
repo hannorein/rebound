@@ -32,7 +32,7 @@
 #include <math.h>
 #include <time.h>
 #include "particle.h"
-#include "main.h"
+#include "rebound.h"
 #include "boundaries.h"
 
 unsigned int gravity_ignore_10;

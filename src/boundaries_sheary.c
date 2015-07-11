@@ -5,7 +5,7 @@
 #include <time.h>
 #include "particle.h"
 #include "boundaries.h"
-#include "main.h"
+#include "rebound.h"
 #include "tree.h"
 
 extern const double OMEGA;

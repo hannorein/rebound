@@ -34,7 +34,7 @@
 #include <time.h>
 #include "g5nbutil.h"
 #include "particle.h"
-#include "main.h"
+#include "rebound.h"
 #include "boundaries.h"
 #include "integrator.h"
 #include "communication_mpi.h"

@@ -35,7 +35,7 @@
 #include <time.h>
 #include "particle.h"
 #include "integrator.h"
-#include "main.h"
+#include "rebound.h"
 #include "boundaries.h"
 #include "tree.h"
 

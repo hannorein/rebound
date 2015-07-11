@@ -157,4 +157,9 @@ void tools_megno_update(struct Rebound* r, double dY);
  */
 double tools_energy(struct Rebound* r);
 
+/**
+ * Init random number generator based on time and process id.
+ */
+void tools_init_srand();
+
 #endif 	// TOOLS_H

@@ -30,7 +30,7 @@
 #include "particle.h"
 #include "collisions.h"
 #include "collision_resolve.h"
-#include "main.h"
+#include "rebound.h"
 #include "boundaries.h"
 double 	collisions_max_r	= 0;
 double 	collisions_max2_r	= 0;

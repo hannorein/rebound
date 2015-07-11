@@ -41,7 +41,7 @@
 #include "particle.h"
 #include "collisions.h"
 #include "collision_resolve.h"
-#include "main.h"
+#include "rebound.h"
 #include "boundaries.h"
 
 #ifdef MPI
