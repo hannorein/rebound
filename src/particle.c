@@ -37,11 +37,8 @@
 #include "communication_mpi.h"
 #endif // MPI
 
-struct particle* 	particles = NULL;	
-
 #ifdef BOUNDARIES_OPEN
 int boundaries_particle_is_in_box(struct particle p);
-int particles_warning_is_not_in_box = 0;
 #endif // BOUNDARIES_OPEN
 #ifdef GRAVITY_GRAPE
 extern double gravity_minimum_mass;
@@ -51,19 +48,16 @@ void particles_add_local(struct Rebound* const r, struct particle pt){
 #ifdef BOUNDARIES_OPEN
 	if (boundaries_particle_is_in_box(pt)==0){
 		// Particle has left the box. Do not add.
-		if (particles_warning_is_not_in_box == 0){
-			particles_warning_is_not_in_box = 1;
-			printf("\nWarning: Trying to add particle which is outside box boundaries.\n");
-		}
+		fprintf(stderr,"\n\033[1mWarning!\033[0m Did not add particle outside of box boundaries.\n");
 		return;
 	}
 #endif // BOUNDARIES_OPEN
 	while (r->Nmax<=r->N){
 		r->Nmax += 128;
-		particles = realloc(particles,sizeof(struct particle)*r->Nmax);
+		r->particles = realloc(r->particles,sizeof(struct particle)*r->Nmax);
 	}
 
-	particles[r->N] = pt;
+	r->particles[r->N] = pt;
 
 #ifdef TREE
 	tree_add_particle_to_tree(r->N);
@@ -73,7 +67,7 @@ void particles_add_local(struct Rebound* const r, struct particle pt){
 
 void particles_add(struct Rebound* const r, struct particle pt){
 	if (r->N_megno){
-		printf("\nWarning: Trying to add particle after calling megno_init().\n");
+		fprintf(stderr,"\n\033[1mWarning!\033[0m Trying to add particle after calling megno_init().\n");
 	}
 #ifndef COLLISIONS_NONE
 	if (pt.r>=collisions_max_r){
@@ -112,7 +106,7 @@ void particles_add_fixed(struct Rebound* const r, struct particle pt,int pos){
 		return;
 	}
 #endif // BOUNDARIES_OPEN
-	particles[pos] = pt; 
+	r->particles[pos] = pt; 
 #ifdef TREE
 	tree_add_particle_to_tree(pos);
 #endif // TREE
@@ -132,8 +126,8 @@ void particles_remove_all(struct Rebound* const r){
 	r->Nmax 	= 0;
 	r->N_active 	= -1;
 	r->N_megno 	= 0;
-	free(particles);
-	particles 	= NULL;
+	free(r->particles);
+	r->particles 	= NULL;
 }
 
 int particles_remove(struct Rebound* const r, int index, int keepSorted){
@@ -152,11 +146,11 @@ int particles_remove(struct Rebound* const r, int index, int keepSorted){
 	(r->N)--;
 	if(keepSorted){
 		for(int j=index; j<r->N; j++){
-			particles[j] = particles[j+1];
+			r->particles[j] = r->particles[j+1];
 		}
 	}
 	else{
-		particles[index] = particles[r->N];
+		r->particles[index] = r->particles[r->N];
 	}
 
 	return 1;
@@ -166,7 +160,7 @@ int particles_remove(struct Rebound* const r, int index, int keepSorted){
 int particles_remove_ID(struct Rebound* const r, int ID, int keepSorted){
 	int success = 0;
 	for(int i=0;i<r->N;i++){
-		if(particles[i].ID == ID){
+		if(r->particles[i].ID == ID){
 			success = particles_remove(i, keepSorted);
 			break;
 		}

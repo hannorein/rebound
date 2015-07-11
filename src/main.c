@@ -101,7 +101,7 @@ void iterate(struct Rebound* const r){
 	}
 	// Calculate non-gravity accelerations. 
 	if (problem_additional_forces) problem_additional_forces();
-	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles, r->t, r->dt, r->G, r->N, r->N_megno);
+	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(r->particles, r->t, r->dt, r->G, r->N, r->N_megno);
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 
 	// A 'DKD'-like integrator will do the 'KD' part.
@@ -114,7 +114,7 @@ void iterate(struct Rebound* const r){
 	}
 	if (problem_post_timestep_modifications_with_parameters){
 		integrator_synchronize(r);
-		problem_post_timestep_modifications_with_parameters(particles, r->t, r->dt, r->G, r->N, r->N_megno);
+		problem_post_timestep_modifications_with_parameters(r->particles, r->t, r->dt, r->G, r->N, r->N_megno);
 		r->ri_whfast->recalculate_jacobi_this_timestep = 1;
 	}
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
@@ -190,6 +190,7 @@ struct Rebound* rebound_init(){
 	r->N_megno 	= 0; 	
 	r->timing_initial 	= -1;
 	r->exit_simulation	= 0;
+	r->particles	= NULL;
 	
 	// Save initial time to calculate total runtime.
 	struct timeval tim;

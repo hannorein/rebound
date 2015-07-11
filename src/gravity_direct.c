@@ -57,6 +57,7 @@ unsigned int gravity_ignore_10;
 // Gravity calculation for periodic boundary conditions
 
 void gravity_calculate_acceleration(struct Rebound* r){
+	struct particle* const particles = r->particles;
 	const int N = r->N;
 	const int N_megno = r->N_megno;
 	const int N_active = r->N_active;
@@ -121,6 +122,7 @@ void gravity_calculate_acceleration(struct Rebound* r){
 }
 
 void gravity_calculate_variational_acceleration(struct Rebound* r){
+	struct particle* const particles = r->particles;
 	const double G = r->G;
 	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
 	const int _N_real   = N - N_megno;
@@ -183,6 +185,7 @@ static struct cs_3d* restrict cs = NULL;
 static int N_cs = 0;
 
 void gravity_calculate_acceleration(struct Rebound* r){
+	struct particle* const particles = r->particles;
 	const double G = r->G;
 	const double softening = r->softening;
 	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
@@ -290,6 +293,7 @@ void gravity_calculate_variational_acceleration(struct Rebound* r){
 	const double softening = r->softening;
 	const double G = r->G;
 	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
+	struct particle* const particles = r->particles;
 	const int N = r->N;
 	const int N_megno = r->N_megno;
 	const int _N_real   = N - N_megno;

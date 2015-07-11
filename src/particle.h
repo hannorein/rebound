@@ -59,12 +59,6 @@ struct particle {
 #endif // TREE
 };
 
-/**
- * Main particle array.
- * This contains all particles on this node.
- */
-extern struct particle* particles;
-
 /** 
  * Adds a particle to the simulation. 
  * @details If a tree is used, it also adds the particle to the tree.

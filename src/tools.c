@@ -74,6 +74,7 @@ double tools_rayleigh(double sigma){
 /// Other helper routines
 double tools_energy(struct Rebound* r){
 	const int N = r->N;
+	const struct particle* restrict const particles = r->particles;
 	const int N_megno = r->N_megno;
 	double e_kin = 0.;
 	double e_pot = 0.;
@@ -93,6 +94,7 @@ double tools_energy(struct Rebound* r){
 
 void tools_move_to_center_of_momentum(struct Rebound* const r){
 	const int N = r->N;
+	struct particle* restrict const particles = r->particles;
 	double m = 0;
 	double x = 0;
 	double y = 0;
@@ -363,7 +365,7 @@ void tools_megno_init(struct Rebound* const r, double delta){
 	tools_megno_delta0 = delta;
         for (int i=0;i<_N_megno;i++){ 
                 struct particle megno = {
-			.m  = particles[i].m,
+			.m  = r->particles[i].m,
 			.x  = tools_normal(1.),
 			.y  = tools_normal(1.),
 			.z  = tools_normal(1.),
@@ -391,6 +393,7 @@ double tools_lyapunov(struct Rebound* r){ // Returns the largest Lyapunov charac
 	return tools_megno_cov_Yt/tools_megno_var_t;
 }
 double tools_megno_deltad_delta(struct Rebound* const r){
+	const struct particle* restrict const particles = r->particles;
 	const int N = r->N;
 	const int N_megno = r->N;
         double deltad = 0;

@@ -191,7 +191,7 @@ void output_append_ascii(struct Rebound* r, char* filename){
 		return;
 	}
 	for (int i=0;i<N;i++){
-		struct particle p = particles[i];
+		struct particle p = r->particles[i];
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\n",p.x,p.y,p.z,p.vx,p.vy,p.vz);
 	}
 	fclose(of);
@@ -211,7 +211,7 @@ void output_ascii(struct Rebound* r, char* filename){
 		return;
 	}
 	for (int i=0;i<N;i++){
-		struct particle p = particles[i];
+		struct particle p = r->particles[i];
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\n",p.x,p.y,p.z,p.vx,p.vy,p.vz);
 	}
 	fclose(of);
@@ -230,11 +230,11 @@ void output_append_orbits(struct Rebound* r, char* filename){
 		printf("\n\nError while opening file '%s'.\n",filename);
 		return;
 	}
-	struct particle com = particles[0];
+	struct particle com = r->particles[0];
 	for (int i=1;i<N;i++){
-		struct orbit o = tools_p2orbit(r->G, particles[i],com);
+		struct orbit o = tools_p2orbit(r->G, r->particles[i],com);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",r->t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
-		com = tools_get_center_of_mass(com,particles[i]);
+		com = tools_get_center_of_mass(com,r->particles[i]);
 	}
 	fclose(of);
 }
@@ -252,11 +252,11 @@ void output_orbits(struct Rebound* r, char* filename){
 		printf("\n\nError while opening file '%s'.\n",filename);
 		return;
 	}
-	struct particle com = particles[0];
+	struct particle com = r->particles[0];
 	for (int i=1;i<N;i++){
-		struct orbit o = tools_p2orbit(r->G, particles[i],com);
+		struct orbit o = tools_p2orbit(r->G, r->particles[i],com);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",r->t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
-		com = tools_get_center_of_mass(com,particles[i]);
+		com = tools_get_center_of_mass(com,r->particles[i]);
 	}
 	fclose(of);
 }
@@ -278,7 +278,7 @@ void output_binary(struct Rebound* r, char* filename){
 	fwrite(&N,sizeof(int),1,of);
 	fwrite(&(r->t),sizeof(double),1,of);
 	for (int i=0;i<N;i++){
-		struct particle p = particles[i];
+		struct particle p = r->particles[i];
 		fwrite(&(p),sizeof(struct particle),1,of);
 	}
 	fclose(of);
@@ -299,9 +299,9 @@ void output_binary_positions(struct Rebound* r, char* filename){
 	}
 	for (int i=0;i<N;i++){
 		struct vec3 v;
-		v.x = particles[i].x;
-		v.y = particles[i].y;
-		v.z = particles[i].z;
+		v.x = r->particles[i].x;
+		v.y = r->particles[i].y;
+		v.z = r->particles[i].z;
 		fwrite(&(v),sizeof(struct vec3),1,of);
 	}
 	fclose(of);
@@ -314,7 +314,7 @@ void output_append_velocity_dispersion(struct Rebound* r, char* filename){
 	struct vec3 Q = {.x=0, .y=0, .z=0};
 	for (int i=0;i<N;i++){
 		struct vec3 Aim1 = A;
-		struct particle p = particles[i];
+		struct particle p = r->particles[i];
 		A.x = A.x + (p.vx-A.x)/(double)(i+1);
 		if (integrator==SEI){
 			A.y = A.y + (p.vy+1.5*OMEGA*p.x-A.y)/(double)(i+1);

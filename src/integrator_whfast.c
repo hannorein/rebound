@@ -321,7 +321,7 @@ double X;
 
 /****************************** 
  * Coordinate transformations */
-static void integrator_to_jacobi_posvel(struct particle* const p_j, const double* const eta, const int N){
+static void integrator_to_jacobi_posvel(const struct particle* const particles, struct particle* const p_j, const double* const eta, const int N){
 	double s_x = particles[0].m * particles[0].x;
 	double s_y = particles[0].m * particles[0].y;
 	double s_z = particles[0].m * particles[0].z;
@@ -355,7 +355,7 @@ static void integrator_to_jacobi_posvel(struct particle* const p_j, const double
 	p_j[0].vz = s_vz * Mtotali;
 }
 
-static void integrator_var_to_jacobi_posvel(struct particle* const p_j, const double* const eta, const int N, const int N_megno){
+static void integrator_var_to_jacobi_posvel(const struct particle* const particles, struct particle* const p_j, const double* const eta, const int N, const int N_megno){
 	double s_x = particles[N_megno].m * particles[N_megno].x;
 	double s_y = particles[N_megno].m * particles[N_megno].y;
 	double s_z = particles[N_megno].m * particles[N_megno].z;
@@ -390,7 +390,7 @@ static void integrator_var_to_jacobi_posvel(struct particle* const p_j, const do
 }
 
 
-static void integrator_to_jacobi_acc(struct particle* const p_j, const double* const eta, const int N){
+static void integrator_to_jacobi_acc(const struct particle* const particles, struct particle* const p_j, const double* const eta, const int N){
 	double s_ax = particles[0].m * particles[0].ax;
 	double s_ay = particles[0].m * particles[0].ay;
 	double s_az = particles[0].m * particles[0].az;
@@ -408,7 +408,7 @@ static void integrator_to_jacobi_acc(struct particle* const p_j, const double* c
 	// p_j[0].a is not needed and thus not calculated 
 }
 
-static void integrator_var_to_jacobi_acc(struct particle* const p_j, const double* const eta, const int N, const int N_megno){
+static void integrator_var_to_jacobi_acc(const struct particle* const particles, struct particle* const p_j, const double* const eta, const int N, const int N_megno){
 	double s_ax = particles[N_megno].m * particles[N_megno].ax;
 	double s_ay = particles[N_megno].m * particles[N_megno].ay;
 	double s_az = particles[N_megno].m * particles[N_megno].az;
@@ -426,7 +426,7 @@ static void integrator_var_to_jacobi_acc(struct particle* const p_j, const doubl
 	// p_j[N_megno].a is not needed and thus not calculated 
 }
 
-static void integrator_to_inertial_posvel(const struct particle* const p_j, const double* const eta, const int N){
+static void integrator_to_inertial_posvel(struct particle* const particles, const struct particle* const p_j, const double* const eta, const int N){
 	const double Mtotal  = eta[N-1];
 	double s_x  = p_j[0].x  * Mtotal; 
 	double s_y  = p_j[0].y  * Mtotal; 
@@ -465,7 +465,7 @@ static void integrator_to_inertial_posvel(const struct particle* const p_j, cons
 	particles[0].vz = s_vz * mi;
 }
 
-static void integrator_var_to_inertial_posvel(const struct particle* const p_j, const double* const eta, const int N, const int N_megno){
+static void integrator_var_to_inertial_posvel(struct particle* const particles, const struct particle* const p_j, const double* const eta, const int N, const int N_megno){
 	const double Mtotal  = eta[N-N_megno-1];
 	double s_x  = p_j[N_megno].x  * Mtotal; 
 	double s_y  = p_j[N_megno].y  * Mtotal; 
@@ -504,7 +504,7 @@ static void integrator_var_to_inertial_posvel(const struct particle* const p_j, 
 	particles[N_megno].vz = s_vz * mi;
 }
 
-static void integrator_to_inertial_pos(const struct particle* const p_j, const double* const eta, const int N){
+static void integrator_to_inertial_pos(struct particle* const particles, const struct particle* const p_j, const double* const eta, const int N){
 	const double Mtotal  = eta[N-1];
 	double s_x  = p_j[0].x  * Mtotal; 
 	double s_y  = p_j[0].y  * Mtotal; 
@@ -528,7 +528,7 @@ static void integrator_to_inertial_pos(const struct particle* const p_j, const d
 	particles[0].z  = s_z  * mi;
 }
 
-static void integrator_var_to_inertial_pos(const struct particle* const p_j, const double* const eta, const int N, const int N_megno){
+static void integrator_var_to_inertial_pos(struct particle* const particles, const struct particle* const p_j, const double* const eta, const int N, const int N_megno){
 	const double Mtotal  = eta[N-N_megno-1];
 	double s_x  = p_j[0].x  * Mtotal; 
 	double s_y  = p_j[0].y  * Mtotal; 
@@ -623,26 +623,27 @@ const static double b_115 = 3394141./2328480.*4.980119205559973422e-02;
 
 static void integrator_whfast_corrector_Z(struct Rebound* r, double a, double b){
 	struct ReboundIntegratorWHFast* const ri_whfast = r->ri_whfast;
+	struct particle* restrict const particles = r->particles;
 	integrator_kepler_drift(ri_whfast->p_j, ri_whfast->eta,  r->G, a, &(ri_whfast->timestep_warning), r->N, r->N_megno);
-	integrator_to_inertial_pos(ri_whfast->p_j, ri_whfast->eta, r->N-r->N_megno);
+	integrator_to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, r->N-r->N_megno);
 	if (r->N_megno){
-		integrator_var_to_inertial_pos(ri_whfast->p_j, ri_whfast->eta, r->N, r->N_megno);
+		integrator_var_to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, r->N, r->N_megno);
 	}
 	integrator_update_acceleration(r);
-	integrator_to_jacobi_acc(ri_whfast->p_j, ri_whfast->eta, r->N-r->N_megno);
+	integrator_to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, r->N-r->N_megno);
 	if (r->N_megno){
-		integrator_var_to_jacobi_acc(ri_whfast->p_j, ri_whfast->eta, r->N, r->N_megno);
+		integrator_var_to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, r->N, r->N_megno);
 	}
 	integrator_interaction(ri_whfast->p_j, ri_whfast->eta, r->G, r->softening, -b, r->N, r->N_megno);
 	integrator_kepler_drift(ri_whfast->p_j, ri_whfast->eta, r->G, -2.*a, &(ri_whfast->timestep_warning), r->N, r->N_megno);
-	integrator_to_inertial_pos(ri_whfast->p_j, ri_whfast->eta, r->N-r->N_megno);
+	integrator_to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, r->N-r->N_megno);
 	if (r->N_megno){
-		integrator_var_to_inertial_pos(ri_whfast->p_j, ri_whfast->eta, r->N, r->N_megno);
+		integrator_var_to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, r->N, r->N_megno);
 	}
 	integrator_update_acceleration(r);
-	integrator_to_jacobi_acc(ri_whfast->p_j, ri_whfast->eta, r->N-r->N_megno);
+	integrator_to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, r->N-r->N_megno);
 	if (r->N_megno){
-		integrator_var_to_jacobi_acc(ri_whfast->p_j, ri_whfast->eta, r->N, r->N_megno);
+		integrator_var_to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, r->N, r->N_megno);
 	}
 	integrator_interaction(ri_whfast->p_j, ri_whfast->eta, r->G, r->softening, b, r->N, r->N_megno);
 	integrator_kepler_drift(ri_whfast->p_j, ri_whfast->eta, r->G, a, &(ri_whfast->timestep_warning), r->N, r->N_megno);
@@ -688,6 +689,7 @@ static void integrator_apply_corrector(struct Rebound* r, double inv){
 
 void integrator_whfast_part1(struct Rebound* const r){
 	struct ReboundIntegratorWHFast* const ri_whfast = r->ri_whfast;
+	struct particle* restrict const particles = r->particles;
 	const int N = r->N;
 	const int N_megno = r->N_megno;
 	gravity_ignore_10 = 1;
@@ -716,9 +718,9 @@ void integrator_whfast_part1(struct Rebound* const r){
 			ri_whfast->p_j[i].m = particles[i].m;
 		}
 		ri_whfast->recalculate_jacobi_this_timestep = 0;
-		integrator_to_jacobi_posvel(ri_whfast->p_j, ri_whfast->eta, N-N_megno);
+		integrator_to_jacobi_posvel(particles, ri_whfast->p_j, ri_whfast->eta, N-N_megno);
 		if (N_megno){
-			integrator_var_to_jacobi_posvel(ri_whfast->p_j, ri_whfast->eta, N, N_megno);
+			integrator_var_to_jacobi_posvel(particles, ri_whfast->p_j, ri_whfast->eta, N, N_megno);
 		}
 	}
 	double _dt2 = r->dt/2.;
@@ -734,9 +736,9 @@ void integrator_whfast_part1(struct Rebound* const r){
 	}
 	// Prepare coordinates for KICK step
 	if (integrator_force_is_velocitydependent){
-		integrator_to_inertial_posvel(ri_whfast->p_j, ri_whfast->eta, N-N_megno);
+		integrator_to_inertial_posvel(particles, ri_whfast->p_j, ri_whfast->eta, N-N_megno);
 	}else{
-		integrator_to_inertial_pos(ri_whfast->p_j, ri_whfast->eta, N-N_megno);
+		integrator_to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, N-N_megno);
 	}
 	
 	if (N_megno){
@@ -744,9 +746,9 @@ void integrator_whfast_part1(struct Rebound* const r){
 		ri_whfast->p_j[N_megno].y += _dt2*ri_whfast->p_j[N_megno].vy;
 		ri_whfast->p_j[N_megno].z += _dt2*ri_whfast->p_j[N_megno].vz;
 		if (integrator_force_is_velocitydependent){
-			integrator_var_to_inertial_posvel(ri_whfast->p_j, ri_whfast->eta, N, N_megno);
+			integrator_var_to_inertial_posvel(particles, ri_whfast->p_j, ri_whfast->eta, N, N_megno);
 		}else{
-			integrator_var_to_inertial_pos(ri_whfast->p_j, ri_whfast->eta, N, N_megno);
+			integrator_var_to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, N, N_megno);
 		}
 	}
 
@@ -762,18 +764,19 @@ void integrator_whfast_synchronize(struct Rebound* const r){
 		if (ri_whfast->corrector){
 			integrator_apply_corrector(r, -1.);
 		}
-		integrator_to_inertial_posvel(ri_whfast->p_j, ri_whfast->eta, N-N_megno);
+		integrator_to_inertial_posvel(r->particles, ri_whfast->p_j, ri_whfast->eta, N-N_megno);
 		ri_whfast->is_synchronized = 1;
 	}
 }
 
 void integrator_whfast_part2(struct Rebound* const r){
+	struct particle* restrict const particles = r->particles;
 	struct ReboundIntegratorWHFast* const ri_whfast = r->ri_whfast;
 	const int N = r->N;
 	const int N_megno = r->N_megno;
-	integrator_to_jacobi_acc(ri_whfast->p_j, ri_whfast->eta, N-N_megno);
+	integrator_to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, N-N_megno);
 	if (N_megno){
-		integrator_var_to_jacobi_acc(ri_whfast->p_j, ri_whfast->eta, N, N_megno);
+		integrator_var_to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, N, N_megno);
 	}
 	integrator_interaction(ri_whfast->p_j, ri_whfast->eta, r->G, r->softening, r->dt, N, N_megno);
 
@@ -789,7 +792,7 @@ void integrator_whfast_part2(struct Rebound* const r){
 		ri_whfast->p_j[N_megno].x += _dt2*ri_whfast->p_j[N_megno].vx;
 		ri_whfast->p_j[N_megno].y += _dt2*ri_whfast->p_j[N_megno].vy;
 		ri_whfast->p_j[N_megno].z += _dt2*ri_whfast->p_j[N_megno].vz;
-		integrator_var_to_inertial_posvel(ri_whfast->p_j, ri_whfast->eta, N, N_megno);
+		integrator_var_to_inertial_posvel(particles, ri_whfast->p_j, ri_whfast->eta, N, N_megno);
 		gravity_calculate_variational_acceleration(r);
 		// Add additional acceleration term for MEGNO calculation
 		int i = N-N_megno;

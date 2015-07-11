@@ -71,6 +71,7 @@ void integrator_cache_coefficients(double dt){
 
 void integrator_sei_part1(struct Rebound* const r){
 	const int N = r->N;
+	struct particle* const particles = r->particles;
 	integrator_cache_coefficients(r->dt);
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
@@ -81,6 +82,7 @@ void integrator_sei_part1(struct Rebound* const r){
 
 void integrator_sei_part2(struct Rebound* r){
 	const int N = r->N;
+	struct particle* const particles = r->particles;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		operator_phi1(r->dt, &(particles[i]));

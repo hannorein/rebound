@@ -52,6 +52,13 @@ struct Rebound {
 	int 	root_n;		/**< Total number of root boxes in all directions, root_nx*root_ny*root_nz. Default: 1. Set in box_init().*/
 	int 	exit_simulation;/**< Set to 1 to exit the simulation at the end of the next timestep. */
 	double 	timing_initial;	/**< System time at start. Used to meassure total cpu time. */
+
+
+	/**
+	 * Main particle array.
+	 * This contains all particles on this node.
+	 */
+	struct particle* particles;
 	
 	/// Integrators
 	struct ReboundIntegratorWHFast* ri_whfast;	/**< Pointer to the WHFast struct */

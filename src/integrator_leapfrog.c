@@ -42,6 +42,7 @@
 // for non-rotating frame.
 void integrator_leapfrog_part1(struct Rebound* r){
 	const int N = r->N;
+	struct particle* restrict const particles = r->particles;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		particles[i].x  += 0.5* r->dt * particles[i].vx;
@@ -52,6 +53,7 @@ void integrator_leapfrog_part1(struct Rebound* r){
 }
 void integrator_leapfrog_part2(struct Rebound* r){
 	const int N = r->N;
+	struct particle* restrict const particles = r->particles;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		particles[i].vx += r->dt * particles[i].ax;

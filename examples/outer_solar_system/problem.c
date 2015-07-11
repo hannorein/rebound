@@ -79,7 +79,7 @@ double ss_mass[6] =
 };
 
 const double k	 	= 0.01720209895;	// Gaussian constant 
-double energy(double const G, const int N);
+double energy(double const G, const int N, const struct particle* const particles);
 double e_init;
 
 void problem_init(int argc, char* argv[], struct Rebound* r){
@@ -103,6 +103,7 @@ void problem_init(int argc, char* argv[], struct Rebound* r){
 		particles_add(r, p); 
 	}
 	if (integrator==WH){
+		struct particle* const particles = r->particles;
 		// Move to heliocentric frame (required by WH integrator)
 		for (int i=1;i<r->N;i++){
 			particles[i].x -= particles[0].x;	particles[i].y -= particles[0].y;	particles[i].z -= particles[0].z;
@@ -116,12 +117,12 @@ void problem_init(int argc, char* argv[], struct Rebound* r){
 
 	r->N_active = r->N-1;
 
-	e_init = energy(r->G, r->N - r->N_megno);
+	e_init = energy(r->G, r->N - r->N_megno, r->particles);
 	system("rm -f energy.txt");
 	system("rm -f pos.txt");
 }
 
-double energy(const double G, const int N){
+double energy(const double G, const int N, const struct particle* const particles){
 	double e_kin = 0.;
 	double e_pot = 0.;
 	for (int i=0;i<N;i++){
