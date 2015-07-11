@@ -447,7 +447,7 @@ void tools_megno_update(struct Rebound* r, double dY){
 	tools_megno_Ys += dY;
 	double Y = tools_megno_Ys/r->t;
 	// Calculate averge <Y> 
-	tools_megno_Yss += Y * dt;
+	tools_megno_Yss += Y * r->dt;
 	// Update covariance of (Y,t) and variance of t
 	tools_megno_n++;
 	double _d_t = r->t - tools_megno_mean_t;

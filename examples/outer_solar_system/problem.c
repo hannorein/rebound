@@ -84,7 +84,7 @@ double e_init;
 
 void problem_init(int argc, char* argv[], struct Rebound* r){
 	// Setup constants
-	dt 		= 40;				// in days
+	r->dt 		= 40;				// in days
 	r->tmax		= 7.3e10;			// 200 Myr
 	r->G		= k*k;				// These are the same units as used by the mercury6 code.
 	init_boxwidth(200); 				// Init box with width 200 astronomical units

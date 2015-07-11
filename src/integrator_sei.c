@@ -45,8 +45,8 @@
 double OMEGA 	= 1.; 	/**< Epicyclic/orbital frequency. */
 double OMEGAZ 	= -1.; 	/**< Epicyclic frequency in vertical direction. */
 
-void operator_H012(struct particle* p);
-void operator_phi1(struct particle* p);
+void operator_H012(double dt, struct particle* p);
+void operator_phi1(double dt, struct particle* p);
 // Cache sin() tan() values.
 double lastdt=0;	/**< Cached sin(), tan() for this value of dt.*/
 double sindt,  tandt;
@@ -55,7 +55,7 @@ double sindtz, tandtz;
 /**
  * This function pre-calculates sin() and tan() needed for SEI. 
  */
-void integrator_cache_coefficients(){
+void integrator_cache_coefficients(double dt){
 	if (lastdt!=dt){
 		// Only calculate sin() and tan() if timestep changed
 		if (OMEGAZ==-1){
@@ -70,22 +70,21 @@ void integrator_cache_coefficients(){
 }
 
 void integrator_sei_part1(struct Rebound* r){
-	integrator_cache_coefficients();
+	integrator_cache_coefficients(r->dt);
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
-		operator_H012(&(particles[i]));
+		operator_H012(r->dt, &(particles[i]));
 	}
-	r->t+=dt/2.;
+	r->t+=r->dt/2.;
 }
 
 void integrator_sei_part2(struct Rebound* r){
-	integrator_cache_coefficients();
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
-		operator_phi1(&(particles[i]));
-		operator_H012(&(particles[i]));
+		operator_phi1(r->dt, &(particles[i]));
+		operator_H012(r->dt, &(particles[i]));
 	}
-	r->t+=dt/2.;
+	r->t+=r->dt/2.;
 }
 
 /**
@@ -93,7 +92,7 @@ void integrator_sei_part2(struct Rebound* r){
  * Hamiltonian H0 exactly up to machine precission.
  * @param p Particle to evolve.
  */
-void operator_H012(struct particle* p){
+void operator_H012(double dt, struct particle* p){
 		
 	// Integrate vertical motion
 	const double zx = p->z * OMEGAZ;
@@ -134,7 +133,7 @@ void operator_H012(struct particle* p){
  * this should not be visible. However, it is worth keeping in mind. 
  * @param p Particle to evolve.
  */
-void operator_phi1(struct particle* p){
+void operator_phi1(double dt, struct particle* p){
 	// The force used here is for test cases 2 and 3 
 	// in Rein & Tremaine 2011. 
 	p->vx += p->ax * dt;

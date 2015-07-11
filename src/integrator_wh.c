@@ -80,9 +80,9 @@ void integrator_wh_part1(struct Rebound* r){
 	  eta[i] = eta[i-1] + particles[i].m;
 	}
 	integrator_wh_to_jacobi();
-	drift_wh(r->G, dt/2.);
+	drift_wh(r->G, r->dt/2.);
 	integrator_wh_from_jacobi();
-	r->t+=dt/2.;
+	r->t+=r->dt/2.;
 }
 
 void integrator_wh_part2(struct Rebound* r){
@@ -95,15 +95,15 @@ void integrator_wh_part2(struct Rebound* r){
 	integrator_wh_aj(r->G);
 	integrator_wh_from_jacobi();
 	for (int i=1;i<N;i++){
-		particles[i].vx += dt*particles[i].ax;
-		particles[i].vy += dt*particles[i].ay;
-		particles[i].vz += dt*particles[i].az;
+		particles[i].vx += r->dt*particles[i].ax;
+		particles[i].vy += r->dt*particles[i].ay;
+		particles[i].vz += r->dt*particles[i].az;
 	}
 	// DRIFT
 	integrator_wh_to_jacobi();
-	drift_wh(r->G, dt/2.);
+	drift_wh(r->G, r->dt/2.);
 	integrator_wh_from_jacobi();
-	r->t+=dt/2.;
+	r->t+=r->dt/2.;
 }
 
 int wh_check_normal(struct particle* p){

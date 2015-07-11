@@ -62,7 +62,7 @@ int output_check(struct Rebound* r, double interval){
 
 int output_check_phase(struct Rebound* r, double interval,double phase){
 	double shift = r->t+interval*phase;
-	if (floor(shift/interval)!=floor((shift-dt)/interval)){
+	if (floor(shift/interval)!=floor((shift-r->dt)/interval)){
 		return 1;
 	}
 	// Output at beginning or end of simulation
@@ -129,7 +129,7 @@ void output_timing(struct Rebound* r){
 	}else{
 		printf("t= %- 9f  ",r->t);
 	}
-	printf("dt= %- 9f  ",dt);
+	printf("dt= %- 9f  ",r->dt);
 	if (integrator==HYBRID){
 		printf("INT= %- 1d  ",integrator_hybrid_mode);
 	}

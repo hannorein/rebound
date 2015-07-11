@@ -85,7 +85,7 @@ integrator_t integrator_hybrid_mode = WHFAST; // 0 = symplectic; 1 = IAS15
 void integrator_hybrid_part1(struct Rebound* r){
 	ratio = get_min_ratio();
 	if (initial_dt==0.){
-		initial_dt = dt;
+		initial_dt = r->dt;
 	}
 	if (ratio<integrator_hybrid_switch_ratio){
 		if (integrator_hybrid_mode==WHFAST){
@@ -102,7 +102,7 @@ void integrator_hybrid_part1(struct Rebound* r){
 		if (integrator_hybrid_mode==IAS15){
 			//integrator_whfast_reset(r); 
 			integrator_whfast_recalculate_jacobi_this_timestep = 1;
-			dt = initial_dt;
+			r->dt = initial_dt;
 		}
 		integrator_hybrid_mode = WHFAST;
 	}

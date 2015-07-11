@@ -663,6 +663,7 @@ static void integrator_whfast_corrector_Z(struct Rebound* r, double a, double b)
 }
 
 static void integrator_apply_corrector(struct Rebound* r, double inv){
+	const double dt = r->dt;
 	if (integrator_whfast_corrector==3){
 		// Third order corrector
 		integrator_whfast_corrector_Z(r, a_1*dt,-inv*b_31*dt);
@@ -736,7 +737,7 @@ void integrator_whfast_part1(struct Rebound* r){
 			integrator_var_to_jacobi_posvel();
 		}
 	}
-	double _dt2 = dt/2.;
+	double _dt2 = r->dt/2.;
 	if (integrator_whfast_is_synchronized){
 		// First half DRIFT step
 		if (integrator_whfast_corrector){
@@ -745,7 +746,7 @@ void integrator_whfast_part1(struct Rebound* r){
 		integrator_kepler_drift(r->G, _dt2);	// half timestep
 	}else{
 		// Combined DRIFT step
-		integrator_kepler_drift(r->G, dt);	// full timestep
+		integrator_kepler_drift(r->G, r->dt);	// full timestep
 	}
 	// Prepare coordinates for KICK step
 	if (integrator_force_is_velocitydependent){
@@ -770,7 +771,7 @@ void integrator_whfast_part1(struct Rebound* r){
 
 void integrator_whfast_synchronize(struct Rebound* r){
 	if (integrator_whfast_is_synchronized == 0){
-		integrator_kepler_drift(r->G, dt/2.);
+		integrator_kepler_drift(r->G, r->dt/2.);
 		if (integrator_whfast_corrector){
 			integrator_apply_corrector(r, -1.);
 		}
@@ -784,9 +785,9 @@ void integrator_whfast_part2(struct Rebound* r){
 	if (N_megno){
 		integrator_var_to_jacobi_acc();
 	}
-	integrator_interaction(r->G, dt);
+	integrator_interaction(r->G, r->dt);
 
-	double _dt2 = dt/2.;
+	double _dt2 = r->dt/2.;
 	integrator_whfast_is_synchronized = 0;
 	if (integrator_whfast_safe_mode || N_megno){
 		integrator_whfast_synchronize(r);
@@ -834,7 +835,7 @@ void integrator_whfast_part2(struct Rebound* r){
 		particles[j].az -= Gmi * daz;
 
 		// Update MEGNO in middle of timestep as we need synchonized x/v/a.
-		double dY = dt * 2. * r->t * tools_megno_deltad_delta();
+		double dY = r->dt * 2. * r->t * tools_megno_deltad_delta();
 		tools_megno_update(r, dY);
 	}
 }

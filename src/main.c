@@ -51,7 +51,6 @@ void gravity_finish(void);
 #endif // GRAVITY_GRAPE
 
 double softening 	= 0;
-double dt 		= 0.001;
 double timing_initial 	= -1;
 int    exit_simulation	= 0;
 
@@ -165,7 +164,7 @@ void iterate(void){
 	}
 	// Calculate non-gravity accelerations. 
 	if (problem_additional_forces) problem_additional_forces();
-	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles, r->t, dt, r->G, N, N_megno);
+	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles, r->t, r->dt, r->G, N, N_megno);
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 
 	// A 'DKD'-like integrator will do the 'KD' part.
@@ -180,7 +179,7 @@ void iterate(void){
 	}
 	if (problem_post_timestep_modifications_with_parameters){
 		integrator_synchronize(r);
-		problem_post_timestep_modifications_with_parameters(particles, r->t, dt, r->G, N, N_megno);
+		problem_post_timestep_modifications_with_parameters(particles, r->t, r->dt, r->G, N, N_megno);
 		if (integrator == WHFAST || integrator == HYBRID){
 			integrator_whfast_recalculate_jacobi_this_timestep = 1;
 		}
@@ -216,7 +215,7 @@ void iterate(void){
 	exit_simulation = _exit_simulation;
 #endif // MPI
 	// @TODO: Adjust timestep so that t==tmax exaclty at the end.
-	if((r->t+dt>r->tmax && r->tmax!=0.0) || exit_simulation==1){
+	if((r->t+r->dt>r->tmax && r->tmax!=0.0) || exit_simulation==1){
 #ifdef GRAVITY_GRAPE
 		gravity_finish();
 #endif // GRAVITY_GRAPE
@@ -274,8 +273,9 @@ int main(int argc, char* argv[]) {
 	srand ( tim.tv_usec + getpid());
 	
 	r = calloc(1,sizeof(struct Rebound));
-	r->t = 0; 
-	r->G = 1;
+	r->t 	= 0; 
+	r->G 	= 1;
+	r->dt	= 0.001;
 	display_r = r;
 
 	problem_init(argc, argv, r);

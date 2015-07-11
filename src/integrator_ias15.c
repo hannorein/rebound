@@ -209,7 +209,7 @@ int integrator_ias15_step(struct Rebound* r) {
 
 		for(int n=1;n<8;n++) {							// Loop over interval using Gauss-Radau spacings
 
-			s[0] = dt * h[n];
+			s[0] = r->dt * h[n];
 			s[1] = s[0] * s[0] / 2.;
 			s[2] = s[1] * h[n] / 3.;
 			s[3] = s[2] * h[n] / 2.;
@@ -235,7 +235,7 @@ int integrator_ias15_step(struct Rebound* r) {
 				particles[i].z = xk2 + x0[k2];
 			}
 			if (N_megno || ((problem_additional_forces || problem_additional_forces_with_parameters)&& integrator_force_is_velocitydependent)){
-				s[0] = dt * h[n];
+				s[0] = r->dt * h[n];
 				s[1] =      s[0] * h[n] / 2.;
 				s[2] = 2. * s[1] * h[n] / 3.;
 				s[3] = 3. * s[2] * h[n] / 4.;
@@ -379,7 +379,7 @@ int integrator_ias15_step(struct Rebound* r) {
 	// Set time back to initial value (will be updated below) 
 	r->t = t_beginning;
 	// Find new timestep
-	const double dt_done = dt;
+	const double dt_done = r->dt;
 	
 	if (integrator_ias15_epsilon>0){
 		// Estimate error (given by last term in series expansion) 
@@ -398,7 +398,7 @@ int integrator_ias15_step(struct Rebound* r) {
 				const double v2 = particles[i].vx*particles[i].vx+particles[i].vy*particles[i].vy+particles[i].vz*particles[i].vz;
 				const double x2 = particles[i].x*particles[i].x+particles[i].y*particles[i].y+particles[i].z*particles[i].z;
 				// Skip slowly varying accelerations
-				if (fabs(v2*dt*dt/x2) < 1e-16) continue;
+				if (fabs(v2*r->dt*r->dt/x2) < 1e-16) continue;
 				for(int k=3*i;k<3*(i+1);k++) { 
 					const double ak  = fabs(at[k]);
 					if (isnormal(ak) && ak>maxak){
@@ -443,9 +443,9 @@ int integrator_ias15_step(struct Rebound* r) {
 				particles[k].vy = v0[3*k+1];
 				particles[k].vz = v0[3*k+2];
 			}
-			dt = dt_new;
+			r->dt = dt_new;
 			if (dt_last_success!=0.){		// Do not predict next e/b values if this is the first time step.
-				double ratio = dt/dt_last_success;
+				double ratio = r->dt/dt_last_success;
 				predict_next_step(ratio, N3, er, br);
 			}
 			
@@ -454,7 +454,7 @@ int integrator_ias15_step(struct Rebound* r) {
 		if (fabs(dt_new/dt_done) > 1.0) {	// New timestep is larger.
 			if (dt_new/dt_done > 1./safety_factor) dt_new = dt_done /safety_factor;	// Don't increase the timestep by too much compared to the last one.
 		}
-		dt = dt_new;
+		r->dt = dt_new;
 	}
 
 	// Find new position and velocity values at end of the sequence
@@ -496,7 +496,7 @@ int integrator_ias15_step(struct Rebound* r) {
 	dt_last_success = dt_done;
 	copybuffers(e,er,N3);		
 	copybuffers(b,br,N3);		
-	double ratio = dt/dt_done;
+	double ratio = r->dt/dt_done;
 	predict_next_step(ratio, N3, e, b);
 	return 1; // Success.
 }
