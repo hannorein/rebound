@@ -60,17 +60,6 @@ struct ReboundIntegratorWHFast* integrator_whfast_init(struct Rebound* r){
 // Fast inverse factorial lookup table
 static const double invfactorial[35] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
 
-//static double ipow(double base, unsigned int exp) {
-//	double result = 1;
-//	while (exp) {
-//		if (exp & 1)
-//		    result *= base;
-//		exp >>= 1;
-//		base *= base;
-//	}
-//	return result;
-//}
-
 static inline double fastabs(double x){
 	    return (x > 0.) ? x : -x;
 }
@@ -165,8 +154,6 @@ static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
 
 /****************************** 
  * Keplerian motion           */
-int iter;
-
 static void kepler_step(struct particle* const restrict p_j, const double* const eta,  const double G, unsigned int i, double _dt, unsigned int* timestep_warning){
   	const double M = G*eta[i];
 	const struct particle p1 = p_j[i];
@@ -215,7 +202,6 @@ double X;
 			const double fpp = eta0*Gs[0] + zeta0*Gs[1];
 			const double denom = fp + sqrt(fabs(16.*fp*fp - 20.*f*fpp));
 			X = (X*denom - 5.*f)/denom;
-			iter++;	// DEBUG
 			
 			for(int i=1;i<n_lag;i++){
 				if(X==prevX[i]){
@@ -240,7 +226,6 @@ double X;
 			const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
 			ri = 1./(r0 + eta0Gs1zeta0Gs2);
 			X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+_dt);
-			iter++;	// DEBUG
 			
 			if (X==oldX||X==oldX2){
 				// Converged. Exit.
@@ -273,7 +258,6 @@ double X;
 		}
 		X = (X_max + X_min)/2.;
 		do{
-			iter++;	// DEBUG
 			stiefel_Gs3(Gs, beta, X);
 			double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-_dt;
 			if (s>=0.){
