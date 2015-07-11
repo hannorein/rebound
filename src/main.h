@@ -29,12 +29,14 @@
 // Make sure M_PI is defined. 
 #define M_PI           3.14159265358979323846
 #endif
+struct ReboundIntegratorWHFast;
 
 struct Rebound {
 	double 	t;		/**< Current simulation time. */
 	double 	tmax;		/**< Maximum simulation time. Simulation stops if t>=tmax. Simulation runs forever if t==0.*/
 	double 	G;		/**< Gravitational constant. Default: 1. */
 	double 	dt;		/**< Current timestep. */
+	struct ReboundIntegratorWHFast* ri_whfast;	/**< Pointer to the WHFast struct */
 };
 
 extern double 	softening;	/**< Gravitational softening parameter. Default: 0. */

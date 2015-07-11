@@ -25,21 +25,32 @@
 #ifndef _INTEGRATOR_WHFAST_H
 #define _INTEGRATOR_WHFAST_H
 struct Rebound;
+struct Particle; 
+
+struct ReboundIntegratorWHFast {
+
+	/*
+	 * This variable turns on/off various symplectic correctors.
+	 * 0 (default): turns off all correctors
+	 * 3: uses third order (two-stage) corrector 
+	 * 5: uses fifth order (four-stage) corrector 
+	 * 7: uses seventh order (six-stage) corrector 
+	 * 11: uses eleventh order (ten-stage) corrector 
+	 */
+	unsigned int corrector;
+
+	/*
+	 * This array contains the Jacobi coordinates of all particles.
+	 */
+	struct particle* restrict p_j;
+
+};
 
 void integrator_whfast_part1(struct Rebound* r);
 void integrator_whfast_part2(struct Rebound* r);
 void integrator_whfast_synchronize(struct Rebound* r);
 void integrator_whfast_reset(struct Rebound* r);
-
-/*
- * This variable turns on/off various symplectic correctors.
- * 0 (default): turns off all correctors
- * 3: uses third order (two-stage) corrector 
- * 5: uses fifth order (four-stage) corrector 
- * 7: uses seventh order (six-stage) corrector 
- * 11: uses eleventh order (ten-stage) corrector 
- */
-extern unsigned int integrator_whfast_corrector;
+struct ReboundIntegratorWHFast* integrator_whfast_init(struct Rebound* r);
 
 /* 
  * Setting this flag to one will recalculate Jacobi coordinates 

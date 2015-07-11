@@ -247,6 +247,15 @@ void interruptHandler(int var) {
 	interrupt_counter++;
 }
 
+struct Rebound* rebound_init(){
+	struct Rebound* r = calloc(1,sizeof(struct Rebound));
+	r->t 	= 0; 
+	r->G 	= 1;
+	r->dt	= 0.001;
+	r->ri_whfast = integrator_whfast_init(r);
+	return r;
+}
+
 int main(int argc, char* argv[]) {
 #ifdef MPI
 	communication_mpi_init(argc,argv);
@@ -272,10 +281,7 @@ int main(int argc, char* argv[]) {
 	signal(SIGKILL, interruptHandler);
 	srand ( tim.tv_usec + getpid());
 	
-	r = calloc(1,sizeof(struct Rebound));
-	r->t 	= 0; 
-	r->G 	= 1;
-	r->dt	= 0.001;
+	r = rebound_init();
 	display_r = r;
 
 	problem_init(argc, argv, r);

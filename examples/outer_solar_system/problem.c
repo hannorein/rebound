@@ -89,7 +89,7 @@ void problem_init(int argc, char* argv[], struct Rebound* r){
 	r->G		= k*k;				// These are the same units as used by the mercury6 code.
 	init_boxwidth(200); 				// Init box with width 200 astronomical units
 	integrator_whfast_safe_mode = 0;		// Turn of safe mode. Need to call integrator_synchronize() before outputs. 
-	integrator_whfast_corrector = 11;		// Turn on symplectic correctors (11th order).
+	r->ri_whfast->corrector = 11;			// Turn on symplectic correctors (11th order).
 	integrator_force_is_velocitydependent = 0;	// Force only depends on positions. 
 	integrator	= WHFAST;
 	//integrator	= IAS15;
