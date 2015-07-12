@@ -46,8 +46,4 @@ void gravity_calculate_acceleration(struct Rebound* r);
   */
 void gravity_calculate_variational_acceleration(struct Rebound* r);
 
-/*
- * Ignore i=1, j=0 pair (used for WHFAST);
- */
-extern unsigned int gravity_ignore_10;
 #endif

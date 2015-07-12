@@ -71,12 +71,12 @@ void particles_add(struct Rebound* const r, struct Particle pt){
 		fprintf(stderr,"\n\033[1mWarning!\033[0m Trying to add particle after calling megno_init().\n");
 	}
 #ifndef COLLISIONS_NONE
-	if (pt.r>=collisions_max_r){
-		collisions_max2_r = collisions_max_r;
-		collisions_max_r = pt.r;
+	if (pt.r>=r->max_radius[0]){
+		r->max_radius[1] = r->max_radius[0];
+		r->max_radius[0] = pt.r;
 	}else{
-		if (pt.r>=collisions_max2_r){
-			collisions_max2_r = pt.r;
+		if (pt.r>=r->max_radius[1]){
+			r->max_radius[1] = pt.r;
 		}
 	}
 #endif 	// COLLISIONS_NONE

@@ -54,9 +54,6 @@ struct 	collision* collisions 	= NULL;		/**< Array of all collisions. */
 int 	collisions_NMAX 	= 0;		/**< Size allocated for collisions.*/
 int 	collisions_N 		= 0;		/**< Number of elements in collisions. */
 
-double 	collisions_max_r	= 0;
-double 	collisions_max2_r	= 0;
-
 /**
  * Find the nearest neighbour in a cell or its daughters.
  * The function only returns a positive result if the particles
@@ -204,7 +201,7 @@ void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, struct Ghostbox
 		double dy = gb.shifty - c->y;
 		double dz = gb.shiftz - c->z;
 		double r2 = dx*dx + dy*dy + dz*dz;
-		double rp  = p1_r + collisions_max2_r + 0.86602540378443*c->w;
+		double rp  = p1_r + r->max_radius[2] + 0.86602540378443*c->w;
 		// Check if we need to decent into daughter cells
 		if (r2 < rp*rp ){
 			for (int o=0;o<8;o++){

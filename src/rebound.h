@@ -60,6 +60,7 @@ struct Rebound {
 	double 	boxsize_y;	/**< Size of the entire box in the y direction, root_ny*boxsize. Set in box_init().*/
 	double 	boxsize_z;	/**< Size of the entire box in the z direction, root_nz*boxsize. Set in box_init().*/
 	double 	boxsize_max;	/**< Maximum size of the entire box in any direction. Set in box_init().*/
+	double  max_radius[2];	/**< Two largest particle radii. Needed for collision search. */
 	int 	N;		/**< Current number of particles on this node. */
 	int 	Nmax;		/**< Current maximum space allocated in the particles array on this node. */
 	int 	N_active;	/**< Number of massive particles included in force calculation. Default: N.*/

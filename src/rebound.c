@@ -211,6 +211,8 @@ struct Rebound* rebound_init(){
 	r->Nmax		= 0;	
 	r->N_active 	= -1; 	
 	r->N_megno 	= 0; 	
+	r->max_radius[0]	= 0.; 	
+	r->max_radius[1]	= 0.; 	
 	r->exit_simulation	= 0;
 	r->exact_finish_time 	= 0;
 	r->particles	= NULL;

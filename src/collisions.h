@@ -44,20 +44,6 @@ void collisions_search(struct Rebound* const r);
 void collisions_resolve(struct Rebound* const r);
 
 /**
- * Maximum radius of the particles in this simulation.
- * The value is set automatically in problem_init().
- */
-extern double collisions_max_r; 
-
-/**
- * Radius of the second largest particle in this simulation.
- * This radius is needed to decide if a tree cell needs to
- * be opened or not.
- * The value is set automatically in problem_init().
- */
-extern double collisions_max2_r; 
-
-/**
  * Particle between 0 and N_collisions (excluding) will not be searched for collisions and not shuffled around.
  */
 extern int N_collisions;
