@@ -17,7 +17,7 @@
  * before accessing the particle structure.
  * 
  * @section 	LICENSE
- * Copyright (c) 2014 Hanno Rein, Shangfei Liu, Dave Spiegel
+ * Copyright (c) 2015 Hanno Rein, Shangfei Liu, Dave Spiegel
  *
  * This file is part of rebound.
  *
@@ -75,40 +75,15 @@ double ss_mass[6] =
 	7.4074074e-09	// Pluto
 };
 
-const double k	 	= 0.01720209895;	// Gaussian constant 
-double energy(double const G, const int N, const struct Particle* const particles);
-double e_init;
-
-
-double energy(const double G, const int N, const struct Particle* const particles){
-	double e_kin = 0.;
-	double e_pot = 0.;
-	for (int i=0;i<N;i++){
-		struct Particle pi = particles[i];
-		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
-		for (int j=i+1;j<N;j++){
-			struct Particle pj = particles[j];
-			double dx = pi.x - pj.x;
-			double dy = pi.y - pj.y;
-			double dz = pi.z - pj.z;
-			e_pot -= G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
-		}
-	}
-	return e_kin +e_pot;
-}
 
 double tmax = 7.3e7;
-void heartbeat(struct Rebound* const r){
-	if (output_check(r, 10000000.)){
-		output_timing(r, tmax);
-	}
-}
 
-
+void heartbeat(struct Rebound* const r);
 
 int main(int argc, char* argv[]) {
 	struct Rebound* r = rebound_init();
 	// Setup constants
+	const double k	 	= 0.01720209895;	// Gaussian constant 
 	r->dt 		= 40;				// in days
 	r->G		= k*k;				// These are the same units as used by the mercury6 code.
 	r->ri_whfast.safe_mode = 0;			// Turn of safe mode. Need to call integrator_synchronize() before outputs. 
@@ -143,15 +118,22 @@ int main(int argc, char* argv[]) {
 		tools_move_to_center_of_momentum(r);
 	}
 
-	r->N_active = r->N-1;
+	r->N_active = r->N-1;  // Pluto is treated as a test-particle.
 
-	e_init = energy(r->G, r->N - r->N_megno, r->particles);
-	system("rm -f energy.txt");
-	system("rm -f pos.txt");
-
+	double e_initial = tools_energy(r);
 
 	// Start integration
 	rebound_integrate(r, tmax);
 	
-	printf("Done. Final time: %.4f\n", r->t);
+	double e_final = tools_energy(r);
+	printf("Done. Final time: %.4f. Relative energy error: %e\n", r->t, fabs((e_final-e_initial)/e_initial));
 }
+
+
+void heartbeat(struct Rebound* const r){
+	if (output_check(r, 10000000.)){
+		output_timing(r, tmax);
+	}
+}
+
+
