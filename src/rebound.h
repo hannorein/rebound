@@ -63,6 +63,9 @@ struct Rebound {
 	int 	root_ny;	/**< Number of root boxes in y direction. Default: 1. */
 	int 	root_nz;	/**< Number of root boxes in z direction. Default: 1. */
 	int 	root_n;		/**< Total number of root boxes in all directions, root_nx*root_ny*root_nz. Default: 1. Set in box_init().*/
+	int	nghostx;	/**< Number of ghostboxes in x direction. */
+	int 	nghosty;	/**< Number of ghostboxes in y direction. */
+	int 	nghostz;	/**< Number of ghostboxes in z direction. */
 	int 	exit_simulation;/**< Set to 1 to exit the simulation at the end of the next timestep. */
 	int 	exact_finish_time; /**< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. */
 	integrator_t integrator; /**< Variable setting the current integrator.  */
@@ -112,17 +115,13 @@ struct Rebound {
 struct Rebound* rebound_init();
 
 /**
- * Main iteration loop.
- * All the work is done within this function.
- * When OpenGL is not used, this function is called by a loop in main(). 
- * When OpenGL is used, this function is called by OpenGL directly. 
+ * Performon integration step.
  */
-void iterate(struct Rebound* const r);
+void rebound_step(struct Rebound* const r);
 
+/**
+ * Performon an integration. Starting at the current time t and until time tmax.
+ */
 int rebound_integrate(struct Rebound* const r, double tmax, double maxR, double minD);
 
-/** Function pointer definitions 
- *
- */
-extern void (*problem_post_timestep_modifications_with_parameters) (struct Particle* particles, double t, double dt, double G, int N, int N_megno);  
 #endif

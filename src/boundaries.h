@@ -37,7 +37,7 @@
  * It is sometimes also used as the relative position and velocity of a 
  * particle to speed up calculation.
  */
-struct ghostbox{
+struct Ghostbox{
 	double shiftx;		/**< Relative x position */
 	double shifty;		/**< Relative y position */
 	double shiftz;		/**< Relative z position */
@@ -51,7 +51,7 @@ struct ghostbox{
  * If a particle left the box, it is shifted back in the box
  * for periodic boundary conditions or remove from the simulation.
  */
-void boundaries_check(void);
+void boundaries_check(struct Rebound* r);
 
 /**
  * Creates a ghostbox.
@@ -59,10 +59,6 @@ void boundaries_check(void);
  * @param j Index in y direction.
  * @param k Index in z direction.
  */
-struct ghostbox boundaries_get_ghostbox(int i, int j, int k);
-
-extern int nghostx;	/**< Number of ghostboxes in x direction. */
-extern int nghosty;	/**< Number of ghostboxes in y direction. */
-extern int nghostz;	/**< Number of ghostboxes in z direction. */
+struct Ghostbox boundaries_get_ghostbox(int i, int j, int k);
 
 #endif

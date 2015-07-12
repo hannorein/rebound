@@ -76,6 +76,10 @@ double display_rotate_z = 0;	/**< Rotate everything around the z-axis. */
  * @param x Position on screen.
  * @param y Position on screen.
  */
+void display_func(void){
+	rebound_step(display_r);
+}
+
 void displayKey(unsigned char key, int x, int y){
 	switch(key){
 		case 'q': case 'Q':
@@ -89,7 +93,7 @@ void displayKey(unsigned char key, int x, int y){
 				glutIdleFunc(NULL);
 			}else{
 				printf("Resume.\n");
-				glutIdleFunc(iterate);
+				glutIdleFunc(display_func);
 			}
 			break;
 		case 's': case 'S':
@@ -119,12 +123,12 @@ void displayKey(unsigned char key, int x, int y){
 			break;
 		case 'x': 
 			display_reference++;
-			if (display_reference>N) display_reference = -1;
+			if (display_reference>display_r->N) display_reference = -1;
 			printf("Reference particle: %d.\n",display_reference);
 			break;
 		case 'X': 
 			display_reference--;
-			if (display_reference<-1) display_reference = N-1;
+			if (display_reference<-1) display_reference = display_r->N-1;
 			printf("Reference particle: %d.\n",display_reference);
 			break;
 		case 'p': case 'P':
@@ -182,6 +186,7 @@ void display_entire_tree(void){
 struct Rebound* display_r = NULL;
 
 void display(void){
+	const struct Particle* particles = display_r->particles;
 	if (display_pause) return;
 #ifdef TREE
 	if (display_tree){
@@ -201,7 +206,7 @@ void display(void){
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_LIGHTING);
 		glEnable(GL_LIGHT0);
-		GLfloat lightpos[] = {0, boxsize_max, boxsize_max, 0.f};
+		GLfloat lightpos[] = {0, display_r->boxsize_max, display_r->boxsize_max, 0.f};
 		glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
 	}else{
 		glEnable(GL_BLEND);                    
@@ -212,17 +217,17 @@ void display(void){
 	}
 	}
 	glEnable(GL_POINT_SMOOTH);
-	glVertexPointer(3, GL_DOUBLE, sizeof(struct particle), particles);
+	glVertexPointer(3, GL_DOUBLE, sizeof(struct Particle), particles);
 	//int _N_active = ((N_active==-1)?N:N_active);
 	if (display_reference>=0){
 		glTranslatef(-particles[display_reference].x,-particles[display_reference].y,-particles[display_reference].z);
 	}
 	glRotatef(display_rotate_x,1,0,0);
 	glRotatef(display_rotate_z,0,0,1);
-	for (int i=-display_ghostboxes*nghostx;i<=display_ghostboxes*nghostx;i++){
-	for (int j=-display_ghostboxes*nghosty;j<=display_ghostboxes*nghosty;j++){
-	for (int k=-display_ghostboxes*nghostz;k<=display_ghostboxes*nghostz;k++){
-		struct ghostbox gb = boundaries_get_ghostbox(i,j,k);
+	for (int i=-display_ghostboxes*display_r->nghostx;i<=display_ghostboxes*display_r->nghostx;i++){
+	for (int j=-display_ghostboxes*display_r->nghosty;j<=display_ghostboxes*display_r->nghosty;j++){
+	for (int k=-display_ghostboxes*display_r->nghostz;k<=display_ghostboxes*display_r->nghostz;k++){
+		struct Ghostbox gb = boundaries_get_ghostbox(i,j,k);
 		glTranslatef(gb.shiftx,gb.shifty,gb.shiftz);
 		if (!(!display_clear&&display_wire)){
 			if (display_spheres){
@@ -230,7 +235,7 @@ void display(void){
 				glColor4f(1.0,1.0,1.0,1.0);
 #ifndef COLLISIONS_NONE
 				for (int i=0;i<N-N_megno;i++){
-					struct particle p = particles[i];
+					struct Particle p = particles[i];
 					glTranslatef(p.x,p.y,p.z);
 					glScalef(p.r,p.r,p.r);
 #ifdef _APPLE
@@ -250,20 +255,20 @@ void display(void){
 				//glDrawArrays(GL_POINTS, _N_active, N-_N_active);
 				glColor4f(1.0,1.0,0.0,0.9);
 				glPointSize(5.);
-				glDrawArrays(GL_POINTS, 0, N-N_megno);
+				glDrawArrays(GL_POINTS, 0, display_r->N-display_r->N_megno);
 				glDisableClientState(GL_VERTEX_ARRAY);
 			}
 		}
 		// Drawing wires
 		if (display_wire){
-			if(integrator!=SEI){
+			if(display_r->integrator!=SEI){
 				double radius = 0;
-				struct particle com = particles[0];
-				for (int i=1;i<N-N_megno;i++){
-					struct particle p = particles[i];
-					if (N_active>0){
+				struct Particle com = particles[0];
+				for (int i=1;i<display_r->N-display_r->N_megno;i++){
+					struct Particle p = particles[i];
+					if (display_r->N_active>0){
 						// Different colors for active/test particles
-						if (i>=N_active){
+						if (i>=display_r->N_active){
 							glColor4f(0.9,1.0,0.9,0.9);
 						}else{
 							glColor4f(1.0,0.9,0.0,0.9);
@@ -295,8 +300,8 @@ void display(void){
 					com = tools_get_center_of_mass(p,com);
 				}
 			}else{
-				for (int i=1;i<N;i++){
-					struct particle p = particles[i];
+				for (int i=1;i<display_r->N;i++){
+					struct Particle p = particles[i];
 					glBegin(GL_LINE_LOOP);
 					for (double _t=-100.*display_r->dt;_t<=100.*display_r->dt;_t+=20.*display_r->dt){
 						double frac = 1.-fabs(_t/(120.*display_r->dt));
@@ -320,9 +325,9 @@ void display(void){
 	}
 	}
 	glColor4f(1.0,0.0,0.0,0.4);
-	glScalef(boxsize_x,boxsize_y,boxsize_z);
+	glScalef(display_r->boxsize_x,display_r->boxsize_y,display_r->boxsize_z);
 	glutWireCube(1);
-	glScalef(1./boxsize_x,1./boxsize_y,1./boxsize_z);
+	glScalef(1./display_r->boxsize_x,1./display_r->boxsize_y,1./display_r->boxsize_z);
 	glRotatef(-display_rotate_z,0,0,1);
 	glRotatef(-display_rotate_x,1,0,0);
 	if (display_reference>=0){
@@ -338,7 +343,7 @@ void display_init(int argc, char* argv[]){
 	glutCreateWindow("rebound");
 	zprInit();
 	glutDisplayFunc(display);
-	glutIdleFunc(iterate);
+	glutIdleFunc(display_func);
 	glutKeyboardFunc(displayKey);
 	glEnable(GL_BLEND);                    
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);  

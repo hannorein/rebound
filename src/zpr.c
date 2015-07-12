@@ -32,7 +32,9 @@
 #include <memory.h>
 #include <math.h>
 
+#include "rebound.h"
 #include "zpr.h"
+#include "display.h"
 
 #define bool int
 #define true 1
@@ -74,7 +76,6 @@ static void zprPick(GLdouble x, GLdouble y,GLdouble delX, GLdouble delY);
 GLfloat zprReferencePoint[4] = { 0,0,0,0 };
 double glscale = 1;
 int resetOrientation = 0;
-extern double boxsize_max;
 
 void zprReset() {
     glMatrixMode(GL_PROJECTION);
@@ -83,7 +84,7 @@ void zprReset() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glGetDoublev(GL_MODELVIEW_MATRIX,_matrix);
-    double initscale = 1.5/boxsize_max;
+    double initscale = 1.5/display_r->boxsize_max;
     glScalef(initscale,initscale,initscale);
     switch(resetOrientation){
 	    case 1:

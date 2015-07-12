@@ -28,6 +28,7 @@
 #include <math.h>
 #include <time.h>
 #include <signal.h>
+#include <string.h>
 #include <sys/time.h>
 #include "integrator.h"
 #include "integrator_whfast.h"
@@ -49,6 +50,7 @@
 #ifdef GRAVITY_GRAPE
 void gravity_finish(void);
 #endif // GRAVITY_GRAPE
+#define MAX(a, b) ((a) < (b) ? (b) : (a))
 
 static const char* logo[];				/**< Logo of rebound. */
 static const char* build_str = __DATE__ " " __TIME__;	/**< Date and time build string. */
@@ -66,7 +68,7 @@ void rebound_step(struct Rebound* const r){
 
 	// Check for root crossings.
 	PROFILING_START()
-	boundaries_check();     
+	boundaries_check(r);     
 	PROFILING_STOP(PROFILING_CAT_BOUNDARY)
 
 	// Update and simplify tree. 
@@ -118,7 +120,7 @@ void rebound_step(struct Rebound* const r){
 #ifndef COLLISIONS_NONE
 	// Check for root crossings.
 	PROFILING_START()
-	boundaries_check();     
+	boundaries_check(r);     
 	PROFILING_STOP(PROFILING_CAT_BOUNDARY)
 
 	// Search for collisions using local and essential tree.
@@ -129,7 +131,66 @@ void rebound_step(struct Rebound* const r){
 	collisions_resolve();
 	PROFILING_STOP(PROFILING_CAT_COLLISION)
 #endif  // COLLISIONS_NONE
+#ifdef OPENGL
+	PROFILING_START()
+	display();
+	PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
+#endif // OPENGL
+	if (r->post_timestep){ r->post_timestep(r); }
+#warning TODO
+//	if (maxR){
+//		// Check for escaping particles
+//		const double maxR2 = maxR*maxR;
+//		const int N = r->N - r->N_megno;
+//		const struct Particle* const particles = r->particles;
+//		for (int i=0;i<N;i++){
+//			struct Particle p = particles[i];
+//			double r2 = p.x*p.x + p.y*p.y + p.z*p.z;
+//			if (r2>maxR2){
+//				ret_value = 2;
+//				escapedParticle = i;
+//			}
+//		}
+//	}
+//	if (minD){
+//		// Check for close encounters
+//		const double minD2 = minD*minD;
+//		const int N = r->N - r->N_megno;
+//		const struct Particle* const particles = r->particles;
+//		for (int i=0;i<N;i++){
+//			struct Particle pi = particles[i];
+//			for (int j=0;j<i;j++){
+//				struct Particle pj = particles[j];
+//				const double x = pi.x-pj.x;
+//				const double y = pi.y-pj.y;
+//				const double z = pi.z-pj.z;
+//				const double r2 = x*x + y*y + z*z;
+//				if (r2<minD2){
+//					ret_value = 3;
+//					closeEncounterPi = i;
+//					closeEncounterPj = j;
+//				}
+//			}
+//		}
+//	}
 }
+
+void rebound_configure_box(struct Rebound* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz){
+	r->boxsize = boxsize;
+	r->root_nx = root_nx;
+	r->root_ny = root_ny;
+	r->root_nz = root_nz;
+	// Setup box sizes
+	r->boxsize_x = r->boxsize *(double)r->root_nx;
+	r->boxsize_y = r->boxsize *(double)r->root_ny;
+	r->boxsize_z = r->boxsize *(double)r->root_nz;
+	r->root_n = r->root_nx*r->root_ny*r->root_nz;
+	r->boxsize_max = MAX(r->boxsize_x, MAX(r->boxsize_y, r->boxsize_z));
+	if (r->root_nx <=0 || r->root_ny <=0 || r->root_nz <= 0){
+		fprintf(stderr,"\n\033[1mError!\033[0m Number of root boxes must be greater or equal to 1 in each direction.\n");
+	}
+}
+	
 
 struct Rebound* rebound_init(){
 	if (rebound_show_logo==1){
@@ -144,14 +205,13 @@ struct Rebound* rebound_init(){
 	r->softening 	= 0;
 	r->dt		= 0.001;
 	r->boxsize 	= -1;
-	r->boxsize_x 	= -1;
-	r->boxsize_y 	= -1;
-	r->boxsize_z 	= -1;
-	r->boxsize_max 	= -1;
 	r->root_nx	= 1;
 	r->root_ny	= 1;
 	r->root_nz	= 1;
 	r->root_n	= 1;
+	r->nghostx	= 0;
+	r->nghosty	= 0;
+	r->nghostz	= 0;
 	r->N 		= 0;	
 	r->Nmax		= 0;	
 	r->N_active 	= -1; 	
@@ -199,28 +259,12 @@ struct Rebound* rebound_init(){
 	memset(&(r->ri_ias15.er),0,sizeof(double)*7);
 	r->ri_ias15.dt_last_success = 0.;
 
-	if (r->root_nx <=0 || r->root_ny <=0 || r->root_nz <= 0){
-		fprintf(stderr,"ERROR: Number of root boxes must be greater or equal to 1 in each direction.\n");
+#ifdef MPI
+	// Make sure domain can be decomposed into equal number of root boxes per node.
+	if ((root_n/mpi_num)*mpi_num != root_n){
+		if (mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",root_n,mpi_num);
 		exit(-1);
 	}
-
-	// Setup box sizes
-	//boxsize_x = boxsize *(double)root_nx;
-	//boxsize_y = boxsize *(double)root_ny;
-	//boxsize_z = boxsize *(double)root_nz;
-	//root_n = root_nx*root_ny*root_nz;
-
-	// Make sure domain can be decomposed into equal number of root boxes per node.
-	//if ((root_n/mpi_num)*mpi_num != root_n){
-	//	if (mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",root_n,mpi_num);
-	//	exit(-1);
-	//}
-
-	//boxsize_max = boxsize_x;
-	//if (boxsize_max<boxsize_y) boxsize_max = boxsize_y;
-	//if (boxsize_max<boxsize_z) boxsize_max = boxsize_z;
-	
-#ifdef MPI
 	printf("Initialized %d*%d*%d root boxes. MPI-node: %d. Process id: %d.\n",r->root_nx,r->root_ny,r->root_nz,mpi_id, getpid());
 #else // MPI
 	printf("Initialized %d*%d*%d root boxes. Process id: %d.\n",r->root_nx,r->root_ny,r->root_nz, getpid());
@@ -244,17 +288,30 @@ int rebound_integrate(struct Rebound* const r, double tmax, double maxR, double 
 		r->dt = tmax-r->t;
 		last_step++;
 	}
+#ifdef OPENGL
+	if (display_r!=NULL){
+		fprintf(stderr,"\n\033[1mError!\033[0m Cannot vizualize two simulations at the same time. Exiting.\n");
+		return(1);
+	}
+	if (r->boxsize==-1){  // Need boxsize for visualization. Creating one. 
+		fprintf(stderr,"\n\033[1mWarning!\033[0m Configuring box automatically based on particle positions.\n");
+		const struct Particle* p = r->particles;
+		double max_r = 0;
+		for (int i=0;i<r->N;i++){
+			max_r = MAX(max_r, sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z));
+		}
+		rebound_configure_box(r, max_r*2.3,MAX(1,r->root_nx),MAX(1,r->root_ny),MAX(1,r->root_nz));
+	}
+	display_r = r;
+	display_init(0,NULL);
+	display_r = NULL;
+#else // OPENGL
 	while(r->t*dtsign<tmax*dtsign && last_step<2 && ret_value==0 && r->exit_simulation==0){
 		if (r->N<=0){
 			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
 			return(1);
 		}
 		rebound_step(r); 								// 0 to not do timing within step
-#ifdef OPENGL
-		PROFILING_START()
-		display();
-		PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
-#endif // OPENGL
 		if ((r->t+r->dt)*dtsign>=tmax*dtsign && r->exact_finish_time==1){
 			integrator_synchronize(r);
 			r->dt = tmax-r->t;
@@ -262,50 +319,13 @@ int rebound_integrate(struct Rebound* const r, double tmax, double maxR, double 
 		}else{
 			dt_last_done = r->dt;
 		}
-		if (r->post_timestep){ r->post_timestep(r); }
-		if (maxR){
-			// Check for escaping particles
-			const double maxR2 = maxR*maxR;
-			const int N = r->N - r->N_megno;
-			const struct Particle* const particles = r->particles;
-			for (int i=0;i<N;i++){
-				struct Particle p = particles[i];
-				double r2 = p.x*p.x + p.y*p.y + p.z*p.z;
-				if (r2>maxR2){
-					ret_value = 2;
-#warning TODO
-					//escapedParticle = i;
-				}
-			}
-		}
-		if (minD){
-			// Check for close encounters
-			const double minD2 = minD*minD;
-			const int N = r->N - r->N_megno;
-			const struct Particle* const particles = r->particles;
-			for (int i=0;i<N;i++){
-				struct Particle pi = particles[i];
-				for (int j=0;j<i;j++){
-					struct Particle pj = particles[j];
-					const double x = pi.x-pj.x;
-					const double y = pi.y-pj.y;
-					const double z = pi.z-pj.z;
-					const double r2 = x*x + y*y + z*z;
-					if (r2<minD2){
-#warning TODO
-						ret_value = 3;
-					 	//closeEncounterPi = i;
-						//closeEncounterPj = j;
-					}
-				}
-			}
-		}
 	}
 	integrator_synchronize(r);
 	r->dt = dt_last_done;
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
 	printf("\nComputation finished. Total runtime: %f s\n",timing_final-timing_initial);
+#endif // OPENGL
 	return ret_value;
 }
 

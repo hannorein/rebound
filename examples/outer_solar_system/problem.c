@@ -122,8 +122,9 @@ int main(int argc, char* argv[]) {
 	r->post_timestep = post_timestep;
 	r->finished = finished;
 	r->force_is_velocitydependent = 0;		// Force only depends on positions. 
-	//r->integrator	= WHFAST;
-	r->integrator	= IAS15;
+	r->integrator	= WHFAST;
+	//r->integrator	= IAS15;
+	//r->integrator	= WH;
 
 	// Initial conditions
 	for (int i=0;i<6;i++){
