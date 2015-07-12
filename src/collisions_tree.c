@@ -117,7 +117,7 @@ void collisions_search(struct Rebound* const r){
 			gb.shiftvz += p1.vz; 
 			// Loop over all root boxes.
 			for (int ri=0;ri<r->root_n;ri++){
-				struct cell* rootcell = tree_root[ri];
+				struct cell* rootcell = r->tree_root[ri];
 				if (rootcell!=NULL){
 					tree_get_nearest_neighbour_in_cell(r, gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
 				}

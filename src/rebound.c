@@ -252,6 +252,18 @@ struct Rebound* rebound_init(){
 	r->ri_ias15.a0  	= NULL;
 	r->ri_ias15.csx  	= NULL;
 	r->ri_ias15.csv  	= NULL;
+	
+	// ********** SEI
+	r->ri_sei.OMEGA  	= 1;
+	r->ri_sei.OMEGAZ 	= -1;
+	r->ri_sei.lastdt 	= 0;
+
+
+
+#ifdef TREE
+	r->tree_root		= NULL;
+	r->N_tree_fixed		= 0;
+#endif // TREE
 	memset(&(r->ri_ias15.g),0,sizeof(double)*7);
 	memset(&(r->ri_ias15.b),0,sizeof(double)*7);
 	memset(&(r->ri_ias15.e),0,sizeof(double)*7);

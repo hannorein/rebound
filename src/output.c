@@ -125,7 +125,7 @@ void output_timing(struct Rebound* r, const double tmax){
 	}
 	printf("N_tot= %- 9d  ",N_tot);
 	if (r->integrator==SEI){
-		printf("t= %- 9f [orb]  ",r->t*OMEGA/2./M_PI);
+		printf("t= %- 9f [orb]  ",r->t*r->ri_sei.OMEGA/2./M_PI);
 	}else{
 		printf("t= %- 9f  ",r->t);
 	}
@@ -316,14 +316,14 @@ void output_append_velocity_dispersion(struct Rebound* r, char* filename){
 		struct Particle p = r->particles[i];
 		A.x = A.x + (p.vx-A.x)/(double)(i+1);
 		if (r->integrator==SEI){
-			A.y = A.y + (p.vy+1.5*OMEGA*p.x-A.y)/(double)(i+1);
+			A.y = A.y + (p.vy+1.5*r->ri_sei.OMEGA*p.x-A.y)/(double)(i+1);
 		}else{
 			A.y = A.y + (p.vy-A.y)/(double)(i+1);
 		}
 		A.z = A.z + (p.vz-A.z)/(double)(i+1);
 		Q.x = Q.x + (p.vx-Aim1.x)*(p.vx-A.x);
 		if (r->integrator==SEI){
-			Q.y = Q.y + (p.vy+1.5*OMEGA*p.x-Aim1.y)*(p.vy+1.5*OMEGA*p.x-A.y);
+			Q.y = Q.y + (p.vy+1.5*r->ri_sei.OMEGA*p.x-Aim1.y)*(p.vy+1.5*r->ri_sei.OMEGA*p.x-A.y);
 		}else{
 			Q.y = Q.y + (p.vy-Aim1.y)*(p.vy-A.y);
 		}

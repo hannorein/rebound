@@ -36,9 +36,6 @@
 
 #ifdef TREE
 
-struct cell** tree_root;
-int N_tree_fixed=0;
-
 /**
   * Given the index of a particle and a pointer to a node cell, the function returns the index
   * of the octant which the particle belongs to.
@@ -46,7 +43,7 @@ int N_tree_fixed=0;
   * @param pt is the index of a particle.
   * @param node is the pointer to a node cell. 
   */
-int tree_get_octant_for_particle_in_cell(const struct Rebound* const r, int pt, struct cell *node);
+int tree_get_octant_for_particle_in_cell(const struct Particle p, struct cell *node);
 
 /**
   * This function adds a particle to the octant[o] of a node. 
@@ -67,8 +64,8 @@ int tree_get_octant_for_particle_in_cell(const struct Rebound* const r, int pt, 
 struct cell *tree_add_particle_to_cell(struct Rebound* const r, struct cell *node, int pt, struct cell *parent, int o);
 
 void tree_add_particle_to_tree(struct Rebound* const r, int pt){
-	if (tree_root==NULL){
-		tree_root = calloc(r->root_nx*r->root_ny*r->root_nz,sizeof(struct cell*));
+	if (r->tree_root==NULL){
+		r->tree_root = calloc(r->root_nx*r->root_ny*r->root_nz,sizeof(struct cell*));
 	}
 	struct Particle p = r->particles[pt];
 	int rootbox = particles_get_rootbox_for_particle(r, p);
@@ -78,14 +75,15 @@ void tree_add_particle_to_tree(struct Rebound* const r, int pt){
 	int proc_id = rootbox/root_n_per_node;
 	if (proc_id!=mpi_id) return;
 #endif 	// MPI
-	tree_root[rootbox] = tree_add_particle_to_cell(r, tree_root[rootbox],pt,NULL,0);
+	r->tree_root[rootbox] = tree_add_particle_to_cell(r, r->tree_root[rootbox],pt,NULL,0);
 }
 
 struct cell *tree_add_particle_to_cell(struct Rebound* const r, struct cell *node, int pt, struct cell *parent, int o){
+	struct Particle* const particles = r->particles;
 	// Initialize a new node
 	if (node == NULL) {  
 		node = calloc(1, sizeof(struct cell));
-		struct Particle p = r->particles[pt];
+		struct Particle p = particles[pt];
 		if (parent == NULL){ // The new node is a root
 			node->w = r->boxsize;
 			int i = ((int)floor((p.x + r->boxsize_x/2.)/r->boxsize))%r->root_nx;
@@ -101,7 +99,7 @@ struct cell *tree_add_particle_to_cell(struct Rebound* const r, struct cell *nod
 			node->z 	= parent->z + node->w/2.*((o>>2)%2==0?1.:-1);
 		}
 		node->pt = pt; 
-		r->particles[pt].c = node;
+		particles[pt].c = node;
 		for (int i=0; i<8; i++){
 			node->oct[i] = NULL;
 		}
@@ -109,22 +107,21 @@ struct cell *tree_add_particle_to_cell(struct Rebound* const r, struct cell *nod
 	}
 	// In a existing node
 	if (node->pt >= 0) { // It's a leaf node
-		int o = tree_get_octant_for_particle_in_cell(r, node->pt, node);
+		int o = tree_get_octant_for_particle_in_cell(particles[node->pt], node);
 		node->oct[o] = tree_add_particle_to_cell(r, node->oct[o], node->pt, node, o); 
-		o = tree_get_octant_for_particle_in_cell(r, pt, node);
+		o = tree_get_octant_for_particle_in_cell(particles[pt], node);
 		node->oct[o] = tree_add_particle_to_cell(r, node->oct[o], pt, node, o);
 		node->pt = -2;
 	}else{ // It's not a leaf
 		node->pt--;
-		int o = tree_get_octant_for_particle_in_cell(r, pt, node);
+		int o = tree_get_octant_for_particle_in_cell(particles[pt], node);
 		node->oct[o] = tree_add_particle_to_cell(r, node->oct[o], pt, node, o);
 	}
 	return node;
 }
 
-int tree_get_octant_for_particle_in_cell(const struct Rebound* const r, int pt, struct cell *node){
+int tree_get_octant_for_particle_in_cell(const struct Particle p, struct cell *node){
 	int octant = 0;
-	struct Particle p = r->particles[pt];
 	if (p.x < node->x) octant+=1;
 	if (p.y < node->y) octant+=2;
 	if (p.z < node->z) octant+=4;
@@ -190,7 +187,7 @@ struct cell *tree_update_cell(struct Rebound* const r, struct cell *node){
 	if (tree_particle_is_inside_cell(r, node) == 0) {
 		int oldpos = node->pt;
 		struct Particle reinsertme = r->particles[oldpos];
-		if (oldpos<N_tree_fixed){
+		if (oldpos<r->N_tree_fixed){
 			particles_add_fixed(r,reinsertme,oldpos);
 		}else{
 			(r->N)--;
@@ -277,8 +274,8 @@ void tree_update_gravity_data(struct Rebound* const r){
 #ifdef MPI
 		if (communication_mpi_rootbox_is_local(i)==1){
 #endif // MPI
-			if (tree_root[i]!=NULL){
-				tree_update_gravity_data_in_cell(r, tree_root[i]);
+			if (r->tree_root[i]!=NULL){
+				tree_update_gravity_data_in_cell(r, r->tree_root[i]);
 			}
 #ifdef MPI
 		}
@@ -288,15 +285,15 @@ void tree_update_gravity_data(struct Rebound* const r){
 #endif // GRAVITY_TREE
 
 void tree_update(struct Rebound* const r){
-	if (tree_root==NULL){
-		tree_root = calloc(r->root_nx*r->root_ny*r->root_nz,sizeof(struct cell*));
+	if (r->tree_root==NULL){
+		r->tree_root = calloc(r->root_nx*r->root_ny*r->root_nz,sizeof(struct cell*));
 	}
 	for(int i=0;i<r->root_n;i++){
 
 #ifdef MPI
 		if (communication_mpi_rootbox_is_local(i)==1){
 #endif // MPI
-			tree_root[i] = tree_update_cell(r, tree_root[i]);
+			r->tree_root[i] = tree_update_cell(r, r->tree_root[i]);
 #ifdef MPI
 		}
 #endif // MPI
@@ -354,22 +351,22 @@ void tree_add_essential_node(struct cell* node){
 		node->oct[o] = NULL;	
 	}
 	int index = particles_get_rootbox_for_node(node);
-	if (tree_root[index]==NULL){
-		tree_root[index] = node;
+	if (r->tree_root[index]==NULL){
+		r->tree_root[index] = node;
 	}else{
-		tree_add_essential_node_to_node(node, tree_root[index]);
+		tree_add_essential_node_to_node(node, r->tree_root[index]);
 	}
 }
 #ifdef GRAVITY_TREE
 void tree_prepare_essential_tree_for_gravity(void){
 	for(int i=0;i<root_n;i++){
 		if (communication_mpi_rootbox_is_local(i)==1){
-			communication_mpi_prepare_essential_tree_for_gravity(tree_root[i]);
+			communication_mpi_prepare_essential_tree_for_gravity(r->tree_root[i]);
 		}else{
 			// Delete essential tree reference. 
 			// Tree itself is saved in tree_essential_recv[][] and
 			// will be overwritten the next timestep.
-			tree_root[i] = NULL;
+			r->tree_root[i] = NULL;
 		}
 	}
 }
@@ -377,12 +374,12 @@ void tree_prepare_essential_tree_for_gravity(void){
 void tree_prepare_essential_tree_for_collisions(void){
 	for(int i=0;i<root_n;i++){
 		if (communication_mpi_rootbox_is_local(i)==1){
-			communication_mpi_prepare_essential_tree_for_collisions(tree_root[i]);
+			communication_mpi_prepare_essential_tree_for_collisions(r->tree_root[i]);
 		}else{
 			// Delete essential tree reference. 
 			// Tree itself is saved in tree_essential_recv[][] and
 			// will be overwritten the next timestep.
-			tree_root[i] = NULL;
+			r->tree_root[i] = NULL;
 		}
 	}
 }

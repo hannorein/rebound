@@ -24,14 +24,20 @@
  */
 #ifndef _INTEGRATOR_SEI_H
 #define _INTEGRATOR_SEI_H
-struct Rebound;
 void integrator_sei_part1(struct Rebound* r);
 void integrator_sei_part2(struct Rebound* r);
 void integrator_sei_synchronize(struct Rebound* r);
 void integrator_sei_reset(struct Rebound* r);
 
-/* 
- * Epicyclic/orbital frequency. 
- */
-extern double OMEGA;
+struct ReboundIntegratorSEI {
+	double OMEGA;		/**< Epicyclic/orbital frequency.  */
+	double OMEGAZ; 		/**< Epicyclic frequency in vertical direction. */
+
+	double lastdt;		/**< Cached sin(), tan() for this value of dt.*/
+	// Cache sin() tan() values.
+	double sindt;
+	double tandt;
+	double sindtz;
+	double tandtz;
+};
 #endif

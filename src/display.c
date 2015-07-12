@@ -178,7 +178,7 @@ void display_cell(struct cell* node){
  */
 void display_entire_tree(void){
 	for(int i=0;i<display_r->root_n;i++){
-		display_cell(tree_root[i]);
+		display_cell(display_r->tree_root[i]);
 	}
 }
 #endif

@@ -44,7 +44,6 @@
 #include "display.h"
 #include "integrator.h"
 
-extern double OMEGA;
 extern double minimum_collision_velocity;
 
 extern double (*coefficient_of_restitution_for_velocity)(double); 
@@ -61,7 +60,8 @@ int main(int argc, char* argv[]) {
 	opening_angle2	= .5;					// This determines the precission of the tree code gravity calculation.
 #endif // GRAVITY_TREE
 	r->integrator			= SEI;
-	OMEGA 				= 0.00013143527;	// 1/s
+	double OMEGA 			= 0.00013143527;	// 1/s
+	r->ri_sei.OMEGA 		= OMEGA;
 	r->G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
 	r->softening 			= 0.1;			// m
 	r->dt 				= 1e-3*2.*M_PI/OMEGA;	// s
@@ -127,11 +127,11 @@ double coefficient_of_restitution_bridges(double v){
 }
 
 void post_timestep(struct Rebound* const r){
-	if (output_check(r, 1e-3*2.*M_PI/OMEGA)){
+	if (output_check(r, 1e-3*2.*M_PI/r->ri_sei.OMEGA)){
 		output_timing(r, 0);
 		//output_append_velocity_dispersion("veldisp.txt");
 	}
-	if (output_check(r, 2.*M_PI/OMEGA)){
+	if (output_check(r, 2.*M_PI/r->ri_sei.OMEGA)){
 		//output_ascii("position.txt");
 	}
 }

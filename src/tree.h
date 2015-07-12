@@ -55,7 +55,6 @@ struct cell {
 			  * Number of particles within that cell. */ 
 };
 
-extern struct cell** tree_root; /**< A public pointer to the roots of the trees. */
 
 /**
   * The wrap function corresponds to initializing the trees when they don't exist and updating the structures of the trees by calling tree_update_cell. 
@@ -96,11 +95,6 @@ void tree_prepare_essential_tree_for_gravity(void);
 void tree_prepare_essential_tree_for_collisions(void);
 #endif //COLLISIONS_TREE
 #endif // MPI
-
-/**
- * Particle between 0 and N_tree_fixed will not be shuffled around during tree-reconstruction.
- */
-extern int N_tree_fixed;
 
 #endif // TREE
 #endif // _TREE_H

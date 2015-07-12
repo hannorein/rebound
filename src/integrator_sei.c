@@ -42,40 +42,30 @@
 #include "integrator_sei.h"
 
 
-double OMEGA 	= 1.; 	/**< Epicyclic/orbital frequency. */
-double OMEGAZ 	= -1.; 	/**< Epicyclic frequency in vertical direction. */
-
-void operator_H012(double dt, struct Particle* p);
+void operator_H012(double dt, const struct ReboundIntegratorSEI ri_sei, struct Particle* p);
 void operator_phi1(double dt, struct Particle* p);
-// Cache sin() tan() values.
-double lastdt=0;	/**< Cached sin(), tan() for this value of dt.*/
-double sindt,  tandt;
-double sindtz, tandtz;
 	
-/**
- * This function pre-calculates sin() and tan() needed for SEI. 
- */
-void integrator_cache_coefficients(double dt){
-	if (lastdt!=dt){
-		// Only calculate sin() and tan() if timestep changed
-		if (OMEGAZ==-1){
-			OMEGAZ=OMEGA;
-		}
-		sindt = sin(OMEGA*(-dt/2.));
-		tandt = tan(OMEGA*(-dt/4.));
-		sindtz = sin(OMEGAZ*(-dt/2.));
-		tandtz = tan(OMEGAZ*(-dt/4.));
-		lastdt = dt;
-	}
-}
 
 void integrator_sei_part1(struct Rebound* const r){
 	const int N = r->N;
 	struct Particle* const particles = r->particles;
-	integrator_cache_coefficients(r->dt);
+	if (r->ri_sei.OMEGAZ==-1){
+		r->ri_sei.OMEGAZ=r->ri_sei.OMEGA;
+	}
+	if (r->ri_sei.lastdt!=r->dt){
+		/**
+		 * Pre-calculates sin() and tan() needed for SEI. 
+		 */
+		r->ri_sei.sindt = sin(r->ri_sei.OMEGA*(-r->dt/2.));
+		r->ri_sei.tandt = tan(r->ri_sei.OMEGA*(-r->dt/4.));
+		r->ri_sei.sindtz = sin(r->ri_sei.OMEGAZ*(-r->dt/2.));
+		r->ri_sei.tandtz = tan(r->ri_sei.OMEGAZ*(-r->dt/4.));
+		r->ri_sei.lastdt = r->dt;
+	}
+	const struct ReboundIntegratorSEI ri_sei = r->ri_sei;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
-		operator_H012(r->dt, &(particles[i]));
+		operator_H012(r->dt, ri_sei, &(particles[i]));
 	}
 	r->t+=r->dt/2.;
 }
@@ -83,10 +73,11 @@ void integrator_sei_part1(struct Rebound* const r){
 void integrator_sei_part2(struct Rebound* r){
 	const int N = r->N;
 	struct Particle* const particles = r->particles;
+	const struct ReboundIntegratorSEI ri_sei = r->ri_sei;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		operator_phi1(r->dt, &(particles[i]));
-		operator_H012(r->dt, &(particles[i]));
+		operator_H012(r->dt, ri_sei, &(particles[i]));
 	}
 	r->t+=r->dt/2.;
 }
@@ -96,35 +87,35 @@ void integrator_sei_part2(struct Rebound* r){
  * Hamiltonian H0 exactly up to machine precission.
  * @param p Particle to evolve.
  */
-void operator_H012(double dt, struct Particle* p){
+void operator_H012(double dt, const struct ReboundIntegratorSEI ri_sei, struct Particle* p){
 		
 	// Integrate vertical motion
-	const double zx = p->z * OMEGAZ;
+	const double zx = p->z * ri_sei.OMEGAZ;
 	const double zy = p->vz;
 	
 	// Rotation implemeted as 3 shear operators
 	// to avoid round-off errors
-	const double zt1 =  zx - tandtz*zy;			
-	const double zyt =  sindtz*zt1 + zy;
-	const double zxt =  zt1 - tandtz*zyt;	
-	p->z  = zxt/OMEGAZ;
+	const double zt1 =  zx - ri_sei.tandtz*zy;			
+	const double zyt =  ri_sei.sindtz*zt1 + zy;
+	const double zxt =  zt1 - ri_sei.tandtz*zyt;	
+	p->z  = zxt/ri_sei.OMEGAZ;
 	p->vz = zyt;
 
 	// Integrate motion in xy directions
-	const double aO = 2.*p->vy + 4.*p->x*OMEGA;	// Center of epicyclic motion
-	const double bO = p->y*OMEGA - 2.*p->vx;	
+	const double aO = 2.*p->vy + 4.*p->x*ri_sei.OMEGA;	// Center of epicyclic motion
+	const double bO = p->y*ri_sei.OMEGA - 2.*p->vx;	
 
-	const double ys = (p->y*OMEGA-bO)/2.; 		// Epicycle vector
-	const double xs = (p->x*OMEGA-aO); 
+	const double ys = (p->y*ri_sei.OMEGA-bO)/2.; 		// Epicycle vector
+	const double xs = (p->x*ri_sei.OMEGA-aO); 
 	
 	// Rotation implemeted as 3 shear operators
 	// to avoid round-off errors
-	const double xst1 =  xs - tandt*ys;			
-	const double yst  =  sindt*xst1 + ys;
-	const double xst  =  xst1 - tandt*yst;	
+	const double xst1 =  xs - ri_sei.tandt*ys;			
+	const double yst  =  ri_sei.sindt*xst1 + ys;
+	const double xst  =  xst1 - ri_sei.tandt*yst;	
 
-	p->x  = (xst+aO)    /OMEGA;			
-	p->y  = (yst*2.+bO) /OMEGA - 3./4.*aO*dt;	
+	p->x  = (xst+aO)    /ri_sei.OMEGA;			
+	p->y  = (yst*2.+bO) /ri_sei.OMEGA - 3./4.*aO*dt;	
 	p->vx = yst;
 	p->vy = -xst*2. -3./2.*aO;
 }
@@ -150,5 +141,5 @@ void integrator_sei_synchronize(struct Rebound* r){
 }
 
 void integrator_sei_reset(struct Rebound* r){
-	lastdt = 0;	
+	r->ri_sei.lastdt = 0;	
 }

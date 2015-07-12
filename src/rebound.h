@@ -24,13 +24,16 @@
  */
 #ifndef _MAIN_H
 #define _MAIN_H
-#include "particle.h" // Needed for struct particle.
+#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
+#define TREE
+#endif
 #ifndef M_PI
 // Make sure M_PI is defined. 
 #define M_PI           3.14159265358979323846
 #endif
 #include "integrator_ias15.h"
 #include "integrator_whfast.h"
+#include "integrator_sei.h"
 
 /*
  * Available integrators.
@@ -77,10 +80,19 @@ struct Rebound {
 	/// Particles
 	struct Particle* particles; 			/**< Main particle array. This contains all particles on this node.  */
 	
+#ifdef TREE
+	//////////////////////////////////////////////
+	/// Tree
+	struct cell** tree_root; 			/**< Pointer to the roots of the trees. */
+	int N_tree_fixed; /**< Particle between 0 and N_tree_fixed will not be shuffled around during tree-reconstruction.  */
+
+#endif // TREE
+	
 	//////////////////////////////////////////////
 	/// Integrators
 	struct ReboundIntegratorWHFast ri_whfast;	/**< The WHFast struct */
-	struct ReboundIntegratorIAS15 ri_ias15;		/**< The WHFast struct */
+	struct ReboundIntegratorIAS15 ri_ias15;		/**< The IAS15 struct */
+	struct ReboundIntegratorSEI ri_sei;		/**< The SEI struct */
 
 
 	//////////////////////////////////////////////

@@ -45,13 +45,13 @@
 #include "tree.h"
 #include "communication_mpi.h"
 
-extern const double OMEGA;
 int nghostx = 1;
 int nghosty = 1;
 int nghostz = 0;	/**< The boundary condition is periodic in z, but usually we don't need any ghostboxed as the disc is stratified */
 
 void boundaries_check(struct Rebound* const r){
 	// The offset of ghostcell is time dependent.
+	const double OMEGA = r->ri_sei.OMEGA;
 	double offsetp1 = -fmod(-1.5*OMEGA*r->boxsize_x*r->t+r->boxsize_y/2.,r->boxsize_y)-r->boxsize_y/2.; 
 	double offsetm1 = -fmod( 1.5*OMEGA*r->boxsize_x*r->t-r->boxsize_y/2.,r->boxsize_y)+r->boxsize_y/2.; 
 	struct Particle* const particles = r->particles;
@@ -86,6 +86,7 @@ void boundaries_check(struct Rebound* const r){
 }
 
 struct Ghostbox boundaries_get_ghostbox(struct Rebound* const r, int i, int j, int k){
+	const double OMEGA = r->ri_sei.OMEGA;
 	struct Ghostbox gb;
 	// Ghostboxes habe a finite velocity.
 	gb.shiftvx = 0;

@@ -53,9 +53,6 @@ void integrator_generate_constants(void);
 #include "integrator.h"
 #include "integrator_ias15.h"
 
-#ifdef TREE
-#error IAS15 integrator not working with TREE module.
-#endif
 #ifdef MPI
 #error IAS15 integrator not working with MPI.
 #endif

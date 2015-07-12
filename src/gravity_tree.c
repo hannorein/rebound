@@ -93,7 +93,7 @@ void gravity_calculate_acceleration(struct Rebound* const r){
 
 void gravity_calculate_acceleration_for_particle(struct Rebound* const r, const int pt, const struct Ghostbox gb) {
 	for(int i=0;i<r->root_n;i++){
-		struct cell* node = tree_root[i];
+		struct cell* node = r->tree_root[i];
 		if (node!=NULL){
 			gravity_calculate_acceleration_for_particle_from_cell(r, pt, node, gb);
 		}
