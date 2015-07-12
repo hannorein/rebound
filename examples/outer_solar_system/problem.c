@@ -98,16 +98,13 @@ double energy(const double G, const int N, const struct Particle* const particle
 	return e_kin +e_pot;
 }
 
-double tmax = 7.3e8;
+double tmax = 7.3e6;
 void post_timestep(struct Rebound* const r){
 	if (output_check(r, 10000000.)){
 		output_timing(r, tmax);
 	}
 }
 
-void finished(struct Rebound* r){
-	printf("Done.\n");
-}
 
 
 int main(int argc, char* argv[]) {
@@ -120,7 +117,6 @@ int main(int argc, char* argv[]) {
 
 	// Setup callbacks:
 	r->post_timestep = post_timestep;
-	r->finished = finished;
 	r->force_is_velocitydependent = 0;		// Force only depends on positions. 
 	r->integrator	= WHFAST;
 	//r->integrator	= IAS15;
@@ -157,4 +153,6 @@ int main(int argc, char* argv[]) {
 
 	// Start integration
 	rebound_integrate(r, tmax);
+	
+	printf("Done. Final time: %.4f\n", r->t);
 }

@@ -293,58 +293,69 @@ struct Rebound* rebound_init(){
 	return r;
 }
 
+int rebound_check_exit(struct Rebound* const r, const double tmax){
+	const double dtsign = copysign(1.,r->dt); 	// Used to determine integration direction
+	if(r->exact_finish_time==1){
+		if ((r->t+r->dt)*dtsign>=tmax*dtsign){  // Next step would overshoot
+			if (r->exit_simulation==2 || r->exit_simulation==1){
+				r->exit_simulation = 1; // Exit now.
+			}else{
+				r->exit_simulation = 2; // Do one small step, then exit.
+				r->dt_last_done = r->dt;
+				integrator_synchronize(r);
+				r->dt = tmax-r->t;
+			}
+		}
+	}else{
+		r->dt_last_done = r->dt;
+		if (r->t*dtsign>=tmax*dtsign){  // Past the integration time
+			r->exit_simulation = 1; // Exit now.
+		}
+	}
+	if (r->N<=0){
+		fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
+		r->exit_simulation = 1; // Exit now.
+	}
+	return r->exit_simulation;
+}
+
 int rebound_integrate(struct Rebound* const r, double tmax){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
-	double dt_last_done = r->dt;
-	int last_step = 0;
-	int ret_value = 0;
-	const double dtsign = copysign(1.,r->dt); 				// Used to determine integration direction
-	if (r->post_timestep){ r->post_timestep(r); }
-	if ((r->t+r->dt)*dtsign>=tmax*dtsign && r->exact_finish_time==1){
-		r->dt = tmax-r->t;
-		last_step++;
-	}
+	r->dt_last_done = r->dt;
+	r->exit_simulation = 0;
+	if (r->post_timestep){ r->post_timestep(r); }				// Heartbeat
 #ifdef OPENGL
 	if (display_r!=NULL){
 		fprintf(stderr,"\n\033[1mError!\033[0m Cannot vizualize two simulations at the same time. Exiting.\n");
-		return(1);
-	}
-	if (r->boxsize==-1){  // Need boxsize for visualization. Creating one. 
-		fprintf(stderr,"\n\033[1mWarning!\033[0m Configuring box automatically based on particle positions.\n");
-		const struct Particle* p = r->particles;
-		double max_r = 0;
-		for (int i=0;i<r->N;i++){
-			max_r = MAX(max_r, sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z));
+		return 1;
+	}else{
+		if (r->boxsize==-1){  // Need boxsize for visualization. Creating one. 
+			fprintf(stderr,"\n\033[1mWarning!\033[0m Configuring box automatically for vizualization based on particle positions.\n");
+			const struct Particle* p = r->particles;
+			double max_r = 0;
+			for (int i=0;i<r->N;i++){
+				const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
+				max_r = MAX(max_r, _r);
+			}
+			rebound_configure_box(r, max_r*2.3,MAX(1,r->root_nx),MAX(1,r->root_ny),MAX(1,r->root_nz));
 		}
-		rebound_configure_box(r, max_r*2.3,MAX(1,r->root_nx),MAX(1,r->root_ny),MAX(1,r->root_nz));
+		display_r = r;
+		display_init(0,NULL, tmax);
+		display_r = NULL;
 	}
-	display_r = r;
-	display_init(0,NULL);
-	display_r = NULL;
 #else // OPENGL
-	while(r->t*dtsign<tmax*dtsign && last_step<2 && ret_value==0 && r->exit_simulation==0){
-		if (r->N<=0){
-			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
-			return(1);
-		}
+	while(rebound_check_exit(r,tmax)!=1){
 		rebound_step(r); 								// 0 to not do timing within step
-		if ((r->t+r->dt)*dtsign>=tmax*dtsign && r->exact_finish_time==1){
-			integrator_synchronize(r);
-			r->dt = tmax-r->t;
-			last_step++;
-		}else{
-			dt_last_done = r->dt;
-		}
 	}
+#endif // OPENGL
 	integrator_synchronize(r);
-	r->dt = dt_last_done;
+	r->dt = r->dt_last_done;
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
 	printf("\nComputation finished. Total runtime: %f s\n",timing_final-timing_initial);
-#endif // OPENGL
-	return ret_value;
+	return 0;
 }
 
 static const char* logo[] = {

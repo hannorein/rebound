@@ -38,7 +38,7 @@ void display(void);
  * @param argc Number of command line arguments.
  * @param argv Command line arguments.
  */
-void display_init(int argc, char* argv[]);
+void display_init(int argc, char* argv[], double tmax);
 
 extern int display_init_done;	/**< Is set to one when the display is initialized and can be drawn. This prevents errors when output_png() is called, but display not initialized yet. */
 #ifdef OPENGL

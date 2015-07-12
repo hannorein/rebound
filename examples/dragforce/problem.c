@@ -31,43 +31,49 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
-#include "main.h"
+#include "rebound.h"
 #include "tools.h"
 #include "output.h"
 #include "particle.h"
-#include "problem.h"
 #include "integrator.h"
 
-void additional_forces();
+void additional_forces(struct Rebound* const r);
+void post_timestep(struct Rebound* const r);
 
-void problem_init(int argc, char* argv[]){
+double tmax = 40.;
+
+int main(int argc, char* argv[]){
+	struct Rebound* r = rebound_init();
 	// Setup constants
-	dt 			= 1e-4;		// initial timestep.
-	boxsize 		= 10;	
-	tmax			= 40;
-	integrator		= IAS15;
+	r->dt 			= 1e-4;		// initial timestep.
+	r->boxsize 		= 10;	
+	r->integrator		= IAS15;
 
 	// Setup callback function for velocity dependent forces.
-	problem_additional_forces 	= additional_forces;
+	r->additional_forces 	= additional_forces;
+	// Setup callback function for outputs.
+	r->post_timestep	= post_timestep;
 	
-	// Initialize simulation and particles
-	init_box();
-	
-	
-	struct particle p; 
+	struct Particle p; 
 	p.m  = 0;	// massless
 	p.x = 1; 	p.y = 0; 	p.z = 0;
 	p.vx = -1; 	p.vy = 0; 	p.vz = 0;
 	p.ax = 0; 	p.ay = 0; 	p.az = 0;
-	particles_add(p); 
+	particles_add(r, p); 
 
 	// Delete previous output
 	system("rm -v r.txt");	
+
+	// Do the integration
+	rebound_integrate(r, tmax);
 }
 
-void additional_forces(){
+void additional_forces(struct Rebound* const r){
+	printf("forces\n");
 	// Simplest velocity dependent drag force.
 	double dragcoefficient = 1;
+	struct Particle* const particles = r->particles;
+	const int N = r->N;
 	for (int i=0;i<N;i++){
 		particles[i].ax = -dragcoefficient*particles[i].vx;
 		particles[i].ay = -dragcoefficient*particles[i].vy;
@@ -75,16 +81,14 @@ void additional_forces(){
 	}
 }
 
-void problem_output(){
+void post_timestep(struct Rebound* const r){
 	// Output some information to the screen every 100th timestep
-	if(output_check(100.*dt)){
-		output_timing();
+	if(output_check(r, 100.*r->dt)){
+		output_timing(r, tmax);
 	}
 	// Output the particle position to a file every timestep.
+	const struct Particle* const particles = r->particles;
 	FILE* f = fopen("r.txt","a");
-	fprintf(f,"%e\t%e\t%e\n",t,particles[0].x, particles[1].vx);
+	fprintf(f,"%e\t%e\t%e\n",r->t,particles[0].x, particles[1].vx);
 	fclose(f);
-}
-
-void problem_finish(){
 }

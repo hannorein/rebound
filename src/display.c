@@ -76,15 +76,26 @@ double display_rotate_z = 0;	/**< Rotate everything around the z-axis. */
  * @param x Position on screen.
  * @param y Position on screen.
  */
+
+void display_exit(void){
+	// Note that there is now general way to leave GlutMainLoop(). Sad but true.
+	fprintf(stderr,"\n\033[1mWarning!\033[0m Exiting OpenGL visualization now. This will immediately terminate REBOUND and not return to your program. If you need to process data after the simulation is completed, disable the OpenGL vizualization.\n");
+	exit(0);
+}
+double display_tmax;
+
 void display_func(void){
-	rebound_step(display_r);
+	if (rebound_check_exit(display_r,display_tmax)!=1){
+		rebound_step(display_r);
+	}else{
+		display_exit();
+	}
 }
 
 void displayKey(unsigned char key, int x, int y){
 	switch(key){
 		case 'q': case 'Q':
-			printf("\nProgram ends.\n");
-			exit(0);
+			display_exit();
 			break;
 		case ' ':
 			display_pause_sim=!display_pause_sim;
@@ -336,7 +347,8 @@ void display(void){
 	glutSwapBuffers();
 }
 
-void display_init(int argc, char* argv[]){
+void display_init(int argc, char* argv[], double tmax){
+	display_tmax = tmax;
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
 	glutInitWindowSize(700,700);

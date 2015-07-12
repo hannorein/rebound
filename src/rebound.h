@@ -54,6 +54,7 @@ struct Rebound {
 	double 	G;		/**< Gravitational constant. Default: 1. */
 	double 	softening;	/**< Gravitational softening parameter. Default: 0. */
 	double 	dt;		/**< Current timestep. */
+	double 	dt_last_done;	/**< Last full timestep (used if exact_finish_time==1). */
 	double 	boxsize;	/**< Size of a root box. Needs to be set in problem_init(). */
 	double 	boxsize_x;	/**< Size of the entire box in the x direction, root_nx*boxsize. Set in box_init().*/
 	double 	boxsize_y;	/**< Size of the entire box in the y direction, root_ny*boxsize. Set in box_init().*/
@@ -156,4 +157,9 @@ int rebound_integrate(struct Rebound* const r, double tmax);
  */
 void rebound_configure_box(struct Rebound* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz);
 
+/**
+ * This function is called once before the integration and then after every timestep.
+ * The simulation exits immediately if it returns 1.
+ */
+int rebound_check_exit(struct Rebound* const r, const double tmax);
 #endif
