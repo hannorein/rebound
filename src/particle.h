@@ -59,6 +59,7 @@ struct Particle {
 #endif // TREE
 };
 
+
 /** 
  * Adds a particle to the simulation. 
  * @details If a tree is used, it also adds the particle to the tree.

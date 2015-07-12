@@ -30,105 +30,101 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
-#include "main.h"
+#include "rebound.h"
 #include "particle.h"
-#include "boundaries.h"
-#include "integrator.h"
 
 extern double coefficient_of_restitution; 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
+	struct Rebound* r = rebound_init();
 	// Setup constants
-	integrator	= LEAPFROG;
-	dt 		= 1e-3;
-	boxsize 	= 3;
+	r->integrator	= LEAPFROG;
+	r->dt 		= 1e-3;
+	r->boundary	= RB_BT_PERIODIC;
+	rebound_configure_box(r,3.,1,1,1);
 	coefficient_of_restitution = 1; // elastic collisions
-	init_box();
 	
 	// Initial conditions
 	int problem_id = 1;
 	if (argc>1){			
 		problem_id = atoi(argv[1]);
 	}
-	struct particle p;
+	struct Particle p;
 
 	switch (problem_id){
 		case 1: // Multiple instantaneous collisions across boundaries
-			nghostx = 1; nghosty = 1; nghostz = 0;
+			r->nghostx = 1; r->nghosty = 1; r->nghostz = 0;
 			p.x  = 1; p.y  = 1; p.z  = 0;
 			p.vx = 0; p.vy = 0; p.vz = 0;
 			p.ax = 0; p.ay = 0; p.az = 0;
 			p.m  = 1;
 			p.r  = 0.1;
-			particles_add(p);
+			particles_add(r,p);
 			p.x  = -1; p.y  = -1; p.z  = 0;
 			p.vx = 0;  p.vy = 0;  p.vz = 0;
 			p.ax = 0;  p.ay = 0;  p.az = 0;
 			p.m  = 1;
 			p.r  = 0.1;
-			particles_add(p);
+			particles_add(r,p);
 			p.x  = 1; p.y  = -1; p.z  = 0;
 			p.vx = 0;  p.vy = 0; p.vz = 0;
 			p.ax = 0;  p.ay = 0; p.az = 0;
 			p.m  = 1;
 			p.r  = 0.1;
-			particles_add(p);
+			particles_add(r,p);
 			p.x  = -1; p.y  = 1; p.z  = 0;
 			p.vx = 0;  p.vy = 0; p.vz = 0;
 			p.ax = 0;  p.ay = 0; p.az = 0;
 			p.m  = 1;
 			p.r  = 0.1;
-			particles_add(p);
+			particles_add(r,p);
 			break;
 		case 2: // Multiple instantaneous collisions with different sizes
-			nghostx = 0; nghosty = 0; nghostz = 0;
+			r->nghostx = 0; r->nghosty = 0; r->nghostz = 0;
 			p.x  = 0; p.y  = 0; p.z  = 0;
 			p.vx = 0; p.vy = 0; p.vz = 0;
 			p.ax = 0; p.ay = 0; p.az = 0;
 			p.m  = 1;
 			p.r  = 0.5;
-			particles_add(p);
+			particles_add(r,p);
 			p.x  = 1; p.y  = 1; p.z  = 0;
 			p.vx = 0; p.vy = 0; p.vz = 0;
 			p.ax = 0; p.ay = 0; p.az = 0;
 			p.m  = 0.008;
 			p.r  = 0.1;
-			particles_add(p);
+			particles_add(r,p);
 			p.x  = -1; p.y  = -1; p.z  = 0;
 			p.vx = 0;  p.vy = 0;  p.vz = 0;
 			p.ax = 0;  p.ay = 0;  p.az = 0;
 			p.m  = 0.008;
 			p.r  = 0.1;
-			particles_add(p);
+			particles_add(r,p);
 			p.x  = 1; p.y  = -1; p.z  = 0;
 			p.vx = 0;  p.vy = 0; p.vz = 0;
 			p.ax = 0;  p.ay = 0; p.az = 0;
 			p.m  = 0.008;
 			p.r  = 0.3;
-			particles_add(p);
+			particles_add(r,p);
 			p.x  = -1; p.y  = 1; p.z  = 0;
 			p.vx = 0;  p.vy = 0; p.vz = 0;
 			p.ax = 0;  p.ay = 0; p.az = 0;
 			p.m  = 0.008;
 			p.r  = 0.2;
-			particles_add(p);
+			particles_add(r,p);
 			p.x  = 0;  p.y  = 0; p.z  = 1.3;
 			p.vx = 0;  p.vy = 0; p.vz = 0;
 			p.ax = 0;  p.ay = 0; p.az = 0;
 			p.m  = 0.008;
 			p.r  = 0.1;
-			particles_add(p);
+			particles_add(r,p);
 			p.x  = 0;  p.y  = 0; p.z  =-1.3;
 			p.vx = 0;  p.vy = 0; p.vz = 0;
 			p.ax = 0;  p.ay = 0; p.az = 0;
 			p.m  = 0.008;
 			p.r  = 0.05;
-			particles_add(p);
+			particles_add(r,p);
 			break;
 	}
+
+	rebound_integrate(r,0);
 }
 
-void problem_output(){
-}
-
-void problem_finish(){
-}

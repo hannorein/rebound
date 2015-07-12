@@ -42,7 +42,7 @@
 #include "collisions.h"
 #include "collision_resolve.h"
 #include "rebound.h"
-#include "boundaries.h"
+#include "boundary.h"
 
 #ifdef MPI
 #error COLLISIONS_DIRECT not yet compatible with MPI
@@ -52,22 +52,21 @@ struct	collision* collisions 	= NULL;		/**< Array of all collisions. */
 int 	collisions_NMAX 	= 0;		/**< Size allocated for collisions.*/
 int 	collisions_N 		= 0;		/**< Number of elements in collisions. */
 
-double 	collisions_max_r	= 0;
-double 	collisions_max2_r	= 0;
-
-void collisions_search(void){
+void collisions_search(struct Rebound* const r){
+	const int N = r->N;
+	const struct Particle* const particles = r->particles;
 	// Loop over ghost boxes, but only the inner most ring.
-	int nghostxcol = (nghostx>1?1:nghostx);
-	int nghostycol = (nghosty>1?1:nghosty);
-	int nghostzcol = (nghostz>1?1:nghostz);
+	int nghostxcol = (r->nghostx>1?1:r->nghostx);
+	int nghostycol = (r->nghosty>1?1:r->nghosty);
+	int nghostzcol = (r->nghostz>1?1:r->nghostz);
 	for (int gbx=-nghostxcol; gbx<=nghostxcol; gbx++){
 	for (int gby=-nghostycol; gby<=nghostycol; gby++){
 	for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
 		// Loop over all particles
 		for (int i=0;i<N;i++){
-			struct particle p1 = particles[i];
-			struct ghostbox gborig = boundaries_get_ghostbox(gbx,gby,gbz);
-			struct ghostbox gb = gborig;
+			struct Particle p1 = particles[i];
+			struct Ghostbox gborig = boundary_get_ghostbox(r, gbx,gby,gbz);
+			struct Ghostbox gb = gborig;
 			// Precalculate shifted position 
 			gb.shiftx += p1.x;
 			gb.shifty += p1.y;
@@ -79,7 +78,7 @@ void collisions_search(void){
 			for (int j=0;j<N;j++){
 				// Do not collide particle with itself.
 				if (i==j) continue;
-				struct particle p2 = particles[j];
+				struct Particle p2 = particles[j];
 				double dx = gb.shiftx - p2.x; 
 				double dy = gb.shifty - p2.y; 
 				double dz = gb.shiftz - p2.z; 
@@ -110,11 +109,11 @@ void collisions_search(void){
 	}
 }
 
-void collisions_resolve(void){
+void collisions_resolve(struct Rebound* const r){
 	// Loop over all collisions previously found in collisions_search().
 	for (int i=0;i<collisions_N;i++){
 		// Resolve collision
-		collision_resolve(collisions[i]);
+		collision_resolve(r, collisions[i]);
 	}
 	// Mark all collisions as resolved.
 	collisions_N=0;

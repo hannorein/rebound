@@ -36,7 +36,7 @@
 #include "integrator_sei.h"
 #include "integrator_wh.h"
 
-/*
+/**
  * Available integrators.
  */
 typedef enum {
@@ -49,6 +49,9 @@ typedef enum {
 	NONE = 6,
 	} integrator_t;
 
+/**
+ * Available boundary conditions.
+ */
 typedef enum {
 	RB_BT_NONE = 0,
 	RB_BT_OPEN = 1,
