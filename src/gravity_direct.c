@@ -78,6 +78,7 @@ void gravity_calculate_acceleration(struct Rebound* r){
 #pragma omp parallel for schedule(guided)
 				for (int i=_N_start; i<_N_real; i++){
 				for (int j=_N_start; j<_N_active; j++){
+					if (_gravity_ignore_10 && j==1 && i==0 ) continue;
 					if (i==j) continue;
 					const double dx = (gb.shiftx+particles[i].x) - particles[j].x;
 					const double dy = (gb.shifty+particles[i].y) - particles[j].y;
