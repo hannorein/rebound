@@ -76,7 +76,7 @@ void rebound_step(struct Rebound* const r){
 	// This function also creates the tree if called for the first time.
 	PROFILING_START()
 #ifdef TREE
-	tree_update();          
+	tree_update(r);          
 #endif //TREE
 
 #ifdef MPI
@@ -86,7 +86,7 @@ void rebound_step(struct Rebound* const r){
 
 #ifdef GRAVITY_TREE
 	// Update center of mass and quadrupole moments in tree in preparation of force calculation.
-	tree_update_gravity_data(); 
+	tree_update_gravity_data(r); 
 	
 #ifdef MPI
 	// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
@@ -125,10 +125,10 @@ void rebound_step(struct Rebound* const r){
 
 	// Search for collisions using local and essential tree.
 	PROFILING_START()
-	collisions_search();
+	collisions_search(r);
 
 	// Resolve collisions (only local particles are affected).
-	collisions_resolve();
+	collisions_resolve(r);
 	PROFILING_STOP(PROFILING_CAT_COLLISION)
 #endif  // COLLISIONS_NONE
 #ifdef OPENGL
@@ -275,7 +275,7 @@ struct Rebound* rebound_init(){
 	return r;
 }
 
-int rebound_integrate(struct Rebound* const r, double tmax, double maxR, double minD){
+int rebound_integrate(struct Rebound* const r, double tmax){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);

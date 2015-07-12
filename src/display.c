@@ -177,7 +177,7 @@ void display_cell(struct cell* node){
  * Draws the entire tree structure.
  */
 void display_entire_tree(void){
-	for(int i=0;i<root_n;i++){
+	for(int i=0;i<display_r->root_n;i++){
 		display_cell(tree_root[i]);
 	}
 }
@@ -190,9 +190,9 @@ void display(void){
 	if (display_pause) return;
 #ifdef TREE
 	if (display_tree){
-		tree_update();
+		tree_update(display_r);
 #ifdef GRAVITY_TREE
-		tree_update_gravity_data();
+		tree_update_gravity_data(display_r);
 #endif
 	}
 #endif
@@ -227,14 +227,14 @@ void display(void){
 	for (int i=-display_ghostboxes*display_r->nghostx;i<=display_ghostboxes*display_r->nghostx;i++){
 	for (int j=-display_ghostboxes*display_r->nghosty;j<=display_ghostboxes*display_r->nghosty;j++){
 	for (int k=-display_ghostboxes*display_r->nghostz;k<=display_ghostboxes*display_r->nghostz;k++){
-		struct Ghostbox gb = boundaries_get_ghostbox(i,j,k);
+		struct Ghostbox gb = boundaries_get_ghostbox(display_r, i,j,k);
 		glTranslatef(gb.shiftx,gb.shifty,gb.shiftz);
 		if (!(!display_clear&&display_wire)){
 			if (display_spheres){
 				// Drawing Spheres
 				glColor4f(1.0,1.0,1.0,1.0);
 #ifndef COLLISIONS_NONE
-				for (int i=0;i<N-N_megno;i++){
+				for (int i=0;i<display_r->N-display_r->N_megno;i++){
 					struct Particle p = particles[i];
 					glTranslatef(p.x,p.y,p.z);
 					glScalef(p.r,p.r,p.r);

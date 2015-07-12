@@ -59,7 +59,7 @@ extern double (*coefficient_of_restitution_for_velocity) (double); /**< Function
  * Resolve a single collision assuming a hardsphere collision model (no super-particle).
  * @param c Collision to resolve.
  */
-void collision_resolve_hardsphere(struct collision c);	
+void collision_resolve_hardsphere(struct Rebound* const r, struct collision c);	
 
 /**
  * Function pointer to collision resolve function. 
@@ -67,7 +67,7 @@ void collision_resolve_hardsphere(struct collision c);
  * or anything where collisions are not resolved exactly.
  * @param c Collision to resolve.
  */
-extern void (*collision_resolve) (struct collision);
+extern void (*collision_resolve) (struct Rebound* const r, struct collision);
 
 #endif // _COLLISION_RESOLVE_H
 

@@ -50,60 +50,61 @@ int nghostx = 1;
 int nghosty = 1;
 int nghostz = 0;	/**< The boundary condition is periodic in z, but usually we don't need any ghostboxed as the disc is stratified */
 
-void boundaries_check(void){
+void boundaries_check(struct Rebound* const r){
 	// The offset of ghostcell is time dependent.
-	double offsetp1 = -fmod(-1.5*OMEGA*boxsize_x*t+boxsize_y/2.,boxsize_y)-boxsize_y/2.; 
-	double offsetm1 = -fmod( 1.5*OMEGA*boxsize_x*t-boxsize_y/2.,boxsize_y)+boxsize_y/2.; 
+	double offsetp1 = -fmod(-1.5*OMEGA*r->boxsize_x*r->t+r->boxsize_y/2.,r->boxsize_y)-r->boxsize_y/2.; 
+	double offsetm1 = -fmod( 1.5*OMEGA*r->boxsize_x*r->t-r->boxsize_y/2.,r->boxsize_y)+r->boxsize_y/2.; 
+	struct Particle* const particles = r->particles;
 #pragma omp parallel for schedule(guided)
-	for (int i=0;i<N;i++){
+	for (int i=0;i<r->N;i++){
 		// Radial
-		while(particles[i].x>boxsize_x/2.){
-			particles[i].x -= boxsize_x;
+		while(particles[i].x>r->boxsize_x/2.){
+			particles[i].x -= r->boxsize_x;
 			particles[i].y += offsetp1;
-			particles[i].vy += 3./2.*OMEGA*boxsize_x;
+			particles[i].vy += 3./2.*OMEGA*r->boxsize_x;
 		}
-		while(particles[i].x<-boxsize_x/2.){
-			particles[i].x += boxsize_x;
+		while(particles[i].x<-r->boxsize_x/2.){
+			particles[i].x += r->boxsize_x;
 			particles[i].y += offsetm1;
-			particles[i].vy -= 3./2.*OMEGA*boxsize_x;
+			particles[i].vy -= 3./2.*OMEGA*r->boxsize_x;
 		}
 		// Azimuthal
-		while(particles[i].y>boxsize_y/2.){
-			particles[i].y -= boxsize_y;
+		while(particles[i].y>r->boxsize_y/2.){
+			particles[i].y -= r->boxsize_y;
 		}
-		while(particles[i].y<-boxsize_y/2.){
-			particles[i].y += boxsize_y;
+		while(particles[i].y<-r->boxsize_y/2.){
+			particles[i].y += r->boxsize_y;
 		}
 		// Vertical (there should be no boundary, but periodic makes life easier)
-		while(particles[i].z>boxsize_z/2.){
-			particles[i].z -= boxsize_z;
+		while(particles[i].z>r->boxsize_z/2.){
+			particles[i].z -= r->boxsize_z;
 		}
-		while(particles[i].z<-boxsize_z/2.){
-			particles[i].z += boxsize_z;
+		while(particles[i].z<-r->boxsize_z/2.){
+			particles[i].z += r->boxsize_z;
 		}
 	}
 }
 
-struct ghostbox boundaries_get_ghostbox(int i, int j, int k){
-	struct ghostbox gb;
+struct Ghostbox boundaries_get_ghostbox(struct Rebound* const r, int i, int j, int k){
+	struct Ghostbox gb;
 	// Ghostboxes habe a finite velocity.
 	gb.shiftvx = 0;
-	gb.shiftvy = -1.5*(double)i*OMEGA*boxsize_x;
+	gb.shiftvy = -1.5*(double)i*OMEGA*r->boxsize_x;
 	gb.shiftvz = 0;
 	// The shift in the y direction is time dependent. 
 	double shift;
 	if (i==0){
-		shift = -fmod(gb.shiftvy*t,boxsize_y); 
+		shift = -fmod(gb.shiftvy*r->t,r->boxsize_y); 
 	}else{
 		if (i>0){
-			shift = -fmod(gb.shiftvy*t-boxsize_y/2.,boxsize_y)-boxsize_y/2.; 
+			shift = -fmod(gb.shiftvy*r->t-r->boxsize_y/2.,r->boxsize_y)-r->boxsize_y/2.; 
 		}else{
-			shift = -fmod(gb.shiftvy*t+boxsize_y/2.,boxsize_y)+boxsize_y/2.; 
+			shift = -fmod(gb.shiftvy*r->t+r->boxsize_y/2.,r->boxsize_y)+r->boxsize_y/2.; 
 		}	
 	}
-	gb.shiftx = boxsize_x*(double)i;
-	gb.shifty = boxsize_y*(double)j-shift;
-	gb.shiftz = boxsize_z*(double)k;
+	gb.shiftx = r->boxsize_x*(double)i;
+	gb.shifty = r->boxsize_y*(double)j-shift;
+	gb.shiftz = r->boxsize_z*(double)k;
 	return gb;
 }
 

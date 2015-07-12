@@ -122,6 +122,11 @@ void rebound_step(struct Rebound* const r);
 /**
  * Performon an integration. Starting at the current time t and until time tmax.
  */
-int rebound_integrate(struct Rebound* const r, double tmax, double maxR, double minD);
+int rebound_integrate(struct Rebound* const r, double tmax);
+
+/**
+ * Helper function to configure box.
+ */
+void rebound_configure_box(struct Rebound* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz);
 
 #endif

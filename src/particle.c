@@ -60,7 +60,7 @@ void particles_add_local(struct Rebound* const r, struct Particle pt){
 	r->particles[r->N] = pt;
 
 #ifdef TREE
-	tree_add_particle_to_tree(r->N);
+	tree_add_particle_to_tree(r, r->N);
 #endif // TREE
 	(r->N)++;
 }
@@ -108,7 +108,7 @@ void particles_add_fixed(struct Rebound* const r, struct Particle pt,int pos){
 #endif // BOUNDARIES_OPEN
 	r->particles[pos] = pt; 
 #ifdef TREE
-	tree_add_particle_to_tree(pos);
+	tree_add_particle_to_tree(r, pos);
 #endif // TREE
 }
 

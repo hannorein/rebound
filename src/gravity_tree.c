@@ -44,7 +44,6 @@
 
 unsigned int gravity_ignore_10;
 double opening_angle2 = 0.25; /**< Square of the cell opening angle \f$ \theta \f$. */
-double softening2;	/**< Used to accelerate calculation */
 
 /**
   * The function loops over all trees to call calculate_forces_for_particle_from_cell() tree to calculate forces for each particle.
@@ -52,7 +51,7 @@ double softening2;	/**< Used to accelerate calculation */
   * @param pt Index of the particle the force is calculated for.
   * @param gb Ghostbox plus position of the particle (precalculated). 
   */
-void gravity_calculate_acceleration_for_particle(const int pt, const struct ghostbox gb);
+void gravity_calculate_acceleration_for_particle(struct Rebound* const r, const int pt, const struct Ghostbox gb);
 
 /**
   * The function calls itself recursively using cell breaking criterion to check whether it can use center of mass (and mass quadrupole tensor) to calculate forces.
@@ -62,10 +61,11 @@ void gravity_calculate_acceleration_for_particle(const int pt, const struct ghos
   * @param node Pointer to the cell the force is calculated from.
   * @param gb Ghostbox plus position of the particle (precalculated). 
   */
-void gravity_calculate_acceleration_for_particle_from_cell(const int pt, const struct cell *node, const struct ghostbox gb);
+void gravity_calculate_acceleration_for_particle_from_cell(struct Rebound* const r, const int pt, const struct cell *node, const struct Ghostbox gb);
 
-void gravity_calculate_acceleration(void){
-	softening2 = softening*softening;
+void gravity_calculate_acceleration(struct Rebound* const r){
+	const int N = r->N;
+	struct Particle* const particles = r->particles;
 #pragma omp parallel for schedule(guided)
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 
@@ -73,34 +73,37 @@ void gravity_calculate_acceleration(void){
 		particles[i].az = 0; 
 	}
 	// Summing over all Ghost Boxes
-	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
-	for (int gby=-nghosty; gby<=nghosty; gby++){
-	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
+	for (int gbx=-r->nghostx; gbx<=r->nghostx; gbx++){
+	for (int gby=-r->nghosty; gby<=r->nghosty; gby++){
+	for (int gbz=-r->nghostz; gbz<=r->nghostz; gbz++){
 		// Summing over all particle pairs
 #pragma omp parallel for schedule(guided)
 		for (int i=0; i<N; i++){
-			struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
+			struct Ghostbox gb = boundaries_get_ghostbox(r, gbx,gby,gbz);
 			// Precalculated shifted position
 			gb.shiftx += particles[i].x;
 			gb.shifty += particles[i].y;
 			gb.shiftz += particles[i].z;
-			gravity_calculate_acceleration_for_particle(i, gb);
+			gravity_calculate_acceleration_for_particle(r, i, gb);
 		}
 	}
 	}
 	}
 }
 
-void gravity_calculate_acceleration_for_particle(const int pt, const struct ghostbox gb) {
-	for(int i=0;i<root_n;i++){
+void gravity_calculate_acceleration_for_particle(struct Rebound* const r, const int pt, const struct Ghostbox gb) {
+	for(int i=0;i<r->root_n;i++){
 		struct cell* node = tree_root[i];
 		if (node!=NULL){
-			gravity_calculate_acceleration_for_particle_from_cell(pt, node, gb);
+			gravity_calculate_acceleration_for_particle_from_cell(r, pt, node, gb);
 		}
 	}
 }
 
-void gravity_calculate_acceleration_for_particle_from_cell(const int pt, const struct cell *node, const struct ghostbox gb) {
+void gravity_calculate_acceleration_for_particle_from_cell(struct Rebound* r, const int pt, const struct cell *node, const struct Ghostbox gb) {
+	const double G = r->G;
+	const double softening2 = r->softening*r->softening;
+	struct Particle* const particles = r->particles;
 	double dx = gb.shiftx - node->mx;
 	double dy = gb.shifty - node->my;
 	double dz = gb.shiftz - node->mz;
@@ -109,7 +112,7 @@ void gravity_calculate_acceleration_for_particle_from_cell(const int pt, const s
 		if ( node->w*node->w > opening_angle2*r2 ){
 			for (int o=0; o<8; o++) {
 				if (node->oct[o] != NULL) {
-					gravity_calculate_acceleration_for_particle_from_cell(pt, node->oct[o], gb);
+					gravity_calculate_acceleration_for_particle_from_cell(r, pt, node->oct[o], gb);
 				}
 			}
 		} else {

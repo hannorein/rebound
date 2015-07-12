@@ -42,12 +42,13 @@ double collisions_constant_coefficient_of_restitution_for_velocity(double v);
 double (*coefficient_of_restitution_for_velocity) (double) = collisions_constant_coefficient_of_restitution_for_velocity;
 double 	collisions_plog =0;	/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
 long	collisions_Nlog =0;	/**< Keep track of Number of collisions. */
-void (*collision_resolve) (struct collision) = collision_resolve_hardsphere;
+void (*collision_resolve) (struct Rebound* const r, struct collision) = collision_resolve_hardsphere;
 
-void collision_resolve_hardsphere(struct collision c){
+void collision_resolve_hardsphere(struct Rebound* const r, struct collision c){
+	struct Particle* const particles = r->particles;
 #ifndef COLLISIONS_NONE
-	struct particle p1 = particles[c.p1];
-	struct particle p2;
+	struct Particle p1 = particles[c.p1];
+	struct Particle p2;
 #ifdef MPI
 	int isloc = communication_mpi_rootbox_is_local(c.ri);
 	if (isloc==1){
@@ -61,7 +62,7 @@ void collision_resolve_hardsphere(struct collision c){
 	}
 #endif // MPI
 //	if (p1.lastcollision==t || p2.lastcollision==t) return;
-	struct ghostbox gb = c.gb;
+	struct Ghostbox gb = c.gb;
 	double x21  = p1.x + gb.shiftx  - p2.x; 
 	double y21  = p1.y + gb.shifty  - p2.y; 
 	double z21  = p1.z + gb.shiftz  - p2.z; 
@@ -97,8 +98,8 @@ void collision_resolve_hardsphere(struct collision c){
 	double minr = (p1.r>p2.r)?p2.r:p1.r;
 	double maxr = (p1.r<p2.r)?p2.r:p1.r;
 	double mindv= minr*minimum_collision_velocity;
-	double r = sqrt(x21*x21 + y21*y21 + z21*z21);
-	mindv *= 1.-(r - maxr)/minr;
+	double _r = sqrt(x21*x21 + y21*y21 + z21*z21);
+	mindv *= 1.-(_r - maxr)/minr;
 	if (mindv>maxr*minimum_collision_velocity)mindv = maxr*minimum_collision_velocity;
 	if (dvx2<mindv) dvx2 = mindv;
 	// Now we are rotating backwards
@@ -116,7 +117,7 @@ void collision_resolve_hardsphere(struct collision c){
 	particles[c.p2].vx -=	p2pf*dvx2n;
 	particles[c.p2].vy -=	p2pf*dvy2nn;
 	particles[c.p2].vz -=	p2pf*dvz2nn;
-	particles[c.p2].lastcollision = t;
+	particles[c.p2].lastcollision = r->t;
 #ifdef MPI
 	}
 #endif // MPI
@@ -124,7 +125,7 @@ void collision_resolve_hardsphere(struct collision c){
 	particles[c.p1].vx +=	p1pf*dvx2n; 
 	particles[c.p1].vy +=	p1pf*dvy2nn; 
 	particles[c.p1].vz +=	p1pf*dvz2nn; 
-	particles[c.p1].lastcollision = t;
+	particles[c.p1].lastcollision = r->t;
 		
 	// Return y-momentum change
 	if (x21>0){

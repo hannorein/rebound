@@ -46,7 +46,7 @@ int N_tree_fixed=0;
   * @param pt is the index of a particle.
   * @param node is the pointer to a node cell. 
   */
-int tree_get_octant_for_particle_in_cell(int pt, struct cell *node);
+int tree_get_octant_for_particle_in_cell(const struct Rebound* const r, int pt, struct cell *node);
 
 /**
   * This function adds a particle to the octant[o] of a node. 
@@ -64,36 +64,36 @@ int tree_get_octant_for_particle_in_cell(int pt, struct cell *node);
   * is set to be NULL.
   * @param o is the index of the octant of the node which particles[pt] belongs to.
   */
-struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *parent, int o);
+struct cell *tree_add_particle_to_cell(struct Rebound* const r, struct cell *node, int pt, struct cell *parent, int o);
 
-void tree_add_particle_to_tree(int pt){
+void tree_add_particle_to_tree(struct Rebound* const r, int pt){
 	if (tree_root==NULL){
-		tree_root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
+		tree_root = calloc(r->root_nx*r->root_ny*r->root_nz,sizeof(struct cell*));
 	}
-	struct particle p = particles[pt];
-	int rootbox = particles_get_rootbox_for_particle(p);
+	struct Particle p = r->particles[pt];
+	int rootbox = particles_get_rootbox_for_particle(r, p);
 #ifdef MPI
 	// Do not add particles that do not belong to this tree (avoid removing active particles)
 	int root_n_per_node = root_n/mpi_num;
 	int proc_id = rootbox/root_n_per_node;
 	if (proc_id!=mpi_id) return;
 #endif 	// MPI
-	tree_root[rootbox] = tree_add_particle_to_cell(tree_root[rootbox],pt,NULL,0);
+	tree_root[rootbox] = tree_add_particle_to_cell(r, tree_root[rootbox],pt,NULL,0);
 }
 
-struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *parent, int o){
+struct cell *tree_add_particle_to_cell(struct Rebound* const r, struct cell *node, int pt, struct cell *parent, int o){
 	// Initialize a new node
 	if (node == NULL) {  
 		node = calloc(1, sizeof(struct cell));
-		struct particle p = particles[pt];
+		struct Particle p = r->particles[pt];
 		if (parent == NULL){ // The new node is a root
-			node->w = boxsize;
-			int i = ((int)floor((p.x + boxsize_x/2.)/boxsize))%root_nx;
-			int j = ((int)floor((p.y + boxsize_y/2.)/boxsize))%root_ny;
-			int k = ((int)floor((p.z + boxsize_z/2.)/boxsize))%root_nz;
-			node->x = -boxsize_x/2.+boxsize*(0.5+(double)i);
-			node->y = -boxsize_y/2.+boxsize*(0.5+(double)j);
-			node->z = -boxsize_z/2.+boxsize*(0.5+(double)k);
+			node->w = r->boxsize;
+			int i = ((int)floor((p.x + r->boxsize_x/2.)/r->boxsize))%r->root_nx;
+			int j = ((int)floor((p.y + r->boxsize_y/2.)/r->boxsize))%r->root_ny;
+			int k = ((int)floor((p.z + r->boxsize_z/2.)/r->boxsize))%r->root_nz;
+			node->x = -r->boxsize_x/2.+r->boxsize*(0.5+(double)i);
+			node->y = -r->boxsize_y/2.+r->boxsize*(0.5+(double)j);
+			node->z = -r->boxsize_z/2.+r->boxsize*(0.5+(double)k);
 		}else{ // The new node is a normal node
 			node->w 	= parent->w/2.;
 			node->x 	= parent->x + node->w/2.*((o>>0)%2==0?1.:-1);
@@ -101,7 +101,7 @@ struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *p
 			node->z 	= parent->z + node->w/2.*((o>>2)%2==0?1.:-1);
 		}
 		node->pt = pt; 
-		particles[pt].c = node;
+		r->particles[pt].c = node;
 		for (int i=0; i<8; i++){
 			node->oct[i] = NULL;
 		}
@@ -109,22 +109,22 @@ struct cell *tree_add_particle_to_cell(struct cell *node, int pt, struct cell *p
 	}
 	// In a existing node
 	if (node->pt >= 0) { // It's a leaf node
-		int o = tree_get_octant_for_particle_in_cell(node->pt, node);
-		node->oct[o] = tree_add_particle_to_cell(node->oct[o], node->pt, node, o); 
-		o = tree_get_octant_for_particle_in_cell(pt, node);
-		node->oct[o] = tree_add_particle_to_cell(node->oct[o], pt, node, o);
+		int o = tree_get_octant_for_particle_in_cell(r, node->pt, node);
+		node->oct[o] = tree_add_particle_to_cell(r, node->oct[o], node->pt, node, o); 
+		o = tree_get_octant_for_particle_in_cell(r, pt, node);
+		node->oct[o] = tree_add_particle_to_cell(r, node->oct[o], pt, node, o);
 		node->pt = -2;
 	}else{ // It's not a leaf
 		node->pt--;
-		int o = tree_get_octant_for_particle_in_cell(pt, node);
-		node->oct[o] = tree_add_particle_to_cell(node->oct[o], pt, node, o);
+		int o = tree_get_octant_for_particle_in_cell(r, pt, node);
+		node->oct[o] = tree_add_particle_to_cell(r, node->oct[o], pt, node, o);
 	}
 	return node;
 }
 
-int tree_get_octant_for_particle_in_cell(int pt, struct cell *node){
+int tree_get_octant_for_particle_in_cell(const struct Rebound* const r, int pt, struct cell *node){
 	int octant = 0;
-	struct particle p = particles[pt];
+	struct Particle p = r->particles[pt];
 	if (p.x < node->x) octant+=1;
 	if (p.y < node->y) octant+=2;
 	if (p.z < node->z) octant+=4;
@@ -136,10 +136,10 @@ int tree_get_octant_for_particle_in_cell(int pt, struct cell *node){
   *
   * @param node is the pointer to a node cell
   */
-int tree_particle_is_inside_cell(struct cell *node){
-	if (fabs(particles[node->pt].x-node->x) > node->w/2. || \
-		fabs(particles[node->pt].y-node->y) > node->w/2. || \
-		fabs(particles[node->pt].z-node->z) > node->w/2.) {
+int tree_particle_is_inside_cell(const struct Rebound* const r, struct cell *node){
+	if (fabs(r->particles[node->pt].x-node->x) > node->w/2. || \
+		fabs(r->particles[node->pt].y-node->y) > node->w/2. || \
+		fabs(r->particles[node->pt].z-node->z) > node->w/2.) {
 		return 0;
 	}
 	return 1;
@@ -150,7 +150,7 @@ int tree_particle_is_inside_cell(struct cell *node){
   *
   * @param node is the pointer to a node cell
   */
-struct cell *tree_update_cell(struct cell *node){
+struct cell *tree_update_cell(struct Rebound* const r, struct cell *node){
 	int test = -1; /**< A temporary int variable is used to store the index of an octant when it needs to be freed. */
 	if (node == NULL) {
 		return NULL;
@@ -158,7 +158,7 @@ struct cell *tree_update_cell(struct cell *node){
 	// Non-leaf nodes	
 	if (node->pt < 0) {
 		for (int o=0; o<8; o++) {
-			node->oct[o] = tree_update_cell(node->oct[o]);
+			node->oct[o] = tree_update_cell(r, node->oct[o]);
 		}
 		node->pt = 0;
 		for (int o=0; o<8; o++) {
@@ -179,7 +179,7 @@ struct cell *tree_update_cell(struct cell *node){
 			return NULL;
 		} else if (node->pt == -1) { // The node becomes a leaf.
 			node->pt = node->oct[test]->pt;
-			particles[node->pt].c = node;
+			r->particles[node->pt].c = node;
 			free(node->oct[test]);
 			node->oct[test]=NULL;
 			return node;
@@ -187,21 +187,21 @@ struct cell *tree_update_cell(struct cell *node){
 		return node;
 	} 
 	// Leaf nodes
-	if (tree_particle_is_inside_cell(node) == 0) {
+	if (tree_particle_is_inside_cell(r, node) == 0) {
 		int oldpos = node->pt;
-		struct particle reinsertme = particles[oldpos];
+		struct Particle reinsertme = r->particles[oldpos];
 		if (oldpos<N_tree_fixed){
-			particles_add_fixed(reinsertme,oldpos);
+			particles_add_fixed(r,reinsertme,oldpos);
 		}else{
-			N--;
-			particles[oldpos] = particles[N];
-			particles[oldpos].c->pt = oldpos;
-			particles_add(reinsertme);
+			(r->N)--;
+			r->particles[oldpos] = r->particles[r->N];
+			r->particles[oldpos].c->pt = oldpos;
+			particles_add(r, reinsertme);
 		}
 		free(node);
 		return NULL; 
 	} else {
-		particles[node->pt].c = node;
+		r->particles[node->pt].c = node;
 		return node;
 	}
 }
@@ -210,7 +210,7 @@ struct cell *tree_update_cell(struct cell *node){
 /**
   * The function calculates the total mass and center of mass of a node. When QUADRUPOLE is defined, it also calculates the mass quadrupole tensor for all non-leaf nodes.
   */
-void tree_update_gravity_data_in_cell(struct cell *node){
+void tree_update_gravity_data_in_cell(const struct Rebound* const r, struct cell *node){
 #ifdef QUADRUPOLE
 	node->mxx = 0;
 	node->mxy = 0;
@@ -228,7 +228,7 @@ void tree_update_gravity_data_in_cell(struct cell *node){
 		for (int o=0; o<8; o++) {
 			struct cell* d = node->oct[o];
 			if (d!=NULL){
-				tree_update_gravity_data_in_cell(d);
+				tree_update_gravity_data_in_cell(r, d);
 				// Calculate the total mass and the center of mass
 				double d_m = d->m;
 				node->mx += d->mx*d_m;
@@ -264,7 +264,7 @@ void tree_update_gravity_data_in_cell(struct cell *node){
 #endif // QUADRUPOLE
 	}else{ 
 		// Leaf nodes
-		struct particle p = particles[node->pt];
+		struct Particle p = r->particles[node->pt];
 		node->m = p.m;
 		node->mx = p.x;
 		node->my = p.y;
@@ -272,13 +272,13 @@ void tree_update_gravity_data_in_cell(struct cell *node){
 	}
 }
 
-void tree_update_gravity_data(void){
-	for(int i=0;i<root_n;i++){
+void tree_update_gravity_data(struct Rebound* const r){
+	for(int i=0;i<r->root_n;i++){
 #ifdef MPI
 		if (communication_mpi_rootbox_is_local(i)==1){
 #endif // MPI
 			if (tree_root[i]!=NULL){
-				tree_update_gravity_data_in_cell(tree_root[i]);
+				tree_update_gravity_data_in_cell(r, tree_root[i]);
 			}
 #ifdef MPI
 		}
@@ -287,16 +287,16 @@ void tree_update_gravity_data(void){
 }
 #endif // GRAVITY_TREE
 
-void tree_update(void){
+void tree_update(struct Rebound* const r){
 	if (tree_root==NULL){
-		tree_root = calloc(root_nx*root_ny*root_nz,sizeof(struct cell*));
+		tree_root = calloc(r->root_nx*r->root_ny*r->root_nz,sizeof(struct cell*));
 	}
-	for(int i=0;i<root_n;i++){
+	for(int i=0;i<r->root_n;i++){
 
 #ifdef MPI
 		if (communication_mpi_rootbox_is_local(i)==1){
 #endif // MPI
-			tree_root[i] = tree_update_cell(tree_root[i]);
+			tree_root[i] = tree_update_cell(r, tree_root[i]);
 #ifdef MPI
 		}
 #endif // MPI

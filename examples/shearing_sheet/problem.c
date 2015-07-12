@@ -34,7 +34,7 @@
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
-#include "main.h"
+#include "rebound.h"
 #include "particle.h"
 #include "boundaries.h"
 #include "output.h"
@@ -52,41 +52,38 @@ double coefficient_of_restitution_bridges(double v);
 
 extern double opening_angle2;
 
-void problem_init(int argc, char* argv[]){
+void post_timestep(struct Rebound* const r);
+
+int main(int argc, char* argv[]) {
+	struct Rebound* r = rebound_init();
 	// Setup constants
 #ifdef GRAVITY_TREE
 	opening_angle2	= .5;					// This determines the precission of the tree code gravity calculation.
 #endif // GRAVITY_TREE
-	integrator			= SEI;
+	r->integrator			= SEI;
 	OMEGA 				= 0.00013143527;	// 1/s
-	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
-	softening 			= 0.1;			// m
-	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
-#ifdef OPENGL							// Delete the next two lines if you want a face on view.
-	display_rotate_z		= 20;			// Rotate the box by 20 around the z axis, then 
-	display_rotate_x		= 60;			// rotate the box by 60 degrees around the x axis	
-#ifdef LIBPNG
-	system("mkdir png");
-#endif // LIBPNG
-#endif // OPENGL
+	r->G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
+	r->softening 			= 0.1;			// m
+	r->dt 				= 1e-3*2.*M_PI/OMEGA;	// s
 	// This example uses two root boxes in the x and y direction. 
 	// Although not necessary in this case, it allows for the parallelization using MPI. 
 	// See Rein & Liu for a description of what a root box is in this context.
-	root_nx = 2; root_ny = 2; root_nz = 1;			
-	nghostx = 2; nghosty = 2; nghostz = 0; 			// Use two ghost rings
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3
 	double particle_radius_min 	= 1;			// m
 	double particle_radius_max 	= 4;			// m
 	double particle_radius_slope 	= -3;	
-	boxsize 			= 100;			// m
+	double boxsize 			= 100;			// m
 	if (argc>1){						// Try to read boxsize from command line
 		boxsize = atof(argv[1]);
 	}
-	init_box();
+	rebound_configure_box(r, boxsize, 2, 2, 1);
+	r->nghostx = 2;
+	r->nghosty = 2;
+	r->nghostz = 0;
 	
 	// Initial conditions
-	printf("Toomre wavelength: %f\n",4.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*G);
+	printf("Toomre wavelength: %f\n",4.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*r->G);
 	// Use Bridges et al coefficient of restitution.
 	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
 	// When two particles collide and the relative velocity is zero, the might sink into each other in the next time step.
@@ -95,12 +92,12 @@ void problem_init(int argc, char* argv[]){
 
 
 	// Add all ring paricles
-	double total_mass = surfacedensity*boxsize_x*boxsize_y;
+	double total_mass = surfacedensity*r->boxsize_x*r->boxsize_y;
 	double mass = 0;
 	while(mass<total_mass){
-		struct particle pt;
-		pt.x 		= tools_uniform(-boxsize_x/2.,boxsize_x/2.);
-		pt.y 		= tools_uniform(-boxsize_y/2.,boxsize_y/2.);
+		struct Particle pt;
+		pt.x 		= tools_uniform(-r->boxsize_x/2.,r->boxsize_x/2.);
+		pt.y 		= tools_uniform(-r->boxsize_y/2.,r->boxsize_y/2.);
 		pt.z 		= tools_normal(1.);					// m
 		pt.vx 		= 0;
 		pt.vy 		= -1.5*pt.x*OMEGA;
@@ -114,9 +111,10 @@ void problem_init(int argc, char* argv[]){
 #endif
 		double		particle_mass = particle_density*4./3.*M_PI*radius*radius*radius;
 		pt.m 		= particle_mass; 	// kg
-		particles_add(pt);
+		particles_add(r, pt);
 		mass += particle_mass;
 	}
+	rebound_integrate(r,0);
 }
 
 // This example is using a custom velocity dependend coefficient of restitution
@@ -128,17 +126,12 @@ double coefficient_of_restitution_bridges(double v){
 	return eps;
 }
 
-void problem_output(){
-#ifdef LIBPNG
-	if (output_check(1e-3*2.*M_PI/OMEGA)){
-		output_png("png/");
-	}
-#endif //LIBPNG
-	if (output_check(1e-3*2.*M_PI/OMEGA)){
-		output_timing();
+void post_timestep(struct Rebound* const r){
+	if (output_check(r, 1e-3*2.*M_PI/OMEGA)){
+		output_timing(r, 0);
 		//output_append_velocity_dispersion("veldisp.txt");
 	}
-	if (output_check(2.*M_PI/OMEGA)){
+	if (output_check(r, 2.*M_PI/OMEGA)){
 		//output_ascii("position.txt");
 	}
 }

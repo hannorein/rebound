@@ -69,12 +69,12 @@ double 	collisions_max2_r	= 0;
  * @param collision_nearest Pointer to the nearest collision found so far.
  * @param c Pointer to the cell currently being searched in.
  */
-void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, struct ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct cell* c);
+void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct cell* c);
 
-void collisions_search(void){
+void collisions_search(struct Rebound* const r){
 	// Update and simplify tree. 
 	// Prepare particles for distribution to other nodes. 
-	tree_update();          
+	tree_update(r);          
 
 #ifdef MPI
 	// Distribute particles and add newly received particles to tree.
@@ -88,25 +88,27 @@ void collisions_search(void){
 #endif // MPI
 
 	// Loop over ghost boxes, but only the inner most ring.
-	int nghostxcol = (nghostx>1?1:nghostx);
-	int nghostycol = (nghosty>1?1:nghosty);
-	int nghostzcol = (nghostz>1?1:nghostz);
+	int nghostxcol = (r->nghostx>1?1:r->nghostx);
+	int nghostycol = (r->nghosty>1?1:r->nghosty);
+	int nghostzcol = (r->nghostz>1?1:r->nghostz);
+	const struct Particle* const particles = r->particles;
+	const int N = r->N;
 	// Loop over all particles
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
-		struct particle p1 = particles[i];
+		struct Particle p1 = particles[i];
 		struct  collision collision_nearest;
 		collision_nearest.p1 = i;
 		collision_nearest.p2 = -1;
 		double p1_r = p1.r;
-		double nearest_r2 = boxsize_max*boxsize_max/4.;
+		double nearest_r2 = r->boxsize_max*r->boxsize_max/4.;
 		// Loop over ghost boxes.
 		for (int gbx=-nghostxcol; gbx<=nghostxcol; gbx++){
 		for (int gby=-nghostycol; gby<=nghostycol; gby++){
 		for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
 			// Calculated shifted position (for speedup). 
-			struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
-			struct ghostbox gbunmod = gb;
+			struct Ghostbox gb = boundaries_get_ghostbox(r, gbx,gby,gbz);
+			struct Ghostbox gbunmod = gb;
 			gb.shiftx += p1.x; 
 			gb.shifty += p1.y; 
 			gb.shiftz += p1.z; 
@@ -114,10 +116,10 @@ void collisions_search(void){
 			gb.shiftvy += p1.vy; 
 			gb.shiftvz += p1.vz; 
 			// Loop over all root boxes.
-			for (int ri=0;ri<root_n;ri++){
+			for (int ri=0;ri<r->root_n;ri++){
 				struct cell* rootcell = tree_root[ri];
 				if (rootcell!=NULL){
-					tree_get_nearest_neighbour_in_cell(gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
+					tree_get_nearest_neighbour_in_cell(r, gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
 				}
 			}
 		}
@@ -132,7 +134,8 @@ void collisions_search(void){
  * This is really nice with all those parametes.
  * @TODO Cleanup
  */ 
-void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, struct ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct collision* collision_nearest, struct cell* c){
+void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct collision* collision_nearest, struct cell* c){
+	const struct Particle* const particles = r->particles;
 	if (c->pt>=0){ 	
 		// c is a leaf node
 		int condition 	= 1;
@@ -152,7 +155,7 @@ void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, struct ghostbox gbun
 		}
 #endif // MPI
 		if (condition){
-			struct particle p2;
+			struct Particle p2;
 #ifdef MPI
 			if (isloc==1){
 #endif // MPI
@@ -207,14 +210,14 @@ void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, struct ghostbox gbun
 			for (int o=0;o<8;o++){
 				struct cell* d = c->oct[o];
 				if (d!=NULL){
-					tree_get_nearest_neighbour_in_cell(gb,gbunmod,ri,p1_r,nearest_r2,collision_nearest,d);
+					tree_get_nearest_neighbour_in_cell(r, gb,gbunmod,ri,p1_r,nearest_r2,collision_nearest,d);
 				}
 			}
 		}
 	}
 }
 
-void collisions_resolve(void){
+void collisions_resolve(struct Rebound* const r){
 	// randomize
 	for (int i=0;i<collisions_N;i++){
 		int new = rand()%collisions_N;
@@ -225,7 +228,7 @@ void collisions_resolve(void){
 	// Loop over all collisions previously found in collisions_search().
 	for (int i=0;i<collisions_N;i++){
 		// Resolve collision
-		collision_resolve(collisions[i]);
+		collision_resolve(r, collisions[i]);
 	}
 	// Mark all collisions as resolved.
 	collisions_N=0;

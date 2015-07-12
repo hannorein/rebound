@@ -59,6 +59,6 @@ void boundaries_check(struct Rebound* r);
  * @param j Index in y direction.
  * @param k Index in z direction.
  */
-struct Ghostbox boundaries_get_ghostbox(int i, int j, int k);
+struct Ghostbox boundaries_get_ghostbox(struct Rebound* const r, int i, int j, int k);
 
 #endif

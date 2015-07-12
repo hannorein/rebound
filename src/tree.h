@@ -60,13 +60,13 @@ extern struct cell** tree_root; /**< A public pointer to the roots of the trees.
 /**
   * The wrap function corresponds to initializing the trees when they don't exist and updating the structures of the trees by calling tree_update_cell. 
   */
-void tree_update(void);
+void tree_update(struct Rebound* const r);
 
 #ifdef GRAVITY_TREE
 /**
   * The wrap function calls tree_update_gravity_data_in_cell() to for each tree.
   */
-void tree_update_gravity_data(void);
+void tree_update_gravity_data(struct Rebound* const r);
 #endif // GRAVITY_TREE
 
 /**
@@ -74,7 +74,7 @@ void tree_update_gravity_data(void);
   *
   * @param pt is the index of a particle.
   */
-void tree_add_particle_to_tree(int pt);
+void tree_add_particle_to_tree(struct Rebound* const r, int pt);
 
 #ifdef MPI
 /**

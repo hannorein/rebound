@@ -156,5 +156,5 @@ int main(int argc, char* argv[]) {
 
 
 	// Start integration
-	rebound_integrate(r, tmax, 0., 0.);
+	rebound_integrate(r, tmax);
 }

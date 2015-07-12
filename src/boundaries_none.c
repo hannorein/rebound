@@ -42,7 +42,7 @@
 void boundaries_check(struct Rebound* r){
 }
 
-struct Ghostbox boundaries_get_ghostbox(int i, int j, int k){
+struct Ghostbox boundaries_get_ghostbox(struct Rebound* const r, int i, int j, int k){
 	struct Ghostbox gb;
 	gb.shiftx = 0.;
 	gb.shifty = 0.; 
