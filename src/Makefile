@@ -67,7 +67,6 @@ endif
 
 
 # Create precompiler definitions from links
-PREDEF+= -D$(shell basename `readlink gravity.c` '.c' | tr '[a-z]' '[A-Z]')
 PREDEF+= -D$(shell basename `readlink collisions.c` '.c' | tr '[a-z]' '[A-Z]')
 
 PREDEFLIST= $(shell echo "$(PREDEF)" | sed 's/-D//g')
