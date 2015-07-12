@@ -4,8 +4,6 @@
 *.pdf
 *.bin
 nbody
-gravity.c
-boundaries.c
 collisions.c
 src/problem.c
 .DS_Store

@@ -60,6 +60,16 @@ typedef enum {
 	} boundary_t;
 
 /**
+ * Available gravity routines.
+ */
+typedef enum {
+	RB_GT_NONE = 0,
+	RB_GT_BASIC = 1,
+	RB_GT_COMPENSATED = 2,
+	RB_GT_TREE = 3,
+	} gravity_t;
+
+/**
  * Generic 3d vector
  */
 struct rb_vec3d {
@@ -95,8 +105,6 @@ struct Rebound {
 	int 	nghostz;	/**< Number of ghostboxes in z direction. */
 	int 	exit_simulation;/**< Set to 1 to exit the simulation at the end of the next timestep. */
 	int 	exact_finish_time; /**< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. */
-	integrator_t integrator; /**< Variable setting the current integrator.  */
-	boundary_t boundary;	/**< Setting boundary type. */
 
 	unsigned int force_is_velocitydependent; 	/**< Set to 1 if integrator needs to consider velocity dependent forces. */ 
 	unsigned int gravity_ignore_10;			/**< Ignore the gravity form the central object (for WH-type integrators)*/
@@ -114,6 +122,12 @@ struct Rebound {
 	double megno_mean_Y; 	// mean of Y
 	double megno_delta0; 	// initial scale of delta (for one particle)
 	long   megno_n; 	// number of covariance updates
+
+	//////////////////////////////////////////////
+	/// Module selection
+	integrator_t 	integrator;	/**< Variable setting the current integrator.  */
+	boundary_t 	boundary;	/**< Boundary type. */
+	gravity_t 	gravity;	/**< Gravity solver */
 
 
 	//////////////////////////////////////////////
