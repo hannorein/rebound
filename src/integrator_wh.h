@@ -24,9 +24,13 @@
  */
 #ifndef _INTEGRATOR_WH_H
 #define _INTEGRATOR_WH_H
-struct Rebound;
 void integrator_wh_part1(struct Rebound* r);
 void integrator_wh_part2(struct Rebound* r);
 void integrator_wh_synchronize(struct Rebound* r);
 void integrator_wh_reset(struct Rebound* r);
+
+struct ReboundIntegratorWH {
+	int Nmax;
+	double* eta;
+};
 #endif

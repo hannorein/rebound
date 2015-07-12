@@ -258,6 +258,10 @@ struct Rebound* rebound_init(){
 	r->ri_sei.OMEGA  	= 1;
 	r->ri_sei.OMEGAZ 	= -1;
 	r->ri_sei.lastdt 	= 0;
+	
+	// ********** WH
+	r->ri_wh.eta 		= NULL;
+	r->ri_wh.Nmax 		= 0;
 
 
 

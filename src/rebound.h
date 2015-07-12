@@ -34,6 +34,7 @@
 #include "integrator_ias15.h"
 #include "integrator_whfast.h"
 #include "integrator_sei.h"
+#include "integrator_wh.h"
 
 /*
  * Available integrators.
@@ -95,6 +96,7 @@ struct Rebound {
 	struct ReboundIntegratorWHFast ri_whfast;	/**< The WHFast struct */
 	struct ReboundIntegratorIAS15 ri_ias15;		/**< The IAS15 struct */
 	struct ReboundIntegratorSEI ri_sei;		/**< The SEI struct */
+	struct ReboundIntegratorWH ri_wh;		/**< The WH struct */
 
 
 	//////////////////////////////////////////////

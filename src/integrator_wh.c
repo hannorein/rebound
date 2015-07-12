@@ -61,29 +61,27 @@ void drift_kepu_fchk(double dt0, double r0, double mu, double alpha, double u, d
 void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* c);
 void integrator_wh_aj(struct Particle* const particles, const double G, const int N, const int N_active);
 void integrator_wh_ah(struct Particle* const particles, const double G, const int N, const int N_active);
-void integrator_wh_to_jacobi(struct Particle* const particles, const int N, const int N_active);
-void integrator_wh_from_jacobi(struct Particle* const particles, const int N, const int N_active);
-
-int integrator_wh_N = 0;
-static double* eta;
+void integrator_wh_to_jacobi(struct Particle* const particles, const double* const eta, const int N, const int N_active);
+void integrator_wh_from_jacobi(struct Particle* const particles, const double* const eta, const int N, const int N_active);
 
 void integrator_wh_part1(struct Rebound* r){
 	const int N = r->N;
 	const int N_active = r->N_active;
 	struct Particle* const particles = r->particles;
 	int _N_active = (N_active==-1)?N:N_active;
-	if (_N_active!=integrator_wh_N){
-		eta = realloc(eta,sizeof(double)*_N_active);
-		integrator_wh_N = _N_active;
+	if (_N_active!=r->ri_wh.Nmax){
+		r->ri_wh.eta = realloc(r->ri_wh.eta,sizeof(double)*_N_active);
+		r->ri_wh.Nmax = _N_active;
 	}
 	// DRIFT
+	double* const eta = r->ri_wh.eta;
 	eta[0] = particles[0].m;
 	for(int i=1;i<_N_active;i++){
 	  eta[i] = eta[i-1] + particles[i].m;
 	}
-	integrator_wh_to_jacobi(particles, N, N_active);
+	integrator_wh_to_jacobi(particles, eta, N, N_active);
 	drift_wh(particles, r->G, r->dt/2., N, N_active);
-	integrator_wh_from_jacobi(particles, N, N_active);
+	integrator_wh_from_jacobi(particles, eta, N, N_active);
 	r->t+=r->dt/2.;
 }
 
@@ -91,22 +89,23 @@ void integrator_wh_part2(struct Rebound* r){
 	const int N = r->N;
 	const int N_active = r->N_active;
 	struct Particle* const particles = r->particles;
+	const double* const eta = r->ri_wh.eta;
 	// KICK
 	// Calculate terms in Heliocentric coordinates
 	integrator_wh_ah(particles, r->G, N, N_active);
-	integrator_wh_to_jacobi(particles, N, N_active);
+	integrator_wh_to_jacobi(particles, eta, N, N_active);
 	// Calculate terms in Jacobi coordinates
 	integrator_wh_aj(particles, r->G, N, N_active);
-	integrator_wh_from_jacobi(particles, N, N_active);
+	integrator_wh_from_jacobi(particles, eta, N, N_active);
 	for (int i=1;i<N;i++){
 		particles[i].vx += r->dt*particles[i].ax;
 		particles[i].vy += r->dt*particles[i].ay;
 		particles[i].vz += r->dt*particles[i].az;
 	}
 	// DRIFT
-	integrator_wh_to_jacobi(particles, N, N_active);
+	integrator_wh_to_jacobi(particles, eta, N, N_active);
 	drift_wh(particles, r->G, r->dt/2., N, N_active);
-	integrator_wh_from_jacobi(particles, N, N_active);
+	integrator_wh_from_jacobi(particles, eta, N, N_active);
 	r->t+=r->dt/2.;
 }
 
@@ -116,7 +115,7 @@ int wh_check_normal(struct Particle* p){
 	return 0;
 }
 
-void integrator_wh_to_jacobi(struct Particle* const particles, const int N, const int N_active){
+void integrator_wh_to_jacobi(struct Particle* const particles, const double* const eta, const int N, const int N_active){
 	int _N_active = (N_active==-1)?N:N_active;
 
 	double sumx  = particles[1].m * particles[1].x;
@@ -158,7 +157,7 @@ void integrator_wh_to_jacobi(struct Particle* const particles, const int N, cons
 	}
 }
 
-void integrator_wh_from_jacobi(struct Particle* const particles, const int N, const int N_active){
+void integrator_wh_from_jacobi(struct Particle* const particles, const double* const eta, const int N, const int N_active){
 	int _N_active = (N_active==-1)?N:N_active;
 	double sumx  = particles[1].m*particles[1].x /eta[1];
 	double sumy  = particles[1].m*particles[1].y /eta[1];
