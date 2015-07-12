@@ -49,7 +49,6 @@ extern double minimum_collision_velocity;
 extern double (*coefficient_of_restitution_for_velocity)(double); 
 double coefficient_of_restitution_bridges(double v); 
 
-extern double opening_angle2;
 
 void post_timestep(struct Rebound* const r);
 
@@ -57,7 +56,7 @@ int main(int argc, char* argv[]) {
 	struct Rebound* r = rebound_init();
 	// Setup constants
 #ifdef GRAVITY_TREE
-	opening_angle2	= .5;					// This determines the precission of the tree code gravity calculation.
+	r->opening_angle2	= .5;					// This determines the precission of the tree code gravity calculation.
 #endif // GRAVITY_TREE
 	r->integrator			= SEI;
 	double OMEGA 			= 0.00013143527;	// 1/s

@@ -99,7 +99,7 @@ void integrator_hybrid_part1(struct Rebound* r){
 				fprintf(stderr,"\n\033[1mInfo!\033[0m Switching to IAS15 for the first time at t=%.9e.\n",r->t);
 			}
 			integrator_whfast_synchronize(r);
-			gravity_ignore_10 = 0;
+			r->gravity_ignore_10 = 0;
 		}
 		integrator_hybrid_mode = IAS15;
 	}else{

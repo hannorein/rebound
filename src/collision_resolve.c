@@ -45,8 +45,8 @@ long	collisions_Nlog =0;	/**< Keep track of Number of collisions. */
 void (*collision_resolve) (struct Rebound* const r, struct collision) = collision_resolve_hardsphere;
 
 void collision_resolve_hardsphere(struct Rebound* const r, struct collision c){
-	struct Particle* const particles = r->particles;
 #ifndef COLLISIONS_NONE
+	struct Particle* const particles = r->particles;
 	struct Particle p1 = particles[c.p1];
 	struct Particle p2;
 #ifdef MPI

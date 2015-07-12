@@ -221,6 +221,7 @@ struct Rebound* rebound_init(){
 	r->particles	= NULL;
 	r->integrator = IAS15;
 	r->force_is_velocitydependent = 0;
+	r->gravity_ignore_10	= 0;
 
 	// Function pointers 
 	r->additional_forces 		= NULL;
@@ -263,6 +264,7 @@ struct Rebound* rebound_init(){
 #ifdef TREE
 	r->tree_root		= NULL;
 	r->N_tree_fixed		= 0;
+	r->opening_angle2	= 0.25;
 #endif // TREE
 	memset(&(r->ri_ias15.g),0,sizeof(double)*7);
 	memset(&(r->ri_ias15.b),0,sizeof(double)*7);

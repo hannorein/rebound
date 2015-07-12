@@ -677,7 +677,7 @@ void integrator_whfast_part1(struct Rebound* const r){
 	struct Particle* restrict const particles = r->particles;
 	const int N = r->N;
 	const int N_megno = r->N_megno;
-	gravity_ignore_10 = 1;
+	r->gravity_ignore_10 = 1;
 	if (ri_whfast->allocated_N != N){
 		ri_whfast->allocated_N = N;
 		ri_whfast->p_j = realloc(ri_whfast->p_j,sizeof(struct Particle)*N);

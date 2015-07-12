@@ -42,8 +42,6 @@
 #include "tree.h"
 #include "boundaries.h"
 
-unsigned int gravity_ignore_10;
-double opening_angle2 = 0.25; /**< Square of the cell opening angle \f$ \theta \f$. */
 
 /**
   * The function loops over all trees to call calculate_forces_for_particle_from_cell() tree to calculate forces for each particle.
@@ -109,7 +107,7 @@ void gravity_calculate_acceleration_for_particle_from_cell(struct Rebound* r, co
 	double dz = gb.shiftz - node->mz;
 	double r2 = dx*dx + dy*dy + dz*dz;
 	if ( node->pt < 0 ) { // Not a leaf
-		if ( node->w*node->w > opening_angle2*r2 ){
+		if ( node->w*node->w > r->opening_angle2*r2 ){
 			for (int o=0; o<8; o++) {
 				if (node->oct[o] != NULL) {
 					gravity_calculate_acceleration_for_particle_from_cell(r, pt, node->oct[o], gb);

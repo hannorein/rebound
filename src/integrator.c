@@ -120,7 +120,7 @@ void integrator_synchronize(struct Rebound* r){
 
 void integrator_reset(struct Rebound* r){
 	r->integrator = IAS15;
-	gravity_ignore_10 = 0;
+	r->gravity_ignore_10 = 0;
 	integrator_ias15_reset(r);
 	integrator_wh_reset(r);
 	integrator_leapfrog_reset(r);

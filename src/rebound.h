@@ -73,7 +73,8 @@ struct Rebound {
 	int 	exact_finish_time; /**< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. */
 	integrator_t integrator; /**< Variable setting the current integrator.  */
 
-	unsigned int force_is_velocitydependent; /**< Set to 1 if integrator needs to consider velocity dependent forces. */ 
+	unsigned int force_is_velocitydependent; 	/**< Set to 1 if integrator needs to consider velocity dependent forces. */ 
+	unsigned int gravity_ignore_10;			/**< Ignore the gravity form the central object (for WH-type integrators)*/
 
 
 	//////////////////////////////////////////////
@@ -84,7 +85,8 @@ struct Rebound {
 	//////////////////////////////////////////////
 	/// Tree
 	struct cell** tree_root; 			/**< Pointer to the roots of the trees. */
-	int N_tree_fixed; /**< Particle between 0 and N_tree_fixed will not be shuffled around during tree-reconstruction.  */
+	int N_tree_fixed; 				/**< Particle between 0 and N_tree_fixed will not be shuffled around during tree-reconstruction.  */
+	double opening_angle2;	 			/**< Square of the cell opening angle \f$ \theta \f$. */
 
 #endif // TREE
 	

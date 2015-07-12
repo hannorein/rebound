@@ -50,7 +50,6 @@ struct cs_3d {
 	double z;
 };
 
-unsigned int gravity_ignore_10;
 
 #if defined(BOUNDARIES_SHEAR) || defined(BOUNDARIES_PERIODIC) || defined(BOUNDARIES_SHEARY)
 // Gravity calculation for periodic boundary conditions
@@ -61,7 +60,7 @@ void gravity_calculate_acceleration(struct Rebound* r){
 	const int N_megno = r->N_megno;
 	const int N_active = r->N_active;
 	const double G = r->G;
-	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
+	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
 #pragma omp parallel for schedule(guided)
 	for (int i=0; i<N; i++){
 		particles[i].ax = 0; 
@@ -123,7 +122,7 @@ void gravity_calculate_acceleration(struct Rebound* r){
 void gravity_calculate_variational_acceleration(struct Rebound* r){
 	struct Particle* const particles = r->particles;
 	const double G = r->G;
-	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
+	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
 	const int _N_real   = N - N_megno;
 #pragma omp parallel for schedule(guided)
 	for (int i=_N_real; i<N; i++){
@@ -187,7 +186,7 @@ void gravity_calculate_acceleration(struct Rebound* r){
 	struct Particle* const particles = r->particles;
 	const double G = r->G;
 	const double softening = r->softening;
-	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
+	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
 	const int N = r->N;
 	const int N_megno = r->N_megno;
 	const int N_active = r->N_active;
@@ -291,7 +290,7 @@ void gravity_calculate_acceleration(struct Rebound* r){
 void gravity_calculate_variational_acceleration(struct Rebound* r){
 	const double softening = r->softening;
 	const double G = r->G;
-	const unsigned int _gravity_ignore_10 = gravity_ignore_10;
+	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
 	struct Particle* const particles = r->particles;
 	const int N = r->N;
 	const int N_megno = r->N_megno;
