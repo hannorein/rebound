@@ -220,6 +220,8 @@ struct Rebound* rebound_init(){
 	r->boundary = RB_BT_NONE;
 	r->force_is_velocitydependent = 0;
 	r->gravity_ignore_10	= 0;
+	r->N_cs 		= 0;
+	r->cs 			= NULL;
 
 	// Function pointers 
 	r->additional_forces 		= NULL;

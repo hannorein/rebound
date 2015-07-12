@@ -59,6 +59,17 @@ typedef enum {
 	RB_BT_SHEAR = 3,
 	} boundary_t;
 
+/**
+ * Generic 3d vector
+ */
+struct rb_vec3d {
+	double x;
+	double y;
+	double z;
+};
+
+
+
 struct Rebound {
 	double 	t;		/**< Current simulation time. */
 	double 	G;		/**< Gravitational constant. Default: 1. */
@@ -89,6 +100,9 @@ struct Rebound {
 
 	unsigned int force_is_velocitydependent; 	/**< Set to 1 if integrator needs to consider velocity dependent forces. */ 
 	unsigned int gravity_ignore_10;			/**< Ignore the gravity form the central object (for WH-type integrators)*/
+	struct rb_vec3d* cs;				/**< Vector containing the information for compensated gravity summation */
+	int N_cs;					/**< Current number of allocated space for cs array*/
+
 
 	//////////////////////////////////////////////
 	/// Variational Particles

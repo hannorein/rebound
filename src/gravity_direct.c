@@ -44,16 +44,6 @@
 #warning Make sure you know what the code is doing. Have a look at the example restricted_threebody_mpi.
 #endif
 
-struct cs_3d {
-	double x;
-	double y;
-	double z;
-};
-
-static struct cs_3d* restrict cs = NULL;
-static int N_cs = 0;
-
-
 void gravity_calculate_acceleration(struct Rebound* r){
 	struct Particle* const particles = r->particles;
 	const int N = r->N;
@@ -69,7 +59,7 @@ void gravity_calculate_acceleration(struct Rebound* r){
 		// Gravity calculation for periodic boundary conditions
 		case RB_BT_PERIODIC:
 		case RB_BT_SHEAR:
-			{
+		{
 			const int nghostx = r->nghostx;
 			const int nghosty = r->nghosty;
 			const int nghostz = r->nghostz;
@@ -87,47 +77,33 @@ void gravity_calculate_acceleration(struct Rebound* r){
 				// Summing over all particle pairs
 #pragma omp parallel for schedule(guided)
 				for (int i=_N_start; i<_N_real; i++){
-					double csx = 0;
-					double csy = 0;
-					double csz = 0;
 				for (int j=_N_start; j<_N_active; j++){
-					if (_gravity_ignore_10 && ((i==_N_real+1 && j==_N_real) || (j==_N_real+1 && i==_N_real)) ) continue;
 					if (i==j) continue;
-					double dx = (gb.shiftx+particles[i].x) - particles[j].x;
-					double dy = (gb.shifty+particles[i].y) - particles[j].y;
-					double dz = (gb.shiftz+particles[i].z) - particles[j].z;
-					double r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-					double prefact = -G/(r*r*r)*particles[j].m;
+					const double dx = (gb.shiftx+particles[i].x) - particles[j].x;
+					const double dy = (gb.shifty+particles[i].y) - particles[j].y;
+					const double dz = (gb.shiftz+particles[i].z) - particles[j].z;
+					const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+					const double prefact = -G/(_r*_r*_r)*particles[j].m;
 					
-					double ax = particles[i].ax;
-					csx  +=	prefact*dx; 
-					particles[i].ax    = ax + csx;
-					csx  += ax - particles[i].ax; 
-					
-					double ay = particles[i].ay;
-					csy  +=	prefact*dy; 
-					particles[i].ay    = ay + csy;
-					csy  += ay - particles[i].ay; 
-					
-					double az = particles[i].az;
-					csz  +=	prefact*dz; 
-					particles[i].az    = az + csz;
-					csz  += az - particles[i].az; 
-					
+					particles[i].ax    += prefact*dx;
+					particles[i].ay    += prefact*dy;
+					particles[i].az    += prefact*dz;
 				}
 				}
 			}
 			}
 			}
-			}
-			break;
+		}
+		break;
 		// Gravity calculation for non-periodic boundary conditions
 		case RB_BT_OPEN:
 		case RB_BT_NONE:
-			if (N_cs<_N_real){
-				cs = realloc(cs,_N_real*sizeof(struct cs_3d));
-				N_cs = _N_real;
+		{
+			if (r->N_cs<_N_real){
+				r->cs = realloc(r->cs,_N_real*sizeof(struct rb_vec3d));
+				r->N_cs = _N_real;
 			}
+			struct rb_vec3d* const cs = r->cs;
 #pragma omp parallel for schedule(guided)
 			for (int i=0; i<_N_real; i++){
 				particles[i].ax = 0.; 
@@ -215,7 +191,8 @@ void gravity_calculate_acceleration(struct Rebound* r){
 				cs[i].z  += az - particles[i].az; 
 			}
 			}
-			break;
+		}
+		break;
 	}
 #ifdef MPI
 	// Distribute active particles from root to all other nodes.
@@ -229,7 +206,6 @@ void gravity_calculate_acceleration(struct Rebound* r){
 void gravity_calculate_variational_acceleration(struct Rebound* r){
 	struct Particle* const particles = r->particles;
 	const double G = r->G;
-	const double softening2 = r->softening*r->softening;
 	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
 	const int N = r->N;
 	const int N_megno = r->N_megno;
@@ -244,51 +220,8 @@ void gravity_calculate_variational_acceleration(struct Rebound* r){
 		// Gravity calculation for periodic boundary conditions
 		case RB_BT_PERIODIC:
 		case RB_BT_SHEAR:
-			{
-			const int nghostx = r->nghostx;
-			const int nghosty = r->nghosty;
-			const int nghostz = r->nghostz;
-			for (int gbx=-nghostx; gbx<=nghostx; gbx++){
-			for (int gby=-nghosty; gby<=nghosty; gby++){
-			for (int gbz=-nghostz; gbz<=nghostz; gbz++){
-				struct Ghostbox gb = boundary_get_ghostbox(r, gbx,gby,gbz);
-#pragma omp parallel for schedule(guided)
-			for (int i=_N_real; i<N; i++){
-			for (int j=_N_real; j<N; j++){
-				if (_gravity_ignore_10 && ((i==_N_real+1 && j==_N_real) || (j==_N_real+1 && i==_N_real)) ) continue;
-				if (i==j) continue;
-				const double dx = gb.shiftx+particles[i-N/2].x - particles[j-N/2].x;
-				const double dy = gb.shifty+particles[i-N/2].y - particles[j-N/2].y;
-				const double dz = gb.shiftz+particles[i-N/2].z - particles[j-N/2].z;
-				const double r2 = dx*dx + dy*dy + dz*dz + softening2;
-				const double r  = sqrt(r2);
-				const double r3inv = 1./(r2*r);
-				const double r5inv = 3.*r3inv/r2;
-				const double ddx = particles[i].x - particles[j].x;
-				const double ddy = particles[i].y - particles[j].y;
-				const double ddz = particles[i].z - particles[j].z;
-				const double Gmj = G * particles[j].m;
-				
-				const double dax =   ddx * ( dx*dx*r5inv - r3inv )
-						   + ddy * ( dx*dy*r5inv )
-						   + ddz * ( dx*dz*r5inv );
-				const double day =   ddx * ( dy*dx*r5inv )
-						   + ddy * ( dy*dy*r5inv - r3inv )
-						   + ddz * ( dy*dz*r5inv );
-				const double daz =   ddx * ( dz*dx*r5inv )
-						   + ddy * ( dz*dy*r5inv )
-						   + ddz * ( dz*dz*r5inv - r3inv );
-				
-				particles[i].ax += Gmj * dax;
-				particles[i].ay += Gmj * day;
-				particles[i].az += Gmj * daz;
-				
-			}
-			}
-			}
-			}
-			}
-			}
+			fprintf(stderr,"\n\033[1mError!\033[0m Variational equations not implemented for periodic boundary conditions.\n");
+			exit(1);
 			break;
 		// Gravity calculation for non-periodic boundary conditions
 		case RB_BT_OPEN:
@@ -300,9 +233,9 @@ void gravity_calculate_variational_acceleration(struct Rebound* r){
 				const double dx = particles[i-N/2].x - particles[j-N/2].x;
 				const double dy = particles[i-N/2].y - particles[j-N/2].y;
 				const double dz = particles[i-N/2].z - particles[j-N/2].z;
-				const double r2 = dx*dx + dy*dy + dz*dz + softening2;
-				const double r  = sqrt(r2);
-				const double r3inv = 1./(r2*r);
+				const double r2 = dx*dx + dy*dy + dz*dz;
+				const double _r  = sqrt(r2);
+				const double r3inv = 1./(r2*_r);
 				const double r5inv = 3.*r3inv/r2;
 				const double ddx = particles[i].x - particles[j].x;
 				const double ddy = particles[i].y - particles[j].y;
