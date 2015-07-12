@@ -51,7 +51,7 @@ struct cs_3d {
 };
 
 
-#if defined(BOUNDARIES_SHEAR) || defined(BOUNDARIES_PERIODIC)/
+#if defined(BOUNDARIES_SHEAR) || defined(BOUNDARIES_PERIODIC)
 // Gravity calculation for periodic boundary conditions
 
 void gravity_calculate_acceleration(struct Rebound* r){
