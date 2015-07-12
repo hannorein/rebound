@@ -38,15 +38,16 @@
 #endif // MPI
 
 #ifdef BOUNDARIES_OPEN
-int boundaries_particle_is_in_box(struct Particle p);
+int boundaries_particle_is_in_box(struct Rebound* r, struct Particle p);
 #endif // BOUNDARIES_OPEN
 #ifdef GRAVITY_GRAPE
+#warning Fix this. 
 extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
 void particles_add_local(struct Rebound* const r, struct Particle pt){
 #ifdef BOUNDARIES_OPEN
-	if (boundaries_particle_is_in_box(pt)==0){
+	if (boundaries_particle_is_in_box(r, pt)==0){
 		// Particle has left the box. Do not add.
 		fprintf(stderr,"\n\033[1mWarning!\033[0m Did not add particle outside of box boundaries.\n");
 		return;
@@ -101,7 +102,7 @@ void particles_add(struct Rebound* const r, struct Particle pt){
 void particles_add_fixed(struct Rebound* const r, struct Particle pt,int pos){
 	// Only works for non-MPI simulations or when the particles does not move to another node.
 #ifdef BOUNDARIES_OPEN
-	if (boundaries_particle_is_in_box(pt)==0){
+	if (boundaries_particle_is_in_box(r, pt)==0){
 		// Particle has left the box. Do not add.
 		return;
 	}

@@ -39,45 +39,42 @@
 #include "boundaries.h"
 #include "tree.h"
 
-int nghostx = 0;
-int nghosty = 0;
-int nghostz = 0;
-
-void boundaries_check(void){
-	for (int i=0;i<N;i++){ // run through loop backwards so we don't have to recheck same index after removing
+void boundaries_check(struct Rebound* const r){
+	struct Particle* const particles = r->particles;
+	for (int i=0;i<r->N;i++){ // run through loop backwards so we don't have to recheck same index after removing
 		int removep = 0;
-		if(particles[i].x>boxsize_x/2.){
+		if(particles[i].x>r->boxsize_x/2.){
 			removep = 1;
 		}
-		if(particles[i].x<-boxsize_x/2.){
+		if(particles[i].x<-r->boxsize_x/2.){
 			removep = 1;
 		}
-		if(particles[i].y>boxsize_y/2.){
+		if(particles[i].y>r->boxsize_y/2.){
 			removep = 1;
 		}
-		if(particles[i].y<-boxsize_y/2.){
+		if(particles[i].y<-r->boxsize_y/2.){
 			removep = 1;
 		}
-		if(particles[i].z>boxsize_z/2.){
+		if(particles[i].z>r->boxsize_z/2.){
 			removep = 1;
 		}
-		if(particles[i].z<-boxsize_z/2.){
+		if(particles[i].z<-r->boxsize_z/2.){
 			removep = 1;
 		}
 		if (removep==1){
 #ifndef TREE
-			particles_remove(i,0); // keepSorted=0 by default in C version
+			particles_remove(r, i,0); // keepSorted=0 by default in C version
 			i--; // need to recheck the particle that replaced the removed one
 #endif
 		}
 	}
 }
 
-struct ghostbox boundaries_get_ghostbox(int i, int j, int k){
-	struct ghostbox gb;
-	gb.shiftx = boxsize_x*(double)i;
-	gb.shifty = boxsize_y*(double)j;
-	gb.shiftz = boxsize_z*(double)k;
+struct Ghostbox boundaries_get_ghostbox(struct Rebound* const r, int i, int j, int k){
+	struct Ghostbox gb;
+	gb.shiftx = r->boxsize_x*(double)i;
+	gb.shifty = r->boxsize_y*(double)j;
+	gb.shiftz = r->boxsize_z*(double)k;
 	gb.shiftvx = 0;
 	gb.shiftvy = 0;
 	gb.shiftvz = 0;
@@ -89,23 +86,23 @@ struct ghostbox boundaries_get_ghostbox(int i, int j, int k){
  * @param p Particle to be checked.
  * @return Return value is 1 if particle is inside the box and 0 otherwise.
  */
-int boundaries_particle_is_in_box(struct particle p){
-	if(p.x>boxsize_x/2.){
+int boundaries_particle_is_in_box(struct Rebound* const r, struct Particle p){
+	if(p.x>r->boxsize_x/2.){
 		return 0;
 	}
-	if(p.x<-boxsize_x/2.){
+	if(p.x<-r->boxsize_x/2.){
 		return 0;
 	}
-	if(p.y>boxsize_y/2.){
+	if(p.y>r->boxsize_y/2.){
 		return 0;
 	}
-	if(p.y<-boxsize_y/2.){
+	if(p.y<-r->boxsize_y/2.){
 		return 0;
 	}
-	if(p.z>boxsize_z/2.){
+	if(p.z>r->boxsize_z/2.){
 		return 0;
 	}
-	if(p.z<-boxsize_z/2.){
+	if(p.z<-r->boxsize_z/2.){
 		return 0;
 	}
 	return 1;

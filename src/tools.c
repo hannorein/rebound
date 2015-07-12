@@ -33,11 +33,6 @@
 #include "tools.h"
 
 
-// Random number helper routines
-double	tools_normaldistribution2_rsq;		/**< Used for speedup**/ 
-double 	tools_normaldistribution2_v2;		/**< Used for speedup**/
-int 	tools_normaldistribution2_ready = 0;	/**< Used for speedup**/
-
 void tools_init_srand(){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
@@ -55,19 +50,13 @@ double tools_powerlaw(double min, double max, double slope){
 }
 
 double tools_normal(double variance){
-	if (tools_normaldistribution2_ready==1){
-		tools_normaldistribution2_ready=0;
-		return tools_normaldistribution2_v2*sqrt(-2.*log(tools_normaldistribution2_rsq)/tools_normaldistribution2_rsq*variance);
-	}
 	double v1,v2,rsq=1.;
 	while(rsq>=1. || rsq<1.0e-12){
 		v1=2.*((double)rand())/((double)(RAND_MAX))-1.0;
 		v2=2.*((double)rand())/((double)(RAND_MAX))-1.0;
 		rsq=v1*v1+v2*v2;
 	}
-	tools_normaldistribution2_ready = 1;
-	tools_normaldistribution2_rsq   = rsq;
-	tools_normaldistribution2_v2	  = v2;
+	// Note: This gives another random variable for free, but we'll throw it away for simplicity and for thread-safety.
 	return 	v1*sqrt(-2.*log(rsq)/rsq*variance);
 }
 
@@ -352,24 +341,16 @@ struct orbit tools_p2orbit(double G, struct Particle p, struct Particle primary)
 /**************************
  * MEGNO Routines         */
 
-double tools_megno_Ys;
-double tools_megno_Yss;
-double tools_megno_cov_Yt;	// covariance of <Y> and t
-double tools_megno_var_t;  	// variance of t 
-double tools_megno_mean_t; 	// mean of t
-double tools_megno_mean_Y; 	// mean of Y
-double tools_megno_delta0; 	// initial scale of delta (for one particle)
-long   tools_megno_n; 		// number of covariance updates
 void tools_megno_init(struct Rebound* const r, double delta){
 	int _N_megno = r->N;
-	tools_megno_Ys = 0.;
-	tools_megno_Yss = 0.;
-	tools_megno_cov_Yt = 0.;
-	tools_megno_var_t = 0.;
-	tools_megno_n = 0;
-	tools_megno_mean_Y = 0;
-	tools_megno_mean_t = 0;
-	tools_megno_delta0 = delta;
+	r->megno_Ys = 0.;
+	r->megno_Yss = 0.;
+	r->megno_cov_Yt = 0.;
+	r->megno_var_t = 0.;
+	r->megno_n = 0;
+	r->megno_mean_Y = 0;
+	r->megno_mean_t = 0;
+	r->megno_delta0 = delta;
         for (int i=0;i<_N_megno;i++){ 
                 struct Particle megno = {
 			.m  = r->particles[i].m,
@@ -393,16 +374,16 @@ void tools_megno_init(struct Rebound* const r, double delta){
 }
 double tools_megno(struct Rebound* r){ // Returns the MEGNO <Y>
 	if (r->t==0.) return 0.;
-	return tools_megno_Yss/r->t;
+	return r->megno_Yss/r->t;
 }
 double tools_lyapunov(struct Rebound* r){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
 	if (r->t==0.) return 0.;
-	return tools_megno_cov_Yt/tools_megno_var_t;
+	return r->megno_cov_Yt/r->megno_var_t;
 }
 double tools_megno_deltad_delta(struct Rebound* const r){
 	const struct Particle* restrict const particles = r->particles;
 	const int N = r->N;
-	const int N_megno = r->N;
+	const int N_megno = r->N_megno;
         double deltad = 0;
         double delta2 = 0;
         for (int i=N-N_megno;i<N;i++){
@@ -459,24 +440,24 @@ double tools_megno_deltad_delta(struct Rebound* const r){
 
 void tools_megno_update(struct Rebound* r, double dY){
 	// Calculate running Y(t)
-	tools_megno_Ys += dY;
-	double Y = tools_megno_Ys/r->t;
+	r->megno_Ys += dY;
+	double Y = r->megno_Ys/r->t;
 	// Calculate averge <Y> 
-	tools_megno_Yss += Y * r->dt;
+	r->megno_Yss += Y * r->dt;
 	// Update covariance of (Y,t) and variance of t
-	tools_megno_n++;
-	double _d_t = r->t - tools_megno_mean_t;
-	tools_megno_mean_t += _d_t/(double)tools_megno_n;
-	double _d_Y = tools_megno(r) - tools_megno_mean_Y;
-	tools_megno_mean_Y += _d_Y/(double)tools_megno_n;
-	tools_megno_cov_Yt += ((double)tools_megno_n-1.)/(double)tools_megno_n 
-					*(r->t-tools_megno_mean_t)
-					*(tools_megno(r)-tools_megno_mean_Y);
-	tools_megno_var_t  += ((double)tools_megno_n-1.)/(double)tools_megno_n 
-					*(r->t-tools_megno_mean_t)
-					*(r->t-tools_megno_mean_t);
+	r->megno_n++;
+	double _d_t = r->t - r->megno_mean_t;
+	r->megno_mean_t += _d_t/(double)r->megno_n;
+	double _d_Y = tools_megno(r) - r->megno_mean_Y;
+	r->megno_mean_Y += _d_Y/(double)r->megno_n;
+	r->megno_cov_Yt += ((double)r->megno_n-1.)/(double)r->megno_n 
+					*(r->t-r->megno_mean_t)
+					*(tools_megno(r)-r->megno_mean_Y);
+	r->megno_var_t  += ((double)r->megno_n-1.)/(double)r->megno_n 
+					*(r->t-r->megno_mean_t)
+					*(r->t-r->megno_mean_t);
 //	// Check to see if we need to rescale
-//	if (tools_megno_delta0!=0){
-//		tools_megno_rescale();
+//	if (r->megno_delta0!=0){
+//		r->megno_rescale();
 //	}
 }
