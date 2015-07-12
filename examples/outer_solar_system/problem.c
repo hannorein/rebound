@@ -98,8 +98,8 @@ double energy(const double G, const int N, const struct Particle* const particle
 	return e_kin +e_pot;
 }
 
-double tmax = 7.3e6;
-void post_timestep(struct Rebound* const r){
+double tmax = 7.3e7;
+void heartbeat(struct Rebound* const r){
 	if (output_check(r, 10000000.)){
 		output_timing(r, tmax);
 	}
@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
 	r->ri_whfast.corrector = 11;			// Turn on symplectic correctors (11th order).
 
 	// Setup callbacks:
-	r->post_timestep = post_timestep;
+	r->heartbeat = heartbeat;
 	r->force_is_velocitydependent = 0;		// Force only depends on positions. 
 	r->integrator	= WHFAST;
 	//r->integrator	= IAS15;

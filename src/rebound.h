@@ -122,10 +122,10 @@ struct Rebound {
 	 */
 	void (*post_timestep_modifications) (struct Rebound* const r);
 	/**
-	 * This function is called at the beginning of the simulation, at the end of
-	 * each timestep and at the end of the simulation. 
+	 * This function is called at the beginning of the simulation and at the end of
+	 * each timestep.
 	 */
-	void (*post_timestep) (struct Rebound* r);
+	void (*heartbeat) (struct Rebound* r);
 	/**
 	 * This function is called at the end of the simulation when t>=tmax.
 	 * Note that it is not called when the simulation stopped for another 
@@ -149,6 +149,7 @@ void rebound_step(struct Rebound* const r);
 
 /**
  * Performon an integration. Starting at the current time t and until time tmax.
+ * tmax==0 means integrate forever.
  */
 int rebound_integrate(struct Rebound* const r, double tmax);
 

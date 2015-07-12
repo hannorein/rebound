@@ -50,7 +50,7 @@ extern double (*coefficient_of_restitution_for_velocity)(double);
 double coefficient_of_restitution_bridges(double v); 
 
 
-void post_timestep(struct Rebound* const r);
+void heartbeat(struct Rebound* const r);
 
 int main(int argc, char* argv[]) {
 	struct Rebound* r = rebound_init();
@@ -64,6 +64,7 @@ int main(int argc, char* argv[]) {
 	r->G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
 	r->softening 			= 0.1;			// m
 	r->dt 				= 1e-3*2.*M_PI/OMEGA;	// s
+	r->heartbeat			= heartbeat;	// function pointer for heartbeat
 	// This example uses two root boxes in the x and y direction. 
 	// Although not necessary in this case, it allows for the parallelization using MPI. 
 	// See Rein & Liu for a description of what a root box is in this context.
@@ -125,7 +126,7 @@ double coefficient_of_restitution_bridges(double v){
 	return eps;
 }
 
-void post_timestep(struct Rebound* const r){
+void heartbeat(struct Rebound* const r){
 	if (output_check(r, 1e-3*2.*M_PI/r->ri_sei.OMEGA)){
 		output_timing(r, 0);
 		//output_append_velocity_dispersion("veldisp.txt");
@@ -135,5 +136,3 @@ void post_timestep(struct Rebound* const r){
 	}
 }
 
-void problem_finish(){
-}

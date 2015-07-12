@@ -58,7 +58,7 @@ double ss_mass[3] =
 
 double tmax = 1e9;
 
-void post_timestep(struct Rebound* const r);
+void heartbeat(struct Rebound* const r);
 
 int main(int argc, char* argv[]) {
 	struct Rebound* r = rebound_init();
@@ -85,12 +85,12 @@ int main(int argc, char* argv[]) {
 	// The first half of particles are real particles, the second half are particles following the variational equations.
 	
 	// Set callback for outputs.
-	r->post_timestep = post_timestep;
+	r->heartbeat = heartbeat;
 
 	rebound_integrate(r, tmax);
 }
 
-void post_timestep(struct Rebound* const r){
+void heartbeat(struct Rebound* const r){
 	if (output_check(r, 1000.*r->dt)){
 		output_timing(r, tmax);
 	}
@@ -98,7 +98,7 @@ void post_timestep(struct Rebound* const r){
 		// Output the time and the MEGNO to the screen and a file.
 		FILE* f = fopen("Y.txt","a+");
 		fprintf(f,"        %.20e     %.20e\n",r->t, tools_megno(r));
-		printf("        %.20e     %.20e\n",r->t, tools_megno(r));
+		//printf("        %.20e     %.20e\n",r->t, tools_megno(r));
 		fclose(f);
 	}
 }

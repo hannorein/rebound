@@ -131,12 +131,7 @@ void rebound_step(struct Rebound* const r){
 	collisions_resolve(r);
 	PROFILING_STOP(PROFILING_CAT_COLLISION)
 #endif  // COLLISIONS_NONE
-#ifdef OPENGL
-	PROFILING_START()
-	display();
-	PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
-#endif // OPENGL
-	if (r->post_timestep){ r->post_timestep(r); }
+	if (r->heartbeat){ r->heartbeat(r); }
 #warning TODO
 //	if (maxR){
 //		// Check for escaping particles
@@ -226,7 +221,7 @@ struct Rebound* rebound_init(){
 	// Function pointers 
 	r->additional_forces 		= NULL;
 	r->finished			= NULL;
-	r->post_timestep		= NULL;
+	r->heartbeat			= NULL;
 	r->post_timestep_modifications	= NULL;
 
 	// Integrators	
@@ -295,21 +290,23 @@ struct Rebound* rebound_init(){
 
 int rebound_check_exit(struct Rebound* const r, const double tmax){
 	const double dtsign = copysign(1.,r->dt); 	// Used to determine integration direction
-	if(r->exact_finish_time==1){
-		if ((r->t+r->dt)*dtsign>=tmax*dtsign){  // Next step would overshoot
-			if (r->exit_simulation==2 || r->exit_simulation==1){
-				r->exit_simulation = 1; // Exit now.
-			}else{
-				r->exit_simulation = 2; // Do one small step, then exit.
-				r->dt_last_done = r->dt;
-				integrator_synchronize(r);
-				r->dt = tmax-r->t;
+	if(tmax!=0.){
+		if(r->exact_finish_time==1){
+			if ((r->t+r->dt)*dtsign>=tmax*dtsign){  // Next step would overshoot
+				if (r->exit_simulation==2 || r->exit_simulation==1){
+					r->exit_simulation = 1; // Exit now.
+				}else{
+					r->exit_simulation = 2; // Do one small step, then exit.
+					r->dt_last_done = r->dt;
+					integrator_synchronize(r);
+					r->dt = tmax-r->t;
+				}
 			}
-		}
-	}else{
-		r->dt_last_done = r->dt;
-		if (r->t*dtsign>=tmax*dtsign){  // Past the integration time
-			r->exit_simulation = 1; // Exit now.
+		}else{
+			r->dt_last_done = r->dt;
+			if (r->t*dtsign>=tmax*dtsign){  // Past the integration time
+				r->exit_simulation = 1; // Exit now.
+			}
 		}
 	}
 	if (r->N<=0){
@@ -325,7 +322,7 @@ int rebound_integrate(struct Rebound* const r, double tmax){
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 	r->dt_last_done = r->dt;
 	r->exit_simulation = 0;
-	if (r->post_timestep){ r->post_timestep(r); }				// Heartbeat
+	if (r->heartbeat){ r->heartbeat(r); }				// Heartbeat
 #ifdef OPENGL
 	if (display_r!=NULL){
 		fprintf(stderr,"\n\033[1mError!\033[0m Cannot vizualize two simulations at the same time. Exiting.\n");
@@ -342,8 +339,7 @@ int rebound_integrate(struct Rebound* const r, double tmax){
 			rebound_configure_box(r, max_r*2.3,MAX(1,r->root_nx),MAX(1,r->root_ny),MAX(1,r->root_nz));
 		}
 		display_r = r;
-		display_init(0,NULL, tmax);
-		display_r = NULL;
+		display_init(0,NULL, tmax); // This function will never return (GLUT issue/bug).
 	}
 #else // OPENGL
 	while(rebound_check_exit(r,tmax)!=1){

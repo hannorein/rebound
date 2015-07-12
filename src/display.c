@@ -87,6 +87,11 @@ double display_tmax;
 void display_func(void){
 	if (rebound_check_exit(display_r,display_tmax)!=1){
 		rebound_step(display_r);
+#ifdef OPENGL
+		PROFILING_START()
+		display();
+		PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
+#endif // OPENGL
 	}else{
 		display_exit();
 	}
