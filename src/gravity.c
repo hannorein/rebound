@@ -55,10 +55,8 @@ void gravity_calculate_acceleration(struct Rebound* r){
 	const int _N_start  = (r->integrator==WH?1:0);
 	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
 	const int _N_real   = N - N_megno;
-	switch (r->boundary){
-		// Gravity calculation for periodic boundary conditions
-		case RB_BT_PERIODIC:
-		case RB_BT_SHEAR:
+	switch (r->gravity){
+		case RB_GT_BASIC:
 		{
 			const int nghostx = r->nghostx;
 			const int nghosty = r->nghosty;
@@ -96,9 +94,7 @@ void gravity_calculate_acceleration(struct Rebound* r){
 			}
 		}
 		break;
-		// Gravity calculation for non-periodic boundary conditions
-		case RB_BT_OPEN:
-		case RB_BT_NONE:
+		case RB_GT_COMPENSATED:
 		{
 			if (r->N_cs<_N_real){
 				r->cs = realloc(r->cs,_N_real*sizeof(struct rb_vec3d));
@@ -193,6 +189,10 @@ void gravity_calculate_acceleration(struct Rebound* r){
 			}
 			}
 		}
+		default:
+			fprintf(stderr,"\n\033[1mError!\033[0m Gravity calculation not yet implemented.\n");
+			exit(EXIT_FAILURE);
+			break;
 		break;
 	}
 #ifdef MPI
@@ -217,16 +217,10 @@ void gravity_calculate_variational_acceleration(struct Rebound* r){
 		particles[i].ay = 0; 
 		particles[i].az = 0; 
 	}
-	switch (r->boundary){
+	switch (r->gravity){
 		// Gravity calculation for periodic boundary conditions
-		case RB_BT_PERIODIC:
-		case RB_BT_SHEAR:
-			fprintf(stderr,"\n\033[1mError!\033[0m Variational equations not implemented for periodic boundary conditions.\n");
-			exit(1);
-			break;
-		// Gravity calculation for non-periodic boundary conditions
-		case RB_BT_OPEN:
-		case RB_BT_NONE:
+		case RB_GT_BASIC:
+		case RB_GT_COMPENSATED:
 #pragma omp parallel for schedule(guided)
 			for (int i=_N_real; i<N; i++){
 			for (int j=i+1; j<N; j++){
@@ -263,6 +257,10 @@ void gravity_calculate_variational_acceleration(struct Rebound* r){
 				particles[j].az -= Gmi * daz;
 			}
 			}
+			break;
+		default:
+			fprintf(stderr,"\n\033[1mError!\033[0m Variational equations not implemented.\n");
+			exit(EXIT_FAILURE);
 			break;
 	}
 
