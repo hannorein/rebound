@@ -30,7 +30,7 @@
 #include <time.h>
 #include "particle.h"
 #include "rebound.h"
-#include "boundaries.h"
+#include "boundary.h"
 #include "tree.h"
 #include "communication_mpi.h"
 

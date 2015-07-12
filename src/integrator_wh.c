@@ -45,7 +45,6 @@
 #include "particle.h"
 #include "rebound.h"
 #include "gravity.h"
-#include "boundaries.h"
 #include "integrator.h"
 #include "integrator_wh.h"
 

@@ -36,7 +36,7 @@
 #include <time.h>
 #include "particle.h"
 #include "rebound.h"
-#include "boundaries.h"
+#include "boundary.h"
 
 #ifdef MPI
 #include "communication_mpi.h"
@@ -51,7 +51,7 @@ struct cs_3d {
 };
 
 
-#if defined(BOUNDARIES_SHEAR) || defined(BOUNDARIES_PERIODIC) || defined(BOUNDARIES_SHEARY)
+#if defined(BOUNDARIES_SHEAR) || defined(BOUNDARIES_PERIODIC)/
 // Gravity calculation for periodic boundary conditions
 
 void gravity_calculate_acceleration(struct Rebound* r){
@@ -74,7 +74,7 @@ void gravity_calculate_acceleration(struct Rebound* r){
 	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
 	for (int gby=-nghosty; gby<=nghosty; gby++){
 	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
-		struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
+		struct ghostbox gb = boundary_get_ghostbox(gbx,gby,gbz);
 		// Summing over all particle pairs
 #pragma omp parallel for schedule(guided)
 		for (int i=_N_start; i<_N_real; i++){
@@ -133,7 +133,7 @@ void gravity_calculate_variational_acceleration(struct Rebound* r){
 	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
 	for (int gby=-nghosty; gby<=nghosty; gby++){
 	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
-		struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
+		struct ghostbox gb = boundary_get_ghostbox(gbx,gby,gbz);
 #pragma omp parallel for schedule(guided)
 	for (int i=_N_real; i<N; i++){
 	for (int j=_N_real; j<N; j++){

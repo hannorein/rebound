@@ -34,7 +34,7 @@
 #include "rebound.h"
 #include "tools.h"
 #include "gravity.h"
-#include "boundaries.h"
+#include "boundary.h"
 #include "integrator.h"
 #include "integrator_whfast.h"
 

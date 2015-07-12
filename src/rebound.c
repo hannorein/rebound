@@ -32,7 +32,7 @@
 #include <sys/time.h>
 #include "integrator.h"
 #include "integrator_whfast.h"
-#include "boundaries.h"
+#include "boundary.h"
 #include "gravity.h"
 #include "output.h"
 #include "collisions.h"
@@ -68,7 +68,7 @@ void rebound_step(struct Rebound* const r){
 
 	// Check for root crossings.
 	PROFILING_START()
-	boundaries_check(r);     
+	boundary_check(r);     
 	PROFILING_STOP(PROFILING_CAT_BOUNDARY)
 
 	// Update and simplify tree. 
@@ -120,7 +120,7 @@ void rebound_step(struct Rebound* const r){
 #ifndef COLLISIONS_NONE
 	// Check for root crossings.
 	PROFILING_START()
-	boundaries_check(r);     
+	boundary_check(r);     
 	PROFILING_STOP(PROFILING_CAT_BOUNDARY)
 
 	// Search for collisions using local and essential tree.
@@ -217,6 +217,7 @@ struct Rebound* rebound_init(){
 	r->exact_finish_time 	= 0;
 	r->particles	= NULL;
 	r->integrator = IAS15;
+	r->boundary = RB_BT_NONE;
 	r->force_is_velocitydependent = 0;
 	r->gravity_ignore_10	= 0;
 

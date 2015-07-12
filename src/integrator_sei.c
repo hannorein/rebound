@@ -37,7 +37,7 @@
 #include "particle.h"
 #include "gravity.h"
 #include "rebound.h"
-#include "boundaries.h"
+#include "boundary.h"
 #include "integrator.h"
 #include "integrator_sei.h"
 

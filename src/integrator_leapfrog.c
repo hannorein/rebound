@@ -35,7 +35,6 @@
 #include "particle.h"
 #include "rebound.h"
 #include "gravity.h"
-#include "boundaries.h"
 #include "integrator.h"
 
 // Leapfrog integrator (Drift-Kick-Drift)

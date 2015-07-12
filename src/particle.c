@@ -30,6 +30,7 @@
 #include "particle.h"
 #include "rebound.h"
 #include "tree.h"
+#include "boundary.h"
 #ifndef COLLISIONS_NONE
 #include "collisions.h"
 #endif // COLLISIONS_NONE
@@ -37,22 +38,17 @@
 #include "communication_mpi.h"
 #endif // MPI
 
-#ifdef BOUNDARIES_OPEN
-int boundaries_particle_is_in_box(struct Rebound* r, struct Particle p);
-#endif // BOUNDARIES_OPEN
 #ifdef GRAVITY_GRAPE
 #warning Fix this. 
 extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
 void particles_add_local(struct Rebound* const r, struct Particle pt){
-#ifdef BOUNDARIES_OPEN
-	if (boundaries_particle_is_in_box(r, pt)==0){
+	if (boundary_particle_is_in_box(r, pt)==0){
 		// Particle has left the box. Do not add.
 		fprintf(stderr,"\n\033[1mWarning!\033[0m Did not add particle outside of box boundaries.\n");
 		return;
 	}
-#endif // BOUNDARIES_OPEN
 	while (r->Nmax<=r->N){
 		r->Nmax += 128;
 		r->particles = realloc(r->particles,sizeof(struct Particle)*r->Nmax);
@@ -101,12 +97,10 @@ void particles_add(struct Rebound* const r, struct Particle pt){
 
 void particles_add_fixed(struct Rebound* const r, struct Particle pt,int pos){
 	// Only works for non-MPI simulations or when the particles does not move to another node.
-#ifdef BOUNDARIES_OPEN
-	if (boundaries_particle_is_in_box(r, pt)==0){
+	if (boundary_particle_is_in_box(r, pt)==0){
 		// Particle has left the box. Do not add.
 		return;
 	}
-#endif // BOUNDARIES_OPEN
 	r->particles[pos] = pt; 
 #ifdef TREE
 	tree_add_particle_to_tree(r, pos);

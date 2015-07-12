@@ -36,7 +36,6 @@
 #include <sys/time.h>
 #include "rebound.h"
 #include "particle.h"
-#include "boundaries.h"
 #include "output.h"
 #include "communication_mpi.h"
 #include "tree.h"
@@ -59,6 +58,7 @@ int main(int argc, char* argv[]) {
 	r->opening_angle2	= .5;					// This determines the precission of the tree code gravity calculation.
 #endif // GRAVITY_TREE
 	r->integrator			= SEI;
+	r->boundary			= RB_BT_SHEAR;
 	double OMEGA 			= 0.00013143527;	// 1/s
 	r->ri_sei.OMEGA 		= OMEGA;
 	r->G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2

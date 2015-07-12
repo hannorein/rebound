@@ -32,7 +32,7 @@
  */
 #ifndef _COLLISION_RESOLVE_H
 #define _COLLISION_RESOLVE_H
-#include "boundaries.h"
+#include "boundary.h"
 #include "collisions.h"
 
 /**

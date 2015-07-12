@@ -30,7 +30,7 @@
 #include "particle.h"
 #include "collision_resolve.h"
 #include "rebound.h"
-#include "boundaries.h"
+#include "boundary.h"
 #include "communication_mpi.h"
 
 #define MAX(a, b) ((a) < (b) ? (b) : (a))

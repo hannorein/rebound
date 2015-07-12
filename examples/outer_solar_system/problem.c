@@ -44,7 +44,6 @@
 #include "output.h"
 #include "tools.h"
 #include "particle.h"
-#include "boundaries.h"
 #include "integrator_whfast.h"
 
 double ss_pos[6][3] = 

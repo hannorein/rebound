@@ -68,7 +68,6 @@ endif
 
 # Create precompiler definitions from links
 PREDEF+= -D$(shell basename `readlink gravity.c` '.c' | tr '[a-z]' '[A-Z]')
-PREDEF+= -D$(shell basename `readlink boundaries.c` '.c' | tr '[a-z]' '[A-Z]')
 PREDEF+= -D$(shell basename `readlink collisions.c` '.c' | tr '[a-z]' '[A-Z]')
 
 PREDEFLIST= $(shell echo "$(PREDEF)" | sed 's/-D//g')
@@ -90,7 +89,7 @@ all:
 	$(CC) $(OPT) $(PREDEF) integrator_wh.c -c
 	$(CC) $(OPT) $(PREDEF) integrator_leapfrog.c -c
 	$(CC) $(OPT) $(PREDEF) integrator_hybrid.c -c
-	$(CC) $(OPT) $(PREDEF) boundaries.c -c
+	$(CC) $(OPT) $(PREDEF) boundary.c -c
 	$(CC) $(OPT) $(PREDEF) input.c -c
 	$(CC) $(OPT) $(PREDEF) output.c -c
 	$(CC) $(OPT) $(PREDEF) collisions.c -c

@@ -49,6 +49,13 @@ typedef enum {
 	NONE = 6,
 	} integrator_t;
 
+typedef enum {
+	RB_BT_NONE = 0,
+	RB_BT_OPEN = 1,
+	RB_BT_PERIODIC = 2,
+	RB_BT_SHEAR = 3,
+	} boundary_t;
+
 struct Rebound {
 	double 	t;		/**< Current simulation time. */
 	double 	G;		/**< Gravitational constant. Default: 1. */
@@ -75,6 +82,7 @@ struct Rebound {
 	int 	exit_simulation;/**< Set to 1 to exit the simulation at the end of the next timestep. */
 	int 	exact_finish_time; /**< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. */
 	integrator_t integrator; /**< Variable setting the current integrator.  */
+	boundary_t boundary;	/**< Setting boundary type. */
 
 	unsigned int force_is_velocitydependent; 	/**< Set to 1 if integrator needs to consider velocity dependent forces. */ 
 	unsigned int gravity_ignore_10;			/**< Ignore the gravity form the central object (for WH-type integrators)*/

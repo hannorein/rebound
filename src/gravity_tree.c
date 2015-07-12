@@ -40,7 +40,7 @@
 #include "particle.h"
 #include "rebound.h"
 #include "tree.h"
-#include "boundaries.h"
+#include "boundary.h"
 
 
 /**
@@ -77,7 +77,7 @@ void gravity_calculate_acceleration(struct Rebound* const r){
 		// Summing over all particle pairs
 #pragma omp parallel for schedule(guided)
 		for (int i=0; i<N; i++){
-			struct Ghostbox gb = boundaries_get_ghostbox(r, gbx,gby,gbz);
+			struct Ghostbox gb = boundary_get_ghostbox(r, gbx,gby,gbz);
 			// Precalculated shifted position
 			gb.shiftx += particles[i].x;
 			gb.shifty += particles[i].y;

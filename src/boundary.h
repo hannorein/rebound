@@ -1,10 +1,10 @@
 /**
- * @file 	boundaries.h
+ * @file 	boundary.h
  * @brief 	Handles different boundary conditions. 
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  *
  * @details 	The code supports different boundary conditions.
- * They all use this common interface. The function boundaries_check()
+ * They all use this common interface. The function boundary_check()
  * is called to check if particles have left the main box. If so, they are
  * shifted accordingly if the box is (shear) periodic and removed from the 
  * simulatiom.
@@ -51,7 +51,7 @@ struct Ghostbox{
  * If a particle left the box, it is shifted back in the box
  * for periodic boundary conditions or remove from the simulation.
  */
-void boundaries_check(struct Rebound* r);
+void boundary_check(struct Rebound* r);
 
 /**
  * Creates a ghostbox.
@@ -59,6 +59,11 @@ void boundaries_check(struct Rebound* r);
  * @param j Index in y direction.
  * @param k Index in z direction.
  */
-struct Ghostbox boundaries_get_ghostbox(struct Rebound* const r, int i, int j, int k);
+struct Ghostbox boundary_get_ghostbox(struct Rebound* const r, int i, int j, int k);
+
+/**
+ * Return 1 if a particle is in the box, 0 otherwise.
+ */
+int boundary_particle_is_in_box(const struct Rebound* const r, struct Particle p);
 
 #endif

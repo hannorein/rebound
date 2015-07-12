@@ -47,7 +47,7 @@
 #include "collision_resolve.h"
 #include "rebound.h"
 #include "tree.h"
-#include "boundaries.h"
+#include "boundary.h"
 #include "communication_mpi.h"
 
 struct 	collision* collisions 	= NULL;		/**< Array of all collisions. */
@@ -104,7 +104,7 @@ void collisions_search(struct Rebound* const r){
 		for (int gby=-nghostycol; gby<=nghostycol; gby++){
 		for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
 			// Calculated shifted position (for speedup). 
-			struct Ghostbox gb = boundaries_get_ghostbox(r, gbx,gby,gbz);
+			struct Ghostbox gb = boundary_get_ghostbox(r, gbx,gby,gbz);
 			struct Ghostbox gbunmod = gb;
 			gb.shiftx += p1.x; 
 			gb.shifty += p1.y; 
@@ -201,7 +201,7 @@ void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, struct Ghostbox
 		double dy = gb.shifty - c->y;
 		double dz = gb.shiftz - c->z;
 		double r2 = dx*dx + dy*dy + dz*dz;
-		double rp  = p1_r + r->max_radius[2] + 0.86602540378443*c->w;
+		double rp  = p1_r + r->max_radius[1] + 0.86602540378443*c->w;
 		// Check if we need to decent into daughter cells
 		if (r2 < rp*rp ){
 			for (int o=0;o<8;o++){
