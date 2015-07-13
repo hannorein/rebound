@@ -48,10 +48,8 @@ struct Particle {
 #ifdef PARTICLEIDS
 	int ID;		/**< Unique ID to identify particle. */
 #endif
-#ifndef COLLISIONS_NONE
 	double r; 	/**< Radius of the particle. */
 	double lastcollision;	/**< Last time the particle had a physical collision. */
-#endif // COLLISIONS_NONE
 	struct cell* c;		/**< Pointer to the cell the particle is currently in. */
 };
 

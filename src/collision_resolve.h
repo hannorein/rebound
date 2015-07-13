@@ -33,7 +33,7 @@
 #ifndef _COLLISION_RESOLVE_H
 #define _COLLISION_RESOLVE_H
 #include "boundary.h"
-#include "collisions.h"
+#include "collision.h"
 
 /**
  * Collision structure of one single collisions

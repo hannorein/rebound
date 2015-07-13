@@ -67,6 +67,15 @@ typedef enum {
 	} gravity_t;
 
 /**
+ * Available collision routines.
+ */
+typedef enum {
+	RB_CT_NONE = 0,
+	RB_CT_DIRECT = 1,
+	RB_CT_TREE = 2,
+	} collision_t;
+
+/**
  * Generic 3d vector
  */
 struct rb_vec3d {
@@ -122,9 +131,10 @@ struct Rebound {
 
 	//////////////////////////////////////////////
 	/// Module selection
-	integrator_t 	integrator;	/**< Variable setting the current integrator.  */
-	boundary_t 	boundary;	/**< Boundary type. */
+	integrator_t 	integrator;	/**< Variable setting the current integrator */
+	boundary_t 	boundary;	/**< Boundary type */
 	gravity_t 	gravity;	/**< Gravity solver */
+	collision_t 	collision;	/**< Collision solver */
 
 
 	//////////////////////////////////////////////

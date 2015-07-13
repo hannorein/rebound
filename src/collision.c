@@ -39,7 +39,7 @@
 #include <math.h>
 #include <time.h>
 #include "particle.h"
-#include "collisions.h"
+#include "collision.h"
 #include "collision_resolve.h"
 #include "rebound.h"
 #include "boundary.h"

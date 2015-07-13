@@ -52,11 +52,7 @@
 #ifdef _APPLE
 GLuint display_dlist_sphere;	/**< Precalculated display list of a sphere. */
 #endif // APPLE
-#ifndef COLLISIONS_NONE
 int display_spheres = 1;	/**< Switches between point sprite and real spheres. */
-#else // COLLISIONS_NONE
-int display_spheres = 0;	/**< Switches between point sprite and real spheres. */
-#endif // COLLISIONS_NONE
 int display_init_done = 0;	
 int display_pause_sim = 0;	/**< Pauses simulation. */
 int display_pause = 0;		/**< Pauses visualization, but keep simulation running */
@@ -209,23 +205,6 @@ void display(void){
 	if (display_clear){
 	        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	}
-	if (!display_wire) {
-	if (display_spheres){
-		glDisable(GL_BLEND);                    
-		glDepthMask(GL_TRUE);
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_LIGHTING);
-		glEnable(GL_LIGHT0);
-		GLfloat lightpos[] = {0, display_r->boxsize_max, display_r->boxsize_max, 0.f};
-		glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
-	}else{
-		glEnable(GL_BLEND);                    
-		glDepthMask(GL_FALSE);
-		glDisable(GL_DEPTH_TEST);
-		glDisable(GL_LIGHTING);
-		glDisable(GL_LIGHT0);
-	}
-	}
 	glEnable(GL_POINT_SMOOTH);
 	glVertexPointer(3, GL_DOUBLE, sizeof(struct Particle), particles);
 	//int _N_active = ((N_active==-1)?N:N_active);
@@ -240,33 +219,44 @@ void display(void){
 		struct Ghostbox gb = boundary_get_ghostbox(display_r, i,j,k);
 		glTranslatef(gb.shiftx,gb.shifty,gb.shiftz);
 		if (!(!display_clear&&display_wire)){
+			// Drawing Points
+			glEnableClientState(GL_VERTEX_ARRAY);
+			glPointSize(3.);
+			glColor4f(1.0,1.0,1.0,0.5);
+			//glDrawArrays(GL_POINTS, _N_active, N-_N_active);
+			glColor4f(1.0,1.0,0.0,0.9);
+			glPointSize(5.);
+			glDrawArrays(GL_POINTS, 0, display_r->N-display_r->N_megno);
+			glDisableClientState(GL_VERTEX_ARRAY);
 			if (display_spheres){
+				glDisable(GL_BLEND);                    
+				glDepthMask(GL_TRUE);
+				glEnable(GL_DEPTH_TEST);
+				glEnable(GL_LIGHTING);
+				glEnable(GL_LIGHT0);
+				GLfloat lightpos[] = {0, display_r->boxsize_max, display_r->boxsize_max, 0.f};
+				glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
 				// Drawing Spheres
 				glColor4f(1.0,1.0,1.0,1.0);
-#ifndef COLLISIONS_NONE
 				for (int i=0;i<display_r->N-display_r->N_megno;i++){
 					struct Particle p = particles[i];
-					glTranslatef(p.x,p.y,p.z);
-					glScalef(p.r,p.r,p.r);
+					if (p.r>0){
+						glTranslatef(p.x,p.y,p.z);
+						glScalef(p.r,p.r,p.r);
 #ifdef _APPLE
-					glCallList(display_dlist_sphere);
+						glCallList(display_dlist_sphere);
 #else //_APPLE
-					glutSolidSphere(1,40,10);
+						glutSolidSphere(1,40,10);
 #endif //_APPLE
-					glScalef(1./p.r,1./p.r,1./p.r);
-					glTranslatef(-p.x,-p.y,-p.z);
+						glScalef(1./p.r,1./p.r,1./p.r);
+						glTranslatef(-p.x,-p.y,-p.z);
+					}
 				}
-#endif // COLLISIONS_NONE
-			}else{
-				// Drawing Points
-				glEnableClientState(GL_VERTEX_ARRAY);
-				glPointSize(3.);
-				glColor4f(1.0,1.0,1.0,0.5);
-				//glDrawArrays(GL_POINTS, _N_active, N-_N_active);
-				glColor4f(1.0,1.0,0.0,0.9);
-				glPointSize(5.);
-				glDrawArrays(GL_POINTS, 0, display_r->N-display_r->N_megno);
-				glDisableClientState(GL_VERTEX_ARRAY);
+				glEnable(GL_BLEND);                    
+				glDepthMask(GL_FALSE);
+				glDisable(GL_DEPTH_TEST);
+				glDisable(GL_LIGHTING);
+				glDisable(GL_LIGHT0);
 			}
 		}
 		// Drawing wires

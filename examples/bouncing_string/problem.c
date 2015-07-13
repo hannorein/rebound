@@ -31,27 +31,26 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
-#include "main.h"
+#include "rebound.h"
 #include "particle.h"
-#include "boundaries.h"
-#include "integrator.h"
 
 extern double coefficient_of_restitution; 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
+	struct Rebound* const r = rebound_init();
 	// Setup constants
-	dt 				= 1e-3;
-	tmax 				= 10000;
-	boxsize 			= 10;
+	r->dt 				= 1e-3;
+	rebound_configure_box(r,10.,3,1,1);  // boxsize 10., three root boxes in x direction, one in y and z
 	coefficient_of_restitution 	= 1; // elastic collisions
-	integrator			= LEAPFROG;
-	root_nx = 3; root_ny = 1; root_nz = 1;
-	nghostx = 1; nghosty = 1; nghostz = 0;
-	init_box();
+	r->integrator			= LEAPFROG;
+	r->boundary			= RB_BT_PERIODIC;
+	r->nghostx = 1; 
+	r->nghosty = 1; 
+	r->nghostz = 0;
 
 	// Initial conditions
-	while(N<10){
-		struct particle p;
-		p.x  = -boxsize_x/2.+boxsize_x*(double)N/10.;
+	for(int i=0;i<10;i++){
+		struct Particle p;
+		p.x  = -r->boxsize_x/2.+r->boxsize_x*(double)i/10.;
 		p.y  = 0;
 		p.z  = 0;
 		p.vx = 0;
@@ -62,13 +61,11 @@ void problem_init(int argc, char* argv[]){
 		p.az = 0;
 		p.m  = 1;
 		p.r  = 1;
-		particles_add(p);
+		particles_add(r, p);
 	}
-	particles[0].vx = 20;
-}
 
-void problem_output(){
-}
+	// Give one particle a kick
+	r->particles[0].vx = 20;
 
-void problem_finish(){
+	rebound_integrate(r,0);
 }

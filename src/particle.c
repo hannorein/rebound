@@ -32,7 +32,7 @@
 #include "tree.h"
 #include "boundary.h"
 #ifndef COLLISIONS_NONE
-#include "collisions.h"
+#include "collision.h"
 #endif // COLLISIONS_NONE
 #ifdef MPI
 #include "communication_mpi.h"

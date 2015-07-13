@@ -4,7 +4,6 @@
 *.pdf
 *.bin
 nbody
-collisions.c
 src/problem.c
 .DS_Store
 error.txt

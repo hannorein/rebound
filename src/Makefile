@@ -66,9 +66,6 @@ endif
 
 
 
-# Create precompiler definitions from links
-PREDEF+= -D$(shell basename `readlink collisions.c` '.c' | tr '[a-z]' '[A-Z]')
-
 PREDEFLIST= $(shell echo "$(PREDEF)" | sed 's/-D//g')
 
 all:
@@ -91,7 +88,7 @@ all:
 	$(CC) $(OPT) $(PREDEF) boundary.c -c
 	$(CC) $(OPT) $(PREDEF) input.c -c
 	$(CC) $(OPT) $(PREDEF) output.c -c
-	$(CC) $(OPT) $(PREDEF) collisions.c -c
+	$(CC) $(OPT) $(PREDEF) collision.c -c
 	$(CC) $(OPT) $(PREDEF) collision_resolve.c -c
 	$(CC) $(OPT) $(PREDEF) communication_mpi.c -c
 	$(CC) $(OPT) $(PREDEF) zpr.c -c

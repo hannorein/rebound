@@ -35,7 +35,7 @@
 #include "boundary.h"
 #include "gravity.h"
 #include "output.h"
-#include "collisions.h"
+#include "collision.h"
 #include "tree.h"
 #include "tools.h"
 #include "particle.h"
@@ -224,6 +224,7 @@ struct Rebound* rebound_init(){
 	r->integrator 	= IAS15;
 	r->boundary 	= RB_BT_NONE;
 	r->gravity	= RB_GT_COMPENSATED;
+	r->collision	= RB_CT_NONE;
 
 	// Function pointers 
 	r->additional_forces 		= NULL;
