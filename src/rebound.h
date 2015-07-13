@@ -216,12 +216,12 @@ struct reb_context {
  * Initializes all REBOUND variables and returns a REBOUND handle.. 
  * This function must be called from problem_init() before any particles are added.
  */
-struct reb_context* rebound_init();
+struct reb_context* reb_init();
 
 /**
  * Performon integration step.
  */
-void rebound_step(struct reb_context* const r);
+void reb_step(struct reb_context* const r);
 
 /**
  * Performon an integration. Starting at the current time t and until time tmax.

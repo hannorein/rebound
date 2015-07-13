@@ -60,7 +60,7 @@ static const char* build_str = __DATE__ " " __TIME__;	/**< Date and time build s
 unsigned int rebound_show_logo = 1;
 
 
-void rebound_step(struct reb_context* const r){
+void reb_step(struct reb_context* const r){
 	// A 'DKD'-like integrator will do the first 'D' part.
 	PROFILING_START()
 	integrator_part1(r);
@@ -219,7 +219,7 @@ void rebound_reset_function_pointers(struct reb_context* const r){
 	r->post_timestep_modifications	= NULL;
 }
 
-struct reb_context* rebound_init(){
+struct reb_context* reb_init(){
 	if (rebound_show_logo==1){
 		int i =0;
 		while (logo[i]!=NULL){ printf("%s",logo[i++]); }
@@ -366,7 +366,7 @@ int rebound_integrate(struct reb_context* const r, double tmax){
 	}
 #else // OPENGL
 	while(rebound_check_exit(r,tmax)!=1){
-		rebound_step(r); 								// 0 to not do timing within step
+		reb_step(r); 								// 0 to not do timing within step
 	}
 #endif // OPENGL
 	integrator_synchronize(r);

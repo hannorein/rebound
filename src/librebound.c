@@ -91,7 +91,7 @@ void set_integrator(int i){
 }
 
 // Integrate for 1 step
-void rebound_step(int do_timing){
+void reb_step(int do_timing){
     struct timeval tim;
 	double timing_initial, timing_final;
 	if (do_timing){
@@ -147,7 +147,7 @@ int rebound_integrate(double _tmax, int exact_finish_time, double maxR, double m
 			fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
 			return(1);
 		}
-		rebound_step(0); 								// 0 to not do timing within step
+		reb_step(0); 								// 0 to not do timing within step
 		if ((t+dt)*dtsign>=tmax*dtsign && exact_finish_time==1){
 			integrator_synchronize();
 			dt = tmax-t;

@@ -28,7 +28,7 @@
  * Reads a binary file.
  * @param filename Filename to be read.
  */
-struct reb_context* rebound_init_from_binary(char* filename);
+struct reb_context* reb_init_from_binary(char* filename);
 
 /**
  * Reads arguments from the command line.

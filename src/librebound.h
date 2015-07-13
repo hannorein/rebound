@@ -33,7 +33,7 @@ void		integrator_set(int i);
 /*
  * Integrate for one step.
  */
-void rebound_step(int do_timing);
+void reb_step(int do_timing);
 
 /* Integrate until t=_tmax.
  * The integration finisheds exactly at _tmax if 
