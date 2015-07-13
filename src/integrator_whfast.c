@@ -491,7 +491,7 @@ const static double b_115 = 3394141./2328480.*4.980119205559973422e-02;
 
 
 static void corrector_Z(struct reb_context* r, const double a, const double b){
-	struct reb_contextIntegratorWHFast* const ri_whfast = &(r->ri_whfast);
+	struct reb_context_integratorWHFast* const ri_whfast = &(r->ri_whfast);
 	struct reb_particle* restrict const particles = r->particles;
 	const int N_megno = r->N_megno;
 	const int N = r->N;
@@ -559,7 +559,7 @@ static void apply_corrector(struct reb_context* r, double inv){
 }
 
 void reb_integrator_whfast_part1(struct reb_context* const r){
-	struct reb_contextIntegratorWHFast* const ri_whfast = &(r->ri_whfast);
+	struct reb_context_integratorWHFast* const ri_whfast = &(r->ri_whfast);
 	struct reb_particle* restrict const particles = r->particles;
 	const int N = r->N;
 	const int N_megno = r->N_megno;
@@ -627,7 +627,7 @@ void reb_integrator_whfast_part1(struct reb_context* const r){
 }
 
 void reb_integrator_whfast_synchronize(struct reb_context* const r){
-	struct reb_contextIntegratorWHFast* const ri_whfast = &(r->ri_whfast);
+	struct reb_context_integratorWHFast* const ri_whfast = &(r->ri_whfast);
 	const int N = r->N;
 	const int N_megno = r->N_megno;
 	if (ri_whfast->is_synchronized == 0){
@@ -645,7 +645,7 @@ void reb_integrator_whfast_synchronize(struct reb_context* const r){
 
 void reb_integrator_whfast_part2(struct reb_context* const r){
 	struct reb_particle* restrict const particles = r->particles;
-	struct reb_contextIntegratorWHFast* const ri_whfast = &(r->ri_whfast);
+	struct reb_context_integratorWHFast* const ri_whfast = &(r->ri_whfast);
 	const int N = r->N;
 	const int N_megno = r->N_megno;
 	to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, N-N_megno);
@@ -708,7 +708,7 @@ void reb_integrator_whfast_part2(struct reb_context* const r){
 }
 	
 void reb_integrator_whfast_reset(struct reb_context* const r){
-	struct reb_contextIntegratorWHFast* const ri_whfast = &(r->ri_whfast);
+	struct reb_context_integratorWHFast* const ri_whfast = &(r->ri_whfast);
 	ri_whfast->corrector = 0;
 	ri_whfast->is_synchronized = 1;
 	ri_whfast->safe_mode = 1;

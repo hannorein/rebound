@@ -42,7 +42,7 @@
 #include "integrator_sei.h"
 
 
-static void operator_H012(double dt, const struct reb_contextIntegratorSEI ri_sei, struct reb_particle* p);
+static void operator_H012(double dt, const struct reb_context_integratorSEI ri_sei, struct reb_particle* p);
 static void operator_phi1(double dt, struct reb_particle* p);
 
 void reb_integrator_sei_part1(struct reb_context* const r){
@@ -61,7 +61,7 @@ void reb_integrator_sei_part1(struct reb_context* const r){
 		r->ri_sei.tandtz = tan(r->ri_sei.OMEGAZ*(-r->dt/4.));
 		r->ri_sei.lastdt = r->dt;
 	}
-	const struct reb_contextIntegratorSEI ri_sei = r->ri_sei;
+	const struct reb_context_integratorSEI ri_sei = r->ri_sei;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		operator_H012(r->dt, ri_sei, &(particles[i]));
@@ -72,7 +72,7 @@ void reb_integrator_sei_part1(struct reb_context* const r){
 void reb_integrator_sei_part2(struct reb_context* r){
 	const int N = r->N;
 	struct reb_particle* const particles = r->particles;
-	const struct reb_contextIntegratorSEI ri_sei = r->ri_sei;
+	const struct reb_context_integratorSEI ri_sei = r->ri_sei;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		operator_phi1(r->dt, &(particles[i]));
@@ -94,7 +94,7 @@ void reb_integrator_sei_reset(struct reb_context* r){
  * Hamiltonian H0 exactly up to machine precission.
  * @param p reb_particle to evolve.
  */
-static void operator_H012(double dt, const struct reb_contextIntegratorSEI ri_sei, struct reb_particle* p){
+static void operator_H012(double dt, const struct reb_context_integratorSEI ri_sei, struct reb_particle* p){
 		
 	// Integrate vertical motion
 	const double zx = p->z * ri_sei.OMEGAZ;

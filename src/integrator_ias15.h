@@ -32,7 +32,7 @@ void reb_integrator_ias15_part2(struct reb_context* r);
 void reb_integrator_ias15_synchronize(struct reb_context* r);
 void reb_integrator_ias15_reset(struct reb_context* r);
 
-struct reb_contextIntegratorIAS15 {
+struct reb_context_integratorIAS15 {
 	/**
 	 * This parameter controls the accuracy of the integrator.
 	 * Set to 0 to make IAS15 a non-adaptive integrator.
