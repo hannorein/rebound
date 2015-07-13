@@ -99,9 +99,9 @@ void reb_step(int do_timing){
 		timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 	}
 	integrator_part1();
-	gravity_calculate_acceleration();
+	reb_calculate_acceleration();
 	if (N_megno){
-		gravity_calculate_variational_acceleration();
+		reb_calculate_acceleration_var();
 	}
 	if (problem_additional_forces) problem_additional_forces();
 	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles, t, dt, G, N, N_megno);

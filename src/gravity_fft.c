@@ -70,7 +70,7 @@ void gravity_fft_p2grid(void);
 void gravity_fft_remap(double* wi, const double direction);
 double shift_shear = 0;
 
-void gravity_calculate_acceleration(void){
+void reb_calculate_acceleration(void){
 	// Setting up the grid
 	if (gravity_fft_init_done==0){
 		gravity_fft_init();
@@ -467,6 +467,6 @@ void gravity_fft_grid2p(struct particle* p){
 }
 
 
-void gravity_calculate_variational_acceleration(void){
+void reb_calculate_acceleration_var(void){
 	// Not yet implemented 
 }

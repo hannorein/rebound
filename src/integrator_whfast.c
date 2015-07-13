@@ -667,7 +667,7 @@ void integrator_whfast_part2(struct reb_context* const r){
 		ri_whfast->p_j[N_megno].y += _dt2*ri_whfast->p_j[N_megno].vy;
 		ri_whfast->p_j[N_megno].z += _dt2*ri_whfast->p_j[N_megno].vz;
 		integrator_to_inertial_posvel(particles+N_megno, ri_whfast->p_j+N_megno, ri_whfast->eta, N-N_megno);
-		gravity_calculate_variational_acceleration(r);
+		reb_calculate_acceleration_var(r);
 		// Add additional acceleration term for MEGNO calculation
 		int i = N-N_megno;
 		int j = N-N_megno+1;

@@ -147,7 +147,7 @@ real_t* 		a_host = NULL;
 real_t* 		m_host = NULL;
 int			oldN = -1;
 
-void gravity_calculate_acceleration(void){
+void reb_calculate_acceleration(void){
 	if (platforms==NULL){
 		OCL_CREATE_PLATFORMS(platforms);
 		OCL_CREATE_DEVICE(platforms[0],CL_DEVICE_TYPE_GPU|CL_DEVICE_TYPE_ACCELERATOR,device_list);
@@ -253,6 +253,6 @@ void gravity_calculate_acceleration(void){
 	}
 }
 
-void gravity_calculate_variational_acceleration(void){
+void reb_calculate_acceleration_var(void){
 	// Not yet implemented 
 }

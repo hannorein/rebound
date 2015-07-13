@@ -97,9 +97,9 @@ void reb_step(struct reb_context* const r){
 	}
 
 	// Calculate accelerations. 
-	gravity_calculate_acceleration(r);
+	reb_calculate_acceleration(r);
 	if (r->N_megno){
-		gravity_calculate_variational_acceleration(r);
+		reb_calculate_acceleration_var(r);
 	}
 	// Calculate non-gravity accelerations. 
 	if (r->additional_forces) r->additional_forces(r);

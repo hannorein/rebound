@@ -132,9 +132,9 @@ void integrator_reset(struct reb_context* r){
 void integrator_update_acceleration(struct reb_context* r){
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 	PROFILING_START()
-	gravity_calculate_acceleration(r);
+	reb_calculate_acceleration(r);
 	if (r->N_megno){
-		gravity_calculate_variational_acceleration(r);
+		reb_calculate_acceleration_var(r);
 	}
 	if (r->additional_forces) r->additional_forces(r);
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
