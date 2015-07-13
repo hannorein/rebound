@@ -37,11 +37,7 @@
 #include "rebound.h"
 #include "particle.h"
 #include "output.h"
-#include "communication_mpi.h"
-#include "tree.h"
 #include "tools.h"
-#include "display.h"
-#include "integrator.h"
 
 extern double minimum_collision_velocity;
 
@@ -58,6 +54,7 @@ int main(int argc, char* argv[]) {
 	r->integrator			= SEI;
 	r->boundary			= RB_BT_SHEAR;
 	r->gravity			= RB_GT_TREE;
+	r->collision			= RB_CT_DIRECT;
 	double OMEGA 			= 0.00013143527;	// 1/s
 	r->ri_sei.OMEGA 		= OMEGA;
 	r->G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2

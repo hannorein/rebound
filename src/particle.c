@@ -56,7 +56,7 @@ void particles_add_local(struct Rebound* const r, struct Particle pt){
 
 	r->particles[r->N] = pt;
 
-	if (r->gravity==RB_GT_TREE){
+	if (r->gravity==RB_GT_TREE || r->collision==RB_CT_TREE){
 		tree_add_particle_to_tree(r, r->N);
 	}
 	(r->N)++;
@@ -102,7 +102,7 @@ void particles_add_fixed(struct Rebound* const r, struct Particle pt,int pos){
 		return;
 	}
 	r->particles[pos] = pt; 
-	if (r->gravity==RB_GT_TREE){
+	if (r->gravity==RB_GT_TREE || r->collision==RB_CT_TREE){
 		tree_add_particle_to_tree(r, pos);
 	}
 }

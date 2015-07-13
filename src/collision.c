@@ -43,10 +43,13 @@
 #include "collision_resolve.h"
 #include "rebound.h"
 #include "boundary.h"
+#include "tree.h"
 
 #ifdef MPI
 #error COLLISIONS_DIRECT not yet compatible with MPI
 #endif
+
+void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct cell* c);
 
 void collisions_search(struct Rebound* const r){
 	const int N = r->N;
@@ -110,11 +113,78 @@ void collisions_search(struct Rebound* const r){
 			}
 		}
 		break;
+		case RB_CT_TREE:
+		{
+			// Update and simplify tree. 
+			// Prepare particles for distribution to other nodes. 
+			tree_update(r);          
+
+#ifdef MPI
+			// Distribute particles and add newly received particles to tree.
+			communication_mpi_distribute_particles();
+			
+			// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
+			tree_prepare_essential_tree_for_collisions();
+
+			// Transfer essential tree and particles needed for collisions.
+			communication_mpi_distribute_essential_tree_for_collisions();
+#endif // MPI
+
+			// Loop over ghost boxes, but only the inner most ring.
+			int nghostxcol = (r->nghostx>1?1:r->nghostx);
+			int nghostycol = (r->nghosty>1?1:r->nghosty);
+			int nghostzcol = (r->nghostz>1?1:r->nghostz);
+			const struct Particle* const particles = r->particles;
+			const int N = r->N;
+			// Loop over all particles
+#pragma omp parallel for schedule(guided)
+			for (int i=0;i<N;i++){
+				struct Particle p1 = particles[i];
+				struct  collision collision_nearest;
+				collision_nearest.p1 = i;
+				collision_nearest.p2 = -1;
+				double p1_r = p1.r;
+				double nearest_r2 = r->boxsize_max*r->boxsize_max/4.;
+				// Loop over ghost boxes.
+				for (int gbx=-nghostxcol; gbx<=nghostxcol; gbx++){
+				for (int gby=-nghostycol; gby<=nghostycol; gby++){
+				for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
+					// Calculated shifted position (for speedup). 
+					struct Ghostbox gb = boundary_get_ghostbox(r, gbx,gby,gbz);
+					struct Ghostbox gbunmod = gb;
+					gb.shiftx += p1.x; 
+					gb.shifty += p1.y; 
+					gb.shiftz += p1.z; 
+					gb.shiftvx += p1.vx; 
+					gb.shiftvy += p1.vy; 
+					gb.shiftvz += p1.vz; 
+					// Loop over all root boxes.
+					for (int ri=0;ri<r->root_n;ri++){
+						struct cell* rootcell = r->tree_root[ri];
+						if (rootcell!=NULL){
+							tree_get_nearest_neighbour_in_cell(r, gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
+						}
+					}
+				}
+				}
+				}
+				// Continue if no collision was found
+				if (collision_nearest.p2==-1) continue;
+			}
+		}
+		break;
 		default:
 			fprintf(stderr,"\n\033[1mError!\033[0m Collision routine not implemented.\n");
 			exit(EXIT_FAILURE);
 	}
 
+	// randomize
+	for (int i=0;i<r->collisions_N;i++){
+		int new = rand()%r->collisions_N;
+		struct collision c1 = r->collisions[i];
+		r->collisions[i] = r->collisions[new];
+		r->collisions[new] = c1;
+	}
 	// Loop over all collisions previously found in collisions_search().
 	for (int i=0;i<r->collisions_N;i++){
 		// Resolve collision
@@ -123,3 +193,101 @@ void collisions_search(struct Rebound* const r){
 	// Mark all collisions as resolved.
 	r->collisions_N=0;
 }
+
+
+
+/**
+ * Find the nearest neighbour in a cell or its daughters.
+ * The function only returns a positive result if the particles
+ * are overlapping. Thus, the name nearest neighbour is not
+ * exactly true.
+ * @param gb (Shifted) position and velocity of the particle.
+ * @param ri Index of the root box currently being searched in.
+ * @param p1_r Radius of the particle (this is not in gb).
+ * @param nearest_r2 Pointer to the nearest neighbour found so far.
+ * @param collision_nearest Pointer to the nearest collision found so far.
+ * @param c Pointer to the cell currently being searched in.
+ */
+void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct collision* collision_nearest, struct cell* c){
+	const struct Particle* const particles = r->particles;
+	if (c->pt>=0){ 	
+		// c is a leaf node
+		int condition 	= 1;
+#ifdef MPI
+		int isloc	= 1 ;
+		isloc = communication_mpi_rootbox_is_local(ri);
+		if (isloc==1){
+#endif // MPI
+			/**
+			 * If this is a local cell, make sure particle is not colliding with itself.
+			 * If this is a remote cell, the particle number might be the same, even for 
+			 * different particles. 
+			 * @TODO This can probably be written in a cleaner way.
+			 */
+			condition = (c->pt != collision_nearest->p1);
+#ifdef MPI
+		}
+#endif // MPI
+		if (condition){
+			struct Particle p2;
+#ifdef MPI
+			if (isloc==1){
+#endif // MPI
+				p2 = particles[c->pt];
+#ifdef MPI
+			}else{
+				int root_n_per_node = root_n/mpi_num;
+				int proc_id = ri/root_n_per_node;
+				p2 = particles_recv[proc_id][c->pt];
+			}
+#endif // MPI
+
+			double dx = gb.shiftx - p2.x;
+			double dy = gb.shifty - p2.y;
+			double dz = gb.shiftz - p2.z;
+			double r2 = dx*dx+dy*dy+dz*dz;
+			// A closer neighbour has already been found 
+			//if (r2 > *nearest_r2) return;
+			double rp = p1_r+p2.r;
+			// Particles are not overlapping 
+			if (r2 > rp*rp) return;
+			double dvx = gb.shiftvx - p2.vx;
+			double dvy = gb.shiftvy - p2.vy;
+			double dvz = gb.shiftvz - p2.vz;
+			// Particles are not approaching each other
+			if (dvx*dx + dvy*dy + dvz*dz >0) return;
+			// Found a new nearest neighbour. Save it for later.
+			*nearest_r2 = r2;
+			collision_nearest->ri = ri;
+			collision_nearest->p2 = c->pt;
+			collision_nearest->gb = gbunmod;
+			// Save collision in collisions array.
+#pragma omp critical
+			{
+				if (r->collisions_NMAX<=r->collisions_N){
+					r->collisions_NMAX += 32;
+					r->collisions = realloc(r->collisions,sizeof(struct collision)*r->collisions_NMAX);
+				}
+				r->collisions[r->collisions_N] = *collision_nearest;
+				r->collisions_N++;
+			}
+		}
+	}else{		
+		// c is not a leaf node
+		double dx = gb.shiftx - c->x;
+		double dy = gb.shifty - c->y;
+		double dz = gb.shiftz - c->z;
+		double r2 = dx*dx + dy*dy + dz*dz;
+		double rp  = p1_r + r->max_radius[1] + 0.86602540378443*c->w;
+		// Check if we need to decent into daughter cells
+		if (r2 < rp*rp ){
+			for (int o=0;o<8;o++){
+				struct cell* d = c->oct[o];
+				if (d!=NULL){
+					tree_get_nearest_neighbour_in_cell(r, gb,gbunmod,ri,p1_r,nearest_r2,collision_nearest,d);
+				}
+			}
+		}
+	}
+}
+

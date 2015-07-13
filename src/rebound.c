@@ -75,7 +75,7 @@ void rebound_step(struct Rebound* const r){
 	// Prepare particles for distribution to other nodes. 
 	// This function also creates the tree if called for the first time.
 	PROFILING_START()
-	if (r->tree_root!=NULL){
+	if (r->gravity==RB_GT_TREE){
 		tree_update(r);          
 	}
 
