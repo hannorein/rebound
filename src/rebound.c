@@ -339,7 +339,7 @@ int rebound_check_exit(struct reb_context* const r, const double tmax){
 	return r->exit_simulation;
 }
 
-int rebound_integrate(struct reb_context* const r, double tmax){
+int reb_integrate(struct reb_context* const r, double tmax){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);

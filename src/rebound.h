@@ -227,7 +227,7 @@ void reb_step(struct reb_context* const r);
  * Performon an integration. Starting at the current time t and until time tmax.
  * tmax==0 means integrate forever.
  */
-int rebound_integrate(struct reb_context* const r, double tmax);
+int reb_integrate(struct reb_context* const r, double tmax);
 
 /**
  * Helper function to configure box.

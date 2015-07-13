@@ -129,7 +129,7 @@ void reb_step(int do_timing){
 //   1 = No particles left
 //   2 = reb_particle distance exceeds maxR
 //   3 = Close encounter closer than minD
-int rebound_integrate(double _tmax, int exact_finish_time, double maxR, double minD){
+int reb_integrate(double _tmax, int exact_finish_time, double maxR, double minD){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
