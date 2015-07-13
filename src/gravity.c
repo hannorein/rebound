@@ -51,7 +51,6 @@
   */
 static void reb_calculate_acceleration_for_particle(const struct reb_context* const r, const int pt, const struct reb_ghostbox gb);
 
-
 /**
  * Main Gravity Routine
  */

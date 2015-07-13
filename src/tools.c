@@ -226,7 +226,7 @@ struct reb_particle tools_init_orbit3d(double G, double M, double m, double a, d
 	return p;
 }
 
-const struct orbit orbit_nan = {.a = NAN, .r = NAN, .h = NAN, .P = NAN, .l = NAN, .e = NAN, .inc = NAN, .Omega = NAN, .omega = NAN, .f = NAN};
+static const struct orbit reb_orbit_nan = {.a = NAN, .r = NAN, .h = NAN, .P = NAN, .l = NAN, .e = NAN, .inc = NAN, .Omega = NAN, .omega = NAN, .f = NAN};
 
 #define MIN_REL_ERROR 1.0e-12
 #define TINY 1.E-308
@@ -234,7 +234,7 @@ const struct orbit orbit_nan = {.a = NAN, .r = NAN, .h = NAN, .P = NAN, .l = NAN
 struct orbit tools_p2orbit(double G, struct reb_particle p, struct reb_particle primary){
 	struct orbit o;
 	if (primary.m <= TINY){	
-		return orbit_nan;
+		return reb_orbit_nan;
 	}
 	double h0,h1,h2,e0,e1,e2,n0,n1,n,er,vr,mu,ea,dx,dy,dz,dvx,dvy,dvz,v,cosf,cosea;
 	mu = G*(p.m+primary.m);
@@ -251,10 +251,10 @@ struct orbit tools_p2orbit(double G, struct reb_particle p, struct reb_particle 
 	v = sqrt ( dvx*dvx + dvy*dvy + dvz*dvz );
 	o.r = sqrt ( dx*dx + dy*dy + dz*dz );
 	if(o.r <= TINY){
-		return orbit_nan;
+		return reb_orbit_nan;
 	}
 	if (o.h/(o.r*v) <= MIN_REL_ERROR){
-		return orbit_nan;
+		return reb_orbit_nan;
 	}
 	vr = (dx*dvx + dy*dvy + dz*dvz)/o.r;
 	e0 = 1./mu*( (v*v-mu/o.r)*dx - o.r*vr*dvx );

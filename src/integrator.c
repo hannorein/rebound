@@ -43,7 +43,7 @@
 #include "integrator_wh.h"
 #include "integrator_hybrid.h"
 
-void integrator_part1(struct reb_context* r){
+void reb_integrator_part1(struct reb_context* r){
 	switch(r->integrator){
 		case RB_IT_IAS15:
 			reb_integrator_ias15_part1(r);
@@ -68,7 +68,7 @@ void integrator_part1(struct reb_context* r){
 	}
 }
 
-void integrator_part2(struct reb_context* r){
+void reb_integrator_part2(struct reb_context* r){
 	switch(r->integrator){
 		case RB_IT_IAS15:
 			reb_integrator_ias15_part2(r);
@@ -93,7 +93,7 @@ void integrator_part2(struct reb_context* r){
 	}
 }
 	
-void integrator_synchronize(struct reb_context* r){
+void reb_integrator_synchronize(struct reb_context* r){
 	switch(r->integrator){
 		case RB_IT_IAS15:
 			reb_integrator_ias15_synchronize(r);
@@ -118,7 +118,7 @@ void integrator_synchronize(struct reb_context* r){
 	}
 }
 
-void integrator_reset(struct reb_context* r){
+void reb_integrator_reset(struct reb_context* r){
 	r->integrator = RB_IT_IAS15;
 	r->gravity_ignore_10 = 0;
 	reb_integrator_ias15_reset(r);
@@ -129,7 +129,8 @@ void integrator_reset(struct reb_context* r){
 	reb_integrator_hybrid_reset(r);
 }
 
-void integrator_update_acceleration(struct reb_context* r){
+void reb_update_acceleration(struct reb_context* r){
+	// This should probably go elsewhere
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 	PROFILING_START()
 	reb_calculate_acceleration(r);
@@ -140,3 +141,4 @@ void integrator_update_acceleration(struct reb_context* r){
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 	PROFILING_START()
 }
+

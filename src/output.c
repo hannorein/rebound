@@ -96,8 +96,6 @@ void profiling_stop(int cat){
 }
 #endif // PROFILING
 
-double output_timing_last = -1; 	/**< Time when output_timing() was called the last time. */
-extern unsigned int reb_integrator_hybrid_mode;
 void output_timing(struct reb_context* r, const double tmax){
 	const int N = r->N;
 #ifdef MPI
@@ -110,8 +108,8 @@ void output_timing(struct reb_context* r, const double tmax){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double temp = tim.tv_sec+(tim.tv_usec/1000000.0);
-	if (output_timing_last==-1){
-		output_timing_last = temp;
+	if (r->output_timing_last==-1){
+		r->output_timing_last = temp;
 	}else{
 		printf("\r");
 #ifdef PROFILING
@@ -129,9 +127,9 @@ void output_timing(struct reb_context* r, const double tmax){
 	}
 	printf("dt= %- 9f  ",r->dt);
 	if (r->integrator==RB_IT_HYBRID){
-		printf("INT= %- 1d  ",reb_integrator_hybrid_mode);
+		printf("INT= %- 1d  ",r->integrator_hybrid_mode);
 	}
-	printf("cpu= %- 9f [s]  ",temp-output_timing_last);
+	printf("cpu= %- 9f [s]  ",temp-r->output_timing_last);
 	if (tmax>0){
 		printf("t/tmax= %5.2f%%",r->t/tmax*100.0);
 	}
@@ -170,7 +168,7 @@ void output_timing(struct reb_context* r, const double tmax){
 	}
 #endif // PROFILING
 	fflush(stdout);
-	output_timing_last = temp;
+	r->output_timing_last = temp;
 }
 
 
@@ -347,35 +345,6 @@ void output_append_velocity_dispersion(struct reb_context* r, char* filename){
 	fclose(of);
 }
 
-int output_logfile_first = 1;
-void output_logfile(char* data){
-	if (output_logfile_first){
-		output_logfile_first = 0;
-		system("rm -fv config.log");
-	}
-	FILE* file = fopen("config.log","a+");
-	fputs(data,file);
-	fclose(file);
-}
-
-void output_double(struct reb_context* r, char* name, double value){
-	char data[2048];
-	if (value>1e7){
-		sprintf(data,"%-35s =         %10e\n",name,value);
-	}else{
-		if (fabs(fmod(value,1.))>1e-9){
-			sprintf(data,"%-35s = %20.10f\n",name,value);
-		}else{
-			sprintf(data,"%-35s = %11.1f\n",name,value);
-		}
-	}
-	output_logfile(data);
-}
-void output_int(struct reb_context* r, char* name, int value){
-	char data[2048];
-	sprintf(data,"%-35s = %9d\n",name,value);
-	output_logfile(data);
-}
 	
 #ifdef OPENGL
 #ifdef LIBPNG

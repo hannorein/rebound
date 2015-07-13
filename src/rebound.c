@@ -59,7 +59,7 @@ unsigned int reb_show_logo = 1;
 void reb_step(struct reb_context* const r){
 	// A 'DKD'-like integrator will do the first 'D' part.
 	PROFILING_START()
-	integrator_part1(r);
+	reb_integrator_part1(r);
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
 	// Check for root crossings.
@@ -103,9 +103,9 @@ void reb_step(struct reb_context* const r){
 
 	// A 'DKD'-like integrator will do the 'KD' part.
 	PROFILING_START()
-	integrator_part2(r);
+	reb_integrator_part2(r);
 	if (r->post_timestep_modifications){
-		integrator_synchronize(r);
+		reb_integrator_synchronize(r);
 		r->post_timestep_modifications(r);
 		r->ri_whfast.recalculate_jacobi_this_timestep = 1;
 	}
@@ -206,6 +206,7 @@ void reb_reset_temporary_pointers(struct reb_context* const r){
 	r->ri_wh.eta 		= NULL;
 	r->ri_wh.Nmax 		= 0;
 }
+
 void reb_reset_function_pointers(struct reb_context* const r){
 	r->coefficient_of_restitution 	= NULL;
 	r->collision_resolve    	= NULL;
@@ -247,6 +248,7 @@ struct reb_context* reb_init(){
 	r->particles	= NULL;
 	r->force_is_velocitydependent = 0;
 	r->gravity_ignore_10	= 0;
+	r->output_timing_last = -1;
 
 	r->minimum_collision_velocity = 0;
 	r->collisions_plog 	= 0;
@@ -281,6 +283,8 @@ struct reb_context* reb_init(){
 	r->ri_sei.OMEGAZ 	= -1;
 	r->ri_sei.lastdt 	= 0;
 	
+	r->integrator_hybrid_switch_ratio = 100; // 100 Hill radii	
+	r->integrator_hybrid_mode = SYMPLECTIC;
 
 	// Tree parameters. Will not be used unless gravity or collision search makes use of tree.
 	r->tree_root		= NULL;
@@ -315,7 +319,7 @@ int reb_check_exit(struct reb_context* const r, const double tmax){
 				}else{
 					r->exit_simulation = 2; // Do one small step, then exit.
 					r->dt_last_done = r->dt;
-					integrator_synchronize(r);
+					reb_integrator_synchronize(r);
 					r->dt = tmax-r->t;
 				}
 			}
@@ -363,7 +367,7 @@ int reb_integrate(struct reb_context* const r, double tmax){
 		reb_step(r); 								// 0 to not do timing within step
 	}
 #endif // OPENGL
-	integrator_synchronize(r);
+	reb_integrator_synchronize(r);
 	r->dt = r->dt_last_done;
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);

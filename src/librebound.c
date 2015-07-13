@@ -98,21 +98,21 @@ void reb_step(int do_timing){
 		gettimeofday(&tim, NULL);
 		timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 	}
-	integrator_part1();
+	reb_integrator_part1();
 	reb_calculate_acceleration();
 	if (N_megno){
 		reb_calculate_acceleration_var();
 	}
 	if (problem_additional_forces) problem_additional_forces();
 	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles, t, dt, G, N, N_megno);
-	integrator_part2();
+	reb_integrator_part2();
 	if (problem_post_timestep_modifications){
-		integrator_synchronize();
+		reb_integrator_synchronize();
 		problem_post_timestep_modifications();
 		reb_integrator_whfast_recalculate_jacobi_this_timestep = 1;
 	}
 	if (problem_post_timestep_modifications_with_parameters){
-		integrator_synchronize();
+		reb_integrator_synchronize();
 		problem_post_timestep_modifications_with_parameters(particles, t, dt, G, N, N_megno);
 		reb_integrator_whfast_recalculate_jacobi_this_timestep = 1;
 	}
@@ -149,7 +149,7 @@ int reb_integrate(double _tmax, int exact_finish_time, double maxR, double minD)
 		}
 		reb_step(0); 								// 0 to not do timing within step
 		if ((t+dt)*dtsign>=tmax*dtsign && exact_finish_time==1){
-			integrator_synchronize();
+			reb_integrator_synchronize();
 			dt = tmax-t;
 			last_step++;
 		}else{
@@ -187,7 +187,7 @@ int reb_integrate(double _tmax, int exact_finish_time, double maxR, double minD)
 			}
 		}
 	}
-	integrator_synchronize();
+	reb_integrator_synchronize();
 	dt = dt_last_done;
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
@@ -213,7 +213,7 @@ void reset(void){
 	problem_additional_forces_with_parameters = NULL;
 	problem_post_timestep_modifications = NULL;
 	problem_post_timestep_modifications_with_parameters = NULL;
-	integrator_reset();
+	reb_integrator_reset();
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	srand ( tim.tv_usec + getpid());

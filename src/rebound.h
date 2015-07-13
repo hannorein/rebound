@@ -99,6 +99,7 @@ struct reb_context {
 	unsigned int gravity_ignore_10;			/**< Ignore the gravity form the central object (for WH-type integrators)*/
 	struct reb_vec3d* cs;				/**< Vector containing the information for compensated gravity summation */
 	int N_cs;					/**< Current number of allocated space for cs array*/
+	double output_timing_last; 	/**< Time when output_timing() was called the last time. */
 
 
 	//////////////////////////////////////////////
@@ -183,6 +184,9 @@ struct reb_context {
 	struct reb_context_integrator_sei ri_sei;		/**< The SEI struct */
 	struct reb_context_integrator_wh ri_wh;		/**< The WH struct */
 
+	// Default corresponds to about 10 Hill Radii 
+	double integrator_hybrid_switch_ratio;
+	enum {SYMPLECTIC, HIGHORDER} integrator_hybrid_mode;
 
 	//////////////////////////////////////////////
 	/// Callback function

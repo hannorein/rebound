@@ -95,20 +95,6 @@ void output_binary_positions(struct reb_context* r, char* filename);
  */
 void output_append_velocity_dispersion(struct reb_context* r, char* filename);
 
-/**
- * Output a string to the default log file 'config.log'
- * @param name Description of value
- * @param value Value to be outputted
- */
-void output_double(struct reb_context* r, char* name, double value);
-
-/**
- * Output a string to the default log file 'config.log'
- * @param name Description of value
- * @param value Value to be outputted
- */
-void output_int(struct reb_context* r, char* name, int value);
-
 #if defined(OPENGL) && defined(LIBPNG)
 /**
  * Outputs a screenshot of the current OpenGL view.

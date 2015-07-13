@@ -117,7 +117,7 @@ static int reb_integrator_ias15_step(struct reb_context* r) {
 		r->ri_ias15.N3allocated = N3;
 	}
 	
-	// integrator_update_acceleration(); // Not needed. Forces are already calculated in main routine.
+	// reb_update_acceleration(); // Not needed. Forces are already calculated in main routine.
 	
 	double s[9];				// Summation coefficients 
 	double* restrict const csx = r->ri_ias15.csx; 
@@ -246,7 +246,7 @@ static int reb_integrator_ias15_step(struct reb_context* r) {
 			}
 
 
-			integrator_update_acceleration(r);				// Calculate forces at interval n
+			reb_update_acceleration(r);				// Calculate forces at interval n
 			if (N_megno){
 				integrator_megno_thisdt += w[n] * r->t * tools_megno_deltad_delta(r);
 			}

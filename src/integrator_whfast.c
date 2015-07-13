@@ -500,7 +500,7 @@ static void corrector_Z(struct reb_context* r, const double a, const double b){
 	if (N_megno){
 		to_inertial_pos(particles+N_megno, ri_whfast->p_j+N_megno, ri_whfast->eta, N-N_megno);
 	}
-	integrator_update_acceleration(r);
+	reb_update_acceleration(r);
 	to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, N-N_megno);
 	if (N_megno){
 		to_jacobi_acc(particles+N_megno, ri_whfast->p_j+N_megno, ri_whfast->eta, N-N_megno);
@@ -511,7 +511,7 @@ static void corrector_Z(struct reb_context* r, const double a, const double b){
 	if (N_megno){
 		to_inertial_pos(particles+N_megno, ri_whfast->p_j+N_megno, ri_whfast->eta, N-N_megno);
 	}
-	integrator_update_acceleration(r);
+	reb_update_acceleration(r);
 	to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, N-N_megno);
 	if (N_megno){
 		to_jacobi_acc(particles+N_megno, ri_whfast->p_j+N_megno, ri_whfast->eta, N-N_megno);
