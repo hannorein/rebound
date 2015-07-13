@@ -69,8 +69,6 @@ struct reb_particle {
 	struct reb_treecell* c;		/**< Pointer to the cell the particle is currently in. */
 };
 
-
-
 struct reb_context {
 	double 	t;		/**< Current simulation time. */
 	double 	G;		/**< Gravitational constant. Default: 1. */
@@ -105,7 +103,7 @@ struct reb_context {
 
 	//////////////////////////////////////////////
 	/// Collisions
-	struct	collision* collisions;			/**< Array of all collisions. */
+	struct collision* collisions;			/**< Array of all collisions. */
 	int 	collisions_NMAX;			/**< Size allocated for collisions.*/
 	double coefficient_of_restitution;		/**< Used for hard sphere collision model. */
 	double minimum_collision_velocity;		/**< Used for hard sphere collision model. */
@@ -202,13 +200,6 @@ struct reb_context {
 	 * each timestep.
 	 */
 	void (*heartbeat) (struct reb_context* r);
-	/**
-	 * This function is called at the end of the simulation when t>=tmax.
-	 * Note that it is not called when the simulation stopped for another 
-	 * reason (e.g. user interaction or crash). 
-	 */ 
-	void (*finished) (struct reb_context* r);
-
 };
 
 

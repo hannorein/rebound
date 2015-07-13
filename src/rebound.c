@@ -36,6 +36,7 @@
 #include "gravity.h"
 #include "collision.h"
 #include "tree.h"
+#include "output.h"
 #include "tools.h"
 #include "particle.h"
 #include "communication_mpi.h"
@@ -45,9 +46,6 @@
 #ifdef OPENMP
 #include <omp.h>
 #endif
-#ifdef GRAVITY_GRAPE
-void gravity_finish(void);
-#endif // GRAVITY_GRAPE
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 
 static const char* logo[];				/**< Logo of rebound. */
@@ -212,7 +210,6 @@ void reb_reset_function_pointers(struct reb_context* const r){
 	r->collisions_coefficient_of_restitution_for_velocity = collisions_constant_coefficient_of_restitution_for_velocity;
 	r->collision_resolve    = collision_resolve_hardsphere;
 	r->additional_forces 		= NULL;
-	r->finished			= NULL;
 	r->heartbeat			= NULL;
 	r->post_timestep_modifications	= NULL;
 }
