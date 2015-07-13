@@ -205,7 +205,7 @@ static struct reb_treecell *reb_tree_update_cell(struct reb_context* const r, st
 /**
   * The function calculates the total mass and center of mass of a node. When QUADRUPOLE is defined, it also calculates the mass quadrupole tensor for all non-leaf nodes.
   */
-void reb_tree_update_gravity_data_in_cell(const struct reb_context* const r, struct reb_treecell *node){
+static void reb_tree_update_gravity_data_in_cell(const struct reb_context* const r, struct reb_treecell *node){
 #ifdef QUADRUPOLE
 	node->mxx = 0;
 	node->mxy = 0;

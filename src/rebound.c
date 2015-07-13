@@ -30,16 +30,14 @@
 #include <signal.h>
 #include <string.h>
 #include <sys/time.h>
+#include "rebound.h"
 #include "integrator.h"
-#include "integrator_whfast.h"
 #include "boundary.h"
 #include "gravity.h"
-#include "output.h"
 #include "collision.h"
 #include "tree.h"
 #include "tools.h"
 #include "particle.h"
-#include "rebound.h"
 #include "communication_mpi.h"
 #ifdef OPENGL
 #include "display.h"
@@ -57,7 +55,7 @@ static const char* build_str = __DATE__ " " __TIME__;	/**< Date and time build s
 
 
 // Global (non-thread safe) variables:
-unsigned int rebound_show_logo = 1;
+unsigned int reb_show_logo = 1;
 
 
 void reb_step(struct reb_context* const r){
@@ -220,7 +218,7 @@ void reb_reset_function_pointers(struct reb_context* const r){
 }
 
 struct reb_context* reb_init(){
-	if (rebound_show_logo==1){
+	if (reb_show_logo==1){
 		int i =0;
 		while (logo[i]!=NULL){ printf("%s",logo[i++]); }
 		printf("Built: %s\n\n",build_str);
