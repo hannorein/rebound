@@ -232,7 +232,7 @@ int reb_integrate(struct reb_context* const r, double tmax);
 /**
  * Helper function to configure box.
  */
-void rebound_configure_box(struct reb_context* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz);
+void reb_configure_box(struct reb_context* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz);
 
 /**
  * This function is called once before the integration and then after every timestep.
@@ -243,6 +243,6 @@ int reb_check_exit(struct reb_context* const r, const double tmax);
 /*
  * Function used to allow binary input.
  */
-void rebound_reset_temporary_pointers(struct reb_context* const r);
-void rebound_reset_function_pointers(struct reb_context* const r);
+void reb_reset_temporary_pointers(struct reb_context* const r);
+void reb_reset_function_pointers(struct reb_context* const r);
 #endif

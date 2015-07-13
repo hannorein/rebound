@@ -166,7 +166,7 @@ void reb_step(struct reb_context* const r){
 //	}
 }
 
-void rebound_configure_box(struct reb_context* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz){
+void reb_configure_box(struct reb_context* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz){
 	r->boxsize = boxsize;
 	r->root_nx = root_nx;
 	r->root_ny = root_ny;
@@ -182,7 +182,7 @@ void rebound_configure_box(struct reb_context* const r, const double boxsize, co
 	}
 }
 
-void rebound_reset_temporary_pointers(struct reb_context* const r){
+void reb_reset_temporary_pointers(struct reb_context* const r){
 	// Note: this will not clear the particle array.
 	r->N_cs 		= 0;
 	r->cs 			= NULL;
@@ -210,7 +210,7 @@ void rebound_reset_temporary_pointers(struct reb_context* const r){
 	r->ri_wh.eta 		= NULL;
 	r->ri_wh.Nmax 		= 0;
 }
-void rebound_reset_function_pointers(struct reb_context* const r){
+void reb_reset_function_pointers(struct reb_context* const r){
 	r->collisions_coefficient_of_restitution_for_velocity = collisions_constant_coefficient_of_restitution_for_velocity;
 	r->collision_resolve    = collision_resolve_hardsphere;
 	r->additional_forces 		= NULL;
@@ -227,8 +227,8 @@ struct reb_context* reb_init(){
 	}
 	tools_init_srand();
 	struct reb_context* r = calloc(1,sizeof(struct reb_context));
-	rebound_reset_temporary_pointers(r);
-	rebound_reset_function_pointers(r);
+	reb_reset_temporary_pointers(r);
+	reb_reset_function_pointers(r);
 	r->t 		= 0; 
 	r->G 		= 1;
 	r->softening 	= 0;
@@ -359,7 +359,7 @@ int reb_integrate(struct reb_context* const r, double tmax){
 				const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
 				max_r = MAX(max_r, _r);
 			}
-			rebound_configure_box(r, max_r*2.3,MAX(1,r->root_nx),MAX(1,r->root_ny),MAX(1,r->root_nz));
+			reb_configure_box(r, max_r*2.3,MAX(1,r->root_nx),MAX(1,r->root_ny),MAX(1,r->root_nz));
 		}
 		display_r = r;
 		display_init(0,NULL, tmax); // This function will never return (GLUT issue/bug).

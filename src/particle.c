@@ -61,7 +61,7 @@ void particles_add_local(struct reb_context* const r, struct reb_particle pt){
 	(r->N)++;
 }
 
-void particles_add(struct reb_context* const r, struct reb_particle pt){
+void reb_add(struct reb_context* const r, struct reb_particle pt){
 	if (r->N_megno){
 		fprintf(stderr,"\n\033[1mWarning!\033[0m Trying to add particle after calling megno_init().\n");
 	}

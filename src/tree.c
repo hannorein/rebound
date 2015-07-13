@@ -192,7 +192,7 @@ struct cell *tree_update_cell(struct reb_context* const r, struct cell *node){
 			(r->N)--;
 			r->particles[oldpos] = r->particles[r->N];
 			r->particles[oldpos].c->pt = oldpos;
-			particles_add(r, reinsertme);
+			reb_add(r, reinsertme);
 		}
 		free(node);
 		return NULL; 

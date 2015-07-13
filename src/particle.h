@@ -36,10 +36,10 @@ struct cell;
  *          put into the corresponding send queue particles_send.
  * @param pt reb_particle to be added.
  */
-void particles_add(struct reb_context* const r, struct reb_particle pt);
+void reb_add(struct reb_context* const r, struct reb_particle pt);
 
 /** 
- * Same as particles_add() but inserts particles at given position. 
+ * Same as reb_add() but inserts particles at given position. 
  * @param pt reb_particle to be added.
  * @param pos New position.
  */

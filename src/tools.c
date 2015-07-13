@@ -178,7 +178,7 @@ void tools_init_plummer(struct reb_context* r, int _N, double M, double R) {
 
 		star.m = M/(double)_N;
 
-		particles_add(r, star);
+		reb_add(r, star);
 	}
 }
 
@@ -365,7 +365,7 @@ void tools_megno_init(struct reb_context* const r, double delta){
 		megno.vy *= deltad;
 		megno.vz *= deltad;
 
-                particles_add(r, megno);
+                reb_add(r, megno);
         }
 	r->N_megno = _N_megno;
 }

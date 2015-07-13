@@ -203,7 +203,7 @@ void communication_mpi_distribute_particles(void){
 	// Add particles to local tree
 	for (int i=0;i<mpi_num;i++){
 		for (int j=0;j<particles_recv_N[i];j++){
-			particles_add(particles_recv[i][j]);
+			reb_add(particles_recv[i][j]);
 		}
 	}
 	// Bring everybody into sync, clean up. 

@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
 	if (argc>1){						// Try to read boxsize from command line
 		boxsize = atof(argv[1]);
 	}
-	rebound_configure_box(r, boxsize, 2, 2, 1);
+	reb_configure_box(r, boxsize, 2, 2, 1);
 	r->nghostx = 2;
 	r->nghosty = 2;
 	r->nghostz = 0;
@@ -102,7 +102,7 @@ int main(int argc, char* argv[]) {
 		pt.r 		= radius;						// m
 		double		particle_mass = particle_density*4./3.*M_PI*radius*radius*radius;
 		pt.m 		= particle_mass; 	// kg
-		particles_add(r, pt);
+		reb_add(r, pt);
 		mass += particle_mass;
 	}
 	reb_integrate(r,0);
