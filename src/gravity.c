@@ -63,7 +63,7 @@ void gravity_calculate_acceleration(struct Rebound* r){
 	const double G = r->G;
 	const double softening2 = r->softening*r->softening;
 	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
-	const int _N_start  = (r->integrator==WH?1:0);
+	const int _N_start  = (r->integrator==RB_IT_WH?1:0);
 	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
 	const int _N_real   = N - N_megno;
 	switch (r->gravity){

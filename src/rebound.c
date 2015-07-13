@@ -259,7 +259,7 @@ struct Rebound* rebound_init(){
 	r->collisions_Nlog 	= 0;	
 	
 	// Default modules
-	r->integrator 	= IAS15;
+	r->integrator 	= RB_IT_IAS15;
 	r->boundary 	= RB_BT_NONE;
 	r->gravity	= RB_GT_COMPENSATED;
 	r->collision	= RB_CT_NONE;

@@ -92,9 +92,9 @@ int main(int argc, char* argv[]) {
 	// Setup callbacks:
 	r->heartbeat = heartbeat;
 	r->force_is_velocitydependent = 0;		// Force only depends on positions. 
-	r->integrator	= WHFAST;
-	//r->integrator	= IAS15;
-	//r->integrator	= WH;
+	r->integrator	= RB_IT_WHFAST;
+	//r->integrator	= RB_IT_IAS15;
+	//r->integrator	= RB_IT_WH;
 
 	// Initial conditions
 	for (int i=0;i<6;i++){
@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
 		p.m  = ss_mass[i];
 		particles_add(r, p); 
 	}
-	if (r->integrator==WH){
+	if (r->integrator==RB_IT_WH){
 		struct Particle* const particles = r->particles;
 		// Move to heliocentric frame (required by WH integrator)
 		for (int i=1;i<r->N;i++){
