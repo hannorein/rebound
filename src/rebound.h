@@ -120,9 +120,15 @@ struct Rebound {
 
 	//////////////////////////////////////////////
 	/// Collisions
-	struct	collision* collisions;	/**< Array of all collisions. */
-	int 	collisions_NMAX;	/**< Size allocated for collisions.*/
-	int 	collisions_N;		/**< Number of elements in collisions. */
+	struct	collision* collisions;			/**< Array of all collisions. */
+	int 	collisions_NMAX;			/**< Size allocated for collisions.*/
+	int 	collisions_N;				/**< Number of elements in collisions array. */
+	double coefficient_of_restitution;		/**< Used for hard sphere collision model. */
+	double minimum_collision_velocity;		/**< Used for hard sphere collision model. */
+	double (*collisions_coefficient_of_restitution_for_velocity) (const struct Rebound* const r, double v); /**< Used for hard sphere collision model. */
+	void (*collision_resolve) (struct Rebound* const r, struct collision);
+	double 	collisions_plog;			/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
+	long	collisions_Nlog;			/**< Keep track of Number of collisions. */
 
 	//////////////////////////////////////////////
 	/// Variational Particles

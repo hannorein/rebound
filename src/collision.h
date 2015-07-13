@@ -31,6 +31,22 @@
  */
 #ifndef _COLLISIONS_H
 #define _COLLISIONS_H
+#include "boundary.h"
+/**
+ * Collision structure of one single collisions
+ * Used to save a collision during collision search. 
+ */
+struct collision{
+	int p1;			/**< First colliding particle. */
+	int p2;			/**< Second colliding particle. */
+	struct Ghostbox gb;	/**< Ghostbox (of particle p1). */
+#if defined(COLLISIONS_SWEEP) || defined(COLLISIONS_SWEEPPHI)
+	double time;		/**< Time of collision. */
+	int crossing;		/**< Collision occurs at the interface of two sweep boxes. */
+#endif // COLLISIONS_SWEEP
+	int ri;	 		/**< Index of rootcell (Needed for MPI). */
+} collision;
+
 /**
  * Search for collisions and save them.
  * This routine searches for all collisions and stores them to 
@@ -47,4 +63,17 @@ void collisions_resolve(struct Rebound* const r);
  * Particle between 0 and N_collisions (excluding) will not be searched for collisions and not shuffled around.
  */
 extern int N_collisions;
+
+
+/**
+ * Just returns the constant coefficient of restitution in the REBOUND struct.
+ */
+double collisions_constant_coefficient_of_restitution_for_velocity(const struct Rebound* const r, double v);
+
+
+/**
+ * Resolve a single collision assuming a hardsphere collision model (no super-particle).
+ * @param c Collision to resolve.
+ */
+void collision_resolve_hardsphere(struct Rebound* const r, struct collision c);	
 #endif // _COLLISIONS_H

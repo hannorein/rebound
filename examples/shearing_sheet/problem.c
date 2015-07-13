@@ -39,10 +39,7 @@
 #include "output.h"
 #include "tools.h"
 
-extern double minimum_collision_velocity;
-
-extern double (*coefficient_of_restitution_for_velocity)(double); 
-double coefficient_of_restitution_bridges(double v); 
+double coefficient_of_restitution_bridges(const struct Rebound* const r, double v);
 
 
 void heartbeat(struct Rebound* const r);
@@ -54,7 +51,7 @@ int main(int argc, char* argv[]) {
 	r->integrator			= SEI;
 	r->boundary			= RB_BT_SHEAR;
 	r->gravity			= RB_GT_TREE;
-	r->collision			= RB_CT_DIRECT;
+	r->collision			= RB_CT_TREE;
 	double OMEGA 			= 0.00013143527;	// 1/s
 	r->ri_sei.OMEGA 		= OMEGA;
 	r->G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
@@ -81,10 +78,10 @@ int main(int argc, char* argv[]) {
 	// Initial conditions
 	printf("Toomre wavelength: %f\n",4.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*r->G);
 	// Use Bridges et al coefficient of restitution.
-	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
+	r->collisions_coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
 	// When two particles collide and the relative velocity is zero, the might sink into each other in the next time step.
 	// By adding a small repulsive velocity to each collision, we prevent this from happening.
-	minimum_collision_velocity = particle_radius_min*OMEGA*0.001;  // small fraction of the shear accross a particle
+	r->minimum_collision_velocity = particle_radius_min*OMEGA*0.001;  // small fraction of the shear accross a particle
 
 
 	// Add all ring paricles
@@ -112,7 +109,7 @@ int main(int argc, char* argv[]) {
 }
 
 // This example is using a custom velocity dependend coefficient of restitution
-double coefficient_of_restitution_bridges(double v){
+double coefficient_of_restitution_bridges(const struct Rebound* const r, double v){
 	// assumes v in units of [m/s]
 	double eps = 0.32*pow(fabs(v)*100.,-0.234);
 	if (eps>1) eps=1;

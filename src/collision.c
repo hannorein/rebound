@@ -40,7 +40,6 @@
 #include <time.h>
 #include "particle.h"
 #include "collision.h"
-#include "collision_resolve.h"
 #include "rebound.h"
 #include "boundary.h"
 #include "tree.h"
@@ -188,7 +187,7 @@ void collisions_search(struct Rebound* const r){
 	// Loop over all collisions previously found in collisions_search().
 	for (int i=0;i<r->collisions_N;i++){
 		// Resolve collision
-		collision_resolve(r, r->collisions[i]);
+		r->collision_resolve(r, r->collisions[i]);
 	}
 	// Mark all collisions as resolved.
 	r->collisions_N=0;
@@ -291,3 +290,106 @@ void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, struct Ghostbox
 	}
 }
 
+
+
+
+
+
+void collision_resolve_hardsphere(struct Rebound* const r, struct collision c){
+#ifndef COLLISIONS_NONE
+	struct Particle* const particles = r->particles;
+	struct Particle p1 = particles[c.p1];
+	struct Particle p2;
+#ifdef MPI
+	int isloc = communication_mpi_rootbox_is_local(c.ri);
+	if (isloc==1){
+#endif // MPI
+		p2 = particles[c.p2];
+#ifdef MPI
+	}else{
+		int root_n_per_node = root_n/mpi_num;
+		int proc_id = c.ri/root_n_per_node;
+		p2 = particles_recv[proc_id][c.p2];
+	}
+#endif // MPI
+//	if (p1.lastcollision==t || p2.lastcollision==t) return;
+	struct Ghostbox gb = c.gb;
+	double x21  = p1.x + gb.shiftx  - p2.x; 
+	double y21  = p1.y + gb.shifty  - p2.y; 
+	double z21  = p1.z + gb.shiftz  - p2.z; 
+	double rp   = p1.r+p2.r;
+	double oldvyouter;
+	if (x21>0){
+	 	oldvyouter = p1.vy;
+	}else{
+		oldvyouter = p2.vy;
+	}
+	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return;
+	double vx21 = p1.vx + gb.shiftvx - p2.vx; 
+	double vy21 = p1.vy + gb.shiftvy - p2.vy; 
+	double vz21 = p1.vz + gb.shiftvz - p2.vz; 
+	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return; // not approaching
+	// Bring the to balls in the xy plane.
+	// NOTE: this could probabely be an atan (which is faster than atan2)
+	double theta = atan2(z21,y21);
+	double stheta = sin(theta);
+	double ctheta = cos(theta);
+	double vy21n = ctheta * vy21 + stheta * vz21;	
+	double y21n = ctheta * y21 + stheta * z21;	
+	
+	// Bring the two balls onto the positive x axis.
+	double phi = atan2(y21n,x21);
+	double cphi = cos(phi);
+	double sphi = sin(phi);
+	double vx21nn = cphi * vx21  + sphi * vy21n;		
+
+	// Coefficient of restitution
+	double eps= r->collisions_coefficient_of_restitution_for_velocity(r, vx21nn);
+	double dvx2 = -(1.0+eps)*vx21nn;
+	double minr = (p1.r>p2.r)?p2.r:p1.r;
+	double maxr = (p1.r<p2.r)?p2.r:p1.r;
+	double mindv= minr*r->minimum_collision_velocity;
+	double _r = sqrt(x21*x21 + y21*y21 + z21*z21);
+	mindv *= 1.-(_r - maxr)/minr;
+	if (mindv>maxr*r->minimum_collision_velocity)mindv = maxr*r->minimum_collision_velocity;
+	if (dvx2<mindv) dvx2 = mindv;
+	// Now we are rotating backwards
+	double dvx2n = cphi * dvx2;		
+	double dvy2n = sphi * dvx2;		
+	double dvy2nn = ctheta * dvy2n;	
+	double dvz2nn = stheta * dvy2n;	
+
+
+	// Applying the changes to the particles.
+#ifdef MPI
+	if (isloc==1){
+#endif // MPI
+	const double p2pf = p1.m/(p1.m+p2.m);
+	particles[c.p2].vx -=	p2pf*dvx2n;
+	particles[c.p2].vy -=	p2pf*dvy2nn;
+	particles[c.p2].vz -=	p2pf*dvz2nn;
+	particles[c.p2].lastcollision = r->t;
+#ifdef MPI
+	}
+#endif // MPI
+	const double p1pf = p2.m/(p1.m+p2.m);
+	particles[c.p1].vx +=	p1pf*dvx2n; 
+	particles[c.p1].vy +=	p1pf*dvy2nn; 
+	particles[c.p1].vz +=	p1pf*dvz2nn; 
+	particles[c.p1].lastcollision = r->t;
+		
+	// Return y-momentum change
+	if (x21>0){
+		r->collisions_plog += -fabs(x21)*(oldvyouter-particles[c.p1].vy) * p1.m;
+		r->collisions_Nlog ++;
+	}else{
+		r->collisions_plog += -fabs(x21)*(oldvyouter-particles[c.p2].vy) * p2.m;
+		r->collisions_Nlog ++;
+	}
+
+#endif // COLLISIONS_NONE
+}
+
+double collisions_constant_coefficient_of_restitution_for_velocity(const struct Rebound* const r, double v){
+	return r->coefficient_of_restitution;
+}

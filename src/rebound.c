@@ -220,6 +220,12 @@ struct Rebound* rebound_init(){
 	r->collisions		= NULL;
 	r->collisions_N		= 0;
 	r->collisions_NMAX	= 0;
+	r->coefficient_of_restitution = 1;
+	r->minimum_collision_velocity = 0;
+	r->collisions_coefficient_of_restitution_for_velocity = collisions_constant_coefficient_of_restitution_for_velocity;
+	r->collision_resolve    = collision_resolve_hardsphere;
+	r->collisions_plog 	= 0;
+	r->collisions_Nlog 	= 0;	
 	
 	// Default modules
 	r->integrator 	= IAS15;

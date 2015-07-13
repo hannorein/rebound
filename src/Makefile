@@ -89,7 +89,6 @@ all:
 	$(CC) $(OPT) $(PREDEF) input.c -c
 	$(CC) $(OPT) $(PREDEF) output.c -c
 	$(CC) $(OPT) $(PREDEF) collision.c -c
-	$(CC) $(OPT) $(PREDEF) collision_resolve.c -c
 	$(CC) $(OPT) $(PREDEF) communication_mpi.c -c
 	$(CC) $(OPT) $(PREDEF) zpr.c -c
 	$(CC) $(OPT) $(PREDEF) display.c -c
