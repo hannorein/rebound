@@ -38,6 +38,7 @@ int main(int argc, char* argv[]){
 	struct Rebound* r = rebound_init();
 	// Setup constants
 	r->integrator	= LEAPFROG;
+	r->gravity	= RB_GT_BASIC;
 	r->dt 		= 1e-3;
 	r->boundary	= RB_BT_PERIODIC;
 	rebound_configure_box(r,3.,1,1,1);
