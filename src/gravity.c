@@ -110,10 +110,10 @@ void gravity_calculate_acceleration(struct Rebound* r){
 		case RB_GT_COMPENSATED:
 		{
 			if (r->N_cs<_N_real){
-				r->cs = realloc(r->cs,_N_real*sizeof(struct rb_vec3d));
+				r->cs = realloc(r->cs,_N_real*sizeof(struct reb_vec3d));
 				r->N_cs = _N_real;
 			}
-			struct rb_vec3d* const cs = r->cs;
+			struct reb_vec3d* const cs = r->cs;
 #pragma omp parallel for schedule(guided)
 			for (int i=0; i<_N_real; i++){
 				particles[i].ax = 0.; 
