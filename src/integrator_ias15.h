@@ -25,13 +25,12 @@
 #ifndef _INTEGRATOR_IAS15_H
 #define _INTEGRATOR_IAS15_H
 struct reb_context;
-void integrator_ias15_part1(struct reb_context* r);
-void integrator_ias15_part2(struct reb_context* r);
-void integrator_ias15_synchronize(struct reb_context* r);
-void integrator_ias15_reset(struct reb_context* r);
-
-struct reb_context;
 struct reb_particle; 
+
+void reb_integrator_ias15_part1(struct reb_context* r);
+void reb_integrator_ias15_part2(struct reb_context* r);
+void reb_integrator_ias15_synchronize(struct reb_context* r);
+void reb_integrator_ias15_reset(struct reb_context* r);
 
 struct reb_contextIntegratorIAS15 {
 	/**

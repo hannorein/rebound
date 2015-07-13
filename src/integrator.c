@@ -46,7 +46,7 @@
 void integrator_part1(struct reb_context* r){
 	switch(r->integrator){
 		case RB_IT_IAS15:
-			integrator_ias15_part1(r);
+			reb_integrator_ias15_part1(r);
 			break;
 		case RB_IT_WH:
 			integrator_wh_part1(r);
@@ -71,7 +71,7 @@ void integrator_part1(struct reb_context* r){
 void integrator_part2(struct reb_context* r){
 	switch(r->integrator){
 		case RB_IT_IAS15:
-			integrator_ias15_part2(r);
+			reb_integrator_ias15_part2(r);
 			break;
 		case RB_IT_WH:
 			integrator_wh_part2(r);
@@ -96,7 +96,7 @@ void integrator_part2(struct reb_context* r){
 void integrator_synchronize(struct reb_context* r){
 	switch(r->integrator){
 		case RB_IT_IAS15:
-			integrator_ias15_synchronize(r);
+			reb_integrator_ias15_synchronize(r);
 			break;
 		case RB_IT_WH:
 			integrator_wh_synchronize(r);
@@ -121,7 +121,7 @@ void integrator_synchronize(struct reb_context* r){
 void integrator_reset(struct reb_context* r){
 	r->integrator = RB_IT_IAS15;
 	r->gravity_ignore_10 = 0;
-	integrator_ias15_reset(r);
+	reb_integrator_ias15_reset(r);
 	integrator_wh_reset(r);
 	integrator_leapfrog_reset(r);
 	integrator_sei_reset(r);

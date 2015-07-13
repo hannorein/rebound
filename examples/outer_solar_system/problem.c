@@ -90,8 +90,8 @@ int main(int argc, char* argv[]) {
 	// Setup callbacks:
 	r->heartbeat = heartbeat;
 	r->force_is_velocitydependent = 0;		// Force only depends on positions. 
-	r->integrator	= RB_IT_WHFAST;
-	//r->integrator	= RB_IT_IAS15;
+	//r->integrator	= RB_IT_WHFAST;
+	r->integrator	= RB_IT_IAS15;
 	//r->integrator	= RB_IT_WH;
 
 	// Initial conditions
