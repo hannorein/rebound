@@ -27,7 +27,7 @@
 struct reb_context;
 struct reb_particle; 
 
-struct reb_context_integratorWHFast {
+struct reb_context_integrator_whfast {
 
 	/*
 	 * This variable turns on/off various symplectic correctors.

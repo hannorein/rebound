@@ -29,7 +29,7 @@ void reb_integrator_wh_part2(struct reb_context* r);
 void reb_integrator_wh_synchronize(struct reb_context* r);
 void reb_integrator_wh_reset(struct reb_context* r);
 
-struct reb_context_integratorWH {
+struct reb_context_integrator_wh {
 	int Nmax;
 	double* eta;
 };

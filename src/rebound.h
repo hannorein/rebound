@@ -178,10 +178,10 @@ struct reb_context {
 	
 	//////////////////////////////////////////////
 	/// Integrators
-	struct reb_context_integratorWHFast ri_whfast;	/**< The WHFast struct */
-	struct reb_context_integratorIAS15 ri_ias15;		/**< The IAS15 struct */
-	struct reb_context_integratorSEI ri_sei;		/**< The SEI struct */
-	struct reb_context_integratorWH ri_wh;		/**< The WH struct */
+	struct reb_context_integrator_whfast ri_whfast;	/**< The WHFast struct */
+	struct reb_context_integrator_ias15 ri_ias15;		/**< The IAS15 struct */
+	struct reb_context_integrator_sei ri_sei;		/**< The SEI struct */
+	struct reb_context_integrator_wh ri_wh;		/**< The WH struct */
 
 
 	//////////////////////////////////////////////

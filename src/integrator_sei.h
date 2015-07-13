@@ -29,7 +29,7 @@ void reb_integrator_sei_part2(struct reb_context* r);
 void reb_integrator_sei_synchronize(struct reb_context* r);
 void reb_integrator_sei_reset(struct reb_context* r);
 
-struct reb_context_integratorSEI {
+struct reb_context_integrator_sei {
 	double OMEGA;		/**< Epicyclic/orbital frequency.  */
 	double OMEGAZ; 		/**< Epicyclic frequency in vertical direction. */
 
