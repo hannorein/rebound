@@ -39,13 +39,13 @@
 #include "output.h"
 #include "tools.h"
 
-double coefficient_of_restitution_bridges(const struct Rebound* const r, double v);
+double coefficient_of_restitution_bridges(const struct reb_context* const r, double v);
 
 
-void heartbeat(struct Rebound* const r);
+void heartbeat(struct reb_context* const r);
 
 int main(int argc, char* argv[]) {
-	struct Rebound* r = rebound_init();
+	struct reb_context* r = rebound_init();
 	// Setup constants
 	r->opening_angle2	= .5;					// This determines the precission of the tree code gravity calculation.
 	r->integrator			= RB_IT_SEI;
@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
 }
 
 // This example is using a custom velocity dependend coefficient of restitution
-double coefficient_of_restitution_bridges(const struct Rebound* const r, double v){
+double coefficient_of_restitution_bridges(const struct reb_context* const r, double v){
 	// assumes v in units of [m/s]
 	double eps = 0.32*pow(fabs(v)*100.,-0.234);
 	if (eps>1) eps=1;
@@ -117,7 +117,7 @@ double coefficient_of_restitution_bridges(const struct Rebound* const r, double 
 	return eps;
 }
 
-void heartbeat(struct Rebound* const r){
+void heartbeat(struct reb_context* const r){
 	if (output_check(r, 1e-3*2.*M_PI/r->ri_sei.OMEGA)){
 		output_timing(r, 0);
 		//output_append_velocity_dispersion("veldisp.txt");

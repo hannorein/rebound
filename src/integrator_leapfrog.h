@@ -24,9 +24,9 @@
  */
 #ifndef _INTEGRATOR_LEAPFROG_H
 #define _INTEGRATOR_LEAPFROG_H
-struct Rebound;
-void integrator_leapfrog_part1(struct Rebound* r);
-void integrator_leapfrog_part2(struct Rebound* r);
-void integrator_leapfrog_synchronize(struct Rebound* r);
-void integrator_leapfrog_reset(struct Rebound* r);
+struct reb_context;
+void integrator_leapfrog_part1(struct reb_context* r);
+void integrator_leapfrog_part2(struct reb_context* r);
+void integrator_leapfrog_synchronize(struct reb_context* r);
+void integrator_leapfrog_reset(struct reb_context* r);
 #endif

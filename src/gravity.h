@@ -31,18 +31,18 @@
  */
 #ifndef _GRAVITY_H
 #define _GRAVITY_H
-struct Rebound;
+struct reb_context;
 
 /**
   * The function loops over all ghostboxs and calls calculate_forces_for_particle() to sum up the forces on each particle.
   * Calculate all the gravitational acceleration for all particles.
   * Different methods implement this function in a different way.
   */
-void gravity_calculate_acceleration(struct Rebound* r);
+void gravity_calculate_acceleration(struct reb_context* r);
 
 /**
   * The function calculates the acceleration for the variational equations.
   */
-void gravity_calculate_variational_acceleration(struct Rebound* r);
+void gravity_calculate_variational_acceleration(struct reb_context* r);
 
 #endif

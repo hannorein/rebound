@@ -55,19 +55,19 @@ struct cell {
 /**
   * The wrap function corresponds to initializing the trees when they don't exist and updating the structures of the trees by calling tree_update_cell. 
   */
-void tree_update(struct Rebound* const r);
+void tree_update(struct reb_context* const r);
 
 /**
   * The wrap function calls tree_update_gravity_data_in_cell() to for each tree.
   */
-void tree_update_gravity_data(struct Rebound* const r);
+void tree_update_gravity_data(struct reb_context* const r);
 
 /**
   * The wrap function calls tree_add_particle_to_cell() to add the particle into one of the trees. If the tree_root doesn't exist, then it initializes the trees. 
   *
   * @param pt is the index of a particle.
   */
-void tree_add_particle_to_tree(struct Rebound* const r, int pt);
+void tree_add_particle_to_tree(struct reb_context* const r, int pt);
 
 #ifdef MPI
 /**

@@ -60,7 +60,7 @@ static const char* build_str = __DATE__ " " __TIME__;	/**< Date and time build s
 unsigned int rebound_show_logo = 1;
 
 
-void rebound_step(struct Rebound* const r){
+void rebound_step(struct reb_context* const r){
 	// A 'DKD'-like integrator will do the first 'D' part.
 	PROFILING_START()
 	integrator_part1(r);
@@ -166,7 +166,7 @@ void rebound_step(struct Rebound* const r){
 //	}
 }
 
-void rebound_configure_box(struct Rebound* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz){
+void rebound_configure_box(struct reb_context* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz){
 	r->boxsize = boxsize;
 	r->root_nx = root_nx;
 	r->root_ny = root_ny;
@@ -182,7 +182,7 @@ void rebound_configure_box(struct Rebound* const r, const double boxsize, const 
 	}
 }
 
-void rebound_reset_temporary_pointers(struct Rebound* const r){
+void rebound_reset_temporary_pointers(struct reb_context* const r){
 	// Note: this will not clear the particle array.
 	r->N_cs 		= 0;
 	r->cs 			= NULL;
@@ -210,7 +210,7 @@ void rebound_reset_temporary_pointers(struct Rebound* const r){
 	r->ri_wh.eta 		= NULL;
 	r->ri_wh.Nmax 		= 0;
 }
-void rebound_reset_function_pointers(struct Rebound* const r){
+void rebound_reset_function_pointers(struct reb_context* const r){
 	r->collisions_coefficient_of_restitution_for_velocity = collisions_constant_coefficient_of_restitution_for_velocity;
 	r->collision_resolve    = collision_resolve_hardsphere;
 	r->additional_forces 		= NULL;
@@ -219,14 +219,14 @@ void rebound_reset_function_pointers(struct Rebound* const r){
 	r->post_timestep_modifications	= NULL;
 }
 
-struct Rebound* rebound_init(){
+struct reb_context* rebound_init(){
 	if (rebound_show_logo==1){
 		int i =0;
 		while (logo[i]!=NULL){ printf("%s",logo[i++]); }
 		printf("Built: %s\n\n",build_str);
 	}
 	tools_init_srand();
-	struct Rebound* r = calloc(1,sizeof(struct Rebound));
+	struct reb_context* r = calloc(1,sizeof(struct reb_context));
 	rebound_reset_temporary_pointers(r);
 	rebound_reset_function_pointers(r);
 	r->t 		= 0; 
@@ -311,7 +311,7 @@ struct Rebound* rebound_init(){
 	return r;
 }
 
-int rebound_check_exit(struct Rebound* const r, const double tmax){
+int rebound_check_exit(struct reb_context* const r, const double tmax){
 	const double dtsign = copysign(1.,r->dt); 	// Used to determine integration direction
 	if(tmax!=0.){
 		if(r->exact_finish_time==1){
@@ -339,7 +339,7 @@ int rebound_check_exit(struct Rebound* const r, const double tmax){
 	return r->exit_simulation;
 }
 
-int rebound_integrate(struct Rebound* const r, double tmax){
+int rebound_integrate(struct reb_context* const r, double tmax){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);

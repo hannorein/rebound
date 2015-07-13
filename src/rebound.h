@@ -71,7 +71,7 @@ struct reb_particle {
 
 
 
-struct Rebound {
+struct reb_context {
 	double 	t;		/**< Current simulation time. */
 	double 	G;		/**< Gravitational constant. Default: 1. */
 	double 	softening;	/**< Gravitational softening parameter. Default: 0. */
@@ -109,8 +109,8 @@ struct Rebound {
 	int 	collisions_NMAX;			/**< Size allocated for collisions.*/
 	double coefficient_of_restitution;		/**< Used for hard sphere collision model. */
 	double minimum_collision_velocity;		/**< Used for hard sphere collision model. */
-	double (*collisions_coefficient_of_restitution_for_velocity) (const struct Rebound* const r, double v); /**< Used for hard sphere collision model. */
-	void (*collision_resolve) (struct Rebound* const r, struct collision);
+	double (*collisions_coefficient_of_restitution_for_velocity) (const struct reb_context* const r, double v); /**< Used for hard sphere collision model. */
+	void (*collision_resolve) (struct reb_context* const r, struct collision);
 	double 	collisions_plog;			/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
 	long	collisions_Nlog;			/**< Keep track of Number of collisions. */
 
@@ -181,10 +181,10 @@ struct Rebound {
 	
 	//////////////////////////////////////////////
 	/// Integrators
-	struct ReboundIntegratorWHFast ri_whfast;	/**< The WHFast struct */
-	struct ReboundIntegratorIAS15 ri_ias15;		/**< The IAS15 struct */
-	struct ReboundIntegratorSEI ri_sei;		/**< The SEI struct */
-	struct ReboundIntegratorWH ri_wh;		/**< The WH struct */
+	struct reb_contextIntegratorWHFast ri_whfast;	/**< The WHFast struct */
+	struct reb_contextIntegratorIAS15 ri_ias15;		/**< The IAS15 struct */
+	struct reb_contextIntegratorSEI ri_sei;		/**< The SEI struct */
+	struct reb_contextIntegratorWH ri_wh;		/**< The WH struct */
 
 
 	//////////////////////////////////////////////
@@ -192,22 +192,22 @@ struct Rebound {
 	/*
 	 * This function allows the user to add additional (non-gravitational) forces.
 	 */
-	void (*additional_forces) (struct Rebound* const r);
+	void (*additional_forces) (struct reb_context* const r);
 	/*
 	 * This function allows the user to modify the dditional (non-gravitational) forces.
 	 */
-	void (*post_timestep_modifications) (struct Rebound* const r);
+	void (*post_timestep_modifications) (struct reb_context* const r);
 	/**
 	 * This function is called at the beginning of the simulation and at the end of
 	 * each timestep.
 	 */
-	void (*heartbeat) (struct Rebound* r);
+	void (*heartbeat) (struct reb_context* r);
 	/**
 	 * This function is called at the end of the simulation when t>=tmax.
 	 * Note that it is not called when the simulation stopped for another 
 	 * reason (e.g. user interaction or crash). 
 	 */ 
-	void (*finished) (struct Rebound* r);
+	void (*finished) (struct reb_context* r);
 
 };
 
@@ -216,33 +216,33 @@ struct Rebound {
  * Initializes all REBOUND variables and returns a REBOUND handle.. 
  * This function must be called from problem_init() before any particles are added.
  */
-struct Rebound* rebound_init();
+struct reb_context* rebound_init();
 
 /**
  * Performon integration step.
  */
-void rebound_step(struct Rebound* const r);
+void rebound_step(struct reb_context* const r);
 
 /**
  * Performon an integration. Starting at the current time t and until time tmax.
  * tmax==0 means integrate forever.
  */
-int rebound_integrate(struct Rebound* const r, double tmax);
+int rebound_integrate(struct reb_context* const r, double tmax);
 
 /**
  * Helper function to configure box.
  */
-void rebound_configure_box(struct Rebound* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz);
+void rebound_configure_box(struct reb_context* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz);
 
 /**
  * This function is called once before the integration and then after every timestep.
  * The simulation exits immediately if it returns 1.
  */
-int rebound_check_exit(struct Rebound* const r, const double tmax);
+int rebound_check_exit(struct reb_context* const r, const double tmax);
 
 /*
  * Function used to allow binary input.
  */
-void rebound_reset_temporary_pointers(struct Rebound* const r);
-void rebound_reset_function_pointers(struct Rebound* const r);
+void rebound_reset_temporary_pointers(struct reb_context* const r);
+void rebound_reset_function_pointers(struct reb_context* const r);
 #endif

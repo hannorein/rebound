@@ -38,10 +38,10 @@
 double collisions_max_r = 0;
 double collisions_max2_r = 0;
 
-void collisions_search(struct Rebound* const r){
+void collisions_search(struct reb_context* const r){
 
 }
 
-void collisions_resolve(struct Rebound* const r){
+void collisions_resolve(struct reb_context* const r){
 
 }

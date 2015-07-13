@@ -46,7 +46,7 @@ double integrator_hybrid_switch_ratio = 100;
 static double initial_dt = 0;
 static unsigned int integrator_hybrid_switch_warning = 0;
 
-static double get_min_ratio(struct Rebound* const r){
+static double get_min_ratio(struct reb_context* const r){
 	const int N = r->N;
 	const int N_active = r->N_active;
 	const int N_megno = r->N_megno;
@@ -85,7 +85,7 @@ static double get_min_ratio(struct Rebound* const r){
 
 static double ratio;
 enum {SYMPLECTIC, HIGHORDER} integrator_hybrid_mode = SYMPLECTIC;
-void integrator_hybrid_part1(struct Rebound* r){
+void integrator_hybrid_part1(struct reb_context* r){
 	ratio = get_min_ratio(r);
 	if (initial_dt==0.){
 		initial_dt = r->dt;
@@ -120,7 +120,7 @@ void integrator_hybrid_part1(struct Rebound* r){
 			break;
 	}
 }
-void integrator_hybrid_part2(struct Rebound* r){
+void integrator_hybrid_part2(struct reb_context* r){
 	switch(integrator_hybrid_mode){
 		case SYMPLECTIC:
 			integrator_whfast_part2(r);
@@ -133,7 +133,7 @@ void integrator_hybrid_part2(struct Rebound* r){
 	}
 }
 	
-void integrator_hybrid_synchronize(struct Rebound* r){
+void integrator_hybrid_synchronize(struct reb_context* r){
 	switch(integrator_hybrid_mode){
 		case SYMPLECTIC:
 			integrator_whfast_synchronize(r);
@@ -143,7 +143,7 @@ void integrator_hybrid_synchronize(struct Rebound* r){
 	}
 }
 
-void integrator_hybrid_reset(struct Rebound* r){
+void integrator_hybrid_reset(struct reb_context* r){
 	integrator_hybrid_mode = SYMPLECTIC;
 	integrator_hybrid_switch_warning = 0;
 	integrator_whfast_reset(r);

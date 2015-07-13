@@ -25,8 +25,8 @@
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
 
-struct Rebound;
-extern struct Rebound* display_r; 
+struct reb_context;
+extern struct reb_context* display_r; 
 
 /**
  * This routine is called by the glut run loop or manually, whenever the screen has to be redrawn 

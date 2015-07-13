@@ -60,9 +60,9 @@ int tree_get_octant_for_particle_in_cell(const struct reb_particle p, struct cel
   * is set to be NULL.
   * @param o is the index of the octant of the node which particles[pt] belongs to.
   */
-struct cell *tree_add_particle_to_cell(struct Rebound* const r, struct cell *node, int pt, struct cell *parent, int o);
+struct cell *tree_add_particle_to_cell(struct reb_context* const r, struct cell *node, int pt, struct cell *parent, int o);
 
-void tree_add_particle_to_tree(struct Rebound* const r, int pt){
+void tree_add_particle_to_tree(struct reb_context* const r, int pt){
 	if (r->tree_root==NULL){
 		r->tree_root = calloc(r->root_nx*r->root_ny*r->root_nz,sizeof(struct cell*));
 	}
@@ -77,7 +77,7 @@ void tree_add_particle_to_tree(struct Rebound* const r, int pt){
 	r->tree_root[rootbox] = tree_add_particle_to_cell(r, r->tree_root[rootbox],pt,NULL,0);
 }
 
-struct cell *tree_add_particle_to_cell(struct Rebound* const r, struct cell *node, int pt, struct cell *parent, int o){
+struct cell *tree_add_particle_to_cell(struct reb_context* const r, struct cell *node, int pt, struct cell *parent, int o){
 	struct reb_particle* const particles = r->particles;
 	// Initialize a new node
 	if (node == NULL) {  
@@ -132,7 +132,7 @@ int tree_get_octant_for_particle_in_cell(const struct reb_particle p, struct cel
   *
   * @param node is the pointer to a node cell
   */
-int tree_particle_is_inside_cell(const struct Rebound* const r, struct cell *node){
+int tree_particle_is_inside_cell(const struct reb_context* const r, struct cell *node){
 	if (fabs(r->particles[node->pt].x-node->x) > node->w/2. || \
 		fabs(r->particles[node->pt].y-node->y) > node->w/2. || \
 		fabs(r->particles[node->pt].z-node->z) > node->w/2.) {
@@ -146,7 +146,7 @@ int tree_particle_is_inside_cell(const struct Rebound* const r, struct cell *nod
   *
   * @param node is the pointer to a node cell
   */
-struct cell *tree_update_cell(struct Rebound* const r, struct cell *node){
+struct cell *tree_update_cell(struct reb_context* const r, struct cell *node){
 	int test = -1; /**< A temporary int variable is used to store the index of an octant when it needs to be freed. */
 	if (node == NULL) {
 		return NULL;
@@ -205,7 +205,7 @@ struct cell *tree_update_cell(struct Rebound* const r, struct cell *node){
 /**
   * The function calculates the total mass and center of mass of a node. When QUADRUPOLE is defined, it also calculates the mass quadrupole tensor for all non-leaf nodes.
   */
-void tree_update_gravity_data_in_cell(const struct Rebound* const r, struct cell *node){
+void tree_update_gravity_data_in_cell(const struct reb_context* const r, struct cell *node){
 #ifdef QUADRUPOLE
 	node->mxx = 0;
 	node->mxy = 0;
@@ -267,7 +267,7 @@ void tree_update_gravity_data_in_cell(const struct Rebound* const r, struct cell
 	}
 }
 
-void tree_update_gravity_data(struct Rebound* const r){
+void tree_update_gravity_data(struct reb_context* const r){
 	for(int i=0;i<r->root_n;i++){
 #ifdef MPI
 		if (communication_mpi_rootbox_is_local(i)==1){
@@ -281,7 +281,7 @@ void tree_update_gravity_data(struct Rebound* const r){
 	}
 }
 
-void tree_update(struct Rebound* const r){
+void tree_update(struct reb_context* const r){
 	if (r->tree_root==NULL){
 		r->tree_root = calloc(r->root_nx*r->root_ny*r->root_nz,sizeof(struct cell*));
 	}

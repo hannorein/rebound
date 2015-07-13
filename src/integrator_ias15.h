@@ -24,16 +24,16 @@
  */
 #ifndef _INTEGRATOR_IAS15_H
 #define _INTEGRATOR_IAS15_H
-struct Rebound;
-void integrator_ias15_part1(struct Rebound* r);
-void integrator_ias15_part2(struct Rebound* r);
-void integrator_ias15_synchronize(struct Rebound* r);
-void integrator_ias15_reset(struct Rebound* r);
+struct reb_context;
+void integrator_ias15_part1(struct reb_context* r);
+void integrator_ias15_part2(struct reb_context* r);
+void integrator_ias15_synchronize(struct reb_context* r);
+void integrator_ias15_reset(struct reb_context* r);
 
-struct Rebound;
+struct reb_context;
 struct reb_particle; 
 
-struct ReboundIntegratorIAS15 {
+struct reb_contextIntegratorIAS15 {
 	/**
 	 * This parameter controls the accuracy of the integrator.
 	 * Set to 0 to make IAS15 a non-adaptive integrator.

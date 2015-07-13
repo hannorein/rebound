@@ -52,23 +52,23 @@ struct collision{
  * This routine searches for all collisions and stores them to 
  * resolve them when called collisions_resolve().
  */
-void collisions_search(struct Rebound* const r);
+void collisions_search(struct reb_context* const r);
 /**
  * Resolve all collisions.
  * This function resolve all previously found collisions.
  */
-void collisions_resolve(struct Rebound* const r);
+void collisions_resolve(struct reb_context* const r);
 
 
 /**
  * Just returns the constant coefficient of restitution in the REBOUND struct.
  */
-double collisions_constant_coefficient_of_restitution_for_velocity(const struct Rebound* const r, double v);
+double collisions_constant_coefficient_of_restitution_for_velocity(const struct reb_context* const r, double v);
 
 
 /**
  * Resolve a single collision assuming a hardsphere collision model (no super-particle).
  * @param c Collision to resolve.
  */
-void collision_resolve_hardsphere(struct Rebound* const r, struct collision c);	
+void collision_resolve_hardsphere(struct reb_context* const r, struct collision c);	
 #endif // _COLLISIONS_H

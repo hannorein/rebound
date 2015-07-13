@@ -24,12 +24,12 @@
  */
 #ifndef _INTEGRATOR_WH_H
 #define _INTEGRATOR_WH_H
-void integrator_wh_part1(struct Rebound* r);
-void integrator_wh_part2(struct Rebound* r);
-void integrator_wh_synchronize(struct Rebound* r);
-void integrator_wh_reset(struct Rebound* r);
+void integrator_wh_part1(struct reb_context* r);
+void integrator_wh_part2(struct reb_context* r);
+void integrator_wh_synchronize(struct reb_context* r);
+void integrator_wh_reset(struct reb_context* r);
 
-struct ReboundIntegratorWH {
+struct reb_contextIntegratorWH {
 	int Nmax;
 	double* eta;
 };

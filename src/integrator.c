@@ -43,7 +43,7 @@
 #include "integrator_wh.h"
 #include "integrator_hybrid.h"
 
-void integrator_part1(struct Rebound* r){
+void integrator_part1(struct reb_context* r){
 	switch(r->integrator){
 		case RB_IT_IAS15:
 			integrator_ias15_part1(r);
@@ -68,7 +68,7 @@ void integrator_part1(struct Rebound* r){
 	}
 }
 
-void integrator_part2(struct Rebound* r){
+void integrator_part2(struct reb_context* r){
 	switch(r->integrator){
 		case RB_IT_IAS15:
 			integrator_ias15_part2(r);
@@ -93,7 +93,7 @@ void integrator_part2(struct Rebound* r){
 	}
 }
 	
-void integrator_synchronize(struct Rebound* r){
+void integrator_synchronize(struct reb_context* r){
 	switch(r->integrator){
 		case RB_IT_IAS15:
 			integrator_ias15_synchronize(r);
@@ -118,7 +118,7 @@ void integrator_synchronize(struct Rebound* r){
 	}
 }
 
-void integrator_reset(struct Rebound* r){
+void integrator_reset(struct reb_context* r){
 	r->integrator = RB_IT_IAS15;
 	r->gravity_ignore_10 = 0;
 	integrator_ias15_reset(r);
@@ -129,7 +129,7 @@ void integrator_reset(struct Rebound* r){
 	integrator_hybrid_reset(r);
 }
 
-void integrator_update_acceleration(struct Rebound* r){
+void integrator_update_acceleration(struct reb_context* r){
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 	PROFILING_START()
 	gravity_calculate_acceleration(r);

@@ -78,12 +78,12 @@ const double d[21] = {0.0562625605369221464656522, 0.0031654757181708292499905, 
 const double w[8] = {0.03125, 0.185358154802979278540728972807180754479812609, 0.304130620646785128975743291458180383736715043, 0.376517545389118556572129261157225608762708603, 0.391572167452493593082499533303669362149363727, 0.347014795634501068709955597003528601733139176, 0.249647901329864963257869294715235590174262844, 0.114508814744257199342353731044292225247093225};
 
 // Do nothing here. This is only used in a leapfrog-like DKD integrator. IAS15 performs one complete timestep.
-void integrator_ias15_part1(struct Rebound* r){
+void integrator_ias15_part1(struct reb_context* r){
 }
 
-int integrator_ias15_step(struct Rebound* r); // Does the actual timestep.
+int integrator_ias15_step(struct reb_context* r); // Does the actual timestep.
 
-void integrator_ias15_part2(struct Rebound* r){
+void integrator_ias15_part2(struct reb_context* r){
 #ifdef GENERATE_CONSTANTS
 	integrator_generate_constants();
 #endif  // GENERATE_CONSTANTS
@@ -91,7 +91,7 @@ void integrator_ias15_part2(struct Rebound* r){
 	while(!integrator_ias15_step(r));
 }
  
-int integrator_ias15_step(struct Rebound* r) {
+int integrator_ias15_step(struct reb_context* r) {
 	struct reb_particle* const particles = r->particles;
 	const int N = r->N;
 	const int N_megno  = r->N_megno;
@@ -558,10 +558,10 @@ void copybuffers(double* const _a[7], double* const _b[7], int N3){
 //		memcpy(_b[i],_a[i], sizeof(double)*N3);
 //	}
 }
-void integrator_ias15_synchronize(struct Rebound* r){
+void integrator_ias15_synchronize(struct reb_context* r){
 }
 
-void integrator_ias15_reset(struct Rebound* r){
+void integrator_ias15_reset(struct reb_context* r){
 	r->ri_ias15.N3allocated 	= 0;
 	r->ri_ias15.dt_last_success = 0;
 	for (int l=0;l<7;++l) {

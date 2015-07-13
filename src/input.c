@@ -85,9 +85,9 @@ char* input_get_argument(int argc, char** argv, const char* argument){
 	return NULL;
 }
 
-struct Rebound* rebound_init_from_binary(char* filename){
+struct reb_context* rebound_init_from_binary(char* filename){
 	fprintf(stderr,"\n\033[1mWarning!\033[0m You might need to reset function pointers after creating a REBOUND struct with a binary file.\n");
-	struct Rebound* r = malloc(sizeof(struct Rebound));
+	struct reb_context* r = malloc(sizeof(struct reb_context));
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -97,7 +97,7 @@ struct Rebound* rebound_init_from_binary(char* filename){
 #endif // MPI
 	if (inf){
 		long objects = 0;
-		objects += fread(r,sizeof(struct Rebound),1,inf);
+		objects += fread(r,sizeof(struct reb_context),1,inf);
 		rebound_reset_temporary_pointers(r);
 		rebound_reset_function_pointers(r);
 		r->Nmax = r->N;

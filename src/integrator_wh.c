@@ -63,7 +63,7 @@ void integrator_wh_ah(struct reb_particle* const particles, const double G, cons
 void integrator_wh_to_jacobi(struct reb_particle* const particles, const double* const eta, const int N, const int N_active);
 void integrator_wh_from_jacobi(struct reb_particle* const particles, const double* const eta, const int N, const int N_active);
 
-void integrator_wh_part1(struct Rebound* r){
+void integrator_wh_part1(struct reb_context* r){
 	const int N = r->N;
 	const int N_active = r->N_active;
 	struct reb_particle* const particles = r->particles;
@@ -84,7 +84,7 @@ void integrator_wh_part1(struct Rebound* r){
 	r->t+=r->dt/2.;
 }
 
-void integrator_wh_part2(struct Rebound* r){
+void integrator_wh_part2(struct reb_context* r){
 	const int N = r->N;
 	const int N_active = r->N_active;
 	struct reb_particle* const particles = r->particles;
@@ -564,9 +564,9 @@ void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* 
 	*s = (*x)*(A0-y*(A1-y*(A2-y*(A3-y*(A4-y)))))/A0;
 	*c = sqrt(1. - (*s)*(*s));
 }
-void integrator_wh_synchronize(struct Rebound* r){
+void integrator_wh_synchronize(struct reb_context* r){
 	// Do nothing.
 }
-void integrator_wh_reset(struct Rebound* r){
+void integrator_wh_reset(struct reb_context* r){
 	// Do nothing.
 }

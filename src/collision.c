@@ -48,9 +48,9 @@
 #error COLLISIONS_DIRECT not yet compatible with MPI
 #endif
 
-void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, int* collisions_N, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct cell* c);
+void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct cell* c);
 
-void collisions_search(struct Rebound* const r){
+void collisions_search(struct reb_context* const r){
 	const int N = r->N;
 	int collisions_N = 0;
 	const struct reb_particle* const particles = r->particles;
@@ -206,7 +206,7 @@ void collisions_search(struct Rebound* const r){
  * @param collision_nearest Pointer to the nearest collision found so far.
  * @param c Pointer to the cell currently being searched in.
  */
-void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, int* collisions_N, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct collision* collision_nearest, struct cell* c){
+void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct collision* collision_nearest, struct cell* c){
 	const struct reb_particle* const particles = r->particles;
 	if (c->pt>=0){ 	
 		// c is a leaf node
@@ -294,7 +294,7 @@ void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, int* collisions
 
 
 
-void collision_resolve_hardsphere(struct Rebound* const r, struct collision c){
+void collision_resolve_hardsphere(struct reb_context* const r, struct collision c){
 #ifndef COLLISIONS_NONE
 	struct reb_particle* const particles = r->particles;
 	struct reb_particle p1 = particles[c.p1];
@@ -389,6 +389,6 @@ void collision_resolve_hardsphere(struct Rebound* const r, struct collision c){
 #endif // COLLISIONS_NONE
 }
 
-double collisions_constant_coefficient_of_restitution_for_velocity(const struct Rebound* const r, double v){
+double collisions_constant_coefficient_of_restitution_for_velocity(const struct reb_context* const r, double v){
 	return r->coefficient_of_restitution;
 }

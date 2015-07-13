@@ -37,7 +37,7 @@
 #include "boundary.h"
 #include "tree.h"
 
-void boundary_check(struct Rebound* const r){
+void boundary_check(struct reb_context* const r){
 	struct reb_particle* const particles = r->particles;
 	const int N = r->N;
 	const double boxsize_x = r->boxsize_x;
@@ -143,7 +143,7 @@ void boundary_check(struct Rebound* const r){
 
 const static struct Ghostbox nan_ghostbox = {.shiftx = 0, .shifty = 0, .shiftz = 0, .shiftvx = 0, .shiftvy = 0, .shiftvz = 0};
 
-struct Ghostbox boundary_get_ghostbox(struct Rebound* const r, int i, int j, int k){
+struct Ghostbox boundary_get_ghostbox(struct reb_context* const r, int i, int j, int k){
 	switch(r->boundary){
 		case RB_BT_OPEN:
 		{
@@ -201,7 +201,7 @@ struct Ghostbox boundary_get_ghostbox(struct Rebound* const r, int i, int j, int
  * @param p reb_particle to be checked.
  * @return Return value is 1 if particle is inside the box and 0 otherwise.
  */
-int boundary_particle_is_in_box(const struct Rebound* const r, struct reb_particle p){
+int boundary_particle_is_in_box(const struct reb_context* const r, struct reb_particle p){
 	switch(r->boundary){
 		case RB_BT_OPEN:
 		case RB_BT_SHEAR:
