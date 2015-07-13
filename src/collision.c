@@ -48,9 +48,9 @@
 #error COLLISIONS_DIRECT not yet compatible with MPI
 #endif
 
-void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct reb_treecell* c);
+void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
 
-void collisions_search(struct reb_context* const r){
+void reb_collision_search(struct reb_context* const r){
 	const int N = r->N;
 	int collisions_N = 0;
 	const struct reb_particle* const particles = r->particles;
@@ -100,7 +100,7 @@ void collisions_search(struct reb_context* const r){
 							// Allocate memory if there is no space in array.
 							// Doing it in chunks of 32 to avoid having to do it too often.
 							r->collisions_NMAX += 32;
-							r->collisions = realloc(r->collisions,sizeof(struct collision)*r->collisions_NMAX);
+							r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_NMAX);
 						}
 						r->collisions[collisions_N].p1 = i;
 						r->collisions[collisions_N].p2 = j;
@@ -140,7 +140,7 @@ void collisions_search(struct reb_context* const r){
 #pragma omp parallel for schedule(guided)
 			for (int i=0;i<N;i++){
 				struct reb_particle p1 = particles[i];
-				struct  collision collision_nearest;
+				struct reb_collision collision_nearest;
 				collision_nearest.p1 = i;
 				collision_nearest.p2 = -1;
 				double p1_r = p1.r;
@@ -181,11 +181,11 @@ void collisions_search(struct reb_context* const r){
 	// randomize
 	for (int i=0;i<collisions_N;i++){
 		int new = rand()%collisions_N;
-		struct collision c1 = r->collisions[i];
+		struct reb_collision c1 = r->collisions[i];
 		r->collisions[i] = r->collisions[new];
 		r->collisions[new] = c1;
 	}
-	// Loop over all collisions previously found in collisions_search().
+	// Loop over all collisions previously found in reb_collision_search().
 	for (int i=0;i<collisions_N;i++){
 		// Resolve collision
 		r->collision_resolve(r, r->collisions[i]);
@@ -206,7 +206,7 @@ void collisions_search(struct reb_context* const r){
  * @param collision_nearest Pointer to the nearest collision found so far.
  * @param c Pointer to the cell currently being searched in.
  */
-void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct collision* collision_nearest, struct reb_treecell* c){
+void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c){
 	const struct reb_particle* const particles = r->particles;
 	if (c->pt>=0){ 	
 		// c is a leaf node
@@ -264,7 +264,7 @@ void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collis
 			{
 				if (r->collisions_NMAX<=(*collisions_N)){
 					r->collisions_NMAX += 32;
-					r->collisions = realloc(r->collisions,sizeof(struct collision)*r->collisions_NMAX);
+					r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_NMAX);
 				}
 				r->collisions[(*collisions_N)] = *collision_nearest;
 				(*collisions_N)++;
@@ -294,7 +294,7 @@ void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collis
 
 
 
-void collision_resolve_hardsphere(struct reb_context* const r, struct collision c){
+void collision_resolve_hardsphere(struct reb_context* const r, struct reb_collision c){
 #ifndef COLLISIONS_NONE
 	struct reb_particle* const particles = r->particles;
 	struct reb_particle p1 = particles[c.p1];

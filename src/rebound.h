@@ -103,12 +103,12 @@ struct reb_context {
 
 	//////////////////////////////////////////////
 	/// Collisions
-	struct collision* collisions;			/**< Array of all collisions. */
+	struct reb_collision* collisions;			/**< Array of all collisions. */
 	int 	collisions_NMAX;			/**< Size allocated for collisions.*/
 	double coefficient_of_restitution;		/**< Used for hard sphere collision model. */
 	double minimum_collision_velocity;		/**< Used for hard sphere collision model. */
 	double (*collisions_coefficient_of_restitution_for_velocity) (const struct reb_context* const r, double v); /**< Used for hard sphere collision model. */
-	void (*collision_resolve) (struct reb_context* const r, struct collision);
+	void (*collision_resolve) (struct reb_context* const r, struct reb_collision);
 	double 	collisions_plog;			/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
 	long	collisions_Nlog;			/**< Keep track of Number of collisions. */
 

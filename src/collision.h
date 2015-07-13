@@ -6,7 +6,7 @@
  * @details 	The code supports different methods for the collision
  * detection. They all use this common interface. To detect and resolve 
  * collisions correctly, positions and velocities of the particles have 
- * to be synchronized in time. For that reason collisions_search() is
+ * to be synchronized in time. For that reason reb_collision_search() is
  * called at the end of the DKD timestep.  
  * 
  * 
@@ -36,7 +36,7 @@
  * Collision structure of one single collisions
  * Used to save a collision during collision search. 
  */
-struct collision{
+struct reb_collision{
 	int p1;			/**< First colliding particle. */
 	int p2;			/**< Second colliding particle. */
 	struct reb_ghostbox gb;	/**< Ghostbox (of particle p1). */
@@ -48,17 +48,9 @@ struct collision{
 } collision;
 
 /**
- * Search for collisions and save them.
- * This routine searches for all collisions and stores them to 
- * resolve them when called collisions_resolve().
+ * Search for collisions and resolve them.
  */
-void collisions_search(struct reb_context* const r);
-/**
- * Resolve all collisions.
- * This function resolve all previously found collisions.
- */
-void collisions_resolve(struct reb_context* const r);
-
+void reb_collision_search(struct reb_context* const r);
 
 /**
  * Just returns the constant coefficient of restitution in the REBOUND struct.
@@ -70,5 +62,5 @@ double collisions_constant_coefficient_of_restitution_for_velocity(const struct 
  * Resolve a single collision assuming a hardsphere collision model (no super-particle).
  * @param c Collision to resolve.
  */
-void collision_resolve_hardsphere(struct reb_context* const r, struct collision c);	
+void collision_resolve_hardsphere(struct reb_context* const r, struct reb_collision c);	
 #endif // _COLLISIONS_H

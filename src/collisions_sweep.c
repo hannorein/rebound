@@ -91,8 +91,8 @@ struct  xvaluelist* sweepx;	/**< Pointers to the SWEEPX list of each processor. 
 /**
  * Structure that contains a list of collisions.
  */
-struct collisionlist {
-	struct collision* collisions;
+struct reb_collisionlist {
+	struct reb_collision* collisions;
 	int 	N;		/**< Current array size. */
 	int 	Nmax;		/**< Maximum array size before realloc() is needed. */
 };
@@ -228,14 +228,14 @@ void collisions_sweep_insertionsort_particles(void){
 
 
 
-void collisions_search(void){
+void reb_collision_search(void){
 	if (sweeps_init_done!=1){
 		sweeps_init_done = 1;
 #ifdef OPENMP
 		sweeps_proc 		= omp_get_max_threads();
 #endif // OPENMP
 		sweepx		= (struct xvaluelist*)   calloc(sweeps_proc,sizeof(struct xvaluelist));
-		clist		= (struct collisionlist*)calloc(sweeps_proc,sizeof(struct collisionlist));
+		clist		= (struct reb_collisionlist*)calloc(sweeps_proc,sizeof(struct reb_collisionlist));
 #ifndef TREE
 		// Sort particles according to their x position to speed up sorting of lines.
 		// Initially the particles are not pre-sorted, thus qsort is faster than insertionsort.
@@ -350,12 +350,12 @@ void detect_collision_of_pair(int pt1, int pt2, int proci, int crossing, struct 
 			time1=tmp;
 		}
 		if ( (time1>-dt/2. && time1<dt/2.) || (time1<-dt/2. && time2>dt/2.) ){
-			struct collisionlist* clisti = &(clist[proci]);
+			struct reb_collisionlist* clisti = &(clist[proci]);
 			if (clisti->N>=clisti->Nmax){
 				clisti->Nmax	 	+= 1024;
-				clisti->collisions	= (struct collision*)realloc(clisti->collisions,clisti->Nmax*sizeof(struct collision));
+				clisti->collisions	= (struct reb_collision*)realloc(clisti->collisions,clisti->Nmax*sizeof(struct reb_collision));
 			}
-			struct collision* c = &(clisti->collisions[clisti->N]);
+			struct reb_collision* c = &(clisti->collisions[clisti->N]);
 			c->p1		= pt1;
 			c->p2		= pt2;
 			c->gb	 	= gb;
@@ -379,20 +379,20 @@ void collisions_resolve(void){
 
 #pragma omp parallel for schedule (static,1)
 	for (int proci=0;proci<sweeps_proc;proci++){
-		struct collision* c = clist[proci].collisions;
+		struct reb_collision* c = clist[proci].collisions;
 		int colN = clist[proci].N;
 	
 		// Randomize array.	
 		for(int i=0; i<colN; i++){
 			int j = rand()%colN;
-			struct collision ctemp = c[i];
+			struct reb_collision ctemp = c[i];
 			c[i]=c[j];
 			c[j]=ctemp;
 		}
 
 
 		for(int i=0; i<colN; i++){
-			struct collision c1= c[i];
+			struct reb_collision c1= c[i];
 			particles[c1.p1].x -= c1.time*particles[c1.p1].vx; 
 			particles[c1.p1].y -= c1.time*particles[c1.p1].vy; 
 			particles[c1.p1].z -= c1.time*particles[c1.p1].vz; 

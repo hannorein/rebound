@@ -120,7 +120,7 @@ void reb_step(struct reb_context* const r){
 
 	// Search for collisions using local and essential tree.
 	PROFILING_START()
-	collisions_search(r);
+	reb_collision_search(r);
 	PROFILING_STOP(PROFILING_CAT_COLLISION)
 #endif  // COLLISIONS_NONE
 	if (r->heartbeat){ r->heartbeat(r); }
