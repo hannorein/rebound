@@ -31,7 +31,7 @@ void integrator_ias15_synchronize(struct Rebound* r);
 void integrator_ias15_reset(struct Rebound* r);
 
 struct Rebound;
-struct Particle; 
+struct reb_particle; 
 
 struct ReboundIntegratorIAS15 {
 	/**

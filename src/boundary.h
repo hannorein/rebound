@@ -64,6 +64,6 @@ struct Ghostbox boundary_get_ghostbox(struct Rebound* const r, int i, int j, int
 /**
  * Return 1 if a particle is in the box, 0 otherwise.
  */
-int boundary_particle_is_in_box(const struct Rebound* const r, struct Particle p);
+int boundary_particle_is_in_box(const struct Rebound* const r, struct reb_particle p);
 
 #endif

@@ -68,15 +68,15 @@ double tools_rayleigh(double sigma){
 /// Other helper routines
 double tools_energy(struct Rebound* r){
 	const int N = r->N;
-	const struct Particle* restrict const particles = r->particles;
+	const struct reb_particle* restrict const particles = r->particles;
 	const int N_megno = r->N_megno;
 	double e_kin = 0.;
 	double e_pot = 0.;
 	for (int i=0;i<N-N_megno;i++){
-		struct Particle pi = particles[i];
+		struct reb_particle pi = particles[i];
 		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
 		for (int j=i+1;j<N-N_megno;j++){
-			struct Particle pj = particles[j];
+			struct reb_particle pj = particles[j];
 			double dx = pi.x - pj.x;
 			double dy = pi.y - pj.y;
 			double dz = pi.z - pj.z;
@@ -88,7 +88,7 @@ double tools_energy(struct Rebound* r){
 
 void tools_move_to_center_of_momentum(struct Rebound* const r){
 	const int N = r->N;
-	struct Particle* restrict const particles = r->particles;
+	struct reb_particle* restrict const particles = r->particles;
 	double m = 0;
 	double x = 0;
 	double y = 0;
@@ -97,7 +97,7 @@ void tools_move_to_center_of_momentum(struct Rebound* const r){
 	double vy = 0;
 	double vz = 0;
 	for (int i=0;i<N;i++){
-		struct Particle p = particles[i];
+		struct reb_particle p = particles[i];
 		m  += p.m;
 		x  += p.x*p.m;
 		y  += p.y*p.m;
@@ -122,7 +122,7 @@ void tools_move_to_center_of_momentum(struct Rebound* const r){
 	}
 }
 
-struct Particle tools_get_center_of_mass(struct Particle p1, struct Particle p2){
+struct reb_particle tools_get_center_of_mass(struct reb_particle p1, struct reb_particle p2){
 	p1.x   = p1.x*p1.m + p2.x*p2.m;		
 	p1.y   = p1.y*p1.m + p2.y*p2.m;
 	p1.z   = p1.z*p1.m + p2.z*p2.m;
@@ -147,7 +147,7 @@ void tools_init_plummer(struct Rebound* r, int _N, double M, double R) {
 	
 	double E = 3./64.*M_PI*M*M/R;
 	for (int i=0;i<_N;i++){
-		struct Particle star;
+		struct reb_particle star;
 		double _r = pow(pow(tools_uniform(0,1),-2./3.)-1.,-1./2.);
 		double x2 = tools_uniform(0,1);
 		double x3 = tools_uniform(0,2.*M_PI);
@@ -182,8 +182,8 @@ void tools_init_plummer(struct Rebound* r, int _N, double M, double R) {
 	}
 }
 
-struct Particle tools_init_orbit2d(double G, double M, double m, double a, double e, double omega, double f){
-	struct Particle p;
+struct reb_particle tools_init_orbit2d(double G, double M, double m, double a, double e, double omega, double f){
+	struct reb_particle p;
 	p.m = m;
 	double r = a*(1.-e*e)/(1.+e*cos(f));
 	double n = sqrt(G*(m+M)/(a*a*a));
@@ -204,8 +204,8 @@ struct Particle tools_init_orbit2d(double G, double M, double m, double a, doubl
 	return p;
 }
 
-struct Particle tools_init_orbit3d(double G, double M, double m, double a, double e, double i, double Omega, double omega, double f){
-	struct Particle p;
+struct reb_particle tools_init_orbit3d(double G, double M, double m, double a, double e, double i, double Omega, double omega, double f){
+	struct reb_particle p;
 	p.m = m;
 	double r = a*(1-e*e)/(1 + e*cos(f));
 
@@ -231,7 +231,7 @@ const struct orbit orbit_nan = {.a = NAN, .r = NAN, .h = NAN, .P = NAN, .l = NAN
 #define MIN_REL_ERROR 1.0e-12
 #define TINY 1.E-308
 
-struct orbit tools_p2orbit(double G, struct Particle p, struct Particle primary){
+struct orbit tools_p2orbit(double G, struct reb_particle p, struct reb_particle primary){
 	struct orbit o;
 	if (primary.m <= TINY){	
 		return orbit_nan;
@@ -349,7 +349,7 @@ void tools_megno_init(struct Rebound* const r, double delta){
 	r->megno_mean_t = 0;
 	r->megno_delta0 = delta;
         for (int i=0;i<_N_megno;i++){ 
-                struct Particle megno = {
+                struct reb_particle megno = {
 			.m  = r->particles[i].m,
 			.x  = tools_normal(1.),
 			.y  = tools_normal(1.),
@@ -378,7 +378,7 @@ double tools_lyapunov(struct Rebound* r){ // Returns the largest Lyapunov charac
 	return r->megno_cov_Yt/r->megno_var_t;
 }
 double tools_megno_deltad_delta(struct Rebound* const r){
-	const struct Particle* restrict const particles = r->particles;
+	const struct reb_particle* restrict const particles = r->particles;
 	const int N = r->N;
 	const int N_megno = r->N_megno;
         double deltad = 0;

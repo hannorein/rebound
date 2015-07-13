@@ -185,7 +185,7 @@ void gravity_fft_init(void) {
 }
 
 // Assignement function (TSC Scheme) 
-// See Hockney and Eastwood (1981), Computer Simulations Using Particles
+// See Hockney and Eastwood (1981), Computer Simulations Using reb_particles
 double W(double x){
 	if (fabs(x)<=0.5) return 0.75 - x*x;
 	if (fabs(x)>=0.5 && fabs(x)<=3./2.) return 0.5*(3./2.-fabs(x))*(3./2.-fabs(x));

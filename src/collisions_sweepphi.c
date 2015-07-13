@@ -61,8 +61,8 @@ static inline double sgn(const double a){ return (a>=0 ? 1. : -1); }
 
 /** 
  * This function checks if two particles colliding during one drift step.
- * @param pt1 Particle 1. 
- * @param pt2 Particle 2. 
+ * @param pt1 reb_particle 1. 
+ * @param pt2 reb_particle 2. 
  * @param proci Processor id (OpenMP) for this collision.
  * @param crossing Flag that is one if one of the particles crosses a boundary in this timestep.
  */
@@ -263,10 +263,10 @@ void collisions_search(void){
 	for (int proci=0;proci<sweeps_proc;proci++){
 		struct phivaluelist* sweepphii = &(sweepphi[proci]);
 #ifdef TREE
-		// Use quicksort when there is a tree. Particles are not pre-sorted.
+		// Use quicksort when there is a tree. reb_particles are not pre-sorted.
 		qsort (sweepphii->phivalues, sweepphii->N, sizeof(struct phivalue), compare_phivalue);
 #else //TREE 
-		// Use insertionsort when there is a tree. Particles are pre-sorted.
+		// Use insertionsort when there is a tree. reb_particles are pre-sorted.
 		collisions_sweep_insertionsort_phivaluelist(sweepphii);	
 #endif //TREE
 		

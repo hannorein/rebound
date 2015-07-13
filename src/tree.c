@@ -42,7 +42,7 @@
   * @param pt is the index of a particle.
   * @param node is the pointer to a node cell. 
   */
-int tree_get_octant_for_particle_in_cell(const struct Particle p, struct cell *node);
+int tree_get_octant_for_particle_in_cell(const struct reb_particle p, struct cell *node);
 
 /**
   * This function adds a particle to the octant[o] of a node. 
@@ -66,7 +66,7 @@ void tree_add_particle_to_tree(struct Rebound* const r, int pt){
 	if (r->tree_root==NULL){
 		r->tree_root = calloc(r->root_nx*r->root_ny*r->root_nz,sizeof(struct cell*));
 	}
-	struct Particle p = r->particles[pt];
+	struct reb_particle p = r->particles[pt];
 	int rootbox = particles_get_rootbox_for_particle(r, p);
 #ifdef MPI
 	// Do not add particles that do not belong to this tree (avoid removing active particles)
@@ -78,11 +78,11 @@ void tree_add_particle_to_tree(struct Rebound* const r, int pt){
 }
 
 struct cell *tree_add_particle_to_cell(struct Rebound* const r, struct cell *node, int pt, struct cell *parent, int o){
-	struct Particle* const particles = r->particles;
+	struct reb_particle* const particles = r->particles;
 	// Initialize a new node
 	if (node == NULL) {  
 		node = calloc(1, sizeof(struct cell));
-		struct Particle p = particles[pt];
+		struct reb_particle p = particles[pt];
 		if (parent == NULL){ // The new node is a root
 			node->w = r->boxsize;
 			int i = ((int)floor((p.x + r->boxsize_x/2.)/r->boxsize))%r->root_nx;
@@ -119,7 +119,7 @@ struct cell *tree_add_particle_to_cell(struct Rebound* const r, struct cell *nod
 	return node;
 }
 
-int tree_get_octant_for_particle_in_cell(const struct Particle p, struct cell *node){
+int tree_get_octant_for_particle_in_cell(const struct reb_particle p, struct cell *node){
 	int octant = 0;
 	if (p.x < node->x) octant+=1;
 	if (p.y < node->y) octant+=2;
@@ -185,7 +185,7 @@ struct cell *tree_update_cell(struct Rebound* const r, struct cell *node){
 	// Leaf nodes
 	if (tree_particle_is_inside_cell(r, node) == 0) {
 		int oldpos = node->pt;
-		struct Particle reinsertme = r->particles[oldpos];
+		struct reb_particle reinsertme = r->particles[oldpos];
 		if (oldpos<r->N_tree_fixed){
 			particles_add_fixed(r,reinsertme,oldpos);
 		}else{
@@ -259,7 +259,7 @@ void tree_update_gravity_data_in_cell(const struct Rebound* const r, struct cell
 #endif // QUADRUPOLE
 	}else{ 
 		// Leaf nodes
-		struct Particle p = r->particles[node->pt];
+		struct reb_particle p = r->particles[node->pt];
 		node->m = p.m;
 		node->mx = p.x;
 		node->my = p.y;

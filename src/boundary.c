@@ -38,7 +38,7 @@
 #include "tree.h"
 
 void boundary_check(struct Rebound* const r){
-	struct Particle* const particles = r->particles;
+	struct reb_particle* const particles = r->particles;
 	const int N = r->N;
 	const double boxsize_x = r->boxsize_x;
 	const double boxsize_y = r->boxsize_y;
@@ -82,7 +82,7 @@ void boundary_check(struct Rebound* const r){
 			const double OMEGA = r->ri_sei.OMEGA;
 			const double offsetp1 = -fmod(-1.5*OMEGA*boxsize_x*r->t+boxsize_y/2.,boxsize_y)-boxsize_y/2.; 
 			const double offsetm1 = -fmod( 1.5*OMEGA*boxsize_x*r->t-boxsize_y/2.,boxsize_y)+boxsize_y/2.; 
-			struct Particle* const particles = r->particles;
+			struct reb_particle* const particles = r->particles;
 #pragma omp parallel for schedule(guided)
 			for (int i=0;i<N;i++){
 				// Radial
@@ -198,10 +198,10 @@ struct Ghostbox boundary_get_ghostbox(struct Rebound* const r, int i, int j, int
 
 /**
  * Checks if a given particle is within the computational domain.
- * @param p Particle to be checked.
+ * @param p reb_particle to be checked.
  * @return Return value is 1 if particle is inside the box and 0 otherwise.
  */
-int boundary_particle_is_in_box(const struct Rebound* const r, struct Particle p){
+int boundary_particle_is_in_box(const struct Rebound* const r, struct reb_particle p){
 	switch(r->boundary){
 		case RB_BT_OPEN:
 		case RB_BT_SHEAR:

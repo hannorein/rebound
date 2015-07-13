@@ -56,7 +56,7 @@ void gravity_calculate_acceleration_for_particle(const struct Rebound* const r, 
  * Main Gravity Routine
  */
 void gravity_calculate_acceleration(struct Rebound* r){
-	struct Particle* const particles = r->particles;
+	struct reb_particle* const particles = r->particles;
 	const int N = r->N;
 	const int N_megno = r->N_megno;
 	const int N_active = r->N_active;
@@ -246,7 +246,7 @@ void gravity_calculate_acceleration(struct Rebound* r){
 }
 
 void gravity_calculate_variational_acceleration(struct Rebound* r){
-	struct Particle* const particles = r->particles;
+	struct reb_particle* const particles = r->particles;
 	const double G = r->G;
 	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
 	const int N = r->N;
@@ -334,7 +334,7 @@ void gravity_calculate_acceleration_for_particle(const struct Rebound* const r, 
 void gravity_calculate_acceleration_for_particle_from_cell(const struct Rebound* r, const int pt, const struct cell *node, const struct Ghostbox gb) {
 	const double G = r->G;
 	const double softening2 = r->softening*r->softening;
-	struct Particle* const particles = r->particles;
+	struct reb_particle* const particles = r->particles;
 	const double dx = gb.shiftx - node->mx;
 	const double dy = gb.shifty - node->my;
 	const double dz = gb.shiftz - node->mz;

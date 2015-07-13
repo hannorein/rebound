@@ -190,7 +190,7 @@ void output_append_ascii(struct Rebound* r, char* filename){
 		return;
 	}
 	for (int i=0;i<N;i++){
-		struct Particle p = r->particles[i];
+		struct reb_particle p = r->particles[i];
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\n",p.x,p.y,p.z,p.vx,p.vy,p.vz);
 	}
 	fclose(of);
@@ -210,7 +210,7 @@ void output_ascii(struct Rebound* r, char* filename){
 		return;
 	}
 	for (int i=0;i<N;i++){
-		struct Particle p = r->particles[i];
+		struct reb_particle p = r->particles[i];
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\n",p.x,p.y,p.z,p.vx,p.vy,p.vz);
 	}
 	fclose(of);
@@ -229,7 +229,7 @@ void output_append_orbits(struct Rebound* r, char* filename){
 		printf("\n\nError while opening file '%s'.\n",filename);
 		return;
 	}
-	struct Particle com = r->particles[0];
+	struct reb_particle com = r->particles[0];
 	for (int i=1;i<N;i++){
 		struct orbit o = tools_p2orbit(r->G, r->particles[i],com);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",r->t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
@@ -251,7 +251,7 @@ void output_orbits(struct Rebound* r, char* filename){
 		printf("\n\nError while opening file '%s'.\n",filename);
 		return;
 	}
-	struct Particle com = r->particles[0];
+	struct reb_particle com = r->particles[0];
 	for (int i=1;i<N;i++){
 		struct orbit o = tools_p2orbit(r->G, r->particles[i],com);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",r->t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
@@ -274,7 +274,7 @@ void output_binary(struct Rebound* r, char* filename){
 		return;
 	}
 	fwrite(r,sizeof(struct Rebound),1,of);
-	fwrite(r->particles,sizeof(struct Particle),r->N,of);
+	fwrite(r->particles,sizeof(struct reb_particle),r->N,of);
 	fclose(of);
 }
 
@@ -308,7 +308,7 @@ void output_append_velocity_dispersion(struct Rebound* r, char* filename){
 	struct vec3 Q = {.x=0, .y=0, .z=0};
 	for (int i=0;i<N;i++){
 		struct vec3 Aim1 = A;
-		struct Particle p = r->particles[i];
+		struct reb_particle p = r->particles[i];
 		A.x = A.x + (p.vx-A.x)/(double)(i+1);
 		if (r->integrator==RB_IT_SEI){
 			A.y = A.y + (p.vy+1.5*r->ri_sei.OMEGA*p.x-A.y)/(double)(i+1);

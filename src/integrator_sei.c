@@ -42,13 +42,13 @@
 #include "integrator_sei.h"
 
 
-void operator_H012(double dt, const struct ReboundIntegratorSEI ri_sei, struct Particle* p);
-void operator_phi1(double dt, struct Particle* p);
+void operator_H012(double dt, const struct ReboundIntegratorSEI ri_sei, struct reb_particle* p);
+void operator_phi1(double dt, struct reb_particle* p);
 	
 
 void integrator_sei_part1(struct Rebound* const r){
 	const int N = r->N;
-	struct Particle* const particles = r->particles;
+	struct reb_particle* const particles = r->particles;
 	if (r->ri_sei.OMEGAZ==-1){
 		r->ri_sei.OMEGAZ=r->ri_sei.OMEGA;
 	}
@@ -72,7 +72,7 @@ void integrator_sei_part1(struct Rebound* const r){
 
 void integrator_sei_part2(struct Rebound* r){
 	const int N = r->N;
-	struct Particle* const particles = r->particles;
+	struct reb_particle* const particles = r->particles;
 	const struct ReboundIntegratorSEI ri_sei = r->ri_sei;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
@@ -85,9 +85,9 @@ void integrator_sei_part2(struct Rebound* r){
 /**
  * This function evolves a particle under the unperturbed
  * Hamiltonian H0 exactly up to machine precission.
- * @param p Particle to evolve.
+ * @param p reb_particle to evolve.
  */
-void operator_H012(double dt, const struct ReboundIntegratorSEI ri_sei, struct Particle* p){
+void operator_H012(double dt, const struct ReboundIntegratorSEI ri_sei, struct reb_particle* p){
 		
 	// Integrate vertical motion
 	const double zx = p->z * ri_sei.OMEGAZ;
@@ -126,9 +126,9 @@ void operator_H012(double dt, const struct ReboundIntegratorSEI ri_sei, struct P
  * If the forces are velocity dependent, it breaks the symmetry of the scheme,
  * making it firsr-order and non-symplectic. As long as these forces are small,
  * this should not be visible. However, it is worth keeping in mind. 
- * @param p Particle to evolve.
+ * @param p reb_particle to evolve.
  */
-void operator_phi1(double dt, struct Particle* p){
+void operator_phi1(double dt, struct reb_particle* p){
 	// The force used here is for test cases 2 and 3 
 	// in Rein & Tremaine 2011. 
 	p->vx += p->ax * dt;

@@ -102,8 +102,8 @@ struct Rebound* rebound_init_from_binary(char* filename){
 		rebound_reset_function_pointers(r);
 		r->Nmax = r->N;
 		r->tree_root = NULL;
-		r->particles = malloc(sizeof(struct Particle)*r->N);
-		objects += fread(r->particles,sizeof(struct Particle),r->N,inf);
+		r->particles = malloc(sizeof(struct reb_particle)*r->N);
+		objects += fread(r->particles,sizeof(struct reb_particle),r->N,inf);
 #ifdef MPI
 		printf("Found %d particles in file '%s'. \n",r->N,filename_mpi);
 #else // MPI

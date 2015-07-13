@@ -22,7 +22,7 @@ extern const char *build_str;	/**< Contains last compile date/time information. 
 extern int closeEncounterPi; 	/**< IDs of the particles which had a close encounter. */
 extern int closeEncounterPj;
 
-extern int escapedParticle;		/**< lowest ID of particles that escaped in a given timestep.*/
+extern int escapedreb_particle;		/**< lowest ID of particles that escaped in a given timestep.*/
 /*
  * This functions sets the current integrator.
  * Default is IAS15. See integrator.h for options.
@@ -54,7 +54,7 @@ void rebound_step(int do_timing);
  * Return values:
  *   0 = All good
  *   1 = No particles left
- *   2 = Particle distance exceeds maxR
+ *   2 = reb_particle distance exceeds maxR
  *   3 = Close encounter closer than minD
  */
 int integrate(double _tmax, int exact_finish_time, double maxR, double minD);

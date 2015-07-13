@@ -89,8 +89,8 @@ void communication_mpi_distribute_particles(void);
 
 /**
  * Places a particle in the send queue.  
- * @param pt Particle to be added to the send queue.
- * @param proc_id Particle will be send to this MPI node on next call of communication_mpi_distribute_particles();
+ * @param pt reb_particle to be added to the send queue.
+ * @param proc_id reb_particle will be send to this MPI node on next call of communication_mpi_distribute_particles();
  */
 void communication_mpi_add_particle_to_send_queue(struct particle pt, int proc_id);
 

@@ -25,7 +25,7 @@
 #ifndef _INTEGRATOR_WHFAST_H
 #define _INTEGRATOR_WHFAST_H
 struct Rebound;
-struct Particle; 
+struct reb_particle; 
 
 struct ReboundIntegratorWHFast {
 
@@ -63,7 +63,7 @@ struct ReboundIntegratorWHFast {
 	/*
 	 * This array contains the Jacobi coordinates of all particles.
 	 */
-	struct Particle* restrict p_j;
+	struct reb_particle* restrict p_j;
 
 	/* Struct containg Jacobi eta parameters */
 	double* restrict eta;

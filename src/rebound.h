@@ -45,12 +45,12 @@ struct reb_vec3d {
 
 
 /**
- * Particle structure.
+ * reb_particle structure.
  * @details This structure is used to represent one particle. Additional particle
  * properties should be added here. Note that when the data structure is changed, 
  * one must also update the equivalent declaration for MPI in communications_mpi.c.
  */
-struct Particle {
+struct reb_particle {
 	double x;	/**< x-position of the particle. */
 	double y;	/**< y-position of the particle. */
 	double z;	/**< z-position of the particle. */
@@ -115,7 +115,7 @@ struct Rebound {
 	long	collisions_Nlog;			/**< Keep track of Number of collisions. */
 
 	//////////////////////////////////////////////
-	/// Variational Particles
+	/// Variational reb_particles
 	double megno_Ys;
 	double megno_Yss;
 	double megno_cov_Yt;	// covariance of <Y> and t
@@ -169,13 +169,13 @@ struct Rebound {
 
 
 	//////////////////////////////////////////////
-	/// Particles
-	struct Particle* particles; 			/**< Main particle array. This contains all particles on this node.  */
+	/// reb_particles
+	struct reb_particle* particles; 			/**< Main particle array. This contains all particles on this node.  */
 	
 	//////////////////////////////////////////////
 	/// Tree
 	struct cell** tree_root; 			/**< Pointer to the roots of the trees. */
-	int N_tree_fixed; 				/**< Particle between 0 and N_tree_fixed will not be shuffled around during tree-reconstruction.  */
+	int N_tree_fixed; 				/**< reb_particle between 0 and N_tree_fixed will not be shuffled around during tree-reconstruction.  */
 	double opening_angle2;	 			/**< Square of the cell opening angle \f$ \theta \f$. */
 
 	

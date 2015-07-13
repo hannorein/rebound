@@ -92,7 +92,7 @@ void integrator_ias15_part2(struct Rebound* r){
 }
  
 int integrator_ias15_step(struct Rebound* r) {
-	struct Particle* const particles = r->particles;
+	struct reb_particle* const particles = r->particles;
 	const int N = r->N;
 	const int N_megno  = r->N_megno;
 	const int N3 = 3*N;

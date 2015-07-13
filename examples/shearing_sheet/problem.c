@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
 	double total_mass = surfacedensity*r->boxsize_x*r->boxsize_y;
 	double mass = 0;
 	while(mass<total_mass){
-		struct Particle pt;
+		struct reb_particle pt;
 		pt.x 		= tools_uniform(-r->boxsize_x/2.,r->boxsize_x/2.);
 		pt.y 		= tools_uniform(-r->boxsize_y/2.,r->boxsize_y/2.);
 		pt.z 		= tools_normal(1.);					// m

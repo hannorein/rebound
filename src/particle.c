@@ -1,6 +1,6 @@
 /**
  * @file 	particle.c
- * @brief 	Particle structure and main particle routines.
+ * @brief 	reb_particle structure and main particle routines.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
@@ -42,15 +42,15 @@
 extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
-void particles_add_local(struct Rebound* const r, struct Particle pt){
+void particles_add_local(struct Rebound* const r, struct reb_particle pt){
 	if (boundary_particle_is_in_box(r, pt)==0){
-		// Particle has left the box. Do not add.
+		// reb_particle has left the box. Do not add.
 		fprintf(stderr,"\n\033[1mWarning!\033[0m Did not add particle outside of box boundaries.\n");
 		return;
 	}
 	while (r->Nmax<=r->N){
 		r->Nmax += 128;
-		r->particles = realloc(r->particles,sizeof(struct Particle)*r->Nmax);
+		r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->Nmax);
 	}
 
 	r->particles[r->N] = pt;
@@ -61,7 +61,7 @@ void particles_add_local(struct Rebound* const r, struct Particle pt){
 	(r->N)++;
 }
 
-void particles_add(struct Rebound* const r, struct Particle pt){
+void particles_add(struct Rebound* const r, struct reb_particle pt){
 	if (r->N_megno){
 		fprintf(stderr,"\n\033[1mWarning!\033[0m Trying to add particle after calling megno_init().\n");
 	}
@@ -94,10 +94,10 @@ void particles_add(struct Rebound* const r, struct Particle pt){
 	particles_add_local(r, pt);
 }
 
-void particles_add_fixed(struct Rebound* const r, struct Particle pt,int pos){
+void particles_add_fixed(struct Rebound* const r, struct reb_particle pt,int pos){
 	// Only works for non-MPI simulations or when the particles does not move to another node.
 	if (boundary_particle_is_in_box(r, pt)==0){
-		// Particle has left the box. Do not add.
+		// reb_particle has left the box. Do not add.
 		return;
 	}
 	r->particles[pos] = pt; 
@@ -106,7 +106,7 @@ void particles_add_fixed(struct Rebound* const r, struct Particle pt,int pos){
 	}
 }
 
-int particles_get_rootbox_for_particle(const struct Rebound* const r, struct Particle pt){
+int particles_get_rootbox_for_particle(const struct Rebound* const r, struct reb_particle pt){
 	if (r->boxsize==-1) return 0;
 	int i = ((int)floor((pt.x + r->boxsize_x/2.)/r->boxsize)+r->root_nx)%r->root_nx;
 	int j = ((int)floor((pt.y + r->boxsize_y/2.)/r->boxsize)+r->root_ny)%r->root_ny;

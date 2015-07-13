@@ -1,6 +1,6 @@
 /**
  * @file 	particle.h
- * @brief 	Particle structure and main particle routines.
+ * @brief 	reb_particle structure and main particle routines.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
@@ -25,7 +25,7 @@
 #ifndef _PARTICLE_H
 #define _PARTICLE_H
 struct Rebound;
-struct Particle;
+struct reb_particle;
 struct cell;
 
 
@@ -34,30 +34,30 @@ struct cell;
  * @details If a tree is used, it also adds the particle to the tree.
  *          If MPI is used, a particle that does not belong to the current node is 
  *          put into the corresponding send queue particles_send.
- * @param pt Particle to be added.
+ * @param pt reb_particle to be added.
  */
-void particles_add(struct Rebound* const r, struct Particle pt);
+void particles_add(struct Rebound* const r, struct reb_particle pt);
 
 /** 
  * Same as particles_add() but inserts particles at given position. 
- * @param pt Particle to be added.
+ * @param pt reb_particle to be added.
  * @param pos New position.
  */
-void particles_add_fixed(struct Rebound* const r, struct Particle pt,int pos);
+void particles_add_fixed(struct Rebound* const r, struct reb_particle pt,int pos);
 
 /**
  * Add a particle to the particle structure on the current node.
  * Do not distribute particles.
- * @param pt Particle to be added.
+ * @param pt reb_particle to be added.
  */
-void particles_add_local(struct Rebound* const r, struct Particle pt);
+void particles_add_local(struct Rebound* const r, struct reb_particle pt);
 
 /**
  * Returns the index of the rootbox for the current particles based on its position.
  * @return Index of the rootbox.
- * @param pt Particle to be checked.
+ * @param pt reb_particle to be checked.
  */
-int particles_get_rootbox_for_particle(const struct Rebound* const r, struct Particle pt);
+int particles_get_rootbox_for_particle(const struct Rebound* const r, struct reb_particle pt);
 
 /**
  * Remove all particles

@@ -7,7 +7,7 @@
  * systems where there is one dominant mass and all particles are nearly on 
  * Keplerian orbits. Note that the scheme is formally only first order 
  * accurate when velocity dependent forces are present.
- * Particles should be sorted by increasing semi-major axis because the 
+ * reb_particles should be sorted by increasing semi-major axis because the 
  * integrator transforms the positions and velocities to Jacobi coordinates
  * during the timestep and assumes that the particles are sorted.
  * The code is based on SWIFT. 
@@ -48,8 +48,8 @@
 #include "integrator.h"
 #include "integrator_wh.h"
 
-void drift_wh(struct Particle* const particles, const double G, double _dt, const int N, const int N_active);
-void drift_dan(struct Particle* pv, double mu, double dt, int* iflag);
+void drift_wh(struct reb_particle* const particles, const double G, double _dt, const int N, const int N_active);
+void drift_dan(struct reb_particle* pv, double mu, double dt, int* iflag);
 void drift_kepu(double dt, double r0, double mu, double alpha, double u, double* fp, double* c1, double* c2, double* c3, int* iflag);
 void drift_kepu_guess(double dt0, double r0, double mu, double alpha, double u, double* s);
 void drift_kepu_p3solve(double dt0, double r0, double mu, double alpha, double u, double* s, int* iflag);
@@ -58,15 +58,15 @@ void drift_kepu_lag(double* s, double dt0, double r0, double mu, double alpha, d
 void drift_kepu_stumpff(double x, double* c0, double* c1, double* c2, double* c3);
 void drift_kepu_fchk(double dt0, double r0, double mu, double alpha, double u, double s, double* f);
 void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* c);
-void integrator_wh_aj(struct Particle* const particles, const double G, const int N, const int N_active);
-void integrator_wh_ah(struct Particle* const particles, const double G, const int N, const int N_active);
-void integrator_wh_to_jacobi(struct Particle* const particles, const double* const eta, const int N, const int N_active);
-void integrator_wh_from_jacobi(struct Particle* const particles, const double* const eta, const int N, const int N_active);
+void integrator_wh_aj(struct reb_particle* const particles, const double G, const int N, const int N_active);
+void integrator_wh_ah(struct reb_particle* const particles, const double G, const int N, const int N_active);
+void integrator_wh_to_jacobi(struct reb_particle* const particles, const double* const eta, const int N, const int N_active);
+void integrator_wh_from_jacobi(struct reb_particle* const particles, const double* const eta, const int N, const int N_active);
 
 void integrator_wh_part1(struct Rebound* r){
 	const int N = r->N;
 	const int N_active = r->N_active;
-	struct Particle* const particles = r->particles;
+	struct reb_particle* const particles = r->particles;
 	int _N_active = (N_active==-1)?N:N_active;
 	if (_N_active!=r->ri_wh.Nmax){
 		r->ri_wh.eta = realloc(r->ri_wh.eta,sizeof(double)*_N_active);
@@ -87,7 +87,7 @@ void integrator_wh_part1(struct Rebound* r){
 void integrator_wh_part2(struct Rebound* r){
 	const int N = r->N;
 	const int N_active = r->N_active;
-	struct Particle* const particles = r->particles;
+	struct reb_particle* const particles = r->particles;
 	const double* const eta = r->ri_wh.eta;
 	// KICK
 	// Calculate terms in Heliocentric coordinates
@@ -108,13 +108,13 @@ void integrator_wh_part2(struct Rebound* r){
 	r->t+=r->dt/2.;
 }
 
-int wh_check_normal(struct Particle* p){
+int wh_check_normal(struct reb_particle* p){
 	if (isnan(p->vx) || isnan(p->vy)) return 1;
 	if (isinf(p->vx) || isinf(p->vy)) return 2;
 	return 0;
 }
 
-void integrator_wh_to_jacobi(struct Particle* const particles, const double* const eta, const int N, const int N_active){
+void integrator_wh_to_jacobi(struct reb_particle* const particles, const double* const eta, const int N, const int N_active){
 	int _N_active = (N_active==-1)?N:N_active;
 
 	double sumx  = particles[1].m * particles[1].x;
@@ -132,7 +132,7 @@ void integrator_wh_to_jacobi(struct Particle* const particles, const double* con
 	double capvz = sumvz/eta[1];
 
 	for (int i=2;i<_N_active;i++){
-		struct Particle p = particles[i];
+		struct reb_particle p = particles[i];
 		sumx  += p.m*p.x;
 		sumy  += p.m*p.y;
 		sumz  += p.m*p.z;
@@ -156,7 +156,7 @@ void integrator_wh_to_jacobi(struct Particle* const particles, const double* con
 	}
 }
 
-void integrator_wh_from_jacobi(struct Particle* const particles, const double* const eta, const int N, const int N_active){
+void integrator_wh_from_jacobi(struct reb_particle* const particles, const double* const eta, const int N, const int N_active){
 	int _N_active = (N_active==-1)?N:N_active;
 	double sumx  = particles[1].m*particles[1].x /eta[1];
 	double sumy  = particles[1].m*particles[1].y /eta[1];
@@ -166,7 +166,7 @@ void integrator_wh_from_jacobi(struct Particle* const particles, const double* c
 	double sumvz = particles[1].m*particles[1].vz/eta[1];
 
 	for(int i=2;i<_N_active;i++){
-		struct Particle p = particles[i];
+		struct reb_particle p = particles[i];
 
 		particles[i].x  += sumx;
 		particles[i].y  += sumy;
@@ -185,7 +185,7 @@ void integrator_wh_from_jacobi(struct Particle* const particles, const double* c
 }
 
 // Assumes positions in heliocentric coordinates
-void integrator_wh_ah(struct Particle* const particles, const double G, const int N, const int N_active){
+void integrator_wh_ah(struct reb_particle* const particles, const double G, const int N, const int N_active){
 	int _N_active = (N_active==-1)?N:N_active;
 	// Massive particles
 	double mass0 = particles[0].m;
@@ -193,7 +193,7 @@ void integrator_wh_ah(struct Particle* const particles, const double G, const in
 	double ayh0 = 0.0;
 	double azh0 = 0.0;
 	for(int i=2;i<_N_active;i++){
-		struct Particle p = particles[i];
+		struct reb_particle p = particles[i];
 		double r = sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
 		double ir3h = 1./(r*r*r);
 		double fac = G*p.m*ir3h;
@@ -202,7 +202,7 @@ void integrator_wh_ah(struct Particle* const particles, const double G, const in
 		azh0 -= fac*p.z;
 	}
 	for(int i=1;i<_N_active;i++){
-		struct Particle* p = &(particles[i]);
+		struct reb_particle* p = &(particles[i]);
 		double r = sqrt(p->x*p->x + p->y*p->y + p->z*p->z);
 		double ir3h = 1./(r*r*r);
 		if (i==1) ir3h=0.;
@@ -212,7 +212,7 @@ void integrator_wh_ah(struct Particle* const particles, const double G, const in
 		p->az += azh0 - G*mass0*p->z*ir3h;
 	}
 	// Test particles
-	struct Particle p = particles[1];
+	struct reb_particle p = particles[1];
 	double r = sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
 	double ir3h = 1./(r*r*r);
 	double fac = G*p.m*ir3h;
@@ -222,7 +222,7 @@ void integrator_wh_ah(struct Particle* const particles, const double G, const in
 
 #pragma omp parallel for schedule(guided)
 	for(int i=_N_active;i<N;i++){
-		struct Particle* pt = &(particles[i]);
+		struct reb_particle* pt = &(particles[i]);
 
 		pt->ax += axh0;
 		pt->ay += ayh0;
@@ -231,7 +231,7 @@ void integrator_wh_ah(struct Particle* const particles, const double G, const in
 }
 
 // Assumes position in Jacobi coordinates
-void integrator_wh_aj(struct Particle* const particles, const double G, const int N, const int N_active){
+void integrator_wh_aj(struct reb_particle* const particles, const double G, const int N, const int N_active){
 	int _N_active = (N_active==-1)?N:N_active;
 	// Massive particles (No need to calculate this for test particles)
 	double mass0 = particles[0].m;
@@ -240,7 +240,7 @@ void integrator_wh_aj(struct Particle* const particles, const double G, const in
 	double ayh2 = 0;
 	double azh2 = 0;
 	for(int i=2;i<_N_active;i++){
-		struct Particle* p = &(particles[i]);
+		struct reb_particle* p = &(particles[i]);
 		double rj = sqrt(p->x*p->x + p->y*p->y + p->z*p->z);
 		double ir3j = 1./(rj*rj*rj);
 		
@@ -260,13 +260,13 @@ void integrator_wh_aj(struct Particle* const particles, const double G, const in
  * This function integrates the Keplerian motion of all particles.
  * @param _dt Timestep.
  */
-void drift_wh(struct Particle* const particles, const double G, double _dt, const int N, const int N_active){
+void drift_wh(struct reb_particle* const particles, const double G, double _dt, const int N, const int N_active){
 	int _N_active = (N_active==-1)?N:N_active;
 	double mass0 = particles[0].m;
 	double etajm1 = mass0;
 	// Massive particles
 	for (int i=1;i<_N_active;i++){
-		struct Particle* p = &(particles[i]);
+		struct reb_particle* p = &(particles[i]);
 		double etaj = etajm1 + p->m;
 		double mu = G*mass0*etaj/etajm1;
 		if (wh_check_normal(p)!=0){
@@ -286,7 +286,7 @@ void drift_wh(struct Particle* const particles, const double G, double _dt, cons
 	// Testparticles
 #pragma omp parallel for schedule(guided)
 	for (int i=_N_active;i<N;i++){
-		struct Particle* p = &(particles[i]);
+		struct reb_particle* p = &(particles[i]);
 		if (wh_check_normal(p)!=0) continue;
 		int iflag = 0;
 		drift_dan(p,G*mass0,_dt,&iflag);
@@ -299,7 +299,7 @@ void drift_wh(struct Particle* const particles, const double G, double _dt, cons
 	}
 }
 
-void drift_dan(struct Particle* pv, double mu, double dt0, int* iflag){
+void drift_dan(struct reb_particle* pv, double mu, double dt0, int* iflag){
 	double dt1 = dt0;
 	double x0 = pv->x;
 	double y0 = pv->y;

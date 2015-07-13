@@ -50,7 +50,7 @@ double softening = 0;
 double timing 	= 0;
 int closeEncounterPi = -1;
 int closeEncounterPj = -1;
-int escapedParticle = -1;
+int escapedreb_particle = -1;
 extern int Nmax;	
 extern int iter;  // TODO DEBUG
 const char *build_str = __DATE__ " " __TIME__;
@@ -61,7 +61,7 @@ void (*problem_additional_forces_with_parameters) (struct particle* particles, d
 void (*problem_post_timestep_modifications) (void) = NULL;
 void (*problem_post_timestep_modifications_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;  
 
-// Particle getter/setter methods.
+// reb_particle getter/setter methods.
 void setp(struct particle* _p){
 	free(particles);
 	particles = malloc(sizeof(struct particle)*N);
@@ -127,7 +127,7 @@ void rebound_step(int do_timing){
 // Return values:
 //   0 = All good
 //   1 = No particles left
-//   2 = Particle distance exceeds maxR
+//   2 = reb_particle distance exceeds maxR
 //   3 = Close encounter closer than minD
 int rebound_integrate(double _tmax, int exact_finish_time, double maxR, double minD){
 	struct timeval tim;
@@ -163,7 +163,7 @@ int rebound_integrate(double _tmax, int exact_finish_time, double maxR, double m
 				double r2 = p.x*p.x + p.y*p.y + p.z*p.z;
 				if (r2>maxR2){
 					ret_value = 2;
-					escapedParticle = i;
+					escapedreb_particle = i;
 				}
 			}
 		}

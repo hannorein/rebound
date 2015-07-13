@@ -133,13 +133,13 @@ void rebound_step(struct Rebound* const r){
 //		// Check for escaping particles
 //		const double maxR2 = maxR*maxR;
 //		const int N = r->N - r->N_megno;
-//		const struct Particle* const particles = r->particles;
+//		const struct reb_particle* const particles = r->particles;
 //		for (int i=0;i<N;i++){
-//			struct Particle p = particles[i];
+//			struct reb_particle p = particles[i];
 //			double r2 = p.x*p.x + p.y*p.y + p.z*p.z;
 //			if (r2>maxR2){
 //				ret_value = 2;
-//				escapedParticle = i;
+//				escapedreb_particle = i;
 //			}
 //		}
 //	}
@@ -147,11 +147,11 @@ void rebound_step(struct Rebound* const r){
 //		// Check for close encounters
 //		const double minD2 = minD*minD;
 //		const int N = r->N - r->N_megno;
-//		const struct Particle* const particles = r->particles;
+//		const struct reb_particle* const particles = r->particles;
 //		for (int i=0;i<N;i++){
-//			struct Particle pi = particles[i];
+//			struct reb_particle pi = particles[i];
 //			for (int j=0;j<i;j++){
-//				struct Particle pj = particles[j];
+//				struct reb_particle pj = particles[j];
 //				const double x = pi.x-pj.x;
 //				const double y = pi.y-pj.y;
 //				const double z = pi.z-pj.z;
@@ -353,7 +353,7 @@ int rebound_integrate(struct Rebound* const r, double tmax){
 	}else{
 		if (r->boxsize==-1){  // Need boxsize for visualization. Creating one. 
 			fprintf(stderr,"\n\033[1mWarning!\033[0m Configuring box automatically for vizualization based on particle positions.\n");
-			const struct Particle* p = r->particles;
+			const struct reb_particle* p = r->particles;
 			double max_r = 0;
 			for (int i=0;i<r->N;i++){
 				const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);

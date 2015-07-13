@@ -58,7 +58,7 @@ void output_ascii(struct Rebound* r, char* filename);
 /**
  * Outputs an ASCII file with orbital paramters of all particles.
  * @details The orbital parameters are calculated with respect the center of mass.
- * Particles are assumed to be sorted from the inside out, the central object having index 0.
+ * reb_particles are assumed to be sorted from the inside out, the central object having index 0.
  * @param filename Output filename.
  */
 void output_orbits(struct Rebound* r, char* filename);
@@ -66,7 +66,7 @@ void output_orbits(struct Rebound* r, char* filename);
 /**
  * Appends an ASCII file with orbital paramters of all particles.
  * @details The orbital parameters are calculated with respect the center of mass.
- * Particles are assumed to be sorted from the inside out, the central object having index 0. 
+ * reb_particles are assumed to be sorted from the inside out, the central object having index 0. 
  * @param filename Output filename.
  */
 void output_append_orbits(struct Rebound* r, char* filename);

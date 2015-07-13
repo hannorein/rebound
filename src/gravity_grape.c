@@ -75,10 +75,10 @@ void gravity_calculate_acceleration(void){
 	}
 	
 	// Do not sum over central object for WH	
-	int firstParticle = 0;
+	int firstreb_particle = 0;
 	switch(integrator){
 		case WH:
-			firstParticle = 1;
+			firstreb_particle = 1;
 			break;
 		case WHFAST:
 			printf("ERROR. Not implemented.\n");
@@ -91,7 +91,7 @@ void gravity_calculate_acceleration(void){
 	// Initialize or increase memory if needed.
 	int	nj = (N_active==-1)?N:N_active;		// Massive particles
 	int 	ni = N;					// All particles
-	nj -= firstParticle;			
+	nj -= firstreb_particle;			
 		
 	if (_nj_MAX<nj){
 		_nj_MAX = nj;
@@ -106,10 +106,10 @@ void gravity_calculate_acceleration(void){
 	}
 	// Copy active (j) particle mass and positions
 	for(int j=0;j<nj;j++){
-		mj[j] 		= particles[j+firstParticle].m;
-		xj[j][0] 	= particles[j+firstParticle].x;
-		xj[j][1] 	= particles[j+firstParticle].y;
-		xj[j][2] 	= particles[j+firstParticle].z;
+		mj[j] 		= particles[j+firstreb_particle].m;
+		xj[j][0] 	= particles[j+firstreb_particle].x;
+		xj[j][1] 	= particles[j+firstreb_particle].y;
+		xj[j][2] 	= particles[j+firstreb_particle].z;
 	}
 	for(int i=0;i<ni;i++){
 		particles[i].ax = 0;

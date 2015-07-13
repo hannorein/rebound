@@ -60,7 +60,7 @@ int display_mass = 0;		/**< Shows/hides centre of mass in tree structure. */
 int display_wire = 0;		/**< Shows/hides orbit wires. */
 int display_clear = 1;		/**< Toggles clearing the display on each draw. */
 int display_ghostboxes = 0;	/**< Shows/hides ghost boxes. */
-int display_reference = -1;	/**< Particle used as a reference for rotation. */
+int display_reference = -1;	/**< reb_particle used as a reference for rotation. */
 double display_rotate_x = 0;	/**< Rotate everything around the x-axis. */
 double display_rotate_z = 0;	/**< Rotate everything around the z-axis. */
 #define DEG2RAD (M_PI/180.)
@@ -193,7 +193,7 @@ void display_entire_tree(void){
 struct Rebound* display_r = NULL;
 
 void display(void){
-	const struct Particle* particles = display_r->particles;
+	const struct reb_particle* particles = display_r->particles;
 	if (display_pause) return;
 	if (display_tree){
 		tree_update(display_r);
@@ -205,7 +205,7 @@ void display(void){
 	        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	}
 	glEnable(GL_POINT_SMOOTH);
-	glVertexPointer(3, GL_DOUBLE, sizeof(struct Particle), particles);
+	glVertexPointer(3, GL_DOUBLE, sizeof(struct reb_particle), particles);
 	//int _N_active = ((N_active==-1)?N:N_active);
 	if (display_reference>=0){
 		glTranslatef(-particles[display_reference].x,-particles[display_reference].y,-particles[display_reference].z);
@@ -237,7 +237,7 @@ void display(void){
 				// Drawing Spheres
 				glColor4f(1.0,1.0,1.0,1.0);
 				for (int i=0;i<display_r->N-display_r->N_megno;i++){
-					struct Particle p = particles[i];
+					struct reb_particle p = particles[i];
 					if (p.r>0){
 						glTranslatef(p.x,p.y,p.z);
 						glScalef(p.r,p.r,p.r);
@@ -260,9 +260,9 @@ void display(void){
 		if (display_wire){
 			if(display_r->integrator!=RB_IT_SEI){
 				double radius = 0;
-				struct Particle com = particles[0];
+				struct reb_particle com = particles[0];
 				for (int i=1;i<display_r->N-display_r->N_megno;i++){
-					struct Particle p = particles[i];
+					struct reb_particle p = particles[i];
 					if (display_r->N_active>0){
 						// Different colors for active/test particles
 						if (i>=display_r->N_active){
@@ -305,7 +305,7 @@ void display(void){
 				}
 			}else{
 				for (int i=1;i<display_r->N;i++){
-					struct Particle p = particles[i];
+					struct reb_particle p = particles[i];
 					glBegin(GL_LINE_LOOP);
 					for (double _t=-100.*display_r->dt;_t<=100.*display_r->dt;_t+=20.*display_r->dt){
 						double frac = 1.-fabs(_t/(120.*display_r->dt));
