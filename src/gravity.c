@@ -67,6 +67,8 @@ void gravity_calculate_acceleration(struct Rebound* r){
 	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
 	const int _N_real   = N - N_megno;
 	switch (r->gravity){
+		case RB_GT_NONE: // Do nothing.
+		break;
 		case RB_GT_BASIC:
 		{
 			const int nghostx = r->nghostx;
@@ -257,7 +259,8 @@ void gravity_calculate_variational_acceleration(struct Rebound* r){
 		particles[i].az = 0; 
 	}
 	switch (r->gravity){
-		// Gravity calculation for periodic boundary conditions
+		case RB_GT_NONE: // Do nothing.
+		break;
 		case RB_GT_BASIC:
 		case RB_GT_COMPENSATED:
 #pragma omp parallel for schedule(guided)

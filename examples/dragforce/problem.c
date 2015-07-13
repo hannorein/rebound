@@ -38,7 +38,7 @@
 #include "integrator.h"
 
 void additional_forces(struct Rebound* const r);
-void post_timestep(struct Rebound* const r);
+void heartbeat(struct Rebound* const r);
 
 double tmax = 40.;
 
@@ -48,11 +48,13 @@ int main(int argc, char* argv[]){
 	r->dt 			= 1e-4;		// initial timestep.
 	r->boxsize 		= 10;	
 	r->integrator		= IAS15;
+	r->gravity		= RB_GT_NONE;
 
 	// Setup callback function for velocity dependent forces.
 	r->additional_forces 	= additional_forces;
+	r->force_is_velocitydependent = 1;
 	// Setup callback function for outputs.
-	r->post_timestep	= post_timestep;
+	r->heartbeat		= heartbeat;
 	
 	struct Particle p; 
 	p.m  = 0;	// massless
@@ -69,7 +71,6 @@ int main(int argc, char* argv[]){
 }
 
 void additional_forces(struct Rebound* const r){
-	printf("forces\n");
 	// Simplest velocity dependent drag force.
 	double dragcoefficient = 1;
 	struct Particle* const particles = r->particles;
@@ -81,7 +82,7 @@ void additional_forces(struct Rebound* const r){
 	}
 }
 
-void post_timestep(struct Rebound* const r){
+void heartbeat(struct Rebound* const r){
 	// Output some information to the screen every 100th timestep
 	if(output_check(r, 100.*r->dt)){
 		output_timing(r, tmax);
