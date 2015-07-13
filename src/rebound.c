@@ -207,8 +207,8 @@ void reb_reset_temporary_pointers(struct reb_context* const r){
 	r->ri_wh.Nmax 		= 0;
 }
 void reb_reset_function_pointers(struct reb_context* const r){
-	r->collisions_coefficient_of_restitution_for_velocity = collisions_constant_coefficient_of_restitution_for_velocity;
-	r->collision_resolve    = collision_resolve_hardsphere;
+	r->coefficient_of_restitution 	= NULL;
+	r->collision_resolve    	= NULL;
 	r->additional_forces 		= NULL;
 	r->heartbeat			= NULL;
 	r->post_timestep_modifications	= NULL;
@@ -248,7 +248,6 @@ struct reb_context* reb_init(){
 	r->force_is_velocitydependent = 0;
 	r->gravity_ignore_10	= 0;
 
-	r->coefficient_of_restitution = 1;
 	r->minimum_collision_velocity = 0;
 	r->collisions_plog 	= 0;
 	r->collisions_Nlog 	= 0;	

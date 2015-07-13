@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
 	// Initial conditions
 	printf("Toomre wavelength: %f\n",4.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*r->G);
 	// Use Bridges et al coefficient of restitution.
-	r->collisions_coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
+	r->coefficient_of_restitution = coefficient_of_restitution_bridges;
 	// When two particles collide and the relative velocity is zero, the might sink into each other in the next time step.
 	// By adding a small repulsive velocity to each collision, we prevent this from happening.
 	r->minimum_collision_velocity = particle_radius_min*OMEGA*0.001;  // small fraction of the shear accross a particle

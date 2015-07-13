@@ -48,7 +48,8 @@
 #error COLLISIONS_DIRECT not yet compatible with MPI
 #endif
 
-void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
+static void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
+static void reb_collision_resolve_hardsphere(struct reb_context* const r, struct reb_collision c);
 
 void reb_collision_search(struct reb_context* const r){
 	const int N = r->N;
@@ -186,9 +187,15 @@ void reb_collision_search(struct reb_context* const r){
 		r->collisions[new] = c1;
 	}
 	// Loop over all collisions previously found in reb_collision_search().
+	
+	void (*resolve) (struct reb_context* const r, struct reb_collision c) = r->collision_resolve;
+	if (resolve==NULL){
+		// Default is hard sphere
+		resolve = reb_collision_resolve_hardsphere;
+	}
 	for (int i=0;i<collisions_N;i++){
 		// Resolve collision
-		r->collision_resolve(r, r->collisions[i]);
+		resolve(r, r->collisions[i]);
 	}
 }
 
@@ -206,7 +213,7 @@ void reb_collision_search(struct reb_context* const r){
  * @param collision_nearest Pointer to the nearest collision found so far.
  * @param c Pointer to the cell currently being searched in.
  */
-void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c){
+static void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c){
 	const struct reb_particle* const particles = r->particles;
 	if (c->pt>=0){ 	
 		// c is a leaf node
@@ -294,7 +301,7 @@ void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collis
 
 
 
-void collision_resolve_hardsphere(struct reb_context* const r, struct reb_collision c){
+static void reb_collision_resolve_hardsphere(struct reb_context* const r, struct reb_collision c){
 #ifndef COLLISIONS_NONE
 	struct reb_particle* const particles = r->particles;
 	struct reb_particle p1 = particles[c.p1];
@@ -343,7 +350,10 @@ void collision_resolve_hardsphere(struct reb_context* const r, struct reb_collis
 	double vx21nn = cphi * vx21  + sphi * vy21n;		
 
 	// Coefficient of restitution
-	double eps= r->collisions_coefficient_of_restitution_for_velocity(r, vx21nn);
+	double eps= 1; // perfect bouncing by default 
+	if (r->coefficient_of_restitution){
+		eps = r->coefficient_of_restitution(r, vx21nn);
+	}
 	double dvx2 = -(1.0+eps)*vx21nn;
 	double minr = (p1.r>p2.r)?p2.r:p1.r;
 	double maxr = (p1.r<p2.r)?p2.r:p1.r;
@@ -387,8 +397,4 @@ void collision_resolve_hardsphere(struct reb_context* const r, struct reb_collis
 	}
 
 #endif // COLLISIONS_NONE
-}
-
-double collisions_constant_coefficient_of_restitution_for_velocity(const struct reb_context* const r, double v){
-	return r->coefficient_of_restitution;
 }

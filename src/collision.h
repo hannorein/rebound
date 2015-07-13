@@ -52,15 +52,4 @@ struct reb_collision{
  */
 void reb_collision_search(struct reb_context* const r);
 
-/**
- * Just returns the constant coefficient of restitution in the REBOUND struct.
- */
-double collisions_constant_coefficient_of_restitution_for_velocity(const struct reb_context* const r, double v);
-
-
-/**
- * Resolve a single collision assuming a hardsphere collision model (no super-particle).
- * @param c Collision to resolve.
- */
-void collision_resolve_hardsphere(struct reb_context* const r, struct reb_collision c);	
 #endif // _COLLISIONS_H
