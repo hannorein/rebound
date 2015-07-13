@@ -67,7 +67,7 @@ void boundary_check(struct reb_context* const r){
 				}
 				if (removep==1){
 					if (r->tree_root==NULL){
-						particles_remove(r, i,0); // keepSorted=0 by default in C version
+						reb_remove(r, i,0); // keepSorted=0 by default in C version
 						i--; // need to recheck the particle that replaced the removed one
 					}else{
 						fprintf(stderr,"\n\033[1mError!\033[0m Cannot remove particle from tree.");

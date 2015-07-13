@@ -62,7 +62,7 @@ int reb_get_rootbox_for_particle(const struct reb_context* const r, struct reb_p
 /**
  * Remove all particles
  */
-void particles_reb_remove_all(struct reb_context* const r);
+void reb_remove_all(struct reb_context* const r);
 
 /**
  * Remove particle by position in particles array
@@ -71,7 +71,7 @@ void particles_reb_remove_all(struct reb_context* const r);
  * Returns 1 if particle was successfully removed, 0 if index passed was 
  * out of range.
  */
-int particles_remove(struct reb_context* const rindex, int ID, int keepSorted);
+int reb_remove(struct reb_context* const rindex, int ID, int keepSorted);
 
 #ifdef PARTICLEIDS
 /**
@@ -81,6 +81,6 @@ int particles_remove(struct reb_context* const rindex, int ID, int keepSorted);
  * ensuring the ordering remains. Returns 1 if particle successfully removed,
  * 0 if ID was not found in the particles array.
  */
-int particles_remove_ID(struct reb_context* const r, int ID, int keepSorted);
+int reb_remove_with_id(struct reb_context* const r, int ID, int keepSorted);
 #endif
 #endif // _PARTICLE_H

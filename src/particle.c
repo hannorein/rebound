@@ -115,7 +115,7 @@ int reb_get_rootbox_for_particle(const struct reb_context* const r, struct reb_p
 	return index;
 }
 
-void particles_reb_remove_all(struct reb_context* const r){
+void reb_remove_all(struct reb_context* const r){
 	r->N 		= 0;
 	r->Nmax 	= 0;
 	r->N_active 	= -1;
@@ -124,7 +124,7 @@ void particles_reb_remove_all(struct reb_context* const r){
 	r->particles 	= NULL;
 }
 
-int particles_remove(struct reb_context* const r, int index, int keepSorted){
+int reb_remove(struct reb_context* const r, int index, int keepSorted){
 	if (r->N==1){
 		fprintf(stderr, "Last particle removed.\n");
 		return 1;
@@ -151,11 +151,11 @@ int particles_remove(struct reb_context* const r, int index, int keepSorted){
 }
 
 #ifdef PARTICLEIDS
-int particles_remove_ID(struct reb_context* const r, int ID, int keepSorted){
+int reb_remove_with_id(struct reb_context* const r, int ID, int keepSorted){
 	int success = 0;
 	for(int i=0;i<r->N;i++){
 		if(r->particles[i].ID == ID){
-			success = particles_remove(i, keepSorted);
+			success = reb_remove(i, keepSorted);
 			break;
 		}
 	}
