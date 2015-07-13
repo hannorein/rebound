@@ -66,10 +66,13 @@ void boundary_check(struct Rebound* const r){
 					removep = 1;
 				}
 				if (removep==1){
-#ifndef TREE
-					particles_remove(r, i,0); // keepSorted=0 by default in C version
-					i--; // need to recheck the particle that replaced the removed one
-#endif
+					if (r->tree_root==NULL){
+						particles_remove(r, i,0); // keepSorted=0 by default in C version
+						i--; // need to recheck the particle that replaced the removed one
+					}else{
+						fprintf(stderr,"\n\033[1mError!\033[0m Cannot remove particle from tree.");
+						exit(EXIT_FAILURE);
+					}
 				}
 			}
 			break;

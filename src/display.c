@@ -324,7 +324,7 @@ void display(void){
 		}
 		// Drawing Tree
 		glColor4f(1.0,0.0,0.0,0.4);
-		if (display_tree && display_r.gravity==RB_GT_TREE){
+		if (display_tree && display_r->gravity==RB_GT_TREE){
 			glColor4f(1.0,0.0,0.0,0.4);
 			display_entire_tree();
 		}

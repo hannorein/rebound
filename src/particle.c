@@ -56,9 +56,9 @@ void particles_add_local(struct Rebound* const r, struct Particle pt){
 
 	r->particles[r->N] = pt;
 
-#ifdef TREE
-	tree_add_particle_to_tree(r, r->N);
-#endif // TREE
+	if (r->gravity==RB_GT_TREE){
+		tree_add_particle_to_tree(r, r->N);
+	}
 	(r->N)++;
 }
 
@@ -102,9 +102,9 @@ void particles_add_fixed(struct Rebound* const r, struct Particle pt,int pos){
 		return;
 	}
 	r->particles[pos] = pt; 
-#ifdef TREE
-	tree_add_particle_to_tree(r, pos);
-#endif // TREE
+	if (r->gravity==RB_GT_TREE){
+		tree_add_particle_to_tree(r, pos);
+	}
 }
 
 int particles_get_rootbox_for_particle(const struct Rebound* const r, struct Particle pt){

@@ -36,12 +36,25 @@
 #include <time.h>
 #include "particle.h"
 #include "rebound.h"
+#include "tree.h"
 #include "boundary.h"
 
 #ifdef MPI
 #include "communication_mpi.h"
 #endif
 
+/**
+  * The function loops over all trees to call calculate_forces_for_particle_from_cell() tree to calculate forces for each particle.
+  *
+  * @param pt Index of the particle the force is calculated for.
+  * @param gb Ghostbox plus position of the particle (precalculated). 
+  */
+void gravity_calculate_acceleration_for_particle(struct Rebound* const r, const int pt, const struct Ghostbox gb);
+
+
+/**
+ * Main Gravity Routine
+ */
 void gravity_calculate_acceleration(struct Rebound* r){
 	struct Particle* const particles = r->particles;
 	const int N = r->N;
@@ -188,6 +201,33 @@ void gravity_calculate_acceleration(struct Rebound* r){
 			}
 		}
 		break;
+		case RB_GT_TREE:
+		{
+#pragma omp parallel for schedule(guided)
+			for (int i=0; i<N; i++){
+				particles[i].ax = 0; 
+				particles[i].ay = 0; 
+				particles[i].az = 0; 
+			}
+			// Summing over all Ghost Boxes
+			for (int gbx=-r->nghostx; gbx<=r->nghostx; gbx++){
+			for (int gby=-r->nghosty; gby<=r->nghosty; gby++){
+			for (int gbz=-r->nghostz; gbz<=r->nghostz; gbz++){
+				// Summing over all particle pairs
+#pragma omp parallel for schedule(guided)
+				for (int i=0; i<N; i++){
+					struct Ghostbox gb = boundary_get_ghostbox(r, gbx,gby,gbz);
+					// Precalculated shifted position
+					gb.shiftx += particles[i].x;
+					gb.shifty += particles[i].y;
+					gb.shiftz += particles[i].z;
+					gravity_calculate_acceleration_for_particle(r, i, gb);
+				}
+			}
+			}
+			}
+		}
+		break;
 		default:
 			fprintf(stderr,"\n\033[1mError!\033[0m Gravity calculation not yet implemented.\n");
 			exit(EXIT_FAILURE);
@@ -263,5 +303,73 @@ void gravity_calculate_variational_acceleration(struct Rebound* r){
 			break;
 	}
 
+}
+
+
+// Helper routines for RB_GT_TREE
+
+
+/**
+  * The function calls itself recursively using cell breaking criterion to check whether it can use center of mass (and mass quadrupole tensor) to calculate forces.
+  * Calculate the acceleration for a particle from a given cell and all its daughter cells.
+  *
+  * @param pt Index of the particle the force is calculated for.
+  * @param node Pointer to the cell the force is calculated from.
+  * @param gb Ghostbox plus position of the particle (precalculated). 
+  */
+void gravity_calculate_acceleration_for_particle_from_cell(struct Rebound* const r, const int pt, const struct cell *node, const struct Ghostbox gb);
+
+void gravity_calculate_acceleration_for_particle(struct Rebound* const r, const int pt, const struct Ghostbox gb) {
+	for(int i=0;i<r->root_n;i++){
+		struct cell* node = r->tree_root[i];
+		if (node!=NULL){
+			gravity_calculate_acceleration_for_particle_from_cell(r, pt, node, gb);
+		}
+	}
+}
+
+void gravity_calculate_acceleration_for_particle_from_cell(struct Rebound* r, const int pt, const struct cell *node, const struct Ghostbox gb) {
+	const double G = r->G;
+	const double softening2 = r->softening*r->softening;
+	struct Particle* const particles = r->particles;
+	const double dx = gb.shiftx - node->mx;
+	const double dy = gb.shifty - node->my;
+	const double dz = gb.shiftz - node->mz;
+	const double r2 = dx*dx + dy*dy + dz*dz;
+	if ( node->pt < 0 ) { // Not a leaf
+		if ( node->w*node->w > r->opening_angle2*r2 ){
+			for (int o=0; o<8; o++) {
+				if (node->oct[o] != NULL) {
+					gravity_calculate_acceleration_for_particle_from_cell(r, pt, node->oct[o], gb);
+				}
+			}
+		} else {
+			double _r = sqrt(r2 + softening2);
+			double prefact = -G/(_r*_r*_r)*node->m;
+#ifdef QUADRUPOLE
+			double qprefact = G/(_r*_r*_r*_r*_r);
+			particles[pt].ax += qprefact*(dx*node->mxx + dy*node->mxy + dz*node->mxz); 
+			particles[pt].ay += qprefact*(dx*node->mxy + dy*node->myy + dz*node->myz); 
+			particles[pt].az += qprefact*(dx*node->mxz + dy*node->myz + dz*node->mzz); 
+			double mrr 	= dx*dx*node->mxx 	+ dy*dy*node->myy 	+ dz*dz*node->mzz
+					+ 2.*dx*dy*node->mxy 	+ 2.*dx*dz*node->mxz 	+ 2.*dy*dz*node->myz; 
+			qprefact *= -5.0/(2.0*_r*_r)*mrr;
+			particles[pt].ax += (qprefact + prefact) * dx; 
+			particles[pt].ay += (qprefact + prefact) * dy; 
+			particles[pt].az += (qprefact + prefact) * dz; 
+#else
+			particles[pt].ax += prefact*dx; 
+			particles[pt].ay += prefact*dy; 
+			particles[pt].az += prefact*dz; 
+#endif
+		}
+	} else { // It's a leaf node
+		if (node->pt == pt) return;
+		double _r = sqrt(r2 + softening2);
+		double prefact = -G/(_r*_r*_r)*node->m;
+		particles[pt].ax += prefact*dx; 
+		particles[pt].ay += prefact*dy; 
+		particles[pt].az += prefact*dz; 
+	}
 }
 
