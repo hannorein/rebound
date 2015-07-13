@@ -100,14 +100,8 @@ struct Rebound* rebound_init_from_binary(char* filename){
 		objects += fread(r,sizeof(struct Rebound),1,inf);
 		rebound_reset_temporary_pointers(r);
 		rebound_reset_function_pointers(r);
-		r->collisions = NULL;
 		r->Nmax = r->N;
-		r->collisions_NMAX = 0;
 		r->tree_root = NULL;
-		r->cs = NULL;
-		r->N_cs = NULL;
-		r->collisions_coefficient_of_restitution_for_velocity = collisions_constant_coefficient_of_restitution_for_velocity;
-		r->collision_resolve    = collision_resolve_hardsphere;
 		r->particles = malloc(sizeof(struct Particle)*r->N);
 		objects += fread(r->particles,sizeof(struct Particle),r->N,inf);
 #ifdef MPI

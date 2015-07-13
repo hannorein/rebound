@@ -49,7 +49,7 @@
   * @param pt Index of the particle the force is calculated for.
   * @param gb Ghostbox plus position of the particle (precalculated). 
   */
-void gravity_calculate_acceleration_for_particle(struct Rebound* const r, const int pt, const struct Ghostbox gb);
+void gravity_calculate_acceleration_for_particle(const struct Rebound* const r, const int pt, const struct Ghostbox gb);
 
 
 /**
@@ -320,9 +320,9 @@ void gravity_calculate_variational_acceleration(struct Rebound* r){
   * @param node Pointer to the cell the force is calculated from.
   * @param gb Ghostbox plus position of the particle (precalculated). 
   */
-void gravity_calculate_acceleration_for_particle_from_cell(struct Rebound* const r, const int pt, const struct cell *node, const struct Ghostbox gb);
+void gravity_calculate_acceleration_for_particle_from_cell(const struct Rebound* const r, const int pt, const struct cell *node, const struct Ghostbox gb);
 
-void gravity_calculate_acceleration_for_particle(struct Rebound* const r, const int pt, const struct Ghostbox gb) {
+void gravity_calculate_acceleration_for_particle(const struct Rebound* const r, const int pt, const struct Ghostbox gb) {
 	for(int i=0;i<r->root_n;i++){
 		struct cell* node = r->tree_root[i];
 		if (node!=NULL){
@@ -331,7 +331,7 @@ void gravity_calculate_acceleration_for_particle(struct Rebound* const r, const 
 	}
 }
 
-void gravity_calculate_acceleration_for_particle_from_cell(struct Rebound* r, const int pt, const struct cell *node, const struct Ghostbox gb) {
+void gravity_calculate_acceleration_for_particle_from_cell(const struct Rebound* r, const int pt, const struct cell *node, const struct Ghostbox gb) {
 	const double G = r->G;
 	const double softening2 = r->softening*r->softening;
 	struct Particle* const particles = r->particles;

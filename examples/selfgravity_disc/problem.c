@@ -30,64 +30,55 @@
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
-#include "main.h"
-#include "particle.h"
-#include "boundaries.h"
-#include "output.h"
-#include "communication_mpi.h"
-#include "tree.h"
+#include "rebound.h"
 #include "tools.h"
-#include "integrator.h"
-#include "integrator_whfast.h"
+#include "output.h"
 
-extern double opening_angle2;
-extern int Nmax;
 
-void problem_init(int argc, char* argv[]){
+void heartbeat(struct Rebound* const r);
+
+int main(int argc, char* argv[]){
+	struct Rebound* const r = rebound_init();
 	// Setup constants
-	integrator	= LEAPFROG;
-	opening_angle2	= 1.5;		// This constant determines the accuracy of the tree code gravity estimate.
-	G 		= 1;		
-	softening 	= 0.02;		// Gravitational softening length
-	dt 		= 3e-3;		// Timestep
-	boxsize 	= 1.2;		// Particles outside the box are removed
-	root_nx = 1; root_ny = 1; root_nz = 1;
-	nghostx = 0; nghosty = 0; nghostz = 0; 		
-	init_box();
+	r->integrator	= LEAPFROG;
+	r->gravity	= RB_GT_TREE;
+	r->boundary	= RB_BT_OPEN;
+	r->opening_angle2	= 1.5;		// This constant determines the accuracy of the tree code gravity estimate.
+	r->G 		= 1;		
+	r->softening 	= 0.02;		// Gravitational softening length
+	r->dt 		= 3e-2;		// Timestep
+	const double boxsize = 10.2;
+	rebound_configure_box(r,boxsize,1,1,1);
 
 	// Setup particles
 	double disc_mass = 2e-1;	// Total disc mass
-	int _N = 10000;			// Number of particles
+	int N = 10000;			// Number of particles
 	// Initial conditions
-	struct particle star;
+	struct Particle star;
 	star.x 		= 0; star.y 	= 0; star.z	= 0;
 	star.vx 	= 0; star.vy 	= 0; star.vz 	= 0;
-	star.ax 	= 0; star.ay 	= 0; star.az 	= 0;
 	star.m 		= 1;
-	particles_add(star);
-	while(N<_N){
-		struct particle pt;
+	particles_add(r,star);
+	for (int i=0;i<N;i++){
+		struct Particle pt;
 		double a	= tools_powerlaw(boxsize/10.,boxsize/2./1.2,-1.5);
 		double phi 	= tools_uniform(0,2.*M_PI);
 		pt.x 		= a*cos(phi);
 		pt.y 		= a*sin(phi);
 		pt.z 		= a*tools_normal(0.001);
 		double mu 	= star.m + disc_mass * (pow(a,-3./2.)-pow(boxsize/10.,-3./2.))/(pow(boxsize/2./1.2,-3./2.)-pow(boxsize/10.,-3./2.));
-		double vkep 	= sqrt(G*mu/a);
+		double vkep 	= sqrt(r->G*mu/a);
 		pt.vx 		=  vkep * sin(phi);
 		pt.vy 		= -vkep * cos(phi);
 		pt.vz 		= 0;
-		pt.ax 		= 0;
-		pt.ay 		= 0;
-		pt.az 		= 0;
-		pt.m 		= disc_mass/(double)_N;
-		particles_add(pt);
+		pt.m 		= disc_mass/(double)N;
+		particles_add(r, pt);
 	}
+
+	r->heartbeat = heartbeat;
+	rebound_integrate(r,0);
 }
 
-void problem_output(){
-	if (output_check(10.0*dt)) output_timing();
-}
-
-void problem_finish(){
+void heartbeat(struct Rebound* const r){
+	if (output_check(r,10.0*r->dt)) output_timing(r,0);
 }

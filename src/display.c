@@ -227,7 +227,7 @@ void display(void){
 			glPointSize(5.);
 			glDrawArrays(GL_POINTS, 0, display_r->N-display_r->N_megno);
 			glDisableClientState(GL_VERTEX_ARRAY);
-			if (display_spheres){
+			if (display_r->collision != RB_CT_NONE && display_spheres){
 				glDisable(GL_BLEND);                    
 				glEnable(GL_DEPTH_TEST);
 				glEnable(GL_LIGHTING);

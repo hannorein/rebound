@@ -42,27 +42,29 @@
 void integrator_leapfrog_part1(struct Rebound* r){
 	const int N = r->N;
 	struct Particle* restrict const particles = r->particles;
+	const double dt = r->dt;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
-		particles[i].x  += 0.5* r->dt * particles[i].vx;
-		particles[i].y  += 0.5* r->dt * particles[i].vy;
-		particles[i].z  += 0.5* r->dt * particles[i].vz;
+		particles[i].x  += 0.5* dt * particles[i].vx;
+		particles[i].y  += 0.5* dt * particles[i].vy;
+		particles[i].z  += 0.5* dt * particles[i].vz;
 	}
-	r->t+=r->dt/2.;
+	r->t+=dt/2.;
 }
 void integrator_leapfrog_part2(struct Rebound* r){
 	const int N = r->N;
 	struct Particle* restrict const particles = r->particles;
+	const double dt = r->dt;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
-		particles[i].vx += r->dt * particles[i].ax;
-		particles[i].vy += r->dt * particles[i].ay;
-		particles[i].vz += r->dt * particles[i].az;
-		particles[i].x  += 0.5* r->dt * particles[i].vx;
-		particles[i].y  += 0.5* r->dt * particles[i].vy;
-		particles[i].z  += 0.5* r->dt * particles[i].vz;
+		particles[i].vx += dt * particles[i].ax;
+		particles[i].vy += dt * particles[i].ay;
+		particles[i].vz += dt * particles[i].az;
+		particles[i].x  += 0.5* dt * particles[i].vx;
+		particles[i].y  += 0.5* dt * particles[i].vy;
+		particles[i].z  += 0.5* dt * particles[i].vz;
 	}
-	r->t+=r->dt/2.;
+	r->t+=dt/2.;
 }
 	
 void integrator_leapfrog_synchronize(struct Rebound* r){
