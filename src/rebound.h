@@ -148,7 +148,6 @@ struct Rebound {
 	/// Collisions
 	struct	collision* collisions;			/**< Array of all collisions. */
 	int 	collisions_NMAX;			/**< Size allocated for collisions.*/
-	int 	collisions_N;				/**< Number of elements in collisions array. */
 	double coefficient_of_restitution;		/**< Used for hard sphere collision model. */
 	double minimum_collision_velocity;		/**< Used for hard sphere collision model. */
 	double (*collisions_coefficient_of_restitution_for_velocity) (const struct Rebound* const r, double v); /**< Used for hard sphere collision model. */
@@ -246,4 +245,10 @@ void rebound_configure_box(struct Rebound* const r, const double boxsize, const 
  * The simulation exits immediately if it returns 1.
  */
 int rebound_check_exit(struct Rebound* const r, const double tmax);
+
+/*
+ * Function used to allow binary input.
+ */
+void rebound_reset_temporary_pointers(struct Rebound* const r);
+void rebound_reset_function_pointers(struct Rebound* const r);
 #endif

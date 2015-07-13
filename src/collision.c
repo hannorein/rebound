@@ -48,10 +48,11 @@
 #error COLLISIONS_DIRECT not yet compatible with MPI
 #endif
 
-void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct cell* c);
+void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, int* collisions_N, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct cell* c);
 
 void collisions_search(struct Rebound* const r){
 	const int N = r->N;
+	int collisions_N = 0;
 	const struct Particle* const particles = r->particles;
 	switch (r->collision){
 		case RB_CT_NONE:
@@ -95,16 +96,16 @@ void collisions_search(struct Rebound* const r){
 						// Check if particles are approaching each other
 						if (dvx*dx + dvy*dy + dvz*dz >0) continue; 
 						// Add particles to collision array.
-						if (r->collisions_NMAX<=r->collisions_N){
+						if (r->collisions_NMAX<=collisions_N){
 							// Allocate memory if there is no space in array.
 							// Doing it in chunks of 32 to avoid having to do it too often.
 							r->collisions_NMAX += 32;
 							r->collisions = realloc(r->collisions,sizeof(struct collision)*r->collisions_NMAX);
 						}
-						r->collisions[r->collisions_N].p1 = i;
-						r->collisions[r->collisions_N].p2 = j;
-						r->collisions[r->collisions_N].gb = gborig;
-						r->collisions_N++;
+						r->collisions[collisions_N].p1 = i;
+						r->collisions[collisions_N].p2 = j;
+						r->collisions[collisions_N].gb = gborig;
+						collisions_N++;
 					}
 				}
 			}
@@ -161,7 +162,7 @@ void collisions_search(struct Rebound* const r){
 					for (int ri=0;ri<r->root_n;ri++){
 						struct cell* rootcell = r->tree_root[ri];
 						if (rootcell!=NULL){
-							tree_get_nearest_neighbour_in_cell(r, gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
+							tree_get_nearest_neighbour_in_cell(r, &collisions_N, gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
 						}
 					}
 				}
@@ -178,19 +179,17 @@ void collisions_search(struct Rebound* const r){
 	}
 
 	// randomize
-	for (int i=0;i<r->collisions_N;i++){
-		int new = rand()%r->collisions_N;
+	for (int i=0;i<collisions_N;i++){
+		int new = rand()%collisions_N;
 		struct collision c1 = r->collisions[i];
 		r->collisions[i] = r->collisions[new];
 		r->collisions[new] = c1;
 	}
 	// Loop over all collisions previously found in collisions_search().
-	for (int i=0;i<r->collisions_N;i++){
+	for (int i=0;i<collisions_N;i++){
 		// Resolve collision
 		r->collision_resolve(r, r->collisions[i]);
 	}
-	// Mark all collisions as resolved.
-	r->collisions_N=0;
 }
 
 
@@ -207,7 +206,7 @@ void collisions_search(struct Rebound* const r){
  * @param collision_nearest Pointer to the nearest collision found so far.
  * @param c Pointer to the cell currently being searched in.
  */
-void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct collision* collision_nearest, struct cell* c){
+void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, int* collisions_N, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct collision* collision_nearest, struct cell* c){
 	const struct Particle* const particles = r->particles;
 	if (c->pt>=0){ 	
 		// c is a leaf node
@@ -263,12 +262,12 @@ void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, struct Ghostbox
 			// Save collision in collisions array.
 #pragma omp critical
 			{
-				if (r->collisions_NMAX<=r->collisions_N){
+				if (r->collisions_NMAX<=(*collisions_N)){
 					r->collisions_NMAX += 32;
 					r->collisions = realloc(r->collisions,sizeof(struct collision)*r->collisions_NMAX);
 				}
-				r->collisions[r->collisions_N] = *collision_nearest;
-				r->collisions_N++;
+				r->collisions[(*collisions_N)] = *collision_nearest;
+				(*collisions_N)++;
 			}
 		}
 	}else{		
@@ -283,7 +282,7 @@ void tree_get_nearest_neighbour_in_cell(struct Rebound* const r, struct Ghostbox
 			for (int o=0;o<8;o++){
 				struct cell* d = c->oct[o];
 				if (d!=NULL){
-					tree_get_nearest_neighbour_in_cell(r, gb,gbunmod,ri,p1_r,nearest_r2,collision_nearest,d);
+					tree_get_nearest_neighbour_in_cell(r, collisions_N, gb,gbunmod,ri,p1_r,nearest_r2,collision_nearest,d);
 				}
 			}
 		}

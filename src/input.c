@@ -98,6 +98,8 @@ struct Rebound* rebound_init_from_binary(char* filename){
 	if (inf){
 		long objects = 0;
 		objects += fread(r,sizeof(struct Rebound),1,inf);
+		rebound_reset_temporary_pointers(r);
+		rebound_reset_function_pointers(r);
 		r->collisions = NULL;
 		r->Nmax = r->N;
 		r->collisions_NMAX = 0;

@@ -71,7 +71,6 @@ struct ReboundIntegratorIAS15 {
 	double* a0;				//                      acceleration
 	double* csx;				//                      compensated summation
 	double* csv;				//                      compensated summation
-	double s[9];				// Summation coefficients 
 
 	double* g[7];
 	double* b[7];

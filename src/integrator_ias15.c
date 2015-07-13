@@ -132,9 +132,9 @@ int integrator_ias15_step(struct Rebound* r) {
 	
 	// integrator_update_acceleration(); // Not needed. Forces are already calculated in main routine.
 	
+	double s[9];				// Summation coefficients 
 	double* restrict const csx = r->ri_ias15.csx; 
 	double* restrict const csv = r->ri_ias15.csv; 
-	double* restrict const s = r->ri_ias15.s; 
 	double* restrict const at = r->ri_ias15.at; 
 	double* restrict const x0 = r->ri_ias15.x0; 
 	double* restrict const v0 = r->ri_ias15.v0; 
