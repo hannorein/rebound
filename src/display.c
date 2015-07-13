@@ -80,7 +80,7 @@ void display_exit(void){
 double display_tmax;
 
 void display_func(void){
-	if (rebound_check_exit(display_r,display_tmax)!=1){
+	if (reb_check_exit(display_r,display_tmax)!=1){
 		reb_step(display_r);
 #ifdef OPENGL
 		PROFILING_START()

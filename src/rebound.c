@@ -311,7 +311,7 @@ struct reb_context* reb_init(){
 	return r;
 }
 
-int rebound_check_exit(struct reb_context* const r, const double tmax){
+int reb_check_exit(struct reb_context* const r, const double tmax){
 	const double dtsign = copysign(1.,r->dt); 	// Used to determine integration direction
 	if(tmax!=0.){
 		if(r->exact_finish_time==1){
@@ -365,7 +365,7 @@ int reb_integrate(struct reb_context* const r, double tmax){
 		display_init(0,NULL, tmax); // This function will never return (GLUT issue/bug).
 	}
 #else // OPENGL
-	while(rebound_check_exit(r,tmax)!=1){
+	while(reb_check_exit(r,tmax)!=1){
 		reb_step(r); 								// 0 to not do timing within step
 	}
 #endif // OPENGL

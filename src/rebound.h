@@ -238,7 +238,7 @@ void rebound_configure_box(struct reb_context* const r, const double boxsize, co
  * This function is called once before the integration and then after every timestep.
  * The simulation exits immediately if it returns 1.
  */
-int rebound_check_exit(struct reb_context* const r, const double tmax);
+int reb_check_exit(struct reb_context* const r, const double tmax);
 
 /*
  * Function used to allow binary input.
