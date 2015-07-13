@@ -384,27 +384,6 @@ void output_int(struct Rebound* r, char* name, int value){
 	output_logfile(data);
 }
 	
-#ifndef LIBREBOUND	
-void output_prepare_directory(void){
-	char dirname[4096] = "out__";
-	strcat(dirname,input_arguments);
-#ifdef MPI
-	if (mpi_id==0){
-#endif // MPI
-	char tmpsystem[4096];
-	sprintf(tmpsystem,"rm -rf %s",dirname);
-	system(tmpsystem);
-	sprintf(tmpsystem,"mkdir %s",dirname);
-	system(tmpsystem);
-#ifdef MPI
-	}
-	MPI_Barrier(MPI_COMM_WORLD);
-	sleep(5); // Wait because the filesystem might be slow to respond.
-#endif // MPI
-	chdir(dirname);
-}
-#endif // LIBREBOUND	
-
 #ifdef OPENGL
 #ifdef LIBPNG
 unsigned char* 	imgdata = NULL;

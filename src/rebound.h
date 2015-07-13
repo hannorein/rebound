@@ -85,6 +85,32 @@ struct rb_vec3d {
 };
 
 
+/**
+ * Particle structure.
+ * @details This structure is used to represent one particle. Additional particle
+ * properties should be added here. Note that when the data structure is changed, 
+ * one must also update the equivalent declaration for MPI in communications_mpi.c.
+ */
+struct Particle {
+	double x;	/**< x-position of the particle. */
+	double y;	/**< y-position of the particle. */
+	double z;	/**< z-position of the particle. */
+	double vx;	/**< x-velocity of the particle. */
+	double vy;	/**< y-velocity of the particle. */
+	double vz;	/**< z-velocity of the particle. */
+	double ax;	/**< x-acceleration of the particle. */
+	double ay;	/**< y-acceleration of the particle. */
+	double az;	/**< z-acceleration of the particle. */
+	double m;	/**< Mass of the particle. */
+#ifdef PARTICLEIDS
+	int ID;		/**< Unique ID to identify particle. */
+#endif
+	double r; 	/**< Radius of the particle. */
+	double lastcollision;	/**< Last time the particle had a physical collision. */
+	struct cell* c;		/**< Pointer to the cell the particle is currently in. */
+};
+
+
 
 struct Rebound {
 	double 	t;		/**< Current simulation time. */

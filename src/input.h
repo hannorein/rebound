@@ -70,9 +70,4 @@ double input_get_double(int argc, char** argv, const char* argument, double _def
  */
 int input_get_int(int argc, char** argv, const char* argument, int _default);
 
-/**
- * This string contains a list of arguments that were not the default.
- * This can for example be used to create a new directory.
- */
-extern char input_arguments[];
 #endif
