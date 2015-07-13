@@ -558,7 +558,7 @@ static void apply_corrector(struct reb_context* r, double inv){
 	}
 }
 
-void integrator_whfast_part1(struct reb_context* const r){
+void reb_integrator_whfast_part1(struct reb_context* const r){
 	struct reb_contextIntegratorWHFast* const ri_whfast = &(r->ri_whfast);
 	struct reb_particle* restrict const particles = r->particles;
 	const int N = r->N;
@@ -573,7 +573,7 @@ void integrator_whfast_part1(struct reb_context* const r){
 	// Only recalculate Jacobi coordinates if needed
 	if (ri_whfast->safe_mode || ri_whfast->recalculate_jacobi_this_timestep){
 		if (ri_whfast->is_synchronized==0){
-			integrator_whfast_synchronize(r);
+			reb_integrator_whfast_synchronize(r);
 			if (ri_whfast->recalculate_jacobi_but_not_synchronized_warning==0){
 				fprintf(stderr,"\n\033[1mWarning!\033[0m Recalculating Jacobi coordinates but pos/vel were not synchronized before.\n");
 				ri_whfast->recalculate_jacobi_but_not_synchronized_warning++;
@@ -626,7 +626,7 @@ void integrator_whfast_part1(struct reb_context* const r){
 	r->t+=_dt2;
 }
 
-void integrator_whfast_synchronize(struct reb_context* const r){
+void reb_integrator_whfast_synchronize(struct reb_context* const r){
 	struct reb_contextIntegratorWHFast* const ri_whfast = &(r->ri_whfast);
 	const int N = r->N;
 	const int N_megno = r->N_megno;
@@ -643,7 +643,7 @@ void integrator_whfast_synchronize(struct reb_context* const r){
 	}
 }
 
-void integrator_whfast_part2(struct reb_context* const r){
+void reb_integrator_whfast_part2(struct reb_context* const r){
 	struct reb_particle* restrict const particles = r->particles;
 	struct reb_contextIntegratorWHFast* const ri_whfast = &(r->ri_whfast);
 	const int N = r->N;
@@ -657,7 +657,7 @@ void integrator_whfast_part2(struct reb_context* const r){
 	double _dt2 = r->dt/2.;
 	ri_whfast->is_synchronized = 0;
 	if (ri_whfast->safe_mode || N_megno){
-		integrator_whfast_synchronize(r);
+		reb_integrator_whfast_synchronize(r);
 	}
 	
 	r->t+=_dt2;
@@ -707,7 +707,7 @@ void integrator_whfast_part2(struct reb_context* const r){
 	}
 }
 	
-void integrator_whfast_reset(struct reb_context* const r){
+void reb_integrator_whfast_reset(struct reb_context* const r){
 	struct reb_contextIntegratorWHFast* const ri_whfast = &(r->ri_whfast);
 	ri_whfast->corrector = 0;
 	ri_whfast->is_synchronized = 1;

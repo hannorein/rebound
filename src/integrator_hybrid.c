@@ -97,13 +97,13 @@ void integrator_hybrid_part1(struct reb_context* r){
 				integrator_hybrid_switch_warning++;
 				fprintf(stderr,"\n\033[1mInfo!\033[0m Switching to HIGHORDER for the first time at t=%.9e.\n",r->t);
 			}
-			integrator_whfast_synchronize(r);
+			reb_integrator_whfast_synchronize(r);
 			r->gravity_ignore_10 = 0;
 		}
 		integrator_hybrid_mode = HIGHORDER;
 	}else{
 		if (integrator_hybrid_mode==HIGHORDER){
-			//integrator_whfast_reset(r); 
+			//reb_integrator_whfast_reset(r); 
 			r->ri_whfast.recalculate_jacobi_this_timestep = 1;
 			r->dt = initial_dt;
 		}
@@ -111,7 +111,7 @@ void integrator_hybrid_part1(struct reb_context* r){
 	}
 	switch(integrator_hybrid_mode){
 		case SYMPLECTIC:
-			integrator_whfast_part1(r);
+			reb_integrator_whfast_part1(r);
 			break;
 		case HIGHORDER:
 			integrator_ias15_part1(r);
@@ -123,7 +123,7 @@ void integrator_hybrid_part1(struct reb_context* r){
 void integrator_hybrid_part2(struct reb_context* r){
 	switch(integrator_hybrid_mode){
 		case SYMPLECTIC:
-			integrator_whfast_part2(r);
+			reb_integrator_whfast_part2(r);
 			break;
 		case HIGHORDER:
 			integrator_ias15_part2(r);
@@ -136,7 +136,7 @@ void integrator_hybrid_part2(struct reb_context* r){
 void integrator_hybrid_synchronize(struct reb_context* r){
 	switch(integrator_hybrid_mode){
 		case SYMPLECTIC:
-			integrator_whfast_synchronize(r);
+			reb_integrator_whfast_synchronize(r);
 			break;
 		default:
 			break;
@@ -146,7 +146,7 @@ void integrator_hybrid_synchronize(struct reb_context* r){
 void integrator_hybrid_reset(struct reb_context* r){
 	integrator_hybrid_mode = SYMPLECTIC;
 	integrator_hybrid_switch_warning = 0;
-	integrator_whfast_reset(r);
+	reb_integrator_whfast_reset(r);
 	integrator_ias15_reset(r);
 	integrator_hybrid_switch_ratio = 400.;
 	initial_dt = 0.;

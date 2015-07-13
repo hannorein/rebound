@@ -58,7 +58,7 @@ void integrator_part1(struct reb_context* r){
 			integrator_sei_part1(r);
 			break;
 		case RB_IT_WHFAST:
-			integrator_whfast_part1(r);
+			reb_integrator_whfast_part1(r);
 			break;
 		case RB_IT_HYBRID:
 			integrator_hybrid_part1(r);
@@ -83,7 +83,7 @@ void integrator_part2(struct reb_context* r){
 			integrator_sei_part2(r);
 			break;
 		case RB_IT_WHFAST:
-			integrator_whfast_part2(r);
+			reb_integrator_whfast_part2(r);
 			break;
 		case RB_IT_HYBRID:
 			integrator_hybrid_part2(r);
@@ -108,7 +108,7 @@ void integrator_synchronize(struct reb_context* r){
 			integrator_sei_synchronize(r);
 			break;
 		case RB_IT_WHFAST:
-			integrator_whfast_synchronize(r);
+			reb_integrator_whfast_synchronize(r);
 			break;
 		case RB_IT_HYBRID:
 			integrator_hybrid_synchronize(r);
@@ -125,7 +125,7 @@ void integrator_reset(struct reb_context* r){
 	integrator_wh_reset(r);
 	integrator_leapfrog_reset(r);
 	integrator_sei_reset(r);
-	integrator_whfast_reset(r);
+	reb_integrator_whfast_reset(r);
 	integrator_hybrid_reset(r);
 }
 

@@ -39,7 +39,7 @@ void reb_step(int do_timing);
  * The integration finisheds exactly at _tmax if 
  * exactFinishTime=1, otherwise REBOUND will overshoot slightly
  * depending on the current timestep.
- * If the integrator_whfast_safe_mode flag is set to 1 (default), then the integrator
+ * If the reb_integrator_whfast_safe_mode flag is set to 1 (default), then the integrator
  * will synchronize the positions and velocities after every timestep.
  * This will cause the integrator to be slower and less accurate. To turn off 
  * safe_mode, and take the appropriate steps manually, see AdvWHFast.ipynb

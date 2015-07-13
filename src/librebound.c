@@ -109,12 +109,12 @@ void reb_step(int do_timing){
 	if (problem_post_timestep_modifications){
 		integrator_synchronize();
 		problem_post_timestep_modifications();
-		integrator_whfast_recalculate_jacobi_this_timestep = 1;
+		reb_integrator_whfast_recalculate_jacobi_this_timestep = 1;
 	}
 	if (problem_post_timestep_modifications_with_parameters){
 		integrator_synchronize();
 		problem_post_timestep_modifications_with_parameters(particles, t, dt, G, N, N_megno);
-		integrator_whfast_recalculate_jacobi_this_timestep = 1;
+		reb_integrator_whfast_recalculate_jacobi_this_timestep = 1;
 	}
 	if (do_timing){
 		gettimeofday(&tim, NULL);
