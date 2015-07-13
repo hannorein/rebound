@@ -59,11 +59,6 @@ void collisions_search(struct Rebound* const r);
  */
 void collisions_resolve(struct Rebound* const r);
 
-/**
- * Particle between 0 and N_collisions (excluding) will not be searched for collisions and not shuffled around.
- */
-extern int N_collisions;
-
 
 /**
  * Just returns the constant coefficient of restitution in the REBOUND struct.

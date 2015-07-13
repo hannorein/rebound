@@ -181,7 +181,43 @@ void rebound_configure_box(struct Rebound* const r, const double boxsize, const 
 		fprintf(stderr,"\n\033[1mError!\033[0m Number of root boxes must be greater or equal to 1 in each direction.\n");
 	}
 }
-	
+
+void rebound_reset_temporary_pointers(struct Rebound* const r){
+	// Note: this will not clear the particle array.
+	r->N_cs 		= 0;
+	r->cs 			= NULL;
+	r->collisions		= NULL;
+	r->collisions_NMAX	= 0;
+	// ********** WHFAST
+	r->ri_whfast.allocated_N	= 0;
+	r->ri_whfast.eta		= NULL;
+	r->ri_whfast.p_j		= NULL;
+	memset(&(r->ri_ias15.g),0,sizeof(double)*7);
+	memset(&(r->ri_ias15.b),0,sizeof(double)*7);
+	memset(&(r->ri_ias15.e),0,sizeof(double)*7);
+	memset(&(r->ri_ias15.br),0,sizeof(double)*7);
+	memset(&(r->ri_ias15.er),0,sizeof(double)*7);
+	// ********** IAS15
+	r->ri_ias15.N3allocated		= 0;
+	r->ri_ias15.at  		= NULL;
+	r->ri_ias15.x0  		= NULL;
+	r->ri_ias15.v0  		= NULL;
+	r->ri_ias15.a0  		= NULL;
+	r->ri_ias15.csx  		= NULL;
+	r->ri_ias15.csv  		= NULL;
+	r->ri_ias15.at  		= NULL;
+	// ********** WH
+	r->ri_wh.eta 		= NULL;
+	r->ri_wh.Nmax 		= 0;
+}
+void rebound_reset_function_pointers(struct Rebound* const r){
+	r->collisions_coefficient_of_restitution_for_velocity = collisions_constant_coefficient_of_restitution_for_velocity;
+	r->collision_resolve    = collision_resolve_hardsphere;
+	r->additional_forces 		= NULL;
+	r->finished			= NULL;
+	r->heartbeat			= NULL;
+	r->post_timestep_modifications	= NULL;
+}
 
 struct Rebound* rebound_init(){
 	if (rebound_show_logo==1){
@@ -191,6 +227,8 @@ struct Rebound* rebound_init(){
 	}
 	tools_init_srand();
 	struct Rebound* r = calloc(1,sizeof(struct Rebound));
+	rebound_reset_temporary_pointers(r);
+	rebound_reset_function_pointers(r);
 	r->t 		= 0; 
 	r->G 		= 1;
 	r->softening 	= 0;
@@ -214,16 +252,9 @@ struct Rebound* rebound_init(){
 	r->particles	= NULL;
 	r->force_is_velocitydependent = 0;
 	r->gravity_ignore_10	= 0;
-	r->N_cs 		= 0;
-	r->cs 			= NULL;
 
-	r->collisions		= NULL;
-	r->collisions_N		= 0;
-	r->collisions_NMAX	= 0;
 	r->coefficient_of_restitution = 1;
 	r->minimum_collision_velocity = 0;
-	r->collisions_coefficient_of_restitution_for_velocity = collisions_constant_coefficient_of_restitution_for_velocity;
-	r->collision_resolve    = collision_resolve_hardsphere;
 	r->collisions_plog 	= 0;
 	r->collisions_Nlog 	= 0;	
 	
@@ -233,11 +264,6 @@ struct Rebound* rebound_init(){
 	r->gravity	= RB_GT_COMPENSATED;
 	r->collision	= RB_CT_NONE;
 
-	// Function pointers 
-	r->additional_forces 		= NULL;
-	r->finished			= NULL;
-	r->heartbeat			= NULL;
-	r->post_timestep_modifications	= NULL;
 
 	// Integrators	
 	// ********** WHFAST
@@ -247,7 +273,6 @@ struct Rebound* rebound_init(){
 	r->ri_whfast.safe_mode = 1;
 	r->ri_whfast.recalculate_jacobi_this_timestep = 0;
 	r->ri_whfast.is_synchronized = 1;
-	r->ri_whfast.allocated_N = 0;
 	r->ri_whfast.timestep_warning = 0;
 	r->ri_whfast.recalculate_jacobi_but_not_synchronized_warning = 0;
 	
@@ -255,34 +280,19 @@ struct Rebound* rebound_init(){
 	r->ri_ias15.epsilon 		= 1e-9;
 	r->ri_ias15.min_dt 		= 0;
 	r->ri_ias15.epsilon_global	= 1;
-	r->ri_ias15.iterations_max_exceeded= 0;	
-	r->ri_ias15.N3allocated		= 0; 	
-	r->ri_ias15.at   	= NULL;
-	r->ri_ias15.x0  	= NULL;
-	r->ri_ias15.v0  	= NULL;
-	r->ri_ias15.a0  	= NULL;
-	r->ri_ias15.csx  	= NULL;
-	r->ri_ias15.csv  	= NULL;
+	r->ri_ias15.iterations_max_exceeded = 0;	
 	
 	// ********** SEI
 	r->ri_sei.OMEGA  	= 1;
 	r->ri_sei.OMEGAZ 	= -1;
 	r->ri_sei.lastdt 	= 0;
 	
-	// ********** WH
-	r->ri_wh.eta 		= NULL;
-	r->ri_wh.Nmax 		= 0;
 
 	// Tree parameters. Will not be used unless gravity or collision search makes use of tree.
 	r->tree_root		= NULL;
 	r->N_tree_fixed		= 0;
 	r->opening_angle2	= 0.25;
 
-	memset(&(r->ri_ias15.g),0,sizeof(double)*7);
-	memset(&(r->ri_ias15.b),0,sizeof(double)*7);
-	memset(&(r->ri_ias15.e),0,sizeof(double)*7);
-	memset(&(r->ri_ias15.br),0,sizeof(double)*7);
-	memset(&(r->ri_ias15.er),0,sizeof(double)*7);
 	r->ri_ias15.dt_last_success = 0.;
 
 #ifdef MPI

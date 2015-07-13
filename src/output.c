@@ -262,7 +262,6 @@ void output_orbits(struct Rebound* r, char* filename){
 
 
 void output_binary(struct Rebound* r, char* filename){
-	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -274,12 +273,8 @@ void output_binary(struct Rebound* r, char* filename){
 		printf("\n\nError while opening file '%s'.\n",filename);
 		return;
 	}
-	fwrite(&N,sizeof(int),1,of);
-	fwrite(&(r->t),sizeof(double),1,of);
-	for (int i=0;i<N;i++){
-		struct Particle p = r->particles[i];
-		fwrite(&(p),sizeof(struct Particle),1,of);
-	}
+	fwrite(r,sizeof(struct Rebound),1,of);
+	fwrite(r->particles,sizeof(struct Particle),r->N,of);
 	fclose(of);
 }
 
@@ -384,27 +379,6 @@ void output_int(struct Rebound* r, char* name, int value){
 	output_logfile(data);
 }
 	
-#ifndef LIBREBOUND	
-void output_prepare_directory(void){
-	char dirname[4096] = "out__";
-	strcat(dirname,input_arguments);
-#ifdef MPI
-	if (mpi_id==0){
-#endif // MPI
-	char tmpsystem[4096];
-	sprintf(tmpsystem,"rm -rf %s",dirname);
-	system(tmpsystem);
-	sprintf(tmpsystem,"mkdir %s",dirname);
-	system(tmpsystem);
-#ifdef MPI
-	}
-	MPI_Barrier(MPI_COMM_WORLD);
-	sleep(5); // Wait because the filesystem might be slow to respond.
-#endif // MPI
-	chdir(dirname);
-}
-#endif // LIBREBOUND	
-
 #ifdef OPENGL
 #ifdef LIBPNG
 unsigned char* 	imgdata = NULL;

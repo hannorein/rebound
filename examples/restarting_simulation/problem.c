@@ -37,56 +37,59 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
-#include "main.h"
-#include "particle.h"
-#include "boundaries.h"
+#include "rebound.h"
 #include "output.h"
 #include "input.h"
-#include "integrator.h"
 
+void heartbeat(struct Rebound* const r);
 
-extern double OMEGA;
-extern double coefficient_of_restitution;
-extern double minimum_collision_velocity;
-
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
 	// Setup constants
-	integrator	= SEI;
-	OMEGA 		= 1.;	
-	dt 		= 1e-4*2.*M_PI; 
-	boxsize 	= 1;
-	coefficient_of_restitution = 0.5;
-	minimum_collision_velocity = 0.01;
-	nghostx = 1; nghosty = 1; nghostz = 0;
-	init_box();
+	struct Rebound* r;
+	
+	const int restart = 1;
 
-	// Check if simulation is restarted
-	if (input_check_restart(argc,argv)!=1){
+	if (restart){
+		r = rebound_init_from_binary("restart.bin");
+	}else{
+		r = rebound_init();
+
+		r->integrator	= SEI;
+		r->collision	= RB_CT_DIRECT;
+		r->ri_sei.OMEGA	= 1.;	
+		r->dt 		= 1e-4*2.*M_PI; 
+		rebound_configure_box(r,1.,1,1,1);
+		r->coefficient_of_restitution = 0.5;
+		r->minimum_collision_velocity = 0.01;
+		r->nghostx = 1; 
+		r->nghosty = 1; 
+		r->nghostz = 0;
+
+		// Check if simulation is restarted
 		// Initial conditions
-		while (N<50){
-			struct particle p;
-			p.x  = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_x;
-			p.y  = ((double)rand()/(double)RAND_MAX-0.5)*boxsize_y;
-			p.z  = 0.1*((double)rand()/(double)RAND_MAX-0.5)*boxsize_z;
+		while (r->N<50){
+			struct Particle p;
+			p.x  = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize_x;
+			p.y  = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize_y;
+			p.z  = 0.1*((double)rand()/(double)RAND_MAX-0.5)*r->boxsize_z;
 			p.vx = 0;
-			p.vy = -1.5*p.x*OMEGA;
+			p.vy = -1.5*p.x*r->ri_sei.OMEGA;
 			p.vz = 0;
 			p.ax = 0; p.ay = 0; p.az = 0;
 			p.m  = 0.01;
 			p.r  = 0.05;
-			particles_add(p);
+			particles_add(r, p);
 		}
 	}
+	r->heartbeat = heartbeat;
+	rebound_integrate(r,0);
 }
 
-void problem_output(){
+void heartbeat(struct Rebound* const r){
 	// Outputs a restartfile once per orbit.
-	output_timing();
-	if (output_check(1e-0*2.*M_PI&&t!=0)){
-		output_binary("restart.bin");
-		printf("\nSaved binary file. Restart simulation with './rebound --restart restart.bin'.\n");
+	output_timing(r,0);
+	if (output_check(r,1e-0*2.*M_PI)){
+		output_binary(r, "restart.bin");
+		printf("\nSaved binary file.\n");
 	}
-}
-
-void problem_finish(){
 }

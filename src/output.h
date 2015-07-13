@@ -109,12 +109,6 @@ void output_double(struct Rebound* r, char* name, double value);
  */
 void output_int(struct Rebound* r, char* name, int value);
 
-/**
- * Delete a directory if it exists, create it and chdir to it. 
- * The name consists of 'out__' appended by all nondefault command line arguments received by input_get_double(), etc.
- */
-void output_prepare_directory(void);
-
 #if defined(OPENGL) && defined(LIBPNG)
 /**
  * Outputs a screenshot of the current OpenGL view.

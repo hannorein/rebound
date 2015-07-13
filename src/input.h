@@ -24,20 +24,11 @@
  */
 #ifndef _INPUT_H
 #define _INPUT_H
-
-/**
- * Checks if a restart file was given as a command line argument. 
- * @return Returns 1 if simulation was restarted. 0 otherwise.
- * @param argc Number of command line arguments.
- * @param argv Array of command line arguments.
- */ 
-int input_check_restart(int argc, char** argv);
-
 /**
  * Reads a binary file.
  * @param filename Filename to be read.
  */
-void input_binary(char* filename);
+struct Rebound* rebound_init_from_binary(char* filename);
 
 /**
  * Reads arguments from the command line.
@@ -70,9 +61,4 @@ double input_get_double(int argc, char** argv, const char* argument, double _def
  */
 int input_get_int(int argc, char** argv, const char* argument, int _default);
 
-/**
- * This string contains a list of arguments that were not the default.
- * This can for example be used to create a new directory.
- */
-extern char input_arguments[];
 #endif
