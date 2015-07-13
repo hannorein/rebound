@@ -83,7 +83,4 @@ void integrator_whfast_part1(struct reb_context* r);
 void integrator_whfast_part2(struct reb_context* r);
 void integrator_whfast_synchronize(struct reb_context* r);
 void integrator_whfast_reset(struct reb_context* r);
-struct reb_contextIntegratorWHFast* integrator_whfast_init(struct reb_context* r);
-
-
 #endif

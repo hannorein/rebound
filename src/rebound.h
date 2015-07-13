@@ -1,10 +1,10 @@
 /**
  * @file 	main.h
- * @brief 	Main header file with widely used global variables.
+ * @brief 	Main header file.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ * Copyright (c) 2015 Hanno Rein, Shangfei Liu
  *
  * This file is part of rebound.
  *

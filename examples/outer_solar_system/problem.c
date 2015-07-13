@@ -43,8 +43,6 @@
 #include "rebound.h"
 #include "output.h"
 #include "tools.h"
-#include "particle.h"
-#include "integrator_whfast.h"
 
 double ss_pos[6][3] = 
 {
@@ -78,10 +76,10 @@ double ss_mass[6] =
 
 double tmax = 7.3e7;
 
-void heartbeat(struct Rebound* const r);
+void heartbeat(struct reb_context* const r);
 
 int main(int argc, char* argv[]) {
-	struct Rebound* r = rebound_init();
+	struct reb_context* r = reb_init();
 	// Setup constants
 	const double k	 	= 0.01720209895;	// Gaussian constant 
 	r->dt 			= 40;			// in days
@@ -98,15 +96,15 @@ int main(int argc, char* argv[]) {
 
 	// Initial conditions
 	for (int i=0;i<6;i++){
-		struct Particle p;
+		struct reb_particle p;
 		p.x  = ss_pos[i][0]; 		p.y  = ss_pos[i][1];	 	p.z  = ss_pos[i][2];
 		p.vx = ss_vel[i][0]; 		p.vy = ss_vel[i][1];	 	p.vz = ss_vel[i][2];
 		p.ax = 0; 			p.ay = 0; 			p.az = 0;
 		p.m  = ss_mass[i];
-		particles_add(r, p); 
+		reb_add(r, p); 
 	}
 	if (r->integrator==RB_IT_WH){
-		struct Particle* const particles = r->particles;
+		struct reb_particle* const particles = r->particles;
 		// Move to heliocentric frame (required by WH integrator)
 		for (int i=1;i<r->N;i++){
 			particles[i].x -= particles[0].x;	particles[i].y -= particles[0].y;	particles[i].z -= particles[0].z;
@@ -123,14 +121,14 @@ int main(int argc, char* argv[]) {
 	double e_initial = tools_energy(r);
 
 	// Start integration
-	rebound_integrate(r, tmax);
+	reb_integrate(r, tmax);
 	
 	double e_final = tools_energy(r);
 	printf("Done. Final time: %.4f. Relative energy error: %e\n", r->t, fabs((e_final-e_initial)/e_initial));
 }
 
 
-void heartbeat(struct Rebound* const r){
+void heartbeat(struct reb_context* const r){
 	if (output_check(r, 10000000.)){
 		output_timing(r, tmax);
 	}
