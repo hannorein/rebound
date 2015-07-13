@@ -33,47 +33,6 @@
 #include "integrator_sei.h"
 #include "integrator_wh.h"
 
-/**
- * Available integrators.
- */
-typedef enum {
-	RB_IT_IAS15 = 0,
-	RB_IT_WHFAST = 1,
-	RB_IT_SEI = 2,
-	RB_IT_WH = 3,
-	RB_IT_LEAPFROG = 4,
-	RB_IT_HYBRID = 5,
-	RB_IT_NONE = 6,
-	} integrator_t;
-
-/**
- * Available boundary conditions.
- */
-typedef enum {
-	RB_BT_NONE = 0,
-	RB_BT_OPEN = 1,
-	RB_BT_PERIODIC = 2,
-	RB_BT_SHEAR = 3,
-	} boundary_t;
-
-/**
- * Available gravity routines.
- */
-typedef enum {
-	RB_GT_NONE = 0,
-	RB_GT_BASIC = 1,
-	RB_GT_COMPENSATED = 2,
-	RB_GT_TREE = 3,
-	} gravity_t;
-
-/**
- * Available collision routines.
- */
-typedef enum {
-	RB_CT_NONE = 0,
-	RB_CT_DIRECT = 1,
-	RB_CT_TREE = 2,
-	} collision_t;
 
 /**
  * Generic 3d vector
@@ -166,12 +125,47 @@ struct Rebound {
 	double megno_delta0; 	// initial scale of delta (for one particle)
 	long   megno_n; 	// number of covariance updates
 
-	//////////////////////////////////////////////
-	/// Module selection
-	integrator_t 	integrator;	/**< Variable setting the current integrator */
-	boundary_t 	boundary;	/**< Boundary type */
-	gravity_t 	gravity;	/**< Gravity solver */
-	collision_t 	collision;	/**< Collision solver */
+	/**
+	 * Available collision routines.
+	 */
+	enum {
+		RB_CT_NONE = 0,
+		RB_CT_DIRECT = 1,
+		RB_CT_TREE = 2,
+		} collision;
+	/**
+	 * Available integrators.
+	 */
+	enum {
+		RB_IT_IAS15 = 0,
+		RB_IT_WHFAST = 1,
+		RB_IT_SEI = 2,
+		RB_IT_WH = 3,
+		RB_IT_LEAPFROG = 4,
+		RB_IT_HYBRID = 5,
+		RB_IT_NONE = 6,
+		} integrator;
+
+	/**
+	 * Available boundary conditions.
+	 */
+	enum {
+		RB_BT_NONE = 0,
+		RB_BT_OPEN = 1,
+		RB_BT_PERIODIC = 2,
+		RB_BT_SHEAR = 3,
+		} boundary;
+
+	/**
+	 * Available gravity routines.
+	 */
+	enum {
+		RB_GT_NONE = 0,
+		RB_GT_BASIC = 1,
+		RB_GT_COMPENSATED = 2,
+		RB_GT_TREE = 3,
+		} gravity;
+
 
 
 	//////////////////////////////////////////////

@@ -141,26 +141,26 @@ struct Particle tools_get_center_of_mass(struct Particle p1, struct Particle p2)
 	return p1;
 }
 
-void tools_init_plummer(int _N, double M, double R) {
+void tools_init_plummer(struct Rebound* r, int _N, double M, double R) {
 	// Algorithm from:	
 	// http://adsabs.harvard.edu/abs/1974A%26A....37..183A
 	
 	double E = 3./64.*M_PI*M*M/R;
 	for (int i=0;i<_N;i++){
 		struct Particle star;
-		double r = pow(pow(tools_uniform(0,1),-2./3.)-1.,-1./2.);
+		double _r = pow(pow(tools_uniform(0,1),-2./3.)-1.,-1./2.);
 		double x2 = tools_uniform(0,1);
 		double x3 = tools_uniform(0,2.*M_PI);
-		star.z = (1.-2.*x2)*r;
-		star.x = sqrt(r*r-star.z*star.z)*cos(x3);
-		star.y = sqrt(r*r-star.z*star.z)*sin(x3);
+		star.z = (1.-2.*x2)*_r;
+		star.x = sqrt(_r*_r-star.z*star.z)*cos(x3);
+		star.y = sqrt(_r*_r-star.z*star.z)*sin(x3);
 		double x5,g,q;
 		do{
 			x5 = tools_uniform(0.,1.);
 			q = tools_uniform(0.,1.);
 			g = q*q*pow(1.-q*q,7./2.);
 		}while(0.1*x5>g);
-		double ve = pow(2.,1./2.)*pow(1.+r*r,-1./4.);
+		double ve = pow(2.,1./2.)*pow(1.+_r*_r,-1./4.);
 		double v = q*ve;
 		double x6 = tools_uniform(0.,1.);
 		double x7 = tools_uniform(0.,2.*M_PI);
@@ -178,8 +178,7 @@ void tools_init_plummer(int _N, double M, double R) {
 
 		star.m = M/(double)_N;
 
-#warning TODO!
-	//	particles_add(star);
+		particles_add(r, star);
 	}
 }
 

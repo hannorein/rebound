@@ -40,7 +40,7 @@ void heartbeat(struct Rebound* const r);
 int main(int argc, char* argv[]){
 	struct Rebound* const r = rebound_init();
 	// Setup constants
-	r->integrator	= LEAPFROG;
+	r->integrator	= RB_IT_LEAPFROG;
 	r->gravity	= RB_GT_TREE;
 	r->boundary	= RB_BT_OPEN;
 	r->opening_angle2	= 1.5;		// This constant determines the accuracy of the tree code gravity estimate.

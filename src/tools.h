@@ -79,7 +79,7 @@ double tools_rayleigh(double sigma);
  * @param R Characteristic radius of the cluster.
  */
 
-void tools_init_plummer(int _N, double M, double R);
+void tools_init_plummer(struct Rebound* r, int _N, double M, double R);
 
 /**
  * Initialize a particle on an orbit in the xy plane.

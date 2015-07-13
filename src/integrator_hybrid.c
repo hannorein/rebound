@@ -84,36 +84,36 @@ static double get_min_ratio(struct Rebound* const r){
 
 
 static double ratio;
-integrator_t integrator_hybrid_mode = RB_IT_WHFAST; // 0 = symplectic; 1 = RB_IT_IAS15
+enum {SYMPLECTIC, HIGHORDER} integrator_hybrid_mode = SYMPLECTIC;
 void integrator_hybrid_part1(struct Rebound* r){
 	ratio = get_min_ratio(r);
 	if (initial_dt==0.){
 		initial_dt = r->dt;
 	}
 	if (ratio<integrator_hybrid_switch_ratio){
-		if (integrator_hybrid_mode==RB_IT_WHFAST){
+		if (integrator_hybrid_mode==SYMPLECTIC){
 			integrator_ias15_reset(r); //previous guesses no good anymore
 			if (integrator_hybrid_switch_warning==0.){
 				integrator_hybrid_switch_warning++;
-				fprintf(stderr,"\n\033[1mInfo!\033[0m Switching to RB_IT_IAS15 for the first time at t=%.9e.\n",r->t);
+				fprintf(stderr,"\n\033[1mInfo!\033[0m Switching to HIGHORDER for the first time at t=%.9e.\n",r->t);
 			}
 			integrator_whfast_synchronize(r);
 			r->gravity_ignore_10 = 0;
 		}
-		integrator_hybrid_mode = RB_IT_IAS15;
+		integrator_hybrid_mode = HIGHORDER;
 	}else{
-		if (integrator_hybrid_mode==RB_IT_IAS15){
+		if (integrator_hybrid_mode==HIGHORDER){
 			//integrator_whfast_reset(r); 
 			r->ri_whfast.recalculate_jacobi_this_timestep = 1;
 			r->dt = initial_dt;
 		}
-		integrator_hybrid_mode = RB_IT_WHFAST;
+		integrator_hybrid_mode = SYMPLECTIC;
 	}
 	switch(integrator_hybrid_mode){
-		case RB_IT_WHFAST:
+		case SYMPLECTIC:
 			integrator_whfast_part1(r);
 			break;
-		case RB_IT_IAS15:
+		case HIGHORDER:
 			integrator_ias15_part1(r);
 			break;
 		default:
@@ -122,10 +122,10 @@ void integrator_hybrid_part1(struct Rebound* r){
 }
 void integrator_hybrid_part2(struct Rebound* r){
 	switch(integrator_hybrid_mode){
-		case RB_IT_WHFAST:
+		case SYMPLECTIC:
 			integrator_whfast_part2(r);
 			break;
-		case RB_IT_IAS15:
+		case HIGHORDER:
 			integrator_ias15_part2(r);
 			break;
 		default:
@@ -135,7 +135,7 @@ void integrator_hybrid_part2(struct Rebound* r){
 	
 void integrator_hybrid_synchronize(struct Rebound* r){
 	switch(integrator_hybrid_mode){
-		case RB_IT_WHFAST:
+		case SYMPLECTIC:
 			integrator_whfast_synchronize(r);
 			break;
 		default:
@@ -144,7 +144,7 @@ void integrator_hybrid_synchronize(struct Rebound* r){
 }
 
 void integrator_hybrid_reset(struct Rebound* r){
-	integrator_hybrid_mode = RB_IT_WHFAST;
+	integrator_hybrid_mode = SYMPLECTIC;
 	integrator_hybrid_switch_warning = 0;
 	integrator_whfast_reset(r);
 	integrator_ias15_reset(r);
