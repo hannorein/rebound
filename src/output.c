@@ -34,9 +34,7 @@
 #include "tools.h"
 #include "output.h"
 #include "integrator_sei.h"
-#ifndef LIBREBOUND	
 #include "input.h"
-#endif // LIBREBOUND	
 #ifdef OPENGL
 #include "display.h"
 #ifdef LIBPNG

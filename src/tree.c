@@ -42,7 +42,7 @@
   * @param pt is the index of a particle.
   * @param node is the pointer to a node cell. 
   */
-static int reb_tree_get_octant_for_particle_in_cell(const struct reb_particle p, struct reb_treecell *node);
+static int reb_reb_tree_get_octant_for_particle_in_cell(const struct reb_particle p, struct reb_treecell *node);
 
 /**
   * This function adds a particle to the octant[o] of a node. 
@@ -106,20 +106,20 @@ static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_context* co
 	}
 	// In a existing node
 	if (node->pt >= 0) { // It's a leaf node
-		int o = reb_tree_get_octant_for_particle_in_cell(particles[node->pt], node);
+		int o = reb_reb_tree_get_octant_for_particle_in_cell(particles[node->pt], node);
 		node->oct[o] = reb_tree_add_particle_to_cell(r, node->oct[o], node->pt, node, o); 
-		o = reb_tree_get_octant_for_particle_in_cell(particles[pt], node);
+		o = reb_reb_tree_get_octant_for_particle_in_cell(particles[pt], node);
 		node->oct[o] = reb_tree_add_particle_to_cell(r, node->oct[o], pt, node, o);
 		node->pt = -2;
 	}else{ // It's not a leaf
 		node->pt--;
-		int o = reb_tree_get_octant_for_particle_in_cell(particles[pt], node);
+		int o = reb_reb_tree_get_octant_for_particle_in_cell(particles[pt], node);
 		node->oct[o] = reb_tree_add_particle_to_cell(r, node->oct[o], pt, node, o);
 	}
 	return node;
 }
 
-static int reb_tree_get_octant_for_particle_in_cell(const struct reb_particle p, struct reb_treecell *node){
+static int reb_reb_tree_get_octant_for_particle_in_cell(const struct reb_particle p, struct reb_treecell *node){
 	int octant = 0;
 	if (p.x < node->x) octant+=1;
 	if (p.y < node->y) octant+=2;
@@ -319,7 +319,7 @@ int reb_particles_get_rootbox_for_node(struct reb_treecell* node){
   * @param nnode is a pointer to a child cell of the cell which node points to.
   * @param node is a pointer to a node cell.
   */
-int reb_tree_get_octant_for_cell_in_cell(struct reb_treecell* nnode, struct reb_treecell *node){
+int reb_reb_tree_get_octant_for_cell_in_cell(struct reb_treecell* nnode, struct reb_treecell *node){
 	int octant = 0;
 	if (nnode->x < node->x) octant+=1;
 	if (nnode->y < node->y) octant+=2;
@@ -334,7 +334,7 @@ int reb_tree_get_octant_for_cell_in_cell(struct reb_treecell* nnode, struct reb_
   * @param node is a pointer to a node cell.
   */
 void reb_tree_add_essential_node_to_node(struct reb_treecell* nnode, struct reb_treecell* node){
-	int o = reb_tree_get_octant_for_cell_in_cell(nnode, node);
+	int o = reb_reb_tree_get_octant_for_cell_in_cell(nnode, node);
 	if (node->oct[o]==NULL){
 		node->oct[o] = nnode;
 	}else{

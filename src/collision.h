@@ -45,7 +45,7 @@ struct reb_collision{
 	int crossing;		/**< Collision occurs at the interface of two sweep boxes. */
 #endif // COLLISIONS_SWEEP
 	int ri;	 		/**< Index of rootcell (Needed for MPI). */
-} collision;
+};
 
 /**
  * Search for collisions and resolve them.

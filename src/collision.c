@@ -48,7 +48,7 @@
 #error COLLISIONS_DIRECT not yet compatible with MPI
 #endif
 
-static void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
+static void reb_tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
 static void reb_collision_resolve_hardsphere(struct reb_context* const r, struct reb_collision c);
 
 void reb_collision_search(struct reb_context* const r){
@@ -163,7 +163,7 @@ void reb_collision_search(struct reb_context* const r){
 					for (int ri=0;ri<r->root_n;ri++){
 						struct reb_treecell* rootcell = r->tree_root[ri];
 						if (rootcell!=NULL){
-							tree_get_nearest_neighbour_in_cell(r, &collisions_N, gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
+							reb_tree_get_nearest_neighbour_in_cell(r, &collisions_N, gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
 						}
 					}
 				}
@@ -213,7 +213,7 @@ void reb_collision_search(struct reb_context* const r){
  * @param collision_nearest Pointer to the nearest collision found so far.
  * @param c Pointer to the cell currently being searched in.
  */
-static void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c){
+static void reb_tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c){
 	const struct reb_particle* const particles = r->particles;
 	if (c->pt>=0){ 	
 		// c is a leaf node
@@ -289,7 +289,7 @@ static void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int*
 			for (int o=0;o<8;o++){
 				struct reb_treecell* d = c->oct[o];
 				if (d!=NULL){
-					tree_get_nearest_neighbour_in_cell(r, collisions_N, gb,gbunmod,ri,p1_r,nearest_r2,collision_nearest,d);
+					reb_tree_get_nearest_neighbour_in_cell(r, collisions_N, gb,gbunmod,ri,p1_r,nearest_r2,collision_nearest,d);
 				}
 			}
 		}
