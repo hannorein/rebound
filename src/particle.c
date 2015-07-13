@@ -43,7 +43,7 @@ extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
 void reb_add_local(struct reb_context* const r, struct reb_particle pt){
-	if (boundary_particle_is_in_box(r, pt)==0){
+	if (reb_boundary_particle_is_in_box(r, pt)==0){
 		// reb_particle has left the box. Do not add.
 		fprintf(stderr,"\n\033[1mWarning!\033[0m Did not add particle outside of box boundaries.\n");
 		return;
@@ -96,7 +96,7 @@ void reb_add(struct reb_context* const r, struct reb_particle pt){
 
 void reb_add_fixed(struct reb_context* const r, struct reb_particle pt,int pos){
 	// Only works for non-MPI simulations or when the particles does not move to another node.
-	if (boundary_particle_is_in_box(r, pt)==0){
+	if (reb_boundary_particle_is_in_box(r, pt)==0){
 		// reb_particle has left the box. Do not add.
 		return;
 	}

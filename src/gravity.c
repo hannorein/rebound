@@ -49,7 +49,7 @@
   * @param pt Index of the particle the force is calculated for.
   * @param gb Ghostbox plus position of the particle (precalculated). 
   */
-static void reb_calculate_acceleration_for_particle(const struct reb_context* const r, const int pt, const struct Ghostbox gb);
+static void reb_calculate_acceleration_for_particle(const struct reb_context* const r, const int pt, const struct reb_ghostbox gb);
 
 
 /**
@@ -84,7 +84,7 @@ void reb_calculate_acceleration(struct reb_context* r){
 			for (int gbx=-nghostx; gbx<=nghostx; gbx++){
 			for (int gby=-nghosty; gby<=nghosty; gby++){
 			for (int gbz=-nghostz; gbz<=nghostz; gbz++){
-				struct Ghostbox gb = boundary_get_ghostbox(r, gbx,gby,gbz);
+				struct reb_ghostbox gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
 				// Summing over all particle pairs
 #pragma omp parallel for schedule(guided)
 				for (int i=_N_start; i<_N_real; i++){
@@ -218,7 +218,7 @@ void reb_calculate_acceleration(struct reb_context* r){
 				// Summing over all particle pairs
 #pragma omp parallel for schedule(guided)
 				for (int i=0; i<N; i++){
-					struct Ghostbox gb = boundary_get_ghostbox(r, gbx,gby,gbz);
+					struct reb_ghostbox gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
 					// Precalculated shifted position
 					gb.shiftx += particles[i].x;
 					gb.shifty += particles[i].y;
@@ -320,9 +320,9 @@ void reb_calculate_acceleration_var(struct reb_context* r){
   * @param node Pointer to the cell the force is calculated from.
   * @param gb Ghostbox plus position of the particle (precalculated). 
   */
-static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_context* const r, const int pt, const struct reb_treecell *node, const struct Ghostbox gb);
+static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_context* const r, const int pt, const struct reb_treecell *node, const struct reb_ghostbox gb);
 
-static void reb_calculate_acceleration_for_particle(const struct reb_context* const r, const int pt, const struct Ghostbox gb) {
+static void reb_calculate_acceleration_for_particle(const struct reb_context* const r, const int pt, const struct reb_ghostbox gb) {
 	for(int i=0;i<r->root_n;i++){
 		struct reb_treecell* node = r->tree_root[i];
 		if (node!=NULL){
@@ -331,7 +331,7 @@ static void reb_calculate_acceleration_for_particle(const struct reb_context* co
 	}
 }
 
-static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_context* r, const int pt, const struct reb_treecell *node, const struct Ghostbox gb) {
+static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_context* r, const int pt, const struct reb_treecell *node, const struct reb_ghostbox gb) {
 	const double G = r->G;
 	const double softening2 = r->softening*r->softening;
 	struct reb_particle* const particles = r->particles;

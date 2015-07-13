@@ -48,7 +48,7 @@
 #error COLLISIONS_DIRECT not yet compatible with MPI
 #endif
 
-void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct reb_treecell* c);
+void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct reb_treecell* c);
 
 void collisions_search(struct reb_context* const r){
 	const int N = r->N;
@@ -69,8 +69,8 @@ void collisions_search(struct reb_context* const r){
 				// Loop over all particles
 				for (int i=0;i<N;i++){
 					struct reb_particle p1 = particles[i];
-					struct Ghostbox gborig = boundary_get_ghostbox(r, gbx,gby,gbz);
-					struct Ghostbox gb = gborig;
+					struct reb_ghostbox gborig = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
+					struct reb_ghostbox gb = gborig;
 					// Precalculate shifted position 
 					gb.shiftx += p1.x;
 					gb.shifty += p1.y;
@@ -150,8 +150,8 @@ void collisions_search(struct reb_context* const r){
 				for (int gby=-nghostycol; gby<=nghostycol; gby++){
 				for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
 					// Calculated shifted position (for speedup). 
-					struct Ghostbox gb = boundary_get_ghostbox(r, gbx,gby,gbz);
-					struct Ghostbox gbunmod = gb;
+					struct reb_ghostbox gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
+					struct reb_ghostbox gbunmod = gb;
 					gb.shiftx += p1.x; 
 					gb.shifty += p1.y; 
 					gb.shiftz += p1.z; 
@@ -206,7 +206,7 @@ void collisions_search(struct reb_context* const r){
  * @param collision_nearest Pointer to the nearest collision found so far.
  * @param c Pointer to the cell currently being searched in.
  */
-void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct collision* collision_nearest, struct reb_treecell* c){
+void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct collision* collision_nearest, struct reb_treecell* c){
 	const struct reb_particle* const particles = r->particles;
 	if (c->pt>=0){ 	
 		// c is a leaf node
@@ -312,7 +312,7 @@ void collision_resolve_hardsphere(struct reb_context* const r, struct collision 
 	}
 #endif // MPI
 //	if (p1.lastcollision==t || p2.lastcollision==t) return;
-	struct Ghostbox gb = c.gb;
+	struct reb_ghostbox gb = c.gb;
 	double x21  = p1.x + gb.shiftx  - p2.x; 
 	double y21  = p1.y + gb.shifty  - p2.y; 
 	double z21  = p1.z + gb.shiftz  - p2.z; 

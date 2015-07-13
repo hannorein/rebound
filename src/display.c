@@ -215,7 +215,7 @@ void display(void){
 	for (int i=-display_ghostboxes*display_r->nghostx;i<=display_ghostboxes*display_r->nghostx;i++){
 	for (int j=-display_ghostboxes*display_r->nghosty;j<=display_ghostboxes*display_r->nghosty;j++){
 	for (int k=-display_ghostboxes*display_r->nghostz;k<=display_ghostboxes*display_r->nghostz;k++){
-		struct Ghostbox gb = boundary_get_ghostbox(display_r, i,j,k);
+		struct reb_ghostbox gb = reb_boundary_get_ghostbox(display_r, i,j,k);
 		glTranslatef(gb.shiftx,gb.shifty,gb.shiftz);
 		if (!(!display_clear&&display_wire)){
 			// Drawing Points

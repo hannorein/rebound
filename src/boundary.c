@@ -37,7 +37,7 @@
 #include "boundary.h"
 #include "tree.h"
 
-void boundary_check(struct reb_context* const r){
+void reb_boundary_check(struct reb_context* const r){
 	struct reb_particle* const particles = r->particles;
 	const int N = r->N;
 	const double boxsize_x = r->boxsize_x;
@@ -141,13 +141,13 @@ void boundary_check(struct reb_context* const r){
 	}
 }
 
-const static struct Ghostbox nan_ghostbox = {.shiftx = 0, .shifty = 0, .shiftz = 0, .shiftvx = 0, .shiftvy = 0, .shiftvz = 0};
+const static struct reb_ghostbox nan_ghostbox = {.shiftx = 0, .shifty = 0, .shiftz = 0, .shiftvx = 0, .shiftvy = 0, .shiftvz = 0};
 
-struct Ghostbox boundary_get_ghostbox(struct reb_context* const r, int i, int j, int k){
+struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_context* const r, int i, int j, int k){
 	switch(r->boundary){
 		case RB_BT_OPEN:
 		{
-			struct Ghostbox gb;
+			struct reb_ghostbox gb;
 			gb.shiftx = r->boxsize_x*(double)i;
 			gb.shifty = r->boxsize_y*(double)j;
 			gb.shiftz = r->boxsize_z*(double)k;
@@ -159,7 +159,7 @@ struct Ghostbox boundary_get_ghostbox(struct reb_context* const r, int i, int j,
 		case RB_BT_SHEAR:
 		{
 			const double OMEGA = r->ri_sei.OMEGA;
-			struct Ghostbox gb;
+			struct reb_ghostbox gb;
 			// Ghostboxes habe a finite velocity.
 			gb.shiftvx = 0.;
 			gb.shiftvy = -1.5*(double)i*OMEGA*r->boxsize_x;
@@ -182,7 +182,7 @@ struct Ghostbox boundary_get_ghostbox(struct reb_context* const r, int i, int j,
 		}
 		case RB_BT_PERIODIC:
 		{
-			struct Ghostbox gb;
+			struct reb_ghostbox gb;
 			gb.shiftx = r->boxsize_x*(double)i;
 			gb.shifty = r->boxsize_y*(double)j;
 			gb.shiftz = r->boxsize_z*(double)k;
@@ -201,7 +201,7 @@ struct Ghostbox boundary_get_ghostbox(struct reb_context* const r, int i, int j,
  * @param p reb_particle to be checked.
  * @return Return value is 1 if particle is inside the box and 0 otherwise.
  */
-int boundary_particle_is_in_box(const struct reb_context* const r, struct reb_particle p){
+int reb_boundary_particle_is_in_box(const struct reb_context* const r, struct reb_particle p){
 	switch(r->boundary){
 		case RB_BT_OPEN:
 		case RB_BT_SHEAR:

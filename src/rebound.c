@@ -68,7 +68,7 @@ void reb_step(struct reb_context* const r){
 
 	// Check for root crossings.
 	PROFILING_START()
-	boundary_check(r);     
+	reb_boundary_check(r);     
 	PROFILING_STOP(PROFILING_CAT_BOUNDARY)
 
 	// Update and simplify tree. 
@@ -119,7 +119,7 @@ void reb_step(struct reb_context* const r){
 #ifndef COLLISIONS_NONE
 	// Check for root crossings.
 	PROFILING_START()
-	boundary_check(r);     
+	reb_boundary_check(r);     
 	PROFILING_STOP(PROFILING_CAT_BOUNDARY)
 
 	// Search for collisions using local and essential tree.

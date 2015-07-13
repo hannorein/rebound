@@ -39,7 +39,7 @@
 struct collision{
 	int p1;			/**< First colliding particle. */
 	int p2;			/**< Second colliding particle. */
-	struct Ghostbox gb;	/**< Ghostbox (of particle p1). */
+	struct reb_ghostbox gb;	/**< Ghostbox (of particle p1). */
 #if defined(COLLISIONS_SWEEP) || defined(COLLISIONS_SWEEPPHI)
 	double time;		/**< Time of collision. */
 	int crossing;		/**< Collision occurs at the interface of two sweep boxes. */
