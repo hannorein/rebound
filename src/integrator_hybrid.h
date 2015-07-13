@@ -25,8 +25,8 @@
 #ifndef _INTEGRATOR_HYBRID_H
 #define _INTEGRATOR_HYBRID_H
 struct reb_context;
-void integrator_hybrid_part1(struct reb_context* r);
-void integrator_hybrid_part2(struct reb_context* r);
-void integrator_hybrid_synchronize(struct reb_context* r);
-void integrator_hybrid_reset(struct reb_context* r);
+void reb_integrator_hybrid_part1(struct reb_context* r);
+void reb_integrator_hybrid_part2(struct reb_context* r);
+void reb_integrator_hybrid_synchronize(struct reb_context* r);
+void reb_integrator_hybrid_reset(struct reb_context* r);
 #endif

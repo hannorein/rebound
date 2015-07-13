@@ -97,7 +97,7 @@ void profiling_stop(int cat){
 #endif // PROFILING
 
 double output_timing_last = -1; 	/**< Time when output_timing() was called the last time. */
-extern unsigned int integrator_hybrid_mode;
+extern unsigned int reb_integrator_hybrid_mode;
 void output_timing(struct reb_context* r, const double tmax){
 	const int N = r->N;
 #ifdef MPI
@@ -129,7 +129,7 @@ void output_timing(struct reb_context* r, const double tmax){
 	}
 	printf("dt= %- 9f  ",r->dt);
 	if (r->integrator==RB_IT_HYBRID){
-		printf("INT= %- 1d  ",integrator_hybrid_mode);
+		printf("INT= %- 1d  ",reb_integrator_hybrid_mode);
 	}
 	printf("cpu= %- 9f [s]  ",temp-output_timing_last);
 	if (tmax>0){

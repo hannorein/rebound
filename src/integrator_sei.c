@@ -42,11 +42,10 @@
 #include "integrator_sei.h"
 
 
-void operator_H012(double dt, const struct reb_contextIntegratorSEI ri_sei, struct reb_particle* p);
-void operator_phi1(double dt, struct reb_particle* p);
-	
+static void operator_H012(double dt, const struct reb_contextIntegratorSEI ri_sei, struct reb_particle* p);
+static void operator_phi1(double dt, struct reb_particle* p);
 
-void integrator_sei_part1(struct reb_context* const r){
+void reb_integrator_sei_part1(struct reb_context* const r){
 	const int N = r->N;
 	struct reb_particle* const particles = r->particles;
 	if (r->ri_sei.OMEGAZ==-1){
@@ -70,7 +69,7 @@ void integrator_sei_part1(struct reb_context* const r){
 	r->t+=r->dt/2.;
 }
 
-void integrator_sei_part2(struct reb_context* r){
+void reb_integrator_sei_part2(struct reb_context* r){
 	const int N = r->N;
 	struct reb_particle* const particles = r->particles;
 	const struct reb_contextIntegratorSEI ri_sei = r->ri_sei;
@@ -82,12 +81,20 @@ void integrator_sei_part2(struct reb_context* r){
 	r->t+=r->dt/2.;
 }
 
+void reb_integrator_sei_synchronize(struct reb_context* r){
+	// Do nothing.
+}
+
+void reb_integrator_sei_reset(struct reb_context* r){
+	r->ri_sei.lastdt = 0;	
+}
+
 /**
  * This function evolves a particle under the unperturbed
  * Hamiltonian H0 exactly up to machine precission.
  * @param p reb_particle to evolve.
  */
-void operator_H012(double dt, const struct reb_contextIntegratorSEI ri_sei, struct reb_particle* p){
+static void operator_H012(double dt, const struct reb_contextIntegratorSEI ri_sei, struct reb_particle* p){
 		
 	// Integrate vertical motion
 	const double zx = p->z * ri_sei.OMEGAZ;
@@ -128,7 +135,7 @@ void operator_H012(double dt, const struct reb_contextIntegratorSEI ri_sei, stru
  * this should not be visible. However, it is worth keeping in mind. 
  * @param p reb_particle to evolve.
  */
-void operator_phi1(double dt, struct reb_particle* p){
+static void operator_phi1(double dt, struct reb_particle* p){
 	// The force used here is for test cases 2 and 3 
 	// in Rein & Tremaine 2011. 
 	p->vx += p->ax * dt;
@@ -136,10 +143,3 @@ void operator_phi1(double dt, struct reb_particle* p){
 	p->vz += p->az * dt;
 }
 
-void integrator_sei_synchronize(struct reb_context* r){
-	// Do nothing.
-}
-
-void integrator_sei_reset(struct reb_context* r){
-	r->ri_sei.lastdt = 0;	
-}

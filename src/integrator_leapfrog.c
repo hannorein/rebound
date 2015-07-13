@@ -32,14 +32,11 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
-#include "particle.h"
 #include "rebound.h"
-#include "gravity.h"
-#include "integrator.h"
 
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
-void integrator_leapfrog_part1(struct reb_context* r){
+void reb_integrator_leapfrog_part1(struct reb_context* r){
 	const int N = r->N;
 	struct reb_particle* restrict const particles = r->particles;
 	const double dt = r->dt;
@@ -51,7 +48,7 @@ void integrator_leapfrog_part1(struct reb_context* r){
 	}
 	r->t+=dt/2.;
 }
-void integrator_leapfrog_part2(struct reb_context* r){
+void reb_integrator_leapfrog_part2(struct reb_context* r){
 	const int N = r->N;
 	struct reb_particle* restrict const particles = r->particles;
 	const double dt = r->dt;
@@ -67,10 +64,10 @@ void integrator_leapfrog_part2(struct reb_context* r){
 	r->t+=dt/2.;
 }
 	
-void integrator_leapfrog_synchronize(struct reb_context* r){
+void reb_integrator_leapfrog_synchronize(struct reb_context* r){
 	// Do nothing.
 }
 
-void integrator_leapfrog_reset(struct reb_context* r){
+void reb_integrator_leapfrog_reset(struct reb_context* r){
 	// Do nothing.
 }

@@ -39,12 +39,12 @@
 #include "integrator_whfast.h"
 #include "integrator_ias15.h"
 
-// Switch to non-symplectic integrator if force_form_star/force_from_other_particle < integrator_hybrid_switch_ratio.
+// Switch to non-symplectic integrator if force_form_star/force_from_other_particle < reb_integrator_hybrid_switch_ratio.
 // Default corresponds to about 10 Hill Radii 
-double integrator_hybrid_switch_ratio = 100; 
+double reb_integrator_hybrid_switch_ratio = 100; 
 
 static double initial_dt = 0;
-static unsigned int integrator_hybrid_switch_warning = 0;
+static unsigned int reb_integrator_hybrid_switch_warning = 0;
 
 static double get_min_ratio(struct reb_context* const r){
 	const int N = r->N;
@@ -84,32 +84,32 @@ static double get_min_ratio(struct reb_context* const r){
 
 
 static double ratio;
-enum {SYMPLECTIC, HIGHORDER} integrator_hybrid_mode = SYMPLECTIC;
-void integrator_hybrid_part1(struct reb_context* r){
+enum {SYMPLECTIC, HIGHORDER} reb_integrator_hybrid_mode = SYMPLECTIC;
+void reb_integrator_hybrid_part1(struct reb_context* r){
 	ratio = get_min_ratio(r);
 	if (initial_dt==0.){
 		initial_dt = r->dt;
 	}
-	if (ratio<integrator_hybrid_switch_ratio){
-		if (integrator_hybrid_mode==SYMPLECTIC){
+	if (ratio<reb_integrator_hybrid_switch_ratio){
+		if (reb_integrator_hybrid_mode==SYMPLECTIC){
 			reb_integrator_ias15_reset(r); //previous guesses no good anymore
-			if (integrator_hybrid_switch_warning==0.){
-				integrator_hybrid_switch_warning++;
+			if (reb_integrator_hybrid_switch_warning==0.){
+				reb_integrator_hybrid_switch_warning++;
 				fprintf(stderr,"\n\033[1mInfo!\033[0m Switching to HIGHORDER for the first time at t=%.9e.\n",r->t);
 			}
 			reb_integrator_whfast_synchronize(r);
 			r->gravity_ignore_10 = 0;
 		}
-		integrator_hybrid_mode = HIGHORDER;
+		reb_integrator_hybrid_mode = HIGHORDER;
 	}else{
-		if (integrator_hybrid_mode==HIGHORDER){
+		if (reb_integrator_hybrid_mode==HIGHORDER){
 			//reb_integrator_whfast_reset(r); 
 			r->ri_whfast.recalculate_jacobi_this_timestep = 1;
 			r->dt = initial_dt;
 		}
-		integrator_hybrid_mode = SYMPLECTIC;
+		reb_integrator_hybrid_mode = SYMPLECTIC;
 	}
-	switch(integrator_hybrid_mode){
+	switch(reb_integrator_hybrid_mode){
 		case SYMPLECTIC:
 			reb_integrator_whfast_part1(r);
 			break;
@@ -120,8 +120,8 @@ void integrator_hybrid_part1(struct reb_context* r){
 			break;
 	}
 }
-void integrator_hybrid_part2(struct reb_context* r){
-	switch(integrator_hybrid_mode){
+void reb_integrator_hybrid_part2(struct reb_context* r){
+	switch(reb_integrator_hybrid_mode){
 		case SYMPLECTIC:
 			reb_integrator_whfast_part2(r);
 			break;
@@ -133,8 +133,8 @@ void integrator_hybrid_part2(struct reb_context* r){
 	}
 }
 	
-void integrator_hybrid_synchronize(struct reb_context* r){
-	switch(integrator_hybrid_mode){
+void reb_integrator_hybrid_synchronize(struct reb_context* r){
+	switch(reb_integrator_hybrid_mode){
 		case SYMPLECTIC:
 			reb_integrator_whfast_synchronize(r);
 			break;
@@ -143,11 +143,11 @@ void integrator_hybrid_synchronize(struct reb_context* r){
 	}
 }
 
-void integrator_hybrid_reset(struct reb_context* r){
-	integrator_hybrid_mode = SYMPLECTIC;
-	integrator_hybrid_switch_warning = 0;
+void reb_integrator_hybrid_reset(struct reb_context* r){
+	reb_integrator_hybrid_mode = SYMPLECTIC;
+	reb_integrator_hybrid_switch_warning = 0;
 	reb_integrator_whfast_reset(r);
 	reb_integrator_ias15_reset(r);
-	integrator_hybrid_switch_ratio = 400.;
+	reb_integrator_hybrid_switch_ratio = 400.;
 	initial_dt = 0.;
 }

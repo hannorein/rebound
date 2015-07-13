@@ -49,19 +49,19 @@ void integrator_part1(struct reb_context* r){
 			reb_integrator_ias15_part1(r);
 			break;
 		case RB_IT_WH:
-			integrator_wh_part1(r);
+			reb_integrator_wh_part1(r);
 			break;
 		case RB_IT_LEAPFROG:
-			integrator_leapfrog_part1(r);
+			reb_integrator_leapfrog_part1(r);
 			break;
 		case RB_IT_SEI:
-			integrator_sei_part1(r);
+			reb_integrator_sei_part1(r);
 			break;
 		case RB_IT_WHFAST:
 			reb_integrator_whfast_part1(r);
 			break;
 		case RB_IT_HYBRID:
-			integrator_hybrid_part1(r);
+			reb_integrator_hybrid_part1(r);
 			break;
 		default:
 			break;
@@ -74,19 +74,19 @@ void integrator_part2(struct reb_context* r){
 			reb_integrator_ias15_part2(r);
 			break;
 		case RB_IT_WH:
-			integrator_wh_part2(r);
+			reb_integrator_wh_part2(r);
 			break;
 		case RB_IT_LEAPFROG:
-			integrator_leapfrog_part2(r);
+			reb_integrator_leapfrog_part2(r);
 			break;
 		case RB_IT_SEI:
-			integrator_sei_part2(r);
+			reb_integrator_sei_part2(r);
 			break;
 		case RB_IT_WHFAST:
 			reb_integrator_whfast_part2(r);
 			break;
 		case RB_IT_HYBRID:
-			integrator_hybrid_part2(r);
+			reb_integrator_hybrid_part2(r);
 			break;
 		default:
 			break;
@@ -99,19 +99,19 @@ void integrator_synchronize(struct reb_context* r){
 			reb_integrator_ias15_synchronize(r);
 			break;
 		case RB_IT_WH:
-			integrator_wh_synchronize(r);
+			reb_integrator_wh_synchronize(r);
 			break;
 		case RB_IT_LEAPFROG:
-			integrator_leapfrog_synchronize(r);
+			reb_integrator_leapfrog_synchronize(r);
 			break;
 		case RB_IT_SEI:
-			integrator_sei_synchronize(r);
+			reb_integrator_sei_synchronize(r);
 			break;
 		case RB_IT_WHFAST:
 			reb_integrator_whfast_synchronize(r);
 			break;
 		case RB_IT_HYBRID:
-			integrator_hybrid_synchronize(r);
+			reb_integrator_hybrid_synchronize(r);
 			break;
 		default:
 			break;
@@ -122,11 +122,11 @@ void integrator_reset(struct reb_context* r){
 	r->integrator = RB_IT_IAS15;
 	r->gravity_ignore_10 = 0;
 	reb_integrator_ias15_reset(r);
-	integrator_wh_reset(r);
-	integrator_leapfrog_reset(r);
-	integrator_sei_reset(r);
+	reb_integrator_wh_reset(r);
+	reb_integrator_leapfrog_reset(r);
+	reb_integrator_sei_reset(r);
 	reb_integrator_whfast_reset(r);
-	integrator_hybrid_reset(r);
+	reb_integrator_hybrid_reset(r);
 }
 
 void integrator_update_acceleration(struct reb_context* r){
