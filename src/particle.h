@@ -26,7 +26,7 @@
 #define _PARTICLE_H
 struct reb_context;
 struct reb_particle;
-struct cell;
+struct reb_treecell;
 
 
 /** 

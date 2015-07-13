@@ -26,9 +26,9 @@
 #ifndef _TREE_H
 #define _TREE_H
 
-struct cell; /**< The data structure of one node of a tree */
+struct reb_treecell; /**< The data structure of one node of a tree */
 
-struct cell {
+struct reb_treecell {
 	double x; /**< The x position of the center of a cell */
 	double y; /**< The y position of the center of a cell */
 	double z; /**< The z position of the center of a cell */
@@ -45,7 +45,7 @@ struct cell {
 	double myz; /**< The yz component of the quadrupole tensor of mass of a cell */
 	double mzz; /**< The zz component of the quadrupole tensor of mass of a cell */
 #endif // QUADRUPOLE
-	struct cell *oct[8]; /**< The pointer array to the octants of a cell */
+	struct reb_treecell *oct[8]; /**< The pointer array to the octants of a cell */
 	int pt;	/**< It has double usages: in a leaf node, it stores the index 
 			  * of a particle; in a non-leaf node, it equals to (-1)*Total 
 			  * Number of particles within that cell. */ 
@@ -53,21 +53,21 @@ struct cell {
 
 
 /**
-  * The wrap function corresponds to initializing the trees when they don't exist and updating the structures of the trees by calling tree_update_cell. 
+  * The wrap function corresponds to initializing the trees when they don't exist and updating the structures of the trees by calling reb_tree_update_cell. 
   */
-void tree_update(struct reb_context* const r);
+void reb_tree_update(struct reb_context* const r);
 
 /**
-  * The wrap function calls tree_update_gravity_data_in_cell() to for each tree.
+  * The wrap function calls reb_tree_update_gravity_data_in_cell() to for each tree.
   */
-void tree_update_gravity_data(struct reb_context* const r);
+void reb_tree_update_gravity_data(struct reb_context* const r);
 
 /**
-  * The wrap function calls tree_add_particle_to_cell() to add the particle into one of the trees. If the tree_root doesn't exist, then it initializes the trees. 
+  * The wrap function calls reb_tree_add_particle_to_cell() to add the particle into one of the trees. If the tree_root doesn't exist, then it initializes the trees. 
   *
   * @param pt is the index of a particle.
   */
-void tree_add_particle_to_tree(struct reb_context* const r, int pt);
+void reb_tree_add_particle_to_tree(struct reb_context* const r, int pt);
 
 #ifdef MPI
 /**
@@ -75,15 +75,15 @@ void tree_add_particle_to_tree(struct reb_context* const r, int pt);
   *
   * @param node is a pointer to a node cell.
   */
-void tree_add_essential_node(struct cell* node);
+void reb_tree_add_essential_node(struct reb_treecell* node);
 /**
   * Needs more comments!
   */
-void tree_prepare_essential_tree_for_gravity(void);
+void reb_tree_prepare_essential_tree_for_gravity(void);
 /**
   * Needs more comments!
   */
-void tree_prepare_essential_tree_for_collisions(void);
+void reb_tree_prepare_essential_tree_for_collisions(void);
 #endif // MPI
 
 #endif // _TREE_H

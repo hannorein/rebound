@@ -66,7 +66,7 @@ struct reb_particle {
 #endif
 	double r; 	/**< Radius of the particle. */
 	double lastcollision;	/**< Last time the particle had a physical collision. */
-	struct cell* c;		/**< Pointer to the cell the particle is currently in. */
+	struct reb_treecell* c;		/**< Pointer to the cell the particle is currently in. */
 };
 
 
@@ -174,7 +174,7 @@ struct reb_context {
 	
 	//////////////////////////////////////////////
 	/// Tree
-	struct cell** tree_root; 			/**< Pointer to the roots of the trees. */
+	struct reb_treecell** tree_root; 			/**< Pointer to the roots of the trees. */
 	int N_tree_fixed; 				/**< reb_particle between 0 and N_tree_fixed will not be shuffled around during tree-reconstruction.  */
 	double opening_angle2;	 			/**< Square of the cell opening angle \f$ \theta \f$. */
 

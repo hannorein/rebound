@@ -76,7 +76,7 @@ void reb_step(struct reb_context* const r){
 	// This function also creates the tree if called for the first time.
 	PROFILING_START()
 	if (r->gravity==RB_GT_TREE){
-		tree_update(r);          
+		reb_tree_update(r);          
 	}
 
 #ifdef MPI
@@ -86,10 +86,10 @@ void reb_step(struct reb_context* const r){
 
 	if (r->tree_root!=NULL && r->gravity==RB_GT_TREE){
 		// Update center of mass and quadrupole moments in tree in preparation of force calculation.
-		tree_update_gravity_data(r); 
+		reb_tree_update_gravity_data(r); 
 #ifdef MPI
 		// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
-		tree_prepare_essential_tree_for_gravity();
+		reb_tree_prepare_essential_tree_for_gravity();
 
 		// Transfer essential tree and particles needed for collisions.
 		communication_mpi_distribute_essential_tree_for_gravity();

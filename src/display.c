@@ -158,7 +158,7 @@ void displayKey(unsigned char key, int x, int y){
  * Draws a cell and all its daughters.
  * @param node Cell to draw.
  */
-void display_cell(struct cell* node){
+void display_cell(struct reb_treecell* node){
 	if (node == NULL) return;
 	glColor4f(1.0,0.5,1.0,0.4);
 	glTranslatef(node->mx,node->my,node->mz);
@@ -196,9 +196,9 @@ void display(void){
 	const struct reb_particle* particles = display_r->particles;
 	if (display_pause) return;
 	if (display_tree){
-		tree_update(display_r);
+		reb_tree_update(display_r);
 		if (display_r->gravity==RB_GT_TREE){
-			tree_update_gravity_data(display_r);
+			reb_tree_update_gravity_data(display_r);
 		}
 	}
 	if (display_clear){

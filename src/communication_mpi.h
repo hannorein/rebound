@@ -62,12 +62,12 @@ extern struct particle** 	particles_recv;		/**< Receive buffer for particles. Th
 extern int* 			particles_recv_N;       /**< Current length of particle receive buffer. */
 extern int* 			particles_recv_Nmax;    /**< Maximal length of particle receive beffer before realloc() is needed. */
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
-MPI_Datatype mpi_cell;						/**< MPI datatype corresponding to the C struct cell. */
-struct cell;
-extern struct cell** 		tree_essential_send;		/**< Send buffer for cells. There is one buffer per node. */
+MPI_Datatype mpi_cell;						/**< MPI datatype corresponding to the C struct reb_treecell. */
+struct reb_treecell;
+extern struct reb_treecell** 		tree_essential_send;		/**< Send buffer for cells. There is one buffer per node. */
 extern int* 			tree_essential_send_N;          /**< Current length of cell send buffer. */
 extern int* 			tree_essential_send_Nmax;       /**< Maximal length of cell send beffer before realloc() is needed. */
-extern struct cell** 		tree_essential_recv;            /**< Receive buffer for cells. There is one buffer per node. */
+extern struct reb_treecell** 		tree_essential_recv;            /**< Receive buffer for cells. There is one buffer per node. */
 extern int* 			tree_essential_recv_N;          /**< Current length of cell receive buffer. */
 extern int* 			tree_essential_recv_Nmax;       /**< Maximal length of cell receive beffer before realloc() is needed. */
 #endif // TREE
@@ -112,7 +112,7 @@ void communication_mpi_distribute_essential_tree_for_gravity(void);
  * Prepares the essential tree of a root box for communication with other nodes.
  * @param root The root cell under investigation.
  */
-void communication_mpi_prepare_essential_tree_for_gravity(struct cell* root);
+void communication_mpi_prepare_essential_tree_for_gravity(struct reb_treecell* root);
 #endif // TREE
 
 #ifdef COLLISIONS_TREE
@@ -128,7 +128,7 @@ void communication_mpi_distribute_essential_tree_for_collisions(void);
  * Adds copy of particles into particles_send.  
  * @param root The root cell under investigation.
  */
-void communication_mpi_prepare_essential_tree_for_collisions(struct cell* root);
+void communication_mpi_prepare_essential_tree_for_collisions(struct reb_treecell* root);
 #endif //COLLISIONS_TREE
 
 

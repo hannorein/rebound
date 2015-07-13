@@ -48,7 +48,7 @@
 #error COLLISIONS_DIRECT not yet compatible with MPI
 #endif
 
-void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct cell* c);
+void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct reb_treecell* c);
 
 void collisions_search(struct reb_context* const r){
 	const int N = r->N;
@@ -117,14 +117,14 @@ void collisions_search(struct reb_context* const r){
 		{
 			// Update and simplify tree. 
 			// Prepare particles for distribution to other nodes. 
-			tree_update(r);          
+			reb_tree_update(r);          
 
 #ifdef MPI
 			// Distribute particles and add newly received particles to tree.
 			communication_mpi_distribute_particles();
 			
 			// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
-			tree_prepare_essential_tree_for_collisions();
+			reb_tree_prepare_essential_tree_for_collisions();
 
 			// Transfer essential tree and particles needed for collisions.
 			communication_mpi_distribute_essential_tree_for_collisions();
@@ -160,7 +160,7 @@ void collisions_search(struct reb_context* const r){
 					gb.shiftvz += p1.vz; 
 					// Loop over all root boxes.
 					for (int ri=0;ri<r->root_n;ri++){
-						struct cell* rootcell = r->tree_root[ri];
+						struct reb_treecell* rootcell = r->tree_root[ri];
 						if (rootcell!=NULL){
 							tree_get_nearest_neighbour_in_cell(r, &collisions_N, gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
 						}
@@ -206,7 +206,7 @@ void collisions_search(struct reb_context* const r){
  * @param collision_nearest Pointer to the nearest collision found so far.
  * @param c Pointer to the cell currently being searched in.
  */
-void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct collision* collision_nearest, struct cell* c){
+void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct Ghostbox gb, struct Ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct collision* collision_nearest, struct reb_treecell* c){
 	const struct reb_particle* const particles = r->particles;
 	if (c->pt>=0){ 	
 		// c is a leaf node
@@ -280,7 +280,7 @@ void tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collis
 		// Check if we need to decent into daughter cells
 		if (r2 < rp*rp ){
 			for (int o=0;o<8;o++){
-				struct cell* d = c->oct[o];
+				struct reb_treecell* d = c->oct[o];
 				if (d!=NULL){
 					tree_get_nearest_neighbour_in_cell(r, collisions_N, gb,gbunmod,ri,p1_r,nearest_r2,collision_nearest,d);
 				}
