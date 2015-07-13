@@ -37,13 +37,13 @@
  * Available integrators.
  */
 typedef enum {
-	IAS15 = 0,
-	WHFAST = 1,
-	SEI = 2,
-	WH = 3,
-	LEAPFROG = 4,
-	HYBRID = 5,
-	NONE = 6,
+	RB_IT_IAS15 = 0,
+	RB_IT_WHFAST = 1,
+	RB_IT_SEI = 2,
+	RB_IT_WH = 3,
+	RB_IT_LEAPFROG = 4,
+	RB_IT_HYBRID = 5,
+	RB_IT_NONE = 6,
 	} integrator_t;
 
 /**

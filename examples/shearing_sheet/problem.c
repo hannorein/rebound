@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 	struct Rebound* r = rebound_init();
 	// Setup constants
 	r->opening_angle2	= .5;					// This determines the precission of the tree code gravity calculation.
-	r->integrator			= SEI;
+	r->integrator			= RB_IT_SEI;
 	r->boundary			= RB_BT_SHEAR;
 	r->gravity			= RB_GT_TREE;
 	r->collision			= RB_CT_TREE;

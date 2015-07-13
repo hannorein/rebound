@@ -45,22 +45,22 @@
 
 void integrator_part1(struct Rebound* r){
 	switch(r->integrator){
-		case IAS15:
+		case RB_IT_IAS15:
 			integrator_ias15_part1(r);
 			break;
-		case WH:
+		case RB_IT_WH:
 			integrator_wh_part1(r);
 			break;
-		case LEAPFROG:
+		case RB_IT_LEAPFROG:
 			integrator_leapfrog_part1(r);
 			break;
-		case SEI:
+		case RB_IT_SEI:
 			integrator_sei_part1(r);
 			break;
-		case WHFAST:
+		case RB_IT_WHFAST:
 			integrator_whfast_part1(r);
 			break;
-		case HYBRID:
+		case RB_IT_HYBRID:
 			integrator_hybrid_part1(r);
 			break;
 		default:
@@ -70,22 +70,22 @@ void integrator_part1(struct Rebound* r){
 
 void integrator_part2(struct Rebound* r){
 	switch(r->integrator){
-		case IAS15:
+		case RB_IT_IAS15:
 			integrator_ias15_part2(r);
 			break;
-		case WH:
+		case RB_IT_WH:
 			integrator_wh_part2(r);
 			break;
-		case LEAPFROG:
+		case RB_IT_LEAPFROG:
 			integrator_leapfrog_part2(r);
 			break;
-		case SEI:
+		case RB_IT_SEI:
 			integrator_sei_part2(r);
 			break;
-		case WHFAST:
+		case RB_IT_WHFAST:
 			integrator_whfast_part2(r);
 			break;
-		case HYBRID:
+		case RB_IT_HYBRID:
 			integrator_hybrid_part2(r);
 			break;
 		default:
@@ -95,22 +95,22 @@ void integrator_part2(struct Rebound* r){
 	
 void integrator_synchronize(struct Rebound* r){
 	switch(r->integrator){
-		case IAS15:
+		case RB_IT_IAS15:
 			integrator_ias15_synchronize(r);
 			break;
-		case WH:
+		case RB_IT_WH:
 			integrator_wh_synchronize(r);
 			break;
-		case LEAPFROG:
+		case RB_IT_LEAPFROG:
 			integrator_leapfrog_synchronize(r);
 			break;
-		case SEI:
+		case RB_IT_SEI:
 			integrator_sei_synchronize(r);
 			break;
-		case WHFAST:
+		case RB_IT_WHFAST:
 			integrator_whfast_synchronize(r);
 			break;
-		case HYBRID:
+		case RB_IT_HYBRID:
 			integrator_hybrid_synchronize(r);
 			break;
 		default:
@@ -119,7 +119,7 @@ void integrator_synchronize(struct Rebound* r){
 }
 
 void integrator_reset(struct Rebound* r){
-	r->integrator = IAS15;
+	r->integrator = RB_IT_IAS15;
 	r->gravity_ignore_10 = 0;
 	integrator_ias15_reset(r);
 	integrator_wh_reset(r);
