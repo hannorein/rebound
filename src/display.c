@@ -53,7 +53,6 @@
 GLuint display_dlist_sphere;	/**< Precalculated display list of a sphere. */
 #endif // APPLE
 int display_spheres = 1;	/**< Switches between point sprite and real spheres. */
-int display_init_done = 0;	
 int display_pause_sim = 0;	/**< Pauses simulation. */
 int display_pause = 0;		/**< Pauses visualization, but keep simulation running */
 int display_tree = 0;		/**< Shows/hides tree structure. */
@@ -230,7 +229,6 @@ void display(void){
 			glDisableClientState(GL_VERTEX_ARRAY);
 			if (display_spheres){
 				glDisable(GL_BLEND);                    
-				glDepthMask(GL_TRUE);
 				glEnable(GL_DEPTH_TEST);
 				glEnable(GL_LIGHTING);
 				glEnable(GL_LIGHT0);
@@ -253,7 +251,6 @@ void display(void){
 					}
 				}
 				glEnable(GL_BLEND);                    
-				glDepthMask(GL_FALSE);
 				glDisable(GL_DEPTH_TEST);
 				glDisable(GL_LIGHTING);
 				glDisable(GL_LIGHT0);
@@ -344,6 +341,7 @@ void display_init(int argc, char* argv[], double tmax){
 	glutDisplayFunc(display);
 	glutIdleFunc(display_func);
 	glutKeyboardFunc(displayKey);
+	glDepthMask(GL_TRUE);
 	glEnable(GL_BLEND);                    
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);  
 	
@@ -379,7 +377,6 @@ void display_init(int argc, char* argv[], double tmax){
 	glMaterialf(GL_FRONT, GL_SHININESS, 80);
 
 	// Enter glut run loop and never come back.
-	display_init_done =1; 
 	glutMainLoop();
 }
 

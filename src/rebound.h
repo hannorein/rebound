@@ -119,6 +119,12 @@ struct Rebound {
 
 
 	//////////////////////////////////////////////
+	/// Collisions
+	struct	collision* collisions;	/**< Array of all collisions. */
+	int 	collisions_NMAX;	/**< Size allocated for collisions.*/
+	int 	collisions_N;		/**< Number of elements in collisions. */
+
+	//////////////////////////////////////////////
 	/// Variational Particles
 	double megno_Ys;
 	double megno_Yss;

@@ -4,8 +4,6 @@ export OPENGL=1
 export LIBPNG=0
 
 all:
-	# Setup link to different modules
-	ln -fs collisions_tree.c ../../src/collisions.c
 	# Setup link to problem file
 	ln -fs ../$(PROBLEMDIR)/problem.c ../../src/problem.c
 	# Compile

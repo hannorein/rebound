@@ -125,9 +125,6 @@ void rebound_step(struct Rebound* const r){
 	// Search for collisions using local and essential tree.
 	PROFILING_START()
 	collisions_search(r);
-
-	// Resolve collisions (only local particles are affected).
-	collisions_resolve(r);
 	PROFILING_STOP(PROFILING_CAT_COLLISION)
 #endif  // COLLISIONS_NONE
 	if (r->heartbeat){ r->heartbeat(r); }
@@ -219,6 +216,10 @@ struct Rebound* rebound_init(){
 	r->gravity_ignore_10	= 0;
 	r->N_cs 		= 0;
 	r->cs 			= NULL;
+
+	r->collisions		= NULL;
+	r->collisions_N		= 0;
+	r->collisions_NMAX	= 0;
 	
 	// Default modules
 	r->integrator 	= IAS15;
