@@ -40,8 +40,6 @@
 
 #ifdef MPI
 #include "communication_mpi.h"
-#warning GRAVITY_DIRECT might not work with MPI for your problem. 
-#warning Make sure you know what the code is doing. Have a look at the example restricted_threebody_mpi.
 #endif
 
 void gravity_calculate_acceleration(struct Rebound* r){
@@ -189,6 +187,7 @@ void gravity_calculate_acceleration(struct Rebound* r){
 			}
 			}
 		}
+		break;
 		default:
 			fprintf(stderr,"\n\033[1mError!\033[0m Gravity calculation not yet implemented.\n");
 			exit(EXIT_FAILURE);

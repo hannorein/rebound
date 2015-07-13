@@ -34,7 +34,6 @@
 #include "tree.h"
 #include "communication_mpi.h"
 
-#ifdef TREE
 
 /**
   * Given the index of a particle and a pointer to a node cell, the function returns the index
@@ -203,7 +202,6 @@ struct cell *tree_update_cell(struct Rebound* const r, struct cell *node){
 	}
 }
 
-#ifdef GRAVITY_TREE
 /**
   * The function calculates the total mass and center of mass of a node. When QUADRUPOLE is defined, it also calculates the mass quadrupole tensor for all non-leaf nodes.
   */
@@ -282,7 +280,6 @@ void tree_update_gravity_data(struct Rebound* const r){
 #endif // MPI
 	}
 }
-#endif // GRAVITY_TREE
 
 void tree_update(struct Rebound* const r){
 	if (r->tree_root==NULL){
@@ -357,7 +354,6 @@ void tree_add_essential_node(struct cell* node){
 		tree_add_essential_node_to_node(node, r->tree_root[index]);
 	}
 }
-#ifdef GRAVITY_TREE
 void tree_prepare_essential_tree_for_gravity(void){
 	for(int i=0;i<root_n;i++){
 		if (communication_mpi_rootbox_is_local(i)==1){
@@ -370,7 +366,6 @@ void tree_prepare_essential_tree_for_gravity(void){
 		}
 	}
 }
-#endif // GRAVITY_TREE
 void tree_prepare_essential_tree_for_collisions(void){
 	for(int i=0;i<root_n;i++){
 		if (communication_mpi_rootbox_is_local(i)==1){
@@ -385,4 +380,3 @@ void tree_prepare_essential_tree_for_collisions(void){
 }
 #endif // MPI
 
-#endif

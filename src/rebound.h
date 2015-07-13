@@ -24,9 +24,6 @@
  */
 #ifndef _MAIN_H
 #define _MAIN_H
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
-#define TREE
-#endif
 #ifndef M_PI
 // Make sure M_PI is defined. 
 #define M_PI           3.14159265358979323846
@@ -134,14 +131,12 @@ struct Rebound {
 	/// Particles
 	struct Particle* particles; 			/**< Main particle array. This contains all particles on this node.  */
 	
-#ifdef TREE
 	//////////////////////////////////////////////
 	/// Tree
 	struct cell** tree_root; 			/**< Pointer to the roots of the trees. */
 	int N_tree_fixed; 				/**< Particle between 0 and N_tree_fixed will not be shuffled around during tree-reconstruction.  */
 	double opening_angle2;	 			/**< Square of the cell opening angle \f$ \theta \f$. */
 
-#endif // TREE
 	
 	//////////////////////////////////////////////
 	/// Integrators

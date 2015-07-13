@@ -159,14 +159,12 @@ void displayKey(unsigned char key, int x, int y){
 	display();
 }
 
-#ifdef TREE
 /**
  * Draws a cell and all its daughters.
  * @param node Cell to draw.
  */
 void display_cell(struct cell* node){
 	if (node == NULL) return;
-#ifdef GRAVITY_TREE
 	glColor4f(1.0,0.5,1.0,0.4);
 	glTranslatef(node->mx,node->my,node->mz);
 	glScalef(0.04*node->w,0.04*node->w,0.04*node->w);
@@ -179,7 +177,6 @@ void display_cell(struct cell* node){
 	}
 	glScalef(25./node->w,25./node->w,25./node->w);
 	glTranslatef(-node->mx,-node->my,-node->mz);
-#endif
 	glColor4f(1.0,0.0,0.0,0.4);
 	glTranslatef(node->x,node->y,node->z);
 	glutWireCube(node->w);
@@ -197,21 +194,18 @@ void display_entire_tree(void){
 		display_cell(display_r->tree_root[i]);
 	}
 }
-#endif
 
 struct Rebound* display_r = NULL;
 
 void display(void){
 	const struct Particle* particles = display_r->particles;
 	if (display_pause) return;
-#ifdef TREE
 	if (display_tree){
 		tree_update(display_r);
-#ifdef GRAVITY_TREE
-		tree_update_gravity_data(display_r);
-#endif
+		if (display_r->gravity==RB_GT_TREE){
+			tree_update_gravity_data(display_r);
+		}
 	}
-#endif
 	if (display_clear){
 	        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	}
@@ -330,12 +324,10 @@ void display(void){
 		}
 		// Drawing Tree
 		glColor4f(1.0,0.0,0.0,0.4);
-#ifdef TREE
-		if (display_tree){
+		if (display_tree && display_r.gravity==RB_GT_TREE){
 			glColor4f(1.0,0.0,0.0,0.4);
 			display_entire_tree();
 		}
-#endif // TREE
 		glTranslatef(-gb.shiftx,-gb.shifty,-gb.shiftz);
 	}
 	}

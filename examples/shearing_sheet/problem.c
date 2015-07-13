@@ -54,11 +54,10 @@ void heartbeat(struct Rebound* const r);
 int main(int argc, char* argv[]) {
 	struct Rebound* r = rebound_init();
 	// Setup constants
-#ifdef GRAVITY_TREE
 	r->opening_angle2	= .5;					// This determines the precission of the tree code gravity calculation.
-#endif // GRAVITY_TREE
 	r->integrator			= SEI;
 	r->boundary			= RB_BT_SHEAR;
+	r->gravity			= RB_GT_TREE;
 	double OMEGA 			= 0.00013143527;	// 1/s
 	r->ri_sei.OMEGA 		= OMEGA;
 	r->G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
@@ -106,9 +105,7 @@ int main(int argc, char* argv[]) {
 		pt.ay 		= 0;
 		pt.az 		= 0;
 		double radius 	= tools_powerlaw(particle_radius_min,particle_radius_max,particle_radius_slope);
-#ifndef COLLISIONS_NONE
 		pt.r 		= radius;						// m
-#endif
 		double		particle_mass = particle_density*4./3.*M_PI*radius*radius*radius;
 		pt.m 		= particle_mass; 	// kg
 		particles_add(r, pt);

@@ -75,27 +75,26 @@ void rebound_step(struct Rebound* const r){
 	// Prepare particles for distribution to other nodes. 
 	// This function also creates the tree if called for the first time.
 	PROFILING_START()
-#ifdef TREE
-	tree_update(r);          
-#endif //TREE
+	if (r->tree_root!=NULL){
+		tree_update(r);          
+	}
 
 #ifdef MPI
 	// Distribute particles and add newly received particles to tree.
 	communication_mpi_distribute_particles();
 #endif // MPI
 
-#ifdef GRAVITY_TREE
-	// Update center of mass and quadrupole moments in tree in preparation of force calculation.
-	tree_update_gravity_data(r); 
-	
+	if (r->tree_root!=NULL && r->gravity==RB_GT_TREE){
+		// Update center of mass and quadrupole moments in tree in preparation of force calculation.
+		tree_update_gravity_data(r); 
 #ifdef MPI
-	// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
-	tree_prepare_essential_tree_for_gravity();
+		// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
+		tree_prepare_essential_tree_for_gravity();
 
-	// Transfer essential tree and particles needed for collisions.
-	communication_mpi_distribute_essential_tree_for_gravity();
+		// Transfer essential tree and particles needed for collisions.
+		communication_mpi_distribute_essential_tree_for_gravity();
 #endif // MPI
-#endif // GRAVITY_TREE
+	}
 
 	// Calculate accelerations. 
 	gravity_calculate_acceleration(r);
@@ -216,12 +215,15 @@ struct Rebound* rebound_init(){
 	r->exit_simulation	= 0;
 	r->exact_finish_time 	= 0;
 	r->particles	= NULL;
-	r->integrator = IAS15;
-	r->boundary = RB_BT_NONE;
 	r->force_is_velocitydependent = 0;
 	r->gravity_ignore_10	= 0;
 	r->N_cs 		= 0;
 	r->cs 			= NULL;
+	
+	// Default modules
+	r->integrator 	= IAS15;
+	r->boundary 	= RB_BT_NONE;
+	r->gravity	= RB_GT_COMPENSATED;
 
 	// Function pointers 
 	r->additional_forces 		= NULL;
@@ -263,13 +265,11 @@ struct Rebound* rebound_init(){
 	r->ri_wh.eta 		= NULL;
 	r->ri_wh.Nmax 		= 0;
 
-
-
-#ifdef TREE
+	// Tree parameters. Will not be used unless gravity or collision search makes use of tree.
 	r->tree_root		= NULL;
 	r->N_tree_fixed		= 0;
 	r->opening_angle2	= 0.25;
-#endif // TREE
+
 	memset(&(r->ri_ias15.g),0,sizeof(double)*7);
 	memset(&(r->ri_ias15.b),0,sizeof(double)*7);
 	memset(&(r->ri_ias15.e),0,sizeof(double)*7);

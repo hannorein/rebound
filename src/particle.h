@@ -26,9 +26,7 @@
 #define _PARTICLE_H
 struct Rebound;
 
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
 struct cell;
-#endif // TREE
 
 /**
  * Particle structure.
@@ -54,9 +52,7 @@ struct Particle {
 	double r; 	/**< Radius of the particle. */
 	double lastcollision;	/**< Last time the particle had a physical collision. */
 #endif // COLLISIONS_NONE
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
 	struct cell* c;		/**< Pointer to the cell the particle is currently in. */
-#endif // TREE
 };
 
 

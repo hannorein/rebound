@@ -42,7 +42,6 @@ void gravity_calculate_acceleration(struct Rebound* r);
 
 /**
   * The function calculates the acceleration for the variational equations.
-  * Note that this is currently only implemented for GRAVITY_DIRECT
   */
 void gravity_calculate_variational_acceleration(struct Rebound* r);
 

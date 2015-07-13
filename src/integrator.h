@@ -56,7 +56,6 @@ void integrator_reset(struct Rebound* r);
 /* This function updates the acceleration on all particles. 
  * It uses the current position and velocity data in the 
  * (struct particle*) particles structure.
- * Note: this does currently not work with MPI or any TREE module.
  */
 void integrator_update_acceleration(struct Rebound* r);
 
