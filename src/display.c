@@ -278,6 +278,13 @@ void display(void){
 							glColor4f(0.0,0.0,1.0,0.9);
 						}
 					}
+					if (display_r->integrator==WHFAST && display_r->ri_whfast.is_synchronized==0){
+						double m = p.m;
+						p = display_r->ri_whfast.p_j[i];
+						p.m = m;
+						// Note: need also update to com.
+						// TODO
+					}
 					struct orbit o = tools_p2orbit(display_r->G, p,com);
 					glPushMatrix();
 					
