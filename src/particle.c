@@ -42,7 +42,7 @@
 extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
-void particles_add_local(struct reb_context* const r, struct reb_particle pt){
+void reb_add_local(struct reb_context* const r, struct reb_particle pt){
 	if (boundary_particle_is_in_box(r, pt)==0){
 		// reb_particle has left the box. Do not add.
 		fprintf(stderr,"\n\033[1mWarning!\033[0m Did not add particle outside of box boundaries.\n");
@@ -81,7 +81,7 @@ void reb_add(struct reb_context* const r, struct reb_particle pt){
 	}
 #endif // GRAVITY_GRAPE
 #ifdef MPI
-	int rootbox = particles_get_rootbox_for_particle(r, pt);
+	int rootbox = reb_get_rootbox_for_particle(r, pt);
 	int root_n_per_node = root_n/mpi_num;
 	int proc_id = rootbox/root_n_per_node;
 	if (proc_id != mpi_id && r->N >= r->N_active){
@@ -91,10 +91,10 @@ void reb_add(struct reb_context* const r, struct reb_particle pt){
 	}
 #endif // MPI
 	// Add particle to local partical array.
-	particles_add_local(r, pt);
+	reb_add_local(r, pt);
 }
 
-void particles_add_fixed(struct reb_context* const r, struct reb_particle pt,int pos){
+void reb_add_fixed(struct reb_context* const r, struct reb_particle pt,int pos){
 	// Only works for non-MPI simulations or when the particles does not move to another node.
 	if (boundary_particle_is_in_box(r, pt)==0){
 		// reb_particle has left the box. Do not add.
@@ -106,7 +106,7 @@ void particles_add_fixed(struct reb_context* const r, struct reb_particle pt,int
 	}
 }
 
-int particles_get_rootbox_for_particle(const struct reb_context* const r, struct reb_particle pt){
+int reb_get_rootbox_for_particle(const struct reb_context* const r, struct reb_particle pt){
 	if (r->boxsize==-1) return 0;
 	int i = ((int)floor((pt.x + r->boxsize_x/2.)/r->boxsize)+r->root_nx)%r->root_nx;
 	int j = ((int)floor((pt.y + r->boxsize_y/2.)/r->boxsize)+r->root_ny)%r->root_ny;
@@ -115,7 +115,7 @@ int particles_get_rootbox_for_particle(const struct reb_context* const r, struct
 	return index;
 }
 
-void particles_remove_all(struct reb_context* const r){
+void particles_reb_remove_all(struct reb_context* const r){
 	r->N 		= 0;
 	r->Nmax 	= 0;
 	r->N_active 	= -1;

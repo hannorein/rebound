@@ -67,7 +67,7 @@ void reb_tree_add_particle_to_tree(struct reb_context* const r, int pt){
 		r->tree_root = calloc(r->root_nx*r->root_ny*r->root_nz,sizeof(struct reb_treecell*));
 	}
 	struct reb_particle p = r->particles[pt];
-	int rootbox = particles_get_rootbox_for_particle(r, p);
+	int rootbox = reb_get_rootbox_for_particle(r, p);
 #ifdef MPI
 	// Do not add particles that do not belong to this tree (avoid removing active particles)
 	int root_n_per_node = root_n/mpi_num;
@@ -187,7 +187,7 @@ struct reb_treecell *reb_tree_update_cell(struct reb_context* const r, struct re
 		int oldpos = node->pt;
 		struct reb_particle reinsertme = r->particles[oldpos];
 		if (oldpos<r->N_tree_fixed){
-			particles_add_fixed(r,reinsertme,oldpos);
+			reb_add_fixed(r,reinsertme,oldpos);
 		}else{
 			(r->N)--;
 			r->particles[oldpos] = r->particles[r->N];

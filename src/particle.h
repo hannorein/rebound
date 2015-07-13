@@ -43,26 +43,26 @@ void reb_add(struct reb_context* const r, struct reb_particle pt);
  * @param pt reb_particle to be added.
  * @param pos New position.
  */
-void particles_add_fixed(struct reb_context* const r, struct reb_particle pt,int pos);
+void reb_add_fixed(struct reb_context* const r, struct reb_particle pt,int pos);
 
 /**
  * Add a particle to the particle structure on the current node.
  * Do not distribute particles.
  * @param pt reb_particle to be added.
  */
-void particles_add_local(struct reb_context* const r, struct reb_particle pt);
+void reb_add_local(struct reb_context* const r, struct reb_particle pt);
 
 /**
  * Returns the index of the rootbox for the current particles based on its position.
  * @return Index of the rootbox.
  * @param pt reb_particle to be checked.
  */
-int particles_get_rootbox_for_particle(const struct reb_context* const r, struct reb_particle pt);
+int reb_get_rootbox_for_particle(const struct reb_context* const r, struct reb_particle pt);
 
 /**
  * Remove all particles
  */
-void particles_remove_all(struct reb_context* const r);
+void particles_reb_remove_all(struct reb_context* const r);
 
 /**
  * Remove particle by position in particles array
