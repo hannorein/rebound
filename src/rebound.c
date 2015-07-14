@@ -248,7 +248,7 @@ struct reb_simulation* reb_create_simulation(){
 		while (logo[i]!=NULL){ printf("%s",logo[i++]); }
 		printf("Built: %s\n\n",build_str);
 	}
-	tools_init_srand();
+	reb_tools_init_srand();
 	struct reb_simulation* r = calloc(1,sizeof(struct reb_simulation));
 	reb_reset_temporary_pointers(r);
 	reb_reset_function_pointers(r);

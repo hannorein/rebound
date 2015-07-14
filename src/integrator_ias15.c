@@ -193,7 +193,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 	double integrator_megno_thisdt = 0.;
 	double integrator_megno_thisdt_init = 0.;
 	if (N_megno){
-		integrator_megno_thisdt_init = w[0]* r->t * tools_megno_deltad_delta(r);
+		integrator_megno_thisdt_init = w[0]* r->t * reb_tools_megno_deltad_delta(r);
 	}
 
 	double t_beginning = r->t;
@@ -280,7 +280,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 
 			reb_update_acceleration(r);				// Calculate forces at interval n
 			if (N_megno){
-				integrator_megno_thisdt += w[n] * r->t * tools_megno_deltad_delta(r);
+				integrator_megno_thisdt += w[n] * r->t * reb_tools_megno_deltad_delta(r);
 			}
 
 			for(int k=0;k<N;++k) {
@@ -499,7 +499,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 
 	if (N_megno){
 		double dY = dt_done*integrator_megno_thisdt;
-		tools_megno_update(r, dY);
+		reb_tools_megno_update(r, dY);
 	}
 
 	// Swap particle buffers

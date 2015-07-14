@@ -52,10 +52,10 @@ void problem_init(int argc, char* argv[]){
 		struct particle p = {.m=0.,.x=1,.y=0.,.z=0.,.vx=0,.vy=1.2,.vz=0.};
 		particles_add(p); 
 	}
-	tools_move_to_center_of_momentum();
+	reb_tools_move_to_center_of_momentum();
 	problem_additional_forces 	= additional_forces;
 	// Add megno particles 
-	tools_megno_init(1e-16);  // N = 6 after this function call. 
+	reb_tools_megno_init(1e-16);  // N = 6 after this function call. 
 	system("rm -f Y.txt");
 }
 
@@ -66,7 +66,7 @@ void additional_forces(){
 void problem_output(){
 	reb_output_timing();
 	FILE* f = fopen("Y.txt","a+");
-	fprintf(f,"%e %e\n",t,tools_megno());
+	fprintf(f,"%e %e\n",t,reb_tools_megno());
 	fclose(f);
 }
 

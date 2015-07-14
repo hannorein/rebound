@@ -82,16 +82,16 @@ void problem_init(int argc, char* argv[]){
 		double mass = 0;
 		while(mass<total_mass){
 			struct particle pt;
-			pt.x 		= tools_uniform(-boxsize_x/2.,boxsize_x/2.);
-			pt.y 		= tools_uniform(-boxsize_y/2.,boxsize_y/2.);
-			pt.z 		= tools_normal(1.);					// m
+			pt.x 		= reb_tools_uniform(-boxsize_x/2.,boxsize_x/2.);
+			pt.y 		= reb_tools_uniform(-boxsize_y/2.,boxsize_y/2.);
+			pt.z 		= reb_tools_normal(1.);					// m
 			pt.vx 		= 0;
 			pt.vy 		= -1.5*pt.x*OMEGA;
 			pt.vz 		= 0;
 			pt.ax 		= 0;
 			pt.ay 		= 0;
 			pt.az 		= 0;
-			double radius 	= tools_powerlaw(particle_radius_min,particle_radius_max,particle_radius_slope);
+			double radius 	= reb_tools_powerlaw(particle_radius_min,particle_radius_max,particle_radius_slope);
 #ifndef COLLISIONS_NONE
 			pt.r 		= radius;						// m
 #endif

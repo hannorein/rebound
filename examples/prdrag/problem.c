@@ -67,7 +67,7 @@ void problem_init(int argc, char* argv[]){
 		p.m  = 0;					// massless
 		double a = 1.;					// a = 1 AU
 		double v = sqrt(G*(star.m*(1.-betaparticles))/a);
-		double phi = tools_uniform(0,2.*M_PI);		// random phase
+		double phi = reb_tools_uniform(0,2.*M_PI);		// random phase
 		p.x  = a*sin(phi);  p.y  = a*cos(phi); p.z  = 0; 
 		p.vx = -v*cos(phi); p.vy = v*sin(phi); p.vz = 0;
 		particles_add(p); 

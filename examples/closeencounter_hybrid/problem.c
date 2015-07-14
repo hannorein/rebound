@@ -70,8 +70,8 @@ void problem_init(int argc, char* argv[]){
 		planet.vx = 0; 	planet.vy = v; 	planet.vz = 0;
 		particles_add(planet); 
 	}
-	tools_move_to_center_of_momentum();				// This makes sure the planetary systems stays within the computational domain and doesn't drift.
-	e_init = tools_energy();
+	reb_tools_move_to_center_of_momentum();				// This makes sure the planetary systems stays within the computational domain and doesn't drift.
+	e_init = reb_tools_energy();
 	system("rm -rf energy.txt");
 }
 
@@ -82,7 +82,7 @@ void problem_output(){
 	if (reb_output_check(2.*M_PI)){  
 		FILE* f = fopen("energy.txt","a");
 		integrator_synchronize();
-		double e = tools_energy();
+		double e = reb_tools_energy();
 		fprintf(f,"%e %e\n",t, fabs((e-e_init)/e_init));
 		fclose(f);
 	}

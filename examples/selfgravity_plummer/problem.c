@@ -67,9 +67,9 @@ void problem_init(int argc, char* argv[]){
 
 	init_box();			// Set up box (uses variable 'boxsize')
 	
-	tools_init_plummer(_N, M, R);	// Add particles
+	reb_tools_init_plummer(_N, M, R);	// Add particles
 	
-	tools_move_to_center_of_momentum(); // Move to rest frame 
+	reb_tools_move_to_center_of_momentum(); // Move to rest frame 
 }
 
 void problem_output(){

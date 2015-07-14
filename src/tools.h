@@ -48,7 +48,7 @@ struct orbit {
  * @param min Minimum value.
  * @param max Maximum value.
  */
-double tools_uniform(double min, double max);
+double reb_tools_uniform(double min, double max);
 
 /**
  * Calculates a random variable drawn form a powerlaw distribution.
@@ -56,7 +56,7 @@ double tools_uniform(double min, double max);
  * @param max Maximum value.
  * @param slop Slope of powerlaw distribution.
  */
-double tools_powerlaw(double min, double max, double slope);
+double reb_tools_powerlaw(double min, double max, double slope);
 
 /**
  * Calculate a random number with normal distribution.
@@ -64,13 +64,13 @@ double tools_powerlaw(double min, double max, double slope);
  * @param variance Variance of normal distribution.
  * @return Random number with normal distribution (mean 0). 
  */
-double tools_normal(double variance);
+double reb_tools_normal(double variance);
 
 /**
  * Calculates a random variable drawn form a Rayleigh distribution.  Calculated as described on Rayleigh distribution wikipedia page
  * @param sigma Scale parameter.
  */
-double tools_rayleigh(double sigma);
+double reb_tools_rayleigh(double sigma);
 
 /**
  * This function sets up a Plummer sphere.
@@ -79,7 +79,7 @@ double tools_rayleigh(double sigma);
  * @param R Characteristic radius of the cluster.
  */
 
-void tools_init_plummer(struct reb_simulation* r, int _N, double M, double R);
+void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R);
 
 /**
  * Initialize a particle on an orbit in the xy plane.
@@ -90,7 +90,7 @@ void tools_init_plummer(struct reb_simulation* r, int _N, double M, double R);
  * @param omega Pericenter of the particle.
  * @param f true anomaly of the particle.
  */
-struct reb_particle tools_init_orbit2d(double G, double M, double m, double a, double e, double omega, double f);
+struct reb_particle reb_tools_init_orbit2d(double G, double M, double m, double a, double e, double omega, double f);
 
 /**
  * Initialize a particle on a 3D orbit.  See Fig. 2.13 of Murray & Dermott Solar System Dynamics for diagram.
@@ -104,7 +104,7 @@ struct reb_particle tools_init_orbit2d(double G, double M, double m, double a, d
  * @param f true anomaly of the particle.
  */
 
-struct reb_particle tools_init_orbit3d(double G, double M, double m, double a, double e, double i, double Omega, double omega, double f);
+struct reb_particle reb_tools_init_orbit3d(double G, double M, double m, double a, double e, double i, double Omega, double omega, double f);
 
 /**
  * This function calculated orbital elements for a given particle. 
@@ -112,54 +112,54 @@ struct reb_particle tools_init_orbit3d(double G, double M, double m, double a, d
  * @param star Star or central object particle
  * @return Orbital parameters. 
  */
-struct orbit tools_p2orbit(double G, struct reb_particle p, struct reb_particle star);
+struct orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_particle star);
 
 /**
  * Move to center of momentum and center of mass frame.
  */
-void tools_move_to_center_of_momentum(struct reb_simulation* const r);
+void reb_tools_move_to_center_of_momentum(struct reb_simulation* const r);
 
 /**
  * Returns the center of mass of particle p1 and p2.
  */
-struct reb_particle tools_get_center_of_mass(struct reb_particle p1, struct reb_particle p2);
+struct reb_particle reb_tools_get_center_of_mass(struct reb_particle p1, struct reb_particle p2);
 
 /* 
  * Init the MEGNO particles
  **/
-void tools_megno_init(struct reb_simulation* const r, double delta);
+void reb_tools_megno_init(struct reb_simulation* const r, double delta);
 
 /*
  * Returns the current value of <Y>
  **/
-double tools_megno(struct reb_simulation* r);
+double reb_tools_megno(struct reb_simulation* r);
 
 /*
  * Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
  **/
-double tools_lyapunov(struct reb_simulation* r);
+double reb_tools_lyapunov(struct reb_simulation* r);
 
 /*
  * Returns deltad/delta (Note, there is a typo in Gozdziewski et al 2001).
  **/
 
-double tools_megno_deltad_delta(struct reb_simulation* const r);
+double reb_tools_megno_deltad_delta(struct reb_simulation* const r);
 
 /*
  * Update MEGNO after a successful timestep by adding dY (=ddelta/delta*dt)
  **/
-void tools_megno_update(struct reb_simulation* r, double dY);
+void reb_tools_megno_update(struct reb_simulation* r, double dY);
 
 /**
  * Calculate the total energy (potential and kinetic).
  * Might not work for WH.
  * @return Total energy. 
  */
-double tools_energy(struct reb_simulation* r);
+double reb_tools_energy(struct reb_simulation* r);
 
 /**
  * Init random number generator based on time and process id.
  */
-void tools_init_srand();
+void reb_tools_init_srand();
 
 #endif 	// TOOLS_H

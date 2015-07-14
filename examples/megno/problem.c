@@ -79,9 +79,9 @@ int main(int argc, char* argv[]) {
 		p.m  = ss_mass[i];
 		particles_add(r, p); 
 	}
-	tools_move_to_center_of_momentum(r);
+	reb_tools_move_to_center_of_momentum(r);
 	// Add megno particles 
-	tools_megno_init(r, 1e-16);  // N = 6 after this function call. 
+	reb_tools_megno_init(r, 1e-16);  // N = 6 after this function call. 
 	// The first half of particles are real particles, the second half are particles following the variational equations.
 	
 	// Set callback for outputs.
@@ -97,8 +97,8 @@ void heartbeat(struct Rebound* const r){
 	if (reb_output_check(r, 362.)){
 		// Output the time and the MEGNO to the screen and a file.
 		FILE* f = fopen("Y.txt","a+");
-		fprintf(f,"        %.20e     %.20e\n",r->t, tools_megno(r));
-		//printf("        %.20e     %.20e\n",r->t, tools_megno(r));
+		fprintf(f,"        %.20e     %.20e\n",r->t, reb_tools_megno(r));
+		//printf("        %.20e     %.20e\n",r->t, reb_tools_megno(r));
 		fclose(f);
 	}
 }

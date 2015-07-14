@@ -37,7 +37,7 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename);
  * @param argument Argument to look for.
  * @return Returns NULL if argument was not given. Return the argument otherwise.
  */
-char* input_get_argument(int argc, char** argv, const char* argument);
+char* reb_input_get_argument(int argc, char** argv, const char* argument);
 
 
 /**
@@ -48,7 +48,7 @@ char* input_get_argument(int argc, char** argv, const char* argument);
  * @param _default Default value.
  * @return Returns _default if argument was not given. Return the argument converted to double otherwise.
  */
-double input_get_double(int argc, char** argv, const char* argument, double _default);
+double reb_input_get_double(int argc, char** argv, const char* argument, double _default);
 
 
 /**
@@ -59,6 +59,6 @@ double input_get_double(int argc, char** argv, const char* argument, double _def
  * @param _default Default value.
  * @return Returns _default if argument was not given. Return the argument converted to int otherwise.
  */
-int input_get_int(int argc, char** argv, const char* argument, int _default);
+int reb_input_get_int(int argc, char** argv, const char* argument, int _default);
 
 #endif

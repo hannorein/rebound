@@ -702,8 +702,8 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
 		particles[j].az -= Gmi * daz;
 
 		// Update MEGNO in middle of timestep as we need synchonized x/v/a.
-		double dY = r->dt * 2. * r->t * tools_megno_deltad_delta(r);
-		tools_megno_update(r, dY);
+		double dY = r->dt * 2. * r->t * reb_tools_megno_deltad_delta(r);
+		reb_tools_megno_update(r, dY);
 	}
 }
 	

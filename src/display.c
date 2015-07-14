@@ -285,7 +285,7 @@ void display(void){
 						// Note: need also update to com.
 						// TODO
 					}
-					struct orbit o = tools_p2orbit(display_r->G, p,com);
+					struct orbit o = reb_tools_p2orbit(display_r->G, p,com);
 					glPushMatrix();
 					
 					glTranslatef(com.x,com.y,com.z);
@@ -301,7 +301,7 @@ void display(void){
 					}
 					glEnd();
 					glPopMatrix();
-					com = tools_get_center_of_mass(p,com);
+					com = reb_tools_get_center_of_mass(p,com);
 				}
 			}else{
 				for (int i=1;i<display_r->N;i++){

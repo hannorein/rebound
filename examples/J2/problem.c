@@ -66,7 +66,7 @@ void problem_init(int argc, char* argv[]){
 	planet.vx = 0; planet.vy = 0; planet.vz = 0;
 	particles_add(planet);
 	// Read obliquity from command line. Default is 0. 
-	ObliquityPlanet 		= input_get_double(argc,argv,"Obliquity",0.)/180.*M_PI;
+	ObliquityPlanet 		= reb_input_get_double(argc,argv,"Obliquity",0.)/180.*M_PI;
 	
 	
 
@@ -84,7 +84,7 @@ void problem_init(int argc, char* argv[]){
 		particles_add(p); 
 	}
 	
-	tools_move_to_center_of_momentum();
+	reb_tools_move_to_center_of_momentum();
 
 	system("rm -v a.txt");					// delete previous output
 }
@@ -123,7 +123,7 @@ void problem_output(){
 		FILE* f = fopen("a.txt","a");
 		const struct particle planet = particles[0];
 		for (int i=1;i<N;i++){
-			struct orbit o = tools_p2orbit(particles[i],planet);
+			struct orbit o = reb_tools_p2orbit(particles[i],planet);
 			fprintf(f,"%.15e\t%.15e\t%.15e\t%.15e\n",t,o.a,o.e,o.omega);
 		}
 		fclose(f);
