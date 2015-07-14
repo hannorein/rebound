@@ -340,6 +340,7 @@ struct orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_parti
 
 void reb_tools_megno_init(struct reb_simulation* const r, double delta){
 	int N_var = r->N;
+	r->calculate_megno = 1;
 	r->megno_Ys = 0.;
 	r->megno_Yss = 0.;
 	r->megno_cov_Yt = 0.;

@@ -109,6 +109,7 @@ struct reb_simulation {
 
 	//////////////////////////////////////////////
 	/// Variational reb_particles
+	int calculate_megno;	// Flag that determines if megno is calculated (default=0, but megno_init() sets it to 1)
 	double megno_Ys;
 	double megno_Yss;
 	double megno_cov_Yt;	// covariance of <Y> and t

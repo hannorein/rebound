@@ -660,13 +660,14 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
 
 	double _dt2 = r->dt/2.;
 	ri_whfast->is_synchronized = 0;
-	if (ri_whfast->safe_mode || N_var){
+	if (ri_whfast->safe_mode){
 		reb_integrator_whfast_synchronize(r);
 	}
 	
 	r->t+=_dt2;
 
-	if (N_var){
+	if (r->calculate_megno){
+		reb_integrator_whfast_synchronize(r);
 		ri_whfast->p_j[N_var].x += _dt2*ri_whfast->p_j[N_var].vx;
 		ri_whfast->p_j[N_var].y += _dt2*ri_whfast->p_j[N_var].vy;
 		ri_whfast->p_j[N_var].z += _dt2*ri_whfast->p_j[N_var].vz;
