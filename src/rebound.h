@@ -213,7 +213,7 @@ struct reb_simulation {
  * Initializes all REBOUND variables and returns a REBOUND handle.. 
  * This function must be called from problem_init() before any particles are added.
  */
-struct reb_simulation* reb_init();
+struct reb_simulation* reb_create_simulation();
 
 /**
  * Performon integration step.

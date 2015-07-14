@@ -45,7 +45,7 @@ double coefficient_of_restitution_bridges(const struct reb_simulation* const r, 
 void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]) {
-	struct reb_simulation* r = reb_init();
+	struct reb_simulation* r = reb_create_simulation();
 	// Setup constants
 	r->opening_angle2	= .5;					// This determines the precission of the tree code gravity calculation.
 	r->integrator			= RB_IT_SEI;

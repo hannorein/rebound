@@ -38,7 +38,7 @@
 void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]){
-	struct reb_simulation* const r = reb_init();
+	struct reb_simulation* const r = reb_create_simulation();
 	// Setup constants
 	r->integrator	= RB_IT_LEAPFROG;
 	r->gravity	= RB_GT_TREE;

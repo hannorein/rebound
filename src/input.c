@@ -85,7 +85,7 @@ char* input_get_argument(int argc, char** argv, const char* argument){
 	return NULL;
 }
 
-struct reb_simulation* reb_init_from_binary(char* filename){
+struct reb_simulation* reb_create_simulation_from_binary(char* filename){
 	fprintf(stderr,"\n\033[1mWarning!\033[0m You might need to reset function pointers after creating a REBOUND struct with a binary file.\n");
 	struct reb_simulation* r = malloc(sizeof(struct reb_simulation));
 #ifdef MPI

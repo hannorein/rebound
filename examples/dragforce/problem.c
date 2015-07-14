@@ -43,7 +43,7 @@ void heartbeat(struct reb_simulation* const r);
 double tmax = 40.;
 
 int main(int argc, char* argv[]){
-	struct reb_simulation* r = reb_init();
+	struct reb_simulation* r = reb_create_simulation();
 	// Setup constants
 	r->dt 			= 1e-4;		// initial timestep.
 	r->integrator		= RB_IT_IAS15;

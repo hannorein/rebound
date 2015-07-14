@@ -28,7 +28,7 @@
  * Reads a binary file.
  * @param filename Filename to be read.
  */
-struct reb_simulation* reb_init_from_binary(char* filename);
+struct reb_simulation* reb_create_simulation_from_binary(char* filename);
 
 /**
  * Reads arguments from the command line.

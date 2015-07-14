@@ -225,7 +225,7 @@ void reb_reset_function_pointers(struct reb_simulation* const r){
 	r->post_timestep_modifications	= NULL;
 }
 
-struct reb_simulation* reb_init(){
+struct reb_simulation* reb_create_simulation(){
 	if (reb_show_logo==1){
 		int i =0;
 		while (logo[i]!=NULL){ printf("%s",logo[i++]); }
