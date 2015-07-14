@@ -98,8 +98,6 @@ struct reb_context {
 
 	unsigned int force_is_velocitydependent; 	/**< Set to 1 if integrator needs to consider velocity dependent forces. */ 
 	unsigned int gravity_ignore_10;			/**< Ignore the gravity form the central object (for WH-type integrators)*/
-	struct reb_vec3d* cs;				/**< Vector containing the information for compensated gravity summation */
-	int N_cs;					/**< Current number of allocated space for cs array*/
 	double output_timing_last; 	/**< Time when output_timing() was called the last time. */
 
 
@@ -108,8 +106,6 @@ struct reb_context {
 	struct reb_collision* collisions;			/**< Array of all collisions. */
 	int 	collisions_NMAX;			/**< Size allocated for collisions.*/
 	double minimum_collision_velocity;		/**< Used for hard sphere collision model. */
-	double (*coefficient_of_restitution) (const struct reb_context* const r, double v); /**< Used for hard sphere collision model. */
-	void (*collision_resolve) (struct reb_context* const r, struct reb_collision);
 	double 	collisions_plog;			/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
 	long	collisions_Nlog;			/**< Keep track of Number of collisions. */
 
@@ -170,6 +166,8 @@ struct reb_context {
 	//////////////////////////////////////////////
 	/// reb_particles
 	struct reb_particle* particles; 			/**< Main particle array. This contains all particles on this node.  */
+	struct reb_vec3d* gravity_cs;				/**< Vector containing the information for compensated gravity summation */
+	int gravity_cs_allocatedN;				/**< Current number of allocated space for cs array*/
 	
 	//////////////////////////////////////////////
 	/// Tree
@@ -187,7 +185,7 @@ struct reb_context {
 	struct reb_context_integrator_hybrid ri_hybrid;		/**< The Hybrid struct */
 
 	//////////////////////////////////////////////
-	/// Callback function
+	/// Callback functions
 	/*
 	 * This function allows the user to add additional (non-gravitational) forces.
 	 */
@@ -201,6 +199,15 @@ struct reb_context {
 	 * each timestep.
 	 */
 	void (*heartbeat) (struct reb_context* r);
+	/**
+	 * Return the coefficient of restitution. If NULL, assume a coefficient of 1.
+	 */
+	double (*coefficient_of_restitution) (const struct reb_context* const r, double v); 
+
+	/**
+	 * Resolve collision within this function. If NULL, assume hard sphere model.
+	 */
+	void (*collision_resolve) (struct reb_context* const r, struct reb_collision);
 };
 
 

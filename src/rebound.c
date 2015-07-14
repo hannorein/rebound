@@ -180,10 +180,10 @@ void reb_configure_box(struct reb_context* const r, const double boxsize, const 
 
 void reb_reset_temporary_pointers(struct reb_context* const r){
 	// Note: this will not clear the particle array.
-	r->N_cs 		= 0;
-	r->cs 			= NULL;
-	r->collisions		= NULL;
-	r->collisions_NMAX	= 0;
+	r->gravity_cs_allocatedN 	= 0;
+	r->gravity_cs 			= NULL;
+	r->collisions			= NULL;
+	r->collisions_NMAX		= 0;
 	// ********** WHFAST
 	r->ri_whfast.allocated_N	= 0;
 	r->ri_whfast.eta		= NULL;

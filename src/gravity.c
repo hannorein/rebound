@@ -108,11 +108,11 @@ void reb_calculate_acceleration(struct reb_context* r){
 		break;
 		case RB_GT_COMPENSATED:
 		{
-			if (r->N_cs<_N_real){
-				r->cs = realloc(r->cs,_N_real*sizeof(struct reb_vec3d));
-				r->N_cs = _N_real;
+			if (r->gravity_cs_allocatedN<_N_real){
+				r->gravity_cs = realloc(r->gravity_cs,_N_real*sizeof(struct reb_vec3d));
+				r->gravity_cs_allocatedN = _N_real;
 			}
-			struct reb_vec3d* const cs = r->cs;
+			struct reb_vec3d* restrict const cs = r->gravity_cs;
 #pragma omp parallel for schedule(guided)
 			for (int i=0; i<_N_real; i++){
 				particles[i].ax = 0.; 
