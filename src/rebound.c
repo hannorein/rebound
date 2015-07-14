@@ -192,20 +192,19 @@ void reb_reset_temporary_pointers(struct reb_context* const r){
 	// Note: this will not clear the particle array.
 	r->gravity_cs_allocatedN 	= 0;
 	r->gravity_cs 			= NULL;
-	r->collisions			= NULL;
 	r->collisions_allocatedN	= 0;
+	r->collisions			= NULL;
 	// ********** WHFAST
 	r->ri_whfast.allocated_N	= 0;
 	r->ri_whfast.eta		= NULL;
 	r->ri_whfast.p_j		= NULL;
-#warning reset dp7 pointerd
+	// ********** IAS15
+	r->ri_ias15.allocatedN		= 0;
 	set_dp7_null(&(r->ri_ias15.g));
 	set_dp7_null(&(r->ri_ias15.b));
 	set_dp7_null(&(r->ri_ias15.e));
 	set_dp7_null(&(r->ri_ias15.br));
 	set_dp7_null(&(r->ri_ias15.er));
-	// ********** IAS15
-	r->ri_ias15.allocatedN		= 0;
 	r->ri_ias15.at  		= NULL;
 	r->ri_ias15.x0  		= NULL;
 	r->ri_ias15.v0  		= NULL;
@@ -214,8 +213,8 @@ void reb_reset_temporary_pointers(struct reb_context* const r){
 	r->ri_ias15.csv  		= NULL;
 	r->ri_ias15.at  		= NULL;
 	// ********** WH
-	r->ri_wh.eta 			= NULL;
 	r->ri_wh.allocatedN 		= 0;
+	r->ri_wh.eta 			= NULL;
 }
 
 void reb_reset_function_pointers(struct reb_context* const r){
