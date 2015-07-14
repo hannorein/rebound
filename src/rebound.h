@@ -237,6 +237,11 @@ void reb_configure_box(struct reb_simulation* const r, const double boxsize, con
  */
 int reb_check_exit(struct reb_simulation* const r, const double tmax);
 
+/**
+ * Frees up all space.
+ */
+void reb_free_simulation(struct reb_simulation* const r);
+
 /*
  * Function used to allow binary input.
  */

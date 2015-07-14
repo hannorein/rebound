@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
 		reb_add(r, pt);
 		mass += particle_mass;
 	}
-	reb_integrate(r,0);
+	reb_integrate(r, INFINITY);
 }
 
 // This example is using a custom velocity dependend coefficient of restitution

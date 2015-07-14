@@ -296,6 +296,23 @@ void reb_tree_update(struct reb_simulation* const r){
 #endif // MPI
 	}
 }
+static void reb_tree_delete_cell(struct reb_treecell* node){
+	if (node==NULL){
+		return;
+	}
+	for (int o=0; o<8; o++) {
+		reb_tree_delete_cell(node->oct[o]);
+	}
+}
+
+void reb_tree_delete(struct reb_simulation* const r){
+	if (r->tree_root!=NULL){
+		for(int i=0;i<r->root_n;i++){
+			reb_tree_delete_cell(r->tree_root[i]);
+		}
+		free(r->tree_root);
+	}
+}
 
 
 

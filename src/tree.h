@@ -69,6 +69,12 @@ void reb_tree_update_gravity_data(struct reb_simulation* const r);
   */
 void reb_tree_add_particle_to_tree(struct reb_simulation* const r, int pt);
 
+/**
+ * Free up all space occupied by the tree structure.
+ * This will not modify particles.
+ */
+void reb_tree_delete(struct reb_simulation* const r);
+
 #ifdef MPI
 /**
   * Needs more comments!

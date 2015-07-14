@@ -188,6 +188,23 @@ static void set_dp7_null(struct reb_dp7 * dp){
 	dp->p6 = NULL;
 }
 
+void reb_free_simulation(struct reb_simulation* const r){
+	reb_tree_delete(r);
+	free(r->gravity_cs 	);
+	free(r->collisions	);
+	free(r->ri_whfast.eta	);
+	free(r->ri_whfast.p_j)	;
+	free(r->ri_ias15.at  	);
+	free(r->ri_ias15.x0  	);
+	free(r->ri_ias15.v0  	);
+	free(r->ri_ias15.a0  	);
+	free(r->ri_ias15.csx 	);
+	free(r->ri_ias15.csv 	);
+	free(r->ri_ias15.at  	);
+	free(r->ri_wh.eta 	);
+	free(r->particles	);
+}
+
 void reb_reset_temporary_pointers(struct reb_simulation* const r){
 	// Note: this will not clear the particle array.
 	r->gravity_cs_allocatedN 	= 0;
@@ -255,7 +272,6 @@ struct reb_simulation* reb_create_simulation(){
 	r->max_radius[1]	= 0.; 	
 	r->exit_simulation	= 0;
 	r->exact_finish_time 	= 0;
-	r->particles	= NULL;
 	r->force_is_velocitydependent = 0;
 	r->gravity_ignore_10	= 0;
 	r->output_timing_last = -1;
@@ -321,7 +337,7 @@ struct reb_simulation* reb_create_simulation(){
 
 int reb_check_exit(struct reb_simulation* const r, const double tmax){
 	const double dtsign = copysign(1.,r->dt); 	// Used to determine integration direction
-	if(tmax!=0.){
+	if(tmax!=INFINITY){
 		if(r->exact_finish_time==1){
 			if ((r->t+r->dt)*dtsign>=tmax*dtsign){  // Next step would overshoot
 				if (r->exit_simulation==2 || r->exit_simulation==1){
