@@ -178,6 +178,16 @@ void reb_configure_box(struct reb_context* const r, const double boxsize, const 
 	}
 }
 
+static void set_dp7_null(struct reb_dp7 * dp){
+	dp->p0 = NULL;
+	dp->p1 = NULL;
+	dp->p2 = NULL;
+	dp->p3 = NULL;
+	dp->p4 = NULL;
+	dp->p5 = NULL;
+	dp->p6 = NULL;
+}
+
 void reb_reset_temporary_pointers(struct reb_context* const r){
 	// Note: this will not clear the particle array.
 	r->gravity_cs_allocatedN 	= 0;
@@ -189,11 +199,11 @@ void reb_reset_temporary_pointers(struct reb_context* const r){
 	r->ri_whfast.eta		= NULL;
 	r->ri_whfast.p_j		= NULL;
 #warning reset dp7 pointerd
-	//memset((r->ri_ias15.g),0,sizeof(double)*7);
-	//memset((r->ri_ias15.b),0,sizeof(double)*7);
-	//memset((r->ri_ias15.e),0,sizeof(double)*7);
-	//memset((r->ri_ias15.br),0,sizeof(double)*7);
-	//memset((r->ri_ias15.er),0,sizeof(double)*7);
+	set_dp7_null(&(r->ri_ias15.g));
+	set_dp7_null(&(r->ri_ias15.b));
+	set_dp7_null(&(r->ri_ias15.e));
+	set_dp7_null(&(r->ri_ias15.br));
+	set_dp7_null(&(r->ri_ias15.er));
 	// ********** IAS15
 	r->ri_ias15.allocatedN		= 0;
 	r->ri_ias15.at  		= NULL;
