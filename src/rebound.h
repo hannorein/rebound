@@ -116,7 +116,6 @@ struct reb_simulation {
 	double megno_var_t;  	// variance of t 
 	double megno_mean_t; 	// mean of t
 	double megno_mean_Y; 	// mean of Y
-	double megno_delta0; 	// initial scale of delta (for one particle)
 	long   megno_n; 	// number of covariance updates
 
 	/**

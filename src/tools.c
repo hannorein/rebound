@@ -348,7 +348,6 @@ void reb_tools_megno_init(struct reb_simulation* const r, double delta){
 	r->megno_n = 0;
 	r->megno_mean_Y = 0;
 	r->megno_mean_t = 0;
-	r->megno_delta0 = delta;
         for (int i=0;i<N_var;i++){ 
                 struct reb_particle megno = {
 			.m  = r->particles[i].m,
