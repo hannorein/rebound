@@ -57,14 +57,13 @@ static void reb_calculate_acceleration_for_particle(const struct reb_simulation*
 void reb_calculate_acceleration(struct reb_simulation* r){
 	struct reb_particle* const particles = r->particles;
 	const int N = r->N;
-	const int N_megno = r->N_megno;
 	const int N_active = r->N_active;
 	const double G = r->G;
 	const double softening2 = r->softening*r->softening;
 	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
 	const int _N_start  = (r->integrator==RB_IT_WH?1:0);
-	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
-	const int _N_real   = N - N_megno;
+	const int _N_active = ((N_active==-1)?N:N_active) - r->N_var;
+	const int _N_real   = N  - r->N_var;
 	switch (r->gravity){
 		case RB_GT_NONE: // Do nothing.
 		break;
@@ -249,8 +248,7 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
 	const double G = r->G;
 	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
 	const int N = r->N;
-	const int N_megno = r->N_megno;
-	const int _N_real   = N - N_megno;
+	const int _N_real   = N - r->N_var;
 #pragma omp parallel for schedule(guided)
 	for (int i=_N_real; i<N; i++){
 		particles[i].ax = 0; 

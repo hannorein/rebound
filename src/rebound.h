@@ -81,9 +81,9 @@ struct reb_simulation {
 	double 	boxsize_max;	/**< Maximum size of the entire box in any direction. Set in box_init().*/
 	double  max_radius[2];	/**< Two largest particle radii. Needed for collision search. */
 	int 	N;		/**< Current number of particles on this node. */
-	int 	allocatedN;	/**< Current maximum space allocated in the particles array on this node. */
+	int 	N_var;		/**< Number of variational particles. Default: 0.*/
 	int 	N_active;	/**< Number of massive particles included in force calculation. Default: N.*/
-	int 	N_megno;	/**< Number of megno particles. Default: 0.*/
+	int 	allocatedN;	/**< Current maximum space allocated in the particles array on this node. */
 	int 	root_nx;	/**< Number of root boxes in x direction. Default: 1. */
 	int 	root_ny;	/**< Number of root boxes in y direction. Default: 1. */
 	int 	root_nz;	/**< Number of root boxes in z direction. Default: 1. */

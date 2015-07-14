@@ -130,7 +130,7 @@ static struct reb_dpconst7 dpcast(struct reb_dp7 dp){
 static int reb_integrator_ias15_step(struct reb_simulation* r) {
 	struct reb_particle* const particles = r->particles;
 	const int N = r->N;
-	const int N_megno  = r->N_megno;
+	const int N_var  = r->N_var;
 	const int N3 = 3*N;
 	if (N3 > r->ri_ias15.allocatedN) {
 		realloc_dp7(&(r->ri_ias15.g),N3);
@@ -192,7 +192,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 
 	double integrator_megno_thisdt = 0.;
 	double integrator_megno_thisdt_init = 0.;
-	if (N_megno){
+	if (N_var){
 		integrator_megno_thisdt_init = w[0]* r->t * reb_tools_megno_deltad_delta(r);
 	}
 
@@ -253,7 +253,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 				double xk2  = csx[k2] + (s[8]*b.p6[k2] + s[7]*b.p5[k2] + s[6]*b.p4[k2] + s[5]*b.p3[k2] + s[4]*b.p2[k2] + s[3]*b.p1[k2] + s[2]*b.p0[k2] + s[1]*a0[k2] + s[0]*v0[k2] );
 				particles[i].z = xk2 + x0[k2];
 			}
-			if (N_megno || (r->additional_forces && r->force_is_velocitydependent)){
+			if (N_var || (r->additional_forces && r->force_is_velocitydependent)){
 				s[0] = r->dt * h[n];
 				s[1] =      s[0] * h[n] / 2.;
 				s[2] = 2. * s[1] * h[n] / 3.;
@@ -279,7 +279,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 
 
 			reb_update_acceleration(r);				// Calculate forces at interval n
-			if (N_megno){
+			if (N_var){
 				integrator_megno_thisdt += w[n] * r->t * reb_tools_megno_deltad_delta(r);
 			}
 
@@ -497,7 +497,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 
 	r->t += dt_done;
 
-	if (N_megno){
+	if (N_var){
 		double dY = dt_done*integrator_megno_thisdt;
 		reb_tools_megno_update(r, dY);
 	}

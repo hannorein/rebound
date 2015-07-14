@@ -225,7 +225,7 @@ void display(void){
 			//glDrawArrays(GL_POINTS, _N_active, N-_N_active);
 			glColor4f(1.0,1.0,0.0,0.9);
 			glPointSize(5.);
-			glDrawArrays(GL_POINTS, 0, display_r->N-display_r->N_megno);
+			glDrawArrays(GL_POINTS, 0, display_r->N-display_r->N_var);
 			glDisableClientState(GL_VERTEX_ARRAY);
 			if (display_r->collision != RB_CT_NONE && display_spheres){
 				glDisable(GL_BLEND);                    
@@ -236,7 +236,7 @@ void display(void){
 				glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
 				// Drawing Spheres
 				glColor4f(1.0,1.0,1.0,1.0);
-				for (int i=0;i<display_r->N-display_r->N_megno;i++){
+				for (int i=0;i<display_r->N-display_r->N_var;i++){
 					struct reb_particle p = particles[i];
 					if (p.r>0){
 						glTranslatef(p.x,p.y,p.z);
@@ -261,7 +261,7 @@ void display(void){
 			if(display_r->integrator!=RB_IT_SEI){
 				double radius = 0;
 				struct reb_particle com = particles[0];
-				for (int i=1;i<display_r->N-display_r->N_megno;i++){
+				for (int i=1;i<display_r->N-display_r->N_var;i++){
 					struct reb_particle p = particles[i];
 					if (display_r->N_active>0){
 						// Different colors for active/test particles

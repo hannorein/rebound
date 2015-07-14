@@ -62,7 +62,7 @@ void reb_add_local(struct reb_simulation* const r, struct reb_particle pt){
 }
 
 void reb_add(struct reb_simulation* const r, struct reb_particle pt){
-	if (r->N_megno){
+	if (r->N_var){
 		fprintf(stderr,"\n\033[1mWarning!\033[0m Trying to add particle after calling megno_init().\n");
 	}
 #ifndef COLLISIONS_NONE
@@ -119,7 +119,7 @@ void reb_remove_all(struct reb_simulation* const r){
 	r->N 		= 0;
 	r->allocatedN 	= 0;
 	r->N_active 	= -1;
-	r->N_megno 	= 0;
+	r->N_var 	= 0;
 	free(r->particles);
 	r->particles 	= NULL;
 }
@@ -133,7 +133,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 		fprintf(stderr, "\nIndex %d passed to particles_remove was out of range (N=%d).  Did not remove particle.\n", index, r->N);
 		return 0;
 	}
-	if (r->N_megno){
+	if (r->N_var){
 		fprintf(stderr, "\nRemoving particles not supported when calculating MEGNO.  Did not remove particle.\n");
 		return 0;
 	}

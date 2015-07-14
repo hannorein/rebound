@@ -69,13 +69,13 @@ double reb_tools_rayleigh(double sigma){
 double reb_tools_energy(struct reb_simulation* r){
 	const int N = r->N;
 	const struct reb_particle* restrict const particles = r->particles;
-	const int N_megno = r->N_megno;
+	const int N_var = r->N_var;
 	double e_kin = 0.;
 	double e_pot = 0.;
-	for (int i=0;i<N-N_megno;i++){
+	for (int i=0;i<N-N_var;i++){
 		struct reb_particle pi = particles[i];
 		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
-		for (int j=i+1;j<N-N_megno;j++){
+		for (int j=i+1;j<N-N_var;j++){
 			struct reb_particle pj = particles[j];
 			double dx = pi.x - pj.x;
 			double dy = pi.y - pj.y;
@@ -339,7 +339,7 @@ struct orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_parti
  * MEGNO Routines         */
 
 void reb_tools_megno_init(struct reb_simulation* const r, double delta){
-	int _N_megno = r->N;
+	int N_var = r->N;
 	r->megno_Ys = 0.;
 	r->megno_Yss = 0.;
 	r->megno_cov_Yt = 0.;
@@ -348,7 +348,7 @@ void reb_tools_megno_init(struct reb_simulation* const r, double delta){
 	r->megno_mean_Y = 0;
 	r->megno_mean_t = 0;
 	r->megno_delta0 = delta;
-        for (int i=0;i<_N_megno;i++){ 
+        for (int i=0;i<N_var;i++){ 
                 struct reb_particle megno = {
 			.m  = r->particles[i].m,
 			.x  = reb_tools_normal(1.),
@@ -367,7 +367,7 @@ void reb_tools_megno_init(struct reb_simulation* const r, double delta){
 
                 reb_add(r, megno);
         }
-	r->N_megno = _N_megno;
+	r->N_var = N_var;
 }
 double reb_tools_megno(struct reb_simulation* r){ // Returns the MEGNO <Y>
 	if (r->t==0.) return 0.;
@@ -380,10 +380,10 @@ double reb_tools_lyapunov(struct reb_simulation* r){ // Returns the largest Lyap
 double reb_tools_megno_deltad_delta(struct reb_simulation* const r){
 	const struct reb_particle* restrict const particles = r->particles;
 	const int N = r->N;
-	const int N_megno = r->N_megno;
+	const int N_var = r->N_var;
         double deltad = 0;
         double delta2 = 0;
-        for (int i=N-N_megno;i<N;i++){
+        for (int i=N-N_var;i<N;i++){
                 deltad += particles[i].vx * particles[i].x; 
                 deltad += particles[i].vy * particles[i].y; 
                 deltad += particles[i].vz * particles[i].z; 

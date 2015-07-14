@@ -94,7 +94,7 @@ void reb_step(struct reb_simulation* const r){
 
 	// Calculate accelerations. 
 	reb_calculate_acceleration(r);
-	if (r->N_megno){
+	if (r->N_var){
 		reb_calculate_acceleration_var(r);
 	}
 	// Calculate non-gravity accelerations. 
@@ -267,7 +267,7 @@ struct reb_simulation* reb_create_simulation(){
 	r->N 		= 0;	
 	r->allocatedN	= 0;	
 	r->N_active 	= -1; 	
-	r->N_megno 	= 0; 	
+	r->N_var 	= 0; 	
 	r->max_radius[0]	= 0.; 	
 	r->max_radius[1]	= 0.; 	
 	r->exit_simulation	= 0;

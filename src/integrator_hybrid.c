@@ -47,11 +47,11 @@ static unsigned int reb_integrator_hybrid_switch_warning = 0;
 static double get_min_ratio(struct reb_simulation* const r){
 	const int N = r->N;
 	const int N_active = r->N_active;
-	const int N_megno = r->N_megno;
+	const int N_var = r->N_var;
 	struct reb_particle* restrict const particles = r->particles;
 	struct reb_particle p0 = particles[0];
-	const int _N_active = ((N_active==-1)?N:N_active)- N_megno;
-	const int _N_real   = N - N_megno;
+	const int _N_active = ((N_active==-1)?N:N_active)- N_var;
+	const int _N_real   = N - N_var;
 	double min_ratio = 1e308;
 	for (int i=1; i<_N_active; i++){
 		struct reb_particle pi = particles[i];
