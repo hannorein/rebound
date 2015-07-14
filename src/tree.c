@@ -84,13 +84,13 @@ static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_context* co
 		node = calloc(1, sizeof(struct reb_treecell));
 		struct reb_particle p = particles[pt];
 		if (parent == NULL){ // The new node is a root
-			node->w = r->boxsize;
-			int i = ((int)floor((p.x + r->boxsize_x/2.)/r->boxsize))%r->root_nx;
-			int j = ((int)floor((p.y + r->boxsize_y/2.)/r->boxsize))%r->root_ny;
-			int k = ((int)floor((p.z + r->boxsize_z/2.)/r->boxsize))%r->root_nz;
-			node->x = -r->boxsize_x/2.+r->boxsize*(0.5+(double)i);
-			node->y = -r->boxsize_y/2.+r->boxsize*(0.5+(double)j);
-			node->z = -r->boxsize_z/2.+r->boxsize*(0.5+(double)k);
+			node->w = r->root_size;
+			int i = ((int)floor((p.x + r->boxsize.x/2.)/r->root_size))%r->root_nx;
+			int j = ((int)floor((p.y + r->boxsize.y/2.)/r->root_size))%r->root_ny;
+			int k = ((int)floor((p.z + r->boxsize.z/2.)/r->root_size))%r->root_nz;
+			node->x = -r->boxsize.x/2.+r->root_size*(0.5+(double)i);
+			node->y = -r->boxsize.y/2.+r->root_size*(0.5+(double)j);
+			node->z = -r->boxsize.z/2.+r->root_size*(0.5+(double)k);
 		}else{ // The new node is a normal node
 			node->w 	= parent->w/2.;
 			node->x 	= parent->x + node->w/2.*((o>>0)%2==0?1.:-1);
@@ -306,9 +306,9 @@ void reb_tree_update(struct reb_context* const r){
   * @param node is a pointer to a node cell.
   */
 int reb_particles_get_rootbox_for_node(struct reb_treecell* node){
-	int i = ((int)floor((node->x + boxsize_x/2.)/boxsize)+root_nx)%root_nx;
-	int j = ((int)floor((node->y + boxsize_y/2.)/boxsize)+root_ny)%root_ny;
-	int k = ((int)floor((node->z + boxsize_z/2.)/boxsize)+root_nz)%root_nz;
+	int i = ((int)floor((node->x + boxsize.x/2.)/root_size)+root_nx)%root_nx;
+	int j = ((int)floor((node->y + boxsize.y/2.)/root_size)+root_ny)%root_ny;
+	int k = ((int)floor((node->z + boxsize.z/2.)/root_size)+root_nz)%root_nz;
 	int index = (k*root_ny+j)*root_nx+i;
 	return index;
 }

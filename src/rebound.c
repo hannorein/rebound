@@ -162,17 +162,17 @@ void reb_step(struct reb_context* const r){
 //	}
 }
 
-void reb_configure_box(struct reb_context* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz){
-	r->boxsize = boxsize;
+void reb_configure_box(struct reb_context* const r, const double root_size, const int root_nx, const int root_ny, const int root_nz){
+	r->root_size = root_size;
 	r->root_nx = root_nx;
 	r->root_ny = root_ny;
 	r->root_nz = root_nz;
 	// Setup box sizes
-	r->boxsize_x = r->boxsize *(double)r->root_nx;
-	r->boxsize_y = r->boxsize *(double)r->root_ny;
-	r->boxsize_z = r->boxsize *(double)r->root_nz;
+	r->boxsize.x = r->root_size *(double)r->root_nx;
+	r->boxsize.y = r->root_size *(double)r->root_ny;
+	r->boxsize.z = r->root_size *(double)r->root_nz;
 	r->root_n = r->root_nx*r->root_ny*r->root_nz;
-	r->boxsize_max = MAX(r->boxsize_x, MAX(r->boxsize_y, r->boxsize_z));
+	r->boxsize_max = MAX(r->boxsize.x, MAX(r->boxsize.y, r->boxsize.z));
 	if (r->root_nx <=0 || r->root_ny <=0 || r->root_nz <= 0){
 		fprintf(stderr,"\n\033[1mError!\033[0m Number of root boxes must be greater or equal to 1 in each direction.\n");
 	}
@@ -239,7 +239,7 @@ struct reb_context* reb_init(){
 	r->G 		= 1;
 	r->softening 	= 0;
 	r->dt		= 0.001;
-	r->boxsize 	= -1;
+	r->root_size 	= -1;
 	r->root_nx	= 1;
 	r->root_ny	= 1;
 	r->root_nz	= 1;
@@ -359,7 +359,7 @@ int reb_integrate(struct reb_context* const r, double tmax){
 		fprintf(stderr,"\n\033[1mError!\033[0m Cannot vizualize two simulations at the same time. Exiting.\n");
 		return 1;
 	}else{
-		if (r->boxsize==-1){  // Need boxsize for visualization. Creating one. 
+		if (r->root_size==-1){  // Need root_size for visualization. Creating one. 
 			fprintf(stderr,"\n\033[1mWarning!\033[0m Configuring box automatically for vizualization based on particle positions.\n");
 			const struct reb_particle* p = r->particles;
 			double max_r = 0;

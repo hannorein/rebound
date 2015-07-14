@@ -76,10 +76,8 @@ struct reb_context {
 	double 	softening;	/**< Gravitational softening parameter. Default: 0. */
 	double 	dt;		/**< Current timestep. */
 	double 	dt_last_done;	/**< Last full timestep (used if exact_finish_time==1). */
-	double 	boxsize;	/**< Size of a root box. Needs to be set in problem_init(). */
-	double 	boxsize_x;	/**< Size of the entire box in the x direction, root_nx*boxsize. Set in box_init().*/
-	double 	boxsize_y;	/**< Size of the entire box in the y direction, root_ny*boxsize. Set in box_init().*/
-	double 	boxsize_z;	/**< Size of the entire box in the z direction, root_nz*boxsize. Set in box_init().*/
+	double  root_size;	/**< Size of a root box. */
+	struct  reb_vec3d boxsize;	/**< Size of the entire box, root_x*boxsize. */
 	double 	boxsize_max;	/**< Maximum size of the entire box in any direction. Set in box_init().*/
 	double  max_radius[2];	/**< Two largest particle radii. Needed for collision search. */
 	int 	N;		/**< Current number of particles on this node. */

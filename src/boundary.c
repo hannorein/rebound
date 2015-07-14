@@ -40,29 +40,27 @@
 void reb_boundary_check(struct reb_context* const r){
 	struct reb_particle* const particles = r->particles;
 	const int N = r->N;
-	const double boxsize_x = r->boxsize_x;
-	const double boxsize_y = r->boxsize_y;
-	const double boxsize_z = r->boxsize_z;
+	const struct reb_vec3d boxsize = r->boxsize;
 	switch(r->boundary){
 		case RB_BT_OPEN:
 			for (int i=0;i<N;i++){ // run through loop backwards so we don't have to recheck same index after removing
 				int removep = 0;
-				if(particles[i].x>boxsize_x/2.){
+				if(particles[i].x>boxsize.x/2.){
 					removep = 1;
 				}
-				if(particles[i].x<-boxsize_x/2.){
+				if(particles[i].x<-boxsize.x/2.){
 					removep = 1;
 				}
-				if(particles[i].y>boxsize_y/2.){
+				if(particles[i].y>boxsize.y/2.){
 					removep = 1;
 				}
-				if(particles[i].y<-boxsize_y/2.){
+				if(particles[i].y<-boxsize.y/2.){
 					removep = 1;
 				}
-				if(particles[i].z>boxsize_z/2.){
+				if(particles[i].z>boxsize.z/2.){
 					removep = 1;
 				}
-				if(particles[i].z<-boxsize_z/2.){
+				if(particles[i].z<-boxsize.z/2.){
 					removep = 1;
 				}
 				if (removep==1){
@@ -80,35 +78,35 @@ void reb_boundary_check(struct reb_context* const r){
 		{
 			// The offset of ghostcell is time dependent.
 			const double OMEGA = r->ri_sei.OMEGA;
-			const double offsetp1 = -fmod(-1.5*OMEGA*boxsize_x*r->t+boxsize_y/2.,boxsize_y)-boxsize_y/2.; 
-			const double offsetm1 = -fmod( 1.5*OMEGA*boxsize_x*r->t-boxsize_y/2.,boxsize_y)+boxsize_y/2.; 
+			const double offsetp1 = -fmod(-1.5*OMEGA*boxsize.x*r->t+boxsize.y/2.,boxsize.y)-boxsize.y/2.; 
+			const double offsetm1 = -fmod( 1.5*OMEGA*boxsize.x*r->t-boxsize.y/2.,boxsize.y)+boxsize.y/2.; 
 			struct reb_particle* const particles = r->particles;
 #pragma omp parallel for schedule(guided)
 			for (int i=0;i<N;i++){
 				// Radial
-				while(particles[i].x>boxsize_x/2.){
-					particles[i].x -= boxsize_x;
+				while(particles[i].x>boxsize.x/2.){
+					particles[i].x -= boxsize.x;
 					particles[i].y += offsetp1;
-					particles[i].vy += 3./2.*OMEGA*boxsize_x;
+					particles[i].vy += 3./2.*OMEGA*boxsize.x;
 				}
-				while(particles[i].x<-boxsize_x/2.){
-					particles[i].x += boxsize_x;
+				while(particles[i].x<-boxsize.x/2.){
+					particles[i].x += boxsize.x;
 					particles[i].y += offsetm1;
-					particles[i].vy -= 3./2.*OMEGA*boxsize_x;
+					particles[i].vy -= 3./2.*OMEGA*boxsize.x;
 				}
 				// Azimuthal
-				while(particles[i].y>boxsize_y/2.){
-					particles[i].y -= boxsize_y;
+				while(particles[i].y>boxsize.y/2.){
+					particles[i].y -= boxsize.y;
 				}
-				while(particles[i].y<-boxsize_y/2.){
-					particles[i].y += boxsize_y;
+				while(particles[i].y<-boxsize.y/2.){
+					particles[i].y += boxsize.y;
 				}
 				// Vertical (there should be no boundary, but periodic makes life easier)
-				while(particles[i].z>boxsize_z/2.){
-					particles[i].z -= boxsize_z;
+				while(particles[i].z>boxsize.z/2.){
+					particles[i].z -= boxsize.z;
 				}
-				while(particles[i].z<-boxsize_z/2.){
-					particles[i].z += boxsize_z;
+				while(particles[i].z<-boxsize.z/2.){
+					particles[i].z += boxsize.z;
 				}
 			}
 		}
@@ -116,23 +114,23 @@ void reb_boundary_check(struct reb_context* const r){
 		case RB_BT_PERIODIC:
 #pragma omp parallel for schedule(guided)
 			for (int i=0;i<N;i++){
-				while(particles[i].x>boxsize_x/2.){
-					particles[i].x -= boxsize_x;
+				while(particles[i].x>boxsize.x/2.){
+					particles[i].x -= boxsize.x;
 				}
-				while(particles[i].x<-boxsize_x/2.){
-					particles[i].x += boxsize_x;
+				while(particles[i].x<-boxsize.x/2.){
+					particles[i].x += boxsize.x;
 				}
-				while(particles[i].y>boxsize_y/2.){
-					particles[i].y -= boxsize_y;
+				while(particles[i].y>boxsize.y/2.){
+					particles[i].y -= boxsize.y;
 				}
-				while(particles[i].y<-boxsize_y/2.){
-					particles[i].y += boxsize_y;
+				while(particles[i].y<-boxsize.y/2.){
+					particles[i].y += boxsize.y;
 				}
-				while(particles[i].z>boxsize_z/2.){
-					particles[i].z -= boxsize_z;
+				while(particles[i].z>boxsize.z/2.){
+					particles[i].z -= boxsize.z;
 				}
-				while(particles[i].z<-boxsize_z/2.){
-					particles[i].z += boxsize_z;
+				while(particles[i].z<-boxsize.z/2.){
+					particles[i].z += boxsize.z;
 				}
 			}
 		break;
@@ -148,9 +146,9 @@ struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_context* const r, int i
 		case RB_BT_OPEN:
 		{
 			struct reb_ghostbox gb;
-			gb.shiftx = r->boxsize_x*(double)i;
-			gb.shifty = r->boxsize_y*(double)j;
-			gb.shiftz = r->boxsize_z*(double)k;
+			gb.shiftx = r->boxsize.x*(double)i;
+			gb.shifty = r->boxsize.y*(double)j;
+			gb.shiftz = r->boxsize.z*(double)k;
 			gb.shiftvx = 0;
 			gb.shiftvy = 0;
 			gb.shiftvz = 0;
@@ -162,30 +160,30 @@ struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_context* const r, int i
 			struct reb_ghostbox gb;
 			// Ghostboxes habe a finite velocity.
 			gb.shiftvx = 0.;
-			gb.shiftvy = -1.5*(double)i*OMEGA*r->boxsize_x;
+			gb.shiftvy = -1.5*(double)i*OMEGA*r->boxsize.x;
 			gb.shiftvz = 0.;
 			// The shift in the y direction is time dependent. 
 			double shift;
 			if (i==0){
-				shift = -fmod(gb.shiftvy*r->t,r->boxsize_y); 
+				shift = -fmod(gb.shiftvy*r->t,r->boxsize.y); 
 			}else{
 				if (i>0){
-					shift = -fmod(gb.shiftvy*r->t-r->boxsize_y/2.,r->boxsize_y)-r->boxsize_y/2.; 
+					shift = -fmod(gb.shiftvy*r->t-r->boxsize.y/2.,r->boxsize.y)-r->boxsize.y/2.; 
 				}else{
-					shift = -fmod(gb.shiftvy*r->t+r->boxsize_y/2.,r->boxsize_y)+r->boxsize_y/2.; 
+					shift = -fmod(gb.shiftvy*r->t+r->boxsize.y/2.,r->boxsize.y)+r->boxsize.y/2.; 
 				}	
 			}
-			gb.shiftx = r->boxsize_x*(double)i;
-			gb.shifty = r->boxsize_y*(double)j-shift;
-			gb.shiftz = r->boxsize_z*(double)k;
+			gb.shiftx = r->boxsize.x*(double)i;
+			gb.shifty = r->boxsize.y*(double)j-shift;
+			gb.shiftz = r->boxsize.z*(double)k;
 			return gb;
 		}
 		case RB_BT_PERIODIC:
 		{
 			struct reb_ghostbox gb;
-			gb.shiftx = r->boxsize_x*(double)i;
-			gb.shifty = r->boxsize_y*(double)j;
-			gb.shiftz = r->boxsize_z*(double)k;
+			gb.shiftx = r->boxsize.x*(double)i;
+			gb.shifty = r->boxsize.y*(double)j;
+			gb.shiftz = r->boxsize.z*(double)k;
 			gb.shiftvx = 0;
 			gb.shiftvy = 0;
 			gb.shiftvz = 0;
@@ -205,22 +203,22 @@ int reb_boundary_particle_is_in_box(const struct reb_context* const r, struct re
 	switch(r->boundary){
 		case RB_BT_OPEN:
 		case RB_BT_SHEAR:
-			if(p.x>r->boxsize_x/2.){
+			if(p.x>r->boxsize.x/2.){
 				return 0;
 			}
-			if(p.x<-r->boxsize_x/2.){
+			if(p.x<-r->boxsize.x/2.){
 				return 0;
 			}
-			if(p.y>r->boxsize_y/2.){
+			if(p.y>r->boxsize.y/2.){
 				return 0;
 			}
-			if(p.y<-r->boxsize_y/2.){
+			if(p.y<-r->boxsize.y/2.){
 				return 0;
 			}
-			if(p.z>r->boxsize_z/2.){
+			if(p.z>r->boxsize.z/2.){
 				return 0;
 			}
-			if(p.z<-r->boxsize_z/2.){
+			if(p.z<-r->boxsize.z/2.){
 				return 0;
 			}
 			return 1;

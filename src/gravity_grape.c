@@ -66,9 +66,9 @@ void reb_calculate_acceleration(void){
 	// Set domain size and minimum mass for GRAPE.
 	// This could be made more precise.
 	double gravity_boxsize 	= 0;
-	if (boxsize_x*((double)nghostx+1.)>gravity_boxsize) gravity_boxsize = boxsize_x*((double)nghostx+1.);
-	if (boxsize_y*((double)nghosty+1.)>gravity_boxsize) gravity_boxsize = boxsize_y*((double)nghosty+1.);
-	if (boxsize_z*((double)nghostz+1.)>gravity_boxsize) gravity_boxsize = boxsize_z*((double)nghostz+1.);
+	if (boxsize.x*((double)nghostx+1.)>gravity_boxsize) gravity_boxsize = boxsize.x*((double)nghostx+1.);
+	if (boxsize.y*((double)nghosty+1.)>gravity_boxsize) gravity_boxsize = boxsize.y*((double)nghosty+1.);
+	if (boxsize.z*((double)nghostz+1.)>gravity_boxsize) gravity_boxsize = boxsize.z*((double)nghostz+1.);
 	g5_set_range(-gravity_boxsize,gravity_boxsize, gravity_minimum_mass);
 	if (gravity_range){
 		g5_set_eta(gravity_range);

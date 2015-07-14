@@ -327,9 +327,9 @@ void display(void){
 	}
 	}
 	glColor4f(1.0,0.0,0.0,0.4);
-	glScalef(display_r->boxsize_x,display_r->boxsize_y,display_r->boxsize_z);
+	glScalef(display_r->boxsize.x,display_r->boxsize.y,display_r->boxsize.z);
 	glutWireCube(1);
-	glScalef(1./display_r->boxsize_x,1./display_r->boxsize_y,1./display_r->boxsize_z);
+	glScalef(1./display_r->boxsize.x,1./display_r->boxsize.y,1./display_r->boxsize.z);
 	glRotatef(-display_rotate_z,0,0,1);
 	glRotatef(-display_rotate_x,1,0,0);
 	if (display_reference>=0){

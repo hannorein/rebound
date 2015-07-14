@@ -127,8 +127,8 @@ void add_line_to_xvsublist(double x1, double x2, int pt, int n, int proci, int c
  * Adds a line to the SWEEPX array and checks for crossings of processor boundaries.
  */
 void add_line_to_xvlist(double x1, double x2, int pt, int n, int crossing){
-	int procix1 = (int)(floor( (x1/boxsize_x+0.5) *(double)sweeps_proc));// %sweeps.xvlists;
-	int procix2 = (int)(floor( (x2/boxsize_x+0.5) *(double)sweeps_proc));// %sweeps.xvlists;
+	int procix1 = (int)(floor( (x1/boxsize.x+0.5) *(double)sweeps_proc));// %sweeps.xvlists;
+	int procix2 = (int)(floor( (x2/boxsize.x+0.5) *(double)sweeps_proc));// %sweeps.xvlists;
 	if (procix2>=sweeps_proc){
 		procix2 = sweeps_proc-1;
 	}
@@ -137,7 +137,7 @@ void add_line_to_xvlist(double x1, double x2, int pt, int n, int crossing){
 	}
 
 	if (procix1!=procix2){
-		double b = -boxsize_x/2.+boxsize_x/(double)sweeps_proc*(double)procix2; 
+		double b = -boxsize.x/2.+boxsize.x/(double)sweeps_proc*(double)procix2; 
 		add_line_to_xvsublist(x1,b,pt,n,procix1,1);
 		add_line_to_xvsublist(b,x2,pt,n,procix2,1);
 	}else{
@@ -161,14 +161,14 @@ void add_to_xvlist(double x1, double x2, int pt){
 	xmin -= radius;
 	xmax += radius;
 
-	if (xmin<-boxsize_x/2.){
-		add_line_to_xvlist(xmin+boxsize_x,boxsize_x/2.,pt,1,1);
-		add_line_to_xvlist(-boxsize_x/2.,xmax,pt,0,1);
+	if (xmin<-boxsize.x/2.){
+		add_line_to_xvlist(xmin+boxsize.x,boxsize.x/2.,pt,1,1);
+		add_line_to_xvlist(-boxsize.x/2.,xmax,pt,0,1);
 		return;
 	}
-	if (xmax>boxsize_x/2.){
-		add_line_to_xvlist(-boxsize_x/2.,xmax-boxsize_x,pt,-1,1);
-		add_line_to_xvlist(xmin,boxsize_x/2.,pt,0,1);
+	if (xmax>boxsize.x/2.){
+		add_line_to_xvlist(-boxsize.x/2.,xmax-boxsize.x,pt,-1,1);
+		add_line_to_xvlist(xmin,boxsize.x/2.,pt,0,1);
 		return;
 	}
 	add_line_to_xvlist(xmin,xmax,pt,0,0);

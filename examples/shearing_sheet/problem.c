@@ -85,12 +85,12 @@ int main(int argc, char* argv[]) {
 
 
 	// Add all ring paricles
-	double total_mass = surfacedensity*r->boxsize_x*r->boxsize_y;
+	double total_mass = surfacedensity*r->boxsize.x*r->boxsize.y;
 	double mass = 0;
 	while(mass<total_mass){
 		struct reb_particle pt;
-		pt.x 		= tools_uniform(-r->boxsize_x/2.,r->boxsize_x/2.);
-		pt.y 		= tools_uniform(-r->boxsize_y/2.,r->boxsize_y/2.);
+		pt.x 		= tools_uniform(-r->boxsize.x/2.,r->boxsize.x/2.);
+		pt.y 		= tools_uniform(-r->boxsize.y/2.,r->boxsize.y/2.);
 		pt.z 		= tools_normal(1.);					// m
 		pt.vx 		= 0;
 		pt.vy 		= -1.5*pt.x*OMEGA;

@@ -107,10 +107,10 @@ void reb_add_fixed(struct reb_context* const r, struct reb_particle pt,int pos){
 }
 
 int reb_get_rootbox_for_particle(const struct reb_context* const r, struct reb_particle pt){
-	if (r->boxsize==-1) return 0;
-	int i = ((int)floor((pt.x + r->boxsize_x/2.)/r->boxsize)+r->root_nx)%r->root_nx;
-	int j = ((int)floor((pt.y + r->boxsize_y/2.)/r->boxsize)+r->root_ny)%r->root_ny;
-	int k = ((int)floor((pt.z + r->boxsize_z/2.)/r->boxsize)+r->root_nz)%r->root_nz;
+	if (r->root_size==-1) return 0;
+	int i = ((int)floor((pt.x + r->boxsize.x/2.)/r->root_size)+r->root_nx)%r->root_nx;
+	int j = ((int)floor((pt.y + r->boxsize.y/2.)/r->root_size)+r->root_ny)%r->root_ny;
+	int k = ((int)floor((pt.z + r->boxsize.z/2.)/r->root_size)+r->root_nz)%r->root_nz;
 	int index = (k*r->root_ny+j)*r->root_nx+i;
 	return index;
 }

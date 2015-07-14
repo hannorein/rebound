@@ -243,12 +243,12 @@ struct aabb communication_boundingbox_for_root(int index){
 	int j = ((index-i)/root_nx)%root_ny;
 	int k = ((index-i)/root_nx-j)/root_ny;
 	struct aabb boundingbox;
-	boundingbox.xmin = -boxsize_x/2.+boxsize*(double)i;
-	boundingbox.ymin = -boxsize_y/2.+boxsize*(double)j;
-	boundingbox.zmin = -boxsize_z/2.+boxsize*(double)k;
-	boundingbox.xmax = -boxsize_x/2.+boxsize*(double)(i+1);
-	boundingbox.ymax = -boxsize_y/2.+boxsize*(double)(j+1);
-	boundingbox.zmax = -boxsize_z/2.+boxsize*(double)(k+1);
+	boundingbox.xmin = -boxsize.x/2.+boxsize*(double)i;
+	boundingbox.ymin = -boxsize.y/2.+boxsize*(double)j;
+	boundingbox.zmin = -boxsize.z/2.+boxsize*(double)k;
+	boundingbox.xmax = -boxsize.x/2.+boxsize*(double)(i+1);
+	boundingbox.ymax = -boxsize.y/2.+boxsize*(double)(j+1);
+	boundingbox.zmax = -boxsize.z/2.+boxsize*(double)(k+1);
 	return boundingbox;
 }
 
