@@ -188,11 +188,11 @@ void reb_reset_temporary_pointers(struct reb_context* const r){
 	r->ri_whfast.allocated_N	= 0;
 	r->ri_whfast.eta		= NULL;
 	r->ri_whfast.p_j		= NULL;
-	memset(&(r->ri_ias15.g),0,sizeof(double)*7);
-	memset(&(r->ri_ias15.b),0,sizeof(double)*7);
-	memset(&(r->ri_ias15.e),0,sizeof(double)*7);
-	memset(&(r->ri_ias15.br),0,sizeof(double)*7);
-	memset(&(r->ri_ias15.er),0,sizeof(double)*7);
+	memset((r->ri_ias15.g),0,sizeof(double)*7);
+	memset((r->ri_ias15.b),0,sizeof(double)*7);
+	memset((r->ri_ias15.e),0,sizeof(double)*7);
+	memset((r->ri_ias15.br),0,sizeof(double)*7);
+	memset((r->ri_ias15.er),0,sizeof(double)*7);
 	// ********** IAS15
 	r->ri_ias15.N3allocated		= 0;
 	r->ri_ias15.at  		= NULL;
@@ -283,8 +283,8 @@ struct reb_context* reb_init(){
 	r->ri_sei.OMEGAZ 	= -1;
 	r->ri_sei.lastdt 	= 0;
 	
-	r->integrator_hybrid_switch_ratio = 100; // 100 Hill radii	
-	r->integrator_hybrid_mode = SYMPLECTIC;
+	r->ri_hybrid.switch_ratio = 100; // 100 Hill radii	
+	r->ri_hybrid.mode = SYMPLECTIC;
 
 	// Tree parameters. Will not be used unless gravity or collision search makes use of tree.
 	r->tree_root		= NULL;

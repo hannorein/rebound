@@ -127,7 +127,7 @@ void output_timing(struct reb_context* r, const double tmax){
 	}
 	printf("dt= %- 9f  ",r->dt);
 	if (r->integrator==RB_IT_HYBRID){
-		printf("INT= %- 1d  ",r->integrator_hybrid_mode);
+		printf("INT= %- 1d  ",r->ri_hybrid.mode);
 	}
 	printf("cpu= %- 9f [s]  ",temp-r->output_timing_last);
 	if (tmax>0){

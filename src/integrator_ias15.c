@@ -90,11 +90,13 @@ static int reb_integrator_ias15_step(struct reb_context* r) {
 			r->ri_ias15.e[l] = realloc(r->ri_ias15.e[l],sizeof(double)*N3);
 			r->ri_ias15.br[l] = realloc(r->ri_ias15.br[l],sizeof(double)*N3);
 			r->ri_ias15.er[l] = realloc(r->ri_ias15.er[l],sizeof(double)*N3);
+			double* restrict const g = r->ri_ias15.g[l]; 
 			double* restrict const b = r->ri_ias15.b[l]; 
-			double* restrict const e = r->ri_ias15.b[l]; 
-			double* restrict const br = r->ri_ias15.b[l]; 
-			double* restrict const er = r->ri_ias15.b[l]; 
+			double* restrict const e = r->ri_ias15.e[l]; 
+			double* restrict const br = r->ri_ias15.br[l]; 
+			double* restrict const er = r->ri_ias15.er[l]; 
 			for (int k=0;k<N3;k++){
+				g[k] = 0;
 				b[k] = 0;
 				e[k] = 0;
 				br[k] = 0;
@@ -127,15 +129,15 @@ static int reb_integrator_ias15_step(struct reb_context* r) {
 	double* restrict const v0 = r->ri_ias15.v0; 
 	double* restrict const a0 = r->ri_ias15.a0; 
 	double* g[7];
-	memcpy(&g,r->ri_ias15.g,sizeof(double*)*7);
+	memcpy(g,r->ri_ias15.g,sizeof(double*)*7);
 	double* b[7];
-	memcpy(&b,r->ri_ias15.b,sizeof(double*)*7);
+	memcpy(b,r->ri_ias15.b,sizeof(double*)*7);
 	double* e[7];
-	memcpy(&e,r->ri_ias15.e,sizeof(double*)*7);
+	memcpy(e,r->ri_ias15.e,sizeof(double*)*7);
 	double* br[7];
-	memcpy(&br,r->ri_ias15.br,sizeof(double*)*7);
+	memcpy(br,r->ri_ias15.br,sizeof(double*)*7);
 	double* er[7];
-	memcpy(&er,r->ri_ias15.er,sizeof(double*)*7);
+	memcpy(er,r->ri_ias15.er,sizeof(double*)*7);
 	for(int k=0;k<N;k++) {
 		x0[3*k]   = particles[k].x;
 		x0[3*k+1] = particles[k].y;

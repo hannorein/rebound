@@ -32,6 +32,7 @@
 #include "integrator_whfast.h"
 #include "integrator_sei.h"
 #include "integrator_wh.h"
+#include "integrator_hybrid.h"
 
 
 /**
@@ -179,14 +180,11 @@ struct reb_context {
 	
 	//////////////////////////////////////////////
 	/// Integrators
-	struct reb_context_integrator_whfast ri_whfast;	/**< The WHFast struct */
+	struct reb_context_integrator_whfast ri_whfast;		/**< The WHFast struct */
 	struct reb_context_integrator_ias15 ri_ias15;		/**< The IAS15 struct */
 	struct reb_context_integrator_sei ri_sei;		/**< The SEI struct */
-	struct reb_context_integrator_wh ri_wh;		/**< The WH struct */
-
-	// Default corresponds to about 10 Hill Radii 
-	double integrator_hybrid_switch_ratio;
-	enum {SYMPLECTIC, HIGHORDER} integrator_hybrid_mode;
+	struct reb_context_integrator_wh ri_wh;			/**< The WH struct */
+	struct reb_context_integrator_hybrid ri_hybrid;		/**< The Hybrid struct */
 
 	//////////////////////////////////////////////
 	/// Callback function
