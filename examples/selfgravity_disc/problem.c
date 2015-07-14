@@ -35,10 +35,10 @@
 #include "output.h"
 
 
-void heartbeat(struct Rebound* const r);
+void heartbeat(struct reb_context* const r);
 
 int main(int argc, char* argv[]){
-	struct Rebound* const r = rebound_init();
+	struct reb_context* const r = reb_init();
 	// Setup constants
 	r->integrator	= RB_IT_LEAPFROG;
 	r->gravity	= RB_GT_TREE;
@@ -48,19 +48,19 @@ int main(int argc, char* argv[]){
 	r->softening 	= 0.02;		// Gravitational softening length
 	r->dt 		= 3e-2;		// Timestep
 	const double boxsize = 10.2;
-	rebound_configure_box(r,boxsize,1,1,1);
+	reb_configure_box(r,boxsize,1,1,1);
 
 	// Setup particles
 	double disc_mass = 2e-1;	// Total disc mass
 	int N = 10000;			// Number of particles
 	// Initial conditions
-	struct Particle star;
+	struct reb_particle star;
 	star.x 		= 0; star.y 	= 0; star.z	= 0;
 	star.vx 	= 0; star.vy 	= 0; star.vz 	= 0;
 	star.m 		= 1;
-	particles_add(r,star);
+	reb_add(r, star);
 	for (int i=0;i<N;i++){
-		struct Particle pt;
+		struct reb_particle pt;
 		double a	= tools_powerlaw(boxsize/10.,boxsize/2./1.2,-1.5);
 		double phi 	= tools_uniform(0,2.*M_PI);
 		pt.x 		= a*cos(phi);
@@ -72,13 +72,13 @@ int main(int argc, char* argv[]){
 		pt.vy 		= -vkep * cos(phi);
 		pt.vz 		= 0;
 		pt.m 		= disc_mass/(double)N;
-		particles_add(r, pt);
+		reb_add(r, pt);
 	}
 
 	r->heartbeat = heartbeat;
-	rebound_integrate(r,0);
+	reb_integrate(r,0);
 }
 
-void heartbeat(struct Rebound* const r){
+void heartbeat(struct reb_context* const r){
 	if (output_check(r,10.0*r->dt)) output_timing(r,0);
 }

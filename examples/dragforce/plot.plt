@@ -1,6 +1,6 @@
 #!/usr/bin/gnuplot
-set output "plot.pdf"
-set term pdf enhanced size 3in,3in monochrome
+set output "plot.png"
+set term png
 set xlabel "time"
 set multiplot layout 2,1
 set ylabel "position"

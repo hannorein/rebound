@@ -37,17 +37,16 @@
 #include "particle.h"
 #include "integrator.h"
 
-void additional_forces(struct Rebound* const r);
-void heartbeat(struct Rebound* const r);
+void additional_forces(struct reb_context* const r);
+void heartbeat(struct reb_context* const r);
 
 double tmax = 40.;
 
 int main(int argc, char* argv[]){
-	struct Rebound* r = rebound_init();
+	struct reb_context* r = reb_init();
 	// Setup constants
 	r->dt 			= 1e-4;		// initial timestep.
-	r->boxsize 		= 10;	
-	r->integrator		= IAS15;
+	r->integrator		= RB_IT_IAS15;
 	r->gravity		= RB_GT_NONE;
 
 	// Setup callback function for velocity dependent forces.
@@ -56,24 +55,24 @@ int main(int argc, char* argv[]){
 	// Setup callback function for outputs.
 	r->heartbeat		= heartbeat;
 	
-	struct Particle p; 
+	struct reb_particle p; 
 	p.m  = 0;	// massless
 	p.x = 1; 	p.y = 0; 	p.z = 0;
 	p.vx = -1; 	p.vy = 0; 	p.vz = 0;
 	p.ax = 0; 	p.ay = 0; 	p.az = 0;
-	particles_add(r, p); 
+	reb_add(r, p); 
 
 	// Delete previous output
 	system("rm -v r.txt");	
 
 	// Do the integration
-	rebound_integrate(r, tmax);
+	reb_integrate(r, tmax);
 }
 
-void additional_forces(struct Rebound* const r){
+void additional_forces(struct reb_context* const r){
 	// Simplest velocity dependent drag force.
 	double dragcoefficient = 1;
-	struct Particle* const particles = r->particles;
+	struct reb_particle* const particles = r->particles;
 	const int N = r->N;
 	for (int i=0;i<N;i++){
 		particles[i].ax = -dragcoefficient*particles[i].vx;
@@ -82,13 +81,13 @@ void additional_forces(struct Rebound* const r){
 	}
 }
 
-void heartbeat(struct Rebound* const r){
+void heartbeat(struct reb_context* const r){
 	// Output some information to the screen every 100th timestep
 	if(output_check(r, 100.*r->dt)){
 		output_timing(r, tmax);
 	}
 	// Output the particle position to a file every timestep.
-	const struct Particle* const particles = r->particles;
+	const struct reb_particle* const particles = r->particles;
 	FILE* f = fopen("r.txt","a");
 	fprintf(f,"%e\t%e\t%e\n",r->t,particles[0].x, particles[1].vx);
 	fclose(f);
