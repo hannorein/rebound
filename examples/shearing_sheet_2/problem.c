@@ -125,16 +125,16 @@ double coefficient_of_restitution_bridges(double v){
 void problem_output(){
 
 #ifdef LIBPNG
-	if (output_check(2.*1e-2*2.*M_PI/OMEGA)){
-		output_png("png/");
+	if (reb_output_check(2.*1e-2*2.*M_PI/OMEGA)){
+		reb_output_png("png/");
 	}
 #endif //LIBPNG
-	if (output_check(1e-3*2.*M_PI/OMEGA)){
-		output_timing();
-		//output_append_velocity_dispersion("veldisp.txt");
+	if (reb_output_check(1e-3*2.*M_PI/OMEGA)){
+		reb_output_timing();
+		//reb_output_append_velocity_dispersion("veldisp.txt");
 	}
-	if (output_check(2.*M_PI/OMEGA)){
-		//output_ascii("position.txt");
+	if (reb_output_check(2.*M_PI/OMEGA)){
+		//reb_output_ascii("position.txt");
 	}
 }
 

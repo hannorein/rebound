@@ -91,10 +91,10 @@ int main(int argc, char* argv[]) {
 }
 
 void heartbeat(struct Rebound* const r){
-	if (output_check(r, 1000.*r->dt)){
-		output_timing(r, tmax);
+	if (reb_output_check(r, 1000.*r->dt)){
+		reb_output_timing(r, tmax);
 	}
-	if (output_check(r, 362.)){
+	if (reb_output_check(r, 362.)){
 		// Output the time and the MEGNO to the screen and a file.
 		FILE* f = fopen("Y.txt","a+");
 		fprintf(f,"        %.20e     %.20e\n",r->t, tools_megno(r));

@@ -118,12 +118,12 @@ double coefficient_of_restitution_bridges(const struct reb_simulation* const r, 
 }
 
 void heartbeat(struct reb_simulation* const r){
-	if (output_check(r, 1e-3*2.*M_PI/r->ri_sei.OMEGA)){
-		output_timing(r, 0);
-		//output_append_velocity_dispersion("veldisp.txt");
+	if (reb_output_check(r, 1e-3*2.*M_PI/r->ri_sei.OMEGA)){
+		reb_output_timing(r, 0);
+		//reb_output_append_velocity_dispersion("veldisp.txt");
 	}
-	if (output_check(r, 2.*M_PI/r->ri_sei.OMEGA)){
-		//output_ascii("position.txt");
+	if (reb_output_check(r, 2.*M_PI/r->ri_sei.OMEGA)){
+		//reb_output_ascii("position.txt");
 	}
 }
 

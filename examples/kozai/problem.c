@@ -85,11 +85,11 @@ void problem_init(int argc, char* argv[]){
 }
 
 void problem_output(){
-	if(output_check(20.*M_PI)){		// outputs to the screen
-		output_timing();
+	if(reb_output_check(20.*M_PI)){		// outputs to the screen
+		reb_output_timing();
 	}
-	if(output_check(12.)){			// outputs to a file
-		output_append_orbits("orbits.txt");
+	if(reb_output_check(12.)){			// outputs to a file
+		reb_output_append_orbits("orbits.txt");
 	}
 }
 

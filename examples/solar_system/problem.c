@@ -138,8 +138,8 @@ double energy(){
 }
 
 void problem_output(){
-	if (output_check(10000.)){
-		output_timing();
+	if (reb_output_check(10000.)){
+		reb_output_timing();
 		integrator_synchronize();
 		FILE* f = fopen("energy.txt","a");
 		double e = energy();

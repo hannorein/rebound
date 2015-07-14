@@ -116,10 +116,10 @@ void force_J2(){
 }
 
 void problem_output(){
-	if(output_check(4000.*dt)){				// output something to screen	
-		output_timing();
+	if(reb_output_check(4000.*dt)){				// output something to screen	
+		reb_output_timing();
 	}
-	if(output_check(M_PI*2.*0.01)){				// output semimajor axis to file
+	if(reb_output_check(M_PI*2.*0.01)){				// output semimajor axis to file
 		FILE* f = fopen("a.txt","a");
 		const struct particle planet = particles[0];
 		for (int i=1;i<N;i++){

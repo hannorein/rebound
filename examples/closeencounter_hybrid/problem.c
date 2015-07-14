@@ -76,10 +76,10 @@ void problem_init(int argc, char* argv[]){
 }
 
 void problem_output(){
-	if (output_check(10.*2.*M_PI)){  
-		output_timing();
+	if (reb_output_check(10.*2.*M_PI)){  
+		reb_output_timing();
 	}
-	if (output_check(2.*M_PI)){  
+	if (reb_output_check(2.*M_PI)){  
 		FILE* f = fopen("energy.txt","a");
 		integrator_synchronize();
 		double e = tools_energy();

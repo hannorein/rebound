@@ -106,10 +106,10 @@ void additional_forces(){
 }
 
 void problem_output(){
-	if(output_check(400.)){						// print some information to screen
-		output_timing();
+	if(reb_output_check(400.)){						// print some information to screen
+		reb_output_timing();
 	}
-	if(output_check(M_PI*2.*1000.)){ 					// output radial distance every 1000 years
+	if(reb_output_check(M_PI*2.*1000.)){ 					// output radial distance every 1000 years
 		FILE* f = fopen("radius.txt","a");
 		const struct particle star = particles[0];
 		for (int i=1;i<N;i++){

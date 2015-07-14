@@ -111,11 +111,11 @@ void problem_init(int argc, char* argv[]){
 }
 
 void problem_output(){
-	if (output_check(2.*M_PI)){
-		output_timing();
+	if (reb_output_check(2.*M_PI)){
+		reb_output_timing();
 	}
-	if (output_check(2.*M_PI)){
-		output_ascii("positions.txt");
+	if (reb_output_check(2.*M_PI)){
+		reb_output_ascii("positions.txt");
 	}
 }
 

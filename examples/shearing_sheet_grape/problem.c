@@ -117,7 +117,7 @@ void problem_init(int argc, char* argv[]){
 	}
 }
 
-void output_ascii_mod(char* filename){
+void reb_output_ascii_mod(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -137,11 +137,11 @@ void output_ascii_mod(char* filename){
 }
 
 void problem_output(){
-	if (output_check(1e-1*2.*M_PI/OMEGA)){
-		output_timing();
+	if (reb_output_check(1e-1*2.*M_PI/OMEGA)){
+		reb_output_timing();
 	}
-	if (output_check(.2*M_PI/OMEGA)){
-		output_ascii_mod("ascii.txt");
+	if (reb_output_check(.2*M_PI/OMEGA)){
+		reb_output_ascii_mod("ascii.txt");
 	}
 }
 

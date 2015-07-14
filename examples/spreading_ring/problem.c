@@ -88,8 +88,8 @@ void problem_init(int argc, char* argv[]){
 }
 
 void problem_output(){
-	if (output_check(10.0*dt)){
-		output_timing();
+	if (reb_output_check(10.0*dt)){
+		reb_output_timing();
 	}
 	for (int i=N_active;i<N;i++){
 		struct particle p = particles[i];

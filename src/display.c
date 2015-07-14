@@ -3,7 +3,7 @@
  * @brief 	Realtime OpenGL visualization.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @details 	These functions provide real time visualizations
- * using OpenGL. Screenshots can be saved with the output_png() routine.
+ * using OpenGL. Screenshots can be saved with the reb_output_png() routine.
  * Tested under Mac OSX Snow Leopard and Linux. 
  * 
  * @section 	LICENSE
@@ -144,7 +144,7 @@ void displayKey(unsigned char key, int x, int y){
 			break;
 		case 'p': case 'P':
 #ifdef LIBPNG
-			output_png_single("screenshot.png");
+			reb_output_png_single("screenshot.png");
 			printf("\nScreenshot saved as 'screenshot.png'.\n");
 #else 	// LIBPNG
 			printf("\nNeed LIBPNG to save screenshot.\n");

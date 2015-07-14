@@ -116,8 +116,8 @@ void collision_resolve_merger(struct collision c){
 }
 
 void problem_output(){
-	if (output_check(10.*2.*M_PI)){  
-		output_timing();
+	if (reb_output_check(10.*2.*M_PI)){  
+		reb_output_timing();
 	}
 }
 

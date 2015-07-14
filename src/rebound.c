@@ -274,7 +274,7 @@ struct reb_simulation* reb_create_simulation(){
 	r->exact_finish_time 	= 0;
 	r->force_is_velocitydependent = 0;
 	r->gravity_ignore_10	= 0;
-	r->output_timing_last = -1;
+	r->reb_output_timing_last = -1;
 
 	r->minimum_collision_velocity = 0;
 	r->collisions_plog 	= 0;

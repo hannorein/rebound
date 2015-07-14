@@ -114,8 +114,8 @@ double coefficient_of_restitution_bridges(double v){
 }
 
 void problem_output(){
-	if (output_check(10.0*dt)){
-		output_timing();
+	if (reb_output_check(10.0*dt)){
+		reb_output_timing();
 	}
 }
 

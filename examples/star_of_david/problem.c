@@ -69,8 +69,8 @@ void problem_init(int argc, char* argv[]){
 }
 
 void problem_output(){
-	if (output_check(1.)){
-		output_timing();
+	if (reb_output_check(1.)){
+		reb_output_timing();
 	}
 }
 

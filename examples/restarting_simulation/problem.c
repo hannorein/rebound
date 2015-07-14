@@ -87,9 +87,9 @@ int main(int argc, char* argv[]){
 
 void heartbeat(struct Rebound* const r){
 	// Outputs a restartfile once per orbit.
-	output_timing(r,0);
-	if (output_check(r,1e-0*2.*M_PI)){
-		output_binary(r, "restart.bin");
+	reb_output_timing(r,0);
+	if (reb_output_check(r,1e-0*2.*M_PI)){
+		reb_output_binary(r, "restart.bin");
 		printf("\nSaved binary file.\n");
 	}
 }

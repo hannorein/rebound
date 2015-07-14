@@ -129,8 +129,8 @@ int main(int argc, char* argv[]) {
 
 
 void heartbeat(struct reb_simulation* const r){
-	if (output_check(r, 10000000.)){
-		output_timing(r, tmax);
+	if (reb_output_check(r, 10000000.)){
+		reb_output_timing(r, tmax);
 	}
 }
 

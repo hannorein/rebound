@@ -53,11 +53,11 @@
 
 // Check if output is needed
 
-int output_check(struct reb_simulation* r, double interval){
-	return output_check_phase(r, interval,0);
+int reb_output_check(struct reb_simulation* r, double interval){
+	return reb_output_check_phase(r, interval,0);
 }
 
-int output_check_phase(struct reb_simulation* r, double interval,double phase){
+int reb_output_check_phase(struct reb_simulation* r, double interval,double phase){
 	double shift = r->t+interval*phase;
 	if (floor(shift/interval)!=floor((shift-r->dt)/interval)){
 		return 1;
@@ -96,7 +96,7 @@ void profiling_stop(int cat){
 }
 #endif // PROFILING
 
-void output_timing(struct reb_simulation* r, const double tmax){
+void reb_output_timing(struct reb_simulation* r, const double tmax){
 	const int N = r->N;
 #ifdef MPI
 	int N_tot = 0;
@@ -108,8 +108,8 @@ void output_timing(struct reb_simulation* r, const double tmax){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double temp = tim.tv_sec+(tim.tv_usec/1000000.0);
-	if (r->output_timing_last==-1){
-		r->output_timing_last = temp;
+	if (r->reb_output_timing_last==-1){
+		r->reb_output_timing_last = temp;
 	}else{
 		printf("\r");
 #ifdef PROFILING
@@ -129,7 +129,7 @@ void output_timing(struct reb_simulation* r, const double tmax){
 	if (r->integrator==RB_IT_HYBRID){
 		printf("INT= %- 1d  ",r->ri_hybrid.mode);
 	}
-	printf("cpu= %- 9f [s]  ",temp-r->output_timing_last);
+	printf("cpu= %- 9f [s]  ",temp-r->reb_output_timing_last);
 	if (tmax>0){
 		printf("t/tmax= %5.2f%%",r->t/tmax*100.0);
 	}
@@ -168,11 +168,11 @@ void output_timing(struct reb_simulation* r, const double tmax){
 	}
 #endif // PROFILING
 	fflush(stdout);
-	r->output_timing_last = temp;
+	r->reb_output_timing_last = temp;
 }
 
 
-void output_append_ascii(struct reb_simulation* r, char* filename){
+void reb_output_append_ascii(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
@@ -192,7 +192,7 @@ void output_append_ascii(struct reb_simulation* r, char* filename){
 	fclose(of);
 }
 
-void output_ascii(struct reb_simulation* r, char* filename){
+void reb_output_ascii(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
@@ -212,7 +212,7 @@ void output_ascii(struct reb_simulation* r, char* filename){
 	fclose(of);
 }
 
-void output_append_orbits(struct reb_simulation* r, char* filename){
+void reb_output_append_orbits(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
@@ -234,7 +234,7 @@ void output_append_orbits(struct reb_simulation* r, char* filename){
 	fclose(of);
 }
 
-void output_orbits(struct reb_simulation* r, char* filename){
+void reb_output_orbits(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
@@ -257,7 +257,7 @@ void output_orbits(struct reb_simulation* r, char* filename){
 }
 
 
-void output_binary(struct reb_simulation* r, char* filename){
+void reb_output_binary(struct reb_simulation* r, char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -274,7 +274,7 @@ void output_binary(struct reb_simulation* r, char* filename){
 	fclose(of);
 }
 
-void output_binary_positions(struct reb_simulation* r, char* filename){
+void reb_output_binary_positions(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
@@ -297,7 +297,7 @@ void output_binary_positions(struct reb_simulation* r, char* filename){
 	fclose(of);
 }
 
-void output_append_velocity_dispersion(struct reb_simulation* r, char* filename){
+void reb_output_append_velocity_dispersion(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 	// Algorithm with reduced roundoff errors (see wikipedia)
 	struct vec3 A = {.x=0, .y=0, .z=0};
@@ -349,15 +349,15 @@ void output_append_velocity_dispersion(struct reb_simulation* r, char* filename)
 #ifdef OPENGL
 #ifdef LIBPNG
 unsigned char* 	imgdata = NULL;
-int output_png_num = 0;
-void output_png(char* dirname){
+int reb_output_png_num = 0;
+void reb_output_png(char* dirname){
 	char filename[1024];
-	sprintf(filename,"%s%09d.png",dirname,output_png_num);
-	output_png_num++;
-	output_png_single(filename);
+	sprintf(filename,"%s%09d.png",dirname,reb_output_png_num);
+	reb_output_png_num++;
+	reb_output_png_single(filename);
 }
 
-void output_png_single(char* filename){
+void reb_output_png_single(char* filename){
 	// Read Image
 	if (display_init_done==0) return;
 	GLint viewport[4];

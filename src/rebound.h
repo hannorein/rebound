@@ -96,7 +96,7 @@ struct reb_simulation {
 
 	unsigned int force_is_velocitydependent; 	/**< Set to 1 if integrator needs to consider velocity dependent forces. */ 
 	unsigned int gravity_ignore_10;			/**< Ignore the gravity form the central object (for WH-type integrators)*/
-	double output_timing_last; 		/**< Time when output_timing() was called the last time. */
+	double reb_output_timing_last; 		/**< Time when reb_output_timing() was called the last time. */
 
 
 	//////////////////////////////////////////////

@@ -5,7 +5,7 @@
  * @details	If MPI is enabled, most functions output one file per
  * node. They automatically add a subscript _0, _1, .. to each file.
  * The user has to join them together manually. One exception is 
- * output_append_velocity_dispersion() which only outputs one file.
+ * reb_output_append_velocity_dispersion() which only outputs one file.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
@@ -34,26 +34,26 @@ struct reb_simulation;
  * @return The return value is 1 if an output is required and 0 otherwise.
  * @param interval Output interval.
  */
-int output_check(struct reb_simulation* r, double interval);
+int reb_output_check(struct reb_simulation* r, double interval);
 
 /**
  * This function checks if a new output is required at this time.
  * @return The return value is 1 if an output is required and 0 otherwise.
  * @param interval Output interval.
- * @param phase Phase (if 0, then this function is equal to output_check()).
+ * @param phase Phase (if 0, then this function is equal to reb_output_check()).
  */
-int output_check_phase(struct reb_simulation* r, double interval,double phase);
+int reb_output_check_phase(struct reb_simulation* r, double interval,double phase);
 
 /**
  * Outputs the current number of particles, the time and the time difference since the last output to the screen.
  */
 
-void output_timing(struct reb_simulation* r, const double tmax);
+void reb_output_timing(struct reb_simulation* r, const double tmax);
 /**
  * Outputs an ASCII file with the positions and velocities of all particles.
  * @param filename Output filename.
  */
-void output_ascii(struct reb_simulation* r, char* filename);
+void reb_output_ascii(struct reb_simulation* r, char* filename);
 
 /**
  * Outputs an ASCII file with orbital paramters of all particles.
@@ -61,7 +61,7 @@ void output_ascii(struct reb_simulation* r, char* filename);
  * reb_particles are assumed to be sorted from the inside out, the central object having index 0.
  * @param filename Output filename.
  */
-void output_orbits(struct reb_simulation* r, char* filename);
+void reb_output_orbits(struct reb_simulation* r, char* filename);
 
 /**
  * Appends an ASCII file with orbital paramters of all particles.
@@ -69,31 +69,31 @@ void output_orbits(struct reb_simulation* r, char* filename);
  * reb_particles are assumed to be sorted from the inside out, the central object having index 0. 
  * @param filename Output filename.
  */
-void output_append_orbits(struct reb_simulation* r, char* filename);
+void reb_output_append_orbits(struct reb_simulation* r, char* filename);
 
 /**
  * Appends the positions and velocities of all particles to an ASCII file.
  * @param filename Output filename.
  */
-void output_append_ascii(struct reb_simulation* r, char* filename);
+void reb_output_append_ascii(struct reb_simulation* r, char* filename);
 
 /**
  * Dumps all particle structs into a binary file.
  * @param filename Output filename.
  */
-void output_binary(struct reb_simulation* r, char* filename);
+void reb_output_binary(struct reb_simulation* r, char* filename);
 
 /**
  * Dumps only the positions of all particles into a binary file.
  * @param filename Output filename.
  */
-void output_binary_positions(struct reb_simulation* r, char* filename);
+void reb_output_binary_positions(struct reb_simulation* r, char* filename);
 
 /**
  * Appends the velocity dispersion of the particles to an ASCII file.
  * @param filename Output filename.
  */
-void output_append_velocity_dispersion(struct reb_simulation* r, char* filename);
+void reb_output_append_velocity_dispersion(struct reb_simulation* r, char* filename);
 
 #if defined(OPENGL) && defined(LIBPNG)
 /**
@@ -104,13 +104,13 @@ void output_append_velocity_dispersion(struct reb_simulation* r, char* filename)
  * compile movies with the command 'ffmpeg -qscale 5 -r 20 -b 9600 -i %09d.png movie.mp4'.
  * @param dirname Output directory (e.g. 'src/'). Must end with a slash. Directory must exist.
  */
-void output_png(char* dirname);
+void reb_output_png(char* dirname);
 /**
  * Outputs a single screenshot of the current OpenGL view.
  * @details Requires OpenGL and LIBPNG to be installed.
  * @param filename Output filename.
  */
-void output_png_single(char* filename);
+void reb_output_png_single(char* filename);
 #endif // OPENGL && LIBPNG
 
 #ifdef PROFILING

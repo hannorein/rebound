@@ -73,8 +73,8 @@ void problem_init(int argc, char* argv[]){
 }
 
 void problem_output(){
-	if (output_check(10.*2.*M_PI)){  
-		output_timing();
+	if (reb_output_check(10.*2.*M_PI)){  
+		reb_output_timing();
 	}
 }
 

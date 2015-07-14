@@ -80,5 +80,5 @@ int main(int argc, char* argv[]){
 }
 
 void heartbeat(struct reb_simulation* const r){
-	if (output_check(r,10.0*r->dt)) output_timing(r,0);
+	if (reb_output_check(r,10.0*r->dt)) reb_output_timing(r,0);
 }

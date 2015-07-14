@@ -84,9 +84,9 @@ void problem_init(int argc, char* argv[]){
 }
 
 void problem_output(){
-	output_timing();
-	if (output_check(2.*M_PI)){
-		output_orbits("orbit.txt");
+	reb_output_timing();
+	if (reb_output_check(2.*M_PI)){
+		reb_output_orbits("orbit.txt");
 	}
 }
 

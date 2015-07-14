@@ -86,8 +86,8 @@ void problem_init(int argc, char* argv[]){
 }
 
 void problem_output(){
-	if (output_check(10.0*dt)) output_timing();
-	if (output_check(1.)) output_ascii("ascii.txt");
+	if (reb_output_check(10.0*dt)) reb_output_timing();
+	if (reb_output_check(1.)) reb_output_ascii("ascii.txt");
 }
 
 void problem_finish(){

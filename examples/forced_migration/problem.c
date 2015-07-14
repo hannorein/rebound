@@ -154,12 +154,12 @@ void problem_migration_forces(){
 }
 
 void problem_output(){
-	if(output_check(20.*M_PI)){
-		output_timing();
+	if(reb_output_check(20.*M_PI)){
+		reb_output_timing();
 	}
-	if(output_check(40.)){
+	if(reb_output_check(40.)){
 		integrator_synchronize();
-		output_append_orbits("orbits.txt");
+		reb_output_append_orbits("orbits.txt");
 		if (integrator != WH){	// The WH integrator assumes a heliocentric coordinate system.
 			tools_move_to_center_of_momentum(); 
 		}

@@ -83,8 +83,8 @@ void additional_forces(struct reb_simulation* const r){
 
 void heartbeat(struct reb_simulation* const r){
 	// Output some information to the screen every 100th timestep
-	if(output_check(r, 100.*r->dt)){
-		output_timing(r, tmax);
+	if(reb_output_check(r, 100.*r->dt)){
+		reb_output_timing(r, tmax);
 	}
 	// Output the particle position to a file every timestep.
 	const struct reb_particle* const particles = r->particles;

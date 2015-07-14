@@ -124,10 +124,10 @@ void force_radiation(){
 }
 
 void problem_output(){
-	if(output_check(M_PI*2.)){
-		output_timing();
+	if(reb_output_check(M_PI*2.)){
+		reb_output_timing();
 	}
-	if(output_check(M_PI*2.*100.)){ // output every 100 years
+	if(reb_output_check(M_PI*2.*100.)){ // output every 100 years
 		FILE* f = fopen("a.txt","a");
 		const struct particle planet = particles[1];
 		for (int i=2;i<N;i++){

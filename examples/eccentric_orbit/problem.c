@@ -80,8 +80,8 @@ void problem_init(int argc, char* argv[]){
 }
 
 void problem_output(){
-	if(output_check(tmax/10000.)){		// outputs to the screen
-		output_timing();
+	if(reb_output_check(tmax/10000.)){		// outputs to the screen
+		reb_output_timing();
 	}
 	// Output the time and the current timestep. Plot it to see how IAS15 automatically reduces the timestep at pericentre. 
 	FILE* of = fopen("timestep.txt","a"); 
