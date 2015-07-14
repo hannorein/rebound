@@ -24,10 +24,10 @@
  */
 #ifndef _INTEGRATOR_WHFAST_H
 #define _INTEGRATOR_WHFAST_H
-struct reb_context;
+struct reb_simulation;
 struct reb_particle; 
 
-struct reb_context_integrator_whfast {
+struct reb_simulation_integrator_whfast {
 
 	/*
 	 * This variable turns on/off various symplectic correctors.
@@ -79,8 +79,8 @@ struct reb_context_integrator_whfast {
 
 };
 
-void reb_integrator_whfast_part1(struct reb_context* r);
-void reb_integrator_whfast_part2(struct reb_context* r);
-void reb_integrator_whfast_synchronize(struct reb_context* r);
-void reb_integrator_whfast_reset(struct reb_context* r);
+void reb_integrator_whfast_part1(struct reb_simulation* r);
+void reb_integrator_whfast_part2(struct reb_simulation* r);
+void reb_integrator_whfast_synchronize(struct reb_simulation* r);
+void reb_integrator_whfast_reset(struct reb_simulation* r);
 #endif

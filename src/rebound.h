@@ -70,7 +70,7 @@ struct reb_particle {
 	struct reb_treecell* c;		/**< Pointer to the cell the particle is currently in. */
 };
 
-struct reb_context {
+struct reb_simulation {
 	double 	t;		/**< Current simulation time. */
 	double 	G;		/**< Gravitational constant. Default: 1. */
 	double 	softening;	/**< Gravitational softening parameter. Default: 0. */
@@ -176,36 +176,36 @@ struct reb_context {
 	
 	//////////////////////////////////////////////
 	/// Integrators
-	struct reb_context_integrator_whfast ri_whfast;		/**< The WHFast struct */
-	struct reb_context_integrator_ias15 ri_ias15;		/**< The IAS15 struct */
-	struct reb_context_integrator_sei ri_sei;		/**< The SEI struct */
-	struct reb_context_integrator_wh ri_wh;			/**< The WH struct */
-	struct reb_context_integrator_hybrid ri_hybrid;		/**< The Hybrid struct */
+	struct reb_simulation_integrator_whfast ri_whfast;		/**< The WHFast struct */
+	struct reb_simulation_integrator_ias15 ri_ias15;		/**< The IAS15 struct */
+	struct reb_simulation_integrator_sei ri_sei;		/**< The SEI struct */
+	struct reb_simulation_integrator_wh ri_wh;			/**< The WH struct */
+	struct reb_simulation_integrator_hybrid ri_hybrid;		/**< The Hybrid struct */
 
 	//////////////////////////////////////////////
 	/// Callback functions
 	/*
 	 * This function allows the user to add additional (non-gravitational) forces.
 	 */
-	void (*additional_forces) (struct reb_context* const r);
+	void (*additional_forces) (struct reb_simulation* const r);
 	/*
 	 * This function allows the user to modify the dditional (non-gravitational) forces.
 	 */
-	void (*post_timestep_modifications) (struct reb_context* const r);
+	void (*post_timestep_modifications) (struct reb_simulation* const r);
 	/**
 	 * This function is called at the beginning of the simulation and at the end of
 	 * each timestep.
 	 */
-	void (*heartbeat) (struct reb_context* r);
+	void (*heartbeat) (struct reb_simulation* r);
 	/**
 	 * Return the coefficient of restitution. If NULL, assume a coefficient of 1.
 	 */
-	double (*coefficient_of_restitution) (const struct reb_context* const r, double v); 
+	double (*coefficient_of_restitution) (const struct reb_simulation* const r, double v); 
 
 	/**
 	 * Resolve collision within this function. If NULL, assume hard sphere model.
 	 */
-	void (*collision_resolve) (struct reb_context* const r, struct reb_collision);
+	void (*collision_resolve) (struct reb_simulation* const r, struct reb_collision);
 };
 
 
@@ -213,33 +213,33 @@ struct reb_context {
  * Initializes all REBOUND variables and returns a REBOUND handle.. 
  * This function must be called from problem_init() before any particles are added.
  */
-struct reb_context* reb_init();
+struct reb_simulation* reb_init();
 
 /**
  * Performon integration step.
  */
-void reb_step(struct reb_context* const r);
+void reb_step(struct reb_simulation* const r);
 
 /**
  * Performon an integration. Starting at the current time t and until time tmax.
  * tmax==0 means integrate forever.
  */
-int reb_integrate(struct reb_context* const r, double tmax);
+int reb_integrate(struct reb_simulation* const r, double tmax);
 
 /**
  * Helper function to configure box.
  */
-void reb_configure_box(struct reb_context* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz);
+void reb_configure_box(struct reb_simulation* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz);
 
 /**
  * This function is called once before the integration and then after every timestep.
  * The simulation exits immediately if it returns 1.
  */
-int reb_check_exit(struct reb_context* const r, const double tmax);
+int reb_check_exit(struct reb_simulation* const r, const double tmax);
 
 /*
  * Function used to allow binary input.
  */
-void reb_reset_temporary_pointers(struct reb_context* const r);
-void reb_reset_function_pointers(struct reb_context* const r);
+void reb_reset_temporary_pointers(struct reb_simulation* const r);
+void reb_reset_function_pointers(struct reb_simulation* const r);
 #endif

@@ -36,7 +36,7 @@
 
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
-void reb_integrator_leapfrog_part1(struct reb_context* r){
+void reb_integrator_leapfrog_part1(struct reb_simulation* r){
 	const int N = r->N;
 	struct reb_particle* restrict const particles = r->particles;
 	const double dt = r->dt;
@@ -48,7 +48,7 @@ void reb_integrator_leapfrog_part1(struct reb_context* r){
 	}
 	r->t+=dt/2.;
 }
-void reb_integrator_leapfrog_part2(struct reb_context* r){
+void reb_integrator_leapfrog_part2(struct reb_simulation* r){
 	const int N = r->N;
 	struct reb_particle* restrict const particles = r->particles;
 	const double dt = r->dt;
@@ -64,10 +64,10 @@ void reb_integrator_leapfrog_part2(struct reb_context* r){
 	r->t+=dt/2.;
 }
 	
-void reb_integrator_leapfrog_synchronize(struct reb_context* r){
+void reb_integrator_leapfrog_synchronize(struct reb_simulation* r){
 	// Do nothing.
 }
 
-void reb_integrator_leapfrog_reset(struct reb_context* r){
+void reb_integrator_leapfrog_reset(struct reb_simulation* r){
 	// Do nothing.
 }

@@ -37,7 +37,7 @@
 #include "boundary.h"
 #include "tree.h"
 
-void reb_boundary_check(struct reb_context* const r){
+void reb_boundary_check(struct reb_simulation* const r){
 	struct reb_particle* const particles = r->particles;
 	const int N = r->N;
 	const struct reb_vec3d boxsize = r->boxsize;
@@ -141,7 +141,7 @@ void reb_boundary_check(struct reb_context* const r){
 
 const static struct reb_ghostbox nan_ghostbox = {.shiftx = 0, .shifty = 0, .shiftz = 0, .shiftvx = 0, .shiftvy = 0, .shiftvz = 0};
 
-struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_context* const r, int i, int j, int k){
+struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_simulation* const r, int i, int j, int k){
 	switch(r->boundary){
 		case RB_BT_OPEN:
 		{
@@ -199,7 +199,7 @@ struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_context* const r, int i
  * @param p reb_particle to be checked.
  * @return Return value is 1 if particle is inside the box and 0 otherwise.
  */
-int reb_boundary_particle_is_in_box(const struct reb_context* const r, struct reb_particle p){
+int reb_boundary_particle_is_in_box(const struct reb_simulation* const r, struct reb_particle p){
 	switch(r->boundary){
 		case RB_BT_OPEN:
 		case RB_BT_SHEAR:

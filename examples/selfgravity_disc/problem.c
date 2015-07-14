@@ -35,10 +35,10 @@
 #include "output.h"
 
 
-void heartbeat(struct reb_context* const r);
+void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]){
-	struct reb_context* const r = reb_init();
+	struct reb_simulation* const r = reb_init();
 	// Setup constants
 	r->integrator	= RB_IT_LEAPFROG;
 	r->gravity	= RB_GT_TREE;
@@ -79,6 +79,6 @@ int main(int argc, char* argv[]){
 	reb_integrate(r,0);
 }
 
-void heartbeat(struct reb_context* const r){
+void heartbeat(struct reb_simulation* const r){
 	if (output_check(r,10.0*r->dt)) output_timing(r,0);
 }

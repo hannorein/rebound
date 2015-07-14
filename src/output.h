@@ -28,13 +28,13 @@
  */
 #ifndef _OUTPUT_H
 #define _OUTPUT_H
-struct reb_context;
+struct reb_simulation;
 /**
  * This function checks if a new output is required at this time.
  * @return The return value is 1 if an output is required and 0 otherwise.
  * @param interval Output interval.
  */
-int output_check(struct reb_context* r, double interval);
+int output_check(struct reb_simulation* r, double interval);
 
 /**
  * This function checks if a new output is required at this time.
@@ -42,18 +42,18 @@ int output_check(struct reb_context* r, double interval);
  * @param interval Output interval.
  * @param phase Phase (if 0, then this function is equal to output_check()).
  */
-int output_check_phase(struct reb_context* r, double interval,double phase);
+int output_check_phase(struct reb_simulation* r, double interval,double phase);
 
 /**
  * Outputs the current number of particles, the time and the time difference since the last output to the screen.
  */
 
-void output_timing(struct reb_context* r, const double tmax);
+void output_timing(struct reb_simulation* r, const double tmax);
 /**
  * Outputs an ASCII file with the positions and velocities of all particles.
  * @param filename Output filename.
  */
-void output_ascii(struct reb_context* r, char* filename);
+void output_ascii(struct reb_simulation* r, char* filename);
 
 /**
  * Outputs an ASCII file with orbital paramters of all particles.
@@ -61,7 +61,7 @@ void output_ascii(struct reb_context* r, char* filename);
  * reb_particles are assumed to be sorted from the inside out, the central object having index 0.
  * @param filename Output filename.
  */
-void output_orbits(struct reb_context* r, char* filename);
+void output_orbits(struct reb_simulation* r, char* filename);
 
 /**
  * Appends an ASCII file with orbital paramters of all particles.
@@ -69,31 +69,31 @@ void output_orbits(struct reb_context* r, char* filename);
  * reb_particles are assumed to be sorted from the inside out, the central object having index 0. 
  * @param filename Output filename.
  */
-void output_append_orbits(struct reb_context* r, char* filename);
+void output_append_orbits(struct reb_simulation* r, char* filename);
 
 /**
  * Appends the positions and velocities of all particles to an ASCII file.
  * @param filename Output filename.
  */
-void output_append_ascii(struct reb_context* r, char* filename);
+void output_append_ascii(struct reb_simulation* r, char* filename);
 
 /**
  * Dumps all particle structs into a binary file.
  * @param filename Output filename.
  */
-void output_binary(struct reb_context* r, char* filename);
+void output_binary(struct reb_simulation* r, char* filename);
 
 /**
  * Dumps only the positions of all particles into a binary file.
  * @param filename Output filename.
  */
-void output_binary_positions(struct reb_context* r, char* filename);
+void output_binary_positions(struct reb_simulation* r, char* filename);
 
 /**
  * Appends the velocity dispersion of the particles to an ASCII file.
  * @param filename Output filename.
  */
-void output_append_velocity_dispersion(struct reb_context* r, char* filename);
+void output_append_velocity_dispersion(struct reb_simulation* r, char* filename);
 
 #if defined(OPENGL) && defined(LIBPNG)
 /**

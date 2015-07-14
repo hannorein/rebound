@@ -24,12 +24,12 @@
  */
 #ifndef _INTEGRATOR_SEI_H
 #define _INTEGRATOR_SEI_H
-void reb_integrator_sei_part1(struct reb_context* r);
-void reb_integrator_sei_part2(struct reb_context* r);
-void reb_integrator_sei_synchronize(struct reb_context* r);
-void reb_integrator_sei_reset(struct reb_context* r);
+void reb_integrator_sei_part1(struct reb_simulation* r);
+void reb_integrator_sei_part2(struct reb_simulation* r);
+void reb_integrator_sei_synchronize(struct reb_simulation* r);
+void reb_integrator_sei_reset(struct reb_simulation* r);
 
-struct reb_context_integrator_sei {
+struct reb_simulation_integrator_sei {
 	double OMEGA;		/**< Epicyclic/orbital frequency.  */
 	double OMEGAZ; 		/**< Epicyclic frequency in vertical direction. */
 

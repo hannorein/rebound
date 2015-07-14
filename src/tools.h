@@ -25,7 +25,7 @@
 #ifndef TOOLS_H
 #define TOOLS_H
 #include "particle.h"
-struct reb_context;
+struct reb_simulation;
 /**
  * Struct representing a Keplerian orbit.
  */
@@ -79,7 +79,7 @@ double tools_rayleigh(double sigma);
  * @param R Characteristic radius of the cluster.
  */
 
-void tools_init_plummer(struct reb_context* r, int _N, double M, double R);
+void tools_init_plummer(struct reb_simulation* r, int _N, double M, double R);
 
 /**
  * Initialize a particle on an orbit in the xy plane.
@@ -117,7 +117,7 @@ struct orbit tools_p2orbit(double G, struct reb_particle p, struct reb_particle 
 /**
  * Move to center of momentum and center of mass frame.
  */
-void tools_move_to_center_of_momentum(struct reb_context* const r);
+void tools_move_to_center_of_momentum(struct reb_simulation* const r);
 
 /**
  * Returns the center of mass of particle p1 and p2.
@@ -127,35 +127,35 @@ struct reb_particle tools_get_center_of_mass(struct reb_particle p1, struct reb_
 /* 
  * Init the MEGNO particles
  **/
-void tools_megno_init(struct reb_context* const r, double delta);
+void tools_megno_init(struct reb_simulation* const r, double delta);
 
 /*
  * Returns the current value of <Y>
  **/
-double tools_megno(struct reb_context* r);
+double tools_megno(struct reb_simulation* r);
 
 /*
  * Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
  **/
-double tools_lyapunov(struct reb_context* r);
+double tools_lyapunov(struct reb_simulation* r);
 
 /*
  * Returns deltad/delta (Note, there is a typo in Gozdziewski et al 2001).
  **/
 
-double tools_megno_deltad_delta(struct reb_context* const r);
+double tools_megno_deltad_delta(struct reb_simulation* const r);
 
 /*
  * Update MEGNO after a successful timestep by adding dY (=ddelta/delta*dt)
  **/
-void tools_megno_update(struct reb_context* r, double dY);
+void tools_megno_update(struct reb_simulation* r, double dY);
 
 /**
  * Calculate the total energy (potential and kinetic).
  * Might not work for WH.
  * @return Total energy. 
  */
-double tools_energy(struct reb_context* r);
+double tools_energy(struct reb_simulation* r);
 
 /**
  * Init random number generator based on time and process id.

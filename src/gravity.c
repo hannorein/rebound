@@ -49,12 +49,12 @@
   * @param pt Index of the particle the force is calculated for.
   * @param gb Ghostbox plus position of the particle (precalculated). 
   */
-static void reb_calculate_acceleration_for_particle(const struct reb_context* const r, const int pt, const struct reb_ghostbox gb);
+static void reb_calculate_acceleration_for_particle(const struct reb_simulation* const r, const int pt, const struct reb_ghostbox gb);
 
 /**
  * Main Gravity Routine
  */
-void reb_calculate_acceleration(struct reb_context* r){
+void reb_calculate_acceleration(struct reb_simulation* r){
 	struct reb_particle* const particles = r->particles;
 	const int N = r->N;
 	const int N_megno = r->N_megno;
@@ -244,7 +244,7 @@ void reb_calculate_acceleration(struct reb_context* r){
 
 }
 
-void reb_calculate_acceleration_var(struct reb_context* r){
+void reb_calculate_acceleration_var(struct reb_simulation* r){
 	struct reb_particle* const particles = r->particles;
 	const double G = r->G;
 	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
@@ -319,9 +319,9 @@ void reb_calculate_acceleration_var(struct reb_context* r){
   * @param node Pointer to the cell the force is calculated from.
   * @param gb Ghostbox plus position of the particle (precalculated). 
   */
-static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_context* const r, const int pt, const struct reb_treecell *node, const struct reb_ghostbox gb);
+static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_simulation* const r, const int pt, const struct reb_treecell *node, const struct reb_ghostbox gb);
 
-static void reb_calculate_acceleration_for_particle(const struct reb_context* const r, const int pt, const struct reb_ghostbox gb) {
+static void reb_calculate_acceleration_for_particle(const struct reb_simulation* const r, const int pt, const struct reb_ghostbox gb) {
 	for(int i=0;i<r->root_n;i++){
 		struct reb_treecell* node = r->tree_root[i];
 		if (node!=NULL){
@@ -330,7 +330,7 @@ static void reb_calculate_acceleration_for_particle(const struct reb_context* co
 	}
 }
 
-static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_context* r, const int pt, const struct reb_treecell *node, const struct reb_ghostbox gb) {
+static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_simulation* r, const int pt, const struct reb_treecell *node, const struct reb_ghostbox gb) {
 	const double G = r->G;
 	const double softening2 = r->softening*r->softening;
 	struct reb_particle* const particles = r->particles;

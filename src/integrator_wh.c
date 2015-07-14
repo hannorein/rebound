@@ -63,7 +63,7 @@ static void reb_integrator_wh_ah(struct reb_particle* const particles, const dou
 static void reb_integrator_wh_to_jacobi(struct reb_particle* const particles, const double* const eta, const int N, const int N_active);
 static void reb_integrator_wh_from_jacobi(struct reb_particle* const particles, const double* const eta, const int N, const int N_active);
 
-void reb_integrator_wh_part1(struct reb_context* r){
+void reb_integrator_wh_part1(struct reb_simulation* r){
 	const int N = r->N;
 	const int N_active = r->N_active;
 	struct reb_particle* const particles = r->particles;
@@ -84,7 +84,7 @@ void reb_integrator_wh_part1(struct reb_context* r){
 	r->t+=r->dt/2.;
 }
 
-void reb_integrator_wh_part2(struct reb_context* r){
+void reb_integrator_wh_part2(struct reb_simulation* r){
 	const int N = r->N;
 	const int N_active = r->N_active;
 	struct reb_particle* const particles = r->particles;
@@ -108,10 +108,10 @@ void reb_integrator_wh_part2(struct reb_context* r){
 	r->t+=r->dt/2.;
 }
 
-void reb_integrator_wh_synchronize(struct reb_context* r){
+void reb_integrator_wh_synchronize(struct reb_simulation* r){
 	// Do nothing.
 }
-void reb_integrator_wh_reset(struct reb_context* r){
+void reb_integrator_wh_reset(struct reb_simulation* r){
 	// Do nothing.
 }
 

@@ -127,7 +127,7 @@ static struct reb_dpconst7 dpcast(struct reb_dp7 dp){
 }
  
 // Does the actual timestep.
-static int reb_integrator_ias15_step(struct reb_context* r) {
+static int reb_integrator_ias15_step(struct reb_simulation* r) {
 	struct reb_particle* const particles = r->particles;
 	const int N = r->N;
 	const int N_megno  = r->N_megno;
@@ -579,10 +579,10 @@ static void copybuffers(const struct reb_dpconst7 _a, const struct reb_dpconst7 
 }
 
 // Do nothing here. This is only used in a leapfrog-like DKD integrator. IAS15 performs one complete timestep.
-void reb_integrator_ias15_part1(struct reb_context* r){
+void reb_integrator_ias15_part1(struct reb_simulation* r){
 }
 
-void reb_integrator_ias15_part2(struct reb_context* r){
+void reb_integrator_ias15_part2(struct reb_simulation* r){
 #ifdef GENERATE_CONSTANTS
 	integrator_generate_constants();
 #endif  // GENERATE_CONSTANTS
@@ -590,10 +590,10 @@ void reb_integrator_ias15_part2(struct reb_context* r){
 	while(!reb_integrator_ias15_step(r));
 }
 
-void reb_integrator_ias15_synchronize(struct reb_context* r){
+void reb_integrator_ias15_synchronize(struct reb_simulation* r){
 }
 
-void reb_integrator_ias15_reset(struct reb_context* r){
+void reb_integrator_ias15_reset(struct reb_simulation* r){
 	r->ri_ias15.allocatedN 	= 0;
 	r->ri_ias15.dt_last_success = 0;
 	free_dp7(&(r->ri_ias15.g));

@@ -190,7 +190,7 @@ void display_entire_tree(void){
 	}
 }
 
-struct reb_context* display_r = NULL;
+struct reb_simulation* display_r = NULL;
 
 void display(void){
 	const struct reb_particle* particles = display_r->particles;

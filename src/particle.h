@@ -24,7 +24,7 @@
  */
 #ifndef _PARTICLE_H
 #define _PARTICLE_H
-struct reb_context;
+struct reb_simulation;
 struct reb_particle;
 struct reb_treecell;
 
@@ -36,33 +36,33 @@ struct reb_treecell;
  *          put into the corresponding send queue particles_send.
  * @param pt reb_particle to be added.
  */
-void reb_add(struct reb_context* const r, struct reb_particle pt);
+void reb_add(struct reb_simulation* const r, struct reb_particle pt);
 
 /** 
  * Same as reb_add() but inserts particles at given position. 
  * @param pt reb_particle to be added.
  * @param pos New position.
  */
-void reb_add_fixed(struct reb_context* const r, struct reb_particle pt,int pos);
+void reb_add_fixed(struct reb_simulation* const r, struct reb_particle pt,int pos);
 
 /**
  * Add a particle to the particle structure on the current node.
  * Do not distribute particles.
  * @param pt reb_particle to be added.
  */
-void reb_add_local(struct reb_context* const r, struct reb_particle pt);
+void reb_add_local(struct reb_simulation* const r, struct reb_particle pt);
 
 /**
  * Returns the index of the rootbox for the current particles based on its position.
  * @return Index of the rootbox.
  * @param pt reb_particle to be checked.
  */
-int reb_get_rootbox_for_particle(const struct reb_context* const r, struct reb_particle pt);
+int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt);
 
 /**
  * Remove all particles
  */
-void reb_remove_all(struct reb_context* const r);
+void reb_remove_all(struct reb_simulation* const r);
 
 /**
  * Remove particle by position in particles array
@@ -71,7 +71,7 @@ void reb_remove_all(struct reb_context* const r);
  * Returns 1 if particle was successfully removed, 0 if index passed was 
  * out of range.
  */
-int reb_remove(struct reb_context* const rindex, int ID, int keepSorted);
+int reb_remove(struct reb_simulation* const rindex, int ID, int keepSorted);
 
 #ifdef PARTICLEIDS
 /**
@@ -81,6 +81,6 @@ int reb_remove(struct reb_context* const rindex, int ID, int keepSorted);
  * ensuring the ordering remains. Returns 1 if particle successfully removed,
  * 0 if ID was not found in the particles array.
  */
-int reb_remove_with_id(struct reb_context* const r, int ID, int keepSorted);
+int reb_remove_with_id(struct reb_simulation* const r, int ID, int keepSorted);
 #endif
 #endif // _PARTICLE_H

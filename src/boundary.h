@@ -51,7 +51,7 @@ struct reb_ghostbox{
  * If a particle left the box, it is shifted back in the box
  * for periodic boundary conditions or remove from the simulation.
  */
-void reb_boundary_check(struct reb_context* r);
+void reb_boundary_check(struct reb_simulation* r);
 
 /**
  * Creates a ghostbox.
@@ -59,11 +59,11 @@ void reb_boundary_check(struct reb_context* r);
  * @param j Index in y direction.
  * @param k Index in z direction.
  */
-struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_context* const r, int i, int j, int k);
+struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_simulation* const r, int i, int j, int k);
 
 /**
  * Return 1 if a particle is in the box, 0 otherwise.
  */
-int reb_boundary_particle_is_in_box(const struct reb_context* const r, struct reb_particle p);
+int reb_boundary_particle_is_in_box(const struct reb_simulation* const r, struct reb_particle p);
 
 #endif

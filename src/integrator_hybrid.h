@@ -24,14 +24,14 @@
  */
 #ifndef _INTEGRATOR_HYBRID_H
 #define _INTEGRATOR_HYBRID_H
-struct reb_context;
+struct reb_simulation;
 
-void reb_integrator_hybrid_part1(struct reb_context* r);
-void reb_integrator_hybrid_part2(struct reb_context* r);
-void reb_integrator_hybrid_synchronize(struct reb_context* r);
-void reb_integrator_hybrid_reset(struct reb_context* r);
+void reb_integrator_hybrid_part1(struct reb_simulation* r);
+void reb_integrator_hybrid_part2(struct reb_simulation* r);
+void reb_integrator_hybrid_synchronize(struct reb_simulation* r);
+void reb_integrator_hybrid_reset(struct reb_simulation* r);
 
-struct reb_context_integrator_hybrid {
+struct reb_simulation_integrator_hybrid {
 	double switch_ratio;			// Default corresponds to about 10 Hill Radii 
 	enum {SYMPLECTIC, HIGHORDER} mode;
 };

@@ -53,11 +53,11 @@
 
 // Check if output is needed
 
-int output_check(struct reb_context* r, double interval){
+int output_check(struct reb_simulation* r, double interval){
 	return output_check_phase(r, interval,0);
 }
 
-int output_check_phase(struct reb_context* r, double interval,double phase){
+int output_check_phase(struct reb_simulation* r, double interval,double phase){
 	double shift = r->t+interval*phase;
 	if (floor(shift/interval)!=floor((shift-r->dt)/interval)){
 		return 1;
@@ -96,7 +96,7 @@ void profiling_stop(int cat){
 }
 #endif // PROFILING
 
-void output_timing(struct reb_context* r, const double tmax){
+void output_timing(struct reb_simulation* r, const double tmax){
 	const int N = r->N;
 #ifdef MPI
 	int N_tot = 0;
@@ -172,7 +172,7 @@ void output_timing(struct reb_context* r, const double tmax){
 }
 
 
-void output_append_ascii(struct reb_context* r, char* filename){
+void output_append_ascii(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
@@ -192,7 +192,7 @@ void output_append_ascii(struct reb_context* r, char* filename){
 	fclose(of);
 }
 
-void output_ascii(struct reb_context* r, char* filename){
+void output_ascii(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
@@ -212,7 +212,7 @@ void output_ascii(struct reb_context* r, char* filename){
 	fclose(of);
 }
 
-void output_append_orbits(struct reb_context* r, char* filename){
+void output_append_orbits(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
@@ -234,7 +234,7 @@ void output_append_orbits(struct reb_context* r, char* filename){
 	fclose(of);
 }
 
-void output_orbits(struct reb_context* r, char* filename){
+void output_orbits(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
@@ -257,7 +257,7 @@ void output_orbits(struct reb_context* r, char* filename){
 }
 
 
-void output_binary(struct reb_context* r, char* filename){
+void output_binary(struct reb_simulation* r, char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -269,12 +269,12 @@ void output_binary(struct reb_context* r, char* filename){
 		printf("\n\nError while opening file '%s'.\n",filename);
 		return;
 	}
-	fwrite(r,sizeof(struct reb_context),1,of);
+	fwrite(r,sizeof(struct reb_simulation),1,of);
 	fwrite(r->particles,sizeof(struct reb_particle),r->N,of);
 	fclose(of);
 }
 
-void output_binary_positions(struct reb_context* r, char* filename){
+void output_binary_positions(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
@@ -297,7 +297,7 @@ void output_binary_positions(struct reb_context* r, char* filename){
 	fclose(of);
 }
 
-void output_append_velocity_dispersion(struct reb_context* r, char* filename){
+void output_append_velocity_dispersion(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 	// Algorithm with reduced roundoff errors (see wikipedia)
 	struct vec3 A = {.x=0, .y=0, .z=0};

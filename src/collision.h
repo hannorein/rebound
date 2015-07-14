@@ -50,6 +50,6 @@ struct reb_collision{
 /**
  * Search for collisions and resolve them.
  */
-void reb_collision_search(struct reb_context* const r);
+void reb_collision_search(struct reb_simulation* const r);
 
 #endif // _COLLISIONS_H

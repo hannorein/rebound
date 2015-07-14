@@ -55,19 +55,19 @@ struct reb_treecell {
 /**
   * The wrap function corresponds to initializing the trees when they don't exist and updating the structures of the trees by calling reb_tree_update_cell. 
   */
-void reb_tree_update(struct reb_context* const r);
+void reb_tree_update(struct reb_simulation* const r);
 
 /**
   * The wrap function calls reb_tree_update_gravity_data_in_cell() to for each tree.
   */
-void reb_tree_update_gravity_data(struct reb_context* const r);
+void reb_tree_update_gravity_data(struct reb_simulation* const r);
 
 /**
   * The wrap function calls reb_tree_add_particle_to_cell() to add the particle into one of the trees. If the tree_root doesn't exist, then it initializes the trees. 
   *
   * @param pt is the index of a particle.
   */
-void reb_tree_add_particle_to_tree(struct reb_context* const r, int pt);
+void reb_tree_add_particle_to_tree(struct reb_simulation* const r, int pt);
 
 #ifdef MPI
 /**

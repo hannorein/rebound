@@ -56,7 +56,7 @@ static const char* build_str = __DATE__ " " __TIME__;	/**< Date and time build s
 unsigned int reb_show_logo = 1;
 
 
-void reb_step(struct reb_context* const r){
+void reb_step(struct reb_simulation* const r){
 	// A 'DKD'-like integrator will do the first 'D' part.
 	PROFILING_START()
 	reb_integrator_part1(r);
@@ -162,7 +162,7 @@ void reb_step(struct reb_context* const r){
 //	}
 }
 
-void reb_configure_box(struct reb_context* const r, const double root_size, const int root_nx, const int root_ny, const int root_nz){
+void reb_configure_box(struct reb_simulation* const r, const double root_size, const int root_nx, const int root_ny, const int root_nz){
 	r->root_size = root_size;
 	r->root_nx = root_nx;
 	r->root_ny = root_ny;
@@ -188,7 +188,7 @@ static void set_dp7_null(struct reb_dp7 * dp){
 	dp->p6 = NULL;
 }
 
-void reb_reset_temporary_pointers(struct reb_context* const r){
+void reb_reset_temporary_pointers(struct reb_simulation* const r){
 	// Note: this will not clear the particle array.
 	r->gravity_cs_allocatedN 	= 0;
 	r->gravity_cs 			= NULL;
@@ -217,7 +217,7 @@ void reb_reset_temporary_pointers(struct reb_context* const r){
 	r->ri_wh.eta 			= NULL;
 }
 
-void reb_reset_function_pointers(struct reb_context* const r){
+void reb_reset_function_pointers(struct reb_simulation* const r){
 	r->coefficient_of_restitution 	= NULL;
 	r->collision_resolve    	= NULL;
 	r->additional_forces 		= NULL;
@@ -225,14 +225,14 @@ void reb_reset_function_pointers(struct reb_context* const r){
 	r->post_timestep_modifications	= NULL;
 }
 
-struct reb_context* reb_init(){
+struct reb_simulation* reb_init(){
 	if (reb_show_logo==1){
 		int i =0;
 		while (logo[i]!=NULL){ printf("%s",logo[i++]); }
 		printf("Built: %s\n\n",build_str);
 	}
 	tools_init_srand();
-	struct reb_context* r = calloc(1,sizeof(struct reb_context));
+	struct reb_simulation* r = calloc(1,sizeof(struct reb_simulation));
 	reb_reset_temporary_pointers(r);
 	reb_reset_function_pointers(r);
 	r->t 		= 0; 
@@ -319,7 +319,7 @@ struct reb_context* reb_init(){
 	return r;
 }
 
-int reb_check_exit(struct reb_context* const r, const double tmax){
+int reb_check_exit(struct reb_simulation* const r, const double tmax){
 	const double dtsign = copysign(1.,r->dt); 	// Used to determine integration direction
 	if(tmax!=0.){
 		if(r->exact_finish_time==1){
@@ -347,7 +347,7 @@ int reb_check_exit(struct reb_context* const r, const double tmax){
 	return r->exit_simulation;
 }
 
-int reb_integrate(struct reb_context* const r, double tmax){
+int reb_integrate(struct reb_simulation* const r, double tmax){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);

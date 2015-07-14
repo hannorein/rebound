@@ -66,7 +66,7 @@ double tools_rayleigh(double sigma){
 }
 
 /// Other helper routines
-double tools_energy(struct reb_context* r){
+double tools_energy(struct reb_simulation* r){
 	const int N = r->N;
 	const struct reb_particle* restrict const particles = r->particles;
 	const int N_megno = r->N_megno;
@@ -86,7 +86,7 @@ double tools_energy(struct reb_context* r){
 	return e_kin +e_pot;
 }
 
-void tools_move_to_center_of_momentum(struct reb_context* const r){
+void tools_move_to_center_of_momentum(struct reb_simulation* const r){
 	const int N = r->N;
 	struct reb_particle* restrict const particles = r->particles;
 	double m = 0;
@@ -141,7 +141,7 @@ struct reb_particle tools_get_center_of_mass(struct reb_particle p1, struct reb_
 	return p1;
 }
 
-void tools_init_plummer(struct reb_context* r, int _N, double M, double R) {
+void tools_init_plummer(struct reb_simulation* r, int _N, double M, double R) {
 	// Algorithm from:	
 	// http://adsabs.harvard.edu/abs/1974A%26A....37..183A
 	
@@ -338,7 +338,7 @@ struct orbit tools_p2orbit(double G, struct reb_particle p, struct reb_particle 
 /**************************
  * MEGNO Routines         */
 
-void tools_megno_init(struct reb_context* const r, double delta){
+void tools_megno_init(struct reb_simulation* const r, double delta){
 	int _N_megno = r->N;
 	r->megno_Ys = 0.;
 	r->megno_Yss = 0.;
@@ -369,15 +369,15 @@ void tools_megno_init(struct reb_context* const r, double delta){
         }
 	r->N_megno = _N_megno;
 }
-double tools_megno(struct reb_context* r){ // Returns the MEGNO <Y>
+double tools_megno(struct reb_simulation* r){ // Returns the MEGNO <Y>
 	if (r->t==0.) return 0.;
 	return r->megno_Yss/r->t;
 }
-double tools_lyapunov(struct reb_context* r){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
+double tools_lyapunov(struct reb_simulation* r){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
 	if (r->t==0.) return 0.;
 	return r->megno_cov_Yt/r->megno_var_t;
 }
-double tools_megno_deltad_delta(struct reb_context* const r){
+double tools_megno_deltad_delta(struct reb_simulation* const r){
 	const struct reb_particle* restrict const particles = r->particles;
 	const int N = r->N;
 	const int N_megno = r->N_megno;
@@ -400,7 +400,7 @@ double tools_megno_deltad_delta(struct reb_context* const r){
         return deltad/delta2;
 }
 
-void tools_megno_update(struct reb_context* r, double dY){
+void tools_megno_update(struct reb_simulation* r, double dY){
 	// Calculate running Y(t)
 	r->megno_Ys += dY;
 	double Y = r->megno_Ys/r->t;

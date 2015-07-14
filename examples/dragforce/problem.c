@@ -37,13 +37,13 @@
 #include "particle.h"
 #include "integrator.h"
 
-void additional_forces(struct reb_context* const r);
-void heartbeat(struct reb_context* const r);
+void additional_forces(struct reb_simulation* const r);
+void heartbeat(struct reb_simulation* const r);
 
 double tmax = 40.;
 
 int main(int argc, char* argv[]){
-	struct reb_context* r = reb_init();
+	struct reb_simulation* r = reb_init();
 	// Setup constants
 	r->dt 			= 1e-4;		// initial timestep.
 	r->integrator		= RB_IT_IAS15;
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]){
 	reb_integrate(r, tmax);
 }
 
-void additional_forces(struct reb_context* const r){
+void additional_forces(struct reb_simulation* const r){
 	// Simplest velocity dependent drag force.
 	double dragcoefficient = 1;
 	struct reb_particle* const particles = r->particles;
@@ -81,7 +81,7 @@ void additional_forces(struct reb_context* const r){
 	}
 }
 
-void heartbeat(struct reb_context* const r){
+void heartbeat(struct reb_simulation* const r){
 	// Output some information to the screen every 100th timestep
 	if(output_check(r, 100.*r->dt)){
 		output_timing(r, tmax);

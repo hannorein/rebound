@@ -24,14 +24,14 @@
  */
 #ifndef _INTEGRATOR_H
 #define _INTEGRATOR_H
-struct reb_context;
+struct reb_simulation;
 
 /*
  * The first half of the integrator step.
  * This function is called at the beginning of the timestep. It 
  * advances the positions by 1/2 timestep.
  */
-void reb_integrator_part1(struct reb_context* r);
+void reb_integrator_part1(struct reb_simulation* r);
 /*
  * The second half of the integrator step.
  * This function is called after gravitational (and non-gravitational) 
@@ -40,23 +40,23 @@ void reb_integrator_part1(struct reb_context* r);
  * At the end of this function, the positions and velocities are in
  * sync which is needed for collision detection.
  */
-void reb_integrator_part2(struct reb_context* r);
+void reb_integrator_part2(struct reb_simulation* r);
 
 
 /*
  * Synchronize particles manually at end of timestep.
  */
-void reb_integrator_synchronize(struct reb_context* r);
+void reb_integrator_synchronize(struct reb_simulation* r);
 
 /* 
  * Cleanup all temporarily stored values.
  **/
-void reb_integrator_reset(struct reb_context* r);
+void reb_integrator_reset(struct reb_simulation* r);
 
 /* This function updates the acceleration on all particles. 
  * It uses the current position and velocity data in the 
  * (struct particle*) particles structure.
  */
-void reb_update_acceleration(struct reb_context* r);
+void reb_update_acceleration(struct reb_simulation* r);
 
 #endif

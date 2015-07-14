@@ -42,7 +42,7 @@
 extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
-void reb_add_local(struct reb_context* const r, struct reb_particle pt){
+void reb_add_local(struct reb_simulation* const r, struct reb_particle pt){
 	if (reb_boundary_particle_is_in_box(r, pt)==0){
 		// reb_particle has left the box. Do not add.
 		fprintf(stderr,"\n\033[1mWarning!\033[0m Did not add particle outside of box boundaries.\n");
@@ -61,7 +61,7 @@ void reb_add_local(struct reb_context* const r, struct reb_particle pt){
 	(r->N)++;
 }
 
-void reb_add(struct reb_context* const r, struct reb_particle pt){
+void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 	if (r->N_megno){
 		fprintf(stderr,"\n\033[1mWarning!\033[0m Trying to add particle after calling megno_init().\n");
 	}
@@ -94,7 +94,7 @@ void reb_add(struct reb_context* const r, struct reb_particle pt){
 	reb_add_local(r, pt);
 }
 
-void reb_add_fixed(struct reb_context* const r, struct reb_particle pt,int pos){
+void reb_add_fixed(struct reb_simulation* const r, struct reb_particle pt,int pos){
 	// Only works for non-MPI simulations or when the particles does not move to another node.
 	if (reb_boundary_particle_is_in_box(r, pt)==0){
 		// reb_particle has left the box. Do not add.
@@ -106,7 +106,7 @@ void reb_add_fixed(struct reb_context* const r, struct reb_particle pt,int pos){
 	}
 }
 
-int reb_get_rootbox_for_particle(const struct reb_context* const r, struct reb_particle pt){
+int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt){
 	if (r->root_size==-1) return 0;
 	int i = ((int)floor((pt.x + r->boxsize.x/2.)/r->root_size)+r->root_nx)%r->root_nx;
 	int j = ((int)floor((pt.y + r->boxsize.y/2.)/r->root_size)+r->root_ny)%r->root_ny;
@@ -115,7 +115,7 @@ int reb_get_rootbox_for_particle(const struct reb_context* const r, struct reb_p
 	return index;
 }
 
-void reb_remove_all(struct reb_context* const r){
+void reb_remove_all(struct reb_simulation* const r){
 	r->N 		= 0;
 	r->allocatedN 	= 0;
 	r->N_active 	= -1;
@@ -124,7 +124,7 @@ void reb_remove_all(struct reb_context* const r){
 	r->particles 	= NULL;
 }
 
-int reb_remove(struct reb_context* const r, int index, int keepSorted){
+int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 	if (r->N==1){
 		fprintf(stderr, "Last particle removed.\n");
 		return 1;
@@ -151,7 +151,7 @@ int reb_remove(struct reb_context* const r, int index, int keepSorted){
 }
 
 #ifdef PARTICLEIDS
-int reb_remove_with_id(struct reb_context* const r, int ID, int keepSorted){
+int reb_remove_with_id(struct reb_simulation* const r, int ID, int keepSorted){
 	int success = 0;
 	for(int i=0;i<r->N;i++){
 		if(r->particles[i].ID == ID){

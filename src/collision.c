@@ -48,10 +48,10 @@
 #error COLLISIONS_DIRECT not yet compatible with MPI
 #endif
 
-static void reb_tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
-static void reb_collision_resolve_hardsphere(struct reb_context* const r, struct reb_collision c);
+static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
+static void reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c);
 
-void reb_collision_search(struct reb_context* const r){
+void reb_collision_search(struct reb_simulation* const r){
 	const int N = r->N;
 	int collisions_N = 0;
 	const struct reb_particle* const particles = r->particles;
@@ -188,7 +188,7 @@ void reb_collision_search(struct reb_context* const r){
 	}
 	// Loop over all collisions previously found in reb_collision_search().
 	
-	void (*resolve) (struct reb_context* const r, struct reb_collision c) = r->collision_resolve;
+	void (*resolve) (struct reb_simulation* const r, struct reb_collision c) = r->collision_resolve;
 	if (resolve==NULL){
 		// Default is hard sphere
 		resolve = reb_collision_resolve_hardsphere;
@@ -213,7 +213,7 @@ void reb_collision_search(struct reb_context* const r){
  * @param collision_nearest Pointer to the nearest collision found so far.
  * @param c Pointer to the cell currently being searched in.
  */
-static void reb_tree_get_nearest_neighbour_in_cell(struct reb_context* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c){
+static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c){
 	const struct reb_particle* const particles = r->particles;
 	if (c->pt>=0){ 	
 		// c is a leaf node
@@ -301,7 +301,7 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_context* const r, 
 
 
 
-static void reb_collision_resolve_hardsphere(struct reb_context* const r, struct reb_collision c){
+static void reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c){
 #ifndef COLLISIONS_NONE
 	struct reb_particle* const particles = r->particles;
 	struct reb_particle p1 = particles[c.p1];

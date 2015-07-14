@@ -44,7 +44,7 @@
 static double initial_dt = 0;
 static unsigned int reb_integrator_hybrid_switch_warning = 0;
 
-static double get_min_ratio(struct reb_context* const r){
+static double get_min_ratio(struct reb_simulation* const r){
 	const int N = r->N;
 	const int N_active = r->N_active;
 	const int N_megno = r->N_megno;
@@ -81,7 +81,7 @@ static double get_min_ratio(struct reb_context* const r){
 }
 
 
-void reb_integrator_hybrid_part1(struct reb_context* r){
+void reb_integrator_hybrid_part1(struct reb_simulation* r){
 	const double ratio = get_min_ratio(r);
 	if (initial_dt==0.){
 		initial_dt = r->dt;
@@ -116,7 +116,7 @@ void reb_integrator_hybrid_part1(struct reb_context* r){
 			break;
 	}
 }
-void reb_integrator_hybrid_part2(struct reb_context* r){
+void reb_integrator_hybrid_part2(struct reb_simulation* r){
 	switch(r->ri_hybrid.mode){
 		case SYMPLECTIC:
 			reb_integrator_whfast_part2(r);
@@ -129,7 +129,7 @@ void reb_integrator_hybrid_part2(struct reb_context* r){
 	}
 }
 	
-void reb_integrator_hybrid_synchronize(struct reb_context* r){
+void reb_integrator_hybrid_synchronize(struct reb_simulation* r){
 	switch(r->ri_hybrid.mode){
 		case SYMPLECTIC:
 			reb_integrator_whfast_synchronize(r);
@@ -139,7 +139,7 @@ void reb_integrator_hybrid_synchronize(struct reb_context* r){
 	}
 }
 
-void reb_integrator_hybrid_reset(struct reb_context* r){
+void reb_integrator_hybrid_reset(struct reb_simulation* r){
 	r->ri_hybrid.mode = SYMPLECTIC;
 	reb_integrator_hybrid_switch_warning = 0;
 	reb_integrator_whfast_reset(r);

@@ -85,9 +85,9 @@ char* input_get_argument(int argc, char** argv, const char* argument){
 	return NULL;
 }
 
-struct reb_context* reb_init_from_binary(char* filename){
+struct reb_simulation* reb_init_from_binary(char* filename){
 	fprintf(stderr,"\n\033[1mWarning!\033[0m You might need to reset function pointers after creating a REBOUND struct with a binary file.\n");
-	struct reb_context* r = malloc(sizeof(struct reb_context));
+	struct reb_simulation* r = malloc(sizeof(struct reb_simulation));
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -97,7 +97,7 @@ struct reb_context* reb_init_from_binary(char* filename){
 #endif // MPI
 	if (inf){
 		long objects = 0;
-		objects += fread(r,sizeof(struct reb_context),1,inf);
+		objects += fread(r,sizeof(struct reb_simulation),1,inf);
 		reb_reset_temporary_pointers(r);
 		reb_reset_function_pointers(r);
 		r->allocatedN = r->N;

@@ -490,8 +490,8 @@ const static double b_114 = -14556229./19015920.*4.980119205559973422e-02;
 const static double b_115 = 3394141./2328480.*4.980119205559973422e-02;
 
 
-static void corrector_Z(struct reb_context* r, const double a, const double b){
-	struct reb_context_integrator_whfast* const ri_whfast = &(r->ri_whfast);
+static void corrector_Z(struct reb_simulation* r, const double a, const double b){
+	struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
 	struct reb_particle* restrict const particles = r->particles;
 	const int N_megno = r->N_megno;
 	const int N = r->N;
@@ -520,7 +520,7 @@ static void corrector_Z(struct reb_context* r, const double a, const double b){
 	kepler_drift(ri_whfast->p_j, ri_whfast->eta, r->G, a, &(ri_whfast->timestep_warning), N, N_megno);
 }
 
-static void apply_corrector(struct reb_context* r, double inv){
+static void apply_corrector(struct reb_simulation* r, double inv){
 	const double dt = r->dt;
 	if (r->ri_whfast.corrector==3){
 		// Third order corrector
@@ -558,8 +558,8 @@ static void apply_corrector(struct reb_context* r, double inv){
 	}
 }
 
-void reb_integrator_whfast_part1(struct reb_context* const r){
-	struct reb_context_integrator_whfast* const ri_whfast = &(r->ri_whfast);
+void reb_integrator_whfast_part1(struct reb_simulation* const r){
+	struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
 	struct reb_particle* restrict const particles = r->particles;
 	const int N = r->N;
 	const int N_megno = r->N_megno;
@@ -626,8 +626,8 @@ void reb_integrator_whfast_part1(struct reb_context* const r){
 	r->t+=_dt2;
 }
 
-void reb_integrator_whfast_synchronize(struct reb_context* const r){
-	struct reb_context_integrator_whfast* const ri_whfast = &(r->ri_whfast);
+void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
+	struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
 	const int N = r->N;
 	const int N_megno = r->N_megno;
 	if (ri_whfast->is_synchronized == 0){
@@ -643,9 +643,9 @@ void reb_integrator_whfast_synchronize(struct reb_context* const r){
 	}
 }
 
-void reb_integrator_whfast_part2(struct reb_context* const r){
+void reb_integrator_whfast_part2(struct reb_simulation* const r){
 	struct reb_particle* restrict const particles = r->particles;
-	struct reb_context_integrator_whfast* const ri_whfast = &(r->ri_whfast);
+	struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
 	const int N = r->N;
 	const int N_megno = r->N_megno;
 	to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, N-N_megno);
@@ -707,8 +707,8 @@ void reb_integrator_whfast_part2(struct reb_context* const r){
 	}
 }
 	
-void reb_integrator_whfast_reset(struct reb_context* const r){
-	struct reb_context_integrator_whfast* const ri_whfast = &(r->ri_whfast);
+void reb_integrator_whfast_reset(struct reb_simulation* const r){
+	struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
 	ri_whfast->corrector = 0;
 	ri_whfast->is_synchronized = 1;
 	ri_whfast->safe_mode = 1;

@@ -24,12 +24,12 @@
  */
 #ifndef _INTEGRATOR_WH_H
 #define _INTEGRATOR_WH_H
-void reb_integrator_wh_part1(struct reb_context* r);
-void reb_integrator_wh_part2(struct reb_context* r);
-void reb_integrator_wh_synchronize(struct reb_context* r);
-void reb_integrator_wh_reset(struct reb_context* r);
+void reb_integrator_wh_part1(struct reb_simulation* r);
+void reb_integrator_wh_part2(struct reb_simulation* r);
+void reb_integrator_wh_synchronize(struct reb_simulation* r);
+void reb_integrator_wh_reset(struct reb_simulation* r);
 
-struct reb_context_integrator_wh {
+struct reb_simulation_integrator_wh {
 	int allocatedN;
 	double* eta;
 };

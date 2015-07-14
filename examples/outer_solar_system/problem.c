@@ -76,10 +76,10 @@ double ss_mass[6] =
 
 double tmax = 7.3e7;
 
-void heartbeat(struct reb_context* const r);
+void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]) {
-	struct reb_context* r = reb_init();
+	struct reb_simulation* r = reb_init();
 	// Setup constants
 	const double k	 	= 0.01720209895;	// Gaussian constant 
 	r->dt 			= 40;			// in days
@@ -128,7 +128,7 @@ int main(int argc, char* argv[]) {
 }
 
 
-void heartbeat(struct reb_context* const r){
+void heartbeat(struct reb_simulation* const r){
 	if (output_check(r, 10000000.)){
 		output_timing(r, tmax);
 	}

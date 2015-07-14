@@ -34,11 +34,11 @@
 #include "rebound.h"
 #include "particle.h"
 
-double coefficient_of_restitution(const struct reb_context* const r, double vel){
+double coefficient_of_restitution(const struct reb_simulation* const r, double vel){
 	return 1.;	
 } 
 int main(int argc, char* argv[]){
-	struct reb_context* const r = reb_init();
+	struct reb_simulation* const r = reb_init();
 	// Setup constants
 	r->dt 				= 1e-3;
 	reb_configure_box(r,10.,3,1,1);  // boxsize 10., three root boxes in x direction, one in y and z
