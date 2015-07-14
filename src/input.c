@@ -100,7 +100,7 @@ struct reb_context* reb_init_from_binary(char* filename){
 		objects += fread(r,sizeof(struct reb_context),1,inf);
 		reb_reset_temporary_pointers(r);
 		reb_reset_function_pointers(r);
-		r->Nmax = r->N;
+		r->allocatedN = r->N;
 		r->tree_root = NULL;
 		r->particles = malloc(sizeof(struct reb_particle)*r->N);
 		objects += fread(r->particles,sizeof(struct reb_particle),r->N,inf);

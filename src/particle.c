@@ -48,9 +48,9 @@ void reb_add_local(struct reb_context* const r, struct reb_particle pt){
 		fprintf(stderr,"\n\033[1mWarning!\033[0m Did not add particle outside of box boundaries.\n");
 		return;
 	}
-	while (r->Nmax<=r->N){
-		r->Nmax += 128;
-		r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->Nmax);
+	while (r->allocatedN<=r->N){
+		r->allocatedN += 128;
+		r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->allocatedN);
 	}
 
 	r->particles[r->N] = pt;
@@ -117,7 +117,7 @@ int reb_get_rootbox_for_particle(const struct reb_context* const r, struct reb_p
 
 void reb_remove_all(struct reb_context* const r){
 	r->N 		= 0;
-	r->Nmax 	= 0;
+	r->allocatedN 	= 0;
 	r->N_active 	= -1;
 	r->N_megno 	= 0;
 	free(r->particles);

@@ -183,7 +183,7 @@ void reb_reset_temporary_pointers(struct reb_context* const r){
 	r->gravity_cs_allocatedN 	= 0;
 	r->gravity_cs 			= NULL;
 	r->collisions			= NULL;
-	r->collisions_NMAX		= 0;
+	r->collisions_allocatedN	= 0;
 	// ********** WHFAST
 	r->ri_whfast.allocated_N	= 0;
 	r->ri_whfast.eta		= NULL;
@@ -203,8 +203,8 @@ void reb_reset_temporary_pointers(struct reb_context* const r){
 	r->ri_ias15.csv  		= NULL;
 	r->ri_ias15.at  		= NULL;
 	// ********** WH
-	r->ri_wh.eta 		= NULL;
-	r->ri_wh.Nmax 		= 0;
+	r->ri_wh.eta 			= NULL;
+	r->ri_wh.allocatedN 		= 0;
 }
 
 void reb_reset_function_pointers(struct reb_context* const r){
@@ -238,7 +238,7 @@ struct reb_context* reb_init(){
 	r->nghosty	= 0;
 	r->nghostz	= 0;
 	r->N 		= 0;	
-	r->Nmax		= 0;	
+	r->allocatedN	= 0;	
 	r->N_active 	= -1; 	
 	r->N_megno 	= 0; 	
 	r->max_radius[0]	= 0.; 	
@@ -288,7 +288,7 @@ struct reb_context* reb_init(){
 
 	// Tree parameters. Will not be used unless gravity or collision search makes use of tree.
 	r->tree_root		= NULL;
-	r->N_tree_fixed		= 0;
+	r->tree_fixed_N		= 0;
 	r->opening_angle2	= 0.25;
 
 	r->ri_ias15.dt_last_success = 0.;

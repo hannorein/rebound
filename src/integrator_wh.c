@@ -68,9 +68,9 @@ void reb_integrator_wh_part1(struct reb_context* r){
 	const int N_active = r->N_active;
 	struct reb_particle* const particles = r->particles;
 	int _N_active = (N_active==-1)?N:N_active;
-	if (_N_active!=r->ri_wh.Nmax){
+	if (_N_active!=r->ri_wh.allocatedN){
 		r->ri_wh.eta = realloc(r->ri_wh.eta,sizeof(double)*_N_active);
-		r->ri_wh.Nmax = _N_active;
+		r->ri_wh.allocatedN = _N_active;
 	}
 	// DRIFT
 	double* const eta = r->ri_wh.eta;

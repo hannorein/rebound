@@ -83,7 +83,7 @@ struct reb_context {
 	double 	boxsize_max;	/**< Maximum size of the entire box in any direction. Set in box_init().*/
 	double  max_radius[2];	/**< Two largest particle radii. Needed for collision search. */
 	int 	N;		/**< Current number of particles on this node. */
-	int 	Nmax;		/**< Current maximum space allocated in the particles array on this node. */
+	int 	allocatedN;	/**< Current maximum space allocated in the particles array on this node. */
 	int 	N_active;	/**< Number of massive particles included in force calculation. Default: N.*/
 	int 	N_megno;	/**< Number of megno particles. Default: 0.*/
 	int 	root_nx;	/**< Number of root boxes in x direction. Default: 1. */
@@ -98,16 +98,16 @@ struct reb_context {
 
 	unsigned int force_is_velocitydependent; 	/**< Set to 1 if integrator needs to consider velocity dependent forces. */ 
 	unsigned int gravity_ignore_10;			/**< Ignore the gravity form the central object (for WH-type integrators)*/
-	double output_timing_last; 	/**< Time when output_timing() was called the last time. */
+	double output_timing_last; 		/**< Time when output_timing() was called the last time. */
 
 
 	//////////////////////////////////////////////
 	/// Collisions
-	struct reb_collision* collisions;			/**< Array of all collisions. */
-	int 	collisions_NMAX;			/**< Size allocated for collisions.*/
-	double minimum_collision_velocity;		/**< Used for hard sphere collision model. */
-	double 	collisions_plog;			/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
-	long	collisions_Nlog;			/**< Keep track of Number of collisions. */
+	struct reb_collision* collisions;	/**< Array of all collisions. */
+	int collisions_allocatedN;		/**< Size allocated for collisions.*/
+	double minimum_collision_velocity;	/**< Used for hard sphere collision model. */
+	double collisions_plog;			/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
+	long collisions_Nlog;			/**< Keep track of Number of collisions. */
 
 	//////////////////////////////////////////////
 	/// Variational reb_particles
@@ -172,7 +172,7 @@ struct reb_context {
 	//////////////////////////////////////////////
 	/// Tree
 	struct reb_treecell** tree_root; 			/**< Pointer to the roots of the trees. */
-	int N_tree_fixed; 				/**< reb_particle between 0 and N_tree_fixed will not be shuffled around during tree-reconstruction.  */
+	int tree_fixed_N; 				/**< reb_particle between 0 and tree_fixed_N will not be shuffled around during tree-reconstruction.  */
 	double opening_angle2;	 			/**< Square of the cell opening angle \f$ \theta \f$. */
 
 	
