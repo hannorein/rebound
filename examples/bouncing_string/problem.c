@@ -34,23 +34,27 @@
 #include "rebound.h"
 #include "particle.h"
 
-extern double coefficient_of_restitution; 
+double coefficient_of_restitution(const struct reb_context* const r, double vel){
+	return 1.;	
+} 
 int main(int argc, char* argv[]){
-	struct Rebound* const r = rebound_init();
+	struct reb_context* const r = reb_init();
 	// Setup constants
 	r->dt 				= 1e-3;
-	rebound_configure_box(r,10.,3,1,1);  // boxsize 10., three root boxes in x direction, one in y and z
-	coefficient_of_restitution 	= 1; // elastic collisions
-	r->integrator			= LEAPFROG;
+	reb_configure_box(r,10.,3,1,1);  // boxsize 10., three root boxes in x direction, one in y and z
+	r->coefficient_of_restitution 	= coefficient_of_restitution; // elastic collisions
+	r->integrator			= RB_IT_LEAPFROG;
 	r->boundary			= RB_BT_PERIODIC;
+	r->collision			= RB_CT_DIRECT;
+	r->gravity			= RB_GT_NONE;
 	r->nghostx = 1; 
 	r->nghosty = 1; 
 	r->nghostz = 0;
 
 	// Initial conditions
 	for(int i=0;i<10;i++){
-		struct Particle p;
-		p.x  = -r->boxsize_x/2.+r->boxsize_x*(double)i/10.;
+		struct reb_particle p;
+		p.x  = -r->boxsize.x/2.+r->boxsize.x*(double)i/10.;
 		p.y  = 0;
 		p.z  = 0;
 		p.vx = 0;
@@ -61,11 +65,11 @@ int main(int argc, char* argv[]){
 		p.az = 0;
 		p.m  = 1;
 		p.r  = 1;
-		particles_add(r, p);
+		reb_add(r, p);
 	}
 
 	// Give one particle a kick
 	r->particles[0].vx = 20;
 
-	rebound_integrate(r,0);
+	reb_integrate(r,0);
 }
