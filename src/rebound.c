@@ -188,13 +188,14 @@ void reb_reset_temporary_pointers(struct reb_context* const r){
 	r->ri_whfast.allocated_N	= 0;
 	r->ri_whfast.eta		= NULL;
 	r->ri_whfast.p_j		= NULL;
-	memset((r->ri_ias15.g),0,sizeof(double)*7);
-	memset((r->ri_ias15.b),0,sizeof(double)*7);
-	memset((r->ri_ias15.e),0,sizeof(double)*7);
-	memset((r->ri_ias15.br),0,sizeof(double)*7);
-	memset((r->ri_ias15.er),0,sizeof(double)*7);
+#warning reset dp7 pointerd
+	//memset((r->ri_ias15.g),0,sizeof(double)*7);
+	//memset((r->ri_ias15.b),0,sizeof(double)*7);
+	//memset((r->ri_ias15.e),0,sizeof(double)*7);
+	//memset((r->ri_ias15.br),0,sizeof(double)*7);
+	//memset((r->ri_ias15.er),0,sizeof(double)*7);
 	// ********** IAS15
-	r->ri_ias15.N3allocated		= 0;
+	r->ri_ias15.allocatedN		= 0;
 	r->ri_ias15.at  		= NULL;
 	r->ri_ias15.x0  		= NULL;
 	r->ri_ias15.v0  		= NULL;

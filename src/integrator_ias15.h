@@ -32,6 +32,26 @@ void reb_integrator_ias15_part2(struct reb_context* r);
 void reb_integrator_ias15_synchronize(struct reb_context* r);
 void reb_integrator_ias15_reset(struct reb_context* r);
 
+struct reb_dp7 {
+	double* restrict p0;
+	double* restrict p1;
+	double* restrict p2;
+	double* restrict p3;
+	double* restrict p4;
+	double* restrict p5;
+	double* restrict p6;
+};
+
+struct reb_dpconst7 {
+	double* const restrict p0;
+	double* const restrict p1;
+	double* const restrict p2;
+	double* const restrict p3;
+	double* const restrict p4;
+	double* const restrict p5;
+	double* const restrict p6;
+};
+
 struct reb_context_integrator_ias15 {
 	/**
 	 * This parameter controls the accuracy of the integrator.
@@ -62,22 +82,22 @@ struct reb_context_integrator_ias15 {
 
 
 
-	int N3allocated; 			// Size of allocated arrays.
+	int allocatedN; 			// Size of allocated arrays.
 
-	double* at;				// Temporary buffer for acceleration
-	double* x0;				// Temporary buffer for position (used for initial values at h=0) 
-	double* v0;				//                      velocity
-	double* a0;				//                      acceleration
-	double* csx;				//                      compensated summation
-	double* csv;				//                      compensated summation
+	double* restrict at;			// Temporary buffer for acceleration
+	double* restrict x0;			// Temporary buffer for position (used for initial values at h=0) 
+	double* restrict v0;			//                      velocity
+	double* restrict a0;			//                      acceleration
+	double* restrict csx;			//                      compensated summation
+	double* restrict csv;			//                      compensated summation
 
-	double* g[7];
-	double* b[7];
-	double* e[7];
+	struct reb_dp7 g;
+	struct reb_dp7 b;
+	struct reb_dp7 e;
 
 	// The following values are used for resetting the b and e coefficients if a timestep gets rejected
-	double* br[7];
-	double* er[7];
+	struct reb_dp7 br;
+	struct reb_dp7 er;
 	double dt_last_success;			// Last accepted timestep (corresponding to br and er)
 
 };

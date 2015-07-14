@@ -58,8 +58,8 @@ void integrator_generate_constants(void);
 #endif
 
 // Helper functions for resetting the b and e coefficients
-static void copybuffers(double* const _a[7], double* const _b[7], int N3);
-static void predict_next_step(double ratio, int N3, double* restrict _e[7], double* restrict _b[7], double* restrict e[7], double* restrict b[7]);
+static void copybuffers(const struct reb_dpconst7 _a, const struct reb_dpconst7 _b, int N3);
+static void predict_next_step(double ratio, int N3,  const struct reb_dpconst7 _e, const struct reb_dpconst7 _b, const struct reb_dpconst7 e, const struct reb_dpconst7 b);
 
 
 /////////////////////////
@@ -76,6 +76,55 @@ static const double d[21] = {0.0562625605369221464656522, 0.00316547571817082924
 
 // Weights for integration of a first order differential equation (Note: interval length = 2) 
 static const double w[8] = {0.03125, 0.185358154802979278540728972807180754479812609, 0.304130620646785128975743291458180383736715043, 0.376517545389118556572129261157225608762708603, 0.391572167452493593082499533303669362149363727, 0.347014795634501068709955597003528601733139176, 0.249647901329864963257869294715235590174262844, 0.114508814744257199342353731044292225247093225};
+
+
+static void free_dp7(struct reb_dp7* dp7){
+	free(dp7->p0);
+	free(dp7->p1);
+	free(dp7->p2);
+	free(dp7->p3);
+	free(dp7->p4);
+	free(dp7->p5);
+	free(dp7->p6);
+	dp7->p0 = NULL;
+	dp7->p1 = NULL;
+	dp7->p2 = NULL;
+	dp7->p3 = NULL;
+	dp7->p4 = NULL;
+	dp7->p5 = NULL;
+	dp7->p6 = NULL;
+}
+static void realloc_dp7(struct reb_dp7* const dp7, const int N3){
+	dp7->p0 = realloc(dp7->p0,sizeof(double)*N3);
+	dp7->p1 = realloc(dp7->p1,sizeof(double)*N3);
+	dp7->p2 = realloc(dp7->p2,sizeof(double)*N3);
+	dp7->p3 = realloc(dp7->p3,sizeof(double)*N3);
+	dp7->p4 = realloc(dp7->p4,sizeof(double)*N3);
+	dp7->p5 = realloc(dp7->p5,sizeof(double)*N3);
+	dp7->p6 = realloc(dp7->p6,sizeof(double)*N3);
+	for (int k=0;k<N3;k++){
+		dp7->p0[k] = 0.;
+		dp7->p1[k] = 0.;
+		dp7->p2[k] = 0.;
+		dp7->p3[k] = 0.;
+		dp7->p4[k] = 0.;
+		dp7->p5[k] = 0.;
+		dp7->p6[k] = 0.;
+	}
+}
+
+static struct reb_dpconst7 dpcast(struct reb_dp7 dp){
+	struct reb_dpconst7 dpc = {
+		.p0 = dp.p0, 
+		.p1 = dp.p1, 
+		.p2 = dp.p2, 
+		.p3 = dp.p3, 
+		.p4 = dp.p4, 
+		.p5 = dp.p5, 
+		.p6 = dp.p6, 
+	};
+	return dpc;
+}
  
 // Does the actual timestep.
 static int reb_integrator_ias15_step(struct reb_context* r) {
@@ -83,26 +132,12 @@ static int reb_integrator_ias15_step(struct reb_context* r) {
 	const int N = r->N;
 	const int N_megno  = r->N_megno;
 	const int N3 = 3*N;
-	if (N3 > r->ri_ias15.N3allocated) {
-		for (int l=0;l<7;++l) {
-			r->ri_ias15.g[l] = realloc(r->ri_ias15.g[l],sizeof(double)*N3);
-			r->ri_ias15.b[l] = realloc(r->ri_ias15.b[l],sizeof(double)*N3);
-			r->ri_ias15.e[l] = realloc(r->ri_ias15.e[l],sizeof(double)*N3);
-			r->ri_ias15.br[l] = realloc(r->ri_ias15.br[l],sizeof(double)*N3);
-			r->ri_ias15.er[l] = realloc(r->ri_ias15.er[l],sizeof(double)*N3);
-			double* restrict const g = r->ri_ias15.g[l]; 
-			double* restrict const b = r->ri_ias15.b[l]; 
-			double* restrict const e = r->ri_ias15.e[l]; 
-			double* restrict const br = r->ri_ias15.br[l]; 
-			double* restrict const er = r->ri_ias15.er[l]; 
-			for (int k=0;k<N3;k++){
-				g[k] = 0;
-				b[k] = 0;
-				e[k] = 0;
-				br[k] = 0;
-				er[k] = 0;
-			}
-		}
+	if (N3 > r->ri_ias15.allocatedN) {
+		realloc_dp7(&(r->ri_ias15.g),N3);
+		realloc_dp7(&(r->ri_ias15.b),N3);
+		realloc_dp7(&(r->ri_ias15.e),N3);
+		realloc_dp7(&(r->ri_ias15.br),N3);
+		realloc_dp7(&(r->ri_ias15.er),N3);
 		r->ri_ias15.at = realloc(r->ri_ias15.at,sizeof(double)*N3);
 		r->ri_ias15.x0 = realloc(r->ri_ias15.x0,sizeof(double)*N3);
 		r->ri_ias15.v0 = realloc(r->ri_ias15.v0,sizeof(double)*N3);
@@ -116,7 +151,7 @@ static int reb_integrator_ias15_step(struct reb_context* r) {
 			csx[i] = 0;
 			csv[i] = 0;
 		}
-		r->ri_ias15.N3allocated = N3;
+		r->ri_ias15.allocatedN = N3;
 	}
 	
 	// reb_update_acceleration(); // Not needed. Forces are already calculated in main routine.
@@ -128,16 +163,11 @@ static int reb_integrator_ias15_step(struct reb_context* r) {
 	double* restrict const x0 = r->ri_ias15.x0; 
 	double* restrict const v0 = r->ri_ias15.v0; 
 	double* restrict const a0 = r->ri_ias15.a0; 
-	double* g[7];
-	memcpy(g,r->ri_ias15.g,sizeof(double*)*7);
-	double* b[7];
-	memcpy(b,r->ri_ias15.b,sizeof(double*)*7);
-	double* e[7];
-	memcpy(e,r->ri_ias15.e,sizeof(double*)*7);
-	double* br[7];
-	memcpy(br,r->ri_ias15.br,sizeof(double*)*7);
-	double* er[7];
-	memcpy(er,r->ri_ias15.er,sizeof(double*)*7);
+	const struct reb_dpconst7 g  = dpcast(r->ri_ias15.g);
+	const struct reb_dpconst7 e  = dpcast(r->ri_ias15.e);
+	const struct reb_dpconst7 b  = dpcast(r->ri_ias15.b);
+	const struct reb_dpconst7 er = dpcast(r->ri_ias15.er);
+	const struct reb_dpconst7 br = dpcast(r->ri_ias15.br);
 	for(int k=0;k<N;k++) {
 		x0[3*k]   = particles[k].x;
 		x0[3*k+1] = particles[k].y;
@@ -151,13 +181,13 @@ static int reb_integrator_ias15_step(struct reb_context* r) {
 	}
 
 	for(int k=0;k<N3;k++) {
-		g[0][k] = b[6][k]*d[15] + b[5][k]*d[10] + b[4][k]*d[6] + b[3][k]*d[3]  + b[2][k]*d[1]  + b[1][k]*d[0]  + b[0][k];
-		g[1][k] = b[6][k]*d[16] + b[5][k]*d[11] + b[4][k]*d[7] + b[3][k]*d[4]  + b[2][k]*d[2]  + b[1][k];
-		g[2][k] = b[6][k]*d[17] + b[5][k]*d[12] + b[4][k]*d[8] + b[3][k]*d[5]  + b[2][k];
-		g[3][k] = b[6][k]*d[18] + b[5][k]*d[13] + b[4][k]*d[9] + b[3][k];
-		g[4][k] = b[6][k]*d[19] + b[5][k]*d[14] + b[4][k];
-		g[5][k] = b[6][k]*d[20] + b[5][k];
-		g[6][k] = b[6][k];
+		g.p0[k] = b.p6[k]*d[15] + b.p5[k]*d[10] + b.p4[k]*d[6] + b.p3[k]*d[3]  + b.p2[k]*d[1]  + b.p1[k]*d[0]  + b.p0[k];
+		g.p1[k] = b.p6[k]*d[16] + b.p5[k]*d[11] + b.p4[k]*d[7] + b.p3[k]*d[4]  + b.p2[k]*d[2]  + b.p1[k];
+		g.p2[k] = b.p6[k]*d[17] + b.p5[k]*d[12] + b.p4[k]*d[8] + b.p3[k]*d[5]  + b.p2[k];
+		g.p3[k] = b.p6[k]*d[18] + b.p5[k]*d[13] + b.p4[k]*d[9] + b.p3[k];
+		g.p4[k] = b.p6[k]*d[19] + b.p5[k]*d[14] + b.p4[k];
+		g.p5[k] = b.p6[k]*d[20] + b.p5[k];
+		g.p6[k] = b.p6[k];
 	}
 
 	double integrator_megno_thisdt = 0.;
@@ -216,11 +246,11 @@ static int reb_integrator_ias15_step(struct reb_context* r) {
 				const int k1 = 3*i+1;
 				const int k2 = 3*i+2;
 
-				double xk0  = csx[k0] + (s[8]*b[6][k0] + s[7]*b[5][k0] + s[6]*b[4][k0] + s[5]*b[3][k0] + s[4]*b[2][k0] + s[3]*b[1][k0] + s[2]*b[0][k0] + s[1]*a0[k0] + s[0]*v0[k0] );
+				double xk0  = csx[k0] + (s[8]*b.p6[k0] + s[7]*b.p5[k0] + s[6]*b.p4[k0] + s[5]*b.p3[k0] + s[4]*b.p2[k0] + s[3]*b.p1[k0] + s[2]*b.p0[k0] + s[1]*a0[k0] + s[0]*v0[k0] );
 				particles[i].x = xk0 + x0[k0];
-				double xk1  = csx[k1] + (s[8]*b[6][k1] + s[7]*b[5][k1] + s[6]*b[4][k1] + s[5]*b[3][k1] + s[4]*b[2][k1] + s[3]*b[1][k1] + s[2]*b[0][k1] + s[1]*a0[k1] + s[0]*v0[k1] );
+				double xk1  = csx[k1] + (s[8]*b.p6[k1] + s[7]*b.p5[k1] + s[6]*b.p4[k1] + s[5]*b.p3[k1] + s[4]*b.p2[k1] + s[3]*b.p1[k1] + s[2]*b.p0[k1] + s[1]*a0[k1] + s[0]*v0[k1] );
 				particles[i].y = xk1 + x0[k1];
-				double xk2  = csx[k2] + (s[8]*b[6][k2] + s[7]*b[5][k2] + s[6]*b[4][k2] + s[5]*b[3][k2] + s[4]*b[2][k2] + s[3]*b[1][k2] + s[2]*b[0][k2] + s[1]*a0[k2] + s[0]*v0[k2] );
+				double xk2  = csx[k2] + (s[8]*b.p6[k2] + s[7]*b.p5[k2] + s[6]*b.p4[k2] + s[5]*b.p3[k2] + s[4]*b.p2[k2] + s[3]*b.p1[k2] + s[2]*b.p0[k2] + s[1]*a0[k2] + s[0]*v0[k2] );
 				particles[i].z = xk2 + x0[k2];
 			}
 			if (N_megno || (r->additional_forces && r->force_is_velocitydependent)){
@@ -238,11 +268,11 @@ static int reb_integrator_ias15_step(struct reb_context* r) {
 					const int k1 = 3*i+1;
 					const int k2 = 3*i+2;
 
-					double vk0 =  csv[k0] + s[7]*b[6][k0] + s[6]*b[5][k0] + s[5]*b[4][k0] + s[4]*b[3][k0] + s[3]*b[2][k0] + s[2]*b[1][k0] + s[1]*b[0][k0] + s[0]*a0[k0];
+					double vk0 =  csv[k0] + s[7]*b.p6[k0] + s[6]*b.p5[k0] + s[5]*b.p4[k0] + s[4]*b.p3[k0] + s[3]*b.p2[k0] + s[2]*b.p1[k0] + s[1]*b.p0[k0] + s[0]*a0[k0];
 					particles[i].vx = vk0 + v0[k0];
-					double vk1 =  csv[k1] + s[7]*b[6][k1] + s[6]*b[5][k1] + s[5]*b[4][k1] + s[4]*b[3][k1] + s[3]*b[2][k1] + s[2]*b[1][k1] + s[1]*b[0][k1] + s[0]*a0[k1];
+					double vk1 =  csv[k1] + s[7]*b.p6[k1] + s[6]*b.p5[k1] + s[5]*b.p4[k1] + s[4]*b.p3[k1] + s[3]*b.p2[k1] + s[2]*b.p1[k1] + s[1]*b.p0[k1] + s[0]*a0[k1];
 					particles[i].vy = vk1 + v0[k1];
-					double vk2 =  csv[k2] + s[7]*b[6][k2] + s[6]*b[5][k2] + s[5]*b[4][k2] + s[4]*b[3][k2] + s[3]*b[2][k2] + s[2]*b[1][k2] + s[1]*b[0][k2] + s[0]*a0[k2];
+					double vk2 =  csv[k2] + s[7]*b.p6[k2] + s[6]*b.p5[k2] + s[5]*b.p4[k2] + s[4]*b.p3[k2] + s[3]*b.p2[k2] + s[2]*b.p1[k2] + s[1]*b.p0[k2] + s[0]*a0[k2];
 					particles[i].vz = vk2 + v0[k2];
 				}
 			}
@@ -261,83 +291,83 @@ static int reb_integrator_ias15_step(struct reb_context* r) {
 			switch (n) {							// Improve b and g values
 				case 1: 
 					for(int k=0;k<N3;++k) {
-						double tmp = g[0][k];
-						g[0][k]  = (at[k] - a0[k]) / rr[0];
-						b[0][k] += g[0][k] - tmp;
+						double tmp = g.p0[k];
+						g.p0[k]  = (at[k] - a0[k]) / rr[0];
+						b.p0[k] += g.p0[k] - tmp;
 					} break;
 				case 2: 
 					for(int k=0;k<N3;++k) {
-						double tmp = g[1][k];
+						double tmp = g.p1[k];
 						const double gk = at[k] - a0[k];
-						g[1][k] = (gk/rr[1] - g[0][k])/rr[2];
-						tmp = g[1][k] - tmp;
-						b[0][k] += tmp * c[0];
-						b[1][k] += tmp;
+						g.p1[k] = (gk/rr[1] - g.p0[k])/rr[2];
+						tmp = g.p1[k] - tmp;
+						b.p0[k] += tmp * c[0];
+						b.p1[k] += tmp;
 					} break;
 				case 3: 
 					for(int k=0;k<N3;++k) {
-						double tmp = g[2][k];
+						double tmp = g.p2[k];
 						const double gk = at[k] - a0[k];
-						g[2][k] = ((gk/rr[3] - g[0][k])/rr[4] - g[1][k])/rr[5];
-						tmp = g[2][k] - tmp;
-						b[0][k] += tmp * c[1];
-						b[1][k] += tmp * c[2];
-						b[2][k] += tmp;
+						g.p2[k] = ((gk/rr[3] - g.p0[k])/rr[4] - g.p1[k])/rr[5];
+						tmp = g.p2[k] - tmp;
+						b.p0[k] += tmp * c[1];
+						b.p1[k] += tmp * c[2];
+						b.p2[k] += tmp;
 					} break;
 				case 4:
 					for(int k=0;k<N3;++k) {
-						double tmp = g[3][k];
+						double tmp = g.p3[k];
 						const double gk = at[k] - a0[k];
-						g[3][k] = (((gk/rr[6] - g[0][k])/rr[7] - g[1][k])/rr[8] - g[2][k])/rr[9];
-						tmp = g[3][k] - tmp;
-						b[0][k] += tmp * c[3];
-						b[1][k] += tmp * c[4];
-						b[2][k] += tmp * c[5];
-						b[3][k] += tmp;
+						g.p3[k] = (((gk/rr[6] - g.p0[k])/rr[7] - g.p1[k])/rr[8] - g.p2[k])/rr[9];
+						tmp = g.p3[k] - tmp;
+						b.p0[k] += tmp * c[3];
+						b.p1[k] += tmp * c[4];
+						b.p2[k] += tmp * c[5];
+						b.p3[k] += tmp;
 					} break;
 				case 5:
 					for(int k=0;k<N3;++k) {
-						double tmp = g[4][k];
+						double tmp = g.p4[k];
 						const double gk = at[k] - a0[k];
-						g[4][k] = ((((gk/rr[10] - g[0][k])/rr[11] - g[1][k])/rr[12] - g[2][k])/rr[13] - g[3][k])/rr[14];
-						tmp = g[4][k] - tmp;
-						b[0][k] += tmp * c[6];
-						b[1][k] += tmp * c[7];
-						b[2][k] += tmp * c[8];
-						b[3][k] += tmp * c[9];
-						b[4][k] += tmp;
+						g.p4[k] = ((((gk/rr[10] - g.p0[k])/rr[11] - g.p1[k])/rr[12] - g.p2[k])/rr[13] - g.p3[k])/rr[14];
+						tmp = g.p4[k] - tmp;
+						b.p0[k] += tmp * c[6];
+						b.p1[k] += tmp * c[7];
+						b.p2[k] += tmp * c[8];
+						b.p3[k] += tmp * c[9];
+						b.p4[k] += tmp;
 					} break;
 				case 6:
 					for(int k=0;k<N3;++k) {
-						double tmp = g[5][k];
+						double tmp = g.p5[k];
 						const double gk = at[k] - a0[k];
-						g[5][k] = (((((gk/rr[15] - g[0][k])/rr[16] - g[1][k])/rr[17] - g[2][k])/rr[18] - g[3][k])/rr[19] - g[4][k])/rr[20];
-						tmp = g[5][k] - tmp;
-						b[0][k] += tmp * c[10];
-						b[1][k] += tmp * c[11];
-						b[2][k] += tmp * c[12];
-						b[3][k] += tmp * c[13];
-						b[4][k] += tmp * c[14];
-						b[5][k] += tmp;
+						g.p5[k] = (((((gk/rr[15] - g.p0[k])/rr[16] - g.p1[k])/rr[17] - g.p2[k])/rr[18] - g.p3[k])/rr[19] - g.p4[k])/rr[20];
+						tmp = g.p5[k] - tmp;
+						b.p0[k] += tmp * c[10];
+						b.p1[k] += tmp * c[11];
+						b.p2[k] += tmp * c[12];
+						b.p3[k] += tmp * c[13];
+						b.p4[k] += tmp * c[14];
+						b.p5[k] += tmp;
 					} break;
 				case 7:
 				{
 					double maxak = 0.0;
 					double maxb6ktmp = 0.0;
 					for(int k=0;k<N3;++k) {
-						double tmp = g[6][k];
+						double tmp = g.p6[k];
 						const double gk = at[k] - a0[k];
-						g[6][k] = ((((((gk/rr[21] - g[0][k])/rr[22] - g[1][k])/rr[23] - g[2][k])/rr[24] - g[3][k])/rr[25] - g[4][k])/rr[26] - g[5][k])/rr[27];
-						tmp = g[6][k] - tmp;	
-						b[0][k] += tmp * c[15];
-						b[1][k] += tmp * c[16];
-						b[2][k] += tmp * c[17];
-						b[3][k] += tmp * c[18];
-						b[4][k] += tmp * c[19];
-						b[5][k] += tmp * c[20];
-						b[6][k] += tmp;
+						g.p6[k] = ((((((gk/rr[21] - g.p0[k])/rr[22] - g.p1[k])/rr[23] - g.p2[k])/rr[24] - g.p3[k])/rr[25] - g.p4[k])/rr[26] - g.p5[k])/rr[27];
+						tmp = g.p6[k] - tmp;	
+						b.p0[k] += tmp * c[15];
+						b.p1[k] += tmp * c[16];
+						b.p2[k] += tmp * c[17];
+						b.p3[k] += tmp * c[18];
+						b.p4[k] += tmp * c[19];
+						b.p5[k] += tmp * c[20];
+						b.p6[k] += tmp;
 						
-						// Monitor change in b[6][k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
+						// Monitor change in b.p6[k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
 						if (r->ri_ias15.epsilon_global){
 							const double ak  = fabs(at[k]);
 							if (isnormal(ak) && ak>maxak){
@@ -393,7 +423,7 @@ static int reb_integrator_ias15_step(struct reb_context* r) {
 					if (isnormal(ak) && ak>maxak){
 						maxak = ak;
 					}
-					const double b6k = fabs(b[6][k]); 
+					const double b6k = fabs(b.p6[k]); 
 					if (isnormal(b6k) && b6k>maxb6k){
 						maxb6k = b6k;
 					}
@@ -403,7 +433,7 @@ static int reb_integrator_ias15_step(struct reb_context* r) {
 		}else{
 			for(int k=0;k<N3;k++) {
 				const double ak  = at[k];
-				const double b6k = b[6][k]; 
+				const double b6k = b.p6[k]; 
 				const double errork = fabs(b6k/ak);
 				if (isnormal(errork) && errork>integrator_error){
 					integrator_error = errork;
@@ -451,14 +481,14 @@ static int reb_integrator_ias15_step(struct reb_context* r) {
 	for(int k=0;k<N3;++k) {
 		{
 			double a = x0[k];
-			csx[k]  +=  (b[6][k]/72. + b[5][k]/56. + b[4][k]/42. + b[3][k]/30. + b[2][k]/20. + b[1][k]/12. + b[0][k]/6. + a0[k]/2.) 
+			csx[k]  +=  (b.p6[k]/72. + b.p5[k]/56. + b.p4[k]/42. + b.p3[k]/30. + b.p2[k]/20. + b.p1[k]/12. + b.p0[k]/6. + a0[k]/2.) 
 					* dt_done2 + v0[k] * dt_done;
 			x0[k]    = a + csx[k];
 			csx[k]  += a - x0[k]; 
 		}
 		{
 			double a = v0[k]; 
-			csv[k]  += (b[6][k]/8. + b[5][k]/7. + b[4][k]/6. + b[3][k]/5. + b[2][k]/4. + b[1][k]/3. + b[0][k]/2. + a0[k])
+			csv[k]  += (b.p6[k]/8. + b.p5[k]/7. + b.p4[k]/6. + b.p3[k]/5. + b.p2[k]/4. + b.p1[k]/3. + b.p0[k]/2. + a0[k])
 					* dt_done;
 			v0[k]    = a + csv[k];
 			csv[k]  += a - v0[k];
@@ -490,7 +520,7 @@ static int reb_integrator_ias15_step(struct reb_context* r) {
 	return 1; // Success.
 }
 
-static void predict_next_step(double ratio, int N3, double* restrict _e[7], double* restrict _b[7], double* restrict e[7], double* restrict b[7]){
+static void predict_next_step(double ratio, int N3,  const struct reb_dpconst7 _e, const struct reb_dpconst7 _b, const struct reb_dpconst7 e, const struct reb_dpconst7 b){
 	// Predict new B values to use at the start of the next sequence. The predicted
 	// values from the last call are saved as E. The correction, BD, between the
 	// actual and predicted values of B is applied in advance as a correction.
@@ -504,43 +534,43 @@ static void predict_next_step(double ratio, int N3, double* restrict _e[7], doub
 	const double q7 = q3 * q4;
 
 	for(int k=0;k<N3;++k) {
-		double be0 = _b[0][k] - _e[0][k];
-		double be1 = _b[1][k] - _e[1][k];
-		double be2 = _b[2][k] - _e[2][k];
-		double be3 = _b[3][k] - _e[3][k];
-		double be4 = _b[4][k] - _e[4][k];
-		double be5 = _b[5][k] - _e[5][k];
-		double be6 = _b[6][k] - _e[6][k];
+		double be0 = _b.p0[k] - _e.p0[k];
+		double be1 = _b.p1[k] - _e.p1[k];
+		double be2 = _b.p2[k] - _e.p2[k];
+		double be3 = _b.p3[k] - _e.p3[k];
+		double be4 = _b.p4[k] - _e.p4[k];
+		double be5 = _b.p5[k] - _e.p5[k];
+		double be6 = _b.p6[k] - _e.p6[k];
 
 
-		e[0][k] = q1*(_b[6][k]* 7.0 + _b[5][k]* 6.0 + _b[4][k]* 5.0 + _b[3][k]* 4.0 + _b[2][k]* 3.0 + _b[1][k]*2.0 + _b[0][k]);
-		e[1][k] = q2*(_b[6][k]*21.0 + _b[5][k]*15.0 + _b[4][k]*10.0 + _b[3][k]* 6.0 + _b[2][k]* 3.0 + _b[1][k]);
-		e[2][k] = q3*(_b[6][k]*35.0 + _b[5][k]*20.0 + _b[4][k]*10.0 + _b[3][k]* 4.0 + _b[2][k]);
-		e[3][k] = q4*(_b[6][k]*35.0 + _b[5][k]*15.0 + _b[4][k]* 5.0 + _b[3][k]);
-		e[4][k] = q5*(_b[6][k]*21.0 + _b[5][k]* 6.0 + _b[4][k]);
-		e[5][k] = q6*(_b[6][k]* 7.0 + _b[5][k]);
-		e[6][k] = q7* _b[6][k];
+		e.p0[k] = q1*(_b.p6[k]* 7.0 + _b.p5[k]* 6.0 + _b.p4[k]* 5.0 + _b.p3[k]* 4.0 + _b.p2[k]* 3.0 + _b.p1[k]*2.0 + _b.p0[k]);
+		e.p1[k] = q2*(_b.p6[k]*21.0 + _b.p5[k]*15.0 + _b.p4[k]*10.0 + _b.p3[k]* 6.0 + _b.p2[k]* 3.0 + _b.p1[k]);
+		e.p2[k] = q3*(_b.p6[k]*35.0 + _b.p5[k]*20.0 + _b.p4[k]*10.0 + _b.p3[k]* 4.0 + _b.p2[k]);
+		e.p3[k] = q4*(_b.p6[k]*35.0 + _b.p5[k]*15.0 + _b.p4[k]* 5.0 + _b.p3[k]);
+		e.p4[k] = q5*(_b.p6[k]*21.0 + _b.p5[k]* 6.0 + _b.p4[k]);
+		e.p5[k] = q6*(_b.p6[k]* 7.0 + _b.p5[k]);
+		e.p6[k] = q7* _b.p6[k];
 		
 
-		b[0][k] = e[0][k] + be0;
-		b[1][k] = e[1][k] + be1;
-		b[2][k] = e[2][k] + be2;
-		b[3][k] = e[3][k] + be3;
-		b[4][k] = e[4][k] + be4;
-		b[5][k] = e[5][k] + be5;
-		b[6][k] = e[6][k] + be6;
+		b.p0[k] = e.p0[k] + be0;
+		b.p1[k] = e.p1[k] + be1;
+		b.p2[k] = e.p2[k] + be2;
+		b.p3[k] = e.p3[k] + be3;
+		b.p4[k] = e.p4[k] + be4;
+		b.p5[k] = e.p5[k] + be5;
+		b.p6[k] = e.p6[k] + be6;
 	}
 }
 
-static void copybuffers(double* const _a[7], double* const _b[7], int N3){
+static void copybuffers(const struct reb_dpconst7 _a, const struct reb_dpconst7 _b, int N3){
 	for (int i=0;i<N3;i++){	
-		_b[0][i] = _a[0][i];
-		_b[1][i] = _a[1][i];
-		_b[2][i] = _a[2][i];
-		_b[3][i] = _a[3][i];
-		_b[4][i] = _a[4][i];
-		_b[5][i] = _a[5][i];
-		_b[6][i] = _a[6][i];
+		_b.p0[i] = _a.p0[i];
+		_b.p1[i] = _a.p1[i];
+		_b.p2[i] = _a.p2[i];
+		_b.p3[i] = _a.p3[i];
+		_b.p4[i] = _a.p4[i];
+		_b.p5[i] = _a.p5[i];
+		_b.p6[i] = _a.p6[i];
 	}
 // The above code seems faster than the code below, probably due to some compiler optimizations. 
 //	for (int i=0;i<7;i++){	
@@ -564,20 +594,13 @@ void reb_integrator_ias15_synchronize(struct reb_context* r){
 }
 
 void reb_integrator_ias15_reset(struct reb_context* r){
-	r->ri_ias15.N3allocated 	= 0;
+	r->ri_ias15.allocatedN 	= 0;
 	r->ri_ias15.dt_last_success = 0;
-	for (int l=0;l<7;++l) {
-		free(r->ri_ias15.g[l]);
-		r->ri_ias15.g[l] = NULL;
-		free(r->ri_ias15.b[l]);
-		r->ri_ias15.b[l] = NULL;
-		free(r->ri_ias15.e[l]);
-		r->ri_ias15.e[l] = NULL;
-		free(r->ri_ias15.br[l]);
-		r->ri_ias15.br[l] = NULL;
-		free(r->ri_ias15.er[l]);
-		r->ri_ias15.er[l] = NULL;
-	}
+	free_dp7(&(r->ri_ias15.g));
+	free_dp7(&(r->ri_ias15.e));
+	free_dp7(&(r->ri_ias15.b));
+	free_dp7(&(r->ri_ias15.er));
+	free_dp7(&(r->ri_ias15.br));
 	free(r->ri_ias15.at);
 	r->ri_ias15.at =  NULL;
 	free(r->ri_ias15.x0);
