@@ -42,7 +42,7 @@
 extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
-void reb_add_local(struct reb_simulation* const r, struct reb_particle pt){
+static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt){
 	if (reb_boundary_particle_is_in_box(r, pt)==0){
 		// reb_particle has left the box. Do not add.
 		fprintf(stderr,"\n\033[1mWarning!\033[0m Did not add particle outside of box boundaries.\n");
@@ -92,18 +92,6 @@ void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 #endif // MPI
 	// Add particle to local partical array.
 	reb_add_local(r, pt);
-}
-
-void reb_add_fixed(struct reb_simulation* const r, struct reb_particle pt,int pos){
-	// Only works for non-MPI simulations or when the particles does not move to another node.
-	if (reb_boundary_particle_is_in_box(r, pt)==0){
-		// reb_particle has left the box. Do not add.
-		return;
-	}
-	r->particles[pos] = pt; 
-	if (r->gravity==RB_GT_TREE || r->collision==RB_CT_TREE){
-		reb_tree_add_particle_to_tree(r, pos);
-	}
 }
 
 int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt){

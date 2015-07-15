@@ -186,14 +186,10 @@ static struct reb_treecell *reb_tree_update_cell(struct reb_simulation* const r,
 	if (reb_tree_particle_is_inside_cell(r, node) == 0) {
 		int oldpos = node->pt;
 		struct reb_particle reinsertme = r->particles[oldpos];
-		if (oldpos<r->tree_fixed_N){
-			reb_add_fixed(r,reinsertme,oldpos);
-		}else{
-			(r->N)--;
-			r->particles[oldpos] = r->particles[r->N];
-			r->particles[oldpos].c->pt = oldpos;
-			reb_add(r, reinsertme);
-		}
+		(r->N)--;
+		r->particles[oldpos] = r->particles[r->N];
+		r->particles[oldpos].c->pt = oldpos;
+		reb_add(r, reinsertme);
 		free(node);
 		return NULL; 
 	} else {

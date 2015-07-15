@@ -108,7 +108,7 @@ struct reb_simulation {
 	long collisions_Nlog;			/**< Keep track of Number of collisions. */
 
 	//////////////////////////////////////////////
-	/// Variational reb_particles
+	/// MEGNO
 	int calculate_megno;	// Flag that determines if megno is calculated (default=0, but megno_init() sets it to 1)
 	double megno_Ys;
 	double megno_Yss;
@@ -118,6 +118,9 @@ struct reb_simulation {
 	double megno_mean_Y; 	// mean of Y
 	long   megno_n; 	// number of covariance updates
 
+	//////////////////////////////////////////////
+	/// Modules
+	
 	/**
 	 * Available collision routines.
 	 */

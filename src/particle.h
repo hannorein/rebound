@@ -28,7 +28,6 @@ struct reb_simulation;
 struct reb_particle;
 struct reb_treecell;
 
-
 /** 
  * Adds a particle to the simulation. 
  * @details If a tree is used, it also adds the particle to the tree.
@@ -37,20 +36,6 @@ struct reb_treecell;
  * @param pt reb_particle to be added.
  */
 void reb_add(struct reb_simulation* const r, struct reb_particle pt);
-
-/** 
- * Same as reb_add() but inserts particles at given position. 
- * @param pt reb_particle to be added.
- * @param pos New position.
- */
-void reb_add_fixed(struct reb_simulation* const r, struct reb_particle pt,int pos);
-
-/**
- * Add a particle to the particle structure on the current node.
- * Do not distribute particles.
- * @param pt reb_particle to be added.
- */
-void reb_add_local(struct reb_simulation* const r, struct reb_particle pt);
 
 /**
  * Returns the index of the rootbox for the current particles based on its position.
