@@ -52,7 +52,7 @@ void problem_init(int argc, char* argv[]){
 		struct particle p = {.m=0.,.x=1,.y=0.,.z=0.,.vx=0,.vy=1.2,.vz=0.};
 		particles_add(p); 
 	}
-	reb_tools_move_to_center_of_momentum();
+	reb_move_to_com();
 	problem_additional_forces 	= additional_forces;
 	// Add megno particles 
 	reb_tools_megno_init(1e-16);  // N = 6 after this function call. 

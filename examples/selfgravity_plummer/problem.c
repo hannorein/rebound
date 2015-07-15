@@ -69,7 +69,7 @@ void problem_init(int argc, char* argv[]){
 	
 	reb_tools_init_plummer(_N, M, R);	// Add particles
 	
-	reb_tools_move_to_center_of_momentum(); // Move to rest frame 
+	reb_move_to_com(); // Move to rest frame 
 }
 
 void problem_output(){

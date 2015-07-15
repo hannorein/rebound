@@ -67,11 +67,11 @@ void problem_init(int argc, char* argv[]){
 	particles_add(star);
 	while(N<_N){
 		struct particle pt;
-		double a	= reb_tools_powerlaw(boxsize/10.,boxsize/2./1.2,-1.5);
-		double phi 	= reb_tools_uniform(0,2.*M_PI);
+		double a	= reb_random_powerlaw(boxsize/10.,boxsize/2./1.2,-1.5);
+		double phi 	= reb_random_uniform(0,2.*M_PI);
 		pt.x 		= a*cos(phi);
 		pt.y 		= a*sin(phi);
-		pt.z 		= a*reb_tools_normal(0.001);
+		pt.z 		= a*reb_random_normal(0.001);
 		double mu 	= star.m + disc_mass * (pow(a,-3./2.)-pow(boxsize/10.,-3./2.))/(pow(boxsize/2./1.2,-3./2.)-pow(boxsize/10.,-3./2.));
 		double vkep 	= sqrt(G*mu/a);
 		pt.vx 		=  vkep * sin(phi);

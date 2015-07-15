@@ -39,17 +39,17 @@ void reb_tools_init_srand(){
 	srand ( tim.tv_usec + getpid());
 }
 
-double reb_tools_uniform(double min, double max){
+double reb_random_uniform(double min, double max){
 	return ((double)rand())/((double)(RAND_MAX))*(max-min)+min;
 }
 
 
-double reb_tools_powerlaw(double min, double max, double slope){
-	double y = reb_tools_uniform(0., 1.);
+double reb_random_powerlaw(double min, double max, double slope){
+	double y = reb_random_uniform(0., 1.);
 	return pow( (pow(max,slope+1.)-pow(min,slope+1.))*y+pow(min,slope+1.), 1./(slope+1.));
 }
 
-double reb_tools_normal(double variance){
+double reb_random_normal(double variance){
 	double v1,v2,rsq=1.;
 	while(rsq>=1. || rsq<1.0e-12){
 		v1=2.*((double)rand())/((double)(RAND_MAX))-1.0;
@@ -60,8 +60,8 @@ double reb_tools_normal(double variance){
 	return 	v1*sqrt(-2.*log(rsq)/rsq*variance);
 }
 
-double reb_tools_rayleigh(double sigma){
-	double y = reb_tools_uniform(0.,1.);
+double reb_random_rayleigh(double sigma){
+	double y = reb_random_uniform(0.,1.);
 	return sigma*sqrt(-2*log(y));
 }
 
@@ -86,7 +86,7 @@ double reb_tools_energy(struct reb_simulation* r){
 	return e_kin +e_pot;
 }
 
-void reb_tools_move_to_center_of_momentum(struct reb_simulation* const r){
+void reb_move_to_com(struct reb_simulation* const r){
 	const int N = r->N;
 	struct reb_particle* restrict const particles = r->particles;
 	double m = 0;
@@ -122,7 +122,7 @@ void reb_tools_move_to_center_of_momentum(struct reb_simulation* const r){
 	}
 }
 
-struct reb_particle reb_tools_get_center_of_mass(struct reb_particle p1, struct reb_particle p2){
+struct reb_particle reb_get_com(struct reb_particle p1, struct reb_particle p2){
 	p1.x   = p1.x*p1.m + p2.x*p2.m;		
 	p1.y   = p1.y*p1.m + p2.y*p2.m;
 	p1.z   = p1.z*p1.m + p2.z*p2.m;
@@ -148,22 +148,22 @@ void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R
 	double E = 3./64.*M_PI*M*M/R;
 	for (int i=0;i<_N;i++){
 		struct reb_particle star;
-		double _r = pow(pow(reb_tools_uniform(0,1),-2./3.)-1.,-1./2.);
-		double x2 = reb_tools_uniform(0,1);
-		double x3 = reb_tools_uniform(0,2.*M_PI);
+		double _r = pow(pow(reb_random_uniform(0,1),-2./3.)-1.,-1./2.);
+		double x2 = reb_random_uniform(0,1);
+		double x3 = reb_random_uniform(0,2.*M_PI);
 		star.z = (1.-2.*x2)*_r;
 		star.x = sqrt(_r*_r-star.z*star.z)*cos(x3);
 		star.y = sqrt(_r*_r-star.z*star.z)*sin(x3);
 		double x5,g,q;
 		do{
-			x5 = reb_tools_uniform(0.,1.);
-			q = reb_tools_uniform(0.,1.);
+			x5 = reb_random_uniform(0.,1.);
+			q = reb_random_uniform(0.,1.);
 			g = q*q*pow(1.-q*q,7./2.);
 		}while(0.1*x5>g);
 		double ve = pow(2.,1./2.)*pow(1.+_r*_r,-1./4.);
 		double v = q*ve;
-		double x6 = reb_tools_uniform(0.,1.);
-		double x7 = reb_tools_uniform(0.,2.*M_PI);
+		double x6 = reb_random_uniform(0.,1.);
+		double x7 = reb_random_uniform(0.,2.*M_PI);
 		star.vz = (1.-2.*x6)*v;
 		star.vx = sqrt(v*v-star.vz*star.vz)*cos(x7);
 		star.vy = sqrt(v*v-star.vz*star.vz)*sin(x7);
@@ -226,13 +226,13 @@ struct reb_particle reb_tools_init_orbit3d(double G, double M, double m, double 
 	return p;
 }
 
-static const struct orbit reb_orbit_nan = {.a = NAN, .r = NAN, .h = NAN, .P = NAN, .l = NAN, .e = NAN, .inc = NAN, .Omega = NAN, .omega = NAN, .f = NAN};
+static const struct reb_orbit reb_orbit_nan = {.a = NAN, .r = NAN, .h = NAN, .P = NAN, .l = NAN, .e = NAN, .inc = NAN, .Omega = NAN, .omega = NAN, .f = NAN};
 
 #define MIN_REL_ERROR 1.0e-12
 #define TINY 1.E-308
 
-struct orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_particle primary){
-	struct orbit o;
+struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_particle primary){
+	struct reb_orbit o;
 	if (primary.m <= TINY){	
 		return reb_orbit_nan;
 	}
@@ -351,12 +351,12 @@ void reb_tools_megno_init(struct reb_simulation* const r, double delta){
         for (int i=0;i<N_var;i++){ 
                 struct reb_particle megno = {
 			.m  = r->particles[i].m,
-			.x  = reb_tools_normal(1.),
-			.y  = reb_tools_normal(1.),
-			.z  = reb_tools_normal(1.),
-			.vx = reb_tools_normal(1.),
-			.vy = reb_tools_normal(1.),
-			.vz = reb_tools_normal(1.) };
+			.x  = reb_random_normal(1.),
+			.y  = reb_random_normal(1.),
+			.z  = reb_random_normal(1.),
+			.vx = reb_random_normal(1.),
+			.vy = reb_random_normal(1.),
+			.vz = reb_random_normal(1.) };
 		double deltad = delta/sqrt(megno.x*megno.x + megno.y*megno.y + megno.z*megno.z + megno.vx*megno.vx + megno.vy*megno.vy + megno.vz*megno.vz); // rescale
 		megno.x *= deltad;
 		megno.y *= deltad;

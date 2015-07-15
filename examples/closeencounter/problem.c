@@ -69,7 +69,7 @@ void problem_init(int argc, char* argv[]){
 		planet.vx = 0; 	planet.vy = v; 	planet.vz = 0;
 		particles_add(planet); 
 	}
-	reb_tools_move_to_center_of_momentum();				// This makes sure the planetary systems stays within the computational domain and doesn't drift.
+	reb_move_to_com();				// This makes sure the planetary systems stays within the computational domain and doesn't drift.
 }
 
 void problem_output(){

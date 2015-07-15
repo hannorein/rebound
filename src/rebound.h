@@ -251,4 +251,83 @@ void reb_free_simulation(struct reb_simulation* const r);
  */
 void reb_reset_temporary_pointers(struct reb_simulation* const r);
 void reb_reset_function_pointers(struct reb_simulation* const r);
+
+/** 
+ * Adds a particle to the simulation. 
+ */
+void reb_add(struct reb_simulation* const r, struct reb_particle pt);
+
+
+/**
+ * Remove all particles
+ */
+void reb_remove_all(struct reb_simulation* const r);
+
+/**
+ * Remove particle by position in particles array
+ * if keepSorted is set, then particles with indices higher than index
+ * are all shifted down one position, ensuring the ordering remains.
+ * Returns 1 if particle was successfully removed, 0 if index passed was 
+ * out of range.
+ */
+int reb_remove(struct reb_simulation* const rindex, int ID, int keepSorted);
+
+#ifdef PARTICLEIDS
+/**
+ * Remove particle by ID.
+ * if keepSorted is set, the particles with indices in the particles array
+ * higher than the one with the passed ID are all shifted down one position,
+ * ensuring the ordering remains. Returns 1 if particle successfully removed,
+ * 0 if ID was not found in the particles array.
+ */
+int reb_remove_with_id(struct reb_simulation* const r, int ID, int keepSorted);
+#endif
+
+////////////////////////////////
+// Tools (random numbers)
+
+/**
+ * Calculates a random variable in a given range.
+ * @param min Minimum value.
+ * @param max Maximum value.
+ */
+double reb_random_uniform(double min, double max);
+
+/**
+ * Calculates a random variable drawn form a powerlaw distribution.
+ * @param min Minimum value.
+ * @param max Maximum value.
+ * @param slop Slope of powerlaw distribution.
+ */
+double reb_random_powerlaw(double min, double max, double slope);
+
+/**
+ * Calculate a random number with normal distribution.
+ * Algorithm by D.E. Knut, 1997, The Art of Computer Programmin, Addison-Wesley. 
+ * @param variance Variance of normal distribution.
+ * @return Random number with normal distribution (mean 0). 
+ */
+double reb_random_normal(double variance);
+
+/**
+ * Calculates a random variable drawn form a Rayleigh distribution.  Calculated as described on Rayleigh distribution wikipedia page
+ * @param sigma Scale parameter.
+ */
+double reb_random_rayleigh(double sigma);
+
+
+////////////////////////////////
+// Tools (center of mass)
+
+
+/**
+ * Move to center of momentum and center of mass frame.
+ */
+void reb_move_to_com(struct reb_simulation* const r);
+
+/**
+ * Returns the center of mass of particle p1 and p2.
+ */
+struct reb_particle reb_get_com(struct reb_particle p1, struct reb_particle p2);
+
 #endif

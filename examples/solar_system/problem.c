@@ -113,7 +113,7 @@ void problem_init(int argc, char* argv[]){
 		particles[0].x = 0;	particles[0].y = 0;	particles[0].z = 0;
 		particles[0].vx= 0;	particles[0].vy= 0;	particles[0].vz= 0;
 	}else{
-		reb_tools_move_to_center_of_momentum();
+		reb_move_to_com();
 	}
 	//reb_tools_megno_init(1e-16);
 	e_init = energy();

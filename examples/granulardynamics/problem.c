@@ -99,12 +99,12 @@ void problem_init(int argc, char* argv[]){
 	// Add real particles
 	while(N-N_border<N_part){
 		struct particle pt;
-		pt.x 		= reb_tools_uniform(-boxsize_x/2.,boxsize_x/2.);
-		pt.y 		= reb_tools_uniform(-boxsize_y/2.,boxsize_y/2.);
-		pt.z 		= 0.758*reb_tools_uniform(-boxsize_z/2.,boxsize_z/2.);
-		pt.vx 		= reb_tools_normal(0.001);
-		pt.vy 		= reb_tools_normal(0.001);
-		pt.vz 		= reb_tools_normal(0.001);
+		pt.x 		= reb_random_uniform(-boxsize_x/2.,boxsize_x/2.);
+		pt.y 		= reb_random_uniform(-boxsize_y/2.,boxsize_y/2.);
+		pt.z 		= 0.758*reb_random_uniform(-boxsize_z/2.,boxsize_z/2.);
+		pt.vx 		= reb_random_normal(0.001);
+		pt.vy 		= reb_random_normal(0.001);
+		pt.vz 		= reb_random_normal(0.001);
 		pt.ax 		= 0;
 		pt.ay 		= 0;
 		pt.az 		= 0;

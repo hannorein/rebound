@@ -29,7 +29,7 @@ struct reb_simulation;
 /**
  * Struct representing a Keplerian orbit.
  */
-struct orbit {
+struct reb_orbit {
 	double a;
 	double r;	// Radial distance from central object
 	double h;	// Angular momentum
@@ -43,34 +43,6 @@ struct orbit {
 };
 
 
-/**
- * Calculates a random variable in a given range.
- * @param min Minimum value.
- * @param max Maximum value.
- */
-double reb_tools_uniform(double min, double max);
-
-/**
- * Calculates a random variable drawn form a powerlaw distribution.
- * @param min Minimum value.
- * @param max Maximum value.
- * @param slop Slope of powerlaw distribution.
- */
-double reb_tools_powerlaw(double min, double max, double slope);
-
-/**
- * Calculate a random number with normal distribution.
- * Algorithm by D.E. Knut, 1997, The Art of Computer Programmin, Addison-Wesley. 
- * @param variance Variance of normal distribution.
- * @return Random number with normal distribution (mean 0). 
- */
-double reb_tools_normal(double variance);
-
-/**
- * Calculates a random variable drawn form a Rayleigh distribution.  Calculated as described on Rayleigh distribution wikipedia page
- * @param sigma Scale parameter.
- */
-double reb_tools_rayleigh(double sigma);
 
 /**
  * This function sets up a Plummer sphere.
@@ -112,17 +84,7 @@ struct reb_particle reb_tools_init_orbit3d(double G, double M, double m, double 
  * @param star Star or central object particle
  * @return Orbital parameters. 
  */
-struct orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_particle star);
-
-/**
- * Move to center of momentum and center of mass frame.
- */
-void reb_tools_move_to_center_of_momentum(struct reb_simulation* const r);
-
-/**
- * Returns the center of mass of particle p1 and p2.
- */
-struct reb_particle reb_tools_get_center_of_mass(struct reb_particle p1, struct reb_particle p2);
+struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_particle star);
 
 /* 
  * Init the MEGNO particles

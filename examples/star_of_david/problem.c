@@ -65,7 +65,7 @@ void problem_init(int argc, char* argv[]){
 	p.vx =   0.012073765486548; p.vy =  -0.021537467220014; 
 	particles_add(p);
 	
-	reb_tools_move_to_center_of_momentum();
+	reb_move_to_com();
 }
 
 void problem_output(){

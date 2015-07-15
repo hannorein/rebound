@@ -71,7 +71,7 @@ void problem_init(int argc, char* argv[]){
 	planet.vx = 0; planet.vy = sqrt((1.+e_testparticle)/(1.-e_testparticle)*mass_scale/size_scale); planet.vz = 0;
 	particles_add(planet); 
 	
-	reb_tools_move_to_center_of_momentum();
+	reb_move_to_com();
 	
 	// initial timestep
 	dt 			= 1e-13*sqrt(size_scale*size_scale*size_scale/mass_scale); 

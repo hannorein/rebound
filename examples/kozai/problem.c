@@ -79,7 +79,7 @@ void problem_init(int argc, char* argv[]){
 	perturber.vz = sin(inc_perturber/180.*M_PI)*sqrt((star.m+perturber.m)/perturber.x); 
 	particles_add(perturber); 
 
-	reb_tools_move_to_center_of_momentum();
+	reb_move_to_com();
 	
 	system("rm -v orbits.txt");		// delete previous output file
 }

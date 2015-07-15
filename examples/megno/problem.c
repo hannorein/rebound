@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
 		p.m  = ss_mass[i];
 		reb_add(r, p); 
 	}
-	reb_tools_move_to_center_of_momentum(r);
+	reb_move_to_com(r);
 	// Add megno particles 
 	reb_tools_megno_init(r, 1e-16);  // N = 6 after this function call. 
 	// The first half of particles are real particles, the second half are particles following the variational equations.

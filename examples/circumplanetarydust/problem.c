@@ -93,7 +93,7 @@ void problem_init(int argc, char* argv[]){
 		particles_add(p); 
 	}
 	
-	reb_tools_move_to_center_of_momentum();
+	reb_move_to_com();
 
 	system("rm -v a.txt");	
 }

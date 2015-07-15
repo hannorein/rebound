@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
 		particles[0].x = 0;	particles[0].y = 0;	particles[0].z = 0;
 		particles[0].vx= 0;	particles[0].vy= 0;	particles[0].vz= 0;
 	}else{
-		reb_tools_move_to_center_of_momentum(r);
+		reb_move_to_com(r);
 	}
 
 	r->N_active = r->N-1;  // Pluto is treated as a test-particle.

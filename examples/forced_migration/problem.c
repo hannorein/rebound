@@ -104,7 +104,7 @@ void problem_init(int argc, char* argv[]){
 	problem_additional_forces = problem_migration_forces; 	//Set function pointer to add dissipative forces.
 	integrator_force_is_velocitydependent = 1;
 	if (integrator != WH){	// The WH integrator assumes a heliocentric coordinate system.
-		reb_tools_move_to_center_of_momentum();  		
+		reb_move_to_com();  		
 	}
 
 	system("rm -v orbits.txt"); // delete previous output file
@@ -149,7 +149,7 @@ void problem_migration_forces(){
 				p->az += -dvz*prefac1 + (hx*dy-hy*dx)*prefac2;
 			}
 		}
-		com = reb_tools_get_center_of_mass(com,particles[i]);
+		com = reb_get_com(com,particles[i]);
 	}
 }
 
@@ -161,7 +161,7 @@ void problem_output(){
 		integrator_synchronize();
 		reb_output_append_orbits("orbits.txt");
 		if (integrator != WH){	// The WH integrator assumes a heliocentric coordinate system.
-			reb_tools_move_to_center_of_momentum(); 
+			reb_move_to_com(); 
 		}
 	}
 }

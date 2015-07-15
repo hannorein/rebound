@@ -75,7 +75,7 @@ void problem_init(int argc, char* argv[]){
 		planet.vx = 0; 	planet.vy = v; 	planet.vz = 0;
 		particles_add(planet); 
 	}
-	reb_tools_move_to_center_of_momentum();				// This makes sure the planetary systems stays within the computational domain and doesn't drift.
+	reb_move_to_com();				// This makes sure the planetary systems stays within the computational domain and doesn't drift.
 }
 
 void collision_resolve_merger(struct collision c){
@@ -99,7 +99,7 @@ void collision_resolve_merger(struct collision c){
 	particles[c.p1].lastcollision = t;
 	// Note: We assume only one collision per timestep. 
 	// Setup new particle (in position of particle p1. Particle p2 will be discarded.
-	struct particle cm = reb_tools_get_center_of_mass(p1, p2);
+	struct particle cm = reb_get_com(p1, p2);
 	particles[c.p1].x = cm.x;
 	particles[c.p1].y = cm.y;
 	particles[c.p1].z = cm.z;
@@ -112,7 +112,7 @@ void collision_resolve_merger(struct collision c){
 	N--;
 	particles[c.p2] = particles[N];
 	// Make sure we don't drift, so let's go back to the center of momentum
-	reb_tools_move_to_center_of_momentum();	
+	reb_move_to_com();	
 }
 
 void problem_output(){

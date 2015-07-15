@@ -301,7 +301,7 @@ void display(void){
 					}
 					glEnd();
 					glPopMatrix();
-					com = reb_tools_get_center_of_mass(p,com);
+					com = reb_get_com(p,com);
 				}
 			}else{
 				for (int i=1;i<display_r->N;i++){
