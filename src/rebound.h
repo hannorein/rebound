@@ -173,7 +173,6 @@ struct reb_simulation {
 	//////////////////////////////////////////////
 	/// Tree
 	struct reb_treecell** tree_root; 			/**< Pointer to the roots of the trees. */
-	int tree_fixed_N; 				/**< reb_particle between 0 and tree_fixed_N will not be shuffled around during tree-reconstruction.  */
 	double opening_angle2;	 			/**< Square of the cell opening angle \f$ \theta \f$. */
 
 	

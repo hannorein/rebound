@@ -315,7 +315,6 @@ struct reb_simulation* reb_create_simulation(){
 
 	// Tree parameters. Will not be used unless gravity or collision search makes use of tree.
 	r->tree_root		= NULL;
-	r->tree_fixed_N		= 0;
 	r->opening_angle2	= 0.25;
 
 	r->ri_ias15.dt_last_success = 0.;
