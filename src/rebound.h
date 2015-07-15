@@ -71,41 +71,43 @@ struct reb_particle {
 };
 
 struct reb_simulation {
-	double 	t;		/**< Current simulation time. */
-	double 	G;		/**< Gravitational constant. Default: 1. */
-	double 	softening;	/**< Gravitational softening parameter. Default: 0. */
-	double 	dt;		/**< Current timestep. */
-	double 	dt_last_done;	/**< Last full timestep (used if exact_finish_time==1). */
-	double  root_size;	/**< Size of a root box. */
-	struct  reb_vec3d boxsize;	/**< Size of the entire box, root_x*boxsize. */
-	double 	boxsize_max;	/**< Maximum size of the entire box in any direction. Set in box_init().*/
-	double  max_radius[2];	/**< Two largest particle radii. Needed for collision search. */
-	int 	N;		/**< Current number of particles on this node. */
-	int 	N_var;		/**< Number of variational particles. Default: 0.*/
-	int 	N_active;	/**< Number of massive particles included in force calculation. Default: N.*/
-	int 	allocatedN;	/**< Current maximum space allocated in the particles array on this node. */
-	int 	root_nx;	/**< Number of root boxes in x direction. Default: 1. */
-	int 	root_ny;	/**< Number of root boxes in y direction. Default: 1. */
-	int 	root_nz;	/**< Number of root boxes in z direction. Default: 1. */
-	int 	root_n;		/**< Total number of root boxes in all directions, root_nx*root_ny*root_nz. Default: 1. Set in box_init().*/
-	int	nghostx;	/**< Number of ghostboxes in x direction. */
-	int 	nghosty;	/**< Number of ghostboxes in y direction. */
-	int 	nghostz;	/**< Number of ghostboxes in z direction. */
-	int 	exit_simulation;/**< Set to 1 to exit the simulation at the end of the next timestep. */
-	int 	exact_finish_time; /**< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. */
+	double 	t;			/**< Current simulation time. */
+	double 	G;			/**< Gravitational constant. Default: 1. */
+	double 	softening;		/**< Gravitational softening parameter. Default: 0. */
+	double 	dt;			/**< Current timestep. */
+	double 	dt_last_done;		/**< Last full timestep (used if exact_finish_time==1). */
+	int 	N;			/**< Current number of particles on this node. */
+	int 	N_var;			/**< Number of variational particles. Default: 0.*/
+	int 	N_active;		/**< Number of massive particles included in force calculation. Default: N.*/
+	int 	allocatedN;		/**< Current maximum space allocated in the particles array on this node. */
+	int 	exit_simulation;	/**< Set to 1 to exit the simulation at the end of the next timestep. */
+	int 	exact_finish_time; 	/**< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. */
 
 	unsigned int force_is_velocitydependent; 	/**< Set to 1 if integrator needs to consider velocity dependent forces. */ 
 	unsigned int gravity_ignore_10;			/**< Ignore the gravity form the central object (for WH-type integrators)*/
-	double reb_output_timing_last; 		/**< Time when reb_output_timing() was called the last time. */
+	double reb_output_timing_last; 			/**< Time when reb_output_timing() was called the last time. */
 
+	//////////////////////////////////////////////
+	/// Boxes
+	struct  reb_vec3d boxsize;	/**< Size of the entire box, root_x*boxsize. */
+	double 	boxsize_max;		/**< Maximum size of the entire box in any direction. Set in box_init().*/
+	double  root_size;		/**< Size of a root box. */
+	int 	root_n;			/**< Total number of root boxes in all directions, root_nx*root_ny*root_nz. Default: 1. Set in box_init().*/
+	int 	root_nx;		/**< Number of root boxes in x direction. Default: 1. */
+	int 	root_ny;		/**< Number of root boxes in y direction. Default: 1. */
+	int 	root_nz;		/**< Number of root boxes in z direction. Default: 1. */
+	int	nghostx;		/**< Number of ghostboxes in x direction. */
+	int 	nghosty;		/**< Number of ghostboxes in y direction. */
+	int 	nghostz;		/**< Number of ghostboxes in z direction. */
 
 	//////////////////////////////////////////////
 	/// Collisions
-	struct reb_collision* collisions;	/**< Array of all collisions. */
-	int collisions_allocatedN;		/**< Size allocated for collisions.*/
-	double minimum_collision_velocity;	/**< Used for hard sphere collision model. */
-	double collisions_plog;			/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
-	long collisions_Nlog;			/**< Keep track of Number of collisions. */
+	struct reb_collision* collisions;		/**< Array of all collisions. */
+	int collisions_allocatedN;			/**< Size allocated for collisions.*/
+	double minimum_collision_velocity;		/**< Used for hard sphere collision model. */
+	double collisions_plog;				/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
+	double max_radius[2];				/**< Two largest particle radii. Needed for collision search. */
+	long collisions_Nlog;				/**< Keep track of Number of collisions. */
 
 	//////////////////////////////////////////////
 	/// MEGNO
