@@ -43,6 +43,7 @@ const double Rplanet			= 0.00038925688; 	// radius of Saturn in AU
 double ObliquityPlanet			= 0.;			// obliquity of the planet
 
 double tmax				= 3e1;			// Maximum integration time
+void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
 	struct reb_simulation* r = reb_create_simulation();
@@ -70,9 +71,12 @@ int main(int argc, char* argv[]){
 	p.vx += planet.vx; 	p.vy += planet.vy; 	p.vz += planet.vz;
 	reb_add(r, p); 
 	
-	reb_move_to_com();
+	reb_move_to_com(r);
 
 	system("rm -v a.txt");					// delete previous output
+
+	r->heartbeat = heartbeat;
+	reb_integrate(r, tmax);
 }
 
 void force_J2(struct reb_simulation* r){
@@ -103,19 +107,18 @@ void force_J2(struct reb_simulation* r){
 }
 
 void heartbeat(struct reb_simulation* r){
-	if(reb_output_check(r, 4000.*dt)){				// output something to screen	
+	if(reb_output_check(r, 4000.*r->dt)){				// output something to screen	
 		reb_output_timing(r, tmax);
 	}
-	if(reb_output_check(M_PI*2.*0.01)){				// output semimajor axis to file
+	if(reb_output_check(r,M_PI*2.*0.01)){				// output semimajor axis to file
 		FILE* f = fopen("a.txt","a");
 		const struct reb_particle planet = r->particles[0];
+		const int N = r->N;
 		for (int i=1;i<N;i++){
-			struct orbit o = reb_tools_p2orbit(particles[i],planet);
-			fprintf(f,"%.15e\t%.15e\t%.15e\t%.15e\n",t,o.a,o.e,o.omega);
+			struct reb_orbit o = reb_tools_p2orbit(r->G, r->particles[i],planet);
+			fprintf(f,"%.15e\t%.15e\t%.15e\t%.15e\n",r->t,o.a,o.e,o.omega);
 		}
 		fclose(f);
 	}
 }
 
-void problem_finish(){
-}

@@ -26,21 +26,6 @@
 #define TOOLS_H
 #include "particle.h"
 struct reb_simulation;
-/**
- * Struct representing a Keplerian orbit.
- */
-struct reb_orbit {
-	double a;
-	double r;	// Radial distance from central object
-	double h;	// Angular momentum
-	double P;	// Orbital period
-	double l;
-	double e;
-	double inc;
-	double Omega; 	// longitude of ascending node
-	double omega; 	// argument of perihelion
-	double f; 	// true anomaly
-};
 
 
 
@@ -77,14 +62,6 @@ struct reb_particle reb_tools_init_orbit2d(double G, double M, double m, double 
  */
 
 struct reb_particle reb_tools_init_orbit3d(double G, double M, double m, double a, double e, double i, double Omega, double omega, double f);
-
-/**
- * This function calculated orbital elements for a given particle. 
- * @param p reb_particle for which the orbit is calculated.
- * @param star Star or central object particle
- * @return Orbital parameters. 
- */
-struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_particle star);
 
 /* 
  * Init the MEGNO particles

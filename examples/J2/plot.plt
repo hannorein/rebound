@@ -1,7 +1,7 @@
 #!/bin/gnuplot
-set output "plot.pdf"
+set output "plot.png"
 set key top left
-set terminal pdf monochrome dashed enhanced size 3in,2in
+set terminal png
 set xlabel "time [years]"
 set ylabel "pericenter [deg]"
 set autoscale xfix 

@@ -70,6 +70,27 @@ struct reb_particle {
 	struct reb_treecell* c;		/**< Pointer to the cell the particle is currently in. */
 };
 
+
+/**
+ * Struct representing a Keplerian orbit.
+ */
+struct reb_orbit {
+	double a;
+	double r;	// Radial distance from central object
+	double h;	// Angular momentum
+	double P;	// Orbital period
+	double l;
+	double e;
+	double inc;
+	double Omega; 	// longitude of ascending node
+	double omega; 	// argument of perihelion
+	double f; 	// true anomaly
+};
+
+
+/**
+ * Main struct representing an entire REBOUND simulation.
+ */
 struct reb_simulation {
 	double 	t;			/**< Current simulation time. */
 	double 	G;			/**< Gravitational constant. Default: 1. */
@@ -330,4 +351,30 @@ void reb_move_to_com(struct reb_simulation* const r);
  */
 struct reb_particle reb_get_com(struct reb_particle p1, struct reb_particle p2);
 
+////////////////////////////////
+// Output functions
+
+/**
+ * This function checks if a new output is required at this time.
+ * @return The return value is 1 if an output is required and 0 otherwise.
+ * @param interval Output interval.
+ */
+int reb_output_check(struct reb_simulation* r, double interval);
+
+/**
+ * Outputs the current number of particles, the time and the time difference since the last output to the screen.
+ */
+void reb_output_timing(struct reb_simulation* r, const double tmax);
+
+
+////////////////////////////////
+// Tools (setup)
+
+/**
+ * This function calculated orbital elements for a given particle. 
+ * @param p reb_particle for which the orbit is calculated.
+ * @param star Star or central object particle
+ * @return Orbital parameters. 
+ */
+struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_particle star);
 #endif
