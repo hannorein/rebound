@@ -23,6 +23,7 @@ class ReboundModule(types.ModuleType):
     AFF = CFUNCTYPE(None)
     afp = None # additional forces pointer
     ptmp = None # post timestep modifications pointer 
+    _units = {'length':None, 'time':None, 'mass':None}
 
 # Status functions
     @property
@@ -191,9 +192,9 @@ class ReboundModule(types.ModuleType):
     def units(self, newunits):
         newunits = self.check_units(newunits)        
         if self.particles: # some particles are loaded
-            raise Exception("Error:  You must initialize the units before populating the particles array.  See Units.ipynb in python_tutorials.")
+            raise Exception("Error:  You cannot set the units after populating the particles array.  See Units.ipynb in python_tutorials.")
         self.update_units(newunits) 
-    
+
     def check_units(self, newunits):   
         if len(newunits) is not 3:
             raise Exception("Error: Need to pass exactly 3 units for length, time, and mass (any order), see python_tutorials/Units.ipynb")
@@ -209,7 +210,7 @@ class ReboundModule(types.ModuleType):
                 m_unit = unit
 
         if l_unit is None or t_unit is None or m_unit is None:
-            raise Exception("Error: Need to assign rebound.units a tuple consisting of 3 units for length, time, and mass (any order).  See python_tutorials/Units.ipynb.  If you did this, your unit isn't in our list.  Please update the dictionaries at the bottom of rebound/rebound/librebound.py and send a pull request!")
+            raise Exception("Error: Need to assign rebound.units a tuple consisting of 3 units for length, time, and mass (any order).  See python_tutorials/Units.ipynb.  If you passed such a tuple, at least one of your units isn't in our list.  Please update the dictionaries at the bottom of rebound/rebound/librebound.py and send a pull request!")
 
         return (l_unit, t_unit, m_unit)
 
@@ -233,9 +234,9 @@ class ReboundModule(types.ModuleType):
         p.vx = self.convert_vel(p.vx, old_l, old_t, new_l, new_t)
         p.vy = self.convert_vel(p.vy, old_l, old_t, new_l, new_t)
         p.vz = self.convert_vel(p.vz, old_l, old_t, new_l, new_t)
-        p.ax = self.convert_vel(p.ax, old_l, old_t, new_l, new_t)
-        p.ay = self.convert_vel(p.ay, old_l, old_t, new_l, new_t)
-        p.az = self.convert_vel(p.az, old_l, old_t, new_l, new_t)
+        p.ax = self.convert_acc(p.ax, old_l, old_t, new_l, new_t)
+        p.ay = self.convert_acc(p.ay, old_l, old_t, new_l, new_t)
+        p.az = self.convert_acc(p.az, old_l, old_t, new_l, new_t)
         return p
 
     def convert_mass(self, mass, old_m, new_m):
@@ -252,10 +253,6 @@ class ReboundModule(types.ModuleType):
         in_SI=acc*lengths_SI[old_l]/times_SI[old_t]**2
         return in_SI*times_SI[new_t]**2/lengths_SI[new_l]
 
-    def convert_acc(self, acc, l_unit, t_unit):
-        in_SI=acc*lengths_SI[self._units['length']]/times_SI[self._units['time']]**2
-        return in_SI*times_SI[t_unit]**2/lengths_SI[l_unit]
-    
     def convert_G(self, new_l, new_t, new_m):
         return G_SI*masses_SI[new_m]*times_SI[new_t]**2/lengths_SI[new_l]**3
 
@@ -297,12 +294,18 @@ class ReboundModule(types.ModuleType):
         """
         if particle is not None:
             if isinstance(particle, Particle):
-                self.clibrebound.particles_add(particle)
+                if kwargs == {}: # copy particle
+                    self.clibrebound.particles_add(particle)
+                else: # use particle as primary
+                    self.add(Particle(primary=particle, **kwargs))
             elif isinstance(particle, list):
                 for p in particle:
                     self.add(p)
-            elif isinstance(particle, str):
+            elif isinstance(particle,str):
+                if None in self.units.values():
+                    self.units = ('AU', 'yr2pi', 'Msun')
                 self.add(horizons.getParticle(particle,**kwargs))
+                self.convert_p(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass'])
         else: 
             self.add(Particle(**kwargs))
 
