@@ -1,49 +1,28 @@
 /**
- * @file 	problem.c
- * @brief 	Example problem: J2 precession
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This example presents an implementation of the J2
- * gravitational moment. The equation of motions are integrated with
- * the 15th order IAS15 integrator. The parameters in this examples 
- * have been chosen to represent those of Saturn, but you can easily
- * change them or even include higher order terms in the multipole 
- * expansion.
+ * J2 precession
  * 
- * @section 	LICENSE
- * Copyright (c) 2013 Hanno Rein, Dave Spiegel
- *
- * This file is part of rebound.
- *
- * rebound is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * rebound is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * This example presents an implementation of the J2 gravitational moment. 
+ * The equation of motions are integrated with the 15th order IAS15 
+ * integrator. The parameters in this example have been chosen to 
+ * represent those of Saturn, but one can easily change them or even 
+ * include higher order terms in the multipole expansion.
+ * 
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include <time.h>
 #include "rebound.h"
 
-void force_J2(struct reb_simulation* r);
 const double J2planet			= 16298e-6; 		// J2 of Saturn (Murray and Dermott p 531) 
 const double Mplanet			= 0.00028588598; 	// mass of Saturn in solar masses 
 const double Rplanet			= 0.00038925688; 	// radius of Saturn in AU
+const double ObliquityPlanet		= 0.;			// obliquity of the planet
 
-double ObliquityPlanet			= 0.;			// obliquity of the planet
+const double tmax			= 3e1;			// Maximum integration time
 
-double tmax				= 3e1;			// Maximum integration time
 void heartbeat(struct reb_simulation* r);
+void force_J2(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
 	struct reb_simulation* r = reb_create_simulation();
@@ -51,7 +30,6 @@ int main(int argc, char* argv[]){
 	r->integrator			= RB_IT_IAS15;
 	r->dt 				= 1e-6;			// initial timestep
 	r->N_active			= 2; 			// only the star and the planet are massive.
-	r->additional_forces 		= force_J2;
 	
 	// Planet
 	struct reb_particle planet;
@@ -60,7 +38,7 @@ int main(int argc, char* argv[]){
 	planet.vx = 0; planet.vy = 0; planet.vz = 0;
 	reb_add(r, planet);
 
-	struct reb_particle p; 
+	struct reb_particle p;				// test particle 
 	p.m  = 0;					// massless
 	double a = Rplanet*3.;				// small distance from planet (makes J2 important)
 	double e = 0.1;
@@ -75,7 +53,10 @@ int main(int argc, char* argv[]){
 
 	system("rm -v a.txt");					// delete previous output
 
-	r->heartbeat = heartbeat;
+	// Setup callback functions
+	r->heartbeat 		= heartbeat;
+	r->additional_forces 	= force_J2;
+
 	reb_integrate(r, tmax);
 }
 

@@ -138,12 +138,11 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 	return 1;
 }
 
-#ifdef PARTICLEIDS
 int reb_remove_with_id(struct reb_simulation* const r, int ID, int keepSorted){
 	int success = 0;
 	for(int i=0;i<r->N;i++){
 		if(r->particles[i].ID == ID){
-			success = reb_remove(i, keepSorted);
+			success = reb_remove(r, i, keepSorted);
 			break;
 		}
 	}
@@ -153,4 +152,3 @@ int reb_remove_with_id(struct reb_simulation* const r, int ID, int keepSorted){
 	}
 	return success;
 }
-#endif

@@ -62,12 +62,10 @@ struct reb_particle {
 	double ay;	/**< y-acceleration of the particle. */
 	double az;	/**< z-acceleration of the particle. */
 	double m;	/**< Mass of the particle. */
-#ifdef PARTICLEIDS
-	int ID;		/**< Unique ID to identify particle. */
-#endif
 	double r; 	/**< Radius of the particle. */
 	double lastcollision;	/**< Last time the particle had a physical collision. */
 	struct reb_treecell* c;		/**< Pointer to the cell the particle is currently in. */
+	int ID;		/**< Unique ID to identify particle. */
 };
 
 
@@ -293,7 +291,6 @@ void reb_remove_all(struct reb_simulation* const r);
  */
 int reb_remove(struct reb_simulation* const rindex, int ID, int keepSorted);
 
-#ifdef PARTICLEIDS
 /**
  * Remove particle by ID.
  * if keepSorted is set, the particles with indices in the particles array
@@ -302,7 +299,6 @@ int reb_remove(struct reb_simulation* const rindex, int ID, int keepSorted);
  * 0 if ID was not found in the particles array.
  */
 int reb_remove_with_id(struct reb_simulation* const r, int ID, int keepSorted);
-#endif
 
 ////////////////////////////////
 // Tools (random numbers)
