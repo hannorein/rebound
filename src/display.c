@@ -285,7 +285,7 @@ void display(void){
 						// Note: need also update to com.
 						// TODO
 					}
-					struct orbit o = reb_tools_p2orbit(display_r->G, p,com);
+					struct reb_orbit o = reb_tools_p2orbit(display_r->G, p,com);
 					glPushMatrix();
 					
 					glTranslatef(com.x,com.y,com.z);
