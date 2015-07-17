@@ -13,19 +13,20 @@ import math
 
 __all__ = ["getParticle"]
 
-# Default date for orbital elements is the current time.
+# Default date for orbital elements is the current time when first particle added, if no date is passed.
 # Cached at the beginning to ensure that all particles are synchronized.
-INITDATE = datetime.datetime.today() 
-
-AU2KM      = 149597870.7  #exactly
-KM2AU      = 1./AU2KM
-YR2S       = 31557600.0   #exactly (Julian year)
-S2YRTWOPI  = 2.*math.pi/YR2S
+# If a date is passed, the same date is used for all subsequent particle adds (that don't themselves pass a date).
+INITDATE = None
 
 def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None):   
     if date is not None:
-        date = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M")
-    else:
+        date = datetime.datetime.strptime(date,"%Y-%m-%d %H:%M")
+    # set the cached initialization time if it's not set
+    global INITDATE
+    if INITDATE is None:
+        INITDATE = date if date is not None else datetime.datetime.utcnow()
+
+    if date is None: # if no date passed, used cached value
         date = INITDATE
     print("Searching NASA Horizons for '%s'... "%(particle),end="")
     sys.stdout.flush()
@@ -42,8 +43,8 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
                ( b'Ending.* :', (date + datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M")+'\n' ),
                ( b'Output interval.*:', '1d\n' ),
                ( b'Accept default output \[.*:', 'n\n' ),
-               ( b'Output reference frame \[.*:', '\n' ),
-               ( b'Corrections \[.*:', '\n' ),
+               ( b'Output reference frame \[.*:', 'J2000\n' ),
+               ( b'Corrections \[.*:', 'NONE\n' ),
                ( b'Output units \[.*:', '1\n' ),
                ( b'Spreadsheet CSV format.*\[.*:', 'NO\n' ),
                ( b'Label cartesian output.*\[.*:', 'NO\n' ),
@@ -112,7 +113,7 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
     elif idn is not None:
         try:
             p.m = float(re.search(r"BODY%d\_GM .* \( *([\.E\+\-0-9]+ *)\)"%int(idn), HORIZONS_MASS_DATA).group(1))
-            p.m /= G # divide by G (horizons masses give GM)
+            p.m /= Gkmkgs # divide by G (horizons masses give GM)
         except:
             print("Warning: Mass cannot be retrieved from NASA HORIZONS. Set to 0.")
             p.m = 0
@@ -126,7 +127,7 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
 # The following data was provided by Jon Giorgini (10 May 2015)
 # Units: km^3/s^2
 
-G = 6.674e-20 # units of km^3/kg/s^2
+Gkmkgs = 6.674e-20 # units of km^3/kg/s^2
 
 HORIZONS_MASS_DATA = """
     BODY1_GM       = ( 2.2031780000000021E+04 )
