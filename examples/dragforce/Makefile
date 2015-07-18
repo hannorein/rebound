@@ -4,7 +4,6 @@ export OPT=-O3
 
 all:
 	# Setup link to different modules
-	ln -fs collisions_none.c ../../src/collisions.c
 	ln -fs ../$(PROBLEMDIR)/problem.c ../../src/problem.c
 	# Compile
 	$(MAKE) -C ../../src/
