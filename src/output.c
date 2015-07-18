@@ -120,7 +120,7 @@ void reb_output_timing(struct reb_simulation* r, const double tmax){
 #endif // PROFILING
 	}
 	printf("N_tot= %- 9d  ",N_tot);
-	if (r->integrator==REB_INTEGRATOR_SEU){
+	if (r->integrator==REB_INTEGRATOR_SEI){
 		printf("t= %- 9f [orb]  ",r->t*r->ri_sei.OMEGA/2./M_PI);
 	}else{
 		printf("t= %- 9f  ",r->t);
@@ -306,14 +306,14 @@ void reb_output_append_velocity_dispersion(struct reb_simulation* r, char* filen
 		struct vec3 Aim1 = A;
 		struct reb_particle p = r->particles[i];
 		A.x = A.x + (p.vx-A.x)/(double)(i+1);
-		if (r->integrator==REB_INTEGRATOR_SEU){
+		if (r->integrator==REB_INTEGRATOR_SEI){
 			A.y = A.y + (p.vy+1.5*r->ri_sei.OMEGA*p.x-A.y)/(double)(i+1);
 		}else{
 			A.y = A.y + (p.vy-A.y)/(double)(i+1);
 		}
 		A.z = A.z + (p.vz-A.z)/(double)(i+1);
 		Q.x = Q.x + (p.vx-Aim1.x)*(p.vx-A.x);
-		if (r->integrator==REB_INTEGRATOR_SEU){
+		if (r->integrator==REB_INTEGRATOR_SEI){
 			Q.y = Q.y + (p.vy+1.5*r->ri_sei.OMEGA*p.x-Aim1.y)*(p.vy+1.5*r->ri_sei.OMEGA*p.x-A.y);
 		}else{
 			Q.y = Q.y + (p.vy-Aim1.y)*(p.vy-A.y);

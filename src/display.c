@@ -274,7 +274,7 @@ void display(void){
 		}
 		// Drawing wires
 		if (display_wire){
-			if(display_r->integrator!=REB_INTEGRATOR_SEU){
+			if(display_r->integrator!=REB_INTEGRATOR_SEI){
 				double radius = 0;
 				struct reb_particle com = particles[0];
 				for (int i=1;i<display_r->N-display_r->N_var;i++){

@@ -54,7 +54,7 @@ void reb_integrator_part1(struct reb_simulation* r){
 		case REB_INTEGRATOR_LEAPFROG:
 			reb_integrator_leapfrog_part1(r);
 			break;
-		case REB_INTEGRATOR_SEU:
+		case REB_INTEGRATOR_SEI:
 			reb_integrator_sei_part1(r);
 			break;
 		case REB_INTEGRATOR_WHFAST:
@@ -79,7 +79,7 @@ void reb_integrator_part2(struct reb_simulation* r){
 		case REB_INTEGRATOR_LEAPFROG:
 			reb_integrator_leapfrog_part2(r);
 			break;
-		case REB_INTEGRATOR_SEU:
+		case REB_INTEGRATOR_SEI:
 			reb_integrator_sei_part2(r);
 			break;
 		case REB_INTEGRATOR_WHFAST:
@@ -104,7 +104,7 @@ void reb_integrator_synchronize(struct reb_simulation* r){
 		case REB_INTEGRATOR_LEAPFROG:
 			reb_integrator_leapfrog_synchronize(r);
 			break;
-		case REB_INTEGRATOR_SEU:
+		case REB_INTEGRATOR_SEI:
 			reb_integrator_sei_synchronize(r);
 			break;
 		case REB_INTEGRATOR_WHFAST:
