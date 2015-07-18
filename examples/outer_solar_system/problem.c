@@ -1,48 +1,26 @@
 /**
- * @file 	problem.c
- * @brief 	Example problem: circular orbit.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example uses the IAS15 integrator
+ * Outer Solar System
+ *
+ * This example uses the IAS15 integrator
  * to integrate the outer planets of the solar system. The initial 
  * conditions are taken from Applegate et al 1986. Pluto is a test
  * particle. This example is a good starting point for any long term orbit
  * integrations.
  *
  * You probably want to turn off the visualization for any serious runs.
- * Just go to the makefile and set `OPENGL=0`. 
+ * Go to the makefile and set `OPENGL=0`. 
  *
  * The example also works with the WHFAST symplectic integrator. We turn
  * off safe-mode to allow fast and accurate simulations with the symplectic
- * corrector. If an output is required, you need to call integrator_synchronize()
+ * corrector. If an output is required, you need to call ireb_integrator_synchronize()
  * before accessing the particle structure.
  * 
- * @section 	LICENSE
- * Copyright (c) 2015 Hanno Rein, Shangfei Liu, Dave Spiegel
- *
- * This file is part of rebound.
- *
- * rebound is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * rebound is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include <time.h>
 #include "rebound.h"
-#include "output.h"
-#include "tools.h"
 
 double ss_pos[6][3] = 
 {

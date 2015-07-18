@@ -34,6 +34,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #ifdef _APPLE
 #include <GLUT/glut.h>
 #else // _APPLE
@@ -60,6 +61,7 @@ int display_mass = 0;		/**< Shows/hides centre of mass in tree structure. */
 int display_wire = 0;		/**< Shows/hides orbit wires. */
 int display_clear = 1;		/**< Toggles clearing the display on each draw. */
 int display_ghostboxes = 0;	/**< Shows/hides ghost boxes. */
+int display_limit = 1;		/**< Limit display refresh to 50 frames per second. */
 int display_reference = -1;	/**< reb_particle used as a reference for rotation. */
 double display_rotate_x = 0;	/**< Rotate everything around the x-axis. */
 double display_rotate_z = 0;	/**< Rotate everything around the z-axis. */
@@ -81,12 +83,24 @@ double display_tmax;
 
 void display_func(void){
 	if (reb_check_exit(display_r,display_tmax)!=1){
-		reb_step(display_r);
-#ifdef OPENGL
-		PROFILING_START()
-		display();
-		PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
-#endif // OPENGL
+		if (display_limit){
+			struct timeval tim;
+			gettimeofday(&tim, NULL);
+			double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
+			double timing;
+			do{
+				reb_step(display_r);
+				gettimeofday(&tim, NULL);
+				timing = tim.tv_sec+(tim.tv_usec/1000000.0);
+			}while(timing-timing_initial<1./50.);  //limit to 50 frames per second.
+		}else{
+			reb_step(display_r);
+		}
+		if (!display_pause){
+			PROFILING_START()
+			display();
+			PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
+		}
 	}else{
 		display_exit();
 	}
@@ -131,6 +145,9 @@ void displayKey(unsigned char key, int x, int y){
 			break;
 		case 'c': case 'C':
 			display_clear = !display_clear;
+			break;
+		case 'l': case 'L':
+			display_limit = !display_limit;
 			break;
 		case 'x': 
 			display_reference++;
@@ -194,7 +211,6 @@ struct reb_simulation* display_r = NULL;
 
 void display(void){
 	const struct reb_particle* particles = display_r->particles;
-	if (display_pause) return;
 	if (display_tree){
 		reb_tree_update(display_r);
 		if (display_r->gravity==REB_GRAVITY_TREE){
