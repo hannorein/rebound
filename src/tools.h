@@ -89,12 +89,6 @@ double reb_tools_megno_deltad_delta(struct reb_simulation* const r);
  **/
 void reb_tools_megno_update(struct reb_simulation* r, double dY);
 
-/**
- * Calculate the total energy (potential and kinetic).
- * Might not work for WH.
- * @return Total energy. 
- */
-double reb_tools_energy(struct reb_simulation* r);
 
 /**
  * Init random number generator based on time and process id.

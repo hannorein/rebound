@@ -249,6 +249,16 @@ void reb_step(struct reb_simulation* const r);
  */
 int reb_integrate(struct reb_simulation* const r, double tmax);
 
+/*
+ * Synchronize particles manually at end of timestep.
+ */
+void reb_integrator_synchronize(struct reb_simulation* r);
+
+/* 
+ * Cleanup all temporarily stored values.
+ **/
+void reb_integrator_reset(struct reb_simulation* r);
+
 /**
  * Helper function to configure box.
  */
@@ -373,4 +383,14 @@ void reb_output_timing(struct reb_simulation* r, const double tmax);
  * @return Orbital parameters. 
  */
 struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_particle star);
+
+
+////////////////////////////////
+// Tools (misc)
+/**
+ * Calculate the total energy (potential and kinetic).
+ * Might not work for WH.
+ * @return Total energy. 
+ */
+double reb_tools_energy(struct reb_simulation* r);
 #endif

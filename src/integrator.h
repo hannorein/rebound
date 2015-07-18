@@ -43,16 +43,6 @@ void reb_integrator_part1(struct reb_simulation* r);
 void reb_integrator_part2(struct reb_simulation* r);
 
 
-/*
- * Synchronize particles manually at end of timestep.
- */
-void reb_integrator_synchronize(struct reb_simulation* r);
-
-/* 
- * Cleanup all temporarily stored values.
- **/
-void reb_integrator_reset(struct reb_simulation* r);
-
 /* This function updates the acceleration on all particles. 
  * It uses the current position and velocity data in the 
  * (struct particle*) particles structure.
