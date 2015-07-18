@@ -1,7 +1,7 @@
 #!/bin/gnuplot
-set output "prdragcirumbinary.pdf"
+set output "prdragcirumbinary.png"
 set key top left
-set terminal pdf monochrome dashed enhanced size 3in,3in
+set terminal png
 set xlabel "time [years]"
 set ylabel "semimajor axis [AU]"
 set multiplot layout 2,1
