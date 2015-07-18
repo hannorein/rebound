@@ -71,7 +71,7 @@ void reb_step(struct reb_simulation* const r){
 	// Prepare particles for distribution to other nodes. 
 	// This function also creates the tree if called for the first time.
 	PROFILING_START()
-	if (r->gravity==RB_GT_TREE){
+	if (r->gravity==REB_GRAVITY_TREE){
 		reb_tree_update(r);          
 	}
 
@@ -80,7 +80,7 @@ void reb_step(struct reb_simulation* const r){
 	communication_mpi_distribute_particles();
 #endif // MPI
 
-	if (r->tree_root!=NULL && r->gravity==RB_GT_TREE){
+	if (r->tree_root!=NULL && r->gravity==REB_GRAVITY_TREE){
 		// Update center of mass and quadrupole moments in tree in preparation of force calculation.
 		reb_tree_update_gravity_data(r); 
 #ifdef MPI
@@ -283,8 +283,8 @@ struct reb_simulation* reb_create_simulation(){
 	
 	// Default modules
 	r->integrator 	= REB_INTEGRATOR_IAS15;
-	r->boundary 	= RB_BT_NONE;
-	r->gravity	= RB_GT_COMPENSATED;
+	r->boundary 	= REB_BOUNDARY_NONE;
+	r->gravity	= REB_GRAVITY_COMPENSATED;
 	r->collision	= REB_COLLISION_NONE;
 
 

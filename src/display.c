@@ -197,7 +197,7 @@ void display(void){
 	if (display_pause) return;
 	if (display_tree){
 		reb_tree_update(display_r);
-		if (display_r->gravity==RB_GT_TREE){
+		if (display_r->gravity==REB_GRAVITY_TREE){
 			reb_tree_update_gravity_data(display_r);
 		}
 	}
@@ -328,7 +328,7 @@ void display(void){
 	}
 	glColor4f(1.0,0.0,0.0,0.4);
 	glScalef(display_r->boxsize.x,display_r->boxsize.y,display_r->boxsize.z);
-	if (display_r->boundary == RB_BT_NONE){
+	if (display_r->boundary == REB_BOUNDARY_NONE){
 		glBegin(GL_LINES);
 		glVertex3f(0,0,0.04);
 		glVertex3f(0,0,-0.04);

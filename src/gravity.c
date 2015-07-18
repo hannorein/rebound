@@ -65,9 +65,9 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 	const int _N_active = ((N_active==-1)?N:N_active) - r->N_var;
 	const int _N_real   = N  - r->N_var;
 	switch (r->gravity){
-		case RB_GT_NONE: // Do nothing.
+		case REB_GRAVITY_NONE: // Do nothing.
 		break;
-		case RB_GT_BASIC:
+		case REB_GRAVITY_BASIC:
 		{
 			const int nghostx = r->nghostx;
 			const int nghosty = r->nghosty;
@@ -105,7 +105,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 			}
 		}
 		break;
-		case RB_GT_COMPENSATED:
+		case REB_GRAVITY_COMPENSATED:
 		{
 			if (r->gravity_cs_allocatedN<_N_real){
 				r->gravity_cs = realloc(r->gravity_cs,_N_real*sizeof(struct reb_vec3d));
@@ -201,7 +201,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 			}
 		}
 		break;
-		case RB_GT_TREE:
+		case REB_GRAVITY_TREE:
 		{
 #pragma omp parallel for schedule(guided)
 			for (int i=0; i<N; i++){
@@ -256,10 +256,10 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
 		particles[i].az = 0; 
 	}
 	switch (r->gravity){
-		case RB_GT_NONE: // Do nothing.
+		case REB_GRAVITY_NONE: // Do nothing.
 		break;
-		case RB_GT_BASIC:
-		case RB_GT_COMPENSATED:
+		case REB_GRAVITY_BASIC:
+		case REB_GRAVITY_COMPENSATED:
 #pragma omp parallel for schedule(guided)
 			for (int i=_N_real; i<N; i++){
 			for (int j=i+1; j<N; j++){
@@ -306,7 +306,7 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
 }
 
 
-// Helper routines for RB_GT_TREE
+// Helper routines for REB_GRAVITY_TREE
 
 
 /**

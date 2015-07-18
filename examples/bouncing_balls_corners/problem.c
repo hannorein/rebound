@@ -17,10 +17,10 @@ int main(int argc, char* argv[]){
 	struct reb_simulation* r = reb_create_simulation();
 	// Setup constants
 	r->integrator	= REB_INTEGRATOR_LEAPFROG;
-	r->gravity	= RB_GT_BASIC;
+	r->gravity	= REB_GRAVITY_BASIC;
 	r->collision	= REB_COLLISION_TREE;
 	r->dt 		= 1e-3;
-	r->boundary	= RB_BT_PERIODIC;
+	r->boundary	= REB_BOUNDARY_PERIODIC;
 	reb_configure_box(r,3.,1,1,1);
 	
 	// Initial conditions

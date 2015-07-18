@@ -15,7 +15,7 @@ int main(int argc, char* argv[]){
 	struct reb_simulation* r = reb_create_simulation();
 	// Setup constants
 	r->integrator	= REB_INTEGRATOR_LEAPFROG;
-	r->gravity	= RB_GT_BASIC;
+	r->gravity	= REB_GRAVITY_BASIC;
 	r->collision	= REB_COLLISION_DIRECT;
 	r->dt = 1e-2;
 

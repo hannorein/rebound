@@ -42,7 +42,7 @@ void reb_boundary_check(struct reb_simulation* const r){
 	const int N = r->N;
 	const struct reb_vec3d boxsize = r->boxsize;
 	switch(r->boundary){
-		case RB_BT_OPEN:
+		case REB_BOUNDARY_OPEN:
 			for (int i=0;i<N;i++){ // run through loop backwards so we don't have to recheck same index after removing
 				int removep = 0;
 				if(particles[i].x>boxsize.x/2.){
@@ -74,7 +74,7 @@ void reb_boundary_check(struct reb_simulation* const r){
 				}
 			}
 			break;
-		case RB_BT_SHEAR:
+		case REB_BOUNDARY_SHEAR:
 		{
 			// The offset of ghostcell is time dependent.
 			const double OMEGA = r->ri_sei.OMEGA;
@@ -111,7 +111,7 @@ void reb_boundary_check(struct reb_simulation* const r){
 			}
 		}
 		break;
-		case RB_BT_PERIODIC:
+		case REB_BOUNDARY_PERIODIC:
 #pragma omp parallel for schedule(guided)
 			for (int i=0;i<N;i++){
 				while(particles[i].x>boxsize.x/2.){
@@ -143,7 +143,7 @@ const static struct reb_ghostbox nan_ghostbox = {.shiftx = 0, .shifty = 0, .shif
 
 struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_simulation* const r, int i, int j, int k){
 	switch(r->boundary){
-		case RB_BT_OPEN:
+		case REB_BOUNDARY_OPEN:
 		{
 			struct reb_ghostbox gb;
 			gb.shiftx = r->boxsize.x*(double)i;
@@ -154,7 +154,7 @@ struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_simulation* const r, in
 			gb.shiftvz = 0;
 			return gb;
 		}
-		case RB_BT_SHEAR:
+		case REB_BOUNDARY_SHEAR:
 		{
 			const double OMEGA = r->ri_sei.OMEGA;
 			struct reb_ghostbox gb;
@@ -178,7 +178,7 @@ struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_simulation* const r, in
 			gb.shiftz = r->boxsize.z*(double)k;
 			return gb;
 		}
-		case RB_BT_PERIODIC:
+		case REB_BOUNDARY_PERIODIC:
 		{
 			struct reb_ghostbox gb;
 			gb.shiftx = r->boxsize.x*(double)i;
@@ -201,8 +201,8 @@ struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_simulation* const r, in
  */
 int reb_boundary_particle_is_in_box(const struct reb_simulation* const r, struct reb_particle p){
 	switch(r->boundary){
-		case RB_BT_OPEN:
-		case RB_BT_SHEAR:
+		case REB_BOUNDARY_OPEN:
+		case REB_BOUNDARY_SHEAR:
 			if(p.x>r->boxsize.x/2.){
 				return 0;
 			}

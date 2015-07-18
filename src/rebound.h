@@ -167,20 +167,20 @@ struct reb_simulation {
 	 * Available boundary conditions.
 	 */
 	enum {
-		RB_BT_NONE = 0,
-		RB_BT_OPEN = 1,
-		RB_BT_PERIODIC = 2,
-		RB_BT_SHEAR = 3,
+		REB_BOUNDARY_NONE = 0,
+		REB_BOUNDARY_OPEN = 1,
+		REB_BOUNDARY_PERIODIC = 2,
+		REB_BOUNDARY_SHEAR = 3,
 		} boundary;
 
 	/**
 	 * Available gravity routines.
 	 */
 	enum {
-		RB_GT_NONE = 0,
-		RB_GT_BASIC = 1,
-		RB_GT_COMPENSATED = 2,
-		RB_GT_TREE = 3,
+		REB_GRAVITY_NONE = 0,
+		REB_GRAVITY_BASIC = 1,
+		REB_GRAVITY_COMPENSATED = 2,
+		REB_GRAVITY_TREE = 3,
 		} gravity;
 
 

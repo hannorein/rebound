@@ -41,8 +41,8 @@ int main(int argc, char* argv[]){
 	struct reb_simulation* const r = reb_create_simulation();
 	// Setup constants
 	r->integrator	= REB_INTEGRATOR_LEAPFROG;
-	r->gravity	= RB_GT_TREE;
-	r->boundary	= RB_BT_OPEN;
+	r->gravity	= REB_GRAVITY_TREE;
+	r->boundary	= REB_BOUNDARY_OPEN;
 	r->opening_angle2	= 1.5;		// This constant determines the accuracy of the tree code gravity estimate.
 	r->G 		= 1;		
 	r->softening 	= 0.02;		// Gravitational softening length
