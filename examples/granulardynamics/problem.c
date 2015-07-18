@@ -14,6 +14,7 @@
 #include "rebound.h"
 
 void collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb_collision c);
+void heartbeat(struct reb_simulation* r);
 int N_border;
 
 int main(int argc, char* argv[]){
