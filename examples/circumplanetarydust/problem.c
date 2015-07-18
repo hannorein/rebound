@@ -25,7 +25,7 @@ double tmax = 1e6;
 int main(int argc, char* argv[]){
 	struct reb_simulation* r = reb_create_simulation();
 	// Setup constants
-	r->integrator		= RB_IT_IAS15;
+	r->integrator		= REB_INTEGRATOR_IAS15;
 	r->dt 			= 1e-4;	// Initial timestep.
 	r->N_active		= 2; 	// Only the star and the planet are massive.
 	r->additional_forces 	= force_radiation;

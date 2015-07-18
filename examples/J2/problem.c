@@ -27,7 +27,7 @@ void force_J2(struct reb_simulation* r);
 int main(int argc, char* argv[]){
 	struct reb_simulation* r = reb_create_simulation();
 	// Setup constants
-	r->integrator			= RB_IT_IAS15;
+	r->integrator			= REB_INTEGRATOR_IAS15;
 	r->dt 				= 1e-6;			// initial timestep
 	r->N_active			= 2; 			// only the star and the planet are massive.
 	

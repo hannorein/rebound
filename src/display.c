@@ -258,7 +258,7 @@ void display(void){
 		}
 		// Drawing wires
 		if (display_wire){
-			if(display_r->integrator!=RB_IT_SEI){
+			if(display_r->integrator!=REB_INTEGRATOR_SEU){
 				double radius = 0;
 				struct reb_particle com = particles[0];
 				for (int i=1;i<display_r->N-display_r->N_var;i++){
@@ -278,7 +278,7 @@ void display(void){
 							glColor4f(0.0,0.0,1.0,0.9);
 						}
 					}
-					if (display_r->integrator==RB_IT_WHFAST && display_r->ri_whfast.is_synchronized==0){
+					if (display_r->integrator==REB_INTEGRATOR_WHFAST && display_r->ri_whfast.is_synchronized==0){
 						double m = p.m;
 						p = display_r->ri_whfast.p_j[i];
 						p.m = m;

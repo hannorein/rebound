@@ -45,22 +45,22 @@
 
 void reb_integrator_part1(struct reb_simulation* r){
 	switch(r->integrator){
-		case RB_IT_IAS15:
+		case REB_INTEGRATOR_IAS15:
 			reb_integrator_ias15_part1(r);
 			break;
-		case RB_IT_WH:
+		case REB_INTEGRATOR_WH:
 			reb_integrator_wh_part1(r);
 			break;
-		case RB_IT_LEAPFROG:
+		case REB_INTEGRATOR_LEAPFROG:
 			reb_integrator_leapfrog_part1(r);
 			break;
-		case RB_IT_SEI:
+		case REB_INTEGRATOR_SEU:
 			reb_integrator_sei_part1(r);
 			break;
-		case RB_IT_WHFAST:
+		case REB_INTEGRATOR_WHFAST:
 			reb_integrator_whfast_part1(r);
 			break;
-		case RB_IT_HYBRID:
+		case REB_INTEGRATOR_HYBRID:
 			reb_integrator_hybrid_part1(r);
 			break;
 		default:
@@ -70,22 +70,22 @@ void reb_integrator_part1(struct reb_simulation* r){
 
 void reb_integrator_part2(struct reb_simulation* r){
 	switch(r->integrator){
-		case RB_IT_IAS15:
+		case REB_INTEGRATOR_IAS15:
 			reb_integrator_ias15_part2(r);
 			break;
-		case RB_IT_WH:
+		case REB_INTEGRATOR_WH:
 			reb_integrator_wh_part2(r);
 			break;
-		case RB_IT_LEAPFROG:
+		case REB_INTEGRATOR_LEAPFROG:
 			reb_integrator_leapfrog_part2(r);
 			break;
-		case RB_IT_SEI:
+		case REB_INTEGRATOR_SEU:
 			reb_integrator_sei_part2(r);
 			break;
-		case RB_IT_WHFAST:
+		case REB_INTEGRATOR_WHFAST:
 			reb_integrator_whfast_part2(r);
 			break;
-		case RB_IT_HYBRID:
+		case REB_INTEGRATOR_HYBRID:
 			reb_integrator_hybrid_part2(r);
 			break;
 		default:
@@ -95,22 +95,22 @@ void reb_integrator_part2(struct reb_simulation* r){
 	
 void reb_integrator_synchronize(struct reb_simulation* r){
 	switch(r->integrator){
-		case RB_IT_IAS15:
+		case REB_INTEGRATOR_IAS15:
 			reb_integrator_ias15_synchronize(r);
 			break;
-		case RB_IT_WH:
+		case REB_INTEGRATOR_WH:
 			reb_integrator_wh_synchronize(r);
 			break;
-		case RB_IT_LEAPFROG:
+		case REB_INTEGRATOR_LEAPFROG:
 			reb_integrator_leapfrog_synchronize(r);
 			break;
-		case RB_IT_SEI:
+		case REB_INTEGRATOR_SEU:
 			reb_integrator_sei_synchronize(r);
 			break;
-		case RB_IT_WHFAST:
+		case REB_INTEGRATOR_WHFAST:
 			reb_integrator_whfast_synchronize(r);
 			break;
-		case RB_IT_HYBRID:
+		case REB_INTEGRATOR_HYBRID:
 			reb_integrator_hybrid_synchronize(r);
 			break;
 		default:
@@ -119,7 +119,7 @@ void reb_integrator_synchronize(struct reb_simulation* r){
 }
 
 void reb_integrator_reset(struct reb_simulation* r){
-	r->integrator = RB_IT_IAS15;
+	r->integrator = REB_INTEGRATOR_IAS15;
 	r->gravity_ignore_10 = 0;
 	reb_integrator_ias15_reset(r);
 	reb_integrator_wh_reset(r);

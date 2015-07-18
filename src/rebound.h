@@ -154,13 +154,13 @@ struct reb_simulation {
 	 * Available integrators.
 	 */
 	enum {
-		RB_IT_IAS15 = 0,
-		RB_IT_WHFAST = 1,
-		RB_IT_SEI = 2,
-		RB_IT_WH = 3,
-		RB_IT_LEAPFROG = 4,
-		RB_IT_HYBRID = 5,
-		RB_IT_NONE = 6,
+		REB_INTEGRATOR_IAS15 = 0,
+		REB_INTEGRATOR_WHFAST = 1,
+		REB_INTEGRATOR_SEU = 2,
+		REB_INTEGRATOR_WH = 3,
+		REB_INTEGRATOR_LEAPFROG = 4,
+		REB_INTEGRATOR_HYBRID = 5,
+		REB_INTEGRATOR_NONE = 6,
 		} integrator;
 
 	/**

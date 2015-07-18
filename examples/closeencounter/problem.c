@@ -20,7 +20,7 @@ void heartbeat(struct reb_simulation* r);
 int main(int argc, char* argv[]){
 	struct reb_simulation* r = reb_create_simulation();
 	r->dt = 0.01*2.*M_PI;						// initial timestep
-	r->integrator = RB_IT_IAS15;
+	r->integrator = REB_INTEGRATOR_IAS15;
 	r->heartbeat  = heartbeat;
 
 
