@@ -138,17 +138,17 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 	return 1;
 }
 
-int reb_remove_with_id(struct reb_simulation* const r, int ID, int keepSorted){
+int reb_remove_with_id(struct reb_simulation* const r, int id, int keepSorted){
 	int success = 0;
 	for(int i=0;i<r->N;i++){
-		if(r->particles[i].ID == ID){
+		if(r->particles[i].id == id){
 			success = reb_remove(r, i, keepSorted);
 			break;
 		}
 	}
 
 	if(!success){
-		fprintf(stderr, "\nIndex passed to particles_remove_ID (ID = %d) not found in particles array.  Did not remove particle.\n", ID);
+		fprintf(stderr, "\nIndex passed to particles_remove_id (id = %d) not found in particles array.  Did not remove particle.\n", id);
 	}
 	return success;
 }

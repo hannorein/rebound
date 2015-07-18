@@ -79,7 +79,7 @@ struct reb_particle {
 	double r; 	/**< Radius of the particle. */
 	double lastcollision;	/**< Last time the particle had a physical collision. */
 	struct reb_treecell* c;		/**< Pointer to the cell the particle is currently in. */
-	int ID;		/**< Unique ID to identify particle. */
+	int id;		/**< Unique id to identify particle. */
 };
 
 
@@ -327,16 +327,16 @@ void reb_remove_all(struct reb_simulation* const r);
  * Returns 1 if particle was successfully removed, 0 if index passed was 
  * out of range.
  */
-int reb_remove(struct reb_simulation* const rindex, int ID, int keepSorted);
+int reb_remove(struct reb_simulation* const rindex, int id, int keepSorted);
 
 /**
- * Remove particle by ID.
+ * Remove particle by id.
  * if keepSorted is set, the particles with indices in the particles array
- * higher than the one with the passed ID are all shifted down one position,
+ * higher than the one with the passed id are all shifted down one position,
  * ensuring the ordering remains. Returns 1 if particle successfully removed,
- * 0 if ID was not found in the particles array.
+ * 0 if id was not found in the particles array.
  */
-int reb_remove_with_id(struct reb_simulation* const r, int ID, int keepSorted);
+int reb_remove_with_id(struct reb_simulation* const r, int id, int keepSorted);
 
 ////////////////////////////////
 // Tools (random numbers)
