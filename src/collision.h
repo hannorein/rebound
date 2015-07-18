@@ -31,22 +31,6 @@
  */
 #ifndef _COLLISIONS_H
 #define _COLLISIONS_H
-#include "boundary.h"
-/**
- * Collision structure of one single collisions
- * Used to save a collision during collision search. 
- */
-struct reb_collision{
-	int p1;			/**< First colliding particle. */
-	int p2;			/**< Second colliding particle. */
-	struct reb_ghostbox gb;	/**< Ghostbox (of particle p1). */
-#if defined(COLLISIONS_SWEEP) || defined(COLLISIONS_SWEEPPHI)
-	double time;		/**< Time of collision. */
-	int crossing;		/**< Collision occurs at the interface of two sweep boxes. */
-#endif // COLLISIONS_SWEEP
-	int ri;	 		/**< Index of rootcell (Needed for MPI). */
-};
-
 /**
  * Search for collisions and resolve them.
  */

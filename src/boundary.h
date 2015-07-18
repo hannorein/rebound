@@ -33,20 +33,6 @@
 #define _BOUNDARIES_H
 
 /**
- * This struct containes the relative position and velocity of a boundary box.
- * It is sometimes also used as the relative position and velocity of a 
- * particle to speed up calculation.
- */
-struct reb_ghostbox{
-	double shiftx;		/**< Relative x position */
-	double shifty;		/**< Relative y position */
-	double shiftz;		/**< Relative z position */
-	double shiftvx;		/**< Relative x velocity */
-	double shiftvy;		/**< Relative y velocity */
-	double shiftvz;		/**< Relative z velocity */
-};
-
-/**
  * This function checks if any particle has left the main box.
  * If a particle left the box, it is shifted back in the box
  * for periodic boundary conditions or remove from the simulation.

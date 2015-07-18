@@ -44,6 +44,20 @@ struct reb_vec3d {
 	double z;
 };
 
+/**
+ * This struct containes the relative position and velocity of a boundary box.
+ * It is sometimes also used as the relative position and velocity of a 
+ * particle to speed up calculation.
+ */
+struct reb_ghostbox{
+	double shiftx;		/**< Relative x position */
+	double shifty;		/**< Relative y position */
+	double shiftz;		/**< Relative z position */
+	double shiftvx;		/**< Relative x velocity */
+	double shiftvy;		/**< Relative y velocity */
+	double shiftvz;		/**< Relative z velocity */
+};
+
 
 /**
  * reb_particle structure.
@@ -85,6 +99,20 @@ struct reb_orbit {
 	double f; 	// true anomaly
 };
 
+/**
+ * Collision structure of one single collisions
+ * Used to save a collision during collision search. 
+ */
+struct reb_collision{
+	int p1;			/**< First colliding particle. */
+	int p2;			/**< Second colliding particle. */
+	struct reb_ghostbox gb;	/**< Ghostbox (of particle p1). */
+#if defined(COLLISIONS_SWEEP) || defined(COLLISIONS_SWEEPPHI)
+	double time;		/**< Time of collision. */
+	int crossing;		/**< Collision occurs at the interface of two sweep boxes. */
+#endif // COLLISIONS_SWEEP
+	int ri;	 		/**< Index of rootcell (Needed for MPI). */
+};
 
 /**
  * Main struct representing an entire REBOUND simulation.
