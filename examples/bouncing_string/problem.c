@@ -18,7 +18,7 @@ int main(int argc, char* argv[]){
 	r->dt 			= 1e-3;
 	r->integrator		= REB_INTEGRATOR_LEAPFROG;
 	r->boundary		= RB_BT_PERIODIC;
-	r->collision		= RB_CT_DIRECT;
+	r->collision		= REB_COLLISION_DIRECT;
 	r->gravity		= RB_GT_NONE;
 	
 	reb_configure_box(r,10.,3,1,1);  // boxsize 10., three root boxes in x direction, one in y and z

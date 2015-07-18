@@ -146,9 +146,9 @@ struct reb_simulation {
 	 * Available collision routines.
 	 */
 	enum {
-		RB_CT_NONE = 0,
-		RB_CT_DIRECT = 1,
-		RB_CT_TREE = 2,
+		REB_COLLISION_NONE = 0,
+		REB_COLLISION_DIRECT = 1,
+		REB_COLLISION_TREE = 2,
 		} collision;
 	/**
 	 * Available integrators.

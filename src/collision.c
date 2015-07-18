@@ -56,9 +56,9 @@ void reb_collision_search(struct reb_simulation* const r){
 	int collisions_N = 0;
 	const struct reb_particle* const particles = r->particles;
 	switch (r->collision){
-		case RB_CT_NONE:
+		case REB_COLLISION_NONE:
 		break;
-		case RB_CT_DIRECT:
+		case REB_COLLISION_DIRECT:
 		{
 			// Loop over ghost boxes, but only the inner most ring.
 			int nghostxcol = (r->nghostx>1?1:r->nghostx);
@@ -114,7 +114,7 @@ void reb_collision_search(struct reb_simulation* const r){
 			}
 		}
 		break;
-		case RB_CT_TREE:
+		case REB_COLLISION_TREE:
 		{
 			// Update and simplify tree. 
 			// Prepare particles for distribution to other nodes. 

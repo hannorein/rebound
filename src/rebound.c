@@ -285,7 +285,7 @@ struct reb_simulation* reb_create_simulation(){
 	r->integrator 	= REB_INTEGRATOR_IAS15;
 	r->boundary 	= RB_BT_NONE;
 	r->gravity	= RB_GT_COMPENSATED;
-	r->collision	= RB_CT_NONE;
+	r->collision	= REB_COLLISION_NONE;
 
 
 	// Integrators	

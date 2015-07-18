@@ -55,7 +55,7 @@ int main(int argc, char* argv[]){
 		r = rebound_init();
 
 		r->integrator	= SEI;
-		r->collision	= RB_CT_DIRECT;
+		r->collision	= REB_COLLISION_DIRECT;
 		r->ri_sei.OMEGA	= 1.;	
 		r->dt 		= 1e-4*2.*M_PI; 
 		rebound_configure_box(r,1.,1,1,1);
