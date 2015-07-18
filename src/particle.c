@@ -138,7 +138,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 	return 1;
 }
 
-int reb_remove_with_id(struct reb_simulation* const r, int id, int keepSorted){
+int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted){
 	int success = 0;
 	for(int i=0;i<r->N;i++){
 		if(r->particles[i].id == id){

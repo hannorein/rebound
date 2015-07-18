@@ -336,7 +336,7 @@ int reb_remove(struct reb_simulation* const rindex, int id, int keepSorted);
  * ensuring the ordering remains. Returns 1 if particle successfully removed,
  * 0 if id was not found in the particles array.
  */
-int reb_remove_with_id(struct reb_simulation* const r, int id, int keepSorted);
+int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted);
 
 ////////////////////////////////
 // Tools (random numbers)
