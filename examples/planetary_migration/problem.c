@@ -1,9 +1,7 @@
 /**
- * @file 	problem.c
- * @brief 	Example problem: forced migration of GJ876.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- * 		Willy Kley <kley@uni-tuebingen.de>
- * @detail 	This example applies dissipative forces to two
+ * Planetary migration in the GJ876 system
+ *
+ * This example applies dissipative forces to two
  * bodies orbiting a central object. The forces are specified
  * in terms of damping timescales for the semi-major axis and
  * eccentricity. This mimics planetary migration in a protostellar disc. 
@@ -14,107 +12,77 @@
  * Special thanks goes to Willy Kley for helping me to implement
  * the damping terms as actual forces. 
  *
- * 
- * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Shangfei Liu
- *
- * This file is part of rebound.
- *
- * rebound is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * rebound is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include <time.h>
-#include "main.h"
-#include "tools.h"
-#include "problem.h"
-#include "output.h"
-#include "particle.h"
-#include "boundaries.h"
-#include "integrator.h"
-#include "integrator_whfast.h"
+#include "rebound.h"
 
 double* tau_a; 	/**< Migration timescale in years for all particles */
 double* tau_e; 	/**< Eccentricity damping timescale in years for all particles */
-void problem_migration_forces();
+double tmax;
 
-#ifdef OPENGL
-extern int display_wire;
-#endif 	// OPENGL
+void migration_forces(struct reb_simulation* r);
+void heartbeat(struct reb_simulation* r);
 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
+	struct reb_simulation* r = reb_create_simulation();
 	// Setup constants
-	// Choose WHFAST integrator
-	integrator	= WHFAST;
-	// Choose IAS15 integrator
-	//integrator	= IAS15;
-	dt 		= 1e-2*2.*M_PI;		// in year/(2*pi)
-	boxsize 	= 3;			// in AU
+	r->integrator	= REB_INTEGRATOR_WHFAST;
+	//r->integrator	= REB_INTEGRATOR_IAS15;
+	r->dt 		= 1e-2*2.*M_PI;		// in year/(2*pi)
+	r->additional_forces = migration_forces; 	//Set function pointer to add dissipative forces.
+	r->heartbeat = heartbeat;  
+	r->force_is_velocitydependent = 1;
 	tmax		= 2.0e4*2.*M_PI;	// in year/(2*pi)
-#ifdef OPENGL
-	display_wire 	= 1;			
-#endif 	// OPENGL
-	init_box();
 
 	// Initial conditions
 	// Parameters are those of Lee & Peale 2002, Figure 4. 
-	struct particle star;
+	struct reb_particle star;
 	star.x  = 0; star.y  = 0; star.z  = 0;
 	star.vx = 0; star.vy = 0; star.vz = 0;
 	star.ax = 0; star.ay = 0; star.az = 0;
 	star.m  = 0.32;			// This is a sub-solar mass star
-	particles_add(star); 
+	reb_add(r, star); 
 	
-	struct particle p1;		// Planet 1
+	struct reb_particle p1;		// Planet 1
 	p1.x 	= 0.5;	p1.y = 0;	p1.z = 0;
 	p1.ax 	= 0;	p1.ay = 0; 	p1.az = 0;
 	p1.m  	= 0.56e-3;
-	p1.vz 	= sqrt(G*(star.m+p1.m)/p1.x);
+	p1.vz 	= sqrt(r->G*(star.m+p1.m)/p1.x);
 	p1.vx 	= 0;	p1.vy = 0;
-	particles_add(p1); 
+	reb_add(r, p1); 
 	
-	struct particle p2;		// Planet 2
+	struct reb_particle p2;		// Planet 2
 	p2.x 	= 1;	p2.y = 0; 	p2.z = 0;
 	p2.ax 	= 0;	p2.ay = 0; 	p2.az = 0;
 	p2.m  	= 1.89e-3;
-	p2.vz 	= sqrt(G*(star.m+p2.m)/p2.x);
+	p2.vz 	= sqrt(r->G*(star.m+p2.m)/p2.x);
 	p2.vx 	= 0;	p2.vy = 0;
-	particles_add(p2); 
+	reb_add(r, p2); 
 
-	tau_a = calloc(sizeof(double),N);
-	tau_e = calloc(sizeof(double),N);
+	tau_a = calloc(sizeof(double),r->N);
+	tau_e = calloc(sizeof(double),r->N);
 
 	tau_a[2] = 2.*M_PI*20000.0;	// Migration timescale of planet 2 is 20000 years.
 	tau_e[2] = 2.*M_PI*200.0; 	// Eccentricity damping timescale is 200 years (K=100). 
 
-	problem_additional_forces = problem_migration_forces; 	//Set function pointer to add dissipative forces.
-	integrator_force_is_velocitydependent = 1;
-	if (integrator != WH){	// The WH integrator assumes a heliocentric coordinate system.
-		reb_move_to_com();  		
-	}
+	reb_move_to_com(r);  		
 
 	system("rm -v orbits.txt"); // delete previous output file
+
+	reb_integrate(r, tmax);
 }
 
-void problem_migration_forces(){
-	struct particle com = particles[0]; // calculate migration forces with respect to center of mass;
+void migration_forces(struct reb_simulation* r){
+	const double G = r->G;
+	const int N = r->N;
+	struct reb_particle* const particles = r->particles;
+	struct reb_particle com = particles[0]; // calculate migration forces with respect to center of mass;
 	for(int i=1;i<N;i++){
 		if (tau_e[i]!=0||tau_a[i]!=0){
-			struct particle* p = &(particles[i]);
+			struct reb_particle* p = &(particles[i]);
 			const double dvx = p->vx-com.vx;
 			const double dvy = p->vy-com.vy;
 			const double dvz = p->vz-com.vz;
@@ -153,18 +121,13 @@ void problem_migration_forces(){
 	}
 }
 
-void problem_output(){
-	if(reb_output_check(20.*M_PI)){
-		reb_output_timing();
+void heartbeat(struct reb_simulation* r){
+	if(reb_output_check(r, 20.*M_PI)){
+		reb_output_timing(r, tmax);
 	}
-	if(reb_output_check(40.)){
-		integrator_synchronize();
-		reb_output_append_orbits("orbits.txt");
-		if (integrator != WH){	// The WH integrator assumes a heliocentric coordinate system.
-			reb_move_to_com(); 
-		}
+	if(reb_output_check(r, 40.)){
+		reb_integrator_synchronize(r);
+		reb_output_append_orbits(r,"orbits.txt");
+		reb_move_to_com(r); 
 	}
-}
-
-void problem_finish(){
 }
