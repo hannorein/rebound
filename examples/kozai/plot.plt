@@ -1,8 +1,8 @@
 #!/bin/gnuplot
-set output "plot.pdf"
+set output "plot.png"
 set key top left
 set xlabel "time [{/Symbol W}^{-1}]"
-set terminal pdf monochrome dashed enhanced
+set terminal png
 set multiplot
 set lmargin 14
 set rmargin 4
