@@ -42,7 +42,7 @@ void additional_forces();
 double betaparticles = 0.01; 	// beta parameter
 				// defined as the ratio of radiation pressure over gravity
 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
 	// setup constants
 	dt 				= 1e-3;			// initial timestep
 	integrator			= IAS15;
@@ -55,32 +55,32 @@ void problem_init(int argc, char* argv[]){
 	
 	
 	// star is at rest at origin
-	struct particle star;
+	struct reb_particle star;
 	star.x  = 0; star.y  = 0; star.z  = 0;
 	star.vx = 0; star.vy = 0; star.vz = 0;
 	star.m  = 1.;
-	particles_add(star);
+	reb_add(r, star);
 
 	// dust particles are initially on a circular orbit
 	while(N<2){
-		struct particle p; 
+		struct reb_particle p; 
 		p.m  = 0;					// massless
 		double a = 1.;					// a = 1 AU
 		double v = sqrt(G*(star.m*(1.-betaparticles))/a);
 		double phi = reb_random_uniform(0,2.*M_PI);		// random phase
 		p.x  = a*sin(phi);  p.y  = a*cos(phi); p.z  = 0; 
 		p.vx = -v*cos(phi); p.vy = v*sin(phi); p.vz = 0;
-		particles_add(p); 
+		reb_add(r, p); 
 	}
 
 	system("rm -v radius.txt");					// remove previous output
 }
 
 void force_radiation(){
-	const struct particle star = particles[0];				// cache
+	const struct reb_particle star = particles[0];				// cache
 #pragma omp parallel for
 	for (int i=0;i<N;i++){
-		const struct particle p = particles[i]; 			// cache
+		const struct reb_particle p = particles[i]; 			// cache
 		if (p.m!=0.) continue; 						// only dust particles feel radiation forces
 		const double prx  = p.x-star.x;
 		const double pry  = p.y-star.y;
@@ -105,15 +105,15 @@ void additional_forces(){
 	force_radiation();							// PR drag (see above)
 }
 
-void problem_output(){
+void heartbeat(struct reb_simulation* r){
 	if(reb_output_check(400.)){						// print some information to screen
 		reb_output_timing();
 	}
 	if(reb_output_check(M_PI*2.*1000.)){ 					// output radial distance every 1000 years
 		FILE* f = fopen("radius.txt","a");
-		const struct particle star = particles[0];
+		const struct reb_particle star = particles[0];
 		for (int i=1;i<N;i++){
-			const struct particle p = particles[i]; 
+			const struct reb_particle p = particles[i]; 
 			const double prx  = p.x-star.x;
 			const double pry  = p.y-star.y;
 			const double prz  = p.z-star.z;

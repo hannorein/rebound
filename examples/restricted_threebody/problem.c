@@ -35,7 +35,7 @@
 #include "output.h"
 #include "integrator.h"
 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
 	// Setup constants
 	integrator		= WH;
 	boxsize 		= 8; 
@@ -45,19 +45,19 @@ void problem_init(int argc, char* argv[]){
 	init_box();
 	
 	// Initial conditions for star
-	struct particle star;
+	struct reb_particle star;
 	star.x  = 0; 	star.y  = 0; 	star.z  = 0; 
 	star.vx = 0; 	star.vy = 0; 	star.vz = 0;
 	star.m  = 1;
-	particles_add(star);
+	reb_add(r, star);
 
 	// Initial conditions for planet
 	double planet_e = 0.;
-	struct particle planet;
+	struct reb_particle planet;
 	planet.x  = 1.-planet_e; 	planet.y  = 0; 				planet.z  = 0; 
 	planet.vx = 0; 			planet.vy = sqrt(2./(1.-planet_e)-1.); 	planet.vz = 0;
 	planet.m  = 1e-2;
-	particles_add(planet);
+	reb_add(r, planet);
 	
 	while(N<10000){
 		double x 	= ((double)rand()/(double)RAND_MAX-0.5)*boxsize*0.9;
@@ -68,7 +68,7 @@ void problem_init(int argc, char* argv[]){
 		if (a>boxsize_x/2.*0.9) continue;
 
 		double vkep = sqrt(G*star.m/a);
-		struct particle testparticle;
+		struct reb_particle testparticle;
 		testparticle.x  = x;
 		testparticle.y  = y; 
 		testparticle.z  = 1.0e-2*x*((double)rand()/(double)RAND_MAX-0.5);
@@ -79,11 +79,11 @@ void problem_init(int argc, char* argv[]){
 		testparticle.ay = 0; 
 		testparticle.az = 0;
 		testparticle.m  = 0;
-		particles_add(testparticle);
+		reb_add(r, testparticle);
 	}
 }
 
-void problem_output(){
+void heartbeat(struct reb_simulation* r){
 	reb_output_timing();
 	if (reb_output_check(2.*M_PI)){
 		reb_output_orbits("orbit.txt");

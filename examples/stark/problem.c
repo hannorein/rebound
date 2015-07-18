@@ -37,7 +37,7 @@
 
 void additional_forces();
 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
 	// Setup constants
 	integrator	= WHFAST;
 	dt 		= 0.0020;			// initial timestep (in days)
@@ -45,12 +45,12 @@ void problem_init(int argc, char* argv[]){
 
 	// Initial conditions
 	{
-		struct particle p = {.m=1.,.x=0,.y=0.,.z=0.,.vx=0,.vy=0.,.vz=0.};
-		particles_add(p); 
+		struct reb_particle p = {.m=1.,.x=0,.y=0.,.z=0.,.vx=0,.vy=0.,.vz=0.};
+		reb_add(r, p); 
 	}
 	{
-		struct particle p = {.m=0.,.x=1,.y=0.,.z=0.,.vx=0,.vy=1.2,.vz=0.};
-		particles_add(p); 
+		struct reb_particle p = {.m=0.,.x=1,.y=0.,.z=0.,.vx=0,.vy=1.2,.vz=0.};
+		reb_add(r, p); 
 	}
 	reb_move_to_com();
 	problem_additional_forces 	= additional_forces;
@@ -63,7 +63,7 @@ void additional_forces(){
 	particles[1].ax += 0.12/6.;
 }
 
-void problem_output(){
+void heartbeat(struct reb_simulation* r){
 	reb_output_timing();
 	FILE* f = fopen("Y.txt","a+");
 	fprintf(f,"%e %e\n",t,reb_calculate_megno());

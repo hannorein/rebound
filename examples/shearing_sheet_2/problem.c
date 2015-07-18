@@ -59,7 +59,7 @@ void collision_resolve_hardsphere_pullaway(struct collision c);
 
 extern double opening_angle2;
 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
 	// Setup constants
 #ifdef GRAVITY_TREE
 	opening_angle2	= .5;
@@ -93,7 +93,7 @@ void problem_init(int argc, char* argv[]){
 	double total_mass = surfacedensity*boxsize_x*boxsize_y;
 	double mass = 0;
 	while(mass<total_mass){
-		struct particle pt;
+		struct reb_particle pt;
 		pt.x 		= reb_random_uniform(-boxsize_x/2.,boxsize_x/2.);
 		pt.y 		= reb_random_uniform(-boxsize_y/2.,boxsize_y/2.);
 		pt.z 		= reb_random_normal(1.);					// m
@@ -109,7 +109,7 @@ void problem_init(int argc, char* argv[]){
 #endif
 		double		particle_mass = particle_density*4./3.*M_PI*radius*radius*radius;
 		pt.m 		= particle_mass; 	// kg
-		particles_add(pt);
+		reb_add(r, pt);
 		mass += particle_mass;
 	}
 }
@@ -122,7 +122,7 @@ double coefficient_of_restitution_bridges(double v){
 	return eps;
 }
 
-void problem_output(){
+void heartbeat(struct reb_simulation* r){
 
 #ifdef LIBPNG
 	if (reb_output_check(2.*1e-2*2.*M_PI/OMEGA)){
@@ -145,8 +145,8 @@ void problem_finish(){
 // Function written by Akihiko Fujii
 void collision_resolve_hardsphere_pullaway(struct collision c){
 #ifndef COLLISIONS_NONE
-	struct particle p1 = particles[c.p1];
-	struct particle p2;
+	struct reb_particle p1 = particles[c.p1];
+	struct reb_particle p2;
 #ifdef MPI
 	int isloc = communication_mpi_rootbox_is_local(c.ri);
 	if (isloc==1){

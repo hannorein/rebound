@@ -82,7 +82,7 @@ double ss_mass[10] =
 double energy();
 double e_init;
 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
 	// Setup constants
 	dt 		= 4;				// in days
 	tmax		= 7.3e10;			// 200 Myr
@@ -97,12 +97,12 @@ void problem_init(int argc, char* argv[]){
 
 	// Initial conditions
 	for (int i=0;i<10;i++){
-		struct particle p;
+		struct reb_particle p;
 		p.x  = ss_pos[i][0]; 		p.y  = ss_pos[i][1];	 	p.z  = ss_pos[i][2];
 		p.vx = ss_vel[i][0]; 		p.vy = ss_vel[i][1];	 	p.vz = ss_vel[i][2];
 		p.ax = 0; 			p.ay = 0; 			p.az = 0;
 		p.m  = ss_mass[i];
-		particles_add(p); 
+		reb_add(r, p); 
 	}
 	if (integrator==WH){
 		// Move to heliocentric frame (required by WH integrator)
@@ -124,10 +124,10 @@ double energy(){
 	double e_kin = 0.;
 	double e_pot = 0.;
 	for (int i=0;i<N-N_megno;i++){
-		struct particle pi = particles[i];
+		struct reb_particle pi = particles[i];
 		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
 		for (int j=i+1;j<N-N_megno;j++){
-			struct particle pj = particles[j];
+			struct reb_particle pj = particles[j];
 			double dx = pi.x - pj.x;
 			double dy = pi.y - pj.y;
 			double dz = pi.z - pj.z;
@@ -137,7 +137,7 @@ double energy(){
 	return e_kin +e_pot;
 }
 
-void problem_output(){
+void heartbeat(struct reb_simulation* r){
 	if (reb_output_check(10000.)){
 		reb_output_timing();
 		integrator_synchronize();

@@ -188,7 +188,7 @@ int compare_xvalue (const void * a, const void * b){
  * Compares the x position of two particles.
  */
 int compare_particle (const void * a, const void * b){
-	const double diff = ((struct particle*)a)->x - ((struct particle*)b)->x;
+	const double diff = ((struct reb_particle*)a)->x - ((struct reb_particle*)b)->x;
 	if (diff > 0) return 1;
 	if (diff < 0) return -1;
 	return 0;
@@ -216,7 +216,7 @@ void collisions_sweep_insertionsort_xvaluelist(struct xvaluelist* xvl){
  */
 void collisions_sweep_insertionsort_particles(void){
 	for(int j=1;j<N;j++){
-		struct particle key = particles[j];
+		struct reb_particle key = particles[j];
 		int i = j - 1;
 		while(i >= 0 && particles[i].x > key.x){
 		    particles[i+1] = particles[i];
@@ -240,7 +240,7 @@ void reb_collision_search(void){
 		// Sort particles according to their x position to speed up sorting of lines.
 		// Initially the particles are not pre-sorted, thus qsort is faster than insertionsort.
 		// Note that this rearranges particles and will cause problems if the particle id is used elsewhere.
-		qsort (particles, N, sizeof(struct particle), compare_particle);
+		qsort (particles, N, sizeof(struct reb_particle), compare_particle);
 	}else{
 		// Keep particles sorted according to their x position to speed up sorting of lines.
 		collisions_sweep_insertionsort_particles();
@@ -324,8 +324,8 @@ void reb_collision_search(void){
 }
 
 void detect_collision_of_pair(int pt1, int pt2, int proci, int crossing, struct ghostbox gb){
-	struct particle* p1 = &(particles[pt1]);
-	struct particle* p2 = &(particles[pt2]);
+	struct reb_particle* p1 = &(particles[pt1]);
+	struct reb_particle* p2 = &(particles[pt2]);
 	double x  = p1->x  + gb.shiftx	- p2->x;
 	double y  = p1->y  + gb.shifty	- p2->y;
 	double z  = p1->z  + gb.shiftz	- p2->z;

@@ -78,7 +78,7 @@ int main(int argc, char* argv[]){
 			p.ax = 0; p.ay = 0; p.az = 0;
 			p.m  = 0.01;
 			p.r  = 0.05;
-			particles_add(r, p);
+			reb_add(r, r, p);
 		}
 	}
 	r->heartbeat = heartbeat;

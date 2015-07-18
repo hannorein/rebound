@@ -50,7 +50,7 @@ extern double minimum_collision_velocity;
 extern double (*coefficient_of_restitution_for_velocity)(double); 
 double coefficient_of_restitution_bridges(double v); 
 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
 	// Setup constants
 	integrator			= SEI;
 	OMEGA 				= 0.00013143527;	// 1/s
@@ -81,7 +81,7 @@ void problem_init(int argc, char* argv[]){
 #endif
 		double mass = 0;
 		while(mass<total_mass){
-			struct particle pt;
+			struct reb_particle pt;
 			pt.x 		= reb_random_uniform(-boxsize_x/2.,boxsize_x/2.);
 			pt.y 		= reb_random_uniform(-boxsize_y/2.,boxsize_y/2.);
 			pt.z 		= reb_random_normal(1.);					// m
@@ -97,7 +97,7 @@ void problem_init(int argc, char* argv[]){
 #endif
 			double		particle_mass = particle_density*4./3.*M_PI*radius*radius*radius;
 			pt.m 		= particle_mass; 	// kg
-			particles_add(pt);
+			reb_add(r, pt);
 			mass += particle_mass;
 		}
 #ifdef MPI
@@ -113,7 +113,7 @@ double coefficient_of_restitution_bridges(double v){
 	return eps;
 }
 
-void problem_output(){
+void heartbeat(struct reb_simulation* r){
 	if (reb_output_check(10.0*dt)){
 		reb_output_timing();
 	}

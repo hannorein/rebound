@@ -189,7 +189,7 @@ int compare_phivalue (const void * a, const void * b){
  * Compares the phi position of two particles.
  */
 int compare_particle (const void * a, const void * b){
-	const double diff = atan2(((struct particle*)a)->y,((struct particle*)a)->x) - atan2(((struct particle*)b)->y,((struct particle*)b)->x);
+	const double diff = atan2(((struct reb_particle*)a)->y,((struct reb_particle*)a)->x) - atan2(((struct reb_particle*)b)->y,((struct reb_particle*)b)->x);
 	if (diff > 0) return 1;
 	if (diff < 0) return -1;
 	return 0;
@@ -217,7 +217,7 @@ void collisions_sweep_insertionsort_phivaluelist(struct phivaluelist* phivl){
  */
 void collisions_sweep_insertionsort_particles(void){
 	for(int j=1+N_collisions;j<N;j++){
-		struct particle key = particles[j];
+		struct reb_particle key = particles[j];
 		double keyphi = atan2(particles[j].y,particles[j].x);
 		int i = j - 1;
 		while(i >= N_collisions && atan2(particles[i].y,particles[i].x) > keyphi){
@@ -242,7 +242,7 @@ void reb_collision_search(void){
 		// Sort particles according to their phi position to speed up sorting of lines.
 		// Initially the particles are not pre-sorted, thus qsort is faster than insertionsort.
 		// Note that this rearranges particles and will cause problems if the particle id is used elsewhere.
-		qsort (&(particles[N_collisions]), N-N_collisions, sizeof(struct particle), compare_particle);
+		qsort (&(particles[N_collisions]), N-N_collisions, sizeof(struct reb_particle), compare_particle);
 	}else{
 		// Keep particles sorted according to their phi position to speed up sorting of lines.
 		collisions_sweep_insertionsort_particles();
@@ -316,8 +316,8 @@ void reb_collision_search(void){
 }
 
 void detect_collision_of_pair(int pt1, int pt2, int proci, int crossing){
-	struct particle* p1 = &(particles[pt1]);
-	struct particle* p2 = &(particles[pt2]);
+	struct reb_particle* p1 = &(particles[pt1]);
+	struct reb_particle* p2 = &(particles[pt2]);
 	double x  = p1->x   - p2->x;
 	double y  = p1->y   - p2->y;
 	double z  = p1->z   - p2->z;

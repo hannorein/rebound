@@ -57,32 +57,32 @@ const char *build_str = __DATE__ " " __TIME__;
 
 // Function pointer to additional forces
 void (*problem_additional_forces) (void) = NULL;
-void (*problem_additional_forces_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;
+void (*problem_additional_forces_with_parameters) (struct reb_particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;
 void (*problem_post_timestep_modifications) (void) = NULL;
-void (*problem_post_timestep_modifications_with_parameters) (struct particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;  
+void (*problem_post_timestep_modifications_with_parameters) (struct reb_particle* particles, double t, double dt, double G, int N, int N_megno) = NULL;  
 
 // reb_particle getter/setter methods.
-void setp(struct particle* _p){
+void setp(struct reb_particle* _p){
 	free(particles);
-	particles = malloc(sizeof(struct particle)*N);
-	memcpy(particles,_p,sizeof(struct particle)*N);
+	particles = malloc(sizeof(struct reb_particle)*N);
+	memcpy(particles,_p,sizeof(struct reb_particle)*N);
 }
-struct particle get_particle(int i){
+struct reb_particle get_particle(int i){
 	return particles[i];
 }
-struct particle* get_particles(void){
+struct reb_particle* get_particles(void){
 	return particles;
 }
 void set_additional_forces(void (* _cb)(void)){
 	problem_additional_forces = _cb;
 }
-void set_additional_forces_with_parameters(void (* _cb)(struct particle* particles, double t, double dt, double G, int N, int N_megno)){
+void set_additional_forces_with_parameters(void (* _cb)(struct reb_particle* particles, double t, double dt, double G, int N, int N_megno)){
 	problem_additional_forces_with_parameters = _cb;
 }
 void set_post_timestep_modifications(void (* _cb)(void)){
 	problem_post_timestep_modifications = _cb;
 }
-void set_post_timestep_modifications_with_parameters(void (* _cb)(struct particle* particles, double t, double dt, double G, int N, int N_megno)){
+void set_post_timestep_modifications_with_parameters(void (* _cb)(struct reb_particle* particles, double t, double dt, double G, int N, int N_megno)){
 	problem_post_timestep_modifications_with_parameters = _cb;
 }
 
@@ -159,7 +159,7 @@ int reb_integrate(double _tmax, int exact_finish_time, double maxR, double minD)
 			// Check for escaping particles
 			const double maxR2 = maxR*maxR;
 			for (int i=0;i<N-N_megno;i++){
-				struct particle p = particles[i];
+				struct reb_particle p = particles[i];
 				double r2 = p.x*p.x + p.y*p.y + p.z*p.z;
 				if (r2>maxR2){
 					ret_value = 2;
@@ -171,9 +171,9 @@ int reb_integrate(double _tmax, int exact_finish_time, double maxR, double minD)
 			// Check for close encounters
 			const double minD2 = minD*minD;
 			for (int i=0;i<N-N_megno;i++){
-				struct particle pi = particles[i];
+				struct reb_particle pi = particles[i];
 				for (int j=0;j<i;j++){
-					struct particle pj = particles[j];
+					struct reb_particle pj = particles[j];
 					const double x = pi.x-pj.x;
 					const double y = pi.y-pj.y;
 					const double z = pi.z-pj.z;

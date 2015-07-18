@@ -40,9 +40,9 @@
 #include "integrator.h"
 
 extern int display_pause_sim;
-void particles_add_local(struct particle pt);
+void particles_add_local(struct reb_particle pt);
 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
 	integrator = NONE;
 	dt 	= 0;
 	display_pause_sim = 1;
@@ -70,7 +70,7 @@ void problem_init(int argc, char* argv[]){
 	double max_z = z, min_z = z;
 	init_boxwidth(1);
 	while(fscanf(f, "%lf %lf %lf %lf", &x, &y, &z, &r)!=EOF){
-		struct particle p = {.x=x, .y=y, .z=z, .r=r};
+		struct reb_particle p = {.x=x, .y=y, .z=z, .r=r};
 		particles_add_local(p);
 		if (x>max_x) max_x = x;	
 		if (y>max_y) max_y = y;	
@@ -96,7 +96,7 @@ void problem_init(int argc, char* argv[]){
 	}
 }
 
-void problem_output(){
+void heartbeat(struct reb_simulation* r){
 }
 
 void problem_finish(){

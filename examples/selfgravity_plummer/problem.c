@@ -45,7 +45,7 @@
 extern double opening_angle2;
 extern int Nmax;
 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
 	// Setup constants
 	G 		= 1;		
 	integrator	= LEAPFROG;
@@ -72,7 +72,7 @@ void problem_init(int argc, char* argv[]){
 	reb_move_to_com(); // Move to rest frame 
 }
 
-void problem_output(){
+void heartbeat(struct reb_simulation* r){
 	if (reb_output_check(10.0*dt)) reb_output_timing();
 }
 

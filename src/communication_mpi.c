@@ -56,10 +56,10 @@ MPI_Status stat;
 int mpi_num;
 int mpi_id;
 
-struct particle** 	particles_send;
+struct reb_particle** 	particles_send;
 int* 			particles_send_N;
 int* 			particles_send_Nmax;
-struct particle** 	particles_recv;
+struct reb_particle** 	particles_recv;
 int* 			particles_recv_N;
 int* 			particles_recv_Nmax;
 
@@ -92,14 +92,14 @@ void communication_mpi_init(int argc, char** argv){
 	oldtypes[bnum] 	= MPI_DOUBLE;
 	bnum++;
 #ifdef TREE
-	struct particle p;
+	struct reb_particle p;
 	blen[bnum] 	= 1; 
 	indices[bnum] 	= (char*)&p.c - (char*)&p; 
 	oldtypes[bnum] 	= MPI_CHAR;
 	bnum++;
 #endif // TREE
 	blen[bnum] 	= 1; 
-	indices[bnum] 	= sizeof(struct particle); 
+	indices[bnum] 	= sizeof(struct reb_particle); 
 	oldtypes[bnum] 	= MPI_UB;
 	bnum++;
 	MPI_Type_struct(bnum, blen, indices, oldtypes, &mpi_particle );
@@ -136,10 +136,10 @@ void communication_mpi_init(int argc, char** argv){
 #endif // TREE 
 	
 	// Prepare send/recv buffers for particles
-	particles_send   	= calloc(mpi_num,sizeof(struct particle*));
+	particles_send   	= calloc(mpi_num,sizeof(struct reb_particle*));
 	particles_send_N 	= calloc(mpi_num,sizeof(int));
 	particles_send_Nmax 	= calloc(mpi_num,sizeof(int));
-	particles_recv   	= calloc(mpi_num,sizeof(struct particle*));
+	particles_recv   	= calloc(mpi_num,sizeof(struct reb_particle*));
 	particles_recv_N 	= calloc(mpi_num,sizeof(int));
 	particles_recv_Nmax 	= calloc(mpi_num,sizeof(int));
 
@@ -175,7 +175,7 @@ void communication_mpi_distribute_particles(void){
 		if  (i==mpi_id) continue;
 		while (particles_recv_Nmax[i]<particles_recv_N[i]){
 			particles_recv_Nmax[i] += 32;
-			particles_recv[i] = realloc(particles_recv[i],sizeof(struct particle)*particles_recv_Nmax[i]);
+			particles_recv[i] = realloc(particles_recv[i],sizeof(struct reb_particle)*particles_recv_Nmax[i]);
 		}
 	}
 
@@ -214,11 +214,11 @@ void communication_mpi_distribute_particles(void){
 	}
 }
 
-void communication_mpi_add_particle_to_send_queue(struct particle pt, int proc_id){
+void communication_mpi_add_particle_to_send_queue(struct reb_particle pt, int proc_id){
 	int send_N = particles_send_N[proc_id];
 	while (particles_send_Nmax[proc_id] <= send_N){
 		particles_send_Nmax[proc_id] += 128;
-		particles_send[proc_id] = realloc(particles_send[proc_id],sizeof(struct particle)*particles_send_Nmax[proc_id]);
+		particles_send[proc_id] = realloc(particles_send[proc_id],sizeof(struct reb_particle)*particles_send_Nmax[proc_id]);
 	}
 	particles_send[proc_id][send_N] = pt;
 	particles_send_N[proc_id]++;
@@ -501,7 +501,7 @@ void communication_mpi_distribute_essential_tree_for_collisions(void){
 		if  (i==mpi_id) continue;
 		while (particles_recv_Nmax[i]<particles_recv_N[i]){
 			particles_recv_Nmax[i] += 32;
-			particles_recv[i] = realloc(particles_recv[i],sizeof(struct particle)*particles_recv_Nmax[i]);
+			particles_recv[i] = realloc(particles_recv[i],sizeof(struct reb_particle)*particles_recv_Nmax[i]);
 		}
 	}
 	

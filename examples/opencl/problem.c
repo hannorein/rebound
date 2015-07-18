@@ -55,7 +55,7 @@
 
 extern int Nmax;
 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
 	// Setup constants
 	G 		= 1;		
 	softening 	= 0.01;		
@@ -67,18 +67,18 @@ void problem_init(int argc, char* argv[]){
 	init_box();
 
 	// Initial conditions
-	struct particle star;
+	struct reb_particle star;
 	star.x 		= 0; star.y 	= 0; star.z	= 0;
 	star.vx 	= 0; star.vy 	= 0; star.vz 	= 0;
 	star.ax 	= 0; star.ay 	= 0; star.az 	= 0;
 	star.m 		= 1;
-	particles_add(star);
+	reb_add(r, star);
 	
 	// Setup disk particles
 	double disc_mass = 2e-1;
 	int _N = 1024*4;
 	while(N<_N){
-		struct particle pt;
+		struct reb_particle pt;
 		double a	= reb_random_powerlaw(boxsize/20.,boxsize/4./1.2,-1.5);
 		double phi 	= reb_random_uniform(0,2.*M_PI);
 		pt.x 		= a*cos(phi);
@@ -93,11 +93,11 @@ void problem_init(int argc, char* argv[]){
 		pt.ay 		= 0;
 		pt.az 		= 0;
 		pt.m 		= disc_mass/(double)_N;
-		particles_add(pt);
+		reb_add(r, pt);
 	}
 }
 
-void problem_output(){
+void heartbeat(struct reb_simulation* r){
 	if (reb_output_check(10.0*dt)) reb_output_timing();
 }
 

@@ -44,7 +44,7 @@
 extern double opening_angle2;
 extern int Nmax;
 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
 	// Setup constants
 	integrator	= WH;
 	G 		= 1;		
@@ -60,15 +60,15 @@ void problem_init(int argc, char* argv[]){
 	// Setup particles
 	int _N = 1000;
 	// Initial conditions
-	struct particle star;
+	struct reb_particle star;
 	star.x 		= 0; star.y 	= 0; star.z	= 0;
 	star.vx 	= 0; star.vy 	= 0; star.vz 	= 0;
 	star.ax 	= 0; star.ay 	= 0; star.az 	= 0;
 	star.m 		= 1;
 	star.r		= 0.01;
-	particles_add(star);
+	reb_add(r, star);
 	while(N<_N){
-		struct particle pt;
+		struct reb_particle pt;
 		double a	= reb_random_powerlaw(boxsize/2.9,boxsize/3.1,.5);
 		double phi 	= reb_random_uniform(0,2.*M_PI);
 		pt.x 		= a*cos(phi);
@@ -83,16 +83,16 @@ void problem_init(int argc, char* argv[]){
 		pt.az 		= 0;
 		pt.m 		= 0.0001;
 		pt.r 		= .3/sqrt((double)_N);
-		particles_add(pt);
+		reb_add(r, pt);
 	}
 }
 
-void problem_output(){
+void heartbeat(struct reb_simulation* r){
 	if (reb_output_check(10.0*dt)){
 		reb_output_timing();
 	}
 	for (int i=N_active;i<N;i++){
-		struct particle p = particles[i];
+		struct reb_particle p = particles[i];
 		double r = sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
 		// Remove particles falling into the star.
 		if (r<0.03){

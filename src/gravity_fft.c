@@ -65,7 +65,7 @@ fftw_plan bac1dfft;	/**< FFT plan for remapping (1D, shearing sheet only) */
 
 int gravity_fft_init_done = 0;	/**< Flag if arrays and plans are initialized */
 void gravity_fft_init(void);
-void gravity_fft_grid2p(struct particle* p);
+void gravity_fft_grid2p(struct reb_particle* p);
 void gravity_fft_p2grid(void);
 void gravity_fft_remap(double* wi, const double direction);
 double shift_shear = 0;
@@ -239,7 +239,7 @@ void gravity_fft_p2grid(void){
 	}
 	
 	for (int i=0; i<N; i++){
-		struct particle p = particles[i];
+		struct reb_particle p = particles[i];
 		// I'm sorry to say I have to keep these traps. Something's wrong if these traps are called.
 		
 		int x = (int) floor((p.x / boxsize.x + 0.5) * root_nx);
@@ -344,7 +344,7 @@ void gravity_fft_p2grid(void){
 }
 
 
-void gravity_fft_grid2p(struct particle* p){
+void gravity_fft_grid2p(struct reb_particle* p){
 	
 	// I'm sorry to say I have to keep these traps. Something's wrong if these traps are called.
 		

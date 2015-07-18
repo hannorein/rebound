@@ -39,19 +39,19 @@
 
 void print_IDs(void);
 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
 	// Setup constants
 	tmax		= 0.;			
 	// Just demonstrating IDs, so set initial conditions arbitrarily (and IDs in the order they are added)
 	// IDs can be set to any integer
 	for (int i=0;i<10;i++){
-		struct particle p;
+		struct reb_particle p;
 		p.x  = i; 		p.y  = i;	 	p.z  = i;
 		p.vx = i; 		p.vy = i;	 	p.vz = i;
 		p.ax = 0; 			p.ay = 0; 			p.az = 0;
 		p.m  = i;
 		p.ID = i; // IDs only work if you export PARTICLEIDS=1 in the Makefile
-		particles_add(p); 
+		reb_add(r, p); 
 	}
 
 	printf("Initial IDs:\n");
@@ -104,7 +104,7 @@ void print_IDs(void){
 	printf("\n");
 }
 
-void problem_output(){
+void heartbeat(struct reb_simulation* r){
 }
 
 void problem_finish(){

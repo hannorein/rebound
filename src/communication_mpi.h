@@ -54,11 +54,11 @@ int mpi_id;	/**< Unique ID of the current node in the range 0 <= mpid_id < mpi_n
  * nodes before the actual communication of the particles/cells.
  * @{
  */
-MPI_Datatype mpi_particle;				/**< MPI datatype corresponding to the C struct particle. */
-extern struct particle** 	particles_send;		/**< Send buffer for particles. There is one buffer per node. */
+MPI_Datatype mpi_particle;				/**< MPI datatype corresponding to the C struct reb_particle. */
+extern struct reb_particle** 	particles_send;		/**< Send buffer for particles. There is one buffer per node. */
 extern int* 			particles_send_N;	/**< Current length of particle send buffer. */
 extern int* 			particles_send_Nmax;	/**< Maximal length of particle send beffer before realloc() is needed. */
-extern struct particle** 	particles_recv;		/**< Receive buffer for particles. There is one buffer per node. */
+extern struct reb_particle** 	particles_recv;		/**< Receive buffer for particles. There is one buffer per node. */
 extern int* 			particles_recv_N;       /**< Current length of particle receive buffer. */
 extern int* 			particles_recv_Nmax;    /**< Maximal length of particle receive beffer before realloc() is needed. */
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
@@ -92,7 +92,7 @@ void communication_mpi_distribute_particles(void);
  * @param pt reb_particle to be added to the send queue.
  * @param proc_id reb_particle will be send to this MPI node on next call of communication_mpi_distribute_particles();
  */
-void communication_mpi_add_particle_to_send_queue(struct particle pt, int proc_id);
+void communication_mpi_add_particle_to_send_queue(struct reb_particle pt, int proc_id);
 
 /**
  * Determine if the root box is local or if it is a copy of a remote node.

@@ -45,7 +45,7 @@ void reb_integrator_part2(struct reb_simulation* r);
 
 /* This function updates the acceleration on all particles. 
  * It uses the current position and velocity data in the 
- * (struct particle*) particles structure.
+ * (struct reb_particle*) particles structure.
  */
 void reb_update_acceleration(struct reb_simulation* r);
 

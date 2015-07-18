@@ -42,33 +42,33 @@
 
 
 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
 	integrator = IAS15;
 	init_boxwidth(6.); 			
 	dt = -1;
 
-	struct particle p = {.m = 1., .z = 0., .vz = 0.};
+	struct reb_particle p = {.m = 1., .z = 0., .vz = 0.};
 	
 	p.x =  -1.842389804706855; p.y =  -1.063801316823613; 
 	p.vx =  -0.012073765486548; p.vy =   0.021537467220014; 
-	particles_add(p);
+	reb_add(r, p);
 
 	p.x =  -0.689515464218133; p.y =  -0.398759403276399; 
 	p.vx =   0.637331229856386; p.vy =  -1.103822313621890; 
-	particles_add(p);
+	reb_add(r, p);
 	
 	p.x =   0.689515464218133; p.y =   0.398759403276399; 
 	p.vx =  -0.637331229856386; p.vy =   1.103822313621890; 
-	particles_add(p);
+	reb_add(r, p);
 	
 	p.x =   1.842389804706855; p.y =   1.063801316823613; 
 	p.vx =   0.012073765486548; p.vy =  -0.021537467220014; 
-	particles_add(p);
+	reb_add(r, p);
 	
 	reb_move_to_com();
 }
 
-void problem_output(){
+void heartbeat(struct reb_simulation* r){
 	if (reb_output_check(1.)){
 		reb_output_timing();
 	}
