@@ -63,21 +63,6 @@ struct reb_particle reb_tools_init_orbit2d(double G, double M, double m, double 
 
 struct reb_particle reb_tools_init_orbit3d(double G, double M, double m, double a, double e, double i, double Omega, double omega, double f);
 
-/* 
- * Init the MEGNO particles
- **/
-void reb_tools_megno_init(struct reb_simulation* const r, double delta);
-
-/*
- * Returns the current value of <Y>
- **/
-double reb_tools_megno(struct reb_simulation* r);
-
-/*
- * Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
- **/
-double reb_tools_lyapunov(struct reb_simulation* r);
-
 /*
  * Returns deltad/delta (Note, there is a typo in Gozdziewski et al 2001).
  **/

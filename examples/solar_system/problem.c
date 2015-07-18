@@ -143,7 +143,7 @@ void problem_output(){
 		integrator_synchronize();
 		FILE* f = fopen("energy.txt","a");
 		double e = energy();
-		fprintf(f,"%e %e %e\n",t, fabs((e-e_init)/e_init), reb_tools_megno());
+		fprintf(f,"%e %e %e\n",t, fabs((e-e_init)/e_init), reb_calculate_megno());
 		fclose(f);
 	}
 }

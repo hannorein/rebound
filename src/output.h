@@ -52,13 +52,6 @@ void reb_output_ascii(struct reb_simulation* r, char* filename);
  */
 void reb_output_orbits(struct reb_simulation* r, char* filename);
 
-/**
- * Appends an ASCII file with orbital paramters of all particles.
- * @details The orbital parameters are calculated with respect the center of mass.
- * reb_particles are assumed to be sorted from the inside out, the central object having index 0. 
- * @param filename Output filename.
- */
-void reb_output_append_orbits(struct reb_simulation* r, char* filename);
 
 /**
  * Appends the positions and velocities of all particles to an ASCII file.

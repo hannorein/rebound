@@ -66,7 +66,7 @@ void additional_forces(){
 void problem_output(){
 	reb_output_timing();
 	FILE* f = fopen("Y.txt","a+");
-	fprintf(f,"%e %e\n",t,reb_tools_megno());
+	fprintf(f,"%e %e\n",t,reb_calculate_megno());
 	fclose(f);
 }
 

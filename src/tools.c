@@ -369,11 +369,11 @@ void reb_tools_megno_init(struct reb_simulation* const r, double delta){
         }
 	r->N_var = N_var;
 }
-double reb_tools_megno(struct reb_simulation* r){ // Returns the MEGNO <Y>
+double reb_calculate_megno(struct reb_simulation* r){ // Returns the MEGNO <Y>
 	if (r->t==0.) return 0.;
 	return r->megno_Yss/r->t;
 }
-double reb_tools_lyapunov(struct reb_simulation* r){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
+double reb_calculate_lyapunov(struct reb_simulation* r){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
 	if (r->t==0.) return 0.;
 	return r->megno_cov_Yt/r->megno_var_t;
 }
@@ -410,11 +410,11 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY){
 	r->megno_n++;
 	double _d_t = r->t - r->megno_mean_t;
 	r->megno_mean_t += _d_t/(double)r->megno_n;
-	double _d_Y = reb_tools_megno(r) - r->megno_mean_Y;
+	double _d_Y = reb_calculate_megno(r) - r->megno_mean_Y;
 	r->megno_mean_Y += _d_Y/(double)r->megno_n;
 	r->megno_cov_Yt += ((double)r->megno_n-1.)/(double)r->megno_n 
 					*(r->t-r->megno_mean_t)
-					*(reb_tools_megno(r)-r->megno_mean_Y);
+					*(reb_calculate_megno(r)-r->megno_mean_Y);
 	r->megno_var_t  += ((double)r->megno_n-1.)/(double)r->megno_n 
 					*(r->t-r->megno_mean_t)
 					*(r->t-r->megno_mean_t);

@@ -400,6 +400,14 @@ int reb_output_check(struct reb_simulation* r, double interval);
  */
 void reb_output_timing(struct reb_simulation* r, const double tmax);
 
+/**
+ * Appends an ASCII file with orbital paramters of all particles.
+ * @details The orbital parameters are calculated with respect the center of mass.
+ * reb_particles are assumed to be sorted from the inside out, the central object having index 0. 
+ * @param filename Output filename.
+ */
+void reb_output_append_orbits(struct reb_simulation* r, char* filename);
+
 
 ////////////////////////////////
 // Tools (setup)
@@ -421,4 +429,20 @@ struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_p
  * @return Total energy. 
  */
 double reb_tools_energy(struct reb_simulation* r);
+
+/* 
+ * Init the MEGNO particles
+ **/
+void reb_tools_megno_init(struct reb_simulation* const r, double delta);
+
+/*
+ * Returns the current value of <Y>
+ **/
+double reb_calculate_megno(struct reb_simulation* r);
+
+/*
+ * Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
+ **/
+double reb_calculate_lyapunov(struct reb_simulation* r);
+
 #endif
