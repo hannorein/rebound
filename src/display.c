@@ -328,7 +328,19 @@ void display(void){
 	}
 	glColor4f(1.0,0.0,0.0,0.4);
 	glScalef(display_r->boxsize.x,display_r->boxsize.y,display_r->boxsize.z);
-	glutWireCube(1);
+	if (display_r->boundary == RB_BT_NONE){
+		glBegin(GL_LINES);
+		glVertex3f(0,0,0.04);
+		glVertex3f(0,0,-0.04);
+		glVertex3f(0,0.04,0);
+		glVertex3f(0,-0.04,0);
+		glVertex3f(0.04,0,0);
+		glVertex3f(-0.04,0,0);
+		glEnd();
+
+	}else{
+		glutWireCube(1);
+	}
 	glScalef(1./display_r->boxsize.x,1./display_r->boxsize.y,1./display_r->boxsize.z);
 	glRotatef(-display_rotate_z,0,0,1);
 	glRotatef(-display_rotate_x,1,0,0);
