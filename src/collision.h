@@ -3,13 +3,6 @@
  * @brief 	Collision search. 
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  *
- * @details 	The code supports different methods for the collision
- * detection. They all use this common interface. To detect and resolve 
- * collisions correctly, positions and velocities of the particles have 
- * to be synchronized in time. For that reason reb_collision_search() is
- * called at the end of the DKD timestep.  
- * 
- * 
  * @section LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
  *

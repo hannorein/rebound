@@ -2,10 +2,6 @@
  * @file 	output.h
  * @brief 	Output routines.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @details	If MPI is enabled, most functions output one file per
- * node. They automatically add a subscript _0, _1, .. to each file.
- * The user has to join them together manually. One exception is 
- * reb_output_append_velocity_dispersion() which only outputs one file.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
@@ -29,12 +25,6 @@
 #ifndef _OUTPUT_H
 #define _OUTPUT_H
 struct reb_simulation;
-
-/**
- * Appends the velocity dispersion of the particles to an ASCII file.
- * @param filename Output filename.
- */
-void reb_output_append_velocity_dispersion(struct reb_simulation* r, char* filename);
 
 #ifdef PROFILING
 /**

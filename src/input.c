@@ -37,16 +37,16 @@
 #include "communication_mpi.h"
 #endif
 
-double reb_input_get_double(int argc, char** argv, const char* argument, double _default){
-	char* value = reb_input_get_argument(argc,argv,argument);
+double reb_read_double(int argc, char** argv, const char* argument, double _default){
+	char* value = reb_read_char(argc,argv,argument);
 	if (value){
 		return atof(value);
 	}
 	return _default;
 }
 
-int reb_input_get_int(int argc, char** argv, const char* argument, int _default){
-	char* value = reb_input_get_argument(argc,argv,argument);
+int reb_read_int(int argc, char** argv, const char* argument, int _default){
+	char* value = reb_read_char(argc,argv,argument);
 	if (value){
 		return atoi(value);
 	}
@@ -54,7 +54,7 @@ int reb_input_get_int(int argc, char** argv, const char* argument, int _default)
 }
 
 
-char* reb_input_get_argument(int argc, char** argv, const char* argument){
+char* reb_read_char(int argc, char** argv, const char* argument){
 	opterr = 0;
 	optind = 1;
   	while (1) {

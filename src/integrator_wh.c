@@ -1,5 +1,5 @@
 /**
- * @file 	integrator.c
+ * @file 	integrator_wh.c
  * @brief 	Wisdom-Holman integrator.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @detail	This file implements the Wisdom-Holman integration scheme.  
@@ -42,8 +42,8 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
-#include "particle.h"
 #include "rebound.h"
+#include "particle.h"
 #include "gravity.h"
 #include "integrator.h"
 #include "integrator_wh.h"

@@ -250,7 +250,7 @@ void reb_output_binary_positions(struct reb_simulation* r, char* filename){
 	fclose(of);
 }
 
-void reb_output_append_velocity_dispersion(struct reb_simulation* r, char* filename){
+void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 	// Algorithm with reduced roundoff errors (see wikipedia)
 	struct reb_vec3d A = {.x=0, .y=0, .z=0};

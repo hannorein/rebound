@@ -1,11 +1,6 @@
 /**
- * @file 	integrator.c
  * @brief 	Hybrid symplectic/IAS15 integration scheme.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This file implements the leap-frog integration scheme.  
- * This scheme is second order accurate, symplectic and well suited for 
- * non-rotating coordinate systems. Note that the scheme is formally only
- * first order accurate when velocity dependent forces are present.
  * 
  * @section 	LICENSE
  * Copyright (c) 2015 Hanno Rein

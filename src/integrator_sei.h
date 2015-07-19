@@ -28,16 +28,4 @@ void reb_integrator_sei_part1(struct reb_simulation* r);
 void reb_integrator_sei_part2(struct reb_simulation* r);
 void reb_integrator_sei_synchronize(struct reb_simulation* r);
 void reb_integrator_sei_reset(struct reb_simulation* r);
-
-struct reb_simulation_integrator_sei {
-	double OMEGA;		/**< Epicyclic/orbital frequency.  */
-	double OMEGAZ; 		/**< Epicyclic frequency in vertical direction. */
-
-	double lastdt;		/**< Cached sin(), tan() for this value of dt.*/
-	// Cache sin() tan() values.
-	double sindt;
-	double tandt;
-	double sindtz;
-	double tandtz;
-};
 #endif

@@ -25,35 +25,4 @@
 #ifndef _INPUT_H
 #define _INPUT_H
 
-/**
- * Reads arguments from the command line.
- * @param argc Number of command line arguments.
- * @param argv Array of command line arguments.
- * @param argument Argument to look for.
- * @return Returns NULL if argument was not given. Return the argument otherwise.
- */
-char* reb_input_get_argument(int argc, char** argv, const char* argument);
-
-
-/**
- * Reads arguments as a double value from the command line.
- * @param argc Number of command line arguments.
- * @param argv Array of command line arguments.
- * @param argument Argument to look for.
- * @param _default Default value.
- * @return Returns _default if argument was not given. Return the argument converted to double otherwise.
- */
-double reb_input_get_double(int argc, char** argv, const char* argument, double _default);
-
-
-/**
- * Reads arguments as a int value from the command line.
- * @param argc Number of command line arguments.
- * @param argv Array of command line arguments.
- * @param argument Argument to look for.
- * @param _default Default value.
- * @return Returns _default if argument was not given. Return the argument converted to int otherwise.
- */
-int reb_input_get_int(int argc, char** argv, const char* argument, int _default);
-
 #endif

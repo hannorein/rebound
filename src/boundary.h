@@ -3,13 +3,6 @@
  * @brief 	Handles different boundary conditions. 
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  *
- * @details 	The code supports different boundary conditions.
- * They all use this common interface. The function reb_boundary_check()
- * is called to check if particles have left the main box. If so, they are
- * shifted accordingly if the box is (shear) periodic and removed from the 
- * simulatiom.
- * 
- * 
  * @section LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
  *

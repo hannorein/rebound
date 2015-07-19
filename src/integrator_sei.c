@@ -1,5 +1,5 @@
 /**
- * @file 	integrator.c
+ * @file 	integrator_sei.c
  * @brief 	Symplectic Epicycle Integrator (SEI).
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @detail	This file implements the Symplectic Epicycle Integrator 
@@ -34,9 +34,9 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include "rebound.h"
 #include "particle.h"
 #include "gravity.h"
-#include "rebound.h"
 #include "boundary.h"
 #include "integrator.h"
 #include "integrator_sei.h"

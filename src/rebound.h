@@ -28,12 +28,9 @@
 // Make sure M_PI is defined. 
 #define M_PI           3.14159265358979323846
 #endif
-#include "integrator_ias15.h"
-#include "integrator_whfast.h"
-#include "integrator_sei.h"
-#include "integrator_wh.h"
-#include "integrator_hybrid.h"
 
+// Forward declarations
+struct reb_simulation;
 
 /**
  * Generic 3d vector
@@ -42,6 +39,19 @@ struct reb_vec3d {
 	double x;
 	double y;
 	double z;
+};
+
+/**
+ * Generic 7d vector of pointers
+ */
+struct reb_dp7 {
+	double* restrict p0;
+	double* restrict p1;
+	double* restrict p2;
+	double* restrict p3;
+	double* restrict p4;
+	double* restrict p5;
+	double* restrict p6;
 };
 
 /**
@@ -98,6 +108,132 @@ struct reb_orbit {
 	double omega; 	// argument of perihelion
 	double f; 	// true anomaly
 };
+
+
+////////////////////////////////
+// Integrator structs 
+
+struct reb_simulation_integrator_hybrid {
+	double switch_ratio;			// Default corresponds to about 10 Hill Radii 
+	enum {SYMPLECTIC, HIGHORDER} mode;
+};
+
+struct reb_simulation_integrator_ias15 {
+	/**
+	 * This parameter controls the accuracy of the integrator.
+	 * Set to 0 to make IAS15 a non-adaptive integrator.
+	 * Default: 1e-9.
+	 **/
+	double epsilon;
+
+	/**
+	 * The minimum timestep to be used in the adaptive integrator.
+	 * Default is 0 (no minimal timestep).
+	 **/
+	double min_dt;
+	
+	/** 
+	 * If 1: estimate the fractional error by max(acceleration_error)/max(acceleration), where max is take over all particles.
+	 * If 0: estimate the fractional error by max(acceleration_error/acceleration).
+	 **/
+	unsigned int epsilon_global;
+
+
+	// Internal data structures below. Nothing to be changed by the user.
+	
+	/**
+	 * Count how many times the iteration did not converge. 
+	 **/
+	unsigned long iterations_max_exceeded;
+
+
+
+	int allocatedN; 			// Size of allocated arrays.
+
+	double* restrict at;			// Temporary buffer for acceleration
+	double* restrict x0;			// Temporary buffer for position (used for initial values at h=0) 
+	double* restrict v0;			//                      velocity
+	double* restrict a0;			//                      acceleration
+	double* restrict csx;			//                      compensated summation
+	double* restrict csv;			//                      compensated summation
+
+	struct reb_dp7 g;
+	struct reb_dp7 b;
+	struct reb_dp7 e;
+
+	// The following values are used for resetting the b and e coefficients if a timestep gets rejected
+	struct reb_dp7 br;
+	struct reb_dp7 er;
+	double dt_last_success;			// Last accepted timestep (corresponding to br and er)
+
+};
+
+struct reb_simulation_integrator_sei {
+	double OMEGA;		/**< Epicyclic/orbital frequency.  */
+	double OMEGAZ; 		/**< Epicyclic frequency in vertical direction. */
+
+	double lastdt;		/**< Cached sin(), tan() for this value of dt.*/
+	// Cache sin() tan() values.
+	double sindt;
+	double tandt;
+	double sindtz;
+	double tandtz;
+};
+
+struct reb_simulation_integrator_wh {
+	int allocatedN;
+	double* eta;
+};
+
+struct reb_simulation_integrator_whfast {
+	/*
+	 * This variable turns on/off various symplectic correctors.
+	 * 0 (default): turns off all correctors
+	 * 3: uses third order (two-stage) corrector 
+	 * 5: uses fifth order (four-stage) corrector 
+	 * 7: uses seventh order (six-stage) corrector 
+	 * 11: uses eleventh order (ten-stage) corrector 
+	 */
+	unsigned int corrector;
+
+	/* 
+	 * Setting this flag to one will recalculate Jacobi coordinates 
+	 * from the particle structure in the next timestep only. 
+	 * Then the flag gets set back to 0. If you want to change 
+	 * particles after every timestep, you also need to set this 
+	 * flag to 1 before every timestep.
+	 * Default is 0.
+	 **/ 
+	unsigned int recalculate_jacobi_this_timestep;
+
+	/*
+	 * If this flag is set (the default), whfast will recalculate jacobi coordinates and synchronize
+	 * every timestep, to avoid problems with outputs or particle modifications
+	 * between timesteps. Setting it to 0 will result in a speedup, but care
+	 * must be taken to synchronize and recalculate jacobi coordinates when needed.
+	 * See AdvWHFast.ipynb in the python_tutorials folder (navigate to it on github
+	 * if you don't have ipython notebook installed).  The explanation is general, and
+	 * the python and C flags have the same names.
+	 **/
+	unsigned int safe_mode;
+
+	/*
+	 * This array contains the Jacobi coordinates of all particles.
+	 */
+	struct reb_particle* restrict p_j;
+
+	/* Struct containg Jacobi eta parameters */
+	double* restrict eta;
+
+	/* Total mass, used for Jacobi coordinates */
+	double Mtotal;
+
+	unsigned int is_synchronized;
+	unsigned int allocated_N;
+	unsigned int timestep_warning;
+	unsigned int recalculate_jacobi_but_not_synchronized_warning;
+};
+
 
 /**
  * Collision structure of one single collisions
@@ -258,6 +394,9 @@ struct reb_simulation {
 	 */
 	void (*collision_resolve) (struct reb_simulation* const r, struct reb_collision);
 };
+
+////////////////////////////////
+// Main rebound functions
 
 
 /**
@@ -426,6 +565,12 @@ void reb_output_ascii(struct reb_simulation* r, char* filename);
  */
 void reb_output_binary_positions(struct reb_simulation* r, char* filename);
 
+/**
+ * Appends the velocity dispersion of the particles to an ASCII file.
+ * @param filename Output filename.
+ */
+void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
+
 
 
 ////////////////////////////////
@@ -452,6 +597,37 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename);
  * @param R Characteristic radius of the cluster.
  */
 void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R);
+
+/**
+ * Reads arguments from the command line.
+ * @param argc Number of command line arguments.
+ * @param argv Array of command line arguments.
+ * @param argument Argument to look for.
+ * @return Returns NULL if argument was not given. Return the argument otherwise.
+ */
+char* reb_read_char(int argc, char** argv, const char* argument);
+
+
+/**
+ * Reads arguments as a double value from the command line.
+ * @param argc Number of command line arguments.
+ * @param argv Array of command line arguments.
+ * @param argument Argument to look for.
+ * @param _default Default value.
+ * @return Returns _default if argument was not given. Return the argument converted to double otherwise.
+ */
+double reb_read_double(int argc, char** argv, const char* argument, double _default);
+
+
+/**
+ * Reads arguments as a int value from the command line.
+ * @param argc Number of command line arguments.
+ * @param argv Array of command line arguments.
+ * @param argument Argument to look for.
+ * @param _default Default value.
+ * @return Returns _default if argument was not given. Return the argument converted to int otherwise.
+ */
+int reb_read_int(int argc, char** argv, const char* argument, int _default);
 
 
 ////////////////////////////////

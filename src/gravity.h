@@ -3,13 +3,6 @@
  * @brief 	Calculate gravitational forces. 
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  *
- * @details 	The code supports different methods for calculating the
- * gravitational forces. They all use this common interface. It is assumed
- * that the gravitational forces are independent of velocity. They are 
- * calculated by reb_calculate_acceleration() which is called in the 
- * middle (K) part of the DKD timestepping scheme.  
- * 
- * 
  * @section LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
  *

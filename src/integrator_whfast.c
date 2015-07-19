@@ -1,8 +1,9 @@
 /**
- * @file 	integrator.c
- * @brief 	Mikkola integration scheme.
+ * @file 	integrator_whfast.c
+ * @brief 	WHFAST integration scheme.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @detail	This file implements the WHFast integration scheme.  
+ * Described in Rein & Tamayo 2015.
  * 
  * @section 	LICENSE
  * Copyright (c) 2015 Hanno Rein, Daniel Tamayo
@@ -30,8 +31,8 @@
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
-#include "particle.h"
 #include "rebound.h"
+#include "particle.h"
 #include "tools.h"
 #include "gravity.h"
 #include "boundary.h"

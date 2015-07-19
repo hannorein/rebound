@@ -1,5 +1,5 @@
 /**
- * @file 	integrator.c
+ * @file 	integrator_ias15.c
  * @brief 	IAS15 integrator.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @detail	This file implements the IAS15 integration scheme.  
@@ -46,8 +46,8 @@
 #include <gmp.h>
 void integrator_generate_constants(void);
 #endif // GENERATE_CONSTANTS
-#include "particle.h"
 #include "rebound.h"
+#include "particle.h"
 #include "gravity.h"
 #include "tools.h"
 #include "integrator.h"
@@ -56,6 +56,16 @@ void integrator_generate_constants(void);
 #ifdef MPI
 #error IAS15 integrator not working with MPI.
 #endif
+
+struct reb_dpconst7 {
+	double* const restrict p0;
+	double* const restrict p1;
+	double* const restrict p2;
+	double* const restrict p3;
+	double* const restrict p4;
+	double* const restrict p5;
+	double* const restrict p6;
+};
 
 // Helper functions for resetting the b and e coefficients
 static void copybuffers(const struct reb_dpconst7 _a, const struct reb_dpconst7 _b, int N3);

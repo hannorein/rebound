@@ -24,81 +24,8 @@
  */
 #ifndef _INTEGRATOR_IAS15_H
 #define _INTEGRATOR_IAS15_H
-struct reb_simulation;
-struct reb_particle; 
-
 void reb_integrator_ias15_part1(struct reb_simulation* r);
 void reb_integrator_ias15_part2(struct reb_simulation* r);
 void reb_integrator_ias15_synchronize(struct reb_simulation* r);
 void reb_integrator_ias15_reset(struct reb_simulation* r);
-
-struct reb_dp7 {
-	double* restrict p0;
-	double* restrict p1;
-	double* restrict p2;
-	double* restrict p3;
-	double* restrict p4;
-	double* restrict p5;
-	double* restrict p6;
-};
-
-struct reb_dpconst7 {
-	double* const restrict p0;
-	double* const restrict p1;
-	double* const restrict p2;
-	double* const restrict p3;
-	double* const restrict p4;
-	double* const restrict p5;
-	double* const restrict p6;
-};
-
-struct reb_simulation_integrator_ias15 {
-	/**
-	 * This parameter controls the accuracy of the integrator.
-	 * Set to 0 to make IAS15 a non-adaptive integrator.
-	 * Default: 1e-9.
-	 **/
-	double epsilon;
-
-	/**
-	 * The minimum timestep to be used in the adaptive integrator.
-	 * Default is 0 (no minimal timestep).
-	 **/
-	double min_dt;
-	
-	/** 
-	 * If 1: estimate the fractional error by max(acceleration_error)/max(acceleration), where max is take over all particles.
-	 * If 0: estimate the fractional error by max(acceleration_error/acceleration).
-	 **/
-	unsigned int epsilon_global;
-
-
-	// Internal data structures below. Nothing to be changed by the user.
-	
-	/**
-	 * Count how many times the iteration did not converge. 
-	 **/
-	unsigned long iterations_max_exceeded;
-
-
-
-	int allocatedN; 			// Size of allocated arrays.
-
-	double* restrict at;			// Temporary buffer for acceleration
-	double* restrict x0;			// Temporary buffer for position (used for initial values at h=0) 
-	double* restrict v0;			//                      velocity
-	double* restrict a0;			//                      acceleration
-	double* restrict csx;			//                      compensated summation
-	double* restrict csv;			//                      compensated summation
-
-	struct reb_dp7 g;
-	struct reb_dp7 b;
-	struct reb_dp7 e;
-
-	// The following values are used for resetting the b and e coefficients if a timestep gets rejected
-	struct reb_dp7 br;
-	struct reb_dp7 er;
-	double dt_last_success;			// Last accepted timestep (corresponding to br and er)
-
-};
 #endif
