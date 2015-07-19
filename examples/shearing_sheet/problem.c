@@ -1,47 +1,20 @@
 /**
- * @file 	problem.c
- * @brief 	Example problem: shearing sheet.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example simulates a small patch of Saturn's
+ * Shearing sheet (Hill's approximation)
+ *
+ * This example simulates a small patch of Saturn's
  * Rings in shearing sheet coordinates. If you have OpenGL enabled, 
  * you'll see one copy of the computational domain. Press `g` to see
  * the ghost boxes which are used to calculate gravity and collisions.
  * Particle properties resemble those found in Saturn's rings. 
- *
- *
- * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Shangfei Liu
- *
- * This file is part of rebound.
- *
- * rebound is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * rebound is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include <time.h>
-#include <sys/time.h>
 #include "rebound.h"
-#include "particle.h"
-#include "output.h"
-#include "tools.h"
 
 double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v);
-
-
 void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]) {
