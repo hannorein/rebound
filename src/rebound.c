@@ -123,43 +123,6 @@ void reb_step(struct reb_simulation* const r){
 	reb_collision_search(r);
 	PROFILING_STOP(PROFILING_CAT_COLLISION)
 #endif  // COLLISIONS_NONE
-	if (r->heartbeat){ r->heartbeat(r); }
-#warning TODO
-//	if (maxR){
-//		// Check for escaping particles
-//		const double maxR2 = maxR*maxR;
-//		const int N = r->N - r->N_megno;
-//		const struct reb_particle* const particles = r->particles;
-//		for (int i=0;i<N;i++){
-//			struct reb_particle p = particles[i];
-//			double r2 = p.x*p.x + p.y*p.y + p.z*p.z;
-//			if (r2>maxR2){
-//				ret_value = 2;
-//				escapedreb_particle = i;
-//			}
-//		}
-//	}
-//	if (minD){
-//		// Check for close encounters
-//		const double minD2 = minD*minD;
-//		const int N = r->N - r->N_megno;
-//		const struct reb_particle* const particles = r->particles;
-//		for (int i=0;i<N;i++){
-//			struct reb_particle pi = particles[i];
-//			for (int j=0;j<i;j++){
-//				struct reb_particle pj = particles[j];
-//				const double x = pi.x-pj.x;
-//				const double y = pi.y-pj.y;
-//				const double z = pi.z-pj.z;
-//				const double r2 = x*x + y*y + z*z;
-//				if (r2<minD2){
-//					ret_value = 3;
-//					closeEncounterPi = i;
-//					closeEncounterPj = j;
-//				}
-//			}
-//		}
-//	}
 }
 
 void reb_configure_box(struct reb_simulation* const r, const double root_size, const int root_nx, const int root_ny, const int root_nz){
@@ -390,7 +353,8 @@ int reb_integrate(struct reb_simulation* const r, double tmax){
 	}
 #else // OPENGL
 	while(reb_check_exit(r,tmax)!=1){
-		reb_step(r); 								// 0 to not do timing within step
+		reb_step(r); 			
+		if (r->heartbeat){ r->heartbeat(r); }
 	}
 #endif // OPENGL
 	reb_integrator_synchronize(r);
