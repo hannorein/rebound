@@ -11,14 +11,52 @@ import types
         
 INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "wh": 3, "leapfrog": 4, "hybrid": 5, "none": 6}
 
-class ReboundModule(types.ModuleType):
-    _pymodulespath = os.path.dirname(__file__)
-    clibrebound = None   # Class variable
-    try:
-        clibrebound = CDLL(_pymodulespath+"/../librebound.so", RTLD_GLOBAL)
-    except:
-        print("Cannot find library 'librebound.so'.")
-        raise
+class reb_vec3d(Structure):
+    _fields_ = [("x", c_double),
+                ("y", c_double),
+                ("z", c_double)]
+
+class reb_dp7(Structure):
+    _fields_ = [("p0", POINTER(c_double)),
+                ("p1", POINTER(c_double)),
+                ("p2", POINTER(c_double)),
+                ("p3", POINTER(c_double)),
+                ("p4", POINTER(c_double)),
+                ("p5", POINTER(c_double)),
+                ("p6", POINTER(c_double))]
+
+class reb_ghostbox(Structure):
+    _fields_ = [("shiftx", c_double),
+                ("shifty", c_double),
+                ("shiftz", c_double),
+                ("shiftvx", c_double),
+                ("shiftvy", c_double),
+                ("shiftvz", c_double)]
+
+class reb_particle(Structure):
+    _fields_ = [("x", c_double),
+                ("y", c_double),
+                ("z", c_double),
+                ("vx", c_double),
+                ("vy", c_double),
+                ("vz", c_double),
+                ("ax", c_double),
+                ("ay", c_double),
+                ("az", c_double),
+                ("m", c_double),
+                ("lastcollision", c_double),
+                ("c", c_void_p),
+                ("id", c_int)]
+
+class reb_simulation_integrator_hybrid(Structure):
+    _fields_ = [(("switch_ratio"), c_double),
+                ("mode", c_int)]
+
+
+class Simulation(Structure):
+
+
+
 
     AFF = CFUNCTYPE(None)
     afp = None # additional forces pointer
@@ -492,6 +530,65 @@ class ReboundModule(types.ModuleType):
 
     class NoParticleLeft(Exception):
         pass
+    
+Simulation._fields_ = [("t", c_double),
+                ("G", c_double),
+                ("softening", c_double),
+                ("dt", c_double),
+                ("dt_last_done", c_double),
+                ("N", c_int),
+                ("N_var", c_int),
+                ("N_active", c_int),
+                ("allocated_N", c_int),
+                ("exit_simulation", c_int),
+                ("exact_finish_time", c_int),
+                ("force_is_velocity_dependent", c_uint),
+                ("gravity_ignore_10", c_uint),
+                ("output_timing_last", c_double),
+                ("boxsize", reb_vec3d),
+                ("boxsize_max", c_double),
+                ("root_size", c_double),
+                ("root_n", c_int),
+                ("root_nx", c_int),
+                ("root_ny", c_int),
+                ("root_nz", c_int),
+                ("nghostx", c_int),
+                ("nghosty", c_int),
+                ("nghostz", c_int),
+                ("collisions", c_void_p),
+                ("collisions_allocatedN", c_int),
+                ("minimum_collision_celocity", c_double),
+                ("collisions_plog", c_double),
+                ("max_radius", c_double*2),
+                ("collisions_Nlog", c_long),
+                ("calculate_megno", c_int),
+                ("megno_Ys", c_double),
+                ("megno_Yss", c_double),
+                ("megno_cov_Yt", c_double),
+                ("megno_var_t", c_double),
+                ("megno_mean_t", c_double),
+                ("megno_mean_Y", c_double),
+                ("megno_n", c_long),
+                ("collision", c_int),
+                ("integrator", c_int),
+                ("boundary", c_int),
+                ("gravity", c_int),
+                ("particles", POINTER(reb_particle)),
+                ("gravity_cs", POINTER(reb_vec3d)),
+                ("gravity_cs_allocatedN", c_int),
+                ("tree_root", c_void_p),
+                ("opening_angle2", c_double),
+                ("ri_whfast", c_int),  #// TODO!!
+                ("ri_ias15", c_int), #// TODO!!
+                ("ri_sei", c_int), #// TODO!!
+                ("ri_wh", c_int), #// TODO!!
+                ("ri_hybrid", reb_simulation_integrator_hybrid),
+                ("additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
+                ("post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
+                ("heartbeat", CFUNCTYPE(None,POINTER(Simulation))),
+                ("coefficient_of_restitution", CFUNCTYPE(c_double,POINTER(Simulation), c_double)),
+                ("collisions_resolve", CFUNCTYPE(None,POINTER(Simulation), c_void_p)),
+                 ]
 
 # Unit constants
 G_SI = 6.674e-11

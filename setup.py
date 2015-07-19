@@ -6,7 +6,7 @@ from codecs import open
 import os
 
 libreboundmodule = Extension('librebound',
-                    sources = [ 'src/librebound.c',
+                    sources = [ 'src/rebound.c',
                                 'src/integrator_ias15.c',
                                 'src/integrator_whfast.c',
                                 'src/integrator_wh.c',

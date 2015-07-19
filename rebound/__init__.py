@@ -12,14 +12,23 @@ try:
 except ImportError:
     pass                 # python 2.x
 
+from ctypes import *
+import ctypes.util
+import os
+_pymodulespath = os.path.dirname(__file__)
+try:
+    clibrebound = CDLL(_pymodulespath+"/../librebound.so", RTLD_GLOBAL)
+except:
+    print("Cannot find library 'librebound.so'.")
+    raise
 
-from .librebound import ReboundModule
+def build_str():
+    return str(c_char_p.in_dll(clibrebound, "reb_build_str").value)
+    
+
+from .librebound import Simulation
 from .particle import Particle
 from .particle import Orbit
 from .interruptible_pool import InterruptiblePool
-import sys
-module = ReboundModule(__name__)
-module.Particle = Particle
-module.Orbit = Orbit
-module.InterruptiblePool = InterruptiblePool
-sys.modules[__name__] = module
+
+__all__ = ["Simulation", "Orbit", "Particle"]

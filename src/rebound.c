@@ -49,7 +49,7 @@
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 
 static const char* logo[];				/**< Logo of rebound. */
-static const char* build_str = __DATE__ " " __TIME__;	/**< Date and time build string. */
+const char* reb_build_str = __DATE__ " " __TIME__;	/**< Date and time build string. */
 
 
 // Global (non-thread safe) variables:
@@ -209,7 +209,7 @@ struct reb_simulation* reb_create_simulation(){
 	if (reb_show_logo==1){
 		int i =0;
 		while (logo[i]!=NULL){ printf("%s",logo[i++]); }
-		printf("Built: %s\n\n",build_str);
+		printf("Built: %s\n\n",reb_build_str);
 	}
 	reb_tools_init_srand();
 	struct reb_simulation* r = calloc(1,sizeof(struct reb_simulation));
@@ -238,7 +238,7 @@ struct reb_simulation* reb_create_simulation(){
 	r->force_is_velocitydependent = 0;
 	r->gravity_ignore_10	= 0;
 	r->calculate_megno	= 0;
-	r->reb_output_timing_last = -1;
+	r->output_timing_last 	= -1;
 
 	r->minimum_collision_velocity = 0;
 	r->collisions_plog 	= 0;
