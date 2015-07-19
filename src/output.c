@@ -82,6 +82,7 @@ struct vec3 {
 #ifdef PROFILING
 double profiling_time_sum[PROFILING_CAT_NUM];
 double profiling_time_initial 	= 0;
+double profiling_timing_initial	= 0;
 double profiling_time_final 	= 0;
 void profiling_start(void){
 	struct timeval tim;
@@ -134,6 +135,11 @@ void reb_output_timing(struct reb_simulation* r, const double tmax){
 		printf("t/tmax= %5.2f%%",r->t/tmax*100.0);
 	}
 #ifdef PROFILING
+	if (profiling_timing_initial==0){
+		struct timeval tim;
+		gettimeofday(&tim, NULL);
+		profiling_timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
+	}
 	printf("\nCATEGORY       TIME \n");
 	double _sum = 0;
 	for (int i=0;i<=PROFILING_CAT_NUM;i++){
@@ -160,9 +166,9 @@ void reb_output_timing(struct reb_simulation* r, const double tmax){
 				break;
 		}
 		if (i==PROFILING_CAT_NUM){
-			printf("%5.2f%%",(1.-_sum/(profiling_time_final - timing_initial))*100.);
+			printf("%5.2f%%",(1.-_sum/(profiling_time_final - profiling_timing_initial))*100.);
 		}else{
-			printf("%5.2f%%\n",profiling_time_sum[i]/(profiling_time_final - timing_initial)*100.);
+			printf("%5.2f%%\n",profiling_time_sum[i]/(profiling_time_final - profiling_timing_initial)*100.);
 			_sum += profiling_time_sum[i];
 		}
 	}
