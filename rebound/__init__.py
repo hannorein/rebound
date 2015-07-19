@@ -24,9 +24,15 @@ except:
 
 def build_str():
     return str(c_char_p.in_dll(clibrebound, "reb_build_str").value)
-    
 
 from .librebound import Simulation
+   
+def create_simulation():
+    clibrebound.reb_create_simulation.restype = Simulation
+    return clibrebound.reb_create_simulation()
+    
+    
+
 from .particle import Particle
 from .particle import Orbit
 from .interruptible_pool import InterruptiblePool

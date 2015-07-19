@@ -288,9 +288,9 @@ struct reb_simulation* reb_create_simulation(){
 		if (mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",root_n,mpi_num);
 		exit(-1);
 	}
-	printf("Initialized %d*%d*%d root boxes. MPI-node: %d. Process id: %d.\n",r->root_nx,r->root_ny,r->root_nz,mpi_id, getpid());
+	printf("MPI-node: %d. Process id: %d.\n",mpi_id, getpid());
 #else // MPI
-	printf("Initialized %d*%d*%d root boxes. Process id: %d.\n",r->root_nx,r->root_ny,r->root_nz, getpid());
+	printf("Process id: %d.\n", getpid());
 #endif // MPI
 #ifdef OPENMP
 	printf("Using OpenMP with %d threads per node.\n",omp_get_max_threads());
