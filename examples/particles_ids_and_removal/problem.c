@@ -11,32 +11,27 @@
 #include <math.h>
 #include "rebound.h"
 
-void print_ids(struct reb_simulation* r) {
+void print_ids(struct reb_simulation* r){
 	printf("ids = ");
-	for (int i = 0; i < r->N; i++) {
+	for (int i=0;i<r->N;i++){
 		printf("%d ", r->particles[i].id);
 	}
 	printf("\n");
 }
 
-int main(int argc, char* argv[]) {
+
+int main(int argc, char* argv[]){
 	struct reb_simulation* r = reb_create_simulation();
 	// Just demonstrating ids, so set initial conditions arbitrarily (and ids in the order they are added)
 	// ids can be set to any integer
-	for (int i = 0; i < 10; i++) {
+	for (int i=0;i<10;i++){
 		struct reb_particle p;
-		p.x = i;
-		p.y = i;
-		p.z = i;
-		p.vx = i;
-		p.vy = i;
-		p.vz = i;
-		p.ax = 0;
-		p.ay = 0;
-		p.az = 0;
-		p.m = i;
-		p.id = i;
-		reb_add(r, p);
+		p.x  = i; 		p.y  = i;	 	p.z  = i;
+		p.vx = i; 		p.vy = i;	 	p.vz = i;
+		p.ax = 0; 		p.ay = 0; 		p.az = 0;
+		p.m  = i;
+		p.id = i; 
+		reb_add(r, p); 
 	}
 
 	printf("Initial ids:\n");
@@ -46,7 +41,7 @@ int main(int argc, char* argv[]) {
 	int keepSorted = 0;
 	printf("\nTry to remove index 3...\n");
 	success = reb_remove(r, 3, keepSorted);
-	if (success) {
+	if (success){
 		printf("Particle successfully removed\n");
 	}
 	print_ids(r);
@@ -55,27 +50,28 @@ int main(int argc, char* argv[]) {
 	keepSorted = 1;
 	printf("Try to remove index 6 while preserving the order with keepSorted=1...\n");
 	success = reb_remove(r, 6, keepSorted);
-	if (success) {
+	if (success){
 		printf("Particle successfully removed\n");
 	}
 	print_ids(r);
 
 	printf("\nWe can also remove particles by id.  Try to remove id=5...\n");
 	success = reb_remove_by_id(r, 5, keepSorted);
-	if (success) {
+	if (success){
 		printf("Particle successfully removed\n");
 	}
 	print_ids(r);
-
+	
 	printf("\nIf we try to remove an index > N or an id that doesn't exist, we get a warning and no particle is removed:\n");
 	printf("Try to remove index 15...\n");
 	success = reb_remove(r, 15, keepSorted);
-	if (success) {
+	if (success){
 		printf("Particle successfully removed\n");
 	}
 	printf("Try to remove id=3...\n");
 	success = reb_remove_by_id(r, 3, keepSorted);
-	if (success) {
+	if (success){
 		printf("Particle successfully removed\n");
 	}
 }
+
