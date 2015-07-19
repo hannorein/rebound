@@ -64,10 +64,6 @@ class Simulation(Structure):
     _units = {'length':None, 'time':None, 'mass':None}
 
 # Status functions
-    @property
-    def build_str(self):
-        return str(c_char_p.in_dll(self.clibrebound, "build_str").value)
-
     def status(self):
         """ Returns a string with a summary of the current status 
             of the simulation
@@ -79,7 +75,6 @@ class Simulation(Structure):
         except:
             # Fails on python3, but not important
             pass
-        s += "Build on:            \t" + self.build_str + "\n"
         s += "Number of particles: \t%d\n" %self.N       
         s += "Simulation time:     \t%f\n" %self.t
         if self.N>0:
