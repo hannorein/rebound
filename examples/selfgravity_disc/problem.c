@@ -1,27 +1,8 @@
 /**
- * @file 	problem.c
- * @brief 	Example problem: self-gravity disc.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	A self-gravitating disc is integrated using
+ * Self-gravitating disc.
+ *
+ * A self-gravitating disc is integrated using
  * the leap frog integrator. Collisions are not resolved.
- * 
- * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Shangfei Liu
- *
- * This file is part of rebound.
- *
- * rebound is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * rebound is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 #include <stdio.h>
@@ -76,9 +57,11 @@ int main(int argc, char* argv[]){
 	}
 
 	r->heartbeat = heartbeat;
-	reb_integrate(r,0);
+	reb_integrate(r, INFINITY);
 }
 
 void heartbeat(struct reb_simulation* const r){
-	if (reb_output_check(r,10.0*r->dt)) reb_output_timing(r,0);
+	if (reb_output_check(r,10.0*r->dt)){
+		reb_output_timing(r,0);
+	}
 }

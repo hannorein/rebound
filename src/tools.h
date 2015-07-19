@@ -29,14 +29,6 @@ struct reb_simulation;
 
 
 
-/**
- * This function sets up a Plummer sphere.
- * @param _N Number of particles in the plummer sphere.
- * @param M Total mass of the cluster.
- * @param R Characteristic radius of the cluster.
- */
-
-void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R);
 
 /**
  * Initialize a particle on an orbit in the xy plane.

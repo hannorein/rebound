@@ -426,6 +426,14 @@ struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_p
  */
 struct reb_simulation* reb_create_simulation_from_binary(char* filename);
 
+/**
+ * This function sets up a Plummer sphere.
+ * @param _N Number of particles in the plummer sphere.
+ * @param M Total mass of the cluster.
+ * @param R Characteristic radius of the cluster.
+ */
+void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R);
+
 
 ////////////////////////////////
 // Tools (misc)
