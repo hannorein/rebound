@@ -2,11 +2,9 @@ SUBDIRS := $(wildcard */.)
 
 all: $(SUBDIRS)
 $(SUBDIRS):
-	@echo "Trying to compile example in $@:"
+	@echo "Trying to compile example $(subst /.,,$@):"
 	@$(MAKE) -s -C $@ 
-	@echo "Success."
-	@echo ""
-	@echo ""
+	@echo "\033[1A\033[55CSuccess."
 
 .PHONY: all $(SUBDIRS)
 

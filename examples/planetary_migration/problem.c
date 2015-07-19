@@ -127,7 +127,7 @@ void heartbeat(struct reb_simulation* r){
 	}
 	if(reb_output_check(r, 40.)){
 		reb_integrator_synchronize(r);
-		reb_output_append_orbits(r,"orbits.txt");
+		reb_output_orbits(r,"orbits.txt");
 		reb_move_to_com(r); 
 	}
 }

@@ -90,13 +90,13 @@ void display_func(void){
 			double timing;
 			do{
 				reb_step(display_r);
-				if (r->heartbeat){ r->heartbeat(r); }
+				if (display_r->heartbeat){ display_r->heartbeat(display_r); }
 				gettimeofday(&tim, NULL);
 				timing = tim.tv_sec+(tim.tv_usec/1000000.0);
 			}while(timing-timing_initial<1./50.);  //limit to 50 frames per second.
 		}else{
 			reb_step(display_r);
-			if (r->heartbeat){ r->heartbeat(r); }
+			if (display_r->heartbeat){ display_r->heartbeat(display_r); }
 		}
 		if (!display_pause){
 			PROFILING_START()
