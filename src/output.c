@@ -51,12 +51,6 @@
 #include "mpi.h"
 #endif // MPI
 
-// Check if output is needed
-
-int reb_output_check(struct reb_simulation* r, double interval){
-	return reb_output_check_phase(r, interval,0);
-}
-
 int reb_output_check_phase(struct reb_simulation* r, double interval,double phase){
 	double shift = r->t+interval*phase;
 	if (floor(shift/interval)!=floor((shift-r->dt)/interval)){
@@ -69,17 +63,13 @@ int reb_output_check_phase(struct reb_simulation* r, double interval,double phas
 	return 0;
 }
 
+int reb_output_check(struct reb_simulation* r, double interval){
+	return reb_output_check_phase(r, interval,0);
+}
 
-/**
- * 3D vector struct.
- */
-struct vec3 {
-	double x;
-	double y;
-	double z;
-};
 
 #ifdef PROFILING
+#warning PROFILING enabled. Rebound is NOT thread-safe.
 double profiling_time_sum[PROFILING_CAT_NUM];
 double profiling_time_initial 	= 0;
 double profiling_timing_initial	= 0;
@@ -178,7 +168,7 @@ void reb_output_timing(struct reb_simulation* r, const double tmax){
 }
 
 
-void reb_output_append_ascii(struct reb_simulation* r, char* filename){
+void reb_output_ascii(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
@@ -186,26 +176,6 @@ void reb_output_append_ascii(struct reb_simulation* r, char* filename){
 	FILE* of = fopen(filename_mpi,"a"); 
 #else // MPI
 	FILE* of = fopen(filename,"a"); 
-#endif // MPI
-	if (of==NULL){
-		printf("\n\nError while opening file '%s'.\n",filename);
-		return;
-	}
-	for (int i=0;i<N;i++){
-		struct reb_particle p = r->particles[i];
-		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\n",p.x,p.y,p.z,p.vx,p.vy,p.vz);
-	}
-	fclose(of);
-}
-
-void reb_output_ascii(struct reb_simulation* r, char* filename){
-	const int N = r->N;
-#ifdef MPI
-	char filename_mpi[1024];
-	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
-	FILE* of = fopen(filename_mpi,"w"); 
-#else // MPI
-	FILE* of = fopen(filename,"w"); 
 #endif // MPI
 	if (of==NULL){
 		printf("\n\nError while opening file '%s'.\n",filename);
@@ -271,11 +241,11 @@ void reb_output_binary_positions(struct reb_simulation* r, char* filename){
 		return;
 	}
 	for (int i=0;i<N;i++){
-		struct vec3 v;
+		struct reb_vec3d v;
 		v.x = r->particles[i].x;
 		v.y = r->particles[i].y;
 		v.z = r->particles[i].z;
-		fwrite(&(v),sizeof(struct vec3),1,of);
+		fwrite(&(v),sizeof(struct reb_vec3d),1,of);
 	}
 	fclose(of);
 }
@@ -283,10 +253,10 @@ void reb_output_binary_positions(struct reb_simulation* r, char* filename){
 void reb_output_append_velocity_dispersion(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 	// Algorithm with reduced roundoff errors (see wikipedia)
-	struct vec3 A = {.x=0, .y=0, .z=0};
-	struct vec3 Q = {.x=0, .y=0, .z=0};
+	struct reb_vec3d A = {.x=0, .y=0, .z=0};
+	struct reb_vec3d Q = {.x=0, .y=0, .z=0};
 	for (int i=0;i<N;i++){
-		struct vec3 Aim1 = A;
+		struct reb_vec3d Aim1 = A;
 		struct reb_particle p = r->particles[i];
 		A.x = A.x + (p.vx-A.x)/(double)(i+1);
 		if (r->integrator==REB_INTEGRATOR_SEI){
@@ -305,16 +275,16 @@ void reb_output_append_velocity_dispersion(struct reb_simulation* r, char* filen
 	}
 #ifdef MPI
 	int N_tot = 0;
-	struct vec3 A_tot = {.x=0, .y=0, .z=0};
-	struct vec3 Q_tot = {.x=0, .y=0, .z=0};
+	struct reb_vec3d A_tot = {.x=0, .y=0, .z=0};
+	struct reb_vec3d Q_tot = {.x=0, .y=0, .z=0};
 	MPI_Reduce(&N, &N_tot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD); 
 	MPI_Reduce(&A, &A_tot, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
 	MPI_Reduce(&Q, &Q_tot, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
 	if (mpi_id!=0) return;
 #else
 	int N_tot = N;
-	struct vec3 A_tot = A;
-	struct vec3 Q_tot = Q;
+	struct reb_vec3d A_tot = A;
+	struct reb_vec3d Q_tot = Q;
 #endif
 	Q_tot.x = sqrt(Q_tot.x/(double)N_tot);
 	Q_tot.y = sqrt(Q_tot.y/(double)N_tot);

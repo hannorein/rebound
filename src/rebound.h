@@ -408,6 +408,25 @@ void reb_output_timing(struct reb_simulation* r, const double tmax);
  */
 void reb_output_orbits(struct reb_simulation* r, char* filename);
 
+/**
+ * Dumps all particle structs into a binary file.
+ * @param filename Output filename.
+ */
+void reb_output_binary(struct reb_simulation* r, char* filename);
+
+/**
+ * Appends the positions and velocities of all particles to an ASCII file.
+ * @param filename Output filename.
+ */
+void reb_output_ascii(struct reb_simulation* r, char* filename);
+
+/**
+ * Dumps only the positions of all particles into a binary file.
+ * @param filename Output filename.
+ */
+void reb_output_binary_positions(struct reb_simulation* r, char* filename);
+
+
 
 ////////////////////////////////
 // Tools (setup)
