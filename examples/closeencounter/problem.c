@@ -17,36 +17,43 @@
 
 void heartbeat(struct reb_simulation* r);
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
 	struct reb_simulation* r = reb_create_simulation();
-	r->dt = 0.01*2.*M_PI;						// initial timestep
+	r->dt = 0.01 * 2. * M_PI; // initial timestep
 	r->integrator = REB_INTEGRATOR_IAS15;
-	r->heartbeat  = heartbeat;
-
+	r->heartbeat = heartbeat;
 
 	struct reb_particle star;
 	star.m = 1;
-	star.x = 0; 	star.y = 0; 	star.z = 0;
-	star.vx = 0; 	star.vy = 0; 	star.vz = 0;
+	star.x = 0;
+	star.y = 0;
+	star.z = 0;
+	star.vx = 0;
+	star.vy = 0;
+	star.vz = 0;
 	reb_add(r, star);
-	
+
 	// Add planets
 	int N_planets = 7;
-	for (int i=0;i<N_planets;i++){
-		double a = 1.+(double)i/(double)(N_planets-1);		// semi major axis
-		double v = sqrt(1./a); 					// velocity (circular orbit)
+	for (int i = 0; i < N_planets; i++) {
+		double a = 1. + (double)i / (double)(N_planets - 1); // semi major axis
+		double v = sqrt(1. / a);			     // velocity (circular orbit)
 		struct reb_particle planet;
-		planet.m = 1e-4; 
-		planet.x = a; 	planet.y = 0; 	planet.z = 0;
-		planet.vx = 0; 	planet.vy = v; 	planet.vz = 0;
-		reb_add(r, planet); 
+		planet.m = 1e-4;
+		planet.x = a;
+		planet.y = 0;
+		planet.z = 0;
+		planet.vx = 0;
+		planet.vy = v;
+		planet.vz = 0;
+		reb_add(r, planet);
 	}
-	reb_move_to_com(r);		// This makes sure the planetary systems stays within the computational domain and doesn't drift.
+	reb_move_to_com(r); // This makes sure the planetary systems stays within the computational domain and doesn't drift.
 	reb_integrate(r, INFINITY);
 }
 
-void heartbeat(struct reb_simulation* r){
-	if (reb_output_check(r, 10.*2.*M_PI)){  
+void heartbeat(struct reb_simulation* r) {
+	if (reb_output_check(r, 10. * 2. * M_PI)) {
 		reb_output_timing(r, 0);
 	}
 }

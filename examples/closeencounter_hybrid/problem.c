@@ -16,46 +16,53 @@ void heartbeat(struct reb_simulation* r);
 
 double e_init; // initial energy
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
 	struct reb_simulation* r = reb_create_simulation();
-	r->dt = 0.012*2.*M_PI;						// initial timestep
+	r->dt = 0.012 * 2. * M_PI; // initial timestep
 	r->integrator = REB_INTEGRATOR_HYBRID;
-	r->heartbeat  = heartbeat;
+	r->heartbeat = heartbeat;
 
 	struct reb_particle star;
 	star.m = 1;
-	star.x = 0; 	star.y = 0; 	star.z = 0;
-	star.vx = 0; 	star.vy = 0; 	star.vz = 0;
+	star.x = 0;
+	star.y = 0;
+	star.z = 0;
+	star.vx = 0;
+	star.vy = 0;
+	star.vz = 0;
 	reb_add(r, star);
-	
+
 	// Add planets
 	int N_planets = 3;
-	for (int i=0;i<N_planets;i++){
-		double a = 1.+.1*(double)i;		// semi major axis
-		double v = sqrt(1./a); 					// velocity (circular orbit)
+	for (int i = 0; i < N_planets; i++) {
+		double a = 1. + .1 * (double)i; // semi major axis
+		double v = sqrt(1. / a);	// velocity (circular orbit)
 		struct reb_particle planet;
-		planet.m = 2e-5; 
-		planet.x = a; 	planet.y = 0; 	planet.z = 0;
-		planet.vx = 0; 	planet.vy = v; 	planet.vz = 0;
-		reb_add(r, planet); 
+		planet.m = 2e-5;
+		planet.x = a;
+		planet.y = 0;
+		planet.z = 0;
+		planet.vx = 0;
+		planet.vy = v;
+		planet.vz = 0;
+		reb_add(r, planet);
 	}
-	reb_move_to_com(r);				// This makes sure the planetary systems stays within the computational domain and doesn't drift.
+	reb_move_to_com(r); // This makes sure the planetary systems stays within the computational domain and doesn't drift.
 	e_init = reb_tools_energy(r);
 	system("rm -rf energy.txt");
 
 	reb_integrate(r, INFINITY);
 }
 
-void heartbeat(struct reb_simulation* r){
-	if (reb_output_check(r, 10.*2.*M_PI)){  
+void heartbeat(struct reb_simulation* r) {
+	if (reb_output_check(r, 10. * 2. * M_PI)) {
 		reb_output_timing(r, 0);
 	}
-	if (reb_output_check(r, 2.*M_PI)){  
-		FILE* f = fopen("energy.txt","a");
+	if (reb_output_check(r, 2. * M_PI)) {
+		FILE* f = fopen("energy.txt", "a");
 		reb_integrator_synchronize(r);
 		double e = reb_tools_energy(r);
-		fprintf(f,"%e %e\n",r->t, fabs((e-e_init)/e_init));
+		fprintf(f, "%e %e\n", r->t, fabs((e - e_init) / e_init));
 		fclose(f);
 	}
 }
-
