@@ -212,7 +212,7 @@ void reb_output_ascii(struct reb_simulation* r, char* filename){
 	fclose(of);
 }
 
-void reb_output_append_orbits(struct reb_simulation* r, char* filename){
+void reb_output_orbits(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
@@ -233,29 +233,6 @@ void reb_output_append_orbits(struct reb_simulation* r, char* filename){
 	}
 	fclose(of);
 }
-
-void reb_output_orbits(struct reb_simulation* r, char* filename){
-	const int N = r->N;
-#ifdef MPI
-	char filename_mpi[1024];
-	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
-	FILE* of = fopen(filename_mpi,"w"); 
-#else // MPI
-	FILE* of = fopen(filename,"w"); 
-#endif // MPI
-	if (of==NULL){
-		printf("\n\nError while opening file '%s'.\n",filename);
-		return;
-	}
-	struct reb_particle com = r->particles[0];
-	for (int i=1;i<N;i++){
-		struct reb_orbit o = reb_tools_p2orbit(r->G, r->particles[i],com);
-		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",r->t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
-		com = reb_get_com(com,r->particles[i]);
-	}
-	fclose(of);
-}
-
 
 void reb_output_binary(struct reb_simulation* r, char* filename){
 #ifdef MPI

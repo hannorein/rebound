@@ -1,48 +1,29 @@
 /**
- * @file 	problem.c
- * @brief 	Example problem: Restricted three body problem.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example simulates a disk of test particles around 
+ * Restricted three body problem.
+ *
+ * This example simulates a disk of test particles around 
  * a central object, being perturbed by a planet. 
- * 
- * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Shangfei Liu
- *
- * This file is part of rebound.
- *
- * rebound is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * rebound is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include <time.h>
-#include "main.h"
-#include "particle.h"
-#include "boundaries.h"
-#include "output.h"
-#include "integrator.h"
+#include "rebound.h"
+
+void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
+	struct reb_simulation* r = reb_create_simulation();
 	// Setup constants
-	integrator		= WH;
-	boxsize 		= 8; 
-	softening		= 1e-6;
-	dt 			= 1.0e-2*2.*M_PI;
-	N_active 		= 2; 	// Only the star and the planet have non-zero mass
-	init_box();
+	r->integrator		= REB_INTEGRATOR_WHFAST;
+	r->boundary		= REB_BOUNDARY_OPEN;
+	r->softening		= 1e-6;
+	r->dt 			= 1.0e-2*2.*M_PI;
+	r->N_active 		= 2; 	// Only the star and the planet have non-zero mass
+	r->heartbeat		= heartbeat;
+
+	reb_configure_box(r,8.,1,1,1); // Box with size 8 AU
 	
 	// Initial conditions for star
 	struct reb_particle star;
@@ -58,16 +39,17 @@ int main(int argc, char* argv[]){
 	planet.vx = 0; 			planet.vy = sqrt(2./(1.-planet_e)-1.); 	planet.vz = 0;
 	planet.m  = 1e-2;
 	reb_add(r, planet);
+	reb_move_to_com(r);
 	
-	while(N<10000){
-		double x 	= ((double)rand()/(double)RAND_MAX-0.5)*boxsize*0.9;
-		double y 	= ((double)rand()/(double)RAND_MAX-0.5)*boxsize*0.9;
+	while(r->N<10000){
+		double x 	= ((double)rand()/(double)RAND_MAX-0.5)*8.;
+		double y 	= ((double)rand()/(double)RAND_MAX-0.5)*8.;
 		double a 	= sqrt(x*x+y*y);
 		double phi 	= atan2(y,x);
 		if (a<.1) continue;
-		if (a>boxsize_x/2.*0.9) continue;
+		if (a>4.) continue;
 
-		double vkep = sqrt(G*star.m/a);
+		double vkep = sqrt(r->G*star.m/a);
 		struct reb_particle testparticle;
 		testparticle.x  = x;
 		testparticle.y  = y; 
@@ -81,12 +63,14 @@ int main(int argc, char* argv[]){
 		testparticle.m  = 0;
 		reb_add(r, testparticle);
 	}
+
+	reb_integrate(r, INFINITY);
 }
 
 void heartbeat(struct reb_simulation* r){
-	reb_output_timing();
-	if (reb_output_check(2.*M_PI)){
-		reb_output_orbits("orbit.txt");
+	if (reb_output_check(r, 20.*M_PI)){
+		reb_output_timing(r, 0);
+		reb_output_orbits(r, "orbit.txt");
 	}
 }
 

@@ -24,11 +24,6 @@
  */
 #ifndef _INPUT_H
 #define _INPUT_H
-/**
- * Reads a binary file.
- * @param filename Filename to be read.
- */
-struct reb_simulation* reb_create_simulation_from_binary(char* filename);
 
 /**
  * Reads arguments from the command line.

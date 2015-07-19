@@ -41,55 +41,46 @@
 #include "output.h"
 #include "input.h"
 
-void heartbeat(struct Rebound* const r);
+void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]){
-	// Setup constants
-	struct Rebound* r;
-	
-	const int restart = 1;
-
-	if (restart){
-		r = rebound_init_from_binary("restart.bin");
-	}else{
-		r = rebound_init();
-
-		r->integrator	= SEI;
+	{
+		printf("Running simulation until t=10.\n");
+		struct reb_simulation* r = reb_create_simulation();
+		r->integrator	= REB_INTEGRATOR_SEI;
 		r->collision	= REB_COLLISION_DIRECT;
 		r->ri_sei.OMEGA	= 1.;	
 		r->dt 		= 1e-4*2.*M_PI; 
-		rebound_configure_box(r,1.,1,1,1);
-		r->coefficient_of_restitution = 0.5;
-		r->minimum_collision_velocity = 0.01;
-		r->nghostx = 1; 
-		r->nghosty = 1; 
-		r->nghostz = 0;
+		r->nghostx = 1; r->nghosty = 1; r->nghostz = 0;
+		reb_configure_box(r,1.,1,1,1);
 
 		// Check if simulation is restarted
 		// Initial conditions
 		while (r->N<50){
-			struct Particle p;
-			p.x  = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize_x;
-			p.y  = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize_y;
-			p.z  = 0.1*((double)rand()/(double)RAND_MAX-0.5)*r->boxsize_z;
+			struct reb_particle p;
+			p.x  = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.x;
+			p.y  = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.y;
+			p.z  = 0.1*((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.z;
 			p.vx = 0;
 			p.vy = -1.5*p.x*r->ri_sei.OMEGA;
 			p.vz = 0;
 			p.ax = 0; p.ay = 0; p.az = 0;
 			p.m  = 0.01;
 			p.r  = 0.05;
-			reb_add(r, r, p);
+			reb_add(r, p);
 		}
+		reb_integrate(r,10.);
+		printf("Saving simulation to binary file and freeing up memory.\n");
+		reb_output_binary(r, "restart.bin");
+		reb_free_simulation(r);
+		r = NULL;
 	}
-	r->heartbeat = heartbeat;
-	rebound_integrate(r,0);
+	{
+		printf("Creating simulation from binary file and integrating until t=20.\n");
+		struct reb_simulation* r = reb_create_simulation_from_binary("restart.bin");
+		reb_integrate(r,20.);
+		printf("Done.\n");
+	}
+	
 }
 
-void heartbeat(struct Rebound* const r){
-	// Outputs a restartfile once per orbit.
-	reb_output_timing(r,0);
-	if (reb_output_check(r,1e-0*2.*M_PI)){
-		reb_output_binary(r, "restart.bin");
-		printf("\nSaved binary file.\n");
-	}
-}

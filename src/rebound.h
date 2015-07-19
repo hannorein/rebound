@@ -406,7 +406,7 @@ void reb_output_timing(struct reb_simulation* r, const double tmax);
  * reb_particles are assumed to be sorted from the inside out, the central object having index 0. 
  * @param filename Output filename.
  */
-void reb_output_append_orbits(struct reb_simulation* r, char* filename);
+void reb_output_orbits(struct reb_simulation* r, char* filename);
 
 
 ////////////////////////////////
@@ -419,6 +419,12 @@ void reb_output_append_orbits(struct reb_simulation* r, char* filename);
  * @return Orbital parameters. 
  */
 struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_particle star);
+
+/**
+ * Reads a binary file.
+ * @param filename Filename to be read.
+ */
+struct reb_simulation* reb_create_simulation_from_binary(char* filename);
 
 
 ////////////////////////////////

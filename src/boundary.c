@@ -39,7 +39,7 @@
 
 void reb_boundary_check(struct reb_simulation* const r){
 	struct reb_particle* const particles = r->particles;
-	const int N = r->N;
+	int N = r->N;
 	const struct reb_vec3d boxsize = r->boxsize;
 	switch(r->boundary){
 		case REB_BOUNDARY_OPEN:
@@ -67,6 +67,7 @@ void reb_boundary_check(struct reb_simulation* const r){
 					if (r->tree_root==NULL){
 						reb_remove(r, i,0); // keepSorted=0 by default in C version
 						i--; // need to recheck the particle that replaced the removed one
+						N--; // This is the local N
 					}else{
 						fprintf(stderr,"\n\033[1mError!\033[0m Cannot remove particle from tree.");
 						exit(EXIT_FAILURE);

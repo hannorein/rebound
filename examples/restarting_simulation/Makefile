@@ -1,5 +1,5 @@
 PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
-export OPENGL=1
+#export OPENGL=1
 export OPT+= -g
 
 all:
