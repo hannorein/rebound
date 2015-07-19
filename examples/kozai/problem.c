@@ -62,6 +62,6 @@ void heartbeat(struct reb_simulation* r){
 		reb_output_timing(r, tmax);
 	}
 	if(reb_output_check(r, 12.)){			// outputs to a file
-		reb_output_append_orbits(r, "orbits.txt");
+		reb_output_orbits(r, "orbits.txt");
 	}
 }
