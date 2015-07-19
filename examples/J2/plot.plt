@@ -1,7 +1,5 @@
 #!/bin/gnuplot
-set output "plot.png"
 set key top left
-set terminal png
 set xlabel "time [years]"
 set ylabel "pericenter [deg]"
 set autoscale xfix 
@@ -15,3 +13,4 @@ plot \
 "a.txt" u ($1/2./pi):(mod360($4/pi*180)) w p t "simulation", \
 mod360(wdot*(x*2.*pi)/pi*180.) w l t "linear theory"
 
+pause -1

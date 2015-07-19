@@ -1,7 +1,5 @@
 #!/bin/gnuplot
-set output "prdragcirumbinary.png"
 set key top left
-set terminal png
 set xlabel "time [years]"
 set ylabel "semimajor axis [AU]"
 set multiplot layout 2,1
@@ -18,4 +16,4 @@ plot "a.txt" u ($1/2./pi):($2) notit
 set ylabel "semimajor axis error [AU]"
 plot "a.txt" u ($1/2./pi):(abs($2-a($1/2./pi))) notit
 
-
+pause -1
