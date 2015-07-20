@@ -1,4 +1,6 @@
 from ctypes import *
+from . import clibrebound
+from .particle import *
 import math
 import os
 import ctypes.util
@@ -33,31 +35,80 @@ class reb_ghostbox(Structure):
                 ("shiftvy", c_double),
                 ("shiftvz", c_double)]
 
-class reb_particle(Structure):
-    _fields_ = [("x", c_double),
-                ("y", c_double),
-                ("z", c_double),
-                ("vx", c_double),
-                ("vy", c_double),
-                ("vz", c_double),
-                ("ax", c_double),
-                ("ay", c_double),
-                ("az", c_double),
-                ("m", c_double),
-                ("lastcollision", c_double),
-                ("c", c_void_p),
-                ("id", c_int)]
 
 class reb_simulation_integrator_hybrid(Structure):
     _fields_ = [(("switch_ratio"), c_double),
                 ("mode", c_int)]
 
 
-class Simulation(Structure):
+class reb_simulation(Structure):
+    pass
+reb_simulation._fields_ = [("t", c_double),
+                ("G", c_double),
+                ("softening", c_double),
+                ("dt", c_double),
+                ("dt_last_done", c_double),
+                ("N", c_int),
+                ("N_var", c_int),
+                ("N_active", c_int),
+                ("allocated_N", c_int),
+                ("exit_simulation", c_int),
+                ("exact_finish_time", c_int),
+                ("force_is_velocity_dependent", c_uint),
+                ("gravity_ignore_10", c_uint),
+                ("output_timing_last", c_double),
+                ("boxsize", reb_vec3d),
+                ("boxsize_max", c_double),
+                ("root_size", c_double),
+                ("root_n", c_int),
+                ("root_nx", c_int),
+                ("root_ny", c_int),
+                ("root_nz", c_int),
+                ("nghostx", c_int),
+                ("nghosty", c_int),
+                ("nghostz", c_int),
+                ("collisions", c_void_p),
+                ("collisions_allocatedN", c_int),
+                ("minimum_collision_celocity", c_double),
+                ("collisions_plog", c_double),
+                ("max_radius", c_double*2),
+                ("collisions_Nlog", c_long),
+                ("calculate_megno", c_int),
+                ("megno_Ys", c_double),
+                ("megno_Yss", c_double),
+                ("megno_cov_Yt", c_double),
+                ("megno_var_t", c_double),
+                ("megno_mean_t", c_double),
+                ("megno_mean_Y", c_double),
+                ("megno_n", c_long),
+                ("collision", c_int),
+                ("integrator", c_int),
+                ("boundary", c_int),
+                ("gravity", c_int),
+                ("particles", POINTER(Particle)),
+                ("gravity_cs", POINTER(reb_vec3d)),
+                ("gravity_cs_allocatedN", c_int),
+                ("tree_root", c_void_p),
+                ("opening_angle2", c_double),
+                ("ri_whfast", c_int),  #// TODO!!
+                ("ri_ias15", c_int), #// TODO!!
+                ("ri_sei", c_int), #// TODO!!
+                ("ri_wh", c_int), #// TODO!!
+                ("ri_hybrid", reb_simulation_integrator_hybrid),
+                ("additional_forces", CFUNCTYPE(None,POINTER(reb_simulation))),
+                ("post_timestep_modifications", CFUNCTYPE(None,POINTER(reb_simulation))),
+                ("heartbeat", CFUNCTYPE(None,POINTER(reb_simulation))),
+                ("coefficient_of_restitution", CFUNCTYPE(c_double,POINTER(reb_simulation), c_double)),
+                ("collisions_resolve", CFUNCTYPE(None,POINTER(reb_simulation), c_void_p)),
+                 ]
 
 
-
-
+class Simulation():
+    simulation = None
+    def __init__(self):
+        clibrebound.reb_create_simulation.restype = POINTER(reb_simulation)
+        self.simulation = clibrebound.reb_create_simulation()
+    
     AFF = CFUNCTYPE(None)
     afp = None # additional forces pointer
     ptmp = None # post timestep modifications pointer 
@@ -75,11 +126,13 @@ class Simulation(Structure):
         except:
             # Fails on python3, but not important
             pass
-        s += "Number of particles: \t%d\n" %self.N       
-        s += "Simulation time:     \t%f\n" %self.t
-        if self.N>0:
+        s += "Number of particles: \t%d\n" %self.simulation.contents.N       
+        s += "Simulation time:     \t%f\n" %self.simulation.contents.t
+        s += "Current timestep:    \t%f\n" %self.simulation.contents.dt
+        if self.simulation.contents.N>0:
             s += "---------------------------------\n"
             for p in self.particles:
+                pass
                 s += str(p) + "\n"
         s += "---------------------------------"
         print(s)
@@ -116,63 +169,6 @@ class Simulation(Structure):
             self.ptmp = "C function pointer value currently not accessible from python.  Edit librebound.py" 
 
 # Setter/getter of parameters and constants
-    @property
-    def G(self):
-        return c_double.in_dll(self.clibrebound, "G").value
-
-    @G.setter
-    def G(self, value):
-        c_double.in_dll(self.clibrebound, "G").value = value
-
-    @property
-    def dt(self):
-        return c_double.in_dll(self.clibrebound, "dt").value
-
-    @dt.setter
-    def dt(self, value):
-        c_double.in_dll(self.clibrebound, "dt").value = value
-
-    @property
-    def t(self):
-        return c_double.in_dll(self.clibrebound, "t").value
-
-    @t.setter
-    def t(self, value):
-        c_double.in_dll(self.clibrebound, "t").value = value
-
-    @property
-    def min_dt(self):
-        return c_double.in_dll(self.clibrebound, "integrator_ias15_min_dt").value
-
-    @min_dt.setter
-    def min_dt(self, value):
-        c_double.in_dll(self.clibrebound, "integrator_ias15_min_dt").value = value
-    
-    @property
-    def integrator_ias15_epsilon(self):
-        return c_double.in_dll(self.clibrebound, "integrator_ias15_epsilon").value
-
-    @integrator_ias15_epsilon.setter
-    def integrator_ias15_epsilon(self, value):
-        c_double.in_dll(self.clibrebound, "integrator_ias15_epsilon").value = value
-
-
-    @property
-    def N(self):
-        return c_int.in_dll(self.clibrebound, "N").value 
-   
-    @N.setter
-    def N(self, value):
-        c_int.in_dll(self.clibrebound, "N").value = value
-
-    @property
-    def N_active(self):
-        return c_int.in_dll(self.clibrebound, "N_active").value
-
-    @N_active.setter
-    def N_active(self, value):
-        c_int.in_dll(self.clibrebound, "N_active").value = value
-
     @property
     def integrator(self):
         i = c_int.in_dll(self.clibrebound, "integrator").value
@@ -290,16 +286,6 @@ class Simulation(Structure):
         return G_SI*masses_SI[new_m]*times_SI[new_t]**2/lengths_SI[new_l]**3
 
        
-# Debug tools
-    @property
-    def iter(self):
-        return c_int.in_dll(self.clibrebound,"iter").value 
-
-    @property
-    def timing(self):
-        return c_double.in_dll(self.clibrebound,"timing").value 
-   
-    
 # MEGNO
     def init_megno(self, delta):
         self.clibrebound.tools_megno_init(c_double(delta))
@@ -328,7 +314,7 @@ class Simulation(Structure):
         if particle is not None:
             if isinstance(particle, Particle):
                 if kwargs == {}: # copy particle
-                    self.clibrebound.particles_add(particle)
+                    clibrebound.reb_add(self.simulation, particle)
                 else: # use particle as primary
                     self.add(Particle(primary=particle, **kwargs))
             elif isinstance(particle, list):
@@ -351,10 +337,8 @@ class Simulation(Structure):
         for example when a particle is added or removed from the simulation. 
         """
         ps = []
-        N = c_int.in_dll(self.clibrebound,"N").value 
-        getp = self.clibrebound.get_particles
-        getp.restype = POINTER(Particle)
-        ps_a = getp()
+        N = self.simulation.contents.N 
+        ps_a = self.simulation.contents.particles
         for i in range(0,N):
             ps.append(ps_a[i])
         return ps
@@ -526,64 +510,6 @@ class Simulation(Structure):
     class NoParticleLeft(Exception):
         pass
     
-Simulation._fields_ = [("t", c_double),
-                ("G", c_double),
-                ("softening", c_double),
-                ("dt", c_double),
-                ("dt_last_done", c_double),
-                ("N", c_int),
-                ("N_var", c_int),
-                ("N_active", c_int),
-                ("allocated_N", c_int),
-                ("exit_simulation", c_int),
-                ("exact_finish_time", c_int),
-                ("force_is_velocity_dependent", c_uint),
-                ("gravity_ignore_10", c_uint),
-                ("output_timing_last", c_double),
-                ("boxsize", reb_vec3d),
-                ("boxsize_max", c_double),
-                ("root_size", c_double),
-                ("root_n", c_int),
-                ("root_nx", c_int),
-                ("root_ny", c_int),
-                ("root_nz", c_int),
-                ("nghostx", c_int),
-                ("nghosty", c_int),
-                ("nghostz", c_int),
-                ("collisions", c_void_p),
-                ("collisions_allocatedN", c_int),
-                ("minimum_collision_celocity", c_double),
-                ("collisions_plog", c_double),
-                ("max_radius", c_double*2),
-                ("collisions_Nlog", c_long),
-                ("calculate_megno", c_int),
-                ("megno_Ys", c_double),
-                ("megno_Yss", c_double),
-                ("megno_cov_Yt", c_double),
-                ("megno_var_t", c_double),
-                ("megno_mean_t", c_double),
-                ("megno_mean_Y", c_double),
-                ("megno_n", c_long),
-                ("collision", c_int),
-                ("integrator", c_int),
-                ("boundary", c_int),
-                ("gravity", c_int),
-                ("particles", POINTER(reb_particle)),
-                ("gravity_cs", POINTER(reb_vec3d)),
-                ("gravity_cs_allocatedN", c_int),
-                ("tree_root", c_void_p),
-                ("opening_angle2", c_double),
-                ("ri_whfast", c_int),  #// TODO!!
-                ("ri_ias15", c_int), #// TODO!!
-                ("ri_sei", c_int), #// TODO!!
-                ("ri_wh", c_int), #// TODO!!
-                ("ri_hybrid", reb_simulation_integrator_hybrid),
-                ("additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
-                ("post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
-                ("heartbeat", CFUNCTYPE(None,POINTER(Simulation))),
-                ("coefficient_of_restitution", CFUNCTYPE(c_double,POINTER(Simulation), c_double)),
-                ("collisions_resolve", CFUNCTYPE(None,POINTER(Simulation), c_void_p)),
-                 ]
 
 # Unit constants
 G_SI = 6.674e-11
@@ -618,6 +544,5 @@ masses_SI = {'kg':1.,
 
 
 # Import at the end to avoid circular dependence
-from .particle import *
 from . import horizons
 from . import debug

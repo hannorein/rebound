@@ -73,7 +73,7 @@ class Orbit():
 
 
 class Particle(Structure):
-    """A particle datastructure. Same as defined in particle.h"""
+    """A particle datastructure. Same as defined in rebound.h"""
     _fields_ = [("x", c_double),
                 ("y", c_double),
                 ("z", c_double),
@@ -84,9 +84,11 @@ class Particle(Structure):
                 ("ay", c_double),
                 ("az", c_double),
                 ("m", c_double),
-                ("ID", c_int) ]
+                ("lastcollision", c_double),
+                ("c", c_void_p),
+                ("id", c_int)]
     def __str__(self):
-        return "<rebound.Particle object, ID=%s m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.ID,self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
+        return "<rebound.Particle object, id=%s m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.id,self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
     def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, ID=None):   
         if particle is not None:
