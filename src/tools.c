@@ -89,40 +89,28 @@ double reb_tools_energy(struct reb_simulation* r){
 void reb_move_to_com(struct reb_simulation* const r){
 	const int N = r->N;
 	struct reb_particle* restrict const particles = r->particles;
-	double m = 0;
-	double x = 0;
-	double y = 0;
-	double z = 0;
-	double vx = 0;
-	double vy = 0;
-	double vz = 0;
+	struct reb_particle com = reb_get_com(r);
 	for (int i=0;i<N;i++){
-		struct reb_particle p = particles[i];
-		m  += p.m;
-		x  += p.x*p.m;
-		y  += p.y*p.m;
-		z  += p.z*p.m;
-		vx += p.vx*p.m;
-		vy += p.vy*p.m;
-		vz += p.vz*p.m;
-	}
-	x /= m;
-	y /= m;
-	z /= m;
-	vx /= m;
-	vy /= m;
-	vz /= m;
-	for (int i=0;i<N;i++){
-		particles[i].x  -= x;
-		particles[i].y  -= y;
-		particles[i].z  -= z;
-		particles[i].vx -= vx;
-		particles[i].vy -= vy;
-		particles[i].vz -= vz;
+		particles[i].x  -= com.x;
+		particles[i].y  -= com.y;
+		particles[i].z  -= com.z;
+		particles[i].vx -= com.vx;
+		particles[i].vy -= com.vy;
+		particles[i].vz -= com.vz;
 	}
 }
 
-struct reb_particle reb_get_com(struct reb_particle p1, struct reb_particle p2){
+struct reb_particle reb_get_com(struct reb_simulation* r){
+	struct reb_particle com = {.m=0, .x=0, .y=0, .z=0, .vx=0, .vy=0, .vz=0};
+	const int N = r->N;
+	struct reb_particle* restrict const particles = r->particles;
+	for (int i=0;i<N;i++){
+		com = reb_get_com_of_pair(com, particles[i]);
+	}
+	return com;
+}
+
+struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_particle p2){
 	p1.x   = p1.x*p1.m + p2.x*p2.m;		
 	p1.y   = p1.y*p1.m + p2.y*p2.m;
 	p1.z   = p1.z*p1.m + p2.z*p2.m;

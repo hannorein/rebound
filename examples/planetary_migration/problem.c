@@ -117,7 +117,7 @@ void migration_forces(struct reb_simulation* r){
 				p->az += -dvz*prefac1 + (hx*dy-hy*dx)*prefac2;
 			}
 		}
-		com = reb_get_com(com,particles[i]);
+		com = reb_get_com_of_pair(com,particles[i]);
 	}
 }
 

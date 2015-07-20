@@ -522,9 +522,14 @@ double reb_random_rayleigh(double sigma);
 void reb_move_to_com(struct reb_simulation* const r);
 
 /**
+ * Returns the center of mass.
+ */
+struct reb_particle reb_get_com(struct reb_simulation* r);
+
+/**
  * Returns the center of mass of particle p1 and p2.
  */
-struct reb_particle reb_get_com(struct reb_particle p1, struct reb_particle p2);
+struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_particle p2);
 
 ////////////////////////////////
 // Output functions

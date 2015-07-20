@@ -69,7 +69,7 @@ void collision_resolve_merger(struct reb_simulation* r, struct reb_collision c){
 	particles[c.p1].lastcollision = r->t;
 	// Note: We assume only one collision per timestep. 
 	// Setup new particle (in position of particle p1. Particle p2 will be discarded.
-	struct reb_particle cm = reb_get_com(p1, p2);
+	struct reb_particle cm = reb_get_com_of_pair(p1, p2);
 	particles[c.p1].x = cm.x;
 	particles[c.p1].y = cm.y;
 	particles[c.p1].z = cm.z;

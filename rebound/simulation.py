@@ -127,6 +127,7 @@ class Simulation():
             # Fails on python3, but not important
             pass
         s += "Number of particles: \t%d\n" %self.simulation.contents.N       
+        s += "Selected integrator: \t" + self.integrator + "\n"       
         s += "Simulation time:     \t%f\n" %self.simulation.contents.t
         s += "Current timestep:    \t%f\n" %self.simulation.contents.dt
         if self.simulation.contents.N>0:
@@ -169,9 +170,13 @@ class Simulation():
             self.ptmp = "C function pointer value currently not accessible from python.  Edit librebound.py" 
 
 # Setter/getter of parameters and constants
+    @property 
+    def N(self):
+        return self.simulation.contents.N
+
     @property
     def integrator(self):
-        i = c_int.in_dll(self.clibrebound, "integrator").value
+        i = self.simulation.contents.integrator
         for name, _i in INTEGRATORS.items():
             if i==_i:
                 return name
@@ -180,7 +185,7 @@ class Simulation():
     @integrator.setter
     def integrator(self, value):
         if isinstance(value, int):
-            self.clibrebound.set_integrator(c_int(value))
+            self.simulation.contents.integrator = c_int(value)
         elif isinstance(value, basestring):
             debug.integrator_fullname = value
             debug.integrator_package = "REBOUND"
@@ -316,7 +321,7 @@ class Simulation():
                 if kwargs == {}: # copy particle
                     clibrebound.reb_add(self.simulation, particle)
                 else: # use particle as primary
-                    self.add(Particle(primary=particle, **kwargs))
+                    self.add(Particle(self.simulation, primary=particle, **kwargs))
             elif isinstance(particle, list):
                 for p in particle:
                     self.add(p)
@@ -326,7 +331,7 @@ class Simulation():
                 self.add(horizons.getParticle(particle,**kwargs))
                 self.convert_p(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass'])
         else: 
-            self.add(Particle(**kwargs))
+            self.add(Particle(self.simulation, **kwargs))
 
 # Particle getter functions
     @property
@@ -475,9 +480,10 @@ class Simulation():
         self.clibrebound.rebound_step(c_int(do_timing))
 
     def integrate(self, tmax, exact_finish_time=1, maxR=0., minD=0.):
+        # TODO: Fix minD maxR
         if debug.integrator_package =="REBOUND":
-            self.clibrebound.rebound_integrate.restype = c_int
-            ret_value = self.clibrebound.rebound_integrate(c_double(tmax),c_int(exact_finish_time),c_double(maxR),c_double(minD))
+            clibrebound.reb_integrate.restype = c_int
+            ret_value = clibrebound.reb_integrate(self.simulation, c_double(tmax))
             if ret_value == 1:
                 raise self.NoParticleLeft("No more particles left in simulation.")
             if ret_value == 2:

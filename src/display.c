@@ -319,7 +319,7 @@ void display(void){
 					}
 					glEnd();
 					glPopMatrix();
-					com = reb_get_com(p,com);
+					com = reb_get_com_of_pair(p,com);
 				}
 			}else{
 				for (int i=1;i<display_r->N;i++){
