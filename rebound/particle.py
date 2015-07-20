@@ -85,6 +85,7 @@ class Particle(Structure):
                 ("ay", c_double),
                 ("az", c_double),
                 ("m", c_double),
+                ("r", c_double),
                 ("lastcollision", c_double),
                 ("c", c_void_p),
                 ("id", c_int)]
