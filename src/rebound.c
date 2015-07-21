@@ -288,7 +288,9 @@ struct reb_simulation* reb_create_simulation(){
 	}
 	printf("MPI-node: %d. Process id: %d.\n",mpi_id, getpid());
 #else // MPI
+#ifndef LIBREBOUND
 	printf("Process id: %d.\n", getpid());
+#endif // LIBREBOUND
 #endif // MPI
 #ifdef OPENMP
 	printf("Using OpenMP with %d threads per node.\n",omp_get_max_threads());
