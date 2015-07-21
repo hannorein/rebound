@@ -24,6 +24,7 @@ include src/collision.h
 include src/boundary.h
 include src/gravity.h
 include src/tree.h
+include src/tree.c
 include src/tools.h
 include src/particle.h
 include src/rebound.h

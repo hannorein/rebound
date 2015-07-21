@@ -119,7 +119,7 @@ reb_simulation._fields_ = [("t", c_double),
                  ]
 
 
-class Simulation():
+class Simulation(object):
     simulation = None
     def __init__(self):
         clibrebound.reb_create_simulation.restype = POINTER(reb_simulation)
@@ -149,7 +149,6 @@ class Simulation():
         if self.N>0:
             s += "---------------------------------\n"
             for p in self.particles:
-                pass
                 s += str(p) + "\n"
         s += "---------------------------------"
         print(s)
@@ -189,6 +188,7 @@ class Simulation():
     @property 
     def dt(self):
         return self.simulation.contents.dt
+
     @dt.setter
     def dt(self, value):
         self.simulation.contents.dt = c_double(value)
@@ -199,6 +199,13 @@ class Simulation():
     @t.setter
     def t(self, value):
         self.simulation.contents.t = c_double(value)
+    
+    @property 
+    def N_active(self):
+        return self.simulation.contents.N_active
+    @N_active.setter
+    def N_active(self, value):
+        self.simulation.contents.N_active = c_int(value)
 
     @property 
     def N(self):
@@ -434,12 +441,6 @@ class Simulation():
     def calculate_energy(self):
         self.clibrebound.tools_energy.restype = c_double
         return self.clibrebound.tools_energy()
-
-    def reset(self):
-        self._units = {'length':None, 'time':None, 'mass':None}
-        debug.reset_debug()
-        self.clibrebound.reset()
-
 
 # Input/Output routines
     def save(self, filename):
