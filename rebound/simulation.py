@@ -162,6 +162,9 @@ class Simulation(object):
     ptmp = None # post timestep modifications pointer 
     _units = {'length':None, 'time':None, 'mass':None}
 
+    def __del__(self):
+        clibrebound.reb_free_simulation(self.simulation)
+
 # Status functions
     def status(self):
         """ Returns a string with a summary of the current status 
