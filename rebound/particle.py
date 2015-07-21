@@ -92,7 +92,7 @@ class Particle(Structure):
     def __str__(self):
         return "<rebound.Particle object, id=%s m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.id,self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
-    def __init__(self, simulation, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, pid=None):   
+    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, pid=None, simulation=None):   
         if particle is not None:
             raise ValueError("Cannot initialise particle from other particles.")
         cart = [x,y,z,vx,vy,vz]
@@ -102,6 +102,8 @@ class Particle(Structure):
         if notNone(cart) and notNone(orbi):
                 raise ValueError("You cannot pass cartesian coordinates and orbital elements at the same time.")
         if notNone(orbi):
+            if simulation is None:
+                raise ValueError("Need to specify simulation when initializing particle with orbital elements.")
             if primary is None:
                 clibrebound.reb_get_com.restype = Particle
                 primary = clibrebound.reb_get_com(simulation)
@@ -238,7 +240,7 @@ class Particle(Structure):
         self.vz = primary.vz + v0*((e+cf)*co*si - sf*si*so)
 
 
-    def calculate_orbit(self, primary=None, verbose=False):
+    def calculate_orbit(self, simulation, primary=None, verbose=False):
         """ Returns a rebound.Orbit object with the keplerian orbital elements
             corresponding to the particle around the central body primary
             (rebound.Particle). Edge cases will return values set to None. If
@@ -264,7 +266,7 @@ class Particle(Structure):
             A rebound.Orbit object (with member variables for the orbital elements)
             """
         if primary is None:
-            primary = rebound.module.particles[0]
+            primary = simulation.contents.particles[0]
 
         o = Orbit()
         if primary.m <= TINY:
@@ -286,7 +288,7 @@ class Particle(Structure):
         dvz = self.vz - primary.vz
         v = math.sqrt ( dvx*dvx + dvy*dvy + dvz*dvz )
         
-        mu = rebound.module.G*(self.m+primary.m)
+        mu = simulation.contents.G*(self.m+primary.m)
         o.a = -mu/( v*v - 2.*mu/o.r )               # semi major axis
         
         h0 = (dy*dvz - dz*dvy)                      # angular momentum vector

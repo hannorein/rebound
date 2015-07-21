@@ -10,6 +10,9 @@ except:
     # Fails on python3, but not important
     pass
 import types
+      
+### The following enum and class definitions need to
+### consitent with those in rebound.h
         
 INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "wh": 3, "leapfrog": 4, "hybrid": 5, "none": 6}
 
@@ -37,9 +40,21 @@ class reb_ghostbox(Structure):
 
 
 class reb_simulation_integrator_hybrid(Structure):
-    _fields_ = [(("switch_ratio"), c_double),
+    _fields_ = [("switch_ratio", c_double),
                 ("mode", c_int)]
 
+class reb_simulation_integrator_wh(Structure):
+    _fields_ = [(("allocatedN"), c_int),
+                ("eta", POINTER(c_double))]
+
+class reb_simulation_integrator_sei(Structure):
+    _fields_ = [("OMEGA", c_double),
+                ("OMEGAZ", c_double),
+                ("lastdt", c_double),
+                ("sindt", c_double),
+                ("tandt", c_double),
+                ("sindtz", c_double),
+                ("tandtz", c_double)]
 
 class reb_simulation(Structure):
     pass
@@ -92,8 +107,8 @@ reb_simulation._fields_ = [("t", c_double),
                 ("opening_angle2", c_double),
                 ("ri_whfast", c_int),  #// TODO!!
                 ("ri_ias15", c_int), #// TODO!!
-                ("ri_sei", c_int), #// TODO!!
-                ("ri_wh", c_int), #// TODO!!
+                ("ri_sei", reb_simulation_integrator_sei), 
+                ("ri_wh", reb_simulation_integrator_wh), 
                 ("ri_hybrid", reb_simulation_integrator_hybrid),
                 ("additional_forces", CFUNCTYPE(None,POINTER(reb_simulation))),
                 ("post_timestep_modifications", CFUNCTYPE(None,POINTER(reb_simulation))),
@@ -126,11 +141,11 @@ class Simulation():
         except:
             # Fails on python3, but not important
             pass
-        s += "Number of particles: \t%d\n" %self.simulation.contents.N       
+        s += "Number of particles: \t%d\n" %self.N       
         s += "Selected integrator: \t" + self.integrator + "\n"       
-        s += "Simulation time:     \t%f\n" %self.simulation.contents.t
-        s += "Current timestep:    \t%f\n" %self.simulation.contents.dt
-        if self.simulation.contents.N>0:
+        s += "Simulation time:     \t%f\n" %self.t
+        s += "Current timestep:    \t%f\n" %self.dt
+        if self.N>0:
             s += "---------------------------------\n"
             for p in self.particles:
                 pass
@@ -170,6 +185,20 @@ class Simulation():
             self.ptmp = "C function pointer value currently not accessible from python.  Edit librebound.py" 
 
 # Setter/getter of parameters and constants
+    @property 
+    def dt(self):
+        return self.simulation.contents.dt
+    @dt.setter
+    def dt(self, value):
+        self.simulation.contents.dt = c_double(value)
+
+    @property 
+    def t(self):
+        return self.simulation.contents.t
+    @t.setter
+    def t(self, value):
+        self.simulation.contents.t = c_double(value)
+
     @property 
     def N(self):
         return self.simulation.contents.N
@@ -321,7 +350,7 @@ class Simulation():
                 if kwargs == {}: # copy particle
                     clibrebound.reb_add(self.simulation, particle)
                 else: # use particle as primary
-                    self.add(Particle(self.simulation, primary=particle, **kwargs))
+                    self.add(Particle(simulation=self.simulation, primary=particle, **kwargs))
             elif isinstance(particle, list):
                 for p in particle:
                     self.add(p)
@@ -331,7 +360,7 @@ class Simulation():
                 self.add(horizons.getParticle(particle,**kwargs))
                 self.convert_p(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass'])
         else: 
-            self.add(Particle(self.simulation, **kwargs))
+            self.add(Particle(simulation=self.simulation, **kwargs))
 
 # Particle getter functions
     @property
@@ -342,7 +371,7 @@ class Simulation():
         for example when a particle is added or removed from the simulation. 
         """
         ps = []
-        N = self.simulation.contents.N 
+        N = self.N 
         ps_a = self.simulation.contents.particles
         for i in range(0,N):
             ps.append(ps_a[i])
@@ -392,7 +421,7 @@ class Simulation():
                 com = _particles[0]
             else:
                 com = self.calculate_com(i)
-            orbits.append(_particles[i].calculate_orbit(primary=com))
+            orbits.append(_particles[i].calculate_orbit(self.simulation, primary=com))
         return orbits
 
 # COM calculation 
@@ -430,7 +459,7 @@ class Simulation():
 
 # Tools
     def move_to_com(self):
-        self.clibrebound.tools_move_to_center_of_momentum()
+        clibrebound.reb_move_to_com(self.simulation)
     
     def calculate_energy(self):
         self.clibrebound.tools_energy.restype = c_double
