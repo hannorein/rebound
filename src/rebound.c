@@ -48,7 +48,9 @@
 #endif
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 
+#ifndef LIBREBOUND
 static const char* logo[];				/**< Logo of rebound. */
+#endif // LIBREBOUND
 const char* reb_build_str = __DATE__ " " __TIME__;	/**< Date and time build string. */
 
 
@@ -323,9 +325,11 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax){
 }
 
 int reb_integrate(struct reb_simulation* const r, double tmax){
+#ifndef LIBREBOUND
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
+#endif // LIBREBOUND
 	r->dt_last_done = r->dt;
 	r->exit_simulation = 0;
 	if (r->heartbeat){ r->heartbeat(r); }				// Heartbeat
