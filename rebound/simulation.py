@@ -198,10 +198,10 @@ class Simulation(object):
         if(isinstance(func,types.FunctionType)):
             # Python function pointer
             self.afp = self.AFF(func)
-            self.clibrebound.set_additional_forces(self.afp)
+            self.simulation.contents.additional_forces = self.afp
         else:
             # C function pointer
-            self.clibrebound.set_additional_forces_with_parameters(func)
+            self.simulation.contents.additional_forces = func
             self.afp = "C function pointer value currently not accessible from python.  Edit librebound.py"
 
     @property
