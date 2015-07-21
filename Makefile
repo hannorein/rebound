@@ -1,7 +1,7 @@
 # This Makefile compiles the shared dynamic library to access the IAS15 integrator.
 
 export CC=cc
-export OPT=-march=native -O3
+export OPT=-march=native -O3 -DLIBREBOUND
 
 librebound: 
 	$(MAKE) -C src librebound

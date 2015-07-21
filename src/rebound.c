@@ -52,10 +52,6 @@ static const char* logo[];				/**< Logo of rebound. */
 const char* reb_build_str = __DATE__ " " __TIME__;	/**< Date and time build string. */
 
 
-// Global (non-thread safe) variables:
-unsigned int reb_show_logo = 1;
-
-
 void reb_step(struct reb_simulation* const r){
 	// A 'DKD'-like integrator will do the first 'D' part.
 	PROFILING_START()
@@ -206,11 +202,11 @@ void reb_reset_function_pointers(struct reb_simulation* const r){
 }
 
 struct reb_simulation* reb_create_simulation(){
-	if (reb_show_logo==1){
-		int i =0;
-		while (logo[i]!=NULL){ printf("%s",logo[i++]); }
-		printf("Built: %s\n\n",reb_build_str);
-	}
+#ifndef LIBREBOUND
+	int i =0;
+	while (logo[i]!=NULL){ printf("%s",logo[i++]); }
+	printf("Built: %s\n\n",reb_build_str);
+#endif // LIBREBOUND
 	reb_tools_init_srand();
 	struct reb_simulation* r = calloc(1,sizeof(struct reb_simulation));
 	reb_reset_temporary_pointers(r);
@@ -359,12 +355,15 @@ int reb_integrate(struct reb_simulation* const r, double tmax){
 #endif // OPENGL
 	reb_integrator_synchronize(r);
 	r->dt = r->dt_last_done;
+#ifndef LIBREBOUND
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
 	printf("\nComputation finished. Total runtime: %f s\n",timing_final-timing_initial);
+#endif // LIBREBOUND
 	return 0;
 }
 
+#ifndef LIBREBOUND
 static const char* logo[] = {
 "          _                           _  \n",   
 "         | |                         | | \n",  
@@ -399,3 +398,4 @@ static const char* logo[] = {
 "http://github.com/hannorein/rebound/     \n",    
 "                                         \n", 
 NULL};
+#endif // LIBREBOUND
