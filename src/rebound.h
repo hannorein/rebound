@@ -153,7 +153,7 @@ struct reb_simulation_integrator_ias15 {
 	int allocatedN; 			// Size of allocated arrays.
 
 	double* restrict at;			// Temporary buffer for acceleration
-	double* restrict x0;			// Temporary buffer for position (used for initial values at h=0) 
+	double* restrict x0;			//                      position (used for initial values at h=0) 
 	double* restrict v0;			//                      velocity
 	double* restrict a0;			//                      acceleration
 	double* restrict csx;			//                      compensated summation
@@ -654,11 +654,11 @@ void reb_tools_megno_init(struct reb_simulation* const r, double delta);
 /*
  * Returns the current value of <Y>
  **/
-double reb_calculate_megno(struct reb_simulation* r);
+double reb_tools_calculate_megno(struct reb_simulation* r);
 
 /*
  * Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
  **/
-double reb_calculate_lyapunov(struct reb_simulation* r);
+double reb_tools_calculate_lyapunov(struct reb_simulation* r);
 
 #endif

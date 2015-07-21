@@ -57,6 +57,38 @@ class reb_simulation_integrator_sei(Structure):
                 ("sindtz", c_double),
                 ("tandtz", c_double)]
 
+class reb_simulation_integrator_ias15(Structure):
+    _fields_ = [("epsilon", c_double),
+                ("min_dt", c_double),
+                ("epsilon_global", c_uint),
+                ("iterations_max_exceeded", c_uint),
+                ("allocatedN", c_int),
+                ("at", POINTER(c_double)),
+                ("x0", POINTER(c_double)),
+                ("v0", POINTER(c_double)),
+                ("a0", POINTER(c_double)),
+                ("csx", POINTER(c_double)),
+                ("csv", POINTER(c_double)),
+                ("g", reb_dp7),
+                ("b", reb_dp7),
+                ("e", reb_dp7),
+                ("g", reb_dp7),
+                ("br", reb_dp7),
+                ("er", reb_dp7),
+                ("dt_last_success", c_double)]
+
+class reb_simulation_integrator_whfast(Structure):
+    _fields_ = [("corrector", c_uint),
+                ("recalculate_jacobi_this_timestep", c_uint),
+                ("safe_mode", c_uint),
+                ("p_j", POINTER(Particle)),
+                ("eta", POINTER(c_double)),
+                ("Mtotal", c_double),
+                ("is_synchronized", c_uint),
+                ("allocatedN", c_uint),
+                ("timestep_warning", c_uint),
+                ("recalculate_jacobi_but_not_synchronized_warning", c_uint)]
+
 class reb_simulation(Structure):
     pass
 reb_simulation._fields_ = [("t", c_double),
@@ -106,8 +138,8 @@ reb_simulation._fields_ = [("t", c_double),
                 ("gravity_cs_allocatedN", c_int),
                 ("tree_root", c_void_p),
                 ("opening_angle2", c_double),
-                ("ri_whfast", c_int),  #// TODO!!
-                ("ri_ias15", c_int), #// TODO!!
+                ("ri_whfast", reb_simulation_integrator_whfast),
+                ("ri_ias15", reb_simulation_integrator_ias15),
                 ("ri_sei", reb_simulation_integrator_sei), 
                 ("ri_wh", reb_simulation_integrator_wh), 
                 ("ri_hybrid", reb_simulation_integrator_hybrid),
@@ -281,11 +313,11 @@ class Simulation(object):
 
 # MEGNO
     def init_megno(self, delta):
-        self.clibrebound.tools_megno_init(c_double(delta))
+        clibrebound.reb_tools_megno_init(self.simulation, c_double(delta))
     
     def calculate_megno(self):
-        self.clibrebound.tools_megno.restype = c_double
-        return self.clibrebound.tools_megno()
+        clibrebound.reb_tools_calculate_megno.restype = c_double
+        return clibrebound.reb_tools_calculate_megno(self.simulation)
     
     def calculate_lyapunov(self):
         self.clibrebound.tools_lyapunov.restype = c_double
@@ -442,11 +474,11 @@ class Simulation(object):
 
     @property
     def integrator_whfast_safe_mode(self):
-        return c_int.in_dll(self.clibrebound, "integrator_whfast_safe_mode").value
+        return self.simulation.contents.ri_whfast.safe_mode
 
     @integrator_whfast_safe_mode.setter
     def integrator_whfast_safe_mode(self, value):
-        c_int.in_dll(self.clibrebound, "integrator_whfast_safe_mode").value = value
+        self.simulation.contents.ri_whfast.safe_mode = c_uint(value)
 
     @property
     def recalculate_jacobi_this_timestep(self):
