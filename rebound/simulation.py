@@ -1,7 +1,7 @@
 from ctypes import *
 from . import clibrebound
 from .particle import *
-from .units import units_convert_p
+from .units import units_convert_particle, check_units, convert_G
 import math
 import os
 import ctypes.util
@@ -261,38 +261,20 @@ class Simulation(object):
 
     @units.setter
     def units(self, newunits):
-        newunits = self.check_units(newunits)        
+        newunits = check_units(newunits)        
         if self.particles: # some particles are loaded
             raise Exception("Error:  You cannot set the units after populating the particles array.  See Units.ipynb in python_tutorials.")
         self.update_units(newunits) 
 
-    def check_units(self, newunits):   
-        if len(newunits) is not 3:
-            raise Exception("Error: Need to pass exactly 3 units for length, time, and mass (any order), see python_tutorials/Units.ipynb")
-        
-        l_unit = t_unit = m_unit = None
-        for unit in newunits:
-            unit = unit.lower()
-            if unit in lengths_SI:
-                l_unit = unit
-            if unit in times_SI:
-                t_unit = unit
-            if unit in masses_SI:
-                m_unit = unit
-
-        if l_unit is None or t_unit is None or m_unit is None:
-            raise Exception("Error: Need to assign rebound.units a tuple consisting of 3 units for length, time, and mass (any order).  See python_tutorials/Units.ipynb.  If you passed such a tuple, at least one of your units isn't in our list.  Please update the dictionaries at the bottom of rebound/rebound/librebound.py and send a pull request!")
-
-        return (l_unit, t_unit, m_unit)
 
     def update_units(self, newunits): 
         self._units['length'] = newunits[0] 
         self._units['time'] = newunits[1] 
         self._units['mass'] = newunits[2] 
-        self.G = self.convert_G(self._units['length'], self._units['time'], self._units['mass'])
+        self.G = convert_G(self._units['length'], self._units['time'], self._units['mass'])
 
     def convert_particle_units(self, *args): 
-        new_l, new_t, new_m = self.check_units(args)
+        new_l, new_t, new_m = check_units(args)
         for p in self.particles:
             self.convert_p(p, self._units['length'], self._units['time'], self._units['mass'], new_l, new_t, new_m)
         self.update_units((new_l, new_t, new_m))
@@ -335,7 +317,7 @@ class Simulation(object):
                 if None in self.units.values():
                     self.units = ('AU', 'yr2pi', 'Msun')
                 self.add(horizons.getParticle(particle,**kwargs))
-                units_convert_p(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass'])
+                units_convert_particle(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass'])
         else: 
             self.add(Particle(simulation=self.simulation, **kwargs))
 

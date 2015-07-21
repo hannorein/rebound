@@ -31,7 +31,7 @@ masses_SI = {'kg':1.,
     'mpluto':8.696138177608748E+02/G_SI*10**9}
 
 
-def units_convert_p(p, old_l, old_t, old_m, new_l, new_t, new_m):
+def units_convert_particle(p, old_l, old_t, old_m, new_l, new_t, new_m):
     p.m = convert_mass(p.m, old_m, new_m)
     p.x = convert_length(p.x, old_l, new_l) 
     p.y = convert_length(p.y, old_l, new_l)
@@ -62,3 +62,21 @@ def convert_G(new_l, new_t, new_m):
     return G_SI*masses_SI[new_m]*times_SI[new_t]**2/lengths_SI[new_l]**3
 
        
+def check_units(newunits):   
+    if len(newunits) is not 3:
+        raise Exception("Error: Need to pass exactly 3 units for length, time, and mass (any order), see python_tutorials/Units.ipynb")
+    
+    l_unit = t_unit = m_unit = None
+    for unit in newunits:
+        unit = unit.lower()
+        if unit in lengths_SI:
+            l_unit = unit
+        if unit in times_SI:
+            t_unit = unit
+        if unit in masses_SI:
+            m_unit = unit
+
+    if l_unit is None or t_unit is None or m_unit is None:
+        raise Exception("Error: Need to assign rebound.units a tuple consisting of 3 units for length, time, and mass (any order).  See python_tutorials/Units.ipynb.  If you passed such a tuple, at least one of your units isn't in our list.  Please update the dictionaries at the bottom of rebound/rebound/librebound.py and send a pull request!")
+
+    return (l_unit, t_unit, m_unit)
