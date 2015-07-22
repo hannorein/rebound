@@ -61,7 +61,7 @@ class reb_simulation_integrator_ias15(Structure):
     _fields_ = [("epsilon", c_double),
                 ("min_dt", c_double),
                 ("epsilon_global", c_uint),
-                ("iterations_max_exceeded", c_uint),
+                ("iterations_max_exceeded", c_ulong),
                 ("allocatedN", c_int),
                 ("at", POINTER(c_double)),
                 ("x0", POINTER(c_double)),
@@ -72,7 +72,6 @@ class reb_simulation_integrator_ias15(Structure):
                 ("g", reb_dp7),
                 ("b", reb_dp7),
                 ("e", reb_dp7),
-                ("g", reb_dp7),
                 ("br", reb_dp7),
                 ("er", reb_dp7),
                 ("dt_last_success", c_double)]
@@ -140,11 +139,11 @@ reb_simulation._fields_ = [("t", c_double),
                 ("gravity_cs_allocatedN", c_int),
                 ("tree_root", c_void_p),
                 ("opening_angle2", c_double),
-                ("ri_whfast", reb_simulation_integrator_whfast),
-                ("ri_ias15", reb_simulation_integrator_ias15),
                 ("ri_sei", reb_simulation_integrator_sei), 
                 ("ri_wh", reb_simulation_integrator_wh), 
                 ("ri_hybrid", reb_simulation_integrator_hybrid),
+                ("ri_whfast", reb_simulation_integrator_whfast),
+                ("ri_ias15", reb_simulation_integrator_ias15),
                 ("additional_forces", CFUNCTYPE(None,POINTER(reb_simulation))),
                 ("post_timestep_modifications", CFUNCTYPE(None,POINTER(reb_simulation))),
                 ("heartbeat", CFUNCTYPE(None,POINTER(reb_simulation))),
@@ -199,6 +198,7 @@ class Simulation(object):
     def additional_forces(self, func):
         if(isinstance(func,types.FunctionType)):
             # Python function pointer
+            self.AFF = CFUNCTYPE(None,POINTER(reb_simulation))
             self.afp = self.AFF(func)
             self.simulation.contents.additional_forces = self.afp
         else:

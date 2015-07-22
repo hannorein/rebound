@@ -378,11 +378,11 @@ struct reb_simulation {
 	
 	//////////////////////////////////////////////
 	/// Integrators
-	struct reb_simulation_integrator_whfast ri_whfast;		/**< The WHFast struct */
-	struct reb_simulation_integrator_ias15 ri_ias15;		/**< The IAS15 struct */
 	struct reb_simulation_integrator_sei ri_sei;		/**< The SEI struct */
 	struct reb_simulation_integrator_wh ri_wh;			/**< The WH struct */
 	struct reb_simulation_integrator_hybrid ri_hybrid;		/**< The Hybrid struct */
+	struct reb_simulation_integrator_whfast ri_whfast;		/**< The WHFast struct */
+	struct reb_simulation_integrator_ias15 ri_ias15;		/**< The IAS15 struct */
 
 	//////////////////////////////////////////////
 	/// Callback functions
@@ -408,6 +408,8 @@ struct reb_simulation {
 	 * Resolve collision within this function. If NULL, assume hard sphere model.
 	 */
 	void (*collision_resolve) (struct reb_simulation* const r, struct reb_collision);
+	
+	
 };
 
 ////////////////////////////////
