@@ -231,7 +231,7 @@ struct reb_simulation* reb_create_simulation(){
 	r->N_var 	= 0; 	
 	r->max_radius[0]	= 0.; 	
 	r->max_radius[1]	= 0.; 	
-	r->exit_simulation	= 0;
+	r->status		= REB_RUNNING;
 	r->exact_finish_time 	= 0;
 	r->force_is_velocitydependent = 0;
 	r->gravity_ignore_10	= 0;
@@ -299,14 +299,18 @@ struct reb_simulation* reb_create_simulation(){
 }
 
 int reb_check_exit(struct reb_simulation* const r, const double tmax){
+	if (r->status>=0){
+		// Exit now.
+		return r->status;
+	}
 	const double dtsign = copysign(1.,r->dt); 	// Used to determine integration direction
 	if(tmax!=INFINITY){
 		if(r->exact_finish_time==1){
 			if ((r->t+r->dt)*dtsign>=tmax*dtsign){  // Next step would overshoot
-				if (r->exit_simulation==2 || r->exit_simulation==1){
-					r->exit_simulation = 1; // Exit now.
+				if (r->status == REB_RUNNING_LAST_STEP){
+					r->status = REB_EXIT_SUCCESS;
 				}else{
-					r->exit_simulation = 2; // Do one small step, then exit.
+					r->status = REB_RUNNING_LAST_STEP; // Do one small step, then exit.
 					r->dt_last_done = r->dt;
 					reb_integrator_synchronize(r);
 					r->dt = tmax-r->t;
@@ -315,15 +319,51 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax){
 		}else{
 			r->dt_last_done = r->dt;
 			if (r->t*dtsign>=tmax*dtsign){  // Past the integration time
-				r->exit_simulation = 1; // Exit now.
+				r->status = REB_EXIT_SUCCESS; // Exit now.
 			}
 		}
 	}
 	if (r->N<=0){
 		fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
-		r->exit_simulation = 1; // Exit now.
+		r->status = REB_EXIT_NOPARTICLES; // Exit now.
 	}
-	return r->exit_simulation;
+	return r->status;
+}
+
+void reb_run_heartbeat(struct reb_simulation* const r){
+	if (r->heartbeat){ r->heartbeat(r); }				// Heartbeat
+	if (r->exit_max_distance){
+		// Check for escaping particles
+		const double max2 = r->exit_max_distance * r->exit_max_distance;
+		const struct reb_particle* const particles = r->particles;
+		const int N = r->N - r->N_var;
+		for (int i=0;i<N;i++){
+			struct reb_particle p = particles[i];
+			double r2 = p.x*p.x + p.y*p.y + p.z*p.z;
+			if (r2>max2){
+				r->status = REB_EXIT_ESCAPE;
+			}
+		}
+	}
+	if (r->exit_min_distance){
+		// Check for close encounters
+		const double min2 = r->exit_min_distance * r->exit_min_distance;
+		const struct reb_particle* const particles = r->particles;
+		const int N = r->N - r->N_var;
+		for (int i=0;i<N;i++){
+			struct reb_particle pi = particles[i];
+			for (int j=0;j<i;j++){
+				struct reb_particle pj = particles[j];
+				const double x = pi.x-pj.x;
+				const double y = pi.y-pj.y;
+				const double z = pi.z-pj.z;
+				const double r2 = x*x + y*y + z*z;
+				if (r2<min2){
+					r->status = REB_EXIT_ENCOUNTER;
+				}
+			}
+		}
+	}
 }
 
 int reb_integrate(struct reb_simulation* const r, double tmax){
@@ -333,8 +373,8 @@ int reb_integrate(struct reb_simulation* const r, double tmax){
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 #endif // LIBREBOUND
 	r->dt_last_done = r->dt;
-	r->exit_simulation = 0;
-	if (r->heartbeat){ r->heartbeat(r); }				// Heartbeat
+	r->status = REB_RUNNING;
+	reb_run_heartbeat(r);
 #ifdef OPENGL
 	if (display_r!=NULL){
 		fprintf(stderr,"\n\033[1mError!\033[0m Cannot vizualize two simulations at the same time. Exiting.\n");
@@ -354,9 +394,9 @@ int reb_integrate(struct reb_simulation* const r, double tmax){
 		display_init(0,NULL, tmax); // This function will never return (GLUT issue/bug).
 	}
 #else // OPENGL
-	while(reb_check_exit(r,tmax)!=1){
+	while(reb_check_exit(r,tmax)<=0){
 		reb_step(r); 			
-		if (r->heartbeat){ r->heartbeat(r); }
+		reb_run_heartbeat(r);
 	}
 #endif // OPENGL
 	reb_integrator_synchronize(r);

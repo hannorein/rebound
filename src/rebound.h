@@ -30,6 +30,17 @@
 #endif
 
 extern const char* reb_build_str;	// Date and time build string.
+	
+
+enum REB_STATUS {
+	REB_RUNNING_LAST_STEP = -2,
+	REB_RUNNING = -1,   
+	REB_EXIT_SUCCESS = 0,   
+	REB_EXIT_ERROR = 1,		// Generic error
+	REB_EXIT_NOPARTICLES = 2,
+	REB_EXIT_ENCOUNTER = 3,
+	REB_EXIT_ESCAPE = 4,
+};
 
 // Forward declarations
 struct reb_simulation;
@@ -265,15 +276,17 @@ struct reb_simulation {
 	int 	N_var;			/**< Number of variational particles. Default: 0.*/
 	int 	N_active;		/**< Number of massive particles included in force calculation. Default: N.*/
 	int 	allocatedN;		/**< Current maximum space allocated in the particles array on this node. */
-	int 	exit_simulation;	/**< Set to 1 to exit the simulation at the end of the next timestep. */
+	enum REB_STATUS status;	/**< Set to 1 to exit the simulation at the end of the next timestep. */
 	int 	exact_finish_time; 	/**< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. */
 
 	unsigned int force_is_velocitydependent; 	/**< Set to 1 if integrator needs to consider velocity dependent forces. */ 
 	unsigned int gravity_ignore_10;			/**< Ignore the gravity form the central object (for WH-type integrators)*/
 	double output_timing_last; 			/**< Time when reb_output_timing() was called the last time. */
+	double exit_max_distance;			/**< Exit simulation if distance from origin larger than this value */
+	double exit_min_distance;			/**< Exit simulation if distance from another particle smaller than this value */
 
 	//////////////////////////////////////////////
-	/// Boxes
+	/// Boxes 
 	struct  reb_vec3d boxsize;	/**< Size of the entire box, root_x*boxsize. */
 	double 	boxsize_max;		/**< Maximum size of the entire box in any direction. Set in box_init().*/
 	double  root_size;		/**< Size of a root box. */
@@ -478,6 +491,11 @@ int reb_remove(struct reb_simulation* const rindex, int id, int keepSorted);
  * 0 if id was not found in the particles array.
  */
 int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted);
+
+/**
+ * Run the heartbeat function and check for escaping particles.
+ */
+void reb_run_heartbeat(struct reb_simulation* const r);
 
 ////////////////////////////////
 // Tools (random numbers)
