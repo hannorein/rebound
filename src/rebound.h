@@ -429,7 +429,7 @@ void reb_step(struct reb_simulation* const r);
  * Performon an integration. Starting at the current time t and until time tmax.
  * tmax==0 means integrate forever.
  */
-int reb_integrate(struct reb_simulation* const r, double tmax);
+enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax);
 
 /*
  * Synchronize particles manually at end of timestep.

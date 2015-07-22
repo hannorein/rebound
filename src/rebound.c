@@ -366,7 +366,7 @@ void reb_run_heartbeat(struct reb_simulation* const r){
 	}
 }
 
-int reb_integrate(struct reb_simulation* const r, double tmax){
+enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
 #ifndef LIBREBOUND
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
@@ -406,7 +406,7 @@ int reb_integrate(struct reb_simulation* const r, double tmax){
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
 	printf("\nComputation finished. Total runtime: %f s\n",timing_final-timing_initial);
 #endif // LIBREBOUND
-	return 0;
+	return r->status;
 }
 
 #ifndef LIBREBOUND
