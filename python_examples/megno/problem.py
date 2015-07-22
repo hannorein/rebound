@@ -14,6 +14,7 @@ import multiprocessing
 # Runs one simulation.
 def simulation(par):
     saturn_a, saturn_e = par
+    sim 
     rebound.reset()
     rebound.integrator = "whfast"
     rebound.min_dt = 5.
