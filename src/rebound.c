@@ -228,6 +228,8 @@ struct reb_simulation* reb_create_simulation(){
 	r->allocatedN	= 0;	
 	r->N_active 	= -1; 	
 	r->N_var 	= 0; 	
+	r->exit_min_distance 	= 0; 	
+	r->exit_max_distance 	= 0; 	
 	r->max_radius[0]	= 0.; 	
 	r->max_radius[1]	= 0.; 	
 	r->status		= REB_RUNNING;

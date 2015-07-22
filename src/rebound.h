@@ -481,7 +481,7 @@ void reb_remove_all(struct reb_simulation* const r);
  * Returns 1 if particle was successfully removed, 0 if index passed was 
  * out of range.
  */
-int reb_remove(struct reb_simulation* const rindex, int id, int keepSorted);
+int reb_remove(struct reb_simulation* const r, int index, int keepSorted);
 
 /**
  * Remove particle by id.

@@ -391,7 +391,7 @@ class Simulation(object):
     def particles(self):
         self.clibrebound.particles_remove_all()
 
-    def remove_particle(self, index=None, id=None, keepSorted=1):
+    def remove(self, index=None, id=None, keepSorted=1):
         """ Removes a particle from the simulation.
 
         Parameters
@@ -404,12 +404,12 @@ class Simulation(object):
         particles and many removals to speed things up.
         """
         if index is not None:
-            success = self.clibrebound.particles_remove(c_int(index), keepSorted)
+            success = clibrebound.reb_remove(self.simulation, c_int(index), keepSorted)
             if not success:
                 print("Index %d passed to remove_particle was out of range (N=%d). Did not remove particle.\n"%(index, self.N))
             return
         if id is not None:
-            success = self.clibrebound.particles_remove_id(c_int(id), keepSorted)
+            success = clibrebound.reb_remove_by_id(self.simulation, c_int(id), keepSorted)
             if not success:
                 print("id %d passed to remove_particle was not found.  Did not remove particle.\n"%(id))
 
