@@ -394,7 +394,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
 		display_init(0,NULL, tmax); // This function will never return (GLUT issue/bug).
 	}
 #else // OPENGL
-	while(reb_check_exit(r,tmax)<=0){
+	while(reb_check_exit(r,tmax)<0){
 		reb_step(r); 			
 		reb_run_heartbeat(r);
 	}

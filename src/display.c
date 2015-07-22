@@ -82,7 +82,7 @@ void display_exit(void){
 double display_tmax;
 
 void display_func(void){
-	if (reb_check_exit(display_r,display_tmax)!=1){
+	if (reb_check_exit(display_r,display_tmax)<0){
 		if (display_limit){
 			struct timeval tim;
 			gettimeofday(&tim, NULL);
