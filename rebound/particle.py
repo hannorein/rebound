@@ -92,7 +92,7 @@ class Particle(Structure):
     def __str__(self):
         return "<rebound.Particle object, id=%s m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.id,self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
-    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, pid=None, simulation=None):   
+    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, id=None, simulation=None):   
         if particle is not None:
             raise ValueError("Cannot initialise particle from other particles.")
         cart = [x,y,z,vx,vy,vz]
@@ -143,7 +143,7 @@ class Particle(Structure):
             self.vy = vy
             self.vz = vz
 
-        self.id = -1 if pid is None else pid
+        self.id = -1 if id is None else id
 
     def set_orbit(self,
                     simulation,

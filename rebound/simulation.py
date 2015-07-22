@@ -1,5 +1,5 @@
 from ctypes import *
-from . import clibrebound
+from . import clibrebound, Escape, NoParticles, Encounter, SimulationError
 from .particle import *
 from .units import units_convert_particle, check_units, convert_G
 import math
@@ -243,6 +243,20 @@ class Simulation(object):
     @N_active.setter
     def N_active(self, value):
         self.simulation.contents.N_active = c_int(value)
+    
+    @property 
+    def exit_max_distance(self):
+        return self.simulation.contents.exit_max_distance
+    @exit_max_distance.setter
+    def exit_max_distance(self, value):
+        self.simulation.contents.exit_max_distance = c_double(value)
+    
+    @property 
+    def exit_min_distance(self):
+        return self.simulation.contents.exit_min_distance
+    @exit_min_distance.setter
+    def exit_min_distance(self, value):
+        self.simulation.contents.exit_min_distance = c_double(value)
 
     @property 
     def N(self):
@@ -377,16 +391,16 @@ class Simulation(object):
     def particles(self):
         self.clibrebound.particles_remove_all()
 
-    def remove_particle(self, index=None, ID=None, keepSorted=1):
+    def remove_particle(self, index=None, id=None, keepSorted=1):
         """ Removes a particle from the simulation.
 
         Parameters
 
         ----------
 
-        Either the index in the particles array to remove, or the ID of the particle to
+        Either the index in the particles array to remove, or the id of the particle to
         remove.  The keepSorted flag ensures the particles array remains sorted
-        in order of increasing IDs.  One might set it to zero in cases with many
+        in order of increasing ids.  One might set it to zero in cases with many
         particles and many removals to speed things up.
         """
         if index is not None:
@@ -394,10 +408,10 @@ class Simulation(object):
             if not success:
                 print("Index %d passed to remove_particle was out of range (N=%d). Did not remove particle.\n"%(index, self.N))
             return
-        if ID is not None:
-            success = self.clibrebound.particles_remove_ID(c_int(ID), keepSorted)
+        if id is not None:
+            success = self.clibrebound.particles_remove_id(c_int(id), keepSorted)
             if not success:
-                print("ID %d passed to remove_particle was not found.  Did not remove particle.\n"%(ID))
+                print("id %d passed to remove_particle was not found.  Did not remove particle.\n"%(id))
 
 
 # Orbit calculation
@@ -498,43 +512,23 @@ class Simulation(object):
     def step(self, do_timing = 1):
         self.clibrebound.rebound_step(c_int(do_timing))
 
-    def integrate(self, tmax, exact_finish_time=1, maxR=0., minD=0.):
-        # TODO: Fix minD maxR
+    def integrate(self, tmax, exact_finish_time=1):
         if debug.integrator_package =="REBOUND":
             clibrebound.reb_integrate.restype = c_int
             ret_value = clibrebound.reb_integrate(self.simulation, c_double(tmax))
             if ret_value == 1:
-                raise self.NoParticleLeft("No more particles left in simulation.")
+                raise SimulationError("An error occured during the integration.")
             if ret_value == 2:
-                raise self.ParticleEscaping(c_int.in_dll(self.clibrebound, "escapedParticle").value, self.t)
+                raise NoParticles("No more particles left in simulation.")
             if ret_value == 3:
-                raise self.CloseEncounter(c_int.in_dll(self.clibrebound, "closeEncounterPi").value,
-                                     c_int.in_dll(self.clibrebound, "closeEncounterPj").value, self.t)
+                raise Encounter("Two particles had a close encounter (d<exit_min_distance).")
+            if ret_value == 4:
+                raise Escape("A particle escaped (r>exit_max_distance).")
         else:
             debug.integrate_other_package(tmax,exact_finish_time)
 
     def integrator_synchronize(self):
         self.clibrebound.integrator_synchronize()
-
-# Exceptions    
-    class CloseEncounter(Exception):
-        def __init__(self, index1, index2, t):
-                self.index1 = index1
-                self.index2 = index2
-                self.t = t
-        def __str__(self):
-                return "A close encounter occured at time %f between particles with indices %d and %d."%(self.t, self.index1,self.index2)
-
-    class ParticleEscaping(Exception):
-        def __init__(self, index, t):
-            self.index = index
-            self.t = t
-        def __str__(self):
-            return "At least one particle's distance > maxR at time %f (index = %d)."%(self.t, self.index)
-
-    class NoParticleLeft(Exception):
-        pass
-    
 
 
 # Import at the end to avoid circular dependence

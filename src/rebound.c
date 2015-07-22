@@ -161,7 +161,6 @@ void reb_free_simulation(struct reb_simulation* const r){
 	free(r->ri_ias15.a0  	);
 	free(r->ri_ias15.csx 	);
 	free(r->ri_ias15.csv 	);
-	free(r->ri_ias15.at  	);
 	free(r->ri_wh.eta 	);
 	free(r->particles	);
 }

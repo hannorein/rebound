@@ -28,9 +28,25 @@ except:
 def build_str():
     return str(c_char_p.in_dll(clibrebound, "reb_build_str").value)
 
+
+# Exceptions    
+class SimulationError(Exception):  
+    pass
+
+class Encounter(Exception):
+    pass
+
+class Escape(Exception):
+    pass
+
+class NoParticles(Exception):
+    pass
+    
+
+
 from .simulation import Simulation
 from .particle import Particle
 from .particle import Orbit
 from .interruptible_pool import InterruptiblePool
 
-__all__ = ["Simulation", "Orbit", "Particle"]
+__all__ = ["Simulation", "Orbit", "Particle", "SimulationError", "Encounter", "Escape", "NoParticles"]
