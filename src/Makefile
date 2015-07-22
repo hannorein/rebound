@@ -43,10 +43,6 @@ ifeq ($(QUADRUPOLE), 1)
 	PREDEF+= -DQUADRUPOLE
 endif
 
-ifeq ($(PARTICLEIDS), 1)
-	PREDEF+= -DPARTICLEIDS
-endif
-
 ifeq ($(PROFILING), 1)
 	PREDEF+= -DPROFILING
 endif
@@ -101,6 +97,7 @@ clean:
 
 
 # This part of the Makefile compiles the shared dynamic library librebound.
+librebound: OPT+= -fPIC
 librebound:
 	# Remove old object files
 	rm -f *.o
