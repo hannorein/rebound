@@ -3,7 +3,6 @@
  * 
  * This example uses the IAS15 or WHFAST integrator
  * to calculate the MEGNO of a two planet system.
- *
  */
 #include <stdio.h>
 #include <stdlib.h>

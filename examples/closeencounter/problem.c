@@ -7,7 +7,6 @@
  * automatically decreases the timestep whenever a close 
  * encounter happens. IAS15 is very high order and ideally suited for the 
  * detection of these kind of encounters.
- *
  */
 #include <stdio.h>
 #include <stdlib.h>

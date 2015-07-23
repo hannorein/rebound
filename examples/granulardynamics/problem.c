@@ -5,7 +5,6 @@
  * forces are present in this example. Two boundary layers made of 
  * particles simulate shearing walls. These walls are heating
  * up the particles, create a dense and cool layer in the middle.
- * 
  */
 #include <stdio.h>
 #include <stdlib.h>

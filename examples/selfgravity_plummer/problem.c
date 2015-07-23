@@ -6,7 +6,6 @@
  * fixed timestep might not allow you to resolve individual two-body
  * encounters. An alternative integrator is IAS15 which
  * comes with adaptive timestepping.
- * 
  */
 #include <stdio.h>
 #include <stdlib.h>

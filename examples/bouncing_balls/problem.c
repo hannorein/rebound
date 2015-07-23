@@ -3,7 +3,6 @@
  * 
  * This example is a simple test of collision detection 
  * methods.
- *
  */
 #include <stdio.h>
 #include <stdlib.h>

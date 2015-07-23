@@ -4,7 +4,6 @@
  * This example tests collision detection methods.
  * The example uses a non-square, rectangular box. 10 particles are placed
  * along a line. All except one of the particles are at rest initially.
- * 
  */
 #include <stdio.h>
 #include <stdlib.h>

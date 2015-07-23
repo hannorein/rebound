@@ -6,7 +6,6 @@
  * you'll see one copy of the computational domain. Press `g` to see
  * the ghost boxes which are used to calculate gravity and collisions.
  * Particle properties resemble those found in Saturn's rings. 
- *
  */
 #include <stdio.h>
 #include <stdlib.h>

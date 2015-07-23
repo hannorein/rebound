@@ -10,7 +10,6 @@
  * overlap. This example also shows how to implement your own collision
  * routine. This is where one could add fragmentation, or merging of
  * particles.
- *
  */
 #include <stdio.h>
 #include <stdlib.h>

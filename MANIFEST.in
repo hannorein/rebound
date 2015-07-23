@@ -31,3 +31,4 @@ include src/rebound.h
 include src/input.h
 include README.rst
 include LICENSE
+include version.txt

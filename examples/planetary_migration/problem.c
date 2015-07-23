@@ -11,7 +11,6 @@
  * can be used. Note that the forces are velocity dependent.
  * Special thanks goes to Willy Kley for helping me to implement
  * the damping terms as actual forces. 
- *
  */
 #include <stdio.h>
 #include <stdlib.h>

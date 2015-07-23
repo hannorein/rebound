@@ -10,7 +10,6 @@
  *
  * You can change the viewing angle of the camera with your mouse or by pressing
  * the `r` key. 
- * 
  */
 #include <stdio.h>
 #include <stdlib.h>

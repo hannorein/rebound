@@ -30,6 +30,7 @@
 #endif
 
 extern const char* reb_build_str;	// Date and time build string.
+extern const char* reb_version_str;	// Version string.
 
 // Enum, describing the return status of rebound_integrate
 enum REB_STATUS {

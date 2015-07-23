@@ -14,7 +14,6 @@
  * off safe-mode to allow fast and accurate simulations with the symplectic
  * corrector. If an output is required, you need to call ireb_integrator_synchronize()
  * before accessing the particle structure.
- * 
  */
 #include <stdio.h>
 #include <stdlib.h>

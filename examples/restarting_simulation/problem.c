@@ -4,7 +4,6 @@
  * This example demonstrates how to restart a simulation
  * using a binary file. A shearing sheet ring simulation is used, but
  * the same method can be applied to any other type of simulation.
- * 
  */
 #include <stdio.h>
 #include <stdlib.h>

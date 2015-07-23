@@ -4,7 +4,6 @@
  * This example provides an implementation of the 
  * Poynting-Robertson effect. The code is using the IAS15 integrator
  * which is ideally suited for this velocity dependent force.
- * 
  */
 #include <stdio.h>
 #include <stdlib.h>
