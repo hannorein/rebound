@@ -58,3 +58,12 @@ with open("src/rebound.c") as f:
     with open("src/rebound.c", "w") as f:
         f.writelines(reboundlines)
 
+with open("setup.py") as f:
+    setuplines = f.readlines()
+    for i,l in enumerate(setuplines):
+        if "version='" in l:
+            setuplines[i] = "    version='"+reboundversion+"'\n"
+
+    with open("setup.py", "w") as f:
+        f.writelines(setuplines)
+
