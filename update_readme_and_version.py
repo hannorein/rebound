@@ -2,6 +2,10 @@
 # This script automatically creates a list of examples by reading the header in all problem.c files.
 import glob
 
+with open("version.txt") as f:
+    reboundversion = f.readlines()[0].strip()
+    print "Updating version to "+reboundversion
+
 with open("README.rst") as f:
     readme = f.readlines()
 
@@ -9,6 +13,8 @@ keep_lines_after_header = 5
 with open("README.rst","w") as f:
     start_delete = -1
     for i in xrange(0,len(readme)):
+        if "badge/rebound-v" in readme[i]:
+            readme[i] = ".. image:: http://img.shields.io/badge/rebound-v"+reboundversion+"-green.svg?style=flat\n"
         if readme[i]=="Examples\n":
             if readme[i+1]=="========\n":
                 start_delete = i + keep_lines_after_header
@@ -42,10 +48,6 @@ with open("README.rst","w") as f:
             start_delete = -1
         if start_delete==-1 or i<start_delete:
             f.write(readme[i])
-
-import re
-with open("version.txt") as f:
-    reboundversion = f.readlines()[0].strip()
 
 with open("src/rebound.c") as f:
     reboundlines = f.readlines()
