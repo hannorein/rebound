@@ -18,17 +18,17 @@ compiler:
 script:
     - cd $TRAVIS_BUILD_DIR/examples/ && make
     - cd $TRAVIS_BUILD_DIR && make
-    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py AdvWHFast.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Checkpoints.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Churyumov-Gerasimenko.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py CloseEncounters.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py EscapingParticles.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Forces.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py ParticleIDsAndRemoval.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Installation.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Testparticles.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Twitter.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py WHfast.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py AdvWHFast.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Checkpoints.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Churyumov-Gerasimenko.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py CloseEncounters.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py EscapingParticles.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Forces.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py ParticleIDsAndRemoval.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Installation.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Testparticles.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Twitter.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py WHfast.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/python_examples/simple_orbit/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/megno/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/horizons/ && python problem.py

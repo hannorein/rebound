@@ -26,7 +26,7 @@ To install the Python version, simply type the following command into a terminal
 
     pip install rebound
 
-To learn more about how to use REBOUND with Python have a look at the iPython/Jupyter tutorials at https://github.com/hannorein/rebound/blob/master/python_tutorials/
+To learn more about how to use REBOUND with Python have a look at the iPython/Jupyter tutorials at https://github.com/hannorein/rebound/blob/master/ipython_examples/
 
 To install the C version, simply copy and paste the following command into your terminal::
     
@@ -102,7 +102,7 @@ If you use the WHFast integrator, please cite Rein and Tamayo (2015).
 The C version of REBOUND
 ========================
 
-This section describes the C version of REBOUND. To learn how to install REBOUND for Python have a look at the iPython/Jupiter notebooks at https://github.com/hannorein/rebound/blob/master/python_tutorials/index.ipynb. Hint: It's super easy!
+This section describes the C version of REBOUND. To learn how to install REBOUND for Python have a look at the iPython/Jupiter notebooks at https://github.com/hannorein/rebound/blob/master/ipython_examples/index.ipynb. Hint: It's super easy!
 
 Installation
 ------------
