@@ -6,7 +6,6 @@
  * integrator with adaptive timestepping is used. The bodies have a finite
  * size and merge if they collide. Note that the size is unphysically large
  * in this example. 
- *
  */
 #include <stdio.h>
 #include <stdlib.h>

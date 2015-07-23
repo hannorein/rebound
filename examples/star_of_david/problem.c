@@ -6,7 +6,6 @@
  * binaries orbiting each other. Note that the time is running backwards,
  * which illustrates that IAS15 can handle both forward and backward in time
  * integrations. The initial conditions are by Robert Vanderbei.
- *
  */
 #include <stdio.h>
 #include <stdlib.h>

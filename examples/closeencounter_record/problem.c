@@ -9,7 +9,6 @@
  * additional physics whenever a collision has been detection (e.g. fragmentation).
  * The collision search is by default a direct search, i.e. O(N^2) but can be
  * changed to a tree by using the `collisions_tree.c` module.
- * 
  */
 #include <stdio.h>
 #include <stdlib.h>

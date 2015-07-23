@@ -8,7 +8,6 @@
  * The example uses a beta parameter of 0.01. 
  * The output is custom too, outputting the semi-major axis of 
  * every dust particle relative to the planet. 
- *
  */
 #include <stdio.h>
 #include <stdlib.h>

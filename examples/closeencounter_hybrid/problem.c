@@ -4,7 +4,6 @@
  * This example integrates a densely packed planetary system 
  * which becomes unstable on a timescale of only a few orbits. 
  * This is a test case for the HYBRID integrator.
- * 
  */
 #include <stdio.h>
 #include <stdlib.h>

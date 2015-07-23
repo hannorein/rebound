@@ -3,7 +3,6 @@
  *
  * A self-gravitating disc is integrated using
  * the leap frog integrator. Collisions are not resolved.
- *
  */
 #include <stdio.h>
 #include <stdlib.h>

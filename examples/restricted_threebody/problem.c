@@ -3,7 +3,6 @@
  *
  * This example simulates a disk of test particles around 
  * a central object, being perturbed by a planet. 
- *
  */
 #include <stdio.h>
 #include <stdlib.h>

@@ -4,7 +4,6 @@
  * This example tests collision detection methods across box boundaries.
  * There are four particles, one in each corner. To see the ghost boxes in OpenGL
  * press `g` while the simulation is running.
- * 
  */
 #include <stdio.h>
 #include <stdlib.h>

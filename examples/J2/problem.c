@@ -6,7 +6,6 @@
  * integrator. The parameters in this example have been chosen to 
  * represent those of Saturn, but one can easily change them or even 
  * include higher order terms in the multipole expansion.
- * 
  */
 #include <stdio.h>
 #include <stdlib.h>

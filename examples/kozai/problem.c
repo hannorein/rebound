@@ -6,7 +6,6 @@
  * The integrator automatically adjusts the timestep so that 
  * even very high eccentricity encounters are resolved with high 
  * accuracy.
- *
  */
 #include <stdio.h>
 #include <stdlib.h>

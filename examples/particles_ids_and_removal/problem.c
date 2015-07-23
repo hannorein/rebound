@@ -3,7 +3,6 @@
  *
  * This example shows how to assign ids to particles, and demonstrates different 
  * options for removing particles from the simulation.
- * 
  */
 #include <stdio.h>
 #include <stdlib.h>

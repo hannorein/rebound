@@ -5,7 +5,6 @@
  * dependent drag force. The example uses the IAS15 integrator, which 
  * is ideally suited to handle non-conservative forces.
  * No gravitational forces or collisions are present.
- * 
  */
 #include <stdio.h>
 #include <stdlib.h>

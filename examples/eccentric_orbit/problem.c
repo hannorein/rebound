@@ -5,7 +5,6 @@
  * a very eccentric planetary orbit. The integrator
  * automatically adjusts the timestep so that the pericentre passages
  * resolved with high accuracy.
- *
  */
 #include <stdio.h>
 #include <stdlib.h>

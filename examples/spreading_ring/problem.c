@@ -2,7 +2,6 @@
  * Spreading ring
  *
  * A narrow ring of collisional particles is spreading.
- *
  */
 #include <stdio.h>
 #include <stdlib.h>
