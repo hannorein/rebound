@@ -145,7 +145,7 @@ The following sections list the available modules that come with REBOUND.
  REB_COLLISION_NONE     | No collision detection, default
  REB_COLLISION_DIRECT   | Direct nearest neighbour search, O(N^2)
  REB_COLLISION_TREE     | Oct tree, O(N log(N))
- REB_COLLISION_SWEPP    | Plane sweep algorithm, ideal for low dimensional  problems, O(N) or O(N^1.5) depending on geometry 
+ REB_COLLISION_SWEPP    | (upgrade to REBOUND 2.0 still in progress) Plane sweep algorithm, ideal for low dimensional  problems, O(N) or O(N^1.5) depending on geometry 
 
 
 **Boundaries**::
