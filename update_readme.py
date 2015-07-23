@@ -43,3 +43,10 @@ with open("README.rst","w") as f:
         if start_delete==-1 or i<start_delete:
             f.write(readme[i])
 
+import re
+with open("src/rebound.c") as f:
+    reboundlines = f.readlines()
+
+for i,l in enumerate(reboundlines):
+    if "**VERSIONLINE**" in l:
+        reboundlines[i] = "const char* reb_version_str = \"2.0.0\";			// **VERSIONLINE** This line gets updated automatically. Do not edit manually."
