@@ -154,9 +154,17 @@ reb_simulation._fields_ = [("t", c_double),
 
 class Simulation(object):
     simulation = None
-    def __init__(self):
-        clibrebound.reb_create_simulation.restype = POINTER(reb_simulation)
-        self.simulation = clibrebound.reb_create_simulation()
+    def __init__(self, filename=None):
+        if filename is None:
+            clibrebound.reb_create_simulation.restype = POINTER(reb_simulation)
+            self.simulation = clibrebound.reb_create_simulation()
+        else:
+            if os.path.isfile(filename):
+                clibrebound.reb_create_simulation_from_binary.restype = POINTER(reb_simulation)
+                self.simulation = clibrebound.reb_create_simulation_from_binary(c_char_p(filename.encode("ascii")))
+            else:
+                raise ValueError("File does not exist.")
+        
     
     AFF = CFUNCTYPE(None)
     afp = None # additional forces pointer
@@ -339,8 +347,8 @@ class Simulation(object):
         return clibrebound.reb_tools_calculate_megno(self.simulation)
     
     def calculate_lyapunov(self):
-        self.clibrebound.tools_lyapunov.restype = c_double
-        return self.clibrebound.tools_lyapunov()
+        clibrebound.reb_tools_calculate_lyapunov.restype = c_double
+        return clibrebound.reb_tools_calculate_lyapunov(self.simulation)
     
     @property
     def N_megno(self):
@@ -478,9 +486,6 @@ class Simulation(object):
 # Input/Output routines
     def save(self, filename):
         self.clibrebound.output_binary(c_char_p(filename.encode("ascii")))
-        
-    def load(self, filename):
-        self.clibrebound.input_binary(c_char_p(filename.encode("ascii")))
         
 # Integrator Flags
     @property 
