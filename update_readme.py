@@ -44,9 +44,15 @@ with open("README.rst","w") as f:
             f.write(readme[i])
 
 import re
+with open("version.txt") as f:
+    reboundversion = f.readlines()[0].strip()
+
 with open("src/rebound.c") as f:
     reboundlines = f.readlines()
+    for i,l in enumerate(reboundlines):
+        if "**VERSIONLINE**" in l:
+            reboundlines[i] = "const char* reb_version_str = \""+reboundversion+"\";			// **VERSIONLINE** This line gets updated automatically. Do not edit manually.\n"
 
-for i,l in enumerate(reboundlines):
-    if "**VERSIONLINE**" in l:
-        reboundlines[i] = "const char* reb_version_str = \"2.0.0\";			// **VERSIONLINE** This line gets updated automatically. Do not edit manually."
+    with open("src/rebound.c", "w") as f:
+        f.writelines(reboundlines)
+

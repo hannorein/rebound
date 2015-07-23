@@ -155,6 +155,14 @@ reb_simulation._fields_ = [("t", c_double),
 class Simulation(object):
     simulation = None
     def __init__(self, filename=None):
+        try:
+            moduleversion = pkg_resources.require("rebound")[0].version
+            libreboundversion = c_char_p.in_dll(clibrebound, "reb_version_str").value
+            if moduleversion != libreboundversion:
+                print("WARNING: python module and librebound have different version numbers.\n")
+        except:
+            # Fails on python3, but not important
+            pass
         if filename is None:
             clibrebound.reb_create_simulation.restype = POINTER(reb_simulation)
             self.simulation = clibrebound.reb_create_simulation()
@@ -181,11 +189,8 @@ class Simulation(object):
             """
         s= ""
         s += "---------------------------------\n"
-        try:
-            s += "Rebound version:     \t" + pkg_resources.require("rebound")[0].version +"\n"
-        except:
-            # Fails on python3, but not important
-            pass
+        s += "REBOUND version:     \t%s\n" %c_char_p.in_dll(clibrebound, "reb_version_str").value
+        s += "REBOUND built on:    \t%s\n" %c_char_p.in_dll(clibrebound, "reb_build_str").value
         s += "Number of particles: \t%d\n" %self.N       
         s += "Selected integrator: \t" + self.integrator + "\n"       
         s += "Simulation time:     \t%f\n" %self.t
