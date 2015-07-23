@@ -6,7 +6,7 @@ filename = "cache.bin"
 solar_system_objects = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "C/2014 Q2"]
 if os.path.isfile(filename):
     # Try to load simulation from file
-    sim = rebound.load(filename)
+    sim = rebound.Simulation(filename=filename)
 else: 
     sim = rebound.Simulation()
     # Get data from NASA Horizons

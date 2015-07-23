@@ -485,7 +485,7 @@ class Simulation(object):
 
 # Input/Output routines
     def save(self, filename):
-        self.clibrebound.output_binary(c_char_p(filename.encode("ascii")))
+        clibrebound.reb_output_binary(self.simulation, c_char_p(filename.encode("ascii")))
         
 # Integrator Flags
     @property 
