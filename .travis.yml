@@ -1,6 +1,4 @@
 sudo: false
-notifications:
-    email: false
 language: c
 os:
     - linux
@@ -12,9 +10,6 @@ addons:
             - python-numpy
             - python-matplotlib
 install:
-#    - sudo apt-get update
-#    - sudo apt-get install freeglut3-dev python-virtualenv
-#    - sudo apt-get install -qq python-numpy python-matplotlib 
     - virtualenv --system-site-packages venv && source venv/bin/activate
     - pip install -e .
 compiler:
