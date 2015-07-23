@@ -505,12 +505,12 @@ class Simulation(object):
         self.simulation.contents.ri_whfast.safe_mode = c_uint(value)
 
     @property
-    def recalculate_jacobi_this_timestep(self):
-        return c_int.in_dll(self.clibrebound, "integrator_whfast_recalculate_jacobi_this_timestep").value
+    def integrator_whfast_recalculate_jacobi_this_timestep(self):
+        return self.simulation.contents.ri_whfast.recalculate_jacobi_this_timestep
 
-    @recalculate_jacobi_this_timestep.setter
-    def recalculate_jacobi_this_timestep(self, value):
-        c_int.in_dll(self.clibrebound, "integrator_whfast_recalculate_jacobi_this_timestep").value = value
+    @integrator_whfast_recalculate_jacobi_this_timestep.setter
+    def integrator_whfast_recalculate_jacobi_this_timestep(self, value):
+        self.simulation.contents.ri_whfast.recalculate_jacobi_this_timestep = c_uint(value)
     
 # Integration
 
