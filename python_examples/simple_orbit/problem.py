@@ -17,3 +17,5 @@ for o in sim.calculate_orbits(heliocentric=True): print(o)
 # Output cartesian coordinates
 for p in sim.particles: 
     print(p)
+
+    djkdjfkd
