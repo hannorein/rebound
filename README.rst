@@ -160,39 +160,45 @@ The following sections list the available modules that come with REBOUND.
 
 **Boundaries**::
 
- Integrator name                  | Description
- -------------------------------- | -----------
- REB_INTEGRATOR_IAS15             | IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precision. IAS15 can integrate variational equations. Rein & Spiegel 2015, Everhart 1985, default
- REB_INTEGRATOR_WHFAST            | WHFast is the integrator described in Rein & Tamayo 2015, it's a second order symplectic Wisdom Holman integrator with 11th order symplectic correctors. It is extremely fast and accurate, uses Gauss f and g functions to solve the Kepler motion and can integrate variational equations.
- REB_INTEGRATOR_EULER             | Euler scheme, first order
- REB_INTEGRATOR_LEAPFROG          | Leap frog, second order, symplectic
- REB_INTEGRATOR_WH                | SWIFT-style Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, note that  `integrator_whfast.c` almost always offers better characteristics, Wisdom & Holman 1991, Kinoshita et al 1991
- REB_INTEGRATOR_SEI               | Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
- REB_INTEGRATOR_HYBRID            | An experimental hybrid symplectic integrator that uses WHFast for long term integrations but switches over to IAS15 for close encounters.
+ Integrator name          | Description
+ ------------------------ | -----------
+ REB_INTEGRATOR_IAS15     | IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precision. IAS15 can integrate variational equations. Rein & Spiegel 2015, Everhart 1985, default
+ REB_INTEGRATOR_WHFAST    | WHFast is the integrator described in Rein & Tamayo 2015, it's a second order symplectic Wisdom Holman integrator with 11th order symplectic correctors. It is extremely fast and accurate, uses Gauss f and g functions to solve the Kepler motion and can integrate variational equations.
+ REB_INTEGRATOR_EULER     | Euler scheme, first order
+ REB_INTEGRATOR_LEAPFROG  | Leap frog, second order, symplectic
+ REB_INTEGRATOR_WH        | SWIFT-style Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, note that  `integrator_whfast.c` almost always offers better characteristics, Wisdom & Holman 1991, Kinoshita et al 1991
+ REB_INTEGRATOR_SEI       | Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
+ REB_INTEGRATOR_HYBRID    | An experimental hybrid symplectic integrator that uses WHFast for long term integrations but switches over to IAS15 for close encounters.
 
 
 
 Directory structure and compilation
 -----------------------------------
 
-In the main directory, you find a sub-directory called `src` which contains the bulk parts of the  source code and a directory called `examples` with various example problems. To compile one of the example, you have to go to that directory, for example:
+In the main directory, you find various sub-directories. 
+
+* The `src` directory contains the bulk parts of the source code. 
+* The `examples` directory contains the C example problems. 
+* The `python_examples` directory contains the python example problems.
+* The `ipython_examples` directory contains ipython notebooks with examples and tutorials
+
+To compile one of the C example, simply go to the directory
 
     cd examples/shearing_sheet/
 
-Then, type
+then type
 
     make
 
 This will do the following things    
 
 * It sets various environment variables. These determine settings like the compiler optimization flags and which libraries are included (see below). 
-* It creates symbolic links to the active modules. This allows you to choose from different gravity solvers, boundary conditions and collision solvers. For example, to change the gravity solver from using a tree to direct summation you could change `gravity_tree.c` to `gravity_direct.c`. 
-* It creates a symbolic link to the current problem file. Each problem file contains the initial conditions and the output routines for the current problem. You do not need to change any file in `src/` to create a new problem unless you want to do something very special. This keeps the initial conditions and the code itself cleanly separated.
+* It creates a symbolic link to the current problem file. Each problem file contains the initial conditions and the output routines for the current problem. Thus, you do not need to change any file in `src/` to create a new problem unless you want to do something very special. This keeps the initial conditions and the code itself cleanly separated.
 * It compiles the code and copies the binary into the current directory.
 
 If something goes wrong, it is most likely the visualization module. You can turn it off by deleting the line which contains `OPENGL` in the makefile. Of course, you will not see the visualization in real time anymore. See below on how to install GLUT and fix this issue.
 
-If you want to start working on your own problem, simply copy one of the example directories. Then modify `problem.c` and `Makefile` according to your application.  
+If you want to start working on your own problem, simply copy one of the example directories. Then modify `problem.c` according to your application.  
 
 
 Running REBOUND
@@ -209,7 +215,7 @@ A window should open and you will see a simulation running in real time. The pro
 Environment variables
 ---------------------
 
-The makefile in each problem directory sets various environment variables. These determine the compiler optimization flags, the libraries included and basic code settings. Let us look at one of the examples `shearing_sheet` in more detail. 
+The makefile in each problem directory sets various environment variables. These determine the compiler optimization flags, the libraries included and basic code settings.
 
 - `export PROFILING=1`. This enables profiling. You can see how much time is spend in the collision, gravity, integrator and visualization modules. This is useful to get an idea about the computational bottleneck.
 - `export QUADRUPOLE=0`. This disables the calculation of quadrupole moments for each cell in the tree. The simulation is faster, but less accurate.
@@ -221,61 +227,6 @@ The makefile in each problem directory sets various environment variables. These
 - `export OPT=-O3`. This sets the additional compiler flag `-O3` and optimizes the code for speed. Additional search paths to header files for external libraries (such as OpenGL, GLUT and LIBPNG) can be set up using this variable. 
 
 When you type make in your problem directory, all of these variables are read and passed on to the makefile in the `src/` directory. The `OPENGL` variable, for example, is used to determine if the OpenGL and GLUT libraries should be included. If the variable is `1` the makefile also sets a pre-compiler macro with `-DOPENGL`. Note that because OPENGL is incompatible with MPI, when MPI is turned on (set to 1), OPENGL is automatically turned off (set to 0) in the main makefile. You rarely should have to work directly with the makefile in the `src/` directory yourself.
-
-
-
-User-defined functions in the problem.c file
---------------------------------------------
-
-The problem.c file must contain at least three functions. You do need to implement all of them, but a dummy (doing nothing) is sufficient to successfully link the object files. The following documentation describes what these functions do.
-
-
-- `void problem_init(int argc, char* argv[])`
-
-    This routine is where you read command line arguments and set up your initial conditions. REBOUND does not come with a built-in functionality to read configuration files at run-time. We consider this not a missing feature. In REBOUND, you have one `problem.c` file for each problem. Thus, everything can be set within this file. There are, of course, situation in which you want to do something like a parameter space survey. In almost all cases, you vary only a few parameters. You can easily read these parameters from the command line.
- 
-    Here is an example that reads in a command line argument given to REBOUND in the standard unix format `./rebound --boxsize=200.`. A default value of 100 is used if no parameter is passed to REBOUND.::
-
-        // At the top of the problem.c file add
-        #include "input.h"
-        // In problem_init() add
-        boxsize = input_get_double(argc,argv,"boxsize",100.);
-
-- `void problem_output()`
-
-    This function is called at the beginning of the simulation and at the end of each time-step. You can implement your output routines here. Many basic output functions are already implemented in REBOUND. See `output.h` for more details. The function `output_check(odt)` can be used to easily check if an output is needed if you want to trigger and output once per time interval `odt`. For example, the following code snippet outputs some timing statistics to the console every 10 time-steps::
-    
-        if (output_check(10.*dt)){
-            output_timing();
-        }
- 
-- `void problem_finish()`
-
-    This function is called at the end of the simulation, when t >= tmax. This is the last chance to output any quantities before the program ends.
-
-
-- `void problem_additional_forces()` (optional function pointer)
-
-    In addition to the four mandatory functions that need to be present, you can also define some other functions and make them callable by setting a function pointer. The function pointer `problem_additional_forces()` which is called one or more times per time-step whenever the forces are updated. This is where you can implement all kind of things such as additional forces onto particles. 
-    
-    The following lines of code implement a simple velocity dependent force.  `IAS15` is best suited for this (see `examples/dragforce`)::
-    
-        void velocity_dependent_force(){
-            for (int i=1;i<N;i++){
-               particles[i].ax -= 0.0000001 * particles[i].vx;
-               particles[i].ay -= 0.0000001 * particles[i].vy;
-               particles[i].az -= 0.0000001 * particles[i].vz;
-            }
-        }
-    
-    Make sure you set the function pointer in the `problem_init()` routine::
-    
-        problem_additional_forces = velocity_dependent_force;
-    
-    By default, all integrators assume that the forces are velocity dependent. If all forces acting on particles only depend on positions, you can set the following variable (defined in `integrator.h`) to `0` to speed up the calculation::
-    
-        // Add to problem_init()
-        integrator_force_is_velocitydependent = 0;
 
 
 How to install GLUT 
@@ -667,4 +618,5 @@ You can use the following keyboard commands to alter the OpenGL real-time visual
  p       | Save screen shot to file.
  c       | Toggle clear screen after each time-step.
  w       | Draw orbits as wires (particle with index 0 is central object).  
+ l       | Toggle limit to screen refresh rate (50Hz/infinity).  
 
