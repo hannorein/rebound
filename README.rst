@@ -115,66 +115,60 @@ or if you do not have git installed::
 
     wget --no-check-certificate https://github.com/hannorein/rebound/tarball/master -O- | tar xvz && cd hannorein-rebound-*/examples/shearing_sheet/ && make && ./rebound
 
-*Note:* Make sure you have a compiler suite installed. Open a terminal and type `make` and `cc` to test if your installation is complete. If you are on OSX, you can download Xcode from the AppStore (for free). Once installed, open Xcode, go to Settings, then Downloads and install the Command Line Tools. 
+Make sure you have a compiler suite installed. Open a terminal and type `make` and `cc` to test if your installation is complete. If you are on OSX, you can download Xcode from the AppStore (for free). Once installed, open Xcode, go to Settings, then Downloads and install the Command Line Tools. 
 
 
 
 Available modules
 -----------------
 
-REBOUND is extremely modular. You have the choice between different gravity, collision, boundary modules. It is also possible to implement completely new modules with minimal effort. Modules are chosen by setting up symbolic links in the Makefile. There is no need to run a configure script. For example, the Makefile might create a link `gravity.c` that points to one of the gravity modules, say `gravity_tree.c`. This tells the code to use a tree code to do the gravity calculation.
-
-This setup allows you to work on multiple projects at the same time using different modules. When switching to another problem, nothing has to be set-up and the problem can by compiled by simply typing `make` in the corresponding directory (see below).
+REBOUND is extremely modular. You have the choice between different gravity, collision, boundary and integrator modules. It is also possible to implement completely new modules with minimal effort. In the new versions of REBOUND, modules are chosen at runtime by setting flags in the `reb_simulation` structure. 
 
 The following sections list the available modules that come with REBOUND.
 
 **Gravity**::
   
- Module name        | Description
- ------------------ | -----------
- `gravity_none.c`   | No self-gravity
- `gravity_direct.c` | Direct summation, O(N^2)
- `gravity_opencl.c` | Direct summation, O(N^2), but accelerated using the OpenCL framework.
- `gravity_tree.c`   | Oct tree, Barnes & Hut 1986, O(N log(N))
- `gravity_grape.c`  | GRAPE, hardware accelerated direct summation, Sugimoto et al. 1990
- `gravity_fft.c`    | Two dimensional gravity solver using FFTW, works in a periodic box and the shearing sheet. (Not well tested yet.)
+ Module name              | Description
+ ------------------------ | -----------
+ REB_GRAVITY_COMPENSATED  | Direct summation with compensated summation, O(N^2), default
+ REB_GRAVITY_NONE         | No self-gravity
+ REB_GRAVITY_BASIC        | Direct summation, O(N^2)
+ REB_GRAVITY_TREE         | Oct tree, Barnes & Hut 1986, O(N log(N))
+ REB_GRAVITY_OPENCL       | (upgrade to REBOUND 2.0 still in progress) Direct summation, O(N^2), but accelerated using the OpenCL framework.
+ REB_GRAVITY_FFT          | (upgrade to REBOUND 2.0 still in progress) Two dimensional gravity solver using FFTW, works in a periodic box and the shearing sheet. 
 
 
 **Collision detection**::
 
  Module name            | Description
  ---------------------- | -----------
- `collisions_none.c`    | No collision detection
- `collisions_direct.c`  | Direct nearest neighbour search, O(N^2)
- `collisions_tree.c`    | Oct tree, O(N log(N))
- `collisions_sweep.c`   | Plane sweep algorithm, ideal for low dimensional  problems, O(N) or O(N^1.5) depending on geometry 
- `collisions_sweepphi.c`| Plane sweep algorithm along the azimuthal angle, ideal for narrow rings in global simulations, O(N) or O(N 1.5) depending on geometry
+ REB_COLLISION_NONE     | No collision detection, default
+ REB_COLLISION_DIRECT   | Direct nearest neighbour search, O(N^2)
+ REB_COLLISION_TREE     | Oct tree, O(N log(N))
+ REB_COLLISION_SWEPP    | Plane sweep algorithm, ideal for low dimensional  problems, O(N) or O(N^1.5) depending on geometry 
 
 
 **Boundaries**::
 
  Module name            | Description
  ---------------------- | -----------
- `boundaries_open.c`    | Particles are removed from the simulation if they leaves the box.
- `boundaries_none.c`    | Dummy. Particles are not affected by boundary conditions.
- `boundaries_periodic.c`| Periodic boundary conditions. Particles are reinserted on the other side if they cross the box boundaries. You can use an arbitrary number of ghost-boxes with this module.
- `boundaries_shear.c`   | Shear periodic boundary conditions. Similar to periodic boundary conditions, but ghost-boxes are moving with constant speed, set by the shear.
+ REB_BOUNDARY_NONE      | Dummy. Particles are not affected by boundary conditions, default
+ REB_BOUNDARY_OPEN      | Particles are removed from the simulation if they leaves the box.
+ REB_BOUNDARY_PERIODIC  | Periodic boundary conditions. Particles are reinserted on the other side if they cross the box boundaries. You can use an arbitrary number of ghost-boxes with this module.
+ REB_BOUNDARY_SHEAR     | Shear periodic boundary conditions. Similar to periodic boundary conditions, but ghost-boxes are moving with constant speed, set by the shear.
   
 
-Available integrators
----------------------
+**Boundaries**::
 
-The following integrators are available within REBOUND. Since May 2015, the integrator can be changed at runtime. Thus, the integrator appears no longer in the Makefile. To set the integrator, set the `integrator` variable in the `probelm_init()` function (see below) to one of the integrator names (it's a C enum)::
-
- Integrator name   | Description
- ----------------- | -----------
- IAS15             | IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precision. IAS15 can integrate variational equations. Rein & Spiegel 2015, Everhart 1985
- WHFAST            | WHFast is the integrator described in Rein & Tamayo 2015, it's a second order symplectic Wisdom Holman integrator with 11th order symplectic correctors. It is extremely fast and accurate, uses Gauss f and g functions to solve the Kepler motion and can integrate variational equations.
- EULER             | Euler scheme, first order
- LEAPFROG          | Leap frog, second order, symplectic
- WH                | SWIFT-style Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, note that  `integrator_whfast.c` almost always offers better characteristics, Wisdom & Holman 1991, Kinoshita et al 1991
- SEI               | Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
- HYBRID            | An experimental hybrid symplectic integrator that uses WHFast for long term integrations but switches over to IAS15 for close encounters.
+ Integrator name                  | Description
+ -------------------------------- | -----------
+ REB_INTEGRATOR_IAS15             | IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precision. IAS15 can integrate variational equations. Rein & Spiegel 2015, Everhart 1985, default
+ REB_INTEGRATOR_WHFAST            | WHFast is the integrator described in Rein & Tamayo 2015, it's a second order symplectic Wisdom Holman integrator with 11th order symplectic correctors. It is extremely fast and accurate, uses Gauss f and g functions to solve the Kepler motion and can integrate variational equations.
+ REB_INTEGRATOR_EULER             | Euler scheme, first order
+ REB_INTEGRATOR_LEAPFROG          | Leap frog, second order, symplectic
+ REB_INTEGRATOR_WH                | SWIFT-style Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, note that  `integrator_whfast.c` almost always offers better characteristics, Wisdom & Holman 1991, Kinoshita et al 1991
+ REB_INTEGRATOR_SEI               | Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
+ REB_INTEGRATOR_HYBRID            | An experimental hybrid symplectic integrator that uses WHFast for long term integrations but switches over to IAS15 for close encounters.
 
 
 
