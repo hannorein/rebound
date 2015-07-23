@@ -25,7 +25,7 @@ with open("README.rst","w") as f:
                             will_output = -1
                         if will_output>1:
                             if will_output == 2:
-                                line = " * " + line.strip() + ""
+                                line = "   * **" + line[3:].strip() + "**"
                             will_output = 2
                             if len(line[3:].strip())==0:
                                 f.write("\n\n  "+line[3:].strip())

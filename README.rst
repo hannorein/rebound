@@ -253,91 +253,91 @@ Examples
 The following examples can all be found in the `examples` directory. 
 Whatever you plan to do with REBOUND, chances are there is already an example available which you can use as a starting point.
 
-* Bouncing balls.
+* **Bouncing balls.**
 
   This example is a simple test of collision detectionmethods.
 
   Directory: examples/bouncing_balls
 
-* Bouncing balls at corner.
+* **Bouncing balls at corner.**
 
   This example tests collision detection methods across box boundaries.There are four particles, one in each corner. To see the ghost boxes in OpenGLpress `g` while the simulation is running.
 
   Directory: examples/bouncing_balls_corners
 
-* A string of solid spheres bouncing
+* **A string of solid spheres bouncing**
 
   This example tests collision detection methods.The example uses a non-square, rectangular box. 10 particles are placedalong a line. All except one of the particles are at rest initially.
 
   Directory: examples/bouncing_string
 
-* Radiation forces on circumplanetary dust
+* **Radiation forces on circumplanetary dust**
 
   This example shows how to integrate circumplanetarydust particles using the IAS15 integrator.The example sets the function pointer `additional_forces`to a function that describes the radiation forces.The example uses a beta parameter of 0.01.The output is custom too, outputting the semi-major axis ofevery dust particle relative to the planet.
 
   Directory: examples/circumplanetarydust
 
-* Close Encounter
+* **Close Encounter**
 
   This example integrates a densely packed planetary systemwhich becomes unstable on a timescale of only a few orbits. The IAS15integrator with adaptive timestepping is used. This integratorautomatically decreases the timestep whenever a closeencounter happens. IAS15 is very high order and ideally suited for thedetection of these kind of encounters.
 
   Directory: examples/closeencounter
 
-* Close Encounter with hybrid integrator (experimental)
+* **Close Encounter with hybrid integrator (experimental)**
 
   This example integrates a densely packed planetary systemwhich becomes unstable on a timescale of only a few orbits.This is a test case for the HYBRID integrator.
 
   Directory: examples/closeencounter_hybrid
 
-* Detect and record close encounters
+* **Detect and record close encounters**
 
   This example integrates a densely packed planetary systemwhich becomes unstable on a timescale of only a few orbits.The example is identical to the `close_encounter` sample, except thatthe collisions are recorded and written to a file. What kind of collisionsare recorded can be easily modified. It is also possible to implement someadditional physics whenever a collision has been detection (e.g. fragmentation).The collision search is by default a direct search, i.e. O(N^2) but can bechanged to a tree by using the `collisions_tree.c` module.
 
   Directory: examples/closeencounter_record
 
-* Velocity dependent drag force
+* **Velocity dependent drag force**
 
   This is a very simple example on how to implement a velocitydependent drag force. The example uses the IAS15 integrator, whichis ideally suited to handle non-conservative forces.No gravitational forces or collisions are present.
 
   Directory: examples/dragforce
 
-* Example problem: Kozai.
+* **Example problem: Kozai.**
 
   This example uses the IAS15 integrator to simulatea very eccentric planetary orbit. The integratorautomatically adjusts the timestep so that the pericentre passagesresolved with high accuracy.
 
   Directory: examples/eccentric_orbit
 
-* Granular dynamics.
+* **Granular dynamics.**
 
   This example is about granular dynamics. No gravitationalforces are present in this example. Two boundary layers made ofparticles simulate shearing walls. These walls are heatingup the particles, create a dense and cool layer in the middle.
 
   Directory: examples/granulardynamics
 
-* J2 precession
+* **J2 precession**
 
   This example presents an implementation of the J2 gravitational moment.The equation of motions are integrated with the 15th order IAS15integrator. The parameters in this example have been chosen torepresent those of Saturn, but one can easily change them or eveninclude higher order terms in the multipole expansion.
 
   Directory: examples/J2
 
-* Kozai cycles
+* **Kozai cycles**
 
   This example uses the IAS15 integrator to simulatea Lidov Kozai cycle of a planet perturbed by a distant star.The integrator automatically adjusts the timestep so thateven very high eccentricity encounters are resolved with highaccuracy.
 
   Directory: examples/kozai
 
-* The chaos indicator MEGNO.
+* **The chaos indicator MEGNO.**
 
   This example uses the IAS15 or WHFAST integratorto calculate the MEGNO of a two planet system.
 
   Directory: examples/megno
 
-* Colliding and merging planets
+* **Colliding and merging planets**
 
   This example integrates a densely packed planetary systemwhich becomes unstable on a timescale of only a few orbits. The IAS15integrator with adaptive timestepping is used. The bodies have a finitesize and merge if they collide. Note that the size is unphysically largein this example.
 
   Directory: examples/mergers
 
-* Outer Solar System
+* **Outer Solar System**
 
   This example uses the IAS15 integratorto integrate the outer planets of the solar system. The initialconditions are taken from Applegate et al 1986. Pluto is a testparticle. This example is a good starting point for any long term orbitintegrations.
 
@@ -347,7 +347,7 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
   Directory: examples/outer_solar_system
 
-* Overstability in Saturn Rings
+* **Overstability in Saturn Rings**
 
   A narrow box of Saturn's rings is simulated to study the viscousoverstability. Collisions are resolved using the plane-sweep method.
 
@@ -357,55 +357,55 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
   Directory: examples/overstability
 
-* How to use unique ids to identify particles
+* **How to use unique ids to identify particles**
 
   This example shows how to assign ids to particles, and demonstrates differentoptions for removing particles from the simulation.
 
   Directory: examples/particles_ids_and_removal
 
-* Planetary migration in the GJ876 system
+* **Planetary migration in the GJ876 system**
 
   This example applies dissipative forces to twobodies orbiting a central object. The forces are specifiedin terms of damping timescales for the semi-major axis andeccentricity. This mimics planetary migration in a protostellar disc.The example reproduces the study of Lee & Peale (2002) on theformation of the planetary system GJ876. For a comparison,see figure 4 in their paper. The IAS15 or WHFAST integratorscan be used. Note that the forces are velocity dependent.Special thanks goes to Willy Kley for helping me to implementthe damping terms as actual forces.
 
   Directory: examples/planetary_migration
 
-* Radiation forces
+* **Radiation forces**
 
   This example provides an implementation of thePoynting-Robertson effect. The code is using the IAS15 integratorwhich is ideally suited for this velocity dependent force.
 
   Directory: examples/prdrag
 
-* Restarting simulations
+* **Restarting simulations**
 
   This example demonstrates how to restart a simulationusing a binary file. A shearing sheet ring simulation is used, butthe same method can be applied to any other type of simulation.
 
   Directory: examples/restarting_simulation
 
-* Restricted three body problem.
+* **Restricted three body problem.**
 
   This example simulates a disk of test particles arounda central object, being perturbed by a planet.
 
   Directory: examples/restricted_threebody
 
-* Self-gravitating disc.
+* **Self-gravitating disc.**
 
   A self-gravitating disc is integrated usingthe leap frog integrator. Collisions are not resolved.
 
   Directory: examples/selfgravity_disc
 
-* A self-gravitating Plummer sphere
+* **A self-gravitating Plummer sphere**
 
   A self-gravitating Plummer sphere is integrated usingthe leap frog integrator. Collisions are not resolved. Note that thefixed timestep might not allow you to resolve individual two-bodyencounters. An alternative integrator is IAS15 whichcomes with adaptive timestepping.
 
   Directory: examples/selfgravity_plummer
 
-* Shearing sheet (Hill's approximation)
+* **Shearing sheet (Hill's approximation)**
 
   This example simulates a small patch of Saturn'sRings in shearing sheet coordinates. If you have OpenGL enabled,you'll see one copy of the computational domain. Press `g` to seethe ghost boxes which are used to calculate gravity and collisions.Particle properties resemble those found in Saturn's rings.
 
   Directory: examples/shearing_sheet
 
-* Shearing sheet (Akihiko Fujii)
+* **Shearing sheet (Akihiko Fujii)**
 
   This example is identical to the shearing_sheetexample but uses a different algorithm for resolving individualcollisions. In some cases, this might give more realistic results.Particle properties resemble those found in Saturn's rings.
 
@@ -413,19 +413,19 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
   Directory: examples/shearing_sheet_2
 
-* Solar System
+* **Solar System**
 
   This example integrates all planets of the SolarSystem. The data comes from the NASA HORIZONS system.
 
   Directory: examples/solar_system
 
-* Spreading ring
+* **Spreading ring**
 
   A narrow ring of collisional particles is spreading.
 
   Directory: examples/spreading_ring
 
-* Star of David
+* **Star of David**
 
   This example uses the IAS15 integratorto integrate the "Star od David", a four body system consisting of twobinaries orbiting each other. Note that the time is running backwards,which illustrates that IAS15 can handle both forward and backward in timeintegrations. The initial conditions are by Robert Vanderbei.
 
