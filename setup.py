@@ -31,11 +31,9 @@ libreboundmodule = Extension('librebound',
 here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
-with open(os.path.join(here, 'version.txt'), encoding='utf-8') as f:
-    version = f.read()
 
 setup(name='rebound',
-    version=version,
+    version='2.0.1',
     description='An open-source multi-purpose N-body code',
     long_description=long_description,
     url='http://github.com/hannorein/rebound',
