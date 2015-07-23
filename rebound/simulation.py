@@ -230,6 +230,14 @@ class Simulation(object):
             self.ptmp = "C function pointer value currently not accessible from python.  Edit librebound.py" 
 
 # Setter/getter of parameters and constants
+    @property
+    def G(self):
+        return self.simulation.contents.G
+    
+    @G.setter
+    def G(self, value):
+        self.simulation.contents.G = c_double(value)
+        
     @property 
     def dt(self):
         return self.simulation.contents.dt
@@ -335,7 +343,7 @@ class Simulation(object):
     def convert_particle_units(self, *args): 
         new_l, new_t, new_m = check_units(args)
         for p in self.particles:
-            self.convert_p(p, self._units['length'], self._units['time'], self._units['mass'], new_l, new_t, new_m)
+            units_convert_particle(p, self._units['length'], self._units['time'], self._units['mass'], new_l, new_t, new_m)
         self.update_units((new_l, new_t, new_m))
 
 # MEGNO
@@ -515,7 +523,7 @@ class Simulation(object):
 # Integration
 
     def step(self, do_timing = 1):
-        self.clibrebound.rebound_step(c_int(do_timing))
+        clibrebound.reb_step(self.simulation, c_int(do_timing))
 
     def integrate(self, tmax, exact_finish_time=1):
         if debug.integrator_package =="REBOUND":
@@ -533,7 +541,7 @@ class Simulation(object):
             debug.integrate_other_package(tmax,exact_finish_time)
 
     def integrator_synchronize(self):
-        self.clibrebound.integrator_synchronize()
+        clibrebound.reb_integrator_synchronize(self.simulation)
 
 
 # Import at the end to avoid circular dependence
