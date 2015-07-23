@@ -40,20 +40,20 @@ Feature list
 
 An incomplete feature list of REBOUND:
 
-* Several symplectic integrators (WHFast, WH, SEI, LEAPFROG)
+* Symplectic integrators (WHFast, WH, SEI, LEAPFROG)
 * High accuracy non-symplectic integrator with adaptive timestepping (IAS15)
 * Support for collisional/granular dynamics, various collision detection routines
-* The code is written entirely in C, conforms to the ISO standard C99
+* The code is written entirely in C, conforms to the ISO standard C99 and can be used as a thread-safe shared library
 * Easy-to-use Python module, installation in 3 words: `pip install rebound`
 * Extensive set of example problems in both C and Python
 * Real-time, 3D OpenGL visualization (C version)
 * Parallelized with OpenMP (for shared memory systems)
 * Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems)
-* No libraries are needed, use of OpenGL/GLUT/libpng for visualization is optional
+* No libraries are needed, use of OpenGL/GLUT for visualization is optional
 * The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound
 * No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
-* Standard ASCII or binary output routines 
-* Different modules are easily interchangeable by one line in the Makefile
+* Comes with standard ASCII or binary output routines 
+* Different modules are easily interchangeable at runtime
 
 
 Contributors
@@ -76,7 +76,7 @@ There are three papers describing the functionality of REBOUND.
 
 2. Rein & Spiegel (Monthly Notices of the Royal Astronomical Society, Volume 446, Issue 2, p.1424-1437) describe the versatile high order integrator IAS15 which is now part of REBOUND. http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R
 
-3. Rein & Tamayo (Monthly Notices of the Royal Astronomical Society, in press) describe WHFast, the fast and unbiased implementation of a symplectic Wisdom-Holman integrator for long term gravitational simulations. http://arxiv.org/abs/1506.01084
+3. Rein & Tamayo (Monthly Notices of the Royal Astronomical Society, Volume 452, Issue 1, p.376-388) describe WHFast, the fast and unbiased implementation of a symplectic Wisdom-Holman integrator for long term gravitational simulations. http://adsabs.harvard.edu/abs/2015MNRAS.452..376R
 
 
 License
