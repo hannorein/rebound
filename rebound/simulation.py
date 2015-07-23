@@ -490,11 +490,11 @@ class Simulation(object):
 # Integrator Flags
     @property 
     def integrator_whfast_corrector(self):
-        return c_int.in_dll(self.clibrebound, "integrator_whfast_corrector").value
+        self.simulation.contents.ri_whfast.corrector.value
     
     @integrator_whfast_corrector.setter 
     def integrator_whfast_corrector(self, value):
-        c_int.in_dll(self.clibrebound, "integrator_whfast_corrector").value = value
+        self.simulation.contents.ri_whfast.corrector = c_uint(value)
 
     @property
     def integrator_whfast_safe_mode(self):
