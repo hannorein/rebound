@@ -176,29 +176,29 @@ Code structure
 REBOUND can be used as a shared library. This is *UNIX-way* of using REBOUND. To compile the `librebound.so` file, simply execute `make` in the main directory. However, installing a shared library can sometimes be an obstacle for new users, especially if you want to change the code frequently. For that reason, all the examples that come with REBOUND don't make use of the shared library, but simply compile all the code (including your setup routines) into one single binary file. Here's an example of how to setup a REBOUND simulation:
 
 .. code-block:: c
-    :linenos:
-    #include "rebound.h"
+ 
+   #include "rebound.h"
+   
+   int main(int argc, char* argv[]) {
+           struct reb_simulation* r = reb_create_simulation();
+           r->dt = 0.1;
+           r->integrator = REB_INTEGRATOR_WHFAST;
     
-    int main(int argc, char* argv[]) {
-            struct reb_simulation* r = reb_create_simulation();
-            r->dt = 0.1;
-            r->integrator = REB_INTEGRATOR_WHFAST;
+           struct reb_particle p1;
+           p1.x = 0;  p1.y = 0;  p1.z = 0; 
+           p1.vx = 0; p1.vy = 0; p1.vz = 0; 
+           p1.m = 1.;
+           reb_add(r, p1);
+           
+           struct reb_particle p2;
+           p2.x = 1;  p2.y = 0;  p2.z = 0; 
+           p2.vx = 0; p2.vy = 1; p2.vz = 0; 
+           p2.m = 0.;
+           reb_add(r, p2);
     
-            struct reb_particle p1;
-            p1.x = 0;  p1.y = 0;  p1.z = 0; 
-            p1.vx = 0; p1.vy = 0; p1.vz = 0; 
-            p1.m = 1.;
-            reb_add(r, p1);
-            
-            struct reb_particle p2;
-            p2.x = 1;  p2.y = 0;  p2.z = 0; 
-            p2.vx = 0; p2.vy = 1; p2.vz = 0; 
-            p2.m = 0.;
-            reb_add(r, p2);
-
-            reb_move_to_com(r);    
-            reb_integrate(r,100.);
-    }
+           reb_move_to_com(r);    
+           reb_integrate(r,100.);
+   }
 
 In the first line we include the REBOUND header file. This file contains all the declarationf of the structures and function that we will be using.
 
