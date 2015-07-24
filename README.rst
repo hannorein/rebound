@@ -237,44 +237,26 @@ REBOUND comes with various built-in output functions that make your life easier.
 
 
 
-Directory structure and compilation
------------------------------------
+Compiling and directory structure
+---------------------------------
 
-In the main directory, you find various sub-directories. 
+If you look at the examples in the `examples/` directory, you see one `.c` file and one `Makefile`. All the REBOUND code itself is in the `src/` directory. This setup keeps the directory in which you're working in nice and clean. To compile one of the examples, go to the directory and type `make`. Then the following events happen
 
-* The `src` directory contains the bulk parts of the source code. 
-* The `examples` directory contains the C example problems. 
-* The `python_examples` directory contains the python example problems.
-* The `ipython_examples` directory contains ipython notebooks with examples and tutorials
+* The `Makefile` sets up various environment variables. These determine settings like the compiler optimization flags and which libraries are included (see below). 
+* It then creates a symbolic link in the `src/` directory to the `.c` file in the current directory you're in. 
+* Next, it calls the `Makefile` in the `src/` directory and compiles the entire code. Note that it compiles everything everytime you execute the script. 
+* Finally it copies the binary executable file into the current directory. It's named `rebound`.
 
-To compile one of the C example, simply go to the directory
+You can execute that file with `./rebound`.
+If something goes wrong during the compilation of the examples, it is most likely the visualization module. You can turn it off by deleting the line which contains `OPENGL` in the `Makefile`. Of course, you will not see the visualization in real time anymore. See below on how to install GLUT and fix this issue.
 
-    cd examples/shearing_sheet/
+If you want to start working on your own problem, simply copy one of the example directories. Then modify the `.c` file and the `Makefile` according to your specific application.  
 
-then type
+The other directories are of interest only if you want to use the Python version of REBOUND. More specifically:
 
-    make
-
-This will do the following things    
-
-* It sets various environment variables. These determine settings like the compiler optimization flags and which libraries are included (see below). 
-* It creates a symbolic link to the current problem file. Each problem file contains the initial conditions and the output routines for the current problem. Thus, you do not need to change any file in `src/` to create a new problem unless you want to do something very special. This keeps the initial conditions and the code itself cleanly separated.
-* It compiles the code and copies the binary into the current directory.
-
-If something goes wrong, it is most likely the visualization module. You can turn it off by deleting the line which contains `OPENGL` in the makefile. Of course, you will not see the visualization in real time anymore. See below on how to install GLUT and fix this issue.
-
-If you want to start working on your own problem, simply copy one of the example directories. Then modify `problem.c` according to your application.  
-
-
-Running REBOUND
----------------
-
-To run the code, simply type
-
-    ./rebound
-
-A window should open and you will see a simulation running in real time. The problem in the directory `examples/shearing_sheet/` simulates the rings of Saturn and uses a local shearing sheet approximation. Have a look at the other examples as well and you will quickly get an idea of what REBOUND can do. 
-
+* The `reboun/` directory contains python module source files.
+* The `python_examples/` directory contains python example problems.
+* The `ipython_examples/` directory contains ipython notebooks with examples and tutorials.
 
 
 Environment variables
