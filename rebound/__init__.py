@@ -19,8 +19,10 @@ if suffix is None:
     suffix = ".so"
 
 # Import shared library
+import os
+pymodulepath = os.path.dirname(__file__)
 from ctypes import *
-clibrebound = cdll.LoadLibrary("librebound"+suffix)
+clibrebound = cdll.LoadLibrary(pymodulepath+"/../librebound"+suffix)
 
 def build_str():
     return str(c_char_p.in_dll(clibrebound, "reb_build_str").value)
