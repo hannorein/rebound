@@ -212,6 +212,30 @@ Finally, we call the REBOUND function `reb_move_to_com()` which moved the partic
 
 Note that all REBOUND functions start with the three character prefix `reb`. 
 
+Next, let's add a call-back function to the above example. This function will be called after every timestep and we can use it to output simulation data. The relevant function pointer is called `heartbeat` in the `reb_simulation` structure. We first declare and implement the function and then set the pointer in the main routine:
+
+.. code-block:: c
+
+    void heartbeat(struct reb_simulation* r){
+           printf("%f\n",r->t);
+    }
+    int main(int argc, char* argv[]) {
+           ...
+           r->heartbeat = heartbeat;
+    }
+
+As you can probably guess, this will make the program print out the current time after every timestep. Since the heartbeat function receives the `reb_simulation` structure, you have access to all the variables and particles within the simulation. You don't need any global variables for that. For example, if we wanted to print out the `x` coordinate of the 2nd particle (the index starts at 0, so the second particle has index 1), we could use this heartbeat function.
+
+.. code-block:: c
+
+    void heartbeat(struct reb_simulation* r){
+           double x = r->particles[1].x;
+           printf("%f\n",x);
+    }
+
+REBOUND comes with various built-in output functions that make your life easier. It can for example calculate the orbital elements for you or output to a binary file to save space. The examples are the best way to get to know these functions. You can also look at the `rebound.h` file in the `src/` directory to get an glimpse of the available functions.
+
+
 
 Directory structure and compilation
 -----------------------------------

@@ -6,10 +6,17 @@
  * units.
  */
 #include "rebound.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+void heartbeat(struct reb_simulation* r){
+	printf("%f\n",r->t);
+}
 
 int main(int argc, char* argv[]) {
 	struct reb_simulation* r = reb_create_simulation();
 	r->dt = 0.1;
+	r->heartbeat = heartbeat;
 
 	struct reb_particle p1;
 	p1.x = 0;  p1.y = 0;  p1.z = 0; 
