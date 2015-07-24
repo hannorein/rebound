@@ -34,9 +34,9 @@ with open("README.rst","w") as f:
                                 line = "   * **" + line[3:].strip() + "**"
                             will_output = 2
                             if len(line[3:].strip())==0:
-                                f.write("\n\n  "+line[3:].strip())
+                                f.write("\n\n  "+line[3:].strip()+" ")
                             else:
-                                f.write(line[3:].strip())
+                                f.write(line[3:].strip()+" ")
                         if will_output==-1:
                             f.write("\n\n  Directory: examples/"+problemc.split("/")[2]+"\n\n")
                             will_output= -2
