@@ -11,11 +11,11 @@ REBOUND - An open-source multi-purpose N-body code
 
 NEW VERSION
 -----------
-This REBOUND version 2.0.0. We made many changes to the code. Most importanly, REBOUND is now thread-safe and does not use global variables anymore. All the variables that were previously global, are now contained in the `reb_simulation` structure. This has many advantages, for example, you can run separate simulations much more easily parallel. We also made it possible to choose all modules at runtime (compared to the selection in the Makefile we had before). This is much more in line with UNIX standards and does not severely impact the performance (it might even help making REBOUND a tiny bit faster). 
+Welcome to REBOUND version 2! We made many changes to the code. Most importanly, REBOUND is now thread-safe and does not use global variables anymore. All the variables that were previously global, are now contained in the `reb_simulation` structure. This has many advantages, for example, you can run separate simulations in parallel from within one process. We also made it possible to choose all modules at runtime (compared to the selection in the Makefile that was used before). This is much more in line with standard UNIX coding practice and does not severely impact the performance (it might even help making REBOUND a tiny bit faster). This makes REBOUND a fully functional shared library. We added a prefix to all public functions and struct definitions: `reb`.
 
 There are still some features that haven't been fully ported. Most importantly, the MPI parallelization and the SWEEP collision detection routine. 
 
-If you have trouble using this new version or find a bug, please submit an issue or a pull request on github. 
+The best way to get and idea of the changes we made is to look at some of the example problems. If you have trouble using the new version or find a bug, please submit an issue or a pull request on github. 
 
 -------------------
 
