@@ -121,11 +121,11 @@ Make sure you have a compiler suite installed. Open a terminal and type `make` a
 Available modules
 -----------------
 
-REBOUND is extremely modular. You have the choice between different gravity, collision, boundary and integrator modules. It is also possible to implement completely new modules with minimal effort. In the new versions of REBOUND, modules are chosen at runtime by setting flags in the `reb_simulation` structure. 
+REBOUND is extremely modular. You have the choice between different gravity, collision, boundary and integrator modules. It is also possible to implement completely new modules with minimal effort. In the new version of REBOUND, modules are chosen at runtime by setting flags in the `reb_simulation` structure. 
 
 The following sections list the available modules that come with REBOUND.
 
-**Gravity**::
+**Gravity solvers**::
   
  Module name              | Description
  ------------------------ | -----------
@@ -139,27 +139,27 @@ The following sections list the available modules that come with REBOUND.
 
 **Collision detection**::
 
- Module name            | Description
- ---------------------- | -----------
- REB_COLLISION_NONE     | No collision detection, default
- REB_COLLISION_DIRECT   | Direct nearest neighbour search, O(N^2)
- REB_COLLISION_TREE     | Oct tree, O(N log(N))
- REB_COLLISION_SWEPP    | (upgrade to REBOUND 2.0 still in progress) Plane sweep algorithm, ideal for low dimensional  problems, O(N) or O(N^1.5) depending on geometry 
+ Module name              | Description
+ ------------------------ | -----------
+ REB_COLLISION_NONE       | No collision detection, default
+ REB_COLLISION_DIRECT     | Direct nearest neighbour search, O(N^2)
+ REB_COLLISION_TREE       | Oct tree, O(N log(N))
+ REB_COLLISION_SWEPP      | (upgrade to REBOUND 2.0 still in progress) Plane sweep algorithm, ideal for low dimensional  problems, O(N) or O(N^1.5) depending on geometry 
 
 
 **Boundaries**::
 
- Module name            | Description
- ---------------------- | -----------
- REB_BOUNDARY_NONE      | Dummy. Particles are not affected by boundary conditions, default
- REB_BOUNDARY_OPEN      | Particles are removed from the simulation if they leaves the box.
- REB_BOUNDARY_PERIODIC  | Periodic boundary conditions. Particles are reinserted on the other side if they cross the box boundaries. You can use an arbitrary number of ghost-boxes with this module.
- REB_BOUNDARY_SHEAR     | Shear periodic boundary conditions. Similar to periodic boundary conditions, but ghost-boxes are moving with constant speed, set by the shear.
+ Module name              | Description
+ ------------------------ | -----------
+ REB_BOUNDARY_NONE        | Dummy. Particles are not affected by boundary conditions, default
+ REB_BOUNDARY_OPEN        | Particles are removed from the simulation if they leaves the box.
+ REB_BOUNDARY_PERIODIC    | Periodic boundary conditions. Particles are reinserted on the other side if they cross the box boundaries. You can use an arbitrary number of ghost-boxes with this module.
+ REB_BOUNDARY_SHEAR       | Shear periodic boundary conditions. Similar to periodic boundary conditions, but ghost-boxes are moving with constant speed, set by the shear.
   
 
-**Boundaries**::
+**Integrator**::
 
- Integrator name          | Description
+ Module name          | Description
  ------------------------ | -----------
  REB_INTEGRATOR_IAS15     | IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precision. IAS15 can integrate variational equations. Rein & Spiegel 2015, Everhart 1985, default
  REB_INTEGRATOR_WHFAST    | WHFast is the integrator described in Rein & Tamayo 2015, it's a second order symplectic Wisdom Holman integrator with 11th order symplectic correctors. It is extremely fast and accurate, uses Gauss f and g functions to solve the Kepler motion and can integrate variational equations.
