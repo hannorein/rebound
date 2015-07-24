@@ -170,6 +170,46 @@ The following sections list the available modules that come with REBOUND.
  REB_INTEGRATOR_HYBRID    | An experimental hybrid symplectic integrator that uses WHFast for long term integrations but switches over to IAS15 for close encounters.
 
 
+Code structure
+--------------
+
+REBOUND can be used as a shared library. This is *UNIX-way* of using REBOUND. To compile the `librebound.so` file, simply execute `make` in the main directory. However, installing a shared library can sometimes be an obstacle for new users, especially if you want to change the code frequently. For that reason, all the examples that come with REBOUND don't make use of the shared library, but simply compile all the code (including your setup routines) into one single binary file. Here's an example of how to setup a REBOUND simulation:
+
+    #include "rebound.h"
+    
+    int main(int argc, char* argv[]) {
+            struct reb_simulation* r = reb_create_simulation();
+            r->dt = 0.1;
+            r->integrator = REB_INTEGRATOR_WHFAST;
+    
+            struct reb_particle p1;
+            p1.x = 0;  p1.y = 0;  p1.z = 0; 
+            p1.vx = 0; p1.vy = 0; p1.vz = 0; 
+            p1.m = 1.;
+            reb_add(r, p1);
+            
+            struct reb_particle p2;
+            p2.x = 1;  p2.y = 0;  p2.z = 0; 
+            p2.vx = 0; p2.vy = 1; p2.vz = 0; 
+            p2.m = 0.;
+            reb_add(r, p2);
+
+            reb_move_to_com(r);    
+            reb_integrate(r,100.);
+    }
+
+In the first line we include the REBOUND header file. This file contains all the declarationf of the structures and function that we will be using.
+
+Next, we declare the only function in our file. It is the standard C `main()` function. Within that, we first create a `reb_simulation` structure. This is the main structure that contains all the variables, pointers and particles of a REBOUND simulation. You can create multiple `reb_simulation` structures at the same time. The code is thread-safe.
+
+We can then set flags and variables in the `reb_simulation` structure. Note that the `r` variable is a pointer to the structure, so we use the arrow syntax `r->dt = 0.1` to set the variable. The next line chooses the integrator module. Here, we use the WHFast symplectic integrator.
+ 
+We then create two particles, which are represented by the `reb_particle` structure. We set the initial conditions and then add the particle to the simulation using the `reb_add()` function. Note that this function takes two arguments, the first one is the simulation to which you want to add the particle, and the second is the particle that you want to add. 
+
+Finally, we call the REBOUND function `reb_move_to_com()` which moved the particles to a centre of mass reference frame (this prevents particles from drifting away from the origin) and then start the integration. Here, we integrate for 100 time units.
+
+Note that all REBOUND functions start with the three character prefix `reb`. 
+
 
 Directory structure and compilation
 -----------------------------------
