@@ -422,6 +422,14 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
   Directory: examples/prdrag
 
+* **Profiling the shearing sheet example**
+
+  This example demonstrates how to use the profiling tool thatcomes with REBOUND to find out which parts of your code areslow. To turn on this option, simple set `PROFILING=1` inthe Makefile.Note that enabeling this option makes REBOUND not thread-safe.
+
+  
+
+  Directory: examples/profiling
+
 * **Restarting simulations**
 
   This example demonstrates how to restart a simulationusing a binary file. A shearing sheet ring simulation is used, butthe same method can be applied to any other type of simulation.
@@ -459,6 +467,12 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   In this collision resolve method, particles are displaced if theyoverlap. This example also shows how to implement your own collisionroutine. This is where one could add fragmentation, or merging ofparticles.
 
   Directory: examples/shearing_sheet_2
+
+* **A very simple test problem**
+
+  We first create a REBOUND simulation, then we addtwo particles and integrate the system for 100 timeunits.
+
+  Directory: examples/simplest
 
 * **Solar System**
 
