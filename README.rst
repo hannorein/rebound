@@ -23,13 +23,13 @@ You can call REBOUND from C or Python. Which programming language you want to us
 
 All the computationally expensive parts of REBOUND are written in C. So even if you use the Python version, you'll end up with a very fast code.
 
-To install the Python version, simply type the following command into a terminal::
+To install the *Python version*, simply type the following command into a terminal::
 
     pip install rebound
 
 To learn more about how to use REBOUND with Python have a look at the iPython/Jupyter tutorials at https://github.com/hannorein/rebound/blob/master/ipython_examples/
 
-To install the C version, simply copy and paste the following command into your terminal::
+To install the *C version*, clone this repository, e.g. by simply copy-and-pasting the following command into your terminal::
     
     git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./rebound
 
