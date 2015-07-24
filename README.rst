@@ -175,6 +175,8 @@ Code structure
 
 REBOUND can be used as a shared library. This is *UNIX-way* of using REBOUND. To compile the `librebound.so` file, simply execute `make` in the main directory. However, installing a shared library can sometimes be an obstacle for new users, especially if you want to change the code frequently. For that reason, all the examples that come with REBOUND don't make use of the shared library, but simply compile all the code (including your setup routines) into one single binary file. Here's an example of how to setup a REBOUND simulation:
 
+.. code-block:: c
+    :linenos:
     #include "rebound.h"
     
     int main(int argc, char* argv[]) {
