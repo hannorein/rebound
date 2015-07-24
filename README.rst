@@ -15,6 +15,25 @@ REBOUND - An open-source multi-purpose N-body code
 .. image:: https://raw.github.com/hannorein/rebound/master/screenshots/outersolarsystem.png
 .. image:: https://raw.github.com/hannorein/rebound/master/screenshots/disc.png
 
+REBOUND is an N-body integrator, i.e. a software package that can integrate the motion of particles under the influence of gravity. The particles can represent stars, planets, moons, ring or dust particles. REBOUND is very flexible and can be customized to accurately and efficiently solve many problems in astrophysics.  An incomplete feature list of REBOUND:
+
+* Symplectic integrators (WHFast, WH, SEI, LEAPFROG)
+* High accuracy non-symplectic integrator with adaptive timestepping (IAS15)
+* Support for collisional/granular dynamics, various collision detection routines
+* The code is written entirely in C, conforms to the ISO standard C99 and can be used as a thread-safe shared library
+* Easy-to-use Python module, installation in 3 words: `pip install rebound`
+* Extensive set of example problems in both C and Python
+* Real-time, 3D OpenGL visualization (C version)
+* Parallelized with OpenMP (for shared memory systems)
+* Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems)
+* No libraries are needed, use of OpenGL/GLUT for visualization is optional
+* The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound
+* No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
+* Comes with standard ASCII or binary output routines 
+* Different modules are easily interchangeable at runtime
+
+
+
 
 How to use REBOUND - a quick introduction
 -----------------------------------------
@@ -34,27 +53,6 @@ To install the *C version*, clone this repository, e.g. by simply copy-and-pasti
     git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./rebound
 
 To learn more about how to use REBOUND with C, continue reading this file.
-
-
-Feature list 
-------------
-
-An incomplete feature list of REBOUND:
-
-* Symplectic integrators (WHFast, WH, SEI, LEAPFROG)
-* High accuracy non-symplectic integrator with adaptive timestepping (IAS15)
-* Support for collisional/granular dynamics, various collision detection routines
-* The code is written entirely in C, conforms to the ISO standard C99 and can be used as a thread-safe shared library
-* Easy-to-use Python module, installation in 3 words: `pip install rebound`
-* Extensive set of example problems in both C and Python
-* Real-time, 3D OpenGL visualization (C version)
-* Parallelized with OpenMP (for shared memory systems)
-* Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems)
-* No libraries are needed, use of OpenGL/GLUT for visualization is optional
-* The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound
-* No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
-* Comes with standard ASCII or binary output routines 
-* Different modules are easily interchangeable at runtime
 
 
 Contributors
