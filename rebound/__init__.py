@@ -4,7 +4,7 @@
 REBOUND Module. 
 
 """
-#Make changes for python 2 and 3 compatibility
+# Make changes for python 2 and 3 compatibility
 try:
     import builtins      # if this succeeds it's python 3.x
     builtins.xrange = range
@@ -12,11 +12,15 @@ try:
 except ImportError:
     pass                 # python 2.x
 
+# Find suffix
+import sysconfig
+suffix = sysconfig.get_config_var('EXT_SUFFIX')
+if suffix is None:
+    suffix = ".so"
+
+# Import shared library
 from ctypes import *
-import ctypes.util
-import os
-_pymodulespath = os.path.dirname(__file__)
-clibrebound = cdll.LoadLibrary("librebound.so")
+clibrebound = cdll.LoadLibrary("librebound"+suffix)
 
 def build_str():
     return str(c_char_p.in_dll(clibrebound, "reb_build_str").value)
