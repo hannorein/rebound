@@ -24,8 +24,19 @@ pymodulepath = os.path.dirname(__file__)
 from ctypes import *
 clibrebound = cdll.LoadLibrary(pymodulepath+"/../librebound"+suffix)
 
+# Check for version
+try:
+    moduleversion = pkg_resources.require("rebound")[0].version
+    libreboundversion = c_char_p.in_dll(clibrebound, "reb_version_str").value.decode("ascii") 
+    if moduleversion != libreboundversion:
+        print("WARNING: python module and librebound have different version numbers: '%s' vs '%s'.\n" %(moduleversion, libreboundversion))
+except:
+    # Might fails on python3 versions, but not important
+    pass
+
+# Built str
 def build_str():
-    return str(c_char_p.in_dll(clibrebound, "reb_build_str").value)
+    return c_char_p.in_dll(clibrebound, "reb_build_str").value.decode('ascii')
 
 
 # Exceptions    
