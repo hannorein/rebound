@@ -16,14 +16,7 @@ from ctypes import *
 import ctypes.util
 import os
 _pymodulespath = os.path.dirname(__file__)
-try:
-    clibrebound = CDLL(_pymodulespath+"/librebound.so", RTLD_GLOBAL)
-except:
-    try:
-        clibrebound = CDLL(_pymodulespath+"/../librebound.so", RTLD_GLOBAL)
-    except:
-        print("Cannot find library 'librebound.so'.")
-        raise
+clibrebound = cdll.LoadLibrary("librebound.so")
 
 def build_str():
     return str(c_char_p.in_dll(clibrebound, "reb_build_str").value)
