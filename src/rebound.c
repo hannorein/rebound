@@ -22,6 +22,9 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#ifdef OPENGL
+#define _GNU_SOURCE
+#endif // OPENGL
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -31,7 +34,6 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/mman.h>
-#define _GNU_SOURCE
 #include <semaphore.h>
 #include "rebound.h"
 #include "integrator.h"

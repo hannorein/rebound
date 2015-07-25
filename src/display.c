@@ -29,13 +29,13 @@
 #ifdef MPI
 #error OpenGL is not compatible with MPI.
 #endif //MPI
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#define _GNU_SOURCE
 #include <semaphore.h>
 #ifdef _APPLE
 #include <GLUT/glut.h>
