@@ -61,8 +61,9 @@ int display_clear = 1;		/**< Toggles clearing the display on each draw. */
 int display_ghostboxes = 0;	/**< Shows/hides ghost boxes. */
 int display_limit = 1;		/**< Limit display refresh to 50 frames per second. */
 int display_reference = -1;	/**< reb_particle used as a reference for rotation. */
-double display_rotate_x = 0;	/**< Rotate everything around the x-axis. */
-double display_rotate_z = 0;	/**< Rotate everything around the z-axis. */
+
+sem_t* display_mutex;
+struct reb_simulation* display_r = NULL;
 
 #define DEG2RAD (M_PI/180.)
 
@@ -75,6 +76,7 @@ double display_rotate_z = 0;	/**< Rotate everything around the z-axis. */
 
 
 void display_exit(){
+	display_r = NULL;
 	printf("Exiting vizualization.\n");
 	exit(0);
 }
@@ -114,7 +116,7 @@ void displayKey(unsigned char key, int x, int y){
 			display_ghostboxes = !display_ghostboxes;
 			break;
 		case 'r': case 'R':
-			zprReset();
+			zprReset(display_r->boxsize_max);
 			break;
 		case 'd': case 'D':
 			display_pause = !display_pause;
@@ -150,7 +152,6 @@ void displayKey(unsigned char key, int x, int y){
 	display();
 }
 
-struct reb_simulation* display_r = NULL;
 
 void display(void){
 	if (display_pause){
@@ -167,8 +168,6 @@ void display(void){
 	if (display_reference>=0){
 		glTranslatef(-particles[display_reference].x,-particles[display_reference].y,-particles[display_reference].z);
 	}
-	glRotatef(display_rotate_x,1,0,0);
-	glRotatef(display_rotate_z,0,0,1);
 	for (int i=-display_ghostboxes*display_r->nghostx;i<=display_ghostboxes*display_r->nghostx;i++){
 	for (int j=-display_ghostboxes*display_r->nghosty;j<=display_ghostboxes*display_r->nghosty;j++){
 	for (int k=-display_ghostboxes*display_r->nghostz;k<=display_ghostboxes*display_r->nghostz;k++){
@@ -295,8 +294,6 @@ void display(void){
 		glutWireCube(1);
 	}
 	glScalef(1./display_r->boxsize.x,1./display_r->boxsize.y,1./display_r->boxsize.z);
-	glRotatef(-display_rotate_z,0,0,1);
-	glRotatef(-display_rotate_x,1,0,0);
 	if (display_reference>=0){
 		glTranslatef(particles[display_reference].x,particles[display_reference].y,particles[display_reference].z);
 	}
@@ -304,12 +301,14 @@ void display(void){
 	sem_post(display_mutex);	
 }
 
-void display_init(int argc, char* argv[]){
+void display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* sem){
+	display_r = r;
+	display_mutex = sem;
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH );
 	glutInitWindowSize(700,700);
 	glutCreateWindow("rebound");
-	zprInit();
+	zprInit(display_r->boxsize_max);
 	glutDisplayFunc(display);
 	glutKeyboardFunc(displayKey);
 	glDepthMask(GL_TRUE);

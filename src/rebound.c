@@ -387,6 +387,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 
 	// Create Semaphore
 	sem_unlink("reb_display"); // unlink first
+	sem_t* display_mutex;
 	if ((display_mutex = sem_open("reb_display", O_CREAT | O_EXCL, 0666, 1))==SEM_FAILED){
 		perror("sem_open");
 		exit(EXIT_FAILURE);
@@ -403,11 +404,6 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 		}
 		reb_configure_box(r, max_r*2.3,MAX(1,r->root_nx),MAX(1,r->root_ny),MAX(1,r->root_nz));
 	}
-	if (display_r!=NULL){
-		fprintf(stderr,"\n\033[1mError!\033[0m Cannot vizualize two simulations at the same time. Exiting.\n");
-		return 1;
-	}
-	display_r = r;
 #else // OPENGL
 	struct reb_simulation* const r = r_user;
 #endif // OPENGL
@@ -432,7 +428,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
                 exit(EXIT_FAILURE);
         }
         if(childpid == 0) {  	// Child (vizualization)
-		display_init(0,NULL);
+		display_init(0,NULL,r, display_mutex);
                 exit(EXIT_SUCCESS); // NEVER REACHED
         } else { 		// Parent (computation)
 		while(reb_check_exit(r,tmax)<0){
@@ -456,7 +452,6 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 	wait(&status);
 	sem_unlink("reb_display");
 	sem_close(display_mutex);
-	display_r = NULL;
 	memcpy(r_user, r, sizeof(struct reb_simulation));
 	memcpy(r_user->particles, r->particles, r->N*sizeof(struct reb_particle));
 #endif //OPENGL

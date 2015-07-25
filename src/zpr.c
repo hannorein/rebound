@@ -77,14 +77,14 @@ GLfloat zprReferencePoint[4] = { 0,0,0,0 };
 double glscale = 1;
 int resetOrientation = 0;
 
-void zprReset() {
+void zprReset(double boxsize_max) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(_left,_right,_bottom,_top,_zNear,_zFar);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glGetDoublev(GL_MODELVIEW_MATRIX,_matrix);
-    double initscale = 1.5/display_r->boxsize_max;
+    double initscale = 1.5/boxsize_max;
     glScalef(initscale,initscale,initscale);
     switch(resetOrientation){
 	    case 1:
@@ -102,14 +102,14 @@ void zprReset() {
     }
 }
 
-void zprInit() {
+void zprInit(double boxsize_max) {
     getMatrix();
     //_zNear  =-1.5*boxsize_max;
     //_zFar   = 1.5*boxsize_max;
     glutReshapeFunc(zprReshape);
     glutMouseFunc(zprMouse);
     glutMotionFunc(zprMotion);
-    zprReset();
+    zprReset(boxsize_max);
 }
 
 static void
@@ -394,16 +394,6 @@ invertMatrix(const GLdouble *m, GLdouble *out )
 
 static void (*selection)(void) = NULL;
 static void (*pick)(GLint name) = NULL;
-
-void zprSelectionFunc(void (*f)(void))
-{
-    selection = f;
-}
-
-void zprPickFunc(void (*f)(GLint name))
-{
-    pick = f;
-}
 
 /* Draw in selection mode */
 

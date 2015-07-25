@@ -25,10 +25,6 @@
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
 #include <semaphore.h>
-sem_t* display_mutex;
-
-struct reb_simulation;
-extern struct reb_simulation* display_r; 
 
 /**
  * This routine is called by the glut run loop or manually, whenever the screen has to be redrawn 
@@ -40,10 +36,6 @@ void display(void);
  * @param argc Number of command line arguments.
  * @param argv Command line arguments.
  */
-void display_init(int argc, char* argv[]);
+void display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* display_mutex);
 
-#ifdef OPENGL
-extern double display_rotate_x;	/**< Rotate everything around the x-axis. */
-extern double display_rotate_z;	/**< Rotate everything around the z-axis. */
-#endif  // OPENGL
 #endif
