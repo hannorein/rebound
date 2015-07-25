@@ -30,6 +30,7 @@
 #include <signal.h>
 #include <string.h>
 #include <sys/time.h>
+#include <sys/mman.h>
 #include "rebound.h"
 #include "integrator.h"
 #include "boundary.h"
@@ -301,6 +302,10 @@ struct reb_simulation* reb_create_simulation(){
 }
 
 int reb_check_exit(struct reb_simulation* const r, const double tmax){
+	while(r->status == REB_RUNNING_PAUSED){
+		// Wait for user to disable paused simulation
+		usleep(10000);
+	}
 	if (r->status>=0){
 		// Exit now.
 		return r->status;
@@ -368,41 +373,70 @@ void reb_run_heartbeat(struct reb_simulation* const r){
 	}
 }
 
-enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
+enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
+	
+	// Copy and share simulation struct 
+	struct reb_simulation* r = (struct reb_simulation*)mmap(r_user, sizeof(struct reb_simulation), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
+	memcpy(r, r_user, sizeof(struct reb_simulation));
+	
+	// Copy and share particle array
+	r->particles = (struct reb_particle*)mmap(NULL, r->N*sizeof(struct reb_particle), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
+	memcpy(r->particles, r_user->particles, r->N*sizeof(struct reb_particle));
+	
+	// Need root_size for visualization. Creating one. 
+	if (r->root_size==-1){  
+		fprintf(stderr,"\n\033[1mWarning!\033[0m Configuring box automatically for vizualization based on particle positions.\n");
+		const struct reb_particle* p = r->particles;
+		double max_r = 0;
+		for (int i=0;i<r->N;i++){
+			const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
+			max_r = MAX(max_r, _r);
+		}
+		reb_configure_box(r, max_r*2.3,MAX(1,r->root_nx),MAX(1,r->root_ny),MAX(1,r->root_nz));
+	}
+
+
+
 #ifndef LIBREBOUND
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 #endif // LIBREBOUND
+	
 	r->dt_last_done = r->dt;
 	r->status = REB_RUNNING;
 	reb_run_heartbeat(r);
-#ifdef OPENGL
+
+
 	if (display_r!=NULL){
 		fprintf(stderr,"\n\033[1mError!\033[0m Cannot vizualize two simulations at the same time. Exiting.\n");
 		return 1;
-	}else{
-		if (r->root_size==-1){  // Need root_size for visualization. Creating one. 
-			fprintf(stderr,"\n\033[1mWarning!\033[0m Configuring box automatically for vizualization based on particle positions.\n");
-			const struct reb_particle* p = r->particles;
-			double max_r = 0;
-			for (int i=0;i<r->N;i++){
-				const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
-				max_r = MAX(max_r, _r);
-			}
-			reb_configure_box(r, max_r*2.3,MAX(1,r->root_nx),MAX(1,r->root_ny),MAX(1,r->root_nz));
+	}
+	display_r = r;
+	
+
+
+        pid_t   childpid;
+        if((childpid = fork()) == -1) {
+                perror("fork");
+                exit(1);
+        }
+
+        if(childpid == 0) {  	// Child (vizualization)
+		display_init(0,NULL, tmax);
+                exit(0);
+        } else { 		// Parent (computation)
+		while(reb_check_exit(r,tmax)<0){
+			reb_step(r); 			
+			reb_run_heartbeat(r);
 		}
-		display_r = r;
-		display_init(0,NULL, tmax); // This function will never return (GLUT issue/bug).
-	}
-#else // OPENGL
-	while(reb_check_exit(r,tmax)<0){
-		reb_step(r); 			
-		reb_run_heartbeat(r);
-	}
-#endif // OPENGL
+        }
+
 	reb_integrator_synchronize(r);
 	r->dt = r->dt_last_done;
+	memcpy(r_user, r, sizeof(struct reb_simulation));
+	memcpy(r_user->particles, r->particles, r->N*sizeof(struct reb_particle));
+
 #ifndef LIBREBOUND
 	gettimeofday(&tim, NULL);
 	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);

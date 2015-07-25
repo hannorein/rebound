@@ -34,6 +34,7 @@ extern const char* reb_version_str;	// Version string.
 
 // Enum, describing the return status of rebound_integrate
 enum REB_STATUS {
+	REB_RUNNING_PAUSED = -3,
 	REB_RUNNING_LAST_STEP = -2,
 	REB_RUNNING = -1,   
 	REB_EXIT_SUCCESS = 0,   
@@ -41,6 +42,7 @@ enum REB_STATUS {
 	REB_EXIT_NOPARTICLES = 2,
 	REB_EXIT_ENCOUNTER = 3,
 	REB_EXIT_ESCAPE = 4,
+	REB_EXIT_USER = 5,		// User caused exit
 };
 
 // Forward declarations

@@ -65,6 +65,7 @@ int display_limit = 1;		/**< Limit display refresh to 50 frames per second. */
 int display_reference = -1;	/**< reb_particle used as a reference for rotation. */
 double display_rotate_x = 0;	/**< Rotate everything around the x-axis. */
 double display_rotate_z = 0;	/**< Rotate everything around the z-axis. */
+
 #define DEG2RAD (M_PI/180.)
 
 /**
@@ -74,53 +75,32 @@ double display_rotate_z = 0;	/**< Rotate everything around the z-axis. */
  * @param y Position on screen.
  */
 
-void display_exit(void){
-	// Note that there is now general way to leave GlutMainLoop(). Sad but true.
-	fprintf(stderr,"\n\033[1mWarning!\033[0m Exiting OpenGL visualization now. This will immediately terminate REBOUND and not return to your program. If you need to process data after the simulation is completed, disable the OpenGL vizualization.\n");
-	exit(0);
-}
 double display_tmax;
 
-void display_func(void){
-	if (reb_check_exit(display_r,display_tmax)<0){
-		if (display_limit){
-			struct timeval tim;
-			gettimeofday(&tim, NULL);
-			double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
-			double timing;
-			do{
-				reb_step(display_r);
-				reb_run_heartbeat(display_r);
-				gettimeofday(&tim, NULL);
-				timing = tim.tv_sec+(tim.tv_usec/1000000.0);
-			}while(timing-timing_initial<1./50.);  //limit to 50 frames per second.
-		}else{
-			reb_step(display_r);
-			reb_run_heartbeat(display_r);
-		}
-		if (!display_pause){
-			PROFILING_START()
-			display();
-			PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
-		}
+void display_timer(int value){
+	if (display_r->status>=0){
+		exit(0);
 	}else{
-		display_exit();
+		glutPostRedisplay();
 	}
 }
+
+			//PROFILING_START()
+			//display();
+			//PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
 
 void displayKey(unsigned char key, int x, int y){
 	switch(key){
 		case 'q': case 'Q':
-			display_exit();
+			display_r->status = REB_EXIT_USER;
 			break;
 		case ' ':
-			display_pause_sim=!display_pause_sim;
-			if (display_pause_sim){
-				printf("Pause.\n");
-				glutIdleFunc(NULL);
-			}else{
+			if (display_r->status == REB_RUNNING_PAUSED){
 				printf("Resume.\n");
-				glutIdleFunc(display_func);
+				display_r->status = REB_RUNNING;
+			}else{
+				printf("Pause.\n");
+				display_r->status = REB_RUNNING_PAUSED;
 			}
 			break;
 		case 's': case 'S':
@@ -212,6 +192,10 @@ void display_entire_tree(void){
 struct reb_simulation* display_r = NULL;
 
 void display(void){
+	glutTimerFunc(10,display_timer,0);
+	if (display_pause){
+		return;
+	}
 	const struct reb_particle* particles = display_r->particles;
 	if (display_tree){
 		reb_tree_update(display_r);
@@ -296,13 +280,13 @@ void display(void){
 							glColor4f(0.0,0.0,1.0,0.9);
 						}
 					}
-					if (display_r->integrator==REB_INTEGRATOR_WHFAST && display_r->ri_whfast.is_synchronized==0){
-						double m = p.m;
-						p = display_r->ri_whfast.p_j[i];
-						p.m = m;
-						// Note: need also update to com.
-						// TODO
-					}
+					//if (display_r->integrator==REB_INTEGRATOR_WHFAST && display_r->ri_whfast.is_synchronized==0){
+					//	double m = p.m;
+					//	p = display_r->ri_whfast.p_j[i];
+					//	p.m = m;
+					//	// Note: need also update to com.
+					//	// TODO
+					//}
 					struct reb_orbit o = reb_tools_p2orbit(display_r->G, p,com);
 					glPushMatrix();
 					
@@ -376,7 +360,6 @@ void display_init(int argc, char* argv[], double tmax){
 	glutCreateWindow("rebound");
 	zprInit();
 	glutDisplayFunc(display);
-	glutIdleFunc(display_func);
 	glutKeyboardFunc(displayKey);
 	glDepthMask(GL_TRUE);
 	glEnable(GL_BLEND);                    
