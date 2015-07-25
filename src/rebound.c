@@ -386,7 +386,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 
 
 	// Create Semaphore
-	sem_unlink("reb_display");
+	sem_unlink("reb_display"); // unlink first
 	if ((display_mutex = sem_open("reb_display", O_CREAT | O_EXCL, 0666, 1))==SEM_FAILED){
 		perror("sem_open");
 		exit(EXIT_FAILURE);
@@ -429,12 +429,11 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
         pid_t   childpid;
         if((childpid = fork()) == -1) {
                 perror("fork");
-                exit(1);
+                exit(EXIT_FAILURE);
         }
         if(childpid == 0) {  	// Child (vizualization)
-		//display_mutex = sem_open("REBOUNDDISPLAY", 0);	
-		display_init(0,NULL, tmax);
-                exit(0);
+		display_init(0,NULL);
+                exit(EXIT_SUCCESS); // NEVER REACHED
         } else { 		// Parent (computation)
 		while(reb_check_exit(r,tmax)<0){
 			sem_wait(display_mutex);	
@@ -450,7 +449,6 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 	}
 #endif // OPENGL
 
-
 	reb_integrator_synchronize(r);
 	r->dt = r->dt_last_done;
 #ifdef OPENGL
@@ -458,6 +456,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 	wait(&status);
 	sem_unlink("reb_display");
 	sem_close(display_mutex);
+	display_r = NULL;
 	memcpy(r_user, r, sizeof(struct reb_simulation));
 	memcpy(r_user->particles, r->particles, r->N*sizeof(struct reb_particle));
 #endif //OPENGL

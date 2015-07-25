@@ -40,7 +40,7 @@ void display(void);
  * @param argc Number of command line arguments.
  * @param argv Command line arguments.
  */
-void display_init(int argc, char* argv[], double tmax);
+void display_init(int argc, char* argv[]);
 
 #ifdef OPENGL
 extern double display_rotate_x;	/**< Rotate everything around the x-axis. */
