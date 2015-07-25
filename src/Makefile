@@ -1,4 +1,4 @@
-OPT+= -std=c99 -Wpointer-arith
+OPT+= -std=c99 -Wpointer-arith -D_GNU_SOURCE
 ifndef OS
 	OS=$(shell uname)
 endif
