@@ -14,7 +14,7 @@
 int main(int argc, char* argv[]){
 	struct reb_simulation* const r = reb_create_simulation();
 	// Setup constants
-	r->dt 			= 1e-3;
+	r->dt 			= 1e-5;
 	r->integrator		= REB_INTEGRATOR_LEAPFROG;
 	r->boundary		= REB_BOUNDARY_PERIODIC;
 	r->collision		= REB_COLLISION_DIRECT;

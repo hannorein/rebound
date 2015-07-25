@@ -31,6 +31,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/mman.h>
+#include <semaphore.h>
 #include "rebound.h"
 #include "integrator.h"
 #include "boundary.h"
@@ -304,7 +305,7 @@ struct reb_simulation* reb_create_simulation(){
 int reb_check_exit(struct reb_simulation* const r, const double tmax){
 	while(r->status == REB_RUNNING_PAUSED){
 		// Wait for user to disable paused simulation
-		usleep(10000);
+		usleep(1000);
 	}
 	if (r->status>=0){
 		// Exit now.
@@ -374,7 +375,7 @@ void reb_run_heartbeat(struct reb_simulation* const r){
 }
 
 enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
-	
+#ifdef OPENGL
 	// Copy and share simulation struct 
 	struct reb_simulation* r = (struct reb_simulation*)mmap(r_user, sizeof(struct reb_simulation), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
 	memcpy(r, r_user, sizeof(struct reb_simulation));
@@ -382,7 +383,15 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 	// Copy and share particle array
 	r->particles = (struct reb_particle*)mmap(NULL, r->N*sizeof(struct reb_particle), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
 	memcpy(r->particles, r_user->particles, r->N*sizeof(struct reb_particle));
-	
+
+
+	// Create Semaphore
+	sem_unlink("reb_display");
+	if ((display_mutex = sem_open("reb_display", O_CREAT, 0666, 1))==SEM_FAILED){
+		perror("sem_open");
+		exit(EXIT_FAILURE);
+	}
+
 	// Need root_size for visualization. Creating one. 
 	if (r->root_size==-1){  
 		fprintf(stderr,"\n\033[1mWarning!\033[0m Configuring box automatically for vizualization based on particle positions.\n");
@@ -394,6 +403,14 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 		}
 		reb_configure_box(r, max_r*2.3,MAX(1,r->root_nx),MAX(1,r->root_ny),MAX(1,r->root_nz));
 	}
+	if (display_r!=NULL){
+		fprintf(stderr,"\n\033[1mError!\033[0m Cannot vizualize two simulations at the same time. Exiting.\n");
+		return 1;
+	}
+	display_r = r;
+#else // OPENGL
+	struct reb_simulation* const r = r_user;
+#endif // OPENGL
 
 
 
@@ -407,35 +424,40 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 	r->status = REB_RUNNING;
 	reb_run_heartbeat(r);
 
-
-	if (display_r!=NULL){
-		fprintf(stderr,"\n\033[1mError!\033[0m Cannot vizualize two simulations at the same time. Exiting.\n");
-		return 1;
-	}
-	display_r = r;
 	
-
-
+#ifdef OPENGL
         pid_t   childpid;
         if((childpid = fork()) == -1) {
                 perror("fork");
                 exit(1);
         }
-
         if(childpid == 0) {  	// Child (vizualization)
+		//display_mutex = sem_open("REBOUNDDISPLAY", 0);	
 		display_init(0,NULL, tmax);
                 exit(0);
         } else { 		// Parent (computation)
+#else // OPENGL
+	if (1){
+#endif // OPENGL
 		while(reb_check_exit(r,tmax)<0){
+			sem_wait(display_mutex);	
 			reb_step(r); 			
 			reb_run_heartbeat(r);
+			usleep(200000);
+			sem_post(display_mutex);	
 		}
         }
 
 	reb_integrator_synchronize(r);
 	r->dt = r->dt_last_done;
+#ifdef OPENGL
+	int status;
+	wait(&status);
+	sem_unlink("reb_display");
+	sem_close(display_mutex);
 	memcpy(r_user, r, sizeof(struct reb_simulation));
 	memcpy(r_user->particles, r->particles, r->N*sizeof(struct reb_particle));
+#endif //OPENGL
 
 #ifndef LIBREBOUND
 	gettimeofday(&tim, NULL);

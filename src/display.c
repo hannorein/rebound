@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <semaphore.h>
 #ifdef _APPLE
 #include <GLUT/glut.h>
 #else // _APPLE
@@ -77,12 +78,18 @@ double display_rotate_z = 0;	/**< Rotate everything around the z-axis. */
 
 double display_tmax;
 
+void display_exit(){
+	printf("Exiting vizualization.\n");
+	exit(0);
+}
+
 void display_timer(int value){
 	if (display_r->status>=0){
-		exit(0);
+		display_exit();
 	}else{
 		glutPostRedisplay();
 	}
+	glutTimerFunc(20,display_timer,0);
 }
 
 			//PROFILING_START()
@@ -93,6 +100,7 @@ void displayKey(unsigned char key, int x, int y){
 	switch(key){
 		case 'q': case 'Q':
 			display_r->status = REB_EXIT_USER;
+			display_exit();
 			break;
 		case ' ':
 			if (display_r->status == REB_RUNNING_PAUSED){
@@ -192,10 +200,10 @@ void display_entire_tree(void){
 struct reb_simulation* display_r = NULL;
 
 void display(void){
-	glutTimerFunc(10,display_timer,0);
 	if (display_pause){
 		return;
 	}
+	sem_wait(display_mutex);	
 	const struct reb_particle* particles = display_r->particles;
 	if (display_tree){
 		reb_tree_update(display_r);
@@ -350,6 +358,7 @@ void display(void){
 		glTranslatef(particles[display_reference].x,particles[display_reference].y,particles[display_reference].z);
 	}
 	glutSwapBuffers();
+	sem_post(display_mutex);	
 }
 
 void display_init(int argc, char* argv[], double tmax){
@@ -396,6 +405,7 @@ void display_init(int argc, char* argv[], double tmax){
 	glMaterialfv(GL_FRONT, GL_SPECULAR, sphere_spec);
 	glMaterialf(GL_FRONT, GL_SHININESS, 80);
 
+	glutTimerFunc(100,display_timer,0);
 	// Enter glut run loop and never come back.
 	glutMainLoop();
 }

@@ -24,6 +24,8 @@
  */
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
+#include <semaphore.h>
+sem_t* display_mutex;
 
 struct reb_simulation;
 extern struct reb_simulation* display_r; 
@@ -40,7 +42,6 @@ void display(void);
  */
 void display_init(int argc, char* argv[], double tmax);
 
-extern int display_init_done;	/**< Is set to one when the display is initialized and can be drawn. This prevents errors when reb_output_png() is called, but display not initialized yet. */
 #ifdef OPENGL
 extern double display_rotate_x;	/**< Rotate everything around the x-axis. */
 extern double display_rotate_z;	/**< Rotate everything around the z-axis. */
