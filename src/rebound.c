@@ -31,6 +31,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/mman.h>
+#define _GNU_SOURCE
 #include <semaphore.h>
 #include "rebound.h"
 #include "integrator.h"

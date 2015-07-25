@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#define _GNU_SOURCE
 #include <semaphore.h>
 #ifdef _APPLE
 #include <GLUT/glut.h>
