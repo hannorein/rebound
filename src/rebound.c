@@ -387,7 +387,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 
 	// Create Semaphore
 	sem_unlink("reb_display");
-	if ((display_mutex = sem_open("reb_display", O_CREAT, 0666, 1))==SEM_FAILED){
+	if ((display_mutex = sem_open("reb_display", O_CREAT | O_EXCL, 0666, 1))==SEM_FAILED){
 		perror("sem_open");
 		exit(EXIT_FAILURE);
 	}
@@ -436,17 +436,20 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 		display_init(0,NULL, tmax);
                 exit(0);
         } else { 		// Parent (computation)
-#else // OPENGL
-	if (1){
-#endif // OPENGL
 		while(reb_check_exit(r,tmax)<0){
 			sem_wait(display_mutex);	
 			reb_step(r); 			
 			reb_run_heartbeat(r);
-			usleep(200000);
 			sem_post(display_mutex);	
 		}
         }
+#else // OPENGL
+	while(reb_check_exit(r,tmax)<0){
+		reb_step(r); 			
+		reb_run_heartbeat(r);
+	}
+#endif // OPENGL
+
 
 	reb_integrator_synchronize(r);
 	r->dt = r->dt_last_done;
