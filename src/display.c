@@ -29,7 +29,6 @@
 #ifdef MPI
 #error OpenGL is not compatible with MPI.
 #endif //MPI
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

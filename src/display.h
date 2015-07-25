@@ -24,7 +24,6 @@
  */
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
-#define _GNU_SOURCE
 #include <semaphore.h>
 
 /**

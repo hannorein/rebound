@@ -26,7 +26,7 @@ ifeq ($(FFTW), 1)
 endif
 
 ifeq ($(OPENGL), 1)
-PREDEF+= -DOPENGL
+PREDEF+= -DOPENGL -D_GNU_SOURCE
 ifeq ($(OS), Darwin)
 	LIB+= -framework OpenGL -framework GLUT
 else
