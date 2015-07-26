@@ -11,7 +11,7 @@ all: librebound
 	@echo ""
 
 librebound:
-	$(MAKE) -C ../../src/ librebound
+	$(MAKE) $(OPT) -C ../../src/ librebound
 	@cp ../../src/librebound.so .
 
 clean:
