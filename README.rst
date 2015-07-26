@@ -11,7 +11,7 @@ REBOUND - An open-source multi-purpose N-body code
 
 NEW VERSION
 -----------
-Welcome to REBOUND version 2! We made many changes to the code. Most importanly, REBOUND is now thread-safe and does not use global variables anymore. All the variables that were previously global, are now contained in the `reb_simulation` structure. This has many advantages, for example, you can run separate simulations in parallel from within one process. We also made it possible to choose all modules at runtime (compared to the selection in the Makefile that was used before). This is much more in line with standard UNIX coding practice and does not severely impact performance (it might even help making REBOUND a tiny bit faster). This makes REBOUND a fully functional shared library. We added a prefix to all public functions and struct definitions: `reb_`.
+Welcome to REBOUND version 2! We made many changes to the code. Most importanly, REBOUND is now thread-safe and does not use global variables anymore. All the variables that were previously global, are now contained in the `reb_simulation` structure. This has many advantages, for example, you can run separate simulations in parallel from within one process. We also made it possible to choose all modules at runtime (compared to the selection in the `Makefile` that was used before). This is much more in line with standard UNIX coding practice and does not severely impact performance (it might even help making REBOUND a tiny bit faster). This makes REBOUND a fully functional shared library. We added a prefix to all public functions and struct definitions: `reb_`.
 
 There are still some features that haven't been fully ported. Most importantly, the MPI parallelization and the SWEEP collision detection routine. 
 
@@ -300,12 +300,12 @@ You can also install freeglut in a non-default installation directory if you do 
     ./configure --prefix=${HOME}/local
     make all && make install
 
-Then, add the following lines to the REBOUND Makefile::
+Then, add the following lines to the `Makefile`::
 
-    OPT += -I$(HOME)/local/include
-    LIB += -L$(HOME)/local/lib
+    export OPT += -I$(HOME)/local/include
+    export LIB += -L$(HOME)/local/lib
 
-Note that you can still compile and run REBOUND even if you do not have GLUT installed. Simply set `OPENGL=0` in the makefile (see below). 
+Note that you can still compile and run REBOUND even if you do not have GLUT installed. Simply set `OPENGL=0` in the `Makefile`.
 
 
 Examples
@@ -437,7 +437,7 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
 * **Profiling the shearing sheet example** 
 
-   This example demonstrates how to use the profiling tool that comes with REBOUND to find out which parts of your code are slow. To turn on this option, simple set `PROFILING=1` in the Makefile. Note that enabeling this option makes REBOUND not thread-safe. 
+   This example demonstrates how to use the profiling tool that comes with REBOUND to find out which parts of your code are slow. To turn on this option, simple set `PROFILING=1` in the `Makefile`. Note that enabeling this option makes REBOUND not thread-safe. 
 
   Directory: examples/profiling
 
