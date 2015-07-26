@@ -104,7 +104,7 @@ void heartbeat(struct reb_simulation* r){
 	if(reb_output_check(r, M_PI*2.)){
 		reb_output_timing(r, tmax);
 	}
-	if(reb_output_check(r, M_PI*2.*100.)){ // output every 100 years
+	if(reb_output_check(r, M_PI*2.)){ // output every year
 		FILE* f = fopen("a.txt","a");
 		const struct reb_particle* particles = r->particles;
 		const struct reb_particle planet = particles[1];

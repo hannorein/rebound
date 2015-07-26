@@ -18,7 +18,7 @@ int main(int argc, char* argv[]){
 	r->integrator	= REB_INTEGRATOR_LEAPFROG;
 	r->gravity	= REB_GRAVITY_BASIC;
 	r->collision	= REB_COLLISION_TREE;
-	r->dt 		= 1e-3;
+	r->dt 		= 1e-5;
 	r->boundary	= REB_BOUNDARY_PERIODIC;
 	reb_configure_box(r,3.,1,1,1);
 	
