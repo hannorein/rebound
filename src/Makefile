@@ -4,7 +4,7 @@ ifndef OS
 endif
 ifeq ($(OS), Linux)
 	OPT+= -Wall -g
-	LIB+= -lm
+	LIB+= -lm -rt
 endif
 ifeq ($(OS), Darwin)
 	OPT+= -I/usr/local/include -Wall -Wno-deprecated -g
