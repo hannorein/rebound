@@ -430,15 +430,19 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
                 exit(EXIT_FAILURE);
         }
         if(childpid == 0) {  	// Child (vizualization)
-		display_init(0,NULL,r, display_mutex);
+		reb_display_init(0,NULL,r, display_mutex);
                 exit(EXIT_SUCCESS); // NEVER REACHED
         } else { 		// Parent (computation)
+		PROFILING_START()
 		while(reb_check_exit(r,tmax)<0){
 			sem_wait(display_mutex);	
+			PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
 			reb_step(r); 			
 			reb_run_heartbeat(r);
+			PROFILING_START()
 			sem_post(display_mutex);	
 		}
+		PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
         }
 #else // OPENGL
 	while(reb_check_exit(r,tmax)<0){

@@ -27,15 +27,10 @@
 #include <semaphore.h>
 
 /**
- * This routine is called by the glut run loop or manually, whenever the screen has to be redrawn 
- */
-void display(void);
-
-/**
  * This function initializes OpenGL and starts the run loop. It will never return.
  * @param argc Number of command line arguments.
  * @param argv Command line arguments.
  */
-void display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* display_mutex);
+void reb_display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* mutex);
 
 #endif
