@@ -374,6 +374,9 @@ void reb_run_heartbeat(struct reb_simulation* const r){
 			}
 		}
 	}
+	if (r->usleep){
+		usleep(r->usleep);
+	}
 }
 
 enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
