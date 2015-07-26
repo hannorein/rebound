@@ -17,7 +17,7 @@ ifeq ($(MPI), 1)
 	PREDEF+= -DMPI
 	OPENGL=0
 else
-	CC?=gcc
+	CC?=cc
 endif
 
 ifeq ($(FFTW), 1)
@@ -97,7 +97,8 @@ clean:
 
 
 # This part of the Makefile compiles the shared dynamic library librebound.
-librebound: OPT+= -fPIC
+librebound: OPT+= -fPIC -DLIBREBOUND
+
 librebound:
 	# Remove old object files
 	rm -f *.o
@@ -120,7 +121,7 @@ librebound:
 	$(CC) $(OPT) $(PREDEF) zpr.c -c
 	$(CC) $(OPT) $(PREDEF) display.c -c
 	$(CC) $(OPT) $(PREDEF) tools.c -c
-	$(CC) $(OPT) -shared *.o -o librebound.so 
+	$(CC) $(OPT) -shared *.o -o librebound.so $(LIB)
 	
 	@echo ""        
 	@echo "The shared library librebound.so has been created successfully."

@@ -69,7 +69,9 @@ struct reb_display_config reb_dc;
 
 void reb_display_exit(struct reb_display_config* dc){
 	dc->r = NULL;
+#ifdef _APPLE
 	glDeleteLists(dc->dlist_sphere,1);
+#endif // _APPLE
 	printf("Exiting vizualization.\n");
 	exit(0);
 }
