@@ -29,16 +29,13 @@ int main(int argc, char* argv[]){
 	// Setup particles
 	int _N = 1000;
 	// Initial conditions
-	struct reb_particle star;
-	star.x 		= 0; star.y 	= 0; star.z	= 0;
-	star.vx 	= 0; star.vy 	= 0; star.vz 	= 0;
-	star.ax 	= 0; star.ay 	= 0; star.az 	= 0;
+	struct reb_particle star = {0};
 	star.m 		= 1;
 	star.r		= 0.01;
 	reb_add(r, star);
 
 	while(r->N<_N){
-		struct reb_particle pt;
+		struct reb_particle pt = {0};
 		double a	= reb_random_powerlaw(boxsize/2.9,boxsize/3.1,.5);
 		double phi 	= reb_random_uniform(0,2.*M_PI);
 		pt.x 		= a*cos(phi);
@@ -47,10 +44,6 @@ int main(int argc, char* argv[]){
 		double vkep 	= sqrt(r->G*star.m/a);
 		pt.vx 		=  vkep * sin(phi);
 		pt.vy 		= -vkep * cos(phi);
-		pt.vz 		= 0;
-		pt.ax 		= 0;
-		pt.ay 		= 0;
-		pt.az 		= 0;
 		pt.m 		= 0.0001;
 		pt.r 		= .3/sqrt((double)_N);
 		reb_add(r, pt);
