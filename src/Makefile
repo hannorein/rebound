@@ -32,11 +32,6 @@ ifeq ($(OS), Darwin)
 else
 	LIB+= -lGL -lGLU -lglut 
 endif
-
-ifeq ($(LIBPNG), 1)
-	PREDEF+= -DLIBPNG
-	LIB+= -lpng
-endif
 endif
 
 ifeq ($(QUADRUPOLE), 1)
@@ -60,71 +55,31 @@ else
 	OPT+= -Wno-unknown-pragmas
 endif
 
+OPT+= -fPIC -DLIBREBOUND
 
+SOURCES=rebound.c tree.c particle.c gravity.c integrator.c integrator_whfast.c integrator_ias15.c integrator_sei.c integrator_wh.c integrator_leapfrog.c integrator_hybrid.c boundary.c input.c output.c collision.c communication_mpi.c zpr.c display.c tools.c 
+OBJECTS=$(SOURCES:.c=.o)
+HEADERS=$(SOURCES:.c=.h)
 
-PREDEFLIST= $(shell echo "$(PREDEF)" | sed 's/-D//g')
+all: $(SOURCES) librebound.so 
 
-all:
-	# Remove old object files
-	rm -f *.o
-	# Compile all source files 
-	@if test -L integrator.c; then { echo "\n\nERROR! The file integrator.c seems to be a symbolic link. In this version of REBOUND you can choose the integrator in your problem.c file and no longer have to overwrite the integrator.c file. Please check the README file and update your Makefile accordingly. Exiting...\n\n"; exit 1;}; else exit 0; fi
-	$(CC) $(OPT) $(PREDEF) rebound.c -c
-	$(CC) $(OPT) $(PREDEF) problem.c -c
-	$(CC) $(OPT) $(PREDEF) tree.c -c
-	$(CC) $(OPT) $(PREDEF) particle.c -c
-	$(CC) $(OPT) $(PREDEF) gravity.c -c
-	$(CC) $(OPT) $(PREDEF) integrator.c -c
-	$(CC) $(OPT) $(PREDEF) integrator_whfast.c -c
-	$(CC) $(OPT) $(PREDEF) integrator_ias15.c -c
-	$(CC) $(OPT) $(PREDEF) integrator_sei.c -c
-	$(CC) $(OPT) $(PREDEF) integrator_wh.c -c
-	$(CC) $(OPT) $(PREDEF) integrator_leapfrog.c -c
-	$(CC) $(OPT) $(PREDEF) integrator_hybrid.c -c
-	$(CC) $(OPT) $(PREDEF) boundary.c -c
-	$(CC) $(OPT) $(PREDEF) input.c -c
-	$(CC) $(OPT) $(PREDEF) output.c -c
-	$(CC) $(OPT) $(PREDEF) collision.c -c
-	$(CC) $(OPT) $(PREDEF) communication_mpi.c -c
-	$(CC) $(OPT) $(PREDEF) zpr.c -c
-	$(CC) $(OPT) $(PREDEF) display.c -c
-	$(CC) $(OPT) $(PREDEF) tools.c -c
-	$(CC) *.o -o rebound $(LIB)
+%.o: %.c $(HEADERS)
+	@echo "Compiling source file $<..."
+	$(CC) -c $(OPT) $(PREDEF) -o $@ $<
 
+librebound.so: $(OBJECTS)
+	@echo ""        
+	@echo "Linking share library $@ ..."
+	$(CC) $(OPT) -shared $(OBJECTS) $(LIB) -o $@ 
+	
+	@echo ""        
+	@echo "The shared library $< has been created successfully."
+	
+	
 clean:
-	rm -vf *.o
-	rm -vf rebound
-
-
-# This part of the Makefile compiles the shared dynamic library librebound.
-librebound: OPT+= -fPIC -DLIBREBOUND
-
-librebound:
-	# Remove old object files
-	rm -f *.o
-	$(CC) $(OPT) $(PREDEF) rebound.c -c
-	$(CC) $(OPT) $(PREDEF) tree.c -c
-	$(CC) $(OPT) $(PREDEF) particle.c -c
-	$(CC) $(OPT) $(PREDEF) gravity.c -c
-	$(CC) $(OPT) $(PREDEF) integrator.c -c
-	$(CC) $(OPT) $(PREDEF) integrator_whfast.c -c
-	$(CC) $(OPT) $(PREDEF) integrator_ias15.c -c
-	$(CC) $(OPT) $(PREDEF) integrator_sei.c -c
-	$(CC) $(OPT) $(PREDEF) integrator_wh.c -c
-	$(CC) $(OPT) $(PREDEF) integrator_leapfrog.c -c
-	$(CC) $(OPT) $(PREDEF) integrator_hybrid.c -c
-	$(CC) $(OPT) $(PREDEF) boundary.c -c
-	$(CC) $(OPT) $(PREDEF) input.c -c
-	$(CC) $(OPT) $(PREDEF) output.c -c
-	$(CC) $(OPT) $(PREDEF) collision.c -c
-	$(CC) $(OPT) $(PREDEF) communication_mpi.c -c
-	$(CC) $(OPT) $(PREDEF) zpr.c -c
-	$(CC) $(OPT) $(PREDEF) display.c -c
-	$(CC) $(OPT) $(PREDEF) tools.c -c
-	$(CC) $(OPT) -shared *.o -o librebound.so $(LIB)
-	
-	@echo ""        
-	@echo "The shared library librebound.so has been created successfully."
-	@echo ""        
-	
+	@echo "Removing old object files..."
+	@-rm -f *.o
+	@echo "Removing old library..."
+	@-rm -f *.so
+	@echo "\n"
 	
