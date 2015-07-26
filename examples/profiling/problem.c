@@ -59,16 +59,11 @@ int main(int argc, char* argv[]) {
 	double total_mass = surfacedensity * r->boxsize.x * r->boxsize.y;
 	double mass = 0;
 	while (mass < total_mass) {
-		struct reb_particle pt;
+		struct reb_particle pt = {0};
 		pt.x = reb_random_uniform(-r->boxsize.x / 2., r->boxsize.x / 2.);
 		pt.y = reb_random_uniform(-r->boxsize.y / 2., r->boxsize.y / 2.);
 		pt.z = reb_random_normal(1.); // m
-		pt.vx = 0;
 		pt.vy = -1.5 * pt.x * OMEGA;
-		pt.vz = 0;
-		pt.ax = 0;
-		pt.ay = 0;
-		pt.az = 0;
 		double radius = reb_random_powerlaw(particle_radius_min, particle_radius_max, particle_radius_slope);
 		pt.r = radius; // m
 		double particle_mass = particle_density * 4. / 3. * M_PI * radius * radius * radius;

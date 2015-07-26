@@ -437,7 +437,6 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
                 exit(EXIT_SUCCESS); // NEVER REACHED
         } else { 		// Parent (computation)
 		PROFILING_START()
-		char* p0 = (char*) r->particles;
 		while(reb_check_exit(r,tmax)<0){
 			sem_wait(display_mutex);	
 			PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
@@ -462,7 +461,9 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 	wait(&status);
 	sem_unlink("reb_display");
 	sem_close(display_mutex);
+	struct reb_particle* const particles_user_loc = r_user->particles;
 	memcpy(r_user, r, sizeof(struct reb_simulation));
+	r_user->particles = particles_user_loc;
 	memcpy(r_user->particles, r->particles, r->N*sizeof(struct reb_particle));
 #endif //OPENGL
 
