@@ -29,12 +29,12 @@ int main(int argc, char* argv[]){
 	r->force_is_velocitydependent = 1;
 	// Setup callback function for outputs.
 	r->heartbeat		= heartbeat;
+	r->usleep		= 10000;		// Slow down integration (for visualization only)
 	
-	struct reb_particle p; 
-	p.m  = 0;	// massless
-	p.x = 1; 	p.y = 0; 	p.z = 0;
-	p.vx = -1; 	p.vy = 0; 	p.vz = 0;
-	p.ax = 0; 	p.ay = 0; 	p.az = 0;
+	struct reb_particle p = {0}; 
+	p.m  	= 0;	// massless
+	p.x 	= 1;
+	p.vx 	= -1;
 	reb_add(r, p); 
 
 	// Delete previous output

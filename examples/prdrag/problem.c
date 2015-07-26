@@ -29,21 +29,19 @@ int main(int argc, char* argv[]){
 	r->heartbeat			= heartbeat;
 	
 	// star is at rest at origin
-	struct reb_particle star;
-	star.x  = 0; star.y  = 0; star.z  = 0;
-	star.vx = 0; star.vy = 0; star.vz = 0;
+	struct reb_particle star = {0};
 	star.m  = 1.;
 	reb_add(r, star);
 
 	// dust particles are initially on a circular orbit
 	while(r->N<2){
-		struct reb_particle p; 
+		struct reb_particle p = {0}; 
 		p.m  = 0;					// massless
 		double a = 1.;					// a = 1 AU
 		double v = sqrt(r->G*(star.m*(1.-betaparticles))/a);
 		double phi = reb_random_uniform(0,2.*M_PI);		// random phase
-		p.x  = a*sin(phi);  p.y  = a*cos(phi); p.z  = 0; 
-		p.vx = -v*cos(phi); p.vy = v*sin(phi); p.vz = 0;
+		p.x  = a*sin(phi);  p.y  = a*cos(phi); 
+		p.vx = -v*cos(phi); p.vy = v*sin(phi);
 		reb_add(r, p); 
 	}
 

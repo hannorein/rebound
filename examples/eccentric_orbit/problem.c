@@ -26,16 +26,14 @@ int main(int argc, char* argv[]){
 	double mass_scale	= 1.;		// Some integrators have problems when changing the mass scale, IAS15 does not. 
 	double size_scale	= 1;		// Some integrators have problems when changing the size scale, IAS15 does not.
 
-	struct reb_particle star; 
+	struct reb_particle star = {0}; 
 	star.m  = mass_scale;
-	star.x  = 0; star.y  = 0; star.z  = 0; 
-	star.vx = 0; star.vy = 0; star.vz = 0;
 	reb_add(r, star); 
 	
 	struct reb_particle planet; 
 	planet.m  = 0;
-	planet.x  = size_scale*(1.-e_testparticle); planet.y  = 0; planet.z  = 0; 
-	planet.vx = 0; planet.vy = sqrt((1.+e_testparticle)/(1.-e_testparticle)*mass_scale/size_scale); planet.vz = 0;
+	planet.x  = size_scale*(1.-e_testparticle); 
+	planet.vy = sqrt((1.+e_testparticle)/(1.-e_testparticle)*mass_scale/size_scale);
 	reb_add(r, planet); 
 	
 	reb_move_to_com(r);

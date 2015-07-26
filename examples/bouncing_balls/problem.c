@@ -16,7 +16,8 @@ int main(int argc, char* argv[]){
 	r->integrator	= REB_INTEGRATOR_LEAPFROG;
 	r->gravity	= REB_GRAVITY_BASIC;
 	r->collision	= REB_COLLISION_DIRECT;
-	r->dt = 1e-4;
+	r->usleep	= 1000;			// Slow down integration (for visualization only)
+	r->dt = 1e-2;
 
 	reb_configure_box(r, 3.0, 1, 1, 1);
 	

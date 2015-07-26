@@ -38,27 +38,20 @@ int main(int argc, char* argv[]){
 
 	// Initial conditions
 	// Parameters are those of Lee & Peale 2002, Figure 4. 
-	struct reb_particle star;
-	star.x  = 0; star.y  = 0; star.z  = 0;
-	star.vx = 0; star.vy = 0; star.vz = 0;
-	star.ax = 0; star.ay = 0; star.az = 0;
+	struct reb_particle star = {0};
 	star.m  = 0.32;			// This is a sub-solar mass star
 	reb_add(r, star); 
 	
-	struct reb_particle p1;		// Planet 1
-	p1.x 	= 0.5;	p1.y = 0;	p1.z = 0;
-	p1.ax 	= 0;	p1.ay = 0; 	p1.az = 0;
+	struct reb_particle p1 = {0};	// Planet 1
+	p1.x 	= 0.5;
 	p1.m  	= 0.56e-3;
-	p1.vz 	= sqrt(r->G*(star.m+p1.m)/p1.x);
-	p1.vx 	= 0;	p1.vy = 0;
+	p1.vy 	= sqrt(r->G*(star.m+p1.m)/p1.x);
 	reb_add(r, p1); 
 	
-	struct reb_particle p2;		// Planet 2
-	p2.x 	= 1;	p2.y = 0; 	p2.z = 0;
-	p2.ax 	= 0;	p2.ay = 0; 	p2.az = 0;
+	struct reb_particle p2 = {0};	// Planet 2
+	p2.x 	= 1;
 	p2.m  	= 1.89e-3;
-	p2.vz 	= sqrt(r->G*(star.m+p2.m)/p2.x);
-	p2.vx 	= 0;	p2.vy = 0;
+	p2.vy 	= sqrt(r->G*(star.m+p2.m)/p2.x);
 	reb_add(r, p2); 
 
 	tau_a = calloc(sizeof(double),r->N);

@@ -25,25 +25,22 @@ int main(int argc, char* argv[]){
 
 	// Initial conditions
 	
-	struct reb_particle star; 
+	struct reb_particle star = {0}; 
 	star.m  = 1;
-	star.x  = 0; star.y  = 0; star.z  = 0; 
-	star.vx = 0; star.vy = 0; star.vz = 0;
 	reb_add(r, star); 
 	
 	// The planet (a zero mass test particle)
-	struct reb_particle planet; 
-	planet.m  = 0;
+	struct reb_particle planet = {0}; 
 	double e_testparticle = 0;
-	planet.x  = 1.-e_testparticle; planet.y  = 0; planet.z  = 0; 
-	planet.vx = 0; planet.vy = sqrt((1.+e_testparticle)/(1.-e_testparticle)); planet.vz = 0;
+	planet.m  = 0.;
+	planet.x  = 1.-e_testparticle;
+	planet.vy = sqrt((1.+e_testparticle)/(1.-e_testparticle));
 	reb_add(r, planet); 
 	
 	// The perturber
-	struct reb_particle perturber; 
-	perturber.x  = 10; perturber.y  = 0; perturber.z  = 0; 
+	struct reb_particle perturber = {0}; 
+	perturber.x  = 10; 
 	double inc_perturber = 89.9;
-	perturber.vx = 0; 
 	perturber.m  = 1;
 	perturber.vy = cos(inc_perturber/180.*M_PI)*sqrt((star.m+perturber.m)/perturber.x); 
 	perturber.vz = sin(inc_perturber/180.*M_PI)*sqrt((star.m+perturber.m)/perturber.x); 

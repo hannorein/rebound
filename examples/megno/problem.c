@@ -42,14 +42,12 @@ int main(int argc, char* argv[]) {
 	r->integrator	= REB_INTEGRATOR_WHFAST;
 	const double k	= 0.01720209895;	// Gaussian constant 
 	r->G		= k*k;			// These are the same units that mercury6 uses
-	reb_configure_box(r,100,1,1,1);
 
 	// Initial conditions
 	for (int i=0;i<3;i++){
-		struct reb_particle p;
+		struct reb_particle p = {0};
 		p.x  = ss_pos[i][0]; 		p.y  = ss_pos[i][1];	 	p.z  = ss_pos[i][2];
 		p.vx = ss_vel[i][0]; 		p.vy = ss_vel[i][1];	 	p.vz = ss_vel[i][2];
-		p.ax = 0; 			p.ay = 0; 			p.az = 0;
 		p.m  = ss_mass[i];
 		reb_add(r, p); 
 	}

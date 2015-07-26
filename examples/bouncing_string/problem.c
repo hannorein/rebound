@@ -14,11 +14,12 @@
 int main(int argc, char* argv[]){
 	struct reb_simulation* const r = reb_create_simulation();
 	// Setup constants
-	r->dt 			= 1e-5;
+	r->dt 			= 1e-3;
 	r->integrator		= REB_INTEGRATOR_LEAPFROG;
 	r->boundary		= REB_BOUNDARY_PERIODIC;
 	r->collision		= REB_COLLISION_DIRECT;
 	r->gravity		= REB_GRAVITY_NONE;
+	r->usleep		= 5000;			// Slow down integration (for visualization only)
 	
 	reb_configure_box(r,10.,3,1,1);  // boxsize 10., three root boxes in x direction, one in y and z
 	r->nghostx = 1; 

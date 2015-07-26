@@ -29,39 +29,33 @@ int main(int argc, char* argv[]){
 	r->N_active		= 2; 	// Only the star and the planet are massive.
 	r->additional_forces 	= force_radiation;
 	r->heartbeat	 	= heartbeat;
+	r->usleep		= 5000;			// Slow down integration (for visualization only)
 	
 	// Star
-	struct reb_particle star;
-	star.x  = 0; star.y  = 0; star.z  = 0;
-	star.vx = 0; star.vy = 0; star.vz = 0;
-	star.ax = 0; star.ay = 0; star.az = 0;
+	struct reb_particle star = {0};
 	star.m  = 1.;
 	reb_add(r, star);
 
 
 	// planet 
-	struct reb_particle planet;
+	struct reb_particle planet = {0};
 	planet.m  = 1e-3;
-	planet.x  = 1; planet.y  = 0.; planet.z  = 0.;
-	planet.ax = 0; planet.ay = 0; planet.az = 0;
-	planet.vx = 0;
+	planet.x  = 1; 
 	planet.vy = sqrt(r->G*(star.m+planet.m)/planet.x);
-	planet.vz = 0;
 	reb_add(r, planet);
 	
 	
 
 	// Dust particles
 	while(r->N<3){ 	// Three particles in total (star, planet, dust particle) 
-		struct reb_particle p; 
+		struct reb_particle p = {0}; 
 		p.m  = 0;		// massless
 		double _r = 0.001;	// distance from planet planet
 		double v = sqrt(r->G*planet.m/_r);
-		p.x  = _r; p.y  = 0; p.z  = 0; 
-		p.vx = 0; p.vy = v; p.vz = 0;
+		p.x  = _r;
+		p.vy = v;
 		p.x += planet.x; 	p.y += planet.y; 	p.z += planet.z;
 		p.vx += planet.vx; 	p.vy += planet.vy; 	p.vz += planet.vz;
-		p.ax = 0; p.ay = 0; p.az = 0;
 		reb_add(r, p); 
 	}
 	

@@ -24,11 +24,7 @@ int main(int argc, char* argv[]){
 	// Just demonstrating ids, so set initial conditions arbitrarily (and ids in the order they are added)
 	// ids can be set to any integer
 	for (int i=0;i<10;i++){
-		struct reb_particle p;
-		p.x  = i; 		p.y  = i;	 	p.z  = i;
-		p.vx = i; 		p.vy = i;	 	p.vz = i;
-		p.ax = 0; 		p.ay = 0; 		p.az = 0;
-		p.m  = i;
+		struct reb_particle p = {0};
 		p.id = i; 
 		reb_add(r, p); 
 	}

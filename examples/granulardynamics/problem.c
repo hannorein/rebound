@@ -38,12 +38,7 @@ int main(int argc, char* argv[]){
 	double mass		= 1;
 	double border_spacing_x = r->boxsize.x/(floor(r->boxsize.x/radius/2.)-1.);
 	double border_spacing_y = r->boxsize.y/(floor(r->boxsize.y/radius/2.)-1.);
-	struct reb_particle pt;
-	pt.vx 		= 0;
-	pt.vz 		= 0;
-	pt.ax 		= 0;
-	pt.ay 		= 0;
-	pt.az 		= 0;
+	struct reb_particle pt = {0};
 	pt.r 		= radius;
 	pt.m 		= mass;
 	pt.id		= 1;
@@ -68,16 +63,13 @@ int main(int argc, char* argv[]){
 	
 	// Add real particles
 	while(r->N-N_border<N_part){
-		struct reb_particle pt;
+		struct reb_particle pt = {0};
 		pt.x 		= reb_random_uniform(-r->boxsize.x/2.,r->boxsize.x/2.);
 		pt.y 		= reb_random_uniform(-r->boxsize.y/2.,r->boxsize.y/2.);
 		pt.z 		= 0.758*reb_random_uniform(-r->boxsize.z/2.,r->boxsize.z/2.);
 		pt.vx 		= reb_random_normal(0.001);
 		pt.vy 		= reb_random_normal(0.001);
 		pt.vz 		= reb_random_normal(0.001);
-		pt.ax 		= 0;
-		pt.ay 		= 0;
-		pt.az 		= 0;
 		pt.r 		= radius;						// m
 		pt.m 		= 1;
 		pt.id		= 2;

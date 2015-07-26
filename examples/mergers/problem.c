@@ -24,11 +24,9 @@ int main(int argc, char* argv[]){
 	r->collision_resolve 	= collision_resolve_merger;		// Setup our own collision routine.
 	r->heartbeat		= heartbeat;
 
-	struct reb_particle star;
+	struct reb_particle star = {0};
 	star.m = 1;
 	star.r = 0.1;
-	star.x = 0; 	star.y = 0; 	star.z = 0;
-	star.vx = 0; 	star.vy = 0; 	star.vz = 0;
 	reb_add(r, star);
 	
 	// Add planets
@@ -36,12 +34,12 @@ int main(int argc, char* argv[]){
 	for (int i=0;i<N_planets;i++){
 		double a = 1.+(double)i/(double)(N_planets-1);		// semi major axis in AU
 		double v = sqrt(1./a); 					// velocity (circular orbit)
-		struct reb_particle planet;
+		struct reb_particle planet = {0};
 		planet.m = 1e-4; 
 		planet.r = 4e-2; 					// radius in AU (it is unphysically large in this example)
 		planet.lastcollision = 0;				// The first time particles can collide with each other
-		planet.x = a; 	planet.y = 0; 	planet.z = 0;
-		planet.vx = 0; 	planet.vy = v; 	planet.vz = 0;
+		planet.x = a; 
+		planet.vy = v;
 		reb_add(r, planet); 
 	}
 	reb_move_to_com(r);				// This makes sure the planetary systems stays within the computational domain and doesn't drift.
