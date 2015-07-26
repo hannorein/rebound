@@ -31,7 +31,9 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 #include <semaphore.h>
+#include <fcntl.h>
 #include "rebound.h"
 #include "integrator.h"
 #include "boundary.h"
