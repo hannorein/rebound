@@ -1,5 +1,4 @@
-# This Makefile compiles the shared dynamic library to access the IAS15 integrator.
-export OPT+= -std=c99 -Wpointer-arith -D_GNU_SOURCE -O3 -march=native
+# This Makefile compiles the shared dynamic library librebound.so
 
 librebound: 
 	$(MAKE) -C src 
