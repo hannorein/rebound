@@ -31,19 +31,16 @@ int main(int argc, char* argv[]){
 	r->N_active			= 2; 			// only the star and the planet are massive.
 	
 	// Planet
-	struct reb_particle planet;
+	struct reb_particle planet = {0};
 	planet.m  = Mplanet;
-	planet.x  = 0; planet.y  = 0; planet.z  = 0;
-	planet.vx = 0; planet.vy = 0; planet.vz = 0;
 	reb_add(r, planet);
 
-	struct reb_particle p;				// test particle 
-	p.m  = 0;					// massless
+	struct reb_particle p = {0};			// test particle 
 	double a = Rplanet*3.;				// small distance from planet (makes J2 important)
 	double e = 0.1;
 	double v = sqrt((1.+e)/(1.-e)*r->G*planet.m/a);	// setup eccentric orbit (ignores J2)
-	p.x  = (1.-e)*a; p.y  = 0; p.z  = 0; 
-	p.vx = 0; p.vy = v; p.vz = 0;
+	p.x  = (1.-e)*a;
+	p.vy = v;
 	p.x += planet.x; 	p.y += planet.y; 	p.z += planet.z;
 	p.vx += planet.vx; 	p.vy += planet.vy; 	p.vz += planet.vz;
 	reb_add(r, p); 

@@ -64,7 +64,7 @@ HEADERS=$(SOURCES:.c=.h)
 all: $(SOURCES) librebound.so 
 
 %.o: %.c $(HEADERS)
-	@echo "Compiling source file $<..."
+	@echo "Compiling source file $< ..."
 	$(CC) -c $(OPT) $(PREDEF) -o $@ $<
 
 librebound.so: $(OBJECTS)
@@ -77,9 +77,8 @@ librebound.so: $(OBJECTS)
 	
 	
 clean:
-	@echo "Removing old object files..."
+	@echo "Removing object files *.o ..."
 	@-rm -f *.o
-	@echo "Removing old library..."
+	@echo "Removing shared library librebound.so ..."
 	@-rm -f *.so
-	@echo "\n"
 	
