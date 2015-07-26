@@ -379,7 +379,7 @@ void reb_run_heartbeat(struct reb_simulation* const r){
 enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 #ifdef OPENGL
 	// Copy and share simulation struct 
-	struct reb_simulation* r = (struct reb_simulation*)mmap(r_user, sizeof(struct reb_simulation), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
+	struct reb_simulation* const r = (struct reb_simulation*)mmap(r_user, sizeof(struct reb_simulation), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
 	memcpy(r, r_user, sizeof(struct reb_simulation));
 	
 	// Copy and share particle array
@@ -404,7 +404,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 			const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
 			max_r = MAX(max_r, _r);
 		}
-		reb_configure_box(r, max_r*2.3,MAX(1,r->root_nx),MAX(1,r->root_ny),MAX(1,r->root_nz));
+		reb_configure_box(r, max_r*2.3,MAX(1.,r->root_nx),MAX(1.,r->root_ny),MAX(1.,r->root_nz));
 	}
 #else // OPENGL
 	struct reb_simulation* const r = r_user;
@@ -434,6 +434,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
                 exit(EXIT_SUCCESS); // NEVER REACHED
         } else { 		// Parent (computation)
 		PROFILING_START()
+		char* p0 = (char*) r->particles;
 		while(reb_check_exit(r,tmax)<0){
 			sem_wait(display_mutex);	
 			PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
