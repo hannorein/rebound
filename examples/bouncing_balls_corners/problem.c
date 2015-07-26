@@ -27,32 +27,24 @@ int main(int argc, char* argv[]){
 	if (argc>1){			
 		problem_id = atoi(argv[1]);
 	}
-	struct reb_particle p;
+	struct reb_particle p = {0};
 
 	switch (problem_id){
 		case 1: // Multiple instantaneous collisions across boundaries
 			r->nghostx = 1; r->nghosty = 1; r->nghostz = 0;
 			p.x  = 1; p.y  = 1; p.z  = 0;
-			p.vx = 0; p.vy = 0; p.vz = 0;
-			p.ax = 0; p.ay = 0; p.az = 0;
 			p.m  = 1;
 			p.r  = 0.1;
 			reb_add(r,p);
 			p.x  = -1; p.y  = -1; p.z  = 0;
-			p.vx = 0;  p.vy = 0;  p.vz = 0;
-			p.ax = 0;  p.ay = 0;  p.az = 0;
 			p.m  = 1;
 			p.r  = 0.1;
 			reb_add(r,p);
 			p.x  = 1; p.y  = -1; p.z  = 0;
-			p.vx = 0;  p.vy = 0; p.vz = 0;
-			p.ax = 0;  p.ay = 0; p.az = 0;
 			p.m  = 1;
 			p.r  = 0.1;
 			reb_add(r,p);
 			p.x  = -1; p.y  = 1; p.z  = 0;
-			p.vx = 0;  p.vy = 0; p.vz = 0;
-			p.ax = 0;  p.ay = 0; p.az = 0;
 			p.m  = 1;
 			p.r  = 0.1;
 			reb_add(r,p);
@@ -60,44 +52,30 @@ int main(int argc, char* argv[]){
 		case 2: // Multiple instantaneous collisions with different sizes
 			r->nghostx = 0; r->nghosty = 0; r->nghostz = 0;
 			p.x  = 0; p.y  = 0; p.z  = 0;
-			p.vx = 0; p.vy = 0; p.vz = 0;
-			p.ax = 0; p.ay = 0; p.az = 0;
 			p.m  = 1;
 			p.r  = 0.5;
 			reb_add(r,p);
 			p.x  = 1; p.y  = 1; p.z  = 0;
-			p.vx = 0; p.vy = 0; p.vz = 0;
-			p.ax = 0; p.ay = 0; p.az = 0;
 			p.m  = 0.008;
 			p.r  = 0.1;
 			reb_add(r,p);
 			p.x  = -1; p.y  = -1; p.z  = 0;
-			p.vx = 0;  p.vy = 0;  p.vz = 0;
-			p.ax = 0;  p.ay = 0;  p.az = 0;
 			p.m  = 0.008;
 			p.r  = 0.1;
 			reb_add(r,p);
 			p.x  = 1; p.y  = -1; p.z  = 0;
-			p.vx = 0;  p.vy = 0; p.vz = 0;
-			p.ax = 0;  p.ay = 0; p.az = 0;
 			p.m  = 0.008;
 			p.r  = 0.3;
 			reb_add(r,p);
 			p.x  = -1; p.y  = 1; p.z  = 0;
-			p.vx = 0;  p.vy = 0; p.vz = 0;
-			p.ax = 0;  p.ay = 0; p.az = 0;
 			p.m  = 0.008;
 			p.r  = 0.2;
 			reb_add(r,p);
 			p.x  = 0;  p.y  = 0; p.z  = 1.3;
-			p.vx = 0;  p.vy = 0; p.vz = 0;
-			p.ax = 0;  p.ay = 0; p.az = 0;
 			p.m  = 0.008;
 			p.r  = 0.1;
 			reb_add(r,p);
 			p.x  = 0;  p.y  = 0; p.z  =-1.3;
-			p.vx = 0;  p.vy = 0; p.vz = 0;
-			p.ax = 0;  p.ay = 0; p.az = 0;
 			p.m  = 0.008;
 			p.r  = 0.05;
 			reb_add(r,p);

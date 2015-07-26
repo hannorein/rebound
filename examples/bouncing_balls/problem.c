@@ -22,19 +22,15 @@ int main(int argc, char* argv[]){
 	
 	// Initial conditions
 	{
-		struct reb_particle p;
+		struct reb_particle p = {0};
 		p.x  = 1; p.y  = 1; p.z  = 1;
-		p.vx = 0; p.vy = 0; p.vz = 0;
-		p.ax = 0; p.ay = 0; p.az = 0;
 		p.m  = 1;
 		p.r  = 0.1;
 		reb_add(r, p);
 	}
 	{
-		struct reb_particle p;
+		struct reb_particle p = {0};
 		p.x  = -1; p.y  = -1; p.z  = -1;
-		p.vx =  0; p.vy =  0; p.vz =  0;
-		p.ax =  0; p.ay =  0; p.az =  0;
 		p.m  = 1;
 		p.r  = 0.1;
 		reb_add(r, p);
