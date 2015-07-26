@@ -171,7 +171,7 @@ void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R
 }
 
 struct reb_particle reb_tools_init_orbit2d(double G, double M, double m, double a, double e, double omega, double f){
-	struct reb_particle p;
+	struct reb_particle p = {0.};
 	p.m = m;
 	double r = a*(1.-e*e)/(1.+e*cos(f));
 	double n = sqrt(G*(m+M)/(a*a*a));
@@ -193,7 +193,7 @@ struct reb_particle reb_tools_init_orbit2d(double G, double M, double m, double 
 }
 
 struct reb_particle reb_tools_init_orbit3d(double G, double M, double m, double a, double e, double i, double Omega, double omega, double f){
-	struct reb_particle p;
+	struct reb_particle p = {0.};
 	p.m = m;
 	double r = a*(1-e*e)/(1 + e*cos(f));
 
