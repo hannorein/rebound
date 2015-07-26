@@ -175,8 +175,7 @@ void reb_collision_search(struct reb_simulation* const r){
 		}
 		break;
 		default:
-			fprintf(stderr,"\n\033[1mError!\033[0m Collision routine not implemented.\n");
-			exit(EXIT_FAILURE);
+			reb_exit("Collision routine not implemented.");
 	}
 
 	// randomize

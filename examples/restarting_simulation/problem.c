@@ -35,8 +35,8 @@ int main(int argc, char* argv[]){
 			reb_add(r, p);
 		}
 		reb_integrate(r,10.);
-		reb_output_binary(r, "restart.bin");
 		printf("Saving simulation to binary file and freeing up memory.\n");
+		reb_output_binary(r, "restart.bin");
 		reb_free_simulation(r);
 		r = NULL;
 	}

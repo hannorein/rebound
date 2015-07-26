@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <sys/types.h>
 #include <signal.h>
 #include <string.h>
 #include <sys/time.h>
@@ -128,6 +129,19 @@ void reb_step(struct reb_simulation* const r){
 #endif  // COLLISIONS_NONE
 }
 
+void reb_exit(const char* const msg){
+	// This function should also kill all children. 
+	// Not implemented as pid is not easy to get to.
+	// kill(pid, SIGKILL);
+	fprintf(stderr,"\n\033[1mError!\033[0m %s\n",msg);
+	exit(EXIT_FAILURE);
+}
+
+void reb_warning(const char* const msg){
+	fprintf(stderr,"\n\033[1mWarning!\033[0m %s\n",msg);
+}
+
+
 void reb_configure_box(struct reb_simulation* const r, const double root_size, const int root_nx, const int root_ny, const int root_nz){
 	r->root_size = root_size;
 	r->root_nx = root_nx;
@@ -140,7 +154,7 @@ void reb_configure_box(struct reb_simulation* const r, const double root_size, c
 	r->root_n = r->root_nx*r->root_ny*r->root_nz;
 	r->boxsize_max = MAX(r->boxsize.x, MAX(r->boxsize.y, r->boxsize.z));
 	if (r->root_nx <=0 || r->root_ny <=0 || r->root_nz <= 0){
-		fprintf(stderr,"\n\033[1mError!\033[0m Number of root boxes must be greater or equal to 1 in each direction.\n");
+		reb_exit("Number of root boxes must be greater or equal to 1 in each direction.");
 	}
 }
 
@@ -334,7 +348,7 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax){
 		}
 	}
 	if (r->N<=0){
-		fprintf(stderr,"\n\033[1mError!\033[0m No particles found. Exiting.\n");
+		reb_warning("No particles found. Will exit.");
 		r->status = REB_EXIT_NOPARTICLES; // Exit now.
 	}
 	return r->status;
@@ -400,7 +414,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 
 	// Need root_size for visualization. Creating one. 
 	if (r->root_size==-1){  
-		fprintf(stderr,"\n\033[1mWarning!\033[0m Configuring box automatically for vizualization based on particle positions.\n");
+		reb_warning("Configuring box automatically for vizualization based on particle positions.");
 		const struct reb_particle* p = r->particles;
 		double max_r = 0;
 		for (int i=0;i<r->N;i++){

@@ -229,10 +229,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 		}
 		break;
 		default:
-			fprintf(stderr,"\n\033[1mError!\033[0m Gravity calculation not yet implemented.\n");
-			exit(EXIT_FAILURE);
-			break;
-		break;
+			reb_exit("Gravity calculation not yet implemented.");
 	}
 #ifdef MPI
 	// Distribute active particles from root to all other nodes.
@@ -298,9 +295,7 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
 			}
 			break;
 		default:
-			fprintf(stderr,"\n\033[1mError!\033[0m Variational equations not implemented.\n");
-			exit(EXIT_FAILURE);
-			break;
+			reb_exit("Variational gravity calculation not yet implemented.");
 	}
 
 }

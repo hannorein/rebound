@@ -34,13 +34,11 @@ int main(int argc, char* argv[]){
 	double disc_mass = 2e-1;	// Total disc mass
 	int N = 10000;			// Number of particles
 	// Initial conditions
-	struct reb_particle star;
-	star.x 		= 0; star.y 	= 0; star.z	= 0;
-	star.vx 	= 0; star.vy 	= 0; star.vz 	= 0;
+	struct reb_particle star = {0};
 	star.m 		= 1;
 	reb_add(r, star);
 	for (int i=0;i<N;i++){
-		struct reb_particle pt;
+		struct reb_particle pt = {0};
 		double a	= reb_random_powerlaw(boxsize/10.,boxsize/2./1.2,-1.5);
 		double phi 	= reb_random_uniform(0,2.*M_PI);
 		pt.x 		= a*cos(phi);

@@ -25,17 +25,15 @@ int main(int argc, char* argv[]){
 	reb_configure_box(r,8.,1,1,1); // Box with size 8 AU
 	
 	// Initial conditions for star
-	struct reb_particle star;
-	star.x  = 0; 	star.y  = 0; 	star.z  = 0; 
-	star.vx = 0; 	star.vy = 0; 	star.vz = 0;
+	struct reb_particle star = {0};
 	star.m  = 1;
 	reb_add(r, star);
 
 	// Initial conditions for planet
 	double planet_e = 0.;
-	struct reb_particle planet;
-	planet.x  = 1.-planet_e; 	planet.y  = 0; 				planet.z  = 0; 
-	planet.vx = 0; 			planet.vy = sqrt(2./(1.-planet_e)-1.); 	planet.vz = 0;
+	struct reb_particle planet = {0};
+	planet.x  = 1.-planet_e;
+	planet.vy = sqrt(2./(1.-planet_e)-1.);
 	planet.m  = 1e-2;
 	reb_add(r, planet);
 	reb_move_to_com(r);
@@ -49,17 +47,12 @@ int main(int argc, char* argv[]){
 		if (a>4.) continue;
 
 		double vkep = sqrt(r->G*star.m/a);
-		struct reb_particle testparticle;
+		struct reb_particle testparticle = {0};
 		testparticle.x  = x;
 		testparticle.y  = y; 
 		testparticle.z  = 1.0e-2*x*((double)rand()/(double)RAND_MAX-0.5);
 		testparticle.vx = -vkep*sin(phi);
 		testparticle.vy = vkep*cos(phi);
-		testparticle.vz = 0;
-		testparticle.ax = 0; 
-		testparticle.ay = 0; 
-		testparticle.az = 0;
-		testparticle.m  = 0;
 		reb_add(r, testparticle);
 	}
 

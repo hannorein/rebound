@@ -69,8 +69,7 @@ void reb_boundary_check(struct reb_simulation* const r){
 						i--; // need to recheck the particle that replaced the removed one
 						N--; // This is the local N
 					}else{
-						fprintf(stderr,"\n\033[1mError!\033[0m Cannot remove particle from tree.");
-						exit(EXIT_FAILURE);
+						reb_exit("REBOUND currently cannot remove a particle from simulations using a tree.");
 					}
 				}
 			}

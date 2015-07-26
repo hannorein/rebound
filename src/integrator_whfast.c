@@ -230,7 +230,7 @@ double X;
 			double X_per_period = 2.*M_PI/sqrt_beta;
 			if (fabs(_dt)*invperiod>1. && *timestep_warning == 0){
 				(*timestep_warning)++;
-				fprintf(stderr,"\n\033[1mWarning!\033[0m Timestep is larger than at least one orbital period.\n");
+				reb_warning("Timestep is larger than at least one orbital period.");
 			}
 			X_min = X_per_period * floor(_dt*invperiod);
 			X_max = X_min + X_per_period;
@@ -578,7 +578,7 @@ void reb_integrator_whfast_part1(struct reb_simulation* const r){
 		if (ri_whfast->is_synchronized==0){
 			reb_integrator_whfast_synchronize(r);
 			if (ri_whfast->recalculate_jacobi_but_not_synchronized_warning==0){
-				fprintf(stderr,"\n\033[1mWarning!\033[0m Recalculating Jacobi coordinates but pos/vel were not synchronized before.\n");
+				reb_warning("Recalculating Jacobi coordinates but pos/vel were not synchronized before.");
 				ri_whfast->recalculate_jacobi_but_not_synchronized_warning++;
 			}
 		}

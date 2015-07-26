@@ -86,7 +86,7 @@ char* reb_read_char(int argc, char** argv, const char* argument){
 }
 
 struct reb_simulation* reb_create_simulation_from_binary(char* filename){
-	fprintf(stderr,"\n\033[1mWarning!\033[0m You might need to reset function pointers after creating a REBOUND struct with a binary file.\n");
+	reb_warning("You have to reset function pointers after creating a reb_simulation struct with a binary file.");
 	struct reb_simulation* r = malloc(sizeof(struct reb_simulation));
 #ifdef MPI
 	char filename_mpi[1024];

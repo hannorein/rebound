@@ -670,19 +670,29 @@ int reb_read_int(int argc, char** argv, const char* argument, int _default);
  */
 double reb_tools_energy(struct reb_simulation* r);
 
-/* 
+/** 
  * Init the MEGNO particles
- **/
+ */
 void reb_tools_megno_init(struct reb_simulation* const r, double delta);
 
-/*
+/**
  * Returns the current value of <Y>
- **/
+ */
 double reb_tools_calculate_megno(struct reb_simulation* r);
 
-/*
+/**
  * Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
- **/
+ */
 double reb_tools_calculate_lyapunov(struct reb_simulation* r);
+
+/**
+ * Print out an error message, then exit.
+ */
+void reb_exit(const char* const msg);
+
+/**
+ * Print out a warningr message, then continue.
+ */
+void reb_warning(const char* const msg);
 
 #endif

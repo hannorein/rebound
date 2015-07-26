@@ -167,8 +167,7 @@ void reb_output_ascii(struct reb_simulation* r, char* filename){
 	FILE* of = fopen(filename,"a"); 
 #endif // MPI
 	if (of==NULL){
-		printf("\n\nError while opening file '%s'.\n",filename);
-		return;
+		reb_exit("Can not open file.");
 	}
 	for (int i=0;i<N;i++){
 		struct reb_particle p = r->particles[i];
@@ -187,8 +186,7 @@ void reb_output_orbits(struct reb_simulation* r, char* filename){
 	FILE* of = fopen(filename,"a"); 
 #endif // MPI
 	if (of==NULL){
-		printf("\n\nError while opening file '%s'.\n",filename);
-		return;
+		reb_exit("Can not open file.");
 	}
 	struct reb_particle com = r->particles[0];
 	for (int i=1;i<N;i++){
@@ -208,8 +206,7 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
 	FILE* of = fopen(filename,"wb"); 
 #endif // MPI
 	if (of==NULL){
-		printf("\n\nError while opening file '%s'.\n",filename);
-		return;
+		reb_exit("Can not open file.");
 	}
 	fwrite(r,sizeof(struct reb_simulation),1,of);
 	fwrite(r->particles,sizeof(struct reb_particle),r->N,of);
@@ -226,8 +223,7 @@ void reb_output_binary_positions(struct reb_simulation* r, char* filename){
 	FILE* of = fopen(filename,"wb"); 
 #endif // MPI
 	if (of==NULL){
-		printf("\n\nError while opening file '%s'.\n",filename);
-		return;
+		reb_exit("Can not open file.");
 	}
 	for (int i=0;i<N;i++){
 		struct reb_vec3d v;
@@ -280,8 +276,7 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename){
 	Q_tot.z = sqrt(Q_tot.z/(double)N_tot);
 	FILE* of = fopen(filename,"a"); 
 	if (of==NULL){
-		printf("\n\nError while opening file '%s'.\n",filename);
-		return;
+		reb_exit("Can not open file.");
 	}
 	fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\n",r->t,A_tot.x,A_tot.y,A_tot.z,Q_tot.x,Q_tot.y,Q_tot.z);
 	fclose(of);

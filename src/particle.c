@@ -45,7 +45,7 @@ extern double gravity_minimum_mass;
 static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt){
 	if (reb_boundary_particle_is_in_box(r, pt)==0){
 		// reb_particle has left the box. Do not add.
-		fprintf(stderr,"\n\033[1mWarning!\033[0m Did not add particle outside of box boundaries.\n");
+		reb_warning("Did not add particle outside of box boundaries.");
 		return;
 	}
 	while (r->allocatedN<=r->N){
@@ -63,7 +63,7 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
 
 void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 	if (r->N_var){
-		fprintf(stderr,"\n\033[1mWarning!\033[0m Trying to add particle after calling megno_init().\n");
+		reb_warning("Trying to add particle after calling megno_init().");
 	}
 #ifndef COLLISIONS_NONE
 	if (pt.r>=r->max_radius[0]){
