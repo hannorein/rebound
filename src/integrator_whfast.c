@@ -52,7 +52,7 @@ static inline double fastabs(double x){
 
 static void stumpff_cs(double *restrict cs, double z) {
 	unsigned int n = 0;
-	while(z>0.1){
+	while(fastabs(z)>0.1){
 		z = z/4.;
 		n++;
 	}
