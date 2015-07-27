@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-
-"""
-REBOUND Module. 
-
-"""
+"""An N-body integrator package for python."""
 # Make changes for python 2 and 3 compatibility
 try:
     import builtins      # if this succeeds it's python 3.x
@@ -41,15 +37,22 @@ def build_str():
 
 # Exceptions    
 class SimulationError(Exception):  
+    """The simulation exited with a generic error."""
     pass
 
 class Encounter(Exception):
+    """The simulation exited because a close encounter has been detected.
+    You may want to search for the pair of bodies which have the smallest distance."""
     pass
 
 class Escape(Exception):
+    """The simulation exited because a particle has been se encounter has been detected.
+    You may want to search for the particle with the largest distance from the 
+    origin and remove it from the simulation."""
     pass
 
 class NoParticles(Exception):
+    """The simulation exited because no particles are left in the simulation."""
     pass
     
 

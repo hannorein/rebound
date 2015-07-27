@@ -17,6 +17,8 @@ There are still some features that haven't been fully ported. Most importantly, 
 
 The best way to get and idea of the changes we made is to look at some of the example problems. If you have trouble using the new version or find a bug, please submit an issue or a pull request on github. 
 
+We're working on a unified way of documenting the code. Stay tuned (or even better, help us!).
+
 -------------------
 
 .. image:: https://raw.github.com/hannorein/rebound/master/screenshots/shearingsheet.png
