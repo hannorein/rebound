@@ -86,7 +86,7 @@ static void stumpff_cs(double *restrict cs, double z) {
 
 static void stumpff_cs3(double *restrict cs, double z) {
 	unsigned int n = 0;
-	while(z>0.1){
+	while(fabs(z)>0.1){
 		z = z/4.;
 		n++;
 	}
