@@ -26,14 +26,14 @@ with open("doc/c_examples.rst","w") as fd:
                     will_output = -1
                 if will_output>1:
                     if will_output == 2:
-                        line = "   * **" + line[3:].strip() + "**"
+                        line = "  " +line.strip() + '\n----------------'
                     will_output = 2
                     if len(line[3:].strip())==0:
-                        fd.write("\n\n  "+line[3:].strip()+" ")
+                        fd.write("\n\n"+line[3:].strip())
                     else:
-                        fd.write(line[3:].strip()+" ")
+                        fd.write(line[3:].strip() + " " )
                 if will_output==-1:
-                    fd.write("\n\n  Directory: examples/"+problemc.split("/")[2]+"\n\n")
+                    fd.write("\n\nThis example is located in the directory `examples/"+problemc.split("/")[2]+"`\n\n")
                     will_output= -2
                     did_output = 1
                 if will_output>0:

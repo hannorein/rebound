@@ -14,3 +14,5 @@ Contents:
    rebound.rst
 
    librebound.rst
+   
+   c_examples.rst
