@@ -101,17 +101,17 @@ struct reb_ghostbox{
  * for MPI in communications_mpi.c.
  */
 struct reb_particle {
-	double x;	///< x-position of the particle. 
-	double y;	///< y-position of the particle. 
-	double z;	///< z-position of the particle. 
-	double vx;	///< x-velocity of the particle. 
-	double vy;	///< y-velocity of the particle. 
-	double vz;	///< z-velocity of the particle. 
-	double ax;	///< x-acceleration of the particle. 
-	double ay;	///< y-acceleration of the particle. 
-	double az;	///< z-acceleration of the particle. 
-	double m;	///< Mass of the particle. 
-	double r; 	///< Radius of the particle. 
+	double x;			///< x-position of the particle. 
+	double y;			///< y-position of the particle. 
+	double z;			///< z-position of the particle. 
+	double vx;			///< x-velocity of the particle. 
+	double vy;			///< y-velocity of the particle. 
+	double vz;			///< z-velocity of the particle. 
+	double ax;			///< x-acceleration of the particle. 
+	double ay;			///< y-acceleration of the particle. 
+	double az;			///< z-acceleration of the particle. 
+	double m;			///< Mass of the particle. 
+	double r; 			///< Radius of the particle. 
 	double lastcollision;		///< Last time the particle had a physical collision.
 	struct reb_treecell* c;		///< Pointer to the cell the particle is currently in.
 	int id;				///< Unique id to identify particle.
@@ -140,28 +140,42 @@ struct reb_orbit {
 ////////////////////////////////
 // Integrator structs 
 
+/**
+ * @brief This structure contains variables and pointer used by the HYBRID integrator.
+ */
 struct reb_simulation_integrator_hybrid {
-	double switch_ratio;			// Default corresponds to about 10 Hill Radii 
-	enum {SYMPLECTIC, HIGHORDER} mode;
+	double switch_ratio;	///< Default corresponds to about 10 Hill Radii 
+	enum {
+		SYMPLECTIC, 	///< HYBRID integrator is currently using a symplectic integrator
+		HIGHORDER	///< HYBRID integrator is currently using a high order non-symplectic integrator
+		} 
+		mode;		///< Flag determining the current integrator used
 };
 
+/**
+ * @brief This structure contains variables and pointer used by the IAS15 integrator.
+ */
 struct reb_simulation_integrator_ias15 {
 	/**
-	 * This parameter controls the accuracy of the integrator.
-	 * Set to 0 to make IAS15 a non-adaptive integrator.
-	 * Default: 1e-9.
+	 * @brief This parameter controls the accuracy of the integrator.
+	 * @details Set to 0 to make IAS15 a non-adaptive integrator.
+	 * The default value is: 1e-9.
 	 **/
 	double epsilon;
 
 	/**
-	 * The minimum timestep to be used in the adaptive integrator.
-	 * Default is 0 (no minimal timestep).
+	 * @brief The minimum allowed timestep.
+	 * @details The default value is 0 (no minimal timestep).
+	 * Set a finite value to this variable if the IAS15 integrator has problems
+	 * and the timestep becomes excessively small.
 	 **/
 	double min_dt;
 	
 	/** 
-	 * If 1: estimate the fractional error by max(acceleration_error)/max(acceleration), where max is take over all particles.
-	 * If 0: estimate the fractional error by max(acceleration_error/acceleration).
+	 * @brief Flag that determines how relative acceleration error is estimated.
+	 * @details If set to 1, estimate the fractional error by max(acceleration_error)/max(acceleration), 
+	 * where max is take over all particles. If set to 0, estimate the fractional error by 
+	 * max(acceleration_error/acceleration).
 	 **/
 	unsigned int epsilon_global;
 
@@ -169,8 +183,9 @@ struct reb_simulation_integrator_ias15 {
 	// Internal data structures below. Nothing to be changed by the user.
 	
 	/**
-	 * Count how many times the iteration did not converge. 
-	 **/
+	 * @cond PRIVATE
+	 * @brief Counter how many times the iteration did not converge. 
+	 */
 	unsigned long iterations_max_exceeded;
 
 
@@ -192,6 +207,9 @@ struct reb_simulation_integrator_ias15 {
 	struct reb_dp7 br;
 	struct reb_dp7 er;
 	double dt_last_success;			// Last accepted timestep (corresponding to br and er)
+	/**
+	 * @endcond
+	 */
 
 };
 
