@@ -1,10 +1,10 @@
 export OPENGL=1
-OPT+= -std=c99 -Wpointer-arith -D_GNU_SOURCE -O3 -march=native -lm
+OPT+= -std=c99 -Wpointer-arith -D_GNU_SOURCE -O3 -march=native
 
 all: librebound
 	@echo ""
 	@echo "Compiling problem file ..."
-	cc -I../../src/ -L. -Wl,-rpath,./ $(OPT) problem.c -lrebound -o rebound
+	cc -I../../src/ -L. -Wl,-rpath,./ $(OPT) problem.c -lrebound -lm -o rebound
 	@echo ""
 	@echo "REBOUND compiled successfully."
 
