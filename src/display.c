@@ -41,9 +41,9 @@
 #else // _APPLE
 #include <GL/glut.h>
 #endif // _APPLE
+#include "rebound.h"
 #include "tools.h"
 #include "zpr.h"
-#include "rebound.h"
 #include "particle.h"
 #include "boundary.h"
 #include "display.h"
