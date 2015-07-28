@@ -39,38 +39,35 @@
 extern const char* reb_build_str;	///< Date and time build string.
 extern const char* reb_version_str;	///< Version string.
 
-// Enum, describing the return status of rebound_integrate
+/**
+ * @brief Enumeration describing the return status of rebound_integrate
+ */
 enum REB_STATUS {
-	REB_RUNNING_PAUSED = -3,
-	REB_RUNNING_LAST_STEP = -2,
-	REB_RUNNING = -1,   
-	REB_EXIT_SUCCESS = 0,   
-	REB_EXIT_ERROR = 1,		///< Generic error
-	REB_EXIT_NOPARTICLES = 2,
-	REB_EXIT_ENCOUNTER = 3,
-	REB_EXIT_ESCAPE = 4,
-	REB_EXIT_USER = 5,		///< User caused exit
+	REB_RUNNING_PAUSED = -3,	///< Simulation is paused by visualization.
+	REB_RUNNING_LAST_STEP = -2,	///< Current timestep is the last one. Needed to ensures that t=tmax exactly.
+	REB_RUNNING = -1,   		///< Simulation is current running, no error occured.
+	REB_EXIT_SUCCESS = 0,   	///< Integration finished successfully.
+	REB_EXIT_ERROR = 1,		///< A generic error occured and the integration was not successfull.
+	REB_EXIT_NOPARTICLES = 2,	///< The integration ends early because no particles are left in the simulation.
+	REB_EXIT_ENCOUNTER = 3,		///< The integration ends early because two particles had a close encounter (see exit_min_distance)
+	REB_EXIT_ESCAPE = 4,		///< The integration ends early because a particle escaped (see exit_min_distance)  
+	REB_EXIT_USER = 5,		///< User caused exit, simulation did not finish successfully.
 };
 
 /**
  * @} 
  */
-
 // Forward declarations
 struct reb_simulation;
 
-/**
- * Generic 3d vector
- */
+// Generic 3d vector
 struct reb_vec3d {
 	double x;
 	double y;
 	double z;
 };
 
-/**
- * Generic 7d vector of pointers
- */
+// Generic 7d vector of pointers
 struct reb_dp7 {
 	double* restrict p0;
 	double* restrict p1;
@@ -81,18 +78,14 @@ struct reb_dp7 {
 	double* restrict p6;
 };
 
-/**
- * This struct containes the relative position and velocity of a boundary box.
- * It is sometimes also used as the relative position and velocity of a 
- * particle to speed up calculation.
- */
+// Structure contains the relative position and velocity of a boundary box.
 struct reb_ghostbox{
-	double shiftx;		/**< Relative x position */
-	double shifty;		/**< Relative y position */
-	double shiftz;		/**< Relative z position */
-	double shiftvx;		/**< Relative x velocity */
-	double shiftvy;		/**< Relative y velocity */
-	double shiftvz;		/**< Relative z velocity */
+	double shiftx;		///< Relative x position
+	double shifty;		///< Relative y position
+	double shiftz;		///< Relative z position
+	double shiftvx;		///< Relative x velocity
+	double shiftvy;		///< Relative y velocity
+	double shiftvz;		///< Relative z velocity
 };
 
 
@@ -108,37 +101,39 @@ struct reb_ghostbox{
  * for MPI in communications_mpi.c.
  */
 struct reb_particle {
-	double x;	/**< x-position of the particle. */
-	double y;	/**< y-position of the particle. */
-	double z;	/**< z-position of the particle. */
-	double vx;	/**< x-velocity of the particle. */
-	double vy;	/**< y-velocity of the particle. */
-	double vz;	/**< z-velocity of the particle. */
-	double ax;	/**< x-acceleration of the particle. */
-	double ay;	/**< y-acceleration of the particle. */
-	double az;	/**< z-acceleration of the particle. */
-	double m;	/**< Mass of the particle. */
-	double r; 	/**< Radius of the particle. */
-	double lastcollision;	/**< Last time the particle had a physical collision. */
-	struct reb_treecell* c;		/**< Pointer to the cell the particle is currently in. */
-	int id;		/**< Unique id to identify particle. */
+	double x;	///< x-position of the particle. 
+	double y;	///< y-position of the particle. 
+	double z;	///< z-position of the particle. 
+	double vx;	///< x-velocity of the particle. 
+	double vy;	///< y-velocity of the particle. 
+	double vz;	///< z-velocity of the particle. 
+	double ax;	///< x-acceleration of the particle. 
+	double ay;	///< y-acceleration of the particle. 
+	double az;	///< z-acceleration of the particle. 
+	double m;	///< Mass of the particle. 
+	double r; 	///< Radius of the particle. 
+	double lastcollision;		///< Last time the particle had a physical collision.
+	struct reb_treecell* c;		///< Pointer to the cell the particle is currently in.
+	int id;				///< Unique id to identify particle.
 };
 
 
 /**
- * Struct representing a Keplerian orbit.
+ * @brief Structure representing a Keplerian orbit.
+ * @detail This structure is returned when calculating 
+ * a Keplerian orbit from Cartesian coordinates. 
  */
 struct reb_orbit {
-	double a;
-	double r;	// Radial distance from central object
-	double h;	// Angular momentum
-	double P;	// Orbital period
-	double l;
-	double e;
-	double inc;
-	double Omega; 	// longitude of ascending node
-	double omega; 	// argument of perihelion
-	double f; 	// true anomaly
+	double a;	///< Semi-major axis
+	double r;	///< Radial distance from central object
+	double h;	///< Angular momentum
+	double P;	///< Orbital period
+	double l;	///< Longitude
+	double e;	///< Eccentricity
+	double inc;	///< Inclination
+	double Omega; 	///< Longitude of ascending node
+	double omega; 	///< Argument of perihelion
+	double f; 	///< True anomaly
 };
 
 
