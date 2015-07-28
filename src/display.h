@@ -26,6 +26,7 @@
 #define _DISPLAY_H
 #include <semaphore.h>
 
+struct reb_simulation;
 /**
  * This function initializes OpenGL and starts the run loop. It will never return.
  * @param argc Number of command line arguments.
