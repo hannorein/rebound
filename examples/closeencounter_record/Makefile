@@ -1,5 +1,5 @@
 export OPENGL=1
-OPT+= -std=c99 -Wpointer-arith -D_GNU_SOURCE -O3 -march=native
+OPT+= -std=c99 -Wpointer-arith -D_GNU_SOURCE -O3 -march=native -lm
 
 all: librebound
 	@echo ""
