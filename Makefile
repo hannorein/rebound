@@ -9,3 +9,9 @@ all: librebound
 
 clean:
 	$(MAKE) -C src clean
+
+.PHONY: doc
+doc: 
+	cd doc/doxygen && doxygen
+	$(MAKE) -C doc html
+		
