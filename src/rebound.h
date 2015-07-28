@@ -1,6 +1,6 @@
 /**
- * @file 	main.h
- * @brief 	Main header file.
+ * @file 	rebound.h
+ * @brief 	Main REBOUND header file.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
@@ -21,7 +21,10 @@
  * You should have received a copy of the GNU General Public License
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
+ *  @defgroup REBOUND_API
+ *  Group containing all public REBOUND API functions.
  */
+
 #ifndef _MAIN_H
 #define _MAIN_H
 #ifndef M_PI
@@ -29,8 +32,12 @@
 #define M_PI           3.14159265358979323846
 #endif
 
-extern const char* reb_build_str;	// Date and time build string.
-extern const char* reb_version_str;	// Version string.
+/**
+ * @addtogroup REBOUND_API
+ * @{
+ */
+extern const char* reb_build_str;	///< Date and time build string.
+extern const char* reb_version_str;	///< Version string.
 
 // Enum, describing the return status of rebound_integrate
 enum REB_STATUS {
@@ -38,12 +45,16 @@ enum REB_STATUS {
 	REB_RUNNING_LAST_STEP = -2,
 	REB_RUNNING = -1,   
 	REB_EXIT_SUCCESS = 0,   
-	REB_EXIT_ERROR = 1,		// Generic error
+	REB_EXIT_ERROR = 1,		///< Generic error
 	REB_EXIT_NOPARTICLES = 2,
 	REB_EXIT_ENCOUNTER = 3,
 	REB_EXIT_ESCAPE = 4,
-	REB_EXIT_USER = 5,		// User caused exit
+	REB_EXIT_USER = 5,		///< User caused exit
 };
+
+/**
+ * @} 
+ */
 
 // Forward declarations
 struct reb_simulation;
@@ -86,10 +97,15 @@ struct reb_ghostbox{
 
 
 /**
- * reb_particle structure.
- * @details This structure is used to represent one particle. Additional particle
- * properties should be added here. Note that when the data structure is changed, 
- * one must also update the equivalent declaration for MPI in communications_mpi.c.
+ * @addtogroup REBOUND_API
+ * @{
+ */
+/**
+ * @brief Structure representing one REBOUND particle.
+ * @details This structure is used to represent one particle. 
+ * If this structure is changed, the corresponding python structure
+ * needs to be changes as well. Also update the equivalent declaration 
+ * for MPI in communications_mpi.c.
  */
 struct reb_particle {
 	double x;	/**< x-position of the particle. */
@@ -459,7 +475,7 @@ void reb_configure_box(struct reb_simulation* const r, const double boxsize, con
 int reb_check_exit(struct reb_simulation* const r, const double tmax);
 
 /**
- * Frees up all space.
+ * @brief Frees up all space.
  */
 void reb_free_simulation(struct reb_simulation* const r);
 
@@ -695,4 +711,7 @@ void reb_exit(const char* const msg);
  */
 void reb_warning(const char* const msg);
 
+/**
+ * @}
+ */
 #endif

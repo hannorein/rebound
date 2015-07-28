@@ -51,8 +51,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'REBOUND'
-copyright = u'2015, Hanno Rein'
-author = u'Hanno Rein'
+copyright = u'2015, Hanno Rein, Shangfei Liu, David S. Spiegel, Akihiko Fujii, Dan Tamayo'
+author = u'Hanno Rein, Shangfei Liu, David S. Spiegel, Akihiko Fujii, Dan Tamayo'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -158,6 +158,9 @@ html_static_path = ['_static']
 
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
+html_sidebars = {
+             '**': ['globaltoc.html','localtoc.html',]
+                }
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
