@@ -6,6 +6,20 @@
 Welcome to REBOUND's documentation!
 ===================================
 
+.. image:: images/dense.png
+   :width: 362px
+   :height: 350px
+.. image:: images/disc.png
+   :width: 362px
+   :height: 350px
+.. image:: images/outersolarsystem.png
+   :width: 362px
+   :height: 350px
+.. image:: images/shearingsheet.png
+   :width: 362px
+   :height: 350px
+
+
 Contents:
 
 .. toctree::
