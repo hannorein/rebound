@@ -439,7 +439,7 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
 
 * **Profiling the shearing sheet example** 
 
-   This example demonstrates how to use the profiling tool that comes with REBOUND to find out which parts of your code are slow. To turn on this option, simple set `PROFILING=1` in the `Makefile`. Note that enabeling this option makes REBOUND not thread-safe. 
+   This example demonstrates how to use the profiling tool that comes with REBOUND to find out which parts of your code are slow. To turn on this option, simple set `PROFILING=1` in the Makefile. Note that enabeling this option makes REBOUND not thread-safe. 
 
   Directory: examples/profiling
 
