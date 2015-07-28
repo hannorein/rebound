@@ -13,4 +13,4 @@ Contents:
 
    rebound.rst
 
-
+   librebound.rst
