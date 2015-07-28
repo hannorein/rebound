@@ -28,3 +28,5 @@ src/rebound
 .ipynb_checkpoints
 others/*.tar.gz
 others/*.tar
+doc/doxygen/xml/
+doc/_build/
