@@ -1,5 +1,5 @@
-REBOUND module documentation
-============================
+REBOUND Python module
+=====================
 
 .. automodule:: rebound
    :members:
