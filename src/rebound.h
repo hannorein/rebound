@@ -233,9 +233,7 @@ struct reb_simulation_integrator_sei {
 	double tandt;		///< Cached tan() 
 	double sindtz;		///< Cached sin(), z axis
 	double tandtz;		///< Cached tan(), z axis
-	/**
-	 * @endcond
-	 */
+	/** @endcond */
 };
 
 /**
@@ -249,9 +247,7 @@ struct reb_simulation_integrator_wh {
 	 */
 	int allocatedN;
 	double* eta;
-	/**
-	 * @endcond
-	 */
+	/** @endcond */
 };
 
 /**
@@ -559,47 +555,66 @@ void reb_integrator_reset(struct reb_simulation* r);
 void reb_configure_box(struct reb_simulation* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz);
 
 /**
- * @brief Frees up all space.
+ * @brief Frees up all space used by a REBOUND simulation.
+ * @detail The REBOUND simulation is not usable anymore after being passed to this function.
+ * @param r The rebound simulation to be freed
  */
 void reb_free_simulation(struct reb_simulation* const r);
 
-/*
- * Function used to allow binary input.
+/**
+ * @cond PRIVATE
+ */
+/**
+ * @brief Function used to allow binary input.
  */
 void reb_reset_temporary_pointers(struct reb_simulation* const r);
+/**
+ * @brief Function used to allow binary input.
+ */
 void reb_reset_function_pointers(struct reb_simulation* const r);
+/** @endcond */
 
 /** 
- * Adds a particle to the simulation. 
+ * @brief Adds a particle to the simulation. 
+ * @detail This function adds the particle pt to the simulation. Note that the particle is passed as a structure, not a reference to a structure.
+ * @param r The rebound simulation to which the particle will be added
  */
 void reb_add(struct reb_simulation* const r, struct reb_particle pt);
 
 
 /**
- * Remove all particles
+ * @brief Remove all particles
+ * @param r The rebound simulation to be considered
  */
 void reb_remove_all(struct reb_simulation* const r);
 
 /**
- * Remove particle by position in particles array
- * if keepSorted is set, then particles with indices higher than index
+ * @brief Remove a particle by the position in particles array
+ * @param r The rebound simulation to be considered
+ * @param index The index in the particles array of the particle to be removed.
+ * @pram keepSorted Set to 1, then particles with indices higher than index
  * are all shifted down one position, ensuring the ordering remains.
- * Returns 1 if particle was successfully removed, 0 if index passed was 
+ * @return Returns 1 if particle was successfully removed, 0 if index passed was 
  * out of range.
  */
 int reb_remove(struct reb_simulation* const r, int index, int keepSorted);
 
 /**
- * Remove particle by id.
- * if keepSorted is set, the particles with indices in the particles array
+ * @brief Remove a particle by its id.
+ * @param r The rebound simulation to be considered
+ * @param keepSorted If set to 1 keep the particles with indices in the particles array
  * higher than the one with the passed id are all shifted down one position,
- * ensuring the ordering remains. Returns 1 if particle successfully removed,
+ * ensuring the ordering remains. 
+ * @return Returns 1 if particle successfully removed,
  * 0 if id was not found in the particles array.
  */
 int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted);
 
 /**
- * Run the heartbeat function and check for escaping particles.
+ * @brief Run the heartbeat function and check for escaping/colliding particles.
+ * @details You rarely want to call this function yourself. It is used internally to 
+ * call the function you set to the heartbeat variable in reb_simulation.
+ * @param r The rebound simulation to be considered
  */
 void reb_run_heartbeat(struct reb_simulation* const r);
 
