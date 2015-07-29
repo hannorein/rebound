@@ -338,6 +338,10 @@ struct reb_collision{
  * function. This will ensure that all variables and pointers are initialized correctly.
  */
 struct reb_simulation {
+	/**
+	 * \name Variables related to time, current number of particles and simulation status/control 
+	 * @{
+	 */
 	double 	t;			///< Current simulation time. 
 	double 	G;			///< Gravitational constant. Default: 1. 
 	double 	softening;		///< Gravitational softening parameter. Default: 0. 
@@ -347,6 +351,14 @@ struct reb_simulation {
 	int 	N_var;			///< Number of variational particles. Default: 0.
 	int 	N_active;		///< Number of massive particles included in force calculation. Default: N.
 	int 	allocatedN;		///< Current maximum space allocated in the particles array on this node. 
+	struct reb_particle* particles;	///< Main particle array. This contains all particles on this node.  
+	struct reb_vec3d* gravity_cs;	///< Vector containing the information for compensated gravity summation 
+	int 	gravity_cs_allocatedN;	///< Current number of allocated space for cs array
+	
+	//////////////////////////////////////////////
+	/// Tree
+	struct reb_treecell** tree_root; 			///< Pointer to the roots of the trees. 
+	double opening_angle2;	 			///< Square of the cell opening angle \f$ \theta \f$. 
 	enum REB_STATUS status;		///< Set to 1 to exit the simulation at the end of the next timestep. 
 	int 	exact_finish_time; 	///< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. 
 
@@ -356,9 +368,12 @@ struct reb_simulation {
 	double exit_max_distance;			///< Exit simulation if distance from origin larger than this value 
 	double exit_min_distance;			///< Exit simulation if distance from another particle smaller than this value 
 	double usleep;					///< Wait this number of microseconds after each timestep 
+	/// @}
 
-	//////////////////////////////////////////////
-	/// Boxes 
+	/**
+	 * \name Variables related to ghost/root boxes 
+	 * @{
+	 */
 	struct  reb_vec3d boxsize;	///< Size of the entire box, root_x*boxsize. 
 	double 	boxsize_max;		///< Maximum size of the entire box in any direction. Set in box_init().
 	double  root_size;		///< Size of a root box. 
@@ -369,18 +384,24 @@ struct reb_simulation {
 	int	nghostx;		///< Number of ghostboxes in x direction. 
 	int 	nghosty;		///< Number of ghostboxes in y direction. 
 	int 	nghostz;		///< Number of ghostboxes in z direction. 
+	/// @}
 
-	//////////////////////////////////////////////
-	/// Collisions
+	/**
+	 * \name Variables related to collision search and detection 
+	 * @{
+	 */
 	struct reb_collision* collisions;		///< Array of all collisions. 
 	int collisions_allocatedN;			///< Size allocated for collisions.
 	double minimum_collision_velocity;		///< Used for hard sphere collision model. 
 	double collisions_plog;				///< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. 
 	double max_radius[2];				///< Two largest particle radii, set automatically, needed for collision search. 
 	long collisions_Nlog;				///< Keep track of number of collisions. 
+	/// @}
 
-	//////////////////////////////////////////////
-	/// MEGNO
+	/**
+	 * \name Variables related to the chaos indicator MEGNO 
+	 * @{
+	 */
 	int calculate_megno;	///< Flag that determines if megno is calculated (default=0, but megno_init() sets it to 1)
 	double megno_Ys;	///< Running megno sum (internal use)
 	double megno_Yss;	///< Running megno sum (internal use)
@@ -389,10 +410,12 @@ struct reb_simulation {
 	double megno_mean_t; 	///< mean of t
 	double megno_mean_Y; 	///< mean of Y
 	long   megno_n; 	///< number of covariance updates
+	/// @}
 
-	//////////////////////////////////////////////
-	/// Modules
-	
+	/**
+	 * \name Variables describing the current module selection 
+	 * @{
+	 */
 	/**
 	 * @brief Available collision routines
 	 */
@@ -433,19 +456,10 @@ struct reb_simulation {
 		REB_GRAVITY_COMPENSATED = 2,	///< Direct summation algorithm O(N^2) but with compensated summation, slightly slower than BASIC but more accurate
 		REB_GRAVITY_TREE = 3,		///< Use the tree to calculate gravity, O(N log(N)), set opening_angle2 to adjust accuracy.
 		} gravity;
+	/// @}
 
 
 
-	//////////////////////////////////////////////
-	/// reb_particles
-	struct reb_particle* particles; 			///< Main particle array. This contains all particles on this node.  
-	struct reb_vec3d* gravity_cs;				///< Vector containing the information for compensated gravity summation 
-	int gravity_cs_allocatedN;				///< Current number of allocated space for cs array
-	
-	//////////////////////////////////////////////
-	/// Tree
-	struct reb_treecell** tree_root; 			///< Pointer to the roots of the trees. 
-	double opening_angle2;	 			///< Square of the cell opening angle \f$ \theta \f$. 
 
 	
 	//////////////////////////////////////////////
