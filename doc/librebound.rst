@@ -1,6 +1,5 @@
 C-API
 =====
 
-.. doxygengroup:: REBOUND_API
-   :members:
+.. doxygenfile:: rebound.h
 
