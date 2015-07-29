@@ -1,8 +1,6 @@
 #!/bin/gnuplot
-set output "plot.pdf"
 set key top left
 set xlabel "time [{/Symbol W}^{-1}]"
-set terminal pdf monochrome dashed enhanced
 set multiplot
 set lmargin 14
 set rmargin 4
@@ -19,3 +17,5 @@ set origin 0,0
 unset logscale y
 set yrange [*:*]
 plot "< awk '{if(NR%2==1) print $0;}' orbits.txt" u 1:($4/pi*180.) notit w l 
+
+pause -1

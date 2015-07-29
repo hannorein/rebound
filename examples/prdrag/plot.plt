@@ -1,7 +1,5 @@
 #!/bin/gnuplot
-set output "plot.pdf"
 set key top left
-set terminal pdf monochrome dashed enhanced size 3in,3in
 set xlabel "time [years]"
 set multiplot layout 2,1
 beta = 0.01
@@ -20,4 +18,4 @@ set ytics 1e-4
 set ylabel "semimajor axis error [AU]"
 plot "radius.txt" u ($1/2./pi):($2-a($1/2./pi)) notit
 
-
+pause -1

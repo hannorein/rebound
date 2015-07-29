@@ -27,103 +27,90 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <sys/time.h>
 #include "particle.h"
-#include "main.h"
+#include "rebound.h"
 #include "tools.h"
 
 
-// Random number helper routines
-double	tools_normaldistribution2_rsq;		/**< Used for speedup**/ 
-double 	tools_normaldistribution2_v2;		/**< Used for speedup**/
-int 	tools_normaldistribution2_ready = 0;	/**< Used for speedup**/
+void reb_tools_init_srand(){
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	srand ( tim.tv_usec + getpid());
+}
 
-double tools_uniform(double min, double max){
+double reb_random_uniform(double min, double max){
 	return ((double)rand())/((double)(RAND_MAX))*(max-min)+min;
 }
 
 
-double tools_powerlaw(double min, double max, double slope){
-	double y = tools_uniform(0., 1.);
+double reb_random_powerlaw(double min, double max, double slope){
+	double y = reb_random_uniform(0., 1.);
 	return pow( (pow(max,slope+1.)-pow(min,slope+1.))*y+pow(min,slope+1.), 1./(slope+1.));
 }
 
-double tools_normal(double variance){
-	if (tools_normaldistribution2_ready==1){
-		tools_normaldistribution2_ready=0;
-		return tools_normaldistribution2_v2*sqrt(-2.*log(tools_normaldistribution2_rsq)/tools_normaldistribution2_rsq*variance);
-	}
+double reb_random_normal(double variance){
 	double v1,v2,rsq=1.;
 	while(rsq>=1. || rsq<1.0e-12){
 		v1=2.*((double)rand())/((double)(RAND_MAX))-1.0;
 		v2=2.*((double)rand())/((double)(RAND_MAX))-1.0;
 		rsq=v1*v1+v2*v2;
 	}
-	tools_normaldistribution2_ready = 1;
-	tools_normaldistribution2_rsq   = rsq;
-	tools_normaldistribution2_v2	  = v2;
+	// Note: This gives another random variable for free, but we'll throw it away for simplicity and for thread-safety.
 	return 	v1*sqrt(-2.*log(rsq)/rsq*variance);
 }
 
-double tools_rayleigh(double sigma){
-	double y = tools_uniform(0.,1.);
+double reb_random_rayleigh(double sigma){
+	double y = reb_random_uniform(0.,1.);
 	return sigma*sqrt(-2*log(y));
 }
 
-
-
 /// Other helper routines
-double tools_energy(void){
+double reb_tools_energy(struct reb_simulation* r){
+	const int N = r->N;
+	const struct reb_particle* restrict const particles = r->particles;
+	const int N_var = r->N_var;
 	double e_kin = 0.;
 	double e_pot = 0.;
-	for (int i=0;i<N-N_megno;i++){
-		struct particle pi = particles[i];
+	for (int i=0;i<N-N_var;i++){
+		struct reb_particle pi = particles[i];
 		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
-		for (int j=i+1;j<N-N_megno;j++){
-			struct particle pj = particles[j];
+		for (int j=i+1;j<N-N_var;j++){
+			struct reb_particle pj = particles[j];
 			double dx = pi.x - pj.x;
 			double dy = pi.y - pj.y;
 			double dz = pi.z - pj.z;
-			e_pot -= G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
+			e_pot -= r->G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
 		}
 	}
 	return e_kin +e_pot;
 }
 
-void tools_move_to_center_of_momentum(void){
-	double m = 0;
-	double x = 0;
-	double y = 0;
-	double z = 0;
-	double vx = 0;
-	double vy = 0;
-	double vz = 0;
+void reb_move_to_com(struct reb_simulation* const r){
+	const int N = r->N;
+	struct reb_particle* restrict const particles = r->particles;
+	struct reb_particle com = reb_get_com(r);
 	for (int i=0;i<N;i++){
-		struct particle p = particles[i];
-		m  += p.m;
-		x  += p.x*p.m;
-		y  += p.y*p.m;
-		z  += p.z*p.m;
-		vx += p.vx*p.m;
-		vy += p.vy*p.m;
-		vz += p.vz*p.m;
-	}
-	x /= m;
-	y /= m;
-	z /= m;
-	vx /= m;
-	vy /= m;
-	vz /= m;
-	for (int i=0;i<N;i++){
-		particles[i].x  -= x;
-		particles[i].y  -= y;
-		particles[i].z  -= z;
-		particles[i].vx -= vx;
-		particles[i].vy -= vy;
-		particles[i].vz -= vz;
+		particles[i].x  -= com.x;
+		particles[i].y  -= com.y;
+		particles[i].z  -= com.z;
+		particles[i].vx -= com.vx;
+		particles[i].vy -= com.vy;
+		particles[i].vz -= com.vz;
 	}
 }
 
-struct particle tools_get_center_of_mass(struct particle p1, struct particle p2){
+struct reb_particle reb_get_com(struct reb_simulation* r){
+	struct reb_particle com = {.m=0, .x=0, .y=0, .z=0, .vx=0, .vy=0, .vz=0};
+	const int N = r->N;
+	struct reb_particle* restrict const particles = r->particles;
+	for (int i=0;i<N;i++){
+		com = reb_get_com_of_pair(com, particles[i]);
+	}
+	return com;
+}
+
+struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_particle p2){
 	p1.x   = p1.x*p1.m + p2.x*p2.m;		
 	p1.y   = p1.y*p1.m + p2.y*p2.m;
 	p1.z   = p1.z*p1.m + p2.z*p2.m;
@@ -142,29 +129,29 @@ struct particle tools_get_center_of_mass(struct particle p1, struct particle p2)
 	return p1;
 }
 
-void tools_init_plummer(int _N, double M, double R) {
+void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R) {
 	// Algorithm from:	
 	// http://adsabs.harvard.edu/abs/1974A%26A....37..183A
 	
 	double E = 3./64.*M_PI*M*M/R;
 	for (int i=0;i<_N;i++){
-		struct particle star;
-		double r = pow(pow(tools_uniform(0,1),-2./3.)-1.,-1./2.);
-		double x2 = tools_uniform(0,1);
-		double x3 = tools_uniform(0,2.*M_PI);
-		star.z = (1.-2.*x2)*r;
-		star.x = sqrt(r*r-star.z*star.z)*cos(x3);
-		star.y = sqrt(r*r-star.z*star.z)*sin(x3);
+		struct reb_particle star = {0};
+		double _r = pow(pow(reb_random_uniform(0,1),-2./3.)-1.,-1./2.);
+		double x2 = reb_random_uniform(0,1);
+		double x3 = reb_random_uniform(0,2.*M_PI);
+		star.z = (1.-2.*x2)*_r;
+		star.x = sqrt(_r*_r-star.z*star.z)*cos(x3);
+		star.y = sqrt(_r*_r-star.z*star.z)*sin(x3);
 		double x5,g,q;
 		do{
-			x5 = tools_uniform(0.,1.);
-			q = tools_uniform(0.,1.);
+			x5 = reb_random_uniform(0.,1.);
+			q = reb_random_uniform(0.,1.);
 			g = q*q*pow(1.-q*q,7./2.);
 		}while(0.1*x5>g);
-		double ve = pow(2.,1./2.)*pow(1.+r*r,-1./4.);
+		double ve = pow(2.,1./2.)*pow(1.+_r*_r,-1./4.);
 		double v = q*ve;
-		double x6 = tools_uniform(0.,1.);
-		double x7 = tools_uniform(0.,2.*M_PI);
+		double x6 = reb_random_uniform(0.,1.);
+		double x7 = reb_random_uniform(0.,2.*M_PI);
 		star.vz = (1.-2.*x6)*v;
 		star.vx = sqrt(v*v-star.vz*star.vz)*cos(x7);
 		star.vy = sqrt(v*v-star.vz*star.vz)*sin(x7);
@@ -179,13 +166,12 @@ void tools_init_plummer(int _N, double M, double R) {
 
 		star.m = M/(double)_N;
 
-
-		particles_add(star);
+		reb_add(r, star);
 	}
 }
 
-struct particle tools_init_orbit2d(double M, double m, double a, double e, double omega, double f){
-	struct particle p;
+struct reb_particle reb_tools_init_orbit2d(double G, double M, double m, double a, double e, double omega, double f){
+	struct reb_particle p = {0};
 	p.m = m;
 	double r = a*(1.-e*e)/(1.+e*cos(f));
 	double n = sqrt(G*(m+M)/(a*a*a));
@@ -206,8 +192,8 @@ struct particle tools_init_orbit2d(double M, double m, double a, double e, doubl
 	return p;
 }
 
-struct particle tools_init_orbit3d(double M, double m, double a, double e, double i, double Omega, double omega, double f){
-	struct particle p;
+struct reb_particle reb_tools_init_orbit3d(double G, double M, double m, double a, double e, double i, double Omega, double omega, double f){
+	struct reb_particle p = {0};
 	p.m = m;
 	double r = a*(1-e*e)/(1 + e*cos(f));
 
@@ -228,15 +214,15 @@ struct particle tools_init_orbit3d(double M, double m, double a, double e, doubl
 	return p;
 }
 
-const struct orbit orbit_nan = {.a = NAN, .r = NAN, .h = NAN, .P = NAN, .l = NAN, .e = NAN, .inc = NAN, .Omega = NAN, .omega = NAN, .f = NAN};
+static const struct reb_orbit reb_orbit_nan = {.a = NAN, .r = NAN, .h = NAN, .P = NAN, .l = NAN, .e = NAN, .inc = NAN, .Omega = NAN, .omega = NAN, .f = NAN};
 
 #define MIN_REL_ERROR 1.0e-12
 #define TINY 1.E-308
 
-struct orbit tools_p2orbit(struct particle p, struct particle primary){
-	struct orbit o;
+struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_particle primary){
+	struct reb_orbit o;
 	if (primary.m <= TINY){	
-		return orbit_nan;
+		return reb_orbit_nan;
 	}
 	double h0,h1,h2,e0,e1,e2,n0,n1,n,er,vr,mu,ea,dx,dy,dz,dvx,dvy,dvz,v,cosf,cosea;
 	mu = G*(p.m+primary.m);
@@ -253,10 +239,10 @@ struct orbit tools_p2orbit(struct particle p, struct particle primary){
 	v = sqrt ( dvx*dvx + dvy*dvy + dvz*dvz );
 	o.r = sqrt ( dx*dx + dy*dy + dz*dz );
 	if(o.r <= TINY){
-		return orbit_nan;
+		return reb_orbit_nan;
 	}
 	if (o.h/(o.r*v) <= MIN_REL_ERROR){
-		return orbit_nan;
+		return reb_orbit_nan;
 	}
 	vr = (dx*dvx + dy*dvy + dz*dvz)/o.r;
 	e0 = 1./mu*( (v*v-mu/o.r)*dx - o.r*vr*dvx );
@@ -340,33 +326,25 @@ struct orbit tools_p2orbit(struct particle p, struct particle primary){
 /**************************
  * MEGNO Routines         */
 
-double tools_megno_Ys;
-double tools_megno_Yss;
-double tools_megno_cov_Yt;	// covariance of <Y> and t
-double tools_megno_var_t;  	// variance of t 
-double tools_megno_mean_t; 	// mean of t
-double tools_megno_mean_Y; 	// mean of Y
-double tools_megno_delta0; 	// initial scale of delta (for one particle)
-long   tools_megno_n; 		// number of covariance updates
-void tools_megno_init(double delta){
-	int _N_megno = N;
-	tools_megno_Ys = 0.;
-	tools_megno_Yss = 0.;
-	tools_megno_cov_Yt = 0.;
-	tools_megno_var_t = 0.;
-	tools_megno_n = 0;
-	tools_megno_mean_Y = 0;
-	tools_megno_mean_t = 0;
-	tools_megno_delta0 = delta;
-        for (int i=0;i<_N_megno;i++){ 
-                struct particle megno = {
-			.m  = particles[i].m,
-			.x  = tools_normal(1.),
-			.y  = tools_normal(1.),
-			.z  = tools_normal(1.),
-			.vx = tools_normal(1.),
-			.vy = tools_normal(1.),
-			.vz = tools_normal(1.) };
+void reb_tools_megno_init(struct reb_simulation* const r, double delta){
+	int N_var = r->N;
+	r->calculate_megno = 1;
+	r->megno_Ys = 0.;
+	r->megno_Yss = 0.;
+	r->megno_cov_Yt = 0.;
+	r->megno_var_t = 0.;
+	r->megno_n = 0;
+	r->megno_mean_Y = 0;
+	r->megno_mean_t = 0;
+        for (int i=0;i<N_var;i++){ 
+                struct reb_particle megno = {
+			.m  = r->particles[i].m,
+			.x  = reb_random_normal(1.),
+			.y  = reb_random_normal(1.),
+			.z  = reb_random_normal(1.),
+			.vx = reb_random_normal(1.),
+			.vy = reb_random_normal(1.),
+			.vz = reb_random_normal(1.) };
 		double deltad = delta/sqrt(megno.x*megno.x + megno.y*megno.y + megno.z*megno.z + megno.vx*megno.vx + megno.vy*megno.vy + megno.vz*megno.vz); // rescale
 		megno.x *= deltad;
 		megno.y *= deltad;
@@ -375,22 +353,25 @@ void tools_megno_init(double delta){
 		megno.vy *= deltad;
 		megno.vz *= deltad;
 
-                particles_add(megno);
+                reb_add(r, megno);
         }
-	N_megno = _N_megno;
+	r->N_var = N_var;
 }
-double tools_megno(void){ // Returns the MEGNO <Y>
-	if (t==0.) return 0.;
-	return tools_megno_Yss/t;
+double reb_tools_calculate_megno(struct reb_simulation* r){ // Returns the MEGNO <Y>
+	if (r->t==0.) return 0.;
+	return r->megno_Yss/r->t;
 }
-double tools_lyapunov(void){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
-	if (t==0.) return 0.;
-	return tools_megno_cov_Yt/tools_megno_var_t;
+double reb_tools_calculate_lyapunov(struct reb_simulation* r){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
+	if (r->t==0.) return 0.;
+	return r->megno_cov_Yt/r->megno_var_t;
 }
-double tools_megno_deltad_delta(void){
+double reb_tools_megno_deltad_delta(struct reb_simulation* const r){
+	const struct reb_particle* restrict const particles = r->particles;
+	const int N = r->N;
+	const int N_var = r->N_var;
         double deltad = 0;
         double delta2 = 0;
-        for (int i=N-N_megno;i<N;i++){
+        for (int i=N-N_var;i<N;i++){
                 deltad += particles[i].vx * particles[i].x; 
                 deltad += particles[i].vy * particles[i].y; 
                 deltad += particles[i].vz * particles[i].z; 
@@ -407,61 +388,22 @@ double tools_megno_deltad_delta(void){
         return deltad/delta2;
 }
 
-// Automatically rescale megno particles if their size grew by more then 10 orders of magnitude.
-//void tools_megno_rescale(void){
-//	int rescale_flag = 0;
-//	double delta2_limit = 1e100*tools_megno_delta0*tools_megno_delta0;
-//        for (int i=N-N_megno;i<N;i++){
-//		double delta2 = 0;
-//		delta2 += particles[i].x  * particles[i].x; 
-//		delta2 += particles[i].y  * particles[i].y;
-//		delta2 += particles[i].z  * particles[i].z;
-//		delta2 += particles[i].vx * particles[i].vx; 
-//		delta2 += particles[i].vy * particles[i].vy;
-//		delta2 += particles[i].vz * particles[i].vz;
-//		if (delta2>delta2_limit){
-//			rescale_flag = 1;
-//		}
-//        }
-//	if (rescale_flag){
-//		for (int i=N-N_megno;i<N;i++){
-//			//particles[i].x  = tools_normal(1.);
-//			//particles[i].y  = tools_normal(1.);
-//			//particles[i].z  = tools_normal(1.);
-//			//particles[i].vx = tools_normal(1.);
-//			//particles[i].vy = tools_normal(1.);
-//			//particles[i].vz = tools_normal(1.);
-//			double deltad = tools_megno_delta0/sqrt(particles[i].x*particles[i].x + particles[i].y*particles[i].y + particles[i].z*particles[i].z + particles[i].vx*particles[i].vx + particles[i].vy*particles[i].vy + particles[i].vz*particles[i].vz); // rescale factor
-//			particles[i].x *= deltad;
-//			particles[i].y *= deltad;
-//			particles[i].z *= deltad;
-//			particles[i].vx *= deltad;
-//			particles[i].vy *= deltad;
-//			particles[i].vz *= deltad;
-//		}
-//	}
-//}
-
-void tools_megno_update(double dY){
+void reb_tools_megno_update(struct reb_simulation* r, double dY){
 	// Calculate running Y(t)
-	tools_megno_Ys += dY;
-	double Y = tools_megno_Ys/t;
+	r->megno_Ys += dY;
+	double Y = r->megno_Ys/r->t;
 	// Calculate averge <Y> 
-	tools_megno_Yss += Y * dt;
+	r->megno_Yss += Y * r->dt;
 	// Update covariance of (Y,t) and variance of t
-	tools_megno_n++;
-	double _d_t = t - tools_megno_mean_t;
-	tools_megno_mean_t += _d_t/(double)tools_megno_n;
-	double _d_Y = tools_megno() - tools_megno_mean_Y;
-	tools_megno_mean_Y += _d_Y/(double)tools_megno_n;
-	tools_megno_cov_Yt += ((double)tools_megno_n-1.)/(double)tools_megno_n 
-					*(t-tools_megno_mean_t)
-					*(tools_megno()-tools_megno_mean_Y);
-	tools_megno_var_t  += ((double)tools_megno_n-1.)/(double)tools_megno_n 
-					*(t-tools_megno_mean_t)
-					*(t-tools_megno_mean_t);
-//	// Check to see if we need to rescale
-//	if (tools_megno_delta0!=0){
-//		tools_megno_rescale();
-//	}
+	r->megno_n++;
+	double _d_t = r->t - r->megno_mean_t;
+	r->megno_mean_t += _d_t/(double)r->megno_n;
+	double _d_Y = reb_tools_calculate_megno(r) - r->megno_mean_Y;
+	r->megno_mean_Y += _d_Y/(double)r->megno_n;
+	r->megno_cov_Yt += ((double)r->megno_n-1.)/(double)r->megno_n 
+					*(r->t-r->megno_mean_t)
+					*(reb_tools_calculate_megno(r)-r->megno_mean_Y);
+	r->megno_var_t  += ((double)r->megno_n-1.)/(double)r->megno_n 
+					*(r->t-r->megno_mean_t)
+					*(r->t-r->megno_mean_t);
 }

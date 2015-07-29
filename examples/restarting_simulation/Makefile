@@ -1,18 +1,22 @@
-PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
 export OPENGL=1
+include ../../src/Makefile.defs
 
-all:
-	# Setup link to different modules
-	ln -fs gravity_direct.c ../../src/gravity.c
-	ln -fs boundaries_shear.c ../../src/boundaries.c
-	ln -fs collisions_direct.c ../../src/collisions.c
-	# Setup link to problem file
-	ln -fs ../$(PROBLEMDIR)/problem.c ../../src/problem.c
-	# Compile
+all: librebound
+	@echo ""
+	@echo "Compiling problem file ..."
+	$(CC) -I../../src/ -Wl,-rpath,./ $(OPT) $(PREDEF) problem.c -L. -lrebound $(LIB) -o rebound
+	@echo ""
+	@echo "REBOUND compiled successfully."
+
+librebound: 
+	@echo "Compiling shared library librebound.so ..."
 	$(MAKE) -C ../../src/
-	# Copy result
-	cp ../../src/rebound .
+	@-rm -f librebound.so
+	@ln -s ../../src/librebound.so .
 
 clean:
+	@echo "Cleaning up shared library librebound.so ..."
+	@-rm -f librebound.so
 	$(MAKE) -C ../../src/ clean
-	rm -vf rebound
+	@echo "Cleaning up local directory ..."
+	@-rm -vf rebound

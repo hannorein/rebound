@@ -1,5 +1,5 @@
 /**
- * @file 	integrator.c
+ * @file 	integrator_ias15.c
  * @brief 	IAS15 integrator.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @detail	This file implements the IAS15 integration scheme.  
@@ -46,109 +46,138 @@
 #include <gmp.h>
 void integrator_generate_constants(void);
 #endif // GENERATE_CONSTANTS
+#include "rebound.h"
 #include "particle.h"
-#include "main.h"
 #include "gravity.h"
-#include "problem.h"
 #include "tools.h"
 #include "integrator.h"
 #include "integrator_ias15.h"
 
-#ifdef TREE
-#error IAS15 integrator not working with TREE module.
-#endif
 #ifdef MPI
 #error IAS15 integrator not working with MPI.
 #endif
 
-unsigned int integrator_ias15_epsilon_global	= 1;	// if 1: estimate the fractional error by max(acceleration_error)/max(acceleration), where max is take over all particles.
-double integrator_ias15_epsilon 		= 1e-9;
-double integrator_ias15_min_dt 			= 0;
-							// if 0: estimate the fractional error by max(acceleration_error/acceleration).
-unsigned long integrator_iterations_max_exceeded= 0;	// Count how many times the iteration did not converge
-const double safety_factor 			= 0.25;	// Maximum increase/deacrease of consecutve timesteps.
+struct reb_dpconst7 {
+	double* const restrict p0;
+	double* const restrict p1;
+	double* const restrict p2;
+	double* const restrict p3;
+	double* const restrict p4;
+	double* const restrict p5;
+	double* const restrict p6;
+};
+
+// Helper functions for resetting the b and e coefficients
+static void copybuffers(const struct reb_dpconst7 _a, const struct reb_dpconst7 _b, int N3);
+static void predict_next_step(double ratio, int N3,  const struct reb_dpconst7 _e, const struct reb_dpconst7 _b, const struct reb_dpconst7 e, const struct reb_dpconst7 b);
+
+
+/////////////////////////
+//   Constants 
+
+static const double safety_factor 			= 0.25;	/**< Maximum increase/deacrease of consecutve timesteps. */
 
 // Gauss Radau spacings
-const double h[8]	= { 0.0, 0.0562625605369221464656521910, 0.1802406917368923649875799428, 0.3526247171131696373739077702, 0.5471536263305553830014485577, 0.7342101772154105410531523211, 0.8853209468390957680903597629, 0.9775206135612875018911745004}; 
+static const double h[8]	= { 0.0, 0.0562625605369221464656521910, 0.1802406917368923649875799428, 0.3526247171131696373739077702, 0.5471536263305553830014485577, 0.7342101772154105410531523211, 0.8853209468390957680903597629, 0.9775206135612875018911745004}; 
 // Other constants
-const double r[28] = {0.0562625605369221464656522, 0.1802406917368923649875799, 0.1239781311999702185219278, 0.3526247171131696373739078, 0.2963621565762474909082556, 0.1723840253762772723863278, 0.5471536263305553830014486, 0.4908910657936332365357964, 0.3669129345936630180138686, 0.1945289092173857456275408, 0.7342101772154105410531523, 0.6779476166784883945875001, 0.5539694854785181760655724, 0.3815854601022409036792446, 0.1870565508848551580517038, 0.8853209468390957680903598, 0.8290583863021736216247076, 0.7050802551022034031027798, 0.5326962297259261307164520, 0.3381673205085403850889112, 0.1511107696236852270372074, 0.9775206135612875018911745, 0.9212580530243653554255223, 0.7972799218243951369035946, 0.6248958964481178645172667, 0.4303669872307321188897259, 0.2433104363458769608380222, 0.0921996667221917338008147};
-const double c[21] = {-0.0562625605369221464656522, 0.0101408028300636299864818, -0.2365032522738145114532321, -0.0035758977292516175949345, 0.0935376952594620658957485, -0.5891279693869841488271399, 0.0019565654099472210769006, -0.0547553868890686864408084, 0.4158812000823068616886219, -1.1362815957175395318285885, -0.0014365302363708915610919, 0.0421585277212687082291130, -0.3600995965020568162530901, 1.2501507118406910366792415, -1.8704917729329500728817408, 0.0012717903090268677658020, -0.0387603579159067708505249, 0.3609622434528459872559689, -1.4668842084004269779203515, 2.9061362593084293206895457, -2.7558127197720458409721005};
-const double d[21] = {0.0562625605369221464656522, 0.0031654757181708292499905, 0.2365032522738145114532321, 0.0001780977692217433881125, 0.0457929855060279188954539, 0.5891279693869841488271399, 0.0000100202365223291272096, 0.0084318571535257015445000, 0.2535340690545692665214616, 1.1362815957175395318285885, 0.0000005637641639318207610, 0.0015297840025004658189490, 0.0978342365324440053653648, 0.8752546646840910912297246, 1.8704917729329500728817408, 0.0000000317188154017613665, 0.0002762930909826476593130, 0.0360285539837364596003871, 0.5767330002770787313544596, 2.2485887607691598182153473, 2.7558127197720458409721005};
+static const double rr[28] = {0.0562625605369221464656522, 0.1802406917368923649875799, 0.1239781311999702185219278, 0.3526247171131696373739078, 0.2963621565762474909082556, 0.1723840253762772723863278, 0.5471536263305553830014486, 0.4908910657936332365357964, 0.3669129345936630180138686, 0.1945289092173857456275408, 0.7342101772154105410531523, 0.6779476166784883945875001, 0.5539694854785181760655724, 0.3815854601022409036792446, 0.1870565508848551580517038, 0.8853209468390957680903598, 0.8290583863021736216247076, 0.7050802551022034031027798, 0.5326962297259261307164520, 0.3381673205085403850889112, 0.1511107696236852270372074, 0.9775206135612875018911745, 0.9212580530243653554255223, 0.7972799218243951369035946, 0.6248958964481178645172667, 0.4303669872307321188897259, 0.2433104363458769608380222, 0.0921996667221917338008147};
+static const double c[21] = {-0.0562625605369221464656522, 0.0101408028300636299864818, -0.2365032522738145114532321, -0.0035758977292516175949345, 0.0935376952594620658957485, -0.5891279693869841488271399, 0.0019565654099472210769006, -0.0547553868890686864408084, 0.4158812000823068616886219, -1.1362815957175395318285885, -0.0014365302363708915610919, 0.0421585277212687082291130, -0.3600995965020568162530901, 1.2501507118406910366792415, -1.8704917729329500728817408, 0.0012717903090268677658020, -0.0387603579159067708505249, 0.3609622434528459872559689, -1.4668842084004269779203515, 2.9061362593084293206895457, -2.7558127197720458409721005};
+static const double d[21] = {0.0562625605369221464656522, 0.0031654757181708292499905, 0.2365032522738145114532321, 0.0001780977692217433881125, 0.0457929855060279188954539, 0.5891279693869841488271399, 0.0000100202365223291272096, 0.0084318571535257015445000, 0.2535340690545692665214616, 1.1362815957175395318285885, 0.0000005637641639318207610, 0.0015297840025004658189490, 0.0978342365324440053653648, 0.8752546646840910912297246, 1.8704917729329500728817408, 0.0000000317188154017613665, 0.0002762930909826476593130, 0.0360285539837364596003871, 0.5767330002770787313544596, 2.2485887607691598182153473, 2.7558127197720458409721005};
 
-// The following values will be set dynamically.
-double s[9];				// Summation coefficients 
-
-int N3allocated	= 0; 			// Size of allocated arrays.
-
-double* at   	= NULL;			// Temporary buffer for acceleration
-double* x0  	= NULL;			// Temporary buffer for position (used for initial values at h=0) 
-double* v0  	= NULL;			//                      velocity
-double* a0  	= NULL;			//                      acceleration
-double* csx  	= NULL;			//                      compensated summation
-double* csv  	= NULL;			//                      compensated summation
-
-double* g[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
-double* b[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
-double* e[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
-
-// The following values are used for resetting the b and e coefficients if a timestep gets rejected
-double* br[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
-double* er[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
-double dt_last_success = 0.;			// Last accepted timestep (corresponding to br and er)
-// Helper functions for resetting the b and e coefficients
-void copybuffers(double* _a[7], double* _b[7], int N3);
-void predict_next_step(double ratio, int N3, double* _e[7], double* _b[7]);
-
-// MEGNO helper routines
 // Weights for integration of a first order differential equation (Note: interval length = 2) 
-const double w[8] = {0.03125, 0.185358154802979278540728972807180754479812609, 0.304130620646785128975743291458180383736715043, 0.376517545389118556572129261157225608762708603, 0.391572167452493593082499533303669362149363727, 0.347014795634501068709955597003528601733139176, 0.249647901329864963257869294715235590174262844, 0.114508814744257199342353731044292225247093225};
+static const double w[8] = {0.03125, 0.185358154802979278540728972807180754479812609, 0.304130620646785128975743291458180383736715043, 0.376517545389118556572129261157225608762708603, 0.391572167452493593082499533303669362149363727, 0.347014795634501068709955597003528601733139176, 0.249647901329864963257869294715235590174262844, 0.114508814744257199342353731044292225247093225};
 
-// Do nothing here. This is only used in a leapfrog-like DKD integrator. IAS15 performs one complete timestep.
-void integrator_ias15_part1(void){
+
+static void free_dp7(struct reb_dp7* dp7){
+	free(dp7->p0);
+	free(dp7->p1);
+	free(dp7->p2);
+	free(dp7->p3);
+	free(dp7->p4);
+	free(dp7->p5);
+	free(dp7->p6);
+	dp7->p0 = NULL;
+	dp7->p1 = NULL;
+	dp7->p2 = NULL;
+	dp7->p3 = NULL;
+	dp7->p4 = NULL;
+	dp7->p5 = NULL;
+	dp7->p6 = NULL;
+}
+static void realloc_dp7(struct reb_dp7* const dp7, const int N3){
+	dp7->p0 = realloc(dp7->p0,sizeof(double)*N3);
+	dp7->p1 = realloc(dp7->p1,sizeof(double)*N3);
+	dp7->p2 = realloc(dp7->p2,sizeof(double)*N3);
+	dp7->p3 = realloc(dp7->p3,sizeof(double)*N3);
+	dp7->p4 = realloc(dp7->p4,sizeof(double)*N3);
+	dp7->p5 = realloc(dp7->p5,sizeof(double)*N3);
+	dp7->p6 = realloc(dp7->p6,sizeof(double)*N3);
+	for (int k=0;k<N3;k++){
+		dp7->p0[k] = 0.;
+		dp7->p1[k] = 0.;
+		dp7->p2[k] = 0.;
+		dp7->p3[k] = 0.;
+		dp7->p4[k] = 0.;
+		dp7->p5[k] = 0.;
+		dp7->p6[k] = 0.;
+	}
 }
 
-int integrator_ias15_step(void); // Does the actual timestep.
-
-void integrator_ias15_part2(void){
-#ifdef GENERATE_CONSTANTS
-	integrator_generate_constants();
-#endif  // GENERATE_CONSTANTS
-	// Try until a step was successful.
-	while(!integrator_ias15_step());
+static struct reb_dpconst7 dpcast(struct reb_dp7 dp){
+	struct reb_dpconst7 dpc = {
+		.p0 = dp.p0, 
+		.p1 = dp.p1, 
+		.p2 = dp.p2, 
+		.p3 = dp.p3, 
+		.p4 = dp.p4, 
+		.p5 = dp.p5, 
+		.p6 = dp.p6, 
+	};
+	return dpc;
 }
  
-int integrator_ias15_step(void) {
+// Does the actual timestep.
+static int reb_integrator_ias15_step(struct reb_simulation* r) {
+	struct reb_particle* const particles = r->particles;
+	const int N = r->N;
+	const int N_var  = r->N_var;
 	const int N3 = 3*N;
-	if (N3 > N3allocated) {
-		for (int l=0;l<7;++l) {
-			g[l] = realloc(g[l],sizeof(double)*N3);
-			b[l] = realloc(b[l],sizeof(double)*N3);
-			e[l] = realloc(e[l],sizeof(double)*N3);
-			br[l] = realloc(br[l],sizeof(double)*N3);
-			er[l] = realloc(er[l],sizeof(double)*N3);
-			for (int k=0;k<N3;k++){
-				b[l][k] = 0;
-				e[l][k] = 0;
-				br[l][k] = 0;
-				er[l][k] = 0;
-			}
-		}
-		at = realloc(at,sizeof(double)*N3);
-		x0 = realloc(x0,sizeof(double)*N3);
-		v0 = realloc(v0,sizeof(double)*N3);
-		a0 = realloc(a0,sizeof(double)*N3);
-		csx= realloc(csx,sizeof(double)*N3);
-		csv= realloc(csv,sizeof(double)*N3);
+	if (N3 > r->ri_ias15.allocatedN) {
+		realloc_dp7(&(r->ri_ias15.g),N3);
+		realloc_dp7(&(r->ri_ias15.b),N3);
+		realloc_dp7(&(r->ri_ias15.e),N3);
+		realloc_dp7(&(r->ri_ias15.br),N3);
+		realloc_dp7(&(r->ri_ias15.er),N3);
+		r->ri_ias15.at = realloc(r->ri_ias15.at,sizeof(double)*N3);
+		r->ri_ias15.x0 = realloc(r->ri_ias15.x0,sizeof(double)*N3);
+		r->ri_ias15.v0 = realloc(r->ri_ias15.v0,sizeof(double)*N3);
+		r->ri_ias15.a0 = realloc(r->ri_ias15.a0,sizeof(double)*N3);
+		r->ri_ias15.csx= realloc(r->ri_ias15.csx,sizeof(double)*N3);
+		r->ri_ias15.csv= realloc(r->ri_ias15.csv,sizeof(double)*N3);
+		double* restrict const csx = r->ri_ias15.csx; 
+		double* restrict const csv = r->ri_ias15.csv; 
 		for (int i=0;i<N3;i++){
 			// Kill compensated summation coefficients
 			csx[i] = 0;
 			csv[i] = 0;
 		}
-		N3allocated = N3;
+		r->ri_ias15.allocatedN = N3;
 	}
 	
-	// integrator_update_acceleration(); // Not needed. Forces are already calculated in main routine.
-
+	// reb_update_acceleration(); // Not needed. Forces are already calculated in main routine.
+	
+	double s[9];				// Summation coefficients 
+	double* restrict const csx = r->ri_ias15.csx; 
+	double* restrict const csv = r->ri_ias15.csv; 
+	double* restrict const at = r->ri_ias15.at; 
+	double* restrict const x0 = r->ri_ias15.x0; 
+	double* restrict const v0 = r->ri_ias15.v0; 
+	double* restrict const a0 = r->ri_ias15.a0; 
+	const struct reb_dpconst7 g  = dpcast(r->ri_ias15.g);
+	const struct reb_dpconst7 e  = dpcast(r->ri_ias15.e);
+	const struct reb_dpconst7 b  = dpcast(r->ri_ias15.b);
+	const struct reb_dpconst7 er = dpcast(r->ri_ias15.er);
+	const struct reb_dpconst7 br = dpcast(r->ri_ias15.br);
 	for(int k=0;k<N;k++) {
 		x0[3*k]   = particles[k].x;
 		x0[3*k+1] = particles[k].y;
@@ -162,22 +191,22 @@ int integrator_ias15_step(void) {
 	}
 
 	for(int k=0;k<N3;k++) {
-		g[0][k] = b[6][k]*d[15] + b[5][k]*d[10] + b[4][k]*d[6] + b[3][k]*d[3]  + b[2][k]*d[1]  + b[1][k]*d[0]  + b[0][k];
-		g[1][k] = b[6][k]*d[16] + b[5][k]*d[11] + b[4][k]*d[7] + b[3][k]*d[4]  + b[2][k]*d[2]  + b[1][k];
-		g[2][k] = b[6][k]*d[17] + b[5][k]*d[12] + b[4][k]*d[8] + b[3][k]*d[5]  + b[2][k];
-		g[3][k] = b[6][k]*d[18] + b[5][k]*d[13] + b[4][k]*d[9] + b[3][k];
-		g[4][k] = b[6][k]*d[19] + b[5][k]*d[14] + b[4][k];
-		g[5][k] = b[6][k]*d[20] + b[5][k];
-		g[6][k] = b[6][k];
+		g.p0[k] = b.p6[k]*d[15] + b.p5[k]*d[10] + b.p4[k]*d[6] + b.p3[k]*d[3]  + b.p2[k]*d[1]  + b.p1[k]*d[0]  + b.p0[k];
+		g.p1[k] = b.p6[k]*d[16] + b.p5[k]*d[11] + b.p4[k]*d[7] + b.p3[k]*d[4]  + b.p2[k]*d[2]  + b.p1[k];
+		g.p2[k] = b.p6[k]*d[17] + b.p5[k]*d[12] + b.p4[k]*d[8] + b.p3[k]*d[5]  + b.p2[k];
+		g.p3[k] = b.p6[k]*d[18] + b.p5[k]*d[13] + b.p4[k]*d[9] + b.p3[k];
+		g.p4[k] = b.p6[k]*d[19] + b.p5[k]*d[14] + b.p4[k];
+		g.p5[k] = b.p6[k]*d[20] + b.p5[k];
+		g.p6[k] = b.p6[k];
 	}
 
 	double integrator_megno_thisdt = 0.;
 	double integrator_megno_thisdt_init = 0.;
-	if (N_megno){
-		integrator_megno_thisdt_init = w[0]* t * tools_megno_deltad_delta();
+	if (r->calculate_megno){
+		integrator_megno_thisdt_init = w[0]* r->t * reb_tools_megno_deltad_delta(r);
 	}
 
-	double t_beginning = t;
+	double t_beginning = r->t;
 	double predictor_corrector_error = 1e300;
 	double predictor_corrector_error_last = 2;
 	int iterations = 0;	
@@ -194,10 +223,10 @@ int integrator_ias15_step(void) {
 			break;
 		}
 		if (iterations>=12){
-			integrator_iterations_max_exceeded++;
+			r->ri_ias15.iterations_max_exceeded++;
 			const int integrator_iterations_warning = 10;
-			if (integrator_iterations_max_exceeded==integrator_iterations_warning ){
-				fprintf(stderr,"\n\033[1mWarning!\033[0m At least %d predictor corrector loops in integrator_ias15.c did not converge. This is typically an indication of the timestep being too large.\n",integrator_iterations_warning);
+			if (r->ri_ias15.iterations_max_exceeded==integrator_iterations_warning ){
+				reb_warning("At least 10 predictor corrector loops in IAS15 did not converge. This is typically an indication of the timestep being too large.");
 			}
 			break;								// Quit predictor corrector loop
 		}
@@ -209,7 +238,7 @@ int integrator_ias15_step(void) {
 
 		for(int n=1;n<8;n++) {							// Loop over interval using Gauss-Radau spacings
 
-			s[0] = dt * h[n];
+			s[0] = r->dt * h[n];
 			s[1] = s[0] * s[0] / 2.;
 			s[2] = s[1] * h[n] / 3.;
 			s[3] = s[2] * h[n] / 2.;
@@ -219,7 +248,7 @@ int integrator_ias15_step(void) {
 			s[7] = 3. * s[6] * h[n] / 4.;
 			s[8] = 7. * s[7] * h[n] / 9.;
 			
-			t = t_beginning + s[0];
+			r->t = t_beginning + s[0];
 
 			// Prepare particles arrays for force calculation
 			for(int i=0;i<N;i++) {						// Predict positions at interval n using b values
@@ -227,15 +256,15 @@ int integrator_ias15_step(void) {
 				const int k1 = 3*i+1;
 				const int k2 = 3*i+2;
 
-				double xk0  = csx[k0] + (s[8]*b[6][k0] + s[7]*b[5][k0] + s[6]*b[4][k0] + s[5]*b[3][k0] + s[4]*b[2][k0] + s[3]*b[1][k0] + s[2]*b[0][k0] + s[1]*a0[k0] + s[0]*v0[k0] );
+				double xk0  = csx[k0] + (s[8]*b.p6[k0] + s[7]*b.p5[k0] + s[6]*b.p4[k0] + s[5]*b.p3[k0] + s[4]*b.p2[k0] + s[3]*b.p1[k0] + s[2]*b.p0[k0] + s[1]*a0[k0] + s[0]*v0[k0] );
 				particles[i].x = xk0 + x0[k0];
-				double xk1  = csx[k1] + (s[8]*b[6][k1] + s[7]*b[5][k1] + s[6]*b[4][k1] + s[5]*b[3][k1] + s[4]*b[2][k1] + s[3]*b[1][k1] + s[2]*b[0][k1] + s[1]*a0[k1] + s[0]*v0[k1] );
+				double xk1  = csx[k1] + (s[8]*b.p6[k1] + s[7]*b.p5[k1] + s[6]*b.p4[k1] + s[5]*b.p3[k1] + s[4]*b.p2[k1] + s[3]*b.p1[k1] + s[2]*b.p0[k1] + s[1]*a0[k1] + s[0]*v0[k1] );
 				particles[i].y = xk1 + x0[k1];
-				double xk2  = csx[k2] + (s[8]*b[6][k2] + s[7]*b[5][k2] + s[6]*b[4][k2] + s[5]*b[3][k2] + s[4]*b[2][k2] + s[3]*b[1][k2] + s[2]*b[0][k2] + s[1]*a0[k2] + s[0]*v0[k2] );
+				double xk2  = csx[k2] + (s[8]*b.p6[k2] + s[7]*b.p5[k2] + s[6]*b.p4[k2] + s[5]*b.p3[k2] + s[4]*b.p2[k2] + s[3]*b.p1[k2] + s[2]*b.p0[k2] + s[1]*a0[k2] + s[0]*v0[k2] );
 				particles[i].z = xk2 + x0[k2];
 			}
-			if (N_megno || ((problem_additional_forces || problem_additional_forces_with_parameters)&& integrator_force_is_velocitydependent)){
-				s[0] = dt * h[n];
+			if (N_var || (r->additional_forces && r->force_is_velocitydependent)){
+				s[0] = r->dt * h[n];
 				s[1] =      s[0] * h[n] / 2.;
 				s[2] = 2. * s[1] * h[n] / 3.;
 				s[3] = 3. * s[2] * h[n] / 4.;
@@ -249,19 +278,19 @@ int integrator_ias15_step(void) {
 					const int k1 = 3*i+1;
 					const int k2 = 3*i+2;
 
-					double vk0 =  csv[k0] + s[7]*b[6][k0] + s[6]*b[5][k0] + s[5]*b[4][k0] + s[4]*b[3][k0] + s[3]*b[2][k0] + s[2]*b[1][k0] + s[1]*b[0][k0] + s[0]*a0[k0];
+					double vk0 =  csv[k0] + s[7]*b.p6[k0] + s[6]*b.p5[k0] + s[5]*b.p4[k0] + s[4]*b.p3[k0] + s[3]*b.p2[k0] + s[2]*b.p1[k0] + s[1]*b.p0[k0] + s[0]*a0[k0];
 					particles[i].vx = vk0 + v0[k0];
-					double vk1 =  csv[k1] + s[7]*b[6][k1] + s[6]*b[5][k1] + s[5]*b[4][k1] + s[4]*b[3][k1] + s[3]*b[2][k1] + s[2]*b[1][k1] + s[1]*b[0][k1] + s[0]*a0[k1];
+					double vk1 =  csv[k1] + s[7]*b.p6[k1] + s[6]*b.p5[k1] + s[5]*b.p4[k1] + s[4]*b.p3[k1] + s[3]*b.p2[k1] + s[2]*b.p1[k1] + s[1]*b.p0[k1] + s[0]*a0[k1];
 					particles[i].vy = vk1 + v0[k1];
-					double vk2 =  csv[k2] + s[7]*b[6][k2] + s[6]*b[5][k2] + s[5]*b[4][k2] + s[4]*b[3][k2] + s[3]*b[2][k2] + s[2]*b[1][k2] + s[1]*b[0][k2] + s[0]*a0[k2];
+					double vk2 =  csv[k2] + s[7]*b.p6[k2] + s[6]*b.p5[k2] + s[5]*b.p4[k2] + s[4]*b.p3[k2] + s[3]*b.p2[k2] + s[2]*b.p1[k2] + s[1]*b.p0[k2] + s[0]*a0[k2];
 					particles[i].vz = vk2 + v0[k2];
 				}
 			}
 
 
-			integrator_update_acceleration();				// Calculate forces at interval n
-			if (N_megno){
-				integrator_megno_thisdt += w[n] * t * tools_megno_deltad_delta();
+			reb_update_acceleration(r);				// Calculate forces at interval n
+			if (r->calculate_megno){
+				integrator_megno_thisdt += w[n] * r->t * reb_tools_megno_deltad_delta(r);
 			}
 
 			for(int k=0;k<N;++k) {
@@ -272,84 +301,84 @@ int integrator_ias15_step(void) {
 			switch (n) {							// Improve b and g values
 				case 1: 
 					for(int k=0;k<N3;++k) {
-						double tmp = g[0][k];
-						g[0][k]  = (at[k] - a0[k]) / r[0];
-						b[0][k] += g[0][k] - tmp;
+						double tmp = g.p0[k];
+						g.p0[k]  = (at[k] - a0[k]) / rr[0];
+						b.p0[k] += g.p0[k] - tmp;
 					} break;
 				case 2: 
 					for(int k=0;k<N3;++k) {
-						double tmp = g[1][k];
+						double tmp = g.p1[k];
 						const double gk = at[k] - a0[k];
-						g[1][k] = (gk/r[1] - g[0][k])/r[2];
-						tmp = g[1][k] - tmp;
-						b[0][k] += tmp * c[0];
-						b[1][k] += tmp;
+						g.p1[k] = (gk/rr[1] - g.p0[k])/rr[2];
+						tmp = g.p1[k] - tmp;
+						b.p0[k] += tmp * c[0];
+						b.p1[k] += tmp;
 					} break;
 				case 3: 
 					for(int k=0;k<N3;++k) {
-						double tmp = g[2][k];
+						double tmp = g.p2[k];
 						const double gk = at[k] - a0[k];
-						g[2][k] = ((gk/r[3] - g[0][k])/r[4] - g[1][k])/r[5];
-						tmp = g[2][k] - tmp;
-						b[0][k] += tmp * c[1];
-						b[1][k] += tmp * c[2];
-						b[2][k] += tmp;
+						g.p2[k] = ((gk/rr[3] - g.p0[k])/rr[4] - g.p1[k])/rr[5];
+						tmp = g.p2[k] - tmp;
+						b.p0[k] += tmp * c[1];
+						b.p1[k] += tmp * c[2];
+						b.p2[k] += tmp;
 					} break;
 				case 4:
 					for(int k=0;k<N3;++k) {
-						double tmp = g[3][k];
+						double tmp = g.p3[k];
 						const double gk = at[k] - a0[k];
-						g[3][k] = (((gk/r[6] - g[0][k])/r[7] - g[1][k])/r[8] - g[2][k])/r[9];
-						tmp = g[3][k] - tmp;
-						b[0][k] += tmp * c[3];
-						b[1][k] += tmp * c[4];
-						b[2][k] += tmp * c[5];
-						b[3][k] += tmp;
+						g.p3[k] = (((gk/rr[6] - g.p0[k])/rr[7] - g.p1[k])/rr[8] - g.p2[k])/rr[9];
+						tmp = g.p3[k] - tmp;
+						b.p0[k] += tmp * c[3];
+						b.p1[k] += tmp * c[4];
+						b.p2[k] += tmp * c[5];
+						b.p3[k] += tmp;
 					} break;
 				case 5:
 					for(int k=0;k<N3;++k) {
-						double tmp = g[4][k];
+						double tmp = g.p4[k];
 						const double gk = at[k] - a0[k];
-						g[4][k] = ((((gk/r[10] - g[0][k])/r[11] - g[1][k])/r[12] - g[2][k])/r[13] - g[3][k])/r[14];
-						tmp = g[4][k] - tmp;
-						b[0][k] += tmp * c[6];
-						b[1][k] += tmp * c[7];
-						b[2][k] += tmp * c[8];
-						b[3][k] += tmp * c[9];
-						b[4][k] += tmp;
+						g.p4[k] = ((((gk/rr[10] - g.p0[k])/rr[11] - g.p1[k])/rr[12] - g.p2[k])/rr[13] - g.p3[k])/rr[14];
+						tmp = g.p4[k] - tmp;
+						b.p0[k] += tmp * c[6];
+						b.p1[k] += tmp * c[7];
+						b.p2[k] += tmp * c[8];
+						b.p3[k] += tmp * c[9];
+						b.p4[k] += tmp;
 					} break;
 				case 6:
 					for(int k=0;k<N3;++k) {
-						double tmp = g[5][k];
+						double tmp = g.p5[k];
 						const double gk = at[k] - a0[k];
-						g[5][k] = (((((gk/r[15] - g[0][k])/r[16] - g[1][k])/r[17] - g[2][k])/r[18] - g[3][k])/r[19] - g[4][k])/r[20];
-						tmp = g[5][k] - tmp;
-						b[0][k] += tmp * c[10];
-						b[1][k] += tmp * c[11];
-						b[2][k] += tmp * c[12];
-						b[3][k] += tmp * c[13];
-						b[4][k] += tmp * c[14];
-						b[5][k] += tmp;
+						g.p5[k] = (((((gk/rr[15] - g.p0[k])/rr[16] - g.p1[k])/rr[17] - g.p2[k])/rr[18] - g.p3[k])/rr[19] - g.p4[k])/rr[20];
+						tmp = g.p5[k] - tmp;
+						b.p0[k] += tmp * c[10];
+						b.p1[k] += tmp * c[11];
+						b.p2[k] += tmp * c[12];
+						b.p3[k] += tmp * c[13];
+						b.p4[k] += tmp * c[14];
+						b.p5[k] += tmp;
 					} break;
 				case 7:
 				{
 					double maxak = 0.0;
 					double maxb6ktmp = 0.0;
 					for(int k=0;k<N3;++k) {
-						double tmp = g[6][k];
+						double tmp = g.p6[k];
 						const double gk = at[k] - a0[k];
-						g[6][k] = ((((((gk/r[21] - g[0][k])/r[22] - g[1][k])/r[23] - g[2][k])/r[24] - g[3][k])/r[25] - g[4][k])/r[26] - g[5][k])/r[27];
-						tmp = g[6][k] - tmp;	
-						b[0][k] += tmp * c[15];
-						b[1][k] += tmp * c[16];
-						b[2][k] += tmp * c[17];
-						b[3][k] += tmp * c[18];
-						b[4][k] += tmp * c[19];
-						b[5][k] += tmp * c[20];
-						b[6][k] += tmp;
+						g.p6[k] = ((((((gk/rr[21] - g.p0[k])/rr[22] - g.p1[k])/rr[23] - g.p2[k])/rr[24] - g.p3[k])/rr[25] - g.p4[k])/rr[26] - g.p5[k])/rr[27];
+						tmp = g.p6[k] - tmp;	
+						b.p0[k] += tmp * c[15];
+						b.p1[k] += tmp * c[16];
+						b.p2[k] += tmp * c[17];
+						b.p3[k] += tmp * c[18];
+						b.p4[k] += tmp * c[19];
+						b.p5[k] += tmp * c[20];
+						b.p6[k] += tmp;
 						
-						// Monitor change in b[6][k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
-						if (integrator_ias15_epsilon_global){
+						// Monitor change in b.p6[k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
+						if (r->ri_ias15.epsilon_global){
 							const double ak  = fabs(at[k]);
 							if (isnormal(ak) && ak>maxak){
 								maxak = ak;
@@ -367,7 +396,7 @@ int integrator_ias15_step(void) {
 							}
 						}
 					} 
-					if (integrator_ias15_epsilon_global){
+					if (r->ri_ias15.epsilon_global){
 						predictor_corrector_error = maxb6ktmp/maxak;
 					}
 					
@@ -377,34 +406,34 @@ int integrator_ias15_step(void) {
 		}
 	}
 	// Set time back to initial value (will be updated below) 
-	t = t_beginning;
+	r->t = t_beginning;
 	// Find new timestep
-	const double dt_done = dt;
+	const double dt_done = r->dt;
 	
-	if (integrator_ias15_epsilon>0){
+	if (r->ri_ias15.epsilon>0){
 		// Estimate error (given by last term in series expansion) 
 		// There are two options:
-		// integrator_ias15_epsilon_global==1  (default)
+		// r->ri_ias15.epsilon_global==1  (default)
 		//   First, we determine the maximum acceleration and the maximum of the last term in the series. 
 		//   Then, the two are divided.
-		// integrator_ias15_epsilon_global==0
+		// r->ri_ias15.epsilon_global==0
 		//   Here, the fractional error is calculated for each particle individually and we use the maximum of the fractional error.
 		//   This might fail in cases where a particle does not experience any (physical) acceleration besides roundoff errors. 
 		double integrator_error = 0.0;
-		if (integrator_ias15_epsilon_global){
+		if (r->ri_ias15.epsilon_global){
 			double maxak = 0.0;
 			double maxb6k = 0.0;
 			for(int i=0;i<N;i++){ // Looping over all particles and all 3 components of the acceleration. 
 				const double v2 = particles[i].vx*particles[i].vx+particles[i].vy*particles[i].vy+particles[i].vz*particles[i].vz;
 				const double x2 = particles[i].x*particles[i].x+particles[i].y*particles[i].y+particles[i].z*particles[i].z;
 				// Skip slowly varying accelerations
-				if (fabs(v2*dt*dt/x2) < 1e-16) continue;
+				if (fabs(v2*r->dt*r->dt/x2) < 1e-16) continue;
 				for(int k=3*i;k<3*(i+1);k++) { 
 					const double ak  = fabs(at[k]);
 					if (isnormal(ak) && ak>maxak){
 						maxak = ak;
 					}
-					const double b6k = fabs(b[6][k]); 
+					const double b6k = fabs(b.p6[k]); 
 					if (isnormal(b6k) && b6k>maxb6k){
 						maxb6k = b6k;
 					}
@@ -414,7 +443,7 @@ int integrator_ias15_step(void) {
 		}else{
 			for(int k=0;k<N3;k++) {
 				const double ak  = at[k];
-				const double b6k = b[6][k]; 
+				const double b6k = b.p6[k]; 
 				const double errork = fabs(b6k/ak);
 				if (isnormal(errork) && errork>integrator_error){
 					integrator_error = errork;
@@ -425,12 +454,12 @@ int integrator_ias15_step(void) {
 		double dt_new;
 		if  (isnormal(integrator_error)){ 	
 			// if error estimate is available increase by more educated guess
-		 	dt_new = pow(integrator_ias15_epsilon/integrator_error,1./7.)*dt_done;
+		 	dt_new = pow(r->ri_ias15.epsilon/integrator_error,1./7.)*dt_done;
 		}else{					// In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
 		 	dt_new = dt_done/safety_factor; // by default, increase timestep a little
 		}
 		
-		if (fabs(dt_new)<integrator_ias15_min_dt) dt_new = copysign(integrator_ias15_min_dt,dt_new);
+		if (fabs(dt_new)<r->ri_ias15.min_dt) dt_new = copysign(r->ri_ias15.min_dt,dt_new);
 		
 		if (fabs(dt_new/dt_done) < safety_factor) {	// New timestep is significantly smaller.
 			// Reset particles
@@ -443,10 +472,10 @@ int integrator_ias15_step(void) {
 				particles[k].vy = v0[3*k+1];
 				particles[k].vz = v0[3*k+2];
 			}
-			dt = dt_new;
-			if (dt_last_success!=0.){		// Do not predict next e/b values if this is the first time step.
-				double ratio = dt/dt_last_success;
-				predict_next_step(ratio, N3, er, br);
+			r->dt = dt_new;
+			if (r->ri_ias15.dt_last_success!=0.){		// Do not predict next e/b values if this is the first time step.
+				double ratio = r->dt/r->ri_ias15.dt_last_success;
+				predict_next_step(ratio, N3, er, br, e, b);
 			}
 			
 			return 0; // Step rejected. Do again. 
@@ -454,7 +483,7 @@ int integrator_ias15_step(void) {
 		if (fabs(dt_new/dt_done) > 1.0) {	// New timestep is larger.
 			if (dt_new/dt_done > 1./safety_factor) dt_new = dt_done /safety_factor;	// Don't increase the timestep by too much compared to the last one.
 		}
-		dt = dt_new;
+		r->dt = dt_new;
 	}
 
 	// Find new position and velocity values at end of the sequence
@@ -462,25 +491,25 @@ int integrator_ias15_step(void) {
 	for(int k=0;k<N3;++k) {
 		{
 			double a = x0[k];
-			csx[k]  +=  (b[6][k]/72. + b[5][k]/56. + b[4][k]/42. + b[3][k]/30. + b[2][k]/20. + b[1][k]/12. + b[0][k]/6. + a0[k]/2.) 
+			csx[k]  +=  (b.p6[k]/72. + b.p5[k]/56. + b.p4[k]/42. + b.p3[k]/30. + b.p2[k]/20. + b.p1[k]/12. + b.p0[k]/6. + a0[k]/2.) 
 					* dt_done2 + v0[k] * dt_done;
 			x0[k]    = a + csx[k];
 			csx[k]  += a - x0[k]; 
 		}
 		{
 			double a = v0[k]; 
-			csv[k]  += (b[6][k]/8. + b[5][k]/7. + b[4][k]/6. + b[3][k]/5. + b[2][k]/4. + b[1][k]/3. + b[0][k]/2. + a0[k])
+			csv[k]  += (b.p6[k]/8. + b.p5[k]/7. + b.p4[k]/6. + b.p3[k]/5. + b.p2[k]/4. + b.p1[k]/3. + b.p0[k]/2. + a0[k])
 					* dt_done;
 			v0[k]    = a + csv[k];
 			csv[k]  += a - v0[k];
 		}
 	}
 
-	t += dt_done;
+	r->t += dt_done;
 
-	if (N_megno){
+	if (r->calculate_megno){
 		double dY = dt_done*integrator_megno_thisdt;
-		tools_megno_update(dY);
+		reb_tools_megno_update(r, dY);
 	}
 
 	// Swap particle buffers
@@ -493,15 +522,15 @@ int integrator_ias15_step(void) {
 		particles[k].vy = v0[3*k+1];
 		particles[k].vz = v0[3*k+2];
 	}
-	dt_last_success = dt_done;
+	r->ri_ias15.dt_last_success = dt_done;
 	copybuffers(e,er,N3);		
 	copybuffers(b,br,N3);		
-	double ratio = dt/dt_done;
-	predict_next_step(ratio, N3, e, b);
+	double ratio = r->dt/dt_done;
+	predict_next_step(ratio, N3, e, b, e, b);
 	return 1; // Success.
 }
 
-void predict_next_step(double ratio, int N3, double* _e[7], double* _b[7]){
+static void predict_next_step(double ratio, int N3,  const struct reb_dpconst7 _e, const struct reb_dpconst7 _b, const struct reb_dpconst7 e, const struct reb_dpconst7 b){
 	// Predict new B values to use at the start of the next sequence. The predicted
 	// values from the last call are saved as E. The correction, BD, between the
 	// actual and predicted values of B is applied in advance as a correction.
@@ -515,79 +544,85 @@ void predict_next_step(double ratio, int N3, double* _e[7], double* _b[7]){
 	const double q7 = q3 * q4;
 
 	for(int k=0;k<N3;++k) {
-		double be0 = _b[0][k] - _e[0][k];
-		double be1 = _b[1][k] - _e[1][k];
-		double be2 = _b[2][k] - _e[2][k];
-		double be3 = _b[3][k] - _e[3][k];
-		double be4 = _b[4][k] - _e[4][k];
-		double be5 = _b[5][k] - _e[5][k];
-		double be6 = _b[6][k] - _e[6][k];
+		double be0 = _b.p0[k] - _e.p0[k];
+		double be1 = _b.p1[k] - _e.p1[k];
+		double be2 = _b.p2[k] - _e.p2[k];
+		double be3 = _b.p3[k] - _e.p3[k];
+		double be4 = _b.p4[k] - _e.p4[k];
+		double be5 = _b.p5[k] - _e.p5[k];
+		double be6 = _b.p6[k] - _e.p6[k];
 
 
-		e[0][k] = q1*(_b[6][k]* 7.0 + _b[5][k]* 6.0 + _b[4][k]* 5.0 + _b[3][k]* 4.0 + _b[2][k]* 3.0 + _b[1][k]*2.0 + _b[0][k]);
-		e[1][k] = q2*(_b[6][k]*21.0 + _b[5][k]*15.0 + _b[4][k]*10.0 + _b[3][k]* 6.0 + _b[2][k]* 3.0 + _b[1][k]);
-		e[2][k] = q3*(_b[6][k]*35.0 + _b[5][k]*20.0 + _b[4][k]*10.0 + _b[3][k]* 4.0 + _b[2][k]);
-		e[3][k] = q4*(_b[6][k]*35.0 + _b[5][k]*15.0 + _b[4][k]* 5.0 + _b[3][k]);
-		e[4][k] = q5*(_b[6][k]*21.0 + _b[5][k]* 6.0 + _b[4][k]);
-		e[5][k] = q6*(_b[6][k]* 7.0 + _b[5][k]);
-		e[6][k] = q7* _b[6][k];
+		e.p0[k] = q1*(_b.p6[k]* 7.0 + _b.p5[k]* 6.0 + _b.p4[k]* 5.0 + _b.p3[k]* 4.0 + _b.p2[k]* 3.0 + _b.p1[k]*2.0 + _b.p0[k]);
+		e.p1[k] = q2*(_b.p6[k]*21.0 + _b.p5[k]*15.0 + _b.p4[k]*10.0 + _b.p3[k]* 6.0 + _b.p2[k]* 3.0 + _b.p1[k]);
+		e.p2[k] = q3*(_b.p6[k]*35.0 + _b.p5[k]*20.0 + _b.p4[k]*10.0 + _b.p3[k]* 4.0 + _b.p2[k]);
+		e.p3[k] = q4*(_b.p6[k]*35.0 + _b.p5[k]*15.0 + _b.p4[k]* 5.0 + _b.p3[k]);
+		e.p4[k] = q5*(_b.p6[k]*21.0 + _b.p5[k]* 6.0 + _b.p4[k]);
+		e.p5[k] = q6*(_b.p6[k]* 7.0 + _b.p5[k]);
+		e.p6[k] = q7* _b.p6[k];
 		
 
-		b[0][k] = e[0][k] + be0;
-		b[1][k] = e[1][k] + be1;
-		b[2][k] = e[2][k] + be2;
-		b[3][k] = e[3][k] + be3;
-		b[4][k] = e[4][k] + be4;
-		b[5][k] = e[5][k] + be5;
-		b[6][k] = e[6][k] + be6;
+		b.p0[k] = e.p0[k] + be0;
+		b.p1[k] = e.p1[k] + be1;
+		b.p2[k] = e.p2[k] + be2;
+		b.p3[k] = e.p3[k] + be3;
+		b.p4[k] = e.p4[k] + be4;
+		b.p5[k] = e.p5[k] + be5;
+		b.p6[k] = e.p6[k] + be6;
 	}
 }
 
-void copybuffers(double* _a[7], double* _b[7], int N3){
+static void copybuffers(const struct reb_dpconst7 _a, const struct reb_dpconst7 _b, int N3){
 	for (int i=0;i<N3;i++){	
-		_b[0][i] = _a[0][i];
-		_b[1][i] = _a[1][i];
-		_b[2][i] = _a[2][i];
-		_b[3][i] = _a[3][i];
-		_b[4][i] = _a[4][i];
-		_b[5][i] = _a[5][i];
-		_b[6][i] = _a[6][i];
+		_b.p0[i] = _a.p0[i];
+		_b.p1[i] = _a.p1[i];
+		_b.p2[i] = _a.p2[i];
+		_b.p3[i] = _a.p3[i];
+		_b.p4[i] = _a.p4[i];
+		_b.p5[i] = _a.p5[i];
+		_b.p6[i] = _a.p6[i];
 	}
 // The above code seems faster than the code below, probably due to some compiler optimizations. 
 //	for (int i=0;i<7;i++){	
 //		memcpy(_b[i],_a[i], sizeof(double)*N3);
 //	}
 }
-void integrator_ias15_synchronize(void){
+
+// Do nothing here. This is only used in a leapfrog-like DKD integrator. IAS15 performs one complete timestep.
+void reb_integrator_ias15_part1(struct reb_simulation* r){
 }
 
-void integrator_ias15_reset(void){
-	N3allocated 	= 0;
-	dt_last_success = 0;
-	for (int l=0;l<7;++l) {
-		free(g[l]);
-		g[l] = NULL;
-		free(b[l]);
-		b[l] = NULL;
-		free(e[l]);
-		e[l] = NULL;
-		free(br[l]);
-		br[l] = NULL;
-		free(er[l]);
-		er[l] = NULL;
-	}
-	free(at);
-	at =  NULL;
-	free(x0);
-	x0 =  NULL;
-	free(v0);
-	v0 =  NULL;
-	free(a0);
-	a0 =  NULL;
-	free(csx);
-	csx=  NULL;
-	free(csv);
-	csv=  NULL;
+void reb_integrator_ias15_part2(struct reb_simulation* r){
+#ifdef GENERATE_CONSTANTS
+	integrator_generate_constants();
+#endif  // GENERATE_CONSTANTS
+	// Try until a step was successful.
+	while(!reb_integrator_ias15_step(r));
+}
+
+void reb_integrator_ias15_synchronize(struct reb_simulation* r){
+}
+
+void reb_integrator_ias15_reset(struct reb_simulation* r){
+	r->ri_ias15.allocatedN 	= 0;
+	r->ri_ias15.dt_last_success = 0;
+	free_dp7(&(r->ri_ias15.g));
+	free_dp7(&(r->ri_ias15.e));
+	free_dp7(&(r->ri_ias15.b));
+	free_dp7(&(r->ri_ias15.er));
+	free_dp7(&(r->ri_ias15.br));
+	free(r->ri_ias15.at);
+	r->ri_ias15.at =  NULL;
+	free(r->ri_ias15.x0);
+	r->ri_ias15.x0 =  NULL;
+	free(r->ri_ias15.v0);
+	r->ri_ias15.v0 =  NULL;
+	free(r->ri_ias15.a0);
+	r->ri_ias15.a0 =  NULL;
+	free(r->ri_ias15.csx);
+	r->ri_ias15.csx=  NULL;
+	free(r->ri_ias15.csv);
+	r->ri_ias15.csv=  NULL;
 }
 
 #ifdef GENERATE_CONSTANTS
@@ -620,7 +655,7 @@ void integrator_generate_constants(void){
 	int l=0;
 	for (int j=1;j<8;++j) {
 		for(int k=0;k<j;++k) {
-			// r[l] = h[j] - h[k];
+			// rr[l] = h[j] - h[k];
 			mpf_sub(_r[l],_h[j],_h[k]);
 			++l;
 		}
@@ -654,7 +689,7 @@ void integrator_generate_constants(void){
 	}
 
 	// Output	
-	printf("double r[28] = {");
+	printf("double rr[28] = {");
 	for (int i=0;i<28;i++){
 	     gmp_printf ("%.*Ff", 25, _r[i]);
 	     if (i!=27) printf(", ");

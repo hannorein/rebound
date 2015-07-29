@@ -14,22 +14,22 @@ import multiprocessing
 # Runs one simulation.
 def simulation(par):
     saturn_a, saturn_e = par
-    rebound.reset()
-    rebound.integrator = "whfast"
-    rebound.min_dt = 5.
-    rebound.dt = 1.
+    sim = rebound.Simulation() 
+    sim.integrator = "whfast"
+    sim.min_dt = 5.
+    sim.dt = 1.
     
     # These parameters are only approximately those of Jupiter and Saturn.
     sun     = rebound.Particle(m=1.)
-    rebound.add(sun)
-    jupiter = rebound.add(primary=sun,m=0.000954, a=5.204, anom=0.600, omega=0.257, e=0.048)
-    saturn  = rebound.add(primary=sun,m=0.000285, a=saturn_a, anom=0.871, omega=1.616, e=saturn_e)
+    sim.add(sun)
+    jupiter = sim.add(primary=sun,m=0.000954, a=5.204, anom=0.600, omega=0.257, e=0.048)
+    saturn  = sim.add(primary=sun,m=0.000285, a=saturn_a, anom=0.871, omega=1.616, e=saturn_e)
 
-    rebound.move_to_com()
-    rebound.init_megno(1e-16)
-    rebound.integrate(1e3*2.*np.pi)
+    sim.move_to_com()
+    sim.init_megno(1e-16)
+    sim.integrate(1e3*2.*np.pi)
 
-    return [rebound.calculate_megno(),1./(rebound.calculate_lyapunov()*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
+    return [sim.calculate_megno(),1./(sim.calculate_lyapunov()*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
 
 
 ### Setup grid and run many simulations in parallel
@@ -41,7 +41,7 @@ for _e in e:
     for _a in a:
         parameters.append([_a,_e])
 
-
+simulation((8,0.))
 # Run simulations in parallel
 pool = rebound.InterruptiblePool()    # Number of threads default to the number of CPUs on the system
 print("Running %d simulations on %d threads..." % (len(parameters), pool._processes))

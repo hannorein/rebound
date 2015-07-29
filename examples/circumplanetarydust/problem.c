@@ -1,108 +1,79 @@
 /**
- * @file 	problem.c
- * @brief 	Example problem: Radiation forces
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This example shows how to integrate circumplanetary
- * dust particles using the `integrator_ias15.c` module.
- * The example sets the function pointer `problem_additional_forces`
- * to its own function that describes the radiation forces.
+ * Radiation forces on circumplanetary dust
+ * 
+ * This example shows how to integrate circumplanetary
+ * dust particles using the IAS15 integrator.
+ * The example sets the function pointer `additional_forces`
+ * to a function that describes the radiation forces.
  * The example uses a beta parameter of 0.01. 
  * The output is custom too, outputting the semi-major axis of 
  * every dust particle relative to the planet. 
- * Only one dust particle is used in this example, but there could be
- * many.
- *
- * @section 	LICENSE
- * Copyright (c) 2013 Hanno Rein, Dave Spiegel
- *
- * This file is part of rebound.
- *
- * rebound is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * rebound is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include <time.h>
-#include "main.h"
-#include "tools.h"
-#include "output.h"
-#include "particle.h"
-#include "integrator.h"
-#include "problem.h"
+#include "rebound.h"
 
-void force_radiation();
-double betaparticles = 0.01; 	// Beta parameter. 
-				// Defined as the ratio of radiation pressure over gravity.
+void force_radiation(struct reb_simulation* r);
+void heartbeat(struct reb_simulation* r);
 
-void problem_init(int argc, char* argv[]){
+double betaparticles = 0.01; 	// Beta parameter, defined as the ratio of radiation pressure over gravity.
+double tmax = 1e6;
+
+int main(int argc, char* argv[]){
+	struct reb_simulation* r = reb_create_simulation();
 	// Setup constants
-	integrator		= IAS15;
-	dt 			= 1e-4;	// Initial timestep.
-	boxsize 		= 10;	
-	tmax			= 1e6;
-	N_active		= 2; 	// Only the star and the planet are massive.
-	problem_additional_forces 	= force_radiation;
-	init_box();
-	
+	r->integrator		= REB_INTEGRATOR_IAS15;
+	r->dt 			= 1e-4;	// Initial timestep.
+	r->N_active		= 2; 	// Only the star and the planet are massive.
+	r->additional_forces 	= force_radiation;
+	r->heartbeat	 	= heartbeat;
+	r->usleep		= 5000;			// Slow down integration (for visualization only)
 	
 	// Star
-	struct particle star;
-	star.x  = 0; star.y  = 0; star.z  = 0;
-	star.vx = 0; star.vy = 0; star.vz = 0;
-	star.ax = 0; star.ay = 0; star.az = 0;
+	struct reb_particle star = {0};
 	star.m  = 1.;
-	particles_add(star);
+	reb_add(r, star);
 
 
-	// Planet 
-	struct particle planet;
+	// planet 
+	struct reb_particle planet = {0};
 	planet.m  = 1e-3;
-	planet.x  = 1; planet.y  = 0.; planet.z  = 0.;
-	planet.ax = 0; planet.ay = 0; planet.az = 0;
-	planet.vx = 0;
-	planet.vy = sqrt(G*(star.m+planet.m)/planet.x);
-	planet.vz = 0;
-	particles_add(planet);
+	planet.x  = 1; 
+	planet.vy = sqrt(r->G*(star.m+planet.m)/planet.x);
+	reb_add(r, planet);
 	
 	
 
 	// Dust particles
-	while(N<3){ 	// Three particles in total (star, planet, dust particle) 
-		struct particle p; 
+	while(r->N<3){ 	// Three particles in total (star, planet, dust particle) 
+		struct reb_particle p = {0}; 
 		p.m  = 0;		// massless
-		double r = 0.001;	// distance from planet planet
-		double v = sqrt(G*planet.m/r);
-		p.x  = r; p.y  = 0; p.z  = 0; 
-		p.vx = 0; p.vy = v; p.vz = 0;
+		double _r = 0.001;	// distance from planet planet
+		double v = sqrt(r->G*planet.m/_r);
+		p.x  = _r;
+		p.vy = v;
 		p.x += planet.x; 	p.y += planet.y; 	p.z += planet.z;
 		p.vx += planet.vx; 	p.vy += planet.vy; 	p.vz += planet.vz;
-		p.ax = 0; p.ay = 0; p.az = 0;
-		particles_add(p); 
+		reb_add(r, p); 
 	}
 	
-	tools_move_to_center_of_momentum();
+	reb_move_to_com(r);
 
 	system("rm -v a.txt");	
+
+	reb_integrate(r, tmax);
 }
 
-void force_radiation(){
-	const struct particle star = particles[0];				// cache
+void force_radiation(struct reb_simulation* r){
+	struct reb_particle* particles = r->particles;
+	const struct reb_particle star = particles[0];			// cache
+	const int N = r->N;
+	const double G = r->G;
 #pragma omp parallel for
 	for (int i=0;i<N;i++){
-		const struct particle p = particles[i]; 			// cache
+		const struct reb_particle p = particles[i]; 			// cache
 		if (p.m!=0.) continue; 						// Only dust particles feel radiation forces
 		const double prx  = p.x-star.x;
 		const double pry  = p.y-star.y;
@@ -123,15 +94,19 @@ void force_radiation(){
 	}
 }
 
-void problem_output(){
-	if(output_check(M_PI*2.)){
-		output_timing();
+void heartbeat(struct reb_simulation* r){
+	if(reb_output_check(r, M_PI*2.)){
+		reb_output_timing(r, tmax);
 	}
-	if(output_check(M_PI*2.*100.)){ // output every 100 years
+	if(reb_output_check(r, M_PI*2.)){ // output every year
 		FILE* f = fopen("a.txt","a");
-		const struct particle planet = particles[1];
+		const struct reb_particle* particles = r->particles;
+		const struct reb_particle planet = particles[1];
+		const double G = r->G;
+		const double t = r->t;
+		const int N = r->N;
 		for (int i=2;i<N;i++){
-			const struct particle p = particles[i]; 
+			const struct reb_particle p = particles[i]; 
 			const double prx  = p.x-planet.x;
 			const double pry  = p.y-planet.y;
 			const double prz  = p.z-planet.z;
@@ -148,7 +123,4 @@ void problem_output(){
 		}
 		fclose(f);
 	}
-}
-
-void problem_finish(){
 }

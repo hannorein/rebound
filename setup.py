@@ -6,7 +6,7 @@ from codecs import open
 import os
 
 libreboundmodule = Extension('librebound',
-                    sources = [ 'src/librebound.c',
+                    sources = [ 'src/rebound.c',
                                 'src/integrator_ias15.c',
                                 'src/integrator_whfast.c',
                                 'src/integrator_wh.c',
@@ -14,15 +14,18 @@ libreboundmodule = Extension('librebound',
                                 'src/integrator_sei.c',
                                 'src/integrator_hybrid.c',
                                 'src/integrator.c',
-                                'src/gravity_direct.c',
+                                'src/gravity.c',
+                                'src/boundary.c',
+                                'src/collision.c',
                                 'src/tools.c',
+                                'src/tree.c',
                                 'src/particle.c',
                                 'src/output.c',
                                 'src/input.c',
                                 ],
                     include_dirs = ['src'],
-                    define_macros=[ ('LIBREBOUND', None), ('COLLISIONS_NONE', None), ('PARTICLEIDS', None)],
-                    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-march=native','-Wno-unknown-pragmas'],
+                    define_macros=[ ('LIBREBOUND', None) ],
+                    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-march=native','-Wno-unknown-pragmas', '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC'],
                                     )
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -30,7 +33,7 @@ with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='1.2.0',
+    version='2.2.1',
     description='An open-source multi-purpose N-body code',
     long_description=long_description,
     url='http://github.com/hannorein/rebound',

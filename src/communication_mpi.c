@@ -41,7 +41,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include "particle.h"
-#include "main.h"
+#include "rebound.h"
 #include "tree.h"
 #include "boundaries.h"
 #include "collisions.h"
@@ -56,18 +56,18 @@ MPI_Status stat;
 int mpi_num;
 int mpi_id;
 
-struct particle** 	particles_send;
+struct reb_particle** 	particles_send;
 int* 			particles_send_N;
 int* 			particles_send_Nmax;
-struct particle** 	particles_recv;
+struct reb_particle** 	particles_recv;
 int* 			particles_recv_N;
 int* 			particles_recv_Nmax;
 
 #ifdef TREE
-struct cell** 	tree_essential_send;
+struct reb_treecell** 	tree_essential_send;
 int* 		tree_essential_send_N;
 int* 		tree_essential_send_Nmax;
-struct cell** 	tree_essential_recv;
+struct reb_treecell** 	tree_essential_recv;
 int* 		tree_essential_recv_N;
 int* 		tree_essential_recv_Nmax;
 #endif
@@ -92,14 +92,14 @@ void communication_mpi_init(int argc, char** argv){
 	oldtypes[bnum] 	= MPI_DOUBLE;
 	bnum++;
 #ifdef TREE
-	struct particle p;
+	struct reb_particle p;
 	blen[bnum] 	= 1; 
 	indices[bnum] 	= (char*)&p.c - (char*)&p; 
 	oldtypes[bnum] 	= MPI_CHAR;
 	bnum++;
 #endif // TREE
 	blen[bnum] 	= 1; 
-	indices[bnum] 	= sizeof(struct particle); 
+	indices[bnum] 	= sizeof(struct reb_particle); 
 	oldtypes[bnum] 	= MPI_UB;
 	bnum++;
 	MPI_Type_struct(bnum, blen, indices, oldtypes, &mpi_particle );
@@ -107,7 +107,7 @@ void communication_mpi_init(int argc, char** argv){
 
 #ifdef TREE
 	// Setup MPI description of the cell structure 
-	struct cell c;
+	struct reb_treecell c;
 	bnum = 0;
 	blen[bnum] 	= 4; 
 #ifdef GRAVITY_TREE
@@ -128,7 +128,7 @@ void communication_mpi_init(int argc, char** argv){
 	oldtypes[bnum] 	= MPI_INT;
 	bnum++;
 	blen[bnum] 	= 1; 
-	indices[bnum] 	= sizeof(struct cell); 
+	indices[bnum] 	= sizeof(struct reb_treecell); 
 	oldtypes[bnum] 	= MPI_UB;
 	bnum++;
 	MPI_Type_struct(bnum, blen, indices, oldtypes, &mpi_cell );
@@ -136,19 +136,19 @@ void communication_mpi_init(int argc, char** argv){
 #endif // TREE 
 	
 	// Prepare send/recv buffers for particles
-	particles_send   	= calloc(mpi_num,sizeof(struct particle*));
+	particles_send   	= calloc(mpi_num,sizeof(struct reb_particle*));
 	particles_send_N 	= calloc(mpi_num,sizeof(int));
 	particles_send_Nmax 	= calloc(mpi_num,sizeof(int));
-	particles_recv   	= calloc(mpi_num,sizeof(struct particle*));
+	particles_recv   	= calloc(mpi_num,sizeof(struct reb_particle*));
 	particles_recv_N 	= calloc(mpi_num,sizeof(int));
 	particles_recv_Nmax 	= calloc(mpi_num,sizeof(int));
 
 #ifdef TREE
 	// Prepare send/recv buffers for essential tree
-	tree_essential_send   	= calloc(mpi_num,sizeof(struct cell*));
+	tree_essential_send   	= calloc(mpi_num,sizeof(struct reb_treecell*));
 	tree_essential_send_N 	= calloc(mpi_num,sizeof(int));
 	tree_essential_send_Nmax= calloc(mpi_num,sizeof(int));
-	tree_essential_recv   	= calloc(mpi_num,sizeof(struct cell*));
+	tree_essential_recv   	= calloc(mpi_num,sizeof(struct reb_treecell*));
 	tree_essential_recv_N 	= calloc(mpi_num,sizeof(int));
 	tree_essential_recv_Nmax= calloc(mpi_num,sizeof(int));
 #endif
@@ -175,7 +175,7 @@ void communication_mpi_distribute_particles(void){
 		if  (i==mpi_id) continue;
 		while (particles_recv_Nmax[i]<particles_recv_N[i]){
 			particles_recv_Nmax[i] += 32;
-			particles_recv[i] = realloc(particles_recv[i],sizeof(struct particle)*particles_recv_Nmax[i]);
+			particles_recv[i] = realloc(particles_recv[i],sizeof(struct reb_particle)*particles_recv_Nmax[i]);
 		}
 	}
 
@@ -203,7 +203,7 @@ void communication_mpi_distribute_particles(void){
 	// Add particles to local tree
 	for (int i=0;i<mpi_num;i++){
 		for (int j=0;j<particles_recv_N[i];j++){
-			particles_add(particles_recv[i][j]);
+			reb_add(particles_recv[i][j]);
 		}
 	}
 	// Bring everybody into sync, clean up. 
@@ -214,11 +214,11 @@ void communication_mpi_distribute_particles(void){
 	}
 }
 
-void communication_mpi_add_particle_to_send_queue(struct particle pt, int proc_id){
+void communication_mpi_add_particle_to_send_queue(struct reb_particle pt, int proc_id){
 	int send_N = particles_send_N[proc_id];
 	while (particles_send_Nmax[proc_id] <= send_N){
 		particles_send_Nmax[proc_id] += 128;
-		particles_send[proc_id] = realloc(particles_send[proc_id],sizeof(struct particle)*particles_send_Nmax[proc_id]);
+		particles_send[proc_id] = realloc(particles_send[proc_id],sizeof(struct reb_particle)*particles_send_Nmax[proc_id]);
 	}
 	particles_send[proc_id][send_N] = pt;
 	particles_send_N[proc_id]++;
@@ -243,12 +243,12 @@ struct aabb communication_boundingbox_for_root(int index){
 	int j = ((index-i)/root_nx)%root_ny;
 	int k = ((index-i)/root_nx-j)/root_ny;
 	struct aabb boundingbox;
-	boundingbox.xmin = -boxsize_x/2.+boxsize*(double)i;
-	boundingbox.ymin = -boxsize_y/2.+boxsize*(double)j;
-	boundingbox.zmin = -boxsize_z/2.+boxsize*(double)k;
-	boundingbox.xmax = -boxsize_x/2.+boxsize*(double)(i+1);
-	boundingbox.ymax = -boxsize_y/2.+boxsize*(double)(j+1);
-	boundingbox.zmax = -boxsize_z/2.+boxsize*(double)(k+1);
+	boundingbox.xmin = -boxsize.x/2.+boxsize*(double)i;
+	boundingbox.ymin = -boxsize.y/2.+boxsize*(double)j;
+	boundingbox.zmin = -boxsize.z/2.+boxsize*(double)k;
+	boundingbox.xmax = -boxsize.x/2.+boxsize*(double)(i+1);
+	boundingbox.ymax = -boxsize.y/2.+boxsize*(double)(j+1);
+	boundingbox.zmax = -boxsize.z/2.+boxsize*(double)(k+1);
 	return boundingbox;
 }
 
@@ -269,7 +269,7 @@ struct aabb communication_boundingbox_for_proc(int proc_id){
 	return boundingbox;
 }
 
-double communication_distance2_of_aabb_to_cell(struct aabb bb, struct cell* node){
+double communication_distance2_of_aabb_to_cell(struct aabb bb, struct reb_treecell* node){
 	double distancex = fabs(node->x - (bb.xmin+bb.xmax)/2.)  -  (node->w + bb.xmax-bb.xmin)/2.;
 	double distancey = fabs(node->y - (bb.ymin+bb.ymax)/2.)  -  (node->w + bb.ymax-bb.ymin)/2.;
 	double distancez = fabs(node->z - (bb.zmin+bb.zmax)/2.)  -  (node->w + bb.zmax-bb.zmin)/2.;
@@ -279,7 +279,7 @@ double communication_distance2_of_aabb_to_cell(struct aabb bb, struct cell* node
 	return distancex*distancex + distancey*distancey + distancez*distancez;
 }
 
-double communication_distance2_of_proc_to_node(int proc_id, struct cell* node){
+double communication_distance2_of_proc_to_node(int proc_id, struct reb_treecell* node){
 	int nghostxcol = (nghostx>0?1:0);
 	int nghostycol = (nghosty>0?1:0);
 	int nghostzcol = (nghostz>0?1:0);
@@ -305,11 +305,11 @@ double communication_distance2_of_proc_to_node(int proc_id, struct cell* node){
 	return distance2;
 }
 
-void communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct cell* node, int proc){
+void communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct reb_treecell* node, int proc){
 	// Add essential cell to tree_essential_send
 	if (tree_essential_send_N[proc]>=tree_essential_send_Nmax[proc]){
 		tree_essential_send_Nmax[proc] += 32;
-		tree_essential_send[proc] = realloc(tree_essential_send[proc],sizeof(struct cell)*tree_essential_send_Nmax[proc]);
+		tree_essential_send[proc] = realloc(tree_essential_send[proc],sizeof(struct reb_treecell)*tree_essential_send_Nmax[proc]);
 	}
 	// Copy node to send buffer
 	tree_essential_send[proc][tree_essential_send_N[proc]] = (*node);
@@ -318,7 +318,7 @@ void communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct cel
 		// Also transmit particle (Here could be another check if the particle actually overlaps with the other box)
 		if (particles_send_N[proc]>=particles_send_Nmax[proc]){
 			particles_send_Nmax[proc] += 32;
-			particles_send[proc] = realloc(particles_send[proc],sizeof(struct cell)*particles_send_Nmax[proc]);
+			particles_send[proc] = realloc(particles_send[proc],sizeof(struct reb_treecell)*particles_send_Nmax[proc]);
 		}
 		// Copy particle to send buffer
 		particles_send[proc][particles_send_N[proc]] = particles[node->pt];
@@ -330,14 +330,14 @@ void communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct cel
 		double rp  = 2.*collisions_max_r + 0.86602540378443*node->w;
 		if (distance2 < rp*rp ){
 			for (int o=0;o<8;o++){
-				struct cell* d = node->oct[o];
+				struct reb_treecell* d = node->oct[o];
 				if (d==NULL) continue;
 				communication_mpi_prepare_essential_cell_for_collisions_for_proc(d,proc);
 			}
 		}
 	}
 }
-void communication_mpi_prepare_essential_tree_for_collisions(struct cell* root){
+void communication_mpi_prepare_essential_tree_for_collisions(struct reb_treecell* root){
 	if (root==NULL) return;
 	// Find out which cells are needed by every other node
 	for (int i=0; i<mpi_num; i++){
@@ -349,11 +349,11 @@ void communication_mpi_prepare_essential_tree_for_collisions(struct cell* root){
 
 #ifdef GRAVITY_TREE
 extern double opening_angle2;
-void communication_mpi_prepare_essential_cell_for_gravity_for_proc(struct cell* node, int proc){
+void communication_mpi_prepare_essential_cell_for_gravity_for_proc(struct reb_treecell* node, int proc){
 	// Add essential cell to tree_essential_send
 	if (tree_essential_send_N[proc]>=tree_essential_send_Nmax[proc]){
 		tree_essential_send_Nmax[proc] += 32;
-		tree_essential_send[proc] = realloc(tree_essential_send[proc],sizeof(struct cell)*tree_essential_send_Nmax[proc]);
+		tree_essential_send[proc] = realloc(tree_essential_send[proc],sizeof(struct reb_treecell)*tree_essential_send_Nmax[proc]);
 	}
 	// Copy node to send buffer
 	tree_essential_send[proc][tree_essential_send_N[proc]] = (*node);
@@ -363,7 +363,7 @@ void communication_mpi_prepare_essential_cell_for_gravity_for_proc(struct cell* 
 		double distance2 = communication_distance2_of_proc_to_node(proc,node);
 		if ( width*width > opening_angle2*distance2) {
 			for (int o=0;o<8;o++){
-				struct cell* d = node->oct[o];
+				struct reb_treecell* d = node->oct[o];
 				if (d!=NULL){
 					communication_mpi_prepare_essential_cell_for_gravity_for_proc(d,proc);
 				}
@@ -372,7 +372,7 @@ void communication_mpi_prepare_essential_cell_for_gravity_for_proc(struct cell* 
 	}
 }
 
-void communication_mpi_prepare_essential_tree_for_gravity(struct cell* root){
+void communication_mpi_prepare_essential_tree_for_gravity(struct reb_treecell* root){
 	if (root==NULL) return;
 	// Find out which cells are needed by every other node
 	for (int i=0; i<mpi_num; i++){
@@ -395,7 +395,7 @@ void communication_mpi_distribute_essential_tree_for_gravity(void){
 		if  (i==mpi_id) continue;
 		while (tree_essential_recv_Nmax[i]<tree_essential_recv_N[i]){
 			tree_essential_recv_Nmax[i] += 32;
-			tree_essential_recv[i] = realloc(tree_essential_recv[i],sizeof(struct cell)*tree_essential_recv_Nmax[i]);
+			tree_essential_recv[i] = realloc(tree_essential_recv[i],sizeof(struct reb_treecell)*tree_essential_recv_Nmax[i]);
 		}
 	}
 	
@@ -424,7 +424,7 @@ void communication_mpi_distribute_essential_tree_for_gravity(void){
 	for (int i=0;i<mpi_num;i++){
 		if (i==mpi_id) continue;
 		for (int j=0;j<tree_essential_recv_N[i];j++){
-			tree_add_essential_node(&(tree_essential_recv[i][j]));
+			reb_tree_add_essential_node(&(tree_essential_recv[i][j]));
 		}
 	}
 	// Bring everybody into sync, clean up. 
@@ -450,7 +450,7 @@ void communication_mpi_distribute_essential_tree_for_collisions(void){
 		if  (i==mpi_id) continue;
 		while (tree_essential_recv_Nmax[i]<tree_essential_recv_N[i]){
 			tree_essential_recv_Nmax[i] += 32;
-			tree_essential_recv[i] = realloc(tree_essential_recv[i],sizeof(struct cell)*tree_essential_recv_Nmax[i]);
+			tree_essential_recv[i] = realloc(tree_essential_recv[i],sizeof(struct reb_treecell)*tree_essential_recv_Nmax[i]);
 		}
 	}
 
@@ -478,7 +478,7 @@ void communication_mpi_distribute_essential_tree_for_collisions(void){
 	// Add tree_essential to local tree
 	for (int i=0;i<mpi_num;i++){
 		for (int j=0;j<tree_essential_recv_N[i];j++){
-			tree_add_essential_node(&(tree_essential_recv[i][j]));
+			reb_tree_add_essential_node(&(tree_essential_recv[i][j]));
 		}
 	}
 	// Bring everybody into sync, clean up. 
@@ -501,7 +501,7 @@ void communication_mpi_distribute_essential_tree_for_collisions(void){
 		if  (i==mpi_id) continue;
 		while (particles_recv_Nmax[i]<particles_recv_N[i]){
 			particles_recv_Nmax[i] += 32;
-			particles_recv[i] = realloc(particles_recv[i],sizeof(struct particle)*particles_recv_Nmax[i]);
+			particles_recv[i] = realloc(particles_recv[i],sizeof(struct reb_particle)*particles_recv_Nmax[i]);
 		}
 	}
 	
