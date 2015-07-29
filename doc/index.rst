@@ -100,7 +100,10 @@ You should have received a copy of the GNU General Public License along with REB
 Table of Contents
 -----------------
 .. toctree::
+   :numbered:
+   
    self
+   modules
    rebound
    librebound
    c_examples

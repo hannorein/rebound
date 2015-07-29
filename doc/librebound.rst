@@ -1,5 +1,5 @@
-REBOUND C-API
-=============
+C-API
+=====
 
 .. doxygengroup:: REBOUND_API
    :members:
