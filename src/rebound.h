@@ -180,10 +180,12 @@ struct reb_simulation_integrator_ias15 {
 	unsigned int epsilon_global;
 
 
-	// Internal data structures below. Nothing to be changed by the user.
 	
 	/**
 	 * @cond PRIVATE
+	 * Internal data structures below. Nothing to be changed by the user.
+	 */
+	/**
 	 * @brief Counter how many times the iteration did not converge. 
 	 */
 	unsigned long iterations_max_exceeded;
@@ -213,70 +215,103 @@ struct reb_simulation_integrator_ias15 {
 
 };
 
+/**
+ * @brief This structure contains variables used by the SEI integrator.
+ * @details This is where the user sets the orbital frequency OMEGA for 
+ * shearing sheet simulations.
+ */
 struct reb_simulation_integrator_sei {
-	double OMEGA;		/**< Epicyclic/orbital frequency.  */
-	double OMEGAZ; 		/**< Epicyclic frequency in vertical direction. */
+	double OMEGA;		///< Epicyclic/orbital frequency.
+	double OMEGAZ; 		///< Epicyclic frequency in vertical direction.
 
-	double lastdt;		/**< Cached sin(), tan() for this value of dt.*/
-	// Cache sin() tan() values.
-	double sindt;
-	double tandt;
-	double sindtz;
-	double tandtz;
+	/**
+	 * @cond PRIVATE
+	 * Internal data structures below. Nothing to be changed by the user.
+	 */
+	double lastdt;		///< Cached sin(), tan() for this value of dt.
+	double sindt;		///< Cached sin() 
+	double tandt;		///< Cached tan() 
+	double sindtz;		///< Cached sin(), z axis
+	double tandtz;		///< Cached tan(), z axis
+	/**
+	 * @endcond
+	 */
 };
 
+/**
+ * @brief This structure contains variables used by the WH integrator.
+ * @detail Nothing needs to be changed by the user. All the variables are just for internal use.
+ */
 struct reb_simulation_integrator_wh {
+	/**
+	 * @cond PRIVATE
+	 * Internal data structures below. Nothing to be changed by the user.
+	 */
 	int allocatedN;
 	double* eta;
+	/**
+	 * @endcond
+	 */
 };
 
+/**
+ * @brief This structure contains variables used by the WHFast integrator.
+ */
 struct reb_simulation_integrator_whfast {
-	/*
-	 * This variable turns on/off various symplectic correctors.
-	 * 0 (default): turns off all correctors
-	 * 3: uses third order (two-stage) corrector 
-	 * 5: uses fifth order (four-stage) corrector 
-	 * 7: uses seventh order (six-stage) corrector 
-	 * 11: uses eleventh order (ten-stage) corrector 
+	/**
+	 * @breif This variable turns on/off different symplectic correctors for WHFast.
+	 * @details 
+	 * - 0 (default): turns off all correctors
+	 * - 3: uses third order (two-stage) corrector 
+	 * - 5: uses fifth order (four-stage) corrector 
+	 * - 7: uses seventh order (six-stage) corrector 
+	 * - 11: uses eleventh order (ten-stage) corrector 
 	 */
 	unsigned int corrector;
 
-	/* 
-	 * Setting this flag to one will recalculate Jacobi coordinates 
-	 * from the particle structure in the next timestep only. 
-	 * Then the flag gets set back to 0. If you want to change 
-	 * particles after every timestep, you also need to set this 
-	 * flag to 1 before every timestep.
+	/** 
+	 * @brief Setting this flag to one will recalculate Jacobi coordinates from the particle structure in the next timestep. 
+	 * @details After the timestep, the flag gets set back to 0. 
+	 * If you want to change particles after every timestep, you 
+	 * also need to set this flag to 1 before every timestep.
 	 * Default is 0.
-	 **/ 
+	 */ 
 	unsigned int recalculate_jacobi_this_timestep;
 
-	/*
-	 * If this flag is set (the default), whfast will recalculate jacobi coordinates and synchronize
+	/**
+	 * @brief If this flag is set (the default), whfast will recalculate jacobi coordinates and synchronize
 	 * every timestep, to avoid problems with outputs or particle modifications
-	 * between timesteps. Setting it to 0 will result in a speedup, but care
+	 * between timesteps. 
+	 * @details Setting it to 0 will result in a speedup, but care
 	 * must be taken to synchronize and recalculate jacobi coordinates when needed.
 	 * See AdvWHFast.ipynb in the python_tutorials folder (navigate to it on github
 	 * if you don't have ipython notebook installed).  The explanation is general, and
 	 * the python and C flags have the same names.
-	 **/
+	 */
 	unsigned int safe_mode;
 
-	/*
-	 * This array contains the Jacobi coordinates of all particles.
+	/**
+	 * @brief Jacobi coordinates
+	 * @details This array contains the Jacobi coordinates of all particles.
+	 * It is automatically filled and updated by WHfast.
+	 * Access this array with caution.
 	 */
 	struct reb_particle* restrict p_j;
 
-	/* Struct containg Jacobi eta parameters */
-	double* restrict eta;
+	/**
+	 * @cond PRIVATE
+	 * Internal data structures below. Nothing to be changed by the user.
+	 */
+	double* restrict eta;		///< Struct containg Jacobi eta parameters 
+	double Mtotal;			///< Total mass, used for Jacobi coordinates 
 
-	/* Total mass, used for Jacobi coordinates */
-	double Mtotal;
-
-	unsigned int is_synchronized;
-	unsigned int allocated_N;
-	unsigned int timestep_warning;
-	unsigned int recalculate_jacobi_but_not_synchronized_warning;
+	unsigned int is_synchronized;	///< Flag to determine if current particle structure is synchronized
+	unsigned int allocated_N;	///< Space allocated in arrays
+	unsigned int timestep_warning;	///< Counter of timestep warnings
+	unsigned int recalculate_jacobi_but_not_synchronized_warning;	///< Counter of Jacobi synchronization errors
+	/**
+	 * @endcond
+	 */
 };
 
 
