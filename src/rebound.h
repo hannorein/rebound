@@ -621,112 +621,146 @@ void reb_run_heartbeat(struct reb_simulation* const r);
 /** @} */
 
 
-////////////////////////////////
-// Tools (random numbers)
+
+
 
 /**
- * Calculates a random variable in a given range.
+ * \name Tools
+ * @{
+ */
+
+/**
+ * @brief Return uniformly distributed random variable in a given range.
  * @param min Minimum value.
  * @param max Maximum value.
+ * @return A random variable
  */
 double reb_random_uniform(double min, double max);
 
 /**
- * Calculates a random variable drawn form a powerlaw distribution.
+ * @brief Returns a random variable drawn form a powerlaw distribution.
  * @param min Minimum value.
  * @param max Maximum value.
- * @param slop Slope of powerlaw distribution.
+ * @param slope Slope of powerlaw distribution.
+ * @return A random variable
  */
 double reb_random_powerlaw(double min, double max, double slope);
 
 /**
- * Calculate a random number with normal distribution.
- * Algorithm by D.E. Knut, 1997, The Art of Computer Programmin, Addison-Wesley. 
+ * @brief Return a random number with normal distribution.
+ * @details Algorithm by D.E. Knut, 1997, The Art of Computer Programmin, Addison-Wesley. 
  * @param variance Variance of normal distribution.
- * @return Random number with normal distribution (mean 0). 
+ * @return A random variable
  */
 double reb_random_normal(double variance);
 
 /**
- * Calculates a random variable drawn form a Rayleigh distribution.  Calculated as described on Rayleigh distribution wikipedia page
+ * @brief Return a random variable drawn form a Rayleigh distribution.  
+ * @details Calculated as described on Rayleigh distribution wikipedia page
  * @param sigma Scale parameter.
+ * @return A random variable
  */
 double reb_random_rayleigh(double sigma);
 
-
-////////////////////////////////
-// Tools (center of mass)
-
-
 /**
- * Move to center of momentum and center of mass frame.
+ * @brief Move to center of momentum and center of mass frame.
+ * @details This function moved all particles to the center of mass 
+ * frame (sometimes also called center of momentum frame). In this frame
+ * the center of mass is at rest.
+ * It is recommended to call this function before you are doing a long
+ * term orbit integration. If the particles are slowly drifting away from the
+ * coordinate origin, numerical errors might build up.
+ * @param r The rebound simulation to be considered
  */
 void reb_move_to_com(struct reb_simulation* const r);
 
 /**
- * Returns the center of mass.
+ * @brief Returns the center of mass.
+ * @param r The rebound simulation to be considered
+ * @return The center of mass as a particle (mass, position and velocity correspond to the center of mass)
  */
 struct reb_particle reb_get_com(struct reb_simulation* r);
 
 /**
- * Returns the center of mass of particle p1 and p2.
+ * @brief Returns the center of mass of two particles
+ * @param p1 One of the two particles
+ * @param p2 One of the two particles
+ * @return The center of mass as a particle (mass, position and velocity correspond to the center of mass)
  */
 struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_particle p2);
+/** @} */
 
-////////////////////////////////
-// Output functions
 
 /**
- * This function checks if a new output is required at this time.
- * @return The return value is 1 if an output is required and 0 otherwise.
+ * \name Built-in output function
+ * @{
+ */
+/**
+ * @brief This function checks if a new output is required at this time.
+ * @detail This is typically used within the heartbeat function to generate
+ * equally spaced outputs.
  * @param interval Output interval.
+ * @param r The rebound simulation to be considered
+ * @return The return value is 1 if an output is required and 0 otherwise.
  */
 int reb_output_check(struct reb_simulation* r, double interval);
 
 /**
- * Outputs the current number of particles, the time and the time difference since the last output to the screen.
+ * @brief Output status information on the screen.
+ * @details Outputs the current number of particles, the time and the time difference since the last output to the screen.
+ * @param r The rebound simulation to be considered
+ * @param tmax The maximum integration time (used to calculate the progress in percent)
  */
 void reb_output_timing(struct reb_simulation* r, const double tmax);
 
 /**
- * Appends an ASCII file with orbital paramters of all particles.
+ * @brief Append an ASCII file with orbital paramters of all particles.
  * @details The orbital parameters are calculated with respect the center of mass.
  * reb_particles are assumed to be sorted from the inside out, the central object having index 0. 
+ * @param r The rebound simulation to be considered
  * @param filename Output filename.
  */
 void reb_output_orbits(struct reb_simulation* r, char* filename);
 
 /**
- * Dumps all particle structs into a binary file.
+ * @brief Save the reb_simualtion structure as a binary
+ * @details This function can be used to save the current status of a REBOUND simualtion 
+ * and later restart the simualtion.
+ * @param r The rebound simulation to be considered
  * @param filename Output filename.
  */
 void reb_output_binary(struct reb_simulation* r, char* filename);
 
 /**
- * Appends the positions and velocities of all particles to an ASCII file.
+ * @brief Append the positions and velocities of all particles to an ASCII file.
+ * @param r The rebound simulation to be considered
  * @param filename Output filename.
  */
 void reb_output_ascii(struct reb_simulation* r, char* filename);
 
 /**
- * Dumps only the positions of all particles into a binary file.
+ * @brief Write the positions of all particles to a binary file.
+ * @param r The rebound simulation to be considered
  * @param filename Output filename.
  */
 void reb_output_binary_positions(struct reb_simulation* r, char* filename);
 
 /**
- * Appends the velocity dispersion of the particles to an ASCII file.
+ * @brief Append the velocity dispersion of the particles to an ASCII file.
+ * @param r The rebound simulation to be considered
  * @param filename Output filename.
  */
 void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 
-
-
-////////////////////////////////
-// Tools (setup)
+/** @} */
 
 /**
- * This function calculated orbital elements for a given particle. 
+ * \name Built-in setup/input functions
+ * @{
+ */
+/**
+ * @brief This function calculated orbital elements for a given particle. 
+ * @param G The gravitational constant
  * @param p reb_particle for which the orbit is calculated.
  * @param star Star or central object particle
  * @return Orbital parameters. 
@@ -734,13 +768,17 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_particle star);
 
 /**
- * Reads a binary file.
+ * @brief Reads a binary file.
+ * @details Also initialises the particles array with data form the binary file.
+ * This can be used to restart a simualtion.
  * @param filename Filename to be read.
+ * @return Returns a pointer to a REBOUND simulation.
  */
 struct reb_simulation* reb_create_simulation_from_binary(char* filename);
 
 /**
- * This function sets up a Plummer sphere.
+ * @brief This function sets up a Plummer sphere.
+ * @param r The rebound simulation to be considered
  * @param _N Number of particles in the plummer sphere.
  * @param M Total mass of the cluster.
  * @param R Characteristic radius of the cluster.
@@ -748,7 +786,7 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename);
 void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R);
 
 /**
- * Reads arguments from the command line.
+ * @brief Reads arguments from the command line.
  * @param argc Number of command line arguments.
  * @param argv Array of command line arguments.
  * @param argument Argument to look for.
@@ -758,7 +796,7 @@ char* reb_read_char(int argc, char** argv, const char* argument);
 
 
 /**
- * Reads arguments as a double value from the command line.
+ * @brief Reads arguments as a double value from the command line.
  * @param argc Number of command line arguments.
  * @param argv Array of command line arguments.
  * @param argument Argument to look for.
@@ -769,7 +807,7 @@ double reb_read_double(int argc, char** argv, const char* argument, double _defa
 
 
 /**
- * Reads arguments as a int value from the command line.
+ * @brief Reads arguments as a int value from the command line.
  * @param argc Number of command line arguments.
  * @param argv Array of command line arguments.
  * @param argument Argument to look for.
@@ -778,40 +816,52 @@ double reb_read_double(int argc, char** argv, const char* argument, double _defa
  */
 int reb_read_int(int argc, char** argv, const char* argument, int _default);
 
+/** @} */
 
-////////////////////////////////
-// Tools (misc)
 /**
- * Calculate the total energy (potential and kinetic).
- * Might not work for WH.
+ * \name Miscellaneous tools
+ * @{
+ */
+/**
+ * @brief Calculate the total energy (potential and kinetic).
+ * @details Does not work for WH/SEI.
+ * @param r The rebound simulation to be considered
  * @return Total energy. 
  */
 double reb_tools_energy(struct reb_simulation* r);
 
 /** 
- * Init the MEGNO particles
+ * @brief Init the MEGNO particles, enable MEGNO calculation
+ * @param delta The initial displacement (typically 1e-16)
+ * @param r The rebound simulation to be considered
  */
 void reb_tools_megno_init(struct reb_simulation* const r, double delta);
 
 /**
- * Returns the current value of <Y>
+ * @brief Get the current MEGNO value
+ * @param r The rebound simulation to be considered
+ * @return Returns the current value of the MEGNO
  */
 double reb_tools_calculate_megno(struct reb_simulation* r);
 
 /**
- * Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
+ * @brief Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
+ * @details MEGNO needs to be enabled to calculate this value.
+ * @param r The rebound simulation to be considered
+ * @return Returns the current CN
  */
 double reb_tools_calculate_lyapunov(struct reb_simulation* r);
 
 /**
- * Print out an error message, then exit.
+ * @brief Print out an error message, then exit in a semi-nice way.
  */
 void reb_exit(const char* const msg);
 
 /**
- * Print out a warningr message, then continue.
+ * @brief Print out a warningr message, then continue.
  */
 void reb_warning(const char* const msg);
+/** @} */
 
 /**
  * @}
