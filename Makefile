@@ -9,6 +9,7 @@ all: librebound
 
 clean:
 	$(MAKE) -C src clean
+	$(MAKE) -C doc clean
 
 .PHONY: doc
 doc: 
