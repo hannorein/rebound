@@ -576,8 +576,9 @@ void reb_reset_function_pointers(struct reb_simulation* const r);
 
 /** 
  * @brief Adds a particle to the simulation. 
- * @details This function adds the particle pt to the simulation. Note that the particle is passed as a structure, not a reference to a structure.
+ * @details This function adds the particle pt to the simulation. 
  * @param r The rebound simulation to which the particle will be added
+ * @param pt The particle to be added. Note that this is a structure, not a reference to a structure.
  */
 void reb_add(struct reb_simulation* const r, struct reb_particle pt);
 
@@ -592,7 +593,7 @@ void reb_remove_all(struct reb_simulation* const r);
  * @brief Remove a particle by the position in particles array
  * @param r The rebound simulation to be considered
  * @param index The index in the particles array of the particle to be removed.
- * @pram keepSorted Set to 1, then particles with indices higher than index
+ * @param keepSorted Set to 1, then particles with indices higher than index
  * are all shifted down one position, ensuring the ordering remains.
  * @return Returns 1 if particle was successfully removed, 0 if index passed was 
  * out of range.
@@ -602,6 +603,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted);
 /**
  * @brief Remove a particle by its id.
  * @param r The rebound simulation to be considered
+ * @param id The id of the particle to be removed.
  * @param keepSorted If set to 1 keep the particles with indices in the particles array
  * higher than the one with the passed id are all shifted down one position,
  * ensuring the ordering remains. 
