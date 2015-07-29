@@ -354,21 +354,18 @@ struct reb_simulation {
 	struct reb_particle* particles;	///< Main particle array. This contains all particles on this node.  
 	struct reb_vec3d* gravity_cs;	///< Vector containing the information for compensated gravity summation 
 	int 	gravity_cs_allocatedN;	///< Current number of allocated space for cs array
-	
-	//////////////////////////////////////////////
-	/// Tree
-	struct reb_treecell** tree_root; 			///< Pointer to the roots of the trees. 
-	double opening_angle2;	 			///< Square of the cell opening angle \f$ \theta \f$. 
+	struct reb_treecell** tree_root;///< Pointer to the roots of the trees. 
+	double opening_angle2;	 	///< Square of the cell opening angle \f$ \theta \f$. 
 	enum REB_STATUS status;		///< Set to 1 to exit the simulation at the end of the next timestep. 
 	int 	exact_finish_time; 	///< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. 
 
-	unsigned int force_is_velocitydependent; 	///< Set to 1 if integrator needs to consider velocity dependent forces.  
-	unsigned int gravity_ignore_10;			///< Ignore the gravity form the central object (for WH-type integrators)
-	double output_timing_last; 			///< Time when reb_output_timing() was called the last time. 
-	double exit_max_distance;			///< Exit simulation if distance from origin larger than this value 
-	double exit_min_distance;			///< Exit simulation if distance from another particle smaller than this value 
-	double usleep;					///< Wait this number of microseconds after each timestep 
-	/// @}
+	unsigned int force_is_velocitydependent;///< Set to 1 if integrator needs to consider velocity dependent forces.  
+	unsigned int gravity_ignore_10;		///< Ignore the gravity form the central object (for WH-type integrators)
+	double output_timing_last; 		///< Time when reb_output_timing() was called the last time. 
+	double exit_max_distance;		///< Exit simulation if distance from origin larger than this value 
+	double exit_min_distance;		///< Exit simulation if distance from another particle smaller than this value 
+	double usleep;				///< Wait this number of microseconds after each timestep 
+	/** @} */
 
 	/**
 	 * \name Variables related to ghost/root boxes 
@@ -384,7 +381,7 @@ struct reb_simulation {
 	int	nghostx;		///< Number of ghostboxes in x direction. 
 	int 	nghosty;		///< Number of ghostboxes in y direction. 
 	int 	nghostz;		///< Number of ghostboxes in z direction. 
-	/// @}
+	/** @} */
 
 	/**
 	 * \name Variables related to collision search and detection 
@@ -396,7 +393,7 @@ struct reb_simulation {
 	double collisions_plog;				///< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. 
 	double max_radius[2];				///< Two largest particle radii, set automatically, needed for collision search. 
 	long collisions_Nlog;				///< Keep track of number of collisions. 
-	/// @}
+	/** @} */
 
 	/**
 	 * \name Variables related to the chaos indicator MEGNO 
@@ -410,7 +407,7 @@ struct reb_simulation {
 	double megno_mean_t; 	///< mean of t
 	double megno_mean_Y; 	///< mean of Y
 	long   megno_n; 	///< number of covariance updates
-	/// @}
+	/** @} */
 
 	/**
 	 * \name Variables describing the current module selection 
@@ -456,89 +453,110 @@ struct reb_simulation {
 		REB_GRAVITY_COMPENSATED = 2,	///< Direct summation algorithm O(N^2) but with compensated summation, slightly slower than BASIC but more accurate
 		REB_GRAVITY_TREE = 3,		///< Use the tree to calculate gravity, O(N log(N)), set opening_angle2 to adjust accuracy.
 		} gravity;
-	/// @}
+	/** @} */
 
 
-
-
-	
-	//////////////////////////////////////////////
-	/// Integrators
+	/**
+	 * \name Integrator structs (the contain integrator specific variables and temporary data structures) 
+	 * @{
+	 */
 	struct reb_simulation_integrator_sei ri_sei;		///< The SEI struct 
-	struct reb_simulation_integrator_wh ri_wh;			///< The WH struct 
-	struct reb_simulation_integrator_hybrid ri_hybrid;		///< The Hybrid struct 
-	struct reb_simulation_integrator_whfast ri_whfast;		///< The WHFast struct 
-	struct reb_simulation_integrator_ias15 ri_ias15;		///< The IAS15 struct 
+	struct reb_simulation_integrator_wh ri_wh;		///< The WH struct 
+	struct reb_simulation_integrator_hybrid ri_hybrid;	///< The Hybrid struct 
+	struct reb_simulation_integrator_whfast ri_whfast;	///< The WHFast struct 
+	struct reb_simulation_integrator_ias15 ri_ias15;	///< The IAS15 struct 
+	/** @} */
 
-	//////////////////////////////////////////////
-	/// Callback functions
-	/*
-	 * This function allows the user to add additional (non-gravitational) forces.
+	/**
+	 * \name Callback functions
+	 * @{
+	 */
+	/**
+	 * @brief This function allows the user to add additional (non-gravitational) forces.
 	 */
 	void (*additional_forces) (struct reb_simulation* const r);
-	/*
-	 * This function allows the user to modify the dditional (non-gravitational) forces.
+	/**
+	 * @brief This function allows the user to modify the dditional (non-gravitational) forces.
 	 */
 	void (*post_timestep_modifications) (struct reb_simulation* const r);
 	/**
-	 * This function is called at the beginning of the simulation and at the end of
+	 * @brief This function is called at the beginning of the simulation and at the end of
 	 * each timestep.
 	 */
 	void (*heartbeat) (struct reb_simulation* r);
 	/**
-	 * Return the coefficient of restitution. If NULL, assume a coefficient of 1.
+	 * @brief Return the coefficient of restitution. By default it is NULL, assuming a coefficient of 1.
+	 * @details The velocity of the collision is given to allow for velocity dependent coefficients
+	 * of restitution.
 	 */
 	double (*coefficient_of_restitution) (const struct reb_simulation* const r, double v); 
 
 	/**
-	 * Resolve collision within this function. If NULL, assume hard sphere model.
+	 * @brief Resolve collision within this function. By default it is NULL, assuming hard sphere model.
 	 */
 	void (*collision_resolve) (struct reb_simulation* const r, struct reb_collision);
-	
+	/** @} */
 	
 };
 
-////////////////////////////////
-// Main rebound functions
-
 
 /**
- * Initializes all REBOUND variables and returns a REBOUND handle.. 
- * This function must be called from problem_init() before any particles are added.
+ * \name Main REBOUND routines
+ * @{
+ */
+/**
+ * @brief Creates and initialises a REBOUND simulation
+ * @details Allocate memory for one reb_simulation structure, initialise all variables 
+ * and returni the pointer to the reb_simulation sructure. This function must be called 
+ * before any particles are added.
  */
 struct reb_simulation* reb_create_simulation();
 
 /**
- * Performon integration step.
+ * @brief Performon one integration step
+ * @details you rarely want to call this function yourself.
+ * Use reb_integrate instead.
+ * @param r The rebound simulation to be integrated by one step.
  */
 void reb_step(struct reb_simulation* const r);
 
 /**
- * Performon an integration. Starting at the current time t and until time tmax.
- * tmax==0 means integrate forever.
+ * @brief Performon an integration
+ * @details This function performs an integration  from the current time t until time tmax.
+ * @param r The rebound simulation to be integrated.
+ * @param tmax The time to be integrated to. Set this to INFINITY to integrate forever.
+ * @return This function returns an integer, indicating the success of the integration.
  */
 enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax);
 
-/*
- * Synchronize particles manually at end of timestep.
+/**
+ * @brief Synchronize particles manually at end of timestep
+ * @details This function should be called if the WHFAST integrator
+ * is used, safe_mode is set to zero and an output is needed.
+ * This advances the positions and velocities to be synchronized.
+ * If enabled, it also applies the symplectic corrector.
+ * If safe_mode is enabled, this function has no effect.
+ * @param r The rebound simulation to be synchronized
  */
 void reb_integrator_synchronize(struct reb_simulation* r);
 
-/* 
- * Cleanup all temporarily stored values.
+/** 
+ * @brief Cleanup all temporarily stored integrator values.
+ * @param r The rebound simulation to be considered
  **/
 void reb_integrator_reset(struct reb_simulation* r);
 
 /**
- * Helper function to configure box.
+ * @brief Configure the boundary/root box
+ * @details This function helps to setup the variables for the simulation box.
+ * Call this function when using open, periodic or shear periodic boundary conditions.
+ * @param r The rebound simulation to be considered
+ * @param boxsize The size of the root box
+ * @param root_nx The numbe rof root boxes in the x direction.
+ * @param root_ny The numbe rof root boxes in the y direction.
+ * @param root_nz The numbe rof root boxes in the z direction.
  */
 void reb_configure_box(struct reb_simulation* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz);
-
-/**
- * This function is called once before the integration and then after every timestep.
- * The simulation exits immediately if it returns 1.
- */
-int reb_check_exit(struct reb_simulation* const r, const double tmax);
 
 /**
  * @brief Frees up all space.
@@ -584,6 +602,9 @@ int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted);
  * Run the heartbeat function and check for escaping particles.
  */
 void reb_run_heartbeat(struct reb_simulation* const r);
+
+/** @} */
+
 
 ////////////////////////////////
 // Tools (random numbers)
