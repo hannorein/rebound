@@ -1,11 +1,5 @@
-.. REBOUND documentation master file, created by
-   sphinx-quickstart on Mon Jul 27 14:10:00 2015.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to REBOUND's documentation!
-===================================
-
+Welcome to REBOUND!
+===================
 .. image:: images/dense.png
    :width: 362px
    :height: 350px
@@ -44,7 +38,6 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 
 How to use REBOUND - a quick introduction
 -----------------------------------------
-    
 You can call REBOUND from C or Python. Which programming language you want to use depends on your taste and your specific application. In short: If you simply want to integrate a few particles such as a planetary system with the high order integrator IAS15 or the new symplectic integrator WHFast then use the Python version. If you want to run large simulations with millions of particles, use an exotic integrator, use OpenGL visualizations, or make use of the distributed tree code then use the C version. 
 
 All the computationally expensive parts of REBOUND are written in C. So even if you use the Python version, you'll end up with a very fast code.
@@ -75,7 +68,6 @@ REBOUND is open source. You are invited to contribute to this project if you are
 
 Papers
 ------
-
 There are three papers describing the functionality of REBOUND. 
 
 1. Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012) describe the code structure and the main feature including the gravity and collision routines for many particle systems. http://adsabs.harvard.edu/abs/2012A%26A...537A.128R 
@@ -104,12 +96,12 @@ REBOUND is distributed in the hope that it will be useful, but WITHOUT ANY WARRA
 
 You should have received a copy of the GNU General Public License along with REBOUND.  If not, see <http://www.gnu.org/licenses/>.
 
-Contents:
 
+Table of Contents
+-----------------
 .. toctree::
-   :maxdepth: 2
-   :hidden:
+   self
+   rebound
+   librebound
+   c_examples
 
-   rebound.rst
-   librebound.rst
-   c_examples.rst
