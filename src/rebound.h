@@ -316,141 +316,145 @@ struct reb_simulation_integrator_whfast {
 
 
 /**
- * Collision structure of one single collisions
- * Used to save a collision during collision search. 
+ * @brief Collision structure describing a single collision.
+ * @detail This structure is used to save a collision during collision search. 
+ * It is passed to the collision_resolve function.
  */
 struct reb_collision{
-	int p1;			/**< First colliding particle. */
-	int p2;			/**< Second colliding particle. */
-	struct reb_ghostbox gb;	/**< Ghostbox (of particle p1). */
+	int p1;			///< One of the colliding particles
+	int p2;			///< One of the colliding particles
+	struct reb_ghostbox gb;	///< Ghostbox (of particle p1, used for periodic and shearing sheet boundary conditions)
 #if defined(COLLISIONS_SWEEP) || defined(COLLISIONS_SWEEPPHI)
-	double time;		/**< Time of collision. */
-	int crossing;		/**< Collision occurs at the interface of two sweep boxes. */
+	double time;		///< Time of collision.
+	int crossing;		///< Collision occurs at the interface of two sweep boxes.
 #endif // COLLISIONS_SWEEP
-	int ri;	 		/**< Index of rootcell (Needed for MPI). */
+	int ri;	 		///< Index of rootcell (needed for MPI only).
 };
 
 /**
- * Main struct representing an entire REBOUND simulation.
+ * @brief Main struct encapsulating one entire REBOUND simulation
+ * @detail This structure contains all variables, status flags and pointers of one 
+ * REBOUND simulation. To create a REBOUND simulation use the reb_create_simulation()
+ * function. This will ensure that all variables and pointers are initialized correctly.
  */
 struct reb_simulation {
-	double 	t;			/**< Current simulation time. */
-	double 	G;			/**< Gravitational constant. Default: 1. */
-	double 	softening;		/**< Gravitational softening parameter. Default: 0. */
-	double 	dt;			/**< Current timestep. */
-	double 	dt_last_done;		/**< Last full timestep (used if exact_finish_time==1). */
-	int 	N;			/**< Current number of particles on this node. */
-	int 	N_var;			/**< Number of variational particles. Default: 0.*/
-	int 	N_active;		/**< Number of massive particles included in force calculation. Default: N.*/
-	int 	allocatedN;		/**< Current maximum space allocated in the particles array on this node. */
-	enum REB_STATUS status;	/**< Set to 1 to exit the simulation at the end of the next timestep. */
-	int 	exact_finish_time; 	/**< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. */
+	double 	t;			///< Current simulation time. 
+	double 	G;			///< Gravitational constant. Default: 1. 
+	double 	softening;		///< Gravitational softening parameter. Default: 0. 
+	double 	dt;			///< Current timestep. 
+	double 	dt_last_done;		///< Last full timestep (used if exact_finish_time==1). 
+	int 	N;			///< Current number of particles on this node. 
+	int 	N_var;			///< Number of variational particles. Default: 0.
+	int 	N_active;		///< Number of massive particles included in force calculation. Default: N.
+	int 	allocatedN;		///< Current maximum space allocated in the particles array on this node. 
+	enum REB_STATUS status;		///< Set to 1 to exit the simulation at the end of the next timestep. 
+	int 	exact_finish_time; 	///< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. 
 
-	unsigned int force_is_velocitydependent; 	/**< Set to 1 if integrator needs to consider velocity dependent forces. */ 
-	unsigned int gravity_ignore_10;			/**< Ignore the gravity form the central object (for WH-type integrators)*/
-	double output_timing_last; 			/**< Time when reb_output_timing() was called the last time. */
-	double exit_max_distance;			/**< Exit simulation if distance from origin larger than this value */
-	double exit_min_distance;			/**< Exit simulation if distance from another particle smaller than this value */
-	double usleep;					/**< Wait this number of microseconds after each timestep */
+	unsigned int force_is_velocitydependent; 	///< Set to 1 if integrator needs to consider velocity dependent forces.  
+	unsigned int gravity_ignore_10;			///< Ignore the gravity form the central object (for WH-type integrators)
+	double output_timing_last; 			///< Time when reb_output_timing() was called the last time. 
+	double exit_max_distance;			///< Exit simulation if distance from origin larger than this value 
+	double exit_min_distance;			///< Exit simulation if distance from another particle smaller than this value 
+	double usleep;					///< Wait this number of microseconds after each timestep 
 
 	//////////////////////////////////////////////
 	/// Boxes 
-	struct  reb_vec3d boxsize;	/**< Size of the entire box, root_x*boxsize. */
-	double 	boxsize_max;		/**< Maximum size of the entire box in any direction. Set in box_init().*/
-	double  root_size;		/**< Size of a root box. */
-	int 	root_n;			/**< Total number of root boxes in all directions, root_nx*root_ny*root_nz. Default: 1. Set in box_init().*/
-	int 	root_nx;		/**< Number of root boxes in x direction. Default: 1. */
-	int 	root_ny;		/**< Number of root boxes in y direction. Default: 1. */
-	int 	root_nz;		/**< Number of root boxes in z direction. Default: 1. */
-	int	nghostx;		/**< Number of ghostboxes in x direction. */
-	int 	nghosty;		/**< Number of ghostboxes in y direction. */
-	int 	nghostz;		/**< Number of ghostboxes in z direction. */
+	struct  reb_vec3d boxsize;	///< Size of the entire box, root_x*boxsize. 
+	double 	boxsize_max;		///< Maximum size of the entire box in any direction. Set in box_init().
+	double  root_size;		///< Size of a root box. 
+	int 	root_n;			///< Total number of root boxes in all directions, root_nx*root_ny*root_nz. Default: 1. Set in box_init().
+	int 	root_nx;		///< Number of root boxes in x direction. Default: 1. 
+	int 	root_ny;		///< Number of root boxes in y direction. Default: 1. 
+	int 	root_nz;		///< Number of root boxes in z direction. Default: 1. 
+	int	nghostx;		///< Number of ghostboxes in x direction. 
+	int 	nghosty;		///< Number of ghostboxes in y direction. 
+	int 	nghostz;		///< Number of ghostboxes in z direction. 
 
 	//////////////////////////////////////////////
 	/// Collisions
-	struct reb_collision* collisions;		/**< Array of all collisions. */
-	int collisions_allocatedN;			/**< Size allocated for collisions.*/
-	double minimum_collision_velocity;		/**< Used for hard sphere collision model. */
-	double collisions_plog;				/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
-	double max_radius[2];				/**< Two largest particle radii. Needed for collision search. */
-	long collisions_Nlog;				/**< Keep track of Number of collisions. */
+	struct reb_collision* collisions;		///< Array of all collisions. 
+	int collisions_allocatedN;			///< Size allocated for collisions.
+	double minimum_collision_velocity;		///< Used for hard sphere collision model. 
+	double collisions_plog;				///< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. 
+	double max_radius[2];				///< Two largest particle radii, set automatically, needed for collision search. 
+	long collisions_Nlog;				///< Keep track of number of collisions. 
 
 	//////////////////////////////////////////////
 	/// MEGNO
-	int calculate_megno;	// Flag that determines if megno is calculated (default=0, but megno_init() sets it to 1)
-	double megno_Ys;
-	double megno_Yss;
-	double megno_cov_Yt;	// covariance of <Y> and t
-	double megno_var_t;  	// variance of t 
-	double megno_mean_t; 	// mean of t
-	double megno_mean_Y; 	// mean of Y
-	long   megno_n; 	// number of covariance updates
+	int calculate_megno;	///< Flag that determines if megno is calculated (default=0, but megno_init() sets it to 1)
+	double megno_Ys;	///< Running megno sum (internal use)
+	double megno_Yss;	///< Running megno sum (internal use)
+	double megno_cov_Yt;	///< covariance of <Y> and t
+	double megno_var_t;  	///< variance of t 
+	double megno_mean_t; 	///< mean of t
+	double megno_mean_Y; 	///< mean of Y
+	long   megno_n; 	///< number of covariance updates
 
 	//////////////////////////////////////////////
 	/// Modules
 	
 	/**
-	 * Available collision routines.
+	 * @brief Available collision routines
 	 */
 	enum {
-		REB_COLLISION_NONE = 0,
-		REB_COLLISION_DIRECT = 1,
-		REB_COLLISION_TREE = 2,
+		REB_COLLISION_NONE = 0,		///< Do not search for collisions (default)
+		REB_COLLISION_DIRECT = 1,	///< Direct collision search O(N^2)
+		REB_COLLISION_TREE = 2,		///< Tree based collision search O(N log(N))
 		} collision;
 	/**
-	 * Available integrators.
+	 * @brief Available integrators
 	 */
 	enum {
-		REB_INTEGRATOR_IAS15 = 0,
-		REB_INTEGRATOR_WHFAST = 1,
-		REB_INTEGRATOR_SEI = 2,
-		REB_INTEGRATOR_WH = 3,
-		REB_INTEGRATOR_LEAPFROG = 4,
-		REB_INTEGRATOR_HYBRID = 5,
-		REB_INTEGRATOR_NONE = 6,
+		REB_INTEGRATOR_IAS15 = 0,	///< IAS15 integrator, 15th order, non-symplectic (default)
+		REB_INTEGRATOR_WHFAST = 1,	///< WHFast integrator, symplectic, 2nd order, up to 11th order correctors
+		REB_INTEGRATOR_SEI = 2,		///< SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable
+		REB_INTEGRATOR_WH = 3,		///< WH integrator (based on swifter), WHFast is recommended, this integrator is in REBOUND for comparison tests only
+		REB_INTEGRATOR_LEAPFROG = 4,	///< LEAPFROG integrator, simple, 2nd order, symplectic
+		REB_INTEGRATOR_HYBRID = 5,	///< HYBRID Integrator for close encounters (experimental)
+		REB_INTEGRATOR_NONE = 6,	///< Do not integrate anything
 		} integrator;
 
 	/**
-	 * Available boundary conditions.
+	 * @brief Available boundary conditions
 	 */
 	enum {
-		REB_BOUNDARY_NONE = 0,
-		REB_BOUNDARY_OPEN = 1,
-		REB_BOUNDARY_PERIODIC = 2,
-		REB_BOUNDARY_SHEAR = 3,
+		REB_BOUNDARY_NONE = 0,		///< Do not check for anything (default)
+		REB_BOUNDARY_OPEN = 1,		///< Open boundary conditions. Removes particles if they leave the box 
+		REB_BOUNDARY_PERIODIC = 2,	///< Periodic boundary conditions
+		REB_BOUNDARY_SHEAR = 3,		///< Shear periodic boundary conditions, needs OMEGA variable
 		} boundary;
 
 	/**
-	 * Available gravity routines.
+	 * @brief Available gravity routines
 	 */
 	enum {
-		REB_GRAVITY_NONE = 0,
-		REB_GRAVITY_BASIC = 1,
-		REB_GRAVITY_COMPENSATED = 2,
-		REB_GRAVITY_TREE = 3,
+		REB_GRAVITY_NONE = 0,		///< Do not calculate graviational forces
+		REB_GRAVITY_BASIC = 1,		///< Basic O(N^2) direct summation algorithm, choose this for shearing sheet and periodic boundary conditions
+		REB_GRAVITY_COMPENSATED = 2,	///< Direct summation algorithm O(N^2) but with compensated summation, slightly slower than BASIC but more accurate
+		REB_GRAVITY_TREE = 3,		///< Use the tree to calculate gravity, O(N log(N)), set opening_angle2 to adjust accuracy.
 		} gravity;
 
 
 
 	//////////////////////////////////////////////
 	/// reb_particles
-	struct reb_particle* particles; 			/**< Main particle array. This contains all particles on this node.  */
-	struct reb_vec3d* gravity_cs;				/**< Vector containing the information for compensated gravity summation */
-	int gravity_cs_allocatedN;				/**< Current number of allocated space for cs array*/
+	struct reb_particle* particles; 			///< Main particle array. This contains all particles on this node.  
+	struct reb_vec3d* gravity_cs;				///< Vector containing the information for compensated gravity summation 
+	int gravity_cs_allocatedN;				///< Current number of allocated space for cs array
 	
 	//////////////////////////////////////////////
 	/// Tree
-	struct reb_treecell** tree_root; 			/**< Pointer to the roots of the trees. */
-	double opening_angle2;	 			/**< Square of the cell opening angle \f$ \theta \f$. */
+	struct reb_treecell** tree_root; 			///< Pointer to the roots of the trees. 
+	double opening_angle2;	 			///< Square of the cell opening angle \f$ \theta \f$. 
 
 	
 	//////////////////////////////////////////////
 	/// Integrators
-	struct reb_simulation_integrator_sei ri_sei;		/**< The SEI struct */
-	struct reb_simulation_integrator_wh ri_wh;			/**< The WH struct */
-	struct reb_simulation_integrator_hybrid ri_hybrid;		/**< The Hybrid struct */
-	struct reb_simulation_integrator_whfast ri_whfast;		/**< The WHFast struct */
-	struct reb_simulation_integrator_ias15 ri_ias15;		/**< The IAS15 struct */
+	struct reb_simulation_integrator_sei ri_sei;		///< The SEI struct 
+	struct reb_simulation_integrator_wh ri_wh;			///< The WH struct 
+	struct reb_simulation_integrator_hybrid ri_hybrid;		///< The Hybrid struct 
+	struct reb_simulation_integrator_whfast ri_whfast;		///< The WHFast struct 
+	struct reb_simulation_integrator_ias15 ri_ias15;		///< The IAS15 struct 
 
 	//////////////////////////////////////////////
 	/// Callback functions
