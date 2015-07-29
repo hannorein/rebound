@@ -120,7 +120,7 @@ struct reb_particle {
 
 /**
  * @brief Structure representing a Keplerian orbit.
- * @detail This structure is returned when calculating 
+ * @details This structure is returned when calculating 
  * a Keplerian orbit from Cartesian coordinates. 
  */
 struct reb_orbit {
@@ -238,7 +238,7 @@ struct reb_simulation_integrator_sei {
 
 /**
  * @brief This structure contains variables used by the WH integrator.
- * @detail Nothing needs to be changed by the user. All the variables are just for internal use.
+ * @details Nothing needs to be changed by the user. All the variables are just for internal use.
  */
 struct reb_simulation_integrator_wh {
 	/**
@@ -313,7 +313,7 @@ struct reb_simulation_integrator_whfast {
 
 /**
  * @brief Collision structure describing a single collision.
- * @detail This structure is used to save a collision during collision search. 
+ * @details This structure is used to save a collision during collision search. 
  * It is passed to the collision_resolve function.
  */
 struct reb_collision{
@@ -329,7 +329,7 @@ struct reb_collision{
 
 /**
  * @brief Main struct encapsulating one entire REBOUND simulation
- * @detail This structure contains all variables, status flags and pointers of one 
+ * @details This structure contains all variables, status flags and pointers of one 
  * REBOUND simulation. To create a REBOUND simulation use the reb_create_simulation()
  * function. This will ensure that all variables and pointers are initialized correctly.
  */
@@ -556,7 +556,7 @@ void reb_configure_box(struct reb_simulation* const r, const double boxsize, con
 
 /**
  * @brief Frees up all space used by a REBOUND simulation.
- * @detail The REBOUND simulation is not usable anymore after being passed to this function.
+ * @details The REBOUND simulation is not usable anymore after being passed to this function.
  * @param r The rebound simulation to be freed
  */
 void reb_free_simulation(struct reb_simulation* const r);
@@ -576,7 +576,7 @@ void reb_reset_function_pointers(struct reb_simulation* const r);
 
 /** 
  * @brief Adds a particle to the simulation. 
- * @detail This function adds the particle pt to the simulation. Note that the particle is passed as a structure, not a reference to a structure.
+ * @details This function adds the particle pt to the simulation. Note that the particle is passed as a structure, not a reference to a structure.
  * @param r The rebound simulation to which the particle will be added
  */
 void reb_add(struct reb_simulation* const r, struct reb_particle pt);
@@ -697,7 +697,7 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
  */
 /**
  * @brief This function checks if a new output is required at this time.
- * @detail This is typically used within the heartbeat function to generate
+ * @details This is typically used within the heartbeat function to generate
  * equally spaced outputs.
  * @param interval Output interval.
  * @param r The rebound simulation to be considered
