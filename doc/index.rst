@@ -108,5 +108,5 @@ Table of Contents
    rebound
    librebound
    c_examples
-   ipython
+   ipython_examples
 
