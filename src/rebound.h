@@ -1,6 +1,6 @@
 /**
  * @file 	rebound.h
- * @brief 	Main REBOUND header file.
+ * @brief 	REBOUND API definition.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
@@ -628,7 +628,10 @@ void reb_run_heartbeat(struct reb_simulation* const r);
  * \name Tools
  * @{
  */
-
+/**
+ * @defgroup ToolsRebFunctions List of the helper functions for REBOUND
+ * @{
+ */
 /**
  * @brief Return uniformly distributed random variable in a given range.
  * @param min Minimum value.
@@ -689,10 +692,15 @@ struct reb_particle reb_get_com(struct reb_simulation* r);
  */
 struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_particle p2);
 /** @} */
+/** @} */
 
 
 /**
  * \name Built-in output function
+ * @{
+ */
+/**
+ * @defgroup OutputRebFunctions List of the built-in output functions for REBOUND
  * @{
  */
 /**
@@ -751,11 +759,17 @@ void reb_output_binary_positions(struct reb_simulation* r, char* filename);
  * @param filename Output filename.
  */
 void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
-
 /** @} */
+/** @} */
+
+
 
 /**
  * \name Built-in setup/input functions
+ * @{
+ */
+/**
+ * @defgroup SetupRebFunctions List of the built-in setup helper functions for REBOUND
  * @{
  */
 /**
@@ -794,7 +808,6 @@ void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R
  */
 char* reb_read_char(int argc, char** argv, const char* argument);
 
-
 /**
  * @brief Reads arguments as a double value from the command line.
  * @param argc Number of command line arguments.
@@ -805,7 +818,6 @@ char* reb_read_char(int argc, char** argv, const char* argument);
  */
 double reb_read_double(int argc, char** argv, const char* argument, double _default);
 
-
 /**
  * @brief Reads arguments as a int value from the command line.
  * @param argc Number of command line arguments.
@@ -815,11 +827,18 @@ double reb_read_double(int argc, char** argv, const char* argument, double _defa
  * @return Returns _default if argument was not given. Return the argument converted to int otherwise.
  */
 int reb_read_int(int argc, char** argv, const char* argument, int _default);
-
 /** @} */
+/** @} */
+
+
+
 
 /**
  * \name Miscellaneous tools
+ * @{
+ */
+/**
+ * @defgroup MiscRebFunctions List of the miscellaneous helper functions for REBOUND
  * @{
  */
 /**
@@ -861,6 +880,7 @@ void reb_exit(const char* const msg);
  * @brief Print out a warningr message, then continue.
  */
 void reb_warning(const char* const msg);
+/** @} */
 /** @} */
 
 #endif

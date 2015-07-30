@@ -99,11 +99,43 @@ If you look at the examples in the `examples/` directory, you see one `.c` file 
 You can execute that file with `./rebound`.
 Only then, at runtie, it loads the shared library.
 
-The main REBOUND structure
---------------------------
+The reb_simulation structure
+----------------------------
 
 .. doxygenstruct:: reb_simulation
    :members:
+
+Main REBOUND functions
+----------------------
+
+.. doxygengroup:: MainRebFunctions
+   :members:
+
+Tool functions
+--------------
+
+.. doxygengroup:: ToolsRebFunctions
+   :members:
+
+Output functions
+--------------------------
+
+.. doxygengroup:: OutputRebFunctions
+   :members:
+
+Particle setup functions
+--------------------------
+
+.. doxygengroup:: SetupRebFunctions
+   :members:
+
+Miscellaneous functions
+-----------------------
+
+.. doxygengroup:: MiscRebFunctions
+   :members:
+
+
 
 
 Complete C API Documentation
