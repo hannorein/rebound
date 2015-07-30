@@ -47,18 +47,16 @@ You can install REBOUND with pip if you want to only use the python version of R
 
     pip install rebound
 
-Then, you can run a simple REBOUND simulation such as::
+Then, you can run a simple REBOUND simulation such as
 
-    import rebound
+.. code:: python
 
-    sim = rebound.Simulation()
-
-    sim.add(m=1.0)
-    sim.add(m=1.0e-3, a=1.0)
-    
-    sim.integrate(1000.)
-
-    sim.status()
+   import rebound
+   sim = rebound.Simulation()
+   sim.add(m=1.0)
+   sim.add(m=1.0e-3, a=1.0)
+   sim.integrate(1000.)
+   sim.status()
 
 If you want to use the C version of REBOUND simply copy and paste this line into your terminal (it won't do anything bad, we promise)::
 
