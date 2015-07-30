@@ -28,9 +28,11 @@
 
 struct reb_simulation;
 /**
- * This function initializes OpenGL and starts the run loop. It will never return.
+ * @brief This function initializes OpenGL and starts the run loop. It will never return.
  * @param argc Number of command line arguments.
  * @param argv Command line arguments.
+ * @param r REBOUND simulation to be visualised.
+ * @param mutex Semaphore to lock the REBOUND simulation structure
  */
 void reb_display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* mutex);
 

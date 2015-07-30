@@ -103,8 +103,10 @@ Table of Contents
    :numbered:
    
    self
+   pythoninstall
    modules
    rebound
    librebound
    c_examples
+   ipython_examples
 

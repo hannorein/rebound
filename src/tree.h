@@ -26,8 +26,11 @@
 #ifndef _TREE_H
 #define _TREE_H
 
-struct reb_treecell; /**< The data structure of one node of a tree */
+struct reb_treecell; 
 
+/**
+ * @brief The data structure of one node of a tree 
+ */
 struct reb_treecell {
 	double x; /**< The x position of the center of a cell */
 	double y; /**< The y position of the center of a cell */
@@ -46,48 +49,50 @@ struct reb_treecell {
 	double mzz; /**< The zz component of the quadrupole tensor of mass of a cell */
 #endif // QUADRUPOLE
 	struct reb_treecell *oct[8]; /**< The pointer array to the octants of a cell */
-	int pt;	/**< It has double usages: in a leaf node, it stores the index 
+	int pt;		/**< It has double usages: in a leaf node, it stores the index 
 			  * of a particle; in a non-leaf node, it equals to (-1)*Total 
 			  * Number of particles within that cell. */ 
 };
 
-
 /**
-  * The wrap function corresponds to initializing the trees when they don't exist and updating the structures of the trees by calling reb_tree_update_cell. 
+  * @brief This function updates the tree.
+  * @details The tree needs to be updated when particles move, this function does that.
+  * @param r Rebound simulation to operate on
   */
 void reb_tree_update(struct reb_simulation* const r);
 
 /**
-  * The wrap function calls reb_tree_update_gravity_data_in_cell() to for each tree.
+  * @brief The wrap function calls reb_tree_update_gravity_data_in_cell() for each tree.
+  * @param r Rebound simulation to operate on
   */
 void reb_tree_update_gravity_data(struct reb_simulation* const r);
 
 /**
-  * The wrap function calls reb_tree_add_particle_to_cell() to add the particle into one of the trees. If the tree_root doesn't exist, then it initializes the trees. 
-  *
-  * @param pt is the index of a particle.
+  * @brief The wrap function calls reb_tree_add_particle_to_cell() to add the particle into one of the trees. If the tree_root doesn't exist, then it initializes the tree. 
+  * @param r Rebound simulation to operate on
+  * @param pt Index of a particle.
   */
 void reb_tree_add_particle_to_tree(struct reb_simulation* const r, int pt);
 
 /**
- * Free up all space occupied by the tree structure.
+ * @brief Free up all space occupied by the tree structure.
  * This will not modify particles.
+  * @param r Rebound simulation to operate on
  */
 void reb_tree_delete(struct reb_simulation* const r);
 
 #ifdef MPI
 /**
-  * Needs more comments!
-  *
+  * @brief MPI related function used to calculate gravity from nearby nodes
   * @param node is a pointer to a node cell.
   */
 void reb_tree_add_essential_node(struct reb_treecell* node);
 /**
-  * Needs more comments!
+  * @brief MPI related function used to calculate gravity from nearby nodes
   */
 void reb_tree_prepare_essential_tree_for_gravity(void);
 /**
-  * Needs more comments!
+  * @brief MPI related function used to calculate gravity from nearby nodes
   */
 void reb_tree_prepare_essential_tree_for_collisions(void);
 #endif // MPI

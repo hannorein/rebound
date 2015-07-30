@@ -1,6 +1,6 @@
 /**
  * @file 	rebound.h
- * @brief 	Main REBOUND header file.
+ * @brief 	REBOUND API definition.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
@@ -21,8 +21,6 @@
  * You should have received a copy of the GNU General Public License
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
- *  @defgroup REBOUND_API
- *  Group containing all public REBOUND API functions.
  */
 
 #ifndef _MAIN_H
@@ -32,10 +30,6 @@
 #define M_PI           3.14159265358979323846
 #endif
 
-/**
- * @addtogroup REBOUND_API
- * @{
- */
 extern const char* reb_build_str;	///< Date and time build string.
 extern const char* reb_version_str;	///< Version string.
 
@@ -54,31 +48,33 @@ enum REB_STATUS {
 	REB_EXIT_USER = 5,		///< User caused exit, simulation did not finish successfully.
 };
 
-/**
- * @} 
- */
-// Forward declarations
 struct reb_simulation;
 
-// Generic 3d vector
+/**
+ * @brief Generic 3d vector, for internal use only.
+ */
 struct reb_vec3d {
-	double x;
-	double y;
-	double z;
+	double x; ///< x coordinate
+	double y; ///< y coordinate
+	double z; ///< z coordinate
 };
 
-// Generic 7d vector of pointers
+/**
+ * @brief Generic 7d pointer, for internal use only (IAS15).
+ */
 struct reb_dp7 {
-	double* restrict p0;
-	double* restrict p1;
-	double* restrict p2;
-	double* restrict p3;
-	double* restrict p4;
-	double* restrict p5;
-	double* restrict p6;
+	double* restrict p0; ///< 0 substep
+	double* restrict p1; ///< 1 substep
+	double* restrict p2; ///< 2 substep
+	double* restrict p3; ///< 3 substep
+	double* restrict p4; ///< 4 substep
+	double* restrict p5; ///< 5 substep
+	double* restrict p6; ///< 6 substep
 };
 
-// Structure contains the relative position and velocity of a boundary box.
+/**
+ * @details Structure that contains the relative position and velocity of a ghostbox.
+ */
 struct reb_ghostbox{
 	double shiftx;		///< Relative x position
 	double shifty;		///< Relative y position
@@ -89,10 +85,6 @@ struct reb_ghostbox{
 };
 
 
-/**
- * @addtogroup REBOUND_API
- * @{
- */
 /**
  * @brief Structure representing one REBOUND particle.
  * @details This structure is used to represent one particle. 
@@ -120,7 +112,7 @@ struct reb_particle {
 
 /**
  * @brief Structure representing a Keplerian orbit.
- * @detail This structure is returned when calculating 
+ * @details This structure is returned when calculating 
  * a Keplerian orbit from Cartesian coordinates. 
  */
 struct reb_orbit {
@@ -180,10 +172,12 @@ struct reb_simulation_integrator_ias15 {
 	unsigned int epsilon_global;
 
 
-	// Internal data structures below. Nothing to be changed by the user.
 	
 	/**
 	 * @cond PRIVATE
+	 * Internal data structures below. Nothing to be changed by the user.
+	 */
+	/**
 	 * @brief Counter how many times the iteration did not converge. 
 	 */
 	unsigned long iterations_max_exceeded;
@@ -213,431 +207,574 @@ struct reb_simulation_integrator_ias15 {
 
 };
 
+/**
+ * @brief This structure contains variables used by the SEI integrator.
+ * @details This is where the user sets the orbital frequency OMEGA for 
+ * shearing sheet simulations.
+ */
 struct reb_simulation_integrator_sei {
-	double OMEGA;		/**< Epicyclic/orbital frequency.  */
-	double OMEGAZ; 		/**< Epicyclic frequency in vertical direction. */
+	double OMEGA;		///< Epicyclic/orbital frequency.
+	double OMEGAZ; 		///< Epicyclic frequency in vertical direction.
 
-	double lastdt;		/**< Cached sin(), tan() for this value of dt.*/
-	// Cache sin() tan() values.
-	double sindt;
-	double tandt;
-	double sindtz;
-	double tandtz;
+	/**
+	 * @cond PRIVATE
+	 * Internal data structures below. Nothing to be changed by the user.
+	 */
+	double lastdt;		///< Cached sin(), tan() for this value of dt.
+	double sindt;		///< Cached sin() 
+	double tandt;		///< Cached tan() 
+	double sindtz;		///< Cached sin(), z axis
+	double tandtz;		///< Cached tan(), z axis
+	/** @endcond */
 };
 
+/**
+ * @brief This structure contains variables used by the WH integrator.
+ * @details Nothing needs to be changed by the user. All the variables are just for internal use.
+ */
 struct reb_simulation_integrator_wh {
+	/**
+	 * @cond PRIVATE
+	 * Internal data structures below. Nothing to be changed by the user.
+	 */
 	int allocatedN;
 	double* eta;
+	/** @endcond */
 };
 
+/**
+ * @brief This structure contains variables used by the WHFast integrator.
+ */
 struct reb_simulation_integrator_whfast {
-	/*
-	 * This variable turns on/off various symplectic correctors.
-	 * 0 (default): turns off all correctors
-	 * 3: uses third order (two-stage) corrector 
-	 * 5: uses fifth order (four-stage) corrector 
-	 * 7: uses seventh order (six-stage) corrector 
-	 * 11: uses eleventh order (ten-stage) corrector 
+	/**
+	 * @brief This variable turns on/off different symplectic correctors for WHFast.
+	 * @details 
+	 * - 0 (default): turns off all correctors
+	 * - 3: uses third order (two-stage) corrector 
+	 * - 5: uses fifth order (four-stage) corrector 
+	 * - 7: uses seventh order (six-stage) corrector 
+	 * - 11: uses eleventh order (ten-stage) corrector 
 	 */
 	unsigned int corrector;
 
-	/* 
-	 * Setting this flag to one will recalculate Jacobi coordinates 
-	 * from the particle structure in the next timestep only. 
-	 * Then the flag gets set back to 0. If you want to change 
-	 * particles after every timestep, you also need to set this 
-	 * flag to 1 before every timestep.
+	/** 
+	 * @brief Setting this flag to one will recalculate Jacobi coordinates from the particle structure in the next timestep. 
+	 * @details After the timestep, the flag gets set back to 0. 
+	 * If you want to change particles after every timestep, you 
+	 * also need to set this flag to 1 before every timestep.
 	 * Default is 0.
-	 **/ 
+	 */ 
 	unsigned int recalculate_jacobi_this_timestep;
 
-	/*
-	 * If this flag is set (the default), whfast will recalculate jacobi coordinates and synchronize
+	/**
+	 * @brief If this flag is set (the default), whfast will recalculate jacobi coordinates and synchronize
 	 * every timestep, to avoid problems with outputs or particle modifications
-	 * between timesteps. Setting it to 0 will result in a speedup, but care
+	 * between timesteps. 
+	 * @details Setting it to 0 will result in a speedup, but care
 	 * must be taken to synchronize and recalculate jacobi coordinates when needed.
 	 * See AdvWHFast.ipynb in the python_tutorials folder (navigate to it on github
 	 * if you don't have ipython notebook installed).  The explanation is general, and
 	 * the python and C flags have the same names.
-	 **/
+	 */
 	unsigned int safe_mode;
 
-	/*
-	 * This array contains the Jacobi coordinates of all particles.
+	/**
+	 * @brief Jacobi coordinates
+	 * @details This array contains the Jacobi coordinates of all particles.
+	 * It is automatically filled and updated by WHfast.
+	 * Access this array with caution.
 	 */
 	struct reb_particle* restrict p_j;
 
-	/* Struct containg Jacobi eta parameters */
-	double* restrict eta;
+	/**
+	 * @cond PRIVATE
+	 * Internal data structures below. Nothing to be changed by the user.
+	 */
+	double* restrict eta;		///< Struct containg Jacobi eta parameters 
+	double Mtotal;			///< Total mass, used for Jacobi coordinates 
 
-	/* Total mass, used for Jacobi coordinates */
-	double Mtotal;
-
-	unsigned int is_synchronized;
-	unsigned int allocated_N;
-	unsigned int timestep_warning;
-	unsigned int recalculate_jacobi_but_not_synchronized_warning;
+	unsigned int is_synchronized;	///< Flag to determine if current particle structure is synchronized
+	unsigned int allocated_N;	///< Space allocated in arrays
+	unsigned int timestep_warning;	///< Counter of timestep warnings
+	unsigned int recalculate_jacobi_but_not_synchronized_warning;	///< Counter of Jacobi synchronization errors
+	/**
+	 * @endcond
+	 */
 };
 
 
 /**
- * Collision structure of one single collisions
- * Used to save a collision during collision search. 
+ * @brief Collision structure describing a single collision.
+ * @details This structure is used to save a collision during collision search. 
+ * It is passed to the collision_resolve function.
  */
 struct reb_collision{
-	int p1;			/**< First colliding particle. */
-	int p2;			/**< Second colliding particle. */
-	struct reb_ghostbox gb;	/**< Ghostbox (of particle p1). */
+	int p1;			///< One of the colliding particles
+	int p2;			///< One of the colliding particles
+	struct reb_ghostbox gb;	///< Ghostbox (of particle p1, used for periodic and shearing sheet boundary conditions)
 #if defined(COLLISIONS_SWEEP) || defined(COLLISIONS_SWEEPPHI)
-	double time;		/**< Time of collision. */
-	int crossing;		/**< Collision occurs at the interface of two sweep boxes. */
+	double time;		///< Time of collision.
+	int crossing;		///< Collision occurs at the interface of two sweep boxes.
 #endif // COLLISIONS_SWEEP
-	int ri;	 		/**< Index of rootcell (Needed for MPI). */
+	int ri;	 		///< Index of rootcell (needed for MPI only).
 };
 
 /**
- * Main struct representing an entire REBOUND simulation.
+ * @brief Main struct encapsulating one entire REBOUND simulation
+ * @details This structure contains all variables, status flags and pointers of one 
+ * REBOUND simulation. To create a REBOUND simulation use the reb_create_simulation()
+ * function. This will ensure that all variables and pointers are initialized correctly.
  */
 struct reb_simulation {
-	double 	t;			/**< Current simulation time. */
-	double 	G;			/**< Gravitational constant. Default: 1. */
-	double 	softening;		/**< Gravitational softening parameter. Default: 0. */
-	double 	dt;			/**< Current timestep. */
-	double 	dt_last_done;		/**< Last full timestep (used if exact_finish_time==1). */
-	int 	N;			/**< Current number of particles on this node. */
-	int 	N_var;			/**< Number of variational particles. Default: 0.*/
-	int 	N_active;		/**< Number of massive particles included in force calculation. Default: N.*/
-	int 	allocatedN;		/**< Current maximum space allocated in the particles array on this node. */
-	enum REB_STATUS status;	/**< Set to 1 to exit the simulation at the end of the next timestep. */
-	int 	exact_finish_time; 	/**< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. */
-
-	unsigned int force_is_velocity_dependent; 	/**< Set to 1 if integrator needs to consider velocity dependent forces. */ 
-	unsigned int gravity_ignore_10;			/**< Ignore the gravity form the central object (for WH-type integrators)*/
-	double output_timing_last; 			/**< Time when reb_output_timing() was called the last time. */
-	double exit_max_distance;			/**< Exit simulation if distance from origin larger than this value */
-	double exit_min_distance;			/**< Exit simulation if distance from another particle smaller than this value */
-	double usleep;					/**< Wait this number of microseconds after each timestep */
-
-	//////////////////////////////////////////////
-	/// Boxes 
-	struct  reb_vec3d boxsize;	/**< Size of the entire box, root_x*boxsize. */
-	double 	boxsize_max;		/**< Maximum size of the entire box in any direction. Set in box_init().*/
-	double  root_size;		/**< Size of a root box. */
-	int 	root_n;			/**< Total number of root boxes in all directions, root_nx*root_ny*root_nz. Default: 1. Set in box_init().*/
-	int 	root_nx;		/**< Number of root boxes in x direction. Default: 1. */
-	int 	root_ny;		/**< Number of root boxes in y direction. Default: 1. */
-	int 	root_nz;		/**< Number of root boxes in z direction. Default: 1. */
-	int	nghostx;		/**< Number of ghostboxes in x direction. */
-	int 	nghosty;		/**< Number of ghostboxes in y direction. */
-	int 	nghostz;		/**< Number of ghostboxes in z direction. */
-
-	//////////////////////////////////////////////
-	/// Collisions
-	struct reb_collision* collisions;		/**< Array of all collisions. */
-	int collisions_allocatedN;			/**< Size allocated for collisions.*/
-	double minimum_collision_velocity;		/**< Used for hard sphere collision model. */
-	double collisions_plog;				/**< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. */
-	double max_radius[2];				/**< Two largest particle radii. Needed for collision search. */
-	long collisions_Nlog;				/**< Keep track of Number of collisions. */
-
-	//////////////////////////////////////////////
-	/// MEGNO
-	int calculate_megno;	// Flag that determines if megno is calculated (default=0, but megno_init() sets it to 1)
-	double megno_Ys;
-	double megno_Yss;
-	double megno_cov_Yt;	// covariance of <Y> and t
-	double megno_var_t;  	// variance of t 
-	double megno_mean_t; 	// mean of t
-	double megno_mean_Y; 	// mean of Y
-	long   megno_n; 	// number of covariance updates
-
-	//////////////////////////////////////////////
-	/// Modules
-	
 	/**
-	 * Available collision routines.
+	 * \name Variables related to time, current number of particles and simulation status/control 
+	 * @{
+	 */
+	double 	t;			///< Current simulation time. 
+	double 	G;			///< Gravitational constant. Default: 1. 
+	double 	softening;		///< Gravitational softening parameter. Default: 0. 
+	double 	dt;			///< Current timestep. 
+	double 	dt_last_done;		///< Last full timestep (used if exact_finish_time==1). 
+	int 	N;			///< Current number of particles on this node. 
+	int 	N_var;			///< Number of variational particles. Default: 0.
+	int 	N_active;		///< Number of massive particles included in force calculation. Default: N.
+	int 	allocatedN;		///< Current maximum space allocated in the particles array on this node. 
+	struct reb_particle* particles;	///< Main particle array. This contains all particles on this node.  
+	struct reb_vec3d* gravity_cs;	///< Vector containing the information for compensated gravity summation 
+	int 	gravity_cs_allocatedN;	///< Current number of allocated space for cs array
+	struct reb_treecell** tree_root;///< Pointer to the roots of the trees. 
+	double opening_angle2;	 	///< Square of the cell opening angle \f$ \theta \f$. 
+	enum REB_STATUS status;		///< Set to 1 to exit the simulation at the end of the next timestep. 
+	int 	exact_finish_time; 	///< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. 
+
+	unsigned int force_is_velocity_dependent;///< Set to 1 if integrator needs to consider velocity dependent forces.  
+	unsigned int gravity_ignore_10;		///< Ignore the gravity form the central object (for WH-type integrators)
+	double output_timing_last; 		///< Time when reb_output_timing() was called the last time. 
+	double exit_max_distance;		///< Exit simulation if distance from origin larger than this value 
+	double exit_min_distance;		///< Exit simulation if distance from another particle smaller than this value 
+	double usleep;				///< Wait this number of microseconds after each timestep 
+	/** @} */
+
+	/**
+	 * \name Variables related to ghost/root boxes 
+	 * @{
+	 */
+	struct  reb_vec3d boxsize;	///< Size of the entire box, root_x*boxsize. 
+	double 	boxsize_max;		///< Maximum size of the entire box in any direction. Set in box_init().
+	double  root_size;		///< Size of a root box. 
+	int 	root_n;			///< Total number of root boxes in all directions, root_nx*root_ny*root_nz. Default: 1. Set in box_init().
+	int 	root_nx;		///< Number of root boxes in x direction. Default: 1. 
+	int 	root_ny;		///< Number of root boxes in y direction. Default: 1. 
+	int 	root_nz;		///< Number of root boxes in z direction. Default: 1. 
+	int	nghostx;		///< Number of ghostboxes in x direction. 
+	int 	nghosty;		///< Number of ghostboxes in y direction. 
+	int 	nghostz;		///< Number of ghostboxes in z direction. 
+	/** @} */
+
+	/**
+	 * \name Variables related to collision search and detection 
+	 * @{
+	 */
+	struct reb_collision* collisions;		///< Array of all collisions. 
+	int collisions_allocatedN;			///< Size allocated for collisions.
+	double minimum_collision_velocity;		///< Used for hard sphere collision model. 
+	double collisions_plog;				///< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. 
+	double max_radius[2];				///< Two largest particle radii, set automatically, needed for collision search. 
+	long collisions_Nlog;				///< Keep track of number of collisions. 
+	/** @} */
+
+	/**
+	 * \name Variables related to the chaos indicator MEGNO 
+	 * @{
+	 */
+	int calculate_megno;	///< Flag that determines if megno is calculated (default=0, but megno_init() sets it to 1)
+	double megno_Ys;	///< Running megno sum (internal use)
+	double megno_Yss;	///< Running megno sum (internal use)
+	double megno_cov_Yt;	///< covariance of MEGNO Y and t
+	double megno_var_t;  	///< variance of t 
+	double megno_mean_t; 	///< mean of t
+	double megno_mean_Y; 	///< mean of MEGNO Y
+	long   megno_n; 	///< number of covariance updates
+	/** @} */
+
+	/**
+	 * \name Variables describing the current module selection 
+	 * @{
+	 */
+	/**
+	 * @brief Available collision routines
 	 */
 	enum {
-		REB_COLLISION_NONE = 0,
-		REB_COLLISION_DIRECT = 1,
-		REB_COLLISION_TREE = 2,
+		REB_COLLISION_NONE = 0,		///< Do not search for collisions (default)
+		REB_COLLISION_DIRECT = 1,	///< Direct collision search O(N^2)
+		REB_COLLISION_TREE = 2,		///< Tree based collision search O(N log(N))
 		} collision;
 	/**
-	 * Available integrators.
+	 * @brief Available integrators
 	 */
 	enum {
-		REB_INTEGRATOR_IAS15 = 0,
-		REB_INTEGRATOR_WHFAST = 1,
-		REB_INTEGRATOR_SEI = 2,
-		REB_INTEGRATOR_WH = 3,
-		REB_INTEGRATOR_LEAPFROG = 4,
-		REB_INTEGRATOR_HYBRID = 5,
-		REB_INTEGRATOR_NONE = 6,
+		REB_INTEGRATOR_IAS15 = 0,	///< IAS15 integrator, 15th order, non-symplectic (default)
+		REB_INTEGRATOR_WHFAST = 1,	///< WHFast integrator, symplectic, 2nd order, up to 11th order correctors
+		REB_INTEGRATOR_SEI = 2,		///< SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable
+		REB_INTEGRATOR_WH = 3,		///< WH integrator (based on swifter), WHFast is recommended, this integrator is in REBOUND for comparison tests only
+		REB_INTEGRATOR_LEAPFROG = 4,	///< LEAPFROG integrator, simple, 2nd order, symplectic
+		REB_INTEGRATOR_HYBRID = 5,	///< HYBRID Integrator for close encounters (experimental)
+		REB_INTEGRATOR_NONE = 6,	///< Do not integrate anything
 		} integrator;
 
 	/**
-	 * Available boundary conditions.
+	 * @brief Available boundary conditions
 	 */
 	enum {
-		REB_BOUNDARY_NONE = 0,
-		REB_BOUNDARY_OPEN = 1,
-		REB_BOUNDARY_PERIODIC = 2,
-		REB_BOUNDARY_SHEAR = 3,
+		REB_BOUNDARY_NONE = 0,		///< Do not check for anything (default)
+		REB_BOUNDARY_OPEN = 1,		///< Open boundary conditions. Removes particles if they leave the box 
+		REB_BOUNDARY_PERIODIC = 2,	///< Periodic boundary conditions
+		REB_BOUNDARY_SHEAR = 3,		///< Shear periodic boundary conditions, needs OMEGA variable
 		} boundary;
 
 	/**
-	 * Available gravity routines.
+	 * @brief Available gravity routines
 	 */
 	enum {
-		REB_GRAVITY_NONE = 0,
-		REB_GRAVITY_BASIC = 1,
-		REB_GRAVITY_COMPENSATED = 2,
-		REB_GRAVITY_TREE = 3,
+		REB_GRAVITY_NONE = 0,		///< Do not calculate graviational forces
+		REB_GRAVITY_BASIC = 1,		///< Basic O(N^2) direct summation algorithm, choose this for shearing sheet and periodic boundary conditions
+		REB_GRAVITY_COMPENSATED = 2,	///< Direct summation algorithm O(N^2) but with compensated summation, slightly slower than BASIC but more accurate
+		REB_GRAVITY_TREE = 3,		///< Use the tree to calculate gravity, O(N log(N)), set opening_angle2 to adjust accuracy.
 		} gravity;
+	/** @} */
 
 
+	/**
+	 * \name Integrator structs (the contain integrator specific variables and temporary data structures) 
+	 * @{
+	 */
+	struct reb_simulation_integrator_sei ri_sei;		///< The SEI struct 
+	struct reb_simulation_integrator_wh ri_wh;		///< The WH struct 
+	struct reb_simulation_integrator_hybrid ri_hybrid;	///< The Hybrid struct 
+	struct reb_simulation_integrator_whfast ri_whfast;	///< The WHFast struct 
+	struct reb_simulation_integrator_ias15 ri_ias15;	///< The IAS15 struct 
+	/** @} */
 
-	//////////////////////////////////////////////
-	/// reb_particles
-	struct reb_particle* particles; 			/**< Main particle array. This contains all particles on this node.  */
-	struct reb_vec3d* gravity_cs;				/**< Vector containing the information for compensated gravity summation */
-	int gravity_cs_allocatedN;				/**< Current number of allocated space for cs array*/
-	
-	//////////////////////////////////////////////
-	/// Tree
-	struct reb_treecell** tree_root; 			/**< Pointer to the roots of the trees. */
-	double opening_angle2;	 			/**< Square of the cell opening angle \f$ \theta \f$. */
-
-	
-	//////////////////////////////////////////////
-	/// Integrators
-	struct reb_simulation_integrator_sei ri_sei;		/**< The SEI struct */
-	struct reb_simulation_integrator_wh ri_wh;			/**< The WH struct */
-	struct reb_simulation_integrator_hybrid ri_hybrid;		/**< The Hybrid struct */
-	struct reb_simulation_integrator_whfast ri_whfast;		/**< The WHFast struct */
-	struct reb_simulation_integrator_ias15 ri_ias15;		/**< The IAS15 struct */
-
-	//////////////////////////////////////////////
-	/// Callback functions
-	/*
-	 * This function allows the user to add additional (non-gravitational) forces.
+	/**
+	 * \name Callback functions
+	 * @{
+	 */
+	/**
+	 * @brief This function allows the user to add additional (non-gravitational) forces.
 	 */
 	void (*additional_forces) (struct reb_simulation* const r);
-	/*
-	 * This function allows the user to modify the dditional (non-gravitational) forces.
+	/**
+	 * @brief This function allows the user to modify the dditional (non-gravitational) forces.
 	 */
 	void (*post_timestep_modifications) (struct reb_simulation* const r);
 	/**
-	 * This function is called at the beginning of the simulation and at the end of
+	 * @brief This function is called at the beginning of the simulation and at the end of
 	 * each timestep.
 	 */
 	void (*heartbeat) (struct reb_simulation* r);
 	/**
-	 * Return the coefficient of restitution. If NULL, assume a coefficient of 1.
+	 * @brief Return the coefficient of restitution. By default it is NULL, assuming a coefficient of 1.
+	 * @details The velocity of the collision is given to allow for velocity dependent coefficients
+	 * of restitution.
 	 */
 	double (*coefficient_of_restitution) (const struct reb_simulation* const r, double v); 
 
 	/**
-	 * Resolve collision within this function. If NULL, assume hard sphere model.
+	 * @brief Resolve collision within this function. By default it is NULL, assuming hard sphere model.
 	 */
 	void (*collision_resolve) (struct reb_simulation* const r, struct reb_collision);
-	
+	/** @} */
 	
 };
 
-////////////////////////////////
-// Main rebound functions
-
 
 /**
- * Initializes all REBOUND variables and returns a REBOUND handle.. 
- * This function must be called from problem_init() before any particles are added.
+ * @name Main REBOUND routines
+ * @{
+ */
+/**
+ * @defgroup MainRebFunctions List of the main REBOUND API functions
+ * @details These are the functions that typically need to be called by the user.
+ * @{
+ */
+/**
+ * @brief Creates and initialises a REBOUND simulation
+ * @details Allocate memory for one reb_simulation structure, initialise all variables 
+ * and returni the pointer to the reb_simulation sructure. This function must be called 
+ * before any particles are added.
  */
 struct reb_simulation* reb_create_simulation();
 
 /**
- * Performon integration step.
+ * @brief Performon one integration step
+ * @details You rarely want to call this function yourself.
+ * Use reb_integrate instead.
+ * @param r The rebound simulation to be integrated by one step.
  */
 void reb_step(struct reb_simulation* const r);
 
 /**
- * Performon an integration. Starting at the current time t and until time tmax.
- * tmax==0 means integrate forever.
+ * @brief Performs the actual integration
+ * @details This function performs an integration  from the current time t until time tmax.
+ * @param r The rebound simulation to be integrated.
+ * @param tmax The time to be integrated to. Set this to INFINITY to integrate forever.
+ * @return This function returns an integer, indicating the success of the integration.
  */
 enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax);
 
-/*
- * Synchronize particles manually at end of timestep.
+/**
+ * @brief Synchronize particles manually at end of timestep
+ * @details This function should be called if the WHFAST integrator
+ * is used, safe_mode is set to zero and an output is needed.
+ * This advances the positions and velocities to be synchronized.
+ * If enabled, it also applies the symplectic corrector.
+ * If safe_mode is enabled, this function has no effect.
+ * @param r The rebound simulation to be synchronized
  */
 void reb_integrator_synchronize(struct reb_simulation* r);
 
-/* 
- * Cleanup all temporarily stored values.
+/** 
+ * @brief Cleanup all temporarily stored integrator values.
+ * @param r The rebound simulation to be considered
  **/
 void reb_integrator_reset(struct reb_simulation* r);
 
 /**
- * Helper function to configure box.
+ * @brief Configure the boundary/root box
+ * @details This function helps to setup the variables for the simulation box.
+ * Call this function when using open, periodic or shear periodic boundary conditions.
+ * @param r The rebound simulation to be considered
+ * @param boxsize The size of the root box
+ * @param root_nx The numbe rof root boxes in the x direction.
+ * @param root_ny The numbe rof root boxes in the y direction.
+ * @param root_nz The numbe rof root boxes in the z direction.
  */
 void reb_configure_box(struct reb_simulation* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz);
 
 /**
- * This function is called once before the integration and then after every timestep.
- * The simulation exits immediately if it returns 1.
- */
-int reb_check_exit(struct reb_simulation* const r, const double tmax);
-
-/**
- * @brief Frees up all space.
+ * @brief Frees up all space used by a REBOUND simulation.
+ * @details The REBOUND simulation is not usable anymore after being passed to this function.
+ * @param r The rebound simulation to be freed
  */
 void reb_free_simulation(struct reb_simulation* const r);
 
-/*
- * Function used to allow binary input.
+/**
+ * @cond PRIVATE
+ */
+/**
+ * @brief Function used to allow binary input.
  */
 void reb_reset_temporary_pointers(struct reb_simulation* const r);
+/**
+ * @brief Function used to allow binary input.
+ */
 void reb_reset_function_pointers(struct reb_simulation* const r);
+/** @endcond */
 
 /** 
- * Adds a particle to the simulation. 
+ * @brief Adds a particle to the simulation. 
+ * @details This function adds the particle pt to the simulation. 
+ * @param r The rebound simulation to which the particle will be added
+ * @param pt The particle to be added. Note that this is a structure, not a reference to a structure.
  */
 void reb_add(struct reb_simulation* const r, struct reb_particle pt);
 
 
 /**
- * Remove all particles
+ * @brief Remove all particles
+ * @param r The rebound simulation to be considered
  */
 void reb_remove_all(struct reb_simulation* const r);
 
 /**
- * Remove particle by position in particles array
- * if keepSorted is set, then particles with indices higher than index
+ * @brief Remove a particle by the position in particles array
+ * @param r The rebound simulation to be considered
+ * @param index The index in the particles array of the particle to be removed.
+ * @param keepSorted Set to 1, then particles with indices higher than index
  * are all shifted down one position, ensuring the ordering remains.
- * Returns 1 if particle was successfully removed, 0 if index passed was 
+ * @return Returns 1 if particle was successfully removed, 0 if index passed was 
  * out of range.
  */
 int reb_remove(struct reb_simulation* const r, int index, int keepSorted);
 
 /**
- * Remove particle by id.
- * if keepSorted is set, the particles with indices in the particles array
+ * @brief Remove a particle by its id.
+ * @param r The rebound simulation to be considered
+ * @param id The id of the particle to be removed.
+ * @param keepSorted If set to 1 keep the particles with indices in the particles array
  * higher than the one with the passed id are all shifted down one position,
- * ensuring the ordering remains. Returns 1 if particle successfully removed,
+ * ensuring the ordering remains. 
+ * @return Returns 1 if particle successfully removed,
  * 0 if id was not found in the particles array.
  */
 int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted);
 
 /**
- * Run the heartbeat function and check for escaping particles.
+ * @brief Run the heartbeat function and check for escaping/colliding particles.
+ * @details You rarely want to call this function yourself. It is used internally to 
+ * call the function you set to the heartbeat variable in reb_simulation.
+ * @param r The rebound simulation to be considered
  */
 void reb_run_heartbeat(struct reb_simulation* const r);
 
-////////////////////////////////
-// Tools (random numbers)
+/** @} */
+/** @} */
+
+
+
+
 
 /**
- * Calculates a random variable in a given range.
+ * \name Tools
+ * @{
+ */
+/**
+ * @defgroup ToolsRebFunctions List of the helper functions for REBOUND
+ * @{
+ */
+/**
+ * @brief Return uniformly distributed random variable in a given range.
  * @param min Minimum value.
  * @param max Maximum value.
+ * @return A random variable
  */
 double reb_random_uniform(double min, double max);
 
 /**
- * Calculates a random variable drawn form a powerlaw distribution.
+ * @brief Returns a random variable drawn form a powerlaw distribution.
  * @param min Minimum value.
  * @param max Maximum value.
- * @param slop Slope of powerlaw distribution.
+ * @param slope Slope of powerlaw distribution.
+ * @return A random variable
  */
 double reb_random_powerlaw(double min, double max, double slope);
 
 /**
- * Calculate a random number with normal distribution.
- * Algorithm by D.E. Knut, 1997, The Art of Computer Programmin, Addison-Wesley. 
+ * @brief Return a random number with normal distribution.
+ * @details Algorithm by D.E. Knut, 1997, The Art of Computer Programmin, Addison-Wesley. 
  * @param variance Variance of normal distribution.
- * @return Random number with normal distribution (mean 0). 
+ * @return A random variable
  */
 double reb_random_normal(double variance);
 
 /**
- * Calculates a random variable drawn form a Rayleigh distribution.  Calculated as described on Rayleigh distribution wikipedia page
+ * @brief Return a random variable drawn form a Rayleigh distribution.  
+ * @details Calculated as described on Rayleigh distribution wikipedia page
  * @param sigma Scale parameter.
+ * @return A random variable
  */
 double reb_random_rayleigh(double sigma);
 
-
-////////////////////////////////
-// Tools (center of mass)
-
-
 /**
- * Move to center of momentum and center of mass frame.
+ * @brief Move to center of momentum and center of mass frame.
+ * @details This function moved all particles to the center of mass 
+ * frame (sometimes also called center of momentum frame). In this frame
+ * the center of mass is at rest.
+ * It is recommended to call this function before you are doing a long
+ * term orbit integration. If the particles are slowly drifting away from the
+ * coordinate origin, numerical errors might build up.
+ * @param r The rebound simulation to be considered
  */
 void reb_move_to_com(struct reb_simulation* const r);
 
 /**
- * Returns the center of mass.
+ * @brief Returns the center of mass.
+ * @param r The rebound simulation to be considered
+ * @return The center of mass as a particle (mass, position and velocity correspond to the center of mass)
  */
 struct reb_particle reb_get_com(struct reb_simulation* r);
 
 /**
- * Returns the center of mass of particle p1 and p2.
+ * @brief Returns the center of mass of two particles
+ * @param p1 One of the two particles
+ * @param p2 One of the two particles
+ * @return The center of mass as a particle (mass, position and velocity correspond to the center of mass)
  */
 struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_particle p2);
+/** @} */
+/** @} */
 
-////////////////////////////////
-// Output functions
 
 /**
- * This function checks if a new output is required at this time.
- * @return The return value is 1 if an output is required and 0 otherwise.
+ * \name Built-in output function
+ * @{
+ */
+/**
+ * @defgroup OutputRebFunctions List of the built-in output functions for REBOUND
+ * @{
+ */
+/**
+ * @brief This function checks if a new output is required at this time.
+ * @details This is typically used within the heartbeat function to generate
+ * equally spaced outputs.
  * @param interval Output interval.
+ * @param r The rebound simulation to be considered
+ * @return The return value is 1 if an output is required and 0 otherwise.
  */
 int reb_output_check(struct reb_simulation* r, double interval);
 
 /**
- * Outputs the current number of particles, the time and the time difference since the last output to the screen.
+ * @brief Output status information on the screen.
+ * @details Outputs the current number of particles, the time and the time difference since the last output to the screen.
+ * @param r The rebound simulation to be considered
+ * @param tmax The maximum integration time (used to calculate the progress in percent)
  */
 void reb_output_timing(struct reb_simulation* r, const double tmax);
 
 /**
- * Appends an ASCII file with orbital paramters of all particles.
+ * @brief Append an ASCII file with orbital paramters of all particles.
  * @details The orbital parameters are calculated with respect the center of mass.
  * reb_particles are assumed to be sorted from the inside out, the central object having index 0. 
+ * @param r The rebound simulation to be considered
  * @param filename Output filename.
  */
 void reb_output_orbits(struct reb_simulation* r, char* filename);
 
 /**
- * Dumps all particle structs into a binary file.
+ * @brief Save the reb_simualtion structure as a binary
+ * @details This function can be used to save the current status of a REBOUND simualtion 
+ * and later restart the simualtion.
+ * @param r The rebound simulation to be considered
  * @param filename Output filename.
  */
 void reb_output_binary(struct reb_simulation* r, char* filename);
 
 /**
- * Appends the positions and velocities of all particles to an ASCII file.
+ * @brief Append the positions and velocities of all particles to an ASCII file.
+ * @param r The rebound simulation to be considered
  * @param filename Output filename.
  */
 void reb_output_ascii(struct reb_simulation* r, char* filename);
 
 /**
- * Dumps only the positions of all particles into a binary file.
+ * @brief Write the positions of all particles to a binary file.
+ * @param r The rebound simulation to be considered
  * @param filename Output filename.
  */
 void reb_output_binary_positions(struct reb_simulation* r, char* filename);
 
 /**
- * Appends the velocity dispersion of the particles to an ASCII file.
+ * @brief Append the velocity dispersion of the particles to an ASCII file.
+ * @param r The rebound simulation to be considered
  * @param filename Output filename.
  */
 void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
+/** @} */
+/** @} */
 
 
-
-////////////////////////////////
-// Tools (setup)
 
 /**
- * This function calculated orbital elements for a given particle. 
+ * \name Built-in setup/input functions
+ * @{
+ */
+/**
+ * @defgroup SetupRebFunctions List of the built-in setup helper functions for REBOUND
+ * @{
+ */
+/**
+ * @brief This function calculated orbital elements for a given particle. 
+ * @param G The gravitational constant
  * @param p reb_particle for which the orbit is calculated.
  * @param star Star or central object particle
  * @return Orbital parameters. 
@@ -645,13 +782,17 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_particle star);
 
 /**
- * Reads a binary file.
+ * @brief Reads a binary file.
+ * @details Also initialises the particles array with data form the binary file.
+ * This can be used to restart a simualtion.
  * @param filename Filename to be read.
+ * @return Returns a pointer to a REBOUND simulation.
  */
 struct reb_simulation* reb_create_simulation_from_binary(char* filename);
 
 /**
- * This function sets up a Plummer sphere.
+ * @brief This function sets up a Plummer sphere.
+ * @param r The rebound simulation to be considered
  * @param _N Number of particles in the plummer sphere.
  * @param M Total mass of the cluster.
  * @param R Characteristic radius of the cluster.
@@ -659,7 +800,7 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename);
 void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R);
 
 /**
- * Reads arguments from the command line.
+ * @brief Reads arguments from the command line.
  * @param argc Number of command line arguments.
  * @param argv Array of command line arguments.
  * @param argument Argument to look for.
@@ -667,9 +808,8 @@ void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R
  */
 char* reb_read_char(int argc, char** argv, const char* argument);
 
-
 /**
- * Reads arguments as a double value from the command line.
+ * @brief Reads arguments as a double value from the command line.
  * @param argc Number of command line arguments.
  * @param argv Array of command line arguments.
  * @param argument Argument to look for.
@@ -678,9 +818,8 @@ char* reb_read_char(int argc, char** argv, const char* argument);
  */
 double reb_read_double(int argc, char** argv, const char* argument, double _default);
 
-
 /**
- * Reads arguments as a int value from the command line.
+ * @brief Reads arguments as a int value from the command line.
  * @param argc Number of command line arguments.
  * @param argv Array of command line arguments.
  * @param argument Argument to look for.
@@ -688,43 +827,60 @@ double reb_read_double(int argc, char** argv, const char* argument, double _defa
  * @return Returns _default if argument was not given. Return the argument converted to int otherwise.
  */
 int reb_read_int(int argc, char** argv, const char* argument, int _default);
+/** @} */
+/** @} */
 
 
-////////////////////////////////
-// Tools (misc)
+
+
 /**
- * Calculate the total energy (potential and kinetic).
- * Might not work for WH.
+ * \name Miscellaneous tools
+ * @{
+ */
+/**
+ * @defgroup MiscRebFunctions List of the miscellaneous helper functions for REBOUND
+ * @{
+ */
+/**
+ * @brief Calculate the total energy (potential and kinetic).
+ * @details Does not work for WH/SEI.
+ * @param r The rebound simulation to be considered
  * @return Total energy. 
  */
 double reb_tools_energy(struct reb_simulation* r);
 
 /** 
- * Init the MEGNO particles
+ * @brief Init the MEGNO particles, enable MEGNO calculation
+ * @param delta The initial displacement (typically 1e-16)
+ * @param r The rebound simulation to be considered
  */
 void reb_tools_megno_init(struct reb_simulation* const r, double delta);
 
 /**
- * Returns the current value of <Y>
+ * @brief Get the current MEGNO value
+ * @param r The rebound simulation to be considered
+ * @return Returns the current value of the MEGNO
  */
 double reb_tools_calculate_megno(struct reb_simulation* r);
 
 /**
- * Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
+ * @brief Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
+ * @details MEGNO needs to be enabled to calculate this value.
+ * @param r The rebound simulation to be considered
+ * @return Returns the current CN
  */
 double reb_tools_calculate_lyapunov(struct reb_simulation* r);
 
 /**
- * Print out an error message, then exit.
+ * @brief Print out an error message, then exit in a semi-nice way.
  */
 void reb_exit(const char* const msg);
 
 /**
- * Print out a warningr message, then continue.
+ * @brief Print out a warningr message, then continue.
  */
 void reb_warning(const char* const msg);
+/** @} */
+/** @} */
 
-/**
- * @}
- */
 #endif

@@ -29,20 +29,22 @@ struct reb_simulation;
 
 
 
-
 /**
- * Initialize a particle on an orbit in the xy plane.
+ * @brief Initialize a particle on an orbit in the xy plane.
+ * @param G Gravitational constant.
  * @param M Mass of the central object.
  * @param m Mass of the particle.
  * @param a Semi-major axis of the particle.
  * @param e Eccentricity of the particle.
  * @param omega Pericenter of the particle.
  * @param f true anomaly of the particle.
+ * @return Returns a particle structure with the given orbital parameters. All other particle properties are 0 by default.
  */
 struct reb_particle reb_tools_init_orbit2d(double G, double M, double m, double a, double e, double omega, double f);
 
 /**
- * Initialize a particle on a 3D orbit.  See Fig. 2.13 of Murray & Dermott Solar System Dynamics for diagram.
+ * @brief Initialize a particle on a 3D orbit.  See Fig. 2.13 of Murray & Dermott Solar System Dynamics for diagram.
+ * @param G Gravitational constant.
  * @param M Mass of the central object.
  * @param m Mass of the particle.
  * @param a Semi-major axis of the particle.
@@ -51,24 +53,28 @@ struct reb_particle reb_tools_init_orbit2d(double G, double M, double m, double 
  * @param Omega Longitude of the ascending node of the particle.
  * @param omega argument of pericenter of the particle.
  * @param f true anomaly of the particle.
+ * @return Returns a particle structure with the given orbital parameters. All other particle properties are 0 by default.
  */
-
 struct reb_particle reb_tools_init_orbit3d(double G, double M, double m, double a, double e, double i, double Omega, double omega, double f);
 
-/*
- * Returns deltad/delta (Note, there is a typo in Gozdziewski et al 2001).
- **/
+/**
+ * @brief Returns deltad/delta 
+ * @details Note, there is a typo in Gozdziewski et al 2001.
+ * @param r REBOUND simulation to be considered.
+ */
 
 double reb_tools_megno_deltad_delta(struct reb_simulation* const r);
 
-/*
- * Update MEGNO after a successful timestep by adding dY (=ddelta/delta*dt)
- **/
+/**
+ * @brief Update MEGNO after a successful timestep by adding dY (=ddelta/delta*dt)
+ * @param r REBOUND simulation to be considered.
+ * @param dY Increment for MEGNO Y
+ */
 void reb_tools_megno_update(struct reb_simulation* r, double dY);
 
 
 /**
- * Init random number generator based on time and process id.
+ * @brief Init random number generator based on time and process id.
  */
 void reb_tools_init_srand();
 

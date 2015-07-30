@@ -29,9 +29,10 @@ struct reb_particle;
 struct reb_treecell;
 
 /**
- * Returns the index of the rootbox for the current particles based on its position.
- * @return Index of the rootbox.
+ * @brief Returns the index of the rootbox for the current particles based on its position.
+ * @param r REBOUND simulation to be considered
  * @param pt reb_particle to be checked.
+ * @return Index of the rootbox.
  */
 int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt);
 #endif // _PARTICLE_H

@@ -26,14 +26,16 @@
 #define _BOUNDARIES_H
 
 /**
- * This function checks if any particle has left the main box.
- * If a particle left the box, it is shifted back in the box
+ * @brief This function checks if any particle has left the main box.
+ * @details If a particle left the box, it is shifted back in the box
  * for periodic boundary conditions or remove from the simulation.
+ * @param r REBOUND Simulation to consider
  */
 void reb_boundary_check(struct reb_simulation* r);
 
 /**
- * Creates a ghostbox.
+ * @brief Creates a ghostbox.
+ * @param r REBOUND Simulation to consider
  * @param i Index in x direction.
  * @param j Index in y direction.
  * @param k Index in z direction.
@@ -41,7 +43,9 @@ void reb_boundary_check(struct reb_simulation* r);
 struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_simulation* const r, int i, int j, int k);
 
 /**
- * Return 1 if a particle is in the box, 0 otherwise.
+ * @details Return 1 if a particle is in the box, 0 otherwise.
+ * @param r REBOUND Simulation to consider
+ * @param p Particle to check
  */
 int reb_boundary_particle_is_in_box(const struct reb_simulation* const r, struct reb_particle p);
 

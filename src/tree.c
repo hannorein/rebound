@@ -36,24 +36,23 @@
 
 
 /**
-  * Given the index of a particle and a pointer to a node cell, the function returns the index
-  * of the octant which the particle belongs to.
-  *
-  * @param pt is the index of a particle.
+  * @brief Given a particle and a pointer to a node cell, the function returns the index of the octant which the particle belongs to.
+  * @param p The particles for which the octant is calculated
   * @param node is the pointer to a node cell. 
+  * @return Octant of subcell
   */
 static int reb_reb_tree_get_octant_for_particle_in_cell(const struct reb_particle p, struct reb_treecell *node);
 
 /**
-  * This function adds a particle to the octant[o] of a node. 
+  * @brief This function adds a particle to the octant[o] of a node. 
   *
-  * If node is NULL, the function allocate memory for it and calculate its geometric properties. 
+  * @details If node is NULL, the function allocate memory for it and calculate its geometric properties. 
   * As a leaf node, node->pt = pt. 
   *
   * If node already exists, the function calls itself recursively until reach a leaf node.
   * The leaf node would be divided into eight octants, then it puts the leaf-node hosting particle 
   * and the new particle into these octants. 
-  * 
+  * @param r REBOUND simulation to operate on
   * @param node is the pointer to a node cell
   * @param pt is the index of a particle.
   * @param parent is the pointer to the parent cell of node. if node is a root, then parent
@@ -128,9 +127,11 @@ static int reb_reb_tree_get_octant_for_particle_in_cell(const struct reb_particl
 }
 
 /**
-  * The function tests whether the particle is still within the cubic cell box. If the particle has moved outside the box, it returns 0. Otherwise, it returns 1. 
+  * @brief The function tests whether the particle is still within the cubic cell box. If the particle has moved outside the box, it returns 0. Otherwise, it returns 1. 
   *
+  * @param r REBOUND simulation to operate on
   * @param node is the pointer to a node cell
+  * @return 0 is particle is not in cell, 1 if it is.
   */
 static int reb_tree_particle_is_inside_cell(const struct reb_simulation* const r, struct reb_treecell *node){
 	if (fabs(r->particles[node->pt].x-node->x) > node->w/2. || \
@@ -142,8 +143,9 @@ static int reb_tree_particle_is_inside_cell(const struct reb_simulation* const r
 }
 
 /**
-  * The function is called to walk through the whole tree to update its structure and node->pt at the end of each time step.
+  * @brief The function is called to walk through the whole tree to update its structure and node->pt at the end of each time step.
   *
+  * @param r REBOUND simulation to operate on
   * @param node is the pointer to a node cell
   */
 static struct reb_treecell *reb_tree_update_cell(struct reb_simulation* const r, struct reb_treecell *node){
@@ -199,7 +201,7 @@ static struct reb_treecell *reb_tree_update_cell(struct reb_simulation* const r,
 }
 
 /**
-  * The function calculates the total mass and center of mass of a node. When QUADRUPOLE is defined, it also calculates the mass quadrupole tensor for all non-leaf nodes.
+  * @brief The function calculates the total mass and center of mass of a node. When QUADRUPOLE is defined, it also calculates the mass quadrupole tensor for all non-leaf nodes.
   */
 static void reb_tree_update_gravity_data_in_cell(const struct reb_simulation* const r, struct reb_treecell *node){
 #ifdef QUADRUPOLE
@@ -314,7 +316,7 @@ void reb_tree_delete(struct reb_simulation* const r){
 
 #ifdef MPI
 /**
-  * The function returns the index of the root which contains the cell.
+  * @brief The function returns the index of the root which contains the cell.
   *
   * @param node is a pointer to a node cell.
   */
@@ -327,7 +329,7 @@ int reb_particles_get_rootbox_for_node(struct reb_treecell* node){
 }
 
 /**
-  * The function returns the octant index of a child cell within a parent cell.
+  * @brief The function returns the octant index of a child cell within a parent cell.
   *
   * @param nnode is a pointer to a child cell of the cell which node points to.
   * @param node is a pointer to a node cell.
@@ -341,7 +343,7 @@ int reb_reb_tree_get_octant_for_cell_in_cell(struct reb_treecell* nnode, struct 
 }
 
 /**
-  * Needs more comments!
+  * @brief Needs more comments!
   *
   * @param nnode is a pointer to a child cell of the cell which node points to.
   * @param node is a pointer to a node cell.

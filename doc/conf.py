@@ -25,8 +25,8 @@ if read_the_docs_build:
 
 # C Example update
 with open("c_examples.rst","w") as fd:
-    fd.write("List of C examples\n")
-    fd.write("==================\n\n")
+    fd.write("Examples (C)\n")
+    fd.write("============\n\n")
     for problemc in glob.glob("../examples/*/problem.c"):
         will_output = 0
         with open(problemc) as pf:
@@ -39,7 +39,8 @@ with open("c_examples.rst","w") as fd:
                     will_output = -1
                 if will_output>1:
                     if will_output == 2:
-                        line = "  " +line.strip() + '\n----------------'
+                        under = "-"*(len(line.strip())-2)
+                        line = "  " +line.strip() + '\n' + under
                     will_output = 2
                     if len(line[3:].strip())==0:
                         fd.write("\n\n"+line[3:].strip())
@@ -53,6 +54,15 @@ with open("c_examples.rst","w") as fd:
                     will_output += 1
             if did_output==0:
                 print "Warning: Did not find description in "+problemc
+
+# iPython examples:
+if not os.path.exists("ipython"):
+    os.makedirs("ipython")
+if 0:
+    os.chdir("ipython")
+    for example in glob.glob("../../ipython_examples/*.ipynb"):
+        subprocess.check_output(["ipython", "nbconvert", example, "--to", "rst"])
+
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the

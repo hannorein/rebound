@@ -2,7 +2,7 @@
  * @file 	integrator_ias15.c
  * @brief 	IAS15 integrator.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This file implements the IAS15 integration scheme.  
+ * @details	This file implements the IAS15 integration scheme.  
  * IAS stands for Integrator with Adaptive Step-size control, 15th 
  * order. This scheme is a fifteenth order integrator well suited for 
  * high accuracy orbit integration with non-conservative forces.
