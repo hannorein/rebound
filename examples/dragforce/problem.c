@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
 
 	// Setup callback function for velocity dependent forces.
 	r->additional_forces 	= additional_forces;
-	r->force_is_velocitydependent = 1;
+	r->force_is_velocity_dependent = 1;
 	// Setup callback function for outputs.
 	r->heartbeat		= heartbeat;
 	r->usleep		= 10000;		// Slow down integration (for visualization only)
