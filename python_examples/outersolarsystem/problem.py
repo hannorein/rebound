@@ -1,5 +1,6 @@
 # Import the rebound module
 import rebound
+import os
 
 # Create a REBOUND simulation
 sim = rebound.Simulation()
@@ -26,8 +27,9 @@ steps = 0
 for i in range(100):
     tmax = 1.0e2*i
     sim.integrate(tmax)
-    # Print particle positions 
-    for p in sim.particles:
-        #     time       x    y    z 
-        print(sim.t, p.x, p.y, p.z)
+    if 'TRAVIS' not in os.environ: # Don't output anything in test build
+        # Print particle positions 
+        for p in sim.particles:
+            #     time       x    y    z 
+            print(sim.t, p.x, p.y, p.z)
 
