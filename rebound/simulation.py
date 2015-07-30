@@ -154,8 +154,12 @@ reb_simulation._fields_ = [("t", c_double),
 
 
 class Simulation(object):
-    """REBOUND Simulation Object
-    This object encapsulated an entire REBOUND simulation. It is an abstraction of the C struct reb_simulation.
+    ""
+    "REBOUND Simulation Object.
+
+    This object encapsulated an entire REBOUND simulation. 
+    It is an abstraction of the C struct reb_simulation.
+    You can create mutiple REBOUND simulations (the c library is thread safe). 
     """
     simulation = None
     def __init__(self, filename=None):
@@ -170,7 +174,7 @@ class Simulation(object):
                 raise ValueError("File does not exist.")
         
     
-    AFF = CFUNCTYPE(None)
+    AFF = CFUNCTYPE(None,POINTER(reb_simulation))
     afp = None # additional forces pointer
     ptmp = None # post timestep modifications pointer 
     _units = {'length':None, 'time':None, 'mass':None}
@@ -180,9 +184,10 @@ class Simulation(object):
 
 # Status functions
     def status(self):
-        """ Returns a string with a summary of the current status 
-            of the simulation
-            """
+        """ 
+        Prints a summary of the current status 
+        of the simulation.
+        """
         s= ""
         s += "---------------------------------\n"
         s += "REBOUND version:     \t%s\n" %c_char_p.in_dll(clibrebound, "reb_version_str").value.decode('ascii')
@@ -201,13 +206,22 @@ class Simulation(object):
 # Set function pointer for additional forces
     @property
     def additional_forces(self):
-        return self.afp   # might not be needed
+        """
+        Get or set a function pointer to include additional forces.
+
+        The function pointer can be a python or a C function of type
+        CFUNCTYPE(None,POINTER(reb_simulation)). 
+        If the forces are velocity dependent, the flag 
+        force_is_velocity_dependent needs to be set to 1. Otherwise
+        the particle structures might contain incorrect velocity 
+        values
+        """
+        return self.afp   # getter might not be needed
 
     @additional_forces.setter
     def additional_forces(self, func):
         if(isinstance(func,types.FunctionType)):
             # Python function pointer
-            self.AFF = CFUNCTYPE(None,POINTER(reb_simulation))
             self.afp = self.AFF(func)
             self.simulation.contents.additional_forces = self.afp
         else:
@@ -217,6 +231,12 @@ class Simulation(object):
 
     @property
     def post_timestep_modifications(self):
+        """
+        Get or set a function pointer for post-timestep modifications.
+
+        The function pointer can be a python or a C function of type
+        CFUNCTYPE(None,POINTER(reb_simulation)). 
+        """
         return self.ptmp
 
     @post_timestep_modifications.setter
@@ -227,12 +247,15 @@ class Simulation(object):
             self.simulation.contents.post_timestep_modifications = self.ptmp
         else:
             # C function pointer
-            self.simulation.contents.post_timestep_modifications_with_parameters = func
+            self.simulation.contents.post_timestep_modifications = func
             self.ptmp = "C function pointer value currently not accessible from python.  Edit simulation.py" 
 
 # Setter/getter of parameters and constants
     @property
     def G(self):
+        """
+        Get or set the gravitational constant. Default: 1.
+        """
         return self.simulation.contents.G
     
     @G.setter
@@ -241,6 +264,11 @@ class Simulation(object):
         
     @property 
     def dt(self):
+        """
+        Get or set the timestep. Default: 0.01.
+
+        The timestep will change if an adaptive integrator is selected (such as IAS15)
+        """
         return self.simulation.contents.dt
 
     @dt.setter
@@ -249,6 +277,9 @@ class Simulation(object):
 
     @property 
     def t(self):
+        """
+        Get or set the current simulation time. Default: 0.
+        """
         return self.simulation.contents.t
     @t.setter
     def t(self, value):
@@ -256,6 +287,18 @@ class Simulation(object):
     
     @property 
     def N_active(self):
+        """ 
+        Get or set the current number of active particles.
+
+        An active particle is a particle that contributes to the 
+        gravitational force for another particle.
+        By default the number of active particles is equal to the number
+        of particles.
+        If you have only a few massive particles, and many massless
+        test-particles, then you can set this value to a finite number to 
+        speed up the simulation. 
+        Default value: -1 (which means N_active = N).
+        """
         return self.simulation.contents.N_active
     @N_active.setter
     def N_active(self, value):
@@ -263,6 +306,12 @@ class Simulation(object):
     
     @property 
     def exit_max_distance(self):
+        """ 
+        Get or set a distance to trigger an exception when a particle escapes.
+
+        If this value is non-zero, an exception is thrown when a particle has a distance
+        from the coordinate origin that is larger than this value.
+        """
         return self.simulation.contents.exit_max_distance
     @exit_max_distance.setter
     def exit_max_distance(self, value):
@@ -270,6 +319,12 @@ class Simulation(object):
     
     @property 
     def exit_min_distance(self):
+        """ 
+        Get or set a distance to trigger an exception when two particle have a close encounter.
+
+        If this value is non-zero, an exception is thrown when two particles have a mutual distance
+        from each other that is less than this value.
+        """
         return self.simulation.contents.exit_min_distance
     @exit_min_distance.setter
     def exit_min_distance(self, value):
@@ -277,16 +332,32 @@ class Simulation(object):
 
     @property 
     def N(self):
+        """
+        Get the current number of particles in the simulation.
+        """
         return self.simulation.contents.N
 
     @property
     def integrator(self):
+        """
+        Get or set the intergrator module.
+
+        Available integrators are:
+        - ias15 (default)
+        - whfast
+        - sei
+        - wh
+        - leapfrog 
+        - hybrid
+        - none
+        
+        Check the online documentation for a full description of each of the integrators. 
+        """
         i = self.simulation.contents.integrator
         for name, _i in INTEGRATORS.items():
             if i==_i:
                 return name
         return i
-
     @integrator.setter
     def integrator(self, value):
         if isinstance(value, int):
@@ -312,8 +383,13 @@ class Simulation(object):
 
     @property
     def force_is_velocity_dependent(self):
-        return self.simulation.contents.integrator_force_is_velocity_dependent
+        """
+        Flag that determines whether the additional forces are velocity dependent or not.
 
+        Setting the flag to 1 guarantees that the velocities are available when forces are calculated.
+        Default: 0.
+        """
+        return self.simulation.contents.integrator_force_is_velocity_dependent
     @force_is_velocity_dependent.setter
     def force_is_velocity_dependent(self, value):
         if isinstance(value, int):
@@ -349,6 +425,15 @@ class Simulation(object):
 
 # MEGNO
     def init_megno(self, delta):
+        """
+        This function initialises the chaos indicator MEGNO particles and enables their integration.
+
+        MEGNO is short for Mean Exponential Growth of Nearby orbits. It can be used to test
+        if a system is chaotic or not. In the backend, the integrator is integrating an additional set
+        of particles using the variational equation. Note that variational equations are better 
+        suited for this than shadow particles. MEGNO is currently only supported in the IAS15 
+        and WHFast integrators.
+        """
         clibrebound.reb_tools_megno_init(self.simulation, c_double(delta))
     
     def calculate_megno(self):
