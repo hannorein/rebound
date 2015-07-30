@@ -39,7 +39,8 @@ with open("c_examples.rst","w") as fd:
                     will_output = -1
                 if will_output>1:
                     if will_output == 2:
-                        line = "  " +line.strip() + '\n----------------'
+                        under = "-"*(len(line.strip())-2)
+                        line = "  " +line.strip() + '\n' + under
                     will_output = 2
                     if len(line[3:].strip())==0:
                         fd.write("\n\n"+line[3:].strip())
