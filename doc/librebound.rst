@@ -1,7 +1,7 @@
 The C version of REBOUND
 ========================
 
-This section describes the C version of REBOUND. To learn how to install REBOUND for Python have a look at the iPython/Jupiter notebooks at https://github.com/hannorein/rebound/blob/master/ipython_examples/index.ipynb. Hint: It's super easy!
+This section describes the C version of REBOUND. 
 
 Installation
 ------------

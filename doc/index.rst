@@ -103,6 +103,7 @@ Table of Contents
    :numbered:
    
    self
+   pythoninstall
    modules
    rebound
    librebound
