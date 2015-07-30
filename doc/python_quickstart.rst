@@ -90,7 +90,7 @@ You can then open iPython notebooks in your browser by typing::
 To create a new notebook select from the dropdown menu on the top right the item that says 'New'. Now you can interactively follow the commands in the tutorials or run your own!
 
 
-First rebound simulation
+First REBOUND simulation
 ------------------------
 
 To run your first REBOUND simuation, just start python with the command::

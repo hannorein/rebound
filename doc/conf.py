@@ -37,6 +37,8 @@ with open("c_examples.rst","w") as fd:
                     will_output += 1
                 if line[0:3] == " */":
                     will_output = -1
+                    line = ""
+                    fd.write("\n\n.. code-block:: c\n");
                 if will_output>1:
                     if will_output == 2:
                         under = "-"*(len(line.strip())-2)
@@ -47,11 +49,11 @@ with open("c_examples.rst","w") as fd:
                     else:
                         fd.write(line[3:].strip() + " " )
                 if will_output==-1:
-                    fd.write("\n\nThis example is located in the directory `examples/"+problemc.split("/")[2]+"`\n\n")
-                    will_output= -2
+                    fd.write("   " +line.rstrip() + "\n" )
                     did_output = 1
                 if will_output>0:
                     will_output += 1
+            fd.write("\n\nThis example is located in the directory `examples/"+problemc.split("/")[2]+"`\n\n")
             if did_output==0:
                 print "Warning: Did not find description in "+problemc
 
