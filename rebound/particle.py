@@ -56,7 +56,10 @@ def notNone(a):
 
 
 class Orbit():
-    """Defines the same data structure as in tools.h"""
+    """
+    A class containing orbital parameter for a particle.
+    This is an abstraction of the reb_orbit datastructure in C
+    """
     def __init__(self):
         self.a      =   None    # semimajor axis
         self.r      =   None    # radial distance from reference
@@ -70,11 +73,24 @@ class Orbit():
         self.f      =   None    # true anomaly
 
     def __str__(self):
+        """
+        Returns a string with the semi-major axis and eccentricity of the orbit.
+        """
         return "<rebound.Orbit instance, a=%s e=%s>"%(str(self.a),str(self.e))
 
 
 class Particle(Structure):
-    """A particle datastructure. Same as defined in rebound.h"""
+    """
+    The main RREBOUND particle datastructure. 
+    This is an abstraction of the reb_particle structure in C
+    
+    Parameters
+    ----------
+    x, y, z -- Particle positions
+    vx, vy, vz -- Particle velocities
+    m -- Particle mass
+    id -- Particle id (arbitrary, specified by the user)
+    """
     _fields_ = [("x", c_double),
                 ("y", c_double),
                 ("z", c_double),
@@ -90,6 +106,9 @@ class Particle(Structure):
                 ("c", c_void_p),
                 ("id", c_int)]
     def __str__(self):
+        """ 
+        Returns a string with the position and velocity of the particle.
+        """
         return "<rebound.Particle object, id=%s m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.id,self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
     def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, id=None, simulation=None):   
@@ -165,7 +184,7 @@ class Particle(Structure):
             taken as the mean anomaly, rather than the true anomaly.
             
             Usage
-            _____
+            -----
             TODO: UPDATE
             primary = rebound.Particle(m=1.) # particle with unit mass at origin & v=0
             
@@ -177,7 +196,7 @@ class Particle(Structure):
             p = kepler_particle(0.1,primary,2.5,math.pi/4)
             
             Parameters
-            __________
+            ----------
             m       : (float)            Mass of the particle
             primary : (rebound.Particle) Particle structure for the central body
             a       : (float)            Semimajor axis
@@ -191,7 +210,7 @@ class Particle(Structure):
             If True, anom = mean anomaly
             
             Returns
-            _______
+            -------
             A rebound.Particle structure initialized with the given orbital parameters
             """
         
@@ -248,7 +267,7 @@ class Particle(Structure):
             when a breakout condition is met.
             
             Usage
-            _____
+            -----
             TODO: Update!
             orbit = p2orbit(p,primary)
             print(orbit.e) # gives the eccentricity
@@ -256,13 +275,13 @@ class Particle(Structure):
             orbit = p2orbit(p,primary,verbose=True) # will print out error msgs
             
             Parameters
-            __________
+            ----------
             self     : (rebound.Particle) particle for which orbital elements are sought
             primary  : (rebound.Particle) central body
             verbose  : (boolean)          If set to True, will print out error msgs
             
             Returns
-            _______
+            -------
             A rebound.Orbit object (with member variables for the orbital elements)
             """
         if primary is None:

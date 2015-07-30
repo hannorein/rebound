@@ -10,7 +10,7 @@ import math
 
 def add_outer_solar_system(G=None):
     """
-    Add the planet of the outer Solar System.
+    Add the planet of the outer Solar System as a test problem.
     Data taken from NASA Horizons.
     """
     Gfac = 1./0.01720209895       # Gaussian constant 
