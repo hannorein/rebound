@@ -8,8 +8,8 @@ REBOUND - An open-source multi-purpose N-body code
 .. image:: http://img.shields.io/badge/arXiv-1409.4779-orange.svg?style=flat :target: http://arxiv.org/abs/1409.4779
 .. image:: http://img.shields.io/badge/arXiv-1506.01084-orange.svg?style=flat :target: http://arxiv.org/abs/1506.01084
 
-NEW VERSION
------------
+New Version!
+------------
 
 Welcome to REBOUND version 2! We made many changes to the code. Most importanly, REBOUND is now thread-safe and does not use global variables anymore. All the variables that were previously global, are now contained in the `reb_simulation` structure. This has many advantages, for example, you can run separate simulations in parallel from within one process. We also made it possible to choose all modules at runtime (compared to the selection in the `Makefile` that was used before). This is much more in line with standard UNIX coding practice and does not severely impact performance (it might even help making REBOUND a tiny bit faster). This makes REBOUND a fully functional shared library. We added a prefix to all public functions and struct definitions: `reb_`.
 
@@ -40,8 +40,8 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * Comes with standard ASCII or binary output routines 
 * Different modules are easily interchangeable at runtime
 
-1-MINUTE INSTALLATION
----------------------
+One minute installation
+-----------------------
 
 You can install REBOUND with pip if you want to only use the python version of REBOUND::
 
@@ -63,7 +63,7 @@ If you want to use the C version of REBOUND simply copy and paste this line into
     git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./rebound
 
  
-DOCUMENTATION
+Documentation
 -------------
 The full documentation with many examples and tutorials can be found at
 
