@@ -33,7 +33,7 @@ int main(int argc, char* argv[]){
 	r->dt 		= 1e-2*2.*M_PI;		// in year/(2*pi)
 	r->additional_forces = migration_forces; 	//Set function pointer to add dissipative forces.
 	r->heartbeat = heartbeat;  
-	r->force_is_velocitydependent = 1;
+	r->force_is_velocity_dependent = 1;
 	tmax		= 2.0e4*2.*M_PI;	// in year/(2*pi)
 
 	// Initial conditions
