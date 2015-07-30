@@ -17,7 +17,8 @@ compiler:
     - gcc
 script:
     - cd $TRAVIS_BUILD_DIR/examples/ && make
-    - cd $TRAVIS_BUILD_DIR/ && make clean && make 
+    - cd $TRAVIS_BUILD_DIR/src && make clean
+    - cd $TRAVIS_BUILD_DIR/ && make  
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py AdvWHFast.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Checkpoints.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Churyumov-Gerasimenko.ipynb | python 
