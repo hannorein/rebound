@@ -103,10 +103,11 @@ Table of Contents
    :numbered:
    
    self
-   pythoninstall
    modules
-   rebound
-   librebound
+   c_quickstart
    c_examples
+   c_api
+   python_quickstart
+   python_api
    ipython_examples
 

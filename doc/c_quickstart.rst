@@ -1,5 +1,5 @@
-The C version of REBOUND
-========================
+Quick User Quide (C)
+====================
 
 This section describes the C version of REBOUND. 
 
@@ -97,51 +97,49 @@ If you look at the examples in the `examples/` directory, you see one `.c` file 
 * Finally it compiles your code, the `problem.c` file, into an executable file. 
 
 You can execute that file with `./rebound`.
-Only then, at runtie, it loads the shared library.
+Only then, at runtime, it loads the shared library.
+
+
+API Documentation
+-----------------
+We provide a full API documentation in a separate file. The most important REBOUND API structures and functions are listed below. 
+Note that you can also look at the code itself. The starting point is the `rebound.h` file in the `src/` directory. 
+This is where the public API is defined. 
 
 The reb_simulation structure
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenstruct:: reb_simulation
    :members:
 
 Main REBOUND functions
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygengroup:: MainRebFunctions
    :members:
 
 Tool functions
---------------
+^^^^^^^^^^^^^^
 
 .. doxygengroup:: ToolsRebFunctions
    :members:
 
 Output functions
---------------------------
+^^^^^^^^^^^^^^^^
 
 .. doxygengroup:: OutputRebFunctions
    :members:
 
 Particle setup functions
---------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygengroup:: SetupRebFunctions
    :members:
 
 Miscellaneous functions
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygengroup:: MiscRebFunctions
    :members:
 
-
-
-
-Complete C API Documentation
-----------------------------
-
-See also the rebound.h file.
-
-.. doxygenfile:: rebound.h
 
