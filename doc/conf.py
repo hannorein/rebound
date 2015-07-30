@@ -59,7 +59,8 @@ with open("c_examples.rst","w") as fd:
 
 # iPython examples:
 import shutil
-shutil.rmtree('./ipython')
+if os.path.exists("ipython"):
+    shutil.rmtree('./ipython')
 os.makedirs("./ipython")
 if 1:
     try:
