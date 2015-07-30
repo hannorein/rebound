@@ -26,7 +26,7 @@ script:
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py EscapingParticles.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Forces.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py ParticleIDsAndRemoval.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Testparticles.ipynb | python 
+    #- cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Testparticles.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py WHFast.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/python_examples/simple_orbit/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/megno/ && python problem.py
@@ -35,7 +35,7 @@ script:
     - cd $TRAVIS_BUILD_DIR/python_examples/longtermtest/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/megno_simple/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/orbital_elements/ && python problem.py
-    - cd $TRAVIS_BUILD_DIR/python_examples/outersolarsystem/ && python problem.py
+    #- cd $TRAVIS_BUILD_DIR/python_examples/outersolarsystem/ && python problem.py
 
 # Ignoring examples with complicated dependencies
 #    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Megno.ipynb | python 
