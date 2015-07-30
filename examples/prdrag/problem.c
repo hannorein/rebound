@@ -24,7 +24,7 @@ int main(int argc, char* argv[]){
 	r->integrator			= REB_INTEGRATOR_IAS15;
 	r->ri_ias15.epsilon 		= 1e-4;			// accuracy parameter
 	r->N_active			= 1; 			// the star is the only massive particle
-	r->force_is_velocitydependent	= 1;
+	r->force_is_velocity_dependent	= 1;
 	r->additional_forces		= radiation_forces;	// setup callback function for velocity dependent forces
 	r->heartbeat			= heartbeat;
 	
