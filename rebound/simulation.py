@@ -210,7 +210,7 @@ class Simulation(object):
         else:
             # C function pointer
             self.simulation.contents.additional_forces = func
-            self.afp = "C function pointer value currently not accessible from python.  Edit librebound.py"
+            self.afp = "C function pointer value currently not accessible from python.  Edit simulation.py"
 
     @property
     def post_timestep_modifications(self):
@@ -221,11 +221,11 @@ class Simulation(object):
         if(isinstance(func, types.FunctionType)):
             # Python function pointer
             self.ptmp = self.AFF(func)
-            self.clibrebound.set_post_timestep_modifications(self.ptmp)
+            self.simulation.contents.post_timestep_modifications = self.ptmp
         else:
             # C function pointer
-            self.clibrebound.set_post_timestep_modifications_with_parameters(func)
-            self.ptmp = "C function pointer value currently not accessible from python.  Edit librebound.py" 
+            self.simulation.contents.post_timestep_modifications_with_parameters = func
+            self.ptmp = "C function pointer value currently not accessible from python.  Edit simulation.py" 
 
 # Setter/getter of parameters and constants
     @property
@@ -308,13 +308,13 @@ class Simulation(object):
                 raise ValueError("Warning. Integrator not found.")
 
     @property
-    def force_is_velocitydependent(self):
-        return c_int.in_dll(self.clibrebound, "integrator_force_is_velocitydependent").value
+    def force_is_velocity_dependent(self):
+        return self.simulation.contents.integrator_force_is_velocity_dependent
 
-    @force_is_velocitydependent.setter
-    def force_is_velocitydependent(self, value):
+    @force_is_velocity_dependent.setter
+    def force_is_velocity_dependent(self, value):
         if isinstance(value, int):
-            c_int.in_dll(self.clibrebound, "integrator_force_is_velocitydependent").value = value
+            self.simulation.contents.integrator_force_is_velocity_dependent = value
             return
         raise ValueError("Expecting integer.")
     
@@ -355,10 +355,6 @@ class Simulation(object):
     def calculate_lyapunov(self):
         clibrebound.reb_tools_calculate_lyapunov.restype = c_double
         return clibrebound.reb_tools_calculate_lyapunov(self.simulation)
-    
-    @property
-    def N_megno(self):
-        return c_int.in_dll(self.clibrebound,"N_megno").value 
     
 # Particle add function, used to be called particle_add() and add_particle() 
     def add(self, particle=None, **kwargs):   
@@ -403,7 +399,7 @@ class Simulation(object):
 
     @particles.deleter
     def particles(self):
-        self.clibrebound.particles_remove_all()
+        clibrebound.reb_particles_remove_all(self.simulation)
 
     def remove(self, index=None, id=None, keepSorted=1):
         """ Removes a particle from the simulation.
@@ -486,8 +482,8 @@ class Simulation(object):
         clibrebound.reb_move_to_com(self.simulation)
     
     def calculate_energy(self):
-        self.clibrebound.tools_energy.restype = c_double
-        return self.clibrebound.tools_energy()
+        clibrebound.reb_tools_energy.restype = c_double
+        return clibrebound.reb_tools_energy(self.simulation)
 
 # Input/Output routines
     def save(self, filename):
