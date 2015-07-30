@@ -461,7 +461,9 @@ class Simulation(object):
     
 # Particle add function, used to be called particle_add() and add_particle() 
     def add(self, particle=None, **kwargs):   
-        """Adds a particle to REBOUND. Accepts one of the following:
+        """
+        Adds a particle to REBOUND. Accepts one of the following:
+
         1) A single Particle structure.
         2) The particle's mass and a set of cartesian coordinates: m,x,y,z,vx,vy,vz.
         3) The primary as a Particle structure, the particle's mass and a set of orbital elements primary,a,anom,e,omega,inv,Omega,MEAN (see kepler_particle() for the definition of orbital elements). 
@@ -488,7 +490,9 @@ class Simulation(object):
 # Particle getter functions
     @property
     def particles(self):
-        """Return an array that points to the particle structure.
+        """
+        Return an array that points to the particle structure.
+
         This is an array of pointers and thus the contents of the array update 
         as the simulation progresses. Note that the pointers could change,
         for example when a particle is added or removed from the simulation. 
@@ -502,15 +506,16 @@ class Simulation(object):
 
     @particles.deleter
     def particles(self):
+        """
+        Remove all particles from the simulation
+        """
         clibrebound.reb_particles_remove_all(self.simulation)
 
     def remove(self, index=None, id=None, keepSorted=1):
         """ Removes a particle from the simulation.
 
         Parameters
-
         ----------
-
         Either the index in the particles array to remove, or the id of the particle to
         remove.  The keepSorted flag ensures the particles array remains sorted
         in order of increasing ids.  One might set it to zero in cases with many
@@ -532,8 +537,7 @@ class Simulation(object):
         """ Returns an array of Orbits of length N-1.
 
         Parameters
-        __________
-
+        ----------
         By default this functions returns the orbits in Jacobi coordinates. 
         Set the parameter heliocentric to True to return orbits in heliocentric coordinates.
         """
@@ -549,7 +553,11 @@ class Simulation(object):
 
 # COM calculation 
     def calculate_com(self, last=None):
-        """Returns the center of momentum for all particles in the simulation"""
+        """
+        Returns the center of momentum for all particles in the simulation
+        If 'last' is specified only calculate the center of momentum for the
+        first 'last' particles in the array.
+        """
         m = 0.
         x = 0.
         y = 0.
@@ -582,47 +590,103 @@ class Simulation(object):
 
 # Tools
     def move_to_com(self):
+        """
+        This function moves all particles in the simulation to a center of momentum frame.
+        In that frame, the center of mass is at the origin and does not move.
+        It makes sense to call this function at the beginning of the integration, especially 
+        for the high accuray integrators IAS15 and WHFast.
+        """
         clibrebound.reb_move_to_com(self.simulation)
     
     def calculate_energy(self):
+        """
+        Returns the sum of potential and kinetic energy of all particles in the simulation.
+        """
         clibrebound.reb_tools_energy.restype = c_double
         return clibrebound.reb_tools_energy(self.simulation)
 
 # Input/Output routines
     def save(self, filename):
+        """
+        Save the entire REBOUND simulation to a binary file.
+        """
         clibrebound.reb_output_binary(self.simulation, c_char_p(filename.encode("ascii")))
         
 # Integrator Flags
     @property 
     def integrator_whfast_corrector(self):
+        """
+        Get or set the order of the symplectic corrector in the WHFast integrator.
+
+        By default the symplectic correctors are turned off (=0). For high
+        accuracy simulation set this value to 11. For more details read 
+        Rein and Tamayo 2015.
+        """
         self.simulation.contents.ri_whfast.corrector.value
-    
     @integrator_whfast_corrector.setter 
     def integrator_whfast_corrector(self, value):
         self.simulation.contents.ri_whfast.corrector = c_uint(value)
 
     @property
     def integrator_whfast_safe_mode(self):
-        return self.simulation.contents.ri_whfast.safe_mode
+        """
+        Get or set the safe mode flag for WHFast.
 
+        If safe_mode is 1 (default) particles can be modified between
+        timesteps and particle velocities and positions are always synchronised.
+        If you set safe_mode to 0, the speed and accuracy of WHFast improves.
+        However, make sure you are aware of the consequences. Read the iPython tutorial
+        on advanced WHFast usage to learn more.
+        """
+        return self.simulation.contents.ri_whfast.safe_mode
     @integrator_whfast_safe_mode.setter
     def integrator_whfast_safe_mode(self, value):
         self.simulation.contents.ri_whfast.safe_mode = c_uint(value)
 
     @property
     def integrator_whfast_recalculate_jacobi_this_timestep(self):
-        return self.simulation.contents.ri_whfast.recalculate_jacobi_this_timestep
+        """
+        Sets a flag that tells WHFast that the particles have changed.
 
+        Setting this flag to 1 (default 0) triggers the WHFast integrator
+        to recalculate Jacobi coordinates. This is needed if the user changes 
+        the particle position, velocity or mass inbetween timesteps.
+        After every timestep the flag is set back to 0, so if you continuously
+        update the particles manually, you need to set this flag to 1 after every timestep.
+        """ 
+        return self.simulation.contents.ri_whfast.recalculate_jacobi_this_timestep
     @integrator_whfast_recalculate_jacobi_this_timestep.setter
     def integrator_whfast_recalculate_jacobi_this_timestep(self, value):
         self.simulation.contents.ri_whfast.recalculate_jacobi_this_timestep = c_uint(value)
     
 # Integration
-
-    def step(self, do_timing = 1):
-        clibrebound.reb_step(self.simulation, c_int(do_timing))
+    def step(self):
+        """
+        Perform exactly one integration step with REBOUND. This function is rarely needed.
+        Instead, use integrate().
+        """
+        clibrebound.reb_step(self.simulation)
 
     def integrate(self, tmax, exact_finish_time=1):
+        """
+        Main integration function. Call this function when you have setup your simulation and want to integrate it forward (or backward) in time. The function might be called many times to integrate the simulation in steps and create outputs in-between steps. The typicall usage is as follows
+
+        >>>import numpy as np
+        >>>for time in np.linspace(0,100.,10): 
+        >>>    sim.integrate(time)
+        >>>    perform_output(sim)
+        
+        Parameters
+        ----------
+        The first argument is the maximum time, tmax. If the current time is 100, and tmax=200, then after the calling the integrate() routine, the time has advanced to t=200. If tmax is larger than the current time, no integration will be performed.
+
+        The second argument determines whether REBOUND should try to finish at the exact time (tmax) you give it or if it is allowed to overshoot. Overshooting could happen if you start at t=0, have a timestep of dt=10 and want to integrate to tmax=25. With exact_finish_time=1, the integrator will choose the last timestep such that t=25 after the integration, otherwise t=30 after the integration. Note that changing the timestep does affect the accuracy of symplectic integrators negatively.
+        
+        Exceptions
+        ----------
+        Exceptions are thrown when no more particles are left in the simulation or when a generic integration error occured. 
+        If you specified exit_min_distance or exit_max_distance, then additional exceptions might thrown for escaping particles or particles that undergo a clos encounter.
+        """
         if debug.integrator_package =="REBOUND":
             clibrebound.reb_integrate.restype = c_int
             ret_value = clibrebound.reb_integrate(self.simulation, c_double(tmax))
@@ -638,6 +702,9 @@ class Simulation(object):
             debug.integrate_other_package(tmax,exact_finish_time)
 
     def integrator_synchronize(self):
+        """
+        Call this function if safe-mode is disabled and you need synchronize particle positions and velocities between timesteps.
+        """
         clibrebound.reb_integrator_synchronize(self.simulation)
 
 
