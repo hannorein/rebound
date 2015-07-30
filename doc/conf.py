@@ -60,7 +60,7 @@ with open("c_examples.rst","w") as fd:
 # iPython examples:
 if not os.path.exists("ipython"):
     os.makedirs("ipython")
-if 0:
+if 1:
     os.chdir("ipython")
     for example in glob.glob("../../ipython_examples/*.ipynb"):
         subprocess.check_output(["ipython", "nbconvert", example, "--to", "rst"])

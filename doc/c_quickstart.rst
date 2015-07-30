@@ -99,6 +99,22 @@ If you look at the examples in the `examples/` directory, you see one `.c` file 
 You can execute that file with `./rebound`.
 Only then, at runtime, it loads the shared library.
 
+OpenGL keyboard command
+-----------------------
+You can use the following keyboard commands to alter the OpenGL real-time visualizations.::
+
+ Key     | Function
+ --------------------------------------------------
+ q       | Quit simulation.
+ (space) | Pause simulation.
+ d       | Pause real-time visualization (simulation continues).
+ s       | Toggle three dimensional spheres (looks better)/points (draws faster)
+ g       | Toggle ghost boxes
+ r       | Reset view. Press multiple times to change orientation.
+ x/X     | Move to a coordinate system centred on a particle (note: does not work if particle array is constantly resorted, i.e. in a tree.)
+ c       | Toggle clear screen after each time-step.
+ w       | Draw orbits as wires (particle with index 0 is central object).  
+
 
 API Documentation
 -----------------
