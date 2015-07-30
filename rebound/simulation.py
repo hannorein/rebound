@@ -154,6 +154,9 @@ reb_simulation._fields_ = [("t", c_double),
 
 
 class Simulation(object):
+    """REBOUND Simulation Object
+    This object encapsulated an entire REBOUND simulation. It is an abstraction of the C struct reb_simulation.
+    """
     simulation = None
     def __init__(self, filename=None):
         if filename is None:
