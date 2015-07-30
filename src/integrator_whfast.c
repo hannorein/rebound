@@ -609,7 +609,7 @@ void reb_integrator_whfast_part1(struct reb_simulation* const r){
 		kepler_drift(ri_whfast->p_j, ri_whfast->eta, r->G, r->dt, &(ri_whfast->timestep_warning), N, N_var);	// full timestep
 	}
 	// Prepare coordinates for KICK step
-	if (r->force_is_velocitydependent){
+	if (r->force_is_velocity_dependent){
 		to_inertial_posvel(particles, ri_whfast->p_j, ri_whfast->eta, N_real);
 	}else{
 		to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, N_real);
@@ -619,7 +619,7 @@ void reb_integrator_whfast_part1(struct reb_simulation* const r){
 		ri_whfast->p_j[N_var].x += _dt2*ri_whfast->p_j[N_var].vx;
 		ri_whfast->p_j[N_var].y += _dt2*ri_whfast->p_j[N_var].vy;
 		ri_whfast->p_j[N_var].z += _dt2*ri_whfast->p_j[N_var].vz;
-		if (r->force_is_velocitydependent){
+		if (r->force_is_velocity_dependent){
 			to_inertial_posvel(particles+N_var, ri_whfast->p_j+N_var, ri_whfast->eta, N_real);
 		}else{
 			to_inertial_pos(particles+N_var, ri_whfast->p_j+N_var, ri_whfast->eta, N_real);

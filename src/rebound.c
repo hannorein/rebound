@@ -253,7 +253,7 @@ struct reb_simulation* reb_create_simulation(){
 	r->max_radius[1]	= 0.; 	
 	r->status		= REB_RUNNING;
 	r->exact_finish_time 	= 0;
-	r->force_is_velocitydependent = 0;
+	r->force_is_velocity_dependent = 0;
 	r->gravity_ignore_10	= 0;
 	r->calculate_megno	= 0;
 	r->output_timing_last 	= -1;
