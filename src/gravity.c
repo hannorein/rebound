@@ -44,8 +44,8 @@
 #endif
 
 /**
-  * The function loops over all trees to call calculate_forces_for_particle_from_cell() tree to calculate forces for each particle.
-  *
+  * @brief The function loops over all trees to call calculate_forces_for_particle_from_cell() tree to calculate forces for each particle.
+  * @param r REBOUND simulation to consider
   * @param pt Index of the particle the force is calculated for.
   * @param gb Ghostbox plus position of the particle (precalculated). 
   */
@@ -305,9 +305,10 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
 
 
 /**
-  * The function calls itself recursively using cell breaking criterion to check whether it can use center of mass (and mass quadrupole tensor) to calculate forces.
+  * @brief The function calls itself recursively using cell breaking criterion to check whether it can use center of mass (and mass quadrupole tensor) to calculate forces.
   * Calculate the acceleration for a particle from a given cell and all its daughter cells.
   *
+  * @param r REBOUND simulation to consider
   * @param pt Index of the particle the force is calculated for.
   * @param node Pointer to the cell the force is calculated from.
   * @param gb Ghostbox plus position of the particle (precalculated). 

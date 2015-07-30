@@ -2,7 +2,7 @@
  * @file 	integrator_whfast.c
  * @brief 	WHFAST integration scheme.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This file implements the WHFast integration scheme.  
+ * @details	This file implements the WHFast integration scheme.  
  * Described in Rein & Tamayo 2015.
  * 
  * @section 	LICENSE

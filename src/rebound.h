@@ -21,8 +21,6 @@
  * You should have received a copy of the GNU General Public License
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
- *  @defgroup REBOUND_API
- *  Group containing all public REBOUND API functions.
  */
 
 #ifndef _MAIN_H
@@ -32,10 +30,6 @@
 #define M_PI           3.14159265358979323846
 #endif
 
-/**
- * @addtogroup REBOUND_API
- * @{
- */
 extern const char* reb_build_str;	///< Date and time build string.
 extern const char* reb_version_str;	///< Version string.
 
@@ -54,31 +48,33 @@ enum REB_STATUS {
 	REB_EXIT_USER = 5,		///< User caused exit, simulation did not finish successfully.
 };
 
-/**
- * @} 
- */
-// Forward declarations
 struct reb_simulation;
 
-// Generic 3d vector
+/**
+ * @brief Generic 3d vector, for internal use only.
+ */
 struct reb_vec3d {
-	double x;
-	double y;
-	double z;
+	double x; ///< x coordinate
+	double y; ///< y coordinate
+	double z; ///< z coordinate
 };
 
-// Generic 7d vector of pointers
+/**
+ * @brief Generic 7d pointer, for internal use only (IAS15).
+ */
 struct reb_dp7 {
-	double* restrict p0;
-	double* restrict p1;
-	double* restrict p2;
-	double* restrict p3;
-	double* restrict p4;
-	double* restrict p5;
-	double* restrict p6;
+	double* restrict p0; ///< 0 substep
+	double* restrict p1; ///< 1 substep
+	double* restrict p2; ///< 2 substep
+	double* restrict p3; ///< 3 substep
+	double* restrict p4; ///< 4 substep
+	double* restrict p5; ///< 5 substep
+	double* restrict p6; ///< 6 substep
 };
 
-// Structure contains the relative position and velocity of a boundary box.
+/**
+ * @details Structure that contains the relative position and velocity of a ghostbox.
+ */
 struct reb_ghostbox{
 	double shiftx;		///< Relative x position
 	double shifty;		///< Relative y position
@@ -89,10 +85,6 @@ struct reb_ghostbox{
 };
 
 
-/**
- * @addtogroup REBOUND_API
- * @{
- */
 /**
  * @brief Structure representing one REBOUND particle.
  * @details This structure is used to represent one particle. 
@@ -255,7 +247,7 @@ struct reb_simulation_integrator_wh {
  */
 struct reb_simulation_integrator_whfast {
 	/**
-	 * @breif This variable turns on/off different symplectic correctors for WHFast.
+	 * @brief This variable turns on/off different symplectic correctors for WHFast.
 	 * @details 
 	 * - 0 (default): turns off all correctors
 	 * - 3: uses third order (two-stage) corrector 
@@ -398,10 +390,10 @@ struct reb_simulation {
 	int calculate_megno;	///< Flag that determines if megno is calculated (default=0, but megno_init() sets it to 1)
 	double megno_Ys;	///< Running megno sum (internal use)
 	double megno_Yss;	///< Running megno sum (internal use)
-	double megno_cov_Yt;	///< covariance of <Y> and t
+	double megno_cov_Yt;	///< covariance of MEGNO Y and t
 	double megno_var_t;  	///< variance of t 
 	double megno_mean_t; 	///< mean of t
-	double megno_mean_Y; 	///< mean of Y
+	double megno_mean_Y; 	///< mean of MEGNO Y
 	long   megno_n; 	///< number of covariance updates
 	/** @} */
 
@@ -865,7 +857,4 @@ void reb_exit(const char* const msg);
 void reb_warning(const char* const msg);
 /** @} */
 
-/**
- * @}
- */
 #endif

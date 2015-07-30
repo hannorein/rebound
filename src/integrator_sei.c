@@ -2,7 +2,7 @@
  * @file 	integrator_sei.c
  * @brief 	Symplectic Epicycle Integrator (SEI).
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This file implements the Symplectic Epicycle Integrator 
+ * @details	This file implements the Symplectic Epicycle Integrator 
  * (SEI). The integrator is described in detail in Rein & Tremaine 2011. 
  * It solves epicyclic motion exactly and is therefore exact up to machine
  * precision in the limit of no perturbing forces. When perturbing-forces
@@ -90,9 +90,11 @@ void reb_integrator_sei_reset(struct reb_simulation* r){
 }
 
 /**
- * This function evolves a particle under the unperturbed
+ * @brief This function evolves a particle under the unperturbed
  * Hamiltonian H0 exactly up to machine precission.
  * @param p reb_particle to evolve.
+ * @param dt Timestep
+ * @param ri_sei Integrator struct
  */
 static void operator_H012(double dt, const struct reb_simulation_integrator_sei ri_sei, struct reb_particle* p){
 		
@@ -128,12 +130,13 @@ static void operator_H012(double dt, const struct reb_simulation_integrator_sei 
 }
 
 /**
- * This function applies the acceleration.
- * It is only exact if the forces are velocity independet (i.e. gravity).
+ * @brief This function applies the acceleration due to the PHI1 term.
+ * @details It is only exact if the forces are velocity independet (i.e. gravity).
  * If the forces are velocity dependent, it breaks the symmetry of the scheme,
  * making it firsr-order and non-symplectic. As long as these forces are small,
  * this should not be visible. However, it is worth keeping in mind. 
  * @param p reb_particle to evolve.
+ * @param dt Timestep
  */
 static void operator_phi1(double dt, struct reb_particle* p){
 	// The force used here is for test cases 2 and 3 

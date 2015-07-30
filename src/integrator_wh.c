@@ -2,7 +2,7 @@
  * @file 	integrator_wh.c
  * @brief 	Wisdom-Holman integrator.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This file implements the Wisdom-Holman integration scheme.  
+ * @details	This file implements the Wisdom-Holman integration scheme.  
  * This scheme is second order accurate, symplectic and well suited for 
  * systems where there is one dominant mass and all particles are nearly on 
  * Keplerian orbits. Note that the scheme is formally only first order 
@@ -267,8 +267,7 @@ static void reb_integrator_wh_aj(struct reb_particle* const particles, const dou
 }
 
 /**
- * This function integrates the Keplerian motion of all particles.
- * @param _dt Timestep.
+ * @brief This function integrates the Keplerian motion of all particles.
  */
 static void reb_drift_wh(struct reb_particle* const particles, const double G, double _dt, const int N, const int N_active){
 	int _N_active = (N_active==-1)?N:N_active;

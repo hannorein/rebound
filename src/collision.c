@@ -201,16 +201,19 @@ void reb_collision_search(struct reb_simulation* const r){
 
 
 /**
- * Find the nearest neighbour in a cell or its daughters.
- * The function only returns a positive result if the particles
+ * @brief Find the nearest neighbour in a cell or its daughters.
+ * @details The function only returns a positive result if the particles
  * are overlapping. Thus, the name nearest neighbour is not
  * exactly true.
+ * @param r REBOUND simulation to work on.
  * @param gb (Shifted) position and velocity of the particle.
  * @param ri Index of the root box currently being searched in.
  * @param p1_r Radius of the particle (this is not in gb).
  * @param nearest_r2 Pointer to the nearest neighbour found so far.
  * @param collision_nearest Pointer to the nearest collision found so far.
  * @param c Pointer to the cell currently being searched in.
+ * @param collisions_N Pointer to current number of collisions
+ * @param gbunmod Ghostbox unmodified
  */
 static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r, double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c){
 	const struct reb_particle* const particles = r->particles;
@@ -226,7 +229,7 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
 			 * If this is a local cell, make sure particle is not colliding with itself.
 			 * If this is a remote cell, the particle number might be the same, even for 
 			 * different particles. 
-			 * @TODO This can probably be written in a cleaner way.
+			 * TODO: This can probably be written in a cleaner way.
 			 */
 			condition = (c->pt != collision_nearest->p1);
 #ifdef MPI
