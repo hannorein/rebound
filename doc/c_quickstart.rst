@@ -21,7 +21,7 @@ Make sure you have a compiler suite installed. Open a terminal and type `make` a
 Code structure
 --------------
 
-REBOUND can be used as a shared library. However, installing a system-wide shared library can sometimes be an obstacle for new users, especially if you want to change the code frequently or don't have root access. For that reason, all the examples can be compiled but simply typing `make` in the example directory.
+REBOUND can be used as a shared library. However, installing a system-wide shared library can sometimes be an obstacle for new users, especially if you want to change the code frequently or don't have root access. For that reason, all the examples can be compiled by simply typing `make` in any of the example directories.
 
 Let's look at how to setup a simple REBOUND simulation:
 
@@ -52,11 +52,11 @@ In the first line we include the REBOUND header file. This file contains all the
 
 Next, we declare the only function in our file. It is the standard C `main()` function. Within that, we first create a `reb_simulation` structure. This is the main structure that contains all the variables, pointers and particles of a REBOUND simulation. You can create multiple `reb_simulation` structures at the same time. REBOUND is thread-safe.
 
-We can then set flags and variables in the `reb_simulation` structure. Note that the `r` variable is a pointer to the structure, so we use the arrow syntax `r->dt = 0.1` to set the variable. The next line chooses the integrator module. Here, we use the WHFast symplectic integrator.
+We can then set flags and variables in the `reb_simulation` structure. Note that the `r` variable is a pointer to the structure, so we use the arrow syntax `r->` to set variables. The next line chooses the integrator module. Here, we use the WHFast symplectic integrator.
  
 We then create two particles, both of which are represented by a `reb_particle` structure. The `= {0}` syntax ensures that our structs are initialized with zeros. We set the initial conditions (the ones we don't want to be zero) and then add the particle to the simulation using the `reb_add()` function. Note that this function takes two arguments, the first one is the simulation to which you want to add the particle, and the second is the particle that you want to add. 
 
-Finally, we call the REBOUND function `reb_move_to_com()`. It moves the particles to a centre of mass reference frame (this prevents particles from drifting away from the origin). We then start the integration. Here, we integrate for 100 time units.
+Finally, we call the REBOUND function `reb_move_to_com()`. It moves the particles to a centre of mass reference frame (this prevents particles from drifting away from the origin). We then start the integration. Here, we integrate for 100 time units. By default REBOUND used units in which G=1, thus a particle around an m=1 mass central object at a semi-major axis of 1 needs 2pi time units for one orbit.
 
 Note that all REBOUND functions start with the three character prefix `reb_`. 
 
@@ -97,7 +97,8 @@ If you look at the examples in the `examples/` directory, you see one `.c` file 
 * Finally it compiles your code, the `problem.c` file, into an executable file. 
 
 You can execute that file with `./rebound`.
-Only then, at runtime, it loads the shared library.
+After you edited a file, you can simply type `make` again to recompile.
+If you change any of the environment variables, clean the build directiory first, by executing `make clean`.
 
 OpenGL keyboard command
 -----------------------
@@ -114,6 +115,8 @@ You can use the following keyboard commands to alter the OpenGL real-time visual
  x/X     | Move to a coordinate system centred on a particle (note: does not work if particle array is constantly resorted, i.e. in a tree.)
  c       | Toggle clear screen after each time-step.
  w       | Draw orbits as wires (particle with index 0 is central object).  
+
+To rotate the view, simple trag the simulation with the mouse. To zoom in, press the shift key and then trag the simulation with the mouse. 
 
 
 API Documentation
