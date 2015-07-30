@@ -103,7 +103,7 @@ Then, import the rebound module::
 
 create a new simualtion::
 
-    sim = rrebound.Simulation()
+    sim = rebound.Simulation()
 
 Now you can add as many particles to REBOUND as you want::
 
