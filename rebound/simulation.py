@@ -154,8 +154,8 @@ reb_simulation._fields_ = [("t", c_double),
 
 
 class Simulation(object):
-    ""
-    "REBOUND Simulation Object.
+    """
+    REBOUND Simulation Object.
 
     This object encapsulated an entire REBOUND simulation. 
     It is an abstraction of the C struct reb_simulation.
@@ -433,14 +433,29 @@ class Simulation(object):
         of particles using the variational equation. Note that variational equations are better 
         suited for this than shadow particles. MEGNO is currently only supported in the IAS15 
         and WHFast integrators.
+
+        This function also needs to be called if you are interested in the Lyapunov exponent as it is
+        calculate with the help of MEGNO. See Rein and Tamayo 2015 for details on the implementation.
+
+        The initial delta value can in principle tace any value, typically we choose 1e-16. For 
+        more information on MENGO see e.g. http://dx.doi.org/10.1051/0004-6361:20011189
         """
         clibrebound.reb_tools_megno_init(self.simulation, c_double(delta))
     
     def calculate_megno(self):
+        """
+        Return the current MEGNO value.
+        Note that you need to call init_megno() before the start of the simulation.
+        """
         clibrebound.reb_tools_calculate_megno.restype = c_double
         return clibrebound.reb_tools_calculate_megno(self.simulation)
     
     def calculate_lyapunov(self):
+        """
+        Return the current Lyapunov Characteristic Number (LCN).
+        Note that you need to call init_megno() before the start of the simulation.
+        To get a timescale (the Lyapunov timescale), take the inverse of this quantity.
+        """
         clibrebound.reb_tools_calculate_lyapunov.restype = c_double
         return clibrebound.reb_tools_calculate_lyapunov(self.simulation)
     
