@@ -1,5 +1,5 @@
-Modules
-=======
+Available physics modules
+=========================
 
 REBOUND is extremely modular. You have the choice between different gravity, collision, boundary and integrator modules. It is also possible to implement completely new modules with minimal effort. In the new version of REBOUND, modules are chosen at runtime by setting flags in the `reb_simulation` structure. 
 

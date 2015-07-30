@@ -489,7 +489,12 @@ struct reb_simulation {
 
 
 /**
- * \name Main REBOUND routines
+ * @name Main REBOUND routines
+ * @{
+ */
+/**
+ * @defgroup MainRebFunctions List of the main REBOUND API functions
+ * @details These are the functions that typically need to be called by the user.
  * @{
  */
 /**
@@ -502,14 +507,14 @@ struct reb_simulation* reb_create_simulation();
 
 /**
  * @brief Performon one integration step
- * @details you rarely want to call this function yourself.
+ * @details You rarely want to call this function yourself.
  * Use reb_integrate instead.
  * @param r The rebound simulation to be integrated by one step.
  */
 void reb_step(struct reb_simulation* const r);
 
 /**
- * @brief Performon an integration
+ * @brief Performs the actual integration
  * @details This function performs an integration  from the current time t until time tmax.
  * @param r The rebound simulation to be integrated.
  * @param tmax The time to be integrated to. Set this to INFINITY to integrate forever.
@@ -612,6 +617,7 @@ int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted);
  */
 void reb_run_heartbeat(struct reb_simulation* const r);
 
+/** @} */
 /** @} */
 
 
