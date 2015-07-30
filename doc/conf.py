@@ -58,12 +58,24 @@ with open("c_examples.rst","w") as fd:
                 print "Warning: Did not find description in "+problemc
 
 # iPython examples:
-if not os.path.exists("ipython"):
-    os.makedirs("ipython")
+import shutil
+shutil.rmtree('./ipython')
+os.makedirs("./ipython")
 if 1:
-    os.chdir("ipython")
-    for example in glob.glob("../../ipython_examples/*.ipynb"):
-        subprocess.check_output(["ipython", "nbconvert", example, "--to", "rst"])
+    try:
+        os.chdir("ipython")
+        for example in glob.glob("../../ipython_examples/*.ipynb"):
+            subprocess.check_output(["ipython", "nbconvert", example, "--to", "rst"])
+    except:
+        with open("ipython.rst","w") as fd:
+            fd.write("Examples can be found on github\n")
+            fd.write("-------------------------------\n\n")
+            fd.write("Due to a bug in the readthedocs system, the iPython notebooks are currently not included here. To view them, head over to github: \n")
+            fd.write("https://github.com/hannorein/rebound/tree/master/ipython_examples \n")
+    finally:
+        os.chdir("../")
+        
+        
 
 
 # If extensions (or modules to document with autodoc) are in another directory,
