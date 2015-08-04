@@ -337,6 +337,13 @@ class Simulation(object):
         """
         return self.simulation.contents.N
 
+    @property 
+    def N_real(self):
+        """
+        Get the current number of real (i.e. no variational/shadow) particles in the simulation.
+        """
+        return self.simulation.contents.N-self.simulation.contents.N_var
+
     @property
     def integrator(self):
         """
@@ -535,6 +542,7 @@ class Simulation(object):
 # Orbit calculation
     def calculate_orbits(self, heliocentric=False):
         """ Returns an array of Orbits of length N-1.
+        If MEGNO is enabled, variational particles will be ignored.
 
         Parameters
         ----------
@@ -543,7 +551,7 @@ class Simulation(object):
         """
         _particles = self.particles
         orbits = []
-        for i in range(1,self.N):
+        for i in range(1,self.N_real):
             if heliocentric:
                 com = _particles[0]
             else:
@@ -567,9 +575,9 @@ class Simulation(object):
         vz = 0.
         ps = self.particles    # particle pointer
         if last is not None:
-            last = min(last, self.N)
+            last = min(last, self.N_real)
         else:
-            last = self.N
+            last = self.N_real
         for i in range(last):
             m  += ps[i].m
             x  += ps[i].x*ps[i].m
