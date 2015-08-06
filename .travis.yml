@@ -9,6 +9,7 @@ addons:
             - python-virtualenv
             - python-numpy
             - python-matplotlib
+            - python-scipy
 install:
     - virtualenv --system-site-packages venv && source venv/bin/activate
     - pip install -e .
