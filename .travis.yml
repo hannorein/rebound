@@ -25,7 +25,13 @@ script:
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py CloseEncounters.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py EscapingParticles.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Forces.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py FourierSpectrum.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Horizons.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Megno.ipynb | python 
+    #- cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Parallel.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py ParticleIDsAndRemoval.ipynb | python 
+    #- cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Testparticles.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Units.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py WHFast.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/python_examples/dragforce/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/horizons/ && python problem.py
@@ -37,12 +43,3 @@ script:
     - cd $TRAVIS_BUILD_DIR/python_examples/outersolarsystem/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/simple_orbit/ && python problem.py
 
-# Ignoring examples with complicated dependencies
-#    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Megno.ipynb | python 
-#    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Testparticles.ipynb | python 
-#    - cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Parallel.ipynb | python 
-#    - cd $TRAVIS_BUILD_DIR/examples/opencl/ && make
-#    - cd examples/restricted_threebody_mpi/ && make
-#    - cd examples/shearing_sheet_fft/ && make
-#    - cd examples/selfgravity_disc_grape/ && make
-#    - cd examples/shearing_sheet_grape/ && make
