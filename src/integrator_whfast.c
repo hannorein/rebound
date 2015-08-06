@@ -138,6 +138,8 @@ static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
 }
 
 
+#define WHFAST_NMAX_QUART 64 	///< Maximum number of iterations for quartic solver
+#define WHFAST_NMAX_NEWT  32	///< Maximum number of iterations for Newton's method
 /****************************** 
  * Keplerian motion           */
 static void kepler_step(struct reb_particle* const restrict p_j, const double* const eta,  const double G, unsigned int i, double _dt, unsigned int* timestep_warning, const int N_var){
@@ -179,7 +181,6 @@ double X;
 	if(fastabs(X-oldX) > 0.01*X_per_period){
 		// Linear guess
 		X = beta*_dt/M;
-		const int WHFAST_NMAX_QUART = 64; 	// Maximum number of iterations for quartic solver
 		static double prevX[WHFAST_NMAX_QUART+1];
 		for(int n_lag=1; n_lag < WHFAST_NMAX_QUART; n_lag++){
 			stiefel_Gs3(Gs, beta, X);
@@ -204,7 +205,6 @@ double X;
 		ri = 1./(r0 + eta0Gs1zeta0Gs2);
 	}else{
 		double oldX2 = NAN; 			// NAN might be a GNU extension, any value other than X works.
-		const int WHFAST_NMAX_NEWT  = 32;	// Maximum number of iterations for Newton's method
 		for (int n_hg=1;n_hg<WHFAST_NMAX_NEWT;n_hg++){
 			oldX2 = oldX;
 			oldX = X;

@@ -57,6 +57,9 @@ void integrator_generate_constants(void);
 #error IAS15 integrator not working with MPI.
 #endif
 
+/**
+ * @brief Struct containing pointers to intermediate values
+ */
 struct reb_dpconst7 {
 	double* const restrict p0;  ///< Temporary values at intermediate step 0 
 	double* const restrict p1;  ///< Temporary values at intermediate step 1 

@@ -63,6 +63,8 @@ static void reb_integrator_wh_ah(struct reb_particle* const particles, const dou
 static void reb_integrator_wh_to_jacobi(struct reb_particle* const particles, const double* const eta, const int N, const int N_active);
 static void reb_integrator_wh_from_jacobi(struct reb_particle* const particles, const double* const eta, const int N, const int N_active);
 
+#define DANBYB 1.e-13	///< Close to smallest relative floating point number
+
 void reb_integrator_wh_part1(struct reb_simulation* r){
 	const int N = r->N;
 	const int N_active = r->N_active;
@@ -335,7 +337,6 @@ static void reb_drift_dan(struct reb_particle* pv, double mu, double dt0, int* i
 			double s, c, xkep;
 			reb_drift_kepmd(dm,es,ec,&xkep,&s,&c);
 			double fchk = (xkep - ec*s + es*(1.-c) - dm);
-#define DANBYB 1.e-13
 			if (fchk*fchk > DANBYB){
 				*iflag =1;
 				return;

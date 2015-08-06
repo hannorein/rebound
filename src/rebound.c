@@ -1,6 +1,6 @@
 /**
- * @file 	main.c
- * @brief 	Main routine, iteration loop, timing.
+ * @file 	rebound.c
+ * @brief 	Main REBOUND control structures and routine, iteration loop.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
@@ -51,7 +51,7 @@
 #ifdef OPENMP
 #include <omp.h>
 #endif
-#define MAX(a, b) ((a) < (b) ? (b) : (a))
+#define MAX(a, b) ((a) < (b) ? (b) : (a))		///< Returns the maximum of a and b
 
 #ifndef LIBREBOUND
 static const char* logo[];				/**< Logo of rebound. */

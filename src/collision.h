@@ -1,5 +1,5 @@
 /**
- * @file 	collisions.h
+ * @file 	collision.h
  * @brief 	Collision search. 
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  *
@@ -25,7 +25,7 @@
 #ifndef _COLLISIONS_H
 #define _COLLISIONS_H
 /**
- * Search for collisions and resolve them.
+ * @brief Search for collisions and resolve them.
  */
 void reb_collision_search(struct reb_simulation* const r);
 

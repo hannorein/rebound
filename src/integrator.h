@@ -26,15 +26,16 @@
 #define _INTEGRATOR_H
 struct reb_simulation;
 
-/*
- * The first half of the integrator step.
- * This function is called at the beginning of the timestep. It 
+/**
+ * @brief The first half of the integrator step.
+ * @details This function is called at the beginning of the timestep. It 
  * advances the positions by 1/2 timestep.
  */
 void reb_integrator_part1(struct reb_simulation* r);
-/*
- * The second half of the integrator step.
- * This function is called after gravitational (and non-gravitational) 
+
+/**
+ * @brief The second half of the integrator step.
+ * @details This function is called after gravitational (and non-gravitational) 
  * forces for each particle have been calculated. It advances the 
  * velocity by 1 timestep and the positions by 1/2 timestep.
  * At the end of this function, the positions and velocities are in
@@ -43,8 +44,9 @@ void reb_integrator_part1(struct reb_simulation* r);
 void reb_integrator_part2(struct reb_simulation* r);
 
 
-/* This function updates the acceleration on all particles. 
- * It uses the current position and velocity data in the 
+/** 
+ * @brief This function updates the acceleration on all particles. 
+ * @details It uses the current position and velocity data in the 
  * (struct reb_particle*) particles structure.
  */
 void reb_update_acceleration(struct reb_simulation* r);

@@ -1,13 +1,9 @@
 /**
- * @file 	collisions.c
- * @brief 	Direct collision search, O(N^2).
+ * @file 	collision.c
+ * @brief 	Collision search routine.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  *
- * @details 	This is the crudest implementation of a collision search
- * and checks every pair of particles. It is only useful very small 
- * particle numbers (N<~100) as it scales as O(N^2). 
- *
- * A collision is defined as an overlap between two particles. This
+ * @details 	A collision is defined as an overlap between two particles. This
  * is only an approximation and works only if the timestep is small
  * enough. More precisely, dt << v / Rp, where v is the typical velocity
  * and Rp the radius of a particle. Furthermore, particles must be 
