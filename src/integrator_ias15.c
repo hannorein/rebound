@@ -58,13 +58,13 @@ void integrator_generate_constants(void);
 #endif
 
 struct reb_dpconst7 {
-	double* const restrict p0;
-	double* const restrict p1;
-	double* const restrict p2;
-	double* const restrict p3;
-	double* const restrict p4;
-	double* const restrict p5;
-	double* const restrict p6;
+	double* const restrict p0;  ///< Temporary values at intermediate step 0 
+	double* const restrict p1;  ///< Temporary values at intermediate step 1 
+	double* const restrict p2;  ///< Temporary values at intermediate step 2 
+	double* const restrict p3;  ///< Temporary values at intermediate step 3 
+	double* const restrict p4;  ///< Temporary values at intermediate step 4 
+	double* const restrict p5;  ///< Temporary values at intermediate step 5 
+	double* const restrict p6;  ///< Temporary values at intermediate step 6 
 };
 
 // Helper functions for resetting the b and e coefficients

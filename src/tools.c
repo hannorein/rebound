@@ -216,8 +216,8 @@ struct reb_particle reb_tools_init_orbit3d(double G, double M, double m, double 
 
 static const struct reb_orbit reb_orbit_nan = {.a = NAN, .r = NAN, .h = NAN, .P = NAN, .l = NAN, .e = NAN, .inc = NAN, .Omega = NAN, .omega = NAN, .f = NAN};
 
-#define MIN_REL_ERROR 1.0e-12
-#define TINY 1.E-308
+#define MIN_REL_ERROR 1.0e-12	///< Close to smallest relative floating point number, used for orbit calculation
+#define TINY 1.E-308 		///< Close to smallest representable floating point number, used for orbit calculation
 
 struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_particle primary){
 	struct reb_orbit o;

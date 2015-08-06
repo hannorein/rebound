@@ -40,6 +40,9 @@
 #include "mpi.h"
 #endif // MPI
 
+/**
+ * @brief Same as reb_output_check but with a phase argument
+ */
 int reb_output_check_phase(struct reb_simulation* r, double interval,double phase){
 	double shift = r->t+interval*phase;
 	if (floor(shift/interval)!=floor((shift-r->dt)/interval)){

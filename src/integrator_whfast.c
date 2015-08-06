@@ -39,8 +39,8 @@
 #include "integrator.h"
 #include "integrator_whfast.h"
 
-#define MAX(a, b) ((a) < (b) ? (b) : (a))
-#define MIN(a, b) ((a) > (b) ? (b) : (a))
+#define MAX(a, b) ((a) < (b) ? (b) : (a))	///< Returns the maximum of a and b
+#define MIN(a, b) ((a) > (b) ? (b) : (a))	///< Returns the minimum of a and b
 
 
 // Fast inverse factorial lookup table
@@ -179,7 +179,7 @@ double X;
 	if(fastabs(X-oldX) > 0.01*X_per_period){
 		// Linear guess
 		X = beta*_dt/M;
-#define WHFAST_NMAX_QUART 64
+		const int WHFAST_NMAX_QUART = 64; 	// Maximum number of iterations for quartic solver
 		static double prevX[WHFAST_NMAX_QUART+1];
 		for(int n_lag=1; n_lag < WHFAST_NMAX_QUART; n_lag++){
 			stiefel_Gs3(Gs, beta, X);
@@ -203,8 +203,8 @@ double X;
 		const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
 		ri = 1./(r0 + eta0Gs1zeta0Gs2);
 	}else{
-		double oldX2 = NAN; // NAN might be a GNU extension, any value other than X works.
-#define WHFAST_NMAX_NEWT 32
+		double oldX2 = NAN; 			// NAN might be a GNU extension, any value other than X works.
+		const int WHFAST_NMAX_NEWT  = 32;	// Maximum number of iterations for Newton's method
 		for (int n_hg=1;n_hg<WHFAST_NMAX_NEWT;n_hg++){
 			oldX2 = oldX;
 			oldX = X;

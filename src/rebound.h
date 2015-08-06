@@ -27,7 +27,7 @@
 #define _MAIN_H
 #ifndef M_PI
 // Make sure M_PI is defined. 
-#define M_PI           3.14159265358979323846
+#define M_PI           3.14159265358979323846		///< The mathematical constant pi.
 #endif
 
 extern const char* reb_build_str;	///< Date and time build string.
