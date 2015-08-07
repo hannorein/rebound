@@ -45,7 +45,7 @@ void run_sim(){
 
 	// Setup particles
 	double disc_mass = 2e-1;	// Total disc mass
-	int N = 10000;			// Number of particles
+	int N = 100000;			// Number of particles
 	// Initial conditions
 	struct reb_particle star = {0};
 	star.m 		= 1;
@@ -67,7 +67,7 @@ void run_sim(){
 	}
 
 	r->heartbeat = heartbeat;
-	reb_integrate(r, 6.0);
+	reb_integrate(r, 1.0);
 	reb_free_simulation(r);
 }
 
