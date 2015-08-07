@@ -34,7 +34,7 @@ void run_sim(){
 	struct reb_simulation* const r = reb_create_simulation();
 	// Setup constants
 	r->integrator	= REB_INTEGRATOR_LEAPFROG;
-	r->gravity	= REB_GRAVITY_TREE;
+	r->gravity	= REB_GRAVITY_BASIC;
 	r->boundary	= REB_BOUNDARY_OPEN;
 	r->opening_angle2	= 1.5;	// This constant determines the accuracy of the tree code gravity estimate.
 	r->G 		= 1;		
@@ -45,7 +45,7 @@ void run_sim(){
 
 	// Setup particles
 	double disc_mass = 2e-1;	// Total disc mass
-	int N = 100000;			// Number of particles
+	int N = 2000;			// Number of particles
 	// Initial conditions
 	struct reb_particle star = {0};
 	star.m 		= 1;
@@ -72,22 +72,28 @@ void run_sim(){
 }
 
 int main(int argc, char* argv[]){
-	int nt = omp_get_max_threads();
+	// Get the number of processors
+	int np = omp_get_num_procs();
+	// Set the number of OpenMP threads to be the number of processors	
+	omp_set_num_threads(np);
+
+	
+	// First, run it with the OpenMP turned on.
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double timing1 = tim.tv_sec+(tim.tv_usec/1000000.0);
-	// First, run it with the default number of OMP_NUM_THREADS.
-	// This is typically the number of physical cores (plus hyper-threaded ones)
-	// on the system. This can be changed by environment variables.
 	run_sim();
+
+	// Reduce the number of threads to 1 and run again.
 	gettimeofday(&tim, NULL);
 	double timing2 = tim.tv_sec+(tim.tv_usec/1000000.0);
-	// Reduce the number of threads to 1 and run again.
 	omp_set_num_threads(1);
 	run_sim();
 	gettimeofday(&tim, NULL);
 	double timing3 = tim.tv_sec+(tim.tv_usec/1000000.0);
-	printf("\n\nOpenMP speed-up: %.3fx (perfect scaling would give %dx)\n",(timing3-timing2)/(timing2-timing1),nt);
+
+	// Output speedup
+	printf("\n\nOpenMP speed-up: %.3fx (perfect scaling would give %dx)\n",(timing3-timing2)/(timing2-timing1),np);
 }
 
 
