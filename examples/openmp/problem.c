@@ -2,10 +2,9 @@
  * OpenMP example.
  *
  * A self-gravitating disc is integrated using
- * the leap frog integrator. Shared memory 
- * parallelization using OpenMP is enabled. 
- * By default OpenMP uses as many threads
- * as there are cores on the system.
+ * the leap frog integrator and direct summation.
+ * Shared memory parallelization using OpenMP 
+ * is enabled in the Makefile.
  *
  * Note that you need a compiler which supports 
  * OpenMP to run this example. By default, the 
@@ -27,8 +26,6 @@
 #include "tools.h"
 #include "output.h"
 
-
-void heartbeat(struct reb_simulation* const r);
 
 void run_sim(){
 	struct reb_simulation* const r = reb_create_simulation();
@@ -66,7 +63,6 @@ void run_sim(){
 		reb_add(r, pt);
 	}
 
-	r->heartbeat = heartbeat;
 	reb_integrate(r, 1.0);
 	reb_free_simulation(r);
 }
@@ -96,9 +92,3 @@ int main(int argc, char* argv[]){
 	printf("\n\nOpenMP speed-up: %.3fx (perfect scaling would give %dx)\n",(timing3-timing2)/(timing2-timing1),np);
 }
 
-
-void heartbeat(struct reb_simulation* const r){
-	if (reb_output_check(r,10.0*r->dt)){
-		reb_output_timing(r,0);
-	}
-}

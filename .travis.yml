@@ -14,7 +14,6 @@ install:
     - virtualenv --system-site-packages venv && source venv/bin/activate
     - pip install -e .
 compiler:
-    - clang
     - gcc
 script:
     - cd $TRAVIS_BUILD_DIR/examples/ && make
