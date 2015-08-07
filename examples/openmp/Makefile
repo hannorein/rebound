@@ -1,4 +1,18 @@
+# turn on OpenMP
 export OPENMP=1
+
+
+# On Mac OSX, we'll have to use the GNU compilers.
+# You can install them with homebrew. 
+OS=$(shell uname)
+	ifeq ($(OS), Darwin)
+	# We'll use specifically the GNU compiler version 5 
+	export CC=gcc-5
+	# Use the OSX linker
+	export OPT=-Wa,-q
+endif
+
+# Include the other definitions from the default makefile
 include ../../src/Makefile.defs
 
 all: librebound

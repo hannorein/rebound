@@ -6,6 +6,15 @@
  * parallelization using OpenMP is enabled. 
  * By default OpenMP uses as many threads
  * as there are cores on the system.
+ *
+ * Note that you need a compiler which supports 
+ * OpenMP to run this example. By default, the 
+ * OSX compilers from Apple do currently not
+ * support OpenMP. You can install the GNU 
+ * C compilers easily with homebrew. Look at the
+ * Makefile of this example to see how you can setup
+ * the parameters to compile REBOUND on both OSX
+ * and Linux.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +22,7 @@
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
+#include <omp.h>
 #include "rebound.h"
 #include "tools.h"
 #include "output.h"
@@ -20,7 +30,7 @@
 
 void heartbeat(struct reb_simulation* const r);
 
-int main(int argc, char* argv[]){
+void run_sim(){
 	struct reb_simulation* const r = reb_create_simulation();
 	// Setup constants
 	r->integrator	= REB_INTEGRATOR_LEAPFROG;
@@ -57,8 +67,29 @@ int main(int argc, char* argv[]){
 	}
 
 	r->heartbeat = heartbeat;
-	reb_integrate(r, INFINITY);
+	reb_integrate(r, 6.0);
+	reb_free_simulation(r);
 }
+
+int main(int argc, char* argv[]){
+	int nt = omp_get_max_threads();
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	double timing1 = tim.tv_sec+(tim.tv_usec/1000000.0);
+	// First, run it with the default number of OMP_NUM_THREADS.
+	// This is typically the number of physical cores (plus hyper-threaded ones)
+	// on the system. This can be changed by environment variables.
+	run_sim();
+	gettimeofday(&tim, NULL);
+	double timing2 = tim.tv_sec+(tim.tv_usec/1000000.0);
+	// Reduce the number of threads to 1 and run again.
+	omp_set_num_threads(1);
+	run_sim();
+	gettimeofday(&tim, NULL);
+	double timing3 = tim.tv_sec+(tim.tv_usec/1000000.0);
+	printf("\n\nOpenMP speed-up: %.3fx (perfect scaling would give %dx)\n",(timing3-timing2)/(timing2-timing1),nt);
+}
+
 
 void heartbeat(struct reb_simulation* const r){
 	if (reb_output_check(r,10.0*r->dt)){
