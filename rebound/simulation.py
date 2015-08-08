@@ -603,7 +603,7 @@ class Simulation(object):
                 com = _particles[0]
             else:
                 com = self.calculate_com(i)
-            orbits.append(_particles[i].calculate_orbit(self.simulation, primary=com))
+            orbits.append(_particles[i].calculate_orbit(self, primary=com))
         return orbits
 
 # COM calculation 
