@@ -185,7 +185,7 @@ class Particle(Structure):
                 raise ValueError("Need to specify simulation when initializing particle with orbital elements.")
             if primary is None:
                 clibrebound.reb_get_com.restype = Particle
-                primary = clibrebound.reb_get_com(simulation)
+                primary = clibrebound.reb_get_com(simulation.simulation)
             if a is None:
                 raise ValueError("You need to pass a semi major axis to initialize the particle using orbital elements.")
             if anom is None:

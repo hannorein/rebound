@@ -1,6 +1,7 @@
 # Unit constants
 import math
 
+# All units entered in SI (kg, m, s)
 G_SI = 6.674e-11
 times_SI = {'s':1.,
     'hr':3600.,
@@ -60,11 +61,10 @@ def convert_acc(acc, old_l, old_t, new_l, new_t):
 
 def convert_G(new_l, new_t, new_m):
     return G_SI*masses_SI[new_m]*times_SI[new_t]**2/lengths_SI[new_l]**3
-
        
 def check_units(newunits):   
     if len(newunits) is not 3:
-        raise Exception("Error: Need to pass exactly 3 units for length, time, and mass (any order), see python_tutorials/Units.ipynb")
+        raise Exception("Error: Need to pass exactly 3 units for length, time, and mass (any order), see ipython_examples/Units.ipynb")
     
     l_unit = t_unit = m_unit = None
     for unit in newunits:
@@ -77,6 +77,6 @@ def check_units(newunits):
             m_unit = unit
 
     if l_unit is None or t_unit is None or m_unit is None:
-        raise Exception("Error: Need to assign rebound.units a tuple consisting of 3 units for length, time, and mass (any order).  See python_tutorials/Units.ipynb.  If you passed such a tuple, at least one of your units isn't in our list.  Please update the dictionaries at the bottom of rebound/rebound/librebound.py and send a pull request!")
+        raise Exception("Error: Need to assign rebound.units a tuple consisting of 3 units for length, time, and mass (any order).  See ipython/examples/Units.ipynb.  If you passed such a tuple, at least one of your units isn't in our list.  Please update the dictionaries at the top of rebound/rebound/units.py and send a pull request!")
 
     return (l_unit, t_unit, m_unit)

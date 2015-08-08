@@ -172,7 +172,6 @@ class Simulation(object):
                 self.simulation = clibrebound.reb_create_simulation_from_binary(c_char_p(filename.encode("ascii")))
             else:
                 raise ValueError("File does not exist.")
-        
     
     AFF = CFUNCTYPE(None,POINTER(reb_simulation))
     afp = None # additional forces pointer
@@ -409,8 +408,39 @@ class Simulation(object):
     @property
     def units(self):
         """
-        Tuple of the units for length, time and mass.  Can be set in any order, and strings are not case-sensitive.  See ipython_examples/Units.ipynb for more information.  Additional units can be added to rebound/rebound/units.py.  Units should be set before adding particles to the simulation (will give error otherwise).
+        Tuple of the units for length, time and mass.  Can be set in any order, and strings are not case-sensitive.  See ipython_examples/Units.ipynb for more information.  You can check the units' exact values and add Additional units in rebound/rebound/units.py.  Units should be set before adding particles to the simulation (will give error otherwise).
 
+        Currently supported Units 
+        -------------------------
+
+        Times:
+        Hr          : Hours
+        Yr          : Julian years
+        Jyr         : Julian years
+        Sidereal_yr : Sidereal year
+        Yr2pi       : Year divided by 2pi, with year defined as orbital period of planet at 1AU around 1Msun star
+        Kyr         : Kiloyears (Julian)
+        Myr         : Megayears (Julian)
+        Gyr         : Gigayears (Julian)
+
+        Lengths:
+        M           : Meters
+        Cm          : Centimeters
+        Km          : Kilometers
+        AU          : Astronomical Units
+
+        Masses:
+        Kg          : Kilograms
+        Msun        : Solar masses
+        Mmercury    : Mercury masses
+        Mvenus      : Venus masses
+        Mearth      : Earth masses
+        Mmars       : Mars masses
+        Mjupiter    : Jupiter masses
+        Msaturn     : Saturn masses
+        Muranus     : Neptune masses
+        Mpluto      : Pluto masses
+        
         Usage
         -----
         
@@ -422,7 +452,7 @@ class Simulation(object):
     def units(self, newunits):
         newunits = check_units(newunits)        
         if self.particles: # some particles are loaded
-            raise Exception("Error:  You cannot set the units after populating the particles array.  See Units.ipynb in python_tutorials.")
+            raise AttributeError("Error:  You cannot set the units after populating the particles array.  See ipython_examples/Units.ipynb.")
         self.update_units(newunits) 
 
     def update_units(self, newunits): 
@@ -433,8 +463,15 @@ class Simulation(object):
 
     def convert_particle_units(self, *args): 
         """
-        Will convert the units for the simulation (i.e. convert G) as 
+        Will convert the units for the simulation (i.e. convert G) as well as the particles' cartesian elements.
+        Must have set sim.units ahead of calling this function so REBOUND knows what units to convert from.
+
+        Parameters
+        ----------
+        3 strings corresponding to units of time, length and mass.  Can be in any order and aren't case sensitive.        You can add new units to rebound/rebound/units.py
         """
+        if None in self.units.values():
+            raise AttributeError("Must set sim.units before calling convert_particle_units in order to know what units to convert from.")
         new_l, new_t, new_m = check_units(args)
         for p in self.particles:
             units_convert_particle(p, self._units['length'], self._units['time'], self._units['mass'], new_l, new_t, new_m)
