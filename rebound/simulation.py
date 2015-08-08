@@ -172,7 +172,6 @@ class Simulation(object):
                 self.simulation = clibrebound.reb_create_simulation_from_binary(c_char_p(filename.encode("ascii")))
             else:
                 raise ValueError("File does not exist.")
-        
     
     AFF = CFUNCTYPE(None,POINTER(reb_simulation))
     afp = None # additional forces pointer
@@ -408,15 +407,53 @@ class Simulation(object):
 
     @property
     def units(self):
+        """
+        Tuple of the units for length, time and mass.  Can be set in any order, and strings are not case-sensitive.  See ipython_examples/Units.ipynb for more information.  You can check the units' exact values and add Additional units in rebound/rebound/units.py.  Units should be set before adding particles to the simulation (will give error otherwise).
+
+        Currently supported Units 
+        -------------------------
+
+        Times:
+        Hr          : Hours
+        Yr          : Julian years
+        Jyr         : Julian years
+        Sidereal_yr : Sidereal year
+        Yr2pi       : Year divided by 2pi, with year defined as orbital period of planet at 1AU around 1Msun star
+        Kyr         : Kiloyears (Julian)
+        Myr         : Megayears (Julian)
+        Gyr         : Gigayears (Julian)
+
+        Lengths:
+        M           : Meters
+        Cm          : Centimeters
+        Km          : Kilometers
+        AU          : Astronomical Units
+
+        Masses:
+        Kg          : Kilograms
+        Msun        : Solar masses
+        Mmercury    : Mercury masses
+        Mvenus      : Venus masses
+        Mearth      : Earth masses
+        Mmars       : Mars masses
+        Mjupiter    : Jupiter masses
+        Msaturn     : Saturn masses
+        Muranus     : Neptune masses
+        Mpluto      : Pluto masses
+        
+        Usage
+        -----
+        
+        sim.units = ('yr', 'AU', 'Msun')
+        """
         return self._units
 
     @units.setter
     def units(self, newunits):
         newunits = check_units(newunits)        
         if self.particles: # some particles are loaded
-            raise Exception("Error:  You cannot set the units after populating the particles array.  See Units.ipynb in python_tutorials.")
+            raise AttributeError("Error:  You cannot set the units after populating the particles array.  See ipython_examples/Units.ipynb.")
         self.update_units(newunits) 
-
 
     def update_units(self, newunits): 
         self._units['length'] = newunits[0] 
@@ -425,6 +462,16 @@ class Simulation(object):
         self.G = convert_G(self._units['length'], self._units['time'], self._units['mass'])
 
     def convert_particle_units(self, *args): 
+        """
+        Will convert the units for the simulation (i.e. convert G) as well as the particles' cartesian elements.
+        Must have set sim.units ahead of calling this function so REBOUND knows what units to convert from.
+
+        Parameters
+        ----------
+        3 strings corresponding to units of time, length and mass.  Can be in any order and aren't case sensitive.        You can add new units to rebound/rebound/units.py
+        """
+        if None in self.units.values():
+            raise AttributeError("Must set sim.units before calling convert_particle_units in order to know what units to convert from.")
         new_l, new_t, new_m = check_units(args)
         for p in self.particles:
             units_convert_particle(p, self._units['length'], self._units['time'], self._units['mass'], new_l, new_t, new_m)
@@ -482,7 +529,7 @@ class Simulation(object):
                 if kwargs == {}: # copy particle
                     clibrebound.reb_add(self.simulation, particle)
                 else: # use particle as primary
-                    self.add(Particle(simulation=self.simulation, primary=particle, **kwargs))
+                    self.add(Particle(simulation=self, primary=particle, **kwargs))
             elif isinstance(particle, list):
                 for p in particle:
                     self.add(p)
@@ -492,7 +539,7 @@ class Simulation(object):
                 self.add(horizons.getParticle(particle,**kwargs))
                 units_convert_particle(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass'])
         else: 
-            self.add(Particle(simulation=self.simulation, **kwargs))
+            self.add(Particle(simulation=self, **kwargs))
 
 # Particle getter functions
     @property
@@ -556,7 +603,7 @@ class Simulation(object):
                 com = _particles[0]
             else:
                 com = self.calculate_com(i)
-            orbits.append(_particles[i].calculate_orbit(self.simulation, primary=com))
+            orbits.append(_particles[i].calculate_orbit(self, primary=com))
         return orbits
 
 # COM calculation 
@@ -564,7 +611,8 @@ class Simulation(object):
         """
         Returns the center of momentum for all particles in the simulation
         If 'last' is specified only calculate the center of momentum for the
-        first 'last' particles in the array.
+        first 'last' particles in the array (i.e., indices up to i-1, as used 
+        in Jacobi coordinates).
         """
         m = 0.
         x = 0.
