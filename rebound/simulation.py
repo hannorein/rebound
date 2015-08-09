@@ -173,7 +173,6 @@ class Simulation(object):
                 self.simulation = clibrebound.reb_create_simulation_from_binary(c_char_p(filename.encode("ascii")))
             else:
                 raise ValueError("File does not exist.")
-    
     AFF = CFUNCTYPE(None,POINTER(reb_simulation))
     afp = None # additional forces pointer
     ptmp = None # post timestep modifications pointer 
@@ -207,9 +206,9 @@ class Simulation(object):
     @property
     def additional_forces(self):
         """
-        Get or set a function pointer to include additional forces.
+        Get or set a function pointer for calculating additional forces in the simulation.
 
-        The function pointer can be a python or a C function of type
+        The argument can be a python function or something that can be cast to a C function of type
         CFUNCTYPE(None,POINTER(reb_simulation)). 
         If the forces are velocity dependent, the flag 
         force_is_velocity_dependent needs to be set to 1. Otherwise
@@ -220,37 +219,23 @@ class Simulation(object):
 
     @additional_forces.setter
     def additional_forces(self, func):
-        if(isinstance(func,types.FunctionType)):
-            # Python function pointer
-            self.afp = self.AFF(func)
-            self.simulation.contents.additional_forces = self.afp
-        else:
-            # C function pointer
-            self.simulation.contents.additional_forces = func
-            self.afp = "C function pointer currently not accessible from python.  Edit simulation.py"
+        self.afp = self.AFF(func)
+        self.simulation.contents.additional_forces = self.afp
 
     @property
     def post_timestep_modifications(self):
         """
         Get or set a function pointer for post-timestep modifications.
 
-        The function pointer can be a python or a C function of type
+        The argument can be a python function or something that can be cast to a C function of type
         CFUNCTYPE(None,POINTER(reb_simulation)). 
         """
         return self.ptmp
 
     @post_timestep_modifications.setter
     def post_timestep_modifications(self, func):
-        if(isinstance(func, types.FunctionType)):
-            # Python function pointer
-            self.ptmp = self.AFF(func)
-            self.simulation.contents.post_timestep_modifications = self.ptmp
-        else:
-            # C function pointer
-            #self.simulation.contents.post_timestep_modifications = func
-            #self.ptmp = "C function pointer currently not accessible from python.  Edit simulation.py" 
-            self.ptmp = self.AFF(func)
-            self.simulation.contents.post_timestep_modifications = self.ptmp
+        self.ptmp = self.AFF(func)
+        self.simulation.contents.post_timestep_modifications = self.ptmp
 
 # Setter/getter of parameters and constants
     @property

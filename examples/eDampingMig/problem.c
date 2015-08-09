@@ -13,12 +13,16 @@
 #include "rebound.h"
 #include "libreboundxf.h"
 #include "tools.h"
+#include "time.h"
 
 void heartbeat(struct reb_simulation* const r);
 
-double tmax = 1.e5;
+double tmax = 1.e6;
 
 int main(int argc, char* argv[]){
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 	struct reb_simulation* r = reb_create_simulation();
 	// Setup constants
 	r->dt 			= 0.012;		// initial timestep.
@@ -55,6 +59,9 @@ int main(int argc, char* argv[]){
 
 
 	reb_integrate(r, tmax);
+	gettimeofday(&tim, NULL);
+	double timing_final = tim.tv_sec + (tim.tv_usec/1000000.0);
+	printf("%f\n", timing_final - timing_initial);
 }
 
 void heartbeat(struct reb_simulation* const r){
