@@ -153,6 +153,7 @@ reb_simulation._fields_ = [("t", c_double),
                 ("heartbeat", CFUNCTYPE(None,POINTER(reb_simulation))),
                 ("coefficient_of_restitution", CFUNCTYPE(c_double,POINTER(reb_simulation), c_double)),
                 ("collisions_resolve", CFUNCTYPE(None,POINTER(reb_simulation), c_void_p)),
+                ("xf_params", c_void_p),
                  ]
 
 
@@ -175,7 +176,6 @@ class Simulation(object):
                 self.simulation = clibrebound.reb_create_simulation_from_binary(c_char_p(filename.encode("ascii")))
             else:
                 raise ValueError("File does not exist.")
-    
     AFF = CFUNCTYPE(None,POINTER(reb_simulation))
     CORFF = CFUNCTYPE(c_double,POINTER(reb_simulation), c_double)
     afp = None # additional forces pointer
@@ -211,47 +211,34 @@ class Simulation(object):
     @property
     def additional_forces(self):
         """
-        Get or set a function pointer to include additional forces.
+        Get or set a function pointer for calculating additional forces in the simulation.
 
-        The function pointer can be a python or a C function of type
-        CFUNCTYPE(None,POINTER(reb_simulation)). 
+        The argument can be a python function or something that can 
+        be cast to a C function of type CFUNCTYPE(None,POINTER(reb_simulation)). 
         If the forces are velocity dependent, the flag 
         force_is_velocity_dependent needs to be set to 1. Otherwise
         the particle structures might contain incorrect velocity 
-        values
+        values.
         """
         return self.afp   # getter might not be needed
-
     @additional_forces.setter
     def additional_forces(self, func):
-        if(isinstance(func,types.FunctionType)):
-            # Python function pointer
-            self.afp = self.AFF(func)
-            self.simulation.contents.additional_forces = self.afp
-        else:
-            # C function pointer
-            self.simulation.contents.additional_forces = func
-            self.afp = "C function pointer value currently not accessible from python.  Edit simulation.py"
+        self.afp = self.AFF(func)
+        self.simulation.contents.additional_forces = self.afp
 
     @property
     def post_timestep_modifications(self):
         """
         Get or set a function pointer for post-timestep modifications.
 
-        The function pointer can be a python or a C function of type
-        CFUNCTYPE(None,POINTER(reb_simulation)). 
+        The argument can be a python function or something that can be cast to a C function or a
+        python function.
         """
         return self.ptmp
     @post_timestep_modifications.setter
     def post_timestep_modifications(self, func):
-        if(isinstance(func, types.FunctionType)):
-            # Python function pointer
-            self.ptmp = self.AFF(func)
-            self.simulation.contents.post_timestep_modifications = self.ptmp
-        else:
-            # C function pointer
-            self.simulation.contents.post_timestep_modifications = func
-            self.ptmp = "C function pointer value currently not accessible from python.  Edit simulation.py" 
+        self.ptmp = self.AFF(func)
+        self.simulation.contents.post_timestep_modifications = self.ptmp
    
     @property 
     def coefficient_of_restitution(self):
@@ -261,14 +248,8 @@ class Simulation(object):
         return self.corfp   # getter might not be needed
     @coefficient_of_restitution.setter
     def coefficient_of_restitution(self, func):
-        if(isinstance(func,types.FunctionType)):
-            # Python function pointer
-            self.corfp = self.CORFF(func)
-            self.simulation.contents.coefficient_of_restitution = self.corfp
-        else:
-            # C function pointer
-            self.simulation.contents.coefficient_of_restitution = func
-            self.corfp = "C function pointer value currently not accessible from python.  Edit simulation.py"
+        self.corfp = self.CORFF(func)
+        self.simulation.contents.coefficient_of_restitution = self.corfp
 
 # Setter/getter of parameters and constants
     @property
