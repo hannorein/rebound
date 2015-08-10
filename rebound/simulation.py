@@ -177,7 +177,9 @@ class Simulation(object):
                 raise ValueError("File does not exist.")
     
     AFF = CFUNCTYPE(None,POINTER(reb_simulation))
+    CORFF = CFUNCTYPE(c_double,POINTER(reb_simulation), c_double)
     afp = None # additional forces pointer
+    corfp = None # coefficient of restitution function pointer
     ptmp = None # post timestep modifications pointer 
     _units = {'length':None, 'time':None, 'mass':None}
 
@@ -240,7 +242,6 @@ class Simulation(object):
         CFUNCTYPE(None,POINTER(reb_simulation)). 
         """
         return self.ptmp
-
     @post_timestep_modifications.setter
     def post_timestep_modifications(self, func):
         if(isinstance(func, types.FunctionType)):
@@ -251,6 +252,23 @@ class Simulation(object):
             # C function pointer
             self.simulation.contents.post_timestep_modifications = func
             self.ptmp = "C function pointer value currently not accessible from python.  Edit simulation.py" 
+   
+    @property 
+    def coefficient_of_restitution(self):
+        """
+        Get or set a function pointer that defined the coefficient of restitution.
+        """
+        return self.corfp   # getter might not be needed
+    @coefficient_of_restitution.setter
+    def coefficient_of_restitution(self, func):
+        if(isinstance(func,types.FunctionType)):
+            # Python function pointer
+            self.corfp = self.CORFF(func)
+            self.simulation.contents.coefficient_of_restitution = self.corfp
+        else:
+            # C function pointer
+            self.simulation.contents.coefficient_of_restitution = func
+            self.corfp = "C function pointer value currently not accessible from python.  Edit simulation.py"
 
 # Setter/getter of parameters and constants
     @property
@@ -767,6 +785,19 @@ class Simulation(object):
         are used. In such a case the boxsize must be known and is set with this function.
         """
         clibrebound.reb_configure_box(self.simulation, c_double(boxsize), c_int(root_nx), c_int(root_ny), c_int(root_nz))
+        return
+   
+    def configure_ghostboxes(self, nghostx=0, nghosty=0, nghostz=0):
+        """
+        Initialize the ghost boxes.
+
+        This function only needs to be called it boundary conditions other than "none" or
+        "open" are used. In such a case the number of ghostboxes must be known and is set 
+        with this function. All values default to 0 (no ghost boxes).
+        """
+        clibrebound.nghostx = c_int(nghostx)
+        clibrebound.nghosty = c_int(nghosty)
+        clibrebound.nghostz = c_int(nghostz)
         return
 
 
