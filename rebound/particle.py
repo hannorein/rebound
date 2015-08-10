@@ -131,7 +131,7 @@ class Particle(Structure):
         """
         return "<rebound.Particle object, id=%s m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.id,self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
-    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, id=None, date=None, simulation=None):   
+    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, r=None, id=None, date=None, simulation=None):   
         """
         Initializes a Particle structure.
         Typically users will not create Particle structures directly.
@@ -145,7 +145,7 @@ class Particle(Structure):
 
         Parameters
         ---------
-        particle    : (Particle)                For consistency with other particle addition routines.  Cannot be passed when creating a particle in this way.
+        particle    : (Particle)    For consistency with other particle addition routines.  Cannot be passed when creating a particle in this way.
         m           : (float)       Mass        (Default: 0)
         x, y, z     : (float)       Positions   (Default: 0)
         vx, vy, vz  : (float)       Velocities  (Default: 0)
@@ -156,7 +156,8 @@ class Particle(Structure):
         omega       : (float)       Argument of pericenter      (Default: 0)
         inc         : (float)       Inclination                 (Default: 0)
         Omega       : (float)       Longitude of ascending node (Default: 0)
-        MEAN        : (boolean)        Flag for whether anom refers to the mean anomaly (MEAN=True) or true anomaly (MEAN=False) (Default: False)
+        MEAN        : (boolean)     Flag for whether anom refers to the mean anomaly (MEAN=True) or true anomaly (MEAN=False) (Default: False)
+        r           : (float)       Particle radius (only used for collisional simulations)
         id          : (int)         Particle ID (arbitrary, specified by the user)
         date        : (string)      For consistency with adding particles through horizons.  Not used here.
         simulation  : (Simulation)  Simulation instance associated with this particle (Required)
@@ -223,6 +224,7 @@ class Particle(Structure):
             self.vz = vz
 
         self.id = -1 if id is None else id
+        self.r  =  0. if r is None else r
 
     def set_orbit(self,
                     simulation,

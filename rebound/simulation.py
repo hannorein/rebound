@@ -16,6 +16,9 @@ import types
 ### consitent with those in rebound.h
         
 INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "wh": 3, "leapfrog": 4, "hybrid": 5, "none": 6}
+BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
+GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3}
+COLLISIONS = {"none": 0, "direct": 1, "tree": 2}
 
 class reb_vec3d(Structure):
     _fields_ = [("x", c_double),
@@ -256,10 +259,19 @@ class Simulation(object):
         Get or set the gravitational constant. Default: 1.
         """
         return self.simulation.contents.G
-    
     @G.setter
     def G(self, value):
         self.simulation.contents.G = c_double(value)
+        
+    @property
+    def softening(self):
+        """
+        Get or set the gravitational softening parameter. Default: 0.
+        """
+        return self.simulation.contents.softening
+    @softening.setter
+    def softening(self, value):
+        self.simulation.contents.softening = c_double(value)
         
     @property 
     def dt(self):
@@ -386,6 +398,92 @@ class Simulation(object):
                 debug.integrator_package = "SWIFTER"
             else:
                 raise ValueError("Warning. Integrator not found.")
+    
+    @property
+    def boundary(self):
+        """
+        Get or set the boundary module.
+
+        Available integrators are:
+        - none (default)
+        - open
+        - periodic
+        - shear
+        
+        Check the online documentation for a full description of each of the modules. 
+        """
+        i = self.simulation.contents.boundary
+        for name, _i in BOUNDARIES.items():
+            if i==_i:
+                return name
+        return i
+    @boundary.setter
+    def boundary(self, value):
+        if isinstance(value, int):
+            self.simulation.contents.boundary = c_int(value)
+        elif isinstance(value, basestring):
+            value = value.lower()
+            if value in BOUNDARIES: 
+                self.boundary = BOUNDARIES[value]
+            else:
+                raise ValueError("Warning. Boundary condition module not found.")
+
+    @property
+    def gravity(self):
+        """
+        Get or set the gravity module.
+
+        Available integrators are:
+        - none 
+        - basic
+        - compensated (default)
+        - tree
+        
+        Check the online documentation for a full description of each of the modules. 
+        """
+        i = self.simulation.contents.gravity
+        for name, _i in GRAVITIES.items():
+            if i==_i:
+                return name
+        return i
+    @gravity.setter
+    def gravity(self, value):
+        if isinstance(value, int):
+            self.simulation.contents.gravity = c_int(value)
+        elif isinstance(value, basestring):
+            value = value.lower()
+            if value in GRAVITIES: 
+                self.gravity = GRAVITIES[value]
+            else:
+                raise ValueError("Warning. Gravity module not found.")
+
+    @property
+    def collision(self):
+        """
+        Get or set the collision module.
+
+        Available integrators are:
+        - none (default)
+        - direct
+        - tree
+        
+        Check the online documentation for a full description of each of the modules. 
+        """
+        i = self.simulation.contents.collision
+        for name, _i in COLLISIONS.items():
+            if i==_i:
+                return name
+        return i
+    @collision.setter
+    def collision(self, value):
+        if isinstance(value, int):
+            self.simulation.contents.collision = c_int(value)
+        elif isinstance(value, basestring):
+            value = value.lower()
+            if value in COLLISIONS: 
+                self.collision = COLLISIONS[value]
+            else:
+                raise ValueError("Warning. Collision module not found.")
 
     @property
     def force_is_velocity_dependent(self):
@@ -660,6 +758,17 @@ class Simulation(object):
         """
         clibrebound.reb_tools_energy.restype = c_double
         return clibrebound.reb_tools_energy(self.simulation)
+    
+    def configure_box(self, boxsize, root_nx=1, root_ny=1, root_nz=1):
+        """
+        Initialize the simulation box.
+
+        This function only needs to be called it boundary conditions other than "none"
+        are used. In such a case the boxsize must be known and is set with this function.
+        """
+        clibrebound.reb_configure_box(self.simulation, c_double(boxsize), c_int(root_nx), c_int(root_ny), c_int(root_nz))
+        return
+
 
 # Input/Output routines
     def save(self, filename):
@@ -670,6 +779,20 @@ class Simulation(object):
         
 # Integrator Flags
     @property 
+    def integrator_sei_OMEGA(self):
+        """
+        Get or set the epicyclic frequency OMEGA.
+
+        For simulations making use of shearing sheet boundary conditions,
+        REBOUND needs to know the epicyclic frequency. By default OMEGA
+        is 1. For more details read Rein and Tremaine 2011.
+        """
+        return self.simulation.contents.ri_sei.OMEGA
+    @integrator_sei_OMEGA.setter 
+    def integrator_sei_OMEGA(self, value):
+        self.simulation.contents.ri_sei.OMEGA = c_double(value)
+
+    @property 
     def integrator_whfast_corrector(self):
         """
         Get or set the order of the symplectic corrector in the WHFast integrator.
@@ -678,7 +801,7 @@ class Simulation(object):
         accuracy simulation set this value to 11. For more details read 
         Rein and Tamayo 2015.
         """
-        self.simulation.contents.ri_whfast.corrector.value
+        return self.simulation.contents.ri_whfast.corrector
     @integrator_whfast_corrector.setter 
     def integrator_whfast_corrector(self, value):
         self.simulation.contents.ri_whfast.corrector = c_uint(value)
