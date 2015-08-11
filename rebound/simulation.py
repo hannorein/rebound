@@ -91,72 +91,8 @@ class reb_simulation_integrator_whfast(Structure):
                 ("timestep_warning", c_uint),
                 ("recalculate_jacobi_but_not_synchronized_warning", c_uint)]
 
-class reb_simulation(Structure):
-    pass
-reb_simulation._fields_ = [("t", c_double),
-                ("G", c_double),
-                ("softening", c_double),
-                ("dt", c_double),
-                ("dt_last_done", c_double),
-                ("N", c_int),
-                ("N_var", c_int),
-                ("N_active", c_int),
-                ("allocated_N", c_int),
-                ("_particles", POINTER(Particle)),
-                ("gravity_cs", POINTER(reb_vec3d)),
-                ("gravity_cs_allocatedN", c_int),
-                ("tree_root", c_void_p),
-                ("opening_angle2", c_double),
-                ("status", c_int),
-                ("exact_finish_time", c_int),
-                ("force_is_velocity_dependent", c_uint),
-                ("gravity_ignore_10", c_uint),
-                ("output_timing_last", c_double),
-                ("exit_max_distance", c_double),
-                ("exit_min_distance", c_double),
-                ("usleep", c_double),
-                ("boxsize", reb_vec3d),
-                ("boxsize_max", c_double),
-                ("root_size", c_double),
-                ("root_n", c_int),
-                ("root_nx", c_int),
-                ("root_ny", c_int),
-                ("root_nz", c_int),
-                ("nghostx", c_int),
-                ("nghosty", c_int),
-                ("nghostz", c_int),
-                ("collisions", c_void_p),
-                ("collisions_allocatedN", c_int),
-                ("minimum_collision_celocity", c_double),
-                ("collisions_plog", c_double),
-                ("max_radius", c_double*2),
-                ("collisions_Nlog", c_long),
-                ("calculate_megno", c_int),
-                ("megno_Ys", c_double),
-                ("megno_Yss", c_double),
-                ("megno_cov_Yt", c_double),
-                ("megno_var_t", c_double),
-                ("megno_mean_t", c_double),
-                ("megno_mean_Y", c_double),
-                ("megno_n", c_long),
-                ("_collision", c_int),
-                ("_integrator", c_int),
-                ("_boundary", c_int),
-                ("_gravity", c_int),
-                ("ri_sei", reb_simulation_integrator_sei), 
-                ("ri_wh", reb_simulation_integrator_wh), 
-                ("ri_hybrid", reb_simulation_integrator_hybrid),
-                ("ri_whfast", reb_simulation_integrator_whfast),
-                ("ri_ias15", reb_simulation_integrator_ias15),
-                ("additional_forces", CFUNCTYPE(None,POINTER(reb_simulation))),
-                ("post_timestep_modifications", CFUNCTYPE(None,POINTER(reb_simulation))),
-                ("heartbeat", CFUNCTYPE(None,POINTER(reb_simulation))),
-                ("coefficient_of_restitution", CFUNCTYPE(c_double,POINTER(reb_simulation), c_double)),
-                ("collisions_resolve", CFUNCTYPE(None,POINTER(reb_simulation), c_void_p)),
-                ("xf_params", c_void_p),
-                 ]
 
-class Simulation(reb_simulation):
+class Simulation(Structure):
     """
     REBOUND Simulation Object.
 
@@ -210,7 +146,7 @@ class Simulation(reb_simulation):
         Get or set a function pointer for calculating additional forces in the simulation.
 
         The argument can be a python function or something that can 
-        be cast to a C function of type CFUNCTYPE(None,POINTER(reb_simulation)). 
+        be cast to a C function of type CFUNCTYPE(None,POINTER(Simulaton)). 
         If the forces are velocity dependent, the flag 
         force_is_velocity_dependent needs to be set to 1. Otherwise
         the particle structures might contain incorrect velocity 
@@ -220,7 +156,7 @@ class Simulation(reb_simulation):
     @additional_forces.setter
     def additional_forces(self, func):
         self.afp = AFF(func)
-        self.additional_forces = self.afp
+        self._additional_forces = self.afp
 
     @property
     def post_timestep_modifications(self):
@@ -234,7 +170,7 @@ class Simulation(reb_simulation):
     @post_timestep_modifications.setter
     def post_timestep_modifications(self, func):
         self.ptmp = AFF(func)
-        self.post_timestep_modifications = self.ptmp
+        self._post_timestep_modifications = self.ptmp
    
     @property 
     def coefficient_of_restitution(self):
@@ -245,7 +181,7 @@ class Simulation(reb_simulation):
     @coefficient_of_restitution.setter
     def coefficient_of_restitution(self, func):
         self.corfp = CORFF(func)
-        self.coefficient_of_restitution = self.corfp
+        self._coefficient_of_restitution = self.corfp
 
 # Setter/getter of parameters and constants
     @property 
@@ -782,6 +718,71 @@ class Simulation(reb_simulation):
         Call this function if safe-mode is disabled and you need synchronize particle positions and velocities between timesteps.
         """
         clibrebound.reb_integrator_synchronize(byref(self))
+
+
+# Setting up fields after class definition (because of self-reference)
+Simulation._fields_ = [("t", c_double),
+                ("G", c_double),
+                ("softening", c_double),
+                ("dt", c_double),
+                ("dt_last_done", c_double),
+                ("N", c_int),
+                ("N_var", c_int),
+                ("N_active", c_int),
+                ("allocated_N", c_int),
+                ("_particles", POINTER(Particle)),
+                ("gravity_cs", POINTER(reb_vec3d)),
+                ("gravity_cs_allocatedN", c_int),
+                ("tree_root", c_void_p),
+                ("opening_angle2", c_double),
+                ("status", c_int),
+                ("exact_finish_time", c_int),
+                ("force_is_velocity_dependent", c_uint),
+                ("gravity_ignore_10", c_uint),
+                ("output_timing_last", c_double),
+                ("exit_max_distance", c_double),
+                ("exit_min_distance", c_double),
+                ("usleep", c_double),
+                ("boxsize", reb_vec3d),
+                ("boxsize_max", c_double),
+                ("root_size", c_double),
+                ("root_n", c_int),
+                ("root_nx", c_int),
+                ("root_ny", c_int),
+                ("root_nz", c_int),
+                ("nghostx", c_int),
+                ("nghosty", c_int),
+                ("nghostz", c_int),
+                ("collisions", c_void_p),
+                ("collisions_allocatedN", c_int),
+                ("minimum_collision_celocity", c_double),
+                ("collisions_plog", c_double),
+                ("max_radius", c_double*2),
+                ("collisions_Nlog", c_long),
+                ("_calculate_megno", c_int),
+                ("megno_Ys", c_double),
+                ("megno_Yss", c_double),
+                ("megno_cov_Yt", c_double),
+                ("megno_var_t", c_double),
+                ("megno_mean_t", c_double),
+                ("megno_mean_Y", c_double),
+                ("megno_n", c_long),
+                ("_collision", c_int),
+                ("_integrator", c_int),
+                ("_boundary", c_int),
+                ("_gravity", c_int),
+                ("ri_sei", reb_simulation_integrator_sei), 
+                ("ri_wh", reb_simulation_integrator_wh), 
+                ("ri_hybrid", reb_simulation_integrator_hybrid),
+                ("ri_whfast", reb_simulation_integrator_whfast),
+                ("ri_ias15", reb_simulation_integrator_ias15),
+                ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
+                ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
+                ("_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),
+                ("_coefficient_of_restitution", CFUNCTYPE(c_double,POINTER(Simulation), c_double)),
+                ("_collisions_resolve", CFUNCTYPE(None,POINTER(Simulation), c_void_p)),
+                ("xf_params", c_void_p),
+                 ]
 
 POINTER_REB_SIM = POINTER(Simulation) 
 AFF = CFUNCTYPE(None,POINTER_REB_SIM)
