@@ -4,7 +4,6 @@
 *.pdf
 *.bin
 nbody
-src/problem.c
 .DS_Store
 error.txt
 tests/testall.html
@@ -30,3 +29,8 @@ others/*.tar.gz
 others/*.tar
 doc/doxygen/xml/
 doc/_build/
+doc/c_examples.rst
+doc/doxygen/html/
+doc/ipython
+doc/search.json
+problems/
