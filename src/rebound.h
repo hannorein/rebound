@@ -136,7 +136,7 @@ struct reb_orbit {
  * @brief This structure contains variables and pointer used by the HYBRID integrator.
  */
 struct reb_simulation_integrator_hybrid {
-	double switch_ratio;	///< Default corresponds to about 10 Hill Radii 
+	double switch_ratio;	///< Default is 8 mutual Hill Radii 
 	enum {
 		SYMPLECTIC, 	///< HYBRID integrator is currently using a symplectic integrator
 		HIGHORDER	///< HYBRID integrator is currently using a high order non-symplectic integrator

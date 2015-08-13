@@ -291,7 +291,7 @@ struct reb_simulation* reb_create_simulation(){
 	r->ri_sei.OMEGAZ 	= -1;
 	r->ri_sei.lastdt 	= 0;
 	
-	r->ri_hybrid.switch_ratio = 100; // 100 Hill radii	
+	r->ri_hybrid.switch_ratio = 8; // Default of 8 mutual Hill radii
 	r->ri_hybrid.mode = SYMPLECTIC;
 
 	// Tree parameters. Will not be used unless gravity or collision search makes use of tree.

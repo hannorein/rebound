@@ -48,25 +48,32 @@ static double get_min_ratio(struct reb_simulation* const r){
 	const int _N_active = ((N_active==-1)?N:N_active)- N_var;
 	const int _N_real   = N - N_var;
 	double min_ratio = 1e308;
+ 
+
 	for (int i=1; i<_N_active; i++){
 		struct reb_particle pi = particles[i];
 		const double dxi = p0.x - pi.x;
 		const double dyi = p0.y - pi.y;
 		const double dzi = p0.z - pi.z;
 		const double r0i2 = dxi*dxi + dyi*dyi + dzi*dzi;
+		const double rhi = r0i2*pow((pi.m/(p0.m*3.)), 2./3.);
 
-		const double F0i = p0.m/r0i2;
 		for (int j=1; j<_N_real; j++){
 			if (i==j) continue;
 
-			const double dx = pi.x - particles[j].x;
-			const double dy = pi.y - particles[j].y;
-			const double dz = pi.z - particles[j].z;
+			struct reb_particle pj = particles[j];
+
+			const double dx = pi.x - pj.x;
+			const double dy = pi.y - pj.y;
+			const double dz = pi.z - pj.z;
 			const double rij2 = dx*dx + dy*dy + dz*dz;
+			const double dxj = p0.x - pj.x;
+			const double dyj = p0.y - pj.y;
+			const double dzj = p0.z - pj.z;
+			const double r0j2 = dxj*dxj + dyj*dyj + dzj*dzj;
+			const double rhj = r0j2*pow((pj.m/(p0.m*3.)), 2./3.);
 
-			const double Fij = pi.m/rij2;
-
-			const double ratio = F0i/Fij;
+			const double ratio = rij2/(rhi+rhj);
 
 			if (ratio<min_ratio){
 				min_ratio = ratio;
@@ -140,6 +147,6 @@ void reb_integrator_hybrid_reset(struct reb_simulation* r){
 	reb_integrator_hybrid_switch_warning = 0;
 	reb_integrator_whfast_reset(r);
 	reb_integrator_ias15_reset(r);
-	r->ri_hybrid.switch_ratio = 400.;
+	r->ri_hybrid.switch_ratio = 8.;
 	initial_dt = 0.;
 }

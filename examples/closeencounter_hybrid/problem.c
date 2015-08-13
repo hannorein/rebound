@@ -17,7 +17,7 @@ double e_init; // initial energy
 
 int main(int argc, char* argv[]){
 	struct reb_simulation* r = reb_create_simulation();
-	r->dt = 0.012*2.*M_PI;				// initial timestep
+	r->dt = 0.0012*2.*M_PI;				// initial timestep
 	r->integrator = REB_INTEGRATOR_HYBRID;
 	r->heartbeat  = heartbeat;
 
