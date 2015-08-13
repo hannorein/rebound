@@ -50,27 +50,28 @@ static double get_min_ratio(struct reb_simulation* const r){
 	double min_ratio = 1e308;
 	for (int i=1; i<_N_active; i++){
 		struct reb_particle pi = particles[i];
-	for (int j=1; j<_N_real; j++){
-		if (i==j) continue;
-		const double dxj = p0.x - particles[j].x;
-		const double dyj = p0.y - particles[j].y;
-		const double dzj = p0.z - particles[j].z;
-		const double r0j2 = dxj*dxj + dyj*dyj + dzj*dzj;
+		const double dxi = p0.x - pi.x;
+		const double dyi = p0.y - pi.y;
+		const double dzi = p0.z - pi.z;
+		const double r0i2 = dxi*dxi + dyi*dyi + dzi*dzi;
 
-		const double dx = pi.x - particles[j].x;
-		const double dy = pi.y - particles[j].y;
-		const double dz = pi.z - particles[j].z;
-		const double rij2 = dx*dx + dy*dy + dz*dz;
-		
-		const double F0j = p0.m/r0j2;
-		const double Fij = pi.m/rij2;
+		const double F0i = p0.m/r0i2;
+		for (int j=1; j<_N_real; j++){
+			if (i==j) continue;
 
-		const double ratio = F0j/Fij;
-			
-		if (ratio<min_ratio){
-			min_ratio = ratio;
+			const double dx = pi.x - particles[j].x;
+			const double dy = pi.y - particles[j].y;
+			const double dz = pi.z - particles[j].z;
+			const double rij2 = dx*dx + dy*dy + dz*dz;
+
+			const double Fij = pi.m/rij2;
+
+			const double ratio = F0i/Fij;
+
+			if (ratio<min_ratio){
+				min_ratio = ratio;
+			}
 		}
-	}
 	}
 	return min_ratio;
 }
