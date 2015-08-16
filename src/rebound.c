@@ -169,6 +169,11 @@ static void set_dp7_null(struct reb_dp7 * dp){
 }
 
 void reb_free_simulation(struct reb_simulation* const r){
+	reb_free_pointers(r);
+	free(r);
+}
+
+void reb_free_pointers(struct reb_simulation* const r){
 	reb_tree_delete(r);
 	free(r->gravity_cs 	);
 	free(r->collisions	);
@@ -222,13 +227,18 @@ void reb_reset_function_pointers(struct reb_simulation* const r){
 }
 
 struct reb_simulation* reb_create_simulation(){
+	struct reb_simulation* r = calloc(1,sizeof(struct reb_simulation));
+	reb_init_simulation(r);
+	return r;
+}
+
+void reb_init_simulation(struct reb_simulation* r){
 #ifndef LIBREBOUND
 	int i =0;
 	while (logo[i]!=NULL){ printf("%s",logo[i++]); }
 	printf("Built: %s\n\n",reb_build_str);
 #endif // LIBREBOUND
 	reb_tools_init_srand();
-	struct reb_simulation* r = calloc(1,sizeof(struct reb_simulation));
 	reb_reset_temporary_pointers(r);
 	reb_reset_function_pointers(r);
 	r->t 		= 0; 
@@ -315,7 +325,6 @@ struct reb_simulation* reb_create_simulation(){
 #ifdef OPENMP
 	printf("Using OpenMP with %d threads per node.\n",omp_get_max_threads());
 #endif // OPENMP
-	return r;
 }
 
 int reb_check_exit(struct reb_simulation* const r, const double tmax){
