@@ -99,6 +99,17 @@ class Simulation(Structure):
     This object encapsulated an entire REBOUND simulation. 
     It is an abstraction of the C struct reb_simulation.
     You can create mutiple REBOUND simulations (the c library is thread safe). 
+
+    Most simulation parameters can be directly changed with the property syntax:
+
+    >>> sim = rebound.Simulation()
+    >>> sim.G = 1.   # Sets the graviational constant (default 1)
+    >>> sim.softening = 1.   # Sets the graviational softening parameter default (0)
+    >>> sim.dt = 0.1   # Sets the timestep (will change for adaptive integrators such as IAS15).
+    >>> sim.t = 0.   # Sets the current simulation time (default 0.)
+    >>> print(sim.N)  # Gets the current number of particles
+    >>> print(sim.N_active)  # Gets the current number of active particles
+
     """
     def __init__(self, filename=None):
         if filename is None:
