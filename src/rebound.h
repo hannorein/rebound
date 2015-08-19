@@ -514,6 +514,14 @@ struct reb_simulation {
 struct reb_simulation* reb_create_simulation();
 
 /**
+ * @brief Initialize reb_simulation structure.
+ *
+ * @details Same as reb_create_simulation() but does not allocate memory for structure itself.
+ * @param r Structure to be initialized (needs to be allocated externally).
+ */
+void reb_init_simulation(struct reb_simulation* r);
+
+/**
  * @brief Performon one integration step
  * @details You rarely want to call this function yourself.
  * Use reb_integrate instead.
@@ -560,11 +568,18 @@ void reb_integrator_reset(struct reb_simulation* r);
 void reb_configure_box(struct reb_simulation* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz);
 
 /**
- * @brief Frees up all space used by a REBOUND simulation.
+ * @brief Frees up all space used by a REBOUND simulation and the reb_simulation structure itself.
  * @details The REBOUND simulation is not usable anymore after being passed to this function.
  * @param r The rebound simulation to be freed
  */
 void reb_free_simulation(struct reb_simulation* const r);
+
+/**
+ * @brief Frees up all space used by a REBOUND simulation, but not the reb_simulation structure itself.
+ * @details The REBOUND simulation is not usable anymore after being passed to this function.
+ * @param r The rebound simulation to be freed
+ */
+void reb_free_pointers(struct reb_simulation* const r);
 
 /**
  * @cond PRIVATE

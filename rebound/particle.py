@@ -186,7 +186,7 @@ class Particle(Structure):
                 raise ValueError("Need to specify simulation when initializing particle with orbital elements.")
             if primary is None:
                 clibrebound.reb_get_com.restype = Particle
-                primary = clibrebound.reb_get_com(simulation.simulation)
+                primary = clibrebound.reb_get_com(byref(simulation))
             if a is None:
                 raise ValueError("You need to pass a semi major axis to initialize the particle using orbital elements.")
             if anom is None:
@@ -296,7 +296,7 @@ class Particle(Structure):
         self.y  = primary.y + r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci)
         self.z  = primary.z + r*(so*cf+co*sf)*si
         
-        n = math.sqrt(simulation.simulation.contents.G*(primary.m+m)/(a**3))
+        n = math.sqrt(simulation.G*(primary.m+m)/(a**3))
         if e>1.:
             v0 = n*a/math.sqrt(-(1.-e**2))
         else:
@@ -367,7 +367,7 @@ class Particle(Structure):
         dvz = self.vz - primary.vz
         v = math.sqrt ( dvx*dvx + dvy*dvy + dvz*dvz )
         
-        mu = simulation.simulation.contents.G*(self.m+primary.m)
+        mu = simulation.G*(self.m+primary.m)
         o.a = -mu/( v*v - 2.*mu/o.r )               # semi major axis
         
         h0 = (dy*dvz - dz*dvy)                      # angular momentum vector

@@ -91,100 +91,43 @@ class reb_simulation_integrator_whfast(Structure):
                 ("timestep_warning", c_uint),
                 ("recalculate_jacobi_but_not_synchronized_warning", c_uint)]
 
-class reb_simulation(Structure):
-    pass
-reb_simulation._fields_ = [("t", c_double),
-                ("G", c_double),
-                ("softening", c_double),
-                ("dt", c_double),
-                ("dt_last_done", c_double),
-                ("N", c_int),
-                ("N_var", c_int),
-                ("N_active", c_int),
-                ("allocated_N", c_int),
-                ("particles", POINTER(Particle)),
-                ("gravity_cs", POINTER(reb_vec3d)),
-                ("gravity_cs_allocatedN", c_int),
-                ("tree_root", c_void_p),
-                ("opening_angle2", c_double),
-                ("status", c_int),
-                ("exact_finish_time", c_int),
-                ("force_is_velocity_dependent", c_uint),
-                ("gravity_ignore_10", c_uint),
-                ("output_timing_last", c_double),
-                ("exit_max_distance", c_double),
-                ("exit_min_distance", c_double),
-                ("usleep", c_double),
-                ("boxsize", reb_vec3d),
-                ("boxsize_max", c_double),
-                ("root_size", c_double),
-                ("root_n", c_int),
-                ("root_nx", c_int),
-                ("root_ny", c_int),
-                ("root_nz", c_int),
-                ("nghostx", c_int),
-                ("nghosty", c_int),
-                ("nghostz", c_int),
-                ("collisions", c_void_p),
-                ("collisions_allocatedN", c_int),
-                ("minimum_collision_celocity", c_double),
-                ("collisions_plog", c_double),
-                ("max_radius", c_double*2),
-                ("collisions_Nlog", c_long),
-                ("calculate_megno", c_int),
-                ("megno_Ys", c_double),
-                ("megno_Yss", c_double),
-                ("megno_cov_Yt", c_double),
-                ("megno_var_t", c_double),
-                ("megno_mean_t", c_double),
-                ("megno_mean_Y", c_double),
-                ("megno_n", c_long),
-                ("collision", c_int),
-                ("integrator", c_int),
-                ("boundary", c_int),
-                ("gravity", c_int),
-                ("ri_sei", reb_simulation_integrator_sei), 
-                ("ri_wh", reb_simulation_integrator_wh), 
-                ("ri_hybrid", reb_simulation_integrator_hybrid),
-                ("ri_whfast", reb_simulation_integrator_whfast),
-                ("ri_ias15", reb_simulation_integrator_ias15),
-                ("additional_forces", CFUNCTYPE(None,POINTER(reb_simulation))),
-                ("post_timestep_modifications", CFUNCTYPE(None,POINTER(reb_simulation))),
-                ("heartbeat", CFUNCTYPE(None,POINTER(reb_simulation))),
-                ("coefficient_of_restitution", CFUNCTYPE(c_double,POINTER(reb_simulation), c_double)),
-                ("collisions_resolve", CFUNCTYPE(None,POINTER(reb_simulation), c_void_p)),
-                ("xf_params", c_void_p),
-                 ]
 
-
-class Simulation(object):
+class Simulation(Structure):
     """
     REBOUND Simulation Object.
 
     This object encapsulated an entire REBOUND simulation. 
     It is an abstraction of the C struct reb_simulation.
     You can create mutiple REBOUND simulations (the c library is thread safe). 
+
+    Most simulation parameters can be directly changed with the property syntax:
+
+    >>> sim = rebound.Simulation()
+    >>> sim.G = 1.   # Sets the graviational constant (default 1)
+    >>> sim.softening = 1.   # Sets the graviational softening parameter default (0)
+    >>> sim.dt = 0.1   # Sets the timestep (will change for adaptive integrators such as IAS15).
+    >>> sim.t = 0.   # Sets the current simulation time (default 0.)
+    >>> print(sim.N)  # Gets the current number of particles
+    >>> print(sim.N_active)  # Gets the current number of active particles
+
     """
-    simulation = None
     def __init__(self, filename=None):
         if filename is None:
-            clibrebound.reb_create_simulation.restype = POINTER(reb_simulation)
-            self.simulation = clibrebound.reb_create_simulation()
+            clibrebound.reb_init_simulation(byref(self))
         else:
+            print "todo"
             if os.path.isfile(filename):
-                clibrebound.reb_create_simulation_from_binary.restype = POINTER(reb_simulation)
+                clibrebound.reb_create_simulation_from_binary.restype = POINTER_REB_SIM
                 self.simulation = clibrebound.reb_create_simulation_from_binary(c_char_p(filename.encode("ascii")))
             else:
                 raise ValueError("File does not exist.")
-    AFF = CFUNCTYPE(None,POINTER(reb_simulation))
-    CORFF = CFUNCTYPE(c_double,POINTER(reb_simulation), c_double)
     afp = None # additional forces pointer
     corfp = None # coefficient of restitution function pointer
     ptmp = None # post timestep modifications pointer 
     _units = {'length':None, 'time':None, 'mass':None}
 
     def __del__(self):
-        clibrebound.reb_free_simulation(self.simulation)
+        clibrebound.reb_free_pointers(byref(self))
 
 # Status functions
     def status(self):
@@ -214,7 +157,7 @@ class Simulation(object):
         Get or set a function pointer for calculating additional forces in the simulation.
 
         The argument can be a python function or something that can 
-        be cast to a C function of type CFUNCTYPE(None,POINTER(reb_simulation)). 
+        be cast to a C function of type CFUNCTYPE(None,POINTER(Simulaton)). 
         If the forces are velocity dependent, the flag 
         force_is_velocity_dependent needs to be set to 1. Otherwise
         the particle structures might contain incorrect velocity 
@@ -223,8 +166,8 @@ class Simulation(object):
         return self.afp   # getter might not be needed
     @additional_forces.setter
     def additional_forces(self, func):
-        self.afp = self.AFF(func)
-        self.simulation.contents.additional_forces = self.afp
+        self.afp = AFF(func)
+        self._additional_forces = self.afp
 
     @property
     def post_timestep_modifications(self):
@@ -237,8 +180,8 @@ class Simulation(object):
         return self.ptmp
     @post_timestep_modifications.setter
     def post_timestep_modifications(self, func):
-        self.ptmp = self.AFF(func)
-        self.simulation.contents.post_timestep_modifications = self.ptmp
+        self.ptmp = AFF(func)
+        self._post_timestep_modifications = self.ptmp
    
     @property 
     def coefficient_of_restitution(self):
@@ -248,111 +191,16 @@ class Simulation(object):
         return self.corfp   # getter might not be needed
     @coefficient_of_restitution.setter
     def coefficient_of_restitution(self, func):
-        self.corfp = self.CORFF(func)
-        self.simulation.contents.coefficient_of_restitution = self.corfp
+        self.corfp = CORFF(func)
+        self._coefficient_of_restitution = self.corfp
 
 # Setter/getter of parameters and constants
-    @property
-    def G(self):
-        """
-        Get or set the gravitational constant. Default: 1.
-        """
-        return self.simulation.contents.G
-    @G.setter
-    def G(self, value):
-        self.simulation.contents.G = c_double(value)
-        
-    @property
-    def softening(self):
-        """
-        Get or set the gravitational softening parameter. Default: 0.
-        """
-        return self.simulation.contents.softening
-    @softening.setter
-    def softening(self, value):
-        self.simulation.contents.softening = c_double(value)
-        
-    @property 
-    def dt(self):
-        """
-        Get or set the timestep. Default: 0.01.
-
-        The timestep will change if an adaptive integrator is selected (such as IAS15)
-        """
-        return self.simulation.contents.dt
-
-    @dt.setter
-    def dt(self, value):
-        self.simulation.contents.dt = c_double(value)
-
-    @property 
-    def t(self):
-        """
-        Get or set the current simulation time. Default: 0.
-        """
-        return self.simulation.contents.t
-    @t.setter
-    def t(self, value):
-        self.simulation.contents.t = c_double(value)
-    
-    @property 
-    def N_active(self):
-        """ 
-        Get or set the current number of active particles.
-
-        An active particle is a particle that contributes to the 
-        gravitational force for another particle.
-        By default the number of active particles is equal to the number
-        of particles.
-        If you have only a few massive particles, and many massless
-        test-particles, then you can set this value to a finite number to 
-        speed up the simulation. 
-        Default value: -1 (which means N_active = N).
-        """
-        return self.simulation.contents.N_active
-    @N_active.setter
-    def N_active(self, value):
-        self.simulation.contents.N_active = c_int(value)
-    
-    @property 
-    def exit_max_distance(self):
-        """ 
-        Get or set a distance to trigger an exception when a particle escapes.
-
-        If this value is non-zero, an exception is thrown when a particle has a distance
-        from the coordinate origin that is larger than this value.
-        """
-        return self.simulation.contents.exit_max_distance
-    @exit_max_distance.setter
-    def exit_max_distance(self, value):
-        self.simulation.contents.exit_max_distance = c_double(value)
-    
-    @property 
-    def exit_min_distance(self):
-        """ 
-        Get or set a distance to trigger an exception when two particle have a close encounter.
-
-        If this value is non-zero, an exception is thrown when two particles have a mutual distance
-        from each other that is less than this value.
-        """
-        return self.simulation.contents.exit_min_distance
-    @exit_min_distance.setter
-    def exit_min_distance(self, value):
-        self.simulation.contents.exit_min_distance = c_double(value)
-
-    @property 
-    def N(self):
-        """
-        Get the current number of particles in the simulation.
-        """
-        return self.simulation.contents.N
-
     @property 
     def N_real(self):
         """
         Get the current number of real (i.e. no variational/shadow) particles in the simulation.
         """
-        return self.simulation.contents.N-self.simulation.contents.N_var
+        return self.N-self.N_var
 
     @property
     def integrator(self):
@@ -370,7 +218,7 @@ class Simulation(object):
         
         Check the online documentation for a full description of each of the integrators. 
         """
-        i = self.simulation.contents.integrator
+        i = self._integrator
         for name, _i in INTEGRATORS.items():
             if i==_i:
                 return name
@@ -378,13 +226,13 @@ class Simulation(object):
     @integrator.setter
     def integrator(self, value):
         if isinstance(value, int):
-            self.simulation.contents.integrator = c_int(value)
+            self._integrator = c_int(value)
         elif isinstance(value, basestring):
             debug.integrator_fullname = value
             debug.integrator_package = "REBOUND"
             value = value.lower()
             if value in INTEGRATORS: 
-                self.integrator = INTEGRATORS[value]
+                self._integrator = INTEGRATORS[value]
             elif value.lower() == "mercury":
                 debug.integrator_package = "MERCURY"
             elif value.lower() == "swifter-whm":
@@ -411,7 +259,7 @@ class Simulation(object):
         
         Check the online documentation for a full description of each of the modules. 
         """
-        i = self.simulation.contents.boundary
+        i = self._boundary
         for name, _i in BOUNDARIES.items():
             if i==_i:
                 return name
@@ -419,11 +267,11 @@ class Simulation(object):
     @boundary.setter
     def boundary(self, value):
         if isinstance(value, int):
-            self.simulation.contents.boundary = c_int(value)
+            self._boundary = c_int(value)
         elif isinstance(value, basestring):
             value = value.lower()
             if value in BOUNDARIES: 
-                self.boundary = BOUNDARIES[value]
+                self._boundary = BOUNDARIES[value]
             else:
                 raise ValueError("Warning. Boundary condition module not found.")
 
@@ -440,7 +288,7 @@ class Simulation(object):
         
         Check the online documentation for a full description of each of the modules. 
         """
-        i = self.simulation.contents.gravity
+        i = self._gravity
         for name, _i in GRAVITIES.items():
             if i==_i:
                 return name
@@ -448,11 +296,11 @@ class Simulation(object):
     @gravity.setter
     def gravity(self, value):
         if isinstance(value, int):
-            self.simulation.contents.gravity = c_int(value)
+            self._gravity = c_int(value)
         elif isinstance(value, basestring):
             value = value.lower()
             if value in GRAVITIES: 
-                self.gravity = GRAVITIES[value]
+                self._gravity = GRAVITIES[value]
             else:
                 raise ValueError("Warning. Gravity module not found.")
 
@@ -468,7 +316,7 @@ class Simulation(object):
         
         Check the online documentation for a full description of each of the modules. 
         """
-        i = self.simulation.contents.collision
+        i = self._collision
         for name, _i in COLLISIONS.items():
             if i==_i:
                 return name
@@ -476,7 +324,7 @@ class Simulation(object):
     @collision.setter
     def collision(self, value):
         if isinstance(value, int):
-            self.simulation.contents.collision = c_int(value)
+            self._collision = c_int(value)
         elif isinstance(value, basestring):
             value = value.lower()
             if value in COLLISIONS: 
@@ -484,22 +332,6 @@ class Simulation(object):
             else:
                 raise ValueError("Warning. Collision module not found.")
 
-    @property
-    def force_is_velocity_dependent(self):
-        """
-        Flag that determines whether the additional forces are velocity dependent or not.
-
-        Setting the flag to 1 guarantees that the velocities are available when forces are calculated.
-        Default: 0.
-        """
-        return self.simulation.contents.integrator_force_is_velocity_dependent
-    @force_is_velocity_dependent.setter
-    def force_is_velocity_dependent(self, value):
-        if isinstance(value, int):
-            self.simulation.contents.integrator_force_is_velocity_dependent = value
-            return
-        raise ValueError("Expecting integer.")
-    
 # Units
 
     @property
@@ -591,7 +423,7 @@ class Simulation(object):
         The initial delta value can in principle tace any value, typically we choose 1e-16. For 
         more information on MENGO see e.g. http://dx.doi.org/10.1051/0004-6361:20011189
         """
-        clibrebound.reb_tools_megno_init(self.simulation, c_double(delta))
+        clibrebound.reb_tools_megno_init(byref(self), c_double(delta))
     
     def calculate_megno(self):
         """
@@ -599,7 +431,7 @@ class Simulation(object):
         Note that you need to call init_megno() before the start of the simulation.
         """
         clibrebound.reb_tools_calculate_megno.restype = c_double
-        return clibrebound.reb_tools_calculate_megno(self.simulation)
+        return clibrebound.reb_tools_calculate_megno(byref(self))
     
     def calculate_lyapunov(self):
         """
@@ -608,7 +440,7 @@ class Simulation(object):
         To get a timescale (the Lyapunov timescale), take the inverse of this quantity.
         """
         clibrebound.reb_tools_calculate_lyapunov.restype = c_double
-        return clibrebound.reb_tools_calculate_lyapunov(self.simulation)
+        return clibrebound.reb_tools_calculate_lyapunov(byref(self))
     
 # Particle add function, used to be called particle_add() and add_particle() 
     def add(self, particle=None, **kwargs):   
@@ -624,7 +456,7 @@ class Simulation(object):
         if particle is not None:
             if isinstance(particle, Particle):
                 if kwargs == {}: # copy particle
-                    clibrebound.reb_add(self.simulation, particle)
+                    clibrebound.reb_add(byref(self), particle)
                 else: # use particle as primary
                     self.add(Particle(simulation=self, primary=particle, **kwargs))
             elif isinstance(particle, list):
@@ -650,7 +482,7 @@ class Simulation(object):
         """
         ps = []
         N = self.N 
-        ps_a = self.simulation.contents.particles
+        ps_a = self._particles
         for i in range(0,N):
             ps.append(ps_a[i])
         return ps
@@ -660,7 +492,7 @@ class Simulation(object):
         """
         Remove all particles from the simulation
         """
-        clibrebound.reb_particles_remove_all(self.simulation)
+        clibrebound.reb_particles_remove_all(byref(self))
 
     def remove(self, index=None, id=None, keepSorted=1):
         """ Removes a particle from the simulation.
@@ -673,12 +505,12 @@ class Simulation(object):
         particles and many removals to speed things up.
         """
         if index is not None:
-            success = clibrebound.reb_remove(self.simulation, c_int(index), keepSorted)
+            success = clibrebound.reb_remove(byref(self), c_int(index), keepSorted)
             if not success:
                 print("Index %d passed to remove_particle was out of range (N=%d). Did not remove particle.\n"%(index, self.N))
             return
         if id is not None:
-            success = clibrebound.reb_remove_by_id(self.simulation, c_int(id), keepSorted)
+            success = clibrebound.reb_remove_by_id(byref(self), c_int(id), keepSorted)
             if not success:
                 print("id %d passed to remove_particle was not found.  Did not remove particle.\n"%(id))
 
@@ -693,14 +525,14 @@ class Simulation(object):
         By default this functions returns the orbits in Jacobi coordinates. 
         Set the parameter heliocentric to True to return orbits in heliocentric coordinates.
         """
-        _particles = self.particles
+        _particles_tmp = self.particles
         orbits = []
         for i in range(1,self.N_real):
             if heliocentric:
-                com = _particles[0]
+                com = _particles_tmp[0]
             else:
                 com = self.calculate_com(i)
-            orbits.append(_particles[i].calculate_orbit(self, primary=com))
+            orbits.append(_particles_tmp[i].calculate_orbit(self, primary=com))
         return orbits
 
 # COM calculation 
@@ -749,14 +581,14 @@ class Simulation(object):
         It makes sense to call this function at the beginning of the integration, especially 
         for the high accuray integrators IAS15 and WHFast.
         """
-        clibrebound.reb_move_to_com(self.simulation)
+        clibrebound.reb_move_to_com(byref(self))
     
     def calculate_energy(self):
         """
         Returns the sum of potential and kinetic energy of all particles in the simulation.
         """
         clibrebound.reb_tools_energy.restype = c_double
-        return clibrebound.reb_tools_energy(self.simulation)
+        return clibrebound.reb_tools_energy(byref(self))
     
     def configure_box(self, boxsize, root_nx=1, root_ny=1, root_nz=1):
         """
@@ -765,7 +597,7 @@ class Simulation(object):
         This function only needs to be called it boundary conditions other than "none"
         are used. In such a case the boxsize must be known and is set with this function.
         """
-        clibrebound.reb_configure_box(self.simulation, c_double(boxsize), c_int(root_nx), c_int(root_ny), c_int(root_nz))
+        clibrebound.reb_configure_box(byref(self), c_double(boxsize), c_int(root_nx), c_int(root_ny), c_int(root_nz))
         return
    
     def configure_ghostboxes(self, nghostx=0, nghosty=0, nghostz=0):
@@ -787,7 +619,7 @@ class Simulation(object):
         """
         Save the entire REBOUND simulation to a binary file.
         """
-        clibrebound.reb_output_binary(self.simulation, c_char_p(filename.encode("ascii")))
+        clibrebound.reb_output_binary(byref(self), c_char_p(filename.encode("ascii")))
         
 # Integrator Flags
     @property 
@@ -799,10 +631,10 @@ class Simulation(object):
         REBOUND needs to know the epicyclic frequency. By default OMEGA
         is 1. For more details read Rein and Tremaine 2011.
         """
-        return self.simulation.contents.ri_sei.OMEGA
+        return self.ri_sei.OMEGA
     @integrator_sei_OMEGA.setter 
     def integrator_sei_OMEGA(self, value):
-        self.simulation.contents.ri_sei.OMEGA = c_double(value)
+        self.ri_sei.OMEGA = c_double(value)
 
     @property 
     def integrator_whfast_corrector(self):
@@ -813,10 +645,10 @@ class Simulation(object):
         accuracy simulation set this value to 11. For more details read 
         Rein and Tamayo 2015.
         """
-        return self.simulation.contents.ri_whfast.corrector
+        return self.ri_whfast.corrector
     @integrator_whfast_corrector.setter 
     def integrator_whfast_corrector(self, value):
-        self.simulation.contents.ri_whfast.corrector = c_uint(value)
+        self.ri_whfast.corrector = c_uint(value)
 
     @property
     def integrator_whfast_safe_mode(self):
@@ -829,10 +661,10 @@ class Simulation(object):
         However, make sure you are aware of the consequences. Read the iPython tutorial
         on advanced WHFast usage to learn more.
         """
-        return self.simulation.contents.ri_whfast.safe_mode
+        return self.ri_whfast.safe_mode
     @integrator_whfast_safe_mode.setter
     def integrator_whfast_safe_mode(self, value):
-        self.simulation.contents.ri_whfast.safe_mode = c_uint(value)
+        self.ri_whfast.safe_mode = c_uint(value)
 
     @property
     def integrator_whfast_recalculate_jacobi_this_timestep(self):
@@ -845,10 +677,10 @@ class Simulation(object):
         After every timestep the flag is set back to 0, so if you continuously
         update the particles manually, you need to set this flag to 1 after every timestep.
         """ 
-        return self.simulation.contents.ri_whfast.recalculate_jacobi_this_timestep
+        return self.ri_whfast.recalculate_jacobi_this_timestep
     @integrator_whfast_recalculate_jacobi_this_timestep.setter
     def integrator_whfast_recalculate_jacobi_this_timestep(self, value):
-        self.simulation.contents.ri_whfast.recalculate_jacobi_this_timestep = c_uint(value)
+        self.ri_whfast.recalculate_jacobi_this_timestep = c_uint(value)
     
 # Integration
     def step(self):
@@ -856,7 +688,7 @@ class Simulation(object):
         Perform exactly one integration step with REBOUND. This function is rarely needed.
         Instead, use integrate().
         """
-        clibrebound.reb_step(self.simulation)
+        clibrebound.reb_step(byref(self))
 
     def integrate(self, tmax, exact_finish_time=1):
         """
@@ -880,7 +712,8 @@ class Simulation(object):
         """
         if debug.integrator_package =="REBOUND":
             clibrebound.reb_integrate.restype = c_int
-            ret_value = clibrebound.reb_integrate(self.simulation, c_double(tmax))
+	    clibrebound.exact_finish_time = c_int(exact_finish_time)
+            ret_value = clibrebound.reb_integrate(byref(self), c_double(tmax))
             if ret_value == 1:
                 raise SimulationError("An error occured during the integration.")
             if ret_value == 2:
@@ -896,8 +729,76 @@ class Simulation(object):
         """
         Call this function if safe-mode is disabled and you need synchronize particle positions and velocities between timesteps.
         """
-        clibrebound.reb_integrator_synchronize(self.simulation)
+        clibrebound.reb_integrator_synchronize(byref(self))
 
+
+# Setting up fields after class definition (because of self-reference)
+Simulation._fields_ = [("t", c_double),
+                ("G", c_double),
+                ("softening", c_double),
+                ("dt", c_double),
+                ("dt_last_done", c_double),
+                ("N", c_int),
+                ("N_var", c_int),
+                ("N_active", c_int),
+                ("allocated_N", c_int),
+                ("_particles", POINTER(Particle)),
+                ("gravity_cs", POINTER(reb_vec3d)),
+                ("gravity_cs_allocatedN", c_int),
+                ("tree_root", c_void_p),
+                ("opening_angle2", c_double),
+                ("_status", c_int),
+                ("exact_finish_time", c_int),
+                ("force_is_velocity_dependent", c_uint),
+                ("gravity_ignore_10", c_uint),
+                ("output_timing_last", c_double),
+                ("exit_max_distance", c_double),
+                ("exit_min_distance", c_double),
+                ("usleep", c_double),
+                ("boxsize", reb_vec3d),
+                ("boxsize_max", c_double),
+                ("root_size", c_double),
+                ("root_n", c_int),
+                ("root_nx", c_int),
+                ("root_ny", c_int),
+                ("root_nz", c_int),
+                ("nghostx", c_int),
+                ("nghosty", c_int),
+                ("nghostz", c_int),
+                ("collisions", c_void_p),
+                ("collisions_allocatedN", c_int),
+                ("minimum_collision_celocity", c_double),
+                ("collisions_plog", c_double),
+                ("max_radius", c_double*2),
+                ("collisions_Nlog", c_long),
+                ("_calculate_megno", c_int),
+                ("megno_Ys", c_double),
+                ("megno_Yss", c_double),
+                ("megno_cov_Yt", c_double),
+                ("megno_var_t", c_double),
+                ("megno_mean_t", c_double),
+                ("megno_mean_Y", c_double),
+                ("megno_n", c_long),
+                ("_collision", c_int),
+                ("_integrator", c_int),
+                ("_boundary", c_int),
+                ("_gravity", c_int),
+                ("ri_sei", reb_simulation_integrator_sei), 
+                ("ri_wh", reb_simulation_integrator_wh), 
+                ("ri_hybrid", reb_simulation_integrator_hybrid),
+                ("ri_whfast", reb_simulation_integrator_whfast),
+                ("ri_ias15", reb_simulation_integrator_ias15),
+                ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
+                ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
+                ("_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),
+                ("_coefficient_of_restitution", CFUNCTYPE(c_double,POINTER(Simulation), c_double)),
+                ("_collisions_resolve", CFUNCTYPE(None,POINTER(Simulation), c_void_p)),
+                ("xf_params", c_void_p),
+                 ]
+
+POINTER_REB_SIM = POINTER(Simulation) 
+AFF = CFUNCTYPE(None,POINTER_REB_SIM)
+CORFF = CFUNCTYPE(c_double,POINTER_REB_SIM, c_double)
 
 # Import at the end to avoid circular dependence
 from . import horizons
