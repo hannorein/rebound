@@ -712,7 +712,7 @@ class Simulation(Structure):
         """
         if debug.integrator_package =="REBOUND":
             clibrebound.reb_integrate.restype = c_int
-	    clibrebound.exact_finish_time = c_int(exact_finish_time)
+	    self.exact_finish_time = c_int(exact_finish_time)
             ret_value = clibrebound.reb_integrate(byref(self), c_double(tmax))
             if ret_value == 1:
                 raise SimulationError("An error occured during the integration.")
