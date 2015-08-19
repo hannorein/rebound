@@ -10,7 +10,7 @@ except:
 
 from .particle import Particle
 
-def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None):
+def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=50, unitlabel=None, color=False, showPeriastron=False, trails=False):
         if packages_missing == 1:
             printf("Matplotlib and/or numpy not found. Plotting functions not available\n")
             return
@@ -32,18 +32,41 @@ def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None):
         ax.set_xlabel("x"+unitlabel)
         ax.set_ylabel("y"+unitlabel)
 
-        xyo = np.zeros((2,Narc))
+        if color:
+            cm = plt.get_cmap("jet")
+        else:
+            cmf = plt.get_cmap("Greys")
+            cm = lambda x: cmf(x/2.+0.5)
+
+
         phase = np.linspace(0,2.*np.pi,Narc)
         for i, o in enumerate(orbits):
             primary = sim.calculate_com(i+1)
-            for j, ph in enumerate(phase):
+            colori = cm(float(i+1)/float(sim.N-1))
+            pp = Particle(a=o.a, anom=o.f, MEAN=True, inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=particles[i+1].m, primary=primary, simulation=sim)
+            ax.scatter(pp.x, pp.y, s=25, facecolor="black", edgecolor=None, zorder=2)
+            for ph in phase:
                 newp = Particle(a=o.a, anom=o.f+ph, MEAN=True, inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=particles[i+1].m, primary=primary, simulation=sim)
-                xyo[0,j] = newp.x
-                xyo[1,j] = newp.y
-            ax.plot(xyo[0], xyo[1])
+                if trails:
+                    alpha = 2.*ph/(2.*np.pi)
+                    if alpha <0.:
+                        alpha = 0.
+                    if alpha >1.:
+                        alpha = 1.
+
+                    color = (colori[0], colori[1], colori[2], alpha)
+                else:
+                    color = colori
+                ax.plot([pp.x, newp.x], [pp.y, newp.y], color=color, zorder=1)
+                pp = newp
+            
+            if showPeriastron:
+                newp = Particle(a=o.a, anom=0., MEAN=True, inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=particles[i+1].m, primary=primary, simulation=sim)
+                ax.plot([primary.x, newp.x], [primary.y, newp.y], "--", c=colori, zorder=0)
 
 
-        ax.scatter(x, y, s=25, c="lightgray")
+
+
 
         return fig
 
