@@ -340,7 +340,11 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax){
 	if(tmax!=INFINITY){
 		if(r->exact_finish_time==1){
 			if ((r->t+r->dt)*dtsign>=tmax*dtsign){  // Next step would overshoot
-				if (r->status == REB_RUNNING_LAST_STEP){
+				if (
+					r->status == REB_RUNNING_LAST_STEP 
+					|| 
+					r->t==tmax
+					){
 					r->status = REB_EXIT_SUCCESS;
 				}else{
 					r->status = REB_RUNNING_LAST_STEP; // Do one small step, then exit.
