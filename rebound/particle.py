@@ -55,46 +55,6 @@ def notNone(a):
     """Returns True if array a contains at least one element that is not None. Returns False otherwise."""
     return a.count(None) != len(a)
 
-
-class Orbit():
-    """
-    A class containing orbital parameters for a particle.
-    This is an abstraction of the reb_orbit data structure in C.
-
-    When using the various REBOUND functions using Orbits, all angles are in radians. 
-
-    Parameters
-    ---------
-    a       : (float)           semimajor axis
-    r       : (float)           radial distance from reference 
-    h       : (float)           specific angular momentum
-    P       : (float)           orbital period
-    l       : (float)           mean longitude = Omega + omega + M
-    e       : (float)           eccentricity
-    inc     : (float)           inclination
-    Omega   : (float)           longitude of ascending node
-    omega   : (float)           argument of pericenter
-    f       : (float)           true anomaly
-    """
-    def __init__(self):
-        self.a      =   None    # semimajor axis
-        self.r      =   None    # radial distance from reference
-        self.h      =   None    # angular momentum
-        self.P      =   None    # orbital period
-        self.l      =   None    # mean longitude = Omega + omega + M
-        self.e      =   None    # eccentricity
-        self.inc    =   None    # inclination
-        self.Omega  =   None    # longitude of ascending node
-        self.omega  =   None    # argument of perihelion
-        self.f      =   None    # true anomaly
-
-    def __str__(self):
-        """
-        Returns a string with the semi-major axis and eccentricity of the orbit.
-        """
-        return "<rebound.Orbit instance, a=%s e=%s>"%(str(self.a),str(self.e))
-
-
 class Particle(Structure):
     """
     The main REBOUND particle data structure. 

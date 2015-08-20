@@ -91,6 +91,46 @@ class reb_simulation_integrator_whfast(Structure):
                 ("timestep_warning", c_uint),
                 ("recalculate_jacobi_but_not_synchronized_warning", c_uint)]
 
+class Orbit(Structure):
+    """
+    A class containing orbital parameters for a particle.
+    This is an abstraction of the reb_orbit data structure in C.
+
+    When using the various REBOUND functions using Orbits, all angles are in radians. 
+
+    Parameters
+    ---------
+    r       : (float)           radial distance from reference 
+    h       : (float)           specific angular momentum
+    P       : (float)           orbital period
+    a       : (float)           semimajor axis
+    e       : (float)           eccentricity
+    inc     : (float)           inclination
+    Omega   : (float)           longitude of ascending node
+    omega   : (float)           argument of pericenter
+    pomega  : (float)           longitude of pericenter
+    f       : (float)           true anomaly
+    M       : (float)           mean anomaly
+    l       : (float)           mean longitude = Omega + omega + M
+    """
+    _fields_ = [("r", c_double),
+                ("h", c_double),
+                ("P", c_double),
+                ("a", c_double),
+                ("e", c_double),
+                ("inc", c_double),
+                ("Omega", c_double),
+                ("omega", c_double),
+                ("pomega", c_double),
+                ("f", c_double),
+                ("M", c_double),
+                ("l", c_double)]
+
+    def __str__(self):
+        """
+        Returns a string with the semi-major axis and eccentricity of the orbit.
+        """
+        return "<rebound.Orbit instance, a=%s e=%s>"%(str(self.a),str(self.e))
 
 class Simulation(Structure):
     """
@@ -115,7 +155,7 @@ class Simulation(Structure):
         if filename is None:
             clibrebound.reb_init_simulation(byref(self))
         else:
-            print "todo"
+            print("todo")
             if os.path.isfile(filename):
                 clibrebound.reb_create_simulation_from_binary.restype = POINTER_REB_SIM
                 self.simulation = clibrebound.reb_create_simulation_from_binary(c_char_p(filename.encode("ascii")))
