@@ -114,13 +114,18 @@ class Simulation(Structure):
     def __init__(self, filename=None):
         if filename is None:
             clibrebound.reb_init_simulation(byref(self))
+
+    @classmethod
+    def from_file(cls, filename):
+        """
+        Loads a REBOUND simulation from a file. Return a Simulation object.
+        """
+        if os.path.isfile(filename):
+            clibrebound.reb_create_simulation_from_binary.restype = POINTER_REB_SIM
+            return clibrebound.reb_create_simulation_from_binary(c_char_p(filename.encode("ascii"))).contents
         else:
-            print "todo"
-            if os.path.isfile(filename):
-                clibrebound.reb_create_simulation_from_binary.restype = POINTER_REB_SIM
-                self.simulation = clibrebound.reb_create_simulation_from_binary(c_char_p(filename.encode("ascii")))
-            else:
-                raise ValueError("File does not exist.")
+            raise ValueError("File does not exist.")
+
     afp = None # additional forces pointer
     corfp = None # coefficient of restitution function pointer
     ptmp = None # post timestep modifications pointer 
