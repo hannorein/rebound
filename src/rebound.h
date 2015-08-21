@@ -117,6 +117,7 @@ struct reb_particle {
  */
 struct reb_orbit {
 	double r;	///< Radial distance from central object
+	double v;   ///< velocity relative to central object's velocity
 	double h;	///< Angular momentum
 	double P;	///< Orbital period
 	double n;	///< Mean motion
@@ -128,6 +129,7 @@ struct reb_orbit {
 	double pomega;  ///< Longitude of pericenter
 	double f; 	///< True anomaly
 	double M;   ///< Mean anomaly
+	double ea;  ///< Eccentric anomaly
 	double l;	///< Mean Longitude
 };
 

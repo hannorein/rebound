@@ -226,7 +226,8 @@ struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_p
 	if (primary.m <= TINY){	
 		return reb_orbit_nan;
 	}
-	double hx,hy,hz,vcirc2,e0,e1,e2,nx,ny,n,er,vr,mu,ea,dx,dy,dz,dvx,dvy,dvz,v,cosf,cosea;
+	double mu,dx,dy,dz,dvx,dvy,dvz,vsquared,vcircsquared,vdiffsquared;
+	double hx,hy,hz,vr,rvr,muinv,ex,ey,ez,nx,ny,n,cosi,cosomega,cosOmega,cosf,cosea;
 	mu = G*(p.m+primary.m);
 	dx = p.x - primary.x;
 	dy = p.y - primary.y;
@@ -234,67 +235,101 @@ struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_p
 	dvx = p.vx - primary.vx;
 	dvy = p.vy - primary.vy;
 	dvz = p.vz - primary.vz;
-	hx = (dy*dvz - dz*dvy); 			//angular momentum vector
-	hy = (dz*dvx - dx*dvz);
-	hz = (dx*dvy - dy*dvx);
-	o.h = sqrt ( hx*hx + hy*hy + hz*hz );		// abs value of angular moment 
-	v = sqrt ( dvx*dvx + dvy*dvy + dvz*dvz );
 	o.r = sqrt ( dx*dx + dy*dy + dz*dz );
 	if(o.r <= TINY){
 		return reb_orbit_nan;
 	}
-	if (o.h/(o.r*v) <= MIN_REL_ERROR){
-		return reb_orbit_nan;
-	}
-	vr = (dx*dvx + dy*dvy + dz*dvz)/o.r;
-	vcirc2 = mu/o.r;
-	e0 = 1./mu*( dvy*hz - dvz*hy - vcirc2*dx);
-	e1 = 1./mu*( dvz*hx - dvx*hz - vcirc2*dy);
-	e2 = 1./mu*( dvx*hy - dvy*hx - vcirc2*dz);
-	/*e0 = 1./mu*( (v*v-mu/o.r)*dx - o.r*vr*dvx );
-	e1 = 1./mu*( (v*v-mu/o.r)*dy - o.r*vr*dvy );
-	e2 = 1./mu*( (v*v-mu/o.r)*dz - o.r*vr*dvz );*/
-	printf("orbit %.16f\t%.16f\t%.16f\t%.16f\n", hz, e0, e1, e2);
- 	o.e = sqrt( e0*e0 + e1*e1 + e2*e2 );		// eccentricity
-	o.a = -mu/( v*v - 2.*mu/o.r );			// semi major axis
+	vsquared = dvx*dvx + dvy*dvy + dvz*dvz;
+	o.v = sqrt(vsquared);
+	vcircsquared = mu/o.r;	
+	o.a = -mu/( vsquared - 2.*vcircsquared );	// semi major axis
 
-	o.P = o.a/fabs(o.a)*2.*M_PI*sqrt(fabs(o.a*o.a*o.a/mu));		// period (negative if hyperbolic)
-	double hratio = hz/o.h;
-	if(hratio > -1. && hratio < 1.){
-		o.inc = acos(hratio) ;				// inclination (wrt xy-plane)   -  Note if pi/2 < i < pi then the orbit is retrograde
+	hx = (dy*dvz - dz*dvy); 					//angular momentum vector
+	hy = (dz*dvx - dx*dvz);
+	hz = (dx*dvy - dy*dvx);
+	o.h = sqrt ( hx*hx + hy*hy + hz*hz );		// abs value of angular moment 
+	if (o.h/(o.r*o.v) <= MIN_REL_ERROR){
+		return reb_orbit_nan; 					// radial orbit.  Not implemented.
+	}
+
+	/*e0 = 1./mu*( dvy*hz - dvz*hy - vcirc2*dx);
+	e1 = 1./mu*( dvz*hx - dvx*hz - vcirc2*dy);
+	e2 = 1./mu*( dvx*hy - dvy*hx - vcirc2*dz);*/
+	
+	vdiffsquared = vsquared - vcircsquared;	
+	vr = (dx*dvx + dy*dvy + dz*dvz)/o.r;	
+	rvr = o.r*vr;
+	muinv = 1./mu;
+
+	ex = muinv*( vdiffsquared*dx - rvr*dvx );
+	ey = muinv*( vdiffsquared*dy - rvr*dvy );
+	ez = muinv*( vdiffsquared*dz - rvr*dvz );
+	//printf("orbit %.16f\t%.16f\t%.16f\t%.16f\n", hz, e0, e1, e2);
+ 	o.e = sqrt( ex*ex + ey*ey + ez*ez );		// eccentricity
+
+	o.n = o.a/fabs(o.a)*sqrt(fabs(mu/(o.a*o.a*o.a)));	// mean motion (negative if hyperbolic)
+	o.P = 2*M_PI/o.n;									// period (negative if hyperbolic)
+	
+	cosi = hz/o.h;
+	if(cosi > -1. && cosi < 1.){
+		o.inc = acos(cosi) ;			// inclination (wrt xy-plane) - if pi/2 < i < pi then the orbit is retrograde
 	}
 	else{
-		o.inc = hz > 0. ? 0. : M_PI;			// if we spuriously get |hz| > h, inc = 0 or pi to within ~ machine precision
+		o.inc = cosi >= 1. ? 0. : M_PI;	// if we spuriously get |hz| > h, inc = 0 or pi to within ~ machine precision
 	}
 
-	nx = -hy;					// vector pointing along the ascending node
+	nx = -hy;							// vector pointing along the ascending node = zhat cross h
 	ny =  hx;		
-	n = sqrt( nx*ny + n1*n1 );
-	er = dx*e0 + dy*e1 + dz*e2;
+	n = sqrt( nx*nx + ny*ny );
 
-	double nratio = nx/n;
-	if(nratio > -1. && nratio < 1.){
-		o.Omega = acos(nratio);
-		if(ny < 0){				// acos only gives angles in [0,pi].  If the y component of n is negative, then we need the other solution -acos(nratio)
+	cosOmega = nx/n;					// Omega is angle between xhat and ascending node vector
+	if(cosOmega > -1. && cosOmega < 1.){
+		o.Omega = acos(cosOmega);
+		if(ny < 0){						// acos only gives angles in [0,pi].  If the y component of n is negative, 
+										// then we need the other solution -acos(cosOmega)
 			o.Omega = -o.Omega;
 		}
 	}
 	else{
-		o.Omega = nratio > 0. ? 0. : M_PI;		// if we spuriously get |nx| > n, Omega = 0 or pi to within ~ machine precision
+		o.Omega = cosOmega >= 1. ? 0. : M_PI;	// numerical error catcher like above for inc
 	}
 
-	double cosomega = (n0*e0 + n1*e1)/(n*o.e);
+	cosomega = (nx*ex + ny*ey)/(n*o.e);			// omega is angle between ascending node and e vectors
 	if(cosomega > -1. && cosomega < 1.){
 		o.omega = acos(cosomega);
-		if(ez < 0){				// acos only gives angles in [0,pi].  Since omega is measured in direction of orbital motion from ascending node, 
-								// ez < 0 guarantees we're in range [pi,2pi], in which case o.omega = -o.omega 
+		if(ez < 0){								// choose right acos solution like above for Omega 
 			o.omega = - o.omega;
 		}
 	}
 	else{
-		o.omega = cosomega > 0. ? 0. : M_PI;
+		o.omega = cosomega >= 1. ? 0. : M_PI;	// numerical error catcher like above for inc
 	}
 	
+	cosf = (dx*ex + dy*ey + dz*ez)/(o.e*o.r);	// true anomaly is angle between r and e vectors	
+	if(cosf > -1. && cosf < 1.){
+		o.f = acos(cosf);						
+	}
+	else{
+		o.f = cosf >= 1. ? 0. : M_PI;			// numerical error catcher
+	}
+
+	cosea = (1.-o.r/o.a)/o.e;					// eccentric anomaly
+	if(cosea > -1. && cosf < 1.){
+		o.ea = acos(cosea);						
+	}
+	else{
+		o.ea = cosea >= 1. ? 0. : M_PI;			// numerical error catcher
+	}
+
+	if(vr < 0.){
+		o.f = - o.f;							// choose right acos solution.  If f is in [pi,2pi], so is ea
+		o.ea = - o.ea;
+	}
+
+	o.pomega = o.Omega + o.omega;				// longitude of pericenter
+	o.M = o.ea - o.e*sin(o.ea);					// mean anomaly (Kepler's equation)
+	o.l = o.pomega + o.M;						// mean longitude
+
 	/*
 	if (n/(o.r*v) <= MIN_REL_ERROR || o.inc <= MIN_REL_ERROR){			// we are in the xy plane
 		o.Omega=0.;
@@ -330,7 +365,7 @@ struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_p
 			o.Omega=2.*M_PI-acos(n0/n); // Omega=longitude of asc node
 		}								// taken in xy plane from x axis
 	}	
-	*/
+	
 
 	if (o.e<=MIN_REL_ERROR){            // circular orbit
 		o.f=0.;                         // f has no meaning
@@ -361,7 +396,7 @@ struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_p
 		}
 		
 		o.l = ea -o.e*sin(ea) + o.omega+ o.Omega;  // mean longitude
-	}
+	}*/
 	return o;
 }
 

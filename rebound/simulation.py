@@ -116,6 +116,7 @@ class Orbit(Structure):
     _fields_ = [("r", c_double),
                 ("h", c_double),
                 ("P", c_double),
+                ("n", c_double),
                 ("a", c_double),
                 ("e", c_double),
                 ("inc", c_double),
