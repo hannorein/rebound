@@ -800,13 +800,50 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
  * @{
  */
 /**
- * @brief This function calculated orbital elements for a given particle. 
+ * @brief returns the true anomaly for a given eccentricity and mean anomaly
+ * @param e Eccentricity
+ * @param M Mean anomaly
+ * @return True anomaly
+ */
+double reb_tools_M_to_f(double e, double M);
+
+/**
+ * @brief Initialize a particle on an orbit in the xy plane.
+ * @param G Gravitational constant.
+ * @param primary Particle structure for the orbit's reference body.
+ * @param m Mass of the particle.
+ * @param a Semi-major axis of the particle.
+ * @param e Eccentricity of the particle.
+ * @param omega Pericenter of the particle.
+ * @param f true anomaly of the particle.
+ * @return Returns a particle structure with the given orbital parameters. 
+ */
+struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle primary, double m, double a, double e, double omega, double f);
+
+/**
+ * @brief Initialize a particle on a 3D orbit.  See Fig. 2.13 of Murray & Dermott Solar System Dynamics for diagram.
+ * @param G Gravitational constant.
+ * @param primary Particle structure for the orbit's reference body.
+ * @param m Mass of the particle.
+ * @param a Semi-major axis of the particle.
+ * @param e Eccentricity of the particle.
+ * @param i inclination of the particle to the reference plane.
+ * @param Omega Longitude of the ascending node of the particle.
+ * @param omega argument of pericenter of the particle.
+ * @param f true anomaly of the particle.
+ * @return Returns a particle structure with the given orbital parameters. 
+ */
+struct reb_particle reb_tools_orbit_to_particle(double G, struct reb_particle primary, double m, double a, double e, double i, double Omega, double omega, double f);
+
+/**
+ * @brief This function calculates orbital elements for a given particle. 
  * @param G The gravitational constant
  * @param p reb_particle for which the orbit is calculated.
  * @param star Star or central object particle
- * @return Orbital parameters. 
+ * @return reb_orbit struct with orbital parameters. 
  */
-struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_particle star);
+struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, struct reb_particle star);
+
 
 /**
  * @brief Reads a binary file.

@@ -58,8 +58,8 @@ class NoParticles(Exception):
 
 
 from .simulation import Simulation
+from .simulation import Orbit
 from .particle import Particle
-from .particle import Orbit
 from .interruptible_pool import InterruptiblePool
 
 __all__ = ["Simulation", "Orbit", "Particle", "SimulationError", "Encounter", "Escape", "NoParticles", "InterruptiblePool"]

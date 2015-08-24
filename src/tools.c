@@ -170,49 +170,132 @@ void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R
 	}
 }
 
-struct reb_particle reb_tools_init_orbit2d(double G, double M, double m, double a, double e, double omega, double f){
-	struct reb_particle p = {0};
-	p.m = m;
-	double r = a*(1.-e*e)/(1.+e*cos(f));
-	double n = sqrt(G*(m+M)/(a*a*a));
-	double tx = r*cos(f);
-	double ty = r*sin(f);
-	p.z = 0;
-	double tvx = -n*a/sqrt(1.-e*e)*sin(f);
-	double tvy =  n*a/sqrt(1.-e*e)*(e+cos(f));
-	p.vz = 0;
-	p.ax = 0; p.ay = 0; p.az = 0;
-	
-	p.x  =  cos(omega)*tx  - sin(omega)*ty;
-	p.y  =  sin(omega)*tx  + cos(omega)*ty;
-	
-	p.vx =  cos(omega)*tvx - sin(omega)*tvy;
-	p.vy =  sin(omega)*tvx + cos(omega)*tvy;
-
-	return p;
+double mod2pi(double f){
+	while(f < 0.){
+		f += 2*M_PI;
+	}
+	while(f > 0.){
+		f -= 2*M_PI;
+	}
+	return f;
 }
 
-struct reb_particle reb_tools_init_orbit3d(double G, double M, double m, double a, double e, double inc, double Omega, double omega, double f){
+double reb_M_to_E(double e, double M){
+	double E;
+	if(e < 1.){
+		E = e < 0.8 ? M : M_PI;
+		double F = E - e*sin(M) - M;
+		for(int i=0; i<100; i++){
+			E = E - F/(1.-e*cos(E));
+			F = E - e*sin(E) - M;
+			if(fabs(F) < 1.e-16){
+				break;
+			}
+		}
+		E = mod2pi(E);
+		return E;
+	}
+	else{
+		E = M;
+
+		double F = E - e*sinh(E) - M;
+		for(int i=0; i<100; i++){
+			E = E - F/(1.0 - e*cosh(E));
+			F = E - e*sinh(E) - M;
+			if(fabs(F) < 1.e-16){
+				break;
+			}
+		}
+		E = mod2pi(E);
+		return E;
+	}
+}
+
+double reb_tools_M_to_f(double e, double M){
+
+	double E = reb_M_to_E(e, M);
+	if(e > 1.){
+		return 2.*atan(sqrt((1.+e)/(e-1.))*tanh(0.5*E));
+	}
+	else{
+		return 2*atan(sqrt((1.+e)/(1.-e))*tan(0.5*E));
+	}
+}
+
+struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle primary, double m, double a, double e, double omega, double f){
+	double Omega = 0.;
+	double inc = 0.;
+	return reb_tools_orbit_to_particle(G, primary, m, a, e, inc, Omega, omega, f);
+}
+
+struct reb_particle reb_tools_orbit_to_particle(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	if(e < 0.){
+		if(fabs(e) < 1.e-16){ // numerical error
+			e = 0.;
+		}
+		else{
+			fprintf(stderr, "e < 0 in call to reb_tools_init_orbit3d.  Exiting.\n");
+			exit(1);
+		}
+	}
+
+	if(e > 1.){
+		if(a > 0.){
+			fprintf(stderr, "e > 1 and a > 0 in call to reb_tools_init_orbit3d.  Exiting.\n");
+		}
+	}
+	else{
+		if(a < 0.){
+			fprintf(stderr, "e < 1 and a < 0 in call to reb_tools_init_orbit3d.  Exiting.\n");
+		}
+	}
+
+	if(e*cos(f) < -1.){
+		fprintf(stderr, "Hyperbolic orbit with anomaly beyond what's allowed by asymptotes.\n");
+	}
 
 	struct reb_particle p = {0};
 	p.m = m;
 	double r = a*(1-e*e)/(1 + e*cos(f));
+	double n = sqrt(G*(m+primary.m)/(a*a*a));
+	double v;
+	if(e < 1.){
+		v = n*a/sqrt(1.-e*e);
+	}
+	else{
+		v = n*a/sqrt(e*e-1.);
+	}
 
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
 	// Murray & Dermott Eq 2.122
-	p.x  = r*(cos(Omega)*cos(omega+f) - sin(Omega)*sin(omega+f)*cos(inc));
-	p.y  = r*(sin(Omega)*cos(omega+f) + cos(Omega)*sin(omega+f)*cos(inc));
-	p.z  = r*sin(omega+f)*sin(inc);
+	p.x = primary.x + r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
+	p.y = primary.y + r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
+	p.z = primary.z + r*(so*cf+co*sf)*si;
 
-	double n = sqrt(G*(m+M)/(a*a*a));
+	/*p.x  = r*(cos(Omega)*cos(omega+f) - sin(Omega)*sin(omega+f)*cos(inc));
+	p.y  = r*(sin(Omega)*cos(omega+f) + cos(Omega)*sin(omega+f)*cos(inc));
+	p.z  = r*sin(omega+f)*sin(inc);*/
+
 
 	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
-	p.vx = (n*a/sqrt(1-e*e))*((e+cos(f))*(-cos(inc)*cos(omega)*sin(Omega) - cos(Omega)*sin(omega)) - sin(f)*(cos(omega)*cos(Omega) - cos(inc)*sin(omega)*sin(Omega)));
-	p.vy = (n*a/sqrt(1-e*e))*((e+cos(f))*(cos(inc)*cos(omega)*cos(Omega) - sin(omega)*sin(Omega)) - sin(f)*(cos(omega)*sin(Omega) + cos(inc)*cos(Omega)*sin(omega)));
-	p.vz = (n*a/sqrt(1-e*e))*((e+cos(f))*cos(omega)*sin(inc) - sin(f)*sin(inc)*sin(omega));
+	p.vx = primary.vx + v*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = primary.vy + v*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = primary.vz + v*((e+cf)*co*si - sf*si*so);
+	
+	/*p.vx = v0*((e+cos(f))*(-cos(inc)*cos(omega)*sin(Omega) - cos(Omega)*sin(omega)) - sin(f)*(cos(omega)*cos(Omega) - cos(inc)*sin(omega)*sin(Omega)));
+	p.vy = v0*((e+cos(f))*(cos(inc)*cos(omega)*cos(Omega) - sin(omega)*sin(Omega)) - sin(f)*(cos(omega)*sin(Omega) + cos(inc)*cos(Omega)*sin(omega)));
+	p.vz = v0*((e+cos(f))*cos(omega)*sin(inc) - sin(f)*sin(inc)*sin(omega));*/
 
 	p.ax = 0; 	p.ay = 0; 	p.az = 0;
 
-	printf("init %.16e\t%.16e\t%.16e\n", p.x,p.y,p.z);
 	return p;
 }
 
@@ -221,7 +304,7 @@ static const struct reb_orbit reb_orbit_nan = {.a = NAN, .r = NAN, .h = NAN, .P 
 #define MIN_REL_ERROR 1.0e-12	///< Close to smallest relative floating point number, used for orbit calculation
 #define TINY 1.E-308 		///< Close to smallest representable floating point number, used for orbit calculation
 
-struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_particle primary){
+struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, struct reb_particle primary){
 	struct reb_orbit o;
 	if (primary.m <= TINY){	
 		return reb_orbit_nan;
@@ -326,9 +409,15 @@ struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_p
 		ea = - ea;
 	}
 
-	o.pomega = o.Omega + o.omega;				// longitude of pericenter
 	o.M = ea - o.e*sin(ea);						// mean anomaly (Kepler's equation)
-	o.l = o.pomega + o.M;						// mean longitude
+	if(o.inc < M_PI/2.){
+		o.pomega = o.Omega + o.omega;			// longitude of pericenter
+		o.l = o.pomega + o.M;					// mean longitude
+	}
+	else{										// for retrograde orbits, omega and M
+		o.pomega = o.Omega - o.omega;			// are measured in opposite direction
+		o.l = o.pomega - o.M;					// to Omega
+	}
 
 	/*
 	if (n/(o.r*v) <= MIN_REL_ERROR || o.inc <= MIN_REL_ERROR){			// we are in the xy plane
