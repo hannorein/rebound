@@ -242,29 +242,25 @@ struct reb_particle reb_tools_orbit_to_particle(double G, struct reb_particle pr
 	if(e > 1.){
 		if(a > 0.){
 			fprintf(stderr, "e > 1 and a > 0 in call to reb_tools_init_orbit3d.  Exiting.\n");
+			exit(1);
 		}
 	}
 	else{
 		if(a < 0.){
 			fprintf(stderr, "e < 1 and a < 0 in call to reb_tools_init_orbit3d.  Exiting.\n");
+			exit(1);
 		}
 	}
 
 	if(e*cos(f) < -1.){
 		fprintf(stderr, "Hyperbolic orbit with anomaly beyond what's allowed by asymptotes.\n");
+		exit(1);
 	}
 
 	struct reb_particle p = {0};
 	p.m = m;
 	double r = a*(1-e*e)/(1 + e*cos(f));
-	double n = sqrt(G*(m+primary.m)/(a*a*a));
-	double v;
-	if(e < 1.){
-		v = n*a/sqrt(1.-e*e);
-	}
-	else{
-		v = n*a/sqrt(e*e-1.);
-	}
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -286,9 +282,9 @@ struct reb_particle reb_tools_orbit_to_particle(double G, struct reb_particle pr
 
 
 	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
-	p.vx = primary.vx + v*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
-	p.vy = primary.vy + v*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
-	p.vz = primary.vz + v*((e+cf)*co*si - sf*si*so);
+	p.vx = primary.vx + v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = primary.vy + v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = primary.vz + v0*((e+cf)*co*si - sf*si*so);
 	
 	/*p.vx = v0*((e+cos(f))*(-cos(inc)*cos(omega)*sin(Omega) - cos(Omega)*sin(omega)) - sin(f)*(cos(omega)*cos(Omega) - cos(inc)*sin(omega)*sin(Omega)));
 	p.vy = v0*((e+cos(f))*(cos(inc)*cos(omega)*cos(Omega) - sin(omega)*sin(Omega)) - sin(f)*(cos(omega)*sin(Omega) + cos(inc)*cos(Omega)*sin(omega)));
