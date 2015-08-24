@@ -4,7 +4,7 @@ import math
 import ctypes.util
 import rebound
 
-__all__ = ["Orbit", "Particle"]
+__all__ = ["Particle"]
 TINY=1.e-308
 MIN_REL_ERROR = 1.e-12
 
@@ -222,10 +222,10 @@ class Particle(Structure):
         -------
         A rebound.Particle structure initialized with the given orbital parameters
         """
-    
+   
+        '''
         self.m = m
 
-        if not(0.<=inc<=math.pi): raise ValueError('inc must be in range [0,pi]')
         if e>1.:
             if math.fabs(anom)>math.acos(-1./e): raise ValueError('hyperbolic orbit with anomaly larger than angle of asymptotes')
     
@@ -266,8 +266,15 @@ class Particle(Structure):
         self.vx = primary.vx + v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO))
         self.vy = primary.vy + v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO))
         self.vz = primary.vz + v0*((e+cf)*co*si - sf*si*so)
+        '''
 
+        f = anom
+        clibrebound.reb_tools_init_orbit3d.restype = Particle
+        p = clibrebound.reb_tools_init_orbit3d(simulation.G, primary.m, m, a, e, inc, Omega, omega, f)
+        self.__dict__.update(p.__dict__)
+        print(self.vx)
 
+        
     def calculate_orbit(self, simulation, primary=None, index=None, verbose=False):
         """ 
         Returns a rebound.Orbit object with the keplerian orbital elements
@@ -307,7 +314,7 @@ class Particle(Structure):
             else:
                 primary = simulation.calculate_com(index)
 
-        o = Orbit()
+        o = reb_Orbit()
         if primary.m <= TINY:
             if verbose is True:
                 print("Star has no mass.")

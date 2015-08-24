@@ -129,7 +129,6 @@ struct reb_orbit {
 	double pomega;  ///< Longitude of pericenter
 	double f; 	///< True anomaly
 	double M;   ///< Mean anomaly
-	double ea;  ///< Eccentric anomaly
 	double l;	///< Mean Longitude
 };
 

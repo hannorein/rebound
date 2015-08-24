@@ -101,8 +101,10 @@ class Orbit(Structure):
     Parameters
     ---------
     r       : (float)           radial distance from reference 
+    v       : (float)           velocity relative to central object's velocity
     h       : (float)           specific angular momentum
     P       : (float)           orbital period
+    n       : (float)           mean motion
     a       : (float)           semimajor axis
     e       : (float)           eccentricity
     inc     : (float)           inclination
@@ -114,6 +116,7 @@ class Orbit(Structure):
     l       : (float)           mean longitude = Omega + omega + M
     """
     _fields_ = [("r", c_double),
+                ("v", c_double),
                 ("h", c_double),
                 ("P", c_double),
                 ("n", c_double),

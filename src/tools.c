@@ -227,7 +227,7 @@ struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_p
 		return reb_orbit_nan;
 	}
 	double mu,dx,dy,dz,dvx,dvy,dvz,vsquared,vcircsquared,vdiffsquared;
-	double hx,hy,hz,vr,rvr,muinv,ex,ey,ez,nx,ny,n,cosi,cosomega,cosOmega,cosf,cosea;
+	double hx,hy,hz,vr,rvr,muinv,ex,ey,ez,nx,ny,n,cosi,cosomega,cosOmega,cosf,cosea, ea;
 	mu = G*(p.m+primary.m);
 	dx = p.x - primary.x;
 	dy = p.y - primary.y;
@@ -315,19 +315,19 @@ struct reb_orbit reb_tools_p2orbit(double G, struct reb_particle p, struct reb_p
 
 	cosea = (1.-o.r/o.a)/o.e;					// eccentric anomaly
 	if(cosea > -1. && cosf < 1.){
-		o.ea = acos(cosea);						
+		ea = acos(cosea);						
 	}
 	else{
-		o.ea = cosea >= 1. ? 0. : M_PI;			// numerical error catcher
+		ea = cosea >= 1. ? 0. : M_PI;			// numerical error catcher
 	}
 
 	if(vr < 0.){
 		o.f = - o.f;							// choose right acos solution.  If f is in [pi,2pi], so is ea
-		o.ea = - o.ea;
+		ea = - ea;
 	}
 
 	o.pomega = o.Omega + o.omega;				// longitude of pericenter
-	o.M = o.ea - o.e*sin(o.ea);					// mean anomaly (Kepler's equation)
+	o.M = ea - o.e*sin(ea);						// mean anomaly (Kepler's equation)
 	o.l = o.pomega + o.M;						// mean longitude
 
 	/*
