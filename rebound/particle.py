@@ -160,10 +160,10 @@ class Particle(Structure):
                 if pomega is None:  # can specify omega through either omega directly or pomega indirectly
                     omega = 0.
                 else:
-                    if inc < math.pi/2.:
-                        omega = pomega - Omega # for prograde orbits, pomega = Omega + omega
+                    if math.cos(inc) > 0:       # inc is in range [-pi/2,pi/2] (prograde), so pomega = Omega + omega
+                        omega = pomega - Omega 
                     else:
-                        omega = Omega - pomega # for retrograde orbits, pomega = Omega - omega
+                        omega = Omega - pomega  # for retrograde orbits, pomega = Omega - omega
             else:
                 if pomega is not None:
                     raise ValueError("Can't pass both omega and pomega")
@@ -174,7 +174,7 @@ class Particle(Structure):
             else:                   # f is not set.  If l or M are, we need to use M to obtain f.  Otherwise f = 0 by default.
                 if l is not None:
                     if M is None: # M is not set, but l is, so find M from l
-                        if inc < math.pi/2.:        # for prograde orbits, lambda = Omega + omega + M
+                        if math.cos(inc) > 0:   # for prograde orbits, lambda = Omega + omega + M
                             M = l - Omega - omega
                         else:
                             M = Omega - omega - l   # for retrograde orbits, lambda = Omega - omega - M

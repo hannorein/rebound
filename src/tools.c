@@ -228,33 +228,32 @@ struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle 
 	return reb_tools_orbit_to_particle(G, primary, m, a, e, inc, Omega, omega, f);
 }
 
-struct reb_particle reb_tools_orbit_to_particle(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
-	if(e < 0.){
-		if(fabs(e) < 1.e-16){ // numerical error
-			e = 0.;
-		}
-		else{
-			fprintf(stderr, "e < 0 in call to reb_tools_init_orbit3d.  Exiting.\n");
-			exit(1);
-		}
-	}
+static const struct reb_particle reb_particle_nan = {.x = NAN, .y = NAN, .z = NAN, .vx = NAN, .vy = NAN, .vz = NAN, .ax = NAN, .ay = NAN, .az = NAN, .m = NAN, .r = NAN, .lastcollision = NAN, .c = NULL, .id = NAN};
 
+struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f, int &err){
+	if(e == 1.){
+		err = 1; 		// Can't initialize a radial orbit with orbital elements.
+		return reb_particle_nan;
+	}
+	if(e < 0.){
+		err = 2; 		// Eccentricity can never be less than zero.
+		return reb_particle_nan;
+	}
 	if(e > 1.){
 		if(a > 0.){
-			fprintf(stderr, "e > 1 and a > 0 in call to reb_tools_init_orbit3d.  Exiting.\n");
-			exit(1);
+			err = 3; 	// Bound orbit (a > 0) can't have e > 1. 
+			return reb_particle_nan;
 		}
 	}
 	else{
 		if(a < 0.){
-			fprintf(stderr, "e < 1 and a < 0 in call to reb_tools_init_orbit3d.  Exiting.\n");
-			exit(1);
+			err =4; 	// Unbound orbit (a < 0) can't have e < 1.
+			return reb_particle_nan;
 		}
 	}
-
 	if(e*cos(f) < -1.){
-		fprintf(stderr, "Hyperbolic orbit with anomaly beyond what's allowed by asymptotes.\n");
-		exit(1);
+		err = 5;		// Unbound orbit can't have f set beyond the asymptotes defining the parabola.
+		return reb_particle_nan;
 	}
 
 	struct reb_particle p = {0};
@@ -276,33 +275,75 @@ struct reb_particle reb_tools_orbit_to_particle(double G, struct reb_particle pr
 	p.y = primary.y + r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
 	p.z = primary.z + r*(so*cf+co*sf)*si;
 
-	/*p.x  = r*(cos(Omega)*cos(omega+f) - sin(Omega)*sin(omega+f)*cos(inc));
-	p.y  = r*(sin(Omega)*cos(omega+f) + cos(Omega)*sin(omega+f)*cos(inc));
-	p.z  = r*sin(omega+f)*sin(inc);*/
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = primary.vx + v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = primary.vy + v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = primary.vz + v0*((e+cf)*co*si - sf*si*so);
+	
+	p.ax = 0; 	p.ay = 0; 	p.az = 0;
 
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+{	
+	if(e == 1.){
+		return reb_particle_nan;
+	}
+	if(e < 0.){
+		return reb_particle_nan;
+	}
+	if(e > 1.){
+		if(a > 0.){
+			return reb_particle_nan;
+		}
+	}
+	else{
+		if(a < 0.){
+			return reb_particle_nan;
+		}
+	}
+	if(e*cos(f) < -1.){
+		return reb_particle_nan;
+	}
+	struct reb_particle p = {0};
+	p.m = m;
+	double r = a*(1-e*e)/(1 + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = primary.x + r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
+	p.y = primary.y + r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
+	p.z = primary.z + r*(so*cf+co*sf)*si;
 
 	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = primary.vx + v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
 	p.vy = primary.vy + v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
 	p.vz = primary.vz + v0*((e+cf)*co*si - sf*si*so);
 	
-	/*p.vx = v0*((e+cos(f))*(-cos(inc)*cos(omega)*sin(Omega) - cos(Omega)*sin(omega)) - sin(f)*(cos(omega)*cos(Omega) - cos(inc)*sin(omega)*sin(Omega)));
-	p.vy = v0*((e+cos(f))*(cos(inc)*cos(omega)*cos(Omega) - sin(omega)*sin(Omega)) - sin(f)*(cos(omega)*sin(Omega) + cos(inc)*cos(Omega)*sin(omega)));
-	p.vz = v0*((e+cos(f))*cos(omega)*sin(inc) - sin(f)*sin(inc)*sin(omega));*/
-
 	p.ax = 0; 	p.ay = 0; 	p.az = 0;
 
 	return p;
 }
 
-static const struct reb_orbit reb_orbit_nan = {.a = NAN, .r = NAN, .h = NAN, .P = NAN, .l = NAN, .e = NAN, .inc = NAN, .Omega = NAN, .omega = NAN, .f = NAN};
+static const struct reb_orbit reb_orbit_nan = {.r = NAN, .v = NAN, .h = NAN, .P = NAN, .n = NAN, .a = NAN, .e = NAN, .inc = NAN, .Omega = NAN, .omega = NAN, .pomega = NAN, .f = NAN, .M = NAN, .l = NAN};
 
 #define MIN_REL_ERROR 1.0e-12	///< Close to smallest relative floating point number, used for orbit calculation
 #define TINY 1.E-308 		///< Close to smallest representable floating point number, used for orbit calculation
 
-struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, struct reb_particle primary){
+struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p, struct reb_particle primary, int &err){
 	struct reb_orbit o;
 	if (primary.m <= TINY){	
+		err = 1;			// primary has no mass.
 		return reb_orbit_nan;
 	}
 	double mu,dx,dy,dz,dvx,dvy,dvz,vsquared,vcircsquared,vdiffsquared;
@@ -315,27 +356,22 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
 	dvy = p.vy - primary.vy;
 	dvz = p.vz - primary.vz;
 	o.r = sqrt ( dx*dx + dy*dy + dz*dz );
-	if(o.r <= TINY){
-		return reb_orbit_nan;
-	}
+	
 	vsquared = dvx*dvx + dvy*dvy + dvz*dvz;
 	o.v = sqrt(vsquared);
 	vcircsquared = mu/o.r;	
 	o.a = -mu/( vsquared - 2.*vcircsquared );	// semi major axis
-
+	
 	hx = (dy*dvz - dz*dvy); 					//angular momentum vector
 	hy = (dz*dvx - dx*dvz);
 	hz = (dx*dvy - dy*dvx);
-	o.h = sqrt ( hx*hx + hy*hy + hz*hz );		// abs value of angular moment 
-	if (o.h/(o.r*o.v) <= MIN_REL_ERROR){
-		return reb_orbit_nan; 					// radial orbit.  Not implemented.
-	}
+	o.h = sqrt ( hx*hx + hy*hy + hz*hz );		// abs value of angular momentum
 
-	/*e0 = 1./mu*( dvy*hz - dvz*hy - vcirc2*dx);
-	e1 = 1./mu*( dvz*hx - dvx*hz - vcirc2*dy);
-	e2 = 1./mu*( dvx*hy - dvy*hx - vcirc2*dz);*/
-	
 	vdiffsquared = vsquared - vcircsquared;	
+	if(o.r <= TINY){							
+		err = 2;									// particle is on top of primary
+		return reb_orbit_nan;
+	}
 	vr = (dx*dvx + dy*dvy + dz*dvz)/o.r;	
 	rvr = o.r*vr;
 	muinv = 1./mu;
@@ -343,7 +379,6 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
 	ex = muinv*( vdiffsquared*dx - rvr*dvx );
 	ey = muinv*( vdiffsquared*dy - rvr*dvy );
 	ez = muinv*( vdiffsquared*dz - rvr*dvz );
-	//printf("orbit %.16f\t%.16f\t%.16f\t%.16f\n", hz, e0, e1, e2);
  	o.e = sqrt( ex*ex + ey*ey + ez*ez );		// eccentricity
 
 	o.n = o.a/fabs(o.a)*sqrt(fabs(mu/(o.a*o.a*o.a)));	// mean motion (negative if hyperbolic)
@@ -354,7 +389,8 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
 		o.inc = acos(cosi) ;			// inclination (wrt xy-plane) - if pi/2 < i < pi then the orbit is retrograde
 	}
 	else{
-		o.inc = cosi >= 1. ? 0. : M_PI;	// if we spuriously get |hz| > h, inc = 0 or pi to within ~ machine precision
+		o.inc = (cosi <= -1.) ? M_PI : 0.;// if we spuriously get |hz| > h, inc = 0 or pi to within ~ machine precision
+										// if h is 0, cosi = nan, reflecting that i is not well defined. This sets i=0
 	}
 
 	nx = -hy;							// vector pointing along the ascending node = zhat cross h
@@ -370,7 +406,7 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
 		}
 	}
 	else{
-		o.Omega = cosOmega >= 1. ? 0. : M_PI;	// numerical error catcher like above for inc
+		o.Omega = cosOmega <= -1. ? M_PI : 0.;	// numerical error catcher like above for inc. Sets Omega=0 for n=0 (polar orbit)
 	}
 
 	cosomega = (nx*ex + ny*ey)/(n*o.e);			// omega is angle between ascending node and e vectors
@@ -381,7 +417,7 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
 		}
 	}
 	else{
-		o.omega = cosomega >= 1. ? 0. : M_PI;	// numerical error catcher like above for inc
+		o.omega = cosomega <= -1. ? M_PI : 0.;	// numerical error catcher like above for inc. Sets omega=0 for n or e =0
 	}
 	
 	cosf = (dx*ex + dy*ey + dz*ez)/(o.e*o.r);	// true anomaly is angle between r and e vectors	
@@ -389,7 +425,7 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
 		o.f = acos(cosf);						
 	}
 	else{
-		o.f = cosf >= 1. ? 0. : M_PI;			// numerical error catcher
+		o.f = cosf <= -1. ? M_PI : 0.;			// numerical error catcher.  Sets f=0 for e=0.
 	}
 
 	cosea = (1.-o.r/o.a)/o.e;					// eccentric anomaly
@@ -397,7 +433,7 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
 		ea = acos(cosea);						
 	}
 	else{
-		ea = cosea >= 1. ? 0. : M_PI;			// numerical error catcher
+		ea = cosea <= -1. ? M_PI : 0.;			// numerical error catcher.  Sets ea=0 for e or a=0.
 	}
 
 	if(vr < 0.){
@@ -415,73 +451,118 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
 		o.l = o.pomega - o.M;					// to Omega
 	}
 
-	/*
-	if (n/(o.r*v) <= MIN_REL_ERROR || o.inc <= MIN_REL_ERROR){			// we are in the xy plane
-		o.Omega=0.;
-		if (o.e <= MIN_REL_ERROR){              // omega not defined for circular orbit
-			o.omega = 0.;
-		}
-		else{
-			if (e1>=0.){
-				o.omega=acos(e0/o.e);
-			}
-			else{
-				o.omega = 2.*M_PI-acos(e0/o.e);
-			}
-		}
-	}
-	else{
-		if (o.e <= MIN_REL_ERROR){
-			o.omega = 0.;
-		}
-		else{
-			if (e2>=0.){                        // omega=0 if pericenter at asc node
-				o.omega=acos(( n0*e0 + n1*e1 )/(n*o.e));
-			}
-			else{
-				o.omega=2.*M_PI-acos(( n0*e0 + n1*e1 )/(n*o.e));
-			}
-		}
+	return o;
+}
 
-		if (n1>=0.){
-			o.Omega = acos(n0/n);
-		}
-		else{
-			o.Omega=2.*M_PI-acos(n0/n); // Omega=longitude of asc node
-		}								// taken in xy plane from x axis
-	}	
+struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, struct reb_particle primary){
+	struct reb_orbit o;
+	if (primary.m <= TINY){	
+		return reb_orbit_nan;
+	}
+	double mu,dx,dy,dz,dvx,dvy,dvz,vsquared,vcircsquared,vdiffsquared;
+	double hx,hy,hz,vr,rvr,muinv,ex,ey,ez,nx,ny,n,cosi,cosomega,cosOmega,cosf,cosea, ea;
+	mu = G*(p.m+primary.m);
+	dx = p.x - primary.x;
+	dy = p.y - primary.y;
+	dz = p.z - primary.z;
+	dvx = p.vx - primary.vx;
+	dvy = p.vy - primary.vy;
+	dvz = p.vz - primary.vz;
+	o.r = sqrt ( dx*dx + dy*dy + dz*dz );
 	
+	vsquared = dvx*dvx + dvy*dvy + dvz*dvz;
+	o.v = sqrt(vsquared);
+	vcircsquared = mu/o.r;	
+	o.a = -mu/( vsquared - 2.*vcircsquared );	// semi major axis
+	
+	hx = (dy*dvz - dz*dvy); 					//angular momentum vector
+	hy = (dz*dvx - dx*dvz);
+	hz = (dx*dvy - dy*dvx);
+	o.h = sqrt ( hx*hx + hy*hy + hz*hz );		// abs value of angular momentum
 
-	if (o.e<=MIN_REL_ERROR){            // circular orbit
-		o.f=0.;                         // f has no meaning
-		o.M=0.;
-		o.l=0.;
+	vdiffsquared = vsquared - vcircsquared;	
+	if(o.r <= TINY){							
+		return reb_orbit_nan;
+	}
+	vr = (dx*dvx + dy*dvy + dz*dvz)/o.r;	
+	rvr = o.r*vr;
+	muinv = 1./mu;
+
+	ex = muinv*( vdiffsquared*dx - rvr*dvx );
+	ey = muinv*( vdiffsquared*dy - rvr*dvy );
+	ez = muinv*( vdiffsquared*dz - rvr*dvz );
+ 	o.e = sqrt( ex*ex + ey*ey + ez*ez );		// eccentricity
+
+	o.n = o.a/fabs(o.a)*sqrt(fabs(mu/(o.a*o.a*o.a)));	// mean motion (negative if hyperbolic)
+	o.P = 2*M_PI/o.n;									// period (negative if hyperbolic)
+	
+	cosi = hz/o.h;
+	if(cosi > -1. && cosi < 1.){
+		o.inc = acos(cosi) ;			// inclination (wrt xy-plane) - if pi/2 < i < pi then the orbit is retrograde
 	}
 	else{
-		cosf = er/(o.e*o.r);
-		cosea = (1.-o.r/o.a)/o.e;
-		
-		if (-1.<=cosf && cosf<=1.){     // failsafe
-			o.f = acos(cosf);
+		o.inc = (cosi <= -1.) ? M_PI : 0.;// if we spuriously get |hz| > h, inc = 0 or pi to within ~ machine precision
+										// if h is 0, cosi = nan, reflecting that i is not well defined. This sets i=0
+	}
+
+	nx = -hy;							// vector pointing along the ascending node = zhat cross h
+	ny =  hx;		
+	n = sqrt( nx*nx + ny*ny );
+
+	cosOmega = nx/n;					// Omega is angle between xhat and ascending node vector
+	if(cosOmega > -1. && cosOmega < 1.){
+		o.Omega = acos(cosOmega);
+		if(ny < 0){						// acos only gives angles in [0,pi].  If the y component of n is negative, 
+										// then we need the other solution -acos(cosOmega)
+			o.Omega = -o.Omega;
 		}
-		else{
-			o.f = M_PI/2.*(1.-cosf);
+	}
+	else{
+		o.Omega = cosOmega <= -1. ? M_PI : 0.;	// numerical error catcher like above for inc. Sets Omega=0 for n=0 (polar orbit)
+	}
+
+	cosomega = (nx*ex + ny*ey)/(n*o.e);			// omega is angle between ascending node and e vectors
+	if(cosomega > -1. && cosomega < 1.){
+		o.omega = acos(cosomega);
+		if(ez < 0){								// choose right acos solution like above for Omega 
+			o.omega = - o.omega;
 		}
-		
-		if (-1.<=cosea && cosea<=1.){
-			ea  = acos(cosea);
-		}
-		else{
-			ea = M_PI/2.*(1.-cosea);
-		}
-		
-		if (vr<0.){
-			o.f=2.*M_PI-o.f;
-			ea =2.*M_PI-ea;
-		}
-		
-		o.l = ea -o.e*sin(ea) + o.omega+ o.Omega;  // mean longitude
-	}*/
+	}
+	else{
+		o.omega = cosomega <= -1. ? M_PI : 0.;	// numerical error catcher like above for inc. Sets omega=0 for n or e =0
+	}
+	
+	cosf = (dx*ex + dy*ey + dz*ez)/(o.e*o.r);	// true anomaly is angle between r and e vectors	
+	if(cosf > -1. && cosf < 1.){
+		o.f = acos(cosf);						
+	}
+	else{
+		o.f = cosf <= -1. ? M_PI : 0.;			// numerical error catcher.  Sets f=0 for e=0.
+	}
+
+	cosea = (1.-o.r/o.a)/o.e;					// eccentric anomaly
+	if(cosea > -1. && cosf < 1.){
+		ea = acos(cosea);						
+	}
+	else{
+		ea = cosea <= -1. ? M_PI : 0.;			// numerical error catcher.  Sets ea=0 for e or a=0.
+	}
+
+	if(vr < 0.){
+		o.f = - o.f;							// choose right acos solution.  If f is in [pi,2pi], so is ea
+		ea = - ea;
+	}
+
+	o.M = ea - o.e*sin(ea);						// mean anomaly (Kepler's equation)
+	if(o.inc < M_PI/2.){
+		o.pomega = o.Omega + o.omega;			// longitude of pericenter
+		o.l = o.pomega + o.M;					// mean longitude
+	}
+	else{										// for retrograde orbits, omega and M
+		o.pomega = o.Omega - o.omega;			// are measured in opposite direction
+		o.l = o.pomega - o.M;					// to Omega
+	}
+
 	return o;
 }
 
