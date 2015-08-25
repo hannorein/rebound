@@ -5,51 +5,6 @@ import ctypes.util
 import rebound
 
 __all__ = ["Particle"]
-TINY=1.e-308
-MIN_REL_ERROR = 1.e-12
-
-# Helper functions
-TWOPI = 2.*math.pi
-def mod2pi(f):
-    """Returns the angle f (in radians) modulo 2 pi."""
-    while f<0.:
-        f += TWOPI
-    while f>TWOPI:
-        f -= TWOPI
-    return f
-
-def eccentricAnomaly(e,M):
-    """Returns the eccentric anomaly given the eccentricity and mean anomaly (in radians) of a Keplerian orbit.
-    
-    Parameters
-    ----------
-    e       : (float)       Eccentricity
-    M       : (float)       Mean anomaly (in radians)
-    """
-    if e<1.:
-        E = M if e<0.8 else math.pi
-        
-        F = E - e*math.sin(M) - M
-        for i in range(100):
-            E = E - F/(1.0-e*math.cos(E))
-            F = E - e*math.sin(E) - M
-            if math.fabs(F)<1e-16:
-                break
-        E = mod2pi(E)
-        return E
-    else:
-        E = M 
-        
-        F = E - e*math.sinh(E) - M
-        for i in range(100):
-            E = E - F/(1.0-e*math.cosh(E))
-            F = E - e*math.sinh(E) - M
-            if math.fabs(F)<1e-16:
-                break
-        E = mod2pi(E)
-        return E
-
-
 
 def notNone(a):
     """Returns True if array a contains at least one element that is not None. Returns False otherwise."""
@@ -91,8 +46,7 @@ class Particle(Structure):
         """
         return "<rebound.Particle object, id=%s m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.id,self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
-    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, e=None, inc=None, Omega=None, omega=None, f=None, pomega=None, M=None, l=None, r=None, id=None, date=None, simulation=None):
-            #anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, r=None, id=None, date=None, simulation=None):   
+    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, e=None, inc=None, Omega=None, omega=None, f=None, pomega=None, M=None, l=None, theta=None, r=None, id=None, date=None, simulation=None):
         """
         Initializes a Particle structure.
         Typically users will not create Particle structures directly.
@@ -134,12 +88,16 @@ class Particle(Structure):
         # m=0.1 particle on circular orbit on positive x axis 
         p2 = rebound.Particle(m=0.1, x=1., vy=1., simulation=sim)
         """        
+
         if particle is not None:
             raise ValueError("Cannot initialize particle from other particles.")
         cart = [x,y,z,vx,vy,vz]
-        orbi = [primary,a,e,inc,Omega,omega,f,pomega,M,l]
-        if m is None:   #default value for mass
-            m = 0.
+        orbi = [primary,a,e,inc,Omega,omega,pomega,f,M,l,theta]
+        
+        self.m = 0. if m is None else m
+        self.id = -1 if id is None else id
+        self.r  =  0. if r is None else r
+        
         if notNone(cart) and notNone(orbi):
                 raise ValueError("You cannot pass cartesian coordinates and orbital elements (and/or primary) at the same time.")
         if notNone(orbi):
@@ -154,39 +112,67 @@ class Particle(Structure):
                 e = 0.
             if inc is None:
                 inc = 0.
-            if Omega is None:
+            if Omega is None:               # we require that Omega be passed if you want to specify longitude of node
                 Omega = 0.
-            if omega is None:
-                if pomega is None:  # can specify omega through either omega directly or pomega indirectly
-                    omega = 0.
-                else:
-                    if math.cos(inc) > 0:       # inc is in range [-pi/2,pi/2] (prograde), so pomega = Omega + omega
-                        omega = pomega - Omega 
+
+            pericenters = [omega, pomega]   # Need omega for C function. Can specify it either directly or through pomega indirectly. 
+            numNones = pericenters.count(None)
+
+            if numNones == 0:
+                raise ValueError("Can't pass both omega and pomega")
+            if numNones == 2:                   # Neither passed.  Default to 0.
+                omega = 0.
+            if numNones == 1:
+                if pomega is not None:          # Only have to find omega is pomega was passed
+                    if math.cos(inc) > 0:       # inc is in range [-pi/2, pi/2] (prograde), so pomega = Omega + omega
+                        omega = pomega - Omega
                     else:
                         omega = Omega - pomega  # for retrograde orbits, pomega = Omega - omega
-            else:
-                if pomega is not None:
-                    raise ValueError("Can't pass both omega and pomega")
 
-            if f is not None:
-                if M is not None or l is not None:
-                    raise ValueError("Can only pass one angle in the set [f, M, l] ([true anomaly, mean anomaly, mean longitude])")
-            else:                   # f is not set.  If l or M are, we need to use M to obtain f.  Otherwise f = 0 by default.
-                if l is not None:
-                    if M is None: # M is not set, but l is, so find M from l
-                        if math.cos(inc) > 0:   # for prograde orbits, lambda = Omega + omega + M
-                            M = l - Omega - omega
+            longitudes = [f,M,l,theta]      # can specify longitude through any of these four.  Need f for C function.
+            numNones = longitudes.count(None)
+
+            if numNones < 3:
+                raise ValueError("Can only pass one longitude/anomaly in the set [f, M, l, theta]")
+            if numNones == 4:                           # none of them passed.  Default to 0.
+                f = 0.
+            if numNones == 3:                           # Only one was passed.
+                if f is None:                           # Only have to work if f wasn't passed.
+                    if theta is not None:               # theta is next easiest
+                        if math.cos(inc) > 0:           # for prograde orbits, theta = Omega + omega + f
+                            f = theta - Omega - omega
                         else:
-                            M = Omega - omega - l   # for retrograde orbits, lambda = Omega - omega - M
-                    else:
-                        raise ValueError("Can only pass one angle in the set [f, M, l] ([true anomaly, mean anomaly, mean longitude])")
-                else:
-                    if M is None: # f, l and M were None, so set to 0 by default.
-                        M = 0.
-                clibrebound.reb_tools_M_to_f.restype = c_double
-                f = clibrebound.reb_tools_M_to_f(c_double(e), c_double(M))
-                                        
-            self.set_orbit(simulation, m=m,primary=primary,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                            f = Omega - omega - theta   # for retrograde, theta = Omega - omega - f
+                    else:                               # Either M or l was passed.  Will need to find M first to find f.
+                        if l is not None:
+                            if math.cos(inc) > 0:       # for prograde orbits, l = Omega + omega + M
+                                M = l - Omega - omega
+                            else:
+                                M = Omega - omega - l   # for retrograde, l = Omega - omega - M
+                        clibrebound.reb_tools_M_to_f.restype = c_double
+                        f = clibrebound.reb_tools_M_to_f(c_double(e), c_double(M)).value
+
+            err = c_int()
+            clibrebound.reb_tools_orbit_to_particle_err.restype = Particle
+            p = clibrebound.reb_tools_orbit_to_particle_err(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f), byref(err))
+
+            if err.value == 1:
+                raise ValueError("Can't initialize a radial orbit with orbital elements.")
+            if err.value == 2:
+                raise ValueError("Eccentricity must be greater than or equal to zero.")
+            if err.value == 3:
+                raise ValueError("Bound orbit (a > 0) must have e < 1.")
+            if err.value == 4:
+                raise ValueError("Unbound orbit (a < 0) must have e > 1.")
+            if err.value == 5:
+                raise ValueError("Unbound orbit can't have f beyond the range allowed by the asymptotes set by the hyperbola.")
+            
+            self.x = p.x
+            self.y = p.y
+            self.z = p.z
+            self.vx = p.vx
+            self.vy = p.vy
+            self.vz = p.vz
         else:
             if x is None:
                 x = 0.
@@ -200,7 +186,6 @@ class Particle(Structure):
                 vy = 0.
             if vz is None:
                 vz = 0.
-            self.m = m
             self.x = x
             self.y = y
             self.z = z
@@ -208,8 +193,6 @@ class Particle(Structure):
             self.vy = vy
             self.vz = vz
 
-        self.id = -1 if id is None else id
-        self.r  =  0. if r is None else r
 
     def set_orbit(self,
                     simulation,
@@ -247,60 +230,6 @@ class Particle(Structure):
         A rebound.Particle structure initialized with the given orbital parameters
         """
    
-        '''
-        self.m = m
-
-        if e>1.:
-            if math.fabs(anom)>math.acos(-1./e): raise ValueError('hyperbolic orbit with anomaly larger than angle of asymptotes')
-    
-        if MEAN is True: # need to calculate f
-            E = eccentricAnomaly(e,anom)
-            if e>1.:
-                print("not working yet")
-                exit(1)
-                f = 2.*math.atan(math.sqrt(-(1.+ e)/(1. - e))*math.tanh(0.5*E))
-            else:
-                f = mod2pi(2.*math.atan(math.sqrt((1.+ e)/(1. - e))*math.tan(0.5*E)))
-        else:
-            f = anom
-        
-        cO = math.cos(Omega)
-        sO = math.sin(Omega)
-        co = math.cos(omega)
-        so = math.sin(omega)
-        cf = math.cos(f)
-        sf = math.sin(f)
-        ci = math.cos(inc)
-        si = math.sin(inc)
-        
-        r = a*(1.-e**2)/(1.+e*cf)
-        
-        # Murray & Dermott Eq. 2.122
-        self.x  = primary.x + r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci)
-        self.y  = primary.y + r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci)
-        self.z  = primary.z + r*(so*cf+co*sf)*si
-        
-        n = math.sqrt(simulation.G*(primary.m+m)/(a**3))
-        if e>1.:
-            v0 = n*a/math.sqrt(-(1.-e**2))
-        else:
-            v0 = n*a/math.sqrt(1.-e**2)
-        
-        # Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
-        self.vx = primary.vx + v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO))
-        self.vy = primary.vy + v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO))
-        self.vz = primary.vz + v0*((e+cf)*co*si - sf*si*so)
-        '''
-
-        clibrebound.reb_tools_orbit_to_particle.restype = Particle
-        p = clibrebound.reb_tools_orbit_to_particle(c_double(simulation.G), primary, c_double(m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-        self.x = p.x
-        self.y = p.y
-        self.z = p.z
-        self.vx = p.vx
-        self.vy = p.vy
-        self.vz = p.vz
-        
     def calculate_orbit(self, simulation, primary=None):
         """ 
         Returns a rebound.Orbit object with the keplerian orbital elements
@@ -336,99 +265,13 @@ class Particle(Structure):
         if primary is None:
             primary = simulation.particles[0]
         
-        clibrebound.reb_tools_particle_to_orbit.restype = rebound.Orbit
-        o = clibrebound.reb_tools_particle_to_orbit(c_double(simulation.G), self, primary)
-        '''
-        o = reb_Orbit()
-        if primary.m <= TINY:
-            if verbose is True:
-                print("Star has no mass.")
-            return o                            # all values set to None
-        
-        dx = self.x - primary.x
-        dy = self.y - primary.y
-        dz = self.z - primary.z
-        o.r = math.sqrt ( dx*dx + dy*dy + dz*dz )
-        if o.r <= TINY:
-            if verbose is True:
-                print('Particle and primary positions are the same.')
-            return o
-        
-        dvx = self.vx - primary.vx
-        dvy = self.vy - primary.vy
-        dvz = self.vz - primary.vz
-        v = math.sqrt ( dvx*dvx + dvy*dvy + dvz*dvz )
-        
-        mu = simulation.G*(self.m+primary.m)
-        o.a = -mu/( v*v - 2.*mu/o.r )               # semi major axis
-        
-        h0 = (dy*dvz - dz*dvy)                      # angular momentum vector
-        h1 = (dz*dvx - dx*dvz)
-        h2 = (dx*dvy - dy*dvx)
-        o.h = math.sqrt ( h0*h0 + h1*h1 + h2*h2 )   # abs value of angular momentum
-        if o.h/(o.r*v) <= MIN_REL_ERROR:
-            if verbose is True:
-                print('Particle orbit is radial.')
-            return o
-        
-        vr = (dx*dvx + dy*dvy + dz*dvz)/o.r
-        e0 = 1./mu*( (v*v-mu/o.r)*dx - o.r*vr*dvx )
-        e1 = 1./mu*( (v*v-mu/o.r)*dy - o.r*vr*dvy )
-        e2 = 1./mu*( (v*v-mu/o.r)*dz - o.r*vr*dvz )
-        o.e = math.sqrt( e0*e0 + e1*e1 + e2*e2 )   # eccentricity
-        
-        o.P = math.copysign(2.*math.pi*math.sqrt( math.fabs(o.a*o.a*o.a/mu) ), o.a)  # period
-        o.inc = math.acos( h2/o.h )               # inclination (wrt xy-plane)
-        # if pi/2<i<pi it's retrograde
-        n0 = -h1                                    # node vector
-        n1 =  h0                                    # in xy plane => no z component
-        n = math.sqrt( n0*n0 + n1*n1 )
-        er = dx*e0 + dy*e1 + dz*e2
-        if n/(o.r*v)<=MIN_REL_ERROR or o.inc<=MIN_REL_ERROR:# we are in the xy plane
-            o.Omega=0.
-            if o.e <= MIN_REL_ERROR:              # omega not defined for circular orbit
-                o.omega = 0.
-            else:
-                if e1>=0.:
-                    o.omega=math.acos(e0/o.e)
-                else:
-                    o.omega = 2.*math.pi-math.acos(e0/o.e)
-        else:
-            if o.e <= MIN_REL_ERROR:
-                o.omega = 0.
-            else:
-                if e2>=0.:                        # omega=0 if perictr at asc node
-                    o.omega=math.acos(( n0*e0 + n1*e1 )/(n*o.e))
-                else:
-                    o.omega=2.*math.pi-math.acos(( n0*e0 + n1*e1 )/(n*o.e))
-            if n1>=0.:
-                o.Omega = math.acos(n0/n)
-            else:
-                o.Omega=2.*math.pi-math.acos(n0/n)# Omega=longitude of asc node
-        # taken in xy plane from x axis
-        
-        if o.e<=MIN_REL_ERROR:                           # circular orbit
-            o.f=0.                                  # f has no meaning
-            o.l=0.
-        else:
-            cosf = er/(o.e*o.r)
-            cosea = (1.-o.r/o.a)/o.e
-            
-            if -1.<=cosf and cosf<=1.:                       # failsafe
-                o.f = math.acos(cosf)
-            else:
-                o.f = math.pi/2.*(1.-cosf)
-            
-            if -1.<=cosea and cosea<=1.:
-                ea  = math.acos(cosea)
-            else:
-                ea = math.pi/2.*(1.-cosea)
-            
-            if vr<0.:
-                o.f=2.*math.pi-o.f
-                ea =2.*math.pi-ea
-            
-            o.l = ea -o.e*math.sin(ea) + o.omega+ o.Omega  # mean longitude
-        '''        
-        return o
+        err = c_int()
+        clibrebound.reb_tools_particle_to_orbit_err.restype = rebound.Orbit
+        o = clibrebound.reb_tools_particle_to_orbit_err(c_double(simulation.G), self, primary, byref(err))
 
+        if err.value == 1:
+            raise ValueError("Primary has no mass.")
+        if err.value == 2:
+            raise ValueError("Particle and primary positions are the same.")
+
+        return o
