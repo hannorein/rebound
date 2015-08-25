@@ -340,8 +340,20 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax){
 	if(tmax!=INFINITY){
 		if(r->exact_finish_time==1){
 			if ((r->t+r->dt)*dtsign>=tmax*dtsign){  // Next step would overshoot
-				if (r->status == REB_RUNNING_LAST_STEP){
+				double tscale = 1e-12*fabs(tmax);	// Find order of magnitude for time
+				if (tscale<1e-200){		// Failsafe if tmax==0.
+					tscale = 1e-12;
+				}
+				if (r->t==tmax){
 					r->status = REB_EXIT_SUCCESS;
+				}else if(r->status == REB_RUNNING_LAST_STEP){
+					if (fabs(r->t-tmax)<tscale){
+						r->status = REB_EXIT_SUCCESS;
+					}else{
+						// not there yet, do another step.
+						reb_integrator_synchronize(r);
+						r->dt = tmax-r->t;
+					}
 				}else{
 					r->status = REB_RUNNING_LAST_STEP; // Do one small step, then exit.
 					r->dt_last_done = r->dt;
