@@ -58,8 +58,8 @@ class NoParticles(Exception):
 
 
 from .simulation import Simulation
+from .simulation import Orbit
 from .particle import Particle
-from .particle import Orbit
 from .plotting import OrbitPlot
 from .interruptible_pool import InterruptiblePool
 

@@ -193,7 +193,7 @@ void reb_output_orbits(struct reb_simulation* r, char* filename){
 	}
 	struct reb_particle com = r->particles[0];
 	for (int i=1;i<N;i++){
-		struct reb_orbit o = reb_tools_p2orbit(r->G, r->particles[i],com);
+		struct reb_orbit o = reb_tools_particle_to_orbit(r->G, r->particles[i],com);
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",r->t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
 		com = reb_get_com_of_pair(com,r->particles[i]);
 	}

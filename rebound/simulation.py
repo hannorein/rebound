@@ -91,6 +91,50 @@ class reb_simulation_integrator_whfast(Structure):
                 ("timestep_warning", c_uint),
                 ("recalculate_jacobi_but_not_synchronized_warning", c_uint)]
 
+class Orbit(Structure):
+    """
+    A class containing orbital parameters for a particle.
+    This is an abstraction of the reb_orbit data structure in C.
+
+    When using the various REBOUND functions using Orbits, all angles are in radians. 
+
+    Parameters
+    ---------
+    r       : (float)           radial distance from reference 
+    v       : (float)           velocity relative to central object's velocity
+    h       : (float)           specific angular momentum
+    P       : (float)           orbital period
+    n       : (float)           mean motion
+    a       : (float)           semimajor axis
+    e       : (float)           eccentricity
+    inc     : (float)           inclination
+    Omega   : (float)           longitude of ascending node
+    omega   : (float)           argument of pericenter
+    pomega  : (float)           longitude of pericenter
+    f       : (float)           true anomaly
+    M       : (float)           mean anomaly
+    l       : (float)           mean longitude = Omega + omega + M
+    """
+    _fields_ = [("r", c_double),
+                ("v", c_double),
+                ("h", c_double),
+                ("P", c_double),
+                ("n", c_double),
+                ("a", c_double),
+                ("e", c_double),
+                ("inc", c_double),
+                ("Omega", c_double),
+                ("omega", c_double),
+                ("pomega", c_double),
+                ("f", c_double),
+                ("M", c_double),
+                ("l", c_double)]
+
+    def __str__(self):
+        """
+        Returns a string with the semi-major axis and eccentricity of the orbit.
+        """
+        return "<rebound.Orbit instance, a={0} e={1} inc={2} Omega={3} omega={4} f={5}>".format(str(self.a),str(self.e), str(self.inc), str(self.Omega), str(self.omega), str(self.f))
 
 class Simulation(Structure):
     """
@@ -114,13 +158,18 @@ class Simulation(Structure):
     def __init__(self, filename=None):
         if filename is None:
             clibrebound.reb_init_simulation(byref(self))
+
+    @classmethod
+    def from_file(cls, filename):
+        """
+        Loads a REBOUND simulation from a file. Return a Simulation object.
+        """
+        if os.path.isfile(filename):
+            clibrebound.reb_create_simulation_from_binary.restype = POINTER_REB_SIM
+            return clibrebound.reb_create_simulation_from_binary(c_char_p(filename.encode("ascii"))).contents
         else:
-            print "todo"
-            if os.path.isfile(filename):
-                clibrebound.reb_create_simulation_from_binary.restype = POINTER_REB_SIM
-                self.simulation = clibrebound.reb_create_simulation_from_binary(c_char_p(filename.encode("ascii")))
-            else:
-                raise ValueError("File does not exist.")
+            raise ValueError("File does not exist.")
+    
     afp = None # additional forces pointer
     corfp = None # coefficient of restitution function pointer
     ptmp = None # post timestep modifications pointer 
@@ -712,6 +761,7 @@ class Simulation(Structure):
         """
         if debug.integrator_package =="REBOUND":
             clibrebound.reb_integrate.restype = c_int
+	    self.exact_finish_time = c_int(exact_finish_time)
             ret_value = clibrebound.reb_integrate(byref(self), c_double(tmax))
             if ret_value == 1:
                 raise SimulationError("An error occured during the integration.")
