@@ -230,29 +230,29 @@ struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle 
 
 static const struct reb_particle reb_particle_nan = {.x = NAN, .y = NAN, .z = NAN, .vx = NAN, .vy = NAN, .vz = NAN, .ax = NAN, .ay = NAN, .az = NAN, .m = NAN, .r = NAN, .lastcollision = NAN, .c = NULL, .id = NAN};
 
-struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f, int &err){
+struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f, int* err){
 	if(e == 1.){
-		err = 1; 		// Can't initialize a radial orbit with orbital elements.
+		*err = 1; 		// Can't initialize a radial orbit with orbital elements.
 		return reb_particle_nan;
 	}
 	if(e < 0.){
-		err = 2; 		// Eccentricity can never be less than zero.
+		*err = 2; 		// Eccentricity can never be less than zero.
 		return reb_particle_nan;
 	}
 	if(e > 1.){
 		if(a > 0.){
-			err = 3; 	// Bound orbit (a > 0) can't have e > 1. 
+			*err = 3; 	// Bound orbit (a > 0) can't have e > 1. 
 			return reb_particle_nan;
 		}
 	}
 	else{
 		if(a < 0.){
-			err =4; 	// Unbound orbit (a < 0) can't have e < 1.
+			*err =4; 	// Unbound orbit (a < 0) can't have e < 1.
 			return reb_particle_nan;
 		}
 	}
 	if(e*cos(f) < -1.){
-		err = 5;		// Unbound orbit can't have f set beyond the asymptotes defining the parabola.
+		*err = 5;		// Unbound orbit can't have f set beyond the asymptotes defining the parabola.
 		return reb_particle_nan;
 	}
 
@@ -286,7 +286,6 @@ struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particl
 }
 
 struct reb_particle reb_tools_orbit_to_particle(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
-{	
 	if(e == 1.){
 		return reb_particle_nan;
 	}
@@ -340,10 +339,10 @@ static const struct reb_orbit reb_orbit_nan = {.r = NAN, .v = NAN, .h = NAN, .P 
 #define MIN_REL_ERROR 1.0e-12	///< Close to smallest relative floating point number, used for orbit calculation
 #define TINY 1.E-308 		///< Close to smallest representable floating point number, used for orbit calculation
 
-struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p, struct reb_particle primary, int &err){
+struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p, struct reb_particle primary, int* err){
 	struct reb_orbit o;
 	if (primary.m <= TINY){	
-		err = 1;			// primary has no mass.
+		*err = 1;			// primary has no mass.
 		return reb_orbit_nan;
 	}
 	double mu,dx,dy,dz,dvx,dvy,dvz,vsquared,vcircsquared,vdiffsquared;
@@ -369,7 +368,7 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 
 	vdiffsquared = vsquared - vcircsquared;	
 	if(o.r <= TINY){							
-		err = 2;									// particle is on top of primary
+		*err = 2;									// particle is on top of primary
 		return reb_orbit_nan;
 	}
 	vr = (dx*dvx + dy*dvy + dz*dvz)/o.r;	
