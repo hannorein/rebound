@@ -23,22 +23,20 @@ int main(int argc, char* argv[]){
 	p.m  	= 1.;	
 	reb_add(r, p); 
 
-	double e = 1.e-14;
+	/*double e = 1.e-14;
 
 	struct reb_particle p1;
 	p1.m = 0.;
 	p1.x = 1.-e;
 	p1.vy = 1.+e;
-	reb_add(r,p1);
+	reb_add(r,p1);*/
 
 	struct reb_particle p2 = reb_tools_init_orbit3d(r->G, 1., 0., 1., e, 0., 0., 0., 0.);
-	printf("%.16e\t%.16e\n", 1.-e, (1.-e*e)/(1.+e));
-
 	reb_add(r,p2);
-	struct reb_orbit o1 = reb_tools_p2orbit(r->G, r->particles[1], r->particles[0]);
+	//struct reb_orbit o1 = reb_tools_p2orbit(r->G, r->particles[1], r->particles[0]);
 	struct reb_orbit o2= reb_tools_p2orbit(r->G, r->particles[2], r->particles[0]);
 	
-	printf("e = %.16e\n", o1.e);
+	/*printf("e = %.16e\n", o1.e);
 	printf("w = %.16e\n", o1.omega);
 
 	printf("e = %.16e\n", o2.e);
@@ -61,6 +59,6 @@ int main(int argc, char* argv[]){
 
 	printf("%f\t%f\t%f\n", o1.inc, o1.Omega, o1.omega);
 	printf("%f\t%f\t%f\n", o2.inc, o2.Omega, o2.omega);
-
+	*/
 
 }

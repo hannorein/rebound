@@ -454,6 +454,8 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 	return o;
 }
 
+#define IS_OK(angle) (angle > -1. && angle < 1.)
+
 struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, struct reb_particle primary){
 	struct reb_orbit o;
 	if (primary.m <= TINY){	
@@ -541,7 +543,7 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
 	}
 
 	cosea = (1.-o.r/o.a)/o.e;					// eccentric anomaly
-	if(cosea > -1. && cosf < 1.){
+	if(cosea > -1. && cosea < 1.){
 		ea = acos(cosea);						
 	}
 	else{
