@@ -301,7 +301,7 @@ class Particle(Structure):
         self.vy = p.vy
         self.vz = p.vz
         
-    def calculate_orbit(self, simulation, primary=None, index=None, verbose=False):
+    def calculate_orbit(self, simulation, primary=None):
         """ 
         Returns a rebound.Orbit object with the keplerian orbital elements
         corresponding to the particle around the central body primary
@@ -327,7 +327,6 @@ class Particle(Structure):
         Parameters
         ----------
         primary : (rebound.Particle) Central body (Default: COM of interior bodies)
-        index   : (int)              Index of particle in particles array (will return Jacobi elements) (Default: None)    
         verbose : (boolean)          If set to True, will print out error msgs (Default: False)
         
         Returns
@@ -335,10 +334,7 @@ class Particle(Structure):
         A rebound.Orbit object 
         """
         if primary is None:
-            if index is None:
-                primary = simulation.particles[0]
-            else:
-                primary = simulation.calculate_com(index)
+            primary = simulation.particles[0]
         
         clibrebound.reb_tools_particle_to_orbit.restype = rebound.Orbit
         o = clibrebound.reb_tools_particle_to_orbit(c_double(simulation.G), self, primary)
