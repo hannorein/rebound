@@ -97,6 +97,15 @@ class Orbit(Structure):
     This is an abstraction of the reb_orbit data structure in C.
 
     When using the various REBOUND functions using Orbits, all angles are in radians. 
+    The following image illustrated the most important angles used.
+    In REBOUND the reference direction is the positive x direction, the reference plane
+    is the xy plane.
+    
+    .. image:: images/orbit.png
+       :width: 500px
+       :height: 450px
+
+    Image from wikipedia. CC-BY-SA-3.
 
     Attributes
     ----------
