@@ -231,7 +231,6 @@ struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle 
 static const struct reb_particle reb_particle_nan = {.x = NAN, .y = NAN, .z = NAN, .vx = NAN, .vy = NAN, .vz = NAN, .ax = NAN, .ay = NAN, .az = NAN, .m = NAN, .r = NAN, .lastcollision = NAN, .c = NULL, .id = NAN};
 
 struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f, int* err){
-	fprintf(stderr, "%d\n", *err);
 	if(e == 1.){
 		*err = 1; 		// Can't initialize a radial orbit with orbital elements.
 		return reb_particle_nan;
