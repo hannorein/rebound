@@ -766,23 +766,30 @@ class Simulation(Structure):
 
     def integrate(self, tmax, exact_finish_time=1):
         """
-        Main integration function. Call this function when you have setup your simulation and want to integrate it forward (or backward) in time. The function might be called many times to integrate the simulation in steps and create outputs in-between steps. The typicall usage is as follows
-
-        >>>import numpy as np
-        >>>for time in np.linspace(0,100.,10): 
-        >>>    sim.integrate(time)
-        >>>    perform_output(sim)
+        Main integration function. Call this function when you have setup your simulation and want to integrate it forward (or backward) in time. The function might be called many times to integrate the simulation in steps and create outputs in-between steps.
         
         Parameters
         ----------
-        The first argument is the maximum time, tmax. If the current time is 100, and tmax=200, then after the calling the integrate() routine, the time has advanced to t=200. If tmax is larger than the current time, no integration will be performed.
-
-        The second argument determines whether REBOUND should try to finish at the exact time (tmax) you give it or if it is allowed to overshoot. Overshooting could happen if you start at t=0, have a timestep of dt=10 and want to integrate to tmax=25. With exact_finish_time=1, the integrator will choose the last timestep such that t=25 after the integration, otherwise t=30 after the integration. Note that changing the timestep does affect the accuracy of symplectic integrators negatively.
+        tmax : float
+            The maximum time, tmax. If the current time is 100, and tmax=200, then after the calling the integrate routine, the time has advanced to t=200. If tmax is larger than or equal to the current time, no integration will be performed.
+        exact_finish_time: int, optional
+            This argument determines whether REBOUND should try to finish at the exact time (tmax) you give it or if it is allowed to overshoot. Overshooting could happen if one starts at t=0, has a timestep of dt=10 and wants to integrate to tmax=25. With ``exact_finish_time=1``, the integrator will choose the last timestep such that t is exactly 25 after the integration, otherwise t=30. Note that changing the timestep does affect the accuracy of symplectic integrators negatively.
         
         Exceptions
         ----------
         Exceptions are thrown when no more particles are left in the simulation or when a generic integration error occured. 
         If you specified exit_min_distance or exit_max_distance, then additional exceptions might thrown for escaping particles or particles that undergo a clos encounter.
+        
+        Examples
+        -------- 
+        The typical usage is as follows. Note the use of ``np.linspace`` to create equally spaced outputs. 
+        Using ``np.logspace`` can be used to easily produce logarithmically spaced outputs.
+
+        >>> import numpy as np
+        >>> for time in np.linspace(0,100.,10): 
+        >>>     sim.integrate(time)
+        >>>     perform_output(sim)
+        
         """
         if debug.integrator_package =="REBOUND":
             clibrebound.reb_integrate.restype = c_int
