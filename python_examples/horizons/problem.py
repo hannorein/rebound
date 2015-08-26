@@ -1,3 +1,5 @@
+import matplotlib; matplotlib.use("pdf")
+import matplotlib.pyplot as plt
 import rebound
 import os.path
 import os
@@ -40,8 +42,6 @@ for ti,t in enumerate(times):
         x[i][ti] = p.x
         y[i][ti] = p.y
 
-import matplotlib; matplotlib.use("pdf")
-import matplotlib.pyplot as plt
 
 fig = plt.figure(figsize=(11,5))
 
