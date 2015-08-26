@@ -175,7 +175,7 @@ void reb_display(void){
 					//	p = reb_dc.r->ri_whfast.p_j[i];
 					//	p.m = m;
 					//}
-					struct reb_orbit o = reb_tools_p2orbit(reb_dc.r->G, p,com);
+					struct reb_orbit o = reb_tools_particle_to_orbit(reb_dc.r->G, p,com);
 					glPushMatrix();
 					
 					glTranslatef(com.x,com.y,com.z);
