@@ -151,7 +151,7 @@ class Particle(Structure):
                             else:
                                 M = Omega - omega - l   # for retrograde, l = Omega - omega - M
                         clibrebound.reb_tools_M_to_f.restype = c_double
-                        f = clibrebound.reb_tools_M_to_f(c_double(e), c_double(M)).value
+                        f = clibrebound.reb_tools_M_to_f(c_double(e), c_double(M))
 
             err = c_int()
             clibrebound.reb_tools_orbit_to_particle_err.restype = Particle

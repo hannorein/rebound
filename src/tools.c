@@ -295,12 +295,14 @@ static const struct reb_orbit reb_orbit_nan = {.r = NAN, .v = NAN, .h = NAN, .P 
 
 #define MIN_REL_ERROR 1.0e-12	///< Close to smallest relative floating point number, used for orbit calculation
 #define TINY 1.E-308 		///< Close to smallest representable floating point number, used for orbit calculation
-
+#define MIN_INC 1.e-8		///< Below this inclination, the broken angles pomega and theta equal the corresponding 
+							///< unbroken angles to within machine precision, so a practical boundary for planar orbits
+							//
 // returns acos(num/denom), using disambiguator to tell which quadrant to return.  
 // will return 0 or pi appropriately if num is larger than denom by machine precision
 // and will return 0 if denom is exactly 0.
 
-double acos2(double num, double denom, double disambiguator){
+static double acos2(double num, double denom, double disambiguator){
 	double val;
 	double cosine = num/denom;
 	if(cosine > -1. && cosine < 1.){
@@ -355,7 +357,7 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 	ey = muinv*( vdiffsquared*dy - rvr*dvy );
 	ez = muinv*( vdiffsquared*dz - rvr*dvz );
  	o.e = sqrt( ex*ex + ey*ey + ez*ez );		// eccentricity
-
+	//fprintf(stderr, "%.16e\t%.16e\t%.16e\n", ex, ey, o.e);
 	o.n = o.a/fabs(o.a)*sqrt(fabs(mu/(o.a*o.a*o.a)));	// mean motion (negative if hyperbolic)
 	o.P = 2*M_PI/o.n;									// period (negative if hyperbolic)
 
@@ -368,23 +370,41 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 
 	// Omega, pomega and theta are measured from x axis, so we can always use y component to disambiguate if in the range [0,pi] or [pi,2pi]
 	o.Omega = acos2(nx, n, ny);			// cos Omega is dot product of x and n unit vectors. Will = 0 if i=0.
-
-	// pomega and true longitude are measured relative to inertial longitudes, and therefore more stable.  We therefore calculate omega and f from them.
 	
-	o.pomega = acos2(ex, o.e, ey);		// cos pomega is dot product of x and e unit vectors.  Will = 0 if e=0.
-	o.theta = acos2(dx, o.r, dy);			// cos theta is dot product of x and r vectors (true longitude).  Will = 0 if e = 0.
 	ea = acos2(1.-o.r/o.a, o.e, vr);	// from definition of eccentric anomaly.  If vr < 0, must be going from apo to peri, so ea = [pi, 2pi] so ea = -acos(cosea)
 	o.M = ea - o.e*sin(ea);						// mean anomaly (Kepler's equation)
 
-	if(o.inc < M_PI/2.){
-		o.omega = o.pomega - o.Omega;			// argument of pericenter (pomega = Omega + omega)
-		o.f = o.theta - o.pomega;				// true anomaly (theta = pomega + f)
-		o.l = o.pomega + o.M;					// mean longitude
+	if(o.inc < MIN_INC || o.inc > M_PI - MIN_INC){	// nearly planar.  Use longitudes rather than angles referenced to node.
+		o.pomega = acos2(ex, o.e, ey);		// cos pomega is dot product of x and e unit vectors.  Will = 0 if e=0.
+		o.theta = acos2(dx, o.r, dy);			// cos theta is dot product of x and r vectors (true longitude).  Will = 0 if e = 0.
+		if(o.inc < M_PI/2.){
+			o.omega = o.pomega - o.Omega;
+			o.f = o.theta - o.pomega;
+			o.l = o.pomega + o.M;
+		}
+		else{
+			o.omega = o.Omega - o.pomega;
+			o.f = o.pomega - o.theta;
+			o.l = o.pomega - o.M;
+		}
 	}
-	else{										// for retrograde orbits, omega, M and f 
-		o.omega = o.Omega - o.pomega;			// are measured in opposite direction (pomega = Omega - omega)  
-		o.f = o.pomega - o.theta;				// to Omega (theta = pomega - f) 
-		o.l = o.pomega - o.M;					
+	else{
+		double wpf = acos2(nx*dx + ny*dy, n*o.r, dz);	// omega plus f.  Both angles measured in orbital plane, and always well defined for i!=0.
+		o.omega = acos2(nx*ex + ny*ey, n*o.e, ez);
+		fprintf(stderr, "%.16e\t%.16e\t%.16e\n", nx*ex + ny*dy, n*o.e, ez);
+		
+		if(o.inc < M_PI/2.){
+			o.pomega = o.Omega + o.omega;
+			o.f = wpf - o.omega;
+			o.theta = o.Omega + wpf;
+			o.l = o.pomega + o.M;
+		}
+		else{
+			o.pomega = o.Omega - o.omega;
+			o.f = wpf - o.omega;
+			o.theta = o.Omega - wpf;
+			o.l = o.pomega - o.M;
+		}
 	}
 
 	return o;
