@@ -98,23 +98,38 @@ class Orbit(Structure):
 
     When using the various REBOUND functions using Orbits, all angles are in radians. 
 
-    Parameters
-    ---------
-    r       : (float)           radial distance from reference 
-    v       : (float)           velocity relative to central object's velocity
-    h       : (float)           specific angular momentum
-    P       : (float)           orbital period
-    n       : (float)           mean motion
-    a       : (float)           semimajor axis
-    e       : (float)           eccentricity
-    inc     : (float)           inclination
-    Omega   : (float)           longitude of ascending node
-    omega   : (float)           argument of pericenter
-    pomega  : (float)           longitude of pericenter
-    f       : (float)           true anomaly
-    M       : (float)           mean anomaly
-    l       : (float)           mean longitude = Omega + omega + M
-    theta   : (float)           true longitude = Omega + omega + f
+    Attributes
+    ----------
+    r       : float           
+        radial distance from reference 
+    v       : float         
+    velocity relative to central object's velocity
+    h       : float           
+        specific angular momentum
+    P       : float           
+        orbital period
+    n       : float           
+        mean motion
+    a       : float           
+        semimajor axis
+    e       : float           
+        eccentricity
+    inc     : float           
+        inclination
+    Omega   : float           
+        longitude of ascending node
+    omega   : float           
+        argument of pericenter
+    pomega  : float           
+        longitude of pericenter
+    f       : float           
+        true anomaly
+    M       : float           
+        mean anomaly
+    l       : float           
+        mean longitude = Omega + omega + M
+    theta   : float           
+        true longitude = Omega + omega + f
     """
     _fields_ = [("r", c_double),
                 ("v", c_double),
@@ -146,6 +161,8 @@ class Simulation(Structure):
     It is an abstraction of the C struct reb_simulation.
     You can create mutiple REBOUND simulations (the c library is thread safe). 
 
+    Examples
+    --------
     Most simulation parameters can be directly changed with the property syntax:
 
     >>> sim = rebound.Simulation()
