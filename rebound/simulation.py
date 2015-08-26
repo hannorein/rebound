@@ -189,9 +189,9 @@ class Simulation(Structure):
         else:
             raise ValueError("File does not exist.")
 
-    afp = None # additional forces pointer
-    corfp = None # coefficient of restitution function pointer
-    ptmp = None # post timestep modifications pointer 
+    _afp = None # additional forces pointer
+    _corfp = None # coefficient of restitution function pointer
+    _ptmp = None # post timestep modifications pointer 
     _units = {'length':None, 'time':None, 'mass':None}
 
     def __del__(self):
@@ -231,11 +231,11 @@ class Simulation(Structure):
         the particle structures might contain incorrect velocity 
         values.
         """
-        return self.afp   # getter might not be needed
+        return self._afp   # getter might not be needed
     @additional_forces.setter
     def additional_forces(self, func):
-        self.afp = AFF(func)
-        self._additional_forces = self.afp
+        self._afp = AFF(func)
+        self._additional_forces = self._afp
 
     @property
     def post_timestep_modifications(self):
@@ -245,22 +245,22 @@ class Simulation(Structure):
         The argument can be a python function or something that can be cast to a C function or a
         python function.
         """
-        return self.ptmp
+        return self._ptmp
     @post_timestep_modifications.setter
     def post_timestep_modifications(self, func):
-        self.ptmp = AFF(func)
-        self._post_timestep_modifications = self.ptmp
+        self._ptmp = AFF(func)
+        self._post_timestep_modifications = self._ptmp
    
     @property 
     def coefficient_of_restitution(self):
         """
         Get or set a function pointer that defined the coefficient of restitution.
         """
-        return self.corfp   # getter might not be needed
+        return self._corfp   # getter might not be needed
     @coefficient_of_restitution.setter
     def coefficient_of_restitution(self, func):
-        self.corfp = CORFF(func)
-        self._coefficient_of_restitution = self.corfp
+        self._corfp = CORFF(func)
+        self._coefficient_of_restitution = self._corfp
 
 # Setter/getter of parameters and constants
     @property 
