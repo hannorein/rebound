@@ -192,7 +192,7 @@ class Particle(Structure):
             p = clibrebound.reb_tools_orbit_to_particle_err(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f), byref(err))
 
             if err.value == 1:
-                raise ValueError("Can't initialize a radial orbit with orbital elements.")
+                raise ValueError("Can't set e exactly to 1.")
             if err.value == 2:
                 raise ValueError("Eccentricity must be greater than or equal to zero.")
             if err.value == 3:

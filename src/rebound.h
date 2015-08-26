@@ -824,7 +824,7 @@ struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle 
 /**
  * @brief Initialize a particle on a 3D orbit, passing an error variable to flag why particle is set to nan.  See Fig. 2.13 of Murray & Dermott Solar System Dynamics for diagram.
  * @details Error codes:\n
- * 1. Can't initialize a radial orbit with orbital elements.\n
+ * 1. Can't set e exactly to 1.\n
  * 2. Eccentricity can never be less than zero.\n
  * 3. Bound orbit (a>0) can't have e>1.\n
  * 4. Unbound orbit (a<0) can't have e<1.\n
