@@ -98,23 +98,38 @@ class Orbit(Structure):
 
     When using the various REBOUND functions using Orbits, all angles are in radians. 
 
-    Parameters
-    ---------
-    r       : (float)           radial distance from reference 
-    v       : (float)           velocity relative to central object's velocity
-    h       : (float)           specific angular momentum
-    P       : (float)           orbital period
-    n       : (float)           mean motion
-    a       : (float)           semimajor axis
-    e       : (float)           eccentricity
-    inc     : (float)           inclination
-    Omega   : (float)           longitude of ascending node
-    omega   : (float)           argument of pericenter
-    pomega  : (float)           longitude of pericenter
-    f       : (float)           true anomaly
-    M       : (float)           mean anomaly
-    l       : (float)           mean longitude = Omega + omega + M
-    theta   : (float)           true longitude = Omega + omega + f
+    Attributes
+    ----------
+    r       : float           
+        radial distance from reference 
+    v       : float         
+        velocity relative to central object's velocity
+    h       : float           
+        specific angular momentum
+    P       : float           
+        orbital period
+    n       : float           
+        mean motion
+    a       : float           
+        semimajor axis
+    e       : float           
+        eccentricity
+    inc     : float           
+        inclination
+    Omega   : float           
+        longitude of ascending node
+    omega   : float           
+        argument of pericenter
+    pomega  : float           
+        longitude of pericenter
+    f       : float           
+        true anomaly
+    M       : float           
+        mean anomaly
+    l       : float           
+        mean longitude = Omega + omega + M
+    theta   : float           
+        true longitude = Omega + omega + f
     """
     _fields_ = [("r", c_double),
                 ("v", c_double),
@@ -146,6 +161,8 @@ class Simulation(Structure):
     It is an abstraction of the C struct reb_simulation.
     You can create mutiple REBOUND simulations (the c library is thread safe). 
 
+    Examples
+    --------
     Most simulation parameters can be directly changed with the property syntax:
 
     >>> sim = rebound.Simulation()
@@ -172,9 +189,9 @@ class Simulation(Structure):
         else:
             raise ValueError("File does not exist.")
 
-    afp = None # additional forces pointer
-    corfp = None # coefficient of restitution function pointer
-    ptmp = None # post timestep modifications pointer 
+    _afp = None # additional forces pointer
+    _corfp = None # coefficient of restitution function pointer
+    _ptmp = None # post timestep modifications pointer 
     _units = {'length':None, 'time':None, 'mass':None}
 
     def __del__(self):
@@ -214,11 +231,11 @@ class Simulation(Structure):
         the particle structures might contain incorrect velocity 
         values.
         """
-        return self.afp   # getter might not be needed
+        return self._afp   # getter might not be needed
     @additional_forces.setter
     def additional_forces(self, func):
-        self.afp = AFF(func)
-        self._additional_forces = self.afp
+        self._afp = AFF(func)
+        self._additional_forces = self._afp
 
     @property
     def post_timestep_modifications(self):
@@ -228,22 +245,22 @@ class Simulation(Structure):
         The argument can be a python function or something that can be cast to a C function or a
         python function.
         """
-        return self.ptmp
+        return self._ptmp
     @post_timestep_modifications.setter
     def post_timestep_modifications(self, func):
-        self.ptmp = AFF(func)
-        self._post_timestep_modifications = self.ptmp
+        self._ptmp = AFF(func)
+        self._post_timestep_modifications = self._ptmp
    
     @property 
     def coefficient_of_restitution(self):
         """
         Get or set a function pointer that defined the coefficient of restitution.
         """
-        return self.corfp   # getter might not be needed
+        return self._corfp   # getter might not be needed
     @coefficient_of_restitution.setter
     def coefficient_of_restitution(self, func):
-        self.corfp = CORFF(func)
-        self._coefficient_of_restitution = self.corfp
+        self._corfp = CORFF(func)
+        self._coefficient_of_restitution = self._corfp
 
 # Setter/getter of parameters and constants
     @property 
@@ -259,13 +276,14 @@ class Simulation(Structure):
         Get or set the intergrator module.
 
         Available integrators are:
-        - ias15 (default)
-        - whfast
-        - sei
-        - wh
-        - leapfrog 
-        - hybrid
-        - none
+
+        - ``'ias15'`` (default)
+        - ``'whfast'``
+        - ``'sei'``
+        - ``'wh'``
+        - ``'leapfrog'``
+        - ``'hybrid'``
+        - ``'none'``
         
         Check the online documentation for a full description of each of the integrators. 
         """
@@ -302,11 +320,12 @@ class Simulation(Structure):
         """
         Get or set the boundary module.
 
-        Available integrators are:
-        - none (default)
-        - open
-        - periodic
-        - shear
+        Available boundary modules are:
+
+        - ``'none'`` (default)
+        - ``'open'``
+        - ``'periodic'``
+        - ``'shear'``
         
         Check the online documentation for a full description of each of the modules. 
         """
@@ -331,11 +350,12 @@ class Simulation(Structure):
         """
         Get or set the gravity module.
 
-        Available integrators are:
-        - none 
-        - basic
-        - compensated (default)
-        - tree
+        Available gravity modules are:
+
+        - ``'none'`` 
+        - ``'basic'``
+        - ``'compensated'`` (default)
+        - ``'tree'``
         
         Check the online documentation for a full description of each of the modules. 
         """
@@ -360,10 +380,11 @@ class Simulation(Structure):
         """
         Get or set the collision module.
 
-        Available integrators are:
-        - none (default)
-        - direct
-        - tree
+        Available collision modules are:
+
+        - ``'none'`` (default)
+        - ``'direct'``
+        - ``'tree'``
         
         Check the online documentation for a full description of each of the modules. 
         """
@@ -421,10 +442,12 @@ class Simulation(Structure):
         Muranus     : Neptune masses
         Mpluto      : Pluto masses
         
-        Usage
-        -----
+        Examples
+        --------
         
-        sim.units = ('yr', 'AU', 'Msun')
+        >>> sim = rebound.Simulation()
+        >>> sim.units = ('yr', 'AU', 'Msun')
+
         """
         return self._units
 
@@ -546,7 +569,8 @@ class Simulation(Structure):
         clibrebound.reb_particles_remove_all(byref(self))
 
     def remove(self, index=None, id=None, keepSorted=1):
-        """ Removes a particle from the simulation.
+        """ 
+        Removes a particle from the simulation.
 
         Parameters
         ----------
@@ -568,7 +592,9 @@ class Simulation(Structure):
 
 # Orbit calculation
     def calculate_orbits(self, heliocentric=False):
-        """ Returns an array of Orbits of length N-1.
+        """ 
+        Returns an array of Orbits of length N-1.
+
         If MEGNO is enabled, variational particles will be ignored.
 
         Parameters
@@ -589,10 +615,24 @@ class Simulation(Structure):
 # COM calculation 
     def calculate_com(self, last=None):
         """
-        Returns the center of momentum for all particles in the simulation
-        If 'last' is specified only calculate the center of momentum for the
-        first 'last' particles in the array (i.e., indices up to i-1, as used 
-        in Jacobi coordinates).
+        Returns the center of momentum for all particles in the simulation.
+
+        Parameters
+        ----------
+        last : int or None, optional
+            If ``last`` is specified only calculate the center of momentum for the
+            first ``last`` particles in the array (i.e., indices up to i-1, as used 
+            in Jacobi coordinates).
+
+        Examples
+        --------
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1, x=0)
+        >>> sim.add(m=1, x=1)
+        >>> com sim.calculate_com()
+        >>> com.x
+        0.5
+
         """
         m = 0.
         x = 0.
@@ -647,6 +687,15 @@ class Simulation(Structure):
 
         This function only needs to be called it boundary conditions other than "none"
         are used. In such a case the boxsize must be known and is set with this function.
+
+        Parameters
+        ----------
+        boxsize : float, optional
+            The size of one root box.
+        root_nx, root_ny, root_nz : int, optional
+            The number of root boxes in each direction. The total size of the simulation box
+            will be ``root_nx * boxsize``, ``root_ny * boxsize`` and ``root_nz * boxsize``.
+            By default there will be exactly one root box in each direction.
         """
         clibrebound.reb_configure_box(byref(self), c_double(boxsize), c_int(root_nx), c_int(root_ny), c_int(root_nz))
         return
@@ -657,7 +706,12 @@ class Simulation(Structure):
 
         This function only needs to be called it boundary conditions other than "none" or
         "open" are used. In such a case the number of ghostboxes must be known and is set 
-        with this function. All values default to 0 (no ghost boxes).
+        with this function. 
+        
+        Parameters
+        ----------
+        nghostx, nghosty, nghostz : int
+            The number of ghost boxes in each direction. All values default to 0 (no ghost boxes).
         """
         clibrebound.nghostx = c_int(nghostx)
         clibrebound.nghosty = c_int(nghosty)
@@ -743,23 +797,30 @@ class Simulation(Structure):
 
     def integrate(self, tmax, exact_finish_time=1):
         """
-        Main integration function. Call this function when you have setup your simulation and want to integrate it forward (or backward) in time. The function might be called many times to integrate the simulation in steps and create outputs in-between steps. The typicall usage is as follows
-
-        >>>import numpy as np
-        >>>for time in np.linspace(0,100.,10): 
-        >>>    sim.integrate(time)
-        >>>    perform_output(sim)
+        Main integration function. Call this function when you have setup your simulation and want to integrate it forward (or backward) in time. The function might be called many times to integrate the simulation in steps and create outputs in-between steps.
         
         Parameters
         ----------
-        The first argument is the maximum time, tmax. If the current time is 100, and tmax=200, then after the calling the integrate() routine, the time has advanced to t=200. If tmax is larger than the current time, no integration will be performed.
-
-        The second argument determines whether REBOUND should try to finish at the exact time (tmax) you give it or if it is allowed to overshoot. Overshooting could happen if you start at t=0, have a timestep of dt=10 and want to integrate to tmax=25. With exact_finish_time=1, the integrator will choose the last timestep such that t=25 after the integration, otherwise t=30 after the integration. Note that changing the timestep does affect the accuracy of symplectic integrators negatively.
+        tmax : float
+            The final time of your simulation. If the current time is 100, and tmax=200, then after the calling the integrate routine, the time has advanced to t=200. If tmax is larger than or equal to the current time, no integration will be performed.
+        exact_finish_time: int, optional
+            This argument determines whether REBOUND should try to finish at the exact time (tmax) you give it or if it is allowed to overshoot. Overshooting could happen if one starts at t=0, has a timestep of dt=10 and wants to integrate to tmax=25. With ``exact_finish_time=1``, the integrator will choose the last timestep such that t is exactly 25 after the integration, otherwise t=30. Note that changing the timestep does affect the accuracy of symplectic integrators negatively.
         
         Exceptions
         ----------
         Exceptions are thrown when no more particles are left in the simulation or when a generic integration error occured. 
         If you specified exit_min_distance or exit_max_distance, then additional exceptions might thrown for escaping particles or particles that undergo a clos encounter.
+        
+        Examples
+        -------- 
+        The typical usage is as follows. Note the use of ``np.linspace`` to create equally spaced outputs. 
+        Using ``np.logspace`` can be used to easily produce logarithmically spaced outputs.
+
+        >>> import numpy as np
+        >>> for time in np.linspace(0,100.,10): 
+        >>>     sim.integrate(time)
+        >>>     perform_output(sim)
+        
         """
         if debug.integrator_package =="REBOUND":
             clibrebound.reb_integrate.restype = c_int

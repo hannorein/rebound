@@ -7,7 +7,9 @@ import rebound
 __all__ = ["Particle"]
 
 def notNone(a):
-    """Returns True if array a contains at least one element that is not None. Returns False otherwise."""
+    """
+    Returns True if array a contains at least one element that is not None. Returns False otherwise.
+    """
     return a.count(None) != len(a)
 
 class Particle(Structure):
@@ -15,16 +17,24 @@ class Particle(Structure):
     The main REBOUND particle data structure. 
     This is an abstraction of the reb_particle structure in C
     
-    Parameters
+    Attributes
     ----------
-    x, y, z     : (float)       Particle positions
-    vx, vy, vz  : (float)       Particle velocities
-    ax, ay, az  : (float)       Particle accelerations
-    m           : (float)       Particle mass
-    r           : (float)       Particle radius
-    lastcollision:(float)       Last time the particle had a physical collision (if checking for collisions)
-    c           : (float)       Pointer to the cell the particle is currently in (if using tree code)
-    id          : (int)         Particle ID (arbitrary, specified by the user)
+    x, y, z     : float       
+        Particle positions
+    vx, vy, vz  : float       
+        Particle velocities
+    ax, ay, az  : float       
+        Particle accelerations
+    m           : float       
+        Particle mass
+    r           : float       
+        Particle radius
+    lastcollision : float       
+        Last time the particle had a physical collision (if checking for collisions)
+    c           : float       
+        Pointer to the cell the particle is currently in (if using tree code)
+    id          : int         
+        Particle ID (arbitrary, specified by the user)
     """
     _fields_ = [("x", c_double),
                 ("y", c_double),
@@ -60,34 +70,58 @@ class Particle(Structure):
         All angles should be specified in radians.
 
         Parameters
-        ---------
-        particle    : (Particle)    For consistency with other particle addition routines.  Cannot be passed when creating a particle in this way.
-        m           : (float)       Mass        (Default: 0)
-        x, y, z     : (float)       Positions   (Default: 0)
-        vx, vy, vz  : (float)       Velocities  (Default: 0)
-        primary     : (Particle)    Primary body for converting orbital elements to cartesian (Default: center of mass of the particles in the passed simulation, i.e., will yield Jacobi coordinates as you progressively pass particles) 
-        a           : (float)       Semimajor axis (Required if passing orbital elements)
-        e           : (float)       Eccentricity                (Default: 0)
-        inc         : (float)       Inclination                 (Default: 0)
-        Omega       : (float)       Longitude of ascending node (Default: 0)
-        omega       : (float)       Argument of pericenter      (Default: 0)
-        pomega      : (float)       Longitude of pericenter     (Default: 0)
-        f           : (float)       True anomaly                (Default: 0)
-        M           : (float)       Mean anomaly                (Default: 0)
-        l           : (float)       Mean longitude              (Default: 0)
-        theta       : (float)       True longitude              (Default: 0)
-        r           : (float)       Particle radius (only used for collisional simulations)
-        id          : (int)         Particle ID (arbitrary, specified by the user)
-        date        : (string)      For consistency with adding particles through horizons.  Not used here.
-        simulation  : (Simulation)  Simulation instance associated with this particle (Required)
+        ----------
+        particle    : Particle    
+            For consistency with other particle addition routines.  Cannot be passed when creating a particle in this way.
+        m           : float       
+            Mass        (Default: 0)
+        x, y, z     : float       
+            Positions   (Default: 0)
+        vx, vy, vz  : float       
+            Velocities  (Default: 0)
+        primary     : Particle    
+            Primary body for converting orbital elements to cartesian (Default: center of mass of the particles in the passed simulation, i.e., will yield Jacobi coordinates as you progressively pass particles) 
+        a           : float       
+            Semimajor axis (Required if passing orbital elements)
+        e           : float       
+            Eccentricity                (Default: 0)
+        inc         : float       
+            Inclination                 (Default: 0)
+        Omega       : float       
+            Longitude of ascending node (Default: 0)
+        omega       : float       
+            Argument of pericenter      (Default: 0)
+        pomega      : float       
+            Longitude of pericenter     (Default: 0)
+        f           : float       
+            True anomaly                (Default: 0)
+        M           : float       
+            Mean anomaly                (Default: 0)
+        l           : float       
+            Mean longitude              (Default: 0)
+        theta       : float       
+            True longitude              (Default: 0)
+        r           : float       
+            Particle radius (only used for collisional simulations)
+        id          : int         
+            Particle ID (arbitrary, specified by the user)
+        date        : string      
+            For consistency with adding particles through horizons.  Not used here.
+        simulation  : Simulation)  
+            Simulation instance associated with this particle (Required)
         
         Returns
         -------
         A rebound.Particle object 
         
-        Usage
-        -----
-        See ipython_examples/OrbitalElements.ipynb 
+        Examples
+        --------
+
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1.)
+        >>> sim.add(m=0.001, a=0.5, e=0.01)
+        >>> sim.add(m=0.0, x=1., vy=1.)
+
         """        
 
         if particle is not None:
@@ -200,19 +234,21 @@ class Particle(Structure):
         corresponding to the particle around the passed primary
         (rebound.Particle). 
         
-        Usage
-        -----
-        sim = rebound.Simulation()
-        sim.add(m=1.)
-        sim.add(x=1.,vy=1.)
-
-        orbit = sim.particles[1].calculate_orbit(sim, sim.particles[0])
-        print(orbit.e) # gives the eccentricity
+        Examples
+        --------
+        
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1.)
+        >>> sim.add(x=1.,vy=1.)
+        >>> orbit = sim.particles[1].calculate_orbit(sim, sim.particles[0])
+        >>> print(orbit.e) # gives the eccentricity
 
         Parameters
         ----------
-        simulation  : (Simulation)  Simulation instance associated with this particle (Required)
-        primary : (rebound.Particle) Central body (Required)
+        simulation  : Simulation
+            Simulation instance associated with this particle (Required)
+        primary : rebound.Particle
+            Central body (Required)
         
         Returns
         -------
