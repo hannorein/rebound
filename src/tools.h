@@ -30,39 +30,10 @@ struct reb_simulation;
 
 
 /**
- * @brief Initialize a particle on an orbit in the xy plane.
- * @param G Gravitational constant.
- * @param M Mass of the central object.
- * @param m Mass of the particle.
- * @param a Semi-major axis of the particle.
- * @param e Eccentricity of the particle.
- * @param omega Pericenter of the particle.
- * @param f true anomaly of the particle.
- * @return Returns a particle structure with the given orbital parameters. All other particle properties are 0 by default.
- */
-struct reb_particle reb_tools_init_orbit2d(double G, double M, double m, double a, double e, double omega, double f);
-
-/**
- * @brief Initialize a particle on a 3D orbit.  See Fig. 2.13 of Murray & Dermott Solar System Dynamics for diagram.
- * @param G Gravitational constant.
- * @param M Mass of the central object.
- * @param m Mass of the particle.
- * @param a Semi-major axis of the particle.
- * @param e Eccentricity of the particle.
- * @param i inclination of the particle to the reference plane.
- * @param Omega Longitude of the ascending node of the particle.
- * @param omega argument of pericenter of the particle.
- * @param f true anomaly of the particle.
- * @return Returns a particle structure with the given orbital parameters. All other particle properties are 0 by default.
- */
-struct reb_particle reb_tools_init_orbit3d(double G, double M, double m, double a, double e, double i, double Omega, double omega, double f);
-
-/**
  * @brief Returns deltad/delta 
  * @details Note, there is a typo in Gozdziewski et al 2001.
  * @param r REBOUND simulation to be considered.
  */
-
 double reb_tools_megno_deltad_delta(struct reb_simulation* const r);
 
 /**
