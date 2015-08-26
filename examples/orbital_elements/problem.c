@@ -51,14 +51,13 @@ int main(int argc, char* argv[]){
 	// to diagnose / catch errors.  You can find error codes in the documentation for the functions
 	// at http://rebound.readthedocs.org/
 	
-	int* err = malloc(sizeof(int));
-	*err = 0;
+	int err = 0;
 	e = 1.001;
 
-	p2 = reb_tools_orbit_to_particle_err(r->G, primary, m, a, e, inc, Omega, omega, f, err);
-	if(*err == 3){			// error code for bound orbit with e > 1
+	p2 = reb_tools_orbit_to_particle_err(r->G, primary, m, a, e, inc, Omega, omega, f, &err);
+	if(err == 3){			// error code for bound orbit with e > 1
 		e = 1.-1.e-15;		// set to just less than 1
-		p2 = reb_tools_orbit_to_particle_err(r->G, primary, m, a, e, inc, Omega, omega, f, err);
+		p2 = reb_tools_orbit_to_particle_err(r->G, primary, m, a, e, inc, Omega, omega, f, &err);
 	}
 	reb_add(r,p2);
 	
