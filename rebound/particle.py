@@ -29,7 +29,7 @@ class Particle(Structure):
         Particle mass
     r           : float       
         Particle radius
-    lastcollision:float       
+    lastcollision : float       
         Last time the particle had a physical collision (if checking for collisions)
     c           : float       
         Pointer to the cell the particle is currently in (if using tree code)

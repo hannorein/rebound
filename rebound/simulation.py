@@ -103,7 +103,7 @@ class Orbit(Structure):
     r       : float           
         radial distance from reference 
     v       : float         
-    velocity relative to central object's velocity
+        velocity relative to central object's velocity
     h       : float           
         specific angular momentum
     P       : float           

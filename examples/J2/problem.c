@@ -92,7 +92,7 @@ void heartbeat(struct reb_simulation* r){
 		const struct reb_particle planet = r->particles[0];
 		const int N = r->N;
 		for (int i=1;i<N;i++){
-			struct reb_orbit o = reb_tools_p2orbit(r->G, r->particles[i],planet);
+			struct reb_orbit o = reb_tools_particle_to_orbit(r->G, r->particles[i],planet);
 			fprintf(f,"%.15e\t%.15e\t%.15e\t%.15e\n",r->t,o.a,o.e,o.omega);
 		}
 		fclose(f);

@@ -95,7 +95,8 @@ if 1:
 extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
+    #'sphinx.ext.napoleon',
+    'numpydoc',
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
     'breathe',
