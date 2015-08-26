@@ -46,7 +46,7 @@ class Particle(Structure):
         """
         return "<rebound.Particle object, id=%s m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.id,self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
-    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, e=None, inc=None, Omega=None, omega=None, f=None, pomega=None, M=None, l=None, theta=None, r=None, id=None, date=None, simulation=None):
+    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, r=None, id=None, date=None, simulation=None):
         """
         Initializes a Particle structure.
         Typically users will not create Particle structures directly.
@@ -55,7 +55,8 @@ class Particle(Structure):
         Accepts either cartesian positions and velocities, or orbital elements together with the reference Particle (primary), but not both.
         Requires a simulation instance for the Particle.
         For convenience, optional keywords that are not passed default to zero (mass, cartesian and orbital elements). 
-        However, if passing orbital elements directly or implicitly (by passing a primary Particle), you must specify the semimajor axis.
+        However, if passing orbital elements directly or implicitly (by passing a primary Particle), you must specify the semimajor axis.  To specify the longitude of ascending node you must pass Omega, to specify the pericenter you can pass either omega or pomega (not both), and for the longitude/anomaly you can pass one of f, M, l or theta.  See ipython_examples/OrbitalElements.ipynb.  See, e.g., Murray & Dermott Solar System Dynamics for angle definitions.
+
         All angles should be specified in radians.
 
         Parameters
@@ -66,27 +67,27 @@ class Particle(Structure):
         vx, vy, vz  : (float)       Velocities  (Default: 0)
         primary     : (Particle)    Primary body for converting orbital elements to cartesian (Default: center of mass of the particles in the passed simulation, i.e., will yield Jacobi coordinates as you progressively pass particles) 
         a           : (float)       Semimajor axis (Required if passing orbital elements)
-        anom        : (float)       Either the true or mean anomaly, determined by the value of the MEAN keyword (Default: 0)
         e           : (float)       Eccentricity                (Default: 0)
-        omega       : (float)       Argument of pericenter      (Default: 0)
         inc         : (float)       Inclination                 (Default: 0)
         Omega       : (float)       Longitude of ascending node (Default: 0)
-        MEAN        : (boolean)     Flag for whether anom refers to the mean anomaly (MEAN=True) or true anomaly (MEAN=False) (Default: False)
+        omega       : (float)       Argument of pericenter      (Default: 0)
+        pomega      : (float)       Longitude of pericenter     (Default: 0)
+        f           : (float)       True anomaly                (Default: 0)
+        M           : (float)       Mean anomaly                (Default: 0)
+        l           : (float)       Mean longitude              (Default: 0)
+        theta       : (float)       True longitude              (Default: 0)
         r           : (float)       Particle radius (only used for collisional simulations)
         id          : (int)         Particle ID (arbitrary, specified by the user)
         date        : (string)      For consistency with adding particles through horizons.  Not used here.
         simulation  : (Simulation)  Simulation instance associated with this particle (Required)
         
+        Returns
+        -------
+        A rebound.Particle object 
+        
         Usage
         -----
-        sim = rebound.Simulation()
-        primary = rebound.Particle(m=1., simulation=sim) # particle with unit mass at origin & v=0
-        
-        # test particle (m=0) with specified elements using mean anomaly
-        p = rebound.Particle(m=0.,primary=primary,a=2.5, anom=math.pi/2,e=0.3,omega=math.pi/6,inc=math.pi/3,Omega=0.,MEAN=True, simulation=sim)
-        
-        # m=0.1 particle on circular orbit on positive x axis 
-        p2 = rebound.Particle(m=0.1, x=1., vy=1., simulation=sim)
+        See ipython_examples/OrbitalElements.ipynb 
         """        
 
         if particle is not None:
@@ -193,54 +194,11 @@ class Particle(Structure):
             self.vy = vy
             self.vz = vz
 
-
-    def set_orbit(self,
-                    simulation,
-                    m,          # mass
-                    primary,    # central body (rebound.Particle object)
-                    a,          # semimajor axis
-                    e=0.,       # eccentricity
-                    inc=0.,     # inclination
-                    Omega=0.,   # longitude of ascending node
-                    omega=0.,   # argument of pericenter
-                    f=0.):      # true anomaly
-        """ 
-        Initialises a particle structure with the passed set of
-        orbital elements. Mass (m), primary and 'a' are required (see Parameters
-        below, and any orbital mechanics text, e.g., Murray & Dermott
-        Solar System Dynamics for definitions). Other values default to zero.
-        All angles should be passed in radians. Units are set by the
-        gravitational constant G (default = 1.). If MEAN is set to True, anom is
-        taken as the mean anomaly, rather than the true anomaly.
-        
-        Parameters
-        ----------
-        m       : (float)           Mass of the particle (Required)
-        primary : (rebound.Particle)Particle structure for the central body (Required)
-        a       : (float)           Semimajor axis (Required)
-        anom    : (float)           Either the true or mean anomaly, determined by the value of the MEAN keyword (Default: 0)
-        e       : (float)           Eccentricity (Default: 0)
-        omega   : (float)           Argument of pericenter (Default: 0)
-        inc     : (float)           Inclination (to xy plane) (Default: 0)
-        Omega   : (float)           Longitude of the ascending node (Default: 0)
-        MEAN    : (boolean)         If False, anom = true anomaly. If True, anom = mean anomaly (Default: False)
-        
-        Returns
-        -------
-        A rebound.Particle structure initialized with the given orbital parameters
-        """
-   
-    def calculate_orbit(self, simulation, primary=None):
+    def calculate_orbit(self, simulation, primary):
         """ 
         Returns a rebound.Orbit object with the keplerian orbital elements
-        corresponding to the particle around the central body primary
-        (rebound.Particle). By default will return orbital elements referenced
-        to simulation.particles[0].  If an index is passed instead of primary,
-        it will return Jacobi orbital elements
-        (with primary as the center of mass of all interior particles).
-        Edge cases will return values set to None. If
-        verbose is set to True (default=False), error messages are printed
-        when a breakout condition is met.
+        corresponding to the particle around the passed primary
+        (rebound.Particle). 
         
         Usage
         -----
@@ -248,22 +206,18 @@ class Particle(Structure):
         sim.add(m=1.)
         sim.add(x=1.,vy=1.)
 
-        orbit = sim.particles[1].calculate_orbit(sim)
+        orbit = sim.particles[1].calculate_orbit(sim, sim.particles[0])
         print(orbit.e) # gives the eccentricity
-
-        orbit = sim.particles[1].calculate_orbit(sim, verbose=True)
 
         Parameters
         ----------
-        primary : (rebound.Particle) Central body (Default: COM of interior bodies)
-        verbose : (boolean)          If set to True, will print out error msgs (Default: False)
+        simulation  : (Simulation)  Simulation instance associated with this particle (Required)
+        primary : (rebound.Particle) Central body (Required)
         
         Returns
         -------
         A rebound.Orbit object 
         """
-        if primary is None:
-            primary = simulation.particles[0]
         
         err = c_int()
         clibrebound.reb_tools_particle_to_orbit_err.restype = rebound.Orbit
