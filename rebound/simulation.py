@@ -569,7 +569,8 @@ class Simulation(Structure):
         clibrebound.reb_particles_remove_all(byref(self))
 
     def remove(self, index=None, id=None, keepSorted=1):
-        """ Removes a particle from the simulation.
+        """ 
+        Removes a particle from the simulation.
 
         Parameters
         ----------
@@ -591,7 +592,9 @@ class Simulation(Structure):
 
 # Orbit calculation
     def calculate_orbits(self, heliocentric=False):
-        """ Returns an array of Orbits of length N-1.
+        """ 
+        Returns an array of Orbits of length N-1.
+
         If MEGNO is enabled, variational particles will be ignored.
 
         Parameters
@@ -612,10 +615,24 @@ class Simulation(Structure):
 # COM calculation 
     def calculate_com(self, last=None):
         """
-        Returns the center of momentum for all particles in the simulation
-        If 'last' is specified only calculate the center of momentum for the
-        first 'last' particles in the array (i.e., indices up to i-1, as used 
-        in Jacobi coordinates).
+        Returns the center of momentum for all particles in the simulation.
+
+        Parameters
+        ----------
+        last : int or None, optional
+            If ``last`` is specified only calculate the center of momentum for the
+            first ``last`` particles in the array (i.e., indices up to i-1, as used 
+            in Jacobi coordinates).
+
+        Examples
+        --------
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1, x=0)
+        >>> sim.add(m=1, x=1)
+        >>> com sim.calculate_com()
+        >>> com.x
+        0.5
+
         """
         m = 0.
         x = 0.
@@ -670,6 +687,15 @@ class Simulation(Structure):
 
         This function only needs to be called it boundary conditions other than "none"
         are used. In such a case the boxsize must be known and is set with this function.
+
+        Parameters
+        ----------
+        boxsize : float, optional
+            The size of one root box.
+        root_nx, root_ny, root_nz : int, optional
+            The number of root boxes in each direction. The total size of the simulation box
+            will be ``root_nx * boxsize``, ``root_ny * boxsize`` and ``root_nz * boxsize``.
+            By default there will be exactly one root box in each direction.
         """
         clibrebound.reb_configure_box(byref(self), c_double(boxsize), c_int(root_nx), c_int(root_ny), c_int(root_nz))
         return
@@ -680,7 +706,12 @@ class Simulation(Structure):
 
         This function only needs to be called it boundary conditions other than "none" or
         "open" are used. In such a case the number of ghostboxes must be known and is set 
-        with this function. All values default to 0 (no ghost boxes).
+        with this function. 
+        
+        Parameters
+        ----------
+        nghostx, nghosty, nghostz : int
+            The number of ghost boxes in each direction. All values default to 0 (no ghost boxes).
         """
         clibrebound.nghostx = c_int(nghostx)
         clibrebound.nghosty = c_int(nghosty)
@@ -771,7 +802,7 @@ class Simulation(Structure):
         Parameters
         ----------
         tmax : float
-            The maximum time, tmax. If the current time is 100, and tmax=200, then after the calling the integrate routine, the time has advanced to t=200. If tmax is larger than or equal to the current time, no integration will be performed.
+            The final time of your simulation. If the current time is 100, and tmax=200, then after the calling the integrate routine, the time has advanced to t=200. If tmax is larger than or equal to the current time, no integration will be performed.
         exact_finish_time: int, optional
             This argument determines whether REBOUND should try to finish at the exact time (tmax) you give it or if it is allowed to overshoot. Overshooting could happen if one starts at t=0, has a timestep of dt=10 and wants to integrate to tmax=25. With ``exact_finish_time=1``, the integrator will choose the last timestep such that t is exactly 25 after the integration, otherwise t=30. Note that changing the timestep does affect the accuracy of symplectic integrators negatively.
         
