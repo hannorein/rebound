@@ -11,6 +11,33 @@ except:
 from .particle import Particle
 
 def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=False, showPeriastron=False, trails=False, lw=1.):
+        """
+        Convenience function for plotting instantaneous orbits.
+
+        Parameters
+        ---------
+        figsize         : (float, float)    Tuple defining the figure size (default: (5,5))
+        lim             : (float)           Limit for axes (default: None = automatically determined)
+        unitlabel       : (string)          String describing the units, shown on axis labels (default: None)
+        color           : (bool)            Enable color (default: False)
+        showPeriastron  : (bool)            Draw a marker at periastron (default: False)
+        trails          : (bool)            Draw trails instead of solid lines (default: False)
+        lw              : (float)           Linewidth (default: 1.)
+
+        Returns
+        -------
+        A matplotlib figure
+
+        Usage
+        -----
+
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1)
+        >>> sim.add(a=1)
+        >>> fig = rebound.OrbitPlot(sim)
+        >>> fig.savefig("image.png")
+
+        """
         if packages_missing == 1:
             printf("Matplotlib and/or numpy not found. Plotting functions not available\n")
             return
