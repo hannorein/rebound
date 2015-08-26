@@ -10,7 +10,7 @@ except:
 
 from .particle import Particle
 
-def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=False, showPeriastron=False, trails=False, lw=1.):
+def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=False, periastron=False, trails=False, lw=1.):
         """
         Convenience function for plotting instantaneous orbits.
 
@@ -24,7 +24,7 @@ def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=Fals
             String describing the units, shown on axis labels (default: None)
         color           : bool, optional            
             Enable color (default: False)
-        showPeriastron  : bool, optional            
+        periastron  : bool, optional            
             Draw a marker at periastron (default: False)
         trails          : bool, optional            
             Draw trails instead of solid lines (default: False)
@@ -119,7 +119,7 @@ def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=Fals
                         ax.plot([pp.x, newp.x], [pp.y, newp.y], color=color, zorder=2, lw=lw)
                     pp = newp
             
-            if showPeriastron:
+            if periastron:
                 newp = Particle(a=o.a, f=0., inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=particles[i+1].m, primary=primary, simulation=sim)
                 ax.plot([primary.x, newp.x], [primary.y, newp.y], linestyle="dotted", c=colori, zorder=1, lw=lw)
                 ax.scatter([newp.x],[newp.y], marker="o", s=5.*lw, facecolor="none", edgecolor=colori, zorder=1)
