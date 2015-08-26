@@ -170,17 +170,17 @@ void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R
 	}
 }
 
-static double mod2pi(double f){
+double mod2pi(double f){
 	while(f < 0.){
-		f += 2.*M_PI;
+		f += 2*M_PI;
 	}
 	while(f > 0.){
-		f -= 2.*M_PI;
+		f -= 2*M_PI;
 	}
 	return f;
 }
 
-double reb_tools_M_to_E(double e, double M){
+double reb_M_to_E(double e, double M){
 	double E;
 	if(e < 1.){
 		E = e < 0.8 ? M : M_PI;
@@ -212,7 +212,8 @@ double reb_tools_M_to_E(double e, double M){
 }
 
 double reb_tools_M_to_f(double e, double M){
-	double E = reb_tools_M_to_E(e, M);
+
+	double E = reb_M_to_E(e, M);
 	if(e > 1.){
 		return 2.*atan(sqrt((1.+e)/(e-1.))*tanh(0.5*E));
 	}
@@ -257,7 +258,7 @@ struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particl
 
 	struct reb_particle p = {0};
 	p.m = m;
-	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double r = a*(1-e*e)/(1 + e*cos(f));
 	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
 
 	double cO = cos(Omega);
@@ -355,7 +356,6 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 	ey = muinv*( vdiffsquared*dy - rvr*dvy );
 	ez = muinv*( vdiffsquared*dz - rvr*dvz );
  	o.e = sqrt( ex*ex + ey*ey + ez*ez );		// eccentricity
-	//fprintf(stderr, "%.16e\t%.16e\t%.16e\n", ex, ey, o.e);
 	o.n = o.a/fabs(o.a)*sqrt(fabs(mu/(o.a*o.a*o.a)));	// mean motion (negative if hyperbolic)
 	o.P = 2*M_PI/o.n;									// period (negative if hyperbolic)
 
@@ -372,7 +372,9 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 	ea = acos2(1.-o.r/o.a, o.e, vr);	// from definition of eccentric anomaly.  If vr < 0, must be going from apo to peri, so ea = [pi, 2pi] so ea = -acos(cosea)
 	o.M = ea - o.e*sin(ea);						// mean anomaly (Kepler's equation)
 
-	if(o.inc < MIN_INC || o.inc > M_PI - MIN_INC){	// nearly planar.  Use longitudes rather than angles referenced to node.
+	// in the near-planar case, the true longitude is always well defined for the position, and pomega for the pericenter if e!= 0
+	// we therefore calculate those and calculate the remaining angles from them
+	if(o.inc < MIN_INC || o.inc > M_PI - MIN_INC){	// nearly planar.  Use longitudes rather than angles referenced to node for numerical stability.
 		o.pomega = acos2(ex, o.e, ey);		// cos pomega is dot product of x and e unit vectors.  Will = 0 if e=0.
 		o.theta = acos2(dx, o.r, dy);			// cos theta is dot product of x and r vectors (true longitude).  Will = 0 if e = 0.
 		if(o.inc < M_PI/2.){
@@ -386,11 +388,10 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 			o.l = o.pomega - o.M;
 		}
 	}
+	// in the non-planar case, we can't calculate the broken angles from vectors like above.  omega+f is always well defined, and omega if e!=0
 	else{
 		double wpf = acos2(nx*dx + ny*dy, n*o.r, dz);	// omega plus f.  Both angles measured in orbital plane, and always well defined for i!=0.
 		o.omega = acos2(nx*ex + ny*ey, n*o.e, ez);
-		fprintf(stderr, "%.16e\t%.16e\t%.16e\n", nx*ex + ny*dy, n*o.e, ez);
-		
 		if(o.inc < M_PI/2.){
 			o.pomega = o.Omega + o.omega;
 			o.f = wpf - o.omega;
