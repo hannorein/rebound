@@ -276,13 +276,14 @@ class Simulation(Structure):
         Get or set the intergrator module.
 
         Available integrators are:
-        - ias15 (default)
-        - whfast
-        - sei
-        - wh
-        - leapfrog 
-        - hybrid
-        - none
+
+        - ``'ias15'`` (default)
+        - ``'whfast'``
+        - ``'sei'``
+        - ``'wh'``
+        - ``'leapfrog'``
+        - ``'hybrid'``
+        - ``'none'``
         
         Check the online documentation for a full description of each of the integrators. 
         """
@@ -349,7 +350,7 @@ class Simulation(Structure):
         """
         Get or set the gravity module.
 
-        Available integrators are:
+        Available gravity modules are:
 
         - ``'none'`` 
         - ``'basic'``
