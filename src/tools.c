@@ -170,17 +170,17 @@ void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R
 	}
 }
 
-double mod2pi(double f){
+static double mod2pi(double f){
 	while(f < 0.){
-		f += 2*M_PI;
+		f += 2.*M_PI;
 	}
 	while(f > 0.){
-		f -= 2*M_PI;
+		f -= 2.*M_PI;
 	}
 	return f;
 }
 
-double reb_M_to_E(double e, double M){
+double reb_tools_M_to_E(double e, double M){
 	double E;
 	if(e < 1.){
 		E = e < 0.8 ? M : M_PI;
@@ -212,8 +212,7 @@ double reb_M_to_E(double e, double M){
 }
 
 double reb_tools_M_to_f(double e, double M){
-
-	double E = reb_M_to_E(e, M);
+	double E = reb_tools_M_to_E(e, M);
 	if(e > 1.){
 		return 2.*atan(sqrt((1.+e)/(e-1.))*tanh(0.5*E));
 	}
@@ -258,7 +257,7 @@ struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particl
 
 	struct reb_particle p = {0};
 	p.m = m;
-	double r = a*(1-e*e)/(1 + e*cos(f));
+	double r = a*(1.-e*e)/(1. + e*cos(f));
 	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
 
 	double cO = cos(Omega);
@@ -299,7 +298,7 @@ static const struct reb_orbit reb_orbit_nan = {.r = NAN, .v = NAN, .h = NAN, .P 
 // will return 0 or pi appropriately if num is larger than denom by machine precision
 // and will return 0 if denom is exactly 0.
 
-double acos2(double num, double denom, double disambiguator){
+static double acos2(double num, double denom, double disambiguator){
 	double val;
 	double cosine = num/denom;
 	if(cosine > -1. && cosine < 1.){
