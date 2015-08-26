@@ -1,3 +1,5 @@
+import matplotlib; matplotlib.use("pdf")
+import matplotlib.pyplot as plt
 import rebound
 import os.path
 import os
@@ -12,7 +14,7 @@ else:
 
 if os.path.isfile(filename):
     # Try to load simulation from file
-    sim = rebound.Simulation(filename=filename)
+    sim = rebound.Simulation.from_file(filename)
 else: 
     sim = rebound.Simulation()
     # Get data from NASA Horizons
@@ -40,8 +42,6 @@ for ti,t in enumerate(times):
         x[i][ti] = p.x
         y[i][ti] = p.y
 
-import matplotlib; matplotlib.use("pdf")
-import matplotlib.pyplot as plt
 
 fig = plt.figure(figsize=(11,5))
 
