@@ -38,13 +38,14 @@ def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=Fals
 
         Examples
         --------
-        The following example illustrates a typical use case. The plot is saved to a file.
+        The following example illustrates a typical use case.
 
         >>> sim = rebound.Simulation()
         >>> sim.add(m=1)
         >>> sim.add(a=1)
         >>> fig = rebound.OrbitPlot(sim)
-        >>> fig.savefig("image.png")
+        >>> fig.savefig("image.png") # save figure to file
+        >>> fig.show() # show figure on screen
 
         """
         if packages_missing == 1:
