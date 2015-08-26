@@ -95,9 +95,12 @@ if 1:
 extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.autodoc',
+    #'sphinx.ext.napoleon',
+    'numpydoc',
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
     'breathe',
+    #'sphinxcontrib.napoleon',
 ]
 breathe_projects = { "librebound": "doxygen/xml/" }
 breathe_default_project = "librebound"

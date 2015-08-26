@@ -170,17 +170,17 @@ void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R
 	}
 }
 
-double mod2pi(double f){
+static double mod2pi(double f){
 	while(f < 0.){
-		f += 2*M_PI;
+		f += 2.*M_PI;
 	}
 	while(f > 0.){
-		f -= 2*M_PI;
+		f -= 2.*M_PI;
 	}
 	return f;
 }
 
-double reb_M_to_E(double e, double M){
+double reb_tools_M_to_E(double e, double M){
 	double E;
 	if(e < 1.){
 		E = e < 0.8 ? M : M_PI;
@@ -212,8 +212,7 @@ double reb_M_to_E(double e, double M){
 }
 
 double reb_tools_M_to_f(double e, double M){
-
-	double E = reb_M_to_E(e, M);
+	double E = reb_tools_M_to_E(e, M);
 	if(e > 1.){
 		return 2.*atan(sqrt((1.+e)/(e-1.))*tanh(0.5*E));
 	}
@@ -231,7 +230,6 @@ struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle 
 static const struct reb_particle reb_particle_nan = {.x = NAN, .y = NAN, .z = NAN, .vx = NAN, .vy = NAN, .vz = NAN, .ax = NAN, .ay = NAN, .az = NAN, .m = NAN, .r = NAN, .lastcollision = NAN, .c = NULL, .id = NAN};
 
 struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f, int* err){
-	fprintf(stderr, "%d\n", *err);
 	if(e == 1.){
 		*err = 1; 		// Can't initialize a radial orbit with orbital elements.
 		return reb_particle_nan;
@@ -259,7 +257,7 @@ struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particl
 
 	struct reb_particle p = {0};
 	p.m = m;
-	double r = a*(1-e*e)/(1 + e*cos(f));
+	double r = a*(1.-e*e)/(1. + e*cos(f));
 	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
 
 	double cO = cos(Omega);

@@ -1,5 +1,9 @@
 # Import the rebound module
-import sys; sys.path.append('../../python_modules')
+import sys
+import matplotlib; matplotlib.use("pdf")
+import matplotlib.pyplot as plt
+from matplotlib import ticker
+from matplotlib.colors import LogNorm
 import rebound
 import numpy as np
 import time
@@ -127,10 +131,6 @@ else:
     print sys.argv[1]
     res = np.load(sys.argv[1])
 
-import matplotlib; matplotlib.use("pdf")
-import matplotlib.pyplot as plt
-from matplotlib import ticker
-from matplotlib.colors import LogNorm
 
 
 f,axarr = plt.subplots(1,1,figsize=(13,4))

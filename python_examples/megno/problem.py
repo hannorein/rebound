@@ -4,6 +4,11 @@
 # These can be used to measure the Mean Exponential Growth of Nearby Orbits (MEGNO), a chaos indicator.
 # This example script runs 12^2 simulations and plots the MEGNO value. Values close to <Y>=2 correspond 
 # to regular quasi-periodic orbits. Higher values of <Y> correspond to chaotic orbits.
+
+# Import matplotlib
+import matplotlib; matplotlib.use("pdf")
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
  
 # Import the rebound module
 import rebound
@@ -22,8 +27,8 @@ def simulation(par):
     # These parameters are only approximately those of Jupiter and Saturn.
     sun     = rebound.Particle(m=1.)
     sim.add(sun)
-    jupiter = sim.add(primary=sun,m=0.000954, a=5.204, anom=0.600, omega=0.257, e=0.048)
-    saturn  = sim.add(primary=sun,m=0.000285, a=saturn_a, anom=0.871, omega=1.616, e=saturn_e)
+    jupiter = sim.add(primary=sun,m=0.000954, a=5.204, M=0.600, omega=0.257, e=0.048)
+    saturn  = sim.add(primary=sun,m=0.000285, a=saturn_a, M=0.871, omega=1.616, e=saturn_e)
 
     sim.move_to_com()
     sim.init_megno(1e-16)
@@ -50,9 +55,6 @@ megno = np.clip(res[:,0].reshape((N,N)),1.8,4.)             # clip arrays to plo
 lyaptimescale = np.clip(np.absolute(res[:,1].reshape((N,N))),1e1,1e5)
 
 ### Create plot and save as pdf 
-import matplotlib; matplotlib.use("pdf")
-import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
 
 # Setup plots
 f, axarr = plt.subplots(2,figsize=(10,10))
