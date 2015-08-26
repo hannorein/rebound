@@ -15,21 +15,30 @@ def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=Fals
         Convenience function for plotting instantaneous orbits.
 
         Parameters
-        ---------
-        figsize         : (float, float)    Tuple defining the figure size (default: (5,5))
-        lim             : (float)           Limit for axes (default: None = automatically determined)
-        unitlabel       : (string)          String describing the units, shown on axis labels (default: None)
-        color           : (bool)            Enable color (default: False)
-        showPeriastron  : (bool)            Draw a marker at periastron (default: False)
-        trails          : (bool)            Draw trails instead of solid lines (default: False)
-        lw              : (float)           Linewidth (default: 1.)
+        ----------
+        figsize         : tuple of float, optional
+            Tuple defining the figure size (default: (5,5))
+        lim             : float, optional           
+            Limit for axes (default: None = automatically determined)
+        unitlabel       : str, optional          
+            String describing the units, shown on axis labels (default: None)
+        color           : bool, optional            
+            Enable color (default: False)
+        showPeriastron  : bool, optional            
+            Draw a marker at periastron (default: False)
+        trails          : bool, optional            
+            Draw trails instead of solid lines (default: False)
+        lw              : float, optional           
+            Linewidth (default: 1.)
 
         Returns
         -------
-        A matplotlib figure
+        fig
+            A matplotlib figure
 
-        Usage
-        -----
+        Examples
+        --------
+        The following example illustrates a typical use case. The plot is saved to a file.
 
         >>> sim = rebound.Simulation()
         >>> sim.add(m=1)
