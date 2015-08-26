@@ -33,6 +33,7 @@ script:
     #- cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Parallel.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py ParticleIDsAndRemoval.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py PoincareMap.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py OrbitalElements.ipynb | python 
     #- cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Testparticles.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Units.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py WHFast.ipynb | python 
