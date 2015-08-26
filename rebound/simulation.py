@@ -319,11 +319,12 @@ class Simulation(Structure):
         """
         Get or set the boundary module.
 
-        Available integrators are:
-        - none (default)
-        - open
-        - periodic
-        - shear
+        Available boundary modules are:
+
+        - ``'none'`` (default)
+        - ``'open'``
+        - ``'periodic'``
+        - ``'shear'``
         
         Check the online documentation for a full description of each of the modules. 
         """
@@ -349,10 +350,11 @@ class Simulation(Structure):
         Get or set the gravity module.
 
         Available integrators are:
-        - none 
-        - basic
-        - compensated (default)
-        - tree
+
+        - ``'none'`` 
+        - ``'basic'``
+        - ``'compensated'`` (default)
+        - ``'tree'``
         
         Check the online documentation for a full description of each of the modules. 
         """
@@ -377,10 +379,11 @@ class Simulation(Structure):
         """
         Get or set the collision module.
 
-        Available integrators are:
-        - none (default)
-        - direct
-        - tree
+        Available collision modules are:
+
+        - ``'none'`` (default)
+        - ``'direct'``
+        - ``'tree'``
         
         Check the online documentation for a full description of each of the modules. 
         """
@@ -438,10 +441,12 @@ class Simulation(Structure):
         Muranus     : Neptune masses
         Mpluto      : Pluto masses
         
-        Usage
-        -----
+        Examples
+        --------
         
-        sim.units = ('yr', 'AU', 'Msun')
+        >>> sim = rebound.Simulation()
+        >>> sim.units = ('yr', 'AU', 'Msun')
+
         """
         return self._units
 
