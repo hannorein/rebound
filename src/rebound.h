@@ -495,9 +495,9 @@ struct reb_simulation {
 	 * * @{
 	 */
 	/**
-	 * @brief Pointer to parameters for (optional) extra forces from the reboundxf library
+	 * @brief Pointer to connect additional (optional) libraries, e.g., reboundx
 	 */
-	void* xf_params;
+	void* extras;
 	/** @} */
 };
 
