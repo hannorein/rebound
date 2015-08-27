@@ -931,7 +931,7 @@ Simulation._fields_ = [("t", c_double),
                 ("_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_coefficient_of_restitution", CFUNCTYPE(c_double,POINTER(Simulation), c_double)),
                 ("_collisions_resolve", CFUNCTYPE(None,POINTER(Simulation), c_void_p)),
-                ("xf_params", c_void_p),
+                ("extras", c_void_p),
                  ]
 
 POINTER_REB_SIM = POINTER(Simulation) 
