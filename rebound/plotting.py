@@ -125,10 +125,5 @@ def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=Fals
                 ax.plot([primary.x, newp.x], [primary.y, newp.y], linestyle="dotted", c=colori, zorder=1, lw=lw)
                 ax.scatter([newp.x],[newp.y], marker="o", s=5.*lw, facecolor="none", edgecolor=colori, zorder=1)
 
-
-
-
-
         return fig
-
 

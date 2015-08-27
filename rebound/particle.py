@@ -245,7 +245,7 @@ class Particle(Structure):
 
         Parameters
         ----------
-        simulation  : Simulation
+        simulation  : rebound.Simulation
             Simulation instance associated with this particle (Required)
         primary : rebound.Particle
             Central body (Required)

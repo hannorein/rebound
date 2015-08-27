@@ -190,7 +190,19 @@ class Simulation(Structure):
     @classmethod
     def from_file(cls, filename):
         """
-        Loads a REBOUND simulation from a file. Return a Simulation object.
+        Loads a REBOUND simulation from a file.
+        
+        After loading the REBOUND simulation from file, you need to reset any function pointers manually.
+        
+        Arguments
+        ---------
+        filename : str
+            Filename of the binary file.
+        
+        Returns
+        ------- 
+        A rebound.Simulation object.
+        
         """
         if os.path.isfile(filename):
             clibrebound.reb_create_simulation_from_binary.restype = POINTER_REB_SIM
@@ -602,14 +614,19 @@ class Simulation(Structure):
 # Orbit calculation
     def calculate_orbits(self, heliocentric=False):
         """ 
-        Returns an array of Orbits of length N-1.
+        Calculate orbital parameters for all partices in the simulation.
 
         If MEGNO is enabled, variational particles will be ignored.
 
         Parameters
         ----------
-        By default this functions returns the orbits in Jacobi coordinates. 
-        Set the parameter heliocentric to True to return orbits in heliocentric coordinates.
+        heliocentric : bool, optional
+            By default this functions returns the orbits in Jacobi coordinates. 
+            Set the parameter heliocentric to True to return orbits in heliocentric coordinates.
+
+        Returns
+        -------
+        Returns an array of Orbits of length N-1.
         """
         _particles_tmp = self.particles
         orbits = []
