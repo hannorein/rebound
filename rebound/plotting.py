@@ -82,7 +82,7 @@ def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=Fals
             cm = lambda x: cmf(x/2.+0.5)
 
 
-        ax.scatter(particles[0].x,particles[0].x, marker="*", s=35*lw, facecolor="black", edgecolor=None, zorder=3)
+        ax.scatter(particles[0].x,particles[0].y, marker="*", s=35*lw, facecolor="black", edgecolor=None, zorder=3)
         for i, o in enumerate(orbits):
             primary = sim.calculate_com(i+1)
             colori = cm(float(i+1)/float(sim.N-1))
