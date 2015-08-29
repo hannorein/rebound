@@ -24,7 +24,6 @@
  */
 #ifndef TOOLS_H
 #define TOOLS_H
-#include "particle.h"
 struct reb_simulation;
 
 
