@@ -183,9 +183,9 @@ class Simulation(Structure):
     >>> print(sim.N_active)  # Gets the current number of active particles
 
     """
-    def __init__(self, filename=None):
-        if filename is None:
-            clibrebound.reb_init_simulation(byref(self))
+    def __init__(self):
+        clibrebound.reb_init_simulation(byref(self))
+        self.ref = byref(self)
 
     @classmethod
     def from_file(cls, filename):
