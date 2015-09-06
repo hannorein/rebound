@@ -131,10 +131,51 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 				const double dz = particles[i].z - particles[j].z;
 				const double r2 = dx*dx + dy*dy + dz*dz + softening2;
 				const double r = sqrt(r2);
-				const double prefact  = -G/(r2*r);
+				const double prefact  = G/(r2*r);
 				const double prefacti = prefact*particles[i].m;
-				const double prefactj = prefact*particles[j].m;
+				const double prefactj = -prefact*particles[j].m;
 				
+				{
+				double ix = prefactj*dx
+				double yx = input - cs[i].x;
+				double tx = particles[i].ax + yx;
+				cs[i].x = (tx - particles[i].ax) - yx
+				particles[i].ax = tx;
+
+				double iy = prefactj*dy
+				double yy = input - cs[i].y;
+				double ty = particles[i].ay + yy;
+				cs[i].y = (ty - particles[i].ay) - yy
+				particles[i].ay = ty;
+				
+				double iz = prefactj*dz
+				double yz = input - cs[i].z;
+				double tz = particles[i].az + yz;
+				cs[i].z = (tz - particles[i].az) - yz
+				particles[i].az = tz;
+				}
+				
+				{
+				double jx = prefacti*dx
+				double yx = input - cs[j].x;
+				double tx = particles[j].ax + yx;
+				cs[j].x = (tx - particles[j].ax) - yx
+				particles[j].ax = tx;
+
+				double iy = prefacti*dy
+				double yy = input - cs[j].y;
+				double ty = particles[j].ay + yy;
+				cs[j].y = (ty - particles[j].ay) - yy
+				particles[j].ay = ty;
+				
+				double iz = prefacti*dz
+				double yz = input - cs[j].z;
+				double tz = particles[j].az + yz;
+				cs[j].z = (tz - particles[j].az) - yz
+				particles[j].az = tz;
+				}
+
+				/*
 				{
 				double ax = particles[i].ax;
 				cs[i].x  +=	prefactj*dx; 
@@ -168,6 +209,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 				particles[j].az    = az + cs[j].z;
 				cs[j].z  += az - particles[j].az; 
 				}
+				*/
 				
 			}
 			}
