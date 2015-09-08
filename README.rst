@@ -1,6 +1,10 @@
 REBOUND - An open-source multi-purpose N-body code
 ==================================================
 
+.. image:: https://badges.gitter.im/Join%20Chat.svg
+   :alt: Join the chat at https://gitter.im/hannorein/rebound
+   :target: https://gitter.im/hannorein/rebound?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
 .. image:: http://img.shields.io/badge/rebound-v2.7.0-green.svg?style=flat
 .. image:: http://img.shields.io/badge/license-GPL-green.svg?style=flat :target: https://github.com/hannorein/rebound/blob/master/LICENSE
 .. image:: http://img.shields.io/travis/hannorein/rebound/master.svg?style=flat :target: https://travis-ci.org/hannorein/rebound/
