@@ -516,8 +516,9 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 					* dt_done2 + v0[k] * dt_done;
 			double y   = inp - csx[k];
 			double tmp = x0[k] + y;
-			csx[k]     = (tmp - x0[k]) - y;
-			x0[k]      = tmp;
+			//csx[k]     = (tmp - x0[k]) - y;
+			//x0[k]      = tmp;
+			x0[k]      += inp;
 
 			/*
 			double a = x0[k];
@@ -532,8 +533,9 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 					* dt_done;
 			double y   = inp - csv[k];
 			double tmp = v0[k] + y;
-			csv[k]     = (tmp - v0[k]) - y;
-			v0[k]      = tmp;
+			//csv[k]     = (tmp - v0[k]) - y;
+			//v0[k]      = tmp;
+			v0[k]      += tmp;
  
  			/*
 			double a = v0[k]; 
