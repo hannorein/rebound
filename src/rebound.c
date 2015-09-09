@@ -203,6 +203,7 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
 	r->ri_ias15.allocatedN		= 0;
 	set_dp7_null(&(r->ri_ias15.g));
 	set_dp7_null(&(r->ri_ias15.b));
+	set_dp7_null(&(r->ri_ias15.csb));
 	set_dp7_null(&(r->ri_ias15.e));
 	set_dp7_null(&(r->ri_ias15.br));
 	set_dp7_null(&(r->ri_ias15.er));

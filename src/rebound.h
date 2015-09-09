@@ -200,6 +200,7 @@ struct reb_simulation_integrator_ias15 {
 
 	struct reb_dp7 g;
 	struct reb_dp7 b;
+	struct reb_dp7 csb;			///< Compensated summation
 	struct reb_dp7 e;
 
 	// The following values are used for resetting the b and e coefficients if a timestep gets rejected
