@@ -535,7 +535,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 			double tmp = v0[k] + y;
 			//csv[k]     = (tmp - v0[k]) - y;
 			//v0[k]      = tmp;
-			v0[k]      += tmp;
+			v0[k]      += inp;
  
  			/*
 			double a = v0[k]; 
