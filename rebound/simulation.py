@@ -216,7 +216,8 @@ class Simulation(Structure):
     _units = {'length':None, 'time':None, 'mass':None}
 
     def __del__(self):
-        clibrebound.reb_free_pointers(byref(self))
+        if self._b_needsfree_ == 1:
+            clibrebound.reb_free_pointers(byref(self))
 
 # Status functions
     def status(self):
