@@ -185,6 +185,7 @@ void reb_free_pointers(struct reb_simulation* const r){
 	free(r->ri_ias15.a0  	);
 	free(r->ri_ias15.csx 	);
 	free(r->ri_ias15.csv 	);
+	free(r->ri_ias15.csa0 	);
 	free(r->ri_wh.eta 	);
 	free(r->particles	);
 }
@@ -213,6 +214,7 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
 	r->ri_ias15.a0  		= NULL;
 	r->ri_ias15.csx  		= NULL;
 	r->ri_ias15.csv  		= NULL;
+	r->ri_ias15.csa0  		= NULL;
 	r->ri_ias15.at  		= NULL;
 	// ********** WH
 	r->ri_wh.allocatedN 		= 0;

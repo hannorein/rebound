@@ -197,6 +197,7 @@ struct reb_simulation_integrator_ias15 {
 	double* restrict a0;			///<                      acceleration
 	double* restrict csx;			///<                      compensated summation
 	double* restrict csv;			///<                      compensated summation
+	double* restrict csa0;			///<                      acceleration
 
 	struct reb_dp7 g;
 	struct reb_dp7 b;
