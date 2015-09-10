@@ -193,7 +193,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 	double* restrict const x0 = r->ri_ias15.x0; 
 	double* restrict const v0 = r->ri_ias15.v0; 
 	double* restrict const a0 = r->ri_ias15.a0; 
-	struct reb_vec3d* const gravity_cs = r->gravity_cs; 
+	struct reb_vec3d* gravity_cs = r->gravity_cs; 
 	const struct reb_dpconst7 g  = dpcast(r->ri_ias15.g);
 	const struct reb_dpconst7 e  = dpcast(r->ri_ias15.e);
 	const struct reb_dpconst7 b  = dpcast(r->ri_ias15.b);
@@ -208,7 +208,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 		v0[3*k+1] = particles[k].vy;
 		v0[3*k+2] = particles[k].vz;
 		a0[3*k]   = particles[k].ax;
-		a0[3*k+1] = particles[k].ay;  
+		a0[3*k+1] = particles[k].ay; 
 		a0[3*k+2] = particles[k].az;
 	}
 	if (r->gravity==REB_GRAVITY_COMPENSATED){
@@ -218,6 +218,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 			csa0[3*k+2] = gravity_cs[k].z;
 		}
 	}else{
+		gravity_cs = (struct reb_vec3d*)csa0; // Always 0.
 		for(int k=0;k<N3;k++) {
 			csa0[k]   = 0;
 		}
