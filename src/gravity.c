@@ -174,43 +174,6 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 				cs[j].z = (tz - particles[j].az) - yz;
 				particles[j].az = tz;
 				}
-
-				/*
-				{
-				double ax = particles[i].ax;
-				cs[i].x  +=	prefactj*dx; 
-				particles[i].ax    = ax + cs[i].x;
-				cs[i].x  += ax - particles[i].ax; 
-				
-				double ay = particles[i].ay;
-				cs[i].y  +=	prefactj*dy; 
-				particles[i].ay    = ay + cs[i].y;
-				cs[i].y  += ay - particles[i].ay; 
-				
-				double az = particles[i].az;
-				cs[i].z  +=	prefactj*dz; 
-				particles[i].az    = az + cs[i].z;
-				cs[i].z  += az - particles[i].az; 
-				}
-				
-				{
-				double ax = particles[j].ax;
-				cs[j].x  -=	prefacti*dx; 
-				particles[j].ax    = ax + cs[j].x;
-				cs[j].x  += ax - particles[j].ax; 
-				
-				double ay = particles[j].ay;
-				cs[j].y  -=	prefacti*dy; 
-				particles[j].ay    = ay + cs[j].y;
-				cs[j].y  += ay - particles[j].ay; 
-				
-				double az = particles[j].az;
-				cs[j].z  -=	prefacti*dz; 
-				particles[j].az    = az + cs[j].z;
-				cs[j].z  += az - particles[j].az; 
-				}
-				*/
-				
 			}
 			}
 			// Testparticles
@@ -223,22 +186,28 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 				const double dz = particles[i].z - particles[j].z;
 				const double r2 = dx*dx + dy*dy + dz*dz + softening2;
 				const double r = sqrt(r2);
-				const double prefact = -G/(r2*r)*particles[j].m;
+				const double prefact  = G/(r2*r);
+				const double prefactj = -prefact*particles[j].m;
 				
-				double ax = particles[i].ax;
-				cs[i].x  +=	prefact*dx; 
-				particles[i].ax    = ax + cs[i].x;
-				cs[i].x  += ax - particles[i].ax; 
+				{
+				double ix = prefactj*dx;
+				double yx = ix - cs[i].x;
+				double tx = particles[i].ax + yx;
+				cs[i].x = (tx - particles[i].ax) - yx;
+				particles[i].ax = tx;
+
+				double iy = prefactj*dy;
+				double yy = iy- cs[i].y;
+				double ty = particles[i].ay + yy;
+				cs[i].y = (ty - particles[i].ay) - yy;
+				particles[i].ay = ty;
 				
-				double ay = particles[i].ay;
-				cs[i].y  +=	prefact*dy; 
-				particles[i].ay    = ay + cs[i].y;
-				cs[i].y  += ay - particles[i].ay; 
-				
-				double az = particles[i].az;
-				cs[i].z  +=	prefact*dz; 
-				particles[i].az    = az + cs[i].z;
-				cs[i].z  += az - particles[i].az; 
+				double iz = prefactj*dz;
+				double yz = iz - cs[i].z;
+				double tz = particles[i].az + yz;
+				cs[i].z = (tz - particles[i].az) - yz;
+				particles[i].az = tz;
+				}
 			}
 			}
 		}
