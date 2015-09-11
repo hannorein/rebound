@@ -57,7 +57,7 @@
 static const char* logo[];				/**< Logo of rebound. */
 #endif // LIBREBOUND
 const char* reb_build_str = __DATE__ " " __TIME__;	// Date and time build string. 
-const char* reb_version_str = "2.7.0";			// **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "2.7.2";			// **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 
 
 void reb_step(struct reb_simulation* const r){
