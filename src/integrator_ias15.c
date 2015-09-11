@@ -139,18 +139,11 @@ static struct reb_dpconst7 dpcast(struct reb_dp7 dp){
 	return dpc;
 }
 
-static inline void add_csp(double* p, double* csp, double inp){
+static inline void add_cs(double* p, double* csp, double inp){
 	const double y = inp - *csp;
 	const double t = *p + y;
 	*csp = (t - *p) - y;
 	*p = t;
-}
-
-static inline void add_cs(double* p, double* csp, int k, double inp){
-	const double y = inp - csp[k];
-	const double t = p[k] + y;
-	csp[k] = (t - p[k]) - y;
-	p[k] = t;
 }
  
 // Does the actual timestep.
@@ -348,80 +341,80 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 						double tmp = g.p0[k];
 						double gk = at[k];
 						double gk_cs = ((double*)(gravity_cs))[k];
-						add_csp(&gk, &gk_cs, -a0[k]);
-						add_csp(&gk, &gk_cs, csa0[k]);
+						add_cs(&gk, &gk_cs, -a0[k]);
+						add_cs(&gk, &gk_cs, csa0[k]);
 						g.p0[k]  = gk/rr[0];
-						add_cs(b.p0, csb.p0, k, g.p0[k]-tmp);
+						add_cs(&(b.p0[k]), &(csb.p0[k]), g.p0[k]-tmp);
 					} break;
 				case 2: 
 					for(int k=0;k<N3;++k) {
 						double tmp = g.p1[k];
 						double gk = at[k];
 						double gk_cs = ((double*)(gravity_cs))[k];
-						add_csp(&gk, &gk_cs, -a0[k]);
-						add_csp(&gk, &gk_cs, csa0[k]);
+						add_cs(&gk, &gk_cs, -a0[k]);
+						add_cs(&gk, &gk_cs, csa0[k]);
 						g.p1[k] = (gk/rr[1] - g.p0[k])/rr[2];
 						tmp = g.p1[k] - tmp;
-						add_cs(b.p0, csb.p0, k, tmp * c[0]);
-						add_cs(b.p1, csb.p1, k, tmp);
+						add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[0]);
+						add_cs(&(b.p1[k]), &(csb.p1[k]), tmp);
 					} break;
 				case 3: 
 					for(int k=0;k<N3;++k) {
 						double tmp = g.p2[k];
 						double gk = at[k];
 						double gk_cs = ((double*)(gravity_cs))[k];
-						add_csp(&gk, &gk_cs, -a0[k]);
-						add_csp(&gk, &gk_cs, csa0[k]);
+						add_cs(&gk, &gk_cs, -a0[k]);
+						add_cs(&gk, &gk_cs, csa0[k]);
 						g.p2[k] = ((gk/rr[3] - g.p0[k])/rr[4] - g.p1[k])/rr[5];
 						tmp = g.p2[k] - tmp;
-						add_cs(b.p0, csb.p0, k, tmp * c[1]);
-						add_cs(b.p1, csb.p1, k, tmp * c[2]);
-						add_cs(b.p2, csb.p2, k, tmp);
+						add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[1]);
+						add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[2]);
+						add_cs(&(b.p2[k]), &(csb.p2[k]), tmp);
 					} break;
 				case 4:
 					for(int k=0;k<N3;++k) {
 						double tmp = g.p3[k];
 						double gk = at[k];
 						double gk_cs = ((double*)(gravity_cs))[k];
-						add_csp(&gk, &gk_cs, -a0[k]);
-						add_csp(&gk, &gk_cs, csa0[k]);
+						add_cs(&gk, &gk_cs, -a0[k]);
+						add_cs(&gk, &gk_cs, csa0[k]);
 						g.p3[k] = (((gk/rr[6] - g.p0[k])/rr[7] - g.p1[k])/rr[8] - g.p2[k])/rr[9];
 						tmp = g.p3[k] - tmp;
-						add_cs(b.p0, csb.p0, k, tmp * c[3]);
-						add_cs(b.p1, csb.p1, k, tmp * c[4]);
-						add_cs(b.p2, csb.p2, k, tmp * c[5]);
-						add_cs(b.p3, csb.p3, k, tmp);
+						add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[3]);
+						add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[4]);
+						add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[5]);
+						add_cs(&(b.p3[k]), &(csb.p3[k]), tmp);
 					} break;
 				case 5:
 					for(int k=0;k<N3;++k) {
 						double tmp = g.p4[k];
 						double gk = at[k];
 						double gk_cs = ((double*)(gravity_cs))[k];
-						add_csp(&gk, &gk_cs, -a0[k]);
-						add_csp(&gk, &gk_cs, csa0[k]);
+						add_cs(&gk, &gk_cs, -a0[k]);
+						add_cs(&gk, &gk_cs, csa0[k]);
 						g.p4[k] = ((((gk/rr[10] - g.p0[k])/rr[11] - g.p1[k])/rr[12] - g.p2[k])/rr[13] - g.p3[k])/rr[14];
 						tmp = g.p4[k] - tmp;
-						add_cs(b.p0, csb.p0, k, tmp * c[6]);
-						add_cs(b.p1, csb.p1, k, tmp * c[7]);
-						add_cs(b.p2, csb.p2, k, tmp * c[8]);
-						add_cs(b.p3, csb.p3, k, tmp * c[9]);
-						add_cs(b.p4, csb.p4, k, tmp);
+						add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[6]);
+						add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[7]);
+						add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[8]);
+						add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[9]);
+						add_cs(&(b.p4[k]), &(csb.p4[k]), tmp);
 					} break;
 				case 6:
 					for(int k=0;k<N3;++k) {
 						double tmp = g.p5[k];
 						double gk = at[k];
 						double gk_cs = ((double*)(gravity_cs))[k];
-						add_csp(&gk, &gk_cs, -a0[k]);
-						add_csp(&gk, &gk_cs, csa0[k]);
+						add_cs(&gk, &gk_cs, -a0[k]);
+						add_cs(&gk, &gk_cs, csa0[k]);
 						g.p5[k] = (((((gk/rr[15] - g.p0[k])/rr[16] - g.p1[k])/rr[17] - g.p2[k])/rr[18] - g.p3[k])/rr[19] - g.p4[k])/rr[20];
 						tmp = g.p5[k] - tmp;
-						add_cs(b.p0, csb.p0, k, tmp * c[10]);
-						add_cs(b.p1, csb.p1, k, tmp * c[11]);
-						add_cs(b.p2, csb.p2, k, tmp * c[12]);
-						add_cs(b.p3, csb.p3, k, tmp * c[13]);
-						add_cs(b.p4, csb.p4, k, tmp * c[14]);
-						add_cs(b.p5, csb.p5, k, tmp);
+						add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[10]);
+						add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[11]);
+						add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[12]);
+						add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[13]);
+						add_cs(&(b.p4[k]), &(csb.p4[k]), tmp * c[14]);
+						add_cs(&(b.p5[k]), &(csb.p5[k]), tmp);
 					} break;
 				case 7:
 				{
@@ -431,17 +424,17 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 						double tmp = g.p6[k];
 						double gk = at[k];
 						double gk_cs = ((double*)(gravity_cs))[k];
-						add_csp(&gk, &gk_cs, -a0[k]);
-						add_csp(&gk, &gk_cs, csa0[k]);
+						add_cs(&gk, &gk_cs, -a0[k]);
+						add_cs(&gk, &gk_cs, csa0[k]);
 						g.p6[k] = ((((((gk/rr[21] - g.p0[k])/rr[22] - g.p1[k])/rr[23] - g.p2[k])/rr[24] - g.p3[k])/rr[25] - g.p4[k])/rr[26] - g.p5[k])/rr[27];
 						tmp = g.p6[k] - tmp;	
-						add_cs(b.p0, csb.p0, k, tmp * c[15]);
-						add_cs(b.p1, csb.p1, k, tmp * c[16]);
-						add_cs(b.p2, csb.p2, k, tmp * c[17]);
-						add_cs(b.p3, csb.p3, k, tmp * c[18]);
-						add_cs(b.p4, csb.p4, k, tmp * c[19]);
-						add_cs(b.p5, csb.p5, k, tmp * c[20]);
-						add_cs(b.p6, csb.p6, k, tmp);
+						add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[15]);
+						add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[16]);
+						add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[17]);
+						add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[18]);
+						add_cs(&(b.p4[k]), &(csb.p4[k]), tmp * c[19]);
+						add_cs(&(b.p5[k]), &(csb.p5[k]), tmp * c[20]);
+						add_cs(&(b.p6[k]), &(csb.p6[k]), tmp);
 						
 						// Monitor change in b.p6[k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
 						if (r->ri_ias15.epsilon_global){
@@ -556,25 +549,25 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 	const double dt_done2 = dt_done * dt_done;
 	for(int k=0;k<N3;++k) {
 		{
-			add_cs(x0, csx, k, b.p6[k]/72.*dt_done2);
-			add_cs(x0, csx, k, b.p5[k]/56.*dt_done2);
-			add_cs(x0, csx, k, b.p4[k]/42.*dt_done2);
-			add_cs(x0, csx, k, b.p3[k]/30.*dt_done2);
-			add_cs(x0, csx, k, b.p2[k]/20.*dt_done2);
-			add_cs(x0, csx, k, b.p1[k]/12.*dt_done2);
-			add_cs(x0, csx, k, b.p0[k]/6.*dt_done2);
-			add_cs(x0, csx, k, a0[k]/2.*dt_done2);
-			add_cs(x0, csx, k, v0[k]*dt_done);
+			add_cs(&(x0[k]), &(csx[k]), b.p6[k]/72.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), b.p5[k]/56.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), b.p4[k]/42.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), b.p3[k]/30.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), b.p2[k]/20.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), b.p1[k]/12.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), b.p0[k]/6.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), a0[k]/2.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), v0[k]*dt_done);
 		}
 		{
-			add_cs(v0, csv, k, b.p6[k]/8.*dt_done);
-			add_cs(v0, csv, k, b.p5[k]/7.*dt_done);
-			add_cs(v0, csv, k, b.p4[k]/6.*dt_done);
-			add_cs(v0, csv, k, b.p3[k]/5.*dt_done);
-			add_cs(v0, csv, k, b.p2[k]/4.*dt_done);
-			add_cs(v0, csv, k, b.p1[k]/3.*dt_done);
-			add_cs(v0, csv, k, b.p0[k]/2.*dt_done);
-			add_cs(v0, csv, k, a0[k]*dt_done);
+			add_cs(&(v0[k]), &(csv[k]), b.p6[k]/8.*dt_done);
+			add_cs(&(v0[k]), &(csv[k]), b.p5[k]/7.*dt_done);
+			add_cs(&(v0[k]), &(csv[k]), b.p4[k]/6.*dt_done);
+			add_cs(&(v0[k]), &(csv[k]), b.p3[k]/5.*dt_done);
+			add_cs(&(v0[k]), &(csv[k]), b.p2[k]/4.*dt_done);
+			add_cs(&(v0[k]), &(csv[k]), b.p1[k]/3.*dt_done);
+			add_cs(&(v0[k]), &(csv[k]), b.p0[k]/2.*dt_done);
+			add_cs(&(v0[k]), &(csv[k]), a0[k]*dt_done);
 		}
 	}
 
