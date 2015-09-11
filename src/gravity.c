@@ -107,9 +107,9 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 		break;
 		case REB_GRAVITY_COMPENSATED:
 		{
-			if (r->gravity_cs_allocatedN<_N_real){
-				r->gravity_cs = realloc(r->gravity_cs,_N_real*sizeof(struct reb_vec3d));
-				r->gravity_cs_allocatedN = _N_real;
+			if (r->gravity_cs_allocatedN<N){
+				r->gravity_cs = realloc(r->gravity_cs,N*sizeof(struct reb_vec3d));
+				r->gravity_cs_allocatedN = N;
 			}
 			struct reb_vec3d* restrict const cs = r->gravity_cs;
 #pragma omp parallel for schedule(guided)
@@ -257,17 +257,27 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
 	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
 	const int N = r->N;
 	const int _N_real   = N - r->N_var;
-#pragma omp parallel for schedule(guided)
-	for (int i=_N_real; i<N; i++){
-		particles[i].ax = 0; 
-		particles[i].ay = 0; 
-		particles[i].az = 0; 
-	}
 	switch (r->gravity){
 		case REB_GRAVITY_NONE: // Do nothing.
 		break;
-		case REB_GRAVITY_BASIC:
 		case REB_GRAVITY_COMPENSATED:
+		{
+			struct reb_vec3d* restrict const cs = r->gravity_cs;
+#pragma omp parallel for schedule(guided)
+			for (int i=_N_real; i<N; i++){
+				cs[i].x = 0.;
+				cs[i].y = 0.;
+				cs[i].z = 0.;
+			}
+		}
+		// No break!
+		case REB_GRAVITY_BASIC:
+#pragma omp parallel for schedule(guided)
+			for (int i=_N_real; i<N; i++){
+				particles[i].ax = 0.; 
+				particles[i].ay = 0.; 
+				particles[i].az = 0.; 
+			}
 #pragma omp parallel for schedule(guided)
 			for (int i=_N_real; i<N; i++){
 			for (int j=i+1; j<N; j++){
