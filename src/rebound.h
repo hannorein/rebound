@@ -195,13 +195,13 @@ struct reb_simulation_integrator_ias15 {
 	double* restrict x0;			///<                      position (used for initial values at h=0) 
 	double* restrict v0;			///<                      velocity
 	double* restrict a0;			///<                      acceleration
-	double* restrict csx;			///<                      compensated summation
-	double* restrict csv;			///<                      compensated summation
-	double* restrict csa0;			///<                      acceleration
+	double* restrict csx;			///<                      compensated summation for x
+	double* restrict csv;			///<                      compensated summation for v
+	double* restrict csa0;			///<                      compensated summation for a
 
 	struct reb_dp7 g;
 	struct reb_dp7 b;
-	struct reb_dp7 csb;			///< Compensated summation
+	struct reb_dp7 csb;			///< Compensated summation for b
 	struct reb_dp7 e;
 
 	// The following values are used for resetting the b and e coefficients if a timestep gets rejected

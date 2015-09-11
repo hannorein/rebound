@@ -72,6 +72,7 @@ class reb_simulation_integrator_ias15(Structure):
                 ("a0", POINTER(c_double)),
                 ("csx", POINTER(c_double)),
                 ("csv", POINTER(c_double)),
+                ("csa0", POINTER(c_double)),
                 ("g", reb_dp7),
                 ("b", reb_dp7),
                 ("csb", reb_dp7),

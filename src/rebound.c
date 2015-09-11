@@ -37,6 +37,9 @@
 #include <fcntl.h>
 #include "rebound.h"
 #include "integrator.h"
+#include "integrator_wh.h"
+#include "integrator_whfast.h"
+#include "integrator_ias15.h"
 #include "boundary.h"
 #include "gravity.h"
 #include "collision.h"
@@ -177,16 +180,9 @@ void reb_free_pointers(struct reb_simulation* const r){
 	reb_tree_delete(r);
 	free(r->gravity_cs 	);
 	free(r->collisions	);
-	free(r->ri_whfast.eta	);
-	free(r->ri_whfast.p_j)	;
-	free(r->ri_ias15.at  	);
-	free(r->ri_ias15.x0  	);
-	free(r->ri_ias15.v0  	);
-	free(r->ri_ias15.a0  	);
-	free(r->ri_ias15.csx 	);
-	free(r->ri_ias15.csv 	);
-	free(r->ri_ias15.csa0 	);
-	free(r->ri_wh.eta 	);
+	reb_integrator_wh_reset(r);
+	reb_integrator_whfast_reset(r);
+	reb_integrator_ias15_reset(r);
 	free(r->particles	);
 }
 
