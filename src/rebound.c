@@ -290,7 +290,7 @@ void reb_init_simulation(struct reb_simulation* r){
 	r->ri_whfast.recalculate_jacobi_but_not_synchronized_warning = 0;
 	
 	// ********** IAS15
-	r->ri_ias15.epsilon 		= 1e-7;
+	r->ri_ias15.epsilon 		= 1e-9;
 	r->ri_ias15.min_dt 		= 0;
 	r->ri_ias15.epsilon_global	= 1;
 	r->ri_ias15.iterations_max_exceeded = 0;	
