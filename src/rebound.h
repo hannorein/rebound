@@ -205,7 +205,6 @@ struct reb_simulation_integrator_ias15 {
 	// The following values are used for resetting the b and e coefficients if a timestep gets rejected
 	struct reb_dp7 br;
 	struct reb_dp7 er;
-	double dt_last_success;			///< Last accepted timestep (corresponding to br and er)
 	/**
 	 * @endcond
 	 */

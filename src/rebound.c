@@ -308,8 +308,6 @@ void reb_init_simulation(struct reb_simulation* r){
 	r->tree_root		= NULL;
 	r->opening_angle2	= 0.25;
 
-	r->ri_ias15.dt_last_success = 0.;
-
 #ifdef MPI
 	// Make sure domain can be decomposed into equal number of root boxes per node.
 	if ((root_n/mpi_num)*mpi_num != root_n){
