@@ -353,13 +353,11 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax){
 					}
 				}else{
 					r->status = REB_RUNNING_LAST_STEP; // Do one small step, then exit.
-					r->dt_last_done = r->dt;
 					reb_integrator_synchronize(r);
 					r->dt = tmax-r->t;
 				}
 			}
 		}else{
-			r->dt_last_done = r->dt;
 			if (r->t*dtsign>=tmax*dtsign){  // Past the integration time
 				r->status = REB_EXIT_SUCCESS; // Exit now.
 			}
@@ -452,8 +450,8 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 	gettimeofday(&tim, NULL);
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 #endif // LIBREBOUND
-	
-	r->dt_last_done = r->dt;
+
+	double tempdt = r->dt; // store to set back at the end of the integration
 	r->status = REB_RUNNING;
 	reb_run_heartbeat(r);
 
@@ -472,6 +470,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 		while(reb_check_exit(r,tmax)<0){
 			sem_wait(display_mutex);	
 			PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
+			r->dt_last_done = r->dt;
 			reb_step(r); 			
 			reb_run_heartbeat(r);
 			PROFILING_START()
@@ -481,13 +480,14 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
         }
 #else // OPENGL
 	while(reb_check_exit(r,tmax)<0){
+		r->dt_last_done = r->dt;
 		reb_step(r); 			
 		reb_run_heartbeat(r);
 	}
 #endif // OPENGL
 
 	reb_integrator_synchronize(r);
-	r->dt = r->dt_last_done;
+	r->dt = tempdt; // restore to value we started with for next call to integrate
 #ifdef OPENGL
 	int status;
 	wait(&status);
