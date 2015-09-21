@@ -138,6 +138,13 @@ static struct reb_dpconst7 dpcast(struct reb_dp7 dp){
 	};
 	return dpc;
 }
+
+static inline void add_cs(double* p, double* csp, double inp){
+	const double y = inp - *csp;
+	const double t = *p + y;
+	*csp = (t - *p) - y;
+	*p = t;
+}
  
 // Does the actual timestep.
 static int reb_integrator_ias15_step(struct reb_simulation* r) {
@@ -148,6 +155,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 	if (N3 > r->ri_ias15.allocatedN) {
 		realloc_dp7(&(r->ri_ias15.g),N3);
 		realloc_dp7(&(r->ri_ias15.b),N3);
+		realloc_dp7(&(r->ri_ias15.csb),N3);
 		realloc_dp7(&(r->ri_ias15.e),N3);
 		realloc_dp7(&(r->ri_ias15.br),N3);
 		realloc_dp7(&(r->ri_ias15.er),N3);
@@ -157,6 +165,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 		r->ri_ias15.a0 = realloc(r->ri_ias15.a0,sizeof(double)*N3);
 		r->ri_ias15.csx= realloc(r->ri_ias15.csx,sizeof(double)*N3);
 		r->ri_ias15.csv= realloc(r->ri_ias15.csv,sizeof(double)*N3);
+		r->ri_ias15.csa0 = realloc(r->ri_ias15.csa0,sizeof(double)*N3);
 		double* restrict const csx = r->ri_ias15.csx; 
 		double* restrict const csv = r->ri_ias15.csv; 
 		for (int i=0;i<N3;i++){
@@ -172,13 +181,16 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 	double s[9];				// Summation coefficients 
 	double* restrict const csx = r->ri_ias15.csx; 
 	double* restrict const csv = r->ri_ias15.csv; 
+	double* restrict const csa0 = r->ri_ias15.csa0; 
 	double* restrict const at = r->ri_ias15.at; 
 	double* restrict const x0 = r->ri_ias15.x0; 
 	double* restrict const v0 = r->ri_ias15.v0; 
 	double* restrict const a0 = r->ri_ias15.a0; 
+	struct reb_vec3d* gravity_cs = r->gravity_cs; 
 	const struct reb_dpconst7 g  = dpcast(r->ri_ias15.g);
 	const struct reb_dpconst7 e  = dpcast(r->ri_ias15.e);
 	const struct reb_dpconst7 b  = dpcast(r->ri_ias15.b);
+	const struct reb_dpconst7 csb= dpcast(r->ri_ias15.csb);
 	const struct reb_dpconst7 er = dpcast(r->ri_ias15.er);
 	const struct reb_dpconst7 br = dpcast(r->ri_ias15.br);
 	for(int k=0;k<N;k++) {
@@ -189,8 +201,30 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 		v0[3*k+1] = particles[k].vy;
 		v0[3*k+2] = particles[k].vz;
 		a0[3*k]   = particles[k].ax;
-		a0[3*k+1] = particles[k].ay;  
+		a0[3*k+1] = particles[k].ay; 
 		a0[3*k+2] = particles[k].az;
+	}
+	if (r->gravity==REB_GRAVITY_COMPENSATED){
+		for(int k=0;k<N;k++) {
+			csa0[3*k]   = gravity_cs[k].x;
+			csa0[3*k+1] = gravity_cs[k].y;  
+			csa0[3*k+2] = gravity_cs[k].z;
+		}
+	}else{
+		gravity_cs = (struct reb_vec3d*)csa0; // Always 0.
+		for(int k=0;k<N3;k++) {
+			csa0[k]   = 0;
+		}
+	}
+	for (int k=0;k<N3;k++){
+		// Memset might be faster!
+		csb.p0[k] = 0.;
+		csb.p1[k] = 0.;
+		csb.p2[k] = 0.;
+		csb.p3[k] = 0.;
+		csb.p4[k] = 0.;
+		csb.p5[k] = 0.;
+		csb.p6[k] = 0.;
 	}
 
 	for(int k=0;k<N3;k++) {
@@ -259,11 +293,11 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 				const int k1 = 3*i+1;
 				const int k2 = 3*i+2;
 
-				double xk0  = csx[k0] + (s[8]*b.p6[k0] + s[7]*b.p5[k0] + s[6]*b.p4[k0] + s[5]*b.p3[k0] + s[4]*b.p2[k0] + s[3]*b.p1[k0] + s[2]*b.p0[k0] + s[1]*a0[k0] + s[0]*v0[k0] );
+				double xk0  = -csx[k0] + (s[8]*b.p6[k0] + s[7]*b.p5[k0] + s[6]*b.p4[k0] + s[5]*b.p3[k0] + s[4]*b.p2[k0] + s[3]*b.p1[k0] + s[2]*b.p0[k0] + s[1]*a0[k0] + s[0]*v0[k0] );
 				particles[i].x = xk0 + x0[k0];
-				double xk1  = csx[k1] + (s[8]*b.p6[k1] + s[7]*b.p5[k1] + s[6]*b.p4[k1] + s[5]*b.p3[k1] + s[4]*b.p2[k1] + s[3]*b.p1[k1] + s[2]*b.p0[k1] + s[1]*a0[k1] + s[0]*v0[k1] );
+				double xk1  = -csx[k1] + (s[8]*b.p6[k1] + s[7]*b.p5[k1] + s[6]*b.p4[k1] + s[5]*b.p3[k1] + s[4]*b.p2[k1] + s[3]*b.p1[k1] + s[2]*b.p0[k1] + s[1]*a0[k1] + s[0]*v0[k1] );
 				particles[i].y = xk1 + x0[k1];
-				double xk2  = csx[k2] + (s[8]*b.p6[k2] + s[7]*b.p5[k2] + s[6]*b.p4[k2] + s[5]*b.p3[k2] + s[4]*b.p2[k2] + s[3]*b.p1[k2] + s[2]*b.p0[k2] + s[1]*a0[k2] + s[0]*v0[k2] );
+				double xk2  = -csx[k2] + (s[8]*b.p6[k2] + s[7]*b.p5[k2] + s[6]*b.p4[k2] + s[5]*b.p3[k2] + s[4]*b.p2[k2] + s[3]*b.p1[k2] + s[2]*b.p0[k2] + s[1]*a0[k2] + s[0]*v0[k2] );
 				particles[i].z = xk2 + x0[k2];
 			}
 			if (N_var || (r->additional_forces && r->force_is_velocity_dependent)){
@@ -281,11 +315,11 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 					const int k1 = 3*i+1;
 					const int k2 = 3*i+2;
 
-					double vk0 =  csv[k0] + s[7]*b.p6[k0] + s[6]*b.p5[k0] + s[5]*b.p4[k0] + s[4]*b.p3[k0] + s[3]*b.p2[k0] + s[2]*b.p1[k0] + s[1]*b.p0[k0] + s[0]*a0[k0];
+					double vk0 =  -csv[k0] + s[7]*b.p6[k0] + s[6]*b.p5[k0] + s[5]*b.p4[k0] + s[4]*b.p3[k0] + s[3]*b.p2[k0] + s[2]*b.p1[k0] + s[1]*b.p0[k0] + s[0]*a0[k0];
 					particles[i].vx = vk0 + v0[k0];
-					double vk1 =  csv[k1] + s[7]*b.p6[k1] + s[6]*b.p5[k1] + s[5]*b.p4[k1] + s[4]*b.p3[k1] + s[3]*b.p2[k1] + s[2]*b.p1[k1] + s[1]*b.p0[k1] + s[0]*a0[k1];
+					double vk1 =  -csv[k1] + s[7]*b.p6[k1] + s[6]*b.p5[k1] + s[5]*b.p4[k1] + s[4]*b.p3[k1] + s[3]*b.p2[k1] + s[2]*b.p1[k1] + s[1]*b.p0[k1] + s[0]*a0[k1];
 					particles[i].vy = vk1 + v0[k1];
-					double vk2 =  csv[k2] + s[7]*b.p6[k2] + s[6]*b.p5[k2] + s[5]*b.p4[k2] + s[4]*b.p3[k2] + s[3]*b.p2[k2] + s[2]*b.p1[k2] + s[1]*b.p0[k2] + s[0]*a0[k2];
+					double vk2 =  -csv[k2] + s[7]*b.p6[k2] + s[6]*b.p5[k2] + s[5]*b.p4[k2] + s[4]*b.p3[k2] + s[3]*b.p2[k2] + s[2]*b.p1[k2] + s[1]*b.p0[k2] + s[0]*a0[k2];
 					particles[i].vz = vk2 + v0[k2];
 				}
 			}
@@ -305,63 +339,82 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 				case 1: 
 					for(int k=0;k<N3;++k) {
 						double tmp = g.p0[k];
-						g.p0[k]  = (at[k] - a0[k]) / rr[0];
-						b.p0[k] += g.p0[k] - tmp;
+						double gk = at[k];
+						double gk_cs = ((double*)(gravity_cs))[k];
+						add_cs(&gk, &gk_cs, -a0[k]);
+						add_cs(&gk, &gk_cs, csa0[k]);
+						g.p0[k]  = gk/rr[0];
+						add_cs(&(b.p0[k]), &(csb.p0[k]), g.p0[k]-tmp);
 					} break;
 				case 2: 
 					for(int k=0;k<N3;++k) {
 						double tmp = g.p1[k];
-						const double gk = at[k] - a0[k];
+						double gk = at[k];
+						double gk_cs = ((double*)(gravity_cs))[k];
+						add_cs(&gk, &gk_cs, -a0[k]);
+						add_cs(&gk, &gk_cs, csa0[k]);
 						g.p1[k] = (gk/rr[1] - g.p0[k])/rr[2];
 						tmp = g.p1[k] - tmp;
-						b.p0[k] += tmp * c[0];
-						b.p1[k] += tmp;
+						add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[0]);
+						add_cs(&(b.p1[k]), &(csb.p1[k]), tmp);
 					} break;
 				case 3: 
 					for(int k=0;k<N3;++k) {
 						double tmp = g.p2[k];
-						const double gk = at[k] - a0[k];
+						double gk = at[k];
+						double gk_cs = ((double*)(gravity_cs))[k];
+						add_cs(&gk, &gk_cs, -a0[k]);
+						add_cs(&gk, &gk_cs, csa0[k]);
 						g.p2[k] = ((gk/rr[3] - g.p0[k])/rr[4] - g.p1[k])/rr[5];
 						tmp = g.p2[k] - tmp;
-						b.p0[k] += tmp * c[1];
-						b.p1[k] += tmp * c[2];
-						b.p2[k] += tmp;
+						add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[1]);
+						add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[2]);
+						add_cs(&(b.p2[k]), &(csb.p2[k]), tmp);
 					} break;
 				case 4:
 					for(int k=0;k<N3;++k) {
 						double tmp = g.p3[k];
-						const double gk = at[k] - a0[k];
+						double gk = at[k];
+						double gk_cs = ((double*)(gravity_cs))[k];
+						add_cs(&gk, &gk_cs, -a0[k]);
+						add_cs(&gk, &gk_cs, csa0[k]);
 						g.p3[k] = (((gk/rr[6] - g.p0[k])/rr[7] - g.p1[k])/rr[8] - g.p2[k])/rr[9];
 						tmp = g.p3[k] - tmp;
-						b.p0[k] += tmp * c[3];
-						b.p1[k] += tmp * c[4];
-						b.p2[k] += tmp * c[5];
-						b.p3[k] += tmp;
+						add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[3]);
+						add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[4]);
+						add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[5]);
+						add_cs(&(b.p3[k]), &(csb.p3[k]), tmp);
 					} break;
 				case 5:
 					for(int k=0;k<N3;++k) {
 						double tmp = g.p4[k];
-						const double gk = at[k] - a0[k];
+						double gk = at[k];
+						double gk_cs = ((double*)(gravity_cs))[k];
+						add_cs(&gk, &gk_cs, -a0[k]);
+						add_cs(&gk, &gk_cs, csa0[k]);
 						g.p4[k] = ((((gk/rr[10] - g.p0[k])/rr[11] - g.p1[k])/rr[12] - g.p2[k])/rr[13] - g.p3[k])/rr[14];
 						tmp = g.p4[k] - tmp;
-						b.p0[k] += tmp * c[6];
-						b.p1[k] += tmp * c[7];
-						b.p2[k] += tmp * c[8];
-						b.p3[k] += tmp * c[9];
-						b.p4[k] += tmp;
+						add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[6]);
+						add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[7]);
+						add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[8]);
+						add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[9]);
+						add_cs(&(b.p4[k]), &(csb.p4[k]), tmp);
 					} break;
 				case 6:
 					for(int k=0;k<N3;++k) {
 						double tmp = g.p5[k];
-						const double gk = at[k] - a0[k];
+						double gk = at[k];
+						double gk_cs = ((double*)(gravity_cs))[k];
+						add_cs(&gk, &gk_cs, -a0[k]);
+						add_cs(&gk, &gk_cs, csa0[k]);
 						g.p5[k] = (((((gk/rr[15] - g.p0[k])/rr[16] - g.p1[k])/rr[17] - g.p2[k])/rr[18] - g.p3[k])/rr[19] - g.p4[k])/rr[20];
 						tmp = g.p5[k] - tmp;
-						b.p0[k] += tmp * c[10];
-						b.p1[k] += tmp * c[11];
-						b.p2[k] += tmp * c[12];
-						b.p3[k] += tmp * c[13];
-						b.p4[k] += tmp * c[14];
-						b.p5[k] += tmp;
+						add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[10]);
+						add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[11]);
+						add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[12]);
+						add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[13]);
+						add_cs(&(b.p4[k]), &(csb.p4[k]), tmp * c[14]);
+						add_cs(&(b.p5[k]), &(csb.p5[k]), tmp);
 					} break;
 				case 7:
 				{
@@ -369,16 +422,19 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 					double maxb6ktmp = 0.0;
 					for(int k=0;k<N3;++k) {
 						double tmp = g.p6[k];
-						const double gk = at[k] - a0[k];
+						double gk = at[k];
+						double gk_cs = ((double*)(gravity_cs))[k];
+						add_cs(&gk, &gk_cs, -a0[k]);
+						add_cs(&gk, &gk_cs, csa0[k]);
 						g.p6[k] = ((((((gk/rr[21] - g.p0[k])/rr[22] - g.p1[k])/rr[23] - g.p2[k])/rr[24] - g.p3[k])/rr[25] - g.p4[k])/rr[26] - g.p5[k])/rr[27];
 						tmp = g.p6[k] - tmp;	
-						b.p0[k] += tmp * c[15];
-						b.p1[k] += tmp * c[16];
-						b.p2[k] += tmp * c[17];
-						b.p3[k] += tmp * c[18];
-						b.p4[k] += tmp * c[19];
-						b.p5[k] += tmp * c[20];
-						b.p6[k] += tmp;
+						add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[15]);
+						add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[16]);
+						add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[17]);
+						add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[18]);
+						add_cs(&(b.p4[k]), &(csb.p4[k]), tmp * c[19]);
+						add_cs(&(b.p5[k]), &(csb.p5[k]), tmp * c[20]);
+						add_cs(&(b.p6[k]), &(csb.p6[k]), tmp);
 						
 						// Monitor change in b.p6[k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
 						if (r->ri_ias15.epsilon_global){
@@ -493,18 +549,25 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 	const double dt_done2 = dt_done * dt_done;
 	for(int k=0;k<N3;++k) {
 		{
-			double a = x0[k];
-			csx[k]  +=  (b.p6[k]/72. + b.p5[k]/56. + b.p4[k]/42. + b.p3[k]/30. + b.p2[k]/20. + b.p1[k]/12. + b.p0[k]/6. + a0[k]/2.) 
-					* dt_done2 + v0[k] * dt_done;
-			x0[k]    = a + csx[k];
-			csx[k]  += a - x0[k]; 
+			add_cs(&(x0[k]), &(csx[k]), b.p6[k]/72.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), b.p5[k]/56.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), b.p4[k]/42.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), b.p3[k]/30.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), b.p2[k]/20.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), b.p1[k]/12.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), b.p0[k]/6.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), a0[k]/2.*dt_done2);
+			add_cs(&(x0[k]), &(csx[k]), v0[k]*dt_done);
 		}
 		{
-			double a = v0[k]; 
-			csv[k]  += (b.p6[k]/8. + b.p5[k]/7. + b.p4[k]/6. + b.p3[k]/5. + b.p2[k]/4. + b.p1[k]/3. + b.p0[k]/2. + a0[k])
-					* dt_done;
-			v0[k]    = a + csv[k];
-			csv[k]  += a - v0[k];
+			add_cs(&(v0[k]), &(csv[k]), b.p6[k]/8.*dt_done);
+			add_cs(&(v0[k]), &(csv[k]), b.p5[k]/7.*dt_done);
+			add_cs(&(v0[k]), &(csv[k]), b.p4[k]/6.*dt_done);
+			add_cs(&(v0[k]), &(csv[k]), b.p3[k]/5.*dt_done);
+			add_cs(&(v0[k]), &(csv[k]), b.p2[k]/4.*dt_done);
+			add_cs(&(v0[k]), &(csv[k]), b.p1[k]/3.*dt_done);
+			add_cs(&(v0[k]), &(csv[k]), b.p0[k]/2.*dt_done);
+			add_cs(&(v0[k]), &(csv[k]), a0[k]*dt_done);
 		}
 	}
 
@@ -612,6 +675,7 @@ void reb_integrator_ias15_reset(struct reb_simulation* r){
 	free_dp7(&(r->ri_ias15.g));
 	free_dp7(&(r->ri_ias15.e));
 	free_dp7(&(r->ri_ias15.b));
+	free_dp7(&(r->ri_ias15.csb));
 	free_dp7(&(r->ri_ias15.er));
 	free_dp7(&(r->ri_ias15.br));
 	free(r->ri_ias15.at);
@@ -626,6 +690,8 @@ void reb_integrator_ias15_reset(struct reb_simulation* r){
 	r->ri_ias15.csx=  NULL;
 	free(r->ri_ias15.csv);
 	r->ri_ias15.csv=  NULL;
+	free(r->ri_ias15.csa0);
+	r->ri_ias15.csa0 =  NULL;
 }
 
 #ifdef GENERATE_CONSTANTS
