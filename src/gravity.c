@@ -107,9 +107,9 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 		break;
 		case REB_GRAVITY_COMPENSATED:
 		{
-			if (r->gravity_cs_allocatedN<_N_real){
-				r->gravity_cs = realloc(r->gravity_cs,_N_real*sizeof(struct reb_vec3d));
-				r->gravity_cs_allocatedN = _N_real;
+			if (r->gravity_cs_allocatedN<N){
+				r->gravity_cs = realloc(r->gravity_cs,N*sizeof(struct reb_vec3d));
+				r->gravity_cs_allocatedN = N;
 			}
 			struct reb_vec3d* restrict const cs = r->gravity_cs;
 #pragma omp parallel for schedule(guided)
@@ -131,44 +131,49 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 				const double dz = particles[i].z - particles[j].z;
 				const double r2 = dx*dx + dy*dy + dz*dz + softening2;
 				const double r = sqrt(r2);
-				const double prefact  = -G/(r2*r);
+				const double prefact  = G/(r2*r);
 				const double prefacti = prefact*particles[i].m;
-				const double prefactj = prefact*particles[j].m;
+				const double prefactj = -prefact*particles[j].m;
 				
 				{
-				double ax = particles[i].ax;
-				cs[i].x  +=	prefactj*dx; 
-				particles[i].ax    = ax + cs[i].x;
-				cs[i].x  += ax - particles[i].ax; 
+				double ix = prefactj*dx;
+				double yx = ix - cs[i].x;
+				double tx = particles[i].ax + yx;
+				cs[i].x = (tx - particles[i].ax) - yx;
+				particles[i].ax = tx;
+
+				double iy = prefactj*dy;
+				double yy = iy- cs[i].y;
+				double ty = particles[i].ay + yy;
+				cs[i].y = (ty - particles[i].ay) - yy;
+				particles[i].ay = ty;
 				
-				double ay = particles[i].ay;
-				cs[i].y  +=	prefactj*dy; 
-				particles[i].ay    = ay + cs[i].y;
-				cs[i].y  += ay - particles[i].ay; 
-				
-				double az = particles[i].az;
-				cs[i].z  +=	prefactj*dz; 
-				particles[i].az    = az + cs[i].z;
-				cs[i].z  += az - particles[i].az; 
+				double iz = prefactj*dz;
+				double yz = iz - cs[i].z;
+				double tz = particles[i].az + yz;
+				cs[i].z = (tz - particles[i].az) - yz;
+				particles[i].az = tz;
 				}
 				
 				{
-				double ax = particles[j].ax;
-				cs[j].x  -=	prefacti*dx; 
-				particles[j].ax    = ax + cs[j].x;
-				cs[j].x  += ax - particles[j].ax; 
+				double ix = prefacti*dx;
+				double yx = ix - cs[j].x;
+				double tx = particles[j].ax + yx;
+				cs[j].x = (tx - particles[j].ax) - yx;
+				particles[j].ax = tx;
+
+				double iy = prefacti*dy;
+				double yy = iy - cs[j].y;
+				double ty = particles[j].ay + yy;
+				cs[j].y = (ty - particles[j].ay) - yy;
+				particles[j].ay = ty;
 				
-				double ay = particles[j].ay;
-				cs[j].y  -=	prefacti*dy; 
-				particles[j].ay    = ay + cs[j].y;
-				cs[j].y  += ay - particles[j].ay; 
-				
-				double az = particles[j].az;
-				cs[j].z  -=	prefacti*dz; 
-				particles[j].az    = az + cs[j].z;
-				cs[j].z  += az - particles[j].az; 
+				double iz = prefacti*dz;
+				double yz = iz - cs[j].z;
+				double tz = particles[j].az + yz;
+				cs[j].z = (tz - particles[j].az) - yz;
+				particles[j].az = tz;
 				}
-				
 			}
 			}
 			// Testparticles
@@ -181,22 +186,28 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 				const double dz = particles[i].z - particles[j].z;
 				const double r2 = dx*dx + dy*dy + dz*dz + softening2;
 				const double r = sqrt(r2);
-				const double prefact = -G/(r2*r)*particles[j].m;
+				const double prefact  = G/(r2*r);
+				const double prefactj = -prefact*particles[j].m;
 				
-				double ax = particles[i].ax;
-				cs[i].x  +=	prefact*dx; 
-				particles[i].ax    = ax + cs[i].x;
-				cs[i].x  += ax - particles[i].ax; 
+				{
+				double ix = prefactj*dx;
+				double yx = ix - cs[i].x;
+				double tx = particles[i].ax + yx;
+				cs[i].x = (tx - particles[i].ax) - yx;
+				particles[i].ax = tx;
+
+				double iy = prefactj*dy;
+				double yy = iy- cs[i].y;
+				double ty = particles[i].ay + yy;
+				cs[i].y = (ty - particles[i].ay) - yy;
+				particles[i].ay = ty;
 				
-				double ay = particles[i].ay;
-				cs[i].y  +=	prefact*dy; 
-				particles[i].ay    = ay + cs[i].y;
-				cs[i].y  += ay - particles[i].ay; 
-				
-				double az = particles[i].az;
-				cs[i].z  +=	prefact*dz; 
-				particles[i].az    = az + cs[i].z;
-				cs[i].z  += az - particles[i].az; 
+				double iz = prefactj*dz;
+				double yz = iz - cs[i].z;
+				double tz = particles[i].az + yz;
+				cs[i].z = (tz - particles[i].az) - yz;
+				particles[i].az = tz;
+				}
 			}
 			}
 		}
@@ -246,17 +257,27 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
 	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
 	const int N = r->N;
 	const int _N_real   = N - r->N_var;
-#pragma omp parallel for schedule(guided)
-	for (int i=_N_real; i<N; i++){
-		particles[i].ax = 0; 
-		particles[i].ay = 0; 
-		particles[i].az = 0; 
-	}
 	switch (r->gravity){
 		case REB_GRAVITY_NONE: // Do nothing.
 		break;
-		case REB_GRAVITY_BASIC:
 		case REB_GRAVITY_COMPENSATED:
+		{
+			struct reb_vec3d* restrict const cs = r->gravity_cs;
+#pragma omp parallel for schedule(guided)
+			for (int i=_N_real; i<N; i++){
+				cs[i].x = 0.;
+				cs[i].y = 0.;
+				cs[i].z = 0.;
+			}
+		}
+		// No break!
+		case REB_GRAVITY_BASIC:
+#pragma omp parallel for schedule(guided)
+			for (int i=_N_real; i<N; i++){
+				particles[i].ax = 0.; 
+				particles[i].ay = 0.; 
+				particles[i].az = 0.; 
+			}
 #pragma omp parallel for schedule(guided)
 			for (int i=_N_real; i<N; i++){
 			for (int j=i+1; j<N; j++){

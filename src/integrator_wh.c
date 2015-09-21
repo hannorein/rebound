@@ -114,7 +114,8 @@ void reb_integrator_wh_synchronize(struct reb_simulation* r){
 	// Do nothing.
 }
 void reb_integrator_wh_reset(struct reb_simulation* r){
-	// Do nothing.
+	free(r->ri_wh.eta);
+	r->ri_wh.allocatedN = 0;
 }
 
 
