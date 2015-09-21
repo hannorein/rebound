@@ -78,8 +78,7 @@ class reb_simulation_integrator_ias15(Structure):
                 ("csb", reb_dp7),
                 ("e", reb_dp7),
                 ("br", reb_dp7),
-                ("er", reb_dp7),
-                ("dt_last_success", c_double)]
+                ("er", reb_dp7)]
 
 class reb_simulation_integrator_whfast(Structure):
     _fields_ = [("corrector", c_uint),
