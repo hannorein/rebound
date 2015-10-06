@@ -207,7 +207,6 @@ struct reb_simulation_integrator_ias15 {
 	// The following values are used for resetting the b and e coefficients if a timestep gets rejected
 	struct reb_dp7 br;
 	struct reb_dp7 er;
-	double dt_last_success;			///< Last accepted timestep (corresponding to br and er)
 	/**
 	 * @endcond
 	 */
@@ -341,7 +340,7 @@ struct reb_simulation {
 	double 	G;			///< Gravitational constant. Default: 1. 
 	double 	softening;		///< Gravitational softening parameter. Default: 0. 
 	double 	dt;			///< Current timestep. 
-	double 	dt_last_done;		///< Last full timestep (used if exact_finish_time==1). 
+	double 	dt_last_done;		///< Last dt used by integrator
 	int 	N;			///< Current number of particles on this node. 
 	int 	N_var;			///< Number of variational particles. Default: 0.
 	int 	N_active;		///< Number of massive particles included in force calculation. Default: N.

@@ -532,8 +532,8 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 				particles[k].vz = v0[3*k+2];
 			}
 			r->dt = dt_new;
-			if (r->ri_ias15.dt_last_success!=0.){		// Do not predict next e/b values if this is the first time step.
-				double ratio = r->dt/r->ri_ias15.dt_last_success;
+			if (r->dt_last_done!=0.){		// Do not predict next e/b values if this is the first time step.
+				double ratio = r->dt/r->dt_last_done;
 				predict_next_step(ratio, N3, er, br, e, b);
 			}
 			
@@ -572,6 +572,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 	}
 
 	r->t += dt_done;
+	r->dt_last_done = dt_done;
 
 	if (r->calculate_megno){
 		double dY = dt_done*integrator_megno_thisdt;
@@ -588,7 +589,6 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 		particles[k].vy = v0[3*k+1];
 		particles[k].vz = v0[3*k+2];
 	}
-	r->ri_ias15.dt_last_success = dt_done;
 	copybuffers(e,er,N3);		
 	copybuffers(b,br,N3);		
 	double ratio = r->dt/dt_done;
@@ -671,7 +671,6 @@ void reb_integrator_ias15_synchronize(struct reb_simulation* r){
 
 void reb_integrator_ias15_reset(struct reb_simulation* r){
 	r->ri_ias15.allocatedN 	= 0;
-	r->ri_ias15.dt_last_success = 0;
 	free_dp7(&(r->ri_ias15.g));
 	free_dp7(&(r->ri_ias15.e));
 	free_dp7(&(r->ri_ias15.b));
