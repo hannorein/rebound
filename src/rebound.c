@@ -244,6 +244,7 @@ void reb_init_simulation(struct reb_simulation* r){
 	r->G 		= 1;
 	r->softening 	= 0;
 	r->dt		= 0.001;
+	r->dt_last_done = 0.;
 	r->root_size 	= -1;
 	r->root_nx	= 1;
 	r->root_ny	= 1;
