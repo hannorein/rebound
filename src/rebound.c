@@ -453,7 +453,8 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 #endif // LIBREBOUND
 
-	double last_full_dt; // store last full dt (before dt gets shrunk to meet exact_finish_time =1) to set back at the end of the integration
+	double last_full_dt = r->dt; // need to store r->dt in case timestep gets artificially shrunk to meet exact_finish_time=1
+
 	r->status = REB_RUNNING;
 	reb_run_heartbeat(r);
 
@@ -487,7 +488,10 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 #endif // OPENGL
 
 	reb_integrator_synchronize(r);
-	r->dt = last_full_dt; 
+	if(r->exact_finish_time==1){ // if finish_time = 1, r->dt could have been shrunk, so set to the last full timestep
+		r->dt = last_full_dt; 
+	}
+
 #ifdef OPENGL
 	int status;
 	wait(&status);
