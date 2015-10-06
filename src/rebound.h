@@ -340,7 +340,7 @@ struct reb_simulation {
 	double 	G;			///< Gravitational constant. Default: 1. 
 	double 	softening;		///< Gravitational softening parameter. Default: 0. 
 	double 	dt;			///< Current timestep. 
-	double 	dt_last_done;		///< Last full timestep (used if exact_finish_time==1). 
+	double 	dt_last_done;		///< Last dt used by integrator
 	int 	N;			///< Current number of particles on this node. 
 	int 	N_var;			///< Number of variational particles. Default: 0.
 	int 	N_active;		///< Number of massive particles included in force calculation. Default: N.

@@ -62,6 +62,7 @@ void reb_integrator_leapfrog_part2(struct reb_simulation* r){
 		particles[i].z  += 0.5* dt * particles[i].vz;
 	}
 	r->t+=dt/2.;
+	r->dt_last_done = r->dt;
 }
 	
 void reb_integrator_leapfrog_synchronize(struct reb_simulation* r){

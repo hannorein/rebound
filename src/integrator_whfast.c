@@ -666,6 +666,7 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
 	}
 	
 	r->t+=_dt2;
+	r->dt_last_done = r->dt;
 
 	if (r->calculate_megno){
 		reb_integrator_whfast_synchronize(r);

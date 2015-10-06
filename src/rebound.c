@@ -324,7 +324,7 @@ void reb_init_simulation(struct reb_simulation* r){
 #endif // OPENMP
 }
 
-int reb_check_exit(struct reb_simulation* const r, const double tmax){
+int reb_check_exit(struct reb_simulation* const r, const double tmax, double* last_full_dt){
 	while(r->status == REB_RUNNING_PAUSED){
 		// Wait for user to disable paused simulation
 		usleep(1000);
@@ -354,6 +354,7 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax){
 				}else{
 					r->status = REB_RUNNING_LAST_STEP; // Do one small step, then exit.
 					reb_integrator_synchronize(r);
+					*last_full_dt = r->dt_last_done; // store last full dt before decreasing the timestep to match finish time
 					r->dt = tmax-r->t;
 				}
 			}
@@ -451,7 +452,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 	double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 #endif // LIBREBOUND
 
-	double tempdt = r->dt; // store to set back at the end of the integration
+	double last_full_dt; // store last full dt (before dt gets shrunk to meet exact_finish_time =1) to set back at the end of the integration
 	r->status = REB_RUNNING;
 	reb_run_heartbeat(r);
 
@@ -467,10 +468,9 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
                 exit(EXIT_SUCCESS); // NEVER REACHED
         } else { 		// Parent (computation)
 		PROFILING_START()
-		while(reb_check_exit(r,tmax)<0){
+		while(reb_check_exit(r,tmax,&last_full_dt)<0){
 			sem_wait(display_mutex);	
 			PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
-			r->dt_last_done = r->dt;
 			reb_step(r); 			
 			reb_run_heartbeat(r);
 			PROFILING_START()
@@ -479,15 +479,14 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 		PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
         }
 #else // OPENGL
-	while(reb_check_exit(r,tmax)<0){
-		r->dt_last_done = r->dt;
+	while(reb_check_exit(r,tmax,&last_full_dt)<0){
 		reb_step(r); 			
 		reb_run_heartbeat(r);
 	}
 #endif // OPENGL
 
 	reb_integrator_synchronize(r);
-	r->dt = tempdt; // restore to value we started with for next call to integrate
+	r->dt = last_full_dt; 
 #ifdef OPENGL
 	int status;
 	wait(&status);

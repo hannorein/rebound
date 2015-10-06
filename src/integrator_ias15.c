@@ -572,6 +572,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 	}
 
 	r->t += dt_done;
+	r->dt_last_done = dt_done;
 
 	if (r->calculate_megno){
 		double dY = dt_done*integrator_megno_thisdt;
@@ -588,7 +589,6 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 		particles[k].vy = v0[3*k+1];
 		particles[k].vz = v0[3*k+2];
 	}
-	r->dt_last_done = dt_done;
 	copybuffers(e,er,N3);		
 	copybuffers(b,br,N3);		
 	double ratio = r->dt/dt_done;
