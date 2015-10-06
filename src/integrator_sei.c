@@ -79,6 +79,7 @@ void reb_integrator_sei_part2(struct reb_simulation* r){
 		operator_H012(r->dt, ri_sei, &(particles[i]));
 	}
 	r->t+=r->dt/2.;
+	r->dt_last_done = r->dt;
 }
 
 void reb_integrator_sei_synchronize(struct reb_simulation* r){

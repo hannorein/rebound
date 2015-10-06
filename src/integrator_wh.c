@@ -108,6 +108,7 @@ void reb_integrator_wh_part2(struct reb_simulation* r){
 	reb_drift_wh(particles, r->G, r->dt/2., N, N_active);
 	reb_integrator_wh_from_jacobi(particles, eta, N, N_active);
 	r->t+=r->dt/2.;
+	r->dt_last_done = r->dt;
 }
 
 void reb_integrator_wh_synchronize(struct reb_simulation* r){
