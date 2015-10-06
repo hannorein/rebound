@@ -49,7 +49,8 @@ class Particle(Structure):
                 ("r", c_double),
                 ("lastcollision", c_double),
                 ("c", c_void_p),
-                ("id", c_int)]
+                ("id", c_int),
+                ("ap", c_void_p)]
     def __str__(self):
         """ 
         Returns a string with the position and velocity of the particle.

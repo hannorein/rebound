@@ -107,6 +107,7 @@ struct reb_particle {
 	double lastcollision;		///< Last time the particle had a physical collision.
 	struct reb_treecell* c;		///< Pointer to the cell the particle is currently in.
 	int id;				///< Unique id to identify particle.
+	void* ap;			///< Functionality for externally adding additional properties to particles.
 };
 
 
