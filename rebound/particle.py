@@ -15,7 +15,8 @@ def notNone(a):
 class Particle(Structure):
     """
     The main REBOUND particle data structure. 
-    This is an abstraction of the reb_particle structure in C
+    This is an abstraction of the reb_particle structure in C.
+    The Particle fields are set at the end of simulation.py to avoid circular references.
     
     Attributes
     ----------
@@ -36,21 +37,6 @@ class Particle(Structure):
     id          : int         
         Particle ID (arbitrary, specified by the user)
     """
-    _fields_ = [("x", c_double),
-                ("y", c_double),
-                ("z", c_double),
-                ("vx", c_double),
-                ("vy", c_double),
-                ("vz", c_double),
-                ("ax", c_double),
-                ("ay", c_double),
-                ("az", c_double),
-                ("m", c_double),
-                ("r", c_double),
-                ("lastcollision", c_double),
-                ("c", c_void_p),
-                ("id", c_int),
-                ("ap", c_void_p)]
     def __str__(self):
         """ 
         Returns a string with the position and velocity of the particle.

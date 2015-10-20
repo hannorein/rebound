@@ -936,6 +936,23 @@ Simulation._fields_ = [("t", c_double),
                 ("extras", c_void_p),
                  ]
 
+Particle._fields_ = [("x", c_double),
+                ("y", c_double),
+                ("z", c_double),
+                ("vx", c_double),
+                ("vy", c_double),
+                ("vz", c_double),
+                ("ax", c_double),
+                ("ay", c_double),
+                ("az", c_double),
+                ("m", c_double),
+                ("r", c_double),
+                ("lastcollision", c_double),
+                ("c", c_void_p),
+                ("id", c_int),
+                ("ap", c_void_p),
+                ("_sim", POINTER(Simulation))]
+
 POINTER_REB_SIM = POINTER(Simulation) 
 AFF = CFUNCTYPE(None,POINTER_REB_SIM)
 CORFF = CFUNCTYPE(c_double,POINTER_REB_SIM, c_double)
