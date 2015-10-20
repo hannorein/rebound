@@ -108,7 +108,7 @@ struct reb_particle {
 	struct reb_treecell* c;		///< Pointer to the cell the particle is currently in.
 	int id;				///< Unique id to identify particle.
 	void* ap;			///< Functionality for externally adding additional properties to particles.
-	struct reb_simulation* sim;
+	struct reb_simulation* sim; ///< Pointer to the parent simulation.
 };
 
 

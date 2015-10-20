@@ -36,6 +36,8 @@ class Particle(Structure):
         Pointer to the cell the particle is currently in (if using tree code)
     id          : int         
         Particle ID (arbitrary, specified by the user)
+    _sim        : POINTER(rebound.Simulation)
+        Internal pointer to the parent simulation (used in C version of REBOUND)
     """
     def __str__(self):
         """ 
