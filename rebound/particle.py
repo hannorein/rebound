@@ -255,15 +255,64 @@ class Particle(Structure):
 
         return o
 
-    @property
-    def a(self):
-        clibrebound.reb_get_particle_index.restype = c_int
-        index = clibrebound.reb_get_particle_index(byref(self))
-        if index == 0:
-            print("Orbital elements for particle[0] not implemented.")
-            return 0.
-        else:
-            clibrebound.reb_get_jacobi_com.restype = Particle
-            com = clibrebound.reb_get_jacobi_com(byref(self))
-            orbit = self.calculate_orbit(com)
-            return orbit.a
+    def orb_el(get_elem):
+        @property
+        def new_elem(self):
+            clibrebound.reb_get_particle_index.restype = c_int
+            index = clibrebound.reb_get_particle_index(byref(self)) # first check this isn't particles[0]
+            if index == 0:
+                print("Orbital elements for particle[0] not implemented.")
+                return 0.
+            else:
+                clibrebound.reb_get_jacobi_com.restype = Particle   # now return jacobi coordinate
+                com = clibrebound.reb_get_jacobi_com(byref(self))
+                orbit = self.calculate_orbit(com)
+            return get_elem(self, orbit)
+        return new_elem
+
+    @orb_el
+    def r(self, orbit):
+        return orbit.r
+    @orb_el
+    def v(self, orbit):
+        return orbit.v 
+    @orb_el
+    def h(self, orbit):
+        return orbit.h
+    @orb_el
+    def P(self, orbit):
+        return orbit.P
+    @orb_el
+    def n(self, orbit):
+        return orbit.n 
+    @orb_el
+    def a(self, orbit):
+        return orbit.a 
+    @orb_el
+    def e(self, orbit):
+        return orbit.e 
+    @orb_el
+    def inc(self, orbit):
+        return orbit.inc 
+    @orb_el
+    def Omega(self, orbit):
+        return orbit.Omega 
+    @orb_el
+    def omega(self, orbit):
+        return orbit.omega 
+    @orb_el
+    def pomega(self, orbit):
+        return orbit.pomega 
+    @orb_el
+    def f(self, orbit):
+        return orbit.f 
+    @orb_el
+    def M(self, orbit):
+        return orbit.M 
+    @orb_el
+    def l(self, orbit):
+        return orbit.l 
+    @orb_el
+    def theta(self, orbit):
+        return orbit.theta 
+
