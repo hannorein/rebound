@@ -725,6 +725,12 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
 /** @} */
 /** @} */
 
+/**
+ * @brief Returns a particle pointer's index in the simulation it's in.
+ * @param p A pointer to the particle 
+ * @return The integer index of the particle in its simulation (will return -1 if not found in the simulation).
+ */
+int reb_get_particle_index(struct reb_particle* p);
 
 /**
  * \name Built-in output function

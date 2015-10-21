@@ -1,19 +1,10 @@
 export OPENGL=0
 include ../src/Makefile.defs
 
-REBOUNDXFDIR=../../reboundxf/cext/
-
-eclipse: librebound
+all: librebound
 	@echo ""
 	@echo "Compiling problem file ..."
-	$(CC) -g -I../src/ -I../../reboundxf/cext/ -Wl,-rpath,./ $(OPT) $(PREDEF) problem.c $(REBOUNDXFDIR)libreboundxf.c $(REBOUNDXFDIR)xftools.c -L. -L ../../reboundxf -lrebound $(LIB) -o rebound
-	@echo ""
-	@echo "REBOUND compiled successfully."
-
-all: librebound libreboundxf
-	@echo ""
-	@echo "Compiling problem file ..."
-	$(CC) -g -I../src/ -I../../reboundxf/cext/ -Wl,-rpath,./ $(OPT) $(PREDEF) problem.c -L. -L ../../reboundxf -lreboundxf -lrebound $(LIB) -o rebound
+	$(CC) -g -I../src/ -Wl,-rpath,./ $(OPT) $(PREDEF) problem.c -L. -lrebound $(LIB) -o rebound
 	@echo ""
 	@echo "REBOUND compiled successfully."
 

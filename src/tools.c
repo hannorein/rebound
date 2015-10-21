@@ -131,6 +131,19 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
 	return p1;
 }
 
+int reb_get_particle_index(struct reb_particle* p){
+	struct reb_simulation* sim = p->sim;
+	int i = 0;
+	int N = sim->N;
+	while(&sim->particles[i] != p){
+		i++;
+		if(i>=N){
+			return -1;	// p not in simulation.  Shouldn't happen unless you mess with p.sim after creating the particle
+		}	
+	}
+	return i;
+}
+	
 #ifndef LIBREBOUNDX
 void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R) {
 	// Algorithm from:	
