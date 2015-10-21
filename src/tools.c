@@ -132,9 +132,9 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
 }
 
 int reb_get_particle_index(struct reb_particle* p){
-	struct reb_simulation* sim = p->sim;
+	struct reb_simulation* r = p->sim;
 	int i = 0;
-	int N = sim->N;
+	int N = r->N-r->N_var;
 	while(&sim->particles[i] != p){
 		i++;
 		if(i>=N){

@@ -254,8 +254,3 @@ class Particle(Structure):
             raise ValueError("Particle and primary positions are the same.")
 
         return o
-
-    @property
-    def a(self):
-        return self._sim.contents.G
-
