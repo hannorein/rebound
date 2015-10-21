@@ -255,7 +255,7 @@ struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle 
 	return reb_tools_orbit_to_particle(G, primary, m, a, e, inc, Omega, omega, f);
 }
 
-static const struct reb_particle reb_particle_nan = {.x = NAN, .y = NAN, .z = NAN, .vx = NAN, .vy = NAN, .vz = NAN, .ax = NAN, .ay = NAN, .az = NAN, .m = NAN, .r = NAN, .lastcollision = NAN, .c = NULL, .id = NAN};
+static const struct reb_particle reb_particle_nan = {.x = NAN, .y = NAN, .z = NAN, .vx = NAN, .vy = NAN, .vz = NAN, .ax = NAN, .ay = NAN, .az = NAN, .m = NAN, .r = NAN, .lastcollision = NAN, .c = NULL, .id = -1, .ap = NULL, .sim = NULL};
 
 struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f, int* err){
 	if(e == 1.){

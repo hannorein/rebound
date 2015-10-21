@@ -679,7 +679,7 @@ class Simulation(Structure):
         else:
             last = self.N_real
         
-        clibrebound.reb_get_com_of_pair.restype = Particle
+        clibrebound.reb_get_jacobi_com.restype = Particle
         com = clibrebound.reb_get_jacobi_com(byref(self.particles[last]))
 
         return com

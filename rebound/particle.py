@@ -129,7 +129,7 @@ class Particle(Structure):
                 raise ValueError("Need to specify simulation when initializing particle with orbital elements.")
             if primary is None:
                 clibrebound.reb_get_com.restype = Particle
-                primary = clibrebound.reb_get_com(byref(simulation))
+                primary = clibrebound.reb_get_com(byref(simulation)) # this corresponds to adding in Jacobi coordinates
             if a is None:
                 raise ValueError("You need to pass a semi major axis to initialize the particle using orbital elements.")
             if e is None:
@@ -229,7 +229,7 @@ class Particle(Structure):
         >>> sim = rebound.Simulation()
         >>> sim.add(m=1.)
         >>> sim.add(x=1.,vy=1.)
-        >>> orbit = sim.particles[1].calculate_orbit(sim, sim.particles[0])
+        >>> orbit = sim.particles[1].calculate_orbit(sim.particles[0])
         >>> print(orbit.e) # gives the eccentricity
 
         Parameters
@@ -271,7 +271,7 @@ class Particle(Structure):
         return new_elem
 
     @orb_el
-    def r(self, orbit):
+    def orb_radius(self, orbit):
         return orbit.r
     @orb_el
     def v(self, orbit):
