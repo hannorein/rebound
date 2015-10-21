@@ -733,6 +733,14 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
 int reb_get_particle_index(struct reb_particle* p);
 
 /**
+ * @brief Returns the jacobi center of mass for a given particle
+ * @param p A pointer to the particle
+ * @return A reb_particle structure for the center of mass of all particles with lower index.  Returns particles[0] if passed the 0th particle.
+ */
+
+struct reb_particle reb_get_jacobi_com(struct reb_particle* p);
+
+/**
  * \name Built-in output function
  * @{
  */

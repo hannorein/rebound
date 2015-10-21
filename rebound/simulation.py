@@ -646,7 +646,7 @@ class Simulation(Structure):
 
         clibrebound.reb_get_com_of_pair.restype = Particle
         for i in range(1,self.N_real):
-            orbits.append(_particles_tmp[i].calculate_orbit(self, primary=com))
+            orbits.append(_particles_tmp[i].calculate_orbit(primary=com))
             if jacobi is True:
                 com = clibrebound.reb_get_com_of_pair(com, _particles_tmp[i])
 
@@ -674,16 +674,13 @@ class Simulation(Structure):
         0.5
 
         """
-        com = Particle()
-        ps = self.particles    # particle pointer
         if last is not None:
             last = min(last, self.N_real)
         else:
             last = self.N_real
         
         clibrebound.reb_get_com_of_pair.restype = Particle
-        for i in range(last):
-            com = clibrebound.reb_get_com_of_pair(com, ps[i])
+        com = clibrebound.reb_get_jacobi_com(byref(self.particles[last]))
 
         return com
 

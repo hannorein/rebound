@@ -143,6 +143,16 @@ int reb_get_particle_index(struct reb_particle* p){
 	}
 	return i;
 }
+
+struct reb_particle reb_get_jacobi_com(struct reb_particle* p){
+	int p_index = reb_get_particle_index(p);
+	struct reb_simulation* r = p->sim;
+	struct reb_particle com = r->particles[0];
+	for(int i=1; i<p_index; i++){
+		com = reb_get_com_of_pair(com, r->particles[i]);
+	}
+	return com;
+}
 	
 #ifndef LIBREBOUNDX
 void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R) {

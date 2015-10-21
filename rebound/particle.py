@@ -217,7 +217,7 @@ class Particle(Structure):
             self.vy = vy
             self.vz = vz
 
-    def calculate_orbit(self, simulation, primary):
+    def calculate_orbit(self, primary):
         """ 
         Returns a rebound.Orbit object with the keplerian orbital elements
         corresponding to the particle around the passed primary
@@ -246,7 +246,7 @@ class Particle(Structure):
         
         err = c_int()
         clibrebound.reb_tools_particle_to_orbit_err.restype = rebound.Orbit
-        o = clibrebound.reb_tools_particle_to_orbit_err(c_double(simulation.G), self, primary, byref(err))
+        o = clibrebound.reb_tools_particle_to_orbit_err(c_double(self._sim.contents.G), self, primary, byref(err))
 
         if err.value == 1:
             raise ValueError("Primary has no mass.")
@@ -254,3 +254,16 @@ class Particle(Structure):
             raise ValueError("Particle and primary positions are the same.")
 
         return o
+
+    @property
+    def a(self):
+        clibrebound.reb_get_particle_index.restype = c_int
+        index = clibrebound.reb_get_particle_index(byref(self))
+        if index == 0:
+            print("Orbital elements for particle[0] not implemented.")
+            return 0.
+        else:
+            clibrebound.reb_get_jacobi_com.restype = Particle
+            com = clibrebound.reb_get_jacobi_com(byref(self))
+            orbit = self.calculate_orbit(com)
+            return orbit.a
