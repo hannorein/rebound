@@ -261,8 +261,7 @@ class Particle(Structure):
             clibrebound.reb_get_particle_index.restype = c_int
             index = clibrebound.reb_get_particle_index(byref(self)) # first check this isn't particles[0]
             if index == 0:
-                print("Orbital elements for particle[0] not implemented.")
-                return 0.
+                raise ValueError("Orbital elements for particle[0] not implemented.")
             else:
                 clibrebound.reb_get_jacobi_com.restype = Particle   # now return jacobi coordinate
                 com = clibrebound.reb_get_jacobi_com(byref(self))
