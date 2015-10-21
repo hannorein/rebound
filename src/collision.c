@@ -76,9 +76,7 @@ void reb_collision_search(struct reb_simulation* const r){
 					gb.shiftvy += p1.vy;
 					gb.shiftvz += p1.vz;
 					// Loop over all particles again
-					for (int j=0;j<N;j++){
-						// Do not collide particle with itself.
-						if (i==j) continue;
+					for (int j=i+1;j<N;j++){ //Start at j=i to not double-count collisions, i+1 to avoid self-collision
 						struct reb_particle p2 = particles[j];
 						double dx = gb.shiftx - p2.x; 
 						double dy = gb.shifty - p2.y; 
