@@ -135,7 +135,7 @@ int reb_get_particle_index(struct reb_particle* p){
 	struct reb_simulation* r = p->sim;
 	int i = 0;
 	int N = r->N-r->N_var;
-	while(&sim->particles[i] != p){
+	while(&r->particles[i] != p){
 		i++;
 		if(i>=N){
 			return -1;	// p not in simulation.  Shouldn't happen unless you mess with p.sim after creating the particle
