@@ -129,7 +129,7 @@ class Particle(Structure):
                 raise ValueError("Need to specify simulation when initializing particle with orbital elements.")
             if primary is None:
                 clibrebound.reb_get_com.restype = Particle
-                primary = clibrebound.reb_get_com(byref(simulation))
+                primary = clibrebound.reb_get_com(byref(simulation)) # this corresponds to adding in Jacobi coordinates
             if a is None:
                 raise ValueError("You need to pass a semi major axis to initialize the particle using orbital elements.")
             if e is None:
@@ -217,7 +217,7 @@ class Particle(Structure):
             self.vy = vy
             self.vz = vz
 
-    def calculate_orbit(self, simulation, primary):
+    def calculate_orbit(self, primary):
         """ 
         Returns a rebound.Orbit object with the keplerian orbital elements
         corresponding to the particle around the passed primary
@@ -229,7 +229,7 @@ class Particle(Structure):
         >>> sim = rebound.Simulation()
         >>> sim.add(m=1.)
         >>> sim.add(x=1.,vy=1.)
-        >>> orbit = sim.particles[1].calculate_orbit(sim, sim.particles[0])
+        >>> orbit = sim.particles[1].calculate_orbit(sim.particles[0])
         >>> print(orbit.e) # gives the eccentricity
 
         Parameters
@@ -246,7 +246,7 @@ class Particle(Structure):
         
         err = c_int()
         clibrebound.reb_tools_particle_to_orbit_err.restype = rebound.Orbit
-        o = clibrebound.reb_tools_particle_to_orbit_err(c_double(simulation.G), self, primary, byref(err))
+        o = clibrebound.reb_tools_particle_to_orbit_err(c_double(self._sim.contents.G), self, primary, byref(err))
 
         if err.value == 1:
             raise ValueError("Primary has no mass.")
@@ -254,3 +254,64 @@ class Particle(Structure):
             raise ValueError("Particle and primary positions are the same.")
 
         return o
+
+    def orb_el(get_elem):
+        @property
+        def new_elem(self):
+            clibrebound.reb_get_particle_index.restype = c_int
+            index = clibrebound.reb_get_particle_index(byref(self)) # first check this isn't particles[0]
+            if index == 0:
+                raise ValueError("Orbital elements for particle[0] not implemented.")
+            else:
+                clibrebound.reb_get_jacobi_com.restype = Particle   # now return jacobi coordinate
+                com = clibrebound.reb_get_jacobi_com(byref(self))
+                orbit = self.calculate_orbit(com)
+            return get_elem(self, orbit)
+        return new_elem
+
+    @orb_el
+    def orb_radius(self, orbit):
+        return orbit.r
+    @orb_el
+    def v(self, orbit):
+        return orbit.v 
+    @orb_el
+    def h(self, orbit):
+        return orbit.h
+    @orb_el
+    def P(self, orbit):
+        return orbit.P
+    @orb_el
+    def n(self, orbit):
+        return orbit.n 
+    @orb_el
+    def a(self, orbit):
+        return orbit.a 
+    @orb_el
+    def e(self, orbit):
+        return orbit.e 
+    @orb_el
+    def inc(self, orbit):
+        return orbit.inc 
+    @orb_el
+    def Omega(self, orbit):
+        return orbit.Omega 
+    @orb_el
+    def omega(self, orbit):
+        return orbit.omega 
+    @orb_el
+    def pomega(self, orbit):
+        return orbit.pomega 
+    @orb_el
+    def f(self, orbit):
+        return orbit.f 
+    @orb_el
+    def M(self, orbit):
+        return orbit.M 
+    @orb_el
+    def l(self, orbit):
+        return orbit.l 
+    @orb_el
+    def theta(self, orbit):
+        return orbit.theta 
+

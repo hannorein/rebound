@@ -614,17 +614,20 @@ class Simulation(Structure):
 
 
 # Orbit calculation
-    def calculate_orbits(self, heliocentric=False):
+    def calculate_orbits(self, heliocentric=False, barycentric=False):
         """ 
         Calculate orbital parameters for all partices in the simulation.
+        By default this functions returns the orbits in Jacobi coordinates. 
 
         If MEGNO is enabled, variational particles will be ignored.
 
         Parameters
         ----------
         heliocentric : bool, optional
-            By default this functions returns the orbits in Jacobi coordinates. 
-            Set the parameter heliocentric to True to return orbits in heliocentric coordinates.
+            Set the parameter heliocentric to True to return orbits referenced to sim.particles[0].
+        barycentric : bool, optional
+            Set the parameter barycentric to True to return orbits referenced to the system's barycenter.
+            
 
         Returns
         -------
@@ -632,12 +635,21 @@ class Simulation(Structure):
         """
         _particles_tmp = self.particles
         orbits = []
+        
+        jacobi = True
+        com = _particles_tmp[0]
+        if heliocentric is True:
+            jacobi = False
+        if barycentric is True:
+            com = self.calculate_com()
+            jacobi = False
+
+        clibrebound.reb_get_com_of_pair.restype = Particle
         for i in range(1,self.N_real):
-            if heliocentric:
-                com = _particles_tmp[0]
-            else:
-                com = self.calculate_com(i)
-            orbits.append(_particles_tmp[i].calculate_orbit(self, primary=com))
+            orbits.append(_particles_tmp[i].calculate_orbit(primary=com))
+            if jacobi is True:
+                com = clibrebound.reb_get_com_of_pair(com, _particles_tmp[i])
+
         return orbits
 
 # COM calculation 
@@ -662,35 +674,15 @@ class Simulation(Structure):
         0.5
 
         """
-        m = 0.
-        x = 0.
-        y = 0.
-        z = 0.
-        vx = 0.
-        vy = 0.
-        vz = 0.
-        ps = self.particles    # particle pointer
         if last is not None:
             last = min(last, self.N_real)
         else:
             last = self.N_real
-        for i in range(last):
-            m  += ps[i].m
-            x  += ps[i].x*ps[i].m
-            y  += ps[i].y*ps[i].m
-            z  += ps[i].z*ps[i].m
-            vx += ps[i].vx*ps[i].m
-            vy += ps[i].vy*ps[i].m
-            vz += ps[i].vz*ps[i].m
-        if m>0.:
-            x /= m
-            y /= m
-            z /= m
-            vx /= m
-            vy /= m
-            vz /= m
-        return Particle(m=m, x=x, y=y, z=z, vx=vx, vy=vy, vz=vz)
-    
+        
+        clibrebound.reb_get_jacobi_com.restype = Particle
+        com = clibrebound.reb_get_jacobi_com(byref(self.particles[last]))
+
+        return com
 
 # Tools
     def move_to_com(self):

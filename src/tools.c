@@ -131,6 +131,29 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
 	return p1;
 }
 
+int reb_get_particle_index(struct reb_particle* p){
+	struct reb_simulation* r = p->sim;
+	int i = 0;
+	int N = r->N-r->N_var;
+	while(&r->particles[i] != p){
+		i++;
+		if(i>=N){
+			return -1;	// p not in simulation.  Shouldn't happen unless you mess with p.sim after creating the particle
+		}	
+	}
+	return i;
+}
+
+struct reb_particle reb_get_jacobi_com(struct reb_particle* p){
+	int p_index = reb_get_particle_index(p);
+	struct reb_simulation* r = p->sim;
+	struct reb_particle com = r->particles[0];
+	for(int i=1; i<p_index; i++){
+		com = reb_get_com_of_pair(com, r->particles[i]);
+	}
+	return com;
+}
+	
 #ifndef LIBREBOUNDX
 void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R) {
 	// Algorithm from:	
@@ -232,7 +255,7 @@ struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle 
 	return reb_tools_orbit_to_particle(G, primary, m, a, e, inc, Omega, omega, f);
 }
 
-static const struct reb_particle reb_particle_nan = {.x = NAN, .y = NAN, .z = NAN, .vx = NAN, .vy = NAN, .vz = NAN, .ax = NAN, .ay = NAN, .az = NAN, .m = NAN, .r = NAN, .lastcollision = NAN, .c = NULL, .id = NAN};
+static const struct reb_particle reb_particle_nan = {.x = NAN, .y = NAN, .z = NAN, .vx = NAN, .vy = NAN, .vz = NAN, .ax = NAN, .ay = NAN, .az = NAN, .m = NAN, .r = NAN, .lastcollision = NAN, .c = NULL, .id = -1, .ap = NULL, .sim = NULL};
 
 struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f, int* err){
 	if(e == 1.){
