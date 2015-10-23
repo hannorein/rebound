@@ -17,6 +17,7 @@ int main(int argc, char* argv[]) {
 	struct reb_simulation* r = reb_create_simulation();
 	r->dt = 0.1;
 	r->heartbeat = heartbeat;
+	r->exact_finish_time = 1; // Finish exactly at tmax in reb_integrate(). Default is already 1.
 
 	struct reb_particle p1 = {0};
 	p1.m = 1.;

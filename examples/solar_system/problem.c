@@ -66,6 +66,7 @@ int main(int argc, char* argv[]){
 	r->ri_whfast.corrector 	= 11;		// 11th order symplectic corrector
 	r->integrator		= REB_INTEGRATOR_WHFAST;
 	r->heartbeat		= heartbeat;
+	r->exact_finish_time = 1; // Finish exactly at tmax in reb_integrate(). Default is already 1.
 	//r->integrator		= REB_INTEGRATOR_IAS15;		// Alternative non-symplectic integrator
 
 	// Initial conditions
