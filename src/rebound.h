@@ -353,7 +353,7 @@ struct reb_simulation {
 	struct reb_treecell** tree_root;///< Pointer to the roots of the trees. 
 	double opening_angle2;	 	///< Square of the cell opening angle \f$ \theta \f$. 
 	enum REB_STATUS status;		///< Set to 1 to exit the simulation at the end of the next timestep. 
-	int 	exact_finish_time; 	///< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. 
+	int 	exact_finish_time; 	///< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. Default is 1. 
 
 	unsigned int force_is_velocity_dependent;///< Set to 1 if integrator needs to consider velocity dependent forces.  
 	unsigned int gravity_ignore_10;		///< Ignore the gravity form the central object (for WH-type integrators)
