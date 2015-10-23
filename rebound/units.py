@@ -5,6 +5,8 @@ import math
 G_SI = 6.674e-11
 times_SI = {'s':1.,
     'hr':3600.,
+    'day': 86400.,
+    'd': 86400.,
     'yr':31557600., # Julian year (exact)
     'jyr':31557600.,
     'sidereal_yr':31558149.7635,
