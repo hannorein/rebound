@@ -94,7 +94,7 @@ class Particle(Structure):
             True longitude              (Default: 0)
         r           : float       
             Particle radius (only used for collisional simulations)
-        id          : int         
+        id          : int               (Default: 0)
             Particle ID (arbitrary, specified by the user)
         date        : string      
             For consistency with adding particles through horizons.  Not used here.
@@ -123,11 +123,11 @@ class Particle(Structure):
         self.ax = 0.
         self.ay = 0.
         self.az = 0.
-        self.m = 0. if m is None else m
-        self.r  =  0. if r is None else r
+        self.m  = 0. if m is None else m
+        self.id = 0 if id is None else id
+        self.r  = 0. if r is None else r
         self.lastcollision = 0.
         self.c = None
-        self.id = -1 if id is None else id
         self.ap = None
         
         if notNone(cart) and notNone(orbi):
