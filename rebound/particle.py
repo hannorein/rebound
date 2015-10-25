@@ -32,10 +32,12 @@ class Particle(Structure):
         Particle radius
     lastcollision : float       
         Last time the particle had a physical collision (if checking for collisions)
-    c           : float       
+    c           : c_void_p (C void pointer) 
         Pointer to the cell the particle is currently in (if using tree code)
     id          : int         
         Particle ID (arbitrary, specified by the user)
+    ap          : c_void_p (C void pointer)
+        Pointer to additional parameters one might want to add to particles
     _sim        : POINTER(rebound.Simulation)
         Internal pointer to the parent simulation (used in C version of REBOUND)
     """
@@ -117,10 +119,16 @@ class Particle(Structure):
             raise ValueError("Cannot initialize particle from other particles.")
         cart = [x,y,z,vx,vy,vz]
         orbi = [primary,a,e,inc,Omega,omega,pomega,f,M,l,theta]
-        
+       
+        self.ax = 0.
+        self.ay = 0.
+        self.az = 0.
         self.m = 0. if m is None else m
-        self.id = -1 if id is None else id
         self.r  =  0. if r is None else r
+        self.lastcollision = 0.
+        self.c = None
+        self.id = -1 if id is None else id
+        self.ap = None
         
         if notNone(cart) and notNone(orbi):
                 raise ValueError("You cannot pass cartesian coordinates and orbital elements (and/or primary) at the same time.")
