@@ -92,7 +92,7 @@ class Particle(Structure):
             True longitude              (Default: 0)
         r           : float       
             Particle radius (only used for collisional simulations)
-        id          : int         
+        id          : int               (Default: 0)
             Particle ID (arbitrary, specified by the user)
         date        : string      
             For consistency with adding particles through horizons.  Not used here.
@@ -119,7 +119,7 @@ class Particle(Structure):
         orbi = [primary,a,e,inc,Omega,omega,pomega,f,M,l,theta]
         
         self.m = 0. if m is None else m
-        self.id = -1 if id is None else id
+        self.id = 0 if id is None else id
         self.r  =  0. if r is None else r
         
         if notNone(cart) and notNone(orbi):
