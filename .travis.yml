@@ -38,7 +38,7 @@ script:
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Units.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py WHFast.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/python_examples/dragforce/ && python problem.py
-    - cd $TRAVIS_BUILD_DIR/python_examples/horizons/ && python problem.py
+    #- cd $TRAVIS_BUILD_DIR/python_examples/horizons/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/longtermtest/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/megno/ && python problem.py
     #- cd $TRAVIS_BUILD_DIR/python_examples/megno_interactive/ && python problem.py
