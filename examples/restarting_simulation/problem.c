@@ -21,6 +21,7 @@ int main(int argc, char* argv[]){
 		r->collision	= REB_COLLISION_DIRECT;
 		r->ri_sei.OMEGA	= 1.;	
 		r->dt 		= 1e-4*2.*M_PI; 
+		r->exact_finish_time = 1; // Finish exactly at tmax in reb_integrate(). Default is already 1.
 		r->nghostx = 1; r->nghosty = 1; r->nghostz = 0;
 		reb_configure_box(r,1.,1,1,1);
 
