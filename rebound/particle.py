@@ -217,11 +217,11 @@ class Particle(Structure):
             self.vy = vy
             self.vz = vz
 
-    def calculate_orbit(self, primary):
+    def calculate_orbit(self, primary=None):
         """ 
         Returns a rebound.Orbit object with the keplerian orbital elements
         corresponding to the particle around the passed primary
-        (rebound.Particle). 
+        (rebound.Particle) If no primary is passed, defaults to Jacobi coordinates. 
         
         Examples
         --------
@@ -234,15 +234,22 @@ class Particle(Structure):
 
         Parameters
         ----------
-        simulation  : rebound.Simulation
-            Simulation instance associated with this particle (Required)
         primary : rebound.Particle
-            Central body (Required)
+            Central body (Optional. Default uses Jacobi coordinates)
         
         Returns
         -------
         A rebound.Orbit object 
         """
+        # First check whether this is particles[0]
+        clibrebound.reb_get_particle_index.restype = c_int
+        index = clibrebound.reb_get_particle_index(byref(self)) # first check this isn't particles[0]
+        if index == 0:
+            raise ValueError("Orbital elements for particle[0] not implemented.")
+
+        if primary is None:    # Use default, i.e., Jacobi coordinates
+            clibrebound.reb_get_jacobi_com.restype = Particle   # now return jacobi center of mass
+            primary = clibrebound.reb_get_jacobi_com(byref(self))
         
         err = c_int()
         clibrebound.reb_tools_particle_to_orbit_err.restype = rebound.Orbit
@@ -255,63 +262,52 @@ class Particle(Structure):
 
         return o
 
-    def orb_el(get_elem):
-        @property
-        def new_elem(self):
-            clibrebound.reb_get_particle_index.restype = c_int
-            index = clibrebound.reb_get_particle_index(byref(self)) # first check this isn't particles[0]
-            if index == 0:
-                raise ValueError("Orbital elements for particle[0] not implemented.")
-            else:
-                clibrebound.reb_get_jacobi_com.restype = Particle   # now return jacobi coordinate
-                com = clibrebound.reb_get_jacobi_com(byref(self))
-                orbit = self.calculate_orbit(com)
-            return get_elem(self, orbit)
-        return new_elem
-
-    @orb_el
-    def orb_radius(self, orbit):
-        return orbit.r
-    @orb_el
-    def v(self, orbit):
-        return orbit.v 
-    @orb_el
-    def h(self, orbit):
-        return orbit.h
-    @orb_el
-    def P(self, orbit):
-        return orbit.P
-    @orb_el
-    def n(self, orbit):
-        return orbit.n 
-    @orb_el
-    def a(self, orbit):
-        return orbit.a 
-    @orb_el
-    def e(self, orbit):
-        return orbit.e 
-    @orb_el
-    def inc(self, orbit):
-        return orbit.inc 
-    @orb_el
-    def Omega(self, orbit):
-        return orbit.Omega 
-    @orb_el
-    def omega(self, orbit):
-        return orbit.omega 
-    @orb_el
-    def pomega(self, orbit):
-        return orbit.pomega 
-    @orb_el
-    def f(self, orbit):
-        return orbit.f 
-    @orb_el
-    def M(self, orbit):
-        return orbit.M 
-    @orb_el
-    def l(self, orbit):
-        return orbit.l 
-    @orb_el
-    def theta(self, orbit):
-        return orbit.theta 
+    @property
+    def orb_radius(self):
+        return self.calculate_orbit().r
+    @property
+    def v(self):
+        return self.calculate_orbit().v 
+    @property
+    def h(self):
+        return self.calculate_orbit().h
+    @property
+    def P(self):
+        return self.calculate_orbit().P
+    @property
+    def n(self):
+        return self.calculate_orbit().n 
+    @property
+    def a(self):
+        return self.calculate_orbit().a 
+    @property
+    def e(self):
+        return self.calculate_orbit().e 
+    @property
+    def inc(self):
+        return self.calculate_orbit().inc 
+    @property
+    def Omega(self):
+        return self.calculate_orbit().Omega 
+    @property
+    def omega(self):
+        return self.calculate_orbit().omega 
+    @property
+    def pomega(self):
+        return self.calculate_orbit().pomega 
+    @property
+    def f(self):
+        return self.calculate_orbit().f 
+    @property
+    def M(self):
+        return self.calculate_orbit().M 
+    @property
+    def l(self):
+        return self.calculate_orbit().l 
+    @property
+    def theta(self):
+        return self.calculate_orbit().theta 
+    @property
+    def orbit(self):
+        return self.calculate_orbit()
 
