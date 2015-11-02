@@ -114,6 +114,9 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
 		printf("Can not open file '%s'\n.",filename);
 		return NULL;
 	}
+    for(int i=0; i<r->N; i++){
+		r->particles[i].sim = r;
+	}
 	return r;
 }
 
