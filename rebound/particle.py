@@ -128,7 +128,7 @@ class Particle(Structure):
         else:
             self.m = m
         if id is None:
-            self.id = 0.
+            self.id = 0
         else:
             self.id = id
         if r is None:
