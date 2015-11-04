@@ -123,9 +123,18 @@ class Particle(Structure):
         self.ax = 0.
         self.ay = 0.
         self.az = 0.
-        self.m  = 0. if m is None else m
-        self.id = 0 if id is None else id
-        self.r  = 0. if r is None else r
+        if m is None:
+            self.m = 0.
+        else:
+            self.m = m
+        if id is None:
+            self.id = 0
+        else:
+            self.id = id
+        if r is None:
+            self.r = 0.
+        else:
+            self.r = r
         self.lastcollision = 0.
         self.c = None
         self.ap = None
