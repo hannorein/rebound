@@ -358,6 +358,12 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
 					*last_full_dt = r->dt_last_done; // store last full dt before decreasing the timestep to match finish time
 					r->dt = tmax-r->t;
 				}
+			}else{
+				if (r->status == REB_RUNNING_LAST_STEP){
+					// This will get executed if an adaptive integrator reduces
+					// the timestep in what was supposed to be the last timestep.
+					r->status = REB_RUNNING;
+				}
 			}
 		}else{
 			if (r->t*dtsign>=tmax*dtsign){  // Past the integration time
