@@ -355,7 +355,9 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
 				}else{
 					r->status = REB_RUNNING_LAST_STEP; // Do one small step, then exit.
 					reb_integrator_synchronize(r);
-					*last_full_dt = r->dt_last_done; // store last full dt before decreasing the timestep to match finish time
+					if (r->dt_last_done!=0.){  	// If first timestep is also last, do not use dt_last_done (which would be 0.)
+						*last_full_dt = r->dt_last_done; // store last full dt before decreasing the timestep to match finish time
+					}
 					r->dt = tmax-r->t;
 				}
 			}else{
