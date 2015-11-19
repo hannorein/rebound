@@ -186,6 +186,11 @@ class Simulation(Structure):
     """
     def __init__(self):
         clibrebound.reb_init_simulation(byref(self))
+        self._afp = None # additional forces pointer
+        self._corfp = None # coefficient of restitution function pointer
+        self._ptmp = None # post timestep modifications pointer 
+        self._units = {'length':None, 'time':None, 'mass':None}
+        self._extras_ref = None # for additional REBOUND libraries to set and keep a reference alive for the lifetime of the simulation
 
     @classmethod
     def from_file(cls, filename):
@@ -210,11 +215,6 @@ class Simulation(Structure):
         else:
             raise ValueError("File does not exist.")
 
-    _afp = None # additional forces pointer
-    _corfp = None # coefficient of restitution function pointer
-    _ptmp = None # post timestep modifications pointer 
-    _units = {'length':None, 'time':None, 'mass':None}
-    _extras_ref = None # for additional REBOUND libraries to set and keep a reference alive for the lifetime of the simulation
 
     def __del__(self):
         if self._b_needsfree_ == 1: # to avoid, e.g., sim.particles[1]._sim.contents.G creating a Simulation instance to get G, and then freeing the C simulation when it immediately goes out of scope
