@@ -210,11 +210,7 @@ class Simulation(Structure):
         else:
             raise ValueError("File does not exist.")
 
-    _afp = None # additional forces pointer
-    _corfp = None # coefficient of restitution function pointer
-    _ptmp = None # post timestep modifications pointer 
     _units = {'length':None, 'time':None, 'mass':None}
-    _extras_ref = None # for additional REBOUND libraries to set and keep a reference alive for the lifetime of the simulation
 
     def __del__(self):
         if self._b_needsfree_ == 1: # to avoid, e.g., sim.particles[1]._sim.contents.G creating a Simulation instance to get G, and then freeing the C simulation when it immediately goes out of scope
@@ -254,7 +250,7 @@ class Simulation(Structure):
         the particle structures might contain incorrect velocity 
         values.
         """
-        return self._afp   # getter might not be needed
+	raise AttributeError("You can only set C function pointers from python.")
     @additional_forces.setter
     def additional_forces(self, func):
         self._afp = AFF(func)
@@ -268,7 +264,7 @@ class Simulation(Structure):
         The argument can be a python function or something that can be cast to a C function or a
         python function.
         """
-        return self._ptmp
+	raise AttributeError("You can only set C function pointers from python.")
     @post_timestep_modifications.setter
     def post_timestep_modifications(self, func):
         self._ptmp = AFF(func)
@@ -279,7 +275,7 @@ class Simulation(Structure):
         """
         Get or set a function pointer that defined the coefficient of restitution.
         """
-        return self._corfp   # getter might not be needed
+	raise AttributeError("You can only set C function pointers from python.")
     @coefficient_of_restitution.setter
     def coefficient_of_restitution(self, func):
         self._corfp = CORFF(func)
