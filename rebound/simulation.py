@@ -250,7 +250,7 @@ class Simulation(Structure):
         the particle structures might contain incorrect velocity 
         values.
         """
-	raise AttributeError("You can only set C function pointers from python.")
+        raise AttributeError("You can only set C function pointers from python.")
     @additional_forces.setter
     def additional_forces(self, func):
         self._afp = AFF(func)
@@ -264,7 +264,7 @@ class Simulation(Structure):
         The argument can be a python function or something that can be cast to a C function or a
         python function.
         """
-	raise AttributeError("You can only set C function pointers from python.")
+        raise AttributeError("You can only set C function pointers from python.")
     @post_timestep_modifications.setter
     def post_timestep_modifications(self, func):
         self._ptmp = AFF(func)
@@ -275,7 +275,7 @@ class Simulation(Structure):
         """
         Get or set a function pointer that defined the coefficient of restitution.
         """
-	raise AttributeError("You can only set C function pointers from python.")
+        raise AttributeError("You can only set C function pointers from python.")
     @coefficient_of_restitution.setter
     def coefficient_of_restitution(self, func):
         self._corfp = CORFF(func)
