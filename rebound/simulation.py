@@ -186,11 +186,7 @@ class Simulation(Structure):
     """
     def __init__(self):
         clibrebound.reb_init_simulation(byref(self))
-        self._afp = None # additional forces pointer
-        self._corfp = None # coefficient of restitution function pointer
-        self._ptmp = None # post timestep modifications pointer 
         self._units = {'length':None, 'time':None, 'mass':None}
-        self._extras_ref = None # for additional REBOUND libraries to set and keep a reference alive for the lifetime of the simulation
 
     @classmethod
     def from_file(cls, filename):
