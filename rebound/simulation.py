@@ -210,8 +210,6 @@ class Simulation(Structure):
         else:
             raise ValueError("File does not exist.")
 
-    _units = {'length':None, 'time':None, 'mass':None}
-
     def __del__(self):
         if self._b_needsfree_ == 1: # to avoid, e.g., sim.particles[1]._sim.contents.G creating a Simulation instance to get G, and then freeing the C simulation when it immediately goes out of scope
             clibrebound.reb_free_pointers(byref(self))
@@ -468,10 +466,15 @@ class Simulation(Structure):
         >>> sim.units = ('yr', 'AU', 'Msun')
 
         """
+        if not hasattr(self, '_units'):
+            self._units = {'length':None, 'mass':None, 'time':None}
+
         return self._units
 
     @units.setter
     def units(self, newunits):
+        if not hasattr(self, '_units'):
+            self._units = {'length':None, 'mass':None, 'time':None}
         newunits = check_units(newunits)        
         if self.particles: # some particles are loaded
             raise AttributeError("Error:  You cannot set the units after populating the particles array.  See ipython_examples/Units.ipynb.")
