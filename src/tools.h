@@ -46,6 +46,6 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY);
 /**
  * @brief Init random number generator based on time and process id.
  */
-void reb_tools_init_srand();
+void reb_tools_init_srand(void);
 
 #endif 	// TOOLS_H

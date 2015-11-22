@@ -519,7 +519,7 @@ struct reb_simulation {
  * and returni the pointer to the reb_simulation sructure. This function must be called 
  * before any particles are added.
  */
-struct reb_simulation* reb_create_simulation();
+struct reb_simulation* reb_create_simulation(void);
 
 /**
  * @brief Initialize reb_simulation structure.

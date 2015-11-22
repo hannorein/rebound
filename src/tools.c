@@ -35,7 +35,7 @@
 #include "tools.h"
 
 
-void reb_tools_init_srand(){
+void reb_tools_init_srand(void){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	srand ( tim.tv_usec + getpid());
