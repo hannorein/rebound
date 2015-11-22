@@ -1,13 +1,5 @@
 # -*- coding: utf-8 -*-
 import math
-try:
-    import matplotlib.pyplot as plt
-    import numpy as np
-    packages_missing = 0
-except:
-    packages_missing = 1
-    pass
-
 from .particle import Particle
 
 def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=False, periastron=False, trails=False, lw=1.):
@@ -48,9 +40,12 @@ def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=Fals
         >>> fig.show() # show figure on screen
 
         """
-        if packages_missing == 1:
-            print("Matplotlib and/or numpy not found. Plotting functions not available\n")
-            return
+        try:
+            import matplotlib.pyplot as plt
+            import numpy as np
+        except:
+            print("Error importing matplotlib and/or numpy. Plotting functions not available\n")
+            return None
         fig, ax = plt.subplots(1, 1, figsize=figsize)
         orbits = sim.calculate_orbits()
         particles = sim.particles

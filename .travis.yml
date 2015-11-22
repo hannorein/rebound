@@ -17,7 +17,7 @@ install:
 compiler:
     - gcc
 script:
-    - coverage run --source=rebound setup.py test
+    - cd $TRAVIS_BUILD_DIR && coverage run --source=rebound setup.py test
     - cd $TRAVIS_BUILD_DIR/examples/ && make
     - cd $TRAVIS_BUILD_DIR/src && make clean
     - cd $TRAVIS_BUILD_DIR/ && make  
