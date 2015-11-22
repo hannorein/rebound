@@ -1,6 +1,7 @@
 import rebound
 import unittest
 import os
+import math
 
 class TestSimulation(unittest.TestCase):
     def setUp(self):
@@ -15,8 +16,32 @@ class TestSimulation(unittest.TestCase):
     def test_status(self):
         self.sim.status()
     
+    def test_configure_ghostboxes(self):
+        self.sim.configure_ghostboxes(1,1,1)
+   
+    def test_step(self):
+        self.sim.step()
+        self.assertNotEqual(self.sim.t, 1.246)
+
+    def test_configure_box(self):
+        self.assertEqual(self.sim.root_size,-1.)
+        self.sim.configure_box(100.,1,1,1)
+        self.assertEqual(self.sim.root_size,100.)
+    
     def test_calculate_orbits(self):
         orbits = self.sim.calculate_orbits()
+        self.assertAlmostEqual(orbits[0].a,1.,delta=1e-15)
+        self.assertAlmostEqual(orbits[0].e,0.01,delta=1e-15)
+        self.assertAlmostEqual(orbits[0].omega,0.02,delta=1e-12)
+        self.assertAlmostEqual(orbits[0].inc,0.1,delta=1e-15)
+        orbits = self.sim.calculate_orbits(heliocentric=True)
+        self.assertAlmostEqual(orbits[0].a,1.,delta=1e-15)
+        self.assertAlmostEqual(orbits[0].e,0.01,delta=1e-15)
+        self.assertAlmostEqual(orbits[0].omega,0.02,delta=1e-12)
+        self.assertAlmostEqual(orbits[0].inc,0.1,delta=1e-15)
+        orbits = self.sim.calculate_orbits(barycentric=True)
+        self.assertAlmostEqual(orbits[0].a,1.,delta=1e-2)
+        
         print orbits[0]
         
     def test_com(self):
@@ -24,6 +49,12 @@ class TestSimulation(unittest.TestCase):
         com = self.sim.calculate_com()
         self.assertEqual(com.x, 0.)
         
+    def test_init_megno(self):
+        self.sim.init_megno(1e-16)
+        self.assertEqual(self.sim.N,4)
+        self.assertEqual(self.sim.N_real,2)
+        self.assertEqual(self.sim.calculate_megno(),0)
+        self.assertTrue(math.isnan(self.sim.calculate_lyapunov()))
         
     def test_calculate_energy(self):
         self.sim.move_to_com()
