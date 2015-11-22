@@ -13,6 +13,7 @@ class TestPlotting(unittest.TestCase):
     
     def test_orbitplot(self):
         import matplotlib
+        import numpy
         plot = rebound.OrbitPlot(self.sim,periastron=True)
         self.assertIsInstance(plot,matplotlib.figure.Figure)
         plot = rebound.OrbitPlot(self.sim,periastron=True,color=True,trails=True,unitlabel="AU")
