@@ -167,6 +167,7 @@ class TestSimulationCollisions(unittest.TestCase):
         self.sim.add(m=1.,x=1,vx=-1.,r=0.5)
         self.sim.integrate(1.)
         self.assertAlmostEqual(self.sim.particles[0].x,-1,delta=1e-15)
+
     def test_tree(self):
         self.sim.configure_box(10)
         self.sim.collision = "tree"
