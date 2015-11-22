@@ -4,6 +4,7 @@ REBOUND - An open-source multi-purpose N-body code
 .. image:: http://img.shields.io/badge/rebound-v2.9.0-green.svg?style=flat
 .. image:: http://img.shields.io/badge/license-GPL-green.svg?style=flat :target: https://github.com/hannorein/rebound/blob/master/LICENSE
 .. image:: http://img.shields.io/travis/hannorein/rebound/master.svg?style=flat :target: https://travis-ci.org/hannorein/rebound/
+.. image:: https://coveralls.io/repos/hannorein/rebound/badge.svg?branch=coveralls&service=github :target: https://coveralls.io/github/hannorein/rebound?branch=coveralls
 .. image:: http://img.shields.io/badge/arXiv-1110.4876-orange.svg?style=flat :target: http://arxiv.org/abs/1110.4876
 .. image:: http://img.shields.io/badge/arXiv-1409.4779-orange.svg?style=flat :target: http://arxiv.org/abs/1409.4779
 .. image:: http://img.shields.io/badge/arXiv-1506.01084-orange.svg?style=flat :target: http://arxiv.org/abs/1506.01084

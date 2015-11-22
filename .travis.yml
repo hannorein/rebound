@@ -46,5 +46,6 @@ script:
     - cd $TRAVIS_BUILD_DIR/python_examples/orbital_elements/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/outersolarsystem/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/simple_orbit/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR 
 after_success:
     coveralls
