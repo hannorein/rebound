@@ -64,6 +64,7 @@ setup(name='rebound',
     keywords='astronomy astrophysics nbody integrator symplectic wisdom-holman',
     packages=['rebound'],
     install_requires=[],
+    tests_require=["numpy","matplotlib"],
     test_suite="rebound.tests",
     ext_modules = [libreboundmodule],
     zip_safe=False)

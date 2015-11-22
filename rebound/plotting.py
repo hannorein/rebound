@@ -49,7 +49,7 @@ def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=Fals
 
         """
         if packages_missing == 1:
-            printf("Matplotlib and/or numpy not found. Plotting functions not available\n")
+            print("Matplotlib and/or numpy not found. Plotting functions not available\n")
             return
         fig, ax = plt.subplots(1, 1, figsize=figsize)
         orbits = sim.calculate_orbits()
