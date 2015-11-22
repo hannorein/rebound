@@ -668,20 +668,21 @@ class Simulation(Structure):
         >>> sim = rebound.Simulation()
         >>> sim.add(m=1, x=0)
         >>> sim.add(m=1, x=1)
-        >>> com sim.calculate_com()
+        >>> com = sim.calculate_com()
         >>> com.x
         0.5
 
         """
         if last is not None:
-            last = min(last, self.N_real)
+            last = min(last, self.N_real-1)
+            clibrebound.reb_get_jacobi_com.restype = Particle
+            com = clibrebound.reb_get_jacobi_com(byref(self.particles[last]))
+            return com
         else:
-            last = self.N_real
+            clibrebound.reb_get_com.restype = Particle
+            com = clibrebound.reb_get_com(byref(self))
+            return com
         
-        clibrebound.reb_get_jacobi_com.restype = Particle
-        com = clibrebound.reb_get_jacobi_com(byref(self.particles[last]))
-
-        return com
 
 # Tools
     def move_to_com(self):
