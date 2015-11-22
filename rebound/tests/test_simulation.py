@@ -140,21 +140,40 @@ class TestSimulation(unittest.TestCase):
     
     
 class TestSimulationCollisions(unittest.TestCase):
+    def setUp(self):
+        self.sim = rebound.Simulation()
+        self.sim.gravity = "none"
+        self.sim.collision = "direct"
+        self.sim.integrator = "leapfrog"
+        self.sim.G = 0.0
+        self.sim.dt = 0.01
+    
+    def tearDown(self):
+        self.sim = None
+
     def test_coefficient_of_restitution(self):
-        sim = rebound.Simulation()
-        sim.gravity = "none"
-        sim.collision = "direct"
-        sim.integrator = "leapfrog"
-        sim.G = 0.0
-        sim.dt = 0.01
-        sim.add(m=1.,x=-1,vx=1.,r=0.5)
-        sim.add(m=1.,x=1,vx=-1.,r=0.5)
-        energy_initial = sim.calculate_energy()
+        self.sim.add(m=1.,x=-1,vx=1.,r=0.5)
+        self.sim.add(m=1.,x=1,vx=-1.,r=0.5)
+        energy_initial = self.sim.calculate_energy()
         def coef(sim,vrel):
             return 0.5
-        sim.coefficient_of_restitution = coef
-        sim.integrate(1.)
-        energy_final = sim.calculate_energy()
+        self.sim.coefficient_of_restitution = coef
+        self.sim.integrate(1.)
+        energy_final = self.sim.calculate_energy()
         self.assertAlmostEqual(energy_final, 0.25*energy_initial,delta=1e-15)
 
+    def test_direct(self):
+        self.sim.add(m=1.,x=-1,vx=1.,r=0.5)
+        self.sim.add(m=1.,x=1,vx=-1.,r=0.5)
+        self.sim.integrate(1.)
+        self.assertAlmostEqual(self.sim.particles[0].x,-1,delta=1e-15)
+    def test_tree(self):
+        self.sim.configure_box(10)
+        self.sim.collision = "tree"
+        self.sim.add(m=1.,x=-1,vx=1.,r=0.5)
+        self.sim.add(m=1.,x=1,vx=-1.,r=0.5)
+        self.sim.integrate(1.)
+        self.assertAlmostEqual(self.sim.particles[0].x,-1,delta=1e-15)
+
+    
     
