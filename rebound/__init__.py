@@ -17,7 +17,7 @@ if suffix is None:
 # Import shared library
 import os
 pymodulepath = os.path.dirname(__file__)
-from ctypes import *
+from ctypes import cdll, c_char_p
 clibrebound = cdll.LoadLibrary(pymodulepath+"/../librebound"+suffix)
 
 # Check for version

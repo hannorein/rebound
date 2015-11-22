@@ -227,4 +227,4 @@ RHILL_PRESENT  no                  ! no Hill's sphere radii in input file
 
 
 # Import at the end to avoid circular dependence
-from .simulation import *
+from .simulation import Simulation

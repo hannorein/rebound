@@ -1,4 +1,4 @@
-from ctypes import *
+from ctypes import Structure, c_double, c_int, byref
 from . import clibrebound
 import math
 import ctypes.util

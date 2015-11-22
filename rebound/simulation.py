@@ -1,6 +1,6 @@
-from ctypes import *
+from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_long, c_ulong, c_void_p, c_char_p, CFUNCTYPE, byref
 from . import clibrebound, Escape, NoParticles, Encounter, SimulationError
-from .particle import *
+from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G
 import math
 import os
