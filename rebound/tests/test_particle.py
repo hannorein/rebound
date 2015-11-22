@@ -72,6 +72,7 @@ class TestParticleInSimulation(unittest.TestCase):
         self.assertAlmostEqual(p[1].P,math.pi*2.,delta=1e-15)
         self.assertAlmostEqual(p[1].n,1.,delta=1e-15)
         self.assertAlmostEqual(p[1].omega,0.,delta=1e-15)
+        self.assertAlmostEqual(p[1].pomega,0.,delta=1e-15)
         self.assertAlmostEqual(p[1].Omega,0.,delta=1e-15)
         self.assertAlmostEqual(p[1].M,0.,delta=1e-15)
         self.assertAlmostEqual(p[1].l,0.,delta=1e-15)

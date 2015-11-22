@@ -82,8 +82,6 @@ class TestSimulation(unittest.TestCase):
         with self.assertRaises(AttributeError):
             self.sim.post_timestep_modifications
 
-
-    
     def test_N(self):
         self.assertEqual(self.sim.N, 2)
     
@@ -139,4 +137,24 @@ class TestSimulation(unittest.TestCase):
         self.assertEqual(self.sim.N, sim2.N)
         self.assertEqual(self.sim.integrator, sim2.integrator)
         os.remove("bintest.bin")
+    
+    
+class TestSimulationCollisions(unittest.TestCase):
+    def test_coefficient_of_restitution(self):
+        sim = rebound.Simulation()
+        sim.gravity = "none"
+        sim.collision = "direct"
+        sim.integrator = "leapfrog"
+        sim.G = 0.0
+        sim.dt = 0.01
+        sim.add(m=1.,x=-1,vx=1.,r=0.5)
+        sim.add(m=1.,x=1,vx=-1.,r=0.5)
+        energy_initial = sim.calculate_energy()
+        def coef(sim,vrel):
+            return 0.5
+        sim.coefficient_of_restitution = coef
+        sim.integrate(1.)
+        energy_final = sim.calculate_energy()
+        self.assertAlmostEqual(energy_final, 0.25*energy_initial,delta=1e-15)
+
     
