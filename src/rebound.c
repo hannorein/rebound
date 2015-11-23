@@ -78,7 +78,7 @@ void reb_step(struct reb_simulation* const r){
 	// Prepare particles for distribution to other nodes. 
 	// This function also creates the tree if called for the first time.
 	PROFILING_START()
-	if (r->gravity==REB_GRAVITY_TREE){
+	if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE){
 		reb_tree_update(r);          
 	}
 
