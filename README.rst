@@ -1,7 +1,7 @@
 REBOUND - An open-source multi-purpose N-body code
 ==================================================
 
-.. image:: http://img.shields.io/badge/rebound-v2.10.1-green.svg?style=flat
+.. image:: http://img.shields.io/badge/rebound-v2.11.0-green.svg?style=flat
 .. image:: http://img.shields.io/badge/license-GPL-green.svg?style=flat :target: https://github.com/hannorein/rebound/blob/master/LICENSE
 .. image:: http://img.shields.io/travis/hannorein/rebound/master.svg?style=flat :target: https://travis-ci.org/hannorein/rebound/
 .. image:: https://coveralls.io/repos/hannorein/rebound/badge.svg?branch=master&service=github :target: https://coveralls.io/github/hannorein/rebound?branch=master
