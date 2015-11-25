@@ -25,9 +25,6 @@
  *
  */
 #ifdef OPENGL
-#ifdef MPI
-#error OpenGL is not compatible with MPI.
-#endif //MPI
 #define DEG2RAD (M_PI/180.)
 #include <stdio.h>
 #include <stdlib.h>

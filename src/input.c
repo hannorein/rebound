@@ -90,7 +90,8 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
 	struct reb_simulation* r = malloc(sizeof(struct reb_simulation));
 #ifdef MPI
 	char filename_mpi[1024];
-	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
+#warning following code not working yet. mpi_id will be random number.
+	sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
 	FILE* inf = fopen(filename_mpi,"rb"); 
 #else // MPI
 	FILE* inf = fopen(filename,"rb"); 

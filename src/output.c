@@ -84,7 +84,7 @@ void reb_output_timing(struct reb_simulation* r, const double tmax){
 #ifdef MPI
 	int N_tot = 0;
 	MPI_Reduce(&N, &N_tot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD); 
-	if (mpi_id!=0) return;
+	if (r->mpi_id!=0) return;
 #else
 	int N_tot = N;
 #endif
@@ -164,7 +164,7 @@ void reb_output_ascii(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
-	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
+	sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
 	FILE* of = fopen(filename_mpi,"a"); 
 #else // MPI
 	FILE* of = fopen(filename,"a"); 
@@ -183,7 +183,7 @@ void reb_output_orbits(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
-	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
+	sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
 	FILE* of = fopen(filename_mpi,"a"); 
 #else // MPI
 	FILE* of = fopen(filename,"a"); 
@@ -203,7 +203,7 @@ void reb_output_orbits(struct reb_simulation* r, char* filename){
 void reb_output_binary(struct reb_simulation* r, char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
-	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
+	sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
 	FILE* of = fopen(filename_mpi,"wb"); 
 #else // MPI
 	FILE* of = fopen(filename,"wb"); 
@@ -220,7 +220,7 @@ void reb_output_binary_positions(struct reb_simulation* r, char* filename){
 	const int N = r->N;
 #ifdef MPI
 	char filename_mpi[1024];
-	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
+	sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
 	FILE* of = fopen(filename_mpi,"wb"); 
 #else // MPI
 	FILE* of = fopen(filename,"wb"); 
@@ -268,7 +268,7 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename){
 	MPI_Reduce(&N, &N_tot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD); 
 	MPI_Reduce(&A, &A_tot, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
 	MPI_Reduce(&Q, &Q_tot, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
-	if (mpi_id!=0) return;
+	if (r->mpi_id!=0) return;
 #else
 	int N_tot = N;
 	struct reb_vec3d A_tot = A;

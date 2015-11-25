@@ -53,10 +53,6 @@ void integrator_generate_constants(void);
 #include "integrator.h"
 #include "integrator_ias15.h"
 
-#ifdef MPI
-#error IAS15 integrator not working with MPI.
-#endif
-
 /**
  * @brief Struct containing pointers to intermediate values
  */

@@ -69,9 +69,9 @@ void reb_tree_add_particle_to_tree(struct reb_simulation* const r, int pt){
 	int rootbox = reb_get_rootbox_for_particle(r, p);
 #ifdef MPI
 	// Do not add particles that do not belong to this tree (avoid removing active particles)
-	int root_n_per_node = root_n/mpi_num;
+	int root_n_per_node = r->root_n/r->mpi_num;
 	int proc_id = rootbox/root_n_per_node;
-	if (proc_id!=mpi_id) return;
+	if (proc_id!=r->mpi_id) return;
 #endif 	// MPI
 	r->tree_root[rootbox] = reb_tree_add_particle_to_cell(r, r->tree_root[rootbox],pt,NULL,0);
 }
@@ -134,9 +134,10 @@ static int reb_reb_tree_get_octant_for_particle_in_cell(const struct reb_particl
   * @return 0 is particle is not in cell, 1 if it is.
   */
 static int reb_tree_particle_is_inside_cell(const struct reb_simulation* const r, struct reb_treecell *node){
-	if (fabs(r->particles[node->pt].x-node->x) > node->w/2. || \
-		fabs(r->particles[node->pt].y-node->y) > node->w/2. || \
-		fabs(r->particles[node->pt].z-node->z) > node->w/2.) {
+	if (fabs(r->particles[node->pt].x-node->x) > node->w/2. || 
+		fabs(r->particles[node->pt].y-node->y) > node->w/2. || 
+		fabs(r->particles[node->pt].z-node->z) > node->w/2. || 
+        isnan(r->particles[node->pt].y)) {
 		return 0;
 	}
 	return 1;
@@ -191,7 +192,9 @@ static struct reb_treecell *reb_tree_update_cell(struct reb_simulation* const r,
 		(r->N)--;
 		r->particles[oldpos] = r->particles[r->N];
 		r->particles[oldpos].c->pt = oldpos;
-		reb_add(r, reinsertme);
+        if (!isnan(reinsertme.y)){ // Do not reinsert if flagged for removal
+		    reb_add(r, reinsertme);
+        }
 		free(node);
 		return NULL; 
 	} else {
@@ -268,7 +271,7 @@ static void reb_tree_update_gravity_data_in_cell(const struct reb_simulation* co
 void reb_tree_update_gravity_data(struct reb_simulation* const r){
 	for(int i=0;i<r->root_n;i++){
 #ifdef MPI
-		if (communication_mpi_rootbox_is_local(i)==1){
+		if (reb_communication_mpi_rootbox_is_local(r, i)==1){
 #endif // MPI
 			if (r->tree_root[i]!=NULL){
 				reb_tree_update_gravity_data_in_cell(r, r->tree_root[i]);
@@ -286,13 +289,14 @@ void reb_tree_update(struct reb_simulation* const r){
 	for(int i=0;i<r->root_n;i++){
 
 #ifdef MPI
-		if (communication_mpi_rootbox_is_local(i)==1){
+		if (reb_communication_mpi_rootbox_is_local(r, i)==1){
 #endif // MPI
 			r->tree_root[i] = reb_tree_update_cell(r, r->tree_root[i]);
 #ifdef MPI
 		}
 #endif // MPI
 	}
+    r->tree_needs_update= 0;
 }
 static void reb_tree_delete_cell(struct reb_treecell* node){
 	if (node==NULL){
@@ -320,11 +324,11 @@ void reb_tree_delete(struct reb_simulation* const r){
   *
   * @param node is a pointer to a node cell.
   */
-int reb_particles_get_rootbox_for_node(struct reb_treecell* node){
-	int i = ((int)floor((node->x + boxsize.x/2.)/root_size)+root_nx)%root_nx;
-	int j = ((int)floor((node->y + boxsize.y/2.)/root_size)+root_ny)%root_ny;
-	int k = ((int)floor((node->z + boxsize.z/2.)/root_size)+root_nz)%root_nz;
-	int index = (k*root_ny+j)*root_nx+i;
+int reb_particles_get_rootbox_for_node(struct reb_simulation* const r, struct reb_treecell* node){
+	int i = ((int)floor((node->x + r->boxsize.x/2.)/r->root_size)+r->root_nx)%r->root_nx;
+	int j = ((int)floor((node->y + r->boxsize.y/2.)/r->root_size)+r->root_ny)%r->root_ny;
+	int k = ((int)floor((node->z + r->boxsize.z/2.)/r->root_size)+r->root_nz)%r->root_nz;
+	int index = (k*r->root_ny+j)*r->root_nx+i;
 	return index;
 }
 
@@ -357,22 +361,22 @@ void reb_tree_add_essential_node_to_node(struct reb_treecell* nnode, struct reb_
 	}
 }
 
-void reb_tree_add_essential_node(struct reb_treecell* node){
+void reb_tree_add_essential_node(struct reb_simulation* const r, struct reb_treecell* node){
 	// Add essential node to appropriate parent.
 	for (int o=0;o<8;o++){
 		node->oct[o] = NULL;	
 	}
-	int index = reb_particles_get_rootbox_for_node(node);
+	int index = reb_particles_get_rootbox_for_node(r, node);
 	if (r->tree_root[index]==NULL){
 		r->tree_root[index] = node;
 	}else{
 		reb_tree_add_essential_node_to_node(node, r->tree_root[index]);
 	}
 }
-void reb_tree_prepare_essential_tree_for_gravity(void){
-	for(int i=0;i<root_n;i++){
-		if (communication_mpi_rootbox_is_local(i)==1){
-			communication_mpi_prepare_essential_tree_for_gravity(r->tree_root[i]);
+void reb_tree_prepare_essential_tree_for_gravity(struct reb_simulation* const r){
+	for(int i=0;i<r->root_n;i++){
+		if (reb_communication_mpi_rootbox_is_local(r, i)==1){
+			reb_communication_mpi_prepare_essential_tree_for_gravity(r, r->tree_root[i]);
 		}else{
 			// Delete essential tree reference. 
 			// Tree itself is saved in tree_essential_recv[][] and
@@ -381,10 +385,10 @@ void reb_tree_prepare_essential_tree_for_gravity(void){
 		}
 	}
 }
-void reb_tree_prepare_essential_tree_for_collisions(void){
-	for(int i=0;i<root_n;i++){
-		if (communication_mpi_rootbox_is_local(i)==1){
-			communication_mpi_prepare_essential_tree_for_collisions(r->tree_root[i]);
+void reb_tree_prepare_essential_tree_for_collisions(struct reb_simulation* const r){
+	for(int i=0;i<r->root_n;i++){
+		if (reb_communication_mpi_rootbox_is_local(r, i)==1){
+			reb_communication_mpi_prepare_essential_tree_for_collisions(r, r->tree_root[i]);
 		}else{
 			// Delete essential tree reference. 
 			// Tree itself is saved in tree_essential_recv[][] and

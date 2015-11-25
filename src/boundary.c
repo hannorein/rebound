@@ -64,13 +64,14 @@ void reb_boundary_check(struct reb_simulation* const r){
 					removep = 1;
 				}
 				if (removep==1){
-					if (r->tree_root==NULL){
-						reb_remove(r, i,0); // keepSorted=0 by default in C version
-						i--; // need to recheck the particle that replaced the removed one
-						N--; // This is the local N
-					}else{
-						reb_exit("REBOUND currently cannot remove a particle from simulations using a tree.");
-					}
+                    reb_remove(r, i,0); // keepSorted=0 by default in C version
+                    if (r->tree_root==NULL){
+                        i--; // need to recheck the particle that replaced the removed one
+                        N--; // This is the local N
+                    }else{
+                        // particle just marked, will be removed later
+                        r->tree_needs_update= 1;
+                    }
 				}
 			}
 			break;

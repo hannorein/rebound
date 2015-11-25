@@ -29,6 +29,9 @@
 // Make sure M_PI is defined. 
 #define M_PI           3.14159265358979323846		///< The mathematical constant pi.
 #endif
+#ifdef MPI
+#include "mpi.h"
+#endif // MPI
 
 extern const char* reb_build_str;	///< Date and time build string.
 extern const char* reb_version_str;	///< Version string.
@@ -351,6 +354,7 @@ struct reb_simulation {
 	struct reb_vec3d* gravity_cs;	///< Vector containing the information for compensated gravity summation 
 	int 	gravity_cs_allocatedN;	///< Current number of allocated space for cs array
 	struct reb_treecell** tree_root;///< Pointer to the roots of the trees. 
+    int     tree_needs_update;  ///< Flag to force a tree update (after boundary check)
 	double opening_angle2;	 	///< Square of the cell opening angle \f$ \theta \f$. 
 	enum REB_STATUS status;		///< Set to 1 to exit the simulation at the end of the next timestep. 
 	int 	exact_finish_time; 	///< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. Default is 1. 
@@ -374,10 +378,34 @@ struct reb_simulation {
 	int 	root_nx;		///< Number of root boxes in x direction. Default: 1. 
 	int 	root_ny;		///< Number of root boxes in y direction. Default: 1. 
 	int 	root_nz;		///< Number of root boxes in z direction. Default: 1. 
-	int	nghostx;		///< Number of ghostboxes in x direction. 
+	int	    nghostx;		///< Number of ghostboxes in x direction. 
 	int 	nghosty;		///< Number of ghostboxes in y direction. 
 	int 	nghostz;		///< Number of ghostboxes in z direction. 
 	/** @} */
+#ifdef MPI
+	/**
+	 * \name Variables related to MPI 
+	 * @{
+	 */
+    int    mpi_id;                              ///< Unique id of this node (starting at 0). Used for MPI only.
+    int    mpi_num;                             ///< Number of MPI nodes. Used for MPI only.
+    MPI_Datatype mpi_particle;				    ///< MPI datatype corresponding to the C struct reb_particle. 
+    struct reb_particle** particles_send;		///< Send buffer for particles. There is one buffer per node. 
+    int*   particles_send_N;	                ///< Current length of particle send buffer. 
+    int*   particles_send_Nmax;	                ///< Maximal length of particle send beffer before realloc() is needed. 
+    struct reb_particle** particles_recv;		///< Receive buffer for particles. There is one buffer per node. 
+    int*   particles_recv_N;                    ///< Current length of particle receive buffer. 
+    int*   particles_recv_Nmax;                 ///< Maximal length of particle receive beffer before realloc() is needed. */
+
+    MPI_Datatype mpi_cell;						///< MPI datatype corresponding to the C struct reb_treecell. 
+    struct reb_treecell** tree_essential_send;	///< Send buffer for cells. There is one buffer per node. 
+    int*   tree_essential_send_N;               ///< Current length of cell send buffer. 
+    int*   tree_essential_send_Nmax;            ///< Maximal length of cell send beffer before realloc() is needed. 
+    struct reb_treecell** tree_essential_recv;  ///< Receive buffer for cells. There is one buffer per node. 
+    int*   tree_essential_recv_N;               ///< Current length of cell receive buffer. 
+    int*   tree_essential_recv_Nmax;            ///< Maximal length of cell receive beffer before realloc() is needed. 
+	/** @} */
+#endif // MPI
 
 	/**
 	 * \name Variables related to collision search and detection 
@@ -588,6 +616,18 @@ void reb_free_simulation(struct reb_simulation* const r);
  * @param r The rebound simulation to be freed
  */
 void reb_free_pointers(struct reb_simulation* const r);
+
+#ifdef MPI
+/**
+ * @brief Init MPI for simulation r
+ */
+void reb_mpi_init(struct reb_simulation* const r);
+
+/**
+ * @brief Finalize MPI for simulation r
+ */
+void reb_mpi_finalize(struct reb_simulation* const r);
+#endif // MPI
 
 /**
  * @cond PRIVATE

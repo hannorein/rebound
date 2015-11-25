@@ -78,13 +78,14 @@ void reb_step(struct reb_simulation* const r){
 	// Prepare particles for distribution to other nodes. 
 	// This function also creates the tree if called for the first time.
 	PROFILING_START()
-	if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE){
+	if (r->tree_needs_update || r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE){
+        // Update tree (this will remove particles which left the box)
 		reb_tree_update(r);          
 	}
 
 #ifdef MPI
 	// Distribute particles and add newly received particles to tree.
-	communication_mpi_distribute_particles();
+	reb_communication_mpi_distribute_particles(r);
 #endif // MPI
 
 	if (r->tree_root!=NULL && r->gravity==REB_GRAVITY_TREE){
@@ -92,10 +93,10 @@ void reb_step(struct reb_simulation* const r){
 		reb_tree_update_gravity_data(r); 
 #ifdef MPI
 		// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
-		reb_tree_prepare_essential_tree_for_gravity();
+		reb_tree_prepare_essential_tree_for_gravity(r);
 
 		// Transfer essential tree and particles needed for collisions.
-		communication_mpi_distribute_essential_tree_for_gravity();
+		reb_communication_mpi_distribute_essential_tree_for_gravity(r);
 #endif // MPI
 	}
 
@@ -119,17 +120,19 @@ void reb_step(struct reb_simulation* const r){
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
 	// Do collisions here. We need both the positions and velocities at the same time.
-#ifndef COLLISIONS_NONE
 	// Check for root crossings.
 	PROFILING_START()
 	reb_boundary_check(r);     
+	if (r->tree_needs_update){
+        // Update tree (this will remove particles which left the box)
+		reb_tree_update(r);          
+	}
 	PROFILING_STOP(PROFILING_CAT_BOUNDARY)
 
 	// Search for collisions using local and essential tree.
 	PROFILING_START()
 	reb_collision_search(r);
 	PROFILING_STOP(PROFILING_CAT_COLLISION)
-#endif  // COLLISIONS_NONE
 }
 
 void reb_exit(const char* const msg){
@@ -160,6 +163,23 @@ void reb_configure_box(struct reb_simulation* const r, const double root_size, c
 		reb_exit("Number of root boxes must be greater or equal to 1 in each direction.");
 	}
 }
+#ifdef MPI
+void reb_mpi_init(struct reb_simulation* const r){
+    reb_communication_mpi_init(r,0,NULL);
+	// Make sure domain can be decomposed into equal number of root boxes per node.
+	if ((r->root_n/r->mpi_num)*r->mpi_num != r->root_n){
+		if (r->mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",r->root_n,r->mpi_num);
+		exit(-1);
+	}
+	printf("MPI-node: %d. Process id: %d.\n",r->mpi_id, getpid());
+}
+
+void reb_mpi_finalize(struct reb_simulation* const r){
+    r->mpi_id = 0;
+    r->mpi_num = 0;
+    MPI_Finalize();
+}
+#endif // MPI
 
 static void set_dp7_null(struct reb_dp7 * dp){
 	dp->p0 = NULL;
@@ -305,16 +325,27 @@ void reb_init_simulation(struct reb_simulation* r){
 	r->ri_hybrid.mode = SYMPLECTIC;
 
 	// Tree parameters. Will not be used unless gravity or collision search makes use of tree.
+    r->tree_needs_update= 0;
 	r->tree_root		= NULL;
 	r->opening_angle2	= 0.25;
 
 #ifdef MPI
-	// Make sure domain can be decomposed into equal number of root boxes per node.
-	if ((root_n/mpi_num)*mpi_num != root_n){
-		if (mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",root_n,mpi_num);
-		exit(-1);
-	}
-	printf("MPI-node: %d. Process id: %d.\n",mpi_id, getpid());
+    r->mpi_id = 0;                            
+    r->mpi_num = 0;                           
+    r->particles_send = NULL;  
+    r->particles_send_N = 0;	              
+    r->particles_send_Nmax = 0;	              
+    r->particles_recv = NULL;	  
+    r->particles_recv_N = 0;                  
+    r->particles_recv_Nmax = 0;               
+    
+    r->tree_essential_send = NULL;
+    r->tree_essential_send_N = 0;             
+    r->tree_essential_send_Nmax = 0;          
+    r->tree_essential_recv = NULL;
+    r->tree_essential_recv_N = 0;             
+    r->tree_essential_recv_Nmax = 0;          
+
 #else // MPI
 #ifndef LIBREBOUND
 	printf("Process id: %d.\n", getpid());
@@ -330,12 +361,10 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
 		// Wait for user to disable paused simulation
 		usleep(1000);
 	}
+	const double dtsign = copysign(1.,r->dt); 	// Used to determine integration direction
 	if (r->status>=0){
 		// Exit now.
-		return r->status;
-	}
-	const double dtsign = copysign(1.,r->dt); 	// Used to determine integration direction
-	if(tmax!=INFINITY){
+	}else if(tmax!=INFINITY){
 		if(r->exact_finish_time==1){
 			if ((r->t+r->dt)*dtsign>=tmax*dtsign){  // Next step would overshoot
 				double tscale = 1e-12*fabs(tmax);	// Find order of magnitude for time
@@ -373,10 +402,19 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
 			}
 		}
 	}
+#ifndef MPI
 	if (r->N<=0){
 		reb_warning("No particles found. Will exit.");
 		r->status = REB_EXIT_NOPARTICLES; // Exit now.
 	}
+#else
+	int status_max = 0;
+	MPI_Allreduce(&(r->status), &status_max, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD); 
+    if (status_max>=0){
+        r->status = status_max;
+    }
+
+#endif // MPI
 	return r->status;
 }
 
@@ -420,20 +458,30 @@ void reb_run_heartbeat(struct reb_simulation* const r){
 }
 
 enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
+#ifdef MPI
+	// Distribute particles
+	reb_communication_mpi_distribute_particles(r_user);
+#endif // MPI
 #ifdef OPENGL
 	// Copy and share simulation struct 
 	struct reb_simulation* const r = (struct reb_simulation*)mmap(r_user, sizeof(struct reb_simulation), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
 	memcpy(r, r_user, sizeof(struct reb_simulation));
 	
 	// Copy and share particle array
-	r->particles = (struct reb_particle*)mmap(NULL, r->N*sizeof(struct reb_particle), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
-	memcpy(r->particles, r_user->particles, r->N*sizeof(struct reb_particle));
+	r->particles = (struct reb_particle*)mmap(NULL, r->allocatedN*sizeof(struct reb_particle), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
+	memcpy(r->particles, r_user->particles, r->allocatedN*sizeof(struct reb_particle));
 
 
 	// Create Semaphore
-	sem_unlink("reb_display"); // unlink first
+#ifdef MPI
+    char sem_name[256];
+    sprintf(sem_name,"/reb_display_%d;",r_user->mpi_id);
+#else // MPI
+    char sem_name[256] = "reb_display";
+#endif // MPI
+	sem_unlink(sem_name); // unlink first
 	sem_t* display_mutex;
-	if ((display_mutex = sem_open("reb_display", O_CREAT | O_EXCL, 0666, 1))==SEM_FAILED){
+	if ((display_mutex = sem_open(sem_name, O_CREAT | O_EXCL, 0666, 1))==SEM_FAILED){
 		perror("sem_open");
 		exit(EXIT_FAILURE);
 	}
@@ -503,7 +551,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 #ifdef OPENGL
 	int status;
 	wait(&status);
-	sem_unlink("reb_display");
+	sem_unlink(sem_name);
 	sem_close(display_mutex);
 	struct reb_particle* const particles_user_loc = r_user->particles;
 	memcpy(r_user, r, sizeof(struct reb_simulation));
