@@ -336,8 +336,8 @@ struct reb_variational_configuration{
     int order;
     int index;
     int testparticle;
-    int var_config_1st_order_a;
-    int var_config_1st_order_b;
+    int index_1st_order_a;
+    int index_1st_order_b;
 };
 
 

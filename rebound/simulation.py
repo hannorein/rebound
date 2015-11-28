@@ -25,6 +25,13 @@ class reb_vec3d(Structure):
                 ("y", c_double),
                 ("z", c_double)]
 
+class reb_variational_configuration(Structure):
+    _fields_ = [("order", c_int),
+                ("index", c_int),
+                ("testparticle", c_int),
+                ("index_1st_order_a", c_int),
+                ("index_1st_order_b", c_int)]
+
 class reb_dp7(Structure):
     _fields_ = [("p0", POINTER(c_double)),
                 ("p1", POINTER(c_double)),
@@ -502,6 +509,13 @@ class Simulation(Structure):
             units_convert_particle(p, self._units['length'], self._units['time'], self._units['mass'], new_l, new_t, new_m)
         self.update_units((new_l, new_t, new_m))
 
+# Variational Equations
+    def add_var_1st_order(self,testparticle=-1):
+        clibrebound.reb_add_var_1st_order.restype = c_int
+        index = clibrebound.reb_add_var_1st_order(byref(self),c_int(testparticle))
+        return index
+        
+
 # MEGNO
     def init_megno(self, delta):
         """
@@ -872,6 +886,8 @@ Simulation._fields_ = [("t", c_double),
                 ("dt_last_done", c_double),
                 ("N", c_int),
                 ("N_var", c_int),
+                ("var_N", c_int),
+                ("var_config", POINTER(reb_variational_configuration)),
                 ("N_active", c_int),
                 ("allocated_N", c_int),
                 ("_particles", POINTER(Particle)),
