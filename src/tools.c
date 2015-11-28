@@ -491,7 +491,6 @@ void reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int
 
 #ifndef LIBREBOUNDX
 void reb_tools_megno_init(struct reb_simulation* const r, double delta){
-	int N_var = r->N;
 	r->calculate_megno = 1;
 	r->megno_Ys = 0.;
 	r->megno_Yss = 0.;
@@ -500,26 +499,30 @@ void reb_tools_megno_init(struct reb_simulation* const r, double delta){
 	r->megno_n = 0;
 	r->megno_mean_Y = 0;
 	r->megno_mean_t = 0;
-        for (int i=0;i<N_var;i++){ 
-                struct reb_particle megno = {
-			.m  = r->particles[i].m,
-			.x  = reb_random_normal(1.),
-			.y  = reb_random_normal(1.),
-			.z  = reb_random_normal(1.),
-			.vx = reb_random_normal(1.),
-			.vy = reb_random_normal(1.),
-			.vz = reb_random_normal(1.) };
-		double deltad = delta/sqrt(megno.x*megno.x + megno.y*megno.y + megno.z*megno.z + megno.vx*megno.vx + megno.vy*megno.vy + megno.vz*megno.vz); // rescale
-		megno.x *= deltad;
-		megno.y *= deltad;
-		megno.z *= deltad;
-		megno.vx *= deltad;
-		megno.vy *= deltad;
-		megno.vz *= deltad;
-
-                reb_add(r, megno);
-        }
-	r->N_var = N_var;
+    int i = reb_add_var_1st_order(r,-1);
+    struct reb_particle* const particles = r->particles;
+    for (;i<r->N;i++){ 
+        particles[i].m  = 0.;
+		particles[i].x  = reb_random_normal(1.);
+		particles[i].y  = reb_random_normal(1.);
+		particles[i].z  = reb_random_normal(1.);
+		particles[i].vx = reb_random_normal(1.);
+		particles[i].vy = reb_random_normal(1.);
+		particles[i].vz = reb_random_normal(1.);
+		double deltad = delta/sqrt(
+                particles[i].x*particles[i].x 
+                + particles[i].y*particles[i].y 
+                + particles[i].z*particles[i].z 
+                + particles[i].vx*particles[i].vx 
+                + particles[i].vy*particles[i].vy 
+                + particles[i].vz*particles[i].vz); // rescale
+		particles[i].x *= deltad;
+		particles[i].y *= deltad;
+		particles[i].z *= deltad;
+		particles[i].vx *= deltad;
+		particles[i].vy *= deltad;
+		particles[i].vz *= deltad;
+    }
 }
 double reb_tools_calculate_megno(struct reb_simulation* r){ // Returns the MEGNO <Y>
 	if (r->t==0.) return 0.;
