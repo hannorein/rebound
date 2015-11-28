@@ -330,6 +330,19 @@ struct reb_collision{
 	int ri;	 		///< Index of rootcell (needed for MPI only).
 };
 
+
+
+struct reb_variational_configuration{
+    int order;
+    int index;
+    int testparticle;
+    int var_config_1st_order_a;
+    int var_config_1st_order_b;
+};
+
+
+
+
 /**
  * @brief Main struct encapsulating one entire REBOUND simulation
  * @details This structure contains all variables, status flags and pointers of one 
@@ -348,6 +361,8 @@ struct reb_simulation {
 	double 	dt_last_done;		///< Last dt used by integrator
 	int 	N;			///< Current number of particles on this node. 
 	int 	N_var;			///< Number of variational particles. Default: 0.
+    int     var_N;
+    struct reb_variational_configuration* var_config;
 	int 	N_active;		///< Number of massive particles included in force calculation. Default: N.
 	int 	allocatedN;		///< Current maximum space allocated in the particles array on this node. 
 	struct reb_particle* particles;	///< Main particle array. This contains all particles on this node.  

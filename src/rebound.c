@@ -277,6 +277,8 @@ void reb_init_simulation(struct reb_simulation* r){
 	r->allocatedN	= 0;	
 	r->N_active 	= -1; 	
 	r->N_var 	= 0; 	
+	r->var_N 	= 0; 	
+	r->var_config 	= NULL; 	
 	r->exit_min_distance 	= 0; 	
 	r->exit_max_distance 	= 0; 	
 	r->max_radius[0]	= 0.; 	
