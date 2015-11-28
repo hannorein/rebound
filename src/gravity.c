@@ -304,7 +304,45 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                             particles_var1[j].ax -= Gmi * dax - dGmi*r3inv*dx;
                             particles_var1[j].ay -= Gmi * day - dGmi*r3inv*dy;
                             particles_var1[j].az -= Gmi * daz - dGmi*r3inv*dz; 
-                            }
+                        }
+                        }
+                    }else{ //testparticle
+                        int i = vc.testparticle;
+                        particles_var1[0].ax = 0.; 
+                        particles_var1[0].ay = 0.; 
+                        particles_var1[0].az = 0.; 
+                        for (int j=0; j<_N_real; j++){
+                            if (i==j) continue;
+                            if (_gravity_ignore_10 && ((i==1 && j==0) || (j==1 && i==0)) ) continue;
+                            const double dx = particles[i].x - particles[j].x;
+                            const double dy = particles[i].y - particles[j].y;
+                            const double dz = particles[i].z - particles[j].z;
+                            const double r2 = dx*dx + dy*dy + dz*dz;
+                            const double _r  = sqrt(r2);
+                            const double r3inv = 1./(r2*_r);
+                            const double r5inv = 3.*r3inv/r2;
+                            const double ddx = particles_var1[0].x;
+                            const double ddy = particles_var1[0].y;
+                            const double ddz = particles_var1[0].z;
+                            const double Gmj = G * particles[j].m;
+
+                            // Variational equations
+                            const double dxdx = dx*dx*r5inv - r3inv;
+                            const double dydy = dy*dy*r5inv - r3inv;
+                            const double dzdz = dz*dz*r5inv - r3inv;
+                            const double dxdy = dx*dy*r5inv;
+                            const double dxdz = dx*dz*r5inv;
+                            const double dydz = dy*dz*r5inv;
+                            const double dax =   ddx * dxdx + ddy * dxdy + ddz * dxdz;
+                            const double day =   ddx * dxdy + ddy * dydy + ddz * dydz;
+                            const double daz =   ddx * dxdz + ddy * dydz + ddz * dzdz;
+
+                            // No variational mass contributions for test particles!
+
+                            particles_var1[0].ax += Gmj * dax;
+                            particles_var1[0].ay += Gmj * day;
+                            particles_var1[0].az += Gmj * daz;
+
                         }
                     }
                 }
