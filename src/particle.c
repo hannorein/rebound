@@ -63,9 +63,6 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
 }
 
 void reb_add(struct reb_simulation* const r, struct reb_particle pt){
-	if (r->N_var){
-		reb_warning("Trying to add particle after calling megno_init().");
-	}
 #ifndef COLLISIONS_NONE
 	if (pt.r>=r->max_radius[0]){
 		r->max_radius[1] = r->max_radius[0];
