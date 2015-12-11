@@ -46,9 +46,9 @@ with open("doc/conf.py") as f:
     conflines = f.readlines()
     for i,l  in enumerate(conflines):
         if "version =" in l:
-            conflines[i] = "version = "+shortversion+"\n"
+            conflines[i] = "version = '"+shortversion+"'\n"
         if "release =" in l:
-            conflines[i] = "release = "+reboundversion+"\n"
+            conflines[i] = "release = '"+reboundversion+"'\n"
 
     with open("doc/conf.py", "w") as f:
         f.writelines(conflines)
