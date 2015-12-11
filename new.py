@@ -2,7 +2,7 @@
 # Deborah Lokhorst
 # Resonances of Jupiter's moons, Io, Europa, and Ganymede
 
-# In this example, the four Galilean moons of Jupiter are downloaded from HORIZONS 
+# In this example, the four Galilean moons of Jupiter are downloaded from HORIZONS
 # and their orbits are integrated forwards in time.  This is a well-known example of a
 # 1:2:4 resonance in orbitting bodies.
 # We will perform an FFT on their positions in their orbits with time, to look for the
@@ -38,7 +38,7 @@ import matplotlib.pyplot as plt
 # a star symbol (not completely representative of this case, but it'll do).
 fig = rebound.OrbitPlot(sim, unitlabel="[AU]", color=True, trails=True, periastron=True)
 
-# This example uses the whfast integrator since no close encounters are expected.  
+# This example uses the whfast integrator since no close encounters are expected.
 # The timestep is set to about 10% of one of Io's orbits.
 sim.integrator = "whfast"
 sim.dt = 0.00008  # 10% of one day (since Io's orbit is about 2 days)
@@ -46,7 +46,7 @@ Nout = 1000000    # number of points to display
 tmax = 80         # let the simulation run for 80 years
 Nmoons = 4
 
-# As was done in the Fourier Transforms and Resonances example, we set up several arrays to 
+# As was done in the Fourier Transforms and Resonances example, we set up several arrays to
 # hold values as the simulation runs.  This includes the positions of the moons, their semi-major
 # axes, eccentricities, mean longitudes, and longitude of pericentres.
 x = np.zeros((Nmoons,Nout))
@@ -65,7 +65,7 @@ for i,time in enumerate(times):
     # symplectic nature.  Not a big deal here.
     os = sim.calculate_orbits()
     for j in range(Nmoons):
-        x[j][i] = ps[j+1].x 
+        x[j][i] = ps[j+1].x
         a[j][i] = os[j].a
         ecc[j][i] = os[j].e
         longitude[j][i] = os[j].l
@@ -77,7 +77,7 @@ for i,time in enumerate(times):
 # Galilean moon, Callisto, which is shown for comparison in cyan.
 # The three inner moons are in resonance, 1:2:4, but Callisto is not quite in resonance with them.
 
-# Also visible is the gradual change in eccentricity as a function of time: Callisto's eccentricity is decreasing and 
+# Also visible is the gradual change in eccentricity as a function of time: Callisto's eccentricity is decreasing and
 # Ganymede's eccentricity is increasing.  The secular change in their eccentricities is due to the periodic perturbation
 # caused by their orbital resonances.
 
@@ -116,13 +116,13 @@ ax.tick_params(labelsize=20)
 plt.legend();
 
 # Resonances are identified by looking at the resonant arguments: theta = (p + q)lambda_out - p lambda_in - q omega_out
-# If these resonant arguments oscillate but are constrained within some range of angles, then 
+# If these resonant arguments oscillate but are constrained within some range of angles, then
 # there is a resonance between the inner and outer bodies.
 # The trick is to find what the values of q and p are.  For our case, we have two 2:1 resonances between the moons,
 # so their resonant arguments would follow the function:
 #    theta = 2*lambda_out - lambda_in - omega_out
 
-# To make the plotting easier, we can borrow this helper function (puts angles into 0 to 360 degrees) 
+# To make the plotting easier, we can borrow this helper function (puts angles into 0 to 360 degrees)
 # from the other example (Fourier Transforms and Resonances), and define a new one that puts angles
 # into -180 to 180 degrees.
 
@@ -147,7 +147,7 @@ theta_sec = [zeroTo360(-varpi[1][i] + varpi[0][i]) for i in range(Nout)]
 
 fig = plt.figure(figsize=(12,5))
 ax = plt.subplot(111)
-ax.plot(times,theta)  
+ax.plot(times,theta)
 
 ax.plot(times,theta_sec) # secular resonance argument
 ax.set_xlim([0,20.])
@@ -224,9 +224,6 @@ ax.tick_params(labelsize=20)
 
 # The spike at about 0.005 years is just the oscillations from the orbit
 # of the moon, Io.
-# The other spikes around around 1 year are from the MMR of the moons: 
+# The other spikes around around 1 year are from the MMR of the moons:
 # the largest spike at ~1.3 years is the from the 1:2 resonance of the
 # two inner moons, Io and Europa.
-
-
-
