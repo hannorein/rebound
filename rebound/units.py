@@ -6,8 +6,10 @@ G_SI = 6.674e-11
 times_SI = {'s':1.,
     'hr':3600.,
     'day': 86400.,
+    'days': 86400.,
     'd': 86400.,
     'yr':31557600., # Julian year (exact)
+    'yrs':31557600., 
     'jyr':31557600.,
     'sidereal_yr':31558149.7635,
     'yr2pi':math.sqrt(149597870700.**3/1.3271244004193938e20), # chosen to make G=1
@@ -17,12 +19,15 @@ times_SI = {'s':1.,
 lengths_SI =  {'m':1.,
     'cm':0.01,
     'km':1000.,
-    'au':149597870700.}
+    'au':149597870700.,
+    'aus':149597870700.
+    }
 
     #What we measure accurately is GM, so set mass units such that G*M gives the value of GM in horizons.py (in the list at the end of horizons.py, the NAIF codes ending in 99 refer to the planets, single digits to the total mass of the planet plus its moons).  Have to multiply by 10**9 since that list has G in kg^-1km^3/s^2 and we use SI.
 
 masses_SI = {'kg':1.,
     'msun':1.3271244004193938E+11/G_SI*10**9,
+    'msolar':1.3271244004193938E+11/G_SI*10**9,
     'mmercury':2.2031780000000021E+04/G_SI*10**9,
     'mvenus':3.2485859200000006E+05/G_SI*10**9,
     'mearth':3.9860043543609598E+05/G_SI*10**9,
