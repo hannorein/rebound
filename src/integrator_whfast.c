@@ -713,7 +713,7 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
                 particles_var1[1].ay -= Gmi * day;
                 particles_var1[1].az -= Gmi * daz;
 
-                // TODO Need to add mass terms.
+                // TODO Need to add mass terms. Also need to add them to tangent map above.
 
             }else{
                 reb_exit("WHFast/MEGNO only supports first order variational equations.");

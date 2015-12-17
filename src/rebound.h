@@ -331,16 +331,22 @@ struct reb_collision{
 };
 
 
-
+/**
+ * @brief Struct describing the properties of a set of variational equations.
+ * @details One struct descibes one or more sets of variational equations.
+ * If testparticle is set to -1, then it is assumed that all particles are massive
+ * and influence all other particles. If testparticle is >=0 then the particle
+ * with that index is assumed to be a testparticle, i.e. it does not influence
+ * other particles. For second order variational equation, index_1st_order_a/b 
+ * is the index in the particle array that corresponds to the 1st order variational equations.
+ */
 struct reb_variational_configuration{
-    int order;
-    int index;
-    int testparticle;
-    int index_1st_order_a;
-    int index_1st_order_b;
+    int order;                  ///< Order of the variational equation. 1 or 2. 
+    int index;                  ///< Index of the first variational particle in the particles array.
+    int testparticle;           ///< Is this variational configuration describe a test particle? -1 if not.
+    int index_1st_order_a;      ///< Used for 2nd order variational particles only: Index of the first first order variational particle in the particles array.
+    int index_1st_order_b;      ///< Used for 2nd order variational particles only: Index of the first first order variational particle in the particles array.
 };
-
-
 
 
 /**
