@@ -668,50 +668,62 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
 	r->t+=_dt2;
 	r->dt_last_done = r->dt;
 
-	if (r->calculate_megno){
-		reb_integrator_whfast_synchronize(r);
-		ri_whfast->p_j[N_var].x += _dt2*ri_whfast->p_j[N_var].vx;
-		ri_whfast->p_j[N_var].y += _dt2*ri_whfast->p_j[N_var].vy;
-		ri_whfast->p_j[N_var].z += _dt2*ri_whfast->p_j[N_var].vz;
-		to_inertial_posvel(particles+N_var, ri_whfast->p_j+N_var, ri_whfast->eta, particles, N-N_var);
-		reb_calculate_acceleration_var(r);
-		// Add additional acceleration term for MEGNO calculation
-		int i = N-N_var;
-		int j = N-N_var+1;
-		const double dx = particles[i-N/2].x - particles[j-N/2].x;
-		const double dy = particles[i-N/2].y - particles[j-N/2].y;
-		const double dz = particles[i-N/2].z - particles[j-N/2].z;
-		const double r2 = dx*dx + dy*dy + dz*dz + r->softening*r->softening;
-		const double _r  = sqrt(r2);
-		const double r3inv = 1./(r2*_r);
-		const double r5inv = 3.*r3inv/r2;
-		const double ddx = particles[i].x - particles[j].x;
-		const double ddy = particles[i].y - particles[j].y;
-		const double ddz = particles[i].z - particles[j].z;
-		const double Gmi = r->G * particles[i].m;
-		const double Gmj = r->G * particles[j].m;
-		const double dax =   ddx * ( dx*dx*r5inv - r3inv )
-				   + ddy * ( dx*dy*r5inv )
-				   + ddz * ( dx*dz*r5inv );
-		const double day =   ddx * ( dy*dx*r5inv )
-				   + ddy * ( dy*dy*r5inv - r3inv )
-				   + ddz * ( dy*dz*r5inv );
-		const double daz =   ddx * ( dz*dx*r5inv )
-				   + ddy * ( dz*dy*r5inv )
-				   + ddz * ( dz*dz*r5inv - r3inv );
-		
-		particles[i].ax += Gmj * dax;
-		particles[i].ay += Gmj * day;
-		particles[i].az += Gmj * daz;
-		
-		particles[j].ax -= Gmi * dax;
-		particles[j].ay -= Gmi * day;
-		particles[j].az -= Gmi * daz;
+	
+    if (r->calculate_megno){
+        // Need to have x,v,a synchronized to calculate ddot/d for MEGNO. 
+        reb_integrator_whfast_synchronize(r);
+        // Add additional acceleration term for MEGNO calculation
+        for (int v=0;v<r->var_config_N;v++){
+            struct reb_variational_configuration const vc = r->var_config[v];
+            if (vc.order==1){
+                struct reb_particle* const particles_var1 = particles + vc.index;
+                // Centre of mass
+                ri_whfast->p_j[N_var].x += _dt2*ri_whfast->p_j[N_var].vx;
+                ri_whfast->p_j[N_var].y += _dt2*ri_whfast->p_j[N_var].vy;
+                ri_whfast->p_j[N_var].z += _dt2*ri_whfast->p_j[N_var].vz;
+                to_inertial_posvel(particles_var1, ri_whfast->p_j+N_var, ri_whfast->eta, particles, N-N_var);
+                reb_calculate_acceleration_var(r);
+                const double dx = particles[0].x - particles[1].x;
+                const double dy = particles[0].y - particles[1].y;
+                const double dz = particles[0].z - particles[1].z;
+                const double r2 = dx*dx + dy*dy + dz*dz + r->softening*r->softening;
+                const double _r  = sqrt(r2);
+                const double r3inv = 1./(r2*_r);
+                const double r5inv = 3.*r3inv/r2;
+                const double ddx = particles_var1[0].x - particles_var1[1].x;
+                const double ddy = particles_var1[0].y - particles_var1[1].y;
+                const double ddz = particles_var1[0].z - particles_var1[1].z;
+                const double Gmi = r->G * particles[0].m;
+                const double Gmj = r->G * particles[1].m;
+                const double dax =   ddx * ( dx*dx*r5inv - r3inv )
+                           + ddy * ( dx*dy*r5inv )
+                           + ddz * ( dx*dz*r5inv );
+                const double day =   ddx * ( dy*dx*r5inv )
+                           + ddy * ( dy*dy*r5inv - r3inv )
+                           + ddz * ( dy*dz*r5inv );
+                const double daz =   ddx * ( dz*dx*r5inv )
+                           + ddy * ( dz*dy*r5inv )
+                           + ddz * ( dz*dz*r5inv - r3inv );
+                
+                particles_var1[0].ax += Gmj * dax;
+                particles_var1[0].ay += Gmj * day;
+                particles_var1[0].az += Gmj * daz;
+                
+                particles_var1[1].ax -= Gmi * dax;
+                particles_var1[1].ay -= Gmi * day;
+                particles_var1[1].az -= Gmi * daz;
 
-		// Update MEGNO in middle of timestep as we need synchonized x/v/a.
-		double dY = r->dt * 2. * r->t * reb_tools_megno_deltad_delta(r);
-		reb_tools_megno_update(r, dY);
-	}
+                // TODO Need to add mass terms.
+
+            }else{
+                reb_exit("WHFast/MEGNO only supports first order variational equations.");
+            }
+        }
+
+        // Update MEGNO in middle of timestep as we need synchonized x/v/a.
+        double dY = r->dt * 2. * r->t * reb_tools_megno_deltad_delta(r);
+        reb_tools_megno_update(r, dY);
+    }
 }
 	
 void reb_integrator_whfast_reset(struct reb_simulation* const r){
