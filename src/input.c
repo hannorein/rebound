@@ -113,6 +113,7 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
 		fclose(inf);
 	}else{
 		printf("Can not open file '%s'\n.",filename);
+        free(r);
 		return NULL;
 	}
     for(int i=0; i<r->N; i++){
