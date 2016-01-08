@@ -566,6 +566,9 @@ class Simulation(Structure):
         if particle is not None:
             if isinstance(particle, Particle):
                 if kwargs == {}: # copy particle
+                    if (self.gravity == "tree" or self.collision == "tree") and self.root_size <=0.:
+                        raise ValueError("The tree code for gravity and/or collision detection has been selected. However, the simulation box has not been configured yet. You cannot add particles until the the simulation box has a finite size.")
+
                     clibrebound.reb_add(byref(self), particle)
                 else: # use particle as primary
                     self.add(Particle(simulation=self, primary=particle, **kwargs))
