@@ -255,6 +255,15 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
 		case REB_GRAVITY_NONE: // Do nothing.
 		break;
 		case REB_GRAVITY_COMPENSATED:
+        {
+			struct reb_vec3d* restrict const cs = r->gravity_cs;
+#pragma omp parallel for schedule(guided)
+			for (int i=_N_real; i<N; i++){
+				cs[i].x = 0.;
+				cs[i].y = 0.;
+				cs[i].z = 0.;
+			}
+        }
 		case REB_GRAVITY_BASIC:
             for (int v=0;v<r->var_config_N;v++){
                 struct reb_variational_configuration const vc = r->var_config[v];
