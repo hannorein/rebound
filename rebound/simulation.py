@@ -510,9 +510,20 @@ class Simulation(Structure):
         self.update_units((new_l, new_t, new_m))
 
 # Variational Equations
-    def add_var_1st_order(self,testparticle=-1):
-        clibrebound.reb_add_var_1st_order.restype = c_int
-        index = clibrebound.reb_add_var_1st_order(byref(self),c_int(testparticle))
+    def add_variational(self,order=1,index_1st_order_a=None, index_1st_order_b=None, testparticle=-1):
+        if order==1:
+            clibrebound.reb_add_var_1st_order.restype = c_int
+            index = clibrebound.reb_add_var_1st_order(byref(self),c_int(testparticle))
+        elif order==2:
+            if index_1st_order_a is None or index_1st_order_b is None:
+                raise AttributeError("You need to specify corresponding first order variational equations when initializing second order variational equations.")
+            clibrebound.reb_add_var_2nd_order.restype = c_int
+            index = clibrebound.reb_add_var_2nd_order(byref(self),c_int(testparticle),c_int(index_1st_order_a),c_int(index_1st_order_b))
+
+            pass
+        else:
+            raise AttributeError("Only variational equations of first and second order are supported.")
+
         return index
         
 
