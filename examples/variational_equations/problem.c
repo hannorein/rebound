@@ -1,0 +1,58 @@
+/**
+ * Variational Equations
+ * 
+ * This example shows how to use first and second
+ * order variational equations.
+ */
+#include "rebound.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+
+struct reb_simulation* create_sim(){
+	struct reb_simulation* r = reb_create_simulation();
+    struct reb_particle star = {0.};
+    star.m = 1;
+    reb_add(r, star);
+    struct reb_particle planet = reb_tools_orbit_to_particle(1.,star,1e-3,1.,0.,0.,0.,0.,0.);
+    reb_add(r, planet);
+    struct reb_particle testparticle = reb_tools_orbit_to_particle(1.,star,0.,1.7,0.,0.,0.,0.,0.);
+    reb_add(r, testparticle);
+    reb_move_to_com(r);
+    return r;
+}
+
+int main(int argc, char* argv[]) {
+	struct reb_simulation* r;
+    double DeltaX = 0.001;
+    int var_i, var_ii;
+
+    r = create_sim();
+	reb_integrate(r,100.);
+    printf("Position of testparticle at t=100:                       %.8f %.8f\n",r->particles[2].x,r->particles[2].y);
+    reb_free_simulation(r);
+    
+    r = create_sim();
+    r->particles[1].x += DeltaX;
+	reb_integrate(r,100.);
+    printf("Position of testparticle at t=100 in shifted simulation: %.8f %.8f\n",r->particles[2].x,r->particles[2].y);
+    reb_free_simulation(r);
+    
+    
+    r = create_sim();
+    var_i = reb_add_var_1st_order(r, -1);
+    r->particles[var_i+1].x = 1.;
+	reb_integrate(r,100.);
+    printf("Position of testparticle at t=100 using 1st var. eqs.:   %.8f %.8f\n",r->particles[2].x+DeltaX*r->particles[var_i+2].x,r->particles[2].y+DeltaX*r->particles[var_i+2].y);
+    reb_free_simulation(r);
+
+    r = create_sim();
+    var_i = reb_add_var_1st_order(r, -1);
+    var_ii = reb_add_var_2nd_order(r, -1, var_i, var_i);
+    r->particles[var_i+1].x = 1.;
+	reb_integrate(r,100.);
+    printf("Position of testparticle at t=100 using 2nd var. eqs.:   %.8f %.8f\n",r->particles[2].x+DeltaX*r->particles[var_i+2].x+DeltaX*DeltaX/2.*r->particles[var_ii+2].x,r->particles[2].y+DeltaX*r->particles[var_i+2].y+DeltaX*DeltaX/2.*r->particles[var_ii+2].y);
+    reb_free_simulation(r);
+
+}
+
