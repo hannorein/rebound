@@ -1027,6 +1027,29 @@ int reb_read_int(int argc, char** argv, const char* argument, int _default);
  */
 double reb_tools_energy(struct reb_simulation* r);
 
+/**
+ * @brief Add and initialize a set of first order variational particles
+ * @param r The rebound simulation to be considered
+ * @param testparticle This flag determines if the set of variational particles is for a testparticle or not.
+ * If testparticle is >= 0, then only one variational particle (the test particle) will be added.
+ * If testparticle is -1, one variational particle for each real particle will be added.
+ * @return Returns the index of the first variational particle added
+ **/
+int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle);
+
+/**
+ * @brief Add and initialize a set of second order variational particles
+ * @details Note that a set of second order variational particles requires two sets of first order variational equations.
+ * @param r The rebound simulation to be considered
+ * @param testparticle This flag determines if the set of variational particles is for a testparticle or not.
+ * If testparticle is >= 0, then only one variational particle (the test particle) will be added.
+ * If testparticle is -1, one variational particle for each real particle will be added.
+ * @param index_1st_order_a The index of the corresponding first variational particles.
+ * @param index_1st_order_b The index of the corresponding first variational particles.
+ * @return Returns the index of the first variational particle added
+ **/
+int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b);
+
 /** 
  * @brief Init the MEGNO particles, enable MEGNO calculation
  * @param delta The initial displacement (typically 1e-16)
