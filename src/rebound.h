@@ -224,6 +224,19 @@ struct reb_simulation_integrator_ias15 {
  */
 struct reb_simulation_integrator_hybarid {
     struct reb_simulation* mini;
+    struct reb_simulation* global;
+    int N_encounter;
+    double switch_ratio;
+    int mini_active;
+    int* encounter_index;
+    int encounter_index_N;
+    int encounter_index_Nmax;
+    
+    int* is_in_mini;
+    int is_in_mini_Nmax;
+
+    struct reb_particle* particles_prev;
+    int particles_prev_Nmax;
 };
 
 /**

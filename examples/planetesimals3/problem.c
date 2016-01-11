@@ -24,6 +24,7 @@ int main(int argc, char* argv[]){
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
 	//r->integrator	= REB_INTEGRATOR_IAS15;
+    r->ri_hybarid.switch_ratio = 3.;
 	r->heartbeat	= heartbeat;
     r->dt = 0.1;
     r->usleep = 50000;
