@@ -577,3 +577,61 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY){
 					*(r->t-r->megno_mean_t);
 }
 #endif // LIBREBOUNDX
+
+// Function for derivates of orbits
+
+struct reb_particle reb_tools_orbit_to_particle_da(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+
+	struct reb_particle p = {0};
+	p.m = m;
+	double r = (1-e*e)/(1 + e*cos(f));
+	double v0 = -0.5/a/sqrt(a)*sqrt(G*(m+primary.m)/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
+	p.y = r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
+	p.z = r*(so*cf+co*sf)*si;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = v0*((e+cf)*co*si - sf*si*so);
+	
+	p.ax = 0; 	p.ay = 0; 	p.az = 0;
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_dda(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+
+	struct reb_particle p = {0};
+	p.m = m;
+	double v0 = -0.75/a/a/sqrt(a)*sqrt(G*(m+primary.m)/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = v0*((e+cf)*co*si - sf*si*so);
+	
+
+	return p;
+}
+
