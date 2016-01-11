@@ -124,6 +124,7 @@ void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
 }
 
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
+    r->additional_forces = reb_integrator_hybarid_additional_forces_global; // TODO fix this.
     if (r->ri_hybarid.mini == NULL){
         r->ri_hybarid.mini = reb_create_simulation();
         r->ri_hybarid.mini->integrator = REB_INTEGRATOR_IAS15;
@@ -161,6 +162,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         r->ri_hybarid.encounter_index[r->ri_hybarid.encounter_index_N] = i;
         r->ri_hybarid.encounter_index_N++;
     }
+    r->ri_hybarid.mini->N_active = r->N_active;
 
     reb_integrator_hybarid_check_for_encounter(r);
 
@@ -232,7 +234,6 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
             r->ri_hybarid.is_in_mini[j] = 0;
             
             if(ratio < HSR){
-                printf("\nencounter found\n");
                 r->ri_hybarid.mini_active = 1;
                 if (j>=r->N_active){
                     reb_add(mini,pj);
