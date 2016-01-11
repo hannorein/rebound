@@ -35,7 +35,8 @@ int main(int argc, char* argv[]){
 	star.m 		= 1;
 	star.r		= 0.005;        // Radius of particle is in AU!
 	reb_add(r, star);
-    
+   
+   // fix 
     
     //planet 1
     {
