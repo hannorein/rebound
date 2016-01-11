@@ -39,6 +39,34 @@
 
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r);
 
+void reb_integrator_hybarid_additional_forces_global(struct reb_simulation* global){
+    const double G = global->G;
+    const int N = global->N;
+    const int N_active = global->N_active;
+    struct reb_particle* const particles = global->particles;
+    double planetesimal_mass = 1e-8;
+    const double Gm1 = G*planetesimal_mass;
+    
+    for(int j=N_active;j<N;j++){//add planetesimal forces to massive bodies
+        struct reb_particle p = particles[j];
+        if(global->ri_hybarid.is_in_mini[j]==0){//If CE don't calculate planetesimal forces in global
+            for(int i=0;i<N_active;i++){
+                struct reb_particle* body = &(particles[i]);
+                const double dx = body->x - p.x;
+                const double dy = body->y - p.y;
+                const double dz = body->z - p.z;
+                
+                const double rijinv2 = 1.0/(dx*dx + dy*dy + dz*dz);
+                const double ac = -Gm1*rijinv2*sqrt(rijinv2);
+                
+                body->ax += ac*dx;      //perturbation on planets due to planetesimals.
+                body->ay += ac*dy;
+                body->az += ac*dz;
+            }
+        }
+    }
+
+}
 
 void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
     const double G = mini->G;
