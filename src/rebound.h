@@ -223,6 +223,7 @@ struct reb_simulation_integrator_ias15 {
  * @brief This structure contains variables and pointer used by the HYBARID integrator.
  */
 struct reb_simulation_integrator_hybarid {
+    struct reb_simulation* mini;
 };
 
 /**

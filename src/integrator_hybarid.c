@@ -33,40 +33,44 @@
 #include <math.h>
 #include <time.h>
 #include "rebound.h"
+#include "integrator_ias15.h"
+#include "integrator_whfast.h"
+
+
+void reb_integrator_hybarid_additional_forces(struct reb_simulation* mini){
+}
 
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
-	const int N = r->N;
-	struct reb_particle* restrict const particles = r->particles;
-	const double dt = r->dt;
-#pragma omp parallel for schedule(guided)
-	for (int i=0;i<N;i++){
-		particles[i].x  += 0.5* dt * particles[i].vx;
-		particles[i].y  += 0.5* dt * particles[i].vy;
-		particles[i].z  += 0.5* dt * particles[i].vz;
-	}
-	r->t+=dt/2.;
+    if (r->ri_hybarid.mini == NULL){
+        r->ri_hybarid.mini = reb_create_simulation();
+        r->ri_hybarid.mini->integrator = REB_INTEGRATOR_IAS15;
+        r->ri_hybarid.mini->additional_forces = reb_integrator_hybarid_additional_forces;
+    }
+    reb_integrator_whfast_part1(r);
 }
 void reb_integrator_hybarid_part2(struct reb_simulation* r){
-	const int N = r->N;
-	struct reb_particle* restrict const particles = r->particles;
-	const double dt = r->dt;
-#pragma omp parallel for schedule(guided)
-	for (int i=0;i<N;i++){
-		particles[i].vx += dt * particles[i].ax;
-		particles[i].vy += dt * particles[i].ay;
-		particles[i].vz += dt * particles[i].az;
-		particles[i].x  += 0.5* dt * particles[i].vx;
-		particles[i].y  += 0.5* dt * particles[i].vy;
-		particles[i].z  += 0.5* dt * particles[i].vz;
-	}
-	r->t+=dt/2.;
-	r->dt_last_done = r->dt;
+    reb_integrator_whfast_part2(r);
+
+    //
+    //
+    //
+    // Run mini
+    //
+    // Check for encounters
+    //   if new encounters, copy from global to mini
+    //
+    // Copy positions from mini to global
+    //
+    // Store the pos to prev_pos
+    //
 }
 	
 void reb_integrator_hybarid_synchronize(struct reb_simulation* r){
 	// Do nothing.
+    reb_integrator_whfast_synchronize(r);
 }
 
 void reb_integrator_hybarid_reset(struct reb_simulation* r){
 	// Do nothing.
+    reb_integrator_whfast_reset(r);
 }

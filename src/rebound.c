@@ -237,6 +237,8 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
 	// ********** WH
 	r->ri_wh.allocatedN 		= 0;
 	r->ri_wh.eta 			= NULL;
+	// ********** HYBARID
+	r->ri_hybarid.mini 		= NULL;
 }
 
 void reb_reset_function_pointers(struct reb_simulation* const r){

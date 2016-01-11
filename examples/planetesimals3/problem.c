@@ -22,8 +22,8 @@ int main(int argc, char* argv[]){
     double powerlaw = 0.5;
     
 	//Simulation Setup
-	//r->integrator	= REB_INTEGRATOR_HYBARID;
-	r->integrator	= REB_INTEGRATOR_IAS15;
+	r->integrator	= REB_INTEGRATOR_HYBARID;
+	//r->integrator	= REB_INTEGRATOR_IAS15;
 	r->heartbeat	= heartbeat;
     r->dt = 0.1;
     r->usleep = 50000;
