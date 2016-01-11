@@ -64,6 +64,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 	const int _N_start  = (r->integrator==REB_INTEGRATOR_WH?1:0);
 	const int _N_active = ((N_active==-1)?N:N_active) - r->N_var;
 	const int _N_real   = N  - r->N_var;
+	const int _passive_influence   = r->passive_influence;
 	switch (r->gravity){
 		case REB_GRAVITY_NONE: // Do nothing.
 		break;
@@ -100,6 +101,22 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 					particles[i].az    += prefact*dz;
 				}
 				}
+                if (_passive_influence){
+				for (int i=_N_start; i<_N_active; i++){
+				for (int j=_N_active; j<_N_real; j++){
+					if (_gravity_ignore_10 && j==1 && i==0 ) continue;
+					const double dx = (gb.shiftx+particles[i].x) - particles[j].x;
+					const double dy = (gb.shifty+particles[i].y) - particles[j].y;
+					const double dz = (gb.shiftz+particles[i].z) - particles[j].z;
+					const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+					const double prefact = -G/(_r*_r*_r)*particles[j].m;
+					
+					particles[i].ax    += prefact*dx;
+					particles[i].ay    += prefact*dy;
+					particles[i].az    += prefact*dz;
+				}
+				}
+                }
 			}
 			}
 			}
@@ -208,6 +225,28 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 				cs[i].z = (tz - particles[i].az) - yz;
 				particles[i].az = tz;
 				}
+                if (_passive_influence){
+				const double prefacti = prefact*particles[i].m;
+				{
+				double ix = prefacti*dx;
+				double yx = ix - cs[j].x;
+				double tx = particles[j].ax + yx;
+				cs[j].x = (tx - particles[j].ax) - yx;
+				particles[j].ax = tx;
+
+				double iy = prefacti*dy;
+				double yy = iy - cs[j].y;
+				double ty = particles[j].ay + yy;
+				cs[j].y = (ty - particles[j].ay) - yy;
+				particles[j].ay = ty;
+				
+				double iz = prefacti*dz;
+				double yz = iz - cs[j].z;
+				double tz = particles[j].az + yz;
+				cs[j].z = (tz - particles[j].az) - yz;
+				particles[j].az = tz;
+				}
+                }
 			}
 			}
 		}

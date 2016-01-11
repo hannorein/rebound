@@ -391,6 +391,7 @@ struct reb_simulation {
     int     var_config_N;   ///< Number of variational configuration structs. Default: 0.
     struct reb_variational_configuration* var_config;   ///< These configuration structs contain details on variational particles. 
 	int 	N_active;		///< Number of massive particles included in force calculation. Default: N.
+	int 	passive_influence;	///< Type of passive particles. 0 means passive particle really don't influence any other particle (test particle), 1 means active particles feel passive particles but passive particle still don't feel passive particles.
 	int 	allocatedN;		///< Current maximum space allocated in the particles array on this node. 
 	struct reb_particle* particles;	///< Main particle array. This contains all particles on this node.  
 	struct reb_vec3d* gravity_cs;	///< Vector containing the information for compensated gravity summation 

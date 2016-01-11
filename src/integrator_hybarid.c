@@ -39,84 +39,38 @@
 
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r);
 
-void reb_integrator_hybarid_additional_forces_global(struct reb_simulation* global){
-    const double G = global->G;
-    const int N = global->N;
-    const int N_active = global->N_active;
-    struct reb_particle* const particles = global->particles;
-    double planetesimal_mass = 1e-8;
-    const double Gm1 = G*planetesimal_mass;
-    
-    for(int j=N_active;j<N;j++){//add planetesimal forces to massive bodies
-        struct reb_particle p = particles[j];
-        if(global->ri_hybarid.is_in_mini[j]==0){//If CE don't calculate planetesimal forces in global
-            for(int i=0;i<N_active;i++){
-                struct reb_particle* body = &(particles[i]);
-                const double dx = body->x - p.x;
-                const double dy = body->y - p.y;
-                const double dz = body->z - p.z;
-                
-                const double rijinv2 = 1.0/(dx*dx + dy*dy + dz*dz);
-                const double ac = -Gm1*rijinv2*sqrt(rijinv2);
-                
-                body->ax += ac*dx;      //perturbation on planets due to planetesimals.
-                body->ay += ac*dy;
-                body->az += ac*dz;
-            }
-        }
-    }
-
-}
-
 void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
-    const double G = mini->G;
-    const int N = mini->N;
-    const int N_active = mini->N_active;
-    struct reb_simulation* global = mini->ri_hybarid.global;
-    struct reb_particle* particles_mini = mini->particles;
-    struct reb_particle* particles_global = global->particles;
-    struct reb_particle* particles_global_prev = global->ri_hybarid.particles_prev;
-    double planetesimal_mass = 1e-8;
-    
-    const double Gm1 = G*planetesimal_mass;
-    for(int i=0;i<N_active;i++){
-        struct reb_particle* body = &(particles_mini[i]);
-        for(int j=N_active;j<N;j++){//add planetesimal forces to massive bodies
-            struct reb_particle p = particles_mini[j];
-            
-            const double dx = body->x - p.x;
-            const double dy = body->y - p.y;
-            const double dz = body->z - p.z;
-            
-            const double rijinv2 = 1.0/(dx*dx + dy*dy + dz*dz);
-            const double ac = -Gm1*rijinv2*sqrt(rijinv2);
-            
-            body->ax += ac*dx;      //perturbation on planets due to planetesimals.
-            body->ay += ac*dy;
-            body->az += ac*dz;
-        }
-    }
-    
-    //forces from global into mini
-    double t_prev = global->t - global->dt;
-    const double timefac = (mini->t - t_prev)/global->dt;
-    for(int i=N_active;i<global->N;i++){    //planetesimals
-        if(global->ri_hybarid.is_in_mini[i]==0){             //find planetesimals which is part of global but not mini
-            const double ix = timefac*particles_global[i].x - (1.-timefac)*particles_global_prev[i].x; //interpolated values
-            const double iy = timefac*particles_global[i].y - (1.-timefac)*particles_global_prev[i].y;
-            const double iz = timefac*particles_global[i].z - (1.-timefac)*particles_global_prev[i].z;
-            for(int j=0;j<N_active;j++){//massive bodies
-                struct reb_particle* body = &(particles_mini[j]);
-                const double ddx = body->x - ix;
-                const double ddy = body->y - iy;
-                const double ddz = body->z - iz;
-                
-                const double rijinv2 = 1.0/(ddx*ddx + ddy*ddy + ddz*ddz);
-                const double ac = -Gm1*rijinv2*sqrt(rijinv2);
-                
-                body->ax += ac*ddx;     //perturbation on planets due to planetesimals.
-                body->ay += ac*ddy;
-                body->az += ac*ddz;
+    if (mini->passive_influence){ 
+        const double G = mini->G;
+        const int N_active = mini->N_active;
+        struct reb_simulation* global = mini->ri_hybarid.global;
+        struct reb_particle* particles_mini = mini->particles;
+        struct reb_particle* particles_global = global->particles;
+        struct reb_particle* particles_global_prev = global->ri_hybarid.particles_prev;
+        double planetesimal_mass = 1e-8;
+        
+        const double Gm1 = G*planetesimal_mass;
+        //forces from global into mini
+        double t_prev = global->t - global->dt;
+        const double timefac = (mini->t - t_prev)/global->dt;
+        for(int i=N_active;i<global->N;i++){    //planetesimals
+            if(global->ri_hybarid.is_in_mini[i]==0){             //find planetesimals which is part of global but not mini
+                const double ix = timefac*particles_global[i].x - (1.-timefac)*particles_global_prev[i].x; //interpolated values
+                const double iy = timefac*particles_global[i].y - (1.-timefac)*particles_global_prev[i].y;
+                const double iz = timefac*particles_global[i].z - (1.-timefac)*particles_global_prev[i].z;
+                for(int j=0;j<N_active;j++){//massive bodies
+                    struct reb_particle* body = &(particles_mini[j]);
+                    const double ddx = body->x - ix;
+                    const double ddy = body->y - iy;
+                    const double ddz = body->z - iz;
+                    
+                    const double rijinv2 = 1.0/(ddx*ddx + ddy*ddy + ddz*ddz);
+                    const double ac = -Gm1*rijinv2*sqrt(rijinv2);
+                    
+                    body->ax += ac*ddx;     //perturbation on planets due to planetesimals.
+                    body->ay += ac*ddy;
+                    body->az += ac*ddz;
+                }
             }
         }
     }
@@ -124,19 +78,22 @@ void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
 }
 
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
-    r->additional_forces = reb_integrator_hybarid_additional_forces_global; // TODO fix this.
+	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     if (r->ri_hybarid.mini == NULL){
         r->ri_hybarid.mini = reb_create_simulation();
         r->ri_hybarid.mini->integrator = REB_INTEGRATOR_IAS15;
         r->ri_hybarid.mini->additional_forces = reb_integrator_hybarid_additional_forces_mini;
         r->ri_hybarid.mini->ri_hybarid.global = r;
+        r->ri_hybarid.mini->passive_influence = r->passive_influence;
     }
 
-    if (r->N>=r->ri_hybarid.particles_prev_Nmax){
-        r->ri_hybarid.particles_prev_Nmax += 32;
-        r->ri_hybarid.particles_prev = realloc(r->ri_hybarid.particles_prev,r->ri_hybarid.particles_prev_Nmax*sizeof(struct reb_particle));
+    if (r->passive_influence){
+        if (r->N>=r->ri_hybarid.particles_prev_Nmax){
+            r->ri_hybarid.particles_prev_Nmax += 32;
+            r->ri_hybarid.particles_prev = realloc(r->ri_hybarid.particles_prev,r->ri_hybarid.particles_prev_Nmax*sizeof(struct reb_particle));
+        }
+        memcpy(r->ri_hybarid.particles_prev, r->particles, sizeof(struct reb_particle)*r->N); 
     }
-    memcpy(r->ri_hybarid.particles_prev, r->particles, sizeof(struct reb_particle)*r->N); 
 
     // Remove all particles from mini
     r->ri_hybarid.mini->t = r->t;
@@ -152,7 +109,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     }
 
     // Add all massive particles
-    for (int i=0; i<r->N_active; i++){
+    for (int i=0; i<_N_active; i++){
         reb_add(r->ri_hybarid.mini, r->particles[i]);
         r->ri_hybarid.is_in_mini[i] = 1;
         if (r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax){
@@ -162,7 +119,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         r->ri_hybarid.encounter_index[r->ri_hybarid.encounter_index_N] = i;
         r->ri_hybarid.encounter_index_N++;
     }
-    r->ri_hybarid.mini->N_active = r->N_active;
+    r->ri_hybarid.mini->N_active = _N_active;
 
     reb_integrator_hybarid_check_for_encounter(r);
 
@@ -205,10 +162,10 @@ void reb_integrator_hybarid_reset(struct reb_simulation* r){
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r){
     struct reb_simulation* mini = r->ri_hybarid.mini;
     const int N = r->N;
-    const int N_active = r->N_active;
+	const int _N_active = ((r->N_active==-1)?N:r->N_active) - r->N_var;
     struct reb_particle* global = r->particles;
     struct reb_particle p0 = global[0];
-    for (int i=0; i<N_active; i++){
+    for (int i=0; i<_N_active; i++){
         struct reb_particle pi = global[i];
         const double dxi = p0.x - pi.x;
         const double dyi = p0.y - pi.y;
@@ -235,7 +192,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
             
             if(ratio < HSR){
                 r->ri_hybarid.mini_active = 1;
-                if (j>=r->N_active){
+                if (j>_N_active){
                     reb_add(mini,pj);
                     r->ri_hybarid.is_in_mini[j] = 1;
                     if (r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax){

@@ -25,6 +25,7 @@ int main(int argc, char* argv[]){
 	r->integrator	= REB_INTEGRATOR_HYBARID;
 	//r->integrator	= REB_INTEGRATOR_IAS15;
     r->ri_hybarid.switch_ratio = 3.;
+    r->passive_influence = 0;
 	r->heartbeat	= heartbeat;
     r->dt = 0.1;
     r->usleep = 50000;
@@ -70,6 +71,7 @@ int main(int argc, char* argv[]){
         double apsis = reb_random_uniform(0,2.*M_PI);
         pt = reb_tools_orbit_to_particle(r->G, star, planetesimal_mass, a, 0., inc, Omega, apsis,phi);
 		pt.r 		= 4e-5;
+        pt.m        = 1e-8;
         pt.id       = r->N;
 		reb_add(r, pt);
 	}
