@@ -47,9 +47,7 @@ void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
         struct reb_particle* particles_mini = mini->particles;
         struct reb_particle* particles_global = global->particles;
         struct reb_particle* particles_global_prev = global->ri_hybarid.particles_prev;
-        double planetesimal_mass = 1e-8;
         
-        const double Gm1 = G*planetesimal_mass;
         //forces from global into mini
         double t_prev = global->t - global->dt;
         const double timefac = (mini->t - t_prev)/global->dt;
@@ -58,6 +56,7 @@ void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
                 const double ix = timefac*particles_global[i].x - (1.-timefac)*particles_global_prev[i].x; //interpolated values
                 const double iy = timefac*particles_global[i].y - (1.-timefac)*particles_global_prev[i].y;
                 const double iz = timefac*particles_global[i].z - (1.-timefac)*particles_global_prev[i].z;
+                const double Gm1 = G*particles_global[i].m;
                 for(int j=0;j<N_active;j++){//massive bodies
                     struct reb_particle* body = &(particles_mini[j]);
                     const double ddx = body->x - ix;
