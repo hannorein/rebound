@@ -40,6 +40,7 @@
 #include "integrator_wh.h"
 #include "integrator_whfast.h"
 #include "integrator_ias15.h"
+#include "integrator_hybarid.h"
 #include "boundary.h"
 #include "gravity.h"
 #include "collision.h"
@@ -203,6 +204,7 @@ void reb_free_pointers(struct reb_simulation* const r){
 	reb_integrator_wh_reset(r);
 	reb_integrator_whfast_reset(r);
 	reb_integrator_ias15_reset(r);
+	reb_integrator_hybarid_reset(r);
 	free(r->particles	);
 }
 

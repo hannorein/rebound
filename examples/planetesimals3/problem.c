@@ -22,6 +22,7 @@ int main(int argc, char* argv[]){
     double powerlaw = 0.5;
     
 	//Simulation Setup
+	//r->integrator	= REB_INTEGRATOR_HYBARID;
 	r->integrator	= REB_INTEGRATOR_IAS15;
 	r->heartbeat	= heartbeat;
     r->dt = 0.1;
@@ -66,7 +67,7 @@ int main(int argc, char* argv[]){
         double inc = reb_random_normal(0.0001);
         double Omega = reb_random_uniform(0,2.*M_PI);
         double apsis = reb_random_uniform(0,2.*M_PI);
-        pt = reb_tools_orbit_to_particle(r->G, star, 0., a, 0., inc, Omega, apsis,phi);
+        pt = reb_tools_orbit_to_particle(r->G, star, planetesimal_mass, a, 0., inc, Omega, apsis,phi);
 		pt.r 		= 4e-5;
         pt.id       = r->N;
 		reb_add(r, pt);

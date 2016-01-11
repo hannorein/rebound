@@ -16,7 +16,8 @@
 
 int main(int argc, char* argv[]){
 	struct reb_simulation* r = reb_create_simulation();
-	r->integrator = REB_INTEGRATOR_IAS15;
+	//r->integrator = REB_INTEGRATOR_IAS15;
+	r->integrator = REB_INTEGRATOR_HYBARID;
 	r->dt = -1;
 	r->usleep = 10000;   // Slowing down integrator (for visualization only)
 
