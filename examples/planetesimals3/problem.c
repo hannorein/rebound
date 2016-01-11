@@ -34,7 +34,6 @@ int main(int argc, char* argv[]){
 	struct reb_particle star = {0};
 	star.m 		= 1;
 	star.r		= 0.005;        // Radius of particle is in AU!
-    star.id     = 0;            // 0 = star
 	reb_add(r, star);
     
     
@@ -44,7 +43,6 @@ int main(int argc, char* argv[]){
         struct reb_particle p1 = {0};
         p1 = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
         p1.r = 1.6e-4;              //radius of particle is in AU!
-        p1.id = r->N;
         reb_add(r, p1);
     }
     
@@ -54,7 +52,6 @@ int main(int argc, char* argv[]){
         struct reb_particle p2 = {0};
         p2 = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
         p2.r = 1.6e-4;
-        p2.id = r->N;
         reb_add(r, p2);
     }
     
@@ -71,8 +68,6 @@ int main(int argc, char* argv[]){
         double apsis = reb_random_uniform(0,2.*M_PI);
         pt = reb_tools_orbit_to_particle(r->G, star, planetesimal_mass, a, 0., inc, Omega, apsis,phi);
 		pt.r 		= 4e-5;
-        pt.m        = 1e-8;
-        pt.id       = r->N;
 		reb_add(r, pt);
 	}
     
