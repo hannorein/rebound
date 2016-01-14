@@ -407,7 +407,7 @@ struct reb_simulation {
 	double output_timing_last; 		///< Time when reb_output_timing() was called the last time. 
 	double exit_max_distance;		///< Exit simulation if distance from origin larger than this value 
 	double exit_min_distance;		///< Exit simulation if distance from another particle smaller than this value 
-	double usleep;				///< Wait this number of microseconds after each timestep 
+	double usleep;				///< Wait this number of microseconds after each timestep, useful for slowing down visualization. Set to negative value to disable visualization (despite compiling with OPENGL=1).  
 	/** @} */
 
 	/**
