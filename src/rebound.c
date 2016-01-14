@@ -454,7 +454,7 @@ void reb_run_heartbeat(struct reb_simulation* const r){
 			}
 		}
 	}
-	if (r->usleep){
+	if (r->usleep > 0){
 		usleep(r->usleep);
 	}
 }
@@ -465,14 +465,23 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 	reb_communication_mpi_distribute_particles(r_user);
 #endif // MPI
 #ifdef OPENGL
-	// Copy and share simulation struct 
-	struct reb_simulation* const r = (struct reb_simulation*)mmap(r_user, sizeof(struct reb_simulation), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
-	memcpy(r, r_user, sizeof(struct reb_simulation));
-	
-	// Copy and share particle array
-	r->particles = (struct reb_particle*)mmap(NULL, r->allocatedN*sizeof(struct reb_particle), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
-	memcpy(r->particles, r_user->particles, r->allocatedN*sizeof(struct reb_particle));
+    int opengl_enabled = 1;
+    if (r_user->usleep<0){
+        opengl_enabled = 0;
+    }
 
+    // Copy and share simulation struct 
+    struct reb_simulation* r = NULL;
+   
+    if (opengl_enabled){
+        r = (struct reb_simulation*)mmap(r_user, sizeof(struct reb_simulation), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
+	    memcpy(r, r_user, sizeof(struct reb_simulation));
+        // Copy and share particle array
+        r->particles = (struct reb_particle*)mmap(NULL, r->allocatedN*sizeof(struct reb_particle), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
+        memcpy(r->particles, r_user->particles, r->allocatedN*sizeof(struct reb_particle));
+    }else{
+        r = r_user;
+    }
 
 	// Create Semaphore
 #ifdef MPI
@@ -518,55 +527,61 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 
 	
 #ifdef OPENGL
+    if (opengl_enabled){
         pid_t   childpid;
         if((childpid = fork()) == -1) {
                 perror("fork");
                 exit(EXIT_FAILURE);
         }
-        if(childpid == 0) {  	// Child (vizualization)
-		reb_display_init(0,NULL,r, display_mutex);
-                exit(EXIT_SUCCESS); // NEVER REACHED
-        } else { 		// Parent (computation)
-		PROFILING_START()
-		while(reb_check_exit(r,tmax,&last_full_dt)<0){
-			sem_wait(display_mutex);	
-			PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
-			reb_step(r); 			
-			reb_run_heartbeat(r);
-			PROFILING_START()
-			sem_post(display_mutex);	
-		}
-		PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
+        if(childpid == 0) {  // Child (vizualization)
+            reb_display_init(0,NULL,r, display_mutex);
+            exit(EXIT_SUCCESS); // NEVER REACHED
+        } else {        // Parent (computation)
+            PROFILING_START()
+            while(reb_check_exit(r,tmax,&last_full_dt)<0){
+                sem_wait(display_mutex);    
+                PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
+                reb_step(r);
+                reb_run_heartbeat(r);
+                PROFILING_START()
+                sem_post(display_mutex);
+            }
+            PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
         }
-#else // OPENGL
-	while(reb_check_exit(r,tmax,&last_full_dt)<0){
-		reb_step(r); 			
-		reb_run_heartbeat(r);
-	}
+    }else{
+#endif // OPENGL
+        while(reb_check_exit(r,tmax,&last_full_dt)<0){
+            reb_step(r); 
+            reb_run_heartbeat(r);
+        }
+#ifdef OPENGL
+    }
 #endif // OPENGL
 
-	reb_integrator_synchronize(r);
-	if(r->exact_finish_time==1){ // if finish_time = 1, r->dt could have been shrunk, so set to the last full timestep
-		r->dt = last_full_dt; 
-	}
+    reb_integrator_synchronize(r);
+    if(r->exact_finish_time==1){ // if finish_time = 1, r->dt could have been shrunk, so set to the last full timestep
+        r->dt = last_full_dt; 
+    }
 
 #ifdef OPENGL
-	int status;
-	wait(&status);
-	sem_unlink(sem_name);
-	sem_close(display_mutex);
-	struct reb_particle* const particles_user_loc = r_user->particles;
-	memcpy(r_user, r, sizeof(struct reb_simulation));
-	r_user->particles = particles_user_loc;
-	memcpy(r_user->particles, r->particles, r->N*sizeof(struct reb_particle));
+    if (opengl_enabled){
+        int status;
+        wait(&status);
+        struct reb_particle* const particles_user_loc = r_user->particles;
+        memcpy(r_user, r, sizeof(struct reb_simulation));
+        r_user->particles = particles_user_loc;
+        memcpy(r_user->particles, r->particles, r->N*sizeof(struct reb_particle));
+    }
+    sem_unlink(sem_name);
+    sem_close(display_mutex);
 #endif //OPENGL
 
 #ifndef LIBREBOUND
-	gettimeofday(&tim, NULL);
-	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
-	printf("\nComputation finished. Total runtime: %f s\n",timing_final-timing_initial);
+    gettimeofday(&tim, NULL);
+    double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
+    printf("\nComputation finished. Total runtime: %f s\n",timing_final-timing_initial);
 #endif // LIBREBOUND
-	return r->status;
+    return r->status;
 }
 
 #ifndef LIBREBOUND
