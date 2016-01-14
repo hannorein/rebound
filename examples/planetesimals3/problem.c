@@ -12,6 +12,7 @@
 #include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
+double E0;
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
@@ -24,6 +25,7 @@ int main(int argc, char* argv[]){
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
 	//r->integrator	= REB_INTEGRATOR_IAS15;
+	//r->integrator	= REB_INTEGRATOR_WHFAST;
     r->ri_hybarid.switch_ratio = 3.;
     r->passive_influence = 1;
 	r->heartbeat	= heartbeat;
@@ -72,12 +74,16 @@ int main(int argc, char* argv[]){
 		pt.r 		= 4e-5;
 		reb_add(r, pt);
 	}
-    
+   
+    E0 = reb_tools_energy(r);
     //Integrate!
     reb_integrate(r, 100.);
 }
 
 void heartbeat(struct reb_simulation* r){
+    double E = reb_tools_energy(r);
+    double dE = fabs((E-E0)/E0);
     reb_output_timing(r, 0);  
+    printf("    dE=%e",dE);
 }
 
