@@ -488,21 +488,21 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
             perror("sem_open");
             exit(EXIT_FAILURE);
         }
+        // Need root_size for visualization. Creating one. 
+        if (r->root_size==-1){  
+            reb_warning("Configuring box automatically for vizualization based on particle positions.");
+            const struct reb_particle* p = r->particles;
+            double max_r = 0;
+            for (int i=0;i<r->N;i++){
+                const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
+                max_r = MAX(max_r, _r);
+            }
+            reb_configure_box(r, max_r*2.3,MAX(1.,r->root_nx),MAX(1.,r->root_ny),MAX(1.,r->root_nz));
+        }
     }else{
         r = r_user;
     }
 
-	// Need root_size for visualization. Creating one. 
-	if (r->root_size==-1){  
-		reb_warning("Configuring box automatically for vizualization based on particle positions.");
-		const struct reb_particle* p = r->particles;
-		double max_r = 0;
-		for (int i=0;i<r->N;i++){
-			const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
-			max_r = MAX(max_r, _r);
-		}
-		reb_configure_box(r, max_r*2.3,MAX(1.,r->root_nx),MAX(1.,r->root_ny),MAX(1.,r->root_nz));
-	}
 #else // OPENGL
 	struct reb_simulation* const r = r_user;
 #endif // OPENGL
