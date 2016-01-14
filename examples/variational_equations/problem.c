@@ -41,7 +41,6 @@ int main(int argc, char* argv[]) {
     printf("Position of testparticle at t=100 in shifted simulation: %.8f %.8f\n",r->particles[2].x,r->particles[2].y);
     reb_free_simulation(r);
     
-    
     r = create_sim();
     var_i = reb_add_var_1st_order(r, -1);
     r->particles[var_i+1].x = 1.;
@@ -66,7 +65,6 @@ int main(int argc, char* argv[]) {
     printf("Position of testparticle at t=100 in shifted simulation: %.8f %.8f\n",r->particles[2].x,r->particles[2].y);
     reb_free_simulation(r);
     
-    
     r = create_sim();
     var_i = reb_add_var_1st_order(r, 2);
     r->particles[var_i].x = 1.;
@@ -90,7 +88,6 @@ int main(int argc, char* argv[]) {
 	reb_integrate(r,100.);
     printf("Position of testparticle at t=100 using shifted a:       %.8f %.8f\n",r->particles[2].x,r->particles[2].y);
     reb_free_simulation(r);
-
 
     r = create_sim();
     var_i = reb_add_var_1st_order(r, 2);
@@ -118,7 +115,6 @@ int main(int argc, char* argv[]) {
     printf("Position of testparticle at t=100 using shifted e:       %.8f %.8f\n",r->particles[2].x,r->particles[2].y);
     reb_free_simulation(r);
 
-
     r = create_sim();
     var_i = reb_add_var_1st_order(r, 2);
     r->particles[var_i] = reb_tools_orbit_to_particle_de(1.,r->particles[0],0.,1.7,0.1,0.2,0.3,0.4,0.5);
@@ -144,7 +140,6 @@ int main(int argc, char* argv[]) {
     printf("Position of testparticle at t=100 using shifted i:       %.8f %.8f\n",r->particles[2].x,r->particles[2].y);
     reb_free_simulation(r);
 
-
     r = create_sim();
     var_i = reb_add_var_1st_order(r, 2);
     r->particles[var_i] = reb_tools_orbit_to_particle_di(1.,r->particles[0],0.,1.7,0.1,0.2,0.3,0.4,0.5);
@@ -157,6 +152,31 @@ int main(int argc, char* argv[]) {
     var_ii = reb_add_var_2nd_order(r, 2, var_i, var_i);
     r->particles[var_i] = reb_tools_orbit_to_particle_di(1.,r->particles[0],0.,1.7,0.1,0.2,0.3,0.4,0.5);
     r->particles[var_ii] = reb_tools_orbit_to_particle_ddi(1.,r->particles[0],0.,1.7,0.1,0.2,0.3,0.4,0.5);
+	reb_integrate(r,100.);
+    printf("Position of testparticle at t=100 using 2nd var. eqs.:   %.8f %.8f\n",r->particles[2].x+DeltaX*r->particles[var_i].x+DeltaX*DeltaX/2.*r->particles[var_ii].x,r->particles[2].y+DeltaX*r->particles[var_i].y+DeltaX*DeltaX/2.*r->particles[var_ii].y);
+    reb_free_simulation(r);
+   
+
+    DeltaX = 0.05; 
+    printf("\nShifting planet's Omega by %f.\n", DeltaX);
+    r = create_sim();
+    r->particles[2] = reb_tools_orbit_to_particle(1.,r->particles[0],0.,1.7,0.1,0.2,0.3+DeltaX,0.4,0.5);
+	reb_integrate(r,100.);
+    printf("Position of testparticle at t=100 using shifted i:       %.8f %.8f\n",r->particles[2].x,r->particles[2].y);
+    reb_free_simulation(r);
+
+    r = create_sim();
+    var_i = reb_add_var_1st_order(r, 2);
+    r->particles[var_i] = reb_tools_orbit_to_particle_dOmega(1.,r->particles[0],0.,1.7,0.1,0.2,0.3,0.4,0.5);
+	reb_integrate(r,100.);
+    printf("Position of testparticle at t=100 using 1st var. eqs.:   %.8f %.8f\n",r->particles[2].x+DeltaX*r->particles[var_i].x,r->particles[2].y+DeltaX*r->particles[var_i].y);
+    reb_free_simulation(r);
+    
+    r = create_sim();
+    var_i = reb_add_var_1st_order(r, 2);
+    var_ii = reb_add_var_2nd_order(r, 2, var_i, var_i);
+    r->particles[var_i] = reb_tools_orbit_to_particle_dOmega(1.,r->particles[0],0.,1.7,0.1,0.2,0.3,0.4,0.5);
+    r->particles[var_ii] = reb_tools_orbit_to_particle_ddOmega(1.,r->particles[0],0.,1.7,0.1,0.2,0.3,0.4,0.5);
 	reb_integrate(r,100.);
     printf("Position of testparticle at t=100 using 2nd var. eqs.:   %.8f %.8f\n",r->particles[2].x+DeltaX*r->particles[var_i].x+DeltaX*DeltaX/2.*r->particles[var_ii].x,r->particles[2].y+DeltaX*r->particles[var_i].y+DeltaX*DeltaX/2.*r->particles[var_ii].y);
     reb_free_simulation(r);
