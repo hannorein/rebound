@@ -658,7 +658,7 @@ struct reb_particle reb_tools_orbit_to_particle_de(double G, struct reb_particle
 	
     p.vx += v0*(-ci*co*sO - cO*so);
 	p.vy += v0*(ci*co*cO - sO*so);
-	p.vz += v0*(co*si - sf*si*so);
+	p.vz += v0*(co*si);
 
 	return p;
 }
@@ -694,7 +694,7 @@ struct reb_particle reb_tools_orbit_to_particle_dde(double G, struct reb_particl
 	
     p.vx += 2.*dv0*(-ci*co*sO - cO*so);
 	p.vy += 2.*dv0*(ci*co*cO - sO*so);
-	p.vz += 2.*dv0*(co*si - sf*si*so);
+	p.vz += 2.*dv0*(co*si);
 
 	return p;
 }
