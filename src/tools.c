@@ -699,7 +699,61 @@ struct reb_particle reb_tools_orbit_to_particle_dde(double G, struct reb_particl
 	return p;
 }
 
+struct reb_particle reb_tools_orbit_to_particle_di(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1-e*e)/(1 + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
 
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double dci = -sin(inc);
+	double dsi = cos(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = r*(- sO*(so*cf+co*sf)*dci);
+	p.y = r*(+ cO*(so*cf+co*sf)*dci);
+	p.z = r*(so*cf+co*sf)*dsi;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = v0*((e+cf)*(-dci*co*sO) - sf*(- dci*so*sO));
+	p.vy = v0*((e+cf)*(dci*co*cO)  - sf*(dci*so*cO));
+	p.vz = v0*((e+cf)*co*dsi - sf*dsi*so);
+	
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_ddi(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1-e*e)/(1 + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ddci = -cos(inc);
+	double ddsi = -sin(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = r*(- sO*(so*cf+co*sf)*ddci);
+	p.y = r*(+ cO*(so*cf+co*sf)*ddci);
+	p.z = r*(so*cf+co*sf)*ddsi;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = v0*((e+cf)*(-ddci*co*sO) - sf*(- ddci*so*sO));
+	p.vy = v0*((e+cf)*(ddci*co*cO)  - sf*(ddci*so*cO));
+	p.vz = v0*((e+cf)*co*ddsi - sf*ddsi*so);
+	
+
+	return p;
+}
 
 /**
 struct reb_particle reb_tools_orbit_to_particle_(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
