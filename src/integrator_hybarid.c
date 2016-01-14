@@ -80,6 +80,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     if (r->ri_hybarid.mini == NULL){
         r->ri_hybarid.mini = reb_create_simulation();
+        r->ri_hybarid.mini->usleep = -1; // Disable visualiation
         r->ri_hybarid.mini->integrator = REB_INTEGRATOR_IAS15;
         r->ri_hybarid.mini->additional_forces = reb_integrator_hybarid_additional_forces_mini;
         r->ri_hybarid.mini->ri_hybarid.global = r;

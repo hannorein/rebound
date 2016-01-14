@@ -25,10 +25,11 @@ int main(int argc, char* argv[]){
 	r->integrator	= REB_INTEGRATOR_HYBARID;
 	//r->integrator	= REB_INTEGRATOR_IAS15;
     r->ri_hybarid.switch_ratio = 3.;
-    r->passive_influence = 0;
+    r->passive_influence = 1;
 	r->heartbeat	= heartbeat;
     r->dt = 0.1;
     r->usleep = 50000;
+    r->usleep = -1;
     
 	// Initial conditions
 	struct reb_particle star = {0};
