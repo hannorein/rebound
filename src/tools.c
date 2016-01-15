@@ -78,6 +78,7 @@ double reb_tools_energy(struct reb_simulation* r){
 		struct reb_particle pi = particles[i];
 		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
 		for (int j=i+1;j<N-N_var;j++){
+            if(r->passive_influence == 1 && i>r->N_active) continue; //ignore forces bet. planetesimals
 			struct reb_particle pj = particles[j];
 			double dx = pi.x - pj.x;
 			double dy = pi.y - pj.y;

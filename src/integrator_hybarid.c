@@ -38,43 +38,7 @@
 #include "integrator_whfast.h"
 
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r);
-
-void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
-    if (mini->passive_influence){ 
-        const double G = mini->G;
-        const int N_active = mini->N_active;
-        struct reb_simulation* global = mini->ri_hybarid.global;
-        struct reb_particle* particles_mini = mini->particles;
-        struct reb_particle* particles_global = global->particles;
-        struct reb_particle* particles_global_prev = global->ri_hybarid.particles_prev;
-        
-        //forces from global into mini
-        double t_prev = global->t - global->dt;
-        const double timefac = (mini->t - t_prev)/global->dt;
-        for(int i=N_active;i<global->N;i++){    //planetesimals
-            if(global->ri_hybarid.is_in_mini[i]==0){             //find planetesimals which is part of global but not mini
-                const double ix = timefac*particles_global[i].x - (1.-timefac)*particles_global_prev[i].x; //interpolated values
-                const double iy = timefac*particles_global[i].y - (1.-timefac)*particles_global_prev[i].y;
-                const double iz = timefac*particles_global[i].z - (1.-timefac)*particles_global_prev[i].z;
-                const double Gm1 = G*particles_global[i].m;
-                for(int j=0;j<N_active;j++){//massive bodies
-                    struct reb_particle* body = &(particles_mini[j]);
-                    const double ddx = body->x - ix;
-                    const double ddy = body->y - iy;
-                    const double ddz = body->z - iz;
-                    
-                    const double rijinv2 = 1.0/(ddx*ddx + ddy*ddy + ddz*ddz);
-                    const double ac = -Gm1*rijinv2*sqrt(rijinv2);
-                    
-                    body->ax += ac*ddx;     //perturbation on planets due to planetesimals.
-                    body->ay += ac*ddy;
-                    body->az += ac*ddz;
-                }
-            }
-        }
-    }
-
-}
+void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini);
 
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
@@ -85,14 +49,8 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         r->ri_hybarid.mini->additional_forces = reb_integrator_hybarid_additional_forces_mini;
         r->ri_hybarid.mini->ri_hybarid.global = r;
         r->ri_hybarid.mini->passive_influence = r->passive_influence;
-    }
-
-    if (r->passive_influence){
-        if (r->N>r->ri_hybarid.particles_prev_Nmax){
-            r->ri_hybarid.particles_prev_Nmax = r->N;
-            r->ri_hybarid.particles_prev = realloc(r->ri_hybarid.particles_prev,r->N*sizeof(struct reb_particle));
-        }
-        memcpy(r->ri_hybarid.particles_prev, r->particles, sizeof(struct reb_particle)*r->N); 
+        r->ri_hybarid.mini->ri_hybarid.mini_active = 1; //flag for collision check in IAS15
+        //r->ri_hybarid.mini->ri_ias15.epsilon = 1e-8;  //speeds up ias and hybarid immensely
     }
 
     // Remove all particles from mini
@@ -101,7 +59,6 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     r->ri_hybarid.mini->N_active = -1;
     r->ri_hybarid.mini_active = 0;
     r->ri_hybarid.encounter_index_N = 0;
-    
     
     if (r->N>r->ri_hybarid.is_in_mini_Nmax){
         r->ri_hybarid.is_in_mini_Nmax = r->N;
@@ -123,6 +80,15 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
 
     reb_integrator_hybarid_check_for_encounter(r);
 
+    //keep this after check_for_encounter - then if particle is removed, no need to edit particles_prev
+    if (r->passive_influence){
+        if (r->N>r->ri_hybarid.particles_prev_Nmax){
+            r->ri_hybarid.particles_prev_Nmax = r->N;
+            r->ri_hybarid.particles_prev = realloc(r->ri_hybarid.particles_prev,r->N*sizeof(struct reb_particle));
+        }
+        memcpy(r->ri_hybarid.particles_prev, r->particles, sizeof(struct reb_particle)*r->N);
+    }
+    
     reb_integrator_whfast_part1(r);
 }
 void reb_integrator_hybarid_part2(struct reb_simulation* r){
@@ -136,15 +102,6 @@ void reb_integrator_hybarid_part2(struct reb_simulation* r){
             r->particles[r->ri_hybarid.encounter_index[i]].sim = r;
         }
     }
-
-
-    // Check for encounters
-    //   if new encounters, copy from global to mini
-    //
-    // Copy positions from mini to global
-    //
-    // Store the pos to prev_pos
-    //
 }
 	
 void reb_integrator_hybarid_synchronize(struct reb_simulation* r){
@@ -157,50 +114,107 @@ void reb_integrator_hybarid_reset(struct reb_simulation* r){
     reb_integrator_whfast_reset(r);
 }
 
-
-//collect the id/array number of all planetesimals involved in a close encounter
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r){
     struct reb_simulation* mini = r->ri_hybarid.mini;
     const int N = r->N;
 	const int _N_active = ((r->N_active==-1)?N:r->N_active) - r->N_var;
     struct reb_particle* global = r->particles;
     struct reb_particle p0 = global[0];
+    double ejectiondistance2 = 100;     //temporary hardcoded value.
+    double HSR = r->ri_hybarid.switch_ratio;
     for (int i=0; i<_N_active; i++){
-        struct reb_particle pi = global[i];
-        const double dxi = p0.x - pi.x;
-        const double dyi = p0.y - pi.y;
-        const double dzi = p0.z - pi.z;
+        struct reb_particle* pi = &(global[i]);
+        const double dxi = p0.x - pi->x;
+        const double dyi = p0.y - pi->y;
+        const double dzi = p0.z - pi->z;
         const double r0i2 = dxi*dxi + dyi*dyi + dzi*dzi;
-        const double rhi = r0i2*pow(pi.m/(p0.m*3.),2./3.);
-        
+        const double rhi = r0i2*pow(pi->m/(p0.m*3.),2./3.);
         for (int j=i+1; j<N; j++){
             struct reb_particle pj = global[j];
-            double HSR = r->ri_hybarid.switch_ratio;
             
             const double dxj = p0.x - pj.x;
             const double dyj = p0.y - pj.y;
             const double dzj = p0.z - pj.z;
             const double r0j2 = dxj*dxj + dyj*dyj + dzj*dzj;
-            const double rhj = r0j2*pow(pj.m/(p0.m*3.),2./3.);
+            const double rhj = r0j2*pow(pj.m/(p0.m*3.),2./3.);  //this is calculated for each massive planet but only needs to be once.
             
-            const double dx = pi.x - pj.x;
-            const double dy = pi.y - pj.y;
-            const double dz = pi.z - pj.z;
+            const double dx = pi->x - pj.x;
+            const double dy = pi->y - pj.y;
+            const double dz = pi->z - pj.z;
             const double rij2 = dx*dx + dy*dy + dz*dz;
             const double ratio = rij2/(rhi+rhj);    //(p-p distance/Hill radii)^2
             r->ri_hybarid.is_in_mini[j] = 0;
-            
+
             if(ratio < HSR){
-                r->ri_hybarid.mini_active = 1;
-                if (j>_N_active){
-                    reb_add(mini,pj);
-                    r->ri_hybarid.is_in_mini[j] = 1;
-                    if (r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax){
-                        r->ri_hybarid.encounter_index_Nmax += 32;
-                        r->ri_hybarid.encounter_index = realloc(r->ri_hybarid.encounter_index,r->ri_hybarid.encounter_index_Nmax*sizeof(int));
+                if(pj.lastcollision > r->t - r->dt && pj.lastcollision != 0){
+                    double invmass = 1.0/(pi->m + pj.m);
+                    double Ei = reb_tools_energy(r);
+                    
+                    pi->vx = (pi->vx*pi->m + pj.vx*pj.m)*invmass;
+                    pi->vy = (pi->vy*pi->m + pj.vy*pj.m)*invmass;
+                    pi->vz = (pi->vz*pi->m + pj.vz*pj.m)*invmass;
+                    pi->m += pj.m;
+                    mini->particles[i] = *pi;     //update massive body in mini
+                    
+                    reb_remove(r,j,1);
+                    
+                    double Ef = reb_tools_energy(r);
+                    r->ri_hybarid.dE_offset += Ei - Ef;
+                    printf("\n\tParticle %d collided with body %d from system at t=%f\n",i,j,r->t);
+                    
+                } else {
+                    r->ri_hybarid.mini_active = 1;
+                    if (j>_N_active){
+                        reb_add(mini,pj);
+                        r->ri_hybarid.is_in_mini[j] = 1;
+                        if (r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax){
+                            while(r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax) r->ri_hybarid.encounter_index_Nmax += 32;
+                            r->ri_hybarid.encounter_index = realloc(r->ri_hybarid.encounter_index,r->ri_hybarid.encounter_index_Nmax*sizeof(int));
+                        }
+                        r->ri_hybarid.encounter_index[r->ri_hybarid.encounter_index_N] = j;
+                        r->ri_hybarid.encounter_index_N++;
                     }
-                    r->ri_hybarid.encounter_index[r->ri_hybarid.encounter_index_N] = j;
-                    r->ri_hybarid.encounter_index_N++;
+                
+                }
+            } else if (r0j2 > ejectiondistance2){
+                double Ei = reb_tools_energy(r);
+                reb_remove(r,j,1);
+                double Ef = reb_tools_energy(r);
+                r->ri_hybarid.dE_offset += Ei - Ef;
+                printf("\n\tParticle %d ejected from system at t=%f\n",j,r->t);
+            }
+        }
+    }
+}
+
+void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
+    if (mini->passive_influence){
+        struct reb_simulation* r = mini->ri_hybarid.global;
+        struct reb_particle* global = r->particles;
+        struct reb_particle* mini_particles = mini->particles;
+        struct reb_particle* global_prev = r->ri_hybarid.particles_prev;
+        const double t_prev = r->t - r->dt;
+        const double timefac = (mini->t - t_prev)/r->dt;
+        const int N_active = r->N_active;
+        const double G = r->G;
+        for(int i=N_active;i<r->N;i++){    //planetesimals
+            if(r->ri_hybarid.is_in_mini[i]==0){
+                const double ix = (1.-timefac)*global_prev[i].x + timefac*global[i].x; //interpolated values
+                const double iy = (1.-timefac)*global_prev[i].y + timefac*global[i].y;
+                const double iz = (1.-timefac)*global_prev[i].z + timefac*global[i].z;
+                const double mp = global[i].m;
+                for(int j=0;j<N_active;j++){//massive bodies
+                    struct reb_particle* body = &(mini_particles[j]);
+                    const double ddx = body->x - ix;
+                    const double ddy = body->y - iy;
+                    const double ddz = body->z - iz;
+                    
+                    const double rijinv2 = 1.0/(ddx*ddx + ddy*ddy + ddz*ddz);
+                    const double ac = -G*mp*rijinv2*sqrt(rijinv2);
+                    
+                    body->ax += ac*ddx;     //perturbation on planets due to planetesimals.
+                    body->ay += ac*ddy;
+                    body->az += ac*ddz;
                 }
             }
         }

@@ -227,6 +227,7 @@ struct reb_simulation_integrator_hybarid {
     struct reb_simulation* global;
     int N_encounter;
     double switch_ratio;
+    double dE_offset;
     int mini_active;
     int* encounter_index;
     int encounter_index_N;
