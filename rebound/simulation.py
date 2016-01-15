@@ -183,12 +183,13 @@ class Simulation(Structure):
     Most simulation parameters can be directly changed with the property syntax:
 
     >>> sim = rebound.Simulation()
-    >>> sim.G = 1.   # Sets the graviational constant (default 1)
-    >>> sim.softening = 1.   # Sets the graviational softening parameter default (0)
-    >>> sim.dt = 0.1   # Sets the timestep (will change for adaptive integrators such as IAS15).
-    >>> sim.t = 0.   # Sets the current simulation time (default 0.)
-    >>> print(sim.N)  # Gets the current number of particles
-    >>> print(sim.N_active)  # Gets the current number of active particles
+    >>> sim.G = 1.                  # Sets the graviational constant (default 1)
+    >>> sim.softening = 1.          # Sets the graviational softening parameter (default 0)
+    >>> sim.passive_influence = 1   # Allows massive particles to feel influence from small particles (default 0)
+    >>> sim.dt = 0.1                # Sets the timestep (will change for adaptive integrators such as IAS15).
+    >>> sim.t = 0.                  # Sets the current simulation time (default 0)
+    >>> print(sim.N)                # Gets the current number of particles
+    >>> print(sim.N_active)         # Gets the current number of active particles
 
     """
     def __init__(self):
@@ -923,6 +924,7 @@ Simulation._fields_ = [("t", c_double),
                 ("var_config_N", c_int),
                 ("var_config", POINTER(reb_variational_configuration)),
                 ("N_active", c_int),
+                ("passive_influence", c_int),
                 ("allocated_N", c_int),
                 ("_particles", POINTER(Particle)),
                 ("gravity_cs", POINTER(reb_vec3d)),

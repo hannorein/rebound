@@ -361,33 +361,33 @@ struct reb_simulation {
      * \name Variables related to time, current number of particles and simulation status/control 
      * @{
      */
-    double  t;          ///< Current simulation time. 
-    double  G;          ///< Gravitational constant. Default: 1. 
+    double  t;              ///< Current simulation time. 
+    double  G;              ///< Gravitational constant. Default: 1. 
     double  softening;      ///< Gravitational softening parameter. Default: 0. 
-    double  dt;         ///< Current timestep. 
-    double  dt_last_done;       ///< Last dt used by integrator
-    int     N;          ///< Current number of particles on this node. 
+    double  dt;             ///< Current timestep. 
+    double  dt_last_done;   ///< Last dt used by integrator
+    int     N;              ///< Current number of particles on this node. 
     int     N_var;          ///< Total number of variational particles. Default: 0.
     int     var_config_N;   ///< Number of variational configuration structs. Default: 0.
     struct reb_variational_configuration* var_config;   ///< These configuration structs contain details on variational particles. 
-    int     N_active;       ///< Number of massive particles included in force calculation. Default: N.
-    int     passive_influence;  ///< Type of passive particles. 0 means passive particle really don't influence any other particle (test particle), 1 means active particles feel passive particles but passive particle still don't feel passive particles.
-    int     allocatedN;     ///< Current maximum space allocated in the particles array on this node. 
+    int     N_active;               ///< Number of massive particles included in force calculation. Default: N.
+    int     passive_influence;      ///< Type of passive particles. 0 means passive particle really don't influence any other particle (test particle), 1 means active particles feel passive particles but passive particle still don't feel passive particles.
+    int     allocatedN;             ///< Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; ///< Main particle array. This contains all particles on this node.  
     struct reb_vec3d* gravity_cs;   ///< Vector containing the information for compensated gravity summation 
     int     gravity_cs_allocatedN;  ///< Current number of allocated space for cs array
     struct reb_treecell** tree_root;///< Pointer to the roots of the trees. 
-    int     tree_needs_update;  ///< Flag to force a tree update (after boundary check)
-    double opening_angle2;      ///< Square of the cell opening angle \f$ \theta \f$. 
-    enum REB_STATUS status;     ///< Set to 1 to exit the simulation at the end of the next timestep. 
-    int     exact_finish_time;  ///< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. Default is 1. 
+    int     tree_needs_update;      ///< Flag to force a tree update (after boundary check)
+    double opening_angle2;          ///< Square of the cell opening angle \f$ \theta \f$. 
+    enum REB_STATUS status;         ///< Set to 1 to exit the simulation at the end of the next timestep. 
+    int     exact_finish_time;      ///< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. Default is 1. 
 
-    unsigned int force_is_velocity_dependent;///< Set to 1 if integrator needs to consider velocity dependent forces.  
-    unsigned int gravity_ignore_10;     ///< Ignore the gravity form the central object (for WH-type integrators)
+    unsigned int force_is_velocity_dependent;   ///< Set to 1 if integrator needs to consider velocity dependent forces.  
+    unsigned int gravity_ignore_10; ///< Ignore the gravity form the central object (for WH-type integrators)
     double output_timing_last;      ///< Time when reb_output_timing() was called the last time. 
     double exit_max_distance;       ///< Exit simulation if distance from origin larger than this value 
     double exit_min_distance;       ///< Exit simulation if distance from another particle smaller than this value 
-    double usleep;              ///< Wait this number of microseconds after each timestep, useful for slowing down visualization. Set to negative value to disable visualization (despite compiling with OPENGL=1).  
+    double usleep;                  ///< Wait this number of microseconds after each timestep, useful for slowing down visualization. Set to negative value to disable visualization (despite compiling with OPENGL=1).  
     /** @} */
 
     /**
