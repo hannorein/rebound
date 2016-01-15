@@ -280,7 +280,7 @@ void reb_init_simulation(struct reb_simulation* r){
 	r->N 		= 0;	
 	r->allocatedN	= 0;	
 	r->N_active 	= -1; 	
-	r->passive_influence = 0; 	
+	r->testparticle_type = 0; 	
 	r->N_var 	= 0; 	
 	r->var_config_N	= 0; 	
 	r->var_config 	= NULL; 	
