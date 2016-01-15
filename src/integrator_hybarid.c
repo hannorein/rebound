@@ -88,9 +88,9 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     }
 
     if (r->passive_influence){
-        if (r->N>=r->ri_hybarid.particles_prev_Nmax){
-            r->ri_hybarid.particles_prev_Nmax += 32;
-            r->ri_hybarid.particles_prev = realloc(r->ri_hybarid.particles_prev,r->ri_hybarid.particles_prev_Nmax*sizeof(struct reb_particle));
+        if (r->N>r->ri_hybarid.particles_prev_Nmax){
+            r->ri_hybarid.particles_prev_Nmax = r->N;
+            r->ri_hybarid.particles_prev = realloc(r->ri_hybarid.particles_prev,r->N*sizeof(struct reb_particle));
         }
         memcpy(r->ri_hybarid.particles_prev, r->particles, sizeof(struct reb_particle)*r->N); 
     }
@@ -103,9 +103,9 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     r->ri_hybarid.encounter_index_N = 0;
     
     
-    if (r->N>=r->ri_hybarid.is_in_mini_Nmax){
-        r->ri_hybarid.is_in_mini_Nmax += 32;
-        r->ri_hybarid.is_in_mini = realloc(r->ri_hybarid.is_in_mini,r->ri_hybarid.is_in_mini_Nmax*sizeof(int));
+    if (r->N>r->ri_hybarid.is_in_mini_Nmax){
+        r->ri_hybarid.is_in_mini_Nmax = r->N;
+        r->ri_hybarid.is_in_mini = realloc(r->ri_hybarid.is_in_mini,r->N*sizeof(int));
     }
 
     // Add all massive particles
