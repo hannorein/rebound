@@ -263,6 +263,7 @@ class Particle(Structure):
                         raise ValueError("Variational particles can only be initializes using the derivatives with respect to a, e, i, Omega, omega, f and m.")
                 else:
                     raise ValueError("Variational equations beyond second order are not implemented.")
+                self.m = p.m
 
             
             self.x = p.x
