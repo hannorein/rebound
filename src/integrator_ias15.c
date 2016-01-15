@@ -588,6 +588,25 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 	copybuffers(b,br,N3);		
 	double ratio = r->dt/dt_done;
 	predict_next_step(ratio, N3, e, b, e, b);
+    
+    //Hybarid
+    if(r->ri_hybarid.mini_active){
+        for(int kk=0;kk<r->N_active;kk++){
+            struct reb_particle body = particles[kk];
+            for(int ll=r->N_active;ll<r->N;ll++){
+                struct reb_particle* pj = &(particles[ll]);
+                double dxj = pj->x - body.x;
+                double dyj = pj->y - body.y;
+                double dzj = pj->z - body.z;
+                double rij2 = dxj*dxj + dyj*dyj + dzj*dzj;
+                double rirj = body.r + pj->r;
+                if(rij2 <= rirj*rirj){
+                    pj->lastcollision = 1;
+                }
+            }
+        }
+    }
+    
 	return 1; // Success.
 }
 

@@ -12,14 +12,14 @@
 #include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
-double E0;
+double E0, planetesimal_mass;
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
 
     int N_planetesimals = 100;
-    double planetesimal_mass = 3e-8;                               //each is a moon
-    double amin = 0.59, amax = 0.61;  //for planetesimal disk
+    planetesimal_mass = 3e-8;
+    double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
     
 	//Simulation Setup
@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
     r->ri_hybarid.switch_ratio = 3.;
     r->passive_influence = 1;
 	r->heartbeat	= heartbeat;
-    r->dt = 0.1;
+    r->dt = 0.01;
     
 	// Initial conditions
 	struct reb_particle star = {0};
@@ -37,6 +37,7 @@ int main(int argc, char* argv[]){
 	star.r		= 0.005;        // Radius of particle is in AU!
 	reb_add(r, star);
    
+    srand(11);
    // fix 
     
     //planet 1
@@ -74,8 +75,17 @@ int main(int argc, char* argv[]){
 	}
    
     E0 = reb_tools_energy(r);
+    time_t t_ini = time(NULL);
+    struct tm *tmp = gmtime(&t_ini);
+    
     //Integrate!
     reb_integrate(r, 100.);
+    
+    time_t t_fini = time(NULL);
+    struct tm *tmp2 = gmtime(&t_fini);
+    double time = t_fini - t_ini;
+    printf("\nSimulation complete. Elapsed simulation time is %.2f s, \n\n",time);
+    
 }
 
 void heartbeat(struct reb_simulation* r){
@@ -84,4 +94,3 @@ void heartbeat(struct reb_simulation* r){
     reb_output_timing(r, 0);  
     printf("    dE=%e",dE);
 }
-
