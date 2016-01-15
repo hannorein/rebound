@@ -60,7 +60,6 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     r->ri_hybarid.mini_active = 0;
     r->ri_hybarid.encounter_index_N = 0;
     
-    
     if (r->N>r->ri_hybarid.is_in_mini_Nmax){
         r->ri_hybarid.is_in_mini_Nmax = r->N;
         r->ri_hybarid.is_in_mini = realloc(r->ri_hybarid.is_in_mini,r->N*sizeof(int));
@@ -81,7 +80,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
 
     reb_integrator_hybarid_check_for_encounter(r);
 
-    //keep this after check_for_encounter - incase particle removed, don't have to re-organize arrays
+    //keep this after check_for_encounter - then if particle is removed, no need to edit particles_prev
     if (r->passive_influence){
         if (r->N>r->ri_hybarid.particles_prev_Nmax){
             r->ri_hybarid.particles_prev_Nmax = r->N;
@@ -121,7 +120,8 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
 	const int _N_active = ((r->N_active==-1)?N:r->N_active) - r->N_var;
     struct reb_particle* global = r->particles;
     struct reb_particle p0 = global[0];
-    double ejectiondistance2 = 100;
+    double ejectiondistance2 = 100;     //temporary hardcoded value.
+    double HSR = r->ri_hybarid.switch_ratio;
     for (int i=0; i<_N_active; i++){
         struct reb_particle* pi = &(global[i]);
         const double dxi = p0.x - pi->x;
@@ -131,7 +131,6 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
         const double rhi = r0i2*pow(pi->m/(p0.m*3.),2./3.);
         for (int j=i+1; j<N; j++){
             struct reb_particle pj = global[j];
-            double HSR = r->ri_hybarid.switch_ratio;
             
             const double dxj = p0.x - pj.x;
             const double dyj = p0.y - pj.y;
@@ -155,7 +154,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                     pi->vy = (pi->vy*pi->m + pj.vy*pj.m)*invmass;
                     pi->vz = (pi->vz*pi->m + pj.vz*pj.m)*invmass;
                     pi->m += pj.m;
-                    mini->particles[i] = *pi;     //need to update mini accordingly
+                    mini->particles[i] = *pi;     //update massive body in mini
                     
                     reb_remove(r,j,1);
                     
