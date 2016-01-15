@@ -361,17 +361,17 @@ struct reb_simulation {
      * \name Variables related to time, current number of particles and simulation status/control 
      * @{
      */
-    double  t;              ///< Current simulation time. 
-    double  G;              ///< Gravitational constant. Default: 1. 
-    double  softening;      ///< Gravitational softening parameter. Default: 0. 
-    double  dt;             ///< Current timestep. 
-    double  dt_last_done;   ///< Last dt used by integrator
-    int     N;              ///< Current number of particles on this node. 
-    int     N_var;          ///< Total number of variational particles. Default: 0.
-    int     var_config_N;   ///< Number of variational configuration structs. Default: 0.
+    double  t;                      ///< Current simulation time. 
+    double  G;                      ///< Gravitational constant. Default: 1. 
+    double  softening;              ///< Gravitational softening parameter. Default: 0. 
+    double  dt;                     ///< Current timestep. 
+    double  dt_last_done;           ///< Last dt used by integrator
+    int     N;                      ///< Current number of particles on this node. 
+    int     N_var;                  ///< Total number of variational particles. Default: 0.
+    int     var_config_N;           ///< Number of variational configuration structs. Default: 0.
     struct reb_variational_configuration* var_config;   ///< These configuration structs contain details on variational particles. 
-    int     N_active;               ///< Number of massive particles included in force calculation. Default: N.
-    int     passive_influence;      ///< Type of passive particles. 0 means passive particle really don't influence any other particle (test particle), 1 means active particles feel passive particles but passive particle still don't feel passive particles.
+    int     N_active;               ///< Number of massive particles included in force calculation (default: N). Particles with index >= N_active are considered testparticles.
+    int     testparticle_type;      ///< Type of the particles with an index>=N_active. 0 means particle does not influence any other particle (default), 1 means particles with index < N_active feel testparticle (similar to MERCURY's "small" particles). Note that testparticles never feel each other.
     int     allocatedN;             ///< Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; ///< Main particle array. This contains all particles on this node.  
     struct reb_vec3d* gravity_cs;   ///< Vector containing the information for compensated gravity summation 
