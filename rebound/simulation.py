@@ -511,6 +511,26 @@ class Simulation(Structure):
 
 # Variational Equations
     def add_variational(self,order=1,index_1st_order_a=None, index_1st_order_b=None, testparticle=-1):
+        """ 
+        This function adds a set of variational particles to the simulation. 
+
+        Currently Leapfrog, WHFast and IAS15 support first order variational equations. IAS15 also
+        supports second order variational equations.
+
+        Parameters
+        ----------
+        order : integer, optional
+            By default the function adds a set of first order variational particles to the simulation. Set this flag to 2 for second order.
+        index_1st_order_a : int, optional
+            Second order variational equations depend on their corresponding first order variational particles. This parameter needs to be set to the index of the first variational particle. 
+        index_1st_order_b : int, optional
+            Same as index_1st_order_a. There are two different indicies to calculate off-diagonal elements.
+            
+
+        Returns
+        -------
+        Returns the index of the first variational particle in the particle array.
+        """
         if order==1:
             clibrebound.reb_add_var_1st_order.restype = c_int
             index = clibrebound.reb_add_var_1st_order(byref(self),c_int(testparticle))
