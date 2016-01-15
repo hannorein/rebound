@@ -624,6 +624,10 @@ class Simulation(Structure):
         This is an array of pointers and thus the contents of the array update 
         as the simulation progresses. Note that the pointers could change,
         for example when a particle is added or removed from the simulation. 
+
+        Note that you cannot use this convenience to set an entire particle.
+        For that use: 
+        >>> sim._particles[i] = newparticle
         """
         ps = []
         N = self.N 
