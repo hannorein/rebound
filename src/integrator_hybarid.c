@@ -48,7 +48,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         r->ri_hybarid.mini->integrator = REB_INTEGRATOR_IAS15;
         r->ri_hybarid.mini->additional_forces = reb_integrator_hybarid_additional_forces_mini;
         r->ri_hybarid.mini->ri_hybarid.global = r;
-        r->ri_hybarid.mini->passive_influence = r->passive_influence;
+        r->ri_hybarid.mini->testparticle_type = r->testparticle_type;
         r->ri_hybarid.mini->ri_hybarid.mini_active = 1; //flag for collision check in IAS15
         //r->ri_hybarid.mini->ri_ias15.epsilon = 1e-8;  //speeds up ias and hybarid immensely
     }
@@ -81,7 +81,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     reb_integrator_hybarid_check_for_encounter(r);
 
     //keep this after check_for_encounter - then if particle is removed, no need to edit particles_prev
-    if (r->passive_influence){
+    if (r->testparticle_type){
         if (r->N>r->ri_hybarid.particles_prev_Nmax){
             r->ri_hybarid.particles_prev_Nmax = r->N;
             r->ri_hybarid.particles_prev = realloc(r->ri_hybarid.particles_prev,r->N*sizeof(struct reb_particle));
@@ -188,7 +188,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
 }
 
 void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
-    if (mini->passive_influence){
+    if (mini->testparticle_type){
         struct reb_simulation* r = mini->ri_hybarid.global;
         struct reb_particle* global = r->particles;
         struct reb_particle* mini_particles = mini->particles;

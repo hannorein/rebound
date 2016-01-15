@@ -500,7 +500,8 @@ struct reb_simulation {
         REB_INTEGRATOR_WH = 3,      ///< WH integrator (based on swifter), WHFast is recommended, this integrator is in REBOUND for comparison tests only
         REB_INTEGRATOR_LEAPFROG = 4,    ///< LEAPFROG integrator, simple, 2nd order, symplectic
         REB_INTEGRATOR_HYBRID = 5,  ///< HYBRID Integrator for close encounters (experimental)
-        REB_INTEGRATOR_NONE = 6,    ///< Do not integrate anything
+        REB_INTEGRATOR_HYBARID = 6,  ///< HYBARID Integrator for close encounters (experimental)
+        REB_INTEGRATOR_NONE = 7,    ///< Do not integrate anything
         } integrator;
 
     /**
@@ -534,6 +535,7 @@ struct reb_simulation {
     struct reb_simulation_integrator_hybrid ri_hybrid;  ///< The Hybrid struct 
     struct reb_simulation_integrator_whfast ri_whfast;  ///< The WHFast struct 
     struct reb_simulation_integrator_ias15 ri_ias15;    ///< The IAS15 struct 
+    struct reb_simulation_integrator_hybarid ri_hybarid;    ///< The HYBARID struct 
     /** @} */
 
     /**
