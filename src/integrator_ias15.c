@@ -599,9 +599,9 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 double dyj = pj->y - body.y;
                 double dzj = pj->z - body.z;
                 double rij2 = dxj*dxj + dyj*dyj + dzj*dzj;
-                double rirj = body.r + pj->r;
+                double rirj = body.r;
                 if(rij2 <= rirj*rirj){
-                    pj->lastcollision = 1;
+                    pj->lastcollision = r->t;
                 }
             }
         }
