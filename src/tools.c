@@ -78,7 +78,7 @@ double reb_tools_energy(struct reb_simulation* r){
 		struct reb_particle pi = particles[i];
 		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
 		for (int j=i+1;j<N-N_var;j++){
-            if(r->passive_influence == 1 && i>r->N_active) continue; //ignore forces bet. planetesimals
+            if(r->testparticle_type == 1 && i>r->N_active) continue; //ignore forces bet. planetesimals
 			struct reb_particle pj = particles[j];
 			double dx = pi.x - pj.x;
 			double dy = pi.y - pj.y;
@@ -584,9 +584,8 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY){
 struct reb_particle reb_tools_orbit_to_particle_da(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 
 	struct reb_particle p = {0};
-	p.m = m;
-	double r = (1-e*e)/(1 + e*cos(f));
-	double v0 = -0.5/a/sqrt(a)*sqrt(G*(m+primary.m)/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double dr = (1-e*e)/(1 + e*cos(f));
+	double dv0 = -0.5/a/sqrt(a)*sqrt(G*(m+primary.m)/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -598,25 +597,22 @@ struct reb_particle reb_tools_orbit_to_particle_da(double G, struct reb_particle
 	double si = sin(inc);
 	
 	// Murray & Dermott Eq 2.122
-	p.x = r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
-	p.y = r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
-	p.z = r*(so*cf+co*sf)*si;
+	p.x = dr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
+	p.y = dr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
+	p.z = dr*(so*cf+co*sf)*si;
 
 	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
-	p.vx = v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
-	p.vy = v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
-	p.vz = v0*((e+cf)*co*si - sf*si*so);
+	p.vx = dv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = dv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = dv0*((e+cf)*co*si - sf*si*so);
 	
-	p.ax = 0; 	p.ay = 0; 	p.az = 0;
-
 	return p;
 }
 
 struct reb_particle reb_tools_orbit_to_particle_dda(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 
 	struct reb_particle p = {0};
-	p.m = m;
-	double v0 = -0.75/a/a/sqrt(a)*sqrt(G*(m+primary.m)/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double ddv0 = -0.75/a/a/sqrt(a)*sqrt(G*(m+primary.m)/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -628,11 +624,388 @@ struct reb_particle reb_tools_orbit_to_particle_dda(double G, struct reb_particl
 	double si = sin(inc);
 	
 	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
-	p.vx = v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
-	p.vy = v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
-	p.vz = v0*((e+cf)*co*si - sf*si*so);
+	p.vx = ddv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = ddv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = ddv0*((e+cf)*co*si - sf*si*so);
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_de(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+    double cosf = cos(f);
+	double dr = -a*(cosf*e*e+cosf+2.*e)/((cosf*e+1.)*(cosf*e+1.));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
+	double dv0 = e*v0/(1.-e*e); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = dr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
+	p.y = dr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
+	p.z = dr*(so*cf+co*sf)*si;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = dv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = dv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = dv0*((e+cf)*co*si - sf*si*so);
+	
+    p.vx += v0*(-ci*co*sO - cO*so);
+	p.vy += v0*(ci*co*cO - sO*so);
+	p.vz += v0*(co*si);
+
+	return p;
+}
+
+
+
+struct reb_particle reb_tools_orbit_to_particle_dde(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+    double cosf = cos(f);
+	double ddr = a*2.*(cosf*cosf-1.)/((cosf*e+1.)*(cosf*e+1.)*(cosf*e+1.));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
+	double dv0 = e*v0/(1.-e*e); 
+	double ddv0 = v0/((e*e-1.)*(e*e-1.)) * (2.*e*e+1.);
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = ddr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
+	p.y = ddr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
+	p.z = ddr*(so*cf+co*sf)*si;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = ddv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = ddv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = ddv0*((e+cf)*co*si - sf*si*so);
+	
+    p.vx += 2.*dv0*(-ci*co*sO - cO*so);
+	p.vy += 2.*dv0*(ci*co*cO - sO*so);
+	p.vz += 2.*dv0*(co*si);
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_di(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double dci = -sin(inc);
+	double dsi = cos(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = r*(- sO*(so*cf+co*sf)*dci);
+	p.y = r*(+ cO*(so*cf+co*sf)*dci);
+	p.z = r*(so*cf+co*sf)*dsi;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = v0*((e+cf)*(-dci*co*sO) - sf*(- dci*so*sO));
+	p.vy = v0*((e+cf)*(dci*co*cO)  - sf*(dci*so*cO));
+	p.vz = v0*((e+cf)*co*dsi - sf*dsi*so);
 	
 
 	return p;
 }
 
+struct reb_particle reb_tools_orbit_to_particle_ddi(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ddci = -cos(inc);
+	double ddsi = -sin(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = r*(- sO*(so*cf+co*sf)*ddci);
+	p.y = r*(+ cO*(so*cf+co*sf)*ddci);
+	p.z = r*(so*cf+co*sf)*ddsi;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = v0*((e+cf)*(-ddci*co*sO) - sf*(- ddci*so*sO));
+	p.vy = v0*((e+cf)*(ddci*co*cO)  - sf*(ddci*so*cO));
+	p.vz = v0*((e+cf)*co*ddsi - sf*ddsi*so);
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_dOmega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+
+	double dcO = -sin(Omega);
+	double dsO = cos(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = r*(dcO*(co*cf-so*sf) - dsO*(so*cf+co*sf)*ci);
+	p.y = r*(dsO*(co*cf-so*sf) + dcO*(so*cf+co*sf)*ci);
+	p.z = 0.;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = v0*((e+cf)*(-ci*co*dsO - dcO*so) - sf*(co*dcO - ci*so*dsO));
+	p.vy = v0*((e+cf)*(ci*co*dcO - dsO*so)  - sf*(co*dsO + ci*so*dcO));
+	p.vz = 0.;
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_ddOmega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+
+	double ddcO = -cos(Omega);
+	double ddsO = -sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = r*(ddcO*(co*cf-so*sf) - ddsO*(so*cf+co*sf)*ci);
+	p.y = r*(ddsO*(co*cf-so*sf) + ddcO*(so*cf+co*sf)*ci);
+	p.z = 0.;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = v0*((e+cf)*(-ci*co*ddsO - ddcO*so) - sf*(co*ddcO - ci*so*ddsO));
+	p.vy = v0*((e+cf)*(ci*co*ddcO - ddsO*so)  - sf*(co*ddsO + ci*so*ddcO));
+	p.vz = 0.;
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_domega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double dco = -sin(omega);
+	double dso = cos(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = r*(cO*(dco*cf-dso*sf) - sO*(dso*cf+dco*sf)*ci);
+	p.y = r*(sO*(dco*cf-dso*sf) + cO*(dso*cf+dco*sf)*ci);
+	p.z = r*(dso*cf+dco*sf)*si;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = v0*((e+cf)*(-ci*dco*sO - cO*dso) - sf*(dco*cO - ci*dso*sO));
+	p.vy = v0*((e+cf)*(ci*dco*cO - sO*dso)  - sf*(dco*sO + ci*dso*cO));
+	p.vz = v0*((e+cf)*dco*si - sf*si*dso);
+	
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_ddomega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double ddco = -cos(omega);
+	double ddso = -sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = r*(cO*(ddco*cf-ddso*sf) - sO*(ddso*cf+ddco*sf)*ci);
+	p.y = r*(sO*(ddco*cf-ddso*sf) + cO*(ddso*cf+ddco*sf)*ci);
+	p.z = r*(ddso*cf+ddco*sf)*si;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = v0*((e+cf)*(-ci*ddco*sO - cO*ddso) - sf*(ddco*cO - ci*ddso*sO));
+	p.vy = v0*((e+cf)*(ci*ddco*cO - sO*ddso)  - sf*(ddco*sO + ci*ddso*cO));
+	p.vz = v0*((e+cf)*ddco*si - sf*si*ddso);
+	
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_df(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double dr = a*(1.-e*e)/((1. + e*cos(f))*(1. + e*cos(f)))*e*sin(f);
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double dcf = -sin(f);
+	double dsf = cos(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = dr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
+	p.y = dr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
+	p.z = dr*(so*cf+co*sf)*si;
+	
+    p.x += r*(cO*(co*dcf-so*dsf) - sO*(so*dcf+co*dsf)*ci);
+	p.y += r*(sO*(co*dcf-so*dsf) + cO*(so*dcf+co*dsf)*ci);
+	p.z += r*(so*dcf+co*dsf)*si;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = v0*(dcf*(-ci*co*sO - cO*so) - dsf*(co*cO - ci*so*sO));
+	p.vy = v0*(dcf*(ci*co*cO - sO*so)  - dsf*(co*sO + ci*so*cO));
+	p.vz = v0*(dcf*co*si - dsf*si*so);
+	
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_ddf(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double dr = a*(1.-e*e)/((1. + e*cos(f))*(1. + e*cos(f)))*e*sin(f);
+	double ddr = 2.*a*(1.-e*e)/((1. + e*cos(f))*(1. + e*cos(f))*(1. + e*cos(f)))*e*e*sin(f)*sin(f) + a*(1.-e*e)*e*cos(f)/((1. + e*cos(f))*(1. + e*cos(f)));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double dcf = -sin(f);
+	double dsf = cos(f);
+	double ddcf = -cos(f);
+	double ddsf = -sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = ddr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
+	p.y = ddr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
+	p.z = ddr*(so*cf+co*sf)*si;
+    
+    p.x += 2.*dr*(cO*(co*dcf-so*dsf) - sO*(so*dcf+co*dsf)*ci);
+	p.y += 2.*dr*(sO*(co*dcf-so*dsf) + cO*(so*dcf+co*dsf)*ci);
+	p.z += 2.*dr*(so*dcf+co*dsf)*si;
+	
+    p.x += r*(cO*(co*ddcf-so*ddsf) - sO*(so*ddcf+co*ddsf)*ci);
+	p.y += r*(sO*(co*ddcf-so*ddsf) + cO*(so*ddcf+co*ddsf)*ci);
+	p.z += r*(so*ddcf+co*ddsf)*si;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = v0*(ddcf*(-ci*co*sO - cO*so) - ddsf*(co*cO - ci*so*sO));
+	p.vy = v0*(ddcf*(ci*co*cO - sO*so)  - ddsf*(co*sO + ci*so*cO));
+	p.vz = v0*(ddcf*co*si - ddsf*si*so);
+	
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	p.m = 1.;
+	double dv0 = 0.5/sqrt(G*(m+primary.m)/a/(1.-e*e))*G/a/(1.-e*e); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = dv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = dv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = dv0*((e+cf)*co*si - sf*si*so);
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_ddm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double ddv0 = -0.25/sqrt(G*(m+primary.m)/a/(1.-e*e))*G/a/(1.-e*e)*G/a/(1.-e*e); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = ddv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = ddv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = ddv0*((e+cf)*co*si - sf*si*so);
+
+	return p;
+}
+
+/**
+struct reb_particle reb_tools_orbit_to_particle_(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	p.m = m;
+	double r = a*(1-e*e)/(1 + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = primary.x + r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
+	p.y = primary.y + r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
+	p.z = primary.z + r*(so*cf+co*sf)*si;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = primary.vx + v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = primary.vy + v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = primary.vz + v0*((e+cf)*co*si - sf*si*so);
+	
+
+	return p;
+}
+    */

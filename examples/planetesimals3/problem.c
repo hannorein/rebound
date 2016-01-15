@@ -27,7 +27,7 @@ int main(int argc, char* argv[]){
 	//r->integrator	= REB_INTEGRATOR_IAS15;
 	//r->integrator	= REB_INTEGRATOR_WHFAST;
     r->ri_hybarid.switch_ratio = 3.;
-    r->passive_influence = 1;
+    r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
     r->dt = 0.01;
     

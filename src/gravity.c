@@ -64,7 +64,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 	const int _N_start  = (r->integrator==REB_INTEGRATOR_WH?1:0);
 	const int _N_active = ((N_active==-1)?N:N_active) - r->N_var;
 	const int _N_real   = N  - r->N_var;
-	const int _passive_influence   = r->passive_influence;
+	const int _testparticle_type   = r->testparticle_type;
 	switch (r->gravity){
 		case REB_GRAVITY_NONE: // Do nothing.
 		break;
@@ -101,7 +101,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 					particles[i].az    += prefact*dz;
 				}
 				}
-                if (_passive_influence){
+                if (_testparticle_type){
 				for (int i=_N_start; i<_N_active; i++){
 				for (int j=_N_active; j<_N_real; j++){
 					if (_gravity_ignore_10 && j==1 && i==0 ) continue;
@@ -225,7 +225,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 				cs[i].z = (tz - particles[i].az) - yz;
 				particles[i].az = tz;
 				}
-                if (_passive_influence){
+                if (_testparticle_type){
 				const double prefacti = prefact*particles[i].m;
 				{
 				double ix = prefacti*dx;
