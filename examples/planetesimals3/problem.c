@@ -12,13 +12,13 @@
 #include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
-double E0, planetesimal_mass;
+double E0;
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
 
     int N_planetesimals = 100;
-    planetesimal_mass = 3e-8;
+    double planetesimal_mass = 3e-8;
     double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
     
@@ -38,7 +38,6 @@ int main(int argc, char* argv[]){
 	reb_add(r, star);
    
     srand(11);
-   // fix 
     
     //planet 1
     {
@@ -72,25 +71,25 @@ int main(int argc, char* argv[]){
         pt = reb_tools_orbit_to_particle(r->G, star, planetesimal_mass, a, 0., inc, Omega, apsis,phi);
 		pt.r 		= 4e-5;
 		reb_add(r, pt);
-	}
+    }
    
     E0 = reb_tools_energy(r);
-    time_t t_ini = time(NULL);
-    struct tm *tmp = gmtime(&t_ini);
+    //time_t t_ini = time(NULL);
+    //struct tm *tmp = gmtime(&t_ini);
     
     //Integrate!
     reb_integrate(r, 100.);
     
-    time_t t_fini = time(NULL);
-    struct tm *tmp2 = gmtime(&t_fini);
-    double time = t_fini - t_ini;
-    printf("\nSimulation complete. Elapsed simulation time is %.2f s, \n\n",time);
+    //time_t t_fini = time(NULL);
+    //struct tm *tmp2 = gmtime(&t_fini);
+    //double time = t_fini - t_ini;
+    //printf("\nSimulation complete. Elapsed simulation time is %.2f s, \n\n",time);
     
 }
 
 void heartbeat(struct reb_simulation* r){
-    double E = reb_tools_energy(r);
+    double E = reb_tools_energy(r) + r->ri_hybarid.dE_offset;
     double dE = fabs((E-E0)/E0);
-    reb_output_timing(r, 0);  
+    reb_output_timing(r, 0);
     printf("    dE=%e",dE);
 }
