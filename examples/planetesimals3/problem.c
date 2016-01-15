@@ -28,8 +28,6 @@ int main(int argc, char* argv[]){
     r->passive_influence = 1;
 	r->heartbeat	= heartbeat;
     r->dt = 0.1;
-    r->usleep = 50000;
-    r->usleep = -1;
     
 	// Initial conditions
 	struct reb_particle star = {0};
