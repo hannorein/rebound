@@ -267,6 +267,9 @@ class Particle(Structure):
                     elif variation == "a" and variation2=="m":
                         clibrebound.reb_tools_orbit_to_particle_da_dm.restype = Particle
                         p = clibrebound.reb_tools_orbit_to_particle_da_dm(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
+                    elif variation == "a" and variation2=="e":
+                        clibrebound.reb_tools_orbit_to_particle_da_de.restype = Particle
+                        p = clibrebound.reb_tools_orbit_to_particle_da_de(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
                     else:
                         raise ValueError("Variational particles can only be initializes using the derivatives with respect to a, e, i, Omega, omega, f and m.")
                 else:
