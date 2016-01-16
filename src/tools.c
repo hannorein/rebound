@@ -1007,9 +1007,9 @@ struct reb_particle reb_tools_orbit_to_particle_da_de(double G, struct reb_parti
 	struct reb_particle p = {0};
     double cosf = cos(f);
 	double ddr = -(cosf*e*e+cosf+2.*e)/((cosf*e+1.)*(cosf*e+1.));
-	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
 	double dv0_da = -0.5/sqrt(G*(m+primary.m)/a/(1.-e*e))*G*(m+primary.m)/(a*a)/(1.-e*e); 
-	double ddv0 = -0.5*e/v0/(1.-e*e)*G*(m+primary.m)/(a*a)/(1.-e*e); 
+	
+	double dv0_da_de = e*dv0_da/(1.-e*e); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -1024,9 +1024,9 @@ struct reb_particle reb_tools_orbit_to_particle_da_de(double G, struct reb_parti
 	p.y = ddr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
 	p.z = ddr*(so*cf+co*sf)*si;
 
-	p.vx = ddv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
-	p.vy = ddv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
-	p.vz = ddv0*((e+cf)*co*si - sf*si*so);
+	p.vx = dv0_da_de*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = dv0_da_de*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = dv0_da_de*((e+cf)*co*si - sf*si*so);
 	
     p.vx += dv0_da*(-ci*co*sO - cO*so);
 	p.vy += dv0_da*(ci*co*cO - sO*so);
