@@ -978,6 +978,32 @@ struct reb_particle reb_tools_orbit_to_particle_ddm(double G, struct reb_particl
 	return p;
 }
 
+
+// Crossterms
+
+struct reb_particle reb_tools_orbit_to_particle_da_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+
+	struct reb_particle p = {0};
+	double ddv0 = -0.25*G/a/sqrt(a)/sqrt(G*(m+primary.m)/(1.-e*e));
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = ddv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = ddv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = ddv0*((e+cf)*co*si - sf*si*so);
+	
+	return p;
+}
+
+
 /**
 struct reb_particle reb_tools_orbit_to_particle_(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};

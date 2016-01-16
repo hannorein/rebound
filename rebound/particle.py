@@ -47,7 +47,7 @@ class Particle(Structure):
         """
         return "<rebound.Particle object, id=%s m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.id,self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
-    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, r=None, id=None, date=None, simulation=None, variation=None, variation_order=1):
+    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, r=None, id=None, date=None, simulation=None, variation=None, variation2=None, variation_order=1):
         """
         Initializes a Particle structure.
         Typically users will not create Particle structures directly.
@@ -102,6 +102,9 @@ class Particle(Structure):
             Simulation instance associated with this particle (Required)
         variation   : string            (Default: None)
             Set this string to the name of an orbital parameter to initialize the particle as a variational particle.
+        variation2  : string            (Default: None)
+            Set this string to the name of a second orbital parameter to initialize the particle as a variational particle.
+            Only used for second order variational equations. If not given, the parameter variation will be used (diagonal elements).
         variation_order : int           (Default: 1)
             Order of the variational particle (only used if 'variation' is not None)
         
@@ -238,27 +241,32 @@ class Particle(Structure):
                     else:
                         raise ValueError("Variational particles can only be initializes using the derivatives with respect to a, e, i, Omega, omega, f and m.")
                 elif variation_order==2:
-                    if variation == "a":
+                    if variation2 is None:
+                        variation2 = variation
+                    if variation == "a" and variation2=="a":
                         clibrebound.reb_tools_orbit_to_particle_dda.restype = Particle
                         p = clibrebound.reb_tools_orbit_to_particle_dda(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "e":
+                    elif variation == "e" and variation2=="e":
                         clibrebound.reb_tools_orbit_to_particle_dde.restype = Particle
                         p = clibrebound.reb_tools_orbit_to_particle_dde(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "i":
+                    elif variation == "i" and variation2=="i":
                         clibrebound.reb_tools_orbit_to_particle_ddi.restype = Particle
                         p = clibrebound.reb_tools_orbit_to_particle_ddi(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "Omega":
+                    elif variation == "Omega" and variation2=="Omega":
                         clibrebound.reb_tools_orbit_to_particle_ddOmega.restype = Particle
                         p = clibrebound.reb_tools_orbit_to_particle_ddOmega(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "omega":
+                    elif variation == "omega" and variation2=="omega":
                         clibrebound.reb_tools_orbit_to_particle_ddomega.restype = Particle
                         p = clibrebound.reb_tools_orbit_to_particle_ddomega(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "f":
+                    elif variation == "f" and variation2=="f":
                         clibrebound.reb_tools_orbit_to_particle_ddf.restype = Particle
                         p = clibrebound.reb_tools_orbit_to_particle_ddf(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "m":
+                    elif variation == "m" and variation2=="m":
                         clibrebound.reb_tools_orbit_to_particle_ddm.restype = Particle
                         p = clibrebound.reb_tools_orbit_to_particle_ddm(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
+                    elif variation == "a" and variation2=="m":
+                        clibrebound.reb_tools_orbit_to_particle_da_dm.restype = Particle
+                        p = clibrebound.reb_tools_orbit_to_particle_da_dm(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
                     else:
                         raise ValueError("Variational particles can only be initializes using the derivatives with respect to a, e, i, Omega, omega, f and m.")
                 else:
