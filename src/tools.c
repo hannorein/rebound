@@ -652,8 +652,8 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY){
 struct reb_particle reb_tools_orbit_to_particle_da(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 
 	struct reb_particle p = {0};
-	double dr = (1-e*e)/(1 + e*cos(f));
-	double dv0 = -0.5/a/sqrt(a)*sqrt(G*(m+primary.m)/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double dr = (1.-e*e)/(1. + e*cos(f));
+	double dv0 = -0.5/sqrt(a*a*a)*sqrt(G*(m+primary.m)/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -680,7 +680,7 @@ struct reb_particle reb_tools_orbit_to_particle_da(double G, struct reb_particle
 struct reb_particle reb_tools_orbit_to_particle_dda(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 
 	struct reb_particle p = {0};
-	double ddv0 = -0.75/a/a/sqrt(a)*sqrt(G*(m+primary.m)/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double ddv0 = 0.75/(a*a*sqrt(a))*sqrt(G*(m+primary.m)/(1.-e*e));
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
