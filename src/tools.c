@@ -702,9 +702,9 @@ struct reb_particle reb_tools_orbit_to_particle_dda(double G, struct reb_particl
 struct reb_particle reb_tools_orbit_to_particle_de(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};
     double cosf = cos(f);
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
 	double dr = -a*(cosf*e*e+cosf+2.*e)/((cosf*e+1.)*(cosf*e+1.));
-	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
-	double dv0 = e*v0/(1.-e*e); 
+	double dv0 = sqrt(G*(m+primary.m)/a)*e/((1.-e*e)*sqrt(1.-e*e)); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
