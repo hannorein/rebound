@@ -89,10 +89,10 @@ double reb_tools_energy(struct reb_simulation* r){
 }
 
 void reb_move_to_com(struct reb_simulation* const r){
-	const int N = r->N;
+    const int N_real = r->N - r->N_var;
 	struct reb_particle* restrict const particles = r->particles;
 	struct reb_particle com = reb_get_com(r);
-	for (int i=0;i<N;i++){
+	for (int i=0;i<N_real;i++){
 		particles[i].x  -= com.x;
 		particles[i].y  -= com.y;
 		particles[i].z  -= com.z;
@@ -100,13 +100,81 @@ void reb_move_to_com(struct reb_simulation* const r){
 		particles[i].vy -= com.vy;
 		particles[i].vz -= com.vz;
 	}
+    for (int v=0;v<r->var_config_N;v++){
+        int index = r->var_config[v].index;
+        if (r->var_config[v].testparticle>=0){
+            // Test particles do not affect the COM
+        }else{
+            if (r->var_config[v].order==1){
+                struct reb_particle com_shift = {0};
+                for (int i=0;i<N_real;i++){
+                    double m = particles[i].m;
+                    com_shift.x += m/com.m * particles[i+index].x; 
+                    com_shift.y += m/com.m * particles[i+index].y; 
+                    com_shift.z += m/com.m * particles[i+index].z; 
+                    com_shift.vx += m/com.m * particles[i+index].vx; 
+                    com_shift.vy += m/com.m * particles[i+index].vy; 
+                    com_shift.vz += m/com.m * particles[i+index].vz; 
+                    
+                    com_shift.x += (particles[i].x - com.x)/com.m * particles[i+index].m; 
+                    com_shift.y += (particles[i].y - com.y)/com.m * particles[i+index].m; 
+                    com_shift.z += (particles[i].z - com.z)/com.m * particles[i+index].m; 
+                    com_shift.vx += (particles[i].vx - com.vx)/com.m * particles[i+index].m; 
+                    com_shift.vy += (particles[i].vy - com.vy)/com.m * particles[i+index].m; 
+                    com_shift.vz += (particles[i].vz - com.vz)/com.m * particles[i+index].m; 
+                }
+                for (int i=0;i<N_real;i++){
+                    particles[i+index].x -= com_shift.x; 
+                    particles[i+index].y -= com_shift.y; 
+                    particles[i+index].z -= com_shift.z; 
+                    particles[i+index].vx -= com_shift.vx; 
+                    particles[i+index].vy -= com_shift.vy; 
+                    particles[i+index].vz -= com_shift.vz; 
+                }
+            }else if (r->var_config[v].order==2){
+                struct reb_particle com_shift = {0};
+                int index_1st_a = r->var_config[v].index_1st_a;
+                int index_1st_b = r->var_config[v].index_1st_b;
+                for (int i=0;i<N_real;i++){
+                    double m = particles[i].m;
+                    com_shift.x += m/com.m * particles[i+index].x; 
+                    com_shift.y += m/com.m * particles[i+index].y; 
+                    com_shift.z += m/com.m * particles[i+index].z; 
+                    com_shift.vx += m/com.m * particles[i+index].vx; 
+                    com_shift.vy += m/com.m * particles[i+index].vy; 
+                    com_shift.vz += m/com.m * particles[i+index].vz; 
+                    
+                    com_shift.x += (particles[i].x - com.x)/com.m * particles[i+index].m; 
+                    com_shift.y += (particles[i].y - com.y)/com.m * particles[i+index].m; 
+                    com_shift.z += (particles[i].z - com.z)/com.m * particles[i+index].m; 
+                    com_shift.vx += (particles[i].vx - com.vx)/com.m * particles[i+index].m; 
+                    com_shift.vy += (particles[i].vy - com.vy)/com.m * particles[i+index].m; 
+                    com_shift.vz += (particles[i].vz - com.vz)/com.m * particles[i+index].m; 
+                }
+                for (int i=0;i<N_real;i++){
+                    double m = particles[i].m;
+                    com_shift.x += 2.*(-particles[i].x + com.x)/(com.m*com.m) * particles[i+index_1st_a].m * particles[i+index_1st_b].m; 
+                    com_shift.y += 2.*(-particles[i].y + com.y)/(com.m*com.m) * particles[i+index_1st_a].m * particles[i+index_1st_b].m; 
+                    com_shift.z += 2.*(-particles[i].z + com.z)/(com.m*com.m) * particles[i+index_1st_a].m * particles[i+index_1st_b].m; 
+                }
+                for (int i=0;i<N_real;i++){
+                    particles[i+index].x -= com_shift.x; 
+                    particles[i+index].y -= com_shift.y; 
+                    particles[i+index].z -= com_shift.z; 
+                    particles[i+index].vx -= com_shift.vx; 
+                    particles[i+index].vy -= com_shift.vy; 
+                    particles[i+index].vz -= com_shift.vz; 
+                }
+            }
+        }
+    }
 }
 
 struct reb_particle reb_get_com(struct reb_simulation* r){
 	struct reb_particle com = {.m=0, .x=0, .y=0, .z=0, .vx=0, .vy=0, .vz=0};
-	const int N = r->N;
+    const int N_real = r->N - r->N_var;
 	struct reb_particle* restrict const particles = r->particles;
-	for (int i=0;i<N;i++){
+	for (int i=0;i<N_real;i++){
 		com = reb_get_com_of_pair(com, particles[i]);
 	}
 	return com;
