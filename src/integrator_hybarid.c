@@ -190,6 +190,8 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
     }
 }
 
+
+
 void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
     if (mini->testparticle_type){
         struct reb_simulation* r = mini->ri_hybarid.global;
