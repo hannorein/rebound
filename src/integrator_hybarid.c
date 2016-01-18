@@ -40,6 +40,7 @@
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r);
 void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini);
 
+
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     if (r->ri_hybarid.mini == NULL){
@@ -129,7 +130,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
         const double dzi = p0.z - pi->z;
         const double r0i2 = dxi*dxi + dyi*dyi + dzi*dzi;
         const double rhi = r0i2*pow(pi->m/(p0.m*3.),2./3.);
-        for (int j=i+1; j<N; j++){
+        for(int j=i+1;j<N;j++){
             struct reb_particle pj = global[j];
             
             const double dxj = p0.x - pj.x;
@@ -161,6 +162,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                     double Ef = reb_tools_energy(r);
                     r->ri_hybarid.dE_offset += Ei - Ef;
                     printf("\n\tParticle %d collided with body %d from system at t=%f\n",i,j,r->t);
+                    j--;    //re-try iteration j since j+1 is now j but hasn't been checked.
                     
                 } else {
                     r->ri_hybarid.mini_active = 1;
@@ -182,6 +184,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                 double Ef = reb_tools_energy(r);
                 r->ri_hybarid.dE_offset += Ei - Ef;
                 printf("\n\tParticle %d ejected from system at t=%f\n",j,r->t);
+                j--;    //re-try iteration j since j+1 is now j but hasn't been checked.
             }
         }
     }
