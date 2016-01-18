@@ -34,3 +34,4 @@ include README.rst
 include LICENSE
 include version.txt
 recursive-include rebound/tests *.py
+include rebound/rebound.h

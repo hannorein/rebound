@@ -4,6 +4,12 @@ except ImportError:
     from distutils.core import setup, Extension
 from codecs import open
 import os
+import sys
+
+if sys.platform == 'darwin':
+    from distutils import sysconfig
+    vars = sysconfig.get_config_vars()
+    vars['LDSHARED'] = vars['LDSHARED'].replace('-bundle', '-dynamiclib')
 
 libreboundmodule = Extension('librebound',
                     sources = [ 'src/rebound.c',
@@ -33,7 +39,7 @@ with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='2.11.1',
+    version='2.1.2',
     description='An open-source multi-purpose N-body code',
     long_description=long_description,
     url='http://github.com/hannorein/rebound',
@@ -63,6 +69,7 @@ setup(name='rebound',
     ],
     keywords='astronomy astrophysics nbody integrator symplectic wisdom-holman',
     packages=['rebound'],
+    package_data = {'rebound':['rebound.h']},
     install_requires=[],
     tests_require=["numpy","matplotlib"],
     test_suite="rebound.tests",
