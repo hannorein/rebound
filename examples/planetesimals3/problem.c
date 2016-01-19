@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
     r->ri_hybarid.switch_ratio = 3.;
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
-    r->dt = 0.01;
+    r->dt = 0.001;
     
 	// Initial conditions
 	struct reb_particle star = {0};

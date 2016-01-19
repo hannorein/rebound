@@ -61,10 +61,12 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     r->ri_hybarid.mini_active = 0;
     r->ri_hybarid.encounter_index_N = 0;
     
+    //reset is_in_mini
     if (r->N>r->ri_hybarid.is_in_mini_Nmax){
         r->ri_hybarid.is_in_mini_Nmax = r->N;
         r->ri_hybarid.is_in_mini = realloc(r->ri_hybarid.is_in_mini,r->N*sizeof(int));
     }
+    for(int i=0;i<r->N;i++)r->ri_hybarid.is_in_mini[i] = 0;
 
     // Add all massive particles
     for (int i=0; i<_N_active; i++){
@@ -144,7 +146,6 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
             const double dz = pi->z - pj.z;
             const double rij2 = dx*dx + dy*dy + dz*dz;
             const double ratio = rij2/(rhi+rhj);    //(p-p distance/Hill radii)^2
-            r->ri_hybarid.is_in_mini[j] = 0;
 
             if(ratio < HSR){
                 if(pj.lastcollision > r->t - r->dt && pj.lastcollision != 0){
@@ -189,8 +190,6 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
         }
     }
 }
-
-
 
 void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
     if (mini->testparticle_type){
