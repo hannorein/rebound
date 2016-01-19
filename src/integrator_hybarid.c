@@ -51,6 +51,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         r->ri_hybarid.mini->ri_hybarid.global = r;
         r->ri_hybarid.mini->testparticle_type = r->testparticle_type;
         r->ri_hybarid.mini->ri_hybarid.mini_active = 1; //flag for collision check in IAS15
+        //r->ri_hybarid.mini->softening = 1e-6;
         //r->ri_hybarid.mini->ri_ias15.epsilon = 1e-8;  //speeds up ias and hybarid immensely
     }
 

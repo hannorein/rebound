@@ -73,7 +73,10 @@ int main(int argc, char* argv[]){
 		reb_add(r, pt);
     }
    
+    //energy
     E0 = reb_tools_energy(r);
+    system("rm -v Energy.txt");
+    
     //time_t t_ini = time(NULL);
     //struct tm *tmp = gmtime(&t_ini);
     
@@ -92,4 +95,9 @@ void heartbeat(struct reb_simulation* r){
     double dE = fabs((E-E0)/E0);
     reb_output_timing(r, 0);
     printf("    dE=%e",dE);
+    
+    FILE *append;
+    append = fopen("Energy.txt", "a");
+    fprintf(append, "%.16f,%.16f\n",r->t,dE);
+    fclose(append);
 }
