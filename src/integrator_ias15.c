@@ -589,18 +589,25 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 	double ratio = r->dt/dt_done;
 	predict_next_step(ratio, N3, e, b, e, b);
     
-    //Hybarid
+    //Hybarid Collisions - check current step and predict next step
     if(r->ri_hybarid.mini_active){
         for(int kk=0;kk<r->N_active;kk++){
             struct reb_particle body = particles[kk];
             for(int ll=r->N_active;ll<r->N;ll++){
                 struct reb_particle* pj = &(particles[ll]);
-                double dxj = pj->x - body.x;
-                double dyj = pj->y - body.y;
-                double dzj = pj->z - body.z;
-                double rij2 = dxj*dxj + dyj*dyj + dzj*dzj;
-                double rirj = body.r;
-                if(rij2 <= rirj*rirj){
+                double dx1 = (pj->vx - body.vx)*r->dt; //xf - xi = distance travelled in dt relative to body
+                double dy1 = (pj->vy - body.vy)*r->dt;
+                double dz1 = (pj->vz - body.vz)*r->dt;
+                double dx2 = pj->x - body.x;
+                double dy2 = pj->y - body.y;
+                double dz2 = pj->z - body.z;
+                double x = dy1*dz2 - dz1*dy2;
+                double y = dz1*dx2 - dx1*dz2;
+                double z = dx1*dy2 - dy1*dx2;
+                double rij2 = dx2*dx2 + dy2*dy2 + dz2*dz2;
+                double d2 = (x*x + y*y + z*z)/(dx1*dx1 + dy1*dy1 + dz1*dz1);
+                double radius2 = (body.r + pj->r)*(body.r + pj->r);
+                if(d2 <= radius2 || rij2 <= radius2){
                     pj->lastcollision = r->t;
                 }
             }
