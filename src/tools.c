@@ -1104,6 +1104,113 @@ struct reb_particle reb_tools_orbit_to_particle_da_de(double G, struct reb_parti
 	return p;
 }
 
+struct reb_particle reb_tools_orbit_to_particle_da_di(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+
+	struct reb_particle p = {0};
+	double dr = (1.-e*e)/(1. + e*cos(f));
+	double dv0 = -0.5/sqrt(a*a*a)*sqrt(G*(m+primary.m)/(1.-e*e)); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double dci = -sin(inc);
+	double dsi = cos(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = dr*(- sO*(so*cf+co*sf)*dci);
+	p.y = dr*(+ cO*(so*cf+co*sf)*dci);
+	p.z = dr*(so*cf+co*sf)*dsi;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = dv0*((e+cf)*(-dci*co*sO) - sf*(- dci*so*sO));
+	p.vy = dv0*((e+cf)*(dci*co*cO)  - sf*(dci*so*cO));
+	p.vz = dv0*((e+cf)*co*dsi - sf*dsi*so);
+	
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_da_dOmega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+
+	struct reb_particle p = {0};
+	double dr = (1.-e*e)/(1. + e*cos(f));
+	double dv0 = -0.5/sqrt(a*a*a)*sqrt(G*(m+primary.m)/(1.-e*e)); 
+
+	double dcO = -sin(Omega);
+	double dsO = cos(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = dr*(dcO*(co*cf-so*sf) - dsO*(so*cf+co*sf)*ci);
+	p.y = dr*(dsO*(co*cf-so*sf) + dcO*(so*cf+co*sf)*ci);
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = dv0*((e+cf)*(-ci*co*dsO - dcO*so) - sf*(co*dcO - ci*so*dsO));
+	p.vy = dv0*((e+cf)*(ci*co*dcO - dsO*so)  - sf*(co*dsO + ci*so*dcO));
+	
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_da_domega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+
+	struct reb_particle p = {0};
+	double dr = (1.-e*e)/(1. + e*cos(f));
+	double dv0 = -0.5/sqrt(a*a*a)*sqrt(G*(m+primary.m)/(1.-e*e)); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double dco = -sin(omega);
+	double dso = cos(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = dr*(cO*(dco*cf-dso*sf) - sO*(dso*cf+dco*sf)*ci);
+	p.y = dr*(sO*(dco*cf-dso*sf) + cO*(dso*cf+dco*sf)*ci);
+	p.z = dr*(dso*cf+dco*sf)*si;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = dv0*((e+cf)*(-ci*dco*sO - cO*dso) - sf*(dco*cO - ci*dso*sO));
+	p.vy = dv0*((e+cf)*(ci*dco*cO - sO*dso)  - sf*(dco*sO + ci*dso*cO));
+	p.vz = dv0*((e+cf)*dco*si - sf*si*dso);
+	
+	return p;
+}
+struct reb_particle reb_tools_orbit_to_particle_da_df(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+
+	struct reb_particle p = {0};
+	double dr = (1.-e*e)/(1. + e*cos(f));
+	double dv0 = -0.5/sqrt(a*a*a)*sqrt(G*(m+primary.m)/(1.-e*e));
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double dcf = -sin(f);
+	double dsf = cos(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	// Murray & Dermott Eq 2.122
+	p.x = dr*(cO*(co*dcf-so*dsf) - sO*(so*dcf+co*dsf)*ci);
+	p.y = dr*(sO*(co*dcf-so*dsf) + cO*(so*dcf+co*dsf)*ci);
+	p.z = dr*(so*dcf+co*dsf)*si;
+
+	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+	p.vx = dv0*((e+dcf)*(-ci*co*sO - cO*so) - dsf*(co*cO - ci*so*sO));
+	p.vy = dv0*((e+dcf)*(ci*co*cO - sO*so)  - dsf*(co*sO + ci*so*cO));
+	p.vz = dv0*((e+dcf)*co*si - dsf*si*so);
+	
+	return p;
+}
 
 /**
 struct reb_particle reb_tools_orbit_to_particle_(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
