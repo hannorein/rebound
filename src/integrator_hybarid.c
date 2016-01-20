@@ -168,7 +168,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                     
                 } else {
                     r->ri_hybarid.mini_active = 1;
-                    if (j>_N_active){
+                    if (j>=_N_active){
                         reb_add(mini,pj);
                         r->ri_hybarid.is_in_mini[j] = 1;
                         if (r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax){
