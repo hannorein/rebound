@@ -13,15 +13,18 @@
 
 void heartbeat(struct reb_simulation* r);
 double E0, t_output, t_log_output;
+char* output_name;
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
 
-    int N_planetesimals = 100;
     double planetesimal_mass = 3e-8;
     double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
-    double tmax = 5000.;
+    double tmax = atof(argv[1]);
+    int N_planetesimals = atoi(argv[2]);
+    int seed = atoi(argv[3]);
+    output_name = argv[4];
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
@@ -38,7 +41,7 @@ int main(int argc, char* argv[]){
 	star.r		= 0.005;        // Radius of particle is in AU!
 	reb_add(r, star);
    
-    srand(12);
+    srand(seed);
     int n_output = 10000;
     t_log_output = pow(tmax + 1, 1./(n_output - 1));
     t_output = r->dt;
@@ -107,7 +110,7 @@ void heartbeat(struct reb_simulation* r){
         printf("    dE=%e",dE);
         
         FILE *append;
-        append = fopen("Energy.txt", "a");
+        append = fopen(output_name, "a");
         fprintf(append, "%.16f,%.16f\n",r->t,dE);
         fclose(append);
     }
