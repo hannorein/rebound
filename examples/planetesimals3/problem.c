@@ -12,15 +12,23 @@
 #include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
-double E0;
+double E0, t_output, t_log_output;
+char* output_name;
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
 
-    int N_planetesimals = 100;
     double planetesimal_mass = 3e-8;
     double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
+    double tmax = 100;
+    int N_planetesimals = 100;
+    int seed = 11;
+    output_name = "Energy.txt";
+    //double tmax = atof(argv[1]);
+    //int N_planetesimals = atoi(argv[2]);
+    //int seed = atoi(argv[3]);
+    //output_name = argv[4];
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
@@ -29,7 +37,7 @@ int main(int argc, char* argv[]){
     r->ri_hybarid.switch_ratio = 3.;
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
-    r->dt = 0.001;
+    r->dt = 0.0015;
     
 	// Initial conditions
 	struct reb_particle star = {0};
@@ -37,7 +45,10 @@ int main(int argc, char* argv[]){
 	star.r		= 0.005;        // Radius of particle is in AU!
 	reb_add(r, star);
    
-    srand(11);
+    srand(seed);
+    int n_output = 10000;
+    t_log_output = pow(tmax + 1, 1./(n_output - 1));
+    t_output = r->dt;
     
     //planet 1
     {
@@ -45,6 +56,7 @@ int main(int argc, char* argv[]){
         struct reb_particle p1 = {0};
         p1 = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
         p1.r = 1.6e-4;              //radius of particle is in AU!
+        p1.id = r->N;
         reb_add(r, p1);
     }
     
@@ -54,6 +66,7 @@ int main(int argc, char* argv[]){
         struct reb_particle p2 = {0};
         p2 = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
         p2.r = 1.6e-4;
+        p2.id = r->N;
         reb_add(r, p2);
     }
     
@@ -70,6 +83,7 @@ int main(int argc, char* argv[]){
         double apsis = reb_random_uniform(0,2.*M_PI);
         pt = reb_tools_orbit_to_particle(r->G, star, planetesimal_mass, a, 0., inc, Omega, apsis,phi);
 		pt.r 		= 4e-5;
+        pt.id = r->N;
 		reb_add(r, pt);
     }
    
@@ -81,7 +95,7 @@ int main(int argc, char* argv[]){
     //struct tm *tmp = gmtime(&t_ini);
     
     //Integrate!
-    reb_integrate(r, 100.);
+    reb_integrate(r, tmax);
     
     //time_t t_fini = time(NULL);
     //struct tm *tmp2 = gmtime(&t_fini);
@@ -91,13 +105,19 @@ int main(int argc, char* argv[]){
 }
 
 void heartbeat(struct reb_simulation* r){
-    double E = reb_tools_energy(r) + r->ri_hybarid.dE_offset;
-    double dE = fabs((E-E0)/E0);
-    reb_output_timing(r, 0);
-    printf("    dE=%e",dE);
-    
-    FILE *append;
-    append = fopen("Energy.txt", "a");
-    fprintf(append, "%.16f,%.16f\n",r->t,dE);
-    fclose(append);
+    if(r->t > t_output){//log output
+        t_output = r->t*t_log_output;
+        
+        double E = reb_tools_energy(r) + r->ri_hybarid.dE_offset;
+        double dE = fabs((E-E0)/E0);
+        reb_output_timing(r, 0);
+        printf("    dE=%e",dE);
+        
+        FILE *append;
+        append = fopen(output_name, "a");
+        fprintf(append, "%.16f,%.16f\n",r->t,dE);
+        fclose(append);
+    }
+
 }
+
