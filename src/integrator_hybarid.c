@@ -39,7 +39,7 @@
 
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r);
 void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini);
-
+void mini_check_for_collision(struct reb_simulation* mini);
 
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
@@ -50,7 +50,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         r->ri_hybarid.mini->additional_forces = reb_integrator_hybarid_additional_forces_mini;
         r->ri_hybarid.mini->ri_hybarid.global = r;
         r->ri_hybarid.mini->testparticle_type = r->testparticle_type;
-        r->ri_hybarid.mini->ri_hybarid.mini_active = 1; //flag for collision check in IAS15
+        r->ri_hybarid.mini->heartbeat = mini_check_for_collision;
         //r->ri_hybarid.mini->softening = 1e-6;
         //r->ri_hybarid.mini->ri_ias15.epsilon = 1e-8;  //speeds up ias and hybarid immensely
     }
@@ -221,6 +221,34 @@ void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
                     body->ay += ac*ddy;
                     body->az += ac*ddz;
                 }
+            }
+        }
+    }
+}
+
+//check for collisions in mini each heartbeat
+void mini_check_for_collision(struct reb_simulation* mini){
+    struct reb_particle* particles = mini->particles;
+    int N_active = mini->N_active;
+    double dtmini = mini->dt;
+    for(int i=0;i<N_active;i++){
+        struct reb_particle pi = particles[i];
+        for(int j=N_active;j<mini->N;j++){
+            struct reb_particle* pj = &(particles[j]);
+            double dvx = pi.vx - pj->vx;
+            double dvy = pi.vy - pj->vy;
+            double dvz = pi.vz - pj->vz;
+            double dx = pj->x - pi.x;
+            double dy = pj->y - pi.y;
+            double dz = pj->z - pi.z;
+            double tmin = (dx*dvx + dy*dvy + dz*dvz)/(dvx*dvx + dvy*dvy + dvz*dvz);
+            
+            double dstart2 = dx*dx + dy*dy + dz*dz;
+            double dmin2 = (dx - dvx*tmin)*(dx - dvx*tmin) + (dy - dvy*tmin)*(dy - dvy*tmin) + (dz - dvz*tmin)*(dz - dvz*tmin);
+            double dend2 = (dx - dvx*dtmini)*(dx - dvx*dtmini) + (dy - dvy*dtmini)*(dy - dvy*dtmini) + (dz - dvz*dtmini)*(dz - dvz*dtmini);
+            double radius2 = (pi.r+pj->r)*(pi.r+pj->r);
+            if(dmin2 <= radius2 || dstart2 <= radius2 || dend2 <= radius2){
+                pj->lastcollision = mini->t;
             }
         }
     }

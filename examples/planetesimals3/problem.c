@@ -21,10 +21,14 @@ int main(int argc, char* argv[]){
     double planetesimal_mass = 3e-8;
     double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
-    double tmax = atof(argv[1]);
-    int N_planetesimals = atoi(argv[2]);
-    int seed = atoi(argv[3]);
-    output_name = argv[4];
+    double tmax = 100;
+    int N_planetesimals = 100;
+    int seed = 11;
+    output_name = "Energy.txt";
+    //double tmax = atof(argv[1]);
+    //int N_planetesimals = atoi(argv[2]);
+    //int seed = atoi(argv[3]);
+    //output_name = argv[4];
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
