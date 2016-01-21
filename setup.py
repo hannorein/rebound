@@ -32,6 +32,7 @@ libreboundmodule = Extension('librebound',
                     include_dirs = ['src'],
                     define_macros=[ ('LIBREBOUND', None) ],
                     extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-march=native','-Wno-unknown-pragmas', '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC'],
+                    extra_link_args=['-install_name @rpath/test'],
                                     )
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -39,7 +40,7 @@ with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='2.1.2',
+    version='2.11.0',
     description='An open-source multi-purpose N-body code',
     long_description=long_description,
     url='http://github.com/hannorein/rebound',
