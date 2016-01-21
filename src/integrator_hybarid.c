@@ -270,7 +270,7 @@ void mini_check_for_collision(struct reb_simulation* mini){
                 
                 double Ef = reb_tools_energy(mini);
                 r->ri_hybarid.dE_offset += Ei - Ef;
-                printf("\n\tParticle %d collided with body %d from system at t=%f. dE_offset=%.15f\n",i,r->ri_hybarid.encounter_index[j],r->t,Ei - Ef);
+                printf("\n\tParticle %d collided with body %d from system at t=%f.\n",i,r->ri_hybarid.encounter_index[j],r->t);
                 
                 //remove from global and update global arrays
                 int globalj = r->ri_hybarid.encounter_index[j];
