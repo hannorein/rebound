@@ -41,8 +41,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
 void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini);
 void mini_check_for_collision(struct reb_simulation* mini);
 
-void output_frame_per_time(struct reb_particle* particles, char* name, int N, double t);
-int movie_counter = 0;
+double E0;
 
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
@@ -56,6 +55,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         r->ri_hybarid.mini->heartbeat = mini_check_for_collision;
         //r->ri_hybarid.mini->softening = 1e-6;
         //r->ri_hybarid.mini->ri_ias15.epsilon = 1e-8;  //speeds up ias and hybarid immensely
+        E0 = reb_tools_energy(r);
     }
 
     // Remove all particles from mini
@@ -123,11 +123,10 @@ void reb_integrator_hybarid_reset(struct reb_simulation* r){
 
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r){
     struct reb_simulation* mini = r->ri_hybarid.mini;
-    const int N = r->N;
-	const int _N_active = ((r->N_active==-1)?N:r->N_active) - r->N_var;
+	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     struct reb_particle* global = r->particles;
     struct reb_particle p0 = global[0];
-    double ejectiondistance2 = 100;     //temporary hardcoded value.
+    double ejectiondistance2 = 9;     //temporary hardcoded value.
     double HSR = r->ri_hybarid.switch_ratio;
     for (int i=0; i<_N_active; i++){
         struct reb_particle* pi = &(global[i]);
@@ -136,7 +135,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
         const double dzi = p0.z - pi->z;
         const double r0i2 = dxi*dxi + dyi*dyi + dzi*dzi;
         const double rhi = r0i2*pow(pi->m/(p0.m*3.),2./3.);
-        for(int j=i+1;j<N;j++){
+        for(int j=i+1;j<r->N;j++){
             struct reb_particle pj = global[j];
             
             const double dxj = p0.x - pj.x;
@@ -163,16 +162,13 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                     r->ri_hybarid.encounter_index[r->ri_hybarid.encounter_index_N] = j;
                     r->ri_hybarid.encounter_index_N++;
                 }
-            } else if (r0j2 > ejectiondistance2){
+            } else if (i==0 && r0j2 > ejectiondistance2){
                 double Ei = reb_tools_energy(r);
                 reb_remove(r,j,1);
                 double Ef = reb_tools_energy(r);
                 r->ri_hybarid.dE_offset += Ei - Ef;
-                printf("\n\tParticle %d ejected from system at t=%f\n",pj.id,r->t);
+                printf("\n\tParticle %d ejected from system at t=%f, E=%e\n",pj.id,r->t,fabs((Ef+r->ri_hybarid.dE_offset-E0)/E0));
                 j--;    //re-try iteration j since j+1 is now j but hasn't been checked.
-                
-                int N=r->N; double t=r->t;
-                if(r->t >16673 && r->t < 16674.8)output_frame_per_time(global, "movie/", N, t);
             }
         }
     }
@@ -271,18 +267,4 @@ void mini_check_for_collision(struct reb_simulation* mini){
             }
         }
     }
-}
-
-void output_frame_per_time(struct reb_particle* particles, char* name, int N, double t){
-    char str[50] = {0};
-    char temp[7];
-    strcat(str, name);
-    sprintf(temp, "%d",movie_counter);
-    strcat(str,temp);
-    strcat(str,".txt");
-    FILE *output;
-    output = fopen(str,"w");
-    for(int i=0;i<N;i++) fprintf(output, "%f,%d,%.16f,%.16f,%.16f\n",t,particles[i].id,particles[i].x,particles[i].y,particles[i].z);
-    fclose(output);
-    movie_counter++;
 }
