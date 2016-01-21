@@ -23,7 +23,7 @@ int main(int argc, char* argv[]){
     double powerlaw = 0.5;
     double tmax = 100;
     int N_planetesimals = 100;
-    int seed = 11;
+    int seed = 30;
     output_name = "Energy.txt";
     //double tmax = atof(argv[1]);
     //int N_planetesimals = atoi(argv[2]);

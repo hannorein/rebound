@@ -170,13 +170,15 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                     r->ri_hybarid.mini_active = 1;
                     if (j>=_N_active){
                         reb_add(mini,pj);
-                        r->ri_hybarid.is_in_mini[j] = 1;
-                        if (r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax){
-                            while(r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax) r->ri_hybarid.encounter_index_Nmax += 32;
-                            r->ri_hybarid.encounter_index = realloc(r->ri_hybarid.encounter_index,r->ri_hybarid.encounter_index_Nmax*sizeof(int));
+                        if(r->ri_hybarid.is_in_mini[j] ==0){
+                            r->ri_hybarid.is_in_mini[j] = 1;
+                            if (r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax){
+                                while(r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax) r->ri_hybarid.encounter_index_Nmax += 32;
+                                r->ri_hybarid.encounter_index = realloc(r->ri_hybarid.encounter_index,r->ri_hybarid.encounter_index_Nmax*sizeof(int));
+                            }
+                            r->ri_hybarid.encounter_index[r->ri_hybarid.encounter_index_N] = j;
+                            r->ri_hybarid.encounter_index_N++;
                         }
-                        r->ri_hybarid.encounter_index[r->ri_hybarid.encounter_index_N] = j;
-                        r->ri_hybarid.encounter_index_N++;
                     }
                 
                 }
@@ -228,6 +230,7 @@ void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
 
 //check for collisions in mini each heartbeat
 void mini_check_for_collision(struct reb_simulation* mini){
+    //struct reb_simulation* r = mini->ri_hybarid.global;
     struct reb_particle* particles = mini->particles;
     int N_active = mini->N_active;
     double dtmini = mini->dt;
@@ -235,18 +238,20 @@ void mini_check_for_collision(struct reb_simulation* mini){
         struct reb_particle pi = particles[i];
         for(int j=N_active;j<mini->N;j++){
             struct reb_particle* pj = &(particles[j]);
+            double radius2 = (pi.r+pj->r)*(pi.r+pj->r);
             double dvx = pi.vx - pj->vx;
             double dvy = pi.vy - pj->vy;
             double dvz = pi.vz - pj->vz;
             double dx = pj->x - pi.x;
             double dy = pj->y - pi.y;
             double dz = pj->z - pi.z;
+            
             double tmin = (dx*dvx + dy*dvy + dz*dvz)/(dvx*dvx + dvy*dvy + dvz*dvz);
+            double dmin2 = radius2*2.;
+            if(tmin < dtmini) dmin2 = (dx - dvx*tmin)*(dx - dvx*tmin) + (dy - dvy*tmin)*(dy - dvy*tmin) + (dz - dvz*tmin)*(dz - dvz*tmin);
             
             double dstart2 = dx*dx + dy*dy + dz*dz;
-            double dmin2 = (dx - dvx*tmin)*(dx - dvx*tmin) + (dy - dvy*tmin)*(dy - dvy*tmin) + (dz - dvz*tmin)*(dz - dvz*tmin);
             double dend2 = (dx - dvx*dtmini)*(dx - dvx*dtmini) + (dy - dvy*dtmini)*(dy - dvy*dtmini) + (dz - dvz*dtmini)*(dz - dvz*dtmini);
-            double radius2 = (pi.r+pj->r)*(pi.r+pj->r);
             if(dmin2 <= radius2 || dstart2 <= radius2 || dend2 <= radius2){
                 pj->lastcollision = mini->t;
             }
