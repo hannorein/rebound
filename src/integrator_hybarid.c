@@ -152,46 +152,27 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
             const double ratio = rij2/(rhi+rhj);    //(p-p distance/Hill radii)^2
 
             if(ratio < HSR){
-                if(pj.lastcollision > r->t - r->dt && pj.lastcollision != 0){
-                    double invmass = 1.0/(pi->m + pj.m);
-                    double Ei = reb_tools_energy(r);
-                    
-                    pi->vx = (pi->vx*pi->m + pj.vx*pj.m)*invmass;
-                    pi->vy = (pi->vy*pi->m + pj.vy*pj.m)*invmass;
-                    pi->vz = (pi->vz*pi->m + pj.vz*pj.m)*invmass;
-                    pi->m += pj.m;
-                    mini->particles[i] = *pi;     //update massive body in mini
-                    
-                    reb_remove(r,j,1);
-                    
-                    double Ef = reb_tools_energy(r);
-                    r->ri_hybarid.dE_offset += Ei - Ef;
-                    printf("\n\tParticle %d collided with body %d from system at t=%f, dE_offset=%.15f\n",i,j,r->t,Ei - Ef);
-                    j--;    //re-try iteration j since j+1 is now j but hasn't been checked.
-                    
-                } else {
-                    r->ri_hybarid.mini_active = 1;
-                    if (j>=_N_active){
-                        reb_add(mini,pj);
-                        if(r->ri_hybarid.is_in_mini[j] ==0){//make sure not already added
-                            r->ri_hybarid.is_in_mini[j] = 1;
-                            if (r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax){
-                                while(r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax) r->ri_hybarid.encounter_index_Nmax += 32;
-                                r->ri_hybarid.encounter_index = realloc(r->ri_hybarid.encounter_index,r->ri_hybarid.encounter_index_Nmax*sizeof(int));
-                            }
-                            r->ri_hybarid.encounter_index[r->ri_hybarid.encounter_index_N] = j;
-                            r->ri_hybarid.encounter_index_N++;
-                        }
+                r->ri_hybarid.mini_active = 1;
+                if (j>=_N_active && r->ri_hybarid.is_in_mini[j] ==0){//make sure not already added
+                    reb_add(mini,pj);
+                    r->ri_hybarid.is_in_mini[j] = 1;
+                    if (r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax){
+                        while(r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax) r->ri_hybarid.encounter_index_Nmax += 32;
+                        r->ri_hybarid.encounter_index = realloc(r->ri_hybarid.encounter_index,r->ri_hybarid.encounter_index_Nmax*sizeof(int));
                     }
-                
+                    r->ri_hybarid.encounter_index[r->ri_hybarid.encounter_index_N] = j;
+                    r->ri_hybarid.encounter_index_N++;
                 }
             } else if (r0j2 > ejectiondistance2){
                 double Ei = reb_tools_energy(r);
                 reb_remove(r,j,1);
                 double Ef = reb_tools_energy(r);
                 r->ri_hybarid.dE_offset += Ei - Ef;
-                printf("\n\tParticle %d ejected from system at t=%f\n",j,r->t);
+                printf("\n\tParticle %d ejected from system at t=%f\n",pj.id,r->t);
                 j--;    //re-try iteration j since j+1 is now j but hasn't been checked.
+                
+                int N=r->N; double t=r->t;
+                if(r->t >16673 && r->t < 16674.8)output_frame_per_time(global, "movie/", N, t);
             }
         }
     }
@@ -290,9 +271,6 @@ void mini_check_for_collision(struct reb_simulation* mini){
             }
         }
     }
-    
-    //int N=mini->N; double t=mini->t;
-    //if(r->t >2.975 && r->t < 2.9765)output_frame_per_time(particles, "movie/", N, t);
 }
 
 void output_frame_per_time(struct reb_particle* particles, char* name, int N, double t){
