@@ -126,7 +126,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     struct reb_particle* global = r->particles;
     struct reb_particle p0 = global[0];
-    double ejectiondistance2 = 9;     //temporary hardcoded value.
+    double ejectiondistance2 = 100;     //temporary hardcoded value.
     double HSR = r->ri_hybarid.switch_ratio;
     for (int i=0; i<_N_active; i++){
         struct reb_particle* pi = &(global[i]);
