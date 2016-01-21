@@ -41,6 +41,9 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
 void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini);
 void mini_check_for_collision(struct reb_simulation* mini);
 
+void output_frame_per_time(struct reb_particle* particles, char* name, int N, double t);
+int movie_counter = 0;
+
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     if (r->ri_hybarid.mini == NULL){
@@ -163,14 +166,14 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                     
                     double Ef = reb_tools_energy(r);
                     r->ri_hybarid.dE_offset += Ei - Ef;
-                    printf("\n\tParticle %d collided with body %d from system at t=%f\n",i,j,r->t);
+                    printf("\n\tParticle %d collided with body %d from system at t=%f, dE_offset=%.15f\n",i,j,r->t,Ei - Ef);
                     j--;    //re-try iteration j since j+1 is now j but hasn't been checked.
                     
                 } else {
                     r->ri_hybarid.mini_active = 1;
                     if (j>=_N_active){
                         reb_add(mini,pj);
-                        if(r->ri_hybarid.is_in_mini[j] ==0){
+                        if(r->ri_hybarid.is_in_mini[j] ==0){//make sure not already added
                             r->ri_hybarid.is_in_mini[j] = 1;
                             if (r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax){
                                 while(r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax) r->ri_hybarid.encounter_index_Nmax += 32;
@@ -230,21 +233,21 @@ void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
 
 //check for collisions in mini each heartbeat
 void mini_check_for_collision(struct reb_simulation* mini){
-    //struct reb_simulation* r = mini->ri_hybarid.global;
+    struct reb_simulation* r = mini->ri_hybarid.global;
     struct reb_particle* particles = mini->particles;
     int N_active = mini->N_active;
     double dtmini = mini->dt;
     for(int i=0;i<N_active;i++){
-        struct reb_particle pi = particles[i];
+        struct reb_particle* pi = &(particles[i]);
         for(int j=N_active;j<mini->N;j++){
             struct reb_particle* pj = &(particles[j]);
-            double radius2 = (pi.r+pj->r)*(pi.r+pj->r);
-            double dvx = pi.vx - pj->vx;
-            double dvy = pi.vy - pj->vy;
-            double dvz = pi.vz - pj->vz;
-            double dx = pj->x - pi.x;
-            double dy = pj->y - pi.y;
-            double dz = pj->z - pi.z;
+            double radius2 = (pi->r+pj->r)*(pi->r+pj->r);
+            double dvx = pi->vx - pj->vx;
+            double dvy = pi->vy - pj->vy;
+            double dvz = pi->vz - pj->vz;
+            double dx = pj->x - pi->x;
+            double dy = pj->y - pi->y;
+            double dz = pj->z - pi->z;
             
             double tmin = (dx*dvx + dy*dvy + dz*dvz)/(dvx*dvx + dvy*dvy + dvz*dvz);
             double dmin2 = radius2*2.;
@@ -253,8 +256,55 @@ void mini_check_for_collision(struct reb_simulation* mini){
             double dstart2 = dx*dx + dy*dy + dz*dz;
             double dend2 = (dx - dvx*dtmini)*(dx - dvx*dtmini) + (dy - dvy*dtmini)*(dy - dvy*dtmini) + (dz - dvz*dtmini)*(dz - dvz*dtmini);
             if(dmin2 <= radius2 || dstart2 <= radius2 || dend2 <= radius2){
-                pj->lastcollision = mini->t;
+                //pj->lastcollision = mini->t;
+                
+                double invmass = 1.0/(pi->m + pj->m);
+                double Ei = reb_tools_energy(mini);
+                
+                pi->vx = (pi->vx*pi->m + pj->vx*pj->m)*invmass;
+                pi->vy = (pi->vy*pi->m + pj->vy*pj->m)*invmass;
+                pi->vz = (pi->vz*pi->m + pj->vz*pj->m)*invmass;
+                pi->m += pj->m;
+                
+                reb_remove(mini,j,1);  //remove mini
+                
+                double Ef = reb_tools_energy(mini);
+                r->ri_hybarid.dE_offset += Ei - Ef;
+                printf("\n\tParticle %d collided with body %d from system at t=%f. dE_offset=%.15f\n",i,r->ri_hybarid.encounter_index[j],r->t,Ei - Ef);
+                
+                //remove from global and update global arrays
+                int globalj = r->ri_hybarid.encounter_index[j];
+                reb_remove(r,globalj,1);
+                
+                for(int k=globalj;k<r->N;k++){
+                    r->ri_hybarid.particles_prev[k] = r->ri_hybarid.particles_prev[k+1];
+                    r->ri_hybarid.is_in_mini[k] = r->ri_hybarid.is_in_mini[k+1];
+                }
+                r->ri_hybarid.encounter_index_N--;
+                for(int k=j;k<r->ri_hybarid.encounter_index_N;k++){
+                    r->ri_hybarid.encounter_index[k] = r->ri_hybarid.encounter_index[k+1] - 1; //1 fewer particles in index now
+                }
+                
+                j--;    //re-try iteration j since j+1 is now j but hasn't been checked.
+
             }
         }
     }
+    
+    int N=mini->N; double t=mini->t;
+    if(r->t >2.975 && r->t < 2.9765)output_frame_per_time(particles, "movie/", N, t);
+}
+
+void output_frame_per_time(struct reb_particle* particles, char* name, int N, double t){
+    char str[50] = {0};
+    char temp[7];
+    strcat(str, name);
+    sprintf(temp, "%d",movie_counter);
+    strcat(str,temp);
+    strcat(str,".txt");
+    FILE *output;
+    output = fopen(str,"w");
+    for(int i=0;i<N;i++) fprintf(output, "%f,%d,%.16f,%.16f,%.16f\n",t,particles[i].id,particles[i].x,particles[i].y,particles[i].z);
+    fclose(output);
+    movie_counter++;
 }
