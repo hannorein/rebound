@@ -281,18 +281,18 @@ void mini_check_for_collision(struct reb_simulation* mini){
                     r->ri_hybarid.is_in_mini[k] = r->ri_hybarid.is_in_mini[k+1];
                 }
                 r->ri_hybarid.encounter_index_N--;
-                for(int k=j;k<r->ri_hybarid.encounter_index_N;k++){
-                    r->ri_hybarid.encounter_index[k] = r->ri_hybarid.encounter_index[k+1] - 1; //1 fewer particles in index now
+                for(int k=j;k<r->ri_hybarid.encounter_index_N;k++) r->ri_hybarid.encounter_index[k] = r->ri_hybarid.encounter_index[k+1];
+                for(int k=N_active;k<r->ri_hybarid.encounter_index_N;k++){
+                    if(r->ri_hybarid.encounter_index[k] > globalj) r->ri_hybarid.encounter_index[k]--; //1 fewer particles in index now
                 }
                 
                 j--;    //re-try iteration j since j+1 is now j but hasn't been checked.
-
             }
         }
     }
     
-    int N=mini->N; double t=mini->t;
-    if(r->t >2.975 && r->t < 2.9765)output_frame_per_time(particles, "movie/", N, t);
+    //int N=mini->N; double t=mini->t;
+    //if(r->t >2.975 && r->t < 2.9765)output_frame_per_time(particles, "movie/", N, t);
 }
 
 void output_frame_per_time(struct reb_particle* particles, char* name, int N, double t){
