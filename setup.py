@@ -10,7 +10,8 @@ if sys.platform == 'darwin':
     from distutils import sysconfig
     vars = sysconfig.get_config_vars()
     vars['LDSHARED'] = vars['LDSHARED'].replace('-bundle', '-shared')
-
+    extra_link_args=['-Wl,-install_name,@rpath/../librebound.so']
+    
 libreboundmodule = Extension('librebound',
                     sources = [ 'src/rebound.c',
                                 'src/integrator_ias15.c',
@@ -32,8 +33,8 @@ libreboundmodule = Extension('librebound',
                     include_dirs = ['src'],
                     define_macros=[ ('LIBREBOUND', None) ],
                     extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-march=native','-Wno-unknown-pragmas', '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC'],
-                    #extra_link_args=['-Wl,-install_name,/blah/librebound.so'],
-                                    )
+                    extra_link_args=extra_link_args,
+                    )
 
 here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
