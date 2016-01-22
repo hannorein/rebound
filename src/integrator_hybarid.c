@@ -128,6 +128,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
     struct reb_particle p0 = global[0];
     double ejectiondistance2 = 100;     //temporary hardcoded value.
     double HSR = r->ri_hybarid.switch_ratio;
+    double minr=100; double max_vr = 1e-6;  int piid = 0; int pjid=0;//AS temp
     for (int i=0; i<_N_active; i++){
         struct reb_particle* pi = &(global[i]);
         const double dxi = p0.x - pi->x;
@@ -170,7 +171,28 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                 printf("\n\tParticle %d ejected from system at t=%f, E=%e\n",pj.id,r->t,fabs((Ef+r->ri_hybarid.dE_offset-E0)/E0));
                 j--;    //re-try iteration j since j+1 is now j but hasn't been checked.
             }
+            if(r->t > 15749 && r->t < 16005){
+                double vx = pi->vx - pj.vx;
+                double vy = pi->vy - pj.vy;
+                double vz = pi->vz - pj.vz;
+                double vrel = sqrt(vx*vx + vy*vy + vz*vz);
+                double rr = sqrt(rij2);
+                double val = r->dt*vrel/rr;
+                if(rr < minr) minr = rr;
+                if(val > max_vr) max_vr = val;
+                piid = pi->id;
+                pjid = pj.id;
+            }
         }
+    }
+    if(r->t > 15749 && r->t < 16005){
+        double E = reb_tools_energy(r) + r->ri_hybarid.dE_offset;
+        double dE = fabs((E-E0)/E0);
+        
+        FILE *append;
+        append = fopen("debug.txt", "a");
+        fprintf(append, "%.16f,%.16f,%f,%f,%d,%d,%d,%d,%d,%d\n",r->t,dE,minr,max_vr,piid,pjid,r->N,mini->N,r->ri_hybarid.encounter_index_N,r->ri_hybarid.mini_active);
+        fclose(append);
     }
 }
 
