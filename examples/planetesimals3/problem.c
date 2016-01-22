@@ -124,12 +124,13 @@ void heartbeat(struct reb_simulation* r){
         fclose(append);
     }
     
+    /*
     if(r->t > 15638.38 && r->t < 15638.49 && r->t > movie_time){
         //movie_time = r->t + 0.1;
         double E = reb_tools_energy(r) + r->ri_hybarid.dE_offset;
         double dE = fabs((E-E0)/E0);
         output_frame_per_time(r,"movie/",dE);
-    }
+    }*/
     
 }
 
