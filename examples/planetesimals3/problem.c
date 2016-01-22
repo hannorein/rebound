@@ -15,6 +15,11 @@ void heartbeat(struct reb_simulation* r);
 double E0, t_output, t_log_output;
 char* output_name;
 
+//AS temp
+void output_frame_per_time(struct reb_simulation* r, char* name, double dE);
+int movie_counter = 0;
+double movie_time = 0;
+
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
 
@@ -118,6 +123,27 @@ void heartbeat(struct reb_simulation* r){
         fprintf(append, "%.16f,%.16f\n",r->t,dE);
         fclose(append);
     }
-
+    
+    if(r->t > 15500 && r->t < 16005 && r->t > movie_time){
+        movie_time = r->t + 0.1;
+        double E = reb_tools_energy(r) + r->ri_hybarid.dE_offset;
+        double dE = fabs((E-E0)/E0);
+        output_frame_per_time(r,"movie/",dE);
+    }
+    
 }
 
+void output_frame_per_time(struct reb_simulation* r, char* name, double dE){
+    struct reb_particle* particles = r->particles;
+    char str[50] = {0};
+    char temp[7];
+    strcat(str, name);
+    sprintf(temp, "%d",movie_counter);
+    strcat(str,temp);
+    strcat(str,".txt");
+    FILE *output;
+    output = fopen(str,"w");
+    for(int i=0;i<r->N;i++) fprintf(output, "%f,%d,%.16f,%.16f,%.16f,%.16f\n",r->t,particles[i].id,particles[i].x,particles[i].y,particles[i].z,dE);
+    fclose(output);
+    movie_counter++;
+}
