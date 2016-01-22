@@ -47,7 +47,7 @@ int main(int argc, char* argv[]){
 	// Initial conditions
 	struct reb_particle star = {0};
 	star.m 		= 1;
-	star.r		= 0.005;        // Radius of particle is in AU!
+    star.r		= 0.005;        // Radius of particle is in AU!
 	reb_add(r, star);
    
     srand(seed);

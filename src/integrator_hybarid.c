@@ -192,7 +192,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                 
                 FILE *append;
                 append = fopen("output/debug.txt", "a");
-                fprintf(append, "%.16f,%.16f,%d,%d,%f,%f,%d,%d,%d,%d,%d,%d,%.8f,,%.8f,,%.8f,,%.8f,,%.8f,%.8f,%f\n",r->t,dE,i,j,minr,max_vr,piid,pjid,r->N,mini->N,r->ri_hybarid.encounter_index_N,r->ri_hybarid.mini_active,r0i2,rhi,r0j2,rhj,rij2,ratio,HSR);
+                fprintf(append, "%.16f,%.16f,%d,%d,%f,%f,%d,%d,%d,%d,%d,%d,%.8f,%.8f,%.8f,%.8f,%.8f,%f\n",r->t,dE,i,j,minr,max_vr,piid,pjid,r->N,mini->N,r->ri_hybarid.encounter_index_N,r->ri_hybarid.mini_active,rhi,r0j2,rhj,rij2,ratio,HSR);
                 fclose(append);
             }
         }
