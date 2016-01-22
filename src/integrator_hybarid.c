@@ -171,7 +171,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                 printf("\n\tParticle %d ejected from system at t=%f, E=%e\n",pj.id,r->t,fabs((Ef+r->ri_hybarid.dE_offset-E0)/E0));
                 j--;    //re-try iteration j since j+1 is now j but hasn't been checked.
             }
-            if(r->t > 15500 && r->t < 16005){
+            if(r->t > 15638.38 && r->t < 15638.49){
                 double vx = pi->vx - pj.vx;
                 double vy = pi->vy - pj.vy;
                 double vz = pi->vz - pj.vz;
@@ -184,18 +184,18 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                     piid = pi->id;
                     pjid = pj.id;
                 }
+                double E = reb_tools_energy(r) + r->ri_hybarid.dE_offset;
+                double dE = fabs((E-E0)/E0);
+                
+                FILE *append;
+                append = fopen("debug.txt", "a");
+                fprintf(append, "%.16f,%.16f,%d,%d,%f,%f,%d,%d,%d,%d,%d,%d,%.8f,,%.8f,,%.8f,,%.8f,,%.8f,%.8f,%f\n",r->t,dE,i,j,minr,max_vr,piid,pjid,r->N,mini->N,r->ri_hybarid.encounter_index_N,r->ri_hybarid.mini_active,r0i2,rhi,r0j2,rhj,rij2,ratio,HSR);
+                fclose(append);
             }
         }
     }
-    if(r->t > 15500 && r->t < 16005){
-        double E = reb_tools_energy(r) + r->ri_hybarid.dE_offset;
-        double dE = fabs((E-E0)/E0);
-        
-        FILE *append;
-        append = fopen("debug.txt", "a");
-        fprintf(append, "%.16f,%.16f,%f,%f,%d,%d,%d,%d,%d,%d\n",r->t,dE,minr,max_vr,piid,pjid,r->N,mini->N,r->ri_hybarid.encounter_index_N,r->ri_hybarid.mini_active);
-        fclose(append);
-    }
+    //if(r->t > 15500 && r->t < 16005){
+    //}
 }
 
 void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
