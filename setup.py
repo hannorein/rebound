@@ -6,6 +6,7 @@ from codecs import open
 import os
 import sys
 
+extra_link_args=[]
 if sys.platform == 'darwin':
     from distutils import sysconfig
     vars = sysconfig.get_config_vars()
