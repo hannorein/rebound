@@ -171,7 +171,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                 printf("\n\tParticle %d ejected from system at t=%f, E=%e\n",pj.id,r->t,fabs((Ef+r->ri_hybarid.dE_offset-E0)/E0));
                 j--;    //re-try iteration j since j+1 is now j but hasn't been checked.
             }
-            if(r->t > 15749 && r->t < 16005){
+            if(r->t > 15550 && r->t < 16005){
                 double vx = pi->vx - pj.vx;
                 double vy = pi->vy - pj.vy;
                 double vz = pi->vz - pj.vz;
@@ -179,13 +179,15 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                 double rr = sqrt(rij2);
                 double val = r->dt*vrel/rr;
                 if(rr < minr) minr = rr;
-                if(val > max_vr) max_vr = val;
-                piid = pi->id;
-                pjid = pj.id;
+                if(val > max_vr){
+                    max_vr = val;
+                    piid = pi->id;
+                    pjid = pj.id;
+                }
             }
         }
     }
-    if(r->t > 15749 && r->t < 16005){
+    if(r->t > 15550 && r->t < 16005){
         double E = reb_tools_energy(r) + r->ri_hybarid.dE_offset;
         double dE = fabs((E-E0)/E0);
         
