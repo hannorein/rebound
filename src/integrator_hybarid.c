@@ -131,11 +131,14 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
     double minr=100; double max_vr = 1e-6;  int piid = 0; int pjid=0;//AS temp
     for (int i=0; i<_N_active; i++){
         struct reb_particle* pi = &(global[i]);
-        const double dxi = p0.x - pi->x;
-        const double dyi = p0.y - pi->y;
-        const double dzi = p0.z - pi->z;
-        const double r0i2 = dxi*dxi + dyi*dyi + dzi*dzi;
-        const double rhi = r0i2*pow(pi->m/(p0.m*3.),2./3.);
+        double rhi;
+        if(i==0) rhi = 100*p0.r*p0.r; else{
+            const double dxi = p0.x - pi->x;
+            const double dyi = p0.y - pi->y;
+            const double dzi = p0.z - pi->z;
+            const double r0i2 = dxi*dxi + dyi*dyi + dzi*dzi;
+            rhi = r0i2*pow(pi->m/(p0.m*3.),2./3.);
+        }
         for(int j=i+1;j<r->N;j++){
             struct reb_particle pj = global[j];
             
@@ -188,7 +191,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                 double dE = fabs((E-E0)/E0);
                 
                 FILE *append;
-                append = fopen("debug.txt", "a");
+                append = fopen("output/debug.txt", "a");
                 fprintf(append, "%.16f,%.16f,%d,%d,%f,%f,%d,%d,%d,%d,%d,%d,%.8f,,%.8f,,%.8f,,%.8f,,%.8f,%.8f,%f\n",r->t,dE,i,j,minr,max_vr,piid,pjid,r->N,mini->N,r->ri_hybarid.encounter_index_N,r->ri_hybarid.mini_active,r0i2,rhi,r0j2,rhj,rij2,ratio,HSR);
                 fclose(append);
             }
