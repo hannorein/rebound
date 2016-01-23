@@ -11,7 +11,7 @@ if sys.platform == 'darwin':
     from distutils import sysconfig
     vars = sysconfig.get_config_vars()
     vars['LDSHARED'] = vars['LDSHARED'].replace('-bundle', '-shared')
-    extra_link_args=['-Wl,-install_name,@rpath/../librebound.so']
+    extra_link_args=['-Wl,-install_name,@rpath/librebound.so']
     
 libreboundmodule = Extension('librebound',
                     sources = [ 'src/rebound.c',
