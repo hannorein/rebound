@@ -6,12 +6,17 @@ from codecs import open
 import os
 import sys
 
+import sysconfig
+suffix = sysconfig.get_config_var('EXT_SUFFIX')
+if suffix is None:
+    suffix = ".so"
+
 extra_link_args=[]
 if sys.platform == 'darwin':
     from distutils import sysconfig
     vars = sysconfig.get_config_vars()
     vars['LDSHARED'] = vars['LDSHARED'].replace('-bundle', '-shared')
-    extra_link_args=['-Wl,-install_name,@rpath/librebound.so']
+    extra_link_args=['-Wl,-install_name,@rpath/librebound'+suffix]
     
 libreboundmodule = Extension('librebound',
                     sources = [ 'src/rebound.c',
