@@ -522,10 +522,12 @@ class Simulation(Structure):
         ----------
         order : integer, optional
             By default the function adds a set of first order variational particles to the simulation. Set this flag to 2 for second order.
+        index_1st_order : int, optional
+            Second order variational equations depend on their corresponding first order variational particles. This parameter needs to be set to the index of the first variational particle of the firster order variational equations. 
         index_1st_order_a : int, optional
-            Second order variational equations depend on their corresponding first order variational particles. This parameter needs to be set to the index of the first variational particle. 
+            Same as index_1st_order. But allows to set two different indicies to calculate off-diagonal elements.
         index_1st_order_b : int, optional
-            Same as index_1st_order_a. There are two different indicies to calculate off-diagonal elements.
+            Same as index_1st_order. But allows to set two different indicies to calculate off-diagonal elements.
             
 
         Returns
@@ -536,6 +538,10 @@ class Simulation(Structure):
             clibrebound.reb_add_var_1st_order.restype = c_int
             index = clibrebound.reb_add_var_1st_order(byref(self),c_int(testparticle))
         elif order==2:
+            if index_1st_order_a is None:
+                index_1st_order_a = index_1st_order
+            if index_1st_order_b is None:
+                index_1st_order_b = index_1st_order
             if index_1st_order_a is None or index_1st_order_b is None:
                 raise AttributeError("You need to specify corresponding first order variational equations when initializing second order variational equations.")
             clibrebound.reb_add_var_2nd_order.restype = c_int
