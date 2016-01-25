@@ -421,6 +421,10 @@ class TestVariationalFull(unittest.TestCase):
     
     
     def test_all_2nd_order_full(self):
+        self.run_2nd_order_full()
+    def test_all_2nd_order_full_com(self):
+        self.run_2nd_order_full(com=True)
+    def run_2nd_order_full(self, com=False):
         vlist = ["a","e","i","Omega","omega","f","m"]
         # Testing a few random initial conditions
         paramslist = [ 
@@ -448,6 +452,8 @@ class TestVariationalFull(unittest.TestCase):
                     simvp._particles[var_ib+1] = vpib
                     vpii = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v1,variation2=v2,variation_order=2,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
                     simvp._particles[var_ii+1] = vpii
+                    if com:
+                        simvp.move_to_com()
                     simvp.integrate(10.)
                     
                     p = simvp.particles[1]
@@ -479,6 +485,8 @@ class TestVariationalFull(unittest.TestCase):
                         if v1=="m":
                             m+=Delta
                         sim._particles[1] = rebound.Particle(simulation=sim, primary=sim.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        if com:
+                            sim.move_to_com()
                         sim.integrate(10.)
                         sp = sim._particles[1]
                         
@@ -503,6 +511,8 @@ class TestVariationalFull(unittest.TestCase):
                         if v1=="m":
                             m-=Delta
                         sim._particles[1] = rebound.Particle(simulation=sim, primary=sim.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        if com:
+                            sim.move_to_com()
                         sim.integrate(10.)
                         sm = sim._particles[1]
                         prec = 1e-4
@@ -549,6 +559,8 @@ class TestVariationalFull(unittest.TestCase):
                         if v2=="m":
                             m+=Delta
                         sim._particles[1] = rebound.Particle(simulation=sim, primary=sim.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        if com:
+                            sim.move_to_com()
                         sim.integrate(10.)
                         spp = sim._particles[1]
                         
@@ -586,6 +598,8 @@ class TestVariationalFull(unittest.TestCase):
                         if v2=="m":
                             m-=Delta
                         sim._particles[1] = rebound.Particle(simulation=sim, primary=sim.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        if com:
+                            sim.move_to_com()
                         sim.integrate(10.)
                         spm = sim._particles[1]
 
@@ -623,6 +637,8 @@ class TestVariationalFull(unittest.TestCase):
                         if v2=="m":
                             m+=Delta
                         sim._particles[1] = rebound.Particle(simulation=sim, primary=sim.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        if com:
+                            sim.move_to_com()
                         sim.integrate(10.)
                         smp = sim._particles[1]
 
@@ -660,6 +676,8 @@ class TestVariationalFull(unittest.TestCase):
                         if v2=="m":
                             m-=Delta
                         sim._particles[1] = rebound.Particle(simulation=sim, primary=sim.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        if com:
+                            sim.move_to_com()
                         sim.integrate(10.)
                         smm = sim._particles[1]
 
