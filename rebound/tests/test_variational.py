@@ -354,3 +354,65 @@ class TestVariationalInitTests(unittest.TestCase):
                         self.assertLess(abs((spp.vy -spm.vy -smp.vy +smm.vy )/Delta/Delta/4.-vp.vy),prec)
                         self.assertLess(abs((spp.vz -spm.vz -smp.vz +smm.vz )/Delta/Delta/4.-vp.vz),prec)
                         self.assertLess(abs((spp.m  -spm.m  -smp.m  +smm.m  )/Delta/Delta/4.-vp.m),prec)
+
+
+class TestVariationalFull(unittest.TestCase):
+    def test_all_1st_order_full(self):
+        vlist = ["a","e","i","Omega","omega","f","m"]
+        paramslist = [ 
+                (1e-3,1.,0.1,0.02,0.3,0.56,0.4),
+                (1e-6,2.,0.02,0.0132,0.33,1.56,0.14),
+                (234.3e-6,1.7567,0.561,0.572,0.573,2.56,0.354),
+                (1e-2,1.7567,0.1561,0.15472,0.24573,12.56,1.354),
+                (1e-7,3.7567,0.00061,0.23572,0.523473,2.56,3.354),
+                ]
+        for params in paramslist:
+            for v in vlist:
+                m,a,e,inc,Omega,omega,f= params
+                simvp = rebound.Simulation()
+                simvp.add(m=1.)
+                p = rebound.Particle(simulation=simvp, primary=simvp.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                simvp.add(p)
+                simvp.add(primary=simvp.particles[0],a=1.76)
+                var_i = simvp.add_variational()
+                vp = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                simvp._particles[var_i+1] = vp
+                simvp.integrate(10.)
+
+
+                simsp = rebound.Simulation()
+                simsp.add(m=1.)
+                p = rebound.Particle(simulation=simsp, primary=simsp.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                simsp.add(p)
+                simsp.add(primary=simsp.particles[0],a=1.76)
+                Delta=1e-8
+                if v=="a":
+                    a+=Delta
+                if v=="e":
+                    e+=Delta
+                if v=="i":
+                    inc+=Delta
+                if v=="Omega":
+                    Omega+=Delta
+                if v=="omega":
+                    omega+=Delta
+                if v=="f":
+                    f+=Delta
+                if v=="m":
+                    m+=Delta
+                sp = rebound.Particle(simulation=simsp, primary=simsp.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                simsp._particles[1] = sp
+                simsp.integrate(10.)
+
+                vp = simvp.particles[var_i+1]
+                sp = simsp.particles[1]
+                p = simvp.particles[1]
+
+                prec = 1e-5
+                self.assertLess(abs((sp.x-p.x)/Delta-vp.x),prec)
+                self.assertLess(abs((sp.y-p.y)/Delta-vp.y),prec)
+                self.assertLess(abs((sp.z-p.z)/Delta-vp.z),prec)
+                self.assertLess(abs((sp.vx-p.vx)/Delta-vp.vx),prec)
+                self.assertLess(abs((sp.vy-p.vy)/Delta-vp.vy),prec)
+                self.assertLess(abs((sp.vz-p.vz)/Delta-vp.vz),prec)
+                self.assertLess(abs((sp.m-p.m)/Delta-vp.m),prec)
