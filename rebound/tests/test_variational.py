@@ -342,7 +342,6 @@ class TestVariationalInitTests(unittest.TestCase):
                     prec = 1e-7
                     if v1=="m" or v2=="m":
                         prec = 1e-3
-                    print v1, v2
                     self.assertLess(abs((spp.x  -spm.x  -smp.x  +smm.x  )/Delta/Delta/4.-vp.x),prec)
                     self.assertLess(abs((spp.y  -spm.y  -smp.y  +smm.y  )/Delta/Delta/4.-vp.y),prec)
                     self.assertLess(abs((spp.z  -spm.z  -smp.z  +smm.z  )/Delta/Delta/4.-vp.z),prec)

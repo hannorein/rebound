@@ -1547,6 +1547,7 @@ struct reb_particle reb_tools_orbit_to_particle_dOmega_dm(double G, struct reb_p
 struct reb_particle reb_tools_orbit_to_particle_domega_df(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};
 	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double dr = e*sin(f)*a*(1.-e*e)/(1. + e*cos(f))/(1. + e*cos(f));
 	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
 
 	double cO = cos(Omega);
@@ -1555,12 +1556,18 @@ struct reb_particle reb_tools_orbit_to_particle_domega_df(double G, struct reb_p
 	double dso = cos(omega);
 	double dcf = -sin(f);
 	double dsf = cos(f);
+	double cf = cos(f);
+	double sf = sin(f);
 	double ci = cos(inc);
 	double si = sin(inc);
 	
 	p.x = r*(cO*(dco*dcf-dso*dsf) - sO*(dso*dcf+dco*dsf)*ci);
 	p.y = r*(sO*(dco*dcf-dso*dsf) + cO*(dso*dcf+dco*dsf)*ci);
 	p.z = r*(dso*dcf+dco*dsf)*si;
+	
+    p.x += dr*(cO*(dco*cf-dso*sf) - sO*(dso*cf+dco*sf)*ci);
+	p.y += dr*(sO*(dco*cf-dso*sf) + cO*(dso*cf+dco*sf)*ci);
+	p.z += dr*(dso*cf+dco*sf)*si;
 
 	p.vx = v0*((dcf)*(-ci*dco*sO - cO*dso) - dsf*(dco*cO - ci*dso*sO));
 	p.vy = v0*((dcf)*(ci*dco*cO - sO*dso)  - dsf*(dco*sO + ci*dso*cO));
