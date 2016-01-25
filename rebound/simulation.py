@@ -539,9 +539,9 @@ class Simulation(Structure):
             index = clibrebound.reb_add_var_1st_order(byref(self),c_int(testparticle))
         elif order==2:
             if index_1st_order_a is None:
-                index_1st_order_a = index_1st_order
+                index_1st_order_a = index_1st_order_b
             if index_1st_order_b is None:
-                index_1st_order_b = index_1st_order
+                index_1st_order_b = index_1st_order_a
             if index_1st_order_a is None or index_1st_order_b is None:
                 raise AttributeError("You need to specify corresponding first order variational equations when initializing second order variational equations.")
             clibrebound.reb_add_var_2nd_order.restype = c_int

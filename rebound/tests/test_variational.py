@@ -416,3 +416,259 @@ class TestVariationalFull(unittest.TestCase):
                 self.assertLess(abs((sp.vy-p.vy)/Delta-vp.vy),prec)
                 self.assertLess(abs((sp.vz-p.vz)/Delta-vp.vz),prec)
                 self.assertLess(abs((sp.m-p.m)/Delta-vp.m),prec)
+    
+    
+    
+    
+    def test_all_2nd_order_full(self):
+        vlist = ["a","e","i","Omega","omega","f","m"]
+        # Testing a few random initial conditions
+        paramslist = [ 
+                (1e-3,1.,0.1,0.02,0.3,0.56,0.4),
+                (1e-6,2.,0.02,0.0132,0.33,1.56,0.14),
+                (234.3e-6,1.7567,0.561,0.572,0.573,2.56,0.354),
+                (1e-2,1.7567,0.1561,0.15472,0.24573,12.56,1.354),
+                (1e-7,3.7567,0.00061,0.23572,0.523473,2.56,3.354),
+                ]
+        for params in paramslist:
+            for v1 in vlist:
+                for v2 in vlist:
+                    m,a,e,inc,Omega,omega,f= params
+                    simvp = rebound.Simulation()
+                    simvp.add(m=1.)
+                    p = rebound.Particle(simulation=simvp, primary=simvp.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                    simvp.add(p)
+                    simvp.add(primary=simvp.particles[0],a=1.76)
+                    var_ia = simvp.add_variational()
+                    var_ib = simvp.add_variational()
+                    var_ii = simvp.add_variational(order=2,index_1st_order_a=var_ia,index_1st_order_b=var_ib)
+                    vpia = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v1,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                    simvp._particles[var_ia+1] = vpia
+                    vpib = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v2,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                    simvp._particles[var_ib+1] = vpib
+                    vpii = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v1,variation2=v2,variation_order=2,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                    simvp._particles[var_ii+1] = vpii
+                    simvp.integrate(10.)
+                    
+                    p = simvp.particles[1]
+                    vp_ia = simvp.particles[var_ia+1]
+                    vp_ib = simvp.particles[var_ib+1]
+                    vp_ii = simvp.particles[var_ii+1]
+
+
+                    Delta = 1e-4
+                    
+                    if v1==v2:
+                        m,a,e,inc,Omega,omega,f= params
+                        sim = rebound.Simulation()
+                        sim.add(m=1.)
+                        sim.add(m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        sim.add(a=1.76)
+                        if v1=="a":
+                            a+=Delta
+                        if v1=="e":
+                            e+=Delta
+                        if v1=="i":
+                            inc+=Delta
+                        if v1=="Omega":
+                            Omega+=Delta
+                        if v1=="omega":
+                            omega+=Delta
+                        if v1=="f":
+                            f+=Delta
+                        if v1=="m":
+                            m+=Delta
+                        sim._particles[1] = rebound.Particle(simulation=sim, primary=sim.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        sim.integrate(10.)
+                        sp = sim._particles[1]
+                        
+                        
+                        m,a,e,inc,Omega,omega,f= params
+                        sim = rebound.Simulation()
+                        sim.add(m=1.)
+                        sim.add(m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        sim.add(a=1.76)
+                        if v1=="a":
+                            a-=Delta
+                        if v1=="e":
+                            e-=Delta
+                        if v1=="i":
+                            inc-=Delta
+                        if v1=="Omega":
+                            Omega-=Delta
+                        if v1=="omega":
+                            omega-=Delta
+                        if v1=="f":
+                            f-=Delta
+                        if v1=="m":
+                            m-=Delta
+                        sim._particles[1] = rebound.Particle(simulation=sim, primary=sim.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        sim.integrate(10.)
+                        sm = sim._particles[1]
+                        prec = 1e-4
+                        
+                        self.assertLess(abs((sp.x-2.*p.x+sm.x)/Delta/Delta-vp_ii.x),prec)
+                        self.assertLess(abs((sp.y-2.*p.y+sm.y)/Delta/Delta-vp_ii.y),prec)
+                        self.assertLess(abs((sp.z-2.*p.z+sm.z)/Delta/Delta-vp_ii.z),prec)
+                        self.assertLess(abs((sp.vx-2.*p.vx+sm.vx)/Delta/Delta-vp_ii.vx),prec)
+                        self.assertLess(abs((sp.vy-2.*p.vy+sm.vy)/Delta/Delta-vp_ii.vy),prec)
+                        self.assertLess(abs((sp.vz-2.*p.vz+sm.vz)/Delta/Delta-vp_ii.vz),prec)
+                        self.assertLess(abs((sp.m-2.*p.m+sm.m)/Delta/Delta-vp_ii.m),prec)
+                    else:
+                        m,a,e,inc,Omega,omega,f= params
+                        sim = rebound.Simulation()
+                        sim.add(m=1.)
+                        sim.add(m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        sim.add(a=1.76)
+                        if v1=="a":
+                            a+=Delta
+                        if v1=="e":
+                            e+=Delta
+                        if v1=="i":
+                            inc+=Delta
+                        if v1=="Omega":
+                            Omega+=Delta
+                        if v1=="omega":
+                            omega+=Delta
+                        if v1=="f":
+                            f+=Delta
+                        if v1=="m":
+                            m+=Delta
+                        if v2=="a":
+                            a+=Delta
+                        if v2=="e":
+                            e+=Delta
+                        if v2=="i":
+                            inc+=Delta
+                        if v2=="Omega":
+                            Omega+=Delta
+                        if v2=="omega":
+                            omega+=Delta
+                        if v2=="f":
+                            f+=Delta
+                        if v2=="m":
+                            m+=Delta
+                        sim._particles[1] = rebound.Particle(simulation=sim, primary=sim.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        sim.integrate(10.)
+                        spp = sim._particles[1]
+                        
+                        m,a,e,inc,Omega,omega,f= params
+                        sim = rebound.Simulation()
+                        sim.add(m=1.)
+                        sim.add(m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        sim.add(a=1.76)
+                        if v1=="a":
+                            a+=Delta
+                        if v1=="e":
+                            e+=Delta
+                        if v1=="i":
+                            inc+=Delta
+                        if v1=="Omega":
+                            Omega+=Delta
+                        if v1=="omega":
+                            omega+=Delta
+                        if v1=="f":
+                            f+=Delta
+                        if v1=="m":
+                            m+=Delta
+                        if v2=="a":
+                            a-=Delta
+                        if v2=="e":
+                            e-=Delta
+                        if v2=="i":
+                            inc-=Delta
+                        if v2=="Omega":
+                            Omega-=Delta
+                        if v2=="omega":
+                            omega-=Delta
+                        if v2=="f":
+                            f-=Delta
+                        if v2=="m":
+                            m-=Delta
+                        sim._particles[1] = rebound.Particle(simulation=sim, primary=sim.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        sim.integrate(10.)
+                        spm = sim._particles[1]
+
+                        m,a,e,inc,Omega,omega,f= params
+                        sim = rebound.Simulation()
+                        sim.add(m=1.)
+                        sim.add(m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        sim.add(a=1.76)
+                        if v1=="a":
+                            a-=Delta
+                        if v1=="e":
+                            e-=Delta
+                        if v1=="i":
+                            inc-=Delta
+                        if v1=="Omega":
+                            Omega-=Delta
+                        if v1=="omega":
+                            omega-=Delta
+                        if v1=="f":
+                            f-=Delta
+                        if v1=="m":
+                            m-=Delta
+                        if v2=="a":
+                            a+=Delta
+                        if v2=="e":
+                            e+=Delta
+                        if v2=="i":
+                            inc+=Delta
+                        if v2=="Omega":
+                            Omega+=Delta
+                        if v2=="omega":
+                            omega+=Delta
+                        if v2=="f":
+                            f+=Delta
+                        if v2=="m":
+                            m+=Delta
+                        sim._particles[1] = rebound.Particle(simulation=sim, primary=sim.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        sim.integrate(10.)
+                        smp = sim._particles[1]
+
+                        m,a,e,inc,Omega,omega,f= params
+                        sim = rebound.Simulation()
+                        sim.add(m=1.)
+                        sim.add(m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        sim.add(a=1.76)
+                        if v1=="a":
+                            a-=Delta
+                        if v1=="e":
+                            e-=Delta
+                        if v1=="i":
+                            inc-=Delta
+                        if v1=="Omega":
+                            Omega-=Delta
+                        if v1=="omega":
+                            omega-=Delta
+                        if v1=="f":
+                            f-=Delta
+                        if v1=="m":
+                            m-=Delta
+                        if v2=="a":
+                            a-=Delta
+                        if v2=="e":
+                            e-=Delta
+                        if v2=="i":
+                            inc-=Delta
+                        if v2=="Omega":
+                            Omega-=Delta
+                        if v2=="omega":
+                            omega-=Delta
+                        if v2=="f":
+                            f-=Delta
+                        if v2=="m":
+                            m-=Delta
+                        sim._particles[1] = rebound.Particle(simulation=sim, primary=sim.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                        sim.integrate(10.)
+                        smm = sim._particles[1]
+
+                        prec = 1e-4
+                        self.assertLess(abs((spp.x  -spm.x  -smp.x  +smm.x  )/Delta/Delta/4.-vp_ii.x),prec)
+                        self.assertLess(abs((spp.y  -spm.y  -smp.y  +smm.y  )/Delta/Delta/4.-vp_ii.y),prec)
+                        self.assertLess(abs((spp.z  -spm.z  -smp.z  +smm.z  )/Delta/Delta/4.-vp_ii.z),prec)
+                        self.assertLess(abs((spp.vx -spm.vx -smp.vx +smm.vx )/Delta/Delta/4.-vp_ii.vx),prec)
+                        self.assertLess(abs((spp.vy -spm.vy -smp.vy +smm.vy )/Delta/Delta/4.-vp_ii.vy),prec)
+                        self.assertLess(abs((spp.vz -spm.vz -smp.vz +smm.vz )/Delta/Delta/4.-vp_ii.vz),prec)
+                        self.assertLess(abs((spp.m  -spm.m  -smp.m  +smm.m  )/Delta/Delta/4.-vp_ii.m),prec)
+
