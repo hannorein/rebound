@@ -243,6 +243,13 @@ class Particle(Structure):
                 elif variation_order==2:
                     if variation2 is None:
                         variation2 = variation
+                    # Swap variations if needed
+                    vlist = ["a","e","i","Omega","omega","f","m"]
+                    vi1 = vlist.index(variation)
+                    vi2 = vlist.index(variation2)
+                    if vi2 < vi1:
+                        variation, variation2 = variation2, variation
+
                     if variation == "a" and variation2=="a":
                         clibrebound.reb_tools_orbit_to_particle_dda.restype = Particle
                         p = clibrebound.reb_tools_orbit_to_particle_dda(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
