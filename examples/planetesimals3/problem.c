@@ -38,7 +38,7 @@ int main(int argc, char* argv[]){
 	//r->integrator	= REB_INTEGRATOR_IAS15;
 	//r->integrator	= REB_INTEGRATOR_WHFAST;
     r->ri_hybarid.switch_ratio = sqrt(3.);  //Hill radii
-    r->ri_hybarid.CE_radius = 10.;          //X*radius
+    r->ri_hybarid.CE_radius = 18.;          //X*radius
     r->ri_hybarid.ejection_distance = 10.;  //AU
     r->ri_hybarid.collisions = 1;
     r->testparticle_type = 1;
@@ -244,7 +244,7 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     fprintf(mercuryparams," algorithm (MVS, BS, BS2, RADAU, HYBRID etc) = hyb\n");
     fprintf(mercuryparams," start time (days)= %f\n",day_zero);
     fprintf(mercuryparams," stop time (days) =%.1f\n",tmax/AU_d + day_zero);
-    fprintf(mercuryparams," output interval (days) = %.2fd0\n",output_rate*r->dt/AU_d);
+    fprintf(mercuryparams," output interval (days) = %.2fd0\n",(tmax/n_output)*365);
     fprintf(mercuryparams," timestep (days) = %f\n",r->dt/AU_d);
     fprintf(mercuryparams," accuracy parameter=1.d-12\n");
     fprintf(mercuryparams,")---------------------------------------------------------------------\n");
