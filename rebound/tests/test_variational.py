@@ -340,8 +340,6 @@ class TestVariationalInitTests(unittest.TestCase):
                     smm = rebound.Particle(simulation=sim, primary=sim.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
 
                     prec = 1e-7
-                    if v1=="f" or v2=="f":
-                        continue
                     if v1=="m" or v2=="m":
                         prec = 1e-3
                     print v1, v2
