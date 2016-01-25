@@ -39,7 +39,9 @@ int main(int argc, char* argv[]){
 	r->integrator	= REB_INTEGRATOR_HYBARID;
 	//r->integrator	= REB_INTEGRATOR_IAS15;
 	//r->integrator	= REB_INTEGRATOR_WHFAST;
-    r->ri_hybarid.switch_ratio = 3.;
+    r->ri_hybarid.switch_ratio = sqrt(3.);        //Hill radii
+    r->ri_hybarid.CE_radius = 10.;          //X*radius
+    r->ri_hybarid.ejection_distance = 10.;  //AU
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
     r->dt = 0.0015;

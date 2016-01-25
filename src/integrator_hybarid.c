@@ -126,18 +126,16 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     struct reb_particle* global = r->particles;
     struct reb_particle p0 = global[0];
-    double ejectiondistance2 = 100;     //temporary hardcoded value.
-    double HSR = r->ri_hybarid.switch_ratio;
+    double ejectiondistance2 = r->ri_hybarid.ejection_distance*r->ri_hybarid.ejection_distance;
+    double HSR2 = r->ri_hybarid.switch_ratio*r->ri_hybarid.switch_ratio;
     for (int i=0; i<_N_active; i++){
         struct reb_particle* pi = &(global[i]);
-        double rhi;
-        if(i==0) rhi = 0.08; else{
-            const double dxi = p0.x - pi->x;
-            const double dyi = p0.y - pi->y;
-            const double dzi = p0.z - pi->z;
-            const double r0i2 = dxi*dxi + dyi*dyi + dzi*dzi;
-            rhi = r0i2*pow(pi->m/(p0.m*3.),2./3.);
-        }
+        double radius_check2 = r->ri_hybarid.CE_radius*r->ri_hybarid.CE_radius*pi->r*pi->r;
+        const double dxi = p0.x - pi->x;
+        const double dyi = p0.y - pi->y;
+        const double dzi = p0.z - pi->z;
+        const double r0i2 = dxi*dxi + dyi*dyi + dzi*dzi;
+        double rhi = r0i2*pow(pi->m/(p0.m*3.),2./3.);
         for(int j=i+1;j<r->N;j++){
             struct reb_particle pj = global[j];
             
@@ -153,7 +151,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
             const double rij2 = dx*dx + dy*dy + dz*dz;
             const double ratio = rij2/(rhi+rhj);    //(p-p distance/Hill radii)^2
 
-            if(ratio < HSR){
+            if(ratio < HSR2 || rij2 < radius_check2){
                 r->ri_hybarid.mini_active = 1;
                 if (j>=_N_active && r->ri_hybarid.is_in_mini[j] ==0){//make sure not already added
                     reb_add(mini,pj);
