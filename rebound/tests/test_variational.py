@@ -446,10 +446,8 @@ class TestVariationalFull(unittest.TestCase):
                     var_ia = simvp.add_variational()
                     var_ib = simvp.add_variational()
                     var_ii = simvp.add_variational(order=2,index_1st_order_a=var_ia,index_1st_order_b=var_ib)
-                    vpia = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v1,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
-                    simvp._particles[var_ia+1] = vpia
-                    vpib = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v2,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
-                    simvp._particles[var_ib+1] = vpib
+                    simvp._particles[var_ia+1] = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v1,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                    simvp._particles[var_ib+1] = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v2,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
                     vpii = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v1,variation2=v2,variation_order=2,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
                     simvp._particles[var_ii+1] = vpii
                     if com:
@@ -524,6 +522,16 @@ class TestVariationalFull(unittest.TestCase):
                         self.assertLess(abs((sp.vy-2.*p.vy+sm.vy)/Delta/Delta-vp_ii.vy),prec)
                         self.assertLess(abs((sp.vz-2.*p.vz+sm.vz)/Delta/Delta-vp_ii.vz),prec)
                         self.assertLess(abs((sp.m-2.*p.m+sm.m)/Delta/Delta-vp_ii.m),prec)
+                        
+                        # Also checking first order
+                        prec = 1e-5
+                        self.assertLess(abs((sp.x -sm.x )/Delta/2.-vp_ia.x ),prec)
+                        self.assertLess(abs((sp.y -sm.y )/Delta/2.-vp_ia.y ),prec)
+                        self.assertLess(abs((sp.z -sm.z )/Delta/2.-vp_ia.z ),prec)
+                        self.assertLess(abs((sp.vx-sm.vx)/Delta/2.-vp_ia.vx),prec)
+                        self.assertLess(abs((sp.vy-sm.vy)/Delta/2.-vp_ia.vy),prec)
+                        self.assertLess(abs((sp.vz-sm.vz)/Delta/2.-vp_ia.vz),prec)
+                        self.assertLess(abs((sp.m -sm.m) /Delta/2.-vp_ia.m ),prec)
                     else:
                         m,a,e,inc,Omega,omega,f= params
                         sim = rebound.Simulation()
