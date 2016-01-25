@@ -1,11 +1,10 @@
 /**
- * @file 	integrator.c
- * @brief 	Leap-frog integration scheme.
+ * @file 	integrator_hybarid.c
+ * @brief 	WHFAST/IAS15 Hybrid integration scheme.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @details	This file implements the leap-frog integration scheme.  
- * This scheme is second order accurate, symplectic and well suited for 
- * non-rotating coordinate systems. Note that the scheme is formally only
- * first order accurate when velocity dependent forces are present.
+ * @details	This file implements a hybrid integration scheme capable
+ *  of handling close encounters, simple collisions, and
+ *  planetesimal forces.
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
@@ -39,7 +38,7 @@
 
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r);
 void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini);
-void mini_check_for_collision(struct reb_simulation* mini);
+void mini_check_for_collisions(struct reb_simulation* mini);
 
 double E0;
 
@@ -52,8 +51,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         r->ri_hybarid.mini->additional_forces = reb_integrator_hybarid_additional_forces_mini;
         r->ri_hybarid.mini->ri_hybarid.global = r;
         r->ri_hybarid.mini->testparticle_type = r->testparticle_type;
-        r->ri_hybarid.mini->heartbeat = mini_check_for_collision;
-        //r->ri_hybarid.mini->softening = 1e-6;
+        if(r->ri_hybarid.collisions)r->ri_hybarid.mini->heartbeat = mini_check_for_collisions;
         //r->ri_hybarid.mini->ri_ias15.epsilon = 1e-8;  //speeds up ias and hybarid immensely
         E0 = reb_tools_energy(r);
     }
@@ -87,7 +85,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
 
     reb_integrator_hybarid_check_for_encounter(r);
 
-    //keep this after check_for_encounter - then if particle is removed, no need to edit particles_prev
+    //keep this after check_for_encounter - then no need to re-edit particles_prev
     if (r->testparticle_type){
         if (r->N>r->ri_hybarid.particles_prev_Nmax){
             r->ri_hybarid.particles_prev_Nmax = r->N;
@@ -98,6 +96,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     
     reb_integrator_whfast_part1(r);
 }
+
 void reb_integrator_hybarid_part2(struct reb_simulation* r){
     reb_integrator_whfast_part2(r);
 
@@ -126,15 +125,16 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     struct reb_particle* global = r->particles;
     struct reb_particle p0 = global[0];
-    double ejectiondistance2 = 100;     //temporary hardcoded value.
-    double HSR = r->ri_hybarid.switch_ratio;
+    double ejectiondistance2 = r->ri_hybarid.ejection_distance*r->ri_hybarid.ejection_distance;
+    double HSR2 = r->ri_hybarid.switch_ratio*r->ri_hybarid.switch_ratio;
     for (int i=0; i<_N_active; i++){
         struct reb_particle* pi = &(global[i]);
+        double radius_check2 = r->ri_hybarid.CE_radius*r->ri_hybarid.CE_radius*pi->r*pi->r;
         const double dxi = p0.x - pi->x;
         const double dyi = p0.y - pi->y;
         const double dzi = p0.z - pi->z;
         const double r0i2 = dxi*dxi + dyi*dyi + dzi*dzi;
-        const double rhi = r0i2*pow(pi->m/(p0.m*3.),2./3.);
+        double rhi = r0i2*pow(pi->m/(p0.m*3.),2./3.);
         for(int j=i+1;j<r->N;j++){
             struct reb_particle pj = global[j];
             
@@ -142,7 +142,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
             const double dyj = p0.y - pj.y;
             const double dzj = p0.z - pj.z;
             const double r0j2 = dxj*dxj + dyj*dyj + dzj*dzj;
-            const double rhj = r0j2*pow(pj.m/(p0.m*3.),2./3.);  //this is calculated for each massive planet but only needs to be once.
+            const double rhj = r0j2*pow(pj.m/(p0.m*3.),2./3.);
             
             const double dx = pi->x - pj.x;
             const double dy = pi->y - pj.y;
@@ -150,9 +150,9 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
             const double rij2 = dx*dx + dy*dy + dz*dz;
             const double ratio = rij2/(rhi+rhj);    //(p-p distance/Hill radii)^2
 
-            if(ratio < HSR){
+            if(ratio < HSR2 || rij2 < radius_check2){
                 r->ri_hybarid.mini_active = 1;
-                if (j>=_N_active && r->ri_hybarid.is_in_mini[j] ==0){//make sure not already added
+                if (j>=_N_active && r->ri_hybarid.is_in_mini[j]==0){//make sure not already added
                     reb_add(mini,pj);
                     r->ri_hybarid.is_in_mini[j] = 1;
                     if (r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax){
@@ -168,7 +168,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                 double Ef = reb_tools_energy(r);
                 r->ri_hybarid.dE_offset += Ei - Ef;
                 printf("\n\tParticle %d ejected from system at t=%f, E=%e\n",pj.id,r->t,fabs((Ef+r->ri_hybarid.dE_offset-E0)/E0));
-                j--;    //re-try iteration j since j+1 is now j but hasn't been checked.
+                j--;    //re-do since j+1 is now j but hasn't been checked for CE.
             }
         }
     }
@@ -209,7 +209,7 @@ void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
 }
 
 //check for collisions in mini each heartbeat
-void mini_check_for_collision(struct reb_simulation* mini){
+void mini_check_for_collisions(struct reb_simulation* mini){
     struct reb_simulation* r = mini->ri_hybarid.global;
     struct reb_particle* particles = mini->particles;
     int N_active = mini->N_active;
