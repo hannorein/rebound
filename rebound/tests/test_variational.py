@@ -169,7 +169,7 @@ class TestVariationalInitTests(unittest.TestCase):
                 Delta = 1e-4
                 
                 if v1==v2:
-
+                    
                     m,a,e,inc,Omega,omega,f=1e-3,1.,0.1,0.02,0.3,0.56,0.4
                     if v1=="a":
                         a+=Delta
@@ -203,8 +203,7 @@ class TestVariationalInitTests(unittest.TestCase):
                         m-=Delta
                     sm = rebound.Particle(simulation=sim, primary=sim.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
                     prec = 1e-7
-                    if v1=="m":
-                        prec = 1e-2 # hard to find linear regime
+                    
                     self.assertLess(abs((sp.x-2.*p.x+sm.x)/Delta/Delta-vp.x),prec)
                     self.assertLess(abs((sp.y-2.*p.y+sm.y)/Delta/Delta-vp.y),prec)
                     self.assertLess(abs((sp.z-2.*p.z+sm.z)/Delta/Delta-vp.z),prec)
@@ -340,8 +339,6 @@ class TestVariationalInitTests(unittest.TestCase):
                     smm = rebound.Particle(simulation=sim, primary=sim.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
 
                     prec = 1e-7
-                    if v1=="m" or v2=="m":
-                        prec = 1e-3
                     self.assertLess(abs((spp.x  -spm.x  -smp.x  +smm.x  )/Delta/Delta/4.-vp.x),prec)
                     self.assertLess(abs((spp.y  -spm.y  -smp.y  +smm.y  )/Delta/Delta/4.-vp.y),prec)
                     self.assertLess(abs((spp.z  -spm.z  -smp.z  +smm.z  )/Delta/Delta/4.-vp.z),prec)

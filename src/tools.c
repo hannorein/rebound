@@ -1007,7 +1007,7 @@ struct reb_particle reb_tools_orbit_to_particle_ddf(double G, struct reb_particl
 struct reb_particle reb_tools_orbit_to_particle_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};
 	p.m = 1.;
-	double dv0 = 0.5/sqrt(G*(m+primary.m)/a/(1.-e*e))*G/a/(1.-e*e); 
+	double dv0 = 0.5*sqrt(G/a/(1.-e*e))/sqrt(m+primary.m); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -1018,7 +1018,6 @@ struct reb_particle reb_tools_orbit_to_particle_dm(double G, struct reb_particle
 	double ci = cos(inc);
 	double si = sin(inc);
 
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = dv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
 	p.vy = dv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
 	p.vz = dv0*((e+cf)*co*si - sf*si*so);
@@ -1028,7 +1027,7 @@ struct reb_particle reb_tools_orbit_to_particle_dm(double G, struct reb_particle
 
 struct reb_particle reb_tools_orbit_to_particle_ddm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};
-	double ddv0 = -0.25/sqrt(G*(m+primary.m)/a/(1.-e*e))*G/a/(1.-e*e)*G/a/(1.-e*e); 
+	double ddv0 = -0.25*sqrt(G/a/(1.-e*e))/sqrt(m+primary.m)/(m+primary.m); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -1578,7 +1577,7 @@ struct reb_particle reb_tools_orbit_to_particle_domega_df(double G, struct reb_p
 
 struct reb_particle reb_tools_orbit_to_particle_domega_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};
-	double dv0 = 0.5/sqrt(m+primary.m)*sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double dv0 = 0.5*sqrt(G/a/(1.-e*e))/sqrt(m+primary.m); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -1598,7 +1597,7 @@ struct reb_particle reb_tools_orbit_to_particle_domega_dm(double G, struct reb_p
 
 struct reb_particle reb_tools_orbit_to_particle_df_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};
-	double dv0 = 0.5/sqrt(m+primary.m)*sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double dv0 = 0.5*sqrt(G/a/(1.-e*e))/sqrt(m+primary.m); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
