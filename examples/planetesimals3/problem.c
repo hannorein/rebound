@@ -13,7 +13,7 @@
 
 void heartbeat(struct reb_simulation* r);
 double E0, t_output, t_log_output;
-char* output_name;
+char* output_name; char* mercury_name; char* swifter_name;
 
 //swifter/mercury compare
 void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax, int n_output);
@@ -24,14 +24,16 @@ int main(int argc, char* argv[]){
     double planetesimal_mass = 3e-8;
     double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
-    double tmax = 1000;
-    int N_planetesimals = 100;
-    int seed = 30;
-    output_name = "output/Energy.txt";
-    //double tmax = atof(argv[1]);
-    //int N_planetesimals = atoi(argv[2]);
-    //int seed = atoi(argv[3]);
-    //output_name = argv[4];
+    //double tmax = 1000;
+    //int N_planetesimals = 100;
+    //int seed = 30;
+    //output_name = "output/Energy.txt";
+    double tmax = atof(argv[1]);
+    int N_planetesimals = atoi(argv[2]);
+    int seed = atoi(argv[3]);
+    output_name = argv[4];
+    mercury_name = argv[5];
+    swifter_name = argv[6];
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
@@ -135,12 +137,20 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     int N = r->N;
     int N_active = r->N_active;
     
+    char s1[200]={0}; strcat(s1,swifter_name); strcat(s1,"swifter_pl.in");
+    char s2[200]={0}; strcat(s2,swifter_name); strcat(s2,"param.in");
+    char m1[200]={0}; strcat(m1,mercury_name); strcat(m1,"mercury_big.in");
+    char m2[200]={0}; strcat(m2,mercury_name); strcat(m2,"mercury_small.in");
+    char m3[200]={0}; strcat(m3,mercury_name); strcat(m3,"mercury_param.in");
+    
+    printf("\ns1=%s\n",s1);
+    
     //Need Hill radii for swifter too.
-    FILE* swifter = fopen("swifter_mercury_output/swifter_pl.in","w");
-    FILE* swifterparams = fopen("swifter_mercury_output/param.in","w");
-    FILE* mercuryb = fopen("swifter_mercury_output/mercury_big.in","w");
-    FILE* mercurys = fopen("swifter_mercury_output/mercury_small.in","w");
-    FILE* mercuryparams = fopen("swifter_mercury_output/mercury_param.in","w");
+    FILE* swifter = fopen(s1,"w");
+    FILE* swifterparams = fopen(s2,"w");
+    FILE* mercuryb = fopen(m1,"w");
+    FILE* mercurys = fopen(m2,"w");
+    FILE* mercuryparams = fopen(m3,"w");
     
     //conversion options - swifter
     int alt_units = 0;
@@ -169,7 +179,7 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     }
     
     //SWIFTER - Other params (time, dt, etc.)
-    int output_rate = tmax/n_output;
+    int output_rate = 100*tmax/n_output;
     fprintf(swifterparams,"! \n");
     fprintf(swifterparams,"! Parameter file for Swifter, with N=%d total bodies. \n",r->N);
     fprintf(swifterparams,"! \n! \n");
@@ -244,7 +254,7 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     fprintf(mercuryparams," algorithm (MVS, BS, BS2, RADAU, HYBRID etc) = hyb\n");
     fprintf(mercuryparams," start time (days)= %f\n",day_zero);
     fprintf(mercuryparams," stop time (days) =%.1f\n",tmax/AU_d + day_zero);
-    fprintf(mercuryparams," output interval (days) = %.2fd0\n",(tmax/n_output)*365);
+    fprintf(mercuryparams," output interval (days) = %.2fd0\n",(tmax/n_output)*365*100);
     fprintf(mercuryparams," timestep (days) = %f\n",r->dt/AU_d);
     fprintf(mercuryparams," accuracy parameter=1.d-12\n");
     fprintf(mercuryparams,")---------------------------------------------------------------------\n");
