@@ -138,26 +138,8 @@ If this does not work, you have an old version of pip.  You can either upgrade p
     pip uninstall rebound
     pip install rebound
 
-If you cloned the git repository, i.e., have a `rebound` directory on your file system, and are not too familiar with git, you can navigate to the `rebound` folder in the terminal and::
-
-    git commit -a -m "My latest commit"
-   
-This will save a snapshot of your current repository to make sure you don't lose any work.  Now type::
-
-    git branch
-
-and take note of the branch name that has an asterisk next to it.  If you haven't changed anything, this should be `master`.  If it's different, replace `master` with the branch name in the first line below (leave the last line as `origin/master`)::
- 
-    git branch mycopy master
-    git fetch origin
-    git merge origin/master
-
-The first line saves everything in the branch `mycopy`.  The second line gets the latest version from the repository, and the last line merges the all the repositories changes with your own.  
-
-If you made changes to the source code that conflict with changes in the new version, you'll get conflicts.  These will be noted in the relevant source files.  You can either fix those conflicts, or if you don't know how to deal with them, you can always revert to what you had before by switching to the mycopy branch with::
-
-    git checkout mycopy
-
-Finally, install the new python version with::
+If you cloned the git repository, i.e., have a `rebound` folder on your file system, merge the new changes (see here_ if you're not sure how to do this) and::
 
     pip install -e .
+
+.. _here: https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging
