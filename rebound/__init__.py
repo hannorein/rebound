@@ -20,19 +20,21 @@ pymodulepath = os.path.dirname(__file__)
 from ctypes import cdll, c_char_p
 clibrebound = cdll.LoadLibrary(pymodulepath+"/../librebound"+suffix)
 
+# Version
+__version__ = c_char_p.in_dll(clibrebound, "reb_version_str").value.decode('ascii')
+
+# Build
+__build__ = c_char_p.in_dll(clibrebound, "reb_build_str").value.decode('ascii')
 # Check for version
+
 try:
     moduleversion = pkg_resources.require("rebound")[0].version
-    libreboundversion = c_char_p.in_dll(clibrebound, "reb_version_str").value.decode("ascii") 
+    libreboundversion = __version__
     if moduleversion != libreboundversion:
         print("WARNING: python module and librebound have different version numbers: '%s' vs '%s'.\n" %(moduleversion, libreboundversion))
 except:
     # Might fails on python3 versions, but not important
     pass
-
-# Built str
-def build_str():
-    return c_char_p.in_dll(clibrebound, "reb_build_str").value.decode('ascii')
 
 
 # Exceptions    
@@ -63,4 +65,4 @@ from .particle import Particle
 from .plotting import OrbitPlot
 from .interruptible_pool import InterruptiblePool
 
-__all__ = ["Simulation", "Orbit", "OrbitPlot", "Particle", "SimulationError", "Encounter", "Escape", "NoParticles", "InterruptiblePool"]
+__all__ = ["__version__", "__build__", "Simulation", "Orbit", "OrbitPlot", "Particle", "SimulationError", "Encounter", "Escape", "NoParticles", "InterruptiblePool"]
