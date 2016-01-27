@@ -93,7 +93,7 @@ To create a new notebook select from the dropdown menu on the top right the item
 First REBOUND simulation
 ------------------------
 
-To run your first REBOUND simuation, just start python with the command::
+To run your first REBOUND simulation, just start python with the command::
 
     python
 
@@ -119,3 +119,45 @@ Now, the time has advanced to t=1000. You can print out the particle positions w
     sim.status()
 
 For more information, have a look at the python examples, which act as tutorials. You can also read the documentation for the REBOUND module and the REBOUND C code to get a better understanding of what is going on behind the scenes.
+
+Upgrading REBOUND
+-----------------
+
+REBOUND is actively being expanded and improved, so it's worthwhile to periodically update it.
+
+If you installed REBOUND with::
+
+    pip install rebound
+
+then simply::
+
+    pip install rebound --upgrade
+
+If this does not work, you have an old version of pip.  You can either upgrade pip (probably best!), or simply::
+
+    pip uninstall rebound
+    pip install rebound
+
+If you cloned the git repository, i.e., have a `rebound` directory on your file system, and are not too familiar with git, you can navigate to the `rebound` folder in the terminal and::
+
+    git commit -a -m "My latest commit"
+   
+This will save a snapshot of your current repository to make sure you don't lose any work.  Now type::
+
+    git branch
+
+and take note of the branch name that has an asterisk next to it.  If you haven't changed anything, this should be `master`.  If it's different, replace `master` with the branch name in the first line below (leave the last line as `origin/master`)::
+ 
+    git branch mycopy master
+    git fetch origin
+    git merge origin/master
+
+The first line saves everything in the branch `mycopy`.  The second line gets the latest version from the repository, and the last line merges the all the repositories changes with your own.  
+
+If you made changes to the source code that conflict with changes in the new version, you'll get conflicts.  These will be noted in the relevant source files.  You can either fix those conflicts, or if you don't know how to deal with them, you can always revert to what you had before by switching to the mycopy branch with::
+
+    git checkout mycopy
+
+Finally, install the new python version with::
+
+    pip install -e .
