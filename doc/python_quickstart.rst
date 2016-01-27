@@ -93,7 +93,7 @@ To create a new notebook select from the dropdown menu on the top right the item
 First REBOUND simulation
 ------------------------
 
-To run your first REBOUND simuation, just start python with the command::
+To run your first REBOUND simulation, just start python with the command::
 
     python
 
@@ -119,3 +119,27 @@ Now, the time has advanced to t=1000. You can print out the particle positions w
     sim.status()
 
 For more information, have a look at the python examples, which act as tutorials. You can also read the documentation for the REBOUND module and the REBOUND C code to get a better understanding of what is going on behind the scenes.
+
+Upgrading REBOUND
+-----------------
+
+REBOUND is actively being expanded and improved, so it's worthwhile to periodically update it.
+
+If you installed REBOUND with::
+
+    pip install rebound
+
+then simply::
+
+    pip install rebound --upgrade
+
+If this does not work, you have an old version of pip.  You can either upgrade pip (probably best!), or simply::
+
+    pip uninstall rebound
+    pip install rebound
+
+If you cloned the git repository, i.e., have a `rebound` folder on your file system, merge the new changes (see here_ if you're not sure how to do this) and::
+
+    pip install -e .
+
+.. _here: https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging
