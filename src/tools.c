@@ -601,6 +601,7 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
 int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle){
     r->var_config_N++;
     r->var_config = realloc(r->var_config,sizeof(struct reb_variational_configuration)*r->var_config_N);
+    r->var_config[r->var_config_N-1].sim = r;
     r->var_config[r->var_config_N-1].order = 1;
     int index = r->N;
     r->var_config[r->var_config_N-1].index = index;
@@ -623,6 +624,7 @@ int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle){
 int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b){
     r->var_config_N++;
     r->var_config = realloc(r->var_config,sizeof(struct reb_variational_configuration)*r->var_config_N);
+    r->var_config[r->var_config_N-1].sim = r;
     r->var_config[r->var_config_N-1].order = 2;
     int index = r->N;
     r->var_config[r->var_config_N-1].index = index;

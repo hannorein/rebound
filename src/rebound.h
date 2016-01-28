@@ -342,6 +342,7 @@ struct reb_collision{
  * equations.
  */
 struct reb_variational_configuration{
+    struct reb_simulation* sim; ///< Reference to the simulation.
     int order;                  ///< Order of the variational equation. 1 or 2. 
     int index;                  ///< Index of the first variational particle in the particles array.
     int testparticle;           ///< Is this variational configuration describe a test particle? -1 if not.

@@ -25,13 +25,6 @@ class reb_vec3d(Structure):
                 ("y", c_double),
                 ("z", c_double)]
 
-class reb_variational_configuration(Structure):
-    _fields_ = [("order", c_int),
-                ("index", c_int),
-                ("testparticle", c_int),
-                ("index_1st_order_a", c_int),
-                ("index_1st_order_b", c_int)]
-
 class reb_dp7(Structure):
     _fields_ = [("p0", POINTER(c_double)),
                 ("p1", POINTER(c_double)),
@@ -512,7 +505,7 @@ class Simulation(Structure):
         self.update_units((new_l, new_t, new_m))
 
 # Variational Equations
-    def add_variational(self,order=1,index_1st_order_a=None, index_1st_order_b=None, testparticle=-1):
+    def add_variation(self,order=1,first_order=None, first_order_2=None, testparticle=-1):
         """ 
         This function adds a set of variational particles to the simulation. 
 
@@ -535,39 +528,24 @@ class Simulation(Structure):
         -------
         Returns the index of the first variational particle in the particle array.
         """
+        cur_var_config_N = self.var_config_N
         if order==1:
             clibrebound.reb_add_var_1st_order.restype = c_int
             index = clibrebound.reb_add_var_1st_order(byref(self),c_int(testparticle))
         elif order==2:
-            if index_1st_order_a is None:
-                index_1st_order_a = index_1st_order_b
-            if index_1st_order_b is None:
-                index_1st_order_b = index_1st_order_a
-            if index_1st_order_a is None or index_1st_order_b is None:
-                raise AttributeError("You need to specify corresponding first order variational equations when initializing second order variational equations.")
+            if first_order is None:
+                raise AttributeError("Please specify corresponding first order variational equations when initializing second order variational equations.")
+            if first_order_2 is None:
+                first_order_2 = first_order
             clibrebound.reb_add_var_2nd_order.restype = c_int
-            index = clibrebound.reb_add_var_2nd_order(byref(self),c_int(testparticle),c_int(index_1st_order_a),c_int(index_1st_order_b))
+            index = clibrebound.reb_add_var_2nd_order(byref(self),c_int(testparticle),c_int(first_order.index),c_int(first_order_2.index))
 
             pass
         else:
             raise AttributeError("Only variational equations of first and second order are supported.")
 
-        return index
+        return self.var_config[cur_var_config_N]
         
-    def init_variational_particle(self, index_variation, index_particle, variation, variation2=None):
-        order = 0
-        for vi in range(self.var_config_N):
-            vs = self.var_config[vi]
-            if vs.index == index_variation:
-                order = vs.order
-        if order==0:
-            raise ValueError("Cannot find variation for given index. ")
-        if order==1 and variation2 is not None:
-            raise AttributeError("Can only specify one variation for first order.")
-        o = self.particles[index_particle].calculate_orbit(primary=self.particles[0])
-        p = Particle(simulation=self, primary=self.particles[0], variation_order=order, variation=variation, variation2=variation2,m=self.particles[index_particle].m,a=o.a, e=o.e, inc=o.inc, Omega=o.Omega, omega=o.omega, f=o.f)
-        self._particles[index_variation + index_particle] = p
-
 # MEGNO
     def init_megno(self, delta):
         """
@@ -937,7 +915,38 @@ class Simulation(Structure):
         clibrebound.reb_integrator_synchronize(byref(self))
 
 
+
+class reb_variational_configuration(Structure):
+    _fields_ = [
+                ("_sim", POINTER(Simulation)),
+                ("order", c_int),
+                ("index", c_int),
+                ("testparticle", c_int),
+                ("index_1st_order_a", c_int),
+                ("index_1st_order_b", c_int)]
+    def init(self, index_particle, variation, variation2=None):
+        order = self.order
+        sim = self._sim[0]
+        if order==0:
+            raise ValueError("Cannot find variation for given index. ")
+        if order==1 and variation2 is not None:
+            raise AttributeError("Can only specify one variation for first order.")
+        o = sim._particles[index_particle].calculate_orbit(primary=sim._particles[0])
+        p = Particle(simulation=sim, primary=sim._particles[0], variation_order=order, variation=variation, variation2=variation2,m=sim._particles[index_particle].m,a=o.a, e=o.e, inc=o.inc, Omega=o.Omega, omega=o.omega, f=o.f)
+        sim._particles[self.index + index_particle] = p
+    
+    @property
+    def particles(self):
+        sim = self._sim[0]
+        ps = []
+        N = sim.N 
+        ps_a = sim._particles
+        for i in range(0,N):
+            ps.append(ps_a[i])
+        return ps
+
 # Setting up fields after class definition (because of self-reference)
+
 Simulation._fields_ = [("t", c_double),
                 ("G", c_double),
                 ("softening", c_double),
