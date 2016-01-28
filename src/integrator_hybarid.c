@@ -233,8 +233,6 @@ void mini_check_for_collisions(struct reb_simulation* mini){
             double dstart2 = dx*dx + dy*dy + dz*dz;
             double dend2 = (dx - dvx*dtmini)*(dx - dvx*dtmini) + (dy - dvy*dtmini)*(dy - dvy*dtmini) + (dz - dvz*dtmini)*(dz - dvz*dtmini);
             if(dmin2 <= radius2 || dstart2 <= radius2 || dend2 <= radius2){
-                //pj->lastcollision = mini->t;
-                
                 double invmass = 1.0/(pi->m + pj->m);
                 double Ei = reb_tools_energy(mini);
                 

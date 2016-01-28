@@ -24,7 +24,8 @@ int main(int argc, char* argv[]){
     double planetesimal_mass = 3e-8;
     double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
-    //double tmax = 1000;
+    
+    //double tmax = 100;
     //int N_planetesimals = 100;
     //int seed = 30;
     //output_name = "output/Energy.txt";
@@ -45,6 +46,7 @@ int main(int argc, char* argv[]){
     r->ri_hybarid.collisions = 1;
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
+    //r->ri_whfast.corrector 	= 11;
     r->dt = 0.0015;
     
 	// Initial conditions
@@ -111,7 +113,14 @@ int main(int argc, char* argv[]){
     time_t t_fini = time(NULL);
     struct tm *tmp2 = gmtime(&t_fini);
     double time = t_fini - t_ini;
-    printf("\nSimulation complete. Elapsed simulation time is %.2f s, \n\n",time);
+    char timeout[200] = {0};
+    char* et = "elapsedtime.txt";
+    strcat(timeout,"output/Np"); strcat(timeout,argv[2]); strcat(timeout,"_"); strcat(timeout,"sd");
+    strcat(timeout,argv[3]); strcat(timeout,"_"); strcat(timeout,"elapsedtime.txt");
+    FILE* outt = fopen(timeout,"w");
+    fprintf(outt,"\nSimulation complete. Elapsed simulation time is %.2f s. \n\n",time);
+    fclose(outt);
+    printf("\nSimulation complete. Elapsed simulation time is %.2f s. \n\n",time);
     
 }
 
@@ -179,7 +188,7 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     }
     
     //SWIFTER - Other params (time, dt, etc.)
-    int output_rate = 100*tmax/n_output;
+    int output_rate = round(tmax/r->dt/n_output);
     fprintf(swifterparams,"! \n");
     fprintf(swifterparams,"! Parameter file for Swifter, with N=%d total bodies. \n",r->N);
     fprintf(swifterparams,"! \n! \n");
@@ -194,7 +203,7 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     fprintf(swifterparams,"OUT_TYPE       REAL8\n");
     fprintf(swifterparams,"OUT_FORM       XV\n");
     fprintf(swifterparams,"OUT_STAT       NEW\n");
-    fprintf(swifterparams,"ISTEP_DUMP     10000     !Dump parameters (incase of crash)\n");
+    fprintf(swifterparams,"ISTEP_DUMP     %d     !Dump parameters (incase of crash)\n",output_rate*500);
     fprintf(swifterparams,"J2             0.0E0\n");
     fprintf(swifterparams,"J4             0.0E0\n");
     fprintf(swifterparams,"CHK_CLOSE      yes\n");
@@ -245,7 +254,7 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     }
     
     //Mercury param file
-    //int mercury_timestep = r->dt/AU_d;
+    double yr2day = 1.0/AU_d; //yr/2pi -> day
     fprintf(mercuryparams,")O+_06 Big-body initial data  (WARNING: Do not delete this line!!)\n");
     fprintf(mercuryparams,") Lines beginning with `)' are ignored.\n");
     fprintf(mercuryparams,")---------------------------------------------------------------------\n");
@@ -253,9 +262,9 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     fprintf(mercuryparams,")---------------------------------------------------------------------\n");
     fprintf(mercuryparams," algorithm (MVS, BS, BS2, RADAU, HYBRID etc) = hyb\n");
     fprintf(mercuryparams," start time (days)= %f\n",day_zero);
-    fprintf(mercuryparams," stop time (days) =%.1f\n",tmax/AU_d + day_zero);
-    fprintf(mercuryparams," output interval (days) = %.2fd0\n",(tmax/n_output)*365*100);
-    fprintf(mercuryparams," timestep (days) = %f\n",r->dt/AU_d);
+    fprintf(mercuryparams," stop time (days) =%.1f\n",tmax*yr2day + day_zero);
+    fprintf(mercuryparams," output interval (days) = %.2fd0\n",(tmax/r->dt/n_output)*yr2day);
+    fprintf(mercuryparams," timestep (days) = %f\n",r->dt*yr2day);
     fprintf(mercuryparams," accuracy parameter=1.d-12\n");
     fprintf(mercuryparams,")---------------------------------------------------------------------\n");
     fprintf(mercuryparams,") Integration options:\n");
