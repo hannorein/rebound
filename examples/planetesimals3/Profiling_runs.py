@@ -17,14 +17,14 @@ os.system('make')
 def execute(pars):
     mercury_dir = '../../../mercury6/input_files/Np'+str(pars[1])+'_sd'+str(pars[2])+'/'
     swifter_dir = '../../../swifter/example/input_files/Np'+str(pars[1])+'_sd'+str(pars[2])+'/'
-    os.system('rm -rf '+mercury_dir)
     os.system('mkdir '+mercury_dir)
-    os.system('rm -rf '+swifter_dir)
     os.system('mkdir '+swifter_dir)
     os.system('./rebound '+str(pars[0])+' '+str(pars[1])+' '+str(pars[2])+ ' '+str(pars[3])+' '+mercury_dir+' '+swifter_dir)
 
 #Main multiprocess execution - Give sysname and letters of outer planets close to resonance
 if __name__== '__main__':
+    os.system('rm -rf ../../../mercury6/input_files/*')
+    os.system('rm -rf ../../../swifter/example/input_files/*')
     pool = mp.Pool(processes=length)
     args=[params[i] for i in xrange(0,length)]
     pool.map(execute, args)
