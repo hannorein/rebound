@@ -228,10 +228,11 @@ class Simulation(Structure):
         Prints a summary of the current status 
         of the simulation.
         """
+        from rebound import __version__, __build__
         s= ""
         s += "---------------------------------\n"
-        s += "REBOUND version:     \t%s\n" %c_char_p.in_dll(clibrebound, "reb_version_str").value.decode('ascii')
-        s += "REBOUND built on:    \t%s\n" %c_char_p.in_dll(clibrebound, "reb_build_str").value.decode('ascii')
+        s += "REBOUND version:     \t%s\n" %__version__
+        s += "REBOUND built on:    \t%s\n" %__build__
         s += "Number of particles: \t%d\n" %self.N       
         s += "Selected integrator: \t" + self.integrator + "\n"       
         s += "Simulation time:     \t%f\n" %self.t
