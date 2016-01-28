@@ -554,6 +554,19 @@ class Simulation(Structure):
 
         return index
         
+    def init_variational_particle(self, index_variation, index_particle, variation, variation2=None):
+        order = 0
+        for vi in range(self.var_config_N):
+            vs = self.var_config[vi]
+            if vs.index == index_variation:
+                order = vs.order
+        if order==0:
+            raise ValueError("Cannot find variation for given index. ")
+        if order==1 and variation2 is not None:
+            raise AttributeError("Can only specify one variation for first order.")
+        o = self.particles[index_particle].calculate_orbit(primary=self.particles[0])
+        p = Particle(simulation=self, primary=self.particles[0], variation_order=order, variation=variation, variation2=variation2,m=self.particles[index_particle].m,a=o.a, e=o.e, inc=o.inc, Omega=o.Omega, omega=o.omega, f=o.f)
+        self._particles[index_variation + index_particle] = p
 
 # MEGNO
     def init_megno(self, delta):
