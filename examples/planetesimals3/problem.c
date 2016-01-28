@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){
 	reb_add(r, star);
    
     srand(seed);
-    int n_output = 10000;
+    int n_output = 25000;
     t_log_output = pow(tmax + 1, 1./(n_output - 1));
     t_output = r->dt;
     
