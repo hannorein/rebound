@@ -544,14 +544,8 @@ class Simulation(Structure):
         else:
             raise AttributeError("Only variational equations of first and second order are supported.")
 
-        s = reb_variational_configuration()
-        so = self.var_config[cur_var_config_N]
-        s.index = so.index
-        s._sim = so._sim
-        s.order = so.order
-        s.testparticle = so.testparticle
-        s.index_1st_order_a = so.index_1st_order_a
-        s.index_1st_order_b = so.index_1st_order_b
+        # Need a copy because location of original might shift if more variations added
+        s = reb_variational_configuration.from_buffer_copy(self.var_config[cur_var_config_N])
 
         return s
         
@@ -933,7 +927,8 @@ class reb_variational_configuration(Structure):
                 ("testparticle", c_int),
                 ("index_1st_order_a", c_int),
                 ("index_1st_order_b", c_int)]
-    def init(self, index_particle, variation, variation2=None):
+
+    def init_particle(self, index_particle, variation, variation2=None):
         order = self.order
         sim = self._sim.contents
         if order==0:
