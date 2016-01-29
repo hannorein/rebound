@@ -14,6 +14,8 @@ description = str(sys.argv[5])
 
 exception = param_name.capitalize()
 
+tab = "    " # 4 space tab
+
 with open("src/rebound.h") as f:
     rebh = f.readlines()
 
@@ -21,9 +23,9 @@ with open("src/rebound.h", "w") as f:
     for i in range(len(rebh)):
         f.write(rebh[i])
         if "struct reb_simulation {" in rebh[i]:
-            f.write("    {0} {1};\n".format(param_type_c, param_name))
+            f.write(tab+"{0} {1};\n".format(param_type_c, param_name))
         if "enum REB_STATUS {" in rebh[i]:
-            f.write("    REB_{0} = {1},\n".format(param_name.upper(), param_enum_code))
+            f.write(tab+"REB_{0} = {1},\n".format(param_name.upper(), param_enum_code))
 
 with open("src/rebound.c") as f:
     rebc = f.readlines()
@@ -32,12 +34,12 @@ with open("src/rebound.c", "w") as f:
     for i in range(len(rebc)):
         f.write(rebc[i])
         if "if (r->heartbeat){ r->heartbeat(r); }" in rebc[i]:
-            f.write("    if (r->{0}){{\n".format(param_name))
-            f.write("        // Check for custom condition\n")
-            f.write("        if (fill_in_here){\n")
-            f.write("            r->status = REB_{0};\n".format(param_name.upper()))
-            f.write("        }\n")
-            f.write("    }\n")
+            f.write(tab+"if (r->{0}){{\n".format(param_name))
+            f.write(tab+tab+"// Check for custom condition\n")
+            f.write(tab+tab+"if (fill_in_here){\n")
+            f.write(tab+tab+tab+"r->status = REB_{0};\n".format(param_name.upper()))
+            f.write(tab+tab+"}\n")
+            f.write(tab+"}\n")
         if "void reb_init_simulation(" in rebc[i]:
             f.write("    r->{0} = 0;\n".format(param_name))
 
@@ -51,10 +53,10 @@ with open("rebound/simulation.py", "w") as f:
         else:
             f.write(sim[i])
         if "Simulation._fields_ = " in sim[i]:
-            f.write('\t\t\t\t("{0}", {1}),\n'.format(param_name, param_ctype))
+            f.write(tab+tab+tab+tab+'("{0}", {1}),\n'.format(param_name, param_ctype))
         if "ret_value = clibrebound.reb_integrate" in sim[i]:
-            f.write("\t\t\tif ret_value == {0}:\n".format(param_enum_code))
-            f.write('\t\t\t\traise {0}("{1}")\n'.format(exception, description))
+            f.write(tab+tab+tab+"if ret_value == {0}:\n".format(param_enum_code))
+            f.write(tab+tab+tab+tab+'raise {0}("{1}")\n'.format(exception, description))
 
 with open("rebound/__init__.py") as f:
     init = f.readlines()
@@ -68,4 +70,4 @@ with open("rebound/__init__.py", "w") as f:
             f.write(init[i])
         if "# Exceptions" in init[i]:
             f.write("class {0}(Exception):\n".format(exception))
-            f.write("\tpass\n")
+            f.write(tab+"pass\n")
