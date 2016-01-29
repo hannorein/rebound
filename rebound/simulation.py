@@ -544,7 +544,16 @@ class Simulation(Structure):
         else:
             raise AttributeError("Only variational equations of first and second order are supported.")
 
-        return self.var_config[cur_var_config_N]
+        s = reb_variational_configuration()
+        so = self.var_config[cur_var_config_N]
+        s.index = so.index
+        s._sim = so._sim
+        s.order = so.order
+        s.testparticle = so.testparticle
+        s.index_1st_order_a = so.index_1st_order_a
+        s.index_1st_order_b = so.index_1st_order_b
+
+        return s
         
 # MEGNO
     def init_megno(self, delta):
@@ -926,7 +935,7 @@ class reb_variational_configuration(Structure):
                 ("index_1st_order_b", c_int)]
     def init(self, index_particle, variation, variation2=None):
         order = self.order
-        sim = self._sim[0]
+        sim = self._sim.contents
         if order==0:
             raise ValueError("Cannot find variation for given index. ")
         if order==1 and variation2 is not None:
@@ -939,9 +948,12 @@ class reb_variational_configuration(Structure):
     def particles(self):
         sim = self._sim[0]
         ps = []
-        N = sim.N 
+        if self.testparticle>=0:
+            N = 1
+        else:
+            N = sim.N-sim.N_var 
         ps_a = sim._particles
-        for i in range(0,N):
+        for i in range(self.index,self.index+N):
             ps.append(ps_a[i])
         return ps
 
