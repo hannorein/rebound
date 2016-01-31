@@ -516,17 +516,17 @@ class Simulation(Structure):
         ----------
         order : integer, optional
             By default the function adds a set of first order variational particles to the simulation. Set this flag to 2 for second order.
-        index_1st_order : int, optional
+        first_order : int, optional
             Second order variational equations depend on their corresponding first order variational particles. This parameter needs to be set to the index of the first variational particle of the firster order variational equations. 
-        index_1st_order_a : int, optional
-            Same as index_1st_order. But allows to set two different indicies to calculate off-diagonal elements.
-        index_1st_order_b : int, optional
-            Same as index_1st_order. But allows to set two different indicies to calculate off-diagonal elements.
+        first_order_2 : int, optional
+            Same as first_order. But allows to set two different indicies to calculate off-diagonal elements.
+        testparticle : int, optional
+            If set to a value >= 0, then only one variational particle will be added and be treated as a test particle.
             
 
         Returns
         -------
-        Returns the index of the first variational particle in the particle array.
+        Returns reb_variational_configuration structure.
         """
         cur_var_config_N = self.var_config_N
         if order==1:
@@ -626,15 +626,11 @@ class Simulation(Structure):
         as the simulation progresses. Note that the pointers could change,
         for example when a particle is added or removed from the simulation. 
 
-        Note that you cannot use this convenience to set an entire particle.
-        For that use: 
-        >>> sim._particles[i] = newparticle
         """
-        ps = []
-        N = self.N 
-        ps_a = self._particles
-        for i in range(0,N):
-            ps.append(ps_a[i])
+        # Create array from pointer to allow manipulation of particles in python
+        ParticleList = Particle*self.N
+        ps = ParticleList.from_address(ctypes.addressof(self._particles.contents))
+
         return ps
 
     @particles.deleter
