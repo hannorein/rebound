@@ -478,7 +478,7 @@ class Simulation(Structure):
         if not hasattr(self, '_units'):
             self._units = {'length':None, 'mass':None, 'time':None}
         newunits = check_units(newunits)        
-        if self.particles: # some particles are loaded
+        if self.N>0: # some particles are loaded
             raise AttributeError("Error:  You cannot set the units after populating the particles array.  See ipython_examples/Units.ipynb.")
         self.update_units(newunits) 
 
