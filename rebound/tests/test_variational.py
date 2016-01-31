@@ -25,18 +25,18 @@ class TestVariationalIAS15(unittest.TestCase):
         self.sim = None
     
     def test_var_1st_order(self):
-        var_i = self.sim.add_variational()
-        self.sim.particles[var_i+1].x = 1.
+        var_i = self.sim.add_variation()
+        var_i.particles[1].x = 1.
         self.sim.integrate(100.)
-        X_var = self.sim.particles[2].x + self.DeltaX*self.sim.particles[var_i+2].x 
+        X_var = self.sim.particles[2].x + self.DeltaX*var_i.particles[2].x 
         self.assertAlmostEqual(self.Xshifted,X_var,delta=1e-3)
     
     def test_var_2nd_order(self):
-        var_i = self.sim.add_variational()
-        var_ii = self.sim.add_variational(order=2,index_1st_order_a=var_i, index_1st_order_b=var_i)
-        self.sim.particles[var_i+1].x = 1.
+        var_i = self.sim.add_variation()
+        var_ii = self.sim.add_variation(order=2,first_order=var_i)
+        var_i.particles[1].x = 1.
         self.sim.integrate(100.)
-        X_var = self.sim.particles[2].x + self.DeltaX*self.sim.particles[var_i+2].x + self.DeltaX**2/2.*self.sim.particles[var_ii+2].x 
+        X_var = self.sim.particles[2].x + self.DeltaX*var_i.particles[2].x + self.DeltaX**2/2.*var_ii.particles[2].x 
 
         self.assertAlmostEqual(self.Xshifted,X_var,delta=1e-5)
     
@@ -66,10 +66,10 @@ class TestVariationalWHFast(unittest.TestCase):
         self.sim = None
     
     def test_var_1st_order(self):
-        var_i = self.sim.add_variational()
-        self.sim.particles[var_i+1].x = 1.
+        var_i = self.sim.add_variation()
+        var_i.particles[1].x = 1.
         self.sim.integrate(100.)
-        X_var = self.sim.particles[2].x + self.DeltaX*self.sim.particles[var_i+2].x 
+        X_var = self.sim.particles[2].x + self.DeltaX*var_i.particles[2].x 
         self.assertAlmostEqual(self.Xshifted,X_var,delta=1e-3)
     
     
@@ -98,18 +98,18 @@ class TestVariationalTestparticleIAS15(unittest.TestCase):
         self.sim = None
     
     def test_var_1st_order(self):
-        var_i = self.sim.add_variational(testparticle=2)
-        self.sim.particles[var_i].x = 1.
+        var_i = self.sim.add_variation(testparticle=2)
+        var_i.particles[0].x = 1.
         self.sim.integrate(100.)
-        X_var = self.sim.particles[2].x + self.DeltaX*self.sim.particles[var_i].x 
+        X_var = self.sim.particles[2].x + self.DeltaX*var_i.particles[0].x 
         self.assertAlmostEqual(self.Xshifted,X_var,delta=1e-2)
     
     def test_var_2nd_order(self):
-        var_i = self.sim.add_variational(testparticle=2)
-        var_ii = self.sim.add_variational(order=2,index_1st_order_a=var_i, index_1st_order_b=var_i, testparticle=2)
-        self.sim.particles[var_i].x = 1.
+        var_i = self.sim.add_variation(testparticle=2)
+        var_ii = self.sim.add_variation(order=2,first_order=var_i, testparticle=2)
+        var_i.particles[0].x = 1.
         self.sim.integrate(100.)
-        X_var = self.sim.particles[2].x + self.DeltaX*self.sim.particles[var_i].x + self.DeltaX**2/2.*self.sim.particles[var_ii].x 
+        X_var = self.sim.particles[2].x + self.DeltaX*var_i.particles[0].x + self.DeltaX**2/2.*var_ii.particles[0].x 
 
         self.assertAlmostEqual(self.Xshifted,X_var,delta=1e-3)
     
@@ -374,9 +374,9 @@ class TestVariationalFull(unittest.TestCase):
                 p = rebound.Particle(simulation=simvp, primary=simvp.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
                 simvp.add(p)
                 simvp.add(primary=simvp.particles[0],a=1.76)
-                var_i = simvp.add_variational()
+                var_i = simvp.add_variation()
                 vp = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
-                simvp._particles[var_i+1] = vp
+                var_i.particles[1] = vp
                 simvp.integrate(10.)
 
 
@@ -404,7 +404,7 @@ class TestVariationalFull(unittest.TestCase):
                 simsp._particles[1] = sp
                 simsp.integrate(10.)
 
-                vp = simvp.particles[var_i+1]
+                vp = var_i.particles[1]
                 sp = simsp.particles[1]
                 p = simvp.particles[1]
 
@@ -443,21 +443,21 @@ class TestVariationalFull(unittest.TestCase):
                     p = rebound.Particle(simulation=simvp, primary=simvp.particles[0],m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
                     simvp.add(p)
                     simvp.add(primary=simvp.particles[0],a=1.76)
-                    var_ia = simvp.add_variational()
-                    var_ib = simvp.add_variational()
-                    var_ii = simvp.add_variational(order=2,index_1st_order_a=var_ia,index_1st_order_b=var_ib)
-                    simvp._particles[var_ia+1] = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v1,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
-                    simvp._particles[var_ib+1] = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v2,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                    var_ia = simvp.add_variation()
+                    var_ib = simvp.add_variation()
+                    var_ii = simvp.add_variation(order=2,first_order=var_ia,first_order_2=var_ib)
+                    var_ia.particles[1] = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v1,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
+                    var_ib.particles[1] = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v2,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
                     vpii = rebound.Particle(simulation=simvp, primary=simvp.particles[0],variation=v1,variation2=v2,variation_order=2,m=m,a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=f)
-                    simvp._particles[var_ii+1] = vpii
+                    var_ii.particles[1] = vpii
                     if com:
                         simvp.move_to_com()
                     simvp.integrate(10.)
                     
                     p = simvp.particles[1]
-                    vp_ia = simvp.particles[var_ia+1]
-                    vp_ib = simvp.particles[var_ib+1]
-                    vp_ii = simvp.particles[var_ii+1]
+                    vp_ia = var_ia.particles[1]
+                    vp_ib = var_ib.particles[1]
+                    vp_ii = var_ii.particles[1]
 
 
                     Delta = 1e-4

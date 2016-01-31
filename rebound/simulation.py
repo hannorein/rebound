@@ -931,21 +931,21 @@ class reb_variational_configuration(Structure):
             raise ValueError("Cannot find variation for given index. ")
         if order==1 and variation2 is not None:
             raise AttributeError("Can only specify one variation for first order.")
-        o = sim._particles[index_particle].calculate_orbit(primary=sim._particles[0])
-        p = Particle(simulation=sim, primary=sim._particles[0], variation_order=order, variation=variation, variation2=variation2,m=sim._particles[index_particle].m,a=o.a, e=o.e, inc=o.inc, Omega=o.Omega, omega=o.omega, f=o.f)
-        sim._particles[self.index + index_particle] = p
+        o = sim.particles[index_particle].calculate_orbit(primary=sim.particles[0])
+        p = Particle(simulation=sim, primary=sim.particles[0], variation_order=order, variation=variation, variation2=variation2,m=sim.particles[index_particle].m,a=o.a, e=o.e, inc=o.inc, Omega=o.Omega, omega=o.omega, f=o.f)
+        sim.particles[self.index + index_particle] = p
     
     @property
     def particles(self):
-        sim = self._sim[0]
+        sim = self._sim.contents
         ps = []
         if self.testparticle>=0:
             N = 1
         else:
             N = sim.N-sim.N_var 
-        ps_a = sim._particles
-        for i in range(self.index,self.index+N):
-            ps.append(ps_a[i])
+        
+        ParticleList = Particle*N
+        ps = ParticleList.from_address(ctypes.addressof(sim._particles.contents)+self.index*ctypes.sizeof(Particle))
         return ps
 
 # Setting up fields after class definition (because of self-reference)
