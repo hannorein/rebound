@@ -59,6 +59,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 	const int N = r->N;
 	const int N_active = r->N_active;
 	const double G = r->G;
+	const double Ginteract = r->Ginteract;
 	const double softening2 = r->softening*r->softening;
 	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
 	const int _N_start  = (r->integrator==REB_INTEGRATOR_WH?1:0);
@@ -151,7 +152,11 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 				const double dz = particles[i].z - particles[j].z;
 				const double r2 = dx*dx + dy*dy + dz*dz + softening2;
 				const double r = sqrt(r2);
-				const double prefact  = G/(r2*r);
+                double _G = G;
+                if (i!=0 && j!=0){
+                    _G = Ginteract;
+                }
+				const double prefact  = _G/(r2*r);
 				const double prefactj = -prefact*particles[j].m;
 				
 				{
@@ -253,7 +258,11 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 				const double dz = particles[i].z - particles[j].z;
 				const double r2 = dx*dx + dy*dy + dz*dz + softening2;
 				const double r = sqrt(r2);
-				const double prefact  = G/(r2*r);
+                double _G = G;
+                if (i!=0 && j!=0){
+                    _G = Ginteract;
+                }
+				const double prefact  = _G/(r2*r);
 				const double prefacti = prefact*particles[i].m;
 				const double prefactj = -prefact*particles[j].m;
 				
@@ -393,6 +402,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 void reb_calculate_acceleration_var(struct reb_simulation* r){
 	struct reb_particle* const particles = r->particles;
 	const double G = r->G;
+	const double Ginteract = r->Ginteract;
 	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
 	const int N = r->N;
 	const int _N_real   = N - r->N_var;
@@ -436,8 +446,12 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                             const double ddx = particles_var1[i].x - particles_var1[j].x;
                             const double ddy = particles_var1[i].y - particles_var1[j].y;
                             const double ddz = particles_var1[i].z - particles_var1[j].z;
-                            const double Gmi = G * particles[i].m;
-                            const double Gmj = G * particles[j].m;
+                            double _G = G;
+                            if (i!=0 && j!=0){
+                                _G = Ginteract;
+                            }
+                            const double Gmi = _G * particles[i].m;
+                            const double Gmj = _G * particles[j].m;
 
                             // Variational equations
                             const double dxdx = dx*dx*r5inv - r3inv;
@@ -451,8 +465,8 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                             const double daz =   ddx * dxdz + ddy * dydz + ddz * dzdz;
 
                             // Variational mass contributions
-                            const double dGmi = G*particles_var1[i].m;
-                            const double dGmj = G*particles_var1[j].m;
+                            const double dGmi = _G*particles_var1[i].m;
+                            const double dGmj = _G*particles_var1[j].m;
 
                             particles_var1[i].ax += Gmj * dax - dGmj*r3inv*dx;
                             particles_var1[i].ay += Gmj * day - dGmj*r3inv*dy;
@@ -530,10 +544,14 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                             const double ddx = particles_var2[i].x - particles_var2[j].x;
                             const double ddy = particles_var2[i].y - particles_var2[j].y;
                             const double ddz = particles_var2[i].z - particles_var2[j].z;
-                            const double Gmi = G * particles[i].m;
-                            const double Gmj = G * particles[j].m;
-                            const double ddGmi = G*particles_var2[i].m;
-                            const double ddGmj = G*particles_var2[j].m;
+                            double _G = G;
+                            if (i!=0 && j!=0){
+                                _G = Ginteract;
+                            }
+                            const double Gmi = _G * particles[i].m;
+                            const double Gmj = _G * particles[j].m;
+                            const double ddGmi = _G*particles_var2[i].m;
+                            const double ddGmj = _G*particles_var2[j].m;
                             
                             // Variational equations
                             // delta^(2) terms
@@ -571,10 +589,10 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                                     + 3.* r5inv    * dz * dk1dk2  
                                         - 15.      * dz * r7inv * rdk1 * rdk2;
                             
-                            const double dk1Gmi = G * particles_var1a[i].m;
-                            const double dk1Gmj = G * particles_var1a[j].m;
-                            const double dk2Gmi = G * particles_var1b[i].m;
-                            const double dk2Gmj = G * particles_var1b[j].m;
+                            const double dk1Gmi = _G * particles_var1a[i].m;
+                            const double dk1Gmj = _G * particles_var1a[j].m;
+                            const double dk2Gmi = _G * particles_var1b[i].m;
+                            const double dk2Gmj = _G * particles_var1b[j].m;
 
                             particles_var2[i].ax += Gmj * dax 
                                 - ddGmj*r3inv*dx 

@@ -364,6 +364,7 @@ struct reb_simulation {
      */
     double  t;                      ///< Current simulation time. 
     double  G;                      ///< Gravitational constant. Default: 1. 
+    double  Ginteract;              ///< Interaction G
     double  softening;              ///< Gravitational softening parameter. Default: 0. 
     double  dt;                     ///< Current timestep. 
     double  dt_last_done;           ///< Last dt used by integrator

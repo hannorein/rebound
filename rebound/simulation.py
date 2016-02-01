@@ -952,6 +952,7 @@ class reb_variational_configuration(Structure):
 
 Simulation._fields_ = [("t", c_double),
                 ("G", c_double),
+                ("Ginteract", c_double),
                 ("softening", c_double),
                 ("dt", c_double),
                 ("dt_last_done", c_double),
