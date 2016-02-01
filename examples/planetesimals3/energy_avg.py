@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
-import re
+import sys
 
 def get_cmap(N):
     '''Returns a function that maps each index in 0, 1, ... N-1 to a distinct
@@ -16,15 +16,24 @@ def get_cmap(N):
         return scalar_map.to_rgba(index)
     return map_index_to_rgb_color
 
-dir = 'energy_avg/'
+dir = str(sys.argv[1])
+N_planetesimals = raw_input("Enter # planetesimals for runs you wish to average: ")
 files = glob.glob(dir+'*.txt')
-N_files = len(files)
+N_files = 0
 
 data = []
 for f in files:
-    ff = open(f, 'r')
-    lines = ff.readlines()
-    data.append(lines)
+    split = f.split("/")
+    split2 = split[-1].split("_")
+    if split2[0] == 'Np'+N_planetesimals:
+        try:
+            ff = open(f, 'r')
+            lines = ff.readlines()
+            data.append(lines)
+            N_files += 1
+            print 'iteration complete'
+        except:
+            print 'couldnt read in data file '+f
 
 n_it = len(data[0])
 E = np.zeros(shape=(N_files,n_it))
@@ -51,8 +60,6 @@ plt.xlabel('time (years)')
 plt.yscale('log')
 plt.xscale('log')
 plt.xlim([0.5,time[-1]])
-split = files[0].split("_")
-name = split[1].split("/")
-plt.title('Median Average dE/E(0) from '+str(N_files)+' runs for '+name[1])
-plt.savefig(dir+'energy_avg_'+name[1]+'.png')
+plt.title('Median Average dE/E(0) from '+str(N_files)+' runs for Np'+N_planetesimals)
+plt.savefig(dir+'energy_avg_Np'+N_planetesimals+'.png')
 plt.show()

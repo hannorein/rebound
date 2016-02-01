@@ -12,8 +12,11 @@
 #include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
-double E0, t_output, t_log_output;
-char* output_name; char* mercury_name; char* swifter_name;
+double E0, t_output, t_log_output, xyz_t = 0;
+int xyz_counter = 0, numdt = 20;
+char* output_name; char* mercury_dir; char* swifter_dir;
+
+int output_xyz = 0; //switch to 0 for no outputs
 
 //swifter/mercury compare
 void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax, int n_output);
@@ -21,7 +24,7 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
 
-    double planetesimal_mass = 3e-8;
+    double planetesimal_mass = 1e-8;
     double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
     
@@ -33,8 +36,8 @@ int main(int argc, char* argv[]){
     int N_planetesimals = atoi(argv[2]);
     int seed = atoi(argv[3]);
     output_name = argv[4];
-    mercury_name = argv[5];
-    swifter_name = argv[6];
+    mercury_dir = argv[5];
+    swifter_dir = argv[6];
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
@@ -46,6 +49,7 @@ int main(int argc, char* argv[]){
     r->ri_hybarid.collisions = 1;
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
+    //r->usleep = 5000;
     //r->ri_whfast.corrector 	= 11;
     r->dt = 0.0015;
     
@@ -59,10 +63,11 @@ int main(int argc, char* argv[]){
     int n_output = 25000;
     t_log_output = pow(tmax + 1, 1./(n_output - 1));
     t_output = r->dt;
+    printf("tlogoutput=%f",t_log_output);
     
     //planet 1
     {
-        double a=0.5, m=5e-4, e=0, inc = reb_random_normal(0.00001);
+        double a=0.5, m=5e-5, e=0, inc = reb_random_normal(0.00001);
         struct reb_particle p1 = {0};
         p1 = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
         p1.r = 1.6e-4;              //radius of particle is in AU!
@@ -72,7 +77,7 @@ int main(int argc, char* argv[]){
     
     //planet 2
     {
-        double a=0.7, m=5e-4, e=0.01, inc=reb_random_normal(0.00001);
+        double a=0.7, m=5e-5, e=0.01, inc=reb_random_normal(0.00001);
         struct reb_particle p2 = {0};
         p2 = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
         p2.r = 1.6e-4;
@@ -107,14 +112,32 @@ int main(int argc, char* argv[]){
     time_t t_ini = time(NULL);
     struct tm *tmp = gmtime(&t_ini);
     
+    //ini positions record
+    if(output_xyz){
+        FILE* output = fopen("xyz_outputs/hybarid0.txt","w");
+        fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,0,r->particles[0].x,r->particles[0].y,r->particles[0].z);
+        int i=r->N_active - 1;
+        while(i>0){
+            fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
+            i--;
+        }
+        i=r->N-1;
+        while(i>=r->N_active){
+            fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
+            i--;
+        }
+        fclose(output);
+        xyz_t += numdt*r->dt;
+    }
+    
     //Integrate!
     reb_integrate(r, tmax);
     
+    //elapsed time stuff
     time_t t_fini = time(NULL);
     struct tm *tmp2 = gmtime(&t_fini);
     double time = t_fini - t_ini;
     char timeout[200] = {0};
-    char* et = "elapsedtime.txt";
     strcat(timeout,"output/Np"); strcat(timeout,argv[2]); strcat(timeout,"_"); strcat(timeout,"sd");
     strcat(timeout,argv[3]); strcat(timeout,"_"); strcat(timeout,"elapsedtime.txt");
     FILE* outt = fopen(timeout,"w");
@@ -138,6 +161,28 @@ void heartbeat(struct reb_simulation* r){
         fprintf(append, "%.16f,%.16f\n",r->t,dE);
         fclose(append);
     }
+    
+    if(r->t >= xyz_t - 0.01*r->dt && output_xyz){
+        xyz_t += numdt*r->dt;
+        //printf("\n%f,%d,%f,%f\n",xyz_t,numdt,r->dt,r->t);
+        xyz_counter++;
+        char filename[100]={0}; char ii[5] = {0};
+        sprintf(ii, "%d", xyz_counter);
+        strcat(filename,"xyz_outputs/hybarid"); strcat(filename,ii); strcat(filename,".txt");
+        FILE* output = fopen(filename,"w");
+        fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,0,r->particles[0].x,r->particles[0].y,r->particles[0].z);
+        int i=r->N_active - 1;
+        while(i>0){
+            fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
+            i--;
+        }
+        i=r->N-1;
+        while(i>=r->N_active){
+            fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
+            i--;
+        }
+        fclose(output);
+    }
 }
 
 void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax, int n_output){
@@ -146,11 +191,11 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     int N = r->N;
     int N_active = r->N_active;
     
-    char s1[200]={0}; strcat(s1,swifter_name); strcat(s1,"swifter_pl.in");
-    char s2[200]={0}; strcat(s2,swifter_name); strcat(s2,"param.in");
-    char m1[200]={0}; strcat(m1,mercury_name); strcat(m1,"mercury_big.in");
-    char m2[200]={0}; strcat(m2,mercury_name); strcat(m2,"mercury_small.in");
-    char m3[200]={0}; strcat(m3,mercury_name); strcat(m3,"mercury_param.in");
+    char s1[200]={0}; strcat(s1,swifter_dir); strcat(s1,"swifter_pl.in");
+    char s2[200]={0}; strcat(s2,swifter_dir); strcat(s2,"param.in");
+    char m1[200]={0}; strcat(m1,mercury_dir); strcat(m1,"mercury_big.in");
+    char m2[200]={0}; strcat(m2,mercury_dir); strcat(m2,"mercury_small.in");
+    char m3[200]={0}; strcat(m3,mercury_dir); strcat(m3,"mercury_param.in");
     
     printf("\ns1=%s\n",s1);
     
@@ -189,6 +234,7 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     
     //SWIFTER - Other params (time, dt, etc.)
     int output_rate = round(tmax/r->dt/n_output);
+    if(output_rate == 0) output_rate = 1;
     fprintf(swifterparams,"! \n");
     fprintf(swifterparams,"! Parameter file for Swifter, with N=%d total bodies. \n",r->N);
     fprintf(swifterparams,"! \n! \n");
