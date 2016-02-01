@@ -598,13 +598,14 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
  * MEGNO Routines         */
 
 
-int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle){
+int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle, double dG){
     r->var_config_N++;
     r->var_config = realloc(r->var_config,sizeof(struct reb_variational_configuration)*r->var_config_N);
     r->var_config[r->var_config_N-1].sim = r;
     r->var_config[r->var_config_N-1].order = 1;
     int index = r->N;
     r->var_config[r->var_config_N-1].index = index;
+    r->var_config[r->var_config_N-1].dG = dG;
     r->var_config[r->var_config_N-1].testparticle = testparticle;
     struct reb_particle p0 = {0};
     if (testparticle>=0){
@@ -621,13 +622,14 @@ int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle){
 }
 
 
-int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b){
+int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b, double dG){
     r->var_config_N++;
     r->var_config = realloc(r->var_config,sizeof(struct reb_variational_configuration)*r->var_config_N);
     r->var_config[r->var_config_N-1].sim = r;
     r->var_config[r->var_config_N-1].order = 2;
     int index = r->N;
     r->var_config[r->var_config_N-1].index = index;
+    r->var_config[r->var_config_N-1].dG = dG;
     r->var_config[r->var_config_N-1].testparticle = testparticle;
     r->var_config[r->var_config_N-1].index_1st_order_a = index_1st_order_a;
     r->var_config[r->var_config_N-1].index_1st_order_b = index_1st_order_b;
@@ -655,7 +657,7 @@ void reb_tools_megno_init(struct reb_simulation* const r, double delta){
 	r->megno_n = 0;
 	r->megno_mean_Y = 0;
 	r->megno_mean_t = 0;
-    int i = reb_add_var_1st_order(r,-1);
+    int i = reb_add_var_1st_order(r,-1,0);
     struct reb_particle* const particles = r->particles;
     for (;i<r->N;i++){ 
         particles[i].m  = 0.;

@@ -422,6 +422,7 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
 		case REB_GRAVITY_BASIC:
             for (int v=0;v<r->var_config_N;v++){
                 struct reb_variational_configuration const vc = r->var_config[v];
+                double dG = vc.dG;
                 if (vc.order==1){
                     //////////////////
                     /// 1st order  ///
@@ -447,8 +448,10 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                             const double ddy = particles_var1[i].y - particles_var1[j].y;
                             const double ddz = particles_var1[i].z - particles_var1[j].z;
                             double _G = G;
+                            double _dG = 0.;
                             if (i!=0 && j!=0){
                                 _G = Ginteract;
+                                _dG = dG;
                             }
                             const double Gmi = _G * particles[i].m;
                             const double Gmj = _G * particles[j].m;
@@ -465,8 +468,9 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                             const double daz =   ddx * dxdz + ddy * dydz + ddz * dzdz;
 
                             // Variational mass contributions
-                            const double dGmi = _G*particles_var1[i].m;
-                            const double dGmj = _G*particles_var1[j].m;
+                            const double dGmi = _G*particles_var1[i].m + _dG*particles[i].m;
+                            const double dGmj = _G*particles_var1[j].m + _dG*particles[j].m;
+
 
                             particles_var1[i].ax += Gmj * dax - dGmj*r3inv*dx;
                             particles_var1[i].ay += Gmj * day - dGmj*r3inv*dy;
@@ -523,6 +527,10 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                     struct reb_particle* const particles_var2 = particles + vc.index;
                     struct reb_particle* const particles_var1a = particles + vc.index_1st_order_a;
                     struct reb_particle* const particles_var1b = particles + vc.index_1st_order_b;
+                    int via = (vc.index_1st_order_a/_N_real)-1;
+                    int vib = (vc.index_1st_order_b/_N_real)-1;
+                    double dGa = r->var_config[via].dG;    
+                    double dGb = r->var_config[vib].dG;    
                     if (vc.testparticle<0){
                         for (int i=0; i<_N_real; i++){
                             particles_var2[i].ax = 0.; 
@@ -545,8 +553,12 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                             const double ddy = particles_var2[i].y - particles_var2[j].y;
                             const double ddz = particles_var2[i].z - particles_var2[j].z;
                             double _G = G;
+                            double _dGa = 0;
+                            double _dGb = 0;
                             if (i!=0 && j!=0){
                                 _G = Ginteract;
+                                _dGa = dGa;
+                                _dGb = dGb;
                             }
                             const double Gmi = _G * particles[i].m;
                             const double Gmj = _G * particles[j].m;
@@ -589,10 +601,10 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                                     + 3.* r5inv    * dz * dk1dk2  
                                         - 15.      * dz * r7inv * rdk1 * rdk2;
                             
-                            const double dk1Gmi = _G * particles_var1a[i].m;
-                            const double dk1Gmj = _G * particles_var1a[j].m;
-                            const double dk2Gmi = _G * particles_var1b[i].m;
-                            const double dk2Gmj = _G * particles_var1b[j].m;
+                            const double dk1Gmi = _G * particles_var1a[i].m + _dGa * particles[i].m;
+                            const double dk1Gmj = _G * particles_var1a[j].m + _dGa * particles[j].m;
+                            const double dk2Gmi = _G * particles_var1b[i].m + _dGb * particles[i].m;
+                            const double dk2Gmj = _G * particles_var1b[j].m + _dGb * particles[j].m;
 
                             particles_var2[i].ax += Gmj * dax 
                                 - ddGmj*r3inv*dx 

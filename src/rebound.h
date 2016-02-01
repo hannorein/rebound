@@ -348,6 +348,7 @@ struct reb_variational_configuration{
     int testparticle;           ///< Is this variational configuration describe a test particle? -1 if not.
     int index_1st_order_a;      ///< Used for 2nd order variational particles only: Index of the first first order variational particle in the particles array.
     int index_1st_order_b;      ///< Used for 2nd order variational particles only: Index of the first first order variational particle in the particles array.
+    double dG;
 };
 
 
@@ -1192,7 +1193,7 @@ double reb_tools_energy(struct reb_simulation* r);
  * If testparticle is -1, one variational particle for each real particle will be added.
  * @return Returns the index of the first variational particle added
  **/
-int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle);
+int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle, double dG);
 
 /**
  * @brief Add and initialize a set of second order variational particles
@@ -1205,7 +1206,7 @@ int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle);
  * @param index_1st_order_b The index of the corresponding first variational particles.
  * @return Returns the index of the first variational particle added
  **/
-int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b);
+int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b, double dG);
 
 /** 
  * @brief Init the MEGNO particles, enable MEGNO calculation

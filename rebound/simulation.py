@@ -505,7 +505,7 @@ class Simulation(Structure):
         self.update_units((new_l, new_t, new_m))
 
 # Variational Equations
-    def add_variation(self,order=1,first_order=None, first_order_2=None, testparticle=-1):
+    def add_variation(self,order=1,first_order=None, first_order_2=None, testparticle=-1,dG=0):
         """ 
         This function adds a set of variational particles to the simulation. 
 
@@ -531,14 +531,14 @@ class Simulation(Structure):
         cur_var_config_N = self.var_config_N
         if order==1:
             clibrebound.reb_add_var_1st_order.restype = c_int
-            index = clibrebound.reb_add_var_1st_order(byref(self),c_int(testparticle))
+            index = clibrebound.reb_add_var_1st_order(byref(self),c_int(testparticle),c_double(dG))
         elif order==2:
             if first_order is None:
                 raise AttributeError("Please specify corresponding first order variational equations when initializing second order variational equations.")
             if first_order_2 is None:
                 first_order_2 = first_order
             clibrebound.reb_add_var_2nd_order.restype = c_int
-            index = clibrebound.reb_add_var_2nd_order(byref(self),c_int(testparticle),c_int(first_order.index),c_int(first_order_2.index))
+            index = clibrebound.reb_add_var_2nd_order(byref(self),c_int(testparticle),c_int(first_order.index),c_int(first_order_2.index),c_double(dG))
 
             pass
         else:
@@ -922,7 +922,8 @@ class reb_variational_configuration(Structure):
                 ("index", c_int),
                 ("testparticle", c_int),
                 ("index_1st_order_a", c_int),
-                ("index_1st_order_b", c_int)]
+                ("index_1st_order_b", c_int),
+                ("dG", c_double)]
 
     def init_particle(self, index_particle, variation, variation2=None):
         order = self.order
