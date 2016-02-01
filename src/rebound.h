@@ -47,7 +47,7 @@ enum REB_STATUS {
 	REB_EXIT_ERROR = 1,		///< A generic error occured and the integration was not successfull.
 	REB_EXIT_NOPARTICLES = 2,	///< The integration ends early because no particles are left in the simulation.
 	REB_EXIT_ENCOUNTER = 3,		///< The integration ends early because two particles had a close encounter (see exit_min_distance)
-	REB_EXIT_ESCAPE = 4,		///< The integration ends early because a particle escaped (see exit_min_distance)  
+	REB_EXIT_ESCAPE = 4,		///< The integration ends early because a particle escaped (see exit_max_distance)  
 	REB_EXIT_USER = 5,		///< User caused exit, simulation did not finish successfully.
 };
 
