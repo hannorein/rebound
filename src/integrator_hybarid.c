@@ -86,7 +86,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     reb_integrator_hybarid_check_for_encounter(r);
 
     //keep this after check_for_encounter - then no need to re-edit particles_prev
-    if (r->testparticle_type){
+    if (r->testparticle_type && r->ri_hybarid.mini_active){
         if (r->N>r->ri_hybarid.particles_prev_Nmax){
             r->ri_hybarid.particles_prev_Nmax = r->N;
             r->ri_hybarid.particles_prev = realloc(r->ri_hybarid.particles_prev,r->N*sizeof(struct reb_particle));

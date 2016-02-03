@@ -18,6 +18,8 @@ char* output_name; char* mercury_dir; char* swifter_dir;
 
 int output_xyz = 0; //switch to 0 for no outputs
 
+time_t t_ini;
+
 //swifter/mercury compare
 void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax, int n_output);
 
@@ -104,12 +106,13 @@ int main(int argc, char* argv[]){
    
     //energy
     E0 = reb_tools_energy(r);
-    system("rm -v output/Energy.txt");
+    char syss[100] = {0}; strcat(syss,"rm -v "); strcat(syss,argv[4]);
+    system(syss);
     
     //swifter/mercury compare
     output_to_mercury_swifter(r, r->ri_hybarid.switch_ratio, tmax, n_output);
     
-    time_t t_ini = time(NULL);
+    t_ini = time(NULL);
     struct tm *tmp = gmtime(&t_ini);
     
     //ini positions record
@@ -156,9 +159,12 @@ void heartbeat(struct reb_simulation* r){
         reb_output_timing(r, 0);
         printf("    dE=%e",dE);
         
+        time_t t_curr = time(NULL);
+        struct tm *tmp2 = gmtime(&t_curr);
+        double time = t_curr - t_ini;
         FILE *append;
         append = fopen(output_name, "a");
-        fprintf(append, "%.16f,%.16f\n",r->t,dE);
+        fprintf(append, "%.16f,%.16f,%d,%d,%d,%.1f\n",r->t,dE,r->N,r->ri_hybarid.mini_active,r->ri_hybarid.mini->N,time);
         fclose(append);
     }
     
