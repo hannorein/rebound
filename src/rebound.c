@@ -530,7 +530,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
                 perror("fork");
                 exit(EXIT_FAILURE);
         }
-        if(childpid != 0) {  // Child (vizualization)
+        if(childpid == 0) {  // Child (vizualization)
             reb_display_init(0,NULL,r, display_mutex);
             exit(EXIT_SUCCESS); // NEVER REACHED
         } else {        // Parent (computation)
