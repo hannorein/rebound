@@ -40,7 +40,6 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
 void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini);
 void mini_check_for_collisions(struct reb_simulation* mini);
 
-double E0;
 
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
@@ -54,7 +53,6 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         if(r->ri_hybarid.collisions)r->ri_hybarid.mini->heartbeat = mini_check_for_collisions;
         r->ri_hybarid.mini->ri_ias15.epsilon = r->ri_ias15.epsilon;   //A.S. TEMPP
         //r->ri_hybarid.mini->ri_ias15.epsilon = 1e-8;  //speeds up ias and hybarid immensely
-        E0 = reb_tools_energy(r);
     }
 
     // Remove all particles from mini
@@ -168,7 +166,6 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                 reb_remove(r,j,1);
                 double Ef = reb_tools_energy(r);
                 r->ri_hybarid.dE_offset += Ei - Ef;
-                printf("\n\tParticle %d ejected from system at t=%f, E=%e\n",pj.id,r->t,fabs((Ef+r->ri_hybarid.dE_offset-E0)/E0));
                 j--;    //re-do since j+1 is now j but hasn't been checked for CE.
                 
                 struct reb_particle* pp0 = &(global[0]);    //A.S. TEMP, for removedparticles
