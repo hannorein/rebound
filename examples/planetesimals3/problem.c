@@ -146,8 +146,8 @@ int main(int argc, char* argv[]){
     struct tm *tmp2 = gmtime(&t_fini);
     double time = t_fini - t_ini;
     char timeout[200] = {0};
-    strcat(timeout,"output/Np"); strcat(timeout,argv[2]); strcat(timeout,"_"); strcat(timeout,"sd");
-    strcat(timeout,argv[3]); strcat(timeout,"_"); strcat(timeout,"elapsedtime.txt");
+    strcat(timeout,"output/Np"); strcat(timeout,argv[2]); strcat(timeout,"_sd");
+    strcat(timeout,argv[3]); strcat(timeout,"_"); strcat(timeout,argv[4]); strcat(timeout,"_elapsedtime.txt");
     FILE* outt = fopen(timeout,"w");
     fprintf(outt,"\nSimulation complete. Elapsed simulation time is %.2f s. \n\n",time);
     fclose(outt);
