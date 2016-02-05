@@ -16,9 +16,11 @@ double E0, t_output, t_log_output, xyz_t = 0;
 int xyz_counter = 0, numdt = 20;
 char* output_name; char* mercury_dir; char* swifter_dir;
 
+//temp
 int output_xyz = 0; //switch to 0 for no outputs
-
 time_t t_ini;
+int N_prev;
+char* argv2; char* argv3; char* argv4;
 
 //swifter/mercury compare
 void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax, int n_output);
@@ -37,9 +39,9 @@ int main(int argc, char* argv[]){
     double tmax = atof(argv[1]);
     int N_planetesimals = atoi(argv[2]);
     int seed = atoi(argv[3]);
-    output_name = argv[4];
-    mercury_dir = argv[5];
-    swifter_dir = argv[6];
+    output_name = argv[5];
+    mercury_dir = argv[6];
+    swifter_dir = argv[7];
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
@@ -51,6 +53,7 @@ int main(int argc, char* argv[]){
     r->ri_hybarid.collisions = 1;
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
+    r->ri_ias15.epsilon = atof(argv[4]);
     //r->usleep = 5000;
     //r->ri_whfast.corrector 	= 11;
     r->dt = 0.0015;
@@ -106,7 +109,7 @@ int main(int argc, char* argv[]){
    
     //energy
     E0 = reb_tools_energy(r);
-    char syss[100] = {0}; strcat(syss,"rm -v "); strcat(syss,argv[4]);
+    char syss[100] = {0}; strcat(syss,"rm -v "); strcat(syss,argv[5]);
     system(syss);
     
     //swifter/mercury compare
@@ -114,6 +117,8 @@ int main(int argc, char* argv[]){
     
     t_ini = time(NULL);
     struct tm *tmp = gmtime(&t_ini);
+    N_prev = r->N;
+    argv2 = argv[2]; argv3 = argv[3]; argv4= argv[4];
     
     //ini positions record
     if(output_xyz){
@@ -168,6 +173,21 @@ void heartbeat(struct reb_simulation* r){
         fclose(append);
     }
     
+    if(r->N < N_prev){
+        //removed particles
+        char removed[200] = {0}; strcat(removed,"output/Np"); strcat(removed,argv2);
+        strcat(removed,"_"); strcat(removed,"sd"); strcat(removed,argv3); strcat(removed,"_");
+        strcat(removed,argv4); strcat(removed,"_removed.txt");
+        FILE* append = fopen(removed,"a");
+        if(r->particles[0].id == -1) fprintf(append,"Ejection,%.5f\n",r->t); else if(r->ri_hybarid.mini->particles[0].id == -2) fprintf(append,"Collision,%.5f\n",r->t);
+        fclose(append);
+        
+        r->particles[0].id = 0;
+        r->ri_hybarid.mini->particles[0].id = 0;
+        N_prev = r->N;
+    }
+    
+    //xyz movie plots
     if(r->t >= xyz_t - 0.01*r->dt && output_xyz){
         xyz_t += numdt*r->dt;
         //printf("\n%f,%d,%f,%f\n",xyz_t,numdt,r->dt,r->t);
