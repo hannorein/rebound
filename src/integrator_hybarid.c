@@ -167,9 +167,6 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                 double Ef = reb_tools_energy(r);
                 r->ri_hybarid.dE_offset += Ei - Ef;
                 j--;    //re-do since j+1 is now j but hasn't been checked for CE.
-                
-                struct reb_particle* pp0 = &(global[0]);    //A.S. TEMP, for removedparticles
-                pp0->id = -1;                               //A.S. TEMP, for removedparticles
             }
         }
     }
