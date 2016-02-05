@@ -12,8 +12,15 @@
 #include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
-double E0, t_output, t_log_output;
-char* output_name;
+double E0, t_output, t_log_output, xyz_t = 0;
+int xyz_counter = 0, numdt = 20;
+char* output_name; char* mercury_dir; char* swifter_dir;
+
+//temp
+int output_xyz = 0; //switch to 0 for no outputs
+time_t t_ini;
+int N_prev;
+char* argv2; char* argv3; char* argv4;
 
 //swifter/mercury compare
 void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax, int n_output);
@@ -21,28 +28,34 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
 
-    double planetesimal_mass = 3e-8;
+    double planetesimal_mass = 1e-8;
     double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
-    double tmax = 1000;
-    int N_planetesimals = 100;
-    int seed = 30;
-    output_name = "output/Energy.txt";
-    //double tmax = atof(argv[1]);
-    //int N_planetesimals = atoi(argv[2]);
-    //int seed = atoi(argv[3]);
-    //output_name = argv[4];
+    
+    //double tmax = 100;
+    //int N_planetesimals = 100;
+    //int seed = 30;
+    //output_name = "output/Energy.txt";
+    double tmax = atof(argv[1]);
+    int N_planetesimals = atoi(argv[2]);
+    int seed = atoi(argv[3]);
+    output_name = argv[5];
+    mercury_dir = argv[6];
+    swifter_dir = argv[7];
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
 	//r->integrator	= REB_INTEGRATOR_IAS15;
 	//r->integrator	= REB_INTEGRATOR_WHFAST;
-    r->ri_hybarid.switch_ratio = sqrt(3.);  //Hill radii
-    r->ri_hybarid.CE_radius = 18.;          //X*radius
+    r->ri_hybarid.switch_ratio = 2;  //Hill radii
+    r->ri_hybarid.CE_radius = 20.;          //X*radius
     r->ri_hybarid.ejection_distance = 10.;  //AU
     r->ri_hybarid.collisions = 1;
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
+    r->ri_ias15.epsilon = atof(argv[4]);
+    //r->usleep = 5000;
+    //r->ri_whfast.corrector 	= 11;
     r->dt = 0.0015;
     
 	// Initial conditions
@@ -52,13 +65,14 @@ int main(int argc, char* argv[]){
 	reb_add(r, star);
    
     srand(seed);
-    int n_output = 10000;
+    int n_output = 25000;
     t_log_output = pow(tmax + 1, 1./(n_output - 1));
     t_output = r->dt;
+    printf("tlogoutput=%f",t_log_output);
     
     //planet 1
     {
-        double a=0.5, m=5e-4, e=0, inc = reb_random_normal(0.00001);
+        double a=0.5, m=5e-5, e=0, inc = reb_random_normal(0.00001);
         struct reb_particle p1 = {0};
         p1 = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
         p1.r = 1.6e-4;              //radius of particle is in AU!
@@ -68,7 +82,7 @@ int main(int argc, char* argv[]){
     
     //planet 2
     {
-        double a=0.7, m=5e-4, e=0.01, inc=reb_random_normal(0.00001);
+        double a=0.7, m=5e-5, e=0.01, inc=reb_random_normal(0.00001);
         struct reb_particle p2 = {0};
         p2 = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
         p2.r = 1.6e-4;
@@ -95,21 +109,49 @@ int main(int argc, char* argv[]){
    
     //energy
     E0 = reb_tools_energy(r);
-    system("rm -v output/Energy.txt");
+    char syss[100] = {0}; strcat(syss,"rm -v "); strcat(syss,argv[5]);
+    system(syss);
     
     //swifter/mercury compare
     output_to_mercury_swifter(r, r->ri_hybarid.switch_ratio, tmax, n_output);
     
-    time_t t_ini = time(NULL);
+    t_ini = time(NULL);
     struct tm *tmp = gmtime(&t_ini);
+    N_prev = r->N;
+    argv2 = argv[2]; argv3 = argv[3]; argv4= argv[4];
+    
+    //ini positions record
+    if(output_xyz){
+        FILE* output = fopen("xyz_outputs/hybarid0.txt","w");
+        fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,0,r->particles[0].x,r->particles[0].y,r->particles[0].z);
+        int i=r->N_active - 1;
+        while(i>0){
+            fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
+            i--;
+        }
+        i=r->N-1;
+        while(i>=r->N_active){
+            fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
+            i--;
+        }
+        fclose(output);
+        xyz_t += numdt*r->dt;
+    }
     
     //Integrate!
     reb_integrate(r, tmax);
     
+    //elapsed time stuff
     time_t t_fini = time(NULL);
     struct tm *tmp2 = gmtime(&t_fini);
     double time = t_fini - t_ini;
-    printf("\nSimulation complete. Elapsed simulation time is %.2f s, \n\n",time);
+    char timeout[200] = {0};
+    strcat(timeout,"output/Np"); strcat(timeout,argv[2]); strcat(timeout,"_sd");
+    strcat(timeout,argv[3]); strcat(timeout,"_"); strcat(timeout,argv[4]); strcat(timeout,"_elapsedtime.txt");
+    FILE* outt = fopen(timeout,"w");
+    fprintf(outt,"\nSimulation complete. Elapsed simulation time is %.2f s. \n\n",time);
+    fclose(outt);
+    printf("\nSimulation complete. Elapsed simulation time is %.2f s. \n\n",time);
     
 }
 
@@ -122,10 +164,50 @@ void heartbeat(struct reb_simulation* r){
         reb_output_timing(r, 0);
         printf("    dE=%e",dE);
         
+        time_t t_curr = time(NULL);
+        struct tm *tmp2 = gmtime(&t_curr);
+        double time = t_curr - t_ini;
         FILE *append;
         append = fopen(output_name, "a");
-        fprintf(append, "%.16f,%.16f\n",r->t,dE);
+        fprintf(append, "%.16f,%.16f,%d,%d,%d,%.1f\n",r->t,dE,r->N,r->ri_hybarid.mini_active,r->ri_hybarid.mini->N,time);
         fclose(append);
+    }
+    
+    if(r->N < N_prev){
+        //removed particles
+        char removed[200] = {0}; strcat(removed,"output/Np"); strcat(removed,argv2);
+        strcat(removed,"_"); strcat(removed,"sd"); strcat(removed,argv3); strcat(removed,"_");
+        strcat(removed,argv4); strcat(removed,"_removed.txt");
+        FILE* append = fopen(removed,"a");
+        if(r->particles[0].id == -1) fprintf(append,"Ejection,%.5f\n",r->t); else if(r->ri_hybarid.mini->particles[0].id == -2) fprintf(append,"Collision,%.5f\n",r->t);
+        fclose(append);
+        
+        r->particles[0].id = 0;
+        r->ri_hybarid.mini->particles[0].id = 0;
+        N_prev = r->N;
+    }
+    
+    //xyz movie plots
+    if(r->t >= xyz_t - 0.01*r->dt && output_xyz){
+        xyz_t += numdt*r->dt;
+        //printf("\n%f,%d,%f,%f\n",xyz_t,numdt,r->dt,r->t);
+        xyz_counter++;
+        char filename[100]={0}; char ii[5] = {0};
+        sprintf(ii, "%d", xyz_counter);
+        strcat(filename,"xyz_outputs/hybarid"); strcat(filename,ii); strcat(filename,".txt");
+        FILE* output = fopen(filename,"w");
+        fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,0,r->particles[0].x,r->particles[0].y,r->particles[0].z);
+        int i=r->N_active - 1;
+        while(i>0){
+            fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
+            i--;
+        }
+        i=r->N-1;
+        while(i>=r->N_active){
+            fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
+            i--;
+        }
+        fclose(output);
     }
 }
 
@@ -135,12 +217,20 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     int N = r->N;
     int N_active = r->N_active;
     
+    char s1[200]={0}; strcat(s1,swifter_dir); strcat(s1,"swifter_pl.in");
+    char s2[200]={0}; strcat(s2,swifter_dir); strcat(s2,"param.in");
+    char m1[200]={0}; strcat(m1,mercury_dir); strcat(m1,"mercury_big.in");
+    char m2[200]={0}; strcat(m2,mercury_dir); strcat(m2,"mercury_small.in");
+    char m3[200]={0}; strcat(m3,mercury_dir); strcat(m3,"mercury_param.in");
+    
+    printf("\ns1=%s\n",s1);
+    
     //Need Hill radii for swifter too.
-    FILE* swifter = fopen("swifter_mercury_output/swifter_pl.in","w");
-    FILE* swifterparams = fopen("swifter_mercury_output/param.in","w");
-    FILE* mercuryb = fopen("swifter_mercury_output/mercury_big.in","w");
-    FILE* mercurys = fopen("swifter_mercury_output/mercury_small.in","w");
-    FILE* mercuryparams = fopen("swifter_mercury_output/mercury_param.in","w");
+    FILE* swifter = fopen(s1,"w");
+    FILE* swifterparams = fopen(s2,"w");
+    FILE* mercuryb = fopen(m1,"w");
+    FILE* mercurys = fopen(m2,"w");
+    FILE* mercuryparams = fopen(m3,"w");
     
     //conversion options - swifter
     int alt_units = 0;
@@ -169,7 +259,8 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     }
     
     //SWIFTER - Other params (time, dt, etc.)
-    int output_rate = tmax/n_output;
+    int output_rate = round(tmax/r->dt/n_output);
+    if(output_rate == 0) output_rate = 1;
     fprintf(swifterparams,"! \n");
     fprintf(swifterparams,"! Parameter file for Swifter, with N=%d total bodies. \n",r->N);
     fprintf(swifterparams,"! \n! \n");
@@ -184,7 +275,7 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     fprintf(swifterparams,"OUT_TYPE       REAL8\n");
     fprintf(swifterparams,"OUT_FORM       XV\n");
     fprintf(swifterparams,"OUT_STAT       NEW\n");
-    fprintf(swifterparams,"ISTEP_DUMP     10000     !Dump parameters (incase of crash)\n");
+    fprintf(swifterparams,"ISTEP_DUMP     %d     !Dump parameters (incase of crash)\n",output_rate*500);
     fprintf(swifterparams,"J2             0.0E0\n");
     fprintf(swifterparams,"J4             0.0E0\n");
     fprintf(swifterparams,"CHK_CLOSE      yes\n");
@@ -235,7 +326,7 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     }
     
     //Mercury param file
-    //int mercury_timestep = r->dt/AU_d;
+    double yr2day = 1.0/AU_d; //yr/2pi -> day
     fprintf(mercuryparams,")O+_06 Big-body initial data  (WARNING: Do not delete this line!!)\n");
     fprintf(mercuryparams,") Lines beginning with `)' are ignored.\n");
     fprintf(mercuryparams,")---------------------------------------------------------------------\n");
@@ -243,9 +334,9 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     fprintf(mercuryparams,")---------------------------------------------------------------------\n");
     fprintf(mercuryparams," algorithm (MVS, BS, BS2, RADAU, HYBRID etc) = hyb\n");
     fprintf(mercuryparams," start time (days)= %f\n",day_zero);
-    fprintf(mercuryparams," stop time (days) =%.1f\n",tmax/AU_d + day_zero);
-    fprintf(mercuryparams," output interval (days) = %.2fd0\n",(tmax/n_output)*365);
-    fprintf(mercuryparams," timestep (days) = %f\n",r->dt/AU_d);
+    fprintf(mercuryparams," stop time (days) =%.1f\n",tmax*yr2day + day_zero);
+    fprintf(mercuryparams," output interval (days) = %.2fd0\n",(tmax/r->dt/n_output)*yr2day);
+    fprintf(mercuryparams," timestep (days) = %f\n",r->dt*yr2day);
     fprintf(mercuryparams," accuracy parameter=1.d-12\n");
     fprintf(mercuryparams,")---------------------------------------------------------------------\n");
     fprintf(mercuryparams,") Integration options:\n");
