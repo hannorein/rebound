@@ -949,8 +949,6 @@ class reb_variational_configuration(Structure):
         return ps
 
 # Setting up fields after class definition (because of self-reference)
-<<<<<<< HEAD
-
 Simulation._fields_ = [
                 ("t", c_double),
                 ("G", c_double),
