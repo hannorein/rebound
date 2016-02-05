@@ -28,9 +28,10 @@ include src/tree.c
 include src/tools.h
 include src/particle.h
 include src/rebound.h
-include src/communication_mpi.h
 include src/input.h
+include src/output.h
 include README.rst
 include LICENSE
 include version.txt
 recursive-include rebound/tests *.py
+include rebound/rebound.h
