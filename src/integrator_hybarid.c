@@ -98,7 +98,6 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
 }
 
 void reb_integrator_hybarid_part2(struct reb_simulation* r){
-    return;
     reb_integrator_whfast_part2(r);
 
     struct reb_simulation* mini = r->ri_hybarid.mini;

@@ -22,15 +22,15 @@ int main(int argc, char* argv[]){
 	r->integrator	= REB_INTEGRATOR_HYBARID;
 	//r->integrator	= REB_INTEGRATOR_IAS15;
 	//r->integrator	= REB_INTEGRATOR_WHFAST;
-    r->ri_hybarid.switch_ratio = 2000;  //Hill radii
-    r->ri_hybarid.CE_radius = 20.;          //X*radius
+    r->ri_hybarid.switch_ratio = 5;  //Hill radii
+    r->ri_hybarid.CE_radius = 5.;          //X*radius
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
     //r->usleep = 5000;
     r->dt = 0.0015;
 
     r->collision = REB_COLLISION_DIRECT;
-    r->collision_resolve = collision_resolve_merge;
+    //r->collision_resolve = collision_resolve_merge;
     
 	// Initial conditions
 	struct reb_particle star = {0};
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]){
         double a=0.5, m=5e-5, e=0, inc = reb_random_normal(0.00001);
         struct reb_particle p1 = {0};
         p1 = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
-        p1.r = 100.*1.6e-4;              //radius of particle is in AU!
+        p1.r = 1.6e-4;              //radius of particle is in AU!
         p1.id = r->N;
         reb_add(r, p1);
     }
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]){
         double a=0.7, m=5e-5, e=0.01, inc=reb_random_normal(0.00001);
         struct reb_particle p2 = {0};
         p2 = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
-        p2.r = 100.*1.6e-4;
+        p2.r = 1.6e-4;
         p2.id = r->N;
         reb_add(r, p2);
     }
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]){
         double Omega = reb_random_uniform(0,2.*M_PI);
         double apsis = reb_random_uniform(0,2.*M_PI);
         pt = reb_tools_orbit_to_particle(r->G, star, planetesimal_mass, a, 0., inc, Omega, apsis,phi);
-		pt.r 		= 100.*4e-5;
+		pt.r 		= 4e-5;
         pt.id = r->N;
 		reb_add(r, pt);
     }
@@ -134,6 +134,4 @@ void collision_resolve_merge(struct reb_simulation* const mini, struct reb_colli
     for(int k=N_active;k<r->ri_hybarid.encounter_index_N;k++){
         if(r->ri_hybarid.encounter_index[k] > globalj) r->ri_hybarid.encounter_index[k]--; //1 fewer particles in index now
     }
-    
-    j--;    //re-try iteration j since j+1 is now j but hasn't been checked.
 }
