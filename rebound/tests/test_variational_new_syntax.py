@@ -22,7 +22,7 @@ class TestVariationalFull_NewSyntax(unittest.TestCase):
                 simvp.add(p)
                 simvp.add(primary=simvp.particles[0],a=1.76)
                 var_i = simvp.add_variation()
-                var_i.init_particle(1,v)
+                var_i.vary(1,v)
                 simvp.integrate(10.)
 
 
@@ -92,9 +92,9 @@ class TestVariationalFull_NewSyntax(unittest.TestCase):
                     var_ia = simvp.add_variation()
                     var_ib = simvp.add_variation()
                     var_ii = simvp.add_variation(order=2,first_order=var_ia,first_order_2=var_ib)
-                    var_ia.init_particle(1, v1)
-                    var_ib.init_particle(1, v2)
-                    var_ii.init_particle(1, v1, v2)
+                    var_ia.vary(1, v1)
+                    var_ib.vary(1, v2)
+                    var_ii.vary(1, v1, v2)
                     if com:
                         simvp.move_to_com()
                     simvp.integrate(10.)
