@@ -66,7 +66,7 @@ if 1:
     try:
         os.chdir("ipython")
         for example in glob.glob("../../ipython_examples/*.ipynb"):
-            subprocess.check_output(["ipython", "nbconvert", example, "--to", "rst"])
+            subprocess.check_output(["jupyter", "nbconvert", example, "--to", "rst"])
     except:
         with open("ipython.rst","w") as fd:
             fd.write("Examples can be found on github\n")
