@@ -229,8 +229,6 @@ struct reb_simulation_integrator_hybarid {
     double switch_ratio;            //thresh. to move particle from global to mini (hill radii)
     double dE_offset;               //keep track of energy lost from collisions/ejections
     double CE_radius;               //close encounter radius: if < this value add to mini (X*radius)
-    double ejection_distance;       //distance at which particle gets ejected (AU)
-    int collisions;                 //particle collisions on/off
     int mini_active;
     int* encounter_index;
     int encounter_index_N;

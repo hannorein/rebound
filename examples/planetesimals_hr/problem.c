@@ -1,8 +1,3 @@
-/**
- * A.S. This is my planetesimal disk with special integrator for close encounters.
- *      Particle id's: 0 = star, 1 = massive body, 2 = planetesimal, 3 = CLOSE ENCOUNTER
- *
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,6 +7,7 @@
 #include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
+void collision_resolve_merge(struct reb_simulation* const mini, struct reb_collision c);
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
@@ -20,24 +16,21 @@ int main(int argc, char* argv[]){
     double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
     
-    //double tmax = 100;
-    //int N_planetesimals = 100;
-    //int seed = 30;
-    //output_name = "output/Energy.txt";
-    int N_planetesimals = 10;
+    int N_planetesimals = 1000;
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
 	//r->integrator	= REB_INTEGRATOR_IAS15;
 	//r->integrator	= REB_INTEGRATOR_WHFAST;
-    r->ri_hybarid.switch_ratio = 2;  //Hill radii
+    r->ri_hybarid.switch_ratio = 2000;  //Hill radii
     r->ri_hybarid.CE_radius = 20.;          //X*radius
-    r->ri_hybarid.ejection_distance = 10.;  //AU
-    r->ri_hybarid.collisions = 1;
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
     //r->usleep = 5000;
     r->dt = 0.0015;
+
+    r->collision = REB_COLLISION_DIRECT;
+    r->collision_resolve = collision_resolve_merge;
     
 	// Initial conditions
 	struct reb_particle star = {0};
@@ -52,7 +45,7 @@ int main(int argc, char* argv[]){
         double a=0.5, m=5e-5, e=0, inc = reb_random_normal(0.00001);
         struct reb_particle p1 = {0};
         p1 = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
-        p1.r = 1.6e-4;              //radius of particle is in AU!
+        p1.r = 100.*1.6e-4;              //radius of particle is in AU!
         p1.id = r->N;
         reb_add(r, p1);
     }
@@ -62,7 +55,7 @@ int main(int argc, char* argv[]){
         double a=0.7, m=5e-5, e=0.01, inc=reb_random_normal(0.00001);
         struct reb_particle p2 = {0};
         p2 = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
-        p2.r = 1.6e-4;
+        p2.r = 100.*1.6e-4;
         p2.id = r->N;
         reb_add(r, p2);
     }
@@ -79,7 +72,7 @@ int main(int argc, char* argv[]){
         double Omega = reb_random_uniform(0,2.*M_PI);
         double apsis = reb_random_uniform(0,2.*M_PI);
         pt = reb_tools_orbit_to_particle(r->G, star, planetesimal_mass, a, 0., inc, Omega, apsis,phi);
-		pt.r 		= 4e-5;
+		pt.r 		= 100.*4e-5;
         pt.id = r->N;
 		reb_add(r, pt);
     }
@@ -93,3 +86,54 @@ void heartbeat(struct reb_simulation* r){
 	}
 }
 
+//check for collisions in mini each heartbeat
+void collision_resolve_merge(struct reb_simulation* const mini, struct reb_collision c){
+    struct reb_simulation* r = mini->ri_hybarid.global;
+    struct reb_particle* particles = mini->particles;
+    int N_active = mini->N_active;
+    int i = c.p1;
+    int j = c.p2;
+    
+    if (i<N_active && j>=N_active){
+        // Already ordered
+    }else if (i>=N_active && j<N_active){
+        // Will be done later
+        return;
+    }else{
+        // Ignore collision between small particles
+        return;
+    }
+
+    struct reb_particle* pi = &(particles[i]);
+    struct reb_particle* pj = &(particles[j]);
+                
+    double invmass = 1.0/(pi->m + pj->m);
+    double Ei = reb_tools_energy(mini);
+    
+    pi->vx = (pi->vx*pi->m + pj->vx*pj->m)*invmass;
+    pi->vy = (pi->vy*pi->m + pj->vy*pj->m)*invmass;
+    pi->vz = (pi->vz*pi->m + pj->vz*pj->m)*invmass;
+    pi->m += pj->m;
+    
+    reb_remove(mini,j,1);  //remove mini
+    
+    double Ef = reb_tools_energy(mini);
+    r->ri_hybarid.dE_offset += Ei - Ef;
+    printf("\n\tParticle %d collided with body %d from system at t=%f.\n",i,r->ri_hybarid.encounter_index[j],r->t);
+    
+    //remove from global and update global arrays
+    int globalj = r->ri_hybarid.encounter_index[j];
+    reb_remove(r,globalj,1);
+    
+    for(int k=globalj;k<r->N;k++){
+        r->ri_hybarid.particles_prev[k] = r->ri_hybarid.particles_prev[k+1];
+        r->ri_hybarid.is_in_mini[k] = r->ri_hybarid.is_in_mini[k+1];
+    }
+    r->ri_hybarid.encounter_index_N--;
+    for(int k=j;k<r->ri_hybarid.encounter_index_N;k++) r->ri_hybarid.encounter_index[k] = r->ri_hybarid.encounter_index[k+1];
+    for(int k=N_active;k<r->ri_hybarid.encounter_index_N;k++){
+        if(r->ri_hybarid.encounter_index[k] > globalj) r->ri_hybarid.encounter_index[k]--; //1 fewer particles in index now
+    }
+    
+    j--;    //re-try iteration j since j+1 is now j but hasn't been checked.
+}

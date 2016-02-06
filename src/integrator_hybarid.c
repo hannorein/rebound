@@ -33,12 +33,12 @@
 #include <time.h>
 #include <string.h>
 #include "rebound.h"
+#include "output.h"
 #include "integrator_ias15.h"
 #include "integrator_whfast.h"
 
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r);
-void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini);
-void mini_check_for_collisions(struct reb_simulation* mini);
+static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini);
 
 
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
@@ -50,7 +50,8 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         r->ri_hybarid.mini->additional_forces = reb_integrator_hybarid_additional_forces_mini;
         r->ri_hybarid.mini->ri_hybarid.global = r;
         r->ri_hybarid.mini->testparticle_type = r->testparticle_type;
-        if(r->ri_hybarid.collisions)r->ri_hybarid.mini->heartbeat = mini_check_for_collisions;
+        r->ri_hybarid.mini->collision = r->collision;
+        r->ri_hybarid.mini->collision_resolve = r->collision_resolve;
         r->ri_hybarid.mini->ri_ias15.epsilon = r->ri_ias15.epsilon;   //A.S. TEMPP
         //r->ri_hybarid.mini->ri_ias15.epsilon = 1e-8;  //speeds up ias and hybarid immensely
     }
@@ -97,6 +98,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
 }
 
 void reb_integrator_hybarid_part2(struct reb_simulation* r){
+    return;
     reb_integrator_whfast_part2(r);
 
     struct reb_simulation* mini = r->ri_hybarid.mini;
@@ -124,7 +126,6 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     struct reb_particle* global = r->particles;
     struct reb_particle p0 = global[0];
-    double ejectiondistance2 = r->ri_hybarid.ejection_distance*r->ri_hybarid.ejection_distance;
     double HSR2 = r->ri_hybarid.switch_ratio*r->ri_hybarid.switch_ratio;
     for (int i=0; i<_N_active; i++){
         struct reb_particle* pi = &(global[i]);
@@ -161,18 +162,12 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                     r->ri_hybarid.encounter_index[r->ri_hybarid.encounter_index_N] = j;
                     r->ri_hybarid.encounter_index_N++;
                 }
-            } else if (i==0 && r0j2 > ejectiondistance2){
-                double Ei = reb_tools_energy(r);
-                reb_remove(r,j,1);
-                double Ef = reb_tools_energy(r);
-                r->ri_hybarid.dE_offset += Ei - Ef;
-                j--;    //re-do since j+1 is now j but hasn't been checked for CE.
             }
         }
     }
 }
 
-void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
+static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
     if (mini->testparticle_type){
         struct reb_simulation* r = mini->ri_hybarid.global;
         struct reb_particle* global = r->particles;
@@ -206,63 +201,3 @@ void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
     }
 }
 
-//check for collisions in mini each heartbeat
-void mini_check_for_collisions(struct reb_simulation* mini){
-    struct reb_simulation* r = mini->ri_hybarid.global;
-    struct reb_particle* particles = mini->particles;
-    int N_active = mini->N_active;
-    double dtmini = mini->dt;
-    for(int i=0;i<N_active;i++){
-        struct reb_particle* pi = &(particles[i]);
-        for(int j=N_active;j<mini->N;j++){
-            struct reb_particle* pj = &(particles[j]);
-            double radius2 = (pi->r+pj->r)*(pi->r+pj->r);
-            double dvx = pi->vx - pj->vx;
-            double dvy = pi->vy - pj->vy;
-            double dvz = pi->vz - pj->vz;
-            double dx = pj->x - pi->x;
-            double dy = pj->y - pi->y;
-            double dz = pj->z - pi->z;
-            
-            double tmin = (dx*dvx + dy*dvy + dz*dvz)/(dvx*dvx + dvy*dvy + dvz*dvz);
-            double dmin2 = radius2*2.;
-            if(tmin < dtmini) dmin2 = (dx - dvx*tmin)*(dx - dvx*tmin) + (dy - dvy*tmin)*(dy - dvy*tmin) + (dz - dvz*tmin)*(dz - dvz*tmin);
-            
-            double dstart2 = dx*dx + dy*dy + dz*dz;
-            double dend2 = (dx - dvx*dtmini)*(dx - dvx*dtmini) + (dy - dvy*dtmini)*(dy - dvy*dtmini) + (dz - dvz*dtmini)*(dz - dvz*dtmini);
-            if(dmin2 <= radius2 || dstart2 <= radius2 || dend2 <= radius2){
-                double invmass = 1.0/(pi->m + pj->m);
-                double Ei = reb_tools_energy(mini);
-                
-                pi->vx = (pi->vx*pi->m + pj->vx*pj->m)*invmass;
-                pi->vy = (pi->vy*pi->m + pj->vy*pj->m)*invmass;
-                pi->vz = (pi->vz*pi->m + pj->vz*pj->m)*invmass;
-                pi->m += pj->m;
-                
-                reb_remove(mini,j,1);  //remove mini
-                
-                double Ef = reb_tools_energy(mini);
-                r->ri_hybarid.dE_offset += Ei - Ef;
-                printf("\n\tParticle %d collided with body %d from system at t=%f.\n",i,r->ri_hybarid.encounter_index[j],r->t);
-                
-                //remove from global and update global arrays
-                int globalj = r->ri_hybarid.encounter_index[j];
-                reb_remove(r,globalj,1);
-                
-                for(int k=globalj;k<r->N;k++){
-                    r->ri_hybarid.particles_prev[k] = r->ri_hybarid.particles_prev[k+1];
-                    r->ri_hybarid.is_in_mini[k] = r->ri_hybarid.is_in_mini[k+1];
-                }
-                r->ri_hybarid.encounter_index_N--;
-                for(int k=j;k<r->ri_hybarid.encounter_index_N;k++) r->ri_hybarid.encounter_index[k] = r->ri_hybarid.encounter_index[k+1];
-                for(int k=N_active;k<r->ri_hybarid.encounter_index_N;k++){
-                    if(r->ri_hybarid.encounter_index[k] > globalj) r->ri_hybarid.encounter_index[k]--; //1 fewer particles in index now
-                }
-                
-                j--;    //re-try iteration j since j+1 is now j but hasn't been checked.
-                struct reb_particle* pp0 = &(particles[0]);     //A.S. TEMP, for removedparticles
-                pp0->id = -2;                                   //A.S. TEMP, for removedparticles
-            }
-        }
-    }
-}
