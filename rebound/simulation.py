@@ -924,16 +924,16 @@ class reb_variational_configuration(Structure):
                 ("index_1st_order_a", c_int),
                 ("index_1st_order_b", c_int)]
 
-    def init_particle(self, index_particle, variation, variation2=None):
+    def vary(self, particle_index, variation, variation2=None):
         order = self.order
         sim = self._sim.contents
         if order==0:
             raise ValueError("Cannot find variation for given index. ")
         if order==1 and variation2 is not None:
             raise AttributeError("Can only specify one variation for first order.")
-        o = sim.particles[index_particle].calculate_orbit(primary=sim.particles[0])
-        p = Particle(simulation=sim, primary=sim.particles[0], variation_order=order, variation=variation, variation2=variation2,m=sim.particles[index_particle].m,a=o.a, e=o.e, inc=o.inc, Omega=o.Omega, omega=o.omega, f=o.f)
-        sim.particles[self.index + index_particle] = p
+        o = sim.particles[particle_index].calculate_orbit(primary=sim.particles[0])
+        p = Particle(simulation=sim, primary=sim.particles[0], variation_order=order, variation=variation, variation2=variation2,m=sim.particles[particle_index].m,a=o.a, e=o.e, inc=o.inc, Omega=o.Omega, omega=o.omega, f=o.f)
+        sim.particles[self.index + particle_index] = p
     
     @property
     def particles(self):
