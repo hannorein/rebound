@@ -127,16 +127,18 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     struct reb_particle* global = r->particles;
     struct reb_particle p0 = global[0];
-    double HSR2 = r->ri_hybarid.switch_ratio*r->ri_hybarid.switch_ratio;
-    double minr2v2 = INFINITY;
+    double switch_ratio = r->ri_hybarid.switch_ratio;
+    double switch_ratio2 = switch_ratio*switch_ratio;
+    double min_dt_enc2 = INFINITY;
     for (int i=0; i<_N_active; i++){
-        struct reb_particle* pi = &(global[i]);
-        double radius_check2 = r->ri_hybarid.CE_radius*r->ri_hybarid.CE_radius*pi->r*pi->r;
-        const double dxi = p0.x - pi->x;
-        const double dyi = p0.y - pi->y;
-        const double dzi = p0.z - pi->z;
+        struct reb_particle pi = global[i];
+        double radius_check2 = r->ri_hybarid.CE_radius*pi.r;
+        const double dxi = p0.x - pi.x;
+        const double dyi = p0.y - pi.y;
+        const double dzi = p0.z - pi.z;
         const double r0i2 = dxi*dxi + dyi*dyi + dzi*dzi;
-        double rhi = r0i2*pow(pi->m/(p0.m*3.),2./3.);
+        const double mi = pi.m/(p0.m*3.);
+        double rhi = pow(mi*mi*r0i2*r0i2*r0i2,1./6.);
         for(int j=i+1;j<r->N;j++){
             struct reb_particle pj = global[j];
             
@@ -144,24 +146,26 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
             const double dyj = p0.y - pj.y;
             const double dzj = p0.z - pj.z;
             const double r0j2 = dxj*dxj + dyj*dyj + dzj*dzj;
-            const double rhj = r0j2*pow(pj.m/(p0.m*3.),2./3.);
+            const double mj = pj.m/(p0.m*3.);
+            double rhj = pow(mj*mj*r0j2*r0j2*r0j2,1./6.);
+            const double rh_sum = rhi+rhj;
+            const double rh_sum2 = rh_sum*rh_sum;
             
-            const double dx = pi->x - pj.x;
-            const double dy = pi->y - pj.y;
-            const double dz = pi->z - pj.z;
+            const double dx = pi.x - pj.x;
+            const double dy = pi.y - pj.y;
+            const double dz = pi.z - pj.z;
             const double rij2 = dx*dx + dy*dy + dz*dz;
-            const double ratio = rij2/(rhi+rhj);    //(p-p distance/Hill radii)^2
 
-            if(ratio < HSR2 || rij2 < radius_check2){
+            if(rij2 < switch_ratio2*rh_sum2 || rij2 < radius_check2){
                 r->ri_hybarid.mini_active = 1;
                 if (j>=_N_active && r->ri_hybarid.is_in_mini[j]==0){//make sure not already added
                     // Monitor hillradius/relative velocity
-                    const double dvx = pi->vx - pj.vx;
-                    const double dvy = pi->vy - pj.vy;
-                    const double dvz = pi->vz - pj.vz;
+                    const double dvx = pi.vx - pj.vx;
+                    const double dvy = pi.vy - pj.vy;
+                    const double dvz = pi.vz - pj.vz;
                     const double vij2 = dvx*dvx + dvy*dvy + dvz*dvz;
-                    const double r2v2 = HSR2*(rhi+rhj)*(rhi+rhj)/vij2;
-                    minr2v2 = MIN(minr2v2,r2v2);
+                    const double dt_enc2 = switch_ratio2*rh_sum2/vij2;
+                    min_dt_enc2 = MIN(min_dt_enc2,dt_enc2);
                     // Add particle to mini simulation
                     reb_add(mini,pj);
                     r->ri_hybarid.is_in_mini[j] = 1;
@@ -175,9 +179,9 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
             }
         }
     }
-    if (r->ri_hybarid.timestep_too_large_warning==0 && minr2v2<16.*r->dt*r->dt){
+    if (r->ri_hybarid.timestep_too_large_warning==0 && min_dt_enc2 < 16.*r->dt*r->dt){
         r->ri_hybarid.timestep_too_large_warning = 1;
-        reb_warning("The timestep appears to be too large. Close encounters might be missed. Decrease the timestep or increase the switching radius. This warning appear only once.");
+        reb_warning("The timestep is likely too large. Close encounters might be missed. Decrease the timestep or increase the switching radius. This warning will appear only once.");
     }
 }
 

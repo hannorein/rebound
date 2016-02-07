@@ -22,12 +22,12 @@ int main(int argc, char* argv[]){
 	r->integrator	= REB_INTEGRATOR_HYBARID;
 	//r->integrator	= REB_INTEGRATOR_IAS15;
 	//r->integrator	= REB_INTEGRATOR_WHFAST;
-    r->ri_hybarid.switch_ratio = 10;  //Hill radii
+    r->ri_hybarid.switch_ratio = 2;  //Hill radii
     r->ri_hybarid.CE_radius = 5.;          //X*radius
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
     //r->usleep = 5000;
-    r->dt = 0.0005;
+    r->dt = 0.01;
 
     r->collision = REB_COLLISION_DIRECT;
     //r->collision_resolve = collision_resolve_merge;
@@ -38,7 +38,7 @@ int main(int argc, char* argv[]){
     star.r		= 0.005;        // Radius of particle is in AU!
 	reb_add(r, star);
    
-    srand(100);
+    srand(140);
     
     //planet 1
     {
