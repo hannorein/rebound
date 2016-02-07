@@ -70,15 +70,19 @@ double reb_random_rayleigh(double sigma){
 /// Other helper routines
 double reb_tools_energy(struct reb_simulation* r){
 	const int N = r->N;
-	const struct reb_particle* restrict const particles = r->particles;
 	const int N_var = r->N_var;
+	const int _N_active = ((r->N_active==-1)?N:r->N_active) - N_var;
+	const struct reb_particle* restrict const particles = r->particles;
 	double e_kin = 0.;
 	double e_pot = 0.;
-	for (int i=0;i<N-N_var;i++){
+    int N_interact = (r->testparticle_type==0)?_N_active:(N-N_var);
+	for (int i=0;i<N_interact;i++){
 		struct reb_particle pi = particles[i];
 		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
-		for (int j=i+1;j<N-N_var;j++){
-            if(r->testparticle_type == 1 && i>r->N_active) continue; //ignore forces bet. planetesimals
+    }
+	for (int i=0;i<_N_active;i++){
+		struct reb_particle pi = particles[i];
+		for (int j=i+1;j<N_interact;j++){
 			struct reb_particle pj = particles[j];
 			double dx = pi.x - pj.x;
 			double dy = pi.y - pj.y;
