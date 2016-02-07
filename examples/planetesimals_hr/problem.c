@@ -27,11 +27,11 @@ int main(int argc, char* argv[]){
     r->ri_hybarid.CE_radius = 5.;          //X*radius
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
-    //r->usleep = 500;
-    r->dt = 0.0001;
+    //r->usleep = 10000;
+    r->dt = 0.001;
 
     r->collision = REB_COLLISION_DIRECT;
-    //r->collision_resolve = collision_resolve_merge;
+    r->collision_resolve = collision_resolve_merge;
     
 	// Initial conditions
 	struct reb_particle star = {0};
@@ -126,6 +126,8 @@ void collision_resolve_merge(struct reb_simulation* const mini, struct reb_colli
                 
     double invmass = 1.0/(pi->m + pj->m);
     double Ei = reb_tools_energy(mini);
+    /// TODO: This is not accurate enough as it ignore the interactions between 
+    //        massive bodies in the mini simulation and planetesimals in the global simulation.
     
     pi->vx = (pi->vx*pi->m + pj->vx*pj->m)*invmass;
     pi->vy = (pi->vy*pi->m + pj->vy*pj->m)*invmass;
@@ -150,8 +152,12 @@ void collision_resolve_merge(struct reb_simulation* const mini, struct reb_colli
         r->ri_hybarid.is_in_mini[k] = r->ri_hybarid.is_in_mini[k+1];
     }
     r->ri_hybarid.encounter_index_N--;
-    for(int k=j;k<r->ri_hybarid.encounter_index_N;k++) r->ri_hybarid.encounter_index[k] = r->ri_hybarid.encounter_index[k+1];
+    for(int k=j;k<r->ri_hybarid.encounter_index_N;k++){
+        r->ri_hybarid.encounter_index[k] = r->ri_hybarid.encounter_index[k+1];
+    }
     for(int k=N_active;k<r->ri_hybarid.encounter_index_N;k++){
-        if(r->ri_hybarid.encounter_index[k] > globalj) r->ri_hybarid.encounter_index[k]--; //1 fewer particles in index now
+        if(r->ri_hybarid.encounter_index[k] > globalj){
+            r->ri_hybarid.encounter_index[k]--; //1 fewer particles in index now
+        }
     }
 }
