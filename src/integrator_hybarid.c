@@ -36,6 +36,7 @@
 #include "output.h"
 #include "integrator_ias15.h"
 #include "integrator_whfast.h"
+#define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r);
 static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini);
@@ -116,7 +117,8 @@ void reb_integrator_hybarid_synchronize(struct reb_simulation* r){
 }
 
 void reb_integrator_hybarid_reset(struct reb_simulation* r){
-	// Do nothing.
+    r->ri_hybarid.timestep_too_large_warning = 0.;
+	// TODO: Implement rest
     reb_integrator_whfast_reset(r);
 }
 
@@ -126,6 +128,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
     struct reb_particle* global = r->particles;
     struct reb_particle p0 = global[0];
     double HSR2 = r->ri_hybarid.switch_ratio*r->ri_hybarid.switch_ratio;
+    double minr2v2 = INFINITY;
     for (int i=0; i<_N_active; i++){
         struct reb_particle* pi = &(global[i]);
         double radius_check2 = r->ri_hybarid.CE_radius*r->ri_hybarid.CE_radius*pi->r*pi->r;
@@ -152,6 +155,14 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
             if(ratio < HSR2 || rij2 < radius_check2){
                 r->ri_hybarid.mini_active = 1;
                 if (j>=_N_active && r->ri_hybarid.is_in_mini[j]==0){//make sure not already added
+                    // Monitor hillradius/relative velocity
+                    const double dvx = pi->vx - pj.vx;
+                    const double dvy = pi->vy - pj.vy;
+                    const double dvz = pi->vz - pj.vz;
+                    const double vij2 = dvx*dvx + dvy*dvy + dvz*dvz;
+                    const double r2v2 = HSR2*(rhi+rhj)*(rhi+rhj)/vij2;
+                    minr2v2 = MIN(minr2v2,r2v2);
+                    // Add particle to mini simulation
                     reb_add(mini,pj);
                     r->ri_hybarid.is_in_mini[j] = 1;
                     if (r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax){
@@ -163,6 +174,10 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r)
                 }
             }
         }
+    }
+    if (r->ri_hybarid.timestep_too_large_warning==0 && minr2v2<16.*r->dt*r->dt){
+        r->ri_hybarid.timestep_too_large_warning = 1;
+        reb_warning("The timestep appears to be too large. Close encounters might be missed. Decrease the timestep or increase the switching radius. This warning appear only once.");
     }
 }
 

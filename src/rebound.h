@@ -239,6 +239,8 @@ struct reb_simulation_integrator_hybarid {
 
     struct reb_particle* particles_prev;
     int particles_prev_Nmax;
+    
+    int timestep_too_large_warning;
 };
 
 /**

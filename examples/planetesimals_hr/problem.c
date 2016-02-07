@@ -22,12 +22,12 @@ int main(int argc, char* argv[]){
 	r->integrator	= REB_INTEGRATOR_HYBARID;
 	//r->integrator	= REB_INTEGRATOR_IAS15;
 	//r->integrator	= REB_INTEGRATOR_WHFAST;
-    r->ri_hybarid.switch_ratio = 5;  //Hill radii
+    r->ri_hybarid.switch_ratio = 10;  //Hill radii
     r->ri_hybarid.CE_radius = 5.;          //X*radius
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
     //r->usleep = 5000;
-    r->dt = 0.0015;
+    r->dt = 0.0005;
 
     r->collision = REB_COLLISION_DIRECT;
     //r->collision_resolve = collision_resolve_merge;
