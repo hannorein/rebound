@@ -8,6 +8,7 @@
 
 void heartbeat(struct reb_simulation* r);
 void collision_resolve_merge(struct reb_simulation* const mini, struct reb_collision c);
+double E0;
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
@@ -16,7 +17,7 @@ int main(int argc, char* argv[]){
     double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
     
-    int N_planetesimals = 1000;
+    int N_planetesimals = 110;
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
@@ -26,8 +27,8 @@ int main(int argc, char* argv[]){
     r->ri_hybarid.CE_radius = 5.;          //X*radius
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
-    //r->usleep = 5000;
-    r->dt = 0.01;
+    //r->usleep = 500;
+    r->dt = 0.0001;
 
     r->collision = REB_COLLISION_DIRECT;
     //r->collision_resolve = collision_resolve_merge;
@@ -76,14 +77,30 @@ int main(int argc, char* argv[]){
         pt.id = r->N;
 		reb_add(r, pt);
     }
+    
+    system("rm -f energy.txt");
+    E0 = reb_tools_energy(r);
     reb_integrate(r, INFINITY);
     
 }
 
+double tout = 1.;
 void heartbeat(struct reb_simulation* r){
 	if (reb_output_check(r, 100.*r->dt)){
 		reb_output_timing(r, 0);
 	}
+    if (tout <r->t){
+        tout *=1.01;
+        double E = reb_tools_energy(r);
+        double relE = fabs((E-E0+r->ri_hybarid.dE_offset)/E0);
+        FILE* f = fopen("energy.txt","a+");
+        int N_mini = 0;
+        if (r->ri_hybarid.mini_active){
+            N_mini = r->ri_hybarid.mini->N;
+        }
+        fprintf(f,"%e %e %d\n",r->t,relE,N_mini);
+        fclose(f);
+    }
 }
 
 //check for collisions in mini each heartbeat
@@ -113,6 +130,9 @@ void collision_resolve_merge(struct reb_simulation* const mini, struct reb_colli
     pi->vx = (pi->vx*pi->m + pj->vx*pj->m)*invmass;
     pi->vy = (pi->vy*pi->m + pj->vy*pj->m)*invmass;
     pi->vz = (pi->vz*pi->m + pj->vz*pj->m)*invmass;
+    pi->x = (pi->x*pi->m + pj->x*pj->m)*invmass;
+    pi->y = (pi->y*pi->m + pj->y*pj->m)*invmass;
+    pi->z = (pi->z*pi->m + pj->z*pj->m)*invmass;
     pi->m += pj->m;
     
     reb_remove(mini,j,1);  //remove mini
