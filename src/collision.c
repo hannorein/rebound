@@ -42,7 +42,6 @@
 #include "communication_mpi.h"
 
 static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
-static int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c);
 
 void reb_collision_search(struct reb_simulation* const r){
 	const int N = r->N;
@@ -309,7 +308,7 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
 
 
 
-static int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c){
+int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c){
 	struct reb_particle* const particles = r->particles;
 	struct reb_particle p1 = particles[c.p1];
 	struct reb_particle p2;
@@ -403,4 +402,39 @@ static int reb_collision_resolve_hardsphere(struct reb_simulation* const r, stru
 		r->collisions_Nlog ++;
 	}
     return 0;
+}
+
+
+int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c){
+	if (r->particles[c.p1].lastcollision==r->t || r->particles[c.p2].lastcollision==r->t) return 0;
+
+    // Every collision will cause two callbacks (with p1/p2 interchanged).
+    // Always remove particle with larger index and merge into lower index particle.
+    // This will keep N_active meaningful even after mergers.
+    int swap = 0;
+    int i = c.p1;
+    int j = c.p2;
+    if (j<i){
+        swap = 1;
+        i = c.p2;
+        j = c.p1;
+    }
+
+    struct reb_particle* pi = &(r->particles[i]);
+    struct reb_particle* pj = &(r->particles[j]);
+                
+    double invmass = 1.0/(pi->m + pj->m);
+    
+    // Merge by conserving mass, volume and momentum
+    pi->vx = (pi->vx*pi->m + pj->vx*pj->m)*invmass;
+    pi->vy = (pi->vy*pi->m + pj->vy*pj->m)*invmass;
+    pi->vz = (pi->vz*pi->m + pj->vz*pj->m)*invmass;
+    pi->x  = (pi->x*pi->m + pj->x*pj->m)*invmass;
+    pi->y  = (pi->y*pi->m + pj->y*pj->m)*invmass;
+    pi->z  = (pi->z*pi->m + pj->z*pj->m)*invmass;
+    pi->m  = pi->m + pj->m;
+    pi->r  = pow(pow(pi->r,3.)+pow(pj->r,3.),1./3.);
+    pi->lastcollision = r->t;
+
+    return swap?1:2; // Remove particle p2 from simulation
 }

@@ -7,7 +7,6 @@
 #include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
-int collision_resolve_merge(struct reb_simulation* const mini, struct reb_collision c);
 double E0;
 
 int main(int argc, char* argv[]){
@@ -28,10 +27,10 @@ int main(int argc, char* argv[]){
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
     //r->usleep = 10000;
-    r->dt = 0.001;
+    r->dt = 0.01;
 
     r->collision = REB_COLLISION_DIRECT;
-    r->collision_resolve = collision_resolve_merge;
+    r->collision_resolve = reb_collision_resolve_merge;
     
 	// Initial conditions
 	struct reb_particle star = {0};
@@ -103,38 +102,3 @@ void heartbeat(struct reb_simulation* r){
     }
 }
 
-//check for collisions in mini each heartbeat
-int collision_resolve_merge(struct reb_simulation* const mini, struct reb_collision c){
-	const int N_active = (mini->N_active==-1)?mini->N:mini->N_active;
-    // Every collision will cause two callbacks (with p1/p2 interchanged).
-	if (p1.lastcollision==mini->t || p2.lastcollision==mini->t) return;
-    
-    if (c.p1<N_active && c.p2>=N_active){
-        // p2 is the small particle.
-    }else if (c.p1>=N_active && c.p2<N_active){
-        // p1 is the small particle.
-        // Do nothing for now. Function will be called again later.
-        return 0;
-    }else{
-        // Ignore collision between small particles
-        return 0;
-    }
-
-    struct reb_particle* pi = &(mini->particles[c.p1]);
-    struct reb_particle* pj = &(mini->particles[c.p2]);
-                
-    double invmass = 1.0/(pi->m + pj->m);
-    
-    // Merge by conserving mass, volume and momentum
-    pi->vx = (pi->vx*pi->m + pj->vx*pj->m)*invmass;
-    pi->vy = (pi->vy*pi->m + pj->vy*pj->m)*invmass;
-    pi->vz = (pi->vz*pi->m + pj->vz*pj->m)*invmass;
-    pi->x  = (pi->x*pi->m + pj->x*pj->m)*invmass;
-    pi->y  = (pi->y*pi->m + pj->y*pj->m)*invmass;
-    pi->z  = (pi->z*pi->m + pj->z*pj->m)*invmass;
-    pi->m  = pi->m + pj->m;
-    pi->r  = pow(pow(pi->r,3.)+pow(pj->r,3.),1./3.);
-    pi->lastcollision = mini->t;
-
-    return 2; // Remove particle p2 from simulation
-}
