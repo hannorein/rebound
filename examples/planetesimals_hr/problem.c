@@ -16,7 +16,7 @@ int main(int argc, char* argv[]){
     double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
     
-    int N_planetesimals = 110;
+    int N_planetesimals = 100;
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
@@ -80,7 +80,7 @@ int main(int argc, char* argv[]){
     
     system("rm -f energy.txt");
     E0 = reb_tools_energy(r);
-    reb_integrate(r, INFINITY);
+    reb_integrate(r, 100.);
     
 }
 
@@ -98,7 +98,7 @@ void heartbeat(struct reb_simulation* r){
         if (r->ri_hybarid.mini_active){
             N_mini = r->ri_hybarid.mini->N;
         }
-        fprintf(f,"%e %e %d\n",r->t,relE,N_mini);
+        fprintf(f,"%e %e %d %e\n",r->t,relE,N_mini, r->collisions_dE);
         fclose(f);
     }
 }
