@@ -111,6 +111,44 @@ void reb_remove_all(struct reb_simulation* const r){
 }
 
 int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
+    if (r->ri_hybarid.global){
+        // This is a mini simulation. Need to remove particle from two simulations. 
+        struct reb_simulation* global = r->ri_hybarid.global;
+	    const int N_active = (r->N_active==-1)?r->N:r->N_active;
+
+        // Calculate energy offset by collision    
+        if (global->testparticle_type && global->ri_hybarid.collision_in_timestep==0){
+            global->ri_hybarid.collision_in_timestep=1;
+            struct reb_particle* tmp = global->particles;
+            // Swap particles to calculate energy at beginning of timstep.
+            global->particles = global->ri_hybarid.particles_prev;
+            global->ri_hybarid.energy_before_collision_in_timestep = reb_tools_energy(global);
+            // Swap particles back
+            global->particles = tmp;
+        }
+
+        //remove from global and update global arrays
+        int globalj = global->ri_hybarid.global_index_from_mini_index[index];
+        reb_remove(global,globalj,1);
+        
+        if (global->testparticle_type){
+            for(int k=globalj;k<global->N;k++){
+                global->ri_hybarid.particles_prev[k] = global->ri_hybarid.particles_prev[k+1];
+            }
+        }
+        for(int k=globalj;k<global->N;k++){
+            global->ri_hybarid.is_in_mini[k] = global->ri_hybarid.is_in_mini[k+1];
+        }
+        global->ri_hybarid.global_index_from_mini_index_N--;
+        for(int k=index;k<global->ri_hybarid.global_index_from_mini_index_N;k++){
+            global->ri_hybarid.global_index_from_mini_index[k] = global->ri_hybarid.global_index_from_mini_index[k+1];
+        }
+        for(int k=N_active;k<global->ri_hybarid.global_index_from_mini_index_N;k++){
+            if(global->ri_hybarid.global_index_from_mini_index[k] > globalj){
+                global->ri_hybarid.global_index_from_mini_index[k]--; //1 fewer particles in index now
+            }
+        }
+    }
 	if (r->N==1){
 		fprintf(stderr, "Last particle removed.\n");
 		return 1;

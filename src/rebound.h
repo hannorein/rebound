@@ -570,8 +570,9 @@ struct reb_simulation {
 
     /**
      * @brief Resolve collision within this function. By default it is NULL, assuming hard sphere model.
+     * @details A return value of 0 indicates that both particles remain in the simulation. A return value of 1 (2) indicates that particle 1 (2) should be removed from the simulation. A return value of 3 indicates that both particles should be removed from the simulation. 
      */
-    void (*collision_resolve) (struct reb_simulation* const r, struct reb_collision);
+    int (*collision_resolve) (struct reb_simulation* const r, struct reb_collision);
     /** @} */
     
     /**

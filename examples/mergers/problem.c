@@ -13,7 +13,7 @@
 #include <math.h>
 #include "rebound.h"
 
-void collision_resolve_merger(struct reb_simulation* r, struct reb_collision c);
+int collision_resolve_merger(struct reb_simulation* r, struct reb_collision c);
 void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
@@ -47,7 +47,7 @@ int main(int argc, char* argv[]){
 	reb_integrate(r, INFINITY);
 }
 
-void collision_resolve_merger(struct reb_simulation* r, struct reb_collision c){
+int collision_resolve_merger(struct reb_simulation* r, struct reb_collision c){
 	struct reb_particle* particles = r->particles;
 	struct reb_particle p1 = particles[c.p1];
 	struct reb_particle p2 = particles[c.p2];
@@ -55,12 +55,12 @@ void collision_resolve_merger(struct reb_simulation* r, struct reb_collision c){
 	double y21  = p1.y  - p2.y; 
 	double z21  = p1.z  - p2.z; 
 	double rp   = p1.r+p2.r;
-	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return; // not overlapping
+	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return 0; // not overlapping
 	double vx21 = p1.vx - p2.vx; 
 	double vy21 = p1.vy - p2.vy; 
 	double vz21 = p1.vz - p2.vz; 
-	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return; // not approaching
-	if (p1.lastcollision>=r->t || p2.lastcollision>=r->t) return; // already collided
+	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return 0; // not approaching
+	if (p1.lastcollision>=r->t || p2.lastcollision>=r->t) return 0; // already collided
 	printf("\nCollision detected. Merging.\n");
 	particles[c.p2].lastcollision = r->t;
 	particles[c.p1].lastcollision = r->t;
@@ -75,11 +75,8 @@ void collision_resolve_merger(struct reb_simulation* r, struct reb_collision c){
 	particles[c.p1].vz = cm.vz;
 	particles[c.p1].r = p1.r*pow(cm.m/p1.m,1./3.);	// Assume a constant density
 	particles[c.p1].m = cm.m;
-	// Remove one particle.
-	r->N--;
-	particles[c.p2] = particles[r->N];
-	// Make sure we don't drift, so let's go back to the center of momentum
-	reb_move_to_com(r);	
+	// Remove particle p2.
+    return 2;
 }
 
 void heartbeat(struct reb_simulation* r){
