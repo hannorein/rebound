@@ -51,12 +51,9 @@ int main(int argc, char* argv[]){
 	//r->integrator	= REB_INTEGRATOR_WHFAST;
     r->ri_hybarid.switch_ratio = 2;  //Hill radii
     r->ri_hybarid.CE_radius = 5.;          //X*radius
-    //r->ri_hybarid.ejection_distance = 10.;  //AU
-    //r->ri_hybarid.collisions = 1;
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
     r->dt = 0.0015;
-    
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = collision_resolve_merge;
     
