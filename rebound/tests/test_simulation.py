@@ -157,7 +157,7 @@ class TestSimulationCollisions(unittest.TestCase):
         def coef(sim,vrel):
             return 0.5
         self.sim.coefficient_of_restitution = coef
-        self.sim.integrate(1.)
+        self.sim.integrate(1.0)
         energy_final = self.sim.calculate_energy()
         self.assertAlmostEqual(energy_final, 0.25*energy_initial,delta=1e-15)
 

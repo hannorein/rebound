@@ -116,17 +116,6 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
         struct reb_simulation* global = r->ri_hybarid.global;
 	    const int N_active = (r->N_active==-1)?r->N:r->N_active;
 
-        // Calculate energy offset by collision    
-        if (global->testparticle_type && global->ri_hybarid.collision_in_timestep==0){
-            global->ri_hybarid.collision_in_timestep=1;
-            struct reb_particle* tmp = global->particles;
-            // Swap particles to calculate energy at beginning of timstep.
-            global->particles = global->ri_hybarid.particles_prev;
-            global->ri_hybarid.energy_before_collision_in_timestep = reb_tools_energy(global);
-            // Swap particles back
-            global->particles = tmp;
-        }
-
         //remove from global and update global arrays
         int globalj = global->ri_hybarid.global_index_from_mini_index[index];
         reb_remove(global,globalj,1);

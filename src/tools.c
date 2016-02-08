@@ -90,7 +90,38 @@ double reb_tools_energy(struct reb_simulation* r){
 			e_pot -= r->G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
 		}
 	}
-	return e_kin +e_pot;
+    double e_global = 0;
+    if (r->ri_hybarid.global){
+        if (r->testparticle_type){
+            struct reb_simulation* global = r->ri_hybarid.global;
+            struct reb_particle* global_particles = global->particles;
+            struct reb_particle* mini_particles = r->particles;
+            struct reb_particle* global_prev = global->ri_hybarid.particles_prev;
+            const double t_prev = global->t - global->dt;
+            double timefac = (r->t - t_prev)/global->dt;
+            const int N_active = global->N_active;
+            const double G = global->G;
+            for(int i=0;i<r->N_active;i++){              //massive bodies in mini
+                struct reb_particle pi = mini_particles[i];
+                for(int j=N_active;j<global->N;j++){        //planetesimals in global
+                    if(global->ri_hybarid.is_in_mini[j]==0){
+                        const double ix = (1.-timefac)*global_prev[j].x + timefac*global_particles[j].x; //interpolated values
+                        const double iy = (1.-timefac)*global_prev[j].y + timefac*global_particles[j].y;
+                        const double iz = (1.-timefac)*global_prev[j].z + timefac*global_particles[j].z;
+                        const double mp = global_particles[j].m;
+                        const double ddx = pi.x - ix;
+                        const double ddy = pi.y - iy;
+                        const double ddz = pi.z - iz;
+                        
+                        const double rijinv2 = 1.0/(ddx*ddx + ddy*ddy + ddz*ddz);
+                        e_global -= G*mp*pi.m*sqrt(rijinv2);
+                    }
+                }
+            }
+        }
+    }
+
+	return e_kin + e_pot + e_global;
 }
 
 void reb_move_to_com(struct reb_simulation* const r){

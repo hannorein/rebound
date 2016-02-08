@@ -45,20 +45,23 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     if (r->ri_hybarid.mini == NULL){
         r->ri_hybarid.mini = reb_create_simulation();
-        r->ri_hybarid.mini->usleep = -1; // Disable visualiation
-        r->ri_hybarid.mini->integrator = REB_INTEGRATOR_IAS15;
-        r->ri_hybarid.mini->additional_forces = reb_integrator_hybarid_additional_forces_mini;
-        r->ri_hybarid.mini->ri_hybarid.global = r;
-        r->ri_hybarid.mini->testparticle_type = r->testparticle_type;
-        r->ri_hybarid.mini->collision = r->collision;
-        r->ri_hybarid.mini->collision_resolve = r->collision_resolve;
-        //r->ri_hybarid.mini->ri_ias15.epsilon = 1e-8;  //speeds up ias and hybarid immensely
+        struct reb_simulation* const mini = r->ri_hybarid.mini;
+        mini->usleep = -1; // Disable visualiation
+        mini->integrator = REB_INTEGRATOR_IAS15;
+        mini->additional_forces = reb_integrator_hybarid_additional_forces_mini;
+        mini->ri_hybarid.global = r;
+        mini->testparticle_type = r->testparticle_type;
+        mini->collision = r->collision;
+        mini->collision_resolve = r->collision_resolve;
+        mini->collisions_track_dE = r->collisions_track_dE;
+        mini->ri_ias15.epsilon = r->ri_ias15.epsilon; 
     }
 
     // Remove all particles from mini
     r->ri_hybarid.mini->t = r->t;
     r->ri_hybarid.mini->N = 0;
     r->ri_hybarid.mini->N_active = -1;
+    r->ri_hybarid.mini->collisions_dE = 0.;
     r->ri_hybarid.mini_active = 0;
     r->ri_hybarid.global_index_from_mini_index_N = 0;
     
@@ -107,12 +110,7 @@ void reb_integrator_hybarid_part2(struct reb_simulation* r){
             r->particles[r->ri_hybarid.global_index_from_mini_index[i]].sim = r;
         }
         // Correct for energy jump in collision
-        if (r->ri_hybarid.collision_in_timestep!=0){
-            double Ei = r->ri_hybarid.energy_before_collision_in_timestep;
-            double Ef = reb_tools_energy(r);
-            r->ri_hybarid.dE_offset += Ei - Ef;
-            r->ri_hybarid.collision_in_timestep = 0;
-        }
+        r->collisions_dE += mini->collisions_dE;
     }
 }
 	
