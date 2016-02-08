@@ -47,7 +47,7 @@ class Particle(Structure):
         """
         return "<rebound.Particle object, id=%s m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.id,self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
-    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, r=None, id=None, date=None, simulation=None):
+    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, id=None, date=None, simulation=None):
         """
         Initializes a Particle structure.
         Typically users will not create Particle structures directly.
@@ -73,7 +73,9 @@ class Particle(Structure):
         primary     : Particle    
             Primary body for converting orbital elements to cartesian (Default: center of mass of the particles in the passed simulation, i.e., will yield Jacobi coordinates as you progressively pass particles) 
         a           : float       
-            Semimajor axis (Required if passing orbital elements)
+            Semimajor axis (a or P required if passing orbital elements)
+        P           : float
+            Orbital period (a or P required if passing orbital elements)
         e           : float       
             Eccentricity                (Default: 0)
         inc         : float       
@@ -92,6 +94,8 @@ class Particle(Structure):
             Mean longitude              (Default: 0)
         theta       : float       
             True longitude              (Default: 0)
+        T           : float 
+            Time of pericenter passage  
         r           : float       
             Particle radius (only used for collisional simulations)
         id          : int               (Default: 0)
@@ -118,7 +122,7 @@ class Particle(Structure):
         if particle is not None:
             raise ValueError("Cannot initialize particle from other particles.")
         cart = [x,y,z,vx,vy,vz]
-        orbi = [primary,a,e,inc,Omega,omega,pomega,f,M,l,theta]
+        orbi = [primary,a,P,e,inc,Omega,omega,pomega,f,M,l,theta,T]
        
         self.ax = 0.
         self.ay = 0.
@@ -147,8 +151,12 @@ class Particle(Structure):
             if primary is None:
                 clibrebound.reb_get_com.restype = Particle
                 primary = clibrebound.reb_get_com(byref(simulation)) # this corresponds to adding in Jacobi coordinates
+            if a is None and P is None:
+                raise ValueError("You need to pass either a semimajor axis or orbital period to initialize the particle using orbital elements.")
+            if a is not None and P is not None:
+                raise ValueError("You can pass either the semimajor axis or orbital period, but not both.")
             if a is None:
-                raise ValueError("You need to pass a semi major axis to initialize the particle using orbital elements.")
+                a = (P**2*simulation.G*(primary.m + self.m)/(4.*math.pi**2))**(1./3.)
             if e is None:
                 e = 0.
             if inc is None:
@@ -170,14 +178,14 @@ class Particle(Structure):
                     else:
                         omega = Omega - pomega  # for retrograde orbits, pomega = Omega - omega
 
-            longitudes = [f,M,l,theta]      # can specify longitude through any of these four.  Need f for C function.
+            longitudes = [f,M,l,theta,T]      # can specify longitude through any of these four.  Need f for C function.
             numNones = longitudes.count(None)
 
-            if numNones < 3:
+            if numNones < 4:
                 raise ValueError("Can only pass one longitude/anomaly in the set [f, M, l, theta]")
-            if numNones == 4:                           # none of them passed.  Default to 0.
+            if numNones == 5:                           # none of them passed.  Default to 0.
                 f = 0.
-            if numNones == 3:                           # Only one was passed.
+            if numNones == 4:                           # Only one was passed.
                 if f is None:                           # Only have to work if f wasn't passed.
                     if theta is not None:               # theta is next easiest
                         if math.cos(inc) > 0:           # for prograde orbits, theta = Omega + omega + f
@@ -190,6 +198,9 @@ class Particle(Structure):
                                 M = l - Omega - omega
                             else:
                                 M = Omega - omega - l   # for retrograde, l = Omega - omega - M
+                        else if T is not None:
+                            n = (simulation.G*(primary.m+self.m)/a**3)**0.5
+                            M = n*(simulation.t - T)
                         clibrebound.reb_tools_M_to_f.restype = c_double
                         f = clibrebound.reb_tools_M_to_f(c_double(e), c_double(M))
 
