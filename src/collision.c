@@ -42,7 +42,6 @@
 #include "communication_mpi.h"
 
 static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
-static void reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c);
 
 void reb_collision_search(struct reb_simulation* const r){
 	const int N = r->N;
@@ -180,14 +179,27 @@ void reb_collision_search(struct reb_simulation* const r){
 	}
 	// Loop over all collisions previously found in reb_collision_search().
 	
-	void (*resolve) (struct reb_simulation* const r, struct reb_collision c) = r->collision_resolve;
+	int (*resolve) (struct reb_simulation* const r, struct reb_collision c) = r->collision_resolve;
 	if (resolve==NULL){
 		// Default is hard sphere
 		resolve = reb_collision_resolve_hardsphere;
 	}
 	for (int i=0;i<collisions_N;i++){
 		// Resolve collision
-		resolve(r, r->collisions[i]);
+        struct reb_collision c = r->collisions[i];
+		int outcome = resolve(r, c);
+        int shift_pos = 0;
+        if (outcome & 1){
+            // Remove p1
+            if (c.p1<c.p2){
+                shift_pos = -1;
+            }
+            reb_remove(r,c.p1,1);
+        }
+        if (outcome & 2){
+            // Remove p2
+            reb_remove(r,c.p2+shift_pos,1);
+        }
 	}
 }
 
@@ -296,7 +308,7 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
 
 
 
-static void reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c){
+int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c){
 	struct reb_particle* const particles = r->particles;
 	struct reb_particle p1 = particles[c.p1];
 	struct reb_particle p2;
@@ -324,11 +336,11 @@ static void reb_collision_resolve_hardsphere(struct reb_simulation* const r, str
 	}else{
 		oldvyouter = p2.vy;
 	}
-	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return;
+	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return 0;
 	double vx21 = p1.vx + gb.shiftvx - p2.vx; 
 	double vy21 = p1.vy + gb.shiftvy - p2.vy; 
 	double vz21 = p1.vz + gb.shiftvz - p2.vz; 
-	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return; // not approaching
+	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return 0; // not approaching
 	// Bring the to balls in the xy plane.
 	// NOTE: this could probabely be an atan (which is faster than atan2)
 	double theta = atan2(z21,y21);
@@ -389,5 +401,40 @@ static void reb_collision_resolve_hardsphere(struct reb_simulation* const r, str
 		r->collisions_plog += -fabs(x21)*(oldvyouter-particles[c.p2].vy) * p2.m;
 		r->collisions_Nlog ++;
 	}
+    return 0;
+}
 
+
+int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c){
+	if (r->particles[c.p1].lastcollision==r->t || r->particles[c.p2].lastcollision==r->t) return 0;
+
+    // Every collision will cause two callbacks (with p1/p2 interchanged).
+    // Always remove particle with larger index and merge into lower index particle.
+    // This will keep N_active meaningful even after mergers.
+    int swap = 0;
+    int i = c.p1;
+    int j = c.p2;
+    if (j<i){
+        swap = 1;
+        i = c.p2;
+        j = c.p1;
+    }
+
+    struct reb_particle* pi = &(r->particles[i]);
+    struct reb_particle* pj = &(r->particles[j]);
+                
+    double invmass = 1.0/(pi->m + pj->m);
+    
+    // Merge by conserving mass, volume and momentum
+    pi->vx = (pi->vx*pi->m + pj->vx*pj->m)*invmass;
+    pi->vy = (pi->vy*pi->m + pj->vy*pj->m)*invmass;
+    pi->vz = (pi->vz*pi->m + pj->vz*pj->m)*invmass;
+    pi->x  = (pi->x*pi->m + pj->x*pj->m)*invmass;
+    pi->y  = (pi->y*pi->m + pj->y*pj->m)*invmass;
+    pi->z  = (pi->z*pi->m + pj->z*pj->m)*invmass;
+    pi->m  = pi->m + pj->m;
+    pi->r  = pow(pow(pi->r,3.)+pow(pj->r,3.),1./3.);
+    pi->lastcollision = r->t;
+
+    return swap?1:2; // Remove particle p2 from simulation
 }

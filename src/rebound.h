@@ -570,8 +570,9 @@ struct reb_simulation {
 
     /**
      * @brief Resolve collision within this function. By default it is NULL, assuming hard sphere model.
+     * @details A return value of 0 indicates that both particles remain in the simulation. A return value of 1 (2) indicates that particle 1 (2) should be removed from the simulation. A return value of 3 indicates that both particles should be removed from the simulation. 
      */
-    void (*collision_resolve) (struct reb_simulation* const r, struct reb_collision);
+    int (*collision_resolve) (struct reb_simulation* const r, struct reb_collision);
     /** @} */
     
     /**
@@ -740,6 +741,18 @@ int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted);
  * @param r The rebound simulation to be considered
  */
 void reb_run_heartbeat(struct reb_simulation* const r);
+
+/**
+ * @brief Hardsphere collision resolving routine (default).
+ */
+int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c);
+
+/**
+ * @brief Merging collision resolving routine.
+ * @details Merges particle with higher index into particle of lower index.
+ *          Conserves mass, momentum and volume. Compatible with HYBARID. 
+ */
+int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c);
 
 /** @} */
 /** @} */
