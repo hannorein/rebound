@@ -14,16 +14,18 @@
 void heartbeat(struct reb_simulation* r);
 double E0, t_output, t_log_output, xyz_t = 0;
 int xyz_counter = 0, numdt = 20;
-char* output_name; char* mercury_dir; char* swifter_dir;
+char* mercury_dir; char* swifter_dir;
 
 //temp
 int output_xyz = 0; //switch to 0 for no outputs
 time_t t_ini;
 int N_prev;
-char* argv2; char* argv3; char* argv4;
+char* argv4;
+char output_name[100] = {0};
 
 //swifter/mercury compare
 void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax, int n_output);
+void collision_resolve_merge(struct reb_simulation* const mini, struct reb_collision c);
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
@@ -39,9 +41,9 @@ int main(int argc, char* argv[]){
     double tmax = atof(argv[1]);
     int N_planetesimals = atoi(argv[2]);
     int seed = atoi(argv[3]);
-    output_name = argv[5];
-    mercury_dir = argv[6];
-    swifter_dir = argv[7];
+    strcat(output_name,argv[4]); strcat(output_name,".txt"); argv4=argv[4];
+    mercury_dir = argv[5];
+    swifter_dir = argv[6];
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
@@ -49,14 +51,15 @@ int main(int argc, char* argv[]){
 	//r->integrator	= REB_INTEGRATOR_WHFAST;
     r->ri_hybarid.switch_ratio = 2;  //Hill radii
     r->ri_hybarid.CE_radius = 20.;          //X*radius
-    r->ri_hybarid.ejection_distance = 10.;  //AU
-    r->ri_hybarid.collisions = 1;
+    //r->ri_hybarid.ejection_distance = 10.;  //AU
+    //r->ri_hybarid.collisions = 1;
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
     r->ri_ias15.epsilon = atof(argv[4]);
-    //r->usleep = 5000;
-    //r->ri_whfast.corrector 	= 11;
     r->dt = 0.0015;
+    
+    r->collision = REB_COLLISION_DIRECT;
+    r->collision_resolve = collision_resolve_merge;
     
 	// Initial conditions
 	struct reb_particle star = {0};
@@ -109,7 +112,7 @@ int main(int argc, char* argv[]){
    
     //energy
     E0 = reb_tools_energy(r);
-    char syss[100] = {0}; strcat(syss,"rm -v "); strcat(syss,argv[5]);
+    char syss[100] = {0}; strcat(syss,"rm -v "); strcat(syss,argv[4]); strcat(syss,"*");
     system(syss);
     
     //swifter/mercury compare
@@ -118,7 +121,7 @@ int main(int argc, char* argv[]){
     t_ini = time(NULL);
     struct tm *tmp = gmtime(&t_ini);
     N_prev = r->N;
-    argv2 = argv[2]; argv3 = argv[3]; argv4= argv[4];
+    argv4= argv[4];
     
     //ini positions record
     if(output_xyz){
@@ -146,8 +149,7 @@ int main(int argc, char* argv[]){
     struct tm *tmp2 = gmtime(&t_fini);
     double time = t_fini - t_ini;
     char timeout[200] = {0};
-    strcat(timeout,"output/Np"); strcat(timeout,argv[2]); strcat(timeout,"_sd");
-    strcat(timeout,argv[3]); strcat(timeout,"_"); strcat(timeout,argv[4]); strcat(timeout,"_elapsedtime.txt");
+    strcat(timeout,argv[4]); strcat(timeout,"_elapsedtime"); strcat(timeout,".txt");
     FILE* outt = fopen(timeout,"w");
     fprintf(outt,"\nSimulation complete. Elapsed simulation time is %.2f s. \n\n",time);
     fclose(outt);
@@ -175,9 +177,7 @@ void heartbeat(struct reb_simulation* r){
     
     if(r->N < N_prev){
         //removed particles
-        char removed[200] = {0}; strcat(removed,"output/Np"); strcat(removed,argv2);
-        strcat(removed,"_"); strcat(removed,"sd"); strcat(removed,argv3); strcat(removed,"_");
-        strcat(removed,argv4); strcat(removed,"_removed.txt");
+        char removed[200] = {0}; strcat(removed,argv4); strcat(removed,"_removed"); strcat(removed,".txt");
         FILE* append = fopen(removed,"a");
         if(r->particles[0].id == -1) fprintf(append,"Ejection,%.5f\n",r->t); else if(r->ri_hybarid.mini->particles[0].id == -2) fprintf(append,"Collision,%.5f\n",r->t);
         fclose(append);
@@ -208,6 +208,70 @@ void heartbeat(struct reb_simulation* r){
             i--;
         }
         fclose(output);
+    }
+}
+
+//check for collisions in mini each heartbeat
+void collision_resolve_merge(struct reb_simulation* const mini, struct reb_collision c){
+    struct reb_simulation* global = mini->ri_hybarid.global;
+    int N_active = mini->N_active;
+    int i = c.p1;
+    int j = c.p2;
+    
+    if (i<N_active && j>=N_active){
+        // Already ordered
+    }else if (i>=N_active && j<N_active){
+        // Will be done later
+        return;
+    }else{
+        // Ignore collision between small particles
+        return;
+    }
+    
+    struct reb_particle* pi = &(mini->particles[i]);
+    struct reb_particle* pj = &(mini->particles[j]);
+    
+    double invmass = 1.0/(pi->m + pj->m);
+    
+    pi->vx = (pi->vx*pi->m + pj->vx*pj->m)*invmass;
+    pi->vy = (pi->vy*pi->m + pj->vy*pj->m)*invmass;
+    pi->vz = (pi->vz*pi->m + pj->vz*pj->m)*invmass;
+    pi->x = (pi->x*pi->m + pj->x*pj->m)*invmass;
+    pi->y = (pi->y*pi->m + pj->y*pj->m)*invmass;
+    pi->z = (pi->z*pi->m + pj->z*pj->m)*invmass;
+    pi->m += pj->m;
+    
+    reb_remove(mini,j,1);  //remove mini
+    
+    printf("\n\tParticle %d collided with body %d from system at t=%f.\n",i,global->ri_hybarid.global_index_from_mini_index[j],global->t);
+    
+    
+    if (global->ri_hybarid.collision_in_timestep==0){
+        global->ri_hybarid.collision_in_timestep=1;
+        struct reb_particle* tmp = global->particles;
+        // Swap particles to calculate energy at beginning of timstep.
+        global->particles = global->ri_hybarid.particles_prev;
+        global->ri_hybarid.energy_before_collision_in_timestep = reb_tools_energy(global);
+        // Swap particles back
+        global->particles = tmp;
+    }
+    
+    //remove from global and update global arrays
+    int globalj = global->ri_hybarid.global_index_from_mini_index[j];
+    reb_remove(global,globalj,1);
+    
+    for(int k=globalj;k<global->N;k++){
+        global->ri_hybarid.particles_prev[k] = global->ri_hybarid.particles_prev[k+1];
+        global->ri_hybarid.is_in_mini[k] = global->ri_hybarid.is_in_mini[k+1];
+    }
+    global->ri_hybarid.global_index_from_mini_index_N--;
+    for(int k=j;k<global->ri_hybarid.global_index_from_mini_index_N;k++){
+        global->ri_hybarid.global_index_from_mini_index[k] = global->ri_hybarid.global_index_from_mini_index[k+1];
+    }
+    for(int k=N_active;k<global->ri_hybarid.global_index_from_mini_index_N;k++){
+        if(global->ri_hybarid.global_index_from_mini_index[k] > globalj){
+            global->ri_hybarid.global_index_from_mini_index[k]--; //1 fewer particles in index now
+        }
     }
 }
 

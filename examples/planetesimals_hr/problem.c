@@ -17,7 +17,7 @@ int main(int argc, char* argv[]){
     double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
     
-    int N_planetesimals = 1010;
+    int N_planetesimals = 500;
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]){
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
     //r->usleep = 10000;
-    r->dt = 0.01;
+    r->dt = 0.0015;
 
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = collision_resolve_merge;
@@ -80,7 +80,15 @@ int main(int argc, char* argv[]){
     
     system("rm -f energy.txt");
     E0 = reb_tools_energy(r);
-    reb_integrate(r, INFINITY);
+    
+    time_t t_ini = time(NULL);
+    struct tm *tmp = gmtime(&t_ini);
+    reb_integrate(r, 100);
+    
+    time_t t_fini = time(NULL);
+    struct tm *tmp2 = gmtime(&t_fini);
+    double time = t_fini - t_ini;
+    printf("\nSimulation complete. Elapsed simulation time is %.2f s. \n\n",time);
     
 }
 
