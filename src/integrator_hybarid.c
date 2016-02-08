@@ -221,29 +221,36 @@ static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation*
         const double t_prev = global->t - global->dt;
         double timefac = (mini->t - t_prev)/global->dt;
         // TODO: See if the following is good enough and if so why
-        /// timefac = 0.5;
+        // timefac = 0.5;
         const int N_active = global->N_active;
         const double G = global->G;
-        for(int j=N_active;j<global->N;j++){            //planetesimals in global
-            if(global->ri_hybarid.is_in_mini[j]==0){
-                for(int i=0;i<mini->N_active;i++){      //massive bodies in mini
-                    struct reb_particle* body = &(mini_particles[i]);
+#pragma omp parallel for schedule(guided)
+        for(int i=0;i<mini->N_active;i++){              //massive bodies in mini
+            struct reb_particle pi = mini_particles[i];
+            double ax = 0.;
+            double ay = 0.;
+            double az = 0.;
+            for(int j=N_active;j<global->N;j++){        //planetesimals in global
+                if(global->ri_hybarid.is_in_mini[j]==0){
                     const double ix = (1.-timefac)*global_prev[j].x + timefac*global_particles[j].x; //interpolated values
                     const double iy = (1.-timefac)*global_prev[j].y + timefac*global_particles[j].y;
                     const double iz = (1.-timefac)*global_prev[j].z + timefac*global_particles[j].z;
                     const double mp = global_particles[j].m;
-                    const double ddx = body->x - ix;
-                    const double ddy = body->y - iy;
-                    const double ddz = body->z - iz;
+                    const double ddx = pi.x - ix;
+                    const double ddy = pi.y - iy;
+                    const double ddz = pi.z - iz;
                     
                     const double rijinv2 = 1.0/(ddx*ddx + ddy*ddy + ddz*ddz);
                     const double ac = -G*mp*rijinv2*sqrt(rijinv2);
                     
-                    body->ax += ac*ddx;     //perturbation on planets due to planetesimals.
-                    body->ay += ac*ddy;
-                    body->az += ac*ddz;
+                    ax += ac*ddx;     //perturbation on planets due to planetesimals.
+                    ay += ac*ddy;
+                    az += ac*ddz;
                 }
             }
+            mini_particles[i].ax += ax;
+            mini_particles[i].ay += ay;
+            mini_particles[i].az += az;
         }
     }
 }

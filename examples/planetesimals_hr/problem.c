@@ -17,7 +17,7 @@ int main(int argc, char* argv[]){
     double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
     
-    int N_planetesimals = 110;
+    int N_planetesimals = 1010;
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
