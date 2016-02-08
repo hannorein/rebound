@@ -62,7 +62,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     r->ri_hybarid.mini->N = 0;
     r->ri_hybarid.mini->N_active = -1;
     r->ri_hybarid.mini_active = 0;
-    r->ri_hybarid.encounter_index_N = 0;
+    r->ri_hybarid.global_index_from_mini_index_N = 0;
     
     //reset is_in_mini
     if (r->N>r->ri_hybarid.is_in_mini_Nmax){
@@ -75,12 +75,12 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     for (int i=0; i<_N_active; i++){
         reb_add(r->ri_hybarid.mini, r->particles[i]);
         r->ri_hybarid.is_in_mini[i] = 1;
-        if (r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax){
+        if (r->ri_hybarid.global_index_from_mini_index_N>=r->ri_hybarid.encounter_index_Nmax){
             r->ri_hybarid.encounter_index_Nmax += 32;
-            r->ri_hybarid.encounter_index = realloc(r->ri_hybarid.encounter_index,r->ri_hybarid.encounter_index_Nmax*sizeof(int));
+            r->ri_hybarid.global_index_from_mini_index = realloc(r->ri_hybarid.global_index_from_mini_index,r->ri_hybarid.encounter_index_Nmax*sizeof(int));
         }
-        r->ri_hybarid.encounter_index[r->ri_hybarid.encounter_index_N] = i;
-        r->ri_hybarid.encounter_index_N++;
+        r->ri_hybarid.global_index_from_mini_index[r->ri_hybarid.global_index_from_mini_index_N] = i;
+        r->ri_hybarid.global_index_from_mini_index_N++;
     }
     r->ri_hybarid.mini->N_active = _N_active;
 
@@ -105,8 +105,15 @@ void reb_integrator_hybarid_part2(struct reb_simulation* r){
     if (r->ri_hybarid.mini_active){
         reb_integrate(mini,r->t);
         for (int i=0; i<mini->N; i++){
-            r->particles[r->ri_hybarid.encounter_index[i]] = mini->particles[i];
-            r->particles[r->ri_hybarid.encounter_index[i]].sim = r;
+            r->particles[r->ri_hybarid.global_index_from_mini_index[i]] = mini->particles[i];
+            r->particles[r->ri_hybarid.global_index_from_mini_index[i]].sim = r;
+        }
+        // Correct for energy jump in collision
+        if (r->ri_hybarid.collision_in_timestep!=0){
+            double Ei = r->ri_hybarid.energy_before_collision_in_timestep;
+            double Ef = reb_tools_energy(r);
+            r->ri_hybarid.dE_offset += Ei - Ef;
+            r->ri_hybarid.collision_in_timestep = 0;
         }
     }
 }
@@ -169,12 +176,12 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* gl
                     // Add particle to mini simulation
                     reb_add(mini,pj);
                     global->ri_hybarid.is_in_mini[j] = 1;
-                    if (global->ri_hybarid.encounter_index_N>=global->ri_hybarid.encounter_index_Nmax){
-                        while(global->ri_hybarid.encounter_index_N>=global->ri_hybarid.encounter_index_Nmax) global->ri_hybarid.encounter_index_Nmax += 32;
-                        global->ri_hybarid.encounter_index = realloc(global->ri_hybarid.encounter_index,global->ri_hybarid.encounter_index_Nmax*sizeof(int));
+                    if (global->ri_hybarid.global_index_from_mini_index_N>=global->ri_hybarid.encounter_index_Nmax){
+                        while(global->ri_hybarid.global_index_from_mini_index_N>=global->ri_hybarid.encounter_index_Nmax) global->ri_hybarid.encounter_index_Nmax += 32;
+                        global->ri_hybarid.global_index_from_mini_index = realloc(global->ri_hybarid.global_index_from_mini_index,global->ri_hybarid.encounter_index_Nmax*sizeof(int));
                     }
-                    global->ri_hybarid.encounter_index[global->ri_hybarid.encounter_index_N] = j;
-                    global->ri_hybarid.encounter_index_N++;
+                    global->ri_hybarid.global_index_from_mini_index[global->ri_hybarid.global_index_from_mini_index_N] = j;
+                    global->ri_hybarid.global_index_from_mini_index_N++;
                 }
             }
         }
