@@ -75,9 +75,9 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     for (int i=0; i<_N_active; i++){
         reb_add(r->ri_hybarid.mini, r->particles[i]);
         r->ri_hybarid.is_in_mini[i] = 1;
-        if (r->ri_hybarid.global_index_from_mini_index_N>=r->ri_hybarid.encounter_index_Nmax){
-            r->ri_hybarid.encounter_index_Nmax += 32;
-            r->ri_hybarid.global_index_from_mini_index = realloc(r->ri_hybarid.global_index_from_mini_index,r->ri_hybarid.encounter_index_Nmax*sizeof(int));
+        if (r->ri_hybarid.global_index_from_mini_index_N>=r->ri_hybarid.global_index_from_mini_index_Nmax){
+            r->ri_hybarid.global_index_from_mini_index_Nmax += 32;
+            r->ri_hybarid.global_index_from_mini_index = realloc(r->ri_hybarid.global_index_from_mini_index,r->ri_hybarid.global_index_from_mini_index_Nmax*sizeof(int));
         }
         r->ri_hybarid.global_index_from_mini_index[r->ri_hybarid.global_index_from_mini_index_N] = i;
         r->ri_hybarid.global_index_from_mini_index_N++;
@@ -125,8 +125,28 @@ void reb_integrator_hybarid_synchronize(struct reb_simulation* r){
 
 void reb_integrator_hybarid_reset(struct reb_simulation* r){
     r->ri_hybarid.timestep_too_large_warning = 0.;
-	// TODO: Implement rest
+    
     reb_integrator_whfast_reset(r);
+
+    if (r->ri_hybarid.mini){
+        reb_free_simulation(r->ri_hybarid.mini);
+        r->ri_hybarid.mini = NULL;
+    }
+    if(r->ri_hybarid.global_index_from_mini_index){
+        free(r->ri_hybarid.global_index_from_mini_index);
+        r->ri_hybarid.global_index_from_mini_index = NULL;
+        r->ri_hybarid.global_index_from_mini_index_Nmax = 0;
+    }
+    if(r->ri_hybarid.is_in_mini){
+        free(r->ri_hybarid.is_in_mini);
+        r->ri_hybarid.is_in_mini = NULL;
+        r->ri_hybarid.is_in_mini_Nmax = 0;
+    }
+    if(r->ri_hybarid.particles_prev){
+        free(r->ri_hybarid.particles_prev);
+        r->ri_hybarid.particles_prev = NULL;
+        r->ri_hybarid.particles_prev_Nmax = 0;
+    }
 }
 
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* global){
@@ -176,9 +196,9 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* gl
                     // Add particle to mini simulation
                     reb_add(mini,pj);
                     global->ri_hybarid.is_in_mini[j] = 1;
-                    if (global->ri_hybarid.global_index_from_mini_index_N>=global->ri_hybarid.encounter_index_Nmax){
-                        while(global->ri_hybarid.global_index_from_mini_index_N>=global->ri_hybarid.encounter_index_Nmax) global->ri_hybarid.encounter_index_Nmax += 32;
-                        global->ri_hybarid.global_index_from_mini_index = realloc(global->ri_hybarid.global_index_from_mini_index,global->ri_hybarid.encounter_index_Nmax*sizeof(int));
+                    if (global->ri_hybarid.global_index_from_mini_index_N>=global->ri_hybarid.global_index_from_mini_index_Nmax){
+                        while(global->ri_hybarid.global_index_from_mini_index_N>=global->ri_hybarid.global_index_from_mini_index_Nmax) global->ri_hybarid.global_index_from_mini_index_Nmax += 32;
+                        global->ri_hybarid.global_index_from_mini_index = realloc(global->ri_hybarid.global_index_from_mini_index,global->ri_hybarid.global_index_from_mini_index_Nmax*sizeof(int));
                     }
                     global->ri_hybarid.global_index_from_mini_index[global->ri_hybarid.global_index_from_mini_index_N] = j;
                     global->ri_hybarid.global_index_from_mini_index_N++;

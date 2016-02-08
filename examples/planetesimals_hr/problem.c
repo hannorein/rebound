@@ -106,7 +106,6 @@ void heartbeat(struct reb_simulation* r){
 //check for collisions in mini each heartbeat
 void collision_resolve_merge(struct reb_simulation* const mini, struct reb_collision c){
     struct reb_simulation* global = mini->ri_hybarid.global;
-    struct reb_particle* particles = mini->particles;
     int N_active = mini->N_active;
     int i = c.p1;
     int j = c.p2;
@@ -121,8 +120,8 @@ void collision_resolve_merge(struct reb_simulation* const mini, struct reb_colli
         return;
     }
 
-    struct reb_particle* pi = &(particles[i]);
-    struct reb_particle* pj = &(particles[j]);
+    struct reb_particle* pi = &(mini->particles[i]);
+    struct reb_particle* pj = &(mini->particles[j]);
                 
     double invmass = 1.0/(pi->m + pj->m);
     
