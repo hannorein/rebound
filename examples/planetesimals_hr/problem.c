@@ -28,7 +28,7 @@ int main(int argc, char* argv[]){
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
     //r->usleep = 10000;
-    r->dt = 0.001;
+    r->dt = 0.01;
 
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = collision_resolve_merge;
@@ -105,7 +105,7 @@ void heartbeat(struct reb_simulation* r){
 
 //check for collisions in mini each heartbeat
 void collision_resolve_merge(struct reb_simulation* const mini, struct reb_collision c){
-    struct reb_simulation* r = mini->ri_hybarid.global;
+    struct reb_simulation* global = mini->ri_hybarid.global;
     struct reb_particle* particles = mini->particles;
     int N_active = mini->N_active;
     int i = c.p1;
@@ -136,34 +136,34 @@ void collision_resolve_merge(struct reb_simulation* const mini, struct reb_colli
     
     reb_remove(mini,j,1);  //remove mini
     
-    printf("\n\tParticle %d collided with body %d from system at t=%f.\n",i,r->ri_hybarid.global_index_from_mini_index[j],r->t);
+    printf("\n\tParticle %d collided with body %d from system at t=%f.\n",i,global->ri_hybarid.global_index_from_mini_index[j],global->t);
     
         
-    if (r->ri_hybarid.collision_in_timestep==0){
-        r->ri_hybarid.collision_in_timestep=1;
-        struct reb_particle* tmp = r->particles;
+    if (global->ri_hybarid.collision_in_timestep==0){
+        global->ri_hybarid.collision_in_timestep=1;
+        struct reb_particle* tmp = global->particles;
         // Swap particles to calculate energy at beginning of timstep.
-        r->particles = r->ri_hybarid.particles_prev;
-        r->ri_hybarid.energy_before_collision_in_timestep = reb_tools_energy(r);
+        global->particles = global->ri_hybarid.particles_prev;
+        global->ri_hybarid.energy_before_collision_in_timestep = reb_tools_energy(global);
         // Swap particles back
-        r->particles = tmp;
+        global->particles = tmp;
     }
 
     //remove from global and update global arrays
-    int globalj = r->ri_hybarid.global_index_from_mini_index[j];
-    reb_remove(r,globalj,1);
+    int globalj = global->ri_hybarid.global_index_from_mini_index[j];
+    reb_remove(global,globalj,1);
     
-    for(int k=globalj;k<r->N;k++){
-        r->ri_hybarid.particles_prev[k] = r->ri_hybarid.particles_prev[k+1];
-        r->ri_hybarid.is_in_mini[k] = r->ri_hybarid.is_in_mini[k+1];
+    for(int k=globalj;k<global->N;k++){
+        global->ri_hybarid.particles_prev[k] = global->ri_hybarid.particles_prev[k+1];
+        global->ri_hybarid.is_in_mini[k] = global->ri_hybarid.is_in_mini[k+1];
     }
-    r->ri_hybarid.global_index_from_mini_index_N--;
-    for(int k=j;k<r->ri_hybarid.global_index_from_mini_index_N;k++){
-        r->ri_hybarid.global_index_from_mini_index[k] = r->ri_hybarid.global_index_from_mini_index[k+1];
+    global->ri_hybarid.global_index_from_mini_index_N--;
+    for(int k=j;k<global->ri_hybarid.global_index_from_mini_index_N;k++){
+        global->ri_hybarid.global_index_from_mini_index[k] = global->ri_hybarid.global_index_from_mini_index[k+1];
     }
-    for(int k=N_active;k<r->ri_hybarid.global_index_from_mini_index_N;k++){
-        if(r->ri_hybarid.global_index_from_mini_index[k] > globalj){
-            r->ri_hybarid.global_index_from_mini_index[k]--; //1 fewer particles in index now
+    for(int k=N_active;k<global->ri_hybarid.global_index_from_mini_index_N;k++){
+        if(global->ri_hybarid.global_index_from_mini_index[k] > globalj){
+            global->ri_hybarid.global_index_from_mini_index[k]--; //1 fewer particles in index now
         }
     }
 }
