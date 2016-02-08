@@ -4,6 +4,7 @@ include src/integrator_wh.c
 include src/integrator_leapfrog.c
 include src/integrator_sei.c
 include src/integrator_hybrid.c
+include src/integrator_hybarid.c
 include src/integrator.c
 include src/gravity.c
 include src/collision.c
@@ -19,6 +20,7 @@ include src/integrator_wh.h
 include src/integrator_leapfrog.h
 include src/integrator_sei.h
 include src/integrator_hybrid.h
+include src/integrator_hybarid.h
 include src/integrator.h
 include src/collision.h
 include src/boundary.h
@@ -28,9 +30,10 @@ include src/tree.c
 include src/tools.h
 include src/particle.h
 include src/rebound.h
-include src/communication_mpi.h
 include src/input.h
+include src/output.h
 include README.rst
 include LICENSE
 include version.txt
 recursive-include rebound/tests *.py
+include rebound/rebound.h

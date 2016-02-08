@@ -102,11 +102,18 @@ void reb_output_timing(struct reb_simulation* r, const double tmax){
 		}
 #endif // PROFILING
 	}
-	printf("N_tot= %- 9d  ",N_tot);
+	printf("N_tot= %- 9d ",N_tot);
+	if (r->integrator==REB_INTEGRATOR_HYBARID){
+        int N_mini = 0;
+        if (r->ri_hybarid.mini_active && r->ri_hybarid.mini){
+	        N_mini = r->ri_hybarid.mini->N;
+        }
+	    printf("N_mini = %- 4d   ",N_mini);
+    }
 	if (r->integrator==REB_INTEGRATOR_SEI){
-		printf("t= %- 9f [orb]  ",r->t*r->ri_sei.OMEGA/2./M_PI);
+		printf(" t= %- 9f [orb]  ",r->t*r->ri_sei.OMEGA/2./M_PI);
 	}else{
-		printf("t= %- 9f  ",r->t);
+		printf(" t= %- 9f  ",r->t);
 	}
 	printf("dt= %- 9f  ",r->dt);
 	if (r->integrator==REB_INTEGRATOR_HYBRID){

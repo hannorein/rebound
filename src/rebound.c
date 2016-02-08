@@ -61,7 +61,7 @@
 static const char* logo[];				/**< Logo of rebound. */
 #endif // LIBREBOUND
 const char* reb_build_str = __DATE__ " " __TIME__;	// Date and time build string. 
-const char* reb_version_str = "2.11.1";			// **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "2.13.0";			// **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 
 
 void reb_step(struct reb_simulation* const r){
@@ -132,7 +132,9 @@ void reb_step(struct reb_simulation* const r){
 
 	// Search for collisions using local and essential tree.
 	PROFILING_START()
-	reb_collision_search(r);
+    if (r->integrator!=REB_INTEGRATOR_HYBARID){ //Hybrid integrator will search for collisions in mini simulation.
+	    reb_collision_search(r);
+    }
 	PROFILING_STOP(PROFILING_CAT_COLLISION)
 }
 
@@ -463,7 +465,6 @@ void reb_run_heartbeat(struct reb_simulation* const r){
 		usleep(r->usleep);
 	}
 }
-
 enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 #ifdef MPI
 	// Distribute particles
@@ -478,7 +479,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
     // Copy and share simulation struct 
     struct reb_simulation* r = NULL;
     char sem_name[256] = "reb_display";
-    sem_t* display_mutex;
+    sem_t* display_mutex = NULL;
    
     if (opengl_enabled){
         r = (struct reb_simulation*)mmap(r_user, sizeof(struct reb_simulation), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
@@ -486,6 +487,9 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
         // Copy and share particle array
         r->particles = (struct reb_particle*)mmap(NULL, r->allocatedN*sizeof(struct reb_particle), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
         memcpy(r->particles, r_user->particles, r->allocatedN*sizeof(struct reb_particle));
+        for(int i=0; i<r->N; i++){
+            r->particles[i].sim = r;
+        }
         // Create Semaphore
 #ifdef MPI
         sprintf(sem_name,"/reb_display_%d;",r_user->mpi_id);
@@ -573,6 +577,9 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
         memcpy(r_user, r, sizeof(struct reb_simulation));
         r_user->particles = particles_user_loc;
         memcpy(r_user->particles, r->particles, r->N*sizeof(struct reb_particle));
+        for(int i=0; i<r_user->N; i++){
+            r_user->particles[i].sim = r_user;
+        }
         sem_unlink(sem_name);
         sem_close(display_mutex);
     }

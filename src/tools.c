@@ -70,15 +70,19 @@ double reb_random_rayleigh(double sigma){
 /// Other helper routines
 double reb_tools_energy(struct reb_simulation* r){
 	const int N = r->N;
-	const struct reb_particle* restrict const particles = r->particles;
 	const int N_var = r->N_var;
+	const int _N_active = ((r->N_active==-1)?N:r->N_active) - N_var;
+	const struct reb_particle* restrict const particles = r->particles;
 	double e_kin = 0.;
 	double e_pot = 0.;
-	for (int i=0;i<N-N_var;i++){
+    int N_interact = (r->testparticle_type==0)?_N_active:(N-N_var);
+	for (int i=0;i<N_interact;i++){
 		struct reb_particle pi = particles[i];
 		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
-		for (int j=i+1;j<N-N_var;j++){
-            if(r->testparticle_type == 1 && i>r->N_active) continue; //ignore forces bet. planetesimals
+    }
+	for (int i=0;i<_N_active;i++){
+		struct reb_particle pi = particles[i];
+		for (int j=i+1;j<N_interact;j++){
 			struct reb_particle pj = particles[j];
 			double dx = pi.x - pj.x;
 			double dy = pi.y - pj.y;
@@ -90,10 +94,162 @@ double reb_tools_energy(struct reb_simulation* r){
 }
 
 void reb_move_to_com(struct reb_simulation* const r){
-	const int N = r->N;
+    const int N_real = r->N - r->N_var;
 	struct reb_particle* restrict const particles = r->particles;
 	struct reb_particle com = reb_get_com(r);
-	for (int i=0;i<N;i++){
+    // First do second order
+    for (int v=0;v<r->var_config_N;v++){
+        int index = r->var_config[v].index;
+        if (r->var_config[v].testparticle>=0){
+            // Test particles do not affect the COM
+        }else{
+            if (r->var_config[v].order==2){
+                struct reb_particle com_shift = {0};
+                int index_1st_order_a = r->var_config[v].index_1st_order_a;
+                int index_1st_order_b = r->var_config[v].index_1st_order_b;
+                double dma = 0.;
+                double dmb = 0.;
+                double ddm = 0.;
+                for (int i=0;i<N_real;i++){
+                    dma += particles[i+index_1st_order_a].m;
+                    dmb += particles[i+index_1st_order_b].m;
+                    ddm += particles[i+index].m;
+                }
+                for (int i=0;i<N_real;i++){
+                    com_shift.x  += particles[i+index].x /com.m * particles[i].m; 
+                    com_shift.y  += particles[i+index].y /com.m * particles[i].m; 
+                    com_shift.z  += particles[i+index].z /com.m * particles[i].m; 
+                    com_shift.vx += particles[i+index].vx/com.m * particles[i].m; 
+                    com_shift.vy += particles[i+index].vy/com.m * particles[i].m; 
+                    com_shift.vz += particles[i+index].vz/com.m * particles[i].m; 
+                    
+                    com_shift.x  += particles[i+index_1st_order_a].x  /com.m * particles[i+index_1st_order_b].m; 
+                    com_shift.y  += particles[i+index_1st_order_a].y  /com.m * particles[i+index_1st_order_b].m; 
+                    com_shift.z  += particles[i+index_1st_order_a].z  /com.m * particles[i+index_1st_order_b].m; 
+                    com_shift.vx += particles[i+index_1st_order_a].vx /com.m * particles[i+index_1st_order_b].m; 
+                    com_shift.vy += particles[i+index_1st_order_a].vy /com.m * particles[i+index_1st_order_b].m; 
+                    com_shift.vz += particles[i+index_1st_order_a].vz /com.m * particles[i+index_1st_order_b].m; 
+                    
+                    com_shift.x  -= particles[i+index_1st_order_a].x  * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.y  -= particles[i+index_1st_order_a].y  * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.z  -= particles[i+index_1st_order_a].z  * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.vx -= particles[i+index_1st_order_a].vx * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.vy -= particles[i+index_1st_order_a].vy * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.vz -= particles[i+index_1st_order_a].vz * particles[i].m/com.m/com.m*dmb; 
+                    
+                    com_shift.x  += particles[i+index_1st_order_b].x  /com.m * particles[i+index_1st_order_a].m; 
+                    com_shift.y  += particles[i+index_1st_order_b].y  /com.m * particles[i+index_1st_order_a].m; 
+                    com_shift.z  += particles[i+index_1st_order_b].z  /com.m * particles[i+index_1st_order_a].m; 
+                    com_shift.vx += particles[i+index_1st_order_b].vx /com.m * particles[i+index_1st_order_a].m; 
+                    com_shift.vy += particles[i+index_1st_order_b].vy /com.m * particles[i+index_1st_order_a].m; 
+                    com_shift.vz += particles[i+index_1st_order_b].vz /com.m * particles[i+index_1st_order_a].m; 
+                   
+                    com_shift.x  += particles[i].x  /com.m * particles[i+index].m; 
+                    com_shift.y  += particles[i].y  /com.m * particles[i+index].m; 
+                    com_shift.z  += particles[i].z  /com.m * particles[i+index].m; 
+                    com_shift.vx += particles[i].vx /com.m * particles[i+index].m; 
+                    com_shift.vy += particles[i].vy /com.m * particles[i+index].m; 
+                    com_shift.vz += particles[i].vz /com.m * particles[i+index].m; 
+                    
+                    com_shift.x  -= particles[i].x  * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.y  -= particles[i].y  * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.z  -= particles[i].z  * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.vx -= particles[i].vx * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.vy -= particles[i].vy * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.vz -= particles[i].vz * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    
+                    com_shift.x  -= particles[i+index_1st_order_b].x  * particles[i].m/com.m/com.m*dma; 
+                    com_shift.y  -= particles[i+index_1st_order_b].y  * particles[i].m/com.m/com.m*dma; 
+                    com_shift.z  -= particles[i+index_1st_order_b].z  * particles[i].m/com.m/com.m*dma; 
+                    com_shift.vx -= particles[i+index_1st_order_b].vx * particles[i].m/com.m/com.m*dma; 
+                    com_shift.vy -= particles[i+index_1st_order_b].vy * particles[i].m/com.m/com.m*dma; 
+                    com_shift.vz -= particles[i+index_1st_order_b].vz * particles[i].m/com.m/com.m*dma; 
+                    
+                    com_shift.x  -= particles[i].x  * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.y  -= particles[i].y  * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.z  -= particles[i].z  * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.vx -= particles[i].vx * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.vy -= particles[i].vy * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.vz -= particles[i].vz * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    
+                    com_shift.x  += 2.*particles[i].x  * particles[i].m/com.m/com.m/com.m*dma*dmb; 
+                    com_shift.y  += 2.*particles[i].y  * particles[i].m/com.m/com.m/com.m*dma*dmb; 
+                    com_shift.z  += 2.*particles[i].z  * particles[i].m/com.m/com.m/com.m*dma*dmb; 
+                    com_shift.vx += 2.*particles[i].vx * particles[i].m/com.m/com.m/com.m*dma*dmb; 
+                    com_shift.vy += 2.*particles[i].vy * particles[i].m/com.m/com.m/com.m*dma*dmb; 
+                    com_shift.vz += 2.*particles[i].vz * particles[i].m/com.m/com.m/com.m*dma*dmb; 
+                    
+                    com_shift.x  -= particles[i].x  * particles[i].m/com.m/com.m*ddm; 
+                    com_shift.y  -= particles[i].y  * particles[i].m/com.m/com.m*ddm; 
+                    com_shift.z  -= particles[i].z  * particles[i].m/com.m/com.m*ddm; 
+                    com_shift.vx -= particles[i].vx * particles[i].m/com.m/com.m*ddm; 
+                    com_shift.vy -= particles[i].vy * particles[i].m/com.m/com.m*ddm; 
+                    com_shift.vz -= particles[i].vz * particles[i].m/com.m/com.m*ddm; 
+                    
+                    
+                    
+                    
+                    
+                }
+                for (int i=0;i<N_real;i++){
+                    particles[i+index].x -= com_shift.x; 
+                    particles[i+index].y -= com_shift.y; 
+                    particles[i+index].z -= com_shift.z; 
+                    particles[i+index].vx -= com_shift.vx; 
+                    particles[i+index].vy -= com_shift.vy; 
+                    particles[i+index].vz -= com_shift.vz; 
+                }
+            }
+        }
+    }
+    // Then do first order
+    for (int v=0;v<r->var_config_N;v++){
+        int index = r->var_config[v].index;
+        if (r->var_config[v].testparticle>=0){
+            // Test particles do not affect the COM
+        }else{
+            if (r->var_config[v].order==1){
+                struct reb_particle com_shift = {0};
+                double dm = 0.;
+                for (int i=0;i<N_real;i++){
+                    dm += particles[i+index].m;
+                }
+                for (int i=0;i<N_real;i++){
+                    com_shift.x  += particles[i].m/com.m * particles[i+index].x ; 
+                    com_shift.y  += particles[i].m/com.m * particles[i+index].y ; 
+                    com_shift.z  += particles[i].m/com.m * particles[i+index].z ; 
+                    com_shift.vx += particles[i].m/com.m * particles[i+index].vx; 
+                    com_shift.vy += particles[i].m/com.m * particles[i+index].vy; 
+                    com_shift.vz += particles[i].m/com.m * particles[i+index].vz; 
+                    
+                    com_shift.x  += particles[i].x /com.m * particles[i+index].m; 
+                    com_shift.y  += particles[i].y /com.m * particles[i+index].m; 
+                    com_shift.z  += particles[i].z /com.m * particles[i+index].m; 
+                    com_shift.vx += particles[i].vx/com.m * particles[i+index].m; 
+                    com_shift.vy += particles[i].vy/com.m * particles[i+index].m; 
+                    com_shift.vz += particles[i].vz/com.m * particles[i+index].m; 
+                    
+                    com_shift.x  -= particles[i].x /(com.m*com.m) * particles[i].m*dm; 
+                    com_shift.y  -= particles[i].y /(com.m*com.m) * particles[i].m*dm; 
+                    com_shift.z  -= particles[i].z /(com.m*com.m) * particles[i].m*dm; 
+                    com_shift.vx -= particles[i].vx/(com.m*com.m) * particles[i].m*dm; 
+                    com_shift.vy -= particles[i].vy/(com.m*com.m) * particles[i].m*dm; 
+                    com_shift.vz -= particles[i].vz/(com.m*com.m) * particles[i].m*dm; 
+                }
+                for (int i=0;i<N_real;i++){
+                    particles[i+index].x -= com_shift.x; 
+                    particles[i+index].y -= com_shift.y; 
+                    particles[i+index].z -= com_shift.z; 
+                    particles[i+index].vx -= com_shift.vx; 
+                    particles[i+index].vy -= com_shift.vy; 
+                    particles[i+index].vz -= com_shift.vz; 
+                }
+            }
+        }
+    }
+	
+    // Finally do normal particles
+    for (int i=0;i<N_real;i++){
 		particles[i].x  -= com.x;
 		particles[i].y  -= com.y;
 		particles[i].z  -= com.z;
@@ -105,9 +261,9 @@ void reb_move_to_com(struct reb_simulation* const r){
 
 struct reb_particle reb_get_com(struct reb_simulation* r){
 	struct reb_particle com = {.m=0, .x=0, .y=0, .z=0, .vx=0, .vy=0, .vz=0};
-	const int N = r->N;
+    const int N_real = r->N - r->N_var;
 	struct reb_particle* restrict const particles = r->particles;
-	for (int i=0;i<N;i++){
+	for (int i=0;i<N_real;i++){
 		com = reb_get_com_of_pair(com, particles[i]);
 	}
 	return com;
@@ -443,13 +599,14 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
 	return reb_tools_particle_to_orbit_err(G, p, primary, &err);
 }
 
-/**************************
- * MEGNO Routines         */
+/***********************************
+ * Variational Equations and Megno */
 
 
 int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle){
     r->var_config_N++;
     r->var_config = realloc(r->var_config,sizeof(struct reb_variational_configuration)*r->var_config_N);
+    r->var_config[r->var_config_N-1].sim = r;
     r->var_config[r->var_config_N-1].order = 1;
     int index = r->N;
     r->var_config[r->var_config_N-1].index = index;
@@ -472,6 +629,7 @@ int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle){
 int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b){
     r->var_config_N++;
     r->var_config = realloc(r->var_config,sizeof(struct reb_variational_configuration)*r->var_config_N);
+    r->var_config[r->var_config_N-1].sim = r;
     r->var_config[r->var_config_N-1].order = 2;
     int index = r->N;
     r->var_config[r->var_config_N-1].index = index;
@@ -579,13 +737,16 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY){
 }
 #endif // LIBREBOUNDX
 
-// Function for derivates of orbits
+
+
+/**************************************
+ * Functionis for derivates of orbits  */
 
 struct reb_particle reb_tools_orbit_to_particle_da(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 
 	struct reb_particle p = {0};
-	double dr = (1-e*e)/(1 + e*cos(f));
-	double dv0 = -0.5/a/sqrt(a)*sqrt(G*(m+primary.m)/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double dr = (1.-e*e)/(1. + e*cos(f));
+	double dv0 = -0.5/sqrt(a*a*a)*sqrt(G*(m+primary.m)/(1.-e*e)); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -596,12 +757,10 @@ struct reb_particle reb_tools_orbit_to_particle_da(double G, struct reb_particle
 	double ci = cos(inc);
 	double si = sin(inc);
 	
-	// Murray & Dermott Eq 2.122
 	p.x = dr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
 	p.y = dr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
 	p.z = dr*(so*cf+co*sf)*si;
 
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = dv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
 	p.vy = dv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
 	p.vz = dv0*((e+cf)*co*si - sf*si*so);
@@ -612,7 +771,7 @@ struct reb_particle reb_tools_orbit_to_particle_da(double G, struct reb_particle
 struct reb_particle reb_tools_orbit_to_particle_dda(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 
 	struct reb_particle p = {0};
-	double ddv0 = -0.75/a/a/sqrt(a)*sqrt(G*(m+primary.m)/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double ddv0 = 0.75/(a*a*sqrt(a))*sqrt(G*(m+primary.m)/(1.-e*e));
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -623,7 +782,6 @@ struct reb_particle reb_tools_orbit_to_particle_dda(double G, struct reb_particl
 	double ci = cos(inc);
 	double si = sin(inc);
 	
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = ddv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
 	p.vy = ddv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
 	p.vz = ddv0*((e+cf)*co*si - sf*si*so);
@@ -634,9 +792,9 @@ struct reb_particle reb_tools_orbit_to_particle_dda(double G, struct reb_particl
 struct reb_particle reb_tools_orbit_to_particle_de(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};
     double cosf = cos(f);
-	double dr = -a*(cosf*e*e+cosf+2.*e)/((cosf*e+1.)*(cosf*e+1.));
 	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
-	double dv0 = e*v0/(1.-e*e); 
+	double dr = -a*(cosf*e*e+cosf+2.*e)/((cosf*e+1.)*(cosf*e+1.));
+	double dv0 = sqrt(G*(m+primary.m)/a)*e/((1.-e*e)*sqrt(1.-e*e)); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -647,12 +805,10 @@ struct reb_particle reb_tools_orbit_to_particle_de(double G, struct reb_particle
 	double ci = cos(inc);
 	double si = sin(inc);
 	
-	// Murray & Dermott Eq 2.122
 	p.x = dr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
 	p.y = dr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
 	p.z = dr*(so*cf+co*sf)*si;
 
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = dv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
 	p.vy = dv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
 	p.vz = dv0*((e+cf)*co*si - sf*si*so);
@@ -683,12 +839,10 @@ struct reb_particle reb_tools_orbit_to_particle_dde(double G, struct reb_particl
 	double ci = cos(inc);
 	double si = sin(inc);
 	
-	// Murray & Dermott Eq 2.122
 	p.x = ddr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
 	p.y = ddr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
 	p.z = ddr*(so*cf+co*sf)*si;
 
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = ddv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
 	p.vy = ddv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
 	p.vz = ddv0*((e+cf)*co*si - sf*si*so);
@@ -703,7 +857,7 @@ struct reb_particle reb_tools_orbit_to_particle_dde(double G, struct reb_particl
 struct reb_particle reb_tools_orbit_to_particle_di(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};
 	double r = a*(1.-e*e)/(1. + e*cos(f));
-	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -714,12 +868,10 @@ struct reb_particle reb_tools_orbit_to_particle_di(double G, struct reb_particle
 	double dci = -sin(inc);
 	double dsi = cos(inc);
 	
-	// Murray & Dermott Eq 2.122
 	p.x = r*(- sO*(so*cf+co*sf)*dci);
 	p.y = r*(+ cO*(so*cf+co*sf)*dci);
 	p.z = r*(so*cf+co*sf)*dsi;
 
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = v0*((e+cf)*(-dci*co*sO) - sf*(- dci*so*sO));
 	p.vy = v0*((e+cf)*(dci*co*cO)  - sf*(dci*so*cO));
 	p.vz = v0*((e+cf)*co*dsi - sf*dsi*so);
@@ -731,7 +883,7 @@ struct reb_particle reb_tools_orbit_to_particle_di(double G, struct reb_particle
 struct reb_particle reb_tools_orbit_to_particle_ddi(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};
 	double r = a*(1.-e*e)/(1. + e*cos(f));
-	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -742,12 +894,10 @@ struct reb_particle reb_tools_orbit_to_particle_ddi(double G, struct reb_particl
 	double ddci = -cos(inc);
 	double ddsi = -sin(inc);
 	
-	// Murray & Dermott Eq 2.122
 	p.x = r*(- sO*(so*cf+co*sf)*ddci);
 	p.y = r*(+ cO*(so*cf+co*sf)*ddci);
 	p.z = r*(so*cf+co*sf)*ddsi;
 
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = v0*((e+cf)*(-ddci*co*sO) - sf*(- ddci*so*sO));
 	p.vy = v0*((e+cf)*(ddci*co*cO)  - sf*(ddci*so*cO));
 	p.vz = v0*((e+cf)*co*ddsi - sf*ddsi*so);
@@ -758,7 +908,7 @@ struct reb_particle reb_tools_orbit_to_particle_ddi(double G, struct reb_particl
 struct reb_particle reb_tools_orbit_to_particle_dOmega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};
 	double r = a*(1.-e*e)/(1. + e*cos(f));
-	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
 
 	double dcO = -sin(Omega);
 	double dsO = cos(Omega);
@@ -768,12 +918,10 @@ struct reb_particle reb_tools_orbit_to_particle_dOmega(double G, struct reb_part
 	double sf = sin(f);
 	double ci = cos(inc);
 	
-	// Murray & Dermott Eq 2.122
 	p.x = r*(dcO*(co*cf-so*sf) - dsO*(so*cf+co*sf)*ci);
 	p.y = r*(dsO*(co*cf-so*sf) + dcO*(so*cf+co*sf)*ci);
 	p.z = 0.;
 
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = v0*((e+cf)*(-ci*co*dsO - dcO*so) - sf*(co*dcO - ci*so*dsO));
 	p.vy = v0*((e+cf)*(ci*co*dcO - dsO*so)  - sf*(co*dsO + ci*so*dcO));
 	p.vz = 0.;
@@ -784,7 +932,7 @@ struct reb_particle reb_tools_orbit_to_particle_dOmega(double G, struct reb_part
 struct reb_particle reb_tools_orbit_to_particle_ddOmega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};
 	double r = a*(1.-e*e)/(1. + e*cos(f));
-	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
 
 	double ddcO = -cos(Omega);
 	double ddsO = -sin(Omega);
@@ -794,12 +942,10 @@ struct reb_particle reb_tools_orbit_to_particle_ddOmega(double G, struct reb_par
 	double sf = sin(f);
 	double ci = cos(inc);
 	
-	// Murray & Dermott Eq 2.122
 	p.x = r*(ddcO*(co*cf-so*sf) - ddsO*(so*cf+co*sf)*ci);
 	p.y = r*(ddsO*(co*cf-so*sf) + ddcO*(so*cf+co*sf)*ci);
 	p.z = 0.;
 
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = v0*((e+cf)*(-ci*co*ddsO - ddcO*so) - sf*(co*ddcO - ci*so*ddsO));
 	p.vy = v0*((e+cf)*(ci*co*ddcO - ddsO*so)  - sf*(co*ddsO + ci*so*ddcO));
 	p.vz = 0.;
@@ -810,7 +956,7 @@ struct reb_particle reb_tools_orbit_to_particle_ddOmega(double G, struct reb_par
 struct reb_particle reb_tools_orbit_to_particle_domega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};
 	double r = a*(1.-e*e)/(1. + e*cos(f));
-	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -821,12 +967,10 @@ struct reb_particle reb_tools_orbit_to_particle_domega(double G, struct reb_part
 	double ci = cos(inc);
 	double si = sin(inc);
 	
-	// Murray & Dermott Eq 2.122
 	p.x = r*(cO*(dco*cf-dso*sf) - sO*(dso*cf+dco*sf)*ci);
 	p.y = r*(sO*(dco*cf-dso*sf) + cO*(dso*cf+dco*sf)*ci);
 	p.z = r*(dso*cf+dco*sf)*si;
 
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = v0*((e+cf)*(-ci*dco*sO - cO*dso) - sf*(dco*cO - ci*dso*sO));
 	p.vy = v0*((e+cf)*(ci*dco*cO - sO*dso)  - sf*(dco*sO + ci*dso*cO));
 	p.vz = v0*((e+cf)*dco*si - sf*si*dso);
@@ -837,7 +981,7 @@ struct reb_particle reb_tools_orbit_to_particle_domega(double G, struct reb_part
 struct reb_particle reb_tools_orbit_to_particle_ddomega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};
 	double r = a*(1.-e*e)/(1. + e*cos(f));
-	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -848,12 +992,10 @@ struct reb_particle reb_tools_orbit_to_particle_ddomega(double G, struct reb_par
 	double ci = cos(inc);
 	double si = sin(inc);
 	
-	// Murray & Dermott Eq 2.122
 	p.x = r*(cO*(ddco*cf-ddso*sf) - sO*(ddso*cf+ddco*sf)*ci);
 	p.y = r*(sO*(ddco*cf-ddso*sf) + cO*(ddso*cf+ddco*sf)*ci);
 	p.z = r*(ddso*cf+ddco*sf)*si;
 
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = v0*((e+cf)*(-ci*ddco*sO - cO*ddso) - sf*(ddco*cO - ci*ddso*sO));
 	p.vy = v0*((e+cf)*(ci*ddco*cO - sO*ddso)  - sf*(ddco*sO + ci*ddso*cO));
 	p.vz = v0*((e+cf)*ddco*si - sf*si*ddso);
@@ -865,7 +1007,7 @@ struct reb_particle reb_tools_orbit_to_particle_df(double G, struct reb_particle
 	struct reb_particle p = {0};
 	double r = a*(1.-e*e)/(1. + e*cos(f));
 	double dr = a*(1.-e*e)/((1. + e*cos(f))*(1. + e*cos(f)))*e*sin(f);
-	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -878,7 +1020,6 @@ struct reb_particle reb_tools_orbit_to_particle_df(double G, struct reb_particle
 	double ci = cos(inc);
 	double si = sin(inc);
 	
-	// Murray & Dermott Eq 2.122
 	p.x = dr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
 	p.y = dr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
 	p.z = dr*(so*cf+co*sf)*si;
@@ -887,7 +1028,6 @@ struct reb_particle reb_tools_orbit_to_particle_df(double G, struct reb_particle
 	p.y += r*(sO*(co*dcf-so*dsf) + cO*(so*dcf+co*dsf)*ci);
 	p.z += r*(so*dcf+co*dsf)*si;
 
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = v0*(dcf*(-ci*co*sO - cO*so) - dsf*(co*cO - ci*so*sO));
 	p.vy = v0*(dcf*(ci*co*cO - sO*so)  - dsf*(co*sO + ci*so*cO));
 	p.vz = v0*(dcf*co*si - dsf*si*so);
@@ -900,7 +1040,7 @@ struct reb_particle reb_tools_orbit_to_particle_ddf(double G, struct reb_particl
 	double r = a*(1.-e*e)/(1. + e*cos(f));
 	double dr = a*(1.-e*e)/((1. + e*cos(f))*(1. + e*cos(f)))*e*sin(f);
 	double ddr = 2.*a*(1.-e*e)/((1. + e*cos(f))*(1. + e*cos(f))*(1. + e*cos(f)))*e*e*sin(f)*sin(f) + a*(1.-e*e)*e*cos(f)/((1. + e*cos(f))*(1. + e*cos(f)));
-	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -915,7 +1055,6 @@ struct reb_particle reb_tools_orbit_to_particle_ddf(double G, struct reb_particl
 	double ci = cos(inc);
 	double si = sin(inc);
 	
-	// Murray & Dermott Eq 2.122
 	p.x = ddr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
 	p.y = ddr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
 	p.z = ddr*(so*cf+co*sf)*si;
@@ -928,7 +1067,6 @@ struct reb_particle reb_tools_orbit_to_particle_ddf(double G, struct reb_particl
 	p.y += r*(sO*(co*ddcf-so*ddsf) + cO*(so*ddcf+co*ddsf)*ci);
 	p.z += r*(so*ddcf+co*ddsf)*si;
 
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = v0*(ddcf*(-ci*co*sO - cO*so) - ddsf*(co*cO - ci*so*sO));
 	p.vy = v0*(ddcf*(ci*co*cO - sO*so)  - ddsf*(co*sO + ci*so*cO));
 	p.vz = v0*(ddcf*co*si - ddsf*si*so);
@@ -939,7 +1077,7 @@ struct reb_particle reb_tools_orbit_to_particle_ddf(double G, struct reb_particl
 struct reb_particle reb_tools_orbit_to_particle_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};
 	p.m = 1.;
-	double dv0 = 0.5/sqrt(G*(m+primary.m)/a/(1.-e*e))*G/a/(1.-e*e); 
+	double dv0 = 0.5*sqrt(G/a/(1.-e*e))/sqrt(m+primary.m); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -950,7 +1088,6 @@ struct reb_particle reb_tools_orbit_to_particle_dm(double G, struct reb_particle
 	double ci = cos(inc);
 	double si = sin(inc);
 
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = dv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
 	p.vy = dv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
 	p.vz = dv0*((e+cf)*co*si - sf*si*so);
@@ -960,7 +1097,7 @@ struct reb_particle reb_tools_orbit_to_particle_dm(double G, struct reb_particle
 
 struct reb_particle reb_tools_orbit_to_particle_ddm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
 	struct reb_particle p = {0};
-	double ddv0 = -0.25/sqrt(G*(m+primary.m)/a/(1.-e*e))*G/a/(1.-e*e)*G/a/(1.-e*e); 
+	double ddv0 = -0.25*sqrt(G/a/(1.-e*e))/sqrt(m+primary.m)/(m+primary.m); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -971,7 +1108,6 @@ struct reb_particle reb_tools_orbit_to_particle_ddm(double G, struct reb_particl
 	double ci = cos(inc);
 	double si = sin(inc);
 
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
 	p.vx = ddv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
 	p.vy = ddv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
 	p.vz = ddv0*((e+cf)*co*si - sf*si*so);
@@ -979,12 +1115,13 @@ struct reb_particle reb_tools_orbit_to_particle_ddm(double G, struct reb_particl
 	return p;
 }
 
-/**
-struct reb_particle reb_tools_orbit_to_particle_(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+
+// Crossterms
+
+struct reb_particle reb_tools_orbit_to_particle_da_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+
 	struct reb_particle p = {0};
-	p.m = m;
-	double r = a*(1-e*e)/(1 + e*cos(f));
-	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+	double ddv0 = -0.25/sqrt((m+primary.m)*a*a*a)*sqrt(G/(1.-e*e)); 
 
 	double cO = cos(Omega);
 	double sO = sin(Omega);
@@ -995,17 +1132,535 @@ struct reb_particle reb_tools_orbit_to_particle_(double G, struct reb_particle p
 	double ci = cos(inc);
 	double si = sin(inc);
 	
-	// Murray & Dermott Eq 2.122
-	p.x = primary.x + r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
-	p.y = primary.y + r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
-	p.z = primary.z + r*(so*cf+co*sf)*si;
-
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
-	p.vx = primary.vx + v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
-	p.vy = primary.vy + v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
-	p.vz = primary.vz + v0*((e+cf)*co*si - sf*si*so);
+	p.vx = ddv0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = ddv0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = ddv0*((e+cf)*co*si - sf*si*so);
 	
+	return p;
+}
+
+
+
+struct reb_particle reb_tools_orbit_to_particle_da_de(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+    double cosf = cos(f);
+	double ddr = -(cosf*e*e+cosf+2.*e)/((cosf*e+1.)*(cosf*e+1.));
+	double dv0_da = -0.5/sqrt(G*(m+primary.m)/a/(1.-e*e))*G*(m+primary.m)/(a*a)/(1.-e*e); 
+	
+	double dv0_da_de = e*dv0_da/(1.-e*e); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	p.x = ddr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
+	p.y = ddr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
+	p.z = ddr*(so*cf+co*sf)*si;
+
+	p.vx = dv0_da_de*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = dv0_da_de*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = dv0_da_de*((e+cf)*co*si - sf*si*so);
+	
+    p.vx += dv0_da*(-ci*co*sO - cO*so);
+	p.vy += dv0_da*(ci*co*cO - sO*so);
+	p.vz += dv0_da*(co*si);
 
 	return p;
 }
-    */
+
+struct reb_particle reb_tools_orbit_to_particle_da_di(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+
+	struct reb_particle p = {0};
+	double dr = (1.-e*e)/(1. + e*cos(f));
+	double dv0 = -0.5/sqrt(a*a*a)*sqrt(G*(m+primary.m)/(1.-e*e)); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double dci = -sin(inc);
+	double dsi = cos(inc);
+	
+	p.x = dr*(- sO*(so*cf+co*sf)*dci);
+	p.y = dr*(+ cO*(so*cf+co*sf)*dci);
+	p.z = dr*(so*cf+co*sf)*dsi;
+
+	p.vx = dv0*((e+cf)*(-dci*co*sO) - sf*(- dci*so*sO));
+	p.vy = dv0*((e+cf)*(dci*co*cO)  - sf*(dci*so*cO));
+	p.vz = dv0*((e+cf)*co*dsi - sf*dsi*so);
+	
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_da_dOmega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+
+	struct reb_particle p = {0};
+	double dr = (1.-e*e)/(1. + e*cos(f));
+	double dv0 = -0.5/sqrt(a*a*a)*sqrt(G*(m+primary.m)/(1.-e*e)); 
+
+	double dcO = -sin(Omega);
+	double dsO = cos(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	
+	p.x = dr*(dcO*(co*cf-so*sf) - dsO*(so*cf+co*sf)*ci);
+	p.y = dr*(dsO*(co*cf-so*sf) + dcO*(so*cf+co*sf)*ci);
+
+	p.vx = dv0*((e+cf)*(-ci*co*dsO - dcO*so) - sf*(co*dcO - ci*so*dsO));
+	p.vy = dv0*((e+cf)*(ci*co*dcO - dsO*so)  - sf*(co*dsO + ci*so*dcO));
+	
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_da_domega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+
+	struct reb_particle p = {0};
+	double dr = (1.-e*e)/(1. + e*cos(f));
+	double dv0 = -0.5/sqrt(a*a*a)*sqrt(G*(m+primary.m)/(1.-e*e)); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double dco = -sin(omega);
+	double dso = cos(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	p.x = dr*(cO*(dco*cf-dso*sf) - sO*(dso*cf+dco*sf)*ci);
+	p.y = dr*(sO*(dco*cf-dso*sf) + cO*(dso*cf+dco*sf)*ci);
+	p.z = dr*(dso*cf+dco*sf)*si;
+
+	p.vx = dv0*((e+cf)*(-ci*dco*sO - cO*dso) - sf*(dco*cO - ci*dso*sO));
+	p.vy = dv0*((e+cf)*(ci*dco*cO - sO*dso)  - sf*(dco*sO + ci*dso*cO));
+	p.vz = dv0*((e+cf)*dco*si - sf*si*dso);
+	
+	return p;
+}
+struct reb_particle reb_tools_orbit_to_particle_da_df(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+
+	struct reb_particle p = {0};
+	double dr = (1.-e*e)/(1. + e*cos(f));
+	double ddr = e*sin(f)*(1.-e*e)/(1. + e*cos(f))/(1. + e*cos(f));
+	double dv0 = -0.5/sqrt(a*a*a)*sqrt(G*(m+primary.m)/(1.-e*e));
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double dcf = -sin(f);
+	double dsf = cos(f);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	p.x = dr*(cO*(co*dcf-so*dsf) - sO*(so*dcf+co*dsf)*ci);
+	p.y = dr*(sO*(co*dcf-so*dsf) + cO*(so*dcf+co*dsf)*ci);
+	p.z = dr*(so*dcf+co*dsf)*si;
+	
+    p.x += ddr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
+	p.y += ddr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
+	p.z += ddr*(so*cf+co*sf)*si;
+
+	p.vx = dv0*(dcf*(-ci*co*sO - cO*so) - dsf*(co*cO - ci*so*sO));
+	p.vy = dv0*(dcf*(ci*co*cO - sO*so)  - dsf*(co*sO + ci*so*cO));
+	p.vz = dv0*(dcf*co*si - dsf*si*so);
+	
+	return p;
+}
+struct reb_particle reb_tools_orbit_to_particle_de_di(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+    double cosf = cos(f);
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
+	double dr = -a*(cosf*e*e+cosf+2.*e)/((cosf*e+1.)*(cosf*e+1.));
+	double dv0 = sqrt(G*(m+primary.m)/a)*e/((1.-e*e)*sqrt(1.-e*e)); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double dci = -sin(inc);
+	double dsi = cos(inc);
+	
+	p.x = dr*(- sO*(so*cf+co*sf)*dci);
+	p.y = dr*(+ cO*(so*cf+co*sf)*dci);
+	p.z = dr*(so*cf+co*sf)*dsi;
+
+	p.vx = dv0*((e+cf)*(-dci*co*sO) - sf*(- dci*so*sO));
+	p.vy = dv0*((e+cf)*(dci*co*cO)  - sf*(+ dci*so*cO));
+	p.vz = dv0*((e+cf)*co*dsi - sf*dsi*so);
+	
+    p.vx += v0*(-dci*co*sO);
+	p.vy += v0*(dci*co*cO);
+	p.vz += v0*(co*dsi);
+
+	return p;
+}
+
+
+struct reb_particle reb_tools_orbit_to_particle_de_dOmega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+    double cosf = cos(f);
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
+	double dr = -a*(cosf*e*e+cosf+2.*e)/((cosf*e+1.)*(cosf*e+1.));
+	double dv0 = sqrt(G*(m+primary.m)/a)*e/((1.-e*e)*sqrt(1.-e*e)); 
+
+	double dcO = -sin(Omega);
+	double dsO = cos(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	
+	p.x = dr*(dcO*(co*cf-so*sf) - dsO*(so*cf+co*sf)*ci);
+	p.y = dr*(dsO*(co*cf-so*sf) + dcO*(so*cf+co*sf)*ci);
+
+	p.vx = dv0*((e+cf)*(-ci*co*dsO - dcO*so) - sf*(co*dcO - ci*so*dsO));
+	p.vy = dv0*((e+cf)*(ci*co*dcO - dsO*so)  - sf*(co*dsO + ci*so*dcO));
+	
+    p.vx += v0*(-ci*co*dsO - dcO*so);
+	p.vy += v0*(ci*co*dcO - dsO*so);
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_de_domega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+    double cosf = cos(f);
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
+	double dr = -a*(cosf*e*e+cosf+2.*e)/((cosf*e+1.)*(cosf*e+1.));
+	double dv0 = sqrt(G*(m+primary.m)/a)*e/((1.-e*e)*sqrt(1.-e*e)); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double dco = -sin(omega);
+	double dso = cos(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	p.x = dr*(cO*(dco*cf-dso*sf) - sO*(dso*cf+dco*sf)*ci);
+	p.y = dr*(sO*(dco*cf-dso*sf) + cO*(dso*cf+dco*sf)*ci);
+	p.z = dr*(dso*cf+dco*sf)*si;
+
+	p.vx = dv0*((e+cf)*(-ci*dco*sO - cO*dso) - sf*(dco*cO - ci*dso*sO));
+	p.vy = dv0*((e+cf)*(ci*dco*cO - sO*dso)  - sf*(dco*sO + ci*dso*cO));
+	p.vz = dv0*((e+cf)*dco*si - sf*si*dso);
+	
+    p.vx += v0*(-ci*dco*sO - cO*dso);
+	p.vy += v0*(ci*dco*cO - sO*dso);
+	p.vz += v0*(dco*si);
+
+	return p;
+}
+struct reb_particle reb_tools_orbit_to_particle_de_df(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+    double cosf = cos(f);
+	double dr = -a*(cosf*e*e+cosf+2.*e)/((cosf*e+1.)*(cosf*e+1.));
+	double ddr = -a*(-sin(f)*e*e-sin(f))/((cosf*e+1.)*(cosf*e+1.))
+	            -2.*e*sin(f) * a*(cosf*e*e+cosf+2.*e)/((cosf*e+1.)*(cosf*e+1.)*(cosf*e+1.));
+	double dv0 = sqrt(G*(m+primary.m)/a)*e/((1.-e*e)*sqrt(1.-e*e)); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double dcf = -sin(f);
+	double dsf = cos(f);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	p.x = dr*(cO*(co*dcf-so*dsf) - sO*(so*dcf+co*dsf)*ci);
+	p.y = dr*(sO*(co*dcf-so*dsf) + cO*(so*dcf+co*dsf)*ci);
+	p.z = dr*(so*dcf+co*dsf)*si;
+	
+    p.x += ddr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
+	p.y += ddr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
+	p.z += ddr*(so*cf+co*sf)*si;
+	
+    p.vx = dv0*(dcf*(-ci*co*sO - cO*so) - dsf*(co*cO - ci*so*sO));
+	p.vy = dv0*(dcf*(ci*co*cO - sO*so)  - dsf*(co*sO + ci*so*cO));
+	p.vz = dv0*(dcf*co*si - dsf*si*so);
+	
+	return p;
+}
+struct reb_particle reb_tools_orbit_to_particle_de_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double dv0m = 0.5*G/a/(1.-e*e)/sqrt(G*(m+primary.m)/a/(1.-e*e)); 
+	double dv0ea = 0.5*G/a/sqrt(G*(m+primary.m)/a)*e/((1.-e*e)*sqrt(1.-e*e)); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	p.vx = dv0ea*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+	p.vy = dv0ea*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+	p.vz = dv0ea*((e+cf)*co*si - sf*si*so);
+	
+    p.vx += dv0m*(-ci*co*sO - cO*so);
+	p.vy += dv0m*(ci*co*cO - sO*so);
+	p.vz += dv0m*(co*si);
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_di_dOmega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
+
+	double dcO = -sin(Omega);
+	double dsO = cos(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double dci = -sin(inc);
+	
+	p.x = r*(- dsO*(so*cf+co*sf)*dci);
+	p.y = r*(+ dcO*(so*cf+co*sf)*dci);
+
+	p.vx = v0*((e+cf)*(-dci*co*dsO) - sf*(- dci*so*dsO));
+	p.vy = v0*((e+cf)*(dci*co*dcO)  - sf*(dci*so*dcO));
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_di_domega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double dco = -sin(omega);
+	double dso = cos(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double dci = -sin(inc);
+	double dsi = cos(inc);
+	
+	p.x = r*(- sO*(dso*cf+dco*sf)*dci);
+	p.y = r*(+ cO*(dso*cf+dco*sf)*dci);
+	p.z = r*(dso*cf+dco*sf)*dsi;
+
+	p.vx = v0*((e+cf)*(-dci*dco*sO) - sf*(- dci*dso*sO));
+	p.vy = v0*((e+cf)*(dci*dco*cO)  - sf*(dci*dso*cO));
+	p.vz = v0*((e+cf)*dco*dsi - sf*dsi*dso);
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_di_df(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double dr = e*sin(f)*a*(1.-e*e)/(1. + e*cos(f))/(1. + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double dcf = -sin(f);
+	double dsf = cos(f);
+	double cf = cos(f);
+	double sf = sin(f);
+	double dci = -sin(inc);
+	double dsi = cos(inc);
+	
+	p.x = r*(- sO*(so*dcf+co*dsf)*dci);
+	p.y = r*(+ cO*(so*dcf+co*dsf)*dci);
+	p.z = r*(so*dcf+co*dsf)*dsi;
+	
+    p.x += dr*(- sO*(so*cf+co*sf)*dci);
+	p.y += dr*(+ cO*(so*cf+co*sf)*dci);
+	p.z += dr*(so*cf+co*sf)*dsi;
+
+	p.vx = v0*(dcf*(-dci*co*sO) - dsf*(- dci*so*sO));
+	p.vy = v0*(dcf*(dci*co*cO)  - dsf*(dci*so*cO));
+	p.vz = v0*(dcf*co*dsi - dsf*dsi*so);
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_di_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double dv0 = 0.5/sqrt(m+primary.m)*sqrt(G/a/(1.-e*e)); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double dci = -sin(inc);
+	double dsi = cos(inc);
+	
+	p.vx = dv0*((e+cf)*(-dci*co*sO) - sf*(- dci*so*sO));
+	p.vy = dv0*((e+cf)*(dci*co*cO)  - sf*(dci*so*cO));
+	p.vz = dv0*((e+cf)*co*dsi - sf*dsi*so);
+	
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_dOmega_domega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
+
+	double dcO = -sin(Omega);
+	double dsO = cos(Omega);
+	double dco = -sin(omega);
+	double dso = cos(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	
+	p.x = r*(dcO*(dco*cf-dso*sf) - dsO*(dso*cf+dco*sf)*ci);
+	p.y = r*(dsO*(dco*cf-dso*sf) + dcO*(dso*cf+dco*sf)*ci);
+
+	p.vx = v0*((e+cf)*(-ci*dco*dsO - dcO*dso) - sf*(dco*dcO - ci*dso*dsO));
+	p.vy = v0*((e+cf)*(ci*dco*dcO - dsO*dso)  - sf*(dco*dsO + ci*dso*dcO));
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_dOmega_df(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double dr = e*sin(f)*a*(1.-e*e)/(1. + e*cos(f))/(1. + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
+
+	double dcO = -sin(Omega);
+	double dsO = cos(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double dcf = -sin(f);
+	double dsf = cos(f);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	
+	p.x = r*(dcO*(co*dcf-so*dsf) - dsO*(so*dcf+co*dsf)*ci);
+	p.y = r*(dsO*(co*dcf-so*dsf) + dcO*(so*dcf+co*dsf)*ci);
+	
+    p.x += dr*(dcO*(co*cf-so*sf) - dsO*(so*cf+co*sf)*ci);
+	p.y += dr*(dsO*(co*cf-so*sf) + dcO*(so*cf+co*sf)*ci);
+
+	p.vx = v0*((dcf)*(-ci*co*dsO - dcO*so) - dsf*(co*dcO - ci*so*dsO));
+	p.vy = v0*((dcf)*(ci*co*dcO - dsO*so)  - dsf*(co*dsO + ci*so*dcO));
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_dOmega_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double dv0 = 0.5/sqrt(m+primary.m)*sqrt(G/a/(1.-e*e)); 
+
+	double dcO = -sin(Omega);
+	double dsO = cos(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	
+	p.vx = dv0*((e+cf)*(-ci*co*dsO - dcO*so) - sf*(co*dcO - ci*so*dsO));
+	p.vy = dv0*((e+cf)*(ci*co*dcO - dsO*so)  - sf*(co*dsO + ci*so*dcO));
+
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_domega_df(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double r = a*(1.-e*e)/(1. + e*cos(f));
+	double dr = e*sin(f)*a*(1.-e*e)/(1. + e*cos(f))/(1. + e*cos(f));
+	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double dco = -sin(omega);
+	double dso = cos(omega);
+	double dcf = -sin(f);
+	double dsf = cos(f);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	p.x = r*(cO*(dco*dcf-dso*dsf) - sO*(dso*dcf+dco*dsf)*ci);
+	p.y = r*(sO*(dco*dcf-dso*dsf) + cO*(dso*dcf+dco*dsf)*ci);
+	p.z = r*(dso*dcf+dco*dsf)*si;
+	
+    p.x += dr*(cO*(dco*cf-dso*sf) - sO*(dso*cf+dco*sf)*ci);
+	p.y += dr*(sO*(dco*cf-dso*sf) + cO*(dso*cf+dco*sf)*ci);
+	p.z += dr*(dso*cf+dco*sf)*si;
+
+	p.vx = v0*((dcf)*(-ci*dco*sO - cO*dso) - dsf*(dco*cO - ci*dso*sO));
+	p.vy = v0*((dcf)*(ci*dco*cO - sO*dso)  - dsf*(dco*sO + ci*dso*cO));
+	p.vz = v0*((dcf)*dco*si - dsf*si*dso);
+	
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_domega_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double dv0 = 0.5*sqrt(G/a/(1.-e*e))/sqrt(m+primary.m); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double dco = -sin(omega);
+	double dso = cos(omega);
+	double cf = cos(f);
+	double sf = sin(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	p.vx = dv0*((e+cf)*(-ci*dco*sO - cO*dso) - sf*(dco*cO - ci*dso*sO));
+	p.vy = dv0*((e+cf)*(ci*dco*cO - sO*dso)  - sf*(dco*sO + ci*dso*cO));
+	p.vz = dv0*((e+cf)*dco*si - sf*si*dso);
+	
+	return p;
+}
+
+struct reb_particle reb_tools_orbit_to_particle_df_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
+	struct reb_particle p = {0};
+	double dv0 = 0.5*sqrt(G/a/(1.-e*e))/sqrt(m+primary.m); 
+
+	double cO = cos(Omega);
+	double sO = sin(Omega);
+	double co = cos(omega);
+	double so = sin(omega);
+	double dcf = -sin(f);
+	double dsf = cos(f);
+	double ci = cos(inc);
+	double si = sin(inc);
+	
+	p.vx = dv0*(dcf*(-ci*co*sO - cO*so) - dsf*(co*cO - ci*so*sO));
+	p.vy = dv0*(dcf*(ci*co*cO - sO*so)  - dsf*(co*sO + ci*so*cO));
+	p.vz = dv0*(dcf*co*si - dsf*si*so);
+	
+	return p;
+}
