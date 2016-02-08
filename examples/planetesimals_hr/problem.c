@@ -17,7 +17,7 @@ int main(int argc, char* argv[]){
     double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
     
-    int N_planetesimals = 1010;
+    int N_planetesimals = 11000;
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
@@ -25,7 +25,7 @@ int main(int argc, char* argv[]){
 	//r->integrator	= REB_INTEGRATOR_WHFAST;
     r->ri_hybarid.switch_ratio = 2;  //Hill radii
     r->ri_hybarid.CE_radius = 5.;          //X*radius
-    r->testparticle_type = 1;
+    r->testparticle_type = 0;
 	r->heartbeat	= heartbeat;
     //r->usleep = 10000;
     r->dt = 0.01;
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]){
         double inc = reb_random_normal(0.0001);
         double Omega = reb_random_uniform(0,2.*M_PI);
         double apsis = reb_random_uniform(0,2.*M_PI);
-        pt = reb_tools_orbit_to_particle(r->G, star, planetesimal_mass, a, 0., inc, Omega, apsis,phi);
+        pt = reb_tools_orbit_to_particle(r->G, star, r->testparticle_type?planetesimal_mass:0., a, 0., inc, Omega, apsis,phi);
 		pt.r 		= 4e-5;
         pt.id = r->N;
 		reb_add(r, pt);
@@ -138,7 +138,7 @@ void collision_resolve_merge(struct reb_simulation* const mini, struct reb_colli
     printf("\n\tParticle %d collided with body %d from system at t=%f.\n",i,global->ri_hybarid.global_index_from_mini_index[j],global->t);
     
         
-    if (global->ri_hybarid.collision_in_timestep==0){
+    if (global->testparticle_type && global->ri_hybarid.collision_in_timestep==0){
         global->ri_hybarid.collision_in_timestep=1;
         struct reb_particle* tmp = global->particles;
         // Swap particles to calculate energy at beginning of timstep.
@@ -152,8 +152,12 @@ void collision_resolve_merge(struct reb_simulation* const mini, struct reb_colli
     int globalj = global->ri_hybarid.global_index_from_mini_index[j];
     reb_remove(global,globalj,1);
     
+    if (global->testparticle_type){
+        for(int k=globalj;k<global->N;k++){
+            global->ri_hybarid.particles_prev[k] = global->ri_hybarid.particles_prev[k+1];
+        }
+    }
     for(int k=globalj;k<global->N;k++){
-        global->ri_hybarid.particles_prev[k] = global->ri_hybarid.particles_prev[k+1];
         global->ri_hybarid.is_in_mini[k] = global->ri_hybarid.is_in_mini[k+1];
     }
     global->ri_hybarid.global_index_from_mini_index_N--;
