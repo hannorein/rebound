@@ -31,6 +31,7 @@ int main(int argc, char* argv[]){
 
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_merge;
+    r->collisions_track_dE = 1;
     
 	// Initial conditions
 	struct reb_particle star = {0};
@@ -91,7 +92,7 @@ void heartbeat(struct reb_simulation* r){
     if (tout <r->t){
         tout *=1.01;
         double E = reb_tools_energy(r);
-        double relE = fabs((E-E0+r->ri_hybarid.dE_offset)/E0);
+        double relE = fabs((E-E0+r->collisions_dE)/E0);
         FILE* f = fopen("energy.txt","a+");
         int N_mini = 0;
         if (r->ri_hybarid.mini_active){

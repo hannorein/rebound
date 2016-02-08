@@ -185,9 +185,17 @@ void reb_collision_search(struct reb_simulation* const r){
 		resolve = reb_collision_resolve_hardsphere;
 	}
 	for (int i=0;i<collisions_N;i++){
-		// Resolve collision
+        // Keep track of energy
+        double Ei = 0.;
+        if (r->collisions_track_dE){
+            Ei = reb_tools_energy(r);
+        }
         struct reb_collision c = r->collisions[i];
+
+		// Resolve collision
 		int outcome = resolve(r, c);
+		
+        // Remove particles
         int shift_pos = 0;
         if (outcome & 1){
             // Remove p1
@@ -199,6 +207,12 @@ void reb_collision_search(struct reb_simulation* const r){
         if (outcome & 2){
             // Remove p2
             reb_remove(r,c.p2+shift_pos,1);
+        }
+        
+        // Keep track of energy
+        if (r->collisions_track_dE){
+            double Ef = reb_tools_energy(r);
+            r->collisions_dE += Ei - Ef;
         }
 	}
 }

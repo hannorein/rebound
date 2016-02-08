@@ -226,10 +226,7 @@ struct reb_simulation_integrator_hybarid {
     struct reb_simulation* mini;
     struct reb_simulation* global;
     double switch_ratio;            //thresh. to move particle from global to mini (hill radii)
-    double dE_offset;               //keep track of energy lost from collisions/ejections
     double CE_radius;               //close encounter radius: if < this value add to mini (X*radius)
-    double energy_before_collision_in_timestep;
-    int collision_in_timestep;
     int mini_active;
 
     int* global_index_from_mini_index;
@@ -462,10 +459,12 @@ struct reb_simulation {
      * \name Variables related to collision search and detection 
      * @{
      */
-    struct reb_collision* collisions;       ///< Array of all collisions. 
+    struct reb_collision* collisions;   ///< Array of all collisions. 
     int collisions_allocatedN;          ///< Size allocated for collisions.
-    double minimum_collision_velocity;      ///< Used for hard sphere collision model. 
+    double minimum_collision_velocity;  ///< Used for hard sphere collision model. 
     double collisions_plog;             ///< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. 
+    int collisions_track_dE;            ///< Track energy change in collisions (default: 0).
+    double collisions_dE;               ///< Energy change in collisions (only calculated if collisions_track_dE=1). 
     double max_radius[2];               ///< Two largest particle radii, set automatically, needed for collision search. 
     long collisions_Nlog;               ///< Keep track of number of collisions. 
     /** @} */
