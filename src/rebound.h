@@ -225,14 +225,16 @@ struct reb_simulation_integrator_ias15 {
 struct reb_simulation_integrator_hybarid {
     struct reb_simulation* mini;
     struct reb_simulation* global;
-    int N_encounter;
     double switch_ratio;            //thresh. to move particle from global to mini (hill radii)
     double dE_offset;               //keep track of energy lost from collisions/ejections
     double CE_radius;               //close encounter radius: if < this value add to mini (X*radius)
+    double energy_before_collision_in_timestep;
+    int collision_in_timestep;
     int mini_active;
-    int* encounter_index;
-    int encounter_index_N;
-    int encounter_index_Nmax;
+
+    int* global_index_from_mini_index;
+    int global_index_from_mini_index_N;
+    int global_index_from_mini_index_Nmax;
     
     int* is_in_mini;
     int is_in_mini_Nmax;

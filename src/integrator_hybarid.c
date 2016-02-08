@@ -62,7 +62,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     r->ri_hybarid.mini->N = 0;
     r->ri_hybarid.mini->N_active = -1;
     r->ri_hybarid.mini_active = 0;
-    r->ri_hybarid.encounter_index_N = 0;
+    r->ri_hybarid.global_index_from_mini_index_N = 0;
     
     //reset is_in_mini
     if (r->N>r->ri_hybarid.is_in_mini_Nmax){
@@ -75,12 +75,12 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     for (int i=0; i<_N_active; i++){
         reb_add(r->ri_hybarid.mini, r->particles[i]);
         r->ri_hybarid.is_in_mini[i] = 1;
-        if (r->ri_hybarid.encounter_index_N>=r->ri_hybarid.encounter_index_Nmax){
-            r->ri_hybarid.encounter_index_Nmax += 32;
-            r->ri_hybarid.encounter_index = realloc(r->ri_hybarid.encounter_index,r->ri_hybarid.encounter_index_Nmax*sizeof(int));
+        if (r->ri_hybarid.global_index_from_mini_index_N>=r->ri_hybarid.global_index_from_mini_index_Nmax){
+            r->ri_hybarid.global_index_from_mini_index_Nmax += 32;
+            r->ri_hybarid.global_index_from_mini_index = realloc(r->ri_hybarid.global_index_from_mini_index,r->ri_hybarid.global_index_from_mini_index_Nmax*sizeof(int));
         }
-        r->ri_hybarid.encounter_index[r->ri_hybarid.encounter_index_N] = i;
-        r->ri_hybarid.encounter_index_N++;
+        r->ri_hybarid.global_index_from_mini_index[r->ri_hybarid.global_index_from_mini_index_N] = i;
+        r->ri_hybarid.global_index_from_mini_index_N++;
     }
     r->ri_hybarid.mini->N_active = _N_active;
 
@@ -105,8 +105,15 @@ void reb_integrator_hybarid_part2(struct reb_simulation* r){
     if (r->ri_hybarid.mini_active){
         reb_integrate(mini,r->t);
         for (int i=0; i<mini->N; i++){
-            r->particles[r->ri_hybarid.encounter_index[i]] = mini->particles[i];
-            r->particles[r->ri_hybarid.encounter_index[i]].sim = r;
+            r->particles[r->ri_hybarid.global_index_from_mini_index[i]] = mini->particles[i];
+            r->particles[r->ri_hybarid.global_index_from_mini_index[i]].sim = r;
+        }
+        // Correct for energy jump in collision
+        if (r->ri_hybarid.collision_in_timestep!=0){
+            double Ei = r->ri_hybarid.energy_before_collision_in_timestep;
+            double Ef = reb_tools_energy(r);
+            r->ri_hybarid.dE_offset += Ei - Ef;
+            r->ri_hybarid.collision_in_timestep = 0;
         }
     }
 }
@@ -118,8 +125,28 @@ void reb_integrator_hybarid_synchronize(struct reb_simulation* r){
 
 void reb_integrator_hybarid_reset(struct reb_simulation* r){
     r->ri_hybarid.timestep_too_large_warning = 0.;
-	// TODO: Implement rest
+    
     reb_integrator_whfast_reset(r);
+
+    if (r->ri_hybarid.mini){
+        reb_free_simulation(r->ri_hybarid.mini);
+        r->ri_hybarid.mini = NULL;
+    }
+    if(r->ri_hybarid.global_index_from_mini_index){
+        free(r->ri_hybarid.global_index_from_mini_index);
+        r->ri_hybarid.global_index_from_mini_index = NULL;
+        r->ri_hybarid.global_index_from_mini_index_Nmax = 0;
+    }
+    if(r->ri_hybarid.is_in_mini){
+        free(r->ri_hybarid.is_in_mini);
+        r->ri_hybarid.is_in_mini = NULL;
+        r->ri_hybarid.is_in_mini_Nmax = 0;
+    }
+    if(r->ri_hybarid.particles_prev){
+        free(r->ri_hybarid.particles_prev);
+        r->ri_hybarid.particles_prev = NULL;
+        r->ri_hybarid.particles_prev_Nmax = 0;
+    }
 }
 
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* global){
@@ -169,12 +196,12 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* gl
                     // Add particle to mini simulation
                     reb_add(mini,pj);
                     global->ri_hybarid.is_in_mini[j] = 1;
-                    if (global->ri_hybarid.encounter_index_N>=global->ri_hybarid.encounter_index_Nmax){
-                        while(global->ri_hybarid.encounter_index_N>=global->ri_hybarid.encounter_index_Nmax) global->ri_hybarid.encounter_index_Nmax += 32;
-                        global->ri_hybarid.encounter_index = realloc(global->ri_hybarid.encounter_index,global->ri_hybarid.encounter_index_Nmax*sizeof(int));
+                    if (global->ri_hybarid.global_index_from_mini_index_N>=global->ri_hybarid.global_index_from_mini_index_Nmax){
+                        while(global->ri_hybarid.global_index_from_mini_index_N>=global->ri_hybarid.global_index_from_mini_index_Nmax) global->ri_hybarid.global_index_from_mini_index_Nmax += 32;
+                        global->ri_hybarid.global_index_from_mini_index = realloc(global->ri_hybarid.global_index_from_mini_index,global->ri_hybarid.global_index_from_mini_index_Nmax*sizeof(int));
                     }
-                    global->ri_hybarid.encounter_index[global->ri_hybarid.encounter_index_N] = j;
-                    global->ri_hybarid.encounter_index_N++;
+                    global->ri_hybarid.global_index_from_mini_index[global->ri_hybarid.global_index_from_mini_index_N] = j;
+                    global->ri_hybarid.global_index_from_mini_index_N++;
                 }
             }
         }
@@ -194,29 +221,36 @@ static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation*
         const double t_prev = global->t - global->dt;
         double timefac = (mini->t - t_prev)/global->dt;
         // TODO: See if the following is good enough and if so why
-        /// timefac = 0.5;
+        // timefac = 0.5;
         const int N_active = global->N_active;
         const double G = global->G;
-        for(int j=N_active;j<global->N;j++){            //planetesimals in global
-            if(global->ri_hybarid.is_in_mini[j]==0){
-                for(int i=0;i<mini->N_active;i++){      //massive bodies in mini
-                    struct reb_particle* body = &(mini_particles[i]);
+#pragma omp parallel for schedule(guided)
+        for(int i=0;i<mini->N_active;i++){              //massive bodies in mini
+            struct reb_particle pi = mini_particles[i];
+            double ax = 0.;
+            double ay = 0.;
+            double az = 0.;
+            for(int j=N_active;j<global->N;j++){        //planetesimals in global
+                if(global->ri_hybarid.is_in_mini[j]==0){
                     const double ix = (1.-timefac)*global_prev[j].x + timefac*global_particles[j].x; //interpolated values
                     const double iy = (1.-timefac)*global_prev[j].y + timefac*global_particles[j].y;
                     const double iz = (1.-timefac)*global_prev[j].z + timefac*global_particles[j].z;
                     const double mp = global_particles[j].m;
-                    const double ddx = body->x - ix;
-                    const double ddy = body->y - iy;
-                    const double ddz = body->z - iz;
+                    const double ddx = pi.x - ix;
+                    const double ddy = pi.y - iy;
+                    const double ddz = pi.z - iz;
                     
                     const double rijinv2 = 1.0/(ddx*ddx + ddy*ddy + ddz*ddz);
                     const double ac = -G*mp*rijinv2*sqrt(rijinv2);
                     
-                    body->ax += ac*ddx;     //perturbation on planets due to planetesimals.
-                    body->ay += ac*ddy;
-                    body->az += ac*ddz;
+                    ax += ac*ddx;     //perturbation on planets due to planetesimals.
+                    ay += ac*ddy;
+                    az += ac*ddz;
                 }
             }
+            mini_particles[i].ax += ax;
+            mini_particles[i].ay += ay;
+            mini_particles[i].az += az;
         }
     }
 }
