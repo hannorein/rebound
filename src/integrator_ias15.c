@@ -103,14 +103,7 @@ static void free_dp7(struct reb_dp7* dp7){
 	dp7->p5 = NULL;
 	dp7->p6 = NULL;
 }
-static void realloc_dp7(struct reb_dp7* const dp7, const int N3){
-	dp7->p0 = realloc(dp7->p0,sizeof(double)*N3);
-	dp7->p1 = realloc(dp7->p1,sizeof(double)*N3);
-	dp7->p2 = realloc(dp7->p2,sizeof(double)*N3);
-	dp7->p3 = realloc(dp7->p3,sizeof(double)*N3);
-	dp7->p4 = realloc(dp7->p4,sizeof(double)*N3);
-	dp7->p5 = realloc(dp7->p5,sizeof(double)*N3);
-	dp7->p6 = realloc(dp7->p6,sizeof(double)*N3);
+static void clear_dp7(struct reb_dp7* const dp7, const int N3){
 	for (int k=0;k<N3;k++){
 		dp7->p0[k] = 0.;
 		dp7->p1[k] = 0.;
@@ -120,6 +113,16 @@ static void realloc_dp7(struct reb_dp7* const dp7, const int N3){
 		dp7->p5[k] = 0.;
 		dp7->p6[k] = 0.;
 	}
+}
+static void realloc_dp7(struct reb_dp7* const dp7, const int N3){
+	dp7->p0 = realloc(dp7->p0,sizeof(double)*N3);
+	dp7->p1 = realloc(dp7->p1,sizeof(double)*N3);
+	dp7->p2 = realloc(dp7->p2,sizeof(double)*N3);
+	dp7->p3 = realloc(dp7->p3,sizeof(double)*N3);
+	dp7->p4 = realloc(dp7->p4,sizeof(double)*N3);
+	dp7->p5 = realloc(dp7->p5,sizeof(double)*N3);
+	dp7->p6 = realloc(dp7->p6,sizeof(double)*N3);
+    clear_dp7(dp7,N3);
 }
 
 static struct reb_dpconst7 dpcast(struct reb_dp7 dp){
@@ -663,6 +666,25 @@ void reb_integrator_ias15_part2(struct reb_simulation* r){
 }
 
 void reb_integrator_ias15_synchronize(struct reb_simulation* r){
+}
+void reb_integrator_ias15_clear(struct reb_simulation* r){
+	const int N3 = r->ri_ias15.allocatedN;
+    if (N3){
+        clear_dp7(&(r->ri_ias15.g),N3);
+        clear_dp7(&(r->ri_ias15.e),N3);
+        clear_dp7(&(r->ri_ias15.b),N3);
+        clear_dp7(&(r->ri_ias15.csb),N3);
+        clear_dp7(&(r->ri_ias15.er),N3);
+        clear_dp7(&(r->ri_ias15.br),N3);
+        
+        double* restrict const csx = r->ri_ias15.csx; 
+        double* restrict const csv = r->ri_ias15.csv; 
+        for (int i=0;i<N3;i++){
+            // Kill compensated summation coefficients
+            csx[i] = 0;
+            csv[i] = 0;
+        }
+    }
 }
 
 void reb_integrator_ias15_reset(struct reb_simulation* r){

@@ -27,7 +27,7 @@ int main(int argc, char* argv[]){
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
     //r->usleep = 10000;
-    r->dt = 0.01;
+    r->dt = 9.9274637917650234e-04;
 
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_merge;
