@@ -212,7 +212,6 @@ class Particle(Structure):
                         clibrebound.reb_tools_M_to_f.restype = c_double
                         f = clibrebound.reb_tools_M_to_f(c_double(e), c_double(M))
 
-
             if variation is None:
                 err = c_int()
                 clibrebound.reb_tools_orbit_to_particle_err.restype = Particle
