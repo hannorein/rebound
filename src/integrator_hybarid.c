@@ -61,7 +61,6 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     // Remove all particles from mini
     r->ri_hybarid.mini->t = r->t;
     r->ri_hybarid.mini->N = 0;
-    r->ri_hybarid.mini->N_active = -1;
     r->ri_hybarid.mini->collisions_dE = 0.;
     r->ri_hybarid.mini_active = 0;
     r->ri_hybarid.global_index_from_mini_index_N = 0;
@@ -71,7 +70,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         r->ri_hybarid.is_in_mini_Nmax = r->N;
         r->ri_hybarid.is_in_mini = realloc(r->ri_hybarid.is_in_mini,r->N*sizeof(int));
     }
-    for(int i=0;i<r->N;i++)r->ri_hybarid.is_in_mini[i] = 0;
+    for(int i=_Nactive;i<r->N;i++)r->ri_hybarid.is_in_mini[i] = 0;
 
     // Add all massive particles
     for (int i=0; i<_N_active; i++){

@@ -240,7 +240,13 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
 	r->ri_wh.allocatedN 		= 0;
 	r->ri_wh.eta 			= NULL;
 	// ********** HYBARID
-	r->ri_hybarid.mini 		= NULL;
+    r->ri_hybarid.global_index_from_mini_index = NULL;
+    r->ri_hybarid.global_index_from_mini_index_N = 0;
+    r->ri_hybarid.global_index_from_mini_index_Nmax = 0;
+    r->ri_hybarid.is_in_mini = NULL;
+    r->ri_hybarid.is_in_mini_Nmax = 0;
+    r->ri_hybarid.particles_prev = NULL;
+    r->ri_hybarid.particles_prev_Nmax = 0;
 }
 
 void reb_reset_function_pointers(struct reb_simulation* const r){
@@ -333,12 +339,15 @@ void reb_init_simulation(struct reb_simulation* r){
 	r->ri_sei.lastdt 	= 0;
     
     // ********** HYBARID
-    r->ri_hybarid.mini = NULL;
-    r->ri_hybarid.global_index_from_mini_index = NULL;
-    r->ri_hybarid.is_in_mini = NULL;
-    r->ri_hybarid.particles_prev = NULL;
+	r->ri_hybarid.mini 		= NULL;
+	r->ri_hybarid.global	= NULL;
+	r->ri_hybarid.switch_ratio = 0.;
+	r->ri_hybarid.CE_radius = 0.;
+	r->ri_hybarid.mini_active = 0;
+	r->ri_hybarid.timestep_too_large_warning = 0;
 
 	
+    // ********** HYBRID
 	r->ri_hybrid.switch_ratio = 8; // Default of 8 mutual Hill radii
 	r->ri_hybrid.mode = SYMPLECTIC;
 
