@@ -204,7 +204,7 @@ double X;
 		const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
 		ri = 1./(r0 + eta0Gs1zeta0Gs2);
 	}else{
-		double oldX2 = nan(); 			
+		double oldX2 = nan(""); 			
 		for (int n_hg=1;n_hg<WHFAST_NMAX_NEWT;n_hg++){
 			oldX2 = oldX;
 			oldX = X;

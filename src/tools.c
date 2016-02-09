@@ -385,7 +385,6 @@ double reb_M_to_E(double e, double M){
 				break;
 			}
 		}
-		E = E;
 		return E;
 	}
 }
@@ -407,32 +406,52 @@ struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle 
 	return reb_tools_orbit_to_particle(G, primary, m, a, e, inc, Omega, omega, f);
 }
 
-static const struct reb_particle reb_particle_nan = {.x = nan(), .y = nan(), .z = nan(), .vx = nan(), .vy = nan(), .vz = nan(), .ax = nan(), .ay = nan(), .az = nan(), .m = nan(), .r = nan(), .lastcollision = nan(), .c = NULL, .id = -1, .ap = NULL, .sim = NULL};
+static struct reb_particle reb_particle_nan(){
+    struct reb_particle p;
+    p.x = nan("");
+    p.y = nan("");
+    p.z = nan("");
+    p.vx = nan("");
+    p.vy = nan("");
+    p.vz = nan("");
+    p.ax = nan("");
+    p.ay = nan("");
+    p.az = nan("");
+    p.m = nan("");
+    p.r = nan("");
+    p.lastcollision = nan("");
+    p.c = NULL;
+    p.id = -1;
+    p.ap = NULL;
+    p.sim = NULL;
+
+    return p;
+}
 
 struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f, int* err){
 	if(e == 1.){
 		*err = 1; 		// Can't initialize a radial orbit with orbital elements.
-		return reb_particle_nan;
+		return reb_particle_nan();
 	}
 	if(e < 0.){
 		*err = 2; 		// Eccentricity must be greater than or equal to zero.
-		return reb_particle_nan;
+		return reb_particle_nan();
 	}
 	if(e > 1.){
 		if(a > 0.){
 			*err = 3; 	// Bound orbit (a > 0) must have e < 1. 
-			return reb_particle_nan;
+			return reb_particle_nan();
 		}
 	}
 	else{
 		if(a < 0.){
 			*err =4; 	// Unbound orbit (a < 0) must have e > 1.
-			return reb_particle_nan;
+			return reb_particle_nan();
 		}
 	}
 	if(e*cos(f) < -1.){
 		*err = 5;		// Unbound orbit can't have f set beyond the range allowed by the asymptotes set by the parabola.
-		return reb_particle_nan;
+		return reb_particle_nan();
 	}
 
 	struct reb_particle p = {0};
@@ -469,7 +488,27 @@ struct reb_particle reb_tools_orbit_to_particle(double G, struct reb_particle pr
 	return reb_tools_orbit_to_particle_err(G, primary, m, a, e, inc, Omega, omega, f, &err);
 }
 
-static const struct reb_orbit reb_orbit_nan = {.r = nan(), .v = nan(), .h = nan(), .P = nan(), .n = nan(), .a = nan(), .e = nan(), .inc = nan(), .Omega = nan(), .omega = nan(), .pomega = nan(), .f = nan(), .M = nan(), .l = nan()};
+struct reb_orbit reb_orbit_nan(){
+    struct reb_orbit o;
+    o.r = nan("");
+    o.v = nan("");
+    o.h = nan("");
+    o.P = nan("");
+    o.n = nan("");
+    o.a = nan("");
+    o.e = nan("");
+    o.inc = nan("");
+    o.Omega = nan("");
+    o.omega = nan("");
+    o.pomega = nan("");
+    o.f = nan("");
+    o.M = nan("");
+    o.l = nan("");
+    o.theta = nan("");
+    o.T = nan("");
+
+    return o;
+}
 
 #define MIN_REL_ERROR 1.0e-12	///< Close to smallest relative floating point number, used for orbit calculation
 #define TINY 1.E-308 		///< Close to smallest representable floating point number, used for orbit calculation
@@ -499,7 +538,7 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 	struct reb_orbit o;
 	if (primary.m <= TINY){	
 		*err = 1;			// primary has no mass.
-		return reb_orbit_nan;
+		return reb_orbit_nan();
 	}
 	double mu,dx,dy,dz,dvx,dvy,dvz,vsquared,vcircsquared,vdiffsquared;
 	double hx,hy,hz,vr,rvr,muinv,ex,ey,ez,nx,ny,n,ea;
@@ -525,7 +564,7 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 	vdiffsquared = vsquared - vcircsquared;	
 	if(o.r <= TINY){							
 		*err = 2;									// particle is on top of primary
-		return reb_orbit_nan;
+		return reb_orbit_nan();
 	}
 	vr = (dx*dvx + dy*dvy + dz*dvz)/o.r;	
 	rvr = o.r*vr;
@@ -595,7 +634,7 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 	}
     
     if (p.sim == NULL){
-        o.T = nan();
+        o.T = nan("");
     }
     else{
         o.T = p.sim->t - o.M/fabs(o.n);         // time of pericenter passage (M = n(t-T).  Works for hyperbolic with fabs and n defined as above).
