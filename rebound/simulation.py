@@ -138,9 +138,9 @@ class Orbit(Structure):
     h       : float           
         specific angular momentum
     P       : float           
-        orbital period
+        orbital period (negative if hyperbolic)
     n       : float           
-        mean motion
+        mean motion    (negative if hyperbolic)
     a       : float           
         semimajor axis
     e       : float           
@@ -161,6 +161,8 @@ class Orbit(Structure):
         mean longitude = Omega + omega + M
     theta   : float           
         true longitude = Omega + omega + f
+    T       : float
+        time of pericenter passage
     """
     _fields_ = [("r", c_double),
                 ("v", c_double),
@@ -176,7 +178,8 @@ class Orbit(Structure):
                 ("f", c_double),
                 ("M", c_double),
                 ("l", c_double),
-                ("theta", c_double)]
+                ("theta", c_double),
+                ("T", c_double)]
 
     def __str__(self):
         """
