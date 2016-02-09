@@ -182,7 +182,7 @@ class Particle(Structure):
             numNones = longitudes.count(None)
 
             if numNones < 4:
-                raise ValueError("Can only pass one longitude/anomaly in the set [f, M, l, theta]")
+                raise ValueError("Can only pass one longitude/anomaly in the set [f, M, l, theta, T]")
             if numNones == 5:                           # none of them passed.  Default to 0.
                 f = 0.
             if numNones == 4:                           # Only one was passed.
@@ -192,15 +192,16 @@ class Particle(Structure):
                             f = theta - Omega - omega
                         else:
                             f = Omega - omega - theta   # for retrograde, theta = Omega - omega - f
-                    else:                               # Either M or l was passed.  Will need to find M first to find f.
+                    else:                               # Either M, l, or T was passed.  Will need to find M first (if not passed) to find f
                         if l is not None:
                             if math.cos(inc) > 0:       # for prograde orbits, l = Omega + omega + M
                                 M = l - Omega - omega
                             else:
                                 M = Omega - omega - l   # for retrograde, l = Omega - omega - M
-                        else if T is not None:
-                            n = (simulation.G*(primary.m+self.m)/a**3)**0.5
-                            M = n*(simulation.t - T)
+                        else:
+                            if T is not None:           # works for both elliptical and hyperbolic orbits
+                                n = (simulation.G*(primary.m+self.m)/abs(a**3))**0.5
+                                M = n*(simulation.t - T)
                         clibrebound.reb_tools_M_to_f.restype = c_double
                         f = clibrebound.reb_tools_M_to_f(c_double(e), c_double(M))
 
@@ -335,6 +336,9 @@ class Particle(Structure):
     @property
     def theta(self):
         return self.calculate_orbit().theta 
+    @property
+    def T(self):
+        return self.calculate_orbit().T
     @property
     def orbit(self):
         return self.calculate_orbit()

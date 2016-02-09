@@ -211,7 +211,7 @@ double reb_M_to_E(double e, double M){
 	double E;
 	if(e < 1.){
 		E = e < 0.8 ? M : M_PI;
-		double F = E - e*sin(M) - M;
+		double F = E - e*sin(E) - M;
 		for(int i=0; i<100; i++){
 			E = E - F/(1.-e*cos(E));
 			F = E - e*sin(E) - M;
@@ -225,15 +225,15 @@ double reb_M_to_E(double e, double M){
 	else{
 		E = M;
 
-		double F = E - e*sinh(E) - M;
+		double F = E - e*sinh(E) + M;
 		for(int i=0; i<100; i++){
 			E = E - F/(1.0 - e*cosh(E));
-			F = E - e*sinh(E) - M;
+			F = E - e*sinh(E) + M;
 			if(fabs(F) < 1.e-16){
 				break;
 			}
 		}
-		E = mod2pi(E);
+		E = E;
 		return E;
 	}
 }
@@ -255,7 +255,7 @@ struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle 
 	return reb_tools_orbit_to_particle(G, primary, m, a, e, inc, Omega, omega, f);
 }
 
-static const struct reb_particle reb_particle_nan = {.x = NAN, .y = NAN, .z = NAN, .vx = NAN, .vy = NAN, .vz = NAN, .ax = NAN, .ay = NAN, .az = NAN, .m = NAN, .r = NAN, .lastcollision = NAN, .c = NULL, .id = -1, .ap = NULL, .sim = NULL};
+static const struct reb_particle reb_particle_nan = {.x = nan(), .y = nan(), .z = nan(), .vx = nan(), .vy = nan(), .vz = nan(), .ax = nan(), .ay = nan(), .az = nan(), .m = nan(), .r = nan(), .lastcollision = nan(), .c = NULL, .id = -1, .ap = NULL, .sim = NULL};
 
 struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f, int* err){
 	if(e == 1.){
@@ -317,7 +317,7 @@ struct reb_particle reb_tools_orbit_to_particle(double G, struct reb_particle pr
 	return reb_tools_orbit_to_particle_err(G, primary, m, a, e, inc, Omega, omega, f, &err);
 }
 
-static const struct reb_orbit reb_orbit_nan = {.r = NAN, .v = NAN, .h = NAN, .P = NAN, .n = NAN, .a = NAN, .e = NAN, .inc = NAN, .Omega = NAN, .omega = NAN, .pomega = NAN, .f = NAN, .M = NAN, .l = NAN};
+static const struct reb_orbit reb_orbit_nan = {.r = nan(), .v = nan(), .h = nan(), .P = nan(), .n = nan(), .a = nan(), .e = nan(), .inc = nan(), .Omega = nan(), .omega = nan(), .pomega = nan(), .f = nan(), .M = nan(), .l = nan()};
 
 #define MIN_REL_ERROR 1.0e-12	///< Close to smallest relative floating point number, used for orbit calculation
 #define TINY 1.E-308 		///< Close to smallest representable floating point number, used for orbit calculation
@@ -395,15 +395,24 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 
 	// Omega, pomega and theta are measured from x axis, so we can always use y component to disambiguate if in the range [0,pi] or [pi,2pi]
 	o.Omega = acos2(nx, n, ny);			// cos Omega is dot product of x and n unit vectors. Will = 0 if i=0.
-	
-	ea = acos2(1.-o.r/o.a, o.e, vr);	// from definition of eccentric anomaly.  If vr < 0, must be going from apo to peri, so ea = [pi, 2pi] so ea = -acos(cosea)
-	o.M = ea - o.e*sin(ea);						// mean anomaly (Kepler's equation)
+
+    if(o.e < 1.){
+	    ea = acos2(1.-o.r/o.a, o.e, vr);// from definition of eccentric anomaly.  If vr < 0, must be going from apo to peri, so ea = [pi, 2pi] so ea = -acos(cosea)
+	    o.M = ea - o.e*sin(ea);			// mean anomaly (Kepler's equation)
+    }
+    else{
+        ea = acosh((1.-o.r/o.a)/o.e);
+        if(vr < 0.){                    // Approaching pericenter, so eccentric anomaly < 0.
+            ea = -ea;
+        }
+        o.M = o.e*sinh(ea) - ea;          // Hyperbolic Kepler's equation
+    }
 
 	// in the near-planar case, the true longitude is always well defined for the position, and pomega for the pericenter if e!= 0
 	// we therefore calculate those and calculate the remaining angles from them
 	if(o.inc < MIN_INC || o.inc > M_PI - MIN_INC){	// nearly planar.  Use longitudes rather than angles referenced to node for numerical stability.
 		o.pomega = acos2(ex, o.e, ey);		// cos pomega is dot product of x and e unit vectors.  Will = 0 if e=0.
-		o.theta = acos2(dx, o.r, dy);			// cos theta is dot product of x and r vectors (true longitude).  Will = 0 if e = 0.
+		o.theta = acos2(dx, o.r, dy);		// cos theta is dot product of x and r vectors (true longitude).  Will = 0 if e = 0.
 		if(o.inc < M_PI/2.){
 			o.omega = o.pomega - o.Omega;
 			o.f = o.theta - o.pomega;
@@ -432,6 +441,13 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 			o.l = o.pomega - o.M;
 		}
 	}
+    
+    if (p.sim == NULL){
+        o.T = nan();
+    }
+    else{
+        o.T = p.sim->t - o.M/fabs(o.n);         // time of pericenter passage (M = n(t-T).  Works for hyperbolic with fabs and n defined as above).
+    }
 
 	return o;
 }

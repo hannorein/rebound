@@ -137,7 +137,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 	}else{
         if (r->tree_root){
             // Just flag particle, will be removed in tree_update.
-            r->particles[index].y = NAN;
+            r->particles[index].y = nan();
         }else{
 	        r->N--;
 		    r->particles[index] = r->particles[r->N];

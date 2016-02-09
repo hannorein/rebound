@@ -136,6 +136,7 @@ struct reb_orbit {
 	double M;   ///< Mean anomaly
 	double l;	///< Mean Longitude
 	double theta; ///< True Longitude
+    double T;   ///< Time of pericenter passage
 };
 
 
