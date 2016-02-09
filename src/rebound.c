@@ -60,7 +60,7 @@
 static const char* logo[];				/**< Logo of rebound. */
 #endif // LIBREBOUND
 const char* reb_build_str = __DATE__ " " __TIME__;	// Date and time build string. 
-const char* reb_version_str = "2.12.1";			// **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "2.13.0";			// **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 
 
 void reb_step(struct reb_simulation* const r){
@@ -276,7 +276,10 @@ void reb_init_simulation(struct reb_simulation* r){
 	r->N 		= 0;	
 	r->allocatedN	= 0;	
 	r->N_active 	= -1; 	
+	r->testparticle_type = 0; 	
 	r->N_var 	= 0; 	
+	r->var_config_N	= 0; 	
+	r->var_config 	= NULL; 	
 	r->exit_min_distance 	= 0; 	
 	r->exit_max_distance 	= 0; 	
 	r->max_radius[0]	= 0.; 	

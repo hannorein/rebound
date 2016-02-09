@@ -179,12 +179,13 @@ class Simulation(Structure):
     Most simulation parameters can be directly changed with the property syntax:
 
     >>> sim = rebound.Simulation()
-    >>> sim.G = 1.   # Sets the graviational constant (default 1)
-    >>> sim.softening = 1.   # Sets the graviational softening parameter default (0)
-    >>> sim.dt = 0.1   # Sets the timestep (will change for adaptive integrators such as IAS15).
-    >>> sim.t = 0.   # Sets the current simulation time (default 0.)
-    >>> print(sim.N)  # Gets the current number of particles
-    >>> print(sim.N_active)  # Gets the current number of active particles
+    >>> sim.G = 1.                  # Sets the graviational constant (default 1)
+    >>> sim.softening = 1.          # Sets the graviational softening parameter (default 0)
+    >>> sim.testparticle_type = 1   # Allows massive particles to feel influence from testparticles (default 0)
+    >>> sim.dt = 0.1                # Sets the timestep (will change for adaptive integrators such as IAS15).
+    >>> sim.t = 0.                  # Sets the current simulation time (default 0)
+    >>> print(sim.N)                # Gets the current number of particles
+    >>> print(sim.N_active)         # Gets the current number of active particles
 
     """
     def __init__(self):
@@ -480,7 +481,7 @@ class Simulation(Structure):
         if not hasattr(self, '_units'):
             self._units = {'length':None, 'mass':None, 'time':None}
         newunits = check_units(newunits)        
-        if self.particles: # some particles are loaded
+        if self.N>0: # some particles are loaded
             raise AttributeError("Error:  You cannot set the units after populating the particles array.  See ipython_examples/Units.ipynb.")
         self.update_units(newunits) 
 
@@ -506,6 +507,51 @@ class Simulation(Structure):
             units_convert_particle(p, self._units['length'], self._units['time'], self._units['mass'], new_l, new_t, new_m)
         self.update_units((new_l, new_t, new_m))
 
+# Variational Equations
+    def add_variation(self,order=1,first_order=None, first_order_2=None, testparticle=-1):
+        """ 
+        This function adds a set of variational particles to the simulation. 
+
+        Currently Leapfrog, WHFast and IAS15 support first order variational equations. IAS15 also
+        supports second order variational equations.
+
+        Parameters
+        ----------
+        order : integer, optional
+            By default the function adds a set of first order variational particles to the simulation. Set this flag to 2 for second order.
+        first_order : int, optional
+            Second order variational equations depend on their corresponding first order variational particles. This parameter needs to be set to the index of the first variational particle of the firster order variational equations. 
+        first_order_2 : int, optional
+            Same as first_order. But allows to set two different indicies to calculate off-diagonal elements.
+        testparticle : int, optional
+            If set to a value >= 0, then only one variational particle will be added and be treated as a test particle.
+            
+
+        Returns
+        -------
+        Returns reb_variational_configuration structure.
+        """
+        cur_var_config_N = self.var_config_N
+        if order==1:
+            clibrebound.reb_add_var_1st_order.restype = c_int
+            index = clibrebound.reb_add_var_1st_order(byref(self),c_int(testparticle))
+        elif order==2:
+            if first_order is None:
+                raise AttributeError("Please specify corresponding first order variational equations when initializing second order variational equations.")
+            if first_order_2 is None:
+                first_order_2 = first_order
+            clibrebound.reb_add_var_2nd_order.restype = c_int
+            index = clibrebound.reb_add_var_2nd_order(byref(self),c_int(testparticle),c_int(first_order.index),c_int(first_order_2.index))
+
+            pass
+        else:
+            raise AttributeError("Only variational equations of first and second order are supported.")
+
+        # Need a copy because location of original might shift if more variations added
+        s = reb_variational_configuration.from_buffer_copy(self.var_config[cur_var_config_N])
+
+        return s
+        
 # MEGNO
     def init_megno(self, delta):
         """
@@ -582,12 +628,12 @@ class Simulation(Structure):
         This is an array of pointers and thus the contents of the array update 
         as the simulation progresses. Note that the pointers could change,
         for example when a particle is added or removed from the simulation. 
+
         """
-        ps = []
-        N = self.N 
-        ps_a = self._particles
-        for i in range(0,N):
-            ps.append(ps_a[i])
+        # Create array from pointer to allow manipulation of particles in python
+        ParticleList = Particle*self.N
+        ps = ParticleList.from_address(ctypes.addressof(self._particles.contents))
+
         return ps
 
     @particles.deleter
@@ -871,6 +917,40 @@ class Simulation(Structure):
         clibrebound.reb_integrator_synchronize(byref(self))
 
 
+
+class reb_variational_configuration(Structure):
+    _fields_ = [
+                ("_sim", POINTER(Simulation)),
+                ("order", c_int),
+                ("index", c_int),
+                ("testparticle", c_int),
+                ("index_1st_order_a", c_int),
+                ("index_1st_order_b", c_int)]
+
+    def vary(self, particle_index, variation, variation2=None):
+        order = self.order
+        sim = self._sim.contents
+        if order==0:
+            raise ValueError("Cannot find variation for given index. ")
+        if order==1 and variation2 is not None:
+            raise AttributeError("Can only specify one variation for first order.")
+        o = sim.particles[particle_index].calculate_orbit(primary=sim.particles[0])
+        p = Particle(simulation=sim, primary=sim.particles[0], variation_order=order, variation=variation, variation2=variation2,m=sim.particles[particle_index].m,a=o.a, e=o.e, inc=o.inc, Omega=o.Omega, omega=o.omega, f=o.f)
+        sim.particles[self.index + particle_index] = p
+    
+    @property
+    def particles(self):
+        sim = self._sim.contents
+        ps = []
+        if self.testparticle>=0:
+            N = 1
+        else:
+            N = sim.N-sim.N_var 
+        
+        ParticleList = Particle*N
+        ps = ParticleList.from_address(ctypes.addressof(sim._particles.contents)+self.index*ctypes.sizeof(Particle))
+        return ps
+
 # Setting up fields after class definition (because of self-reference)
 Simulation._fields_ = [
                 ("t", c_double),
@@ -880,7 +960,10 @@ Simulation._fields_ = [
                 ("dt_last_done", c_double),
                 ("N", c_int),
                 ("N_var", c_int),
+                ("var_config_N", c_int),
+                ("var_config", POINTER(reb_variational_configuration)),
                 ("N_active", c_int),
+                ("testparticle_type", c_int),
                 ("allocated_N", c_int),
                 ("_particles", POINTER(Particle)),
                 ("gravity_cs", POINTER(reb_vec3d)),
