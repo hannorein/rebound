@@ -633,7 +633,7 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 		}
 	}
     
-    if (p.sim == NULL){
+    if (p.sim == NULL){                         // if particle isn't in simulation yet, can't get time.  You can still manually apply the equation below using o.M and o.n
         o.T = nan("");
     }
     else{
