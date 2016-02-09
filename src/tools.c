@@ -408,18 +408,18 @@ struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle 
 
 static struct reb_particle reb_particle_nan(){
     struct reb_particle p;
-    p.x = nan("");
-    p.y = nan("");
-    p.z = nan("");
-    p.vx = nan("");
-    p.vy = nan("");
-    p.vz = nan("");
-    p.ax = nan("");
-    p.ay = nan("");
-    p.az = nan("");
-    p.m = nan("");
-    p.r = nan("");
-    p.lastcollision = nan("");
+    p.x = nan(NULL);
+    p.y = nan(NULL);
+    p.z = nan(NULL);
+    p.vx = nan(NULL);
+    p.vy = nan(NULL);
+    p.vz = nan(NULL);
+    p.ax = nan(NULL);
+    p.ay = nan(NULL);
+    p.az = nan(NULL);
+    p.m = nan(NULL);
+    p.r = nan(NULL);
+    p.lastcollision = nan(NULL);
     p.c = NULL;
     p.id = -1;
     p.ap = NULL;
@@ -490,22 +490,22 @@ struct reb_particle reb_tools_orbit_to_particle(double G, struct reb_particle pr
 
 struct reb_orbit reb_orbit_nan(){
     struct reb_orbit o;
-    o.r = nan("");
-    o.v = nan("");
-    o.h = nan("");
-    o.P = nan("");
-    o.n = nan("");
-    o.a = nan("");
-    o.e = nan("");
-    o.inc = nan("");
-    o.Omega = nan("");
-    o.omega = nan("");
-    o.pomega = nan("");
-    o.f = nan("");
-    o.M = nan("");
-    o.l = nan("");
-    o.theta = nan("");
-    o.T = nan("");
+    o.r = nan(NULL);
+    o.v = nan(NULL);
+    o.h = nan(NULL);
+    o.P = nan(NULL);
+    o.n = nan(NULL);
+    o.a = nan(NULL);
+    o.e = nan(NULL);
+    o.inc = nan(NULL);
+    o.Omega = nan(NULL);
+    o.omega = nan(NULL);
+    o.pomega = nan(NULL);
+    o.f = nan(NULL);
+    o.M = nan(NULL);
+    o.l = nan(NULL);
+    o.theta = nan(NULL);
+    o.T = nan(NULL);
 
     return o;
 }
@@ -634,7 +634,7 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 	}
     
     if (p.sim == NULL){                         // if particle isn't in simulation yet, can't get time.  You can still manually apply the equation below using o.M and o.n
-        o.T = nan("");
+        o.T = nan(NULL);
     }
     else{
         o.T = p.sim->t - o.M/fabs(o.n);         // time of pericenter passage (M = n(t-T).  Works for hyperbolic with fabs and n defined as above).
