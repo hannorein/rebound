@@ -318,10 +318,6 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
 }
 
 
-
-
-
-
 int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c){
 	struct reb_particle* const particles = r->particles;
 	struct reb_particle p1 = particles[c.p1];

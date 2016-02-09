@@ -10,7 +10,7 @@ import time
 
 #params=[(10000000,50,12,"output/Np50_sd12.txt"),(10000000,50,22,"output/Np50_sd22.txt"),(10000000,50,32,"output/Np50_sd32.txt"),(10000000,50,51,"output/Np50_sd51.txt"),(10000000,50,61,"output/Np50_sd61.txt"),(10000000,50,80,"output/Np50_sd80.txt"),(5000000,100,10,"output/Np100_sd10.txt"),(5000000,100,18,"output/Np100_sd18.txt"),(5000000,100,27,"output/Np100_sd27.txt"),(5000000,100,41,"output/Np100_sd41.txt"),(5000000,100,73,"output/Np100_sd73.txt"),(5000000,100,83,"output/Np100_sd83.txt"),(1000000,500,13,"output/Np500_sd13.txt"),(1000000,500,16,"output/Np500_sd16.txt"),(1000000,500,33,"output/Np500_sd33.txt"),(1000000,500,39,"output/Np500_sd39.txt"),(1000000,500,79,"output/Np500_sd79.txt"),(1000000,500,90,"output/Np500_sd90.txt")]
 
-params=[(10000000,50,12,"1e-8","output/Np50_sd12_1e-8.txt"),(10000000,50,22,"1e-8","output/Np50_sd22_1e-8.txt"),(10000000,50,32,"1e-8","output/Np50_sd32_1e-8.txt"),(10000000,50,51,"1e-8","output/Np50_sd51_1e-8.txt"),(10000000,50,61,"1e-8","output/Np50_sd61_1e-8.txt"),(10000000,50,80,"1e-8","output/Np50_sd80_1e-8.txt"),(10000000,50,12,"1e-9","output/Np50_sd12_1e-9.txt"),(10000000,50,22,"1e-9","output/Np50_sd22_1e-9.txt"),(10000000,50,32,"1e-9","output/Np50_sd32_1e-9.txt"),(10000000,50,51,"1e-9","output/Np50_sd51_1e-9.txt"),(10000000,50,61,"1e-9","output/Np50_sd61_1e-9.txt"),(10000000,50,80,"1e-9","output/Np50_sd80_1e-9.txt")]
+params=[(50000000,50,12,"output/Np50_sd12"),(50000000,50,22,"output/Np50_sd22"),(50000000,50,32,"output/Np50_sd32"),(50000000,50,51,"output/Np50_sd51"),(50000000,50,61,"output/Np50_sd61"),(50000000,50,80,"output/Np50_sd80")]
 
 length = len(params)
 

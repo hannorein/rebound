@@ -49,7 +49,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         mini->usleep = -1; // Disable visualiation
         mini->integrator = REB_INTEGRATOR_IAS15;
         mini->additional_forces = reb_integrator_hybarid_additional_forces_mini;
-        mini->ri_hybarid.global = r;
+        mini->ri_hybarid.global = r;    //set to != 0 so that in collision.c it knows to remove from both
         mini->testparticle_type = r->testparticle_type;
         mini->collision = r->collision;
         mini->collision_resolve = r->collision_resolve;

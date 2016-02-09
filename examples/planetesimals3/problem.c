@@ -25,7 +25,6 @@ char output_name[100] = {0};
 
 //swifter/mercury compare
 void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax, int n_output);
-void collision_resolve_merge(struct reb_simulation* const mini, struct reb_collision c);
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
@@ -49,13 +48,15 @@ int main(int argc, char* argv[]){
 	r->integrator	= REB_INTEGRATOR_HYBARID;
 	//r->integrator	= REB_INTEGRATOR_IAS15;
 	//r->integrator	= REB_INTEGRATOR_WHFAST;
-    r->ri_hybarid.switch_ratio = 2;  //Hill radii
-    r->ri_hybarid.CE_radius = 5.;          //X*radius
+    r->ri_hybarid.switch_ratio = 2;        //Hill radii
+    r->ri_hybarid.CE_radius = 15.;         //X*radius
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
     r->dt = 0.0015;
+    
     r->collision = REB_COLLISION_DIRECT;
-    r->collision_resolve = collision_resolve_merge;
+    r->collision_resolve = reb_collision_resolve_merge;
+    r->collisions_track_dE = 1;     //switch to track the energy from collisions/ejections
     
 	// Initial conditions
 	struct reb_particle star = {0};
@@ -119,24 +120,6 @@ int main(int argc, char* argv[]){
     N_prev = r->N;
     argv4= argv[4];
     
-    //ini positions record
-    if(output_xyz){
-        FILE* output = fopen("xyz_outputs/hybarid0.txt","w");
-        fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,0,r->particles[0].x,r->particles[0].y,r->particles[0].z);
-        int i=r->N_active - 1;
-        while(i>0){
-            fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
-            i--;
-        }
-        i=r->N-1;
-        while(i>=r->N_active){
-            fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
-            i--;
-        }
-        fclose(output);
-        xyz_t += numdt*r->dt;
-    }
-    
     //Integrate!
     reb_integrate(r, tmax);
     
@@ -157,7 +140,7 @@ void heartbeat(struct reb_simulation* r){
     if(r->t > t_output){//log output
         t_output = r->t*t_log_output;
         
-        double E = reb_tools_energy(r) + r->ri_hybarid.dE_offset;
+        double E = reb_tools_energy(r) + r->collisions_dE;
         double dE = fabs((E-E0)/E0);
         reb_output_timing(r, 0);
         printf("    dE=%e",dE);
@@ -171,102 +154,36 @@ void heartbeat(struct reb_simulation* r){
         fclose(append);
     }
     
+    //record collisions in mini
     if(r->N < N_prev){
-        //removed particles
         char removed[200] = {0}; strcat(removed,argv4); strcat(removed,"_removed"); strcat(removed,".txt");
         FILE* append = fopen(removed,"a");
-        if(r->particles[0].id == -1) fprintf(append,"Ejection,%.5f\n",r->t); else if(r->ri_hybarid.mini->particles[0].id == -2) fprintf(append,"Collision,%.5f\n",r->t);
+        fprintf(append,"Collision,%.5f\n",r->t);
         fclose(append);
         
-        r->particles[0].id = 0;
-        r->ri_hybarid.mini->particles[0].id = 0;
         N_prev = r->N;
     }
     
-    //xyz movie plots
-    if(r->t >= xyz_t - 0.01*r->dt && output_xyz){
-        xyz_t += numdt*r->dt;
-        //printf("\n%f,%d,%f,%f\n",xyz_t,numdt,r->dt,r->t);
-        xyz_counter++;
-        char filename[100]={0}; char ii[5] = {0};
-        sprintf(ii, "%d", xyz_counter);
-        strcat(filename,"xyz_outputs/hybarid"); strcat(filename,ii); strcat(filename,".txt");
-        FILE* output = fopen(filename,"w");
-        fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,0,r->particles[0].x,r->particles[0].y,r->particles[0].z);
-        int i=r->N_active - 1;
-        while(i>0){
-            fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
-            i--;
-        }
-        i=r->N-1;
-        while(i>=r->N_active){
-            fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
-            i--;
-        }
-        fclose(output);
-    }
-}
-
-//check for collisions in mini each heartbeat
-void collision_resolve_merge(struct reb_simulation* const mini, struct reb_collision c){
-    struct reb_simulation* global = mini->ri_hybarid.global;
-    int N_active = mini->N_active;
-    int i = c.p1;
-    int j = c.p2;
-    
-    if (i<N_active && j>=N_active){
-        // Already ordered
-    }else if (i>=N_active && j<N_active){
-        // Will be done later
-        return;
-    }else{
-        // Ignore collision between small particles
-        return;
-    }
-    
-    struct reb_particle* pi = &(mini->particles[i]);
-    struct reb_particle* pj = &(mini->particles[j]);
-    
-    double invmass = 1.0/(pi->m + pj->m);
-    
-    pi->vx = (pi->vx*pi->m + pj->vx*pj->m)*invmass;
-    pi->vy = (pi->vy*pi->m + pj->vy*pj->m)*invmass;
-    pi->vz = (pi->vz*pi->m + pj->vz*pj->m)*invmass;
-    pi->x = (pi->x*pi->m + pj->x*pj->m)*invmass;
-    pi->y = (pi->y*pi->m + pj->y*pj->m)*invmass;
-    pi->z = (pi->z*pi->m + pj->z*pj->m)*invmass;
-    pi->m += pj->m;
-    
-    reb_remove(mini,j,1);  //remove mini
-    
-    printf("\n\tParticle %d collided with body %d from system at t=%f.\n",i,global->ri_hybarid.global_index_from_mini_index[j],global->t);
-    
-    
-    if (global->ri_hybarid.collision_in_timestep==0){
-        global->ri_hybarid.collision_in_timestep=1;
-        struct reb_particle* tmp = global->particles;
-        // Swap particles to calculate energy at beginning of timstep.
-        global->particles = global->ri_hybarid.particles_prev;
-        global->ri_hybarid.energy_before_collision_in_timestep = reb_tools_energy(global);
-        // Swap particles back
-        global->particles = tmp;
-    }
-    
-    //remove from global and update global arrays
-    int globalj = global->ri_hybarid.global_index_from_mini_index[j];
-    reb_remove(global,globalj,1);
-    
-    for(int k=globalj;k<global->N;k++){
-        global->ri_hybarid.particles_prev[k] = global->ri_hybarid.particles_prev[k+1];
-        global->ri_hybarid.is_in_mini[k] = global->ri_hybarid.is_in_mini[k+1];
-    }
-    global->ri_hybarid.global_index_from_mini_index_N--;
-    for(int k=j;k<global->ri_hybarid.global_index_from_mini_index_N;k++){
-        global->ri_hybarid.global_index_from_mini_index[k] = global->ri_hybarid.global_index_from_mini_index[k+1];
-    }
-    for(int k=N_active;k<global->ri_hybarid.global_index_from_mini_index_N;k++){
-        if(global->ri_hybarid.global_index_from_mini_index[k] > globalj){
-            global->ri_hybarid.global_index_from_mini_index[k]--; //1 fewer particles in index now
+    //ejections
+    const double ED2 = 9;
+    struct reb_particle* global = r->particles;
+    struct reb_particle p0 = global[0];
+    for(int i=1;i<r->N;i++){
+        const double dx = global[i].x - p0.x;
+        const double dy = global[i].y - p0.y;
+        const double dz = global[i].z - p0.z;
+        if(dx*dx+dy*dy+dz*dz > ED2){
+            const double Ei = reb_tools_energy(r);
+            reb_remove(r,i,1);
+            const double Ef = reb_tools_energy(r);
+            r->collisions_dE += Ei - Ef;
+            
+            char removed[200] = {0}; strcat(removed,argv4); strcat(removed,"_removed"); strcat(removed,".txt");
+            FILE* append = fopen(removed,"a");
+            fprintf(append,"Ejection,%.5f\n",r->t);
+            fclose(append);
+            
+            N_prev = r->N;
         }
     }
 }
@@ -431,3 +348,46 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
     fclose(swifterparams);
     fclose(mercuryparams);
 }
+
+/*
+ //ini positions record
+ if(output_xyz){
+ FILE* output = fopen("xyz_outputs/hybarid0.txt","w");
+ fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,0,r->particles[0].x,r->particles[0].y,r->particles[0].z);
+ int i=r->N_active - 1;
+ while(i>0){
+ fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
+ i--;
+ }
+ i=r->N-1;
+ while(i>=r->N_active){
+ fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
+ i--;
+ }
+ fclose(output);
+ xyz_t += numdt*r->dt;
+ }*/
+
+/*
+ //xyz movie plots
+ if(r->t >= xyz_t - 0.01*r->dt && output_xyz){
+ xyz_t += numdt*r->dt;
+ //printf("\n%f,%d,%f,%f\n",xyz_t,numdt,r->dt,r->t);
+ xyz_counter++;
+ char filename[100]={0}; char ii[5] = {0};
+ sprintf(ii, "%d", xyz_counter);
+ strcat(filename,"xyz_outputs/hybarid"); strcat(filename,ii); strcat(filename,".txt");
+ FILE* output = fopen(filename,"w");
+ fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,0,r->particles[0].x,r->particles[0].y,r->particles[0].z);
+ int i=r->N_active - 1;
+ while(i>0){
+ fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
+ i--;
+ }
+ i=r->N-1;
+ while(i>=r->N_active){
+ fprintf(output,"%f,%d,%.16f,%.16f,%.16f\n",r->t,i,r->particles[i].x,r->particles[i].y,r->particles[i].z);
+ i--;
+ }
+ fclose(output);
+ }*/
