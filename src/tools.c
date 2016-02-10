@@ -375,7 +375,7 @@ double reb_M_to_E(double e, double M){
 		return E;
 	}
 	else{
-		E = log(2.*M/e + 1.8);
+		E = M/fabs(M)*log(2.*fabs(M)/e + 1.8);
 
 		double F = E - e*sinh(E) + M;
 		for(int i=0; i<100; i++){
