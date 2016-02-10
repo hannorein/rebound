@@ -411,7 +411,7 @@ double reb_M_to_E(double e, double M){
 		return E;
 	}
 	else{
-		E = M;
+		E = M/fabs(M)*log(2.*fabs(M)/e + 1.8);
 
 		double F = E - e*sinh(E) + M;
 		for(int i=0; i<100; i++){
@@ -426,7 +426,6 @@ double reb_M_to_E(double e, double M){
 }
 
 double reb_tools_M_to_f(double e, double M){
-
 	double E = reb_M_to_E(e, M);
 	if(e > 1.){
 		return 2.*atan(sqrt((1.+e)/(e-1.))*tanh(0.5*E));
