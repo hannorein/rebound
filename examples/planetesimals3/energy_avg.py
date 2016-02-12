@@ -22,6 +22,7 @@ files = glob.glob(dir+'*.txt')
 N_files = 0
 
 data = []
+n_it = 10e10
 for f in files:
     split = f.split("/")
     split2 = split[-1].split("_")
@@ -29,13 +30,15 @@ for f in files:
         try:
             ff = open(f, 'r')
             lines = ff.readlines()
+            length = len(lines)
+            if length < n_it:   #need to find array with shortest length
+                n_it = length
             data.append(lines)
             N_files += 1
             print 'iteration complete'
         except:
             print 'couldnt read in data file '+f
 
-n_it = len(data[0])
 E = np.zeros(shape=(N_files,n_it))
 Eavg = np.zeros(n_it)
 time = np.zeros(n_it)
@@ -53,7 +56,7 @@ cmap = get_cmap(N_files)
 for i in xrange(0,N_files):
     plt.plot(time,E[i], ms=0.5, color=cmap(i), alpha=0.75)
 plt.plot(time, Eavg, 'o', markeredgecolor='none', color='black', label='Averaged curve')
-plt.plot(time,3e-10*time**(0.5),color='black',label='t^1/2 growth')
+plt.plot(time,5e-11*time**(0.5),color='black',label='t^1/2 growth')
 plt.legend(loc='upper left',prop={'size':10})
 plt.ylabel('Avg Energy')
 plt.xlabel('time (years)')
