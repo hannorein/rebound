@@ -96,16 +96,18 @@ def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=Fals
                     pp = newp
             else:     # unbound orbit.  Step in M rather than f, since for hyperbolic orbits f stays near lim, and jumps to -f at peri
                 pp = None
-                lim_phase = o.M 
+                t_cross = 2*o.r/o.v # rough time to cross display box
+                lim_phase = abs(o.n)*t_cross # M = nt, n is negative
                 phase = np.linspace(-lim_phase,lim_phase,Narc)
                 # add particle phase manually
                 p_i = np.searchsorted(phase, o.M)
                 phase = np.insert(phase, p_i, o.M)
+                tail_length = o.M + lim_phase 
                 for ph in phase:
                     newp = Particle(a=o.a, M=ph, inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=particles[i+1].m, primary=primary, simulation=sim)
                     if trails:
                         if ph<=o.M:
-                            alpha = 1.-(-ph+o.M)/(2.*lim_phase)
+                            alpha = 1.-abs(o.M-ph)/(tail_length)
                         else:
                             alpha = 0.2
                         color = (colori[0], colori[1], colori[2], alpha)
