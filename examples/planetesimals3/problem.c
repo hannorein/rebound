@@ -45,13 +45,14 @@ int main(int argc, char* argv[]){
     swifter_dir = argv[6];
     
 	//Simulation Setup
-	r->integrator	= REB_INTEGRATOR_HYBARID;
+	//r->integrator	= REB_INTEGRATOR_HYBARID;
 	//r->integrator	= REB_INTEGRATOR_IAS15;
-	//r->integrator	= REB_INTEGRATOR_WHFAST;
+	r->integrator	= REB_INTEGRATOR_WHFAST;
     r->ri_hybarid.switch_ratio = 2;        //Hill radii
     r->ri_hybarid.CE_radius = 15.;         //X*radius
     r->testparticle_type = 1;
-	r->heartbeat	= heartbeat;
+    r->heartbeat	= heartbeat;
+    //r->ri_whfast.corrector 	= 3;
     r->dt = 0.0015;
     
     r->collision = REB_COLLISION_DIRECT;

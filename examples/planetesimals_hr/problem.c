@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
     r->ri_hybarid.CE_radius = 5.;          //X*radius
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
-    //r->usleep = 10000;
+    r->usleep = 2000;
     r->dt = 0.0015;
 
     r->collision = REB_COLLISION_DIRECT;
@@ -94,9 +94,6 @@ int main(int argc, char* argv[]){
 
 double tout = .1;
 void heartbeat(struct reb_simulation* r){
-	if (reb_output_check(r, 100.*r->dt)){
-		reb_output_timing(r, 0);
-	}
     if (tout <r->t){
         tout *=1.01;
         double E = reb_tools_energy(r);
@@ -108,6 +105,13 @@ void heartbeat(struct reb_simulation* r){
         }
         fprintf(f,"%e %e %d\n",r->t,relE,N_mini);
         fclose(f);
+    }
+    
+    if (reb_output_check(r, 100.*r->dt)){
+        double E = reb_tools_energy(r);
+        double relE = fabs((E-E0+r->collisions_dE)/E0);
+        reb_output_timing(r, 0);
+        printf("%e",relE);
     }
 }
 

@@ -54,7 +54,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         mini->collision = r->collision;
         mini->collision_resolve = r->collision_resolve;
         mini->collisions_track_dE = r->collisions_track_dE;
-        mini->ri_ias15.epsilon = r->ri_ias15.epsilon; 
+        mini->ri_ias15.epsilon = 1e-9;
     }
 
     // Remove all particles from mini

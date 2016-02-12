@@ -33,7 +33,7 @@ if diagnostics == 1:
     axes[2].set_xscale('log')
     axes[2].set_yscale('log')
     axes[2].set_ylabel('real life elapsed time (seconds)')
-    axes[2].set_xlabel('time (yrs)')
+    axes[2].set_xlabel('simulation time (yrs)')
     axes[2].set_xlim([1,max(data[:,0])])
 else:
     plt.plot(data[:,0],data[:,1], 'o', ms=ms, markeredgecolor='none')
