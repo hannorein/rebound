@@ -16,7 +16,7 @@ int main(int argc, char* argv[]){
     double amin = 0.45, amax = 0.75;        //for planetesimal disk
     double powerlaw = 0.5;
     
-    int N_planetesimals = 110;
+    int N_planetesimals = 100;
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
@@ -26,8 +26,8 @@ int main(int argc, char* argv[]){
     r->ri_hybarid.CE_radius = 5.;          //X*radius
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
-    r->usleep = 2000;
-    r->dt = 0.0015;
+    //r->usleep = 10000;
+    r->dt = 9.9274637917650234e-04;
 
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_merge;
@@ -80,7 +80,6 @@ int main(int argc, char* argv[]){
     
     system("rm -f energy.txt");
     E0 = reb_tools_energy(r);
-    
     time_t t_ini = time(NULL);
     struct tm *tmp = gmtime(&t_ini);
     reb_integrate(r, 100);
@@ -103,7 +102,7 @@ void heartbeat(struct reb_simulation* r){
         if (r->ri_hybarid.mini_active){
             N_mini = r->ri_hybarid.mini->N;
         }
-        fprintf(f,"%e %e %d\n",r->t,relE,N_mini);
+        fprintf(f,"%e %e %d %e\n",r->t,relE,N_mini, r->collisions_dE);
         fclose(f);
     }
     
