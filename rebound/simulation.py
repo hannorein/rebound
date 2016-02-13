@@ -927,8 +927,9 @@ class reb_variational_configuration(Structure):
                 ("index_1st_order_a", c_int),
                 ("index_1st_order_b", c_int)]
 
-    def vary(self, particle_index, variation, variation2=None):
-        order = self.order
+    def vary(self, particle_index, variation, variation2=None, order=None):
+        if order is None:
+            order = self.order
         sim = self._sim.contents
         if order==0:
             raise ValueError("Cannot find variation for given index. ")
