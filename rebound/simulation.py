@@ -616,6 +616,8 @@ class Simulation(Structure):
                     self.units = ('AU', 'yr2pi', 'Msun')
                 self.add(horizons.getParticle(particle,**kwargs))
                 units_convert_particle(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass'])
+            else: 
+                raise ValueError("Argument passed to add() not supported.")
         else: 
             self.add(Particle(simulation=self, **kwargs))
 
