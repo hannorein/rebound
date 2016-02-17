@@ -40,11 +40,16 @@
 
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r);
 static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini);
+void calc_forces_on_planets(const struct reb_simulation* r, double* a_0);
 
+double* a_0 = NULL;
+double* a_1 = NULL;
 
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     if (r->ri_hybarid.mini == NULL){
+        a_0 = malloc(3*_N_active);
+        a_1 = malloc(3*_N_active);
         r->ri_hybarid.mini = reb_create_simulation();
         struct reb_simulation* const mini = r->ri_hybarid.mini;
         mini->usleep = -1; // Disable visualiation
@@ -96,12 +101,48 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         }
         memcpy(r->ri_hybarid.particles_prev, r->particles, sizeof(struct reb_particle)*r->N);
     }
+
+
+    calc_forces_on_planets(r, a_0);
     
     reb_integrator_whfast_part1(r);
 }
 
+
+void calc_forces_on_planets(const struct reb_simulation* r, double* a_0){
+    int* is_in_mini = r->ri_hybarid.is_in_mini;
+    double G = r->G;
+	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
+    for (int i = 0; i<_N_active; i++){
+        struct reb_particle pm = r->particles[i];
+        double ax = 0.;
+        double ay = 0.;
+        double az = 0.;
+        for (int j = _N_active; j<r->N; j++){
+            if (is_in_mini[j]){
+                struct reb_particle ps = r->particles[j];
+                double dx = ps.x - pm.x;
+                double dy = ps.y - pm.y;
+                double dz = ps.z - pm.z;
+                double d = sqrt(dx*dx + dy*dy + dz*dz);
+                ax += ps.m * dx * G/(d*d*d); 
+                ay += ps.m * dy * G/(d*d*d); 
+                az += ps.m * dz * G/(d*d*d); 
+                
+            }
+        }
+        a_0[i*3+0] = ax;
+        a_0[i*3+1] = ay;
+        a_0[i*3+2] = az;
+    }
+
+}
+
+
 void reb_integrator_hybarid_part2(struct reb_simulation* r){
     reb_integrator_whfast_part2(r);
+    
+    calc_forces_on_planets(r, a_1);
 
     struct reb_simulation* mini = r->ri_hybarid.mini;
     if (r->ri_hybarid.mini_active){
@@ -210,6 +251,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* gl
 }
 
 static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
+    printf("%e\n",mini->dt);
     if (mini->testparticle_type){
         struct reb_simulation* global = mini->ri_hybarid.global;
         struct reb_particle* global_particles = global->particles;
@@ -224,30 +266,16 @@ static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation*
 #pragma omp parallel for schedule(guided)
         for(int i=0;i<mini->N_active;i++){              //massive bodies in mini
             struct reb_particle pi = mini_particles[i];
-            double ax = 0.;
-            double ay = 0.;
-            double az = 0.;
-            for(int j=N_active;j<global->N;j++){        //planetesimals in global
-                if(global->ri_hybarid.is_in_mini[j]==0){
-                    const double ix = (1.-timefac)*global_prev[j].x + timefac*global_particles[j].x; //interpolated values
-                    const double iy = (1.-timefac)*global_prev[j].y + timefac*global_particles[j].y;
-                    const double iz = (1.-timefac)*global_prev[j].z + timefac*global_particles[j].z;
-                    const double mp = global_particles[j].m;
-                    const double ddx = pi.x - ix;
-                    const double ddy = pi.y - iy;
-                    const double ddz = pi.z - iz;
-                    
-                    const double rijinv2 = 1.0/(ddx*ddx + ddy*ddy + ddz*ddz);
-                    const double ac = -G*mp*rijinv2*sqrt(rijinv2);
-                    
-                    ax += ac*ddx;     //perturbation on planets due to planetesimals.
-                    ay += ac*ddy;
-                    az += ac*ddz;
-                }
-            }
-            mini_particles[i].ax += ax;
-            mini_particles[i].ay += ay;
-            mini_particles[i].az += az;
+            double ax0 = a_0[i*3+0];
+            double ay0 = a_0[i*3+1];
+            double az0 = a_0[i*3+2];
+            double ax1 = a_1[i*3+0];
+            double ay1 = a_1[i*3+1];
+            double az1 = a_1[i*3+2];
+            
+            mini_particles[i].ax += ax0*(1.-timefac) + ax1*timefac;
+            mini_particles[i].ay += ay0*(1.-timefac) + ay1*timefac;
+            mini_particles[i].az += az0*(1.-timefac) + az1*timefac;
         }
     }
 }
