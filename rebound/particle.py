@@ -423,6 +423,63 @@ class Particle(Structure):
             raise ValueError("Particle and primary positions are the same.")
 
         return o
+    
+    # Simple operators for particles.
+
+    def __sub__(self, other):
+        if isinstance(other, Particle):
+            np = Particle()
+            np.x = self.x - other.x
+            np.y = self.y - other.y
+            np.z = self.z - other.z
+            np.vx = self.vx - other.vx
+            np.vy = self.vy - other.vy
+            np.vz = self.vz - other.vz
+            np.m = self.m - other.m
+            return np
+        return NotImplemented 
+    
+    def __add__(self, other):
+        if isinstance(other, Particle):
+            np = Particle()
+            np.x = self.x + other.x
+            np.y = self.y + other.y
+            np.z = self.z + other.z
+            np.vx = self.vx + other.vx
+            np.vy = self.vy + other.vy
+            np.vz = self.vz + other.vz
+            np.m = self.m + other.m
+            return np
+        return NotImplemented 
+    
+    def __mul__(self, other):
+        if isinstance(other, float):
+            np = Particle()
+            np.x  = other*self.x
+            np.y  = other*self.y
+            np.z  = other*self.z
+            np.vx = other*self.vx
+            np.vy = other*self.vy
+            np.vz = other*self.vz 
+            np.m  = other*self.m 
+            return np
+        return NotImplemented 
+
+    def __truediv__(self, other):
+        return self.__div__(other)
+
+    def __div__(self, other):
+        if isinstance(other, float):
+            np = Particle()
+            np.x  = self.x / other
+            np.y  = self.y / other
+            np.z  = self.z / other
+            np.vx = self.vx/ other
+            np.vy = self.vy/ other
+            np.vz = self.vz/ other 
+            np.m  = self.m / other 
+            return np
+        return NotImplemented 
 
     @property
     def orb_radius(self):
