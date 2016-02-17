@@ -48,8 +48,10 @@ double* a_1 = NULL;
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     if (r->ri_hybarid.mini == NULL){
-        a_0 = calloc(sizeof(double),3*_N_active);
-        a_1 = calloc(sizeof(double),3*_N_active);
+        a_0 = malloc(sizeof(double)*3*_N_active);
+        a_1 = malloc(sizeof(double)*3*_N_active);
+        //a_0 = calloc(sizeof(double),3*_N_active);
+        //a_1 = calloc(sizeof(double),3*_N_active);
         r->ri_hybarid.mini = reb_create_simulation();
         struct reb_simulation* const mini = r->ri_hybarid.mini;
         mini->usleep = -1; // Disable visualiation
@@ -219,7 +221,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* gl
     }
 }
 
-void calc_forces_on_planets(const struct reb_simulation* r, double* a_0){
+void calc_forces_on_planets(const struct reb_simulation* r, double* a){
     int* is_in_mini = r->ri_hybarid.is_in_mini;
     double G = r->G;
     const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
@@ -240,9 +242,9 @@ void calc_forces_on_planets(const struct reb_simulation* r, double* a_0){
                 az += ps.m * dz * G/(d*d*d);
             }
         }
-        a_0[i*3+0] = ax;
-        a_0[i*3+1] = ay;
-        a_0[i*3+2] = az;
+        a[i*3+0] = ax;
+        a[i*3+1] = ay;
+        a[i*3+2] = az;
     }
 }
 
