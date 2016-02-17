@@ -40,18 +40,11 @@
 
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r);
 static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini);
-void calc_forces_on_planets(const struct reb_simulation* r, double* a_0);
-
-double* a_0 = NULL;
-double* a_1 = NULL;
+static void calc_forces_on_planets(const struct reb_simulation* r, int which_acceleration);
 
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     if (r->ri_hybarid.mini == NULL){
-        a_0 = malloc(sizeof(double)*3*_N_active);
-        a_1 = malloc(sizeof(double)*3*_N_active);
-        //a_0 = calloc(sizeof(double),3*_N_active);
-        //a_1 = calloc(sizeof(double),3*_N_active);
         r->ri_hybarid.mini = reb_create_simulation();
         struct reb_simulation* const mini = r->ri_hybarid.mini;
         mini->usleep = -1; // Disable visualiation
@@ -62,7 +55,8 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         mini->collision = r->collision;
         mini->collision_resolve = r->collision_resolve;
         mini->collisions_track_dE = r->collisions_track_dE;
-        mini->ri_ias15.epsilon = 1e-9;
+        mini->ri_hybarid.a_i = malloc(sizeof(double)*3*_N_active);
+        mini->ri_hybarid.a_f = malloc(sizeof(double)*3*_N_active);
     }
 
     // Remove all particles from mini
@@ -104,7 +98,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         memcpy(r->ri_hybarid.particles_prev, r->particles, sizeof(struct reb_particle)*r->N);
     }
 
-    calc_forces_on_planets(r, a_0);
+    calc_forces_on_planets(r, 0);
     
     reb_integrator_whfast_part1(r);
 }
@@ -113,7 +107,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
 void reb_integrator_hybarid_part2(struct reb_simulation* r){
     reb_integrator_whfast_part2(r);
     
-    calc_forces_on_planets(r, a_1);
+    calc_forces_on_planets(r, 1);
     
     struct reb_simulation* mini = r->ri_hybarid.mini;
     if (r->ri_hybarid.mini_active){
@@ -221,8 +215,11 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* gl
     }
 }
 
-void calc_forces_on_planets(const struct reb_simulation* r, double* a){
+//couldn't these "a" values be collected in gravity.c? Maybe not worth the effort though?
+void calc_forces_on_planets(const struct reb_simulation* r, int which_acceleration){
     int* is_in_mini = r->ri_hybarid.is_in_mini;
+    double* a;
+    if(which_acceleration) a = r->ri_hybarid.mini->ri_hybarid.a_f; else a = r->ri_hybarid.mini->ri_hybarid.a_i;
     double G = r->G;
     const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     for (int i = 0; i<_N_active; i++){
@@ -231,7 +228,7 @@ void calc_forces_on_planets(const struct reb_simulation* r, double* a){
         double ay = 0.;
         double az = 0.;
         for (int j = _N_active; j<r->N; j++){
-            if (is_in_mini[j]){
+            if (is_in_mini[j] == 0){
                 struct reb_particle ps = r->particles[j];
                 double dx = ps.x - pm.x;
                 double dy = ps.y - pm.y;
@@ -249,22 +246,24 @@ void calc_forces_on_planets(const struct reb_simulation* r, double* a){
 }
 
 static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
-    //printf("%e\n",mini->dt);
     if (mini->testparticle_type){
         struct reb_simulation* global = mini->ri_hybarid.global;
         struct reb_particle* mini_particles = mini->particles;
         const double t_prev = global->t - global->dt;
         double timefac = (mini->t - t_prev)/global->dt;
+        
+        double* a_i = mini->ri_hybarid.a_i;
+        double* a_f = mini->ri_hybarid.a_f;
         // TODO: See if the following is good enough and if so why
         // timefac = 0.5;
 #pragma omp parallel for schedule(guided)
         for(int i=0;i<mini->N_active;i++){              //massive bodies in mini
-            double ax0 = a_0[i*3+0];
-            double ay0 = a_0[i*3+1];
-            double az0 = a_0[i*3+2];
-            double ax1 = a_1[i*3+0];
-            double ay1 = a_1[i*3+1];
-            double az1 = a_1[i*3+2];
+            double ax0 = a_i[i*3+0];
+            double ay0 = a_i[i*3+1];
+            double az0 = a_i[i*3+2];
+            double ax1 = a_f[i*3+0];
+            double ay1 = a_f[i*3+1];
+            double az1 = a_f[i*3+2];
             
             mini_particles[i].ax += ax0*(1.-timefac) + ax1*timefac;
             mini_particles[i].ay += ay0*(1.-timefac) + ay1*timefac;

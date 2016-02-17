@@ -237,6 +237,9 @@ struct reb_simulation_integrator_hybarid {
     int* is_in_mini;
     int is_in_mini_Nmax;
 
+    double* a_i;
+    double* a_f;
+    
     struct reb_particle* particles_prev;
     int particles_prev_Nmax;
     
