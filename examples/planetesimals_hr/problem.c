@@ -80,15 +80,19 @@ int main(int argc, char* argv[]){
     
     system("rm -f energy.txt");
     E0 = reb_tools_energy(r);
-    reb_integrate(r, 100.);
+    time_t t_ini = time(NULL);
+    struct tm *tmp = gmtime(&t_ini);
+    reb_integrate(r, 100);
+    
+    time_t t_fini = time(NULL);
+    struct tm *tmp2 = gmtime(&t_fini);
+    double time = t_fini - t_ini;
+    printf("\nSimulation complete. Elapsed simulation time is %.2f s. \n\n",time);
     
 }
 
 double tout = .1;
 void heartbeat(struct reb_simulation* r){
-	if (reb_output_check(r, 100.*r->dt)){
-		reb_output_timing(r, 0);
-	}
     if (tout <r->t){
         tout *=1.01;
         double E = reb_tools_energy(r);
@@ -100,6 +104,13 @@ void heartbeat(struct reb_simulation* r){
         }
         fprintf(f,"%e %e %d %e\n",r->t,relE,N_mini, r->collisions_dE);
         fclose(f);
+    }
+    
+    if (reb_output_check(r, 100.*r->dt)){
+        double E = reb_tools_energy(r);
+        double relE = fabs((E-E0+r->collisions_dE)/E0);
+        reb_output_timing(r, 0);
+        printf("%e",relE);
     }
 }
 

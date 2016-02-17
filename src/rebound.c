@@ -247,6 +247,8 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_hybarid.is_in_mini_Nmax = 0;
     r->ri_hybarid.particles_prev = NULL;
     r->ri_hybarid.particles_prev_Nmax = 0;
+    r->ri_hybarid.a_i = NULL;
+    r->ri_hybarid.a_f = NULL;
 }
 
 void reb_reset_function_pointers(struct reb_simulation* const r){
