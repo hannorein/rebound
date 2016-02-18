@@ -8,6 +8,7 @@
 
 void heartbeat(struct reb_simulation* r);
 double calc_a(struct reb_simulation* r);
+double draw_ainv_powerlaw(double min, double max);
 
 double E0;
 char output_name[100] = {0};
@@ -58,16 +59,18 @@ int main(int argc, char* argv[]){
     //planetesimals
     double planetesimal_mass = m1/600;     //each planetesimal = 1/600th of planet mass
     int N_planetesimals = 230.*m_earth/planetesimal_mass;
-    double amin = 15, amax = 30;        //for planetesimal disk
-    double powerlaw = 1;
+    double amin = a1 - 10.5, amax = a1 + 10.5;   //10.5AU on each side of the planet
+    //double powerlaw = 1;
     while(r->N<N_planetesimals + r->N_active){
 		struct reb_particle pt = {0};
-		double a	= reb_random_powerlaw(amin,amax,powerlaw);
-        double phi 	= reb_random_uniform(0,2.*M_PI);
-        double inc = reb_random_normal(0.0001);
+		//double a	= reb_random_powerlaw(amin,amax,powerlaw);
+        double a = draw_ainv_powerlaw(amin,amax);
+        double e = reb_random_rayleigh(0.01);   //rayleigh dist
+        double inc = reb_random_rayleigh(0.005);
         double Omega = reb_random_uniform(0,2.*M_PI);
         double apsis = reb_random_uniform(0,2.*M_PI);
-        pt = reb_tools_orbit_to_particle(r->G, star, r->testparticle_type?planetesimal_mass:0., a, 0., inc, Omega, apsis,phi);
+        double phi 	= reb_random_uniform(0,2.*M_PI);
+        pt = reb_tools_orbit_to_particle(r->G, star, r->testparticle_type?planetesimal_mass:0., a, e, inc, Omega, apsis, phi);
 		pt.r 		= 0.00000934532;
         pt.id = r->N;
 		reb_add(r, pt);
@@ -155,4 +158,10 @@ double calc_a(struct reb_simulation* r){
     const double a = -mu/( v2 - 2.*mu*dinv );
     
     return a;
+}
+
+//returns value randomly drawn from P(x) = 1/x distribution
+double draw_ainv_powerlaw(double min, double max){
+    double y = reb_random_uniform(0., 1.);
+    return exp(y*log(max/min) + log(min));
 }
