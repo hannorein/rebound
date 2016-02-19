@@ -34,3 +34,6 @@ doc/doxygen/html/
 doc/ipython
 doc/search.json
 problems/
+examples/planetesimals_Kirsh/output/*
+examples/planetesimals_Kirsh/saved_output/*
+examples/planetesimals_Kirsh/xyz_outputs/*

@@ -57,8 +57,7 @@ int main(int argc, char* argv[]){
     
     //planetesimals
     double planetesimal_mass = m1/600;     //each planetesimal = 1/600th of planet mass
-    //int N_planetesimals = 230.*m_earth/planetesimal_mass;
-    int N_planetesimals = 10000;
+    int N_planetesimals = 230.*m_earth/planetesimal_mass;
     double amin = a1 - 10.5, amax = a1 + 10.5;   //10.5AU on each side of the planet
     while(r->N<N_planetesimals + r->N_active){
 		struct reb_particle pt = {0};
