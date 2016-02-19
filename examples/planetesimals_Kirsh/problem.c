@@ -15,8 +15,6 @@ char output_name[100] = {0};
 double log_constant, tlog_output, lin_constant, tlin_output;
 time_t t_ini;
 
-int xyz_counter = 0;
-
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
     double m_earth = 0.000003003;
@@ -25,13 +23,14 @@ int main(int argc, char* argv[]){
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
-    r->ri_hybarid.switch_ratio = 2;  //Hill radii
+    r->ri_hybarid.switch_ratio = atof(argv[3]);  //Hill radii
     r->ri_hybarid.CE_radius = 15.;          //X*radius
     r->testparticle_type = 1;
 	r->heartbeat	= heartbeat;
     r->dt = atof(argv[1]);
     //r->dt = 12.56;  //planet's period = 125 years
     //r->dt = 1;
+    r->usleep = 10000;
     double tmax = 1e5 * 6.283;
     
     r->collision = REB_COLLISION_DIRECT;
@@ -58,13 +57,13 @@ int main(int argc, char* argv[]){
     
     //planetesimals
     double planetesimal_mass = m1/600;     //each planetesimal = 1/600th of planet mass
-    int N_planetesimals = 230.*m_earth/planetesimal_mass;
+    //int N_planetesimals = 230.*m_earth/planetesimal_mass;
+    int N_planetesimals = 10000;
     double amin = a1 - 10.5, amax = a1 + 10.5;   //10.5AU on each side of the planet
-    //double powerlaw = 1;
     while(r->N<N_planetesimals + r->N_active){
 		struct reb_particle pt = {0};
-		//double a	= reb_random_powerlaw(amin,amax,powerlaw);
-        double a = draw_ainv_powerlaw(amin,amax);
+		double a	= reb_random_powerlaw(amin,amax,1);
+        //double a = draw_ainv_powerlaw(amin,amax);
         double e = reb_random_rayleigh(0.01);   //rayleigh dist
         double inc = reb_random_rayleigh(0.005);
         double Omega = reb_random_uniform(0,2.*M_PI);
@@ -89,7 +88,9 @@ int main(int argc, char* argv[]){
     sprintf(seedstr, "%d", seed);
     char dtstr[15];
     sprintf(dtstr, "%.2f", r->dt);
-    strcat(output_name,"output/Kirsh_dt"); strcat(output_name,dtstr); strcat(output_name,"_sd");strcat(output_name,seedstr); strcat(output_name,".txt");
+    char HSRstr[15];
+    sprintf(HSRstr, "%.2f", r->ri_hybarid.switch_ratio);
+    strcat(output_name,"output/Kirsh_dt"); strcat(output_name,dtstr); strcat(output_name,"_HSR"); strcat(output_name,HSRstr); strcat(output_name,"_sd"); strcat(output_name,seedstr); strcat(output_name,".txt");
     char syss[100] = {0}; strcat(syss,"rm -v "); strcat(syss,output_name);
     system(syss);
     time_t t_ini = time(NULL);
