@@ -512,6 +512,10 @@ class Simulation(Structure):
         """ 
         This function adds a set of variational particles to the simulation. 
 
+        If there are N real particles in the simulation, this functions adds N additional variational 
+        particles. To see how many particles (real and variational) are in a simulation, use ``'sim.N'``. 
+        To see how many variational particles are in a simulation use ``'sim.N_var'``.
+
         Currently Leapfrog, WHFast and IAS15 support first order variational equations. IAS15 also
         supports second order variational equations.
 
@@ -519,10 +523,12 @@ class Simulation(Structure):
         ----------
         order : integer, optional
             By default the function adds a set of first order variational particles to the simulation. Set this flag to 2 for second order.
-        first_order : int, optional
-            Second order variational equations depend on their corresponding first order variational particles. This parameter needs to be set to the index of the first variational particle of the firster order variational equations. 
-        first_order_2 : int, optional
-            Same as first_order. But allows to set two different indicies to calculate off-diagonal elements.
+        first_order : reb_variational_configuration, optional
+            Second order variational equations depend on their corresponding first order variational equations. 
+            This parameter expects the reb_variational_configuration object corresponding  to the first order variational equations. 
+        first_order_2 : reb_variational_configuration, optional
+            Same as first_order. But allows to set two different indicies to calculate off-diagonal elements. 
+            If omitted, then first_order will be used for both first order equations.
         testparticle : int, optional
             If set to a value >= 0, then only one variational particle will be added and be treated as a test particle.
             
@@ -542,8 +548,6 @@ class Simulation(Structure):
                 first_order_2 = first_order
             clibrebound.reb_add_var_2nd_order.restype = c_int
             index = clibrebound.reb_add_var_2nd_order(byref(self),c_int(testparticle),c_int(first_order.index),c_int(first_order_2.index))
-
-            pass
         else:
             raise AttributeError("Only variational equations of first and second order are supported.")
 
@@ -553,7 +557,7 @@ class Simulation(Structure):
         return s
         
 # MEGNO
-    def init_megno(self, delta):
+    def init_megno(self):
         """
         This function initialises the chaos indicator MEGNO particles and enables their integration.
 
@@ -566,16 +570,18 @@ class Simulation(Structure):
         This function also needs to be called if you are interested in the Lyapunov exponent as it is
         calculate with the help of MEGNO. See Rein and Tamayo 2015 for details on the implementation.
 
-        The initial delta value can in principle tace any value, typically we choose 1e-16. For 
-        more information on MENGO see e.g. http://dx.doi.org/10.1051/0004-6361:20011189
+        For more information on MENGO see e.g. http://dx.doi.org/10.1051/0004-6361:20011189
         """
-        clibrebound.reb_tools_megno_init(byref(self), c_double(delta))
+        clibrebound.reb_tools_megno_init(byref(self))
     
     def calculate_megno(self):
         """
         Return the current MEGNO value.
         Note that you need to call init_megno() before the start of the simulation.
         """
+        if self._calculate_megno!=1:
+            raise RuntimeError("MEGNO cannot be calculated. Make sure to call init_megno() after adding all particles but before integrating the simulation.")
+
         clibrebound.reb_tools_calculate_megno.restype = c_double
         return clibrebound.reb_tools_calculate_megno(byref(self))
     
@@ -585,6 +591,9 @@ class Simulation(Structure):
         Note that you need to call init_megno() before the start of the simulation.
         To get a timescale (the Lyapunov timescale), take the inverse of this quantity.
         """
+        if self._calculate_megno!=1:
+            raise RuntimeError("Lyapunov Characteristic Number cannot be calculated. Make sure to call init_megno() after adding all particles but before integrating the simulation.")
+
         clibrebound.reb_tools_calculate_lyapunov.restype = c_double
         return clibrebound.reb_tools_calculate_lyapunov(byref(self))
     
