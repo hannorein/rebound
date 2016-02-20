@@ -523,10 +523,10 @@ class Simulation(Structure):
         ----------
         order : integer, optional
             By default the function adds a set of first order variational particles to the simulation. Set this flag to 2 for second order.
-        first_order : reb_variational_configuration, optional
+        first_order : Variation, optional
             Second order variational equations depend on their corresponding first order variational equations. 
-            This parameter expects the reb_variational_configuration object corresponding  to the first order variational equations. 
-        first_order_2 : reb_variational_configuration, optional
+            This parameter expects the Variation object corresponding  to the first order variational equations. 
+        first_order_2 : Variation, optional
             Same as first_order. But allows to set two different indicies to calculate off-diagonal elements. 
             If omitted, then first_order will be used for both first order equations.
         testparticle : int, optional
@@ -535,7 +535,7 @@ class Simulation(Structure):
 
         Returns
         -------
-        Returns reb_variational_configuration structure.
+        Returns Variation object (a copy, thus read only).
         """
         cur_var_config_N = self.var_config_N
         if order==1:
@@ -552,7 +552,7 @@ class Simulation(Structure):
             raise AttributeError("Only variational equations of first and second order are supported.")
 
         # Need a copy because location of original might shift if more variations added
-        s = reb_variational_configuration.from_buffer_copy(self.var_config[cur_var_config_N])
+        s = Variation.from_buffer_copy(self.var_config[cur_var_config_N])
 
         return s
         
@@ -929,7 +929,7 @@ class Simulation(Structure):
 
 
 
-class reb_variational_configuration(Structure):
+class Variation(Structure):
     """
     REBOUND Variational Configuration Object.
 
@@ -937,7 +937,7 @@ class reb_variational_configuration(Structure):
     equations in a REBOUND simulation.  It is an abstraction of the 
     C struct reb_variational_configuration.
 
-    The reb_variational_configuration object that the user receives in 
+    The Variation object that the user receives in 
     python is a copy (not a pointer) of the actual struct in the simulation.
     This is because the location of the actual struct might change. However,
     since none of the fields in this struct should ever be changed after it has
@@ -1033,7 +1033,7 @@ Simulation._fields_ = [
                 ("N", c_int),
                 ("N_var", c_int),
                 ("var_config_N", c_int),
-                ("var_config", POINTER(reb_variational_configuration)),
+                ("var_config", POINTER(Variation)),
                 ("N_active", c_int),
                 ("testparticle_type", c_int),
                 ("allocated_N", c_int),
