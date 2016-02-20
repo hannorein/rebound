@@ -930,6 +930,33 @@ class Simulation(Structure):
 
 
 class reb_variational_configuration(Structure):
+    """
+    REBOUND Variational Configuration Object.
+
+    This object encapsulated the configuration of one set of variational 
+    equations in a REBOUND simulation.  It is an abstraction of the 
+    C struct reb_variational_configuration.
+
+    The reb_variational_configuration object that the user receives in 
+    python is a copy (not a pointer) of the actual struct in the simulation.
+    This is because the location of the actual struct might change. However,
+    since none of the fields in this struct should ever be changed after it has
+    been initialized, a copy should work in all cases.
+
+    One rebound simulation can include any number of first and second order 
+    variational equations.
+
+    Examples
+    --------
+
+    >>> sim = rebound.Simulation()          # Create a simulation
+    >>> sim.add(m=1.)                       # Add a star
+    >>> sim.add(m=1.e-3, a=1.)              #     a planet
+    >>> var_config = sim.add_variation()    # Add a set of variational equations. 
+    >>> var_config.particles[1].x = 1.      # Initialize the variational particle corresponding to the planet
+    >>> sim.integrate(100.)                 # Integrate the simulation
+    >>> print(var_config.particles[0].vx)   # Print the velocity of the variational particle corresponding to the star
+    """
     _fields_ = [
                 ("_sim", POINTER(Simulation)),
                 ("order", c_int),
@@ -939,6 +966,28 @@ class reb_variational_configuration(Structure):
                 ("index_1st_order_b", c_int)]
 
     def vary(self, particle_index, variation, variation2=None, order=None):
+        """
+        This function can be used to initialize variational particles.
+    
+        Note that rather than using this convenience function, one can 
+        also directly manipulate the particles' coordinates.
+
+        This function is useful for initializing variations corresponding to 
+        changes in one of the orbital parameters.
+
+        The function supports both first and second order variations in the following
+        orbital parameters:
+          a, e, inc, omega, Omega, f, m (mass)
+
+        Parameters
+        ----------
+        particle_index : int
+            The index of the particle that should be varied. The index starts at 0 and runs through N-1. The first particle added to a simulation receives the index 0, the second 1, and the on.
+        variation : string
+            This parameter determines which orbital parameter is varied. 
+        variation2: string
+            This is only used for second order variations which can depend on two varying parameters. If omitted, then it is assumed that the parameter variation is variation2.
+        """
         if order is None:
             order = self.order
         sim = self._sim.contents
@@ -952,6 +1001,17 @@ class reb_variational_configuration(Structure):
     
     @property
     def particles(self):
+        """
+        Access the variational particles corresponding to this set of variational equations.
+
+        The function returns a list of particles which are sorted in the same way as those in 
+        sim.particles
+
+        The particles are pointers and thus can be modified. 
+
+        If there are N real particles, this function will also return a list of N particles (all of which are 
+        variational particles). 
+        """
         sim = self._sim.contents
         ps = []
         if self.testparticle>=0:
