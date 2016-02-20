@@ -45,9 +45,7 @@ int main(int argc, char* argv[]){
     swifter_dir = argv[6];
     
 	//Simulation Setup
-	//r->integrator	= REB_INTEGRATOR_HYBARID;
-	//r->integrator	= REB_INTEGRATOR_IAS15;
-	r->integrator	= REB_INTEGRATOR_WHFAST;
+	r->integrator	= REB_INTEGRATOR_HYBARID;
     r->ri_hybarid.switch_ratio = 2;        //Hill radii
     r->ri_hybarid.CE_radius = 15.;         //X*radius
     r->testparticle_type = 1;
@@ -149,9 +147,10 @@ void heartbeat(struct reb_simulation* r){
         time_t t_curr = time(NULL);
         struct tm *tmp2 = gmtime(&t_curr);
         double time = t_curr - t_ini;
+        
         FILE *append;
         append = fopen(output_name, "a");
-        fprintf(append, "%.16f,%.16f,%d,%d,%d,%.1f\n",r->t,dE,r->N,r->ri_hybarid.mini_active,r->ri_hybarid.mini->N,time);
+        fprintf(append, "%.16f,%.16f,%d,%d,%.1f\n",r->t,dE,r->N,r->ri_hybarid.mini->N,time);
         fclose(append);
     }
     
