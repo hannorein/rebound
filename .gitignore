@@ -37,3 +37,4 @@ problems/
 examples/planetesimals_Kirsh/output/*
 examples/planetesimals_Kirsh/saved_output/*
 examples/planetesimals_Kirsh/xyz_outputs/*
+examples/planetesimals_Kirsh/energy_avg/*

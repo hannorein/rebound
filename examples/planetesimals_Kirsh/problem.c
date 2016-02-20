@@ -30,7 +30,6 @@ int main(int argc, char* argv[]){
     r->dt = atof(argv[1]);
     //r->dt = 12.56;  //planet's period = 125 years
     //r->dt = 1;
-    r->usleep = 10000;
     double tmax = 1e5 * 6.283;
     
     r->collision = REB_COLLISION_DIRECT;
@@ -89,7 +88,10 @@ int main(int argc, char* argv[]){
     sprintf(dtstr, "%.2f", r->dt);
     char HSRstr[15];
     sprintf(HSRstr, "%.2f", r->ri_hybarid.switch_ratio);
-    strcat(output_name,"output/Kirsh_dt"); strcat(output_name,dtstr); strcat(output_name,"_HSR"); strcat(output_name,HSRstr); strcat(output_name,"_sd"); strcat(output_name,seedstr); strcat(output_name,".txt");
+    strcat(output_name,"output/Kirsh_dt"); strcat(output_name,dtstr); strcat(output_name,"_HSR"); strcat(output_name,HSRstr); strcat(output_name,"_sd"); strcat(output_name,seedstr);
+    char timeout[200] = {0};
+    strcat(timeout,output_name);
+    strcat(output_name,".txt");
     char syss[100] = {0}; strcat(syss,"rm -v "); strcat(syss,output_name);
     system(syss);
     time_t t_ini = time(NULL);
@@ -101,8 +103,7 @@ int main(int argc, char* argv[]){
     time_t t_fini = time(NULL);
     struct tm *tmp2 = gmtime(&t_fini);
     double time = t_fini - t_ini;
-    char timeout[200] = {0};
-    strcat(output_name,"output/Kirsh_dt"); strcat(output_name,dtstr); strcat(output_name,"_sd");strcat(output_name,seedstr); strcat(timeout,"_elapsedtime.txt");
+    strcat(timeout,"_elapsedtime.txt");
     FILE* outt = fopen(timeout,"w");
     fprintf(outt,"\nSimulation complete. Elapsed simulation time is %.2f s. \n\n",time);
     fclose(outt);
