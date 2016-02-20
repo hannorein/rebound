@@ -50,7 +50,7 @@ class TestSimulation(unittest.TestCase):
         self.assertEqual(com.x, 0.)
         
     def test_init_megno(self):
-        self.sim.init_megno(1e-16)
+        self.sim.init_megno()
         self.assertEqual(self.sim.N,4)
         self.assertEqual(self.sim.N_real,2)
         self.assertEqual(self.sim.calculate_megno(),0)
