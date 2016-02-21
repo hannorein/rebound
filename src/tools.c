@@ -97,18 +97,15 @@ double reb_tools_energy(struct reb_simulation* r){
             struct reb_simulation* global = r->ri_hybarid.global;
             struct reb_particle* global_particles = global->particles;
             struct reb_particle* mini_particles = r->particles;
-            struct reb_particle* global_prev = global->ri_hybarid.particles_prev;
-            const double t_prev = global->t - global->dt;
-            double timefac = (r->t - t_prev)/global->dt;
             const int N_active = global->N_active;
             const double G = global->G;
             for(int i=0;i<r->N_active;i++){              //massive bodies in mini
                 struct reb_particle pi = mini_particles[i];
                 for(int j=N_active;j<global->N;j++){        //planetesimals in global
                     if(global->ri_hybarid.is_in_mini[j]==0){
-                        const double ix = (1.-timefac)*global_prev[j].x + timefac*global_particles[j].x; //interpolated values
-                        const double iy = (1.-timefac)*global_prev[j].y + timefac*global_particles[j].y;
-                        const double iz = (1.-timefac)*global_prev[j].z + timefac*global_particles[j].z;
+                        const double ix = global_particles[j].x; // Note: no interpolated values
+                        const double iy = global_particles[j].y;
+                        const double iz = global_particles[j].z;
                         const double mp = global_particles[j].m;
                         const double ddx = pi.x - ix;
                         const double ddy = pi.y - iy;
