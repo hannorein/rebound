@@ -109,8 +109,9 @@ class reb_simulation_integrator_hybarid(Structure):
                 ("global_index_from_mini_index_Nmax", c_int),
                 ("is_in_mini", POINTER(c_int)),
                 ("is_in_mini_Nmax", c_int),
-                ("particles_prev", c_void_p),
-                ("particles_prev_Nmax", c_int),
+                ("a_i", c_void_p),
+                ("a_f", c_void_p),
+                ("a_Nmax", c_int),
                 ("timestep_too_large_warning", c_int)]
 
 class Orbit(Structure):
