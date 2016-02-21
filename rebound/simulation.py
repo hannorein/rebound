@@ -558,6 +558,10 @@ class Simulation(Structure):
         """ 
         This function adds a set of variational particles to the simulation. 
 
+        If there are N real particles in the simulation, this functions adds N additional variational 
+        particles. To see how many particles (real and variational) are in a simulation, use ``'sim.N'``. 
+        To see how many variational particles are in a simulation use ``'sim.N_var'``.
+
         Currently Leapfrog, WHFast and IAS15 support first order variational equations. IAS15 also
         supports second order variational equations.
 
@@ -565,17 +569,19 @@ class Simulation(Structure):
         ----------
         order : integer, optional
             By default the function adds a set of first order variational particles to the simulation. Set this flag to 2 for second order.
-        first_order : int, optional
-            Second order variational equations depend on their corresponding first order variational particles. This parameter needs to be set to the index of the first variational particle of the firster order variational equations. 
-        first_order_2 : int, optional
-            Same as first_order. But allows to set two different indicies to calculate off-diagonal elements.
+        first_order : Variation, optional
+            Second order variational equations depend on their corresponding first order variational equations. 
+            This parameter expects the Variation object corresponding  to the first order variational equations. 
+        first_order_2 : Variation, optional
+            Same as first_order. But allows to set two different indicies to calculate off-diagonal elements. 
+            If omitted, then first_order will be used for both first order equations.
         testparticle : int, optional
             If set to a value >= 0, then only one variational particle will be added and be treated as a test particle.
             
 
         Returns
         -------
-        Returns reb_variational_configuration structure.
+        Returns Variation object (a copy, thus read only).
         """
         cur_var_config_N = self.var_config_N
         if order==1:
@@ -588,18 +594,16 @@ class Simulation(Structure):
                 first_order_2 = first_order
             clibrebound.reb_add_var_2nd_order.restype = c_int
             index = clibrebound.reb_add_var_2nd_order(byref(self),c_int(testparticle),c_int(first_order.index),c_int(first_order_2.index))
-
-            pass
         else:
             raise AttributeError("Only variational equations of first and second order are supported.")
 
         # Need a copy because location of original might shift if more variations added
-        s = reb_variational_configuration.from_buffer_copy(self.var_config[cur_var_config_N])
+        s = Variation.from_buffer_copy(self.var_config[cur_var_config_N])
 
         return s
         
 # MEGNO
-    def init_megno(self, delta):
+    def init_megno(self):
         """
         This function initialises the chaos indicator MEGNO particles and enables their integration.
 
@@ -612,16 +616,18 @@ class Simulation(Structure):
         This function also needs to be called if you are interested in the Lyapunov exponent as it is
         calculate with the help of MEGNO. See Rein and Tamayo 2015 for details on the implementation.
 
-        The initial delta value can in principle tace any value, typically we choose 1e-16. For 
-        more information on MENGO see e.g. http://dx.doi.org/10.1051/0004-6361:20011189
+        For more information on MENGO see e.g. http://dx.doi.org/10.1051/0004-6361:20011189
         """
-        clibrebound.reb_tools_megno_init(byref(self), c_double(delta))
+        clibrebound.reb_tools_megno_init(byref(self))
     
     def calculate_megno(self):
         """
         Return the current MEGNO value.
         Note that you need to call init_megno() before the start of the simulation.
         """
+        if self._calculate_megno!=1:
+            raise RuntimeError("MEGNO cannot be calculated. Make sure to call init_megno() after adding all particles but before integrating the simulation.")
+
         clibrebound.reb_tools_calculate_megno.restype = c_double
         return clibrebound.reb_tools_calculate_megno(byref(self))
     
@@ -631,6 +637,9 @@ class Simulation(Structure):
         Note that you need to call init_megno() before the start of the simulation.
         To get a timescale (the Lyapunov timescale), take the inverse of this quantity.
         """
+        if self._calculate_megno!=1:
+            raise RuntimeError("Lyapunov Characteristic Number cannot be calculated. Make sure to call init_megno() after adding all particles but before integrating the simulation.")
+
         clibrebound.reb_tools_calculate_lyapunov.restype = c_double
         return clibrebound.reb_tools_calculate_lyapunov(byref(self))
     
@@ -662,6 +671,8 @@ class Simulation(Structure):
                     self.units = ('AU', 'yr2pi', 'Msun')
                 self.add(horizons.getParticle(particle,**kwargs))
                 units_convert_particle(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass'])
+            else: 
+                raise ValueError("Argument passed to add() not supported.")
         else: 
             self.add(Particle(simulation=self, **kwargs))
 
@@ -964,7 +975,34 @@ class Simulation(Structure):
 
 
 
-class reb_variational_configuration(Structure):
+class Variation(Structure):
+    """
+    REBOUND Variational Configuration Object.
+
+    This object encapsulated the configuration of one set of variational 
+    equations in a REBOUND simulation.  It is an abstraction of the 
+    C struct reb_variational_configuration.
+
+    The Variation object that the user receives in 
+    python is a copy (not a pointer) of the actual struct in the simulation.
+    This is because the location of the actual struct might change. However,
+    since none of the fields in this struct should ever be changed after it has
+    been initialized, a copy should work in all cases.
+
+    One rebound simulation can include any number of first and second order 
+    variational equations.
+
+    Examples
+    --------
+
+    >>> sim = rebound.Simulation()          # Create a simulation
+    >>> sim.add(m=1.)                       # Add a star
+    >>> sim.add(m=1.e-3, a=1.)              #     a planet
+    >>> var_config = sim.add_variation()    # Add a set of variational equations. 
+    >>> var_config.particles[1].x = 1.      # Initialize the variational particle corresponding to the planet
+    >>> sim.integrate(100.)                 # Integrate the simulation
+    >>> print(var_config.particles[0].vx)   # Print the velocity of the variational particle corresponding to the star
+    """
     _fields_ = [
                 ("_sim", POINTER(Simulation)),
                 ("order", c_int),
@@ -973,8 +1011,31 @@ class reb_variational_configuration(Structure):
                 ("index_1st_order_a", c_int),
                 ("index_1st_order_b", c_int)]
 
-    def vary(self, particle_index, variation, variation2=None):
-        order = self.order
+    def vary(self, particle_index, variation, variation2=None, order=None):
+        """
+        This function can be used to initialize variational particles.
+    
+        Note that rather than using this convenience function, one can 
+        also directly manipulate the particles' coordinates.
+
+        This function is useful for initializing variations corresponding to 
+        changes in one of the orbital parameters.
+
+        The function supports both first and second order variations in the following
+        orbital parameters:
+          a, e, inc, omega, Omega, f, m (mass)
+
+        Parameters
+        ----------
+        particle_index : int
+            The index of the particle that should be varied. The index starts at 0 and runs through N-1. The first particle added to a simulation receives the index 0, the second 1, and the on.
+        variation : string
+            This parameter determines which orbital parameter is varied. 
+        variation2: string
+            This is only used for second order variations which can depend on two varying parameters. If omitted, then it is assumed that the parameter variation is variation2.
+        """
+        if order is None:
+            order = self.order
         sim = self._sim.contents
         if order==0:
             raise ValueError("Cannot find variation for given index. ")
@@ -986,6 +1047,17 @@ class reb_variational_configuration(Structure):
     
     @property
     def particles(self):
+        """
+        Access the variational particles corresponding to this set of variational equations.
+
+        The function returns a list of particles which are sorted in the same way as those in 
+        sim.particles
+
+        The particles are pointers and thus can be modified. 
+
+        If there are N real particles, this function will also return a list of N particles (all of which are 
+        variational particles). 
+        """
         sim = self._sim.contents
         ps = []
         if self.testparticle>=0:
@@ -1007,7 +1079,7 @@ Simulation._fields_ = [
                 ("N", c_int),
                 ("N_var", c_int),
                 ("var_config_N", c_int),
-                ("var_config", POINTER(reb_variational_configuration)),
+                ("var_config", POINTER(Variation)),
                 ("N_active", c_int),
                 ("testparticle_type", c_int),
                 ("allocated_N", c_int),

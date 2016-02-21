@@ -439,7 +439,7 @@ struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle 
 	return reb_tools_orbit_to_particle(G, primary, m, a, e, inc, Omega, omega, f);
 }
 
-static struct reb_particle reb_particle_nan(){
+static struct reb_particle reb_particle_nan(void){
     struct reb_particle p;
     p.x = nan("");
     p.y = nan("");
@@ -521,7 +521,7 @@ struct reb_particle reb_tools_orbit_to_particle(double G, struct reb_particle pr
 	return reb_tools_orbit_to_particle_err(G, primary, m, a, e, inc, Omega, omega, f, &err);
 }
 
-struct reb_orbit reb_orbit_nan(){
+struct reb_orbit reb_orbit_nan(void){
     struct reb_orbit o;
     o.r = nan("");
     o.v = nan("");
@@ -734,7 +734,7 @@ int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int 
 }
 
 #ifndef LIBREBOUNDX
-void reb_tools_megno_init(struct reb_simulation* const r, double delta){
+void reb_tools_megno_init(struct reb_simulation* const r){
 	r->calculate_megno = 1;
 	r->megno_Ys = 0.;
 	r->megno_Yss = 0.;
@@ -753,7 +753,7 @@ void reb_tools_megno_init(struct reb_simulation* const r, double delta){
 		particles[i].vx = reb_random_normal(1.);
 		particles[i].vy = reb_random_normal(1.);
 		particles[i].vz = reb_random_normal(1.);
-		double deltad = delta/sqrt(
+		double deltad = 1./sqrt(
                 particles[i].x*particles[i].x 
                 + particles[i].y*particles[i].y 
                 + particles[i].z*particles[i].z 
