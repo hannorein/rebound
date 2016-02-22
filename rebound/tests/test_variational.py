@@ -40,6 +40,21 @@ class TestVariationalIAS15(unittest.TestCase):
 
         self.assertAlmostEqual(self.Xshifted,X_var,delta=1e-5)
     
+    def test_var_restart(self):
+        var_i = self.sim.add_variation()
+        var_ii = self.sim.add_variation(order=2,first_order=var_i)
+        var_i.particles[1].x = 1.
+        self.sim.save("test.bin")
+        self.sim = None
+        sim = rebound.Simulation.from_file("test.bin")
+        var_i = sim.var_config[0]
+        var_ii = sim.var_config[1]
+        var_i.particles[1].x = 1.
+        sim.integrate(100.)
+        X_var = sim.particles[2].x + self.DeltaX*var_i.particles[2].x + self.DeltaX**2/2.*var_ii.particles[2].x 
+
+        self.assertAlmostEqual(self.Xshifted,X_var,delta=1e-5)
+    
 
 class TestVariationalWHFast(unittest.TestCase):
     def setUp(self):
