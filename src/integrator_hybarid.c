@@ -40,13 +40,14 @@
 
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r);
 static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini);
-static void calc_forces_on_planets(const struct reb_simulation* r, int which_acceleration);
+static void calc_forces_on_planets(const struct reb_simulation* r, double* a);
 
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
-    if (r->ri_hybarid.mini == NULL){
-        r->ri_hybarid.mini = reb_create_simulation();
-        struct reb_simulation* const mini = r->ri_hybarid.mini;
+    struct reb_simulation* mini = r->ri_hybarid.mini;
+    if (mini == NULL){
+        mini = reb_create_simulation();
+        r->ri_hybarid.mini = mini;
         mini->usleep = -1; // Disable visualiation
         mini->integrator = REB_INTEGRATOR_IAS15;
         mini->additional_forces = reb_integrator_hybarid_additional_forces_mini;
@@ -55,17 +56,21 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         mini->collision = r->collision;
         mini->collision_resolve = r->collision_resolve;
         mini->collisions_track_dE = r->collisions_track_dE;
-        mini->ri_hybarid.a_i = malloc(sizeof(double)*3*_N_active);
-        mini->ri_hybarid.a_f = malloc(sizeof(double)*3*_N_active);
     }
 
     // Remove all particles from mini
-    r->ri_hybarid.mini->t = r->t;
-    r->ri_hybarid.mini->N = 0;
-    r->ri_hybarid.mini->collisions_dE = 0.;
+    mini->t = r->t;
+    mini->N = 0;
+    mini->collisions_dE = 0.;
     r->ri_hybarid.mini_active = 0;
     r->ri_hybarid.global_index_from_mini_index_N = 0;
     reb_integrator_ias15_clear(r->ri_hybarid.mini);
+    
+    if (_N_active>r->ri_hybarid.a_Nmax){
+        r->ri_hybarid.a_i = realloc(r->ri_hybarid.a_i,sizeof(double)*3*_N_active);
+        r->ri_hybarid.a_f = realloc(r->ri_hybarid.a_f,sizeof(double)*3*_N_active);
+        r->ri_hybarid.a_Nmax = _N_active;
+    }
     
     //reset is_in_mini
     if (r->N>r->ri_hybarid.is_in_mini_Nmax){
@@ -89,16 +94,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
 
     reb_integrator_hybarid_check_for_encounter(r);
     
-    //keep this after check_for_encounter - then no need to re-edit particles_prev
-    if (r->testparticle_type && r->ri_hybarid.mini_active){
-        if (r->N>r->ri_hybarid.particles_prev_Nmax){
-            r->ri_hybarid.particles_prev_Nmax = r->N;
-            r->ri_hybarid.particles_prev = realloc(r->ri_hybarid.particles_prev,r->N*sizeof(struct reb_particle));
-        }
-        memcpy(r->ri_hybarid.particles_prev, r->particles, sizeof(struct reb_particle)*r->N);
-    }
-
-    calc_forces_on_planets(r, 0);
+    calc_forces_on_planets(r, r->ri_hybarid.a_i);
     
     reb_integrator_whfast_part1(r);
 }
@@ -107,7 +103,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
 void reb_integrator_hybarid_part2(struct reb_simulation* r){
     reb_integrator_whfast_part2(r);
     
-    calc_forces_on_planets(r, 1);
+    calc_forces_on_planets(r, r->ri_hybarid.a_f);
     
     struct reb_simulation* mini = r->ri_hybarid.mini;
     if (r->ri_hybarid.mini_active){
@@ -145,11 +141,13 @@ void reb_integrator_hybarid_reset(struct reb_simulation* r){
         r->ri_hybarid.is_in_mini = NULL;
         r->ri_hybarid.is_in_mini_Nmax = 0;
     }
-    if(r->ri_hybarid.particles_prev){
-        free(r->ri_hybarid.particles_prev);
-        r->ri_hybarid.particles_prev = NULL;
-        r->ri_hybarid.particles_prev_Nmax = 0;
+    if(r->ri_hybarid.a_i){
+        free(r->ri_hybarid.a_i);
     }
+    if(r->ri_hybarid.a_f){
+        free(r->ri_hybarid.a_f);
+    }
+    r->ri_hybarid.a_Nmax = 0;
 }
 
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* global){
@@ -216,10 +214,8 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* gl
 }
 
 //couldn't these "a" values be collected in gravity.c? Maybe not worth the effort though?
-void calc_forces_on_planets(const struct reb_simulation* r, int which_acceleration){
+static void calc_forces_on_planets(const struct reb_simulation* r, double* a){
     int* is_in_mini = r->ri_hybarid.is_in_mini;
-    double* a;
-    if(which_acceleration) a = r->ri_hybarid.mini->ri_hybarid.a_f; else a = r->ri_hybarid.mini->ri_hybarid.a_i;
     double G = r->G;
     const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     for (int i = 0; i<_N_active; i++){
@@ -252,8 +248,8 @@ static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation*
         const double t_prev = global->t - global->dt;
         double timefac = (mini->t - t_prev)/global->dt;
         
-        double* a_i = mini->ri_hybarid.a_i;
-        double* a_f = mini->ri_hybarid.a_f;
+        double* a_i = global->ri_hybarid.a_i;
+        double* a_f = global->ri_hybarid.a_f;
         // TODO: See if the following is good enough and if so why
         // timefac = 0.5;
 #pragma omp parallel for schedule(guided)

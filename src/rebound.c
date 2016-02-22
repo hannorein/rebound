@@ -61,7 +61,7 @@
 static const char* logo[];				/**< Logo of rebound. */
 #endif // LIBREBOUND
 const char* reb_build_str = __DATE__ " " __TIME__;	// Date and time build string. 
-const char* reb_version_str = "2.13.2";			// **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "2.13.5";			// **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 
 
 void reb_step(struct reb_simulation* const r){
@@ -245,8 +245,7 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_hybarid.global_index_from_mini_index_Nmax = 0;
     r->ri_hybarid.is_in_mini = NULL;
     r->ri_hybarid.is_in_mini_Nmax = 0;
-    r->ri_hybarid.particles_prev = NULL;
-    r->ri_hybarid.particles_prev_Nmax = 0;
+    r->ri_hybarid.a_Nmax = 0;
     r->ri_hybarid.a_i = NULL;
     r->ri_hybarid.a_f = NULL;
 }

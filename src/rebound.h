@@ -239,9 +239,7 @@ struct reb_simulation_integrator_hybarid {
 
     double* a_i;
     double* a_f;
-    
-    struct reb_particle* particles_prev;
-    int particles_prev_Nmax;
+    int a_Nmax;
     
     int timestep_too_large_warning;
 };
@@ -1253,10 +1251,9 @@ int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int 
 
 /** 
  * @brief Init the MEGNO particles, enable MEGNO calculation
- * @param delta The initial displacement (typically 1e-16)
  * @param r The rebound simulation to be considered
  */
-void reb_tools_megno_init(struct reb_simulation* const r, double delta);
+void reb_tools_megno_init(struct reb_simulation* const r);
 
 /**
  * @brief Get the current MEGNO value

@@ -97,18 +97,15 @@ double reb_tools_energy(struct reb_simulation* r){
             struct reb_simulation* global = r->ri_hybarid.global;
             struct reb_particle* global_particles = global->particles;
             struct reb_particle* mini_particles = r->particles;
-            struct reb_particle* global_prev = global->ri_hybarid.particles_prev;
-            const double t_prev = global->t - global->dt;
-            double timefac = (r->t - t_prev)/global->dt;
             const int N_active = global->N_active;
             const double G = global->G;
             for(int i=0;i<r->N_active;i++){              //massive bodies in mini
                 struct reb_particle pi = mini_particles[i];
                 for(int j=N_active;j<global->N;j++){        //planetesimals in global
                     if(global->ri_hybarid.is_in_mini[j]==0){
-                        const double ix = (1.-timefac)*global_prev[j].x + timefac*global_particles[j].x; //interpolated values
-                        const double iy = (1.-timefac)*global_prev[j].y + timefac*global_particles[j].y;
-                        const double iz = (1.-timefac)*global_prev[j].z + timefac*global_particles[j].z;
+                        const double ix = global_particles[j].x; // Note: no interpolated values
+                        const double iy = global_particles[j].y;
+                        const double iz = global_particles[j].z;
                         const double mp = global_particles[j].m;
                         const double ddx = pi.x - ix;
                         const double ddy = pi.y - iy;
@@ -442,7 +439,7 @@ struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle 
 	return reb_tools_orbit_to_particle(G, primary, m, a, e, inc, Omega, omega, f);
 }
 
-static struct reb_particle reb_particle_nan(){
+static struct reb_particle reb_particle_nan(void){
     struct reb_particle p;
     p.x = nan("");
     p.y = nan("");
@@ -524,7 +521,7 @@ struct reb_particle reb_tools_orbit_to_particle(double G, struct reb_particle pr
 	return reb_tools_orbit_to_particle_err(G, primary, m, a, e, inc, Omega, omega, f, &err);
 }
 
-struct reb_orbit reb_orbit_nan(){
+struct reb_orbit reb_orbit_nan(void){
     struct reb_orbit o;
     o.r = nan("");
     o.v = nan("");
@@ -737,7 +734,7 @@ int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int 
 }
 
 #ifndef LIBREBOUNDX
-void reb_tools_megno_init(struct reb_simulation* const r, double delta){
+void reb_tools_megno_init(struct reb_simulation* const r){
 	r->calculate_megno = 1;
 	r->megno_Ys = 0.;
 	r->megno_Yss = 0.;
@@ -756,7 +753,7 @@ void reb_tools_megno_init(struct reb_simulation* const r, double delta){
 		particles[i].vx = reb_random_normal(1.);
 		particles[i].vy = reb_random_normal(1.);
 		particles[i].vz = reb_random_normal(1.);
-		double deltad = delta/sqrt(
+		double deltad = 1./sqrt(
                 particles[i].x*particles[i].x 
                 + particles[i].y*particles[i].y 
                 + particles[i].z*particles[i].z 

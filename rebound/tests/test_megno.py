@@ -13,7 +13,7 @@ class TestMegno(unittest.TestCase):
         self.sim.integrator = "ias15"
         self.sim.add(m=1)
         self.sim.add(m=1e-3,a=1.5,e=0.1,inc=0.1)
-        self.sim.init_megno(1e-16)
+        self.sim.init_megno()
         self.sim.integrate(1000)
         self.assertAlmostEqual(self.sim.calculate_megno(),2.,delta=2e-1)
         self.assertAlmostEqual(self.sim.calculate_lyapunov(),0.,delta=1e-3)
@@ -22,7 +22,7 @@ class TestMegno(unittest.TestCase):
         self.sim.integrator = "whfast"
         self.sim.add(m=1)
         self.sim.add(m=1e-3,a=1.5,e=0.1,inc=0.1)
-        self.sim.init_megno(1e-16)
+        self.sim.init_megno()
         self.sim.integrate(1000)
         self.assertAlmostEqual(self.sim.calculate_megno(),2.,delta=2e-1)
         self.assertAlmostEqual(self.sim.calculate_lyapunov(),0.,delta=1e-3)
