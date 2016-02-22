@@ -191,7 +191,7 @@ void reb_collision_search(struct reb_simulation* const r){
             Ei = reb_tools_energy(r);
         }
         struct reb_collision c = r->collisions[i];
-
+        
 		// Resolve collision
 		int outcome = resolve(r, c);
 		
@@ -451,5 +451,10 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
     pi->r  = pow(pow(pi->r,3.)+pow(pj->r,3.),1./3.);
     pi->lastcollision = r->t;
 
+    // If hybarid calculate energy offset in global
+    if(r->ri_hybarid.global->ri_hybarid.mini_active){
+        r->ri_hybarid.global->ri_hybarid.collision_this_global_dt = 1;
+    }
+    
     return swap?1:2; // Remove particle p2 from simulation
 }

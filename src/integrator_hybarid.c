@@ -41,6 +41,7 @@
 static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r);
 static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini);
 static void calc_forces_on_planets(const struct reb_simulation* r, double* a);
+double Ei;
 
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
@@ -64,6 +65,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     mini->collisions_dE = 0.;
     r->ri_hybarid.mini_active = 0;
     r->ri_hybarid.global_index_from_mini_index_N = 0;
+    r->ri_hybarid.collision_this_global_dt = 0;
     reb_integrator_ias15_clear(r->ri_hybarid.mini);
     
     if (_N_active>r->ri_hybarid.a_Nmax){
@@ -96,6 +98,8 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     
     calc_forces_on_planets(r, r->ri_hybarid.a_i);
     
+    if(r->mini_active)Ei = reb_tools_energy(r);
+    
     reb_integrator_whfast_part1(r);
 }
 
@@ -108,12 +112,17 @@ void reb_integrator_hybarid_part2(struct reb_simulation* r){
     struct reb_simulation* mini = r->ri_hybarid.mini;
     if (r->ri_hybarid.mini_active){
         reb_integrate(mini,r->t);
+        
         for (int i=0; i<mini->N; i++){
             r->particles[r->ri_hybarid.global_index_from_mini_index[i]] = mini->particles[i];
             r->particles[r->ri_hybarid.global_index_from_mini_index[i]].sim = r;
         }
         // Correct for energy jump in collision
-        r->collisions_dE += mini->collisions_dE;
+        if(r->ri_hybarid.collision_this_global_dt){
+            double Ef = reb_tools_energy(r);
+            r->collisions_dE += Ei - Ef;
+            //r->collisions_dE += mini->collisions_dE;
+        }
     }
 }
 	

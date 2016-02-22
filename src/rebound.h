@@ -228,8 +228,10 @@ struct reb_simulation_integrator_hybarid {
     struct reb_simulation* global;
     double switch_ratio;            //thresh. to move particle from global to mini (hill radii)
     double CE_radius;               //close encounter radius: if < this value add to mini (X*radius)
+    
     int mini_active;
-
+    int collision_this_global_dt;
+    
     int* global_index_from_mini_index;
     int global_index_from_mini_index_N;
     int global_index_from_mini_index_Nmax;
