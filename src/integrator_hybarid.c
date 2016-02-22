@@ -98,7 +98,7 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     
     calc_forces_on_planets(r, r->ri_hybarid.a_i);
     
-    if(r->mini_active)Ei = reb_tools_energy(r);
+    if(r->ri_hybarid.mini_active)Ei = reb_tools_energy(r);
     
     reb_integrator_whfast_part1(r);
 }
