@@ -121,7 +121,7 @@ struct reb_particle {
  * a Keplerian orbit from Cartesian coordinates. 
  */
 struct reb_orbit {
-	double r;	///< Radial distance from central object
+	double d;	///< Radial distance from central object
 	double v;   ///< velocity relative to central object's velocity
 	double h;	///< Angular momentum
 	double P;	///< Orbital period

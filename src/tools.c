@@ -489,7 +489,7 @@ struct reb_particle reb_tools_orbit_to_particle(double G, struct reb_particle pr
 
 struct reb_orbit reb_orbit_nan(void){
     struct reb_orbit o;
-    o.r = nan("");
+    o.d = nan("");
     o.v = nan("");
     o.h = nan("");
     o.P = nan("");
@@ -548,11 +548,11 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 	dvx = p.vx - primary.vx;
 	dvy = p.vy - primary.vy;
 	dvz = p.vz - primary.vz;
-	o.r = sqrt ( dx*dx + dy*dy + dz*dz );
+	o.d = sqrt ( dx*dx + dy*dy + dz*dz );
 	
 	vsquared = dvx*dvx + dvy*dvy + dvz*dvz;
 	o.v = sqrt(vsquared);
-	vcircsquared = mu/o.r;	
+	vcircsquared = mu/o.d;	
 	o.a = -mu/( vsquared - 2.*vcircsquared );	// semi major axis
 	
 	hx = (dy*dvz - dz*dvy); 					//angular momentum vector
@@ -561,12 +561,12 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 	o.h = sqrt ( hx*hx + hy*hy + hz*hz );		// abs value of angular momentum
 
 	vdiffsquared = vsquared - vcircsquared;	
-	if(o.r <= TINY){							
+	if(o.d <= TINY){							
 		*err = 2;									// particle is on top of primary
 		return reb_orbit_nan();
 	}
-	vr = (dx*dvx + dy*dvy + dz*dvz)/o.r;	
-	rvr = o.r*vr;
+	vr = (dx*dvx + dy*dvy + dz*dvz)/o.d;	
+	rvr = o.d*vr;
 	muinv = 1./mu;
 
 	ex = muinv*( vdiffsquared*dx - rvr*dvx );
@@ -587,11 +587,11 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 	o.Omega = acos2(nx, n, ny);			// cos Omega is dot product of x and n unit vectors. Will = 0 if i=0.
 
     if(o.e < 1.){
-	    ea = acos2(1.-o.r/o.a, o.e, vr);// from definition of eccentric anomaly.  If vr < 0, must be going from apo to peri, so ea = [pi, 2pi] so ea = -acos(cosea)
+	    ea = acos2(1.-o.d/o.a, o.e, vr);// from definition of eccentric anomaly.  If vr < 0, must be going from apo to peri, so ea = [pi, 2pi] so ea = -acos(cosea)
 	    o.M = ea - o.e*sin(ea);			// mean anomaly (Kepler's equation)
     }
     else{
-        ea = acosh((1.-o.r/o.a)/o.e);
+        ea = acosh((1.-o.d/o.a)/o.e);
         if(vr < 0.){                    // Approaching pericenter, so eccentric anomaly < 0.
             ea = -ea;
         }
@@ -602,7 +602,7 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 	// we therefore calculate those and calculate the remaining angles from them
 	if(o.inc < MIN_INC || o.inc > M_PI - MIN_INC){	// nearly planar.  Use longitudes rather than angles referenced to node for numerical stability.
 		o.pomega = acos2(ex, o.e, ey);		// cos pomega is dot product of x and e unit vectors.  Will = 0 if e=0.
-		o.theta = acos2(dx, o.r, dy);		// cos theta is dot product of x and r vectors (true longitude).  Will = 0 if e = 0.
+		o.theta = acos2(dx, o.d, dy);		// cos theta is dot product of x and r vectors (true longitude).  Will = 0 if e = 0.
 		if(o.inc < M_PI/2.){
 			o.omega = o.pomega - o.Omega;
 			o.f = o.theta - o.pomega;
@@ -616,7 +616,7 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 	}
 	// in the non-planar case, we can't calculate the broken angles from vectors like above.  omega+f is always well defined, and omega if e!=0
 	else{
-		double wpf = acos2(nx*dx + ny*dy, n*o.r, dz);	// omega plus f.  Both angles measured in orbital plane, and always well defined for i!=0.
+		double wpf = acos2(nx*dx + ny*dy, n*o.d, dz);	// omega plus f.  Both angles measured in orbital plane, and always well defined for i!=0.
 		o.omega = acos2(nx*ex + ny*ey, n*o.e, ez);
 		if(o.inc < M_PI/2.){
 			o.pomega = o.Omega + o.omega;
