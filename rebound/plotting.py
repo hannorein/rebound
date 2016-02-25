@@ -57,7 +57,7 @@ def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=Fals
                 if o.a>0.:
                     r = (1.+o.e)*o.a
                 else:
-                    r = o.r
+                    r = o.d
                 if r>lim:
                     lim = r
         ax.set_xlim([-lim,lim])
@@ -96,7 +96,7 @@ def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=Fals
                     pp = newp
             else:     # unbound orbit.  Step in M rather than f, since for hyperbolic orbits f stays near lim, and jumps to -f at peri
                 pp = None
-                t_cross = 2*o.r/o.v # rough time to cross display box
+                t_cross = 2*o.d/o.v # rough time to cross display box
                 lim_phase = abs(o.n)*t_cross # M = nt, n is negative
                 phase = np.linspace(-lim_phase,lim_phase,Narc)
                 # add particle phase manually

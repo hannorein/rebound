@@ -66,7 +66,7 @@ class TestParticleInSimulation(unittest.TestCase):
         self.assertAlmostEqual(p[1].e,0.,delta=1e-15)
         self.assertAlmostEqual(p[1].f,0.,delta=1e-15)
         self.assertAlmostEqual(p[1].inc,0.,delta=1e-15)
-        self.assertAlmostEqual(p[1].orb_radius,1.,delta=1e-15)
+        self.assertAlmostEqual(p[1].d,1.,delta=1e-15)
         self.assertAlmostEqual(p[1].v,1.,delta=1e-15)
         self.assertAlmostEqual(p[1].h,1.,delta=1e-15)
         self.assertAlmostEqual(p[1].P,math.pi*2.,delta=1e-15)
