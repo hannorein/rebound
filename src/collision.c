@@ -450,9 +450,9 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
     pi->m  = pi->m + pj->m;
     pi->r  = pow(pow(pi->r,3.)+pow(pj->r,3.),1./3.);
     pi->lastcollision = r->t;
-
+    
     // If hybarid calculate energy offset in global
-    if(r->integrator == REB_INTEGRATOR_HYBARID && r->ri_hybarid.global->ri_hybarid.mini_active){
+    if(r->ri_hybarid.global->integrator == REB_INTEGRATOR_HYBARID && r->ri_hybarid.global->ri_hybarid.mini_active){
         r->ri_hybarid.global->ri_hybarid.collision_this_global_dt = 1;
     }
     
