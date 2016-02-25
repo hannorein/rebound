@@ -119,9 +119,9 @@ void reb_integrator_hybarid_part2(struct reb_simulation* r){
         }
         // Correct for energy jump in collision
         if(r->ri_hybarid.collision_this_global_dt){
-            double Ef = reb_tools_energy(r);
-            r->collisions_dE += Ei - Ef;
-            //r->collisions_dE += mini->collisions_dE;
+            //double Ef = reb_tools_energy(r);
+            //r->collisions_dE += Ei - Ef;
+            r->collisions_dE += mini->collisions_dE;
         }
     }
 }
