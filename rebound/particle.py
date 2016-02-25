@@ -482,8 +482,8 @@ class Particle(Structure):
         return NotImplemented 
 
     @property
-    def orb_radius(self):
-        return self.calculate_orbit().r
+    def d(self):
+        return self.calculate_orbit().d
     @property
     def v(self):
         return self.calculate_orbit().v 

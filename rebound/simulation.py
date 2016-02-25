@@ -110,7 +110,7 @@ class Orbit(Structure):
 
     Attributes
     ----------
-    r       : float           
+    d       : float           
         radial distance from reference 
     v       : float         
         velocity relative to central object's velocity
@@ -143,7 +143,7 @@ class Orbit(Structure):
     T       : float
         time of pericenter passage
     """
-    _fields_ = [("r", c_double),
+    _fields_ = [("d", c_double),
                 ("v", c_double),
                 ("h", c_double),
                 ("P", c_double),
