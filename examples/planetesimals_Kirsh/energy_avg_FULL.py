@@ -12,16 +12,25 @@ import re
 def natural_key(string_):
     return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string_)]
 
+def get_cmap(N):
+    '''Returns a function that maps each index in 0, 1, ... N-1 to a distinct
+        RGB color.'''
+    color_norm  = colors.Normalize(vmin=0, vmax=N-1)
+    scalar_map = cmx.ScalarMappable(norm=color_norm, cmap='hsv')
+    def map_index_to_rgb_color(index):
+        return scalar_map.to_rgba(index)
+    return map_index_to_rgb_color
+
 plot_choice = 2      #1 = plot energy, 2 = plot semi-major axis
 time_sort = 0        #sort runs according to time?
 
 ms = 0.25
 alpha = 0.5
-names = ['time (years)','dE/E(0)','semi-major axis of planet(AU)']
+naming = ['time (years)','dE/E(0)','semi-major axis of planet (AU)']
 outputn = ['time (years)','dE','a']
 
 N_files = 0
-dirP = str('energy_avg/')
+dirP = str(sys.argv[1])
 files = glob.glob(dirP+'*.txt')
 files = sorted(files, key = natural_key)
 data = []
@@ -29,12 +38,14 @@ n_it = 10e10
 
 g_c = 0
 b_c = 0
-colors = []
+r_c = 0
+if time_sort == 1:
+    colors = []
 colorsg = ['lime','chartreuse','forestgreen','springgreen','olivedrab','green']
-#colorsg = ['red','orange','blue']
+colorsr = ['indianred', 'lightcoral','salmon','red','crimson','firebrick','darkred']
 colorsb = ['dodgerblue','blue','mediumblue','darkblue','royalblue','navy']
-time_array = ['dt4.00','dt12.76']
-HSR=[]
+time_array = ['dt4.00','dt8.00','dt12.76']
+names=[]
 for f in files:
     try:
         ff = open(f, 'r')
@@ -49,11 +60,13 @@ for f in files:
             if split[-3] == time_array[0]:
                 colors.append(colorsg[g_c])
                 g_c += 1
-            else:
+            if split[-3] == time_array[1]:
+                colors.append(colorsr[r_c])
+                r_c += 1
+            if split[-3] == time_array[2]:
                 colors.append(colorsb[b_c])
                 b_c += 1
-        else:
-            HSR.append(split[-2])
+        names.append(split[-2]+', '+split[-3])
     except:
         print 'couldnt read in data file '+f
 
@@ -72,35 +85,32 @@ for i in xrange(0,n_it):
 j=0
 k=0
 if time_sort == 0:
-    colors = colorsg
+    colors = get_cmap(N_files)
 for i in xrange(0,N_files):
     if time_sort == 1:
-        if colors[j] == colorsg[0]:
-            plt.plot(time,E[i], ms=ms, color=colors[j], alpha=alpha, label = 'dt = 0.637')
-        elif colors[j] == colorsb[0]:
-            plt.plot(time,E[i], ms=ms, color=colors[j], alpha=alpha, label = 'dt = 2')
+        if i > 0:
+            if names[i] != names[i-1]:
+                plt.plot(time,E[i], ms=ms, color=colors[i], alpha=alpha, label = names[i])
+            else:
+                plt.plot(time,E[i], ms=ms, color=colors[i], alpha=alpha)
         else:
-            plt.plot(time,E[i], ms=ms, color=colors[j], alpha=alpha)
+            plt.plot(time,E[i], ms=ms, color=colors[i], alpha=alpha, label = names[i])
     else:
-        plt.plot(time,E[i], ms=ms, color=colors[j], alpha=alpha, label = HSR[k])
-        k += 1
-    j += 1
-    if j >= len(colors):
-        j = 0
+        plt.plot(time,E[i], ms=ms, color=colors(i), alpha=alpha, label = names[i])
 #plt.plot(time, Eavg, 'o', markeredgecolor='none', color='black', label='avg.')
 if plot_choice == 1:
     plt.plot(time,3e-10*time**(0.5),color='black')
-
+    print 'max error is',max(E[i])
 
 ##############################################
 #Final plotting stuff
 plt.legend(loc='lower left',prop={'size':10})
-plt.ylabel(names[plot_choice])
-plt.xlabel('time (years)')
+plt.ylabel(naming[plot_choice], fontsize=16)
+plt.xlabel('time (years)', fontsize=16)
 if plot_choice == 1:
     plt.yscale('log')
     plt.xscale('log')
-plt.xlim([0.5,time[-1]])
-plt.title('Median '+names[plot_choice]+' from '+str(N_files)+' files')
-plt.savefig(dirP+'energy_avg_'+outputn[plot_choice]+'.png')
+plt.xlim([0.5,70000])
+#plt.title('Median '+names[plot_choice]+' from '+str(N_files)+' files')
+plt.savefig(dirP+'Kirsh_avg_'+outputn[plot_choice]+'.png')
 plt.show()

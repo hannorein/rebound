@@ -172,11 +172,11 @@ if mercury == 1:
 ##############################################
 #Final plotting stuff
 plt.legend(loc='lower right',prop={'size':10})
-plt.ylabel('Avg Energy')
-plt.xlabel('time (years)')
+plt.ylabel('dE/E(0)', fontsize=16)
+plt.xlabel('time (years)', fontsize=16)
 plt.yscale('log')
 plt.xscale('log')
 plt.xlim([0.5,time[-1]])
-plt.title('Median Average dE/E(0) from '+str(N_files)+' runs for Np'+N_planetesimals)
+#plt.title('Median Average dE/E(0) from '+str(N_files)+' runs for Np'+N_planetesimals)
 plt.savefig(dirP+'energy_avg_Np'+N_planetesimals+'_FULL.png')
 plt.show()
