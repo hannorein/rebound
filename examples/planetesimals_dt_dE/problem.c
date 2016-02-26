@@ -35,11 +35,13 @@ int main(int argc, char* argv[]){
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
-    r->ri_hybarid.switch_ratio = 2;        //Hill radii
+    //r->ri_hybarid.switch_ratio = 2;        //units of Hill radii
+    r->ri_hybarid.switch_ratio = atof(argv[1]);
     r->ri_hybarid.CE_radius = 20.;         //X*radius
     r->testparticle_type = 1;
     r->heartbeat	= heartbeat;
-    r->dt = atof(argv[1]) * 6.28319;
+    //r->dt = atof(argv[1]) * 6.28319;
+    r->dt = 0.01 * 6.28319; //100 dt's per orbital period
     
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_merge;
