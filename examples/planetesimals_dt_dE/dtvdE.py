@@ -29,7 +29,14 @@ def natural_key(string_):
     return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string_)]
 
 #plot dt vs.
-plot_choice = int(sys.argv[1])      #0 = plot elapsed time, 1 = energy
+y_choice = int(sys.argv[1])      #0 = plot elapsed time, 1 = energy
+x_choice = 1                     #0 = dt, 1 = HSR
+
+ext = 'dt'
+xname = 'timestep (years)'
+if x_choice == 1:
+    ext = 'HSR'
+    xname = 'HSR (hill radii)'
 
 N_files = 0
 dirP = str('dtvdE_files/')
@@ -38,14 +45,14 @@ files = sorted(files, key = natural_key)
 size = (2,len(files))
 ET = np.zeros(size)
 dE = np.zeros(size)
-dt = np.zeros(len(files))
+x = np.zeros(len(files))
 Navg = 10
 
 i=0
 for f in files:
     header = f.split("_")
-    dtt = header[-4]
-    dt[i] = float(re.sub('^files/dt', '', dtt))
+    xx = header[-4]
+    x[i] = float(re.sub('^files/'+ext, '', xx))
     temp = header[-3]
     filenames = [f, re.sub('Np500','Np50',f)]
     for index in xrange(0,2):
@@ -72,7 +79,7 @@ for f in files:
             print 'couldnt find file: '+filenames[index]
     i+=1
 
-if plot_choice == 0:
+if y_choice == 0:
     y = ET
     name = 'elapsed time (seconds)'
     oname = 'ET'
@@ -80,16 +87,17 @@ else:
     y = dE
     name = 'dE/E(0)'
     oname = 'dE'
-dt, y = sort(dt, y)
-plt.plot(dt, y[0], 'o-',label='Np = 500')
-plt.plot(dt, y[1], 'o-',label='Np = 50')
+x, y = sort(x, y)
+plt.plot(x, y[0], 'o-',label='Np = 500')
+plt.plot(x, y[1], 'o-',label='Np = 50')
 plt.yscale('log')
-plt.xscale('log')
+if x_choice == 0:
+    plt.xscale('log')
 plt.ylabel(name)
-plt.xlabel('timestep (years)')
+plt.xlabel(xname)
 plt.title('Integrating 2p, 2pl system for 1000 orbits')
 #plt.ylim([np.min(y),2])
 plt.legend(loc='lower right',prop={'size':10})
-plt.savefig('dtvdE_files/dt_v_'+oname+'.png')
+plt.savefig('dtvdE_files/'+ext+'_v_'+oname+'.png')
 plt.show()
 
