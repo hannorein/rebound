@@ -21,7 +21,7 @@ def get_cmap(N):
         return scalar_map.to_rgba(index)
     return map_index_to_rgb_color
 
-plot_choice = 2      #1 = plot energy, 2 = plot semi-major axis
+plot_choice = 1      #1 = plot energy, 2 = plot semi-major axis
 time_sort = 0        #sort runs according to time?
 
 ms = 0.25
@@ -104,12 +104,14 @@ if plot_choice == 1:
 
 ##############################################
 #Final plotting stuff
-plt.legend(loc='lower left',prop={'size':10})
+#plt.legend(loc='lower left',prop={'size':10})
 plt.ylabel(naming[plot_choice], fontsize=16)
 plt.xlabel('time (years)', fontsize=16)
 if plot_choice == 1:
     plt.yscale('log')
     plt.xscale('log')
+else:
+    plt.ylim([18,26])
 plt.xlim([0.5,70000])
 #plt.title('Median '+names[plot_choice]+' from '+str(N_files)+' files')
 plt.savefig(dirP+'Kirsh_avg_'+outputn[plot_choice]+'.png')

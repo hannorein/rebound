@@ -37,8 +37,10 @@ Navg = 10                       #number of points at end of .txt file to average
 
 ext = 'dt'
 xname = 'timestep (years)'
-xvals = [1e-5,2e-5,5e-5,1e-4,2e-4,5e-4,1e-3,2e-3,5e-3,0.01,0.05,0.1,0.2,0.5,1]
-yvals = ['Np50_sd12','Np500_sd12']
+xvals = [1e-5,2e-5,5e-5,1e-4,2e-4,5e-4,1e-3,2e-3,5e-3,0.01,0.05,0.1,0.2,0.5]
+yvals = ['Np50_sd12','Np50_sd11','Np50_sd42','Np500_sd12','Np500_sd11','Np500_sd42']
+marker = ['^--', '^--','^--','o-', 'o-','o-']
+label = ['Np50','','','Np500','','']
 if x_choice == 1:
     ext = 'HSR'
     xname = 'HSR (hill radii)'
@@ -80,7 +82,7 @@ for i in xrange(0,leny):
         y = ET
     else:
         y = dE
-    plt.plot(xvals, y, 'o-',label=yvals[i])
+    plt.plot(xvals, y, marker[i],label=label[i])
 
 if y_choice == 0:
     name = 'elapsed time (seconds)'

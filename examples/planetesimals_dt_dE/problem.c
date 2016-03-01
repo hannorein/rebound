@@ -28,24 +28,38 @@ void output_to_mercury_swifter(struct reb_simulation* r, double HSR, double tmax
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
     
-    double tmax = 2000 * 6.28319;   //1000 orbits of outer planet
     int N_planetesimals = atoi(argv[2]);
     int seed = atoi(argv[3]);
     strcat(output_name,argv[4]); strcat(output_name,".txt"); argv4=argv[4];
     
 	//Simulation Setup
 	r->integrator	= REB_INTEGRATOR_HYBARID;
-    r->ri_hybarid.switch_ratio = 2;        //units of Hill radii
-    //r->ri_hybarid.switch_ratio = atof(argv[1]);
     r->ri_hybarid.CE_radius = 20.;         //X*radius
     r->testparticle_type = 1;
     r->heartbeat	= heartbeat;
-    r->dt = atof(argv[1]) * 6.28319;
-    //r->dt = 0.001 * 6.28319; //100 dt's per orbital period
     
+    //which test?
+    int test_dt = 0;
+    double tmax;
+    if(test_dt){//testing dt
+        tmax = 1000 * 2 * 6.28319;   //1000 orbits of outer planet
+        r->ri_hybarid.switch_ratio = 2;        //units of Hill radii
+        r->dt = atof(argv[1]) * 6.28319;
+    } else {//testing HSR
+        tmax = 1e6 * 2 * 6.28319;   //1Myr orbits of outer planet
+        r->ri_hybarid.switch_ratio = atof(argv[1]);
+        r->dt = 0.01 * 6.28319; //100 dt's per orbital period
+    }
+    
+    //collision
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_merge;
     r->collisions_track_dE = 1;     //switch to track the energy from collisions/ejections
+    
+    //boundary
+    //r->boundary			= REB_BOUNDARY_OPEN;
+    //double boxsize = 5;
+    //reb_configure_box(r, boxsize, 1, 1, 1);
     
 	// Initial conditions
 	struct reb_particle star = {0};
@@ -98,7 +112,7 @@ int main(int argc, char* argv[]){
         pt.id = r->N;
 		reb_add(r, pt);
     }
-   
+    
     //energy
     E0 = reb_tools_energy(r);
     char syss[100] = {0}; strcat(syss,"rm -v "); strcat(syss,argv[4]); strcat(syss,"*");
