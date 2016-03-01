@@ -30,66 +30,65 @@ def natural_key(string_):
 
 #plot dt vs.
 y_choice = int(sys.argv[1])      #0 = plot elapsed time, 1 = energy
-x_choice = 1                     #0 = dt, 1 = HSR
+x_choice = 0                     #0 = dt, 1 = HSR
+
+dirP = str('dtvdE_files/')
+Navg = 10                       #number of points at end of .txt file to average energy over
 
 ext = 'dt'
 xname = 'timestep (years)'
+xvals = [1e-5,2e-5,5e-5,1e-4,2e-4,5e-4,1e-3,2e-3,5e-3,0.01,0.05,0.1,0.2,0.5,1]
+yvals = ['Np50_sd12','Np500_sd12']
 if x_choice == 1:
     ext = 'HSR'
     xname = 'HSR (hill radii)'
+    xvals = [0.1,0.25,0.5,0.75,1,1.5,2,2.5,3,4,6,8,12,16]
 
-N_files = 0
-dirP = str('dtvdE_files/')
-files = glob.glob(dirP+'*Np500_*_elapsedtime.txt')
-files = sorted(files, key = natural_key)
-size = (2,len(files))
-ET = np.zeros(size)
-dE = np.zeros(size)
-x = np.zeros(len(files))
-Navg = 10
-
-i=0
-for f in files:
-    header = f.split("_")
-    xx = header[-4]
-    x[i] = float(re.sub('^files/'+ext, '', xx))
-    temp = header[-3]
-    filenames = [f, re.sub('Np500','Np50',f)]
-    for index in xrange(0,2):
-        try:
-            ff = open(filenames[index], 'r')
-            lines = ff.readlines()
-            elapsed = lines[1]
-            elapsed = elapsed.split()
-            ET[index][i] = float(elapsed[-2])/3600
-            txtfile = filenames[index].split("_elapsedtime.txt")
-            fff = open(txtfile[0]+".txt","r")
-            lines = fff.readlines()
-            length = len(lines)
-            Emed = np.zeros(Navg)
-            for j in xrange(0,Navg):
-                split = lines[-1-j]
-                split = split.split(",")
-                Emed[j] = float(split[1])
-            med = np.median(Emed)
-            if med != med:
-                med = 1
-            dE[index][i] = med
-        except:
-            print 'couldnt find file: '+filenames[index]
-    i+=1
+lenx = len(xvals)
+leny = len(yvals)
+for i in xrange(0,leny):
+    files = glob.glob(dirP+'*'+yvals[i]+'_elapsedtime.txt')
+    files = sorted(files, key = natural_key)
+    ET = np.zeros(lenx)
+    dE = np.zeros(lenx)
+    for f in files:
+        header = f.split("_")
+        xx = header[-4]
+        x = float(re.sub('^files/'+ext, '', xx))
+        for j in xrange(0,lenx):
+            if x == xvals[j]:
+                index = j
+        ff = open(f, 'r')
+        lines = ff.readlines()
+        elapsed = lines[1]
+        elapsed = elapsed.split()
+        ET[index] = float(elapsed[-2])/3600
+        txtfile = f.split("_elapsedtime.txt")
+        fff = open(txtfile[0]+".txt","r")
+        lines = fff.readlines()
+        length = len(lines)
+        Emed = np.zeros(Navg)
+        for k in xrange(0,Navg):
+            split = lines[-1-k]
+            split = split.split(",")
+            Emed[k] = float(split[1])
+        med = np.median(Emed)
+        if med != med:
+            med = 1
+        dE[index] = med
+    if y_choice == 0:
+        y = ET
+    else:
+        y = dE
+    plt.plot(xvals, y, 'o-',label=yvals[i])
 
 if y_choice == 0:
-    y = ET
     name = 'elapsed time (seconds)'
     oname = 'ET'
 else:
-    y = dE
     name = 'dE/E(0)'
     oname = 'dE'
-x, y = sort(x, y)
-plt.plot(x, y[0], 'o-',label='Np = 500')
-plt.plot(x, y[1], 'o-',label='Np = 50')
+#x, y = sort(x, y)
 plt.yscale('log')
 if x_choice == 0:
     plt.xscale('log')
