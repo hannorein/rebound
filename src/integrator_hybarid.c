@@ -169,7 +169,8 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* gl
     double min_dt_enc2 = INFINITY;
     for (int i=0; i<_N_active; i++){
         struct reb_particle pi = global_particles[i];
-        double radius_check2 = global->ri_hybarid.CE_radius*pi.r;
+        double radius_check = global->ri_hybarid.CE_radius*pi.r;
+        double radius_check2 = radius_check*radius_check;
         const double dxi = p0.x - pi.x;
         const double dyi = p0.y - pi.y;
         const double dzi = p0.z - pi.z;
