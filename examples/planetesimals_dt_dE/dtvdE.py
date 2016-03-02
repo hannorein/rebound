@@ -30,21 +30,27 @@ def natural_key(string_):
 
 #plot dt vs.
 y_choice = int(sys.argv[1])      #0 = plot elapsed time, 1 = energy
-x_choice = 0                     #0 = dt, 1 = HSR
+x_choice = 1                     #0 = dt, 1 = HSR
 
 dirP = str('dtvdE_files/')
 Navg = 10                       #number of points at end of .txt file to average energy over
 
-ext = 'dt'
-xname = 'timestep (years)'
-xvals = [1e-5,2e-5,5e-5,1e-4,2e-4,5e-4,1e-3,2e-3,5e-3,0.01,0.05,0.1,0.2,0.5]
-yvals = ['Np50_sd12','Np50_sd11','Np50_sd42','Np500_sd12','Np500_sd11','Np500_sd42']
-marker = ['^--', '^--','^--','o-', 'o-','o-']
-label = ['Np50','','','Np500','','']
-if x_choice == 1:
+if x_choice == 0:   #dt
+    ext = 'dt'
+    xname = 'timestep (years)'
+    xvals = [1e-5,2e-5,5e-5,1e-4,2e-4,5e-4,1e-3,2e-3,5e-3,0.01,0.05,0.1,0.2,0.5]
+    yvals = ['Np50_sd12','Np50_sd11','Np50_sd42','Np500_sd12','Np500_sd11','Np500_sd42']
+    marker = ['^--', '^--','^--','o-', 'o-','o-']
+    label = ['Np50','','','Np500','','']
+    title = 'dt: Integrating 2p, 2pl system for 1000 orbits'
+if x_choice == 1:   #HSR
     ext = 'HSR'
     xname = 'HSR (hill radii)'
     xvals = [0.1,0.25,0.5,0.75,1,1.5,2,2.5,3,4,6,8,12,16]
+    yvals = ['Np50_sd22','Np500_sd22']
+    marker = ['^--','o-']
+    label = ['Np50','Np500']
+    title = 'HSR: Integrating 2p, 2pl system for 1M orbits'
 
 lenx = len(xvals)
 leny = len(yvals)
@@ -57,6 +63,7 @@ for i in xrange(0,leny):
         header = f.split("_")
         xx = header[-4]
         x = float(re.sub('^files/'+ext, '', xx))
+        index = -10000
         for j in xrange(0,lenx):
             if x == xvals[j]:
                 index = j
@@ -64,7 +71,6 @@ for i in xrange(0,leny):
         lines = ff.readlines()
         elapsed = lines[1]
         elapsed = elapsed.split()
-        ET[index] = float(elapsed[-2])/3600
         txtfile = f.split("_elapsedtime.txt")
         fff = open(txtfile[0]+".txt","r")
         lines = fff.readlines()
@@ -77,7 +83,11 @@ for i in xrange(0,leny):
         med = np.median(Emed)
         if med != med:
             med = 1
-        dE[index] = med
+        try:
+            ET[index] = float(elapsed[-2])/3600
+            dE[index] = med
+        except:
+            print 'file: '+f+' will not be included in dataset'
     if y_choice == 0:
         y = ET
     else:
@@ -96,7 +106,7 @@ if x_choice == 0:
     plt.xscale('log')
 plt.ylabel(name)
 plt.xlabel(xname)
-plt.title('Integrating 2p, 2pl system for 1000 orbits')
+plt.title(title)
 #plt.ylim([np.min(y),2])
 plt.legend(loc='lower right',prop={'size':10})
 plt.savefig('dtvdE_files/'+ext+'_v_'+oname+'.png')

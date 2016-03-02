@@ -9,7 +9,7 @@ colors=['b','g','m','r','c','y']
 
 file_name=str(sys.argv[1])
 
-diagnostics = 0
+diagnostics = 1
 
 fos = open(''+file_name, 'r')
 data = np.loadtxt(fos, delimiter=',')
@@ -22,14 +22,14 @@ if diagnostics == 1:
     axes[0].set_yscale('log')
     axes[0].set_xlim([1,max(data[:,0])])
     axes[0].set_ylabel('Energy')
-    axes[1].plot(data[:,0],10*data[:,3], ms=ms, markeredgecolor='none', label='mini_active', alpha=0.5)
     axes[1].plot(data[:,0],data[:,2]-3, 'o', ms=ms, markeredgecolor='none', label='global: Np')
-    axes[1].plot(data[:,0],data[:,4]-3, 'o', ms=ms, markeredgecolor='none', label='mini: Np')
+    axes[1].plot(data[:,0],data[:,3]-3, 'o', ms=ms, markeredgecolor='none', label='mini: Np')
     axes[1].legend(loc='upper left',prop={'size':10})
     axes[1].set_xscale('log')
+    axes[1].set_yscale('log')
     axes[1].set_ylim([0,max(data[:,2])])
     axes[1].set_xlim([1,max(data[:,0])])
-    axes[2].plot(data[:,0],data[:,5], 'o', ms=ms, markeredgecolor='none')
+    axes[2].plot(data[:,0],data[:,4], 'o', ms=ms, markeredgecolor='none')
     axes[2].set_xscale('log')
     axes[2].set_yscale('log')
     axes[2].set_ylabel('real life elapsed time (seconds)')
