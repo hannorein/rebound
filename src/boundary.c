@@ -65,7 +65,7 @@ void reb_boundary_check(struct reb_simulation* const r){
 				}
 				if (removep==1){
                     // If hybarid calculate energy offset in global
-                    if(r->integrator == REB_INTEGRATOR_HYBARID){
+                    if(r->collisions_track_dE){
                         double Ei = reb_tools_energy(r);
                         reb_remove(r, i,0);
                         r->collisions_dE += Ei - reb_tools_energy(r);
