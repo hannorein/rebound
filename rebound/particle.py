@@ -464,6 +464,19 @@ class Particle(Structure):
             np.m  = other*self.m 
             return np
         return NotImplemented 
+    
+    def __rmul__(self, other):
+        if isinstance(other, float):
+            np = Particle()
+            np.x  = other*self.x
+            np.y  = other*self.y
+            np.z  = other*self.z
+            np.vx = other*self.vx
+            np.vy = other*self.vy
+            np.vz = other*self.vz 
+            np.m  = other*self.m 
+            return np
+        return NotImplemented 
 
     def __truediv__(self, other):
         return self.__div__(other)
