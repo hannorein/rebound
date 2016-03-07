@@ -448,7 +448,7 @@ struct reb_simulation {
      * \name Variables related to the chaos indicator MEGNO 
      * @{
      */
-    int calculate_megno;    ///< Flag that determines if megno is calculated (default=0, but megno_init() sets it to 1)
+    int calculate_megno;    ///< Internal flag that determines if megno is calculated (default=0, but megno_init() sets it to the index of variational particles used for megno)
     double megno_Ys;    ///< Running megno sum (internal use)
     double megno_Yss;   ///< Running megno sum (internal use)
     double megno_cov_Yt;    ///< covariance of MEGNO Y and t

@@ -579,7 +579,7 @@ class Simulation(Structure):
         Return the current MEGNO value.
         Note that you need to call init_megno() before the start of the simulation.
         """
-        if self._calculate_megno!=1:
+        if self._calculate_megno==0:
             raise RuntimeError("MEGNO cannot be calculated. Make sure to call init_megno() after adding all particles but before integrating the simulation.")
 
         clibrebound.reb_tools_calculate_megno.restype = c_double
@@ -591,7 +591,7 @@ class Simulation(Structure):
         Note that you need to call init_megno() before the start of the simulation.
         To get a timescale (the Lyapunov timescale), take the inverse of this quantity.
         """
-        if self._calculate_megno!=1:
+        if self._calculate_megno==0:
             raise RuntimeError("Lyapunov Characteristic Number cannot be calculated. Make sure to call init_megno() after adding all particles but before integrating the simulation.")
 
         clibrebound.reb_tools_calculate_lyapunov.restype = c_double

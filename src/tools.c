@@ -701,7 +701,6 @@ int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int 
 
 #ifndef LIBREBOUNDX
 void reb_tools_megno_init(struct reb_simulation* const r){
-	r->calculate_megno = 1;
 	r->megno_Ys = 0.;
 	r->megno_Yss = 0.;
 	r->megno_cov_Yt = 0.;
@@ -710,8 +709,10 @@ void reb_tools_megno_init(struct reb_simulation* const r){
 	r->megno_mean_Y = 0;
 	r->megno_mean_t = 0;
     int i = reb_add_var_1st_order(r,-1);
+	r->calculate_megno = i;
+    const int imax = i + (r->N-r->N_var);
     struct reb_particle* const particles = r->particles;
-    for (;i<r->N;i++){ 
+    for (;i<imax;i++){ 
         particles[i].m  = 0.;
 		particles[i].x  = reb_random_normal(1.);
 		particles[i].y  = reb_random_normal(1.);
@@ -744,25 +745,25 @@ double reb_tools_calculate_lyapunov(struct reb_simulation* r){ // Returns the la
 }
 double reb_tools_megno_deltad_delta(struct reb_simulation* const r){
 	const struct reb_particle* restrict const particles = r->particles;
-	const int N = r->N;
-	const int N_var = r->N_var;
-        double deltad = 0;
-        double delta2 = 0;
-        for (int i=N-N_var;i<N;i++){
-                deltad += particles[i].vx * particles[i].x; 
-                deltad += particles[i].vy * particles[i].y; 
-                deltad += particles[i].vz * particles[i].z; 
-                deltad += particles[i].ax * particles[i].vx; 
-                deltad += particles[i].ay * particles[i].vy; 
-                deltad += particles[i].az * particles[i].vz; 
-                delta2 += particles[i].x  * particles[i].x; 
-                delta2 += particles[i].y  * particles[i].y;
-                delta2 += particles[i].z  * particles[i].z;
-                delta2 += particles[i].vx * particles[i].vx; 
-                delta2 += particles[i].vy * particles[i].vy;
-                delta2 += particles[i].vz * particles[i].vz;
-        }
-        return deltad/delta2;
+    double deltad = 0;
+    double delta2 = 0;
+    int i = r->calculate_megno;
+    const int imax = i + (r->N-r->N_var);
+    for (;i<imax;i++){
+            deltad += particles[i].vx * particles[i].x; 
+            deltad += particles[i].vy * particles[i].y; 
+            deltad += particles[i].vz * particles[i].z; 
+            deltad += particles[i].ax * particles[i].vx; 
+            deltad += particles[i].ay * particles[i].vy; 
+            deltad += particles[i].az * particles[i].vz; 
+            delta2 += particles[i].x  * particles[i].x; 
+            delta2 += particles[i].y  * particles[i].y;
+            delta2 += particles[i].z  * particles[i].z;
+            delta2 += particles[i].vx * particles[i].vx; 
+            delta2 += particles[i].vy * particles[i].vy;
+            delta2 += particles[i].vz * particles[i].vz;
+    }
+    return deltad/delta2;
 }
 
 void reb_tools_megno_update(struct reb_simulation* r, double dY){
