@@ -379,7 +379,7 @@ class Particle(Structure):
             self.vy = vy
             self.vz = vz
 
-    def calculate_orbit(self, primary=None):
+    def calculate_orbit(self, primary=None, G=None):
         """ 
         Returns a rebound.Orbit object with the keplerian orbital elements
         corresponding to the particle around the passed primary
@@ -398,24 +398,36 @@ class Particle(Structure):
         ----------
         primary : rebound.Particle
             Central body (Optional. Default uses Jacobi coordinates)
+        G : float
+            Gravitational constant (Optional. Default takes G from simulation in which particle is in)
         
         Returns
         -------
         A rebound.Orbit object 
         """
-        # First check whether this is particles[0]
-        clibrebound.reb_get_particle_index.restype = c_int
-        index = clibrebound.reb_get_particle_index(byref(self)) # first check this isn't particles[0]
-        if index == 0:
-            raise ValueError("Orbital elements for particle[0] not implemented.")
+        if not self._sim:
+            # Particle not in a simulation
+            if primary is None:
+                raise ValueError("Particle does not belong to any simulation and no primary given. Cannot calculate orbit.")
+            if G is None:
+                raise ValueError("Particle does not belong to any simulation and G not given. Cannot calculate orbit.")
+            else:
+                G = c_double(G)
+        else:
+            # First check whether this is particles[0]
+            clibrebound.reb_get_particle_index.restype = c_int
+            index = clibrebound.reb_get_particle_index(byref(self)) # first check this isn't particles[0]
+            if index == 0:
+                raise ValueError("Orbital elements for particle[0] not implemented.")
 
-        if primary is None:    # Use default, i.e., Jacobi coordinates
-            clibrebound.reb_get_jacobi_com.restype = Particle   # now return jacobi center of mass
-            primary = clibrebound.reb_get_jacobi_com(byref(self))
+            if primary is None:    # Use default, i.e., Jacobi coordinates
+                clibrebound.reb_get_jacobi_com.restype = Particle   # now return jacobi center of mass
+                primary = clibrebound.reb_get_jacobi_com(byref(self))
+            G = c_double(self._sim.contents.G)
         
         err = c_int()
         clibrebound.reb_tools_particle_to_orbit_err.restype = rebound.Orbit
-        o = clibrebound.reb_tools_particle_to_orbit_err(c_double(self._sim.contents.G), self, primary, byref(err))
+        o = clibrebound.reb_tools_particle_to_orbit_err(G, self, primary, byref(err))
 
         if err.value == 1:
             raise ValueError("Primary has no mass.")
