@@ -937,11 +937,8 @@ class Variation(Structure):
     equations in a REBOUND simulation.  It is an abstraction of the 
     C struct reb_variational_configuration.
 
-    The Variation object that the user receives in 
-    python is a copy (not a pointer) of the actual struct in the simulation.
-    This is because the location of the actual struct might change. However,
-    since none of the fields in this struct should ever be changed after it has
-    been initialized, a copy should work in all cases.
+    None of the fields in this struct should be changed after it has
+    been initialized.
 
     One rebound simulation can include any number of first and second order 
     variational equations.
