@@ -943,6 +943,10 @@ class Variation(Structure):
     One rebound simulation can include any number of first and second order 
     variational equations.
 
+    Note that variations are only encoded as particles for convenience.  
+    A variational particle's position and velocity should be interpreted as a derivative, i.e. how much that position orvelocity varies with respect to the first or second-order variation.  
+    See ipython_examples/VariationalEquations.ipynb and Rein and Tamayo (2016) for details.
+
     Examples
     --------
 
