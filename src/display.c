@@ -90,6 +90,11 @@ void reb_display(void){
 	}
 	sem_wait(reb_dc.mutex);	
 	const struct reb_particle* particles = reb_dc.r->particles;
+	
+	if (reb_dc.pause_sim){
+		reb_dc.r->status = REB_RUNNING_PAUSED;
+	}
+	
 	if (reb_dc.clear){
 	        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	}
@@ -240,9 +245,11 @@ void reb_display_keyboard(unsigned char key, int x, int y){
 			if (reb_dc.r->status == REB_RUNNING_PAUSED){
 				printf("Resume.\n");
 				reb_dc.r->status = REB_RUNNING;
+				reb_dc.pause_sim = !reb_dc.pause_sim; 
 			}else{
 				printf("Pause.\n");
 				reb_dc.r->status = REB_RUNNING_PAUSED;
+				reb_dc.pause_sim = !reb_dc.pause_sim; 
 			}
 			break;
 		case 's': case 'S':
@@ -283,9 +290,9 @@ void reb_display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* m
 	reb_dc.mutex 		= mutex;
 	// Default parameters
 	reb_dc.spheres 		= 2; 
-	reb_dc.pause_sim 	= 0; 
+	reb_dc.pause_sim 	= 1; 
 	reb_dc.pause 		= 0; 
-	reb_dc.wire 		= 0; 
+	reb_dc.wire 		= 1; 
 	reb_dc.clear 		= 1; 
 	reb_dc.ghostboxes 	= 0; 
 	reb_dc.reference 	= -1;
