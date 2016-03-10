@@ -3,6 +3,7 @@
  * 
  * This example shows how to use first and second
  * order variational equations.
+ * See also https://github.com/hannorein/rebound/blob/master/ipython_examples/VariationalEquations.ipynb and Rein and Tamayo (2016).
  */
 #include "rebound.h"
 #include <stdio.h>

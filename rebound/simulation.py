@@ -535,7 +535,7 @@ class Simulation(Structure):
 
         Returns
         -------
-        Returns Variation object (a copy, thus read only).
+        Returns Variation object (a copy--you can only modify it through its particles property or vary method). 
         """
         cur_var_config_N = self.var_config_N
         if order==1:
@@ -937,14 +937,15 @@ class Variation(Structure):
     equations in a REBOUND simulation.  It is an abstraction of the 
     C struct reb_variational_configuration.
 
-    The Variation object that the user receives in 
-    python is a copy (not a pointer) of the actual struct in the simulation.
-    This is because the location of the actual struct might change. However,
-    since none of the fields in this struct should ever be changed after it has
-    been initialized, a copy should work in all cases.
+    None of the fields in this struct should be changed after it has
+    been initialized.
 
     One rebound simulation can include any number of first and second order 
     variational equations.
+
+    Note that variations are only encoded as particles for convenience.  
+    A variational particle's position and velocity should be interpreted as a derivative, i.e. how much that position orvelocity varies with respect to the first or second-order variation.  
+    See ipython_examples/VariationalEquations.ipynb and Rein and Tamayo (2016) for details.
 
     Examples
     --------
