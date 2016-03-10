@@ -535,7 +535,7 @@ class Simulation(Structure):
 
         Returns
         -------
-        Returns Variation object (a copy, thus read only).
+        Returns Variation object (a copy--you can only modify it through its particles property or vary method). 
         """
         cur_var_config_N = self.var_config_N
         if order==1:
