@@ -33,6 +33,7 @@ script:
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Horizons.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Megno.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquations.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquationsWithChainRule.ipynb | python 
     #- cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Parallel.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py ParticleIDsAndRemoval.ipynb | python 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py PoincareMap.ipynb | python 
