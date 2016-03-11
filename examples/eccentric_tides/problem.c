@@ -50,7 +50,7 @@
 #include "rebound.h"
 
 void tidal_forces(struct reb_simulation* const r);
-void heartbeat(struct reb_simulation* const r);
+void heartbeat(struct reb_simulaton* const r);
 double tmax;
 double e_init; // initial energy
 
@@ -180,40 +180,40 @@ void tidal_forces(struct reb_simulation* const r){
 
 
 void heartbeat(struct reb_simulation* const r){
-    if(reb_output_check(r, 1000)){
+	 if(reb_output_check(r, 1000)){
 		reb_output_timing(r, tmax);
-    }
+	 }
 		
-		if(reb_output_check(r, M_PI*2000.)){
-			//reb_integrator_synchronize(r);
-			double en = reb_tools_energy(r);
-			const struct reb_particle* p = r->particles;
-			const double G = r->G;
-			const int N = r->N;
+	if(reb_output_check(r, M_PI*2000.)){
+		//reb_integrator_synchronize(r);
+		double en = reb_tools_energy(r);
+		const struct reb_particle* p = r->particles;
+		const double G = r->G;
+		const int N = r->N;
+		
+		for (int i=1;i<N;i++){
 			
-			for (int i=1;i<N;i++){
-				
-				const double dx = p[i].x-p[0].x;
-				const double dy = p[i].y-p[0].y;
-				const double dz = p[i].z-p[0].z;
-				const double d = sqrt(dx*dx + dy*dy + dz*dz);
-				const double dvx = p[i].vx-p[0].vx;
-				const double dvy = p[i].vy-p[0].vy;
-				const double dvz = p[i].vz-p[0].vz;
-				const double mu = G*(p[0].m + p[i].m);
-				const double v = sqrt(dvx*dvx + dvy*dvy + dvz*dvz);
-				const double vr = (dx*dvx + dy*dvy + dz*dvz)/d;
-				const double ex = 1./mu*((v*v-mu/d)*dx - d*vr*dvx);
-				const double ey = 1./mu*((v*v-mu/d)*dy - d*vr*dvy);
-				const double ez = 1./mu*((v*v-mu/d)*dz - d*vr*dvz);
-				const double e = sqrt( ex*ex + ey*ey + ez*ez );	// eccentricity
-				const double a = -mu/( v*v - 2.*mu/d );	
-				const double q = a * (1. - e);
-				//struct reb_orbit o = reb_tools_particle_to_orbit(r->G, p[1], p[0]);
-			
-				FILE* f = fopen("orbits.txt","a");
-				fprintf(f,"%e, %e, %e, %e, %e\n", r->t, a, q, e, fabs((en-e_init)/e_init));
-				fclose(f);
-			}
+			const double dx = p[i].x-p[0].x;
+			const double dy = p[i].y-p[0].y;
+			const double dz = p[i].z-p[0].z;
+			const double d = sqrt(dx*dx + dy*dy + dz*dz);
+			const double dvx = p[i].vx-p[0].vx;
+			const double dvy = p[i].vy-p[0].vy;
+			const double dvz = p[i].vz-p[0].vz;
+			const double mu = G*(p[0].m + p[i].m);
+			const double v = sqrt(dvx*dvx + dvy*dvy + dvz*dvz);
+			const double vr = (dx*dvx + dy*dvy + dz*dvz)/d;
+			const double ex = 1./mu*((v*v-mu/d)*dx - d*vr*dvx);
+			const double ey = 1./mu*((v*v-mu/d)*dy - d*vr*dvy);
+			const double ez = 1./mu*((v*v-mu/d)*dz - d*vr*dvz);
+			const double e = sqrt( ex*ex + ey*ey + ez*ez );	// eccentricity
+			const double a = -mu/( v*v - 2.*mu/d );	
+			const double q = a * (1. - e);
+			//struct reb_orbit o = reb_tools_particle_to_orbit(r->G, p[1], p[0]);
+		
+			FILE* f = fopen("orbits.txt","a");
+			fprintf(f,"%e, %e, %e, %e, %e\n", r->t, a, q, e, fabs((en-e_init)/e_init));
+			fclose(f);
 		}
+	}
 }
