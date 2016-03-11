@@ -46,10 +46,12 @@
 #include "display.h"
 #include "output.h"
 #include "integrator.h"
+#define WINWIDTH 700
+#define WINHEIGHT 700
+
 
 struct reb_display_config {
 	int spheres;	/**< Switches between point sprite and real spheres. */
-	int pause_sim;	/**< Pauses simulation. */
 	int pause;	/**< Pauses visualization, but keep simulation running */
 	int wire;	/**< Shows/hides orbit wires. */
 	int clear;	/**< Toggles clearing the display on each draw. */
@@ -82,14 +84,13 @@ void reb_display_timer(int value){
 	glutTimerFunc(20,reb_display_timer,0); // 50 Hz refresh rate.
 }
 
-
-
 void reb_display(void){
 	if (reb_dc.pause){
 		return;
 	}
 	sem_wait(reb_dc.mutex);	
 	const struct reb_particle* particles = reb_dc.r->particles;
+	
 	if (reb_dc.clear){
 	        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	}
@@ -226,6 +227,26 @@ void reb_display(void){
 	if (reb_dc.reference>=0){
 		glTranslatef(particles[reb_dc.reference].x,particles[reb_dc.reference].y,particles[reb_dc.reference].z);
 	}
+	
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix(); // save
+	glLoadIdentity();// and clear
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	glColor4f(1.0,1.0,1.0,0.5);
+	glRasterPos2f(-0.98,-0.98);
+	
+	char buf[50];
+	sprintf(buf, "t = %.2lf yrs", 2./2.0/M_PI);
+	const char* p = buf;
+	do glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *p); while(*(++p));
+	
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix(); // revert back to the matrix
+	glMatrixMode(GL_MODELVIEW );
+	glPopMatrix();
+
 	glFlush();
 	sem_post(reb_dc.mutex);	
 }
@@ -279,11 +300,10 @@ void reb_display_keyboard(unsigned char key, int x, int y){
 
 
 void reb_display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* mutex){
-	reb_dc.r 		= r;
+	reb_dc.r 			= r;
 	reb_dc.mutex 		= mutex;
 	// Default parameters
 	reb_dc.spheres 		= 2; 
-	reb_dc.pause_sim 	= 0; 
 	reb_dc.pause 		= 0; 
 	reb_dc.wire 		= 0; 
 	reb_dc.clear 		= 1; 
@@ -292,7 +312,7 @@ void reb_display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* m
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH );
-	glutInitWindowSize(700,700);
+	glutInitWindowSize(WINWIDTH,WINHEIGHT);
 	glutCreateWindow("rebound");
 	zprInit(reb_dc.r->boxsize_max);
 	glutDisplayFunc(reb_display);
