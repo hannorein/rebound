@@ -14,8 +14,8 @@
 *  central star (Prot ~ 20 days ) is around 1.4e+49 - they
 *  are comparable! However, the distortion on the planet 
 *  caused by the star is more significant than the couter 
-*  part raised on the star. Tao_e ~ 10^7
-*
+*  part raised on the star. Tao_e ~ 10^7, takes 3 months
+*  to finish the code? ...
 *
 *  by Meldonization. 2016
 *
@@ -110,40 +110,38 @@ static double acos2(double num, double denom, double disambiguator){
 	return val;
 }
 
-const double eccsmooth=1.E-5;
+const double eccsmooth=1.e-5;
 /* tiny eccentricity causes repeat calculating true anomaly problem */
 int ecctrigger = 0;
+const double Qp = 1.0e5; // tidal deformation parameter
+const double k2p = 5.2e-1; // love number
 
 void tidal_forces(struct reb_simulation* const r){	
-	struct reb_particle* const particles = r->particles;
-	struct reb_particle com = particles[0];
-	const double Qp = 1.0e5; // tidal deformation parameter
-	const double k2p = 5.2e-1; // love number
-	const double G = r->G;
-	const int N = r->N;
-	double coef, coefr, taolag, rdot, f;
+	struct reb_particle* const p = r->particles;
+	//struct reb_particle com = particles[0];
+	//const double G = r->G;
+	//const int N = r->N;
 	
-	for (int i=1;i<N;i++){
+	for (int i=1;i<r->N;i++){
 		
-		if (ecctrigger) {
-			continue;
-		}
 		
-		struct reb_particle* p = &(particles[i]);
-		const double dx = p->x-com.x;
-		const double dy = p->y-com.y;
-		const double dz = p->z-com.z;
+		if (ecctrigger) continue;
+		
+		//struct reb_particle* p = &(particles[i]);
+		const double dx = p[i].x-p[0].x;
+		const double dy = p[i].y-p[0].y;
+		const double dz = p[i].z-p[0].z;
 		const double d = sqrt(dx*dx + dy*dy + dz*dz);
 		
-		if (d >= 0.5 ) continue; // tidal force effective at close distances
+		//if (d >= 0.5 ) continue; // tidal force effective at close distances
 		
-		const double dvx = p->vx-com.vx;
-		const double dvy = p->vy-com.vy;
-		const double dvz = p->vz-com.vz;
+		const double dvx = p[i].vx-p[0].vx;
+		const double dvy = p[i].vy-p[0].vy;
+		const double dvz = p[i].vz-p[0].vz;
 		//const double hx = dy*dvz - dz*dvy; 
 		//const double hy = dz*dvx - dx*dvz;
 		//const double hz = dx*dvy - dy*dvx;
-		const double mu = G*(com.m + p->m);
+		const double mu = r->G*(p[0].m + p[i].m);
 		//const double h = sqrt(hx*hx + hy*hy + hz*hz);
 		const double v = sqrt(dvx*dvx + dvy*dvy + dvz*dvz);
 		const double vr = (dx*dvx + dy*dvy + dz*dvz)/d;
@@ -155,23 +153,22 @@ void tidal_forces(struct reb_simulation* const r){
 		if (e <= eccsmooth) { 
 			// small eccentricity would slow down the intergration.
 			ecctrigger = 1;
-		} else if (e >= eccsmooth * 100) {
+		} else if (ecctrigger && e >= eccsmooth * 100.) {
 			ecctrigger = 0;
 		}
 		
 		const double a = -mu/( v*v - 2.*mu/d );	
-		const double n = sqrt(mu / pow(a, 3.0));
-		const double q = a * (1. - e * e);
-				
-		f = acos2(q/d-1., e, vr);
-		rdot = n * a * e / sqrt(1.0e0 - e * e) * sin(f);
-		taolag = M_PI / Qp / n;
-		coef = mu * com.m / p->m * k2p * pow(p->r, 5.0e0) / pow(d, 8.0e0);
-		coefr = 9.0e0 * rdot / d * taolag;
+		const double n = sqrt(mu / a / a / a);
+		const double q = a * (1. - e * e);	
+		const double f = acos2(q/d-1., e, vr);
+		const double rdot = n * a * e / sqrt(1. - e * e) * sin(f);
+		const double taolag = M_PI / Qp / n;
+		const double coef = mu * p[0].m / p[i].m * k2p * pow(p[i].r, 5.) / pow(d, 8.);
+		const double coefr = 9. * rdot / d * taolag;
 	
-		p->ax -= coef * coefr * dx;
-		p->ay -= coef * coefr * dy;
-		p->az -= coef * coefr * dz;
+		p[i].ax -= coef * coefr * dx;
+		p[i].ay -= coef * coefr * dy;
+		p[i].az -= coef * coefr * dz;
 		
 		reb_move_to_com(r); // avoid com drifting
 	}		
@@ -180,9 +177,9 @@ void tidal_forces(struct reb_simulation* const r){
 
 
 void heartbeat(struct reb_simulation* const r){
-	 if(reb_output_check(r, 1000)){
+    if(reb_output_check(r, 100.)){
 		reb_output_timing(r, tmax);
-	 }
+    }
 		
 	if(reb_output_check(r, M_PI*2000.)){
 		//reb_integrator_synchronize(r);
