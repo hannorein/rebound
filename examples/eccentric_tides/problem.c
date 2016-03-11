@@ -14,7 +14,7 @@
 *  central star (Prot ~ 20 days ) is around 1.4e+49 - they
 *  are comparable! However, the distortion on the planet 
 *  caused by the star is more significant than the couter 
-*  part raised on the star.
+*  part raised on the star. Tao_e ~ 10^7
 *
 *
 *  by Meldonization. 2016
@@ -135,7 +135,7 @@ void tidal_forces(struct reb_simulation* const r){
 		const double dz = p->z-com.z;
 		const double d = sqrt(dx*dx + dy*dy + dz*dz);
 		
-		//if (d >= 0.5 ) continue; // tidal force effective at close distances
+		if (d >= 0.5 ) continue; // tidal force effective at close distances
 		
 		const double dvx = p->vx-com.vx;
 		const double dvy = p->vy-com.vy;
@@ -180,7 +180,9 @@ void tidal_forces(struct reb_simulation* const r){
 
 
 void heartbeat(struct reb_simulation* const r){
+    if(reb_output_check(r, 1000)){
 		reb_output_timing(r, tmax);
+    }
 		
 		if(reb_output_check(r, M_PI*2000.)){
 			//reb_integrator_synchronize(r);
