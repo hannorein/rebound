@@ -50,7 +50,7 @@
 #include "rebound.h"
 
 void tidal_forces(struct reb_simulation* const r);
-void heartbeat(struct reb_simulaton* const r);
+void heartbeat(struct reb_simulation* const r);
 double tmax;
 double e_init; // initial energy
 
