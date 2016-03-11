@@ -65,6 +65,8 @@ struct reb_display_config {
 #endif // APPLE
 };
 
+
+
 struct reb_display_config reb_dc;
 
 void reb_display_exit(struct reb_display_config* dc){
@@ -307,7 +309,7 @@ void reb_display_keyboard(unsigned char key, int x, int y){
 
 
 void reb_display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* mutex){
-	reb_dc.r 			= r;
+	reb_dc.r 		= r;
 	reb_dc.mutex 		= mutex;
 	// Default parameters
 	reb_dc.spheres 		= 2; 
