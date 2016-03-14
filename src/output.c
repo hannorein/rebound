@@ -79,7 +79,7 @@ void profiling_stop(int cat){
 }
 #endif // PROFILING
 
-void reb_output_timing(struct reb_simulation* r, const double tmax){
+void reb_output_timing_str(struct reb_simulation* r, const double tmax, char* str){
 	const int N = r->N;
 #ifdef MPI
 	int N_tot = 0;
@@ -88,6 +88,28 @@ void reb_output_timing(struct reb_simulation* r, const double tmax){
 #else
 	int N_tot = N;
 #endif
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	double temp = tim.tv_sec+(tim.tv_usec/1000000.0);
+
+	sprintf(str,"%sN_tot= %- 9d  ",str,N_tot);
+	if (r->integrator==REB_INTEGRATOR_SEI){
+		sprintf(str,"%st= %- 9f [orb]  ",str,r->t*r->ri_sei.OMEGA/2./M_PI);
+	}else{
+		sprintf(str,"%st= %- 9f  ",str,r->t);
+	}
+	sprintf(str,"%sdt= %- 9f  ",str,r->dt);
+	if (r->integrator==REB_INTEGRATOR_HYBRID){
+		sprintf(str,"%sINT= %- 1d  ",str,r->ri_hybrid.mode);
+	}
+	sprintf(str,"%scpu= %- 9f [s]  ",str,temp-r->output_timing_last);
+	if (tmax>0){
+		sprintf(str,"%st/tmax= %5.2f%%",str,r->t/tmax*100.0);
+	}
+}
+
+
+void reb_output_timing(struct reb_simulation* r, const double tmax){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	double temp = tim.tv_sec+(tim.tv_usec/1000000.0);
@@ -102,20 +124,9 @@ void reb_output_timing(struct reb_simulation* r, const double tmax){
 		}
 #endif // PROFILING
 	}
-	printf("N_tot= %- 9d  ",N_tot);
-	if (r->integrator==REB_INTEGRATOR_SEI){
-		printf("t= %- 9f [orb]  ",r->t*r->ri_sei.OMEGA/2./M_PI);
-	}else{
-		printf("t= %- 9f  ",r->t);
-	}
-	printf("dt= %- 9f  ",r->dt);
-	if (r->integrator==REB_INTEGRATOR_HYBRID){
-		printf("INT= %- 1d  ",r->ri_hybrid.mode);
-	}
-	printf("cpu= %- 9f [s]  ",temp-r->output_timing_last);
-	if (tmax>0){
-		printf("t/tmax= %5.2f%%",r->t/tmax*100.0);
-	}
+    char str[2048] = "\0";
+    reb_output_timing_str(r,tmax,str);
+    printf("%s",str);
 #ifdef PROFILING
 	if (profiling_timing_initial==0){
 		struct timeval tim;

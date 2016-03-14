@@ -237,10 +237,10 @@ void reb_display(void){
 	glColor4f(1.0,1.0,1.0,0.5);
 	glRasterPos2f(-0.98,-0.98);
 	
-	char buf[50];
-	sprintf(buf, "t = %.2lf yrs", 2./2.0/M_PI);
-	const char* p = buf;
-	do glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *p); while(*(++p));
+    char str[4096] = "\0";
+    const char* p = str;
+    reb_output_timing_str(reb_dc.r, 0., str);
+	do glutBitmapCharacter(GLUT_BITMAP_8_BY_13, *p); while(*(++p));
 	
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix(); // revert back to the matrix
