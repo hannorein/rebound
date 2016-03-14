@@ -76,7 +76,7 @@ There are four papers describing the functionality of REBOUND.
 
 3. Rein & Tamayo 2015 (Monthly Notices of the Royal Astronomical Society, Volume 452, Issue 1, p.376-388) describe WHFast, the fast and unbiased implementation of a symplectic Wisdom-Holman integrator for long term gravitational simulations. http://adsabs.harvard.edu/abs/2015MNRAS.452..376R
 
-4. Rein & Tamayo 2016 (accepted for publication in the Monthly Notices of the Royal Astronomical Society) develop the framework for second order variational equations.
+4. Rein & Tamayo 2016 (accepted for publication in the Monthly Notices of the Royal Astronomical Society) develop the framework for second order variational equations. http://arxiv.org/abs/1603.03424
 
 Acknowledgments
 ---------------
@@ -87,6 +87,8 @@ When you use this code or parts of this code for results presented in a scientif
 If you use the IAS15 integrator, please cite Rein and Spiegel (2015).
 
 If you use the WHFast integrator, please cite Rein and Tamayo (2015).
+
+If you use the variational equations, please cite Rein and Tamayo (2016).
 
 
 License
