@@ -281,10 +281,10 @@ class Simulation(Structure):
         The argument can be a python function or something that can be cast to a C function or a python function.
         """
         raise AttributeError("You can only set C function pointers from python (not get).")
-        @heartbeat.setter
-        def heartbeat(self, func):
-            self._hb = AFF(func)
-            self._heartbeat = self._hb
+    @heartbeat.setter
+    def heartbeat(self, func):
+        self._hb = AFF(func)
+        self._heartbeat = self._hb
 
     @property 
     def coefficient_of_restitution(self):
