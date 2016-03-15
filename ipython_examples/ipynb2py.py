@@ -1,10 +1,10 @@
 import json
 import sys
-print "import matplotlib as mpl"
-print "mpl.use(\"Agg\")"
+exec("import matplotlib as mpl")
+exec("mpl.use(\"Agg\")")
 
 if len(sys.argv)!=2:
-    print "Usage: ipynb2py.py FILENAME"
+    print("Usage: ipynb2py.py FILENAME")
     exit(1)
 with open(sys.argv[1]) as data_file:    
     ipynb = json.load(data_file)
@@ -16,4 +16,9 @@ for c in ipynb["cells"]:
         for s in source:
             if s[0] != "%":
                 code += s.rstrip('\n')+"\n"
-print code
+import socket
+try:
+    exec(code)
+except socket.error: 
+    print("A socket error occured. This is most likely due to a timeout in the NASA Horizons connections. We catch this exception here and ignore is.")
+    pass
