@@ -815,12 +815,12 @@ void reb_solve_kepler_pal(double h, double k, double lambda, double* p, double* 
 }
 
 void reb_particle_to_pal(double G, struct reb_particle p, struct reb_particle primary, double *a, double* lambda, double* k, double* h, double* ix, double* iy){
-    double x = p.x = primary.x;
-    double y = p.y = primary.y;
-    double z = p.z = primary.z;
-    double vx = p.vx = primary.vx;
-    double vy = p.vy = primary.vy;
-    double vz = p.vz = primary.vz;
+    double x = p.x - primary.x;
+    double y = p.y - primary.y;
+    double z = p.z - primary.z;
+    double vx = p.vx - primary.vx;
+    double vy = p.vy - primary.vy;
+    double vz = p.vz - primary.vz;
     double mu = G*(p.m+primary.m);
     double r2 = x*x + y*y + z*z;
     double r = sqrt(r2);
