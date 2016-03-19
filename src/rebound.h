@@ -890,6 +890,11 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
  */
 double reb_tools_M_to_f(double e, double M);
 
+
+// New orbit routine!! TODO!
+struct reb_particle reb_pal_to_particle(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy);
+void reb_particle_to_pal(double G, struct reb_particle p, struct reb_particle primary, double *a, double* lambda, double* k, double* h, double* ix, double* iy);
+
 /**
  * @brief Initialize a particle on an orbit in the xy plane.
  * @param G Gravitational constant.

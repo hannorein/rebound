@@ -790,7 +790,7 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY){
 /**************************************
  * New derivatives */
 
-void reb_solve_kepler(double h, double k, double lambda, double* p, double* q){
+void reb_solve_kepler_pal(double h, double k, double lambda, double* p, double* q){
     double pn = 0;
     double qn = 0;
 
@@ -824,7 +824,6 @@ void reb_particle_to_pal(double G, struct reb_particle p, struct reb_particle pr
     double mu = G*(p.m+primary.m);
     double r2 = x*x + y*y + z*z;
     double r = sqrt(r2);
-    double v2 = vx*vx + vy*vy + vz*vz;
     double cx = y*vz - z*vy;
     double cy = z*vx - x*vz;
     double cz = x*vy - y*vx;
@@ -841,6 +840,41 @@ void reb_particle_to_pal(double G, struct reb_particle p, struct reb_particle pr
     *a = c2/(mu*(1.-e2));
     double l = 1.-sqrt(1.-e2);
     *lambda = atan2(-r*vx+r*vz*cx/(c+cz)-(*k)*chat/(2.-l), r*vy-r*vz*cy/(c+cz)+(*h)*chat/(2.-l))-chat/c*(1.-l);
+}
+
+struct reb_particle reb_pal_to_particle(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy){
+    struct reb_particle np = {0.};
+
+    double p=0.,q=0.;
+    reb_solve_kepler_pal(h, k, lambda, &p, &q);
+    
+    double l = 1.-sqrt(1.-h*h-k*k);
+    double xi = a*cos(lambda+p) + p/(2.-l)*h -k;
+    double eta = a*sin(lambda+p) - p/(2.-l)*k -h;
+
+    double iz = sqrt(fabs(4.-ix*ix-iy*iy));
+    double W = eta*ix-xi*iy;
+
+    np.x = xi+0.5*iy*W;
+    np.y = eta-0.5*ix*W;
+    np.z = 0.5*iz*W;
+
+    double n = sqrt(G*(m+primary.m)/(a*a*a));
+    double dxi  = a*n/(1.-q)*(-sin(lambda+p)+q/(2.-l)*h);
+    double deta = a*n/(1.-q)*(+cos(lambda+p)-q/(2.-l)*k);
+    double dW = deta*ix-dxi*iy;
+
+    np.vx = dxi+0.5*iy*dW;
+    np.vy = deta-0.5*ix*dW;
+    np.vz = 0.5*iz*dW;
+
+    np.x += primary.x;
+    np.y += primary.y;
+    np.z += primary.z;
+    np.vx += primary.vx;
+    np.vy += primary.vy;
+    np.vz += primary.vz;
+    return np;
 }
 
 
