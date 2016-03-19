@@ -507,6 +507,11 @@ class Particle(Structure):
         return NotImplemented 
 
     @property
+    def index(self):
+        clibrebound.reb_get_particle_index.restype = c_int
+        return clibrebound.reb_get_particle_index(byref(self)) 
+        
+    @property
     def d(self):
         return self.calculate_orbit().d
     @property
