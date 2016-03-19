@@ -847,33 +847,30 @@ struct reb_particle reb_pal_to_particle(double G, struct reb_particle primary, d
 
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
+
+    double slp = sin(lambda+p);
+    double clp = cos(lambda+p);
     
     double l = 1.-sqrt(1.-h*h-k*k);
-    double xi = a*cos(lambda+p) + p/(2.-l)*h -k;
-    double eta = a*sin(lambda+p) - p/(2.-l)*k -h;
+    double xi = a*clp + p/(2.-l)*h -k;
+    double eta = a*slp - p/(2.-l)*k -h;
 
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
     double W = eta*ix-xi*iy;
 
-    np.x = xi+0.5*iy*W;
-    np.y = eta-0.5*ix*W;
-    np.z = 0.5*iz*W;
+    np.x = primary.x + xi+0.5*iy*W;
+    np.y = primary.y + eta-0.5*ix*W;
+    np.z = primary.z + 0.5*iz*W;
 
     double an = sqrt(G*(m+primary.m)/a);
-    double dxi  = an/(1.-q)*(-sin(lambda+p)+q/(2.-l)*h);
-    double deta = an/(1.-q)*(+cos(lambda+p)-q/(2.-l)*k);
+    double dxi  = an/(1.-q)*(-slp+q/(2.-l)*h);
+    double deta = an/(1.-q)*(+clp-q/(2.-l)*k);
     double dW = deta*ix-dxi*iy;
 
-    np.vx = dxi+0.5*iy*dW;
-    np.vy = deta-0.5*ix*dW;
-    np.vz = 0.5*iz*dW;
+    np.vx = primary.vx + dxi+0.5*iy*dW;
+    np.vy = primary.vy + deta-0.5*ix*dW;
+    np.vz = primary.vz + 0.5*iz*dW;
 
-    np.x += primary.x;
-    np.y += primary.y;
-    np.z += primary.z;
-    np.vx += primary.vx;
-    np.vy += primary.vy;
-    np.vz += primary.vz;
     return np;
 }
 
