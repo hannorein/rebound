@@ -859,9 +859,9 @@ struct reb_particle reb_pal_to_particle(double G, struct reb_particle primary, d
     np.y = eta-0.5*ix*W;
     np.z = 0.5*iz*W;
 
-    double n = sqrt(G*(m+primary.m)/(a*a*a));
-    double dxi  = a*n/(1.-q)*(-sin(lambda+p)+q/(2.-l)*h);
-    double deta = a*n/(1.-q)*(+cos(lambda+p)-q/(2.-l)*k);
+    double an = sqrt(G*(m+primary.m)/a);
+    double dxi  = an/(1.-q)*(-sin(lambda+p)+q/(2.-l)*h);
+    double deta = an/(1.-q)*(+cos(lambda+p)-q/(2.-l)*k);
     double dW = deta*ix-dxi*iy;
 
     np.vx = dxi+0.5*iy*dW;
