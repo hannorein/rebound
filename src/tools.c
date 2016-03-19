@@ -791,7 +791,6 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY){
  * New derivatives */
 
 void reb_solve_kepler(double h, double k, double lambda, double* p, double* q){
-    double e = sqrt(h*h+k*k);
     double pn = 0;
     double qn = 0;
 
@@ -815,7 +814,34 @@ void reb_solve_kepler(double h, double k, double lambda, double* p, double* q){
     *q = qn;
 }
 
+void reb_particle_to_pal(double G, struct reb_particle p, struct reb_particle primary, double *a, double* lambda, double* k, double* h, double* ix, double* iy){
+    double x = p.x = primary.x;
+    double y = p.y = primary.y;
+    double z = p.z = primary.z;
+    double vx = p.vx = primary.vx;
+    double vy = p.vy = primary.vy;
+    double vz = p.vz = primary.vz;
+    double mu = G*(p.m+primary.m);
+    double r2 = x*x + y*y + z*z;
+    double r = sqrt(r2);
+    double v2 = vx*vx + vy*vy + vz*vz;
+    double cx = y*vz - z*vy;
+    double cy = z*vx - x*vz;
+    double cz = x*vy - y*vx;
+    double c2 = cx*cx + cy*cy + cz*cz;
+    double c = sqrt(c2);
+    double chat = x*vx + y*vy + z*vz;
 
+    double fac = sqrt(2./(1.+cz/c))/c;
+    *ix = -fac * cy;
+    *iy = fac * cx;
+    *k = c/mu*(vy-vz/(c+cz)*cy)-1./r*(x-z/(c+cz)*cx);
+    *h = c/mu*(-vx+vz/(c+cz)*cx)-1./r*(y-z/(c+cz)*cy);
+    double e2 = (*k)*(*k)+(*h)*(*h);
+    *a = c2/(mu*(1.-e2));
+    double l = 1.-sqrt(1.-e2);
+    *lambda = atan2(-r*vx+r*vz*cx/(c+cz)-(*k)*chat/(2.-l), r*vy-r*vz*cy/(c+cz)+(*h)*chat/(2.-l))-chat/c*(1.-l);
+}
 
 
 /**************************************
