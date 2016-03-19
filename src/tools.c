@@ -787,6 +787,35 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY){
 }
 #endif // LIBREBOUNDX
 
+/**************************************
+ * New derivatives */
+
+void reb_solve_kepler(double h, double k, double lambda, double* p, double* q){
+    double e = sqrt(h*h+k*k);
+    double pn = 0;
+    double qn = 0;
+
+    int n=0;
+    double f=0.;
+    do{
+        double f0 = qn*cos(pn)+pn*sin(pn)-(k*cos(lambda)+h*sin(lambda));
+        double f1 = -qn*sin(pn)+pn*cos(pn)-(k*sin(lambda)-h*cos(lambda));
+
+        double fac = 1./(qn-1.);
+        double fd00 = fac*(qn*cos(pn)-cos(pn)+pn*sin(pn));
+        double fd01 = fac*(pn*cos(pn)-qn*sin(pn)+sin(pn));
+        double fd10 = fac*(-sin(pn));
+        double fd11 = fac*(-cos(pn));
+
+        qn -= fd00*f0+fd10*f1;
+        pn -= fd01*f0+fd11*f1;
+        f = sqrt(f0*f0+f1*f1);
+    }while(n++<50 && f>1e-15);
+    *p = pn;
+    *q = qn;
+}
+
+
 
 
 /**************************************
