@@ -18,11 +18,11 @@ int main(int argc, char* argv[]) {
     reb_add(sim,p);
     p = reb_tools_orbit_to_particle(1, sim->particles[0],1e-2,
             1., //a
-            0.2, //e
-            0.4, // i
-            0.4, // Omega
-            1.4, // omega
-            3.); //f
+            0.0098, //e
+            0.80004, // i
+            0.3020, // Omega
+            0.1, // omega
+            0.); //f
     reb_add(sim,p);
 
     double a, lambda, k, h, ix, iy;

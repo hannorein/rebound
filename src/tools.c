@@ -791,27 +791,37 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY){
  * New derivatives */
 
 void reb_solve_kepler_pal(double h, double k, double lambda, double* p, double* q){
-    double pn = 0;
-    double qn = 0;
+    double e2 = h*h + k*k;
+    if (e2<0.3*0.3){ // low e case
+        double pn = 0;
+        double qn = 0;
 
-    int n=0;
-    double f=0.;
-    do{
-        double f0 = qn*cos(pn)+pn*sin(pn)-(k*cos(lambda)+h*sin(lambda));
-        double f1 = -qn*sin(pn)+pn*cos(pn)-(k*sin(lambda)-h*cos(lambda));
+        int n=0;
+        double f=0.;
+        do{
+            double f0 = qn*cos(pn)+pn*sin(pn)-(k*cos(lambda)+h*sin(lambda));
+            double f1 = -qn*sin(pn)+pn*cos(pn)-(k*sin(lambda)-h*cos(lambda));
 
-        double fac = 1./(qn-1.);
-        double fd00 = fac*(qn*cos(pn)-cos(pn)+pn*sin(pn));
-        double fd01 = fac*(pn*cos(pn)-qn*sin(pn)+sin(pn));
-        double fd10 = fac*(-sin(pn));
-        double fd11 = fac*(-cos(pn));
+            double fac = 1./(qn-1.);
+            double fd00 = fac*(qn*cos(pn)-cos(pn)+pn*sin(pn));
+            double fd01 = fac*(pn*cos(pn)-qn*sin(pn)+sin(pn));
+            double fd10 = fac*(-sin(pn));
+            double fd11 = fac*(-cos(pn));
 
-        qn -= fd00*f0+fd10*f1;
-        pn -= fd01*f0+fd11*f1;
-        f = sqrt(f0*f0+f1*f1);
-    }while(n++<50 && f>1e-15);
-    *p = pn;
-    *q = qn;
+            qn -= fd00*f0+fd10*f1;
+            pn -= fd01*f0+fd11*f1;
+            f = sqrt(f0*f0+f1*f1);
+        }while(n++<50 && f>1e-15);
+        *p = pn;
+        *q = qn;
+    }else{  // high e case
+        double pomega = atan2(h,k);
+        double M = lambda-pomega;
+        double e = sqrt(e2);
+        double E = reb_M_to_E(e, M);
+        *p = e*sin(E); 
+        *q = e*cos(E); 
+    }
 }
 
 void reb_particle_to_pal(double G, struct reb_particle p, struct reb_particle primary, double *a, double* lambda, double* k, double* h, double* ix, double* iy){
