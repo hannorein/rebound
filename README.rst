@@ -87,4 +87,4 @@ There are still some features that haven't been fully ported. Most importantly, 
 
 The best way to get and idea of the changes we made is to look at some of the example problems and the new REBOUND documentation. If you have trouble using the new version or find a bug, please submit an issue or a pull request on github. 
 
-
+.. image:: http://i.imgur.com/0WsuHoc.png

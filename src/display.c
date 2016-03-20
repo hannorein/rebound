@@ -46,6 +46,9 @@
 #include "display.h"
 #include "output.h"
 #include "integrator.h"
+#define WINWIDTH 700
+#define WINHEIGHT 700
+
 
 struct reb_display_config {
 	int spheres;	/**< Switches between point sprite and real spheres. */
@@ -61,6 +64,8 @@ struct reb_display_config {
 	GLuint dlist_sphere;		/**< Precalculated display list of a sphere. */
 #endif // APPLE
 };
+
+
 
 struct reb_display_config reb_dc;
 
@@ -82,14 +87,18 @@ void reb_display_timer(int value){
 	glutTimerFunc(20,reb_display_timer,0); // 50 Hz refresh rate.
 }
 
-
-
 void reb_display(void){
 	if (reb_dc.pause){
 		return;
 	}
 	sem_wait(reb_dc.mutex);	
 	const struct reb_particle* particles = reb_dc.r->particles;
+	const double tnow = reb_dc.r->t;
+	
+	if (reb_dc.pause_sim){
+		reb_dc.r->status = REB_RUNNING_PAUSED;
+	}
+	
 	if (reb_dc.clear){
 	        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	}
@@ -226,6 +235,25 @@ void reb_display(void){
 	if (reb_dc.reference>=0){
 		glTranslatef(particles[reb_dc.reference].x,particles[reb_dc.reference].y,particles[reb_dc.reference].z);
 	}
+	
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix(); // save
+	glLoadIdentity();// and clear
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	glRasterPos2f(0.25,0.75);
+	
+	char buf[50];
+	sprintf(buf, "t = %.2lf yrs", tnow/2.0/M_PI);
+	const char* p = buf;
+	do glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *p); while(*(++p));
+	
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix(); // revert back to the matrix
+	glMatrixMode(GL_MODELVIEW );
+	glPopMatrix();
+
 	glFlush();
 	sem_post(reb_dc.mutex);	
 }
@@ -240,9 +268,11 @@ void reb_display_keyboard(unsigned char key, int x, int y){
 			if (reb_dc.r->status == REB_RUNNING_PAUSED){
 				printf("Resume.\n");
 				reb_dc.r->status = REB_RUNNING;
+				reb_dc.pause_sim = !reb_dc.pause_sim; 
 			}else{
 				printf("Pause.\n");
 				reb_dc.r->status = REB_RUNNING_PAUSED;
+				reb_dc.pause_sim = !reb_dc.pause_sim; 
 			}
 			break;
 		case 's': case 'S':
@@ -283,7 +313,7 @@ void reb_display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* m
 	reb_dc.mutex 		= mutex;
 	// Default parameters
 	reb_dc.spheres 		= 2; 
-	reb_dc.pause_sim 	= 0; 
+	reb_dc.pause_sim 	= 1; 
 	reb_dc.pause 		= 0; 
 	reb_dc.wire 		= 0; 
 	reb_dc.clear 		= 1; 
@@ -292,7 +322,7 @@ void reb_display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* m
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH );
-	glutInitWindowSize(700,700);
+	glutInitWindowSize(WINWIDTH,WINHEIGHT);
 	glutCreateWindow("rebound");
 	zprInit(reb_dc.r->boxsize_max);
 	glutDisplayFunc(reb_display);
