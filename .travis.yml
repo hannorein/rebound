@@ -23,25 +23,25 @@ script:
     - cd $TRAVIS_BUILD_DIR/examples/ && make
     - cd $TRAVIS_BUILD_DIR/src && make clean
     - cd $TRAVIS_BUILD_DIR/ && make  
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py AdvWHFast.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Checkpoints.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Churyumov-Gerasimenko.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py CloseEncounters.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py EscapingParticles.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Forces.ipynb | python 
-    #- cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py FourierSpectrum.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Horizons.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Megno.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquations.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquationsWithChainRule.ipynb | python 
-    #- cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Parallel.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py ParticleIDsAndRemoval.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py PoincareMap.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py OrbitalElements.ipynb | python 
-    #- cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Testparticles.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Units.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py WHFast.ipynb | python 
-    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py TransitTimingVariations.ipynb | python 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py AdvWHFast.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Checkpoints.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Churyumov-Gerasimenko.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py CloseEncounters.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py EscapingParticles.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Forces.ipynb 
+    #- cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py FourierSpectrum.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Horizons.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Megno.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquations.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquationsWithChainRule.ipynb 
+    #- cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Parallel.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py ParticleIDsAndRemoval.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py PoincareMap.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py OrbitalElements.ipynb 
+    #- cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Testparticles.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Units.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py WHFast.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py TransitTimingVariations.ipynb 
     - cd $TRAVIS_BUILD_DIR/python_examples/dragforce/ && python problem.py
     #- cd $TRAVIS_BUILD_DIR/python_examples/horizons/ && python problem.py
     - cd $TRAVIS_BUILD_DIR/python_examples/longtermtest/ && python problem.py

@@ -1,6 +1,8 @@
 import matplotlib; matplotlib.use("pdf")
 import matplotlib.pyplot as plt
 import rebound
+import socket
+import sys
 import os.path
 import os
 filename = "cache.bin"
@@ -18,7 +20,12 @@ if os.path.isfile(filename):
 else: 
     sim = rebound.Simulation()
     # Get data from NASA Horizons
-    sim.add(solar_system_objects)
+    try:
+        sim.add(solar_system_objects)
+    except socket.error:
+        print("A socket error occured. Maybe Horizons is down?")
+        sys.exit(0) # we ignore the error and exit
+
     sim.move_to_com()
     # Configure simulation
     sim.integrator = "whfast"
