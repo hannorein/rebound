@@ -238,11 +238,6 @@ void reb_display(void){
 	glRasterPos2f(-0.98,-0.98);
 	
     char str[4096] = "\0";
-    const char* p = str;
-	struct timeval tim;
-	gettimeofday(&tim, NULL);
-	//double temp = tim.tv_sec+(tim.tv_usec/1000000.0);
-	//	r->output_timing_last = temp;
 	sprintf(str, "REBOUND  N_tot= %d  ",reb_dc.r->N);
 	if (reb_dc.r->integrator==REB_INTEGRATOR_SEI){
 		sprintf(str, "%st= %f [orb]  ",str, reb_dc.r->t*reb_dc.r->ri_sei.OMEGA/2./M_PI);
@@ -253,7 +248,8 @@ void reb_display(void){
 	if (reb_dc.r->integrator==REB_INTEGRATOR_HYBRID){
 		sprintf(str, "%s INT= %- 1d  ", str, reb_dc.r->ri_hybrid.mode);
 	}
-	//sprintf(str, "%scpu= %- 9f [s]  ", str, temp-r->output_timing_last);
+    
+    const char* p = str;
 	do glutBitmapCharacter(GLUT_BITMAP_8_BY_13, *p); while(*(++p));
 	
 	glMatrixMode(GL_PROJECTION);
