@@ -49,9 +49,4 @@ void profiling_stop(int cat);
 #define PROFILING_STOP(C)	///< Stop profiling block (dummy, does nothing)
 #endif // PROFILING
 
-/**
- * @brief Internal function that writes status information into a string.
- */
-void reb_output_timing_str(struct reb_simulation* r, const double tmax, char* str);
-
 #endif
