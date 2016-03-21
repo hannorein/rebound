@@ -54,6 +54,7 @@ struct reb_display_config {
 	int spheres;	/**< Switches between point sprite and real spheres. */
 	int pause;	/**< Pauses visualization, but keep simulation running */
 	int wire;	/**< Shows/hides orbit wires. */
+	int onscreentext;	/**< Shows/hides onscreen text. */
 	int clear;	/**< Toggles clearing the display on each draw. */
 	int ghostboxes;	/**< Shows/hides ghost boxes. */
 	int reference;	/**< reb_particle used as a reference for centering. */
@@ -228,34 +229,42 @@ void reb_display(void){
 		glTranslatef(particles[reb_dc.reference].x,particles[reb_dc.reference].y,particles[reb_dc.reference].z);
 	}
 	
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix(); // save
-	glLoadIdentity();// and clear
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
-	glColor4f(1.0,1.0,1.0,0.5);
-	glRasterPos2f(-0.98,-0.98);
-	
-    char str[4096] = "\0";
-	sprintf(str, "REBOUND  N_tot= %d  ",reb_dc.r->N);
-	if (reb_dc.r->integrator==REB_INTEGRATOR_SEI){
-		sprintf(str, "%st= %f [orb]  ",str, reb_dc.r->t*reb_dc.r->ri_sei.OMEGA/2./M_PI);
-	}else{
-		sprintf(str, "%st= %f  ",str, reb_dc.r->t);
-	}
-	sprintf(str,"%sdt= %f  ",str,reb_dc.r->dt);
-	if (reb_dc.r->integrator==REB_INTEGRATOR_HYBRID){
-		sprintf(str, "%s INT= %- 1d  ", str, reb_dc.r->ri_hybrid.mode);
-	}
-    
-    const char* p = str;
-	do glutBitmapCharacter(GLUT_BITMAP_8_BY_13, *p); while(*(++p));
-	
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix(); // revert back to the matrix
-	glMatrixMode(GL_MODELVIEW );
-	glPopMatrix();
+    if (reb_dc.onscreentext){
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix(); // save
+        glLoadIdentity();// and clear
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+        glColor4f(1.0,1.0,1.0,0.5);
+        glRasterPos2f(-0.98,-0.98);
+        
+        char str[4096] = "\0";
+        sprintf(str, "REBOUND");
+        if (reb_dc.r->status == REB_RUNNING){
+            sprintf(str, "%s (running)  ", str);
+        }else if (reb_dc.r->status == REB_RUNNING_PAUSED){
+            sprintf(str, "%s (paused)   ", str);
+        }
+        sprintf(str, "%s  N_tot= %d  ",str, reb_dc.r->N);
+        if (reb_dc.r->integrator==REB_INTEGRATOR_SEI){
+            sprintf(str, "%st= %f [orb]  ",str, reb_dc.r->t*reb_dc.r->ri_sei.OMEGA/2./M_PI);
+        }else{
+            sprintf(str, "%st= %f  ",str, reb_dc.r->t);
+        }
+        sprintf(str,"%sdt= %f  ",str,reb_dc.r->dt);
+        if (reb_dc.r->integrator==REB_INTEGRATOR_HYBRID){
+            sprintf(str, "%s INT= %- 1d  ", str, reb_dc.r->ri_hybrid.mode);
+        }
+        
+        const char* p = str;
+        do glutBitmapCharacter(GLUT_BITMAP_8_BY_13, *p); while(*(++p));
+        
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix(); // revert back to the matrix
+        glMatrixMode(GL_MODELVIEW );
+        glPopMatrix();
+    }
 
 	glFlush();
 	sem_post(reb_dc.mutex);	
@@ -291,6 +300,9 @@ void reb_display_keyboard(unsigned char key, int x, int y){
 		case 'w': case 'W':
 			reb_dc.wire = !reb_dc.wire;
 			break;
+		case 't': case 'T':
+			reb_dc.onscreentext = !reb_dc.onscreentext;
+			break;
 		case 'c': case 'C':
 			reb_dc.clear = !reb_dc.clear;
 			break;
@@ -316,6 +328,7 @@ void reb_display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* m
 	reb_dc.spheres 		= 2; 
 	reb_dc.pause 		= 0; 
 	reb_dc.wire 		= 0; 
+	reb_dc.onscreentext = 1; 
 	reb_dc.clear 		= 1; 
 	reb_dc.ghostboxes 	= 0; 
 	reb_dc.reference 	= -1;
