@@ -68,7 +68,7 @@ double reb_random_rayleigh(double sigma){
 }
 
 /// Other helper routines
-double reb_tools_energy(struct reb_simulation* r){
+double reb_tools_energy(const struct reb_simulation* const r){
 	const int N = r->N;
 	const struct reb_particle* restrict const particles = r->particles;
 	const int N_var = r->N_var;

@@ -1188,7 +1188,7 @@ struct reb_particle reb_tools_orbit_to_particle_df_dm(double G, struct reb_parti
  * @param r The rebound simulation to be considered
  * @return Total energy. 
  */
-double reb_tools_energy(struct reb_simulation* r);
+double reb_tools_energy(const struct reb_simulation* const r);
 
 /**
  * @brief Add and initialize a set of first order variational particles

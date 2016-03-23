@@ -272,7 +272,20 @@ class Simulation(Structure):
     def post_timestep_modifications(self, func):
         self._ptmp = AFF(func)
         self._post_timestep_modifications = self._ptmp
-   
+ 
+    @property
+    def heartbeat(self):
+        """
+        Get or set a function pointer for a heartbeat function that is called every timestep.
+     
+        The argument can be a python function or something that can be cast to a C function or a python function.
+        """
+        raise AttributeError("You can only set C function pointers from python (not get).")
+    @heartbeat.setter
+    def heartbeat(self, func):
+        self._hb = AFF(func)
+        self._heartbeat = self._hb
+
     @property 
     def coefficient_of_restitution(self):
         """
