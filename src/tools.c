@@ -892,6 +892,7 @@ struct reb_particle reb_vary_pal_lambda(double G, struct reb_particle po, struct
 
     struct reb_particle np = {0.};
 
+
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
     double dq_dlambda = -p/(1.-q);
