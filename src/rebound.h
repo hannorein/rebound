@@ -895,6 +895,7 @@ double reb_tools_M_to_f(double e, double M);
 struct reb_particle reb_pal_to_particle(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy);
 void reb_particle_to_pal(double G, struct reb_particle p, struct reb_particle primary, double *a, double* lambda, double* k, double* h, double* ix, double* iy);
 struct reb_particle reb_vary_pal_lambda(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_h(double G, struct reb_particle po, struct reb_particle primary);
 
 /**
  * @brief Initialize a particle on an orbit in the xy plane.

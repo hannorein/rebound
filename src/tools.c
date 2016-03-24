@@ -928,6 +928,47 @@ struct reb_particle reb_vary_pal_lambda(double G, struct reb_particle po, struct
     return np;
 }
 
+struct reb_particle reb_vary_pal_h(double G, struct reb_particle po, struct reb_particle primary){
+    double a, lambda, k, h, ix, iy;
+    reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
+
+    struct reb_particle np = {0.};
+    double p=0.,q=0.;
+    reb_solve_kepler_pal(h, k, lambda, &p, &q);
+
+    double slp = sin(lambda+p);
+    double clp = cos(lambda+p);
+    
+    double l = 1.-sqrt(1.-h*h-k*k);
+    double dl_dh = 1./sqrt(1.-h*h-k*k)*h;
+    double xi = a*clp + p/(2.-l)*h -k;
+    double eta = a*slp - p/(2.-l)*k -h;
+
+    double iz = sqrt(fabs(4.-ix*ix-iy*iy));
+    double W = eta*ix-xi*iy;
+
+    np.x = xi+0.5*iy*W;
+    np.y = eta-0.5*ix*W;
+    np.z = 0.5*iz*W;
+
+    double dq_dh = 1./(1.-q)*(slp-h);
+    double dclp_dh = -1./(1.-q)*(-slp*clp);
+    double dslp_dh = -1./(1.-q)*(clp*clp);
+    double an = sqrt(G*(po.m+primary.m)/a);
+    double ddxi_dh  = dq_dh*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
+                + an/(1.-q)*(-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
+    double ddeta_dh = dq_dh*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
+                + an/(1.-q) * (+dclp_dh - dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
+    double ddW_dh = ddeta_dh*ix-ddxi_dh*iy;
+
+    np.vx = ddxi_dh+0.5*iy*ddW_dh;
+    np.vy = ddeta_dh-0.5*ix*ddW_dh;
+    np.vz = 0.5*iz*ddW_dh;
+
+
+    return np;
+}
+
 
 
 /**************************************
