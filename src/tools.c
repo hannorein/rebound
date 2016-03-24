@@ -952,12 +952,12 @@ struct reb_particle reb_vary_pal_h(double G, struct reb_particle po, struct reb_
     np.z = 0.5*iz*W;
 
     double dq_dh = 1./(1.-q)*(slp-h);
-    double dclp_dh = -1./(1.-q)*(clp*clp);
-    double dslp_dh = -1./(1.-q)*(-slp*clp);
+    double dclp_dh = -1./(1.-q)*(-slp*clp);
+    double dslp_dh = -1./(1.-q)*(clp*clp);
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dh  = dq_dh*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
-        + 1./(1.-q)*(-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
-    double ddeta_dh = an/((1.-q)*(1.-q)) * dq_dh *(+clp - q/(2.-l)*k)
+                + an/(1.-q)*(-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
+    double ddeta_dh = dq_dh*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
                 + an/(1.-q) * (+dclp_dh - dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
     double ddW_dh = ddeta_dh*ix-ddxi_dh*iy;
 
