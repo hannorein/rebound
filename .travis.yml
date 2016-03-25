@@ -7,14 +7,10 @@ env:
   - TESTPART=PYTHON
   - TESTPART=IPYTHON
 
-matrix:
-  include:
-    - python: "2.7"
-      env: DEPS="libgfortran=1.0 numpy=1.9 scipy=0.16 matplotlib=1.4"
-    - python: "3.4"
-      env: DEPS="libgfortran=1.0 numpy=1.9 scipy=0.16 matplotlib=1.4"
-    - python: "3.5"
-      env: DEPS="numpy scipy matplotlib"
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
 
 addons:
     apt:
@@ -24,7 +20,9 @@ addons:
             - libopenmpi-dev
 install:
   - conda update --yes conda
-  - conda create -n testenv --yes $DEPS setuptools coverage python=$TRAVIS_PYTHON_VERSION
+  - if [ ${TRAVIS_PYTHON_VERSION:0:3} == "2.7" ]; then conda create -n testenv --yes libgfortran=1.0 numpy=1.9 scipy=0.16 matplotlib=1.4 setuptools coverage python=$TRAVIS_PYTHON_VERSION; fi
+  - if [ ${TRAVIS_PYTHON_VERSION:0:3} == "3.4" ]; then conda create -n testenv --yes libgfortran=1.0 numpy=1.9 scipy=0.16 matplotlib=1.4 setuptools coverage python=$TRAVIS_PYTHON_VERSION; fi
+  - if [ ${TRAVIS_PYTHON_VERSION:0:3} == "3.5" ]; then conda create -n testenv --yes numpy scipy matplotlib setuptools coverage python=$TRAVIS_PYTHON_VERSION; fi
   - source activate testenv
   # for debugging...
   - echo $PATH
