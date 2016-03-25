@@ -787,6 +787,188 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY){
 }
 #endif // LIBREBOUNDX
 
+/**************************************
+ * New derivatives */
+
+void reb_solve_kepler_pal(double h, double k, double lambda, double* p, double* q){
+    double e2 = h*h + k*k;
+    if (e2<0.3*0.3){ // low e case
+        double pn = 0;
+        double qn = 0;
+
+        int n=0;
+        double f=0.;
+        do{
+            double f0 = qn*cos(pn)+pn*sin(pn)-(k*cos(lambda)+h*sin(lambda));
+            double f1 = -qn*sin(pn)+pn*cos(pn)-(k*sin(lambda)-h*cos(lambda));
+
+            double fac = 1./(qn-1.);
+            double fd00 = fac*(qn*cos(pn)-cos(pn)+pn*sin(pn));
+            double fd01 = fac*(pn*cos(pn)-qn*sin(pn)+sin(pn));
+            double fd10 = fac*(-sin(pn));
+            double fd11 = fac*(-cos(pn));
+
+            qn -= fd00*f0+fd10*f1;
+            pn -= fd01*f0+fd11*f1;
+            f = sqrt(f0*f0+f1*f1);
+        }while(n++<50 && f>1e-15);
+        *p = pn;
+        *q = qn;
+    }else{  // high e case
+        double pomega = atan2(h,k);
+        double M = lambda-pomega;
+        double e = sqrt(e2);
+        double E = reb_M_to_E(e, M);
+        *p = e*sin(E); 
+        *q = e*cos(E); 
+    }
+}
+
+void reb_particle_to_pal(double G, struct reb_particle p, struct reb_particle primary, double *a, double* lambda, double* k, double* h, double* ix, double* iy){
+    double x = p.x - primary.x;
+    double y = p.y - primary.y;
+    double z = p.z - primary.z;
+    double vx = p.vx - primary.vx;
+    double vy = p.vy - primary.vy;
+    double vz = p.vz - primary.vz;
+    double mu = G*(p.m+primary.m);
+    double r2 = x*x + y*y + z*z;
+    double r = sqrt(r2);
+    double cx = y*vz - z*vy;
+    double cy = z*vx - x*vz;
+    double cz = x*vy - y*vx;
+    double c2 = cx*cx + cy*cy + cz*cz;
+    double c = sqrt(c2);
+    double chat = x*vx + y*vy + z*vz;
+
+    double fac = sqrt(2./(1.+cz/c))/c;
+    *ix = -fac * cy;
+    *iy = fac * cx;
+    *k = c/mu*(vy-vz/(c+cz)*cy)-1./r*(x-z/(c+cz)*cx);
+    *h = c/mu*(-vx+vz/(c+cz)*cx)-1./r*(y-z/(c+cz)*cy);
+    double e2 = (*k)*(*k)+(*h)*(*h);
+    *a = c2/(mu*(1.-e2));
+    double l = 1.-sqrt(1.-e2);
+    *lambda = atan2(-r*vx+r*vz*cx/(c+cz)-(*k)*chat/(2.-l), r*vy-r*vz*cy/(c+cz)+(*h)*chat/(2.-l))-chat/c*(1.-l);
+}
+
+struct reb_particle reb_pal_to_particle(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy){
+    struct reb_particle np = {0.};
+    np.m = m;
+
+    double p=0.,q=0.;
+    reb_solve_kepler_pal(h, k, lambda, &p, &q);
+
+    double slp = sin(lambda+p);
+    double clp = cos(lambda+p);
+    
+    double l = 1.-sqrt(1.-h*h-k*k);
+    double xi = a*clp + p/(2.-l)*h -k;
+    double eta = a*slp - p/(2.-l)*k -h;
+
+    double iz = sqrt(fabs(4.-ix*ix-iy*iy));
+    double W = eta*ix-xi*iy;
+
+    np.x = primary.x + xi+0.5*iy*W;
+    np.y = primary.y + eta-0.5*ix*W;
+    np.z = primary.z + 0.5*iz*W;
+
+    double an = sqrt(G*(m+primary.m)/a);
+    double dxi  = an/(1.-q)*(-slp+q/(2.-l)*h);
+    double deta = an/(1.-q)*(+clp-q/(2.-l)*k);
+    double dW = deta*ix-dxi*iy;
+
+    np.vx = primary.vx + dxi+0.5*iy*dW;
+    np.vy = primary.vy + deta-0.5*ix*dW;
+    np.vz = primary.vz + 0.5*iz*dW;
+
+
+    return np;
+}
+
+
+struct reb_particle reb_vary_pal_lambda(double G, struct reb_particle po, struct reb_particle primary){
+    double a, lambda, k, h, ix, iy;
+    reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
+
+    struct reb_particle np = {0.};
+
+
+    double p=0.,q=0.;
+    reb_solve_kepler_pal(h, k, lambda, &p, &q);
+    double dq_dlambda = -p/(1.-q);
+    double dp_dlambda = q/(1.-q);
+
+    double slp = sin(lambda+p);
+    double clp = cos(lambda+p);
+    double dclp_dlambda = -1./(1.-q)*slp;
+    double dslp_dlambda = 1./(1.-q)*clp;
+    
+    double l = 1.-sqrt(1.-h*h-k*k);
+    double dxi_dlambda = a*dclp_dlambda + dp_dlambda/(2.-l)*h;
+    double deta_dlambda = a*dslp_dlambda - dp_dlambda/(2.-l)*k;
+
+    double iz = sqrt(fabs(4.-ix*ix-iy*iy));
+    double dW_dlambda = deta_dlambda*ix-dxi_dlambda*iy;
+
+    np.x = dxi_dlambda+0.5*iy*dW_dlambda;
+    np.y = deta_dlambda-0.5*ix*dW_dlambda;
+    np.z = 0.5*iz*dW_dlambda;
+
+    double an = sqrt(G*(po.m+primary.m)/a);
+    double ddxi_dlambda  = an/((1.-q)*(1.-q))*dq_dlambda*(-slp+q/(2.-l)*h)
+    + an/(1.-q)*(-dslp_dlambda+dq_dlambda/(2.-l)*h);
+    double ddeta_dlambda = an/((1.-q)*(1.-q))*dq_dlambda*(+clp-q/(2.-l)*k)
+    + an/(1.-q)*(dclp_dlambda-dq_dlambda/(2.-l)*k);
+    double ddW_dlambda = ddeta_dlambda*ix-ddxi_dlambda*iy;
+    np.vx = ddxi_dlambda+0.5*iy*ddW_dlambda;
+    np.vy = ddeta_dlambda-0.5*ix*ddW_dlambda;
+    np.vz = 0.5*iz*ddW_dlambda;
+
+    return np;
+}
+
+struct reb_particle reb_vary_pal_h(double G, struct reb_particle po, struct reb_particle primary){
+    double a, lambda, k, h, ix, iy;
+    reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
+
+    struct reb_particle np = {0.};
+    double p=0.,q=0.;
+    reb_solve_kepler_pal(h, k, lambda, &p, &q);
+
+    double slp = sin(lambda+p);
+    double clp = cos(lambda+p);
+    
+    double l = 1.-sqrt(1.-h*h-k*k);
+    double dl_dh = 1./sqrt(1.-h*h-k*k)*h;
+    double xi = a*clp + p/(2.-l)*h -k;
+    double eta = a*slp - p/(2.-l)*k -h;
+
+    double iz = sqrt(fabs(4.-ix*ix-iy*iy));
+    double W = eta*ix-xi*iy;
+
+    np.x = xi+0.5*iy*W;
+    np.y = eta-0.5*ix*W;
+    np.z = 0.5*iz*W;
+
+    double dq_dh = 1./(1.-q)*(slp-h);
+    double dclp_dh = -1./(1.-q)*(-slp*clp);
+    double dslp_dh = -1./(1.-q)*(clp*clp);
+    double an = sqrt(G*(po.m+primary.m)/a);
+    double ddxi_dh  = dq_dh*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
+                + an/(1.-q)*(-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
+    double ddeta_dh = dq_dh*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
+                + an/(1.-q) * (+dclp_dh - dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
+    double ddW_dh = ddeta_dh*ix-ddxi_dh*iy;
+
+    np.vx = ddxi_dh+0.5*iy*ddW_dh;
+    np.vy = ddeta_dh-0.5*ix*ddW_dh;
+    np.vz = 0.5*iz*ddW_dh;
+
+
+    return np;
+}
+
 
 
 /**************************************
