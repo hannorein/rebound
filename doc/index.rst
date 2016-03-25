@@ -68,14 +68,15 @@ REBOUND is open source. You are invited to contribute to this project if you are
 
 Papers
 ------
-There are three papers describing the functionality of REBOUND. 
+There are four papers describing the functionality of REBOUND. 
 
-1. Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012) describe the code structure and the main feature including the gravity and collision routines for many particle systems. http://adsabs.harvard.edu/abs/2012A%26A...537A.128R 
+1. Rein & Liu 2012 (Astronomy and Astrophysics, Volume 537, A128) describe the code structure and the main feature including the gravity and collision routines for many particle systems. http://adsabs.harvard.edu/abs/2012A%26A...537A.128R 
 
-2. Rein & Spiegel (Monthly Notices of the Royal Astronomical Society, Volume 446, Issue 2, p.1424-1437) describe the versatile high order integrator IAS15 which is now part of REBOUND. http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R
+2. Rein & Spiegel 2015 (Monthly Notices of the Royal Astronomical Society, Volume 446, Issue 2, p.1424-1437) describe the versatile high order integrator IAS15 which is now part of REBOUND. http://adsabs.harvard.edu/abs/2015MNRAS.446.1424R
 
-3. Rein & Tamayo (Monthly Notices of the Royal Astronomical Society, Volume 452, Issue 1, p.376-388) describe WHFast, the fast and unbiased implementation of a symplectic Wisdom-Holman integrator for long term gravitational simulations. http://adsabs.harvard.edu/abs/2015MNRAS.452..376R
+3. Rein & Tamayo 2015 (Monthly Notices of the Royal Astronomical Society, Volume 452, Issue 1, p.376-388) describe WHFast, the fast and unbiased implementation of a symplectic Wisdom-Holman integrator for long term gravitational simulations. http://adsabs.harvard.edu/abs/2015MNRAS.452..376R
 
+4. Rein & Tamayo 2016 (accepted for publication in the Monthly Notices of the Royal Astronomical Society) develop the framework for second order variational equations. http://arxiv.org/abs/1603.03424
 
 Acknowledgments
 ---------------
@@ -86,6 +87,8 @@ When you use this code or parts of this code for results presented in a scientif
 If you use the IAS15 integrator, please cite Rein and Spiegel (2015).
 
 If you use the WHFast integrator, please cite Rein and Tamayo (2015).
+
+If you use the variational equations, please cite Rein and Tamayo (2016).
 
 
 License

@@ -213,6 +213,9 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
 	}
 	fwrite(r,sizeof(struct reb_simulation),1,of);
 	fwrite(r->particles,sizeof(struct reb_particle),r->N,of);
+    if (r->var_config_N){
+	    fwrite(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,of);
+    }
 	fclose(of);
 }
 

@@ -1,13 +1,30 @@
 REBOUND - An open-source multi-purpose N-body code
 ==================================================
 
-.. image:: http://img.shields.io/badge/rebound-v2.11.0-green.svg?style=flat
-.. image:: http://img.shields.io/badge/license-GPL-green.svg?style=flat :target: https://github.com/hannorein/rebound/blob/master/LICENSE
-.. image:: http://img.shields.io/travis/hannorein/rebound/master.svg?style=flat :target: https://travis-ci.org/hannorein/rebound/
-.. image:: https://coveralls.io/repos/hannorein/rebound/badge.svg?branch=master&service=github :target: https://coveralls.io/github/hannorein/rebound?branch=master
-.. image:: http://img.shields.io/badge/arXiv-1110.4876-green.svg?style=flat :target: http://arxiv.org/abs/1110.4876
-.. image:: http://img.shields.io/badge/arXiv-1409.4779-green.svg?style=flat :target: http://arxiv.org/abs/1409.4779
-.. image:: http://img.shields.io/badge/arXiv-1506.01084-green.svg?style=flat :target: http://arxiv.org/abs/1506.01084
+.. image:: http://img.shields.io/badge/rebound-v2.13.10-green.svg?style=flat
+    :target: http://rebound.readthedocs.org
+.. image:: https://badge.fury.io/py/rebound.svg
+    :target: https://badge.fury.io/py/rebound
+.. image:: http://img.shields.io/badge/license-GPL-green.svg?style=flat 
+    :target: https://github.com/hannorein/rebound/blob/master/LICENSE
+.. image:: http://img.shields.io/travis/hannorein/rebound/master.svg?style=flat 
+    :target: https://travis-ci.org/hannorein/rebound/
+.. image:: https://coveralls.io/repos/hannorein/rebound/badge.svg?branch=master&service=github 
+    :target: https://coveralls.io/github/hannorein/rebound?branch=master
+.. image:: http://img.shields.io/badge/arXiv-1110.4876-green.svg?style=flat 
+    :target: http://arxiv.org/abs/1110.4876
+.. image:: http://img.shields.io/badge/arXiv-1409.4779-green.svg?style=flat 
+    :target: http://arxiv.org/abs/1409.4779
+.. image:: http://img.shields.io/badge/arXiv-1506.01084-green.svg?style=flat 
+    :target: http://arxiv.org/abs/1506.01084
+.. image:: http://img.shields.io/badge/arXiv-1603.03424-green.svg?style=flat 
+    :target: http://arxiv.org/abs/1603.03424 
+.. image:: https://readthedocs.org/projects/pip/badge/?version=latest
+    :target: http://rebound.readthedocs.org/
+.. image:: https://img.shields.io/badge/launch-binder-ff69b4.svg?style=flat
+    :target: http://mybinder.org/repo/hannorein/rebound
+
+
 
 FEATURES
 --------

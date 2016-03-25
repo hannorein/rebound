@@ -46,12 +46,15 @@
 #include "display.h"
 #include "output.h"
 #include "integrator.h"
+#define WINWIDTH 700
+#define WINHEIGHT 700
+
 
 struct reb_display_config {
 	int spheres;	/**< Switches between point sprite and real spheres. */
-	int pause_sim;	/**< Pauses simulation. */
 	int pause;	/**< Pauses visualization, but keep simulation running */
 	int wire;	/**< Shows/hides orbit wires. */
+	int onscreentext;	/**< Shows/hides onscreen text. */
 	int clear;	/**< Toggles clearing the display on each draw. */
 	int ghostboxes;	/**< Shows/hides ghost boxes. */
 	int reference;	/**< reb_particle used as a reference for centering. */
@@ -82,14 +85,13 @@ void reb_display_timer(int value){
 	glutTimerFunc(20,reb_display_timer,0); // 50 Hz refresh rate.
 }
 
-
-
 void reb_display(void){
 	if (reb_dc.pause){
 		return;
 	}
 	sem_wait(reb_dc.mutex);	
 	const struct reb_particle* particles = reb_dc.r->particles;
+	
 	if (reb_dc.clear){
 	        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	}
@@ -226,6 +228,44 @@ void reb_display(void){
 	if (reb_dc.reference>=0){
 		glTranslatef(particles[reb_dc.reference].x,particles[reb_dc.reference].y,particles[reb_dc.reference].z);
 	}
+	
+    if (reb_dc.onscreentext){
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix(); // save
+        glLoadIdentity();// and clear
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+        glColor4f(1.0,1.0,1.0,0.5);
+        glRasterPos2f(-0.98,-0.98);
+        
+        char str[4096] = "\0";
+        sprintf(str, "REBOUND");
+        if (reb_dc.r->status == REB_RUNNING){
+            sprintf(str, "%s (running)  ", str);
+        }else if (reb_dc.r->status == REB_RUNNING_PAUSED){
+            sprintf(str, "%s (paused)   ", str);
+        }
+        sprintf(str, "%s  N_tot= %d  ",str, reb_dc.r->N);
+        if (reb_dc.r->integrator==REB_INTEGRATOR_SEI){
+            sprintf(str, "%st= %f [orb]  ",str, reb_dc.r->t*reb_dc.r->ri_sei.OMEGA/2./M_PI);
+        }else{
+            sprintf(str, "%st= %f  ",str, reb_dc.r->t);
+        }
+        sprintf(str,"%sdt= %f  ",str,reb_dc.r->dt);
+        if (reb_dc.r->integrator==REB_INTEGRATOR_HYBRID){
+            sprintf(str, "%s INT= %- 1d  ", str, reb_dc.r->ri_hybrid.mode);
+        }
+        
+        const char* p = str;
+        do glutBitmapCharacter(GLUT_BITMAP_8_BY_13, *p); while(*(++p));
+        
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix(); // revert back to the matrix
+        glMatrixMode(GL_MODELVIEW );
+        glPopMatrix();
+    }
+
 	glFlush();
 	sem_post(reb_dc.mutex);	
 }
@@ -260,6 +300,9 @@ void reb_display_keyboard(unsigned char key, int x, int y){
 		case 'w': case 'W':
 			reb_dc.wire = !reb_dc.wire;
 			break;
+		case 't': case 'T':
+			reb_dc.onscreentext = !reb_dc.onscreentext;
+			break;
 		case 'c': case 'C':
 			reb_dc.clear = !reb_dc.clear;
 			break;
@@ -279,20 +322,20 @@ void reb_display_keyboard(unsigned char key, int x, int y){
 
 
 void reb_display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* mutex){
-	reb_dc.r 		= r;
+	reb_dc.r 			= r;
 	reb_dc.mutex 		= mutex;
 	// Default parameters
 	reb_dc.spheres 		= 2; 
-	reb_dc.pause_sim 	= 0; 
 	reb_dc.pause 		= 0; 
 	reb_dc.wire 		= 0; 
+	reb_dc.onscreentext = 1; 
 	reb_dc.clear 		= 1; 
 	reb_dc.ghostboxes 	= 0; 
 	reb_dc.reference 	= -1;
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH );
-	glutInitWindowSize(700,700);
+	glutInitWindowSize(WINWIDTH,WINHEIGHT);
 	glutCreateWindow("rebound");
 	zprInit(reb_dc.r->boxsize_max);
 	glutDisplayFunc(reb_display);

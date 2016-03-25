@@ -21,7 +21,7 @@ def simulation(par):
     sim.add(m=0.000285, a=saturn_a, anom=0.871, omega=1.616, e=saturn_e)
 
     sim.move_to_com()
-    sim.init_megno(1e-16)
+    sim.init_megno()
     sim.integrate(5e2*2.*np.pi) # integrator for 500 years
 
     return [sim.calculate_megno(),1./(sim.calculate_lyapunov()*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
