@@ -1,6 +1,12 @@
 language: python
 sudo: false
 
+
+env:
+  - TESTPART=C
+  - TESTPART=PYTHON
+  - TESTPART=IPYTHON
+
 matrix:
   include:
     - python: "2.7"
@@ -9,11 +15,6 @@ matrix:
       env: DEPS="libgfortran=1.0 numpy=1.9 scipy=0.16 matplotlib=1.4"
     - python: "3.5"
       env: DEPS="numpy scipy matplotlib"
-
-  env:
-    - TESTPART=C
-    - TESTPART=PYTHON
-    - TESTPART=IPYTHON
 
 addons:
     apt:
