@@ -1,0 +1,57 @@
+sudo: false
+language: c
+os:
+    - linux
+addons:
+    apt:
+        packages:
+            - freeglut3-dev
+            - python-virtualenv
+            - python-numpy
+            - python-matplotlib
+            - python-scipy
+            - openmpi-bin 
+            - libopenmpi-dev
+install:
+    - virtualenv --system-site-packages venv && source venv/bin/activate
+    - pip install coveralls
+    - pip install -e .
+compiler:
+    - gcc
+script:
+    - cd $TRAVIS_BUILD_DIR && coverage run --source=rebound setup.py test
+    - cd $TRAVIS_BUILD_DIR/examples/ && make
+    - cd $TRAVIS_BUILD_DIR/src && make clean
+    - cd $TRAVIS_BUILD_DIR/ && make  
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py AdvWHFast.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Checkpoints.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Churyumov-Gerasimenko.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py CloseEncounters.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py EscapingParticles.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Forces.ipynb 
+    #- cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py FourierSpectrum.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Horizons.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Megno.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Resonances_of_Jupiters_moons.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquations.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquationsWithChainRule.ipynb 
+    #- cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Parallel.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py ParticleIDsAndRemoval.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py PoincareMap.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py OrbitalElements.ipynb 
+    #- cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Testparticles.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Units.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py WHFast.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py TransitTimingVariations.ipynb 
+    - cd $TRAVIS_BUILD_DIR/python_examples/dragforce/ && python problem.py
+    #- cd $TRAVIS_BUILD_DIR/python_examples/horizons/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/longtermtest/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/megno/ && python problem.py
+    #- cd $TRAVIS_BUILD_DIR/python_examples/megno_interactive/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/megno_simple/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/orbital_elements/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/outersolarsystem/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR/python_examples/simple_orbit/ && python problem.py
+    - cd $TRAVIS_BUILD_DIR 
+after_success:
+    coveralls
