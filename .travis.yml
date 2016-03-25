@@ -24,7 +24,7 @@ addons:
             - libopenmpi-dev
 install:
   - conda update --yes conda
-  - conda create -n testenv --yes $DEPS pip nose setuptools coverage python=$TRAVIS_PYTHON_VERSION
+  - conda create -n testenv --yes $DEPS setuptools coverage python=$TRAVIS_PYTHON_VERSION
   - source activate testenv
   # for debugging...
   - echo $PATH
