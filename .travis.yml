@@ -16,6 +16,12 @@ matrix:
     #- python: "3.5"
     #  env: DEPS="numpy scipy matplotlib pillow<3 pandas scikit-image pyyaml pytables numba"
 
+addons:
+    apt:
+        packages:
+            - freeglut3-dev
+            - openmpi-bin 
+            - libopenmpi-dev
 install:
   - conda update --yes conda
   - conda create -n testenv --yes $DEPS pip nose setuptools coverage python=$TRAVIS_PYTHON_VERSION
