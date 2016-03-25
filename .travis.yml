@@ -19,6 +19,12 @@ addons:
             - openmpi-bin 
             - libopenmpi-dev
 
+before_install:
+  - if [ $TESTPART != "C" ]; then if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-3.5.5-Linux-x86_64.sh -O miniconda.sh; fi; fi
+  - if [ $TESTPART != "C" ]; then chmod +x miniconda.sh; fi
+  - if [ $TESTPART != "C" ]; then ./miniconda.sh -b -p /home/travis/mc; fi
+  - if [ $TESTPART != "C" ]; then export PATH=/home/travis/mc/bin:$PATH; fi
+
 install:
   - if [ $TESTPART != "C" ]; then conda update --yes conda; fi
   - if [ $TESTPART != "C" ] && [ ${TRAVIS_PYTHON_VERSION:0:3} == "2.7" ] ; then conda create -n testenv --yes libgfortran=1.0 numpy=1.9 scipy=0.16 matplotlib=1.4 setuptools coverage python=$TRAVIS_PYTHON_VERSION; fi
@@ -27,11 +33,6 @@ install:
   - if [ $TESTPART != "C" ]; then source activate testenv; fi
   - if [ $TESTPART != "C" ]; then python setup.py install; fi
 
-before_in$stall:
-  - if [ $TESTPART != "C" ]; then if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-3.5.5-Linux-x86_64.sh -O miniconda.sh; fi; fi
-  - if [ $TESTPART != "C" ]; then chmod +x miniconda.sh; fi
-  - if [ $TESTPART != "C" ]; then ./miniconda.sh -b -p /home/travis/mc; fi
-  - if [ $TESTPART != "C" ]; then export PATH=/home/travis/mc/bin:$PATH; fi
 
 script:
     - if [[ $TESTPART == "C" ]]; then cd $TRAVIS_BUILD_DIR/examples/ && make; fi
