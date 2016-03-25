@@ -29,9 +29,10 @@ script:
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py CloseEncounters.ipynb 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py EscapingParticles.ipynb 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Forces.ipynb 
-    #- cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py FourierSpectrum.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py FourierSpectrum.ipynb 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Horizons.ipynb 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Megno.ipynb 
+    - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Resonances_of_Jupiters_moons.ipynb 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquations.ipynb 
     - cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquationsWithChainRule.ipynb 
     #- cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Parallel.ipynb 
