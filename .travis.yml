@@ -10,10 +10,10 @@ matrix:
     - python: "3.5"
       env: DEPS="numpy scipy matplotlib"
 
-env:
-    - TESTPART=C
-    - TESTPART=PYTHON
-    - TESTPART=IPYTHON
+    env:
+        - TESTPART=C
+        - TESTPART=PYTHON
+        - TESTPART=IPYTHON
 
 addons:
     apt:
