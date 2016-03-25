@@ -5,7 +5,8 @@ sudo: false
 env:
   - TESTPART=C
   - TESTPART=PYTHON
-  - TESTPART=IPYTHON
+  - TESTPART=IPYTHON1
+  - TESTPART=IPYTHON2
 
 python:
   - "2.7"
@@ -37,26 +38,26 @@ install:
 script:
     - if [[ $TESTPART == "C" ]]; then cd $TRAVIS_BUILD_DIR/examples/ && make; fi
     - if [[ $TESTPART != "C" ]]; then cd $TRAVIS_BUILD_DIR && coverage run --source=rebound setup.py test; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py AdvWHFast.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Checkpoints.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Churyumov-Gerasimenko.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py CloseEncounters.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py EscapingParticles.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Forces.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py FourierSpectrum.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Horizons.ipynb; fi 
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Megno.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Resonances_of_Jupiters_moons.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquations.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquationsWithChainRule.ipynb; fi
-    #-if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Parallel.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py ParticleIDsAndRemoval.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py PoincareMap.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py OrbitalElements.ipynb; fi
-    #-if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Testparticles.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Units.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py WHFast.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py TransitTimingVariations.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py AdvWHFast.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Checkpoints.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Churyumov-Gerasimenko.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py CloseEncounters.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py EscapingParticles.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Forces.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py FourierSpectrum.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Horizons.ipynb; fi 
+    - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Megno.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Resonances_of_Jupiters_moons.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquations.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquationsWithChainRule.ipynb; fi
+    #-if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Parallel.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py ParticleIDsAndRemoval.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py PoincareMap.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py OrbitalElements.ipynb; fi
+    #-if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Testparticles.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Units.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py WHFast.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py TransitTimingVariations.ipynb; fi
     - if [[ $TESTPART == "PYTHON" ]]; then cd $TRAVIS_BUILD_DIR/python_examples/dragforce/ && python problem.py; fi
     #-if [[ $TESTPART == "PYTHON" ]]; then cd $TRAVIS_BUILD_DIR/python_examples/horizons/ && python problem.py; fi
     - if [[ $TESTPART == "PYTHON" ]]; then cd $TRAVIS_BUILD_DIR/python_examples/longtermtest/ && python problem.py; fi
