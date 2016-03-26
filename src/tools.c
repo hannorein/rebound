@@ -938,27 +938,29 @@ struct reb_particle reb_vary_pal_h(double G, struct reb_particle po, struct reb_
 
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
+    double dclp_dh = -1./(1.-q)*(-slp*clp);
+    double dslp_dh = -1./(1.-q)*(clp*clp);
     
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dh = 1./sqrt(1.-h*h-k*k)*h;
-    double xi = a*clp + p/(2.-l)*h -k;
-    double eta = a*slp - p/(2.-l)*k -h;
+    double dp_dh = 1./(1.-q)*(-clp);
+    double dxi_dh = a*dclp_dh + dp_dh/(2.-l)*h + p/(2.-l) + p/((2.-l)*(2.-l))*dl_dh;
+    double deta_dh = a*dslp_dh - dp_dh/(2.-l)*k - p/((2.-l)*(2.-l))*k*dl_dh -1;
 
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
-    double W = eta*ix-xi*iy;
+    double dW_dh = deta_dh*ix-dxi_dh*iy;
 
-    np.x = xi+0.5*iy*W;
-    np.y = eta-0.5*ix*W;
-    np.z = 0.5*iz*W;
+    np.x = dxi_dh+0.5*iy*dW_dh;
+    np.y = deta_dh-0.5*ix*dW_dh;
+    np.z = 0.5*iz*dW_dh;
 
     double dq_dh = 1./(1.-q)*(slp-h);
-    double dclp_dh = -1./(1.-q)*(-slp*clp);
-    double dslp_dh = -1./(1.-q)*(clp*clp);
+
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dh  = dq_dh*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
-                + an/(1.-q)*(-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
+                + an/(1.-q) * (-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
     double ddeta_dh = dq_dh*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
-                + an/(1.-q) * (+dclp_dh - dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
+                + an/(1.-q) * (+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
     double ddW_dh = ddeta_dh*ix-ddxi_dh*iy;
 
     np.vx = ddxi_dh+0.5*iy*ddW_dh;
