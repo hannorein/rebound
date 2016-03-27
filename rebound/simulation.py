@@ -979,6 +979,25 @@ class Variation(Structure):
                 ("index_1st_order_a", c_int),
                 ("index_1st_order_b", c_int)]
 
+    def vary_pal(self, particle_index, variation, variation2=None):
+        if self._sim is not None:
+            sim = self._sim.contents
+            particles = sim.particles
+        else:
+            raise RuntimeError("Something went wrong. Cannot seem to find simulation corresponding to variation.")
+        p = None
+        if self.order==1:
+            variationtypes = ["lambda", "h", "k"]
+            if variation in variationtypes:
+                method = getattr(clibrebound, 'reb_vary_pal_'+variation)
+                method.restype = Particle
+                p = method(c_double(sim.G), particles[particle_index], particles[0])
+            else:
+                raise AttributeError("Variation type not supported. Must be one of the following: %s."% ", ".join(variationtypes))
+        else:
+            raise AttributeError("Higher order pal derivates are in development.")
+        particles[self.index + particle_index] = p
+
     def vary(self, particle_index, variation, variation2=None, order=None):
         """
         This function can be used to initialize variational particles.
