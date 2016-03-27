@@ -42,8 +42,6 @@ class TestSimulation(unittest.TestCase):
         orbits = self.sim.calculate_orbits(barycentric=True)
         self.assertAlmostEqual(orbits[0].a,1.,delta=1e-2)
         
-        print orbits[0]
-        
     def test_com(self):
         self.sim.move_to_com()
         com = self.sim.calculate_com()

@@ -256,6 +256,8 @@ class Simulation(Structure):
         raise AttributeError("You can only set C function pointers from python.")
     @additional_forces.setter
     def additional_forces(self, func):
+        if hasattr(self, '_extras_ref'): # using REBOUNDx
+            raise AttributeError("You cannot access additional_forces after adding REBOUNDx to a simulation.  Instead, add your own custom effects through REBOUNDx.  See https://github.com/dtamayo/reboundx/blob/master/ipython_examples/Custom_Effects.ipynb for a tutorial.")
         self._afp = AFF(func)
         self._additional_forces = self._afp
 
@@ -270,6 +272,8 @@ class Simulation(Structure):
         raise AttributeError("You can only set C function pointers from python.")
     @post_timestep_modifications.setter
     def post_timestep_modifications(self, func):
+        if hasattr(self, '_extras_ref'): # using REBOUNDx
+            raise AttributeError("You cannot access post_timestep_modifications after adding REBOUNDx to a simulation.  Instead, add your own custom effects through REBOUNDx.  See https://github.com/dtamayo/reboundx/blob/master/ipython_examples/Custom_Effects.ipynb for a tutorial.")
         self._ptmp = AFF(func)
         self._post_timestep_modifications = self._ptmp
  
