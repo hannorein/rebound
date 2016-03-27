@@ -227,127 +227,36 @@ class Particle(Structure):
                 if err.value == 5:
                     raise ValueError("Unbound orbit can't have f beyond the range allowed by the asymptotes set by the hyperbola.")
             else:
+                variationtypes = ["a","e","i","Omega","omega","f","m"]
                 if variation_order==1:
-                    if variation == "a":
-                        clibrebound.reb_tools_orbit_to_particle_da.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_da(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "e":
-                        clibrebound.reb_tools_orbit_to_particle_de.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_de(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "i":
-                        clibrebound.reb_tools_orbit_to_particle_di.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_di(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "Omega":
-                        clibrebound.reb_tools_orbit_to_particle_dOmega.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_dOmega(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "omega":
-                        clibrebound.reb_tools_orbit_to_particle_domega.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_domega(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "f":
-                        clibrebound.reb_tools_orbit_to_particle_df.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_df(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "m":
-                        clibrebound.reb_tools_orbit_to_particle_dm.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_dm(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
+                    if variation in variationtypes:
+                        method = getattr(clibrebound, 'reb_tools_orbit_to_particle_d'+variation)
+                        method.restype = Particle
+                        p = method(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
                     else:
-                        raise ValueError("Variational particles can only be initializes using the derivatives with respect to a, e, i, Omega, omega, f and m.")
+                        raise ValueError("Variational particles can only be initializes using the derivatives with respect to one of the following: %s."%", ".join(variationtypes))
                 elif variation_order==2:
                     if variation2 is None:
                         variation2 = variation
-                    # Swap variations if needed
-                    vlist = ["a","e","i","Omega","omega","f","m"]
-                    vi1 = vlist.index(variation)
-                    vi2 = vlist.index(variation2)
-                    if vi2 < vi1:
-                        variation, variation2 = variation2, variation
+                    if variation in variationtypes and variation2 in variationtypes:
+                        # Swap variations if needed
+                        vi1 = variationtypes.index(variation)
+                        vi2 = variationtypes.index(variation2)
+                        if vi2 < vi1:
+                            variation, variation2 = variation2, variation
 
-                    if variation == "a" and variation2=="a":
-                        clibrebound.reb_tools_orbit_to_particle_dda.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_dda(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "e" and variation2=="e":
-                        clibrebound.reb_tools_orbit_to_particle_dde.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_dde(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "i" and variation2=="i":
-                        clibrebound.reb_tools_orbit_to_particle_ddi.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_ddi(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "Omega" and variation2=="Omega":
-                        clibrebound.reb_tools_orbit_to_particle_ddOmega.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_ddOmega(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "omega" and variation2=="omega":
-                        clibrebound.reb_tools_orbit_to_particle_ddomega.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_ddomega(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "f" and variation2=="f":
-                        clibrebound.reb_tools_orbit_to_particle_ddf.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_ddf(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "m" and variation2=="m":
-                        clibrebound.reb_tools_orbit_to_particle_ddm.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_ddm(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    # Cross terms
-                    elif variation == "a" and variation2=="e":
-                        clibrebound.reb_tools_orbit_to_particle_da_de.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_da_de(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "a" and variation2=="i":
-                        clibrebound.reb_tools_orbit_to_particle_da_di.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_da_di(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "a" and variation2=="Omega":
-                        clibrebound.reb_tools_orbit_to_particle_da_dOmega.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_da_dOmega(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "a" and variation2=="omega":
-                        clibrebound.reb_tools_orbit_to_particle_da_domega.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_da_domega(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "a" and variation2=="f":
-                        clibrebound.reb_tools_orbit_to_particle_da_df.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_da_df(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "a" and variation2=="m":
-                        clibrebound.reb_tools_orbit_to_particle_da_dm.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_da_dm(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "e" and variation2=="i":
-                        clibrebound.reb_tools_orbit_to_particle_de_di.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_de_di(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "e" and variation2=="Omega":
-                        clibrebound.reb_tools_orbit_to_particle_de_dOmega.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_de_dOmega(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "e" and variation2=="omega":
-                        clibrebound.reb_tools_orbit_to_particle_de_domega.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_de_domega(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "e" and variation2=="f":
-                        clibrebound.reb_tools_orbit_to_particle_de_df.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_de_df(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "e" and variation2=="m":
-                        clibrebound.reb_tools_orbit_to_particle_de_dm.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_de_dm(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "i" and variation2=="Omega":
-                        clibrebound.reb_tools_orbit_to_particle_di_dOmega.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_di_dOmega(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "i" and variation2=="omega":
-                        clibrebound.reb_tools_orbit_to_particle_di_domega.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_di_domega(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "i" and variation2=="f":
-                        clibrebound.reb_tools_orbit_to_particle_di_df.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_di_df(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "i" and variation2=="m":
-                        clibrebound.reb_tools_orbit_to_particle_di_dm.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_di_dm(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "Omega" and variation2=="omega":
-                        clibrebound.reb_tools_orbit_to_particle_dOmega_domega.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_dOmega_domega(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "Omega" and variation2=="f":
-                        clibrebound.reb_tools_orbit_to_particle_dOmega_df.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_dOmega_df(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "Omega" and variation2=="m":
-                        clibrebound.reb_tools_orbit_to_particle_dOmega_dm.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_dOmega_dm(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "omega" and variation2=="f":
-                        clibrebound.reb_tools_orbit_to_particle_domega_df.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_domega_df(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "omega" and variation2=="m":
-                        clibrebound.reb_tools_orbit_to_particle_domega_dm.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_domega_dm(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
-                    elif variation == "f" and variation2=="m":
-                        clibrebound.reb_tools_orbit_to_particle_df_dm.restype = Particle
-                        p = clibrebound.reb_tools_orbit_to_particle_df_dm(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
+                        if variation == variation2:
+                            # Diagonal terms
+                            method = getattr(clibrebound, 'reb_tools_orbit_to_particle_dd'+variation)
+                            method.restype = Particle
+                            p = method(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
+                        else:
+                            # CrossTerms
+                            method = getattr(clibrebound, 'reb_tools_orbit_to_particle_d'+variation+'_d'+variation2)
+                            method.restype = Particle
+                            p = method(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
                     else:
-                        raise ValueError("Variational particles can only be initializes using the derivatives with respect to a, e, i, Omega, omega, f and m.")
+                        raise ValueError("Variational particles can only be initializes using the derivatives with respect to one of the following: %s."%", ".join(variationtypes))
                 else:
                     raise ValueError("Variational equations beyond second order are not implemented.")
                 self.m = p.m
