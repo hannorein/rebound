@@ -63,5 +63,37 @@ int main(int argc, char* argv[]) {
     printf("%f %f %f %f %f %f\n",(ppp.x-pp.x)/Delta,(ppp.y-pp.y)/Delta,(ppp.z-pp.z)/Delta, (ppp.vx-pp.vx)/Delta,(ppp.vy-pp.vy)/Delta,(ppp.vz-pp.vz)/Delta);
     }
 
+    {
+    struct reb_particle pv = reb_vary_pal_kk(1.,sim->particles[1],sim->particles[0]);
+    double Delta = 1e-8;
+    struct reb_particle ppp = reb_pal_to_particle(1.,sim->particles[0],1e-2,a,lambda,k+Delta,h,ix,iy);
+    struct reb_particle ppm = reb_pal_to_particle(1.,sim->particles[0],1e-2,a,lambda,k-Delta,h,ix,iy);
+    printf("\n");
+    printf("%f %f %f %f %f %f\n",pv.x,pv.y,pv.z, pv.vx,pv.vy,pv.vz);
+    printf("%f %f %f %f %f %f\n",(ppp.x-2.*pp.x+ppm.x)/(Delta*Delta),(ppp.y-2.*pp.y+ppm.y)/(Delta*Delta),(ppp.z-2.*pp.z+ppm.z)/(Delta*Delta), 
+    	(ppp.vx-2.*pp.vx+ppm.vx)/(Delta*Delta),(ppp.vy-2.*pp.vy+ppm.vy)/(Delta*Delta),(ppp.vz-2.*pp.vz+ppm.vz)/(Delta*Delta));
+    }
+
+    {
+    struct reb_particle pv = reb_vary_pal_hh(1.,sim->particles[1],sim->particles[0]);
+    double Delta = 1e-8;
+    struct reb_particle ppp = reb_pal_to_particle(1.,sim->particles[0],1e-2,a,lambda,k,h+Delta,ix,iy);
+    struct reb_particle ppm = reb_pal_to_particle(1.,sim->particles[0],1e-2,a,lambda,k,h-Delta,ix,iy);
+    printf("\n");
+    printf("%f %f %f %f %f %f\n",pv.x,pv.y,pv.z, pv.vx,pv.vy,pv.vz);
+    printf("%f %f %f %f %f %f\n",(ppp.x-2.*pp.x+ppm.x)/(Delta*Delta),(ppp.y-2.*pp.y+ppm.y)/(Delta*Delta),(ppp.z-2.*pp.z+ppm.z)/(Delta*Delta), 
+    	(ppp.vx-2.*pp.vx+ppm.vx)/(Delta*Delta),(ppp.vy-2.*pp.vy+ppm.vy)/(Delta*Delta),(ppp.vz-2.*pp.vz+ppm.vz)/(Delta*Delta));
+    }
+
+    {
+    struct reb_particle pv = reb_vary_pal_lambdalambda(1.,sim->particles[1],sim->particles[0]);
+    double Delta = 1e-8;
+    struct reb_particle ppp = reb_pal_to_particle(1.,sim->particles[0],1e-2,a,lambda+Delta,k,h,ix,iy);
+    struct reb_particle ppm = reb_pal_to_particle(1.,sim->particles[0],1e-2,a,lambda-Delta,k,h,ix,iy);
+    printf("\n");
+    printf("%f %f %f %f %f %f\n",pv.x,pv.y,pv.z, pv.vx,pv.vy,pv.vz);
+    printf("%f %f %f %f %f %f\n",(ppp.x-2.*pp.x+ppm.x)/(Delta*Delta),(ppp.y-2.*pp.y+ppm.y)/(Delta*Delta),(ppp.z-2.*pp.z+ppm.z)/(Delta*Delta), 
+    	(ppp.vx-2.*pp.vx+ppm.vx)/(Delta*Delta),(ppp.vy-2.*pp.vy+ppm.vy)/(Delta*Delta),(ppp.vz-2.*pp.vz+ppm.vz)/(Delta*Delta));
+    }
 }
 
