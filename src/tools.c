@@ -1107,7 +1107,7 @@ struct reb_particle reb_vary_pal_hh(double G, struct reb_particle po, struct reb
     double ddeta_dhh = dq_dhh*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k) + 2.*dq_dh*dq_dh*an/((1.-q)*(1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
                 + 2.*dq_dh*an/((1.-q)*(1.-q))*(+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k)
                 + an/(1.-q)*(+dclp_dhh+ (-dq_dhh/(2.-l)*k-dl_dh*dl_dh/((2.-l)*(2.-l))*k)
-                -dl_dhh*q/((2.-l)*(2.-l))*k -2.*dl_dh*dl_dh*q/((2.-l)*(2.-l)*(2.-l))*k -dl_dh*dq_dh/((2.-l)*(2.-l))*k - dl_dh*q/((2.-l)*(2.-l)) );
+                -dl_dhh*q/((2.-l)*(2.-l))*k -2.*dl_dh*dl_dh*q/((2.-l)*(2.-l)*(2.-l))*k -dl_dh*dq_dh/((2.-l)*(2.-l))*k );
 
     double ddW_dhh = ddeta_dhh*ix-ddxi_dhh*iy;
 
