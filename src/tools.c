@@ -1153,11 +1153,11 @@ struct reb_particle reb_vary_pal_lambdalambda(double G, struct reb_particle po, 
 
     double an = sqrt(G*(po.m+primary.m)/a);
 
-    double ddxi_dlambdalambda  = (an/((1.-q)*(1.-q)*(1.-q))*dq_dlambda*dq_dlambda*(-slp+q/(2.-l)*h)) + (an/((1.-q)*(1.-q))*dq_dlambdalambda*(-slp+q/(2.-l)*h))
+    double ddxi_dlambdalambda  = (2.*an/((1.-q)*(1.-q)*(1.-q))*dq_dlambda*dq_dlambda*(-slp+q/(2.-l)*h)) + (an/((1.-q)*(1.-q))*dq_dlambdalambda*(-slp+q/(2.-l)*h))
     + 2.*an/((1.-q)*(1.-q))*dq_dlambda*(-dslp_dlambda+dq_dlambda/(2.-l)*h)
     + an/(1.-q)*(-dslp_dlambdalambda+dq_dlambdalambda/(2.-l)*h);
 
-    double ddeta_dlambdalambda = (an/((1.-q)*(1.-q)*(1.-q))*dq_dlambda*dq_dlambda*(+clp-q/(2.-l)*k)) + (an/((1.-q)*(1.-q))*dq_dlambdalambda*(+clp-q/(2.-l)*k))
+    double ddeta_dlambdalambda = (2.*an/((1.-q)*(1.-q)*(1.-q))*dq_dlambda*dq_dlambda*(+clp-q/(2.-l)*k)) + (an/((1.-q)*(1.-q))*dq_dlambdalambda*(+clp-q/(2.-l)*k))
     + 2.*an/((1.-q)*(1.-q))*dq_dlambda*(dclp_dlambda-dq_dlambda/(2.-l)*k)
     + an/(1.-q)*(dclp_dlambdalambda-dq_dlambdalambda/(2.-l)*k);
 
