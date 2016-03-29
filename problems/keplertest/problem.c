@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 
     {
     struct reb_particle pv = reb_vary_pal_kk(1.,sim->particles[1],sim->particles[0]);
-    double Delta = 1e-8;
+    double Delta = 1e-4;
     struct reb_particle ppp = reb_pal_to_particle(1.,sim->particles[0],1e-2,a,lambda,k+Delta,h,ix,iy);
     struct reb_particle ppm = reb_pal_to_particle(1.,sim->particles[0],1e-2,a,lambda,k-Delta,h,ix,iy);
     printf("\n");
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 
     {
     struct reb_particle pv = reb_vary_pal_hh(1.,sim->particles[1],sim->particles[0]);
-    double Delta = 1e-8;
+    double Delta = 1e-4;
     struct reb_particle ppp = reb_pal_to_particle(1.,sim->particles[0],1e-2,a,lambda,k,h+Delta,ix,iy);
     struct reb_particle ppm = reb_pal_to_particle(1.,sim->particles[0],1e-2,a,lambda,k,h-Delta,ix,iy);
     printf("\n");
@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
 
     {
     struct reb_particle pv = reb_vary_pal_lambdalambda(1.,sim->particles[1],sim->particles[0]);
-    double Delta = 1e-8;
+    double Delta = 1e-4;
     struct reb_particle ppp = reb_pal_to_particle(1.,sim->particles[0],1e-2,a,lambda+Delta,k,h,ix,iy);
     struct reb_particle ppm = reb_pal_to_particle(1.,sim->particles[0],1e-2,a,lambda-Delta,k,h,ix,iy);
     printf("\n");

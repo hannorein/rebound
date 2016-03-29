@@ -1023,20 +1023,20 @@ struct reb_particle reb_vary_pal_kk(double G, struct reb_particle po, struct reb
     double clp = cos(lambda+p);
     double dclp_dk = -1./(1.-q)*(slp*slp);
     double dslp_dk = -1./(1.-q)*(-slp*clp);
-
+    
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dk = 1./sqrt(1.-h*h-k*k)*k;
+    double dl_dkk = 1./sqrt(1.-h*h-k*k) + (k*k)/(sqrt(1.-h*h-k*k)*sqrt(1.-h*h-k*k)*sqrt(1.-h*h-k*k));
     double dp_dk = 1./(1.-q)*(slp);
     double dq_dk = 1./(1.-q)*(clp-k);
-    double dq_dkk = 1./((1.-q)*(1.-q))*dq_dk + 1./(1.-q)*(dclp_dk-1);
-    double dp_dkk = 1./((1.-q)*(1.-q))*dq_dk + 1./(1.-q)*(dslp_dk);
-    double dclp_dkk = -1./((1.-q)*(1.-q))*dq_dk*slp*slp -2./(1.-q)*slp*dslp_dk;
-	double dslp_dkk = -1./((1.-q)*(1.-q))*dq_dk*(-slp*clp) - 1./(1.-q)*clp*-dslp_dk - 1./(1.-q)*dclp_dk*-slp;
-	double dl_dkk = 1./sqrt(1.-h*h-k*k) + (k*k)/(sqrt(1.-h*h-k*k)*sqrt(1.-h*h-k*k)*sqrt(1.-h*h-k*k));
+    double dp_dkk = dq_dk/((1.-q)*(1.-q))*(slp) + 1./(1.-q)*(dslp_dk);
+    double dq_dkk = dq_dk/((1.-q)*(1.-q))*(clp-k) + 1./(1.-q)*(dclp_dk -1.);
+    double dclp_dkk = -dq_dk/((1.-q)*(1.-q))*(slp*slp) -2./(1.-q)*slp*dslp_dk;
+    double dslp_dkk = -dq_dk/((1.-q)*(1.-q))*(-slp*clp) -1./(1.-q)*-slp*dclp_dk -1./(1.-q)*-dslp_dk*clp;
 
-    double dxi_dkk = a*dclp_dkk + dp_dkk/(2.-l)*h + dp_dk*dl_dk/((2.-l)*(2.-l))*h + dp_dk/((2.-l)*(2.-l))*dl_dk*h+p/((2.-l)*(2.-l))*dl_dkk*h+p/((2.-l)*(2.-l)*(2.-l))*dl_dk*dl_dk*h;
-    double deta_dkk = a*dslp_dkk-dp_dkk/(2.-l)*k-dp_dk*dl_dk/((2.-l)*(2.-l))*k-dp_dk/(2.-l) - dp_dk/(2.-l) -p*dl_dk/((2.-l)*(2.-l)) 
-    	- dp_dk/((2.-l)*(2.-l))*dl_dk*k - 2.*p/((2.-l)*(2.-l)*(2.-l))*dl_dk*dl_dk*k - p/((2.-l)*(2.-l))*dl_dkk*k - p/((2.-l)*(2.-l))*dl_dk;
+    double dxi_dkk = a*dclp_dkk + dp_dkk/(2.-l)*h + dl_dk*dp_dk/((2.-l)*(2.-l))*h + dp_dk/((2.-l)*(2.-l))*dl_dk*h + 2.*dl_dk*p/((2.-l)*(2.-l)*(2.-l))*dl_dk*h + p/((2.-l)*(2.-l))*dl_dkk*h;
+    double deta_dkk = a*dslp_dkk - dp_dkk/(2.-l)*k - dl_dk*dp_dk/((2.-l)*(2.-l))*k - dp_dk/(2.-l) - dp_dk/(2.-l) - dl_dk*p/((2.-l)*(2.-l)) 
+                - dp_dk/((2.-l)*(2.-l))*dl_dk*k - 2.*dl_dk*p/((2.-l)*(2.-l)*(2.-l))*dl_dk*k - p/((2.-l)*(2.-l))*dl_dkk*k - p/((2.-l)*(2.-l))*dl_dk;
 
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
     double dW_dkk = deta_dkk*ix-dxi_dkk*iy;
@@ -1046,15 +1046,16 @@ struct reb_particle reb_vary_pal_kk(double G, struct reb_particle po, struct reb
     np.z = 0.5*iz*dW_dkk;
 
     double an = sqrt(G*(po.m+primary.m)/a);
-
-    double ddxi_dkk  = dq_dkk*(an/((1.-q)*(1-q)))*(-slp+h*q/(2.-l)) + 2.*(dq_dk)*(dq_dk)*(an/((1.-q)*(1.-q)*(1.-q)))*(-slp+h*q/(2.-l))
-    					+ 2.*dq_dk*(an/((1.-q)*(1.-q)))*(-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h) 
-    					+ an/(1.-q)*(-dslp_dkk+dq_dkk/(2.-l)*h+dq_dk*dl_dk/((2.-l)*(2.-l))*h+dl_dkk*q/((2.-l)*(2.-l))*h+dl_dk*dq_dk/((2.-l)*(2.-l))*h+2.*dl_dk*dl_dk*q/((2.-l)*(2.-l)*(2.-l))*h);
-    double ddeta_dkk = dq_dkk*(an/((1.-q)*(1-q)))*(clp-k*q/(2.-l)) + 2.*(dq_dk)*(dq_dk)*(an/((1.-q)*(1.-q)*(1.-q)))*(clp-k*q/(2.-l))
-    					+ 2.*dq_dk*(an/((1.-q)*(1.-q)))*(+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l))
-    					+ an/(1.-q)*(+dclp_dkk-dq_dkk/(2.-l)*k-dq_dk*dl_dk/((2.-l)*(2.-l))*k-dq_dk/(2.-l) 
-    					- dl_dkk*q/((2.-l)*(2.-l))*k-dl_dk*dq_dk/((2.-l)*(2.-l))*k-2.*dl_dk*dl_dk*q/((2.-l)*(2.-l)*(2.-l))*k-2*dl_dk*q/((2.-l)*(2.-l))-dq_dk/(2.-l));
-
+    double ddxi_dkk  = dq_dkk*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h) + 2.*dq_dk*dq_dk*an/((1.-q)*(1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
+    			+ dq_dk*an/((1.-q)*(1.-q))*(-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h)
+                + dq_dk*an/((1.-q)*(1.-q))*(-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h)
+                + an/(1.-q)*(-dslp_dkk + dq_dkk/(2.-l)*h + dl_dk*dq_dk/((2.-l)*(2.-l))*h 
+                + dl_dkk*q/((2.-l)*(2.-l))*h + dl_dk*dq_dk/((2.-l)*(2.-l))*h + 2.*dl_dk*dl_dk*q/((2.-l)*(2.-l)*(2.-l))*h );
+    double ddeta_dkk = dq_dkk*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k) + 2.*dq_dk*dq_dk*an/((1.-q)*(1.-q)*(1.-q))*(+clp-q/(2.-l)*k) 
+    			+ dq_dk*an/((1.-q)*(1.-q))*(+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l))
+                + dq_dk*an/((1.-q)*(1.-q))*(+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l))
+                + an/(1.-q)*(+dclp_dkk - dq_dkk/(2.-l)*k - dq_dk*dl_dk/((2.-l)*(2.-l))*k - dq_dk/(2.-l) 
+                - dl_dkk*q/((2.-l)*(2.-l))*k - dl_dk*dq_dk/((2.-l)*(2.-l))*k - 2.*dl_dk*dl_dk*q/((2.-l)*(2.-l)*(2.-l))*k - dl_dk*q/((2.-l)*(2.-l)) - dq_dk/(2.-l) - dl_dk*q/((2.-l)*(2.-l)) );
     double ddW_dkk = ddeta_dkk*ix-ddxi_dkk*iy;
 
     np.vx = ddxi_dkk+0.5*iy*ddW_dkk;
@@ -1084,12 +1085,12 @@ struct reb_particle reb_vary_pal_hh(double G, struct reb_particle po, struct reb
     double dq_dh = 1./(1.-q)*(slp-h);
 	double dq_dhh = 1./((1.-q)*(1.-q))*dq_dh*(slp-h) + 1./(1.-q)*(dslp_dh-1);
 	double dp_dhh = 1./((1.-q)*(1.-q))*dq_dh*(-clp) + 1./(1.-q)*(-dclp_dh);
-    double dclp_dhh = -1./((1.-q)*(1.-q))*dq_dh*(-slp*clp)-1./(1.-q)*(-dslp_dh*clp)-1./(1.-q)*(-slp*dclp_dh);
-    double dslp_dhh = -1./((1.-q)*(1.-q))*dq_dh*(clp*clp)-2./(1.-q)*(clp*dclp_dh);
+    double dclp_dhh = -1./((1.-q)*(1.-q))*dq_dh*(-slp*clp) - 1./(1.-q)*(-dslp_dh*clp) - 1./(1.-q)*(-slp*dclp_dh);
+    double dslp_dhh = -1./((1.-q)*(1.-q))*dq_dh*(clp*clp) - 2./(1.-q)*(clp*dclp_dh);
 
-    double dxi_dhh = a*dclp_dhh + dp_dhh/(2.-l)*h + dl_dh*dp_dh/((2.-l)*(2.-l))*h + dp_dh/(2.-l) + dp_dh/(2.-l)+ dl_dh*p/((2.-l)*(2.-l)) 
-    	+ dp_dh/((2.-l)*(2.-l))*dl_dh*h + p/((2.-l)*(2.-l)*(2.-l))*dl_dh*dl_dh*h + p/((2.-l)*(2.-l))*dl_dhh*h + p/((2.-l)*(2.-l))*dl_dh;
-    double deta_dhh = a*dslp_dhh - dp_dhh/(2.-l)*k - dl_dh*dp_dh/((2.-l)*(2.-l))*k - dp_dh/((2.-l)*(2.-l))*k*dl_dh - 2.*p/((2.-l)*(2.-l)*(2.-l))*k*dl_dh*dl_dh- p/((2.-l)*(2.-l))*k*dl_dhh ;
+    double dxi_dhh = a*dclp_dhh + (dp_dhh/(2.-l)*h + dl_dh*dp_dh/((2.-l)*(2.-l))*h + dp_dh/(2.-l)) + (dp_dh/(2.-l)+ dl_dh*p/((2.-l)*(2.-l)))
+    	+ (dp_dh/((2.-l)*(2.-l))*dl_dh*h + 2.*p/((2.-l)*(2.-l)*(2.-l))*dl_dh*dl_dh*h + p/((2.-l)*(2.-l))*dl_dhh*h + p/((2.-l)*(2.-l))*dl_dh);
+    double deta_dhh = a*dslp_dhh + (-dp_dhh/(2.-l)*k - dl_dh*dp_dh/((2.-l)*(2.-l))*k) +(- dp_dh/((2.-l)*(2.-l))*k*dl_dh - 2.*p/((2.-l)*(2.-l)*(2.-l))*k*dl_dh*dl_dh- p/((2.-l)*(2.-l))*k*dl_dhh );
 
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
     double dW_dhh = deta_dhh*ix-dxi_dhh*iy;
@@ -1099,15 +1100,16 @@ struct reb_particle reb_vary_pal_hh(double G, struct reb_particle po, struct reb
     np.z = 0.5*iz*dW_dhh;
 
     double an = sqrt(G*(po.m+primary.m)/a);
-    double ddxi_dhh  = dq_dhh*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h) + 2.*dq_dh*dq_dh*an/((1.-q)*(1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
-                + 2.*dq_dh*an/((1.-q)*(1.-q))*(-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l)) 
-                + an/(1.-q)*(-dslp_dhh+dq_dhh/(2.-l)*h+dl_dh*dq_dh/((2.-l)*(2.-l))*h+dq_dh/(2.-l) 
-                + dl_dhh*q/((2.-l)*(2.-l))*h + dl_dh*dq_dh/((2.-l)*(2.-l))*h+ dl_dh*dl_dh*q/((2.-l)*(2.-l)*(2.-l))*h+dl_dh*q/((2.-l)*(2.-l))
-                +dq_dh/(2.-l)+dl_dh*q/((2.-l)*(2.-l)));
-    double ddeta_dhh = dq_dhh*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k) + dq_dh*dq_dh*an/((1.-q)*(1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
-                + 2.*dq_dh*an/((1.-q)*(1.-q))*(+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k)
-                + an/(1.-q)*(+dclp_dhh-dq_dhh/(2.-l)*k-dl_dh*dq_dh/((2.-l)*(2.-l))*k
-                -dl_dhh*q/((2.-l)*(2.-l))*k-dl_dh*dl_dh*q/((2.-l)*(2.-l)*(2.-l))*k-dl_dh*dq_dh/((2.-l)*(2.-l))*k);
+    double ddxi_dhh  = dq_dhh*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h) + 2.*dq_dh*dq_dh*an/((1.-q)*(1.-q)*(1.-q))*(-slp+q/(2.-l)*h) 
+    			+ dq_dh*an/((1.-q)*(1.-q))*(-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l))
+                + dq_dh*an/((1.-q)*(1.-q))*(-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l)) 
+                + an/(1.-q)*(-dslp_dhh + (dq_dhh/(2.-l)*h+dl_dh*dq_dh/((2.-l)*(2.-l))*h+dq_dh/(2.-l)) 
+                + (dl_dhh*q/((2.-l)*(2.-l))*h+dl_dh*dq_dh/((2.-l)*(2.-l))*h+2.*dl_dh*dl_dh*q/((2.-l)*(2.-l)*(2.-l))*h+dl_dh*q/((2.-l)*(2.-l))) + (dq_dh/(2.-l)+dl_dh*q/((2.-l)*(2.-l)))  );
+    double ddeta_dhh = dq_dhh*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k) + 2.*dq_dh*dq_dh*an/((1.-q)*(1.-q)*(1.-q))*(+clp-q/(2.-l)*k) 
+    			+ dq_dh*an/((1.-q)*(1.-q))*(+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k)
+    			+ dq_dh*an/((1.-q)*(1.-q))*(+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k)
+                + an/(1.-q)*(+dclp_dhh - dq_dhh/(2.-l)*k - dl_dh*dq_dh/((2.-l)*(2.-l))*k 
+                - dl_dhh*q/((2.-l)*(2.-l))*k - dl_dh*dq_dh/((2.-l)*(2.-l))*k - 2.*dl_dh*dl_dh*q/((2.-l)*(2.-l)*(2.-l))*k );
 
     double ddW_dhh = ddeta_dhh*ix-ddxi_dhh*iy;
 
@@ -1128,15 +1130,15 @@ struct reb_particle reb_vary_pal_lambdalambda(double G, struct reb_particle po, 
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
     double dq_dlambda = -p/(1.-q);
     double dp_dlambda = q/(1.-q);
-    double dq_dlambdalambda = -dp_dlambda/(1.-q) -p/((1.-q)*(1.-q))*dq_dlambda;
-    double dp_dlambdalambda = dq_dlambda/(1.-q) + q/((1.-q)*(1.-q))*dq_dlambda;
+    double dq_dlambdalambda = -dp_dlambda/(1.-q) - p/((1.-q)*(1.-q))*dq_dlambda ;
+    double dp_dlambdalambda = dq_dlambda/(1.-q) + q/((1.-q)*(1.-q))*dq_dlambda ;
 
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
     double dclp_dlambda = -1./(1.-q)*slp;
     double dslp_dlambda = 1./(1.-q)*clp;
-    double dclp_dlambdalambda = -1./((1.-q)*(1.-q))*dq_dlambda*slp - 1./(1.-q)*dslp_dlambda;
-    double dslp_dlambdalambda = 1./((1.-q)*(1.-q))*dq_dlambda*clp + 1./(1.-q)*dclp_dlambda;
+    double dclp_dlambdalambda = -1./((1.-q)*(1.-q))*dq_dlambda*slp -1./(1.-q)*dslp_dlambda;
+    double dslp_dlambdalambda = 1./((1.-q)*(1.-q))*dq_dlambda*clp + 1./(1.-q)*dclp_dlambda;    
     
     double l = 1.-sqrt(1.-h*h-k*k);
     double dxi_dlambdalambda = a*dclp_dlambdalambda + dp_dlambdalambda/(2.-l)*h;
@@ -1150,17 +1152,14 @@ struct reb_particle reb_vary_pal_lambdalambda(double G, struct reb_particle po, 
     np.z = 0.5*iz*dW_dlambdalambda;
 
     double an = sqrt(G*(po.m+primary.m)/a);
-
-    double ddxi_dlambdalambda  = an/((1.-q)*(1.-q)*(1.-q))*dq_dlambda*dq_dlambda*(-slp+q/(2.-l)*h)+an/((1.-q)*(1.-q))*dq_dlambdalambda*(-slp+q/(2.-l)*h)
-    + 2.*an/((1.-q)*(1.-q))*dq_dlambda*(-dslp_dlambda+dq_dlambda/(2.-l)*h)
-    + an/(1.-q)*(-dslp_dlambdalambda+dq_dlambdalambda/(2.-l)*h);
-
-    double ddeta_dlambdalambda = an/((1.-q)*(1.-q)*(1.-q))*dq_dlambda*dq_dlambda*(+clp-q/(2.-l)*k)+an/((1.-q)*(1.-q))*dq_dlambdalambda*(+clp-q/(2.-l)*k)
-    + 2.*an/((1.-q)*(1.-q))*dq_dlambda*(dclp_dlambda-dq_dlambda/(2.-l)*k)
-    + an/(1.-q)*(dclp_dlambdalambda-dq_dlambdalambda/(2.-l)*k);
+    double ddxi_dlambdalambda  = 2.*an/((1.-q)*(1.-q)*(1.-q))*dq_dlambda*dq_dlambda*(-slp+q/(2.-l)*h) 
+    			+ an/((1.-q)*(1.-q))*dq_dlambdalambda*(-slp+q/(2.-l)*h) + an/((1.-q)*(1.-q))*dq_dlambda*(-dslp_dlambda+dq_dlambda/(2.-l)*h)
+    			+ an/((1.-q)*(1.-q))*dq_dlambda*(-dslp_dlambda+dq_dlambda/(2.-l)*h) + an/(1.-q)*(-dslp_dlambdalambda+dq_dlambdalambda/(2.-l)*h);
+    double ddeta_dlambdalambda = 2.*an/((1.-q)*(1.-q)*(1.-q))*dq_dlambda*dq_dlambda*(+clp-q/(2.-l)*k) 
+    			+ an/((1.-q)*(1.-q))*dq_dlambdalambda*(+clp-q/(2.-l)*k) + an/((1.-q)*(1.-q))*dq_dlambda*(dclp_dlambda-dq_dlambda/(2.-l)*k)
+    			+ an/((1.-q)*(1.-q))*dq_dlambda*(dclp_dlambda-dq_dlambda/(2.-l)*k) + an/(1.-q)*(dclp_dlambdalambda-dq_dlambdalambda/(2.-l)*k);
 
     double ddW_dlambdalambda = ddeta_dlambdalambda*ix-ddxi_dlambdalambda*iy;
-
     np.vx = ddxi_dlambdalambda+0.5*iy*ddW_dlambdalambda;
     np.vy = ddeta_dlambdalambda-0.5*ix*ddW_dlambdalambda;
     np.vz = 0.5*iz*ddW_dlambdalambda;
