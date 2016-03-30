@@ -900,6 +900,9 @@ struct reb_particle reb_vary_pal_k(double G, struct reb_particle po, struct reb_
 struct reb_particle reb_vary_pal_kk(double G, struct reb_particle po, struct reb_particle primary);
 struct reb_particle reb_vary_pal_hh(double G, struct reb_particle po, struct reb_particle primary);
 struct reb_particle reb_vary_pal_lambdalambda(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_klambda(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_hlambda(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_kh(double G, struct reb_particle po, struct reb_particle primary);
 
 /**
  * @brief Initialize a particle on an orbit in the xy plane.
