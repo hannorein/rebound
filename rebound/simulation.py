@@ -990,6 +990,10 @@ class Variation(Structure):
         else:
             raise RuntimeError("Something went wrong. Cannot seem to find simulation corresponding to variation.")
         p = None
+        if variation == "l":
+            variation = "lambda"
+        if variation2 == "l":
+            variation2 = "lambda"
         variationtypes = ["k","h","lambda"]
         if self.order==1:
             if variation in variationtypes:
