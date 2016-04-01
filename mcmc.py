@@ -54,7 +54,8 @@ class Smala(Mcmc):
         Ginv = np.linalg.inv(softabs(logp_dd))
         Ginvsqrt = np.linalg.cholesky(Ginv)   
 
-        newparams = self.state.get_params() + self.epsilon * np.dot(Ginvsqrt, np.random.normal(0.,1.,self.state.Nvars))
+        mu = self.state.get_params() + (self.epsilon)**2 * np.dot(Ginv, logp_d)/2.
+        newparams = mu + self.epsilon * np.dot(Ginvsqrt, np.random.normal(0.,1.,self.state.Nvars))
         prop = self.state.deepcopy()
         prop.set_params(newparams)
         return prop
@@ -62,7 +63,8 @@ class Smala(Mcmc):
     def transitionProbability(self,state_from, state_to):
         logp, logp_d, logp_dd = state_from.get_logp_d_dd(self.obs) 
         Ginv = np.linalg.inv(softabs(logp_dd))
-        return stats.multivariate_normal.logpdf(state_to.get_params(),mean=state_from.get_params(), cov=(self.epsilon)**2*Ginv)
+        mu = state_from.get_params() + (self.epsilon)**2 * np.dot(Ginv, logp_d)/2.
+        return stats.multivariate_normal.logpdf(state_to.get_params(),mean=mu, cov=(self.epsilon)**2*Ginv)
         
     def step(self):
         stateStar = self.generate_proposal()

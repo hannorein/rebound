@@ -113,8 +113,8 @@ class StateVar(State):
     
     def get_logp_d_dd(self, obs):
         if self.logp is None:
-            logp, logp_d, logp_dd = self.get_chi2_d_dd(obs)
-            self.logp, self.logp_d, self.logp_dd = logp, logp_d, logp_dd
+            chi, chi_d, chi_dd = self.get_chi2_d_dd(obs)
+            self.logp, self.logp_d, self.logp_dd = -chi, -chi_d, -chi_dd
         return self.logp, self.logp_d, self.logp_dd
 
 
