@@ -256,6 +256,8 @@ class Simulation(Structure):
         raise AttributeError("You can only set C function pointers from python.")
     @additional_forces.setter
     def additional_forces(self, func):
+        if hasattr(self, '_extras_ref'): # using REBOUNDx
+            raise AttributeError("You cannot access additional_forces after adding REBOUNDx to a simulation.  Instead, add your own custom effects through REBOUNDx.  See https://github.com/dtamayo/reboundx/blob/master/ipython_examples/Custom_Effects.ipynb for a tutorial.")
         self._afp = AFF(func)
         self._additional_forces = self._afp
 
@@ -270,6 +272,8 @@ class Simulation(Structure):
         raise AttributeError("You can only set C function pointers from python.")
     @post_timestep_modifications.setter
     def post_timestep_modifications(self, func):
+        if hasattr(self, '_extras_ref'): # using REBOUNDx
+            raise AttributeError("You cannot access post_timestep_modifications after adding REBOUNDx to a simulation.  Instead, add your own custom effects through REBOUNDx.  See https://github.com/dtamayo/reboundx/blob/master/ipython_examples/Custom_Effects.ipynb for a tutorial.")
         self._ptmp = AFF(func)
         self._post_timestep_modifications = self._ptmp
  
@@ -978,6 +982,37 @@ class Variation(Structure):
                 ("testparticle", c_int),
                 ("index_1st_order_a", c_int),
                 ("index_1st_order_b", c_int)]
+
+    def vary_pal(self, particle_index, variation, variation2=None):
+        if self._sim is not None:
+            sim = self._sim.contents
+            particles = sim.particles
+        else:
+            raise RuntimeError("Something went wrong. Cannot seem to find simulation corresponding to variation.")
+        p = None
+        variationtypes = ["k","h","lambda"]
+        if self.order==1:
+            if variation in variationtypes:
+                method = getattr(clibrebound, 'reb_vary_pal_'+variation)
+                method.restype = Particle
+                p = method(c_double(sim.G), particles[particle_index], particles[0])
+            else:
+                raise AttributeError("Variation type not supported. Must be one of the following: %s."% ", ".join(variationtypes))
+        else:
+            if variation2 is None:
+                variation2 = variation
+            if variation in variationtypes and variation2 in variationtypes:
+                # Swap variations if needed
+                vi1 = variationtypes.index(variation)
+                vi2 = variationtypes.index(variation2)
+                if vi2 < vi1:
+                    variation, variation2 = variation2, variation
+                method = getattr(clibrebound, 'reb_vary_pal_'+variation+variation2)
+                method.restype = Particle
+                p = method(c_double(sim.G), particles[particle_index], particles[0])
+            else:
+                raise AttributeError("Variation type not supported. Must be one of the following: %s."% ", ".join(variationtypes))
+        particles[self.index + particle_index] = p
 
     def vary(self, particle_index, variation, variation2=None, order=None):
         """
