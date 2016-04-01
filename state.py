@@ -43,6 +43,7 @@ class StateVar(State):
         super(StateVar,self).__init__(planets)
         self.planets_vars = []
         self.Nvars = 0
+        self.ignore_vars = ignore_vars
         for planet in planets:
             planet_vars = [x for x in planet.keys() if x not in ignore_vars]
             self.planets_vars.append(planet_vars)
@@ -101,4 +102,14 @@ class StateVar(State):
 
         return chi2, chi2_d, chi2_dd
 
+
+    def shift(self, vec):
+        if len(vec)!=self.Nvars:
+            raise AttributeError("vector has wrong length")
+        varindex = 0
+        for i, planet in enumerate(self.planets):
+            for k in planet.keys():
+                if k not in self.ignore_vars:
+                    self.planets[i][k] += vec[varindex]
+                    varindex += 1
 
