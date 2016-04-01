@@ -13,7 +13,7 @@ class State(object):
         sim = rebound.Simulation()
         sim.add(m=1.)
         for planet in self.planets:
-            sim.add(**planet)
+            sim.add(primary=sim.particles[0],**planet)
         sim.move_to_com()
         return sim
 

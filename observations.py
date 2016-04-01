@@ -18,7 +18,7 @@ class FakeObservation(Observation):
         sim = rebound.Simulation()
         sim.add(m=1.)
         for planet in state.planets:
-            sim.add(**planet)
+            sim.add(primary=sim.particles[0],**planet)
         sim.move_to_com()
         
         self.t = np.sort(np.random.uniform(0.,tmax,self.Npoints))
