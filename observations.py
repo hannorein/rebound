@@ -6,6 +6,7 @@ class Observation:
     t = None
     rv = None
     Npoints = 0
+    error = 0
 
 class FakeObservation(Observation):
     def __init__(self, state, Npoints=30, error=0., tmax=1.5):
@@ -13,6 +14,7 @@ class FakeObservation(Observation):
             Generates fake observations. 
         """
         self.Npoints = Npoints
+        self.error = error
         sim = rebound.Simulation()
         sim.add(m=1.)
         for planet in state.planets:
