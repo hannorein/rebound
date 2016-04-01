@@ -1,5 +1,6 @@
 import numpy as np
 import rebound
+import state
 
 class Observation:
     t = None
@@ -7,14 +8,14 @@ class Observation:
     Npoints = 0
 
 class FakeObservation(Observation):
-    def __init__(self, planets, Npoints=30, error=0., tmax=1.5):
+    def __init__(self, state, Npoints=30, error=0., tmax=1.5):
         """
             Generates fake observations. 
         """
         self.Npoints = Npoints
         sim = rebound.Simulation()
         sim.add(m=1.)
-        for planet in planets:
+        for planet in state.planets:
             sim.add(**planet)
         sim.move_to_com()
         
