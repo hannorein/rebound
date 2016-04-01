@@ -6,6 +6,7 @@ class State(object):
 
     def __init__(self, planets):
         self.planets = planets
+        self.logp = None
 
 
     def setup_sim(self):
@@ -30,13 +31,17 @@ class State(object):
         times = np.linspace(0,tmax,Npoints)
         return times, self.get_rv(times)
 
-
     def get_chi2(self, obs):
         rv = self.get_rv(obs.t)
         chi2 = 0.
         for i, t in enumerate(obs.t):
             chi2 += (rv[i]-obs.rv[i])**2
         return chi2/(obs.error**2 * obs.Npoints)
+
+    def get_logp(self, obs):
+        if self.logp is None:
+            self.logp = -self.get_chi2(obs)
+        return self.logp
 
 class StateVar(State):
 
@@ -107,7 +112,8 @@ class StateVar(State):
         return chi2, chi2_d, chi2_dd
 
 
-    def shift(self, vec):
+    def shift_params(self, vec):
+        self.logp = None
         if len(vec)!=self.Nvars:
             raise AttributeError("vector has wrong length")
         varindex = 0
@@ -116,4 +122,26 @@ class StateVar(State):
                 if k not in self.ignore_vars:
                     self.planets[i][k] += vec[varindex]
                     varindex += 1
+   
+    def get_params(self):
+        params = np.zeros(self.Nvars)
+        parindex = 0
+        for i, planet in enumerate(self.planets):
+            for k in planet.keys():
+                if k not in self.ignore_vars:
+                    params[parindex] = self.planets[i][k]
+                    parindex += 1
+        return params
+
+    def set_params(self, vec):
+        self.logp = None
+        if len(vec)!=self.Nvars:
+            raise AttributeError("vector has wrong length")
+        varindex = 0
+        for i, planet in enumerate(self.planets):
+            for k in planet.keys():
+                if k not in self.ignore_vars:
+                    self.planets[i][k] = vec[varindex]
+                    varindex += 1
+
 
