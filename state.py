@@ -1,5 +1,6 @@
 import numpy as np
 import rebound
+import copy
 
 class State(object):
 
@@ -48,6 +49,9 @@ class StateVar(State):
             planet_vars = [x for x in planet.keys() if x not in ignore_vars]
             self.planets_vars.append(planet_vars)
             self.Nvars += len(planet_vars)
+
+    def deepcopy(self):
+        return StateVar(copy.deepcopy(self.planets), copy.deepcopy(self.ignore_vars))
 
     def var_pindex_vname(self, vindex):
         vi = 0.
