@@ -110,6 +110,12 @@ class StateVar(State):
                         chi2_dd[vindex2][vindex1] = chi2_dd[vindex1][vindex2]
 
         return chi2, chi2_d, chi2_dd
+    
+    def get_logp_d_dd(self, obs):
+        if self.logp is None:
+            logp, logp_d, logp_dd = self.get_chi2_d_dd(obs)
+            self.logp, self.logp_d, self.logp_dd = logp, logp_d, logp_dd
+        return self.logp, self.logp_d, self.logp_dd
 
 
     def shift_params(self, vec):
