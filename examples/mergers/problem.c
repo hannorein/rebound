@@ -13,16 +13,15 @@
 #include <math.h>
 #include "rebound.h"
 
-void collision_resolve_merger(struct reb_simulation* r, struct reb_collision c);
 void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
 	struct reb_simulation* r = reb_create_simulation();
-	r->dt 			= 0.01*2.*M_PI;				// initial timestep
-	r->integrator 		= REB_INTEGRATOR_IAS15;
-	r->collision		= REB_COLLISION_DIRECT;
-	r->collision_resolve 	= collision_resolve_merger;		// Setup our own collision routine.
-	r->heartbeat		= heartbeat;
+	r->dt                   = 0.01*2.*M_PI;				// initial timestep
+	r->integrator           = REB_INTEGRATOR_IAS15;
+	r->collision            = REB_COLLISION_DIRECT;
+	r->collision_resolve    = reb_collision_resolve_merge;		// Choose merger collision routine.
+	r->heartbeat            = heartbeat;
 
 	struct reb_particle star = {0};
 	star.m = 1;
@@ -45,41 +44,6 @@ int main(int argc, char* argv[]){
 	reb_move_to_com(r);				// This makes sure the planetary systems stays within the computational domain and doesn't drift.
 
 	reb_integrate(r, INFINITY);
-}
-
-void collision_resolve_merger(struct reb_simulation* r, struct reb_collision c){
-	struct reb_particle* particles = r->particles;
-	struct reb_particle p1 = particles[c.p1];
-	struct reb_particle p2 = particles[c.p2];
-	double x21  = p1.x  - p2.x; 
-	double y21  = p1.y  - p2.y; 
-	double z21  = p1.z  - p2.z; 
-	double rp   = p1.r+p2.r;
-	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return; // not overlapping
-	double vx21 = p1.vx - p2.vx; 
-	double vy21 = p1.vy - p2.vy; 
-	double vz21 = p1.vz - p2.vz; 
-	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return; // not approaching
-	if (p1.lastcollision>=r->t || p2.lastcollision>=r->t) return; // already collided
-	printf("\nCollision detected. Merging.\n");
-	particles[c.p2].lastcollision = r->t;
-	particles[c.p1].lastcollision = r->t;
-	// Note: We assume only one collision per timestep. 
-	// Setup new particle (in position of particle p1. Particle p2 will be discarded.
-	struct reb_particle cm = reb_get_com_of_pair(p1, p2);
-	particles[c.p1].x = cm.x;
-	particles[c.p1].y = cm.y;
-	particles[c.p1].z = cm.z;
-	particles[c.p1].vx = cm.vx;
-	particles[c.p1].vy = cm.vy;
-	particles[c.p1].vz = cm.vz;
-	particles[c.p1].r = p1.r*pow(cm.m/p1.m,1./3.);	// Assume a constant density
-	particles[c.p1].m = cm.m;
-	// Remove one particle.
-	r->N--;
-	particles[c.p2] = particles[r->N];
-	// Make sure we don't drift, so let's go back to the center of momentum
-	reb_move_to_com(r);	
 }
 
 void heartbeat(struct reb_simulation* r){

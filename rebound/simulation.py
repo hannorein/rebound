@@ -42,6 +42,12 @@ class reb_ghostbox(Structure):
                 ("shiftvy", c_double),
                 ("shiftvz", c_double)]
 
+class reb_collision(Structure):
+    _fields_ = [("p1", c_int),
+                ("p2", c_int),
+                ("gb", reb_ghostbox),
+                ("time", c_double),
+                ("ri", c_int)]
 
 class reb_simulation_integrator_hybrid(Structure):
     _fields_ = [("switch_ratio", c_double),
@@ -300,6 +306,29 @@ class Simulation(Structure):
     def coefficient_of_restitution(self, func):
         self._corfp = CORFF(func)
         self._coefficient_of_restitution = self._corfp
+    
+    @property 
+    def collision_resolve(self):
+        """
+        Get or set a function pointer for collision resolving routine.
+        
+        Possible options for setting:
+          1) Function pointer
+          2) "merge": two colliding particles will merge) 
+          3) "harsphere": two colliding particles will bounce of using a set coefficient of restitution
+        """
+        raise AttributeError("You can only set C function pointers from python.")
+    @collision_resolve.setter
+    def collision_resolve(self, func):
+        if func is "merge":
+            clibrebound.reb_set_collision_resolve.restype = None
+            clibrebound.reb_set_collision_resolve(byref(self), clibrebound.reb_collision_resolve_merge)
+        elif func is "hardsphere":
+            clibrebound.reb_set_collision_resolve.restype = None
+            clibrebound.reb_set_collision_resolve(byref(self), clibrebound.reb_collision_resolve_hardsphere)
+        else:
+            self._colrfp = COLRFF(func)
+            self._collision_resolve = self._colrfp
 
 # Setter/getter of parameters and constants
     @property 
@@ -1106,7 +1135,7 @@ Simulation._fields_ = [
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_coefficient_of_restitution", CFUNCTYPE(c_double,POINTER(Simulation), c_double)),
-                ("_collisions_resolve", CFUNCTYPE(None,POINTER(Simulation), c_void_p)),
+                ("_collision_resolve", CFUNCTYPE(c_int,POINTER(Simulation), reb_collision)),
                 ("extras", c_void_p),
                  ]
 
@@ -1130,6 +1159,7 @@ Particle._fields_ = [("x", c_double),
 POINTER_REB_SIM = POINTER(Simulation) 
 AFF = CFUNCTYPE(None,POINTER_REB_SIM)
 CORFF = CFUNCTYPE(c_double,POINTER_REB_SIM, c_double)
+COLRFF = CFUNCTYPE(c_int, POINTER_REB_SIM, reb_collision)
 
 # Import at the end to avoid circular dependence
 from . import horizons
