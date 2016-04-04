@@ -63,9 +63,6 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
 }
 
 void reb_add(struct reb_simulation* const r, struct reb_particle pt){
-	if (r->N_var){
-		reb_warning("Trying to add particle after calling megno_init().");
-	}
 #ifndef COLLISIONS_NONE
 	if (pt.r>=r->max_radius[0]){
 		r->max_radius[1] = r->max_radius[0];
@@ -137,7 +134,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 	}else{
         if (r->tree_root){
             // Just flag particle, will be removed in tree_update.
-            r->particles[index].y = NAN;
+            r->particles[index].y = nan("");
         }else{
 	        r->N--;
 		    r->particles[index] = r->particles[r->N];

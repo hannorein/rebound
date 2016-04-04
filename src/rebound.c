@@ -60,7 +60,7 @@
 static const char* logo[];				/**< Logo of rebound. */
 #endif // LIBREBOUND
 const char* reb_build_str = __DATE__ " " __TIME__;	// Date and time build string. 
-const char* reb_version_str = "2.11.1";			// **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "2.13.10";			// **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 
 
 void reb_step(struct reb_simulation* const r){
@@ -276,7 +276,10 @@ void reb_init_simulation(struct reb_simulation* r){
 	r->N 		= 0;	
 	r->allocatedN	= 0;	
 	r->N_active 	= -1; 	
+	r->testparticle_type = 0; 	
 	r->N_var 	= 0; 	
+	r->var_config_N	= 0; 	
+	r->var_config 	= NULL; 	
 	r->exit_min_distance 	= 0; 	
 	r->exit_max_distance 	= 0; 	
 	r->max_radius[0]	= 0.; 	
@@ -456,7 +459,6 @@ void reb_run_heartbeat(struct reb_simulation* const r){
 		usleep(r->usleep);
 	}
 }
-
 enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 #ifdef MPI
 	// Distribute particles
@@ -470,6 +472,8 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 
     // Copy and share simulation struct 
     struct reb_simulation* r = NULL;
+    char sem_name[256] = "reb_display";
+    sem_t* display_mutex = NULL;
    
     if (opengl_enabled){
         r = (struct reb_simulation*)mmap(r_user, sizeof(struct reb_simulation), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
@@ -477,35 +481,33 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
         // Copy and share particle array
         r->particles = (struct reb_particle*)mmap(NULL, r->allocatedN*sizeof(struct reb_particle), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
         memcpy(r->particles, r_user->particles, r->allocatedN*sizeof(struct reb_particle));
+        for(int i=0; i<r->N; i++){
+            r->particles[i].sim = r;
+        }
+        // Create Semaphore
+#ifdef MPI
+        sprintf(sem_name,"/reb_display_%d;",r_user->mpi_id);
+#endif // MPI
+        sem_unlink(sem_name); // unlink first
+        if ((display_mutex = sem_open(sem_name, O_CREAT | O_EXCL, 0666, 1))==SEM_FAILED){
+            perror("sem_open");
+            exit(EXIT_FAILURE);
+        }
+        // Need root_size for visualization. Creating one. 
+        if (r->root_size==-1){  
+            reb_warning("Configuring box automatically for vizualization based on particle positions.");
+            const struct reb_particle* p = r->particles;
+            double max_r = 0;
+            for (int i=0;i<r->N;i++){
+                const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
+                max_r = MAX(max_r, _r);
+            }
+            reb_configure_box(r, max_r*2.3,MAX(1.,r->root_nx),MAX(1.,r->root_ny),MAX(1.,r->root_nz));
+        }
     }else{
         r = r_user;
     }
 
-	// Create Semaphore
-#ifdef MPI
-    char sem_name[256];
-    sprintf(sem_name,"/reb_display_%d;",r_user->mpi_id);
-#else // MPI
-    char sem_name[256] = "reb_display";
-#endif // MPI
-	sem_unlink(sem_name); // unlink first
-	sem_t* display_mutex;
-	if ((display_mutex = sem_open(sem_name, O_CREAT | O_EXCL, 0666, 1))==SEM_FAILED){
-		perror("sem_open");
-		exit(EXIT_FAILURE);
-	}
-
-	// Need root_size for visualization. Creating one. 
-	if (r->root_size==-1){  
-		reb_warning("Configuring box automatically for vizualization based on particle positions.");
-		const struct reb_particle* p = r->particles;
-		double max_r = 0;
-		for (int i=0;i<r->N;i++){
-			const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
-			max_r = MAX(max_r, _r);
-		}
-		reb_configure_box(r, max_r*2.3,MAX(1.,r->root_nx),MAX(1.,r->root_ny),MAX(1.,r->root_nz));
-	}
 #else // OPENGL
 	struct reb_simulation* const r = r_user;
 #endif // OPENGL
@@ -569,9 +571,12 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
         memcpy(r_user, r, sizeof(struct reb_simulation));
         r_user->particles = particles_user_loc;
         memcpy(r_user->particles, r->particles, r->N*sizeof(struct reb_particle));
+        for(int i=0; i<r_user->N; i++){
+            r_user->particles[i].sim = r_user;
+        }
+        sem_unlink(sem_name);
+        sem_close(display_mutex);
     }
-    sem_unlink(sem_name);
-    sem_close(display_mutex);
 #endif //OPENGL
 
 #ifndef LIBREBOUND

@@ -42,15 +42,13 @@ class TestSimulation(unittest.TestCase):
         orbits = self.sim.calculate_orbits(barycentric=True)
         self.assertAlmostEqual(orbits[0].a,1.,delta=1e-2)
         
-        print orbits[0]
-        
     def test_com(self):
         self.sim.move_to_com()
         com = self.sim.calculate_com()
         self.assertEqual(com.x, 0.)
         
     def test_init_megno(self):
-        self.sim.init_megno(1e-16)
+        self.sim.init_megno()
         self.assertEqual(self.sim.N,4)
         self.assertEqual(self.sim.N_real,2)
         self.assertEqual(self.sim.calculate_megno(),0)

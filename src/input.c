@@ -105,11 +105,21 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
 		r->tree_root = NULL;
 		r->particles = malloc(sizeof(struct reb_particle)*r->N);
 		objects += fread(r->particles,sizeof(struct reb_particle),r->N,inf);
+        for (int l=0;l<r->N;l++){
+            r->particles[l].sim = r;
+        }
 #ifdef MPI
 		printf("Found %d particles in file '%s'. \n",r->N,filename_mpi);
 #else // MPI
 		printf("Found %d particles in file '%s'. \n",r->N,filename);
 #endif // MPI
+		if (r->var_config_N){
+            r->var_config = malloc(sizeof(struct reb_variational_configuration)*r->var_config_N);
+	        objects +=fread(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,inf);
+            for (int l=0;l<r->var_config_N;l++){
+                r->var_config[l].sim = r;
+            }
+        }
 		fclose(inf);
 	}else{
 		printf("Can not open file '%s'\n.",filename);

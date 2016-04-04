@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
 	}
 	reb_move_to_com(r);
 	// Add megno particles 
-	reb_tools_megno_init(r, 1e-16);  // N = 6 after this function call. 
+	reb_tools_megno_init(r);  // N = 6 after this function call. 
 	// The first half of particles are real particles, the second half are particles following the variational equations.
 	
 	// Set callback for outputs.
