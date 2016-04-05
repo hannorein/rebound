@@ -361,5 +361,92 @@ int main(int argc, char* argv[]) {
     printf("%f %f %f %f %f %f\n",(pppp.x+ppmm.x-pppm.x-ppmp.x)/(4.*Delta*Delta),(pppp.y+ppmm.y-pppm.y-ppmp.y)/(4.*Delta*Delta),(pppp.z+ppmm.z-pppm.z-ppmp.z)/(4.*Delta*Delta), 
     	(pppp.vx+ppmm.vx-pppm.vx-ppmp.vx)/(4.*Delta*Delta),(pppp.vy+ppmm.vy-pppm.vy-ppmp.vy)/(4.*Delta*Delta),(pppp.vz+ppmm.vz-pppm.vz-ppmp.vz)/(4.*Delta*Delta));
     }
+
+    {
+    struct reb_particle pv = reb_vary_pal_m(1.,sim->particles[1],sim->particles[0]);
+    double Delta = 1e-8;
+    struct reb_particle ppp = reb_pal_to_particle(1.,sim->particles[0],1e-2+Delta,a,lambda,k,h,ix,iy);
+    printf("pal_m \n");
+    printf("%f %f %f %f %f %f\n",pv.x,pv.y,pv.z, pv.vx,pv.vy,pv.vz);
+    printf("%f %f %f %f %f %f\n",(ppp.x-pp.x)/Delta,(ppp.y-pp.y)/Delta,(ppp.z-pp.z)/Delta, (ppp.vx-pp.vx)/Delta,(ppp.vy-pp.vy)/Delta,(ppp.vz-pp.vz)/Delta);
+    }
+
+    {
+    struct reb_particle pv = reb_vary_pal_ma(1.,sim->particles[1],sim->particles[0]);
+    double Delta = 1e-4;
+    struct reb_particle pppp = reb_pal_to_particle(1.,sim->particles[0],1e-2+Delta,a+Delta,lambda,k,h,ix,iy);
+    struct reb_particle ppmp = reb_pal_to_particle(1.,sim->particles[0],1e-2-Delta,a+Delta,lambda,k,h,ix,iy);
+    struct reb_particle pppm = reb_pal_to_particle(1.,sim->particles[0],1e-2+Delta,a-Delta,lambda,k,h,ix,iy);
+    struct reb_particle ppmm = reb_pal_to_particle(1.,sim->particles[0],1e-2-Delta,a-Delta,lambda,k,h,ix,iy);
+    printf("pal_ma \n");
+    printf("%f %f %f %f %f %f\n",pv.x,pv.y,pv.z, pv.vx,pv.vy,pv.vz);
+    printf("%f %f %f %f %f %f\n",(pppp.x+ppmm.x-pppm.x-ppmp.x)/(4.*Delta*Delta),(pppp.y+ppmm.y-pppm.y-ppmp.y)/(4.*Delta*Delta),(pppp.z+ppmm.z-pppm.z-ppmp.z)/(4.*Delta*Delta), 
+    	(pppp.vx+ppmm.vx-pppm.vx-ppmp.vx)/(4.*Delta*Delta),(pppp.vy+ppmm.vy-pppm.vy-ppmp.vy)/(4.*Delta*Delta),(pppp.vz+ppmm.vz-pppm.vz-ppmp.vz)/(4.*Delta*Delta));
+    }
+
+    {
+    struct reb_particle pv = reb_vary_pal_mlambda(1.,sim->particles[1],sim->particles[0]);
+    double Delta = 1e-4;
+    struct reb_particle pppp = reb_pal_to_particle(1.,sim->particles[0],1e-2+Delta,a,lambda+Delta,k,h,ix,iy);
+    struct reb_particle ppmp = reb_pal_to_particle(1.,sim->particles[0],1e-2-Delta,a,lambda+Delta,k,h,ix,iy);
+    struct reb_particle pppm = reb_pal_to_particle(1.,sim->particles[0],1e-2+Delta,a,lambda-Delta,k,h,ix,iy);
+    struct reb_particle ppmm = reb_pal_to_particle(1.,sim->particles[0],1e-2-Delta,a,lambda-Delta,k,h,ix,iy);
+    printf("pal_mlambda \n");
+    printf("%f %f %f %f %f %f\n",pv.x,pv.y,pv.z, pv.vx,pv.vy,pv.vz);
+    printf("%f %f %f %f %f %f\n",(pppp.x+ppmm.x-pppm.x-ppmp.x)/(4.*Delta*Delta),(pppp.y+ppmm.y-pppm.y-ppmp.y)/(4.*Delta*Delta),(pppp.z+ppmm.z-pppm.z-ppmp.z)/(4.*Delta*Delta), 
+    	(pppp.vx+ppmm.vx-pppm.vx-ppmp.vx)/(4.*Delta*Delta),(pppp.vy+ppmm.vy-pppm.vy-ppmp.vy)/(4.*Delta*Delta),(pppp.vz+ppmm.vz-pppm.vz-ppmp.vz)/(4.*Delta*Delta));
+    }
+
+    {
+    struct reb_particle pv = reb_vary_pal_mh(1.,sim->particles[1],sim->particles[0]);
+    double Delta = 1e-4;
+    struct reb_particle pppp = reb_pal_to_particle(1.,sim->particles[0],1e-2+Delta,a,lambda,k,h+Delta,ix,iy);
+    struct reb_particle ppmp = reb_pal_to_particle(1.,sim->particles[0],1e-2-Delta,a,lambda,k,h+Delta,ix,iy);
+    struct reb_particle pppm = reb_pal_to_particle(1.,sim->particles[0],1e-2+Delta,a,lambda,k,h-Delta,ix,iy);
+    struct reb_particle ppmm = reb_pal_to_particle(1.,sim->particles[0],1e-2-Delta,a,lambda,k,h-Delta,ix,iy);
+    printf("pal_mh \n");
+    printf("%f %f %f %f %f %f\n",pv.x,pv.y,pv.z, pv.vx,pv.vy,pv.vz);
+    printf("%f %f %f %f %f %f\n",(pppp.x+ppmm.x-pppm.x-ppmp.x)/(4.*Delta*Delta),(pppp.y+ppmm.y-pppm.y-ppmp.y)/(4.*Delta*Delta),(pppp.z+ppmm.z-pppm.z-ppmp.z)/(4.*Delta*Delta), 
+    	(pppp.vx+ppmm.vx-pppm.vx-ppmp.vx)/(4.*Delta*Delta),(pppp.vy+ppmm.vy-pppm.vy-ppmp.vy)/(4.*Delta*Delta),(pppp.vz+ppmm.vz-pppm.vz-ppmp.vz)/(4.*Delta*Delta));
+    }
+
+    {
+    struct reb_particle pv = reb_vary_pal_mk(1.,sim->particles[1],sim->particles[0]);
+    double Delta = 1e-4;
+    struct reb_particle pppp = reb_pal_to_particle(1.,sim->particles[0],1e-2+Delta,a,lambda,k+Delta,h,ix,iy);
+    struct reb_particle ppmp = reb_pal_to_particle(1.,sim->particles[0],1e-2-Delta,a,lambda,k+Delta,h,ix,iy);
+    struct reb_particle pppm = reb_pal_to_particle(1.,sim->particles[0],1e-2+Delta,a,lambda,k-Delta,h,ix,iy);
+    struct reb_particle ppmm = reb_pal_to_particle(1.,sim->particles[0],1e-2-Delta,a,lambda,k-Delta,h,ix,iy);
+    printf("pal_mk \n");
+    printf("%f %f %f %f %f %f\n",pv.x,pv.y,pv.z, pv.vx,pv.vy,pv.vz);
+    printf("%f %f %f %f %f %f\n",(pppp.x+ppmm.x-pppm.x-ppmp.x)/(4.*Delta*Delta),(pppp.y+ppmm.y-pppm.y-ppmp.y)/(4.*Delta*Delta),(pppp.z+ppmm.z-pppm.z-ppmp.z)/(4.*Delta*Delta), 
+    	(pppp.vx+ppmm.vx-pppm.vx-ppmp.vx)/(4.*Delta*Delta),(pppp.vy+ppmm.vy-pppm.vy-ppmp.vy)/(4.*Delta*Delta),(pppp.vz+ppmm.vz-pppm.vz-ppmp.vz)/(4.*Delta*Delta));
+    }
+
+    {
+    struct reb_particle pv = reb_vary_pal_mix(1.,sim->particles[1],sim->particles[0]);
+    double Delta = 1e-4;
+    struct reb_particle pppp = reb_pal_to_particle(1.,sim->particles[0],1e-2+Delta,a,lambda,k,h,ix+Delta,iy);
+    struct reb_particle ppmp = reb_pal_to_particle(1.,sim->particles[0],1e-2-Delta,a,lambda,k,h,ix+Delta,iy);
+    struct reb_particle pppm = reb_pal_to_particle(1.,sim->particles[0],1e-2+Delta,a,lambda,k,h,ix-Delta,iy);
+    struct reb_particle ppmm = reb_pal_to_particle(1.,sim->particles[0],1e-2-Delta,a,lambda,k,h,ix-Delta,iy);
+    printf("pal_mix \n");
+    printf("%f %f %f %f %f %f\n",pv.x,pv.y,pv.z, pv.vx,pv.vy,pv.vz);
+    printf("%f %f %f %f %f %f\n",(pppp.x+ppmm.x-pppm.x-ppmp.x)/(4.*Delta*Delta),(pppp.y+ppmm.y-pppm.y-ppmp.y)/(4.*Delta*Delta),(pppp.z+ppmm.z-pppm.z-ppmp.z)/(4.*Delta*Delta), 
+    	(pppp.vx+ppmm.vx-pppm.vx-ppmp.vx)/(4.*Delta*Delta),(pppp.vy+ppmm.vy-pppm.vy-ppmp.vy)/(4.*Delta*Delta),(pppp.vz+ppmm.vz-pppm.vz-ppmp.vz)/(4.*Delta*Delta));
+    }
+
+    {
+    struct reb_particle pv = reb_vary_pal_miy(1.,sim->particles[1],sim->particles[0]);
+    double Delta = 1e-4;
+    struct reb_particle pppp = reb_pal_to_particle(1.,sim->particles[0],1e-2+Delta,a,lambda,k,h,ix,iy+Delta);
+    struct reb_particle ppmp = reb_pal_to_particle(1.,sim->particles[0],1e-2-Delta,a,lambda,k,h,ix,iy+Delta);
+    struct reb_particle pppm = reb_pal_to_particle(1.,sim->particles[0],1e-2+Delta,a,lambda,k,h,ix,iy-Delta);
+    struct reb_particle ppmm = reb_pal_to_particle(1.,sim->particles[0],1e-2-Delta,a,lambda,k,h,ix,iy-Delta);
+    printf("pal_miy \n");
+    printf("%f %f %f %f %f %f\n",pv.x,pv.y,pv.z, pv.vx,pv.vy,pv.vz);
+    printf("%f %f %f %f %f %f\n",(pppp.x+ppmm.x-pppm.x-ppmp.x)/(4.*Delta*Delta),(pppp.y+ppmm.y-pppm.y-ppmp.y)/(4.*Delta*Delta),(pppp.z+ppmm.z-pppm.z-ppmp.z)/(4.*Delta*Delta), 
+    	(pppp.vx+ppmm.vx-pppm.vx-ppmp.vx)/(4.*Delta*Delta),(pppp.vy+ppmm.vy-pppm.vy-ppmp.vy)/(4.*Delta*Delta),(pppp.vz+ppmm.vz-pppm.vz-ppmp.vz)/(4.*Delta*Delta));
+    }
 }
 
