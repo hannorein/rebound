@@ -542,8 +542,9 @@ struct reb_simulation {
 
     /**
      * @brief Resolve collision within this function. By default it is NULL, assuming hard sphere model.
+     * @details A return value of 0 indicates that both particles remain in the simulation. A return value of 1 (2) indicates that particle 1 (2) should be removed from the simulation. A return value of 3 indicates that both particles should be removed from the simulation. 
      */
-    void (*collision_resolve) (struct reb_simulation* const r, struct reb_collision);
+    int (*collision_resolve) (struct reb_simulation* const r, struct reb_collision);
     /** @} */
     
     /**
@@ -712,6 +713,18 @@ int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted);
  * @param r The rebound simulation to be considered
  */
 void reb_run_heartbeat(struct reb_simulation* const r);
+
+/**
+ * @brief Hardsphere collision resolving routine (default).
+ */
+int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c);
+
+/**
+ * @brief Merging collision resolving routine.
+ * @details Merges particle with higher index into particle of lower index.
+ *          Conserves mass, momentum and volume. Compatible with HYBARID. 
+ */
+int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c);
 
 /** @} */
 /** @} */
@@ -894,15 +907,41 @@ double reb_tools_M_to_f(double e, double M);
 // New orbit routine!! TODO!
 struct reb_particle reb_pal_to_particle(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy);
 void reb_particle_to_pal(double G, struct reb_particle p, struct reb_particle primary, double *a, double* lambda, double* k, double* h, double* ix, double* iy);
+struct reb_particle reb_vary_pal_a(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_aa(double G, struct reb_particle po, struct reb_particle primary);
 struct reb_particle reb_vary_pal_lambda(double G, struct reb_particle po, struct reb_particle primary);
 struct reb_particle reb_vary_pal_h(double G, struct reb_particle po, struct reb_particle primary);
 struct reb_particle reb_vary_pal_k(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_ix(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_iy(double G, struct reb_particle po, struct reb_particle primary);
 struct reb_particle reb_vary_pal_kk(double G, struct reb_particle po, struct reb_particle primary);
 struct reb_particle reb_vary_pal_hh(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_ixix(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_kix(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_hix(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_lambdaix(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_iyiy(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_kiy(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_hiy(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_lambdaiy(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_ixiy(double G, struct reb_particle po, struct reb_particle primary);
 struct reb_particle reb_vary_pal_lambdalambda(double G, struct reb_particle po, struct reb_particle primary);
 struct reb_particle reb_vary_pal_klambda(double G, struct reb_particle po, struct reb_particle primary);
 struct reb_particle reb_vary_pal_hlambda(double G, struct reb_particle po, struct reb_particle primary);
 struct reb_particle reb_vary_pal_kh(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_alambda(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_ak(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_ah(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_aix(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_aiy(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_m(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_ma(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_mlambda(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_mh(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_mk(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_mix(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_vary_pal_miy(double G, struct reb_particle po, struct reb_particle primary);
+
 
 /**
  * @brief Initialize a particle on an orbit in the xy plane.
