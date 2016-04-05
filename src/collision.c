@@ -187,22 +187,53 @@ void reb_collision_search(struct reb_simulation* const r){
 	for (int i=0;i<collisions_N;i++){
         
         struct reb_collision c = r->collisions[i];
-        
-		// Resolve collision
-		int outcome = resolve(r, c);
-		
-        // Remove particles
-        int shift_pos = 0;
-        if (outcome & 1){
-            // Remove p1
-            if (c.p1<c.p2){
-                shift_pos = -1;
+        if (c.p1 != -1 && c.p2 != -1){
+            
+            // Resolve collision
+            int outcome = resolve(r, c);
+            printf("outcome: %d\n",outcome);
+            
+            // Remove particles
+            int shift_pos = 0;
+            int keepsorted = 1;
+            if (r->tree_root){
+                keepsorted = 0;
             }
-            reb_remove(r,c.p1,1);
-        }
-        if (outcome & 2){
-            // Remove p2
-            reb_remove(r,c.p2+shift_pos,1);
+            if (outcome & 1){
+                // Remove p1
+                if (keepsorted==0){
+                    if (c.p2==r->N-1){
+                        shift_pos = -c.p2+c.p1;
+                    }
+                }else{
+                    if (c.p1<c.p2){
+                        shift_pos = -1;
+                    }
+                }
+                reb_remove(r,c.p1,keepsorted);
+                // Check for pair
+                for (int j=i+1;j<collisions_N;j++){
+                    struct reb_collision cp = r->collisions[j];
+                    if (cp.p1==c.p1 || cp.p2==c.p1){
+                        r->collisions[j].p1 = -1;
+                        r->collisions[j].p2 = -1;
+                        // Will be skipped.
+                    }
+                }
+            }
+            if (outcome & 2){
+                // Remove p2
+                reb_remove(r,c.p2+shift_pos,keepsorted);
+                // Check for pair
+                for (int j=i+1;j<collisions_N;j++){
+                    struct reb_collision cp = r->collisions[j];
+                    if (cp.p1==c.p2 || cp.p2==c.p2){
+                        r->collisions[j].p1 = -1;
+                        r->collisions[j].p2 = -1;
+                        // Will be skipped.
+                    }
+                }
+            }
         }
 	}
 }
