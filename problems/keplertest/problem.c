@@ -37,6 +37,15 @@ int main(int argc, char* argv[]) {
     printf("%f %f %f %f %f %f\n",pp.x,pp.y,pp.z, pp.vx,pp.vy,pp.vz);
     
     { 
+    struct reb_particle pv = reb_vary_pal_a(1.,sim->particles[1],sim->particles[0]);
+    double Delta = 1e-8;
+    struct reb_particle ppp = reb_pal_to_particle(1.,sim->particles[0],1e-2,a+Delta,lambda,k,h,ix,iy);
+    printf("\n");
+    printf("%f %f %f %f %f %f\n",pv.x,pv.y,pv.z, pv.vx,pv.vy,pv.vz);
+    printf("%f %f %f %f %f %f\n",(ppp.x-pp.x)/Delta,(ppp.y-pp.y)/Delta,(ppp.z-pp.z)/Delta, (ppp.vx-pp.vx)/Delta,(ppp.vy-pp.vy)/Delta,(ppp.vz-pp.vz)/Delta);
+    }
+
+    { 
     struct reb_particle pv = reb_vary_pal_lambda(1.,sim->particles[1],sim->particles[0]);
     double Delta = 1e-8;
     struct reb_particle ppp = reb_pal_to_particle(1.,sim->particles[0],1e-2,a,lambda+Delta,k,h,ix,iy);

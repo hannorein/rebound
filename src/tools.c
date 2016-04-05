@@ -1335,6 +1335,77 @@ struct reb_particle reb_vary_pal_kh(double G, struct reb_particle po, struct reb
 
     return np;
 }
+
+struct reb_particle reb_vary_pal_a(double G, struct reb_particle po, struct reb_particle primary){
+    double a, lambda, k, h, ix, iy;
+    reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
+
+    struct reb_particle np = {0.};
+
+    double p=0.,q=0.;
+    reb_solve_kepler_pal(h, k, lambda, &p, &q);
+
+    double slp = sin(lambda+p);
+    double clp = cos(lambda+p);
+    
+    double l = 1.-sqrt(1.-h*h-k*k);
+    double dxi_da = clp;
+    double deta_da = slp;
+
+    double iz = sqrt(fabs(4.-ix*ix-iy*iy));
+    double dW_da = deta_da*ix-dxi_da*iy;
+
+    np.x = dxi_da+0.5*iy*dW_da;
+    np.y = deta_da-0.5*ix*dW_da;
+    np.z = 0.5*iz*dW_da;
+
+    double dan_da = sqrt(G*(po.m+primary.m))* -sqrt(1./(a*a*a))/2.;
+    double ddxi_da  = dan_da/(1.-q)*q*(-slp+q/(2.-l)*h);
+    double ddeta_da = dan_da/(1.-q)*q*(+clp-q/(2.-l)*k);
+
+    double ddW_da = ddeta_da*ix-ddxi_da*iy;
+    np.vx = ddxi_da+0.5*iy*ddW_da;
+    np.vy = ddeta_da-0.5*ix*ddW_da;
+    np.vz = 0.5*iz*ddW_da;
+
+    return np;
+}
+
+
+/**struct reb_particle reb_pal_to_particle(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy){
+    struct reb_particle np = {0.};
+    np.m = m;
+
+    double p=0.,q=0.;
+    reb_solve_kepler_pal(h, k, lambda, &p, &q);
+
+    double slp = sin(lambda+p);
+    double clp = cos(lambda+p);
+    
+    double l = 1.-sqrt(1.-h*h-k*k);
+    double xi = a*clp + p/(2.-l)*h -k;
+    double eta = a*slp - p/(2.-l)*k -h;
+
+    double iz = sqrt(fabs(4.-ix*ix-iy*iy));
+    double W = eta*ix-xi*iy;
+
+    np.x = primary.x + xi+0.5*iy*W;
+    np.y = primary.y + eta-0.5*ix*W;
+    np.z = primary.z + 0.5*iz*W;
+
+    double an = sqrt(G*(m+primary.m)/a);
+    double dxi  = an/(1.-q)*(-slp+q/(2.-l)*h);
+    double deta = an/(1.-q)*(+clp-q/(2.-l)*k);
+    double dW = deta*ix-dxi*iy;
+
+    np.vx = primary.vx + dxi+0.5*iy*dW;
+    np.vy = primary.vy + deta-0.5*ix*dW;
+    np.vz = primary.vz + 0.5*iz*dW;
+
+
+    return np;
+}*/
+
 /**************************************
  * Functionis for derivates of orbits  */
 
