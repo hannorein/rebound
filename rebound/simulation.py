@@ -1023,7 +1023,7 @@ class Variation(Structure):
             variation = "lambda"
         if variation2 == "l":
             variation2 = "lambda"
-        variationtypes = ["k","h","lambda"]
+        variationtypes = ["m","a","k","h","lambda","ix","iy"]
         if self.order==1:
             if variation in variationtypes:
                 method = getattr(clibrebound, 'reb_vary_pal_'+variation)
