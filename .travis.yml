@@ -13,6 +13,13 @@ python:
   - "3.4"
   - "3.5"
 
+matrix:
+  exclude:
+    - env: TESTPART=C
+      python: "3.4"
+    - env: TESTPART=C
+      python: "3.5"
+
 addons:
     apt:
         packages:
