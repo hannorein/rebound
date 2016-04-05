@@ -96,7 +96,7 @@ def simulation(par):
         es.append(e)
     
     integrator, run, trial = par
-    print integrator.ljust(13) + " %9.5fs"%(time.time()-start) + "\t Error: %e"  %( e)
+    print(integrator.ljust(13) + " %9.5fs"%(time.time()-start) + "\t Error: %e"  %( e))
     
     es = np.array(es)
     return [times, es]
@@ -123,12 +123,12 @@ trials = 4
 parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]
 if len(sys.argv)!=2:
     pool = InterruptiblePool()
-    print "Running %d simulations" % (len(parameters))
+    print("Running %d simulations" % (len(parameters)))
     res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),trials,2,Ngrid)
     np.save("res.npy",res)
 else:
-    print "Loading %d simulations" % (len(parameters))
-    print sys.argv[1]
+    print("Loading %d simulations" % (len(parameters)))
+    print(sys.argv[1])
     res = np.load(sys.argv[1])
 
 
