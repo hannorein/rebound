@@ -1360,13 +1360,48 @@ struct reb_particle reb_vary_pal_a(double G, struct reb_particle po, struct reb_
     np.z = 0.5*iz*dW_da;
 
     double dan_da = -0.5*sqrt(G*(po.m+primary.m)/(a*a*a));
-    double ddxi_da  = dan_da/(1.-q)*q*(-slp+q/(2.-l)*h);
-    double ddeta_da = dan_da/(1.-q)*q*(+clp-q/(2.-l)*k);
+    double ddxi_da  = dan_da/(1.-q)*(-slp+q/(2.-l)*h);
+    double ddeta_da = dan_da/(1.-q)*(+clp-q/(2.-l)*k);
 
     double ddW_da = ddeta_da*ix-ddxi_da*iy;
     np.vx = ddxi_da+0.5*iy*ddW_da;
     np.vy = ddeta_da-0.5*ix*ddW_da;
     np.vz = 0.5*iz*ddW_da;
+
+    return np;
+}
+
+struct reb_particle reb_vary_pal_aa(double G, struct reb_particle po, struct reb_particle primary){
+    double a, lambda, k, h, ix, iy;
+    reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
+
+    struct reb_particle np = {0.};
+
+    double p=0.,q=0.;
+    reb_solve_kepler_pal(h, k, lambda, &p, &q);
+
+    double slp = sin(lambda+p);
+    double clp = cos(lambda+p);
+    
+    double l = 1.-sqrt(1.-h*h-k*k);
+    double dxi_daa = 0.0;//clp + p/(2.-l)*h -k;
+    double deta_daa = 0.0;//slp - p/(2.-l)*k -h;
+
+    double iz = sqrt(fabs(4.-ix*ix-iy*iy));
+    double dW_daa = deta_daa*ix-dxi_daa*iy;
+
+    np.x = dxi_daa+0.5*iy*dW_daa;
+    np.y = deta_daa-0.5*ix*dW_daa;
+    np.z = 0.5*iz*dW_daa;
+
+    double dan_daa = 0.75*sqrt(G*(po.m+primary.m)/(a*a*a*a*a));
+    double ddxi_daa  = dan_daa/(1.-q)*(-slp+q/(2.-l)*h);
+    double ddeta_daa = dan_daa/(1.-q)*(+clp-q/(2.-l)*k);
+
+    double ddW_daa = ddeta_daa*ix-ddxi_daa*iy;
+    np.vx = ddxi_daa+0.5*iy*ddW_daa;
+    np.vy = ddeta_daa-0.5*ix*ddW_daa;
+    np.vz = 0.5*iz*ddW_daa;
 
     return np;
 }
@@ -1828,7 +1863,202 @@ struct reb_particle reb_vary_pal_ixiy(double G, struct reb_particle po, struct r
     return np;
 }
 
+struct reb_particle reb_vary_pal_aix(double G, struct reb_particle po, struct reb_particle primary){
+    double a, lambda, k, h, ix, iy;
+    reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
+    struct reb_particle np = {0.};
+    double p=0.,q=0.;
+    reb_solve_kepler_pal(h, k, lambda, &p, &q);
+
+    double slp = sin(lambda+p);
+    double clp = cos(lambda+p);
+    
+    double l = 1.-sqrt(1.-h*h-k*k);
+	double deta_da = (slp - p/(2.-l)*k -h);
+    double iz = sqrt(fabs(4.-ix*ix-iy*iy));
+    double diz_dix = -ix/sqrt(fabs(4.-ix*ix-iy*iy));
+    double dW_daix = deta_da;
+    double dxi_da = clp + p/(2.-l)*h -k;
+    double dW_da = deta_da*ix-dxi_da*iy;
+
+    np.x = 0.5*iy*dW_daix;
+    np.y = -0.5*dW_da-0.5*ix*dW_daix;
+    np.z = 0.5*diz_dix*dW_da + 0.5*iz*dW_daix;
+
+    double dan_da = -0.5*sqrt(G*(po.m+primary.m)/(a*a*a));
+    double ddeta_da = dan_da/(1.-q)*(+clp-q/(2.-l)*k);
+    double ddW_daix = ddeta_da;
+    double ddxi_da  = dan_da/(1.-q)*(-slp+q/(2.-l)*h);
+    double ddW_da = ddeta_da*ix-ddxi_da*iy;
+
+    np.vx = 0.5*iy*ddW_daix;
+    np.vy = -0.5*ddW_da-0.5*ix*ddW_daix;
+    np.vz = 0.5*diz_dix*ddW_da + 0.5*iz*ddW_daix;
+
+    return np;
+}
+
+struct reb_particle reb_vary_pal_aiy(double G, struct reb_particle po, struct reb_particle primary){
+    double a, lambda, k, h, ix, iy;
+    reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
+
+    struct reb_particle np = {0.};
+    double p=0.,q=0.;
+    reb_solve_kepler_pal(h, k, lambda, &p, &q);
+
+    double slp = sin(lambda+p);
+    double clp = cos(lambda+p);
+    
+    double l = 1.-sqrt(1.-h*h-k*k);
+
+    double iz = sqrt(fabs(4.-ix*ix-iy*iy));
+    double diz_diy = -iy/sqrt(fabs(4.-ix*ix-iy*iy));
+	double dxi_da = clp + p/(2.-l)*h -k;
+    double deta_da = slp - p/(2.-l)*k -h;
+    double dW_da = deta_da*ix-dxi_da*iy;
+    double dW_daiy = -dxi_da;
+    np.x = 0.5*dW_da+0.5*iy*dW_daiy;
+    np.y = -0.5*ix*dW_daiy;
+    np.z = 0.5*diz_diy*dW_da + 0.5*iz*dW_daiy;
+
+    double dan_da = -0.5*sqrt(G*(po.m+primary.m)/(a*a*a));
+    double ddxi_da  = dan_da/(1.-q)*(-slp+q/(2.-l)*h);
+    double ddW_daiy = -ddxi_da;
+    double ddeta_da = dan_da/(1.-q)*(+clp-q/(2.-l)*k);
+    double ddW_da = ddeta_da*ix-ddxi_da*iy;
+
+    np.vx = 0.5*ddW_da+0.5*iy*ddW_daiy;
+    np.vy = -0.5*ix*ddW_daiy;
+    np.vz = 0.5*diz_diy*ddW_da + 0.5*iz*ddW_daiy;
+
+    return np;
+}
+
+
+struct reb_particle reb_vary_pal_alambda(double G, struct reb_particle po, struct reb_particle primary){
+    double a, lambda, k, h, ix, iy;
+    reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
+
+    struct reb_particle np = {0.};
+
+    double p=0.,q=0.;
+    reb_solve_kepler_pal(h, k, lambda, &p, &q);
+    double dq_dlambda = -p/(1.-q);
+    double dp_dlambda = q/(1.-q);
+
+    double slp = sin(lambda+p);
+    double clp = cos(lambda+p);
+    double dclp_dlambda = -1./(1.-q)*slp;
+    double dslp_dlambda = 1./(1.-q)*clp;
+    
+    double l = 1.-sqrt(1.-h*h-k*k);
+    double dxi_dalambda = (dclp_dlambda + dp_dlambda/(2.-l)*h);
+    double deta_dalambda = (dslp_dlambda - dp_dlambda/(2.-l)*k);
+
+    double iz = sqrt(fabs(4.-ix*ix-iy*iy));
+    double dW_dalambda = deta_dalambda*ix-dxi_dalambda*iy;
+
+    np.x = dxi_dalambda+0.5*iy*dW_dalambda;
+    np.y = deta_dalambda-0.5*ix*dW_dalambda;
+    np.z = 0.5*iz*dW_dalambda;
+
+    double dan_da = -0.5*sqrt(G*(po.m+primary.m)/(a*a*a));
+    double ddxi_dalambda  = dan_da/((1.-q)*(1.-q))*dq_dlambda*(-slp+q/(2.-l)*h)
+    + dan_da/(1.-q)*(-dslp_dlambda+dq_dlambda/(2.-l)*h);
+    double ddeta_dalambda = dan_da/((1.-q)*(1.-q))*dq_dlambda*(+clp-q/(2.-l)*k)
+    + dan_da/(1.-q)*(dclp_dlambda-dq_dlambda/(2.-l)*k);
+    double ddW_dalambda = ddeta_dalambda*ix-ddxi_dalambda*iy;
+    np.vx = ddxi_dalambda+0.5*iy*ddW_dalambda;
+    np.vy = ddeta_dalambda-0.5*ix*ddW_dalambda;
+    np.vz = 0.5*iz*ddW_dalambda;
+
+    return np;
+}
+
+struct reb_particle reb_vary_pal_ah(double G, struct reb_particle po, struct reb_particle primary){
+    double a, lambda, k, h, ix, iy;
+    reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
+
+    struct reb_particle np = {0.};
+    double p=0.,q=0.;
+    reb_solve_kepler_pal(h, k, lambda, &p, &q);
+
+    double slp = sin(lambda+p);
+    double clp = cos(lambda+p);
+    double dclp_dh = -1./(1.-q)*(-slp*clp);
+    double dslp_dh = -1./(1.-q)*(clp*clp);
+    
+    double l = 1.-sqrt(1.-h*h-k*k);
+    double dl_dh = 1./sqrt(1.-h*h-k*k)*h;
+    double dp_dh = 1./(1.-q)*(-clp);
+    double dxi_dah = (dclp_dh + dp_dh/(2.-l)*h + p/(2.-l) + p/((2.-l)*(2.-l))*dl_dh*h);
+    double deta_dah = (dslp_dh - dp_dh/(2.-l)*k - p/((2.-l)*(2.-l))*k*dl_dh -1);
+
+    double iz = sqrt(fabs(4.-ix*ix-iy*iy));
+    double dW_dah = deta_dah*ix-dxi_dah*iy;
+
+    np.x = dxi_dah+0.5*iy*dW_dah;
+    np.y = deta_dah-0.5*ix*dW_dah;
+    np.z = 0.5*iz*dW_dah;
+
+    double dq_dh = 1./(1.-q)*(slp-h);
+
+    double dan_da = -0.5*sqrt(G*(po.m+primary.m)/(a*a*a));
+    double ddxi_dah  = dq_dh*dan_da/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
+                + dan_da/(1.-q) * (-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
+    double ddeta_dah = dq_dh*dan_da/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
+                + dan_da/(1.-q) * (+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
+    double ddW_dah = ddeta_dah*ix-ddxi_dah*iy;
+
+    np.vx = ddxi_dah+0.5*iy*ddW_dah;
+    np.vy = ddeta_dah-0.5*ix*ddW_dah;
+    np.vz = 0.5*iz*ddW_dah;
+
+    return np;
+}
+
+struct reb_particle reb_vary_pal_ak(double G, struct reb_particle po, struct reb_particle primary){
+    double a, lambda, k, h, ix, iy;
+    reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
+
+    struct reb_particle np = {0.};
+    double p=0.,q=0.;
+    reb_solve_kepler_pal(h, k, lambda, &p, &q);
+
+    double slp = sin(lambda+p);
+    double clp = cos(lambda+p);
+    double dclp_dk = -1./(1.-q)*(slp*slp);
+    double dslp_dk = -1./(1.-q)*(-slp*clp);
+    
+    double l = 1.-sqrt(1.-h*h-k*k);
+    double dl_dk = 1./sqrt(1.-h*h-k*k)*k;
+    double dp_dk = 1./(1.-q)*(slp);
+    double dxi_dak = (dclp_dk + dp_dk/(2.-l)*h + p/((2.-l)*(2.-l))*dl_dk*h -1);
+    double deta_dak = (dslp_dk - dp_dk/(2.-l)*k - p/(2.-l) - p/((2.-l)*(2.-l))*dl_dk*k);
+
+    double iz = sqrt(fabs(4.-ix*ix-iy*iy));
+    double dW_dak = deta_dak*ix-dxi_dak*iy;
+
+    np.x = dxi_dak+0.5*iy*dW_dak;
+    np.y = deta_dak-0.5*ix*dW_dak;
+    np.z = 0.5*iz*dW_dak;
+
+    double dq_dk = 1./(1.-q)*(clp-k);
+
+    double dan_da = -0.5*sqrt(G*(po.m+primary.m)/(a*a*a));
+    double ddxi_dak  = dq_dk*dan_da/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
+                + dan_da/(1.-q) * (-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h);
+    double ddeta_dak = dq_dk*dan_da/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
+                + dan_da/(1.-q) * (+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l));
+    double ddW_dak = ddeta_dak*ix-ddxi_dak*iy;
+
+    np.vx = ddxi_dak+0.5*iy*ddW_dak;
+    np.vy = ddeta_dak-0.5*ix*ddW_dak;
+    np.vz = 0.5*iz*ddW_dak;
+
+    return np;
+}
 
 
 
