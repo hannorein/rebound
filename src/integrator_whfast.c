@@ -745,8 +745,12 @@ void reb_integrator_whfast_reset(struct reb_simulation* const r){
 	ri_whfast->allocated_N = 0;
 	ri_whfast->timestep_warning = 0;
 	ri_whfast->recalculate_jacobi_but_not_synchronized_warning = 0;
-	free(ri_whfast->p_j);
-	ri_whfast->p_j = NULL;
-	free(ri_whfast->eta);
-	ri_whfast->eta = NULL;
+    if (ri_whfast->p_j){
+	    free(ri_whfast->p_j);
+    	ri_whfast->p_j = NULL;
+    }
+	if(ri_whfast->eta){
+        free(ri_whfast->eta);
+        ri_whfast->eta = NULL;
+    }
 }

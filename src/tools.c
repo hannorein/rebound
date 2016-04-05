@@ -48,7 +48,8 @@ double reb_random_uniform(double min, double max){
 
 double reb_random_powerlaw(double min, double max, double slope){
 	double y = reb_random_uniform(0., 1.);
-	return pow( (pow(max,slope+1.)-pow(min,slope+1.))*y+pow(min,slope+1.), 1./(slope+1.));
+	if(slope == -1) return exp(y*log(max/min) + log(min));
+    else return pow( (pow(max,slope+1.)-pow(min,slope+1.))*y+pow(min,slope+1.), 1./(slope+1.));
 }
 
 double reb_random_normal(double variance){

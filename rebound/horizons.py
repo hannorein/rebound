@@ -32,7 +32,7 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
     sys.stdout.flush()
 
     t = telnetlib.Telnet()
-    t.open('horizons.jpl.nasa.gov', 6775)
+    t.open('horizons.jpl.nasa.gov', 6775, 20)
     expect = ( ( b'Horizons>', particle+'\n' ),
                ( b'Continue.*:', 'y\n' ),
                ( b'Select.*E.phemeris.*:', 'E\n'),
@@ -59,7 +59,7 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
     idn = None
     while True:
         try:
-            answer = t.expect(list(i[0] for i in expect), 4)
+            answer = t.expect(list(i[0] for i in expect), 8)
         except EOFError:
             break
         a = answer[2].decode()
