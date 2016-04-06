@@ -356,6 +356,9 @@ class Particle(Structure):
             np.vx = self.vx - other.vx
             np.vy = self.vy - other.vy
             np.vz = self.vz - other.vz
+            np.ax = self.ax - other.ax
+            np.ay = self.ay - other.ay
+            np.az = self.az - other.az
             np.m = self.m - other.m
             return np
         return NotImplemented 
@@ -369,6 +372,9 @@ class Particle(Structure):
             np.vx = self.vx + other.vx
             np.vy = self.vy + other.vy
             np.vz = self.vz + other.vz
+            np.ax = self.ax + other.ax
+            np.ay = self.ay + other.ay
+            np.az = self.az + other.az
             np.m = self.m + other.m
             return np
         return NotImplemented 
@@ -382,6 +388,9 @@ class Particle(Structure):
             np.vx = other*self.vx
             np.vy = other*self.vy
             np.vz = other*self.vz 
+            np.ax = other*self.ax
+            np.ay = other*self.ay
+            np.az = other*self.az 
             np.m  = other*self.m 
             return np
         return NotImplemented 
@@ -395,6 +404,9 @@ class Particle(Structure):
             np.vx = other*self.vx
             np.vy = other*self.vy
             np.vz = other*self.vz 
+            np.ax = other*self.ax
+            np.ay = other*self.ay
+            np.az = other*self.az 
             np.m  = other*self.m 
             return np
         return NotImplemented 
@@ -411,6 +423,9 @@ class Particle(Structure):
             np.vx = self.vx/ other
             np.vy = self.vy/ other
             np.vz = self.vz/ other 
+            np.ax = self.ax/ other
+            np.ay = self.ay/ other
+            np.az = self.az/ other 
             np.m  = self.m / other 
             return np
         return NotImplemented 
