@@ -256,7 +256,7 @@ void reb_move_to_com(struct reb_simulation* const r){
 }
 
 struct reb_particle reb_get_com(struct reb_simulation* r){
-	struct reb_particle com = {.m=0, .x=0, .y=0, .z=0, .vx=0, .vy=0, .vz=0, .ax=0, .ay=0, .az=0};
+	struct reb_particle com = {0.};
     const int N_real = r->N - r->N_var;
 	struct reb_particle* restrict const particles = r->particles;
 	for (int i=0;i<N_real;i++){
