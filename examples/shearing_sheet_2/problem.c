@@ -17,7 +17,7 @@
 #include <math.h>
 #include "rebound.h"
 
-void collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_collision c);
+int collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_collision c);
 
 double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v);
 void heartbeat(struct reb_simulation* const r);
@@ -101,7 +101,7 @@ void heartbeat(struct reb_simulation* const r){
 }
 
 // Function written by Akihiko Fujii
-void collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_collision c){
+int collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_collision c){
 	struct reb_particle* particles = r->particles;
 	struct reb_particle p1 = particles[c.p1];
 	struct reb_particle p2 = particles[c.p2];
@@ -120,13 +120,13 @@ void collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_
 		oldvyouter = p2.vy;
 	}
 
-	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return;
+	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return 0;
 
 	double vx21 = p1.vx + gb.shiftvx - p2.vx; 
 	double vy21 = p1.vy + gb.shiftvy - p2.vy; 
 	double vz21 = p1.vz + gb.shiftvz - p2.vz; 
 
-	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return; // not approaching
+	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return 0; // not approaching
 
 	// Bring the to balls in the xy plane.
 	// NOTE: this could probabely be an atan (which is faster than atan2) 
@@ -188,5 +188,6 @@ void collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_
 
 	particles[c.p1].lastcollision = r->t;
 
+    return 0; // Do not remove any particle
 }
 
