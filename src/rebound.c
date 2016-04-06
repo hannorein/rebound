@@ -40,6 +40,7 @@
 #include "integrator_wh.h"
 #include "integrator_whfast.h"
 #include "integrator_ias15.h"
+#include "integrator_hybarid.h"
 #include "boundary.h"
 #include "gravity.h"
 #include "collision.h"
@@ -129,9 +130,11 @@ void reb_step(struct reb_simulation* const r){
 	}
 	PROFILING_STOP(PROFILING_CAT_BOUNDARY)
 
-	// Search for collisions using local and essential tree.
-	PROFILING_START()
-	reb_collision_search(r);
+    // Search for collisions using local and essential tree.
+    PROFILING_START()
+    if (r->integrator!=REB_INTEGRATOR_HYBARID){ //Hybrid integrator will search for collisions in mini simulation.
+        reb_collision_search(r);
+    }
 	PROFILING_STOP(PROFILING_CAT_COLLISION)
 }
 
@@ -203,6 +206,7 @@ void reb_free_pointers(struct reb_simulation* const r){
 	reb_integrator_wh_reset(r);
 	reb_integrator_whfast_reset(r);
 	reb_integrator_ias15_reset(r);
+    reb_integrator_hybarid_reset(r);
 	free(r->particles	);
 }
 
@@ -235,6 +239,15 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
 	// ********** WH
 	r->ri_wh.allocatedN 		= 0;
 	r->ri_wh.eta 			= NULL;
+    // ********** HYBARID
+    r->ri_hybarid.global_index_from_mini_index = NULL;
+    r->ri_hybarid.global_index_from_mini_index_N = 0;
+    r->ri_hybarid.global_index_from_mini_index_Nmax = 0;
+    r->ri_hybarid.is_in_mini = NULL;
+    r->ri_hybarid.is_in_mini_Nmax = 0;
+    r->ri_hybarid.a_Nmax = 0;
+    r->ri_hybarid.a_i = NULL;
+    r->ri_hybarid.a_f = NULL;
 }
 
 void reb_reset_function_pointers(struct reb_simulation* const r){
@@ -324,6 +337,15 @@ void reb_init_simulation(struct reb_simulation* r){
 	r->ri_sei.OMEGAZ 	= -1;
 	r->ri_sei.lastdt 	= 0;
 	
+    // ********** HYBARID
+    r->ri_hybarid.mini 		= NULL;
+    r->ri_hybarid.global	= NULL;
+    r->ri_hybarid.switch_ratio = 0.;
+    r->ri_hybarid.CE_radius = 0.;
+    r->ri_hybarid.mini_active = 0;
+    r->ri_hybarid.timestep_too_large_warning = 0;
+    
+    // ********** HYBRID
 	r->ri_hybrid.switch_ratio = 8; // Default of 8 mutual Hill radii
 	r->ri_hybrid.mode = SYMPLECTIC;
 

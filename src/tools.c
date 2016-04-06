@@ -70,24 +70,58 @@ double reb_random_rayleigh(double sigma){
 
 /// Other helper routines
 double reb_tools_energy(const struct reb_simulation* const r){
-	const int N = r->N;
-	const struct reb_particle* restrict const particles = r->particles;
-	const int N_var = r->N_var;
-	double e_kin = 0.;
-	double e_pot = 0.;
-	for (int i=0;i<N-N_var;i++){
-		struct reb_particle pi = particles[i];
-		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
-		for (int j=i+1;j<N-N_var;j++){
-			struct reb_particle pj = particles[j];
-			double dx = pi.x - pj.x;
-			double dy = pi.y - pj.y;
-			double dz = pi.z - pj.z;
-			e_pot -= r->G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
-		}
-	}
-	return e_kin +e_pot;
+    const int N = r->N;
+    const int N_var = r->N_var;
+    const int _N_active = ((r->N_active==-1)?N:r->N_active) - N_var;
+    const struct reb_particle* restrict const particles = r->particles;
+    double e_kin = 0.;
+    double e_pot = 0.;
+    int N_interact = (r->testparticle_type==0)?_N_active:(N-N_var);
+    for (int i=0;i<N_interact;i++){
+        struct reb_particle pi = particles[i];
+        e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
+    }
+    for (int i=0;i<_N_active;i++){
+        struct reb_particle pi = particles[i];
+        for (int j=i+1;j<N_interact;j++){
+            struct reb_particle pj = particles[j];
+            double dx = pi.x - pj.x;
+            double dy = pi.y - pj.y;
+            double dz = pi.z - pj.z;
+            e_pot -= r->G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
+        }
+    }
+    double e_global = 0;
+    if (r->ri_hybarid.global){
+        if (r->testparticle_type){
+            struct reb_simulation* global = r->ri_hybarid.global;
+            struct reb_particle* global_particles = global->particles;
+            struct reb_particle* mini_particles = r->particles;
+            const int N_active = global->N_active;
+            const double G = global->G;
+            for(int i=0;i<r->N_active;i++){              //massive bodies in mini
+                struct reb_particle pi = mini_particles[i];
+                for(int j=N_active;j<global->N;j++){        //planetesimals in global
+                    if(global->ri_hybarid.is_in_mini[j]==0){
+                        const double ix = global_particles[j].x; // Note: no interpolated values
+                        const double iy = global_particles[j].y;
+                        const double iz = global_particles[j].z;
+                        const double mp = global_particles[j].m;
+                        const double ddx = pi.x - ix;
+                        const double ddy = pi.y - iy;
+                        const double ddz = pi.z - iz;
+                        
+                        const double rijinv2 = 1.0/(ddx*ddx + ddy*ddy + ddz*ddz);
+                        e_global -= G*mp*pi.m*sqrt(rijinv2);
+                    }
+                }
+            }
+        }
+    }
+    
+    return e_kin + e_pot + e_global;
 }
+
 
 void reb_move_to_com(struct reb_simulation* const r){
     const int N_real = r->N - r->N_var;
