@@ -1,5 +1,5 @@
 /**
- * @file 	collision.c
+ * @file 	collision.c 
  * @brief 	Collision search routine.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  *
