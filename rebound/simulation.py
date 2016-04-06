@@ -15,7 +15,7 @@ import types
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "wh": 3, "leapfrog": 4, "hybrid": 5, "none": 6}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "wh": 3, "leapfrog": 4, "hybrid": 5, "hybarid": 6, "none": 7}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2}
@@ -52,6 +52,24 @@ class reb_collision(Structure):
 class reb_simulation_integrator_hybrid(Structure):
     _fields_ = [("switch_ratio", c_double),
                 ("mode", c_int)]
+
+class reb_simulation_integrator_hybarid(Structure):
+    _fields_ = [("mini", c_void_p),
+                ("global", c_void_p),
+                ("switch_radius", c_double),
+                ("CE_radius", c_double),
+                ("mini_active", c_int),
+                ("collision_this_global_dt", c_int),
+                ("global_index_from_mini_index", POINTER(c_int)),
+                ("global_index_from_mini_index_N",c_int),
+                ("global_index_from_mini_index_Nmax",c_int),
+                ("is_in_mini", POINTER(c_int)),
+                ("is_in_mini_Nmax", c_int),
+                ("a_i", POINTER(c_double)),
+                ("a_f", POINTER(c_double)),
+                ("a_Nmax", c_int),
+                ("timestep_too_large_warning", c_int)]
+
 
 class reb_simulation_integrator_wh(Structure):
     _fields_ = [(("allocatedN"), c_int),
@@ -1112,6 +1130,8 @@ Simulation._fields_ = [
                 ("collisions_allocatedN", c_int),
                 ("minimum_collision_celocity", c_double),
                 ("collisions_plog", c_double),
+                ("collisions_track_dE", c_int),
+                ("collisions_dE", c_double),
                 ("max_radius", c_double*2),
                 ("collisions_Nlog", c_long),
                 ("_calculate_megno", c_int),
@@ -1131,6 +1151,7 @@ Simulation._fields_ = [
                 ("ri_hybrid", reb_simulation_integrator_hybrid),
                 ("ri_whfast", reb_simulation_integrator_whfast),
                 ("ri_ias15", reb_simulation_integrator_ias15),
+                ("ri_hybarid", reb_simulation_integrator_hybarid),
                 ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),
