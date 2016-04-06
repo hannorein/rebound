@@ -2065,6 +2065,7 @@ struct reb_particle reb_vary_pal_m(double G, struct reb_particle po, struct reb_
     reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
     struct reb_particle np = {0.};
+    np.m = 1.;
 
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
