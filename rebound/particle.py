@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, c_int, byref
+from ctypes import Structure, c_double, c_int, byref, memmove, sizeof
 from . import clibrebound
 import math
 import ctypes.util
@@ -287,6 +287,15 @@ class Particle(Structure):
             self.vx = vx
             self.vy = vy
             self.vz = vz
+
+
+    def copy(self):
+        """
+        Returns a deep copy of the particle. The particle is not added to any simulation by default.
+        """
+        np = Particle()
+        memmove(byref(np), byref(self), sizeof(self))
+        return np
 
     def calculate_orbit(self, primary=None, G=None):
         """ 
