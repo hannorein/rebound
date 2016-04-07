@@ -749,12 +749,10 @@ class Simulation(Structure):
         for l in s.split("\n"):
             r = l.split()
             if len(r):
-                r = [float(x) for x in r]
-                print(r)
-                p = Particle(simulation=self, m=r[0], r=r[1], x=r[2], y=r[3], z=r[4], vx=r[5], vy=r[6], vz=r[7])
-                self.add(p)
                 try:
-                    pass
+                    r = [float(x) for x in r]
+                    p = Particle(simulation=self, m=r[0], r=r[1], x=r[2], y=r[3], z=r[4], vx=r[5], vy=r[6], vz=r[7])
+                    self.add(p)
                 except:
                     raise AttributeError("Each line requires 8 floats corresponding to mass, radius, position (x,y,z) and velocity (x,y,z).")
 
