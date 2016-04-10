@@ -4,9 +4,16 @@ import copy
 
 class State(object):
 
-    def __init__(self, planets):
+    def __init__(self, planets, ignore_vars=[]):
         self.planets = planets
         self.logp = None
+        self.planets_vars = []
+        self.Nvars = 0
+        self.ignore_vars = ignore_vars
+        for planet in planets:
+            planet_vars = [x for x in planet.keys() if x not in ignore_vars]
+            self.planets_vars.append(planet_vars)
+            self.Nvars += len(planet_vars)
 
 
     def setup_sim(self):
@@ -42,18 +49,60 @@ class State(object):
         if self.logp is None:
             self.logp = -self.get_chi2(obs)
         return self.logp
+    
+    def shift_params(self, vec):
+        self.logp = None
+        if len(vec)!=self.Nvars:
+            raise AttributeError("vector has wrong length")
+        varindex = 0
+        for i, planet in enumerate(self.planets):
+            for k in planet.keys():
+                if k not in self.ignore_vars:
+                    self.planets[i][k] += vec[varindex]
+                    varindex += 1
+   
+    def get_params(self):
+        params = np.zeros(self.Nvars)
+        parindex = 0
+        for i, planet in enumerate(self.planets):
+            for k in planet.keys():
+                if k not in self.ignore_vars:
+                    params[parindex] = self.planets[i][k]
+                    parindex += 1
+        return params
+
+    def set_params(self, vec):
+        self.logp = None
+        if len(vec)!=self.Nvars:
+            raise AttributeError("vector has wrong length")
+        varindex = 0
+        for i, planet in enumerate(self.planets):
+            for k in planet.keys():
+                if k not in self.ignore_vars:
+                    self.planets[i][k] = vec[varindex]
+                    varindex += 1
+    
+    def get_keys(self):
+        keys = [""]*self.Nvars
+        parindex = 0
+        for i, planet in enumerate(self.planets):
+            for k in planet.keys():
+                if k not in self.ignore_vars:
+                    keys[parindex] = "$%s_%d$"%(k,i)
+                    parindex += 1
+        return keys
+
+    def get_rawkeys(self):
+        keys = [""]*self.Nvars
+        parindex = 0
+        for i, planet in enumerate(self.planets):
+            for k in planet.keys():
+                if k not in self.ignore_vars:
+                    keys[parindex] = k
+                    parindex += 1
+        return keys
 
 class StateVar(State):
-
-    def __init__(self, planets, ignore_vars=[]):
-        super(StateVar,self).__init__(planets)
-        self.planets_vars = []
-        self.Nvars = 0
-        self.ignore_vars = ignore_vars
-        for planet in planets:
-            planet_vars = [x for x in planet.keys() if x not in ignore_vars]
-            self.planets_vars.append(planet_vars)
-            self.Nvars += len(planet_vars)
 
     def deepcopy(self):
         return StateVar(copy.deepcopy(self.planets), copy.deepcopy(self.ignore_vars))
@@ -118,55 +167,4 @@ class StateVar(State):
         return self.logp, self.logp_d, self.logp_dd
 
 
-    def shift_params(self, vec):
-        self.logp = None
-        if len(vec)!=self.Nvars:
-            raise AttributeError("vector has wrong length")
-        varindex = 0
-        for i, planet in enumerate(self.planets):
-            for k in planet.keys():
-                if k not in self.ignore_vars:
-                    self.planets[i][k] += vec[varindex]
-                    varindex += 1
-   
-    def get_params(self):
-        params = np.zeros(self.Nvars)
-        parindex = 0
-        for i, planet in enumerate(self.planets):
-            for k in planet.keys():
-                if k not in self.ignore_vars:
-                    params[parindex] = self.planets[i][k]
-                    parindex += 1
-        return params
-
-    def set_params(self, vec):
-        self.logp = None
-        if len(vec)!=self.Nvars:
-            raise AttributeError("vector has wrong length")
-        varindex = 0
-        for i, planet in enumerate(self.planets):
-            for k in planet.keys():
-                if k not in self.ignore_vars:
-                    self.planets[i][k] = vec[varindex]
-                    varindex += 1
-    
-    def get_keys(self):
-        keys = [""]*self.Nvars
-        parindex = 0
-        for i, planet in enumerate(self.planets):
-            for k in planet.keys():
-                if k not in self.ignore_vars:
-                    keys[parindex] = "$%s_%d$"%(k,i)
-                    parindex += 1
-        return keys
-
-    def get_rawkeys(self):
-        keys = [""]*self.Nvars
-        parindex = 0
-        for i, planet in enumerate(self.planets):
-            for k in planet.keys():
-                if k not in self.ignore_vars:
-                    keys[parindex] = k
-                    parindex += 1
-        return keys
 
