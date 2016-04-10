@@ -20,13 +20,20 @@ class Mcmc(object):
 class Mh(Mcmc):
     def __init__(self, initial_state, obs):
         super(Mh,self).__init__(initial_state, obs)
-        self.scales = np.ones(self.state.Nvars)
+        self.step_size = 2e-5
 
     def generate_proposal(self):
         prop = self.state.deepcopy()
-        shift = self.scales*np.random.normal(size=self.state.Nvars)
+        shift = self.step_size*self.scales*np.random.normal(size=self.state.Nvars)
         prop.shift_params(shift)
         return prop
+
+    def set_scales(self, scales):
+        self.scales = np.ones(self.state.Nvars)
+        keys = self.state.get_rawkeys()
+        for i,k in enumerate(keys):
+            if k in scales:
+                self.scales[i] = scales[k]
 
     def step(self):
         logp = self.state.get_logp(self.obs)

@@ -149,5 +149,24 @@ class StateVar(State):
                 if k not in self.ignore_vars:
                     self.planets[i][k] = vec[varindex]
                     varindex += 1
+    
+    def get_keys(self):
+        keys = [""]*self.Nvars
+        parindex = 0
+        for i, planet in enumerate(self.planets):
+            for k in planet.keys():
+                if k not in self.ignore_vars:
+                    keys[parindex] = "$%s_%d$"%(k,i)
+                    parindex += 1
+        return keys
 
+    def get_rawkeys(self):
+        keys = [""]*self.Nvars
+        parindex = 0
+        for i, planet in enumerate(self.planets):
+            for k in planet.keys():
+                if k not in self.ignore_vars:
+                    keys[parindex] = k
+                    parindex += 1
+        return keys
 
