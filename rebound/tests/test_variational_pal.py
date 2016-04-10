@@ -10,7 +10,8 @@ paramslist = [
         [234.3e-6,  1.7567, 0.561,  0.572,  0.573,      0.056,   0.0091354],
         [1e-2,      1.7567, 0.1561, 0.15472,0.24573,    0.0056,  0.0013],
         [1e-7,      3.7567, 0.00061,0.23572,0.523473,   0.47256, 0.000024],
-        [1e-7,      3.7567, 0.00061,0.23572,0.523473,   1.99, 0.0],
+        [1e-7,      3.7567, 0.00061,0.23572,0.523473,   1.97,    0.0],
+        [1e-7,      3.7567, 0.00061,0.23572,0.523473,   0.0,     1.97],
         ]
 
 class TestVariationalPal(unittest.TestCase):
@@ -61,10 +62,13 @@ class TestVariationalPal(unittest.TestCase):
                 self.assertLess(abs(p_fd.m -vp.m ), prec, msg=msg)
     
     def test_all_2nd_order(self):
-        Delta = 1e-6
+        Delta = 1e-5
         for params in paramslist:
             for vi,v in enumerate(vlist):
                 for wi,w in enumerate(vlist):
+                    if w=="m" or v=="m":
+                        # Ignore mass derivates for now.
+                        continue
                     args = dict(zip(vlist,params))
                     simvp = rebound.Simulation()
                     simvp.add(m=1.)
@@ -104,16 +108,15 @@ class TestVariationalPal(unittest.TestCase):
                     params[wi] += Delta
 
                     vp  = var_vw.particles[1]
-                    p   = simvp.particles[1]
                     spp = simspp.particles[1]
                     spm = simspm.particles[1]
                     smp = simsmp.particles[1]
                     smm = simsmm.particles[1]
 
-                    p_fd = (spp-spm-smp+smm)/(4.*Delta**2)
+                    p_fd = (spp-spm-smp+smm)/(4.*Delta*Delta)
 
                     prec = 1e-4
-                    msg = "Problem with '%s_%s' derivative for the following parameters: %s." % (v,w,args)
+                    msg ="Problem with '%s_%s' derivative for the following parameters: %s." % (v,w,args)
                     self.assertLess(abs(p_fd.x -vp.x ), prec, msg=msg)
                     self.assertLess(abs(p_fd.y -vp.y ), prec, msg=msg)
                     self.assertLess(abs(p_fd.z -vp.z ), prec, msg=msg)
