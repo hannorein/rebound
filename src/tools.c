@@ -2095,7 +2095,6 @@ struct reb_particle reb_vary_pal_ma(double G, struct reb_particle po, struct reb
     reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
     struct reb_particle np = {0.};
-    np.m = 1.;
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -2125,7 +2124,6 @@ struct reb_particle reb_vary_pal_mlambda(double G, struct reb_particle po, struc
     reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
     struct reb_particle np = {0.};
-    np.m = 1.;
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
     double dq_dlambda = -p/(1.-q);
@@ -2162,7 +2160,6 @@ struct reb_particle reb_vary_pal_mh(double G, struct reb_particle po, struct reb
     struct reb_particle np = {0.};
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
-    np.m = 1.;
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
     double dclp_dh = -1./(1.-q)*(-slp*clp);
@@ -2199,7 +2196,6 @@ struct reb_particle reb_vary_pal_mk(double G, struct reb_particle po, struct reb
     struct reb_particle np = {0.};
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
-    np.m = 1.;
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
     double dclp_dk = -1./(1.-q)*(slp*slp);
@@ -2236,7 +2232,6 @@ struct reb_particle reb_vary_pal_mix(double G, struct reb_particle po, struct re
     struct reb_particle np = {0.};
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
-    np.m = 1.;
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
     
@@ -2268,7 +2263,6 @@ struct reb_particle reb_vary_pal_miy(double G, struct reb_particle po, struct re
     struct reb_particle np = {0.};
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
-    np.m = 1.;
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
     
@@ -2298,7 +2292,6 @@ struct reb_particle reb_vary_pal_mm(double G, struct reb_particle po, struct reb
     reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
     struct reb_particle np = {0.};
-    np.m = 0.;
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
 

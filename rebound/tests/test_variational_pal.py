@@ -66,8 +66,8 @@ class TestVariationalPal(unittest.TestCase):
         for params in paramslist:
             for vi,v in enumerate(vlist):
                 for wi,w in enumerate(vlist):
-                    if w=="m" or v=="m":
-                        # Ignore mass derivates for now.
+                    if (w=="m" or v=="m") and params[0]<1e-4:
+                        # Ignore mass derivates for very small particles (finite differences don't work).
                         continue
                     args = dict(zip(vlist,params))
                     simvp = rebound.Simulation()
@@ -125,8 +125,5 @@ class TestVariationalPal(unittest.TestCase):
                     self.assertLess(abs(p_fd.vz-vp.vz), prec, msg=msg)
                     self.assertLess(abs(p_fd.m -vp.m ), prec, msg=msg)
 
-    
-    
-    
 if __name__ == "__main__":
     unittest.main()
