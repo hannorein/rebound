@@ -2066,7 +2066,6 @@ struct reb_particle reb_vary_pal_m(double G, struct reb_particle po, struct reb_
 
     struct reb_particle np = {0.};
     np.m = 1.;
-
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -2096,7 +2095,7 @@ struct reb_particle reb_vary_pal_ma(double G, struct reb_particle po, struct reb
     reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
     struct reb_particle np = {0.};
-
+    np.m = 1.;
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -2126,7 +2125,7 @@ struct reb_particle reb_vary_pal_mlambda(double G, struct reb_particle po, struc
     reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
     struct reb_particle np = {0.};
-
+    np.m = 1.;
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
     double dq_dlambda = -p/(1.-q);
@@ -2163,7 +2162,7 @@ struct reb_particle reb_vary_pal_mh(double G, struct reb_particle po, struct reb
     struct reb_particle np = {0.};
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
-
+    np.m = 1.;
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
     double dclp_dh = -1./(1.-q)*(-slp*clp);
@@ -2200,7 +2199,7 @@ struct reb_particle reb_vary_pal_mk(double G, struct reb_particle po, struct reb
     struct reb_particle np = {0.};
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
-
+    np.m = 1.;
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
     double dclp_dk = -1./(1.-q)*(slp*slp);
@@ -2237,7 +2236,7 @@ struct reb_particle reb_vary_pal_mix(double G, struct reb_particle po, struct re
     struct reb_particle np = {0.};
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
-
+    np.m = 1.;
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
     
@@ -2269,7 +2268,7 @@ struct reb_particle reb_vary_pal_miy(double G, struct reb_particle po, struct re
     struct reb_particle np = {0.};
     double p=0.,q=0.;
     reb_solve_kepler_pal(h, k, lambda, &p, &q);
-
+    np.m = 1.;
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
     
@@ -2290,6 +2289,36 @@ struct reb_particle reb_vary_pal_miy(double G, struct reb_particle po, struct re
     np.vx = 0.5*ddW_dm+0.5*iy*ddW_dmiy;
     np.vy = -0.5*ix*ddW_dmiy;
     np.vz = 0.5*diz_diy*ddW_dm + 0.5*iz*ddW_dmiy;
+
+    return np;
+}
+
+struct reb_particle reb_vary_pal_mm(double G, struct reb_particle po, struct reb_particle primary){
+    double a, lambda, k, h, ix, iy;
+    reb_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
+
+    struct reb_particle np = {0.};
+    np.m = 0.;
+    double p=0.,q=0.;
+    reb_solve_kepler_pal(h, k, lambda, &p, &q);
+
+    double slp = sin(lambda+p);
+    double clp = cos(lambda+p);
+    
+    double l = 1.-sqrt(1.-h*h-k*k);
+    double iz = sqrt(fabs(4.-ix*ix-iy*iy));
+    np.x = 0.0;
+    np.y = 0.0;
+    np.z = 0.0;
+
+    double dan_dmm = -0.25*sqrt(G/(a*(po.m+primary.m)*(po.m+primary.m)*(po.m+primary.m)));
+    double ddxi_dmm  = dan_dmm/(1.-q)*(-slp+q/(2.-l)*h);
+    double ddeta_dmm = dan_dmm/(1.-q)*(+clp-q/(2.-l)*k);
+
+    double ddW_dmm = ddeta_dmm*ix-ddxi_dmm*iy;
+    np.vx = ddxi_dmm+0.5*iy*ddW_dmm;
+    np.vy = ddeta_dmm-0.5*ix*ddW_dmm;
+    np.vz = 0.5*iz*ddW_dmm;
 
     return np;
 }
