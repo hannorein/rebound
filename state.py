@@ -102,10 +102,8 @@ class State(object):
                     parindex += 1
         return keys
 
-class StateVar(State):
-
     def deepcopy(self):
-        return StateVar(copy.deepcopy(self.planets), copy.deepcopy(self.ignore_vars))
+        return State(copy.deepcopy(self.planets), copy.deepcopy(self.ignore_vars))
 
     def var_pindex_vname(self, vindex):
         vi = 0.
@@ -117,7 +115,7 @@ class StateVar(State):
 
 
     def setup_sim_vars(self):
-        sim = super(StateVar,self).setup_sim()
+        sim = self.setup_sim()
         variations1 = []
         variations2 = []
         for vindex in range(self.Nvars):
