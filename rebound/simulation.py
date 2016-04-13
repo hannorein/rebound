@@ -739,6 +739,40 @@ class Simulation(Structure):
             if not success:
                 print("id %d passed to remove_particle was not found.  Did not remove particle.\n"%(id))
 
+    def particles_ascii(self, prec=8):
+        """
+        Returns an ASCII string with all particles' masses, radii, positions and velocities.
+
+        Parameters
+        ----------
+        prec : int, optional
+            Number of digits after decimal point. Default 8.
+        """
+        s = ""
+        for p in self.particles:
+            s += (("%%.%de "%prec) * 8)%(p.m, p.r, p.x, p.y, p.z, p.vx, p.vy, p.vz) + "\n"
+        if len(s):
+            s = s[:-1]
+        return s
+    
+    def add_particles_ascii(self, s):
+        """
+        Adds particles from an ASCII string. 
+
+        Parameters
+        ----------
+        s : string
+            One particle per line. Each line should include particle's mass, radius, position and velocity.
+        """
+        for l in s.split("\n"):
+            r = l.split()
+            if len(r):
+                try:
+                    r = [float(x) for x in r]
+                    p = Particle(simulation=self, m=r[0], r=r[1], x=r[2], y=r[3], z=r[4], vx=r[5], vy=r[6], vz=r[7])
+                    self.add(p)
+                except:
+                    raise AttributeError("Each line requires 8 floats corresponding to mass, radius, position (x,y,z) and velocity (x,y,z).")
 
 # Orbit calculation
     def calculate_orbits(self, heliocentric=False, barycentric=False):
