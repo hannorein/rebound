@@ -70,20 +70,22 @@ void reb_step(struct reb_simulation* const r){
 	reb_integrator_part1(r);
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
-	// Check for root crossings.
-	PROFILING_START()
-	reb_boundary_check(r);     
-	PROFILING_STOP(PROFILING_CAT_BOUNDARY)
-
 	// Update and simplify tree. 
 	// Prepare particles for distribution to other nodes. 
 	// This function also creates the tree if called for the first time.
-	PROFILING_START()
 	if (r->tree_needs_update || r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE){
+        // Check for root crossings.
+        PROFILING_START()
+        reb_boundary_check(r);     
+        PROFILING_STOP(PROFILING_CAT_BOUNDARY)
+
         // Update tree (this will remove particles which left the box)
+	    PROFILING_START()
 		reb_tree_update(r);          
+	    PROFILING_STOP(PROFILING_CAT_GRAVITY)
 	}
 
+	PROFILING_START()
 #ifdef MPI
 	// Distribute particles and add newly received particles to tree.
 	reb_communication_mpi_distribute_particles(r);
