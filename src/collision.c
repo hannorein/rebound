@@ -191,7 +191,6 @@ void reb_collision_search(struct reb_simulation* const r){
             
             // Resolve collision
             int outcome = resolve(r, c);
-            printf("outcome: %d\n",outcome);
             
             // Remove particles
             int shift_pos = 0;

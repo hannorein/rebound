@@ -256,7 +256,7 @@ void reb_move_to_com(struct reb_simulation* const r){
 }
 
 struct reb_particle reb_get_com(struct reb_simulation* r){
-	struct reb_particle com = {.m=0, .x=0, .y=0, .z=0, .vx=0, .vy=0, .vz=0};
+	struct reb_particle com = {0.};
     const int N_real = r->N - r->N_var;
 	struct reb_particle* restrict const particles = r->particles;
 	for (int i=0;i<N_real;i++){
@@ -272,6 +272,10 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
 	p1.vx  = p1.vx*p1.m + p2.vx*p2.m;
 	p1.vy  = p1.vy*p1.m + p2.vy*p2.m;
 	p1.vz  = p1.vz*p1.m + p2.vz*p2.m;
+	p1.ax  = p1.ax*p1.m + p2.ax*p2.m;
+	p1.ay  = p1.ay*p1.m + p2.ay*p2.m;
+	p1.az  = p1.az*p1.m + p2.az*p2.m;
+    
 	p1.m  += p2.m;
 	if (p1.m>0.){
 		p1.x  /= p1.m;
@@ -280,6 +284,9 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
 		p1.vx /= p1.m;
 		p1.vy /= p1.m;
 		p1.vz /= p1.m;
+		p1.ax /= p1.m;
+		p1.ay /= p1.m;
+		p1.az /= p1.m;
 	}
 	return p1;
 }
