@@ -1,9 +1,10 @@
 import numpy as np
+import emcee
 from scipy import stats
 
 class Mcmc(object):
     def __init__(self, initial_state, obs):
-        self.state = initial_state
+        self.state = initial_state.deepcopy()
         self.obs = obs
 
     def step(self):
@@ -15,6 +16,37 @@ class Mcmc(object):
             tries += 1
             pass
         return tries
+
+def lnprob(x, e):
+    e.state.set_params(x)
+    logp = e.state.get_logp(e.obs)
+    return logp
+
+
+class Ensemble(Mcmc):
+    def __init__(self, initial_state, obs, scales, nwalkers=10):
+        super(Ensemble,self).__init__(initial_state, obs)
+        self.set_scales(scales)
+        self.nwalkers = nwalkers
+        self.states = [self.state.get_params() for i in range(nwalkers)]
+        self.lnprob = None
+        for i,s in enumerate(self.states):
+            shift = 1e-2*self.scales*np.random.normal(size=self.state.Nvars)
+            self.states[i] += shift
+        self.sampler = emcee.EnsembleSampler(nwalkers,self.state.Nvars, lnprob, args=[self])
+
+    def step(self):
+        self.states, self.lnprob, rstate = self.sampler.run_mcmc(self.states,1,lnprob0=self.lnprob)
+        return True
+
+    def set_scales(self, scales):
+        self.scales = np.ones(self.state.Nvars)
+        keys = self.state.get_rawkeys()
+        for i,k in enumerate(keys):
+            if k in scales:
+                self.scales[i] = scales[k]
+
+
 
 
 class Mh(Mcmc):
