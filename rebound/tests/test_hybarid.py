@@ -68,9 +68,21 @@ class TestHybarid(unittest.TestCase):
 
 
     def test_collision(self):
-        sim = rebound.Simulation()
-        sim.add(m=1.)
+sim = rebound.Simulation()
+sim.add(m=1.)
+sim.add(m=1e-5,a=0.5,e=0.1,r=1.6e-4)
+sim.add(m=1e-9,a=sim.particles[1].x+0.1,e=0.4,f=-0.94,r=4e-5)
+sim.N_active = 2
+sim.move_to_com()
 
+sim.integrator = "hybarid"
+sim.gravity = "basic"
+sim.ri_hybarid.switch_radius = 6.
+sim.dt = 0.001
+sim.testparticle_type = 1
+sim.collision = "direct"
+sim.collision_resolve = "merge"
+sim.integrate(5)
 
 if __name__ == "__main__":
     unittest.main()
