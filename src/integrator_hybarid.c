@@ -43,9 +43,6 @@ static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation*
 static void calc_forces_on_planets(const struct reb_simulation* r, double* a);
 double Ei;
 
-//temp!
-struct reb_particle ari_get_com(struct reb_simulation* r, int N_choice);
-
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     struct reb_simulation* mini = r->ri_hybarid.mini;

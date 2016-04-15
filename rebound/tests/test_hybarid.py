@@ -27,8 +27,8 @@ class TestHybarid(unittest.TestCase):
         x_whfast = sim.particles[1].x
 
         self.assertEqual(x_hybarid,x_whfast)
-    
-    
+
+    #This fails when Ari tries to run it on his machine.
     def test_close_encounter(self):
         sim = rebound.Simulation()
         sim.add(m=1.)
@@ -65,6 +65,11 @@ class TestHybarid(unittest.TestCase):
 
         print(abs((x_hybarid-x_ias15)/x_ias15))
         self.assertEqual(x_hybarid,x_ias15)
+
+
+    def test_collision(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
 
 
 if __name__ == "__main__":
