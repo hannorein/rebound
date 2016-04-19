@@ -1,6 +1,7 @@
 import rebound
 import unittest
 import math
+import rebound.data
 
 class TestIntegrator(unittest.TestCase):
     def setUp(self):
@@ -65,3 +66,6 @@ class TestIntegrator(unittest.TestCase):
         self.assertNotEqual(e0,0.)
         e1 = self.sim.calculate_energy()
         self.assertLess(math.fabs((e0-e1)/e1),1e-9)
+
+if __name__ == "__main__":
+    unittest.main()

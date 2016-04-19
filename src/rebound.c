@@ -298,10 +298,10 @@ void reb_init_simulation(struct reb_simulation* r){
 	r->collisions_Nlog 	= 0;	
 	
 	// Default modules
-	r->integrator 	= REB_INTEGRATOR_IAS15;
-	r->boundary 	= REB_BOUNDARY_NONE;
-	r->gravity	= REB_GRAVITY_COMPENSATED;
-	r->collision	= REB_COLLISION_NONE;
+	r->integrator   = REB_INTEGRATOR_IAS15;
+	r->boundary     = REB_BOUNDARY_NONE;
+	r->gravity      = REB_GRAVITY_BASIC;
+	r->collision    = REB_COLLISION_NONE;
 
 
 	// Integrators	

@@ -421,8 +421,8 @@ class Simulation(Structure):
         Available gravity modules are:
 
         - ``'none'`` 
-        - ``'basic'``
-        - ``'compensated'`` (default)
+        - ``'basic'`` (default)
+        - ``'compensated'``
         - ``'tree'``
         
         Check the online documentation for a full description of each of the modules. 
