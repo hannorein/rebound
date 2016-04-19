@@ -85,4 +85,4 @@ script:
 
 after_success:
     - if [[ $TESTPART == "PYTHON" ]]; then coveralls; fi
-    - if [[ $TESTPART == "CUNITTESTS" ]]; then coveralls -b src/ --gcov-options '\-lp'; fi
+    - if [[ $TESTPART == "CUNITTESTS" ]]; then coveralls -i src/; fi
