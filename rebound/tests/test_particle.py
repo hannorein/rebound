@@ -66,6 +66,8 @@ class TestParticleInSimulation(unittest.TestCase):
         with self.assertRaises(ValueError):
             p[0].calculate_orbit()
         o = p[1].calculate_orbit()
+        string = o.__str__()
+        self.assertGreater(len(string),20)
         self.assertAlmostEqual(o.a,1.,delta=1e-15)
         self.assertAlmostEqual(o.e,0.,delta=1e-15)
         self.assertAlmostEqual(o.f,0.,delta=1e-15)

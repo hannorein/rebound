@@ -714,12 +714,12 @@ class Simulation(Structure):
         if index is not None:
             success = clibrebound.reb_remove(byref(self), c_int(index), keepSorted)
             if not success:
-                print("Index %d passed to remove_particle was out of range (N=%d). Did not remove particle.\n"%(index, self.N))
+                raise ValueError("Index %d passed to remove_particle was out of range (N=%d). Did not remove particle.\n"%(index, self.N))
             return
         if id is not None:
             success = clibrebound.reb_remove_by_id(byref(self), c_int(id), keepSorted)
-            if not success:
-                print("id %d passed to remove_particle was not found.  Did not remove particle.\n"%(id))
+            if success == 0:
+                raise ValueError("id %d passed to remove_particle was not found.  Did not remove particle.\n"%(id))
 
     def particles_ascii(self, prec=8):
         """
