@@ -1,7 +1,6 @@
 language: python
 sudo: false
 
-
 env:
   - TESTPART=C
   - TESTPART=CUNITTESTS
