@@ -84,5 +84,4 @@ script:
     - cd $TRAVIS_BUILD_DIR 
 
 after_success:
-    - if [[ $TESTPART == "PYTHON" ]]; then coveralls; fi
-    - if [[ $TESTPART == "CUNITTESTS" ]]; then coveralls -i src/; fi
+    if [[ $TESTPART == "PYTHON" ]]; then coveralls; fi; if [[ $TESTPART == "CUNITTESTS" ]]; then coveralls -i src/; fi
