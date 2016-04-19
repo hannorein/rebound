@@ -4,6 +4,7 @@ sudo: false
 
 env:
   - TESTPART=C
+  - TESTPART=CUNITTESTS
   - TESTPART=PYTHON
   - TESTPART=IPYTHON1
   - TESTPART=IPYTHON2
@@ -19,6 +20,10 @@ matrix:
       python: "3.4"
     - env: TESTPART=C
       python: "3.5"
+    - env: TESTPART=CUNITTESTS
+      python: "3.4"
+    - env: TESTPART=CUNITTESTS
+      python: "3.5"
 
 addons:
     apt:
@@ -28,24 +33,26 @@ addons:
             - libopenmpi-dev
 
 before_install:
-  - if [ $TESTPART != "C" ]; then if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-3.5.5-Linux-x86_64.sh -O miniconda.sh; fi; fi
-  - if [ $TESTPART != "C" ]; then chmod +x miniconda.sh; fi
-  - if [ $TESTPART != "C" ]; then ./miniconda.sh -b -p /home/travis/mc; fi
-  - if [ $TESTPART != "C" ]; then export PATH=/home/travis/mc/bin:$PATH; fi
+  - if [ $TESTPART == "CUNITTESTS" ]; then pip install --user cpp-coveralls; fi
+  - if [ $TESTPART == *"PYTHON"* ]; then if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-3.5.5-Linux-x86_64.sh -O miniconda.sh; fi; fi
+  - if [ $TESTPART == *"PYTHON"* ]; then chmod +x miniconda.sh; fi
+  - if [ $TESTPART == *"PYTHON"* ]; then ./miniconda.sh -b -p /home/travis/mc; fi
+  - if [ $TESTPART == *"PYTHON"* ]; then export PATH=/home/travis/mc/bin:$PATH; fi
 
 install:
-  - if [ $TESTPART != "C" ]; then conda update --yes conda; fi
-  - if [ $TESTPART != "C" ] && [ ${TRAVIS_PYTHON_VERSION:0:3} == "2.7" ] ; then conda create -n testenv --yes libgfortran=1.0 numpy=1.9 scipy=0.16 matplotlib=1.4 setuptools coverage python=$TRAVIS_PYTHON_VERSION; fi
-  - if [ $TESTPART != "C" ] && [ ${TRAVIS_PYTHON_VERSION:0:3} == "3.4" ] ; then conda create -n testenv --yes libgfortran=1.0 numpy=1.9 scipy=0.16 matplotlib=1.4 setuptools coverage python=$TRAVIS_PYTHON_VERSION; fi
-  - if [ $TESTPART != "C" ] && [ ${TRAVIS_PYTHON_VERSION:0:3} == "3.5" ] ; then conda create -n testenv --yes numpy scipy matplotlib setuptools coverage python=$TRAVIS_PYTHON_VERSION; fi
-  - if [ $TESTPART != "C" ]; then source activate testenv; fi
-  - if [ $TESTPART != "C" ]; then pip install coveralls; fi
-  - if [ $TESTPART != "C" ]; then python setup.py install; fi
+  - if [ $TESTPART == *"PYTHON"* ]; then conda update --yes conda; fi
+  - if [ $TESTPART == *"PYTHON"* ] && [ ${TRAVIS_PYTHON_VERSION:0:3} == "2.7" ] ; then conda create -n testenv --yes libgfortran=1.0 numpy=1.9 scipy=0.16 matplotlib=1.4 setuptools coverage python=$TRAVIS_PYTHON_VERSION; fi
+  - if [ $TESTPART == *"PYTHON"* ] && [ ${TRAVIS_PYTHON_VERSION:0:3} == "3.4" ] ; then conda create -n testenv --yes libgfortran=1.0 numpy=1.9 scipy=0.16 matplotlib=1.4 setuptools coverage python=$TRAVIS_PYTHON_VERSION; fi
+  - if [ $TESTPART == *"PYTHON"* ] && [ ${TRAVIS_PYTHON_VERSION:0:3} == "3.5" ] ; then conda create -n testenv --yes numpy scipy matplotlib setuptools coverage python=$TRAVIS_PYTHON_VERSION; fi
+  - if [ $TESTPART == *"PYTHON"* ]; then source activate testenv; fi
+  - if [ $TESTPART == *"PYTHON"* ]; then pip install coveralls; fi
+  - if [ $TESTPART == *"PYTHON"* ]; then python setup.py install; fi
 
 
 script:
+    - if [[ $TESTPART == "CUNITTESTS" ]]; then cd $TRAVIS_BUILD_DIR/tests/oss/ && make && ./rebound; fi
     - if [[ $TESTPART == "C" ]]; then cd $TRAVIS_BUILD_DIR/examples/ && make; fi
-    - if [[ $TESTPART != "C" ]]; then cd $TRAVIS_BUILD_DIR && coverage run --source=rebound setup.py test; fi
+    - if [[ $TESTPART == *"PYTHON"* ]]; then cd $TRAVIS_BUILD_DIR && coverage run --source=rebound setup.py test; fi
     - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py AdvWHFast.ipynb; fi
     - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Checkpoints.ipynb; fi
     - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Churyumov-Gerasimenko.ipynb; fi
@@ -78,4 +85,5 @@ script:
     - cd $TRAVIS_BUILD_DIR 
 
 after_success:
-    coveralls
+    - if [[ $TESTPART == "PYTHON" ]]; then coveralls; fi
+    - if [[ $TESTPART == "CUNITTESTS" ]]; then coveralls -b src/ --gcov-options '\-lp'; fi
