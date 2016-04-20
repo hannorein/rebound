@@ -16,8 +16,27 @@ class TestSimulation(unittest.TestCase):
     def test_status(self):
         self.sim.status()
     
+    def test_removeall(self):
+        del self.sim.particles
+        self.assertEqual(self.sim.N,0)
+    
+    def test_remove_too_many(self):
+        self.sim.remove(0)
+        self.sim.remove(0)
+        with self.assertRaises(ValueError):
+            self.sim.remove(0)
+    
+    def test_remove_variational(self):
+        v = self.sim.add_variation()
+        with self.assertRaises(ValueError):
+            self.sim.remove(0)
+    
     def test_remove(self):
         self.sim.remove(1)
+        self.assertEqual(self.sim.N,1)
+    
+    def test_remove_keepsorted(self):
+        self.sim.remove(1,keepSorted=0)
         self.assertEqual(self.sim.N,1)
     
     def test_ascii(self):

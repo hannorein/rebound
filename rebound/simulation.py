@@ -698,7 +698,7 @@ class Simulation(Structure):
         """
         Remove all particles from the simulation
         """
-        clibrebound.reb_particles_remove_all(byref(self))
+        clibrebound.reb_remove_all(byref(self))
 
     def remove(self, index=None, id=None, keepSorted=1):
         """ 
@@ -714,7 +714,7 @@ class Simulation(Structure):
         if index is not None:
             success = clibrebound.reb_remove(byref(self), c_int(index), keepSorted)
             if not success:
-                raise ValueError("Index %d passed to remove_particle was out of range (N=%d). Did not remove particle.\n"%(index, self.N))
+                raise ValueError("Removing particle with index %d failed. Did not remove particle.\n"%(index))
             return
         if id is not None:
             success = clibrebound.reb_remove_by_id(byref(self), c_int(id), keepSorted)
@@ -1006,6 +1006,12 @@ class Simulation(Structure):
         Call this function if safe-mode is disabled and you need synchronize particle positions and velocities between timesteps.
         """
         clibrebound.reb_integrator_synchronize(byref(self))
+    
+    def tree_update(self):
+        """
+        Call this function to update the tree structure manually after removing particles.
+        """
+        clibrebound.reb_tree_update(byref(self))
 
 
 
