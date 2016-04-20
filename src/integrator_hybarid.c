@@ -201,14 +201,14 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* gl
 
             if(rij2 < switch_ratio2*rh_sum2 || rij2 < radius_check2){
                 global->ri_hybarid.mini_active = 1;
+                // Monitor hillradius/relative velocity
+                const double dvx = pi.vx - pj.vx;
+                const double dvy = pi.vy - pj.vy;
+                const double dvz = pi.vz - pj.vz;
+                const double vij2 = dvx*dvx + dvy*dvy + dvz*dvz;
+                const double dt_enc2 = switch_ratio2*rh_sum2/vij2;
+                min_dt_enc2 = MIN(min_dt_enc2,dt_enc2);
                 if (j>=_N_active && global->ri_hybarid.is_in_mini[j]==0){//make sure not already added
-                    // Monitor hillradius/relative velocity
-                    const double dvx = pi.vx - pj.vx;
-                    const double dvy = pi.vy - pj.vy;
-                    const double dvz = pi.vz - pj.vz;
-                    const double vij2 = dvx*dvx + dvy*dvy + dvz*dvz;
-                    const double dt_enc2 = switch_ratio2*rh_sum2/vij2;
-                    min_dt_enc2 = MIN(min_dt_enc2,dt_enc2);
                     // Add particle to mini simulation
                     reb_add(mini,pj);
                     global->ri_hybarid.is_in_mini[j] = 1;
