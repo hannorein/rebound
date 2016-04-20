@@ -112,6 +112,7 @@ void reb_remove_all(struct reb_simulation* const r){
 
 int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 	if (r->N==1){
+	    r->N = 0;
 		fprintf(stderr, "Last particle removed.\n");
 		return 1;
 	}
@@ -129,7 +130,8 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 			r->particles[j] = r->particles[j+1];
 		}
         if (r->tree_root){
-		    reb_exit("REBOUND cannot remove a particle a tree and keep the particles sorted.");
+		    fprintf(stderr, "\nREBOUND cannot remove a particle a tree and keep the particles sorted. Did not remove particle.\n");
+		    return 0;
         }
 	}else{
         if (r->tree_root){
