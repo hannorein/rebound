@@ -43,9 +43,6 @@ static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation*
 static void calc_forces_on_planets(const struct reb_simulation* r, double* a);
 double Ei;
 
-//temp!
-struct reb_particle ari_get_com(struct reb_simulation* r, int N_choice);
-
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     struct reb_simulation* mini = r->ri_hybarid.mini;
@@ -204,14 +201,14 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* gl
 
             if(rij2 < switch_ratio2*rh_sum2 || rij2 < radius_check2){
                 global->ri_hybarid.mini_active = 1;
+                // Monitor hillradius/relative velocity
+                const double dvx = pi.vx - pj.vx;
+                const double dvy = pi.vy - pj.vy;
+                const double dvz = pi.vz - pj.vz;
+                const double vij2 = dvx*dvx + dvy*dvy + dvz*dvz;
+                const double dt_enc2 = switch_ratio2*rh_sum2/vij2;
+                min_dt_enc2 = MIN(min_dt_enc2,dt_enc2);
                 if (j>=_N_active && global->ri_hybarid.is_in_mini[j]==0){//make sure not already added
-                    // Monitor hillradius/relative velocity
-                    const double dvx = pi.vx - pj.vx;
-                    const double dvy = pi.vy - pj.vy;
-                    const double dvz = pi.vz - pj.vz;
-                    const double vij2 = dvx*dvx + dvy*dvy + dvz*dvz;
-                    const double dt_enc2 = switch_ratio2*rh_sum2/vij2;
-                    min_dt_enc2 = MIN(min_dt_enc2,dt_enc2);
                     // Add particle to mini simulation
                     reb_add(mini,pj);
                     global->ri_hybarid.is_in_mini[j] = 1;
