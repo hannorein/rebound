@@ -16,7 +16,7 @@ or if you do not have git installed::
 
 Make sure you have a compiler suite installed. Open a terminal and type `make` and `cc` to test if your installation is complete. If you are on OSX, you can download Xcode from the AppStore (for free). Once installed, open Xcode, go to Settings, then Downloads and install the Command Line Tools. 
 
-
+Note:  REBOUND does not work on Windows, and we currently do not have plans to support it.
 
 Code structure
 --------------
