@@ -16,6 +16,49 @@ class TestSimulation(unittest.TestCase):
     def test_status(self):
         self.sim.status()
     
+    def test_removeall(self):
+        del self.sim.particles
+        self.assertEqual(self.sim.N,0)
+    
+    def test_remove_too_many(self):
+        self.sim.remove(0)
+        self.sim.remove(0)
+        with self.assertRaises(ValueError):
+            self.sim.remove(0)
+    
+    def test_remove_variational(self):
+        v = self.sim.add_variation()
+        with self.assertRaises(ValueError):
+            self.sim.remove(0)
+    
+    def test_remove(self):
+        self.sim.remove(1)
+        self.assertEqual(self.sim.N,1)
+    
+    def test_remove_keepsorted(self):
+        self.sim.remove(1,keepSorted=0)
+        self.assertEqual(self.sim.N,1)
+    
+    def test_ascii(self):
+        a = self.sim.particles_ascii()
+        sim = rebound.Simulation()
+        sim.add_particles_ascii(a)
+        for i in range(self.sim.N):
+            self.assertAlmostEqual(self.sim.particles[i].m,sim.particles[i].m,delta=1e-7)
+            self.assertAlmostEqual(self.sim.particles[i].x,sim.particles[i].x,delta=1e-7)
+            self.assertAlmostEqual(self.sim.particles[i].vy,sim.particles[i].vy,delta=1e-7)
+    
+    def test_removeid(self):
+        self.sim.add(m=1e-3, a=1., e=0.01, omega=0.02, M=0.04, inc=0.1, id=99)
+        self.sim.remove(id=99)
+        self.assertEqual(self.sim.N,2)
+        with self.assertRaises(ValueError):
+            self.sim.remove(99)
+        with self.assertRaises(ValueError):
+            self.sim.remove(id=99)
+        with self.assertRaises(ValueError):
+            self.sim.remove(id=-99334)
+    
     def test_configure_ghostboxes(self):
         self.sim.configure_ghostboxes(1,1,1)
    
@@ -176,3 +219,5 @@ class TestSimulationCollisions(unittest.TestCase):
 
     
     
+if __name__ == "__main__":
+    unittest.main()

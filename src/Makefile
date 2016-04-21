@@ -26,4 +26,7 @@ clean:
 	@-rm -f *.o
 	@echo "Removing shared library librebound.so ..."
 	@-rm -f *.so
+	@echo "Removing coverage files ..."
+	@-rm -f *.gcda
+	@-rm -f *.gcno
 	

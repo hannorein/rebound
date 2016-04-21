@@ -1,6 +1,7 @@
 import rebound
 import unittest
 import math
+import rebound.data
 
 class TestIntegrator(unittest.TestCase):
     def setUp(self):
@@ -24,6 +25,35 @@ class TestIntegrator(unittest.TestCase):
         #e1 = self.sim.calculate_energy()
         #self.assertLess(math.fabs((e0-e1)/e1),10**13.5)
     
+    def test_ias15_compensated(self):
+        self.sim.integrator = "ias15"
+        self.sim.gravity = "compensated"
+        jupyr = 11.86*2.*math.pi
+        e0 = self.sim.calculate_energy()
+        self.assertNotEqual(e0,0.)
+        self.sim.integrate(1e3*jupyr)
+        e1 = self.sim.calculate_energy()
+        self.assertLess(math.fabs((e0-e1)/e1),1e-14)
+    
+    def test_wh(self):
+        self.sim.integrator = "wh"
+        self.sim.move_to_com()
+        e0 = self.sim.calculate_energy()
+        # Move to heliocentric frame
+        sun = self.sim.particles[0].copy()
+        for p in self.sim.particles:
+            m = p.m
+            p -= sun
+            p.m = m
+        jupyr = 11.86*2.*math.pi
+        self.sim.dt = 0.123*jupyr
+        self.sim.integrate(1e3*jupyr)
+        self.assertNotEqual(e0,0.)
+        self.sim.move_to_com()
+        e1 = self.sim.calculate_energy()
+        # Something wrong here with the energy conservations! TODO!
+        self.assertLess(math.fabs((e0-e1)/e1),1e-2)
+    
     def test_whfast_largedt(self):
         self.sim.integrator = "whfast"
         jupyr = 11.86*2.*math.pi
@@ -36,6 +66,17 @@ class TestIntegrator(unittest.TestCase):
 
     def test_whfast_smalldt(self):
         self.sim.integrator = "whfast"
+        jupyr = 11.86*2.*math.pi
+        self.sim.dt = 0.0123*jupyr
+        e0 = self.sim.calculate_energy()
+        self.sim.integrate(1e3*jupyr)
+        self.assertNotEqual(e0,0.)
+        e1 = self.sim.calculate_energy()
+        self.assertLess(math.fabs((e0-e1)/e1),1e-6)
+    
+    def test_whfast_smalldt_compensated(self):
+        self.sim.integrator = "whfast"
+        self.sim.gravity = "compensated"
         jupyr = 11.86*2.*math.pi
         self.sim.dt = 0.0123*jupyr
         e0 = self.sim.calculate_energy()
@@ -65,3 +106,6 @@ class TestIntegrator(unittest.TestCase):
         self.assertNotEqual(e0,0.)
         e1 = self.sim.calculate_energy()
         self.assertLess(math.fabs((e0-e1)/e1),1e-9)
+
+if __name__ == "__main__":
+    unittest.main()
