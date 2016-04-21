@@ -119,6 +119,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
         //remove from global and update global arrays
         int globalj = global->ri_hybarid.global_index_from_mini_index[index];
         reb_remove(global,globalj,1);
+        if(index<r->N_active)r->N_active--;
         
         for(int k=globalj;k<global->N;k++){
             global->ri_hybarid.is_in_mini[k] = global->ri_hybarid.is_in_mini[k+1];
@@ -147,6 +148,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 	}
 	if(keepSorted){
 	    r->N--;
+        if(index<r->N_active)r->N_active--;
 		for(int j=index; j<r->N; j++){
 			r->particles[j] = r->particles[j+1];
 		}
