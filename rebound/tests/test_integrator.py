@@ -3,6 +3,21 @@ import unittest
 import math
 import rebound.data
 
+class TestIntegrator2(unittest.TestCase):
+    def test_whfast_verylargedt(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1e-3, a=1.)
+        sim.move_to_com()
+        sim.integrator = "whfast"
+        yr = sim.particles[1].P
+        sim.dt = 4.56*yr
+        x0 = sim.particles[1].x
+        sim.integrate(1e3*yr)
+        x1 = sim.particles[1].x
+        self.assertAlmostEqual(x0, x1, delta=1e-12)
+
+
 class TestIntegrator(unittest.TestCase):
     def setUp(self):
         self.sim = rebound.Simulation()
@@ -63,7 +78,7 @@ class TestIntegrator(unittest.TestCase):
         self.assertNotEqual(e0,0.)
         e1 = self.sim.calculate_energy()
         self.assertLess(math.fabs((e0-e1)/e1),1e-4)
-
+    
     def test_whfast_smalldt(self):
         self.sim.integrator = "whfast"
         jupyr = 11.86*2.*math.pi
