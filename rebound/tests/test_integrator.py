@@ -16,6 +16,42 @@ class TestIntegrator2(unittest.TestCase):
         sim.integrate(1e3*yr)
         x1 = sim.particles[1].x
         self.assertAlmostEqual(x0, x1, delta=1e-12)
+    
+    def test_wh_verylargedt(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1e-3, a=1.)
+        sim.integrator = "wh"
+        yr = sim.particles[1].P
+        sim.dt = 4.56*yr
+        x0 = sim.particles[1].x
+        sim.integrate(1e3*yr)
+        x1 = sim.particles[1].x
+        self.assertAlmostEqual(x0, x1, delta=1e-12)
+    
+    def test_whfast_hyperbolic(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1e-3, a=-1.,e=2.5)
+        sim.integrator = "whfast"
+        x0 = sim.calculate_energy()
+        yr = -sim.particles[1].P
+        sim.dt = 0.12*yr
+        sim.integrate(1e2*yr)
+        x1 = sim.calculate_energy()
+        self.assertAlmostEqual(x0, x1, delta=1e-14)
+    
+    def test_whfast_verylargedt_hyperbolic(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1e-3, a=-1.,e=2.5)
+        sim.integrator = "whfast"
+        x0 = sim.calculate_energy()
+        yr = -sim.particles[1].P
+        sim.dt = 4.56*yr
+        sim.integrate(1e3*yr)
+        x1 = sim.calculate_energy()
+        self.assertAlmostEqual(x0, x1, delta=1e-14)
 
 
 class TestIntegrator(unittest.TestCase):
