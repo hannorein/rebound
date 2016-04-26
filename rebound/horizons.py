@@ -20,7 +20,12 @@ INITDATE = None
 
 def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None):   
     if date is not None:
-        date = datetime.datetime.strptime(date,"%Y-%m-%d %H:%M")
+        if type(date) is datetime.datetime:
+            pass
+        elif type(date) is str:
+            date = datetime.datetime.strptime(date,"%Y-%m-%d %H:%M")
+        else:
+            raise AttributeError("Unknown date format.")
     # set the cached initialization time if it's not set
     global INITDATE
     if INITDATE is None:
