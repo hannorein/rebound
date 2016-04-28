@@ -113,7 +113,7 @@ class TestHybarid(unittest.TestCase):
         E0 = sim.calculate_energy()
         sim.integrate(1)
         dE = abs((sim.calculate_energy() - E0)/E0)
-        self.assertLess(dE,2e-11)
+        self.assertLess(dE,5e-11)
 
 if __name__ == "__main__":
     unittest.main()
