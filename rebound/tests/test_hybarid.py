@@ -28,7 +28,6 @@ class TestHybarid(unittest.TestCase):
 
         self.assertEqual(x_hybarid,x_whfast)
 
-    #This fails when Ari tries to run it on his machine.
     def test_close_encounter(self):
         sim = rebound.Simulation()
         sim.add(m=1.)
@@ -66,7 +65,7 @@ class TestHybarid(unittest.TestCase):
         print(abs((x_hybarid-x_ias15)/x_ias15))
         self.assertEqual(x_hybarid,x_ias15)
 
-    def test_collision(self):
+    def test_planetesimal_collision(self):
         sim = rebound.Simulation()
         sim.add(m=1.)
         sim.add(m=1e-5,r=1.6e-4,a=0.5,e=0.1)    #these params lead to collision on my machine
@@ -87,6 +86,34 @@ class TestHybarid(unittest.TestCase):
         sim.integrate(1)
         dE = abs((sim.calculate_energy() - E0)/E0)
         self.assertLess(dE,1e-14)
+
+    def test_massive_ejection(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1e-4,r=1.6e-4,a=0.5,e=0.1)
+        sim.add(m=1e-6,r=4e-5,a=0.6)
+        sim.particles[2].vy *= 2
+        sim.N_active = 3
+        sim.move_to_com()
+        
+        sim.integrator = "hybarid"
+        #sim.gravity = "basic"
+        sim.ri_hybarid.switch_radius = 3.
+        sim.ri_hybarid.CE_radius = 20.
+        sim.dt = 0.001
+        sim.testparticle_type = 1
+        sim.collision = "direct"
+        sim.collision_resolve = "merge"
+        sim.collisions_track_dE = 1;
+        
+        sim.boundary = "open"
+        boxsize = 3.
+        sim.configure_box(boxsize)
+        
+        E0 = sim.calculate_energy()
+        sim.integrate(1)
+        dE = abs((sim.calculate_energy() - E0)/E0)
+        self.assertLess(dE,2e-11)
 
 if __name__ == "__main__":
     unittest.main()
