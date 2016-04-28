@@ -1,73 +1,54 @@
 /**
- * @file 	problem.c
- * @brief 	Example problem: Velocity dependent drag force
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This is a very simple example on how to implement a velocity 
+ * Velocity dependent drag force
+ *
+ * This is a very simple example on how to implement a velocity 
  * dependent drag force. The example uses the IAS15 integrator, which 
  * is ideally suited to handle non-conservative forces.
  * No gravitational forces or collisions are present.
- * 
- * @section 	LICENSE
- * Copyright (c) 2013 Hanno Rein, Dave Spiegel
- *
- * This file is part of rebound.
- *
- * rebound is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * rebound is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include <time.h>
-#include "main.h"
-#include "tools.h"
-#include "output.h"
-#include "particle.h"
-#include "problem.h"
-#include "integrator.h"
+#include "rebound.h"
 
-void additional_forces();
+void additional_forces(struct reb_simulation* const r);
+void heartbeat(struct reb_simulation* const r);
 
-void problem_init(int argc, char* argv[]){
+double tmax = 40.;
+
+int main(int argc, char* argv[]){
+	struct reb_simulation* r = reb_create_simulation();
 	// Setup constants
-	dt 			= 1e-4;		// initial timestep.
-	boxsize 		= 10;	
-	tmax			= 40;
-	integrator		= IAS15;
+	r->dt 			= 1e-4;		// initial timestep.
+	r->integrator		= REB_INTEGRATOR_IAS15;
+	r->gravity		= REB_GRAVITY_NONE;
 
 	// Setup callback function for velocity dependent forces.
-	problem_additional_forces 	= additional_forces;
+	r->additional_forces 	= additional_forces;
+	r->force_is_velocity_dependent = 1;
+	// Setup callback function for outputs.
+	r->heartbeat		= heartbeat;
+	r->usleep		= 10000;		// Slow down integration (for visualization only)
 	
-	// Initialize simulation and particles
-	init_box();
-	
-	
-	struct particle p; 
-	p.m  = 0;	// massless
-	p.x = 1; 	p.y = 0; 	p.z = 0;
-	p.vx = -1; 	p.vy = 0; 	p.vz = 0;
-	p.ax = 0; 	p.ay = 0; 	p.az = 0;
-	particles_add(p); 
+	struct reb_particle p = {0}; 
+	p.m  	= 0;	// massless
+	p.x 	= 1;
+	p.vx 	= -1;
+	reb_add(r, p); 
 
 	// Delete previous output
 	system("rm -v r.txt");	
+
+	// Do the integration
+	reb_integrate(r, tmax);
 }
 
-void additional_forces(){
+void additional_forces(struct reb_simulation* const r){
 	// Simplest velocity dependent drag force.
 	double dragcoefficient = 1;
+	struct reb_particle* const particles = r->particles;
+	const int N = r->N;
 	for (int i=0;i<N;i++){
 		particles[i].ax = -dragcoefficient*particles[i].vx;
 		particles[i].ay = -dragcoefficient*particles[i].vy;
@@ -75,16 +56,14 @@ void additional_forces(){
 	}
 }
 
-void problem_output(){
+void heartbeat(struct reb_simulation* const r){
 	// Output some information to the screen every 100th timestep
-	if(output_check(100.*dt)){
-		output_timing();
+	if(reb_output_check(r, 100.*r->dt)){
+		reb_output_timing(r, tmax);
 	}
 	// Output the particle position to a file every timestep.
+	const struct reb_particle* const particles = r->particles;
 	FILE* f = fopen("r.txt","a");
-	fprintf(f,"%e\t%e\t%e\n",t,particles[0].x, particles[1].vx);
+	fprintf(f,"%e\t%e\t%e\n",r->t,particles[0].x, particles[1].vx);
 	fclose(f);
-}
-
-void problem_finish(){
 }

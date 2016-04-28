@@ -1,0 +1,6 @@
+breathe==4.0.0
+jupyter==1.0.0
+jupyter-client==4.0.0
+jupyter-console==4.0.0
+jupyter-core==4.0.3
+numpydoc==0.5

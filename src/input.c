@@ -30,87 +30,31 @@
 #include <getopt.h>
 #include <string.h>
 #include "particle.h"
-#include "main.h"
+#include "rebound.h"
+#include "collision.h"
 #include "input.h"
 #ifdef MPI
 #include "communication_mpi.h"
 #endif
 
-char input_arguments[4096]; // This is a bit of an arbitrary number. Should be dynamic.
-
-void input_append_input_arguments_with_int(const char* argument, int value){
-	if (strlen(input_arguments)){
-		strcat(input_arguments,"__");
-	}
-	char addition[2048];
-	sprintf(addition,"%s_%d",argument,value);
-	strcat(input_arguments,addition);
-}
-
-void input_append_input_arguments_with_double(const char* argument, double value){
-	if (strlen(input_arguments)){
-		strcat(input_arguments,"__");
-	}
-	char addition[2048];
-	sprintf(addition,"%s_%.3e",argument,value);
-	strcat(input_arguments,addition);
-}
-
-int input_check_restart(int argc, char** argv){
-	char filename[1024];
-	int restart = 0;
-	opterr = 0;
-	optind = 1;
-  	while (1) {
-      		static struct option long_options[] = {
-	  		{"restart", required_argument, 0, 'r'},
-			{0,0,0,0}
-		};
-
-      		/* getopt_long stores the option index here.   */
-      		int option_index = 0;
-		//				short options. format abc:d::
-      		int c = getopt_long (argc, argv, "", long_options, &option_index);
-
-      		/* Detect the end of the options.   */
-      		if (c == -1) break;
-
-      		switch (c)
-		{
-			case 'r':
-				restart = 1;
-				strcpy(filename, optarg);
-				break;
-			default:
-				break;
-		}
-  	}
-	if (restart==1){
-		input_binary(filename);
-	}
-	return restart;
-}
-
-double input_get_double(int argc, char** argv, const char* argument, double _default){
-	char* value = input_get_argument(argc,argv,argument);
+double reb_read_double(int argc, char** argv, const char* argument, double _default){
+	char* value = reb_read_char(argc,argv,argument);
 	if (value){
-		input_append_input_arguments_with_double(argument,atof(value));
 		return atof(value);
 	}
 	return _default;
 }
 
-int input_get_int(int argc, char** argv, const char* argument, int _default){
-	char* value = input_get_argument(argc,argv,argument);
+int reb_read_int(int argc, char** argv, const char* argument, int _default){
+	char* value = reb_read_char(argc,argv,argument);
 	if (value){
-		input_append_input_arguments_with_int(argument,atoi(value));
 		return atoi(value);
 	}
 	return _default;
 }
 
 
-char* input_get_argument(int argc, char** argv, const char* argument){
+char* reb_read_char(int argc, char** argv, const char* argument){
 	opterr = 0;
 	optind = 1;
   	while (1) {
@@ -141,33 +85,50 @@ char* input_get_argument(int argc, char** argv, const char* argument){
 	return NULL;
 }
 
-void input_binary(char* filename){
+struct reb_simulation* reb_create_simulation_from_binary(char* filename){
+	reb_warning("You have to reset function pointers after creating a reb_simulation struct with a binary file.");
+	struct reb_simulation* r = malloc(sizeof(struct reb_simulation));
 #ifdef MPI
 	char filename_mpi[1024];
-	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
+#warning following code not working yet. mpi_id will be random number.
+	sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
 	FILE* inf = fopen(filename_mpi,"rb"); 
 #else // MPI
 	FILE* inf = fopen(filename,"rb"); 
 #endif // MPI
 	if (inf){
 		long objects = 0;
-		int _N;
-		objects += fread(&_N,sizeof(int),1,inf);
-		objects += fread(&t,sizeof(double),1,inf);
+		objects += fread(r,sizeof(struct reb_simulation),1,inf);
+		reb_reset_temporary_pointers(r);
+		reb_reset_function_pointers(r);
+		r->allocatedN = r->N;
+		r->tree_root = NULL;
+		r->particles = malloc(sizeof(struct reb_particle)*r->N);
+		objects += fread(r->particles,sizeof(struct reb_particle),r->N,inf);
+        for (int l=0;l<r->N;l++){
+            r->particles[l].sim = r;
+        }
 #ifdef MPI
-		printf("Found %d particles in file '%s'. ",_N,filename_mpi);
+		printf("Found %d particles in file '%s'. \n",r->N,filename_mpi);
 #else // MPI
-		printf("Found %d particles in file '%s'. ",_N,filename);
+		printf("Found %d particles in file '%s'. \n",r->N,filename);
 #endif // MPI
-		for (int i=0;i<_N;i++){
-			struct particle p;
-			objects += fread(&p,sizeof(struct particle),1,inf);
-			particles_add(p);
-		}
+		if (r->var_config_N){
+            r->var_config = malloc(sizeof(struct reb_variational_configuration)*r->var_config_N);
+	        objects +=fread(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,inf);
+            for (int l=0;l<r->var_config_N;l++){
+                r->var_config[l].sim = r;
+            }
+        }
 		fclose(inf);
-		printf("%ld objects read. Restarting at time t=%f\n",objects,t);
 	}else{
 		printf("Can not open file '%s'\n.",filename);
+        free(r);
+		return NULL;
 	}
+    for(int i=0; i<r->N; i++){
+		r->particles[i].sim = r;
+	}
+	return r;
 }
 

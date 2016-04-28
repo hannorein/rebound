@@ -1,119 +1,289 @@
-from ctypes import *
+from ctypes import Structure, c_double, c_int, byref, memmove, sizeof
+from . import clibrebound
 import math
 import ctypes.util
 import rebound
 
-__all__ = ["Orbit", "Particle"]
-TINY=1.e-308
-MIN_REL_ERROR = 1.e-12
-
-# Helper functions
-TWOPI = 2.*math.pi
-def mod2pi(f):
-    """Returns the angle f modulo 2 pi."""
-    while f<0.:
-        f += TWOPI
-    while f>TWOPI:
-        f -= TWOPI
-    return f
-
-def eccentricAnomaly(e,M):
-    """Returns the eccentric anomaly given the eccentricity and mean anomaly of a Keplerian orbit.
-
-    Keyword arguments:
-    e -- the eccentricity
-    M -- the mean anomaly
-    """
-    if e<1.:
-        E = M if e<0.8 else math.pi
-        
-        F = E - e*math.sin(M) - M
-        for i in range(100):
-            E = E - F/(1.0-e*math.cos(E))
-            F = E - e*math.sin(E) - M
-            if math.fabs(F)<1e-16:
-                break
-        E = mod2pi(E)
-        return E
-    else:
-        E = M 
-        
-        F = E - e*math.sinh(E) - M
-        for i in range(100):
-            E = E - F/(1.0-e*math.cosh(E))
-            F = E - e*math.sinh(E) - M
-            if math.fabs(F)<1e-16:
-                break
-        E = mod2pi(E)
-        return E
-
-
+__all__ = ["Particle"]
 
 def notNone(a):
-    """Returns True if array a contains at least one element that is not None. Returns False otherwise."""
+    """
+    Returns True if array a contains at least one element that is not None. Returns False otherwise.
+    """
     return a.count(None) != len(a)
 
-
-class Orbit():
-    """Defines the same data structure as in tools.h"""
-    def __init__(self):
-        self.a      =   None    # semimajor axis
-        self.r      =   None    # radial distance from reference
-        self.h      =   None    # angular momentum
-        self.P      =   None    # orbital period
-        self.l      =   None    # mean longitude = Omega + omega + M
-        self.e      =   None    # eccentricity
-        self.inc    =   None    # inclination
-        self.Omega  =   None    # longitude of ascending node
-        self.omega  =   None    # argument of perihelion
-        self.f      =   None    # true anomaly
-
-    def __str__(self):
-        return "<rebound.Orbit instance, a=%s e=%s>"%(str(self.a),str(self.e))
-
-
 class Particle(Structure):
-    """A particle datastructure. Same as defined in particle.h"""
-    _fields_ = [("x", c_double),
-                ("y", c_double),
-                ("z", c_double),
-                ("vx", c_double),
-                ("vy", c_double),
-                ("vz", c_double),
-                ("ax", c_double),
-                ("ay", c_double),
-                ("az", c_double),
-                ("m", c_double) ]
-    def __str__(self):
-        return "<rebound.Particle object, m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
+    """
+    The main REBOUND particle data structure. 
+    This is an abstraction of the reb_particle structure in C.
+    The Particle fields are set at the end of simulation.py to avoid circular references.
     
-    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None):   
+    Attributes
+    ----------
+    x, y, z     : float       
+        Particle positions
+    vx, vy, vz  : float       
+        Particle velocities
+    ax, ay, az  : float       
+        Particle accelerations
+    m           : float       
+        Particle mass
+    r           : float       
+        Particle radius
+    lastcollision : float       
+        Last time the particle had a physical collision (if checking for collisions)
+    c           : c_void_p (C void pointer) 
+        Pointer to the cell the particle is currently in (if using tree code)
+    id          : int         
+        Particle ID (arbitrary, specified by the user)
+    ap          : c_void_p (C void pointer)
+        Pointer to additional parameters one might want to add to particles
+    _sim        : POINTER(rebound.Simulation)
+        Internal pointer to the parent simulation (used in C version of REBOUND)
+    """
+    def __str__(self):
+        """ 
+        Returns a string with the position and velocity of the particle.
+        """
+        return "<rebound.Particle object, id=%s m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.id,self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
+    
+    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, id=None, date=None, simulation=None, variation=None, variation2=None, variation_order=1, h=None, k=None, ix=None, iy=None):
+        """
+        Initializes a Particle structure.
+        Typically users will not create Particle structures directly.
+        Rather, use the add member function of a Simulation instance, which will create a Particle and add it to the simulation.
+
+        Accepts either cartesian positions and velocities, or orbital elements together with the reference Particle (primary), but not both.
+        Requires a simulation instance for the Particle.
+        For convenience, optional keywords that are not passed default to zero (mass, cartesian and orbital elements). 
+        However, if passing orbital elements directly or implicitly (by passing a primary Particle), you must specify the semimajor axis.  To specify the longitude of ascending node you must pass Omega, to specify the pericenter you can pass either omega or pomega (not both), and for the longitude/anomaly you can pass one of f, M, l or theta.  See ipython_examples/OrbitalElements.ipynb.  See, e.g., Murray & Dermott Solar System Dynamics for angle definitions.
+
+        All angles should be specified in radians.
+
+        Parameters
+        ----------
+        particle    : Particle    
+            For consistency with other particle addition routines.  Cannot be passed when creating a particle in this way.
+        m           : float       
+            Mass        (Default: 0)
+        x, y, z     : float       
+            Positions   (Default: 0)
+        vx, vy, vz  : float       
+            Velocities  (Default: 0)
+        primary     : Particle    
+            Primary body for converting orbital elements to cartesian (Default: center of mass of the particles in the passed simulation, i.e., will yield Jacobi coordinates as you progressively pass particles) 
+        a           : float       
+            Semimajor axis (a or P required if passing orbital elements)
+        P           : float
+            Orbital period (a or P required if passing orbital elements)
+        e           : float       
+            Eccentricity                (Default: 0)
+        inc         : float       
+            Inclination                 (Default: 0)
+        Omega       : float       
+            Longitude of ascending node (Default: 0)
+        omega       : float       
+            Argument of pericenter      (Default: 0)
+        pomega      : float       
+            Longitude of pericenter     (Default: 0)
+        f           : float       
+            True anomaly                (Default: 0)
+        M           : float       
+            Mean anomaly                (Default: 0)
+        l           : float       
+            Mean longitude              (Default: 0)
+        theta       : float       
+            True longitude              (Default: 0)
+        T           : float 
+            Time of pericenter passage  
+        r           : float       
+            Particle radius (only used for collisional simulations)
+        id          : int               (Default: 0)
+            Particle ID (arbitrary, specified by the user)
+        date        : string      
+            For consistency with adding particles through horizons.  Not used here.
+        simulation  : Simulation)  
+            Simulation instance associated with this particle (Required)
+        variation   : string            (Default: None)
+            Set this string to the name of an orbital parameter to initialize the particle as a variational particle.
+        variation2  : string            (Default: None)
+            Set this string to the name of a second orbital parameter to initialize the particle as a variational particle.
+            Only used for second order variational equations. If not given, the parameter variation will be used (diagonal elements).
+        variation_order : int           (Default: 1)
+            Order of the variational particle (only used if 'variation' is not None)
+        
+        Returns
+        -------
+        A rebound.Particle object 
+        
+        Examples
+        --------
+
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1.)
+        >>> sim.add(m=0.001, a=0.5, e=0.01)
+        >>> sim.add(m=0.0, x=1., vy=1.)
+
+        """        
+
         if particle is not None:
-            raise ValueError("Cannot initialise particle from other particles.")
+            raise ValueError("Cannot initialize particle from other particles.")
         cart = [x,y,z,vx,vy,vz]
-        orbi = [primary,a,anom,e,omega,inc,Omega,MEAN]
-        if m is None:   #default value for mass
-            m = 0.
+        orbi = [primary,a,P,e,inc,Omega,omega,pomega,f,M,l,theta,T]
+        pal  = [h,k,ix,iy]
+       
+        self.ax = 0.
+        self.ay = 0.
+        self.az = 0.
+        if m is None:
+            self.m = 0.
+        else:
+            self.m = m
+        if id is None:
+            self.id = 0
+        else:
+            self.id = id
+        if r is None:
+            self.r = 0.
+        else:
+            self.r = r
+        self.lastcollision = 0.
+        self.c = None
+        self.ap = None
+        
         if notNone(cart) and notNone(orbi):
-                raise ValueError("You cannot pass cartesian coordinates and orbital elements at the same time.")
+                raise ValueError("You cannot pass cartesian coordinates and orbital elements (and/or primary) at the same time.")
         if notNone(orbi):
+            if simulation is None:
+                raise ValueError("Need to specify simulation when initializing particle with orbital elements.")
             if primary is None:
-                primary = rebound.module.calculate_com()
+                clibrebound.reb_get_com.restype = Particle
+                primary = clibrebound.reb_get_com(byref(simulation)) # this corresponds to adding in Jacobi coordinates
+            if a is None and P is None:
+                raise ValueError("You need to pass either a semimajor axis or orbital period to initialize the particle using orbital elements.")
+            if a is not None and P is not None:
+                raise ValueError("You can pass either the semimajor axis or orbital period, but not both.")
             if a is None:
-                raise ValueError("You need to pass a semi major axis to initialize the particle using orbital elements.")
-            if anom is None:
-                anom = 0.
-            if e is None:
-                e = 0.
-            if omega is None:
-                omega = 0.
-            if inc is None:
-                inc = 0.
-            if Omega is None:
-                Omega = 0.
-            if MEAN is None:
-                MEAN = False
-            self.set_orbit(m=m,primary=primary,a=a,anom=anom,e=e,omega=omega,inc=inc,Omega=Omega,MEAN=MEAN)
+                a = (P**2*simulation.G*(primary.m + self.m)/(4.*math.pi**2))**(1./3.)
+            if notNone(pal):
+                # Pal orbital parameters
+                if h is None:
+                    h = 0.
+                if k is None:
+                    k = 0.
+                if l is None:
+                    l = 0.
+                if ix is None:
+                    ix = 0.
+                if iy is None:
+                    iy = 0.
+                clibrebound.reb_pal_to_particle.restype = Particle
+                p = clibrebound.reb_pal_to_particle(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(l), c_double(k), c_double(h), c_double(ix), c_double(iy))
+            else:
+                # Normal orbital parameters
+                if e is None:
+                    e = 0.
+                if inc is None:
+                    inc = 0.
+                if Omega is None:               # we require that Omega be passed if you want to specify longitude of node
+                    Omega = 0.
+
+                pericenters = [omega, pomega]   # Need omega for C function. Can specify it either directly or through pomega indirectly. 
+                numNones = pericenters.count(None)
+
+                if numNones == 0:
+                    raise ValueError("Can't pass both omega and pomega")
+                if numNones == 2:                   # Neither passed.  Default to 0.
+                    omega = 0.
+                if numNones == 1:
+                    if pomega is not None:          # Only have to find omega is pomega was passed
+                        if math.cos(inc) > 0:       # inc is in range [-pi/2, pi/2] (prograde), so pomega = Omega + omega
+                            omega = pomega - Omega
+                        else:
+                            omega = Omega - pomega  # for retrograde orbits, pomega = Omega - omega
+
+                longitudes = [f,M,l,theta,T]      # can specify longitude through any of these four.  Need f for C function.
+                numNones = longitudes.count(None)
+
+                if numNones < 4:
+                    raise ValueError("Can only pass one longitude/anomaly in the set [f, M, l, theta, T]")
+                if numNones == 5:                           # none of them passed.  Default to 0.
+                    f = 0.
+                if numNones == 4:                           # Only one was passed.
+                    if f is None:                           # Only have to work if f wasn't passed.
+                        if theta is not None:               # theta is next easiest
+                            if math.cos(inc) > 0:           # for prograde orbits, theta = Omega + omega + f
+                                f = theta - Omega - omega
+                            else:
+                                f = Omega - omega - theta   # for retrograde, theta = Omega - omega - f
+                        else:                               # Either M, l, or T was passed.  Will need to find M first (if not passed) to find f
+                            if l is not None:
+                                if math.cos(inc) > 0:       # for prograde orbits, l = Omega + omega + M
+                                    M = l - Omega - omega
+                                else:
+                                    M = Omega - omega - l   # for retrograde, l = Omega - omega - M
+                            else:
+                                if T is not None:           # works for both elliptical and hyperbolic orbits
+                                    n = (simulation.G*(primary.m+self.m)/abs(a**3))**0.5
+                                    M = n*(simulation.t - T)
+                            clibrebound.reb_tools_M_to_f.restype = c_double
+                            f = clibrebound.reb_tools_M_to_f(c_double(e), c_double(M))
+
+                if variation is None:
+                    err = c_int()
+                    clibrebound.reb_tools_orbit_to_particle_err.restype = Particle
+                    p = clibrebound.reb_tools_orbit_to_particle_err(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f), byref(err))
+                    if err.value == 1:
+                        raise ValueError("Can't set e exactly to 1.")
+                    if err.value == 2:
+                        raise ValueError("Eccentricity must be greater than or equal to zero.")
+                    if err.value == 3:
+                        raise ValueError("Bound orbit (a > 0) must have e < 1.")
+                    if err.value == 4:
+                        raise ValueError("Unbound orbit (a < 0) must have e > 1.")
+                    if err.value == 5:
+                        raise ValueError("Unbound orbit can't have f beyond the range allowed by the asymptotes set by the hyperbola.")
+                else:
+                    variationtypes = ["a","e","i","Omega","omega","f","m"]
+                    if variation_order==1:
+                        if variation in variationtypes:
+                            method = getattr(clibrebound, 'reb_tools_orbit_to_particle_d'+variation)
+                            method.restype = Particle
+                            p = method(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
+                        else:
+                            raise ValueError("Variational particles can only be initializes using the derivatives with respect to one of the following: %s."%", ".join(variationtypes))
+                    elif variation_order==2:
+                        if variation2 is None:
+                            variation2 = variation
+                        if variation in variationtypes and variation2 in variationtypes:
+                            # Swap variations if needed
+                            vi1 = variationtypes.index(variation)
+                            vi2 = variationtypes.index(variation2)
+                            if vi2 < vi1:
+                                variation, variation2 = variation2, variation
+
+                            if variation == variation2:
+                                # Diagonal terms
+                                method = getattr(clibrebound, 'reb_tools_orbit_to_particle_dd'+variation)
+                                method.restype = Particle
+                                p = method(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
+                            else:
+                                # CrossTerms
+                                method = getattr(clibrebound, 'reb_tools_orbit_to_particle_d'+variation+'_d'+variation2)
+                                method.restype = Particle
+                                p = method(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(e), c_double(inc), c_double(Omega), c_double(omega), c_double(f))
+                        else:
+                            raise ValueError("Variational particles can only be initializes using the derivatives with respect to one of the following: %s."%", ".join(variationtypes))
+                    else:
+                        raise ValueError("Variational equations beyond second order are not implemented.")
+                    self.m = p.m
+            
+            self.x = p.x
+            self.y = p.y
+            self.z = p.z
+            self.vx = p.vx
+            self.vy = p.vy
+            self.vz = p.vz
         else:
             if x is None:
                 x = 0.
@@ -127,7 +297,6 @@ class Particle(Structure):
                 vy = 0.
             if vz is None:
                 vz = 0.
-            self.m = m
             self.x = x
             self.y = y
             self.z = z
@@ -135,218 +304,211 @@ class Particle(Structure):
             self.vy = vy
             self.vz = vz
 
-    def set_orbit(self,
-                    m,          # mass
-                    primary,    # central body (rebound.Particle object)
-                    a,          # semimajor axis
-                    anom=0.,    # anomaly
-                    e=0.,       # eccentricity
-                    omega=0.,   # argument of pericenter
-                    inc=0.,     # inclination
-                    Omega=0.,   # longitude of ascending node
-                    MEAN=False):    # mean anomaly
-        """ Initialises a particle structure with the passed set of
-            orbital elements. Mass (m), primary and 'a' are required (see Parameters
-            below, and any orbital mechanics text, e.g., Murray & Dermott
-            Solar System Dynamics for definitions). Other values default to zero.
-            All angles should be passed in radians. Units are set by the
-            gravitational constant G (default = 1.). If MEAN is set to True, anom is
-            taken as the mean anomaly, rather than the true anomaly.
-            
-            Usage
-            _____
-            TODO: UPDATE
-            primary = rebound.Particle(m=1.) # particle with unit mass at origin & v=0
-            
-            # test particle (m=0) with specified elements using mean anomaly
-            p = kepler_particle(m=0.,primary=primary,a=2.5, anom=math.pi/2,e=0.3,
-            omega=math.pi/6,inc=math.pi/3,Omega=0.,MEAN=True)
-            
-            # m=0.1 particle on circular orbit math.pi/4 from x axis in xy plane
-            p = kepler_particle(0.1,primary,2.5,math.pi/4)
-            
-            Parameters
-            __________
-            m       : (float)            Mass of the particle
-            primary : (rebound.Particle) Particle structure for the central body
-            a       : (float)            Semimajor axis
-            anom    : (float)            True anomaly (default).
-            Mean anomaly if MEAN is set to True
-            e       : (float)            Eccentricity
-            omega   : (float)            Argument of pericenter
-            inc     : (float)            Inclination (to xy plane)
-            Omega   : (float)            Longitude of the ascending node
-            MEAN    : (boolean)          If False (default), anom = true anomaly
-            If True, anom = mean anomaly
-            
-            Returns
-            _______
-            A rebound.Particle structure initialized with the given orbital parameters
-            """
-        
-        self.m = m
 
-        if not(0.<=inc<=math.pi): raise ValueError('inc must be in range [0,pi]')
-        if e>1.:
-            if math.fabs(anom)>math.acos(-1./e): raise ValueError('hyperbolic orbit with anomaly larger than angle of asymptotes')
-        
-        if MEAN is True: # need to calculate f
-            E = eccentricAnomaly(e,anom)
-            if e>1.:
-                print("not working yet")
-                exit(1)
-                f = 2.*math.atan(math.sqrt(-(1.+ e)/(1. - e))*math.tanh(0.5*E))
-            else:
-                f = mod2pi(2.*math.atan(math.sqrt((1.+ e)/(1. - e))*math.tan(0.5*E)))
-        else:
-            f = anom
-        
-        cO = math.cos(Omega)
-        sO = math.sin(Omega)
-        co = math.cos(omega)
-        so = math.sin(omega)
-        cf = math.cos(f)
-        sf = math.sin(f)
-        ci = math.cos(inc)
-        si = math.sin(inc)
-        
-        r = a*(1.-e**2)/(1.+e*cf)
-        
-        # Murray & Dermott Eq. 2.122
-        self.x  = primary.x + r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci)
-        self.y  = primary.y + r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci)
-        self.z  = primary.z + r*(so*cf+co*sf)*si
-        
-        n = math.sqrt(rebound.module.G*(primary.m+m)/(a**3))
-        if e>1.:
-            v0 = n*a/math.sqrt(-(1.-e**2))
-        else:
-            v0 = n*a/math.sqrt(1.-e**2)
-        
-        # Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
-        self.vx = primary.vx + v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO))
-        self.vy = primary.vy + v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO))
-        self.vz = primary.vz + v0*((e+cf)*co*si - sf*si*so)
+    def copy(self):
+        """
+        Returns a deep copy of the particle. The particle is not added to any simulation by default.
+        """
+        np = Particle()
+        memmove(byref(np), byref(self), sizeof(self))
+        return np
 
+    def calculate_orbit(self, primary=None, G=None):
+        """ 
+        Returns a rebound.Orbit object with the keplerian orbital elements
+        corresponding to the particle around the passed primary
+        (rebound.Particle) If no primary is passed, defaults to Jacobi coordinates. 
+        
+        Examples
+        --------
+        
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1.)
+        >>> sim.add(x=1.,vy=1.)
+        >>> orbit = sim.particles[1].calculate_orbit(sim.particles[0])
+        >>> print(orbit.e) # gives the eccentricity
 
-    def calculate_orbit(self, primary=None, verbose=False):
-        """ Returns a rebound.Orbit object with the keplerian orbital elements
-            corresponding to the particle around the central body primary
-            (rebound.Particle). Edge cases will return values set to None. If
-            verbose is set to True (default=False), error messages are printed
-            when a breakout condition is met.
-            
-            Usage
-            _____
-            TODO: Update!
-            orbit = p2orbit(p,primary)
-            print(orbit.e) # gives the eccentricity
-            
-            orbit = p2orbit(p,primary,verbose=True) # will print out error msgs
-            
-            Parameters
-            __________
-            self     : (rebound.Particle) particle for which orbital elements are sought
-            primary  : (rebound.Particle) central body
-            verbose  : (boolean)          If set to True, will print out error msgs
-            
-            Returns
-            _______
-            A rebound.Orbit object (with member variables for the orbital elements)
-            """
-        if primary is None:
-            primary = rebound.module.particles[0]
+        Parameters
+        ----------
+        primary : rebound.Particle
+            Central body (Optional. Default uses Jacobi coordinates)
+        G : float
+            Gravitational constant (Optional. Default takes G from simulation in which particle is in)
+        
+        Returns
+        -------
+        A rebound.Orbit object 
+        """
+        if not self._sim:
+            # Particle not in a simulation
+            if primary is None:
+                raise ValueError("Particle does not belong to any simulation and no primary given. Cannot calculate orbit.")
+            if G is None:
+                raise ValueError("Particle does not belong to any simulation and G not given. Cannot calculate orbit.")
+            else:
+                G = c_double(G)
+        else:
+            # First check whether this is particles[0]
+            clibrebound.reb_get_particle_index.restype = c_int
+            index = clibrebound.reb_get_particle_index(byref(self)) # first check this isn't particles[0]
+            if index == 0:
+                raise ValueError("Orbital elements for particle[0] not implemented.")
 
-        o = Orbit()
-        if primary.m <= TINY:
-            if verbose is True:
-                print("Star has no mass.")
-            return o                            # all values set to None
+            if primary is None:    # Use default, i.e., Jacobi coordinates
+                clibrebound.reb_get_jacobi_com.restype = Particle   # now return jacobi center of mass
+                primary = clibrebound.reb_get_jacobi_com(byref(self))
+            G = c_double(self._sim.contents.G)
         
-        dx = self.x - primary.x
-        dy = self.y - primary.y
-        dz = self.z - primary.z
-        o.r = math.sqrt ( dx*dx + dy*dy + dz*dz )
-        if o.r <= TINY:
-            if verbose is True:
-                print('Particle and primary positions are the same.')
-            return o
-        
-        dvx = self.vx - primary.vx
-        dvy = self.vy - primary.vy
-        dvz = self.vz - primary.vz
-        v = math.sqrt ( dvx*dvx + dvy*dvy + dvz*dvz )
-        
-        mu = rebound.module.G*(self.m+primary.m)
-        o.a = -mu/( v*v - 2.*mu/o.r )               # semi major axis
-        
-        h0 = (dy*dvz - dz*dvy)                      # angular momentum vector
-        h1 = (dz*dvx - dx*dvz)
-        h2 = (dx*dvy - dy*dvx)
-        o.h = math.sqrt ( h0*h0 + h1*h1 + h2*h2 )   # abs value of angular momentum
-        if o.h/(o.r*v) <= MIN_REL_ERROR:
-            if verbose is True:
-                print('Particle orbit is radial.')
-            return o
-        
-        vr = (dx*dvx + dy*dvy + dz*dvz)/o.r
-        e0 = 1./mu*( (v*v-mu/o.r)*dx - o.r*vr*dvx )
-        e1 = 1./mu*( (v*v-mu/o.r)*dy - o.r*vr*dvy )
-        e2 = 1./mu*( (v*v-mu/o.r)*dz - o.r*vr*dvz )
-        o.e = math.sqrt( e0*e0 + e1*e1 + e2*e2 )   # eccentricity
-        
-        o.P = math.copysign(2.*math.pi*math.sqrt( math.fabs(o.a*o.a*o.a/mu) ), o.a)  # period
-        o.inc = math.acos( h2/o.h )               # inclination (wrt xy-plane)
-        # if pi/2<i<pi it's retrograde
-        n0 = -h1                                    # node vector
-        n1 =  h0                                    # in xy plane => no z component
-        n = math.sqrt( n0*n0 + n1*n1 )
-        er = dx*e0 + dy*e1 + dz*e2
-        if n/(o.r*v)<=MIN_REL_ERROR or o.inc<=MIN_REL_ERROR:# we are in the xy plane
-            o.Omega=0.
-            if o.e <= MIN_REL_ERROR:              # omega not defined for circular orbit
-                o.omega = 0.
-            else:
-                if e1>=0.:
-                    o.omega=math.acos(e0/o.e)
-                else:
-                    o.omega = 2.*math.pi-math.acos(e0/o.e)
-        else:
-            if o.e <= MIN_REL_ERROR:
-                o.omega = 0.
-            else:
-                if e2>=0.:                        # omega=0 if perictr at asc node
-                    o.omega=math.acos(( n0*e0 + n1*e1 )/(n*o.e))
-                else:
-                    o.omega=2.*math.pi-math.acos(( n0*e0 + n1*e1 )/(n*o.e))
-            if n1>=0.:
-                o.Omega = math.acos(n0/n)
-            else:
-                o.Omega=2.*math.pi-math.acos(n0/n)# Omega=longitude of asc node
-        # taken in xy plane from x axis
-        
-        if o.e<=MIN_REL_ERROR:                           # circular orbit
-            o.f=0.                                  # f has no meaning
-            o.l=0.
-        else:
-            cosf = er/(o.e*o.r)
-            cosea = (1.-o.r/o.a)/o.e
-            
-            if -1.<=cosf and cosf<=1.:                       # failsafe
-                o.f = math.acos(cosf)
-            else:
-                o.f = math.pi/2.*(1.-cosf)
-            
-            if -1.<=cosea and cosea<=1.:
-                ea  = math.acos(cosea)
-            else:
-                ea = math.pi/2.*(1.-cosea)
-            
-            if vr<0.:
-                o.f=2.*math.pi-o.f
-                ea =2.*math.pi-ea
-            
-            o.l = ea -o.e*math.sin(ea) + o.omega+ o.Omega  # mean longitude
-        
+        err = c_int()
+        clibrebound.reb_tools_particle_to_orbit_err.restype = rebound.Orbit
+        o = clibrebound.reb_tools_particle_to_orbit_err(G, self, primary, byref(err))
+
+        if err.value == 1:
+            raise ValueError("Primary has no mass.")
+        if err.value == 2:
+            raise ValueError("Particle and primary positions are the same.")
+
         return o
+    
+    # Simple operators for particles.
+
+    def __sub__(self, other):
+        if isinstance(other, Particle):
+            np = Particle()
+            np.x = self.x - other.x
+            np.y = self.y - other.y
+            np.z = self.z - other.z
+            np.vx = self.vx - other.vx
+            np.vy = self.vy - other.vy
+            np.vz = self.vz - other.vz
+            np.ax = self.ax - other.ax
+            np.ay = self.ay - other.ay
+            np.az = self.az - other.az
+            np.m = self.m - other.m
+            return np
+        return NotImplemented 
+    
+    def __add__(self, other):
+        if isinstance(other, Particle):
+            np = Particle()
+            np.x = self.x + other.x
+            np.y = self.y + other.y
+            np.z = self.z + other.z
+            np.vx = self.vx + other.vx
+            np.vy = self.vy + other.vy
+            np.vz = self.vz + other.vz
+            np.ax = self.ax + other.ax
+            np.ay = self.ay + other.ay
+            np.az = self.az + other.az
+            np.m = self.m + other.m
+            return np
+        return NotImplemented 
+    
+    def __mul__(self, other):
+        if isinstance(other, float):
+            np = Particle()
+            np.x  = other*self.x
+            np.y  = other*self.y
+            np.z  = other*self.z
+            np.vx = other*self.vx
+            np.vy = other*self.vy
+            np.vz = other*self.vz 
+            np.ax = other*self.ax
+            np.ay = other*self.ay
+            np.az = other*self.az 
+            np.m  = other*self.m 
+            return np
+        return NotImplemented 
+    
+    def __rmul__(self, other):
+        if isinstance(other, float):
+            np = Particle()
+            np.x  = other*self.x
+            np.y  = other*self.y
+            np.z  = other*self.z
+            np.vx = other*self.vx
+            np.vy = other*self.vy
+            np.vz = other*self.vz 
+            np.ax = other*self.ax
+            np.ay = other*self.ay
+            np.az = other*self.az 
+            np.m  = other*self.m 
+            return np
+        return NotImplemented 
+
+    def __truediv__(self, other):
+        return self.__div__(other)
+
+    def __div__(self, other):
+        if isinstance(other, float):
+            np = Particle()
+            np.x  = self.x / other
+            np.y  = self.y / other
+            np.z  = self.z / other
+            np.vx = self.vx/ other
+            np.vy = self.vy/ other
+            np.vz = self.vz/ other 
+            np.ax = self.ax/ other
+            np.ay = self.ay/ other
+            np.az = self.az/ other 
+            np.m  = self.m / other 
+            return np
+        return NotImplemented 
+
+    @property
+    def index(self):
+        clibrebound.reb_get_particle_index.restype = c_int
+        return clibrebound.reb_get_particle_index(byref(self)) 
+        
+    @property
+    def d(self):
+        return self.calculate_orbit().d
+    @property
+    def v(self):
+        return self.calculate_orbit().v 
+    @property
+    def h(self):
+        return self.calculate_orbit().h
+    @property
+    def P(self):
+        return self.calculate_orbit().P
+    @property
+    def n(self):
+        return self.calculate_orbit().n 
+    @property
+    def a(self):
+        return self.calculate_orbit().a 
+    @property
+    def e(self):
+        return self.calculate_orbit().e 
+    @property
+    def inc(self):
+        return self.calculate_orbit().inc 
+    @property
+    def Omega(self):
+        return self.calculate_orbit().Omega 
+    @property
+    def omega(self):
+        return self.calculate_orbit().omega 
+    @property
+    def pomega(self):
+        return self.calculate_orbit().pomega 
+    @property
+    def f(self):
+        return self.calculate_orbit().f 
+    @property
+    def M(self):
+        return self.calculate_orbit().M 
+    @property
+    def l(self):
+        return self.calculate_orbit().l 
+    @property
+    def theta(self):
+        return self.calculate_orbit().theta 
+    @property
+    def T(self):
+        return self.calculate_orbit().T
+    @property
+    def orbit(self):
+        return self.calculate_orbit()
 

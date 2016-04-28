@@ -1,41 +1,14 @@
 /**
- * @file 	problem.c
- * @brief 	Example problem: solar system.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail 	This example integrates all planets of the Solar
+ * Solar System
+ *
+ * This example integrates all planets of the Solar
  * System. The data comes from the NASA HORIZONS system. 
- * 
- * @section 	LICENSE
- * Copyright (c) 2015 Hanno Rein, Shangfei Liu, Dave Spiegel
- *
- * This file is part of rebound.
- *
- * rebound is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * rebound is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include <time.h>
-#include "main.h"
-#include "output.h"
-#include "tools.h"
-#include "particle.h"
-#include "boundaries.h"
-#include "integrator.h"
-#include "integrator_whfast.h"
+#include "rebound.h"
 
 double ss_pos[10][3] = 
 {
@@ -79,75 +52,45 @@ double ss_mass[10] =
 	1.4639248e+22,
 };
 
-double energy();
+void heartbeat(struct reb_simulation* r);
 double e_init;
+double tmax;
 
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]){
+	struct reb_simulation* r = reb_create_simulation();
 	// Setup constants
-	dt 		= 4;				// in days
-	tmax		= 7.3e10;			// 200 Myr
-	G		= 1.4880826e-34;		// in AU^3 / kg / day^2.
-	init_boxwidth(200); 				// Init box with width 200 astronomical units
-	integrator_whfast_synchronize_manually = 1;	// Need to call integrator_synchronize() before outputs. 
-	integrator_force_is_velocitydependent = 0;	// Force only depends on positions. 
-	//integrator	= WH;
-	integrator	= WHFAST;
-	//integrator	= IAS15;
+	r->dt 			= 4;				// in days
+	tmax			= 7.3e10;			// 200 Myr
+	r->G			= 1.4880826e-34;		// in AU^3 / kg / day^2.
+	r->ri_whfast.safe_mode 	= 0;		// Turn off safe mode. Need to call reb_integrator_synchronize() before outputs. 
+	r->ri_whfast.corrector 	= 11;		// 11th order symplectic corrector
+	r->integrator		= REB_INTEGRATOR_WHFAST;
+	r->heartbeat		= heartbeat;
+	r->exact_finish_time = 1; // Finish exactly at tmax in reb_integrate(). Default is already 1.
+	//r->integrator		= REB_INTEGRATOR_IAS15;		// Alternative non-symplectic integrator
 
 	// Initial conditions
 	for (int i=0;i<10;i++){
-		struct particle p;
+		struct reb_particle p = {0};
 		p.x  = ss_pos[i][0]; 		p.y  = ss_pos[i][1];	 	p.z  = ss_pos[i][2];
 		p.vx = ss_vel[i][0]; 		p.vy = ss_vel[i][1];	 	p.vz = ss_vel[i][2];
-		p.ax = 0; 			p.ay = 0; 			p.az = 0;
 		p.m  = ss_mass[i];
-		particles_add(p); 
+		reb_add(r, p); 
 	}
-	if (integrator==WH){
-		// Move to heliocentric frame (required by WH integrator)
-		for (int i=1;i<N;i++){
-			particles[i].x -= particles[0].x;	particles[i].y -= particles[0].y;	particles[i].z -= particles[0].z;
-			particles[i].vx -= particles[0].vx;	particles[i].vy -= particles[0].vy;	particles[i].vz -= particles[0].vz;
-		}
-		particles[0].x = 0;	particles[0].y = 0;	particles[0].z = 0;
-		particles[0].vx= 0;	particles[0].vy= 0;	particles[0].vz= 0;
-	}else{
-		tools_move_to_center_of_momentum();
-	}
-	//tools_megno_init(1e-16);
-	e_init = energy();
+	reb_move_to_com(r);
+	e_init = reb_tools_energy(r);
 	system("rm -f energy.txt");
-	system("rm -f pos.txt");
+	reb_integrate(r, tmax);
 }
 
-double energy(){
-	double e_kin = 0.;
-	double e_pot = 0.;
-	for (int i=0;i<N-N_megno;i++){
-		struct particle pi = particles[i];
-		e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
-		for (int j=i+1;j<N-N_megno;j++){
-			struct particle pj = particles[j];
-			double dx = pi.x - pj.x;
-			double dy = pi.y - pj.y;
-			double dz = pi.z - pj.z;
-			e_pot -= G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
-		}
-	}
-	return e_kin +e_pot;
-}
-
-void problem_output(){
-	if (output_check(10000.)){
-		output_timing();
-		integrator_synchronize();
+void heartbeat(struct reb_simulation* r){
+	if (reb_output_check(r, 10000.)){
+		reb_output_timing(r, tmax);
+		reb_integrator_synchronize(r);
 		FILE* f = fopen("energy.txt","a");
-		double e = energy();
-		fprintf(f,"%e %e %e\n",t, fabs((e-e_init)/e_init), tools_megno());
+		double e = reb_tools_energy(r);
+		fprintf(f,"%e %e\n",r->t, fabs((e-e_init)/e_init));
 		fclose(f);
-		printf("  Y = %.3f",tools_megno());
 	}
 }
 
-void problem_finish(){
-}

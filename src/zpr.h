@@ -39,13 +39,13 @@
 
 /* Mouse Manipulation API */
 
-void zprInit(void);
+void zprInit(double boxsize_max);
 extern GLfloat zprReferencePoint[4];
 
 /**
  * Reset the viewing angle, zooming scale.
  */
-void zprReset(void);
+void zprReset(double boxsize_max);
 
 
 /* Picking API (Optional) */

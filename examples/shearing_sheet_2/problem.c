@@ -1,9 +1,7 @@
 /**
- * @file 	problem.c
- * @brief 	Example problem: shearing sheet.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- * 		Akihiko Fujii <akihiko.fujii@nao.ac.jp>
- * @detail 	This example is identical to the shearing_sheet
+ * Shearing sheet (Akihiko Fujii)
+ *
+ * This example is identical to the shearing_sheet
  * example but uses a different algorithm for resolving individual 
  * collisions. In some cases, this might give more realistic results.
  * Particle properties resemble those found in Saturn's rings. 
@@ -12,109 +10,79 @@
  * overlap. This example also shows how to implement your own collision
  * routine. This is where one could add fragmentation, or merging of
  * particles.
- *
- * 
- * @section 	LICENSE
- * Copyright (c) 2014 Hanno Rein, Shangfei Liu, Akihiko Fujii
- *
- * This file is part of rebound.
- *
- * rebound is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * rebound is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include <time.h>
-#include <sys/time.h>
-#include "main.h"
-#include "particle.h"
-#include "boundaries.h"
-#include "collision_resolve.h"
-#include "output.h"
-#include "communication_mpi.h"
-#include "tree.h"
-#include "tools.h"
-#include "display.h"
-#include "integrator.h"
+#include "rebound.h"
 
-extern double OMEGA;
-extern double minimum_collision_velocity;
+int collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_collision c);
 
-extern double (*coefficient_of_restitution_for_velocity)(double); 
-double coefficient_of_restitution_bridges(double v); 
-void collision_resolve_hardsphere_pullaway(struct collision c);
+double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v);
+void heartbeat(struct reb_simulation* const r);
 
-extern double opening_angle2;
-
-void problem_init(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
+	struct reb_simulation* r = reb_create_simulation();
 	// Setup constants
-#ifdef GRAVITY_TREE
-	opening_angle2	= .5;
-#endif // GRAVITY_TREE
-	integrator			= SEI;
-	OMEGA 				= 0.00013143527;	// 1/s
-	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
-	softening 			= 0.1;			// m
-	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
-	root_nx = 2; root_ny = 2; root_nz = 1;
-	nghostx = 2; nghosty = 2; nghostz = 0; 			// Use two ghost rings
-	double surfacedensity 		= 840; 			// kg/m^2
-	double particle_density		= 900;			// kg/m^3
-	double particle_radius_min 	= 1.;			// m
-	double particle_radius_max 	= 1.;			// m
+	r->opening_angle2	= .5;					// This determines the precission of the tree code gravity calculation.
+	r->integrator			= REB_INTEGRATOR_SEI;
+	r->boundary			= REB_BOUNDARY_SHEAR;
+	r->gravity			= REB_GRAVITY_TREE;
+	r->collision			= REB_COLLISION_TREE;
+	double OMEGA 			= 0.00013143527;	// 1/s
+	r->ri_sei.OMEGA 		= OMEGA;
+	r->G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
+	r->softening 			= 0.1;			// m
+	r->dt 				= 1e-3*2.*M_PI/OMEGA;	// s
+	r->heartbeat			= heartbeat;	// function pointer for heartbeat
+	// This example uses two root boxes in the x and y direction. 
+	// Although not necessary in this case, it allows for the parallelization using MPI. 
+	// See Rein & Liu for a description of what a root box is in this context.
+	double surfacedensity 		= 400; 			// kg/m^2
+	double particle_density		= 400;			// kg/m^3
+	double particle_radius_min 	= 1;			// m
+	double particle_radius_max 	= 4;			// m
 	double particle_radius_slope 	= -3;	
-	boxsize 			= 40;			// m
+	double boxsize 			= 100;			// m
 	if (argc>1){						// Try to read boxsize from command line
 		boxsize = atof(argv[1]);
 	}
-	init_box();
+	reb_configure_box(r, boxsize, 2, 2, 1);
+	r->nghostx = 2;
+	r->nghosty = 2;
+	r->nghostz = 0;
 	
 	// Initial conditions
-	printf("Toomre wavelength: %f\n",4.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*G);
+	printf("Toomre wavelength: %f\n",4.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*r->G);
 	// Use Bridges et al coefficient of restitution.
-	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
-	// Change collision_resolve routing from default.
-	collision_resolve = collision_resolve_hardsphere_pullaway;
-	// Small residual velocity to avoid particles from sinking into each other.
-	minimum_collision_velocity = particle_radius_min*OMEGA*0.001;  // small fraction of the shear
-	double total_mass = surfacedensity*boxsize_x*boxsize_y;
+	r->coefficient_of_restitution = coefficient_of_restitution_bridges;
+	// When two particles collide and the relative velocity is zero, the might sink into each other in the next time step.
+	// By adding a small repulsive velocity to each collision, we prevent this from happening.
+	r->minimum_collision_velocity = particle_radius_min*OMEGA*0.001;  // small fraction of the shear accross a particle
+
+
+	// Add all ring paricles
+	double total_mass = surfacedensity*r->boxsize.x*r->boxsize.y;
 	double mass = 0;
 	while(mass<total_mass){
-		struct particle pt;
-		pt.x 		= tools_uniform(-boxsize_x/2.,boxsize_x/2.);
-		pt.y 		= tools_uniform(-boxsize_y/2.,boxsize_y/2.);
-		pt.z 		= tools_normal(1.);					// m
-		pt.vx 		= 0;
+		struct reb_particle pt = {0};
+		pt.x 		= reb_random_uniform(-r->boxsize.x/2.,r->boxsize.x/2.);
+		pt.y 		= reb_random_uniform(-r->boxsize.y/2.,r->boxsize.y/2.);
+		pt.z 		= reb_random_normal(1.);					// m
 		pt.vy 		= -1.5*pt.x*OMEGA;
-		pt.vz 		= 0;
-		pt.ax 		= 0;
-		pt.ay 		= 0;
-		pt.az 		= 0;
-		double radius 	= tools_powerlaw(particle_radius_min,particle_radius_max,particle_radius_slope);
-#ifndef COLLISIONS_NONE
+		double radius 	= reb_random_powerlaw(particle_radius_min,particle_radius_max,particle_radius_slope);
 		pt.r 		= radius;						// m
-#endif
 		double		particle_mass = particle_density*4./3.*M_PI*radius*radius*radius;
 		pt.m 		= particle_mass; 	// kg
-		particles_add(pt);
+		reb_add(r, pt);
 		mass += particle_mass;
 	}
+	reb_integrate(r, INFINITY);
 }
 
-double coefficient_of_restitution_bridges(double v){
+// This example is using a custom velocity dependend coefficient of restitution
+double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v){
 	// assumes v in units of [m/s]
 	double eps = 0.32*pow(fabs(v)*100.,-0.234);
 	if (eps>1) eps=1;
@@ -122,49 +90,26 @@ double coefficient_of_restitution_bridges(double v){
 	return eps;
 }
 
-void problem_output(){
-
-#ifdef LIBPNG
-	if (output_check(2.*1e-2*2.*M_PI/OMEGA)){
-		output_png("png/");
+void heartbeat(struct reb_simulation* const r){
+	if (reb_output_check(r, 1e-3*2.*M_PI/r->ri_sei.OMEGA)){
+		reb_output_timing(r, 0);
+		//reb_output_append_velocity_dispersion("veldisp.txt");
 	}
-#endif //LIBPNG
-	if (output_check(1e-3*2.*M_PI/OMEGA)){
-		output_timing();
-		//output_append_velocity_dispersion("veldisp.txt");
-	}
-	if (output_check(2.*M_PI/OMEGA)){
-		//output_ascii("position.txt");
+	if (reb_output_check(r, 2.*M_PI/r->ri_sei.OMEGA)){
+		//reb_output_ascii("position.txt");
 	}
 }
-
-void problem_finish(){
-}
-
 
 // Function written by Akihiko Fujii
-void collision_resolve_hardsphere_pullaway(struct collision c){
-#ifndef COLLISIONS_NONE
-	struct particle p1 = particles[c.p1];
-	struct particle p2;
-#ifdef MPI
-	int isloc = communication_mpi_rootbox_is_local(c.ri);
-	if (isloc==1){
-#endif // MPI
-		p2 = particles[c.p2];
-#ifdef MPI
-	}else{
-		int root_n_per_node = root_n/mpi_num;
-		int proc_id = c.ri/root_n_per_node;
-		p2 = particles_recv[proc_id][c.p2];
-	}
-#endif // MPI
-	//	if (p1.lastcollision==t || p2.lastcollision==t) return;
-	struct ghostbox gb = c.gb;
+int collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_collision c){
+	struct reb_particle* particles = r->particles;
+	struct reb_particle p1 = particles[c.p1];
+	struct reb_particle p2 = particles[c.p2];
+	struct reb_ghostbox gb = c.gb;
 	double x21  = p1.x + gb.shiftx  - p2.x; 
 	double y21  = p1.y + gb.shifty  - p2.y; 
 	double z21  = p1.z + gb.shiftz  - p2.z; 
-	double r = sqrt(x21*x21 + y21*y21 + z21*z21);
+	double _r = sqrt(x21*x21 + y21*y21 + z21*z21);
 	/* double r21 = sqrt(x21*x21 + y21*y21 + z21*z21); */
 	double rp   = p1.r+p2.r;
 	double oldvyouter;
@@ -175,13 +120,13 @@ void collision_resolve_hardsphere_pullaway(struct collision c){
 		oldvyouter = p2.vy;
 	}
 
-	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return;
+	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return 0;
 
 	double vx21 = p1.vx + gb.shiftvx - p2.vx; 
 	double vy21 = p1.vy + gb.shiftvy - p2.vy; 
 	double vz21 = p1.vz + gb.shiftvz - p2.vz; 
 
-	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return; // not approaching
+	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return 0; // not approaching
 
 	// Bring the to balls in the xy plane.
 	// NOTE: this could probabely be an atan (which is faster than atan2) 
@@ -199,29 +144,23 @@ void collision_resolve_hardsphere_pullaway(struct collision c){
 	double vy21nn = -sphi* vx21  + cphi * vy21n;
 
 	// Coefficient of restitution
-	double eps= coefficient_of_restitution_for_velocity(vx21nn);
+	double eps= r->coefficient_of_restitution(r, vx21nn);
 	double dvx2 = -(1.0+eps)*vx21nn;
-	double dvy2 = (r/rp-1.)*vy21nn;
+	double dvy2 = (_r/rp-1.)*vy21nn;
 
 	double minr = (p1.r>p2.r)?p2.r:p1.r;
 	double maxr = (p1.r<p2.r)?p2.r:p1.r;
-	double mindv= minr*minimum_collision_velocity;
-	mindv *= 1.-(r - maxr)/minr;
-	if (mindv>maxr*minimum_collision_velocity)mindv = maxr*minimum_collision_velocity;
+	double mindv= minr*r->minimum_collision_velocity;
+	mindv *= 1.-(_r - maxr)/minr;
+	if (mindv>maxr*r->minimum_collision_velocity)mindv = maxr*r->minimum_collision_velocity;
 	if (dvx2<mindv) dvx2 = mindv;
 
-	// added
-	double dxx2 = rp-r;
+	double dxx2 = rp-_r;
 	double dxx2n = cphi * dxx2;
 	double dxy2n = sphi * dxx2;
 	double dxy2nn = ctheta * dxy2n;
 	double dxz2nn = stheta * dxy2n;
 
-	// Now we are rotating backwards
-	/* double dvx2n = cphi * dvx2;	 */
-	/* double dvy2n = sphi * dvx2; */
-
-	// updated
 	double dvx2n = cphi * dvx2 - sphi * dvy2;
 	double dvy2n = sphi * dvx2 + cphi * dvy2;
 
@@ -229,35 +168,26 @@ void collision_resolve_hardsphere_pullaway(struct collision c){
 	double dvz2nn = stheta * dvy2n;
 
 	// Applying the changes to the particles.
-#ifdef MPI
-	if (isloc==1){
-#endif // MPI
+	const double p1pf = p1.m/(p1.m+p2.m);
+	const double p2pf = p2.m/(p1.m+p2.m);
+	particles[c.p2].vx -=	p1pf*dvx2n;
+	particles[c.p2].vy -=	p1pf*dvy2nn;
+	particles[c.p2].vz -=	p1pf*dvz2nn;
+	particles[c.p2].lastcollision = r->t;
+	particles[c.p2].x -=	p1pf*dxx2n;
+	particles[c.p2].y -=	p1pf*dxy2nn;
+	particles[c.p2].z -=	p1pf*dxz2nn;
 
-		const double p1pf = p1.m/(p1.m+p2.m);
-		const double p2pf = p2.m/(p1.m+p2.m);
-		particles[c.p2].vx -=	p1pf*dvx2n;
-		particles[c.p2].vy -=	p1pf*dvy2nn;
-		particles[c.p2].vz -=	p1pf*dvz2nn;
-		particles[c.p2].lastcollision = t;
 
-		// added
-		particles[c.p2].x -=	p1pf*dxx2n;
-		particles[c.p2].y -=	p1pf*dxy2nn;
-		particles[c.p2].z -=	p1pf*dxz2nn;
-#ifdef MPI
-	}
-#endif // MPI
 	particles[c.p1].vx +=	p2pf*dvx2n;
 	particles[c.p1].vy +=	p2pf*dvy2nn;
 	particles[c.p1].vz +=	p2pf*dvz2nn;
-
-	// added
 	particles[c.p1].x +=	p2pf*dxx2n; 
 	particles[c.p1].y +=	p2pf*dxy2nn; 
 	particles[c.p1].z +=	p2pf*dxz2nn; 
 
-	particles[c.p1].lastcollision = t;
+	particles[c.p1].lastcollision = r->t;
 
-#endif // COLLISIONS_NONE
+    return 0; // Do not remove any particle
 }
 

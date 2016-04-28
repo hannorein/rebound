@@ -1,13 +1,13 @@
 /**
- * @file 	integrator.c
+ * @file 	integrator_wh.c
  * @brief 	Wisdom-Holman integrator.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This file implements the Wisdom-Holman integration scheme.  
+ * @details	This file implements the Wisdom-Holman integration scheme.  
  * This scheme is second order accurate, symplectic and well suited for 
  * systems where there is one dominant mass and all particles are nearly on 
  * Keplerian orbits. Note that the scheme is formally only first order 
  * accurate when velocity dependent forces are present.
- * Particles should be sorted by increasing semi-major axis because the 
+ * reb_particles should be sorted by increasing semi-major axis because the 
  * integrator transforms the positions and velocities to Jacobi coordinates
  * during the timestep and assumes that the particles are sorted.
  * The code is based on SWIFT. 
@@ -42,77 +42,94 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include "rebound.h"
 #include "particle.h"
-#include "main.h"
 #include "gravity.h"
-#include "boundaries.h"
 #include "integrator.h"
 #include "integrator_wh.h"
 
-void drift_wh(double _dt);
-void drift_dan(struct particle* pv, double mu, double dt, int* iflag);
-void drift_kepu(double dt, double r0, double mu, double alpha, double u, double* fp, double* c1, double* c2, double* c3, int* iflag);
-void drift_kepu_guess(double dt0, double r0, double mu, double alpha, double u, double* s);
-void drift_kepu_p3solve(double dt0, double r0, double mu, double alpha, double u, double* s, int* iflag);
-void drift_kepu_new(double* s, double dt0, double r0, double mu, double alpha, double u, double* fp, double* c1, double* c2, double* c3, int* iflag);
-void drift_kepu_lag(double* s, double dt0, double r0, double mu, double alpha, double u, double* fp, double* c1, double* c2, double* c3, int* iflag);
-void drift_kepu_stumpff(double x, double* c0, double* c1, double* c2, double* c3);
-void drift_kepu_fchk(double dt0, double r0, double mu, double alpha, double u, double s, double* f);
-void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* c);
-void integrator_wh_aj(void);
-void integrator_wh_ah(void);
-void integrator_wh_to_jacobi(void);
-void integrator_wh_from_jacobi(void);
+static void reb_drift_wh(struct reb_particle* const particles, const double G, double _dt, const int N, const int N_active);
+static void reb_drift_dan(struct reb_particle* pv, double mu, double dt, int* iflag);
+static void reb_drift_kepu(double dt, double r0, double mu, double alpha, double u, double* fp, double* c1, double* c2, double* c3, int* iflag);
+static void reb_drift_kepu_guess(double dt0, double r0, double mu, double alpha, double u, double* s);
+static void reb_drift_kepu_p3solve(double dt0, double r0, double mu, double alpha, double u, double* s, int* iflag);
+static void reb_drift_kepu_new(double* s, double dt0, double r0, double mu, double alpha, double u, double* fp, double* c1, double* c2, double* c3, int* iflag);
+static void reb_drift_kepu_lag(double* s, double dt0, double r0, double mu, double alpha, double u, double* fp, double* c1, double* c2, double* c3, int* iflag);
+static void reb_drift_kepu_stumpff(double x, double* c0, double* c1, double* c2, double* c3);
+static void reb_drift_kepu_fchk(double dt0, double r0, double mu, double alpha, double u, double s, double* f);
+static void reb_drift_kepmd(double dm, double es, double ec, double* x, double* s, double* c);
+static void reb_integrator_wh_aj(struct reb_particle* const particles, const double G, const int N, const int N_active);
+static void reb_integrator_wh_ah(struct reb_particle* const particles, const double G, const int N, const int N_active);
+static void reb_integrator_wh_to_jacobi(struct reb_particle* const particles, const double* const eta, const int N, const int N_active);
+static void reb_integrator_wh_from_jacobi(struct reb_particle* const particles, const double* const eta, const int N, const int N_active);
 
-int _N_active;
-int integrator_wh_N = 0;
-static double* eta;
+#define DANBYB 1.e-13	///< Close to smallest relative floating point number
 
-void integrator_wh_part1(void){
-	_N_active = (N_active==-1)?N:N_active;
-	if (_N_active!=integrator_wh_N){
-		eta = realloc(eta,sizeof(double)*_N_active);
-		integrator_wh_N = _N_active;
+void reb_integrator_wh_part1(struct reb_simulation* r){
+	const int N = r->N;
+	const int N_active = r->N_active;
+	struct reb_particle* const particles = r->particles;
+	int _N_active = (N_active==-1)?N:N_active;
+	if (_N_active!=r->ri_wh.allocatedN){
+		r->ri_wh.eta = realloc(r->ri_wh.eta,sizeof(double)*_N_active);
+		r->ri_wh.allocatedN = _N_active;
 	}
 	// DRIFT
+	double* const eta = r->ri_wh.eta;
 	eta[0] = particles[0].m;
 	for(int i=1;i<_N_active;i++){
 	  eta[i] = eta[i-1] + particles[i].m;
 	}
-	integrator_wh_to_jacobi();
-	drift_wh(dt/2.);
-	integrator_wh_from_jacobi();
-	t+=dt/2.;
+	reb_integrator_wh_to_jacobi(particles, eta, N, N_active);
+	reb_drift_wh(particles, r->G, r->dt/2., N, N_active);
+	reb_integrator_wh_from_jacobi(particles, eta, N, N_active);
+	r->t+=r->dt/2.;
 }
 
-void integrator_wh_part2(void){
+void reb_integrator_wh_part2(struct reb_simulation* r){
+	const int N = r->N;
+	const int N_active = r->N_active;
+	struct reb_particle* const particles = r->particles;
+	const double* const eta = r->ri_wh.eta;
 	// KICK
-	_N_active = (N_active==-1)?N:N_active;
 	// Calculate terms in Heliocentric coordinates
-	integrator_wh_ah();
-	integrator_wh_to_jacobi();
+	reb_integrator_wh_ah(particles, r->G, N, N_active);
+	reb_integrator_wh_to_jacobi(particles, eta, N, N_active);
 	// Calculate terms in Jacobi coordinates
-	integrator_wh_aj();
-	integrator_wh_from_jacobi();
+	reb_integrator_wh_aj(particles, r->G, N, N_active);
+	reb_integrator_wh_from_jacobi(particles, eta, N, N_active);
 	for (int i=1;i<N;i++){
-		particles[i].vx += dt*particles[i].ax;
-		particles[i].vy += dt*particles[i].ay;
-		particles[i].vz += dt*particles[i].az;
+		particles[i].vx += r->dt*particles[i].ax;
+		particles[i].vy += r->dt*particles[i].ay;
+		particles[i].vz += r->dt*particles[i].az;
 	}
 	// DRIFT
-	integrator_wh_to_jacobi();
-	drift_wh(dt/2.);
-	integrator_wh_from_jacobi();
-	t+=dt/2.;
+	reb_integrator_wh_to_jacobi(particles, eta, N, N_active);
+	reb_drift_wh(particles, r->G, r->dt/2., N, N_active);
+	reb_integrator_wh_from_jacobi(particles, eta, N, N_active);
+	r->t+=r->dt/2.;
+	r->dt_last_done = r->dt;
 }
 
-int wh_check_normal(struct particle* p){
+void reb_integrator_wh_synchronize(struct reb_simulation* r){
+	// Do nothing.
+}
+void reb_integrator_wh_reset(struct reb_simulation* r){
+	free(r->ri_wh.eta);
+	r->ri_wh.allocatedN = 0;
+}
+
+
+// Only static routines below
+
+static int wh_check_normal(struct reb_particle* p){
 	if (isnan(p->vx) || isnan(p->vy)) return 1;
 	if (isinf(p->vx) || isinf(p->vy)) return 2;
 	return 0;
 }
 
-void integrator_wh_to_jacobi(void){
+static void reb_integrator_wh_to_jacobi(struct reb_particle* const particles, const double* const eta, const int N, const int N_active){
+	int _N_active = (N_active==-1)?N:N_active;
 
 	double sumx  = particles[1].m * particles[1].x;
 	double sumy  = particles[1].m * particles[1].y;
@@ -129,7 +146,7 @@ void integrator_wh_to_jacobi(void){
 	double capvz = sumvz/eta[1];
 
 	for (int i=2;i<_N_active;i++){
-		struct particle p = particles[i];
+		struct reb_particle p = particles[i];
 		sumx  += p.m*p.x;
 		sumy  += p.m*p.y;
 		sumz  += p.m*p.z;
@@ -153,7 +170,8 @@ void integrator_wh_to_jacobi(void){
 	}
 }
 
-void integrator_wh_from_jacobi(void){
+static void reb_integrator_wh_from_jacobi(struct reb_particle* const particles, const double* const eta, const int N, const int N_active){
+	int _N_active = (N_active==-1)?N:N_active;
 	double sumx  = particles[1].m*particles[1].x /eta[1];
 	double sumy  = particles[1].m*particles[1].y /eta[1];
 	double sumz  = particles[1].m*particles[1].z /eta[1];
@@ -162,7 +180,7 @@ void integrator_wh_from_jacobi(void){
 	double sumvz = particles[1].m*particles[1].vz/eta[1];
 
 	for(int i=2;i<_N_active;i++){
-		struct particle p = particles[i];
+		struct reb_particle p = particles[i];
 
 		particles[i].x  += sumx;
 		particles[i].y  += sumy;
@@ -181,14 +199,15 @@ void integrator_wh_from_jacobi(void){
 }
 
 // Assumes positions in heliocentric coordinates
-void integrator_wh_ah(void){
+static void reb_integrator_wh_ah(struct reb_particle* const particles, const double G, const int N, const int N_active){
+	int _N_active = (N_active==-1)?N:N_active;
 	// Massive particles
 	double mass0 = particles[0].m;
 	double axh0 = 0.0;
 	double ayh0 = 0.0;
 	double azh0 = 0.0;
 	for(int i=2;i<_N_active;i++){
-		struct particle p = particles[i];
+		struct reb_particle p = particles[i];
 		double r = sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
 		double ir3h = 1./(r*r*r);
 		double fac = G*p.m*ir3h;
@@ -197,7 +216,7 @@ void integrator_wh_ah(void){
 		azh0 -= fac*p.z;
 	}
 	for(int i=1;i<_N_active;i++){
-		struct particle* p = &(particles[i]);
+		struct reb_particle* p = &(particles[i]);
 		double r = sqrt(p->x*p->x + p->y*p->y + p->z*p->z);
 		double ir3h = 1./(r*r*r);
 		if (i==1) ir3h=0.;
@@ -207,7 +226,7 @@ void integrator_wh_ah(void){
 		p->az += azh0 - G*mass0*p->z*ir3h;
 	}
 	// Test particles
-	struct particle p = particles[1];
+	struct reb_particle p = particles[1];
 	double r = sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
 	double ir3h = 1./(r*r*r);
 	double fac = G*p.m*ir3h;
@@ -217,7 +236,7 @@ void integrator_wh_ah(void){
 
 #pragma omp parallel for schedule(guided)
 	for(int i=_N_active;i<N;i++){
-		struct particle* pt = &(particles[i]);
+		struct reb_particle* pt = &(particles[i]);
 
 		pt->ax += axh0;
 		pt->ay += ayh0;
@@ -226,7 +245,8 @@ void integrator_wh_ah(void){
 }
 
 // Assumes position in Jacobi coordinates
-void integrator_wh_aj(void){
+static void reb_integrator_wh_aj(struct reb_particle* const particles, const double G, const int N, const int N_active){
+	int _N_active = (N_active==-1)?N:N_active;
 	// Massive particles (No need to calculate this for test particles)
 	double mass0 = particles[0].m;
 	double etaj = mass0;
@@ -234,7 +254,7 @@ void integrator_wh_aj(void){
 	double ayh2 = 0;
 	double azh2 = 0;
 	for(int i=2;i<_N_active;i++){
-		struct particle* p = &(particles[i]);
+		struct reb_particle* p = &(particles[i]);
 		double rj = sqrt(p->x*p->x + p->y*p->y + p->z*p->z);
 		double ir3j = 1./(rj*rj*rj);
 		
@@ -251,15 +271,15 @@ void integrator_wh_aj(void){
 }
 
 /**
- * This function integrates the Keplerian motion of all particles.
- * @param _dt Timestep.
+ * @brief This function integrates the Keplerian motion of all particles.
  */
-void drift_wh(double _dt){
+static void reb_drift_wh(struct reb_particle* const particles, const double G, double _dt, const int N, const int N_active){
+	int _N_active = (N_active==-1)?N:N_active;
 	double mass0 = particles[0].m;
 	double etajm1 = mass0;
 	// Massive particles
 	for (int i=1;i<_N_active;i++){
-		struct particle* p = &(particles[i]);
+		struct reb_particle* p = &(particles[i]);
 		double etaj = etajm1 + p->m;
 		double mu = G*mass0*etaj/etajm1;
 		if (wh_check_normal(p)!=0){
@@ -267,10 +287,10 @@ void drift_wh(double _dt){
 			continue;
 		}
 		int iflag = 0;
-		drift_dan(p,mu,_dt,&iflag);
+		reb_drift_dan(p,mu,_dt,&iflag);
 		if (iflag != 0){ // Try again with 10 times smaller timestep.
 			for (int j=0;j<10;j++){
-				drift_dan(p,mu,_dt/10.,&iflag);
+				reb_drift_dan(p,mu,_dt/10.,&iflag);
 				if (iflag != 0) break;
 			}
 		}
@@ -279,20 +299,20 @@ void drift_wh(double _dt){
 	// Testparticles
 #pragma omp parallel for schedule(guided)
 	for (int i=_N_active;i<N;i++){
-		struct particle* p = &(particles[i]);
+		struct reb_particle* p = &(particles[i]);
 		if (wh_check_normal(p)!=0) continue;
 		int iflag = 0;
-		drift_dan(p,G*mass0,_dt,&iflag);
+		reb_drift_dan(p,G*mass0,_dt,&iflag);
 		if (iflag != 0){ // Try again with 10 times smaller timestep.
 			for (int j=0;j<10;j++){
-				drift_dan(p,G*mass0,_dt/10.,&iflag);
+				reb_drift_dan(p,G*mass0,_dt/10.,&iflag);
 				if (iflag != 0) break;
 			}
 		}
 	}
 }
 
-void drift_dan(struct particle* pv, double mu, double dt0, int* iflag){
+static void reb_drift_dan(struct reb_particle* pv, double mu, double dt0, int* iflag){
 	double dt1 = dt0;
 	double x0 = pv->x;
 	double y0 = pv->y;
@@ -317,9 +337,8 @@ void drift_dan(struct particle* pv, double mu, double dt0, int* iflag){
 		dt1 = dm/en;
 		if ((esq*dm*dm < 0.0016) && !(dm*dm > 0.16 || esq > 0.36) ){
 			double s, c, xkep;
-			drift_kepmd(dm,es,ec,&xkep,&s,&c);
+			reb_drift_kepmd(dm,es,ec,&xkep,&s,&c);
 			double fchk = (xkep - ec*s + es*(1.-c) - dm);
-#define DANBYB 1.e-13
 			if (fchk*fchk > DANBYB){
 				*iflag =1;
 				return;
@@ -347,7 +366,7 @@ void drift_dan(struct particle* pv, double mu, double dt0, int* iflag){
 	double c2;
 	double c3;
 	double fp;
-	drift_kepu(dt1,r0,mu,alpha,u,&fp,&c1,&c2,&c3,iflag);
+	reb_drift_kepu(dt1,r0,mu,alpha,u,&fp,&c1,&c2,&c3,iflag);
 	if (*iflag==0){
 		double f = 1.0 - (mu/r0)*c2;
 		double g = dt1 - mu*c3;
@@ -365,26 +384,26 @@ void drift_dan(struct particle* pv, double mu, double dt0, int* iflag){
 }
 
 
-void drift_kepu(double dt0, double r0, double mu, double alpha, double u,
+static void reb_drift_kepu(double dt0, double r0, double mu, double alpha, double u,
 		double* fp, double* c1, double* c2, double* c3, int* iflag){
 	// iflag == 0 if converged
 	double s, st;
-	drift_kepu_guess(dt0, r0, mu, alpha, u, &s);
+	reb_drift_kepu_guess(dt0, r0, mu, alpha, u, &s);
 	st = s;
-	drift_kepu_new(&s,dt0,r0,mu,alpha,u,fp,c1,c2,c3,iflag);
+	reb_drift_kepu_new(&s,dt0,r0,mu,alpha,u,fp,c1,c2,c3,iflag);
 	if (*iflag!=0){
 		// fall back
 		double fo,fn;
-		drift_kepu_fchk(dt0,r0,mu,alpha,u,st,&fo);
-		drift_kepu_fchk(dt0,r0,mu,alpha,u,s, &fn);
+		reb_drift_kepu_fchk(dt0,r0,mu,alpha,u,st,&fo);
+		reb_drift_kepu_fchk(dt0,r0,mu,alpha,u,s, &fn);
 		if (fabs(fo)<fabs(fn)){
 			s = st;
 		}
-		drift_kepu_lag(&s,dt0,r0,mu,alpha,u,fp,c1,c2,c3,iflag);
+		reb_drift_kepu_lag(&s,dt0,r0,mu,alpha,u,fp,c1,c2,c3,iflag);
 	}
 }
 
-void drift_kepu_guess(double dt0, double r0, double mu, double alpha, double u, double* s){
+static void reb_drift_kepu_guess(double dt0, double r0, double mu, double alpha, double u, double* s){
 	if (alpha > 0.){
 		// elliptic motion
 		if ((dt0/r0) <= 0.4){
@@ -406,14 +425,14 @@ void drift_kepu_guess(double dt0, double r0, double mu, double alpha, double u, 
 	}else{
 		// hyperbolic
 		int iflag=0;
-		drift_kepu_p3solve(dt0,r0,mu,alpha,u,s,&iflag);
+		reb_drift_kepu_p3solve(dt0,r0,mu,alpha,u,s,&iflag);
 		if (iflag!=0){
 			*s = dt0/r0;
 		}
 	}
 }
 
-void drift_kepu_p3solve(double dt0, double r0, double mu, double alpha, double u, double* s, int* iflag){
+static void reb_drift_kepu_p3solve(double dt0, double r0, double mu, double alpha, double u, double* s, int* iflag){
 	double denom = (mu - alpha*r0)/6.;
 	double a2 = 0.5*u/denom;
 	double a1 = r0/denom;
@@ -443,12 +462,12 @@ void drift_kepu_p3solve(double dt0, double r0, double mu, double alpha, double u
 	}
 }
 
-void drift_kepu_new(double* s, double dt0, double r0, double mu, double alpha, double u, double* fp, double* c1, double* c2, double* c3, int* iflag){
+static void reb_drift_kepu_new(double* s, double dt0, double r0, double mu, double alpha, double u, double* fp, double* c1, double* c2, double* c3, int* iflag){
 	int nc;
 	for (nc=0;nc<6;nc++){
 		double x = (*s)*(*s)*alpha;
 		double c0;
-		drift_kepu_stumpff(x,&c0,c1,c2,c3);
+		reb_drift_kepu_stumpff(x,&c0,c1,c2,c3);
 		*c1 = (*c1) * (*s);
 		*c2 = (*c2) * (*s) * (*s);
 		*c3 = (*c3) * (*s) * (*s) * (*s);
@@ -470,7 +489,7 @@ void drift_kepu_new(double* s, double dt0, double r0, double mu, double alpha, d
 	*iflag = 1;
 }
 
-void drift_kepu_stumpff(double x, double* c0, double* c1, double* c2, double* c3){
+static void reb_drift_kepu_stumpff(double x, double* c0, double* c1, double* c2, double* c3){
 	int n = 0;
 	double xm = 0.1;
 	while(fabs(x)>= xm){
@@ -491,17 +510,17 @@ void drift_kepu_stumpff(double x, double* c0, double* c1, double* c2, double* c3
 	}
 }
 
-void drift_kepu_fchk(double dt0, double r0, double mu, double alpha, double u, double s, double* f){
+static void reb_drift_kepu_fchk(double dt0, double r0, double mu, double alpha, double u, double s, double* f){
 	double x = s*s*alpha;
 	double c0, c1, c2, c3;
-	drift_kepu_stumpff(x,&c0,&c1,&c2,&c3);
+	reb_drift_kepu_stumpff(x,&c0,&c1,&c2,&c3);
 	c1 = c1 *s;
 	c2 = c2 *s*s;
 	c3 = c3 *s*s*s;
 	*f = r0*c1 + u*c2 + mu*c3 - dt0;
 }
 
-void drift_kepu_lag(double* s, double dt0, double r0, double mu, double alpha, double u, double* fp, double* c1, double* c2, double* c3, int* iflag){
+static void reb_drift_kepu_lag(double* s, double dt0, double r0, double mu, double alpha, double u, double* fp, double* c1, double* c2, double* c3, int* iflag){
 	int ncmax = 400;
 	double ln = 5.;
 	
@@ -509,7 +528,7 @@ void drift_kepu_lag(double* s, double dt0, double r0, double mu, double alpha, d
 	for (nc=0;nc<=ncmax;nc++){
 		double x = (*s)*(*s)*alpha;
 		double c0;
-		drift_kepu_stumpff(x,&c0,c1,c2,c3);
+		reb_drift_kepu_stumpff(x,&c0,c1,c2,c3);
 		*c1 = (*c1)*(*s);
 		*c2 = (*c2)*(*s)*(*s);
 		*c3 = (*c3)*(*s)*(*s)*(*s);
@@ -528,7 +547,7 @@ void drift_kepu_lag(double* s, double dt0, double r0, double mu, double alpha, d
 	*iflag = 2;
 }
 
-void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* c){
+static void reb_drift_kepmd(double dm, double es, double ec, double* x, double* s, double* c){
 	const double A0 = 39916800.;
 	const double A1 = 6652800.;
 	const double A2 = 332640.;
@@ -557,9 +576,4 @@ void drift_kepmd(double dm, double es, double ec, double* x, double* s, double* 
 	*s = (*x)*(A0-y*(A1-y*(A2-y*(A3-y*(A4-y)))))/A0;
 	*c = sqrt(1. - (*s)*(*s));
 }
-void integrator_wh_synchronize(void){
-	// Do nothing.
-}
-void integrator_wh_reset(void){
-	// Do nothing.
-}
+

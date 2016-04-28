@@ -24,8 +24,8 @@
  */
 #ifndef _INTEGRATOR_HYBRID_H
 #define _INTEGRATOR_HYBRID_H
-void integrator_hybrid_part1(void);
-void integrator_hybrid_part2(void);
-void integrator_hybrid_synchronize(void);
-void integrator_hybrid_reset(void);
+void reb_integrator_hybrid_part1(struct reb_simulation* r);          	///< Internal function used to call a specific integrator
+void reb_integrator_hybrid_part2(struct reb_simulation* r);             ///< Internal function used to call a specific integrator
+void reb_integrator_hybrid_synchronize(struct reb_simulation* r);       ///< Internal function used to call a specific integrator
+void reb_integrator_hybrid_reset(struct reb_simulation* r);             ///< Internal function used to call a specific integrator
 #endif

@@ -3,11 +3,10 @@
  * @brief 	Realtime OpenGL visualization.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @details 	These functions provide real time visualizations
- * using OpenGL. Screenshots can be saved with the output_png() routine.
- * Tested under Mac OSX Snow Leopard and Linux. 
+ * using OpenGL. 
  * 
  * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ * Copyright (c) 2015 Hanno Rein, Shangfei Liu
  *
  * This file is part of rebound.
  *
@@ -26,221 +25,89 @@
  *
  */
 #ifdef OPENGL
-#ifdef MPI
-#error OpenGL is not compatible with MPI.
-#endif //MPI
+#define DEG2RAD (M_PI/180.)
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <semaphore.h>
 #ifdef _APPLE
 #include <GLUT/glut.h>
 #else // _APPLE
 #include <GL/glut.h>
 #endif // _APPLE
+#include "rebound.h"
 #include "tools.h"
 #include "zpr.h"
-#include "main.h"
 #include "particle.h"
-#include "boundaries.h"
-#include "tree.h"
+#include "boundary.h"
 #include "display.h"
 #include "output.h"
 #include "integrator.h"
+#define WINWIDTH 700
+#define WINHEIGHT 700
 
+
+struct reb_display_config {
+	int spheres;	/**< Switches between point sprite and real spheres. */
+	int pause;	/**< Pauses visualization, but keep simulation running */
+	int wire;	/**< Shows/hides orbit wires. */
+	int onscreentext;	/**< Shows/hides onscreen text. */
+	int clear;	/**< Toggles clearing the display on each draw. */
+	int ghostboxes;	/**< Shows/hides ghost boxes. */
+	int reference;	/**< reb_particle used as a reference for centering. */
+	struct reb_simulation* r;	/**< Simulation to render */
+	sem_t* mutex;			/**< Mutex to guarantee non-flickering */
 #ifdef _APPLE
-GLuint display_dlist_sphere;	/**< Precalculated display list of a sphere. */
+	GLuint dlist_sphere;		/**< Precalculated display list of a sphere. */
 #endif // APPLE
-#ifndef COLLISIONS_NONE
-int display_spheres = 1;	/**< Switches between point sprite and real spheres. */
-#else // COLLISIONS_NONE
-int display_spheres = 0;	/**< Switches between point sprite and real spheres. */
-#endif // COLLISIONS_NONE
-int display_init_done = 0;	
-int display_pause_sim = 0;	/**< Pauses simulation. */
-int display_pause = 0;		/**< Pauses visualization, but keep simulation running */
-int display_tree = 0;		/**< Shows/hides tree structure. */
-int display_mass = 0;		/**< Shows/hides centre of mass in tree structure. */
-int display_wire = 0;		/**< Shows/hides orbit wires. */
-int display_clear = 1;		/**< Toggles clearing the display on each draw. */
-int display_ghostboxes = 0;	/**< Shows/hides ghost boxes. */
-int display_reference = -1;	/**< Particle used as a reference for rotation. */
-double display_rotate_x = 0;	/**< Rotate everything around the x-axis. */
-double display_rotate_z = 0;	/**< Rotate everything around the z-axis. */
-#define DEG2RAD (M_PI/180.)
+};
 
-/**
- * This function is called when the user presses a key. 
- * @param key Character pressed.
- * @param x Position on screen.
- * @param y Position on screen.
- */
-void displayKey(unsigned char key, int x, int y){
-	switch(key){
-		case 'q': case 'Q':
-			printf("\nProgram ends.\n");
-			exit(0);
-			break;
-		case ' ':
-			display_pause_sim=!display_pause_sim;
-			if (display_pause_sim){
-				printf("Pause.\n");
-				glutIdleFunc(NULL);
-			}else{
-				printf("Resume.\n");
-				glutIdleFunc(iterate);
-			}
-			break;
-		case 's': case 'S':
-			display_spheres = !display_spheres;
-			break;
-		case 'g': case 'G':
-			display_ghostboxes = !display_ghostboxes;
-			break;
-		case 'r': case 'R':
-			zprReset();
-			break;
-		case 't': case 'T':
-			display_mass = 0;
-			display_tree = !display_tree;
-			break;
-		case 'd': case 'D':
-			display_pause = !display_pause;
-			break;
-		case 'm': case 'M':
-			display_mass = !display_mass;
-			break;
-		case 'w': case 'W':
-			display_wire = !display_wire;
-			break;
-		case 'c': case 'C':
-			display_clear = !display_clear;
-			break;
-		case 'x': 
-			display_reference++;
-			if (display_reference>N) display_reference = -1;
-			printf("Reference particle: %d.\n",display_reference);
-			break;
-		case 'X': 
-			display_reference--;
-			if (display_reference<-1) display_reference = N-1;
-			printf("Reference particle: %d.\n",display_reference);
-			break;
-		case 'p': case 'P':
-#ifdef LIBPNG
-			output_png_single("screenshot.png");
-			printf("\nScreenshot saved as 'screenshot.png'.\n");
-#else 	// LIBPNG
-			printf("\nNeed LIBPNG to save screenshot.\n");
-#endif 	// LIBPNG
-			break;
-	}
-	display();
-}
+struct reb_display_config reb_dc;
 
-#ifdef TREE
-/**
- * Draws a cell and all its daughters.
- * @param node Cell to draw.
- */
-void display_cell(struct cell* node){
-	if (node == NULL) return;
-#ifdef GRAVITY_TREE
-	glColor4f(1.0,0.5,1.0,0.4);
-	glTranslatef(node->mx,node->my,node->mz);
-	glScalef(0.04*node->w,0.04*node->w,0.04*node->w);
-	if (display_mass) {
+void reb_display_exit(struct reb_display_config* dc){
+	dc->r = NULL;
 #ifdef _APPLE
-		glCallList(display_dlist_sphere);
-#else
-		glutSolidSphere(1,40,10);
-#endif
-	}
-	glScalef(25./node->w,25./node->w,25./node->w);
-	glTranslatef(-node->mx,-node->my,-node->mz);
-#endif
-	glColor4f(1.0,0.0,0.0,0.4);
-	glTranslatef(node->x,node->y,node->z);
-	glutWireCube(node->w);
-	glTranslatef(-node->x,-node->y,-node->z);
-	for (int i=0;i<8;i++) {
-		display_cell(node->oct[i]);
-	}
+	glDeleteLists(dc->dlist_sphere,1);
+#endif // _APPLE
+	printf("Exiting vizualization.\n");
+	exit(0);
 }
 
-/**
- * Draws the entire tree structure.
- */
-void display_entire_tree(void){
-	for(int i=0;i<root_n;i++){
-		display_cell(tree_root[i]);
+void reb_display_timer(int value){
+	if (reb_dc.r->status>=0){
+		reb_display_exit(&reb_dc);
+	}else{
+		glutPostRedisplay();
 	}
+	glutTimerFunc(20,reb_display_timer,0); // 50 Hz refresh rate.
 }
-#endif
 
-void display(void){
-	if (display_pause) return;
-#ifdef TREE
-	if (display_tree){
-		tree_update();
-#ifdef GRAVITY_TREE
-		tree_update_gravity_data();
-#endif
+void reb_display(void){
+	if (reb_dc.pause){
+		return;
 	}
-#endif
-	if (display_clear){
+	sem_wait(reb_dc.mutex);	
+	const struct reb_particle* particles = reb_dc.r->particles;
+	
+	if (reb_dc.clear){
 	        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	}
-	if (!display_wire) {
-	if (display_spheres){
-		glDisable(GL_BLEND);                    
-		glDepthMask(GL_TRUE);
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_LIGHTING);
-		glEnable(GL_LIGHT0);
-		GLfloat lightpos[] = {0, boxsize_max, boxsize_max, 0.f};
-		glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
-	}else{
-		glEnable(GL_BLEND);                    
-		glDepthMask(GL_FALSE);
-		glDisable(GL_DEPTH_TEST);
-		glDisable(GL_LIGHTING);
-		glDisable(GL_LIGHT0);
-	}
-	}
 	glEnable(GL_POINT_SMOOTH);
-	glVertexPointer(3, GL_DOUBLE, sizeof(struct particle), particles);
+	glVertexPointer(3, GL_DOUBLE, sizeof(struct reb_particle), particles);
 	//int _N_active = ((N_active==-1)?N:N_active);
-	if (display_reference>=0){
-		glTranslatef(-particles[display_reference].x,-particles[display_reference].y,-particles[display_reference].z);
+	if (reb_dc.reference>=0){
+		glTranslatef(-particles[reb_dc.reference].x,-particles[reb_dc.reference].y,-particles[reb_dc.reference].z);
 	}
-	glRotatef(display_rotate_x,1,0,0);
-	glRotatef(display_rotate_z,0,0,1);
-	for (int i=-display_ghostboxes*nghostx;i<=display_ghostboxes*nghostx;i++){
-	for (int j=-display_ghostboxes*nghosty;j<=display_ghostboxes*nghosty;j++){
-	for (int k=-display_ghostboxes*nghostz;k<=display_ghostboxes*nghostz;k++){
-		struct ghostbox gb = boundaries_get_ghostbox(i,j,k);
+	for (int i=-reb_dc.ghostboxes*reb_dc.r->nghostx;i<=reb_dc.ghostboxes*reb_dc.r->nghostx;i++){
+	for (int j=-reb_dc.ghostboxes*reb_dc.r->nghosty;j<=reb_dc.ghostboxes*reb_dc.r->nghosty;j++){
+	for (int k=-reb_dc.ghostboxes*reb_dc.r->nghostz;k<=reb_dc.ghostboxes*reb_dc.r->nghostz;k++){
+		struct reb_ghostbox gb = reb_boundary_get_ghostbox(reb_dc.r, i,j,k);
 		glTranslatef(gb.shiftx,gb.shifty,gb.shiftz);
-		if (!(!display_clear&&display_wire)){
-			if (display_spheres){
-				// Drawing Spheres
-				glColor4f(1.0,1.0,1.0,1.0);
-#ifndef COLLISIONS_NONE
-				for (int i=0;i<N-N_megno;i++){
-					struct particle p = particles[i];
-					glTranslatef(p.x,p.y,p.z);
-					glScalef(p.r,p.r,p.r);
-#ifdef _APPLE
-					glCallList(display_dlist_sphere);
-#else //_APPLE
-					glutSolidSphere(1,40,10);
-#endif //_APPLE
-					glScalef(1./p.r,1./p.r,1./p.r);
-					glTranslatef(-p.x,-p.y,-p.z);
-				}
-#endif // COLLISIONS_NONE
-			}else{
+		if (!(!reb_dc.clear&&reb_dc.wire)){
+			if (reb_dc.spheres==0 || reb_dc.spheres==2){
 				// Drawing Points
 				glEnableClientState(GL_VERTEX_ARRAY);
 				glPointSize(3.);
@@ -248,20 +115,48 @@ void display(void){
 				//glDrawArrays(GL_POINTS, _N_active, N-_N_active);
 				glColor4f(1.0,1.0,0.0,0.9);
 				glPointSize(5.);
-				glDrawArrays(GL_POINTS, 0, N-N_megno);
+				glDrawArrays(GL_POINTS, 0, reb_dc.r->N-reb_dc.r->N_var);
 				glDisableClientState(GL_VERTEX_ARRAY);
+			}
+			if (reb_dc.spheres){
+				glDisable(GL_BLEND);                    
+				glEnable(GL_DEPTH_TEST);
+				glEnable(GL_LIGHTING);
+				glEnable(GL_LIGHT0);
+				GLfloat lightpos[] = {0, reb_dc.r->boxsize_max, reb_dc.r->boxsize_max, 0.f};
+				glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
+				// Drawing Spheres
+				glColor4f(1.0,1.0,1.0,1.0);
+				for (int i=0;i<reb_dc.r->N-reb_dc.r->N_var;i++){
+					struct reb_particle p = particles[i];
+					if (p.r>0){
+						glTranslatef(p.x,p.y,p.z);
+						glScalef(p.r,p.r,p.r);
+#ifdef _APPLE
+						glCallList(reb_dc.dlist_sphere);
+#else //_APPLE
+						glutSolidSphere(1,40,10);
+#endif //_APPLE
+						glScalef(1./p.r,1./p.r,1./p.r);
+						glTranslatef(-p.x,-p.y,-p.z);
+					}
+				}
+				glEnable(GL_BLEND);                    
+				glDisable(GL_DEPTH_TEST);
+				glDisable(GL_LIGHTING);
+				glDisable(GL_LIGHT0);
 			}
 		}
 		// Drawing wires
-		if (display_wire){
-			if(integrator!=SEI){
+		if (reb_dc.wire){
+			if(reb_dc.r->integrator!=REB_INTEGRATOR_SEI){
 				double radius = 0;
-				struct particle com = particles[0];
-				for (int i=1;i<N-N_megno;i++){
-					struct particle p = particles[i];
-					if (N_active>0){
+				struct reb_particle com = particles[0];
+				for (int i=1;i<reb_dc.r->N-reb_dc.r->N_var;i++){
+					struct reb_particle p = particles[i];
+					if (reb_dc.r->N_active>0){
 						// Different colors for active/test particles
-						if (i>=N_active){
+						if (i>=reb_dc.r->N_active){
 							glColor4f(0.9,1.0,0.9,0.9);
 						}else{
 							glColor4f(1.0,0.9,0.0,0.9);
@@ -274,7 +169,12 @@ void display(void){
 							glColor4f(0.0,0.0,1.0,0.9);
 						}
 					}
-					struct orbit o = tools_p2orbit(p,com);
+					//if (reb_dc.r->integrator==REB_INTEGRATOR_WHFAST && reb_dc.r->ri_whfast.is_synchronized==0){
+					//	double m = p.m;
+					//	p = reb_dc.r->ri_whfast.p_j[i];
+					//	p.m = m;
+					//}
+					struct reb_orbit o = reb_tools_particle_to_orbit(reb_dc.r->G, p,com);
 					glPushMatrix();
 					
 					glTranslatef(com.x,com.y,com.z);
@@ -290,62 +190,165 @@ void display(void){
 					}
 					glEnd();
 					glPopMatrix();
-					com = tools_get_center_of_mass(p,com);
+					com = reb_get_com_of_pair(p,com);
 				}
 			}else{
-				for (int i=1;i<N;i++){
-					struct particle p = particles[i];
+				for (int i=1;i<reb_dc.r->N;i++){
+					struct reb_particle p = particles[i];
 					glBegin(GL_LINE_LOOP);
-					for (double _t=-100.*dt;_t<=100.*dt;_t+=20.*dt){
-						double frac = 1.-fabs(_t/(120.*dt));
-						glColor4f(1.0,(_t+100.*dt)/(200.*dt),0.0,frac);
+					for (double _t=-100.*reb_dc.r->dt;_t<=100.*reb_dc.r->dt;_t+=20.*reb_dc.r->dt){
+						double frac = 1.-fabs(_t/(120.*reb_dc.r->dt));
+						glColor4f(1.0,(_t+100.*reb_dc.r->dt)/(200.*reb_dc.r->dt),0.0,frac);
 						glVertex3f(p.x+p.vx*_t, p.y+p.vy*_t, p.z+p.vz*_t);
 					}
 					glEnd();
 				}
 			}
 		}
-		// Drawing Tree
-		glColor4f(1.0,0.0,0.0,0.4);
-#ifdef TREE
-		if (display_tree){
-			glColor4f(1.0,0.0,0.0,0.4);
-			display_entire_tree();
-		}
-#endif // TREE
 		glTranslatef(-gb.shiftx,-gb.shifty,-gb.shiftz);
 	}
 	}
 	}
 	glColor4f(1.0,0.0,0.0,0.4);
-	glScalef(boxsize_x,boxsize_y,boxsize_z);
-	glutWireCube(1);
-	glScalef(1./boxsize_x,1./boxsize_y,1./boxsize_z);
-	glRotatef(-display_rotate_z,0,0,1);
-	glRotatef(-display_rotate_x,1,0,0);
-	if (display_reference>=0){
-		glTranslatef(particles[display_reference].x,particles[display_reference].y,particles[display_reference].z);
+	glScalef(reb_dc.r->boxsize.x,reb_dc.r->boxsize.y,reb_dc.r->boxsize.z);
+	if (reb_dc.r->boundary == REB_BOUNDARY_NONE){
+		glBegin(GL_LINES);
+		glVertex3f(0,0,0.04);
+		glVertex3f(0,0,-0.04);
+		glVertex3f(0,0.04,0);
+		glVertex3f(0,-0.04,0);
+		glVertex3f(0.04,0,0);
+		glVertex3f(-0.04,0,0);
+		glEnd();
+
+	}else{
+		glutWireCube(1);
 	}
-	glutSwapBuffers();
+	glScalef(1./reb_dc.r->boxsize.x,1./reb_dc.r->boxsize.y,1./reb_dc.r->boxsize.z);
+	if (reb_dc.reference>=0){
+		glTranslatef(particles[reb_dc.reference].x,particles[reb_dc.reference].y,particles[reb_dc.reference].z);
+	}
+	
+    if (reb_dc.onscreentext){
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix(); // save
+        glLoadIdentity();// and clear
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+        glColor4f(1.0,1.0,1.0,0.5);
+        glRasterPos2f(-0.98,-0.98);
+        
+        char str[4096] = "\0";
+        sprintf(str, "REBOUND");
+        if (reb_dc.r->status == REB_RUNNING){
+            sprintf(str, "%s (running)  ", str);
+        }else if (reb_dc.r->status == REB_RUNNING_PAUSED){
+            sprintf(str, "%s (paused)   ", str);
+        }
+        sprintf(str, "%s  N_tot= %d  ",str, reb_dc.r->N);
+        if (reb_dc.r->integrator==REB_INTEGRATOR_SEI){
+            sprintf(str, "%st= %f [orb]  ",str, reb_dc.r->t*reb_dc.r->ri_sei.OMEGA/2./M_PI);
+        }else{
+            sprintf(str, "%st= %f  ",str, reb_dc.r->t);
+        }
+        sprintf(str,"%sdt= %f  ",str,reb_dc.r->dt);
+        if (reb_dc.r->integrator==REB_INTEGRATOR_HYBRID){
+            sprintf(str, "%s INT= %- 1d  ", str, reb_dc.r->ri_hybrid.mode);
+        }
+        
+        const char* p = str;
+        do glutBitmapCharacter(GLUT_BITMAP_8_BY_13, *p); while(*(++p));
+        
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix(); // revert back to the matrix
+        glMatrixMode(GL_MODELVIEW );
+        glPopMatrix();
+    }
+
+	glFlush();
+	sem_post(reb_dc.mutex);	
 }
 
-void display_init(int argc, char* argv[]){
+void reb_display_keyboard(unsigned char key, int x, int y){
+	switch(key){
+		case 'q': case 'Q':
+			reb_dc.r->status = REB_EXIT_USER;
+			reb_display_exit(&reb_dc);
+			break;
+		case ' ':
+			if (reb_dc.r->status == REB_RUNNING_PAUSED){
+				printf("Resume.\n");
+				reb_dc.r->status = REB_RUNNING;
+			}else{
+				printf("Pause.\n");
+				reb_dc.r->status = REB_RUNNING_PAUSED;
+			}
+			break;
+		case 's': case 'S':
+			reb_dc.spheres = (reb_dc.spheres+1)%3;
+			break;
+		case 'g': case 'G':
+			reb_dc.ghostboxes = !reb_dc.ghostboxes;
+			break;
+		case 'r': case 'R':
+			zprReset(reb_dc.r->boxsize_max);
+			break;
+		case 'd': case 'D':
+			reb_dc.pause = !reb_dc.pause;
+			break;
+		case 'w': case 'W':
+			reb_dc.wire = !reb_dc.wire;
+			break;
+		case 't': case 'T':
+			reb_dc.onscreentext = !reb_dc.onscreentext;
+			break;
+		case 'c': case 'C':
+			reb_dc.clear = !reb_dc.clear;
+			break;
+		case 'x': 
+			reb_dc.reference++;
+			if (reb_dc.reference>reb_dc.r->N) reb_dc.reference = -1;
+			printf("Reference particle: %d.\n",reb_dc.reference);
+			break;
+		case 'X': 
+			reb_dc.reference--;
+			if (reb_dc.reference<-1) reb_dc.reference = reb_dc.r->N-1;
+			printf("Reference particle: %d.\n",reb_dc.reference);
+			break;
+	}
+	reb_display();
+}
+
+
+void reb_display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* mutex){
+	reb_dc.r 			= r;
+	reb_dc.mutex 		= mutex;
+	// Default parameters
+	reb_dc.spheres 		= 2; 
+	reb_dc.pause 		= 0; 
+	reb_dc.wire 		= 0; 
+	reb_dc.onscreentext = 1; 
+	reb_dc.clear 		= 1; 
+	reb_dc.ghostboxes 	= 0; 
+	reb_dc.reference 	= -1;
+
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
-	glutInitWindowSize(700,700);
+	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH );
+	glutInitWindowSize(WINWIDTH,WINHEIGHT);
 	glutCreateWindow("rebound");
-	zprInit();
-	glutDisplayFunc(display);
-	glutIdleFunc(iterate);
-	glutKeyboardFunc(displayKey);
+	zprInit(reb_dc.r->boxsize_max);
+	glutDisplayFunc(reb_display);
+	glutKeyboardFunc(reb_display_keyboard);
+	glDepthMask(GL_TRUE);
 	glEnable(GL_BLEND);                    
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);  
 	
 	// Sphere
 #ifdef _APPLE
-	display_dlist_sphere = glGenLists(1);
+	reb_dc.dlist_sphere = glGenLists(1);
 	GLUquadricObj *sphere;
-	glNewList(display_dlist_sphere, GL_COMPILE);
+	glNewList(reb_dc.dlist_sphere, GL_COMPILE);
 	sphere = gluNewQuadric();
 	gluSphere(sphere, 1.f, 20, 20);
 	gluDeleteQuadric(sphere);
@@ -372,8 +375,8 @@ void display_init(int argc, char* argv[]){
 	glMaterialfv(GL_FRONT, GL_SPECULAR, sphere_spec);
 	glMaterialf(GL_FRONT, GL_SHININESS, 80);
 
+	glutTimerFunc(100,reb_display_timer,0);
 	// Enter glut run loop and never come back.
-	display_init_done =1; 
 	glutMainLoop();
 }
 

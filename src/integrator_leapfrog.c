@@ -2,7 +2,7 @@
  * @file 	integrator.c
  * @brief 	Leap-frog integration scheme.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This file implements the leap-frog integration scheme.  
+ * @details	This file implements the leap-frog integration scheme.  
  * This scheme is second order accurate, symplectic and well suited for 
  * non-rotating coordinate systems. Note that the scheme is formally only
  * first order accurate when velocity dependent forces are present.
@@ -32,24 +32,26 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
-#include "particle.h"
-#include "main.h"
-#include "gravity.h"
-#include "boundaries.h"
-#include "integrator.h"
+#include "rebound.h"
 
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
-void integrator_leapfrog_part1(void){
+void reb_integrator_leapfrog_part1(struct reb_simulation* r){
+	const int N = r->N;
+	struct reb_particle* restrict const particles = r->particles;
+	const double dt = r->dt;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		particles[i].x  += 0.5* dt * particles[i].vx;
 		particles[i].y  += 0.5* dt * particles[i].vy;
 		particles[i].z  += 0.5* dt * particles[i].vz;
 	}
-	t+=dt/2.;
+	r->t+=dt/2.;
 }
-void integrator_leapfrog_part2(void){
+void reb_integrator_leapfrog_part2(struct reb_simulation* r){
+	const int N = r->N;
+	struct reb_particle* restrict const particles = r->particles;
+	const double dt = r->dt;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		particles[i].vx += dt * particles[i].ax;
@@ -59,13 +61,14 @@ void integrator_leapfrog_part2(void){
 		particles[i].y  += 0.5* dt * particles[i].vy;
 		particles[i].z  += 0.5* dt * particles[i].vz;
 	}
-	t+=dt/2.;
+	r->t+=dt/2.;
+	r->dt_last_done = r->dt;
 }
 	
-void integrator_leapfrog_synchronize(void){
+void reb_integrator_leapfrog_synchronize(struct reb_simulation* r){
 	// Do nothing.
 }
 
-void integrator_leapfrog_reset(void){
+void reb_integrator_leapfrog_reset(struct reb_simulation* r){
 	// Do nothing.
 }

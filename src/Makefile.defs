@@ -1,0 +1,55 @@
+OPT+= -std=c99 -Wpointer-arith -D_GNU_SOURCE -O3 -march=native
+ifndef OS
+	OS=$(shell uname)
+endif
+ifeq ($(OS), Linux)
+	OPT+= -Wall -g
+	LIB+= -lm -lrt
+endif
+ifeq ($(OS), Darwin)
+	OPT+= -I/usr/local/include -Wall -Wno-deprecated -g
+	PREDEF+= -D_APPLE
+	LIB+= -L/usr/local/lib
+endif
+
+ifeq ($(MPI), 1)
+	CC?=mpicc
+	PREDEF+= -DMPI
+else
+	CC?=cc
+endif
+
+ifeq ($(FFTW), 1)
+	PREDEF+= -DFFTW
+	LIB+= -lfftw3
+endif
+
+ifeq ($(OPENGL), 1)
+PREDEF+= -DOPENGL
+ifeq ($(OS), Darwin)
+	LIB+= -framework OpenGL -framework GLUT
+else
+	LIB+= -lGL -lGLU -lglut 
+endif
+endif
+
+ifeq ($(QUADRUPOLE), 1)
+	PREDEF+= -DQUADRUPOLE
+endif
+
+ifeq ($(PROFILING), 1)
+	PREDEF+= -DPROFILING
+endif
+
+ifeq ($(OPENMP), 1)
+	PREDEF+= -DOPENMP
+ifeq ($(CC), icc)
+	OPT+= -openmp
+	LIB+= -openmp
+else
+	OPT+= -fopenmp
+	LIB+= -fopenmp
+endif
+else
+	OPT+= -Wno-unknown-pragmas
+endif

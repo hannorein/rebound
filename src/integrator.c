@@ -2,7 +2,7 @@
  * @file 	integrator.c
  * @brief 	Integration schemes.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This file implements the leap-frog integration scheme.  
+ * @details	This file implements the leap-frog integration scheme.  
  * This scheme is second order accurate, symplectic and well suited for 
  * non-rotating coordinate systems. Note that the scheme is formally only
  * first order accurate when velocity dependent forces are present.
@@ -32,9 +32,8 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
-#include "main.h"
+#include "rebound.h"
 #include "gravity.h"
-#include "problem.h"
 #include "output.h"
 #include "integrator.h"
 #include "integrator_whfast.h"
@@ -44,105 +43,102 @@
 #include "integrator_wh.h"
 #include "integrator_hybrid.h"
 
-integrator_t integrator = IAS15;
-unsigned int integrator_force_is_velocitydependent = 0;
-
-void integrator_part1(void){
-	switch(integrator){
-		case IAS15:
-			integrator_ias15_part1();
+void reb_integrator_part1(struct reb_simulation* r){
+	switch(r->integrator){
+		case REB_INTEGRATOR_IAS15:
+			reb_integrator_ias15_part1(r);
 			break;
-		case WH:
-			integrator_wh_part1();
+		case REB_INTEGRATOR_WH:
+			reb_integrator_wh_part1(r);
 			break;
-		case LEAPFROG:
-			integrator_leapfrog_part1();
+		case REB_INTEGRATOR_LEAPFROG:
+			reb_integrator_leapfrog_part1(r);
 			break;
-		case SEI:
-			integrator_sei_part1();
+		case REB_INTEGRATOR_SEI:
+			reb_integrator_sei_part1(r);
 			break;
-		case WHFAST:
-			integrator_whfast_part1();
+		case REB_INTEGRATOR_WHFAST:
+			reb_integrator_whfast_part1(r);
 			break;
-		case HYBRID:
-			integrator_hybrid_part1();
+		case REB_INTEGRATOR_HYBRID:
+			reb_integrator_hybrid_part1(r);
 			break;
 		default:
 			break;
 	}
 }
 
-void integrator_part2(void){
-	switch(integrator){
-		case IAS15:
-			integrator_ias15_part2();
+void reb_integrator_part2(struct reb_simulation* r){
+	switch(r->integrator){
+		case REB_INTEGRATOR_IAS15:
+			reb_integrator_ias15_part2(r);
 			break;
-		case WH:
-			integrator_wh_part2();
+		case REB_INTEGRATOR_WH:
+			reb_integrator_wh_part2(r);
 			break;
-		case LEAPFROG:
-			integrator_leapfrog_part2();
+		case REB_INTEGRATOR_LEAPFROG:
+			reb_integrator_leapfrog_part2(r);
 			break;
-		case SEI:
-			integrator_sei_part2();
+		case REB_INTEGRATOR_SEI:
+			reb_integrator_sei_part2(r);
 			break;
-		case WHFAST:
-			integrator_whfast_part2();
+		case REB_INTEGRATOR_WHFAST:
+			reb_integrator_whfast_part2(r);
 			break;
-		case HYBRID:
-			integrator_hybrid_part2();
+		case REB_INTEGRATOR_HYBRID:
+			reb_integrator_hybrid_part2(r);
 			break;
 		default:
 			break;
 	}
 }
 	
-void integrator_synchronize(void){
-	switch(integrator){
-		case IAS15:
-			integrator_ias15_synchronize();
+void reb_integrator_synchronize(struct reb_simulation* r){
+	switch(r->integrator){
+		case REB_INTEGRATOR_IAS15:
+			reb_integrator_ias15_synchronize(r);
 			break;
-		case WH:
-			integrator_wh_synchronize();
+		case REB_INTEGRATOR_WH:
+			reb_integrator_wh_synchronize(r);
 			break;
-		case LEAPFROG:
-			integrator_leapfrog_synchronize();
+		case REB_INTEGRATOR_LEAPFROG:
+			reb_integrator_leapfrog_synchronize(r);
 			break;
-		case SEI:
-			integrator_sei_synchronize();
+		case REB_INTEGRATOR_SEI:
+			reb_integrator_sei_synchronize(r);
 			break;
-		case WHFAST:
-			integrator_whfast_synchronize();
+		case REB_INTEGRATOR_WHFAST:
+			reb_integrator_whfast_synchronize(r);
 			break;
-		case HYBRID:
-			integrator_hybrid_synchronize();
+		case REB_INTEGRATOR_HYBRID:
+			reb_integrator_hybrid_synchronize(r);
 			break;
 		default:
 			break;
 	}
 }
 
-void integrator_reset(void){
-	integrator = IAS15;
-	gravity_ignore_10 = 0;
-	integrator_force_is_velocitydependent = 0;
-	integrator_ias15_reset();
-	integrator_wh_reset();
-	integrator_leapfrog_reset();
-	integrator_sei_reset();
-	integrator_whfast_reset();
-	integrator_hybrid_reset();
+void reb_integrator_reset(struct reb_simulation* r){
+	r->integrator = REB_INTEGRATOR_IAS15;
+	r->gravity_ignore_10 = 0;
+	reb_integrator_ias15_reset(r);
+	reb_integrator_wh_reset(r);
+	reb_integrator_leapfrog_reset(r);
+	reb_integrator_sei_reset(r);
+	reb_integrator_whfast_reset(r);
+	reb_integrator_hybrid_reset(r);
 }
 
-void integrator_update_acceleration(void){
+void reb_update_acceleration(struct reb_simulation* r){
+	// This should probably go elsewhere
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 	PROFILING_START()
-	gravity_calculate_acceleration();
-	if (N_megno){
-		gravity_calculate_variational_acceleration();
+	reb_calculate_acceleration(r);
+	if (r->N_var){
+		reb_calculate_acceleration_var(r);
 	}
-	if (problem_additional_forces) problem_additional_forces();
-	if (problem_additional_forces_with_parameters) problem_additional_forces_with_parameters(particles,t,dt,G,N,N_megno);
+	if (r->additional_forces) r->additional_forces(r);
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 	PROFILING_START()
 }
+

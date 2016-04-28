@@ -1,6 +1,6 @@
 /**
  * @file 	particle.h
- * @brief 	Particle structure and main particle routines.
+ * @brief 	reb_particle structure and main particle routines.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
@@ -24,6 +24,7 @@
  */
 #ifndef _PARTICLE_H
 #define _PARTICLE_H
+<<<<<<< HEAD
 
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
 struct cell;
@@ -88,17 +89,17 @@ void particles_add_fixed(struct particle pt,int pos);
  * @param pt Particle to be added.
  */
 void particles_add_local(struct particle pt);
+=======
+struct reb_simulation;
+struct reb_particle;
+struct reb_treecell;
+>>>>>>> cc0076f9ccfdaded3d1682a2aa31b2ff67dd9020
 
 /**
- * Returns the index of the rootbox for the current particles based on its position.
+ * @brief Returns the index of the rootbox for the current particles based on its position.
+ * @param r REBOUND simulation to be considered
+ * @param pt reb_particle to be checked.
  * @return Index of the rootbox.
- * @param pt Particle to be checked.
  */
-int particles_get_rootbox_for_particle(struct particle pt);
-
-/**
- * Remove all particles
- */
-void particles_remove_all(void);
-
+int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt);
 #endif // _PARTICLE_H

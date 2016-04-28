@@ -24,65 +24,31 @@
  */
 #ifndef _INTEGRATOR_H
 #define _INTEGRATOR_H
+struct reb_simulation;
 
-/*
- * Available integrator.
- */
-typedef enum {
-	IAS15 = 0,
-	WHFAST = 1,
-	SEI = 2,
-	WH = 3,
-	LEAPFROG = 4,
-	HYBRID = 5,
-	NONE = 6,
-	} integrator_t;
-/*
- * Variable setting the current integrator.
- */
-extern integrator_t integrator;
-
-
-/*
- * The first half of the integrator step.
- * This function is called at the beginning of the timestep. It 
+/**
+ * @brief The first half of the integrator step.
+ * @details This function is called at the beginning of the timestep. It 
  * advances the positions by 1/2 timestep.
  */
-void integrator_part1(void);
-/*
- * The second half of the integrator step.
- * This function is called after gravitational (and non-gravitational) 
+void reb_integrator_part1(struct reb_simulation* r);
+
+/**
+ * @brief The second half of the integrator step.
+ * @details This function is called after gravitational (and non-gravitational) 
  * forces for each particle have been calculated. It advances the 
  * velocity by 1 timestep and the positions by 1/2 timestep.
  * At the end of this function, the positions and velocities are in
  * sync which is needed for collision detection.
  */
-void integrator_part2(void);
- 
-
-/* 
- * Flag determining if the integrator needs to consider velocity 
- * dependent forces. 
- * Default is 0.
- **/ 
-extern unsigned int integrator_force_is_velocitydependent;
+void reb_integrator_part2(struct reb_simulation* r);
 
 
-/*
- * Synchronize particles manually at end of timestep.
+/** 
+ * @brief This function updates the acceleration on all particles. 
+ * @details It uses the current position and velocity data in the 
+ * (struct reb_particle*) particles structure.
  */
-void integrator_synchronize(void);
-
-/* 
- * Cleanup all temporarily stored values.
- **/
-void integrator_reset(void);
-
-/* This function updates the acceleration on all particles. 
- * It uses the current position and velocity data in the 
- * (struct particle*) particles structure.
- * Note: this does currently not work with MPI or any TREE module.
- */
-void integrator_update_acceleration(void);
+void reb_update_acceleration(struct reb_simulation* r);
 
 #endif

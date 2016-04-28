@@ -25,17 +25,17 @@
 
 #ifndef _TREE_H
 #define _TREE_H
-#if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
-#define TREE
 
-struct cell; /**< The data structure of one node of a tree */
+struct reb_treecell; 
 
-struct cell {
+/**
+ * @brief The data structure of one node of a tree 
+ */
+struct reb_treecell {
 	double x; /**< The x position of the center of a cell */
 	double y; /**< The y position of the center of a cell */
 	double z; /**< The z position of the center of a cell */
 	double w; /**< The width of a cell */
-#ifdef GRAVITY_TREE
 	double m; /**< The total mass of a cell */
 	double mx; /**< The x position of the center of mass of a cell */
 	double my; /**< The y position of the center of mass of a cell */
@@ -48,59 +48,53 @@ struct cell {
 	double myz; /**< The yz component of the quadrupole tensor of mass of a cell */
 	double mzz; /**< The zz component of the quadrupole tensor of mass of a cell */
 #endif // QUADRUPOLE
-#endif // GRAVITY_TREE
-	struct cell *oct[8]; /**< The pointer array to the octants of a cell */
-	int pt;	/**< It has double usages: in a leaf node, it stores the index 
+	struct reb_treecell *oct[8]; /**< The pointer array to the octants of a cell */
+	int pt;		/**< It has double usages: in a leaf node, it stores the index 
 			  * of a particle; in a non-leaf node, it equals to (-1)*Total 
 			  * Number of particles within that cell. */ 
 };
 
-extern struct cell** tree_root; /**< A public pointer to the roots of the trees. */
+/**
+  * @brief This function updates the tree.
+  * @details The tree needs to be updated when particles move, this function does that.
+  * @param r Rebound simulation to operate on
+  */
+void reb_tree_update(struct reb_simulation* const r);
 
 /**
-  * The wrap function corresponds to initializing the trees when they don't exist and updating the structures of the trees by calling tree_update_cell. 
+  * @brief The wrap function calls reb_tree_update_gravity_data_in_cell() for each tree.
+  * @param r Rebound simulation to operate on
   */
-void tree_update(void);
-
-#ifdef GRAVITY_TREE
-/**
-  * The wrap function calls tree_update_gravity_data_in_cell() to for each tree.
-  */
-void tree_update_gravity_data(void);
-#endif // GRAVITY_TREE
+void reb_tree_update_gravity_data(struct reb_simulation* const r);
 
 /**
-  * The wrap function calls tree_add_particle_to_cell() to add the particle into one of the trees. If the tree_root doesn't exist, then it initializes the trees. 
-  *
-  * @param pt is the index of a particle.
+  * @brief The wrap function calls reb_tree_add_particle_to_cell() to add the particle into one of the trees. If the tree_root doesn't exist, then it initializes the tree. 
+  * @param r Rebound simulation to operate on
+  * @param pt Index of a particle.
   */
-void tree_add_particle_to_tree(int pt);
+void reb_tree_add_particle_to_tree(struct reb_simulation* const r, int pt);
+
+/**
+ * @brief Free up all space occupied by the tree structure.
+ * This will not modify particles.
+  * @param r Rebound simulation to operate on
+ */
+void reb_tree_delete(struct reb_simulation* const r);
 
 #ifdef MPI
 /**
-  * Needs more comments!
-  *
+  * @brief MPI related function used to calculate gravity from nearby nodes
   * @param node is a pointer to a node cell.
   */
-void tree_add_essential_node(struct cell* node);
-#ifdef GRAVITY_TREE
+void reb_tree_add_essential_node(struct reb_simulation* const r, struct reb_treecell* node);
 /**
-  * Needs more comments!
+  * @brief MPI related function used to calculate gravity from nearby nodes
   */
-void tree_prepare_essential_tree_for_gravity(void);
-#endif //GRAVITY_TREE
-#ifdef COLLISIONS_TREE
+void reb_tree_prepare_essential_tree_for_gravity(struct reb_simulation* const r);
 /**
-  * Needs more comments!
+  * @brief MPI related function used to calculate gravity from nearby nodes
   */
-void tree_prepare_essential_tree_for_collisions(void);
-#endif //COLLISIONS_TREE
+void reb_tree_prepare_essential_tree_for_collisions(struct reb_simulation* const r);
 #endif // MPI
 
-/**
- * Particle between 0 and N_tree_fixed will not be shuffled around during tree-reconstruction.
- */
-extern int N_tree_fixed;
-
-#endif // TREE
 #endif // _TREE_H

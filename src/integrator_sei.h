@@ -24,13 +24,8 @@
  */
 #ifndef _INTEGRATOR_SEI_H
 #define _INTEGRATOR_SEI_H
-void integrator_sei_part1(void);
-void integrator_sei_part2(void);
-void integrator_sei_synchronize(void);
-void integrator_sei_reset(void);
-
-/* 
- * Epicyclic/orbital frequency. 
- */
-extern double OMEGA;
+void reb_integrator_sei_part1(struct reb_simulation* r);       ///< Internal function used to call a specific integrator
+void reb_integrator_sei_part2(struct reb_simulation* r);       ///< Internal function used to call a specific integrator
+void reb_integrator_sei_synchronize(struct reb_simulation* r); ///< Internal function used to call a specific integrator
+void reb_integrator_sei_reset(struct reb_simulation* r);       ///< Internal function used to call a specific integrator
 #endif

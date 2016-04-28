@@ -24,8 +24,8 @@
  */
 #ifndef _INTEGRATOR_WH_H
 #define _INTEGRATOR_WH_H
-void integrator_wh_part1(void);
-void integrator_wh_part2(void);
-void integrator_wh_synchronize(void);
-void integrator_wh_reset(void);
+void reb_integrator_wh_part1(struct reb_simulation* r);         ///< Internal function used to call a specific integrator
+void reb_integrator_wh_part2(struct reb_simulation* r);         ///< Internal function used to call a specific integrator
+void reb_integrator_wh_synchronize(struct reb_simulation* r);   ///< Internal function used to call a specific integrator
+void reb_integrator_wh_reset(struct reb_simulation* r);         ///< Internal function used to call a specific integrator
 #endif

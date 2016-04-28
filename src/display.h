@@ -24,22 +24,16 @@
  */
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
+#include <semaphore.h>
 
+struct reb_simulation;
 /**
- * This routine is called by the glut run loop or manually, whenever the screen has to be redrawn 
- */
-void display(void);
-
-/**
- * This function initializes OpenGL and starts the run loop. It will never return.
+ * @brief This function initializes OpenGL and starts the run loop. It will never return.
  * @param argc Number of command line arguments.
  * @param argv Command line arguments.
+ * @param r REBOUND simulation to be visualised.
+ * @param mutex Semaphore to lock the REBOUND simulation structure
  */
-void display_init(int argc, char* argv[]);
+void reb_display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* mutex);
 
-extern int display_init_done;	/**< Is set to one when the display is initialized and can be drawn. This prevents errors when output_png() is called, but display not initialized yet. */
-#ifdef OPENGL
-extern double display_rotate_x;	/**< Rotate everything around the x-axis. */
-extern double display_rotate_z;	/**< Rotate everything around the z-axis. */
-#endif  // OPENGL
 #endif

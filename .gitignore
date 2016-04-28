@@ -4,10 +4,6 @@
 *.pdf
 *.bin
 nbody
-gravity.c
-boundaries.c
-collisions.c
-src/problem.c
 .DS_Store
 error.txt
 tests/testall.html
@@ -31,3 +27,10 @@ src/rebound
 .ipynb_checkpoints
 others/*.tar.gz
 others/*.tar
+doc/doxygen/xml/
+doc/_build/
+doc/c_examples.rst
+doc/doxygen/html/
+doc/ipython
+doc/search.json
+problems/

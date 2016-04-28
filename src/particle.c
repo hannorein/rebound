@@ -1,6 +1,6 @@
 /**
  * @file 	particle.c
- * @brief 	Particle structure and main particle routines.
+ * @brief 	reb_particle structure and main particle routines.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
@@ -27,16 +27,18 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
-#include "particle.h"
-#include "main.h"
+#include "rebound.h"
 #include "tree.h"
+#include "boundary.h"
+#include "particle.h"
 #ifndef COLLISIONS_NONE
-#include "collisions.h"
+#include "collision.h"
 #endif // COLLISIONS_NONE
 #ifdef MPI
 #include "communication_mpi.h"
 #endif // MPI
 
+<<<<<<< HEAD
 struct particle* 	particles = NULL;	
 
 int N 		= 0;	
@@ -49,44 +51,47 @@ int N_megnopp 	= 1;
 int boundaries_particle_is_in_box(struct particle p);
 int particles_warning_is_not_in_box = 0;
 #endif // BOUNDARIES_OPEN
+=======
+>>>>>>> cc0076f9ccfdaded3d1682a2aa31b2ff67dd9020
 #ifdef GRAVITY_GRAPE
+#warning Fix this. 
 extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
-void particles_add_local(struct particle pt){
-#ifdef BOUNDARIES_OPEN
-	if (boundaries_particle_is_in_box(pt)==0){
-		// Particle has left the box. Do not add.
-		if (particles_warning_is_not_in_box == 0){
-			particles_warning_is_not_in_box = 1;
-			printf("\nWarning: Trying to add particle which is outside box boundaries.\n");
-		}
+static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt){
+	if (reb_boundary_particle_is_in_box(r, pt)==0){
+		// reb_particle has left the box. Do not add.
+		reb_warning("Did not add particle outside of box boundaries.");
 		return;
 	}
-#endif // BOUNDARIES_OPEN
-	while (Nmax<=N){
-		Nmax += 128;
-		particles = realloc(particles,sizeof(struct particle)*Nmax);
+	while (r->allocatedN<=r->N){
+		r->allocatedN += 128;
+		r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->allocatedN);
 	}
-	particles[N] = pt;
-#ifdef TREE
-	tree_add_particle_to_tree(N);
-#endif // TREE
-	N++;
-}
 
+<<<<<<< HEAD
 
 void particles_add(struct particle pt){
 	if (N_megno){
 		printf("\nWarning: Trying to add particle after calling megno_init().\n");
+=======
+	r->particles[r->N] = pt;
+	r->particles[r->N].sim = r;
+	if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE){
+		reb_tree_add_particle_to_tree(r, r->N);
+>>>>>>> cc0076f9ccfdaded3d1682a2aa31b2ff67dd9020
 	}
+	(r->N)++;
+}
+
+void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 #ifndef COLLISIONS_NONE
-	if (pt.r>=collisions_max_r){
-		collisions_max2_r = collisions_max_r;
-		collisions_max_r = pt.r;
+	if (pt.r>=r->max_radius[0]){
+		r->max_radius[1] = r->max_radius[0];
+		r->max_radius[0] = pt.r;
 	}else{
-		if (pt.r>=collisions_max2_r){
-			collisions_max2_r = pt.r;
+		if (pt.r>=r->max_radius[1]){
+			r->max_radius[1] = pt.r;
 		}
 	}
 #endif 	// COLLISIONS_NONE
@@ -96,19 +101,20 @@ void particles_add(struct particle pt){
 	}
 #endif // GRAVITY_GRAPE
 #ifdef MPI
-	int rootbox = particles_get_rootbox_for_particle(pt);
-	int root_n_per_node = root_n/mpi_num;
+	int rootbox = reb_get_rootbox_for_particle(r, pt);
+	int root_n_per_node = r->root_n/r->mpi_num;
 	int proc_id = rootbox/root_n_per_node;
-	if (proc_id != mpi_id && N >= N_active){
+	if (proc_id != r->mpi_id && r->N >= r->N_active){
 		// Add particle to array and send them to proc_id later. 
-		communication_mpi_add_particle_to_send_queue(pt,proc_id);
+		reb_communication_mpi_add_particle_to_send_queue(r,pt,proc_id);
 		return;
 	}
 #endif // MPI
 	// Add particle to local partical array.
-	particles_add_local(pt);
+	reb_add_local(r, pt);
 }
 
+<<<<<<< HEAD
 void particles_add_ptr(struct particle* pt){
 	particles_add(*pt);
 }
@@ -131,27 +137,73 @@ void particles_add_fixed(struct particle pt,int pos){
 #ifdef TREE
 	tree_add_particle_to_tree(pos);
 #endif // TREE
-}
-
-#ifdef LIBREBOUND
-int particles_get_rootbox_for_particle(struct particle pt){
-	return 0;
-}
-#else // LIBREBOUND
-int particles_get_rootbox_for_particle(struct particle pt){
-	int i = ((int)floor((pt.x + boxsize_x/2.)/boxsize)+root_nx)%root_nx;
-	int j = ((int)floor((pt.y + boxsize_y/2.)/boxsize)+root_ny)%root_ny;
-	int k = ((int)floor((pt.z + boxsize_z/2.)/boxsize)+root_nz)%root_nz;
-	int index = (k*root_ny+j)*root_nx+i;
+=======
+int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt){
+	if (r->root_size==-1) return 0;
+	int i = ((int)floor((pt.x + r->boxsize.x/2.)/r->root_size)+r->root_nx)%r->root_nx;
+	int j = ((int)floor((pt.y + r->boxsize.y/2.)/r->root_size)+r->root_ny)%r->root_ny;
+	int k = ((int)floor((pt.z + r->boxsize.z/2.)/r->root_size)+r->root_nz)%r->root_nz;
+	int index = (k*r->root_ny+j)*r->root_nx+i;
 	return index;
+>>>>>>> cc0076f9ccfdaded3d1682a2aa31b2ff67dd9020
 }
-#endif // LIBREBOUND
 
-void particles_remove_all(void){
-	N 		= 0;
-	Nmax 		= 0;
-	N_active 	= -1;
-	N_megno 	= 0;
-	free(particles);
-	particles 	= NULL;
+void reb_remove_all(struct reb_simulation* const r){
+	r->N 		= 0;
+	r->allocatedN 	= 0;
+	r->N_active 	= -1;
+	r->N_var 	= 0;
+	free(r->particles);
+	r->particles 	= NULL;
+}
+
+int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
+	if (r->N==1){
+	    r->N = 0;
+		fprintf(stderr, "Last particle removed.\n");
+		return 1;
+	}
+	if (index >= r->N){
+		fprintf(stderr, "\nIndex %d passed to particles_remove was out of range (N=%d).  Did not remove particle.\n", index, r->N);
+		return 0;
+	}
+	if (r->N_var){
+		fprintf(stderr, "\nRemoving particles not supported when calculating MEGNO.  Did not remove particle.\n");
+		return 0;
+	}
+	if(keepSorted){
+	    r->N--;
+		for(int j=index; j<r->N; j++){
+			r->particles[j] = r->particles[j+1];
+		}
+        if (r->tree_root){
+		    fprintf(stderr, "\nREBOUND cannot remove a particle a tree and keep the particles sorted. Did not remove particle.\n");
+		    return 0;
+        }
+	}else{
+        if (r->tree_root){
+            // Just flag particle, will be removed in tree_update.
+            r->particles[index].y = nan("");
+        }else{
+	        r->N--;
+		    r->particles[index] = r->particles[r->N];
+        }
+	}
+
+	return 1;
+}
+
+int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted){
+	int success = 0;
+	for(int i=0;i<r->N;i++){
+		if(r->particles[i].id == id){
+			success = reb_remove(r, i, keepSorted);
+			break;
+		}
+	}
+
+	if(!success){
+		fprintf(stderr, "\nIndex passed to particles_remove_id (id = %d) not found in particles array.  Did not remove particle.\n", id);
+	}
+	return success;
 }

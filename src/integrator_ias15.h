@@ -24,21 +24,9 @@
  */
 #ifndef _INTEGRATOR_IAS15_H
 #define _INTEGRATOR_IAS15_H
-void integrator_ias15_part1(void);
-void integrator_ias15_part2(void);
-void integrator_ias15_synchronize(void);
-void integrator_ias15_reset(void);
-
-/*
- * This parameter controls the accuracy of the integrator.
- * Set to 0 to make IAS15 a non-adaptive integrator.
- * Default: 1e-9.
- **/
-extern double integrator_ias15_epsilon;
-
-/*
- * The minimum timestep to be used in the adaptive integrator.
- * Default is 0 (no minimal timestep).
- **/
-extern double integrator_ias15_min_dt;
+void reb_integrator_ias15_part1(struct reb_simulation* r);              ///< Internal function used to call a specific integrator
+void reb_integrator_ias15_part2(struct reb_simulation* r);              ///< Internal function used to call a specific integrator
+void reb_integrator_ias15_synchronize(struct reb_simulation* r);        ///< Internal function used to call a specific integrator
+void reb_integrator_ias15_reset(struct reb_simulation* r);              ///< Internal function used to call a specific integrator
+void reb_integrator_ias15_clear(struct reb_simulation* r);              ///< Internal function used to call a specific integrator
 #endif
