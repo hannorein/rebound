@@ -87,14 +87,13 @@ class TestHybarid(unittest.TestCase):
         dE = abs((sim.calculate_energy() - E0)/E0)
         self.assertLess(dE,1e-14)
 
-'''
     def test_massive_ejection(self):
         sim = rebound.Simulation()
         sim.add(m=1.)
         sim.add(m=1e-4,r=1.6e-4,a=0.5,e=0.1)
         sim.add(m=1e-6,r=4e-5,a=0.6)
         sim.particles[2].vy *= 2
-        sim.N_active = 3
+        sim.N_active = 2
         sim.move_to_com()
         
         sim.integrator = "hybarid"
@@ -115,7 +114,6 @@ class TestHybarid(unittest.TestCase):
         sim.integrate(1)
         dE = abs((sim.calculate_energy() - E0)/E0)
         self.assertLess(dE,5e-11)
-        '''
 
 if __name__ == "__main__":
     unittest.main()
