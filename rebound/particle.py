@@ -446,6 +446,9 @@ class Particle(Structure):
     
     @property
     def xyz(self):
+        """
+        Get or set the xyz position coordinates of the particle.
+        """
         return [self.x, self.y, self.z]
     @xyz.setter
     def xyz(self, value):
@@ -457,6 +460,9 @@ class Particle(Structure):
     
     @property
     def vxyz(self):
+        """
+        Get or set the xyz velocity coordinates of the particle.
+        """
         return [self.vx, self.vy, self.vz]
     @vxyz.setter
     def vxyz(self, value):
