@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_long, c_ulong, c_void_p, c_char_p, CFUNCTYPE, byref
+from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref
 from . import clibrebound, Escape, NoParticles, Encounter, SimulationError
 from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G
@@ -68,7 +68,11 @@ class reb_simulation_integrator_hybarid(Structure):
                 ("a_i", POINTER(c_double)),
                 ("a_f", POINTER(c_double)),
                 ("a_Nmax", c_int),
-                ("timestep_too_large_warning", c_int)]
+                ("timestep_too_large_warning", c_int),
+                ("steps", c_ulonglong),
+                ("steps_miniactive", c_ulonglong),
+                ("steps_miniN", c_ulonglong),
+                ]
 
 
 class reb_simulation_integrator_wh(Structure):

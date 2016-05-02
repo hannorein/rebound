@@ -116,8 +116,12 @@ void reb_integrator_hybarid_part2(struct reb_simulation* r){
     calc_forces_on_planets(r, r->ri_hybarid.a_f);
     
     struct reb_simulation* mini = r->ri_hybarid.mini;
+    r->ri_hybarid.steps++;
     if (r->ri_hybarid.mini_active){
+        r->ri_hybarid.steps_miniactive++;
+        r->ri_hybarid.steps_miniN += mini->N;
         reb_integrate(mini,r->t);
+
         for (int i=0; i<mini->N; i++){
             r->particles[r->ri_hybarid.global_index_from_mini_index[i]] = mini->particles[i];
             r->particles[r->ri_hybarid.global_index_from_mini_index[i]].sim = r;    
