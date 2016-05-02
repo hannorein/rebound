@@ -91,6 +91,7 @@ double reb_tools_energy(const struct reb_simulation* const r){
             e_pot -= r->G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
         }
     }
+    /* Don't need this anymore I think. Comment out for now and test, delete later.
     double e_global = 0;
     if (r->ri_hybarid.global){
         if (r->testparticle_type){
@@ -117,9 +118,9 @@ double reb_tools_energy(const struct reb_simulation* const r){
                 }
             }
         }
-    }
+    }*/
     
-    return e_kin + e_pot + e_global;
+    return e_kin + e_pot + r->collisions_dE;
 }
 
 

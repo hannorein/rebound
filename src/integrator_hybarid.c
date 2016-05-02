@@ -43,9 +43,6 @@ static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation*
 static void calc_forces_on_planets(const struct reb_simulation* r, double* a);
 double Ei;
 
-//temp!
-struct reb_particle ari_get_com(struct reb_simulation* r, int N_choice);
-
 void reb_integrator_hybarid_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     struct reb_simulation* mini = r->ri_hybarid.mini;
@@ -54,6 +51,8 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
         r->ri_hybarid.mini = mini;
         mini->usleep = -1; // Disable visualiation
         mini->integrator = REB_INTEGRATOR_IAS15;
+        mini->gravity = REB_GRAVITY_BASIC;
+        mini->dt = r->dt;
         mini->additional_forces = reb_integrator_hybarid_additional_forces_mini;
         mini->ri_hybarid.global = r;    //set to != 0 so that collision.c knows to remove from both
         mini->testparticle_type = r->testparticle_type;
@@ -64,12 +63,12 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
 
     // Remove all particles from mini
     mini->t = r->t;
+    int mini_previously_active = r->ri_hybarid.mini_active;
     mini->N = 0;
     mini->collisions_dE = 0.;
     r->ri_hybarid.mini_active = 0;
     r->ri_hybarid.global_index_from_mini_index_N = 0;
     r->ri_hybarid.collision_this_global_dt = 0;
-    reb_integrator_ias15_clear(r->ri_hybarid.mini);
     
     if (_N_active>r->ri_hybarid.a_Nmax){
         r->ri_hybarid.a_i = realloc(r->ri_hybarid.a_i,sizeof(double)*3*_N_active);
@@ -98,6 +97,10 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
     r->ri_hybarid.mini->N_active = _N_active;
 
     reb_integrator_hybarid_check_for_encounter(r);
+        
+    if (r->N != r->ri_hybarid.mini->N || mini_previously_active==0) {
+        reb_integrator_ias15_clear(r->ri_hybarid.mini);
+    }
     
     calc_forces_on_planets(r, r->ri_hybarid.a_i);
     
@@ -117,7 +120,7 @@ void reb_integrator_hybarid_part2(struct reb_simulation* r){
         reb_integrate(mini,r->t);
         for (int i=0; i<mini->N; i++){
             r->particles[r->ri_hybarid.global_index_from_mini_index[i]] = mini->particles[i];
-            r->particles[r->ri_hybarid.global_index_from_mini_index[i]].sim = r;    //what does this do?
+            r->particles[r->ri_hybarid.global_index_from_mini_index[i]].sim = r;    
         }
         
         // Correct for energy jump in collision
@@ -198,14 +201,14 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* gl
 
             if(rij2 < switch_ratio2*rh_sum2 || rij2 < radius_check2){
                 global->ri_hybarid.mini_active = 1;
+                // Monitor hillradius/relative velocity
+                const double dvx = pi.vx - pj.vx;
+                const double dvy = pi.vy - pj.vy;
+                const double dvz = pi.vz - pj.vz;
+                const double vij2 = dvx*dvx + dvy*dvy + dvz*dvz;
+                const double dt_enc2 = switch_ratio2*rh_sum2/vij2;
+                min_dt_enc2 = MIN(min_dt_enc2,dt_enc2);
                 if (j>=_N_active && global->ri_hybarid.is_in_mini[j]==0){//make sure not already added
-                    // Monitor hillradius/relative velocity
-                    const double dvx = pi.vx - pj.vx;
-                    const double dvy = pi.vy - pj.vy;
-                    const double dvz = pi.vz - pj.vz;
-                    const double vij2 = dvx*dvx + dvy*dvy + dvz*dvz;
-                    const double dt_enc2 = switch_ratio2*rh_sum2/vij2;
-                    min_dt_enc2 = MIN(min_dt_enc2,dt_enc2);
                     // Add particle to mini simulation
                     reb_add(mini,pj);
                     global->ri_hybarid.is_in_mini[j] = 1;
