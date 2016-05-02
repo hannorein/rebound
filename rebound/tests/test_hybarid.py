@@ -69,23 +69,24 @@ class TestHybarid(unittest.TestCase):
         sim = rebound.Simulation()
         sim.add(m=1.)
         sim.add(m=1e-5,r=1.6e-4,a=0.5,e=0.1)    #these params lead to collision on my machine
-        sim.add(m=1e-9,r=4e-5,a=0.55,e=0.4,f=-0.383)
         sim.N_active = 2
+        sim.add(m=1e-8,r=4e-5,a=0.55,e=0.4,f=-0.94)
         sim.move_to_com()
         
         sim.integrator = "hybarid"
-        sim.gravity = "basic"
-        sim.ri_hybarid.switch_radius = 30.
+        #sim.gravity = "basic"
+        sim.ri_hybarid.switch_radius = 3.
         sim.ri_hybarid.CE_radius = 20.
-        sim.dt = 0.001
+        sim.dt = 0.0001
         sim.testparticle_type = 1
+        sim.collisions_track_dE = 1;
         sim.collision = "direct"
         sim.collision_resolve = "merge"
         
         E0 = sim.calculate_energy()
         sim.integrate(1)
         dE = abs((sim.calculate_energy() - E0)/E0)
-        self.assertLess(dE,1e-14)
+        self.assertLess(dE,5e-13)
 
     def test_massive_ejection(self):
         sim = rebound.Simulation()
