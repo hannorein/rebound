@@ -18,9 +18,16 @@ __all__ = ["getParticle"]
 # If a date is passed, the same date is used for all subsequent particle adds (that don't themselves pass a date).
 INITDATE = None
 
-def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None):   
+def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, plane="ecliptic"):   
+    if plane not in ["ecliptic","frame"]:
+        raise AttributeError("Reference plane needs to be either 'ecliptic' or 'frame'. See Horizons for a definition of these coordinate systems.")
     if date is not None:
-        date = datetime.datetime.strptime(date,"%Y-%m-%d %H:%M")
+        if type(date) is datetime.datetime:
+            pass
+        elif type(date) is str:
+            date = datetime.datetime.strptime(date,"%Y-%m-%d %H:%M")
+        else:
+            raise AttributeError("Unknown date format.")
     # set the cached initialization time if it's not set
     global INITDATE
     if INITDATE is None:
@@ -37,11 +44,11 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
                ( b'Continue.*:', 'y\n' ),
                ( b'Select.*E.phemeris.*:', 'E\n'),
                ( b'Observe.*:', 'v\n' ),
-               ( b'Coordinate center.*:', '@Sun\n' ),
-               ( b'Reference plane.*:', 'eclip\n' ),
-               ( b'Starting.* :', date.strftime("%Y-%m-%d %H:%M")+'\n' ),
-               ( b'Ending.* :', (date + datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M")+'\n' ),
-               ( b'Output interval.*:', '1d\n' ),
+               ( b'Coordinate center.*:', '@0\n' ),
+               ( b'Reference plane.*:', plane+'\n' ),
+               ( b'Starting.* :', date.strftime("%Y-%m-%d %H:%M:%S")+'\n' ),
+               ( b'Ending.* :', (date + datetime.timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M")+'\n' ),
+               ( b'Output interval.*:', '2\n' ),
                ( b'Accept default output \[.*:', 'n\n' ),
                ( b'Output reference frame \[.*:', 'J2000\n' ),
                ( b'Corrections \[.*:', 'NONE\n' ),

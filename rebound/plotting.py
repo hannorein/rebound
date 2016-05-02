@@ -44,8 +44,7 @@ def OrbitPlot(sim, figsize=(5,5), lim=None, Narc=100, unitlabel=None, color=Fals
             import matplotlib.pyplot as plt
             import numpy as np
         except:
-            print("Error importing matplotlib and/or numpy. Plotting functions not available\n")
-            return None
+            raise ImportError("Error importing matplotlib and/or numpy. Plotting functions not available. If running from within a jupyter notebook, try calling '%matplotlib inline' beforehand.")
         fig, ax = plt.subplots(1, 1, figsize=figsize)
         orbits = sim.calculate_orbits()
         particles = sim.particles

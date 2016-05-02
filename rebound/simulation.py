@@ -439,8 +439,8 @@ class Simulation(Structure):
         Available gravity modules are:
 
         - ``'none'`` 
-        - ``'basic'``
-        - ``'compensated'`` (default)
+        - ``'basic'`` (default)
+        - ``'compensated'``
         - ``'tree'``
         
         Check the online documentation for a full description of each of the modules. 
@@ -716,7 +716,7 @@ class Simulation(Structure):
         """
         Remove all particles from the simulation
         """
-        clibrebound.reb_particles_remove_all(byref(self))
+        clibrebound.reb_remove_all(byref(self))
 
     def remove(self, index=None, id=None, keepSorted=1):
         """ 
@@ -732,12 +732,12 @@ class Simulation(Structure):
         if index is not None:
             success = clibrebound.reb_remove(byref(self), c_int(index), keepSorted)
             if not success:
-                print("Index %d passed to remove_particle was out of range (N=%d). Did not remove particle.\n"%(index, self.N))
+                raise ValueError("Removing particle with index %d failed. Did not remove particle.\n"%(index))
             return
         if id is not None:
             success = clibrebound.reb_remove_by_id(byref(self), c_int(id), keepSorted)
-            if not success:
-                print("id %d passed to remove_particle was not found.  Did not remove particle.\n"%(id))
+            if success == 0:
+                raise ValueError("id %d passed to remove_particle was not found.  Did not remove particle.\n"%(id))
 
     def particles_ascii(self, prec=8):
         """
@@ -1024,6 +1024,12 @@ class Simulation(Structure):
         Call this function if safe-mode is disabled and you need synchronize particle positions and velocities between timesteps.
         """
         clibrebound.reb_integrator_synchronize(byref(self))
+    
+    def tree_update(self):
+        """
+        Call this function to update the tree structure manually after removing particles.
+        """
+        clibrebound.reb_tree_update(byref(self))
 
 
 
