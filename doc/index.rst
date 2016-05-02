@@ -54,6 +54,7 @@ To install the *C version*, clone this repository, e.g. by simply copy-and-pasti
 
 To learn more about how to use REBOUND with C, study the examples in the `examples/` directory and continue reading this file. You might also want to have a look at the `rebound.h` file in the `src/` directory which contains the API specifications. Last but not least, REBOUND is open source. If you want to know how something works, you can just look at the source code. And of course, you are welcome to e-mail any of the contributors with questions. We'll do our best to answer them quickly.
 
+Note:  REBOUND does not work on Windows, and we currently do not have plans to support it.
 
 Contributors
 ------------

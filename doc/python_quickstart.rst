@@ -8,6 +8,8 @@ Installing REBOUND is very easy. Rebound does not depend on any libraries. Howev
 
 If you don't, and aren't sure how to go about getting them, it is probably easiest to install either the Enthought or Anaconda python distributions (which are free and come with typically used libraries and an easy-to-use installer).  For the C compiler on Mac, it's probably easiest to install Xcode from the App store.
 
+Note:  REBOUND does not work on Windows, and we currently do not have plans to support it.
+
 Create a virtual environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -443,6 +443,34 @@ class Particle(Structure):
     def index(self):
         clibrebound.reb_get_particle_index.restype = c_int
         return clibrebound.reb_get_particle_index(byref(self)) 
+    
+    @property
+    def xyz(self):
+        """
+        Get or set the xyz position coordinates of the particle.
+        """
+        return [self.x, self.y, self.z]
+    @xyz.setter
+    def xyz(self, value):
+        if len(value)!=3:
+            raise AttributeError("Can only set xyz positions to array with length 3")
+        self.x = float(value[0])
+        self.y = float(value[1])
+        self.z = float(value[2])
+    
+    @property
+    def vxyz(self):
+        """
+        Get or set the xyz velocity coordinates of the particle.
+        """
+        return [self.vx, self.vy, self.vz]
+    @vxyz.setter
+    def vxyz(self, value):
+        if len(value)!=3:
+            raise AttributeError("Can only set xyz velocities to array with length 3")
+        self.vx = float(value[0])
+        self.vy = float(value[1])
+        self.vz = float(value[2])
         
     @property
     def d(self):
