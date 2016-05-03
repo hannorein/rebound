@@ -595,45 +595,52 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 }
 
 static void predict_next_step(double ratio, int N3,  const struct reb_dpconst7 _e, const struct reb_dpconst7 _b, const struct reb_dpconst7 e, const struct reb_dpconst7 b){
-	// Predict new B values to use at the start of the next sequence. The predicted
-	// values from the last call are saved as E. The correction, BD, between the
-	// actual and predicted values of B is applied in advance as a correction.
-	//
-	const double q1 = ratio;
-	const double q2 = q1 * q1;
-	const double q3 = q1 * q2;
-	const double q4 = q2 * q2;
-	const double q5 = q2 * q3;
-	const double q6 = q3 * q3;
-	const double q7 = q3 * q4;
+    if (ratio>20.){
+        // Do not predict if stepsize increase is very large. 
+        for(int k=0;k<N3;++k) {
+            e.p0[k] = 0.; e.p1[k] = 0.; e.p2[k] = 0.; e.p3[k] = 0.; e.p4[k] = 0.; e.p5[k] = 0.; e.p6[k] = 0.;
+            b.p0[k] = 0.; b.p1[k] = 0.; b.p2[k] = 0.; b.p3[k] = 0.; b.p4[k] = 0.; b.p5[k] = 0.; b.p6[k] = 0.;
+        }
+    }else{
+        // Predict new B values to use at the start of the next sequence. The predicted
+        // values from the last call are saved as E. The correction, BD, between the
+        // actual and predicted values of B is applied in advance as a correction.
+        //
+        const double q1 = ratio;
+        const double q2 = q1 * q1;
+        const double q3 = q1 * q2;
+        const double q4 = q2 * q2;
+        const double q5 = q2 * q3;
+        const double q6 = q3 * q3;
+        const double q7 = q3 * q4;
 
-	for(int k=0;k<N3;++k) {
-		double be0 = _b.p0[k] - _e.p0[k];
-		double be1 = _b.p1[k] - _e.p1[k];
-		double be2 = _b.p2[k] - _e.p2[k];
-		double be3 = _b.p3[k] - _e.p3[k];
-		double be4 = _b.p4[k] - _e.p4[k];
-		double be5 = _b.p5[k] - _e.p5[k];
-		double be6 = _b.p6[k] - _e.p6[k];
+        for(int k=0;k<N3;++k) {
+            double be0 = _b.p0[k] - _e.p0[k];
+            double be1 = _b.p1[k] - _e.p1[k];
+            double be2 = _b.p2[k] - _e.p2[k];
+            double be3 = _b.p3[k] - _e.p3[k];
+            double be4 = _b.p4[k] - _e.p4[k];
+            double be5 = _b.p5[k] - _e.p5[k];
+            double be6 = _b.p6[k] - _e.p6[k];
 
 
-		e.p0[k] = q1*(_b.p6[k]* 7.0 + _b.p5[k]* 6.0 + _b.p4[k]* 5.0 + _b.p3[k]* 4.0 + _b.p2[k]* 3.0 + _b.p1[k]*2.0 + _b.p0[k]);
-		e.p1[k] = q2*(_b.p6[k]*21.0 + _b.p5[k]*15.0 + _b.p4[k]*10.0 + _b.p3[k]* 6.0 + _b.p2[k]* 3.0 + _b.p1[k]);
-		e.p2[k] = q3*(_b.p6[k]*35.0 + _b.p5[k]*20.0 + _b.p4[k]*10.0 + _b.p3[k]* 4.0 + _b.p2[k]);
-		e.p3[k] = q4*(_b.p6[k]*35.0 + _b.p5[k]*15.0 + _b.p4[k]* 5.0 + _b.p3[k]);
-		e.p4[k] = q5*(_b.p6[k]*21.0 + _b.p5[k]* 6.0 + _b.p4[k]);
-		e.p5[k] = q6*(_b.p6[k]* 7.0 + _b.p5[k]);
-		e.p6[k] = q7* _b.p6[k];
-		
+            e.p0[k] = q1*(_b.p6[k]* 7.0 + _b.p5[k]* 6.0 + _b.p4[k]* 5.0 + _b.p3[k]* 4.0 + _b.p2[k]* 3.0 + _b.p1[k]*2.0 + _b.p0[k]);
+            e.p1[k] = q2*(_b.p6[k]*21.0 + _b.p5[k]*15.0 + _b.p4[k]*10.0 + _b.p3[k]* 6.0 + _b.p2[k]* 3.0 + _b.p1[k]);
+            e.p2[k] = q3*(_b.p6[k]*35.0 + _b.p5[k]*20.0 + _b.p4[k]*10.0 + _b.p3[k]* 4.0 + _b.p2[k]);
+            e.p3[k] = q4*(_b.p6[k]*35.0 + _b.p5[k]*15.0 + _b.p4[k]* 5.0 + _b.p3[k]);
+            e.p4[k] = q5*(_b.p6[k]*21.0 + _b.p5[k]* 6.0 + _b.p4[k]);
+            e.p5[k] = q6*(_b.p6[k]* 7.0 + _b.p5[k]);
+            e.p6[k] = q7* _b.p6[k];
 
-		b.p0[k] = e.p0[k] + be0;
-		b.p1[k] = e.p1[k] + be1;
-		b.p2[k] = e.p2[k] + be2;
-		b.p3[k] = e.p3[k] + be3;
-		b.p4[k] = e.p4[k] + be4;
-		b.p5[k] = e.p5[k] + be5;
-		b.p6[k] = e.p6[k] + be6;
-	}
+            b.p0[k] = e.p0[k] + be0;
+            b.p1[k] = e.p1[k] + be1;
+            b.p2[k] = e.p2[k] + be2;
+            b.p3[k] = e.p3[k] + be3;
+            b.p4[k] = e.p4[k] + be4;
+            b.p5[k] = e.p5[k] + be5;
+            b.p6[k] = e.p6[k] + be6;
+        }
+    }
 }
 
 static void copybuffers(const struct reb_dpconst7 _a, const struct reb_dpconst7 _b, int N3){
