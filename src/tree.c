@@ -32,7 +32,9 @@
 #include "rebound.h"
 #include "boundary.h"
 #include "tree.h"
+#ifdef MPI
 #include "communication_mpi.h"
+#endif // MPI
 
 
 /**
