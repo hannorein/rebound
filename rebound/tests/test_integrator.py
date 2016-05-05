@@ -148,8 +148,8 @@ class TestIntegrator(unittest.TestCase):
     
     def test_whfast_nosafemode(self):
         self.sim.integrator = "whfast"
-        self.sim.integrator_whfast_safe_mode = 0
-        self.sim.integrator_whfast_corrector = 11
+        self.sim.ri_whfast.safe_mode = 0
+        self.sim.ri_whfast.corrector = 11
         jupyr = 11.86*2.*math.pi
         self.sim.dt = 0.0123*jupyr
         e0 = self.sim.calculate_energy()

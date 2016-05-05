@@ -18,9 +18,9 @@ def simulation(par):
     if integrator == "whfast-nocor":
         integrator = "whfast"
     else:
-        sim.integrator_whfast_corrector = 11
+        sim.ri_whfast.corrector = 11
     sim.integrator = integrator 
-    sim.integrator_whfast_safe_mode = 0
+    sim.ri_whfast.safe_mode = 0
 
     massfac = 1.
     sim.add(m=1.00000597682, x=-4.06428567034226e-3, y=-6.08813756435987e-3, z=-1.66162304225834e-6,      vx=+6.69048890636161e-6*Gfac, vy=-6.33922479583593e-6*Gfac, vz=-3.13202145590767e-9*Gfac)   # Sun

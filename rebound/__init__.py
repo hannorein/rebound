@@ -59,9 +59,9 @@ class NoParticles(Exception):
     
 
 
-from .simulation import Simulation, Orbit, Variation
+from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_whfast, reb_simulation_integrator_sei
 from .particle import Particle
 from .plotting import OrbitPlot
 from .interruptible_pool import InterruptiblePool
 
-__all__ = ["__version__", "__build__", "Simulation", "Orbit", "OrbitPlot", "Particle", "SimulationError", "Encounter", "Escape", "NoParticles", "InterruptiblePool","Variation"]
+__all__ = ["__version__", "__build__", "Simulation", "Orbit", "OrbitPlot", "Particle", "SimulationError", "Encounter", "Escape", "NoParticles", "InterruptiblePool","Variation", "reb_simulation_integrator_whfast", "reb_simulation_integrator_sei"]

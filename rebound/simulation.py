@@ -58,6 +58,25 @@ class reb_simulation_integrator_wh(Structure):
                 ("eta", POINTER(c_double))]
 
 class reb_simulation_integrator_sei(Structure):
+    """
+    This class is an abstraction of the C-struct reb_simulation_integrator_sei.
+    It controls the behaviour of the symplectic SEI integrator for shearing
+    sheet calculations. It is described in Rein and Tremaine (2011).
+    
+    This struct should be accessed via the simulation class only. Here is an 
+    example:
+
+    >>> sim = rebound.Simulation()
+    >>> sim.ri_sei.OMEGA =  1.58
+    
+    :ivar float OMEGA:          
+        The epicyclic frequency OMEGA. For simulations making use of shearing 
+        sheet boundary conditions, REBOUND needs to know the epicyclic frequency. 
+        By default OMEGA is 1. For more details read Rein and Tremaine 2011.
+    :ivar float OMEGAZ:          
+        The z component of the epicyclic frequency OMEGA. By default it is assuming
+        OMEGAZ is the same as OMEGA.
+    """
     _fields_ = [("OMEGA", c_double),
                 ("OMEGAZ", c_double),
                 ("lastdt", c_double),
@@ -87,6 +106,37 @@ class reb_simulation_integrator_ias15(Structure):
                 ("er", reb_dp7)]
 
 class reb_simulation_integrator_whfast(Structure):
+    """
+    This class is an abstraction of the C-struct reb_simulation_integrator_whfast.
+    It controls the behaviour of the symplectic WHFast integrator described 
+    in Rein and Tamayo (2015).
+    
+    This struct should be accessed via the simulation class only. Here is an 
+    example:
+
+    >>> sim = rebound.Simulation
+    >>> sim.ri_hybarid.corrector =  11
+
+    
+    :ivar int corrector:      
+        The order of the symplectic corrector in the WHFast integrator.
+        By default the symplectic correctors are turned off (=0). For high
+        accuracy simulation set this value to 11. For more details read 
+        Rein and Tamayo (2015).
+    :ivar int recalculate_jacobi_this_timestep:
+        Sets a flag that tells WHFast that the particles have changed.
+        Setting this flag to 1 (default 0) triggers the WHFast integrator
+        to recalculate Jacobi coordinates. This is needed if the user changes 
+        the particle position, velocity or mass inbetween timesteps.
+        After every timestep the flag is set back to 0, so if you continuously
+        update the particles manually, you need to set this flag to 1 after every timestep.
+    :ivar int safe_mode:
+        If safe_mode is 1 (default) particles can be modified between
+        timesteps and particle velocities and positions are always synchronised.
+        If you set safe_mode to 0, the speed and accuracy of WHFast improves.
+        However, make sure you are aware of the consequences. Read the iPython tutorial
+        on advanced WHFast usage to learn more.
+    """
     _fields_ = [("corrector", c_uint),
                 ("recalculate_jacobi_this_timestep", c_uint),
                 ("safe_mode", c_uint),
@@ -890,67 +940,6 @@ class Simulation(Structure):
         """
         clibrebound.reb_output_binary(byref(self), c_char_p(filename.encode("ascii")))
         
-# Integrator Flags
-    @property 
-    def integrator_sei_OMEGA(self):
-        """
-        Get or set the epicyclic frequency OMEGA.
-
-        For simulations making use of shearing sheet boundary conditions,
-        REBOUND needs to know the epicyclic frequency. By default OMEGA
-        is 1. For more details read Rein and Tremaine 2011.
-        """
-        return self.ri_sei.OMEGA
-    @integrator_sei_OMEGA.setter 
-    def integrator_sei_OMEGA(self, value):
-        self.ri_sei.OMEGA = c_double(value)
-
-    @property 
-    def integrator_whfast_corrector(self):
-        """
-        Get or set the order of the symplectic corrector in the WHFast integrator.
-
-        By default the symplectic correctors are turned off (=0). For high
-        accuracy simulation set this value to 11. For more details read 
-        Rein and Tamayo 2015.
-        """
-        return self.ri_whfast.corrector
-    @integrator_whfast_corrector.setter 
-    def integrator_whfast_corrector(self, value):
-        self.ri_whfast.corrector = c_uint(value)
-
-    @property
-    def integrator_whfast_safe_mode(self):
-        """
-        Get or set the safe mode flag for WHFast.
-
-        If safe_mode is 1 (default) particles can be modified between
-        timesteps and particle velocities and positions are always synchronised.
-        If you set safe_mode to 0, the speed and accuracy of WHFast improves.
-        However, make sure you are aware of the consequences. Read the iPython tutorial
-        on advanced WHFast usage to learn more.
-        """
-        return self.ri_whfast.safe_mode
-    @integrator_whfast_safe_mode.setter
-    def integrator_whfast_safe_mode(self, value):
-        self.ri_whfast.safe_mode = c_uint(value)
-
-    @property
-    def integrator_whfast_recalculate_jacobi_this_timestep(self):
-        """
-        Sets a flag that tells WHFast that the particles have changed.
-
-        Setting this flag to 1 (default 0) triggers the WHFast integrator
-        to recalculate Jacobi coordinates. This is needed if the user changes 
-        the particle position, velocity or mass inbetween timesteps.
-        After every timestep the flag is set back to 0, so if you continuously
-        update the particles manually, you need to set this flag to 1 after every timestep.
-        """ 
-        return self.ri_whfast.recalculate_jacobi_this_timestep
-    @integrator_whfast_recalculate_jacobi_this_timestep.setter
-    def integrator_whfast_recalculate_jacobi_this_timestep(self, value):
-        self.ri_whfast.recalculate_jacobi_this_timestep = c_uint(value)
-    
 # Integration
     def step(self):
         """
