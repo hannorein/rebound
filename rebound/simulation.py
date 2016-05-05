@@ -950,7 +950,17 @@ class Simulation(Structure):
     @integrator_whfast_recalculate_jacobi_this_timestep.setter
     def integrator_whfast_recalculate_jacobi_this_timestep(self, value):
         self.ri_whfast.recalculate_jacobi_this_timestep = c_uint(value)
-    
+
+    def raise_external_exceptions(self, ret_value):
+        """
+        Dummy function that can be monkey patched by external libraries to check a simulation's
+        status field to raise custom exceptions, e.g.
+
+        if ret_value == 999:
+            raise CustomError("This or that kind of error occurred.")
+        """
+        pass
+
 # Integration
     def step(self):
         """
@@ -998,6 +1008,7 @@ class Simulation(Structure):
                 raise Encounter("Two particles had a close encounter (d<exit_min_distance).")
             if ret_value == 4:
                 raise Escape("A particle escaped (r>exit_max_distance).")
+            self.raise_external_exceptions(ret_value)
         else:
             debug.integrate_other_package(tmax,exact_finish_time)
 
