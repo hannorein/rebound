@@ -166,16 +166,9 @@ class Particle(Structure):
                     if vi2 < vi1:
                         variation, variation2 = variation2, variation
 
-                    if variation == variation2:
-                        # Diagonal terms
-                        method = getattr(clibrebound, 'reb_derivatives_'+variation+'_'+variation)
-                        method.restype = Particle
-                        p = method(c_double(simulation.G), particle, primary)
-                    else:
-                        # CrossTerms
-                        method = getattr(clibrebound, 'reb_derivatives_'+variation+'_'+variation2)
-                        method.restype = Particle
-                        p = method(c_double(simulation.G), particle, primary)
+                    method = getattr(clibrebound, 'reb_derivatives_'+variation+'_'+variation2)
+                    method.restype = Particle
+                    p = method(c_double(simulation.G), particle, primary)
                 else:
                     raise ValueError("Variational particles can only be initializes using the derivatives with respect to one of the following: %s."%", ".join(variationtypes))
             else:

@@ -975,6 +975,22 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
  */
 struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, struct reb_particle primary);
 
+/**
+ * @brief Initialize a particle on a 3D orbit.  See Pal 2009 for a definition of these coordinates.
+ * @detail Pal describes a coordinate system for Keplerian Orbits that is analytical (i.e. infinitely differentiable) between spatial coordinates and orbital elements. See http://adsabs.harvard.edu/abs/2009MNRAS.396.1737P
+ * @param G Gravitational constant.
+ * @param primary Particle structure for the orbit's reference body.
+ * @param m Mass of the particle.
+ * @param a Semi-major axis of the particle.
+ * @param lambda longitude.
+ * @param k Eccentricity/pericenter k = e*cos(w).
+ * @param h Eccentricity/pericenter h = e*sin(w).
+ * @param ix Inclination, x component.
+ * @param iy Inclination, y component.
+ * @return Returns a particle structure with the given orbital parameters. 
+ */
+struct reb_particle reb_tools_pal_to_particle(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy);
+
 
 /**
  * @brief Reads a binary file.

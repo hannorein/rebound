@@ -1057,7 +1057,7 @@ class Variation(Structure):
           a, e, inc, omega, Omega, f
         as well as the Pal coordinates: 
           a, h, k, ix, iy, lambda
-        ans in both cases the mass m of the particle.
+        and in both cases the mass m of the particle.
 
         Parameters
         ----------
