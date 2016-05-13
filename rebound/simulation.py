@@ -1041,7 +1041,7 @@ class Variation(Structure):
                 ("index_1st_order_a", c_int),
                 ("index_1st_order_b", c_int)]
 
-    def vary(self, particle_index, variation, variation2=None, order=None):
+    def vary(self, particle_index, variation, variation2=None, primary=None):
         """
         This function can be used to initialize variational particles.
     
@@ -1049,11 +1049,15 @@ class Variation(Structure):
         also directly manipulate the particles' coordinates.
 
         This function is useful for initializing variations corresponding to 
-        changes in one of the orbital parameters.
+        changes in one of the orbital parameters for a particle on a bound 
+        Keplerian orbit.
 
         The function supports both first and second order variations in the following
-        orbital parameters:
-          a, e, inc, omega, Omega, f, m (mass)
+        classical orbital parameters:
+          a, e, inc, omega, Omega, f
+        as well as the Pal coordinates: 
+          a, h, k, ix, iy, lambda
+        ans in both cases the mass m of the particle.
 
         Parameters
         ----------
@@ -1061,20 +1065,19 @@ class Variation(Structure):
             The index of the particle that should be varied. The index starts at 0 and runs through N-1. The first particle added to a simulation receives the index 0, the second 1, and the on.
         variation : string
             This parameter determines which orbital parameter is varied. 
-        variation2: string
+        variation2: string, optional
             This is only used for second order variations which can depend on two varying parameters. If omitted, then it is assumed that the parameter variation is variation2.
+        primary: Particle, optional
+            By default variational particles are created in the Heliocentric frame. 
+            Set this parameter to use any other particles as a primary (e.g. the center of mass).
         """
-        if order is None:
-            order = self.order
-        sim = self._sim.contents
-        if order==0:
-            raise ValueError("Cannot find variation for given index. ")
-        if order==1 and variation2 is not None:
-            raise AttributeError("Can only specify one variation for first order.")
-        o = sim.particles[particle_index].calculate_orbit(primary=sim.particles[0])
-        p = Particle(simulation=sim, primary=sim.particles[0], variation_order=order, variation=variation, variation2=variation2,m=sim.particles[particle_index].m,a=o.a, e=o.e, inc=o.inc, Omega=o.Omega, omega=o.omega, f=o.f)
-        sim.particles[self.index + particle_index] = p
-    
+        if self._sim is not None:
+            sim = self._sim.contents
+            particles = sim.particles
+        else:
+            raise RuntimeError("Something went wrong. Cannot seem to find simulation corresponding to variation.")
+        particles[self.index + particle_index] = Particle(simulation=sim,particle=particles[particle_index], variation=variation, variation2=variation2, primary=primary)
+
     @property
     def particles(self):
         """

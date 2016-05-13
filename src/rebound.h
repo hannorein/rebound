@@ -1030,153 +1030,81 @@ int reb_read_int(int argc, char** argv, const char* argument, int _default);
 /**
  * \name Setup functions for variational particles.
  * @{
+ * @brief This function calculates the first/second derivative of a Keplerian orbit. 
+ * @details The derivative is calculated with respect to the variables in the function name.
+ *          One variable implies that a first derivative is returned, two variables implies that a second
+ *          derivate is returned. Classical orbital parameters and Pal coordinates are supported.
+ *          Note that Cartesian coordinates are trivial.
+ * @return The derivative as a particle structre. Each structure element is a derivative.
+ * @param G The gravitational constant
+ * @param primary The primary of the Keplerian orbit
+ * @param po The original partical for which the derivative is to be calculated.
  */
-/**
- * @defgroup VarSetupRebFunctions Setup functions for variational particles.
- * @{
- */
-/**
- * @brief This function initializes a first order variational particle, varying one orbital parameter.
- */
-struct reb_particle reb_tools_orbit_to_particle_da(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying one orbital parameter.
- */
-struct reb_particle reb_tools_orbit_to_particle_dda(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a first order variational particle, varying one orbital parameter.
- */
-struct reb_particle reb_tools_orbit_to_particle_de(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying one orbital parameter.
- */
-struct reb_particle reb_tools_orbit_to_particle_dde(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a first order variational particle, varying one orbital parameter.
- */
-struct reb_particle reb_tools_orbit_to_particle_di(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying one orbital parameter.
- */
-struct reb_particle reb_tools_orbit_to_particle_ddi(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a first order variational particle, varying one orbital parameter.
- */
-struct reb_particle reb_tools_orbit_to_particle_dOmega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying one orbital parameter.
- */
-struct reb_particle reb_tools_orbit_to_particle_ddOmega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a first order variational particle, varying one orbital parameter.
- */
-struct reb_particle reb_tools_orbit_to_particle_domega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying one orbital parameter.
- */
-struct reb_particle reb_tools_orbit_to_particle_ddomega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a first order variational particle, varying one orbital parameter.
- */
-struct reb_particle reb_tools_orbit_to_particle_df(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying one orbital parameter.
- */
-struct reb_particle reb_tools_orbit_to_particle_ddf(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a first order variational particle, varying one orbital parameter.
- */
-struct reb_particle reb_tools_orbit_to_particle_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying one orbital parameter.
- */
-struct reb_particle reb_tools_orbit_to_particle_ddm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_da_de(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_da_di(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_da_dOmega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_da_domega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_da_df(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_da_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_de_di(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_de_dOmega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_de_domega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_de_df(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/** @} */
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_de_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_di_dOmega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_di_domega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_di_df(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_di_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_dOmega_domega(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_dOmega_df(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_dOmega_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_domega_df(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_domega_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/**
- * @brief This function initializes a second order variational particle, varying two orbital parameters (crossterm).
- */
-struct reb_particle reb_tools_orbit_to_particle_df_dm(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f);
-/** @} */
+struct reb_particle reb_derivatives_lambda(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_h(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_k(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_k_k(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_h_h(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_lambda_lambda(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_k_lambda(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_h_lambda(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_k_h(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_a(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_a_a(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_ix(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_ix_ix(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_iy(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_iy_iy(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_k_ix(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_h_ix(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_lambda_ix(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_lambda_iy(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_h_iy(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_k_iy(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_ix_iy(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_a_ix(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_a_iy(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_a_lambda(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_a_h(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_a_k(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_m(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_m_a(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_m_lambda(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_m_h(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_m_k(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_m_ix(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_m_iy(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_m_m(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_e(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_e_e(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_inc(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_inc_inc(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_Omega(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_Omega_Omega(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_omega(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_omega_omega(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_f(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_f_f(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_a_e(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_a_inc(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_a_Omega(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_a_omega(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_a_f(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_e_inc(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_e_Omega(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_e_omega(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_e_f(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_m_e(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_inc_Omega(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_inc_omega(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_inc_f(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_m_inc(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_omega_Omega(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_Omega_f(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_m_Omega(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_omega_f(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_m_omega(double G, struct reb_particle po, struct reb_particle primary);
+struct reb_particle reb_derivatives_m_f(double G, struct reb_particle po, struct reb_particle primary);
 /** @} */
 
 
