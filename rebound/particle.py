@@ -49,30 +49,46 @@ class Particle(Structure):
     
     def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, id=None, date=None, simulation=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None):
         """
-        Initializes a Particle structure.
-        Typically users will not create Particle structures directly.
-        Rather, use the add member function of a Simulation instance, which will create a Particle and add it to the simulation.
+        Initializes a Particle structure. Rather than explicitly creating 
+        a Particle structure, users may use the ``add()`` member function 
+        of a Simulation instance, which will both create a Particle and 
+        then add it to the simulation with one function call.
 
-        Accepts either cartesian positions and velocities, or orbital elements together with the reference Particle (primary), but not both.
-        Requires a simulation instance for the Particle.
-        For convenience, optional keywords that are not passed default to zero (mass, cartesian and orbital elements). 
-        However, if passing orbital elements directly or implicitly (by passing a primary Particle), you must specify the semimajor axis.  To specify the longitude of ascending node you must pass Omega, to specify the pericenter you can pass either omega or pomega (not both), and for the longitude/anomaly you can pass one of f, M, l or theta.  See ipython_examples/OrbitalElements.ipynb.  See, e.g., Murray & Dermott Solar System Dynamics for angle definitions.
+        This function accepts either cartesian positions and velocities, 
+        classical orbital elements together with the reference Particle 
+        (the primary), as well as orbital parameters defined by Pal (2009).
+
+        For convenience, optional keywords that are not passed default 
+        to zero (mass, cartesian and orbital elements). 
+
+        Whenever initializing a particle from orbital elements, one must 
+        specify either the semimajor axis or the period of the orbit.
+        
+        For classical orbital paramerers, one can specify the longitude 
+        of the ascending node by passing Omega, to specify the pericenter 
+        one can pass either omega or pomega (not both), and for the 
+        longitude/anomaly one can pass one of f, M, l or theta.  
+        See ipython_examples/OrbitalElements.ipynb for examples.  
+        See also Murray & Dermott Solar System Dynamics for formal 
+        definitions of angles in orbital mechanics.
 
         All angles should be specified in radians.
+        
 
         Parameters
         ----------
-        particle    : Particle    
-            For consistency with other particle addition routines.  
-            Cannot be passed when creating a particle in this way (with the exception of variational particles).
+        particle    : Particle, optional    
+            If a particle is passed, a copy of that particle is returned.
+            If a variational particle is initialized, then ``particle`` is 
+            original particle that will be varied. 
         m           : float       
             Mass        (Default: 0)
         x, y, z     : float       
-            Positions   (Default: 0)
+            Positions in Cartesian coordinates  (Default: 0)
         vx, vy, vz  : float       
-            Velocities  (Default: 0)
+            Velocities in Cartesian coordinates (Default: 0)
         primary     : Particle    
-            Primary body for converting orbital elements to cartesian (Default: center of mass of the particles in the passed simulation, i.e., will yield Jacobi coordinates as you progressively pass particles) 
+            Primary body for converting orbital elements to cartesian (Default: center of mass of the particles in the passed simulation, i.e., this will yield Jacobi coordinates as one progressively adds particles) 
         a           : float       
             Semimajor axis (a or P required if passing orbital elements)
         P           : float
@@ -97,13 +113,21 @@ class Particle(Structure):
             True longitude              (Default: 0)
         T           : float 
             Time of pericenter passage  
+        h           : float       
+            h variable, see Pal (2009) for a definition  (Default: 0)
+        k           : float       
+            k variable, see Pal (2009) for a definition  (Default: 0)
+        ix          : float       
+            ix variable, see Pal (2009) for a definition  (Default: 0)
+        iy           : float       
+            iy variable, see Pal (2009) for a definition  (Default: 0)
         r           : float       
             Particle radius (only used for collisional simulations)
         id          : int               (Default: 0)
             Particle ID (arbitrary, specified by the user)
         date        : string      
             For consistency with adding particles through horizons.  Not used here.
-        simulation  : Simulation)  
+        simulation  : Simulation  
             Simulation instance associated with this particle (Required)
         variation   : string            (Default: None)
             Set this string to the name of an orbital parameter to initialize the particle as a variational particle.
@@ -121,8 +145,9 @@ class Particle(Structure):
 
         >>> sim = rebound.Simulation()
         >>> sim.add(m=1.)
-        >>> sim.add(m=0.001, a=0.5, e=0.01)
-        >>> sim.add(m=0.0, x=1., vy=1.)
+        >>> p1 = rebound.Particle(simulation=sim, m=0.001, a=0.5, e=0.01)
+        >>> p2 = rebound.Particle(simulation=sim, m=0.0, x=1., vy=1.)
+        >>> p3 = rebound.Particle(simulation=sim, m=0.001, a=1.5, h=0.1, k=0.2, l=0.1)
 
         """        
         if variation:
@@ -183,7 +208,8 @@ class Particle(Structure):
             return 
 
         if particle is not None:
-            raise ValueError("Cannot initialize particle from other particles.")
+            memmove(byref(self), byref(particle), sizeof(self))
+            return
         cart = [x,y,z,vx,vy,vz]
         orbi = [primary,a,P,e,inc,Omega,omega,pomega,f,M,l,theta,T]
         pal  = [h,k,ix,iy]
