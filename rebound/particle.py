@@ -155,7 +155,7 @@ class Particle(Structure):
                 if variation in variationtypes:
                     method = getattr(clibrebound, 'reb_derivatives_'+variation)
                     method.restype = Particle
-                    p = method(c_double(simulation.G), particle, primary)
+                    p = method(c_double(simulation.G), primary, particle)
                 else:
                     raise ValueError("Variational particles can only be initializes using the derivatives with respect to one of the following: %s."%", ".join(variationtypes))
             elif variation_order==2:
@@ -168,7 +168,7 @@ class Particle(Structure):
 
                     method = getattr(clibrebound, 'reb_derivatives_'+variation+'_'+variation2)
                     method.restype = Particle
-                    p = method(c_double(simulation.G), particle, primary)
+                    p = method(c_double(simulation.G), primary, particle)
                 else:
                     raise ValueError("Variational particles can only be initializes using the derivatives with respect to one of the following: %s."%", ".join(variationtypes))
             else:
