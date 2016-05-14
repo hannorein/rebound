@@ -1,6 +1,6 @@
 /**
  * @file    derivatives.c
- * @brief   Function to calculate derivatives of Keplerian orbits.
+ * @brief   Functions to calculate derivatives of Keplerian orbits.
  * @author  Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section     LICENSE

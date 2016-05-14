@@ -621,7 +621,7 @@ class Simulation(Structure):
             By default the function adds a set of first order variational particles to the simulation. Set this flag to 2 for second order.
         first_order : Variation, optional
             Second order variational equations depend on their corresponding first order variational equations. 
-            This parameter expects the Variation object corresponding  to the first order variational equations. 
+            This parameter expects the Variation object corresponding to the first order variational equations. 
         first_order_2 : Variation, optional
             Same as first_order. But allows to set two different indicies to calculate off-diagonal elements. 
             If omitted, then first_order will be used for both first order equations.
@@ -1043,21 +1043,35 @@ class Variation(Structure):
 
     def vary(self, particle_index, variation, variation2=None, primary=None):
         """
-        This function can be used to initialize variational particles.
+        This function can be used to initialize the variational particles that are 
+        part of a Variation.
     
         Note that rather than using this convenience function, one can 
-        also directly manipulate the particles' coordinates.
+        also directly manipulate the particles' coordinate using the following
+        syntax:
 
-        This function is useful for initializing variations corresponding to 
+        >>> var = sim.add_variation()
+        >>> var.particles[0].x = 1.
+
+        The ``vary()`` function is useful for initializing variations corresponding to 
         changes in one of the orbital parameters for a particle on a bound 
         Keplerian orbit.
 
         The function supports both first and second order variations in the following
         classical orbital parameters:
           a, e, inc, omega, Omega, f
-        as well as the Pal coordinates: 
+        as well as the Pal (2009) coordinates: 
           a, h, k, ix, iy, lambda
-        and in both cases the mass m of the particle.
+        and in both cases the mass m of the particle. The advantage of the Pal coordinate
+        system is that all derivatives are well behaved (infinitely differentiable).
+        Classical orbital parameters on the other hand exhibit coordinate singularities, 
+        for example when e=0.
+        
+        The following example initializes the variational particles corresponding to a 
+        change in the semi-major axis of the particle with index 1:
+        
+        >>> var = sim.add_variation()
+        >>> var.vary(1,"a")
 
         Parameters
         ----------

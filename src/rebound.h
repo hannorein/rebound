@@ -1047,10 +1047,16 @@ int reb_read_int(int argc, char** argv, const char* argument, int _default);
  * \name Setup functions for variational particles.
  * @{
  * @brief This function calculates the first/second derivative of a Keplerian orbit. 
- * @details The derivative is calculated with respect to the variables in the function name.
+ * @details Derivatives of Keplerian orbits are required for variational equations, in particular
+ *          for optimization problems. 
+ *          The derivative is calculated with respect to the variables that appear in the function name.
  *          One variable implies that a first derivative is returned, two variables implies that a second
- *          derivate is returned. Classical orbital parameters and Pal coordinates are supported.
- *          Note that Cartesian coordinates are trivial.
+ *          derivate is returned. Classical orbital parameters and those introduced by Pal (2009) are 
+ *          supported. Pal coordinates have the advantage of being analytical (i.e. infinite differentiable).
+ *          Classical orbital parameters may have singularities, for example when e is close to 0.
+ *          Note that derivatives with respect to Cartesian coordinates are trivial and therefore not
+ *          implemented as seperate functions. 
+ *          The following variables are supported: a, e, inc, f, omega, Omega, h, k, ix, iy and m (mass). 
  * @return The derivative as a particle structre. Each structure element is a derivative.
  * @param G The gravitational constant
  * @param primary The primary of the Keplerian orbit
