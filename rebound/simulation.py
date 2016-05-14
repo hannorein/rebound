@@ -1090,7 +1090,10 @@ class Variation(Structure):
             particles = sim.particles
         else:
             raise RuntimeError("Something went wrong. Cannot seem to find simulation corresponding to variation.")
-        particles[self.index + particle_index] = Particle(simulation=sim,particle=particles[particle_index], variation=variation, variation2=variation2, primary=primary)
+        if self.testparticle >= 0:
+            particles[self.index] = Particle(simulation=sim,particle=particles[particle_index], variation=variation, variation2=variation2, primary=primary)
+        else:
+            particles[self.index + particle_index] = Particle(simulation=sim,particle=particles[particle_index], variation=variation, variation2=variation2, primary=primary)
 
     @property
     def particles(self):
