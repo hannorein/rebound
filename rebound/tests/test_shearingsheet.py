@@ -8,7 +8,7 @@ class TestShearingSheet(unittest.TestCase):
     def test_whfast_nosafemode(self):
         sim = rebound.Simulation()
         OMEGA = 0.00013143527     # [1/s]
-        sim.integrator_sei_OMEGA = OMEGA
+        sim.ri_sei.OMEGA = OMEGA
         surface_density = 400.    # kg/m^2
         particle_density = 400.   # kg/m^3
         sim.G = 6.67428e-11       # N m^2 / kg^2

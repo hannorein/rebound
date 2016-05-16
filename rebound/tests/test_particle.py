@@ -164,6 +164,19 @@ class TestParticleCopy(unittest.TestCase):
         self.assertEqual(sim.particles[1].m,pc.m)
         sim.particles[1].m=0.01
         self.assertNotEqual(sim.particles[1].m,pc.m)
+    def test_copy2(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        p1 = rebound.Particle(simulation=sim,m=1.,e=0.2,a=1)
+        p2 = rebound.Particle(p1)
+        p1.m=2.
+        p2.m=3.
+        sim.add(p1)
+        sim.add(p2)
+        self.assertEqual(p1.m,2.)
+        self.assertEqual(p2.m,3.)
+        self.assertEqual(sim.particles[1].m,2.)
+        self.assertEqual(sim.particles[2].m,3.)
         
 
 class TestParticleNotInSimulation(unittest.TestCase):
@@ -172,8 +185,6 @@ class TestParticleNotInSimulation(unittest.TestCase):
         p2 = rebound.Particle(x=1)
         with self.assertRaises(ValueError):
             p3 = rebound.Particle(a=1)
-        with self.assertRaises(ValueError):
-            p4 = rebound.Particle(p1)
 
 if __name__ == "__main__":
     unittest.main()

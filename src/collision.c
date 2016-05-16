@@ -39,7 +39,9 @@
 #include "rebound.h"
 #include "boundary.h"
 #include "tree.h"
+#ifdef MPI
 #include "communication_mpi.h"
+#endif // MPI
 
 static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
 

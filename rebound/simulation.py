@@ -76,6 +76,25 @@ class reb_simulation_integrator_wh(Structure):
                 ("eta", POINTER(c_double))]
 
 class reb_simulation_integrator_sei(Structure):
+    """
+    This class is an abstraction of the C-struct reb_simulation_integrator_sei.
+    It controls the behaviour of the symplectic SEI integrator for shearing
+    sheet calculations. It is described in Rein and Tremaine (2011).
+    
+    This struct should be accessed via the simulation class only. Here is an 
+    example:
+
+    >>> sim = rebound.Simulation()
+    >>> sim.ri_sei.OMEGA =  1.58
+    
+    :ivar float OMEGA:          
+        The epicyclic frequency OMEGA. For simulations making use of shearing 
+        sheet boundary conditions, REBOUND needs to know the epicyclic frequency. 
+        By default OMEGA is 1. For more details read Rein and Tremaine 2011.
+    :ivar float OMEGAZ:          
+        The z component of the epicyclic frequency OMEGA. By default it is assuming
+        OMEGAZ is the same as OMEGA.
+    """
     _fields_ = [("OMEGA", c_double),
                 ("OMEGAZ", c_double),
                 ("lastdt", c_double),
@@ -105,6 +124,37 @@ class reb_simulation_integrator_ias15(Structure):
                 ("er", reb_dp7)]
 
 class reb_simulation_integrator_whfast(Structure):
+    """
+    This class is an abstraction of the C-struct reb_simulation_integrator_whfast.
+    It controls the behaviour of the symplectic WHFast integrator described 
+    in Rein and Tamayo (2015).
+    
+    This struct should be accessed via the simulation class only. Here is an 
+    example:
+
+    >>> sim = rebound.Simulation
+    >>> sim.ri_hybarid.corrector =  11
+
+    
+    :ivar int corrector:      
+        The order of the symplectic corrector in the WHFast integrator.
+        By default the symplectic correctors are turned off (=0). For high
+        accuracy simulation set this value to 11. For more details read 
+        Rein and Tamayo (2015).
+    :ivar int recalculate_jacobi_this_timestep:
+        Sets a flag that tells WHFast that the particles have changed.
+        Setting this flag to 1 (default 0) triggers the WHFast integrator
+        to recalculate Jacobi coordinates. This is needed if the user changes 
+        the particle position, velocity or mass inbetween timesteps.
+        After every timestep the flag is set back to 0, so if you continuously
+        update the particles manually, you need to set this flag to 1 after every timestep.
+    :ivar int safe_mode:
+        If safe_mode is 1 (default) particles can be modified between
+        timesteps and particle velocities and positions are always synchronised.
+        If you set safe_mode to 0, the speed and accuracy of WHFast improves.
+        However, make sure you are aware of the consequences. Read the iPython tutorial
+        on advanced WHFast usage to learn more.
+    """
     _fields_ = [("corrector", c_uint),
                 ("recalculate_jacobi_this_timestep", c_uint),
                 ("safe_mode", c_uint),
@@ -589,7 +639,7 @@ class Simulation(Structure):
             By default the function adds a set of first order variational particles to the simulation. Set this flag to 2 for second order.
         first_order : Variation, optional
             Second order variational equations depend on their corresponding first order variational equations. 
-            This parameter expects the Variation object corresponding  to the first order variational equations. 
+            This parameter expects the Variation object corresponding to the first order variational equations. 
         first_order_2 : Variation, optional
             Same as first_order. But allows to set two different indicies to calculate off-diagonal elements. 
             If omitted, then first_order will be used for both first order equations.
@@ -908,67 +958,6 @@ class Simulation(Structure):
         """
         clibrebound.reb_output_binary(byref(self), c_char_p(filename.encode("ascii")))
         
-# Integrator Flags
-    @property 
-    def integrator_sei_OMEGA(self):
-        """
-        Get or set the epicyclic frequency OMEGA.
-
-        For simulations making use of shearing sheet boundary conditions,
-        REBOUND needs to know the epicyclic frequency. By default OMEGA
-        is 1. For more details read Rein and Tremaine 2011.
-        """
-        return self.ri_sei.OMEGA
-    @integrator_sei_OMEGA.setter 
-    def integrator_sei_OMEGA(self, value):
-        self.ri_sei.OMEGA = c_double(value)
-
-    @property 
-    def integrator_whfast_corrector(self):
-        """
-        Get or set the order of the symplectic corrector in the WHFast integrator.
-
-        By default the symplectic correctors are turned off (=0). For high
-        accuracy simulation set this value to 11. For more details read 
-        Rein and Tamayo 2015.
-        """
-        return self.ri_whfast.corrector
-    @integrator_whfast_corrector.setter 
-    def integrator_whfast_corrector(self, value):
-        self.ri_whfast.corrector = c_uint(value)
-
-    @property
-    def integrator_whfast_safe_mode(self):
-        """
-        Get or set the safe mode flag for WHFast.
-
-        If safe_mode is 1 (default) particles can be modified between
-        timesteps and particle velocities and positions are always synchronised.
-        If you set safe_mode to 0, the speed and accuracy of WHFast improves.
-        However, make sure you are aware of the consequences. Read the iPython tutorial
-        on advanced WHFast usage to learn more.
-        """
-        return self.ri_whfast.safe_mode
-    @integrator_whfast_safe_mode.setter
-    def integrator_whfast_safe_mode(self, value):
-        self.ri_whfast.safe_mode = c_uint(value)
-
-    @property
-    def integrator_whfast_recalculate_jacobi_this_timestep(self):
-        """
-        Sets a flag that tells WHFast that the particles have changed.
-
-        Setting this flag to 1 (default 0) triggers the WHFast integrator
-        to recalculate Jacobi coordinates. This is needed if the user changes 
-        the particle position, velocity or mass inbetween timesteps.
-        After every timestep the flag is set back to 0, so if you continuously
-        update the particles manually, you need to set this flag to 1 after every timestep.
-        """ 
-        return self.ri_whfast.recalculate_jacobi_this_timestep
-    @integrator_whfast_recalculate_jacobi_this_timestep.setter
-    def integrator_whfast_recalculate_jacobi_this_timestep(self, value):
-        self.ri_whfast.recalculate_jacobi_this_timestep = c_uint(value)
-    
 # Integration
     def step(self):
         """
@@ -1070,19 +1059,37 @@ class Variation(Structure):
                 ("index_1st_order_a", c_int),
                 ("index_1st_order_b", c_int)]
 
-    def vary(self, particle_index, variation, variation2=None, order=None):
+    def vary(self, particle_index, variation, variation2=None, primary=None):
         """
-        This function can be used to initialize variational particles.
+        This function can be used to initialize the variational particles that are 
+        part of a Variation.
     
         Note that rather than using this convenience function, one can 
-        also directly manipulate the particles' coordinates.
+        also directly manipulate the particles' coordinate using the following
+        syntax:
 
-        This function is useful for initializing variations corresponding to 
-        changes in one of the orbital parameters.
+        >>> var = sim.add_variation()
+        >>> var.particles[0].x = 1.
+
+        The ``vary()`` function is useful for initializing variations corresponding to 
+        changes in one of the orbital parameters for a particle on a bound 
+        Keplerian orbit.
 
         The function supports both first and second order variations in the following
-        orbital parameters:
-          a, e, inc, omega, Omega, f, m (mass)
+        classical orbital parameters:
+          a, e, inc, omega, Omega, f
+        as well as the Pal (2009) coordinates: 
+          a, h, k, ix, iy, lambda
+        and in both cases the mass m of the particle. The advantage of the Pal coordinate
+        system is that all derivatives are well behaved (infinitely differentiable).
+        Classical orbital parameters on the other hand exhibit coordinate singularities, 
+        for example when e=0.
+        
+        The following example initializes the variational particles corresponding to a 
+        change in the semi-major axis of the particle with index 1:
+        
+        >>> var = sim.add_variation()
+        >>> var.vary(1,"a")
 
         Parameters
         ----------
@@ -1090,20 +1097,22 @@ class Variation(Structure):
             The index of the particle that should be varied. The index starts at 0 and runs through N-1. The first particle added to a simulation receives the index 0, the second 1, and the on.
         variation : string
             This parameter determines which orbital parameter is varied. 
-        variation2: string
+        variation2: string, optional
             This is only used for second order variations which can depend on two varying parameters. If omitted, then it is assumed that the parameter variation is variation2.
+        primary: Particle, optional
+            By default variational particles are created in the Heliocentric frame. 
+            Set this parameter to use any other particles as a primary (e.g. the center of mass).
         """
-        if order is None:
-            order = self.order
-        sim = self._sim.contents
-        if order==0:
-            raise ValueError("Cannot find variation for given index. ")
-        if order==1 and variation2 is not None:
-            raise AttributeError("Can only specify one variation for first order.")
-        o = sim.particles[particle_index].calculate_orbit(primary=sim.particles[0])
-        p = Particle(simulation=sim, primary=sim.particles[0], variation_order=order, variation=variation, variation2=variation2,m=sim.particles[particle_index].m,a=o.a, e=o.e, inc=o.inc, Omega=o.Omega, omega=o.omega, f=o.f)
-        sim.particles[self.index + particle_index] = p
-    
+        if self._sim is not None:
+            sim = self._sim.contents
+            particles = sim.particles
+        else:
+            raise RuntimeError("Something went wrong. Cannot seem to find simulation corresponding to variation.")
+        if self.testparticle >= 0:
+            particles[self.index] = Particle(simulation=sim,particle=particles[particle_index], variation=variation, variation2=variation2, primary=primary)
+        else:
+            particles[self.index + particle_index] = Particle(simulation=sim,particle=particles[particle_index], variation=variation, variation2=variation2, primary=primary)
+
     @property
     def particles(self):
         """
