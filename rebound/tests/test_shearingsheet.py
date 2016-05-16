@@ -5,7 +5,7 @@ import numpy as np
 
 class TestShearingSheet(unittest.TestCase):
     
-    def test_whfast_nosafemode(self):
+    def test_saturnsrings(self):
         sim = rebound.Simulation()
         OMEGA = 0.00013143527     # [1/s]
         sim.ri_sei.OMEGA = OMEGA

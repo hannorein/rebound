@@ -63,6 +63,28 @@ class TestIntegrator(unittest.TestCase):
     def tearDown(self):
         self.sim = None
     
+    def test_ias15_globaloff(self):
+        self.sim.integrator = "ias15"
+        self.sim.ri_ias15.epsilon_global = 0
+        jupyr = 11.86*2.*math.pi
+        e0 = self.sim.calculate_energy()
+        self.assertNotEqual(e0,0.)
+        self.sim.integrate(1e3*jupyr)
+        e1 = self.sim.calculate_energy()
+        self.assertLess(math.fabs((e0-e1)/e1),1e-14)
+
+    def test_ias15_small_initial_dt(self):
+        self.sim.integrator = "ias15"
+        jupyr = 11.86*2.*math.pi
+        self.sim.dt = jupyr*1e-7
+        e0 = self.sim.calculate_energy()
+        self.assertNotEqual(e0,0.)
+        self.sim.integrate(self.sim.dt*1.001)
+        self.sim.dt = jupyr
+        self.sim.integrate(1e3*jupyr)
+        e1 = self.sim.calculate_energy()
+        self.assertLess(math.fabs((e0-e1)/e1),1e-14)
+
     def test_ias15(self):
         self.sim.integrator = "ias15"
         jupyr = 11.86*2.*math.pi

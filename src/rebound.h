@@ -121,22 +121,22 @@ struct reb_particle {
  * a Keplerian orbit from Cartesian coordinates. 
  */
 struct reb_orbit {
-	double d;	///< Radial distance from central object
-	double v;   ///< velocity relative to central object's velocity
-	double h;	///< Angular momentum
-	double P;	///< Orbital period
-	double n;	///< Mean motion
-	double a;	///< Semi-major axis
-	double e;	///< Eccentricity
-	double inc;	///< Inclination
-	double Omega; 	///< Longitude of ascending node
-	double omega; 	///< Argument of pericenter
-	double pomega;  ///< Longitude of pericenter
-	double f; 	///< True anomaly
-	double M;   ///< Mean anomaly
-	double l;	///< Mean Longitude
-	double theta; ///< True Longitude
-    double T;   ///< Time of pericenter passage
+    double d;        ///< Radial distance from central object
+    double v;        ///< velocity relative to central object's velocity
+    double h;        ///< Angular momentum
+    double P;        ///< Orbital period
+    double n;        ///< Mean motion
+    double a;        ///< Semi-major axis
+    double e;        ///< Eccentricity
+    double inc;      ///< Inclination
+    double Omega;    ///< Longitude of ascending node
+    double omega;    ///< Argument of pericenter
+    double pomega;   ///< Longitude of pericenter
+    double f;        ///< True anomaly
+    double M;        ///< Mean anomaly
+    double l;        ///< Mean Longitude
+    double theta;    ///< True Longitude
+    double T;        ///< Time of pericenter passage
 };
 
 

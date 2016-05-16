@@ -367,7 +367,7 @@ static double mod2pi(double f){
 	return f;
 }
 
-double reb_M_to_E(double e, double M){
+double reb_tools_M_to_E(double e, double M){
 	double E;
 	if(e < 1.){
 		E = e < 0.8 ? M : M_PI;
@@ -398,7 +398,7 @@ double reb_M_to_E(double e, double M){
 }
 
 double reb_tools_M_to_f(double e, double M){
-	double E = reb_M_to_E(e, M);
+	double E = reb_tools_M_to_E(e, M);
 	if(e > 1.){
 		return 2.*atan(sqrt((1.+e)/(e-1.))*tanh(0.5*E));
 	}
@@ -685,7 +685,7 @@ void reb_tools_solve_kepler_pal(double h, double k, double lambda, double* p, do
         double pomega = atan2(h,k);
         double M = lambda-pomega;
         double e = sqrt(e2);
-        double E = reb_M_to_E(e, M);
+        double E = reb_tools_M_to_E(e, M);
         *p = e*sin(E); 
         *q = e*cos(E); 
     }
