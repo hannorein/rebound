@@ -22,7 +22,7 @@ with open("src/rebound.c") as f:
     reboundlines = f.readlines()
     for i,l in enumerate(reboundlines):
         if "**VERSIONLINE**" in l:
-            reboundlines[i] = "const char* reb_version_str = \""+reboundversion+"\";			// **VERSIONLINE** This line gets updated automatically. Do not edit manually.\n"
+            reboundlines[i] = "const char* reb_version_str = \""+reboundversion+"\";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.\n"
 
     with open("src/rebound.c", "w") as f:
         f.writelines(reboundlines)
