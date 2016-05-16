@@ -12,6 +12,7 @@ include src/output.c
 include src/input.c
 include src/rebound.c
 include src/tools.c
+include src/derivatives.c
 include src/particle.c
 include src/integrator_ias15.h
 include src/integrator_whfast.h
@@ -26,6 +27,7 @@ include src/gravity.h
 include src/tree.h
 include src/tree.c
 include src/tools.h
+include src/derivatives.h
 include src/particle.h
 include src/rebound.h
 include src/input.h
