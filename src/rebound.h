@@ -243,6 +243,9 @@ struct reb_simulation_integrator_hybarid {
     int a_Nmax;
     
     int timestep_too_large_warning;
+    unsigned long long steps;
+    unsigned long long steps_miniactive;
+    unsigned long long steps_miniN;
 };
 
 

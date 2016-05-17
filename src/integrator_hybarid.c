@@ -116,8 +116,12 @@ void reb_integrator_hybarid_part2(struct reb_simulation* r){
     calc_forces_on_planets(r, r->ri_hybarid.a_f);
     
     struct reb_simulation* mini = r->ri_hybarid.mini;
+    r->ri_hybarid.steps++;
     if (r->ri_hybarid.mini_active){
+        r->ri_hybarid.steps_miniactive++;
+        r->ri_hybarid.steps_miniN += mini->N;
         reb_integrate(mini,r->t);
+
         for (int i=0; i<mini->N; i++){
             r->particles[r->ri_hybarid.global_index_from_mini_index[i]] = mini->particles[i];
             r->particles[r->ri_hybarid.global_index_from_mini_index[i]].sim = r;    
@@ -138,6 +142,9 @@ void reb_integrator_hybarid_synchronize(struct reb_simulation* r){
 
 void reb_integrator_hybarid_reset(struct reb_simulation* r){
     //r->ri_hybarid.timestep_too_large_warning = 0.; //Don't think we want to reset the warning.
+    r->ri_hybarid.steps = 0;
+    r->ri_hybarid.steps_miniactive = 0;
+    r->ri_hybarid.steps_miniN = 0;
     
     reb_integrator_whfast_reset(r);
 

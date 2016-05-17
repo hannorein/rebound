@@ -250,6 +250,9 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_hybarid.is_in_mini = NULL;
     r->ri_hybarid.is_in_mini_Nmax = 0;
     r->ri_hybarid.a_Nmax = 0;
+    r->ri_hybarid.steps = 0;
+    r->ri_hybarid.steps_miniactive = 0;
+    r->ri_hybarid.steps_miniN = 0;
     r->ri_hybarid.a_i = NULL;
     r->ri_hybarid.a_f = NULL;
 }
