@@ -67,7 +67,8 @@ if 1:
         os.chdir("ipython")
         for example in glob.glob("../../ipython_examples/*.ipynb"):
             print("Trying file: ", example)
-            outp = subprocess.check_output(["jupyter", "nbconvert", example, "--to", "rst"])
+            outp = subprocess.check_output(["cp", example, example[23:]])
+            outp = subprocess.check_output(["jupyter", "nbconvert", example[23:], "--to", "rst"])
             print(outp)
     except:
         with open("ipython.rst","w") as fd:
