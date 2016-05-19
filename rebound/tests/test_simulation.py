@@ -88,7 +88,7 @@ class TestSimulation(unittest.TestCase):
     def test_com(self):
         self.sim.move_to_com()
         com = self.sim.calculate_com()
-        self.assertEqual(com.x, 0.)
+        self.assertAlmostEqual(com.x, 0., delta=1e-15)
         
     def test_init_megno(self):
         self.sim.init_megno()
