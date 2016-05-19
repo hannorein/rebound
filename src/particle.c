@@ -161,7 +161,7 @@ int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted){
 	return success;
 }
 
-struct reb_particle subtract_particles(struct reb_particle p1, struct reb_particle p2){
+struct reb_particle reb_subtract_particles(struct reb_particle p1, struct reb_particle p2){
     struct reb_particle p = {0};
     p.x = p1.x - p2.x;
     p.y = p1.y - p2.y;
@@ -173,10 +173,10 @@ struct reb_particle subtract_particles(struct reb_particle p1, struct reb_partic
     p.ay = p1.ay - p2.ay;
     p.az = p1.az - p2.az;
     p.m = p1.m - p2.m;
-    return p
+    return p;
 }
 
-struct reb_particle add_particles(struct reb_particle p1, struct reb_particle p2){
+struct reb_particle reb_add_particles(struct reb_particle p1, struct reb_particle p2){
     struct reb_particle p = {0};
     p.x = p1.x + p2.x;
     p.y = p1.y + p2.y;
@@ -188,10 +188,10 @@ struct reb_particle add_particles(struct reb_particle p1, struct reb_particle p2
     p.ay = p1.ay + p2.ay;
     p.az = p1.az + p2.az;
     p.m = p1.m + p2.m;
-    return p
+    return p;
 }
 
-struct reb_particle multiply_particle(struct reb_particle p1, double value){
+struct reb_particle reb_multiply_particle(struct reb_particle p1, double value){
     struct reb_particle p = {0};
     p.x *= value;
     p.y *= value;
@@ -203,10 +203,10 @@ struct reb_particle multiply_particle(struct reb_particle p1, double value){
     p.ay *= value;
     p.az *= value;
     p.m *= value;
-    return p
+    return p;
 }
 
-struct reb_particle divide_particle(struct reb_particle p1, double value){
+struct reb_particle reb_divide_particle(struct reb_particle p1, double value){
     struct reb_particle p = {0};
     p.x /= value;
     p.y /= value;
@@ -218,5 +218,5 @@ struct reb_particle divide_particle(struct reb_particle p1, double value){
     p.ay /= value;
     p.az /= value;
     p.m /= value;
-    return p
+    return p;
 }
