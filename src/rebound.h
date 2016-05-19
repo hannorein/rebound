@@ -1149,7 +1149,51 @@ struct reb_particle reb_derivatives_m_omega(double G, struct reb_particle primar
 struct reb_particle reb_derivatives_m_f(double G, struct reb_particle primary, struct reb_particle po);
 /** @} */
 
+/**
+ * \name Particle manipulation functions
+ * @{
+ */
+/**
+ * @defgroup ParticleManipFunctions List of reb_particle manipulation functions for REBOUND
+ * @{
+ */
+/**
+ * @brief Subtract particle p2 from particle p1 (p1 - p2).
+ * @details Subtracts positions, velocities, accelerations and mass element by element. 
+ * @param p1 First reb_particle.
+ * @param p2 Second reb_particle to subtract from p1.
+ * @returns A new particle with no pointers (not in any simulation etc.) set.
+ */
+struct reb_particle subtract_particles(struct reb_particle p1, struct reb_particle p2);
 
+/**
+ * @brief Add particle p1 to particle p1.
+ * @details Adds positions, velocities, accelerations and mass element by element. 
+ * @param p1 First reb_particle.
+ * @param p2 Second reb_particle.
+ * @returns A new particle with no pointers (not in any simulation etc.) set.
+ */
+struct reb_particle add_particles(struct reb_particle p1, struct reb_particle p2);
+
+/**
+ * @brief Multiply a particle's members by a constant.
+ * @brief Multiplies particle's positions, velocities, accelerations and mass by a constant.
+ * @param p1 reb_particle to modify.
+ * @param value Value by which to multiply particle's fields.
+ * @returns A new particle with no pointers (not in any simulation etc.) set.
+ */
+struct reb_particle multiply_particle(struct reb_particle p1, double value);
+
+/**
+ * @brief Divide a particle's members by a constant.
+ * @brief Divides particle's positions, velocities, accelerations and mass by a constant.
+ * @param p1 reb_particle to modify.
+ * @param value Value by which to divide particle's fields.
+ * @returns A new particle with no pointers (not in any simulation etc.) set.
+ */
+struct reb_particle divide_particle(struct reb_particle p1, double value);
+/** @} */
+/** @} */
 
 /**
  * \name Miscellaneous tools
