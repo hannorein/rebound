@@ -434,13 +434,13 @@ class Particle(Structure):
     def __mul__(self, other):
         if isinstance(other, float):
             clibrebound.reb_multiply_particle.restype = Particle
-            return clibrebound.reb_multiply_particle(self, other)
+            return clibrebound.reb_multiply_particle(self, c_double(other))
         return NotImplemented 
     
     def __rmul__(self, other):
         if isinstance(other, float):
             clibrebound.reb_multiply_particle.restype = Particle
-            return clibrebound.reb_multiply_particle(self, other)
+            return clibrebound.reb_multiply_particle(self, c_double(other))
         return NotImplemented 
 
     def __truediv__(self, other):
@@ -449,7 +449,7 @@ class Particle(Structure):
     def __div__(self, other):
         if isinstance(other, float):
             clibrebound.reb_divide_particle.restype = Particle
-            return clibrebound.reb_divide_particle(self, other)
+            return clibrebound.reb_divide_particle(self, c_double(other))
         return NotImplemented 
 
     @property

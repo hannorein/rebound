@@ -193,30 +193,30 @@ struct reb_particle reb_add_particles(struct reb_particle p1, struct reb_particl
 
 struct reb_particle reb_multiply_particle(struct reb_particle p1, double value){
     struct reb_particle p = {0};
-    p.x *= value;
-    p.y *= value;
-    p.z *= value;
-    p.vx *= value;
-    p.vy *= value;
-    p.vz *= value;
-    p.ax *= value;
-    p.ay *= value;
-    p.az *= value;
-    p.m *= value;
+    p.x = p1.x * value;
+    p.y = p1.y * value;
+    p.z = p1.z * value;
+    p.vx = p1.vx * value;
+    p.vy = p1.vy * value;
+    p.vz = p1.vz * value;
+    p.ax = p1.ax * value;
+    p.ay = p1.ay * value;
+    p.az = p1.az * value;
+    p.m = p1.m * value;
     return p;
 }
 
 struct reb_particle reb_divide_particle(struct reb_particle p1, double value){
     struct reb_particle p = {0};
-    p.x /= value;
-    p.y /= value;
-    p.z /= value;
-    p.vx /= value;
-    p.vy /= value;
-    p.vz /= value;
-    p.ax /= value;
-    p.ay /= value;
-    p.az /= value;
-    p.m /= value;
+    p.x = p1.x / value;
+    p.y = p1.y / value;
+    p.z = p1.z / value;
+    p.vx = p1.vx / value;
+    p.vy = p1.vy / value;
+    p.vz = p1.vz / value;
+    p.ax = p1.ax / value;
+    p.ay = p1.ay / value;
+    p.az = p1.az / value;
+    p.m = p1.m / value;
     return p;
 }
