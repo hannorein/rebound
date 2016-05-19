@@ -846,37 +846,39 @@ class Simulation(Structure):
         return orbits
 
 # COM calculation 
-    def calculate_com(self, last=None):
+    def calculate_com(self, first=0, last=None):
         """
         Returns the center of momentum for all particles in the simulation.
 
         Parameters
         ----------
+        first: int, optional
+            If ``first`` is specified, only calculate the center of momentum starting
+            from index=``first``.
         last : int or None, optional
-            If ``last`` is specified only calculate the center of momentum for the
-            first ``last`` particles in the array (i.e., indices up to i-1, as used 
-            in Jacobi coordinates).
+            If ``last`` is specified only calculate the center of momentum up to 
+            (but excluding) index=``last``.  Same behavior as Python's range function.
 
         Examples
         --------
         >>> sim = rebound.Simulation()
+        >>> sim.add(m=1, x=-20)
+        >>> sim.add(m=1, x=-10)
         >>> sim.add(m=1, x=0)
-        >>> sim.add(m=1, x=1)
+        >>> sim.add(m=1, x=10)
+        >>> sim.add(m=1, x=20)
         >>> com = sim.calculate_com()
         >>> com.x
-        0.5
+        0.0 
+        >>> com = sim.calculate_com(first=2,last=4) # Considers indices 2,3
+        >>> com.x
+        5.0
 
         """
-        if last is not None:
-            last = min(last, self.N_real-1)
-            clibrebound.reb_get_jacobi_com.restype = Particle
-            com = clibrebound.reb_get_jacobi_com(byref(self.particles[last]))
-            return com
-        else:
-            clibrebound.reb_get_com.restype = Particle
-            com = clibrebound.reb_get_com(byref(self))
-            return com
-        
+        if last is None:
+            last = self.N_real
+        clibrebound.reb_get_com_range.restype = Particle
+        return clibrebound.reb_get_com_range(byref(self), c_int(first), c_int(last))
 
 # Tools
     def move_to_com(self):
