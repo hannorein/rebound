@@ -320,13 +320,13 @@ int reb_get_particle_index(struct reb_particle* p){
 	return i;
 }
 
-struct reb_particle reb_get_com_range(struct reb_simulation* r, int min_index, int max_index){
+struct reb_particle reb_get_com_range(struct reb_simulation* r, int first, int last){
 	struct reb_particle com = {0};
     int N_real = r->N-r->N_var;
-    if(max_index > N_real){
-        max_index = N_real;
+    if(last > N_real){
+        last = N_real;
     }
-	for(int i=min_index; i<max_index; i++){
+	for(int i=first; i<last; i++){
 		com = reb_get_com_of_pair(com, r->particles[i]);
 	}
 	return com;

@@ -820,15 +820,15 @@ struct reb_particle reb_get_com_without_particle(struct reb_particle com, struct
 int reb_get_particle_index(struct reb_particle* p);
 
 /**
- * @brief Returns the center of mass for particles with indices between min_index (inclusive) and max_index (exclusive).
+ * @brief Returns the center of mass for particles with indices between first (inclusive) and last (exclusive).
  * @details For example, reb_get_com_range(r, 6, 9) returns COM for particles 6, 7 and 8. 
  * @param r A pointer to the simulation structure.
- * @param min_index first index in range to consider.
- * @param max_index will consider particles with indices < max_index (i.e., max_index not considered).
- * @return A reb_particle structure for the center of mass of all particles in range [min_index, max_index). Returns particles[min_index] if passed max_index <= min_index.
+ * @param first First index in range to consider.
+ * @param last Will consider particles with indices < last (i.e., particle with index last not considered).
+ * @return A reb_particle structure for the center of mass of all particles in range [first, last). Returns particle filled with zeros if passed last <= first.
  */
 
-struct reb_particle reb_get_com_range(struct reb_simulation* r, int min_index, int max_index);
+struct reb_particle reb_get_com_range(struct reb_simulation* r, int first, int last);
 
 /**
  * @brief Returns the jacobi center of mass for a given particle
