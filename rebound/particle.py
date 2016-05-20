@@ -537,3 +537,7 @@ class Particle(Structure):
     def orbit(self):
         return self.calculate_orbit()
 
+    @property
+    def jacobi_com(self):
+        clibrebound.reb_get_jacobi_com.restype = Particle
+        return clibrebound.reb_get_jacobi_com(byref(self))
