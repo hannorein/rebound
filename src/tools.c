@@ -28,9 +28,7 @@
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
-#ifndef LIBREBOUNDX
 #include "particle.h"
-#endif // LIBREBOUNDX
 #include "rebound.h"
 #include "tools.h"
 
@@ -353,7 +351,6 @@ struct reb_particle reb_get_jacobi_com(struct reb_particle* p){
     return reb_get_com_range(r, 0, p_index);
 }
 	
-#ifndef LIBREBOUNDX
 void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R) {
 	// Algorithm from:	
 	// http://adsabs.harvard.edu/abs/1974A%26A....37..183A
@@ -394,7 +391,6 @@ void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R
 		reb_add(r, star);
 	}
 }
-#endif // LIBREBOUNDX
 
 static double mod2pi(double f){
 	while(f < 0.){
@@ -843,7 +839,6 @@ int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int 
     return index;
 }
 
-#ifndef LIBREBOUNDX
 void reb_tools_megno_init(struct reb_simulation* const r){
 	r->megno_Ys = 0.;
 	r->megno_Yss = 0.;
@@ -929,5 +924,4 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY){
 					*(r->t-r->megno_mean_t)
 					*(r->t-r->megno_mean_t);
 }
-#endif // LIBREBOUNDX
 
