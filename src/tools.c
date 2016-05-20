@@ -322,10 +322,6 @@ int reb_get_particle_index(struct reb_particle* p){
 
 struct reb_particle reb_get_com_range(struct reb_simulation* r, int first, int last){
 	struct reb_particle com = {0};
-    int N_real = r->N-r->N_var;
-    if(last > N_real){
-        last = N_real;
-    }
 	for(int i=first; i<last; i++){
 		com = reb_get_com_of_pair(com, r->particles[i]);
 	}
@@ -333,7 +329,8 @@ struct reb_particle reb_get_com_range(struct reb_simulation* r, int first, int l
 }
 
 struct reb_particle reb_get_com(struct reb_simulation* r){
-	return reb_get_com_range(r, 0, r->N); 
+    int N_real = r->N-r->N_var;
+	return reb_get_com_range(r, 0, N_real); 
 }
 
 struct reb_particle reb_get_jacobi_com(struct reb_particle* p){

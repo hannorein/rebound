@@ -421,26 +421,26 @@ class Particle(Structure):
 
     def __sub__(self, other):
         if isinstance(other, Particle):
-            clibrebound.reb_subtract_particles.restype = Particle
-            return clibrebound.reb_subtract_particles(self, other)
+            clibrebound.reb_particle_minus.restype = Particle
+            return clibrebound.reb_particle_minus(self, other)
         return NotImplemented 
     
     def __add__(self, other):
         if isinstance(other, Particle):
-            clibrebound.reb_add_particles.restype = Particle
-            return clibrebound.reb_add_particles(self, other)
+            clibrebound.reb_particle_plus.restype = Particle
+            return clibrebound.reb_particle_plus(self, other)
         return NotImplemented 
     
     def __mul__(self, other):
         if isinstance(other, float):
-            clibrebound.reb_multiply_particle.restype = Particle
-            return clibrebound.reb_multiply_particle(self, c_double(other))
+            clibrebound.reb_particle_multiply.restype = Particle
+            return clibrebound.reb_particle_multiply(self, c_double(other))
         return NotImplemented 
     
     def __rmul__(self, other):
         if isinstance(other, float):
-            clibrebound.reb_multiply_particle.restype = Particle
-            return clibrebound.reb_multiply_particle(self, c_double(other))
+            clibrebound.reb_particle_multiply.restype = Particle
+            return clibrebound.reb_particle_multiply(self, c_double(other))
         return NotImplemented 
 
     def __truediv__(self, other):
@@ -448,8 +448,8 @@ class Particle(Structure):
 
     def __div__(self, other):
         if isinstance(other, float):
-            clibrebound.reb_divide_particle.restype = Particle
-            return clibrebound.reb_divide_particle(self, c_double(other))
+            clibrebound.reb_particle_divide.restype = Particle
+            return clibrebound.reb_particle_divide(self, c_double(other))
         return NotImplemented 
 
     @property

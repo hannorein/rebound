@@ -1164,7 +1164,7 @@ struct reb_particle reb_derivatives_m_f(double G, struct reb_particle primary, s
  * @param p2 Second reb_particle to subtract from p1.
  * @returns A new particle with no pointers (not in any simulation etc.) set.
  */
-struct reb_particle reb_subtract_particles(struct reb_particle p1, struct reb_particle p2);
+struct reb_particle reb_particle_minus(struct reb_particle p1, struct reb_particle p2);
 
 /**
  * @brief Add particle p1 to particle p1.
@@ -1173,7 +1173,7 @@ struct reb_particle reb_subtract_particles(struct reb_particle p1, struct reb_pa
  * @param p2 Second reb_particle.
  * @returns A new particle with no pointers (not in any simulation etc.) set.
  */
-struct reb_particle reb_add_particles(struct reb_particle p1, struct reb_particle p2);
+struct reb_particle reb_particle_plus(struct reb_particle p1, struct reb_particle p2);
 
 /**
  * @brief Multiply a particle's members by a constant.
@@ -1182,7 +1182,7 @@ struct reb_particle reb_add_particles(struct reb_particle p1, struct reb_particl
  * @param value Value by which to multiply particle's fields.
  * @returns A new particle with no pointers (not in any simulation etc.) set.
  */
-struct reb_particle reb_multiply_particle(struct reb_particle p1, double value);
+struct reb_particle reb_particle_multiply(struct reb_particle p1, double value);
 
 /**
  * @brief Divide a particle's members by a constant.
@@ -1191,7 +1191,7 @@ struct reb_particle reb_multiply_particle(struct reb_particle p1, double value);
  * @param value Value by which to divide particle's fields.
  * @returns A new particle with no pointers (not in any simulation etc.) set.
  */
-struct reb_particle reb_divide_particle(struct reb_particle p1, double value);
+struct reb_particle reb_particle_divide(struct reb_particle p1, double value);
 /** @} */
 /** @} */
 
