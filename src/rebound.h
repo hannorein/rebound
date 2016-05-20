@@ -804,11 +804,31 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
 /** @} */
 
 /**
+ * @brief Takes the center of mass of a system of particles and returns the center of mass with one of the particles removed. 
+ * @param com A particle structure that holds the center of mass state for a system of particles (mass, position, velocity).
+ * @param p The particle to be removed from com.
+ * @return The center of mass with particle p removed.
+ */
+
+struct reb_particle reb_get_com_without_particle(struct reb_particle com, struct reb_particle p);
+
+/**
  * @brief Returns a particle pointer's index in the simulation it's in.
  * @param p A pointer to the particle 
  * @return The integer index of the particle in its simulation (will return -1 if not found in the simulation).
  */
 int reb_get_particle_index(struct reb_particle* p);
+
+/**
+ * @brief Returns the center of mass for particles with indices between first (inclusive) and last (exclusive).
+ * @details For example, reb_get_com_range(r, 6, 9) returns COM for particles 6, 7 and 8. 
+ * @param r A pointer to the simulation structure.
+ * @param first First index in range to consider.
+ * @param last Will consider particles with indices < last (i.e., particle with index last not considered).
+ * @return A reb_particle structure for the center of mass of all particles in range [first, last). Returns particle filled with zeros if passed last <= first.
+ */
+
+struct reb_particle reb_get_com_range(struct reb_simulation* r, int first, int last);
 
 /**
  * @brief Returns the jacobi center of mass for a given particle
@@ -1129,7 +1149,51 @@ struct reb_particle reb_derivatives_m_omega(double G, struct reb_particle primar
 struct reb_particle reb_derivatives_m_f(double G, struct reb_particle primary, struct reb_particle po);
 /** @} */
 
+/**
+ * \name Particle manipulation functions
+ * @{
+ */
+/**
+ * @defgroup ParticleManipFunctions List of reb_particle manipulation functions for REBOUND
+ * @{
+ */
+/**
+ * @brief Subtract particle p2 from particle p1 (p1 - p2).
+ * @details Subtracts positions, velocities, accelerations and mass element by element. 
+ * @param p1 First reb_particle.
+ * @param p2 Second reb_particle to subtract from p1.
+ * @returns A new particle with no pointers (not in any simulation etc.) set.
+ */
+struct reb_particle reb_particle_minus(struct reb_particle p1, struct reb_particle p2);
 
+/**
+ * @brief Add particle p1 to particle p1.
+ * @details Adds positions, velocities, accelerations and mass element by element. 
+ * @param p1 First reb_particle.
+ * @param p2 Second reb_particle.
+ * @returns A new particle with no pointers (not in any simulation etc.) set.
+ */
+struct reb_particle reb_particle_plus(struct reb_particle p1, struct reb_particle p2);
+
+/**
+ * @brief Multiply a particle's members by a constant.
+ * @brief Multiplies particle's positions, velocities, accelerations and mass by a constant.
+ * @param p1 reb_particle to modify.
+ * @param value Value by which to multiply particle's fields.
+ * @returns A new particle with no pointers (not in any simulation etc.) set.
+ */
+struct reb_particle reb_particle_multiply(struct reb_particle p1, double value);
+
+/**
+ * @brief Divide a particle's members by a constant.
+ * @brief Divides particle's positions, velocities, accelerations and mass by a constant.
+ * @param p1 reb_particle to modify.
+ * @param value Value by which to divide particle's fields.
+ * @returns A new particle with no pointers (not in any simulation etc.) set.
+ */
+struct reb_particle reb_particle_divide(struct reb_particle p1, double value);
+/** @} */
+/** @} */
 
 /**
  * \name Miscellaneous tools

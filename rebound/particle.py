@@ -421,66 +421,26 @@ class Particle(Structure):
 
     def __sub__(self, other):
         if isinstance(other, Particle):
-            np = Particle()
-            np.x = self.x - other.x
-            np.y = self.y - other.y
-            np.z = self.z - other.z
-            np.vx = self.vx - other.vx
-            np.vy = self.vy - other.vy
-            np.vz = self.vz - other.vz
-            np.ax = self.ax - other.ax
-            np.ay = self.ay - other.ay
-            np.az = self.az - other.az
-            np.m = self.m - other.m
-            return np
+            clibrebound.reb_particle_minus.restype = Particle
+            return clibrebound.reb_particle_minus(self, other)
         return NotImplemented 
     
     def __add__(self, other):
         if isinstance(other, Particle):
-            np = Particle()
-            np.x = self.x + other.x
-            np.y = self.y + other.y
-            np.z = self.z + other.z
-            np.vx = self.vx + other.vx
-            np.vy = self.vy + other.vy
-            np.vz = self.vz + other.vz
-            np.ax = self.ax + other.ax
-            np.ay = self.ay + other.ay
-            np.az = self.az + other.az
-            np.m = self.m + other.m
-            return np
+            clibrebound.reb_particle_plus.restype = Particle
+            return clibrebound.reb_particle_plus(self, other)
         return NotImplemented 
     
     def __mul__(self, other):
         if isinstance(other, float):
-            np = Particle()
-            np.x  = other*self.x
-            np.y  = other*self.y
-            np.z  = other*self.z
-            np.vx = other*self.vx
-            np.vy = other*self.vy
-            np.vz = other*self.vz 
-            np.ax = other*self.ax
-            np.ay = other*self.ay
-            np.az = other*self.az 
-            np.m  = other*self.m 
-            return np
+            clibrebound.reb_particle_multiply.restype = Particle
+            return clibrebound.reb_particle_multiply(self, c_double(other))
         return NotImplemented 
     
     def __rmul__(self, other):
         if isinstance(other, float):
-            np = Particle()
-            np.x  = other*self.x
-            np.y  = other*self.y
-            np.z  = other*self.z
-            np.vx = other*self.vx
-            np.vy = other*self.vy
-            np.vz = other*self.vz 
-            np.ax = other*self.ax
-            np.ay = other*self.ay
-            np.az = other*self.az 
-            np.m  = other*self.m 
-            return np
+            clibrebound.reb_particle_multiply.restype = Particle
+            return clibrebound.reb_particle_multiply(self, c_double(other))
         return NotImplemented 
 
     def __truediv__(self, other):
@@ -488,18 +448,8 @@ class Particle(Structure):
 
     def __div__(self, other):
         if isinstance(other, float):
-            np = Particle()
-            np.x  = self.x / other
-            np.y  = self.y / other
-            np.z  = self.z / other
-            np.vx = self.vx/ other
-            np.vy = self.vy/ other
-            np.vz = self.vz/ other 
-            np.ax = self.ax/ other
-            np.ay = self.ay/ other
-            np.az = self.az/ other 
-            np.m  = self.m / other 
-            return np
+            clibrebound.reb_particle_divide.restype = Particle
+            return clibrebound.reb_particle_divide(self, c_double(other))
         return NotImplemented 
 
     @property
@@ -587,3 +537,7 @@ class Particle(Structure):
     def orbit(self):
         return self.calculate_orbit()
 
+    @property
+    def jacobi_com(self):
+        clibrebound.reb_get_jacobi_com.restype = Particle
+        return clibrebound.reb_get_jacobi_com(byref(self))

@@ -89,7 +89,33 @@ class TestSimulation(unittest.TestCase):
         self.sim.move_to_com()
         com = self.sim.calculate_com()
         self.assertAlmostEqual(com.x, 0., delta=1e-15)
-        
+    
+    def test_com_range(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1., x=2.)
+        sim.add(m=2., x=5.)
+        com = sim.calculate_com(first=1)
+        self.assertAlmostEqual(com.x, 4., delta=1e-15)
+        com = sim.calculate_com(last=2)
+        self.assertAlmostEqual(com.x, 1., delta=1e-15)
+        com = sim.calculate_com(first=1,last=2)
+        self.assertAlmostEqual(com.x, 2., delta=1e-15)
+        com = sim.calculate_com(first=4, last=-3)
+        self.assertAlmostEqual(com.x, 0., delta=1e-15)
+    
+    def test_jacobi_com(self):
+        sim = rebound.Simulation()
+        sim.add(m=1., x=1.)
+        sim.add(m=1., x=3.)
+        sim.add(m=2., x=5.)
+        com = sim.particles[1].jacobi_com
+        self.assertAlmostEqual(com.x, 1., delta=1e-15)
+        com = sim.particles[2].jacobi_com
+        self.assertAlmostEqual(com.x, 2., delta=1e-15)
+        com = sim.particles[0].jacobi_com
+        self.assertAlmostEqual(com.x, 0., delta=1e-15)
+
     def test_init_megno(self):
         self.sim.init_megno()
         self.assertEqual(self.sim.N,4)

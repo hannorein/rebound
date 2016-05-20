@@ -269,16 +269,6 @@ void reb_move_to_com(struct reb_simulation* const r){
 	}
 }
 
-struct reb_particle reb_get_com(struct reb_simulation* r){
-	struct reb_particle com = {0.};
-    const int N_real = r->N - r->N_var;
-	struct reb_particle* restrict const particles = r->particles;
-	for (int i=0;i<N_real;i++){
-		com = reb_get_com_of_pair(com, particles[i]);
-	}
-	return com;
-}
-
 struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_particle p2){
 	p1.x   = p1.x*p1.m + p2.x*p2.m;		
 	p1.y   = p1.y*p1.m + p2.y*p2.m;
@@ -305,6 +295,32 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
 	return p1;
 }
 
+struct reb_particle reb_get_com_without_particle(struct reb_particle com, struct reb_particle p){
+    com.x = com.x*com.m - p.x*p.m;
+    com.y = com.y*com.m - p.y*p.m;
+    com.z = com.z*com.m - p.z*p.m;
+    com.vx = com.vx*com.m - p.vx*p.m;
+    com.vy = com.vy*com.m - p.vy*p.m;
+    com.vz = com.vz*com.m - p.vz*p.m;
+    com.ax = com.ax*com.m - p.ax*p.m;
+    com.ay = com.ay*com.m - p.ay*p.m;
+    com.az = com.az*com.m - p.az*p.m;
+    com.m -= p.m; 
+
+    if (com.m > 0.){
+        com.x /= com.m;
+        com.y /= com.m;
+        com.z /= com.m;
+        com.vx /= com.m;
+        com.vy /= com.m;
+        com.vz /= com.m;
+        com.ax /= com.m;
+        com.ay /= com.m;
+        com.az /= com.m;
+    }
+    return com;
+}
+
 int reb_get_particle_index(struct reb_particle* p){
 	struct reb_simulation* r = p->sim;
 	int i = 0;
@@ -318,14 +334,23 @@ int reb_get_particle_index(struct reb_particle* p){
 	return i;
 }
 
-struct reb_particle reb_get_jacobi_com(struct reb_particle* p){
-	int p_index = reb_get_particle_index(p);
-	struct reb_simulation* r = p->sim;
-	struct reb_particle com = r->particles[0];
-	for(int i=1; i<p_index; i++){
+struct reb_particle reb_get_com_range(struct reb_simulation* r, int first, int last){
+	struct reb_particle com = {0};
+	for(int i=first; i<last; i++){
 		com = reb_get_com_of_pair(com, r->particles[i]);
 	}
 	return com;
+}
+
+struct reb_particle reb_get_com(struct reb_simulation* r){
+    int N_real = r->N-r->N_var;
+	return reb_get_com_range(r, 0, N_real); 
+}
+
+struct reb_particle reb_get_jacobi_com(struct reb_particle* p){
+	int p_index = reb_get_particle_index(p);
+	struct reb_simulation* r = p->sim;
+    return reb_get_com_range(r, 0, p_index);
 }
 	
 #ifndef LIBREBOUNDX
