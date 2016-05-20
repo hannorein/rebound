@@ -1198,23 +1198,11 @@ struct reb_particle reb_tools_orbit_to_particle_df_dm(double G, struct reb_parti
 double reb_tools_energy(const struct reb_simulation* const r);
 
 /**
- * @brief Calculate the x component of the system's angular momentum.
+ * @brief Calculate the system's angular momentum.
  * @param r The rebound simulation to be considered.
- * @return x component of the angular momentum.
+ * @return The angular momentum vector as a reb_vec3d struct.
  */
-double reb_tools_Lx(const struct reb_simulation* const r);
-/**
- * @brief Calculate the y component of the system's angular momentum.
- * @param r The rebound simulation to be considered.
- * @return y component of the angular momentum.
- */
-double reb_tools_Ly(const struct reb_simulation* const r);
-/**
- * @brief Calculate the z component of the system's angular momentum.
- * @param r The rebound simulation to be considered.
- * @return z component of the angular momentum.
- */
-double reb_tools_Lz(const struct reb_simulation* const r);
+struct reb_vec3d reb_tools_angular_momentum(const struct reb_simulation* const r);
 
 /**
  * @brief Add and initialize a set of first order variational particles

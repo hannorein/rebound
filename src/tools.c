@@ -89,40 +89,18 @@ double reb_tools_energy(const struct reb_simulation* const r){
 	return e_kin +e_pot;
 }
 
-double reb_tools_Lx(const struct reb_simulation* const r){
+struct reb_vec3d reb_tools_angular_momentum(const struct reb_simulation* const r){
 	const int N = r->N;
 	const struct reb_particle* restrict const particles = r->particles;
 	const int N_var = r->N_var;
-	double Lx = 0.;
+    struct reb_vec3d L = {0};
     for (int i=0;i<N-N_var;i++){
 		struct reb_particle pi = particles[i];
-        Lx += pi.m*(pi.y*pi.vz - pi.z*pi.vy);
+        L.x += pi.m*(pi.y*pi.vz - pi.z*pi.vy);
+        L.y += pi.m*(pi.z*pi.vx - pi.x*pi.vz);
+        L.z += pi.m*(pi.x*pi.vy - pi.y*pi.vx);
 	}
-	return Lx;
-}
-
-double reb_tools_Ly(const struct reb_simulation* const r){
-	const int N = r->N;
-	const struct reb_particle* restrict const particles = r->particles;
-	const int N_var = r->N_var;
-	double Ly = 0.;
-    for (int i=0;i<N-N_var;i++){
-		struct reb_particle pi = particles[i];
-        Ly += pi.m*(pi.z*pi.vx - pi.x*pi.vz);
-	}
-	return Ly;
-}
-
-double reb_tools_Lz(const struct reb_simulation* const r){
-	const int N = r->N;
-	const struct reb_particle* restrict const particles = r->particles;
-	const int N_var = r->N_var;
-	double Lz = 0.;
-    for (int i=0;i<N-N_var;i++){
-		struct reb_particle pi = particles[i];
-        Lz += pi.m*(pi.x*pi.vy - pi.y*pi.vx);
-	}
-	return Lz;
+	return L;
 }
 
 void reb_move_to_com(struct reb_simulation* const r){
