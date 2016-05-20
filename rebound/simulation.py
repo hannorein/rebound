@@ -899,10 +899,9 @@ class Simulation(Structure):
         """
         Returns a list of the three (x,y,z) components of the total angular momentum of all particles in the simulation.
         """
-        clibrebound.reb_tools_Lx.restype = c_double
-        clibrebound.reb_tools_Ly.restype = c_double
-        clibrebound.reb_tools_Lz.restype = c_double
-        return [clibrebound.reb_tools_Lx(byref(self)), clibrebound.reb_tools_Ly(byref(self)), clibrebound.reb_tools_Lz(byref(self))]
+        clibrebound.reb_tools_angular_momentum.restype = reb_vec3d
+        L = clibrebound.reb_tools_angular_momentum(byref(self))
+        return [L.x, L.y, L.z]
 
     def configure_box(self, boxsize, root_nx=1, root_ny=1, root_nz=1):
         """
