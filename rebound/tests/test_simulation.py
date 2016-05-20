@@ -102,6 +102,16 @@ class TestSimulation(unittest.TestCase):
         energy = self.sim.calculate_energy()
         self.assertAlmostEqual(energy, -0.5e-3, delta=1e-14)
 
+    def test_calculate_angular_momentum(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1.e-3, a=1., inc=0.3, Omega=0.5)
+        sim.add(m=1.e-3, a=3., inc=0.2, Omega = -0.8)
+        L0 = sim.calculate_angular_momentum()
+        sim.integrate(1.)
+        Lf = sim.calculate_angular_momentum()
+        for i in range(3):
+            self.assertAlmostEqual(abs((Lf[i]-L0[i])/L0[i]), 0., delta=1e-15)
 
     def test_additional_forces(self):
         def af(sim):
