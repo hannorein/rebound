@@ -124,7 +124,7 @@ def OrbitPlotOneSlice(sim, ax, lim=None, limz=None, Narc=100, color=False, peria
     ax.scatter(getattr(particles[0],axes[0]),getattr(particles[0],axes[1]), marker="*", s=35*lw, facecolor="black", edgecolor=None, zorder=3)
     for i, o in enumerate(orbits):
         colori = next(coloriterator)
-        primary = sim.calculate_com(i+1)
+        primary = sim.calculate_com(last=i)
         pp = Particle(a=o.a, f=o.f, inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=particles[i+1].m, primary=primary, simulation=sim)
         ax.scatter(getattr(pp,axes[0]), getattr(pp,axes[1]), s=25*lw, facecolor="black", edgecolor=None, zorder=3)
         if o.a>0.: # bound orbit
