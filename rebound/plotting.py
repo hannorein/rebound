@@ -3,7 +3,7 @@ import math
 from .particle import Particle
 from itertools import cycle
 
-def OrbitPlot(sim, figsize=None, lim=None, limz=None, Narc=100, unitlabel=None, color=False, periastron=False, trails=False, lw=1., slices=False):
+def OrbitPlot(sim, figsize=None, lim=None, limz=None, Narc=100, unitlabel=None, color=False, periastron=False, trails=True, lw=1., slices=False):
     """
     Convenience function for plotting instantaneous orbits.
 
