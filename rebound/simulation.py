@@ -22,7 +22,7 @@ COLLISIONS = {"none": 0, "direct": 1, "tree": 2}
 
 class reb_hash_pointer_pair(Structure):
     _fields_ = [("hash", c_uint32),
-                ("ptr", POINTER(Particle))]
+                ("index", c_int)]
 
 class reb_vec3d(Structure):
     _fields_ = [("x", c_double),

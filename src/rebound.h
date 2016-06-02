@@ -337,7 +337,7 @@ struct reb_collision{
  */
 struct reb_hash_pointer_pair{
     uint32_t hash;
-    struct reb_particle* ptr;
+    int index;
 };
 
 /**

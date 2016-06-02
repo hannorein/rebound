@@ -165,7 +165,7 @@ void reb_update_particle_lookup_table(struct reb_simulation* const r){
                 r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*r->allocatedN_lookup);
             }
             r->particle_lookup_table[N_hash].hash = particles[i].hash;
-            r->particle_lookup_table[N_hash].ptr = &particles[i];
+            r->particle_lookup_table[N_hash].index = i;
             N_hash++;
         }
     }
@@ -179,7 +179,7 @@ struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uin
     }
     for(int i=0; i<r->N_lookup; i++){
         if(lookup[i].hash == hash){
-            return lookup[i].ptr;
+            return &r->particles[lookup[i].index];
         }
     }
     return NULL;
