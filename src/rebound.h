@@ -109,7 +109,7 @@ struct reb_particle {
     double r;           ///< Radius of the particle. 
     double lastcollision;       ///< Last time the particle had a physical collision.
     struct reb_treecell* c;     ///< Pointer to the cell the particle is currently in.
-    int id;             ///< Unique id to identify particle.
+    uint32_t hash;      ///< Unique hash to identify particle.
     void* ap;           ///< Functionality for externally adding additional properties to particles.
     struct reb_simulation* sim; ///< Pointer to the parent simulation.
 };
@@ -331,6 +331,14 @@ struct reb_collision{
     int ri;         ///< Index of rootcell (needed for MPI only).
 };
 
+/**
+ * @brief Holds a particle's unique hash and a pointer to that particle.
+ * @details This structure is used for the simulation's particle_lookup_table.
+ */
+struct reb_hash_pointer_pair{
+    uint32_t hash;
+    struct reb_particle* ptr;
+};
 
 /**
  * @brief Struct describing the properties of a set of variational equations.
@@ -373,9 +381,11 @@ struct reb_simulation {
     int     var_config_N;           ///< Number of variational configuration structs. Default: 0.
     struct reb_variational_configuration* var_config;   ///< These configuration structs contain details on variational particles. 
     int     N_active;               ///< Number of massive particles included in force calculation (default: N). Particles with index >= N_active are considered testparticles.
+    int     N_particle_lookup_table; ///< Number of entries in the particle lookup table.
     int     testparticle_type;      ///< Type of the particles with an index>=N_active. 0 means particle does not influence any other particle (default), 1 means particles with index < N_active feel testparticles (similar to MERCURY's small particles). Testparticles never feel each other.
     int     allocatedN;             ///< Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; ///< Main particle array. This contains all particles on this node.  
+    struct reb_hash_pointer_pair* particle_lookup_table; ///< Array of pairs that map unique hashes to pointers to the respective particles.
     struct reb_vec3d* gravity_cs;   ///< Vector containing the information for compensated gravity summation 
     int     gravity_cs_allocatedN;  ///< Current number of allocated space for cs array
     struct reb_treecell** tree_root;///< Pointer to the roots of the trees. 
@@ -704,7 +714,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted);
  * @return Returns 1 if particle successfully removed,
  * 0 if id was not found in the particles array.
  */
-int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted);
+//int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted);
 
 /**
  * @brief Run the heartbeat function and check for escaping/colliding particles.
@@ -800,6 +810,19 @@ struct reb_particle reb_get_com(struct reb_simulation* r);
  * @return The center of mass as a particle (mass, position and velocity correspond to the center of mass)
  */
 struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_particle p2);
+
+/**
+ * @brief Returns hash for passed string.
+ * @param str String key.
+ * @return Calculated hash for the passed string.
+ */
+uint32_t reb_hash(const char* str);
+
+struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash);
+void reb_update_particle_lookup_table(struct reb_simulation* const r);
+struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash);
+struct reb_particle* reb_get_particle_by_str(struct reb_simulation* const r, const char* str);
+
 /** @} */
 /** @} */
 

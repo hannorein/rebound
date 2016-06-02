@@ -146,7 +146,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 	return 1;
 }
 
-int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted){
+/*int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted){
 	int success = 0;
 	for(int i=0;i<r->N;i++){
 		if(r->particles[i].id == id){
@@ -159,7 +159,7 @@ int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted){
 		fprintf(stderr, "\nIndex passed to particles_remove_id (id = %d) not found in particles array.  Did not remove particle.\n", id);
 	}
 	return success;
-}
+}*/
 
 struct reb_particle reb_particle_minus(struct reb_particle p1, struct reb_particle p2){
     struct reb_particle p = {0};

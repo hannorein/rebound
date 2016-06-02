@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <string.h>
 #include <sys/time.h>
 #include "particle.h"
 #include "rebound.h"
@@ -463,7 +464,7 @@ static struct reb_particle reb_particle_nan(void){
     p.r = nan("");
     p.lastcollision = nan("");
     p.c = NULL;
-    p.id = -1;
+    p.hash = 0;
     p.ap = NULL;
     p.sim = NULL;
 
@@ -923,5 +924,63 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY){
 	r->megno_var_t  += ((double)r->megno_n-1.)/(double)r->megno_n 
 					*(r->t-r->megno_mean_t)
 					*(r->t-r->megno_mean_t);
+}
+
+#define ROT32(x, y) ((x << y) | (x >> (32 - y))) // avoid effort
+uint32_t reb_murmur3_32(const char *key, uint32_t len, uint32_t seed) {
+    // Source: Wikipedia
+    static const uint32_t c1 = 0xcc9e2d51;
+    static const uint32_t c2 = 0x1b873593;
+    static const uint32_t r1 = 15;
+    static const uint32_t r2 = 13;
+    static const uint32_t m = 5;
+    static const uint32_t n = 0xe6546b64;
+
+    uint32_t hash = seed;
+
+    const int nblocks = len / 4;
+    const uint32_t *blocks = (const uint32_t *) key;
+    int i;
+    uint32_t k;
+    for (i = 0; i < nblocks; i++) {
+        k = blocks[i];
+        k *= c1;
+        k = ROT32(k, r1);
+        k *= c2;
+
+        hash ^= k;
+        hash = ROT32(hash, r2) * m + n;
+    }
+
+    const uint8_t *tail = (const uint8_t *) (key + nblocks * 4);
+    uint32_t k1 = 0;
+
+    switch (len & 3) {
+    case 3:
+        k1 ^= tail[2] << 16;
+    case 2:
+        k1 ^= tail[1] << 8;
+    case 1:
+        k1 ^= tail[0];
+
+        k1 *= c1;
+        k1 = ROT32(k1, r1);
+        k1 *= c2;
+        hash ^= k1;
+    }
+
+    hash ^= len;
+    hash ^= (hash >> 16);
+    hash *= 0x85ebca6b;
+    hash ^= (hash >> 13);
+    hash *= 0xc2b2ae35;
+    hash ^= (hash >> 16);
+
+    return hash;
+}
+
+uint32_t reb_hash(const char* str){
+    const int reb_seed = 1983;
+    return reb_murmur3_32(str,(uint32_t)strlen(str),reb_seed);
 }
 

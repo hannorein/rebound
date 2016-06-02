@@ -139,6 +139,57 @@ void reb_step(struct reb_simulation* const r){
     PROFILING_STOP(PROFILING_CAT_COLLISION)
 }
 
+struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash){
+    struct reb_particle* p; 
+    p = reb_search_lookup_table(r, hash);
+    if (p == NULL){
+        reb_update_particle_lookup_table(r);
+        return reb_search_lookup_table(r, hash);
+    }
+    else{
+        if (p->hash != hash){
+            reb_update_particle_lookup_table(r);
+            p = reb_search_lookup_table(r, hash);
+        }
+    }
+    return p;
+}
+
+void reb_update_particle_lookup_table(struct reb_simulation* const r){
+    const struct reb_particle* const particles = r->particles;
+    struct reb_hash_pointer_pair* const lookup = r->particle_lookup_table;
+    const int N_lookup = r->N_particle_lookup_table;
+    int N_hash = 0;
+    for(int i=0; i<r->N; i++){
+        if(particles[i].hash != 0){
+            if(N_hash < N_lookup){
+                lookup[N_hash].hash = particles[i].hash;
+            }
+            N_hash++;
+        }
+    }
+
+    if(N_hash > N_lookup){
+        r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*N_hash);
+        reb_update_particle_lookup_table(r);
+    }
+}
+
+struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash){
+    const struct reb_hash_pointer_pair* const lookup = r->particle_lookup_table;
+    for(int i=0; i<r->N_particle_lookup_table; i++){
+        if(lookup[i].hash == hash){
+            return lookup[i].ptr;
+        }
+    }
+    return NULL;
+}
+
+struct reb_particle* reb_get_particle_by_str(struct reb_simulation* const r, const char* str){
+    uint32_t hash = reb_hash(str);
+    return reb_get_particle_by_hash(r, hash);
+}
+
 void reb_exit(const char* const msg){
     // This function should also kill all children. 
     // Not implemented as pid is not easy to get to.
@@ -208,6 +259,7 @@ void reb_free_pointers(struct reb_simulation* const r){
     reb_integrator_whfast_reset(r);
     reb_integrator_ias15_reset(r);
     free(r->particles   );
+    free(r->particle_lookup_table);
 }
 
 void reb_reset_temporary_pointers(struct reb_simulation* const r){
@@ -280,6 +332,8 @@ void reb_init_simulation(struct reb_simulation* r){
     r->N        = 0;    
     r->allocatedN   = 0;    
     r->N_active     = -1;   
+    r->N_particle_lookup_table = 0;
+    r->particle_lookup_table = NULL;
     r->testparticle_type = 0;   
     r->N_var    = 0;    
     r->var_config_N = 0;    
