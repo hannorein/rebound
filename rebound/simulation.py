@@ -1,5 +1,5 @@
-from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_long, c_ulong, c_void_p, c_char_p, CFUNCTYPE, byref
-from . import clibrebound, Escape, NoParticles, Encounter, SimulationError
+from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_long, c_ulong, c_void_p, c_char_p, CFUNCTYPE, byref, c_uint32
+from . import clibrebound, Escape, NoParticles, Encounter, SimulationError, ParticleNotFound
 from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G
 import math
@@ -19,6 +19,10 @@ INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "wh": 3, "leapfrog": 4, "hybri
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2}
+
+class reb_hash_pointer_pair(Structure):
+    _fields_ = [("hash", c_uint32),
+                ("ptr", POINTER(Particle))]
 
 class reb_vec3d(Structure):
     _fields_ = [("x", c_double),
@@ -1011,6 +1015,15 @@ class Simulation(Structure):
         Call this function to update the tree structure manually after removing particles.
         """
         clibrebound.reb_tree_update(byref(self))
+    
+    def get_particle_by_string(self, string):
+        clibrebound.reb_get_particle_by_string.restype = POINTER(Particle)
+        ptr = clibrebound.reb_get_particle_by_string(byref(self), c_char_p(string.encode('utf-8')))
+        if ptr:
+            return ptr.contents
+        else:
+            raise ParticleNotFound("Particle was not found in the simulation.")
+
 
 
 
@@ -1141,9 +1154,11 @@ Simulation._fields_ = [
                 ("var_config_N", c_int),
                 ("var_config", POINTER(Variation)),
                 ("N_active", c_int),
+                ("N_particle_lookup_table", c_int),
                 ("testparticle_type", c_int),
                 ("allocated_N", c_int),
                 ("_particles", POINTER(Particle)),
+                ("_particle_lookup_table", POINTER(reb_hash_pointer_pair)),
                 ("gravity_cs", POINTER(reb_vec3d)),
                 ("gravity_cs_allocatedN", c_int),
                 ("tree_root", c_void_p),
@@ -1211,7 +1226,7 @@ Particle._fields_ = [("x", c_double),
                 ("r", c_double),
                 ("lastcollision", c_double),
                 ("c", c_void_p),
-                ("id", c_int),
+                ("hash", c_uint32),
                 ("ap", c_void_p),
                 ("_sim", POINTER(Simulation))]
 

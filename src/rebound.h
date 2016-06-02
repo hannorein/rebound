@@ -821,7 +821,7 @@ uint32_t reb_hash(const char* str);
 struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash);
 void reb_update_particle_lookup_table(struct reb_simulation* const r);
 struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash);
-struct reb_particle* reb_get_particle_by_str(struct reb_simulation* const r, const char* str);
+struct reb_particle* reb_get_particle_by_string(struct reb_simulation* const r, const char* str);
 
 /** @} */
 /** @} */
