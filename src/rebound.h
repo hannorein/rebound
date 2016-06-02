@@ -381,11 +381,13 @@ struct reb_simulation {
     int     var_config_N;           ///< Number of variational configuration structs. Default: 0.
     struct reb_variational_configuration* var_config;   ///< These configuration structs contain details on variational particles. 
     int     N_active;               ///< Number of massive particles included in force calculation (default: N). Particles with index >= N_active are considered testparticles.
-    int     N_particle_lookup_table; ///< Number of entries in the particle lookup table.
+    struct reb_hash_pointer_pair* particle_lookup_table; ///< Array of pairs that map unique hashes to pointers to the respective particles.
+    int     hash_ctr;               ///< Counter for number of assigned hashes to assign unique values.
+    int     N_lookup;               ///< Number of entries in the particle lookup table.
+    int     allocatedN_lookup;      ///< Number of lookup table entries allocated.
     int     testparticle_type;      ///< Type of the particles with an index>=N_active. 0 means particle does not influence any other particle (default), 1 means particles with index < N_active feel testparticles (similar to MERCURY's small particles). Testparticles never feel each other.
     int     allocatedN;             ///< Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; ///< Main particle array. This contains all particles on this node.  
-    struct reb_hash_pointer_pair* particle_lookup_table; ///< Array of pairs that map unique hashes to pointers to the respective particles.
     struct reb_vec3d* gravity_cs;   ///< Vector containing the information for compensated gravity summation 
     int     gravity_cs_allocatedN;  ///< Current number of allocated space for cs array
     struct reb_treecell** tree_root;///< Pointer to the roots of the trees. 
@@ -813,10 +815,12 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
 
 /**
  * @brief Returns hash for passed string.
- * @param str String key.
- * @return Calculated hash for the passed string.
+ * @details Currently does not check for collisions with other particles' hashes. If str is NULL, returns an assigned hash.
+ * @param r rebound simulation.
+ * @param str String key (or NULL).
+ * @return Calculated hash for the passed string (or assigned by simulation if NULL was passed for str).
  */
-uint32_t reb_hash(const char* str);
+uint32_t reb_hash(struct reb_simulation* const r, const char* str);
 
 struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash);
 void reb_update_particle_lookup_table(struct reb_simulation* const r);

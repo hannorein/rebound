@@ -979,7 +979,11 @@ uint32_t reb_murmur3_32(const char *key, uint32_t len, uint32_t seed) {
     return hash;
 }
 
-uint32_t reb_hash(const char* str){
+uint32_t reb_hash(struct reb_simulation* const r, const char* str){
+    r->hash_ctr++;
+    if(str == NULL){
+        return (uint32_t)(getpid() + r->hash_ctr);
+    }
     const int reb_seed = 1983;
     return reb_murmur3_32(str,(uint32_t)strlen(str),reb_seed);
 }

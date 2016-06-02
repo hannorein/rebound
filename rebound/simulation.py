@@ -810,6 +810,25 @@ class Simulation(Structure):
                 except:
                     raise AttributeError("Each line requires 8 floats corresponding to mass, radius, position (x,y,z) and velocity (x,y,z).")
 
+    def get_hash(self, string=None):
+        clibrebound.reb_hash.restype = c_uint32
+        if string is None:
+            return clibrebound.reb_hash(byref(self), None)
+        else:
+            return clibrebound.reb_hash(byref(self), c_char_p(string.encode('utf-8')))
+
+    def get_particle(self, string=None, hash=None):
+        if hash:
+            clibrebound.reb_get_particle_by_hash.restype = POINTER(Particle)
+            ptr = clibrebound.reb_get_particle_by_hash(byref(self), c_uint32(hash))
+        if string:
+            clibrebound.reb_get_particle_by_string.restype = POINTER(Particle)
+            ptr = clibrebound.reb_get_particle_by_string(byref(self), c_char_p(string.encode('utf-8')))
+        if ptr:
+            return ptr.contents
+        else:
+            raise ParticleNotFound("Particle was not found in the simulation.")
+
 # Orbit calculation
     def calculate_orbits(self, heliocentric=False, barycentric=False):
         """ 
@@ -1016,17 +1035,6 @@ class Simulation(Structure):
         """
         clibrebound.reb_tree_update(byref(self))
     
-    def get_particle_by_string(self, string):
-        clibrebound.reb_get_particle_by_string.restype = POINTER(Particle)
-        ptr = clibrebound.reb_get_particle_by_string(byref(self), c_char_p(string.encode('utf-8')))
-        if ptr:
-            return ptr.contents
-        else:
-            raise ParticleNotFound("Particle was not found in the simulation.")
-
-
-
-
 class Variation(Structure):
     """
     REBOUND Variational Configuration Object.
@@ -1154,11 +1162,13 @@ Simulation._fields_ = [
                 ("var_config_N", c_int),
                 ("var_config", POINTER(Variation)),
                 ("N_active", c_int),
-                ("N_particle_lookup_table", c_int),
+                ("_particle_lookup_table", POINTER(reb_hash_pointer_pair)),
+                ("hash_ctr", c_int),
+                ("N_lookup", c_int),
+                ("allocatedN_lookup", c_int),
                 ("testparticle_type", c_int),
                 ("allocated_N", c_int),
                 ("_particles", POINTER(Particle)),
-                ("_particle_lookup_table", POINTER(reb_hash_pointer_pair)),
                 ("gravity_cs", POINTER(reb_vec3d)),
                 ("gravity_cs_allocatedN", c_int),
                 ("tree_root", c_void_p),

@@ -157,24 +157,19 @@ struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, ui
 
 void reb_update_particle_lookup_table(struct reb_simulation* const r){
     const struct reb_particle* const particles = r->particles;
-    struct reb_hash_pointer_pair* const lookup = r->particle_lookup_table;
-    const int N_lookup = r->N_particle_lookup_table;
     int N_hash = 0;
     for(int i=0; i<r->N; i++){
         if(particles[i].hash != 0){
-            if(N_hash < N_lookup){
-                lookup[N_hash].hash = particles[i].hash;
-                lookup[N_hash].ptr = &particles[i];
+            if(N_hash >= r->allocatedN_lookup){
+                r->allocatedN_lookup += 128;
+                r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*r->allocatedN_lookup);
             }
+            r->particle_lookup_table[N_hash].hash = particles[i].hash;
+            r->particle_lookup_table[N_hash].ptr = &particles[i];
             N_hash++;
         }
     }
-
-    if(N_hash > N_lookup){
-        r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*N_hash);
-        r->N_particle_lookup_table = N_hash;
-        reb_update_particle_lookup_table(r);
-    }
+    r->N_lookup = N_hash;
 }
 
 struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash){
@@ -182,7 +177,7 @@ struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uin
     if (lookup == NULL){
         return NULL;
     }
-    for(int i=0; i<r->N_particle_lookup_table; i++){
+    for(int i=0; i<r->N_lookup; i++){
         if(lookup[i].hash == hash){
             return lookup[i].ptr;
         }
@@ -191,7 +186,7 @@ struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uin
 }
 
 struct reb_particle* reb_get_particle_by_string(struct reb_simulation* const r, const char* str){
-    uint32_t hash = reb_hash(str);
+    uint32_t hash = reb_hash(r, str);
     return reb_get_particle_by_hash(r, hash);
 }
 
@@ -337,8 +332,10 @@ void reb_init_simulation(struct reb_simulation* r){
     r->N        = 0;    
     r->allocatedN   = 0;    
     r->N_active     = -1;   
-    r->N_particle_lookup_table = 0;
     r->particle_lookup_table = NULL;
+    r->hash_ctr = 0;
+    r->N_lookup = 0;
+    r->allocatedN_lookup = 0;
     r->testparticle_type = 0;   
     r->N_var    = 0;    
     r->var_config_N = 0;    
