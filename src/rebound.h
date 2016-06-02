@@ -866,8 +866,12 @@ void reb_output_timing(struct reb_simulation* r, const double tmax);
 
 /**
  * @brief Append an ASCII file with orbital paramters of all particles.
- * @details The orbital parameters are calculated with respect the center of mass.
- * reb_particles are assumed to be sorted from the inside out, the central object having index 0. 
+ * @details The orbital parameters are calculated in Jacobi coordinates.
+ * Particles are assumed to be sorted from the inside out, the central object having index 0. 
+ * Each time the function is called N-1 rows are appended to the file with name filename.
+ * Each row in the file corresponds to one particle and contains the following columns (tab separated):
+ * time, semi-major axis, eccentricity, inclination, Omega (longitude ascending node), 
+ * omega (argument of pericenter), lambda (mean longitude), period, f (true anomaly). 
  * @param r The rebound simulation to be considered
  * @param filename Output filename.
  */
