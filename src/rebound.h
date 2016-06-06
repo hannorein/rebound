@@ -717,7 +717,9 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted);
  * 0 if id was not found in the particles array.
  */
 int reb_remove_by_hash(struct reb_simulation* const r, uint32_t hash, int keepSorted);
-int reb_remove_by_string(struct reb_simulation* const r, const char* str, int keepSorted);
+int reb_remove_by_name(struct reb_simulation* const r, const char* str, int keepSorted);
+struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash);
+struct reb_particle* reb_get_particle_by_name(struct reb_simulation* const r, const char* str);
 
 /**
  * @brief Run the heartbeat function and check for escaping/colliding particles.

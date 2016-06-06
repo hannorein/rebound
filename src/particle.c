@@ -174,7 +174,7 @@ int reb_remove_by_hash(struct reb_simulation* const r, uint32_t hash, int keepSo
     }
 }
 
-int reb_remove_by_string(struct reb_simulation* const r, const char* str, int keepSorted){
+int reb_remove_by_name(struct reb_simulation* const r, const char* str, int keepSorted){
     uint32_t hash = reb_tools_hash(str);
     return reb_remove_by_hash(r, hash, keepSorted);
 }
@@ -189,7 +189,7 @@ uint32_t reb_get_particle_hash(struct reb_simulation* const r, const char* str){
     }
 }
 
-struct reb_particle* reb_get_particle_by_string(struct reb_simulation* const r, const char* str){
+struct reb_particle* reb_get_particle_by_name(struct reb_simulation* const r, const char* str){
     uint32_t hash = reb_tools_hash(str);
     return reb_get_particle_by_hash(r, hash);
 }

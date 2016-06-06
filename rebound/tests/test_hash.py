@@ -44,6 +44,10 @@ class TestHash(unittest.TestCase):
         self.assertAlmostEqual(self.sim.get_particle("earth").a, 1., delta=1e-15)
         self.assertEqual(self.sim.N_lookup, 3)
 
+    def test_add(self):
+        self.sim.add(a=7., name = "planet 9")
+        self.assertEqual(rebound.hash("planet 9"), self.sim.get_particle("planet 9").hash)
+
 class TestEmptyLookup(unittest.TestCase):
     def setUp(self):
         self.sim = rebound.Simulation()
