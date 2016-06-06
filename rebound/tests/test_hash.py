@@ -71,7 +71,7 @@ class TestAssignedHashes(unittest.TestCase):
 
     def test_assigned_hashes(self):
         hash53 = self.sim.particles[53].hash
-        hash54 = self.sim.get_particle(hash53+1).hash
+        hash54 = self.sim.get_particle(hash=hash53+1).hash
         self.assertEqual(self.sim.N_lookup, 100)
         self.assertEqual(hash54, hash53+1)
 

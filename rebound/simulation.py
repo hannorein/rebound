@@ -754,7 +754,7 @@ class Simulation(Structure):
         """
         clibrebound.reb_remove_all(byref(self))
 
-    def remove(self, index=None, id=None, keepSorted=1):
+    def remove(self, index=None, hash=None, string=None, keepSorted=1):
         """ 
         Removes a particle from the simulation.
 
@@ -766,14 +766,21 @@ class Simulation(Structure):
         particles and many removals to speed things up.
         """
         if index is not None:
+            clibrebound.reb_remove.restype = c_int
             success = clibrebound.reb_remove(byref(self), c_int(index), keepSorted)
             if not success:
                 raise ValueError("Removing particle with index %d failed. Did not remove particle.\n"%(index))
             return
-        if id is not None:
-            success = clibrebound.reb_remove_by_id(byref(self), c_int(id), keepSorted)
-            if success == 0:
-                raise ValueError("id %d passed to remove_particle was not found.  Did not remove particle.\n"%(id))
+        if hash is not None:
+            clibrebound.reb_remove_by_hash.restype = c_int
+            success = clibrebound.reb_remove_by_hash(byref(self), c_uint32(hash), keepSorted)
+            if not success:
+                raise ValueError("Removing particle with hash %d failed. Did not remove particle.\n"%(hash))
+        if string is not None:
+            clibrebound.reb_remove_by_string.restype = c_int
+            success = clibrebound.reb_remove_by_string(byref(self), c_char_p(string.encode('utf-8')), keepSorted)
+            if not success:
+                raise ValueError("Removing particle with name %s failed. Did not remove particle.\n"%(string))
 
     def particles_ascii(self, prec=8):
         """
@@ -817,20 +824,20 @@ class Simulation(Structure):
         else:
             return clibrebound.reb_get_particle_hash(byref(self), c_char_p(string.encode('utf-8')))
 
-    def get_particle(self, identifier):
-        if isinstance(identifier, int):
+    def get_particle(self, string=None, index=None, hash=None):
+        if index is not None:
+            return self.particles[index]
+        if hash is not None:
             clibrebound.reb_get_particle_by_hash.restype = POINTER(Particle)
-            ptr = clibrebound.reb_get_particle_by_hash(byref(self), c_uint32(identifier))
-        elif isinstance(identifier, str):
+            ptr = clibrebound.reb_get_particle_by_hash(byref(self), c_uint32(hash))
+        if string is not None:
             clibrebound.reb_get_particle_by_string.restype = POINTER(Particle)
-            ptr = clibrebound.reb_get_particle_by_string(byref(self), c_char_p(identifier.encode('utf-8')))
-        else:
-            raise TypeError("Must pass an integer hash or a string.")
+            ptr = clibrebound.reb_get_particle_by_string(byref(self), c_char_p(string.encode('utf-8')))
 
         if ptr:
             return ptr.contents
         else:
-            raise ParticleNotFound("Particle was not found in the simulation. To access particle by index, use sim.particles[index]")
+            raise ParticleNotFound("Particle was not found in the simulation.") 
 
 # Orbit calculation
     def calculate_orbits(self, heliocentric=False, barycentric=False):
