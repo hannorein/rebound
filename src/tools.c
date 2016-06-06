@@ -436,28 +436,6 @@ struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle 
 	return reb_tools_orbit_to_particle(G, primary, m, a, e, inc, Omega, omega, f);
 }
 
-static struct reb_particle reb_particle_nan(void){
-    struct reb_particle p;
-    p.x = nan("");
-    p.y = nan("");
-    p.z = nan("");
-    p.vx = nan("");
-    p.vy = nan("");
-    p.vz = nan("");
-    p.ax = nan("");
-    p.ay = nan("");
-    p.az = nan("");
-    p.m = nan("");
-    p.r = nan("");
-    p.lastcollision = nan("");
-    p.c = NULL;
-    p.hash = 0;
-    p.ap = NULL;
-    p.sim = NULL;
-
-    return p;
-}
-
 struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f, int* err){
 	if(e == 1.){
 		*err = 1; 		// Can't initialize a radial orbit with orbital elements.

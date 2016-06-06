@@ -34,8 +34,8 @@ class Particle(Structure):
         Last time the particle had a physical collision (if checking for collisions)
     c           : c_void_p (C void pointer) 
         Pointer to the cell the particle is currently in (if using tree code)
-    id          : int         
-        Particle ID (arbitrary, specified by the user)
+    hash          : c_uint32         
+        Particle hash (permanent identifier for the particle)
     ap          : c_void_p (C void pointer)
         Pointer to additional parameters one might want to add to particles
     _sim        : POINTER(rebound.Simulation)
@@ -45,7 +45,7 @@ class Particle(Structure):
         """ 
         Returns a string with the position and velocity of the particle.
         """
-        return "<rebound.Particle object, id=%s m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.id,self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
+        return "<rebound.Particle object, m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
     def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, id=None, date=None, simulation=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None):
         """

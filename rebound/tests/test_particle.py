@@ -13,7 +13,7 @@ class TestParticleInSimulation(unittest.TestCase):
         self.sim.add()
         self.sim.add(m=1.)
         self.sim.add(m=1.,x=1, vy=1)
-        self.sim.add(x=2, id=9)
+        self.sim.add(x=2)
         self.sim.add(x=3, r=1.)
         with self.assertRaises(ValueError):
             self.sim.add(x=4,a=1)

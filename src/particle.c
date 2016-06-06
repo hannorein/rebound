@@ -124,6 +124,9 @@ void reb_remove_all(struct reb_simulation* const r){
 }
 
 int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
+    if (index == r->N-1){ // if last particle, won't get overwritten, so set to nan in case mis-accessed later (e.g., by hash)
+        r->particles[index] = reb_particle_nan();
+    } 
 	if (r->N==1){
 	    r->N = 0;
 		fprintf(stderr, "Last particle removed.\n");
@@ -294,5 +297,27 @@ struct reb_particle reb_particle_divide(struct reb_particle p1, double value){
     p.ay = p1.ay / value;
     p.az = p1.az / value;
     p.m = p1.m / value;
+    return p;
+}
+
+struct reb_particle reb_particle_nan(void){
+    struct reb_particle p;
+    p.x = nan("");
+    p.y = nan("");
+    p.z = nan("");
+    p.vx = nan("");
+    p.vy = nan("");
+    p.vz = nan("");
+    p.ax = nan("");
+    p.ay = nan("");
+    p.az = nan("");
+    p.m = nan("");
+    p.r = nan("");
+    p.lastcollision = nan("");
+    p.c = NULL;
+    p.hash = 0;
+    p.ap = NULL;
+    p.sim = NULL;
+
     return p;
 }

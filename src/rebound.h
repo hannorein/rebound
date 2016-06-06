@@ -1291,6 +1291,12 @@ double reb_tools_calculate_lyapunov(struct reb_simulation* r);
 uint32_t reb_tools_hash(const char* str);
 
 /**
+ * @brief Returns a reb_particle structure with fields/hash/ptrs initialized to nan/0/NULL. 
+ * @return reb_particle with fields initialized to nan.
+ */
+struct reb_particle reb_particle_nan(void);
+
+/**
  * @brief Print out an error message, then exit in a semi-nice way.
  */
 void reb_exit(const char* const msg);
