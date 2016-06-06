@@ -249,21 +249,33 @@ class Simulation(Structure):
 
     @classmethod
     def from_file(cls, filename):
-        """
-        Loads a REBOUND simulation from a file.
-        
-        After loading the REBOUND simulation from file, you need to reset any function pointers manually.
-        
-        Arguments
-        ---------
-        filename : str
-            Filename of the binary file.
-        
-        Returns
-        ------- 
-        A rebound.Simulation object.
-        
-        """
+    """
+    Loads a REBOUND simulation from a file.
+    
+    After loading the REBOUND simulation from file, you need to reset any function pointers manually.
+    
+    Arguments
+    ---------
+    filename : str
+        Filename of the binary file.
+    
+    Returns
+    ------- 
+    A rebound.Simulation object.
+    
+    Examples
+    --------
+    The following example creates a simulation, saves it to a file and then creates
+    a copy of the simulation store in the binary file.
+
+    >>> sim = rebound.Simulation()
+    >>> sim.add(m=1.)
+    >>> sim.add(m=1.e-3,x=1.,vy=1.)
+    >>> sim.save("simulation.bin")
+    >>> sim_copy = rebound.Simulation.from_file("simulation.bin")
+
+    
+    """
         if os.path.isfile(filename):
             clibrebound.reb_create_simulation_from_binary.restype = POINTER_REB_SIM
             return clibrebound.reb_create_simulation_from_binary(c_char_p(filename.encode("ascii"))).contents
