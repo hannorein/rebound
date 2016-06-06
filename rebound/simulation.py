@@ -810,24 +810,27 @@ class Simulation(Structure):
                 except:
                     raise AttributeError("Each line requires 8 floats corresponding to mass, radius, position (x,y,z) and velocity (x,y,z).")
 
-    def get_hash(self, string=None):
-        clibrebound.reb_hash.restype = c_uint32
+    def get_particle_hash(self, string=None):
+        clibrebound.reb_get_particle_hash.restype = c_uint32
         if string is None:
-            return clibrebound.reb_hash(byref(self), None)
+            return clibrebound.reb_get_particle_hash(byref(self), None)
         else:
-            return clibrebound.reb_hash(byref(self), c_char_p(string.encode('utf-8')))
+            return clibrebound.reb_get_particle_hash(byref(self), c_char_p(string.encode('utf-8')))
 
-    def get_particle(self, string=None, hash=None):
-        if hash:
+    def get_particle(self, identifier):
+        if isinstance(identifier, int):
             clibrebound.reb_get_particle_by_hash.restype = POINTER(Particle)
-            ptr = clibrebound.reb_get_particle_by_hash(byref(self), c_uint32(hash))
-        if string:
+            ptr = clibrebound.reb_get_particle_by_hash(byref(self), c_uint32(identifier))
+        elif isinstance(identifier, str):
             clibrebound.reb_get_particle_by_string.restype = POINTER(Particle)
-            ptr = clibrebound.reb_get_particle_by_string(byref(self), c_char_p(string.encode('utf-8')))
+            ptr = clibrebound.reb_get_particle_by_string(byref(self), c_char_p(identifier.encode('utf-8')))
+        else:
+            raise TypeError("Must pass an integer hash or a string.")
+
         if ptr:
             return ptr.contents
         else:
-            raise ParticleNotFound("Particle was not found in the simulation.")
+            raise ParticleNotFound("Particle was not found in the simulation. To access particle by index, use sim.particles[index]")
 
 # Orbit calculation
     def calculate_orbits(self, heliocentric=False, barycentric=False):

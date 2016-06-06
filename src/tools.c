@@ -320,19 +320,6 @@ struct reb_particle reb_get_com_without_particle(struct reb_particle com, struct
     return com;
 }
 
-int reb_get_particle_index(struct reb_particle* p){
-	struct reb_simulation* r = p->sim;
-	int i = 0;
-	int N = r->N-r->N_var;
-	while(&r->particles[i] != p){
-		i++;
-		if(i>=N){
-			return -1;	// p not in simulation.  Shouldn't happen unless you mess with p.sim after creating the particle
-		}	
-	}
-	return i;
-}
-
 struct reb_particle reb_get_com_range(struct reb_simulation* r, int first, int last){
 	struct reb_particle com = {0};
 	for(int i=first; i<last; i++){
@@ -979,11 +966,7 @@ uint32_t reb_murmur3_32(const char *key, uint32_t len, uint32_t seed) {
     return hash;
 }
 
-uint32_t reb_hash(struct reb_simulation* const r, const char* str){
-    r->hash_ctr++;
-    if(str == NULL){
-        return (uint32_t)(getpid() + r->hash_ctr);
-    }
+uint32_t reb_tools_hash(const char* str){
     const int reb_seed = 1983;
     return reb_murmur3_32(str,(uint32_t)strlen(str),reb_seed);
 }

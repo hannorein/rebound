@@ -64,7 +64,6 @@ static const char* logo[];              /**< Logo of rebound. */
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
 const char* reb_version_str = "2.16.6";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 
-
 void reb_step(struct reb_simulation* const r){
     // A 'DKD'-like integrator will do the first 'D' part.
     PROFILING_START()
@@ -139,56 +138,6 @@ void reb_step(struct reb_simulation* const r){
     PROFILING_STOP(PROFILING_CAT_COLLISION)
 }
 
-struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash){
-    struct reb_particle* p; 
-    p = reb_search_lookup_table(r, hash);
-    if (p == NULL){
-        reb_update_particle_lookup_table(r);
-        return reb_search_lookup_table(r, hash);
-    }
-    else{
-        if (p->hash != hash){
-            reb_update_particle_lookup_table(r);
-            p = reb_search_lookup_table(r, hash);
-        }
-    }
-    return p;
-}
-
-void reb_update_particle_lookup_table(struct reb_simulation* const r){
-    const struct reb_particle* const particles = r->particles;
-    int N_hash = 0;
-    for(int i=0; i<r->N; i++){
-        if(particles[i].hash != 0){
-            if(N_hash >= r->allocatedN_lookup){
-                r->allocatedN_lookup += 128;
-                r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*r->allocatedN_lookup);
-            }
-            r->particle_lookup_table[N_hash].hash = particles[i].hash;
-            r->particle_lookup_table[N_hash].index = i;
-            N_hash++;
-        }
-    }
-    r->N_lookup = N_hash;
-}
-
-struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash){
-    const struct reb_hash_pointer_pair* const lookup = r->particle_lookup_table;
-    if (lookup == NULL){
-        return NULL;
-    }
-    for(int i=0; i<r->N_lookup; i++){
-        if(lookup[i].hash == hash){
-            return &r->particles[lookup[i].index];
-        }
-    }
-    return NULL;
-}
-
-struct reb_particle* reb_get_particle_by_string(struct reb_simulation* const r, const char* str){
-    uint32_t hash = reb_hash(r, str);
-    return reb_get_particle_by_hash(r, hash);
-}
 
 void reb_exit(const char* const msg){
     // This function should also kill all children. 
@@ -201,7 +150,6 @@ void reb_exit(const char* const msg){
 void reb_warning(const char* const msg){
     fprintf(stderr,"\n\033[1mWarning!\033[0m %s\n",msg);
 }
-
 
 void reb_configure_box(struct reb_simulation* const r, const double root_size, const int root_nx, const int root_ny, const int root_nz){
     r->root_size = root_size;

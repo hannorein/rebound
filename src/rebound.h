@@ -716,7 +716,8 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted);
  * @return Returns 1 if particle successfully removed,
  * 0 if id was not found in the particles array.
  */
-//int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted);
+int reb_remove_by_hash(struct reb_simulation* const r, uint32_t hash, int keepSorted);
+int reb_remove_by_string(struct reb_simulation* const r, const char* str, int keepSorted);
 
 /**
  * @brief Run the heartbeat function and check for escaping/colliding particles.
@@ -814,18 +815,11 @@ struct reb_particle reb_get_com(struct reb_simulation* r);
 struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_particle p2);
 
 /**
- * @brief Returns hash for passed string.
- * @details Currently does not check for collisions with other particles' hashes. If str is NULL, returns an assigned hash.
- * @param r rebound simulation.
- * @param str String key (or NULL).
- * @return Calculated hash for the passed string (or assigned by simulation if NULL was passed for str).
+ * @brief Returns a hash to identify a particle.
+ * @param str (Optional) If passed, returns hash corresponding to the passed string.  If str is NULL, simulation assigns a hash. 
+ * @return hash.
  */
-uint32_t reb_hash(struct reb_simulation* const r, const char* str);
-
-struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash);
-void reb_update_particle_lookup_table(struct reb_simulation* const r);
-struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash);
-struct reb_particle* reb_get_particle_by_string(struct reb_simulation* const r, const char* str);
+uint32_t reb_get_particle_hash(struct reb_simulation* const r, const char* str);
 
 /** @} */
 /** @} */
@@ -1288,6 +1282,13 @@ double reb_tools_calculate_megno(struct reb_simulation* r);
  * @return Returns the current CN
  */
 double reb_tools_calculate_lyapunov(struct reb_simulation* r);
+
+/**
+ * @brief Returns hash for passed string.
+ * @param str String key. 
+ * @return hash for the passed string.
+ */
+uint32_t reb_tools_hash(const char* str);
 
 /**
  * @brief Print out an error message, then exit in a semi-nice way.

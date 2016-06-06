@@ -36,7 +36,6 @@ except:
     # Might fails on python3 versions, but not important
     pass
 
-
 # Exceptions    
 class SimulationError(Exception):  
     """The simulation exited with a generic error."""
@@ -59,6 +58,7 @@ class NoParticles(Exception):
     
 class ParticleNotFound(Exception):
     """Particle was not found in the simulation."""
+    pass
 
 from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_whfast, reb_simulation_integrator_sei
 from .particle import Particle
