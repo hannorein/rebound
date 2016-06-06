@@ -639,14 +639,12 @@ class Simulation(Structure):
         """
         cur_var_config_N = self.var_config_N
         if order==1:
-            clibrebound.reb_add_var_1st_order.restype = c_int
             index = clibrebound.reb_add_var_1st_order(byref(self),c_int(testparticle))
         elif order==2:
             if first_order is None:
                 raise AttributeError("Please specify corresponding first order variational equations when initializing second order variational equations.")
             if first_order_2 is None:
                 first_order_2 = first_order
-            clibrebound.reb_add_var_2nd_order.restype = c_int
             index = clibrebound.reb_add_var_2nd_order(byref(self),c_int(testparticle),c_int(first_order.index),c_int(first_order_2.index))
         else:
             raise AttributeError("Only variational equations of first and second order are supported.")
@@ -766,18 +764,15 @@ class Simulation(Structure):
         particles and many removals to speed things up.
         """
         if index is not None:
-            clibrebound.reb_remove.restype = c_int
             success = clibrebound.reb_remove(byref(self), c_int(index), keepSorted)
             if not success:
                 raise ValueError("Removing particle with index %d failed. Did not remove particle.\n"%(index))
             return
         if hash is not None:
-            clibrebound.reb_remove_by_hash.restype = c_int
             success = clibrebound.reb_remove_by_hash(byref(self), c_uint32(hash), keepSorted)
             if not success:
                 raise ValueError("Removing particle with hash %d failed. Did not remove particle.\n"%(hash))
         if string is not None:
-            clibrebound.reb_remove_by_string.restype = c_int
             success = clibrebound.reb_remove_by_string(byref(self), c_char_p(string.encode('utf-8')), keepSorted)
             if not success:
                 raise ValueError("Removing particle with name %s failed. Did not remove particle.\n"%(string))
@@ -1019,7 +1014,6 @@ class Simulation(Structure):
         
         """
         if debug.integrator_package =="REBOUND":
-            clibrebound.reb_integrate.restype = c_int
             self.exact_finish_time = c_int(exact_finish_time)
             ret_value = clibrebound.reb_integrate(byref(self), c_double(tmax))
             if ret_value == 1:
