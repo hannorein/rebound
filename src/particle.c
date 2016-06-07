@@ -228,7 +228,7 @@ void reb_update_particle_lookup_table(struct reb_simulation* const r){
     r->N_lookup = N_hash;
 }
 
-struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash){
+static struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash){
     const struct reb_hash_pointer_pair* const lookup = r->particle_lookup_table;
     if (lookup == NULL){
         return NULL;

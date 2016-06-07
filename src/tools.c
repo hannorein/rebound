@@ -893,7 +893,7 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY){
 }
 
 #define ROT32(x, y) ((x << y) | (x >> (32 - y))) // avoid effort
-uint32_t reb_murmur3_32(const char *key, uint32_t len, uint32_t seed) {
+static uint32_t reb_murmur3_32(const char *key, uint32_t len, uint32_t seed) {
     // Source: Wikipedia
     static const uint32_t c1 = 0xcc9e2d51;
     static const uint32_t c2 = 0x1b873593;

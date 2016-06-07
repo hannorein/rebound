@@ -69,9 +69,4 @@ void reb_tools_solve_kepler_pal(double h, double k, double lambda, double* p, do
  */
 void reb_tools_particle_to_pal(double G, struct reb_particle p, struct reb_particle primary, double *a, double* lambda, double* k, double* h, double* ix, double* iy);
 
-/**
- * @brief Internal hash function.  Use reb_hash.
- */
-uint32_t reb_murmur3_32(const char *key, uint32_t len, uint32_t seed);
-
 #endif 	// TOOLS_H
