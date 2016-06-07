@@ -34,8 +34,8 @@ class Particle(Structure):
         Last time the particle had a physical collision (if checking for collisions)
     c           : c_void_p (C void pointer) 
         Pointer to the cell the particle is currently in (if using tree code)
-    id          : int         
-        Particle ID (arbitrary, specified by the user)
+    hash          : c_uint32         
+        Particle hash (permanent identifier for the particle)
     ap          : c_void_p (C void pointer)
         Pointer to additional parameters one might want to add to particles
     _sim        : POINTER(rebound.Simulation)
@@ -45,9 +45,9 @@ class Particle(Structure):
         """ 
         Returns a string with the position and velocity of the particle.
         """
-        return "<rebound.Particle object, id=%s m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.id,self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
+        return "<rebound.Particle object, m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
-    def __init__(self, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, id=None, date=None, simulation=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None):
+    def __init__(self, simulation=None, name=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, id=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None):
         """
         Initializes a Particle structure. Rather than explicitly creating 
         a Particle structure, users may use the ``add()`` member function 
@@ -77,6 +77,10 @@ class Particle(Structure):
 
         Parameters
         ----------
+        simulation  : Simulation  
+            Simulation instance associated with this particle (Required if passing orbital elements, assigning a name/hash, or setting up a variation).
+        name : string
+            String is converted to a hash and assigned to particle.hash for identification (Optional).       
         particle    : Particle, optional    
             If a particle is passed, a copy of that particle is returned.
             If a variational particle is initialized, then ``particle`` is 
@@ -127,19 +131,13 @@ class Particle(Structure):
             Particle ID (arbitrary, specified by the user)
         date        : string      
             For consistency with adding particles through horizons.  Not used here.
-        simulation  : Simulation  
-            Simulation instance associated with this particle (Required)
         variation   : string            (Default: None)
             Set this string to the name of an orbital parameter to initialize the particle as a variational particle.
             Can be one of the following: m, a, e, inc, omega, Omega, f, k, h, lambda, ix, iy.
         variation2  : string            (Default: None)
             Set this string to the name of a second orbital parameter to initialize the particle as a second order variational particle. Only used for second order variational equations. 
             Can be one of the following: m, a, e, inc, omega, Omega, f, k, h, lambda, ix, iy.
-        
-        Returns
-        -------
-        A rebound.Particle object 
-        
+
         Examples
         --------
 
@@ -150,6 +148,12 @@ class Particle(Structure):
         >>> p3 = rebound.Particle(simulation=sim, m=0.001, a=1.5, h=0.1, k=0.2, l=0.1)
 
         """        
+        
+        if name is not None:
+            if simulation is None:
+                raise ValueError("Need to specify a simulation to assign a name.")
+            self.hash = simulation.get_particle_hash(name)
+        
         if variation:
             if primary is None:
                 primary = simulation.particles[0]
@@ -350,8 +354,7 @@ class Particle(Structure):
             self.vx = vx
             self.vy = vy
             self.vz = vz
-
-
+        
     def copy(self):
         """
         Returns a deep copy of the particle. The particle is not added to any simulation by default.

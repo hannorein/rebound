@@ -64,7 +64,6 @@ static const char* logo[];              /**< Logo of rebound. */
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
 const char* reb_version_str = "2.16.6";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 
-
 void reb_step(struct reb_simulation* const r){
     // A 'DKD'-like integrator will do the first 'D' part.
     PROFILING_START()
@@ -139,6 +138,7 @@ void reb_step(struct reb_simulation* const r){
     PROFILING_STOP(PROFILING_CAT_COLLISION)
 }
 
+
 void reb_exit(const char* const msg){
     // This function should also kill all children. 
     // Not implemented as pid is not easy to get to.
@@ -150,7 +150,6 @@ void reb_exit(const char* const msg){
 void reb_warning(const char* const msg){
     fprintf(stderr,"\n\033[1mWarning!\033[0m %s\n",msg);
 }
-
 
 void reb_configure_box(struct reb_simulation* const r, const double root_size, const int root_nx, const int root_ny, const int root_nz){
     r->root_size = root_size;
@@ -208,6 +207,7 @@ void reb_free_pointers(struct reb_simulation* const r){
     reb_integrator_whfast_reset(r);
     reb_integrator_ias15_reset(r);
     free(r->particles   );
+    free(r->particle_lookup_table);
 }
 
 void reb_reset_temporary_pointers(struct reb_simulation* const r){
@@ -280,6 +280,10 @@ void reb_init_simulation(struct reb_simulation* r){
     r->N        = 0;    
     r->allocatedN   = 0;    
     r->N_active     = -1;   
+    r->particle_lookup_table = NULL;
+    r->hash_ctr = 0;
+    r->N_lookup = 0;
+    r->allocatedN_lookup = 0;
     r->testparticle_type = 0;   
     r->N_var    = 0;    
     r->var_config_N = 0;    
