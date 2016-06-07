@@ -30,9 +30,17 @@ class TestHash(unittest.TestCase):
             self.sim.get_particle("venus")
 
     def test_removing_particles(self):
-        self.sim.remove(index=1)
-        self.assertAlmostEqual(self.sim.get_particle("earth").a, 1., delta=1e-15)
-        self.assertAlmostEqual(self.sim.get_particle("jupiter").a, 5., delta=1e-15)
+        self.sim.add(a=30.)
+        self.sim.remove(index=0)
+        self.sim.remove(index=0)
+        self.sim.remove(hash=rebound.hash("earth"), keepSorted=0)
+        self.assertEqual(self.sim.get_particle("jupiter").hash, rebound.hash("jupiter"))
+        self.assertEqual(self.sim.N, 2)
+        with self.assertRaises(rebound.ParticleNotFound):
+            self.sim.get_particle("earth")
+        self.sim.remove(name="jupiter")
+        with self.assertRaises(rebound.ParticleNotFound):
+            self.sim.get_particle("jupiter")
 
     def test_adding_particles(self):
         self.assertAlmostEqual(self.sim.get_particle("earth").a, 1., delta=1e-15)

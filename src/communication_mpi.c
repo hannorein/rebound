@@ -74,7 +74,7 @@ void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char**
         struct reb_particle p;
         blen[bnum] 	= 1; 
         indices[bnum] 	= (char*)&p.hash - (char*)&p; 
-        oldtypes[bnum] 	= MPI_INT;
+        oldtypes[bnum] 	= MPI_UINT32_T;
     }
 	bnum++;
     {
