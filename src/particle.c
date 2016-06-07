@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <stdint.h>
 #include "rebound.h"
 #include "tree.h"
 #include "boundary.h"

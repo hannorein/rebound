@@ -29,6 +29,7 @@
 #include <time.h>
 #include <string.h>
 #include <sys/time.h>
+#include <stdint.h>
 #include "particle.h"
 #include "rebound.h"
 #include "tools.h"
