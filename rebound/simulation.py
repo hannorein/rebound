@@ -758,10 +758,10 @@ class Simulation(Structure):
 
         Parameters
         ----------
-        Either the index in the particles array to remove, or the id of the particle to
-        remove.  The keepSorted flag ensures the particles array remains sorted
-        in order of increasing ids.  One might set it to zero in cases with many
-        particles and many removals to speed things up.
+        Either the index in the particles array to remove, the hash of the particle, or
+        the name the particle has been assigned.
+        The keepSorted flag preserves the order of hashes in the particles array.
+        One might set it to zero in cases with many particles and many removals to speed things up.
         """
         if index is not None:
             success = clibrebound.reb_remove(byref(self), c_int(index), keepSorted)

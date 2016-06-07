@@ -730,17 +730,25 @@ int reb_remove_by_hash(struct reb_simulation* const r, uint32_t hash, int keepSo
  * @return Returns 1 if particle successfully removed,
  * 0 if hash was not found in the particles array.
  */
-int reb_remove_by_name(struct reb_simulation* const r, const char* str, int keepSorted);
+int reb_remove_by_name(struct reb_simulation* const r, const char* name, int keepSorted);
 
 /**
  * @brief Get a pointer to a particle by its hash.
  * @details see examples/uniquely_identifying_particles.
  * @param r The rebound simulation to be considered.
- *
- *
+ * @param hash The hash of the particle to search for.
+ * @return A pointer to the particle if found, NULL otherwise.
 */
 struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash);
-struct reb_particle* reb_get_particle_by_name(struct reb_simulation* const r, const char* str);
+
+/**
+ * @brief Get a pointer to a particle by its name.
+ * @details see examples/uniquely_identifying_particles.
+ * @param r The rebound simulation to be considered.
+ * @param str The name of the particle to search for.
+ * @return A pointer to the particle if found, NULL otherwise.
+*/
+struct reb_particle* reb_get_particle_by_name(struct reb_simulation* const r, const char* name);
 
 /**
  * @brief Run the heartbeat function and check for escaping/colliding particles.
@@ -764,10 +772,6 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
 
 /** @} */
 /** @} */
-
-
-
-
 
 /**
  * \name Tools
@@ -949,8 +953,6 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 /** @} */
 /** @} */
 
-
-
 /**
  * \name Built-in setup/input functions
  * @{
@@ -1054,7 +1056,6 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
  * @return Returns a particle structure with the given orbital parameters. 
  */
 struct reb_particle reb_tools_pal_to_particle(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy);
-
 
 /**
  * @brief Reads a binary file.
