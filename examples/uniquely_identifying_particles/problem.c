@@ -1,7 +1,8 @@
 /**
- * How to use unique hashes to identify particles
+ * How to use hashes to identify particles
  *
  * This example shows how to assign hashes to particles
+ * and how to access particles using hashes.
  */
 #include <stdio.h>
 #include <stdlib.h>

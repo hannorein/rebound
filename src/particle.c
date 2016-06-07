@@ -125,9 +125,6 @@ void reb_remove_all(struct reb_simulation* const r){
 }
 
 int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
-    if (index == r->N-1){ // if last particle, won't get overwritten, so set hash to 0 so it's not misaccessed by get_particle_hash.
-        r->particles[index].hash = 0;
-    }
 	if (r->N==1){
 	    r->N = 0;
 		fprintf(stderr, "Last particle removed.\n");
@@ -202,7 +199,9 @@ static struct reb_particle* reb_search_lookup_table(struct reb_simulation* const
     }
     for(int i=0; i<r->N_lookup; i++){
         if(lookup[i].hash == hash){
-            return &r->particles[lookup[i].index];
+            if(lookup[i].index < r->N){
+                return &r->particles[lookup[i].index];
+            }
         }
     }
     return NULL;

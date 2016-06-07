@@ -1,5 +1,5 @@
 /**
- * How to use unique hashes to identify particles
+ * Removing particles from simulations.
  *
  * This example demonstrates different 
  * options for removing particles from the simulation.
