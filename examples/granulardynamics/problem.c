@@ -41,7 +41,7 @@ int main(int argc, char* argv[]){
 	struct reb_particle pt = {0};
 	pt.r 		= radius;
 	pt.m 		= mass;
-	pt.id		= 1;
+	pt.hash		= 1;
 	for(double x = -r->boxsize.x/2.; x<r->boxsize.x/2.-border_spacing_x/2.;x+=border_spacing_x){
 		for(double y = -r->boxsize.y/2.; y<r->boxsize.y/2.-border_spacing_y/2.;y+=border_spacing_y){
 			pt.x 		= x;
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]){
 		pt.vz 		= reb_random_normal(0.001);
 		pt.r 		= radius;						// m
 		pt.m 		= 1;
-		pt.id		= 2;
+		pt.hash		= 2;
 		reb_add(r, pt);
 	}
 
@@ -127,13 +127,13 @@ int collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb
 
 	// Applying the changes to the particles.
 	// Do not change border particles.
-	if (p2.id!=1){
+	if (p2.hash!=1){
 		particles[c.p2].vx -=	m21*dvx2n;
 		particles[c.p2].vy -=	m21*dvy2nn;
 		particles[c.p2].vz -=	m21*dvz2nn;
 		particles[c.p2].lastcollision = t;
 	}
-	if (p1.id!=1){
+	if (p1.hash!=1){
 		particles[c.p1].vx +=	dvx2n; 
 		particles[c.p1].vy +=	dvy2nn; 
 		particles[c.p1].vz +=	dvz2nn; 

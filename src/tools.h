@@ -24,10 +24,11 @@
  */
 #ifndef TOOLS_H
 #define TOOLS_H
+
+#include <stdint.h>
+
 struct reb_simulation;
 struct reb_particles;
-
-
 
 /**
  * @brief Returns deltad/delta 
@@ -42,7 +43,6 @@ double reb_tools_megno_deltad_delta(struct reb_simulation* const r);
  * @param dY Increment for MEGNO Y
  */
 void reb_tools_megno_update(struct reb_simulation* r, double dY);
-
 
 /**
  * @brief Init random number generator based on time and process id.

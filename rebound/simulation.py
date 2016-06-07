@@ -1,5 +1,5 @@
-from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_long, c_ulong, c_void_p, c_char_p, CFUNCTYPE, byref
-from . import clibrebound, Escape, NoParticles, Encounter, SimulationError
+from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_long, c_ulong, c_void_p, c_char_p, CFUNCTYPE, byref, c_uint32
+from . import clibrebound, Escape, NoParticles, Encounter, SimulationError, ParticleNotFound
 from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G
 import math
@@ -19,6 +19,10 @@ INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "wh": 3, "leapfrog": 4, "hybri
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2}
+
+class reb_hash_pointer_pair(Structure):
+    _fields_ = [("hash", c_uint32),
+                ("index", c_int)]
 
 class reb_vec3d(Structure):
     _fields_ = [("x", c_double),
@@ -645,14 +649,12 @@ class Simulation(Structure):
         """
         cur_var_config_N = self.var_config_N
         if order==1:
-            clibrebound.reb_add_var_1st_order.restype = c_int
             index = clibrebound.reb_add_var_1st_order(byref(self),c_int(testparticle))
         elif order==2:
             if first_order is None:
                 raise AttributeError("Please specify corresponding first order variational equations when initializing second order variational equations.")
             if first_order_2 is None:
                 first_order_2 = first_order
-            clibrebound.reb_add_var_2nd_order.restype = c_int
             index = clibrebound.reb_add_var_2nd_order(byref(self),c_int(testparticle),c_int(first_order.index),c_int(first_order_2.index))
         else:
             raise AttributeError("Only variational equations of first and second order are supported.")
@@ -704,7 +706,7 @@ class Simulation(Structure):
         return clibrebound.reb_tools_calculate_lyapunov(byref(self))
     
 # Particle add function, used to be called particle_add() and add_particle() 
-    def add(self, particle=None, **kwargs):   
+    def add(self, particle=None, name=None, **kwargs):   
         """
         Adds a particle to REBOUND. Accepts one of the following:
 
@@ -716,25 +718,24 @@ class Simulation(Structure):
         """
         if particle is not None:
             if isinstance(particle, Particle):
-                if kwargs == {}: # copy particle
-                    if (self.gravity == "tree" or self.collision == "tree") and self.root_size <=0.:
-                        raise ValueError("The tree code for gravity and/or collision detection has been selected. However, the simulation box has not been configured yet. You cannot add particles until the the simulation box has a finite size.")
+                if (self.gravity == "tree" or self.collision == "tree") and self.root_size <=0.:
+                    raise ValueError("The tree code for gravity and/or collision detection has been selected. However, the simulation box has not been configured yet. You cannot add particles until the the simulation box has a finite size.")
 
-                    clibrebound.reb_add(byref(self), particle)
-                else: # use particle as primary
-                    self.add(Particle(simulation=self, primary=particle, **kwargs))
+                clibrebound.reb_add(byref(self), particle)
+                if name is not None:
+                    self.particles[-1].hash = self.get_particle_hash(name)
             elif isinstance(particle, list):
                 for p in particle:
                     self.add(p)
             elif isinstance(particle,str):
                 if None in self.units.values():
                     self.units = ('AU', 'yr2pi', 'Msun')
-                self.add(horizons.getParticle(particle,**kwargs))
+                self.add(horizons.getParticle(particle, **kwargs), name=particle)
                 units_convert_particle(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass'])
             else: 
                 raise ValueError("Argument passed to add() not supported.")
         else: 
-            self.add(Particle(simulation=self, **kwargs))
+            self.add(Particle(simulation=self, name=name, **kwargs))
 
 # Particle getter functions
     @property
@@ -760,26 +761,35 @@ class Simulation(Structure):
         """
         clibrebound.reb_remove_all(byref(self))
 
-    def remove(self, index=None, id=None, keepSorted=1):
+    def remove(self, index=None, hash=None, name=None, keepSorted=True):
         """ 
         Removes a particle from the simulation.
 
         Parameters
         ----------
-        Either the index in the particles array to remove, or the id of the particle to
-        remove.  The keepSorted flag ensures the particles array remains sorted
-        in order of increasing ids.  One might set it to zero in cases with many
-        particles and many removals to speed things up.
+        index : int, optional
+            Specify particle to remove by index.
+        hash : c_uint32, optional
+            Specify particle to remove by hash.
+        name : string, optional
+            Specify particle to remove by name.
+        keepSorted : bool, optional
+            By default, remove preserves the order of particles in the particles array. 
+            Might set it to zero in cases with many particles and many removals to speed things up.
         """
         if index is not None:
             success = clibrebound.reb_remove(byref(self), c_int(index), keepSorted)
             if not success:
                 raise ValueError("Removing particle with index %d failed. Did not remove particle.\n"%(index))
             return
-        if id is not None:
-            success = clibrebound.reb_remove_by_id(byref(self), c_int(id), keepSorted)
-            if success == 0:
-                raise ValueError("id %d passed to remove_particle was not found.  Did not remove particle.\n"%(id))
+        if hash is not None:
+            success = clibrebound.reb_remove_by_hash(byref(self), c_uint32(hash), keepSorted)
+            if not success:
+                raise ValueError("Removing particle with hash %d failed. Did not remove particle.\n"%(hash))
+        if name is not None:
+            success = clibrebound.reb_remove_by_name(byref(self), c_char_p(name.encode('utf-8')), keepSorted)
+            if not success:
+                raise ValueError("Removing particle with name %s failed. Did not remove particle.\n"%(name))
 
     def particles_ascii(self, prec=8):
         """
@@ -815,6 +825,48 @@ class Simulation(Structure):
                     self.add(p)
                 except:
                     raise AttributeError("Each line requires 8 floats corresponding to mass, radius, position (x,y,z) and velocity (x,y,z).")
+
+    def get_particle_hash(self, name=None):
+        """
+        Get a hash to assign to a particle in the simulation.
+
+        Parameters
+        ----------
+        name : string, optional
+            Will convert string and return corresponding hash. If omitted, simulation will assign unique hash.
+        """
+        clibrebound.reb_get_particle_hash.restype = c_uint32
+        if name is None:
+            return clibrebound.reb_get_particle_hash(byref(self), None)
+        else:
+            return clibrebound.reb_get_particle_hash(byref(self), c_char_p(name.encode('utf-8')))
+
+    def get_particle(self, name=None, index=None, hash=None):
+        """
+        Retrieve a particle from the simulation. Will raise ParticleNotFound error if not found.
+
+        Parameters
+        ----------
+        name : string, optional
+            Will search for particle by hash corresponding to passed name.
+        hash : c_uint32, optional
+            Will search for particle by passed hash.
+        index : int, optional
+            Provided for completeness.  Returns sim.particles[index].
+        """
+        if index is not None:
+            return self.particles[index]
+        if hash is not None:
+            clibrebound.reb_get_particle_by_hash.restype = POINTER(Particle)
+            ptr = clibrebound.reb_get_particle_by_hash(byref(self), c_uint32(hash))
+        if name is not None:
+            clibrebound.reb_get_particle_by_name.restype = POINTER(Particle)
+            ptr = clibrebound.reb_get_particle_by_name(byref(self), c_char_p(name.encode('utf-8')))
+
+        if ptr:
+            return ptr.contents
+        else:
+            raise ParticleNotFound("Particle was not found in the simulation.") 
 
 # Orbit calculation
     def calculate_orbits(self, heliocentric=False, barycentric=False):
@@ -996,7 +1048,6 @@ class Simulation(Structure):
         
         """
         if debug.integrator_package =="REBOUND":
-            clibrebound.reb_integrate.restype = c_int
             self.exact_finish_time = c_int(exact_finish_time)
             ret_value = clibrebound.reb_integrate(byref(self), c_double(tmax))
             if ret_value == 1:
@@ -1021,9 +1072,7 @@ class Simulation(Structure):
         Call this function to update the tree structure manually after removing particles.
         """
         clibrebound.reb_tree_update(byref(self))
-
-
-
+    
 class Variation(Structure):
     """
     REBOUND Variational Configuration Object.
@@ -1151,6 +1200,10 @@ Simulation._fields_ = [
                 ("var_config_N", c_int),
                 ("var_config", POINTER(Variation)),
                 ("N_active", c_int),
+                ("_particle_lookup_table", POINTER(reb_hash_pointer_pair)),
+                ("hash_ctr", c_int),
+                ("N_lookup", c_int),
+                ("allocatedN_lookup", c_int),
                 ("testparticle_type", c_int),
                 ("allocated_N", c_int),
                 ("_particles", POINTER(Particle)),
@@ -1221,7 +1274,7 @@ Particle._fields_ = [("x", c_double),
                 ("r", c_double),
                 ("lastcollision", c_double),
                 ("c", c_void_p),
-                ("id", c_int),
+                ("hash", c_uint32),
                 ("ap", c_void_p),
                 ("_sim", POINTER(Simulation))]
 
