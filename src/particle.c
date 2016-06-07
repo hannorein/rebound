@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <stdint.h>
 #include "rebound.h"
 #include "tree.h"
 #include "boundary.h"
@@ -101,6 +102,19 @@ int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct re
 	return index;
 }
 
+int reb_get_particle_index(struct reb_particle* p){
+	struct reb_simulation* r = p->sim;
+	int i = 0;
+	const int N = r->N;
+	while(&r->particles[i] != p){
+		i++;
+		if(i>=N){
+			return -1;	// p not in simulation.  Shouldn't happen unless you mess with p.sim after creating the particle
+		}	
+	}
+	return i;
+}
+
 void reb_remove_all(struct reb_simulation* const r){
 	r->N 		= 0;
 	r->allocatedN 	= 0;
@@ -146,19 +160,84 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 	return 1;
 }
 
-int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted){
-	int success = 0;
-	for(int i=0;i<r->N;i++){
-		if(r->particles[i].id == id){
-			success = reb_remove(r, i, keepSorted);
-			break;
-		}
-	}
+int reb_remove_by_hash(struct reb_simulation* const r, uint32_t hash, int keepSorted){
+    struct reb_particle* p = reb_get_particle_by_hash(r, hash);
+    if(p == NULL){
+		fprintf(stderr, "\nParticle to be removed not found in simulation.  Did not remove particle.\n");
+        return 0;
+    }
+    else{
+        int index = reb_get_particle_index(p);
+        return reb_remove(r, index, keepSorted);
+    }
+}
 
-	if(!success){
-		fprintf(stderr, "\nIndex passed to particles_remove_id (id = %d) not found in particles array.  Did not remove particle.\n", id);
-	}
-	return success;
+int reb_remove_by_name(struct reb_simulation* const r, const char* name, int keepSorted){
+    uint32_t hash = reb_tools_hash(name);
+    return reb_remove_by_hash(r, hash, keepSorted);
+}
+
+uint32_t reb_get_particle_hash(struct reb_simulation* const r, const char* str){
+    if(str == NULL){
+        r->hash_ctr++;
+        return (uint32_t)(getpid() + r->hash_ctr);
+    }
+    else{
+        return reb_tools_hash(str);
+    }
+}
+
+struct reb_particle* reb_get_particle_by_name(struct reb_simulation* const r, const char* name){
+    uint32_t hash = reb_tools_hash(name);
+    return reb_get_particle_by_hash(r, hash);
+}
+
+static struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash){
+    const struct reb_hash_pointer_pair* const lookup = r->particle_lookup_table;
+    if (lookup == NULL){
+        return NULL;
+    }
+    for(int i=0; i<r->N_lookup; i++){
+        if(lookup[i].hash == hash){
+            if(lookup[i].index < r->N){
+                return &r->particles[lookup[i].index];
+            }
+        }
+    }
+    return NULL;
+}
+
+struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash){
+    struct reb_particle* p; 
+    p = reb_search_lookup_table(r, hash);
+    if (p == NULL){
+        reb_update_particle_lookup_table(r);
+        return reb_search_lookup_table(r, hash);
+    }
+    else{
+        if (p->hash != hash){
+            reb_update_particle_lookup_table(r);
+            p = reb_search_lookup_table(r, hash);
+        }
+    }
+    return p;
+}
+
+void reb_update_particle_lookup_table(struct reb_simulation* const r){
+    const struct reb_particle* const particles = r->particles;
+    int N_hash = 0;
+    for(int i=0; i<r->N; i++){
+        if(particles[i].hash != 0){
+            if(N_hash >= r->allocatedN_lookup){
+                r->allocatedN_lookup += 128;
+                r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*r->allocatedN_lookup);
+            }
+            r->particle_lookup_table[N_hash].hash = particles[i].hash;
+            r->particle_lookup_table[N_hash].index = i;
+            N_hash++;
+        }
+    }
+    r->N_lookup = N_hash;
 }
 
 struct reb_particle reb_particle_minus(struct reb_particle p1, struct reb_particle p2){
@@ -218,5 +297,27 @@ struct reb_particle reb_particle_divide(struct reb_particle p1, double value){
     p.ay = p1.ay / value;
     p.az = p1.az / value;
     p.m = p1.m / value;
+    return p;
+}
+
+struct reb_particle reb_particle_nan(void){
+    struct reb_particle p;
+    p.x = nan("");
+    p.y = nan("");
+    p.z = nan("");
+    p.vx = nan("");
+    p.vy = nan("");
+    p.vz = nan("");
+    p.ax = nan("");
+    p.ay = nan("");
+    p.az = nan("");
+    p.m = nan("");
+    p.r = nan("");
+    p.lastcollision = nan("");
+    p.c = NULL;
+    p.hash = 0;
+    p.ap = NULL;
+    p.sim = NULL;
+
     return p;
 }

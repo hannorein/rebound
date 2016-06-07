@@ -68,7 +68,8 @@ script:
     - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquations.ipynb; fi
     - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquationsWithChainRule.ipynb; fi
     #-if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/python_tutorials/ && python ipynb2py.py Parallel.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py ParticleIDsAndRemoval.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py UniquelyIdentifyingParticles.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py RemovingParticlesFromSimulation.ipynb; fi
     - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py PoincareMap.ipynb; fi
     - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py OrbitalElements.ipynb; fi
     #-if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Testparticles.ipynb; fi

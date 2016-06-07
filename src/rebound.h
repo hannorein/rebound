@@ -25,6 +25,7 @@
 
 #ifndef _MAIN_H
 #define _MAIN_H
+#include <stdint.h>
 #ifndef M_PI
 // Make sure M_PI is defined. 
 #define M_PI           3.14159265358979323846       ///< The mathematical constant pi.
@@ -87,7 +88,6 @@ struct reb_ghostbox{
     double shiftvz;     ///< Relative z velocity
 };
 
-
 /**
  * @brief Structure representing one REBOUND particle.
  * @details This structure is used to represent one particle. 
@@ -109,7 +109,7 @@ struct reb_particle {
     double r;           ///< Radius of the particle. 
     double lastcollision;       ///< Last time the particle had a physical collision.
     struct reb_treecell* c;     ///< Pointer to the cell the particle is currently in.
-    int id;             ///< Unique id to identify particle.
+    uint32_t hash;      ///< hash to identify particle.
     void* ap;           ///< Functionality for externally adding additional properties to particles.
     struct reb_simulation* sim; ///< Pointer to the parent simulation.
 };
@@ -331,6 +331,14 @@ struct reb_collision{
     int ri;         ///< Index of rootcell (needed for MPI only).
 };
 
+/**
+ * @brief Holds a particle's hash and the particle's index in the particles array.
+ * @details This structure is used for the simulation's particle_lookup_table.
+ */
+struct reb_hash_pointer_pair{
+    uint32_t hash;
+    int index;
+};
 
 /**
  * @brief Struct describing the properties of a set of variational equations.
@@ -373,6 +381,10 @@ struct reb_simulation {
     int     var_config_N;           ///< Number of variational configuration structs. Default: 0.
     struct reb_variational_configuration* var_config;   ///< These configuration structs contain details on variational particles. 
     int     N_active;               ///< Number of massive particles included in force calculation (default: N). Particles with index >= N_active are considered testparticles.
+    struct reb_hash_pointer_pair* particle_lookup_table; ///< Array of pairs that map particles' hashes to their index in the particles array.
+    int     hash_ctr;               ///< Counter for number of assigned hashes to assign unique values.
+    int     N_lookup;               ///< Number of entries in the particle lookup table.
+    int     allocatedN_lookup;      ///< Number of lookup table entries allocated.
     int     testparticle_type;      ///< Type of the particles with an index>=N_active. 0 means particle does not influence any other particle (default), 1 means particles with index < N_active feel testparticles (similar to MERCURY's small particles). Testparticles never feel each other.
     int     allocatedN;             ///< Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; ///< Main particle array. This contains all particles on this node.  
@@ -695,16 +707,48 @@ void reb_remove_all(struct reb_simulation* const r);
 int reb_remove(struct reb_simulation* const r, int index, int keepSorted);
 
 /**
- * @brief Remove a particle by its id.
+ * @brief Remove a particle by its hash.
+ * @details see examples/removing_particles_from_simulation.
  * @param r The rebound simulation to be considered
- * @param id The id of the particle to be removed.
+ * @param id The hash of the particle to be removed.
  * @param keepSorted If set to 1 keep the particles with indices in the particles array
  * higher than the one with the passed id are all shifted down one position,
  * ensuring the ordering remains. 
  * @return Returns 1 if particle successfully removed,
- * 0 if id was not found in the particles array.
+ * 0 if hash was not found in the particles array.
  */
-int reb_remove_by_id(struct reb_simulation* const r, int id, int keepSorted);
+int reb_remove_by_hash(struct reb_simulation* const r, uint32_t hash, int keepSorted);
+
+/**
+ * @brief Remove a particle by its assigned name.
+ * @details see examples/removing_particles_from_simulation.
+ * @param r The rebound simulation to be considered
+ * @param name The name of the particle to be removed.
+ * @param keepSorted If set to 1 keep the particles with indices in the particles array
+ * higher than the one with the passed id are all shifted down one position,
+ * ensuring the ordering remains. 
+ * @return Returns 1 if particle successfully removed,
+ * 0 if hash was not found in the particles array.
+ */
+int reb_remove_by_name(struct reb_simulation* const r, const char* name, int keepSorted);
+
+/**
+ * @brief Get a pointer to a particle by its hash.
+ * @details see examples/uniquely_identifying_particles.
+ * @param r The rebound simulation to be considered.
+ * @param hash The hash of the particle to search for.
+ * @return A pointer to the particle if found, NULL otherwise.
+*/
+struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash);
+
+/**
+ * @brief Get a pointer to a particle by its name.
+ * @details see examples/uniquely_identifying_particles.
+ * @param r The rebound simulation to be considered.
+ * @param str The name of the particle to search for.
+ * @return A pointer to the particle if found, NULL otherwise.
+*/
+struct reb_particle* reb_get_particle_by_name(struct reb_simulation* const r, const char* name);
 
 /**
  * @brief Run the heartbeat function and check for escaping/colliding particles.
@@ -728,10 +772,6 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
 
 /** @} */
 /** @} */
-
-
-
-
 
 /**
  * \name Tools
@@ -800,6 +840,14 @@ struct reb_particle reb_get_com(struct reb_simulation* r);
  * @return The center of mass as a particle (mass, position and velocity correspond to the center of mass)
  */
 struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_particle p2);
+
+/**
+ * @brief Returns a hash to identify a particle.
+ * @param str (Optional) If passed, returns hash corresponding to the passed string.  If str is NULL, simulation assigns a hash. 
+ * @return hash.
+ */
+uint32_t reb_get_particle_hash(struct reb_simulation* const r, const char* str);
+
 /** @} */
 /** @} */
 
@@ -909,8 +957,6 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 /** @} */
 /** @} */
 
-
-
 /**
  * \name Built-in setup/input functions
  * @{
@@ -1014,7 +1060,6 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
  * @return Returns a particle structure with the given orbital parameters. 
  */
 struct reb_particle reb_tools_pal_to_particle(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy);
-
 
 /**
  * @brief Reads a binary file.
@@ -1265,6 +1310,19 @@ double reb_tools_calculate_megno(struct reb_simulation* r);
  * @return Returns the current CN
  */
 double reb_tools_calculate_lyapunov(struct reb_simulation* r);
+
+/**
+ * @brief Returns hash for passed string.
+ * @param str String key. 
+ * @return hash for the passed string.
+ */
+uint32_t reb_tools_hash(const char* str);
+
+/**
+ * @brief Returns a reb_particle structure with fields/hash/ptrs initialized to nan/0/NULL. 
+ * @return reb_particle with fields initialized to nan.
+ */
+struct reb_particle reb_particle_nan(void);
 
 /**
  * @brief Print out an error message, then exit in a semi-nice way.
