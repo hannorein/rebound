@@ -41,8 +41,11 @@ int main(int argc, char* argv[]){
 	}
 
 	print_hashes(r);
-
-    printf("We can also reference particles with their numeric hash: m of particles[0] = %f\n", reb_get_particle_by_hash(r,3000342645)->m);
+    
+    printf("We can also reference particles with their numeric hash directly.\n");
+    uint32_t hash = reb_tools_hash("Sun"); 
+    printf("Hash corresponding to the name Sun = %u\n", hash);
+    printf("m of Sun = %f\n", reb_get_particle_by_hash(r,hash)->m);
     // You can therefore assign your own hash values manually, but if two particles share the same hash, get_particle_by_hash will return the first hit in particles array.
 }
 
