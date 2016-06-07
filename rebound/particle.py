@@ -47,7 +47,7 @@ class Particle(Structure):
         """
         return "<rebound.Particle object, m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
-    def __init__(self, simulation=None, name=None, assignHash=False, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, id=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None):
+    def __init__(self, simulation=None, name=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, id=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None):
         """
         Initializes a Particle structure. Rather than explicitly creating 
         a Particle structure, users may use the ``add()`` member function 
@@ -79,6 +79,8 @@ class Particle(Structure):
         ----------
         simulation  : Simulation  
             Simulation instance associated with this particle (Required if passing orbital elements, assigning a name/hash, or setting up a variation).
+        name : string
+            String is converted to a hash and assigned to particle.hash for identification (Optional).       
         particle    : Particle, optional    
             If a particle is passed, a copy of that particle is returned.
             If a variational particle is initialized, then ``particle`` is 
@@ -135,10 +137,6 @@ class Particle(Structure):
         variation2  : string            (Default: None)
             Set this string to the name of a second orbital parameter to initialize the particle as a second order variational particle. Only used for second order variational equations. 
             Can be one of the following: m, a, e, inc, omega, Omega, f, k, h, lambda, ix, iy.
-        name : string
-            String is converted to a hash and assigned to particle.hash for identification (Optional).       
-        assignHash : bool
-            If True, the simulation will assign a unique hash to the particle (Default: False, overridden if name is passed.)
 
         Examples
         --------
@@ -150,6 +148,12 @@ class Particle(Structure):
         >>> p3 = rebound.Particle(simulation=sim, m=0.001, a=1.5, h=0.1, k=0.2, l=0.1)
 
         """        
+        
+        if name is not None:
+            if simulation is None:
+                raise ValueError("Need to specify a simulation to assign a name.")
+            self.hash = simulation.get_particle_hash(name)
+        
         if variation:
             if primary is None:
                 primary = simulation.particles[0]
@@ -205,12 +209,10 @@ class Particle(Structure):
             self.vx = p.vx
             self.vy = p.vy
             self.vz = p.vz
-            self.assign_hash(simulation, name, assignHash)
             return 
 
         if particle is not None:
             memmove(byref(self), byref(particle), sizeof(self))
-            self.assign_hash(simulation, name, assignHash)
             return
         cart = [x,y,z,vx,vy,vz]
         orbi = [primary,a,P,e,inc,Omega,omega,pomega,f,M,l,theta,T]
@@ -353,18 +355,6 @@ class Particle(Structure):
             self.vy = vy
             self.vz = vz
         
-        self.assign_hash(simulation, name, assignHash)
-
-    def assign_hash(self, simulation, name, assignHash):
-        if name is not None:
-            if simulation is None:
-                raise ValueError("Need to specify a simulation to assign a name.")
-            self.hash = simulation.get_particle_hash(name)
-        elif assignHash is True:
-            if simulation is None:
-                raise ValueError("Need to specify a simulation to assign a hash.")
-            self.hash = simulation.get_particle_hash()
-
     def copy(self):
         """
         Returns a deep copy of the particle. The particle is not added to any simulation by default.

@@ -45,6 +45,7 @@
 #include "tree.h"
 #include "boundary.h"
 #include "communication_mpi.h"
+#include "mpi.h"
 
 void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char** argv){
 	MPI_Init(&argc,&argv);

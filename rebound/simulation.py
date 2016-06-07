@@ -696,7 +696,7 @@ class Simulation(Structure):
         return clibrebound.reb_tools_calculate_lyapunov(byref(self))
     
 # Particle add function, used to be called particle_add() and add_particle() 
-    def add(self, particle=None, name=None, assignHash=False, **kwargs):   
+    def add(self, particle=None, name=None, **kwargs):   
         """
         Adds a particle to REBOUND. Accepts one of the following:
 
@@ -712,20 +712,20 @@ class Simulation(Structure):
                     raise ValueError("The tree code for gravity and/or collision detection has been selected. However, the simulation box has not been configured yet. You cannot add particles until the the simulation box has a finite size.")
 
                 clibrebound.reb_add(byref(self), particle)
-                if name is not None or assignHash is True:
-                    self.particles[-1].assign_hash(self, name, assignHash)
+                if name is not None:
+                    self.particles[-1].hash = self.get_particle_hash(name)
             elif isinstance(particle, list):
                 for p in particle:
                     self.add(p)
             elif isinstance(particle,str):
                 if None in self.units.values():
                     self.units = ('AU', 'yr2pi', 'Msun')
-                self.add(horizons.getParticle(particle, name, assignHash, **kwargs))
+                self.add(horizons.getParticle(particle, **kwargs), name=particle)
                 units_convert_particle(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass'])
             else: 
                 raise ValueError("Argument passed to add() not supported.")
         else: 
-            self.add(Particle(simulation=self, name=name, assignHash=assignHash, **kwargs))
+            self.add(Particle(simulation=self, name=name, **kwargs))
 
 # Particle getter functions
     @property
