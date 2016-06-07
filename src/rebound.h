@@ -30,6 +30,7 @@
 #define M_PI           3.14159265358979323846       ///< The mathematical constant pi.
 #endif
 #ifdef MPI
+#include <stdint.h>
 #include "mpi.h"
 #endif // MPI
 
