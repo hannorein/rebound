@@ -751,16 +751,21 @@ class Simulation(Structure):
         """
         clibrebound.reb_remove_all(byref(self))
 
-    def remove(self, index=None, hash=None, name=None, keepSorted=1):
+    def remove(self, index=None, hash=None, name=None, keepSorted=True):
         """ 
         Removes a particle from the simulation.
 
         Parameters
         ----------
-        Either the index in the particles array to remove, the hash of the particle, or
-        the name the particle has been assigned.
-        The keepSorted flag preserves the order of hashes in the particles array.
-        One might set it to zero in cases with many particles and many removals to speed things up.
+        index : int, optional
+            Specify particle to remove by index.
+        hash : c_uint32, optional
+            Specify particle to remove by hash.
+        name : string, optional
+            Specify particle to remove by name.
+        keepSorted : bool, optional
+            By default, remove preserves the order of particles in the particles array. 
+            Might set it to zero in cases with many particles and many removals to speed things up.
         """
         if index is not None:
             success = clibrebound.reb_remove(byref(self), c_int(index), keepSorted)
