@@ -45,7 +45,6 @@
 #include "tree.h"
 #include "boundary.h"
 #include "communication_mpi.h"
-#include "mpi.h"
 
 void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char** argv){
 	MPI_Init(&argc,&argv);
@@ -75,7 +74,7 @@ void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char**
         struct reb_particle p;
         blen[bnum] 	= 1; 
         indices[bnum] 	= (char*)&p.hash - (char*)&p; 
-        oldtypes[bnum] 	= mpi_uint32_t; //MPI_UINT32_T;
+        oldtypes[bnum] 	= MPI_UINT; // hash is a uint32_t, but not all MPI headers seem to have MPI_UINT32_T
     }
 	bnum++;
     {
