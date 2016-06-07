@@ -88,7 +88,6 @@ struct reb_ghostbox{
     double shiftvz;     ///< Relative z velocity
 };
 
-
 /**
  * @brief Structure representing one REBOUND particle.
  * @details This structure is used to represent one particle. 
@@ -110,7 +109,7 @@ struct reb_particle {
     double r;           ///< Radius of the particle. 
     double lastcollision;       ///< Last time the particle had a physical collision.
     struct reb_treecell* c;     ///< Pointer to the cell the particle is currently in.
-    uint32_t hash;      ///< Unique hash to identify particle.
+    uint32_t hash;      ///< hash to identify particle.
     void* ap;           ///< Functionality for externally adding additional properties to particles.
     struct reb_simulation* sim; ///< Pointer to the parent simulation.
 };
@@ -333,7 +332,7 @@ struct reb_collision{
 };
 
 /**
- * @brief Holds a particle's unique hash and a pointer to that particle.
+ * @brief Holds a particle's hash and the particle's index in the particles array.
  * @details This structure is used for the simulation's particle_lookup_table.
  */
 struct reb_hash_pointer_pair{
@@ -382,7 +381,7 @@ struct reb_simulation {
     int     var_config_N;           ///< Number of variational configuration structs. Default: 0.
     struct reb_variational_configuration* var_config;   ///< These configuration structs contain details on variational particles. 
     int     N_active;               ///< Number of massive particles included in force calculation (default: N). Particles with index >= N_active are considered testparticles.
-    struct reb_hash_pointer_pair* particle_lookup_table; ///< Array of pairs that map unique hashes to pointers to the respective particles.
+    struct reb_hash_pointer_pair* particle_lookup_table; ///< Array of pairs that map particles' hashes to their index in the particles array.
     int     hash_ctr;               ///< Counter for number of assigned hashes to assign unique values.
     int     N_lookup;               ///< Number of entries in the particle lookup table.
     int     allocatedN_lookup;      ///< Number of lookup table entries allocated.
@@ -708,17 +707,38 @@ void reb_remove_all(struct reb_simulation* const r);
 int reb_remove(struct reb_simulation* const r, int index, int keepSorted);
 
 /**
- * @brief Remove a particle by its id.
+ * @brief Remove a particle by its hash.
+ * @details see examples/removing_particles_from_simulation.
  * @param r The rebound simulation to be considered
- * @param id The id of the particle to be removed.
+ * @param id The hash of the particle to be removed.
  * @param keepSorted If set to 1 keep the particles with indices in the particles array
  * higher than the one with the passed id are all shifted down one position,
  * ensuring the ordering remains. 
  * @return Returns 1 if particle successfully removed,
- * 0 if id was not found in the particles array.
+ * 0 if hash was not found in the particles array.
  */
 int reb_remove_by_hash(struct reb_simulation* const r, uint32_t hash, int keepSorted);
+
+/**
+ * @brief Remove a particle by its assigned name.
+ * @details see examples/removing_particles_from_simulation.
+ * @param r The rebound simulation to be considered
+ * @param name The name of the particle to be removed.
+ * @param keepSorted If set to 1 keep the particles with indices in the particles array
+ * higher than the one with the passed id are all shifted down one position,
+ * ensuring the ordering remains. 
+ * @return Returns 1 if particle successfully removed,
+ * 0 if hash was not found in the particles array.
+ */
 int reb_remove_by_name(struct reb_simulation* const r, const char* str, int keepSorted);
+
+/**
+ * @brief Get a pointer to a particle by its hash.
+ * @details see examples/uniquely_identifying_particles.
+ * @param r The rebound simulation to be considered.
+ *
+ *
+*/
 struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash);
 struct reb_particle* reb_get_particle_by_name(struct reb_simulation* const r, const char* str);
 

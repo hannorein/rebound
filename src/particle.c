@@ -195,6 +195,19 @@ struct reb_particle* reb_get_particle_by_name(struct reb_simulation* const r, co
     return reb_get_particle_by_hash(r, hash);
 }
 
+static struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash){
+    const struct reb_hash_pointer_pair* const lookup = r->particle_lookup_table;
+    if (lookup == NULL){
+        return NULL;
+    }
+    for(int i=0; i<r->N_lookup; i++){
+        if(lookup[i].hash == hash){
+            return &r->particles[lookup[i].index];
+        }
+    }
+    return NULL;
+}
+
 struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash){
     struct reb_particle* p; 
     p = reb_search_lookup_table(r, hash);
@@ -226,19 +239,6 @@ void reb_update_particle_lookup_table(struct reb_simulation* const r){
         }
     }
     r->N_lookup = N_hash;
-}
-
-static struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash){
-    const struct reb_hash_pointer_pair* const lookup = r->particle_lookup_table;
-    if (lookup == NULL){
-        return NULL;
-    }
-    for(int i=0; i<r->N_lookup; i++){
-        if(lookup[i].hash == hash){
-            return &r->particles[lookup[i].index];
-        }
-    }
-    return NULL;
 }
 
 struct reb_particle reb_particle_minus(struct reb_particle p1, struct reb_particle p2){
