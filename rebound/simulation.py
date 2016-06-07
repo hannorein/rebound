@@ -813,6 +813,14 @@ class Simulation(Structure):
                     raise AttributeError("Each line requires 8 floats corresponding to mass, radius, position (x,y,z) and velocity (x,y,z).")
 
     def get_particle_hash(self, name=None):
+        """
+        Get a hash to assign to a particle in the simulation.
+
+        Parameters
+        ----------
+        name : string, optional
+            Will convert string and return corresponding hash. If omitted, simulation will assign unique hash.
+        """
         clibrebound.reb_get_particle_hash.restype = c_uint32
         if name is None:
             return clibrebound.reb_get_particle_hash(byref(self), None)
@@ -820,6 +828,18 @@ class Simulation(Structure):
             return clibrebound.reb_get_particle_hash(byref(self), c_char_p(name.encode('utf-8')))
 
     def get_particle(self, name=None, index=None, hash=None):
+        """
+        Retrieve a particle from the simulation. Will raise ParticleNotFound error if not found.
+
+        Parameters
+        ----------
+        name : string, optional
+            Will search for particle by hash corresponding to passed name.
+        hash : c_uint32, optional
+            Will search for particle by passed hash.
+        index : int, optional
+            Provided for completeness.  Returns sim.particles[index].
+        """
         if index is not None:
             return self.particles[index]
         if hash is not None:
