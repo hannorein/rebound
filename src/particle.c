@@ -125,9 +125,9 @@ void reb_remove_all(struct reb_simulation* const r){
 }
 
 int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
-    if (index == r->N-1){ // if last particle, won't get overwritten, so set to nan in case mis-accessed later (e.g., by hash)
-        r->particles[index] = reb_particle_nan();
-    } 
+    if (index == r->N-1){ // if last particle, won't get overwritten, so set hash to 0 so it's not misaccessed by get_particle_hash.
+        r->particles[index].hash = 0;
+    }
 	if (r->N==1){
 	    r->N = 0;
 		fprintf(stderr, "Last particle removed.\n");
