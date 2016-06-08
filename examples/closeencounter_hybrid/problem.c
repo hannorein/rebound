@@ -19,7 +19,7 @@ int main(int argc, char* argv[]){
 	struct reb_simulation* r = reb_create_simulation();
 	r->dt = 0.0012*2.*M_PI;				// initial timestep
 	r->integrator = REB_INTEGRATOR_HERMES;
-    r->ri_hermes.switch_ratio = 2.;
+    r->ri_hermes.hill_switch_factor = 2.;
 	r->heartbeat  = heartbeat;
 
 	struct reb_particle star = {0};

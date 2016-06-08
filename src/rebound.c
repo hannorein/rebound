@@ -350,8 +350,8 @@ void reb_init_simulation(struct reb_simulation* r){
     // ********** HERMES
     r->ri_hermes.mini      = NULL;
     r->ri_hermes.global    = NULL;
-    r->ri_hermes.switch_ratio = 0.;
-    r->ri_hermes.CE_radius = 0.;
+    r->ri_hermes.hill_switch_factor = 0.;
+    r->ri_hermes.radius_switch_factor = 0.;
     r->ri_hermes.mini_active = 0;
     r->ri_hermes.timestep_too_large_warning = 0;
     

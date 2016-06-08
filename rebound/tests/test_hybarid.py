@@ -76,7 +76,7 @@ class TestHermes(unittest.TestCase):
         sim.integrator = "hermes"
         #sim.gravity = "basic"
         sim.ri_hermes.switch_radius = 3.
-        sim.ri_hermes.CE_radius = 20.
+        sim.ri_hermes.radius_switch_factor = 20.
         sim.dt = 0.0001
         sim.testparticle_type = 1
         sim.collisions_track_dE = 1;
@@ -100,7 +100,7 @@ class TestHermes(unittest.TestCase):
         sim.integrator = "hermes"
         #sim.gravity = "basic"
         sim.ri_hermes.switch_radius = 3.
-        sim.ri_hermes.CE_radius = 20.
+        sim.ri_hermes.radius_switch_factor = 20.
         sim.dt = 0.001
         sim.testparticle_type = 1
         sim.collision = "direct"

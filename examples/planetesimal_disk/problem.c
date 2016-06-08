@@ -18,8 +18,8 @@ int main(int argc, char* argv[]){
 	r->integrator	= REB_INTEGRATOR_HERMES;
     //r->integrator	= REB_INTEGRATOR_IAS15;
     r->heartbeat	= heartbeat;
-    r->ri_hermes.switch_ratio = 3;         //Hill radii
-    r->ri_hermes.CE_radius = 20.;          //X*radius
+    r->ri_hermes.hill_switch_factor = 3;         //Hill radii
+    r->ri_hermes.radius_switch_factor = 20.;          //X*radius
     r->testparticle_type = 1;
     double tmax = 1e5 * 6.283;
     

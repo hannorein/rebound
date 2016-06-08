@@ -176,12 +176,12 @@ static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* glo
 	const int _N_active = ((global->N_active==-1)?global->N:global->N_active) - global->N_var;
     struct reb_particle* global_particles = global->particles;
     struct reb_particle p0 = global_particles[0];
-    double switch_ratio = global->ri_hermes.switch_ratio;
-    double switch_ratio2 = switch_ratio*switch_ratio;
+    double hill_switch_factor = global->ri_hermes.hill_switch_factor;
+    double hill_switch_factor2 = hill_switch_factor*hill_switch_factor;
     double min_dt_enc2 = INFINITY;
     for (int i=0; i<_N_active; i++){
         struct reb_particle pi = global_particles[i];
-        double radius_check = global->ri_hermes.CE_radius*pi.r;
+        double radius_check = global->ri_hermes.radius_switch_factor*pi.r;
         double radius_check2 = radius_check*radius_check;
         const double dxi = p0.x - pi.x;
         const double dyi = p0.y - pi.y;
@@ -206,14 +206,14 @@ static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* glo
             const double dz = pi.z - pj.z;
             const double rij2 = dx*dx + dy*dy + dz*dz;
 
-            if(rij2 < switch_ratio2*rh_sum2 || rij2 < radius_check2){
+            if(rij2 < hill_switch_factor2*rh_sum2 || rij2 < radius_check2){
                 global->ri_hermes.mini_active = 1;
                 // Monitor hill radius/relative velocity
                 const double dvx = pi.vx - pj.vx;
                 const double dvy = pi.vy - pj.vy;
                 const double dvz = pi.vz - pj.vz;
                 const double vij2 = dvx*dvx + dvy*dvy + dvz*dvz;
-                const double dt_enc2 = switch_ratio2*rh_sum2/vij2;
+                const double dt_enc2 = hill_switch_factor2*rh_sum2/vij2;
                 min_dt_enc2 = MIN(min_dt_enc2,dt_enc2);
                 if (j>=_N_active && global->ri_hermes.is_in_mini[j]==0){//make sure not already added
                     // Add particle to mini simulation

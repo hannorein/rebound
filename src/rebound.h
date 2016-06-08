@@ -213,8 +213,8 @@ struct reb_simulation_integrator_ias15 {
 struct reb_simulation_integrator_hermes {
     struct reb_simulation* mini;
     struct reb_simulation* global;
-    double switch_ratio;            //thresh. to move particle from global to mini (hill radii)
-    double CE_radius;               //close encounter radius: if < this value add to mini (X*radius)
+    double hill_switch_factor;            //thresh. to move particle from global to mini (hill radii)
+    double radius_switch_factor;               //close encounter radius: if < this value add to mini (X*radius)
     
     int mini_active;
     int collision_this_global_dt;

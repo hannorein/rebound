@@ -57,7 +57,7 @@ class reb_simulation_integrator_hermes(Structure):
     _fields_ = [("mini", c_void_p),
                 ("global", c_void_p),
                 ("switch_radius", c_double),
-                ("CE_radius", c_double),
+                ("radius_switch_factor", c_double),
                 ("mini_active", c_int),
                 ("collision_this_global_dt", c_int),
                 ("global_index_from_mini_index", POINTER(c_int)),
