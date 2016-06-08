@@ -40,6 +40,7 @@
 #include "integrator_wh.h"
 #include "integrator_whfast.h"
 #include "integrator_ias15.h"
+#include "integrator_hermes.h"
 #include "boundary.h"
 #include "gravity.h"
 #include "collision.h"
@@ -134,7 +135,9 @@ void reb_step(struct reb_simulation* const r){
 
     // Search for collisions using local and essential tree.
     PROFILING_START()
-    reb_collision_search(r);
+    if (r->integrator!=REB_INTEGRATOR_HERMES){ //Hybrid integrator will search for collisions in mini simulation.
+        reb_collision_search(r);
+    }
     PROFILING_STOP(PROFILING_CAT_COLLISION)
 }
 
@@ -239,6 +242,17 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     // ********** WH
     r->ri_wh.allocatedN         = 0;
     r->ri_wh.eta            = NULL;
+    // ********** HERMES
+    r->ri_hermes.mini      = NULL;
+    r->ri_hermes.global    = NULL;
+    r->ri_hermes.global_index_from_mini_index = NULL;
+    r->ri_hermes.global_index_from_mini_index_N = 0;
+    r->ri_hermes.global_index_from_mini_index_Nmax = 0;
+    r->ri_hermes.is_in_mini = NULL;
+    r->ri_hermes.is_in_mini_Nmax = 0;
+    r->ri_hermes.a_Nmax = 0;
+    r->ri_hermes.a_i = NULL;
+    r->ri_hermes.a_f = NULL;
 }
 
 void reb_reset_function_pointers(struct reb_simulation* const r){
@@ -302,6 +316,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->minimum_collision_velocity = 0;
     r->collisions_plog  = 0;
     r->collisions_Nlog  = 0;    
+    r->collision_resolve_keep_sorted  = 0;    
     
     // Default modules
     r->integrator   = REB_INTEGRATOR_IAS15;
@@ -332,9 +347,16 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_sei.OMEGAZ    = -1;
     r->ri_sei.lastdt    = 0;
     
-    r->ri_hybrid.switch_ratio = 8; // Default of 8 mutual Hill radii
-    r->ri_hybrid.mode = SYMPLECTIC;
-
+    // ********** HERMES
+    r->ri_hermes.hill_switch_factor = 0.;
+    r->ri_hermes.radius_switch_factor = 0.;
+    r->ri_hermes.mini_active = 0;
+    r->ri_hermes.collision_this_global_dt = 0;
+    r->ri_hermes.steps = 0;
+    r->ri_hermes.steps_miniactive = 0;
+    r->ri_hermes.steps_miniN = 0;
+    r->ri_hermes.timestep_too_large_warning = 0;
+    
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.
     r->tree_needs_update= 0;
     r->tree_root        = NULL;

@@ -1,7 +1,7 @@
 /**
- * @file 	integrator_hybrid.h
+ * @file 	integrator_hermes.h
  * @brief 	Interface for numerical particle integrator
- * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @author 	Ari Silburt 
  * 
  * @section 	LICENSE
  * Copyright (c) 2015 Hanno Rein
@@ -22,10 +22,10 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _INTEGRATOR_HYBRID_H
-#define _INTEGRATOR_HYBRID_H
-void reb_integrator_hybrid_part1(struct reb_simulation* r);          	///< Internal function used to call a specific integrator
-void reb_integrator_hybrid_part2(struct reb_simulation* r);             ///< Internal function used to call a specific integrator
-void reb_integrator_hybrid_synchronize(struct reb_simulation* r);       ///< Internal function used to call a specific integrator
-void reb_integrator_hybrid_reset(struct reb_simulation* r);             ///< Internal function used to call a specific integrator
+#ifndef _INTEGRATOR_HERMES_H
+#define _INTEGRATOR_HERMES_H
+void reb_integrator_hermes_part1(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
+void reb_integrator_hermes_part2(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
+void reb_integrator_hermes_synchronize(struct reb_simulation* r);    ///< Internal function used to call a specific integrator
+void reb_integrator_hermes_reset(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
 #endif

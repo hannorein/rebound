@@ -34,3 +34,4 @@ doc/doxygen/html/
 doc/ipython
 doc/search.json
 problems/
+ipython_examples/HERMES_examples/*

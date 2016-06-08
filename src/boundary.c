@@ -64,7 +64,14 @@ void reb_boundary_check(struct reb_simulation* const r){
 					removep = 1;
 				}
 				if (removep==1){
+                    // If hermes calculate energy offset in global
+                    if(r->track_energy_offset){
+                        double Ei = reb_tools_energy(r);
+                        reb_remove(r, i,1);
+                        r->energy_offset += Ei - reb_tools_energy(r);
+                    } else {
                     reb_remove(r, i,0); // keepSorted=0 by default in C version
+                    }
                     if (r->tree_root==NULL){
                         i--; // need to recheck the particle that replaced the removed one
                         N--; // This is the local N
