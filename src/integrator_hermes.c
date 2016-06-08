@@ -41,7 +41,6 @@
 static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* r);
 static void reb_integrator_hermes_additional_forces_mini(struct reb_simulation* mini);
 static void calc_forces_on_planets(const struct reb_simulation* r, double* a);
-double Ei;
 
 void reb_integrator_hermes_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
@@ -104,7 +103,9 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
     
     calc_forces_on_planets(r, r->ri_hermes.a_i);
     
-    if(r->ri_hermes.mini_active)Ei = reb_tools_energy(r);
+    if(r->ri_hermes.mini_active && r->track_energy_offset){
+        r->ri_hermes.energy_before_timestep = reb_tools_energy(r);
+    }
     
     reb_integrator_whfast_part1(r);
 }
@@ -130,7 +131,7 @@ void reb_integrator_hermes_part2(struct reb_simulation* r){
         // Correct for energy jump in collision
         if(r->ri_hermes.collision_this_global_dt && r->track_energy_offset){
             double Ef = reb_tools_energy(r);
-            r->energy_offset += Ei - Ef;
+            r->energy_offset += r->ri_hermes.energy_before_timestep - Ef;
         }
     }
 }

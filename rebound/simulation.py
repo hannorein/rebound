@@ -60,6 +60,7 @@ class reb_simulation_integrator_hermes(Structure):
                 ("radius_switch_factor", c_double),
                 ("mini_active", c_int),
                 ("collision_this_global_dt", c_int),
+                ("energy_before_timestep", c_double),
                 ("global_index_from_mini_index", POINTER(c_int)),
                 ("global_index_from_mini_index_N",c_int),
                 ("global_index_from_mini_index_Nmax",c_int),

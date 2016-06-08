@@ -476,7 +476,7 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
     
     // If hermes calculate energy offset in global - hasn't been removed from global yet
     if (r->ri_hermes.global){
-        if(r->ri_hermes.global->integrator == REB_INTEGRATOR_HERMES && r->ri_hermes.global->ri_hermes.mini_active){
+        if(r->ri_hermes.global->ri_hermes.mini_active){
             r->ri_hermes.global->ri_hermes.collision_this_global_dt = 1;
         }
     }

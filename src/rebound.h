@@ -218,6 +218,7 @@ struct reb_simulation_integrator_hermes {
     
     int mini_active;                        ///< Flag that is set to 1 by HERMES if the mini simulation is active in this timestep.
     int collision_this_global_dt;           
+    double energy_before_timestep;            ///< Store energy at the beginning of timestep. Used to track energy_offset.
     
     int* global_index_from_mini_index;
     int global_index_from_mini_index_N;
