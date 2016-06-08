@@ -316,6 +316,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->minimum_collision_velocity = 0;
     r->collisions_plog  = 0;
     r->collisions_Nlog  = 0;    
+    r->collision_resolve_keep_sorted  = 0;    
     
     // Default modules
     r->integrator   = REB_INTEGRATOR_IAS15;

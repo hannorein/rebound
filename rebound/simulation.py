@@ -1251,6 +1251,7 @@ Simulation._fields_ = [
                 ("nghostx", c_int),
                 ("nghosty", c_int),
                 ("nghostz", c_int),
+                ("collision_resolve_keep_sorted", c_int),
                 ("collisions", c_void_p),
                 ("collisions_allocatedN", c_int),
                 ("minimum_collision_celocity", c_double),

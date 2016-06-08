@@ -469,6 +469,7 @@ struct reb_simulation {
      * \name Variables related to collision search and detection 
      * @{
      */
+    int collision_resolve_keep_sorted;      ///< Keep particles sorted if collision_resolve removes particles during a collision. 
     struct reb_collision* collisions;       ///< Array of all collisions. 
     int collisions_allocatedN;          ///< Size allocated for collisions.
     double minimum_collision_velocity;      ///< Used for hard sphere collision model. 

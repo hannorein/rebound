@@ -200,7 +200,7 @@ void reb_collision_search(struct reb_simulation* const r){
                     // Particles swapped
                     c.p2 = c.p1;
                 }
-                reb_remove(r,c.p1,0);
+                reb_remove(r,c.p1,r->collision_resolve_keep_sorted);
                 // Check for pair
                 for (int j=i+1;j<collisions_N;j++){
                     struct reb_collision cp = r->collisions[j];
@@ -219,7 +219,7 @@ void reb_collision_search(struct reb_simulation* const r){
             }
             if (outcome & 2){
                 // Remove p2
-                reb_remove(r,c.p2,0);
+                reb_remove(r,c.p2,r->collision_resolve_keep_sorted);
                 // Check for pair
                 for (int j=i+1;j<collisions_N;j++){
                     struct reb_collision cp = r->collisions[j];

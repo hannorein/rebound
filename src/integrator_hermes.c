@@ -54,11 +54,12 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
         mini->dt = r->dt;
         mini->additional_forces = reb_integrator_hermes_additional_forces_mini;
         mini->ri_hermes.global = r;    //set to != 0 so that collision.c knows to remove from both
-        mini->testparticle_type = r->testparticle_type;
-        mini->collision = r->collision;
-        mini->collision_resolve = r->collision_resolve;
-        mini->track_energy_offset = r->track_energy_offset;
     }
+    mini->testparticle_type = r->testparticle_type;
+    mini->collision = r->collision;
+    mini->collision_resolve = r->collision_resolve;
+    mini->collision_resolve_keep_sorted = r->collision_resolve_keep_sorted;
+    mini->track_energy_offset = r->track_energy_offset;
 
     // Remove all particles from mini
     mini->t = r->t;

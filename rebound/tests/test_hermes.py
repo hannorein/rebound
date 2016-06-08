@@ -80,6 +80,7 @@ class TestHermes(unittest.TestCase):
         sim.dt = 0.0001
         sim.testparticle_type = 1
         sim.track_energy_offset = 1;
+        sim.collision_resolve_keep_sorted = 1
         sim.collision = "direct"
         sim.collision_resolve = "merge"
         
