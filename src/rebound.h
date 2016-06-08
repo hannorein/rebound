@@ -400,11 +400,11 @@ struct reb_simulation {
     int     var_config_N;           ///< Number of variational configuration structs. Default: 0.
     struct reb_variational_configuration* var_config;   ///< These configuration structs contain details on variational particles. 
     int     N_active;               ///< Number of massive particles included in force calculation (default: N). Particles with index >= N_active are considered testparticles.
+    int     testparticle_type;      ///< Type of the particles with an index>=N_active. 0 means particle does not influence any other particle (default), 1 means particles with index < N_active feel testparticles (similar to MERCURY's small particles). Testparticles never feel each other.
     struct reb_hash_pointer_pair* particle_lookup_table; ///< Array of pairs that map particles' hashes to their index in the particles array.
     int     hash_ctr;               ///< Counter for number of assigned hashes to assign unique values.
     int     N_lookup;               ///< Number of entries in the particle lookup table.
     int     allocatedN_lookup;      ///< Number of lookup table entries allocated.
-    int     testparticle_type;      ///< Type of the particles with an index>=N_active. 0 means particle does not influence any other particle (default), 1 means particles with index < N_active feel testparticles (similar to MERCURY's small particles). Testparticles never feel each other.
     int     allocatedN;             ///< Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; ///< Main particle array. This contains all particles on this node.  
     struct reb_vec3d* gravity_cs;   ///< Vector containing the information for compensated gravity summation 
