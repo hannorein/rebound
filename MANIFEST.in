@@ -3,7 +3,7 @@ include src/integrator_whfast.c
 include src/integrator_wh.c
 include src/integrator_leapfrog.c
 include src/integrator_sei.c
-include src/integrator_hybrid.c
+include src/integrator_hermes.c
 include src/integrator.c
 include src/gravity.c
 include src/collision.c
@@ -19,7 +19,7 @@ include src/integrator_whfast.h
 include src/integrator_wh.h
 include src/integrator_leapfrog.h
 include src/integrator_sei.h
-include src/integrator_hybrid.h
+include src/integrator_hermes.h
 include src/integrator.h
 include src/collision.h
 include src/boundary.h

@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_long, c_ulong, c_void_p, c_char_p, CFUNCTYPE, byref, c_uint32
+from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_uint32, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref
 from . import clibrebound, Escape, NoParticles, Encounter, SimulationError, ParticleNotFound
 from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G
@@ -15,7 +15,7 @@ import types
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "wh": 3, "leapfrog": 4, "hybrid": 5, "none": 6}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "wh": 3, "leapfrog": 4, "hermes": 5, "none": 6}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2}
@@ -53,9 +53,28 @@ class reb_collision(Structure):
                 ("time", c_double),
                 ("ri", c_int)]
 
-class reb_simulation_integrator_hybrid(Structure):
-    _fields_ = [("switch_ratio", c_double),
-                ("mode", c_int)]
+class reb_simulation_integrator_hermes(Structure):
+    _fields_ = [("mini", c_void_p),
+                ("global", c_void_p),
+                ("hill_switch_factor", c_double),
+                ("radius_switch_factor", c_double),
+                ("mini_active", c_int),
+                ("collision_this_global_dt", c_int),
+                ("energy_before_timestep", c_double),
+                ("global_index_from_mini_index", POINTER(c_int)),
+                ("global_index_from_mini_index_N",c_int),
+                ("global_index_from_mini_index_Nmax",c_int),
+                ("is_in_mini", POINTER(c_int)),
+                ("is_in_mini_Nmax", c_int),
+                ("a_i", POINTER(c_double)),
+                ("a_f", POINTER(c_double)),
+                ("a_Nmax", c_int),
+                ("timestep_too_large_warning", c_int),
+                ("steps", c_ulonglong),
+                ("steps_miniactive", c_ulonglong),
+                ("steps_miniN", c_ulonglong),
+                ]
+
 
 class reb_simulation_integrator_wh(Structure):
     _fields_ = [(("allocatedN"), c_int),
@@ -118,8 +137,8 @@ class reb_simulation_integrator_whfast(Structure):
     This struct should be accessed via the simulation class only. Here is an 
     example:
 
-    >>> sim = rebound.Simulation
-    >>> sim.ri_hybarid.corrector =  11
+    >>> sim = rebound.Simulation()
+    >>> sim.ri_whfast.corrector =  11
 
     
     :ivar int corrector:      
@@ -414,7 +433,7 @@ class Simulation(Structure):
         - ``'sei'``
         - ``'wh'``
         - ``'leapfrog'``
-        - ``'hybrid'``
+        - ``'hermes'``
         - ``'none'``
         
         Check the online documentation for a full description of each of the integrators. 
@@ -1200,11 +1219,11 @@ Simulation._fields_ = [
                 ("var_config_N", c_int),
                 ("var_config", POINTER(Variation)),
                 ("N_active", c_int),
+                ("testparticle_type", c_int),
                 ("_particle_lookup_table", POINTER(reb_hash_pointer_pair)),
                 ("hash_ctr", c_int),
                 ("N_lookup", c_int),
                 ("allocatedN_lookup", c_int),
-                ("testparticle_type", c_int),
                 ("allocated_N", c_int),
                 ("_particles", POINTER(Particle)),
                 ("gravity_cs", POINTER(reb_vec3d)),
@@ -1220,6 +1239,8 @@ Simulation._fields_ = [
                 ("exit_max_distance", c_double),
                 ("exit_min_distance", c_double),
                 ("usleep", c_double),
+                ("track_energy_offset", c_int),
+                ("energy_offset", c_double),
                 ("boxsize", reb_vec3d),
                 ("boxsize_max", c_double),
                 ("root_size", c_double),
@@ -1230,6 +1251,7 @@ Simulation._fields_ = [
                 ("nghostx", c_int),
                 ("nghosty", c_int),
                 ("nghostz", c_int),
+                ("collision_resolve_keep_sorted", c_int),
                 ("collisions", c_void_p),
                 ("collisions_allocatedN", c_int),
                 ("minimum_collision_celocity", c_double),
@@ -1250,9 +1272,9 @@ Simulation._fields_ = [
                 ("_gravity", c_int),
                 ("ri_sei", reb_simulation_integrator_sei), 
                 ("ri_wh", reb_simulation_integrator_wh), 
-                ("ri_hybrid", reb_simulation_integrator_hybrid),
                 ("ri_whfast", reb_simulation_integrator_whfast),
                 ("ri_ias15", reb_simulation_integrator_ias15),
+                ("ri_hermes", reb_simulation_integrator_hermes),
                 ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),
