@@ -141,19 +141,7 @@ struct reb_orbit {
 
 
 ////////////////////////////////
-// Integrator structs 
-
-/**
- * @brief This structure contains variables and pointer used by the HYBRID integrator.
- */
-struct reb_simulation_integrator_hybrid {
-    double switch_ratio;    ///< Default is 8 mutual Hill Radii 
-    enum {
-        SYMPLECTIC,     ///< HYBRID integrator is currently using a symplectic integrator
-        HIGHORDER   ///< HYBRID integrator is currently using a high order non-symplectic integrator
-        } 
-        mode;       ///< Flag determining the current integrator used
-};
+// Integrator structs
 
 /**
  * @brief This structure contains variables and pointer used by the IAS15 integrator.
@@ -218,6 +206,36 @@ struct reb_simulation_integrator_ias15 {
      */
 
 };
+
+/**
+ * @brief This structure contains variables and pointer used by the HYBARID integrator.
+ */
+struct reb_simulation_integrator_hybarid {
+    struct reb_simulation* mini;
+    struct reb_simulation* global;
+    double switch_ratio;            //thresh. to move particle from global to mini (hill radii)
+    double CE_radius;               //close encounter radius: if < this value add to mini (X*radius)
+    
+    int mini_active;
+    int collision_this_global_dt;
+    
+    int* global_index_from_mini_index;
+    int global_index_from_mini_index_N;
+    int global_index_from_mini_index_Nmax;
+    
+    int* is_in_mini;
+    int is_in_mini_Nmax;
+    
+    double* a_i;
+    double* a_f;
+    int a_Nmax;
+    
+    int timestep_too_large_warning;
+    unsigned long long steps;
+    unsigned long long steps_miniactive;
+    unsigned long long steps_miniN;
+};
+
 
 /**
  * @brief This structure contains variables used by the SEI integrator.
@@ -451,8 +469,10 @@ struct reb_simulation {
     struct reb_collision* collisions;       ///< Array of all collisions. 
     int collisions_allocatedN;          ///< Size allocated for collisions.
     double minimum_collision_velocity;      ///< Used for hard sphere collision model. 
-    double collisions_plog;             ///< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. 
-    double max_radius[2];               ///< Two largest particle radii, set automatically, needed for collision search. 
+    double collisions_plog;             ///< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems.
+    int collisions_track_dE;            ///< Track energy change in collisions (default: 0).
+    double collisions_dE;               ///< Energy change in collisions (only calculated if collisions_track_dE=1).
+    double max_radius[2];               ///< Two largest particle radii, set automatically, needed for collision search.
     long collisions_Nlog;               ///< Keep track of number of collisions. 
     /** @} */
 
@@ -490,9 +510,9 @@ struct reb_simulation {
         REB_INTEGRATOR_WHFAST = 1,  ///< WHFast integrator, symplectic, 2nd order, up to 11th order correctors
         REB_INTEGRATOR_SEI = 2,     ///< SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable
         REB_INTEGRATOR_WH = 3,      ///< WH integrator (based on swifter), WHFast is recommended, this integrator is in REBOUND for comparison tests only
-        REB_INTEGRATOR_LEAPFROG = 4,    ///< LEAPFROG integrator, simple, 2nd order, symplectic
-        REB_INTEGRATOR_HYBRID = 5,  ///< HYBRID Integrator for close encounters (experimental)
-        REB_INTEGRATOR_NONE = 6,    ///< Do not integrate anything
+        REB_INTEGRATOR_LEAPFROG = 4,  ///< LEAPFROG integrator, simple, 2nd order, symplectic
+        REB_INTEGRATOR_HYBARID = 5,   ///< HYBARID Integrator for close encounters (experimental)
+        REB_INTEGRATOR_NONE = 6,      ///< Do not integrate anything
         } integrator;
 
     /**
@@ -523,9 +543,9 @@ struct reb_simulation {
      */
     struct reb_simulation_integrator_sei ri_sei;        ///< The SEI struct 
     struct reb_simulation_integrator_wh ri_wh;      ///< The WH struct 
-    struct reb_simulation_integrator_hybrid ri_hybrid;  ///< The Hybrid struct 
     struct reb_simulation_integrator_whfast ri_whfast;  ///< The WHFast struct 
-    struct reb_simulation_integrator_ias15 ri_ias15;    ///< The IAS15 struct 
+    struct reb_simulation_integrator_ias15 ri_ias15;    ///< The IAS15 struct
+    struct reb_simulation_integrator_hybarid ri_hybarid;    ///< The HYBARID struct
     /** @} */
 
     /**

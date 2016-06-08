@@ -1,9 +1,9 @@
 /**
- * Close Encounter with hybrid integrator (experimental)
+ * Close Encounter with hybarid integrator.
  * 
  * This example integrates a densely packed planetary system 
  * which becomes unstable on a timescale of only a few orbits. 
- * This is a test case for the HYBRID integrator.
+ * This is a test case for the HYBARID integrator.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +18,8 @@ double e_init; // initial energy
 int main(int argc, char* argv[]){
 	struct reb_simulation* r = reb_create_simulation();
 	r->dt = 0.0012*2.*M_PI;				// initial timestep
-	r->integrator = REB_INTEGRATOR_HYBRID;
+	r->integrator = REB_INTEGRATOR_HYBARID;
+    r->ri_hybarid.switch_ratio = 2.;
 	r->heartbeat  = heartbeat;
 
 	struct reb_particle star = {0};

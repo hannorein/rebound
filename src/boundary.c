@@ -64,7 +64,15 @@ void reb_boundary_check(struct reb_simulation* const r){
 					removep = 1;
 				}
 				if (removep==1){
+                    // If hybarid calculate energy offset in global
+                    if(r->collisions_track_dE){
+                        double Ei = reb_tools_energy(r);
+                        reb_remove(r, i,1);
+                        reb_move_to_com(r);
+                        r->collisions_dE += Ei - reb_tools_energy(r);
+                    } else {
                     reb_remove(r, i,0); // keepSorted=0 by default in C version
+                    }
                     if (r->tree_root==NULL){
                         i--; // need to recheck the particle that replaced the removed one
                         N--; // This is the local N
