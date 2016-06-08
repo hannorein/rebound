@@ -79,7 +79,7 @@ class TestHermes(unittest.TestCase):
         sim.ri_hermes.radius_switch_factor = 20.
         sim.dt = 0.0001
         sim.testparticle_type = 1
-        sim.collisions_track_dE = 1;
+        sim.track_energy_offset = 1;
         sim.collision = "direct"
         sim.collision_resolve = "merge"
         
@@ -105,7 +105,7 @@ class TestHermes(unittest.TestCase):
         sim.testparticle_type = 1
         sim.collision = "direct"
         sim.collision_resolve = "merge"
-        sim.collisions_track_dE = 1;
+        sim.track_energy_offset = 1;
         
         sim.boundary = "open"
         boxsize = 3.

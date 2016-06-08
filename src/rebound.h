@@ -420,6 +420,8 @@ struct reb_simulation {
     double exit_max_distance;       ///< Exit simulation if distance from origin larger than this value 
     double exit_min_distance;       ///< Exit simulation if distance from another particle smaller than this value 
     double usleep;                  ///< Wait this number of microseconds after each timestep, useful for slowing down visualization. Set to negative value to disable visualization (despite compiling with OPENGL=1).  
+    int track_energy_offset;        ///< Track energy change during collisions and ejections (default: 0).
+    double energy_offset;           ///< Energy offset due to collisions and ejections (only calculated if track_energy_offset=1).
     /** @} */
 
     /**
@@ -470,8 +472,6 @@ struct reb_simulation {
     int collisions_allocatedN;          ///< Size allocated for collisions.
     double minimum_collision_velocity;      ///< Used for hard sphere collision model. 
     double collisions_plog;             ///< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems.
-    int collisions_track_dE;            ///< Track energy change in collisions (default: 0).
-    double collisions_dE;               ///< Energy change in collisions (only calculated if collisions_track_dE=1).
     double max_radius[2];               ///< Two largest particle radii, set automatically, needed for collision search.
     long collisions_Nlog;               ///< Keep track of number of collisions. 
     /** @} */

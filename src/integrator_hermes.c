@@ -58,14 +58,14 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
         mini->testparticle_type = r->testparticle_type;
         mini->collision = r->collision;
         mini->collision_resolve = r->collision_resolve;
-        mini->collisions_track_dE = r->collisions_track_dE;
+        mini->track_energy_offset = r->track_energy_offset;
     }
 
     // Remove all particles from mini
     mini->t = r->t;
     int mini_previously_active = r->ri_hermes.mini_active;
     mini->N = 0;
-    mini->collisions_dE = 0.;
+    mini->energy_offset = 0.;
     r->ri_hermes.mini_active = 0;
     r->ri_hermes.global_index_from_mini_index_N = 0;
     r->ri_hermes.collision_this_global_dt = 0;
@@ -128,9 +128,9 @@ void reb_integrator_hermes_part2(struct reb_simulation* r){
         }
         
         // Correct for energy jump in collision
-        if(r->ri_hermes.collision_this_global_dt && r->collisions_track_dE){
+        if(r->ri_hermes.collision_this_global_dt && r->track_energy_offset){
             double Ef = reb_tools_energy(r);
-            r->collisions_dE += Ei - Ef;
+            r->energy_offset += Ei - Ef;
         }
     }
 }
