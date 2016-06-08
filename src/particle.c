@@ -125,6 +125,31 @@ void reb_remove_all(struct reb_simulation* const r){
 }
 
 int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
+    if (r->ri_hermes.global){
+        // This is a mini simulation. Need to remove particle from two simulations.
+        struct reb_simulation* global = r->ri_hermes.global;
+
+        if (keepSorted!=1){
+            reb_exit("When removing particles from a mini simulation, keepSorted must be set to 1. Make sure the 'collision_resolve_keep_sorted' flag is set to 1.");
+        }
+        
+        //remove from global and update global arrays
+        int globalj = global->ri_hermes.global_index_from_mini_index[index];
+        reb_remove(global,globalj,1);
+        
+        for(int k=globalj;k<global->N;k++){
+            global->ri_hermes.is_in_mini[k] = global->ri_hermes.is_in_mini[k+1];
+        }
+        global->ri_hermes.global_index_from_mini_index_N--;
+        for(int k=index;k<global->ri_hermes.global_index_from_mini_index_N;k++){
+            global->ri_hermes.global_index_from_mini_index[k] = global->ri_hermes.global_index_from_mini_index[k+1];
+        }
+        for(int k=index;k<global->ri_hermes.global_index_from_mini_index_N;k++){
+            if(global->ri_hermes.global_index_from_mini_index[k] > globalj){
+                global->ri_hermes.global_index_from_mini_index[k]--; //1 fewer particles in index now
+            }
+        }
+    }
 	if (r->N==1){
 	    r->N = 0;
 		fprintf(stderr, "Last particle removed.\n");
@@ -140,6 +165,9 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 	}
 	if(keepSorted){
 	    r->N--;
+        if(index<r->N_active){
+            r->N_active--;
+        }
 		for(int j=index; j<r->N; j++){
 			r->particles[j] = r->particles[j+1];
 		}

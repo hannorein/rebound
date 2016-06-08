@@ -109,9 +109,6 @@ void reb_output_timing(struct reb_simulation* r, const double tmax){
 		printf("t= %- 9f  ",r->t);
 	}
 	printf("dt= %- 9f  ",r->dt);
-	if (r->integrator==REB_INTEGRATOR_HYBRID){
-		printf("INT= %- 1d  ",r->ri_hybrid.mode);
-	}
 	printf("cpu= %- 9f [s]  ",temp-r->output_timing_last);
 	if (tmax>0){
 		printf("t/tmax= %5.2f%%",r->t/tmax*100.0);

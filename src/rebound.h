@@ -141,19 +141,7 @@ struct reb_orbit {
 
 
 ////////////////////////////////
-// Integrator structs 
-
-/**
- * @brief This structure contains variables and pointer used by the HYBRID integrator.
- */
-struct reb_simulation_integrator_hybrid {
-    double switch_ratio;    ///< Default is 8 mutual Hill Radii 
-    enum {
-        SYMPLECTIC,     ///< HYBRID integrator is currently using a symplectic integrator
-        HIGHORDER   ///< HYBRID integrator is currently using a high order non-symplectic integrator
-        } 
-        mode;       ///< Flag determining the current integrator used
-};
+// Integrator structs
 
 /**
  * @brief This structure contains variables and pointer used by the IAS15 integrator.
@@ -218,6 +206,37 @@ struct reb_simulation_integrator_ias15 {
      */
 
 };
+
+/**
+ * @brief This structure contains variables and pointer used by the HERMES integrator.
+ */
+struct reb_simulation_integrator_hermes {
+    struct reb_simulation* mini;            ///< Mini simulation integrated using IAS15. See Silburt et al 2016.
+    struct reb_simulation* global;          ///< Global simulation integrated using WHFast. Only set in mini simulation. See Silburt et al 2016).
+    double hill_switch_factor;              ///< Criteria for switching between IAS15 and WHFast in terms of Hill radii.
+    double radius_switch_factor;            ///< Criteria for switching between IAS15 and WHfast in terms of the particles' physical radius.
+    
+    int mini_active;                        ///< Flag that is set to 1 by HERMES if the mini simulation is active in this timestep.
+    int collision_this_global_dt;           
+    double energy_before_timestep;            ///< Store energy at the beginning of timestep. Used to track energy_offset.
+    
+    int* global_index_from_mini_index;
+    int global_index_from_mini_index_N;
+    int global_index_from_mini_index_Nmax;
+    
+    int* is_in_mini;
+    int is_in_mini_Nmax;
+    
+    double* a_i;
+    double* a_f;
+    int a_Nmax;
+    
+    int timestep_too_large_warning;
+    unsigned long long steps;
+    unsigned long long steps_miniactive;
+    unsigned long long steps_miniN;
+};
+
 
 /**
  * @brief This structure contains variables used by the SEI integrator.
@@ -381,11 +400,11 @@ struct reb_simulation {
     int     var_config_N;           ///< Number of variational configuration structs. Default: 0.
     struct reb_variational_configuration* var_config;   ///< These configuration structs contain details on variational particles. 
     int     N_active;               ///< Number of massive particles included in force calculation (default: N). Particles with index >= N_active are considered testparticles.
+    int     testparticle_type;      ///< Type of the particles with an index>=N_active. 0 means particle does not influence any other particle (default), 1 means particles with index < N_active feel testparticles (similar to MERCURY's small particles). Testparticles never feel each other.
     struct reb_hash_pointer_pair* particle_lookup_table; ///< Array of pairs that map particles' hashes to their index in the particles array.
     int     hash_ctr;               ///< Counter for number of assigned hashes to assign unique values.
     int     N_lookup;               ///< Number of entries in the particle lookup table.
     int     allocatedN_lookup;      ///< Number of lookup table entries allocated.
-    int     testparticle_type;      ///< Type of the particles with an index>=N_active. 0 means particle does not influence any other particle (default), 1 means particles with index < N_active feel testparticles (similar to MERCURY's small particles). Testparticles never feel each other.
     int     allocatedN;             ///< Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; ///< Main particle array. This contains all particles on this node.  
     struct reb_vec3d* gravity_cs;   ///< Vector containing the information for compensated gravity summation 
@@ -402,6 +421,8 @@ struct reb_simulation {
     double exit_max_distance;       ///< Exit simulation if distance from origin larger than this value 
     double exit_min_distance;       ///< Exit simulation if distance from another particle smaller than this value 
     double usleep;                  ///< Wait this number of microseconds after each timestep, useful for slowing down visualization. Set to negative value to disable visualization (despite compiling with OPENGL=1).  
+    int track_energy_offset;        ///< Track energy change during collisions and ejections (default: 0).
+    double energy_offset;           ///< Energy offset due to collisions and ejections (only calculated if track_energy_offset=1).
     /** @} */
 
     /**
@@ -448,11 +469,12 @@ struct reb_simulation {
      * \name Variables related to collision search and detection 
      * @{
      */
+    int collision_resolve_keep_sorted;      ///< Keep particles sorted if collision_resolve removes particles during a collision. 
     struct reb_collision* collisions;       ///< Array of all collisions. 
     int collisions_allocatedN;          ///< Size allocated for collisions.
     double minimum_collision_velocity;      ///< Used for hard sphere collision model. 
-    double collisions_plog;             ///< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems. 
-    double max_radius[2];               ///< Two largest particle radii, set automatically, needed for collision search. 
+    double collisions_plog;             ///< Keep track of momentum exchange (used to calculate collisional viscosity in ring systems.
+    double max_radius[2];               ///< Two largest particle radii, set automatically, needed for collision search.
     long collisions_Nlog;               ///< Keep track of number of collisions. 
     /** @} */
 
@@ -490,9 +512,9 @@ struct reb_simulation {
         REB_INTEGRATOR_WHFAST = 1,  ///< WHFast integrator, symplectic, 2nd order, up to 11th order correctors
         REB_INTEGRATOR_SEI = 2,     ///< SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable
         REB_INTEGRATOR_WH = 3,      ///< WH integrator (based on swifter), WHFast is recommended, this integrator is in REBOUND for comparison tests only
-        REB_INTEGRATOR_LEAPFROG = 4,    ///< LEAPFROG integrator, simple, 2nd order, symplectic
-        REB_INTEGRATOR_HYBRID = 5,  ///< HYBRID Integrator for close encounters (experimental)
-        REB_INTEGRATOR_NONE = 6,    ///< Do not integrate anything
+        REB_INTEGRATOR_LEAPFROG = 4,  ///< LEAPFROG integrator, simple, 2nd order, symplectic
+        REB_INTEGRATOR_HERMES = 5,   ///< HERMES Integrator for close encounters (experimental)
+        REB_INTEGRATOR_NONE = 6,      ///< Do not integrate anything
         } integrator;
 
     /**
@@ -523,9 +545,9 @@ struct reb_simulation {
      */
     struct reb_simulation_integrator_sei ri_sei;        ///< The SEI struct 
     struct reb_simulation_integrator_wh ri_wh;      ///< The WH struct 
-    struct reb_simulation_integrator_hybrid ri_hybrid;  ///< The Hybrid struct 
     struct reb_simulation_integrator_whfast ri_whfast;  ///< The WHFast struct 
-    struct reb_simulation_integrator_ias15 ri_ias15;    ///< The IAS15 struct 
+    struct reb_simulation_integrator_ias15 ri_ias15;    ///< The IAS15 struct
+    struct reb_simulation_integrator_hermes ri_hermes;    ///< The HERMES struct
     /** @} */
 
     /**
@@ -766,7 +788,7 @@ int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_
 /**
  * @brief Merging collision resolving routine.
  * @details Merges particle with higher index into particle of lower index.
- *          Conserves mass, momentum and volume. Compatible with HYBARID. 
+ *          Conserves mass, momentum and volume. Compatible with HERMES. 
  */
 int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c);
 

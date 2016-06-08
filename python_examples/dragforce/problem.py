@@ -1,4 +1,4 @@
-# Import the rebound module
+# Import the rebound module 
 import rebound
 
 # Add particles

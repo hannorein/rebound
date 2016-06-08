@@ -200,7 +200,7 @@ void reb_collision_search(struct reb_simulation* const r){
                     // Particles swapped
                     c.p2 = c.p1;
                 }
-                reb_remove(r,c.p1,0);
+                reb_remove(r,c.p1,r->collision_resolve_keep_sorted);
                 // Check for pair
                 for (int j=i+1;j<collisions_N;j++){
                     struct reb_collision cp = r->collisions[j];
@@ -219,7 +219,7 @@ void reb_collision_search(struct reb_simulation* const r){
             }
             if (outcome & 2){
                 // Remove p2
-                reb_remove(r,c.p2,0);
+                reb_remove(r,c.p2,r->collision_resolve_keep_sorted);
                 // Check for pair
                 for (int j=i+1;j<collisions_N;j++){
                     struct reb_collision cp = r->collisions[j];
@@ -473,6 +473,13 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
     pi->m  = pi->m + pj->m;
     pi->r  = pow(pow(pi->r,3.)+pow(pj->r,3.),1./3.);
     pi->lastcollision = r->t;
+    
+    // If hermes calculate energy offset in global - hasn't been removed from global yet
+    if (r->ri_hermes.global){
+        if(r->ri_hermes.global->ri_hermes.mini_active){
+            r->ri_hermes.global->ri_hermes.collision_this_global_dt = 1;
+        }
+    }
     
     return swap?1:2; // Remove particle p2 from simulation
 }

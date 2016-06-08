@@ -253,9 +253,6 @@ void reb_display(void){
             sprintf(str, "%st= %f  ",str, reb_dc.r->t);
         }
         sprintf(str,"%sdt= %f  ",str,reb_dc.r->dt);
-        if (reb_dc.r->integrator==REB_INTEGRATOR_HYBRID){
-            sprintf(str, "%s INT= %- 1d  ", str, reb_dc.r->ri_hybrid.mode);
-        }
         
         const char* p = str;
         do glutBitmapCharacter(GLUT_BITMAP_8_BY_13, *p); while(*(++p));
