@@ -136,8 +136,8 @@ class reb_simulation_integrator_whfast(Structure):
     This struct should be accessed via the simulation class only. Here is an 
     example:
 
-    >>> sim = rebound.Simulation
-    >>> sim.ri_hermes.corrector =  11
+    >>> sim = rebound.Simulation()
+    >>> sim.ri_whfast.corrector =  11
 
     
     :ivar int corrector:      

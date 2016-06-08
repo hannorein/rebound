@@ -68,7 +68,6 @@ void reb_boundary_check(struct reb_simulation* const r){
                     if(r->track_energy_offset){
                         double Ei = reb_tools_energy(r);
                         reb_remove(r, i,1);
-                        reb_move_to_com(r);
                         r->energy_offset += Ei - reb_tools_energy(r);
                     } else {
                     reb_remove(r, i,0); // keepSorted=0 by default in C version
