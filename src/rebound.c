@@ -243,15 +243,14 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_wh.allocatedN         = 0;
     r->ri_wh.eta            = NULL;
     // ********** HERMES
+    r->ri_hermes.mini      = NULL;
+    r->ri_hermes.global    = NULL;
     r->ri_hermes.global_index_from_mini_index = NULL;
     r->ri_hermes.global_index_from_mini_index_N = 0;
     r->ri_hermes.global_index_from_mini_index_Nmax = 0;
     r->ri_hermes.is_in_mini = NULL;
     r->ri_hermes.is_in_mini_Nmax = 0;
     r->ri_hermes.a_Nmax = 0;
-    r->ri_hermes.steps = 0;
-    r->ri_hermes.steps_miniactive = 0;
-    r->ri_hermes.steps_miniN = 0;
     r->ri_hermes.a_i = NULL;
     r->ri_hermes.a_f = NULL;
 }
@@ -348,11 +347,13 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_sei.lastdt    = 0;
     
     // ********** HERMES
-    r->ri_hermes.mini      = NULL;
-    r->ri_hermes.global    = NULL;
     r->ri_hermes.hill_switch_factor = 0.;
     r->ri_hermes.radius_switch_factor = 0.;
     r->ri_hermes.mini_active = 0;
+    r->ri_hermes.collision_this_global_dt = 0;
+    r->ri_hermes.steps = 0;
+    r->ri_hermes.steps_miniactive = 0;
+    r->ri_hermes.steps_miniN = 0;
     r->ri_hermes.timestep_too_large_warning = 0;
     
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.

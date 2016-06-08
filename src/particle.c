@@ -165,7 +165,9 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 	}
 	if(keepSorted){
 	    r->N--;
-        if(index<r->N_active)r->N_active--;
+        if(index<r->N_active){
+            r->N_active--;
+        }
 		for(int j=index; j<r->N; j++){
 			r->particles[j] = r->particles[j+1];
 		}
