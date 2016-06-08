@@ -38,7 +38,7 @@ class TestHermes(unittest.TestCase):
         sim.add(dust)
         sim.integrator = "hermes"
         sim.gravity = "basic"
-        sim.ri_hermes.switch_radius = 2.
+        sim.ri_hermes.hill_switch_factor = 2.
         P = sim.particles[1].P
         sim.dt = 1e-4*P
         for i in range(1000):
@@ -75,7 +75,7 @@ class TestHermes(unittest.TestCase):
         
         sim.integrator = "hermes"
         #sim.gravity = "basic"
-        sim.ri_hermes.switch_radius = 3.
+        sim.ri_hermes.hill_switch_factor = 3.
         sim.ri_hermes.radius_switch_factor = 20.
         sim.dt = 0.0001
         sim.testparticle_type = 1
@@ -99,7 +99,7 @@ class TestHermes(unittest.TestCase):
         
         sim.integrator = "hermes"
         #sim.gravity = "basic"
-        sim.ri_hermes.switch_radius = 3.
+        sim.ri_hermes.hill_switch_factor = 3.
         sim.ri_hermes.radius_switch_factor = 20.
         sim.dt = 0.001
         sim.testparticle_type = 1
