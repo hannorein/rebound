@@ -211,13 +211,13 @@ struct reb_simulation_integrator_ias15 {
  * @brief This structure contains variables and pointer used by the HERMES integrator.
  */
 struct reb_simulation_integrator_hermes {
-    struct reb_simulation* mini;
-    struct reb_simulation* global;
-    double hill_switch_factor;            //thresh. to move particle from global to mini (hill radii)
-    double radius_switch_factor;               //close encounter radius: if < this value add to mini (X*radius)
+    struct reb_simulation* mini;            ///< Mini simulation integrated using IAS15. See Silburt et al 2016.
+    struct reb_simulation* global;          ///< Global simulation integrated using WHFast. Only set in mini simulation. See Silburt et al 2016).
+    double hill_switch_factor;              ///< Criteria for switching between IAS15 and WHFast in terms of Hill radii.
+    double radius_switch_factor;            ///< Criteria for switching between IAS15 and WHfast in terms of the particles' physical radius.
     
-    int mini_active;
-    int collision_this_global_dt;
+    int mini_active;                        ///< Flag that is set to 1 by HERMES if the mini simulation is active in this timestep.
+    int collision_this_global_dt;           
     
     int* global_index_from_mini_index;
     int global_index_from_mini_index_N;
