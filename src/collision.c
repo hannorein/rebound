@@ -474,10 +474,10 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
     pi->r  = pow(pow(pi->r,3.)+pow(pj->r,3.),1./3.);
     pi->lastcollision = r->t;
     
-    // If hybarid calculate energy offset in global - hasn't been removed from global yet
-    if (r->ri_hybarid.global){
-        if(r->ri_hybarid.global->integrator == REB_INTEGRATOR_HYBARID && r->ri_hybarid.global->ri_hybarid.mini_active){
-            r->ri_hybarid.global->ri_hybarid.collision_this_global_dt = 1;
+    // If hermes calculate energy offset in global - hasn't been removed from global yet
+    if (r->ri_hermes.global){
+        if(r->ri_hermes.global->integrator == REB_INTEGRATOR_HERMES && r->ri_hermes.global->ri_hermes.mini_active){
+            r->ri_hermes.global->ri_hermes.collision_this_global_dt = 1;
         }
     }
     

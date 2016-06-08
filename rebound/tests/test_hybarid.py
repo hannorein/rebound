@@ -3,18 +3,18 @@ import unittest
 import os
 import rebound.data as data
 
-class TestHybarid(unittest.TestCase):
+class TestHermes(unittest.TestCase):
     
     def test_no_close_encounter(self):
         sim = rebound.Simulation()
         sim.add(m=1.)
         sim.add(m=1.e-3, a=1.523,e=0.0146,f=0.24)
         sim.add(m=1.e-3, a=2.423523,e=0.01246,f=0.324)
-        sim.integrator = "hybarid"
+        sim.integrator = "hermes"
         P = sim.particles[1].P
         sim.dt = 1e-4*P
         sim.integrate(P)
-        x_hybarid = sim.particles[1].x
+        x_hermes = sim.particles[1].x
         
         sim = rebound.Simulation()
         sim.add(m=1.)
@@ -26,7 +26,7 @@ class TestHybarid(unittest.TestCase):
         sim.integrate(P)
         x_whfast = sim.particles[1].x
 
-        self.assertEqual(x_hybarid,x_whfast)
+        self.assertEqual(x_hermes,x_whfast)
 
     def test_close_encounter(self):
         sim = rebound.Simulation()
@@ -36,14 +36,14 @@ class TestHybarid(unittest.TestCase):
         rh = sim.particles[1].a*pow(sim.particles[1].m/(3.*sim.particles[0].m),1./3)
         dust = rebound.Particle(simulation=sim, primary=sim.particles[1], a=0.25*rh, e=0.000123, f=2.3, m=1e-8)
         sim.add(dust)
-        sim.integrator = "hybarid"
+        sim.integrator = "hermes"
         sim.gravity = "basic"
-        sim.ri_hybarid.switch_radius = 2.
+        sim.ri_hermes.switch_radius = 2.
         P = sim.particles[1].P
         sim.dt = 1e-4*P
         for i in range(1000):
             sim.step()
-        x_hybarid = sim.particles[1].x
+        x_hermes = sim.particles[1].x
         
         sim = rebound.Simulation()
         sim.add(m=1.)
@@ -62,8 +62,8 @@ class TestHybarid(unittest.TestCase):
             sim.integrate(t)
         x_ias15 = sim.particles[1].x
 
-        print(abs((x_hybarid-x_ias15)/x_ias15))
-        self.assertEqual(x_hybarid,x_ias15)
+        print(abs((x_hermes-x_ias15)/x_ias15))
+        self.assertEqual(x_hermes,x_ias15)
 
     def test_planetesimal_collision(self):
         sim = rebound.Simulation()
@@ -73,10 +73,10 @@ class TestHybarid(unittest.TestCase):
         sim.add(m=1e-8,r=4e-5,a=0.55,e=0.4,f=-0.94)
         sim.move_to_com()
         
-        sim.integrator = "hybarid"
+        sim.integrator = "hermes"
         #sim.gravity = "basic"
-        sim.ri_hybarid.switch_radius = 3.
-        sim.ri_hybarid.CE_radius = 20.
+        sim.ri_hermes.switch_radius = 3.
+        sim.ri_hermes.CE_radius = 20.
         sim.dt = 0.0001
         sim.testparticle_type = 1
         sim.collisions_track_dE = 1;
@@ -97,10 +97,10 @@ class TestHybarid(unittest.TestCase):
         sim.N_active = 2
         sim.move_to_com()
         
-        sim.integrator = "hybarid"
+        sim.integrator = "hermes"
         #sim.gravity = "basic"
-        sim.ri_hybarid.switch_radius = 3.
-        sim.ri_hybarid.CE_radius = 20.
+        sim.ri_hermes.switch_radius = 3.
+        sim.ri_hermes.CE_radius = 20.
         sim.dt = 0.001
         sim.testparticle_type = 1
         sim.collision = "direct"

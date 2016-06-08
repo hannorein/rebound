@@ -15,11 +15,11 @@ int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
     
 	//Simulation Setup
-	r->integrator	= REB_INTEGRATOR_HYBARID;
+	r->integrator	= REB_INTEGRATOR_HERMES;
     //r->integrator	= REB_INTEGRATOR_IAS15;
     r->heartbeat	= heartbeat;
-    r->ri_hybarid.switch_ratio = 3;         //Hill radii
-    r->ri_hybarid.CE_radius = 20.;          //X*radius
+    r->ri_hermes.switch_ratio = 3;         //Hill radii
+    r->ri_hermes.CE_radius = 20.;          //X*radius
     r->testparticle_type = 1;
     double tmax = 1e5 * 6.283;
     
@@ -97,8 +97,8 @@ void heartbeat(struct reb_simulation* r){
         double relE = fabs((E-E0)/E0);
         FILE* f = fopen("energy.txt","a+");
         int N_mini = 0;
-        if (r->ri_hybarid.mini_active){
-            N_mini = r->ri_hybarid.mini->N;
+        if (r->ri_hermes.mini_active){
+            N_mini = r->ri_hermes.mini->N;
         }
         fprintf(f,"%e,%e,%d,%d,%e\n",r->t,relE,r->N,N_mini,r->collisions_dE);
         fclose(f);

@@ -15,7 +15,7 @@ import types
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "wh": 3, "leapfrog": 4, "hybarid": 5, "none": 6}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "wh": 3, "leapfrog": 4, "hermes": 5, "none": 6}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2}
@@ -53,7 +53,7 @@ class reb_collision(Structure):
                 ("time", c_double),
                 ("ri", c_int)]
 
-class reb_simulation_integrator_hybarid(Structure):
+class reb_simulation_integrator_hermes(Structure):
     _fields_ = [("mini", c_void_p),
                 ("global", c_void_p),
                 ("switch_radius", c_double),
@@ -137,7 +137,7 @@ class reb_simulation_integrator_whfast(Structure):
     example:
 
     >>> sim = rebound.Simulation
-    >>> sim.ri_hybarid.corrector =  11
+    >>> sim.ri_hermes.corrector =  11
 
     
     :ivar int corrector:      
@@ -432,7 +432,7 @@ class Simulation(Structure):
         - ``'sei'``
         - ``'wh'``
         - ``'leapfrog'``
-        - ``'hybarid'``
+        - ``'hermes'``
         - ``'none'``
         
         Check the online documentation for a full description of each of the integrators. 
@@ -1272,7 +1272,7 @@ Simulation._fields_ = [
                 ("ri_wh", reb_simulation_integrator_wh), 
                 ("ri_whfast", reb_simulation_integrator_whfast),
                 ("ri_ias15", reb_simulation_integrator_ias15),
-                ("ri_hybarid", reb_simulation_integrator_hybarid),
+                ("ri_hermes", reb_simulation_integrator_hermes),
                 ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),

@@ -40,7 +40,7 @@
 #include "integrator_wh.h"
 #include "integrator_whfast.h"
 #include "integrator_ias15.h"
-#include "integrator_hybarid.h"
+#include "integrator_hermes.h"
 #include "boundary.h"
 #include "gravity.h"
 #include "collision.h"
@@ -135,7 +135,7 @@ void reb_step(struct reb_simulation* const r){
 
     // Search for collisions using local and essential tree.
     PROFILING_START()
-    if (r->integrator!=REB_INTEGRATOR_HYBARID){ //Hybrid integrator will search for collisions in mini simulation.
+    if (r->integrator!=REB_INTEGRATOR_HERMES){ //Hybrid integrator will search for collisions in mini simulation.
         reb_collision_search(r);
     }
     PROFILING_STOP(PROFILING_CAT_COLLISION)
@@ -242,18 +242,18 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     // ********** WH
     r->ri_wh.allocatedN         = 0;
     r->ri_wh.eta            = NULL;
-    // ********** HYBARID
-    r->ri_hybarid.global_index_from_mini_index = NULL;
-    r->ri_hybarid.global_index_from_mini_index_N = 0;
-    r->ri_hybarid.global_index_from_mini_index_Nmax = 0;
-    r->ri_hybarid.is_in_mini = NULL;
-    r->ri_hybarid.is_in_mini_Nmax = 0;
-    r->ri_hybarid.a_Nmax = 0;
-    r->ri_hybarid.steps = 0;
-    r->ri_hybarid.steps_miniactive = 0;
-    r->ri_hybarid.steps_miniN = 0;
-    r->ri_hybarid.a_i = NULL;
-    r->ri_hybarid.a_f = NULL;
+    // ********** HERMES
+    r->ri_hermes.global_index_from_mini_index = NULL;
+    r->ri_hermes.global_index_from_mini_index_N = 0;
+    r->ri_hermes.global_index_from_mini_index_Nmax = 0;
+    r->ri_hermes.is_in_mini = NULL;
+    r->ri_hermes.is_in_mini_Nmax = 0;
+    r->ri_hermes.a_Nmax = 0;
+    r->ri_hermes.steps = 0;
+    r->ri_hermes.steps_miniactive = 0;
+    r->ri_hermes.steps_miniN = 0;
+    r->ri_hermes.a_i = NULL;
+    r->ri_hermes.a_f = NULL;
 }
 
 void reb_reset_function_pointers(struct reb_simulation* const r){
@@ -347,13 +347,13 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_sei.OMEGAZ    = -1;
     r->ri_sei.lastdt    = 0;
     
-    // ********** HYBARID
-    r->ri_hybarid.mini      = NULL;
-    r->ri_hybarid.global    = NULL;
-    r->ri_hybarid.switch_ratio = 0.;
-    r->ri_hybarid.CE_radius = 0.;
-    r->ri_hybarid.mini_active = 0;
-    r->ri_hybarid.timestep_too_large_warning = 0;
+    // ********** HERMES
+    r->ri_hermes.mini      = NULL;
+    r->ri_hermes.global    = NULL;
+    r->ri_hermes.switch_ratio = 0.;
+    r->ri_hermes.CE_radius = 0.;
+    r->ri_hermes.mini_active = 0;
+    r->ri_hermes.timestep_too_large_warning = 0;
     
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.
     r->tree_needs_update= 0;

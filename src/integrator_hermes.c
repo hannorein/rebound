@@ -1,5 +1,5 @@
 /**
- * @file 	integrator_hybarid.c
+ * @file 	integrator_hermes.c
  * @brief 	WHFAST/IAS15 Hybrid integration scheme.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @details	This file implements a hybrid integration scheme capable
@@ -38,23 +38,23 @@
 #include "integrator_whfast.h"
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 
-static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* r);
-static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini);
+static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* r);
+static void reb_integrator_hermes_additional_forces_mini(struct reb_simulation* mini);
 static void calc_forces_on_planets(const struct reb_simulation* r, double* a);
 double Ei;
 
-void reb_integrator_hybarid_part1(struct reb_simulation* r){
+void reb_integrator_hermes_part1(struct reb_simulation* r){
 	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
-    struct reb_simulation* mini = r->ri_hybarid.mini;
+    struct reb_simulation* mini = r->ri_hermes.mini;
     if (mini == NULL){
         mini = reb_create_simulation();
-        r->ri_hybarid.mini = mini;
+        r->ri_hermes.mini = mini;
         mini->usleep = -1; // Disable visualiation
         mini->integrator = REB_INTEGRATOR_IAS15;
         mini->gravity = REB_GRAVITY_BASIC;
         mini->dt = r->dt;
-        mini->additional_forces = reb_integrator_hybarid_additional_forces_mini;
-        mini->ri_hybarid.global = r;    //set to != 0 so that collision.c knows to remove from both
+        mini->additional_forces = reb_integrator_hermes_additional_forces_mini;
+        mini->ri_hermes.global = r;    //set to != 0 so that collision.c knows to remove from both
         mini->testparticle_type = r->testparticle_type;
         mini->collision = r->collision;
         mini->collision_resolve = r->collision_resolve;
@@ -63,125 +63,125 @@ void reb_integrator_hybarid_part1(struct reb_simulation* r){
 
     // Remove all particles from mini
     mini->t = r->t;
-    int mini_previously_active = r->ri_hybarid.mini_active;
+    int mini_previously_active = r->ri_hermes.mini_active;
     mini->N = 0;
     mini->collisions_dE = 0.;
-    r->ri_hybarid.mini_active = 0;
-    r->ri_hybarid.global_index_from_mini_index_N = 0;
-    r->ri_hybarid.collision_this_global_dt = 0;
+    r->ri_hermes.mini_active = 0;
+    r->ri_hermes.global_index_from_mini_index_N = 0;
+    r->ri_hermes.collision_this_global_dt = 0;
     
-    if (_N_active>r->ri_hybarid.a_Nmax){
-        r->ri_hybarid.a_i = realloc(r->ri_hybarid.a_i,sizeof(double)*3*_N_active);
-        r->ri_hybarid.a_f = realloc(r->ri_hybarid.a_f,sizeof(double)*3*_N_active);
-        r->ri_hybarid.a_Nmax = _N_active;
+    if (_N_active>r->ri_hermes.a_Nmax){
+        r->ri_hermes.a_i = realloc(r->ri_hermes.a_i,sizeof(double)*3*_N_active);
+        r->ri_hermes.a_f = realloc(r->ri_hermes.a_f,sizeof(double)*3*_N_active);
+        r->ri_hermes.a_Nmax = _N_active;
     }
     
     //reset is_in_mini
-    if (r->N>r->ri_hybarid.is_in_mini_Nmax){
-        r->ri_hybarid.is_in_mini_Nmax = r->N;
-        r->ri_hybarid.is_in_mini = realloc(r->ri_hybarid.is_in_mini,r->N*sizeof(int));
+    if (r->N>r->ri_hermes.is_in_mini_Nmax){
+        r->ri_hermes.is_in_mini_Nmax = r->N;
+        r->ri_hermes.is_in_mini = realloc(r->ri_hermes.is_in_mini,r->N*sizeof(int));
     }
-    for(int i=_N_active;i<r->N;i++)r->ri_hybarid.is_in_mini[i] = 0;
+    for(int i=_N_active;i<r->N;i++)r->ri_hermes.is_in_mini[i] = 0;
     
     // Add all massive particles
     for (int i=0; i<_N_active; i++){
-        reb_add(r->ri_hybarid.mini, r->particles[i]);
-        r->ri_hybarid.is_in_mini[i] = 1;
-        if (r->ri_hybarid.global_index_from_mini_index_N>=r->ri_hybarid.global_index_from_mini_index_Nmax){
-            r->ri_hybarid.global_index_from_mini_index_Nmax += 32;
-            r->ri_hybarid.global_index_from_mini_index = realloc(r->ri_hybarid.global_index_from_mini_index,r->ri_hybarid.global_index_from_mini_index_Nmax*sizeof(int));
+        reb_add(r->ri_hermes.mini, r->particles[i]);
+        r->ri_hermes.is_in_mini[i] = 1;
+        if (r->ri_hermes.global_index_from_mini_index_N>=r->ri_hermes.global_index_from_mini_index_Nmax){
+            r->ri_hermes.global_index_from_mini_index_Nmax += 32;
+            r->ri_hermes.global_index_from_mini_index = realloc(r->ri_hermes.global_index_from_mini_index,r->ri_hermes.global_index_from_mini_index_Nmax*sizeof(int));
         }
-        r->ri_hybarid.global_index_from_mini_index[r->ri_hybarid.global_index_from_mini_index_N] = i;
-        r->ri_hybarid.global_index_from_mini_index_N++;
+        r->ri_hermes.global_index_from_mini_index[r->ri_hermes.global_index_from_mini_index_N] = i;
+        r->ri_hermes.global_index_from_mini_index_N++;
     }
-    r->ri_hybarid.mini->N_active = _N_active;
+    r->ri_hermes.mini->N_active = _N_active;
 
-    reb_integrator_hybarid_check_for_encounter(r);
+    reb_integrator_hermes_check_for_encounter(r);
         
-    if (r->N != r->ri_hybarid.mini->N || mini_previously_active==0) {
-        reb_integrator_ias15_clear(r->ri_hybarid.mini);
+    if (r->N != r->ri_hermes.mini->N || mini_previously_active==0) {
+        reb_integrator_ias15_clear(r->ri_hermes.mini);
     }
     
-    calc_forces_on_planets(r, r->ri_hybarid.a_i);
+    calc_forces_on_planets(r, r->ri_hermes.a_i);
     
-    if(r->ri_hybarid.mini_active)Ei = reb_tools_energy(r);
+    if(r->ri_hermes.mini_active)Ei = reb_tools_energy(r);
     
     reb_integrator_whfast_part1(r);
 }
 
 
-void reb_integrator_hybarid_part2(struct reb_simulation* r){
+void reb_integrator_hermes_part2(struct reb_simulation* r){
     reb_integrator_whfast_part2(r);
     
-    calc_forces_on_planets(r, r->ri_hybarid.a_f);
+    calc_forces_on_planets(r, r->ri_hermes.a_f);
     
-    struct reb_simulation* mini = r->ri_hybarid.mini;
-    r->ri_hybarid.steps++;
-    if (r->ri_hybarid.mini_active){
-        r->ri_hybarid.steps_miniactive++;
-        r->ri_hybarid.steps_miniN += mini->N;
+    struct reb_simulation* mini = r->ri_hermes.mini;
+    r->ri_hermes.steps++;
+    if (r->ri_hermes.mini_active){
+        r->ri_hermes.steps_miniactive++;
+        r->ri_hermes.steps_miniN += mini->N;
         reb_integrate(mini,r->t);
 
         for (int i=0; i<mini->N; i++){
-            r->particles[r->ri_hybarid.global_index_from_mini_index[i]] = mini->particles[i];
-            r->particles[r->ri_hybarid.global_index_from_mini_index[i]].sim = r;    
+            r->particles[r->ri_hermes.global_index_from_mini_index[i]] = mini->particles[i];
+            r->particles[r->ri_hermes.global_index_from_mini_index[i]].sim = r;    
         }
         
         // Correct for energy jump in collision
-        if(r->ri_hybarid.collision_this_global_dt && r->collisions_track_dE){
+        if(r->ri_hermes.collision_this_global_dt && r->collisions_track_dE){
             double Ef = reb_tools_energy(r);
             r->collisions_dE += Ei - Ef;
         }
     }
 }
 	
-void reb_integrator_hybarid_synchronize(struct reb_simulation* r){
+void reb_integrator_hermes_synchronize(struct reb_simulation* r){
 	// Do nothing.
     reb_integrator_whfast_synchronize(r);
 }
 
-void reb_integrator_hybarid_reset(struct reb_simulation* r){
-    //r->ri_hybarid.timestep_too_large_warning = 0.; //Don't think we want to reset the warning.
-    r->ri_hybarid.steps = 0;
-    r->ri_hybarid.steps_miniactive = 0;
-    r->ri_hybarid.steps_miniN = 0;
+void reb_integrator_hermes_reset(struct reb_simulation* r){
+    //r->ri_hermes.timestep_too_large_warning = 0.; //Don't think we want to reset the warning.
+    r->ri_hermes.steps = 0;
+    r->ri_hermes.steps_miniactive = 0;
+    r->ri_hermes.steps_miniN = 0;
     
     reb_integrator_whfast_reset(r);
 
-    if (r->ri_hybarid.mini){
-        reb_free_simulation(r->ri_hybarid.mini);
-        r->ri_hybarid.mini = NULL;
+    if (r->ri_hermes.mini){
+        reb_free_simulation(r->ri_hermes.mini);
+        r->ri_hermes.mini = NULL;
     }
-    if(r->ri_hybarid.global_index_from_mini_index){
-        free(r->ri_hybarid.global_index_from_mini_index);
-        r->ri_hybarid.global_index_from_mini_index = NULL;
-        r->ri_hybarid.global_index_from_mini_index_Nmax = 0;
+    if(r->ri_hermes.global_index_from_mini_index){
+        free(r->ri_hermes.global_index_from_mini_index);
+        r->ri_hermes.global_index_from_mini_index = NULL;
+        r->ri_hermes.global_index_from_mini_index_Nmax = 0;
     }
-    if(r->ri_hybarid.is_in_mini){
-        free(r->ri_hybarid.is_in_mini);
-        r->ri_hybarid.is_in_mini = NULL;
-        r->ri_hybarid.is_in_mini_Nmax = 0;
+    if(r->ri_hermes.is_in_mini){
+        free(r->ri_hermes.is_in_mini);
+        r->ri_hermes.is_in_mini = NULL;
+        r->ri_hermes.is_in_mini_Nmax = 0;
     }
-    if(r->ri_hybarid.a_i){
-        free(r->ri_hybarid.a_i);
+    if(r->ri_hermes.a_i){
+        free(r->ri_hermes.a_i);
     }
-    if(r->ri_hybarid.a_f){
-        free(r->ri_hybarid.a_f);
+    if(r->ri_hermes.a_f){
+        free(r->ri_hermes.a_f);
     }
-    r->ri_hybarid.a_Nmax = 0;
+    r->ri_hermes.a_Nmax = 0;
 }
 
-static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* global){
-    struct reb_simulation* mini = global->ri_hybarid.mini;
+static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* global){
+    struct reb_simulation* mini = global->ri_hermes.mini;
 	const int _N_active = ((global->N_active==-1)?global->N:global->N_active) - global->N_var;
     struct reb_particle* global_particles = global->particles;
     struct reb_particle p0 = global_particles[0];
-    double switch_ratio = global->ri_hybarid.switch_ratio;
+    double switch_ratio = global->ri_hermes.switch_ratio;
     double switch_ratio2 = switch_ratio*switch_ratio;
     double min_dt_enc2 = INFINITY;
     for (int i=0; i<_N_active; i++){
         struct reb_particle pi = global_particles[i];
-        double radius_check = global->ri_hybarid.CE_radius*pi.r;
+        double radius_check = global->ri_hermes.CE_radius*pi.r;
         double radius_check2 = radius_check*radius_check;
         const double dxi = p0.x - pi.x;
         const double dyi = p0.y - pi.y;
@@ -207,7 +207,7 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* gl
             const double rij2 = dx*dx + dy*dy + dz*dz;
 
             if(rij2 < switch_ratio2*rh_sum2 || rij2 < radius_check2){
-                global->ri_hybarid.mini_active = 1;
+                global->ri_hermes.mini_active = 1;
                 // Monitor hill radius/relative velocity
                 const double dvx = pi.vx - pj.vx;
                 const double dvy = pi.vy - pj.vy;
@@ -215,28 +215,28 @@ static void reb_integrator_hybarid_check_for_encounter(struct reb_simulation* gl
                 const double vij2 = dvx*dvx + dvy*dvy + dvz*dvz;
                 const double dt_enc2 = switch_ratio2*rh_sum2/vij2;
                 min_dt_enc2 = MIN(min_dt_enc2,dt_enc2);
-                if (j>=_N_active && global->ri_hybarid.is_in_mini[j]==0){//make sure not already added
+                if (j>=_N_active && global->ri_hermes.is_in_mini[j]==0){//make sure not already added
                     // Add particle to mini simulation
                     reb_add(mini,pj);
-                    global->ri_hybarid.is_in_mini[j] = 1;
-                    if (global->ri_hybarid.global_index_from_mini_index_N>=global->ri_hybarid.global_index_from_mini_index_Nmax){
-                        while(global->ri_hybarid.global_index_from_mini_index_N>=global->ri_hybarid.global_index_from_mini_index_Nmax) global->ri_hybarid.global_index_from_mini_index_Nmax += 32;
-                        global->ri_hybarid.global_index_from_mini_index = realloc(global->ri_hybarid.global_index_from_mini_index,global->ri_hybarid.global_index_from_mini_index_Nmax*sizeof(int));
+                    global->ri_hermes.is_in_mini[j] = 1;
+                    if (global->ri_hermes.global_index_from_mini_index_N>=global->ri_hermes.global_index_from_mini_index_Nmax){
+                        while(global->ri_hermes.global_index_from_mini_index_N>=global->ri_hermes.global_index_from_mini_index_Nmax) global->ri_hermes.global_index_from_mini_index_Nmax += 32;
+                        global->ri_hermes.global_index_from_mini_index = realloc(global->ri_hermes.global_index_from_mini_index,global->ri_hermes.global_index_from_mini_index_Nmax*sizeof(int));
                     }
-                    global->ri_hybarid.global_index_from_mini_index[global->ri_hybarid.global_index_from_mini_index_N] = j;
-                    global->ri_hybarid.global_index_from_mini_index_N++;
+                    global->ri_hermes.global_index_from_mini_index[global->ri_hermes.global_index_from_mini_index_N] = j;
+                    global->ri_hermes.global_index_from_mini_index_N++;
                 }
             }
         }
     }
-    if (global->ri_hybarid.timestep_too_large_warning==0 && min_dt_enc2 < 16.*global->dt*global->dt){
-        global->ri_hybarid.timestep_too_large_warning = 1;
+    if (global->ri_hermes.timestep_too_large_warning==0 && min_dt_enc2 < 16.*global->dt*global->dt){
+        global->ri_hermes.timestep_too_large_warning = 1;
         reb_warning("The timestep is likely too large. Close encounters might be missed. Decrease the timestep or increase the switching radius. This warning will appear only once.");
     }
 }
 
 static void calc_forces_on_planets(const struct reb_simulation* r, double* a){
-    int* is_in_mini = r->ri_hybarid.is_in_mini;
+    int* is_in_mini = r->ri_hermes.is_in_mini;
     double G = r->G;
     const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     for (int i = 0; i<_N_active; i++){
@@ -263,15 +263,15 @@ static void calc_forces_on_planets(const struct reb_simulation* r, double* a){
 }
 
 // This is the current algorithm, interpolating forces
-static void reb_integrator_hybarid_additional_forces_mini(struct reb_simulation* mini){
+static void reb_integrator_hermes_additional_forces_mini(struct reb_simulation* mini){
     if (mini->testparticle_type){
-        struct reb_simulation* global = mini->ri_hybarid.global;
+        struct reb_simulation* global = mini->ri_hermes.global;
         struct reb_particle* mini_particles = mini->particles;
         const double t_prev = global->t - global->dt;
         double timefac = (mini->t - t_prev)/global->dt;
         
-        double* a_i = global->ri_hybarid.a_i;
-        double* a_f = global->ri_hybarid.a_f;
+        double* a_i = global->ri_hermes.a_i;
+        double* a_f = global->ri_hermes.a_f;
         // TODO: See if the following is good enough and if so why
         // timefac = 0.5;
 #pragma omp parallel for schedule(guided)

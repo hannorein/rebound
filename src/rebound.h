@@ -208,9 +208,9 @@ struct reb_simulation_integrator_ias15 {
 };
 
 /**
- * @brief This structure contains variables and pointer used by the HYBARID integrator.
+ * @brief This structure contains variables and pointer used by the HERMES integrator.
  */
-struct reb_simulation_integrator_hybarid {
+struct reb_simulation_integrator_hermes {
     struct reb_simulation* mini;
     struct reb_simulation* global;
     double switch_ratio;            //thresh. to move particle from global to mini (hill radii)
@@ -511,7 +511,7 @@ struct reb_simulation {
         REB_INTEGRATOR_SEI = 2,     ///< SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable
         REB_INTEGRATOR_WH = 3,      ///< WH integrator (based on swifter), WHFast is recommended, this integrator is in REBOUND for comparison tests only
         REB_INTEGRATOR_LEAPFROG = 4,  ///< LEAPFROG integrator, simple, 2nd order, symplectic
-        REB_INTEGRATOR_HYBARID = 5,   ///< HYBARID Integrator for close encounters (experimental)
+        REB_INTEGRATOR_HERMES = 5,   ///< HERMES Integrator for close encounters (experimental)
         REB_INTEGRATOR_NONE = 6,      ///< Do not integrate anything
         } integrator;
 
@@ -545,7 +545,7 @@ struct reb_simulation {
     struct reb_simulation_integrator_wh ri_wh;      ///< The WH struct 
     struct reb_simulation_integrator_whfast ri_whfast;  ///< The WHFast struct 
     struct reb_simulation_integrator_ias15 ri_ias15;    ///< The IAS15 struct
-    struct reb_simulation_integrator_hybarid ri_hybarid;    ///< The HYBARID struct
+    struct reb_simulation_integrator_hermes ri_hermes;    ///< The HERMES struct
     /** @} */
 
     /**
@@ -786,7 +786,7 @@ int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_
 /**
  * @brief Merging collision resolving routine.
  * @details Merges particle with higher index into particle of lower index.
- *          Conserves mass, momentum and volume. Compatible with HYBARID. 
+ *          Conserves mass, momentum and volume. Compatible with HERMES. 
  */
 int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c);
 

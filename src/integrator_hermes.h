@@ -1,5 +1,5 @@
 /**
- * @file 	integrator_hybarid.h
+ * @file 	integrator_hermes.h
  * @brief 	Interface for numerical particle integrator
  * @author 	Ari Silburt 
  * 
@@ -22,10 +22,10 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _INTEGRATOR_HYBARID_H
-#define _INTEGRATOR_HYBARID_H
-void reb_integrator_hybarid_part1(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
-void reb_integrator_hybarid_part2(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
-void reb_integrator_hybarid_synchronize(struct reb_simulation* r);    ///< Internal function used to call a specific integrator
-void reb_integrator_hybarid_reset(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
+#ifndef _INTEGRATOR_HERMES_H
+#define _INTEGRATOR_HERMES_H
+void reb_integrator_hermes_part1(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
+void reb_integrator_hermes_part2(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
+void reb_integrator_hermes_synchronize(struct reb_simulation* r);    ///< Internal function used to call a specific integrator
+void reb_integrator_hermes_reset(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
 #endif
