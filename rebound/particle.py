@@ -127,8 +127,6 @@ class Particle(Structure):
             iy variable, see Pal (2009) for a definition  (Default: 0)
         r           : float       
             Particle radius (only used for collisional simulations)
-        id          : int               (Default: 0)
-            Particle ID (arbitrary, specified by the user)
         date        : string      
             For consistency with adding particles through horizons.  Not used here.
         variation   : string            (Default: None)
@@ -148,7 +146,7 @@ class Particle(Structure):
         >>> p3 = rebound.Particle(simulation=sim, m=0.001, a=1.5, h=0.1, k=0.2, l=0.1)
 
         """        
-        
+                
         if name is not None:
             if simulation is None:
                 raise ValueError("Need to specify a simulation to assign a name.")
@@ -225,10 +223,6 @@ class Particle(Structure):
             self.m = 0.
         else:
             self.m = m
-        if id is None:
-            self.id = 0
-        else:
-            self.id = id
         if r is None:
             self.r = 0.
         else:
