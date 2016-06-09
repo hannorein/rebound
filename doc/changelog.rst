@@ -1,11 +1,11 @@
-REBOUND - Changelog
-===================
+Changelog
+=========
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
 Version 2.18.0
 --------------
-* We replaces the old HYBRID integrator with the new and better HERMES integrator. Details of the HERMES integrator will be explained in an upcoming paper Silburt et al (2016, in prep). 
+* We replaced the old HYBRID integrator with the new and better HERMES integrator. Details of the HERMES integrator will be explained in an upcoming paper Silburt et al (2016, in prep). 
 
 Version 2.17.0
 --------------
