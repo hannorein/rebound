@@ -100,6 +100,16 @@ You can execute that file with `./rebound`.
 After you edited a file, you can simply type `make` again to recompile.
 If you change any of the environment variables, clean the build directiory first, by executing `make clean`.
 
+
+Possible issues when compiling REBOUND
+--------------------------------------
+
+REBOUND should be extremely easy to compile as it does not require any external libraries. You might nevertheless run into problems. Two of the most common issues are:
+
+* **Missing compilers.** Make sure you have a C compiler installed. If you are using a Mac, install the XCode package which you can download for free on the AppStore.
+* **Missing OpenGL/Glut libraries.** You can compile REBOUND with support for real-time OpenGL visualizations. This requires OpenGL/Glut libraries. If you are on a Mac, then XCode will automatically install the OpenGL libraries. If you are on Linux, you might have to manually install them. How to do this depends on your distribution. Search your package manager for ``freeglut``. Alternatively, you can disable the OpenGL visualization in the Makefile by setting ``OPENGL=0``. Then, execute ``make clean`` and try compiling the program again. 
+
+
 OpenGL keyboard command
 -----------------------
 You can use the following keyboard commands to alter the OpenGL real-time visualizations.::

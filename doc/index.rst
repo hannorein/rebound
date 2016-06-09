@@ -114,4 +114,5 @@ Table of Contents
    python_quickstart
    python_api
    ipython_examples
+   changelog
 
