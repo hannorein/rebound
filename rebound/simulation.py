@@ -4,6 +4,7 @@ from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G
 import math
 import os
+import sys
 import ctypes.util
 try:
     import pkg_resources
@@ -860,28 +861,32 @@ class Simulation(Structure):
         else:
             return clibrebound.reb_get_particle_hash(byref(self), c_char_p(name.encode('utf-8')))
 
-    def get_particle(self, name=None, index=None, hash=None):
+    def get_particle(self, hash):
         """
-        Retrieve a particle from the simulation. Will raise ParticleNotFound error if not found.
+        Retrieve a particle from the simulation by using a hash.
+        The hash can either be an integer (i.e. the hash itself), or a string in 
+        which case the simulation will calculate the corresponding hash.
+        
+        Will raise ParticleNotFound error if not found.
 
         Parameters
         ----------
-        name : string, optional
-            Will search for particle by hash corresponding to passed name.
-        hash : c_uint32, optional
-            Will search for particle by passed hash.
-        index : int, optional
-            Provided for completeness.  Returns sim.particles[index].
+        hash: string or integer
+            If string, the simulation will convert it to a hash and then search for the particle.
         """
-        if index is not None:
-            return self.particles[index]
-        if hash is not None:
+        PY3 = sys.version_info[0] == 3
+        if PY3:
+            string_types = str,
+        else:
+            string_types = basestring,
+        if isinstance(hash,string_types):
+            clibrebound.reb_get_particle_by_name.restype = POINTER(Particle)
+            ptr = clibrebound.reb_get_particle_by_name(byref(self), c_char_p(hash.encode('utf-8')))
+        elif isinstance(hash, int) or isinstance(hash, long):
             clibrebound.reb_get_particle_by_hash.restype = POINTER(Particle)
             ptr = clibrebound.reb_get_particle_by_hash(byref(self), c_uint32(hash))
-        if name is not None:
-            clibrebound.reb_get_particle_by_name.restype = POINTER(Particle)
-            ptr = clibrebound.reb_get_particle_by_name(byref(self), c_char_p(name.encode('utf-8')))
-
+        else:
+            raise AttributeError("Expecting string or integer as argument")
         if ptr:
             return ptr.contents
         else:
