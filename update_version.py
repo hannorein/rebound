@@ -4,7 +4,7 @@ import glob
 
 with open("version.txt") as f:
     reboundversion = f.readlines()[0].strip()
-    print "Updating version to "+reboundversion
+    print("Updating version to "+reboundversion)
 
 with open("README.rst") as f:
     readme = f.readlines()
@@ -52,3 +52,5 @@ with open("doc/conf.py") as f:
 
     with open("doc/conf.py", "w") as f:
         f.writelines(conflines)
+print("To commit, copy and paste:")
+print("\ngit commit -a -m \"Updating version to "+reboundversion+"\"")
