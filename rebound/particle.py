@@ -538,6 +538,9 @@ class Particle(Structure):
         return clibrebound.reb_get_jacobi_com(byref(self))
     @property
     def hash(self):
+        """
+        Get or set the particle's hash.  If set to a string, the corresponding integer hash is calculated.
+        """
         return self._hash
     @hash.setter
     def hash(self, value):

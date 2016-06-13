@@ -779,7 +779,7 @@ class Simulation(Structure):
         """
         clibrebound.reb_remove_all(byref(self))
 
-    def remove(self, index=None, hash=None, name=None, keepSorted=True):
+    def remove(self, index=None, hash=None, keepSorted=True):
         """ 
         Removes a particle from the simulation.
 
@@ -787,10 +787,8 @@ class Simulation(Structure):
         ----------
         index : int, optional
             Specify particle to remove by index.
-        hash : c_uint32, optional
-            Specify particle to remove by hash.
-        name : string, optional
-            Specify particle to remove by name.
+        hash : c_uint32 or string, optional
+            Specify particle to remove by hash (if a string is passed, the corresponding hash is calculated).
         keepSorted : bool, optional
             By default, remove preserves the order of particles in the particles array. 
             Might set it to zero in cases with many particles and many removals to speed things up.
@@ -801,13 +799,19 @@ class Simulation(Structure):
                 raise ValueError("Removing particle with index %d failed. Did not remove particle.\n"%(index))
             return
         if hash is not None:
-            success = clibrebound.reb_remove_by_hash(byref(self), c_uint32(hash), keepSorted)
+            PY3 = sys.version_info[0] == 3
+            if PY3:
+                string_types = str,
+                int_types = int,
+            else:
+                string_types = basestring,
+                int_types = int, long,
+            if isinstance(hash,string_types):
+                success = clibrebound.reb_remove_by_name(byref(self), c_char_p(hash.encode('utf-8')), keepSorted)
+            elif isinstance(hash, int_types):
+                success = clibrebound.reb_remove_by_hash(byref(self), c_uint32(hash), keepSorted)
             if not success:
-                raise ValueError("Removing particle with hash %d failed. Did not remove particle.\n"%(hash))
-        if name is not None:
-            success = clibrebound.reb_remove_by_name(byref(self), c_char_p(name.encode('utf-8')), keepSorted)
-            if not success:
-                raise ValueError("Removing particle with name %s failed. Did not remove particle.\n"%(name))
+                raise ValueError("Removing particle with hash {0} failed. Did not remove particle.\n".format(hash))
 
     def particles_ascii(self, prec=8):
         """
@@ -847,11 +851,6 @@ class Simulation(Structure):
     def generate_unique_hash(self):
         """
         Get a unique hash to assign to a particle in the simulation.
-
-        Parameters
-        ----------
-        name : string, optional
-            Will convert string and return corresponding hash. If omitted, simulation will assign unique hash.
         """
         clibrebound.reb_generate_unique_hash.restype = c_uint32
         return clibrebound.reb_generate_unique_hash(byref(self))

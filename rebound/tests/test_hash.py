@@ -38,7 +38,7 @@ class TestHash(unittest.TestCase):
         self.assertEqual(self.sim.N, 2)
         with self.assertRaises(rebound.ParticleNotFound):
             self.sim.get_particle_by_hash("earth")
-        self.sim.remove(name="jupiter")
+        self.sim.remove(hash="jupiter")
         with self.assertRaises(rebound.ParticleNotFound):
             self.sim.get_particle_by_hash("jupiter")
 
