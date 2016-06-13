@@ -726,7 +726,7 @@ class Simulation(Structure):
         return clibrebound.reb_tools_calculate_lyapunov(byref(self))
     
 # Particle add function, used to be called particle_add() and add_particle() 
-    def add(self, particle=None, name=None, **kwargs):   
+    def add(self, particle=None, **kwargs):   
         """
         Adds a particle to REBOUND. Accepts one of the following:
 
@@ -742,20 +742,18 @@ class Simulation(Structure):
                     raise ValueError("The tree code for gravity and/or collision detection has been selected. However, the simulation box has not been configured yet. You cannot add particles until the the simulation box has a finite size.")
 
                 clibrebound.reb_add(byref(self), particle)
-                if name is not None:
-                    self.particles[-1].hash = self.get_particle_hash(name)
             elif isinstance(particle, list):
                 for p in particle:
                     self.add(p)
             elif isinstance(particle,str):
                 if None in self.units.values():
                     self.units = ('AU', 'yr2pi', 'Msun')
-                self.add(horizons.getParticle(particle, **kwargs), name=particle)
+                self.add(horizons.getParticle(particle, **kwargs), hash=particle)
                 units_convert_particle(self.particles[-1], 'km', 's', 'kg', self._units['length'], self._units['time'], self._units['mass'])
             else: 
                 raise ValueError("Argument passed to add() not supported.")
         else: 
-            self.add(Particle(simulation=self, name=name, **kwargs))
+            self.add(Particle(simulation=self, **kwargs))
 
 # Particle getter functions
     @property
@@ -846,22 +844,19 @@ class Simulation(Structure):
                 except:
                     raise AttributeError("Each line requires 8 floats corresponding to mass, radius, position (x,y,z) and velocity (x,y,z).")
 
-    def get_particle_hash(self, name=None):
+    def generate_unique_hash(self):
         """
-        Get a hash to assign to a particle in the simulation.
+        Get a unique hash to assign to a particle in the simulation.
 
         Parameters
         ----------
         name : string, optional
             Will convert string and return corresponding hash. If omitted, simulation will assign unique hash.
         """
-        clibrebound.reb_get_particle_hash.restype = c_uint32
-        if name is None:
-            return clibrebound.reb_get_particle_hash(byref(self), None)
-        else:
-            return clibrebound.reb_get_particle_hash(byref(self), c_char_p(name.encode('utf-8')))
+        clibrebound.reb_generate_unique_hash.restype = c_uint32
+        return clibrebound.reb_generate_unique_hash(byref(self))
 
-    def get_particle(self, hash):
+    def get_particle_by_hash(self, hash):
         """
         Retrieve a particle from the simulation by using a hash.
         The hash can either be an integer (i.e. the hash itself), or a string in 
@@ -877,12 +872,14 @@ class Simulation(Structure):
         PY3 = sys.version_info[0] == 3
         if PY3:
             string_types = str,
+            int_types = int,
         else:
             string_types = basestring,
+            int_types = int, long,
         if isinstance(hash,string_types):
             clibrebound.reb_get_particle_by_name.restype = POINTER(Particle)
             ptr = clibrebound.reb_get_particle_by_name(byref(self), c_char_p(hash.encode('utf-8')))
-        elif isinstance(hash, int) or isinstance(hash, long):
+        elif isinstance(hash, int_types):
             clibrebound.reb_get_particle_by_hash.restype = POINTER(Particle)
             ptr = clibrebound.reb_get_particle_by_hash(byref(self), c_uint32(hash))
         else:
@@ -1301,7 +1298,7 @@ Particle._fields_ = [("x", c_double),
                 ("r", c_double),
                 ("lastcollision", c_double),
                 ("c", c_void_p),
-                ("hash", c_uint32),
+                ("_hash", c_uint32),
                 ("ap", c_void_p),
                 ("_sim", POINTER(Simulation))]
 
