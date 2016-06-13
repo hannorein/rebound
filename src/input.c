@@ -128,13 +128,15 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
             reb_warning("Binary file was saved with a different version of REBOUND. Binary format might have changed.");
         }
 
-        //fwrite(reb_version_str,sizeof(char), strlen(reb_version_str),of);
+        // Read main simulation oject.
 		objects += fread(r,sizeof(struct reb_simulation),1,inf);
         int ri_ias15_allocatedN = r->ri_ias15.allocatedN;
 		reb_reset_temporary_pointers(r);
 		reb_reset_function_pointers(r);
 		r->allocatedN = r->N;
 		r->tree_root = NULL;
+
+        // Read particles
 		r->particles = malloc(sizeof(struct reb_particle)*r->N);
 		objects += fread(r->particles,sizeof(struct reb_particle),r->N,inf);
         for (int l=0;l<r->N;l++){
@@ -145,6 +147,8 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
 #else // MPI
 		printf("Found %d particles in file '%s'. \n",r->N,filename);
 #endif // MPI
+        
+        // Read variational config structures
 		if (r->var_config_N){
             r->var_config = malloc(sizeof(struct reb_variational_configuration)*r->var_config_N);
 	        objects +=fread(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,inf);
@@ -152,7 +156,8 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
                 r->var_config[l].sim = r;
             }
         }
-        // Reload temporary arrays for IAS15.
+
+        // Read temporary arrays for IAS15 (needed for bit-by-bit reproducability)
         if (ri_ias15_allocatedN){
             int N3 = ri_ias15_allocatedN;
             r->ri_ias15.allocatedN = N3;
