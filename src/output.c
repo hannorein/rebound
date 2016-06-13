@@ -218,11 +218,31 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
 	if (of==NULL){
 		reb_exit("Can not open file.");
 	}
-	fwrite(r,sizeof(struct reb_simulation),1,of);
+
+    // Output header.
+    const char str[] = "REBOUND Binary File. Version: ";
+    int lenheader = strlen(str)+strlen(reb_version_str);
+	fwrite(str,sizeof(char),strlen(str),of);
+	fwrite(reb_version_str,sizeof(char), strlen(reb_version_str),of);
+    while (lenheader<64){ //padding
+        char space = ' ';
+        if (lenheader==63) space = '\0';
+	    fwrite(&space,sizeof(char),1,of);
+        lenheader += 1;
+    }
+
+    // Output main simulation structure    
+    fwrite(r,sizeof(struct reb_simulation),1,of);
+
+    // Output particles
 	fwrite(r->particles,sizeof(struct reb_particle),r->N,of);
+
+    // Output variational configuration structures
     if (r->var_config_N){
 	    fwrite(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,of);
     }
+    
+    // Output IAS15 temporary arrays (needed for bit-by-bit reproducability)
     if (r->ri_ias15.allocatedN){
         int N3 = r->ri_ias15.allocatedN;
 	    fwrite(r->ri_ias15.at,sizeof(double),N3,of);

@@ -115,6 +115,20 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
 #endif // MPI
 	if (inf){
 		long objects = 0;
+        // Input header.
+        const char str[] = "REBOUND Binary File. Version: ";
+        char readbuf[65], curvbuf[65];
+        sprintf(curvbuf,"%s%s",str,reb_version_str);
+        for(int j=strlen(curvbuf);j<63;j++){
+            curvbuf[j] = ' ';
+        }
+        curvbuf[63] = '\0';
+        objects += fread(readbuf,sizeof(char),64,inf);
+        if (strcmp(readbuf,curvbuf)!=0){
+            reb_warning("Binary file was saved with a different version of REBOUND. Binary format might have changed.");
+        }
+
+        //fwrite(reb_version_str,sizeof(char), strlen(reb_version_str),of);
 		objects += fread(r,sizeof(struct reb_simulation),1,inf);
         int ri_ias15_allocatedN = r->ri_ias15.allocatedN;
 		reb_reset_temporary_pointers(r);
