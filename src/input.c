@@ -85,6 +85,23 @@ char* reb_read_char(int argc, char** argv, const char* argument){
 	return NULL;
 }
 
+static void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf){
+    dp7->p0 = malloc(sizeof(double)*N3);
+    dp7->p1 = malloc(sizeof(double)*N3);
+    dp7->p2 = malloc(sizeof(double)*N3);
+    dp7->p3 = malloc(sizeof(double)*N3);
+    dp7->p4 = malloc(sizeof(double)*N3);
+    dp7->p5 = malloc(sizeof(double)*N3);
+    dp7->p6 = malloc(sizeof(double)*N3);
+    fread(dp7->p0,sizeof(double),N3,inf);
+    fread(dp7->p1,sizeof(double),N3,inf);
+    fread(dp7->p2,sizeof(double),N3,inf);
+    fread(dp7->p3,sizeof(double),N3,inf);
+    fread(dp7->p4,sizeof(double),N3,inf);
+    fread(dp7->p5,sizeof(double),N3,inf);
+    fread(dp7->p6,sizeof(double),N3,inf);
+}
+
 struct reb_simulation* reb_create_simulation_from_binary(char* filename){
 	reb_warning("You have to reset function pointers after creating a reb_simulation struct with a binary file.");
 	struct reb_simulation* r = malloc(sizeof(struct reb_simulation));
@@ -99,6 +116,7 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
 	if (inf){
 		long objects = 0;
 		objects += fread(r,sizeof(struct reb_simulation),1,inf);
+        int ri_ias15_allocatedN = r->ri_ias15.allocatedN;
 		reb_reset_temporary_pointers(r);
 		reb_reset_function_pointers(r);
 		r->allocatedN = r->N;
@@ -120,6 +138,32 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
                 r->var_config[l].sim = r;
             }
         }
+        // Reload temporary arrays for IAS15.
+        if (ri_ias15_allocatedN){
+            int N3 = ri_ias15_allocatedN;
+            r->ri_ias15.allocatedN = N3;
+            r->ri_ias15.at = malloc(sizeof(double)*N3);
+            fread(r->ri_ias15.at,sizeof(double),N3,inf);
+            r->ri_ias15.x0 = malloc(sizeof(double)*N3);
+            fread(r->ri_ias15.x0,sizeof(double),N3,inf);
+            r->ri_ias15.v0 = malloc(sizeof(double)*N3);
+            fread(r->ri_ias15.v0,sizeof(double),N3,inf);
+            r->ri_ias15.a0 = malloc(sizeof(double)*N3);
+            fread(r->ri_ias15.a0,sizeof(double),N3,inf);
+            r->ri_ias15.csx = malloc(sizeof(double)*N3);
+            fread(r->ri_ias15.csx,sizeof(double),N3,inf);
+            r->ri_ias15.csv = malloc(sizeof(double)*N3);
+            fread(r->ri_ias15.csv,sizeof(double),N3,inf);
+            r->ri_ias15.csa0 = malloc(sizeof(double)*N3);
+            fread(r->ri_ias15.csa0,sizeof(double),N3,inf);
+            reb_read_dp7(&(r->ri_ias15.g)  ,N3,inf);
+            reb_read_dp7(&(r->ri_ias15.b)  ,N3,inf);
+            reb_read_dp7(&(r->ri_ias15.csb),N3,inf);
+            reb_read_dp7(&(r->ri_ias15.e)  ,N3,inf);
+            reb_read_dp7(&(r->ri_ias15.br) ,N3,inf);
+            reb_read_dp7(&(r->ri_ias15.er) ,N3,inf);
+        }
+
 		fclose(inf);
 	}else{
 		printf("Can not open file '%s'\n.",filename);

@@ -197,6 +197,16 @@ void reb_output_orbits(struct reb_simulation* r, char* filename){
 	fclose(of);
 }
 
+static void reb_save_dp7(struct reb_dp7* dp7, const int N3, FILE* of){
+    fwrite(dp7->p0,sizeof(double),N3,of);
+    fwrite(dp7->p1,sizeof(double),N3,of);
+    fwrite(dp7->p2,sizeof(double),N3,of);
+    fwrite(dp7->p3,sizeof(double),N3,of);
+    fwrite(dp7->p4,sizeof(double),N3,of);
+    fwrite(dp7->p5,sizeof(double),N3,of);
+    fwrite(dp7->p6,sizeof(double),N3,of);
+}
+
 void reb_output_binary(struct reb_simulation* r, char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
@@ -212,6 +222,22 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
 	fwrite(r->particles,sizeof(struct reb_particle),r->N,of);
     if (r->var_config_N){
 	    fwrite(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,of);
+    }
+    if (r->ri_ias15.allocatedN){
+        int N3 = r->ri_ias15.allocatedN;
+	    fwrite(r->ri_ias15.at,sizeof(double),N3,of);
+	    fwrite(r->ri_ias15.x0,sizeof(double),N3,of);
+	    fwrite(r->ri_ias15.v0,sizeof(double),N3,of);
+	    fwrite(r->ri_ias15.a0,sizeof(double),N3,of);
+	    fwrite(r->ri_ias15.csx,sizeof(double),N3,of);
+	    fwrite(r->ri_ias15.csv,sizeof(double),N3,of);
+	    fwrite(r->ri_ias15.csa0,sizeof(double),N3,of);
+        reb_save_dp7(&(r->ri_ias15.g)  ,N3,of);
+        reb_save_dp7(&(r->ri_ias15.b)  ,N3,of);
+        reb_save_dp7(&(r->ri_ias15.csb),N3,of);
+        reb_save_dp7(&(r->ri_ias15.e)  ,N3,of);
+        reb_save_dp7(&(r->ri_ias15.br) ,N3,of);
+        reb_save_dp7(&(r->ri_ias15.er) ,N3,of);
     }
 	fclose(of);
 }
