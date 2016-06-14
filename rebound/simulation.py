@@ -6,6 +6,7 @@ import math
 import os
 import sys
 import ctypes.util
+import warnings
 try:
     import pkg_resources
 except: 
@@ -299,6 +300,16 @@ class Simulation(Structure):
         >>> sim_copy = rebound.Simulation.from_file("simulation.bin")
         """
         if os.path.isfile(filename):
+            with open(filename, "rb") as f:
+                fvs = f.read(64)
+            from rebound import __version__, __build__
+            vs = b'REBOUND Binary File. Version: ' + __version__.encode('ascii')
+            while len(vs)<63:
+                vs += ' '.encode('ascii')
+            vs += '\0'.encode('ascii')
+            if vs!=fvs:
+                warnings.warn("The binary file was saved with a different version of REBOUND. The file format might have changed.", RuntimeWarning)
+
             clibrebound.reb_create_simulation_from_binary.restype = POINTER_REB_SIM
             return clibrebound.reb_create_simulation_from_binary(c_char_p(filename.encode("ascii"))).contents
         else:
