@@ -1,9 +1,9 @@
 /**
- * @file 	input.c
- * @brief 	Parse command line options and read retart files.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @file    input.c
+ * @brief   Parse command line options and read retart files.
+ * @author  Hanno Rein <hanno@hanno-rein.de>
  * 
- * @section 	LICENSE
+ * @section     LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
  *
  * This file is part of rebound.
@@ -38,51 +38,50 @@
 #endif
 
 double reb_read_double(int argc, char** argv, const char* argument, double _default){
-	char* value = reb_read_char(argc,argv,argument);
-	if (value){
-		return atof(value);
-	}
-	return _default;
+    char* value = reb_read_char(argc,argv,argument);
+    if (value){
+        return atof(value);
+    }
+    return _default;
 }
 
 int reb_read_int(int argc, char** argv, const char* argument, int _default){
-	char* value = reb_read_char(argc,argv,argument);
-	if (value){
-		return atoi(value);
-	}
-	return _default;
+    char* value = reb_read_char(argc,argv,argument);
+    if (value){
+        return atoi(value);
+    }
+    return _default;
 }
 
 
 char* reb_read_char(int argc, char** argv, const char* argument){
-	opterr = 0;
-	optind = 1;
-  	while (1) {
-      		struct option long_options[] = {
-	  		{NULL, required_argument, 0, 'a'},
-			{0,0,0,0}
-		};
+    opterr = 0;
+    optind = 1;
+    while (1) {
+        struct option long_options[] = {
+            {NULL, required_argument, 0, 'a'},
+            {0,0,0,0}
+        };
 
-		long_options[0].name = argument;
+        long_options[0].name = argument;
 
-      		/* getopt_long stores the option index here.   */
-      		int option_index = 0;
-		//				short options. format abc:d::
-      		int c = getopt_long (argc, argv, "", long_options, &option_index);
+        /* getopt_long stores the option index here.   */
+        int option_index = 0;
+        //              short options. format abc:d::
+        int c = getopt_long (argc, argv, "", long_options, &option_index);
 
-      		/* Detect the end of the options.   */
-      		if (c == -1) break;
+        /* Detect the end of the options.   */
+        if (c == -1) break;
 
-      		switch (c)
-		{
-			case 'a':
-				return optarg;
-				break;
-			default:
-				break;
-		}
-  	}
-	return NULL;
+        switch (c){
+            case 'a':
+                return optarg;
+                break;
+            default:
+                break;
+        }
+    }
+    return NULL;
 }
 
 static void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf){
@@ -103,18 +102,18 @@ static void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf){
 }
 
 struct reb_simulation* reb_create_simulation_from_binary(char* filename){
-	reb_warning("You have to reset function pointers after creating a reb_simulation struct with a binary file.");
-	struct reb_simulation* r = malloc(sizeof(struct reb_simulation));
+    reb_warning("You have to reset function pointers after creating a reb_simulation struct with a binary file.");
+    struct reb_simulation* r = malloc(sizeof(struct reb_simulation));
 #ifdef MPI
-	char filename_mpi[1024];
+    char filename_mpi[1024];
 #warning following code not working yet. mpi_id will be random number.
-	sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
-	FILE* inf = fopen(filename_mpi,"rb"); 
+    sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
+    FILE* inf = fopen(filename_mpi,"rb"); 
 #else // MPI
-	FILE* inf = fopen(filename,"rb"); 
+    FILE* inf = fopen(filename,"rb"); 
 #endif // MPI
-	if (inf){
-		long objects = 0;
+    if (inf){
+        long objects = 0;
         // Input header.
         const char str[] = "REBOUND Binary File. Version: ";
         char readbuf[65], curvbuf[65];
@@ -129,29 +128,29 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
         }
 
         // Read main simulation oject.
-		objects += fread(r,sizeof(struct reb_simulation),1,inf);
+        objects += fread(r,sizeof(struct reb_simulation),1,inf);
         int ri_ias15_allocatedN = r->ri_ias15.allocatedN;
-		reb_reset_temporary_pointers(r);
-		reb_reset_function_pointers(r);
-		r->allocatedN = r->N;
-		r->tree_root = NULL;
+        reb_reset_temporary_pointers(r);
+        reb_reset_function_pointers(r);
+        r->allocatedN = r->N;
+        r->tree_root = NULL;
 
         // Read particles
-		r->particles = malloc(sizeof(struct reb_particle)*r->N);
-		objects += fread(r->particles,sizeof(struct reb_particle),r->N,inf);
+        r->particles = malloc(sizeof(struct reb_particle)*r->N);
+        objects += fread(r->particles,sizeof(struct reb_particle),r->N,inf);
         for (int l=0;l<r->N;l++){
             r->particles[l].sim = r;
         }
 #ifdef MPI
-		printf("Found %d particles in file '%s'. \n",r->N,filename_mpi);
+        printf("Found %d particles in file '%s'. \n",r->N,filename_mpi);
 #else // MPI
-		printf("Found %d particles in file '%s'. \n",r->N,filename);
+        printf("Found %d particles in file '%s'. \n",r->N,filename);
 #endif // MPI
         
         // Read variational config structures
-		if (r->var_config_N){
+        if (r->var_config_N){
             r->var_config = malloc(sizeof(struct reb_variational_configuration)*r->var_config_N);
-	        objects +=fread(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,inf);
+            objects +=fread(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,inf);
             for (int l=0;l<r->var_config_N;l++){
                 r->var_config[l].sim = r;
             }
@@ -183,15 +182,15 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
             reb_read_dp7(&(r->ri_ias15.er) ,N3,inf);
         }
 
-		fclose(inf);
-	}else{
-		printf("Can not open file '%s'\n.",filename);
+        fclose(inf);
+    }else{
+        printf("Can not open file '%s'\n.",filename);
         free(r);
-		return NULL;
-	}
+        return NULL;
+    }
     for(int i=0; i<r->N; i++){
-		r->particles[i].sim = r;
-	}
-	return r;
+        r->particles[i].sim = r;
+    }
+    return r;
 }
 
