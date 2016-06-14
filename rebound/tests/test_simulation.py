@@ -216,6 +216,19 @@ class TestSimulation(unittest.TestCase):
         self.assertEqual(self.sim.integrator, sim2.integrator)
         os.remove("bintest.bin")
     
+    def test_checkpoint_ias15_pointers(self):
+        self.sim.integrate(1.)
+        self.sim.save("bintest.bin")
+        self.sim.integrate(5.)
+        sim2 = rebound.Simulation.from_file("bintest.bin")
+        sim2.integrate(5.)
+        self.assertEqual(self.sim.particles[1].x, sim2.particles[1].x)
+        self.assertEqual(self.sim.particles[1].vx, sim2.particles[1].vx)
+        self.assertEqual(self.sim.t, sim2.t)
+        self.assertEqual(self.sim.N, sim2.N)
+        self.assertEqual(self.sim.integrator, sim2.integrator)
+        os.remove("bintest.bin")
+    
     
 class TestSimulationCollisions(unittest.TestCase):
     def setUp(self):
