@@ -3,6 +3,12 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 2.18.5
+--------------
+* When loading a simulation from a binary file, REBOUND now checks if the version of the binary file is the same as the current version. 
+* When saving a simulation to a binary file, all the auxiliary arrays for IAS15 are now stored. This allows for bit-by-bit reproducability in simulations that are making use of checkpoints.
+
+
 Version 2.18.0
 --------------
 * We replaced the old HYBRID integrator with the new and better HERMES integrator. Details of the HERMES integrator will be explained in an upcoming paper Silburt et al (2016, in prep). 
@@ -18,15 +24,15 @@ Version 2.17.0
    sim.add(m=1)
    sim.add(m=1e-3,a=1)
    # Setting a hash using a string:
-   sim.particles[1].hash = sim.get_particle_hash("planet1") 
+   sim.particles[1].hash = "planet1"
    # Finding a particle using a string:
-   p = sim.get_particle("planet1")
+   p = sim.get_particle_by_hash("planet1")
    # Setting a random unique hash:
-   sim.particles[1].hash = sim.get_particle_hash() 
+   sim.particles[1].hash = sim.generate_unique_hash() 
    # Save unique hash to find particle later
    uhash = sim.particles[1].hash
    # Find particle using the hash
-   p = sim.get_particle(uhash)
+   p = sim.get_particle_by_hash(uhash)
    
 
 
