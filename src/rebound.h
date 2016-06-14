@@ -864,11 +864,12 @@ struct reb_particle reb_get_com(struct reb_simulation* r);
 struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_particle p2);
 
 /**
- * @brief Returns a hash to identify a particle.
- * @param str (Optional) If passed, returns hash corresponding to the passed string.  If str is NULL, simulation assigns a hash. 
+ * @brief Generates a unique hash.
+ * @details Hash is only guaranteed to be unique relative to other hashes generated this way. 
+ * It is the user's responsibility to check for collisions when assigning a hash directly or using a string with reb_tools_hash.
  * @return hash.
  */
-uint32_t reb_get_particle_hash(struct reb_simulation* const r, const char* str);
+uint32_t reb_generate_unique_hash(struct reb_simulation* const r);
 
 /** @} */
 /** @} */

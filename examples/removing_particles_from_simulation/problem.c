@@ -26,12 +26,12 @@ int main(int argc, char* argv[]){
 	for (int i=0;i<9;i++){
 		struct reb_particle p = {0};
 		reb_add(r, p); 
-        r->particles[i].hash = reb_get_particle_hash(r, NULL);
+        r->particles[i].hash = reb_generate_unique_hash(r);
 	}
 
     struct reb_particle p = {0};
     reb_add(r, p);
-    r->particles[9].hash = reb_get_particle_hash(r, "Planet 9");
+    r->particles[9].hash = reb_tools_hash("Planet 9");
 	
     printf("Initial hashes:\n");
 	print_hashes(r);

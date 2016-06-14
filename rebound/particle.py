@@ -3,6 +3,7 @@ from . import clibrebound
 import math
 import ctypes.util
 import rebound
+import sys
 
 __all__ = ["Particle"]
 
@@ -47,7 +48,7 @@ class Particle(Structure):
         """
         return "<rebound.Particle object, m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
-    def __init__(self, simulation=None, name=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, id=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None):
+    def __init__(self, simulation=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, id=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None, hash=None):
         """
         Initializes a Particle structure. Rather than explicitly creating 
         a Particle structure, users may use the ``add()`` member function 
@@ -78,9 +79,7 @@ class Particle(Structure):
         Parameters
         ----------
         simulation  : Simulation  
-            Simulation instance associated with this particle (Required if passing orbital elements, assigning a name/hash, or setting up a variation).
-        name : string
-            String is converted to a hash and assigned to particle.hash for identification (Optional).       
+            Simulation instance associated with this particle (Required if passing orbital elements or setting up a variation).
         particle    : Particle, optional    
             If a particle is passed, a copy of that particle is returned.
             If a variational particle is initialized, then ``particle`` is 
@@ -135,6 +134,8 @@ class Particle(Structure):
         variation2  : string            (Default: None)
             Set this string to the name of a second orbital parameter to initialize the particle as a second order variational particle. Only used for second order variational equations. 
             Can be one of the following: m, a, e, inc, omega, Omega, f, k, h, lambda, ix, iy.
+        hash        : c_uint32  
+            Unsigned integer identifier for particle.  Can pass an integer directly, or a string that will be converted to a hash. User is responsible for assigning unique hashes.
 
         Examples
         --------
@@ -146,12 +147,10 @@ class Particle(Structure):
         >>> p3 = rebound.Particle(simulation=sim, m=0.001, a=1.5, h=0.1, k=0.2, l=0.1)
 
         """        
-                
-        if name is not None:
-            if simulation is None:
-                raise ValueError("Need to specify a simulation to assign a name.")
-            self.hash = simulation.get_particle_hash(name)
-        
+
+        if hash:
+            self.hash = hash # set via the property, which checks for type
+
         if variation:
             if primary is None:
                 primary = simulation.particles[0]
@@ -533,8 +532,30 @@ class Particle(Structure):
     @property
     def orbit(self):
         return self.calculate_orbit()
-
     @property
     def jacobi_com(self):
         clibrebound.reb_get_jacobi_com.restype = Particle
         return clibrebound.reb_get_jacobi_com(byref(self))
+    @property
+    def hash(self):
+        """
+        Get or set the particle's hash.  If set to a string, the corresponding integer hash is calculated.
+        """
+        return self._hash
+    @hash.setter
+    def hash(self, value):
+        PY3 = sys.version_info[0] == 3
+        if PY3:
+            string_types = str,
+            int_types = int,
+        else:
+            string_types = basestring,
+            int_types = int, long,
+        if isinstance(value, int_types):
+            self._hash = value
+        elif isinstance(value, string_types):
+            self._hash = rebound.hash(value)
+        else:
+            raise AttributeError("Expecting integer or string as argument")
+            
+
