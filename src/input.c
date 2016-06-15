@@ -102,7 +102,6 @@ static void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf){
 }
 
 struct reb_simulation* reb_create_simulation_from_binary(char* filename){
-    reb_warning("You have to reset function pointers after creating a reb_simulation struct with a binary file.");
     struct reb_simulation* r = malloc(sizeof(struct reb_simulation));
 #ifdef MPI
     char filename_mpi[1024];
@@ -130,8 +129,10 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
         // Read main simulation oject.
         objects += fread(r,sizeof(struct reb_simulation),1,inf);
         int ri_ias15_allocatedN = r->ri_ias15.allocatedN;
+        if(reb_reset_function_pointers(r)){
+            reb_warning("You have to reset function pointers after creating a reb_simulation struct with a binary file.");
+        }
         reb_reset_temporary_pointers(r);
-        reb_reset_function_pointers(r);
         r->allocatedN = r->N;
         r->tree_root = NULL;
 

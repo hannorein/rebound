@@ -255,12 +255,21 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_hermes.a_f = NULL;
 }
 
-void reb_reset_function_pointers(struct reb_simulation* const r){
+int reb_reset_function_pointers(struct reb_simulation* const r){
+    int wasnotnull = 0;
+    if (r->coefficient_of_restitution ||
+        r->collision_resolve ||
+        r->additional_forces ||
+        r->heartbeat ||
+        r->post_timestep_modifications){
+      wasnotnull = 1;
+    }
     r->coefficient_of_restitution   = NULL;
     r->collision_resolve        = NULL;
     r->additional_forces        = NULL;
     r->heartbeat            = NULL;
     r->post_timestep_modifications  = NULL;
+    return wasnotnull;
 }
 
 struct reb_simulation* reb_create_simulation(){

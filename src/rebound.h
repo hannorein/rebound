@@ -698,8 +698,9 @@ void reb_mpi_finalize(struct reb_simulation* const r);
 void reb_reset_temporary_pointers(struct reb_simulation* const r);
 /**
  * @brief Function used to allow binary input.
+ * @return Returns 1 if one ore more function pointers were not NULL before.
  */
-void reb_reset_function_pointers(struct reb_simulation* const r);
+int reb_reset_function_pointers(struct reb_simulation* const r);
 /** @endcond */
 
 /** 
