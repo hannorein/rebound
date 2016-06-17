@@ -144,11 +144,6 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
             r->particles[l].ap = NULL;
             r->particles[l].sim = r;
         }
-#ifdef MPI
-        printf("Found %d particles in file '%s'. \n",r->N,filename_mpi);
-#else // MPI
-        printf("Found %d particles in file '%s'. \n",r->N,filename);
-#endif // MPI
         
         // Read variational config structures
         if (r->var_config_N){
@@ -187,7 +182,7 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
 
         fclose(inf);
     }else{
-        printf("Can not open file '%s'\n.",filename);
+        reb_warning("Cannot read binary file. Check filename and file contents.");
         free(r);
         return NULL;
     }
