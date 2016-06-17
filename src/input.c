@@ -139,6 +139,7 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
         // Read particles
         r->particles = malloc(sizeof(struct reb_particle)*r->N);
         objects += fread(r->particles,sizeof(struct reb_particle),r->N,inf);
+        reb_reset_particle_pointers(r);
         for (int l=0;l<r->N;l++){
             r->particles[l].sim = r;
         }

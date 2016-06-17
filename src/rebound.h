@@ -692,6 +692,11 @@ void reb_mpi_finalize(struct reb_simulation* const r);
 /**
  * @cond PRIVATE
  */
+
+/**
+ * @brief Function used for binary input.
+ */
+void reb_reset_particle_pointers(struct reb_simulation* const r);
 /**
  * @brief Function used to allow binary input.
  */
