@@ -1198,7 +1198,7 @@ class Variation(Structure):
 
 class reb_simulation_integrator_hermes(Structure):
     _fields_ = [("mini", POINTER(Simulation)),
-                ("global", c_void_p),
+                ("global", POINTER(Simulation)),
                 ("hill_switch_factor", c_double),
                 ("radius_switch_factor", c_double),
                 ("mini_active", c_int),
