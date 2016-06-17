@@ -213,14 +213,6 @@ void reb_free_pointers(struct reb_simulation* const r){
     free(r->particle_lookup_table);
 }
 
-void reb_reset_particle_pointers(struct reb_simulation* const r){
-    for(int i=0;i<r->N;i++){
-        r->particles[i].c = NULL;
-        r->particles[i].ap = NULL;
-        r->particles[i].sim = NULL;
-    }
-}
-
 void reb_reset_temporary_pointers(struct reb_simulation* const r){
     // Note: this will not clear the particle array.
     r->gravity_cs_allocatedN    = 0;
