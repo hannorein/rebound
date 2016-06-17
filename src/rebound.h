@@ -692,6 +692,7 @@ void reb_mpi_finalize(struct reb_simulation* const r);
 /**
  * @cond PRIVATE
  */
+
 /**
  * @brief Function used to allow binary input.
  */
