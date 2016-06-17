@@ -55,29 +55,6 @@ class reb_collision(Structure):
                 ("time", c_double),
                 ("ri", c_int)]
 
-class reb_simulation_integrator_hermes(Structure):
-    _fields_ = [("mini", c_void_p),
-                ("global", c_void_p),
-                ("hill_switch_factor", c_double),
-                ("radius_switch_factor", c_double),
-                ("mini_active", c_int),
-                ("collision_this_global_dt", c_int),
-                ("energy_before_timestep", c_double),
-                ("global_index_from_mini_index", POINTER(c_int)),
-                ("global_index_from_mini_index_N",c_int),
-                ("global_index_from_mini_index_Nmax",c_int),
-                ("is_in_mini", POINTER(c_int)),
-                ("is_in_mini_Nmax", c_int),
-                ("a_i", POINTER(c_double)),
-                ("a_f", POINTER(c_double)),
-                ("a_Nmax", c_int),
-                ("timestep_too_large_warning", c_int),
-                ("steps", c_ulonglong),
-                ("steps_miniactive", c_ulonglong),
-                ("steps_miniN", c_ulonglong),
-                ]
-
-
 class reb_simulation_integrator_wh(Structure):
     _fields_ = [(("allocatedN"), c_int),
                 ("eta", POINTER(c_double))]
@@ -1218,6 +1195,28 @@ class Variation(Structure):
         ParticleList = Particle*N
         ps = ParticleList.from_address(ctypes.addressof(sim._particles.contents)+self.index*ctypes.sizeof(Particle))
         return ps
+
+class reb_simulation_integrator_hermes(Structure):
+    _fields_ = [("mini", POINTER(Simulation)),
+                ("global", c_void_p),
+                ("hill_switch_factor", c_double),
+                ("radius_switch_factor", c_double),
+                ("mini_active", c_int),
+                ("collision_this_global_dt", c_int),
+                ("energy_before_timestep", c_double),
+                ("global_index_from_mini_index", POINTER(c_int)),
+                ("global_index_from_mini_index_N",c_int),
+                ("global_index_from_mini_index_Nmax",c_int),
+                ("is_in_mini", POINTER(c_int)),
+                ("is_in_mini_Nmax", c_int),
+                ("a_i", POINTER(c_double)),
+                ("a_f", POINTER(c_double)),
+                ("a_Nmax", c_int),
+                ("timestep_too_large_warning", c_int),
+                ("steps", c_ulonglong),
+                ("steps_miniactive", c_ulonglong),
+                ("steps_miniN", c_ulonglong),
+                ]
 
 # Setting up fields after class definition (because of self-reference)
 Simulation._fields_ = [
