@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_uint32, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref
+from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_uint32, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer
 from . import clibrebound, Escape, NoParticles, Encounter, SimulationError, ParticleNotFound
 from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G
@@ -21,6 +21,13 @@ INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "wh": 3, "leapfrog": 4, "herme
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2}
+BINARY_WARNINGS = [
+    ("Cannot read binary file. Check filename and file contents.", 1),
+    ("Binary file was saved with a different version of REBOUND. Binary format might have changed.", 2),
+    ("You have to reset function pointers after creating a reb_simulation struct with a binary file.", 4),
+    ("Binary file might be corrupted. Number of particles found does not match particle number expected.", 8),
+    ("Binary file might be corrupted. Number of variational config structs found does not match number of variational config structs expected.", 16)
+]
 
 class reb_hash_pointer_pair(Structure):
     _fields_ = [("hash", c_uint32),
@@ -248,6 +255,7 @@ class Simulation(Structure):
     """
     def __init__(self):
         clibrebound.reb_init_simulation(byref(self))
+        self.save_messages = 1 # Warnings will be checked within python
 
     @classmethod
     def from_file(cls, filename):
@@ -276,21 +284,28 @@ class Simulation(Structure):
         >>> sim.save("simulation.bin")
         >>> sim_copy = rebound.Simulation.from_file("simulation.bin")
         """
-        if os.path.isfile(filename):
-            with open(filename, "rb") as f:
-                fvs = f.read(64)
-            from rebound import __version__, __build__
-            vs = b'REBOUND Binary File. Version: ' + __version__.encode('ascii')
-            while len(vs)<63:
-                vs += ' '.encode('ascii')
-            vs += '\0'.encode('ascii')
-            if vs!=fvs:
-                warnings.warn("The binary file was saved with a different version of REBOUND. The file format might have changed.", RuntimeWarning)
+        clibrebound.reb_create_simulation_from_binary_with_messages.restype = POINTER_REB_SIM
+        w = c_int(0)
+        simp = clibrebound.reb_create_simulation_from_binary_with_messages(c_char_p(filename.encode("ascii")),byref(w))
+        if (simp is None) or (w.value & 1):     # Major error
+            raise ValueError(BINARY_WARNINGS[0])
+        for message, value in BINARY_WARNINGS:  # Just warnings
+            if w.value & value and value!=1:
+                warnings.warn(message, RuntimeWarning)
+        sim = simp.contents
+        sim.save_messages = 1 # Warnings will be checked within python
+        return sim
+    
+    def process_messages(self):
+        clibrebound.reb_get_next_message.restype = c_int
+        buf = create_string_buffer(c_int.in_dll(clibrebound, "reb_max_messages_length").value)
+        while clibrebound.reb_get_next_message(byref(self), buf):
+            msg = buf.value.decode("ascii")
+            if msg[0]=='w':
+                warnings.warn(msg[1:], RuntimeWarning)
+            elif msg[0]=='e':
+                raise RuntimeError(msg[1:])
 
-            clibrebound.reb_create_simulation_from_binary.restype = POINTER_REB_SIM
-            return clibrebound.reb_create_simulation_from_binary(c_char_p(filename.encode("ascii"))).contents
-        else:
-            raise ValueError("File does not exist.")
 
     def __del__(self):
         if self._b_needsfree_ == 1: # to avoid, e.g., sim.particles[1]._sim.contents.G creating a Simulation instance to get G, and then freeing the C simulation when it immediately goes out of scope
@@ -766,6 +781,7 @@ class Simulation(Structure):
         Remove all particles from the simulation
         """
         clibrebound.reb_remove_all(byref(self))
+        self.process_messages()
 
     def remove(self, index=None, hash=None, keepSorted=True):
         """ 
@@ -783,9 +799,9 @@ class Simulation(Structure):
         """
         if index is not None:
             success = clibrebound.reb_remove(byref(self), c_int(index), keepSorted)
-            if not success:
-                raise ValueError("Removing particle with index %d failed. Did not remove particle.\n"%(index))
-            return
+            #if not success:
+            #    raise ValueError("Removing particle with index %d failed. Did not remove particle.\n"%(index))
+            #return
         if hash is not None:
             PY3 = sys.version_info[0] == 3
             if PY3:
@@ -798,8 +814,9 @@ class Simulation(Structure):
                 success = clibrebound.reb_remove_by_name(byref(self), c_char_p(hash.encode('utf-8')), keepSorted)
             elif isinstance(hash, int_types):
                 success = clibrebound.reb_remove_by_hash(byref(self), c_uint32(hash), keepSorted)
-            if not success:
-                raise ValueError("Removing particle with hash {0} failed. Did not remove particle.\n".format(hash))
+            #if not success:
+            #    raise ValueError("Removing particle with hash {0} failed. Did not remove particle.\n".format(hash))
+        self.process_messages()
 
     def particles_ascii(self, prec=8):
         """
@@ -1027,6 +1044,7 @@ class Simulation(Structure):
         Instead, use integrate().
         """
         clibrebound.reb_step(byref(self))
+        self.process_messages()
 
     def integrate(self, tmax, exact_finish_time=1):
         """
@@ -1068,6 +1086,7 @@ class Simulation(Structure):
                 raise Escape("A particle escaped (r>exit_max_distance).")
         else:
             debug.integrate_other_package(tmax,exact_finish_time)
+        self.process_messages()
 
     def integrator_synchronize(self):
         """
@@ -1247,6 +1266,8 @@ Simulation._fields_ = [
                 ("force_is_velocity_dependent", c_uint),
                 ("gravity_ignore_10", c_uint),
                 ("output_timing_last", c_double),
+                ("save_messages", c_int),
+                ("messages", c_void_p),
                 ("exit_max_distance", c_double),
                 ("exit_min_distance", c_double),
                 ("usleep", c_double),

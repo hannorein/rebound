@@ -142,7 +142,7 @@ static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
 #define WHFAST_NMAX_NEWT  32	///< Maximum number of iterations for Newton's method
 /****************************** 
  * Keplerian motion           */
-static void kepler_step(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double* const eta,  const double G, unsigned int i, double _dt, unsigned int* timestep_warning){
+static void kepler_step(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double* const eta,  const double G, unsigned int i, double _dt){
   	const double M = G*eta[i];
 	const struct reb_particle p1 = p_j[i];
 
@@ -152,18 +152,28 @@ static void kepler_step(const struct reb_simulation* const r, struct reb_particl
 	const double beta = 2.*M*r0i - v2;
 	const double eta0 = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
 	const double zeta0 = M - beta*r0;
-double X;
+    double X;
 	double Gs[6]; 
+    double invperiod;  // only used for beta>0.
+    double X_per_period = nan(""); // only used for beta>0. nan triggers Newton's method for beta<0.
 		
 	if (beta>0.){
 		// Elliptic orbit
+        const double sqrt_beta = sqrt(beta);
+        invperiod = sqrt_beta*beta/(2.*M_PI*M);
+        X_per_period = 2.*M_PI/sqrt_beta;
+        if (fabs(_dt)*invperiod>1. && r->ri_whfast.timestep_warning == 0){
+            // Ignoring const qualifiers. This warning should not have any effect on
+            // other parts of the code, nor is it vital to show it.
+            ((struct reb_simulation* const)r)->ri_whfast.timestep_warning++;
+            reb_warning((struct reb_simulation* const)r,"WHFast convergence issue. Timestep is larger than at least one orbital period.");
+        }
 		//X = _dt*invperiod*X_per_period; // first order guess 
-		double dtr0i = _dt*r0i;
+		const double dtr0i = _dt*r0i;
 		//X = dtr0i; // first order guess
 		X = dtr0i * (1. - dtr0i*eta0*0.5*r0i); // second order guess
 		//X = dtr0i *(1.- 0.5*dtr0i*r0i*(eta0-dtr0i*(eta0*eta0*r0i-1./3.*zeta0))); // third order guess
 		//X = _dt*beta/M + eta0/M*(0.85*sqrt(1.+zeta0*zeta0/beta/eta0/eta0) - 1.);  // Dan's version 
-
 	}else{
 		// Hyperbolic orbit
 		X = 0.; // Initial guess 
@@ -172,14 +182,17 @@ double X;
 	unsigned int converged = 0;
 	double oldX = X; 
 
+    // Do one Newton step
 	stiefel_Gs3(Gs, beta, X);
 	const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
 	double ri = 1./(r0 + eta0Gs1zeta0Gs2);
 	X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+_dt);
-	double X_per_period = 2.*M_PI/sqrt(beta);
 
+    // Choose solver depending on estimated step size
+    // Note, for hyperbolic orbits this uses Newton's method.
 	if(fastabs(X-oldX) > 0.01*X_per_period){
-		// Linear guess
+        // Quartic solver
+		// Linear initial guess
 		X = beta*_dt/M;
 		static double prevX[WHFAST_NMAX_QUART+1];
 		for(int n_lag=1; n_lag < WHFAST_NMAX_QUART; n_lag++){
@@ -189,7 +202,6 @@ double X;
 			const double fpp = eta0*Gs[0] + zeta0*Gs[1];
 			const double denom = fp + sqrt(fabs(16.*fp*fp - 20.*f*fpp));
 			X = (X*denom - 5.*f)/denom;
-			
 			for(int i=1;i<n_lag;i++){
 				if(X==prevX[i]){
 					// Converged. Exit.
@@ -199,11 +211,11 @@ double X;
 				}
 			}
 			prevX[n_lag] = X;
-			
 		}
 		const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
 		ri = 1./(r0 + eta0Gs1zeta0Gs2);
 	}else{
+        // Newton's method
 		double oldX2 = nan(""); 			
 		for (int n_hg=1;n_hg<WHFAST_NMAX_NEWT;n_hg++){
 			oldX2 = oldX;
@@ -220,18 +232,12 @@ double X;
 			}
 		}
 	}
-
-	if (converged == 0){ // Fallback to bisection 
+        
+    // If solver did not work, fallback to bisection 
+	if (converged == 0){ 
 		double X_min, X_max;
 		if (beta>0.){
 			//Elliptic
-			double sqrt_beta = sqrt(beta);
-			double invperiod = sqrt_beta*beta/(2.*M_PI*M);
-			double X_per_period = 2.*M_PI/sqrt_beta;
-			if (fabs(_dt)*invperiod>1. && *timestep_warning == 0){
-				(*timestep_warning)++;
-				reb_warning("Timestep is larger than at least one orbital period.");
-			}
 			X_min = X_per_period * floor(_dt*invperiod);
 			X_max = X_min + X_per_period;
 		}else{
@@ -467,9 +473,9 @@ static void interaction_step(struct reb_simulation* const r, struct reb_particle
 /***************************** 
  * DKD Scheme                */
 
-static void kepler_drift(const struct reb_simulation* const r, struct reb_particle* const p_j, const double* const eta, const double G, const double _dt, unsigned int* timestep_warning, const int N_real){
+static void kepler_drift(const struct reb_simulation* const r, struct reb_particle* const p_j, const double* const eta, const double G, const double _dt, const int N_real){
 	for (unsigned int i=1;i<N_real;i++){
-		kepler_step(r, p_j, eta, G, i, _dt, timestep_warning);
+		kepler_step(r, p_j, eta, G, i, _dt);
 	}
 	p_j[0].x += _dt*p_j[0].vx;
 	p_j[0].y += _dt*p_j[0].vy;
@@ -498,7 +504,7 @@ static void corrector_Z(struct reb_simulation* r, const double a, const double b
 	struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
 	struct reb_particle* restrict const particles = r->particles;
 	const int N_real = r->N-r->N_var;
-	kepler_drift(r, ri_whfast->p_j, ri_whfast->eta,  r->G, a, &(ri_whfast->timestep_warning), N_real);
+	kepler_drift(r, ri_whfast->p_j, ri_whfast->eta,  r->G, a, N_real);
 	to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
     for (int v=0;v<r->var_config_N;v++){
         struct reb_variational_configuration const vc = r->var_config[v];
@@ -511,7 +517,7 @@ static void corrector_Z(struct reb_simulation* r, const double a, const double b
 		to_jacobi_acc(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
 	}
 	interaction_step(r, ri_whfast->p_j, ri_whfast->eta, r->G, r->softening, -b, N_real);
-	kepler_drift(r, ri_whfast->p_j, ri_whfast->eta, r->G, -2.*a, &(ri_whfast->timestep_warning), N_real);
+	kepler_drift(r, ri_whfast->p_j, ri_whfast->eta, r->G, -2.*a, N_real);
 	to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
     for (int v=0;v<r->var_config_N;v++){
         struct reb_variational_configuration const vc = r->var_config[v];
@@ -524,7 +530,7 @@ static void corrector_Z(struct reb_simulation* r, const double a, const double b
 		to_jacobi_acc(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
 	}
 	interaction_step(r, ri_whfast->p_j, ri_whfast->eta, r->G, r->softening, b, N_real);
-	kepler_drift(r, ri_whfast->p_j, ri_whfast->eta, r->G, a, &(ri_whfast->timestep_warning), N_real);
+	kepler_drift(r, ri_whfast->p_j, ri_whfast->eta, r->G, a, N_real);
 }
 
 static void apply_corrector(struct reb_simulation* r, double inv){
@@ -591,7 +597,7 @@ void reb_integrator_whfast_part1(struct reb_simulation* const r){
 		if (ri_whfast->is_synchronized==0){
 			reb_integrator_whfast_synchronize(r);
 			if (ri_whfast->recalculate_jacobi_but_not_synchronized_warning==0){
-				reb_warning("Recalculating Jacobi coordinates but pos/vel were not synchronized before.");
+				reb_warning(r,"Recalculating Jacobi coordinates but pos/vel were not synchronized before.");
 				ri_whfast->recalculate_jacobi_but_not_synchronized_warning++;
 			}
 		}
@@ -617,10 +623,10 @@ void reb_integrator_whfast_part1(struct reb_simulation* const r){
 		if (ri_whfast->corrector){
 			apply_corrector(r, 1.);
 		}
-		kepler_drift(r, ri_whfast->p_j, ri_whfast->eta, r->G, _dt2, &(ri_whfast->timestep_warning), N_real);	// half timestep
+		kepler_drift(r, ri_whfast->p_j, ri_whfast->eta, r->G, _dt2, N_real);	// half timestep
 	}else{
 		// Combined DRIFT step
-		kepler_drift(r, ri_whfast->p_j, ri_whfast->eta, r->G, r->dt, &(ri_whfast->timestep_warning), N_real);	// full timestep
+		kepler_drift(r, ri_whfast->p_j, ri_whfast->eta, r->G, r->dt, N_real);	// full timestep
 	}
 	// Prepare coordinates for KICK step
 	if (r->force_is_velocity_dependent){
@@ -648,7 +654,7 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
 	struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
 	const int N_real = r->N-r->N_var;
 	if (ri_whfast->is_synchronized == 0){
-		kepler_drift(r, ri_whfast->p_j, ri_whfast->eta, r->G, r->dt/2., &(ri_whfast->timestep_warning), N_real);
+		kepler_drift(r, ri_whfast->p_j, ri_whfast->eta, r->G, r->dt/2., N_real);
 		if (ri_whfast->corrector){
 			apply_corrector(r, -1.);
 		}

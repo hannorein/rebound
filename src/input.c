@@ -101,61 +101,72 @@ static void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf){
     fread(dp7->p6,sizeof(double),N3,inf);
 }
 
-struct reb_simulation* reb_create_simulation_from_binary(char* filename){
-    struct reb_simulation* r = malloc(sizeof(struct reb_simulation));
-#ifdef MPI
-    char filename_mpi[1024];
-#warning following code not working yet. mpi_id will be random number.
-    sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
-    FILE* inf = fopen(filename_mpi,"rb"); 
-#else // MPI
+struct reb_simulation* reb_create_simulation_from_binary_with_messages(char* filename, enum reb_input_binary_messages* warnings){
     FILE* inf = fopen(filename,"rb"); 
-#endif // MPI
     if (inf){
+        struct reb_simulation* r = malloc(sizeof(struct reb_simulation));
         long objects = 0;
         // Input header.
         const char str[] = "REBOUND Binary File. Version: ";
         char readbuf[65], curvbuf[65];
         sprintf(curvbuf,"%s%s",str,reb_version_str);
-        for(int j=strlen(curvbuf);j<63;j++){
+        for(unsigned long j=strlen(curvbuf);j<63;j++){
             curvbuf[j] = ' ';
         }
         curvbuf[63] = '\0';
         objects += fread(readbuf,sizeof(char),64,inf);
-        if (strcmp(readbuf,curvbuf)!=0){
-            reb_warning("Binary file was saved with a different version of REBOUND. Binary format might have changed.");
+        if(strcmp(readbuf,curvbuf)!=0){
+            *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
         }
 
         // Read main simulation oject.
         objects += fread(r,sizeof(struct reb_simulation),1,inf);
         int ri_ias15_allocatedN = r->ri_ias15.allocatedN;
         if(reb_reset_function_pointers(r)){
-            reb_warning("You have to reset function pointers after creating a reb_simulation struct with a binary file.");
+            *warnings |= REB_INPUT_BINARY_WARNING_POINTERS;
         }
         reb_reset_temporary_pointers(r);
         r->allocatedN = r->N;
         r->tree_root = NULL;
 
         // Read particles
-        r->particles = malloc(sizeof(struct reb_particle)*r->N);
-        objects += fread(r->particles,sizeof(struct reb_particle),r->N,inf);
-        for (int l=0;l<r->N;l++){
-            r->particles[l].c = NULL;
-            r->particles[l].ap = NULL;
-            r->particles[l].sim = r;
+        if (r->N>0){
+            r->particles = malloc(sizeof(struct reb_particle)*r->N);
+            if (r->particles){
+                objects = fread(r->particles,sizeof(struct reb_particle),r->N,inf);
+                if (objects==r->N){
+                    for (int l=0;l<r->N;l++){
+                        r->particles[l].c = NULL;
+                        r->particles[l].ap = NULL;
+                        r->particles[l].sim = r;
+                    }
+                }else{
+                    *warnings |= REB_INPUT_BINARY_WARNING_PARTICLES;
+                }
+            }else{
+                *warnings |= REB_INPUT_BINARY_WARNING_PARTICLES;
+            }
         }
         
         // Read variational config structures
-        if (r->var_config_N){
+        if (r->var_config_N>0){
             r->var_config = malloc(sizeof(struct reb_variational_configuration)*r->var_config_N);
-            objects +=fread(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,inf);
-            for (int l=0;l<r->var_config_N;l++){
-                r->var_config[l].sim = r;
+            if (r->var_config){
+                objects = fread(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,inf);
+                if (objects==r->var_config_N){
+                    for (int l=0;l<r->var_config_N;l++){
+                        r->var_config[l].sim = r;
+                    }
+                }else{
+                    *warnings |= REB_INPUT_BINARY_WARNING_VARCONFIG;
+                }
+            }else{
+                *warnings |= REB_INPUT_BINARY_WARNING_VARCONFIG;
             }
         }
 
         // Read temporary arrays for IAS15 (needed for bit-by-bit reproducability)
-        if (ri_ias15_allocatedN){
+        if (ri_ias15_allocatedN && !(*warnings & REB_INPUT_BINARY_WARNING_PARTICLES)){
             int N3 = ri_ias15_allocatedN;
             r->ri_ias15.allocatedN = N3;
             r->ri_ias15.at = malloc(sizeof(double)*N3);
@@ -179,15 +190,31 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
             reb_read_dp7(&(r->ri_ias15.br) ,N3,inf);
             reb_read_dp7(&(r->ri_ias15.er) ,N3,inf);
         }
-
         fclose(inf);
-    }else{
-        reb_warning("Cannot read binary file. Check filename and file contents.");
-        free(r);
-        return NULL;
+        
+        return r;
     }
-    for(int i=0; i<r->N; i++){
-        r->particles[i].sim = r;
+    *warnings |= REB_INPUT_BINARY_ERROR_NOFILE;
+    return NULL;
+}
+
+struct reb_simulation* reb_create_simulation_from_binary(char* filename){
+    enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
+    struct reb_simulation* r = reb_create_simulation_from_binary_with_messages(filename,&warnings);
+    if (warnings & REB_INPUT_BINARY_WARNING_VERSION){
+        reb_warning(r,"Binary file was saved with a different version of REBOUND. Binary format might have changed.");
+    }
+    if (warnings & REB_INPUT_BINARY_WARNING_PARTICLES){
+        reb_warning(r,"Binary file might be corrupted. Number of particles found does not match expected number.");
+    }
+    if (warnings & REB_INPUT_BINARY_WARNING_VARCONFIG){
+        reb_warning(r,"Binary file might be corrupted. Number of variational config structs found does not match number of variational config structs expected.");
+    }
+    if (warnings & REB_INPUT_BINARY_WARNING_POINTERS){
+        reb_warning(r,"You have to reset function pointers after creating a reb_simulation struct with a binary file.");
+    }
+    if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
+        reb_error(r,"Cannot read binary file. Check filename and file contents.");
     }
     return r;
 }

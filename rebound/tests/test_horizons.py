@@ -2,6 +2,7 @@ import rebound
 import unittest
 import datetime
 import socket
+import warnings
 
 class TestHorizons(unittest.TestCase):
     def setUp(self):
@@ -12,7 +13,10 @@ class TestHorizons(unittest.TestCase):
     
     def test_earth(self):
         try:
-            self.sim.add("Earth",date="2000-01-01 00:00")
+            with warnings.catch_warnings(record=True) as w: 
+                warnings.simplefilter("always")
+                self.sim.add("Earth",date="2000-01-01 00:00")
+                self.assertEqual(0,len(w))
             self.assertAlmostEqual(self.sim.particles[0].x,-0.17568959237103887,delta=1e-10)
             self.assertAlmostEqual(self.sim.particles[0].m,3.0404326480226416e-06,delta=1e-15)
         except socket.error: 
@@ -28,3 +32,5 @@ class TestHorizons(unittest.TestCase):
                 raise Exception("Socket error. Should have been bogus planet error. Ignoring")
 
 
+if __name__ == "__main__":
+    unittest.main()

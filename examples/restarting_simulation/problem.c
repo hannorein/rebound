@@ -35,6 +35,7 @@ int main(int argc, char* argv[]){
 			p.r  = 0.05;
 			reb_add(r, p);
 		}
+        r->heartbeat = heartbeat;
 		reb_integrate(r,10.);
 		printf("Saving simulation to binary file and freeing up memory.\n");
 		reb_output_binary(r, "restart.bin");
@@ -44,8 +45,13 @@ int main(int argc, char* argv[]){
 	{
 		printf("Creating simulation from binary file and integrating until t=20.\n");
 		struct reb_simulation* r = reb_create_simulation_from_binary("restart.bin");
+        // Need to reset function pointers
+        r->heartbeat = heartbeat;
 		reb_integrate(r,20.);
 		printf("Done.\n");
 	}
 }
 
+void heartbeat(struct reb_simulation* const r){
+    // Dummy.
+}

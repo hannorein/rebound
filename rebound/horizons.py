@@ -10,6 +10,7 @@ import datetime
 import re
 import sys
 import math
+import warnings
 
 __all__ = ["getParticle"]
 
@@ -110,8 +111,6 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
                 t.write(expect[answer[0]][1].encode())
         else:
             pass
-            #print "NOT FOUND!!"
-            #print answer
     if startdata == 0:
         print(message)
         raise SyntaxError("Object not found. See above output from HORIZONS. Please try different identifier or look up JPL Body Number.")
@@ -122,10 +121,10 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
             p.m = float(re.search(r"BODY%d\_GM .* \( *([\.E\+\-0-9]+ *)\)"%int(idn), HORIZONS_MASS_DATA).group(1))
             p.m /= Gkmkgs # divide by G (horizons masses give GM)
         except:
-            print("Warning: Mass cannot be retrieved from NASA HORIZONS. Set to 0.")
+            warnings.warn("Warning: Mass cannot be retrieved from NASA HORIZONS. Set to 0.", RuntimeWarning)
             p.m = 0
     else:
-        print("Warning: Mass cannot be retrieved from NASA HORIZONS. Set to 0.")
+        warnings.warn("Warning: Mass cannot be retrieved from NASA HORIZONS. Set to 0.", RuntimeWarning)
         p.m = 0
     return p
 

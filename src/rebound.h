@@ -45,11 +45,11 @@ enum REB_STATUS {
     REB_RUNNING_LAST_STEP = -2, ///< Current timestep is the last one. Needed to ensures that t=tmax exactly.
     REB_RUNNING = -1,           ///< Simulation is current running, no error occured.
     REB_EXIT_SUCCESS = 0,       ///< Integration finished successfully.
-    REB_EXIT_ERROR = 1,     ///< A generic error occured and the integration was not successfull.
+    REB_EXIT_ERROR = 1,         ///< A generic error occured and the integration was not successfull.
     REB_EXIT_NOPARTICLES = 2,   ///< The integration ends early because no particles are left in the simulation.
     REB_EXIT_ENCOUNTER = 3,     ///< The integration ends early because two particles had a close encounter (see exit_min_distance)
     REB_EXIT_ESCAPE = 4,        ///< The integration ends early because a particle escaped (see exit_max_distance)  
-    REB_EXIT_USER = 5,      ///< User caused exit, simulation did not finish successfully.
+    REB_EXIT_USER = 5,          ///< User caused exit, simulation did not finish successfully.
 };
 
 struct reb_simulation;
@@ -418,6 +418,8 @@ struct reb_simulation {
     unsigned int force_is_velocity_dependent;   ///< Set to 1 if integrator needs to consider velocity dependent forces.  
     unsigned int gravity_ignore_10; ///< Ignore the gravity form the central object (for WH-type integrators)
     double output_timing_last;      ///< Time when reb_output_timing() was called the last time. 
+    int save_messages;              ///< Set to 1 to ignore messages (used in python interface).
+    char** messages;                ///< Array of strings containing last messages (only used if save_messages==1). 
     double exit_max_distance;       ///< Exit simulation if distance from origin larger than this value 
     double exit_min_distance;       ///< Exit simulation if distance from another particle smaller than this value 
     double usleep;                  ///< Wait this number of microseconds after each timestep, useful for slowing down visualization. Set to negative value to disable visualization (despite compiling with OPENGL=1).  
@@ -1095,6 +1097,24 @@ struct reb_particle reb_tools_pal_to_particle(double G, struct reb_particle prim
  */
 struct reb_simulation* reb_create_simulation_from_binary(char* filename);
 
+
+/**
+ * @brief Enum describing possible errors that might occur during binary file reading.
+ */
+enum reb_input_binary_messages {
+    REB_INPUT_BINARY_WARNING_NONE = 0,
+    REB_INPUT_BINARY_ERROR_NOFILE = 1,
+    REB_INPUT_BINARY_WARNING_VERSION = 2,
+    REB_INPUT_BINARY_WARNING_POINTERS = 4,
+    REB_INPUT_BINARY_WARNING_PARTICLES = 8,
+    REB_INPUT_BINARY_WARNING_VARCONFIG = 16,
+};
+
+/**
+ * @brief Same as reb_create_simulation_from_binary() but lets user specify the value of save_messages flag.
+ */
+struct reb_simulation* reb_create_simulation_from_binary_with_messages(char* filename, enum reb_input_binary_messages* messages);
+
 /**
  * @brief This function sets up a Plummer sphere.
  * @param r The rebound simulation to be considered
@@ -1355,9 +1375,22 @@ struct reb_particle reb_particle_nan(void);
 void reb_exit(const char* const msg);
 
 /**
- * @brief Print out a warningr message, then continue.
+ * @brief Print or store a warning message, then continue.
  */
-void reb_warning(const char* const msg);
+void reb_warning(struct reb_simulation* const r, const char* const msg);
+
+/**
+ * @brief Print or store an error message, then continue.
+ */
+void reb_error(struct reb_simulation* const r, const char* const msg);
+
+/**
+ * @brief Get the next warning message stored. Used only if save_messages==1.
+ * @param r The rebound simulation to be considered
+ * @param buf The buffer in which the error message it copied (needs to be at least reb_max_messages_length long).
+ * @return Return value is 0 if no messages are present, 1 otherwise.
+ */
+int reb_get_next_message(struct reb_simulation* const r, char* const buf);
 /** @} */
 /** @} */
 

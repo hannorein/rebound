@@ -1,7 +1,9 @@
 import rebound
+import warnings
 import unittest
 import os
 import math
+import sys
 
 class TestSimulation(unittest.TestCase):
     def setUp(self):
@@ -14,21 +16,27 @@ class TestSimulation(unittest.TestCase):
         self.sim = None
 
     def test_status(self):
+        sys.stdout = open(os.devnull, 'w')
         self.sim.status()
+        sys.stdout.close()
+        sys.stdout = sys.__stdout__
     
     def test_removeall(self):
         del self.sim.particles
         self.assertEqual(self.sim.N,0)
     
     def test_remove_too_many(self):
-        self.sim.remove(0)
-        self.sim.remove(0)
-        with self.assertRaises(ValueError):
+        with warnings.catch_warnings(record=True) as w: 
+            warnings.simplefilter("always")
+            self.sim.remove(0)
+            self.sim.remove(0)
+            self.assertEqual(1,len(w))
+        with self.assertRaises(RuntimeError):
             self.sim.remove(0)
     
     def test_remove_variational(self):
         v = self.sim.add_variation()
-        with self.assertRaises(ValueError):
+        with self.assertRaises(RuntimeError):
             self.sim.remove(0)
     
     def test_remove(self):
@@ -53,11 +61,11 @@ class TestSimulation(unittest.TestCase):
         self.sim.particles[-1].hash = 99
         self.sim.remove(hash=99)
         self.assertEqual(self.sim.N,2)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(RuntimeError):
             self.sim.remove(99)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(RuntimeError):
             self.sim.remove(hash=99)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(RuntimeError):
             self.sim.remove(hash=-99334)
     
     def test_configure_ghostboxes(self):
@@ -228,6 +236,16 @@ class TestSimulation(unittest.TestCase):
         self.assertEqual(self.sim.N, sim2.N)
         self.assertEqual(self.sim.integrator, sim2.integrator)
         os.remove("bintest.bin")
+    
+    def test_checkpoint_warnings(self):
+        with open("bintest2.bin", "a") as f:
+            for i in range(1000):
+                f.write("gibberish")
+        with warnings.catch_warnings(record=True) as w: 
+            warnings.simplefilter("always")
+            sim2 = rebound.Simulation.from_file("bintest2.bin")
+            self.assertEqual(4,len(w))
+        os.remove("bintest2.bin")
     
     
 class TestSimulationCollisions(unittest.TestCase):

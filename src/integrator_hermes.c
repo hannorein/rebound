@@ -233,7 +233,7 @@ static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* glo
     }
     if (global->ri_hermes.timestep_too_large_warning==0 && min_dt_enc2 < 16.*global->dt*global->dt){
         global->ri_hermes.timestep_too_large_warning = 1;
-        reb_warning("The timestep is likely too large. Close encounters might be missed. Decrease the timestep or increase the switching radius. This warning will appear only once.");
+        reb_warning(global,"The timestep is likely too large. Close encounters might be missed. Decrease the timestep or increase the switching radius. This warning will appear only once.");
     }
 }
 

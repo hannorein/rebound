@@ -56,7 +56,7 @@ class TestShearingSheet(unittest.TestCase):
         sim.remove(0,keepSorted=0)
         sim.tree_update()
         self.assertEqual(Nbefore-1,sim.N)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(RuntimeError):
             sim.remove(0,keepSorted=1)
 
 if __name__ == "__main__":

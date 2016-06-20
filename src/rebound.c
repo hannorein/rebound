@@ -64,6 +64,9 @@ static const char* logo[];              /**< Logo of rebound. */
 #endif // LIBREBOUND
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
 const char* reb_version_str = "2.18.7";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
+const int reb_max_messages_N = 10;
+
 
 void reb_step(struct reb_simulation* const r){
     // A 'DKD'-like integrator will do the first 'D' part.
@@ -146,13 +149,69 @@ void reb_exit(const char* const msg){
     // This function should also kill all children. 
     // Not implemented as pid is not easy to get to.
     // kill(pid, SIGKILL);
-    fprintf(stderr,"\n\033[1mError!\033[0m %s\n",msg);
+    fprintf(stderr,"\n\033[1mFatal error! Exiting now.\033[0m %s\n",msg);
     exit(EXIT_FAILURE);
 }
 
-void reb_warning(const char* const msg){
-    fprintf(stderr,"\n\033[1mWarning!\033[0m %s\n",msg);
+void reb_message(struct reb_simulation* const r, char type, const char* const msg){
+    int save_messages = 0;
+    if (r != NULL){
+        save_messages = r->save_messages;
+    }
+    if (!save_messages || strlen(msg)>=reb_max_messages_length){
+        if (type=='w'){
+            fprintf(stderr,"\n\033[1mWarning!\033[0m %s\n",msg);
+        }else if (type=='e'){
+            fprintf(stderr,"\n\033[1mError!\033[0m %s\n",msg);
+        }
+    }else{
+        if (r->messages==NULL){
+            r->messages = calloc(reb_max_messages_N,sizeof(char*));
+        }
+        int n = 0;
+        for (;n<reb_max_messages_N;n++){
+            if (r->messages[n]==NULL){
+                break;
+            }
+        }
+        if (n==reb_max_messages_N){
+            free(r->messages[0]);
+            for (int i=0;i<reb_max_messages_N-1;i++){
+                r->messages[i] = r->messages[i+1];
+            }
+            r->messages[reb_max_messages_N-1] = NULL;
+            n= reb_max_messages_N-1;
+        }
+        r->messages[n] = malloc(sizeof(char*)*reb_max_messages_length);
+        r->messages[n][0] = type;
+        strcpy(r->messages[n]+1, msg);
+    }
 }
+
+void reb_warning(struct reb_simulation* const r, const char* const msg){
+    reb_message(r, 'w', msg);
+}
+
+void reb_error(struct reb_simulation* const r, const char* const msg){
+    reb_message(r, 'e', msg);
+}
+
+int reb_get_next_message(struct reb_simulation* const r, char* const buf){
+    if (r->messages){
+        char* w0 = r->messages[0];
+        if (w0){
+            for(int i=0;i<reb_max_messages_N-1;i++){
+                r->messages[i] = r->messages[i+1];
+            }
+            r->messages[reb_max_messages_N-1] = NULL;
+            strcpy(buf,w0);
+            free(w0);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 
 void reb_configure_box(struct reb_simulation* const r, const double root_size, const int root_nx, const int root_ny, const int root_nz){
     r->root_size = root_size;
@@ -211,6 +270,12 @@ void reb_free_pointers(struct reb_simulation* const r){
     reb_integrator_ias15_reset(r);
     free(r->particles   );
     free(r->particle_lookup_table);
+    if (r->messages){
+        for (int i=0;i<reb_max_messages_N;i++){
+            free(r->messages[i]);
+        }
+    }
+    free(r->messages);
 }
 
 void reb_reset_temporary_pointers(struct reb_simulation* const r){
@@ -220,6 +285,7 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->collisions_allocatedN    = 0;
     r->collisions           = NULL;
     r->extras               = NULL;
+    r->messages             = NULL;
     // ********** WHFAST
     r->ri_whfast.allocated_N    = 0;
     r->ri_whfast.eta        = NULL;
@@ -322,6 +388,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->gravity_ignore_10    = 0;
     r->calculate_megno  = 0;
     r->output_timing_last   = -1;
+    r->save_messages = 0;
 
     r->minimum_collision_velocity = 0;
     r->collisions_plog  = 0;
@@ -447,7 +514,7 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
     }
 #ifndef MPI
     if (r->N<=0){
-        reb_warning("No particles found. Will exit.");
+        reb_warning(r,"No particles found. Will exit.");
         r->status = REB_EXIT_NOPARTICLES; // Exit now.
     }
 #else
@@ -535,7 +602,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
         }
         // Need root_size for visualization. Creating one. 
         if (r->root_size==-1){  
-            reb_warning("Configuring box automatically for vizualization based on particle positions.");
+            reb_warning(r,"Configuring box automatically for vizualization based on particle positions.");
             const struct reb_particle* p = r->particles;
             double max_r = 0;
             for (int i=0;i<r->N;i++){

@@ -47,7 +47,7 @@ extern double gravity_minimum_mass;
 static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt){
 	if (reb_boundary_particle_is_in_box(r, pt)==0){
 		// reb_particle has left the box. Do not add.
-		reb_warning("Did not add particle outside of box boundaries.");
+		reb_error(r,"Particle outside of box boundaries. Did not add particle.");
 		return;
 	}
 	while (r->allocatedN<=r->N){
@@ -152,15 +152,17 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
     }
 	if (r->N==1){
 	    r->N = 0;
-		fprintf(stderr, "Last particle removed.\n");
+		reb_warning(r, "Last particle removed.");
 		return 1;
 	}
 	if (index >= r->N){
-		fprintf(stderr, "\nIndex %d passed to particles_remove was out of range (N=%d).  Did not remove particle.\n", index, r->N);
+		char warning[1024];
+        sprintf(warning, "Index %d passed to particles_remove was out of range (N=%d).  Did not remove particle.", index, r->N);
+		reb_error(r, warning);
 		return 0;
 	}
 	if (r->N_var){
-		fprintf(stderr, "\nRemoving particles not supported when calculating MEGNO.  Did not remove particle.\n");
+		reb_error(r, "Removing particles not supported when calculating MEGNO.  Did not remove particle.");
 		return 0;
 	}
 	if(keepSorted){
@@ -172,7 +174,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 			r->particles[j] = r->particles[j+1];
 		}
         if (r->tree_root){
-		    fprintf(stderr, "\nREBOUND cannot remove a particle a tree and keep the particles sorted. Did not remove particle.\n");
+		    reb_error(r, "REBOUND cannot remove a particle a tree and keep the particles sorted. Did not remove particle.");
 		    return 0;
         }
 	}else{
@@ -191,7 +193,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 int reb_remove_by_hash(struct reb_simulation* const r, uint32_t hash, int keepSorted){
     struct reb_particle* p = reb_get_particle_by_hash(r, hash);
     if(p == NULL){
-		fprintf(stderr, "\nParticle to be removed not found in simulation.  Did not remove particle.\n");
+		reb_error(r,"Particle to be removed not found in simulation.  Did not remove particle.");
         return 0;
     }
     else{

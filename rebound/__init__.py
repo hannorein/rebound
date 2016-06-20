@@ -16,6 +16,7 @@ if suffix is None:
 
 # Import shared library
 import os
+import warnings
 pymodulepath = os.path.dirname(__file__)
 from ctypes import cdll, c_char_p
 clibrebound = cdll.LoadLibrary(pymodulepath+"/../librebound"+suffix)
@@ -31,7 +32,7 @@ try:
     moduleversion = pkg_resources.require("rebound")[0].version
     libreboundversion = __version__
     if moduleversion != libreboundversion:
-        print("WARNING: python module and librebound have different version numbers: '%s' vs '%s'.\n" %(moduleversion, libreboundversion))
+        warnings.warn("WARNING: python module and librebound have different version numbers: '%s' vs '%s'.\n" %(moduleversion, libreboundversion), ImportWarning)
 except:
     # Might fails on python3 versions, but not important
     pass

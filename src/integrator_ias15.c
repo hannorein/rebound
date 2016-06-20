@@ -262,7 +262,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             r->ri_ias15.iterations_max_exceeded++;
             const int integrator_iterations_warning = 10;
             if (r->ri_ias15.iterations_max_exceeded==integrator_iterations_warning ){
-                reb_warning("At least 10 predictor corrector loops in IAS15 did not converge. This is typically an indication of the timestep being too large.");
+                reb_warning(r, "At least 10 predictor corrector loops in IAS15 did not converge. This is typically an indication of the timestep being too large.");
             }
             break;                              // Quit predictor corrector loop
         }

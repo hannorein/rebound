@@ -31,7 +31,6 @@ class TestHermes(unittest.TestCase):
     def test_close_encounter(self):
         sim = rebound.Simulation()
         sim.add(m=1.)
-        print(rebound.__build__)
         sim.add(m=1.e-3, a=1.523,e=0.0146,f=0.24)
         rh = sim.particles[1].a*pow(sim.particles[1].m/(3.*sim.particles[0].m),1./3)
         dust = rebound.Particle(simulation=sim, primary=sim.particles[1], a=0.25*rh, e=0.000123, f=2.3, m=1e-8)
@@ -61,8 +60,6 @@ class TestHermes(unittest.TestCase):
             t += dt0/2.
             sim.integrate(t)
         x_ias15 = sim.particles[1].x
-
-        print(abs((x_hermes-x_ias15)/x_ias15))
         self.assertEqual(x_hermes,x_ias15)
 
     def test_planetesimal_collision(self):
