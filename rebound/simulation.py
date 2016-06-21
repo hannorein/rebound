@@ -13,8 +13,6 @@ except:
     # Fails on python3, but not important
     pass
 import types
-
-import numpy as np 
       
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
