@@ -92,4 +92,4 @@ after_success:
     - if [[ $TESTPART == "CCOVERAGE" ]]; then find build/ -name "*.gcno" -exec cp {} src/ \; ; fi
     - if [[ $TESTPART == "CCOVERAGE" ]]; then find build/ -name "*.gcda" -exec cp {} src/ \; ; fi
     - if [[ $TESTPART == "CCOVERAGE" ]]; then find build/ -name "*.o" -exec cp {} src/ \; ; fi
-    - if [[ $TESTPART == "CCOVERAGE" ]]; then coveralls; fi
+    - if [[ $TESTPART == "CCOVERAGE" ]]; then coveralls -r src/; fi
