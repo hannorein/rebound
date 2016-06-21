@@ -757,7 +757,7 @@ class Simulation(Structure):
         # Create array from pointer to allow manipulation of particles in python
         ParticleList = Particle*self.N
         ps = ParticleList.from_address(ctypes.addressof(self._particles.contents))
-        
+
         return ps
 
     @particles.deleter
