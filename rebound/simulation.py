@@ -11,6 +11,8 @@ except:
     # Fails on python3, but not important
     pass
 import types
+
+import numpy as np 
       
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
@@ -690,7 +692,7 @@ class Simulation(Structure):
         # Create array from pointer to allow manipulation of particles in python
         ParticleList = Particle*self.N
         ps = ParticleList.from_address(ctypes.addressof(self._particles.contents))
-
+        
         return ps
 
     @particles.deleter
@@ -826,9 +828,32 @@ class Simulation(Structure):
             clibrebound.reb_get_com.restype = Particle
             com = clibrebound.reb_get_com(byref(self))
             return com
-        
 
 # Tools
+    def get_particle_data(self):
+        """
+        Returns the attributes of all particles in the simulation as arrays. 
+
+        Returns
+        -------
+        Returns a list of 4 arrays: [mass, radius, pos, vel].
+        mass and radius are (N,) arrays giving the mass and radius of 
+        each particle, and pos and vel are (N, 3) arrays giving the 
+        Cartesian position and velocity of each particle.  
+
+        The returned arrays are ctypes c_double arrays, which can be
+        converted to a ndarray with numpy.asarray. 
+        """
+        ScalarIntArray = c_int*self.N_real  # shape (N_real,)
+        ids = ScalarIntArray()
+        ScalarArray = c_double*self.N_real
+        mass, rad = ScalarArray(), ScalarArray()
+        Coord3Array = (c_double*3)*self.N_real  # shape (N_real, 3)
+        pos, vel = Coord3Array(), Coord3Array()
+        clibrebound.reb_get_particle_data(byref(self), byref(ids), byref(mass),
+                                          byref(rad), byref(pos), byref(vel))
+        return ids, mass, rad, pos, vel
+
     def move_to_com(self):
         """
         This function moves all particles in the simulation to a center of momentum frame.
