@@ -4,7 +4,7 @@ import glob
 
 with open("version.txt") as f:
     reboundversion = f.readlines()[0].strip()
-    print "Updating version to "+reboundversion
+    print("Updating version to "+reboundversion)
 
 with open("README.rst") as f:
     readme = f.readlines()
@@ -22,7 +22,7 @@ with open("src/rebound.c") as f:
     reboundlines = f.readlines()
     for i,l in enumerate(reboundlines):
         if "**VERSIONLINE**" in l:
-            reboundlines[i] = "const char* reb_version_str = \""+reboundversion+"\";			// **VERSIONLINE** This line gets updated automatically. Do not edit manually.\n"
+            reboundlines[i] = "const char* reb_version_str = \""+reboundversion+"\";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.\n"
 
     with open("src/rebound.c", "w") as f:
         f.writelines(reboundlines)
@@ -52,3 +52,5 @@ with open("doc/conf.py") as f:
 
     with open("doc/conf.py", "w") as f:
         f.writelines(conflines)
+print("To commit, copy and paste:")
+print("\ngit commit -a -m \"Updating version to "+reboundversion+"\"")

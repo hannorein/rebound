@@ -48,16 +48,17 @@ class TestSimulation(unittest.TestCase):
             self.assertAlmostEqual(self.sim.particles[i].x,sim.particles[i].x,delta=1e-7)
             self.assertAlmostEqual(self.sim.particles[i].vy,sim.particles[i].vy,delta=1e-7)
     
-    def test_removeid(self):
-        self.sim.add(m=1e-3, a=1., e=0.01, omega=0.02, M=0.04, inc=0.1, id=99)
-        self.sim.remove(id=99)
+    def test_removehash(self):
+        self.sim.add(m=1e-3, a=1., e=0.01, omega=0.02, M=0.04, inc=0.1)
+        self.sim.particles[-1].hash = 99
+        self.sim.remove(hash=99)
         self.assertEqual(self.sim.N,2)
         with self.assertRaises(ValueError):
             self.sim.remove(99)
         with self.assertRaises(ValueError):
-            self.sim.remove(id=99)
+            self.sim.remove(hash=99)
         with self.assertRaises(ValueError):
-            self.sim.remove(id=-99334)
+            self.sim.remove(hash=-99334)
     
     def test_configure_ghostboxes(self):
         self.sim.configure_ghostboxes(1,1,1)
@@ -88,8 +89,34 @@ class TestSimulation(unittest.TestCase):
     def test_com(self):
         self.sim.move_to_com()
         com = self.sim.calculate_com()
-        self.assertEqual(com.x, 0.)
-        
+        self.assertAlmostEqual(com.x, 0., delta=1e-15)
+    
+    def test_com_range(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1., x=2.)
+        sim.add(m=2., x=5.)
+        com = sim.calculate_com(first=1)
+        self.assertAlmostEqual(com.x, 4., delta=1e-15)
+        com = sim.calculate_com(last=2)
+        self.assertAlmostEqual(com.x, 1., delta=1e-15)
+        com = sim.calculate_com(first=1,last=2)
+        self.assertAlmostEqual(com.x, 2., delta=1e-15)
+        com = sim.calculate_com(first=4, last=-3)
+        self.assertAlmostEqual(com.x, 0., delta=1e-15)
+    
+    def test_jacobi_com(self):
+        sim = rebound.Simulation()
+        sim.add(m=1., x=1.)
+        sim.add(m=1., x=3.)
+        sim.add(m=2., x=5.)
+        com = sim.particles[1].jacobi_com
+        self.assertAlmostEqual(com.x, 1., delta=1e-15)
+        com = sim.particles[2].jacobi_com
+        self.assertAlmostEqual(com.x, 2., delta=1e-15)
+        com = sim.particles[0].jacobi_com
+        self.assertAlmostEqual(com.x, 0., delta=1e-15)
+
     def test_init_megno(self):
         self.sim.init_megno()
         self.assertEqual(self.sim.N,4)
@@ -102,24 +129,34 @@ class TestSimulation(unittest.TestCase):
         energy = self.sim.calculate_energy()
         self.assertAlmostEqual(energy, -0.5e-3, delta=1e-14)
 
+    def test_calculate_angular_momentum(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1.e-3, a=1., inc=0.3, Omega=0.5)
+        sim.add(m=1.e-3, a=3., inc=0.2, Omega = -0.8)
+        L0 = sim.calculate_angular_momentum()
+        sim.integrate(1.)
+        Lf = sim.calculate_angular_momentum()
+        for i in range(3):
+            self.assertAlmostEqual(abs((Lf[i]-L0[i])/L0[i]), 0., delta=1e-15)
 
     def test_additional_forces(self):
         def af(sim):
-            sim.contents.particles[0].id = 5
+            sim.contents.particles[0].hash = 5
             pass
         self.sim.additional_forces = af
         self.sim.integrate(.1)
-        self.assertEqual(self.sim.particles[0].id,5)
+        self.assertEqual(self.sim.particles[0].hash,5)
         with self.assertRaises(AttributeError):
             self.sim.additional_forces
 
     def test_post_timestep_modifications(self):
         def ptm(sim):
-            sim.contents.particles[0].id = 6
+            sim.contents.particles[0].hash = 6
             pass
         self.sim.post_timestep_modifications = ptm
         self.sim.integrate(.1)
-        self.assertEqual(self.sim.particles[0].id,6)
+        self.assertEqual(self.sim.particles[0].hash,6)
         with self.assertRaises(AttributeError):
             self.sim.post_timestep_modifications
 
@@ -172,6 +209,19 @@ class TestSimulation(unittest.TestCase):
     def test_checkpoint(self):
         self.sim.save("bintest.bin")
         sim2 = rebound.Simulation.from_file("bintest.bin")
+        self.assertEqual(self.sim.particles[1].x, sim2.particles[1].x)
+        self.assertEqual(self.sim.particles[1].vx, sim2.particles[1].vx)
+        self.assertEqual(self.sim.t, sim2.t)
+        self.assertEqual(self.sim.N, sim2.N)
+        self.assertEqual(self.sim.integrator, sim2.integrator)
+        os.remove("bintest.bin")
+    
+    def test_checkpoint_ias15_pointers(self):
+        self.sim.integrate(1.)
+        self.sim.save("bintest.bin")
+        self.sim.integrate(5.)
+        sim2 = rebound.Simulation.from_file("bintest.bin")
+        sim2.integrate(5.)
         self.assertEqual(self.sim.particles[1].x, sim2.particles[1].x)
         self.assertEqual(self.sim.particles[1].vx, sim2.particles[1].vx)
         self.assertEqual(self.sim.t, sim2.t)

@@ -1,9 +1,9 @@
 /**
- * @file 	integrator_ias15.h
- * @brief 	Interface for numerical particle integrator
- * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @file    integrator_ias15.h
+ * @brief   Interface for numerical particle integrator
+ * @author  Hanno Rein <hanno@hanno-rein.de>
  * 
- * @section 	LICENSE
+ * @section LICENSE
  * Copyright (c) 2015 Hanno Rein
  *
  * This file is part of rebound.
