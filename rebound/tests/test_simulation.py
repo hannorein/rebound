@@ -21,6 +21,16 @@ class TestSimulation(unittest.TestCase):
         sys.stdout.close()
         sys.stdout = sys.__stdout__
     
+    def test_escape(self):
+        self.sim.exit_max_distance = 0.1
+        with self.assertRaises(rebound.Escape):
+            self.sim.integrate(1.)
+
+    def test_encounter(self):
+        self.sim.exit_min_distance = 1.
+        with self.assertRaises(rebound.Encounter):
+            self.sim.integrate(1.)
+    
     def test_removeall(self):
         del self.sim.particles
         self.assertEqual(self.sim.N,0)
