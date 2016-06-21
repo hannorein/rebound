@@ -3,6 +3,18 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 2.19.0
+--------------
+* Added warning/error message system. This allows warning messages to be shown directly in iPython/python programs, rather than being shown on the console. To hide the warning messages, use a filter, e.g.
+.. code::  python
+    
+   with warnings.catch_warnings(record=True) as w:
+       warnings.simplefilter("always")
+       # Execute a command which triggers a warning message.
+       # The message will not show up.
+* Improvements regarding the WHFast logic for hyperbolic orbis. No changes should be noticable to users.
+
+
 Version 2.18.5
 --------------
 * When loading a simulation from a binary file, REBOUND now checks if the version of the binary file is the same as the current version. 
