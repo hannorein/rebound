@@ -4,10 +4,10 @@ sudo: false
 
 env:
   - TESTPART=CCOVERAGE
-  #- TESTPART=C
-  #- TESTPART=PYTHON
-  #- TESTPART=IPYTHON1
-  #- TESTPART=IPYTHON2
+  - TESTPART=C
+  - TESTPART=PYTHON
+  - TESTPART=IPYTHON1
+  - TESTPART=IPYTHON2
 
 python:
   - "2.7"
@@ -91,4 +91,3 @@ after_success:
     - if [[ $TESTPART == "PYTHON" ]] && [[ ${TRAVIS_PYTHON_VERSION:0:3} == "2.7" ]]; then coveralls; fi
     - if [[ $TESTPART == "CCOVERAGE" ]]; then cp -r src build/*/src/ ; fi
     - if [[ $TESTPART == "CCOVERAGE" ]]; then coveralls ; fi
-    - if [[ $TESTPART == "CCOVERAGE" ]]; then ls -lsa build; fi
