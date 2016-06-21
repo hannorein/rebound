@@ -48,7 +48,7 @@ class Particle(Structure):
         """
         return "<rebound.Particle object, m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
     
-    def __init__(self, simulation=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, id=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None, hash=None):
+    def __init__(self, simulation=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None, hash=None):
         """
         Initializes a Particle structure. Rather than explicitly creating 
         a Particle structure, users may use the ``add()`` member function 
