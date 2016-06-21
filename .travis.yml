@@ -3,11 +3,11 @@ sudo: false
 
 
 env:
-  - TESTPART=C
+  #- TESTPART=C
   - TESTPART=CCOVERAGE
-  - TESTPART=PYTHON
-  - TESTPART=IPYTHON1
-  - TESTPART=IPYTHON2
+  #- TESTPART=PYTHON
+  #- TESTPART=IPYTHON1
+  #- TESTPART=IPYTHON2
 
 python:
   - "2.7"
@@ -93,3 +93,5 @@ after_success:
     - if [[ $TESTPART == "CCOVERAGE" ]]; then find build/ -name "*.gcda" -exec cp {} src/ \; ; fi
     - if [[ $TESTPART == "CCOVERAGE" ]]; then find build/ -name "*.o" -exec cp {} src/ \; ; fi
     - if [[ $TESTPART == "CCOVERAGE" ]]; then coveralls -r src/; fi
+    - if [[ $TESTPART == "CCOVERAGE" ]]; then ls -lsa build/; fi
+    - if [[ $TESTPART == "CCOVERAGE" ]]; then ls -sla build/*/*; fi
