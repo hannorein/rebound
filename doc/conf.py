@@ -70,6 +70,9 @@ if 1:
             outp = subprocess.check_output(["cp", example, example[23:]])
             outp = subprocess.check_output(["jupyter", "nbconvert", example[23:], "--to", "rst"])
             print(outp)
+            print("Replacing links")
+            outp = subprocess.check_output(["perl", "-i", "-pe", "s/ipynb/html/g", example[23:][:-5]+"rst"])
+            print(outp)
     except:
         with open("ipython.rst","w") as fd:
             fd.write("Examples can be found on github\n")
