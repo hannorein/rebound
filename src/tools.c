@@ -280,7 +280,7 @@ void reb_get_particle_data(struct reb_simulation* r, int* ids, double* mass,
     const int N_real = r->N - r->N_var;
     struct reb_particle* restrict const particles = r->particles;
     for (int i=0;i<N_real;i++){
-        ids[i] = particles[i].id;
+        ids[i] = particles[i].hash;
         mass[i] = particles[i].m;
         radius[i] = particles[i].r;
         pos[i][0] = particles[i].x;
