@@ -206,8 +206,10 @@ int reb_remove_by_name(struct reb_simulation* const r, const char* name, int kee
 }
 
 uint32_t reb_generate_unique_hash(struct reb_simulation* const r){
-    r->hash_ctr++;
-    return (uint32_t)(getpid() + r->hash_ctr);
+    if (r->hash_ctr==NULL){
+        r->hash_ctr=getpid();
+    }
+    return (uint32_t)(r->hash_ctr++);
 }
 
 struct reb_particle* reb_get_particle_by_name(struct reb_simulation* const r, const char* name){
