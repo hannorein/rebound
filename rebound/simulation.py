@@ -971,8 +971,8 @@ class Simulation(Structure):
         mass, rad = ScalarArray(), ScalarArray()
         Coord3Array = (c_double*3)*self.N_real  # shape (N_real, 3)
         pos, vel = Coord3Array(), Coord3Array()
-        clibrebound.reb_get_particle_data(byref(self), byref(ids), byref(mass),
-                                          byref(rad), byref(pos), byref(vel))
+        clibrebound.reb_serialize_particle_data(byref(self), byref(ids), byref(mass),
+                                                byref(rad), byref(pos), byref(vel))
         return ids, mass, rad, pos, vel
 
     def move_to_com(self):

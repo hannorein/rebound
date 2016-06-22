@@ -275,7 +275,7 @@ void reb_move_to_com(struct reb_simulation* const r){
 	}
 }
 
-void reb_get_particle_data(struct reb_simulation* r, int* ids, double* mass,
+void reb_serialize_particle_data(struct reb_simulation* r, int* ids, double* mass,
                            double* radius, double (*pos)[3], double (*vel)[3]){
     const int N_real = r->N - r->N_var;
     struct reb_particle* restrict const particles = r->particles;
