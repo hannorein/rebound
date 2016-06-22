@@ -220,6 +220,10 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->collisions_allocatedN    = 0;
     r->collisions           = NULL;
     r->extras               = NULL;
+    // ********** Lookup Table
+    r->particle_lookup_table = NULL;
+    r->N_lookup = 0;
+    r->allocatedN_lookup = 0;
     // ********** WHFAST
     r->ri_whfast.allocated_N    = 0;
     r->ri_whfast.eta        = NULL;
