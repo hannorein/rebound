@@ -136,10 +136,6 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
         r->allocatedN = r->N;
         r->tree_root = NULL;
 
-        // Reset lookup table
-        r->N_lookup = 0;
-        r->allocatedN_lookup = 0;
-
         // Read particles
         r->particles = malloc(sizeof(struct reb_particle)*r->N);
         objects += fread(r->particles,sizeof(struct reb_particle),r->N,inf);
