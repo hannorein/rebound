@@ -980,21 +980,25 @@ class Simulation(Structure):
         Examples
         --------
         This sets an array to the xyz positions of all particles:
+
         >>> import numpy as np
         >>> a = np.zeros((sim.N,3),dtype="float64")
         >>> sim.serialize_particle_data(xyz=a)
         >>> print(a)
 
         To get all current radii of particles:
+
         >>> a = np.zeros(sim.N,dtype="float64")
         >>> sim.serialize_particle_data(r=a)
         >>> print(a)
         
         To get all current radii and hashes of particles:
+
         >>> a = np.zeros(sim.N,dtype="float64")
         >>> b = np.zeros(sim.N,dtype="uint32")
         >>> sim.serialize_particle_data(r=a,hash=b)
         >>> print(a,b)
+
         """
         N = self.N
         possible_keys = ["hash","m","r","xyz","vxvyvz"]
