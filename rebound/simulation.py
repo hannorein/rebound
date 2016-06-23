@@ -993,7 +993,7 @@ class Simulation(Structure):
         N = self.N
         possible_keys = ["hash","m","r","xyz","vxvyvz"]
         d = {x:None for x in possible_keys}
-        for k,v in kwargs.iteritems():
+        for k,v in kwargs.items():
             if k in d:
                 if k == "hash":
                     if v.dtype!= "uint32":
