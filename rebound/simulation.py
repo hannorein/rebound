@@ -951,6 +951,30 @@ class Simulation(Structure):
         return clibrebound.reb_get_com_range(byref(self), c_int(first), c_int(last))
 
 # Tools
+    def get_particle_data(self):
+        """
+        Returns the attributes of all particles in the simulation as arrays. 
+
+        Returns
+        -------
+        Returns a list of 4 arrays: [mass, radius, pos, vel].
+        mass and radius are (N,) arrays giving the mass and radius of 
+        each particle, and pos and vel are (N, 3) arrays giving the 
+        Cartesian position and velocity of each particle.  
+
+        The returned arrays are ctypes c_double arrays, which can be
+        converted to a ndarray with numpy.asarray. 
+        """
+        ScalarIntArray = c_int*self.N_real  # shape (N_real,)
+        ids = ScalarIntArray()
+        ScalarArray = c_double*self.N_real
+        mass, rad = ScalarArray(), ScalarArray()
+        Coord3Array = (c_double*3)*self.N_real  # shape (N_real, 3)
+        pos, vel = Coord3Array(), Coord3Array()
+        clibrebound.reb_serialize_particle_data(byref(self), byref(ids), byref(mass),
+                                                byref(rad), byref(pos), byref(vel))
+        return ids, mass, rad, pos, vel
+
     def move_to_com(self):
         """
         This function moves all particles in the simulation to a center of momentum frame.
