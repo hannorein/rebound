@@ -951,6 +951,79 @@ class Simulation(Structure):
         return clibrebound.reb_get_com_range(byref(self), c_int(first), c_int(last))
 
 # Tools
+    def serialize_particle_data(self,**kwargs):
+        """
+        Fast way to access serialized particle data via numpy arrays.
+
+        This function can directly set the values of numpy arrays to
+        current particle data. This is significantly faster than accessing
+        particle data via `sim.particles` as all the copying is done 
+        on the C side. 
+        No memory is allocated by this function.
+        It expects correctly sized numpy arrays as arguments. The argument
+        name indicates what kind of particle data is written to the array. 
+        
+        Possible argument names are "hash", "m", "r", "xyz", "vxyyvyvz".
+        The datatype for the "hash" array needs to be uint32. The other arrays
+        expect a datatype of float64. The lengths of "hash", "m", "r" arrays
+        need to be at least sim.N. The lengths of xyz and vxvyvz need
+        to be at least 3*sim.N. Exceptions are raised otherwise.
+
+        Note that this routine is only intended for special use cases
+        where speed is an issue. For normal use, it is recommended to
+        access particle data via the `sim.particles` array. Be aware of
+        potential issues that arrise by directly accesing the memory of
+        numpy arrays (see numpy documentation for more details).
+
+        Examples
+        --------
+        This sets an array to the xyz positions of all particles:
+
+        >>> import numpy as np
+        >>> a = np.zeros((sim.N,3),dtype="float64")
+        >>> sim.serialize_particle_data(xyz=a)
+        >>> print(a)
+
+        To get all current radii of particles:
+
+        >>> a = np.zeros(sim.N,dtype="float64")
+        >>> sim.serialize_particle_data(r=a)
+        >>> print(a)
+        
+        To get all current radii and hashes of particles:
+
+        >>> a = np.zeros(sim.N,dtype="float64")
+        >>> b = np.zeros(sim.N,dtype="uint32")
+        >>> sim.serialize_particle_data(r=a,hash=b)
+        >>> print(a,b)
+
+        """
+        N = self.N
+        possible_keys = ["hash","m","r","xyz","vxvyvz"]
+        d = {x:None for x in possible_keys}
+        for k,v in kwargs.items():
+            if k in d:
+                if k == "hash":
+                    if v.dtype!= "uint32":
+                        raise AttributeError("Expected 'uint32' data type for '%s' array."%k)
+                    if v.size<N:
+                        raise AttributeError("Array '%s' is not large enough."%k)
+                    d[k] = v.ctypes.data_as(ctypes.POINTER(ctypes.c_uint32))
+                else:
+                    if v.dtype!= "float64":
+                        raise AttributeError("Expected 'float64' data type for %s array."%k)
+                    if k in ["xyz", "vxvyvz"]:
+                        minsize = 3*N
+                    else:
+                        minsize = N
+                    if v.size<minsize:
+                        raise AttributeError("Array '%s' is not large enough."%k)
+                    d[k] = v.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+            else:
+                raise AttributeError("Only '%s' are currently supported attributes for serialization." % "', '".join(d.keys()))
+
+        clibrebound.reb_serialize_particle_data(byref(self), d["hash"], d["m"], d["r"], d["xyz"], d["vxvyvz"])
+
     def move_to_com(self):
         """
         This function moves all particles in the simulation to a center of momentum frame.

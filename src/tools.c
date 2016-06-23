@@ -275,6 +275,32 @@ void reb_move_to_com(struct reb_simulation* const r){
 	}
 }
 
+void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3]){
+    const int N_real = r->N - r->N_var;
+    struct reb_particle* restrict const particles = r->particles;
+    for (int i=0;i<N_real;i++){
+        if (hash){
+            hash[i] = particles[i].hash;
+        }
+        if (m){
+            m[i] = particles[i].m;
+        }
+        if (radius){
+            radius[i] = particles[i].r;
+        }
+        if (xyz){
+            xyz[i][0] = particles[i].x;
+            xyz[i][1] = particles[i].y;
+            xyz[i][2] = particles[i].z;
+        }
+        if (vxvyvz){
+            vxvyvz[i][0] = particles[i].vx;
+            vxvyvz[i][1] = particles[i].vy;
+            vxvyvz[i][2] = particles[i].vz;
+        }
+    }
+}
+
 struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_particle p2){
 	p1.x   = p1.x*p1.m + p2.x*p2.m;		
 	p1.y   = p1.y*p1.m + p2.y*p2.m;

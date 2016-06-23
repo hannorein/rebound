@@ -221,7 +221,7 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
 
     // Output header.
     const char str[] = "REBOUND Binary File. Version: ";
-    int lenheader = strlen(str)+strlen(reb_version_str);
+    size_t lenheader = strlen(str)+strlen(reb_version_str);
     fwrite(str,sizeof(char),strlen(str),of);
     fwrite(reb_version_str,sizeof(char), strlen(reb_version_str),of);
     while (lenheader<64){ //padding
