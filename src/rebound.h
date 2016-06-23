@@ -866,6 +866,18 @@ struct reb_particle reb_get_com(struct reb_simulation* r);
 struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_particle p2);
 
 /**
+ * @brief Constructs arrays containing particle data  
+ * @param r The rebound simulation to be considered
+ * @param ids 1D array to to hold particle hashes
+ * @param mass 1D array to to hold particle masses
+ * @param radius 1D array to to hold particle radii
+ * @param pos 2D array to to hold particle positions
+ * @param vel 2D array to to hold particle velocities
+*/
+void reb_serialize_particle_data(struct reb_simulation* r, int* ids, double* mass,
+                                 double* radius, double (*pos)[3], double (*vel)[3])
+
+/**
  * @brief Generates a unique hash.
  * @details Hash is only guaranteed to be unique relative to other hashes generated this way. 
  * It is the user's responsibility to check for collisions when assigning a hash directly or using a string with reb_tools_hash.
