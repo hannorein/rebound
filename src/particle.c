@@ -206,7 +206,7 @@ int reb_remove_by_name(struct reb_simulation* const r, const char* name, int kee
 }
 
 uint32_t reb_generate_unique_hash(struct reb_simulation* const r){
-    if (r->hash_ctr==NULL){
+    if (r->hash_ctr==0){
         r->hash_ctr=getpid();
     }
     return (uint32_t)(r->hash_ctr++);
