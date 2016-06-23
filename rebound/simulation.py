@@ -957,19 +957,25 @@ class Simulation(Structure):
 
         Details
         -------
-        This function can directly set the values of nump arrays to
+        This function can directly set the values of numpy arrays to
         current particle data. This is significantly faster than accessing
         particle data via `sim.particles` as all the copying is done 
         on the C side. 
         No memory is allocated by this function.
         It expects correctly sized numpy arrays as arguments. The argument
-        name indicates which particle is written to the array. 
+        name indicates what kind of particle data is written to the array. 
         
-        Possible arguments are "hash", "m", "r", "xyz", "vxyyvyvz".
-        The datatype for "hash" arrays needs to be uint32. The other arrays
+        Possible argument names are "hash", "m", "r", "xyz", "vxyyvyvz".
+        The datatype for the "hash" array needs to be uint32. The other arrays
         expect a datatype of float64. The lengths of "hash", "m", "r" arrays
         need to be at least sim.N. The lengths of xyz and vxvyvz need
         to be at least 3*sim.N. Exceptions are raised otherwise.
+
+        Note that this routine is only intended for special use cases
+        where speed is an issue. For normal use, it is recommended to
+        access particle data via the `sim.particles` array. Be aware of
+        potential issues that arrise by directly accesing the memory of
+        numpy arrays (see numpy documentation for more details).
 
         Examples
         --------
