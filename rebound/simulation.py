@@ -955,8 +955,6 @@ class Simulation(Structure):
         """
         Fast way to access serialized particle data via numpy arrays.
 
-        Details
-        -------
         This function can directly set the values of numpy arrays to
         current particle data. This is significantly faster than accessing
         particle data via `sim.particles` as all the copying is done 
