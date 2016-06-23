@@ -144,7 +144,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
         for(int k=index;k<global->ri_hermes.global_index_from_mini_index_N;k++){
             global->ri_hermes.global_index_from_mini_index[k] = global->ri_hermes.global_index_from_mini_index[k+1];
         }
-        for(int k=index;k<global->ri_hermes.global_index_from_mini_index_N;k++){
+        for(int k=0;k<global->ri_hermes.global_index_from_mini_index_N;k++){
             if(global->ri_hermes.global_index_from_mini_index[k] > globalj){
                 global->ri_hermes.global_index_from_mini_index[k]--; //1 fewer particles in index now
             }
