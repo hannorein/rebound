@@ -951,29 +951,70 @@ class Simulation(Structure):
         return clibrebound.reb_get_com_range(byref(self), c_int(first), c_int(last))
 
 # Tools
-    def get_particle_data(self):
+    def serialize_particle_data(self,**kwargs):
         """
-        Returns the attributes of all particles in the simulation as arrays. 
+        Fast way to access serialized particle data via numpy arrays.
 
-        Returns
+        Details
         -------
-        Returns a list of 4 arrays: [mass, radius, pos, vel].
-        mass and radius are (N,) arrays giving the mass and radius of 
-        each particle, and pos and vel are (N, 3) arrays giving the 
-        Cartesian position and velocity of each particle.  
+        This function can directly set the values of nump arrays to
+        current particle data. This is significantly faster than accessing
+        particle data via `sim.particles` as all the copying is done 
+        on the C side. 
+        No memory is allocated by this function.
+        It expects correctly sized numpy arrays as arguments. The argument
+        name indicates which particle is written to the array. 
+        
+        Possible arguments are "hash", "m", "r", "xyz", "vxyyvyvz".
+        The datatype for "hash" arrays needs to be uint32. The other arrays
+        expect a datatype of float64. The lengths of "hash", "m", "r" arrays
+        need to be at least sim.N. The lengths of xyz and vxvyvz need
+        to be at least 3*sim.N. Exceptions are raised otherwise.
 
-        The returned arrays are ctypes c_double arrays, which can be
-        converted to a ndarray with numpy.asarray. 
+        Examples
+        --------
+        This sets an array to the xyz positions of all particles:
+        >>> import numpy as np
+        >>> a = np.zeros((sim.N,3),dtype="float64")
+        >>> sim.serialize_particle_data(xyz=a)
+        >>> print(a)
+
+        To get all current radii of particles:
+        >>> a = np.zeros(sim.N,dtype="float64")
+        >>> sim.serialize_particle_data(r=a)
+        >>> print(a)
+        
+        To get all current radii and hashes of particles:
+        >>> a = np.zeros(sim.N,dtype="float64")
+        >>> b = np.zeros(sim.N,dtype="uint32")
+        >>> sim.serialize_particle_data(r=a,hash=b)
+        >>> print(a,b)
         """
-        ScalarIntArray = c_int*self.N_real  # shape (N_real,)
-        ids = ScalarIntArray()
-        ScalarArray = c_double*self.N_real
-        mass, rad = ScalarArray(), ScalarArray()
-        Coord3Array = (c_double*3)*self.N_real  # shape (N_real, 3)
-        pos, vel = Coord3Array(), Coord3Array()
-        clibrebound.reb_serialize_particle_data(byref(self), byref(ids), byref(mass),
-                                                byref(rad), byref(pos), byref(vel))
-        return ids, mass, rad, pos, vel
+        N = self.N
+        possible_keys = ["hash","m","r","xyz","vxvyvz"]
+        d = {x:None for x in possible_keys}
+        for k,v in kwargs.iteritems():
+            if k in d:
+                if k == "hash":
+                    if v.dtype!= "uint32":
+                        raise AttributeError("Expected 'uint32' data type for '%s' array."%k)
+                    if v.size<N:
+                        raise AttributeError("Array '%s' is not large enough."%k)
+                    d[k] = v.ctypes.data_as(ctypes.POINTER(ctypes.c_uint32))
+                else:
+                    if v.dtype!= "float64":
+                        raise AttributeError("Expected 'float64' data type for %s array."%k)
+                    if k in ["xyz", "vxvyvz"]:
+                        minsize = 3*N
+                    else:
+                        minsize = N
+                    if v.size<minsize:
+                        raise AttributeError("Array '%s' is not large enough."%k)
+                    d[k] = v.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+            else:
+                raise AttributeError("Only '%s' are currently supported attributes for serialization." % "', '".join(d.keys()))
+
+        clibrebound.reb_serialize_particle_data(byref(self), d["hash"], d["m"], d["r"], d["xyz"], d["vxvyvz"])
 
     def move_to_com(self):
         """
