@@ -66,6 +66,7 @@ static void reb_integrator_wh_from_jacobi(struct reb_particle* const particles, 
 #define DANBYB 1.e-13	///< Close to smallest relative floating point number
 
 void reb_integrator_wh_part1(struct reb_simulation* r){
+    r->gravity_ignore_10 = 0;
 	const int N = r->N;
 	const int N_active = r->N_active;
 	struct reb_particle* const particles = r->particles;
