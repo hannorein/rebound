@@ -61,7 +61,7 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
     mini->collision_resolve = r->collision_resolve;
     mini->collision_resolve_keep_sorted = r->collision_resolve_keep_sorted;
     mini->track_energy_offset = r->track_energy_offset;
-    mini->force_is_velocity_dependent = global->force_is_velocity_dependent;
+    mini->force_is_velocity_dependent = r->force_is_velocity_dependent;
 
     // Remove all particles from mini
     mini->t = r->t;
@@ -268,8 +268,8 @@ static void calc_forces_on_planets(const struct reb_simulation* r, double* a){
 
 // This is the current algorithm, interpolating forces
 static void reb_integrator_hermes_additional_forces_mini(struct reb_simulation* mini){
+    struct reb_simulation* global = mini->ri_hermes.global;
     if (mini->testparticle_type){
-        struct reb_simulation* global = mini->ri_hermes.global;
         struct reb_particle* mini_particles = mini->particles;
         const double t_prev = global->t - global->dt;
         double timefac = (mini->t - t_prev)/global->dt;
