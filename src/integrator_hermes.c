@@ -60,6 +60,7 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
     mini->collision_resolve = r->collision_resolve;
     mini->collision_resolve_keep_sorted = r->collision_resolve_keep_sorted;
     mini->track_energy_offset = r->track_energy_offset;
+    mini->force_is_velocity_dependent = global->force_is_velocity_dependent;
 
     // Remove all particles from mini
     mini->t = r->t;
@@ -289,5 +290,9 @@ static void reb_integrator_hermes_additional_forces_mini(struct reb_simulation* 
             mini_particles[i].ay += ay0*(1.-timefac) + ay1*timefac;
             mini_particles[i].az += az0*(1.-timefac) + az1*timefac;
         }
+    }
+    
+    if(global->additional_forces){
+        global->additional_forces(mini);
     }
 }
