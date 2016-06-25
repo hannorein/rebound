@@ -90,7 +90,7 @@ def simulation(par):
 
     runtime = 0.
     start = time.time()
-    # Capture warning messages (WHFast timestep to large)
+    # Capture warning messages (WHFast timestep too large)
     with warnings.catch_warnings(record=True) as w: 
         warnings.simplefilter("always")
         for t in times:
