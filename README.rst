@@ -78,3 +78,7 @@ http://rebound.readthedocs.org
 We're alway trying to improve REBOUND and extending the documention is high on our to-do list.
 If you have trouble installing or using REBOUND, please open an issue on github and we'll try to help as much as we can.
 
+
+Changelog
+---------
+For a changelog of the most important changes in recent updates, see https://github.com/hannorein/rebound/blob/master/doc/changelog.rst 
