@@ -41,15 +41,11 @@
 #include "integrator_hermes.h"
 #include "integrator_leapfrog.h"
 #include "integrator_sei.h"
-#include "integrator_wh.h"
 
 void reb_integrator_part1(struct reb_simulation* r){
 	switch(r->integrator){
 		case REB_INTEGRATOR_IAS15:
 			reb_integrator_ias15_part1(r);
-			break;
-		case REB_INTEGRATOR_WH:
-			reb_integrator_wh_part1(r);
 			break;
 		case REB_INTEGRATOR_LEAPFROG:
 			reb_integrator_leapfrog_part1(r);
@@ -73,9 +69,6 @@ void reb_integrator_part2(struct reb_simulation* r){
 		case REB_INTEGRATOR_IAS15:
 			reb_integrator_ias15_part2(r);
 			break;
-		case REB_INTEGRATOR_WH:
-			reb_integrator_wh_part2(r);
-			break;
 		case REB_INTEGRATOR_LEAPFROG:
 			reb_integrator_leapfrog_part2(r);
 			break;
@@ -97,9 +90,6 @@ void reb_integrator_synchronize(struct reb_simulation* r){
 	switch(r->integrator){
 		case REB_INTEGRATOR_IAS15:
 			reb_integrator_ias15_synchronize(r);
-			break;
-		case REB_INTEGRATOR_WH:
-			reb_integrator_wh_synchronize(r);
 			break;
 		case REB_INTEGRATOR_LEAPFROG:
 			reb_integrator_leapfrog_synchronize(r);
@@ -123,7 +113,6 @@ void reb_integrator_reset(struct reb_simulation* r){
 	r->gravity_ignore_10 = 0;
 	reb_integrator_ias15_reset(r);
 	reb_integrator_hermes_reset(r);
-	reb_integrator_wh_reset(r);
 	reb_integrator_leapfrog_reset(r);
 	reb_integrator_sei_reset(r);
 	reb_integrator_whfast_reset(r);

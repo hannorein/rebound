@@ -17,7 +17,7 @@ import types
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "wh": 3, "leapfrog": 4, "hermes": 5, "none": 6}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "hermes": 5, "none": 6}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2}
@@ -61,10 +61,6 @@ class reb_collision(Structure):
                 ("gb", reb_ghostbox),
                 ("time", c_double),
                 ("ri", c_int)]
-
-class reb_simulation_integrator_wh(Structure):
-    _fields_ = [(("allocatedN"), c_int),
-                ("eta", POINTER(c_double))]
 
 class reb_simulation_integrator_sei(Structure):
     """
@@ -435,7 +431,6 @@ class Simulation(Structure):
         - ``'ias15'`` (default)
         - ``'whfast'``
         - ``'sei'``
-        - ``'wh'``
         - ``'leapfrog'``
         - ``'hermes'``
         - ``'none'``
@@ -1376,7 +1371,6 @@ Simulation._fields_ = [
                 ("_boundary", c_int),
                 ("_gravity", c_int),
                 ("ri_sei", reb_simulation_integrator_sei), 
-                ("ri_wh", reb_simulation_integrator_wh), 
                 ("ri_whfast", reb_simulation_integrator_whfast),
                 ("ri_ias15", reb_simulation_integrator_ias15),
                 ("ri_hermes", reb_simulation_integrator_hermes),
