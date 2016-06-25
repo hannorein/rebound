@@ -134,19 +134,24 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
         }
         
         //remove from global and update global arrays
-        int globalj = global->ri_hermes.global_index_from_mini_index[index];
-        reb_remove(global,globalj,1);
+        int global_index = global->ri_hermes.global_index_from_mini_index[index];
+        reb_remove(global,global_index,1);
         
-        for(int k=globalj;k<global->N;k++){
+        //Shifting array values (filled with 0/1)
+        for(int k=global_index;k<global->N;k++){
             global->ri_hermes.is_in_mini[k] = global->ri_hermes.is_in_mini[k+1];
         }
+        
+        //Shifting array values (filled with index values)
         global->ri_hermes.global_index_from_mini_index_N--;
         for(int k=index;k<global->ri_hermes.global_index_from_mini_index_N;k++){
             global->ri_hermes.global_index_from_mini_index[k] = global->ri_hermes.global_index_from_mini_index[k+1];
         }
-        for(int k=index;k<global->ri_hermes.global_index_from_mini_index_N;k++){
-            if(global->ri_hermes.global_index_from_mini_index[k] > globalj){
-                global->ri_hermes.global_index_from_mini_index[k]--; //1 fewer particles in index now
+        
+        //Depreciating all index values larger than global_index
+        for(int k=0;k<global->ri_hermes.global_index_from_mini_index_N;k++){
+            if(global->ri_hermes.global_index_from_mini_index[k] > global_index){
+                global->ri_hermes.global_index_from_mini_index[k]--;
             }
         }
     }
@@ -208,8 +213,10 @@ int reb_remove_by_name(struct reb_simulation* const r, const char* name, int kee
 }
 
 uint32_t reb_generate_unique_hash(struct reb_simulation* const r){
-    r->hash_ctr++;
-    return (uint32_t)(getpid() + r->hash_ctr);
+    if (r->hash_ctr==0){
+        r->hash_ctr=getpid();
+    }
+    return (uint32_t)(r->hash_ctr++);
 }
 
 struct reb_particle* reb_get_particle_by_name(struct reb_simulation* const r, const char* name){

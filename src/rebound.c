@@ -62,11 +62,10 @@
 #ifndef LIBREBOUND
 static const char* logo[];              /**< Logo of rebound. */
 #endif // LIBREBOUND
-const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "2.18.7";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
-
+const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
+const char* reb_version_str = "2.18.7";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 
 void reb_step(struct reb_simulation* const r){
     // A 'DKD'-like integrator will do the first 'D' part.
@@ -286,6 +285,10 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->collisions           = NULL;
     r->extras               = NULL;
     r->messages             = NULL;
+    // ********** Lookup Table
+    r->particle_lookup_table = NULL;
+    r->N_lookup = 0;
+    r->allocatedN_lookup = 0;
     // ********** WHFAST
     r->ri_whfast.allocated_N    = 0;
     r->ri_whfast.eta        = NULL;

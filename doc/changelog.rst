@@ -14,6 +14,17 @@ Version 2.19.0
        # The message will not show up.
 * Improvements regarding the WHFast logic for hyperbolic orbis. No changes should be noticable to users.
 
+Version 2.18.9
+--------------
+* Added the reb_serialize_particle_data function for fast access to particle data via numpy array. The full syntax is explain in the documentation. Here is a short example: 
+.. code:: python
+   
+   import numpy as np
+   a = np.zeros((sim.N,3),dtype="float64")
+   sim.serialize_particle_data(xyz=a)
+   print(a)
+>>>>>>> master
+
 
 Version 2.18.5
 --------------

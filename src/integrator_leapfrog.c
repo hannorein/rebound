@@ -37,6 +37,7 @@
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
 void reb_integrator_leapfrog_part1(struct reb_simulation* r){
+    r->gravity_ignore_10 = 0;
 	const int N = r->N;
 	struct reb_particle* restrict const particles = r->particles;
 	const double dt = r->dt;

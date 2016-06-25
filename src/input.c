@@ -110,7 +110,7 @@ struct reb_simulation* reb_create_simulation_from_binary_with_messages(char* fil
         const char str[] = "REBOUND Binary File. Version: ";
         char readbuf[65], curvbuf[65];
         sprintf(curvbuf,"%s%s",str,reb_version_str);
-        for(unsigned long j=strlen(curvbuf);j<63;j++){
+        for(size_t j=strlen(curvbuf);j<63;j++){
             curvbuf[j] = ' ';
         }
         curvbuf[63] = '\0';

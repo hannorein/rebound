@@ -1,13 +1,13 @@
 /**
- * @file 	integrator_hermes.c
- * @brief 	WHFAST/IAS15 Hybrid integration scheme.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @details	This file implements a hybrid integration scheme capable
+ * @file    integrator_hermes.c
+ * @brief   HERMES. A WHFAST/IAS15 hybrid integration scheme.
+ * @author  Ari Silburt <silburt@astro.utoronto.ca>
+ * @details This file implements a hybrid integration scheme capable
  *  of handling close encounters, simple collisions, and
- *  planetesimal forces.
+ *  planetesimal forces. Details are describe in Silburt et al (in prep).
  * 
- * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ * @section LICENSE
+ * Copyright (c) 2016 Ari Silburt 
  *
  * This file is part of rebound.
  *
@@ -43,7 +43,8 @@ static void reb_integrator_hermes_additional_forces_mini(struct reb_simulation* 
 static void calc_forces_on_planets(const struct reb_simulation* r, double* a);
 
 void reb_integrator_hermes_part1(struct reb_simulation* r){
-	const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
+    r->gravity_ignore_10 = 0;
+    const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     struct reb_simulation* mini = r->ri_hermes.mini;
     if (mini == NULL){
         mini = reb_create_simulation();
@@ -60,6 +61,7 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
     mini->collision_resolve = r->collision_resolve;
     mini->collision_resolve_keep_sorted = r->collision_resolve_keep_sorted;
     mini->track_energy_offset = r->track_energy_offset;
+    mini->force_is_velocity_dependent = r->force_is_velocity_dependent;
 
     // Remove all particles from mini
     mini->t = r->t;
@@ -136,9 +138,9 @@ void reb_integrator_hermes_part2(struct reb_simulation* r){
         }
     }
 }
-	
+
 void reb_integrator_hermes_synchronize(struct reb_simulation* r){
-	// Do nothing.
+    // Do nothing.
     reb_integrator_whfast_synchronize(r);
 }
 
@@ -175,7 +177,7 @@ void reb_integrator_hermes_reset(struct reb_simulation* r){
 
 static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* global){
     struct reb_simulation* mini = global->ri_hermes.mini;
-	const int _N_active = ((global->N_active==-1)?global->N:global->N_active) - global->N_var;
+    const int _N_active = ((global->N_active==-1)?global->N:global->N_active) - global->N_var;
     struct reb_particle* global_particles = global->particles;
     struct reb_particle p0 = global_particles[0];
     double hill_switch_factor = global->ri_hermes.hill_switch_factor;
@@ -266,8 +268,8 @@ static void calc_forces_on_planets(const struct reb_simulation* r, double* a){
 
 // This is the current algorithm, interpolating forces
 static void reb_integrator_hermes_additional_forces_mini(struct reb_simulation* mini){
+    struct reb_simulation* global = mini->ri_hermes.global;
     if (mini->testparticle_type){
-        struct reb_simulation* global = mini->ri_hermes.global;
         struct reb_particle* mini_particles = mini->particles;
         const double t_prev = global->t - global->dt;
         double timefac = (mini->t - t_prev)/global->dt;
@@ -289,5 +291,9 @@ static void reb_integrator_hermes_additional_forces_mini(struct reb_simulation* 
             mini_particles[i].ay += ay0*(1.-timefac) + ay1*timefac;
             mini_particles[i].az += az0*(1.-timefac) + az1*timefac;
         }
+    }
+    
+    if(global->additional_forces){
+        global->additional_forces(mini);
     }
 }
