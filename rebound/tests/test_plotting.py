@@ -1,5 +1,6 @@
 import rebound
 import unittest
+import warnings
 
 class TestPlotting(unittest.TestCase):
     def setUp(self):
@@ -12,19 +13,27 @@ class TestPlotting(unittest.TestCase):
         self.sim = None
     
     def test_orbitplot(self):
-        import matplotlib; matplotlib.use("pdf")
-        import numpy as np
-        t = np.array(1.)
-        plot = rebound.OrbitPlot(self.sim,periastron=True)
-        self.assertIsInstance(plot,matplotlib.figure.Figure)
-        plot = rebound.OrbitPlot(self.sim,periastron=True,color=True,trails=True,unitlabel="AU")
-        self.assertIsInstance(plot,matplotlib.figure.Figure)
+        with warnings.catch_warnings(record=True) as w: 
+            warnings.simplefilter("always")
+            import matplotlib; matplotlib.use("pdf")
+            import numpy as np
+            t = np.array(1.)
+            plot = rebound.OrbitPlot(self.sim,periastron=True)
+            self.assertIsInstance(plot,matplotlib.figure.Figure)
+            plot = rebound.OrbitPlot(self.sim,periastron=True,color=True,trails=True,unitlabel="AU")
+            self.assertIsInstance(plot,matplotlib.figure.Figure)
     
     def test_orbitplot_slices(self):
-        import matplotlib; matplotlib.use("pdf")
-        import numpy as np
-        t = np.array(1.)
-        plot = rebound.OrbitPlot(self.sim,periastron=True,slices=True)
-        self.assertIsInstance(plot,matplotlib.figure.Figure)
-        plot = rebound.OrbitPlot(self.sim,periastron=True,color=True,trails=True,unitlabel="AU",slices=True,limz=1.)
-        self.assertIsInstance(plot,matplotlib.figure.Figure)
+        with warnings.catch_warnings(record=True) as w: 
+            warnings.simplefilter("always")
+            import matplotlib; matplotlib.use("pdf")
+            import numpy as np
+            t = np.array(1.)
+            plot = rebound.OrbitPlot(self.sim,periastron=True,slices=True)
+            self.assertIsInstance(plot,matplotlib.figure.Figure)
+            plot = rebound.OrbitPlot(self.sim,periastron=True,color=True,trails=True,unitlabel="AU",slices=True,limz=1.)
+            self.assertIsInstance(plot,matplotlib.figure.Figure)
+   
+
+if __name__ == "__main__":
+    unittest.main()
