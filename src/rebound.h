@@ -1296,7 +1296,7 @@ struct reb_particle reb_particle_divide(struct reb_particle p1, double value);
  */
 /**
  * @brief Calculate the total energy (potential and kinetic).
- * @details Does not work for WH/SEI.
+ * @details Does not work for SEI (shearing sheet simulations). 
  * @param r The rebound simulation to be considered.
  * @return Total energy. 
  */

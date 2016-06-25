@@ -19,7 +19,7 @@ Welcome to REBOUND!
 
 REBOUND is an N-body integrator, i.e. a software package that can integrate the motion of particles under the influence of gravity. The particles can represent stars, planets, moons, ring or dust particles. REBOUND is very flexible and can be customized to accurately and efficiently solve many problems in astrophysics.  An incomplete feature list of REBOUND:
 
-* Symplectic integrators (WHFast, WH, SEI, LEAPFROG)
+* Symplectic integrators (WHFast, SEI, LEAPFROG)
 * High accuracy non-symplectic integrator with adaptive timestepping (IAS15)
 * Support for collisional/granular dynamics, various collision detection routines
 * The code is written entirely in C, conforms to the ISO standard C99 and can be used as a thread-safe shared library

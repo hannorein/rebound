@@ -56,9 +56,8 @@ REB_INTEGRATOR_IAS15      IAS15 stands for Integrator with Adaptive Step-size co
 REB_INTEGRATOR_WHFAST     WHFast is the integrator described in Rein & Tamayo 2015, it's a second order symplectic Wisdom Holman integrator with 11th order symplectic correctors. It is extremely fast and accurate, uses Gauss f and g functions to solve the Kepler motion and can integrate variational equations.
 REB_INTEGRATOR_EULER      Euler scheme, first order
 REB_INTEGRATOR_LEAPFROG   Leap frog, second order, symplectic
-REB_INTEGRATOR_WH         SWIFT-style Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, note that  `integrator_whfast.c` almost always offers better characteristics, Wisdom & Holman 1991, Kinoshita et al 1991
 REB_INTEGRATOR_SEI        Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
-REB_INTEGRATOR_HYBRID     An experimental hybrid symplectic integrator that uses WHFast for long term integrations but switches over to IAS15 for close encounters.
+REB_INTEGRATOR_HERMES     A hybrid symplectic integrator that uses WHFast for long term integrations but switches over to IAS15 for close encounters.
 =======================  ============================================ 
 
 
