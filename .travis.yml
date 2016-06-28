@@ -91,3 +91,5 @@ after_success:
     - if [[ $TESTPART == "PYTHON" ]] && [[ ${TRAVIS_PYTHON_VERSION:0:3} == "2.7" ]]; then coveralls; fi
     - if [[ $TESTPART == "CCOVERAGE" ]]; then cp -r src build/*/src/ ; fi
     - if [[ $TESTPART == "CCOVERAGE" ]]; then coveralls ; fi
+    - if [[ $TESTPART == "PYTHON" ]]; then bash <(curl -s https://codecov.io/bash); fi
+    - if [[ $TESTPART == "CCOVERAGE" ]]; then bash <(curl -s https://codecov.io/bash); fi
