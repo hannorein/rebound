@@ -68,7 +68,6 @@ int main(int argc, char* argv[]) {
 	r->force_is_velocity_dependent = 0; // Force only depends on positions.
 	r->integrator = REB_INTEGRATOR_WHFAST;
 	//r->integrator	= REB_INTEGRATOR_IAS15;
-	//r->integrator	= REB_INTEGRATOR_WH;
 
 	// Initial conditions
 	for (int i = 0; i < 6; i++) {
@@ -82,26 +81,8 @@ int main(int argc, char* argv[]) {
 		p.m = ss_mass[i];
 		reb_add(r, p);
 	}
-	if (r->integrator == REB_INTEGRATOR_WH) {
-		struct reb_particle* const particles = r->particles;
-		// Move to heliocentric frame (required by WH integrator)
-		for (int i = 1; i < r->N; i++) {
-			particles[i].x -= particles[0].x;
-			particles[i].y -= particles[0].y;
-			particles[i].z -= particles[0].z;
-			particles[i].vx -= particles[0].vx;
-			particles[i].vy -= particles[0].vy;
-			particles[i].vz -= particles[0].vz;
-		}
-		particles[0].x = 0;
-		particles[0].y = 0;
-		particles[0].z = 0;
-		particles[0].vx = 0;
-		particles[0].vy = 0;
-		particles[0].vz = 0;
-	} else {
-		reb_move_to_com(r);
-	}
+
+    reb_move_to_com(r);
 
 	r->N_active = r->N - 1; // Pluto is treated as a test-particle.
 

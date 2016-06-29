@@ -2,6 +2,7 @@ import rebound
 import unittest
 import math
 import rebound.data
+import warnings
 
 class TestIntegrator2(unittest.TestCase):
     def test_whfast_verylargedt(self):
@@ -13,19 +14,10 @@ class TestIntegrator2(unittest.TestCase):
         yr = sim.particles[1].P
         sim.dt = 4.56*yr
         x0 = sim.particles[1].x
-        sim.integrate(1e3*yr)
-        x1 = sim.particles[1].x
-        self.assertAlmostEqual(x0, x1, delta=1e-12)
-    
-    def test_wh_verylargedt(self):
-        sim = rebound.Simulation()
-        sim.add(m=1.)
-        sim.add(m=1e-3, a=1.)
-        sim.integrator = "wh"
-        yr = sim.particles[1].P
-        sim.dt = 4.56*yr
-        x0 = sim.particles[1].x
-        sim.integrate(1e3*yr)
+        with warnings.catch_warnings(record=True) as w: 
+            warnings.simplefilter("always")
+            sim.integrate(1e3*yr)
+            self.assertEqual(1,len(w))
         x1 = sim.particles[1].x
         self.assertAlmostEqual(x0, x1, delta=1e-12)
     
@@ -107,25 +99,6 @@ class TestIntegrator(unittest.TestCase):
         self.sim.integrate(1e3*jupyr)
         e1 = self.sim.calculate_energy()
         self.assertLess(math.fabs((e0-e1)/e1),1e-14)
-    
-    def test_wh(self):
-        self.sim.integrator = "wh"
-        self.sim.move_to_com()
-        e0 = self.sim.calculate_energy()
-        # Move to heliocentric frame
-        sun = self.sim.particles[0].copy()
-        for p in self.sim.particles:
-            m = p.m
-            p -= sun
-            p.m = m
-        jupyr = 11.86*2.*math.pi
-        self.sim.dt = 0.123*jupyr
-        self.sim.integrate(1e3*jupyr)
-        self.assertNotEqual(e0,0.)
-        self.sim.move_to_com()
-        e1 = self.sim.calculate_energy()
-        # Something wrong here with the energy conservations! TODO!
-        self.assertLess(math.fabs((e0-e1)/e1),1e-2)
     
     def test_whfast_largedt(self):
         self.sim.integrator = "whfast"

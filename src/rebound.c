@@ -37,7 +37,6 @@
 #include <fcntl.h>
 #include "rebound.h"
 #include "integrator.h"
-#include "integrator_wh.h"
 #include "integrator_whfast.h"
 #include "integrator_ias15.h"
 #include "integrator_hermes.h"
@@ -264,7 +263,6 @@ void reb_free_pointers(struct reb_simulation* const r){
     reb_tree_delete(r);
     free(r->gravity_cs  );
     free(r->collisions  );
-    reb_integrator_wh_reset(r);
     reb_integrator_whfast_reset(r);
     reb_integrator_ias15_reset(r);
     free(r->particles   );
@@ -309,9 +307,6 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_ias15.csv         = NULL;
     r->ri_ias15.csa0        = NULL;
     r->ri_ias15.at          = NULL;
-    // ********** WH
-    r->ri_wh.allocatedN         = 0;
-    r->ri_wh.eta            = NULL;
     // ********** HERMES
     r->ri_hermes.mini      = NULL;
     r->ri_hermes.global    = NULL;

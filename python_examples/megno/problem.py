@@ -15,6 +15,7 @@ import rebound
 # Import other modules
 import numpy as np
 import multiprocessing
+import warnings
 
 # Runs one simulation.
 def simulation(par):
@@ -32,7 +33,10 @@ def simulation(par):
 
     sim.move_to_com()
     sim.init_megno()
-    sim.integrate(1e3*2.*np.pi)
+    # Hide warning messages (WHFast timestep too large)
+    with warnings.catch_warnings(record=True) as w: 
+        warnings.simplefilter("always")
+        sim.integrate(1e3*2.*np.pi)
 
     return [sim.calculate_megno(),1./(sim.calculate_lyapunov()*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
 

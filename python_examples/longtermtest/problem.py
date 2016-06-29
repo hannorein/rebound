@@ -8,6 +8,7 @@ import rebound
 import numpy as np
 import time
 from rebound.interruptible_pool import InterruptiblePool
+import warnings
 
 def simulation(par):
     integrator, run, trial = par
@@ -53,7 +54,7 @@ def simulation(par):
         com_vx = 0.
         com_vy = 0.
         com_vz = 0.
-        if integrator=="wh" or integrator=="mercury" or integrator[0:7]=="swifter":
+        if integrator=="mercury" or integrator[0:7]=="swifter":
             mtot = 0.
             for p in particles:
                 com_vx += p.vx*p.m 
@@ -79,7 +80,7 @@ def simulation(par):
         return E_kin+E_pot
 
     times = np.logspace(np.log10(orbit),np.log10(tmax),Ngrid)
-    if integrator=="wh" or integrator=="mercury" or integrator[0:7]=="swifter":
+    if integrator=="mercury" or integrator[0:7]=="swifter":
         move_to_heliocentric()
     else:
         sim.move_to_com()
@@ -89,11 +90,14 @@ def simulation(par):
 
     runtime = 0.
     start = time.time()
-    for t in times:
-        sim.integrate(t,exact_finish_time=0)
-        ef = energy()
-        e = np.fabs((ei-ef)/ei)+1.1e-16
-        es.append(e)
+    # Capture warning messages (WHFast timestep too large)
+    with warnings.catch_warnings(record=True) as w: 
+        warnings.simplefilter("always")
+        for t in times:
+            sim.integrate(t,exact_finish_time=0)
+            ef = energy()
+            e = np.fabs((ei-ef)/ei)+1.1e-16
+            es.append(e)
     
     integrator, run, trial = par
     print(integrator.ljust(13) + " %9.5fs"%(time.time()-start) + "\t Error: %e"  %( e))
@@ -106,13 +110,12 @@ Ngrid = 500
 orbit = 11.8618*1.*np.pi
 dt = orbit/3000.
 tmax = orbit*1e2        # Maximum integration time.
-integrators = ["wh","whfast-nocor", "whfast"]
-#integrators = ["mercury","wh","swifter-whm","whfast-nocor", "whfast"]
+integrators = ["whfast-nocor", "whfast"]
+#integrators = ["mercury","swifter-whm","whfast-nocor", "whfast"]
 colors = {
     'whfast-nocor': "#FF0000",
     'whfast':       "#00AA00",
     'mercury':      "#6E6E6E",
-    'wh':           "b",
     'swifter-whm':  "#444444",
     'swifter-helio':"#AABBBB",
     'swifter-tu4':  "#FFAAAA",

@@ -260,20 +260,6 @@ struct reb_simulation_integrator_sei {
 };
 
 /**
- * @brief This structure contains variables used by the WH integrator.
- * @details Nothing needs to be changed by the user. All the variables are just for internal use.
- */
-struct reb_simulation_integrator_wh {
-    /**
-     * @cond PRIVATE
-     * Internal data structures below. Nothing to be changed by the user.
-     */
-    int allocatedN;
-    double* eta;
-    /** @endcond */
-};
-
-/**
  * @brief This structure contains variables used by the WHFast integrator.
  */
 struct reb_simulation_integrator_whfast {
@@ -510,13 +496,12 @@ struct reb_simulation {
      * @brief Available integrators
      */
     enum {
-        REB_INTEGRATOR_IAS15 = 0,   ///< IAS15 integrator, 15th order, non-symplectic (default)
-        REB_INTEGRATOR_WHFAST = 1,  ///< WHFast integrator, symplectic, 2nd order, up to 11th order correctors
-        REB_INTEGRATOR_SEI = 2,     ///< SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable
-        REB_INTEGRATOR_WH = 3,      ///< WH integrator (based on swifter), WHFast is recommended, this integrator is in REBOUND for comparison tests only
-        REB_INTEGRATOR_LEAPFROG = 4,  ///< LEAPFROG integrator, simple, 2nd order, symplectic
+        REB_INTEGRATOR_IAS15 = 0,    ///< IAS15 integrator, 15th order, non-symplectic (default)
+        REB_INTEGRATOR_WHFAST = 1,   ///< WHFast integrator, symplectic, 2nd order, up to 11th order correctors
+        REB_INTEGRATOR_SEI = 2,      ///< SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable
+        REB_INTEGRATOR_LEAPFROG = 4, ///< LEAPFROG integrator, simple, 2nd order, symplectic
         REB_INTEGRATOR_HERMES = 5,   ///< HERMES Integrator for close encounters (experimental)
-        REB_INTEGRATOR_NONE = 6,      ///< Do not integrate anything
+        REB_INTEGRATOR_NONE = 6,     ///< Do not integrate anything
         } integrator;
 
     /**
@@ -546,7 +531,6 @@ struct reb_simulation {
      * @{
      */
     struct reb_simulation_integrator_sei ri_sei;        ///< The SEI struct 
-    struct reb_simulation_integrator_wh ri_wh;      ///< The WH struct 
     struct reb_simulation_integrator_whfast ri_whfast;  ///< The WHFast struct 
     struct reb_simulation_integrator_ias15 ri_ias15;    ///< The IAS15 struct
     struct reb_simulation_integrator_hermes ri_hermes;    ///< The HERMES struct
@@ -1312,7 +1296,7 @@ struct reb_particle reb_particle_divide(struct reb_particle p1, double value);
  */
 /**
  * @brief Calculate the total energy (potential and kinetic).
- * @details Does not work for WH/SEI.
+ * @details Does not work for SEI (shearing sheet simulations). 
  * @param r The rebound simulation to be considered.
  * @return Total energy. 
  */
