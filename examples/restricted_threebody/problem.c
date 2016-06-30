@@ -65,7 +65,3 @@ void heartbeat(struct reb_simulation* r){
 		reb_output_orbits(r, "orbit.txt");
 	}
 }
-
-void problem_finish(){
-}
-
