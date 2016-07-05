@@ -730,7 +730,7 @@ class Simulation(Structure):
 
         1) A single Particle structure.
         2) The particle's mass and a set of cartesian coordinates: m,x,y,z,vx,vy,vz.
-        3) The primary as a Particle structure, the particle's mass and a set of orbital elements primary,a,anom,e,omega,inv,Omega,MEAN (see kepler_particle() for the definition of orbital elements). 
+        3) The primary as a Particle structure, the particle's mass and a set of orbital elements: primary,m,a,anom,e,omega,inv,Omega,MEAN (see :class:`.Orbit` for the definition of orbital elements).
         4) A name of an object (uses NASA Horizons to look up coordinates)
         5) A list of particles or names.
         """
