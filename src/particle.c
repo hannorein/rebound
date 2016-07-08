@@ -44,12 +44,7 @@
 extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
-static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt){
-	if (reb_boundary_particle_is_in_box(r, pt)==0){
-		// reb_particle has left the box. Do not add.
-		reb_error(r,"Particle outside of box boundaries. Did not add particle.");
-		return;
-	}
+static struct reb_particle* reb_add_local(struct reb_simulation* const r, struct reb_particle pt){
 	while (r->allocatedN<=r->N){
 		r->allocatedN += 128;
 		r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->allocatedN);
@@ -61,6 +56,13 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
 		reb_tree_add_particle_to_tree(r, r->N);
 	}
 	(r->N)++;
+    return &r->particles[r->N-1];
+}
+
+struct reb_particle* reb_add_particle(struct reb_simulation* const r){
+    struct reb_particle pt = {0};
+    pt.hash = UINT32_MAX;       // we don't set pt.hash in reb_add routine since user might already have set hash manually.
+    return reb_add_local(r, pt);
 }
 
 void reb_add(struct reb_simulation* const r, struct reb_particle pt){
@@ -90,7 +92,14 @@ void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 	}
 #endif // MPI
 	// Add particle to local partical array.
-	reb_add_local(r, pt);
+	if (reb_boundary_particle_is_in_box(r, pt)==0){
+		// reb_particle has left the box. Do not add.
+		reb_error(r,"Particle outside of box boundaries. Did not add particle.");
+		return;
+	}
+    else{
+        reb_add_local(r, pt);
+    }
 }
 
 int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt){
@@ -113,6 +122,54 @@ int reb_get_particle_index(struct reb_particle* p){
 		}	
 	}
 	return i;
+}
+
+static struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash){
+    const struct reb_hash_pointer_pair* const lookup = r->particle_lookup_table;
+    if (lookup == NULL || hash == UINT32_MAX){
+        return NULL;
+    }
+    for(int i=0; i<r->N_lookup; i++){
+        if(lookup[i].hash == hash){
+            if(lookup[i].index < r->N){
+                return &r->particles[lookup[i].index];
+            }
+        }
+    }
+    return NULL;
+}
+
+static void reb_update_particle_lookup_table(struct reb_simulation* const r){
+    const struct reb_particle* const particles = r->particles;
+    int N_hash = 0;
+    for(int i=0; i<r->N; i++){
+        if(N_hash >= r->allocatedN_lookup){
+            r->allocatedN_lookup += 128;
+            r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*r->allocatedN_lookup);
+        }
+        if(particles[i].hash != UINT32_MAX){
+            r->particle_lookup_table[N_hash].hash = particles[i].hash;
+            r->particle_lookup_table[N_hash].index = i;
+            N_hash++;
+        }
+    }
+    r->N_lookup = N_hash;
+}
+
+struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash){
+    struct reb_particle* p; 
+    p = reb_search_lookup_table(r, hash);
+    if (p == NULL){
+        reb_update_particle_lookup_table(r);
+        p = reb_search_lookup_table(r, hash);
+    }
+    else{
+        if (p->hash != hash){
+            reb_update_particle_lookup_table(r);
+            p = reb_search_lookup_table(r, hash);
+        }
+    }
+    return p;
 }
 
 void reb_remove_all(struct reb_simulation* const r){
@@ -205,71 +262,6 @@ int reb_remove_by_hash(struct reb_simulation* const r, uint32_t hash, int keepSo
         int index = reb_get_particle_index(p);
         return reb_remove(r, index, keepSorted);
     }
-}
-
-int reb_remove_by_name(struct reb_simulation* const r, const char* name, int keepSorted){
-    uint32_t hash = reb_tools_hash(name);
-    return reb_remove_by_hash(r, hash, keepSorted);
-}
-
-uint32_t reb_generate_unique_hash(struct reb_simulation* const r){
-    if (r->hash_ctr==0){
-        r->hash_ctr=getpid();
-    }
-    return (uint32_t)(r->hash_ctr++);
-}
-
-struct reb_particle* reb_get_particle_by_name(struct reb_simulation* const r, const char* name){
-    uint32_t hash = reb_tools_hash(name);
-    return reb_get_particle_by_hash(r, hash);
-}
-
-static struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash){
-    const struct reb_hash_pointer_pair* const lookup = r->particle_lookup_table;
-    if (lookup == NULL){
-        return NULL;
-    }
-    for(int i=0; i<r->N_lookup; i++){
-        if(lookup[i].hash == hash){
-            if(lookup[i].index < r->N){
-                return &r->particles[lookup[i].index];
-            }
-        }
-    }
-    return NULL;
-}
-
-struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash){
-    struct reb_particle* p; 
-    p = reb_search_lookup_table(r, hash);
-    if (p == NULL){
-        reb_update_particle_lookup_table(r);
-        return reb_search_lookup_table(r, hash);
-    }
-    else{
-        if (p->hash != hash){
-            reb_update_particle_lookup_table(r);
-            p = reb_search_lookup_table(r, hash);
-        }
-    }
-    return p;
-}
-
-void reb_update_particle_lookup_table(struct reb_simulation* const r){
-    const struct reb_particle* const particles = r->particles;
-    int N_hash = 0;
-    for(int i=0; i<r->N; i++){
-        if(particles[i].hash != 0){
-            if(N_hash >= r->allocatedN_lookup){
-                r->allocatedN_lookup += 128;
-                r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*r->allocatedN_lookup);
-            }
-            r->particle_lookup_table[N_hash].hash = particles[i].hash;
-            r->particle_lookup_table[N_hash].index = i;
-            N_hash++;
-        }
-    }
-    r->N_lookup = N_hash;
 }
 
 struct reb_particle reb_particle_minus(struct reb_particle p1, struct reb_particle p2){

@@ -698,6 +698,14 @@ int reb_reset_function_pointers(struct reb_simulation* const r);
  */
 void reb_add(struct reb_simulation* const r, struct reb_particle pt);
 
+/** 
+ * @brief Adds an uninitialized particle to the simulation and returns a pointer to it.
+ * @details It is safer to make new particles with this function rather than reb_add in order to ensure the particle is in a simulation before e.g. using REBOUNDx to add parameters to it.  It's also necessary in order to ensure correct behavior if using hashes. 
+ * @param r The rebound simulation to which the particle will be added
+ * @param pt The particle to be added. Note that this is a structure, not a reference to a structure.
+ * @return A pointer to the new particle.  Only simulation pointer and hash are set (to r and UINT32_MAX). All other fields set to 0/NULL.
+ */
+struct reb_particle* reb_add_particle(struct reb_simulation* const r);
 
 /**
  * @brief Remove all particles
@@ -730,19 +738,6 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted);
 int reb_remove_by_hash(struct reb_simulation* const r, uint32_t hash, int keepSorted);
 
 /**
- * @brief Remove a particle by its assigned name.
- * @details see examples/removing_particles_from_simulation.
- * @param r The rebound simulation to be considered
- * @param name The name of the particle to be removed.
- * @param keepSorted If set to 1 keep the particles with indices in the particles array
- * higher than the one with the passed id are all shifted down one position,
- * ensuring the ordering remains. 
- * @return Returns 1 if particle successfully removed,
- * 0 if hash was not found in the particles array.
- */
-int reb_remove_by_name(struct reb_simulation* const r, const char* name, int keepSorted);
-
-/**
  * @brief Get a pointer to a particle by its hash.
  * @details see examples/uniquely_identifying_particles.
  * @param r The rebound simulation to be considered.
@@ -750,15 +745,6 @@ int reb_remove_by_name(struct reb_simulation* const r, const char* name, int kee
  * @return A pointer to the particle if found, NULL otherwise.
 */
 struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash);
-
-/**
- * @brief Get a pointer to a particle by its name.
- * @details see examples/uniquely_identifying_particles.
- * @param r The rebound simulation to be considered.
- * @param str The name of the particle to search for.
- * @return A pointer to the particle if found, NULL otherwise.
-*/
-struct reb_particle* reb_get_particle_by_name(struct reb_simulation* const r, const char* name);
 
 /**
  * @brief Run the heartbeat function and check for escaping/colliding particles.
