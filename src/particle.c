@@ -129,14 +129,43 @@ static struct reb_particle* reb_search_lookup_table(struct reb_simulation* const
     if (lookup == NULL || hash == UINT32_MAX){
         return NULL;
     }
+
+    int left = 0;
+    int right = r->N_lookup-1;
+    int middle;
+    /*printf("%u\n", hash);
     for(int i=0; i<r->N_lookup; i++){
-        if(lookup[i].hash == hash){
-            if(lookup[i].index < r->N){
-                return &r->particles[lookup[i].index];
+        printf("%u\n", lookup[i].hash);
+    }*/
+    int N=0;
+    do{
+        middle = (left + right)/2;
+        uint32_t lookuphash = lookup[middle].hash;
+        //printf("%d\t%d\t%d\t%u\n", left, right, middle, lookuphash);
+        if(lookuphash < hash){
+            left = middle+1;
+        }
+        else if(lookuphash > hash){
+            right = middle-1;
+        }
+        else if(lookuphash  == hash){
+            if(lookup[middle].index < r->N){
+                return &r->particles[lookup[middle].index];
             }
         }
-    }
+        N++;
+        if(N>10){
+            exit(1);
+        }
+    } while (left != right);
+
     return NULL;
+}
+
+static int compare_hash(const void* a, const void* b){
+    struct reb_hash_pointer_pair* ia = (struct reb_hash_pointer_pair*)a; 
+    struct reb_hash_pointer_pair* ib = (struct reb_hash_pointer_pair*)b;
+    return (ia->hash > ib->hash) - (ia->hash < ib->hash); // to avoid overflow possibilities
 }
 
 static void reb_update_particle_lookup_table(struct reb_simulation* const r){
@@ -154,6 +183,7 @@ static void reb_update_particle_lookup_table(struct reb_simulation* const r){
         }
     }
     r->N_lookup = N_hash;
+    qsort(r->particle_lookup_table, r->N_lookup, sizeof(*r->particle_lookup_table), compare_hash); // only sort the first N_lookup entries that are initialized.
 }
 
 struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash){
