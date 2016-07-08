@@ -739,7 +739,7 @@ int reb_remove_by_hash(struct reb_simulation* const r, uint32_t hash, int keepSo
 
 /**
  * @brief Get a pointer to a particle by its hash.
- * @details see examples/uniquely_identifying_particles.
+ * @details see examples/uniquely_identifying_particles_with_hashes.
  * @param r The rebound simulation to be considered.
  * @param hash The hash of the particle to search for.
  * @return A pointer to the particle if found, NULL otherwise.
