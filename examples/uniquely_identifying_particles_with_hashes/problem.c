@@ -67,6 +67,19 @@ int main(int argc, char* argv[]){
 
     printf("Using hash: hash=%u, x=%f\n\n", last->hash, last->x); 
 
+    /* Note that if the particle is not found in the simulation, reb_get_particle_by_hash returns a NULL pointer.
+     * This allows you to check if particles are still in the simulation when you don't know ahead of time, but means that if you 
+     * mistakenly access a removed particle, you'll get a segmentation fault.*/
+
+    struct reb_particle* sun = reb_get_particle_by_hash(r, reb_tools_hash("Sun"));
+
+    if (sun == NULL){
+        printf("Whoops!  Already removed particle.\n");
+    }
+    else{
+        printf("Mass = %f\n", sun->m); // would cause segmentation fault in this case
+    }
+
     /* The user is responsible for making sure the hashes don't clash. If two particles share the same hash, reb_get_particle_by_hash
      * will return the first hit.  2 hashes generated with the reb_tools_hash hash function have a ~1e-9 chance of clashing.
      */
