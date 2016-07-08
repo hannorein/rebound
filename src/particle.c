@@ -133,32 +133,24 @@ static struct reb_particle* reb_search_lookup_table(struct reb_simulation* const
     int left = 0;
     int right = r->N_lookup-1;
     int middle;
-    /*printf("%u\n", hash);
-    for(int i=0; i<r->N_lookup; i++){
-        printf("%u\n", lookup[i].hash);
-    }*/
-    int N=0;
-    do{
+    while(left <= right){
         middle = (left + right)/2;
         uint32_t lookuphash = lookup[middle].hash;
-        //printf("%d\t%d\t%d\t%u\n", left, right, middle, lookuphash);
         if(lookuphash < hash){
             left = middle+1;
         }
         else if(lookuphash > hash){
             right = middle-1;
         }
-        else if(lookuphash  == hash){
+        else if(lookuphash == hash){
             if(lookup[middle].index < r->N){
                 return &r->particles[lookup[middle].index];
             }
+            else{ // found lookup table entry pointing beyond r->N in particles array. Needs update
+                return NULL;
+            }
         }
-        N++;
-        if(N>10){
-            exit(1);
-        }
-    } while (left != right);
-
+    }
     return NULL;
 }
 
