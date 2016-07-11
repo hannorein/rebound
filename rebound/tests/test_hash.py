@@ -99,5 +99,46 @@ class TestZeroHash(unittest.TestCase):
         self.assertAlmostEqual(self.sim.particles["jupiter"].m, 3., delta=1e-15)
         self.assertEqual(self.sim.N_lookup, 3)
 
+class TestSort(unittest.TestCase):
+    def setUp(self):
+        self.sim = rebound.Simulation()
+
+    def tearDown(self):
+        self.sim = None
+
+    def init(self, hashes):
+        for hash in hashes:
+            if hash is None:
+                self.sim.add(m=0.)
+            else:
+                self.sim.add(m=hash, hash=hash)
+   
+    def case(self, hashes):
+        self.setUp()
+        self.init(hashes)
+        for hash in hashes:
+            if hash is not None:
+                self.assertAlmostEqual(self.sim.particles[c_uint32(hash)].m, hash, delta=1e-15)
+        self.tearDown()
+
+    def test_hash(self):
+        self.case(hashes=[0,1,2,3])
+        self.case(hashes=[0,None,2,3])
+        self.case(hashes=[2,3,1,4])
+        self.case(hashes=[2,4,None,3])
+        self.case(hashes=[2,0,4,3])
+        self.case(hashes=[2,0,4,None])
+        self.case(hashes=[2,3,4,0])
+        self.case(hashes=[None,4,3,0])
+        e = rebound.hash("earth").value
+        self.case(hashes=[0,1,2,e])
+        self.case(hashes=[0,None,e,3])
+        self.case(hashes=[2,3,e,4])
+        self.case(hashes=[2,e,None,3])
+        self.case(hashes=[2,0,e,3])
+        self.case(hashes=[e,0,4,None])
+        self.case(hashes=[2,e,4,0])
+        self.case(hashes=[None,4,e,0])
+
 if __name__ == "__main__":
     unittest.main()

@@ -760,14 +760,13 @@ class Simulation(Structure):
     @property
     def particles(self):
         """
-        Return an array that points to the particle structure.
+        Returns a Particles class that allows user to access particles like a dictionary using indices, hashes, or strings. 
 
-        This is an array of pointers and thus the contents of the array update 
+        This always returns pointers and thus the contents update 
         as the simulation progresses. Note that the pointers could change,
         for example when a particle is added or removed from the simulation. 
-
         """
-        particles = Particles(self)
+        particles = Particles(self, self.N)
         return particles
 
     @particles.deleter
@@ -1364,10 +1363,18 @@ CORFF = CFUNCTYPE(c_double,POINTER_REB_SIM, c_double)
 COLRFF = CFUNCTYPE(c_int, POINTER_REB_SIM, reb_collision)
 
 class Particles(MutableMapping):
-    def __init__(self, sim):
+    """
+    This class allows the user to access particles like a dictionary using the particle's 1) index 2) hash 3) string (which will be converted to hash).
+    Allows for negative indices and slicing.
+    """
+    def __init__(self, sim, N, offset=0):
         self.sim = sim
+        self.N = N
+        ParticleList = Particle*N
+        self.ps = ParticleList.from_address(ctypes.addressof(self.sim._particles.contents)+offset*ctypes.sizeof(Particle))
 
     def __getitem__(self, key):
+
         hash_types = c_uint32, c_uint, c_ulong
         PY3 = sys.version_info[0] == 3
         if PY3:
@@ -1381,13 +1388,11 @@ class Particles(MutableMapping):
             return [self[i] for i in range(*key.indices(len(self)))]
 
         if isinstance(key, int_types):
-            ParticleList = Particle*self.sim.N
-            ps = ParticleList.from_address(ctypes.addressof(self.sim._particles.contents))
             if key < 0: # accept negative indices
-                key += self.sim.N
-            if key < 0 or key >= self.sim.N:
+                key += self.N
+            if key < 0 or key >= self.N:
                 raise AttributeError("Index {0} used to access particles out of range.".format(key))
-            return ps[key]
+            return self.ps[key]
 
         else:
             clibrebound.reb_get_particle_by_hash.restype = POINTER(Particle)
@@ -1411,21 +1416,17 @@ class Particles(MutableMapping):
             if p.index == -1:
                 raise AttributeError("Can't set particle (particle not found in simulation).")
             else:
-                ParticleList = Particle*self.sim.N
-                ps = ParticleList.from_address(ctypes.addressof(self.sim._particles.contents))
-                ps[p.index] = value
+                self.ps[p.index] = value
 
     def __delitem__(self, key):
         pass
 
     def __iter__(self):
-        ParticleList = Particle*self.sim.N
-        ps = ParticleList.from_address(ctypes.addressof(self.sim._particles.contents))
-        for p in ps:
+        for p in self.ps:
             yield p
 
     def __len__(self):
-        return self.sim.N
+        return self.N
 
 # Import at the end to avoid circular dependence
 from . import horizons
