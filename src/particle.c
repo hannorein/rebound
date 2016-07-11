@@ -247,7 +247,9 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
     }
 	if (r->N==1){
 	    r->N = 0;
-        r->free_particle_ap(&r->particles[index]);
+        if(r->free_particle_ap){
+            r->free_particle_ap(&r->particles[index]);
+        }
 		reb_warning(r, "Last particle removed.");
 		return 1;
 	}
@@ -263,7 +265,9 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 	}
 	if(keepSorted){
 	    r->N--;
-        r->free_particle_ap(&r->particles[index]);
+        if(r->free_particle_ap){
+            r->free_particle_ap(&r->particles[index]);
+        }
         if(index<r->N_active){
             r->N_active--;
         }
@@ -278,10 +282,14 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
         if (r->tree_root){
             // Just flag particle, will be removed in tree_update.
             r->particles[index].y = nan("");
-            r->free_particle_ap(&r->particles[index]);
+            if(r->free_particle_ap){
+                r->free_particle_ap(&r->particles[index]);
+            }
         }else{
 	        r->N--;
-            r->free_particle_ap(&r->particles[index]);
+            if(r->free_particle_ap){
+                r->free_particle_ap(&r->particles[index]);
+            }
 		    r->particles[index] = r->particles[r->N];
         }
 	}
