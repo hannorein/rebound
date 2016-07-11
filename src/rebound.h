@@ -853,7 +853,7 @@ void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, doubl
 /**
  * @brief Generates a unique hash.
  * @details Hash is only guaranteed to be unique relative to other hashes generated this way. 
- * It is the user's responsibility to check for collisions when assigning a hash directly or using a string with reb_tools_hash.
+ * It is the user's responsibility to check for collisions when assigning a hash directly or using a string with reb_hash.
  * @return hash.
  */
 uint32_t reb_generate_unique_hash(struct reb_simulation* const r);
@@ -1344,7 +1344,7 @@ double reb_tools_calculate_lyapunov(struct reb_simulation* r);
  * @param str String key. 
  * @return hash for the passed string.
  */
-uint32_t reb_tools_hash(const char* str);
+uint32_t reb_hash(const char* str);
 
 /**
  * @brief Returns a reb_particle structure with fields/hash/ptrs initialized to nan/0/NULL. 

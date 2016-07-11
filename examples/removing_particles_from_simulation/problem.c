@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
 	}
 
     struct reb_particle* p = reb_add_particle(r);
-    p->hash = reb_tools_hash("Planet 9");
+    p->hash = reb_hash("Planet 9");
 	
     printf("Initial hashes:\n");
 	print_hashes(r);
@@ -54,7 +54,7 @@ int main(int argc, char* argv[]){
 	
     printf("\nWe can also remove particles by the hashes we assign them (this is robust to particles switching indices in the particles array during the simulation).\n");  
     printf("Try to remove Planet 9...\n");
-    success = reb_remove_by_hash(r, reb_tools_hash("Planet 9"), keepSorted);
+    success = reb_remove_by_hash(r, reb_hash("Planet 9"), keepSorted);
 	if (success){
 		printf("Particle successfully removed\n");
 	}

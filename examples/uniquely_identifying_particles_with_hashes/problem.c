@@ -17,35 +17,21 @@ int main(int argc, char* argv[]){
 
     struct reb_simulation* r = reb_create_simulation();
 
-    /* In order for hashes to work correctly and faster, we have to add particles using reb_add_particle (rather than reb_add).
-     * reb_add_particle adds a new particle to the simulation and returns a pointer to it.  It sets the particle simulation pointer
-     * and hash to the default value UINT32_MAX but the particle is otherwise uninitialized. reb_add is kept for backwards compatibility.
-     */
+    struct reb_particle p = {0};
+    p.m = 1.;
+    p.hash = reb_hash("Sun");
+    reb_add(r, p);
 
-    struct reb_particle* p = reb_add_particle(r);
-    p->m = 1.;
-    p->hash = reb_tools_hash("Sun"); // We add a hash to particles[0] corresponding to the name "Sun"
-
-    printf("We can now reference the particle like this: m=%f, or like this: m=%f\n", r->particles[0].m, reb_get_particle_by_hash(r, reb_tools_hash("Sun"))->m);
+    printf("We can now reference the particle like this: m=%f, or like this: m=%f\n", r->particles[0].m, reb_get_particle_by_hash(r, reb_hash("Sun"))->m);
 
     for (int i=1; i <= 200; i++){
-        struct reb_particle* tp = reb_add_particle(r);
-        tp->hash = i;
-        tp->x = i;      // put particles progressively farther away
+        struct reb_particle tp = {0};
+        tp.x = i;       // put particles progressively farther away
+        tp.hash = i;
+        reb_add(r, tp);
         // ... initialize rest of particle variables.
     }
 
-    /* One pitfall is that the particles array is reallocated in blocks of 128 particles.  If we try to update the Sun's mass with
-     * our original pointer, it doesn't work because it's pointing to an old location in memory. */
-
-    p->m = 1000.;
-    printf("Sun mass still = %f after setting p->m = 1000.\n", r->particles[0].m);
-
-    reb_get_particle_by_hash(r, reb_tools_hash("Sun"))->m = 1000.;
-    printf("Sun mass correctly = %f using hash.\n\n", r->particles[0].m);
-
-    /* If you always initialize the particle just after getting the pointer back from reb_add_particle there is no problem.*/
-    
     /* The advantage of hashes is that if particles are ejected or otherwise removed from the simulation (or you are using 
      * the tree code), the indices in the particles array will get scrambled.  Accessing particles through their hash 
      * guarantees you get back the particle you intended.
@@ -53,7 +39,7 @@ int main(int argc, char* argv[]){
 
     printf("r->particles[200] hash=%u, x=%f\n", r->particles[200].hash, r->particles[200].x);
 
-    reb_remove_by_hash(r, reb_tools_hash("Sun"), 0);
+    reb_remove_by_hash(r, reb_hash("Sun"), 0);
 
     /* The remove function has moved particles[200] to index 0:*/
 
@@ -61,7 +47,7 @@ int main(int argc, char* argv[]){
 
     /* Rather than worry about the internals of what the remove function, the tree code etc. do, we can get it by hash. 
      * When you are not sure, assigning particles hashes and accessing them through them is always safe.
-     * We can use reb_tools_hash for a string, or just pass an unsigned integer we assigned directly.*/
+     * We can use reb_hash for a string, or just pass an unsigned integer we assigned directly.*/
 
     struct reb_particle* last = reb_get_particle_by_hash(r, 200);
 
@@ -71,17 +57,40 @@ int main(int argc, char* argv[]){
      * This allows you to check if particles are still in the simulation when you don't know ahead of time, but means that if you 
      * mistakenly access a removed particle, you'll get a segmentation fault.*/
 
-    struct reb_particle* sun = reb_get_particle_by_hash(r, reb_tools_hash("Sun"));
+    struct reb_particle* sunptr = reb_get_particle_by_hash(r, reb_hash("Sun"));
 
-    if (sun == NULL){
+    if (sunptr == NULL){
         printf("Whoops!  Already removed particle.\n");
     }
     else{
-        printf("Mass = %f\n", sun->m); // would cause segmentation fault in this case
+        printf("Mass = %f\n\n", sunptr->m); // would cause segmentation fault in this case
     }
 
     /* The user is responsible for making sure the hashes don't clash. If two particles share the same hash, reb_get_particle_by_hash
-     * will return the first hit.  2 hashes generated with the reb_tools_hash hash function have a ~1e-9 chance of clashing.
+     * could return either particle.  2 hashes generated with the reb_hash hash function have a ~1e-9 chance of clashing.
+     * The most common case is assigning a hash of 0:
      */
+
+    reb_free_simulation(r);
+    r = reb_create_simulation();
+
+    struct reb_particle sun = {0};
+    sun.m = 1.;
+    sun.hash = 0;
+    reb_add(r, sun);
+
+    struct reb_particle earth = {0};
+    earth.x = 1.;
+    earth.vy = 1.;
+    reb_add(r, earth);
+
+    printf("Sun's x position = %f\n", reb_get_particle_by_hash(r, 0)->x);
+
+    /* The above line prints x=1 for the Sun's x position, which is not what we wanted.  The problem is we also set earth's hash to 0
+     * when we initialized the structure to {0}!  We can use the 0 hash as long as we make sure we assign the hashes of all particles in the simulation:
+     */
+
+    r->particles[1].hash = reb_hash("earth");
+    printf("Sun's x position = %f\n", reb_get_particle_by_hash(r, 0)->x);
 }
 
