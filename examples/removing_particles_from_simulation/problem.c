@@ -21,16 +21,17 @@ void print_hashes(struct reb_simulation* r){
 
 int main(int argc, char* argv[]){
 	struct reb_simulation* r = reb_create_simulation();
-    // We first add some particles with hashes to track what is going on.  We need to use reb_add_particle rather than reb_add with hashes.
 
 	for (int i=0;i<9;i++){
-		struct reb_particle *p = reb_add_particle(r);
-        p->hash = i;
+        struct reb_particle p = {0};
+        p.hash = i;
+        reb_add(r, p);
 	}
 
-    struct reb_particle* p = reb_add_particle(r);
-    p->hash = reb_hash("Planet 9");
-	
+    struct reb_particle p = {0};
+    p.hash = reb_hash("Planet 9");
+    reb_add(r, p);
+
     printf("Initial hashes:\n");
 	print_hashes(r);
 
