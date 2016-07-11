@@ -59,11 +59,6 @@ static struct reb_particle* reb_add_local(struct reb_simulation* const r, struct
     return &r->particles[r->N-1];
 }
 
-struct reb_particle* reb_add_particle(struct reb_simulation* const r){
-    struct reb_particle pt = {0};
-    return reb_add_local(r, pt);
-}
-
 void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 #ifndef COLLISIONS_NONE
 	if (pt.r>=r->max_radius[0]){
