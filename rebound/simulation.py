@@ -1416,17 +1416,7 @@ class Particles(MutableMapping):
                 ps[p.index] = value
 
     def __delitem__(self, key):
-        """ 
-        Removes a particle from the simulation. Will scramble particle indices in particles array.
-
-        Parameters
-        ----------
-        key : int, c_uint32, or string 
-            Function removes sim.particles[key]. Key can be an integer (for the index in the array), c_uint32 for the hash, or string (will be converted to hash)
-        """
-        p = self[key]
-        clibrebound.reb_remove(byref(self.sim), p.index, False)
-        self.sim.process_messages()
+        pass
 
     def __iter__(self):
         ParticleList = Particle*self.sim.N
