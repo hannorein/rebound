@@ -61,7 +61,6 @@ static struct reb_particle* reb_add_local(struct reb_simulation* const r, struct
 
 struct reb_particle* reb_add_particle(struct reb_simulation* const r){
     struct reb_particle pt = {0};
-    pt.hash = UINT32_MAX;       // we don't set pt.hash in reb_add routine since user might already have set hash manually.
     return reb_add_local(r, pt);
 }
 
@@ -126,7 +125,7 @@ int reb_get_particle_index(struct reb_particle* p){
 
 static struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash){
     const struct reb_hash_pointer_pair* const lookup = r->particle_lookup_table;
-    if (lookup == NULL || hash == UINT32_MAX){
+    if (lookup == NULL){
         return NULL;
     }
 
@@ -163,12 +162,24 @@ static int compare_hash(const void* a, const void* b){
 static void reb_update_particle_lookup_table(struct reb_simulation* const r){
     const struct reb_particle* const particles = r->particles;
     int N_hash = 0;
+    int zerohash = -1;
     for(int i=0; i<r->N; i++){
         if(N_hash >= r->allocatedN_lookup){
             r->allocatedN_lookup += 128;
             r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*r->allocatedN_lookup);
         }
-        if(particles[i].hash != UINT32_MAX){
+        if(particles[i].hash == 0){ // default hash (0) special case
+            if (zerohash == -1){    // first zero hash
+                zerohash = i;
+                r->particle_lookup_table[zerohash].hash = particles[i].hash;
+                r->particle_lookup_table[zerohash].index = i;
+                N_hash++;
+            }
+            else{                   // update zero hash entry in lookup without incrementing N_hash
+                r->particle_lookup_table[zerohash].index = i;
+            }
+        }
+        else{                   
             r->particle_lookup_table[N_hash].hash = particles[i].hash;
             r->particle_lookup_table[N_hash].index = i;
             N_hash++;

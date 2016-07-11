@@ -50,7 +50,7 @@ class Particle(Structure):
    
     __repr__ = __str__
 
-    def __init__(self, simulation=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None, hash=None):
+    def __init__(self, simulation=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None, hash=0):
         """
         Initializes a Particle structure. Rather than explicitly creating 
         a Particle structure, users may use the ``add()`` member function 
@@ -150,10 +150,7 @@ class Particle(Structure):
 
         """        
 
-        if hash is not None:
-            self.hash = hash # set via the property, which checks for type
-        else:
-            self.hash = 4294967295 # UINT32_MAX
+        self.hash = hash # set via the property, which checks for type
 
         if variation:
             if primary is None:
@@ -563,6 +560,4 @@ class Particle(Structure):
         elif isinstance(value, int_types):
             self._hash = value
         else:
-            raise AttributeError("Hash must be set to a ctypes.c_uint32 or string. See UniquelyIdentifyingParticles.ipynb ipython_example.")
-            
-
+            raise AttributeError("Hash must be set to an integer, a ctypes.c_uint32 or a string. See UniquelyIdentifyingParticles.ipynb ipython_example.")

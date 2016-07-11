@@ -12,7 +12,6 @@ class TestHash(unittest.TestCase):
         self.sim.add(a=5.)
         self.sim.particles[2].hash = "earth"
         self.sim.particles[3].hash = "jupiter"
-        self.uint32_max = 4294967295
 
     def tearDown(self):
         self.sim = None
@@ -22,7 +21,7 @@ class TestHash(unittest.TestCase):
         self.assertEqual(rebound.hash("earth").value, 1424801690)
         
     def test_add_hash(self):
-        self.assertEqual(self.sim.particles[0].hash.value, self.uint32_max)
+        self.assertEqual(self.sim.particles[0].hash.value, 0)
         self.assertEqual(self.sim.particles[2].hash.value, 1424801690)
 
     def test_particles(self):
@@ -46,13 +45,13 @@ class TestHash(unittest.TestCase):
 
     def test_adding_particles(self):
         self.assertAlmostEqual(self.sim.particles["earth"].a, 1., delta=1e-15)
-        self.assertEqual(self.sim.N_lookup, 2)
+        self.assertEqual(self.sim.N_lookup, 3)
         self.sim.add(a=10.)
         self.sim.particles[4].hash = "saturn"
         self.assertAlmostEqual(self.sim.particles["jupiter"].a, 5., delta=1e-15)
         self.assertAlmostEqual(self.sim.particles["saturn"].a, 10., delta=1e-15)
         self.assertAlmostEqual(self.sim.particles["earth"].a, 1., delta=1e-15)
-        self.assertEqual(self.sim.N_lookup, 3)
+        self.assertEqual(self.sim.N_lookup, 4)
 
     def test_add(self):
         self.sim.add(a=7., hash = "planet 9")
@@ -87,6 +86,16 @@ class TestZeroHash(unittest.TestCase):
         self.assertEqual(self.sim.N_lookup, 2)
         self.sim.add(m=3., hash="jupiter")
         self.assertAlmostEqual(self.sim.particles[c_uint32(0)].m, 1., delta=1e-15)
+        self.assertAlmostEqual(self.sim.particles["jupiter"].m, 3., delta=1e-15)
+        self.assertEqual(self.sim.N_lookup, 3)
+    
+    def test_zero_second_hash(self):
+        self.sim.add(m=1., hash=c_uint32(1))
+        self.sim.add(m=2., hash=c_uint32(0))
+        self.assertAlmostEqual(self.sim.particles[c_uint32(0)].m, 2., delta=1e-15)
+        self.assertEqual(self.sim.N_lookup, 2)
+        self.sim.add(m=3., hash="jupiter")
+        self.assertAlmostEqual(self.sim.particles[c_uint32(0)].m, 2., delta=1e-15)
         self.assertAlmostEqual(self.sim.particles["jupiter"].m, 3., delta=1e-15)
         self.assertEqual(self.sim.N_lookup, 3)
 
