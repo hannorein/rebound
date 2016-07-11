@@ -17,7 +17,7 @@
 #include "rebound.h"
 
 // Define our own collision resolve function, which will only record collisions but not change any of the particles.		
-void collision_record_only(struct reb_simulation* const r, struct reb_collision c){
+int collision_record_only(struct reb_simulation* const r, struct reb_collision c){
 	double delta_t = 2.*M_PI; 	
 	struct reb_particle* particles = r->particles;
 	const double t = r->t;
@@ -34,6 +34,7 @@ void collision_record_only(struct reb_simulation* const r, struct reb_collision 
 		fprintf(of, "\n");
 		fclose(of);						// close file
 	}
+    return 0;
 }
 
 

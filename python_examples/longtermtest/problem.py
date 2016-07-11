@@ -8,6 +8,7 @@ import rebound
 import numpy as np
 import time
 from rebound.interruptible_pool import InterruptiblePool
+import warnings
 
 def simulation(par):
     integrator, run, trial = par
@@ -18,9 +19,9 @@ def simulation(par):
     if integrator == "whfast-nocor":
         integrator = "whfast"
     else:
-        sim.integrator_whfast_corrector = 11
+        sim.ri_whfast.corrector = 11
     sim.integrator = integrator 
-    sim.integrator_whfast_safe_mode = 0
+    sim.ri_whfast.safe_mode = 0
 
     massfac = 1.
     sim.add(m=1.00000597682, x=-4.06428567034226e-3, y=-6.08813756435987e-3, z=-1.66162304225834e-6,      vx=+6.69048890636161e-6*Gfac, vy=-6.33922479583593e-6*Gfac, vz=-3.13202145590767e-9*Gfac)   # Sun
@@ -53,7 +54,7 @@ def simulation(par):
         com_vx = 0.
         com_vy = 0.
         com_vz = 0.
-        if integrator=="wh" or integrator=="mercury" or integrator[0:7]=="swifter":
+        if integrator=="mercury" or integrator[0:7]=="swifter":
             mtot = 0.
             for p in particles:
                 com_vx += p.vx*p.m 
@@ -79,7 +80,7 @@ def simulation(par):
         return E_kin+E_pot
 
     times = np.logspace(np.log10(orbit),np.log10(tmax),Ngrid)
-    if integrator=="wh" or integrator=="mercury" or integrator[0:7]=="swifter":
+    if integrator=="mercury" or integrator[0:7]=="swifter":
         move_to_heliocentric()
     else:
         sim.move_to_com()
@@ -89,14 +90,17 @@ def simulation(par):
 
     runtime = 0.
     start = time.time()
-    for t in times:
-        sim.integrate(t,exact_finish_time=0)
-        ef = energy()
-        e = np.fabs((ei-ef)/ei)+1.1e-16
-        es.append(e)
+    # Capture warning messages (WHFast timestep too large)
+    with warnings.catch_warnings(record=True) as w: 
+        warnings.simplefilter("always")
+        for t in times:
+            sim.integrate(t,exact_finish_time=0)
+            ef = energy()
+            e = np.fabs((ei-ef)/ei)+1.1e-16
+            es.append(e)
     
     integrator, run, trial = par
-    print integrator.ljust(13) + " %9.5fs"%(time.time()-start) + "\t Error: %e"  %( e)
+    print(integrator.ljust(13) + " %9.5fs"%(time.time()-start) + "\t Error: %e"  %( e))
     
     es = np.array(es)
     return [times, es]
@@ -106,13 +110,12 @@ Ngrid = 500
 orbit = 11.8618*1.*np.pi
 dt = orbit/3000.
 tmax = orbit*1e2        # Maximum integration time.
-integrators = ["wh","whfast-nocor", "whfast"]
-#integrators = ["mercury","wh","swifter-whm","whfast-nocor", "whfast"]
+integrators = ["whfast-nocor", "whfast"]
+#integrators = ["mercury","swifter-whm","whfast-nocor", "whfast"]
 colors = {
     'whfast-nocor': "#FF0000",
     'whfast':       "#00AA00",
     'mercury':      "#6E6E6E",
-    'wh':           "b",
     'swifter-whm':  "#444444",
     'swifter-helio':"#AABBBB",
     'swifter-tu4':  "#FFAAAA",
@@ -123,12 +126,12 @@ trials = 4
 parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]
 if len(sys.argv)!=2:
     pool = InterruptiblePool()
-    print "Running %d simulations" % (len(parameters))
+    print("Running %d simulations" % (len(parameters)))
     res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),trials,2,Ngrid)
     np.save("res.npy",res)
 else:
-    print "Loading %d simulations" % (len(parameters))
-    print sys.argv[1]
+    print("Loading %d simulations" % (len(parameters)))
+    print(sys.argv[1])
     res = np.load(sys.argv[1])
 
 

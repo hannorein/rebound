@@ -12,7 +12,7 @@
 #include <math.h>
 #include "rebound.h"
 
-void collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb_collision c);
+int collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb_collision c);
 void heartbeat(struct reb_simulation* r);
 int N_border;
 
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]){
 	struct reb_particle pt = {0};
 	pt.r 		= radius;
 	pt.m 		= mass;
-	pt.id		= 1;
+	pt.hash		= 1;
 	for(double x = -r->boxsize.x/2.; x<r->boxsize.x/2.-border_spacing_x/2.;x+=border_spacing_x){
 		for(double y = -r->boxsize.y/2.; y<r->boxsize.y/2.-border_spacing_y/2.;y+=border_spacing_y){
 			pt.x 		= x;
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]){
 		pt.vz 		= reb_random_normal(0.001);
 		pt.r 		= radius;						// m
 		pt.m 		= 1;
-		pt.id		= 2;
+		pt.hash		= 2;
 		reb_add(r, pt);
 	}
 
@@ -85,7 +85,7 @@ void heartbeat(struct reb_simulation* r){
 	}
 }
 
-void collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb_collision c){
+int collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb_collision c){
 	const double t = r->t;
 	struct reb_particle* particles = r->particles;
 	struct reb_particle p1 = particles[c.p1];
@@ -96,11 +96,11 @@ void collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct re
 	double y21  = p1.y + gb.shifty  - p2.y; 
 	double z21  = p1.z + gb.shiftz  - p2.z; 
 	double rp   = p1.r+p2.r;
-	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return;
+	if (rp*rp < x21*x21 + y21*y21 + z21*z21) return 0;
 	double vx21 = p1.vx + gb.shiftvx - p2.vx; 
 	double vy21 = p1.vy + gb.shiftvy - p2.vy; 
 	double vz21 = p1.vz + gb.shiftvz - p2.vz; 
-	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return; // not approaching
+	if (vx21*x21 + vy21*y21 + vz21*z21 >0) return 0; // not approaching
 	// Bring the to balls in the xy plane.
 	// NOTE: this could probabely be an atan (which is faster than atan2)
 	double theta = atan2(z21,y21);
@@ -127,16 +127,17 @@ void collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct re
 
 	// Applying the changes to the particles.
 	// Do not change border particles.
-	if (p2.id!=1){
+	if (p2.hash!=1){
 		particles[c.p2].vx -=	m21*dvx2n;
 		particles[c.p2].vy -=	m21*dvy2nn;
 		particles[c.p2].vz -=	m21*dvz2nn;
 		particles[c.p2].lastcollision = t;
 	}
-	if (p1.id!=1){
+	if (p1.hash!=1){
 		particles[c.p1].vx +=	dvx2n; 
 		particles[c.p1].vy +=	dvy2nn; 
 		particles[c.p1].vz +=	dvz2nn; 
 		particles[c.p1].lastcollision = t;
 	}
+    return 0; // Do not remove any particle from simulation.
 }

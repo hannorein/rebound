@@ -46,6 +46,7 @@ static void operator_H012(double dt, const struct reb_simulation_integrator_sei 
 static void operator_phi1(double dt, struct reb_particle* p);
 
 void reb_integrator_sei_part1(struct reb_simulation* const r){
+    r->gravity_ignore_10 = 0;
 	const int N = r->N;
 	struct reb_particle* const particles = r->particles;
 	if (r->ri_sei.OMEGAZ==-1){

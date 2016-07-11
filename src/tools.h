@@ -24,9 +24,11 @@
  */
 #ifndef TOOLS_H
 #define TOOLS_H
+
+#include <stdint.h>
+
 struct reb_simulation;
-
-
+struct reb_particles;
 
 /**
  * @brief Returns deltad/delta 
@@ -42,10 +44,29 @@ double reb_tools_megno_deltad_delta(struct reb_simulation* const r);
  */
 void reb_tools_megno_update(struct reb_simulation* r, double dY);
 
-
 /**
  * @brief Init random number generator based on time and process id.
  */
 void reb_tools_init_srand(void);
+
+/**
+ * @brief Convert angles for orbit routines
+ */
+double reb_toosl_M_to_E(double e, double M);
+
+/**
+ * @brief Convert angles for orbit routines
+ */
+double reb_tools_M_to_f(double e, double M);
+
+/**
+ * @brief Kepler solver in Pal coordinates
+ */
+void reb_tools_solve_kepler_pal(double h, double k, double lambda, double* p, double* q);
+
+/**
+ * @brief Convert particle to Pal coordinates
+ */
+void reb_tools_particle_to_pal(double G, struct reb_particle p, struct reb_particle primary, double *a, double* lambda, double* k, double* h, double* ix, double* iy);
 
 #endif 	// TOOLS_H

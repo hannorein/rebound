@@ -1,9 +1,9 @@
 /**
- * @file 	integrator_ias15.h
- * @brief 	Interface for numerical particle integrator
- * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @file    integrator_ias15.h
+ * @brief   Interface for numerical particle integrator
+ * @author  Hanno Rein <hanno@hanno-rein.de>
  * 
- * @section 	LICENSE
+ * @section LICENSE
  * Copyright (c) 2015 Hanno Rein
  *
  * This file is part of rebound.
@@ -28,4 +28,5 @@ void reb_integrator_ias15_part1(struct reb_simulation* r);              ///< Int
 void reb_integrator_ias15_part2(struct reb_simulation* r);              ///< Internal function used to call a specific integrator
 void reb_integrator_ias15_synchronize(struct reb_simulation* r);        ///< Internal function used to call a specific integrator
 void reb_integrator_ias15_reset(struct reb_simulation* r);              ///< Internal function used to call a specific integrator
+void reb_integrator_ias15_clear(struct reb_simulation* r);              ///< Internal function used to call a specific integrator
 #endif
