@@ -4,6 +4,7 @@ import unittest
 import os
 import math
 import sys
+from ctypes import c_uint32
 
 class TestSimulation(unittest.TestCase):
     def setUp(self):
@@ -57,6 +58,18 @@ class TestSimulation(unittest.TestCase):
         self.sim.remove(1,keepSorted=0)
         self.assertEqual(self.sim.N,1)
     
+    def test_removehash(self):
+        self.sim.add(m=1e-3, a=1., e=0.01, omega=0.02, M=0.04, inc=0.1)
+        self.sim.particles[-1].hash = 99
+        self.sim.remove(hash=99)
+        self.assertEqual(self.sim.N,2)
+        with self.assertRaises(RuntimeError):
+            self.sim.remove(hash=99)
+        with self.assertRaises(RuntimeError):
+            self.sim.remove(hash=99)
+        with self.assertRaises(RuntimeError):
+            self.sim.remove(hash=-99334)
+    
     def test_ascii(self):
         a = self.sim.particles_ascii()
         sim = rebound.Simulation()
@@ -65,18 +78,6 @@ class TestSimulation(unittest.TestCase):
             self.assertAlmostEqual(self.sim.particles[i].m,sim.particles[i].m,delta=1e-7)
             self.assertAlmostEqual(self.sim.particles[i].x,sim.particles[i].x,delta=1e-7)
             self.assertAlmostEqual(self.sim.particles[i].vy,sim.particles[i].vy,delta=1e-7)
-    
-    def test_removehash(self):
-        self.sim.add(m=1e-3, a=1., e=0.01, omega=0.02, M=0.04, inc=0.1)
-        self.sim.particles[-1].hash = 99
-        self.sim.remove(hash=99)
-        self.assertEqual(self.sim.N,2)
-        with self.assertRaises(RuntimeError):
-            self.sim.remove(99)
-        with self.assertRaises(RuntimeError):
-            self.sim.remove(hash=99)
-        with self.assertRaises(RuntimeError):
-            self.sim.remove(hash=-99334)
     
     def test_configure_ghostboxes(self):
         self.sim.configure_ghostboxes(1,1,1)
@@ -164,7 +165,7 @@ class TestSimulation(unittest.TestCase):
             pass
         self.sim.additional_forces = af
         self.sim.integrate(.1)
-        self.assertEqual(self.sim.particles[0].hash,5)
+        self.assertEqual(self.sim.particles[0].hash.value,5)
         with self.assertRaises(AttributeError):
             self.sim.additional_forces
 
@@ -174,7 +175,7 @@ class TestSimulation(unittest.TestCase):
             pass
         self.sim.post_timestep_modifications = ptm
         self.sim.integrate(.1)
-        self.assertEqual(self.sim.particles[0].hash,6)
+        self.assertEqual(self.sim.particles[0].hash.value,6)
         with self.assertRaises(AttributeError):
             self.sim.post_timestep_modifications
 
