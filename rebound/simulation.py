@@ -415,6 +415,17 @@ class Simulation(Structure):
         else:
             self._colrfp = COLRFF(func)
             self._collision_resolve = self._colrfp
+    
+    @property 
+    def free_particle_ap(self):
+        """
+        Get or set a function pointer for freeing the ap pointer whenever sim.remove is called.
+        """
+        raise AttributeError("You can only set C function pointers from python.")
+    @free_particle_ap.setter
+    def free_particle_ap(self, func):
+        self._fpa = FPA(func)
+        self._free_particle_ap = self._fpa
 
 # Setter/getter of parameters and constants
     @property 
@@ -1337,6 +1348,7 @@ Simulation._fields_ = [
                 ("_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_coefficient_of_restitution", CFUNCTYPE(c_double,POINTER(Simulation), c_double)),
                 ("_collision_resolve", CFUNCTYPE(c_int,POINTER(Simulation), reb_collision)),
+                ("_free_particle_ap", CFUNCTYPE(None, POINTER(Particle))),
                 ("extras", c_void_p),
                  ]
 
@@ -1361,6 +1373,7 @@ POINTER_REB_SIM = POINTER(Simulation)
 AFF = CFUNCTYPE(None,POINTER_REB_SIM)
 CORFF = CFUNCTYPE(c_double,POINTER_REB_SIM, c_double)
 COLRFF = CFUNCTYPE(c_int, POINTER_REB_SIM, reb_collision)
+FPA = CFUNCTYPE(None, POINTER(Particle))
 
 class Particles(MutableMapping):
     """
