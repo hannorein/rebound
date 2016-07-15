@@ -57,6 +57,7 @@ struct reb_display_config {
 	int onscreentext;	/**< Shows/hides onscreen text. */
 	int clear;	/**< Toggles clearing the display on each draw. */
 	int ghostboxes;	/**< Shows/hides ghost boxes. */
+	int showhelp;	/**< Shows/hides onscreen help. */
 	int reference;	/**< reb_particle used as a reference for centering. */
 	struct reb_simulation* r;	/**< Simulation to render */
 	sem_t* mutex;			/**< Mutex to guarantee non-flickering */
@@ -228,6 +229,55 @@ void reb_display(void){
 	if (reb_dc.reference>=0){
 		glTranslatef(particles[reb_dc.reference].x,particles[reb_dc.reference].y,particles[reb_dc.reference].z);
 	}
+
+    if (reb_dc.showhelp){
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix(); // save
+        glLoadIdentity();// and clear
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+        glColor4f(1.0,1.0,1.0,1.0);
+        
+        const char* help[17];
+        int i = 0;
+        help[i++] = "REBOUND OPENGL mouse and keyboard commands\0";
+        help[i++] = "----------------------------------------------------\0";
+        help[i++] = " To rotate the view, simple drag the simulation\0";
+        help[i++] = " with the mouse. To zoom in, press the shift key \0";
+        help[i++] = " and then drag the simulation with the mouse.\0";
+        help[i++] = "----------------------------------------------------\0";
+        help[i++] = " h       | Show/hide this page\0";
+        help[i++] = " q       | Quit simulation\0";
+        help[i++] = " (space) | Pause simulation\0";
+        help[i++] = " d       | Pause real-time visualization\0"; 
+        help[i++] = "         | (the simulation continues)\0";
+        help[i++] = " s       | Toggle three dimensional spheres \0";
+        help[i++] = "         | (looks better)/points (draws faster)\0";
+        help[i++] = " g       | Toggle ghost boxes\0";
+        help[i++] = " r       | Reset view. Press multiple times to \0";
+        help[i++] = "         | change orientation\0";
+        help[i++] = " x/X     | Move to a coordinate system centred \0";
+        help[i++] = "         | on a particle (note: does not work if\0"; 
+        help[i++] = "         | particle array is resorted)\0";
+        help[i++] = " c       | Toggle clear screen after each time-step\0";
+        help[i++] = " w       | Draw orbits as wires (particle with \0";
+        help[i++] = "         | index 0 is central object).\0";
+        help[i++] = " t       | Show/hide time, timestep and number of \0";
+        help[i++] = "         | particles.\0";
+        help[i++] = "----------------------------------------------------\0";
+        for (int j=0;j<i;j++){
+            glRasterPos2f(-0.98,0.95-(double)j*0.04);
+            const char* p = help[j];
+            do glutBitmapCharacter(GLUT_BITMAP_8_BY_13, *p); while(*(++p));
+        }
+
+        
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix(); // revert back to the matrix
+        glMatrixMode(GL_MODELVIEW );
+        glPopMatrix();
+    }
 	
     if (reb_dc.onscreentext){
         glMatrixMode(GL_PROJECTION);
@@ -240,11 +290,10 @@ void reb_display(void){
         glRasterPos2f(-0.98,-0.98);
         
         char str[4096] = "\0";
-        sprintf(str, "REBOUND");
         if (reb_dc.r->status == REB_RUNNING){
-            sprintf(str, "%s (running)  ", str);
+            sprintf(str, "REBOUND (running, press h for help) ", str);
         }else if (reb_dc.r->status == REB_RUNNING_PAUSED){
-            sprintf(str, "%s (paused)   ", str);
+            sprintf(str, "REBOUND (paused, press h for help)  ", str);
         }
         sprintf(str, "%s  N_tot= %d  ",str, reb_dc.r->N);
         if (reb_dc.r->integrator==REB_INTEGRATOR_SEI){
@@ -269,6 +318,9 @@ void reb_display(void){
 
 void reb_display_keyboard(unsigned char key, int x, int y){
 	switch(key){
+		case 'h': case 'H':
+			reb_dc.showhelp = !reb_dc.showhelp;
+			break;
 		case 'q': case 'Q':
 			reb_dc.r->status = REB_EXIT_USER;
 			reb_display_exit(&reb_dc);
@@ -328,6 +380,7 @@ void reb_display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* m
 	reb_dc.onscreentext = 1; 
 	reb_dc.clear 		= 1; 
 	reb_dc.ghostboxes 	= 0; 
+	reb_dc.showhelp 	= 0; 
 	reb_dc.reference 	= -1;
 
 	glutInit(&argc, argv);

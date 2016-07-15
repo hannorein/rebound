@@ -116,6 +116,7 @@ You can use the following keyboard commands to alter the OpenGL real-time visual
 
  Key     | Function
  --------------------------------------------------
+ h       | Show/hide on screen help.
  q       | Quit simulation.
  (space) | Pause simulation.
  d       | Pause real-time visualization (simulation continues).
@@ -125,8 +126,9 @@ You can use the following keyboard commands to alter the OpenGL real-time visual
  x/X     | Move to a coordinate system centred on a particle (note: does not work if particle array is constantly resorted, i.e. in a tree.)
  c       | Toggle clear screen after each time-step.
  w       | Draw orbits as wires (particle with index 0 is central object).  
+ t       | Show/hide time, timestep and number of particles.  
 
-To rotate the view, simple trag the simulation with the mouse. To zoom in, press the shift key and then trag the simulation with the mouse. 
+To rotate the view, simple drag the simulation with the mouse. To zoom in, press the shift key and then drag the simulation with the mouse. 
 
 
 API Documentation
