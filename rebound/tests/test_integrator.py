@@ -4,6 +4,28 @@ import math
 import rebound.data
 import warnings
 
+class TestIntegratorWHFastHyper(unittest.TestCase):
+    def test_whfast_veryhyperbolic(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=0.,x=1.,vy=100000.)
+        sim.integrator = "whfast"
+        sim.dt = 1.234567
+        sim.step()
+        y = sim.particles[1].y
+        ys = 1.234567*100000.
+        self.assertAlmostEqual((y-ys)/ys, 0., delta=1e-10)
+    def test_ias_veryhyperbolic(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=0.,x=1.,vy=100000.)
+        sim.integrator = "ias15"
+        sim.dt = 1.234567
+        sim.integrate(1.234567)
+        y = sim.particles[1].y
+        ys = 1.234567*100000.
+        self.assertAlmostEqual((y-ys)/ys, 0., delta=1e-10)
+
 class TestIntegrator2(unittest.TestCase):
     def test_whfast_verylargedt(self):
         sim = rebound.Simulation()

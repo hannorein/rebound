@@ -137,7 +137,6 @@ static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
 	return;
 }
 
-
 #define WHFAST_NMAX_QUART 64 	///< Maximum number of iterations for quartic solver
 #define WHFAST_NMAX_NEWT  32	///< Maximum number of iterations for Newton's method
 /****************************** 
@@ -262,6 +261,13 @@ static void kepler_step(const struct reb_simulation* const r, struct reb_particl
 		const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
 		ri = 1./(r0 + eta0Gs1zeta0Gs2);
 	}
+    if (isnan(ri)){
+        // Exception for (almost) straight line motion in hyperbolic case
+        ri = 0.;
+        Gs[1] = 0.;
+        Gs[2] = 0.;
+        Gs[3] = 0.;
+    }
 
 	// Note: These are not the traditional f and g functions.
 	double f = -M*Gs[2]*r0i;
