@@ -777,7 +777,7 @@ class Simulation(Structure):
         as the simulation progresses. Note that the pointers could change,
         for example when a particle is added or removed from the simulation. 
         """
-        particles = Particles(self, self.N)
+        particles = Particles(self)
         return particles
 
     @particles.deleter
@@ -1380,14 +1380,15 @@ class Particles(MutableMapping):
     This class allows the user to access particles like a dictionary using the particle's 1) index 2) hash 3) string (which will be converted to hash).
     Allows for negative indices and slicing.
     """
-    def __init__(self, sim, N, offset=0):
+    def __init__(self, sim):
         self.sim = sim
-        self.N = N
-        ParticleList = Particle*N
-        self.ps = ParticleList.from_address(ctypes.addressof(self.sim._particles.contents)+offset*ctypes.sizeof(Particle))
+
+    @property
+    def _ps(self):
+        ParticleList = Particle*self.sim.N
+        return ParticleList.from_address(ctypes.addressof(self.sim._particles.contents))
 
     def __getitem__(self, key):
-
         hash_types = c_uint32, c_uint, c_ulong
         PY3 = sys.version_info[0] == 3
         if PY3:
@@ -1402,10 +1403,10 @@ class Particles(MutableMapping):
 
         if isinstance(key, int_types):
             if key < 0: # accept negative indices
-                key += self.N
-            if key < 0 or key >= self.N:
+                key += self.sim.N
+            if key < 0 or key >= self.sim.N:
                 raise AttributeError("Index {0} used to access particles out of range.".format(key))
-            return self.ps[key]
+            return self._ps[key]
 
         else:
             clibrebound.reb_get_particle_by_hash.restype = POINTER(Particle)
@@ -1429,17 +1430,17 @@ class Particles(MutableMapping):
             if p.index == -1:
                 raise AttributeError("Can't set particle (particle not found in simulation).")
             else:
-                self.ps[p.index] = value
+                self._ps[p.index] = value
 
     def __delitem__(self, key):
         pass
 
     def __iter__(self):
-        for p in self.ps:
+        for p in self._ps:
             yield p
 
     def __len__(self):
-        return self.N
+        return self.sim.N
 
 # Import at the end to avoid circular dependence
 from . import horizons
