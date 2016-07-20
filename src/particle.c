@@ -44,7 +44,12 @@
 extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
-static struct reb_particle* reb_add_local(struct reb_simulation* const r, struct reb_particle pt){
+static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt){
+	if (reb_boundary_particle_is_in_box(r, pt)==0){
+		// reb_particle has left the box. Do not add.
+		reb_error(r,"Particle outside of box boundaries. Did not add particle.");
+		return;
+	}
 	while (r->allocatedN<=r->N){
 		r->allocatedN += 128;
 		r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->allocatedN);
@@ -56,12 +61,6 @@ static struct reb_particle* reb_add_local(struct reb_simulation* const r, struct
 		reb_tree_add_particle_to_tree(r, r->N);
 	}
 	(r->N)++;
-    return &r->particles[r->N-1];
-}
-
-struct reb_particle* reb_add_particle(struct reb_simulation* const r){
-    struct reb_particle pt = {0};
-    return reb_add_local(r, pt);
 }
 
 void reb_add(struct reb_simulation* const r, struct reb_particle pt){
@@ -91,14 +90,7 @@ void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 	}
 #endif // MPI
 	// Add particle to local partical array.
-	if (reb_boundary_particle_is_in_box(r, pt)==0){
-		// reb_particle has left the box. Do not add.
-		reb_error(r,"Particle outside of box boundaries. Did not add particle.");
-		return;
-	}
-    else{
-        reb_add_local(r, pt);
-    }
+	reb_add_local(r, pt);
 }
 
 int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt){

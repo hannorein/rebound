@@ -703,15 +703,6 @@ int reb_reset_function_pointers(struct reb_simulation* const r);
  */
 void reb_add(struct reb_simulation* const r, struct reb_particle pt);
 
-/** 
- * @brief Adds an uninitialized particle to the simulation and returns a pointer to it.
- * @details It is safer to make new particles with this function rather than reb_add in order to ensure the particle is in a simulation before e.g. using REBOUNDx to add parameters to it.
- * @param r The rebound simulation to which the particle will be added
- * @param pt The particle to be added. Note that this is a structure, not a reference to a structure.
- * @return A pointer to the new particle.  Only its simulation pointer is set (to r). All other fields set to 0/NULL.
- */
-struct reb_particle* reb_add_particle(struct reb_simulation* const r);
-
 /**
  * @brief Remove all particles
  * @param r The rebound simulation to be considered
