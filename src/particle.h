@@ -36,9 +36,4 @@ struct reb_treecell;
  */
 int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt);
 
-/**
- * @brief Updates the hash-index lookup table for the particles in the simulation.
- * @param r REBOUND simulation to be considered.
- */
-void reb_update_particle_lookup_table(struct reb_simulation* const r);
 #endif // _PARTICLE_H
