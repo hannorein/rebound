@@ -1,12 +1,15 @@
-from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_uint32, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer
+from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_uint32, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer
 from . import clibrebound, Escape, NoParticles, Encounter, SimulationError, ParticleNotFound
 from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G
+from .tools import hash as rebhash
 import math
 import os
 import sys
 import ctypes.util
 import warnings
+from collections import MutableMapping
+
 try:
     import pkg_resources
 except: 
@@ -412,6 +415,17 @@ class Simulation(Structure):
         else:
             self._colrfp = COLRFF(func)
             self._collision_resolve = self._colrfp
+    
+    @property 
+    def free_particle_ap(self):
+        """
+        Get or set a function pointer for freeing the ap pointer whenever sim.remove is called.
+        """
+        raise AttributeError("You can only set C function pointers from python.")
+    @free_particle_ap.setter
+    def free_particle_ap(self, func):
+        self._fpa = FPA(func)
+        self._free_particle_ap = self._fpa
 
 # Setter/getter of parameters and constants
     @property 
@@ -757,18 +771,14 @@ class Simulation(Structure):
     @property
     def particles(self):
         """
-        Return an array that points to the particle structure.
+        Returns a Particles class that allows user to access particles like a dictionary using indices, hashes, or strings. 
 
-        This is an array of pointers and thus the contents of the array update 
+        This always returns pointers and thus the contents update 
         as the simulation progresses. Note that the pointers could change,
         for example when a particle is added or removed from the simulation. 
-
         """
-        # Create array from pointer to allow manipulation of particles in python
-        ParticleList = Particle*self.N
-        ps = ParticleList.from_address(ctypes.addressof(self._particles.contents))
-
-        return ps
+        particles = Particles(self)
+        return particles
 
     @particles.deleter
     def particles(self):
@@ -787,30 +797,29 @@ class Simulation(Structure):
         index : int, optional
             Specify particle to remove by index.
         hash : c_uint32 or string, optional
-            Specify particle to remove by hash (if a string is passed, the corresponding hash is calculated).
+            Specifiy particle to remove by hash (if a string is passed, the corresponding hash is calculated).
         keepSorted : bool, optional
             By default, remove preserves the order of particles in the particles array. 
             Might set it to zero in cases with many particles and many removals to speed things up.
         """
         if index is not None:
-            success = clibrebound.reb_remove(byref(self), c_int(index), keepSorted)
-            #if not success:
-            #    raise ValueError("Removing particle with index %d failed. Did not remove particle.\n"%(index))
-            #return
+            clibrebound.reb_remove(byref(self), index, keepSorted)
         if hash is not None:
+            hash_types = c_uint32, c_uint, c_ulong
             PY3 = sys.version_info[0] == 3
             if PY3:
                 string_types = str,
                 int_types = int,
             else:
                 string_types = basestring,
-                int_types = int, long,
-            if isinstance(hash,string_types):
-                success = clibrebound.reb_remove_by_name(byref(self), c_char_p(hash.encode('utf-8')), keepSorted)
+                int_types = int, long
+            if isinstance(hash, string_types):
+                clibrebound.reb_remove_by_hash(byref(self), rebhash(hash), keepSorted)
             elif isinstance(hash, int_types):
-                success = clibrebound.reb_remove_by_hash(byref(self), c_uint32(hash), keepSorted)
-            #if not success:
-            #    raise ValueError("Removing particle with hash {0} failed. Did not remove particle.\n".format(hash))
+                clibrebound.reb_remove_by_hash(byref(self), c_uint32(hash), keepSorted)
+            elif isinstance(hash, hash_types):
+                clibrebound.reb_remove_by_hash(byref(self), hash, keepSorted)
+
         self.process_messages()
 
     def particles_ascii(self, prec=8):
@@ -847,46 +856,6 @@ class Simulation(Structure):
                     self.add(p)
                 except:
                     raise AttributeError("Each line requires 8 floats corresponding to mass, radius, position (x,y,z) and velocity (x,y,z).")
-
-    def generate_unique_hash(self):
-        """
-        Get a unique hash to assign to a particle in the simulation.
-        """
-        clibrebound.reb_generate_unique_hash.restype = c_uint32
-        return clibrebound.reb_generate_unique_hash(byref(self))
-
-    def get_particle_by_hash(self, hash):
-        """
-        Retrieve a particle from the simulation by using a hash.
-        The hash can either be an integer (i.e. the hash itself), or a string in 
-        which case the simulation will calculate the corresponding hash.
-        
-        Will raise ParticleNotFound error if not found.
-
-        Parameters
-        ----------
-        hash: string or integer
-            If string, the simulation will convert it to a hash and then search for the particle.
-        """
-        PY3 = sys.version_info[0] == 3
-        if PY3:
-            string_types = str,
-            int_types = int,
-        else:
-            string_types = basestring,
-            int_types = int, long,
-        if isinstance(hash,string_types):
-            clibrebound.reb_get_particle_by_name.restype = POINTER(Particle)
-            ptr = clibrebound.reb_get_particle_by_name(byref(self), c_char_p(hash.encode('utf-8')))
-        elif isinstance(hash, int_types):
-            clibrebound.reb_get_particle_by_hash.restype = POINTER(Particle)
-            ptr = clibrebound.reb_get_particle_by_hash(byref(self), c_uint32(hash))
-        else:
-            raise AttributeError("Expecting string or integer as argument")
-        if ptr:
-            return ptr.contents
-        else:
-            raise ParticleNotFound("Particle was not found in the simulation.") 
 
 # Orbit calculation
     def calculate_orbits(self, heliocentric=False, barycentric=False):
@@ -1379,6 +1348,7 @@ Simulation._fields_ = [
                 ("_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_coefficient_of_restitution", CFUNCTYPE(c_double,POINTER(Simulation), c_double)),
                 ("_collision_resolve", CFUNCTYPE(c_int,POINTER(Simulation), reb_collision)),
+                ("_free_particle_ap", CFUNCTYPE(None, POINTER(Particle))),
                 ("extras", c_void_p),
                  ]
 
@@ -1403,6 +1373,74 @@ POINTER_REB_SIM = POINTER(Simulation)
 AFF = CFUNCTYPE(None,POINTER_REB_SIM)
 CORFF = CFUNCTYPE(c_double,POINTER_REB_SIM, c_double)
 COLRFF = CFUNCTYPE(c_int, POINTER_REB_SIM, reb_collision)
+FPA = CFUNCTYPE(None, POINTER(Particle))
+
+class Particles(MutableMapping):
+    """
+    This class allows the user to access particles like a dictionary using the particle's 1) index 2) hash 3) string (which will be converted to hash).
+    Allows for negative indices and slicing.
+    """
+    def __init__(self, sim):
+        self.sim = sim
+
+    @property
+    def _ps(self):
+        ParticleList = Particle*self.sim.N
+        return ParticleList.from_address(ctypes.addressof(self.sim._particles.contents))
+
+    def __getitem__(self, key):
+        hash_types = c_uint32, c_uint, c_ulong
+        PY3 = sys.version_info[0] == 3
+        if PY3:
+            string_types = str,
+            int_types = int,
+        else:
+            string_types = basestring,
+            int_types = int, long,
+       
+        if isinstance(key, slice):
+            return [self[i] for i in range(*key.indices(len(self)))]
+
+        if isinstance(key, int_types):
+            if key < 0: # accept negative indices
+                key += self.sim.N
+            if key < 0 or key >= self.sim.N:
+                raise AttributeError("Index {0} used to access particles out of range.".format(key))
+            return self._ps[key]
+
+        else:
+            clibrebound.reb_get_particle_by_hash.restype = POINTER(Particle)
+            if isinstance(key, string_types):
+                key = rebhash(key)
+            elif not isinstance(key, hash_types):
+                raise AttributeError("Expecting string, integer or ctypes.c_uint32 as argument to sim.particles.  See UniquelyIdentifyingParticles.ipynb ipython_example.")
+
+            ptr = clibrebound.reb_get_particle_by_hash(byref(self.sim), key) 
+            
+            if ptr:
+                p = Particle
+                return p.from_address(ctypes.addressof(ptr.contents))
+            else:
+                raise ParticleNotFound("Particle was not found in the simulation.") 
+
+    def __setitem__(self, key, value):
+        if isinstance(value, Particle):
+            value._sim = pointer(self.sim)
+            p = self[key]
+            if p.index == -1:
+                raise AttributeError("Can't set particle (particle not found in simulation).")
+            else:
+                self._ps[p.index] = value
+
+    def __delitem__(self, key):
+        pass
+
+    def __iter__(self):
+        for p in self._ps:
+            yield p
+
+    def __len__(self):
+        return self.sim.N
 
 # Import at the end to avoid circular dependence
 from . import horizons
