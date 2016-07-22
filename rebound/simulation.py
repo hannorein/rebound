@@ -771,9 +771,9 @@ class Simulation(Structure):
     @property
     def particles(self):
         """
-        Returns a Particles class that allows user to access particles like a dictionary using indices, hashes, or strings. 
+        Returns a Particles object that allows users to access particles like a dictionary using indices, hashes, or strings. 
 
-        This always returns pointers and thus the contents update 
+        The Particles object uses pointers and thus the contents update 
         as the simulation progresses. Note that the pointers could change,
         for example when a particle is added or removed from the simulation. 
         """
