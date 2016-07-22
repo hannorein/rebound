@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, c_int, byref, memmove, sizeof
+from ctypes import Structure, c_double, c_int, byref, memmove, sizeof, c_uint32, c_uint, c_ulong
 from . import clibrebound
 import math
 import ctypes.util
@@ -47,8 +47,10 @@ class Particle(Structure):
         Returns a string with the position and velocity of the particle.
         """
         return "<rebound.Particle object, m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
-    
-    def __init__(self, simulation=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None, hash=None):
+   
+    __repr__ = __str__
+
+    def __init__(self, simulation=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None, hash=0):
         """
         Initializes a Particle structure. Rather than explicitly creating 
         a Particle structure, users may use the ``add()`` member function 
@@ -148,8 +150,7 @@ class Particle(Structure):
 
         """        
 
-        if hash:
-            self.hash = hash # set via the property, which checks for type
+        self.hash = hash # set via the property, which checks for type
 
         if variation:
             if primary is None:
@@ -541,21 +542,22 @@ class Particle(Structure):
         """
         Get or set the particle's hash.  If set to a string, the corresponding integer hash is calculated.
         """
-        return self._hash
+        return c_uint32(self._hash)
     @hash.setter
     def hash(self, value):
         PY3 = sys.version_info[0] == 3
+        hash_types = c_uint32, c_uint, c_ulong
         if PY3:
             string_types = str,
             int_types = int,
         else:
             string_types = basestring,
             int_types = int, long,
-        if isinstance(value, int_types):
-            self._hash = value
+        if isinstance(value, hash_types):
+            self._hash = value.value
         elif isinstance(value, string_types):
-            self._hash = rebound.hash(value)
+            self._hash = rebound.hash(value).value
+        elif isinstance(value, int_types):
+            self._hash = value
         else:
-            raise AttributeError("Expecting integer or string as argument")
-            
-
+            raise AttributeError("Hash must be set to an integer, a ctypes.c_uint32 or a string. See UniquelyIdentifyingParticles.ipynb ipython_example.")
