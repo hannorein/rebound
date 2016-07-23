@@ -291,9 +291,9 @@ void reb_display(void){
         
         char str[4096] = "\0";
         if (reb_dc.r->status == REB_RUNNING){
-            sprintf(str, "REBOUND (running, press h for help) ", str);
+            sprintf(str, "REBOUND (running, press h for help) ");
         }else if (reb_dc.r->status == REB_RUNNING_PAUSED){
-            sprintf(str, "REBOUND (paused, press h for help)  ", str);
+            sprintf(str, "REBOUND (paused, press h for help)  ");
         }
         sprintf(str, "%s  N_tot= %d  ",str, reb_dc.r->N);
         if (reb_dc.r->integrator==REB_INTEGRATOR_SEI){
