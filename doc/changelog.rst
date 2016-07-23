@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 2.19.2
+--------------
+* Changes to how particle hashes are handled.
+
 Version 2.19.1
 --------------
 * This version removes the old SWIFTER based Wisdom-Holman routine, INTEGRATOR_WH. It wasn't working correctly for a while and the WHFast (INTEGRATOR_WHFAST) should be superior in any possible case we can think of. 
