@@ -372,9 +372,32 @@ class Simulation(Structure):
     @property
     def heartbeat(self):
         """
-        Get or set a function pointer for a heartbeat function that is called every timestep.
+        Set a function pointer for a heartbeat function.
+        The heartbeat function is called every timestep and can be used
+        to monitor long simulations, check for stalled simulations and 
+        output debugging information.
      
-        The argument can be a python function or something that can be cast to a C function or a python function.
+        The argument can be a python function or something that can be 
+        cast to a C function or a python function.
+
+        The function called will receive a pointer to the simulation
+        object as its argument.
+        
+        Examples
+        --------
+
+        >>> import rebound
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1.)
+        >>> sim.add(m=1e-3, a=1)
+        >>> def heartbeat(sim):
+        >>>     # sim is a pointer to the simulation object,
+        >>>     # thus use contents to access object data.
+        >>>     # See ctypes documentation for details.
+        >>>     print(sim.contents.t)
+        >>> sim.heartbeat = heartbeat
+        >>> sim.integrate(1.)
+
         """
         raise AttributeError("You can only set C function pointers from python (not get).")
     @heartbeat.setter
