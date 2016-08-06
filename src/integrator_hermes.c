@@ -43,7 +43,7 @@ static void reb_integrator_hermes_additional_forces_mini(struct reb_simulation* 
 static void calc_forces_on_planets(const struct reb_simulation* r, double* a);
 
 void reb_integrator_hermes_part1(struct reb_simulation* r){
-    r->gravity_ignore_10 = 0;
+    r->gravity_ignore_terms = 0;
     const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     struct reb_simulation* mini = r->ri_hermes.mini;
     if (mini == NULL){

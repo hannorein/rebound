@@ -1,5 +1,6 @@
 include src/integrator_ias15.c
 include src/integrator_whfast.c
+include src/integrator_whfasthelio.c
 include src/integrator_leapfrog.c
 include src/integrator_sei.c
 include src/integrator_hermes.c
@@ -15,6 +16,7 @@ include src/derivatives.c
 include src/particle.c
 include src/integrator_ias15.h
 include src/integrator_whfast.h
+include src/integrator_whfasthelio.h
 include src/integrator_leapfrog.h
 include src/integrator_sei.h
 include src/integrator_hermes.h

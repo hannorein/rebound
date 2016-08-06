@@ -38,6 +38,7 @@
 #include "rebound.h"
 #include "integrator.h"
 #include "integrator_whfast.h"
+#include "integrator_whfasthelio.h"
 #include "integrator_ias15.h"
 #include "integrator_hermes.h"
 #include "boundary.h"
@@ -64,7 +65,7 @@ static const char* logo[];              /**< Logo of rebound. */
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "2.19.2";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "2.20.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 
 void reb_step(struct reb_simulation* const r){
     // A 'DKD'-like integrator will do the first 'D' part.
@@ -264,6 +265,7 @@ void reb_free_pointers(struct reb_simulation* const r){
     free(r->gravity_cs  );
     free(r->collisions  );
     reb_integrator_whfast_reset(r);
+    reb_integrator_whfasthelio_reset(r);
     reb_integrator_ias15_reset(r);
     free(r->particles   );
     free(r->particle_lookup_table);
@@ -385,7 +387,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->status       = REB_RUNNING;
     r->exact_finish_time    = 1;
     r->force_is_velocity_dependent = 0;
-    r->gravity_ignore_10    = 0;
+    r->gravity_ignore_terms    = 0;
     r->calculate_megno  = 0;
     r->output_timing_last   = -1;
     r->save_messages = 0;
@@ -412,6 +414,11 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_whfast.is_synchronized = 1;
     r->ri_whfast.timestep_warning = 0;
     r->ri_whfast.recalculate_jacobi_but_not_synchronized_warning = 0;
+    // ********** WHFASTHELIO
+    r->ri_whfasthelio.safe_mode = 1;
+    r->ri_whfasthelio.is_synchronized = 1;
+    r->ri_whfasthelio.recalculate_heliocentric_this_timestep = 0;
+    r->ri_whfasthelio.recalculate_heliocentric_but_not_synchronized_warning = 0;
     
     // ********** IAS15
     r->ri_ias15.epsilon         = 1e-9;

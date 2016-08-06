@@ -1,5 +1,5 @@
 /**
- * @file 	integrator_whfast.h
+ * @file 	integrator_whfasthelio.h
  * @brief 	Interface for numerical particle integrator
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
@@ -22,11 +22,10 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _INTEGRATOR_WHFAST_H
-#define _INTEGRATOR_WHFAST_H
-void reb_integrator_whfast_part1(struct reb_simulation* r);		///< Internal function used to call a specific integrator
-void reb_integrator_whfast_part2(struct reb_simulation* r);		///< Internal function used to call a specific integrator
-void reb_integrator_whfast_synchronize(struct reb_simulation* r);	///< Internal function used to call a specific integrator
-void reb_integrator_whfast_reset(struct reb_simulation* r);		///< Internal function used to call a specific integrator
-void kepler_step(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt);   ///< Internal function (Main WHFast Kepler Solver)
+#ifndef _INTEGRATOR_WHFASTHELIO_H
+#define _INTEGRATOR_WHFASTHELIO_H
+void reb_integrator_whfasthelio_part1(struct reb_simulation* r);		///< Internal function used to call a specific integrator
+void reb_integrator_whfasthelio_part2(struct reb_simulation* r);		///< Internal function used to call a specific integrator
+void reb_integrator_whfasthelio_synchronize(struct reb_simulation* r);	///< Internal function used to call a specific integrator
+void reb_integrator_whfasthelio_reset(struct reb_simulation* r);		///< Internal function used to call a specific integrator
 #endif

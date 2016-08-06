@@ -319,6 +319,44 @@ struct reb_simulation_integrator_whfast {
      */
 };
 
+struct reb_simulation_integrator_whfasthelio {
+    /** 
+     * @brief Setting this flag to one will recalculate heliocentric coordinates from the particle structure in the next timestep. 
+     * @details After the timestep, the flag gets set back to 0. 
+     * If you want to change particles after every timestep, you 
+     * also need to set this flag to 1 before every timestep.
+     * Default is 0.
+     */ 
+    unsigned int recalculate_heliocentric_this_timestep;
+    /**
+     * @brief If this flag is set (the default), WHFastHelio will recalculate heliocentric
+     * coordinates and synchronize every timestep, to avoid problems with outputs or 
+     * particle modifications between timesteps. 
+     * @details Setting it to 0 will result in a speedup, but care
+     * must be taken to synchronize and recalculate heliocentric coordinates when needed.
+     */
+    unsigned int safe_mode;
+
+    /**
+     * @brief Heliocentric coordinates
+     * @details This array contains the heliocentric coordinates of all particles.
+     * It is automatically filled and updated by WHfastDemocratic.
+     * Access this array with caution.
+     */
+    struct reb_particle* restrict p_h;
+
+    /**
+     * @cond PRIVATE
+     * Internal data structures below. Nothing to be changed by the user.
+     */
+    unsigned int allocated_N;   ///< Space allocated in arrays
+    unsigned int is_synchronized;   ///< Flag to determine if current particle structure is synchronized
+    unsigned int recalculate_heliocentric_but_not_synchronized_warning;   ///< Counter of heliocentric synchronization errors
+    /**
+     * @endcond
+     */
+};
+
 
 /**
  * @brief Collision structure describing a single collision.
@@ -402,7 +440,7 @@ struct reb_simulation {
     int     exact_finish_time;      ///< Set to 1 to finish the integration exactly at tmax. Set to 0 to finish at the next dt. Default is 1. 
 
     unsigned int force_is_velocity_dependent;   ///< Set to 1 if integrator needs to consider velocity dependent forces.  
-    unsigned int gravity_ignore_10; ///< Ignore the gravity form the central object (for WH-type integrators)
+    unsigned int gravity_ignore_terms; ///< Ignore the gravity form the central object (1 for WHFast, 2 for WHFastHelio, 0 otherwise)
     double output_timing_last;      ///< Time when reb_output_timing() was called the last time. 
     int save_messages;              ///< Set to 1 to ignore messages (used in python interface).
     char** messages;                ///< Array of strings containing last messages (only used if save_messages==1). 
@@ -501,7 +539,8 @@ struct reb_simulation {
         REB_INTEGRATOR_SEI = 2,      ///< SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable
         REB_INTEGRATOR_LEAPFROG = 4, ///< LEAPFROG integrator, simple, 2nd order, symplectic
         REB_INTEGRATOR_HERMES = 5,   ///< HERMES Integrator for close encounters (experimental)
-        REB_INTEGRATOR_NONE = 6,     ///< Do not integrate anything
+        REB_INTEGRATOR_WHFASTHELIO = 6,   ///< WHFastHelio integrator, symplectic, 2nd order, in democratic heliocentric coordinates
+        REB_INTEGRATOR_NONE = 7,     ///< Do not integrate anything
         } integrator;
 
     /**
@@ -534,6 +573,7 @@ struct reb_simulation {
     struct reb_simulation_integrator_whfast ri_whfast;  ///< The WHFast struct 
     struct reb_simulation_integrator_ias15 ri_ias15;    ///< The IAS15 struct
     struct reb_simulation_integrator_hermes ri_hermes;    ///< The HERMES struct
+    struct reb_simulation_integrator_whfasthelio ri_whfasthelio;  ///< The WHFastDemocratic struct 
     /** @} */
 
     /**

@@ -20,7 +20,7 @@ import types
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "hermes": 5, "none": 6}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "hermes": 5, "whfasthelio": 6, "none": 7}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2}
@@ -141,7 +141,7 @@ class reb_simulation_integrator_whfast(Structure):
     :ivar int safe_mode:
         If safe_mode is 1 (default) particles can be modified between
         timesteps and particle velocities and positions are always synchronised.
-        If you set safe_mode to 0, the speed and accuracy of WHFast improves.
+        If you set safe_mode to 0, the speed and accuracy of WHFast improve.
         However, make sure you are aware of the consequences. Read the iPython tutorial
         on advanced WHFast usage to learn more.
     """
@@ -155,6 +155,43 @@ class reb_simulation_integrator_whfast(Structure):
                 ("allocatedN", c_uint),
                 ("timestep_warning", c_uint),
                 ("recalculate_jacobi_but_not_synchronized_warning", c_uint)]
+
+class reb_simulation_integrator_whfasthelio(Structure):
+    """
+    This class is an abstraction of the C-struct reb_simulation_integrator_whfasthelio.
+    It controls the behaviour of the symplectic WHFastHelio integrator. The integrator
+    id based on WHFast which is described in Rein and Tamayo (2015), but works in 
+    democratic heliocentric coordinates which are better for systems in which planets
+    swap positions.
+    
+    This struct should be accessed via the simulation class only. Here is an 
+    example:
+
+    >>> sim = rebound.Simulation()
+    >>> sim.ri_whfasthelio.safe_mode =  0
+    
+   
+   :ivar int recalculate_helio_this_timestep:
+        Sets a flag that tells WHFastHelio that the particles have changed.
+        Setting this flag to 1 (default 0) triggers the WHFastHelio integrator
+        to recalculate heliocentric coordinates. This is needed if the user changes 
+        the particle position, velocity or mass inbetween timesteps.
+        After every timestep the flag is set back to 0, so if you continuously
+        update the particles manually, you need to set this flag to 1 after every timestep.
+    :ivar int safe_mode:
+        If safe_mode is 1 (default) particles can be modified between
+        timesteps and particle velocities and positions are always synchronised.
+        If you set safe_mode to 0, the speed and accuracy of WHFastiHelio improve.
+        However, make sure you are aware of the consequences.
+    """
+
+    _fields_ = [("recalculate_heliocentric_this_timestep", c_uint),
+                ("safe_mode", c_uint),
+                ("p_h", POINTER(Particle)),
+                ("allocatedN", c_uint),
+                ("is_synchronized", c_uint),
+                ("recalculate_heliocentric_but_not_synchronized_warning", c_uint)]
+
 
 class Orbit(Structure):
     """
@@ -467,6 +504,7 @@ class Simulation(Structure):
 
         - ``'ias15'`` (default)
         - ``'whfast'``
+        - ``'whfasthelio'``
         - ``'sei'``
         - ``'leapfrog'``
         - ``'hermes'``
@@ -1366,6 +1404,7 @@ Simulation._fields_ = [
                 ("ri_whfast", reb_simulation_integrator_whfast),
                 ("ri_ias15", reb_simulation_integrator_ias15),
                 ("ri_hermes", reb_simulation_integrator_hermes),
+                ("ri_whfasthelio", reb_simulation_integrator_whfasthelio),
                 ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),

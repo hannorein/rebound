@@ -1,7 +1,7 @@
 REBOUND - An open-source multi-purpose N-body code
 ==================================================
 
-.. image:: http://img.shields.io/badge/rebound-v2.19.2-green.svg?style=flat
+.. image:: http://img.shields.io/badge/rebound-v2.20.0-green.svg?style=flat
     :target: http://rebound.readthedocs.org
 .. image:: https://badge.fury.io/py/rebound.svg
     :target: https://badge.fury.io/py/rebound
@@ -31,7 +31,7 @@ FEATURES
 
 REBOUND is an N-body integrator, i.e. a software package that can integrate the motion of particles under the influence of gravity. The particles can represent stars, planets, moons, ring or dust particles. REBOUND is very flexible and can be customized to accurately and efficiently solve many problems in astrophysics.  An incomplete feature list of REBOUND:
 
-* Symplectic integrators (WHFast, SEI, LEAPFROG)
+* Symplectic integrators (WHFast, WHFastHelio, SEI, LEAPFROG)
 * High accuracy non-symplectic integrator with adaptive timestepping (IAS15)
 * Support for collisional/granular dynamics, various collision detection routines
 * The code is written entirely in C, conforms to the ISO standard C99 and can be used as a thread-safe shared library

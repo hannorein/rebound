@@ -141,8 +141,7 @@ static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
 #define WHFAST_NMAX_NEWT  32	///< Maximum number of iterations for Newton's method
 /****************************** 
  * Keplerian motion           */
-static void kepler_step(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double* const eta,  const double G, unsigned int i, double _dt){
-  	const double M = G*eta[i];
+void kepler_step(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt){
 	const struct reb_particle p1 = p_j[i];
 
 	const double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
@@ -481,7 +480,7 @@ static void interaction_step(struct reb_simulation* const r, struct reb_particle
 
 static void kepler_drift(const struct reb_simulation* const r, struct reb_particle* const p_j, const double* const eta, const double G, const double _dt, const int N_real){
 	for (unsigned int i=1;i<N_real;i++){
-		kepler_step(r, p_j, eta, G, i, _dt);
+		kepler_step(r, p_j, eta[i]*G, i, _dt);
 	}
 	p_j[0].x += _dt*p_j[0].vx;
 	p_j[0].y += _dt*p_j[0].vy;
@@ -591,7 +590,7 @@ void reb_integrator_whfast_part1(struct reb_simulation* const r){
 	struct reb_particle* restrict const particles = r->particles;
 	const int N = r->N;
 	const int N_real = N-r->N_var;
-	r->gravity_ignore_10 = 1;
+	r->gravity_ignore_terms = 1;
 	if (ri_whfast->allocated_N != N){
 		ri_whfast->allocated_N = N;
 		ri_whfast->p_j = realloc(ri_whfast->p_j,sizeof(struct reb_particle)*N);

@@ -60,7 +60,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 	const int N_active = r->N_active;
 	const double G = r->G;
 	const double softening2 = r->softening*r->softening;
-	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
+	const unsigned int _gravity_ignore_terms = r->gravity_ignore_terms;
 	const int _N_active = ((N_active==-1)?N:N_active) - r->N_var;
 	const int _N_real   = N  - r->N_var;
 	const int _testparticle_type   = r->testparticle_type;
@@ -87,7 +87,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 #pragma omp parallel for schedule(guided)
 				for (int i=0; i<_N_real; i++){
 				for (int j=0; j<_N_active; j++){
-					if (_gravity_ignore_10 && ((j==1 && i==0) || (i==1 && j==0))) continue;
+					if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0) )) continue;
+					if (_gravity_ignore_terms==2 && ((j==0 || i==0) )) continue;
 					if (i==j) continue;
 					const double dx = (gb.shiftx+particles[i].x) - particles[j].x;
 					const double dy = (gb.shifty+particles[i].y) - particles[j].y;
@@ -103,7 +104,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                 if (_testparticle_type){
 				for (int i=0; i<_N_active; i++){
 				for (int j=_N_active; j<_N_real; j++){
-					if (_gravity_ignore_10 && j==1 && i==0 ) continue;
+					if (_gravity_ignore_terms==1 && ((j==1 && i==0) )) continue;
+					if (_gravity_ignore_terms==2 && ((j==0 || i==0) )) continue;
 					const double dx = (gb.shiftx+particles[i].x) - particles[j].x;
 					const double dy = (gb.shifty+particles[i].y) - particles[j].y;
 					const double dz = (gb.shiftz+particles[i].z) - particles[j].z;
@@ -142,8 +144,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 #pragma omp parallel for schedule(guided)
 			for (int i=0; i<_N_active; i++){
 			for (int j=0; j<_N_active; j++){
-				if (_gravity_ignore_10 && j==1 && i==0 ) continue;
-				if (_gravity_ignore_10 && i==1 && j==0 ) continue;
+				if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
+				if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
 				if (i==j) continue;
 				const double dx = particles[i].x - particles[j].x;
 				const double dy = particles[i].y - particles[j].y;
@@ -179,7 +181,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 #pragma omp parallel for schedule(guided)
 			for (int i=_N_active; i<_N_real; i++){
 			for (int j=0; j<_N_active; j++){
-				if (_gravity_ignore_10 && i==1 && j==0 ) continue;
+				if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
+				if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
 				const double dx = particles[i].x - particles[j].x;
 				const double dy = particles[i].y - particles[j].y;
 				const double dz = particles[i].z - particles[j].z;
@@ -213,7 +216,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 #pragma omp parallel for schedule(guided)
 				for (int j=0; j<_N_active; j++){
 				for (int i=_N_active; i<_N_real; i++){
-					if (_gravity_ignore_10 && i==1 && j==0 ) continue;
+                    if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
+                    if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
 					const double dx = particles[i].x - particles[j].x;
 					const double dy = particles[i].y - particles[j].y;
 					const double dz = particles[i].z - particles[j].z;
@@ -246,7 +250,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 #else // OPENMP
 			for (int i=0; i<_N_active; i++){
 			for (int j=i+1; j<_N_active; j++){
-				if (_gravity_ignore_10 && j==1 && i==0 ) continue;
+                if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
+                if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
 				const double dx = particles[i].x - particles[j].x;
 				const double dy = particles[i].y - particles[j].y;
 				const double dz = particles[i].z - particles[j].z;
@@ -301,7 +306,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 			// Testparticles
 			for (int i=_N_active; i<_N_real; i++){
 			for (int j=0; j<_N_active; j++){
-				if (_gravity_ignore_10 && i==1 && j==0 ) continue;
+                if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
+                if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
 				const double dx = particles[i].x - particles[j].x;
 				const double dy = particles[i].y - particles[j].y;
 				const double dz = particles[i].z - particles[j].z;
@@ -392,7 +398,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 void reb_calculate_acceleration_var(struct reb_simulation* r){
 	struct reb_particle* const particles = r->particles;
 	const double G = r->G;
-	const unsigned int _gravity_ignore_10 = r->gravity_ignore_10;
+	const unsigned int _gravity_ignore_terms = r->gravity_ignore_terms;
 	const int N = r->N;
 	const int _N_real   = N - r->N_var;
 	switch (r->gravity){
@@ -424,7 +430,8 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                         }
                         for (int i=0; i<_N_real; i++){
                         for (int j=i+1; j<_N_real; j++){
-                            if (_gravity_ignore_10 && ((i==1 && j==0) || (j==1 && i==0)) ) continue;
+                            if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
+                            if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
                             const double dx = particles[i].x - particles[j].x;
                             const double dy = particles[i].y - particles[j].y;
                             const double dz = particles[i].z - particles[j].z;
@@ -469,7 +476,8 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                         particles_var1[0].az = 0.; 
                         for (int j=0; j<_N_real; j++){
                             if (i==j) continue;
-                            if (_gravity_ignore_10 && ((i==1 && j==0) || (j==1 && i==0)) ) continue;
+                            if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
+                            if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
                             const double dx = particles[i].x - particles[j].x;
                             const double dy = particles[i].y - particles[j].y;
                             const double dz = particles[i].z - particles[j].z;
@@ -517,7 +525,8 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                         for (int i=0; i<_N_real; i++){
                         for (int j=i+1; j<_N_real; j++){
                             // TODO: Need to implement WH skipping
-                            //if (_gravity_ignore_10 && ((i==1 && j==0) || (j==1 && i==0)) ) continue;
+                            //if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
+                            //if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
                             const double dx = particles[i].x - particles[j].x;
                             const double dy = particles[i].y - particles[j].y;
                             const double dz = particles[i].z - particles[j].z;
@@ -610,7 +619,8 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                         for (int j=0; j<_N_real; j++){
                             if (i==j) continue;
                             // TODO: Need to implement WH skipping
-                            //if (_gravity_ignore_10 && ((i==1 && j==0) || (j==1 && i==0)) ) continue;
+                            //if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
+                            //if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
                             const double dx = particles[i].x - particles[j].x;
                             const double dy = particles[i].y - particles[j].y;
                             const double dz = particles[i].z - particles[j].z;
