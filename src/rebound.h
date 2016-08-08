@@ -96,6 +96,7 @@ struct reb_ghostbox{
  * for MPI in communications_mpi.c.
  */
 struct reb_particle {
+    struct reb_simulation* sim; ///< Pointer to the parent simulation.
     double x;           ///< x-position of the particle. 
     double y;           ///< y-position of the particle. 
     double z;           ///< z-position of the particle. 
@@ -111,7 +112,6 @@ struct reb_particle {
     struct reb_treecell* c;     ///< Pointer to the cell the particle is currently in.
     uint32_t hash;      ///< hash to identify particle.
     void* ap;           ///< Functionality for externally adding additional properties to particles.
-    struct reb_simulation* sim; ///< Pointer to the parent simulation.
 };
 
 

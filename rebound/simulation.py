@@ -1414,7 +1414,8 @@ Simulation._fields_ = [
                 ("extras", c_void_p),
                  ]
 
-Particle._fields_ = [("x", c_double),
+Particle._fields_ = [("_sim", POINTER(Simulation)),
+                ("x", c_double),
                 ("y", c_double),
                 ("z", c_double),
                 ("vx", c_double),
@@ -1428,8 +1429,7 @@ Particle._fields_ = [("x", c_double),
                 ("lastcollision", c_double),
                 ("c", c_void_p),
                 ("_hash", c_uint32),
-                ("ap", c_void_p),
-                ("_sim", POINTER(Simulation))]
+                ("ap", c_void_p)]
 
 POINTER_REB_SIM = POINTER(Simulation) 
 AFF = CFUNCTYPE(None,POINTER_REB_SIM)
