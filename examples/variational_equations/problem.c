@@ -13,7 +13,7 @@
 struct reb_simulation* create_sim(){
 	struct reb_simulation* r = reb_create_simulation();
     // r->integrator = REB_INTEGRATOR_WHFAST;  Only first order variational equations supported in WHFast.
-    struct reb_particle star = {0.};
+    struct reb_particle star = {0};
     star.m = 1;
     reb_add(r, star);
     struct reb_particle planet = reb_tools_orbit_to_particle(1.,star,1e-3,1.,0.,0.,0.,0.,0.);
