@@ -3,6 +3,11 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 2.20.1
+--------------
+* Added symplectic correctors for WHFastHelio integrator. See Wisdom (2006). 
+* Improved accuracy of symplectic corrector coefficients for WHFast and WHFastHelio.
+
 Version 2.20.0
 --------------
 * Added new WHFastHelio integrator. This integrator uses the WHFast Kepler solver, but uses democratic heliocentric coordinates (WHFast itself uses Jacobi coordinates). Heliocentric coordinates are advantages if planets swap positions. 

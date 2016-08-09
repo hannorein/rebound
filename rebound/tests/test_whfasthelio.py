@@ -42,6 +42,38 @@ class TestIntegratorWHFastHelio(unittest.TestCase):
         e1 = sim.calculate_energy()
         self.assertLess(math.fabs((e0-e1)/e1),1e-7)
     
+    def test_whfasthelio_cor(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1e-3, a=1.,e=.1)
+        sim.add(m=1e-3, a=3.,e=0.1)
+        sim.integrator = "whfasthelio"
+        sim.ri_whfasthelio.corrector=11
+        jupyr = 2.*math.pi
+        sim.dt = 0.05123*jupyr
+        e0 = sim.calculate_energy()
+        sim.integrate(1e3*jupyr)
+        self.assertNotEqual(e0,0.)
+        e1 = sim.calculate_energy()
+        self.assertLess(math.fabs((e0-e1)/e1),1e-7)
+    
+    def test_whfasthelioi_cor_nosafemode(self):
+        sim = rebound.Simulation()
+        sim.ri_whfasthelio.safe_mode=0
+        sim.add(m=1.)
+        sim.add(m=1e-3, a=1.,e=.1)
+        sim.add(m=1e-3, a=3.,e=0.1)
+        sim.integrator = "whfasthelio"
+        sim.ri_whfasthelio.corrector=11
+        jupyr = 2.*math.pi
+        sim.dt = 0.05123*jupyr
+        e0 = sim.calculate_energy()
+        sim.integrate(1e3*jupyr)
+        self.assertNotEqual(e0,0.)
+        e1 = sim.calculate_energy()
+        self.assertLess(math.fabs((e0-e1)/e1),1e-7)
+    
+    
     def test_whfasthelio_orderdoesnotmatter(self):
         jupyr = 2.*math.pi
 

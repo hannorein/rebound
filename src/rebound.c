@@ -65,7 +65,7 @@ static const char* logo[];              /**< Logo of rebound. */
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "2.20.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "2.20.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 
 void reb_step(struct reb_simulation* const r){
     // A 'DKD'-like integrator will do the first 'D' part.
@@ -291,8 +291,11 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->allocatedN_lookup = 0;
     // ********** WHFAST
     r->ri_whfast.allocated_N    = 0;
-    r->ri_whfast.eta        = NULL;
-    r->ri_whfast.p_j        = NULL;
+    r->ri_whfast.eta            = NULL;
+    r->ri_whfast.p_j            = NULL;
+    // ********** WHFASTHELIO
+    r->ri_whfasthelio.allocated_N  = 0;
+    r->ri_whfasthelio.p_h          = NULL;
     // ********** IAS15
     r->ri_ias15.allocatedN      = 0;
     set_dp7_null(&(r->ri_ias15.g));
@@ -415,6 +418,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_whfast.timestep_warning = 0;
     r->ri_whfast.recalculate_jacobi_but_not_synchronized_warning = 0;
     // ********** WHFASTHELIO
+    r->ri_whfasthelio.corrector = 0;
     r->ri_whfasthelio.safe_mode = 1;
     r->ri_whfasthelio.is_synchronized = 1;
     r->ri_whfasthelio.recalculate_heliocentric_this_timestep = 0;

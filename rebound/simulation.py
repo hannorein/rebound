@@ -171,6 +171,12 @@ class reb_simulation_integrator_whfasthelio(Structure):
     >>> sim.ri_whfasthelio.safe_mode =  0
     
    
+   :ivar int corrector:      
+        The order of the symplectic corrector in the WHFastHelio integrator.
+        By default the symplectic correctors are turned off (=0). For high
+        accuracy simulation set this value to 11. For more details read 
+        Rein and Tamayo (2015) and also Widsom (2006).
+   
    :ivar int recalculate_helio_this_timestep:
         Sets a flag that tells WHFastHelio that the particles have changed.
         Setting this flag to 1 (default 0) triggers the WHFastHelio integrator
@@ -185,7 +191,8 @@ class reb_simulation_integrator_whfasthelio(Structure):
         However, make sure you are aware of the consequences.
     """
 
-    _fields_ = [("recalculate_heliocentric_this_timestep", c_uint),
+    _fields_ = [("corrector", c_uint),
+                ("recalculate_heliocentric_this_timestep", c_uint),
                 ("safe_mode", c_uint),
                 ("p_h", POINTER(Particle)),
                 ("allocatedN", c_uint),

@@ -29,4 +29,6 @@ void reb_integrator_whfast_part2(struct reb_simulation* r);		///< Internal funct
 void reb_integrator_whfast_synchronize(struct reb_simulation* r);	///< Internal function used to call a specific integrator
 void reb_integrator_whfast_reset(struct reb_simulation* r);		///< Internal function used to call a specific integrator
 void kepler_step(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt);   ///< Internal function (Main WHFast Kepler Solver)
+
+void reb_whfast_apply_corrector(struct reb_simulation* r, double inv, int order, void (*corrector_Z)(struct reb_simulation*, const double, const double)); ///< Internal function to apply correctors according to Wisdom (2006). 
 #endif
