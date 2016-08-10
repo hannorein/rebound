@@ -20,7 +20,7 @@ class TestHermes(unittest.TestCase):
         sim.add(m=1.)
         sim.add(m=1.e-3, a=1.523,e=0.0146,f=0.24)
         sim.add(m=1.e-3, a=2.423523,e=0.01246,f=0.324)
-        sim.integrator = "whfast"
+        sim.integrator = "whfasthelio"
         P = sim.particles[1].P
         sim.dt = 1e-4*P
         sim.integrate(P)
@@ -74,6 +74,7 @@ class TestHermes(unittest.TestCase):
         #sim.gravity = "basic"
         sim.ri_hermes.hill_switch_factor = 3.
         sim.ri_hermes.radius_switch_factor = 20.
+        sim.ri_hermes.adaptive_hill_switch_factor = 0
         sim.dt = 0.0001
         sim.testparticle_type = 1
         sim.track_energy_offset = 1;
