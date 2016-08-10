@@ -445,7 +445,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_hermes.steps_miniN = 0;
     r->ri_hermes.timestep_too_large_warning = 0;
     r->ri_hermes.radius_switch_factor = 15.;        //defualt RSF value
-    r->ri_hermes.hill_switch_factor = 3;            //default HSF value
+    r->ri_hermes.hill_switch_factor = 1;            //default HSF value
     r->ri_hermes.adaptive_hill_switch_factor = 1;   //by default, HERMES autocalculates HSF
     r->ri_hermes.hill_switch_factor_floor = 1;      //An optional HSF floor can be set by the user (default set to 1)
     
