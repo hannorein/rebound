@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 2.20.2
+--------------
+* Added adaptive HSF for HERMES integrator. More documentation and paper to follow. 
+
 Version 2.20.1
 --------------
 * Added symplectic correctors for WHFastHelio integrator. See Wisdom (2006). 
