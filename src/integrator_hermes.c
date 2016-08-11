@@ -42,7 +42,7 @@
 
 static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* r);
 static void reb_integrator_hermes_additional_forces_mini(struct reb_simulation* mini);
-static void calc_forces_on_planets(const struct reb_simulation* r, double* a);
+static void reb_integrator_hermes_apply_forces(const struct reb_simulation* r, double* a);
 static void reb_integrator_hermes_autocalc_HSF(struct reb_simulation* r);
 static void reb_integrator_hermes_get_ae(struct reb_simulation* r, struct reb_particle com, int index, double* a, double* e);
 
@@ -115,7 +115,7 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
         reb_integrator_ias15_clear(r->ri_hermes.mini);
     }
     
-    calc_forces_on_planets(r, r->ri_hermes.a_i);
+    reb_integrator_hermes_apply_forces(r, r->ri_hermes.a_i);
     
     if(r->ri_hermes.mini_active && r->track_energy_offset){
         r->ri_hermes.energy_before_timestep = reb_tools_energy(r);
@@ -130,7 +130,7 @@ void reb_integrator_hermes_part2(struct reb_simulation* r){
     //reb_integrator_whfast_part2(r);
     reb_integrator_whfasthelio_part2(r);
     
-    calc_forces_on_planets(r, r->ri_hermes.a_f);
+    reb_integrator_hermes_apply_forces(r, r->ri_hermes.a_f);
     
     struct reb_simulation* mini = r->ri_hermes.mini;
     r->ri_hermes.steps++;
@@ -337,7 +337,7 @@ static void reb_integrator_hermes_autocalc_HSF(struct reb_simulation* r){
     }
 }
 
-static void calc_forces_on_planets(const struct reb_simulation* r, double* a){
+static void reb_integrator_hermes_apply_forces(const struct reb_simulation* r, double* a){
     int* is_in_mini = r->ri_hermes.is_in_mini;
     double G = r->G;
     const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
