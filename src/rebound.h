@@ -235,6 +235,9 @@ struct reb_simulation_integrator_hermes {
     unsigned long long steps;
     unsigned long long steps_miniactive;
     unsigned long long steps_miniN;
+    
+    int adaptive_hill_switch_factor;        ///< Flag (default==1) for automatically calculating the appropriate HSF value each iteration
+    double hill_switch_factor_floor;        ///< Optional HSF floor value (default=1),
 };
 
 

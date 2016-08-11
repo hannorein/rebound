@@ -1340,6 +1340,8 @@ class reb_simulation_integrator_hermes(Structure):
                 ("steps", c_ulonglong),
                 ("steps_miniactive", c_ulonglong),
                 ("steps_miniN", c_ulonglong),
+                ("adaptive_hill_switch_factor", c_int),
+                ("hill_switch_factor_floor", c_double),
                 ]
 
 # Setting up fields after class definition (because of self-reference)
