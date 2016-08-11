@@ -213,12 +213,19 @@ struct reb_simulation_integrator_ias15 {
 struct reb_simulation_integrator_hermes {
     struct reb_simulation* mini;            ///< Mini simulation integrated using IAS15. See Silburt et al 2016.
     struct reb_simulation* global;          ///< Global simulation integrated using WHFast. Only set in mini simulation. See Silburt et al 2016).
-    double hill_switch_factor;              ///< Criteria for switching between IAS15 and WHFast in terms of Hill radii.
-    double radius_switch_factor;            ///< Criteria for switching between IAS15 and WHfast in terms of the particles' physical radius.
+    double hill_switch_factor;              ///< Criteria for switching between IAS15 and WHFast in terms of Hill radii (default: 15.).
+    double radius_switch_factor;            ///< Criteria for switching between IAS15 and WHfast in terms of the particles' physical radius (default: 3.).
+    int adaptive_hill_switch_factor;        ///< Flag (default: 1) for automatically calculating the appropriate HSF value each iteration
     
     int mini_active;                        ///< Flag that is set to 1 by HERMES if the mini simulation is active in this timestep.
-    int collision_this_global_dt;           
+    
+    /**
+     * @cond PRIVATE
+     * Internal data structures below. Nothing to be changed by the user.
+     */
+    double current_hill_switch_factor;        ///< HSF used in current timestep (useful to debug adaptive HSF)
     double energy_before_timestep;            ///< Store energy at the beginning of timestep. Used to track energy_offset.
+    int collision_this_global_dt;           
     
     int* global_index_from_mini_index;
     int global_index_from_mini_index_N;
@@ -236,8 +243,7 @@ struct reb_simulation_integrator_hermes {
     unsigned long long steps_miniactive;
     unsigned long long steps_miniN;
     
-    int adaptive_hill_switch_factor;        ///< Flag (default==1) for automatically calculating the appropriate HSF value each iteration
-    double hill_switch_factor_floor;        ///< Optional HSF floor value (default=1),
+    /** @endcond */
 };
 
 
