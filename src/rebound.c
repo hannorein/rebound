@@ -65,7 +65,7 @@ static const char* logo[];              /**< Logo of rebound. */
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "2.20.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "2.20.2";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 
 void reb_step(struct reb_simulation* const r){
     // A 'DKD'-like integrator will do the first 'D' part.
@@ -436,7 +436,6 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_sei.lastdt    = 0;
     
     // ********** HERMES
-    r->ri_hermes.hill_switch_factor = 0.;
     r->ri_hermes.radius_switch_factor = 0.;
     r->ri_hermes.mini_active = 0;
     r->ri_hermes.collision_this_global_dt = 0;
@@ -444,10 +443,10 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_hermes.steps_miniactive = 0;
     r->ri_hermes.steps_miniN = 0;
     r->ri_hermes.timestep_too_large_warning = 0;
-    r->ri_hermes.radius_switch_factor = 15.;        //defualt RSF value
-    r->ri_hermes.hill_switch_factor = 1;            //default HSF value
-    r->ri_hermes.adaptive_hill_switch_factor = 1;   //by default, HERMES autocalculates HSF
-    r->ri_hermes.hill_switch_factor_floor = 1;      //An optional HSF floor can be set by the user (default set to 1)
+    r->ri_hermes.radius_switch_factor = 15.;         
+    r->ri_hermes.hill_switch_factor = 3.;            
+    r->ri_hermes.adaptive_hill_switch_factor = 1;    
+    r->ri_hermes.current_hill_switch_factor = 3.;     //Internal 
     
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.
     r->tree_needs_update= 0;
