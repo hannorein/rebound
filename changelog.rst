@@ -44,7 +44,6 @@ Version 2.18.9
    a = np.zeros((sim.N,3),dtype="float64")
    sim.serialize_particle_data(xyz=a)
    print(a)
->>>>>>> master
 
 
 Version 2.18.5

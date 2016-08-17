@@ -81,4 +81,4 @@ If you have trouble installing or using REBOUND, please open an issue on github 
 
 Changelog
 ---------
-For a changelog of the most important changes in recent updates, see https://github.com/hannorein/rebound/blob/master/doc/changelog.rst 
+For a changelog of the most important changes in recent updates, see https://github.com/hannorein/rebound/blob/master/changelog.rst 
