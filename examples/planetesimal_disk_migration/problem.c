@@ -3,7 +3,7 @@
  *
  * This example integrates a star, 2 planet, N-planetesimal disk system, with the
  * outer planet at the inner edge of the planetesimal disk. If the system is
- * integrated for at least 10^5 years outward migration by the outer planet in
+ * integrated for at least 10^5 years/2pi outward migration by the outer planet in
  * the planetesimal can be observed.
  *
  * The ideal integrator choice for this problem is HERMES due to the large
@@ -21,7 +21,6 @@
 
 void heartbeat(struct reb_simulation* r);
 double calc_a(struct reb_simulation* r, int index);
-
 double E0;
 
 int main(int argc, char* argv[]){
@@ -40,7 +39,7 @@ int main(int argc, char* argv[]){
     
     // Boundaries
     r->boundary	= REB_BOUNDARY_OPEN;
-    const double boxsize = 10;
+    const double boxsize = 6;
     reb_configure_box(r,boxsize,2,2,1);
     
     srand(12);
@@ -48,7 +47,7 @@ int main(int argc, char* argv[]){
     double m_neptune = 5.1e-4;
     double a_scat_planet = 1;
     double a_mig_planet = 1.67;
-    r->dt = pow(a_scat_planet,1.5)/30;
+    r->dt = 6.283*pow(a_scat_planet,1.5)/50;
     
 	// Star
 	struct reb_particle star = {0};
@@ -105,26 +104,12 @@ int main(int argc, char* argv[]){
     reb_integrate(r, INFINITY);
 }
 
-double tout = 0.1;
 void heartbeat(struct reb_simulation* r){
-    if (tout <r->t){
-        tout *=1.01;
-        double E = reb_tools_energy(r);
-        double relE = fabs((E-E0)/E0);
-        FILE* f = fopen("energy.txt","a+");
-        int N_mini = 0;
-        if (r->ri_hermes.mini_active){
-            N_mini = r->ri_hermes.mini->N;
-        }
-        fprintf(f,"%e,%e,%f,%f,%d,%d,%f\n",r->t,relE,calc_a(r,1),calc_a(r,2),r->N,N_mini,r->ri_hermes.current_hill_switch_factor);
-        fclose(f);
-    }
-    
     if (reb_output_check(r, 100.*r->dt)){
         double E = reb_tools_energy(r);
         double relE = fabs((E-E0)/E0);
         reb_output_timing(r, 0);
-        printf("%e",relE);
+        printf("a2=%f,dE=%e",calc_a(r,2),relE);
     }
 }
 
