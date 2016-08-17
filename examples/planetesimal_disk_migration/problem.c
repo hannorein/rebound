@@ -20,7 +20,6 @@
 #include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
-double calc_a(struct reb_simulation* r, int index);
 double E0;
 
 int main(int argc, char* argv[]){
@@ -106,29 +105,16 @@ int main(int argc, char* argv[]){
 
 void heartbeat(struct reb_simulation* r){
     if (reb_output_check(r, 100.*r->dt)){
+        //relative energy error
         double E = reb_tools_energy(r);
         double relE = fabs((E-E0)/E0);
+        
+        //get orbital elements
+        struct reb_particle p = r->particles[2];
+        struct reb_particle star = r->particles[0];
+        struct reb_orbit o = reb_tools_particle_to_orbit(r->G,p,star);
+        
         reb_output_timing(r, 0);
-        printf("a2=%f,dE=%e",calc_a(r,2),relE);
+        printf("a2=%f,dE=%e",o.a,relE);
     }
-}
-
-double calc_a(struct reb_simulation* r, int index){
-    struct reb_particle* const particles = r->particles;
-    struct reb_particle com = reb_get_com(r);
-    struct reb_particle p = particles[index];
-    const double mu = r->G*(com.m + p.m);
-    const double dvx = p.vx-com.vx;
-    const double dvy = p.vy-com.vy;
-    const double dvz = p.vz-com.vz;
-    const double dx = p.x-com.x;
-    const double dy = p.y-com.y;
-    const double dz = p.z-com.z;
-    
-    const double v2 = dvx*dvx + dvy*dvy + dvz*dvz;
-    const double d = sqrt(dx*dx + dy*dy + dz*dz);    //distance
-    const double dinv = 1./d;
-    const double a = -mu/(v2 - 2.*mu*dinv);
-    
-    return a;
 }
