@@ -436,14 +436,13 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_sei.lastdt    = 0;
     
     // ********** HERMES
-    r->ri_hermes.radius_switch_factor = 0.;
     r->ri_hermes.mini_active = 0;
     r->ri_hermes.collision_this_global_dt = 0;
     r->ri_hermes.steps = 0;
     r->ri_hermes.steps_miniactive = 0;
     r->ri_hermes.steps_miniN = 0;
     r->ri_hermes.timestep_too_large_warning = 0;
-    r->ri_hermes.radius_switch_factor = 15.;         
+    r->ri_hermes.solar_switch_factor = 15.;
     r->ri_hermes.hill_switch_factor = 3.;            
     r->ri_hermes.adaptive_hill_switch_factor = 1;    
     r->ri_hermes.current_hill_switch_factor = 3.;     //Internal 

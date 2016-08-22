@@ -193,13 +193,13 @@ static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* glo
     const int _N_active = ((global->N_active==-1)?global->N:global->N_active) - global->N_var;
     struct reb_particle* global_particles = global->particles;
     struct reb_particle p0 = global_particles[0];
+    double solar_check = global->ri_hermes.solar_switch_factor*p0.r;
+    double solar_check2 = solar_check*solar_check;
     double current_hill_switch_factor = global->ri_hermes.current_hill_switch_factor;
     double hill_switch_factor2 = current_hill_switch_factor*current_hill_switch_factor;
     double min_dt_enc2 = INFINITY;
     for (int i=0; i<_N_active; i++){
         struct reb_particle pi = global_particles[i];
-        double radius_check = global->ri_hermes.radius_switch_factor*pi.r;
-        double radius_check2 = radius_check*radius_check;
         const double dxi = p0.x - pi.x;
         const double dyi = p0.y - pi.y;
         const double dzi = p0.z - pi.z;
@@ -223,7 +223,7 @@ static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* glo
             const double dz = pi.z - pj.z;
             const double rij2 = dx*dx + dy*dy + dz*dz;
 
-            if(rij2 < hill_switch_factor2*rh_sum2 || rij2 < radius_check2){
+            if((rij2 < hill_switch_factor2*rh_sum2 && i>0) || (rij2 < solar_check2 && i==0)){
                 global->ri_hermes.mini_active = 1;
                 // Monitor hill radius/relative velocity
                 const double dvx = pi.vx - pj.vx;
