@@ -213,8 +213,8 @@ struct reb_simulation_integrator_ias15 {
 struct reb_simulation_integrator_hermes {
     struct reb_simulation* mini;            ///< Mini simulation integrated using IAS15. See Silburt et al 2016.
     struct reb_simulation* global;          ///< Global simulation integrated using WHFast. Only set in mini simulation. See Silburt et al 2016).
-    double hill_switch_factor;              ///< Criteria for switching between IAS15 and WHFast in terms of Hill radii (default: 15.).
-    double radius_switch_factor;            ///< Criteria for switching between IAS15 and WHfast in terms of the particles' physical radius (default: 3.).
+    double hill_switch_factor;              ///< Criteria for switching between IAS15 and WHFast in terms of Hill radii (default: 3.).
+    double solar_switch_factor;             ///< Criteria for switching between IAS15 and WHfast in terms of the central star's physical radius (default: 15.).
     int adaptive_hill_switch_factor;        ///< Flag (default: 1) for automatically calculating the appropriate HSF value each iteration
     
     int mini_active;                        ///< Flag that is set to 1 by HERMES if the mini simulation is active in this timestep.
