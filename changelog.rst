@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 2.20.4
+--------------
+* Improvements to the Kepler solver. This is typically only relevant for extremly long simulation (1e11 timesteps or more) and extremely accurate simulation with symplectic correctors and a relative energy error of less than 1e-10.
+
 Version 2.20.3
 --------------
 * Small changes to HERMES integrator. It now has a Solar Switch Factor SSF to allow for close encounters with the central object. 
