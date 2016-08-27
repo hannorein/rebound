@@ -73,23 +73,18 @@ static void stumpff_cs(double *restrict cs, double z) {
         z = z/4.;
         n++;
     }
-    double zm = -z;
-    cs[4] = invfactorial[4] - z*invfactorial[6];    // always calculate first two terms
-    cs[5] = invfactorial[5] - z*invfactorial[7];    // always calculate first two terms
-    double old_c_4;
-    double _pow = zm;
-    unsigned int k=8;
-    do{
-        old_c_4 = cs[4];
-        _pow *= zm;
-        cs[4] += _pow*invfactorial[k];
-        k+=1;
-        cs[5] += _pow*invfactorial[k];
-        k+=1;
-    }while(cs[4]!=old_c_4 && k<35);         // Stop if new term smaller than machine precision (cs[5] converges faster than cs[4])
-    cs[3] = 1./6.-z*cs[5];
-    cs[2] = 0.5-z*cs[4];
-    cs[1] = 1.-z*cs[3];
+    const int nmax = 15;
+    double c_odd  = invfactorial[nmax];
+    double c_even = invfactorial[nmax-1];
+    for(int np=nmax-2;np>=5;np-=2){
+        c_odd  = invfactorial[np]    - z *c_odd;
+        c_even = invfactorial[np-1]  - z *c_even;
+    }
+    cs[5] = c_odd;
+    cs[4] = c_even;
+    cs[3] = invfactorial[3]  - z *cs[5];
+    cs[2] = invfactorial[2]  - z *cs[4];
+    cs[1] = invfactorial[1]  - z *cs[3];
     for (;n>0;n--){ 
         z = z*4.;
         cs[5] = (cs[5]+cs[4]+cs[3]*cs[2])*0.0625;
@@ -98,31 +93,25 @@ static void stumpff_cs(double *restrict cs, double z) {
         cs[2] = 0.5-z*cs[4];
         cs[1] = 1.-z*cs[3];
     }
-    cs[0] = 1.-z*cs[2];
+    cs[0] = invfactorial[0]  - z *cs[2];
 }
-
 static void stumpff_cs3(double *restrict cs, double z) {
     unsigned int n = 0;
     while(fabs(z)>0.1){
         z = z/4.;
         n++;
     }
-    double zm = -z;
-    cs[2] = invfactorial[2] - z*invfactorial[4];    // always calculate first two terms
-    cs[3] = invfactorial[3] - z*invfactorial[5];    // always calculate first two terms
-    double old_c_2;
-    double _pow = zm;
-    unsigned int k=6;
-    do{
-        old_c_2 = cs[2];
-        _pow *= zm;
-        cs[2] += _pow*invfactorial[k];
-        k+=1;
-        cs[3] += _pow*invfactorial[k];
-        k+=1;
-    }while(cs[2]!=old_c_2 && k<34);         // Stop if new term smaller than machine precision (cs[3] converges faster than cs[2])
-    cs[1] = 1.-z*cs[3];
-    cs[0] = 1.-z*cs[2];
+    const int nmax = 13;
+    double c_odd  = invfactorial[nmax];
+    double c_even = invfactorial[nmax-1];
+    for(int np=nmax-2;np>=3;np-=2){
+        c_odd  = invfactorial[np]    - z *c_odd;
+        c_even = invfactorial[np-1]  - z *c_even;
+    }
+    cs[3] = c_odd;
+    cs[2] = c_even;
+    cs[1] = invfactorial[1]  - z *c_odd;
+    cs[0] = invfactorial[0]  - z *c_even;
     for (;n>0;n--){ 
         cs[3] = (cs[2]+cs[0]*cs[3])*0.25;
         cs[2] = cs[1]*cs[1]*0.5;

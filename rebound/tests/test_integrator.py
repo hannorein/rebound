@@ -41,7 +41,7 @@ class TestIntegrator2(unittest.TestCase):
             sim.integrate(1e3*yr)
             self.assertEqual(1,len(w))
         x1 = sim.particles[1].x
-        self.assertAlmostEqual(x0, x1, delta=1e-12)
+        self.assertAlmostEqual(x0, x1, delta=1e-11)
     
     def test_whfast_hyperbolic(self):
         sim = rebound.Simulation()
