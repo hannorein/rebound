@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 2.20.3
+--------------
+* Small changes to HERMES integrator. It now has a Solar Switch Factor SSF to allow for close encounters with the central object. 
+
 Version 2.20.2
 --------------
 * Added adaptive HSF for HERMES integrator. More documentation and paper to follow. 
