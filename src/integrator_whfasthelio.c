@@ -147,6 +147,7 @@ static void reb_whfasthelio_keplerstep(const struct reb_simulation* const r, con
     const int N_real = r->N-r->N_var;
     struct reb_particle* const p_h = r->ri_whfasthelio.p_h;
     const double M = r->particles[0].m*r->G;
+#pragma omp parallel for
     for (unsigned int i=1;i<N_real;i++){
         kepler_step(r, p_h, M, i, _dt);
     }

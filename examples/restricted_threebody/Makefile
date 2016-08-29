@@ -1,4 +1,5 @@
 export OPENGL=1
+#export OPENMP=1
 include ../../src/Makefile.defs
 
 all: librebound
