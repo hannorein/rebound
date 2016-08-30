@@ -394,6 +394,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->calculate_megno  = 0;
     r->output_timing_last   = -1;
     r->save_messages = 0;
+    r->track_energy_offset = 0;
 
     r->minimum_collision_velocity = 0;
     r->collisions_plog  = 0;
