@@ -170,28 +170,28 @@ void reb_display(void){
 							glColor4f(0.0,0.0,1.0,0.9);
 						}
 					}
-					//if (reb_dc.r->integrator==REB_INTEGRATOR_WHFAST && reb_dc.r->ri_whfast.is_synchronized==0){
-					//	double m = p.m;
-					//	p = reb_dc.r->ri_whfast.p_j[i];
-					//	p.m = m;
-					//}
-					struct reb_orbit o = reb_tools_particle_to_orbit(reb_dc.r->G, p,com);
-					glPushMatrix();
-					
-					glTranslatef(com.x,com.y,com.z);
-					glRotatef(o.Omega/DEG2RAD,0,0,1);
-					glRotatef(o.inc/DEG2RAD,1,0,0);
-					glRotatef(o.omega/DEG2RAD,0,0,1);
-					
-					glBegin(GL_LINE_LOOP);
-					for (double trueAnom=0; trueAnom < 2.*M_PI; trueAnom+=M_PI/100.) {
-						//convert degrees into radians
-						radius = o.a * (1. - o.e*o.e) / (1. + o.e*cos(trueAnom));
-						glVertex3f(radius*cos(trueAnom),radius*sin(trueAnom),0);
-					}
-					glEnd();
-					glPopMatrix();
-					com = reb_get_com_of_pair(p,com);
+					if ((reb_dc.r->integrator==REB_INTEGRATOR_WHFAST && reb_dc.r->ri_whfast.is_synchronized==0) 
+					    || (reb_dc.r->integrator==REB_INTEGRATOR_WHFASTHELIO && reb_dc.r->ri_whfasthelio.is_synchronized==0)){
+                        // Skip wires, cannot be drawn without synchronization step
+					}else{
+                        struct reb_orbit o = reb_tools_particle_to_orbit(reb_dc.r->G, p,com);
+                        glPushMatrix();
+                        
+                        glTranslatef(com.x,com.y,com.z);
+                        glRotatef(o.Omega/DEG2RAD,0,0,1);
+                        glRotatef(o.inc/DEG2RAD,1,0,0);
+                        glRotatef(o.omega/DEG2RAD,0,0,1);
+                        
+                        glBegin(GL_LINE_LOOP);
+                        for (double trueAnom=0; trueAnom < 2.*M_PI; trueAnom+=M_PI/100.) {
+                            //convert degrees into radians
+                            radius = o.a * (1. - o.e*o.e) / (1. + o.e*cos(trueAnom));
+                            glVertex3f(radius*cos(trueAnom),radius*sin(trueAnom),0);
+                        }
+                        glEnd();
+                        glPopMatrix();
+                        com = reb_get_com_of_pair(p,com);
+                    }
 				}
 			}else{
 				for (int i=1;i<reb_dc.r->N;i++){
