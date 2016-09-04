@@ -1286,6 +1286,8 @@ class Variation(Structure):
             By default variational particles are created in the Heliocentric frame. 
             Set this parameter to use any other particles as a primary (e.g. the center of mass).
         """
+        if self.order==2 and variation2 is None:
+            variation2 = variation
         if self._sim is not None:
             sim = self._sim.contents
             particles = sim.particles
