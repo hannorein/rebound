@@ -254,12 +254,13 @@ static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* glo
 
 //get min encounter time between overlapping orbits
 static void reb_integrator_hermes_autocalc_HSF(struct reb_simulation* r){
+    const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     struct reb_particle com = reb_get_com(r);
     const double mu = r->G*r->particles[0].m;
     struct reb_particle* particles = r->particles;
     double min_dt_enc2 = INFINITY;
     double m0 = particles[0].m;
-    for(int i=1;i<r->N_active;i++){                                             //run over massive bodies
+    for(int i=1;i<_N_active;i++){                                             //run over massive bodies
         double ep, ap;
         reb_integrator_hermes_get_ae(r, com, i, &ap, &ep);
         double rp_min = ap*(1.-ep);
