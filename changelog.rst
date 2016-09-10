@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 2.20.5
+--------------
+* NASA Horizons changed a telnet command. This update implements those changes and restores access to NASA Horizons from within REBOUND.
+
 Version 2.20.4
 --------------
 * Improvements to the Kepler solver. This is typically only relevant for extremly long simulation (1e11 timesteps or more) and extremely accurate simulation with symplectic correctors and a relative energy error of less than 1e-10.
