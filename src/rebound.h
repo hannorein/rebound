@@ -317,7 +317,6 @@ struct reb_simulation_integrator_whfast {
      * Internal data structures below. Nothing to be changed by the user.
      */
     double* restrict eta;       ///< Struct containg Jacobi eta parameters 
-    double Mtotal;          ///< Total mass, used for Jacobi coordinates 
 
     unsigned int is_synchronized;   ///< Flag to determine if current particle structure is synchronized
     unsigned int allocated_N;   ///< Space allocated in arrays

@@ -150,7 +150,6 @@ class reb_simulation_integrator_whfast(Structure):
                 ("safe_mode", c_uint),
                 ("p_j", POINTER(Particle)),
                 ("eta", POINTER(c_double)),
-                ("Mtotal", c_double),
                 ("is_synchronized", c_uint),
                 ("allocatedN", c_uint),
                 ("timestep_warning", c_uint),
