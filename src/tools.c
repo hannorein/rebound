@@ -982,3 +982,66 @@ uint32_t reb_hash(const char* str){
     return reb_murmur3_32(str,(uint32_t)strlen(str),reb_seed);
 }
 
+struct reb_simulation* reb_fsr_restart(char* filename){
+    if (access(filename, F_OK) == -1) return NULL;
+    struct reb_simulation* r = reb_create_simulation_from_binary(filename);
+    if (r){
+        FILE* fd = fopen(filename,"r");
+        fseek(fd,r->fsr_binary_seek,SEEK_SET);
+        size_t chunk_size = sizeof(double)*1+sizeof(double)*7*r->N;
+        fread(&(r->t),sizeof(double),1,fd);
+        if (r->integrator==REB_INTEGRATOR_WHFAST){
+            struct reb_particle* p = r->particles;
+            if (!r->ri_whfast.is_synchronized){
+                r->ri_whfast.p_j= malloc(sizeof(struct reb_particle)*r->N);
+                r->ri_whfast.eta= malloc(sizeof(double)*r->N);
+                r->ri_whfast.allocated_N = r->N;
+                p = r->ri_whfast.p_j;
+            }  
+            for(int i=0;i<r->N;i++){
+                fread(&(r->particles[i].m),sizeof(double),1,fd);
+                fread(&(p[i].x),sizeof(double),1,fd);
+                fread(&(p[i].y),sizeof(double),1,fd);
+                fread(&(p[i].z),sizeof(double),1,fd);
+                fread(&(p[i].vx),sizeof(double),1,fd);
+                fread(&(p[i].vy),sizeof(double),1,fd);
+                fread(&(p[i].vz),sizeof(double),1,fd);
+            }
+            if (!r->ri_whfast.is_synchronized){
+                r->ri_whfast.eta[0] = r->particles[0].m;
+                r->ri_whfast.p_j[0].m = r->particles[0].m;
+                for (unsigned int i=1;i<r->N;i++){
+                    r->ri_whfast.eta[i] = r->ri_whfast.eta[i-1] + r->particles[i].m;
+                    r->ri_whfast.p_j[i].m = r->particles[i].m;
+                }
+            }
+    }
+    return r;
+}
+
+void reb_fsr_heartbeat(struct reb_simulation* const r){
+    if (r->t==0){
+        // First output
+        reb_output_binary(r,r->fsr_filename);
+        r->fsr_next += r->fsr_interval;
+    }else{
+        // Appending outputs
+        if (r->fsr_next <= r->t){
+            r->fsr_next += r->fsr_interval;
+            printf(".r->t = %.16f\n",r->t);
+            FILE* of = fopen(r->fsr_filename,"a");
+            fwrite(&(r->t),sizeof(double),1, of);
+            struct reb_particle* p = r->ri_whfast.p_j;
+            for(int i=0;i<r->N;i++){
+                fwrite(&(r->particles[i].m),sizeof(double),1,of);
+                fwrite(&(p[i].x),sizeof(double),1,of);
+                fwrite(&(p[i].y),sizeof(double),1,of);
+                fwrite(&(p[i].z),sizeof(double),1,of);
+                fwrite(&(p[i].vx),sizeof(double),1,of);
+                fwrite(&(p[i].vy),sizeof(double),1,of);
+                fwrite(&(p[i].vz),sizeof(double),1,of);
+            }
+            fclose(of);
+        }
+    }
+}

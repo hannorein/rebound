@@ -190,6 +190,7 @@ struct reb_simulation* reb_create_simulation_from_binary_with_messages(char* fil
             reb_read_dp7(&(r->ri_ias15.br) ,N3,inf);
             reb_read_dp7(&(r->ri_ias15.er) ,N3,inf);
         }
+        r->fsr_binary_seek = ftell(inf);
         fclose(inf);
         
         return r;

@@ -535,6 +535,18 @@ struct reb_simulation {
     double megno_mean_Y;    ///< mean of MEGNO Y
     long   megno_n;     ///< number of covariance updates
     /** @} */
+    
+    
+    /**
+     * \name Variables related to the fast simulation restarter 
+     * @{
+     */
+    long   fsr_binary_seek;
+    double fsr_interval;
+    double fsr_next;
+    char*  fsr_filename; 
+    double fsr_walltime;
+    /** @} */
 
     /**
      * \name Variables describing the current module selection 
@@ -1317,6 +1329,10 @@ struct reb_particle reb_particle_multiply(struct reb_particle p1, double value);
 struct reb_particle reb_particle_divide(struct reb_particle p1, double value);
 /** @} */
 /** @} */
+
+
+/// TODO Add documentation
+struct reb_simulation* reb_fsr_restart(char* filename);
 
 /**
  * \name Miscellaneous tools
