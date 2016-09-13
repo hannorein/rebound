@@ -988,33 +988,45 @@ struct reb_simulation* reb_fsr_restart(char* filename){
     if (r){
         FILE* fd = fopen(filename,"r");
         fseek(fd,r->fsr_binary_seek,SEEK_SET);
-        size_t chunk_size = sizeof(double)*1+sizeof(double)*7*r->N;
+        size_t chunk_size = sizeof(double)*2+sizeof(double)*7*r->N;
+        fseek(fd,-chunk_size,SEEK_END);
         fread(&(r->t),sizeof(double),1,fd);
-        if (r->integrator==REB_INTEGRATOR_WHFAST){
-            struct reb_particle* p = r->particles;
-            if (!r->ri_whfast.is_synchronized){
+        fread(&(r->fsr_walltime),sizeof(double),1,fd);
+        gettimeofday(&r->fsr_time,NULL);
+
+        while (r->fsr_next<=r->t){
+            r->fsr_next += r->fsr_interval;
+        }
+        switch (r->integrator){
+            case REB_INTEGRATOR_WHFAST:
+                // Recreate Jacobi arrrays
                 r->ri_whfast.p_j= malloc(sizeof(struct reb_particle)*r->N);
                 r->ri_whfast.eta= malloc(sizeof(double)*r->N);
                 r->ri_whfast.allocated_N = r->N;
-                p = r->ri_whfast.p_j;
-            }  
-            for(int i=0;i<r->N;i++){
-                fread(&(r->particles[i].m),sizeof(double),1,fd);
-                fread(&(p[i].x),sizeof(double),1,fd);
-                fread(&(p[i].y),sizeof(double),1,fd);
-                fread(&(p[i].z),sizeof(double),1,fd);
-                fread(&(p[i].vx),sizeof(double),1,fd);
-                fread(&(p[i].vy),sizeof(double),1,fd);
-                fread(&(p[i].vz),sizeof(double),1,fd);
-            }
-            if (!r->ri_whfast.is_synchronized){
+                for(int i=0;i<r->N;i++){
+                    fread(&(r->particles[i].m),sizeof(double),1,fd);
+                    fread(&(r->ri_whfast.p_j[i].x),sizeof(double),1,fd);
+                    fread(&(r->ri_whfast.p_j[i].y),sizeof(double),1,fd);
+                    fread(&(r->ri_whfast.p_j[i].z),sizeof(double),1,fd);
+                    fread(&(r->ri_whfast.p_j[i].vx),sizeof(double),1,fd);
+                    fread(&(r->ri_whfast.p_j[i].vy),sizeof(double),1,fd);
+                    fread(&(r->ri_whfast.p_j[i].vz),sizeof(double),1,fd);
+                }
+                // Not synchronized
+                r->ri_whfast.is_synchronized=0.;
+                // Recreate eta array
                 r->ri_whfast.eta[0] = r->particles[0].m;
                 r->ri_whfast.p_j[0].m = r->particles[0].m;
                 for (unsigned int i=1;i<r->N;i++){
                     r->ri_whfast.eta[i] = r->ri_whfast.eta[i-1] + r->particles[i].m;
                     r->ri_whfast.p_j[i].m = r->particles[i].m;
                 }
-            }
+                printf("Restarted at t=%16f\n,    saved: %.5fs\n",r->t, r->fsr_walltime);
+                break;
+            default:
+                reb_error(r,"Restart not implemented for this integrator.");
+                break;
+        }
     }
     return r;
 }
@@ -1022,24 +1034,42 @@ struct reb_simulation* reb_fsr_restart(char* filename){
 void reb_fsr_heartbeat(struct reb_simulation* const r){
     if (r->t==0){
         // First output
+        printf("First outut t = %.16f\n",r->t);
         reb_output_binary(r,r->fsr_filename);
         r->fsr_next += r->fsr_interval;
+        r->fsr_walltime = 0.;
+        gettimeofday(&r->fsr_time,NULL);
     }else{
         // Appending outputs
         if (r->fsr_next <= r->t){
             r->fsr_next += r->fsr_interval;
-            printf(".r->t = %.16f\n",r->t);
+            printf("Appending output t = %.16f\n",r->t);
+            printf("                 x = %.16f\n",r->ri_whfast.p_j[1].x);
+            
+            struct timeval time_now;
+            gettimeofday(&time_now,NULL);
+            r->fsr_walltime += time_now.tv_sec-r->fsr_time.tv_sec+(time_now.tv_usec-r->fsr_time.tv_usec)/1e6;
+            r->fsr_time = time_now;
+
+
             FILE* of = fopen(r->fsr_filename,"a");
             fwrite(&(r->t),sizeof(double),1, of);
-            struct reb_particle* p = r->ri_whfast.p_j;
-            for(int i=0;i<r->N;i++){
-                fwrite(&(r->particles[i].m),sizeof(double),1,of);
-                fwrite(&(p[i].x),sizeof(double),1,of);
-                fwrite(&(p[i].y),sizeof(double),1,of);
-                fwrite(&(p[i].z),sizeof(double),1,of);
-                fwrite(&(p[i].vx),sizeof(double),1,of);
-                fwrite(&(p[i].vy),sizeof(double),1,of);
-                fwrite(&(p[i].vz),sizeof(double),1,of);
+            fwrite(&(r->fsr_walltime),sizeof(double),1, of);
+            switch (r->integrator){
+                case REB_INTEGRATOR_WHFAST:
+                    for(int i=0;i<r->N;i++){
+                        fwrite(&(r->particles[i].m),sizeof(double),1,of);
+                        fwrite(&(r->ri_whfast.p_j[i].x),sizeof(double),1,of);
+                        fwrite(&(r->ri_whfast.p_j[i].y),sizeof(double),1,of);
+                        fwrite(&(r->ri_whfast.p_j[i].z),sizeof(double),1,of);
+                        fwrite(&(r->ri_whfast.p_j[i].vx),sizeof(double),1,of);
+                        fwrite(&(r->ri_whfast.p_j[i].vy),sizeof(double),1,of);
+                        fwrite(&(r->ri_whfast.p_j[i].vz),sizeof(double),1,of);
+                    }
+                    break;
+                default:
+                    reb_error(r,"Restart not implemented for this integrator.");
+                    break;
             }
             fclose(of);
         }

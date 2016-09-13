@@ -26,6 +26,7 @@
 #ifndef _MAIN_H
 #define _MAIN_H
 #include <stdint.h>
+#include <sys/time.h>
 #ifndef M_PI
 // Make sure M_PI is defined. 
 #define M_PI           3.14159265358979323846       ///< The mathematical constant pi.
@@ -546,6 +547,7 @@ struct reb_simulation {
     double fsr_next;
     char*  fsr_filename; 
     double fsr_walltime;
+    struct timeval fsr_time;
     /** @} */
 
     /**
