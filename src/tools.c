@@ -982,51 +982,84 @@ uint32_t reb_hash(const char* str){
     return reb_murmur3_32(str,(uint32_t)strlen(str),reb_seed);
 }
 
+int reb_fsr_load_blob(struct reb_simulation* r, char* filename, long blob){
+    printf("loading block\n");
+    if (access(filename, F_OK) == -1) return -1;
+    if (!r) return -2;
+    
+    FILE* fd = fopen(filename,"r");
+    int fseekret = 0;
+    if (blob<0){
+        fseekret = fseek(fd,-r->fsr_seek_blob,SEEK_END);
+    }else if(blob==0){
+        // load original binary file
+        enum reb_input_binary_messages warnings = 0;
+        reb_create_simulation_from_binary_with_messages(r,filename,&warnings);
+        if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
+            reb_error(r,"Cannot read binary file. Check filename and file contents.");
+        }
+        return 0;
+    }else{
+        fseekret = fseek(fd,r->fsr_seek_first + (blob-1)*r->fsr_seek_blob,SEEK_SET);
+    }
+    if (fseekret){
+        fclose(fd);
+        return -3;
+    }
+    fread(&(r->t),sizeof(double),1,fd);
+    printf("found time\n %f",r->t);
+    fread(&(r->fsr_walltime),sizeof(double),1,fd);
+    gettimeofday(&r->fsr_time,NULL);
+    while (r->fsr_next<=r->t){
+        r->fsr_next += r->fsr_interval;
+    }
+    switch (r->gravity){
+        case REB_GRAVITY_BASIC:
+        case REB_GRAVITY_NONE:
+            break;
+        default:
+            reb_error(r,"Restart not implemented for this gravity module.");
+            break;
+    }
+    switch (r->integrator){
+        case REB_INTEGRATOR_WHFAST:
+            // Recreate Jacobi arrrays
+            r->ri_whfast.p_j= malloc(sizeof(struct reb_particle)*r->N);
+            r->ri_whfast.eta= malloc(sizeof(double)*r->N);
+            r->ri_whfast.allocated_N = r->N;
+            for(int i=0;i<r->N;i++){
+                fread(&(r->particles[i].m),sizeof(double),1,fd);
+                fread(&(r->ri_whfast.p_j[i].x),sizeof(double),1,fd);
+                fread(&(r->ri_whfast.p_j[i].y),sizeof(double),1,fd);
+                fread(&(r->ri_whfast.p_j[i].z),sizeof(double),1,fd);
+                fread(&(r->ri_whfast.p_j[i].vx),sizeof(double),1,fd);
+                fread(&(r->ri_whfast.p_j[i].vy),sizeof(double),1,fd);
+                fread(&(r->ri_whfast.p_j[i].vz),sizeof(double),1,fd);
+            }
+            // Not synchronized
+            r->ri_whfast.is_synchronized=0.;
+            // Recreate eta array
+            r->ri_whfast.eta[0] = r->particles[0].m;
+            r->ri_whfast.p_j[0].m = r->particles[0].m;
+            for (unsigned int i=1;i<r->N;i++){
+                r->ri_whfast.eta[i] = r->ri_whfast.eta[i-1] + r->particles[i].m;
+                r->ri_whfast.p_j[i].m = r->particles[i].m;
+            }
+            break;
+        default:
+            reb_error(r,"Restart not implemented for this integrator.");
+            break;
+    }
+    fclose(fd);
+
+    return 0;
+}
+
 struct reb_simulation* reb_fsr_restart(char* filename){
     if (access(filename, F_OK) == -1) return NULL;
     struct reb_simulation* r = reb_create_simulation_from_binary(filename);
     if (r){
-        FILE* fd = fopen(filename,"r");
-        fseek(fd,r->fsr_binary_seek,SEEK_SET);
-        size_t chunk_size = sizeof(double)*2+sizeof(double)*7*r->N;
-        fseek(fd,-chunk_size,SEEK_END);
-        fread(&(r->t),sizeof(double),1,fd);
-        fread(&(r->fsr_walltime),sizeof(double),1,fd);
-        gettimeofday(&r->fsr_time,NULL);
-
-        while (r->fsr_next<=r->t){
-            r->fsr_next += r->fsr_interval;
-        }
-        switch (r->integrator){
-            case REB_INTEGRATOR_WHFAST:
-                // Recreate Jacobi arrrays
-                r->ri_whfast.p_j= malloc(sizeof(struct reb_particle)*r->N);
-                r->ri_whfast.eta= malloc(sizeof(double)*r->N);
-                r->ri_whfast.allocated_N = r->N;
-                for(int i=0;i<r->N;i++){
-                    fread(&(r->particles[i].m),sizeof(double),1,fd);
-                    fread(&(r->ri_whfast.p_j[i].x),sizeof(double),1,fd);
-                    fread(&(r->ri_whfast.p_j[i].y),sizeof(double),1,fd);
-                    fread(&(r->ri_whfast.p_j[i].z),sizeof(double),1,fd);
-                    fread(&(r->ri_whfast.p_j[i].vx),sizeof(double),1,fd);
-                    fread(&(r->ri_whfast.p_j[i].vy),sizeof(double),1,fd);
-                    fread(&(r->ri_whfast.p_j[i].vz),sizeof(double),1,fd);
-                }
-                // Not synchronized
-                r->ri_whfast.is_synchronized=0.;
-                // Recreate eta array
-                r->ri_whfast.eta[0] = r->particles[0].m;
-                r->ri_whfast.p_j[0].m = r->particles[0].m;
-                for (unsigned int i=1;i<r->N;i++){
-                    r->ri_whfast.eta[i] = r->ri_whfast.eta[i-1] + r->particles[i].m;
-                    r->ri_whfast.p_j[i].m = r->particles[i].m;
-                }
-                printf("Restarted at t=%16f\n,    saved: %.5fs\n",r->t, r->fsr_walltime);
-                break;
-            default:
-                reb_error(r,"Restart not implemented for this integrator.");
-                break;
-        }
+        reb_fsr_load_blob(r, filename, -1);
     }
     return r;
 }
@@ -1034,7 +1067,7 @@ struct reb_simulation* reb_fsr_restart(char* filename){
 void reb_fsr_heartbeat(struct reb_simulation* const r){
     if (r->t==0){
         // First output
-        printf("First outut t = %.16f\n",r->t);
+        r->fsr_seek_blob = sizeof(double)*2+sizeof(double)*7*r->N;
         reb_output_binary(r,r->fsr_filename);
         r->fsr_next += r->fsr_interval;
         r->fsr_walltime = 0.;
@@ -1043,14 +1076,11 @@ void reb_fsr_heartbeat(struct reb_simulation* const r){
         // Appending outputs
         if (r->fsr_next <= r->t){
             r->fsr_next += r->fsr_interval;
-            printf("Appending output t = %.16f\n",r->t);
-            printf("                 x = %.16f\n",r->ri_whfast.p_j[1].x);
             
             struct timeval time_now;
             gettimeofday(&time_now,NULL);
             r->fsr_walltime += time_now.tv_sec-r->fsr_time.tv_sec+(time_now.tv_usec-r->fsr_time.tv_usec)/1e6;
             r->fsr_time = time_now;
-
 
             FILE* of = fopen(r->fsr_filename,"a");
             fwrite(&(r->t),sizeof(double),1, of);

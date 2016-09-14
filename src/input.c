@@ -101,107 +101,107 @@ static void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf){
     fread(dp7->p6,sizeof(double),N3,inf);
 }
 
-struct reb_simulation* reb_create_simulation_from_binary_with_messages(char* filename, enum reb_input_binary_messages* warnings){
+void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, char* filename, enum reb_input_binary_messages* warnings){
     FILE* inf = fopen(filename,"rb"); 
-    if (inf){
-        struct reb_simulation* r = malloc(sizeof(struct reb_simulation));
-        long objects = 0;
-        // Input header.
-        const char str[] = "REBOUND Binary File. Version: ";
-        char readbuf[65], curvbuf[65];
-        sprintf(curvbuf,"%s%s",str,reb_version_str);
-        for(size_t j=strlen(curvbuf);j<63;j++){
-            curvbuf[j] = ' ';
-        }
-        curvbuf[63] = '\0';
-        objects += fread(readbuf,sizeof(char),64,inf);
-        if(strcmp(readbuf,curvbuf)!=0){
-            *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
-        }
+    
+    if (!inf){
+        *warnings |= REB_INPUT_BINARY_ERROR_NOFILE;
+        return;
+    }
 
-        // Read main simulation oject.
-        objects += fread(r,sizeof(struct reb_simulation),1,inf);
-        int ri_ias15_allocatedN = r->ri_ias15.allocatedN;
-        if(reb_reset_function_pointers(r)){
-            *warnings |= REB_INPUT_BINARY_WARNING_POINTERS;
-        }
-        reb_reset_temporary_pointers(r);
-        r->allocatedN = r->N;
-        r->tree_root = NULL;
+    long objects = 0;
+    // Input header.
+    const char str[] = "REBOUND Binary File. Version: ";
+    char readbuf[65], curvbuf[65];
+    sprintf(curvbuf,"%s%s",str,reb_version_str);
+    for(size_t j=strlen(curvbuf);j<63;j++){
+        curvbuf[j] = ' ';
+    }
+    curvbuf[63] = '\0';
+    objects += fread(readbuf,sizeof(char),64,inf);
+    if(strcmp(readbuf,curvbuf)!=0){
+        *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
+    }
 
-        // Read particles
-        if (r->N>0){
-            r->particles = malloc(sizeof(struct reb_particle)*r->N);
-            if (r->particles){
-                objects = fread(r->particles,sizeof(struct reb_particle),r->N,inf);
-                if (objects==r->N){
-                    for (int l=0;l<r->N;l++){
-                        r->particles[l].c = NULL;
-                        r->particles[l].ap = NULL;
-                        r->particles[l].sim = r;
-                    }
-                }else{
-                    *warnings |= REB_INPUT_BINARY_WARNING_PARTICLES;
+    // Read main simulation oject.
+    objects += fread(r,sizeof(struct reb_simulation),1,inf);
+    int ri_ias15_allocatedN = r->ri_ias15.allocatedN;
+    if(reb_reset_function_pointers(r)){
+        *warnings |= REB_INPUT_BINARY_WARNING_POINTERS;
+    }
+    reb_reset_temporary_pointers(r);
+    r->allocatedN = r->N;
+    r->tree_root = NULL;
+
+    // Read particles
+    if (r->N>0){
+        r->particles = malloc(sizeof(struct reb_particle)*r->N);
+        if (r->particles){
+            objects = fread(r->particles,sizeof(struct reb_particle),r->N,inf);
+            if (objects==r->N){
+                for (int l=0;l<r->N;l++){
+                    r->particles[l].c = NULL;
+                    r->particles[l].ap = NULL;
+                    r->particles[l].sim = r;
                 }
             }else{
                 *warnings |= REB_INPUT_BINARY_WARNING_PARTICLES;
             }
+        }else{
+            *warnings |= REB_INPUT_BINARY_WARNING_PARTICLES;
         }
-        
-        // Read variational config structures
-        if (r->var_config_N>0){
-            r->var_config = malloc(sizeof(struct reb_variational_configuration)*r->var_config_N);
-            if (r->var_config){
-                objects = fread(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,inf);
-                if (objects==r->var_config_N){
-                    for (int l=0;l<r->var_config_N;l++){
-                        r->var_config[l].sim = r;
-                    }
-                }else{
-                    *warnings |= REB_INPUT_BINARY_WARNING_VARCONFIG;
+    }
+    
+    // Read variational config structures
+    if (r->var_config_N>0){
+        r->var_config = malloc(sizeof(struct reb_variational_configuration)*r->var_config_N);
+        if (r->var_config){
+            objects = fread(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,inf);
+            if (objects==r->var_config_N){
+                for (int l=0;l<r->var_config_N;l++){
+                    r->var_config[l].sim = r;
                 }
             }else{
                 *warnings |= REB_INPUT_BINARY_WARNING_VARCONFIG;
             }
+        }else{
+            *warnings |= REB_INPUT_BINARY_WARNING_VARCONFIG;
         }
-
-        // Read temporary arrays for IAS15 (needed for bit-by-bit reproducability)
-        if (ri_ias15_allocatedN && !(*warnings & REB_INPUT_BINARY_WARNING_PARTICLES)){
-            int N3 = ri_ias15_allocatedN;
-            r->ri_ias15.allocatedN = N3;
-            r->ri_ias15.at = malloc(sizeof(double)*N3);
-            fread(r->ri_ias15.at,sizeof(double),N3,inf);
-            r->ri_ias15.x0 = malloc(sizeof(double)*N3);
-            fread(r->ri_ias15.x0,sizeof(double),N3,inf);
-            r->ri_ias15.v0 = malloc(sizeof(double)*N3);
-            fread(r->ri_ias15.v0,sizeof(double),N3,inf);
-            r->ri_ias15.a0 = malloc(sizeof(double)*N3);
-            fread(r->ri_ias15.a0,sizeof(double),N3,inf);
-            r->ri_ias15.csx = malloc(sizeof(double)*N3);
-            fread(r->ri_ias15.csx,sizeof(double),N3,inf);
-            r->ri_ias15.csv = malloc(sizeof(double)*N3);
-            fread(r->ri_ias15.csv,sizeof(double),N3,inf);
-            r->ri_ias15.csa0 = malloc(sizeof(double)*N3);
-            fread(r->ri_ias15.csa0,sizeof(double),N3,inf);
-            reb_read_dp7(&(r->ri_ias15.g)  ,N3,inf);
-            reb_read_dp7(&(r->ri_ias15.b)  ,N3,inf);
-            reb_read_dp7(&(r->ri_ias15.csb),N3,inf);
-            reb_read_dp7(&(r->ri_ias15.e)  ,N3,inf);
-            reb_read_dp7(&(r->ri_ias15.br) ,N3,inf);
-            reb_read_dp7(&(r->ri_ias15.er) ,N3,inf);
-        }
-        r->fsr_binary_seek = ftell(inf);
-        fclose(inf);
-        
-        return r;
     }
-    *warnings |= REB_INPUT_BINARY_ERROR_NOFILE;
-    return NULL;
+
+    // Read temporary arrays for IAS15 (needed for bit-by-bit reproducability)
+    if (ri_ias15_allocatedN && !(*warnings & REB_INPUT_BINARY_WARNING_PARTICLES)){
+        int N3 = ri_ias15_allocatedN;
+        r->ri_ias15.allocatedN = N3;
+        r->ri_ias15.at = malloc(sizeof(double)*N3);
+        fread(r->ri_ias15.at,sizeof(double),N3,inf);
+        r->ri_ias15.x0 = malloc(sizeof(double)*N3);
+        fread(r->ri_ias15.x0,sizeof(double),N3,inf);
+        r->ri_ias15.v0 = malloc(sizeof(double)*N3);
+        fread(r->ri_ias15.v0,sizeof(double),N3,inf);
+        r->ri_ias15.a0 = malloc(sizeof(double)*N3);
+        fread(r->ri_ias15.a0,sizeof(double),N3,inf);
+        r->ri_ias15.csx = malloc(sizeof(double)*N3);
+        fread(r->ri_ias15.csx,sizeof(double),N3,inf);
+        r->ri_ias15.csv = malloc(sizeof(double)*N3);
+        fread(r->ri_ias15.csv,sizeof(double),N3,inf);
+        r->ri_ias15.csa0 = malloc(sizeof(double)*N3);
+        fread(r->ri_ias15.csa0,sizeof(double),N3,inf);
+        reb_read_dp7(&(r->ri_ias15.g)  ,N3,inf);
+        reb_read_dp7(&(r->ri_ias15.b)  ,N3,inf);
+        reb_read_dp7(&(r->ri_ias15.csb),N3,inf);
+        reb_read_dp7(&(r->ri_ias15.e)  ,N3,inf);
+        reb_read_dp7(&(r->ri_ias15.br) ,N3,inf);
+        reb_read_dp7(&(r->ri_ias15.er) ,N3,inf);
+    }
+    r->fsr_seek_first = ftell(inf);
+    fclose(inf);
 }
 
 struct reb_simulation* reb_create_simulation_from_binary(char* filename){
     enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
-    struct reb_simulation* r = reb_create_simulation_from_binary_with_messages(filename,&warnings);
+    struct reb_simulation* r = malloc(sizeof(struct reb_simulation));
+    reb_create_simulation_from_binary_with_messages(r,filename,&warnings);
     if (warnings & REB_INPUT_BINARY_WARNING_VERSION){
         reb_warning(r,"Binary file was saved with a different version of REBOUND. Binary format might have changed.");
     }
@@ -216,6 +216,8 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
     }
     if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
         reb_error(r,"Cannot read binary file. Check filename and file contents.");
+        free(r);
+        r = NULL;
     }
     return r;
 }

@@ -542,7 +542,8 @@ struct reb_simulation {
      * \name Variables related to the fast simulation restarter 
      * @{
      */
-    long   fsr_binary_seek;
+    long   fsr_seek_first;
+    long   fsr_seek_blob;
     double fsr_interval;
     double fsr_next;
     char*  fsr_filename; 
@@ -1154,9 +1155,9 @@ enum reb_input_binary_messages {
 };
 
 /**
- * @brief Same as reb_create_simulation_from_binary() but lets user specify the value of save_messages flag.
+ * @brief Similar to reb_create_simulation_from_binary() but allows takes simulation as an argument (will be overwritten) and allows for manual message handling.
  */
-struct reb_simulation* reb_create_simulation_from_binary_with_messages(char* filename, enum reb_input_binary_messages* messages);
+void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, char* filename, enum reb_input_binary_messages* messages);
 
 /**
  * @brief This function sets up a Plummer sphere.

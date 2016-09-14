@@ -273,6 +273,53 @@ class Orbit(Structure):
         """
         return "<rebound.Orbit instance, a={0} e={1} inc={2} Omega={3} omega={4} f={5}>".format(str(self.a),str(self.e), str(self.inc), str(self.Omega), str(self.omega), str(self.f))
 
+
+class FastSimulationRestarter(object):
+    def __init__(self,filename):
+        clibrebound.reb_fsr_restart.restype = POINTER_REB_SIM
+        self.cfilename = c_char_p(filename.encode("ascii"))
+
+        # Recreate simulation at t=0
+        w = c_int(0)
+        clibrebound.reb_create_simulation.restype = POINTER(Simulation)
+        simp = clibrebound.reb_create_simulation() 
+        clibrebound.reb_create_simulation_from_binary_with_messages(simp, self.cfilename,byref(w))
+        if (simp is None) or (w.value & 1):     # Major error
+            raise ValueError(BINARY_WARNINGS[0])
+        self.simp = simp
+        sim = self.simp.contents
+
+        self.filesize = os.path.getsize(filename)
+        self.dt = sim.dt
+        self.interval = sim.fsr_interval
+        self.tmin = 0. # Right now simulations must start at t=0
+        self.Nblob = (self.filesize-sim.fsr_seek_first)/sim.fsr_seek_blob
+        self.tmax = self.tmin + self.interval*self.Nblob
+        print(self.interval, self.filesize, sim.fsr_seek_first, sim.fsr_seek_blob)
+
+    def estimateTime(self, t):
+        pass
+    def getBlobJustBefore(self, t):
+        if t>self.tmax or t<self.tmin:
+            raise ValueError("Requested time outside of baseline stored in binary fie.")
+        return int(math.floor((t-self.dt-self.tmin)/self.interval))
+
+    def getSimulation(self, t,exact_finish_time=1):
+        bi = self.getBlobJustBefore(t)
+        print("Trying to load blob #%d"%bi)
+        clibrebound.reb_fsr_load_blob.restype = c_int
+        fsrlbr = clibrebound.reb_fsr_load_blob(self.simp, self.cfilename, c_long(bi));
+        if fsrlbr:
+            raise ValueError("Error while loading blob in binary file. Errorcode: %d."%fsrlbr)
+
+        sim = self.simp.contents
+        print(sim.t)
+        sim.fsr_filename = 0 # Setting this to zero, so no new outputs are generated
+        sim.integrate(t,exact_finish_time=exact_finish_time)
+        print(sim.t)
+        return sim
+
+
 class Simulation(Structure):
     """
     REBOUND Simulation Object.
@@ -326,9 +373,10 @@ class Simulation(Structure):
         >>> sim.save("simulation.bin")
         >>> sim_copy = rebound.Simulation.from_file("simulation.bin")
         """
-        clibrebound.reb_create_simulation_from_binary_with_messages.restype = POINTER_REB_SIM
         w = c_int(0)
-        simp = clibrebound.reb_create_simulation_from_binary_with_messages(c_char_p(filename.encode("ascii")),byref(w))
+        clibrebound.reb_create_simulation.restype = POINTER(Simulation)
+        simp = clibrebound.reb_create_simulation() 
+        clibrebound.reb_create_simulation_from_binary_with_messages(simp, c_char_p(filename.encode("ascii")),byref(w))
         if (simp is None) or (w.value & 1):     # Major error
             raise ValueError(BINARY_WARNINGS[0])
         for message, value in BINARY_WARNINGS:  # Just warnings
@@ -1345,6 +1393,9 @@ class reb_simulation_integrator_hermes(Structure):
                 ("_steps_miniN", c_ulonglong),
                 ]
 
+class timeval(Structure):
+    _fields_ = [("tv_sec",c_long),("tv_usec",c_long)]
+
 # Setting up fields after class definition (because of self-reference)
 Simulation._fields_ = [
                 ("t", c_double),
@@ -1406,11 +1457,13 @@ Simulation._fields_ = [
                 ("megno_mean_t", c_double),
                 ("megno_mean_Y", c_double),
                 ("megno_n", c_long),
-                ("fsr_binary_seek", c_long),
+                ("fsr_seek_first", c_long),
+                ("fsr_seek_blob", c_long),
                 ("fsr_interval", c_double),
                 ("fsr_next", c_double),
                 ("fsr_filename", c_char_p),
                 ("fsr_walltime", c_double),
+                ("fsr_time", timeval),
                 ("_collision", c_int),
                 ("_integrator", c_int),
                 ("_boundary", c_int),
