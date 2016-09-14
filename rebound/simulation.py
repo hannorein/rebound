@@ -149,6 +149,7 @@ class reb_simulation_integrator_whfast(Structure):
                 ("recalculate_jacobi_this_timestep", c_uint),
                 ("safe_mode", c_uint),
                 ("p_j", POINTER(Particle)),
+                ("keep_unsynchronized", c_uint),
                 ("eta", POINTER(c_double)),
                 ("is_synchronized", c_uint),
                 ("allocatedN", c_uint),
@@ -302,22 +303,37 @@ class FastSimulationRestarter(object):
     def getBlobJustBefore(self, t):
         if t>self.tmax or t<self.tmin:
             raise ValueError("Requested time outside of baseline stored in binary fie.")
-        return int(math.floor((t-self.dt-self.tmin)/self.interval))
+        bi = max(0,int(math.floor((t-self.dt-self.tmin)/self.interval)))
+        bt = self.tmin + self.interval*bi
+        return bi, bt
 
-    def getSimulation(self, t,exact_finish_time=1):
-        bi = self.getBlobJustBefore(t)
-        print("Trying to load blob #%d"%bi)
-        clibrebound.reb_fsr_load_blob.restype = c_int
-        fsrlbr = clibrebound.reb_fsr_load_blob(self.simp, self.cfilename, c_long(bi));
-        if fsrlbr:
-            raise ValueError("Error while loading blob in binary file. Errorcode: %d."%fsrlbr)
-
+    def getSimulation(self, t, exact_finish_time=1, keep_unsynchronized=0, integrate=1):
+        bi, bt = self.getBlobJustBefore(t)
         sim = self.simp.contents
-        print(sim.t)
-        sim.fsr_filename = 0 # Setting this to zero, so no new outputs are generated
-        sim.integrate(t,exact_finish_time=exact_finish_time)
-        print(sim.t)
+        if sim.t<t and bt-sim.dt<sim.t and sim.ri_whfast.keep_unsynchronized==1:
+            # Reuse current simulation
+            pass
+        else:
+            # Load from blob
+            clibrebound.reb_fsr_load_blob.restype = c_int
+            fsrlbr = clibrebound.reb_fsr_load_blob(self.simp, self.cfilename, c_long(bi));
+            if fsrlbr:
+                raise ValueError("Error while loading blob in binary file. Errorcode: %d."%fsrlbr)
+
+        sim.ri_whfast.keep_unsynchronized = keep_unsynchronized;
+        if integrate==1:
+            sim.fsr_filename = 0 # Setting this to zero, so no new outputs are generated
+            sim.integrate(t,exact_finish_time=exact_finish_time)
+        else:
+            sim.integrator_synchronize()
+            
         return sim
+
+    def getSimulations(self,times):
+        import numpy as np
+        stimes = np.sort(times)
+        for t in stimes:
+            yield self.getSimulation(t,exact_finish_time=0,keep_unsynchronized=1,integrate=0)
 
 
 class Simulation(Structure):

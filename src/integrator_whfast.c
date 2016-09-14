@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <string.h>
 #include <sys/time.h>
 #include "rebound.h"
 #include "particle.h"
@@ -647,6 +648,11 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
     struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
     const int N_real = r->N-r->N_var;
     if (ri_whfast->is_synchronized == 0){
+        struct reb_particle* sync_pj  = NULL;
+        if (ri_whfast->keep_unsynchronized){
+            sync_pj = malloc(sizeof(struct reb_particle)*r->N);
+            memcpy(sync_pj,r->ri_whfast.p_j,r->N*sizeof(struct reb_particle));
+        }
         kepler_drift(r, ri_whfast->p_j, ri_whfast->eta, r->G, r->dt/2., N_real);
         if (ri_whfast->corrector){
             reb_whfast_apply_corrector(r, -1., ri_whfast->corrector, reb_whfast_corrector_Z);
@@ -656,7 +662,12 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
             struct reb_variational_configuration const vc = r->var_config[v];
             to_inertial_posvel(r->particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta,r-> particles, N_real);
         }
-        ri_whfast->is_synchronized = 1;
+        if (ri_whfast->keep_unsynchronized){
+            memcpy(r->ri_whfast.p_j,sync_pj,r->N*sizeof(struct reb_particle));
+            free(sync_pj);
+        }else{
+            ri_whfast->is_synchronized = 1;
+        }
     }
 }
 
