@@ -276,7 +276,8 @@ class Orbit(Structure):
 
 
 class FastSimulationRestarter(object):
-    def __init__(self,filename):
+    def __init__(self,filename,additional_forces=None):
+        self.additional_forces = additional_forces
         clibrebound.reb_fsr_restart.restype = POINTER_REB_SIM
         self.cfilename = c_char_p(filename.encode("ascii"))
 
@@ -287,6 +288,7 @@ class FastSimulationRestarter(object):
         clibrebound.reb_create_simulation_from_binary_with_messages(simp, self.cfilename,byref(w))
         if (simp is None) or (w.value & 1):     # Major error
             raise ValueError(BINARY_WARNINGS[0])
+        # Note: Other warnings not shown!
         self.simp = simp
         sim = self.simp.contents
 
@@ -295,19 +297,25 @@ class FastSimulationRestarter(object):
         self.interval = sim.fsr_interval
         self.tmin = 0. # Right now simulations must start at t=0
         self.Nblob = (self.filesize-sim.fsr_seek_first)/sim.fsr_seek_blob
-        self.tmax = self.tmin + self.interval*self.Nblob
-        print(self.interval, self.filesize, sim.fsr_seek_first, sim.fsr_seek_blob)
+        self.tmax = self.tmin + self.interval*(self.Nblob+1)
 
-    def estimateTime(self, t):
-        pass
     def getBlobJustBefore(self, t):
-        if t>self.tmax or t<self.tmin:
+        if t>self.tmax+self.dt or t<self.tmin:
             raise ValueError("Requested time outside of baseline stored in binary fie.")
         bi = max(0,int(math.floor((t-self.dt-self.tmin)/self.interval)))
         bt = self.tmin + self.interval*bi
         return bi, bt
 
-    def getSimulation(self, t, exact_finish_time=1, keep_unsynchronized=0, integrate=1):
+    def getSimulation(self, t, mode='blob', keep_unsynchronized=1):
+        """
+        Possible values for mode:
+         - 'blob' This loads a blob such that sim.t<t.
+         - 'close' This integrates the simulation to get to the time t but may overshoot by at most one timestep sim.dt.
+         - 'exact' This integrates the simulation to exactly time t. This is not compatible with keep_unsynchronized=1. 
+        """
+        if mode=='exact':
+            keep_unsynchronized==0
+
         bi, bt = self.getBlobJustBefore(t)
         sim = self.simp.contents
         if sim.t<t and bt-sim.dt<sim.t and sim.ri_whfast.keep_unsynchronized==1:
@@ -321,19 +329,25 @@ class FastSimulationRestarter(object):
                 raise ValueError("Error while loading blob in binary file. Errorcode: %d."%fsrlbr)
 
         sim.ri_whfast.keep_unsynchronized = keep_unsynchronized;
-        if integrate==1:
+        if self.additional_forces:
+            sim.additional_forces = self.additional_forces
+        if mode=='close' or mode=='exact':
             sim.fsr_filename = 0 # Setting this to zero, so no new outputs are generated
+            if mode=='close':
+                exact_finish_time=0
+            else:
+                exact_finish_time=1
             sim.integrate(t,exact_finish_time=exact_finish_time)
         else:
             sim.integrator_synchronize()
             
         return sim
 
-    def getSimulations(self,times):
+    def getSimulations(self, times, mode='blob', keep_unsynchronized=1):
         import numpy as np
         stimes = np.sort(times)
         for t in stimes:
-            yield self.getSimulation(t,exact_finish_time=0,keep_unsynchronized=1,integrate=0)
+            yield self.getSimulation(t, mode=mode, keep_unsynchronized=keep_unsynchronized)
 
 
 class Simulation(Structure):

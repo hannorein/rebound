@@ -983,7 +983,6 @@ uint32_t reb_hash(const char* str){
 }
 
 int reb_fsr_load_blob(struct reb_simulation* r, char* filename, long blob){
-    printf("loading block\n");
     if (access(filename, F_OK) == -1) return -1;
     if (!r) return -2;
     
@@ -1007,7 +1006,6 @@ int reb_fsr_load_blob(struct reb_simulation* r, char* filename, long blob){
         return -3;
     }
     fread(&(r->t),sizeof(double),1,fd);
-    printf("found time\n %f",r->t);
     fread(&(r->fsr_walltime),sizeof(double),1,fd);
     gettimeofday(&r->fsr_time,NULL);
     while (r->fsr_next<=r->t){
@@ -1024,9 +1022,17 @@ int reb_fsr_load_blob(struct reb_simulation* r, char* filename, long blob){
     switch (r->integrator){
         case REB_INTEGRATOR_WHFAST:
             // Recreate Jacobi arrrays
-            r->ri_whfast.p_j= malloc(sizeof(struct reb_particle)*r->N);
-            r->ri_whfast.eta= malloc(sizeof(double)*r->N);
-            r->ri_whfast.allocated_N = r->N;
+            if (r->ri_whfast.allocated_N<r->N){
+                if (r->ri_whfast.p_j){
+                    free(r->ri_whfast.p_j);
+                }
+                if (r->ri_whfast.eta){
+                    free(r->ri_whfast.eta);
+                }
+                r->ri_whfast.p_j= malloc(sizeof(struct reb_particle)*r->N);
+                r->ri_whfast.eta= malloc(sizeof(double)*r->N);
+                r->ri_whfast.allocated_N = r->N;
+            }
             for(int i=0;i<r->N;i++){
                 fread(&(r->particles[i].m),sizeof(double),1,fd);
                 fread(&(r->ri_whfast.p_j[i].x),sizeof(double),1,fd);
@@ -1038,6 +1044,7 @@ int reb_fsr_load_blob(struct reb_simulation* r, char* filename, long blob){
             }
             // Not synchronized
             r->ri_whfast.is_synchronized=0.;
+	        r->gravity_ignore_terms = 1;
             // Recreate eta array
             r->ri_whfast.eta[0] = r->particles[0].m;
             r->ri_whfast.p_j[0].m = r->particles[0].m;
