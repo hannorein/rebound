@@ -549,13 +549,13 @@ struct reb_simulation {
      * \name Variables related to the fast simulation restarter 
      * @{
      */
-    long   fsr_seek_first;
-    long   fsr_seek_blob;
-    double fsr_interval;
-    double fsr_next;
-    char*  fsr_filename; 
-    double fsr_walltime;
-    struct timeval fsr_time;
+    long   simulationarchive_seek_first;
+    long   simulationarchive_seek_blob;
+    double simulationarchive_interval;
+    double simulationarchive_next;
+    char*  simulationarchive_filename; 
+    double simulationarchive_walltime;
+    struct timeval simulationarchive_time;
     /** @} */
 
     /**
@@ -1322,7 +1322,7 @@ struct reb_particle reb_particle_plus(struct reb_particle p1, struct reb_particl
 
 /**
  * @brief Multiply a particle's members by a constant.
- * @brief Multiplies particle's positions, velocities, accelerations and mass by a constant.
+ * @details Multiplies particle's positions, velocities, accelerations and mass by a constant.
  * @param p1 reb_particle to modify.
  * @param value Value by which to multiply particle's fields.
  * @returns A new particle with no pointers (not in any simulation etc.) set.
@@ -1331,7 +1331,7 @@ struct reb_particle reb_particle_multiply(struct reb_particle p1, double value);
 
 /**
  * @brief Divide a particle's members by a constant.
- * @brief Divides particle's positions, velocities, accelerations and mass by a constant.
+ * @details Divides particle's positions, velocities, accelerations and mass by a constant.
  * @param p1 reb_particle to modify.
  * @param value Value by which to divide particle's fields.
  * @returns A new particle with no pointers (not in any simulation etc.) set.
@@ -1341,8 +1341,15 @@ struct reb_particle reb_particle_divide(struct reb_particle p1, double value);
 /** @} */
 
 
-/// TODO Add documentation
-struct reb_simulation* reb_fsr_restart(char* filename);
+/**
+ * @brief Restart a simulation using a SimulationArchive file.
+ * @detail Note that use of this function is dependent on many requirements. 
+ * See python documentation for full details.
+ * @param filename The name of the file to be opened. 
+ * @returns Returns a pointer to a new reb_simulation structure. Returns
+ * NULL if an error occured. 
+ */
+struct reb_simulation* reb_simulationarchive_restart(char* filename);
 
 /**
  * \name Miscellaneous tools

@@ -194,7 +194,7 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
         reb_read_dp7(&(r->ri_ias15.br) ,N3,inf);
         reb_read_dp7(&(r->ri_ias15.er) ,N3,inf);
     }
-    r->fsr_seek_first = ftell(inf);
+    r->simulationarchive_seek_first = ftell(inf);
     fclose(inf);
 }
 

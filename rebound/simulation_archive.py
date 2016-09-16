@@ -61,14 +61,14 @@ class SimulationArchive(Mapping):
 
     def loadFromBlobAndSynchronize(self, blob, keep_unsynchronized=1):
         sim = self.simp.contents
-        clibrebound.reb_fsr_load_blob.restype = c_int
-        fsrlbr = clibrebound.reb_fsr_load_blob(self.simp, self.cfilename, c_long(blob));
-        if fsrlbr:
-            raise ValueError("Error while loading blob in binary file. Errorcode: %d."%fsrlbr)
+        clibrebound.reb_simulationarchive_load_blob.restype = c_int
+        retv = clibrebound.reb_simulationarchive_load_blob(self.simp, self.cfilename, c_long(blob));
+        if retv:
+            raise ValueError("Error while loading blob in binary file. Errorcode: %d."%retv)
         sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
         if self.additional_forces:
             sim.additional_forces = self.additional_forces
-        sim.fsr_filename = 0 # Setting this to zero, so no new outputs are generated
+        sim.simulationarchive_filename = 0 # Setting this to zero, so no new outputs are generated
         sim.integrator_synchronize()
         return sim
 
@@ -87,7 +87,7 @@ class SimulationArchive(Mapping):
 
     def __init__(self,filename,additional_forces=None):
         self.additional_forces = additional_forces
-        clibrebound.reb_fsr_restart.restype = POINTER_REB_SIM
+        clibrebound.reb_simulationarchive_restart.restype = POINTER_REB_SIM
         self.cfilename = c_char_p(filename.encode("ascii"))
 
         # Recreate simulation at t=0
@@ -103,9 +103,9 @@ class SimulationArchive(Mapping):
 
         self.filesize = os.path.getsize(filename)
         self.dt = sim.dt
-        self.interval = sim.fsr_interval
+        self.interval = sim.simulationarchive_interval
         self.tmin = 0. # Right now simulations must start at t=0
-        self.Nblob = int((self.filesize-sim.fsr_seek_first)/sim.fsr_seek_blob)
+        self.Nblob = int((self.filesize-sim.simulationarchive_seek_first)/sim.simulationarchive_seek_blob)
         self.tmax = self.tmin + self.interval*(self.Nblob+1)
 
     def getBlobJustBefore(self, t):
@@ -135,17 +135,17 @@ class SimulationArchive(Mapping):
                 pass
             else:
                 # Load from blob
-                clibrebound.reb_fsr_load_blob.restype = c_int
-                fsrlbr = clibrebound.reb_fsr_load_blob(self.simp, self.cfilename, c_long(bi));
-                if fsrlbr:
-                    raise ValueError("Error while loading blob in binary file. Errorcode: %d."%fsrlbr)
+                clibrebound.reb_simulationarchive_load_blob.restype = c_int
+                retv = clibrebound.reb_simulationarchive_load_blob(self.simp, self.cfilename, c_long(bi));
+                if retv:
+                    raise ValueError("Error while loading blob in binary file. Errorcode: %d."%retv)
 
             if mode=='exact':
                 keep_unsynchronized==0
             sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
             if self.additional_forces:
                 sim.additional_forces = self.additional_forces
-            sim.fsr_filename = 0 # Setting this to zero, so no new outputs are generated
+            sim.simulationarchive_filename = 0 # Setting this to zero, so no new outputs are generated
             exact_finish_time = 1 if mode=='exact' else 0
             sim.integrate(t,exact_finish_time=exact_finish_time)
                 

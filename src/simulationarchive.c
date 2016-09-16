@@ -36,14 +36,14 @@
 
 
 
-int reb_fsr_load_blob(struct reb_simulation* r, char* filename, long blob){
+int reb_simulationarchive_load_blob(struct reb_simulation* r, char* filename, long blob){
     if (access(filename, F_OK) == -1) return -1;
     if (!r) return -2;
     
     FILE* fd = fopen(filename,"r");
     int fseekret = 0;
     if (blob<0){
-        fseekret = fseek(fd,-r->fsr_seek_blob,SEEK_END);
+        fseekret = fseek(fd,-r->simulationarchive_seek_blob,SEEK_END);
     }else if(blob==0){
         // load original binary file
         enum reb_input_binary_messages warnings = 0;
@@ -53,17 +53,17 @@ int reb_fsr_load_blob(struct reb_simulation* r, char* filename, long blob){
         }
         return 0;
     }else{
-        fseekret = fseek(fd,r->fsr_seek_first + (blob-1)*r->fsr_seek_blob,SEEK_SET);
+        fseekret = fseek(fd,r->simulationarchive_seek_first + (blob-1)*r->simulationarchive_seek_blob,SEEK_SET);
     }
     if (fseekret){
         fclose(fd);
         return -3;
     }
     fread(&(r->t),sizeof(double),1,fd);
-    fread(&(r->fsr_walltime),sizeof(double),1,fd);
-    gettimeofday(&r->fsr_time,NULL);
-    while (r->fsr_next<=r->t){
-        r->fsr_next += r->fsr_interval;
+    fread(&(r->simulationarchive_walltime),sizeof(double),1,fd);
+    gettimeofday(&r->simulationarchive_time,NULL);
+    while (r->simulationarchive_next<=r->t){
+        r->simulationarchive_next += r->simulationarchive_interval;
     }
     switch (r->gravity){
         case REB_GRAVITY_BASIC:
@@ -124,11 +124,11 @@ int reb_fsr_load_blob(struct reb_simulation* r, char* filename, long blob){
     return 0;
 }
 
-struct reb_simulation* reb_fsr_restart(char* filename){
+struct reb_simulation* reb_simulationarchive_restart(char* filename){
     if (access(filename, F_OK) == -1) return NULL;
     struct reb_simulation* r = reb_create_simulation_from_binary(filename);
     if (r){
-        reb_fsr_load_blob(r, filename, -1);
+        reb_simulationarchive_load_blob(r, filename, -1);
     }
     return r;
 }
@@ -136,24 +136,24 @@ struct reb_simulation* reb_fsr_restart(char* filename){
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
     if (r->t==0){
         // First output
-        r->fsr_seek_blob = sizeof(double)*2+sizeof(double)*7*r->N;
-        reb_output_binary(r,r->fsr_filename);
-        r->fsr_next += r->fsr_interval;
-        r->fsr_walltime = 0.;
-        gettimeofday(&r->fsr_time,NULL);
+        r->simulationarchive_seek_blob = sizeof(double)*2+sizeof(double)*7*r->N;
+        reb_output_binary(r,r->simulationarchive_filename);
+        r->simulationarchive_next += r->simulationarchive_interval;
+        r->simulationarchive_walltime = 0.;
+        gettimeofday(&r->simulationarchive_time,NULL);
     }else{
         // Appending outputs
-        if (r->fsr_next <= r->t){
-            r->fsr_next += r->fsr_interval;
+        if (r->simulationarchive_next <= r->t){
+            r->simulationarchive_next += r->simulationarchive_interval;
             
             struct timeval time_now;
             gettimeofday(&time_now,NULL);
-            r->fsr_walltime += time_now.tv_sec-r->fsr_time.tv_sec+(time_now.tv_usec-r->fsr_time.tv_usec)/1e6;
-            r->fsr_time = time_now;
+            r->simulationarchive_walltime += time_now.tv_sec-r->simulationarchive_time.tv_sec+(time_now.tv_usec-r->simulationarchive_time.tv_usec)/1e6;
+            r->simulationarchive_time = time_now;
 
-            FILE* of = fopen(r->fsr_filename,"a");
+            FILE* of = fopen(r->simulationarchive_filename,"a");
             fwrite(&(r->t),sizeof(double),1, of);
-            fwrite(&(r->fsr_walltime),sizeof(double),1, of);
+            fwrite(&(r->simulationarchive_walltime),sizeof(double),1, of);
             switch (r->integrator){
                 case REB_INTEGRATOR_WHFAST:
                     {
