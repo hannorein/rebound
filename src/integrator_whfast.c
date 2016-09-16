@@ -504,6 +504,7 @@ static void reb_whfast_corrector_Z(struct reb_simulation* r, const double a, con
         struct reb_variational_configuration const vc = r->var_config[v];
         to_inertial_pos(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
     }
+    r->gravity_ignore_terms = 1;
     reb_update_acceleration(r);
     to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
     for (int v=0;v<r->var_config_N;v++){
@@ -517,6 +518,7 @@ static void reb_whfast_corrector_Z(struct reb_simulation* r, const double a, con
         struct reb_variational_configuration const vc = r->var_config[v];
         to_inertial_pos(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
     }
+    r->gravity_ignore_terms = 1;
     reb_update_acceleration(r);
     to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
     for (int v=0;v<r->var_config_N;v++){
@@ -750,6 +752,7 @@ void reb_integrator_whfast_reset(struct reb_simulation* const r){
     struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
     ri_whfast->corrector = 0;
     ri_whfast->is_synchronized = 1;
+    ri_whfast->keep_unsynchronized = 0;
     ri_whfast->safe_mode = 1;
     ri_whfast->recalculate_jacobi_this_timestep = 0;
     ri_whfast->allocated_N = 0;

@@ -14,6 +14,7 @@ include src/rebound.c
 include src/tools.c
 include src/derivatives.c
 include src/particle.c
+include src/simulationarchive.c
 include src/integrator_ias15.h
 include src/integrator_whfast.h
 include src/integrator_whfasthelio.h
@@ -32,6 +33,7 @@ include src/particle.h
 include src/rebound.h
 include src/input.h
 include src/output.h
+include src/simulationarchive.h
 include README.rst
 include LICENSE
 include version.txt

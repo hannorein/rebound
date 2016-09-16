@@ -48,6 +48,7 @@
 #include "output.h"
 #include "tools.h"
 #include "particle.h"
+#include "simulationarchive.h"
 #ifdef MPI
 #include "communication_mpi.h"
 #endif
@@ -544,7 +545,7 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
 }
 
 void reb_run_heartbeat(struct reb_simulation* const r){
-    if (r->fsr_filename){ reb_fsr_heartbeat(r);}
+    if (r->fsr_filename){ reb_simulationarchive_heartbeat(r);}
     if (r->heartbeat){ r->heartbeat(r); }               // Heartbeat
     if (r->exit_max_distance){
         // Check for escaping particles

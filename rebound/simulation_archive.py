@@ -27,6 +27,8 @@ class SimulationArchive(Mapping):
     - The number of particles can not change.
     - Any additional forces present during the integration also
       need to be present when the SimulationArchive class is used.
+    - The ri_whfast.safemode flag may be 0 or 1. However, 
+      no manual synchronization steps should be undertaken by the user.
 
 
     Examples
