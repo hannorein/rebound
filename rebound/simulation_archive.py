@@ -15,13 +15,29 @@ class SimulationArchive(Mapping):
     This class allows fast access to long running simulations 
     by making use of a SimulationArchive binary file.
 
+    Requirements
+    ------------
+    The SimulationArchive Class currently only works under the following 
+    requirements.  These requirements are not checked for and the user 
+    needs to make sure they all apply.
+
+    - Only the WHFast integrator is supported.
+    - All symplectic correcters are supported.
+    - The simulations must start at t=0.
+    - The number of particles can not change.
+    - Any additional forces present during the integration also
+      need to be present when the SimulationArchive class is used.
+
+
     Examples
     --------
-    Most simulation parameters can be directly changed with the property syntax:
+    Here is a simple example:
 
     >>> sa = rebound.SimulationArchive("archive.bin")
     >>> sim = sa.getSimulation(t=1e6)
     >>> print(sim.particles[1])
+    >>> for sim in sa:
+    >>>     print(sim.t, sim.particles[1].e)
 
     """
     def __getitem__(self, key):
@@ -108,8 +124,8 @@ class SimulationArchive(Mapping):
             raise AttributeError("Unknown mode.")
 
         bi, bt = self.getBlobJustBefore(t)
-        if mode='blob':
-            return self.loadFromBlobAndSynchronize(self, bi, keep_unsynchronized=keep_unsynchronized)
+        if mode=='blob':
+            return self.loadFromBlobAndSynchronize(bi, keep_unsynchronized=keep_unsynchronized)
         else:
             sim = self.simp.contents
             if sim.t<t and bt-sim.dt<sim.t and sim.ri_whfast.keep_unsynchronized==1:
