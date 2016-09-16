@@ -87,7 +87,6 @@ class SimulationArchive(Mapping):
 
     def __init__(self,filename,additional_forces=None):
         self.additional_forces = additional_forces
-        clibrebound.reb_simulationarchive_restart.restype = POINTER_REB_SIM
         self.cfilename = c_char_p(filename.encode("ascii"))
 
         # Recreate simulation at t=0

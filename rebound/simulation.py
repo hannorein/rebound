@@ -301,6 +301,35 @@ class Simulation(Structure):
     def __init__(self):
         clibrebound.reb_init_simulation(byref(self))
         self.save_messages = 1 # Warnings will be checked within python
+    
+    @classmethod
+    def from_archive(cls, filename):
+        """
+        Loads a REBOUND simulation from a SimulationArchive bianry file.
+        It uses the last snapshot. This function is only useful for
+        restarting a simualtion. For full access to the Simulation
+        Archive, use the SimulationArchive class.
+        
+        After loading the REBOUND simulation from file, you need to reset 
+        any function pointers manually. Please read all documentation 
+        before using this function as it has many requirements to work
+        correctly.
+        
+        Arguments
+        ---------
+        filename : str
+            Filename of the binary file.
+        
+        Returns
+        ------- 
+        A rebound.Simulation object.
+        
+        """
+        clibrebound.reb_simulationarchive_restart.restype = POINTER(Simulation)
+        simp = clibrebound.reb_simulationarchive_restart(c_char_p(filename.encode("ascii")))
+        if simp is None:
+            raise AttributeError("Error loading simulation.")
+        return simp.contents
 
     @classmethod
     def from_file(cls, filename):
@@ -341,6 +370,26 @@ class Simulation(Structure):
         sim = simp.contents
         sim.save_messages = 1 # Warnings will be checked within python
         return sim
+
+    def initSimulationArchive(self, filename, interval):
+        """
+        This function initializes the arguments needed to output
+        binary data to the SimulationArchive file during the simulation.
+        
+        The function needs to be called at the beginning of the simulation
+        when t=0. 
+        
+        Arguments
+        ---------
+        filename : str
+            Filename of the binary file.
+        
+        interval : float
+            Interval between outputs in code units.
+        """
+        self.simulationarchive_filename = c_char_p(filename.encode("ascii")) # Not sure if the memory is retained here..
+        self.simulationarchive_interval = interval
+
     
     def process_messages(self):
         clibrebound.reb_get_next_message.restype = c_int

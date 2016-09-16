@@ -403,6 +403,12 @@ void reb_init_simulation(struct reb_simulation* r){
     r->collisions_Nlog  = 0;    
     r->collision_resolve_keep_sorted  = 0;    
     
+    r->simulationarchive_seek_first  = 0;    
+    r->simulationarchive_seek_blob   = 0;    
+    r->simulationarchive_interval    = 0.;    
+    r->simulationarchive_walltime    = 0.;    
+    r->simulationarchive_filename    = NULL;    
+    
     // Default modules
     r->integrator   = REB_INTEGRATOR_IAS15;
     r->boundary     = REB_BOUNDARY_NONE;
