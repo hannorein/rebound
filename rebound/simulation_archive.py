@@ -57,12 +57,12 @@ class SimulationArchive(Mapping):
             key += len(self)
         if key>= len(self):
             raise IndexError("Index out of range, number of blobs stored in binary: %d."%self.Nblob)
-        return self.loadFromBlobAndSynchronize(self, key)
+        return self.loadFromBlobAndSynchronize(key)
 
     def loadFromBlobAndSynchronize(self, blob, keep_unsynchronized=1):
         sim = self.simp.contents
         clibrebound.reb_simulationarchive_load_blob.restype = c_int
-        retv = clibrebound.reb_simulationarchive_load_blob(self.simp, self.cfilename, c_long(blob));
+        retv = clibrebound.reb_simulationarchive_load_blob(self.simp, self.cfilename, c_long(blob))
         if retv:
             raise ValueError("Error while loading blob in binary file. Errorcode: %d."%retv)
         sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
@@ -150,8 +150,67 @@ class SimulationArchive(Mapping):
                 
             return sim
 
+
     def getSimulations(self, times, mode='blob', keep_unsynchronized=1):
         times.sort()
         for t in times:
             yield self.getSimulation(t, mode=mode, keep_unsynchronized=keep_unsynchronized)
+
+    
+    def estimateTime(self, t, tbefore=None):
+        """
+        This function estimates the time needed to integrate the simulation 
+        exactly to time the t starting from the nearest blob or the current
+        status of the simulation (whichever is smaller).
+
+        If an array is passed as an argument, the function will estimate the
+        time it will take to integarte to all the times in the array. The 
+        array will be sorted before the estimation. The function assumes
+        a simulation can be reused to get to the next requested time if
+        this is faster than reloading the simulation from the nearest blob.
+
+        Note that the estimates are based on the runtime of the original 
+        simulation. If the original simulation was run on a different 
+        machine, the estimated runtime may differ. 
+        
+
+        Arguments
+        ---------
+        t : float, array
+            The exact time to which a simulation object is to be integrated.
+
+
+        Returns
+        -------
+        An approximation of the runtime required to integrate to time t. 
+        
+        """
+        try:
+            # See if we have an array, will fail if not
+            iterator = iter(t)
+            t.sort()
+            tbefore = 0.
+            runtime_estimate = 0.
+            for _t in t:
+                runtime_estimate += self.estimateTime(_t, tbefore)
+                tbefore = _t
+
+        except TypeError:
+            # t is a single floating point number
+            try:
+                speed = self.speed
+            except AttributeError:
+                # get average speed from total runtime:
+                sim = self[-1]
+                speed = sim.t/sim.simulationarchive_walltime
+                # cache speed
+                self.speed = speed
+
+            bi, bt = self.getBlobJustBefore(t)
+            runtime_estimate = (t-bt)/speed
+            if tbefore is not None:
+                runtime_estimate = min((t-bt)/speed, (t-tbefore)/speed)
+
+        return runtime_estimate
+
 
