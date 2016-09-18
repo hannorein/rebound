@@ -84,7 +84,7 @@ char* reb_read_char(int argc, char** argv, const char* argument){
     return NULL;
 }
 
-static void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf){
+void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf){
     dp7->p0 = malloc(sizeof(double)*N3);
     dp7->p1 = malloc(sizeof(double)*N3);
     dp7->p2 = malloc(sizeof(double)*N3);

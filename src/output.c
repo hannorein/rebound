@@ -197,7 +197,7 @@ void reb_output_orbits(struct reb_simulation* r, char* filename){
     fclose(of);
 }
 
-static void reb_save_dp7(struct reb_dp7* dp7, const int N3, FILE* of){
+void reb_save_dp7(struct reb_dp7* dp7, const int N3, FILE* of){
     fwrite(dp7->p0,sizeof(double),N3,of);
     fwrite(dp7->p1,sizeof(double),N3,of);
     fwrite(dp7->p2,sizeof(double),N3,of);
@@ -242,7 +242,7 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
         fwrite(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,of);
     }
     
-    // Output IAS15 temporary arrays (needed for bit-by-bit reproducability)
+    // Output IAS15 temporary arrays (needed for bit-by-bit reproducibility)
     if (r->ri_ias15.allocatedN){
         int N3 = r->ri_ias15.allocatedN;
         fwrite(r->ri_ias15.at,sizeof(double),N3,of);

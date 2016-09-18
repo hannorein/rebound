@@ -23,6 +23,9 @@
  *
  */
 #ifndef _INPUT_H
+
+void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf); ///< Internal function to read dp7 structs from file.
+
 #define _INPUT_H
 
 #endif
