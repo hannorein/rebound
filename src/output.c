@@ -207,6 +207,21 @@ void reb_save_dp7(struct reb_dp7* dp7, const int N3, FILE* of){
     fwrite(dp7->p6,sizeof(double),N3,of);
 }
 
+void reb_get_binary_size(struct reb_simulation* r, long* seek_length){
+    seek_length[0] = sizeof(struct reb_simulation);
+    long size = 0;
+    size += sizeof(char)*64;  // Header
+    size += sizeof(struct reb_simulation);
+    size += sizeof(struct reb_particle)*r->N;
+    size += sizeof(struct reb_variational_configuration)*r->var_config_N;
+    int N3 = r->ri_ias15.allocatedN;
+    size += 7*sizeof(double)*N3;  // IAS15 double arrays
+    size += 6*7*sizeof(double)*N3;  // dp7 arrays
+    seek_length[1] = size;
+    seek_length[2] = r->N;
+}
+
+
 void reb_output_binary(struct reb_simulation* r, char* filename){
 #ifdef MPI
     char filename_mpi[1024];
@@ -230,6 +245,14 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
         fwrite(&space,sizeof(char),1,of);
         lenheader += 1;
     }
+    // Output length of simulation structure in bytes
+    // the length of entire restart file in bytes and the
+    // number of particles.
+    // This is used to read particle data if the simulation 
+    // structure changes due to updates to REBOUND.
+    long seek_length[3];
+    reb_get_binary_size(r, seek_length);
+    fwrite(seek_length,sizeof(long),3,of);
 
     // Output main simulation structure    
     fwrite(r,sizeof(struct reb_simulation),1,of);
