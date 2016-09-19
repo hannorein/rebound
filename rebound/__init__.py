@@ -61,7 +61,7 @@ class ParticleNotFound(Exception):
     """Particle was not found in the simulation."""
     pass
 
-from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_whfast, reb_simulation_integrator_sei, BINARY_WARNINGS
+from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_whfast, reb_simulation_integrator_sei
 from .particle import Particle
 from .plotting import OrbitPlot
 from .tools import hash
