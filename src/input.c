@@ -125,8 +125,8 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
 
     // Read two longs to get size of entire restart file and location of first 
     // particle data.
-    long seek_length[3];
-    objects += fread(seek_length,sizeof(long),3,inf);
+    long seek_length[4];
+    objects += fread(seek_length,sizeof(long),4,inf);
     // Check if size of reb_simulation changed. 
     if (seek_length[0]!=sizeof(struct reb_simulation)){
         // If so, do not read in, create new simulation instead.
@@ -147,8 +147,6 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
             objects = fread(&p,sizeof(struct reb_particle),1,inf);
             reb_add(r,p);
         }
-
-
     }else{
         // Same size. So, let's read main simulation oject.
         objects += fread(r,sizeof(struct reb_simulation),1,inf);
@@ -221,9 +219,10 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
             reb_read_dp7(&(r->ri_ias15.br) ,N3,inf);
             reb_read_dp7(&(r->ri_ias15.er) ,N3,inf);
         }
-        r->simulationarchive_seek_first = ftell(inf);
-        r->simulationarchive_filename = NULL;
     }
+    r->simulationarchive_seek_first = seek_length[1];
+    r->simulationarchive_seek_blob = seek_length[3];
+    r->simulationarchive_filename = NULL;
     fclose(inf);
 }
 

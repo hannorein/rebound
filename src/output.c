@@ -219,6 +219,21 @@ void reb_get_binary_size(struct reb_simulation* r, long* seek_length){
     size += 6*7*sizeof(double)*N3;  // dp7 arrays
     seek_length[1] = size;
     seek_length[2] = r->N;
+            
+    switch (r->integrator){
+        case REB_INTEGRATOR_WHFAST:
+            seek_length[3] = sizeof(double)*2+sizeof(double)*7*r->N;
+            break;
+        case REB_INTEGRATOR_IAS15:
+            seek_length[3] =  sizeof(double)*4           // time, walltime, dt, dt_last_done
+                             +sizeof(double)*3*r->N*5*7  // dp7 arrays
+                             +sizeof(double)*7*r->N      // particle m, pos, vel
+                             +sizeof(double)*3*r->N*2;   // csx, csv
+            break;
+        default:
+            seek_length[3] = 0; // Restart not implemented for this integrator.
+            break;
+    }
 }
 
 
@@ -250,9 +265,9 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     // number of particles.
     // This is used to read particle data if the simulation 
     // structure changes due to updates to REBOUND.
-    long seek_length[3];
+    long seek_length[4];
     reb_get_binary_size(r, seek_length);
-    fwrite(seek_length,sizeof(long),3,of);
+    fwrite(seek_length,sizeof(long),4,of);
 
     // Output main simulation structure    
     fwrite(r,sizeof(struct reb_simulation),1,of);
