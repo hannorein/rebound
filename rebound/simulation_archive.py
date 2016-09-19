@@ -66,7 +66,6 @@ class SimulationArchive(Mapping):
         if retv:
             raise ValueError("Error while loading blob in binary file. Errorcode: %d."%retv)
         sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
-        sim.simulationarchive_filename = 0 # Setting this to zero, so no new outputs are generated
         sim.integrator_synchronize()
         if blob == 0:
             if self.setup:
@@ -147,7 +146,6 @@ class SimulationArchive(Mapping):
             if bi == 0:
                 if self.setup:
                     self.setup(sim, *self.setup_args)
-            sim.simulationarchive_filename = 0 # Setting this to zero, so no new outputs are generated
             exact_finish_time = 1 if mode=='exact' else 0
             sim.integrate(t,exact_finish_time=exact_finish_time)
                 
