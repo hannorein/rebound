@@ -21,8 +21,8 @@ class SimulationArchive(Mapping):
     requirements.  These requirements are not checked for and the user 
     needs to make sure they all apply.
 
-    - Only the WHFast integrator is supported.
-    - All symplectic correcters are supported.
+    - Only the WHFast and IAS15 integrators is supported.
+    - Symplectic correcters are supported.
     - The simulations must start at t=0.
     - The number of particles can not change.
     - Any additional forces present during the integration also
