@@ -1,5 +1,5 @@
 from ctypes import POINTER, c_int, c_long, c_char_p, byref, pointer
-from .simulation import Simulation
+from .simulation import Simulation, BINARY_WARNINGS
 from . import clibrebound 
 import os
 import sys
@@ -66,10 +66,11 @@ class SimulationArchive(Mapping):
         if retv:
             raise ValueError("Error while loading blob in binary file. Errorcode: %d."%retv)
         sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
-        if self.additional_forces:
-            sim.additional_forces = self.additional_forces
         sim.simulationarchive_filename = 0 # Setting this to zero, so no new outputs are generated
         sim.integrator_synchronize()
+        if blob == 0:
+            if self.setup:
+                self.setup(sim, *self.setup_args)
         return sim
 
     def __setitem__(self, key, value):
@@ -85,9 +86,10 @@ class SimulationArchive(Mapping):
     def __len__(self):
         return self.Nblob
 
-    def __init__(self,filename,additional_forces=None):
-        self.additional_forces = additional_forces
+    def __init__(self,filename,setup=None, setup_args=()):
         self.cfilename = c_char_p(filename.encode("ascii"))
+        self.setup = setup
+        self.setup_args = setup_args
 
         # Recreate simulation at t=0
         w = c_int(0)
@@ -142,8 +144,9 @@ class SimulationArchive(Mapping):
             if mode=='exact':
                 keep_unsynchronized==0
             sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
-            if self.additional_forces:
-                sim.additional_forces = self.additional_forces
+            if bi == 0:
+                if self.setup:
+                    self.setup(sim, *self.setup_args)
             sim.simulationarchive_filename = 0 # Setting this to zero, so no new outputs are generated
             exact_finish_time = 1 if mode=='exact' else 0
             sim.integrate(t,exact_finish_time=exact_finish_time)
