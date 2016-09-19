@@ -29,7 +29,9 @@ BINARY_WARNINGS = [
     ("Binary file was saved with a different version of REBOUND. Binary format might have changed.", 2),
     ("You have to reset function pointers after creating a reb_simulation struct with a binary file.", 4),
     ("Binary file might be corrupted. Number of particles found does not match particle number expected.", 8),
-    ("Binary file might be corrupted. Number of variational config structs found does not match number of variational config structs expected.", 16)
+    ("Binary file might be corrupted. Number of variational config structs found does not match number of variational config structs expected.", 16),
+    ("Size of simulation structure is different in binary file. Cannot read binary data file. Will try to rescue particle data, but return otherwise empty simulation structure.", 32),
+    ("Could not rescue binary file data.", 64)
 ]
 
 class reb_hash_pointer_pair(Structure):

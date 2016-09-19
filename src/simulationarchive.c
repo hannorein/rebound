@@ -42,12 +42,7 @@
 int reb_simulationarchive_load_blob(struct reb_simulation* r, char* filename, long blob){
     if (access(filename, F_OK) == -1) return -1;
     if (!r) return -2;
-    
-    FILE* fd = fopen(filename,"r");
-    int fseekret = 0;
-    if (blob<0){
-        fseekret = fseek(fd,-r->simulationarchive_seek_blob,SEEK_END);
-    }else if(blob==0){
+    if (blob==0){
         // load original binary file
         enum reb_input_binary_messages warnings = 0;
         reb_create_simulation_from_binary_with_messages(r,filename,&warnings);
@@ -55,10 +50,19 @@ int reb_simulationarchive_load_blob(struct reb_simulation* r, char* filename, lo
             reb_error(r,"Cannot read binary file. Check filename and file contents.");
         }
         return 0;
+    }
+
+    
+    FILE* fd = fopen(filename,"r");
+    int fseekret = 0;
+    if (blob<0){
+        // Find latest blob
+        fseekret = fseek(fd,-r->simulationarchive_seek_blob,SEEK_END);
     }else{
         fseekret = fseek(fd,r->simulationarchive_seek_first + (blob-1)*r->simulationarchive_seek_blob,SEEK_SET);
     }
     if (fseekret){
+        // Seek didn't work.
         fclose(fd);
         return -3;
     }
