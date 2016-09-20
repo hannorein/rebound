@@ -266,11 +266,6 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
         fwrite(&space,sizeof(char),1,of);
         lenheader += 1;
     }
-    // Output length of simulation structure in bytes
-    // the length of entire restart file in bytes and the
-    // number of particles.
-    // This is used to read particle data if the simulation 
-    // structure changes due to updates to REBOUND.
    
     WRITE_FIELD(T,                  &r->t,                          sizeof(double));
     WRITE_FIELD(G,                  &r->G,                          sizeof(double));
@@ -296,7 +291,37 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(ENERGYOFFSET,       &r->energy_offset,              sizeof(double));
     WRITE_FIELD(BOXSIZE,            &r->boxsize,                    sizeof(struct reb_vec3d));
     WRITE_FIELD(BOXSIZEMAX,         &r->boxsize_max,                sizeof(double));
-    WRITE_FIELD(ROOTSIZE,           &r->root_size,                  sizeof(int));
+    WRITE_FIELD(ROOTSIZE,           &r->root_size,                  sizeof(double));
+    WRITE_FIELD(ROOTN,              &r->root_n,                     sizeof(int));
+    WRITE_FIELD(ROOTNX,             &r->root_nx,                    sizeof(int));
+    WRITE_FIELD(ROOTNY,             &r->root_ny,                    sizeof(int));
+    WRITE_FIELD(ROOTNZ,             &r->root_nz,                    sizeof(int));
+    WRITE_FIELD(NGHOSTX,            &r->nghostx,                    sizeof(int));
+    WRITE_FIELD(NGHOSTY,            &r->nghosty,                    sizeof(int));
+    WRITE_FIELD(NGHOSTZ,            &r->nghostz,                    sizeof(int));
+    WRITE_FIELD(COLLISIONRESOLVEKEEPSORTED, &r->collision_resolve_keep_sorted, sizeof(int));
+    WRITE_FIELD(MINIMUMCOLLISIONVELOCITY, &r->minimum_collision_velocity, sizeof(double));
+    WRITE_FIELD(COLLISIONSPLOG,     &r->collisions_plog,            sizeof(double));
+    WRITE_FIELD(MAXRADIUS,          &r->max_radius,                 2*sizeof(double));
+    WRITE_FIELD(COLLISIONSNLOG,     &r->collisions_Nlog,            sizeof(long));
+    WRITE_FIELD(CALCULATEMEGNO,     &r->calculate_megno,            sizeof(int));
+    WRITE_FIELD(MEGNOYS,            &r->megno_Ys,                   sizeof(double));
+    WRITE_FIELD(MEGNOYSS,           &r->megno_Yss,                  sizeof(double));
+    WRITE_FIELD(MEGNOCOVYT,         &r->megno_cov_Yt,               sizeof(double));
+    WRITE_FIELD(MEGNOVART,          &r->megno_var_t,                sizeof(double));
+    WRITE_FIELD(MEGNOMEANT,         &r->megno_mean_t,               sizeof(double));
+    WRITE_FIELD(MEGNOMEANY,         &r->megno_mean_Y,               sizeof(double));
+    WRITE_FIELD(MEGNON,             &r->megno_n,                    sizeof(long));
+    WRITE_FIELD(SASEEKFIRST,        &r->simulationarchive_seek_first, sizeof(long));
+    WRITE_FIELD(SASEEKBLOB,         &r->simulationarchive_seek_blob,sizeof(long));
+    WRITE_FIELD(SAINTERVAL,         &r->simulationarchive_interval, sizeof(double));
+    WRITE_FIELD(SANEXT,             &r->simulationarchive_next,     sizeof(long));
+    WRITE_FIELD(SAWALLTIME,         &r->simulationarchive_walltime, sizeof(double));
+    WRITE_FIELD(COLLISION,          &r->collision,                  sizeof(int));
+    WRITE_FIELD(INTEGRATOR,         &r->integrator,                 sizeof(int));
+    WRITE_FIELD(BOUNDARY,           &r->boundary,                   sizeof(int));
+    WRITE_FIELD(GRAVITY,            &r->gravity,                    sizeof(int));
+    //WRITE_FIELD(,             &r->,             sizeof());
     //WRITE_FIELD(,             &r->,             sizeof());
     //WRITE_FIELD(,             &r->,             sizeof());
 
