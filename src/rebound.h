@@ -249,6 +249,82 @@ struct reb_simulation_integrator_hermes {
 
 
 /**
+ * @brief Enumeration describing the contents of a binary field. Used to read and write binary files.
+ */
+enum REB_BINARY_FIELD_TYPE {
+    REB_BINARY_FIELD_TYPE_T = 0,
+    REB_BINARY_FIELD_TYPE_G = 1,
+    REB_BINARY_FIELD_TYPE_SOFTENING = 2,
+    REB_BINARY_FIELD_TYPE_DT = 3,
+    REB_BINARY_FIELD_TYPE_N = 4,
+    REB_BINARY_FIELD_TYPE_NVAR = 5,
+    REB_BINARY_FIELD_TYPE_VARCONFIGN = 6,
+    REB_BINARY_FIELD_TYPE_NACTIVE = 7,
+    REB_BINARY_FIELD_TYPE_TESTPARTICLETYPE = 8,
+    REB_BINARY_FIELD_TYPE_HASHCTR = 9, 
+    REB_BINARY_FIELD_TYPE_OPENINGANGLE2 = 10,
+    REB_BINARY_FIELD_TYPE_STATUS = 11,
+    REB_BINARY_FIELD_TYPE_EXACTFINISHTIME = 12,
+    REB_BINARY_FIELD_TYPE_FORCEISVELOCITYDEP = 13,
+    REB_BINARY_FIELD_TYPE_GRAVITYIGNORETERMS = 14,
+    REB_BINARY_FIELD_TYPE_OUTPUTTIMINGLAST = 15,
+    REB_BINARY_FIELD_TYPE_SAVEMESSAGES = 16,
+    REB_BINARY_FIELD_TYPE_EXITMAXDISTANCE = 17,
+    REB_BINARY_FIELD_TYPE_EXITMINDISTANCE = 18,
+    REB_BINARY_FIELD_TYPE_USLEEP = 19,
+    REB_BINARY_FIELD_TYPE_TRACKENERGYOFFSET = 20,
+    REB_BINARY_FIELD_TYPE_ENERGYOFFSET = 21,
+    REB_BINARY_FIELD_TYPE_BOXSIZE = 22, 
+    REB_BINARY_FIELD_TYPE_BOXSIZEMAX = 23, 
+    REB_BINARY_FIELD_TYPE_ROOTSIZE = 24,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+  //  REB_BINARY_FIELD_TYPE_ = ,
+};
+
+/**
+ * @brief This structure is used to save and load binary files.
+ */
+struct reb_binary_field {
+    enum REB_BINARY_FIELD_TYPE type;    ///< Type of what field
+    long size;                          ///< Size in bytes of field (only what follows, not the binary field, itself).
+};
+
+
+/**
  * @brief This structure contains variables used by the SEI integrator.
  * @details This is where the user sets the orbital frequency OMEGA for 
  * shearing sheet simulations.

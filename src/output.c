@@ -236,6 +236,12 @@ void reb_get_binary_size(struct reb_simulation* r, long* seek_length){
     }
 }
 
+// Macro to write a single field to a binary file.
+#define WRITE_FIELD(typename, value, length) {\
+        struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_##typename, .size = (length)};\
+        fwrite(&field,sizeof(struct reb_binary_field),1,of);\
+        fwrite(value,field.size,1,of);\
+    }
 
 void reb_output_binary(struct reb_simulation* r, char* filename){
 #ifdef MPI
@@ -265,6 +271,35 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     // number of particles.
     // This is used to read particle data if the simulation 
     // structure changes due to updates to REBOUND.
+   
+    WRITE_FIELD(T,                  &r->t,                          sizeof(double));
+    WRITE_FIELD(G,                  &r->G,                          sizeof(double));
+    WRITE_FIELD(SOFTENING,          &r->softening,                  sizeof(double));
+    WRITE_FIELD(DT,                 &r->dt,                         sizeof(double));
+    WRITE_FIELD(N,                  &r->N,                          sizeof(int));
+    WRITE_FIELD(NVAR,               &r->N_var,                      sizeof(int));
+    WRITE_FIELD(VARCONFIGN,         &r->var_config_N,               sizeof(int));
+    WRITE_FIELD(NACTIVE,            &r->N_active,                   sizeof(int));
+    WRITE_FIELD(TESTPARTICLETYPE,   &r->testparticle_type,          sizeof(int));
+    WRITE_FIELD(HASHCTR,            &r->hash_ctr,                   sizeof(int));
+    WRITE_FIELD(OPENINGANGLE2,      &r->opening_angle2,             sizeof(double));
+    WRITE_FIELD(STATUS,             &r->status,                     sizeof(int));
+    WRITE_FIELD(EXACTFINISHTIME,    &r->exact_finish_time,          sizeof(int));
+    WRITE_FIELD(FORCEISVELOCITYDEP, &r->force_is_velocity_dependent,sizeof(unsigned int));
+    WRITE_FIELD(GRAVITYIGNORETERMS, &r->gravity_ignore_terms,       sizeof(unsigned int));
+    WRITE_FIELD(OUTPUTTIMINGLAST,   &r->output_timing_last,         sizeof(double));
+    WRITE_FIELD(SAVEMESSAGES,       &r->save_messages,              sizeof(int));
+    WRITE_FIELD(EXITMAXDISTANCE,    &r->exit_max_distance,          sizeof(double));
+    WRITE_FIELD(EXITMINDISTANCE,    &r->exit_min_distance,          sizeof(double));
+    WRITE_FIELD(USLEEP,             &r->usleep,                     sizeof(double));
+    WRITE_FIELD(TRACKENERGYOFFSET,  &r->track_energy_offset,        sizeof(int));
+    WRITE_FIELD(ENERGYOFFSET,       &r->energy_offset,              sizeof(double));
+    WRITE_FIELD(BOXSIZE,            &r->boxsize,                    sizeof(struct reb_vec3d));
+    WRITE_FIELD(BOXSIZEMAX,         &r->boxsize_max,                sizeof(double));
+    WRITE_FIELD(ROOTSIZE,           &r->root_size,                  sizeof(int));
+    //WRITE_FIELD(,             &r->,             sizeof());
+    //WRITE_FIELD(,             &r->,             sizeof());
+
     long seek_length[4];
     reb_get_binary_size(r, seek_length);
     fwrite(seek_length,sizeof(long),4,of);
