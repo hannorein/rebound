@@ -233,6 +233,9 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
     if (warnings & REB_INPUT_BINARY_WARNING_VERSION){
         reb_warning(r,"Binary file was saved with a different version of REBOUND. Binary format might have changed.");
     }
+    if (warnings & REB_INPUT_BINARY_WARNING_VERSION_SERIOUS){
+        reb_warning(r,"Size of simulation structure is different in binary file. Will attempt recovery of particle data. Simulation structure will be initialized to 0.");
+    }
     if (warnings & REB_INPUT_BINARY_WARNING_PARTICLES){
         reb_warning(r,"Binary file might be corrupted. Number of particles found does not match expected number.");
     }
@@ -244,6 +247,11 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
     }
     if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
         reb_error(r,"Cannot read binary file. Check filename and file contents.");
+        free(r);
+        r = NULL;
+    }
+    if (warnings & REB_INPUT_BINARY_ERROR_SEEK){
+        reb_error(r,"Error occured during recovery attempt.");
         free(r);
         r = NULL;
     }
