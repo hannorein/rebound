@@ -338,7 +338,6 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(IAS15_MINDT,        &r->ri_ias15.min_dt,                sizeof(double));
     WRITE_FIELD(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global,        sizeof(unsigned int));
     WRITE_FIELD(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded,sizeof(unsigned long));
-    // TODO: Arrays.
     WRITE_FIELD(HERMES_HSF,         &r->ri_hermes.hill_switch_factor,   sizeof(double));
     WRITE_FIELD(HERMES_SSF,         &r->ri_hermes.solar_switch_factor,  sizeof(double));
     WRITE_FIELD(HERMES_ADAPTIVE,    &r->ri_hermes.adaptive_hill_switch_factor, sizeof(int));
@@ -350,11 +349,8 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(WHFASTH_RECALCHELIO,&r->ri_whfasthelio.recalculate_heliocentric_this_timestep, sizeof(unsigned int));
     WRITE_FIELD(WHFASTH_SAFEMODE,   &r->ri_whfasthelio.safe_mode,       sizeof(unsigned int));
     WRITE_FIELD(WHFASTH_ISSYNCHRON, &r->ri_whfasthelio.is_synchronized, sizeof(unsigned int));
-    //WRITE_FIELD(,             &r->,             sizeof());
-
-    long seek_length[4];
-    reb_get_binary_size(r, seek_length);
-    fwrite(seek_length,sizeof(long),4,of);
+    WRITE_FIELD(END, NULL, 0);
+    // TODO: Arrays.
 
     // Output main simulation structure    
     fwrite(r,sizeof(struct reb_simulation),1,of);

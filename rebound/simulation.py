@@ -32,6 +32,7 @@ BINARY_WARNINGS = [
     ("Binary file might be corrupted. Number of variational config structs found does not match number of variational config structs expected.", 16),
     ("Size of simulation structure is different in binary file. Cannot read binary data file. Will try to rescue particle data, but return otherwise empty simulation structure.", 32),
     ("Could not rescue binary file data.", 64)
+    ("Unknown field found in binary file.", 128)
 ]
 
 class reb_hash_pointer_pair(Structure):

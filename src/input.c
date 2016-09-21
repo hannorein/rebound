@@ -101,6 +101,14 @@ void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf){
     fread(dp7->p6,sizeof(double),N3,inf);
 }
 
+// Macro to read a single field from a binary file.
+#define CASE(typename, value) case REB_BINARY_FIELD_TYPE_##typename: \
+    {\
+        fread(value, field.size,1,inf);\
+    }\
+    break;
+    
+
 void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, char* filename, enum reb_input_binary_messages* warnings){
     FILE* inf = fopen(filename,"rb"); 
     
@@ -125,6 +133,47 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
 
     // Read two longs to get size of entire restart file and location of first 
     // particle data.
+    
+    
+    int reading_fields = 1;
+    while(reading_fields){
+        struct reb_binary_field field;
+        fread(&field,sizeof(struct reb_binary_field),1,inf);
+        switch (field.type){
+            CASE(T,                  &r->t);
+            CASE(G,                  &r->G);
+            CASE(SOFTENING,          &r->softening);
+            CASE(DT,                 &r->dt);
+            CASE(N,                  &r->N);
+            CASE(NVAR,               &r->N_var);
+            CASE(VARCONFIGN,         &r->var_config_N);
+            CASE(NACTIVE,            &r->N_active);
+            CASE(TESTPARTICLETYPE,   &r->testparticle_type);
+            CASE(HASHCTR,            &r->hash_ctr);
+            CASE(OPENINGANGLE2,      &r->opening_angle2);
+            CASE(STATUS,             &r->status);
+            default:
+                *warnings |= REB_INPUT_BINARY_WARNING_FIELD_UNKOWN;
+                fseek(inf,field.size,SEEK_CUR);
+                break;
+        }
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     long seek_length[4];
     objects += fread(seek_length,sizeof(long),4,inf);
     // Check if size of reb_simulation changed. 
@@ -232,6 +281,9 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
     reb_create_simulation_from_binary_with_messages(r,filename,&warnings);
     if (warnings & REB_INPUT_BINARY_WARNING_VERSION){
         reb_warning(r,"Binary file was saved with a different version of REBOUND. Binary format might have changed.");
+    }
+    if (warnings & REB_INPUT_BINARY_WARNING_FIELD_UNKOWN){
+        reb_warning(r,"Unknown field found in binary file.");
     }
     if (warnings & REB_INPUT_BINARY_WARNING_VERSION_SERIOUS){
         reb_warning(r,"Size of simulation structure is different in binary file. Will attempt recovery of particle data. Simulation structure will be initialized to 0.");
