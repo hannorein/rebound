@@ -321,8 +321,35 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(INTEGRATOR,         &r->integrator,                 sizeof(int));
     WRITE_FIELD(BOUNDARY,           &r->boundary,                   sizeof(int));
     WRITE_FIELD(GRAVITY,            &r->gravity,                    sizeof(int));
-    //WRITE_FIELD(,             &r->,             sizeof());
-    //WRITE_FIELD(,             &r->,             sizeof());
+    WRITE_FIELD(SEI_OMEGA,          &r->ri_sei.OMEGA,               sizeof(double));
+    WRITE_FIELD(SEI_OMEGAZ,         &r->ri_sei.OMEGAZ,              sizeof(double));
+    WRITE_FIELD(SEI_LASTDT,         &r->ri_sei.lastdt,              sizeof(double));
+    WRITE_FIELD(SEI_SINDT,          &r->ri_sei.sindt,               sizeof(double));
+    WRITE_FIELD(SEI_TANDT,          &r->ri_sei.tandt,               sizeof(double));
+    WRITE_FIELD(SEI_SINDTZ,         &r->ri_sei.sindtz,              sizeof(double));
+    WRITE_FIELD(SEI_TANDTZ,         &r->ri_sei.tandtz,              sizeof(double));
+    WRITE_FIELD(WHFAST_CORRECTOR,   &r->ri_whfast.corrector,        sizeof(unsigned int));
+    WRITE_FIELD(WHFAST_RECALCJAC,   &r->ri_whfast.recalculate_jacobi_this_timestep, sizeof(unsigned int));
+    WRITE_FIELD(WHFAST_SAFEMODE,    &r->ri_whfast.safe_mode,        sizeof(unsigned int));
+    WRITE_FIELD(WHFAST_KEEPUNSYNC,  &r->ri_whfast.keep_unsynchronized, sizeof(unsigned int));
+    WRITE_FIELD(WHFAST_ISSYNCHRON,  &r->ri_whfast.is_synchronized,  sizeof(unsigned int));
+    WRITE_FIELD(WHFAST_TIMESTEPWARN,&r->ri_whfast.timestep_warning, sizeof(unsigned int));
+    WRITE_FIELD(IAS15_EPSILON,      &r->ri_ias15.epsilon,           sizeof(double));
+    WRITE_FIELD(IAS15_MINDT,        &r->ri_ias15.min_dt,            sizeof(double));
+    WRITE_FIELD(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global,    sizeof(unsigned int));
+    WRITE_FIELD(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded,sizeof(unsigned long));
+    // TODO: Arrays.
+    WRITE_FIELD(HERMES_HSF,         &r->ri_hermes.hill_switch_factor, sizeof(double));
+    WRITE_FIELD(HERMES_SSF,         &r->ri_hermes.solar_switch_factor, sizeof(double));
+    WRITE_FIELD(HERMES_ADAPTIVE,    &r->ri_hermes.adaptive_hill_switch_factor, sizeof(int));
+    WRITE_FIELD(HERMES_TIMESTEPWARN,&r->ri_hermes.timestep_too_large_warning, sizeof(int));
+    WRITE_FIELD(HERMES_STEPS,       &r->ri_hermes.steps,            sizeof(unsigned long long));
+    WRITE_FIELD(HERMES_STEPS_MA,    &r->ri_hermes.steps_miniactive, sizeof(unsigned long long));
+    WRITE_FIELD(HERMES_STEPS_MN,    &r->ri_hermes.steps_miniN,      sizeof(unsigned long long));
+    WRITE_FIELD(WHFASTH_CORRECTOR,  &r->ri_whfasthelio.corrector,   sizeof(unsigned int));
+    WRITE_FIELD(WHFASTH_RECALCHELIO,&r->ri_whfasthelio.recalculate_heliocentric_this_timestep, sizeof(unsigned int));
+    WRITE_FIELD(WHFASTH_SAFEMODE,   &r->ri_whfasthelio.safe_mode,   sizeof(unsigned int));
+    WRITE_FIELD(WHFASTH_ISSYNCHRON, &r->ri_whfasthelio.is_synchronized, sizeof(unsigned int));
     //WRITE_FIELD(,             &r->,             sizeof());
 
     long seek_length[4];
