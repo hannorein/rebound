@@ -158,7 +158,7 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
     }
     
     reb_reset_temporary_pointers(r);
-    r->tree_root = NULL;
+    reb_reset_function_pointers(r);
 
     // Read two longs to get size of entire restart file and location of first 
     // particle data.
@@ -265,20 +265,28 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
                     r->particles[l].sim = r;
                 }
                 break;
-           CASE_MALLOC(VARCONFIG,    r->var_config);
-           CASE_MALLOC(IAS15_AT,     r->ri_ias15.at);
-           CASE_MALLOC(IAS15_X0,     r->ri_ias15.x0);
-           CASE_MALLOC(IAS15_V0,     r->ri_ias15.v0);
-           CASE_MALLOC(IAS15_A0,     r->ri_ias15.a0);
-           CASE_MALLOC(IAS15_CSX,    r->ri_ias15.csx);
-           CASE_MALLOC(IAS15_CSV,    r->ri_ias15.csv);
-           CASE_MALLOC(IAS15_CSA0,   r->ri_ias15.csa0);
-           CASE_MALLOC_DP7(IAS15_G,  r->ri_ias15.g);
-           CASE_MALLOC_DP7(IAS15_B,  r->ri_ias15.b);
-           CASE_MALLOC_DP7(IAS15_CSB,r->ri_ias15.csb);
-           CASE_MALLOC_DP7(IAS15_E,  r->ri_ias15.e);
-           CASE_MALLOC_DP7(IAS15_BR, r->ri_ias15.br);
-           CASE_MALLOC_DP7(IAS15_ER, r->ri_ias15.er);
+            case REB_BINARY_FIELD_TYPE_VARCONFIG:
+                r->var_config = malloc(field.size);
+                fread(r->var_config, field.size,1,inf);
+                if (r->var_config_N>0){
+                    for (int l=0;l<r->var_config_N;l++){
+                        r->var_config[l].sim = r;
+                    }
+                }
+                break;
+            CASE_MALLOC(IAS15_AT,     r->ri_ias15.at);
+            CASE_MALLOC(IAS15_X0,     r->ri_ias15.x0);
+            CASE_MALLOC(IAS15_V0,     r->ri_ias15.v0);
+            CASE_MALLOC(IAS15_A0,     r->ri_ias15.a0);
+            CASE_MALLOC(IAS15_CSX,    r->ri_ias15.csx);
+            CASE_MALLOC(IAS15_CSV,    r->ri_ias15.csv);
+            CASE_MALLOC(IAS15_CSA0,   r->ri_ias15.csa0);
+            CASE_MALLOC_DP7(IAS15_G,  r->ri_ias15.g);
+            CASE_MALLOC_DP7(IAS15_B,  r->ri_ias15.b);
+            CASE_MALLOC_DP7(IAS15_CSB,r->ri_ias15.csb);
+            CASE_MALLOC_DP7(IAS15_E,  r->ri_ias15.e);
+            CASE_MALLOC_DP7(IAS15_BR, r->ri_ias15.br);
+            CASE_MALLOC_DP7(IAS15_ER, r->ri_ias15.er);
             case REB_BINARY_FIELD_TYPE_END:
                 reading_fields = 0;
                 break;
@@ -297,55 +305,6 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
                 break;
         }
     }
-
-    int ri_ias15_allocatedN = r->ri_ias15.allocatedN;
-    if(reb_reset_function_pointers(r)){
-        *warnings |= REB_INPUT_BINARY_WARNING_POINTERS;
-    }
-
-    // Read variational config structures
-    if (r->var_config_N>0){
-        r->var_config = malloc(sizeof(struct reb_variational_configuration)*r->var_config_N);
-        if (r->var_config){
-            objects = fread(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,inf);
-            if (objects==r->var_config_N){
-                for (int l=0;l<r->var_config_N;l++){
-                    r->var_config[l].sim = r;
-                }
-            }else{
-                *warnings |= REB_INPUT_BINARY_WARNING_VARCONFIG;
-            }
-        }else{
-            *warnings |= REB_INPUT_BINARY_WARNING_VARCONFIG;
-        }
-    }
-
-    // Read temporary arrays for IAS15 (needed for bit-by-bit reproducability)
-    if (ri_ias15_allocatedN && !(*warnings & REB_INPUT_BINARY_WARNING_PARTICLES)){
-        int N3 = ri_ias15_allocatedN;
-        r->ri_ias15.allocatedN = N3;
-        r->ri_ias15.at = malloc(sizeof(double)*N3);
-        fread(r->ri_ias15.at,sizeof(double),N3,inf);
-        r->ri_ias15.x0 = malloc(sizeof(double)*N3);
-        fread(r->ri_ias15.x0,sizeof(double),N3,inf);
-        r->ri_ias15.v0 = malloc(sizeof(double)*N3);
-        fread(r->ri_ias15.v0,sizeof(double),N3,inf);
-        r->ri_ias15.a0 = malloc(sizeof(double)*N3);
-        fread(r->ri_ias15.a0,sizeof(double),N3,inf);
-        r->ri_ias15.csx = malloc(sizeof(double)*N3);
-        fread(r->ri_ias15.csx,sizeof(double),N3,inf);
-        r->ri_ias15.csv = malloc(sizeof(double)*N3);
-        fread(r->ri_ias15.csv,sizeof(double),N3,inf);
-        r->ri_ias15.csa0 = malloc(sizeof(double)*N3);
-        fread(r->ri_ias15.csa0,sizeof(double),N3,inf);
-        reb_read_dp7(&(r->ri_ias15.g)  ,N3,inf);
-        reb_read_dp7(&(r->ri_ias15.b)  ,N3,inf);
-        reb_read_dp7(&(r->ri_ias15.csb),N3,inf);
-        reb_read_dp7(&(r->ri_ias15.e)  ,N3,inf);
-        reb_read_dp7(&(r->ri_ias15.br) ,N3,inf);
-        reb_read_dp7(&(r->ri_ias15.er) ,N3,inf);
-    }
-    
     r->simulationarchive_filename = NULL;
     fclose(inf);
 }
@@ -363,19 +322,11 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
     if (warnings & REB_INPUT_BINARY_WARNING_PARTICLES){
         reb_warning(r,"Binary file might be corrupted. Number of particles found does not match expected number.");
     }
-    if (warnings & REB_INPUT_BINARY_WARNING_VARCONFIG){
-        reb_warning(r,"Binary file might be corrupted. Number of variational config structs found does not match number of variational config structs expected.");
-    }
     if (warnings & REB_INPUT_BINARY_WARNING_POINTERS){
         reb_warning(r,"You have to reset function pointers after creating a reb_simulation struct with a binary file.");
     }
     if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
         reb_error(r,"Cannot read binary file. Check filename and file contents.");
-        free(r);
-        r = NULL;
-    }
-    if (warnings & REB_INPUT_BINARY_ERROR_SEEK){
-        reb_error(r,"Error occured during recovery attempt.");
         free(r);
         r = NULL;
     }
