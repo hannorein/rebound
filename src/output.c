@@ -207,35 +207,6 @@ void reb_save_dp7(struct reb_dp7* dp7, const int N3, FILE* of){
     fwrite(dp7->p6,sizeof(double),N3,of);
 }
 
-void reb_get_binary_size(struct reb_simulation* r, long* seek_length){
-    seek_length[0] = sizeof(struct reb_simulation);
-    long size = 0;
-    size += sizeof(char)*64;  // Header
-    size += sizeof(struct reb_simulation);
-    size += sizeof(struct reb_particle)*r->N;
-    size += sizeof(struct reb_variational_configuration)*r->var_config_N;
-    int N3 = r->ri_ias15.allocatedN;
-    size += 7*sizeof(double)*N3;  // IAS15 double arrays
-    size += 6*7*sizeof(double)*N3;  // dp7 arrays
-    seek_length[1] = size;
-    seek_length[2] = r->N;
-            
-    switch (r->integrator){
-        case REB_INTEGRATOR_WHFAST:
-            seek_length[3] = sizeof(double)*2+sizeof(double)*7*r->N;
-            break;
-        case REB_INTEGRATOR_IAS15:
-            seek_length[3] =  sizeof(double)*4           // time, walltime, dt, dt_last_done
-                             +sizeof(double)*3*r->N*5*7  // dp7 arrays
-                             +sizeof(double)*7*r->N      // particle m, pos, vel
-                             +sizeof(double)*3*r->N*2;   // csx, csv
-            break;
-        default:
-            seek_length[3] = 0; // Restart not implemented for this integrator.
-            break;
-    }
-}
-
 // Macro to write a single field to a binary file.
 #define WRITE_FIELD(typename, value, length) {\
         struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_##typename, .size = (length)};\
