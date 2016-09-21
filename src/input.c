@@ -228,10 +228,8 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
             case REB_BINARY_FIELD_TYPE_PARTICLES:
                 r->particles = malloc(field.size);
                 r->allocatedN = field.size/sizeof(struct reb_particle);
-                printf("allocted n : %d\n",r->allocatedN);
                 fread(r->particles, field.size,1,inf);
                 for (int l=0;l<r->N;l++){
-                    printf("%f\n",r->particles[l].x);
                     r->particles[l].c = NULL;
                     r->particles[l].ap = NULL;
                     r->particles[l].sim = r;
