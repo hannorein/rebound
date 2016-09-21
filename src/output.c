@@ -349,14 +349,8 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(WHFASTH_RECALCHELIO,&r->ri_whfasthelio.recalculate_heliocentric_this_timestep, sizeof(unsigned int));
     WRITE_FIELD(WHFASTH_SAFEMODE,   &r->ri_whfasthelio.safe_mode,       sizeof(unsigned int));
     WRITE_FIELD(WHFASTH_ISSYNCHRON, &r->ri_whfasthelio.is_synchronized, sizeof(unsigned int));
+    WRITE_FIELD(PARTICLES,          r->particles,                      sizeof(struct reb_particle)*r->N);
     WRITE_FIELD(END, NULL, 0);
-    // TODO: Arrays.
-
-    // Output main simulation structure    
-    fwrite(r,sizeof(struct reb_simulation),1,of);
-
-    // Output particles
-    fwrite(r->particles,sizeof(struct reb_particle),r->N,of);
 
     // Output variational configuration structures
     if (r->var_config_N){
