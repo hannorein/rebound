@@ -312,7 +312,6 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(MEGNOMEANT,         &r->megno_mean_t,                   sizeof(double));
     WRITE_FIELD(MEGNOMEANY,         &r->megno_mean_Y,                   sizeof(double));
     WRITE_FIELD(MEGNON,             &r->megno_n,                        sizeof(long));
-    WRITE_FIELD(SASEEKFIRST,        &r->simulationarchive_seek_first,   sizeof(long));
     WRITE_FIELD(SASEEKBLOB,         &r->simulationarchive_seek_blob,    sizeof(long));
     WRITE_FIELD(SAINTERVAL,         &r->simulationarchive_interval,     sizeof(double));
     WRITE_FIELD(SANEXT,             &r->simulationarchive_next,         sizeof(long));
@@ -404,6 +403,9 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
             reb_save_dp7(&(r->ri_ias15.er),N3,of);
         }
     }
+    // To output size of binary file, need to calculate it first. 
+    r->simulationarchive_seek_first = ftell(of)+sizeof(struct reb_binary_field)*2+sizeof(long);
+    WRITE_FIELD(SASEEKFIRST,        &r->simulationarchive_seek_first,   sizeof(long));
     WRITE_FIELD(END, NULL, 0);
     fclose(of);
 }

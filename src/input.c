@@ -159,11 +159,8 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
     
     reb_reset_temporary_pointers(r);
     reb_reset_function_pointers(r);
+    r->simulationarchive_filename = NULL;
 
-    // Read two longs to get size of entire restart file and location of first 
-    // particle data.
-    
-    
     int reading_fields = 1;
     while(reading_fields){
         struct reb_binary_field field;
@@ -305,7 +302,6 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
                 break;
         }
     }
-    r->simulationarchive_filename = NULL;
     fclose(inf);
 }
 
