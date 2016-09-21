@@ -46,7 +46,6 @@ int main(int argc, char* argv[]){
 	{
 		printf("Creating simulation from binary file and integrating until t=2.\n");
 		struct reb_simulation* r = reb_create_simulation_from_binary("restart.bin");
-printf("%e\n%d\n",r->particles[5].x,r->N);
         // Need to reset function pointers
         r->heartbeat = heartbeat;
 		reb_integrate(r,2.);

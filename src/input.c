@@ -107,6 +107,32 @@ void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf){
         fread(value, field.size,1,inf);\
     }\
     break;
+
+#define CASE_MALLOC(typename, valueref) case REB_BINARY_FIELD_TYPE_##typename: \
+    {\
+        valueref = malloc(field.size);\
+        fread(valueref, field.size,1,inf);\
+    }\
+    break;
+
+#define CASE_MALLOC_DP7(typename, valueref) case REB_BINARY_FIELD_TYPE_##typename: \
+    {\
+        valueref.p0 = malloc(field.size/7);\
+        valueref.p1 = malloc(field.size/7);\
+        valueref.p2 = malloc(field.size/7);\
+        valueref.p3 = malloc(field.size/7);\
+        valueref.p4 = malloc(field.size/7);\
+        valueref.p5 = malloc(field.size/7);\
+        valueref.p6 = malloc(field.size/7);\
+        fread(valueref.p0, field.size/7,1,inf);\
+        fread(valueref.p1, field.size/7,1,inf);\
+        fread(valueref.p2, field.size/7,1,inf);\
+        fread(valueref.p3, field.size/7,1,inf);\
+        fread(valueref.p4, field.size/7,1,inf);\
+        fread(valueref.p5, field.size/7,1,inf);\
+        fread(valueref.p6, field.size/7,1,inf);\
+    }\
+    break;
     
 
 void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, char* filename, enum reb_input_binary_messages* warnings){
@@ -214,6 +240,7 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
             CASE(IAS15_MINDT,        &r->ri_ias15.min_dt);
             CASE(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global);
             CASE(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded);
+            CASE(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN);
             CASE(HERMES_HSF,         &r->ri_hermes.hill_switch_factor);
             CASE(HERMES_SSF,         &r->ri_hermes.solar_switch_factor);
             CASE(HERMES_ADAPTIVE,    &r->ri_hermes.adaptive_hill_switch_factor);
@@ -228,15 +255,41 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
             case REB_BINARY_FIELD_TYPE_PARTICLES:
                 r->particles = malloc(field.size);
                 r->allocatedN = field.size/sizeof(struct reb_particle);
+                if (r->allocatedN<r->N){
+                    *warnings |= REB_INPUT_BINARY_WARNING_PARTICLES;
+                }
                 fread(r->particles, field.size,1,inf);
-                for (int l=0;l<r->N;l++){
+                for (int l=0;l<r->allocatedN;l++){
                     r->particles[l].c = NULL;
                     r->particles[l].ap = NULL;
                     r->particles[l].sim = r;
                 }
                 break;
+           CASE_MALLOC(VARCONFIG,    r->var_config);
+           CASE_MALLOC(IAS15_AT,     r->ri_ias15.at);
+           CASE_MALLOC(IAS15_X0,     r->ri_ias15.x0);
+           CASE_MALLOC(IAS15_V0,     r->ri_ias15.v0);
+           CASE_MALLOC(IAS15_A0,     r->ri_ias15.a0);
+           CASE_MALLOC(IAS15_CSX,    r->ri_ias15.csx);
+           CASE_MALLOC(IAS15_CSV,    r->ri_ias15.csv);
+           CASE_MALLOC(IAS15_CSA0,   r->ri_ias15.csa0);
+           CASE_MALLOC_DP7(IAS15_G,  r->ri_ias15.g);
+           CASE_MALLOC_DP7(IAS15_B,  r->ri_ias15.b);
+           CASE_MALLOC_DP7(IAS15_CSB,r->ri_ias15.csb);
+           CASE_MALLOC_DP7(IAS15_E,  r->ri_ias15.e);
+           CASE_MALLOC_DP7(IAS15_BR, r->ri_ias15.br);
+           CASE_MALLOC_DP7(IAS15_ER, r->ri_ias15.er);
             case REB_BINARY_FIELD_TYPE_END:
                 reading_fields = 0;
+                break;
+            case REB_BINARY_FIELD_TYPE_FUNCTIONPOINTERS:
+                {
+                    int fpwarn;
+                    fread(&fpwarn, field.size,1,inf);
+                    if (fpwarn){
+                        *warnings |= REB_INPUT_BINARY_WARNING_POINTERS;
+                    }
+                }
                 break;
             default:
                 *warnings |= REB_INPUT_BINARY_WARNING_FIELD_UNKOWN;

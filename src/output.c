@@ -338,6 +338,7 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(IAS15_MINDT,        &r->ri_ias15.min_dt,                sizeof(double));
     WRITE_FIELD(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global,        sizeof(unsigned int));
     WRITE_FIELD(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded,sizeof(unsigned long));
+    WRITE_FIELD(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN,            sizeof(int));
     WRITE_FIELD(HERMES_HSF,         &r->ri_hermes.hill_switch_factor,   sizeof(double));
     WRITE_FIELD(HERMES_SSF,         &r->ri_hermes.solar_switch_factor,  sizeof(double));
     WRITE_FIELD(HERMES_ADAPTIVE,    &r->ri_hermes.adaptive_hill_switch_factor, sizeof(int));
@@ -349,31 +350,61 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(WHFASTH_RECALCHELIO,&r->ri_whfasthelio.recalculate_heliocentric_this_timestep, sizeof(unsigned int));
     WRITE_FIELD(WHFASTH_SAFEMODE,   &r->ri_whfasthelio.safe_mode,       sizeof(unsigned int));
     WRITE_FIELD(WHFASTH_ISSYNCHRON, &r->ri_whfasthelio.is_synchronized, sizeof(unsigned int));
-    WRITE_FIELD(PARTICLES,          r->particles,                      sizeof(struct reb_particle)*r->N);
-    WRITE_FIELD(END, NULL, 0);
-
-    // Output variational configuration structures
-    if (r->var_config_N){
-        fwrite(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,of);
+    int functionpointersused = 0;
+    if (r->coefficient_of_restitution ||
+        r->collision_resolve ||
+        r->additional_forces ||
+        r->heartbeat ||
+        r->post_timestep_modifications ||
+        r->free_particle_ap){
+        functionpointersused = 1;
     }
-    
-    // Output IAS15 temporary arrays (needed for bit-by-bit reproducibility)
+    WRITE_FIELD(FUNCTIONPOINTERS,   &functionpointersused,              sizeof(int));
+    WRITE_FIELD(PARTICLES,          r->particles,                       sizeof(struct reb_particle)*r->N);
+    if (r->var_config){
+        WRITE_FIELD(VARCONFIG,      r->var_config,                      sizeof(struct reb_variational_configuration)*r->var_config_N);
+    }
     if (r->ri_ias15.allocatedN){
         int N3 = r->ri_ias15.allocatedN;
-        fwrite(r->ri_ias15.at,sizeof(double),N3,of);
-        fwrite(r->ri_ias15.x0,sizeof(double),N3,of);
-        fwrite(r->ri_ias15.v0,sizeof(double),N3,of);
-        fwrite(r->ri_ias15.a0,sizeof(double),N3,of);
-        fwrite(r->ri_ias15.csx,sizeof(double),N3,of);
-        fwrite(r->ri_ias15.csv,sizeof(double),N3,of);
-        fwrite(r->ri_ias15.csa0,sizeof(double),N3,of);
-        reb_save_dp7(&(r->ri_ias15.g)  ,N3,of);
-        reb_save_dp7(&(r->ri_ias15.b)  ,N3,of);
-        reb_save_dp7(&(r->ri_ias15.csb),N3,of);
-        reb_save_dp7(&(r->ri_ias15.e)  ,N3,of);
-        reb_save_dp7(&(r->ri_ias15.br) ,N3,of);
-        reb_save_dp7(&(r->ri_ias15.er) ,N3,of);
+        WRITE_FIELD(IAS15_AT,   r->ri_ias15.at,     sizeof(double)*N3);
+        WRITE_FIELD(IAS15_X0,   r->ri_ias15.x0,     sizeof(double)*N3);
+        WRITE_FIELD(IAS15_V0,   r->ri_ias15.v0,     sizeof(double)*N3);
+        WRITE_FIELD(IAS15_A0,   r->ri_ias15.a0,     sizeof(double)*N3);
+        WRITE_FIELD(IAS15_CSX,  r->ri_ias15.csx,    sizeof(double)*N3);
+        WRITE_FIELD(IAS15_CSV,  r->ri_ias15.csv,    sizeof(double)*N3);
+        WRITE_FIELD(IAS15_CSA0, r->ri_ias15.csa0,   sizeof(double)*N3);
+        {
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_G, .size = sizeof(double)*N3*7};
+            fwrite(&field,sizeof(struct reb_binary_field),1,of);
+            reb_save_dp7(&(r->ri_ias15.g),N3,of);
+        }
+        {
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_B, .size = sizeof(double)*N3*7};
+            fwrite(&field,sizeof(struct reb_binary_field),1,of);
+            reb_save_dp7(&(r->ri_ias15.b),N3,of);
+        }
+        {
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_CSB, .size = sizeof(double)*N3*7};
+            fwrite(&field,sizeof(struct reb_binary_field),1,of);
+            reb_save_dp7(&(r->ri_ias15.csb),N3,of);
+        }
+        {
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_E, .size = sizeof(double)*N3*7};
+            fwrite(&field,sizeof(struct reb_binary_field),1,of);
+            reb_save_dp7(&(r->ri_ias15.e),N3,of);
+        }
+        {
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_BR, .size = sizeof(double)*N3*7};
+            fwrite(&field,sizeof(struct reb_binary_field),1,of);
+            reb_save_dp7(&(r->ri_ias15.br),N3,of);
+        }
+        {
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_ER, .size = sizeof(double)*N3*7};
+            fwrite(&field,sizeof(struct reb_binary_field),1,of);
+            reb_save_dp7(&(r->ri_ias15.er),N3,of);
+        }
     }
+    WRITE_FIELD(END, NULL, 0);
     fclose(of);
 }
 
