@@ -51,7 +51,6 @@ int reb_simulationarchive_load_blob(struct reb_simulation* r, char* filename, lo
         }
         return 0;
     }
-
     
     FILE* fd = fopen(filename,"r");
     int fseekret = 0;
@@ -71,14 +70,6 @@ int reb_simulationarchive_load_blob(struct reb_simulation* r, char* filename, lo
     gettimeofday(&r->simulationarchive_time,NULL);
     while (r->simulationarchive_next<=r->t){
         r->simulationarchive_next += r->simulationarchive_interval;
-    }
-    switch (r->gravity){
-        case REB_GRAVITY_BASIC:
-        case REB_GRAVITY_NONE:
-            break;
-        default:
-            reb_error(r,"Restart not implemented for this gravity module.");
-            break;
     }
     switch (r->integrator){
         case REB_INTEGRATOR_WHFAST:
@@ -148,7 +139,7 @@ int reb_simulationarchive_load_blob(struct reb_simulation* r, char* filename, lo
             }
             break;
         default:
-            reb_error(r,"Restart not implemented for this integrator.");
+            reb_error(r,"Simulation archive not implemented for this integrator.");
             break;
     }
     fclose(fd);
@@ -168,12 +159,6 @@ struct reb_simulation* reb_simulationarchive_restart(char* filename){
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
     if (r->t==0){
         // First output
-        if (r->integrator!=REB_INTEGRATOR_WHFAST && r->integrator!=REB_INTEGRATOR_IAS15){
-            reb_error(r,"Restart not implemented for this integrator.");
-        }
-        r->simulationarchive_next += r->simulationarchive_interval;
-        r->simulationarchive_walltime = 0.;
-        gettimeofday(&r->simulationarchive_time,NULL);
         switch (r->integrator){
             case REB_INTEGRATOR_WHFAST:
                 r->simulationarchive_seek_blob = sizeof(double)*2+sizeof(double)*7*r->N;
@@ -188,6 +173,17 @@ void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
                 reb_error(r,"Simulation archive not implemented for this integrator.");
                 break;
         }
+        switch (r->gravity){
+            case REB_GRAVITY_BASIC:
+            case REB_GRAVITY_NONE:
+                break;
+            default:
+                reb_error(r,"Simulation archive not implemented for this gravity module.");
+                break;
+        }
+        r->simulationarchive_next += r->simulationarchive_interval;
+        r->simulationarchive_walltime = 0.;
+        gettimeofday(&r->simulationarchive_time,NULL);
         reb_output_binary(r,r->simulationarchive_filename);
     }else{
         // Appending outputs
@@ -245,7 +241,7 @@ void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
                     }
                     break;
                 default:
-                    reb_error(r,"Restart not implemented for this integrator.");
+                    reb_error(r,"Simulation archive not implemented for this integrator.");
                     break;
             }
             fclose(of);

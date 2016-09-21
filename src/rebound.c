@@ -407,6 +407,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->simulationarchive_seek_blob   = 0;    
     r->simulationarchive_interval    = 0.;    
     r->simulationarchive_walltime    = 0.;    
+    r->simulationarchive_next        = 0.;    
     r->simulationarchive_filename    = NULL;    
     
     // Default modules

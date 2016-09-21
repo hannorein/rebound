@@ -307,7 +307,7 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
 
 struct reb_simulation* reb_create_simulation_from_binary(char* filename){
     enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
-    struct reb_simulation* r = malloc(sizeof(struct reb_simulation));
+    struct reb_simulation* r = reb_create_simulation();
     reb_create_simulation_from_binary_with_messages(r,filename,&warnings);
     if (warnings & REB_INPUT_BINARY_WARNING_VERSION){
         reb_warning(r,"Binary file was saved with a different version of REBOUND. Binary format might have changed.");
