@@ -251,7 +251,7 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
             CASE(WHFASTH_ISSYNCHRON, &r->ri_whfasthelio.is_synchronized);
             case REB_BINARY_FIELD_TYPE_PARTICLES:
                 r->particles = malloc(field.size);
-                r->allocatedN = field.size/sizeof(struct reb_particle);
+                r->allocatedN = (int)(field.size/sizeof(struct reb_particle));
                 if (r->allocatedN<r->N){
                     *warnings |= REB_INPUT_BINARY_WARNING_PARTICLES;
                 }

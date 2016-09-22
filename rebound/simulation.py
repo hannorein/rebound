@@ -327,7 +327,7 @@ class Simulation(Structure):
         """
         clibrebound.reb_simulationarchive_restart.restype = POINTER(Simulation)
         simp = clibrebound.reb_simulationarchive_restart(c_char_p(filename.encode("ascii")))
-        if simp is None:
+        if not simp:
             raise AttributeError("Error loading simulation.")
         return simp.contents
 
@@ -362,7 +362,7 @@ class Simulation(Structure):
         clibrebound.reb_create_simulation.restype = POINTER(Simulation)
         simp = clibrebound.reb_create_simulation() 
         clibrebound.reb_create_simulation_from_binary_with_messages(simp, c_char_p(filename.encode("ascii")),byref(w))
-        if (simp is None) or (w.value & 1):     # Major error
+        if (not simp) or (w.value & 1):     # Major error
             raise ValueError(BINARY_WARNINGS[0])
         for message, value in BINARY_WARNINGS:  # Just warnings
             if w.value & value and value!=1:
@@ -1488,6 +1488,7 @@ Simulation._fields_ = [
                 ("simulationarchive_seek_first", c_long),
                 ("simulationarchive_seek_blob", c_long),
                 ("simulationarchive_interval", c_double),
+                ("simulationarchive_intervalwalltime", c_double),
                 ("simulationarchive_next", c_double),
                 ("simulationarchive_filename", c_char_p),
                 ("simulationarchive_walltime", c_double),
