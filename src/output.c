@@ -285,6 +285,7 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(MEGNON,             &r->megno_n,                        sizeof(long));
     WRITE_FIELD(SASEEKBLOB,         &r->simulationarchive_seek_blob,    sizeof(long));
     WRITE_FIELD(SAINTERVAL,         &r->simulationarchive_interval,     sizeof(double));
+    WRITE_FIELD(SAINTERVALWALLTIME, &r->simulationarchive_interval_walltime, sizeof(double));
     WRITE_FIELD(SANEXT,             &r->simulationarchive_next,         sizeof(long));
     WRITE_FIELD(SAWALLTIME,         &r->simulationarchive_walltime,     sizeof(double));
     WRITE_FIELD(COLLISION,          &r->collision,                      sizeof(int));
