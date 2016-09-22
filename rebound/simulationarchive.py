@@ -103,9 +103,21 @@ class SimulationArchive(Mapping):
 
         self.filesize = os.path.getsize(filename)
         self.dt = sim.dt
-        self.interval = sim.simulationarchive_interval
+        if sim.simulationarchive_interval>0. and sim.simulationarchive_interval_walltime>0.:
+            raise ValueError("Something is wrong. Binary file contains both interval>0 and interval_walltime>0.")
+        if sim.simulationarchive_interval==0. and sim.simulationarchive_interval_walltime==0.:
+            raise ValueError("Something is wrong. Binary file has interval==0 and interval_walltime==0.")
+        if sim.simulationarchive_interval>0.:
+            self.interval = sim.simulationarchive_interval
+        if sim.simulationarchive_interval_walltime>0.:
+            self.interval_walltime = sim.simulationarchive_interval_walltime
+
         self.tmin = 0. # Right now simulations must start at t=0
         self.Nblob = int((self.filesize-sim.simulationarchive_seek_first)/sim.simulationarchive_seek_blob)
+        if sim.simulationarchive_interval_walltime>0.:
+            self.timetable = [-1]*self.Nblob
+            raise NotImplementedError("Not yet implemented")
+
         self.tmax = self.tmin + self.interval*(self.Nblob+1)
 
     def getBlobJustBefore(self, t):
