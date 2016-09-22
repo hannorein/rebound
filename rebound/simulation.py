@@ -392,9 +392,11 @@ class Simulation(Structure):
             raise RuntimeError("Need to add particles to simulation before estimating filesize.")
 
         clibrebound.reb_simulationarchive_estimate_size.restype = c_long
-        return clibrebound.reb_simulationarchive_estimate_size(byref(self), c_double(tmax))
+        estsize = clibrebound.reb_simulationarchive_estimate_size(byref(self), c_double(tmax))
+        self.process_messages()
+        return estsize
         
-    def initSimulationArchive(self, filename, interval):
+    def initSimulationArchive(self, filename, interval=None, interval_walltime=None):
         """
         This function initializes the arguments needed to output
         binary data to the SimulationArchive file during the simulation.
@@ -406,12 +408,18 @@ class Simulation(Structure):
         ---------
         filename : str
             Filename of the binary file.
-        
         interval : float
             Interval between outputs in code units.
+        interval_walltime : float
+            Interval between outputs in wall time (seconds). Useful for adaptive timesteps. 
         """
         self.simulationarchive_filename = c_char_p(filename.encode("ascii")) # Not sure if the memory is retained here..
-        self.simulationarchive_interval = interval
+        if interval is None and interval_walltime is None:
+            raise AttributeError("Need to specify either interval or interval_walltime.")
+        if interval:
+            self.simulationarchive_interval = interval
+        if interval_walltime:
+            self.simulationarchive_interval_walltime = interval_walltime
 
     
     def process_messages(self):
@@ -1488,7 +1496,7 @@ Simulation._fields_ = [
                 ("simulationarchive_seek_first", c_long),
                 ("simulationarchive_seek_blob", c_long),
                 ("simulationarchive_interval", c_double),
-                ("simulationarchive_intervalwalltime", c_double),
+                ("simulationarchive_interval_walltime", c_double),
                 ("simulationarchive_next", c_double),
                 ("simulationarchive_filename", c_char_p),
                 ("simulationarchive_walltime", c_double),

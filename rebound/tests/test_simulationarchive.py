@@ -120,8 +120,36 @@ class TestSimulationArchive(unittest.TestCase):
         x0 = sim.particles[1].x
 
         self.assertEqual(x0,x1)
+
+    def test_sa_restart_ias15_walltime(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "ias15"
+        sim.dt = 0.1313
+        sim.initSimulationArchive("test.bin", interval_walltime = 0.01)
+        sim.integrate(400.,exact_finish_time=0)
+
+        sim = None
+        sim = rebound.Simulation.from_archive("test.bin")
+        self.assertGreater(sim.t,100.)
+        sim.integrate(800.,exact_finish_time=0)
+        x1 = sim.particles[1].x
+        
+        
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "ias15"
+        sim.dt = 0.1313
+        sim.integrate(800.,exact_finish_time=0)
+        x0 = sim.particles[1].x
+
+        self.assertEqual(x0,x1)
     
-    def test_sa_esimatesize(self):
+def test_sa_esimatesize(self):
         sim = rebound.Simulation()
         sim.add(m=1)
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)

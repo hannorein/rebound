@@ -184,7 +184,7 @@ struct reb_simulation* reb_simulationarchive_restart(char* filename){
     if (r){
         int ret = reb_simulationarchive_load_blob(r, filename, -1);
         if (ret){
-            reb_error(r,"Cannot read binary file.");
+            reb_warning(r,"Did not find any blobs in binary file. Using t=0.");
         }
     }
     return r;
