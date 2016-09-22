@@ -83,7 +83,7 @@ class SimulationArchive(Mapping):
             yield self[i]
 
     def __len__(self):
-        return self.Nblob
+        return self.Nblob+1  # number of binary blobs plus binary of t=0
 
     def __init__(self,filename,setup=None, setup_args=()):
         self.cfilename = c_char_p(filename.encode("ascii"))
@@ -115,17 +115,45 @@ class SimulationArchive(Mapping):
         self.tmin = 0. # Right now simulations must start at t=0
         self.Nblob = int((self.filesize-sim.simulationarchive_seek_first)/sim.simulationarchive_seek_blob)
         if sim.simulationarchive_interval_walltime>0.:
-            self.timetable = [-1]*self.Nblob
-            raise NotImplementedError("Not yet implemented")
-
-        self.tmax = self.tmin + self.interval*(self.Nblob+1)
+            self.timetable = [-1.]*(self.Nblob+1)
+            self.timetable[0] = sim.t
+            sim = self.loadFromBlobAndSynchronize(-1)
+            self.timetable[-1] = sim.t
+            self.tmax = sim.t
+        else:
+            self.tmax = self.tmin + self.interval*(i+1)
+        
 
     def getBlobJustBefore(self, t):
         if t>self.tmax+self.dt or t<self.tmin:
             raise ValueError("Requested time outside of baseline stored in binary fie.")
-        bi = max(0,int(math.floor((t-self.dt-self.tmin)/self.interval)))
-        bt = self.tmin + self.interval*bi
-        return bi, bt
+        try:
+            bi = max(0,int(math.floor((t-self.dt-self.tmin)/self.interval)))
+            bt = self.tmin + self.interval*bi
+            return bi, bt
+        except AttributeError: # No interval, need to use timetable
+            # bisect
+            sim = self.simp.contents
+            l = 0
+            r = self.Nblob
+            while True:
+                bi = (r-l)//2
+                if self.timetable[bi] == -1.:
+                    clibrebound.reb_simulationarchive_load_blob.restype = c_int
+                    retv = clibrebound.reb_simulationarchive_load_blob(self.simp, self.cfilename, bi)
+                    if retv:
+                        raise ValueError("Error while loading blob in binary file. Errorcode: %d."%retv)
+                    self.timetable[bi] = sim.t
+                if self.timetable[bi]>t:
+                    r = bi
+                else:
+                    l = bi
+                if r-1<=l:
+                    break
+            return bi, sim.t
+
+
+        return 0, 0.
 
     def getSimulation(self, t, mode='blob', keep_unsynchronized=1):
         """
