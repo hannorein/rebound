@@ -151,7 +151,10 @@ struct reb_simulation* reb_simulationarchive_restart(char* filename){
     if (access(filename, F_OK) == -1) return NULL;
     struct reb_simulation* r = reb_create_simulation_from_binary(filename);
     if (r){
-        reb_simulationarchive_load_blob(r, filename, -1);
+        int ret = reb_simulationarchive_load_blob(r, filename, -1);
+        if (ret){
+            reb_error(r,"Cannot read binary file. Error code %d.",ret);
+        }
     }
     return r;
 }
