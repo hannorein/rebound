@@ -371,6 +371,29 @@ class Simulation(Structure):
         sim.save_messages = 1 # Warnings will be checked within python
         return sim
 
+# Simulation Archive tools
+    def estimateSimulationArchiveSize(self, tmax):
+        """
+        This function estimates the SimulationArchive file size before 
+        a simulation is run. This is useful to check if the interval
+        results in a resonable filesize.
+
+        Note that the simulation needs to be setup (with particles)
+        before this function can return meaningful results.
+        
+        Arguments
+        ---------
+        tmax : float
+            Maximum integration time.
+        """
+        if self.simulationarchive_interval ==0.:
+            raise RuntimeError("Need to set simulationarchive_interval before estimating filesize.")
+        if self.N==0:
+            raise RuntimeError("Need to add particles to simulation before estimating filesize.")
+
+        clibrebound.reb_simulationarchive_estimate_size.restype = c_long
+        return clibrebound.reb_simulationarchive_estimate_size(byref(self), c_double(tmax))
+        
     def initSimulationArchive(self, filename, interval):
         """
         This function initializes the arguments needed to output
@@ -1193,7 +1216,7 @@ class Simulation(Structure):
         Save the entire REBOUND simulation to a binary file.
         """
         clibrebound.reb_output_binary(byref(self), c_char_p(filename.encode("ascii")))
-        
+
 # Integration
     def step(self):
         """

@@ -121,6 +121,17 @@ class TestSimulationArchive(unittest.TestCase):
 
         self.assertEqual(x0,x1)
     
+    def test_sa_esimatesize(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "ias15"
+        sim.dt = 0.1313
+        sim.initSimulationArchive("test.bin", 10.)
+        s = sim.estimateSimulationArchiveSize(40.)
+        self.assertGreater(s,11000)
+    
 
 if __name__ == "__main__":
     unittest.main()
