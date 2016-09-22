@@ -147,35 +147,52 @@ int reb_simulationarchive_load_blob(struct reb_simulation* r, char* filename, lo
     return 0;
 }
 
+static int reb_simulationarchive_blobsize(struct reb_simulation* const r){
+    int seek_blob = 0;
+    switch (r->integrator){
+        case REB_INTEGRATOR_WHFAST:
+            seek_blob = sizeof(double)*2+sizeof(double)*7*r->N;
+            break;
+        case REB_INTEGRATOR_IAS15:
+            seek_blob =  sizeof(double)*4  // time, walltime, dt, dt_last_done
+                             +sizeof(double)*3*r->N*5*7  // dp7 arrays
+                             +sizeof(double)*7*r->N      // particle m, pos, vel
+                             +sizeof(double)*3*r->N*2;   // csx, csv
+            break;
+        default:
+            reb_error(r,"Simulation archive not implemented for this integrator.");
+            break;
+    }
+    return seek_blob;
+}
+
+long reb_simulationarchive_estimate_size(struct reb_simulation* const r, double tmax){
+    if (r->simulationarchive_interval){
+        long blobsize = reb_simulationarchive_blobsize(r);
+        return blobsize*(long)ceil(tmax/r->simulationarchive_interval);
+    }else{
+        reb_warning(r, "Simulationarchive interval not set.");
+        return 0;
+    }
+}
+
 struct reb_simulation* reb_simulationarchive_restart(char* filename){
     if (access(filename, F_OK) == -1) return NULL;
     struct reb_simulation* r = reb_create_simulation_from_binary(filename);
     if (r){
         int ret = reb_simulationarchive_load_blob(r, filename, -1);
         if (ret){
-            reb_error(r,"Cannot read binary file. Error code %d.",ret);
+            reb_error(r,"Cannot read binary file.");
         }
     }
     return r;
 }
 
+
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
     if (r->t==0){
         // First output
-        switch (r->integrator){
-            case REB_INTEGRATOR_WHFAST:
-                r->simulationarchive_seek_blob = sizeof(double)*2+sizeof(double)*7*r->N;
-                break;
-            case REB_INTEGRATOR_IAS15:
-                r->simulationarchive_seek_blob =  sizeof(double)*4  // time, walltime, dt, dt_last_done
-                                 +sizeof(double)*3*r->N*5*7  // dp7 arrays
-                                 +sizeof(double)*7*r->N      // particle m, pos, vel
-                                 +sizeof(double)*3*r->N*2;   // csx, csv
-                break;
-            default:
-                reb_error(r,"Simulation archive not implemented for this integrator.");
-                break;
-        }
+        r->simulationarchive_seek_blob = reb_simulationarchive_blobsize(r);
         switch (r->gravity){
             case REB_GRAVITY_BASIC:
             case REB_GRAVITY_NONE:
