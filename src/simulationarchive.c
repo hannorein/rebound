@@ -68,8 +68,10 @@ int reb_simulationarchive_load_blob(struct reb_simulation* r, char* filename, lo
     fread(&(r->t),sizeof(double),1,fd);
     fread(&(r->simulationarchive_walltime),sizeof(double),1,fd);
     gettimeofday(&r->simulationarchive_time,NULL);
-    while (r->simulationarchive_next<=r->t){
-        r->simulationarchive_next += r->simulationarchive_interval;
+    if (r->simulationarchive_interval){
+        while (r->simulationarchive_next<=r->t){
+            r->simulationarchive_next += r->simulationarchive_interval;
+        }
     }
     switch (r->integrator){
         case REB_INTEGRATOR_WHFAST:
@@ -171,7 +173,7 @@ long reb_simulationarchive_estimate_size(struct reb_simulation* const r, double 
         long blobsize = reb_simulationarchive_blobsize(r);
         return blobsize*(long)ceil(tmax/r->simulationarchive_interval);
     }else{
-        reb_warning(r, "Simulationarchive interval not set.");
+        reb_warning(r, "Variable simulationarchive_interval not set. Cannot estimate filesize.");
         return 0;
     }
 }
@@ -188,6 +190,58 @@ struct reb_simulation* reb_simulationarchive_restart(char* filename){
     return r;
 }
 
+static void reb_simulationarchive_appendblob(struct reb_simulation* r){
+    FILE* of = fopen(r->simulationarchive_filename,"a");
+    fwrite(&(r->t),sizeof(double),1, of);
+    fwrite(&(r->simulationarchive_walltime),sizeof(double),1, of);
+    switch (r->integrator){
+        case REB_INTEGRATOR_WHFAST:
+            {
+                struct reb_particle* ps = r->particles;
+                if (r->ri_whfast.safe_mode==0){
+                    ps = r->ri_whfast.p_j;
+                }
+                for(int i=0;i<r->N;i++){
+                    fwrite(&(r->particles[i].m),sizeof(double),1,of);
+                    fwrite(&(ps[i].x),sizeof(double),1,of);
+                    fwrite(&(ps[i].y),sizeof(double),1,of);
+                    fwrite(&(ps[i].z),sizeof(double),1,of);
+                    fwrite(&(ps[i].vx),sizeof(double),1,of);
+                    fwrite(&(ps[i].vy),sizeof(double),1,of);
+                    fwrite(&(ps[i].vz),sizeof(double),1,of);
+                }
+            }
+            break;
+        case REB_INTEGRATOR_IAS15:
+            {
+                fwrite(&(r->dt),sizeof(double),1,of);
+                fwrite(&(r->dt_last_done),sizeof(double),1,of);
+                struct reb_particle* ps = r->particles;
+                const int N3 = r->N*3;
+                for(int i=0;i<r->N;i++){
+                    fwrite(&(ps[i].m),sizeof(double),1,of);
+                    fwrite(&(ps[i].x),sizeof(double),1,of);
+                    fwrite(&(ps[i].y),sizeof(double),1,of);
+                    fwrite(&(ps[i].z),sizeof(double),1,of);
+                    fwrite(&(ps[i].vx),sizeof(double),1,of);
+                    fwrite(&(ps[i].vy),sizeof(double),1,of);
+                    fwrite(&(ps[i].vz),sizeof(double),1,of);
+                }
+                reb_save_dp7(&(r->ri_ias15.b)  ,N3,of);
+                reb_save_dp7(&(r->ri_ias15.csb),N3,of);
+                reb_save_dp7(&(r->ri_ias15.e)  ,N3,of);
+                reb_save_dp7(&(r->ri_ias15.br) ,N3,of);
+                reb_save_dp7(&(r->ri_ias15.er) ,N3,of);
+                fwrite((r->ri_ias15.csx),sizeof(double)*N3,1,of);
+                fwrite((r->ri_ias15.csv),sizeof(double)*N3,1,of);
+            }
+            break;
+        default:
+            reb_error(r,"Simulation archive not implemented for this integrator.");
+            break;
+    }
+    fclose(of);
+}
 
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
     if (r->t==0){
@@ -207,64 +261,26 @@ void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
         reb_output_binary(r,r->simulationarchive_filename);
     }else{
         // Appending outputs
-        if (r->simulationarchive_next <= r->t){
-            r->simulationarchive_next += r->simulationarchive_interval;
-            
+        if (r->simulationarchive_interval){
+            if (r->simulationarchive_next <= r->t){
+                r->simulationarchive_next += r->simulationarchive_interval;
+                
+                struct timeval time_now;
+                gettimeofday(&time_now,NULL);
+                r->simulationarchive_walltime += time_now.tv_sec-r->simulationarchive_time.tv_sec+(time_now.tv_usec-r->simulationarchive_time.tv_usec)/1e6;
+                r->simulationarchive_time = time_now;
+                reb_simulationarchive_appendblob(r);
+            }
+        }
+        if (r->simulationarchive_interval_walltime){
             struct timeval time_now;
             gettimeofday(&time_now,NULL);
-            r->simulationarchive_walltime += time_now.tv_sec-r->simulationarchive_time.tv_sec+(time_now.tv_usec-r->simulationarchive_time.tv_usec)/1e6;
-            r->simulationarchive_time = time_now;
-
-            FILE* of = fopen(r->simulationarchive_filename,"a");
-            fwrite(&(r->t),sizeof(double),1, of);
-            fwrite(&(r->simulationarchive_walltime),sizeof(double),1, of);
-            switch (r->integrator){
-                case REB_INTEGRATOR_WHFAST:
-                    {
-                        struct reb_particle* ps = r->particles;
-                        if (r->ri_whfast.safe_mode==0){
-                            ps = r->ri_whfast.p_j;
-                        }
-                        for(int i=0;i<r->N;i++){
-                            fwrite(&(r->particles[i].m),sizeof(double),1,of);
-                            fwrite(&(ps[i].x),sizeof(double),1,of);
-                            fwrite(&(ps[i].y),sizeof(double),1,of);
-                            fwrite(&(ps[i].z),sizeof(double),1,of);
-                            fwrite(&(ps[i].vx),sizeof(double),1,of);
-                            fwrite(&(ps[i].vy),sizeof(double),1,of);
-                            fwrite(&(ps[i].vz),sizeof(double),1,of);
-                        }
-                    }
-                    break;
-                case REB_INTEGRATOR_IAS15:
-                    {
-                        fwrite(&(r->dt),sizeof(double),1,of);
-                        fwrite(&(r->dt_last_done),sizeof(double),1,of);
-                        struct reb_particle* ps = r->particles;
-                        const int N3 = r->N*3;
-                        for(int i=0;i<r->N;i++){
-                            fwrite(&(ps[i].m),sizeof(double),1,of);
-                            fwrite(&(ps[i].x),sizeof(double),1,of);
-                            fwrite(&(ps[i].y),sizeof(double),1,of);
-                            fwrite(&(ps[i].z),sizeof(double),1,of);
-                            fwrite(&(ps[i].vx),sizeof(double),1,of);
-                            fwrite(&(ps[i].vy),sizeof(double),1,of);
-                            fwrite(&(ps[i].vz),sizeof(double),1,of);
-                        }
-                        reb_save_dp7(&(r->ri_ias15.b)  ,N3,of);
-                        reb_save_dp7(&(r->ri_ias15.csb),N3,of);
-                        reb_save_dp7(&(r->ri_ias15.e)  ,N3,of);
-                        reb_save_dp7(&(r->ri_ias15.br) ,N3,of);
-                        reb_save_dp7(&(r->ri_ias15.er) ,N3,of);
-                        fwrite((r->ri_ias15.csx),sizeof(double)*N3,1,of);
-                        fwrite((r->ri_ias15.csv),sizeof(double)*N3,1,of);
-                    }
-                    break;
-                default:
-                    reb_error(r,"Simulation archive not implemented for this integrator.");
-                    break;
+            double delta_walltime = time_now.tv_sec-r->simulationarchive_time.tv_sec+(time_now.tv_usec-r->simulationarchive_time.tv_usec)/1e6;
+            if (delta_walltime >= r->simulationarchive_interval_walltime){
+                r->simulationarchive_walltime += delta_walltime;
+                r->simulationarchive_time = time_now;
+                reb_simulationarchive_appendblob(r);
             }
-            fclose(of);
         }
     }
 }

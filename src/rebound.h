@@ -662,12 +662,13 @@ struct reb_simulation {
     
     
     /**
-     * \name Variables related to the fast simulation restarter 
+     * \name Variables related to SimulationArchive 
      * @{
      */
     long   simulationarchive_seek_first;
     long   simulationarchive_seek_blob;
     double simulationarchive_interval;
+    double simulationarchive_interval_walltime;
     double simulationarchive_next;
     char*  simulationarchive_filename; 
     double simulationarchive_walltime;
