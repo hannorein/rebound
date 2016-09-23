@@ -137,7 +137,7 @@ class SimulationArchive(Mapping):
             l = 0
             r = self.Nblob
             while True:
-                bi = (r-l)//2
+                bi = l+(r-l)//2
                 if self.timetable[bi] == -1.:
                     clibrebound.reb_simulationarchive_load_blob.restype = c_int
                     retv = clibrebound.reb_simulationarchive_load_blob(self.simp, self.cfilename, bi)
@@ -149,6 +149,7 @@ class SimulationArchive(Mapping):
                 else:
                     l = bi
                 if r-1<=l:
+                    bi = l
                     break
             return bi, sim.t
 
