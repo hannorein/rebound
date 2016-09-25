@@ -154,15 +154,15 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
         realloc_dp7(&(r->ri_ias15.e),N3);
         realloc_dp7(&(r->ri_ias15.br),N3);
         realloc_dp7(&(r->ri_ias15.er),N3);
-        realloc_dp7(&(r->ri_ias15.csb),N3);
         r->ri_ias15.at = realloc(r->ri_ias15.at,sizeof(double)*N3);
         r->ri_ias15.x0 = realloc(r->ri_ias15.x0,sizeof(double)*N3);
         r->ri_ias15.v0 = realloc(r->ri_ias15.v0,sizeof(double)*N3);
         r->ri_ias15.a0 = realloc(r->ri_ias15.a0,sizeof(double)*N3);
-        r->ri_ias15.csa0 = realloc(r->ri_ias15.csa0,sizeof(double)*N3);
         if (r->ri_ias15.compensated_summation){
+            realloc_dp7(&(r->ri_ias15.csb),N3);
             r->ri_ias15.csx= realloc(r->ri_ias15.csx,sizeof(double)*N3);
             r->ri_ias15.csv= realloc(r->ri_ias15.csv,sizeof(double)*N3);
+            r->ri_ias15.csa0 = realloc(r->ri_ias15.csa0,sizeof(double)*N3);
             double* restrict const csx = r->ri_ias15.csx; 
             double* restrict const csv = r->ri_ias15.csv; 
             for (int i=0;i<N3;i++){
@@ -212,27 +212,29 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         a0[3*k+1] = particles[k].ay; 
         a0[3*k+2] = particles[k].az;
     }
-    if (r->gravity==REB_GRAVITY_COMPENSATED){
-        for(int k=0;k<N;k++) {
-            csa0[3*k]   = gravity_cs[k].x;
-            csa0[3*k+1] = gravity_cs[k].y;  
-            csa0[3*k+2] = gravity_cs[k].z;
+    if (r->ri_ias15.compensated_summation){
+        if (r->gravity==REB_GRAVITY_COMPENSATED){
+            for(int k=0;k<N;k++) {
+                csa0[3*k]   = gravity_cs[k].x;
+                csa0[3*k+1] = gravity_cs[k].y;  
+                csa0[3*k+2] = gravity_cs[k].z;
+            }
+        }else{
+            gravity_cs = (struct reb_vec3d*)csa0; // Always 0.
+            for(int k=0;k<N3;k++) {
+                csa0[k]   = 0;
+            }
         }
-    }else{
-        gravity_cs = (struct reb_vec3d*)csa0; // Always 0.
-        for(int k=0;k<N3;k++) {
-            csa0[k]   = 0;
+        for (int k=0;k<N3;k++){
+            // Memset might be faster!
+            csb.p0[k] = 0.;
+            csb.p1[k] = 0.;
+            csb.p2[k] = 0.;
+            csb.p3[k] = 0.;
+            csb.p4[k] = 0.;
+            csb.p5[k] = 0.;
+            csb.p6[k] = 0.;
         }
-    }
-    for (int k=0;k<N3;k++){
-        // Memset might be faster!
-        csb.p0[k] = 0.;
-        csb.p1[k] = 0.;
-        csb.p2[k] = 0.;
-        csb.p3[k] = 0.;
-        csb.p4[k] = 0.;
-        csb.p5[k] = 0.;
-        csb.p6[k] = 0.;
     }
 
     for(int k=0;k<N3;k++) {
@@ -359,131 +361,240 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 at[3*k+1] = particles[k].ay;  
                 at[3*k+2] = particles[k].az;
             }
-            switch (n) {                            // Improve b and g values
-                case 1: 
-                    for(int k=0;k<N3;++k) {
-                        double tmp = g.p0[k];
-                        double gk = at[k];
-                        double gk_cs = ((double*)(gravity_cs))[k];
-                        add_cs(&gk, &gk_cs, -a0[k]);
-                        add_cs(&gk, &gk_cs, csa0[k]);
-                        g.p0[k]  = gk/rr[0];
-                        add_cs(&(b.p0[k]), &(csb.p0[k]), g.p0[k]-tmp);
-                    } break;
-                case 2: 
-                    for(int k=0;k<N3;++k) {
-                        double tmp = g.p1[k];
-                        double gk = at[k];
-                        double gk_cs = ((double*)(gravity_cs))[k];
-                        add_cs(&gk, &gk_cs, -a0[k]);
-                        add_cs(&gk, &gk_cs, csa0[k]);
-                        g.p1[k] = (gk/rr[1] - g.p0[k])/rr[2];
-                        tmp = g.p1[k] - tmp;
-                        add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[0]);
-                        add_cs(&(b.p1[k]), &(csb.p1[k]), tmp);
-                    } break;
-                case 3: 
-                    for(int k=0;k<N3;++k) {
-                        double tmp = g.p2[k];
-                        double gk = at[k];
-                        double gk_cs = ((double*)(gravity_cs))[k];
-                        add_cs(&gk, &gk_cs, -a0[k]);
-                        add_cs(&gk, &gk_cs, csa0[k]);
-                        g.p2[k] = ((gk/rr[3] - g.p0[k])/rr[4] - g.p1[k])/rr[5];
-                        tmp = g.p2[k] - tmp;
-                        add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[1]);
-                        add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[2]);
-                        add_cs(&(b.p2[k]), &(csb.p2[k]), tmp);
-                    } break;
-                case 4:
-                    for(int k=0;k<N3;++k) {
-                        double tmp = g.p3[k];
-                        double gk = at[k];
-                        double gk_cs = ((double*)(gravity_cs))[k];
-                        add_cs(&gk, &gk_cs, -a0[k]);
-                        add_cs(&gk, &gk_cs, csa0[k]);
-                        g.p3[k] = (((gk/rr[6] - g.p0[k])/rr[7] - g.p1[k])/rr[8] - g.p2[k])/rr[9];
-                        tmp = g.p3[k] - tmp;
-                        add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[3]);
-                        add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[4]);
-                        add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[5]);
-                        add_cs(&(b.p3[k]), &(csb.p3[k]), tmp);
-                    } break;
-                case 5:
-                    for(int k=0;k<N3;++k) {
-                        double tmp = g.p4[k];
-                        double gk = at[k];
-                        double gk_cs = ((double*)(gravity_cs))[k];
-                        add_cs(&gk, &gk_cs, -a0[k]);
-                        add_cs(&gk, &gk_cs, csa0[k]);
-                        g.p4[k] = ((((gk/rr[10] - g.p0[k])/rr[11] - g.p1[k])/rr[12] - g.p2[k])/rr[13] - g.p3[k])/rr[14];
-                        tmp = g.p4[k] - tmp;
-                        add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[6]);
-                        add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[7]);
-                        add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[8]);
-                        add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[9]);
-                        add_cs(&(b.p4[k]), &(csb.p4[k]), tmp);
-                    } break;
-                case 6:
-                    for(int k=0;k<N3;++k) {
-                        double tmp = g.p5[k];
-                        double gk = at[k];
-                        double gk_cs = ((double*)(gravity_cs))[k];
-                        add_cs(&gk, &gk_cs, -a0[k]);
-                        add_cs(&gk, &gk_cs, csa0[k]);
-                        g.p5[k] = (((((gk/rr[15] - g.p0[k])/rr[16] - g.p1[k])/rr[17] - g.p2[k])/rr[18] - g.p3[k])/rr[19] - g.p4[k])/rr[20];
-                        tmp = g.p5[k] - tmp;
-                        add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[10]);
-                        add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[11]);
-                        add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[12]);
-                        add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[13]);
-                        add_cs(&(b.p4[k]), &(csb.p4[k]), tmp * c[14]);
-                        add_cs(&(b.p5[k]), &(csb.p5[k]), tmp);
-                    } break;
-                case 7:
-                {
-                    double maxak = 0.0;
-                    double maxb6ktmp = 0.0;
-                    for(int k=0;k<N3;++k) {
-                        double tmp = g.p6[k];
-                        double gk = at[k];
-                        double gk_cs = ((double*)(gravity_cs))[k];
-                        add_cs(&gk, &gk_cs, -a0[k]);
-                        add_cs(&gk, &gk_cs, csa0[k]);
-                        g.p6[k] = ((((((gk/rr[21] - g.p0[k])/rr[22] - g.p1[k])/rr[23] - g.p2[k])/rr[24] - g.p3[k])/rr[25] - g.p4[k])/rr[26] - g.p5[k])/rr[27];
-                        tmp = g.p6[k] - tmp;    
-                        add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[15]);
-                        add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[16]);
-                        add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[17]);
-                        add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[18]);
-                        add_cs(&(b.p4[k]), &(csb.p4[k]), tmp * c[19]);
-                        add_cs(&(b.p5[k]), &(csb.p5[k]), tmp * c[20]);
-                        add_cs(&(b.p6[k]), &(csb.p6[k]), tmp);
-                        
-                        // Monitor change in b.p6[k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
+            if (r->ri_ias15.compensated_summation){
+                switch (n) {                            // Improve b and g values
+                    case 1: 
+                        for(int k=0;k<N3;++k) {
+                            double tmp = g.p0[k];
+                            double gk = at[k];
+                            double gk_cs = ((double*)(gravity_cs))[k];
+                            add_cs(&gk, &gk_cs, -a0[k]);
+                            add_cs(&gk, &gk_cs, csa0[k]);
+                            g.p0[k]  = gk/rr[0];
+                            add_cs(&(b.p0[k]), &(csb.p0[k]), g.p0[k]-tmp);
+                        } break;
+                    case 2: 
+                        for(int k=0;k<N3;++k) {
+                            double tmp = g.p1[k];
+                            double gk = at[k];
+                            double gk_cs = ((double*)(gravity_cs))[k];
+                            add_cs(&gk, &gk_cs, -a0[k]);
+                            add_cs(&gk, &gk_cs, csa0[k]);
+                            g.p1[k] = (gk/rr[1] - g.p0[k])/rr[2];
+                            tmp = g.p1[k] - tmp;
+                            add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[0]);
+                            add_cs(&(b.p1[k]), &(csb.p1[k]), tmp);
+                        } break;
+                    case 3: 
+                        for(int k=0;k<N3;++k) {
+                            double tmp = g.p2[k];
+                            double gk = at[k];
+                            double gk_cs = ((double*)(gravity_cs))[k];
+                            add_cs(&gk, &gk_cs, -a0[k]);
+                            add_cs(&gk, &gk_cs, csa0[k]);
+                            g.p2[k] = ((gk/rr[3] - g.p0[k])/rr[4] - g.p1[k])/rr[5];
+                            tmp = g.p2[k] - tmp;
+                            add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[1]);
+                            add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[2]);
+                            add_cs(&(b.p2[k]), &(csb.p2[k]), tmp);
+                        } break;
+                    case 4:
+                        for(int k=0;k<N3;++k) {
+                            double tmp = g.p3[k];
+                            double gk = at[k];
+                            double gk_cs = ((double*)(gravity_cs))[k];
+                            add_cs(&gk, &gk_cs, -a0[k]);
+                            add_cs(&gk, &gk_cs, csa0[k]);
+                            g.p3[k] = (((gk/rr[6] - g.p0[k])/rr[7] - g.p1[k])/rr[8] - g.p2[k])/rr[9];
+                            tmp = g.p3[k] - tmp;
+                            add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[3]);
+                            add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[4]);
+                            add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[5]);
+                            add_cs(&(b.p3[k]), &(csb.p3[k]), tmp);
+                        } break;
+                    case 5:
+                        for(int k=0;k<N3;++k) {
+                            double tmp = g.p4[k];
+                            double gk = at[k];
+                            double gk_cs = ((double*)(gravity_cs))[k];
+                            add_cs(&gk, &gk_cs, -a0[k]);
+                            add_cs(&gk, &gk_cs, csa0[k]);
+                            g.p4[k] = ((((gk/rr[10] - g.p0[k])/rr[11] - g.p1[k])/rr[12] - g.p2[k])/rr[13] - g.p3[k])/rr[14];
+                            tmp = g.p4[k] - tmp;
+                            add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[6]);
+                            add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[7]);
+                            add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[8]);
+                            add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[9]);
+                            add_cs(&(b.p4[k]), &(csb.p4[k]), tmp);
+                        } break;
+                    case 6:
+                        for(int k=0;k<N3;++k) {
+                            double tmp = g.p5[k];
+                            double gk = at[k];
+                            double gk_cs = ((double*)(gravity_cs))[k];
+                            add_cs(&gk, &gk_cs, -a0[k]);
+                            add_cs(&gk, &gk_cs, csa0[k]);
+                            g.p5[k] = (((((gk/rr[15] - g.p0[k])/rr[16] - g.p1[k])/rr[17] - g.p2[k])/rr[18] - g.p3[k])/rr[19] - g.p4[k])/rr[20];
+                            tmp = g.p5[k] - tmp;
+                            add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[10]);
+                            add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[11]);
+                            add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[12]);
+                            add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[13]);
+                            add_cs(&(b.p4[k]), &(csb.p4[k]), tmp * c[14]);
+                            add_cs(&(b.p5[k]), &(csb.p5[k]), tmp);
+                        } break;
+                    case 7:
+                    {
+                        double maxak = 0.0;
+                        double maxb6ktmp = 0.0;
+                        for(int k=0;k<N3;++k) {
+                            double tmp = g.p6[k];
+                            double gk = at[k];
+                            double gk_cs = ((double*)(gravity_cs))[k];
+                            add_cs(&gk, &gk_cs, -a0[k]);
+                            add_cs(&gk, &gk_cs, csa0[k]);
+                            g.p6[k] = ((((((gk/rr[21] - g.p0[k])/rr[22] - g.p1[k])/rr[23] - g.p2[k])/rr[24] - g.p3[k])/rr[25] - g.p4[k])/rr[26] - g.p5[k])/rr[27];
+                            tmp = g.p6[k] - tmp;    
+                            add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[15]);
+                            add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[16]);
+                            add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[17]);
+                            add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[18]);
+                            add_cs(&(b.p4[k]), &(csb.p4[k]), tmp * c[19]);
+                            add_cs(&(b.p5[k]), &(csb.p5[k]), tmp * c[20]);
+                            add_cs(&(b.p6[k]), &(csb.p6[k]), tmp);
+                            
+                            // Monitor change in b.p6[k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
+                            if (r->ri_ias15.epsilon_global){
+                                const double ak  = fabs(at[k]);
+                                if (isnormal(ak) && ak>maxak){
+                                    maxak = ak;
+                                }
+                                const double b6ktmp = fabs(tmp);  // change of b6ktmp coefficient
+                                if (isnormal(b6ktmp) && b6ktmp>maxb6ktmp){
+                                    maxb6ktmp = b6ktmp;
+                                }
+                            }else{
+                                const double ak  = at[k];
+                                const double b6ktmp = tmp; 
+                                const double errork = fabs(b6ktmp/ak);
+                                if (isnormal(errork) && errork>predictor_corrector_error){
+                                    predictor_corrector_error = errork;
+                                }
+                            }
+                        } 
                         if (r->ri_ias15.epsilon_global){
-                            const double ak  = fabs(at[k]);
-                            if (isnormal(ak) && ak>maxak){
-                                maxak = ak;
-                            }
-                            const double b6ktmp = fabs(tmp);  // change of b6ktmp coefficient
-                            if (isnormal(b6ktmp) && b6ktmp>maxb6ktmp){
-                                maxb6ktmp = b6ktmp;
-                            }
-                        }else{
-                            const double ak  = at[k];
-                            const double b6ktmp = tmp; 
-                            const double errork = fabs(b6ktmp/ak);
-                            if (isnormal(errork) && errork>predictor_corrector_error){
-                                predictor_corrector_error = errork;
-                            }
+                            predictor_corrector_error = maxb6ktmp/maxak;
                         }
-                    } 
-                    if (r->ri_ias15.epsilon_global){
-                        predictor_corrector_error = maxb6ktmp/maxak;
+                        
+                        break;
                     }
-                    
-                    break;
+                }
+            }else{ // No compensated summation
+                switch (n) {                            // Improve b and g values
+                    case 1: 
+                        for(int k=0;k<N3;++k) {
+                            double tmp = g.p0[k];
+                            double gk = at[k] - a0[k];
+                            g.p0[k]  = gk/rr[0];
+                            b.p0[k] += g.p0[k]-tmp;
+                        } break;
+                    case 2: 
+                        for(int k=0;k<N3;++k) {
+                            double tmp = g.p1[k];
+                            double gk = at[k] - a0[k];
+                            g.p1[k] = (gk/rr[1] - g.p0[k])/rr[2];
+                            tmp = g.p1[k] - tmp;
+                            b.p0[k] += tmp * c[0];
+                            b.p1[k] += tmp;
+                        } break;
+                    case 3: 
+                        for(int k=0;k<N3;++k) {
+                            double tmp = g.p2[k];
+                            double gk = at[k] - a0[k];
+                            g.p2[k] = ((gk/rr[3] - g.p0[k])/rr[4] - g.p1[k])/rr[5];
+                            tmp = g.p2[k] - tmp;
+                            b.p0[k] += tmp * c[1];
+                            b.p1[k] += tmp * c[2];
+                            b.p2[k] += tmp;
+                        } break;
+                    case 4:
+                        for(int k=0;k<N3;++k) {
+                            double tmp = g.p3[k];
+                            double gk = at[k] - a0[k];
+                            g.p3[k] = (((gk/rr[6] - g.p0[k])/rr[7] - g.p1[k])/rr[8] - g.p2[k])/rr[9];
+                            tmp = g.p3[k] - tmp;
+                            b.p0[k] += tmp * c[3];
+                            b.p1[k] += tmp * c[4];
+                            b.p2[k] += tmp * c[5];
+                            b.p3[k] += tmp;
+                        } break;
+                    case 5:
+                        for(int k=0;k<N3;++k) {
+                            double tmp = g.p4[k];
+                            double gk = at[k] - a0[k];
+                            g.p4[k] = ((((gk/rr[10] - g.p0[k])/rr[11] - g.p1[k])/rr[12] - g.p2[k])/rr[13] - g.p3[k])/rr[14];
+                            tmp = g.p4[k] - tmp;
+                            b.p0[k] += tmp * c[6];
+                            b.p1[k] += tmp * c[7];
+                            b.p2[k] += tmp * c[8];
+                            b.p3[k] += tmp * c[9];
+                            b.p4[k] += tmp;
+                        } break;
+                    case 6:
+                        for(int k=0;k<N3;++k) {
+                            double tmp = g.p5[k];
+                            double gk = at[k] - a0[k];
+                            g.p5[k] = (((((gk/rr[15] - g.p0[k])/rr[16] - g.p1[k])/rr[17] - g.p2[k])/rr[18] - g.p3[k])/rr[19] - g.p4[k])/rr[20];
+                            tmp = g.p5[k] - tmp;
+                            b.p0[k] += tmp * c[10];
+                            b.p1[k] += tmp * c[11];
+                            b.p2[k] += tmp * c[12];
+                            b.p3[k] += tmp * c[13];
+                            b.p4[k] += tmp * c[14];
+                            b.p5[k] += tmp;
+                        } break;
+                    case 7:
+                    {
+                        double maxak = 0.0;
+                        double maxb6ktmp = 0.0;
+                        for(int k=0;k<N3;++k) {
+                            double tmp = g.p6[k];
+                            double gk = at[k] - a0[k];
+                            g.p6[k] = ((((((gk/rr[21] - g.p0[k])/rr[22] - g.p1[k])/rr[23] - g.p2[k])/rr[24] - g.p3[k])/rr[25] - g.p4[k])/rr[26] - g.p5[k])/rr[27];
+                            tmp = g.p6[k] - tmp;    
+                            b.p0[k] += tmp * c[15];
+                            b.p1[k] += tmp * c[16];
+                            b.p2[k] += tmp * c[17];
+                            b.p3[k] += tmp * c[18];
+                            b.p4[k] += tmp * c[19];
+                            b.p5[k] += tmp * c[20];
+                            b.p6[k] += tmp;
+                            
+                            // Monitor change in b.p6[k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
+                            if (r->ri_ias15.epsilon_global){
+                                const double ak  = fabs(at[k]);
+                                if (isnormal(ak) && ak>maxak){
+                                    maxak = ak;
+                                }
+                                const double b6ktmp = fabs(tmp);  // change of b6ktmp coefficient
+                                if (isnormal(b6ktmp) && b6ktmp>maxb6ktmp){
+                                    maxb6ktmp = b6ktmp;
+                                }
+                            }else{
+                                const double ak  = at[k];
+                                const double b6ktmp = tmp; 
+                                const double errork = fabs(b6ktmp/ak);
+                                if (isnormal(errork) && errork>predictor_corrector_error){
+                                    predictor_corrector_error = errork;
+                                }
+                            }
+                        } 
+                        if (r->ri_ias15.epsilon_global){
+                            predictor_corrector_error = maxb6ktmp/maxak;
+                        }
+                        
+                        break;
+                    }
                 }
             }
         }
@@ -727,9 +838,9 @@ void reb_integrator_ias15_clear(struct reb_simulation* r){
         clear_dp7(&(r->ri_ias15.b),N3);
         clear_dp7(&(r->ri_ias15.er),N3);
         clear_dp7(&(r->ri_ias15.br),N3);
-        clear_dp7(&(r->ri_ias15.csb),N3);
         
         if (r->ri_ias15.compensated_summation){
+            clear_dp7(&(r->ri_ias15.csb),N3);
             double* restrict const csx = r->ri_ias15.csx; 
             double* restrict const csv = r->ri_ias15.csv; 
             for (int i=0;i<N3;i++){
@@ -748,7 +859,6 @@ void reb_integrator_ias15_reset(struct reb_simulation* r){
     free_dp7(&(r->ri_ias15.b));
     free_dp7(&(r->ri_ias15.er));
     free_dp7(&(r->ri_ias15.br));
-    free_dp7(&(r->ri_ias15.csb));
     free(r->ri_ias15.at);
     r->ri_ias15.at =  NULL;
     free(r->ri_ias15.x0);
@@ -757,13 +867,14 @@ void reb_integrator_ias15_reset(struct reb_simulation* r){
     r->ri_ias15.v0 =  NULL;
     free(r->ri_ias15.a0);
     r->ri_ias15.a0 =  NULL;
-    free(r->ri_ias15.csa0);
-    r->ri_ias15.csa0 =  NULL;
     if (r->ri_ias15.compensated_summation){
+        free_dp7(&(r->ri_ias15.csb));
         free(r->ri_ias15.csx);
         r->ri_ias15.csx=  NULL;
         free(r->ri_ias15.csv);
         r->ri_ias15.csv=  NULL;
+        free(r->ri_ias15.csa0);
+        r->ri_ias15.csa0 =  NULL;
     }
 }
 
