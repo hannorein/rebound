@@ -237,6 +237,7 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
             CASE(IAS15_EPSILON,      &r->ri_ias15.epsilon);
             CASE(IAS15_MINDT,        &r->ri_ias15.min_dt);
             CASE(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global);
+            CASE(IAS15_COMPENSATEDSUM,&r->ri_ias15.compensated_summation);
             CASE(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded);
             CASE(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN);
             CASE(HERMES_HSF,         &r->ri_hermes.hill_switch_factor);
