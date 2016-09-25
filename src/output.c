@@ -342,10 +342,10 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
         WRITE_FIELD(IAS15_X0,   r->ri_ias15.x0,     sizeof(double)*N3);
         WRITE_FIELD(IAS15_V0,   r->ri_ias15.v0,     sizeof(double)*N3);
         WRITE_FIELD(IAS15_A0,   r->ri_ias15.a0,     sizeof(double)*N3);
+        WRITE_FIELD(IAS15_CSA0, r->ri_ias15.csa0,   sizeof(double)*N3);
         if (r->ri_ias15.compensated_summation){
             WRITE_FIELD(IAS15_CSX,  r->ri_ias15.csx,    sizeof(double)*N3);
             WRITE_FIELD(IAS15_CSV,  r->ri_ias15.csv,    sizeof(double)*N3);
-            WRITE_FIELD(IAS15_CSA0, r->ri_ias15.csa0,   sizeof(double)*N3);
         }
         {
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_G, .size = sizeof(double)*N3*7};
@@ -357,7 +357,7 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
             fwrite(&field,sizeof(struct reb_binary_field),1,of);
             reb_save_dp7(&(r->ri_ias15.b),N3,of);
         }
-        if (r->ri_ias15.compensated_summation){
+        {
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_CSB, .size = sizeof(double)*N3*7};
             fwrite(&field,sizeof(struct reb_binary_field),1,of);
             reb_save_dp7(&(r->ri_ias15.csb),N3,of);
