@@ -171,15 +171,6 @@ struct reb_simulation_integrator_ias15 {
      **/
     unsigned int epsilon_global;
 
-    
-    /** 
-     * @brief Flag that determines if IAS15 uses compensated summation internally.
-     * @details If set to 1 (default is 0), then IAS15 will use compensated 
-     * summation for various operations. This might slow down the integration and
-     * could be potentially problematic if particles swap positions, get removed, etc.
-     * However if set to 1, the integration should be more accurate.
-     **/
-    unsigned int compensated_summation;
 
     
     /**
@@ -362,7 +353,6 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_IAS15_BR = 100,
     REB_BINARY_FIELD_TYPE_IAS15_ER = 101,
     REB_BINARY_FIELD_TYPE_SAINTERVALWALLTIME = 102,
-    REB_BINARY_FIELD_TYPE_IAS15_COMPENSATEDSUM = 103,
     REB_BINARY_FIELD_TYPE_END = 9999,
 };
 

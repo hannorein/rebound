@@ -308,7 +308,6 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(IAS15_EPSILON,      &r->ri_ias15.epsilon,               sizeof(double));
     WRITE_FIELD(IAS15_MINDT,        &r->ri_ias15.min_dt,                sizeof(double));
     WRITE_FIELD(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global,        sizeof(unsigned int));
-    WRITE_FIELD(IAS15_COMPENSATEDSUM,&r->ri_ias15.compensated_summation,sizeof(unsigned int));
     WRITE_FIELD(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded,sizeof(unsigned long));
     WRITE_FIELD(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN,            sizeof(int));
     WRITE_FIELD(HERMES_HSF,         &r->ri_hermes.hill_switch_factor,   sizeof(double));
