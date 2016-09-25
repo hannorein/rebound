@@ -132,12 +132,14 @@ int reb_simulationarchive_load_blob(struct reb_simulation* r, char* filename, lo
                 reb_integrator_ias15_alloc(r);
                 const int N3 = r->N*3;
                 reb_read_dp7(&(r->ri_ias15.b)  ,N3,fd);
-                reb_read_dp7(&(r->ri_ias15.csb),N3,fd);
                 reb_read_dp7(&(r->ri_ias15.e)  ,N3,fd);
                 reb_read_dp7(&(r->ri_ias15.br) ,N3,fd);
                 reb_read_dp7(&(r->ri_ias15.er) ,N3,fd);
-                fread((r->ri_ias15.csx),sizeof(double)*N3,1,fd);
-                fread((r->ri_ias15.csv),sizeof(double)*N3,1,fd);
+                if (r->ri_ias15.compensated_summation){
+                    reb_read_dp7(&(r->ri_ias15.csb),N3,fd);
+                    fread((r->ri_ias15.csx),sizeof(double)*N3,1,fd);
+                    fread((r->ri_ias15.csv),sizeof(double)*N3,1,fd);
+                }
             }
             break;
         default:
@@ -157,9 +159,12 @@ static int reb_simulationarchive_blobsize(struct reb_simulation* const r){
             break;
         case REB_INTEGRATOR_IAS15:
             seek_blob =  sizeof(double)*4  // time, walltime, dt, dt_last_done
-                             +sizeof(double)*3*r->N*5*7  // dp7 arrays
-                             +sizeof(double)*7*r->N      // particle m, pos, vel
+                             +sizeof(double)*3*r->N*4*7  // dp7 arrays
+                             +sizeof(double)*7*r->N;     // particle m, pos, vel
+            if (r->ri_ias15.compensated_summation){
+                seek_blob += sizeof(double)*3*r->N*7     // dp7 array
                              +sizeof(double)*3*r->N*2;   // csx, csv
+            }
             break;
         default:
             reb_error(r,"Simulation archive not implemented for this integrator.");
@@ -228,12 +233,14 @@ static void reb_simulationarchive_appendblob(struct reb_simulation* r){
                     fwrite(&(ps[i].vz),sizeof(double),1,of);
                 }
                 reb_save_dp7(&(r->ri_ias15.b)  ,N3,of);
-                reb_save_dp7(&(r->ri_ias15.csb),N3,of);
                 reb_save_dp7(&(r->ri_ias15.e)  ,N3,of);
                 reb_save_dp7(&(r->ri_ias15.br) ,N3,of);
                 reb_save_dp7(&(r->ri_ias15.er) ,N3,of);
-                fwrite((r->ri_ias15.csx),sizeof(double)*N3,1,of);
-                fwrite((r->ri_ias15.csv),sizeof(double)*N3,1,of);
+                if (r->ri_ias15.compensated_summation){
+                    reb_save_dp7(&(r->ri_ias15.csb),N3,of);
+                    fwrite((r->ri_ias15.csx),sizeof(double)*N3,1,of);
+                    fwrite((r->ri_ias15.csv),sizeof(double)*N3,1,of);
+                }
             }
             break;
         default:
