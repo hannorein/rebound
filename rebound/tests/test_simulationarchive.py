@@ -3,6 +3,41 @@ import unittest
 import warnings
 
 class TestSimulationArchive(unittest.TestCase):
+    def test_ptm_warning(self):
+        def test():
+            pass
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.post_timestep_modifications = test
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim.initSimulationArchive("test.bin", 10.)
+            self.assertEqual(1, len(w))
+
+    def test_safe_mode_warning(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "whfast"
+        sim.dt = 0.1313
+        sim.ri_whfast.safe_mode = 1
+        sim.initSimulationArchive("test.bin", 10.)
+        sim.integrate(40.,exact_finish_time=0)
+        x1 = sim.particles[1].x
+
+        sa = rebound.SimulationArchive("test.bin")
+        sim = sa.getSimulation(0.)
+        
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim.integrate(40.,exact_finish_time=0)
+            x0 = sim.particles[1].x
+            self.assertEqual(0, len(w)) # did not raise recalculating Jacobi warning
+
+        self.assertEqual(x0,x1)
+
     def test_sa_restart_safe_mode(self):
         sim = rebound.Simulation()
         sim.add(m=1)

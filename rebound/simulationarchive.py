@@ -65,6 +65,8 @@ class SimulationArchive(Mapping):
         retv = clibrebound.reb_simulationarchive_load_blob(self.simp, self.cfilename, c_long(blob))
         if retv:
             raise ValueError("Error while loading blob in binary file. Errorcode: %d."%retv)
+        if sim.ri_whfast.safe_mode == 1:
+            keep_unsynchronized = 0
         sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
         sim.integrator_synchronize()
         if blob == 0:
@@ -175,7 +177,7 @@ class SimulationArchive(Mapping):
             return self.loadFromBlobAndSynchronize(bi, keep_unsynchronized=keep_unsynchronized)
         else:
             sim = self.simp.contents
-            if sim.t<t and bt-sim.dt<sim.t and sim.ri_whfast.keep_unsynchronized==1:
+            if sim.t<t and bt-sim.dt<sim.t and (sim.ri_whfast.keep_unsynchronized==1 or self.ri_whfast_safe_mode == 1):
                 # Reuse current simulation
                 pass
             else:
@@ -187,6 +189,9 @@ class SimulationArchive(Mapping):
 
             if mode=='exact':
                 keep_unsynchronized==0
+            if sim.ri_whfast.safe_mode == 1:
+                keep_unsynchronized = 0
+
             sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
             if bi == 0:
                 if self.setup:

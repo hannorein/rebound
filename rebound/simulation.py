@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_uint32, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer
+from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_uint32, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
 from . import clibrebound, Escape, NoParticles, Encounter, SimulationError, ParticleNotFound
 from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G
@@ -374,7 +374,7 @@ class Simulation(Structure):
 # Simulation Archive tools
     def estimateSimulationArchiveSize(self, tmax):
         """
-        This function estimates the SimulationArchive file size before 
+        This function estimates the SimulationArchive file size (in bytes) before 
         a simulation is run. This is useful to check if the interval
         results in a resonable filesize.
 
@@ -413,7 +413,8 @@ class Simulation(Structure):
         interval_walltime : float
             Interval between outputs in wall time (seconds). Useful for adaptive timesteps. 
         """
-        self.ri_whfast.safe_mode=0
+        if cast(self._post_timestep_modifications, c_void_p).value is not None:
+            warnings.warn("sim.post_timestep_modifications is set, but this is not supported with SimulationArchives")
         self.simulationarchive_filename = c_char_p(filename.encode("ascii")) # Not sure if the memory is retained here..
         if interval is None and interval_walltime is None:
             raise AttributeError("Need to specify either interval or interval_walltime.")
