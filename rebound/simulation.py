@@ -413,6 +413,7 @@ class Simulation(Structure):
         interval_walltime : float
             Interval between outputs in wall time (seconds). Useful for adaptive timesteps. 
         """
+        self.ri_whfast.safe_mode=0
         self.simulationarchive_filename = c_char_p(filename.encode("ascii")) # Not sure if the memory is retained here..
         if interval is None and interval_walltime is None:
             raise AttributeError("Need to specify either interval or interval_walltime.")
