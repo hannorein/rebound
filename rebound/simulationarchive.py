@@ -70,6 +70,10 @@ class SimulationArchive(Mapping):
         if blob == 0:
             if self.setup:
                 self.setup(sim, *self.setup_args)
+            if self.rebxfilename:
+                import reboundx
+                rebx = reboundx.Extras.from_file(sim, self.rebxfilename)
+
         return sim
 
     def __setitem__(self, key, value):
@@ -85,10 +89,11 @@ class SimulationArchive(Mapping):
     def __len__(self):
         return self.Nblob+1  # number of binary blobs plus binary of t=0
 
-    def __init__(self,filename,setup=None, setup_args=()):
+    def __init__(self,filename,setup=None, setup_args=(), rebxfilename=None):
         self.cfilename = c_char_p(filename.encode("ascii"))
         self.setup = setup
         self.setup_args = setup_args
+        self.rebxfilename = rebxfilename
 
         # Recreate simulation at t=0
         w = c_int(0)
@@ -121,8 +126,7 @@ class SimulationArchive(Mapping):
             self.timetable[-1] = sim.t
             self.tmax = sim.t
         else:
-            self.tmax = self.tmin + self.interval*(i+1)
-        
+            self.tmax = self.tmin + self.interval*(self.Nblob)
 
     def getBlobJustBefore(self, t):
         if t>self.tmax+self.dt or t<self.tmin:
@@ -187,6 +191,10 @@ class SimulationArchive(Mapping):
             if bi == 0:
                 if self.setup:
                     self.setup(sim, *self.setup_args)
+                if self.rebxfilename:
+                    import reboundx
+                    rebx = reboundx.Extras.from_file(sim, self.rebxfilename)
+
             exact_finish_time = 1 if mode=='exact' else 0
             sim.integrate(t,exact_finish_time=exact_finish_time)
                 
