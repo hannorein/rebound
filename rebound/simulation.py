@@ -413,8 +413,6 @@ class Simulation(Structure):
         interval_walltime : float
             Interval between outputs in wall time (seconds). Useful for adaptive timesteps. 
         """
-        if cast(self._post_timestep_modifications, c_void_p).value is not None:
-            warnings.warn("sim.post_timestep_modifications is set, but this is not supported with SimulationArchives")
         self.simulationarchive_filename = c_char_p(filename.encode("ascii")) # Not sure if the memory is retained here..
         if interval is None and interval_walltime is None:
             raise AttributeError("Need to specify either interval or interval_walltime.")

@@ -107,6 +107,11 @@ class SimulationArchive(Mapping):
         # Note: Other warnings not shown!
         self.simp = simp
         sim = self.simp.contents
+        if self.setup:
+            self.setup(sim, *self.setup_args)
+        if self.rebxfilename:
+            import reboundx
+            rebx = reboundx.Extras.from_file(sim, self.rebxfilename)
 
         self.filesize = os.path.getsize(filename)
         self.dt = sim.dt

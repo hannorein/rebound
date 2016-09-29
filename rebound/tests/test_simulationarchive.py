@@ -3,18 +3,6 @@ import unittest
 import warnings
 
 class TestSimulationArchive(unittest.TestCase):
-    def test_ptm_warning(self):
-        def test():
-            pass
-        sim = rebound.Simulation()
-        sim.add(m=1)
-        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
-        sim.post_timestep_modifications = test
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            sim.initSimulationArchive("test.bin", 10.)
-            self.assertEqual(1, len(w))
-
     def test_safe_mode_warning(self):
         sim = rebound.Simulation()
         sim.add(m=1)
