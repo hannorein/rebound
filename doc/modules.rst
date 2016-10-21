@@ -59,6 +59,6 @@ REB_INTEGRATOR_EULER        Euler scheme, first order
 REB_INTEGRATOR_LEAPFROG     Leap frog, second order, symplectic
 REB_INTEGRATOR_SEI          Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
 REB_INTEGRATOR_HERMES       A hybrid symplectic integrator that uses WHFast for long term integrations but switches over to IAS15 for close encounters.
-=======================  ============================================ 
+==========================  ============================================ 
 
 
