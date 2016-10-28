@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 2.20.6
+--------------
+* Minor bug fixes in HERMES integrator and some examples.
+
 Version 2.20.5
 --------------
 * NASA Horizons changed a telnet command. This update implements those changes and restores access to NASA Horizons from within REBOUND.

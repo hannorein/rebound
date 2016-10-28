@@ -65,7 +65,7 @@ static const char* logo[];              /**< Logo of rebound. */
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "2.20.5";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "2.20.6";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 
 void reb_step(struct reb_simulation* const r){
     // A 'DKD'-like integrator will do the first 'D' part.
