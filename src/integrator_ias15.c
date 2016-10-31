@@ -87,6 +87,15 @@ static const double d[21] = {0.0562625605369221464656522, 0.00316547571817082924
 // Weights for integration of a first order differential equation (Note: interval length = 2) 
 static const double w[8] = {0.03125, 0.185358154802979278540728972807180754479812609, 0.304130620646785128975743291458180383736715043, 0.376517545389118556572129261157225608762708603, 0.391572167452493593082499533303669362149363727, 0.347014795634501068709955597003528601733139176, 0.249647901329864963257869294715235590174262844, 0.114508814744257199342353731044292225247093225};
 
+// Machine independent implementation of pow(*,1./7.)
+static double sqrt7(double a){
+    double x = 1.;
+    for (int k=0; k<20;k++){  // A smaller number should be ok too.
+        double x6 = x*x*x*x*x*x;
+        x += (a/x6-x)/7.;
+    }
+    return x;
+}
 
 static void free_dp7(struct reb_dp7* dp7){
     free(dp7->p0);
@@ -512,7 +521,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         double dt_new;
         if  (isnormal(integrator_error)){   
             // if error estimate is available increase by more educated guess
-            dt_new = pow(r->ri_ias15.epsilon/integrator_error,1./7.)*dt_done;
+            dt_new = sqrt7(r->ri_ias15.epsilon/integrator_error)*dt_done;
         }else{                  // In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
             dt_new = dt_done/safety_factor; // by default, increase timestep a little
         }
