@@ -59,6 +59,7 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
         mini->dt = r->dt;
         mini->additional_forces = reb_integrator_hermes_additional_forces_mini;
         mini->G = r->G;
+        mini->softening = r->softening;
     }
     mini->ri_hermes.global = r;    //set to != 0 so that collision.c knows to remove from both
     mini->testparticle_type = r->testparticle_type;
