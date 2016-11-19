@@ -3,6 +3,12 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.0.0
+--------------
+* Introducing the Simulation Archive. The Simulation Archive allows for exact (bit-by-bit) reproducibility in N-body simulations and a completely new way of analyzing simulations. See Rein&Tamayo (2017) for details.
+* The binary format has changed. Binary files created with an earlier version of REBOUND can not be loaded with this version. However, future binary files will be backwards compatible from this point forward.
+
+
 Version 2.20.6
 --------------
 * Minor bug fixes in HERMES integrator and some examples.

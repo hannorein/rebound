@@ -69,7 +69,7 @@ REBOUND is open source. You are invited to contribute to this project if you are
 
 Papers
 ------
-There are four papers describing the functionality of REBOUND. 
+There are five papers describing the functionality of REBOUND. 
 
 1. Rein & Liu 2012 (Astronomy and Astrophysics, Volume 537, A128) describe the code structure and the main feature including the gravity and collision routines for many particle systems. http://adsabs.harvard.edu/abs/2012A%26A...537A.128R 
 
@@ -77,7 +77,10 @@ There are four papers describing the functionality of REBOUND.
 
 3. Rein & Tamayo 2015 (Monthly Notices of the Royal Astronomical Society, Volume 452, Issue 1, p.376-388) describe WHFast, the fast and unbiased implementation of a symplectic Wisdom-Holman integrator for long term gravitational simulations. http://adsabs.harvard.edu/abs/2015MNRAS.452..376R
 
-4. Rein & Tamayo 2016 (accepted for publication in the Monthly Notices of the Royal Astronomical Society) develop the framework for second order variational equations. http://arxiv.org/abs/1603.03424
+4. Rein & Tamayo 2016 (Monthly Notices of the Royal Astronomical Society, Volume 459, Issue 3, p.2275-2285) develop the framework for second order variational equations. http://arxiv.org/abs/1603.03424
+
+5. Rein & Tamayo 2017 (submitted to Monthly Notices of the Royal Astronomical Society) describes the Simulation Archive for exact reproducibility of N-body simulations. http://rein.utsc.utoronto.ca/sa_preprint.pdf
+
 
 Acknowledgments
 ---------------
