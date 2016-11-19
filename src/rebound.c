@@ -48,6 +48,7 @@
 #include "output.h"
 #include "tools.h"
 #include "particle.h"
+#include "simulationarchive.h"
 #ifdef MPI
 #include "communication_mpi.h"
 #endif
@@ -293,9 +294,11 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_whfast.allocated_N    = 0;
     r->ri_whfast.eta            = NULL;
     r->ri_whfast.p_j            = NULL;
+    r->ri_whfast.keep_unsynchronized = 0;
     // ********** WHFASTHELIO
     r->ri_whfasthelio.allocated_N  = 0;
     r->ri_whfasthelio.p_h          = NULL;
+    r->ri_whfasthelio.keep_unsynchronized = 0;
     // ********** IAS15
     r->ri_ias15.allocatedN      = 0;
     set_dp7_null(&(r->ri_ias15.g));
@@ -400,6 +403,14 @@ void reb_init_simulation(struct reb_simulation* r){
     r->collisions_plog  = 0;
     r->collisions_Nlog  = 0;    
     r->collision_resolve_keep_sorted  = 0;    
+    
+    r->simulationarchive_size_first  = 0;    
+    r->simulationarchive_size_snapshot   = 0;    
+    r->simulationarchive_interval    = 0.;    
+    r->simulationarchive_interval_walltime = 0.;    
+    r->simulationarchive_walltime    = 0.;    
+    r->simulationarchive_next        = 0.;    
+    r->simulationarchive_filename    = NULL;    
     
     // Default modules
     r->integrator   = REB_INTEGRATOR_IAS15;
@@ -543,6 +554,7 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
 }
 
 void reb_run_heartbeat(struct reb_simulation* const r){
+    if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
     if (r->heartbeat){ r->heartbeat(r); }               // Heartbeat
     if (r->exit_max_distance){
         // Check for escaping particles

@@ -154,12 +154,9 @@ static inline void add_cs(double* p, double* csp, double inp){
     *csp = (t - *p) - y;
     *p = t;
 }
- 
-// Does the actual timestep.
-static int reb_integrator_ias15_step(struct reb_simulation* r) {
-    struct reb_particle* const particles = r->particles;
-    const int N = r->N;
-    const int N3 = 3*N;
+
+void reb_integrator_ias15_alloc(struct reb_simulation* r){
+    const int N3 = 3*r->N;
     if (N3 > r->ri_ias15.allocatedN) {
         realloc_dp7(&(r->ri_ias15.g),N3);
         realloc_dp7(&(r->ri_ias15.b),N3);
@@ -183,6 +180,16 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         }
         r->ri_ias15.allocatedN = N3;
     }
+
+}
+ 
+// Does the actual timestep.
+static int reb_integrator_ias15_step(struct reb_simulation* r) {
+    reb_integrator_ias15_alloc(r);
+
+    struct reb_particle* const particles = r->particles;
+    const int N = r->N;
+    const int N3 = 3*N;
     
     // reb_update_acceleration(); // Not needed. Forces are already calculated in main routine.
     

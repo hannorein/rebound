@@ -197,7 +197,7 @@ void reb_output_orbits(struct reb_simulation* r, char* filename){
     fclose(of);
 }
 
-static void reb_save_dp7(struct reb_dp7* dp7, const int N3, FILE* of){
+void reb_save_dp7(struct reb_dp7* dp7, const int N3, FILE* of){
     fwrite(dp7->p0,sizeof(double),N3,of);
     fwrite(dp7->p1,sizeof(double),N3,of);
     fwrite(dp7->p2,sizeof(double),N3,of);
@@ -206,6 +206,13 @@ static void reb_save_dp7(struct reb_dp7* dp7, const int N3, FILE* of){
     fwrite(dp7->p5,sizeof(double),N3,of);
     fwrite(dp7->p6,sizeof(double),N3,of);
 }
+
+// Macro to write a single field to a binary file.
+#define WRITE_FIELD(typename, value, length) {\
+        struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_##typename, .size = (length)};\
+        fwrite(&field,sizeof(struct reb_binary_field),1,of);\
+        fwrite(value,field.size,1,of);\
+    }
 
 void reb_output_binary(struct reb_simulation* r, char* filename){
 #ifdef MPI
@@ -230,35 +237,152 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
         fwrite(&space,sizeof(char),1,of);
         lenheader += 1;
     }
-
-    // Output main simulation structure    
-    fwrite(r,sizeof(struct reb_simulation),1,of);
-
-    // Output particles
-    fwrite(r->particles,sizeof(struct reb_particle),r->N,of);
-
-    // Output variational configuration structures
-    if (r->var_config_N){
-        fwrite(r->var_config,sizeof(struct reb_variational_configuration),r->var_config_N,of);
+   
+    WRITE_FIELD(T,                  &r->t,                              sizeof(double));
+    WRITE_FIELD(G,                  &r->G,                              sizeof(double));
+    WRITE_FIELD(SOFTENING,          &r->softening,                      sizeof(double));
+    WRITE_FIELD(DT,                 &r->dt,                             sizeof(double));
+    WRITE_FIELD(N,                  &r->N,                              sizeof(int));
+    WRITE_FIELD(NVAR,               &r->N_var,                          sizeof(int));
+    WRITE_FIELD(VARCONFIGN,         &r->var_config_N,                   sizeof(int));
+    WRITE_FIELD(NACTIVE,            &r->N_active,                       sizeof(int));
+    WRITE_FIELD(TESTPARTICLETYPE,   &r->testparticle_type,              sizeof(int));
+    WRITE_FIELD(HASHCTR,            &r->hash_ctr,                       sizeof(int));
+    WRITE_FIELD(OPENINGANGLE2,      &r->opening_angle2,                 sizeof(double));
+    WRITE_FIELD(STATUS,             &r->status,                         sizeof(int));
+    WRITE_FIELD(EXACTFINISHTIME,    &r->exact_finish_time,              sizeof(int));
+    WRITE_FIELD(FORCEISVELOCITYDEP, &r->force_is_velocity_dependent,    sizeof(unsigned int));
+    WRITE_FIELD(GRAVITYIGNORETERMS, &r->gravity_ignore_terms,           sizeof(unsigned int));
+    WRITE_FIELD(OUTPUTTIMINGLAST,   &r->output_timing_last,             sizeof(double));
+    WRITE_FIELD(SAVEMESSAGES,       &r->save_messages,                  sizeof(int));
+    WRITE_FIELD(EXITMAXDISTANCE,    &r->exit_max_distance,              sizeof(double));
+    WRITE_FIELD(EXITMINDISTANCE,    &r->exit_min_distance,              sizeof(double));
+    WRITE_FIELD(USLEEP,             &r->usleep,                         sizeof(double));
+    WRITE_FIELD(TRACKENERGYOFFSET,  &r->track_energy_offset,            sizeof(int));
+    WRITE_FIELD(ENERGYOFFSET,       &r->energy_offset,                  sizeof(double));
+    WRITE_FIELD(BOXSIZE,            &r->boxsize,                        sizeof(struct reb_vec3d));
+    WRITE_FIELD(BOXSIZEMAX,         &r->boxsize_max,                    sizeof(double));
+    WRITE_FIELD(ROOTSIZE,           &r->root_size,                      sizeof(double));
+    WRITE_FIELD(ROOTN,              &r->root_n,                         sizeof(int));
+    WRITE_FIELD(ROOTNX,             &r->root_nx,                        sizeof(int));
+    WRITE_FIELD(ROOTNY,             &r->root_ny,                        sizeof(int));
+    WRITE_FIELD(ROOTNZ,             &r->root_nz,                        sizeof(int));
+    WRITE_FIELD(NGHOSTX,            &r->nghostx,                        sizeof(int));
+    WRITE_FIELD(NGHOSTY,            &r->nghosty,                        sizeof(int));
+    WRITE_FIELD(NGHOSTZ,            &r->nghostz,                        sizeof(int));
+    WRITE_FIELD(COLLISIONRESOLVEKEEPSORTED, &r->collision_resolve_keep_sorted, sizeof(int));
+    WRITE_FIELD(MINIMUMCOLLISIONVELOCITY, &r->minimum_collision_velocity, sizeof(double));
+    WRITE_FIELD(COLLISIONSPLOG,     &r->collisions_plog,                sizeof(double));
+    WRITE_FIELD(MAXRADIUS,          &r->max_radius,                     2*sizeof(double));
+    WRITE_FIELD(COLLISIONSNLOG,     &r->collisions_Nlog,                sizeof(long));
+    WRITE_FIELD(CALCULATEMEGNO,     &r->calculate_megno,                sizeof(int));
+    WRITE_FIELD(MEGNOYS,            &r->megno_Ys,                       sizeof(double));
+    WRITE_FIELD(MEGNOYSS,           &r->megno_Yss,                      sizeof(double));
+    WRITE_FIELD(MEGNOCOVYT,         &r->megno_cov_Yt,                   sizeof(double));
+    WRITE_FIELD(MEGNOVART,          &r->megno_var_t,                    sizeof(double));
+    WRITE_FIELD(MEGNOMEANT,         &r->megno_mean_t,                   sizeof(double));
+    WRITE_FIELD(MEGNOMEANY,         &r->megno_mean_Y,                   sizeof(double));
+    WRITE_FIELD(MEGNON,             &r->megno_n,                        sizeof(long));
+    WRITE_FIELD(SASIZESNAPSHOT,     &r->simulationarchive_size_snapshot,sizeof(long));
+    WRITE_FIELD(SAINTERVAL,         &r->simulationarchive_interval,     sizeof(double));
+    WRITE_FIELD(SAINTERVALWALLTIME, &r->simulationarchive_interval_walltime, sizeof(double));
+    WRITE_FIELD(SANEXT,             &r->simulationarchive_next,         sizeof(long));
+    WRITE_FIELD(SAWALLTIME,         &r->simulationarchive_walltime,     sizeof(double));
+    WRITE_FIELD(COLLISION,          &r->collision,                      sizeof(int));
+    WRITE_FIELD(INTEGRATOR,         &r->integrator,                     sizeof(int));
+    WRITE_FIELD(BOUNDARY,           &r->boundary,                       sizeof(int));
+    WRITE_FIELD(GRAVITY,            &r->gravity,                        sizeof(int));
+    WRITE_FIELD(SEI_OMEGA,          &r->ri_sei.OMEGA,                   sizeof(double));
+    WRITE_FIELD(SEI_OMEGAZ,         &r->ri_sei.OMEGAZ,                  sizeof(double));
+    WRITE_FIELD(SEI_LASTDT,         &r->ri_sei.lastdt,                  sizeof(double));
+    WRITE_FIELD(SEI_SINDT,          &r->ri_sei.sindt,                   sizeof(double));
+    WRITE_FIELD(SEI_TANDT,          &r->ri_sei.tandt,                   sizeof(double));
+    WRITE_FIELD(SEI_SINDTZ,         &r->ri_sei.sindtz,                  sizeof(double));
+    WRITE_FIELD(SEI_TANDTZ,         &r->ri_sei.tandtz,                  sizeof(double));
+    WRITE_FIELD(WHFAST_CORRECTOR,   &r->ri_whfast.corrector,            sizeof(unsigned int));
+    WRITE_FIELD(WHFAST_RECALCJAC,   &r->ri_whfast.recalculate_jacobi_this_timestep, sizeof(unsigned int));
+    WRITE_FIELD(WHFAST_SAFEMODE,    &r->ri_whfast.safe_mode,            sizeof(unsigned int));
+    WRITE_FIELD(WHFAST_KEEPUNSYNC,  &r->ri_whfast.keep_unsynchronized,  sizeof(unsigned int));
+    WRITE_FIELD(WHFAST_ISSYNCHRON,  &r->ri_whfast.is_synchronized,      sizeof(unsigned int));
+    WRITE_FIELD(WHFAST_TIMESTEPWARN,&r->ri_whfast.timestep_warning,     sizeof(unsigned int));
+    WRITE_FIELD(WHFAST_PJ,          r->ri_whfast.p_j,                   sizeof(struct reb_particle)*r->ri_whfast.allocated_N);
+    WRITE_FIELD(WHFAST_ETA,         r->ri_whfast.eta,                   sizeof(double)*r->ri_whfast.allocated_N);
+    WRITE_FIELD(IAS15_EPSILON,      &r->ri_ias15.epsilon,               sizeof(double));
+    WRITE_FIELD(IAS15_MINDT,        &r->ri_ias15.min_dt,                sizeof(double));
+    WRITE_FIELD(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global,        sizeof(unsigned int));
+    WRITE_FIELD(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded,sizeof(unsigned long));
+    WRITE_FIELD(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN,            sizeof(int));
+    WRITE_FIELD(HERMES_HSF,         &r->ri_hermes.hill_switch_factor,   sizeof(double));
+    WRITE_FIELD(HERMES_SSF,         &r->ri_hermes.solar_switch_factor,  sizeof(double));
+    WRITE_FIELD(HERMES_ADAPTIVE,    &r->ri_hermes.adaptive_hill_switch_factor, sizeof(int));
+    WRITE_FIELD(HERMES_TIMESTEPWARN,&r->ri_hermes.timestep_too_large_warning, sizeof(int));
+    WRITE_FIELD(HERMES_STEPS,       &r->ri_hermes.steps,                sizeof(unsigned long long));
+    WRITE_FIELD(HERMES_STEPS_MA,    &r->ri_hermes.steps_miniactive,     sizeof(unsigned long long));
+    WRITE_FIELD(HERMES_STEPS_MN,    &r->ri_hermes.steps_miniN,          sizeof(unsigned long long));
+    WRITE_FIELD(WHFASTH_CORRECTOR,  &r->ri_whfasthelio.corrector,       sizeof(unsigned int));
+    WRITE_FIELD(WHFASTH_RECALCHELIO,&r->ri_whfasthelio.recalculate_heliocentric_this_timestep, sizeof(unsigned int));
+    WRITE_FIELD(WHFASTH_SAFEMODE,   &r->ri_whfasthelio.safe_mode,       sizeof(unsigned int));
+    WRITE_FIELD(WHFASTH_ISSYNCHRON, &r->ri_whfasthelio.is_synchronized, sizeof(unsigned int));
+    WRITE_FIELD(WHFASTH_KEEPUNSYNC, &r->ri_whfasthelio.keep_unsynchronized, sizeof(unsigned int));
+    WRITE_FIELD(WHFASTH_PH,         r->ri_whfasthelio.p_h,              sizeof(struct reb_particle)*r->ri_whfasthelio.allocated_N);
+    int functionpointersused = 0;
+    if (r->coefficient_of_restitution ||
+        r->collision_resolve ||
+        r->additional_forces ||
+        r->heartbeat ||
+        r->post_timestep_modifications ||
+        r->free_particle_ap){
+        functionpointersused = 1;
     }
-    
-    // Output IAS15 temporary arrays (needed for bit-by-bit reproducability)
+    WRITE_FIELD(FUNCTIONPOINTERS,   &functionpointersused,              sizeof(int));
+    WRITE_FIELD(PARTICLES,          r->particles,                       sizeof(struct reb_particle)*r->N);
+    if (r->var_config){
+        WRITE_FIELD(VARCONFIG,      r->var_config,                      sizeof(struct reb_variational_configuration)*r->var_config_N);
+    }
     if (r->ri_ias15.allocatedN){
         int N3 = r->ri_ias15.allocatedN;
-        fwrite(r->ri_ias15.at,sizeof(double),N3,of);
-        fwrite(r->ri_ias15.x0,sizeof(double),N3,of);
-        fwrite(r->ri_ias15.v0,sizeof(double),N3,of);
-        fwrite(r->ri_ias15.a0,sizeof(double),N3,of);
-        fwrite(r->ri_ias15.csx,sizeof(double),N3,of);
-        fwrite(r->ri_ias15.csv,sizeof(double),N3,of);
-        fwrite(r->ri_ias15.csa0,sizeof(double),N3,of);
-        reb_save_dp7(&(r->ri_ias15.g)  ,N3,of);
-        reb_save_dp7(&(r->ri_ias15.b)  ,N3,of);
-        reb_save_dp7(&(r->ri_ias15.csb),N3,of);
-        reb_save_dp7(&(r->ri_ias15.e)  ,N3,of);
-        reb_save_dp7(&(r->ri_ias15.br) ,N3,of);
-        reb_save_dp7(&(r->ri_ias15.er) ,N3,of);
+        WRITE_FIELD(IAS15_AT,   r->ri_ias15.at,     sizeof(double)*N3);
+        WRITE_FIELD(IAS15_X0,   r->ri_ias15.x0,     sizeof(double)*N3);
+        WRITE_FIELD(IAS15_V0,   r->ri_ias15.v0,     sizeof(double)*N3);
+        WRITE_FIELD(IAS15_A0,   r->ri_ias15.a0,     sizeof(double)*N3);
+        WRITE_FIELD(IAS15_CSX,  r->ri_ias15.csx,    sizeof(double)*N3);
+        WRITE_FIELD(IAS15_CSV,  r->ri_ias15.csv,    sizeof(double)*N3);
+        WRITE_FIELD(IAS15_CSA0, r->ri_ias15.csa0,   sizeof(double)*N3);
+        {
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_G, .size = sizeof(double)*N3*7};
+            fwrite(&field,sizeof(struct reb_binary_field),1,of);
+            reb_save_dp7(&(r->ri_ias15.g),N3,of);
+        }
+        {
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_B, .size = sizeof(double)*N3*7};
+            fwrite(&field,sizeof(struct reb_binary_field),1,of);
+            reb_save_dp7(&(r->ri_ias15.b),N3,of);
+        }
+        {
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_CSB, .size = sizeof(double)*N3*7};
+            fwrite(&field,sizeof(struct reb_binary_field),1,of);
+            reb_save_dp7(&(r->ri_ias15.csb),N3,of);
+        }
+        {
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_E, .size = sizeof(double)*N3*7};
+            fwrite(&field,sizeof(struct reb_binary_field),1,of);
+            reb_save_dp7(&(r->ri_ias15.e),N3,of);
+        }
+        {
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_BR, .size = sizeof(double)*N3*7};
+            fwrite(&field,sizeof(struct reb_binary_field),1,of);
+            reb_save_dp7(&(r->ri_ias15.br),N3,of);
+        }
+        {
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_ER, .size = sizeof(double)*N3*7};
+            fwrite(&field,sizeof(struct reb_binary_field),1,of);
+            reb_save_dp7(&(r->ri_ias15.er),N3,of);
+        }
     }
+    // To output size of binary file, need to calculate it first. 
+    r->simulationarchive_size_first = ftell(of)+sizeof(struct reb_binary_field)*2+sizeof(long);
+    WRITE_FIELD(SASIZEFIRST,        &r->simulationarchive_size_first,   sizeof(long));
+    WRITE_FIELD(END, NULL, 0);
     fclose(of);
 }
 

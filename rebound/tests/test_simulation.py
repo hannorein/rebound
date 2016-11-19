@@ -248,17 +248,6 @@ class TestSimulation(unittest.TestCase):
         self.assertEqual(self.sim.integrator, sim2.integrator)
         os.remove("bintest.bin")
     
-    def test_checkpoint_warnings(self):
-        with open("bintest2.bin", "a") as f:
-            for i in range(1000):
-                f.write("gibberish")
-        with warnings.catch_warnings(record=True) as w: 
-            warnings.simplefilter("always")
-            sim2 = rebound.Simulation.from_file("bintest2.bin")
-            self.assertEqual(4,len(w))
-        os.remove("bintest2.bin")
-    
-    
 class TestSimulationCollisions(unittest.TestCase):
     def setUp(self):
         self.sim = rebound.Simulation()

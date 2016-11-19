@@ -65,6 +65,7 @@ from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_
 from .particle import Particle
 from .plotting import OrbitPlot
 from .tools import hash
+from .simulationarchive import SimulationArchive
 from .interruptible_pool import InterruptiblePool
 
-__all__ = ["__version__", "__build__", "Simulation", "Orbit", "OrbitPlot", "Particle", "SimulationError", "Encounter", "Escape", "NoParticles", "ParticleNotFound", "InterruptiblePool","Variation", "reb_simulation_integrator_whfast", "reb_simulation_integrator_sei"]
+__all__ = ["__version__", "__build__", "SimulationArchive", "Simulation", "Orbit", "OrbitPlot", "Particle", "SimulationError", "Encounter", "Escape", "NoParticles", "ParticleNotFound", "InterruptiblePool","Variation", "reb_simulation_integrator_whfast", "reb_simulation_integrator_sei"]

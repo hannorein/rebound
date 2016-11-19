@@ -69,4 +69,9 @@ void reb_tools_solve_kepler_pal(double h, double k, double lambda, double* p, do
  */
 void reb_tools_particle_to_pal(double G, struct reb_particle p, struct reb_particle primary, double *a, double* lambda, double* k, double* h, double* ix, double* iy);
 
+/**
+ * @brief internal function to handle outputs for the Fast Simulation Restarter.
+ */
+void reb_fsr_heartbeat(struct reb_simulation* const r);
+
 #endif 	// TOOLS_H

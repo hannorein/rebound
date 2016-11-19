@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <string.h>
 #include <sys/time.h>
 #include "rebound.h"
 #include "particle.h"
@@ -230,14 +231,24 @@ void reb_integrator_whfasthelio_synchronize(struct reb_simulation* const r){
     struct reb_simulation_integrator_whfasthelio* const ri_whfasthelio = &(r->ri_whfasthelio);
     if (ri_whfasthelio->is_synchronized==0){
         const int N_real = r->N - r->N_var;
+        struct reb_particle* sync_ph  = NULL;
+        if (ri_whfasthelio->keep_unsynchronized){
+            sync_ph = malloc(sizeof(struct reb_particle)*r->N);
+            memcpy(sync_ph,r->ri_whfasthelio.p_h,r->N*sizeof(struct reb_particle));
+        }
         struct reb_particle* restrict const particles = r->particles;
         reb_whfasthelio_keplerstep(r,r->dt/2.);
         if (ri_whfasthelio->corrector){
             reb_whfast_apply_corrector(r, -1.,ri_whfasthelio->corrector,reb_whfasthelio_corrector_Z);
         }
         to_inertial_posvel(particles, ri_whfasthelio->p_h, N_real);
+        if (ri_whfasthelio->keep_unsynchronized){
+            memcpy(r->ri_whfasthelio.p_h,sync_ph,r->N*sizeof(struct reb_particle));
+            free(sync_ph);
+        }else{
+            ri_whfasthelio->is_synchronized=1;
+        }
     }
-    ri_whfasthelio->is_synchronized=1;
 }
 
 void reb_integrator_whfasthelio_part2(struct reb_simulation* const r){

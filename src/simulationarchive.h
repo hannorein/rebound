@@ -1,10 +1,10 @@
 /**
- * @file 	input.h
- * @brief 	Parse command line options and read retart files.
+ * @file 	simulationarchive.h
+ * @brief 	Tools for creating and readin a Simulation Archive binary file.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ * Copyright (c) 2016 Hanno Rein
  *
  * This file is part of rebound.
  *
@@ -22,10 +22,17 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _INPUT_H
+#ifndef SIMULATIONARCHIVE_H
+#define SIMULATIONARCHIVE_H
 
-void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf); ///< Internal function to read dp7 structs from file.
+#include <stdint.h>
 
-#define _INPUT_H
+struct reb_simulation;
+struct reb_particles;
 
-#endif
+/**
+ * @brief Internal function to handle outputs for the Simulation Archive.
+ */
+void reb_simulationarchive_heartbeat(struct reb_simulation* const r);
+
+#endif 	// SIMULATIONARCHIVE_H
