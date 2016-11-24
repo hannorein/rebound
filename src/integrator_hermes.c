@@ -119,10 +119,6 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
     
     reb_integrator_hermes_apply_forces(r, r->ri_hermes.a_i);
     
-    //if(r->ri_hermes.mini_active && r->track_energy_offset){
-    //    r->ri_hermes.energy_before_timestep = reb_tools_energy(r);
-    //}
-    
     //reb_integrator_whfast_part1(r);
     reb_integrator_whfasthelio_part1(r);
 }
@@ -148,11 +144,6 @@ void reb_integrator_hermes_part2(struct reb_simulation* r){
         
         // Correct for energy jump in collision
         r->energy_offset += r->ri_hermes.mini->energy_offset;
-
-        //if(r->ri_hermes.collision_this_global_dt && r->track_energy_offset){
-        //    double Ef = reb_tools_energy(r);
-        //    r->energy_offset += r->ri_hermes.energy_before_timestep - Ef;
-        //}
     }
 }
 
