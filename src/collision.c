@@ -487,7 +487,7 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
         int N_interact = (r->testparticle_type==0)?_N_active:(N-N_var);
         const struct reb_particle* restrict const particles = r->particles;
         for (int k=0;k<N_interact;k++){
-            if(k==j) continue;
+            if(k==j) continue;      //j is the particle that will be removed but hasn't yet
             struct reb_particle pk = particles[k];
             Ef += 0.5 * pk.m * (pk.vx*pk.vx + pk.vy*pk.vy + pk.vz*pk.vz);
         }
@@ -495,7 +495,7 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
             if(k==j) continue;
             struct reb_particle pk = particles[k];
             for (int l=k+1;l<N_interact;l++){
-                if(l==j)continue;
+                if(l==j)continue;   //j is the particle that will be removed but hasn't yet
                 struct reb_particle pl = particles[l];
                 double dx = pl.x - pk.x;
                 double dy = pl.y - pk.y;

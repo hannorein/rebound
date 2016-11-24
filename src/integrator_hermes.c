@@ -152,7 +152,6 @@ void reb_integrator_hermes_part2(struct reb_simulation* r){
         //if(r->ri_hermes.collision_this_global_dt && r->track_energy_offset){
         //    double Ef = reb_tools_energy(r);
         //    r->energy_offset += r->ri_hermes.energy_before_timestep - Ef;
-        //    printf("\ndE_real=%e\n",r->ri_hermes.energy_before_timestep - Ef);
         //}
     }
 }
