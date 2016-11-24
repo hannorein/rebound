@@ -97,7 +97,7 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
         reb_add(r->ri_hermes.mini, r->particles[i]);
         r->ri_hermes.is_in_mini[i] = 1;
         if (r->ri_hermes.global_index_from_mini_index_N>=r->ri_hermes.global_index_from_mini_index_Nmax){
-            r->ri_hermes.global_index_from_mini_index_Nmax += 32;
+            while(r->ri_hermes.global_index_from_mini_index_N>=r->ri_hermes.global_index_from_mini_index_Nmax) r->ri_hermes.global_index_from_mini_index_Nmax += 32;
             r->ri_hermes.global_index_from_mini_index = realloc(r->ri_hermes.global_index_from_mini_index,r->ri_hermes.global_index_from_mini_index_Nmax*sizeof(int));
         }
         r->ri_hermes.global_index_from_mini_index[r->ri_hermes.global_index_from_mini_index_N] = i;
@@ -118,10 +118,6 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
     }
     
     reb_integrator_hermes_apply_forces(r, r->ri_hermes.a_i);
-    
-    if(r->ri_hermes.mini_active && r->track_energy_offset){
-        r->ri_hermes.energy_before_timestep = reb_tools_energy(r);
-    }
     
     //reb_integrator_whfast_part1(r);
     reb_integrator_whfasthelio_part1(r);
@@ -147,10 +143,7 @@ void reb_integrator_hermes_part2(struct reb_simulation* r){
         }
         
         // Correct for energy jump in collision
-        if(r->ri_hermes.collision_this_global_dt && r->track_energy_offset){
-            double Ef = reb_tools_energy(r);
-            r->energy_offset += r->ri_hermes.energy_before_timestep - Ef;
-        }
+        r->energy_offset += r->ri_hermes.mini->energy_offset;
     }
 }
 
@@ -262,13 +255,15 @@ static void reb_integrator_hermes_autocalc_HSF(struct reb_simulation* r){
     struct reb_particle* particles = r->particles;
     double min_dt_enc2 = INFINITY;
     double m0 = particles[0].m;
-    for(int i=1;i<_N_active;i++){                                             //run over massive bodies
+    int* is_in_mini = r->ri_hermes.is_in_mini;
+    for(int i=1;i<_N_active;i++){                                               //run over massive bodies
         double ep, ap;
         reb_integrator_hermes_get_ae(r, com, i, &ap, &ep);
         double rp_min = ap*(1.-ep);
         double rp_max = ap*(1.+ep);
         double np = sqrt(mu/(ap*ap*ap));
         for(int j=i+1;j<r->N;j++){                                              //run over massive + planetesimal bodies
+            if(is_in_mini[j] == 1) continue;                                    //exclude bodies in mini from Auto HSF calc
             double e, a, n;
             reb_integrator_hermes_get_ae(r, com, j, &a, &e);
             double r_min = a*(1.-e);
