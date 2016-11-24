@@ -495,7 +495,7 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
             if(k==j) continue;
             struct reb_particle pk = particles[k];
             for (int l=k+1;l<N_interact;l++){
-                if(l==j)continue;   //j is the particle that will be removed but hasn't yet
+                if(l==j)continue;
                 struct reb_particle pl = particles[l];
                 double dx = pl.x - pk.x;
                 double dy = pl.y - pk.y;
