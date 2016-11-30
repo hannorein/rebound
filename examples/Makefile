@@ -1,4 +1,4 @@
-SUBDIRS := $(wildcard */.)
+SUBDIRS := $(filter-out shearing_sheet_mpi/. selfgravity_disc_mpi/.,$(wildcard */.))
 
 all: $(SUBDIRS)
 $(SUBDIRS):

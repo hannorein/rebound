@@ -33,7 +33,7 @@
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
-#include <semaphore.h>
+#include <pthread.h>
 #include <fcntl.h>
 #include "rebound.h"
 #include "integrator.h"
@@ -60,13 +60,10 @@
 #endif
 #define MAX(a, b) ((a) < (b) ? (b) : (a))       ///< Returns the maximum of a and b
 
-#ifndef LIBREBOUND
-static const char* logo[];              /**< Logo of rebound. */
-#endif // LIBREBOUND
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.0.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.1.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 
 void reb_step(struct reb_simulation* const r){
     // A 'DKD'-like integrator will do the first 'D' part.
@@ -354,11 +351,6 @@ struct reb_simulation* reb_create_simulation(){
 }
 
 void reb_init_simulation(struct reb_simulation* r){
-#ifndef LIBREBOUND
-    int i =0;
-    while (logo[i]!=NULL){ printf("%s",logo[i++]); }
-    printf("Built: %s\n\n",reb_build_str);
-#endif // LIBREBOUND
     reb_tools_init_srand();
     reb_reset_temporary_pointers(r);
     reb_reset_function_pointers(r);
@@ -592,60 +584,23 @@ void reb_run_heartbeat(struct reb_simulation* const r){
         usleep(r->usleep);
     }
 }
-enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
+
+////////////////////////////////////////////////////
+///  Integrate functions and visualization stuff
+
+
+void * reb_integrate_without_visualization(void* args){
 #ifdef MPI
     // Distribute particles
-    reb_communication_mpi_distribute_particles(r_user);
+    reb_communication_mpi_distribute_particles(r);
 #endif // MPI
+    struct reb_display_data* data = (struct reb_display_data*)args;
+    struct reb_simulation* r = data->r;
+    double tmax = data->tmax;
 #ifdef OPENGL
-    int opengl_enabled = 1;
-    if (r_user->usleep<0){
-        opengl_enabled = 0;
-    }
-
-    // Copy and share simulation struct 
-    struct reb_simulation* r = NULL;
-    char sem_name[256] = "reb_display";
-    sem_t* display_mutex = NULL;
-   
-    if (opengl_enabled){
-        r = (struct reb_simulation*)mmap(r_user, sizeof(struct reb_simulation), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
-        memcpy(r, r_user, sizeof(struct reb_simulation));
-        // Copy and share particle array
-        r->particles = (struct reb_particle*)mmap(NULL, r->allocatedN*sizeof(struct reb_particle), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
-        memcpy(r->particles, r_user->particles, r->allocatedN*sizeof(struct reb_particle));
-        for(int i=0; i<r->N; i++){
-            r->particles[i].sim = r;
-        }
-        // Create Semaphore
-#ifdef MPI
-        sprintf(sem_name,"/reb_display_%d;",r_user->mpi_id);
-#endif // MPI
-        sem_unlink(sem_name); // unlink first
-        if ((display_mutex = sem_open(sem_name, O_CREAT | O_EXCL, 0666, 1))==SEM_FAILED){
-            perror("sem_open");
-            exit(EXIT_FAILURE);
-        }
-        // Need root_size for visualization. Creating one. 
-        if (r->root_size==-1){  
-            reb_warning(r,"Configuring box automatically for vizualization based on particle positions.");
-            const struct reb_particle* p = r->particles;
-            double max_r = 0;
-            for (int i=0;i<r->N;i++){
-                const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
-                max_r = MAX(max_r, _r);
-            }
-            reb_configure_box(r, max_r*2.3,MAX(1.,r->root_nx),MAX(1.,r->root_ny),MAX(1.,r->root_nz));
-        }
-    }else{
-        r = r_user;
-    }
-
-#else // OPENGL
-    struct reb_simulation* const r = r_user;
-#endif // OPENGL
-
-
+    pthread_mutex_t* display_mutex = data->mutex;
+    unsigned int opengl_enabled = data->opengl_enabled;
+#endif //: OPENGL
 
 #ifndef LIBREBOUND
     struct timeval tim;
@@ -657,102 +612,110 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r_user, double tmax){
 
     r->status = REB_RUNNING;
     reb_run_heartbeat(r);
-
-    
+    while(reb_check_exit(r,tmax,&last_full_dt)<0){
 #ifdef OPENGL
-    if (opengl_enabled){
-        pid_t   childpid;
-        if((childpid = fork()) == -1) {
-                perror("fork");
-                exit(EXIT_FAILURE);
-        }
-        if(childpid == 0) {  // Child (vizualization)
-            reb_display_init(0,NULL,r, display_mutex);
-            exit(EXIT_SUCCESS); // NEVER REACHED
-        } else {        // Parent (computation)
-            PROFILING_START()
-            while(reb_check_exit(r,tmax,&last_full_dt)<0){
-                sem_wait(display_mutex);    
-                PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
-                reb_step(r);
-                reb_run_heartbeat(r);
-                PROFILING_START()
-                sem_post(display_mutex);
-            }
-            PROFILING_STOP(PROFILING_CAT_VISUALIZATION)
-        }
-    }else{
+        if (opengl_enabled){ pthread_mutex_lock(display_mutex); }
 #endif // OPENGL
-        while(reb_check_exit(r,tmax,&last_full_dt)<0){
-            reb_step(r); 
-            reb_run_heartbeat(r);
-        }
+        reb_step(r); 
+        reb_run_heartbeat(r);
 #ifdef OPENGL
+        if (opengl_enabled){ pthread_mutex_unlock(display_mutex); }
+#endif // OPENGL
     }
-#endif // OPENGL
 
     reb_integrator_synchronize(r);
     if(r->exact_finish_time==1){ // if finish_time = 1, r->dt could have been shrunk, so set to the last full timestep
         r->dt = last_full_dt; 
     }
 
-#ifdef OPENGL
-    if (opengl_enabled){
-        int status;
-        wait(&status);
-        struct reb_particle* const particles_user_loc = r_user->particles;
-        memcpy(r_user, r, sizeof(struct reb_simulation));
-        r_user->particles = particles_user_loc;
-        memcpy(r_user->particles, r->particles, r->N*sizeof(struct reb_particle));
-        for(int i=0; i<r_user->N; i++){
-            r_user->particles[i].sim = r_user;
-        }
-        sem_unlink(sem_name);
-        sem_close(display_mutex);
-    }
-#endif //OPENGL
 
 #ifndef LIBREBOUND
     gettimeofday(&tim, NULL);
     double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
     printf("\nComputation finished. Total runtime: %f s\n",timing_final-timing_initial);
 #endif // LIBREBOUND
-    return r->status;
+    data->return_status = r->status;
+    return NULL;
 }
 
-#ifndef LIBREBOUND
-static const char* logo[] = {
-"          _                           _  \n",   
-"         | |                         | | \n",  
-" _ __ ___| |__   ___  _   _ _ __   __| | \n", 
-"| '__/ _ \\ '_ \\ / _ \\| | | | '_ \\ / _` | \n", 
-"| | |  __/ |_) | (_) | |_| | | | | (_| | \n", 
-"|_|  \\___|_.__/ \\___/ \\__,_|_| |_|\\__,_| \n", 
-"                                         \n",   
-"              `-:://::.`                 \n",
-"          `/oshhoo+++oossso+:`           \n", 
-"       `/ssooys++++++ossssssyyo:`        \n", 
-"     `+do++oho+++osssso++++++++sy/`      \n", 
-"    :yoh+++ho++oys+++++++++++++++ss.     \n", 
-"   /y++hooyyooshooo+++++++++++++++oh-    \n", 
-"  -dsssdssdsssdssssssssssooo+++++++oh`   \n", 
-"  ho++ys+oy+++ho++++++++oosssssooo++so   \n", 
-" .d++oy++ys+++oh+++++++++++++++oosssod   \n", 
-" -h+oh+++yo++++oyo+++++++++++++++++oom   \n", 
-" `d+ho+++ys+++++oys++++++++++++++++++d   \n", 
-"  yys++++oy+++++++oys+++++++++++++++s+   \n", 
-"  .m++++++h+++++++++oys++++++++++++oy`   \n", 
-"   -yo++++ss++++++++++oyso++++++++oy.    \n", 
-"    .ss++++ho+++++++++++osys+++++yo`     \n", 
-"      :ss+++ho+++++++++++++osssss-       \n", 
-"        -ossoys++++++++++++osso.         \n", 
-"          `-/oyyyssosssyso+/.            \n", 
-"                ``....`                  \n", 
-"                                         \n",   
-"Written by Hanno Rein, Shangfei Liu,     \n",
-"David Spiegel, Daniel Tamayo and many    \n",
-"other. REBOUND project website:          \n",  
-"http://github.com/hannorein/rebound/     \n",    
-"                                         \n", 
-NULL};
-#endif // LIBREBOUND
+enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
+#ifndef OPENGL
+    struct reb_display_data data = { 
+        .r = r, 
+        .tmax = tmax, 
+        .return_status = REB_RUNNING,
+    };
+    reb_integrate_without_visualization(&data);
+    return data.return_status;
+#else // OPENGL
+    int opengl_enabled = (r->usleep<0)?0:1;
+    if (opengl_enabled){
+        // Need root_size for visualization. Creating one. 
+        if (r->root_size==-1){  
+            reb_warning(r,"Configuring box automatically for vizualization based on particle positions.");
+            const struct reb_particle* p = r->particles;
+            double max_r = 0;
+            for (int i=0;i<r->N;i++){
+                const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
+                max_r = MAX(max_r, _r);
+            }
+            reb_configure_box(r, max_r*2.3,MAX(1.,r->root_nx),MAX(1.,r->root_ny),MAX(1.,r->root_nz));
+        }
+    }
+
+    pthread_mutex_t mutex;
+    if (pthread_mutex_init(&mutex, NULL)){
+        reb_error(r,"Mutex creation failed.");
+    }
+    
+    struct reb_display_data data = { 
+        .r = r, 
+        .opengl_enabled = opengl_enabled, 
+        .mutex = &mutex, 
+        .tmax = tmax, 
+        .return_status = REB_RUNNING,
+    };
+    
+    pthread_t compute_thread;
+    if (pthread_create(&compute_thread,NULL,reb_integrate_without_visualization,&data)){
+        reb_error(r, "Error creating display thread.");
+    }
+
+    reb_display_init(&data);
+
+    if (pthread_join(compute_thread,NULL)){
+        reb_error(r, "Error joining display thread.");
+    }
+    pthread_mutex_destroy(&mutex);
+    return data.return_status;
+#endif //OPENGL
+}
+
+const char* reb_logo[26] = {
+"          _                           _  ",
+"         | |                         | | ",
+" _ __ ___| |__   ___  _   _ _ __   __| | ",
+"| '__/ _ \\ '_ \\ / _ \\| | | | '_ \\ / _` | ",
+"| | |  __/ |_) | (_) | |_| | | | | (_| | ",
+"|_|  \\___|_.__/ \\___/ \\__,_|_| |_|\\__,_| ",
+"                                         ",
+"              `-:://::.`                 ",
+"          `/oshhoo+++oossso+:`           ",
+"       `/ssooys++++++ossssssyyo:`        ",
+"     `+do++oho+++osssso++++++++sy/`      ",
+"    :yoh+++ho++oys+++++++++++++++ss.     ",
+"   /y++hooyyooshooo+++++++++++++++oh-    ",
+"  -dsssdssdsssdssssssssssooo+++++++oh`   ",
+"  ho++ys+oy+++ho++++++++oosssssooo++so   ",
+" .d++oy++ys+++oh+++++++++++++++oosssod   ",
+" -h+oh+++yo++++oyo+++++++++++++++++oom   ",
+" `d+ho+++ys+++++oys++++++++++++++++++d   ",
+"  yys++++oy+++++++oys+++++++++++++++s+   ",
+"  .m++++++h+++++++++oys++++++++++++oy`   ",
+"   -yo++++ss++++++++++oyso++++++++oy.    ",
+"    .ss++++ho+++++++++++osys+++++yo`     ",
+"      :ss+++ho+++++++++++++osssss-       ",
+"        -ossoys++++++++++++osso.         ",
+"          `-/oyyyssosssyso+/.            ",
+"                ``....`                  ",
+};

@@ -107,28 +107,7 @@ Possible issues when compiling REBOUND
 REBOUND should be extremely easy to compile as it does not require any external libraries. You might nevertheless run into problems. Two of the most common issues are:
 
 * **Missing compilers.** Make sure you have a C compiler installed. If you are using a Mac, install the XCode package which you can download for free on the AppStore.
-* **Missing OpenGL/Glut libraries.** You can compile REBOUND with support for real-time OpenGL visualizations. This requires OpenGL/Glut libraries. If you are on a Mac, then XCode will automatically install the OpenGL libraries. If you are on Linux, you might have to manually install them. How to do this depends on your distribution. Search your package manager for ``freeglut``. Alternatively, you can disable the OpenGL visualization in the Makefile by setting ``OPENGL=0``. Then, execute ``make clean`` and try compiling the program again. 
-
-
-OpenGL keyboard command
------------------------
-You can use the following keyboard commands to alter the OpenGL real-time visualizations.::
-
- Key     | Function
- --------------------------------------------------
- h       | Show/hide on screen help.
- q       | Quit simulation.
- (space) | Pause simulation.
- d       | Pause real-time visualization (simulation continues).
- s       | Toggle three dimensional spheres (looks better)/points (draws faster)
- g       | Toggle ghost boxes
- r       | Reset view. Press multiple times to change orientation.
- x/X     | Move to a coordinate system centred on a particle (note: does not work if particle array is constantly resorted, i.e. in a tree.)
- c       | Toggle clear screen after each time-step.
- w       | Draw orbits as wires (particle with index 0 is central object).  
- t       | Show/hide time, timestep and number of particles.  
-
-To rotate the view, simple drag the simulation with the mouse. To zoom in, press the shift key and then drag the simulation with the mouse. 
+* **Missing glfw3 library.** You can compile REBOUND with support for real-time OpenGL visualizations. This requires the glfw3 library. If you are on a Mac, then the easiest way to install the glfw3 library is with homebrew: `brew tap homebrew/versions && brew install glfw3`. If you are on Linux, you can install it with your package manager, for example with `sudo apt-get install libglfw3-dev`. Alternatively, you can disable the OpenGL visualization in the Makefile by setting ``OPENGL=0``. Then, execute ``make clean`` and try compiling the program again. 
 
 
 API Documentation

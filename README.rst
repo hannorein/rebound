@@ -1,7 +1,7 @@
 REBOUND - An open-source multi-purpose N-body code
 ==================================================
 
-.. image:: http://img.shields.io/badge/rebound-v3.0.0-green.svg?style=flat
+.. image:: http://img.shields.io/badge/rebound-v3.1.0-green.svg?style=flat
     :target: http://rebound.readthedocs.org
 .. image:: https://badge.fury.io/py/rebound.svg
     :target: https://badge.fury.io/py/rebound
@@ -40,7 +40,7 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * Real-time, 3D OpenGL visualization (C version)
 * Parallelized with OpenMP (for shared memory systems)
 * Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems)
-* No libraries are needed, use of OpenGL/GLUT for visualization is optional
+* No libraries are needed, use of OpenGL/glfw3 for visualization is optional
 * The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound
 * No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
 * Comes with standard ASCII or binary output routines 

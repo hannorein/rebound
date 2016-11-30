@@ -27,6 +27,7 @@
 #define _MAIN_H
 #include <stdint.h>
 #include <sys/time.h>
+#include <pthread.h>
 #ifndef M_PI
 // Make sure M_PI is defined. 
 #define M_PI           3.14159265358979323846       ///< The mathematical constant pi.
@@ -37,6 +38,7 @@
 
 extern const char* reb_build_str;   ///< Date and time build string.
 extern const char* reb_version_str; ///< Version string.
+extern const char* reb_logo[26];    ///< Logo of rebound. 
 
 /**
  * @brief Enumeration describing the return status of rebound_integrate
@@ -1599,5 +1601,81 @@ void reb_error(struct reb_simulation* const r, const char* const msg);
 int reb_get_next_message(struct reb_simulation* const r, char* const buf);
 /** @} */
 /** @} */
+
+#ifdef OPENGL
+/**
+ * @cond PRIVATE
+ * Related to OpenGL visualization. Nothing to be changed by the user.
+ */
+struct reb_quaternion {
+    double x, y, z, w;
+};
+
+struct reb_display_data {
+    struct reb_simulation* r;
+    double tmax;
+    enum REB_STATUS return_status;
+    struct reb_simulation* r_copy;
+    struct reb_particle* particles_copy;
+    double* eta_copy;
+    double retina;
+    struct reb_particle* p_j_copy;
+    struct reb_particle* p_h_copy;
+    unsigned long allocated_N;
+    unsigned long allocated_N_whfast;
+    unsigned long allocated_N_whfasthelio;
+    unsigned int opengl_enabled;
+    pthread_mutex_t* mutex;         /**< Mutex to guarantee non-flickering */
+    int spheres;                    /**< Switches between point sprite and real spheres. */
+    int pause;                      /**< Pauses visualization, but keep simulation running */
+    int wire;                       /**< Shows/hides orbit wires. */
+    int onscreentext;               /**< Shows/hides onscreen text. */
+    int onscreenhelp;               /**< Shows/hides onscreen help. */
+    int clear;                      /**< Toggles clearing the display on each draw. */
+    int ghostboxes;                 /**< Shows/hides ghost boxes. */
+    int reference;                  /**< reb_particle used as a reference for centering. */
+    unsigned int mouse_action;      
+    unsigned int key_mods;      
+    double mouse_x;
+    double mouse_y;
+    struct reb_quaternion view;
+    double scale;
+    unsigned int simplefont_tex;
+    unsigned int simplefont_shader_program;
+    unsigned int simplefont_shader_vao;
+    unsigned int simplefont_shader_pos_location;
+    unsigned int simplefont_shader_ypos_location;
+    unsigned int simplefont_shader_scale_location;
+    unsigned int simplefont_shader_aspect_location;
+    unsigned int simplefont_shader_charval_buffer;
+    unsigned int box_shader_program;
+    unsigned int box_shader_box_vao;
+    unsigned int box_shader_cross_vao;
+    unsigned int box_shader_mvp_location;
+    unsigned int box_shader_color_location;
+    unsigned int point_shader_mvp_location;
+    unsigned int point_shader_color_location;
+    unsigned int point_shader_program;
+    unsigned int point_shader_particle_vao;
+    unsigned int sphere_shader_mvp_location;
+    unsigned int sphere_shader_program;
+    unsigned int sphere_shader_particle_vao;
+    unsigned int sphere_shader_vertex_count;
+    unsigned int orbit_shader_mvp_location;
+    unsigned int orbit_shader_program;
+    unsigned int orbit_shader_particle_vao;
+    unsigned int orbit_shader_vertex_count;
+};
+#else //OPENGL
+struct reb_display_data {
+    struct reb_simulation* r;
+    double tmax;
+    enum REB_STATUS return_status;
+};
+#endif // OPENGL
+/**
+ * @cond PRIVATE
+ */
+
 
 #endif

@@ -382,7 +382,8 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     // To output size of binary file, need to calculate it first. 
     r->simulationarchive_size_first = ftell(of)+sizeof(struct reb_binary_field)*2+sizeof(long);
     WRITE_FIELD(SASIZEFIRST,        &r->simulationarchive_size_first,   sizeof(long));
-    WRITE_FIELD(END, NULL, 0);
+    int end_null = 0;
+    WRITE_FIELD(END, &end_null, 0);
     fclose(of);
 }
 

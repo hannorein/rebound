@@ -1,10 +1,10 @@
 /**
- * @file 	display.h
- * @brief 	Realtime OpenGL visualization.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @file    display.h
+ * @brief   Realtime OpenGL visualization.
+ * @author  Hanno Rein <hanno@hanno-rein.de>
  * 
- * @section 	LICENSE
- * Copyright (c) 2011 Hanno Rein, Shangfei Liu
+ * @section LICENSE
+ * Copyright (c) 2016 Hanno Rein, Shangfei Liu
  *
  * This file is part of rebound.
  *
@@ -24,16 +24,15 @@
  */
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
-#include <semaphore.h>
+#include <GLFW/glfw3.h>
 
 struct reb_simulation;
+struct reb_display_data;
 /**
- * @brief This function initializes OpenGL and starts the run loop. It will never return.
- * @param argc Number of command line arguments.
- * @param argv Command line arguments.
- * @param r REBOUND simulation to be visualised.
- * @param mutex Semaphore to lock the REBOUND simulation structure
+ * @brief This function initializes OpenGL and starts the run loop.
+ * @param data A struct containing all the data needed by the visualization.
  */
-void reb_display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* mutex);
+//void reb_display_init(int argc, char* argv[], struct reb_simulation* r, sem_t* mutex, GLFWwindow* window);
+void reb_display_init(struct reb_display_data *data);
 
 #endif

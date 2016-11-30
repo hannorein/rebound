@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.1.0
+--------------
+* Updated visualization. REBOUND now uses a modern version of OpenGL (3.3) that allows for custom shaders and therefore better looking visualizations. However, REBOUND now requires glfw3 to compile the visualization module. If you are on a Mac, then the easiest way to install the glfw3 library is with homebrew: `brew tap homebrew/versions && brew install glfw3`. If you are on Linux, you can install it with your package manager, for example with `sudo apt-get install libglfw3-dev`. 
+
 Version 3.0.0
 --------------
 * Introducing the Simulation Archive. The Simulation Archive allows for exact (bit-by-bit) reproducibility in N-body simulations and a completely new way of analyzing simulations. See Rein&Tamayo (2017) for details.

@@ -27,10 +27,12 @@ matrix:
 
 addons:
     apt:
+        sources:
+            - debian-sid
         packages:
-            - freeglut3-dev
-            - openmpi-bin 
-            - libopenmpi-dev
+            - libglfw3-dev
+              #- libopenmpi-dev  # leads to conflicts with debian-sid
+              #- openmpi-bin 
 
 before_install:
   - if [[ $TESTPART == *"PYTHON"* ]] || [[ $TESTPART == "CCOVERAGE" ]]; then if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-3.5.5-Linux-x86_64.sh -O miniconda.sh; fi; fi
