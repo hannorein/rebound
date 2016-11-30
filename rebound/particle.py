@@ -231,6 +231,8 @@ class Particle(Structure):
         self.c = None
         self.ap = None
         
+        if notNone([e,inc,omega,pomega,Omega,M,f,theta,T]) and notNone(pal):
+            raise ValueError("You cannot mix Pal coordinates (h,k,ix,iy) with the following orbital elements: e,inc,Omega,omega,pomega,f,M,theta,T. If a longitude/anomaly is needed in Pal coordinates, use l.")
         if notNone(cart) and notNone(orbi):
                 raise ValueError("You cannot pass cartesian coordinates and orbital elements (and/or primary) at the same time.")
         if notNone(orbi):
