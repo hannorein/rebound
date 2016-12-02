@@ -69,6 +69,7 @@ static const char* onscreenhelp[] = {
                 "         | on a particle (note: does not work if", 
                 "         | particle array is resorted)",
                 " c       | Toggle clear screen after each time-step",
+                " m       | Toggle multisampling",
                 " w       | Draw orbits as wires",
                 " t       | Show/hide logo, time, timestep and number ",
                 "         | of particles.",
@@ -346,6 +347,14 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
             case 'G':
                 data->ghostboxes = !data->ghostboxes;
                 break;
+            case 'M':
+                data->multisample = !data->multisample;
+                if (data->multisample){
+                    glEnable(GL_MULTISAMPLE); 
+                }else{
+                    glDisable(GL_MULTISAMPLE); 
+                }
+                break;
             case 'R':
                 data->view.x = 0.;
                 data->view.y = 0.;
@@ -564,7 +573,7 @@ void reb_display_init(struct reb_display_data *data){
         reb_error(r, "GLFW initialization failed.");
     }
     glfwSetErrorCallback(reb_glfw_error_callback);
-    glfwWindowHint(GLFW_SAMPLES, 2);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 #ifdef _APPLE
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -592,6 +601,7 @@ void reb_display_init(struct reb_display_data *data){
     }
     data->spheres       = 0; 
     data->pause         = 0; 
+    data->multisample = 1; 
     if (data->r->integrator==REB_INTEGRATOR_WHFAST || data->r->integrator==REB_INTEGRATOR_WHFASTHELIO){
         data->wire          = 1; 
     }else{

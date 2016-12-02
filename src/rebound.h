@@ -1631,6 +1631,7 @@ struct reb_display_data {
     int wire;                       /**< Shows/hides orbit wires. */
     int onscreentext;               /**< Shows/hides onscreen text. */
     int onscreenhelp;               /**< Shows/hides onscreen help. */
+    int multisample;                /**< Turn off/on multisampling. */
     int clear;                      /**< Toggles clearing the display on each draw. */
     int ghostboxes;                 /**< Shows/hides ghost boxes. */
     int reference;                  /**< reb_particle used as a reference for centering. */
