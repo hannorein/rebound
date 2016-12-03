@@ -706,7 +706,9 @@ void reb_display_init(struct reb_display_data *data){
             "  if (length(rel)>0.25f){\n"
             "     outcolor = vec4(0.f,0.f,0.f,0.f); \n"
             "  }else{\n"
-            "     outcolor = color;\n"
+            "     vec4 cmod = color;\n"
+            "     cmod.a*= min(1.,1.-4.*(length(rel)/0.25-0.75));\n"
+            "     outcolor = cmod;\n"
             "  }\n"
             "}\n";
 
