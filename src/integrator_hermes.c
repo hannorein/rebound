@@ -60,6 +60,7 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
         mini->additional_forces = reb_integrator_hermes_additional_forces_mini;
         mini->G = r->G;
         mini->softening = r->softening;
+        if(r->collision_resolve_keep_sorted ==0) reb_warning(r,"When using HERMES, the user must set r->collision_resolve_keep_sorted = 1, or else it is likely that the wrong particle will be removed from the simulation during a collision/ejection, leading to energy jumps and other unpredictable behaviour. This warning will only appear once.\n");
     }
     mini->ri_hermes.global = r;    //set to != 0 so that collision.c knows to remove from both
     mini->testparticle_type = r->testparticle_type;
