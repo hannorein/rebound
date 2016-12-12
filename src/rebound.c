@@ -449,7 +449,10 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_hermes.solar_switch_factor = 15.;
     r->ri_hermes.hill_switch_factor = 3.;            
     r->ri_hermes.adaptive_hill_switch_factor = 1;    
-    r->ri_hermes.current_hill_switch_factor = 3.;     //Internal 
+    r->ri_hermes.current_hill_switch_factor = 3.;     //Internal
+    if((r->integrator == REB_INTEGRATOR_HERMES) && (r->collision_resolve_keep_sorted == 0)){
+        reb_warning(r, "For HERMES to properly remove ejected/collided particles, one must set r->collision_resolve_keep_sorted = 1.");
+    }
     
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.
     r->tree_needs_update= 0;
