@@ -48,7 +48,6 @@ static void reb_integrator_hermes_get_ae(struct reb_simulation* r, struct reb_pa
 
 void reb_integrator_hermes_part1(struct reb_simulation* r){
     r->gravity_ignore_terms = 0;
-    r->collision_resolve_keep_sorted = 1;
     const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
     struct reb_simulation* mini = r->ri_hermes.mini;
     if (mini == NULL){
