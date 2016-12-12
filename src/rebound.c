@@ -451,7 +451,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_hermes.adaptive_hill_switch_factor = 1;    
     r->ri_hermes.current_hill_switch_factor = 3.;     //Internal
     if((r->integrator == REB_INTEGRATOR_HERMES) && (r->collision_resolve_keep_sorted == 0)){
-        reb_warning(r, "For HERMES to properly remove ejected/collided particles, one must set r->collision_resolve_keep_sorted = 1.");
+        reb_warning(r,"When using HERMES, the user must set r->collision_resolve_keep_sorted = 1, or else the wrong particle will likely be removed from the simulation, leading to energy jumps and other unpredictable behaviour. This warning will only appear once.");
     }
     
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.

@@ -210,10 +210,6 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
     if (r->ri_hermes.global){
         // This is a mini simulation. Need to remove particle from two simulations.
         struct reb_simulation* global = r->ri_hermes.global;
-
-        if (keepSorted!=1){
-            reb_exit("When removing particles from a mini simulation, keepSorted must be set to 1. Make sure the 'collision_resolve_keep_sorted' flag is set to 1.");
-        }
         
         //remove from global and update global arrays
         int global_index = global->ri_hermes.global_index_from_mini_index[index];
