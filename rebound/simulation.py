@@ -360,16 +360,13 @@ class Simulation(Structure):
         >>> sim_copy = rebound.Simulation.from_file("simulation.bin")
         """
         w = c_int(0)
-        clibrebound.reb_create_simulation.restype = POINTER(Simulation)
-        simp = clibrebound.reb_create_simulation() 
-        clibrebound.reb_create_simulation_from_binary_with_messages(simp, c_char_p(filename.encode("ascii")),byref(w))
-        if (not simp) or (w.value & 1):     # Major error
+        sim = Simulation()
+        clibrebound.reb_create_simulation_from_binary_with_messages(byref(sim), c_char_p(filename.encode("ascii")),byref(w))
+        if w.value & 1:     # Major error
             raise ValueError(BINARY_WARNINGS[0])
         for message, value in BINARY_WARNINGS:  # Just warnings
             if w.value & value and value!=1:
                 warnings.warn(message, RuntimeWarning)
-        sim = simp.contents
-        sim.save_messages = 1 # Warnings will be checked within python
         return sim
 
 # Simulation Archive tools
