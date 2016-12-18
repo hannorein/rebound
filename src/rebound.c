@@ -639,17 +639,23 @@ void * reb_integrate_without_visualization(void* args){
 }
 
 enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
-#ifndef OPENGL
-    struct reb_display_data data = { 
-        .r = r, 
-        .tmax = tmax, 
-        .return_status = REB_RUNNING,
-    };
-    reb_integrate_without_visualization(&data);
-    return data.return_status;
-#else // OPENGL
+#ifdef OPENGL
     int opengl_enabled = (r->usleep<0)?0:1;
-    if (opengl_enabled){
+    if (!opengl_enabled){
+#endif // OPENGL
+        struct reb_display_data data = { 
+            .r = r, 
+#ifdef OPENGL
+            .opengl_enabled = opengl_enabled, 
+            .mutex = NULL, 
+#endif // OPENGL
+            .tmax = tmax, 
+            .return_status = REB_RUNNING,
+        };
+        reb_integrate_without_visualization(&data);
+        return data.return_status;
+#ifdef OPENGL
+    }else{
         // Need root_size for visualization. Creating one. 
         if (r->root_size==-1){  
             reb_warning(r,"Configuring box automatically for vizualization based on particle positions.");
@@ -661,33 +667,33 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
             }
             reb_configure_box(r, max_r*2.3,MAX(1.,r->root_nx),MAX(1.,r->root_ny),MAX(1.,r->root_nz));
         }
-    }
 
-    pthread_mutex_t mutex;
-    if (pthread_mutex_init(&mutex, NULL)){
-        reb_error(r,"Mutex creation failed.");
-    }
-    
-    struct reb_display_data data = { 
-        .r = r, 
-        .opengl_enabled = opengl_enabled, 
-        .mutex = &mutex, 
-        .tmax = tmax, 
-        .return_status = REB_RUNNING,
-    };
-    
-    pthread_t compute_thread;
-    if (pthread_create(&compute_thread,NULL,reb_integrate_without_visualization,&data)){
-        reb_error(r, "Error creating display thread.");
-    }
+        pthread_mutex_t mutex;
+        if (pthread_mutex_init(&mutex, NULL)){
+            reb_error(r,"Mutex creation failed.");
+        }
+        
+        struct reb_display_data data = { 
+            .r = r, 
+            .opengl_enabled = opengl_enabled, 
+            .mutex = &mutex, 
+            .tmax = tmax, 
+            .return_status = REB_RUNNING,
+        };
+        
+        pthread_t compute_thread;
+        if (pthread_create(&compute_thread,NULL,reb_integrate_without_visualization,&data)){
+            reb_error(r, "Error creating display thread.");
+        }
 
-    reb_display_init(&data);
+        reb_display_init(&data);
 
-    if (pthread_join(compute_thread,NULL)){
-        reb_error(r, "Error joining display thread.");
+        if (pthread_join(compute_thread,NULL)){
+            reb_error(r, "Error joining display thread.");
+        }
+        pthread_mutex_destroy(&mutex);
+        return data.return_status;
     }
-    pthread_mutex_destroy(&mutex);
-    return data.return_status;
 #endif //OPENGL
 }
 

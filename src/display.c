@@ -393,6 +393,10 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
 
 static void reb_display(GLFWwindow* window){
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
+    if (!data){
+        // No user pointer available
+        return;
+    }
     if (data->pause){
         return;
     }
@@ -571,6 +575,7 @@ void reb_display_init(struct reb_display_data *data){
     struct reb_simulation* r = data->r;
     if (!glfwInit()){
         reb_error(r, "GLFW initialization failed.");
+        return;
     }
     glfwSetErrorCallback(reb_glfw_error_callback);
     glfwWindowHint(GLFW_SAMPLES, 4);
@@ -584,6 +589,7 @@ void reb_display_init(struct reb_display_data *data){
     GLFWwindow*  window = glfwCreateWindow(700, 700, "rebound", NULL, NULL);
     if (!window){
         reb_error(r,"GLFW window creation failed.");
+        return;
     }
 
     glfwMakeContextCurrent(window);
@@ -1094,6 +1100,9 @@ void reb_display_init(struct reb_display_data *data){
         reb_display(window);
         glfwPollEvents();
     }
+    glfwDestroyWindow(window);
+    glfwTerminate();
+
     data->r->status = REB_EXIT_USER;
     data->return_status = REB_EXIT_USER;
     free(data->r_copy);
@@ -1104,7 +1113,6 @@ void reb_display_init(struct reb_display_data *data){
     free(particle_data);
     free(orbit_data);
 
-    glfwTerminate();
 }
 
 #endif // OPENGL
