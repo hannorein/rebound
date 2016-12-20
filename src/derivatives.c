@@ -38,7 +38,7 @@ struct reb_particle reb_derivatives_lambda(double G, struct reb_particle primary
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
 
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
@@ -78,7 +78,7 @@ struct reb_particle reb_derivatives_h(double G, struct reb_particle primary, str
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -120,7 +120,7 @@ struct reb_particle reb_derivatives_k(double G, struct reb_particle primary, str
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -162,7 +162,7 @@ struct reb_particle reb_derivatives_k_k(double G, struct reb_particle primary, s
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -216,7 +216,7 @@ struct reb_particle reb_derivatives_h_h(double G, struct reb_particle primary, s
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -271,7 +271,7 @@ struct reb_particle reb_derivatives_lambda_lambda(double G, struct reb_particle 
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
 
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
@@ -318,7 +318,7 @@ struct reb_particle reb_derivatives_k_lambda(double G, struct reb_particle prima
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -373,7 +373,7 @@ struct reb_particle reb_derivatives_h_lambda(double G, struct reb_particle prima
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -427,7 +427,7 @@ struct reb_particle reb_derivatives_k_h(double G, struct reb_particle primary, s
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -487,7 +487,7 @@ struct reb_particle reb_derivatives_a(double G, struct reb_particle primary, str
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
 
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
@@ -522,7 +522,7 @@ struct reb_particle reb_derivatives_a_a(double G, struct reb_particle primary, s
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
 
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
@@ -557,7 +557,7 @@ struct reb_particle reb_derivatives_ix(double G, struct reb_particle primary, st
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -594,7 +594,7 @@ struct reb_particle reb_derivatives_ix_ix(double G, struct reb_particle primary,
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -634,7 +634,7 @@ struct reb_particle reb_derivatives_iy(double G, struct reb_particle primary, st
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -671,7 +671,7 @@ struct reb_particle reb_derivatives_iy_iy(double G, struct reb_particle primary,
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -711,7 +711,7 @@ struct reb_particle reb_derivatives_k_ix(double G, struct reb_particle primary, 
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -756,7 +756,7 @@ struct reb_particle reb_derivatives_h_ix(double G, struct reb_particle primary, 
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -801,7 +801,7 @@ struct reb_particle reb_derivatives_lambda_ix(double G, struct reb_particle prim
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
 
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
@@ -844,7 +844,7 @@ struct reb_particle reb_derivatives_lambda_iy(double G, struct reb_particle prim
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
 
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
@@ -886,7 +886,7 @@ struct reb_particle reb_derivatives_h_iy(double G, struct reb_particle primary, 
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -929,7 +929,7 @@ struct reb_particle reb_derivatives_k_iy(double G, struct reb_particle primary, 
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -972,7 +972,7 @@ struct reb_particle reb_derivatives_ix_iy(double G, struct reb_particle primary,
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -1014,7 +1014,7 @@ struct reb_particle reb_derivatives_a_ix(double G, struct reb_particle primary, 
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -1050,7 +1050,7 @@ struct reb_particle reb_derivatives_a_iy(double G, struct reb_particle primary, 
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -1087,7 +1087,7 @@ struct reb_particle reb_derivatives_a_lambda(double G, struct reb_particle prima
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
 
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
@@ -1127,7 +1127,7 @@ struct reb_particle reb_derivatives_a_h(double G, struct reb_particle primary, s
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -1169,7 +1169,7 @@ struct reb_particle reb_derivatives_a_k(double G, struct reb_particle primary, s
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -1211,7 +1211,7 @@ struct reb_particle reb_derivatives_m(double G, struct reb_particle primary, str
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     np.m = 1.;
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
@@ -1241,7 +1241,7 @@ struct reb_particle reb_derivatives_m_a(double G, struct reb_particle primary, s
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
@@ -1270,7 +1270,7 @@ struct reb_particle reb_derivatives_m_lambda(double G, struct reb_particle prima
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
     double dq_dlambda = -p/(1.-q);
@@ -1304,7 +1304,7 @@ struct reb_particle reb_derivatives_m_h(double G, struct reb_particle primary, s
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
     double slp = sin(lambda+p);
@@ -1340,7 +1340,7 @@ struct reb_particle reb_derivatives_m_k(double G, struct reb_particle primary, s
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
     double slp = sin(lambda+p);
@@ -1376,7 +1376,7 @@ struct reb_particle reb_derivatives_m_ix(double G, struct reb_particle primary, 
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
     double slp = sin(lambda+p);
@@ -1407,7 +1407,7 @@ struct reb_particle reb_derivatives_m_iy(double G, struct reb_particle primary, 
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
     double slp = sin(lambda+p);
@@ -1438,7 +1438,7 @@ struct reb_particle reb_derivatives_m_m(double G, struct reb_particle primary, s
     double a, lambda, k, h, ix, iy;
     reb_tools_particle_to_pal(G, po, primary, &a, &lambda, &k, &h, &ix, &iy);
 
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     double p=0.,q=0.;
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
 
