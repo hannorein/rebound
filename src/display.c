@@ -442,7 +442,7 @@ static void reb_display(GLFWwindow* window){
                 glUseProgram(data->sphere_shader_program);
                 glBindVertexArray(data->sphere_shader_particle_vao);
                 glUniformMatrix4fv(data->sphere_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
-                glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, data->sphere_shader_vertex_count, data->allocated_N);
+                glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, data->sphere_shader_vertex_count, data->r_copy->N);
                 glBindVertexArray(0);
                 glDisable(GL_DEPTH_TEST);
             }
@@ -453,7 +453,7 @@ static void reb_display(GLFWwindow* window){
                 glBindVertexArray(data->point_shader_particle_vao);
                 glUniform4f(data->point_shader_color_location, 1.,1.,0.,0.8);
                 glUniformMatrix4fv(data->point_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
-                glDrawArrays(GL_POINTS, 0, data->allocated_N);
+                glDrawArrays(GL_POINTS, 0, data->r_copy->N);
                 glBindVertexArray(0);
             }
             if (data->wire){
