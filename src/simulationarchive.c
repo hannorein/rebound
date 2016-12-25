@@ -215,7 +215,7 @@ long reb_simulationarchive_estimate_size(struct reb_simulation* const r, double 
     }
 }
 
-struct reb_simulation* reb_simulationarchive_restart(char* filename){
+struct reb_simulation* reb_create_simulation_from_simulationarchive(char* filename){
     if (access(filename, F_OK) == -1) return NULL;
     struct reb_simulation* r = reb_create_simulation_from_binary(filename);
     if (r){

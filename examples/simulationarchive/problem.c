@@ -21,7 +21,7 @@
 int main(int argc, char* argv[]) {
     char filename[512] = "simulationarchive.bin";
     // Trying to restart from the Simulation Archive.
-    struct reb_simulation* r = reb_simulationarchive_restart(filename);
+    struct reb_simulation* r = reb_create_simulation_from_simulationarchive(filename);
     // Check if that was successful
     if (r==NULL){
         printf("No simulation archive found. Creating new simulation.\n");
