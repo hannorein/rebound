@@ -35,9 +35,13 @@
 #ifdef MPI
 #include "mpi.h"
 #endif // MPI
+#ifndef GITHASH
+#define GITHASH notavailable0000000000000000000000000001 
+#endif // GITHASH
 
 extern const char* reb_build_str;   ///< Date and time build string.
 extern const char* reb_version_str; ///< Version string.
+extern const char* reb_githash_str; ///< Current git hash.
 extern const char* reb_logo[26];    ///< Logo of rebound. 
 
 /**

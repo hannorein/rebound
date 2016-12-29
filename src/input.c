@@ -146,13 +146,14 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
     long objects = 0;
     // Input header.
     const char str[] = "REBOUND Binary File. Version: ";
+    const char zero = '\0';
     char readbuf[65], curvbuf[65];
     sprintf(curvbuf,"%s%s",str,reb_version_str);
-    for(size_t j=strlen(curvbuf);j<63;j++){
-        curvbuf[j] = ' ';
-    }
-    curvbuf[63] = '\0';
+    memcpy(curvbuf+strlen(curvbuf)+1,reb_githash_str,sizeof(char)*(62-strlen(curvbuf)));
+    curvbuf[63] = zero;
+    
     objects += fread(readbuf,sizeof(char),64,inf);
+    // Note: following compares version, but ignores githash.
     if(strcmp(readbuf,curvbuf)!=0){
         *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
     }

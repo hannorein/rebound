@@ -3,6 +3,11 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+
+Version 3.1.1
+--------------
+* Now stores the first characters of the current githash in binary files. This is helpful when trying to restart simulations from a binary file and making sure one uses the same version of REBOUND than in the original run. Currently, the git hash is not automatically compared when reloading a binary file. To view the githash, use e.g. hexdump. The hash appears between the first and second zero character in the first 64 bytes of the file. 
+
 Version 3.1.0
 --------------
 * Updated visualization. REBOUND now uses a modern version of OpenGL (3.3) that allows for custom shaders and therefore better looking visualizations. However, REBOUND now requires glfw3 to compile the visualization module. If you are on a Mac, then the easiest way to install the glfw3 library is with homebrew: `brew tap homebrew/versions && brew install glfw3`. If you are on Linux, you can install it with your package manager, for example with `sudo apt-get install libglfw3-dev`. 

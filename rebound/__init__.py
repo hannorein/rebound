@@ -26,8 +26,11 @@ __version__ = c_char_p.in_dll(clibrebound, "reb_version_str").value.decode('asci
 
 # Build
 __build__ = c_char_p.in_dll(clibrebound, "reb_build_str").value.decode('ascii')
-# Check for version
 
+# Githash
+__githash__ = c_char_p.in_dll(clibrebound, "reb_githash_str").value.decode('ascii')
+
+# Check for version
 try:
     moduleversion = pkg_resources.require("rebound")[0].version
     libreboundversion = __version__
@@ -68,4 +71,4 @@ from .tools import hash
 from .simulationarchive import SimulationArchive
 from .interruptible_pool import InterruptiblePool
 
-__all__ = ["__version__", "__build__", "SimulationArchive", "Simulation", "Orbit", "OrbitPlot", "Particle", "SimulationError", "Encounter", "Escape", "NoParticles", "ParticleNotFound", "InterruptiblePool","Variation", "reb_simulation_integrator_whfast", "reb_simulation_integrator_sei"]
+__all__ = ["__version__", "__build__", "__githash__", "SimulationArchive", "Simulation", "Orbit", "OrbitPlot", "Particle", "SimulationError", "Encounter", "Escape", "NoParticles", "ParticleNotFound", "InterruptiblePool","Variation", "reb_simulation_integrator_whfast", "reb_simulation_integrator_sei"]

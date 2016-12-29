@@ -53,3 +53,8 @@ endif
 else
 	OPT+= -Wno-unknown-pragmas
 endif
+
+ifndef GITHASH
+	GITHASH = $(shell git rev-parse HEAD || echo '0000000000gitnotfound0000000000000000000')
+	PREDEF+= -DGITHASH=$(GITHASH)
+endif
