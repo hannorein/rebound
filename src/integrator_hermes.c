@@ -144,7 +144,7 @@ void reb_integrator_hermes_part2(struct reb_simulation* r){
         }
         
         // Correct for energy jump in collision
-        r->energy_offset += r->ri_hermes.mini->energy_offset;
+        if(r->track_energy_offset) r->energy_offset += r->ri_hermes.mini->energy_offset;
     }
 }
 
