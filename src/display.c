@@ -393,6 +393,10 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
 
 static void reb_display(GLFWwindow* window){
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
+    if (!data){
+        // No user pointer available
+        return;
+    }
     if (data->pause){
         return;
     }
@@ -438,7 +442,7 @@ static void reb_display(GLFWwindow* window){
                 glUseProgram(data->sphere_shader_program);
                 glBindVertexArray(data->sphere_shader_particle_vao);
                 glUniformMatrix4fv(data->sphere_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
-                glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, data->sphere_shader_vertex_count, data->allocated_N);
+                glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, data->sphere_shader_vertex_count, data->r_copy->N);
                 glBindVertexArray(0);
                 glDisable(GL_DEPTH_TEST);
             }
@@ -449,7 +453,7 @@ static void reb_display(GLFWwindow* window){
                 glBindVertexArray(data->point_shader_particle_vao);
                 glUniform4f(data->point_shader_color_location, 1.,1.,0.,0.8);
                 glUniformMatrix4fv(data->point_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
-                glDrawArrays(GL_POINTS, 0, data->allocated_N);
+                glDrawArrays(GL_POINTS, 0, data->r_copy->N);
                 glBindVertexArray(0);
             }
             if (data->wire){
@@ -571,6 +575,7 @@ void reb_display_init(struct reb_display_data *data){
     struct reb_simulation* r = data->r;
     if (!glfwInit()){
         reb_error(r, "GLFW initialization failed.");
+        return;
     }
     glfwSetErrorCallback(reb_glfw_error_callback);
     glfwWindowHint(GLFW_SAMPLES, 4);
@@ -584,6 +589,7 @@ void reb_display_init(struct reb_display_data *data){
     GLFWwindow*  window = glfwCreateWindow(700, 700, "rebound", NULL, NULL);
     if (!window){
         reb_error(r,"GLFW window creation failed.");
+        return;
     }
 
     glfwMakeContextCurrent(window);
@@ -1094,6 +1100,9 @@ void reb_display_init(struct reb_display_data *data){
         reb_display(window);
         glfwPollEvents();
     }
+    glfwDestroyWindow(window);
+    glfwTerminate();
+
     data->r->status = REB_EXIT_USER;
     data->return_status = REB_EXIT_USER;
     free(data->r_copy);
@@ -1104,7 +1113,6 @@ void reb_display_init(struct reb_display_data *data){
     free(particle_data);
     free(orbit_data);
 
-    glfwTerminate();
 }
 
 #endif // OPENGL

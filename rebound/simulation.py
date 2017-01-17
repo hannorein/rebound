@@ -304,12 +304,13 @@ class Simulation(Structure):
         self.save_messages = 1 # Warnings will be checked within python
     
     @classmethod
-    def from_archive(cls, filename):
+    def from_archive(cls, filename,snapshot=-1):
         """
         Loads a REBOUND simulation from a SimulationArchive binary file.
-        It uses the last snapshot. This function is only useful for
-        restarting a simulation. For full access to the Simulation
-        Archive, use the SimulationArchive class.
+        It uses the last snapshot in that file unless otherwise specified. 
+        This function is only really useful for restarting a simulation. 
+        For full access to the Simulation Archive, use the 
+        SimulationArchive class.
         
         After loading the REBOUND simulation from file, you need to reset 
         any function pointers manually. Please read all documentation 
@@ -320,17 +321,21 @@ class Simulation(Structure):
         ---------
         filename : str
             Filename of the binary file.
+        snapshot : int (optional)
+            If given, load the snapshot with this index. Otherwise 
+            load last snapshot.
         
         Returns
         ------- 
         A rebound.Simulation object.
         
         """
-        clibrebound.reb_simulationarchive_restart.restype = POINTER(Simulation)
-        simp = clibrebound.reb_simulationarchive_restart(c_char_p(filename.encode("ascii")))
-        if not simp:
-            raise AttributeError("Error loading simulation.")
-        return simp.contents
+        sim = Simulation.from_file(filename)
+        clibrebound.reb_simulationarchive_load_snapshot.restype = c_int
+        err = clibrebound.reb_simulationarchive_load_snapshot(byref(sim),c_char_p(filename.encode("ascii")),snapshot)
+        if err != 0:
+            raise AttributeError("Error loading simulation from archive.")
+        return sim
 
     @classmethod
     def from_file(cls, filename):
@@ -360,16 +365,13 @@ class Simulation(Structure):
         >>> sim_copy = rebound.Simulation.from_file("simulation.bin")
         """
         w = c_int(0)
-        clibrebound.reb_create_simulation.restype = POINTER(Simulation)
-        simp = clibrebound.reb_create_simulation() 
-        clibrebound.reb_create_simulation_from_binary_with_messages(simp, c_char_p(filename.encode("ascii")),byref(w))
-        if (not simp) or (w.value & 1):     # Major error
+        sim = Simulation()
+        clibrebound.reb_create_simulation_from_binary_with_messages(byref(sim), c_char_p(filename.encode("ascii")),byref(w))
+        if w.value & 1:     # Major error
             raise ValueError(BINARY_WARNINGS[0])
         for message, value in BINARY_WARNINGS:  # Just warnings
             if w.value & value and value!=1:
                 warnings.warn(message, RuntimeWarning)
-        sim = simp.contents
-        sim.save_messages = 1 # Warnings will be checked within python
         return sim
 
 # Simulation Archive tools
