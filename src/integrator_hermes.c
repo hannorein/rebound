@@ -43,7 +43,7 @@
 static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* r);
 static void reb_integrator_hermes_additional_forces_mini(struct reb_simulation* mini);
 static void reb_integrator_hermes_apply_forces(const struct reb_simulation* r, double* a);
-static void reb_integrator_hermes_autocalc_HSF(struct reb_simulation* r);
+static void reb_integrator_hermes_autocalc_HSF(struct reb_simulation* r, struct reb_particle com, double* min_dt_enc2, int i, int j);
 static void reb_integrator_hermes_get_ae(struct reb_simulation* r, struct reb_particle com, int index, double* a, double* e);
 
 void reb_integrator_hermes_part1(struct reb_simulation* r){
@@ -106,12 +106,8 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
     }
     r->ri_hermes.mini->N_active = _N_active;
 
-    // Determine HSF
+    // Check for Close Encounters and Determine HSF
     r->ri_hermes.current_hill_switch_factor = r->ri_hermes.hill_switch_factor;
-    if(r->ri_hermes.adaptive_hill_switch_factor){
-        reb_integrator_hermes_autocalc_HSF(r); // increases current_hill_switch_factor is needed
-    }
-    
     reb_integrator_hermes_check_for_encounter(r);
         
     if (r->N != r->ri_hermes.mini->N || mini_previously_active==0) {
@@ -144,7 +140,8 @@ void reb_integrator_hermes_part2(struct reb_simulation* r){
         }
         
         // Correct for energy jump in collision
-        r->energy_offset += r->ri_hermes.mini->energy_offset;
+        if(r->track_energy_offset)r->energy_offset += r->ri_hermes.mini->energy_offset;
+
     }
 }
 
@@ -194,6 +191,8 @@ static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* glo
     double current_hill_switch_factor = global->ri_hermes.current_hill_switch_factor;
     double hill_switch_factor2 = current_hill_switch_factor*current_hill_switch_factor;
     double min_dt_enc2 = INFINITY;
+    double min_dt_enc2_autoHSF = INFINITY;
+    struct reb_particle com = reb_get_com(global);
     for (int i=0; i<_N_active; i++){
         struct reb_particle pi = global_particles[i];
         const double dxi = p0.x - pi.x;
@@ -239,9 +238,20 @@ static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* glo
                     global->ri_hermes.global_index_from_mini_index[global->ri_hermes.global_index_from_mini_index_N] = j;
                     global->ri_hermes.global_index_from_mini_index_N++;
                 }
-            }
+            } else if(global->ri_hermes.adaptive_hill_switch_factor) reb_integrator_hermes_autocalc_HSF(global, com, &min_dt_enc2_autoHSF, i, j); //find autoHSF
         }
     }
+    if(global->ri_hermes.adaptive_hill_switch_factor){      //Calc optimal HSF value from min_dt_enc2_autoHSF value found in for loop
+        if(min_dt_enc2_autoHSF < INFINITY){
+            double dt2 = 16.*global->dt*global->dt;         //Factor of 4:hill sphere > 4*length scales for wiggle room
+            double HSF_new = sqrt(dt2/min_dt_enc2_autoHSF);
+            double base = 1.25;
+            double exp = ceilf(log10(HSF_new)/log10(base)); //round HSF up to nearest multiple of 1.25
+            HSF_new = pow(base,exp);
+            global->ri_hermes.current_hill_switch_factor = MAX(global->ri_hermes.current_hill_switch_factor, HSF_new); // Increase HSF if needed
+        }
+    }
+    
     if (global->ri_hermes.adaptive_hill_switch_factor==0 && global->ri_hermes.timestep_too_large_warning==0 && min_dt_enc2 < 16.*global->dt*global->dt){
         global->ri_hermes.timestep_too_large_warning = 1;
         reb_warning(global,"The timestep is likely too large. Close encounters might be missed. Decrease the timestep or increase the switching radius. This warning will appear only once.");
@@ -249,92 +259,76 @@ static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* glo
 }
 
 //get min encounter time between overlapping orbits
-static void reb_integrator_hermes_autocalc_HSF(struct reb_simulation* r){
-    const int _N_active = ((r->N_active==-1)?r->N:r->N_active) - r->N_var;
-    struct reb_particle com = reb_get_com(r);
-    const double mu = r->G*r->particles[0].m;
-    struct reb_particle* particles = r->particles;
-    double min_dt_enc2 = INFINITY;
-    double m0 = particles[0].m;
-    int* is_in_mini = r->ri_hermes.is_in_mini;
-    for(int i=1;i<_N_active;i++){                                               //run over massive bodies
-        double ep, ap;
-        reb_integrator_hermes_get_ae(r, com, i, &ap, &ep);
-        double rp_min = ap*(1.-ep);
-        double rp_max = ap*(1.+ep);
-        double np = sqrt(mu/(ap*ap*ap));
-        for(int j=i+1;j<r->N;j++){                                              //run over massive + planetesimal bodies
-            if(is_in_mini[j] == 1) continue;                                    //exclude bodies in mini from Auto HSF calc
-            double e, a, n;
-            reb_integrator_hermes_get_ae(r, com, j, &a, &e);
-            double r_min = a*(1.-e);
-            double r_max = a*(1.+e);
-            double vphi_max_r=0., vr_max_r=0., global_max_r=0., sinf_max_r=0.;
-            double vphi_max_rp=0., vr_max_rp=0., global_max_rp=0., sinf_max_rp=0.;
-            if((rp_min<r_min)&&(rp_max>r_max)){         //CASE1: massive planet totally overlaps planetesimal
-                n = sqrt(mu/(a*a*a));
-                vphi_max_r = n*a*(1.+e)/sqrt(1.-e*e);                           //vphi_max is at r_min = a*(1.-e)
-                vphi_max_rp = np*ap*ap*(1.-ep*ep)/(a*(1.-e)*sqrt(1.-ep*ep));    //vphi_max_rp @ r_min
-                vr_max_r = n*a*e/sqrt(1.-e*e);                                  //vr_max_r is at r = a*(1.-e^2.)
-                global_max_rp = ap*(1.-ep*ep);                                  //the distance corresponding to the global vr_max_rp
-                if((global_max_rp>r_max)||(global_max_rp<r_min)){               //take max of boundaries (r_min and r_max)
-                    sinf_max_rp = sqrt(MAX(1.-pow(global_max_rp/(r_min*ep)-1./ep,2.), 1.-pow(global_max_rp/(r_max*ep)-1./ep,2.)));
-                    vr_max_rp = np*ap*ep/sqrt(1.-ep*ep) * sinf_max_rp;
-                } else { vr_max_rp = np*ap*ep/sqrt(1.-ep*ep); }
-            } else if((r_min<rp_min)&&(r_max>rp_max)){  //CASE2: planetesimal totally overlaps planet
-                n = sqrt(mu/(a*a*a));
-                vphi_max_rp = np*ap*(1.+ep)/sqrt(1.-ep*ep);
-                vphi_max_r = n*a*a*(1.-e*e)/(ap*(1.-ep)*sqrt(1.-e*e));
-                vr_max_rp = np*ap*ep/sqrt(1.-ep*ep);
-                global_max_r = a*(1.-e*e);
-                if((global_max_r>rp_max)||(global_max_r<rp_min)){               //take max of boundaries (rp_min and rp_max)
-                    sinf_max_r = sqrt(MAX(1.-pow(global_max_r/(rp_min*e)-1./e,2.), 1.-pow(global_max_r/(rp_max*e)-1./e,2.)));
-                    vr_max_r = n*a*e/sqrt(1.-e*e) * sinf_max_r;
-                } else {vr_max_r = n*a*e/sqrt(1.-e*e);}
-            } else if((rp_max>r_max)&&(r_max>rp_min)){  //CASE3: partial overlap (planetesimal=inner body), boundaries: inner=rp_min, outer=r_max
-                n = sqrt(mu/(a*a*a));
-                vphi_max_r = n*a*a*(1.-e*e)/(ap*(1.-ep)*sqrt(1.-e*e));
-                vphi_max_rp = np*ap*(1.+ep)/sqrt(1.-ep*ep);
-                global_max_r = a*(1.-e*e);
-                if(global_max_r<rp_min){                                        //Since r_max is a minimum of vr, vr_max_r must be at rp_min
-                    vr_max_r = n*a*e*sqrt((1.-pow(global_max_r/(rp_min*e)-1./e,2.))/(1.-e*e));
-                } else {vr_max_r = n*a*e/sqrt(1.-e*e);}
-                global_max_rp = ap*(1.-ep*ep);
-                if(global_max_rp>r_max){                                        //Since rp_min is a minimum of vr, vr_max_rp must be at r_max
-                    vr_max_rp = np*ap*ep*sqrt((1.-pow(global_max_rp/(r_max*ep)-1./ep,2.))/(1.-ep*ep));
-                } else {vr_max_rp = np*ap*ep/sqrt(1.-ep*ep);}
-            } else if((r_max>rp_max)&&(rp_max>r_min)){  //CASE4: partial overlap (planet=inner body), boundaries: inner=r_min, outer=rp_max
-                n = sqrt(mu/(a*a*a));
-                vphi_max_r = n*a*(1.+e)/sqrt(1.-e*e);
-                vphi_max_rp = np*ap*ap*(1.-ep*ep)/(a*(1.-e)*sqrt(1.-ep*ep));
-                global_max_r = a*(1.-e*e);
-                if(global_max_r>rp_max){                                        //Since r_min is a minimum of vr, vr_max_r must be at rp_max
-                    vr_max_r = n*a*e*sqrt((1.-pow(global_max_r/(rp_max*e)-1./e,2.))/(1.-e*e));
-                } else {vr_max_r = n*a*e/sqrt(1.-e*e);}
-                global_max_rp = ap*(1.-ep*ep);
-                if(global_max_rp<r_min){                                        //Since rp_max is a minimum of vr, vr_max_rp must be at r_min
-                    vr_max_rp = np*ap*ep*sqrt((1.-pow(global_max_rp/(r_min*ep)-1./ep,2.))/(1.-ep*ep));
-                } else {vr_max_rp = np*ap*ep/sqrt(1.-ep*ep);}
-            }
-            //We calculate vrel_max the following way since it can be solved analytically. The correct way to find vrel_max is not easily
-            //done (leads to a quartic soln). This estimate is guaranteed to be larger than the correct way, leading to a more conservative
-            //estimate of min_dt_enc.
-            double vrel_max2 = (vr_max_rp+vr_max_r)*(vr_max_rp+vr_max_r) + (vphi_max_rp-vphi_max_r)*(vphi_max_rp-vphi_max_r);
-            if(vrel_max2 > 0.){
-                double rhill_sum = ap*pow(particles[i].m/(3.*m0),1./3.) + a*pow(particles[j].m/(3.*m0),1./3.);
-                double dt_enc2 = rhill_sum*rhill_sum/vrel_max2;
-                min_dt_enc2 = MIN(min_dt_enc2,dt_enc2);
-            }
-        }
+static void reb_integrator_hermes_autocalc_HSF(struct reb_simulation* r, struct reb_particle com, double* min_dt_enc2, int i, int j){
+    const double m0 = r->particles[0].m;
+    const double mu = r->G*m0;
+    double ep, ap, e, a, n, np;
+    reb_integrator_hermes_get_ae(r, com, i, &ap, &ep);
+    reb_integrator_hermes_get_ae(r, com, j, &a, &e);
+    double rp_min = ap*(1.-ep);
+    double rp_max = ap*(1.+ep);
+    double r_min = a*(1.-e);
+    double r_max = a*(1.+e);
+    double vphi_max_rp=0., vr_max_rp=0., global_max_rp=0., sinf_max_rp=0.;  //planet
+    double vphi_max_r=0., vr_max_r=0., global_max_r=0., sinf_max_r=0.;  //planetesimal (or second massive planet)
+    if((rp_min<r_min)&&(rp_max>r_max)){         //CASE1: massive planet totally overlaps planetesimal
+        n = sqrt(mu/(a*a*a));
+        np = sqrt(mu/(ap*ap*ap));
+        vphi_max_r = n*a*(1.+e)/sqrt(1.-e*e);                           //vphi_max is at r_min = a*(1.-e)
+        vphi_max_rp = np*ap*ap*(1.-ep*ep)/(a*(1.-e)*sqrt(1.-ep*ep));    //vphi_max_rp @ r_min
+        vr_max_r = n*a*e/sqrt(1.-e*e);                                  //vr_max_r is at r = a*(1.-e^2.)
+        global_max_rp = ap*(1.-ep*ep);                                  //the distance corresponding to the global vr_max_rp
+        if((global_max_rp>r_max)||(global_max_rp<r_min)){               //take max of boundaries (r_min and r_max)
+            sinf_max_rp = sqrt(MAX(1.-pow(global_max_rp/(r_min*ep)-1./ep,2.), 1.-pow(global_max_rp/(r_max*ep)-1./ep,2.)));
+            vr_max_rp = np*ap*ep/sqrt(1.-ep*ep) * sinf_max_rp;
+        } else { vr_max_rp = np*ap*ep/sqrt(1.-ep*ep); }
+    } else if((r_min<rp_min)&&(r_max>rp_max)){  //CASE2: planetesimal totally overlaps planet
+        n = sqrt(mu/(a*a*a));
+        np = sqrt(mu/(ap*ap*ap));
+        vphi_max_rp = np*ap*(1.+ep)/sqrt(1.-ep*ep);
+        vphi_max_r = n*a*a*(1.-e*e)/(ap*(1.-ep)*sqrt(1.-e*e));
+        vr_max_rp = np*ap*ep/sqrt(1.-ep*ep);
+        global_max_r = a*(1.-e*e);
+        if((global_max_r>rp_max)||(global_max_r<rp_min)){               //take max of boundaries (rp_min and rp_max)
+            sinf_max_r = sqrt(MAX(1.-pow(global_max_r/(rp_min*e)-1./e,2.), 1.-pow(global_max_r/(rp_max*e)-1./e,2.)));
+            vr_max_r = n*a*e/sqrt(1.-e*e) * sinf_max_r;
+        } else {vr_max_r = n*a*e/sqrt(1.-e*e);}
+    } else if((rp_max>r_max)&&(r_max>rp_min)){  //CASE3: partial overlap (planetesimal=inner body), boundaries: inner=rp_min, outer=r_max
+        n = sqrt(mu/(a*a*a));
+        np = sqrt(mu/(ap*ap*ap));
+        vphi_max_r = n*a*a*(1.-e*e)/(ap*(1.-ep)*sqrt(1.-e*e));
+        vphi_max_rp = np*ap*(1.+ep)/sqrt(1.-ep*ep);
+        global_max_r = a*(1.-e*e);
+        if(global_max_r<rp_min){                                        //Since r_max is a minimum of vr, vr_max_r must be at rp_min
+            vr_max_r = n*a*e*sqrt((1.-pow(global_max_r/(rp_min*e)-1./e,2.))/(1.-e*e));
+        } else {vr_max_r = n*a*e/sqrt(1.-e*e);}
+        global_max_rp = ap*(1.-ep*ep);
+        if(global_max_rp>r_max){                                        //Since rp_min is a minimum of vr, vr_max_rp must be at r_max
+            vr_max_rp = np*ap*ep*sqrt((1.-pow(global_max_rp/(r_max*ep)-1./ep,2.))/(1.-ep*ep));
+        } else {vr_max_rp = np*ap*ep/sqrt(1.-ep*ep);}
+    } else if((r_max>rp_max)&&(rp_max>r_min)){  //CASE4: partial overlap (planet=inner body), boundaries: inner=r_min, outer=rp_max
+        n = sqrt(mu/(a*a*a));
+        np = sqrt(mu/(ap*ap*ap));
+        vphi_max_r = n*a*(1.+e)/sqrt(1.-e*e);
+        vphi_max_rp = np*ap*ap*(1.-ep*ep)/(a*(1.-e)*sqrt(1.-ep*ep));
+        global_max_r = a*(1.-e*e);
+        if(global_max_r>rp_max){                                        //Since r_min is a minimum of vr, vr_max_r must be at rp_max
+            vr_max_r = n*a*e*sqrt((1.-pow(global_max_r/(rp_max*e)-1./e,2.))/(1.-e*e));
+        } else {vr_max_r = n*a*e/sqrt(1.-e*e);}
+        global_max_rp = ap*(1.-ep*ep);
+        if(global_max_rp<r_min){                                        //Since rp_max is a minimum of vr, vr_max_rp must be at r_min
+            vr_max_rp = np*ap*ep*sqrt((1.-pow(global_max_rp/(r_min*ep)-1./ep,2.))/(1.-ep*ep));
+        } else {vr_max_rp = np*ap*ep/sqrt(1.-ep*ep);}
     }
-    
-    if(min_dt_enc2 < INFINITY){
-        double dt2 = 16.*r->dt*r->dt;                                           //Factor of 4:hill sphere > 4*length scales for wiggle room
-        double HSF_new = sqrt(dt2/min_dt_enc2);
-        double base = 1.25;
-        double exp = ceilf(log10(HSF_new)/log10(base));                         //round HSF up to nearest multiple of 1.25
-        HSF_new = pow(base,exp);
-        r->ri_hermes.current_hill_switch_factor = MAX(r->ri_hermes.current_hill_switch_factor, HSF_new); // Increase HSF if needed
+
+    //We calculate vrel_max the following way since it can be solved analytically. The correct way to find vrel_max is not easily
+    //done (leads to a quartic soln). This estimate is guaranteed to be larger than the correct way, leading to a more conservative
+    //estimate of min_dt_enc.
+    double vrel_max2 = (vr_max_rp+vr_max_r)*(vr_max_rp+vr_max_r) + (vphi_max_rp-vphi_max_r)*(vphi_max_rp-vphi_max_r);
+    if(vrel_max2 > 0.){
+        double rhill_sum = ap*pow(r->particles[i].m/(3.*m0),1./3.) + a*pow(r->particles[j].m/(3.*m0),1./3.);
+        double dt_enc2 = rhill_sum*rhill_sum/vrel_max2;
+        *min_dt_enc2 = MIN(*min_dt_enc2,dt_enc2);
     }
 }
 
