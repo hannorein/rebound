@@ -287,6 +287,7 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(SANEXT,             &r->simulationarchive_next,         sizeof(long));
     WRITE_FIELD(SAWALLTIME,         &r->simulationarchive_walltime,     sizeof(double));
     WRITE_FIELD(COLLISION,          &r->collision,                      sizeof(int));
+    WRITE_FIELD(VISUALIZATION,      &r->visualization,                  sizeof(int));
     WRITE_FIELD(INTEGRATOR,         &r->integrator,                     sizeof(int));
     WRITE_FIELD(BOUNDARY,           &r->boundary,                       sizeof(int));
     WRITE_FIELD(GRAVITY,            &r->gravity,                        sizeof(int));

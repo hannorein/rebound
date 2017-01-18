@@ -59,7 +59,9 @@ enum REB_STATUS {
     REB_EXIT_USER = 5,          ///< User caused exit, simulation did not finish successfully.
 };
 
+// Forward declarations
 struct reb_simulation;
+struct reb_display_data;
 
 /**
  * @brief Generic 3d vector, for internal use only.
@@ -363,6 +365,7 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_WHFAST_PJ = 104,
     REB_BINARY_FIELD_TYPE_WHFAST_ETA = 105,
     REB_BINARY_FIELD_TYPE_WHFASTH_PH = 106,
+    REB_BINARY_FIELD_TYPE_VISUALIZATION = 107,
     REB_BINARY_FIELD_TYPE_END = 9999,
 };
 
@@ -602,11 +605,13 @@ struct reb_simulation {
     unsigned int force_is_velocity_dependent;   ///< Set to 1 if integrator needs to consider velocity dependent forces.  
     unsigned int gravity_ignore_terms; ///< Ignore the gravity form the central object (1 for WHFast, 2 for WHFastHelio, 0 otherwise)
     double output_timing_last;      ///< Time when reb_output_timing() was called the last time. 
+    unsigned long display_clock;    ///< Display clock, internal variable for timing refreshs.
     int save_messages;              ///< Set to 1 to ignore messages (used in python interface).
     char** messages;                ///< Array of strings containing last messages (only used if save_messages==1). 
     double exit_max_distance;       ///< Exit simulation if distance from origin larger than this value 
     double exit_min_distance;       ///< Exit simulation if distance from another particle smaller than this value 
-    double usleep;                  ///< Wait this number of microseconds after each timestep, useful for slowing down visualization. Set to negative value to disable visualization (despite compiling with OPENGL=1).  
+    double usleep;                  ///< Wait this number of microseconds after each timestep, useful for slowing down visualization.  
+    struct reb_display_data* display_data; /// < Datastructure stores visualization related data. Does not have to be modified by the user. 
     int track_energy_offset;        ///< Track energy change during collisions and ejections (default: 0).
     double energy_offset;           ///< Energy offset due to collisions and ejections (only calculated if track_energy_offset=1).
     /** @} */
@@ -701,6 +706,14 @@ struct reb_simulation {
      * @brief Available collision routines
      */
     enum {
+        REB_VISUALIZATION_NONE = 0,     ///< No visualization (default if OPENGL compiler flag is turned off)
+        REB_VISUALIZATION_OPENGL = 1,   ///< OpenGL visualization (default if OPENGL compiler flag is turned on)
+        REB_VISUALIZATION_WEBGL = 2,    ///< WebGL visualization, only usable from Jupyter notebook widget
+        } visualization;
+    /**
+     * @brief Available collision routines
+     */
+    enum {
         REB_COLLISION_NONE = 0,     ///< Do not search for collisions (default)
         REB_COLLISION_DIRECT = 1,   ///< Direct collision search O(N^2)
         REB_COLLISION_TREE = 2,     ///< Tree based collision search O(N log(N))
@@ -768,6 +781,11 @@ struct reb_simulation {
      * each timestep.
      */
     void (*heartbeat) (struct reb_simulation* r);
+    /**
+     * @brief This function is called at the beginning of the simulation and at the end of
+     * each timestep.
+     */
+    void (*display_heartbeat) (struct reb_simulation* r);
     /**
      * @brief Return the coefficient of restitution. By default it is NULL, assuming a coefficient of 1.
      * @details The velocity of the collision is given to allow for velocity dependent coefficients
@@ -1609,30 +1627,42 @@ int reb_get_next_message(struct reb_simulation* const r, char* const buf);
 /** @} */
 /** @} */
 
-#ifdef OPENGL
 /**
  * @cond PRIVATE
- * Related to OpenGL visualization. Nothing to be changed by the user.
+ * Related to OpenGL/WebGL visualization. Nothing to be changed by the user.
  */
 struct reb_quaternion {
     double x, y, z, w;
 };
+struct reb_particle_opengl {
+    float x,y,z;
+    float vx,vy,vz;
+    float r;
+};
+struct reb_orbit_opengl {
+    float x,y,z;
+    float a, e, f;
+    float omega, Omega, inc;
+};
 
 struct reb_display_data {
     struct reb_simulation* r;
-    double tmax;
-    enum REB_STATUS return_status;
     struct reb_simulation* r_copy;
+    struct reb_particle_opengl* particle_data;
+    struct reb_orbit_opengl* orbit_data;
     struct reb_particle* particles_copy;
-    double* eta_copy;
-    double retina;
     struct reb_particle* p_j_copy;
     struct reb_particle* p_h_copy;
+    double* eta_copy;
     unsigned long allocated_N;
     unsigned long allocated_N_whfast;
     unsigned long allocated_N_whfasthelio;
     unsigned int opengl_enabled;
-    pthread_mutex_t* mutex;         /**< Mutex to guarantee non-flickering */
+    double scale;
+    double mouse_x;
+    double mouse_y;
+    double retina;
+    pthread_mutex_t mutex;          /**< Mutex to guarantee non-flickering */
     int spheres;                    /**< Switches between point sprite and real spheres. */
     int pause;                      /**< Pauses visualization, but keep simulation running */
     int wire;                       /**< Shows/hides orbit wires. */
@@ -1644,10 +1674,7 @@ struct reb_display_data {
     int reference;                  /**< reb_particle used as a reference for centering. */
     unsigned int mouse_action;      
     unsigned int key_mods;      
-    double mouse_x;
-    double mouse_y;
     struct reb_quaternion view;
-    double scale;
     unsigned int simplefont_tex;
     unsigned int simplefont_shader_program;
     unsigned int simplefont_shader_vao;
@@ -1674,13 +1701,6 @@ struct reb_display_data {
     unsigned int orbit_shader_particle_vao;
     unsigned int orbit_shader_vertex_count;
 };
-#else //OPENGL
-struct reb_display_data {
-    struct reb_simulation* r;
-    double tmax;
-    enum REB_STATUS return_status;
-};
-#endif // OPENGL
 /**
  * @cond PRIVATE
  */

@@ -3,6 +3,11 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.2.0
+--------------
+* Added real-time interactive 3D visualizations using WebGL for Jupyter notebooks. This is an early release. Not everything might be working yet and new feature will be added to the widget class. To try it out, simply run `sim.getWidget()` in a Jupyter notebook. Note that you need to have ipywidgets installed and enabled. 
+* Minor changes to the Visualization backend. This should not have any consequences for users.
+
 
 Version 3.1.1
 --------------
