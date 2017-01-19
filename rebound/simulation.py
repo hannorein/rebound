@@ -982,8 +982,6 @@ class Simulation(Structure):
                     raise ValueError("The tree code for gravity and/or collision detection has been selected. However, the simulation box has not been configured yet. You cannot add particles until the the simulation box has a finite size.")
 
                 clibrebound.reb_add(byref(self), particle)
-                if hasattr(self, '_widgets'):
-                    self._display_heartbeat(pointer(self))
             elif isinstance(particle, list):
                 for p in particle:
                     self.add(p)
@@ -996,6 +994,8 @@ class Simulation(Structure):
                 raise ValueError("Argument passed to add() not supported.")
         else: 
             self.add(Particle(simulation=self, **kwargs))
+        if hasattr(self, '_widgets'):
+            self._display_heartbeat(pointer(self))
 
 # Particle getter functions
     @property
