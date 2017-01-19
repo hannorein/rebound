@@ -41,10 +41,10 @@
 #include "display.h"
 #include "output.h"
 #include "integrator.h"
-#include "simplefont.h"
 #define MAX(a, b) ((a) < (b) ? (b) : (a))       ///< Returns the maximum of a and b
 
 #ifdef OPENGL
+#include "simplefont.h"
 #define GLFW_INCLUDE_NONE
 #include "glad.h"
 #include <GLFW/glfw3.h>
