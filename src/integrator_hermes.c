@@ -118,14 +118,14 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
     
     reb_integrator_hermes_apply_forces(r, r->ri_hermes.a_i);
     
-    reb_integrator_whfast_part1(r);
-    //reb_integrator_whfasthelio_part1(r);
+    //reb_integrator_whfast_part1(r);
+    reb_integrator_whfasthelio_part1(r);
 }
 
 
 void reb_integrator_hermes_part2(struct reb_simulation* r){
-    reb_integrator_whfast_part2(r);
-    //reb_integrator_whfasthelio_part2(r);
+    //reb_integrator_whfast_part2(r);
+    reb_integrator_whfasthelio_part2(r);
     
     reb_integrator_hermes_apply_forces(r, r->ri_hermes.a_f);
     
