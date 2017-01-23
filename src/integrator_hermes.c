@@ -43,8 +43,10 @@
 static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* r);
 static void reb_integrator_hermes_additional_forces_mini(struct reb_simulation* mini);
 static void reb_integrator_hermes_apply_forces(const struct reb_simulation* r, double* a);
-static void reb_integrator_hermes_autocalc_HSF(struct reb_simulation* r, struct reb_particle com, double* min_dt_enc2, int i, int j);
-static void reb_integrator_hermes_get_ae(struct reb_simulation* r, struct reb_particle com, int index, double* a, double* e);
+static void reb_integrator_hermes_get_ae(struct reb_simulation* r, int index, double* a, double* e);
+static void reb_integrator_hermes_autocalc_HSF(struct reb_simulation* r, double* min_dt_enc2, int i, int j);
+static void reb_integrator_hermes_autocalc_HSF_case_total_overlap(double mu, double ri_min, double ri_max, double ai, double ei, double* vphi_max_i, double* vr_max_i, double aj, double ej, double rj_min, double rj_max, double* vphi_max_j, double* vr_max_j);
+static void reb_integrator_hermes_autocalc_HSF_case_partial_overlap(double mu, double ri_min, double ri_max, double ai, double ei, double* vphi_max_i, double* vr_max_i, double aj, double ej, double rj_min, double rj_max, double* vphi_max_j, double* vr_max_j);
 
 void reb_integrator_hermes_part1(struct reb_simulation* r){
     r->gravity_ignore_terms = 0;
@@ -116,14 +118,14 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
     
     reb_integrator_hermes_apply_forces(r, r->ri_hermes.a_i);
     
-    //reb_integrator_whfast_part1(r);
-    reb_integrator_whfasthelio_part1(r);
+    reb_integrator_whfast_part1(r);
+    //reb_integrator_whfasthelio_part1(r);
 }
 
 
 void reb_integrator_hermes_part2(struct reb_simulation* r){
-    //reb_integrator_whfast_part2(r);
-    reb_integrator_whfasthelio_part2(r);
+    reb_integrator_whfast_part2(r);
+    //reb_integrator_whfasthelio_part2(r);
     
     reb_integrator_hermes_apply_forces(r, r->ri_hermes.a_f);
     
@@ -192,7 +194,6 @@ static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* glo
     double hill_switch_factor2 = current_hill_switch_factor*current_hill_switch_factor;
     double min_dt_enc2 = INFINITY;
     double min_dt_enc2_autoHSF = INFINITY;
-    struct reb_particle com = reb_get_com(global);
     for (int i=0; i<_N_active; i++){
         struct reb_particle pi = global_particles[i];
         const double dxi = p0.x - pi.x;
@@ -238,7 +239,7 @@ static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* glo
                     global->ri_hermes.global_index_from_mini_index[global->ri_hermes.global_index_from_mini_index_N] = j;
                     global->ri_hermes.global_index_from_mini_index_N++;
                 }
-            } else if(global->ri_hermes.adaptive_hill_switch_factor) reb_integrator_hermes_autocalc_HSF(global, com, &min_dt_enc2_autoHSF, i, j); //find autoHSF
+            } else if(global->ri_hermes.adaptive_hill_switch_factor) reb_integrator_hermes_autocalc_HSF(global, &min_dt_enc2_autoHSF, i, j); //find autoHSF
         }
     }
     if(global->ri_hermes.adaptive_hill_switch_factor){      //Calc optimal HSF value from min_dt_enc2_autoHSF value found in for loop
@@ -259,76 +260,72 @@ static void reb_integrator_hermes_check_for_encounter(struct reb_simulation* glo
 }
 
 //get min encounter time between overlapping orbits
-static void reb_integrator_hermes_autocalc_HSF(struct reb_simulation* r, struct reb_particle com, double* min_dt_enc2, int i, int j){
+//Using subscripts i and j for related variables, corresponding to bodies 'i' and 'j'
+static void reb_integrator_hermes_autocalc_HSF(struct reb_simulation* r, double* min_dt_enc2, int i, int j){
     const double m0 = r->particles[0].m;
     const double mu = r->G*m0;
-    double ep, ap, e, a, n, np;
-    reb_integrator_hermes_get_ae(r, com, i, &ap, &ep);
-    reb_integrator_hermes_get_ae(r, com, j, &a, &e);
-    double rp_min = ap*(1.-ep);
-    double rp_max = ap*(1.+ep);
-    double r_min = a*(1.-e);
-    double r_max = a*(1.+e);
-    double vphi_max_rp=0., vr_max_rp=0., global_max_rp=0., sinf_max_rp=0.;  //planet
-    double vphi_max_r=0., vr_max_r=0., global_max_r=0., sinf_max_r=0.;  //planetesimal (or second massive planet)
-    if((rp_min<r_min)&&(rp_max>r_max)){         //CASE1: massive planet totally overlaps planetesimal
-        n = sqrt(mu/(a*a*a));
-        np = sqrt(mu/(ap*ap*ap));
-        vphi_max_r = n*a*(1.+e)/sqrt(1.-e*e);                           //vphi_max is at r_min = a*(1.-e)
-        vphi_max_rp = np*ap*ap*(1.-ep*ep)/(a*(1.-e)*sqrt(1.-ep*ep));    //vphi_max_rp @ r_min
-        vr_max_r = n*a*e/sqrt(1.-e*e);                                  //vr_max_r is at r = a*(1.-e^2.)
-        global_max_rp = ap*(1.-ep*ep);                                  //the distance corresponding to the global vr_max_rp
-        if((global_max_rp>r_max)||(global_max_rp<r_min)){               //take max of boundaries (r_min and r_max)
-            sinf_max_rp = sqrt(MAX(1.-pow(global_max_rp/(r_min*ep)-1./ep,2.), 1.-pow(global_max_rp/(r_max*ep)-1./ep,2.)));
-            vr_max_rp = np*ap*ep/sqrt(1.-ep*ep) * sinf_max_rp;
-        } else { vr_max_rp = np*ap*ep/sqrt(1.-ep*ep); }
-    } else if((r_min<rp_min)&&(r_max>rp_max)){  //CASE2: planetesimal totally overlaps planet
-        n = sqrt(mu/(a*a*a));
-        np = sqrt(mu/(ap*ap*ap));
-        vphi_max_rp = np*ap*(1.+ep)/sqrt(1.-ep*ep);
-        vphi_max_r = n*a*a*(1.-e*e)/(ap*(1.-ep)*sqrt(1.-e*e));
-        vr_max_rp = np*ap*ep/sqrt(1.-ep*ep);
-        global_max_r = a*(1.-e*e);
-        if((global_max_r>rp_max)||(global_max_r<rp_min)){               //take max of boundaries (rp_min and rp_max)
-            sinf_max_r = sqrt(MAX(1.-pow(global_max_r/(rp_min*e)-1./e,2.), 1.-pow(global_max_r/(rp_max*e)-1./e,2.)));
-            vr_max_r = n*a*e/sqrt(1.-e*e) * sinf_max_r;
-        } else {vr_max_r = n*a*e/sqrt(1.-e*e);}
-    } else if((rp_max>r_max)&&(r_max>rp_min)){  //CASE3: partial overlap (planetesimal=inner body), boundaries: inner=rp_min, outer=r_max
-        n = sqrt(mu/(a*a*a));
-        np = sqrt(mu/(ap*ap*ap));
-        vphi_max_r = n*a*a*(1.-e*e)/(ap*(1.-ep)*sqrt(1.-e*e));
-        vphi_max_rp = np*ap*(1.+ep)/sqrt(1.-ep*ep);
-        global_max_r = a*(1.-e*e);
-        if(global_max_r<rp_min){                                        //Since r_max is a minimum of vr, vr_max_r must be at rp_min
-            vr_max_r = n*a*e*sqrt((1.-pow(global_max_r/(rp_min*e)-1./e,2.))/(1.-e*e));
-        } else {vr_max_r = n*a*e/sqrt(1.-e*e);}
-        global_max_rp = ap*(1.-ep*ep);
-        if(global_max_rp>r_max){                                        //Since rp_min is a minimum of vr, vr_max_rp must be at r_max
-            vr_max_rp = np*ap*ep*sqrt((1.-pow(global_max_rp/(r_max*ep)-1./ep,2.))/(1.-ep*ep));
-        } else {vr_max_rp = np*ap*ep/sqrt(1.-ep*ep);}
-    } else if((r_max>rp_max)&&(rp_max>r_min)){  //CASE4: partial overlap (planet=inner body), boundaries: inner=r_min, outer=rp_max
-        n = sqrt(mu/(a*a*a));
-        np = sqrt(mu/(ap*ap*ap));
-        vphi_max_r = n*a*(1.+e)/sqrt(1.-e*e);
-        vphi_max_rp = np*ap*ap*(1.-ep*ep)/(a*(1.-e)*sqrt(1.-ep*ep));
-        global_max_r = a*(1.-e*e);
-        if(global_max_r>rp_max){                                        //Since r_min is a minimum of vr, vr_max_r must be at rp_max
-            vr_max_r = n*a*e*sqrt((1.-pow(global_max_r/(rp_max*e)-1./e,2.))/(1.-e*e));
-        } else {vr_max_r = n*a*e/sqrt(1.-e*e);}
-        global_max_rp = ap*(1.-ep*ep);
-        if(global_max_rp<r_min){                                        //Since rp_max is a minimum of vr, vr_max_rp must be at r_min
-            vr_max_rp = np*ap*ep*sqrt((1.-pow(global_max_rp/(r_min*ep)-1./ep,2.))/(1.-ep*ep));
-        } else {vr_max_rp = np*ap*ep/sqrt(1.-ep*ep);}
+    double ei, ai, ej, aj;
+    reb_integrator_hermes_get_ae(r, i, &ai, &ei);
+    reb_integrator_hermes_get_ae(r, j, &aj, &ej);
+    double ri_min = ai*(1.-ei);
+    double ri_max = ai*(1.+ei);
+    double rj_min = aj*(1.-ej);
+    double rj_max = aj*(1.+ej);
+    double vphi_max_i=0., vr_max_i=0.;            //max phi_hat velocity, max r_hat velocity for body i
+    double vphi_max_j=0., vr_max_j=0.;            //max phi_hat velocity, max r_hat velocity for body j
+    if((ri_max>rj_max)&&(ri_min<rj_min)){         //CASE1: body i totally overlaps body j
+        reb_integrator_hermes_autocalc_HSF_case_total_overlap(mu, ri_min, ri_max, ai, ei, &vphi_max_i, &vr_max_i, aj, ej, rj_min, rj_max, &vphi_max_j, &vr_max_j);
+    } else if((rj_max>ri_max)&&(rj_min<ri_min)){  //CASE2: body j totally overlaps body i
+        reb_integrator_hermes_autocalc_HSF_case_total_overlap(mu, rj_min, rj_max, aj, ej, &vphi_max_j, &vr_max_j, ai, ei, ri_min, ri_max, &vphi_max_i, &vr_max_i);
+    } else if((rj_max>ri_max)&&(rj_min<ri_max)){  //CASE3: partial overlap (i=inner body), boundaries: inner=rj_min, outer=ri_max
+        reb_integrator_hermes_autocalc_HSF_case_partial_overlap(mu, ri_min, ri_max, ai, ei, &vphi_max_i, &vr_max_i, aj, ej, rj_min, rj_max, &vphi_max_j, &vr_max_j);
+    } else if((ri_max>rj_max)&&(ri_min<rj_max)){  //CASE4: partial overlap (j=inner body), boundaries: inner=ri_min, outer=rj_max
+        reb_integrator_hermes_autocalc_HSF_case_partial_overlap(mu, rj_min, rj_max, aj, ej, &vphi_max_j, &vr_max_j, ai, ei, ri_min, ri_max, &vphi_max_i, &vr_max_i);
     }
-
     //We calculate vrel_max the following way since it can be solved analytically. The correct way to find vrel_max is not easily
     //done (leads to a quartic soln). This estimate is guaranteed to be larger than the correct way, leading to a more conservative
     //estimate of min_dt_enc.
-    double vrel_max2 = (vr_max_rp+vr_max_r)*(vr_max_rp+vr_max_r) + (vphi_max_rp-vphi_max_r)*(vphi_max_rp-vphi_max_r);
+    double vrel_max2 = (vr_max_i+vr_max_j)*(vr_max_i+vr_max_j) + (vphi_max_i-vphi_max_j)*(vphi_max_i-vphi_max_j);
     if(vrel_max2 > 0.){
-        double rhill_sum = ap*pow(r->particles[i].m/(3.*m0),1./3.) + a*pow(r->particles[j].m/(3.*m0),1./3.);
+        double rhill_sum = ai*pow(r->particles[i].m/(3.*m0),1./3.) + aj*pow(r->particles[j].m/(3.*m0),1./3.);
         double dt_enc2 = rhill_sum*rhill_sum/vrel_max2;
         *min_dt_enc2 = MIN(*min_dt_enc2,dt_enc2);
+    }
+}
+
+static void reb_integrator_hermes_autocalc_HSF_case_total_overlap(double mu, double ri_min, double ri_max, double ai, double ei, double* vphi_max_i, double* vr_max_i, double aj, double ej, double rj_min, double rj_max, double* vphi_max_j, double* vr_max_j){
+    //body 'i' completely overlaps body 'j'
+    const double sqrt_termj = sqrt(1.-ej*ej);
+    const double sqrt_termi = sqrt(1.-ei*ei);
+    const double ni = sqrt(mu/(ai*ai*ai));
+    const double nj = sqrt(mu/(aj*aj*aj));
+    *vphi_max_j = nj*aj*(1.+ej)/sqrt_termj;             //max phi velocity (j) is @ rj_min = aj*(1.-ej)
+    *vphi_max_i = ni*ai*ai*sqrt_termi/(aj*(1.-ej));     //max phi velocity (i) is *also* @ rj_min = aj*(1.-ej), i.e. the smallest distance in the total overlap region
+    *vr_max_j = nj*aj*ej/sqrt_termj;                    //max radial velocity (j) is @ rj = aj*(1.-ej^2.)
+    *vr_max_i = ni*ai*ei/sqrt_termi;                    //max radial velocity (i) is @ ri = ai*(1.-ei^2.), *but check if this falls in overlap region*
+    double loc_vr_max_i = ai*(1.-ei*ei);                //location of max radial velocity (i)
+    if((loc_vr_max_i>rj_max)||(loc_vr_max_i<rj_min)){   //is loc_vr_max_i outside the overlap region?
+        *vr_max_i *= sqrt(MAX( 1.-pow(loc_vr_max_i/(rj_min*ei)-1./ei,2.), 1.-pow(loc_vr_max_i/(rj_max*ei)-1./ei,2.) )); //if so, vr_max_i = MAX(vr(rj_min), vr(rj_max))
+    }
+}
+
+static void reb_integrator_hermes_autocalc_HSF_case_partial_overlap(double mu, double ri_min, double ri_max, double ai, double ei, double* vphi_max_i, double* vr_max_i, double aj, double ej, double rj_min, double rj_max, double* vphi_max_j, double* vr_max_j){
+    //body 'i' is interior to body 'j'
+    const double sqrt_termj = sqrt(1.-ej*ej);
+    const double sqrt_termi = sqrt(1.-ei*ei);
+    const double ni = sqrt(mu/(ai*ai*ai));
+    const double nj = sqrt(mu/(aj*aj*aj));
+    *vphi_max_j = nj*aj*(1.+ej)/sqrt_termj;             //max phi velocity (j) is @ rj_min = aj*(1.-ej)
+    *vphi_max_i = ni*ai*ai*sqrt_termi/(aj*(1.-ej));     //max phi velocity (i) is *also* @ rj_min = aj*(1.-ej), i.e. the smallest distance in the total overlap region
+    *vr_max_j = nj*aj*ej/sqrt_termj;                    //max radial velocity (j) is @ rj = aj*(1.-ej^2.), *but check if this falls in overlap region*
+    *vr_max_i = ni*ai*ei/sqrt_termi;                    //max radial velocity (i) is @ ri = ai*(1.-ei^2.), *but check if this falls in overlap region*
+    double loc_vr_max_i = ai*(1.-ei*ei);                //location of max radial velocity (i) is @ ri = ai*(1.-ei^2.)
+    double loc_vr_max_j = aj*(1.-ej*ej);                //location of max radial velocity (j) is @ rj = aj*(1.-ej^2.)
+    if(loc_vr_max_i<rj_min){                            //is loc_vr_max_i outside the overlap region?
+        *vr_max_i *= sqrt(1.-pow(loc_vr_max_i/(rj_min*ei)-1./ei,2.));  //if so, vr_max_i occurs at rj_min
+    }
+    if(loc_vr_max_j>ri_max){                            //is loc_vr_max_j outside the overlap region?
+        *vr_max_j *= sqrt(1.-pow(loc_vr_max_j/(ri_max*ej)-1./ej,2.));  //if so, vr_max_i occurs at ri_max
     }
 }
 
@@ -391,19 +388,20 @@ static void reb_integrator_hermes_additional_forces_mini(struct reb_simulation* 
     }
 }
 
-static void reb_integrator_hermes_get_ae(struct reb_simulation* r, struct reb_particle com, int index, double* a, double* e){
-    const double G = r->G;
-    const double mu = G*r->particles[0].m;
-    const double muinv = 1./mu;
+static void reb_integrator_hermes_get_ae(struct reb_simulation* r, int index, double* a, double* e){
+    struct reb_particle m0 = r->particles[0];
     struct reb_particle* particles = r->particles;
+    const double G = r->G;
+    const double mu = G*m0.m;
+    const double muinv = 1./mu;
     
     struct reb_particle p = particles[index];
-    const double dvx = p.vx-com.vx;
-    const double dvy = p.vy-com.vy;
-    const double dvz = p.vz-com.vz;
-    const double dx = p.x-com.x;
-    const double dy = p.y-com.y;
-    const double dz = p.z-com.z;
+    const double dvx = p.vx-m0.vx;
+    const double dvy = p.vy-m0.vy;
+    const double dvz = p.vz-m0.vz;
+    const double dx = p.x-m0.x;
+    const double dy = p.y-m0.y;
+    const double dz = p.z-m0.z;
     const double v2 = dvx*dvx + dvy*dvy + dvz*dvz;
     const double d = sqrt(dx*dx + dy*dy + dz*dz);   //distance
     const double dinv = 1./d;
