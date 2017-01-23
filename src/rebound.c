@@ -52,9 +52,7 @@
 #ifdef MPI
 #include "communication_mpi.h"
 #endif
-#ifdef OPENGL
 #include "display.h"
-#endif // OPENGL
 #ifdef OPENMP
 #include <omp.h>
 #endif
@@ -65,7 +63,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.1.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.2.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 void reb_step(struct reb_simulation* const r){
@@ -263,6 +261,17 @@ void reb_free_simulation(struct reb_simulation* const r){
 
 void reb_free_pointers(struct reb_simulation* const r){
     reb_tree_delete(r);
+    if(r->display_data){
+        pthread_mutex_destroy(&(r->display_data->mutex));
+        free(r->display_data->r_copy);
+        free(r->display_data->particles_copy);
+        free(r->display_data->eta_copy);
+        free(r->display_data->p_j_copy);
+        free(r->display_data->p_h_copy);
+        free(r->display_data->particle_data);
+        free(r->display_data->orbit_data);
+        free(r->display_data); // TODO: Free other pointers in display_data
+    }
     free(r->gravity_cs  );
     free(r->collisions  );
     reb_integrator_whfast_reset(r);
@@ -393,6 +402,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->output_timing_last   = -1;
     r->save_messages = 0;
     r->track_energy_offset = 0;
+    r->display_data = NULL;
 
     r->minimum_collision_velocity = 0;
     r->collisions_plog  = 0;
@@ -408,6 +418,11 @@ void reb_init_simulation(struct reb_simulation* r){
     r->simulationarchive_filename    = NULL;    
     
     // Default modules
+#ifdef OPENGL
+    r->visualization= REB_VISUALIZATION_OPENGL;
+#else // OPENGL
+    r->visualization= REB_VISUALIZATION_NONE;
+#endif // OPENGL
     r->integrator   = REB_INTEGRATOR_IAS15;
     r->boundary     = REB_BOUNDARY_NONE;
     r->gravity      = REB_GRAVITY_BASIC;
@@ -548,9 +563,11 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
     return r->status;
 }
 
+
 void reb_run_heartbeat(struct reb_simulation* const r){
     if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
     if (r->heartbeat){ r->heartbeat(r); }               // Heartbeat
+    if (r->display_heartbeat){ reb_check_for_display_heartbeat(r); } 
     if (r->exit_max_distance){
         // Check for escaping particles
         const double max2 = r->exit_max_distance * r->exit_max_distance;
@@ -591,113 +608,93 @@ void reb_run_heartbeat(struct reb_simulation* const r){
 ////////////////////////////////////////////////////
 ///  Integrate functions and visualization stuff
 
+struct reb_thread_info {
+    struct reb_simulation* r;
+    double tmax;
+};
 
-void * reb_integrate_without_visualization(void* args){
+static void* reb_integrate_raw(void* args){
+    struct reb_thread_info* thread_info = (struct reb_thread_info*)args;
 #ifdef MPI
     // Distribute particles
     reb_communication_mpi_distribute_particles(r);
 #endif // MPI
-    struct reb_display_data* data = (struct reb_display_data*)args;
-    struct reb_simulation* r = data->r;
-    double tmax = data->tmax;
-#ifdef OPENGL
-    pthread_mutex_t* display_mutex = data->mutex;
-    unsigned int opengl_enabled = data->opengl_enabled;
-#endif //: OPENGL
-
-#ifndef LIBREBOUND
-    struct timeval tim;
-    gettimeofday(&tim, NULL);
-    double timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
-#endif // LIBREBOUND
+    struct reb_simulation* const r = thread_info->r;
 
     double last_full_dt = r->dt; // need to store r->dt in case timestep gets artificially shrunk to meet exact_finish_time=1
 
     r->status = REB_RUNNING;
     reb_run_heartbeat(r);
-    while(reb_check_exit(r,tmax,&last_full_dt)<0){
+    while(reb_check_exit(r,thread_info->tmax,&last_full_dt)<0){
 #ifdef OPENGL
-        if (opengl_enabled){ pthread_mutex_lock(display_mutex); }
+        if (r->display_data){
+            if (r->display_data->opengl_enabled){ pthread_mutex_lock(&(r->display_data->mutex)); }
+        }
 #endif // OPENGL
         reb_step(r); 
         reb_run_heartbeat(r);
 #ifdef OPENGL
-        if (opengl_enabled){ pthread_mutex_unlock(display_mutex); }
+        if (r->display_data){
+            if (r->display_data->opengl_enabled){ pthread_mutex_unlock(&(r->display_data->mutex)); }
+        }
 #endif // OPENGL
     }
 
     reb_integrator_synchronize(r);
+    if (r->display_heartbeat){                          // Display Heartbeat
+        r->display_heartbeat(r); 
+    }
     if(r->exact_finish_time==1){ // if finish_time = 1, r->dt could have been shrunk, so set to the last full timestep
         r->dt = last_full_dt; 
     }
 
-
-#ifndef LIBREBOUND
-    gettimeofday(&tim, NULL);
-    double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
-    printf("\nComputation finished. Total runtime: %f s\n",timing_final-timing_initial);
-#endif // LIBREBOUND
-    data->return_status = r->status;
     return NULL;
 }
 
 enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
-#ifdef OPENGL
-    int opengl_enabled = (r->usleep<0)?0:1;
-    if (!opengl_enabled){
-#endif // OPENGL
-        struct reb_display_data data = { 
-            .r = r, 
-#ifdef OPENGL
-            .opengl_enabled = opengl_enabled, 
-            .mutex = NULL, 
-#endif // OPENGL
-            .tmax = tmax, 
-            .return_status = REB_RUNNING,
-        };
-        reb_integrate_without_visualization(&data);
-        return data.return_status;
-#ifdef OPENGL
-    }else{
-        // Need root_size for visualization. Creating one. 
-        if (r->root_size==-1){  
-            reb_warning(r,"Configuring box automatically for vizualization based on particle positions.");
-            const struct reb_particle* p = r->particles;
-            double max_r = 0;
-            for (int i=0;i<r->N;i++){
-                const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
-                max_r = MAX(max_r, _r);
+    struct reb_thread_info thread_info = {
+        .r = r,
+        .tmax = tmax, 
+    };
+    switch (r->visualization){
+        case REB_VISUALIZATION_NONE:
+            {
+                if (r->display_data){
+                    r->display_data->opengl_enabled = 0;
+                }
+                reb_integrate_raw(&thread_info);
             }
-            reb_configure_box(r, max_r*2.3,MAX(1.,r->root_nx),MAX(1.,r->root_ny),MAX(1.,r->root_nz));
-        }
+            break;
+        case REB_VISUALIZATION_OPENGL:
+            {
+#ifdef OPENGL
+                reb_display_init_data(r);
+                r->display_data->opengl_enabled = 1;
 
-        pthread_mutex_t mutex;
-        if (pthread_mutex_init(&mutex, NULL)){
-            reb_error(r,"Mutex creation failed.");
-        }
-        
-        struct reb_display_data data = { 
-            .r = r, 
-            .opengl_enabled = opengl_enabled, 
-            .mutex = &mutex, 
-            .tmax = tmax, 
-            .return_status = REB_RUNNING,
-        };
-        
-        pthread_t compute_thread;
-        if (pthread_create(&compute_thread,NULL,reb_integrate_without_visualization,&data)){
-            reb_error(r, "Error creating display thread.");
-        }
+                pthread_t compute_thread;
+                if (pthread_create(&compute_thread,NULL,reb_integrate_raw,&thread_info)){
+                    reb_error(r, "Error creating display thread.");
+                }
+                
+                reb_display_init(r); // Display routines running on main thread.
 
-        reb_display_init(&data);
-
-        if (pthread_join(compute_thread,NULL)){
-            reb_error(r, "Error joining display thread.");
-        }
-        pthread_mutex_destroy(&mutex);
-        return data.return_status;
+                if (pthread_join(compute_thread,NULL)){
+                    reb_error(r, "Error joining display thread.");
+                }
+#else // OPENGL
+                reb_error(r,"REBOUND was not compiled/linked with OPENGL libraries.");
+                return REB_EXIT_ERROR; 
+#endif // OPENGL
+            }
+            break;
+        case REB_VISUALIZATION_WEBGL:
+            {
+                reb_display_init_data(r);
+                reb_integrate_raw(&thread_info);
+            }
+            break;
     }
-#endif //OPENGL
+    return r->status;
 }
 
 const char* reb_logo[26] = {

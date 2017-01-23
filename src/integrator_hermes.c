@@ -55,7 +55,7 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
     if (mini == NULL){
         mini = reb_create_simulation();
         r->ri_hermes.mini = mini;
-        mini->usleep = -1; // Disable visualiation
+        mini->visualization = REB_VISUALIZATION_NONE; // Disable visualiation
         mini->integrator = REB_INTEGRATOR_IAS15;
         mini->gravity = REB_GRAVITY_BASIC;
         mini->dt = r->dt;

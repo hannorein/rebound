@@ -10,6 +10,7 @@ include src/collision.c
 include src/boundary.c
 include src/output.c
 include src/input.c
+include src/display.c
 include src/rebound.c
 include src/tools.c
 include src/derivatives.c
@@ -32,6 +33,7 @@ include src/derivatives.h
 include src/particle.h
 include src/rebound.h
 include src/input.h
+include src/display.h
 include src/output.h
 include src/simulationarchive.h
 include README.rst

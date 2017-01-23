@@ -24,7 +24,6 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifdef OPENGL
 #define DEG2RAD (M_PI/180.)
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,17 +33,21 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#define GLFW_INCLUDE_NONE
-#include "glad.h"
-#include <GLFW/glfw3.h>
 #include "rebound.h"
+#include "display.h"
 #include "tools.h"
 #include "particle.h"
 #include "boundary.h"
 #include "display.h"
 #include "output.h"
 #include "integrator.h"
+#define MAX(a, b) ((a) < (b) ? (b) : (a))       ///< Returns the maximum of a and b
+
+#ifdef OPENGL
 #include "simplefont.h"
+#define GLFW_INCLUDE_NONE
+#include "glad.h"
+#include <GLFW/glfw3.h>
 
 static void reb_display(GLFWwindow* window);
                 
@@ -76,17 +79,6 @@ static const char* onscreenhelp[] = {
                 "----------------------------------------------------"
 };
 
-struct reb_particle_opengl {
-    double x,y,z;
-    double vx,vy,vz;
-    double r;
-};
-
-struct reb_orbit_opengl {
-    double x,y,z;
-    double a, e, f;
-    double omega, Omega, inc;
-};
 
 static struct reb_quaternion normalize(struct reb_quaternion quat) {
     float L = sqrtf(quat.x * quat.x + quat.y * quat.y + quat.z * quat.z + quat.w * quat.w);
@@ -571,12 +563,13 @@ static void reb_display(GLFWwindow* window){
 
 
 
-void reb_display_init(struct reb_display_data *data){
-    struct reb_simulation* r = data->r;
+void reb_display_init(struct reb_simulation * const r){
+    struct reb_display_data* data = r->display_data;
     if (!glfwInit()){
         reb_error(r, "GLFW initialization failed.");
         return;
     }
+
     glfwSetErrorCallback(reb_glfw_error_callback);
     glfwWindowHint(GLFW_SAMPLES, 4);
 #ifdef _APPLE
@@ -623,7 +616,6 @@ void reb_display_init(struct reb_display_data *data){
     data->eta_copy      = NULL;
     data->allocated_N_whfast = 0;
     data->allocated_N_whfasthelio = 0;
-    data->scale         = r->boxsize_max/2.;
 
     glfwSetKeyCallback(window,reb_display_keyboard);
     glfwGetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS);
@@ -877,14 +869,11 @@ void reb_display_init(struct reb_display_data *data){
     GLuint pvp = glGetAttribLocation(data->point_shader_program,"vp");
     glEnableVertexAttribArray(pvp);
 
-    int particle_data_allocated_N = 1;
-    struct reb_particle_opengl* particle_data = malloc(sizeof(struct reb_particle_opengl)*particle_data_allocated_N);
     GLuint particle_buffer;
     glGenBuffers(1, &particle_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, particle_buffer);
-    glBufferData(GL_ARRAY_BUFFER, particle_data_allocated_N*sizeof(struct reb_particle_opengl), NULL, GL_STATIC_DRAW);
     
-    glVertexAttribPointer(pvp, 3, GL_DOUBLE, GL_FALSE, sizeof(double)*7, NULL);
+    glVertexAttribPointer(pvp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*7, NULL);
     glBindVertexArray(0);
     
     // Create cross mesh
@@ -961,8 +950,8 @@ void reb_display_init(struct reb_display_data *data){
     glVertexAttribPointer(svp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
     glBindBuffer(GL_ARRAY_BUFFER, particle_buffer);
-    glVertexAttribPointer(ssp, 3, GL_DOUBLE, GL_FALSE, sizeof(double)*7, NULL);
-    glVertexAttribPointer(ssr, 1, GL_DOUBLE, GL_FALSE, sizeof(double)*7, (void*)(sizeof(double)*6));
+    glVertexAttribPointer(ssp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*7, NULL);
+    glVertexAttribPointer(ssr, 1, GL_FLOAT, GL_FALSE, sizeof(float)*7, (void*)(sizeof(float)*6));
 
     glVertexAttribDivisor(svp, 0); 
     glVertexAttribDivisor(data->sphere_shader_mvp_location, 0); 
@@ -998,14 +987,12 @@ void reb_display_init(struct reb_display_data *data){
     glVertexAttribPointer(olintwopip, 1, GL_FLOAT, GL_FALSE, 0, NULL);
 
 
-    struct reb_orbit_opengl* orbit_data = malloc(sizeof(struct reb_orbit_opengl)*particle_data_allocated_N);
     GLuint orbit_buffer;
     glGenBuffers(1, &orbit_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, orbit_buffer);
-    glBufferData(GL_ARRAY_BUFFER, particle_data_allocated_N*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
-    glVertexAttribPointer(ofocusp, 3, GL_DOUBLE, GL_FALSE, sizeof(double)*9, NULL);
-    glVertexAttribPointer(oaefp, 3, GL_DOUBLE, GL_FALSE, sizeof(double)*9, (void*)(sizeof(double)*3));
-    glVertexAttribPointer(oomegaOmegaincp, 3, GL_DOUBLE, GL_FALSE, sizeof(double)*9, (void*)(sizeof(double)*6));
+    glVertexAttribPointer(ofocusp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, NULL);
+    glVertexAttribPointer(oaefp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*3));
+    glVertexAttribPointer(oomegaOmegaincp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*6));
 
     glVertexAttribDivisor(olintwopip, 0); 
     glVertexAttribDivisor(data->orbit_shader_mvp_location, 0); 
@@ -1016,85 +1003,28 @@ void reb_display_init(struct reb_display_data *data){
     glBindVertexArray(0);
 
 
-    // Main display loop
-    while(!glfwWindowShouldClose(window) && data->return_status<0){
-        { // lock mutex for update
-            pthread_mutex_lock(data->mutex);    
-            if (r->N>data->allocated_N){
-                data->allocated_N = r->N;
-                data->r_copy = realloc(data->r_copy,sizeof(struct reb_simulation));
-                data->particles_copy = realloc(data->particles_copy,r->N*sizeof(struct reb_particle));
-            }
-            memcpy(data->r_copy, r, sizeof(struct reb_simulation));
-            memcpy(data->particles_copy, r->particles, sizeof(struct reb_particle)*r->N);
-            data->r_copy->particles = data->particles_copy;
-            if (r->integrator==REB_INTEGRATOR_WHFAST && r->ri_whfast.is_synchronized==0){
-                if (r->ri_whfast.allocated_N > data->allocated_N_whfast){
-                    data->allocated_N_whfast = r->ri_whfast.allocated_N;
-                    data->p_j_copy = realloc(data->p_j_copy,data->allocated_N_whfast*sizeof(struct reb_particle));
-                    data->eta_copy = realloc(data->eta_copy,data->allocated_N_whfast*sizeof(double));
-                }
-                memcpy(data->p_j_copy, r->ri_whfast.p_j, data->allocated_N_whfast*sizeof(struct reb_particle));
-                memcpy(data->eta_copy, r->ri_whfast.eta, data->allocated_N_whfast*sizeof(double));
-            }
-            data->r_copy->ri_whfast.p_j= data->p_j_copy;
-            data->r_copy->ri_whfast.eta= data->eta_copy;
-            if (r->integrator==REB_INTEGRATOR_WHFASTHELIO && r->ri_whfasthelio.is_synchronized==0){
-                if (r->ri_whfasthelio.allocated_N > data->allocated_N_whfast){
-                    data->allocated_N_whfasthelio = r->ri_whfasthelio.allocated_N;
-                    data->p_h_copy = realloc(data->p_h_copy,data->allocated_N_whfasthelio*sizeof(struct reb_particle));
-                }
-                memcpy(data->p_h_copy, r->ri_whfasthelio.p_h, data->allocated_N_whfasthelio*sizeof(struct reb_particle));
-            }
-            data->r_copy->ri_whfasthelio.p_h= data->p_h_copy;
-            pthread_mutex_unlock(data->mutex);  
-        }
 
-        // this only does something for WHFAST + WHFASTHELIO
-        reb_integrator_synchronize(data->r_copy);
-           
-        // Update data on GPU 
-        if (data->r_copy->N > particle_data_allocated_N){
-            particle_data_allocated_N = data->r_copy->N;
-            particle_data = realloc(particle_data, particle_data_allocated_N*sizeof(struct reb_particle_opengl));
+    // Main display loop
+    while(!glfwWindowShouldClose(window) && r->status<0){
+        // lock mutex for update
+        pthread_mutex_lock(&(data->mutex));    
+        int size_changed = reb_display_copy_data(r);
+        pthread_mutex_unlock(&(data->mutex));  
+
+        // prepare data (incl orbit calculation)
+        reb_display_prepare_data(r, data->wire);
+
+        // Copy data to GPU
+        if (size_changed){ // reallocated GPU memory
             glBindBuffer(GL_ARRAY_BUFFER, particle_buffer);
-            glBufferData(GL_ARRAY_BUFFER, particle_data_allocated_N*sizeof(struct reb_particle_opengl), NULL, GL_STATIC_DRAW);
-            orbit_data = realloc(orbit_data, particle_data_allocated_N*sizeof(struct reb_orbit_opengl));
+            glBufferData(GL_ARRAY_BUFFER, data->allocated_N*sizeof(struct reb_particle_opengl), NULL, GL_STATIC_DRAW);
             glBindBuffer(GL_ARRAY_BUFFER, orbit_buffer);
-            glBufferData(GL_ARRAY_BUFFER, particle_data_allocated_N*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
-        }
-        for (int i=0;i<data->r_copy->N;i++){
-            struct reb_particle p = data->r_copy->particles[i];
-            particle_data[i].x  = p.x;
-            particle_data[i].y  = p.y;
-            particle_data[i].z  = p.z;
-            particle_data[i].vx = p.vx;
-            particle_data[i].vy = p.vy;
-            particle_data[i].vz = p.vz;
-            particle_data[i].r  = p.r;
+            glBufferData(GL_ARRAY_BUFFER, data->allocated_N*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
         }
         glBindBuffer(GL_ARRAY_BUFFER, particle_buffer);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, data->r_copy->N*sizeof(struct reb_particle_opengl), particle_data);
-
-        if (data->wire){
-            struct reb_particle com = data->r_copy->particles[0];
-            for (int i=1;i<r->N;i++){
-                struct reb_particle p = data->r_copy->particles[i];
-                orbit_data[i-1].x  = com.x;
-                orbit_data[i-1].y  = com.y;
-                orbit_data[i-1].z  = com.z;
-                struct reb_orbit o = reb_tools_particle_to_orbit(data->r_copy->G, p,com);
-                orbit_data[i-1].a = o.a;
-                orbit_data[i-1].e = o.e;
-                orbit_data[i-1].f = o.f;
-                orbit_data[i-1].omega = o.omega;
-                orbit_data[i-1].Omega = o.Omega;
-                orbit_data[i-1].inc = o.inc;
-                com = reb_get_com_of_pair(p,com);
-            }
-            glBindBuffer(GL_ARRAY_BUFFER, orbit_buffer);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, (data->r_copy->N-1)*sizeof(struct reb_orbit_opengl), orbit_data);
-        }
+        glBufferSubData(GL_ARRAY_BUFFER, 0, data->r_copy->N*sizeof(struct reb_particle_opengl), data->particle_data);
+        glBindBuffer(GL_ARRAY_BUFFER, orbit_buffer);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, (data->r_copy->N-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
 
         // Do actual drawing
         reb_display(window);
@@ -1102,17 +1032,125 @@ void reb_display_init(struct reb_display_data *data){
     }
     glfwDestroyWindow(window);
     glfwTerminate();
+    if (data->r->status<0){
+        data->r->status = REB_EXIT_USER; 
+    }
+}
+#endif // OPENGL
 
-    data->r->status = REB_EXIT_USER;
-    data->return_status = REB_EXIT_USER;
-    free(data->r_copy);
-    free(data->particles_copy);
-    free(data->eta_copy);
-    free(data->p_j_copy);
-    free(data->p_h_copy);
-    free(particle_data);
-    free(orbit_data);
-
+void reb_display_init_data(struct reb_simulation* const r){
+    if (r->display_data==NULL){
+        r->display_data = calloc(sizeof(struct reb_display_data),1);
+        r->display_data->r = r;
+        if (pthread_mutex_init(&(r->display_data->mutex), NULL)){
+            reb_error(r,"Mutex creation failed.");
+        }
+        // Need a scale for visualization
+        if (r->root_size==-1){  
+            const struct reb_particle* p = r->particles;
+            for (int i=0;i<r->N;i++){
+                const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
+                r->display_data->scale = MAX(r->display_data->scale, _r);
+            }
+            if(r->display_data->scale==0.){
+                r->display_data->scale = 1.;
+            }
+            r->display_data->scale *= 1.1;
+        }else{
+            r->display_data->scale = r->boxsize_max/2.;
+        }
+    }
 }
 
-#endif // OPENGL
+int reb_display_copy_data(struct reb_simulation* const r){
+    if (r->N==0) return 0;
+    struct reb_display_data* data = r->display_data;
+    int size_changed = 0;
+    if (r->N>data->allocated_N){
+        size_changed = 1;
+        data->allocated_N = r->N;
+        data->r_copy = realloc(data->r_copy,sizeof(struct reb_simulation));
+        data->particles_copy = realloc(data->particles_copy,r->N*sizeof(struct reb_particle));
+        data->particle_data = realloc(data->particle_data, data->allocated_N*sizeof(struct reb_particle_opengl));
+        data->orbit_data = realloc(data->orbit_data, data->allocated_N*sizeof(struct reb_orbit_opengl));
+    }
+    memcpy(data->r_copy, r, sizeof(struct reb_simulation));
+    memcpy(data->particles_copy, r->particles, sizeof(struct reb_particle)*r->N);
+    data->r_copy->particles = data->particles_copy;
+    if (r->integrator==REB_INTEGRATOR_WHFAST && r->ri_whfast.is_synchronized==0){
+        if (r->ri_whfast.allocated_N > data->allocated_N_whfast){
+            size_changed = 1;
+            data->allocated_N_whfast = r->ri_whfast.allocated_N;
+            data->p_j_copy = realloc(data->p_j_copy,data->allocated_N_whfast*sizeof(struct reb_particle));
+            data->eta_copy = realloc(data->eta_copy,data->allocated_N_whfast*sizeof(double));
+        }
+        memcpy(data->p_j_copy, r->ri_whfast.p_j, data->allocated_N_whfast*sizeof(struct reb_particle));
+        memcpy(data->eta_copy, r->ri_whfast.eta, data->allocated_N_whfast*sizeof(double));
+    }
+    data->r_copy->ri_whfast.p_j= data->p_j_copy;
+    data->r_copy->ri_whfast.eta= data->eta_copy;
+    if (r->integrator==REB_INTEGRATOR_WHFASTHELIO && r->ri_whfasthelio.is_synchronized==0){
+        if (r->ri_whfasthelio.allocated_N > data->allocated_N_whfast){
+            size_changed = 1;
+            data->allocated_N_whfasthelio = r->ri_whfasthelio.allocated_N;
+            data->p_h_copy = realloc(data->p_h_copy,data->allocated_N_whfasthelio*sizeof(struct reb_particle));
+        }
+        memcpy(data->p_h_copy, r->ri_whfasthelio.p_h, data->allocated_N_whfasthelio*sizeof(struct reb_particle));
+    }
+    data->r_copy->ri_whfasthelio.p_h= data->p_h_copy;
+    
+    return size_changed;
+}
+
+void reb_display_prepare_data(struct reb_simulation* const r, int orbits){
+    if (r->N==0) return;
+    struct reb_display_data* data = r->display_data;
+    struct reb_simulation* const r_copy = data->r_copy;
+
+    // this only does something for WHFAST + WHFASTHELIO
+    reb_integrator_synchronize(r_copy);
+       
+    // Update data on GPU 
+    for (int i=0;i<r_copy->N;i++){
+        struct reb_particle p = r_copy->particles[i];
+        data->particle_data[i].x  = p.x;
+        data->particle_data[i].y  = p.y;
+        data->particle_data[i].z  = p.z;
+        data->particle_data[i].vx = p.vx;
+        data->particle_data[i].vy = p.vy;
+        data->particle_data[i].vz = p.vz;
+        data->particle_data[i].r  = p.r;
+    }
+    if (orbits){
+        struct reb_particle com = r_copy->particles[0];
+        for (int i=1;i<r->N;i++){
+            struct reb_particle p = r_copy->particles[i];
+            data->orbit_data[i-1].x  = com.x;
+            data->orbit_data[i-1].y  = com.y;
+            data->orbit_data[i-1].z  = com.z;
+            struct reb_orbit o = reb_tools_particle_to_orbit(r_copy->G, p,com);
+            data->orbit_data[i-1].a = o.a;
+            data->orbit_data[i-1].e = o.e;
+            data->orbit_data[i-1].f = o.f;
+            data->orbit_data[i-1].omega = o.omega;
+            data->orbit_data[i-1].Omega = o.Omega;
+            data->orbit_data[i-1].inc = o.inc;
+            com = reb_get_com_of_pair(p,com);
+        }
+    }
+}
+
+
+
+void reb_check_for_display_heartbeat(struct reb_simulation* const r){
+    if (r->display_heartbeat){                          // Display Heartbeat
+        struct timeval tim;
+        gettimeofday(&tim, NULL);
+        unsigned long milis = (tim.tv_sec+(tim.tv_usec/1000000.0))*1000;
+        if (r->display_clock==0 || (milis - r->display_clock)>25){
+            r->display_clock = milis;
+            r->display_heartbeat(r); 
+        }
+    }
+}
+

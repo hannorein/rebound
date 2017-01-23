@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_uint32, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
+from ctypes import Structure, c_double, POINTER, c_float, c_int, c_uint, c_uint32, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
 from . import clibrebound, Escape, NoParticles, Encounter, SimulationError, ParticleNotFound
 from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G
@@ -24,6 +24,7 @@ INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "hermes": 5, "w
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2}
+VISUALIZATIONS = {"none": 0, "opengl": 1, "webgl": 2}
 BINARY_WARNINGS = [
     ("Cannot read binary file. Check filename and file contents.", 1),
     ("Binary file was saved with a different version of REBOUND. Binary format might have changed.", 2),
@@ -373,6 +374,62 @@ class Simulation(Structure):
             if w.value & value and value!=1:
                 warnings.warn(message, RuntimeWarning)
         return sim
+
+    def getWidget(self,**kwargs):
+        """
+        Wrapper function that returns a new widget attached to this simulation.
+
+        Widgets provide real-time 3D visualizations from within an Jupyter notebook.
+        See the Widget class for more details on the possible arguments.
+        
+        
+        Arguments
+        ---------
+        All arguments passed to this wrapper function will be passed to /Widget class.
+        
+        Returns
+        ------- 
+        A rebound.Widget object.
+        
+        Examples
+        --------
+
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1.)
+        >>> sim.add(m=1.e-3,x=1.,vy=1.)
+        >>> sim.getWidget()
+
+        """
+        from .widget import Widget # ondemand
+        from ipywidgets import DOMWidget
+        from IPython.display import display, HTML
+        if not hasattr(self, '_widgets'):
+            self._widgets = []
+            def display_heartbeat(simp):
+                for w in self._widgets:
+                    w.refresh(simp,isauto=1)
+            self.visualization = VISUALIZATIONS["webgl"] 
+            clibrebound.reb_display_init_data(byref(self));
+            self._dhbf = AFF(display_heartbeat)
+            self._display_heartbeat = self._dhbf
+            display(HTML(Widget.getClientCode())) # HACK! Javascript should go into custom.js
+        newWidget = Widget(self,**kwargs)
+        self._widgets.append(newWidget)
+        newWidget.refresh(isauto=0)
+        return newWidget
+    
+    def refreshWidgets(self):
+        """
+        This function manually refreshed all widgets attached to this simulation.
+        
+        You want to call this function if any particle data has been manually changed.
+        """
+        if hasattr(self, '_widgets'):
+            for w in self._widgets:
+                w.refresh(isauto=0)
+        else:
+            raise RuntimeError("No widgets found")
+
 
 # Simulation Archive tools
     def estimateSimulationArchiveSize(self, tmax):
@@ -937,6 +994,8 @@ class Simulation(Structure):
                 raise ValueError("Argument passed to add() not supported.")
         else: 
             self.add(Particle(simulation=self, **kwargs))
+        if hasattr(self, '_widgets'):
+            self._display_heartbeat(pointer(self))
 
 # Particle getter functions
     @property
@@ -990,6 +1049,8 @@ class Simulation(Structure):
                 clibrebound.reb_remove_by_hash(byref(self), c_uint32(hash), keepSorted)
             elif isinstance(hash, hash_types):
                 clibrebound.reb_remove_by_hash(byref(self), hash, keepSorted)
+        if hasattr(self, '_widgets'):
+            self._display_heartbeat(pointer(self))
 
         self.process_messages()
 
@@ -1452,6 +1513,27 @@ class reb_simulation_integrator_hermes(Structure):
 class timeval(Structure):
     _fields_ = [("tv_sec",c_long),("tv_usec",c_long)]
 
+class reb_display_data(Structure):
+    _fields_ = [("r", POINTER(Simulation)),
+                ("r_copy", POINTER(Simulation)),
+                ("particle_data", c_void_p),
+                ("orbit_data", c_void_p),
+                ("particles_copy", POINTER(Particle)),
+                ("p_j_copy", POINTER(Particle)),
+                ("p_h_copy", POINTER(Particle)),
+                ("eta_copy", POINTER(c_double)),
+                ("allocated_N", c_ulong),
+                ("allocated_N_whfast", c_ulong),
+                ("allocated_N_whfasthelio", c_ulong),
+                ("opengl_enabled", c_int),
+                ("scale", c_double),
+                ("mouse_x", c_double),
+                ("mouse_y", c_double),
+                ("retina", c_double),
+                # ignoring other data (never used)
+                ]
+
+
 # Setting up fields after class definition (because of self-reference)
 Simulation._fields_ = [
                 ("t", c_double),
@@ -1481,11 +1563,13 @@ Simulation._fields_ = [
                 ("force_is_velocity_dependent", c_uint),
                 ("gravity_ignore_10", c_uint),
                 ("output_timing_last", c_double),
+                ("_display_clock", c_ulong),
                 ("save_messages", c_int),
                 ("messages", c_void_p),
                 ("exit_max_distance", c_double),
                 ("exit_min_distance", c_double),
                 ("usleep", c_double),
+                ("display_data", POINTER(reb_display_data)),
                 ("track_energy_offset", c_int),
                 ("energy_offset", c_double),
                 ("boxsize", reb_vec3d),
@@ -1521,6 +1605,7 @@ Simulation._fields_ = [
                 ("simulationarchive_filename", c_char_p),
                 ("simulationarchive_walltime", c_double),
                 ("simulationarchive_time", timeval),
+                ("_visualization", c_int),
                 ("_collision", c_int),
                 ("_integrator", c_int),
                 ("_boundary", c_int),
@@ -1533,6 +1618,7 @@ Simulation._fields_ = [
                 ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),
+                ("_display_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_coefficient_of_restitution", CFUNCTYPE(c_double,POINTER(Simulation), c_double)),
                 ("_collision_resolve", CFUNCTYPE(c_int,POINTER(Simulation), reb_collision)),
                 ("_free_particle_ap", CFUNCTYPE(None, POINTER(Particle))),

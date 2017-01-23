@@ -219,6 +219,7 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
             CASE(SANEXT,             &r->simulationarchive_next);
             CASE(SAWALLTIME,         &r->simulationarchive_walltime);
             CASE(COLLISION,          &r->collision);
+            CASE(VISUALIZATION,      &r->visualization);
             CASE(INTEGRATOR,         &r->integrator);
             CASE(BOUNDARY,           &r->boundary);
             CASE(GRAVITY,            &r->gravity);
