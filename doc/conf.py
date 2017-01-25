@@ -24,10 +24,9 @@ if read_the_docs_build:
     subprocess.call('cd doxygen; doxygen', shell=True)
 
 # C Example update
-with open("c_examples.rst","w") as fd:
-    fd.write("Examples (C)\n")
-    fd.write("============\n\n")
-    for problemc in glob.glob("../examples/*/problem.c"):
+for problemc in glob.glob("../examples/*/problem.c"):
+    cname = problemc.split("/")[2]
+    with open("c_example_"+cname+".rst","w") as fd:
         will_output = 0
         with open(problemc) as pf:
             did_output=0
@@ -41,8 +40,9 @@ with open("c_examples.rst","w") as fd:
                     fd.write("\n\n.. code-block:: c\n");
                 if will_output>1:
                     if will_output == 2:
-                        under = "-"*(len(line.strip())-2)
-                        line = "  " +line.strip() + '\n' + under
+                        title = line.strip() + " (C)"
+                        under = "-"*(len(title)-2)
+                        line = "  " +title + '\n' + under
                     will_output = 2
                     if len(line[3:].strip())==0:
                         fd.write("\n\n"+line[3:].strip())
@@ -59,29 +59,33 @@ with open("c_examples.rst","w") as fd:
 
 # iPython examples:
 import shutil
-if os.path.exists("ipython"):
-    shutil.rmtree('./ipython')
-os.makedirs("./ipython")
 if 1:
-    try:
-        os.chdir("ipython")
-        for example in glob.glob("../../ipython_examples/*.ipynb"):
-            print("Trying file: ", example)
-            outp = subprocess.check_output(["cp", example, example[23:]])
-            outp = subprocess.check_output(["jupyter", "nbconvert", example[23:], "--to", "rst"])
-            print(outp)
-            print("Replacing links")
-            outp = subprocess.check_output(["perl", "-i", "-pe", "s/ipynb/html/g", example[23:][:-5]+"rst"])
-            print(outp)
-    except:
-        with open("ipython.rst","w") as fd:
-            fd.write("Examples can be found on github\n")
-            fd.write("-------------------------------\n\n")
-            fd.write("Due to a bug in the readthedocs system, the iPython notebooks are currently not included here. To view them, head over to github: \n")
-            fd.write("https://github.com/hannorein/rebound/tree/master/ipython_examples \n")
-    finally:
-        os.chdir("../")
-        
+    if os.path.exists("ipython"):
+        shutil.rmtree('./ipython')
+    os.makedirs("./ipython")
+    os.chdir("ipython")
+    for example in glob.glob("../../ipython_examples/*.ipynb"):
+        print("Trying file: ", example)
+        outp = subprocess.check_output(["cp", example, example[23:]])
+        outp = subprocess.check_output(["jupyter", "nbconvert", example[23:], "--to", "rst"])
+        print(outp)
+        print("Replacing links")
+        outp = subprocess.check_output(["perl", "-i", "-pe", "s/ipynb/html/g", example[23:][:-5]+"rst"])
+        print(outp)
+    for example in glob.glob("*.rst"):
+        with open(example) as fd:
+            lines = fd.readlines()
+        with open(example,"w") as fd:
+            for i,l in enumerate(lines):
+                if i==1:
+                    fd.write(l.strip()+" (iPython)\n")
+                elif i==2:
+                    fd.write(l.strip()+"==========\n")
+                else:
+                    fd.write(l)
+
+    os.chdir("../")
+
         
 
 
@@ -189,8 +193,9 @@ todo_include_todos = False
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'alabaster'
-html_theme = 'classic'
+html_theme = 'bizstyle'
+#html_theme = 'alabaster'
+#html_theme = 'classic'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

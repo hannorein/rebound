@@ -38,7 +38,7 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 
 How to use REBOUND - a quick introduction
 -----------------------------------------
-You can call REBOUND from C or Python. Which programming language you want to use depends on your taste and your specific application. In short: If you simply want to integrate a few particles such as a planetary system with the high order integrator IAS15 or the new symplectic integrator WHFast then use the Python version. If you want to run large simulations with millions of particles, use an exotic integrator, use OpenGL visualizations, or make use of the distributed tree code then use the C version. 
+You can call REBOUND from C or Python. Which programming language you want to use depends on your taste and your specific application. In short: If you simply want to setup a few particles such as a planetary system, visualize it with a WebGL widget, and integrate it with the high order integrator IAS15 or the new symplectic integrator WHFast then use the Python version. If you want to run large simulations with millions of particles, use an exotic integrator, use fast OpenGL visualizations, or make use of the distributed tree code then use the C version. 
 
 All the computationally expensive parts of REBOUND are written in C. So even if you use the Python version, you'll end up with a very fast code.
 
@@ -107,15 +107,14 @@ You should have received a copy of the GNU General Public License along with REB
 Table of Contents
 -----------------
 .. toctree::
-   :numbered:
+   :maxdepth: 2
+
    
    self
-   modules
-   c_quickstart
-   c_examples
-   c_api
-   python_quickstart
-   python_api
-   ipython_examples
    changelog
+   modules
+   quickstart
+   examples
+   c_api
+   python_api
 
