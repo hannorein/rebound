@@ -22,7 +22,7 @@ import glob
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 if read_the_docs_build:
     subprocess.call('cd doxygen; doxygen', shell=True)
-
+'''
 # C Example update
 for problemc in glob.glob("../examples/*/problem.c"):
     cname = problemc.split("/")[2]
@@ -85,7 +85,7 @@ if 1:
                     fd.write(l)
 
     os.chdir("../")
-
+'''
         
 
 
@@ -200,7 +200,7 @@ html_theme = 'bizstyle'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
+#html_theme_options = {'stickysidebar':'true'}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
