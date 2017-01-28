@@ -44,21 +44,6 @@ extern const char* reb_version_str; ///< Version string.
 extern const char* reb_githash_str; ///< Current git hash.
 extern const char* reb_logo[26];    ///< Logo of rebound. 
 
-/**
- * @brief Enumeration describing the return status of rebound_integrate
- */
-enum REB_STATUS {
-    REB_RUNNING_PAUSED = -3,    ///< Simulation is paused by visualization.
-    REB_RUNNING_LAST_STEP = -2, ///< Current timestep is the last one. Needed to ensures that t=tmax exactly.
-    REB_RUNNING = -1,           ///< Simulation is current running, no error occured.
-    REB_EXIT_SUCCESS = 0,       ///< Integration finished successfully.
-    REB_EXIT_ERROR = 1,         ///< A generic error occured and the integration was not successfull.
-    REB_EXIT_NOPARTICLES = 2,   ///< The integration ends early because no particles are left in the simulation.
-    REB_EXIT_ENCOUNTER = 3,     ///< The integration ends early because two particles had a close encounter (see exit_min_distance)
-    REB_EXIT_ESCAPE = 4,        ///< The integration ends early because a particle escaped (see exit_max_distance)  
-    REB_EXIT_USER = 5,          ///< User caused exit, simulation did not finish successfully.
-};
-
 // Forward declarations
 struct reb_simulation;
 struct reb_display_data;
@@ -98,60 +83,10 @@ struct reb_ghostbox{
 };
 
 /**
- * @brief Structure representing one REBOUND particle.
- * @details This structure is used to represent one particle. 
- * If this structure is changed, the corresponding python structure
- * needs to be changes as well. Also update the equivalent declaration 
- * for MPI in communications_mpi.c.
- */
-struct reb_particle {
-    double x;           ///< x-position of the particle. 
-    double y;           ///< y-position of the particle. 
-    double z;           ///< z-position of the particle. 
-    double vx;          ///< x-velocity of the particle. 
-    double vy;          ///< y-velocity of the particle. 
-    double vz;          ///< z-velocity of the particle. 
-    double ax;          ///< x-acceleration of the particle. 
-    double ay;          ///< y-acceleration of the particle. 
-    double az;          ///< z-acceleration of the particle. 
-    double m;           ///< Mass of the particle. 
-    double r;           ///< Radius of the particle. 
-    double lastcollision;       ///< Last time the particle had a physical collision.
-    struct reb_treecell* c;     ///< Pointer to the cell the particle is currently in.
-    uint32_t hash;      ///< hash to identify particle.
-    void* ap;           ///< Functionality for externally adding additional properties to particles.
-    struct reb_simulation* sim; ///< Pointer to the parent simulation.
-};
-
-
-/**
- * @brief Structure representing a Keplerian orbit.
- * @details This structure is returned when calculating 
- * a Keplerian orbit from Cartesian coordinates. 
- */
-struct reb_orbit {
-    double d;        ///< Radial distance from central object
-    double v;        ///< velocity relative to central object's velocity
-    double h;        ///< Angular momentum
-    double P;        ///< Orbital period
-    double n;        ///< Mean motion
-    double a;        ///< Semi-major axis
-    double e;        ///< Eccentricity
-    double inc;      ///< Inclination
-    double Omega;    ///< Longitude of ascending node
-    double omega;    ///< Argument of pericenter
-    double pomega;   ///< Longitude of pericenter
-    double f;        ///< True anomaly
-    double M;        ///< Mean anomaly
-    double l;        ///< Mean Longitude
-    double theta;    ///< True Longitude
-    double T;        ///< Time of pericenter passage
-};
-
-
-////////////////////////////////
-// Integrator structs
-
+ * @defgroup IntegratorStructs 
+ * @details Structures for the various integrators.
+ * @{
+*/
 /**
  * @brief This structure contains variables and pointer used by the IAS15 integrator.
  */
@@ -254,129 +189,6 @@ struct reb_simulation_integrator_hermes {
     
     /** @endcond */
 };
-
-
-/**
- * @brief Enumeration describing the contents of a binary field. Used to read and write binary files.
- */
-enum REB_BINARY_FIELD_TYPE {
-    REB_BINARY_FIELD_TYPE_T = 0,
-    REB_BINARY_FIELD_TYPE_G = 1,
-    REB_BINARY_FIELD_TYPE_SOFTENING = 2,
-    REB_BINARY_FIELD_TYPE_DT = 3,
-    REB_BINARY_FIELD_TYPE_N = 4,
-    REB_BINARY_FIELD_TYPE_NVAR = 5,
-    REB_BINARY_FIELD_TYPE_VARCONFIGN = 6,
-    REB_BINARY_FIELD_TYPE_NACTIVE = 7,
-    REB_BINARY_FIELD_TYPE_TESTPARTICLETYPE = 8,
-    REB_BINARY_FIELD_TYPE_HASHCTR = 9, 
-    REB_BINARY_FIELD_TYPE_OPENINGANGLE2 = 10,
-    REB_BINARY_FIELD_TYPE_STATUS = 11,
-    REB_BINARY_FIELD_TYPE_EXACTFINISHTIME = 12,
-    REB_BINARY_FIELD_TYPE_FORCEISVELOCITYDEP = 13,
-    REB_BINARY_FIELD_TYPE_GRAVITYIGNORETERMS = 14,
-    REB_BINARY_FIELD_TYPE_OUTPUTTIMINGLAST = 15,
-    REB_BINARY_FIELD_TYPE_SAVEMESSAGES = 16,
-    REB_BINARY_FIELD_TYPE_EXITMAXDISTANCE = 17,
-    REB_BINARY_FIELD_TYPE_EXITMINDISTANCE = 18,
-    REB_BINARY_FIELD_TYPE_USLEEP = 19,
-    REB_BINARY_FIELD_TYPE_TRACKENERGYOFFSET = 20,
-    REB_BINARY_FIELD_TYPE_ENERGYOFFSET = 21,
-    REB_BINARY_FIELD_TYPE_BOXSIZE = 22, 
-    REB_BINARY_FIELD_TYPE_BOXSIZEMAX = 23, 
-    REB_BINARY_FIELD_TYPE_ROOTSIZE = 24,
-    REB_BINARY_FIELD_TYPE_ROOTN = 25,
-    REB_BINARY_FIELD_TYPE_ROOTNX = 26, 
-    REB_BINARY_FIELD_TYPE_ROOTNY = 27,
-    REB_BINARY_FIELD_TYPE_ROOTNZ = 28,
-    REB_BINARY_FIELD_TYPE_NGHOSTX = 29,
-    REB_BINARY_FIELD_TYPE_NGHOSTY = 30,
-    REB_BINARY_FIELD_TYPE_NGHOSTZ = 31,
-    REB_BINARY_FIELD_TYPE_COLLISIONRESOLVEKEEPSORTED = 32,
-    REB_BINARY_FIELD_TYPE_MINIMUMCOLLISIONVELOCITY = 33,
-    REB_BINARY_FIELD_TYPE_COLLISIONSPLOG = 34, 
-    REB_BINARY_FIELD_TYPE_MAXRADIUS = 35, 
-    REB_BINARY_FIELD_TYPE_COLLISIONSNLOG = 36, 
-    REB_BINARY_FIELD_TYPE_CALCULATEMEGNO = 37, 
-    REB_BINARY_FIELD_TYPE_MEGNOYS = 38, 
-    REB_BINARY_FIELD_TYPE_MEGNOYSS = 39, 
-    REB_BINARY_FIELD_TYPE_MEGNOCOVYT = 40,
-    REB_BINARY_FIELD_TYPE_MEGNOVART = 41, 
-    REB_BINARY_FIELD_TYPE_MEGNOMEANT = 42, 
-    REB_BINARY_FIELD_TYPE_MEGNOMEANY = 43, 
-    REB_BINARY_FIELD_TYPE_MEGNON = 44,
-    REB_BINARY_FIELD_TYPE_SASIZEFIRST = 45,
-    REB_BINARY_FIELD_TYPE_SASIZESNAPSHOT = 46,
-    REB_BINARY_FIELD_TYPE_SAINTERVAL = 47,
-    REB_BINARY_FIELD_TYPE_SANEXT = 48,
-    REB_BINARY_FIELD_TYPE_SAWALLTIME = 49,
-    REB_BINARY_FIELD_TYPE_COLLISION = 50,
-    REB_BINARY_FIELD_TYPE_INTEGRATOR = 51,
-    REB_BINARY_FIELD_TYPE_BOUNDARY = 52,
-    REB_BINARY_FIELD_TYPE_GRAVITY = 53,
-    REB_BINARY_FIELD_TYPE_SEI_OMEGA = 54,
-    REB_BINARY_FIELD_TYPE_SEI_OMEGAZ = 55,
-    REB_BINARY_FIELD_TYPE_SEI_LASTDT = 56,
-    REB_BINARY_FIELD_TYPE_SEI_SINDT = 57,
-    REB_BINARY_FIELD_TYPE_SEI_TANDT = 58,
-    REB_BINARY_FIELD_TYPE_SEI_SINDTZ = 59,
-    REB_BINARY_FIELD_TYPE_SEI_TANDTZ = 60,
-    REB_BINARY_FIELD_TYPE_WHFAST_CORRECTOR = 61,
-    REB_BINARY_FIELD_TYPE_WHFAST_RECALCJAC = 62, 
-    REB_BINARY_FIELD_TYPE_WHFAST_SAFEMODE = 63,
-    REB_BINARY_FIELD_TYPE_WHFAST_KEEPUNSYNC = 64,
-    REB_BINARY_FIELD_TYPE_WHFAST_ISSYNCHRON = 65,
-    REB_BINARY_FIELD_TYPE_WHFAST_TIMESTEPWARN = 66,
-    REB_BINARY_FIELD_TYPE_IAS15_EPSILON = 69,
-    REB_BINARY_FIELD_TYPE_IAS15_MINDT = 70,
-    REB_BINARY_FIELD_TYPE_IAS15_EPSILONGLOBAL = 71,
-    REB_BINARY_FIELD_TYPE_IAS15_ITERATIONSMAX = 72,
-    REB_BINARY_FIELD_TYPE_HERMES_HSF = 73,
-    REB_BINARY_FIELD_TYPE_HERMES_SSF = 74,
-    REB_BINARY_FIELD_TYPE_HERMES_ADAPTIVE = 75,
-    REB_BINARY_FIELD_TYPE_HERMES_TIMESTEPWARN = 76,
-    REB_BINARY_FIELD_TYPE_HERMES_STEPS = 77,
-    REB_BINARY_FIELD_TYPE_HERMES_STEPS_MA = 78,
-    REB_BINARY_FIELD_TYPE_HERMES_STEPS_MN = 79,
-    REB_BINARY_FIELD_TYPE_WHFASTH_CORRECTOR = 80,
-    REB_BINARY_FIELD_TYPE_WHFASTH_RECALCHELIO = 81,
-    REB_BINARY_FIELD_TYPE_WHFASTH_SAFEMODE = 82,
-    REB_BINARY_FIELD_TYPE_WHFASTH_TIMESTEPWARN =83,
-    REB_BINARY_FIELD_TYPE_WHFASTH_ISSYNCHRON = 84,
-    REB_BINARY_FIELD_TYPE_PARTICLES = 85,
-    REB_BINARY_FIELD_TYPE_VARCONFIG = 86,
-    REB_BINARY_FIELD_TYPE_FUNCTIONPOINTERS = 87,
-    REB_BINARY_FIELD_TYPE_IAS15_ALLOCATEDN = 88,
-    REB_BINARY_FIELD_TYPE_IAS15_AT = 89,
-    REB_BINARY_FIELD_TYPE_IAS15_X0 = 90,
-    REB_BINARY_FIELD_TYPE_IAS15_V0 = 91,
-    REB_BINARY_FIELD_TYPE_IAS15_A0 = 92,
-    REB_BINARY_FIELD_TYPE_IAS15_CSX = 93,
-    REB_BINARY_FIELD_TYPE_IAS15_CSV = 94,
-    REB_BINARY_FIELD_TYPE_IAS15_CSA0 = 95,
-    REB_BINARY_FIELD_TYPE_IAS15_G = 96,
-    REB_BINARY_FIELD_TYPE_IAS15_B = 97,
-    REB_BINARY_FIELD_TYPE_IAS15_CSB = 98,
-    REB_BINARY_FIELD_TYPE_IAS15_E = 99,
-    REB_BINARY_FIELD_TYPE_IAS15_BR = 100,
-    REB_BINARY_FIELD_TYPE_IAS15_ER = 101,
-    REB_BINARY_FIELD_TYPE_SAINTERVALWALLTIME = 102,
-    REB_BINARY_FIELD_TYPE_WHFASTH_KEEPUNSYNC = 103,
-    REB_BINARY_FIELD_TYPE_WHFAST_PJ = 104,
-    REB_BINARY_FIELD_TYPE_WHFAST_ETA = 105,
-    REB_BINARY_FIELD_TYPE_WHFASTH_PH = 106,
-    REB_BINARY_FIELD_TYPE_VISUALIZATION = 107,
-    REB_BINARY_FIELD_TYPE_END = 9999,
-};
-
-/**
- * @brief This structure is used to save and load binary files.
- */
-struct reb_binary_field {
-    enum REB_BINARY_FIELD_TYPE type;    ///< Type of what field
-    long size;                          ///< Size in bytes of field (only what follows, not the binary field, itself).
-};
-
 
 /**
  * @brief This structure contains variables used by the SEI integrator.
@@ -519,7 +331,13 @@ struct reb_simulation_integrator_whfasthelio {
      * @endcond
      */
 };
+/** @} */
 
+/**
+ * @defgroup MiscRebStructs 
+ * @details Miscellaneous REBOUND structures
+ * @{
+*/
 
 /**
  * @brief Collision structure describing a single collision.
@@ -538,13 +356,20 @@ struct reb_collision{
 };
 
 /**
- * @brief Holds a particle's hash and the particle's index in the particles array.
- * @details This structure is used for the simulation's particle_lookup_table.
+ * @brief Enumeration describing the return status of rebound_integrate
  */
-struct reb_hash_pointer_pair{
-    uint32_t hash;
-    int index;
+enum REB_STATUS {
+    REB_RUNNING_PAUSED = -3,    ///< Simulation is paused by visualization.
+    REB_RUNNING_LAST_STEP = -2, ///< Current timestep is the last one. Needed to ensures that t=tmax exactly.
+    REB_RUNNING = -1,           ///< Simulation is current running, no error occured.
+    REB_EXIT_SUCCESS = 0,       ///< Integration finished successfully.
+    REB_EXIT_ERROR = 1,         ///< A generic error occured and the integration was not successfull.
+    REB_EXIT_NOPARTICLES = 2,   ///< The integration ends early because no particles are left in the simulation.
+    REB_EXIT_ENCOUNTER = 3,     ///< The integration ends early because two particles had a close encounter (see exit_min_distance)
+    REB_EXIT_ESCAPE = 4,        ///< The integration ends early because a particle escaped (see exit_max_distance)  
+    REB_EXIT_USER = 5,          ///< User caused exit, simulation did not finish successfully.
 };
+
 
 /**
  * @brief Struct describing the properties of a set of variational equations.
@@ -565,6 +390,200 @@ struct reb_variational_configuration{
     int index_1st_order_b;      ///< Used for 2nd order variational particles only: Index of the first first order variational particle in the particles array.
 };
 
+/**
+ * @cond PRIVATE
+ * Internal data structures below. Nothing to be changed by the user.
+ */
+
+/**
+ * @brief Enumeration describing the contents of a binary field. Used to read and write binary files.
+ */
+enum REB_BINARY_FIELD_TYPE {
+    REB_BINARY_FIELD_TYPE_T = 0,
+    REB_BINARY_FIELD_TYPE_G = 1,
+    REB_BINARY_FIELD_TYPE_SOFTENING = 2,
+    REB_BINARY_FIELD_TYPE_DT = 3,
+    REB_BINARY_FIELD_TYPE_N = 4,
+    REB_BINARY_FIELD_TYPE_NVAR = 5,
+    REB_BINARY_FIELD_TYPE_VARCONFIGN = 6,
+    REB_BINARY_FIELD_TYPE_NACTIVE = 7,
+    REB_BINARY_FIELD_TYPE_TESTPARTICLETYPE = 8,
+    REB_BINARY_FIELD_TYPE_HASHCTR = 9, 
+    REB_BINARY_FIELD_TYPE_OPENINGANGLE2 = 10,
+    REB_BINARY_FIELD_TYPE_STATUS = 11,
+    REB_BINARY_FIELD_TYPE_EXACTFINISHTIME = 12,
+    REB_BINARY_FIELD_TYPE_FORCEISVELOCITYDEP = 13,
+    REB_BINARY_FIELD_TYPE_GRAVITYIGNORETERMS = 14,
+    REB_BINARY_FIELD_TYPE_OUTPUTTIMINGLAST = 15,
+    REB_BINARY_FIELD_TYPE_SAVEMESSAGES = 16,
+    REB_BINARY_FIELD_TYPE_EXITMAXDISTANCE = 17,
+    REB_BINARY_FIELD_TYPE_EXITMINDISTANCE = 18,
+    REB_BINARY_FIELD_TYPE_USLEEP = 19,
+    REB_BINARY_FIELD_TYPE_TRACKENERGYOFFSET = 20,
+    REB_BINARY_FIELD_TYPE_ENERGYOFFSET = 21,
+    REB_BINARY_FIELD_TYPE_BOXSIZE = 22, 
+    REB_BINARY_FIELD_TYPE_BOXSIZEMAX = 23, 
+    REB_BINARY_FIELD_TYPE_ROOTSIZE = 24,
+    REB_BINARY_FIELD_TYPE_ROOTN = 25,
+    REB_BINARY_FIELD_TYPE_ROOTNX = 26, 
+    REB_BINARY_FIELD_TYPE_ROOTNY = 27,
+    REB_BINARY_FIELD_TYPE_ROOTNZ = 28,
+    REB_BINARY_FIELD_TYPE_NGHOSTX = 29,
+    REB_BINARY_FIELD_TYPE_NGHOSTY = 30,
+    REB_BINARY_FIELD_TYPE_NGHOSTZ = 31,
+    REB_BINARY_FIELD_TYPE_COLLISIONRESOLVEKEEPSORTED = 32,
+    REB_BINARY_FIELD_TYPE_MINIMUMCOLLISIONVELOCITY = 33,
+    REB_BINARY_FIELD_TYPE_COLLISIONSPLOG = 34, 
+    REB_BINARY_FIELD_TYPE_MAXRADIUS = 35, 
+    REB_BINARY_FIELD_TYPE_COLLISIONSNLOG = 36, 
+    REB_BINARY_FIELD_TYPE_CALCULATEMEGNO = 37, 
+    REB_BINARY_FIELD_TYPE_MEGNOYS = 38, 
+    REB_BINARY_FIELD_TYPE_MEGNOYSS = 39, 
+    REB_BINARY_FIELD_TYPE_MEGNOCOVYT = 40,
+    REB_BINARY_FIELD_TYPE_MEGNOVART = 41, 
+    REB_BINARY_FIELD_TYPE_MEGNOMEANT = 42, 
+    REB_BINARY_FIELD_TYPE_MEGNOMEANY = 43, 
+    REB_BINARY_FIELD_TYPE_MEGNON = 44,
+    REB_BINARY_FIELD_TYPE_SASIZEFIRST = 45,
+    REB_BINARY_FIELD_TYPE_SASIZESNAPSHOT = 46,
+    REB_BINARY_FIELD_TYPE_SAINTERVAL = 47,
+    REB_BINARY_FIELD_TYPE_SANEXT = 48,
+    REB_BINARY_FIELD_TYPE_SAWALLTIME = 49,
+    REB_BINARY_FIELD_TYPE_COLLISION = 50,
+    REB_BINARY_FIELD_TYPE_INTEGRATOR = 51,
+    REB_BINARY_FIELD_TYPE_BOUNDARY = 52,
+    REB_BINARY_FIELD_TYPE_GRAVITY = 53,
+    REB_BINARY_FIELD_TYPE_SEI_OMEGA = 54,
+    REB_BINARY_FIELD_TYPE_SEI_OMEGAZ = 55,
+    REB_BINARY_FIELD_TYPE_SEI_LASTDT = 56,
+    REB_BINARY_FIELD_TYPE_SEI_SINDT = 57,
+    REB_BINARY_FIELD_TYPE_SEI_TANDT = 58,
+    REB_BINARY_FIELD_TYPE_SEI_SINDTZ = 59,
+    REB_BINARY_FIELD_TYPE_SEI_TANDTZ = 60,
+    REB_BINARY_FIELD_TYPE_WHFAST_CORRECTOR = 61,
+    REB_BINARY_FIELD_TYPE_WHFAST_RECALCJAC = 62, 
+    REB_BINARY_FIELD_TYPE_WHFAST_SAFEMODE = 63,
+    REB_BINARY_FIELD_TYPE_WHFAST_KEEPUNSYNC = 64,
+    REB_BINARY_FIELD_TYPE_WHFAST_ISSYNCHRON = 65,
+    REB_BINARY_FIELD_TYPE_WHFAST_TIMESTEPWARN = 66,
+    REB_BINARY_FIELD_TYPE_IAS15_EPSILON = 69,
+    REB_BINARY_FIELD_TYPE_IAS15_MINDT = 70,
+    REB_BINARY_FIELD_TYPE_IAS15_EPSILONGLOBAL = 71,
+    REB_BINARY_FIELD_TYPE_IAS15_ITERATIONSMAX = 72,
+    REB_BINARY_FIELD_TYPE_HERMES_HSF = 73,
+    REB_BINARY_FIELD_TYPE_HERMES_SSF = 74,
+    REB_BINARY_FIELD_TYPE_HERMES_ADAPTIVE = 75,
+    REB_BINARY_FIELD_TYPE_HERMES_TIMESTEPWARN = 76,
+    REB_BINARY_FIELD_TYPE_HERMES_STEPS = 77,
+    REB_BINARY_FIELD_TYPE_HERMES_STEPS_MA = 78,
+    REB_BINARY_FIELD_TYPE_HERMES_STEPS_MN = 79,
+    REB_BINARY_FIELD_TYPE_WHFASTH_CORRECTOR = 80,
+    REB_BINARY_FIELD_TYPE_WHFASTH_RECALCHELIO = 81,
+    REB_BINARY_FIELD_TYPE_WHFASTH_SAFEMODE = 82,
+    REB_BINARY_FIELD_TYPE_WHFASTH_TIMESTEPWARN =83,
+    REB_BINARY_FIELD_TYPE_WHFASTH_ISSYNCHRON = 84,
+    REB_BINARY_FIELD_TYPE_PARTICLES = 85,
+    REB_BINARY_FIELD_TYPE_VARCONFIG = 86,
+    REB_BINARY_FIELD_TYPE_FUNCTIONPOINTERS = 87,
+    REB_BINARY_FIELD_TYPE_IAS15_ALLOCATEDN = 88,
+    REB_BINARY_FIELD_TYPE_IAS15_AT = 89,
+    REB_BINARY_FIELD_TYPE_IAS15_X0 = 90,
+    REB_BINARY_FIELD_TYPE_IAS15_V0 = 91,
+    REB_BINARY_FIELD_TYPE_IAS15_A0 = 92,
+    REB_BINARY_FIELD_TYPE_IAS15_CSX = 93,
+    REB_BINARY_FIELD_TYPE_IAS15_CSV = 94,
+    REB_BINARY_FIELD_TYPE_IAS15_CSA0 = 95,
+    REB_BINARY_FIELD_TYPE_IAS15_G = 96,
+    REB_BINARY_FIELD_TYPE_IAS15_B = 97,
+    REB_BINARY_FIELD_TYPE_IAS15_CSB = 98,
+    REB_BINARY_FIELD_TYPE_IAS15_E = 99,
+    REB_BINARY_FIELD_TYPE_IAS15_BR = 100,
+    REB_BINARY_FIELD_TYPE_IAS15_ER = 101,
+    REB_BINARY_FIELD_TYPE_SAINTERVALWALLTIME = 102,
+    REB_BINARY_FIELD_TYPE_WHFASTH_KEEPUNSYNC = 103,
+    REB_BINARY_FIELD_TYPE_WHFAST_PJ = 104,
+    REB_BINARY_FIELD_TYPE_WHFAST_ETA = 105,
+    REB_BINARY_FIELD_TYPE_WHFASTH_PH = 106,
+    REB_BINARY_FIELD_TYPE_VISUALIZATION = 107,
+    REB_BINARY_FIELD_TYPE_END = 9999,
+};
+
+/**
+ * @brief This structure is used to save and load binary files.
+ */
+struct reb_binary_field {
+    enum REB_BINARY_FIELD_TYPE type;    ///< Type of what field
+    long size;                          ///< Size in bytes of field (only what follows, not the binary field, itself).
+};
+
+/**
+ * @brief Holds a particle's hash and the particle's index in the particles array.
+ * @details This structure is used for the simulation's particle_lookup_table.
+ */
+struct reb_hash_pointer_pair{
+    uint32_t hash;
+    int index;
+};
+/**
+ * @endcond
+ */
+/** @} */
+
+/**
+ * @defgroup MainRebStructs 
+ * @details These are the main REBOUND structures
+ * @{
+*/
+/**
+ * @brief Structure representing one REBOUND particle.
+ * @details This structure is used to represent one particle. 
+ * If this structure is changed, the corresponding python structure
+ * needs to be changes as well. Also update the equivalent declaration 
+ * for MPI in communications_mpi.c.
+ */
+struct reb_particle {
+    double x;           ///< x-position of the particle. 
+    double y;           ///< y-position of the particle. 
+    double z;           ///< z-position of the particle. 
+    double vx;          ///< x-velocity of the particle. 
+    double vy;          ///< y-velocity of the particle. 
+    double vz;          ///< z-velocity of the particle. 
+    double ax;          ///< x-acceleration of the particle. 
+    double ay;          ///< y-acceleration of the particle. 
+    double az;          ///< z-acceleration of the particle. 
+    double m;           ///< Mass of the particle. 
+    double r;           ///< Radius of the particle. 
+    double lastcollision;       ///< Last time the particle had a physical collision.
+    struct reb_treecell* c;     ///< Pointer to the cell the particle is currently in.
+    uint32_t hash;      ///< hash to identify particle.
+    void* ap;           ///< Functionality for externally adding additional properties to particles.
+    struct reb_simulation* sim; ///< Pointer to the parent simulation.
+};
+
+
+/**
+ * @brief Structure representing a Keplerian orbit.
+ * @details This structure is returned when calculating 
+ * a Keplerian orbit from Cartesian coordinates. 
+ */
+struct reb_orbit {
+    double d;        ///< Radial distance from central object
+    double v;        ///< velocity relative to central object's velocity
+    double h;        ///< Angular momentum
+    double P;        ///< Orbital period
+    double n;        ///< Mean motion
+    double a;        ///< Semi-major axis
+    double e;        ///< Eccentricity
+    double inc;      ///< Inclination
+    double Omega;    ///< Longitude of ascending node
+    double omega;    ///< Argument of pericenter
+    double pomega;   ///< Longitude of pericenter
+    double f;        ///< True anomaly
+    double M;        ///< Mean anomaly
+    double l;        ///< Mean Longitude
+    double theta;    ///< True Longitude
+    double T;        ///< Time of pericenter passage
+};
 
 /**
  * @brief Main struct encapsulating one entire REBOUND simulation
@@ -806,8 +825,8 @@ struct reb_simulation {
     /** @} */
     
     /**
-     * * \name Hooks for external libraries
-     * * @{
+     * \name Hooks for external libraries
+     * @{
      */
     /**
      * @brief Pointer to connect additional (optional) libraries, e.g., reboundx
@@ -816,10 +835,8 @@ struct reb_simulation {
     /** @} */
 };
 
-/**
- * @name Main REBOUND routines
- * @{
- */
+/** @} */
+
 /**
  * @defgroup MainRebFunctions List of the main REBOUND API functions
  * @details These are the functions that typically need to be called by the user.
@@ -996,14 +1013,10 @@ int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_
 int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c);
 
 /** @} */
-/** @} */
 
 /**
- * \name Tools
- * @{
- */
-/**
- * @defgroup ToolsRebFunctions List of the helper functions for REBOUND
+ * @defgroup ToolsRebFunctions 
+ * List of the helper functions for REBOUND
  * @{
  */
 /**
@@ -1079,9 +1092,6 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
 */
 void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3]);
 
-/** @} */
-/** @} */
-
 /**
  * @brief Takes the center of mass of a system of particles and returns the center of mass with one of the particles removed. 
  * @param com A particle structure that holds the center of mass state for a system of particles (mass, position, velocity).
@@ -1116,13 +1126,11 @@ struct reb_particle reb_get_com_range(struct reb_simulation* r, int first, int l
  */
 
 struct reb_particle reb_get_jacobi_com(struct reb_particle* p);
+/** @} */
 
 /**
- * \name Built-in output function
- * @{
- */
-/**
- * @defgroup OutputRebFunctions List of the built-in output functions for REBOUND
+ * @defgroup OutputRebFunctions
+ * List of the built-in output functions for REBOUND
  * @{
  */
 /**
@@ -1186,14 +1194,10 @@ void reb_output_binary_positions(struct reb_simulation* r, char* filename);
  */
 void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 /** @} */
-/** @} */
 
 /**
- * \name Built-in setup/input functions
- * @{
- */
-/**
- * @defgroup SetupRebFunctions List of the built-in setup helper functions for REBOUND
+ * @defgroup SetupRebFunctions 
+ * List of the built-in setup helper functions
  * @{
  */
 /**
@@ -1301,7 +1305,6 @@ struct reb_particle reb_tools_pal_to_particle(double G, struct reb_particle prim
  */
 struct reb_simulation* reb_create_simulation_from_binary(char* filename);
 
-
 /**
  * @brief Enum describing possible errors that might occur during binary file reading.
  */
@@ -1356,13 +1359,9 @@ double reb_read_double(int argc, char** argv, const char* argument, double _defa
  * @return Returns _default if argument was not given. Return the argument converted to int otherwise.
  */
 int reb_read_int(int argc, char** argv, const char* argument, int _default);
-/** @} */
-/** @} */
-
-
 
 /**
- * \name Setup functions for variational particles.
+ * \name Variables related to ghost/root boxes 
  * @{
  * @brief This function calculates the first/second derivative of a Keplerian orbit. 
  * @details Derivatives of Keplerian orbits are required for variational equations, in particular
@@ -1446,13 +1445,11 @@ struct reb_particle reb_derivatives_omega_f(double G, struct reb_particle primar
 struct reb_particle reb_derivatives_m_omega(double G, struct reb_particle primary, struct reb_particle po);
 struct reb_particle reb_derivatives_m_f(double G, struct reb_particle primary, struct reb_particle po);
 /** @} */
+/** @} */
 
 /**
- * \name Particle manipulation functions
- * @{
- */
-/**
- * @defgroup ParticleManipFunctions List of reb_particle manipulation functions for REBOUND
+ * @defgroup ParticleManipFunctions 
+ * List of reb_particle manipulation functions for REBOUND
  * @{
  */
 /**
@@ -1491,8 +1488,12 @@ struct reb_particle reb_particle_multiply(struct reb_particle p1, double value);
  */
 struct reb_particle reb_particle_divide(struct reb_particle p1, double value);
 /** @} */
-/** @} */
 
+/**
+ * @defgroup SimulationArchiveFunctions
+ * Functions for interacting with simulation archives
+ * @{
+ */
 
 /**
  * @brief Restart a simulation using a SimulationArchive file.
@@ -1521,13 +1522,11 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
  * @returns Returns the approximate size of the SimulationArchive file in bytes.
  */
 long reb_simulationarchive_estimate_size(struct reb_simulation* const r, double tmax);
+/** @} */
 
 /**
- * \name Miscellaneous tools
- * @{
- */
-/**
- * @defgroup MiscRebFunctions List of the miscellaneous helper functions for REBOUND
+ * @defgroup MiscRebFunctions
+ * List of the miscellaneous helper functions for REBOUND
  * @{
  */
 /**
@@ -1624,7 +1623,6 @@ void reb_error(struct reb_simulation* const r, const char* const msg);
  * @return Return value is 0 if no messages are present, 1 otherwise.
  */
 int reb_get_next_message(struct reb_simulation* const r, char* const buf);
-/** @} */
 /** @} */
 
 /**
