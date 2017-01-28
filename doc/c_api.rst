@@ -1,54 +1,13 @@
 API documentation (C)
 =====================
 
-See also the rebound.h file.
-
-:ref:`MainRebFunctions`: 
-These are the most often used functions.
-
-:ref:`MainRebStructs`: 
-These are the main structs.
-
-
-Tools
-^^^^^
-
-.. doxygengroup:: ToolsRebFunctions
-
-Output
-^^^^^^
-
-.. doxygengroup:: OutputRebFunctions
-
-Input/Setup
-^^^^^^^^^^^
-
-.. doxygengroup:: SetupRebFunctions
-
-Particle Manipulation
-^^^^^^^^^^^^^^^^^^^^^
-
-.. doxygengroup:: ParticleManipFunctions
-
-Simulation Archive
-^^^^^^^^^^^^^^^^^^
-
-.. doxygengroup:: SimulationArchiveFunctions
-
-Integrator Structures
-^^^^^^^^^^^^^^^^^^^^^
-
-.. doxygengroup:: IntegratorStructs
-    :members:
-
-Miscellaneous Functions
-^^^^^^^^^^^^^^^^^^^^^^^
-
-.. doxygengroup:: MiscRebFunctions
-
-Miscellaneous Structures
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. doxygengroup:: MiscRebStructs
-    :members:
-
+.. toctree::
+    c_api_mainrebfunctions
+    c_api_mainrebstructs
+    c_api_toolsrebfunctions
+    c_api_setuprebfunctions
+    c_api_particlemanipfunctions
+    c_api_simulationarchivefunctions
+    c_api_integratorstructs
+    c_api_miscrebfunctions
+    c_api_miscrebstructs
