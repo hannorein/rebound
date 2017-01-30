@@ -22,7 +22,7 @@ import glob
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 if read_the_docs_build:
     subprocess.call('cd doxygen; doxygen', shell=True)
-'''
+
 # C Example update
 for problemc in glob.glob("../examples/*/problem.c"):
     cname = problemc.split("/")[2]
@@ -85,9 +85,6 @@ if 1:
                     fd.write(l)
 
     os.chdir("../")
-'''
-        
-
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
