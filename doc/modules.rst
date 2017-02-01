@@ -20,7 +20,7 @@ REB_GRAVITY_FFT           (upgrade to REBOUND 2.0 still in progress) Two dimensi
 =======================  ============================================ 
 
 
-Collision detection algoihms
+Collision detection algorithms
 ----------------------------
 
 =======================  ============================================ 
