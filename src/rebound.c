@@ -121,6 +121,7 @@ void reb_step(struct reb_simulation* const r){
         reb_integrator_synchronize(r);
         r->post_timestep_modifications(r);
         r->ri_whfast.recalculate_jacobi_this_timestep = 1;
+        r->ri_whfasthelio.recalculate_heliocentric_this_timestep = 1;
     }
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
