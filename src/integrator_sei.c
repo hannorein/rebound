@@ -45,6 +45,18 @@
 static void operator_H012(double dt, const struct reb_simulation_integrator_sei ri_sei, struct reb_particle* p);
 static void operator_phi1(double dt, struct reb_particle* p);
 
+
+void reb_integrator_sei_init(struct reb_simulation* const r){
+    /**
+     * Pre-calculates sin() and tan() needed for SEI. 
+     */
+    r->ri_sei.sindt = sin(r->ri_sei.OMEGA*(-r->dt/2.));
+    r->ri_sei.tandt = tan(r->ri_sei.OMEGA*(-r->dt/4.));
+    r->ri_sei.sindtz = sin(r->ri_sei.OMEGAZ*(-r->dt/2.));
+    r->ri_sei.tandtz = tan(r->ri_sei.OMEGAZ*(-r->dt/4.));
+    r->ri_sei.lastdt = r->dt;
+}
+
 void reb_integrator_sei_part1(struct reb_simulation* const r){
     r->gravity_ignore_terms = 0;
 	const int N = r->N;
@@ -53,14 +65,7 @@ void reb_integrator_sei_part1(struct reb_simulation* const r){
 		r->ri_sei.OMEGAZ=r->ri_sei.OMEGA;
 	}
 	if (r->ri_sei.lastdt!=r->dt){
-		/**
-		 * Pre-calculates sin() and tan() needed for SEI. 
-		 */
-		r->ri_sei.sindt = sin(r->ri_sei.OMEGA*(-r->dt/2.));
-		r->ri_sei.tandt = tan(r->ri_sei.OMEGA*(-r->dt/4.));
-		r->ri_sei.sindtz = sin(r->ri_sei.OMEGAZ*(-r->dt/2.));
-		r->ri_sei.tandtz = tan(r->ri_sei.OMEGAZ*(-r->dt/4.));
-		r->ri_sei.lastdt = r->dt;
+        reb_integrator_sei_init(r);
 	}
 	const struct reb_simulation_integrator_sei ri_sei = r->ri_sei;
 #pragma omp parallel for schedule(guided)

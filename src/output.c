@@ -33,6 +33,7 @@
 #include "rebound.h"
 #include "tools.h"
 #include "output.h"
+#include "integrator.h"
 #include "integrator_sei.h"
 #include "input.h"
 #ifdef MPI
@@ -225,6 +226,8 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     if (of==NULL){
         reb_exit("Can not open file.");
     }
+    // Init integrators. This helps with bit-by-bit reproducibility.
+    reb_integrator_init(r);
 
     // Output header.
     const char str[] = "REBOUND Binary File. Version: ";
