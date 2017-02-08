@@ -117,6 +117,7 @@ class TestHermes(unittest.TestCase):
         self.assertLess(dE,5e-11)
 
     def test_autoHSF_case_total_overlap(self):
+        #checks to ensure that CASE 2 and CASE 1 are doing the same thing for a tailored example
         #test 1 - both massive bodies, outer body completely overlaps inner - CASE 2
         sim = rebound.Simulation()
         sim.integrator = "hermes"
@@ -129,7 +130,7 @@ class TestHermes(unittest.TestCase):
         sim.integrate(3)
         self.assertGreater(sim.ri_hermes._current_hill_switch_factor,1)
 
-        #test 2 - outer body is test - CASE 2
+        #test 2 - inner body massive, outer body is semi-active - CASE 2
         sim2 = rebound.Simulation()
         sim2.integrator = "hermes"
         sim2.ri_hermes.hill_switch_factor = 1.
@@ -143,10 +144,11 @@ class TestHermes(unittest.TestCase):
         sim2.integrate(3)
         self.assertEqual(sim2.ri_hermes._current_hill_switch_factor,sim.ri_hermes._current_hill_switch_factor)
 
-        #test 3 - inner body now has large eccentricity, completely overlaps outer - CASE 1
+        #test 3 - inner body (massive) now has large eccentricity, completely overlaps outer (semi-active) - CASE 1
         sim3 = rebound.Simulation()
         sim3.integrator = "hermes"
         sim3.ri_hermes.hill_switch_factor = 1.
+        sim3.testparticle_type = 1
         sim3.dt = 0.001
         sim3.add(m=1)
         sim3.add(m=1e-8, a=1., e=0.75)
@@ -157,6 +159,7 @@ class TestHermes(unittest.TestCase):
         self.assertEqual(sim3.ri_hermes._current_hill_switch_factor,sim.ri_hermes._current_hill_switch_factor)
 
     def test_autoHSF_case_partial_overlap(self):
+        #checks to ensure that CASE 3 and CASE 4 are doing the same thing for a tailored example
         #test 1 - both massive bodies, partial overlap between inner and outer body - CASE 3
         sim = rebound.Simulation()
         sim.integrator = "hermes"
@@ -182,29 +185,28 @@ class TestHermes(unittest.TestCase):
         sim2.move_to_com()
         sim2.integrate(3)
         self.assertEqual(sim2.ri_hermes._current_hill_switch_factor,sim.ri_hermes._current_hill_switch_factor)
-'''
-    def test_autoHSF_proper_calculation(self):
+
+    def test_autoHSF_overlaping_orbits_general(self):
+        #start bodies close to each other on intersecting orbits, so that dv calculation is approx accurate.
+        #If f_1 - f_2 = np.pi, dv will be large but not realistic for these purposes.
         sim = rebound.Simulation()
         sim.integrator="hermes"
         sim.ri_hermes.hill_switch_factor = 1.
-        sim.dt = 0.001
+        sim.dt = 0.01
         sim.add(m=1)
-        sim.add(a=1, m=1e-11)
-        sim.add(a=1, m=1e-11, e=0.02)
+        m=1e-10
+        sim.add(a=1, m=m)
+        sim.add(a=1+0.05*np.random.random(), m=m, e=0.05*np.random.random()+0.05)
         dv = np.sqrt((sim.particles[1].vx - sim.particles[2].vx)**2 + (sim.particles[1].vy - sim.particles[2].vy)**2)
-        rhillsum = (sim.particles[1].a + sim.particles[2].a)*np.power(sim.particles[1].m/(3.*sim.particles[0].m),1./3.)
+        rhillsum = (sim.particles[1].a + sim.particles[2].a)*np.power(m/(3.*sim.particles[0].m),1./3.)
+        sim.integrate(5*sim.dt)
         
-        sim.integrate(sim.dt)
-        HSF_theory = 1.25**(np.ceil(np.log10(sim.dt/(0.25*rhillsum/dv)/np.log10(1.25))))
-        print HSF_theory, sim.ri_hermes._current_hill_switch_factor
-
-#        print("1/4 encounter timescale:", 0.25*2*rhillsum/dv)
-#        print("timestep               :", sim.dt)
-#        print("should have HSF > than :", sim.dt/(0.25*rhillsum/dv))
-#        print("HSF returned by hermes :", sim.ri_hermes._current_hill_switch_factor)
-        #rebound.clibrebound.reb_integrator_hermes_check_for_encounter(ctypes.byref(sim))
-        #print("HSF returned by hermes :", sim.ri_hermes._current_hill_switch_factor)
-'''
+        #leading coeff=3 for some extra wiggle room, real algorithm has leading coeff=4
+        HSF_approx = 3*sim.dt/(sim.ri_hermes.hill_switch_factor*rhillsum/dv)
+        #print sim.ri_hermes._current_hill_switch_factor, HSF_approx
+        
+        self.assertGreaterEqual(sim.ri_hermes._current_hill_switch_factor,HSF_approx)
+        self.assertGreater(sim.ri_hermes._current_hill_switch_factor,1) #make sure alg actually did something...
 
 if __name__ == "__main__":
     unittest.main()
