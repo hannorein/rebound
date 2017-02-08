@@ -63,7 +63,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.2.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.2.2";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 void reb_step(struct reb_simulation* const r){
@@ -121,6 +121,7 @@ void reb_step(struct reb_simulation* const r){
         reb_integrator_synchronize(r);
         r->post_timestep_modifications(r);
         r->ri_whfast.recalculate_jacobi_this_timestep = 1;
+        r->ri_whfasthelio.recalculate_heliocentric_this_timestep = 1;
     }
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
@@ -343,6 +344,7 @@ int reb_reset_function_pointers(struct reb_simulation* const r){
         r->collision_resolve ||
         r->additional_forces ||
         r->heartbeat ||
+        r->display_heartbeat ||
         r->post_timestep_modifications ||
         r->free_particle_ap){
       wasnotnull = 1;
@@ -351,6 +353,7 @@ int reb_reset_function_pointers(struct reb_simulation* const r){
     r->collision_resolve        = NULL;
     r->additional_forces        = NULL;
     r->heartbeat            = NULL;
+    r->display_heartbeat    = NULL; 
     r->post_timestep_modifications  = NULL;
     r->free_particle_ap = NULL;
     return wasnotnull;
@@ -622,6 +625,7 @@ static void* reb_integrate_raw(void* args){
     struct reb_simulation* const r = thread_info->r;
 
     double last_full_dt = r->dt; // need to store r->dt in case timestep gets artificially shrunk to meet exact_finish_time=1
+    r->dt_last_done = 0.; // Reset in case first timestep attempt will fail
 
     r->status = REB_RUNNING;
     reb_run_heartbeat(r);

@@ -117,6 +117,15 @@ void reb_integrator_synchronize(struct reb_simulation* r){
 			break;
 	}
 }
+void reb_integrator_init(struct reb_simulation* r){
+	switch(r->integrator){
+		case REB_INTEGRATOR_SEI:
+			reb_integrator_sei_init(r);
+			break;
+		default:
+			break;
+	}
+}
 
 void reb_integrator_reset(struct reb_simulation* r){
 	r->integrator = REB_INTEGRATOR_IAS15;

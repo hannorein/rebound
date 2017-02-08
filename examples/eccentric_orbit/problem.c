@@ -1,5 +1,5 @@
 /**
- * Example problem: Kozai.
+ * Highly eccentric orbits
  *
  * This example uses the IAS15 integrator to simulate
  * a very eccentric planetary orbit. The integrator

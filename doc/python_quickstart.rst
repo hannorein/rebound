@@ -1,5 +1,5 @@
-Quick User Guide (Python)
-=========================
+Python Version
+==============
 
 Installation
 ------------
