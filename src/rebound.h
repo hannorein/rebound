@@ -1531,6 +1531,28 @@ long reb_simulationarchive_estimate_size(struct reb_simulation* const r, double 
  */
 
 /**
+ * \name Functions to obtain various masses needed in Jacobi coordinates.
+ * @{
+ */
+/**
+ * @brief Calculate the eta array needed by Jacobi conversion routines.
+ * @param ps Particles array.
+ * @param eta Array of doubles to store eta values in.
+ * @param N number of particles in the array.
+ */
+void reb_transformations_calculate_jacobi_eta(const struct reb_particle* const ps, double* const eta, const int N);
+
+/**
+ * @brief Calculate the Jacobi masses and the eta array needed by Jacobi conversion routines.
+ * @param ps Particles array.
+ * @param m_j Array to store jacobi masses in.
+ * @param eta Array to store eta values in.
+ * @param N number of particles in the array.
+ */
+void reb_transformations_calculate_jacobi_masses(const struct reb_particle* const ps, double* const m_j, double* const eta, const int N);
+/** @} */
+    
+/**
  * \name From inertial to Jacobi coordinates
  * @{
  * @details Different functions allow you to calculate subsets of the positions (pos), velocities(vel),
@@ -1546,7 +1568,7 @@ long reb_simulationarchive_estimate_size(struct reb_simulation* const r, double 
 void reb_transformations_inertial_to_jacobi_posvel(const struct reb_particle* const particles, struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N);
 void reb_transformations_inertial_to_jacobi_posvelacc(const struct reb_particle* const particles, struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N);
 void reb_transformations_inertial_to_jacobi_acc(const struct reb_particle* const particles, struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N);
-
+/** @} */
 /**
  * \name From Jacobi to inertial coordinates
  * @{
@@ -1562,7 +1584,7 @@ void reb_transformations_inertial_to_jacobi_acc(const struct reb_particle* const
 void reb_transformations_jacobi_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N);
 void reb_transformations_jacobi_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N);
 void reb_transformations_jacobi_to_inertial_acc(struct reb_particle* const particles, const struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N);
-
+/** @} */
 /**
  * \name From inertial to democratic heliocentric coordinates
  * @{
@@ -1573,7 +1595,7 @@ void reb_transformations_jacobi_to_inertial_acc(struct reb_particle* const parti
  * @param N number of particles in the array.
  */
 void reb_transformations_inertial_to_democratic_heliocentric_posvel(const struct reb_particle* const particles, struct reb_particle* const p_h, const int N);
-
+/** @} */
 /**
  * \name From democratic heliocentric to inertial coordinates
  * @{
@@ -1585,6 +1607,7 @@ void reb_transformations_inertial_to_democratic_heliocentric_posvel(const struct
  */
 void reb_transformations_democratic_heliocentric_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_h, const int N);
 void reb_transformations_democratic_heliocentric_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_h, const int N);
+/** @} */
 /** @} */
 
 /**
