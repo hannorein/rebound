@@ -36,6 +36,8 @@ include src/input.h
 include src/display.h
 include src/output.h
 include src/simulationarchive.h
+include src/transformations.h
+include src/transformations.c
 include README.rst
 include LICENSE
 include version.txt
