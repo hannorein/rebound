@@ -9,5 +9,6 @@ API documentation (C)
     c_api_particlemanipfunctions
     c_api_simulationarchivefunctions
     c_api_integratorstructs
+    c_api_transformationfunctions
     c_api_miscrebfunctions
     c_api_miscrebstructs

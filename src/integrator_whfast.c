@@ -325,123 +325,6 @@ void kepler_step(const struct reb_simulation* const r, struct reb_particle* cons
 
 }
 
-/****************************** 
- * Coordinate transformations */
-static void to_jacobi_posvel(const struct reb_particle* const particles, struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N){
-    double s_x = eta[0] * particles[0].x;
-    double s_y = eta[0] * particles[0].y;
-    double s_z = eta[0] * particles[0].z;
-    double s_vx = eta[0] * particles[0].vx;
-    double s_vy = eta[0] * particles[0].vy;
-    double s_vz = eta[0] * particles[0].vz;
-    for (unsigned int i=1;i<N;i++){
-        const double ei = 1./eta[i-1];
-        const struct reb_particle pi = particles[i];
-        const double pme = eta[i]*ei;
-        p_j[i].x = pi.x - s_x*ei;
-        p_j[i].y = pi.y - s_y*ei;
-        p_j[i].z = pi.z - s_z*ei;
-        p_j[i].vx = pi.vx - s_vx*ei;
-        p_j[i].vy = pi.vy - s_vy*ei;
-        p_j[i].vz = pi.vz - s_vz*ei;
-        s_x  = s_x  * pme + p_mass[i].m*p_j[i].x ;
-        s_y  = s_y  * pme + p_mass[i].m*p_j[i].y ;
-        s_z  = s_z  * pme + p_mass[i].m*p_j[i].z ;
-        s_vx = s_vx * pme + p_mass[i].m*p_j[i].vx;
-        s_vy = s_vy * pme + p_mass[i].m*p_j[i].vy;
-        s_vz = s_vz * pme + p_mass[i].m*p_j[i].vz;
-    }
-    const double Mtotal  = eta[N-1];
-    const double Mtotali = 1./Mtotal;
-    p_j[0].x = s_x * Mtotali;
-    p_j[0].y = s_y * Mtotali;
-    p_j[0].z = s_z * Mtotali;
-    p_j[0].vx = s_vx * Mtotali;
-    p_j[0].vy = s_vy * Mtotali;
-    p_j[0].vz = s_vz * Mtotali;
-}
-
-static void to_jacobi_acc(const struct reb_particle* const particles, struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N){
-    double s_ax = eta[0] * particles[0].ax;
-    double s_ay = eta[0] * particles[0].ay;
-    double s_az = eta[0] * particles[0].az;
-    for (unsigned int i=1;i<N;i++){
-        const double ei = 1./eta[i-1];
-        const struct reb_particle pi = particles[i];
-        const double pme = eta[i]*ei;
-        p_j[i].ax = pi.ax - s_ax*ei;
-        p_j[i].ay = pi.ay - s_ay*ei;
-        p_j[i].az = pi.az - s_az*ei;
-        s_ax = s_ax * pme + p_mass[i].m*p_j[i].ax;
-        s_ay = s_ay * pme + p_mass[i].m*p_j[i].ay;
-        s_az = s_az * pme + p_mass[i].m*p_j[i].az;
-    }
-    // p_j[0].a is not needed and thus not calculated 
-}
-
-static void to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N){
-    const double Mtotal  = eta[N-1];
-    double s_x  = p_j[0].x  * Mtotal; 
-    double s_y  = p_j[0].y  * Mtotal; 
-    double s_z  = p_j[0].z  * Mtotal; 
-    double s_vx = p_j[0].vx * Mtotal; 
-    double s_vy = p_j[0].vy * Mtotal; 
-    double s_vz = p_j[0].vz * Mtotal; 
-    for (unsigned int i=N-1;i>0;i--){
-        const struct reb_particle pji = p_j[i];
-        const double ei = 1./eta[i];
-        s_x  = (s_x  - p_mass[i].m * pji.x ) * ei;
-        s_y  = (s_y  - p_mass[i].m * pji.y ) * ei;
-        s_z  = (s_z  - p_mass[i].m * pji.z ) * ei;
-        s_vx = (s_vx - p_mass[i].m * pji.vx) * ei;
-        s_vy = (s_vy - p_mass[i].m * pji.vy) * ei;
-        s_vz = (s_vz - p_mass[i].m * pji.vz) * ei;
-        particles[i].x  = pji.x  + s_x ;
-        particles[i].y  = pji.y  + s_y ;
-        particles[i].z  = pji.z  + s_z ;
-        particles[i].vx = pji.vx + s_vx;
-        particles[i].vy = pji.vy + s_vy;
-        particles[i].vz = pji.vz + s_vz;
-        s_x  *= eta[i-1];
-        s_y  *= eta[i-1];
-        s_z  *= eta[i-1];
-        s_vx *= eta[i-1];
-        s_vy *= eta[i-1];
-        s_vz *= eta[i-1];
-    }
-    const double mi = 1./eta[0];
-    particles[0].x  = s_x  * mi;
-    particles[0].y  = s_y  * mi;
-    particles[0].z  = s_z  * mi;
-    particles[0].vx = s_vx * mi;
-    particles[0].vy = s_vy * mi;
-    particles[0].vz = s_vz * mi;
-}
-
-static void to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N){
-    const double Mtotal  = eta[N-1];
-    double s_x  = p_j[0].x  * Mtotal; 
-    double s_y  = p_j[0].y  * Mtotal; 
-    double s_z  = p_j[0].z  * Mtotal; 
-    for (unsigned int i=N-1;i>0;i--){
-        const struct reb_particle pji = p_j[i];
-        const double ei = 1./eta[i];
-        s_x  = (s_x  - p_mass[i].m * pji.x ) * ei;
-        s_y  = (s_y  - p_mass[i].m * pji.y ) * ei;
-        s_z  = (s_z  - p_mass[i].m * pji.z ) * ei;
-        particles[i].x  = pji.x  + s_x ;
-        particles[i].y  = pji.y  + s_y ;
-        particles[i].z  = pji.z  + s_z ;
-        s_x  *= eta[i-1];
-        s_y  *= eta[i-1];
-        s_z  *= eta[i-1];
-    }
-    const double mi = 1./eta[0];
-    particles[0].x  = s_x  * mi;
-    particles[0].y  = s_y  * mi;
-    particles[0].z  = s_z  * mi;
-}
-
 /***************************** 
  * Interaction Hamiltonian  */
 
@@ -499,31 +382,31 @@ static void reb_whfast_corrector_Z(struct reb_simulation* r, const double a, con
     struct reb_particle* restrict const particles = r->particles;
     const int N_real = r->N-r->N_var;
     kepler_drift(r, ri_whfast->p_j, ri_whfast->eta,  r->G, a, N_real);
-    to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
+    reb_transformations_jacobi_to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
     for (int v=0;v<r->var_config_N;v++){
         struct reb_variational_configuration const vc = r->var_config[v];
-        to_inertial_pos(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
+        reb_transformations_jacobi_to_inertial_pos(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
     }
     r->gravity_ignore_terms = 1;
     reb_update_acceleration(r);
-    to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
+    reb_transformations_inertial_to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
     for (int v=0;v<r->var_config_N;v++){
         struct reb_variational_configuration const vc = r->var_config[v];
-        to_jacobi_acc(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
+        reb_transformations_inertial_to_jacobi_acc(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
     }
     interaction_step(r, ri_whfast->p_j, ri_whfast->eta, r->G, r->softening, -b, N_real);
     kepler_drift(r, ri_whfast->p_j, ri_whfast->eta, r->G, -2.*a, N_real);
-    to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
+    reb_transformations_jacobi_to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
     for (int v=0;v<r->var_config_N;v++){
         struct reb_variational_configuration const vc = r->var_config[v];
-        to_inertial_pos(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
+        reb_transformations_jacobi_to_inertial_pos(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
     }
     r->gravity_ignore_terms = 1;
     reb_update_acceleration(r);
-    to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
+    reb_transformations_inertial_to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
     for (int v=0;v<r->var_config_N;v++){
         struct reb_variational_configuration const vc = r->var_config[v];
-        to_jacobi_acc(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
+        reb_transformations_inertial_to_jacobi_acc(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
     }
     interaction_step(r, ri_whfast->p_j, ri_whfast->eta, r->G, r->softening, b, N_real);
     kepler_drift(r, ri_whfast->p_j, ri_whfast->eta, r->G, a, N_real);
@@ -607,10 +490,10 @@ void reb_integrator_whfast_part1(struct reb_simulation* const r){
             ri_whfast->p_j[i].m = particles[i].m;
         }
         ri_whfast->recalculate_jacobi_this_timestep = 0;
-        to_jacobi_posvel(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
+        reb_transformations_inertial_to_jacobi_posvel(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
         for (int v=0;v<r->var_config_N;v++){
             struct reb_variational_configuration const vc = r->var_config[v];
-            to_jacobi_posvel(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
+            reb_transformations_inertial_to_jacobi_posvel(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
         }
     }
     double _dt2 = r->dt/2.;
@@ -626,9 +509,9 @@ void reb_integrator_whfast_part1(struct reb_simulation* const r){
     }
     // Prepare coordinates for KICK step
     if (r->force_is_velocity_dependent){
-        to_inertial_posvel(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
+        reb_transformations_jacobi_to_inertial_posvel(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
     }else{
-        to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
+        reb_transformations_jacobi_to_inertial_pos(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
     }
     
     for (int v=0;v<r->var_config_N;v++){
@@ -637,9 +520,9 @@ void reb_integrator_whfast_part1(struct reb_simulation* const r){
         ri_whfast->p_j[vc.index].y += _dt2*ri_whfast->p_j[vc.index].vy;
         ri_whfast->p_j[vc.index].z += _dt2*ri_whfast->p_j[vc.index].vz;
         if (r->force_is_velocity_dependent){
-            to_inertial_posvel(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
+            reb_transformations_jacobi_to_inertial_posvel(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
         }else{
-            to_inertial_pos(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
+            reb_transformations_jacobi_to_inertial_pos(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
         }
     }
 
@@ -659,10 +542,10 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
         if (ri_whfast->corrector){
             reb_whfast_apply_corrector(r, -1., ri_whfast->corrector, reb_whfast_corrector_Z);
         }
-        to_inertial_posvel(r->particles, ri_whfast->p_j, ri_whfast->eta, r->particles, N_real);
+        reb_transformations_jacobi_to_inertial_posvel(r->particles, ri_whfast->p_j, ri_whfast->eta, r->particles, N_real);
         for (int v=0;v<r->var_config_N;v++){
             struct reb_variational_configuration const vc = r->var_config[v];
-            to_inertial_posvel(r->particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta,r-> particles, N_real);
+            reb_transformations_jacobi_to_inertial_posvel(r->particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta,r-> particles, N_real);
         }
         if (ri_whfast->keep_unsynchronized){
             memcpy(r->ri_whfast.p_j,sync_pj,r->N*sizeof(struct reb_particle));
@@ -677,10 +560,10 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
     struct reb_particle* restrict const particles = r->particles;
     struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
     const int N_real = r->N-r->N_var;
-    to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
+    reb_transformations_inertial_to_jacobi_acc(particles, ri_whfast->p_j, ri_whfast->eta, particles, N_real);
     for (int v=0;v<r->var_config_N;v++){
         struct reb_variational_configuration const vc = r->var_config[v];
-        to_jacobi_acc(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
+        reb_transformations_inertial_to_jacobi_acc(particles+vc.index, ri_whfast->p_j+vc.index, ri_whfast->eta, particles, N_real);
     }
     interaction_step(r, ri_whfast->p_j, ri_whfast->eta, r->G, r->softening, r->dt, N_real);
 
@@ -706,7 +589,7 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
             ri_whfast->p_j[index].x += _dt2*ri_whfast->p_j[index].vx;
             ri_whfast->p_j[index].y += _dt2*ri_whfast->p_j[index].vy;
             ri_whfast->p_j[index].z += _dt2*ri_whfast->p_j[index].vz;
-            to_inertial_posvel(particles_var1, ri_whfast->p_j+index, ri_whfast->eta, particles, N_real);
+            reb_transformations_jacobi_to_inertial_posvel(particles_var1, ri_whfast->p_j+index, ri_whfast->eta, particles, N_real);
             reb_calculate_acceleration_var(r);
             const double dx = particles[0].x - particles[1].x;
             const double dy = particles[0].y - particles[1].y;
