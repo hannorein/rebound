@@ -792,7 +792,11 @@ struct reb_simulation {
      */
     void (*additional_forces) (struct reb_simulation* const r);
     /**
-     * @brief This function allows the user to modify the dditional (non-gravitational) forces.
+     * @brief This function allows the user to make changes before each timestep.
+     */
+    void (*pre_timestep_modifications) (struct reb_simulation* const r);
+    /**
+     * @brief This function allows the user to make changes after each timestep.
      */
     void (*post_timestep_modifications) (struct reb_simulation* const r);
     /**
