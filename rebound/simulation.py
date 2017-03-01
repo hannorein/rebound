@@ -553,10 +553,26 @@ class Simulation(Structure):
     @additional_forces.setter
     def additional_forces(self, func):
         if hasattr(self, '_extras_ref'): # using REBOUNDx
-            raise AttributeError("You cannot access additional_forces after adding REBOUNDx to a simulation.  Instead, add your own custom effects through REBOUNDx.  See https://github.com/dtamayo/reboundx/blob/master/ipython_examples/Custom_Effects.ipynb for a tutorial.")
+            raise Warning("Overwriting REBOUNDx operators. If you want to use REBOUNDx and your own custom effects, add them through REBOUNDx.  See https://github.com/dtamayo/reboundx/blob/master/ipython_examples/Custom_Effects.ipynb for a tutorial.")
         self._afp = AFF(func)
         self._additional_forces = self._afp
 
+    @property
+    def pre_timestep_modifications(self):
+        """
+        Get or set a function pointer for pre-timestep modifications.
+
+        The argument can be a python function or something that can be cast to a C function or a
+        python function.
+        """
+        raise AttributeError("You can only set C function pointers from python.")
+    @pre_timestep_modifications.setter
+    def pre_timestep_modifications(self, func):
+        if hasattr(self, '_extras_ref'): # using REBOUNDx
+            raise Warning("Overwriting REBOUNDx operators. If you want to use REBOUNDx and your own custom effects, add them through REBOUNDx.  See https://github.com/dtamayo/reboundx/blob/master/ipython_examples/Custom_Effects.ipynb for a tutorial.")
+        self._pretmp = AFF(func)
+        self._pre_timestep_modifications = self._pretmp
+    
     @property
     def post_timestep_modifications(self):
         """
@@ -570,8 +586,8 @@ class Simulation(Structure):
     def post_timestep_modifications(self, func):
         if hasattr(self, '_extras_ref'): # using REBOUNDx
             raise AttributeError("You cannot access post_timestep_modifications after adding REBOUNDx to a simulation.  Instead, add your own custom effects through REBOUNDx.  See https://github.com/dtamayo/reboundx/blob/master/ipython_examples/Custom_Effects.ipynb for a tutorial.")
-        self._ptmp = AFF(func)
-        self._post_timestep_modifications = self._ptmp
+        self._posttmp = AFF(func)
+        self._post_timestep_modifications = self._posttmp
  
     @property
     def heartbeat(self):
@@ -1616,6 +1632,7 @@ Simulation._fields_ = [
                 ("ri_hermes", reb_simulation_integrator_hermes),
                 ("ri_whfasthelio", reb_simulation_integrator_whfasthelio),
                 ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
+                ("_pre_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_display_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),

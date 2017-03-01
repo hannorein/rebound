@@ -69,6 +69,13 @@ const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets 
 void reb_step(struct reb_simulation* const r){
     // A 'DKD'-like integrator will do the first 'D' part.
     PROFILING_START()
+    if (r->pre_timestep_modifications){
+        reb_integrator_synchronize(r);
+        r->pre_timestep_modifications(r);
+        r->ri_whfast.recalculate_jacobi_this_timestep = 1;
+        r->ri_whfasthelio.recalculate_heliocentric_this_timestep = 1;
+    }
+    
     reb_integrator_part1(r);
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
@@ -117,6 +124,7 @@ void reb_step(struct reb_simulation* const r){
     // A 'DKD'-like integrator will do the 'KD' part.
     PROFILING_START()
     reb_integrator_part2(r);
+    
     if (r->post_timestep_modifications){
         reb_integrator_synchronize(r);
         r->post_timestep_modifications(r);
@@ -142,7 +150,6 @@ void reb_step(struct reb_simulation* const r){
     }
     PROFILING_STOP(PROFILING_CAT_COLLISION)
 }
-
 
 void reb_exit(const char* const msg){
     // This function should also kill all children. 
@@ -345,6 +352,7 @@ int reb_reset_function_pointers(struct reb_simulation* const r){
         r->additional_forces ||
         r->heartbeat ||
         r->display_heartbeat ||
+        r->pre_timestep_modifications ||
         r->post_timestep_modifications ||
         r->free_particle_ap){
       wasnotnull = 1;
@@ -353,7 +361,8 @@ int reb_reset_function_pointers(struct reb_simulation* const r){
     r->collision_resolve        = NULL;
     r->additional_forces        = NULL;
     r->heartbeat            = NULL;
-    r->display_heartbeat    = NULL; 
+    r->display_heartbeat    = NULL;
+    r->pre_timestep_modifications  = NULL;
     r->post_timestep_modifications  = NULL;
     r->free_particle_ap = NULL;
     return wasnotnull;
