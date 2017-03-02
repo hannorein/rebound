@@ -5,6 +5,10 @@ This changelog only includes the most important changes in recent updates. For a
 
 Version 3.2.2
 --------------
+* Various minor bug fixes. Added pre-timestep modifications for REBOUNDx. 
+
+Version 3.2.2
+--------------
 * Various minor bug fixes. One related to exact_finish_time=1. 
 
 Version 3.2.0
