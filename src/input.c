@@ -33,6 +33,7 @@
 #include "rebound.h"
 #include "collision.h"
 #include "input.h"
+#include "tree.h"
 #ifdef MPI
 #include "communication_mpi.h"
 #endif
@@ -267,6 +268,11 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
                     r->particles[l].c = NULL;
                     r->particles[l].ap = NULL;
                     r->particles[l].sim = r;
+                }
+                if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE){
+                    for (int l=0;l<r->allocatedN;l++){
+                        reb_tree_add_particle_to_tree(r, l);
+                    }
                 }
                 break;
             case REB_BINARY_FIELD_TYPE_WHFAST_PJ:
