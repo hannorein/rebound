@@ -42,38 +42,6 @@ class TestIntegratorWHFastHelio(unittest.TestCase):
         e1 = sim.calculate_energy()
         self.assertLess(math.fabs((e0-e1)/e1),1e-7)
     
-    def test_whfasthelio_cor(self):
-        sim = rebound.Simulation()
-        sim.add(m=1.)
-        sim.add(m=1e-3, a=1.,e=.1)
-        sim.add(m=1e-3, a=3.,e=0.1)
-        sim.integrator = "whfasthelio"
-        sim.ri_whfasthelio.corrector=11
-        jupyr = 2.*math.pi
-        sim.dt = 0.05123*jupyr
-        e0 = sim.calculate_energy()
-        sim.integrate(1e3*jupyr)
-        self.assertNotEqual(e0,0.)
-        e1 = sim.calculate_energy()
-        self.assertLess(math.fabs((e0-e1)/e1),1e-7)
-    
-    def test_whfasthelioi_cor_nosafemode(self):
-        sim = rebound.Simulation()
-        sim.ri_whfasthelio.safe_mode=0
-        sim.add(m=1.)
-        sim.add(m=1e-3, a=1.,e=.1)
-        sim.add(m=1e-3, a=3.,e=0.1)
-        sim.integrator = "whfasthelio"
-        sim.ri_whfasthelio.corrector=11
-        jupyr = 2.*math.pi
-        sim.dt = 0.05123*jupyr
-        e0 = sim.calculate_energy()
-        sim.integrate(1e3*jupyr)
-        self.assertNotEqual(e0,0.)
-        e1 = sim.calculate_energy()
-        self.assertLess(math.fabs((e0-e1)/e1),1e-7)
-    
-    
     def test_whfasthelio_orderdoesnotmatter(self):
         jupyr = 2.*math.pi
 
@@ -92,10 +60,10 @@ class TestIntegratorWHFastHelio(unittest.TestCase):
         sim2.dt = 0.005123*jupyr
         sim2.integrate(1e0*jupyr)
         
-        self.assertAlmostEqual(sim1.particles[1].x, sim2.particles[2].x, delta=1e-15)
-        self.assertAlmostEqual(sim1.particles[1].y, sim2.particles[2].y, delta=1e-15)
-        self.assertAlmostEqual(sim1.particles[2].x, sim2.particles[1].x, delta=1e-15)
-        self.assertAlmostEqual(sim1.particles[2].y, sim2.particles[1].y, delta=1e-15)
+        self.assertAlmostEqual(sim1.particles[1].x, sim2.particles[2].x, delta=1e-14)
+        self.assertAlmostEqual(sim1.particles[1].y, sim2.particles[2].y, delta=1e-14)
+        self.assertAlmostEqual(sim1.particles[2].x, sim2.particles[1].x, delta=1e-14)
+        self.assertAlmostEqual(sim1.particles[2].y, sim2.particles[1].y, delta=1e-14)
         
     
     def test_whfasthelio_nosafemode(self):

@@ -278,16 +278,6 @@ struct reb_simulation_integrator_whfast {
 };
 
 struct reb_simulation_integrator_whfasthelio {
-    /**
-     * @brief This variable turns on/off different symplectic correctors for WHFastHelio. Same as for WHFast.
-     * @details 
-     * - 0 (default): turns off all correctors
-     * - 3: uses third order (two-stage) corrector 
-     * - 5: uses fifth order (four-stage) corrector 
-     * - 7: uses seventh order (six-stage) corrector 
-     * - 11: uses eleventh order (ten-stage) corrector 
-     */
-    unsigned int corrector;
     /** 
      * @brief Setting this flag to one will recalculate heliocentric coordinates from the particle structure in the next timestep. 
      * @details After the timestep, the flag gets set back to 0. 

@@ -321,7 +321,6 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(HERMES_STEPS,       &r->ri_hermes.steps,                sizeof(unsigned long long));
     WRITE_FIELD(HERMES_STEPS_MA,    &r->ri_hermes.steps_miniactive,     sizeof(unsigned long long));
     WRITE_FIELD(HERMES_STEPS_MN,    &r->ri_hermes.steps_miniN,          sizeof(unsigned long long));
-    WRITE_FIELD(WHFASTH_CORRECTOR,  &r->ri_whfasthelio.corrector,       sizeof(unsigned int));
     WRITE_FIELD(WHFASTH_RECALCHELIO,&r->ri_whfasthelio.recalculate_heliocentric_this_timestep, sizeof(unsigned int));
     WRITE_FIELD(WHFASTH_SAFEMODE,   &r->ri_whfasthelio.safe_mode,       sizeof(unsigned int));
     WRITE_FIELD(WHFASTH_ISSYNCHRON, &r->ri_whfasthelio.is_synchronized, sizeof(unsigned int));

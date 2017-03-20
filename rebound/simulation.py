@@ -192,8 +192,7 @@ class reb_simulation_integrator_whfasthelio(Structure):
         However, make sure you are aware of the consequences.
     """
 
-    _fields_ = [("corrector", c_uint),
-                ("recalculate_heliocentric_this_timestep", c_uint),
+    _fields_ = [("recalculate_heliocentric_this_timestep", c_uint),
                 ("safe_mode", c_uint),
                 ("p_h", POINTER(Particle)),
                 ("keep_unsynchronized", c_uint),

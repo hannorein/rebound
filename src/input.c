@@ -249,7 +249,6 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
             CASE(HERMES_STEPS,       &r->ri_hermes.steps);
             CASE(HERMES_STEPS_MA,    &r->ri_hermes.steps_miniactive);
             CASE(HERMES_STEPS_MN,    &r->ri_hermes.steps_miniN);
-            CASE(WHFASTH_CORRECTOR,  &r->ri_whfasthelio.corrector);
             CASE(WHFASTH_RECALCHELIO,&r->ri_whfasthelio.recalculate_heliocentric_this_timestep);
             CASE(WHFASTH_SAFEMODE,   &r->ri_whfasthelio.safe_mode);
             CASE(WHFASTH_ISSYNCHRON, &r->ri_whfasthelio.is_synchronized);
