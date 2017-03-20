@@ -431,6 +431,17 @@ class Simulation(Structure):
 
 
 # Simulation Archive tools
+    @property 
+    def simulationarchive_filename(self):
+        """
+        Filename where to store SimulationArchive
+        """
+        return self._sa_filename.value.decode("ascii")
+    @simulationarchive_filename.setter
+    def simulationarchive_filename(self, filename):
+        self._sa_filename = c_char_p(filename.encode("ascii")) # keep a reference to string
+        self._simulationarchive_filename = self._sa_filename
+    
     def estimateSimulationArchiveSize(self, tmax):
         """
         This function estimates the SimulationArchive file size (in bytes)
@@ -485,7 +496,7 @@ class Simulation(Structure):
         >>> sim.initSimulationArchive("sa.bin",interval=1000.)
         >>> sim.integrate(1e8)
         """
-        self.simulationarchive_filename = c_char_p(filename.encode("ascii")) # Not sure if the memory is retained here..
+        self.simulationarchive_filename = filename
         if interval is None and interval_walltime is None:
             raise AttributeError("Need to specify either interval or interval_walltime.")
         self.simulationarchive_walltime = 0.
@@ -1617,7 +1628,7 @@ Simulation._fields_ = [
                 ("simulationarchive_interval", c_double),
                 ("simulationarchive_interval_walltime", c_double),
                 ("simulationarchive_next", c_double),
-                ("simulationarchive_filename", c_char_p),
+                ("_simulationarchive_filename", c_char_p),
                 ("simulationarchive_walltime", c_double),
                 ("simulationarchive_time", timeval),
                 ("_visualization", c_int),
