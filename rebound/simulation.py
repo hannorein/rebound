@@ -537,7 +537,7 @@ class Simulation(Structure):
         s += "REBOUND built on:    \t%s\n" %__build__
         s += "Number of particles: \t%d\n" %self.N       
         s += "Selected integrator: \t" + self.integrator + "\n"       
-        s += "Simulation time:     \t%f\n" %self.t
+        s += "Simulation time:     \t%.16e\n" %self.t
         s += "Current timestep:    \t%f\n" %self.dt
         if self.N>0:
             s += "---------------------------------\n"
