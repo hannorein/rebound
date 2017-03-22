@@ -1,4 +1,4 @@
-OPT+= -std=c99 -Wpointer-arith -D_GNU_SOURCE -O3 -march=native
+OPT+= -std=c99 -Wpointer-arith -D_GNU_SOURCE -O3 -mtune=native
 ifndef OS
 	OS=$(shell uname)
 endif
