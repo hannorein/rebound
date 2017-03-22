@@ -150,7 +150,8 @@ void reb_integrator_hermes_part2(struct reb_simulation* r){
 
 void reb_integrator_hermes_synchronize(struct reb_simulation* r){
     // Do nothing.
-    reb_integrator_whfast_synchronize(r);
+    //reb_integrator_whfast_synchronize(r);
+    reb_integrator_whfasthelio_synchronize(r);
 }
 
 void reb_integrator_hermes_reset(struct reb_simulation* r){
@@ -159,7 +160,8 @@ void reb_integrator_hermes_reset(struct reb_simulation* r){
     r->ri_hermes.steps_miniactive = 0;
     r->ri_hermes.steps_miniN = 0;
     
-    reb_integrator_whfast_reset(r);
+    //reb_integrator_whfast_reset(r);
+    reb_integrator_whfasthelio_reset(r);
 
     if (r->ri_hermes.mini){
         reb_free_simulation(r->ri_hermes.mini);
