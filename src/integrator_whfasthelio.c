@@ -54,15 +54,15 @@ static void reb_whfasthelio_jump_step(const struct reb_simulation* const r, doub
     double px=0, py=0, pz=0;
     for(int i=1;i<N_real;i++){
         const double m = r->particles[i].m;
-        px += _dt * m * p_h[i].vx / m0;
-        py += _dt * m * p_h[i].vy / m0;
-        pz += _dt * m * p_h[i].vz / m0;
+        px += _dt * m * p_h[i].vx / (m0+m);
+        py += _dt * m * p_h[i].vy / (m0+m);
+        pz += _dt * m * p_h[i].vz / (m0+m);
     }
     for(int i=1;i<N_real;i++){
         const double m = r->particles[i].m;
-        p_h[i].x += px - (_dt * m * p_h[i].vx / m0);
-        p_h[i].y += py - (_dt * m * p_h[i].vy / m0);
-        p_h[i].z += pz - (_dt * m * p_h[i].vz / m0);
+        p_h[i].x += px - (_dt * m * p_h[i].vx / (m0+m));
+        p_h[i].y += py - (_dt * m * p_h[i].vy / (m0+m));
+        p_h[i].z += pz - (_dt * m * p_h[i].vz / (m0+m));
     }
 }
 
