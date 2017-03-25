@@ -343,6 +343,13 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_hermes.a_Nmax = 0;
     r->ri_hermes.a_i = NULL;
     r->ri_hermes.a_f = NULL;
+    // ********** JANUS
+    r->ri_janus.allocated_N = 0;
+    r->ri_janus.p_int = NULL;
+    r->ri_janus.recalculate_integer_coordinates_this_timestep = 0;
+    r->ri_janus.order = 6;
+    r->ri_janus.scale_pos = 1e16;
+    r->ri_janus.scale_vel = 1e16;
 }
 
 int reb_reset_function_pointers(struct reb_simulation* const r){

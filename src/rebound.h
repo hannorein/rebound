@@ -323,6 +323,55 @@ struct reb_simulation_integrator_whfasthelio {
 };
 /** @} */
 
+
+/**
+ * @cond PRIVATE
+ * Internal data structures below. Nothing to be changed by the user.
+ */
+#define REB_PARTICLE_INT_TYPE int64_t
+/**
+ * @brief Integer positions and velocities for particles. Used in JANUS integrator. 
+ */
+struct reb_particle_int {
+    REB_PARTICLE_INT_TYPE x;
+    REB_PARTICLE_INT_TYPE y;
+    REB_PARTICLE_INT_TYPE z;
+    REB_PARTICLE_INT_TYPE vx;
+    REB_PARTICLE_INT_TYPE vy;
+    REB_PARTICLE_INT_TYPE vz;
+};
+/**
+ * @endcond
+ */
+
+struct reb_simulation_integrator_janus {
+    /**
+     * @brief Scale of the problem. Positions get multiplied by this number before rounding them to an integer. 
+     */
+    double scale_pos;
+    /**
+     * @brief Scale of the problem. Velocities get multiplied by this number before rounding them to an integer. 
+     */
+    double scale_vel;
+    /**
+     * @brief Order of the scheme. Default is 6. 
+     */
+    unsigned int order; //TODO needs input/output
+    /**
+     * @brief If this flag is set, then janus will recalculate integer coordinates at
+     * the next timestep.
+     */
+    unsigned int recalculate_integer_coordinates_this_timestep;
+    /**
+     * @cond PRIVATE
+     * Internal data structures below. Nothing to be changed by the user.
+     */
+    struct reb_particle_int* restrict p_int;    ///< Integer particle pos/vel
+    unsigned int allocated_N;                   ///< Space allocated in arrays
+    /**
+     * @endcond
+     */
+};
 /**
  * @defgroup MiscRebStructs 
  * @details Miscellaneous REBOUND structures
@@ -495,6 +544,12 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_WHFAST_ETA = 105,
     REB_BINARY_FIELD_TYPE_WHFASTH_PH = 106,
     REB_BINARY_FIELD_TYPE_VISUALIZATION = 107,
+    REB_BINARY_FIELD_TYPE_JANUS_ALLOCATEDN = 110,
+    REB_BINARY_FIELD_TYPE_JANUS_PINT = 112,
+    REB_BINARY_FIELD_TYPE_JANUS_SCALEPOS = 113,
+    REB_BINARY_FIELD_TYPE_JANUS_SCALEVEL = 114,
+    REB_BINARY_FIELD_TYPE_JANUS_ORDER = 115,
+    REB_BINARY_FIELD_TYPE_JANUS_RECALC = 116,
     REB_BINARY_FIELD_TYPE_END = 9999,
 };
 
@@ -738,6 +793,7 @@ struct reb_simulation {
         REB_INTEGRATOR_HERMES = 5,   ///< HERMES Integrator for close encounters (experimental)
         REB_INTEGRATOR_WHFASTHELIO = 6,   ///< WHFastHelio integrator, symplectic, 2nd order, in democratic heliocentric coordinates
         REB_INTEGRATOR_NONE = 7,     ///< Do not integrate anything
+        REB_INTEGRATOR_JANUS = 8,    ///< Bit-wise reversible JANUS integrator.
         } integrator;
 
     /**
@@ -771,6 +827,7 @@ struct reb_simulation {
     struct reb_simulation_integrator_ias15 ri_ias15;    ///< The IAS15 struct
     struct reb_simulation_integrator_hermes ri_hermes;    ///< The HERMES struct
     struct reb_simulation_integrator_whfasthelio ri_whfasthelio;  ///< The WHFastDemocratic struct 
+    struct reb_simulation_integrator_janus ri_janus;    ///< The JANUS struct 
     /** @} */
 
     /**

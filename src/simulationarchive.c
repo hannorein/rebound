@@ -74,6 +74,19 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
         }
     }
     switch (r->integrator){
+        case REB_INTEGRATOR_JANUS:
+            {
+                if (r->ri_janus.allocated_N<r->N){
+                    if (r->ri_janus.p_int){
+                        free(r->ri_janus.p_int);
+                    }
+                    r->ri_janus.p_int= malloc(sizeof(struct reb_particle)*r->N);
+                    r->ri_janus.allocated_N = r->N;
+                }
+                fread(r->ri_janus.p_int,sizeof(struct reb_particle_int)*r->N,1,fd);
+                reb_integrator_synchronize(r);  // get floating point coordinates 
+            }
+            break;
         case REB_INTEGRATOR_WHFAST:
             {
                 // Recreate Jacobi arrrays
@@ -188,6 +201,9 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
 static int reb_simulationarchive_snapshotsize(struct reb_simulation* const r){
     int size_snapshot = 0;
     switch (r->integrator){
+        case REB_INTEGRATOR_JANUS:
+            size_snapshot = sizeof(double)*2+sizeof(struct reb_particle_int)*r->N;
+            break;
         case REB_INTEGRATOR_WHFAST:
         case REB_INTEGRATOR_WHFASTHELIO:
             size_snapshot = sizeof(double)*2+sizeof(double)*7*r->N;
@@ -232,6 +248,11 @@ static void reb_simulationarchive_append(struct reb_simulation* r){
     fwrite(&(r->t),sizeof(double),1, of);
     fwrite(&(r->simulationarchive_walltime),sizeof(double),1, of);
     switch (r->integrator){
+        case REB_INTEGRATOR_JANUS:
+            {
+                fwrite(r->ri_janus.p_int,sizeof(struct reb_particle_int)*r->N,1,of);
+            }
+            break;
         case REB_INTEGRATOR_WHFASTHELIO:
             {
                 struct reb_particle* ps = r->particles;
