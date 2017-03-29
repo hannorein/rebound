@@ -654,7 +654,7 @@ class Simulation(Structure):
         Possible options for setting:
           1) Function pointer
           2) "merge": two colliding particles will merge) 
-          3) "harsphere": two colliding particles will bounce of using a set coefficient of restitution
+          3) "hardsphere": two colliding particles will bounce of using a set coefficient of restitution
         """
         raise AttributeError("You can only set C function pointers from python.")
     @collision_resolve.setter
