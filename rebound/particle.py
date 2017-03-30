@@ -397,8 +397,8 @@ class Particle(Structure):
             # First check whether this is particles[0]
             clibrebound.reb_get_particle_index.restype = c_int
             index = clibrebound.reb_get_particle_index(byref(self)) # first check this isn't particles[0]
-            if index == 0:
-                raise ValueError("Orbital elements for particle[0] not implemented.")
+            if index == 0 and primary is None:
+                raise ValueError("Orbital elements for particle[0] not implemented unless primary is provided")
 
             if primary is None:    # Use default, i.e., Jacobi coordinates
                 clibrebound.reb_get_jacobi_com.restype = Particle   # now return jacobi center of mass
