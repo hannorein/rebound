@@ -1010,7 +1010,7 @@ class Simulation(Structure):
                 clibrebound.reb_add(byref(self), particle)
             elif isinstance(particle, list):
                 for p in particle:
-                    self.add(p)
+                    self.add(p, **kwargs)
             elif isinstance(particle,str):
                 if None in self.units.values():
                     self.units = ('AU', 'yr2pi', 'Msun')
