@@ -346,11 +346,11 @@ struct reb_particle_int {
 
 struct reb_simulation_integrator_janus {
     /**
-     * @brief Scale of the problem. Positions get multiplied by this number before rounding them to an integer. 
+     * @brief Scale of the problem. Positions get divided by this number before the conversion to an integer. 
      */
     double scale_pos;
     /**
-     * @brief Scale of the problem. Velocities get multiplied by this number before rounding them to an integer. 
+     * @brief Scale of the problem. Velocities get divided by this number before the conversion to an integer. 
      */
     double scale_vel;
     /**
