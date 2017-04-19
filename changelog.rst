@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.4.0
+-------------
+* Added a screenshot functionality for the WebGL ipython widget. This lets you take screenshots programmatically which is useful to create movies of simulations. 
+
 Version 3.3.1
 -------------
 * Removed the march=native compiler flag as it seems to be problematic for some OSX/Sierra compilers.

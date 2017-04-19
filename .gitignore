@@ -26,6 +26,7 @@ dist/
 build/
 src/rebound
 .ipynb_checkpoints
+ipython_examples/*.png
 others/*.tar.gz
 others/*.tar
 doc/doxygen/xml/
