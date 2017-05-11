@@ -375,6 +375,7 @@ define('rebound', ["jupyter-js-widgets"], function(widgets) {
             this.el.innerHTML = '<canvas style="display: inline" id="reboundcanvas-'+this.id+'" style="border: none;" width="'+this.model.get("width")+'" height="'+this.model.get("height")+'"></canvas>';
             this.model.on('change:t', this.trigger_refresh, this);
             this.model.on('change:count', this.trigger_refresh, this);
+            this.model.on('change:screenshotcount', this.take_screenshot, this);
             this.startCount = 0;
             this.gl = null;
             // Only copy those once
@@ -384,6 +385,13 @@ define('rebound', ["jupyter-js-widgets"], function(widgets) {
             this.orbits = this.model.get("orbits");
             this.orientation = this.model.get("orientation");
             startGL(this);
+        },
+        take_screenshot: function() {
+            drawGL(this);
+            var canvas = document.getElementById("reboundcanvas-"+this.id);
+            var img = canvas.toDataURL("image/png");
+            this.model.set("screenshot",img, {updated_view: this});
+            this.touch();
         },
         trigger_refresh: function() {
             updateRenderData(this);
@@ -401,22 +409,49 @@ define('rebound', ["jupyter-js-widgets"], function(widgets) {
 from ipywidgets import DOMWidget
 import traitlets
 import math
+import base64
+import sys
 from ctypes import c_float, byref, create_string_buffer, c_int, c_char, pointer
 from . import clibrebound
+def savescreenshot(change):
+    if len(change["new"]) and change["type"] =="change":
+        w = change["owner"]
+        bd = base64.b64decode(change["new"].split(",")[-1])
+        if sys.version_info[0] < 3:
+            with open(w.screenshotprefix+"%05d.png"%w.screenshotcountall, 'w') as f:
+                f.write(bd)
+        else:
+            with open(w.screenshotprefix+"%05d.png"%w.screenshotcountall, 'bw') as f:
+                f.write(bd)
+        w.screenshotcountall += 1
+        if len(w.times)>w.screenshotcount:
+            nexttime = w.times[w.screenshotcount]
+            if w.archive:
+                sim = w.archive.getSimulation(w.times[w.screenshotcount],mode=w.mode)
+                w.refresh(pointer(sim))
+            else:
+                w.simp.contents.integrate(w.times[w.screenshotcount])
+            w.screenshotcount += 1
+        else:
+            w.unobserve(savescreenshot)
+            w.times = None
+            w.screenshotprefix = None
 
 class Widget(DOMWidget):
     _view_name = traitlets.Unicode('ReboundView').tag(sync=True)
     _view_module = traitlets.Unicode('rebound').tag(sync=True)
     count = traitlets.Int(0).tag(sync=True)
+    screenshotcount = traitlets.Int(0).tag(sync=True)
     t = traitlets.Float().tag(sync=True)
     N = traitlets.Int().tag(sync=True)
     width = traitlets.Float().tag(sync=True)
     height = traitlets.Float().tag(sync=True)
     scale = traitlets.Float().tag(sync=True)
-    particle_data = traitlets.Bytes().tag(sync=True)
-    orbit_data = traitlets.Bytes().tag(sync=True)
+    particle_data = traitlets.CBytes(allow_none=True).tag(sync=True)
+    orbit_data = traitlets.CBytes(allow_none=True).tag(sync=True)
     orientation = traitlets.Tuple().tag(sync=True)
     orbits = traitlets.Int().tag(sync=True)
+    screenshot = traitlets.Unicode().tag(sync=True)
     def __init__(self,simulation,size=(200,200),orientation=(0.,0.,0.,1.),scale=None,autorefresh=True,orbits=True):
         """ 
         Initializes a Widget.
@@ -445,6 +480,7 @@ class Widget(DOMWidget):
             orbits of the particles. For simulations in which particles are not on
             Keplerian orbits, the orbits shown will not be accurate. 
         """
+        self.screenshotcountall = 0
         self.width, self.height  = size
         self.t, self.N = simulation.t, simulation.N
         self.orientation = orientation
@@ -485,6 +521,109 @@ class Widget(DOMWidget):
         self.N = sim.N
         self.t = sim.t
         self.count += 1
+
+    def takeScreenshot(self, times=None, prefix="./screenshot", resetCounter=False, archive=None,mode="snapshot"):
+        """
+        Take one or more screenshots of the widget and save the images to a file. 
+        The images can be used to create a video.
+
+        This function cannot be called multiple times within one cell.
+
+        Note: this is a new feature and might not work on all systems.
+        It was tested on python 2.7.10 and 3.5.2 on MacOSX.
+        
+        Parameters
+        ----------
+        times : (float, list), optional
+            If this argument is not given a screenshot of the widget will be made 
+            as it is (without integrating the simulation). If a float is given, then the
+            simulation will be integrated to that time and then a screenshot will 
+            be taken. If a list of floats is given, the simulation will be integrated
+            to each time specified in the array. A separate screenshot for 
+            each time will be saved.
+        prefix : (str), optional
+            This string will be part of the output filename for each image.
+            Follow by a five digit integer and the suffix .png. By default the
+            prefix is './screenshot' which outputs images in the current
+            directory with the filnames screenshot00000.png, screenshot00001.png...
+            Note that the prefix can include a directory.
+        resetCounter : (bool), optional
+            Resets the output counter to 0. 
+        archive : (rebound.SimulationArchive), optional
+            Use a REBOUND SimulationArchive. Thus, instead of integratating the 
+            Simulation from the current time, it will use the SimulationArchive
+            to load a snapshot. See examples for usage.
+        mode : (string), optional
+            Mode to use when querying the SimulationArchive. See SimulationArchive
+            documentation for details. By default the value is "snapshot".
+
+        Examples
+        --------
+
+        First, create a simulation and widget. All of the following can go in 
+        one cell.
+
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1.)
+        >>> sim.add(m=1.e-3,x=1.,vy=1.)
+        >>> w = sim.getWidget()
+        >>> w
+
+        The widget should show up. To take a screenshot, simply call 
+
+        >>> w.takeScreenshot()
+
+        A new file with the name screenshot00000.png will appear in the 
+        current directory. 
+
+        Note that the takeScreenshot command needs to be in a separate cell, 
+        i.e. after you see the widget. 
+
+        You can pass an array of times to the function. This allows you to 
+        take multiple screenshots, for example to create a movie, 
+
+        >>> times = [0,10,100]
+        >>> w.takeScreenshot(times)
+
+        """
+        self.archive = archive
+        if resetCounter:
+            self.screenshotcountall = 0
+        self.screenshotprefix = prefix
+        self.screenshotcount = 0
+        self.screenshot = "" 
+        if archive is None:
+            if times is None:
+                times = self.simp.contents.t
+            try:
+                # List
+                len(times)
+            except:
+                # Float:
+                times = [times]
+            self.times = times
+            self.observe(savescreenshot,names="screenshot")
+            self.simp.contents.integrate(times[0])
+            self.screenshotcount += 1 # triggers first screenshot
+        else:
+            if times is None:
+                raise ValueError("Need times argument for archive mode.")
+            try:
+                len(times)
+            except:
+                raise ValueError("Need a list of times for archive mode.")
+            self.times = times
+            self.mode = mode
+            self.observe(savescreenshot,names="screenshot")
+            sim = archive.getSimulation(times[0],mode=mode)
+            self.refresh(pointer(sim))
+            self.screenshotcount += 1 # triggers first screenshot
+
+
+
+            
+
+
 
     @staticmethod
     def getClientCode():

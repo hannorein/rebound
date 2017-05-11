@@ -15,8 +15,8 @@ class TestIntegratorJanus(unittest.TestCase):
             sim.dt = 0.25
             sim.integrator = "janus"
             sim.ri_janus.order = o
-            sim.ri_janus.scale_pos = 1e16
-            sim.ri_janus.scale_vel = 1e16
+            sim.ri_janus.scale_pos = 1e-16
+            sim.ri_janus.scale_vel = 1e-16
             e0 = sim.calculate_energy()
             sim.integrate(1e2)
             e1 = sim.calculate_energy()
@@ -33,8 +33,8 @@ class TestIntegratorJanus(unittest.TestCase):
             sim.integrator = "janus"
             sim.ri_janus.order = o
             sim.ri_janus.safe_mode = 0
-            sim.ri_janus.scale_pos = 1e16
-            sim.ri_janus.scale_vel = 1e16
+            sim.ri_janus.scale_pos = 1e-16
+            sim.ri_janus.scale_vel = 1e-16
             sim.step()
             t0 = sim.t
 
@@ -72,8 +72,8 @@ class TestIntegratorJanus(unittest.TestCase):
             sim.initSimulationArchive("test.bin",interval=5)
             sim.integrator = "janus"
             sim.ri_janus.order = o
-            sim.ri_janus.scale_pos = 1e16
-            sim.ri_janus.scale_vel = 1e16
+            sim.ri_janus.scale_pos = 1e-16
+            sim.ri_janus.scale_vel = 1e-16
             sim.integrate(1e2,exact_finish_time=0)
             
             sim2 = rebound.Simulation.from_archive("test.bin")

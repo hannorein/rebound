@@ -545,6 +545,10 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 particles[k].vx = v0[3*k+0];    // Set inital velocity
                 particles[k].vy = v0[3*k+1];
                 particles[k].vz = v0[3*k+2];
+                
+                particles[k].ax = a0[3*k+0];    // Set inital acceleration
+                particles[k].ay = a0[3*k+1];
+                particles[k].az = a0[3*k+2];
             }
             r->dt = dt_new;
             if (r->dt_last_done!=0.){       // Do not predict next e/b values if this is the first time step.

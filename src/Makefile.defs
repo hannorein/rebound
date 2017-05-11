@@ -28,7 +28,7 @@ endif
 ifeq ($(OPENGL), 1)
 PREDEF+= -DOPENGL
 ifeq ($(OS), Darwin)
-	LIB+= -lglfw3 -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo
+	LIB+= -lglfw -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo
 else
 	LIB+= -lglfw
 endif

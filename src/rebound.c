@@ -63,7 +63,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.3.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.4.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 void reb_step(struct reb_simulation* const r){
@@ -348,8 +348,8 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_janus.p_int = NULL;
     r->ri_janus.recalculate_integer_coordinates_this_timestep = 0;
     r->ri_janus.order = 6;
-    r->ri_janus.scale_pos = 1e16;
-    r->ri_janus.scale_vel = 1e16;
+    r->ri_janus.scale_pos = 1e-16;
+    r->ri_janus.scale_vel = 1e-16;
 }
 
 int reb_reset_function_pointers(struct reb_simulation* const r){

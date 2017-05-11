@@ -124,32 +124,32 @@ static double gg(struct scheme s, int stage){
 
 static void to_int(struct reb_particle_int* psi, struct reb_particle* ps, unsigned int N, double scale_pos, double scale_vel){
     for(unsigned int i=0; i<N; i++){ 
-        psi[i].x = ps[i].x*scale_pos; 
-        psi[i].y = ps[i].y*scale_pos; 
-        psi[i].z = ps[i].z*scale_pos; 
-        psi[i].vx = ps[i].vx*scale_vel; 
-        psi[i].vy = ps[i].vy*scale_vel; 
-        psi[i].vz = ps[i].vz*scale_vel; 
+        psi[i].x = ps[i].x/scale_pos; 
+        psi[i].y = ps[i].y/scale_pos; 
+        psi[i].z = ps[i].z/scale_pos; 
+        psi[i].vx = ps[i].vx/scale_vel; 
+        psi[i].vy = ps[i].vy/scale_vel; 
+        psi[i].vz = ps[i].vz/scale_vel; 
     }
 }
 static void to_double(struct reb_particle* ps, struct reb_particle_int* psi, unsigned int N, double scale_pos, double scale_vel){
     for(unsigned int i=0; i<N; i++){ 
-        ps[i].x = ((double)psi[i].x)/scale_pos; 
-        ps[i].y = ((double)psi[i].y)/scale_pos; 
-        ps[i].z = ((double)psi[i].z)/scale_pos; 
-        ps[i].vx = ((double)psi[i].vx)/scale_vel; 
-        ps[i].vy = ((double)psi[i].vy)/scale_vel; 
-        ps[i].vz = ((double)psi[i].vz)/scale_vel; 
+        ps[i].x = ((double)psi[i].x)*scale_pos; 
+        ps[i].y = ((double)psi[i].y)*scale_pos; 
+        ps[i].z = ((double)psi[i].z)*scale_pos; 
+        ps[i].vx = ((double)psi[i].vx)*scale_vel; 
+        ps[i].vy = ((double)psi[i].vy)*scale_vel; 
+        ps[i].vz = ((double)psi[i].vz)*scale_vel; 
     }
 }
 
-static void drift(struct reb_simulation* r, double dt){
+static void drift(struct reb_simulation* r, double dt, double scale_pos, double scale_vel){
     struct reb_simulation_integrator_janus* ri_janus = &(r->ri_janus);
     const unsigned int N = r->N;
     for(int i=0; i<N; i++){
-        ri_janus->p_int[i].x += (REB_PARTICLE_INT_TYPE)(dt*(double)ri_janus->p_int[i].vx) ;
-        ri_janus->p_int[i].y += (REB_PARTICLE_INT_TYPE)(dt*(double)ri_janus->p_int[i].vy) ;
-        ri_janus->p_int[i].z += (REB_PARTICLE_INT_TYPE)(dt*(double)ri_janus->p_int[i].vz) ;
+        ri_janus->p_int[i].x += (REB_PARTICLE_INT_TYPE)(dt*(double)ri_janus->p_int[i].vx*scale_vel/scale_pos) ;
+        ri_janus->p_int[i].y += (REB_PARTICLE_INT_TYPE)(dt*(double)ri_janus->p_int[i].vy*scale_vel/scale_pos) ;
+        ri_janus->p_int[i].z += (REB_PARTICLE_INT_TYPE)(dt*(double)ri_janus->p_int[i].vz*scale_vel/scale_pos) ;
     }
 }
 
@@ -157,9 +157,9 @@ static void kick(struct reb_simulation* r, double dt, double scale_vel){
     struct reb_simulation_integrator_janus* ri_janus = &(r->ri_janus);
     const unsigned int N = r->N;
     for(int i=0; i<N; i++){
-        ri_janus->p_int[i].vx += (REB_PARTICLE_INT_TYPE)(scale_vel*dt*r->particles[i].ax) ;
-        ri_janus->p_int[i].vy += (REB_PARTICLE_INT_TYPE)(scale_vel*dt*r->particles[i].ay) ;
-        ri_janus->p_int[i].vz += (REB_PARTICLE_INT_TYPE)(scale_vel*dt*r->particles[i].az) ;
+        ri_janus->p_int[i].vx += (REB_PARTICLE_INT_TYPE)(dt*r->particles[i].ax/scale_vel) ;
+        ri_janus->p_int[i].vy += (REB_PARTICLE_INT_TYPE)(dt*r->particles[i].ay/scale_vel) ;
+        ri_janus->p_int[i].vz += (REB_PARTICLE_INT_TYPE)(dt*r->particles[i].az/scale_vel) ;
     }
 }
 
@@ -203,7 +203,7 @@ void reb_integrator_janus_part1(struct reb_simulation* r){
             reb_error(r,"Order not supported in JANUS.");
     }
 
-    drift(r,gg(s,0)*dt/2.);
+    drift(r,gg(s,0)*dt/2.,scale_pos,scale_vel);
     to_double(r->particles, r->ri_janus.p_int, r->N, scale_pos, scale_vel); 
 }
 
@@ -238,12 +238,12 @@ void reb_integrator_janus_part2(struct reb_simulation* r){
    
     kick(r,gg(s,0)*dt, scale_vel);
     for (int i=1; i<s.stages; i++){
-        drift(r,(gg(s,i-1)+gg(s,i))*dt/2.);
+        drift(r,(gg(s,i-1)+gg(s,i))*dt/2.,scale_pos,scale_vel);
         to_double(r->particles, r->ri_janus.p_int, N, scale_pos, scale_vel); 
         reb_update_acceleration(r);
         kick(r,gg(s,i)*dt, scale_vel);
     }
-    drift(r,gg(s,s.stages-1)*dt/2.);
+    drift(r,gg(s,s.stages-1)*dt/2.,scale_pos,scale_vel);
 
     // Small overhead here: Always get positions and velocities in floating point at 
     // the end of the timestep.
@@ -263,8 +263,8 @@ void reb_integrator_janus_reset(struct reb_simulation* r){
     ri_janus->allocated_N = 0;
     ri_janus->recalculate_integer_coordinates_this_timestep = 0;
     ri_janus->order = 2;
-    ri_janus->scale_pos = 1e16;
-    ri_janus->scale_vel = 1e16;
+    ri_janus->scale_pos = 1e-16;
+    ri_janus->scale_vel = 1e-16;
     if (ri_janus->p_int){
         free(ri_janus->p_int);
         ri_janus->p_int = NULL;
