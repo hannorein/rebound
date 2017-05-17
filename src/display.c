@@ -420,9 +420,9 @@ static void reb_display(GLFWwindow* window){
         quat2mat(data->view,view);
     }
     
-    for (int i=-data->ghostboxes*data->r->nghostx;i<=data->ghostboxes*data->r->nghostx;i++){
-    for (int j=-data->ghostboxes*data->r->nghosty;j<=data->ghostboxes*data->r->nghosty;j++){
-    for (int k=-data->ghostboxes*data->r->nghostz;k<=data->ghostboxes*data->r->nghostz;k++){
+    for (int i=-data->ghostboxes*data->r_copy->nghostx;i<=data->ghostboxes*data->r_copy->nghostx;i++){
+    for (int j=-data->ghostboxes*data->r_copy->nghosty;j<=data->ghostboxes*data->r_copy->nghosty;j++){
+    for (int k=-data->ghostboxes*data->r_copy->nghostz;k<=data->ghostboxes*data->r_copy->nghostz;k++){
         struct reb_ghostbox gb = reb_boundary_get_ghostbox(data->r_copy, i,j,k);
         { // Particles
             mattranslate(tmp2,gb.shiftx,gb.shifty,gb.shiftz);
@@ -453,19 +453,19 @@ static void reb_display(GLFWwindow* window){
                 glUseProgram(data->orbit_shader_program);
                 glBindVertexArray(data->orbit_shader_particle_vao);
                 glUniformMatrix4fv(data->orbit_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
-                glDrawArraysInstanced(GL_LINE_STRIP, 0, data->orbit_shader_vertex_count, data->r->N-1);
+                glDrawArraysInstanced(GL_LINE_STRIP, 0, data->orbit_shader_vertex_count, data->r_copy->N-1);
                 glBindVertexArray(0);
             }
         }
         { // Box
             glUseProgram(data->box_shader_program);
-            if (data->r->boundary == REB_BOUNDARY_NONE){
+            if (data->r_copy->boundary == REB_BOUNDARY_NONE){
                 glBindVertexArray(data->box_shader_cross_vao);
             }else{
                 glBindVertexArray(data->box_shader_box_vao);
             }
             glUniform4f(data->box_shader_color_location, 1.,0.,0.,1.);
-            matscale(tmp1,data->r->boxsize_max/2.);
+            matscale(tmp1,data->r_copy->boxsize_max/2.);
             mattranslate(tmp2,gb.shiftx,gb.shifty,gb.shiftz);
             matmult(tmp2,tmp1,tmp3);
             matmult(view,tmp3,tmp1);
@@ -1123,7 +1123,7 @@ void reb_display_prepare_data(struct reb_simulation* const r, int orbits){
     }
     if (orbits){
         struct reb_particle com = r_copy->particles[0];
-        for (int i=1;i<r->N;i++){
+        for (int i=1;i<r_copy->N;i++){
             struct reb_particle p = r_copy->particles[i];
             data->orbit_data[i-1].x  = com.x;
             data->orbit_data[i-1].y  = com.y;
