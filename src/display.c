@@ -50,6 +50,7 @@
 #include <GLFW/glfw3.h>
 
 static void reb_display(GLFWwindow* window);
+static void reb_display_set_default_scale(struct reb_simulation* const r);
                 
 static const char* onscreenhelp[] = { 
                 "REBOUND OPENGL mouse and keyboard commands",
@@ -348,12 +349,24 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
                 }
                 break;
             case 'R':
-                data->view.x = 0.;
-                data->view.y = 0.;
-                data->view.z = 0.;
-                data->view.w = 1.;
+                if (data->view.w ==1.){
+                    data->view.x = 1./sqrt(2.);
+                    data->view.y = 0.;
+                    data->view.z = 0.;
+                    data->view.w = 1./sqrt(2.);
+                }else if (data->view.x == 1./sqrt(2.)){
+                    data->view.x = 0.;
+                    data->view.y = -1./sqrt(2.);
+                    data->view.z = 0.;
+                    data->view.w = 1./sqrt(2.);
+                }else{
+                    data->view.x = 0.;
+                    data->view.y = 0.;
+                    data->view.z = 0.;
+                    data->view.w = 1.;
+                }
                 data->reference     = -1;
-                data->scale = data->r->boxsize_max/2.;
+                reb_display_set_default_scale(data->r);
                 break;
             case 'D':
                 data->pause = !data->pause;
@@ -1038,6 +1051,25 @@ void reb_display_init(struct reb_simulation * const r){
 }
 #endif // OPENGL
 
+static void reb_display_set_default_scale(struct reb_simulation* const r){
+    // Need a scale for visualization
+    if (r->root_size==-1){  
+        r->display_data->scale = 0.;
+        const struct reb_particle* p = r->particles;
+        for (int i=0;i<r->N;i++){
+            const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
+            r->display_data->scale = MAX(r->display_data->scale, _r);
+        }
+        if(r->display_data->scale==0.){
+            r->display_data->scale = 1.;
+        }
+        r->display_data->scale *= 1.1;
+    }else{
+        r->display_data->scale = r->boxsize_max/2.;
+    }
+}
+
+
 void reb_display_init_data(struct reb_simulation* const r){
     if (r->display_data==NULL){
         r->display_data = calloc(sizeof(struct reb_display_data),1);
@@ -1045,20 +1077,7 @@ void reb_display_init_data(struct reb_simulation* const r){
         if (pthread_mutex_init(&(r->display_data->mutex), NULL)){
             reb_error(r,"Mutex creation failed.");
         }
-        // Need a scale for visualization
-        if (r->root_size==-1){  
-            const struct reb_particle* p = r->particles;
-            for (int i=0;i<r->N;i++){
-                const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
-                r->display_data->scale = MAX(r->display_data->scale, _r);
-            }
-            if(r->display_data->scale==0.){
-                r->display_data->scale = 1.;
-            }
-            r->display_data->scale *= 1.1;
-        }else{
-            r->display_data->scale = r->boxsize_max/2.;
-        }
+        reb_display_set_default_scale(r);
     }
 }
 
