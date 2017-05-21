@@ -4,6 +4,7 @@ import math
 import ctypes.util
 import rebound
 import sys
+import random
 
 __all__ = ["Particle"]
 
@@ -147,8 +148,24 @@ class Particle(Structure):
         >>> p1 = rebound.Particle(simulation=sim, m=0.001, a=0.5, e=0.01)
         >>> p2 = rebound.Particle(simulation=sim, m=0.0, x=1., vy=1.)
         >>> p3 = rebound.Particle(simulation=sim, m=0.001, a=1.5, h=0.1, k=0.2, l=0.1)
+        >>> p4 = rebound.Particle(simulation=sim, m=0.001, a=1.5, omega="uniform")  # omega will be a random number between 0 and 2pi
 
         """        
+
+        if Omega == "uniform":
+            Omega = random.vonmisesvariate(0.,0.) 
+        if omega == "uniform":
+            omega = random.vonmisesvariate(0.,0.) 
+        if pomega == "uniform":
+            pomega = random.vonmisesvariate(0.,0.) 
+        if f == "uniform":
+            f = random.vonmisesvariate(0.,0.) 
+        if M == "uniform":
+            M = random.vonmisesvariate(0.,0.) 
+        if l == "uniform":
+            l = random.vonmisesvariate(0.,0.) 
+        if theta == "uniform":
+            theta = random.vonmisesvariate(0.,0.) 
 
         self.hash = hash # set via the property, which checks for type
 
