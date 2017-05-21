@@ -23,9 +23,9 @@ class TestBoundary(unittest.TestCase):
         sim.configure_box(10.)
         sim.add(m=0.1,x=1., vx=5.0, vy=15.1, vz=26.)
         sim.integrate(1.)
-        self.assertAlmostEqual(sim.particles[0].x,-4,1e-16)
+        self.assertAlmostEqual(sim.particles[0].x,-4,delta=1e-16)
         sim.integrate(2.)
-        self.assertAlmostEqual(sim.particles[0].x,1,1e-16)
+        self.assertAlmostEqual(sim.particles[0].x,1,delta=1e-16)
         self.assertEqual(sim.N,1)
     
     
