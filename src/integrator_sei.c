@@ -50,6 +50,9 @@ void reb_integrator_sei_init(struct reb_simulation* const r){
     /**
      * Pre-calculates sin() and tan() needed for SEI. 
      */
+	if (r->ri_sei.OMEGAZ==-1){
+		r->ri_sei.OMEGAZ=r->ri_sei.OMEGA;
+	}
     r->ri_sei.sindt = sin(r->ri_sei.OMEGA*(-r->dt/2.));
     r->ri_sei.tandt = tan(r->ri_sei.OMEGA*(-r->dt/4.));
     r->ri_sei.sindtz = sin(r->ri_sei.OMEGAZ*(-r->dt/2.));
