@@ -20,7 +20,8 @@ class TestHermes(unittest.TestCase):
         sim.add(m=1.)
         sim.add(m=1.e-3, a=1.523,e=0.0146,f=0.24)
         sim.add(m=1.e-3, a=2.423523,e=0.01246,f=0.324)
-        sim.integrator = "whfasthelio"
+        sim.integrator = "whfast"
+        sim.ri_whfast.coordinates = 1
         P = sim.particles[1].P
         sim.dt = 1e-4*P
         sim.integrate(P)
@@ -85,7 +86,7 @@ class TestHermes(unittest.TestCase):
         E0 = sim.calculate_energy()
         sim.integrate(1)
         dE = abs((sim.calculate_energy() - E0)/E0)
-        self.assertLess(dE,5e-13)
+        self.assertLess(dE,7e-11)
 
     def test_massive_ejection(self):
         sim = rebound.Simulation()

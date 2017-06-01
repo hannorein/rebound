@@ -36,7 +36,6 @@
 #include "output.h"
 #include "integrator_ias15.h"
 #include "integrator_whfast.h"
-#include "integrator_whfasthelio.h"
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
@@ -120,14 +119,13 @@ void reb_integrator_hermes_part1(struct reb_simulation* r){
     
     reb_integrator_hermes_apply_forces(r, r->ri_hermes.a_i);
     
-    //reb_integrator_whfast_part1(r);
-    reb_integrator_whfasthelio_part1(r);
+    r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
+    reb_integrator_whfast_part1(r);
 }
 
 
 void reb_integrator_hermes_part2(struct reb_simulation* r){
-    //reb_integrator_whfast_part2(r);
-    reb_integrator_whfasthelio_part2(r);
+    reb_integrator_whfast_part2(r);
     
     reb_integrator_hermes_apply_forces(r, r->ri_hermes.a_f);
     

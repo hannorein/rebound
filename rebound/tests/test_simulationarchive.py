@@ -59,9 +59,10 @@ class TestSimulationArchive(unittest.TestCase):
         sim.add(m=1)
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
-        sim.integrator = "whfasthelio"
+        sim.integrator = "whfast"
+        sim.ri_whfast.coordinates = 1
         sim.dt = 0.1313
-        sim.ri_whfasthelio.safe_mode = 1
+        sim.ri_whfast.safe_mode = 1
         sim.initSimulationArchive("test.bin", 10.)
         sim.integrate(40.,exact_finish_time=0)
 
@@ -76,9 +77,10 @@ class TestSimulationArchive(unittest.TestCase):
         sim.add(m=1)
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
-        sim.integrator = "whfasthelio"
+        sim.integrator = "whfast"
+        sim.ri_whfast.coordinates = 1
         sim.dt = 0.1313
-        sim.ri_whfasthelio.safe_mode = 1
+        sim.ri_whfast.safe_mode = 1
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 
@@ -89,9 +91,10 @@ class TestSimulationArchive(unittest.TestCase):
         sim.add(m=1)
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
-        sim.integrator = "whfasthelio"
+        sim.integrator = "whfast"
+        sim.ri_whfast.coordinates = 1
         sim.dt = 0.1313
-        sim.ri_whfasthelio.safe_mode = 0
+        sim.ri_whfast.safe_mode = 0
         sim.initSimulationArchive("test.bin", 10.)
         sim.integrate(40.,exact_finish_time=0)
 
@@ -106,9 +109,10 @@ class TestSimulationArchive(unittest.TestCase):
         sim.add(m=1)
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
-        sim.integrator = "whfasthelio"
+        sim.integrator = "whfast"
+        sim.ri_whfast.coordinates = 1
         sim.dt = 0.1313
-        sim.ri_whfasthelio.safe_mode = 0
+        sim.ri_whfast.safe_mode = 0
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 

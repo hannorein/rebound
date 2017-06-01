@@ -152,6 +152,55 @@ struct reb_simulation_integrator_ias15 {
 };
 
 /**
+ * @brief This structure contains variables and pointer used by the MERCURIUS integrator.
+ */
+struct reb_simulation_integrator_mercurius {
+    double rcrit;               ///< Critical radius in units of Hill radii
+    
+    /** 
+     * @brief Setting this flag to one will recalculate heliocentric coordinates from the particle structure at the beginning of the next timestep. 
+     * @details After one timestep, the flag gets set back to 0. 
+     * If you want to change particles after every timestep, you 
+     * also need to set this flag to 1 before every timestep.
+     * Default is 0.
+     */ 
+    unsigned int recalculate_heliocentric_this_timestep;
+
+    /** 
+     * @brief Setting this flag to one will recalculate Hill radii at the beginning of the next timestep. 
+     * @details After one timestep, the flag gets set back to 0. 
+     * If you want to recalculate hill radii at every every timestep, you 
+     * also need to set this flag to 1 before every timestep.
+     * Default is 0.
+     */ 
+    unsigned int recalculate_rhill_this_timestep;
+
+    /**
+     * @brief If this flag is set (the default), the integrator will 
+     * recalculate heliocentric coordinates and synchronize after
+     * every timestep, to avoid problems with outputs or particle modifications
+     * between timesteps. 
+     * @details Setting it to 0 will result in a speedup, but care
+     * must be taken to synchronize and recalculate jacobi coordinates when needed.
+     */
+    unsigned int safe_mode;
+    
+    unsigned int is_synchronized;   ///< Flag to determine if current particle structure is synchronized
+    unsigned int mode;          ///< Internal. 0 if WH is operating, 1 if IAS15 is operating.
+    unsigned int encounterN;    ///< Number of particles currently having an encounter
+    unsigned int globalN;       
+    unsigned int globalNactive;
+    unsigned int allocatedN;
+    unsigned int encounterAllocatedN;
+    double m0;
+    double* rhill;
+    double* encounterRhill;
+    unsigned int* encounterIndicies;
+    struct reb_particle* encounterParticles;
+    struct reb_particle* restrict p_hold;
+};
+
+/**
  * @brief This structure contains variables and pointer used by the HERMES integrator.
  */
 struct reb_simulation_integrator_hermes {
@@ -225,18 +274,28 @@ struct reb_simulation_integrator_whfast {
      * - 11: uses eleventh order (ten-stage) corrector 
      */
     unsigned int corrector;
+    
+    /**
+     * @brief Chooses the coordinate system for the WHFast algorithm. Default is Jacobi Coordinates.
+     */
+    enum {
+        REB_WHFAST_COORDINATES_JACOBI = 0,                      ///< Jacobi coordinates (default)
+        REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC = 1,      ///< Democratic Heliocentric coordinates
+        REB_WHFAST_COORDINATES_WHDS = 2,                        ///< WHDS coordinates (Hernandez and Dehnen, 2017)
+        } coordinates;
 
     /** 
-     * @brief Setting this flag to one will recalculate Jacobi coordinates from the particle structure in the next timestep. 
+     * @brief Setting this flag to one will recalculate Jacobi/heliocentric coordinates from the particle structure in the next timestep. 
      * @details After the timestep, the flag gets set back to 0. 
      * If you want to change particles after every timestep, you 
      * also need to set this flag to 1 before every timestep.
      * Default is 0.
      */ 
-    unsigned int recalculate_jacobi_this_timestep;
+    unsigned int recalculate_coordinates_this_timestep;
 
     /**
-     * @brief If this flag is set (the default), whfast will recalculate jacobi coordinates and synchronize
+     * @brief If this flag is set (the default), whfast will recalculate 
+     * jacobi/heliocentric coordinates and synchronize
      * every timestep, to avoid problems with outputs or particle modifications
      * between timesteps. 
      * @details Setting it to 0 will result in a speedup, but care
@@ -248,16 +307,18 @@ struct reb_simulation_integrator_whfast {
     unsigned int safe_mode;
 
     /**
-     * @brief Jacobi coordinates
-     * @details This array contains the Jacobi coordinates of all particles.
+     * @brief Jacobi/heliocentric coordinates
+     * @details This array contains the Jacobi/heliocentric
+     * coordinates of all particles.
      * It is automatically filled and updated by WHfast.
      * Access this array with caution.
      */
-    struct reb_particle* restrict p_j;
+    struct reb_particle* restrict p_jh;
     
     /**
-     * @brief Generate inertial coordinates at the end of the integration, but do not change the Jacobi coordinates
-     * @details Danger zone! Only use this flag if you are absolutely sure what you are doing. This is intended for
+     * @brief Generate inertial coordinates at the end of the integration, but do not change the Jacobi/heliocentric coordinates
+     * @details Danger zone! Only use this flag if you are absolutely sure
+     * what you are doing. This is intended for
      * simulation which have to be reproducible on a bit by bit basis.
      */
     unsigned int keep_unsynchronized;
@@ -266,62 +327,15 @@ struct reb_simulation_integrator_whfast {
      * @cond PRIVATE
      * Internal data structures below. Nothing to be changed by the user.
      */
-    double* restrict eta;       ///< Struct containg Jacobi eta parameters 
 
     unsigned int is_synchronized;   ///< Flag to determine if current particle structure is synchronized
     unsigned int allocated_N;   ///< Space allocated in arrays
     unsigned int timestep_warning;  ///< Counter of timestep warnings
-    unsigned int recalculate_jacobi_but_not_synchronized_warning;   ///< Counter of Jacobi synchronization errors
+    unsigned int recalculate_coordinates_but_not_synchronized_warning;   ///< Counter of Jacobi synchronization errors
     /**
      * @endcond
      */
 };
-
-struct reb_simulation_integrator_whfasthelio {
-    /** 
-     * @brief Setting this flag to one will recalculate heliocentric coordinates from the particle structure in the next timestep. 
-     * @details After the timestep, the flag gets set back to 0. 
-     * If you want to change particles after every timestep, you 
-     * also need to set this flag to 1 before every timestep.
-     * Default is 0.
-     */ 
-    unsigned int recalculate_heliocentric_this_timestep;
-    /**
-     * @brief If this flag is set (the default), WHFastHelio will recalculate heliocentric
-     * coordinates and synchronize every timestep, to avoid problems with outputs or 
-     * particle modifications between timesteps. 
-     * @details Setting it to 0 will result in a speedup, but care
-     * must be taken to synchronize and recalculate heliocentric coordinates when needed.
-     */
-    unsigned int safe_mode;
-
-    /**
-     * @brief Heliocentric coordinates
-     * @details This array contains the heliocentric coordinates of all particles.
-     * It is automatically filled and updated by WHfastDemocratic.
-     * Access this array with caution.
-     */
-    struct reb_particle* restrict p_h;
-    
-    /**
-     * @brief Generate inertial coordinates at the end of the integration, but do not change the Heliocentric coordinates
-     * @details Danger zone! Only use this flag if you are absolutely sure what you are doing. This is intended for
-     * simulation which have to be reproducible on a bit by bit basis.
-     */
-    unsigned int keep_unsynchronized;
-
-    /**
-     * @cond PRIVATE
-     * Internal data structures below. Nothing to be changed by the user.
-     */
-    unsigned int allocated_N;   ///< Space allocated in arrays
-    unsigned int is_synchronized;   ///< Flag to determine if current particle structure is synchronized
-    unsigned int recalculate_heliocentric_but_not_synchronized_warning;   ///< Counter of heliocentric synchronization errors
-    /**
-     * @endcond
-     */
-};
-/** @} */
 
 
 /**
@@ -372,6 +386,7 @@ struct reb_simulation_integrator_janus {
      * @endcond
      */
 };
+
 /**
  * @defgroup MiscRebStructs 
  * @details Miscellaneous REBOUND structures
@@ -516,11 +531,6 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_HERMES_STEPS = 77,
     REB_BINARY_FIELD_TYPE_HERMES_STEPS_MA = 78,
     REB_BINARY_FIELD_TYPE_HERMES_STEPS_MN = 79,
-    REB_BINARY_FIELD_TYPE_WHFASTH_CORRECTOR = 80,
-    REB_BINARY_FIELD_TYPE_WHFASTH_RECALCHELIO = 81,
-    REB_BINARY_FIELD_TYPE_WHFASTH_SAFEMODE = 82,
-    REB_BINARY_FIELD_TYPE_WHFASTH_TIMESTEPWARN =83,
-    REB_BINARY_FIELD_TYPE_WHFASTH_ISSYNCHRON = 84,
     REB_BINARY_FIELD_TYPE_PARTICLES = 85,
     REB_BINARY_FIELD_TYPE_VARCONFIG = 86,
     REB_BINARY_FIELD_TYPE_FUNCTIONPOINTERS = 87,
@@ -539,10 +549,7 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_IAS15_BR = 100,
     REB_BINARY_FIELD_TYPE_IAS15_ER = 101,
     REB_BINARY_FIELD_TYPE_SAINTERVALWALLTIME = 102,
-    REB_BINARY_FIELD_TYPE_WHFASTH_KEEPUNSYNC = 103,
     REB_BINARY_FIELD_TYPE_WHFAST_PJ = 104,
-    REB_BINARY_FIELD_TYPE_WHFAST_ETA = 105,
-    REB_BINARY_FIELD_TYPE_WHFASTH_PH = 106,
     REB_BINARY_FIELD_TYPE_VISUALIZATION = 107,
     REB_BINARY_FIELD_TYPE_JANUS_ALLOCATEDN = 110,
     REB_BINARY_FIELD_TYPE_JANUS_PINT = 112,
@@ -550,6 +557,7 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_JANUS_SCALEVEL = 114,
     REB_BINARY_FIELD_TYPE_JANUS_ORDER = 115,
     REB_BINARY_FIELD_TYPE_JANUS_RECALC = 116,
+    REB_BINARY_FIELD_TYPE_WHFAST_COORDINATES = 117,
     REB_BINARY_FIELD_TYPE_END = 9999,
 };
 
@@ -781,6 +789,7 @@ struct reb_simulation {
         REB_COLLISION_NONE = 0,     ///< Do not search for collisions (default)
         REB_COLLISION_DIRECT = 1,   ///< Direct collision search O(N^2)
         REB_COLLISION_TREE = 2,     ///< Tree based collision search O(N log(N))
+        REB_COLLISION_MERCURIUS = 3,///< Direct collision search optimized for MERCURIUS
         } collision;
     /**
      * @brief Available integrators
@@ -791,9 +800,9 @@ struct reb_simulation {
         REB_INTEGRATOR_SEI = 2,      ///< SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable
         REB_INTEGRATOR_LEAPFROG = 4, ///< LEAPFROG integrator, simple, 2nd order, symplectic
         REB_INTEGRATOR_HERMES = 5,   ///< HERMES Integrator for close encounters (experimental)
-        REB_INTEGRATOR_WHFASTHELIO = 6,   ///< WHFastHelio integrator, symplectic, 2nd order, in democratic heliocentric coordinates
         REB_INTEGRATOR_NONE = 7,     ///< Do not integrate anything
         REB_INTEGRATOR_JANUS = 8,    ///< Bit-wise reversible JANUS integrator.
+        REB_INTEGRATOR_MERCURIUS = 9,///< MERCURIUS integrator 
         } integrator;
 
     /**
@@ -814,6 +823,7 @@ struct reb_simulation {
         REB_GRAVITY_BASIC = 1,      ///< Basic O(N^2) direct summation algorithm, choose this for shearing sheet and periodic boundary conditions
         REB_GRAVITY_COMPENSATED = 2,    ///< Direct summation algorithm O(N^2) but with compensated summation, slightly slower than BASIC but more accurate
         REB_GRAVITY_TREE = 3,       ///< Use the tree to calculate gravity, O(N log(N)), set opening_angle2 to adjust accuracy.
+        REB_GRAVITY_MERCURIUS = 4,  ///< Special gravity routine only for MERCURIUS
         } gravity;
     /** @} */
 
@@ -826,7 +836,7 @@ struct reb_simulation {
     struct reb_simulation_integrator_whfast ri_whfast;  ///< The WHFast struct 
     struct reb_simulation_integrator_ias15 ri_ias15;    ///< The IAS15 struct
     struct reb_simulation_integrator_hermes ri_hermes;    ///< The HERMES struct
-    struct reb_simulation_integrator_whfasthelio ri_whfasthelio;  ///< The WHFastDemocratic struct 
+    struct reb_simulation_integrator_mercurius ri_mercurius;      ///< The MERCURIUS struct
     struct reb_simulation_integrator_janus ri_janus;    ///< The JANUS struct 
     /** @} */
 
@@ -1586,39 +1596,20 @@ long reb_simulationarchive_estimate_size(struct reb_simulation* const r, double 
  * @{
  */
 /**
- * @brief Calculate the eta array needed by Jacobi conversion routines.
- * @param ps Particles array.
- * @param eta Array of doubles to store eta values in.
- * @param N number of particles in the array.
- */
-void reb_transformations_calculate_jacobi_eta(const struct reb_particle* const ps, double* const eta, const int N);
-
-/**
- * @brief Calculate the Jacobi masses and the eta array needed by Jacobi conversion routines.
- * @param ps Particles array.
- * @param m_j Array to store jacobi masses in.
- * @param eta Array to store eta values in.
- * @param N number of particles in the array.
- */
-void reb_transformations_calculate_jacobi_masses(const struct reb_particle* const ps, double* const m_j, double* const eta, const int N);
-/** @} */
-    
-/**
  * \name From inertial to Jacobi coordinates
  * @{
  * @details Different functions allow you to calculate subsets of the positions (pos), velocities(vel),
  *          and accelerations (acc) depending on what's needed.
  * @param ps Particles array with the inertial quantities to convert
  * @param p_j Particles array in which the Jacobi quantities will be stored.
- * @param eta Array of doubles such that eta[i] = sum of all masses up to and including index i
  * @param p_mass Should be the same particles array as ps for real particles. If passing variational
  * particles in ps, p_mass should be the corresponding array of real particles.
  * @param N number of particles in the array.
  */
 
-void reb_transformations_inertial_to_jacobi_posvel(const struct reb_particle* const particles, struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N);
-void reb_transformations_inertial_to_jacobi_posvelacc(const struct reb_particle* const particles, struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N);
-void reb_transformations_inertial_to_jacobi_acc(const struct reb_particle* const particles, struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N);
+void reb_transformations_inertial_to_jacobi_posvel(const struct reb_particle* const particles, struct reb_particle* const p_j, const struct reb_particle* const p_mass, const int N);
+void reb_transformations_inertial_to_jacobi_posvelacc(const struct reb_particle* const particles, struct reb_particle* const p_j, const struct reb_particle* const p_mass, const int N);
+void reb_transformations_inertial_to_jacobi_acc(const struct reb_particle* const particles, struct reb_particle* const p_j,const struct reb_particle* const p_mass, const int N);
 /** @} */
 /**
  * \name From Jacobi to inertial coordinates
@@ -1627,14 +1618,13 @@ void reb_transformations_inertial_to_jacobi_acc(const struct reb_particle* const
  *          and accelerations (acc) depending on what's needed.
  * @param ps Particles array with the inertial quantities to convert
  * @param p_j Particles array in which the Jacobi quantities will be stored.
- * @param eta Array of doubles such that eta[i] = sum of all masses up to and including index i
  * @param p_mass Should be the same particles array as ps for real particles. If passing variational
  * particles in ps, p_mass should be the corresponding array of real particles.
  * @param N number of particles in the array.
  */
-void reb_transformations_jacobi_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N);
-void reb_transformations_jacobi_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N);
-void reb_transformations_jacobi_to_inertial_acc(struct reb_particle* const particles, const struct reb_particle* const p_j, const double* const eta, const struct reb_particle* const p_mass, const int N);
+void reb_transformations_jacobi_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_j, const struct reb_particle* const p_mass, const int N);
+void reb_transformations_jacobi_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_j, const struct reb_particle* const p_mass, const int N);
+void reb_transformations_jacobi_to_inertial_acc(struct reb_particle* const particles, const struct reb_particle* const p_j, const struct reb_particle* const p_mass, const int N);
 /** @} */
 /**
  * \name From inertial to democratic heliocentric coordinates
@@ -1645,7 +1635,7 @@ void reb_transformations_jacobi_to_inertial_acc(struct reb_particle* const parti
  * @param p_h Particles array in which the democratic heliocentric quantities will be stored.
  * @param N number of particles in the array.
  */
-void reb_transformations_inertial_to_democratic_heliocentric_posvel(const struct reb_particle* const particles, struct reb_particle* const p_h, const int N);
+void reb_transformations_inertial_to_democraticheliocentric_posvel(const struct reb_particle* const particles, struct reb_particle* const p_h, const int N);
 /** @} */
 /**
  * \name From democratic heliocentric to inertial coordinates
@@ -1656,8 +1646,31 @@ void reb_transformations_inertial_to_democratic_heliocentric_posvel(const struct
  * @param p_h Particles array in which the democratic heliocentric quantities will be stored.
  * @param N number of particles in the array.
  */
-void reb_transformations_democratic_heliocentric_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_h, const int N);
-void reb_transformations_democratic_heliocentric_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_h, const int N);
+void reb_transformations_democraticheliocentric_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_h, const int N);
+void reb_transformations_democraticheliocentric_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_h, const int N);
+/** @} */
+/**
+ * \name From inertial to WHDS coordinates
+ * @{
+ * @details Different functions allow you to calculate subsets of the positions (pos), velocities(vel),
+ *          and accelerations (acc) depending on what's needed.
+ * @param ps Particles array with the inertial quantities to convert
+ * @param p_h Particles array in which the WHDS quantities will be stored.
+ * @param N number of particles in the array.
+ */
+void reb_transformations_inertial_to_whds_posvel(const struct reb_particle* const particles, struct reb_particle* const p_h, const int N);
+/** @} */
+/**
+ * \name From WHDS to inertial coordinates
+ * @{
+ * @details Different functions allow you to calculate subsets of the positions (pos), velocities(vel),
+ *          and accelerations (acc) depending on what's needed.
+ * @param ps Particles array with the inertial quantities to convert
+ * @param p_h Particles array in which the WHDS quantities will be stored.
+ * @param N number of particles in the array.
+ */
+void reb_transformations_whds_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_h, const int N);
+void reb_transformations_whds_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_h, const int N);
 /** @} */
 /** @} */
 
@@ -1786,12 +1799,12 @@ struct reb_display_data {
     struct reb_particle_opengl* particle_data;
     struct reb_orbit_opengl* orbit_data;
     struct reb_particle* particles_copy;
-    struct reb_particle* p_j_copy;
+    struct reb_particle* p_jh_copy;
     struct reb_particle* p_h_copy;
     double* eta_copy;
     unsigned long allocated_N;
     unsigned long allocated_N_whfast;
-    unsigned long allocated_N_whfasthelio;
+    unsigned long allocated_N_mercurius;
     unsigned int opengl_enabled;
     double scale;
     double mouse_x;

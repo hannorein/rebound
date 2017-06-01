@@ -232,11 +232,12 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
             CASE(SEI_SINDTZ,         &r->ri_sei.sindtz);
             CASE(SEI_TANDTZ,         &r->ri_sei.tandtz);
             CASE(WHFAST_CORRECTOR,   &r->ri_whfast.corrector);
-            CASE(WHFAST_RECALCJAC,   &r->ri_whfast.recalculate_jacobi_this_timestep);
+            CASE(WHFAST_RECALCJAC,   &r->ri_whfast.recalculate_coordinates_this_timestep);
             CASE(WHFAST_SAFEMODE,    &r->ri_whfast.safe_mode);
             CASE(WHFAST_KEEPUNSYNC,  &r->ri_whfast.keep_unsynchronized);
             CASE(WHFAST_ISSYNCHRON,  &r->ri_whfast.is_synchronized);
             CASE(WHFAST_TIMESTEPWARN,&r->ri_whfast.timestep_warning);
+            CASE(WHFAST_COORDINATES, &r->ri_whfast.coordinates);
             CASE(IAS15_EPSILON,      &r->ri_ias15.epsilon);
             CASE(IAS15_MINDT,        &r->ri_ias15.min_dt);
             CASE(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global);
@@ -249,10 +250,6 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
             CASE(HERMES_STEPS,       &r->ri_hermes.steps);
             CASE(HERMES_STEPS_MA,    &r->ri_hermes.steps_miniactive);
             CASE(HERMES_STEPS_MN,    &r->ri_hermes.steps_miniN);
-            CASE(WHFASTH_RECALCHELIO,&r->ri_whfasthelio.recalculate_heliocentric_this_timestep);
-            CASE(WHFASTH_SAFEMODE,   &r->ri_whfasthelio.safe_mode);
-            CASE(WHFASTH_ISSYNCHRON, &r->ri_whfasthelio.is_synchronized);
-            CASE(WHFASTH_KEEPUNSYNC, &r->ri_whfasthelio.keep_unsynchronized);
             CASE(JANUS_SCALEPOS,     &r->ri_janus.scale_pos);
             CASE(JANUS_SCALEVEL,     &r->ri_janus.scale_vel);
             CASE(JANUS_ORDER,        &r->ri_janus.order);
@@ -280,12 +277,12 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
                 }
                 break;
             case REB_BINARY_FIELD_TYPE_WHFAST_PJ:
-                if(r->ri_whfast.p_j){
-                    free(r->ri_whfast.p_j);
+                if(r->ri_whfast.p_jh){
+                    free(r->ri_whfast.p_jh);
                 }
-                r->ri_whfast.p_j = malloc(field.size);
+                r->ri_whfast.p_jh = malloc(field.size);
                 r->ri_whfast.allocated_N = (int)(field.size/sizeof(struct reb_particle));
-                fread(r->ri_whfast.p_j, field.size,1,inf);
+                fread(r->ri_whfast.p_jh, field.size,1,inf);
                 break;
             case REB_BINARY_FIELD_TYPE_JANUS_PINT:
                 if(r->ri_janus.p_int){
@@ -294,22 +291,6 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
                 r->ri_janus.p_int = malloc(field.size);
                 r->ri_janus.allocated_N = (int)(field.size/sizeof(struct reb_particle_int));
                 fread(r->ri_janus.p_int, field.size,1,inf);
-                break;
-            case REB_BINARY_FIELD_TYPE_WHFAST_ETA:
-                if(r->ri_whfast.eta){
-                    free(r->ri_whfast.eta);
-                }
-                r->ri_whfast.eta = malloc(field.size);
-                r->ri_whfast.allocated_N = (int)(field.size/sizeof(double));
-                fread(r->ri_whfast.eta, field.size,1,inf);
-                break;
-            case REB_BINARY_FIELD_TYPE_WHFASTH_PH:
-                if(r->ri_whfasthelio.p_h){
-                    free(r->ri_whfasthelio.p_h);
-                }
-                r->ri_whfasthelio.p_h = malloc(field.size);
-                r->ri_whfasthelio.allocated_N = (int)(field.size/sizeof(struct reb_particle));
-                fread(r->ri_whfasthelio.p_h, field.size,1,inf);
                 break;
             case REB_BINARY_FIELD_TYPE_VARCONFIG:
                 if (r->var_config){

@@ -302,13 +302,13 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(SEI_SINDTZ,         &r->ri_sei.sindtz,                  sizeof(double));
     WRITE_FIELD(SEI_TANDTZ,         &r->ri_sei.tandtz,                  sizeof(double));
     WRITE_FIELD(WHFAST_CORRECTOR,   &r->ri_whfast.corrector,            sizeof(unsigned int));
-    WRITE_FIELD(WHFAST_RECALCJAC,   &r->ri_whfast.recalculate_jacobi_this_timestep, sizeof(unsigned int));
+    WRITE_FIELD(WHFAST_RECALCJAC,   &r->ri_whfast.recalculate_coordinates_this_timestep, sizeof(unsigned int));
     WRITE_FIELD(WHFAST_SAFEMODE,    &r->ri_whfast.safe_mode,            sizeof(unsigned int));
     WRITE_FIELD(WHFAST_KEEPUNSYNC,  &r->ri_whfast.keep_unsynchronized,  sizeof(unsigned int));
     WRITE_FIELD(WHFAST_ISSYNCHRON,  &r->ri_whfast.is_synchronized,      sizeof(unsigned int));
     WRITE_FIELD(WHFAST_TIMESTEPWARN,&r->ri_whfast.timestep_warning,     sizeof(unsigned int));
-    WRITE_FIELD(WHFAST_PJ,          r->ri_whfast.p_j,                   sizeof(struct reb_particle)*r->ri_whfast.allocated_N);
-    WRITE_FIELD(WHFAST_ETA,         r->ri_whfast.eta,                   sizeof(double)*r->ri_whfast.allocated_N);
+    WRITE_FIELD(WHFAST_PJ,          r->ri_whfast.p_jh,                  sizeof(struct reb_particle)*r->ri_whfast.allocated_N);
+    WRITE_FIELD(WHFAST_COORDINATES, &r->ri_whfast.coordinates,          sizeof(int));
     WRITE_FIELD(IAS15_EPSILON,      &r->ri_ias15.epsilon,               sizeof(double));
     WRITE_FIELD(IAS15_MINDT,        &r->ri_ias15.min_dt,                sizeof(double));
     WRITE_FIELD(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global,        sizeof(unsigned int));
@@ -321,11 +321,6 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(HERMES_STEPS,       &r->ri_hermes.steps,                sizeof(unsigned long long));
     WRITE_FIELD(HERMES_STEPS_MA,    &r->ri_hermes.steps_miniactive,     sizeof(unsigned long long));
     WRITE_FIELD(HERMES_STEPS_MN,    &r->ri_hermes.steps_miniN,          sizeof(unsigned long long));
-    WRITE_FIELD(WHFASTH_RECALCHELIO,&r->ri_whfasthelio.recalculate_heliocentric_this_timestep, sizeof(unsigned int));
-    WRITE_FIELD(WHFASTH_SAFEMODE,   &r->ri_whfasthelio.safe_mode,       sizeof(unsigned int));
-    WRITE_FIELD(WHFASTH_ISSYNCHRON, &r->ri_whfasthelio.is_synchronized, sizeof(unsigned int));
-    WRITE_FIELD(WHFASTH_KEEPUNSYNC, &r->ri_whfasthelio.keep_unsynchronized, sizeof(unsigned int));
-    WRITE_FIELD(WHFASTH_PH,         r->ri_whfasthelio.p_h,              sizeof(struct reb_particle)*r->ri_whfasthelio.allocated_N);
     WRITE_FIELD(JANUS_SCALEPOS,     &r->ri_janus.scale_pos,             sizeof(double));
     WRITE_FIELD(JANUS_SCALEVEL,     &r->ri_janus.scale_vel,             sizeof(double));
     WRITE_FIELD(JANUS_ORDER,        &r->ri_janus.order,                 sizeof(unsigned int));

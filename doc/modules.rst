@@ -53,8 +53,7 @@ Integrators
 Module name                 Description
 ==========================  ============================================ 
 REB_INTEGRATOR_IAS15        IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precision. IAS15 can integrate variational equations. Rein & Spiegel 2015, Everhart 1985, default
-REB_INTEGRATOR_WHFAST       WHFast is the integrator described in Rein & Tamayo 2015, it's a second order symplectic Wisdom Holman integrator with 11th order symplectic correctors. It is extremely fast and accurate, uses Gauss f and g functions to solve the Kepler motion and can integrate variational equations.
-REB_INTEGRATOR_WHFASTHELIO  A symplectic second order integrator using the Kepler solver of WHFast (Rein & Tamayo 2015) but works in democratic heliocentric coordinates. This coordinate system is better if planets have crossing orbits or swap positions during an integrations. We use the WHDS splitting proposed by Hernandez and Dehnen (2017). 
+REB_INTEGRATOR_WHFAST       WHFast is the integrator described in Rein & Tamayo 2015, it's a second order symplectic Wisdom Holman integrator with 11th order symplectic correctors. It is extremely fast and accurate, uses Gauss f and g functions to solve the Kepler motion and can integrate variational equations. The user can choose between Jacobi, Democratic Heliocentric, and WHDS (Hernandez and Dehnen, 2017) coordinates. 
 REB_INTEGRATOR_JANUS        Janus is a bit-wise time-reversible high-order symplectic integrator using a mix of floating point and integer arithmetic. This integrator is still in an experimental stage and will be discussed in an upcoming paper. 
 REB_INTEGRATOR_EULER        Euler scheme, first order
 REB_INTEGRATOR_LEAPFROG     Leap frog, second order, symplectic

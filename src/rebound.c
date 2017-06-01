@@ -38,9 +38,9 @@
 #include "rebound.h"
 #include "integrator.h"
 #include "integrator_whfast.h"
-#include "integrator_whfasthelio.h"
 #include "integrator_ias15.h"
 #include "integrator_hermes.h"
+#include "integrator_mercurius.h"
 #include "boundary.h"
 #include "gravity.h"
 #include "collision.h"
@@ -63,7 +63,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.4.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.5.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 void reb_step(struct reb_simulation* const r){
@@ -72,8 +72,7 @@ void reb_step(struct reb_simulation* const r){
     if (r->pre_timestep_modifications){
         reb_integrator_synchronize(r);
         r->pre_timestep_modifications(r);
-        r->ri_whfast.recalculate_jacobi_this_timestep = 1;
-        r->ri_whfasthelio.recalculate_heliocentric_this_timestep = 1;
+        r->ri_whfast.recalculate_coordinates_this_timestep = 1;
     }
     
     reb_integrator_part1(r);
@@ -128,8 +127,7 @@ void reb_step(struct reb_simulation* const r){
     if (r->post_timestep_modifications){
         reb_integrator_synchronize(r);
         r->post_timestep_modifications(r);
-        r->ri_whfast.recalculate_jacobi_this_timestep = 1;
-        r->ri_whfasthelio.recalculate_heliocentric_this_timestep = 1;
+        r->ri_whfast.recalculate_coordinates_this_timestep = 1;
     }
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
@@ -274,7 +272,7 @@ void reb_free_pointers(struct reb_simulation* const r){
         free(r->display_data->r_copy);
         free(r->display_data->particles_copy);
         free(r->display_data->eta_copy);
-        free(r->display_data->p_j_copy);
+        free(r->display_data->p_jh_copy);
         free(r->display_data->p_h_copy);
         free(r->display_data->particle_data);
         free(r->display_data->orbit_data);
@@ -283,8 +281,8 @@ void reb_free_pointers(struct reb_simulation* const r){
     free(r->gravity_cs  );
     free(r->collisions  );
     reb_integrator_whfast_reset(r);
-    reb_integrator_whfasthelio_reset(r);
     reb_integrator_ias15_reset(r);
+    reb_integrator_mercurius_reset(r);
     free(r->particles   );
     free(r->particle_lookup_table);
     if (r->messages){
@@ -309,13 +307,8 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->allocatedN_lookup = 0;
     // ********** WHFAST
     r->ri_whfast.allocated_N    = 0;
-    r->ri_whfast.eta            = NULL;
-    r->ri_whfast.p_j            = NULL;
+    r->ri_whfast.p_jh           = NULL;
     r->ri_whfast.keep_unsynchronized = 0;
-    // ********** WHFASTHELIO
-    r->ri_whfasthelio.allocated_N  = 0;
-    r->ri_whfasthelio.p_h          = NULL;
-    r->ri_whfasthelio.keep_unsynchronized = 0;
     // ********** IAS15
     r->ri_ias15.allocatedN      = 0;
     set_dp7_null(&(r->ri_ias15.g));
@@ -343,6 +336,15 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_hermes.a_Nmax = 0;
     r->ri_hermes.a_i = NULL;
     r->ri_hermes.a_f = NULL;
+    // ********** MERCURIUS
+    r->ri_mercurius.allocatedN = 0;
+    r->ri_mercurius.rhill = NULL;
+    r->ri_mercurius.encounterRhill = NULL;
+    r->ri_mercurius.encounterIndicies = NULL;
+    r->ri_mercurius.encounterAllocatedN = 0;
+    r->ri_mercurius.encounterParticles = NULL;
+    r->ri_mercurius.p_hold = NULL;
+
     // ********** JANUS
     r->ri_janus.allocated_N = 0;
     r->ri_janus.p_int = NULL;
@@ -453,16 +455,12 @@ void reb_init_simulation(struct reb_simulation* r){
     // the defaults below are chosen to safeguard the user against spurious results, but
     // will be slower and less accurate
     r->ri_whfast.corrector = 0;
+    r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_JACOBI;
     r->ri_whfast.safe_mode = 1;
-    r->ri_whfast.recalculate_jacobi_this_timestep = 0;
+    r->ri_whfast.recalculate_coordinates_this_timestep = 0;
     r->ri_whfast.is_synchronized = 1;
     r->ri_whfast.timestep_warning = 0;
-    r->ri_whfast.recalculate_jacobi_but_not_synchronized_warning = 0;
-    // ********** WHFASTHELIO
-    r->ri_whfasthelio.safe_mode = 1;
-    r->ri_whfasthelio.is_synchronized = 1;
-    r->ri_whfasthelio.recalculate_heliocentric_this_timestep = 0;
-    r->ri_whfasthelio.recalculate_heliocentric_but_not_synchronized_warning = 0;
+    r->ri_whfast.recalculate_coordinates_but_not_synchronized_warning = 0;
     
     // ********** IAS15
     r->ri_ias15.epsilon         = 1e-9;
@@ -487,6 +485,16 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_hermes.adaptive_hill_switch_factor = 1;    
     r->ri_hermes.current_hill_switch_factor = 3.;     //Internal 
     
+    // ********** MERCURIUS
+    r->ri_mercurius.mode = 0;
+    r->ri_mercurius.safe_mode = 1;
+    r->ri_mercurius.recalculate_heliocentric_this_timestep = 0;
+    r->ri_mercurius.recalculate_rhill_this_timestep = 0;
+    r->ri_mercurius.is_synchronized = 1;
+    r->ri_mercurius.encounterN = 0;
+    r->ri_mercurius.m0 = 0;
+    r->ri_mercurius.rcrit = 3;
+
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.
     r->tree_needs_update= 0;
     r->tree_root        = NULL;

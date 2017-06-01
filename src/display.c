@@ -614,7 +614,7 @@ void reb_display_init(struct reb_simulation * const r){
     data->spheres       = 0; 
     data->pause         = 0; 
     data->multisample = 1; 
-    if (data->r->integrator==REB_INTEGRATOR_WHFAST || data->r->integrator==REB_INTEGRATOR_WHFASTHELIO){
+    if (data->r->integrator==REB_INTEGRATOR_WHFAST){
         data->wire          = 1; 
     }else{
         data->wire          = 0; 
@@ -625,10 +625,9 @@ void reb_display_init(struct reb_simulation * const r){
     data->reference     = -1;
     data->view.w        = 1.;
     data->p_h_copy      = NULL;
-    data->p_j_copy      = NULL;
-    data->eta_copy      = NULL;
+    data->p_jh_copy      = NULL;
     data->allocated_N_whfast = 0;
-    data->allocated_N_whfasthelio = 0;
+    data->allocated_N_mercurius = 0;
 
     glfwSetKeyCallback(window,reb_display_keyboard);
     glfwGetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS);
@@ -1100,23 +1099,19 @@ int reb_display_copy_data(struct reb_simulation* const r){
         if (r->ri_whfast.allocated_N > data->allocated_N_whfast){
             size_changed = 1;
             data->allocated_N_whfast = r->ri_whfast.allocated_N;
-            data->p_j_copy = realloc(data->p_j_copy,data->allocated_N_whfast*sizeof(struct reb_particle));
-            data->eta_copy = realloc(data->eta_copy,data->allocated_N_whfast*sizeof(double));
+            data->p_jh_copy = realloc(data->p_jh_copy,data->allocated_N_whfast*sizeof(struct reb_particle));
         }
-        memcpy(data->p_j_copy, r->ri_whfast.p_j, data->allocated_N_whfast*sizeof(struct reb_particle));
-        memcpy(data->eta_copy, r->ri_whfast.eta, data->allocated_N_whfast*sizeof(double));
+        memcpy(data->p_jh_copy, r->ri_whfast.p_jh, data->allocated_N_whfast*sizeof(struct reb_particle));
     }
-    data->r_copy->ri_whfast.p_j= data->p_j_copy;
-    data->r_copy->ri_whfast.eta= data->eta_copy;
-    if (r->integrator==REB_INTEGRATOR_WHFASTHELIO && r->ri_whfasthelio.is_synchronized==0){
-        if (r->ri_whfasthelio.allocated_N > data->allocated_N_whfast){
+    data->r_copy->ri_whfast.p_jh= data->p_jh_copy;
+    if (r->integrator==REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.is_synchronized==0){
+        if (r->ri_mercurius.allocatedN > data->allocated_N_mercurius){
             size_changed = 1;
-            data->allocated_N_whfasthelio = r->ri_whfasthelio.allocated_N;
-            data->p_h_copy = realloc(data->p_h_copy,data->allocated_N_whfasthelio*sizeof(struct reb_particle));
+            data->allocated_N_mercurius = r->ri_mercurius.allocatedN;
+            data->p_h_copy = realloc(data->p_h_copy,data->allocated_N_mercurius*sizeof(struct reb_particle));
         }
-        memcpy(data->p_h_copy, r->ri_whfasthelio.p_h, data->allocated_N_whfasthelio*sizeof(struct reb_particle));
+        memcpy(data->p_h_copy, r->ri_whfast.p_jh, data->allocated_N_whfast*sizeof(struct reb_particle));
     }
-    data->r_copy->ri_whfasthelio.p_h= data->p_h_copy;
     
     return size_changed;
 }
@@ -1126,7 +1121,7 @@ void reb_display_prepare_data(struct reb_simulation* const r, int orbits){
     struct reb_display_data* data = r->display_data;
     struct reb_simulation* const r_copy = data->r_copy;
 
-    // this only does something for WHFAST + WHFASTHELIO
+    // this only does something for WHFAST + MERCURIUS
     reb_integrator_synchronize(r_copy);
        
     // Update data on GPU 

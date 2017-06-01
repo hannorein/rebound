@@ -28,3 +28,6 @@ class TestMegno(unittest.TestCase):
         self.assertAlmostEqual(self.sim.calculate_lyapunov(),0.,delta=1e-3)
 
 
+    
+if __name__ == "__main__":
+    unittest.main()

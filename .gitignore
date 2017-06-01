@@ -1,4 +1,5 @@
 *.o
+/*.ipynb
 Info.plist
 *.so
 *.pyc

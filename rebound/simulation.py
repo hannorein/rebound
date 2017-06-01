@@ -20,11 +20,12 @@ import types
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "hermes": 5, "whfasthelio": 6, "none": 7, "janus": 8}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "hermes": 5, "none": 7, "janus": 8, "mercurius": 9}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
-GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3}
-COLLISIONS = {"none": 0, "direct": 1, "tree": 2}
+GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4}
+COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "mercurius": 3}
 VISUALIZATIONS = {"none": 0, "opengl": 1, "webgl": 2}
+COORDINATES = {"jacobi": 0, "democraticheliocentric": 1, "whds": 2}
 BINARY_WARNINGS = [
     ("Cannot read binary file. Check filename and file contents.", 1),
     ("Binary file was saved with a different version of REBOUND. Binary format might have changed.", 2),
@@ -132,13 +133,19 @@ class reb_simulation_integrator_whfast(Structure):
         By default the symplectic correctors are turned off (=0). For high
         accuracy simulation set this value to 11. For more details read 
         Rein and Tamayo (2015).
-    :ivar int recalculate_jacobi_this_timestep:
+    :ivar int recalculate_coordinates_this_timestep:
         Sets a flag that tells WHFast that the particles have changed.
         Setting this flag to 1 (default 0) triggers the WHFast integrator
-        to recalculate Jacobi coordinates. This is needed if the user changes 
-        the particle position, velocity or mass inbetween timesteps.
-        After every timestep the flag is set back to 0, so if you continuously
-        update the particles manually, you need to set this flag to 1 after every timestep.
+        to recalculate Jacobi/heliocenctric coordinates. This is needed 
+        if the user changes the particle position, velocity or mass 
+        inbetween timesteps.  After every timestep the flag is set back 
+        to 0, so if you continuously update the particles manually, 
+        you need to set this flag to 1 after every timestep.
+    :ivar string coordinates:
+        Sets the internal coordinate system that WHFast is using. By default
+        it uses ``'jacobi'`` (=0) coordinates. Other options are 
+        ``'democraticheliocentric'`` (=1) and ``'whds'`` (=2). See Hernandez 
+        and Dehnen (2017) for more information.
     :ivar int safe_mode:
         If safe_mode is 1 (default) particles can be modified between
         timesteps and particle velocities and positions are always synchronised.
@@ -147,59 +154,41 @@ class reb_simulation_integrator_whfast(Structure):
         on advanced WHFast usage to learn more.
     """
     _fields_ = [("corrector", c_uint),
-                ("recalculate_jacobi_this_timestep", c_uint),
+                ("_coordinates", c_uint),
+                ("recalculate_coordinates_this_timestep", c_uint),
                 ("safe_mode", c_uint),
-                ("p_j", POINTER(Particle)),
+                ("p_jh", POINTER(Particle)),
                 ("keep_unsynchronized", c_uint),
-                ("eta", POINTER(c_double)),
                 ("is_synchronized", c_uint),
                 ("allocatedN", c_uint),
                 ("timestep_warning", c_uint),
-                ("recalculate_jacobi_but_not_synchronized_warning", c_uint)]
+                ("recalculate_coordinates_but_not_synchronized_warning", c_uint)]
+    @property
+    def coordinates(self):
+        """
+        Get or set the internal coordinate system.
 
-class reb_simulation_integrator_whfasthelio(Structure):
-    """
-    This class is an abstraction of the C-struct reb_simulation_integrator_whfasthelio.
-    It controls the behaviour of the symplectic WHFastHelio integrator. The integrator
-    id based on WHFast which is described in Rein and Tamayo (2015), but works in 
-    democratic heliocentric coordinates which are better for systems in which planets
-    swap positions.
-    
-    This struct should be accessed via the simulation class only. Here is an 
-    example:
+        Available coordinate systems are:
 
-    >>> sim = rebound.Simulation()
-    >>> sim.ri_whfasthelio.safe_mode =  0
-    
-   
-   :ivar int corrector:      
-        The order of the symplectic corrector in the WHFastHelio integrator.
-        By default the symplectic correctors are turned off (=0). For high
-        accuracy simulation set this value to 11. For more details read 
-        Rein and Tamayo (2015) and also Widsom (2006).
-   
-   :ivar int recalculate_helio_this_timestep:
-        Sets a flag that tells WHFastHelio that the particles have changed.
-        Setting this flag to 1 (default 0) triggers the WHFastHelio integrator
-        to recalculate heliocentric coordinates. This is needed if the user changes 
-        the particle position, velocity or mass inbetween timesteps.
-        After every timestep the flag is set back to 0, so if you continuously
-        update the particles manually, you need to set this flag to 1 after every timestep.
-    :ivar int safe_mode:
-        If safe_mode is 1 (default) particles can be modified between
-        timesteps and particle velocities and positions are always synchronised.
-        If you set safe_mode to 0, the speed and accuracy of WHFastiHelio improve.
-        However, make sure you are aware of the consequences.
-    """
-
-    _fields_ = [("recalculate_heliocentric_this_timestep", c_uint),
-                ("safe_mode", c_uint),
-                ("p_h", POINTER(Particle)),
-                ("keep_unsynchronized", c_uint),
-                ("allocatedN", c_uint),
-                ("is_synchronized", c_uint),
-                ("recalculate_heliocentric_but_not_synchronized_warning", c_uint)]
-
+        - ``'jacobi'`` (default)
+        - ``'democraticheliocentric'``
+        - ``'whds'``
+        """
+        i = self._coordinates
+        for name, _i in COORDINATES.items():
+            if i==_i:
+                return name
+        return i
+    @coordinates.setter
+    def coordinates(self, value):
+        if isinstance(value, int):
+            self._coordinates = c_uint(value)
+        elif isinstance(value, basestring):
+            value = value.lower()
+            if value in COORDINATES: 
+                self._coordinates = COORDINATES[value]
+            else:
+                raise ValueError("Warning. Coordinate system not found.")
 
 class Orbit(Structure):
     """
@@ -697,10 +686,11 @@ class Simulation(Structure):
 
         - ``'ias15'`` (default)
         - ``'whfast'``
-        - ``'whfasthelio'``
         - ``'sei'``
         - ``'leapfrog'``
         - ``'hermes'``
+        - ``'mercurius'``
+        - ``'bs'``
         - ``'none'``
         
         Check the online documentation for a full description of each of the integrators. 
@@ -803,6 +793,7 @@ class Simulation(Structure):
         - ``'none'`` (default)
         - ``'direct'``
         - ``'tree'``
+        - ``'mercurius'`` 
         
         Check the online documentation for a full description of each of the modules. 
         """
@@ -1532,6 +1523,25 @@ class reb_simulation_integrator_janus(Structure):
                 ("allocated_N",c_uint),
                 ]
 
+class reb_simulation_integrator_mercurius(Structure):
+    _fields_ = [("rcrit", c_double),
+                ("recalculate_heliocentric_this_timestep", c_uint),
+                ("recalculate_rhill_this_timestep", c_uint),
+                ("safe_mode", c_uint),
+                ("_is_synchronized", c_uint),
+                ("_mode", c_uint),
+                ("_encounterN", c_uint),
+                ("_globalN", c_uint),
+                ("_globalNactive", c_uint),
+                ("_allocatedN", c_uint),
+                ("_encounterAllocatedN", c_uint),
+                ("_m0", c_double),
+                ("_rhill", c_void_p),
+                ("_rhillias15", c_void_p),
+                ("_encounterIndicies", c_void_p),
+                ("_encounterParticles", POINTER(Particle)),
+                ("_p_hold", POINTER(Particle)),
+                ]
 
 class reb_simulation_integrator_hermes(Structure):
     _fields_ = [("mini", POINTER(Simulation)),
@@ -1566,12 +1576,11 @@ class reb_display_data(Structure):
                 ("particle_data", c_void_p),
                 ("orbit_data", c_void_p),
                 ("particles_copy", POINTER(Particle)),
-                ("p_j_copy", POINTER(Particle)),
+                ("p_jh_copy", POINTER(Particle)),
                 ("p_h_copy", POINTER(Particle)),
                 ("eta_copy", POINTER(c_double)),
                 ("allocated_N", c_ulong),
                 ("allocated_N_whfast", c_ulong),
-                ("allocated_N_whfasthelio", c_ulong),
                 ("opengl_enabled", c_int),
                 ("scale", c_double),
                 ("mouse_x", c_double),
@@ -1661,7 +1670,7 @@ Simulation._fields_ = [
                 ("ri_whfast", reb_simulation_integrator_whfast),
                 ("ri_ias15", reb_simulation_integrator_ias15),
                 ("ri_hermes", reb_simulation_integrator_hermes),
-                ("ri_whfasthelio", reb_simulation_integrator_whfasthelio),
+                ("ri_mercurius", reb_simulation_integrator_mercurius),
                 ("ri_janus", reb_simulation_integrator_janus),
                 ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_pre_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),

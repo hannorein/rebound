@@ -16,7 +16,8 @@ void heartbeat(struct reb_simulation* r);
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
     // Setup constants
-    r->integrator   = REB_INTEGRATOR_WHFASTHELIO;
+    r->integrator   = REB_INTEGRATOR_WHFAST;
+    r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
     r->boundary     = REB_BOUNDARY_OPEN;
     r->softening    = 1e-6;
     r->dt           = 1.0e-2*2.*M_PI;

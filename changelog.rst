@@ -3,6 +3,11 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.5.0
+-------------
+* The WHFast integrator now supports Jacobi coordinates (default), democratic heliocentric coordinates and WHDS coordinates. The previously separate WHFastHelio integrator has been removed. The coordinate system can now be changed by simply setting the coordinates flag in the ri_whfast struct.
+* Included a experimental new integrator MERCURIUS. This is similar to the hybrid integrator in Mercury but uses WHFast and IAS15. Not ready for production yet.
+
 Version 3.4.0
 -------------
 * Added a screenshot functionality for the WebGL ipython widget. This lets you take screenshots programmatically which is useful to create movies of simulations. 
