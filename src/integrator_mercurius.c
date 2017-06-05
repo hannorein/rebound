@@ -237,10 +237,8 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
     if (r->var_config_N){
         reb_warning(r,"Mercurius does not work with variational equations.");
     }
-    if (r->ri_whfast.coordinates == REB_WHFAST_COORDINATES_JACOBI){
-        reb_warning(r,"Mercurius does not work with Jacobi coordinates. Using democratic heliocentric coordinates. Set the coordinates flag in ri_whfast to avoid this message.");
-        r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
-    }
+    // Force use of democratic heliocentric coordinates.
+    r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
     
     struct reb_particle* restrict const particles = r->particles;
     struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
