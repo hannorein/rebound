@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.5.1
+-------------
+* MERCURIUS is not compatible with binary files and the SimulationArchive.
+
 Version 3.5.0
 -------------
 * The WHFast integrator now supports Jacobi coordinates (default), democratic heliocentric coordinates and WHDS coordinates. The previously separate WHFastHelio integrator has been removed. The coordinate system can now be changed by simply setting the coordinates flag in the ri_whfast struct.

@@ -63,7 +63,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.5.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.5.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 void reb_step(struct reb_simulation* const r){
@@ -337,6 +337,7 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_hermes.a_i = NULL;
     r->ri_hermes.a_f = NULL;
     // ********** MERCURIUS
+    r->ri_mercurius.rhillallocatedN = 0;
     r->ri_mercurius.allocatedN = 0;
     r->ri_mercurius.rhill = NULL;
     r->ri_mercurius.encounterRhill = NULL;
@@ -344,6 +345,7 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_mercurius.encounterAllocatedN = 0;
     r->ri_mercurius.encounterParticles = NULL;
     r->ri_mercurius.p_hold = NULL;
+    r->ri_mercurius.keep_unsynchronized = 0;
 
     // ********** JANUS
     r->ri_janus.allocated_N = 0;

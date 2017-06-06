@@ -246,17 +246,23 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
     const int N = r->N;
    
     
-    if (rim->allocatedN<N){
-        rim->allocatedN = N;
+    if (rim->rhillallocatedN<N){
+        rim->rhillallocatedN = N;
         rim->rhill              = realloc(rim->rhill, sizeof(double)*N);
-        rim->encounterIndicies  = realloc(rim->encounterIndicies, sizeof(unsigned int)*N);
-        rim->p_hold             = realloc(rim->p_hold,sizeof(struct reb_particle)*N);
-        rim->recalculate_heliocentric_this_timestep = 1;
         rim->recalculate_rhill_this_timestep        = 1;
     }
+    if (rim->allocatedN<N){
+        // These arrays are only used within one timestep. 
+        // Can be recreated without loosing bit-wise reproducibility
+        rim->allocatedN = N;
+        rim->encounterIndicies  = realloc(rim->encounterIndicies, sizeof(unsigned int)*N);
+        rim->p_hold             = realloc(rim->p_hold,sizeof(struct reb_particle)*N);
+    }
     if (riw->allocated_N<N){
+        // Heliocentric coordinates. Stored in WHFast struct.
         riw->allocated_N = N;
         riw->p_jh = realloc(riw->p_jh,sizeof(struct reb_particle)*N);
+        rim->recalculate_heliocentric_this_timestep = 1;
     }
     if (rim->safe_mode || rim->recalculate_heliocentric_this_timestep){
         rim->recalculate_heliocentric_this_timestep = 0;
@@ -367,7 +373,14 @@ void reb_integrator_mercurius_synchronize(struct reb_simulation* r){
     if (rim->is_synchronized == 0){
         struct reb_particle* restrict const particles = r->particles;
         const int N = r->N;
+        struct reb_particle* sync_ph = NULL;
+        if (rim->keep_unsynchronized){
+            sync_ph = malloc(sizeof(struct reb_particle)*r->N);
+            memcpy(sync_ph,r->ri_whfast.p_jh,r->N*sizeof(struct reb_particle));
+        }
     
+        r->gravity = REB_GRAVITY_MERCURIUS; // needed for SimulationArchive
+        r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
         rim->mode = 0;
         reb_calculate_acceleration(r);
         reb_whfast_interaction_step(r,r->dt/2.);
@@ -377,7 +390,12 @@ void reb_integrator_mercurius_synchronize(struct reb_simulation* r){
         }else{
             reb_transformations_whds_to_inertial_posvel(particles, riw->p_jh, N);
         }
-        rim->is_synchronized = 1;
+        if (rim->keep_unsynchronized){
+            memcpy(r->ri_whfast.p_jh,sync_ph,r->N*sizeof(struct reb_particle));
+            free(sync_ph);
+        }else{
+            rim->is_synchronized = 1;
+        }
     }
 }
 
@@ -388,6 +406,7 @@ void reb_integrator_mercurius_reset(struct reb_simulation* r){
     r->ri_mercurius.globalNactive = 0;
     r->ri_mercurius.m0 = 0;
     r->ri_mercurius.rcrit = 3;
+    r->ri_mercurius.keep_unsynchronized = 0;
     // Arrays
     r->ri_mercurius.encounterAllocatedN = 0;
     free(r->ri_mercurius.encounterParticles);
@@ -400,6 +419,7 @@ void reb_integrator_mercurius_reset(struct reb_simulation* r){
     r->ri_mercurius.p_hold = NULL;
     free(r->ri_mercurius.encounterIndicies);
     r->ri_mercurius.encounterIndicies = NULL;
+    r->ri_mercurius.rhillallocatedN = 0;
     free(r->ri_mercurius.rhill);
     r->ri_mercurius.rhill = NULL;
 }

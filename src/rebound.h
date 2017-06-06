@@ -185,12 +185,21 @@ struct reb_simulation_integrator_mercurius {
      */
     unsigned int safe_mode;
     
+    /**
+     * @brief Generate inertial coordinates at the end of the integration, but do not change the Jacobi/heliocentric coordinates
+     * @details Danger zone! Only use this flag if you are absolutely sure
+     * what you are doing. This is intended for
+     * simulation which have to be reproducible on a bit by bit basis.
+     */
+    unsigned int keep_unsynchronized;
+    
     unsigned int is_synchronized;   ///< Flag to determine if current particle structure is synchronized
     unsigned int mode;          ///< Internal. 0 if WH is operating, 1 if IAS15 is operating.
     unsigned int encounterN;    ///< Number of particles currently having an encounter
     unsigned int globalN;       
     unsigned int globalNactive;
     unsigned int allocatedN;
+    unsigned int rhillallocatedN;
     unsigned int encounterAllocatedN;
     double m0;
     double* rhill;
@@ -558,6 +567,13 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_JANUS_ORDER = 115,
     REB_BINARY_FIELD_TYPE_JANUS_RECALC = 116,
     REB_BINARY_FIELD_TYPE_WHFAST_COORDINATES = 117,
+    REB_BINARY_FIELD_TYPE_MERCURIUS_RCRIT = 118,
+    REB_BINARY_FIELD_TYPE_MERCURIUS_SAFEMODE = 119,
+    REB_BINARY_FIELD_TYPE_MERCURIUS_ISSYNCHRON = 120,
+    REB_BINARY_FIELD_TYPE_MERCURIUS_M0 = 121,
+    REB_BINARY_FIELD_TYPE_MERCURIUS_RHILL = 122,
+    REB_BINARY_FIELD_TYPE_MERCURIUS_RHILLALLOCATEDN = 123,
+    REB_BINARY_FIELD_TYPE_MERCURIUS_KEEPUNSYNC = 124,
     REB_BINARY_FIELD_TYPE_END = 9999,
 };
 

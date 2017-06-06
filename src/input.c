@@ -255,6 +255,12 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
             CASE(JANUS_ORDER,        &r->ri_janus.order);
             CASE(JANUS_ALLOCATEDN,   &r->ri_janus.allocated_N);
             CASE(JANUS_RECALC,       &r->ri_janus.recalculate_integer_coordinates_this_timestep);
+            CASE(MERCURIUS_RCRIT,    &r->ri_mercurius.rcrit);
+            CASE(MERCURIUS_SAFEMODE, &r->ri_mercurius.safe_mode);
+            CASE(MERCURIUS_ISSYNCHRON, &r->ri_mercurius.is_synchronized);
+            CASE(MERCURIUS_M0,       &r->ri_mercurius.m0);
+            CASE(MERCURIUS_RHILLALLOCATEDN, &r->ri_mercurius.rhillallocatedN);
+            CASE(MERCURIUS_KEEPUNSYNC, &r->ri_mercurius.keep_unsynchronized);
             case REB_BINARY_FIELD_TYPE_PARTICLES:
                 if(r->particles){
                     free(r->particles);
@@ -303,6 +309,14 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
                         r->var_config[l].sim = r;
                     }
                 }
+                break;
+            case REB_BINARY_FIELD_TYPE_MERCURIUS_RHILL:
+                if(r->ri_mercurius.rhill){
+                    free(r->ri_mercurius.rhill);
+                }
+                r->ri_mercurius.rhill = malloc(field.size);
+                r->ri_mercurius.rhillallocatedN = (int)(field.size/sizeof(double));
+                fread(r->ri_mercurius.rhill, field.size,1,inf);
                 break;
             CASE_MALLOC(IAS15_AT,     r->ri_ias15.at);
             CASE_MALLOC(IAS15_X0,     r->ri_ias15.x0);

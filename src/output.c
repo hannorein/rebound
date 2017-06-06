@@ -327,6 +327,13 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(JANUS_ALLOCATEDN,   &r->ri_janus.allocated_N,           sizeof(unsigned int));
     WRITE_FIELD(JANUS_RECALC,       &r->ri_janus.recalculate_integer_coordinates_this_timestep, sizeof(unsigned int));
     WRITE_FIELD(JANUS_PINT,         r->ri_janus.p_int,                  sizeof(struct reb_particle_int)*r->ri_janus.allocated_N);
+    WRITE_FIELD(MERCURIUS_RCRIT,    &r->ri_mercurius.rcrit,             sizeof(double));
+    WRITE_FIELD(MERCURIUS_SAFEMODE, &r->ri_mercurius.safe_mode,         sizeof(unsigned int));
+    WRITE_FIELD(MERCURIUS_ISSYNCHRON, &r->ri_mercurius.is_synchronized, sizeof(unsigned int));
+    WRITE_FIELD(MERCURIUS_M0,       &r->ri_mercurius.m0,                sizeof(double));
+    WRITE_FIELD(MERCURIUS_RHILLALLOCATEDN, &r->ri_mercurius.rhillallocatedN, sizeof(unsigned int));
+    WRITE_FIELD(MERCURIUS_RHILL,    &r->ri_mercurius.rhill,             sizeof(double)*r->ri_mercurius.rhillallocatedN);
+    WRITE_FIELD(MERCURIUS_KEEPUNSYNC, &r->ri_mercurius.keep_unsynchronized,  sizeof(unsigned int));
     int functionpointersused = 0;
     if (r->coefficient_of_restitution ||
         r->collision_resolve ||

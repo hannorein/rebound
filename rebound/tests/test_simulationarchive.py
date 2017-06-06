@@ -60,7 +60,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = 1
+        sim.ri_whfast.coordinates = "democraticheliocentric"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 1
         sim.initSimulationArchive("test.bin", 10.)
@@ -78,7 +78,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = 1
+        sim.ri_whfast.coordinates = "democraticheliocentric"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 1
         sim.integrate(80.,exact_finish_time=0)
@@ -92,7 +92,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = 1
+        sim.ri_whfast.coordinates = "democraticheliocentric"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 0
         sim.initSimulationArchive("test.bin", 10.)
@@ -110,7 +110,71 @@ class TestSimulationArchive(unittest.TestCase):
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = 1
+        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.dt = 0.1313
+        sim.ri_whfast.safe_mode = 0
+        sim.integrate(80.,exact_finish_time=0)
+        x0 = sim.particles[1].x
+
+        self.assertEqual(x0,x1)
+    
+    def test_sa_whds_restart_safe_mode(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "whfast"
+        sim.ri_whfast.coordinates = "whds"
+        sim.dt = 0.1313
+        sim.ri_whfast.safe_mode = 1
+        sim.initSimulationArchive("test.bin", 10.)
+        sim.integrate(40.,exact_finish_time=0)
+
+        sim = None
+        sa = rebound.SimulationArchive("test.bin")
+        sim = sa[-1]
+        sim.integrate(80.,exact_finish_time=0)
+        x1 = sim.particles[1].x
+        
+        
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "whfast"
+        sim.ri_whfast.coordinates = "whds"
+        sim.dt = 0.1313
+        sim.ri_whfast.safe_mode = 1
+        sim.integrate(80.,exact_finish_time=0)
+        x0 = sim.particles[1].x
+
+        self.assertEqual(x0,x1)
+    
+    def test_sa_whds_restart(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "whfast"
+        sim.ri_whfast.coordinates = "whds"
+        sim.dt = 0.1313
+        sim.ri_whfast.safe_mode = 0
+        sim.initSimulationArchive("test.bin", 10.)
+        sim.integrate(40.,exact_finish_time=0)
+
+        sim = None
+        sa = rebound.SimulationArchive("test.bin")
+        sim = sa[-1]
+        sim.integrate(80.,exact_finish_time=0)
+        x1 = sim.particles[1].x
+        
+        
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "whfast"
+        sim.ri_whfast.coordinates = "whds"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 0
         sim.integrate(80.,exact_finish_time=0)
@@ -386,6 +450,70 @@ class TestSimulationArchiveTmin(unittest.TestCase):
         self.assertEqual(tmin,sa[0].t)
         self.assertEqual(tmin,sa.tmin)
         self.assertNotEqual(tmin,sa.tmax)
+   
+
+class TestSimulationArchiveMercurius(unittest.TestCase):
+    def test_sa_mercurius_restart(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "mercurius"
+        sim.dt = 0.1313
+        sim.ri_mercurius.safe_mode = 0
+        sim.initSimulationArchive("test.bin", 10.)
+        sim.integrate(40.,exact_finish_time=0)
+
+        sim = None
+        sa = rebound.SimulationArchive("test.bin")
+        sim = sa[-1]
+        sim.integrate(80.,exact_finish_time=0)
+        x1 = sim.particles[1].x
+        
+        
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "mercurius"
+        sim.dt = 0.1313
+        sim.ri_mercurius.safe_mode = 0
+        sim.integrate(80.,exact_finish_time=0)
+        x0 = sim.particles[1].x
+
+        self.assertEqual(x0,x1)
+    
+    def test_sa_mercurius_restart_safemode(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "mercurius"
+        sim.dt = 0.1313
+        sim.ri_mercurius.safe_mode = 1
+        sim.initSimulationArchive("test.bin", 10.)
+        sim.integrate(40.,exact_finish_time=0)
+
+        sim = None
+        sa = rebound.SimulationArchive("test.bin")
+        sim = sa[-1]
+        sim.integrate(80.,exact_finish_time=0)
+        x1 = sim.particles[1].x
+        
+        
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "mercurius"
+        sim.dt = 0.1313
+        sim.ri_mercurius.safe_mode = 1
+        sim.integrate(80.,exact_finish_time=0)
+        x0 = sim.particles[1].x
+
+        self.assertEqual(x0,x1)
+    
+    
     
 
 if __name__ == "__main__":
