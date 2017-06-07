@@ -142,7 +142,7 @@ void reb_integrator_hermes_part2(struct reb_simulation* r){
         }
         
         // Correct for energy jump in collision
-        r->energy_offset += r->ri_hermes.mini->energy_offset;
+        if(r->track_energy_offset) r->energy_offset += r->ri_hermes.mini->energy_offset;
     }
 }
 
@@ -262,13 +262,13 @@ static void reb_integrator_hermes_autocalc_HSF(struct reb_simulation* r){
         double rp_max = ap*(1.+ep);
         double np = sqrt(mu/(ap*ap*ap));
         for(int j=i+1;j<r->N;j++){                                              //run over massive + planetesimal bodies
-            if(is_in_mini[j] == 1) continue;                                    //exclude bodies in mini from Auto HSF calc
+            if((is_in_mini[j]==1) && (j>_N_active)) continue;                   //exclude bodies in mini from Auto HSF calc (but massive bodies always in mini)
             double e, a, n;
             reb_integrator_hermes_get_ae(r, com, j, &a, &e);
             double r_min = a*(1.-e);
             double r_max = a*(1.+e);
-            double vphi_max_r=0., vr_max_r=0., global_max_r=0., sinf_max_r=0.;
-            double vphi_max_rp=0., vr_max_rp=0., global_max_rp=0., sinf_max_rp=0.;
+            double vphi_max_r=0, vr_max_r=0, global_max_r=0, sinf_max_r=0;      //planetesimal (or other massive planet)
+            double vphi_max_rp=0, vr_max_rp=0, global_max_rp=0, sinf_max_rp=0;  //planet
             if((rp_min<r_min)&&(rp_max>r_max)){         //CASE1: massive planet totally overlaps planetesimal
                 n = sqrt(mu/(a*a*a));
                 vphi_max_r = n*a*(1.+e)/sqrt(1.-e*e);                           //vphi_max is at r_min = a*(1.-e)
