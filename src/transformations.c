@@ -25,11 +25,23 @@
  *
  */
 
+#include <stdlib.h>
 #include "transformations.h"
 #include "rebound.h"
 
 /******************************
  * Jacobi */
+
+void reb_transformations_calculate_jacobi_masses(const struct reb_particle* const ps, double* const m_j, const int N){
+    double* const eta = malloc(N*sizeof(*eta));
+    eta[0] = ps[0].m;
+    for (unsigned int i=1;i<N;i++){
+        eta[i] = eta[i-1] + ps[i].m;
+        m_j[i] = ps[i].m*eta[i-1]/eta[i];
+    }
+    m_j[0] = eta[N-1];
+    free(eta);
+}
 
 void reb_transformations_inertial_to_jacobi_posvel(const struct reb_particle* const particles, struct reb_particle* const p_j, const struct reb_particle* const p_mass, const int N){
     double eta = p_mass[0].m;

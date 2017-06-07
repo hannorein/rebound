@@ -1622,7 +1622,7 @@ long reb_simulationarchive_estimate_size(struct reb_simulation* const r, double 
  * particles in ps, p_mass should be the corresponding array of real particles.
  * @param N number of particles in the array.
  */
-
+void reb_transformations_calculate_jacobi_masses(const struct reb_particle* const ps, double* const m_j, const int N);
 void reb_transformations_inertial_to_jacobi_posvel(const struct reb_particle* const particles, struct reb_particle* const p_j, const struct reb_particle* const p_mass, const int N);
 void reb_transformations_inertial_to_jacobi_posvelacc(const struct reb_particle* const particles, struct reb_particle* const p_j, const struct reb_particle* const p_mass, const int N);
 void reb_transformations_inertial_to_jacobi_acc(const struct reb_particle* const particles, struct reb_particle* const p_j,const struct reb_particle* const p_mass, const int N);
