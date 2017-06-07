@@ -485,7 +485,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_hermes.solar_switch_factor = 15.;
     r->ri_hermes.hill_switch_factor = 3.;            
     r->ri_hermes.adaptive_hill_switch_factor = 1;    
-    r->ri_hermes.current_hill_switch_factor = 3.;     //Internal 
+    r->ri_hermes.current_hill_switch_factor = 3.;     //Internal
     
     // ********** MERCURIUS
     r->ri_mercurius.mode = 0;
