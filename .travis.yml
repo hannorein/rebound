@@ -3,6 +3,7 @@ sudo: false
 
 
 env:
+  matrix:
   - TESTPART=CCOVERAGE
   - TESTPART=C
   - TESTPART=PYTHON
@@ -24,6 +25,16 @@ matrix:
       python: "3.4"
     - env: TESTPART=CCOVERAGE
       python: "3.5"
+  include:
+    - stage: triggerdependencybuilds
+      before_install: skip
+      install: skip
+      script:
+        - chmod +x triggerdependencybuilds.sh
+        - ./triggerdependencybuilds.sh
+      after_success: skip
+      python: '3.5'
+      env: TESTPART=C
 
 addons:
     apt:
