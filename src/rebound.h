@@ -164,7 +164,7 @@ struct reb_simulation_integrator_mercurius {
      * also need to set this flag to 1 before every timestep.
      * Default is 0.
      */ 
-    unsigned int recalculate_heliocentric_this_timestep;
+    unsigned int recalculate_coordinates_this_timestep;
 
     /** 
      * @brief Setting this flag to one will recalculate Hill radii at the beginning of the next timestep. 

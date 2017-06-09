@@ -262,10 +262,10 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
         // Heliocentric coordinates. Stored in WHFast struct.
         riw->allocated_N = N;
         riw->p_jh = realloc(riw->p_jh,sizeof(struct reb_particle)*N);
-        rim->recalculate_heliocentric_this_timestep = 1;
+        rim->recalculate_coordinates_this_timestep = 1;
     }
-    if (rim->safe_mode || rim->recalculate_heliocentric_this_timestep){
-        rim->recalculate_heliocentric_this_timestep = 0;
+    if (rim->safe_mode || rim->recalculate_coordinates_this_timestep){
+        rim->recalculate_coordinates_this_timestep = 0;
         if (rim->is_synchronized==0){
             reb_integrator_mercurius_synchronize(r);
             reb_warning(r,"MERCURIUS: Recalculating heliocentric coordinates but pos/vel were not synchronized before.");
@@ -407,6 +407,7 @@ void reb_integrator_mercurius_reset(struct reb_simulation* r){
     r->ri_mercurius.m0 = 0;
     r->ri_mercurius.rcrit = 3;
     r->ri_mercurius.keep_unsynchronized = 0;
+    r->ri_mercurius.recalculate_coordinates_this_timestep = 0;
     // Arrays
     r->ri_mercurius.encounterAllocatedN = 0;
     free(r->ri_mercurius.encounterParticles);

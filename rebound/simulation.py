@@ -1525,7 +1525,7 @@ class reb_simulation_integrator_janus(Structure):
 
 class reb_simulation_integrator_mercurius(Structure):
     _fields_ = [("rcrit", c_double),
-                ("recalculate_heliocentric_this_timestep", c_uint),
+                ("recalculate_coordinates_this_timestep", c_uint),
                 ("recalculate_rhill_this_timestep", c_uint),
                 ("safe_mode", c_uint),
                 ("keep_unsynchronized", c_uint),

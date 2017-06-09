@@ -73,6 +73,7 @@ void reb_step(struct reb_simulation* const r){
         reb_integrator_synchronize(r);
         r->pre_timestep_modifications(r);
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
+        r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
     
     reb_integrator_part1(r);
@@ -128,6 +129,7 @@ void reb_step(struct reb_simulation* const r){
         reb_integrator_synchronize(r);
         r->post_timestep_modifications(r);
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
+        r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
@@ -488,7 +490,7 @@ void reb_init_simulation(struct reb_simulation* r){
     // ********** MERCURIUS
     r->ri_mercurius.mode = 0;
     r->ri_mercurius.safe_mode = 1;
-    r->ri_mercurius.recalculate_heliocentric_this_timestep = 0;
+    r->ri_mercurius.recalculate_coordinates_this_timestep = 0;
     r->ri_mercurius.recalculate_rhill_this_timestep = 0;
     r->ri_mercurius.is_synchronized = 1;
     r->ri_mercurius.encounterN = 0;
