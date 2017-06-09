@@ -3,6 +3,11 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.5.2
+-------------
+* Fixes an issue with the WebGL widget.
+* Fixes an issue with external forces and MERCURIUS.
+
 Version 3.5.1
 -------------
 * MERCURIUS is not compatible with binary files and the SimulationArchive.
