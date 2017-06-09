@@ -1579,8 +1579,6 @@ class reb_display_data(Structure):
                 ("orbit_data", c_void_p),
                 ("particles_copy", POINTER(Particle)),
                 ("p_jh_copy", POINTER(Particle)),
-                ("p_h_copy", POINTER(Particle)),
-                ("eta_copy", POINTER(c_double)),
                 ("allocated_N", c_ulong),
                 ("allocated_N_whfast", c_ulong),
                 ("opengl_enabled", c_int),

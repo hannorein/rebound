@@ -624,10 +624,8 @@ void reb_display_init(struct reb_simulation * const r){
     data->ghostboxes    = 0; 
     data->reference     = -1;
     data->view.w        = 1.;
-    data->p_h_copy      = NULL;
     data->p_jh_copy      = NULL;
     data->allocated_N_whfast = 0;
-    data->allocated_N_mercurius = 0;
 
     glfwSetKeyCallback(window,reb_display_keyboard);
     glfwGetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS);
@@ -1095,7 +1093,11 @@ int reb_display_copy_data(struct reb_simulation* const r){
     memcpy(data->r_copy, r, sizeof(struct reb_simulation));
     memcpy(data->particles_copy, r->particles, sizeof(struct reb_particle)*r->N);
     data->r_copy->particles = data->particles_copy;
-    if (r->integrator==REB_INTEGRATOR_WHFAST && r->ri_whfast.is_synchronized==0){
+    if (
+            (r->integrator==REB_INTEGRATOR_WHFAST && r->ri_whfast.is_synchronized==0)
+            ||   
+            (r->integrator==REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.is_synchronized==0))
+       {
         if (r->ri_whfast.allocated_N > data->allocated_N_whfast){
             size_changed = 1;
             data->allocated_N_whfast = r->ri_whfast.allocated_N;
@@ -1104,14 +1106,6 @@ int reb_display_copy_data(struct reb_simulation* const r){
         memcpy(data->p_jh_copy, r->ri_whfast.p_jh, data->allocated_N_whfast*sizeof(struct reb_particle));
     }
     data->r_copy->ri_whfast.p_jh= data->p_jh_copy;
-    if (r->integrator==REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.is_synchronized==0){
-        if (r->ri_mercurius.allocatedN > data->allocated_N_mercurius){
-            size_changed = 1;
-            data->allocated_N_mercurius = r->ri_mercurius.allocatedN;
-            data->p_h_copy = realloc(data->p_h_copy,data->allocated_N_mercurius*sizeof(struct reb_particle));
-        }
-        memcpy(data->p_h_copy, r->ri_whfast.p_jh, data->allocated_N_whfast*sizeof(struct reb_particle));
-    }
     
     return size_changed;
 }

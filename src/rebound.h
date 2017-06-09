@@ -1816,11 +1816,8 @@ struct reb_display_data {
     struct reb_orbit_opengl* orbit_data;
     struct reb_particle* particles_copy;
     struct reb_particle* p_jh_copy;
-    struct reb_particle* p_h_copy;
-    double* eta_copy;
     unsigned long allocated_N;
     unsigned long allocated_N_whfast;
-    unsigned long allocated_N_mercurius;
     unsigned int opengl_enabled;
     double scale;
     double mouse_x;
