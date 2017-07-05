@@ -585,12 +585,10 @@ void reb_display_init(struct reb_simulation * const r){
 
     glfwSetErrorCallback(reb_glfw_error_callback);
     glfwWindowHint(GLFW_SAMPLES, 4);
-#ifdef _APPLE
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
-#endif // _APPLE
 
     GLFWwindow*  window = glfwCreateWindow(700, 700, "rebound", NULL, NULL);
     if (!window){
