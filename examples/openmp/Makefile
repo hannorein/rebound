@@ -6,8 +6,8 @@ export OPENMP=1
 # You can install them with homebrew. 
 OS=$(shell uname)
 	ifeq ($(OS), Darwin)
-	# We'll use specifically the GNU compiler version 5 
-	export CC=gcc-5
+	# We'll use specifically the GNU compiler version 7 
+	export CC=gcc-7
 	# Use the OSX linker
 	export OPT=-Wa,-q
 endif
