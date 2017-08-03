@@ -276,6 +276,8 @@ class Particle(Structure):
                     ix = 0.
                 if iy is None:
                     iy = 0.
+                if((ix*ix + iy*iy) > 4.0):
+                    raise ValueError("Passed (ix, iy) coordinates are not valid, squared sum exceeds 4.")
                 clibrebound.reb_tools_pal_to_particle.restype = Particle
                 p = clibrebound.reb_tools_pal_to_particle(c_double(simulation.G), primary, c_double(self.m), c_double(a), c_double(l), c_double(k), c_double(h), c_double(ix), c_double(iy))
             else:
