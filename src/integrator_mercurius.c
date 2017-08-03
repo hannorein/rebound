@@ -94,6 +94,8 @@ static void reb_mercurius_encounterstep(struct reb_simulation* const r, const do
         if(rim->encounterIndicies[i]>0){
             rim->encounterParticles[r->N] = rim->p_hold[i];
             rim->encounterParticles[r->N].r = r->particles[i].r;
+            rim->encounterParticles[r->N].ap = r->particles[i].ap;
+            rim->encounterParticles[r->N].hash = r->particles[i].hash;
             rim->encounterRhill[r->N] = rim->rhill[i];
             r->N++;
             if (i<rim->globalNactive || rim->globalNactive==-1){
