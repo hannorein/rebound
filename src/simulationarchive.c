@@ -253,7 +253,7 @@ struct reb_simulation* reb_create_simulation_from_simulationarchive(char* filena
     return r;
 }
 
-static void reb_simulationarchive_append(struct reb_simulation* r){
+void reb_simulationarchive_append(struct reb_simulation* r){
     FILE* of = fopen(r->simulationarchive_filename,"a");
     fwrite(&(r->t),sizeof(double),1, of);
     fwrite(&(r->simulationarchive_walltime),sizeof(double),1, of);
