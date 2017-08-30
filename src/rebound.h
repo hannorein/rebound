@@ -1650,8 +1650,10 @@ void reb_transformations_jacobi_to_inertial_acc(struct reb_particle* const parti
  * @param ps Particles array with the inertial quantities to convert
  * @param p_h Particles array in which the democratic heliocentric quantities will be stored.
  * @param N number of particles in the array.
+ * @param N_active number of active particles in the array.
  */
 void reb_transformations_inertial_to_democraticheliocentric_posvel(const struct reb_particle* const particles, struct reb_particle* const p_h, const int N);
+void reb_transformations_inertial_to_democraticheliocentric_posvel_testparticles(const struct reb_particle* const particles, struct reb_particle* const p_h, const int N, const int N_active);
 /** @} */
 /**
  * \name From democratic heliocentric to inertial coordinates
@@ -1661,9 +1663,12 @@ void reb_transformations_inertial_to_democraticheliocentric_posvel(const struct 
  * @param ps Particles array with the inertial quantities to convert
  * @param p_h Particles array in which the democratic heliocentric quantities will be stored.
  * @param N number of particles in the array.
+ * @param N_active number of active particles in the array.
  */
 void reb_transformations_democraticheliocentric_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_h, const int N);
+void reb_transformations_democraticheliocentric_to_inertial_pos_testparticles(struct reb_particle* const particles, const struct reb_particle* const p_h, const int N, const int N_active);
 void reb_transformations_democraticheliocentric_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_h, const int N);
+void reb_transformations_democraticheliocentric_to_inertial_posvel_testparticles(struct reb_particle* const particles, const struct reb_particle* const p_h, const int N, const int N_active);
 /** @} */
 /**
  * \name From inertial to WHDS coordinates

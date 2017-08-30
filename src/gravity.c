@@ -75,7 +75,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 			const int nghostx = r->nghostx;
 			const int nghosty = r->nghosty;
 			const int nghostz = r->nghostz;
-#pragma omp parallel for schedule(guided)
+#pragma omp parallel for 
 			for (int i=0; i<N; i++){
 				particles[i].ax = 0; 
 				particles[i].ay = 0; 
@@ -87,7 +87,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 			for (int gbz=-nghostz; gbz<=nghostz; gbz++){
 				struct reb_ghostbox gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
 				// Summing over all particle pairs
-#pragma omp parallel for schedule(guided)
+#pragma omp parallel for
 				for (int i=0; i<_N_real; i++){
 				for (int j=0; j<_N_active; j++){
 					if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0) )) continue;
