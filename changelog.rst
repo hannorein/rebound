@@ -3,6 +3,12 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.5.3
+-------------
+* Allow for better parallelization of WHFast with OpenMP.
+* Addded example of the Solar System with Testparticles.
+* Made simulationarchive_append a public function (might be useful for some hacking projects).
+
 Version 3.5.2
 -------------
 * Fixes an issue with the WebGL widget.
