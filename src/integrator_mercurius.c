@@ -98,10 +98,14 @@ static void reb_mercurius_encounterstep(struct reb_simulation* const r, const do
             rim->encounterParticles[r->N].hash = r->particles[i].hash;
             rim->encounterRhill[r->N] = rim->rhill[i];
             r->N++;
-            if (i<rim->globalNactive || rim->globalNactive==-1){
+            if (i<rim->globalNactive){
+                // The case globalNactive==-1 is handled below
                 r->N_active++;
             }
         }
+    }
+    if (rim->globalNactive==-1){
+        r->N_active=-1;
     }
 
     // Swap pointers

@@ -252,7 +252,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
             reb_error(r, "Error finding particle in global simulation.");
         }
 	    rim->globalN--;
-        if(global_index<rim->globalNactive){
+        if(global_index<rim->globalNactive && rim->globalNactive!=-1){
             rim->globalNactive--;
         }
 		for(int j=global_index; j<rim->globalN; j++){
