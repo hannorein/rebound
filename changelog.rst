@@ -3,9 +3,13 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.5.5
+-------------
+* Various fixed for Mercurius
+
 Version 3.5.4
 -------------
-* Bug fix for N_active=-1 (default(
+* Bug fix for N_active=-1 (default)
 
 Version 3.5.3
 -------------
