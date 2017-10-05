@@ -1,3 +1,6 @@
+import ipywidgets
+ipywidgets_major_version = int((ipywidgets.__version__).split(".")[0])
+
 shader_code = """
 <script id="orbit_shader-vs" type="x-shader/x-vertex">
     uniform vec3 focus;
@@ -369,7 +372,14 @@ function drawGL(reboundView) {
     }
 }
 require.undef('rebound');
-define('rebound', ["jupyter-js-widgets"], function(widgets) {
+"""
+
+if ipywidgets_major_version>=7:
+    js_code += "define('rebound', [\"@jupyter-widgets/base\"], function(widgets) {\n"
+else:
+    js_code += "define('rebound', [\"@jupyter-js-widgets\"], function(widgets) {\n"
+
+js_code +="""
     var ReboundView = widgets.DOMWidgetView.extend({
         render: function() {
             this.el.innerHTML = '<canvas style="display: inline" id="reboundcanvas-'+this.id+'" style="border: none;" width="'+this.model.get("width")+'" height="'+this.model.get("height")+'"></canvas>';
