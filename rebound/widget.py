@@ -377,7 +377,7 @@ require.undef('rebound');
 if ipywidgets_major_version>=7:
     js_code += "define('rebound', [\"@jupyter-widgets/base\"], function(widgets) {\n"
 else:
-    js_code += "define('rebound', [\"@jupyter-js-widgets\"], function(widgets) {\n"
+    js_code += "define('rebound', [\"jupyter-js-widgets\"], function(widgets) {\n"
 
 js_code +="""
     var ReboundView = widgets.DOMWidgetView.extend({
