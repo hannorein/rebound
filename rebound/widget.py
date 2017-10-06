@@ -1,6 +1,3 @@
-import ipywidgets
-ipywidgets_major_version = int((ipywidgets.__version__).split(".")[0])
-
 shader_code = """
 <script id="orbit_shader-vs" type="x-shader/x-vertex">
     uniform vec3 focus;
@@ -201,7 +198,7 @@ function matmult(A,B,C){
     }}}
 }
 function startGL(reboundView) {
-    var canvas = document.getElementById("reboundcanvas-"+reboundView.id);
+    var canvas = document.getElementById("reboundcanvas-"+reboundView.cid);
     if (!canvas){
         reboundView.startCount = reboundView.startCount+1;
         if (reboundView.startCount>1000){
@@ -372,17 +369,10 @@ function drawGL(reboundView) {
     }
 }
 require.undef('rebound');
-"""
-
-if ipywidgets_major_version>=7:
-    js_code += "define('rebound', [\"@jupyter-widgets/base\"], function(widgets) {\n"
-else:
-    js_code += "define('rebound', [\"jupyter-js-widgets\"], function(widgets) {\n"
-
-js_code +="""
+    define('rebound', ["@jupyter-widgets/base"], function(widgets) {
     var ReboundView = widgets.DOMWidgetView.extend({
         render: function() {
-            this.el.innerHTML = '<canvas style="display: inline" id="reboundcanvas-'+this.id+'" style="border: none;" width="'+this.model.get("width")+'" height="'+this.model.get("height")+'"></canvas>';
+            this.el.innerHTML = '<canvas style="display: inline" id="reboundcanvas-'+this.cid+'" style="border: none;" width="'+this.model.get("width")+'" height="'+this.model.get("height")+'"></canvas>';
             this.model.on('change:t', this.trigger_refresh, this);
             this.model.on('change:count', this.trigger_refresh, this);
             this.model.on('change:screenshotcount', this.take_screenshot, this);
@@ -398,7 +388,7 @@ js_code +="""
         },
         take_screenshot: function() {
             drawGL(this);
-            var canvas = document.getElementById("reboundcanvas-"+this.id);
+            var canvas = document.getElementById("reboundcanvas-"+this.cid);
             var img = canvas.toDataURL("image/png");
             this.model.set("screenshot",img, {updated_view: this});
             this.touch();
@@ -415,6 +405,14 @@ js_code +="""
       
 </script>
 """
+
+import ipywidgets
+ipywidgets_major_version = int((ipywidgets.__version__).split(".")[0])
+
+
+if ipywidgets_major_version<7:
+    js_code = js_code.replace("@jupyter-widgets/base", "jupyter-js-widgets")
+    js_code = js_code.replace(".cid", ".id")
 
 from ipywidgets import DOMWidget
 import traitlets
