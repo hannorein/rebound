@@ -374,7 +374,7 @@ require.undef('rebound');
     define('rebound', ["@jupyter-widgets/base"], function(widgets) {
     var ReboundView = widgets.DOMWidgetView.extend({
         render: function() {
-            this.el.innerHTML = '<span style="display: inline-block; position: relative;" width="'+this.model.get("width")+'" height="'+this.model.get("height")+'"><canvas style="border: none;" id="reboundcanvas-'+this.cid+'" width="'+this.model.get("width")+'" height="'+this.model.get("height")+'"></canvas><span style="position: absolute; color: #FFF; pointer-events:none;  bottom:5px; right:0px; padding-right:5px;" id="reboundoverlay-'+this.cid+'">REBOUND</span></span>';
+            this.el.innerHTML = '<span style="display: inline-block; position: relative;" width="'+this.model.get("width")+'" height="'+this.model.get("height")+'"><canvas style="border: none;" id="reboundcanvas-'+this.cid+'" width="'+this.model.get("width")+'" height="'+this.model.get("height")+'"></canvas><span style="position: absolute; color: #FFF; pointer-events:none;  bottom:5px; right:0px; padding-right:5px; font-family: monospace;" id="reboundoverlay-'+this.cid+'">REBOUND</span></span>';
             this.model.on('change:t', this.trigger_refresh, this);
             this.model.on('change:count', this.trigger_refresh, this);
             this.model.on('change:screenshotcount', this.take_screenshot, this);
