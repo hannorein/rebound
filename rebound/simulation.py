@@ -689,6 +689,7 @@ class Simulation(Structure):
         - ``'sei'``
         - ``'leapfrog'``
         - ``'hermes'``
+        - ``'janus'``
         - ``'mercurius'``
         - ``'bs'``
         - ``'none'``

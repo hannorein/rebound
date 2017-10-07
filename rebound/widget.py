@@ -297,6 +297,8 @@ function startGL(reboundView) {
     drawGL(reboundView);
 }
 function updateRenderData(reboundView){
+    var overlay = document.getElementById("reboundoverlay-"+reboundView.cid);
+    overlay.innerHTML = reboundView.model.get("overlay");
     var previousN = reboundView.N;
     reboundView.N = reboundView.model.get("N");
     reboundView.t = reboundView.model.get("t");
@@ -372,7 +374,7 @@ require.undef('rebound');
     define('rebound', ["@jupyter-widgets/base"], function(widgets) {
     var ReboundView = widgets.DOMWidgetView.extend({
         render: function() {
-            this.el.innerHTML = '<canvas style="display: inline" id="reboundcanvas-'+this.cid+'" style="border: none;" width="'+this.model.get("width")+'" height="'+this.model.get("height")+'"></canvas>';
+            this.el.innerHTML = '<span style="display: inline-block; position: relative;" width="'+this.model.get("width")+'" height="'+this.model.get("height")+'"><canvas style="border: none;" id="reboundcanvas-'+this.cid+'" width="'+this.model.get("width")+'" height="'+this.model.get("height")+'"></canvas><span style="position: absolute; color: #FFF; pointer-events:none;  bottom:5px; right:0px; padding-right:5px;" id="reboundoverlay-'+this.cid+'">REBOUND</span></span>';
             this.model.on('change:t', this.trigger_refresh, this);
             this.model.on('change:count', this.trigger_refresh, this);
             this.model.on('change:screenshotcount', this.take_screenshot, this);
@@ -452,6 +454,7 @@ class Widget(DOMWidget):
     screenshotcount = traitlets.Int(0).tag(sync=True)
     t = traitlets.Float().tag(sync=True)
     N = traitlets.Int().tag(sync=True)
+    overlay = traitlets.Unicode('REB WIdund').tag(sync=True)
     width = traitlets.Float().tag(sync=True)
     height = traitlets.Float().tag(sync=True)
     scale = traitlets.Float().tag(sync=True)
@@ -460,7 +463,7 @@ class Widget(DOMWidget):
     orientation = traitlets.Tuple().tag(sync=True)
     orbits = traitlets.Int().tag(sync=True)
     screenshot = traitlets.Unicode().tag(sync=True)
-    def __init__(self,simulation,size=(200,200),orientation=(0.,0.,0.,1.),scale=None,autorefresh=True,orbits=True):
+    def __init__(self,simulation,size=(200,200),orientation=(0.,0.,0.,1.),scale=None,autorefresh=True,orbits=True, overlay=True):
         """ 
         Initializes a Widget.
 
@@ -487,6 +490,8 @@ class Widget(DOMWidget):
             The default value for this is True and the widget will draw the instantaneous 
             orbits of the particles. For simulations in which particles are not on
             Keplerian orbits, the orbits shown will not be accurate. 
+        overlay : string, optional
+            Change the default text overlay. Set to None to hide all text.
         """
         self.screenshotcountall = 0
         self.width, self.height  = size
@@ -494,6 +499,7 @@ class Widget(DOMWidget):
         self.orientation = orientation
         self.autorefresh = autorefresh
         self.orbits = orbits
+        self.useroverlay = overlay
         self.simp = pointer(simulation)
         clibrebound.reb_display_copy_data.restype = c_int
         if scale is None:
@@ -526,6 +532,12 @@ class Widget(DOMWidget):
         if size_changed:
             #TODO: Implement better GPU size change
             pass
+        if self.useroverlay==True:
+            self.overlay = "REBOUND (%s), N=%d, t=%g"%(sim.integrator,sim.N,sim.t)
+        elif self.useroverlay==None or self.useroverlay==False:
+            self.overlay = ""
+        else:
+            self.overlay = self.useroverlay + ", N=%d, t=%g"%(sim.N,sim.t)
         self.N = sim.N
         self.t = sim.t
         self.count += 1
@@ -599,6 +611,7 @@ class Widget(DOMWidget):
             self.screenshotcountall = 0
         self.screenshotprefix = prefix
         self.screenshotcount = 0
+        self.overlay = "REBOUND"
         self.screenshot = "" 
         if archive is None:
             if times is None:
