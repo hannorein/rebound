@@ -1,4 +1,4 @@
-breathe==4.0.0
+sphinx==1.4.8
 jupyter==1.0.0
 jupyter-client==4.1.1
 jupyter-console==4.0.0
