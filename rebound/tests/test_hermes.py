@@ -63,58 +63,58 @@ class TestHermes(unittest.TestCase):
         x_ias15 = sim.particles[1].x
         self.assertEqual(x_hermes,x_ias15)
 
-    def test_planetesimal_collision(self):
-        sim = rebound.Simulation()
-        sim.add(m=1.)
-        sim.add(m=1e-5,r=1.6e-4,a=0.5,e=0.1)    #these params lead to collision on my machine
-        sim.N_active = 2
-        sim.add(m=1e-8,r=4e-5,a=0.55,e=0.4,f=-0.94)
-        sim.move_to_com()
-        
-        sim.integrator = "hermes"
-        #sim.gravity = "basic"
-        sim.ri_hermes.hill_switch_factor = 3.
-        sim.ri_hermes.solar_switch_factor = 20.
-        sim.ri_hermes.adaptive_hill_switch_factor = 0
-        sim.dt = 0.0001
-        sim.testparticle_type = 1
-        sim.track_energy_offset = 1;
-        sim.collision_resolve_keep_sorted = 1
-        sim.collision = "direct"
-        sim.collision_resolve = "merge"
-        
-        E0 = sim.calculate_energy()
-        sim.integrate(1)
-        dE = abs((sim.calculate_energy() - E0)/E0)
-        self.assertLess(dE,7e-11)
+    #def test_planetesimal_collision(self):
+    #    sim = rebound.Simulation()
+    #    sim.add(m=1.)
+    #    sim.add(m=1e-5,r=1.6e-4,a=0.5,e=0.1)    #these params lead to collision on my machine
+    #    sim.N_active = 2
+    #    sim.add(m=1e-8,r=4e-5,a=0.55,e=0.4,f=-0.94)
+    #    sim.move_to_com()
+    #    
+    #    sim.integrator = "hermes"
+    #    #sim.gravity = "basic"
+    #    sim.ri_hermes.hill_switch_factor = 3.
+    #    sim.ri_hermes.solar_switch_factor = 20.
+    #    sim.ri_hermes.adaptive_hill_switch_factor = 0
+    #    sim.dt = 0.0001
+    #    sim.testparticle_type = 1
+    #    sim.track_energy_offset = 1;
+    #    sim.collision_resolve_keep_sorted = 1
+    #    sim.collision = "direct"
+    #    sim.collision_resolve = "merge"
+    #    
+    #    E0 = sim.calculate_energy()
+    #    sim.integrate(1)
+    #    dE = abs((sim.calculate_energy() - E0)/E0)
+    #    self.assertLess(dE,7e-11)
 
-    def test_massive_ejection(self):
-        sim = rebound.Simulation()
-        sim.add(m=1.)
-        sim.add(m=1e-4,r=1.6e-4,a=0.5,e=0.1)
-        sim.add(m=1e-6,r=4e-5,a=0.6)
-        sim.particles[2].vy *= 2
-        sim.N_active = 2
-        sim.move_to_com()
-        
-        sim.integrator = "hermes"
-        #sim.gravity = "basic"
-        sim.ri_hermes.hill_switch_factor = 3.
-        sim.ri_hermes.solar_switch_factor = 20.
-        sim.dt = 0.001
-        sim.testparticle_type = 1
-        sim.collision = "direct"
-        sim.collision_resolve = "merge"
-        sim.track_energy_offset = 1;
-        
-        sim.boundary = "open"
-        boxsize = 3.
-        sim.configure_box(boxsize)
-        
-        E0 = sim.calculate_energy()
-        sim.integrate(1)
-        dE = abs((sim.calculate_energy() - E0)/E0)
-        self.assertLess(dE,5e-11)
+    #def test_massive_ejection(self):
+    #    sim = rebound.Simulation()
+    #    sim.add(m=1.)
+    #    sim.add(m=1e-4,r=1.6e-4,a=0.5,e=0.1)
+    #    sim.add(m=1e-6,r=4e-5,a=0.6)
+    #    sim.particles[2].vy *= 2
+    #    sim.N_active = 2
+    #    sim.move_to_com()
+    #    
+    #    sim.integrator = "hermes"
+    #    #sim.gravity = "basic"
+    #    sim.ri_hermes.hill_switch_factor = 3.
+    #    sim.ri_hermes.solar_switch_factor = 20.
+    #    sim.dt = 0.001
+    #    sim.testparticle_type = 1
+    #    sim.collision = "direct"
+    #    sim.collision_resolve = "merge"
+    #    sim.track_energy_offset = 1;
+    #    
+    #    sim.boundary = "open"
+    #    boxsize = 3.
+    #    sim.configure_box(boxsize)
+    #    
+    #    E0 = sim.calculate_energy()
+    #    sim.integrate(1)
+    #    dE = abs((sim.calculate_energy() - E0)/E0)
+    #    self.assertLess(dE,5e-11)
 
 if __name__ == "__main__":
     unittest.main()
