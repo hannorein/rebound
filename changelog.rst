@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.5.8
+-------------
+* WebGL widget text overlay added.
+
 Version 3.5.7
 -------------
 * Bug fixes related to WebGL widget and ipywidgets version 6
