@@ -1371,6 +1371,10 @@ class Simulation(Structure):
                 raise Encounter("Two particles had a close encounter (d<exit_min_distance).")
             if ret_value == 4:
                 raise Escape("A particle escaped (r>exit_max_distance).")
+            if ret_value == 5:
+                raise Escape("User caused exit. Simulation did not finish.") # should not occur in python
+            if ret_value == 6:
+                raise KeyboardInterrupt
         else:
             debug.integrate_other_package(tmax,exact_finish_time)
         self.process_messages()

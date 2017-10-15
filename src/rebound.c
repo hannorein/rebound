@@ -28,7 +28,6 @@
 #include <math.h>
 #include <time.h>
 #include <sys/types.h>
-#include <signal.h>
 #include <string.h>
 #include <sys/time.h>
 #include <sys/mman.h>
@@ -63,7 +62,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.5.8";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.5.9";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 void reb_step(struct reb_simulation* const r){
@@ -641,7 +640,18 @@ struct reb_thread_info {
     double tmax;
 };
 
+volatile sig_atomic_t reb_sigint;
+
+void reb_sigint_handler(int signum) {
+    // Handles graceful shutdown for interrupts
+    if (signum == SIGINT){
+        reb_sigint = 1;
+    }
+}
+
 static void* reb_integrate_raw(void* args){
+    reb_sigint = 0;
+    signal(SIGINT, reb_sigint_handler);
     struct reb_thread_info* thread_info = (struct reb_thread_info*)args;
 #ifdef MPI
     // Distribute particles
@@ -662,6 +672,9 @@ static void* reb_integrate_raw(void* args){
 #endif // OPENGL
         reb_step(r); 
         reb_run_heartbeat(r);
+        if (reb_sigint== 1){
+            r->status = REB_EXIT_SIGINT;
+        }
 #ifdef OPENGL
         if (r->display_data){
             if (r->display_data->opengl_enabled){ pthread_mutex_unlock(&(r->display_data->mutex)); }

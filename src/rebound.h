@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 #include <pthread.h>
+#include <signal.h>
 #ifndef M_PI
 // Make sure M_PI is defined. 
 #define M_PI           3.14159265358979323846       ///< The mathematical constant pi.
@@ -43,6 +44,7 @@ extern const char* reb_build_str;   ///< Date and time build string.
 extern const char* reb_version_str; ///< Version string.
 extern const char* reb_githash_str; ///< Current git hash.
 extern const char* reb_logo[26];    ///< Logo of rebound. 
+extern volatile sig_atomic_t reb_sigint;  ///< Graceful global interrupt handler 
 
 // Forward declarations
 struct reb_simulation;
@@ -431,6 +433,7 @@ enum REB_STATUS {
     REB_EXIT_ENCOUNTER = 3,     ///< The integration ends early because two particles had a close encounter (see exit_min_distance)
     REB_EXIT_ESCAPE = 4,        ///< The integration ends early because a particle escaped (see exit_max_distance)  
     REB_EXIT_USER = 5,          ///< User caused exit, simulation did not finish successfully.
+    REB_EXIT_SIGINT = 6,        ///< SIGINT received. Simulation stopped.
 };
 
 
