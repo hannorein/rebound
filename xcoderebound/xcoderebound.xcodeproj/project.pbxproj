@@ -1,0 +1,327 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 48;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		D409AE741F9E655F00F28A3C /* problem.c in Sources */ = {isa = PBXBuildFile; fileRef = D409AE721F9E655E00F28A3C /* problem.c */; };
+		D409AE751F9E655F00F28A3C /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = D409AE731F9E655E00F28A3C /* Makefile */; };
+		D409AE7E1F9E65DA00F28A3C /* librebound.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = D409AE7C1F9E658200F28A3C /* librebound.dylib */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D409AE7B1F9E658200F28A3C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D409AE761F9E658200F28A3C /* rebound.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D43660781F9E606E00474DFB;
+			remoteInfo = rebound;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		D409AE641F9E652200F28A3C /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		D409AE661F9E652200F28A3C /* kozai */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = kozai; sourceTree = BUILT_PRODUCTS_DIR; };
+		D409AE711F9E655E00F28A3C /* plot.plt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = plot.plt; sourceTree = "<group>"; };
+		D409AE721F9E655E00F28A3C /* problem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = problem.c; sourceTree = "<group>"; };
+		D409AE731F9E655E00F28A3C /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		D409AE761F9E658200F28A3C /* rebound.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = rebound.xcodeproj; path = ../src/rebound.xcodeproj; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D409AE631F9E652200F28A3C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D409AE7E1F9E65DA00F28A3C /* librebound.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		D409AE5D1F9E652200F28A3C = {
+			isa = PBXGroup;
+			children = (
+				D409AE701F9E655E00F28A3C /* kozai */,
+				D409AE671F9E652200F28A3C /* Products */,
+				D409AE761F9E658200F28A3C /* rebound.xcodeproj */,
+				D409AE7D1F9E65DA00F28A3C /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		D409AE671F9E652200F28A3C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D409AE661F9E652200F28A3C /* kozai */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D409AE701F9E655E00F28A3C /* kozai */ = {
+			isa = PBXGroup;
+			children = (
+				D409AE711F9E655E00F28A3C /* plot.plt */,
+				D409AE721F9E655E00F28A3C /* problem.c */,
+				D409AE731F9E655E00F28A3C /* Makefile */,
+			);
+			name = kozai;
+			path = ../examples/kozai;
+			sourceTree = "<group>";
+		};
+		D409AE771F9E658200F28A3C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D409AE7C1F9E658200F28A3C /* librebound.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D409AE7D1F9E65DA00F28A3C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		D409AE651F9E652200F28A3C /* kozai */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D409AE6D1F9E652200F28A3C /* Build configuration list for PBXNativeTarget "kozai" */;
+			buildPhases = (
+				D409AE621F9E652200F28A3C /* Sources */,
+				D409AE631F9E652200F28A3C /* Frameworks */,
+				D409AE641F9E652200F28A3C /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = kozai;
+			productName = xcoderebound;
+			productReference = D409AE661F9E652200F28A3C /* kozai */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D409AE5E1F9E652200F28A3C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0900;
+				ORGANIZATIONNAME = "Daniel Tamayo";
+				TargetAttributes = {
+					D409AE651F9E652200F28A3C = {
+						CreatedOnToolsVersion = 9.0.1;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = D409AE611F9E652200F28A3C /* Build configuration list for PBXProject "xcoderebound" */;
+			compatibilityVersion = "Xcode 8.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = D409AE5D1F9E652200F28A3C;
+			productRefGroup = D409AE671F9E652200F28A3C /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = D409AE771F9E658200F28A3C /* Products */;
+					ProjectRef = D409AE761F9E658200F28A3C /* rebound.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				D409AE651F9E652200F28A3C /* kozai */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		D409AE7C1F9E658200F28A3C /* librebound.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = librebound.dylib;
+			remoteRef = D409AE7B1F9E658200F28A3C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D409AE621F9E652200F28A3C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D409AE751F9E655F00F28A3C /* Makefile in Sources */,
+				D409AE741F9E655F00F28A3C /* problem.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		D409AE6B1F9E652200F28A3C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		D409AE6C1F9E652200F28A3C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		D409AE6E1F9E652200F28A3C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				HEADER_SEARCH_PATHS = /Users/dtamayo/Documents/workspace/rebound/src/;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		D409AE6F1F9E652200F28A3C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				HEADER_SEARCH_PATHS = /Users/dtamayo/Documents/workspace/rebound/src/;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		D409AE611F9E652200F28A3C /* Build configuration list for PBXProject "xcoderebound" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D409AE6B1F9E652200F28A3C /* Debug */,
+				D409AE6C1F9E652200F28A3C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D409AE6D1F9E652200F28A3C /* Build configuration list for PBXNativeTarget "kozai" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D409AE6E1F9E652200F28A3C /* Debug */,
+				D409AE6F1F9E652200F28A3C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = D409AE5E1F9E652200F28A3C /* Project object */;
+}
