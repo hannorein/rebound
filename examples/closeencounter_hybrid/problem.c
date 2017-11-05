@@ -1,9 +1,9 @@
 /**
- * Close Encounter with hermes integrator.
+ * Close Encounter with MERCURIUS integrator.
  * 
  * This example integrates a densely packed planetary system 
  * which becomes unstable on a timescale of only a few orbits. 
- * This is a test case for the HERMES integrator.
+ * This is a test case for the MERCURIUS integrator.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,8 +18,7 @@ double e_init; // initial energy
 int main(int argc, char* argv[]){
 	struct reb_simulation* r = reb_create_simulation();
 	r->dt = 0.0012*2.*M_PI;				// initial timestep
-	r->integrator = REB_INTEGRATOR_HERMES;
-    r->ri_hermes.hill_switch_factor = 2.;
+	r->integrator = REB_INTEGRATOR_MERCURIUS;
 	r->heartbeat  = heartbeat;
 
 	struct reb_particle star = {0};
@@ -49,6 +48,7 @@ void heartbeat(struct reb_simulation* r){
 		reb_output_timing(r, 0);
 	}
 	if (reb_output_check(r, 2.*M_PI)){  
+        // Once per year, output the relative energy error to a text file
 		FILE* f = fopen("energy.txt","a");
 		reb_integrator_synchronize(r);
 		double e = reb_tools_energy(r);
