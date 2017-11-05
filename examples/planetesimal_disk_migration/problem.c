@@ -97,7 +97,6 @@ int main(int argc, char* argv[]){
 
     reb_move_to_com(r);
     E0 = reb_tools_energy(r);
-    system("rm -f energy.txt");
     
     // Integrate!
     reb_integrate(r, INFINITY);
