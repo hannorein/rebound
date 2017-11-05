@@ -41,7 +41,6 @@ The following examples demonstrate how to calculate orbital elements.
    ipython/OrbitalElements
    
 If you are interested in simulating a planetary system in which there are many small particles, have a look at the following examples. 
-All these examples use the HERMES integrator.
 
 .. toctree::
    c_example_planetesimal_disk_migration
