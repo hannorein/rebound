@@ -12,7 +12,7 @@ sim.add( a=1.4, e=0.1 )       # Massless test particle
 for o in sim.calculate_orbits(): print(o)
 
 # Output orbits in Heliocentric coordinates
-for o in sim.calculate_orbits(heliocentric=True): print(o)
+for o in sim.calculate_orbits(primary=sim.particles[0]): print(o)
 
 # Output cartesian coordinates
 for p in sim.particles: 
