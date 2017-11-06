@@ -1136,6 +1136,8 @@ class Simulation(Structure):
         if primary is None:
             jacobi = True
             primary = _particles_tmp[0]
+        else:
+            jacobi = False
 
         clibrebound.reb_get_com_of_pair.restype = Particle
         for i in range(1,self.N_real):
