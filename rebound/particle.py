@@ -470,6 +470,49 @@ class Particle(Structure):
             return clibrebound.reb_particle_divide(self, c_double(other))
         return NotImplemented 
 
+    def sample_orbit(self, Npts=100, trailing=True, timespan=None, useTrueAnomaly=True):
+        """
+        Returns a nested list of xyz positions along the orbit of the particle. 
+        Points are equally spaced in true anomaly for bound orbits, and equally spaced in time for hyperbolic orbits.
+        
+        Parameters
+        ----------
+        Npts    : int, optional  
+            Number of points along the orbit to return  (default: 100)
+        trailing: bool, optional
+            Whether to return points stepping backwards in time (True) or forwards (False). (default: True)
+        timespan: float, optional    
+            Return points (for the osculating orbit) from the current position to timespan (forwards or backwards in time depending on trailing keyword). 
+            Defaults to the orbital period for bound orbits, and to the rough time it taks the orbit to move by the current distance from the primary for a hyperbolic orbit.
+        useTrueAnomaly: bool, optional
+            Will sample equally spaced points in true anomaly if True, otherwise in mean anomaly.
+            Latter might be better for hyperbolic orbits, where true anomaly can stay near the limiting value for a long time, and then switch abruptly at pericenter. (Default: True)
+        """
+        p = self
+        o = []
+
+        if timespan is None:
+            if self.a < 0.: # hyperbolic orbit
+                timespan = 2*math.pi*p.d/p.v # rough time to cross display box
+            else:
+                timespan = self.P
+        
+        lim_phase = abs(p.n)*timespan # n is negative for hyperbolic orbits
+
+        if trailing is True:
+            lim_phase *= -1 # sample phase backwards from current value
+        phase = [lim_phase*i/(Npts-1) for i in range(Npts)]
+
+        for i,ph in enumerate(phase):
+            if useTrueAnomaly is True:
+                newp = Particle(a=p.a, f=p.f+ph, inc=p.inc, omega=p.omega, Omega=p.Omega, e=p.e, m=p.m, simulation=p._sim.contents)
+            else: 
+                newp = Particle(a=p.a, M=p.M+ph, inc=p.inc, omega=p.omega, Omega=p.Omega, e=p.e, m=p.m, simulation=p._sim.contents)
+
+            o.append(newp.xyz)
+        
+        return o 
+
     @property
     def index(self):
         clibrebound.reb_get_particle_index.restype = c_int
