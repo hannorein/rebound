@@ -264,8 +264,6 @@ class Orbit(Structure):
         """
         return "<rebound.Orbit instance, a={0} e={1} inc={2} Omega={3} omega={4} f={5}>".format(str(self.a),str(self.e), str(self.inc), str(self.Omega), str(self.omega), str(self.f))
 
-
-
 class Simulation(Structure):
     """
     REBOUND Simulation Object.
@@ -1108,7 +1106,7 @@ class Simulation(Structure):
                     raise AttributeError("Each line requires 8 floats corresponding to mass, radius, position (x,y,z) and velocity (x,y,z).")
 
 # Orbit calculation
-    def calculate_orbits(self, heliocentric=False, barycentric=False):
+    def calculate_orbits(self, primary=None, heliocentric=None, barycentric=None):
         """ 
         Calculate orbital parameters for all partices in the simulation.
         By default this functions returns the orbits in Jacobi coordinates. 
@@ -1117,11 +1115,13 @@ class Simulation(Structure):
 
         Parameters
         ----------
-        heliocentric : bool, optional
-            Set the parameter heliocentric to True to return orbits referenced to sim.particles[0].
-        barycentric : bool, optional
-            Set the parameter barycentric to True to return orbits referenced to the system's barycenter.
-            
+
+        primary     : rebound.Particle, optional
+            Set the primary against which to reference the osculating orbit. default(use Jacobi center of mass)
+        heliocentric: bool, DEPRECATED
+            To calculate heliocentric elements, pass primary=sim.particles[0]
+        barycentric : bool, DEPRECATED
+            To calculate barycentric elements, pass primary=sim.calculate_com()
 
         Returns
         -------
@@ -1129,20 +1129,19 @@ class Simulation(Structure):
         """
         _particles_tmp = self.particles
         orbits = []
-        
-        jacobi = True
-        com = _particles_tmp[0]
-        if heliocentric is True:
-            jacobi = False
-        if barycentric is True:
-            com = self.calculate_com()
-            jacobi = False
+       
+        if heliocentric is not None or barycentric is not None:
+            raise AttributeError('heliocentric and barycentric keywords in calculate_orbits are deprecated. Pass primary keyword instead (sim.particles[0] for heliocentric and sim.calculate_com() for barycentric)')
+
+        if primary is None:
+            jacobi = True
+            primary = _particles_tmp[0]
 
         clibrebound.reb_get_com_of_pair.restype = Particle
         for i in range(1,self.N_real):
-            orbits.append(_particles_tmp[i].calculate_orbit(primary=com))
+            orbits.append(_particles_tmp[i].calculate_orbit(primary=primary))
             if jacobi is True:
-                com = clibrebound.reb_get_com_of_pair(com, _particles_tmp[i])
+                primary = clibrebound.reb_get_com_of_pair(primary, _particles_tmp[i])
 
         return orbits
 
