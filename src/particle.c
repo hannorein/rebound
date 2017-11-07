@@ -51,7 +51,7 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
 		return;
 	}
 	while (r->allocatedN<=r->N){
-		r->allocatedN += 128;
+		r->allocatedN = r->allocatedN ? r->allocatedN * 2 : 128;
 		r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->allocatedN);
 	}
 
@@ -157,7 +157,7 @@ static void reb_update_particle_lookup_table(struct reb_simulation* const r){
     int zerohash = -1;
     for(int i=0; i<r->N; i++){
         if(N_hash >= r->allocatedN_lookup){
-            r->allocatedN_lookup += 128;
+            r->allocatedN_lookup = r->allocatedN_lookup ? r->allocatedN_lookup * 2 : 128;
             r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*r->allocatedN_lookup);
         }
         if(particles[i].hash == 0){ // default hash (0) special case
