@@ -98,8 +98,8 @@ void reb_collision_search(struct reb_simulation* const r){
 						// Add particles to collision array.
 						if (r->collisions_allocatedN<=collisions_N){
 							// Allocate memory if there is no space in array.
-							// Doing it in chunks of 32 to avoid having to do it too often.
-							r->collisions_allocatedN += 32;
+							// Init to 32 if no space has been allocated yet, otherwise double it.
+							r->collisions_allocatedN = r->collisions_allocatedN ? r->collisions_allocatedN * 2 : 32;
 							r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocatedN);
 						}
 						r->collisions[collisions_N].p1 = i;
@@ -143,8 +143,8 @@ void reb_collision_search(struct reb_simulation* const r){
                         // Add particles to collision array.
                         if (r->collisions_allocatedN<=collisions_N){
                             // Allocate memory if there is no space in array.
-                            // Doing it in chunks of 32 to avoid having to do it too often.
-                            r->collisions_allocatedN += 32;
+                            // Init to 32 if no space has been allocated yet, otherwise double it.
+                            r->collisions_allocatedN = r->collisions_allocatedN ? r->collisions_allocatedN * 2 : 32;
                             r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocatedN);
                         }
                         r->collisions[collisions_N].p1 = i;
@@ -211,8 +211,8 @@ void reb_collision_search(struct reb_simulation* const r){
                     // Add particles to collision array.
                     if (r->collisions_allocatedN<=collisions_N){
                         // Allocate memory if there is no space in array.
-                        // Doing it in chunks of 32 to avoid having to do it too often.
-                        r->collisions_allocatedN += 32;
+                        // Init to 32 if no space has been allocated yet, otherwise double it.
+                        r->collisions_allocatedN = r->collisions_allocatedN ? r->collisions_allocatedN * 2 : 32;
                         r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocatedN);
                     }
                     r->collisions[collisions_N].p1 = 0;
@@ -438,7 +438,8 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
 #pragma omp critical
 			{
 				if (r->collisions_allocatedN<=(*collisions_N)){
-					r->collisions_allocatedN += 32;
+					// Init to 32 if no space has been allocated yet, otherwise double it.
+					r->collisions_allocatedN = r->collisions_allocatedN ? r->collisions_allocatedN * 2 : 32;
 					r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocatedN);
 				}
 				r->collisions[(*collisions_N)] = *collision_nearest;
