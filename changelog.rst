@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.5.10
+-------------
+* Refactored OrbitPlot.
+
 Version 3.5.9
 -------------
 * SIGINT handler added. Allows for garceful exit and keyboard interrupts (even from python).
