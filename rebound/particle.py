@@ -435,6 +435,53 @@ class Particle(Structure):
 
         return o
     
+    def sample_orbit(self, Npts=100, primary=None, trailing=True, timespan=None, useTrueAnomaly=True):
+        """
+        Returns a nested list of xyz positions along the osculating orbit of the particle. 
+        If primary is not passed, returns xyz positions along the Jacobi osculating orbit.
+
+        Parameters
+        ----------
+        Npts    : int, optional  
+            Number of points along the orbit to return  (default: 100)
+        primary : rebound.Particle, optional
+            Primary to use for the osculating orbit (default: Jacobi center of mass)
+        trailing: bool, optional
+            Whether to return points stepping backwards in time (True) or forwards (False). (default: True)
+        timespan: float, optional    
+            Return points (for the osculating orbit) from the current position to timespan (forwards or backwards in time depending on trailing keyword). 
+            Defaults to the orbital period for bound orbits, and to the rough time it takes the orbit to move by the current distance from the primary for a hyperbolic orbit. Implementation currently only supports this option if useTrueAnomaly=False.
+        useTrueAnomaly: bool, optional
+            Will sample equally spaced points in true anomaly if True, otherwise in mean anomaly.
+            Latter might be better for hyperbolic orbits, where true anomaly can stay near the limiting value for a long time, and then switch abruptly at pericenter. (Default: True)
+        """
+        pts = []
+        if primary is None:
+            primary = self.jacobi_com
+        o = self.calculate_orbit(primary=primary)
+
+        if timespan is None:
+            if o.a < 0.: # hyperbolic orbit
+                timespan = 2*math.pi*o.d/o.v # rough time to cross display box
+            else:
+                timespan = o.P
+        
+        lim_phase = abs(o.n)*timespan # n is negative for hyperbolic orbits
+
+        if trailing is True:
+            lim_phase *= -1 # sample phase backwards from current value
+        phase = [lim_phase*i/(Npts-1) for i in range(Npts)]
+
+        for i,ph in enumerate(phase):
+            if useTrueAnomaly is True:
+                newp = Particle(a=o.a, f=o.f+ph, inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=self.m, primary=primary, simulation=self._sim.contents)
+            else: 
+                newp = Particle(a=o.a, M=o.M+ph, inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=self.m, primary=primary, simulation=self._sim.contents)
+
+            pts.append(newp.xyz)
+        
+        return pts
+
     # Simple operators for particles.
 
     def __sub__(self, other):
