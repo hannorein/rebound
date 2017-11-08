@@ -25,6 +25,29 @@
 
 #ifndef _MAIN_H
 #define _MAIN_H
+
+#ifdef __cplusplus
+
+// At least GCC and clang support the restrict keyword as an extension.
+#if defined(__GNUC__) || defined(__clang__)
+
+#define REBOUND_RESTRICT __restrict__
+
+#else
+
+// For other compilers, we disable it.
+#define REBOUND_RESTRICT
+
+#endif
+
+extern "C" {
+
+#else
+
+#define REBOUND_RESTRICT restrict
+
+#endif
+
 #include <stdint.h>
 #include <sys/time.h>
 #include <pthread.h>
@@ -63,13 +86,13 @@ struct reb_vec3d {
  * @brief Generic 7d pointer, for internal use only (IAS15).
  */
 struct reb_dp7 {
-    double* restrict p0; ///< 0 substep
-    double* restrict p1; ///< 1 substep
-    double* restrict p2; ///< 2 substep
-    double* restrict p3; ///< 3 substep
-    double* restrict p4; ///< 4 substep
-    double* restrict p5; ///< 5 substep
-    double* restrict p6; ///< 6 substep
+    double* REBOUND_RESTRICT p0; ///< 0 substep
+    double* REBOUND_RESTRICT p1; ///< 1 substep
+    double* REBOUND_RESTRICT p2; ///< 2 substep
+    double* REBOUND_RESTRICT p3; ///< 3 substep
+    double* REBOUND_RESTRICT p4; ///< 4 substep
+    double* REBOUND_RESTRICT p5; ///< 5 substep
+    double* REBOUND_RESTRICT p6; ///< 6 substep
 };
 
 /**
@@ -131,13 +154,13 @@ struct reb_simulation_integrator_ias15 {
 
     int allocatedN;             ///< Size of allocated arrays.
 
-    double* restrict at;            ///< Temporary buffer for acceleration
-    double* restrict x0;            ///<                      position (used for initial values at h=0) 
-    double* restrict v0;            ///<                      velocity
-    double* restrict a0;            ///<                      acceleration
-    double* restrict csx;           ///<                      compensated summation for x
-    double* restrict csv;           ///<                      compensated summation for v
-    double* restrict csa0;          ///<                      compensated summation for a
+    double* REBOUND_RESTRICT at;            ///< Temporary buffer for acceleration
+    double* REBOUND_RESTRICT x0;            ///<                      position (used for initial values at h=0)
+    double* REBOUND_RESTRICT v0;            ///<                      velocity
+    double* REBOUND_RESTRICT a0;            ///<                      acceleration
+    double* REBOUND_RESTRICT csx;           ///<                      compensated summation for x
+    double* REBOUND_RESTRICT csv;           ///<                      compensated summation for v
+    double* REBOUND_RESTRICT csa0;          ///<                      compensated summation for a
 
     struct reb_dp7 g;
     struct reb_dp7 b;
@@ -208,7 +231,7 @@ struct reb_simulation_integrator_mercurius {
     double* encounterRhill;
     unsigned int* encounterIndicies;
     struct reb_particle* encounterParticles;
-    struct reb_particle* restrict p_hold;
+    struct reb_particle* REBOUND_RESTRICT p_hold;
 };
 
 /**
@@ -324,7 +347,7 @@ struct reb_simulation_integrator_whfast {
      * It is automatically filled and updated by WHfast.
      * Access this array with caution.
      */
-    struct reb_particle* restrict p_jh;
+    struct reb_particle* REBOUND_RESTRICT p_jh;
     
     /**
      * @brief Generate inertial coordinates at the end of the integration, but do not change the Jacobi/heliocentric coordinates
@@ -391,7 +414,7 @@ struct reb_simulation_integrator_janus {
      * @cond PRIVATE
      * Internal data structures below. Nothing to be changed by the user.
      */
-    struct reb_particle_int* restrict p_int;    ///< Integer particle pos/vel
+    struct reb_particle_int* REBOUND_RESTRICT p_int;    ///< Integer particle pos/vel
     unsigned int allocated_N;                   ///< Space allocated in arrays
     /**
      * @endcond
@@ -1874,5 +1897,10 @@ struct reb_display_data {
  * @cond PRIVATE
  */
 
+#ifdef __cplusplus
+}
+#endif
+
+#undef REBOUND_RESTRICT
 
 #endif
