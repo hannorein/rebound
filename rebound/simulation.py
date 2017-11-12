@@ -486,6 +486,8 @@ class Simulation(Structure):
         self.simulationarchive_filename = filename
         if interval is None and interval_walltime is None:
             raise AttributeError("Need to specify either interval or interval_walltime.")
+        if self.dt<0.:
+            raise RuntimeError("Simulation archive requires a positive timestep. If you want to integrate backwards in time, simply flip the sign of all velocities to keep the timestep positive.")
         self.simulationarchive_walltime = 0.
         self.simulationarchive_next = 0.
         self.simulationarchive_interval = 0. 
