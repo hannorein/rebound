@@ -13,6 +13,7 @@ class TestCollisions(unittest.TestCase):
         sim.boundary   = "open"
         sim.gravity    = "tree"
         sim.collision  = "tree"
+        sim.collision_resolve = "hardsphere"
         def cor_remove_both(r, c):
             r.contents.collisions_Nlog += 1
             return 3

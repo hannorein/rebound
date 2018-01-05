@@ -16,7 +16,8 @@ int main(int argc, char* argv[]){
 	// Setup constants
 	r->integrator	= REB_INTEGRATOR_LEAPFROG;
 	r->collision	= REB_COLLISION_TREE;
-	r->boundary	= REB_BOUNDARY_OPEN;
+    r->collision_resolve = reb_collision_resolve_hardsphere;
+    r->boundary	= REB_BOUNDARY_OPEN;
 	r->G 		= 1;		
 	r->N_active	= 1;
 	r->softening 	= 0.01;		

@@ -253,6 +253,7 @@ class TestSimulationCollisions(unittest.TestCase):
         self.sim = rebound.Simulation()
         self.sim.gravity = "none"
         self.sim.collision = "direct"
+        self.sim.collision_resolve = "hardsphere"
         self.sim.integrator = "leapfrog"
         self.sim.G = 0.0
         self.sim.dt = 0.01
@@ -280,6 +281,7 @@ class TestSimulationCollisions(unittest.TestCase):
     def test_tree(self):
         self.sim.configure_box(10)
         self.sim.collision = "tree"
+        self.sim.collision_resolve = "hardsphere"
         self.sim.add(m=1.,x=-1,vx=1.,r=0.5)
         self.sim.add(m=1.,x=1,vx=-1.,r=0.5)
         self.sim.integrate(1.)

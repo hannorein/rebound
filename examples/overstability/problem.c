@@ -35,6 +35,7 @@ int main(int argc, char* argv[]){
 	r->coefficient_of_restitution 	= coefficient_of_restitution;
 	r->integrator			= REB_INTEGRATOR_SEI;
 	r->collision			= REB_COLLISION_TREE;
+    r->collision_resolve = reb_collision_resolve_hardsphere;
 	r->gravity			= REB_GRAVITY_NONE;
 	r->boundary			= REB_BOUNDARY_SHEAR;
 

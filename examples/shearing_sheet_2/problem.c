@@ -30,6 +30,7 @@ int main(int argc, char* argv[]) {
 	r->boundary			= REB_BOUNDARY_SHEAR;
 	r->gravity			= REB_GRAVITY_TREE;
 	r->collision			= REB_COLLISION_TREE;
+    r->collision_resolve = collision_resolve_hardsphere_pullaway;
 	double OMEGA 			= 0.00013143527;	// 1/s
 	r->ri_sei.OMEGA 		= OMEGA;
 	r->G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2

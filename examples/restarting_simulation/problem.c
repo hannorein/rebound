@@ -19,6 +19,7 @@ int main(int argc, char* argv[]){
 		struct reb_simulation* r = reb_create_simulation();
 		r->integrator	= REB_INTEGRATOR_SEI;
 		r->collision	= REB_COLLISION_DIRECT;
+        r->collision_resolve = reb_collision_resolve_hardsphere;
 		r->boundary 	= REB_BOUNDARY_SHEAR;
 		r->ri_sei.OMEGA	= 1.;	
 		r->dt 		= 1e-4*2.*M_PI; 
