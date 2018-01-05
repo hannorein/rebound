@@ -303,7 +303,7 @@ void reb_collision_search(struct reb_simulation* const r){
 	int (*resolve) (struct reb_simulation* const r, struct reb_collision c) = r->collision_resolve;
 	if (resolve==NULL){
 		// Default is hard sphere
-		resolve = reb_collision_resolve_hardsphere;
+		resolve = reb_collision_resolve_halt;
 	}
 	for (int i=0;i<collisions_N;i++){
         
@@ -562,6 +562,12 @@ int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_
     return 0;
 }
 
+int reb_collision_resolve_halt(struct reb_simulation* const r, struct reb_collision c){
+    r->status = REB_EXIT_COLLISION;
+	r->particles[c.p1].lastcollision = r->t;
+	r->particles[c.p2].lastcollision = r->t;
+    return 0; // don't remove either particle
+}
 
 int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c){
 	if (r->particles[c.p1].lastcollision==r->t || r->particles[c.p2].lastcollision==r->t) return 0;

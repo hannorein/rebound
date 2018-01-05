@@ -1,5 +1,5 @@
 from ctypes import Structure, c_double, POINTER, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
-from . import clibrebound, Escape, NoParticles, Encounter, SimulationError, ParticleNotFound
+from . import clibrebound, Escape, NoParticles, Encounter, Collision, SimulationError, ParticleNotFound
 from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G
 from .tools import hash as rebhash
@@ -1378,6 +1378,8 @@ class Simulation(Structure):
                 raise Escape("User caused exit. Simulation did not finish.") # should not occur in python
             if ret_value == 6:
                 raise KeyboardInterrupt
+            if ret_value == 7:
+                raise Collision("Two particles collided (d < r1+r2)")
         else:
             debug.integrate_other_package(tmax,exact_finish_time)
         self.process_messages()
