@@ -15,33 +15,33 @@
 
 
 int main(int argc, char* argv[]){
-	struct reb_simulation* r = reb_create_simulation();
-	r->integrator = REB_INTEGRATOR_IAS15;
-	r->dt = -1;
-	r->usleep = 10000;   // Slowing down integrator (for visualization only)
+    struct reb_simulation* r = reb_create_simulation();
+    r->integrator = REB_INTEGRATOR_IAS15;
+    r->dt = -1;
+    r->usleep = 10000;   // Slowing down integrator (for visualization only)
 
-	struct reb_particle p = {0};
-	p.m = 1.;
-	p.z = 0.;
-	p.vz = 0.;
-	
-	p.x =  -1.842389804706855; p.y =  -1.063801316823613; 
-	p.vx =  -0.012073765486548; p.vy =   0.021537467220014; 
-	reb_add(r, p);
+    struct reb_particle p = {0};
+    p.m = 1.;
+    p.z = 0.;
+    p.vz = 0.;
+    
+    p.x =  -1.842389804706855; p.y =  -1.063801316823613; 
+    p.vx =  -0.012073765486548; p.vy =   0.021537467220014; 
+    reb_add(r, p);
 
-	p.x =  -0.689515464218133; p.y =  -0.398759403276399; 
-	p.vx =   0.637331229856386; p.vy =  -1.103822313621890; 
-	reb_add(r, p);
-	
-	p.x =   0.689515464218133; p.y =   0.398759403276399; 
-	p.vx =  -0.637331229856386; p.vy =   1.103822313621890; 
-	reb_add(r, p);
-	
-	p.x =   1.842389804706855; p.y =   1.063801316823613; 
-	p.vx =   0.012073765486548; p.vy =  -0.021537467220014; 
-	reb_add(r, p);
-	
-	reb_move_to_com(r);
+    p.x =  -0.689515464218133; p.y =  -0.398759403276399; 
+    p.vx =   0.637331229856386; p.vy =  -1.103822313621890; 
+    reb_add(r, p);
+    
+    p.x =   0.689515464218133; p.y =   0.398759403276399; 
+    p.vx =  -0.637331229856386; p.vy =   1.103822313621890; 
+    reb_add(r, p);
+    
+    p.x =   1.842389804706855; p.y =   1.063801316823613; 
+    p.vx =   0.012073765486548; p.vy =  -0.021537467220014; 
+    reb_add(r, p);
+    
+    reb_move_to_com(r);
 
-	reb_integrate(r, INFINITY);
+    reb_integrate(r, INFINITY);
 }

@@ -25,9 +25,9 @@ double E0;
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
     
-	// Simulation Setup
-	r->integrator	= REB_INTEGRATOR_HERMES;
-    r->heartbeat	= heartbeat;
+    // Simulation Setup
+    r->integrator    = REB_INTEGRATOR_HERMES;
+    r->heartbeat    = heartbeat;
     r->testparticle_type = 1;
     
     // Collisions
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]){
     r->collision_resolve_keep_sorted = 1;
     
     // Boundaries
-    r->boundary	= REB_BOUNDARY_OPEN;
+    r->boundary    = REB_BOUNDARY_OPEN;
     const double boxsize = 6;
     reb_configure_box(r,boxsize,2,2,1);
     
@@ -48,11 +48,11 @@ int main(int argc, char* argv[]){
     double a_mig_planet = 1.67;
     r->dt = 6.283*pow(a_scat_planet,1.5)/50;
     
-	// Star
-	struct reb_particle star = {0};
-	star.m 		= 1;
-    star.r		= 0.005;        // Radius of particle is in AU!
-	reb_add(r, star);
+    // Star
+    struct reb_particle star = {0};
+    star.m         = 1;
+    star.r        = 0.005;        // Radius of particle is in AU!
+    reb_add(r, star);
     
     // Planet 1 - inner massive planet to scatter planetesimals out
     {
@@ -83,16 +83,16 @@ int main(int argc, char* argv[]){
     
     // Generate Planetesimal Disk
     while(r->N<N_planetesimals + r->N_active){
-		struct reb_particle pt = {0};
-		double a    = reb_random_powerlaw(amin,amax,powerlaw);
+        struct reb_particle pt = {0};
+        double a    = reb_random_powerlaw(amin,amax,powerlaw);
         double e    = reb_random_rayleigh(0.005);
         double inc  = reb_random_rayleigh(0.005);
         double Omega = reb_random_uniform(0,2.*M_PI);
         double apsis = reb_random_uniform(0,2.*M_PI);
-        double phi 	= reb_random_uniform(0,2.*M_PI);
+        double phi     = reb_random_uniform(0,2.*M_PI);
         pt = reb_tools_orbit_to_particle(r->G, star, r->testparticle_type?planetesimal_mass:0., a, e, inc, Omega, apsis, phi);
-		pt.r 		= 0.00000934532;
-		reb_add(r, pt);
+        pt.r         = 0.00000934532;
+        reb_add(r, pt);
     }
 
     reb_move_to_com(r);
