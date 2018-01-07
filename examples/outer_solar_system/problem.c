@@ -55,48 +55,48 @@ double tmax = 7.3e7;
 void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]) {
-	struct reb_simulation* r = reb_create_simulation();
-	// Setup constants
-	const double k = 0.01720209895; // Gaussian constant
-	r->dt = 40;			// in days
-	r->G = k * k;			// These are the same units as used by the mercury6 code.
-	r->ri_whfast.safe_mode = 0;     // Turn of safe mode. Need to call integrator_synchronize() before outputs.
-	r->ri_whfast.corrector = 11;    // Turn on symplectic correctors (11th order).
+    struct reb_simulation* r = reb_create_simulation();
+    // Setup constants
+    const double k = 0.01720209895; // Gaussian constant
+    r->dt = 40;            // in days
+    r->G = k * k;            // These are the same units as used by the mercury6 code.
+    r->ri_whfast.safe_mode = 0;     // Turn of safe mode. Need to call integrator_synchronize() before outputs.
+    r->ri_whfast.corrector = 11;    // Turn on symplectic correctors (11th order).
 
-	// Setup callbacks:
-	r->heartbeat = heartbeat;
-	r->force_is_velocity_dependent = 0; // Force only depends on positions.
-	r->integrator = REB_INTEGRATOR_WHFAST;
-	//r->integrator	= REB_INTEGRATOR_IAS15;
+    // Setup callbacks:
+    r->heartbeat = heartbeat;
+    r->force_is_velocity_dependent = 0; // Force only depends on positions.
+    r->integrator = REB_INTEGRATOR_WHFAST;
+    //r->integrator    = REB_INTEGRATOR_IAS15;
 
-	// Initial conditions
-	for (int i = 0; i < 6; i++) {
-		struct reb_particle p = {0};
-		p.x = ss_pos[i][0];
-		p.y = ss_pos[i][1];
-		p.z = ss_pos[i][2];
-		p.vx = ss_vel[i][0];
-		p.vy = ss_vel[i][1];
-		p.vz = ss_vel[i][2];
-		p.m = ss_mass[i];
-		reb_add(r, p);
-	}
+    // Initial conditions
+    for (int i = 0; i < 6; i++) {
+        struct reb_particle p = {0};
+        p.x = ss_pos[i][0];
+        p.y = ss_pos[i][1];
+        p.z = ss_pos[i][2];
+        p.vx = ss_vel[i][0];
+        p.vy = ss_vel[i][1];
+        p.vz = ss_vel[i][2];
+        p.m = ss_mass[i];
+        reb_add(r, p);
+    }
 
     reb_move_to_com(r);
 
-	r->N_active = r->N - 1; // Pluto is treated as a test-particle.
+    r->N_active = r->N - 1; // Pluto is treated as a test-particle.
 
-	double e_initial = reb_tools_energy(r);
+    double e_initial = reb_tools_energy(r);
 
-	// Start integration
-	reb_integrate(r, tmax);
+    // Start integration
+    reb_integrate(r, tmax);
 
-	double e_final = reb_tools_energy(r);
-	printf("Done. Final time: %.4f. Relative energy error: %e\n", r->t, fabs((e_final - e_initial) / e_initial));
+    double e_final = reb_tools_energy(r);
+    printf("Done. Final time: %.4f. Relative energy error: %e\n", r->t, fabs((e_final - e_initial) / e_initial));
 }
 
 void heartbeat(struct reb_simulation* const r) {
-	if (reb_output_check(r, 10000000.)) {
-		reb_output_timing(r, tmax);
-	}
+    if (reb_output_check(r, 10000000.)) {
+        reb_output_timing(r, tmax);
+    }
 }

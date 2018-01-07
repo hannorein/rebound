@@ -143,8 +143,8 @@ axarr.set_xlim(extent[0], extent[1])
 axarr.set_ylim(extent[2], extent[3])
 axarr.set_xlabel(r"time [orbits]")
 axarr.set_ylabel(r"relative energy error")
-plt.xscale('log', nonposy='clip')
-plt.yscale('log', nonposy='clip')
+plt.xscale('log')
+plt.yscale('log')
 plt.grid(True)
 
 

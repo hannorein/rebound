@@ -21,6 +21,7 @@ class TestShearingSheet(unittest.TestCase):
         sim.boundary   = "shear"
         sim.gravity    = "tree"
         sim.collision  = "tree"
+        sim.collision_resolve = "hardsphere"
         def cor_bridges(r, v):
             eps = 0.32*pow(abs(v)*100.,-0.234)
             if eps>1.:

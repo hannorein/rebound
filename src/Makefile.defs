@@ -4,7 +4,7 @@ ifndef OS
 	OS=$(shell uname)
 endif
 ifeq ($(OS), Linux)
-	OPT+= -Wall -g
+	OPT+= -Wall -g -Wno-unused-result
 	LIB+= -lm -lrt
 endif
 ifeq ($(OS), Darwin)
