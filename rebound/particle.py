@@ -332,6 +332,7 @@ class Particle(Structure):
                                     M = Omega - omega - l   # for retrograde, l = Omega - omega - M
                             else:
                                 if T is not None:           # works for both elliptical and hyperbolic orbits
+                                                            # TODO: has accuracy problems for M=n*(t-T) << 1
                                     n = (simulation.G*(primary.m+self.m)/abs(a**3))**0.5
                                     M = n*(simulation.t - T)
                             clibrebound.reb_tools_M_to_f.restype = c_double
