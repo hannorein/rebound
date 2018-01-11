@@ -63,6 +63,8 @@ Contributors
 * David S. Spiegel, Institute for Advanced Study (IAS), Princeton, <dave@ias.edu>
 * Akihiko Fujii, National Astronomical Observatory of Japan/University of Tokyo, Tokyo, <akihiko.fujii@nao.ac.jp>
 * Dan Tamayo, University of Toronto, <dtamayo@cita.utoronto.ca>
+* Ari Silburt, Penn State University <ajs725@psu.edu>
+* and many others!
 
 REBOUND is open source. You are invited to contribute to this project if you are using it. Please contact any of the authors above if you have any questions.
 
