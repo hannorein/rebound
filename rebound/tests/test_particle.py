@@ -21,6 +21,38 @@ class TestParticleInSimulation(unittest.TestCase):
         ind = p4.index
         self.assertEqual(ind,4)
 
+    def test_masses(self):
+        self.sim.add(m=1.)
+        self.sim.add(m=1.e-3, a=1.)
+        self.sim.add(m=1.e-6, a=2.)
+        self.sim.add(m=0., a=3.)
+        ps = self.sim.particles
+        self.assertAlmostEqual(ps[0].m,1.,delta=1e-15)
+        self.assertAlmostEqual(ps[1].m,1.e-3,delta=1e-15)
+        self.assertAlmostEqual(ps[2].m,1.e-6,delta=1e-15)
+        self.assertAlmostEqual(ps[3].m,0.,delta=1e-15)
+
+    def test_jacobi_masses(self):
+        self.sim.add(m=1.)
+        self.sim.add(m=1.e-3, a=1., jacobi_masses=True)
+        self.sim.add(m=1.e-6, a=2., jacobi_masses=True)
+        self.sim.add(m=0., a=3., jacobi_masses=True)
+        ps = self.sim.particles
+        self.assertAlmostEqual(ps[0].m,1.,delta=1e-15)
+        self.assertAlmostEqual(ps[1].m,1.e-3,delta=1e-15)
+        self.assertAlmostEqual(ps[2].m,1.e-6,delta=1e-15)
+        self.assertAlmostEqual(ps[3].m,0.,delta=1e-15)
+        self.assertAlmostEqual(ps[1].vy,1.000499875062461,delta=1e-15)
+        self.assertAlmostEqual(ps[2].vy,0.7081066347613374,delta=1e-15)
+        self.assertAlmostEqual(ps[3].vy,0.5783504759643414,delta=1e-15)
+        o = self.sim.calculate_orbits(jacobi_masses=True)
+        self.assertAlmostEqual(o[0].a,1.,delta=1e-15)
+        self.assertAlmostEqual(o[1].a,2.,delta=1e-15)
+        self.assertAlmostEqual(o[2].a,3.,delta=1e-15)
+        self.assertAlmostEqual(o[0].e,0.,delta=1e-15)
+        self.assertAlmostEqual(o[1].e,0.,delta=1e-15)
+        self.assertAlmostEqual(o[2].e,0.,delta=1e-15)
+
     def test_adding_orbits(self):
         self.sim.add(m=1.)
         self.sim.add(a=1.)
@@ -58,7 +90,19 @@ class TestParticleInSimulation(unittest.TestCase):
         self.sim.add(a=-3.,e=1.4,f=0.1)
         with self.assertRaises(ValueError):
             self.sim.add(a=-3.,e=1.4,f=3.1)
-    
+   
+    def test_sim_calculate_orbits(self):
+        self.sim.add(m=1.)
+        self.sim.add(m=1.e-3, a=1.,e=0.2,inc=0.3)
+        self.sim.add(m=1.e-3, a=2.,e=0.2,inc=0.3)
+        ps = self.sim.particles
+        self.assertAlmostEqual(ps[1].a,1.,delta=1e-15)
+        self.assertAlmostEqual(ps[1].e,0.2,delta=1e-15)
+        self.assertAlmostEqual(ps[1].inc,0.3,delta=1e-15)
+        self.assertAlmostEqual(ps[2].a,2.,delta=1e-15)
+        self.assertAlmostEqual(ps[2].e,0.2,delta=1e-15)
+        self.assertAlmostEqual(ps[2].inc,0.3,delta=1e-15)
+
     def test_calculate_orbits(self):
         self.sim.add(m=1.)
         self.sim.add(a=1.)
