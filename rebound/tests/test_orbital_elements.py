@@ -1,8 +1,38 @@
 import rebound
+import numpy as np
 import unittest
 import ctypes
 
 class TestOrbitalElements(unittest.TestCase):
+    def test_add_errors(self):
+        sim = rebound.Simulation()
+        with self.assertRaises(ValueError):
+            sim.add(a=1)
+        sim.add(m=1.)
+        with self.assertRaises(ValueError):
+            sim.add(a=1, e=1)
+        with self.assertRaises(ValueError):
+            sim.add(a=1, e=-2)
+        with self.assertRaises(ValueError):
+            sim.add(a=1, e=1.2)
+        with self.assertRaises(ValueError):
+            sim.add(a=-1, e=.2)
+        with self.assertRaises(ValueError):
+            sim.add(a=-1, e=2.2, f=3.)
+    
+    def test_calculate_orbit_errors(self):
+        sim = rebound.Simulation()
+        sim.add()
+        sim.add(x=1.)
+        with self.assertRaises(ValueError):
+            a = sim.particles[1].a
+        
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1.e-3)
+        with self.assertRaises(ValueError):
+            a = sim.particles[1].a
+
     def test_inclined_eccentric(self):
         sim = rebound.Simulation()
         d = 1.e-12 # abs error tolerance
@@ -297,7 +327,7 @@ class TestOrbitalElements(unittest.TestCase):
 
         def test_p(p):
             self.assertAlmostEqual(p.e, 0., delta=d)
-            self.assertAlmostEqual(p.inc, 0., delta=d)
+            self.assertAlmostEqual(p.inc, np.pi, delta=d)
 
         ps = sim.particles
         for p in ps[1:]: 
@@ -309,7 +339,6 @@ class TestOrbitalElements(unittest.TestCase):
         self.assertAlmostEqual(ps[3].a, 2.24, delta=d)
         self.assertAlmostEqual(ps[3].theta, 0.632, delta=d)
         self.assertAlmostEqual(ps[3].inc, np.pi, delta=d)
-
 
 if __name__ == "__main__":
     unittest.main()
