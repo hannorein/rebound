@@ -204,7 +204,7 @@ static void reb_mercurius_predict_encounters(struct reb_simulation* const r){
             double rmin = MIN(rn,ro);
 
             const double s = b*b-4.*a*c;
-            const double sr = sqrt(s);
+            const double sr = sqrt(MAX(0.,s));
             const double tmin1 = (-b + sr)/(2.*a); 
             const double tmin2 = (-b - sr)/(2.*a); 
             if (tmin1>0. && tmin1<1.){
