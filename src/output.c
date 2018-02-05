@@ -209,8 +209,13 @@ void reb_save_dp7(struct reb_dp7* dp7, const int N3, FILE* of){
 }
 
 // Macro to write a single field to a binary file.
+// Memset forces padding to be set to 0 (not necessary but
+// helps when comparing binary files)
 #define WRITE_FIELD(typename, value, length) {\
-        struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_##typename, .size = (length)};\
+        struct reb_binary_field field;\
+        memset(&field,0,sizeof(struct reb_binary_field));\
+        field.type = REB_BINARY_FIELD_TYPE_##typename;\
+        field.size = (length);\
         fwrite(&field,sizeof(struct reb_binary_field),1,of);\
         fwrite(value,field.size,1,of);\
     }
@@ -344,7 +349,10 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     }
     WRITE_FIELD(FUNCTIONPOINTERS,   &functionpointersused,              sizeof(int));
     {
-        struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_PARTICLES, .size = sizeof(struct reb_particle)*r->N};
+        struct reb_binary_field field;
+        memset(&field,0,sizeof(struct reb_binary_field));
+        field.type = REB_BINARY_FIELD_TYPE_PARTICLES;
+        field.size = sizeof(struct reb_particle)*r->N;
         fwrite(&field,sizeof(struct reb_binary_field),1,of);
         // output one particle at a time to sanitize pointers.
         for (int l=0;l<r->N;l++){
