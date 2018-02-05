@@ -259,7 +259,6 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
             CASE(MERCURIUS_SAFEMODE, &r->ri_mercurius.safe_mode);
             CASE(MERCURIUS_ISSYNCHRON, &r->ri_mercurius.is_synchronized);
             CASE(MERCURIUS_M0,       &r->ri_mercurius.m0);
-            CASE(MERCURIUS_RHILLALLOCATEDN, &r->ri_mercurius.rhillallocatedN);
             CASE(MERCURIUS_KEEPUNSYNC, &r->ri_mercurius.keep_unsynchronized);
             case REB_BINARY_FIELD_TYPE_PARTICLES:
                 if(r->particles){

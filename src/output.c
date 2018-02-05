@@ -331,8 +331,7 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(MERCURIUS_SAFEMODE, &r->ri_mercurius.safe_mode,         sizeof(unsigned int));
     WRITE_FIELD(MERCURIUS_ISSYNCHRON, &r->ri_mercurius.is_synchronized, sizeof(unsigned int));
     WRITE_FIELD(MERCURIUS_M0,       &r->ri_mercurius.m0,                sizeof(double));
-    WRITE_FIELD(MERCURIUS_RHILLALLOCATEDN, &r->ri_mercurius.rhillallocatedN, sizeof(unsigned int));
-    WRITE_FIELD(MERCURIUS_RHILL,    &r->ri_mercurius.rhill,             sizeof(double)*r->ri_mercurius.rhillallocatedN);
+    WRITE_FIELD(MERCURIUS_RHILL,    r->ri_mercurius.rhill,             sizeof(double)*r->ri_mercurius.rhillallocatedN);
     WRITE_FIELD(MERCURIUS_KEEPUNSYNC, &r->ri_mercurius.keep_unsynchronized,  sizeof(unsigned int));
     int functionpointersused = 0;
     if (r->coefficient_of_restitution ||
@@ -349,7 +348,6 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
         fwrite(&field,sizeof(struct reb_binary_field),1,of);
         // output one particle at a time to sanitize pointers.
         for (int l=0;l<r->N;l++){
-            printf("out\n");
             struct reb_particle op = r->particles[l];
             op.c = NULL;
             op.ap = NULL;

@@ -290,6 +290,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
             reb_integrator_mercurius_synchronize(r);
             reb_warning(r,"MERCURIUS: Recalculating rhill but pos/vel were not synchronized before.");
         }
+        rim->rhill[0] = 0; // Unsused
         for (int i=1;i<N;i++){
             const double dx  = riw->p_jh[i].x;
             const double dy  = riw->p_jh[i].y;
