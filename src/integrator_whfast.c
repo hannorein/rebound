@@ -249,9 +249,18 @@ void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_p
             //Hyperbolic
             double h2 = r0*r0*v2-eta0*eta0;
             double q = h2/M/(1.+sqrt(1.-h2*beta/(M*M)));
-            double vq = sqrt(h2)/q;
-            X_min = 1./(vq+r0/_dt);
+            double vq = copysign( sqrt(h2)/q, _dt);
+            // X_max and X_min correspond to dt/r_min and dt/r_max
+            // which are reachable in this timestep
+            // r_max = vq*_dt+r0
+            // r_min = pericenter
+            X_min = _dt/(fastabs(vq*_dt)+r0); 
             X_max = _dt/q;
+            if (_dt<0.){
+                double temp = X_min;
+                X_min = X_max;
+                X_max = temp;
+            }
         }
         X = (X_max + X_min)/2.;
         do{
@@ -263,7 +272,7 @@ void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_p
                 X_min = X;
             }
             X = (X_max + X_min)/2.;
-        }while (fastabs((X_max-X_min)/X_max)>1e-15);
+        }while (fastabs((X_max-X_min))>fastabs((X_max+X_min)*1e-15));
         const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
         ri = 1./(r0 + eta0Gs1zeta0Gs2);
     }
