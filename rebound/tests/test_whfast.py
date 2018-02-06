@@ -200,8 +200,8 @@ class TestIntegratorWHFastBackAndForth(unittest.TestCase):
         x1 = sim.particles[1].x;
         v1 = sim.particles[1].vx;
         e1 = sim.calculate_energy()
-        self.assertLess(math.fabs((e0-e1)/e1),1e-15)
-        self.assertLess(math.fabs((x0-x1)/x1),1e-15)
+        self.assertLess(math.fabs((e0-e1)/e1),1e-14)
+        self.assertLess(math.fabs((x0-x1)/x1),1e-14)
         self.assertLess(math.fabs((v0-v1)/v1),1e-14)
     
     def test_whfast_eccentric(self):
