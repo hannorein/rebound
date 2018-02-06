@@ -3,7 +3,8 @@ import unittest
 import math
 import rebound.data
 import warnings
-
+    
+    
 class TestIntegratorWHFast(unittest.TestCase):
     # WHDS
     def test_whfastwhds_outersolarsystem(self):
@@ -178,6 +179,54 @@ class TestIntegratorWHFast(unittest.TestCase):
         self.assertNotEqual(e0,0.)
         e1 = sim.calculate_energy()
         self.assertLess(math.fabs((e0-e1)/e1),2.9e-8)
+
+
+class TestIntegratorWHFastBackAndForth(unittest.TestCase):
+    def test_whfast_hyperbolic(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1e-3, a=-1.,e=2.5,omega=0.3,Omega=0.4,inc=0.1)
+        x0 = sim.particles[1].x;
+        v0 = sim.particles[1].vx;
+        sim.integrator = "whfast"
+        e0 = sim.calculate_energy()
+        yr = -sim.particles[1].P
+        sim.dt = 0.0512*yr
+        for i in range(100):
+            sim.step()
+        sim.dt *= -1
+        for i in range(100):
+            sim.step()
+        x1 = sim.particles[1].x;
+        v1 = sim.particles[1].vx;
+        e1 = sim.calculate_energy()
+        self.assertLess(math.fabs((e0-e1)/e1),1e-15)
+        self.assertLess(math.fabs((x0-x1)/x1),1e-15)
+        self.assertLess(math.fabs((v0-v1)/v1),1e-14)
+    
+    def test_whfast_eccentric(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1e-3, a=1.4,e=0.0125,omega=0.3,Omega=0.4,inc=0.1)
+        x0 = sim.particles[1].x;
+        v0 = sim.particles[1].vx;
+        sim.integrator = "whfast"
+        e0 = sim.calculate_energy()
+        yr = sim.particles[1].P
+        sim.dt = 0.0512*yr
+        for i in range(100):
+            sim.step()
+        sim.dt *= -1
+        for i in range(100):
+            sim.step()
+        x1 = sim.particles[1].x;
+        v1 = sim.particles[1].vx;
+        e1 = sim.calculate_energy()
+        self.assertLess(math.fabs((e0-e1)/e1),1e-13)
+        self.assertLess(math.fabs((x0-x1)/x1),1e-13)
+        self.assertLess(math.fabs((v0-v1)/v1),1e-13)
+    
+
 
 if __name__ == "__main__":
     unittest.main()
