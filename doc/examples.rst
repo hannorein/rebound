@@ -24,6 +24,7 @@ The following examples are good if you're just starting to use REBOUND.
    c_example_eccentric_orbit
    c_example_restricted_threebody
    ipython/Horizons
+   ipython/Starman
 
 If you want to capture close encounters and collisions between particles, have a look at the following examples.
 
