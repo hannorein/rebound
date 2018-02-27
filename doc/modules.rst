@@ -27,7 +27,8 @@ Collision detection algorithms
 Module name               Description
 =======================  ============================================ 
 REB_COLLISION_NONE        No collision detection, default
-REB_COLLISION_DIRECT      Direct nearest neighbour search, O(N^2)
+REB_COLLISION_DIRECT      Brute force collision search, O(N^2), checks for instantaneous overlaps only 
+REB_COLLISION_LINE        Brute force collision search, O(N^2), checks for overlaps that occured during the last timestep assuming particles travelled along straight lines
 REB_COLLISION_TREE        Oct tree, O(N log(N))
 REB_COLLISION_SWEPP       (upgrade to REBOUND 2.0 still in progress) Plane sweep algorithm, ideal for low dimensional  problems, O(N) or O(N^1.5) depending on geometry 
 =======================  ============================================ 
