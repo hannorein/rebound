@@ -3,6 +3,48 @@ import unittest
 import math
 import numpy as np
 
+class TestLineCollisions(unittest.TestCase):
+    
+    def test_direct_miss(self):
+        # Should miss the collision
+        sim = rebound.Simulation()
+        sim.integrator = "leapfrog"
+        sim.collision  = "direct"
+        sim.dt = 10
+        sim.add(r=1,x=0)
+        sim.add(r=1,x=3,vx=-1)
+        sim.integrate(10)
+    def test_line_find(self):
+        # Should find the collision
+        sim = rebound.Simulation()
+        sim.integrator = "leapfrog"
+        sim.collision  = "line"
+        sim.dt = 10
+        sim.add(r=1,x=0)
+        sim.add(r=1,x=3,vx=-1)
+        with self.assertRaises(rebound.Collision) as context:
+            sim.integrate(10)
+    def test_line_miss_overlap(self):
+        # Should miss the collision because overlapping at t=0
+        sim = rebound.Simulation()
+        sim.integrator = "leapfrog"
+        sim.collision  = "line"
+        sim.dt = 10
+        sim.add(r=1,x=0)
+        sim.add(r=1,x=1,vx=-1)
+        sim.integrate(10)
+    def test_line_find_overlap(self):
+        # Should find the collision because not overlapping at t=0, only at end
+        sim = rebound.Simulation()
+        sim.integrator = "leapfrog"
+        sim.collision  = "line"
+        sim.dt = 10
+        sim.add(r=1,x=0)
+        sim.add(r=1,x=11,vx=-1)
+        with self.assertRaises(rebound.Collision) as context:
+            sim.integrate(10)
+
+
 class TestCollisions(unittest.TestCase):
     
     def test_tree_remove_both(self):
