@@ -142,6 +142,13 @@ static void reb_mercurius_encounterstep(struct reb_simulation* const r, const do
     for (int i=0; i<rim->globalN; i++){
         if(rim->encounterIndicies[i]>0){
             riw->p_jh[i] = r->particles[k];
+            // In case properties changed in a collision
+            rim->encounterParticles[i].r = r->particles[k].r;
+            rim->encounterParticles[i].ap = r->particles[k].ap;
+            rim->encounterParticles[i].hash = r->particles[k].hash;
+            // Mass update is more complicated as it is in part done by the transformations.
+            // Commenting this out for now.
+            //rim->encounterParticles[i].m = r->particles[k].m;
             k++;
         }
     }
