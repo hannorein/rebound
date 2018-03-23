@@ -28,6 +28,10 @@ class Particle(Structure):
         Particle velocities
     ax, ay, az  : float       
         Particle accelerations
+    a, e, inc	: float
+	Kepler Coordinates, semi-major axis, eccentricity, inclination
+    Omega, omega, f	: float
+	Kepler Coordinates, longitude of the ascending node, argument of periapsis, true anomaly
     m           : float       
         Particle mass
     r           : float       
