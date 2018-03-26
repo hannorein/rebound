@@ -64,8 +64,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 	const double G = r->G;
 	const double softening2 = r->softening*r->softening;
 	const unsigned int _gravity_ignore_terms = r->gravity_ignore_terms;
-	const int _N_active = ((N_active==-1)?N:N_active) - r->N_var;
 	const int _N_real   = N  - r->N_var;
+	const int _N_active = ((N_active==-1)?_N_real:N_active);
 	const int _testparticle_type   = r->testparticle_type;
 	switch (r->gravity){
 		case REB_GRAVITY_NONE: // Do nothing.
