@@ -19,7 +19,6 @@ class Particle(Structure):
     The main REBOUND particle data structure. 
     This is an abstraction of the reb_particle structure in C.
     The Particle fields are set at the end of simulation.py to avoid circular references.
-    The Keplerian Elements are in Jacobi coordinates (with mu = G*Minc, where Minc is the total mass from index 0 to the particle's index, inclusive).
     
     Attributes
     ----------
@@ -29,10 +28,6 @@ class Particle(Structure):
         Particle velocities
     ax, ay, az  : float       
         Particle accelerations
-    a, e, inc	: float
-	(Kepler Elements) Semi-major axis, eccentricity, and inclination
-    Omega, omega, f	: float
-	(Kepler Elements) Longitude of the ascending node, argument of periapsis, and true anomaly
     m           : float       
         Particle mass
     r           : float       
@@ -47,6 +42,8 @@ class Particle(Structure):
         Pointer to additional parameters one might want to add to particles
     _sim        : POINTER(rebound.Simulation)
         Internal pointer to the parent simulation (used in C version of REBOUND)
+    a, e, inc, Omega, omega, f	: float
+	    (Kepler Elements) Semi-major axis, eccentricity, inclination, longitude of the ascending node, argument of periapsis, and true anomaly respectively. The Keplerian Elements are in Jacobi coordinates (with mu = G*Minc, where Minc is the total mass from index 0 to the particle's index, inclusive).
     """
     def __str__(self):
         """ 
