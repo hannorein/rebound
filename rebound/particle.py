@@ -42,6 +42,8 @@ class Particle(Structure):
         Pointer to additional parameters one might want to add to particles
     _sim        : POINTER(rebound.Simulation)
         Internal pointer to the parent simulation (used in C version of REBOUND)
+    a, e, inc, Omega, omega, f	: float
+	    (Kepler Elements) Semi-major axis, eccentricity, inclination, longitude of the ascending node, argument of periapsis, and true anomaly respectively. The Keplerian Elements are in Jacobi coordinates (with mu = G*Minc, where Minc is the total mass from index 0 to the particle's index, inclusive).
     """
     def __str__(self):
         """ 
