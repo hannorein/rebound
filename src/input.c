@@ -213,6 +213,7 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
             CASE(MEGNOMEANT,         &r->megno_mean_t);
             CASE(MEGNOMEANY,         &r->megno_mean_Y);
             CASE(MEGNON,             &r->megno_n);
+            CASE(SAVERSION,          &r->simulationarchive_version);
             CASE(SASIZEFIRST,        &r->simulationarchive_size_first);
             CASE(SASIZESNAPSHOT,     &r->simulationarchive_size_snapshot);
             CASE(SAINTERVAL,         &r->simulationarchive_interval);

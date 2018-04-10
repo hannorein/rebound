@@ -1672,6 +1672,7 @@ Simulation._fields_ = [
                 ("megno_mean_t", c_double),
                 ("megno_mean_Y", c_double),
                 ("megno_n", c_long),
+                ("simulationarchive_version", c_int),
                 ("simulationarchive_size_first", c_long),
                 ("simulationarchive_size_snapshot", c_long),
                 ("simulationarchive_interval", c_double),

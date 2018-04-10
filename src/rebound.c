@@ -433,6 +433,7 @@ void reb_init_simulation(struct reb_simulation* r){
     
     r->simulationarchive_size_first  = 0;    
     r->simulationarchive_size_snapshot   = 0;    
+    r->simulationarchive_version     = 0;    
     r->simulationarchive_interval    = 0.;    
     r->simulationarchive_interval_walltime = 0.;    
     r->simulationarchive_walltime    = 0.;    

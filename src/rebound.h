@@ -601,6 +601,7 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_MERCURIUS_M0 = 121,
     REB_BINARY_FIELD_TYPE_MERCURIUS_RHILL = 122,
     REB_BINARY_FIELD_TYPE_MERCURIUS_KEEPUNSYNC = 124,
+    REB_BINARY_FIELD_TYPE_SAVERSION = 125,
     REB_BINARY_FIELD_TYPE_END = 9999,
 };
 
@@ -803,6 +804,7 @@ struct reb_simulation {
      * \name Variables related to SimulationArchive 
      * @{
      */
+    int    simulationarchive_version;           ///< Version of the SA binary format (0=original, 1=incremental)
     long   simulationarchive_size_first;        ///< Size of the initial binary file in a SA
     long   simulationarchive_size_snapshot;     ///< Size of a snapshot in a SA (other than 1st), in bytes
     double simulationarchive_interval;          ///< Current sampling cadence, in code units

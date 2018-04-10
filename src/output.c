@@ -289,6 +289,7 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(MEGNOMEANT,         &r->megno_mean_t,                   sizeof(double));
     WRITE_FIELD(MEGNOMEANY,         &r->megno_mean_Y,                   sizeof(double));
     WRITE_FIELD(MEGNON,             &r->megno_n,                        sizeof(long));
+    WRITE_FIELD(SAVERSION,          &r->simulationarchive_version,      sizeof(int));
     WRITE_FIELD(SASIZESNAPSHOT,     &r->simulationarchive_size_snapshot,sizeof(long));
     WRITE_FIELD(SAINTERVAL,         &r->simulationarchive_interval,     sizeof(double));
     WRITE_FIELD(SAINTERVALWALLTIME, &r->simulationarchive_interval_walltime, sizeof(double));
