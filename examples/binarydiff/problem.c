@@ -24,6 +24,10 @@ int main(int argc, char* argv[]) {
     reb_output_binary(r, "s1.bin");
     reb_integrator_reset(r);
     r->integrator=REB_INTEGRATOR_WHFAST;
+    struct reb_particle p3 = {0};
+    p3.x = 2;
+    p3.vy = 0.21;
+    reb_add(r, p3); 
     reb_integrate(r,110.);
     reb_output_binary(r, "s2.bin");
 
