@@ -34,6 +34,7 @@ int main(int argc, char* argv[]) {
     FILE* f1 = fopen("s1.bin","r");
     FILE* f2 = fopen("s2.bin","r");
     FILE* diff = reb_binary_diff(f1,f2);
+    printf("size: %ld\n",ftell(diff));
     fclose(diff);
 
 }

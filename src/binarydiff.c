@@ -49,7 +49,8 @@ FILE* reb_binary_diff(FILE* f1, FILE* f2){
     long f2length = ftell(f2)-f20;
     fseek(f2, f20 , SEEK_SET);
 
-    FILE* diff = fmemopen(NULL,512,"w+");
+    // Create buffer which is large enough (note that files could have different fields)
+    FILE* diff = fmemopen(NULL,f1length+f2length,"w+b");
     if (diff==0){
         printf("fmemopen failed\n");
         return NULL;
