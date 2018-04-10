@@ -3,8 +3,14 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.5.12
+--------------
+* Added REB_COLLISION_LINE. This is a collision detection routine which serves for collisions during the last timestep, assuming that all particles travel along straight lines. This can be useful in cases where not every collision needs to be detected exactly, but the overall collision rate should be reproduced. The algorithm is O(N**2).
+* Bug related to N_active and variational particles has been fixed.
+* A bug where WHFast might not converge in rare cases involving negative timesteps has been fixed.
+
 Version 3.5.11
--------------
+--------------
 * Changed default collision behaviour from hardsphere bouncing to halting the simulation. An exception is raised when using the python version. In C, you need to check the status flag after integrating the simulation.
 
 Version 3.5.10
