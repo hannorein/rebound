@@ -8,6 +8,7 @@
 
 int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_create_simulation();
+    r->integrator=REB_INTEGRATOR_WHFAST;
     r->dt = 0.1;
     struct reb_particle p1 = {0}; 
     p1.m = 1.;
@@ -27,6 +28,7 @@ int main(int argc, char* argv[]) {
     FILE* f1 = fopen("s1.bin","r");
     FILE* f2 = fopen("s2.bin","r");
     FILE* diff = reb_binary_diff(f1,f2);
+    fclose(diff);
 
 }
 

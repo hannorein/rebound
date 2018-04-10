@@ -52,6 +52,7 @@ extern "C" {
 #include <sys/time.h>
 #include <pthread.h>
 #include <signal.h>
+#include <stdio.h>
 #ifndef M_PI
 // Make sure M_PI is defined. 
 #define M_PI           3.14159265358979323846       ///< The mathematical constant pi.
@@ -1281,6 +1282,8 @@ void reb_output_orbits(struct reb_simulation* r, char* filename);
  * @param filename Output filename.
  */
 void reb_output_binary(struct reb_simulation* r, char* filename);
+
+FILE* reb_binary_diff(FILE* f1, FILE* f2);
 
 /**
  * @brief Append the positions and velocities of all particles to an ASCII file.

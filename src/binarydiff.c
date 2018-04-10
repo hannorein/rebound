@@ -34,13 +34,27 @@
 #include "tools.h"
 #include "binarydiff.h"
 
-
 FILE* reb_binary_diff(FILE* f1, FILE* f2){
-    
     if (!f1 || !f2){
         printf("Cannot read binary file.\n");
         return NULL;
     }
+    
+    long f10 = ftell(f1);
+    fseek(f1, 0 , SEEK_END);
+    long f1length = ftell(f1)-f10;
+    fseek(f1, f10 , SEEK_SET);
+    long f20 = ftell(f2);
+    fseek(f2, 0 , SEEK_END);
+    long f2length = ftell(f2)-f20;
+    fseek(f2, f20 , SEEK_SET);
+
+    FILE* diff = fmemopen(NULL,512,"w+");
+    if (diff==0){
+        printf("fmemopen failed\n");
+        return NULL;
+    }
+    
 
     long objects1 = 0;
     long objects2 = 0;
@@ -67,25 +81,55 @@ FILE* reb_binary_diff(FILE* f1, FILE* f2){
         if (field2.type==REB_BINARY_FIELD_TYPE_END){
             reading_fields2 = 0;
         }
-        if (field1.type==field2.type){
-            if (field1.size==field2.size){
-                if (field1.size>bufN){
-                    while (field1.size>bufN){
-                        bufN *= 2;
-                    }
-                    readbuf1 = realloc(readbuf1, sizeof(char)*bufN);
-                    readbuf2 = realloc(readbuf2, sizeof(char)*bufN);
+        // Fields are not in the same order.
+        if (field1.type!=field2.type){
+            // Will search for element in f2, starting at beginning just past header
+            // Note that we ignore all ADDITIONAL fields in f2 that were not present in f1 
+            fseek(f2, 64, SEEK_SET);
+            int notfound = 1; 
+            int bytesread = 0;
+            do {
+                bytesread = fread(&field2,sizeof(struct reb_binary_field),1,f2);
+                if (bytesread == 0){
+                    notfound = 0;
+                    break;
                 }
-                fread(readbuf1, field1.size,1,f1);
-                fread(readbuf2, field1.size,1,f2);
-                
-                if(memcmp(readbuf1,readbuf2,field1.size)!=0){
-                    printf("Field %d differs.\n",field1.type);
+                if(field2.type==REB_BINARY_FIELD_TYPE_END){
+                    notfound = 0;
+                    break;
                 }
+            }while(field2.type!=field1.type);
+            if (notfound == 1){
+                printf("No matching field for %d found in f2.\n",field1.type);
+                continue;
             }
+        }
+        // Can assume field1.type == field2.type from here on
+        if (field1.size>bufN || field2.size>bufN){
+            while (field1.size>bufN || field2.size>bufN){
+                bufN *= 2;
+            }
+            readbuf1 = realloc(readbuf1, sizeof(char)*bufN);
+            readbuf2 = realloc(readbuf2, sizeof(char)*bufN);
+        }
+        fread(readbuf1, field1.size,1,f1);
+        fread(readbuf2, field2.size,1,f2);
+
+        int fields_differ = 0;
+        if (field1.size==field2.size){
+            if (memcmp(readbuf1,readbuf2,field1.size)!=0){
+                fields_differ = 1;
+            }
+        }else{
+            fields_differ = 1;
+        }
+        if(fields_differ){
+            printf("Field %d differs.\n",field1.type);
+            fwrite(&field2,sizeof(struct reb_binary_field),1,diff);
+            fwrite(readbuf2,field2.size,1,diff);
         }
     }
     free(readbuf1);
     free(readbuf2);
-    return NULL;
+    return diff;
 }
