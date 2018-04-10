@@ -26,6 +26,8 @@
 #define _OUTPUT_H
 struct reb_simulation;
 
+#include <stdio.h>
+void _reb_output_binary_to_stream(struct reb_simulation* r, FILE* of);
 void reb_save_dp7(struct reb_dp7* dp7, const int N3, FILE* of);  ///< Internal function to store dp7 struct to a file
 
 #ifdef PROFILING

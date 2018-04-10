@@ -34,26 +34,20 @@
 #include "tools.h"
 #include "binarydiff.h"
 
-FILE* reb_binary_diff(FILE* f1, FILE* f2){
+void reb_binary_diff(FILE* f1, FILE* f2, char** bufp, size_t* sizep){
     if (!f1 || !f2){
         printf("Cannot read binary file.\n");
-        return NULL;
+        return;
     }
     
     long f10 = ftell(f1);
-    fseek(f1, 0 , SEEK_END);
-    long f1length = ftell(f1)-f10;
-    fseek(f1, f10 , SEEK_SET);
     long f20 = ftell(f2);
-    fseek(f2, 0 , SEEK_END);
-    long f2length = ftell(f2)-f20;
-    fseek(f2, f20 , SEEK_SET);
 
     // Create buffer which is large enough (note that files could have different fields)
-    FILE* diff = fmemopen(NULL,f1length+f2length,"w+b");
+    FILE* diff = open_memstream(bufp, sizep);//fmemopen(NULL,f1length+f2length,"w+b");
     if (diff==0){
         printf("fmemopen failed\n");
-        return NULL;
+        return;
     }
     
 
@@ -66,7 +60,7 @@ FILE* reb_binary_diff(FILE* f1, FILE* f2){
     objects1 += fread(readbuf1,sizeof(char),64,f1);
     objects2 += fread(readbuf2,sizeof(char),64,f2);
     if(strcmp(readbuf1,readbuf2)!=0){
-        printf("Header in binary files are different.\n");
+        printf("Header in binary files are different %s.\n", readbuf2);
     }
     
     while(1){
@@ -105,7 +99,7 @@ FILE* reb_binary_diff(FILE* f1, FILE* f2){
                 }
             };
             if (notfound == 1){
-                printf("No match found for field %d in f2.\n",field1.type);
+                // printf("No match found for field %d in f2.\n",field1.type);
                 // Output field with size 0
                 fseek(f1, field1.size, SEEK_CUR); // For next search
                 fseek(f2, f20+64, SEEK_SET); // For next search
@@ -136,7 +130,7 @@ FILE* reb_binary_diff(FILE* f1, FILE* f2){
             fields_differ = 1;
         }
         if(fields_differ){
-            printf("Field %d %d differs.\n",field1.type,field2.type);
+            // printf("Field %d %d differs.\n",field1.type,field2.type);
             fwrite(&field2,sizeof(struct reb_binary_field),1,diff);
             fwrite(readbuf2,field2.size,1,diff);
         }
@@ -201,11 +195,12 @@ FILE* reb_binary_diff(FILE* f1, FILE* f2){
         bytesread = fread(readbuf2, field2.size,1,f2);
         if (bytesread==0 && field2.size!=0) printf("Corrupt binary file f2.\n");
 
-        printf("Field %d new in f2.\n",field2.type);
+        //printf("Field %d new in f2.\n",field2.type);
         fwrite(&field2,sizeof(struct reb_binary_field),1,diff);
         fwrite(readbuf2,field2.size,1,diff);
     }
     free(readbuf1);
     free(readbuf2);
-    return diff;
+    fclose(diff);
+    return;
 }

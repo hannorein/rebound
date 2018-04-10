@@ -18,6 +18,11 @@ int main(int argc, char* argv[]) {
     p2.x = 1;
     p2.vy = 1;
     reb_add(r, p2); 
+    
+    
+    r->simulationarchive_filename = "sa.bin";
+    r->simulationarchive_interval = 5;
+    r->simulationarchive_version = 1;
 
     reb_integrate(r,100.);
 
@@ -33,9 +38,9 @@ int main(int argc, char* argv[]) {
 
     FILE* f1 = fopen("s1.bin","r");
     FILE* f2 = fopen("s2.bin","r");
-    FILE* diff = reb_binary_diff(f1,f2);
-    printf("size: %ld\n",ftell(diff));
-    fclose(diff);
+    char* buf;
+    size_t size;
+    reb_binary_diff(f1,f2,&buf,&size);
 
 }
 

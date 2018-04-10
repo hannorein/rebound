@@ -220,17 +220,8 @@ void reb_save_dp7(struct reb_dp7* dp7, const int N3, FILE* of){
         fwrite(value,field.size,1,of);\
     }
 
-void reb_output_binary(struct reb_simulation* r, char* filename){
-#ifdef MPI
-    char filename_mpi[1024];
-    sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
-    FILE* of = fopen(filename_mpi,"wb"); 
-#else // MPI
-    FILE* of = fopen(filename,"wb"); 
-#endif // MPI
-    if (of==NULL){
-        reb_exit("Can not open file.");
-    }
+
+void _reb_output_binary_to_stream(struct reb_simulation* r, FILE* of){
     // Init integrators. This helps with bit-by-bit reproducibility.
     reb_integrator_init(r);
 
@@ -412,6 +403,20 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(SASIZEFIRST,        &r->simulationarchive_size_first,   sizeof(long));
     int end_null = 0;
     WRITE_FIELD(END, &end_null, 0);
+}
+
+void reb_output_binary(struct reb_simulation* r, char* filename){
+#ifdef MPI
+    char filename_mpi[1024];
+    sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
+    FILE* of = fopen(filename_mpi,"wb"); 
+#else // MPI
+    FILE* of = fopen(filename,"wb"); 
+#endif // MPI
+    if (of==NULL){
+        reb_exit("Can not open file.");
+    }
+    _reb_output_binary_to_stream(r, of);
     fclose(of);
 }
 

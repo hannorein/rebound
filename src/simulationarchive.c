@@ -32,6 +32,8 @@
 #include <stdint.h>
 #include "particle.h"
 #include "rebound.h"
+#include "binarydiff.h"
+#include "output.h"
 #include "tools.h"
 #include "input.h"
 #include "output.h"
@@ -254,85 +256,134 @@ struct reb_simulation* reb_create_simulation_from_simulationarchive(char* filena
 }
 
 void reb_simulationarchive_append(struct reb_simulation* r){
-    FILE* of = fopen(r->simulationarchive_filename,"a");
-    fwrite(&(r->t),sizeof(double),1, of);
-    fwrite(&(r->simulationarchive_walltime),sizeof(double),1, of);
-    switch (r->integrator){
-        case REB_INTEGRATOR_JANUS:
-            {
-                fwrite(r->ri_janus.p_int,sizeof(struct reb_particle_int)*r->N,1,of);
-            }
-            break;
-        case REB_INTEGRATOR_WHFAST:
-            {
-                struct reb_particle* ps = r->particles;
-                if (r->ri_whfast.safe_mode==0){
-                    ps = r->ri_whfast.p_jh;
+    if (r->simulationarchive_version==0){
+        FILE* of = fopen(r->simulationarchive_filename,"r+");
+        fseek(of, 0, SEEK_END);
+        fwrite(&(r->t),sizeof(double),1, of);
+        fwrite(&(r->simulationarchive_walltime),sizeof(double),1, of);
+        switch (r->integrator){
+            case REB_INTEGRATOR_JANUS:
+                {
+                    fwrite(r->ri_janus.p_int,sizeof(struct reb_particle_int)*r->N,1,of);
                 }
-                for(int i=0;i<r->N;i++){
-                    fwrite(&(r->particles[i].m),sizeof(double),1,of);
-                    fwrite(&(ps[i].x),sizeof(double),1,of);
-                    fwrite(&(ps[i].y),sizeof(double),1,of);
-                    fwrite(&(ps[i].z),sizeof(double),1,of);
-                    fwrite(&(ps[i].vx),sizeof(double),1,of);
-                    fwrite(&(ps[i].vy),sizeof(double),1,of);
-                    fwrite(&(ps[i].vz),sizeof(double),1,of);
+                break;
+            case REB_INTEGRATOR_WHFAST:
+                {
+                    struct reb_particle* ps = r->particles;
+                    if (r->ri_whfast.safe_mode==0){
+                        ps = r->ri_whfast.p_jh;
+                    }
+                    for(int i=0;i<r->N;i++){
+                        fwrite(&(r->particles[i].m),sizeof(double),1,of);
+                        fwrite(&(ps[i].x),sizeof(double),1,of);
+                        fwrite(&(ps[i].y),sizeof(double),1,of);
+                        fwrite(&(ps[i].z),sizeof(double),1,of);
+                        fwrite(&(ps[i].vx),sizeof(double),1,of);
+                        fwrite(&(ps[i].vy),sizeof(double),1,of);
+                        fwrite(&(ps[i].vz),sizeof(double),1,of);
+                    }
                 }
-            }
-            break;
-        case REB_INTEGRATOR_MERCURIUS:
-            {
-                struct reb_particle* ps = r->particles;
-                if (r->ri_mercurius.safe_mode==0){
-                    ps = r->ri_whfast.p_jh;
+                break;
+            case REB_INTEGRATOR_MERCURIUS:
+                {
+                    struct reb_particle* ps = r->particles;
+                    if (r->ri_mercurius.safe_mode==0){
+                        ps = r->ri_whfast.p_jh;
+                    }
+                    for(int i=0;i<r->N;i++){
+                        fwrite(&(r->particles[i].m),sizeof(double),1,of);
+                        fwrite(&(ps[i].x),sizeof(double),1,of);
+                        fwrite(&(ps[i].y),sizeof(double),1,of);
+                        fwrite(&(ps[i].z),sizeof(double),1,of);
+                        fwrite(&(ps[i].vx),sizeof(double),1,of);
+                        fwrite(&(ps[i].vy),sizeof(double),1,of);
+                        fwrite(&(ps[i].vz),sizeof(double),1,of);
+                    }
+                    fwrite(r->ri_mercurius.rhill,sizeof(double),r->N,of);
                 }
-                for(int i=0;i<r->N;i++){
-                    fwrite(&(r->particles[i].m),sizeof(double),1,of);
-                    fwrite(&(ps[i].x),sizeof(double),1,of);
-                    fwrite(&(ps[i].y),sizeof(double),1,of);
-                    fwrite(&(ps[i].z),sizeof(double),1,of);
-                    fwrite(&(ps[i].vx),sizeof(double),1,of);
-                    fwrite(&(ps[i].vy),sizeof(double),1,of);
-                    fwrite(&(ps[i].vz),sizeof(double),1,of);
+                break;
+            case REB_INTEGRATOR_IAS15:
+                {
+                    fwrite(&(r->dt),sizeof(double),1,of);
+                    fwrite(&(r->dt_last_done),sizeof(double),1,of);
+                    struct reb_particle* ps = r->particles;
+                    const int N3 = r->N*3;
+                    for(int i=0;i<r->N;i++){
+                        fwrite(&(ps[i].m),sizeof(double),1,of);
+                        fwrite(&(ps[i].x),sizeof(double),1,of);
+                        fwrite(&(ps[i].y),sizeof(double),1,of);
+                        fwrite(&(ps[i].z),sizeof(double),1,of);
+                        fwrite(&(ps[i].vx),sizeof(double),1,of);
+                        fwrite(&(ps[i].vy),sizeof(double),1,of);
+                        fwrite(&(ps[i].vz),sizeof(double),1,of);
+                    }
+                    reb_save_dp7(&(r->ri_ias15.b)  ,N3,of);
+                    reb_save_dp7(&(r->ri_ias15.csb),N3,of);
+                    reb_save_dp7(&(r->ri_ias15.e)  ,N3,of);
+                    reb_save_dp7(&(r->ri_ias15.br) ,N3,of);
+                    reb_save_dp7(&(r->ri_ias15.er) ,N3,of);
+                    fwrite((r->ri_ias15.csx),sizeof(double)*N3,1,of);
+                    fwrite((r->ri_ias15.csv),sizeof(double)*N3,1,of);
                 }
-                fwrite(r->ri_mercurius.rhill,sizeof(double),r->N,of);
-            }
-            break;
-        case REB_INTEGRATOR_IAS15:
-            {
-                fwrite(&(r->dt),sizeof(double),1,of);
-                fwrite(&(r->dt_last_done),sizeof(double),1,of);
-                struct reb_particle* ps = r->particles;
-                const int N3 = r->N*3;
-                for(int i=0;i<r->N;i++){
-                    fwrite(&(ps[i].m),sizeof(double),1,of);
-                    fwrite(&(ps[i].x),sizeof(double),1,of);
-                    fwrite(&(ps[i].y),sizeof(double),1,of);
-                    fwrite(&(ps[i].z),sizeof(double),1,of);
-                    fwrite(&(ps[i].vx),sizeof(double),1,of);
-                    fwrite(&(ps[i].vy),sizeof(double),1,of);
-                    fwrite(&(ps[i].vz),sizeof(double),1,of);
-                }
-                reb_save_dp7(&(r->ri_ias15.b)  ,N3,of);
-                reb_save_dp7(&(r->ri_ias15.csb),N3,of);
-                reb_save_dp7(&(r->ri_ias15.e)  ,N3,of);
-                reb_save_dp7(&(r->ri_ias15.br) ,N3,of);
-                reb_save_dp7(&(r->ri_ias15.er) ,N3,of);
-                fwrite((r->ri_ias15.csx),sizeof(double)*N3,1,of);
-                fwrite((r->ri_ias15.csv),sizeof(double)*N3,1,of);
-            }
-            break;
-        default:
-            reb_error(r,"Simulation archive not implemented for this integrator.");
-            break;
+                break;
+            default:
+                reb_error(r,"Simulation archive not implemented for this integrator.");
+                break;
+        }
+        fclose(of);
+    }else{
+        // New version with incremental outputs
+
+
+        // Create file object containing original binary file
+        FILE* of = fopen(r->simulationarchive_filename,"r+b");
+        fseek(of, 64, SEEK_SET); // Header
+        struct reb_binary_field field = {0};
+        int bytesread = 1;
+        while(field.type!=REB_BINARY_FIELD_TYPE_END && bytesread){
+            bytesread = fread(&field,sizeof(struct reb_binary_field),1,of);
+            fseek(of, field.size, SEEK_CUR);
+        }
+        long size_old = ftell(of);
+        char* buf_old = malloc(size_old);
+        fseek(of, 0, SEEK_SET);  
+        fread(buf_old, size_old,1,of);
+        FILE* old_file = fmemopen(buf_old, size_old, "rb");
+
+
+        // Create file object containing current binary file
+        char* buf_new;
+        size_t size_new;
+        FILE* new_file = open_memstream(&buf_new, &size_new);
+        _reb_output_binary_to_stream(r, new_file);
+        fclose(new_file);
+        new_file = fmemopen(buf_new, size_new, "rb");
+        
+        
+        // Create file object containing diff
+        char* buf_diff;
+        size_t size_diff;
+        reb_binary_diff(old_file, new_file, &buf_diff, &size_diff);
+        
+        // Write diff to binary file
+        fseek(of, 0, SEEK_END);  
+        fwrite(buf_diff, size_diff, 1, of); 
+
+        fclose(of);
+        fclose(new_file);
+        fclose(old_file);
+        free(buf_new);
+        free(buf_old);
+        free(buf_diff);
     }
-    fclose(of);
 }
 
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
     if (r->simulationarchive_walltime==0){
         // First output
-        r->simulationarchive_size_snapshot = reb_simulationarchive_snapshotsize(r);
+        if (r->simulationarchive_version==0){
+            r->simulationarchive_size_snapshot = reb_simulationarchive_snapshotsize(r);
+        }
         switch (r->gravity){
             case REB_GRAVITY_BASIC:
             case REB_GRAVITY_NONE:
