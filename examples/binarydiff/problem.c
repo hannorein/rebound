@@ -8,7 +8,7 @@
 
 int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_create_simulation();
-    r->integrator=REB_INTEGRATOR_WHFAST;
+    r->integrator=REB_INTEGRATOR_IAS15;
     r->dt = 0.1;
     struct reb_particle p1 = {0}; 
     p1.m = 1.;
@@ -22,6 +22,8 @@ int main(int argc, char* argv[]) {
     reb_integrate(r,100.);
 
     reb_output_binary(r, "s1.bin");
+    reb_integrator_reset(r);
+    r->integrator=REB_INTEGRATOR_WHFAST;
     reb_integrate(r,110.);
     reb_output_binary(r, "s2.bin");
 

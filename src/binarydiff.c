@@ -68,39 +68,48 @@ FILE* reb_binary_diff(FILE* f1, FILE* f2){
         printf("Header in binary files are different.\n");
     }
     
-    int reading_fields1 = 1;
-    int reading_fields2 = 1;
-    while(reading_fields1==1 && reading_fields2==1){
+    while(1){
+        int bytesread = 0;
         struct reb_binary_field field1;
-        fread(&field1,sizeof(struct reb_binary_field),1,f1);
+        bytesread = fread(&field1,sizeof(struct reb_binary_field),1,f1);
+        if (bytesread==0){
+            break;
+        }
         if (field1.type==REB_BINARY_FIELD_TYPE_END){
-            reading_fields1 = 0;
+            break;
         }
         struct reb_binary_field field2;
-        fread(&field2,sizeof(struct reb_binary_field),1,f2);
-        if (field2.type==REB_BINARY_FIELD_TYPE_END){
-            reading_fields2 = 0;
-        }
-        // Fields are not in the same order.
+        bytesread = fread(&field2,sizeof(struct reb_binary_field),1,f2);
+        
+        // Fields might not be in the same order.
         if (field1.type!=field2.type){
             // Will search for element in f2, starting at beginning just past header
             // Note that we ignore all ADDITIONAL fields in f2 that were not present in f1 
-            fseek(f2, 64, SEEK_SET);
-            int notfound = 1; 
-            int bytesread = 0;
-            do {
+            fseek(f2, f20+64, SEEK_SET);
+            int notfound = 0; 
+            while(1) {
                 bytesread = fread(&field2,sizeof(struct reb_binary_field),1,f2);
                 if (bytesread == 0){
-                    notfound = 0;
+                    notfound = 1;
                     break;
                 }
                 if(field2.type==REB_BINARY_FIELD_TYPE_END){
-                    notfound = 0;
+                    notfound = 1;
                     break;
                 }
-            }while(field2.type!=field1.type);
+                if (field2.type==field1.type){
+                    break; // found!!
+                }else{
+                    fseek(f2,field2.size,SEEK_CUR); //skip
+                }
+            };
             if (notfound == 1){
-                printf("No matching field for %d found in f2.\n",field1.type);
+                printf("No match found for field %d in f2.\n",field1.type);
+                // Output field with size 0
+                fseek(f1, field1.size, SEEK_CUR); // For next search
+                fseek(f2, f20+64, SEEK_SET); // For next search
+                field1.size = 0;
+                fwrite(&field1,sizeof(struct reb_binary_field),1,diff);
                 continue;
             }
         }
@@ -112,8 +121,10 @@ FILE* reb_binary_diff(FILE* f1, FILE* f2){
             readbuf1 = realloc(readbuf1, sizeof(char)*bufN);
             readbuf2 = realloc(readbuf2, sizeof(char)*bufN);
         }
-        fread(readbuf1, field1.size,1,f1);
-        fread(readbuf2, field2.size,1,f2);
+        bytesread = fread(readbuf1, field1.size,1,f1);
+        if (bytesread==0 && field1.size!=0) printf("Corrupt binary file f1.\n");
+        bytesread = fread(readbuf2, field2.size,1,f2);
+        if (bytesread==0 && field2.size!=0) printf("Corrupt binary file f2.\n");
 
         int fields_differ = 0;
         if (field1.size==field2.size){
@@ -124,10 +135,74 @@ FILE* reb_binary_diff(FILE* f1, FILE* f2){
             fields_differ = 1;
         }
         if(fields_differ){
-            printf("Field %d differs.\n",field1.type);
+            printf("Field %d %d differs.\n",field1.type,field2.type);
             fwrite(&field2,sizeof(struct reb_binary_field),1,diff);
             fwrite(readbuf2,field2.size,1,diff);
         }
+    }
+    // Search for fields which are present in f2 but not in f1
+    fseek(f1, f10+64, SEEK_SET); 
+    fseek(f2, f20+64, SEEK_SET);
+    while(1){
+        int bytesread = 0;
+        struct reb_binary_field field2;
+        bytesread = fread(&field2,sizeof(struct reb_binary_field),1,f2);
+        if (bytesread==0){
+            break;
+        }
+        if (field2.type==REB_BINARY_FIELD_TYPE_END){
+            break;
+        }
+        struct reb_binary_field field1;
+        bytesread = fread(&field1,sizeof(struct reb_binary_field),1,f1);
+        
+        if (field1.type==field2.type){
+            // Not a new field. Skip.
+            fseek(f1, field1.size, SEEK_CUR); // For next search
+            fseek(f2, field2.size, SEEK_CUR); // For next search
+            continue;
+        }
+        // Fields might not be in the same order.
+        // Will search for element in f1, starting at beginning just past header
+        fseek(f1, f10+64, SEEK_SET);
+        int notfound = 0; 
+        while(1) {
+            bytesread = fread(&field1,sizeof(struct reb_binary_field),1,f1);
+            if (bytesread == 0){
+                notfound = 1;
+                break;
+            }
+            if(field1.type==REB_BINARY_FIELD_TYPE_END){
+                notfound = 1;
+                break;
+            }
+            if (field2.type==field1.type){
+                notfound = 0;
+                break; // found!!
+            }else{
+                notfound = 1;
+                fseek(f1,field1.size,SEEK_CUR); //skip
+            }
+        };
+        if (notfound == 0){
+            // Not a new field. Skip.
+            fseek(f1, field1.size, SEEK_CUR); // For next search
+            fseek(f2, field2.size, SEEK_CUR); // For next search
+            continue;
+        }
+        if (field2.size>bufN){
+            while (field2.size>bufN){
+                bufN *= 2;
+            }
+            readbuf1 = realloc(readbuf1, sizeof(char)*bufN);
+            readbuf2 = realloc(readbuf2, sizeof(char)*bufN);
+        }
+        bytesread = fread(readbuf2, field2.size,1,f2);
+        if (bytesread==0 && field2.size!=0) printf("Corrupt binary file f2.\n");
+
+        printf("Field %d new in f2.\n",field2.type);
+        fwrite(&field2,sizeof(struct reb_binary_field),1,diff);
+        fwrite(readbuf2,field2.size,1,diff);
     }
     free(readbuf1);
     free(readbuf2);
