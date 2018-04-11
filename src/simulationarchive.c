@@ -366,8 +366,18 @@ void reb_simulationarchive_append(struct reb_simulation* r){
         reb_binary_diff(old_file, new_file, &buf_diff, &size_diff);
         
         // Write diff to binary file
-        fseek(of, 0, SEEK_END);  
+        struct reb_simulationarchive_blob blob = {0};
+        fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);  
+        fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+        blob.offset_next = size_diff;
+        fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);  
+        fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
         fwrite(buf_diff, size_diff, 1, of); 
+        blob.index++;
+        blob.offset_prev = blob.offset_next;
+        blob.offset_next = 0;
+        fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+        
 
         fclose(of);
         fclose(new_file);

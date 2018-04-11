@@ -403,6 +403,8 @@ void _reb_output_binary_to_stream(struct reb_simulation* r, FILE* of){
     WRITE_FIELD(SASIZEFIRST,        &r->simulationarchive_size_first,   sizeof(long));
     int end_null = 0;
     WRITE_FIELD(END, &end_null, 0);
+    struct reb_simulationarchive_blob blob = {0};
+    fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
 }
 
 void reb_output_binary(struct reb_simulation* r, char* filename){

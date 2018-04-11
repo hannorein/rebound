@@ -612,6 +612,14 @@ struct reb_binary_field {
     enum REB_BINARY_FIELD_TYPE type;    ///< Type of what field
     long size;                          ///< Size in bytes of field (only what follows, not the binary field, itself).
 };
+/**
+ * @brief This structure is used to save and load simulation archive files.
+ */
+struct reb_simulationarchive_blob {
+    long index;                         ///< Index of previous blob (binary file is 0, first blob is 1)
+    long offset_prev;                   ///< Offset to beginning of previous blob (size of previous blob).
+    long offset_next;                   ///< Offset to end of following blob (size of following blob).
+};
 
 /**
  * @brief Holds a particle's hash and the particle's index in the particles array.
