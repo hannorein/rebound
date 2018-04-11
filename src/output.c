@@ -399,7 +399,7 @@ void _reb_output_binary_to_stream(struct reb_simulation* r, FILE* of){
         }
     }
     // To output size of binary file, need to calculate it first. 
-    r->simulationarchive_size_first = ftell(of)+sizeof(struct reb_binary_field)*2+sizeof(long);
+    r->simulationarchive_size_first = ftell(of)+sizeof(struct reb_binary_field)*2+sizeof(long)+sizeof(struct reb_simulationarchive_blob);
     WRITE_FIELD(SASIZEFIRST,        &r->simulationarchive_size_first,   sizeof(long));
     int end_null = 0;
     WRITE_FIELD(END, &end_null, 0);
