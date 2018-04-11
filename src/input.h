@@ -25,6 +25,7 @@
 #ifndef _INPUT_H
 
 void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf); ///< Internal function to read dp7 structs from file.
+int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_messages* warnings); ///< Read one field from inf stream into r. 
 
 #define _INPUT_H
 

@@ -53,159 +53,190 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
         }
         return 0;
     }
-    
-    FILE* fd = fopen(filename,"r");
-    int fseekret = 0;
-    if (snapshot<0){
-        // Find latest snapshot
-        fseekret = fseek(fd,-r->simulationarchive_size_snapshot,SEEK_END);
-    }else{
-        fseekret = fseek(fd,r->simulationarchive_size_first + (snapshot-1)*r->simulationarchive_size_snapshot,SEEK_SET);
-    }
-    if (fseekret){
-        // Seek didn't work.
-        fclose(fd);
-        return -3;
-    }
-    fread(&(r->t),sizeof(double),1,fd);
-    fread(&(r->simulationarchive_walltime),sizeof(double),1,fd);
-    gettimeofday(&r->simulationarchive_time,NULL);
-    if (r->simulationarchive_interval){
-        while (r->simulationarchive_next<=r->t){
-            r->simulationarchive_next += r->simulationarchive_interval;
+   
+    if (r->simulationarchive_version==0){ 
+        FILE* fd = fopen(filename,"r");
+        int fseekret = 0;
+        if (snapshot<0){
+            // Find latest snapshot
+            fseekret = fseek(fd,-r->simulationarchive_size_snapshot,SEEK_END);
+        }else{
+            fseekret = fseek(fd,r->simulationarchive_size_first + (snapshot-1)*r->simulationarchive_size_snapshot,SEEK_SET);
         }
-    }
-    switch (r->integrator){
-        case REB_INTEGRATOR_JANUS:
-            {
-                if (r->ri_janus.allocated_N<r->N){
-                    if (r->ri_janus.p_int){
-                        free(r->ri_janus.p_int);
-                    }
-                    r->ri_janus.p_int= malloc(sizeof(struct reb_particle)*r->N);
-                    r->ri_janus.allocated_N = r->N;
-                }
-                fread(r->ri_janus.p_int,sizeof(struct reb_particle_int)*r->N,1,fd);
-                reb_integrator_synchronize(r);  // get floating point coordinates 
+        if (fseekret){
+            // Seek didn't work.
+            fclose(fd);
+            return -3;
+        }
+        fread(&(r->t),sizeof(double),1,fd);
+        fread(&(r->simulationarchive_walltime),sizeof(double),1,fd);
+        gettimeofday(&r->simulationarchive_time,NULL);
+        if (r->simulationarchive_interval){
+            while (r->simulationarchive_next<=r->t){
+                r->simulationarchive_next += r->simulationarchive_interval;
             }
-            break;
-        case REB_INTEGRATOR_WHFAST:
-            {
-                // Recreate Jacobi arrrays
-                struct reb_particle* ps = r->particles;
-                if (r->ri_whfast.safe_mode==0){
-                    // If same mode is off, store unsynchronized Jacobi coordinates
-                    if (r->ri_whfast.allocated_N<r->N){
-                        if (r->ri_whfast.p_jh){
-                            free(r->ri_whfast.p_jh);
+        }
+        switch (r->integrator){
+            case REB_INTEGRATOR_JANUS:
+                {
+                    if (r->ri_janus.allocated_N<r->N){
+                        if (r->ri_janus.p_int){
+                            free(r->ri_janus.p_int);
                         }
-                        r->ri_whfast.p_jh= malloc(sizeof(struct reb_particle)*r->N);
-                        r->ri_whfast.allocated_N = r->N;
+                        r->ri_janus.p_int= malloc(sizeof(struct reb_particle)*r->N);
+                        r->ri_janus.allocated_N = r->N;
                     }
-                    ps = r->ri_whfast.p_jh;
+                    fread(r->ri_janus.p_int,sizeof(struct reb_particle_int)*r->N,1,fd);
+                    reb_integrator_synchronize(r);  // get floating point coordinates 
                 }
-                for(int i=0;i<r->N;i++){
-                    fread(&(r->particles[i].m),sizeof(double),1,fd);
-                    fread(&(ps[i].x),sizeof(double),1,fd);
-                    fread(&(ps[i].y),sizeof(double),1,fd);
-                    fread(&(ps[i].z),sizeof(double),1,fd);
-                    fread(&(ps[i].vx),sizeof(double),1,fd);
-                    fread(&(ps[i].vy),sizeof(double),1,fd);
-                    fread(&(ps[i].vz),sizeof(double),1,fd);
-                }
-                if (r->ri_whfast.safe_mode==0){
-                    // Assume we are not synchronized
-                    r->ri_whfast.is_synchronized=0.;
-                    // Recalculate total mass
-                    double msum = r->particles[0].m;
-                    for (unsigned int i=1;i<r->N;i++){
-                        r->ri_whfast.p_jh[i].m = r->particles[i].m;
-                        r->ri_whfast.p_jh[i].r = r->particles[i].r;
-                        msum += r->particles[i].m;
-                    }
-                    r->ri_whfast.p_jh[0].m = msum;
-                    r->ri_whfast.p_jh[0].r = r->particles[0].r;
-                }
-            }
-            break;
-        case REB_INTEGRATOR_MERCURIUS:
-            {
-                // Recreate heliocentric arrrays
-                struct reb_particle* ps = r->particles;
-                if (r->ri_mercurius.safe_mode==0){
-                    // If same mode is off, store unsynchronized Jacobi coordinates
-                    if (r->ri_whfast.allocated_N<r->N){
-                        if (r->ri_whfast.p_jh){
-                            free(r->ri_whfast.p_jh);
+                break;
+            case REB_INTEGRATOR_WHFAST:
+                {
+                    // Recreate Jacobi arrrays
+                    struct reb_particle* ps = r->particles;
+                    if (r->ri_whfast.safe_mode==0){
+                        // If same mode is off, store unsynchronized Jacobi coordinates
+                        if (r->ri_whfast.allocated_N<r->N){
+                            if (r->ri_whfast.p_jh){
+                                free(r->ri_whfast.p_jh);
+                            }
+                            r->ri_whfast.p_jh= malloc(sizeof(struct reb_particle)*r->N);
+                            r->ri_whfast.allocated_N = r->N;
                         }
-                        r->ri_whfast.p_jh= malloc(sizeof(struct reb_particle)*r->N);
-                        r->ri_whfast.allocated_N = r->N;
+                        ps = r->ri_whfast.p_jh;
                     }
-                    ps = r->ri_whfast.p_jh;
-                }
-                for(int i=0;i<r->N;i++){
-                    fread(&(r->particles[i].m),sizeof(double),1,fd);
-                    fread(&(ps[i].x),sizeof(double),1,fd);
-                    fread(&(ps[i].y),sizeof(double),1,fd);
-                    fread(&(ps[i].z),sizeof(double),1,fd);
-                    fread(&(ps[i].vx),sizeof(double),1,fd);
-                    fread(&(ps[i].vy),sizeof(double),1,fd);
-                    fread(&(ps[i].vz),sizeof(double),1,fd);
-                }
-                if (r->ri_mercurius.rhill){
-                    free(r->ri_mercurius.rhill);
-                }
-                r->ri_mercurius.rhill = malloc(sizeof(double)*r->N);
-                r->ri_mercurius.rhillallocatedN = r->N;
-                fread(r->ri_mercurius.rhill,sizeof(double),r->N,fd);
-                if (r->ri_mercurius.safe_mode==0){
-                    // Assume we are not synchronized
-                    r->ri_mercurius.is_synchronized=0.;
-                    // Recalculate total mass
-                    r->ri_mercurius.m0 = r->particles[0].m;
-                    double msum = r->particles[0].m;
-                    for (unsigned int i=1;i<r->N;i++){
-                        r->ri_whfast.p_jh[i].m = r->particles[i].m;
-                        r->ri_whfast.p_jh[i].r = r->particles[i].r;
-                        msum += r->particles[i].m;
+                    for(int i=0;i<r->N;i++){
+                        fread(&(r->particles[i].m),sizeof(double),1,fd);
+                        fread(&(ps[i].x),sizeof(double),1,fd);
+                        fread(&(ps[i].y),sizeof(double),1,fd);
+                        fread(&(ps[i].z),sizeof(double),1,fd);
+                        fread(&(ps[i].vx),sizeof(double),1,fd);
+                        fread(&(ps[i].vy),sizeof(double),1,fd);
+                        fread(&(ps[i].vz),sizeof(double),1,fd);
                     }
-                    r->ri_whfast.p_jh[0].m = msum;
-                    r->ri_whfast.p_jh[0].r = r->particles[0].r;
+                    if (r->ri_whfast.safe_mode==0){
+                        // Assume we are not synchronized
+                        r->ri_whfast.is_synchronized=0.;
+                        // Recalculate total mass
+                        double msum = r->particles[0].m;
+                        for (unsigned int i=1;i<r->N;i++){
+                            r->ri_whfast.p_jh[i].m = r->particles[i].m;
+                            r->ri_whfast.p_jh[i].r = r->particles[i].r;
+                            msum += r->particles[i].m;
+                        }
+                        r->ri_whfast.p_jh[0].m = msum;
+                        r->ri_whfast.p_jh[0].r = r->particles[0].r;
+                    }
                 }
-            }
-            break;
-        case REB_INTEGRATOR_IAS15:
-            {
-                fread(&(r->dt),sizeof(double),1,fd);
-                fread(&(r->dt_last_done),sizeof(double),1,fd);
-                struct reb_particle* ps = r->particles;
-                for(int i=0;i<r->N;i++){
-                    fread(&(ps[i].m),sizeof(double),1,fd);
-                    fread(&(ps[i].x),sizeof(double),1,fd);
-                    fread(&(ps[i].y),sizeof(double),1,fd);
-                    fread(&(ps[i].z),sizeof(double),1,fd);
-                    fread(&(ps[i].vx),sizeof(double),1,fd);
-                    fread(&(ps[i].vy),sizeof(double),1,fd);
-                    fread(&(ps[i].vz),sizeof(double),1,fd);
+                break;
+            case REB_INTEGRATOR_MERCURIUS:
+                {
+                    // Recreate heliocentric arrrays
+                    struct reb_particle* ps = r->particles;
+                    if (r->ri_mercurius.safe_mode==0){
+                        // If same mode is off, store unsynchronized Jacobi coordinates
+                        if (r->ri_whfast.allocated_N<r->N){
+                            if (r->ri_whfast.p_jh){
+                                free(r->ri_whfast.p_jh);
+                            }
+                            r->ri_whfast.p_jh= malloc(sizeof(struct reb_particle)*r->N);
+                            r->ri_whfast.allocated_N = r->N;
+                        }
+                        ps = r->ri_whfast.p_jh;
+                    }
+                    for(int i=0;i<r->N;i++){
+                        fread(&(r->particles[i].m),sizeof(double),1,fd);
+                        fread(&(ps[i].x),sizeof(double),1,fd);
+                        fread(&(ps[i].y),sizeof(double),1,fd);
+                        fread(&(ps[i].z),sizeof(double),1,fd);
+                        fread(&(ps[i].vx),sizeof(double),1,fd);
+                        fread(&(ps[i].vy),sizeof(double),1,fd);
+                        fread(&(ps[i].vz),sizeof(double),1,fd);
+                    }
+                    if (r->ri_mercurius.rhill){
+                        free(r->ri_mercurius.rhill);
+                    }
+                    r->ri_mercurius.rhill = malloc(sizeof(double)*r->N);
+                    r->ri_mercurius.rhillallocatedN = r->N;
+                    fread(r->ri_mercurius.rhill,sizeof(double),r->N,fd);
+                    if (r->ri_mercurius.safe_mode==0){
+                        // Assume we are not synchronized
+                        r->ri_mercurius.is_synchronized=0.;
+                        // Recalculate total mass
+                        r->ri_mercurius.m0 = r->particles[0].m;
+                        double msum = r->particles[0].m;
+                        for (unsigned int i=1;i<r->N;i++){
+                            r->ri_whfast.p_jh[i].m = r->particles[i].m;
+                            r->ri_whfast.p_jh[i].r = r->particles[i].r;
+                            msum += r->particles[i].m;
+                        }
+                        r->ri_whfast.p_jh[0].m = msum;
+                        r->ri_whfast.p_jh[0].r = r->particles[0].r;
+                    }
                 }
-                reb_integrator_ias15_alloc(r);
-                const int N3 = r->N*3;
-                reb_read_dp7(&(r->ri_ias15.b)  ,N3,fd);
-                reb_read_dp7(&(r->ri_ias15.csb),N3,fd);
-                reb_read_dp7(&(r->ri_ias15.e)  ,N3,fd);
-                reb_read_dp7(&(r->ri_ias15.br) ,N3,fd);
-                reb_read_dp7(&(r->ri_ias15.er) ,N3,fd);
-                fread((r->ri_ias15.csx),sizeof(double)*N3,1,fd);
-                fread((r->ri_ias15.csv),sizeof(double)*N3,1,fd);
-            }
-            break;
-        default:
-            reb_error(r,"Simulation archive not implemented for this integrator.");
-            break;
+                break;
+            case REB_INTEGRATOR_IAS15:
+                {
+                    fread(&(r->dt),sizeof(double),1,fd);
+                    fread(&(r->dt_last_done),sizeof(double),1,fd);
+                    struct reb_particle* ps = r->particles;
+                    for(int i=0;i<r->N;i++){
+                        fread(&(ps[i].m),sizeof(double),1,fd);
+                        fread(&(ps[i].x),sizeof(double),1,fd);
+                        fread(&(ps[i].y),sizeof(double),1,fd);
+                        fread(&(ps[i].z),sizeof(double),1,fd);
+                        fread(&(ps[i].vx),sizeof(double),1,fd);
+                        fread(&(ps[i].vy),sizeof(double),1,fd);
+                        fread(&(ps[i].vz),sizeof(double),1,fd);
+                    }
+                    reb_integrator_ias15_alloc(r);
+                    const int N3 = r->N*3;
+                    reb_read_dp7(&(r->ri_ias15.b)  ,N3,fd);
+                    reb_read_dp7(&(r->ri_ias15.csb),N3,fd);
+                    reb_read_dp7(&(r->ri_ias15.e)  ,N3,fd);
+                    reb_read_dp7(&(r->ri_ias15.br) ,N3,fd);
+                    reb_read_dp7(&(r->ri_ias15.er) ,N3,fd);
+                    fread((r->ri_ias15.csx),sizeof(double)*N3,1,fd);
+                    fread((r->ri_ias15.csv),sizeof(double)*N3,1,fd);
+                }
+                break;
+            default:
+                reb_error(r,"Simulation archive not implemented for this integrator.");
+                break;
+        }
+        fclose(fd);
+        return 0;
+    }else{
+        // Version 1
+        // load original binary file
+        enum reb_input_binary_messages warnings = 0;
+        reb_create_simulation_from_binary_with_messages(r,filename,&warnings);
+        if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
+            reb_error(r,"Cannot read binary file. Check filename and file contents.");
+        }
+        // Go back through snapshots (can be made faster)
+        FILE* of = fopen(filename,"r");
+        struct reb_simulationarchive_blob blob = {0};
+        fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);  
+        fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+        long last = blob.index;
+        long stepsback = (snapshot<0)?1:last-snapshot+1;
+        if (stepsback<=0||stepsback>last){
+            // Out of range
+            fclose(of);
+            return -3;
+        }
+        for (int i=0;i<stepsback;i++){
+            fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
+            fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+            fseek(of, -blob.offset_prev, SEEK_CUR);  
+        }
+        while(reb_input_field(r, of, &warnings)){ }
+        if (warnings & REB_INPUT_BINARY_WARNING_FIELD_UNKOWN){
+            reb_warning(r,"Unknown field found in binary file.");
+        }
+        return 0;
     }
-    fclose(fd);
-
-    return 0;
 }
 
 static int reb_simulationarchive_snapshotsize(struct reb_simulation* const r){
@@ -365,14 +396,17 @@ void reb_simulationarchive_append(struct reb_simulation* r){
         size_t size_diff;
         reb_binary_diff(old_file, new_file, &buf_diff, &size_diff);
         
-        // Write diff to binary file
+        // Update blob info and Write diff to binary file
         struct reb_simulationarchive_blob blob = {0};
         fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);  
         fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-        blob.offset_next = size_diff;
+        blob.offset_next = size_diff+sizeof(struct reb_binary_field);
         fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);  
         fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
         fwrite(buf_diff, size_diff, 1, of); 
+        field.type = REB_BINARY_FIELD_TYPE_END;
+        field.size = 0;
+        fwrite(&field,sizeof(struct reb_binary_field), 1, of);
         blob.index++;
         blob.offset_prev = blob.offset_next;
         blob.offset_next = 0;
