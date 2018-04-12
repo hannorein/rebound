@@ -229,7 +229,7 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
         for (int i=0;i<stepsback;i++){
             fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
             fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-            fseek(of, -blob.offset_prev, SEEK_CUR);  
+            fseek(of, -blob.offset_prev-sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
         }
         while(reb_input_field(r, of, &warnings)){ }
         if (warnings & REB_INPUT_BINARY_WARNING_FIELD_UNKOWN){
