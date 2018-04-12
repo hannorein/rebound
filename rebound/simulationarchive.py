@@ -82,7 +82,7 @@ class SimulationArchive(Mapping):
             self.interval_walltime = sim.simulationarchive_interval_walltime
 
         self.tmin = sim.t
-        self.Nblob = int((self.filesize-sim.simulationarchive_size_first)/sim.simulationarchive_size_snapshot)
+        self.Nblob = clibrebound.reb_simulationarchive_nblobs(simp, self.cfilename)
         if sim.simulationarchive_interval_walltime>0.:
             self.timetable = [-1.]*(self.Nblob+1)
             self.timetable[0] = sim.t

@@ -235,7 +235,24 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
         if (warnings & REB_INPUT_BINARY_WARNING_FIELD_UNKOWN){
             reb_warning(r,"Unknown field found in binary file.");
         }
+        fclose(of);
         return 0;
+    }
+}
+int reb_simulationarchive_nblobs(struct reb_simulation* r, char* filename){
+    if (r->simulationarchive_version==0){ 
+        FILE* of = fopen(filename,"r");
+        fseek(of, 0, SEEK_END);  
+        long filesize = ftell(of);
+        fclose(of);
+        return (int)((filesize-r->simulationarchive_size_first)/r->simulationarchive_size_snapshot);
+    }else{
+        FILE* of = fopen(filename,"r");
+        struct reb_simulationarchive_blob blob = {0};
+        fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);  
+        fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+        fclose(of);
+        return blob.index;
     }
 }
 
