@@ -48,6 +48,7 @@ extern "C" {
 
 #endif
 
+#include <inttypes.h>
 #include <stdint.h>
 #include <sys/time.h>
 #include <pthread.h>
@@ -602,6 +603,8 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_MERCURIUS_RHILL = 122,
     REB_BINARY_FIELD_TYPE_MERCURIUS_KEEPUNSYNC = 124,
     REB_BINARY_FIELD_TYPE_SAVERSION = 125,
+    REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
+    REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
     REB_BINARY_FIELD_TYPE_END = 9999,
 };
 
@@ -609,16 +612,17 @@ enum REB_BINARY_FIELD_TYPE {
  * @brief This structure is used to save and load binary files.
  */
 struct reb_binary_field {
-    enum REB_BINARY_FIELD_TYPE type;    ///< Type of what field
-    long size;                          ///< Size in bytes of field (only what follows, not the binary field, itself).
+    uint32_t type;  ///< Type of what field (enum of REB_BINARY_FIELD_TYPE)
+    uint64_t size;  ///< Size in bytes of field (only counting what follows, not the binary field, itself).
 };
+
 /**
  * @brief This structure is used to save and load simulation archive files.
  */
 struct reb_simulationarchive_blob {
-    long index;                         ///< Index of previous blob (binary file is 0, first blob is 1)
-    long offset_prev;                   ///< Offset to beginning of previous blob (size of previous blob).
-    long offset_next;                   ///< Offset to end of following blob (size of following blob).
+    int16_t index;                         ///< Index of previous blob (binary file is 0, first blob is 1)
+    int16_t offset_prev;                   ///< Offset to beginning of previous blob (size of previous blob).
+    int16_t offset_next;                   ///< Offset to end of following blob (size of following blob).
 };
 
 /**

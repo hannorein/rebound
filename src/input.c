@@ -313,6 +313,22 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
                 }
             }
             break;
+        case REB_BINARY_FIELD_TYPE_HEADER:
+            {
+                long objects = 0;
+                // Input header.
+                const long bufsize = 64 - sizeof(struct reb_binary_field);
+                char readbuf[bufsize], curvbuf[bufsize];
+                const char* header = "REBOUND Binary File. Version: ";
+                sprintf(curvbuf,"%s%s",header+sizeof(struct reb_binary_field), reb_version_str);
+                
+                objects += fread(readbuf,sizeof(char),bufsize,inf);
+                // Note: following compares version, but ignores githash.
+                if(strncmp(readbuf,curvbuf,bufsize)!=0){
+                    *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
+                }
+            }
+            break;
         default:
             if (warnings){
                 *warnings |= REB_INPUT_BINARY_WARNING_FIELD_UNKOWN;
@@ -331,21 +347,6 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
         return;
     }
 
-    long objects = 0;
-    // Input header.
-    const char str[] = "REBOUND Binary File. Version: ";
-    const char zero = '\0';
-    char readbuf[65], curvbuf[65];
-    sprintf(curvbuf,"%s%s",str,reb_version_str);
-    memcpy(curvbuf+strlen(curvbuf)+1,reb_githash_str,sizeof(char)*(62-strlen(curvbuf)));
-    curvbuf[63] = zero;
-    
-    objects += fread(readbuf,sizeof(char),64,inf);
-    // Note: following compares version, but ignores githash.
-    if(strcmp(readbuf,curvbuf)!=0){
-        *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
-    }
-    
     reb_reset_temporary_pointers(r);
     reb_reset_function_pointers(r);
     r->simulationarchive_filename = NULL;
