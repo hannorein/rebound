@@ -59,6 +59,12 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
         int fseekret = 0;
         if (snapshot<0){
             // Find latest snapshot
+            fseek(fd,0, SEEK_END);
+            long filesize = ftell(fd);
+            if (filesize < r->simulationarchive_size_first + r->simulationarchive_size_snapshot){
+                fclose(fd);
+                return -4; // No snapshots found. Already loaded binary.
+            }
             fseekret = fseek(fd,-r->simulationarchive_size_snapshot,SEEK_END);
         }else{
             fseekret = fseek(fd,r->simulationarchive_size_first + (snapshot-1)*r->simulationarchive_size_snapshot,SEEK_SET);

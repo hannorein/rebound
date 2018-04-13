@@ -26,6 +26,7 @@ int main(int argc, char* argv[]) {
     if (r==NULL){
         printf("No simulation archive found. Creating new simulation.\n");
         r= reb_create_simulation();
+        r->simulationarchive_version = 1;
         struct reb_particle star = {.m=1.};
         reb_add(r, star);
         struct reb_particle planet1 = reb_tools_orbit2d_to_particle(r->G, star, 1e-3, 1., 0.01, 0., 0.);
