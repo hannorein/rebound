@@ -58,6 +58,10 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
 	r->particles[r->N] = pt;
 	r->particles[r->N].sim = r;
 	if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE){
+        if (r->root_size==-1){
+            reb_error(r,"root_size is -1. Make sure you call reb_configure_box() before using a tree based gravity or collision solver.");
+            return;
+        }
 		reb_tree_add_particle_to_tree(r, r->N);
 	}
 	(r->N)++;
