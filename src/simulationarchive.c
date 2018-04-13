@@ -54,7 +54,8 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
         return 0;
     }
    
-    if (r->simulationarchive_version==0){ 
+    if (r->simulationarchive_version<2){ 
+        // Old version
         FILE* fd = fopen(filename,"r");
         int fseekret = 0;
         if (snapshot<0){
@@ -246,13 +247,15 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
     }
 }
 int reb_simulationarchive_nblobs(struct reb_simulation* r, char* filename){
-    if (r->simulationarchive_version==0){ 
+    if (r->simulationarchive_version<2){ 
+        // Old version
         FILE* of = fopen(filename,"r");
         fseek(of, 0, SEEK_END);  
         long filesize = ftell(of);
         fclose(of);
         return (int)((filesize-r->simulationarchive_size_first)/r->simulationarchive_size_snapshot);
     }else{
+        // Version 2
         FILE* of = fopen(filename,"r");
         struct reb_simulationarchive_blob blob = {0};
         fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);  
@@ -310,7 +313,8 @@ struct reb_simulation* reb_create_simulation_from_simulationarchive(char* filena
 }
 
 void reb_simulationarchive_append(struct reb_simulation* r){
-    if (r->simulationarchive_version==0){
+    if (r->simulationarchive_version<2){
+        // Old version
         FILE* of = fopen(r->simulationarchive_filename,"r+");
         fseek(of, 0, SEEK_END);
         fwrite(&(r->t),sizeof(double),1, of);
@@ -448,7 +452,8 @@ void reb_simulationarchive_append(struct reb_simulation* r){
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
     if (r->simulationarchive_walltime==0){
         // First output
-        if (r->simulationarchive_version==0){
+        if (r->simulationarchive_version<2){
+            // Old version
             r->simulationarchive_size_snapshot = reb_simulationarchive_snapshotsize(r);
         }
         switch (r->gravity){

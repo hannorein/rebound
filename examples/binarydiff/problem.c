@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
     
     r->simulationarchive_filename = "sa.bin";
     r->simulationarchive_interval = 5;
-    r->simulationarchive_version = 1;
+    r->simulationarchive_version = 2;
 
     reb_integrate(r,100.);
 
