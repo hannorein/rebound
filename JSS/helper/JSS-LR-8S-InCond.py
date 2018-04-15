@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Program:		JSS-LR-8S-InitialiseBinary.py
+# Program:		JSS-LR-8S-InCond.py
 #				(Jupiter Satellite System Long Run 12 Satellites)
 # Author:		Christopher C.E. Tylor
 # 				University of Southern Queensland
@@ -8,7 +8,7 @@
 # Version:		1.0
 # 				14. April 2018
 # Based on:		rebound by Hanno Rein http://github.com/hannorein/rebound
-# Usage: python JSS-LR-8S-InitialiseBinary.py > JSS-LR-8S-InitialiseBinary.log
+# Usage: 		python JSS-LR-8S-InCond.py > ../data/JSS-LR-8S-InCond.py.log
 #------------------------------------------------------------------------------
 # Description:	This program initialises the binary file used for the analysis 
 #				of the orbital evolution of Jupiter's inner 8 satellites. The 
@@ -37,7 +37,7 @@ model.units 		= ("yr", "au", "Msun")	# chosen yr instead of yr/2pi
 model.integrator 	= "whfast"				# whfast integrator (no collision)
 #model.integrator 	= "IAS15"				# IAS15 integrator (collision)
 TimeOfEphemeris		= 2458208				# Julian Day of 30/03/2018 12:00
-BinFile 			= 'JSS-LR-8S-InCond-JD'+str(TimeOfEphemeris)+'.bin'
+BinFile 			= '../data/JSS-LR-8S-InCond-JD'+str(TimeOfEphemeris)+'.bin'
 
 model.add(labels, date='2018-03-30 12:00') 	# Julian day 2458208
 
@@ -65,5 +65,6 @@ model.particles['Thebe'].m 		= 7.17e18/solar_mass
 model.particles['Sun'].m 		= 1.000005976997955015050933980092
 
 # Save initial conditions to binary file
+print('---------------------------------\nmodel.G:\t\t{}'.format(model.G))
+model.status()
 model.save(BinFile)
-
