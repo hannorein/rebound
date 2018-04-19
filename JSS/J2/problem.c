@@ -18,7 +18,7 @@ const double Mplanet			= 0.00028588598; 	// mass of Saturn in solar masses
 const double Rplanet			= 0.00038925688; 	// radius of Saturn in AU
 const double ObliquityPlanet		= 0.;			// obliquity of the planet
 
-const double tmax			= 3e1;			// Maximum integration time
+const double tmax			= 3e5;			// Maximum integration time
 
 void heartbeat(struct reb_simulation* r);
 void force_J2(struct reb_simulation* r);
