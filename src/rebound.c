@@ -593,7 +593,6 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
 
 
 void reb_run_heartbeat(struct reb_simulation* const r){
-    if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
     if (r->heartbeat){ r->heartbeat(r); }               // Heartbeat
     if (r->display_heartbeat){ reb_check_for_display_heartbeat(r); } 
     if (r->exit_max_distance){
@@ -671,6 +670,7 @@ static void* reb_integrate_raw(void* args){
             if (r->display_data->opengl_enabled){ pthread_mutex_lock(&(r->display_data->mutex)); }
         }
 #endif // OPENGL
+        if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
         reb_step(r); 
         reb_run_heartbeat(r);
         if (reb_sigint== 1){
@@ -690,6 +690,7 @@ static void* reb_integrate_raw(void* args){
     if(r->exact_finish_time==1){ // if finish_time = 1, r->dt could have been shrunk, so set to the last full timestep
         r->dt = last_full_dt; 
     }
+    if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
 
     return NULL;
 }
