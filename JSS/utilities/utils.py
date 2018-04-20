@@ -3,13 +3,13 @@ import rebound as rb
 import datetime
 import math
 
-def getMass(body=None, barycentric=False):
+def getMass(body=None):
 	if type(body) is str:
 		body = getNAIF(body)
 	elif type(body) is int:
 		body = str(body)
 	else:
-		raise AttributeError("Body needs to be a name or NAIF identifyer.")
+		raise AttributeError("Body needs to be a name or NAIF identifier.")
 
 	mass = float(re.search(r"BODY%d\_GM .* \( *([\.E\+\-0-9]+ *)\)"%int(body), rb.horizons.HORIZONS_MASS_DATA).group(1))
 	mass /= rb.horizons.Gkmkgs # divide by G (horizons masses give GM. units of km^3/kg/s^2)
