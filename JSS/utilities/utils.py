@@ -1,5 +1,7 @@
 import re
 import rebound as rb
+import datetime
+import math
 
 def getMass(body=None, barycentric=False):
 	if type(body) is str:
@@ -12,10 +14,6 @@ def getMass(body=None, barycentric=False):
 	mass = float(re.search(r"BODY%d\_GM .* \( *([\.E\+\-0-9]+ *)\)"%int(body), rb.horizons.HORIZONS_MASS_DATA).group(1))
 	mass /= rb.horizons.Gkmkgs # divide by G (horizons masses give GM. units of km^3/kg/s^2)
 	return mass
-
-
-
-
 
 
 def getNAIF(name_or_id=None):
@@ -121,3 +119,65 @@ def getNAIF(name_or_id=None):
             raise AttributeError("Unknown NAIF name. For a list of valid codes and ids call utils.getNAIF('print')")
     else:
         raise AttributeError("NAIF name or id code not listed. For a list of valid codes and ids call util.getNAIF('print')")
+
+
+def initReboundBinaryFile():
+###############################################################################
+# This subroutine is still very static, designed to cater for JSS-LR-8S and
+# needs to be changed in order to be more flexible (i.e. Configiuration file)
+# containing:
+#   List of bodies
+#   List of bodies to add to the Sun
+#   Model units
+#   time of ephemeris (gregorian or julian. astropy?)
+#   Name of project
+# Should not be too hard to implement ....
+###############################################################################
+
+# define variables pretending to be constants
+
+    MASS_SOLAR          = getMass('Sun')              # in kg
+    MASS_MERCURY        = getMass('Mercury')          # in kg
+    MASS_VENUS          = getMass('Venus')            # in kg
+    MASS_EARTH          = getMass('Earth barycenter') # in kg (Earth+Moon)
+    MASS_MARS           = getMass('Mars barycenter')  # in kg (Mars+Moons)
+    
+# Set bodies for model
+
+    bodies  =  ["Jupiter", "Metis", "Adrastea", "Amalthea", "Thebe", "Io", "Europa", 
+                "Ganymede", "Callisto", "Sun", "Saturn barycenter", "Uranus barycenter", 
+                "Neptune barycenter"]
+    
+    for i in range(0,len(bodies),1):bodies[i] = str(getNAIF(bodies[i]))
+    
+# Set rebound integrator conditions
+
+    model               = rb.Simulation()
+    model.units         = ("yr", "au", "Msun")  # chosen yr instead of yr/2pi
+    model.integrator    = "whfast"              # whfast integrator (no collision)
+    #model.integrator   = "IAS15"               # IAS15 integrator (collision)
+    time_of_ephemeris   = 2458208.              # Julian Day of 30/03/2018 12:00
+    model.t             = time_of_ephemeris
+    bin_file            = '../data/JSS-LR-8S-InCond-JD'+str(time_of_ephemeris)+'.bin'
+    
+    model.add(bodies, date='2018-03-30 12:00')  # Julian day 2458208.
+    
+# Set particle hash to address particles by their name rather than their index
+
+    for i in range(0,len(model.particles),1):
+        model.particles[i].hash = getNAIF(int(bodies[i]))
+    
+# Throw the inner planets into the Sun "Boohahaha!"
+
+    model.particles['Sun'].m        = (MASS_SOLAR+      \
+                                       MASS_MERCURY+    \
+                                       MASS_VENUS+      \
+                                       MASS_EARTH+      \
+                                       MASS_MARS)/      \
+                                       MASS_SOLAR
+    
+# Save initial conditions to binary file
+
+    model.status()
+    model.save(bin_file)
+    
