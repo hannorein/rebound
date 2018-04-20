@@ -90,8 +90,7 @@ for i in range(0,len(model.particles),1):
 print(model.particles['Metis'].m)	
 print(model.particles['Adrastea'].m)
 print(model.particles['Amalthea'].m)
-print(model.particles['Thebe'].m) 
-print('-'*40)	
+print(model.particles['Thebe'].m) 	
 
 
 # Correct mass of bodies that do not have mass information in Horizons.
@@ -115,15 +114,13 @@ print('-'*40)
 #    that its mean density is like that of Amalthea (around 0.86 g/cm^3),its 
 #    mass can be estimated at roughly 4.3 × 10^17 kg.
 
-print('Metis:\t\t{0:.15e}\t{1:.15e}'.format(model.particles['Metis'].m,3.6e16/MASS_SOLAR))	
-print('Adrastea:\t{0:.15e}\t{1:.15e}'.format(model.particles['Adrastea'].m,2e15/MASS_SOLAR))
-print('Amalthea\t{0:.15e}\t{1:.15e}'.format(model.particles['Amalthea'].m,2.08e18/MASS_SOLAR))
-print('Thebe\t\t{0:.15e}\t{1:.15e}'.format(model.particles['Thebe'].m,7.77e17/MASS_SOLAR)) 	
-print('-'*40)
-print('Metis: 516\t{0:.15e}'.format(3.6e16*rb.horizons.Gkmkgs))	
-print('Adrastea 515:\t{0:.15e}'.format(2e15*rb.horizons.Gkmkgs))
-print('Amalthea 505\t{0:.15e}'.format(2.08e18*rb.horizons.Gkmkgs))
-print('Thebe 514\t{0:.15e}'.format(7.77e17*rb.horizons.Gkmkgs)) 	
+
+print(3.6e16/MASS_SOLAR)
+print(2e15/MASS_SOLAR)
+print(2.08e18/MASS_SOLAR)
+print(4.3e17/MASS_SOLAR)
+
+
 
 # Throw the inner planets into the Sun "Boohahaha!"
 model.particles['Sun'].m 		= (MASS_SOLAR+ 		\
