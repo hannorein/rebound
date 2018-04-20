@@ -1,19 +1,20 @@
 import re
 import rebound as rb
 
-def getMass(body=None, barycentric=False):
-	if type(body) is str:
-		body = getNAIF(body)
-	elif type(body) is int:
-		body = str(body)
-	else:
-		raise AttributeError("Body needs to be a name or NAIF identifyer.")
+def getMass(body):
+
+    if type(body) is str:
+        body = getNAIF(body)
+    elif type(body) is int:
+        body = str(body)
+	else: 
+        raise AttributeError("Body needs to be a name or NAIF identifyer.")
+
+
 
 	mass = float(re.search(r"BODY%d\_GM .* \( *([\.E\+\-0-9]+ *)\)"%int(body), rb.horizons.HORIZONS_MASS_DATA).group(1))
 	mass /= rb.horizons.Gkmkgs # divide by G (horizons masses give GM. units of km^3/kg/s^2)
 	return mass
-
-
 
 
 
@@ -113,7 +114,7 @@ def getNAIF(name_or_id=None):
         else:
             raise AttributeError("Unknown NAIF id. For a list of valid codes and ids call utils.getNAIF('print')")
     elif type(name_or_id) is str:
-        if name_or_id in NAIF_NAME_OR_ID:
+        if name_or_id in NAIF_NAME_OR_ID.keys():
             return NAIF_NAME_OR_ID[name_or_id]
         elif name_or_id == 'print':
             for key in NAIF_NAME_OR_ID: print("ID: {} = {}".format(NAIF_NAME_OR_ID[key], key))
