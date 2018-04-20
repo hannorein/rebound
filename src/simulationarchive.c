@@ -246,14 +246,14 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
         return 0;
     }
 }
-int reb_simulationarchive_nblobs(struct reb_simulation* r, char* filename){
+long reb_simulationarchive_nblobs(struct reb_simulation* r, char* filename){
     if (r->simulationarchive_version<2){ 
         // Old version
         FILE* of = fopen(filename,"r");
         fseek(of, 0, SEEK_END);  
         long filesize = ftell(of);
         fclose(of);
-        return (int)((filesize-r->simulationarchive_size_first)/r->simulationarchive_size_snapshot);
+        return (long)((filesize-r->simulationarchive_size_first)/r->simulationarchive_size_snapshot);
     }else{
         // Version 2
         FILE* of = fopen(filename,"r");

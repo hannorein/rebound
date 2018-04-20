@@ -620,7 +620,7 @@ struct reb_binary_field {
  * @brief This structure is used to save and load simulation archive files.
  */
 struct reb_simulationarchive_blob {
-    int16_t index;                         ///< Index of previous blob (binary file is 0, first blob is 1)
+    int32_t index;                         ///< Index of previous blob (binary file is 0, first blob is 1)
     int16_t offset_prev;                   ///< Offset to beginning of previous blob (size of previous blob).
     int16_t offset_next;                   ///< Offset to end of following blob (size of following blob).
 };

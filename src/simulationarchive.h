@@ -35,6 +35,6 @@ struct reb_particles;
  */
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r);
 
-int reb_simulationarchive_nblobs(struct reb_simulation* r, char* filename);
+long reb_simulationarchive_nblobs(struct reb_simulation* r, char* filename);
 
 #endif 	// SIMULATIONARCHIVE_H
