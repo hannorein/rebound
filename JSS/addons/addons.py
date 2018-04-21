@@ -11,6 +11,14 @@ def validateDate(date_text):
     except ValueError:
         return False
 
+def configStr2List(convert_me):
+    remove = "'[]"
+    for char in remove:convert_me = convert_me.replace(char,'')
+    char = ", "
+    convert_me = convert_me.replace(char,',')
+    convert_me = convert_me.split(',')
+    for i in range(len(convert_me)):convert_me[i].lstrip
+    return convert_me
 
 def getMass(body=None):
 	if type(body) is str:
@@ -189,4 +197,6 @@ def initReboundBinaryFile():
 
     model.status()
     model.save(bin_file)
+
+    return 0
     

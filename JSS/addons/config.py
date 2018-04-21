@@ -3,6 +3,7 @@ from argparse import ArgumentParser as ap
 import configparser
 from astropy.time import Time
 import datetime
+import sys
 
 
 parser = ap(description='Reads command line arguments and creates configuration'\
@@ -114,57 +115,32 @@ parser.add_argument('-C', '--collision',
 							      '"mercurius", "direct". See rebound docs for '\
 							      'details')
 parser.add_argument('-V', '--version', 
-					action='version', 
-					version='%(prog)s 0.1')
+					action		= 'version', 
+					version		= '%(prog)s 0.1')
 
 clarg = parser.parse_args()
 
+print(sys.argv[1:])
+
 if clarg.start_time=='now':clarg.start_time = str(datetime.datetime.now())
 if not addons.validateDate(clarg.start_time):
-	clarg.start_time = '2018-03-30 12:00:00.0'
+	clarg.start_time 			= '2018-03-30 12:00:00.0'
 
-time 		= Time(clarg.start_time, scale='utc')
+time 							= Time(clarg.start_time, scale='utc')
 
-cf = configparser.ConfigParser()
-cf['Bodies'] 		= {'list_of_bodies'	: clarg.list_of_bodies,
-					   'add_to_sun'		: clarg.add_to_sun}
-cf['Simulation'] 	= {'project_name'	: clarg.project_name,
-					   'units'			: clarg.units,
-					   'start_time'		: clarg.start_time,
-					   'start_time_jd'	: time.jd,
-					   'dt'				: clarg.dt,
-					   'tmax'			: clarg.tmax}
-cf['Integrator'] 	= {'integrator'		: clarg.integrator,
-				  	   'gravity'		: clarg.gravity,
-				  	   'boundary'		: clarg.boundary,
-				  	   'collision'		: clarg.collision}
+cfout = configparser.ConfigParser()
+cfout['Bodies'] 				= {'list_of_bodies'	: clarg.list_of_bodies,
+					   			   'add_to_sun'		: clarg.add_to_sun}
+cfout['Simulation'] 			= {'project_name'	: clarg.project_name,
+								   'units'			: clarg.units,
+								   'start_time'		: clarg.start_time,
+								   'start_time_jd'	: time.jd,
+								   'dt'				: clarg.dt,
+								   'tmax'			: clarg.tmax}
+cfout['Integrator'] 			= {'integrator'		: clarg.integrator,
+								   'gravity'		: clarg.gravity,
+								   'boundary'		: clarg.boundary,
+								   'collision'		: clarg.collision}
 
 with open(clarg.project_name+'.ini', 'w') as configfile:
-	cf.write(configfile)
-
-
-
-
-
-file_name 	= "../data/"+clarg.project_name+".cfg" 
-
-f 			= open(file_name,'w')
-
-print(file_name)
-
-f.write('#'*78)
-f.write('\n# config file for rebound project {}\n'.format(clarg.project_name))
-f.write('# generated {}\n'.format(str(datetime.datetime.now())))
-f.write('#'*78)
-f.write('#\nproject_name:{}\n'.format(clarg.project_name))
-f.write('list_of_bodies:{}\n'.format(clarg.list_of_bodies))
-f.write('add_to_sun:{}\n'.format(clarg.add_to_sun))
-f.write('units:{}\n'.format(clarg.units))
-f.write('start_time:{}\n'.format(clarg.start_time))
-f.write('start_time_jd:{}\n'.format(time.jd))
-f.write('dt:{}\n'.format(clarg.dt))
-f.write('tmax:{}\n'.format(clarg.tmax))
-f.write('integrator:{}\n'.format(clarg.integrator))
-f.write('gravity:{}\n'.format(clarg.gravity))
-f.write('boundary:{}\n'.format(clarg.boundary))
-f.write('collision:{}\n'.format(clarg.collision))
+	cfout.write(configfile)
