@@ -1,22 +1,20 @@
-from argparse import ArgumentParser
+import addons
+from argparse import ArgumentParser as ap
+from astropy.time import Time
+import datetime
 
-parser = ArgumentParser(description='Reads command line arguments and creates '	\
-								  'configuration file. How to use this progam: '\
-								  'ctrebound <project_name> where project_name '\
-								  'is not optional. If there are no other '		\
-								  'arguments provided the configuration file '	\
-								  'for <project_name> will be used. If there '	\
-								  'is no configuration file, the program will '	\
-								  'give a warning and create a new file with '	\
-								  'the default parameter. In case there are '	\
-								  'other arguments those will be used for the '	\
-								  'new configuration file. In case an existing '\
-								  'configuration file is found, the system will'\
-								  ' use this file in order to configure the '	\
-								  'model. -o will overwrite an existing file '	\
-								  'without warning and -k will update an '		\
-								  'existing configuration file with the '		\
-								  'arguments provided' )
+
+parser = ap(description='Reads command line arguments and creates '	\
+		   'configuration file. Start with ctrebound <project_name>'\
+		   ' where <project_name> is required. With no other '		\
+		   'arguments provided, the configuration file for '		\
+		   '<project_name> is used. If there is no configuration '	\
+		   'file in the data directory, the program will give a '	\
+		   'warning and create a new config file using the '		\
+		   'defaults as well as arguments if provided. -o will '	\
+		   'overwrite an existing file without warning and -k will '\
+		   'update an existing configuration file only with the '	\
+		   'arguments provided' )
 parser.add_argument('project_name', 
 					type		= str,
 					help		= 'Id of the project. (example: JSS-LR-12S for '\
@@ -34,7 +32,7 @@ parser.add_argument('-o', '--overwrite',
 					const 		= True,
 					help 		= 'Overwrite the configuartion file with the '	\
 								  'arguments provided in the command line.')
-parser.add_argument('-lb', '--l_bodies', 
+parser.add_argument('-l', '--list_of_bodies', 
 	                action		= 'store', 
 	                type 		= str, 
 	                nargs 		= '*', 
@@ -44,7 +42,7 @@ parser.add_argument('-lb', '--l_bodies',
 					              'Neptune barycenter'],
 					help		= 'List of bodies for the model, separeded by '	\
 								  'blanks.')
-parser.add_argument('-la', '--l_add_mass_to_sun', 
+parser.add_argument('-a', '--add_to_sun', 
 	                action		= 'store', 
 	                type 		= str, 
 	                nargs 		= '*', 
@@ -53,11 +51,24 @@ parser.add_argument('-la', '--l_add_mass_to_sun',
 					help		= 'List of bodies for the model, that are '		\
 								  'added to the mass of the sun. Make sure to '	\
 								  'use planets plus their satellite systems '	\
-								  'i.e. "Earth barycenter"')			
-
-
-parser.add_argument('-st', '--StartTime', action='store', dest='st', type=int, 
-					default=0.0, help='start time within archive')
+								  'i.e. "Earth barycenter"')
+parser.add_argument('-u', '--units', 
+	                action		= 'store', 
+	                type 		= str, 
+	                nargs 		= '*', 
+					default 	= ['au', 'yr', 'msun'],
+					help		= 'List of units used in the model. Default is '\
+								  'au, yr, and msun')			
+parser.add_argument('-s', '--start_time', 
+					action		= 'store', 
+					type		= str, 
+					default 	= '2018-03-30 12:00:00.0', 
+					help		= 'Date and time of ephemeris in the format '	\
+								  '"YYYY-MM-DD HH:MM:00.0" the default is set '	\
+								  'to 2018-03-30 12:00:00.0 "-s now" sets '		\
+								  'start_time to now. If the date entered is '	\
+								  'not valid or not in the right format the '	\
+								  'date is set to the default value.')
 parser.add_argument('-et', '--EndTime', action='store', dest='et', type=int, 
 					default=200000000, help='end time within archive')
 parser.add_argument('-fr', '--framerate', action='store', dest='fr', type=int, 
@@ -75,8 +86,21 @@ parser.add_argument('--version', action='version', version='%(prog)s 1.2')
 results = parser.parse_args()
 
 
+
+if results.start_time=='now':results.start_time = str(datetime.datetime.now())
+if not addons.validateDate(results.start_time):
+	results.start_time = '2018-03-30 12:00:00.0'
+
 print(results.project_name)
 if results.keep:print('-k is set {}'.format(results.keep))
 if results.overwrite:print('-o is set {}'.format(results.overwrite))
-print (results.l_bodies)
-print (results.l_add_mass_to_sun)
+print (results.list_of_bodies)
+print (results.add_to_sun)
+print (results.units)
+print (results.start_time)
+
+
+	
+t=Time(results.start_time, scale='utc')
+print(t)
+print(t.jd, t)

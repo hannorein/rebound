@@ -3,6 +3,15 @@ import rebound as rb
 import datetime
 import math
 
+def validateDate(date_text):
+    # checks if date is in format YYYY-MM-DD HH:MM:SS.MS
+    try:
+        datetime.datetime.strptime(date_text, '%Y-%m-%d %H:%M:%S.%f')
+        return True
+    except ValueError:
+        return False
+
+
 def getMass(body=None):
 	if type(body) is str:
 		body = getNAIF(body)
