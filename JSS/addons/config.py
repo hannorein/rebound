@@ -9,12 +9,12 @@ from pathlib import Path
 
 # parse commandline arguments
 parser = ap(description='Reads command line arguments and builds configuration '\
-			'file. With no other arguments provided, the configuration '	\
-			'file for <project_name> is used. If there is no configuration '	\
-			'file in the data directory, the program will create a new config '	\
-			'file using the defaults as well as arguments if provided. -n will '\
-		    'overwrite an existing file without warning otherwise an existing '	\
-		    'configuration file is updated with the arguments provided' )
+			'file. With no other arguments provided, the configuration file for'\
+			' <project_name> is used. If there is no configuration file found '	\
+			'the program will build a new config file using the defaults as '	\
+			'well as arguments if provided. -n will overwrite an existing file '\
+			'without warning otherwise an existing configuration file is '		\
+			'updated with the arguments provided' )
 parser.add_argument('project_name', 
 					type		= str,
 					help		= 'Id of the project. (example: JSS-LR-12S for '\
@@ -76,7 +76,7 @@ parser.add_argument('-d', '--dt',
 					default 	= 1/365.25/24,	#1 hour 
 					help		= 'Timestep for model. Depending on the '		\
 								  'underlying integrator dt should be between '	\
-								  '10% and 25% of the orbital period or about '	\
+								  '10%% and 25%% of the orbital period or about '	\
 								  '0.6rad to 1.5rad. the default here is 1hour'	\
 								  'whicgh needs to be set accordingly. ias15 '	\
 								  'is using an adaptive timestep.')
