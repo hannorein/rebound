@@ -206,12 +206,9 @@ def initReboundBinaryFile(project_name):
 
 # Remove bodies in add_to_sun from simulation
     for body in add_to_sun:
-        print('remove {}'.format(body))
         sim.remove(hash=body)
 
 # Save initial conditions to binary file
-    print(sim.G, sim.collision, sim.gravity, sim.integrator)
-    sim.status()
     sim.save(BINFILE)
 
     return 0
