@@ -19,7 +19,6 @@ def configWrite(file_name, clarg):
                                        'tmax'           : clarg.tmax}
     cfout['Integrator']             = {'integrator'     : clarg.integrator,
                                        'gravity'        : clarg.gravity,
-                                       'boundary'       : clarg.boundary,
                                        'collision'      : clarg.collision}
     with open(file_name, 'w') as configfile:
         cfout.write(configfile)
@@ -29,7 +28,7 @@ def configWrite(file_name, clarg):
 def validateDate(date_text):
     # checks if date is in format YYYY-MM-DD HH:MM:SS.MS
     try:
-        datetime.datetime.strptime(date_text, '%Y-%m-%d %H:%M:%S.%f')
+        datetime.datetime.strptime(date_text, '%Y-%m-%d %H:%M')
         return True
     except ValueError:
         return False
@@ -160,65 +159,60 @@ def getNAIF(name_or_id=None):
         raise AttributeError("NAIF name or id code not listed. For a list of valid codes and ids call util.getNAIF('print')")
 
 
-def initReboundBinaryFile():
-###############################################################################
-# This subroutine is still very static, designed to cater for JSS-LR-8S and
-# needs to be changed in order to be more flexible (i.e. Configiuration file)
-# containing:
-#   List of bodies
-#   List of bodies to add to the Sun
-#   Model units
-#   time of ephemeris (gregorian or julian. astropy?)
-#   Name of project
-# Should not be too hard to implement ....
-###############################################################################
+def initReboundBinaryFile(project_name):
 
-# define variables pretending to be constants
+    BINFILE = project_name+'-IC.bin'
 
-    MASS_SOLAR          = getMass('Sun')              # in kg
-    MASS_MERCURY        = getMass('Mercury')          # in kg
-    MASS_VENUS          = getMass('Venus')            # in kg
-    MASS_EARTH          = getMass('Earth barycenter') # in kg (Earth+Moon)
-    MASS_MARS           = getMass('Mars barycenter')  # in kg (Mars+Moons)
-    
-# Set bodies for model
+# read in config file
+    CONFIGFILE = project_name+'.cfg'
 
-    bodies  =  ["Jupiter", "Metis", "Adrastea", "Amalthea", "Thebe", "Io", "Europa", 
-                "Ganymede", "Callisto", "Sun", "Saturn barycenter", "Uranus barycenter", 
-                "Neptune barycenter"]
+    cfin = configparser.ConfigParser()
+    cfin.read(CONFIGFILE)
+
+# Set up bodies for model and get NAIF id numbers for those bodies
+    bodies = configStr2List(cfin['Bodies']['list_of_bodies'])
+    for i in range(len(bodies)):
+        bodies[i] = str(getNAIF(bodies[i]))
     
-    for i in range(0,len(bodies),1):bodies[i] = str(getNAIF(bodies[i]))
-    
+    add_to_sun = configStr2List(cfin['Bodies']['add_to_sun'])
+    for i in range(0,len(add_to_sun),1):
+        add_to_sun[i] = str(getNAIF(add_to_sun[i]))
+
+    bodies     = bodies + add_to_sun
+    add_to_sun = configStr2List(cfin['Bodies']['add_to_sun'])
+
 # Set rebound integrator conditions
+    sim             = rb.Simulation()
+    sim.units       = configStr2List(cfin['Simulation']['units'])
+    sim.integrator  = cfin['Integrator']['integrator']
+    sim.t           = float(cfin['Simulation']['start_time_jd'])
+    sim.dt          = float(cfin['Simulation']['dt'])
+    sim.gravity     = cfin['Integrator']['gravity']
+    sim.collision   = cfin['Integrator']['collision']
+    tmax            = float(cfin['Simulation']['tmax'])
 
-    model               = rb.Simulation()
-    model.units         = ("yr", "au", "Msun")  # chosen yr instead of yr/2pi
-    model.integrator    = "whfast"              # whfast integrator (no collision)
-    #model.integrator   = "IAS15"               # IAS15 integrator (collision)
-    time_of_ephemeris   = 2458208.              # Julian Day of 30/03/2018 12:00
-    model.t             = time_of_ephemeris
-    bin_file            = '../data/JSS-LR-8S-InCond-JD'+str(time_of_ephemeris)+'.bin'
-    
-    model.add(bodies, date='2018-03-30 12:00')  # Julian day 2458208.
-    
+    sim.add(bodies, date=cfin['Simulation']['start_time'])
+
 # Set particle hash to address particles by their name rather than their index
+# and add up masses of bodies in add_to_sun
+    add_mass = 0
+    for i in range(0,len(sim.particles),1):
+        body = getNAIF(int(bodies[i]))
+        sim.particles[i].hash = body
+        if body in add_to_sun:add_mass = add_mass+sim.particles[i].m
 
-    for i in range(0,len(model.particles),1):
-        model.particles[i].hash = getNAIF(int(bodies[i]))
-    
-# Throw the inner planets into the Sun "Boohahaha!"
+# Throw the inner planets into the Sun "Boohahaha!"        
+    sim.particles['Sun'].m = sim.particles['Sun'].m + add_mass
 
-    model.particles['Sun'].m        = (MASS_SOLAR+      \
-                                       MASS_MERCURY+    \
-                                       MASS_VENUS+      \
-                                       MASS_EARTH+      \
-                                       MASS_MARS)/      \
-                                       MASS_SOLAR
-    
+# Remove bodies in add_to_sun from simulation
+    for body in add_to_sun:
+        print('remove {}'.format(body))
+        sim.remove(hash=body)
+
 # Save initial conditions to binary file
-
-    model.status()
-    model.save(bin_file)
+    print(sim.G, sim.collision, sim.gravity, sim.integrator)
+    sim.status()
+    sim.save(BINFILE)
 
     return 0
     

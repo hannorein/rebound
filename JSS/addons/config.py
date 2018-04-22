@@ -7,14 +7,13 @@ import sys
 from pathlib import Path
 
 # parse commandline arguments
-parser = ap(description='Reads command line arguments and creates configuration'\
-			' file. Start with ctrebound <project_name> where <project_name> '	\
-			'is required. With no other arguments provided, the configuration '	\
+parser = ap(description='Reads command line arguments and builds configuration '\
+			'file. With no other arguments provided, the configuration '	\
 			'file for <project_name> is used. If there is no configuration '	\
 			'file in the data directory, the program will create a new config '	\
-			'file using the defaults as well as arguments if provided. -o will '\
-		    'overwrite an existing file without warning and -k will update an '	\
-		    'existing configuration file only with the arguments provided' )
+			'file using the defaults as well as arguments if provided. -n will '\
+		    'overwrite an existing file without warning otherwise an existing '	\
+		    'configuration file is updated with the arguments provided' )
 parser.add_argument('project_name', 
 					type		= str,
 					help		= 'Id of the project. (example: JSS-LR-12S for '\
@@ -31,11 +30,11 @@ parser.add_argument('-l', '--list_of_bodies',
 	                action		= 'store', 
 	                type 		= str, 
 	                nargs 		= '*', 
-					default 	= ['Jupiter', 'Metis', 'Adrestea', 'Amalthea',
-					              'Thebe', 'Io', 'Europa', 'Ganymede', 'Calisto',
+					default 	= ['Jupiter', 'Metis', 'Adrastea', 'Amalthea',
+					              'Thebe', 'Io', 'Europa', 'Ganymede', 'Callisto',
 					              'Sun', 'Saturn barycenter', 'Uranus barycenter', 
 					              'Neptune barycenter'],
-					help		= 'List of bodies for the model, separeded by '	\
+					help		= 'List of bodies for the model, separated by '	\
 								  'blanks.')
 parser.add_argument('-a', '--add_to_sun', 
 	                action		= 'store', 
@@ -57,9 +56,9 @@ parser.add_argument('-u', '--units',
 parser.add_argument('-s', '--start_time', 
 					action		= 'store', 
 					type		= str, 
-					default 	= '2018-03-30 12:00:00.0', 
+					default 	= '2018-03-30 12:00', 
 					help		= 'Date and time of ephemeris in the format '	\
-								  '"YYYY-MM-DD HH:MM:00.0" the default is set '	\
+								  '"YYYY-MM-DD HH:MM" the default is set '	\
 								  'to 2018-03-30 12:00:00.0 "-s now" sets '		\
 								  'start_time to now. If the date entered is '	\
 								  'not valid or not in the right format the '	\
@@ -94,13 +93,6 @@ parser.add_argument('-G', '--gravity',
 					help		= 'Set gavity module used in rebound. Choices '	\
 							      'are "none", "basic" (def.), "compensated" '	\
 							      '"tree". See rebound docs for details')
-parser.add_argument('-B', '--boundary', 
-					action		='store',
-					type		= str, 
-					default 	= 'none',
-					help		= 'Set boundary module used in rebound. Choices '\
-							      'are "none" (default), "open", "periodic", '	\
-							      '"shear". See rebound docs for details')
 parser.add_argument('-C', '--collision', 
 					action		='store',
 					type		= str, 
@@ -116,8 +108,10 @@ parser.add_argument('-V', '--version',
 clarg = parser.parse_args()
 
 # check and clean up start time 
-if clarg.start_time=='now':clarg.start_time = str(datetime.datetime.now())
-if not addons.validateDate(clarg.start_time):clarg.start_time = '2018-03-30 12:00:00.0'
+if clarg.start_time=='now':clarg.start_time = f"{datetime.datetime.now():%Y-%m-%d %H:%M}"
+if not addons.validateDate(clarg.start_time):
+	print("Runtime Warning: Invalid date format. Date set to 2018-03-30 12:00")
+	clarg.start_time = '2018-03-30 12:00'
 time = Time(clarg.start_time, scale='utc')
 
 # check if configfile exists and open it
@@ -152,8 +146,6 @@ if not (clarg.new):
 			clarg.integrator 	 = cfin['Integrator']['integrator']
 		if not '-G' in sys.argv:
 			clarg.gravity  		 = cfin['Integrator']['gravity']
-		if not '-B' in sys.argv:
-			clarg.boundary  	 = cfin['Integrator']['boundary']
 		if not '-C' in sys.argv:
 			clarg.collision  	 = cfin['Integrator']['collision']
 		addons.configWrite(CONFIGFILE, clarg)		
