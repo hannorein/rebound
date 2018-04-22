@@ -33,11 +33,11 @@ import utils
 ###############################################################################
 # define variables pretending to be constants
 ###############################################################################
-MASS_SOLAR 			= utils.getMass('Sun')				# in kg
-MASS_MERCURY 		= utils.getMass('Mercury')			# in kg
-MASS_VENUS 			= utils.getMass('Venus')			# in kg
-MASS_EARTH 			= utils.getMass('Earth barycenter')	# in kg (Earth+Moon)
-MASS_MARS 			= utils.getMass('Mars barycenter')	# in kg (Mars+Moons)
+MASS_SOLAR 			= addons.getMass('Sun')				# in kg
+MASS_MERCURY 		= addons.getMass('Mercury')			# in kg
+MASS_VENUS 			= addons.getMass('Venus')			# in kg
+MASS_EARTH 			= addons.getMass('Earth barycenter')	# in kg (Earth+Moon)
+MASS_MARS 			= addons.getMass('Mars barycenter')	# in kg (Mars+Moons)
 
 ###############################################################################
 # Set bodies for model
@@ -46,7 +46,7 @@ bodies  =  ["Jupiter", "Metis", "Adrastea", "Amalthea", "Thebe", "Io", "Europa",
 		    "Ganymede", "Callisto", "Sun", "Saturn barycenter", "Uranus barycenter", 
 		    "Neptune barycenter"]
 
-for i in range(0,len(bodies),1):bodies[i] = str(utils.getNAIF(bodies[i]))
+for i in range(len(bodies)):bodies[i] = str(addons.getNAIF(bodies[i]))
 
 ###############################################################################
 # Set rebound integrator conditions

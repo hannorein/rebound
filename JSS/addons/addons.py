@@ -2,6 +2,29 @@ import re
 import rebound as rb
 import datetime
 import math
+import configparser
+from astropy.time import Time
+
+def configWrite(file_name, clarg):
+    # clarg = command line arguments from argparser
+    time = Time(clarg.start_time, scale='utc')
+    cfout = configparser.ConfigParser()
+    cfout['Bodies']                 = {'list_of_bodies' : clarg.list_of_bodies,
+                                       'add_to_sun'     : clarg.add_to_sun}
+    cfout['Simulation']             = {'project_name'   : clarg.project_name,
+                                       'units'          : clarg.units,
+                                       'start_time'     : clarg.start_time,
+                                       'start_time_jd'  : time.jd,
+                                       'dt'             : clarg.dt,
+                                       'tmax'           : clarg.tmax}
+    cfout['Integrator']             = {'integrator'     : clarg.integrator,
+                                       'gravity'        : clarg.gravity,
+                                       'boundary'       : clarg.boundary,
+                                       'collision'      : clarg.collision}
+    with open(file_name, 'w') as configfile:
+        cfout.write(configfile)
+
+    return 0
 
 def validateDate(date_text):
     # checks if date is in format YYYY-MM-DD HH:MM:SS.MS
@@ -31,7 +54,6 @@ def getMass(body=None):
 	mass = float(re.search(r"BODY%d\_GM .* \( *([\.E\+\-0-9]+ *)\)"%int(body), rb.horizons.HORIZONS_MASS_DATA).group(1))
 	mass /= rb.horizons.Gkmkgs # divide by G (horizons masses give GM. units of km^3/kg/s^2)
 	return mass
-
 
 def getNAIF(name_or_id=None):
     

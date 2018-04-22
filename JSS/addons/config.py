@@ -4,8 +4,9 @@ import configparser
 from astropy.time import Time
 import datetime
 import sys
+from pathlib import Path
 
-
+# parse commandline arguments
 parser = ap(description='Reads command line arguments and creates configuration'\
 			' file. Start with ctrebound <project_name> where <project_name> '	\
 			'is required. With no other arguments provided, the configuration '	\
@@ -21,16 +22,11 @@ parser.add_argument('project_name',
 								  'ites). <project_name> is used in all project'\
 								  ' related files.  Use whatever rocks your '	\
 								  'boat! ')
-parser.add_argument('-k', '--keep', 											
+parser.add_argument('-n', '--new', 											
 					action		= 'store_const',
 					const 		= True,
-					help 		= 'Keep and update configuartion file with the '\
-								  'arguments provided in the command line.')			
-parser.add_argument('-o', '--overwrite', 											
-					action		= 'store_const',
-					const 		= True,
-					help 		= 'Overwrite the configuartion file with the '	\
-								  'arguments provided in the command line.')
+					help 		= 'writes a new ini file with the default '		\
+								  'settings')
 parser.add_argument('-l', '--list_of_bodies', 
 	                action		= 'store', 
 	                type 		= str, 
@@ -91,7 +87,6 @@ parser.add_argument('-I', '--integrator',
 							      '"ias15" (def.), "whfast", "sei", "leapfrog",'\
 							      '"hermes", "janus", "mercurius", "bs". See '	\
 							      'rebound docs for details.')
-
 parser.add_argument('-G', '--gravity', 
 					action		= 'store', 
 					type		= str, 
@@ -120,27 +115,54 @@ parser.add_argument('-V', '--version',
 
 clarg = parser.parse_args()
 
-print(sys.argv[1:])
-
+# check and clean up start time 
 if clarg.start_time=='now':clarg.start_time = str(datetime.datetime.now())
-if not addons.validateDate(clarg.start_time):
-	clarg.start_time 			= '2018-03-30 12:00:00.0'
+if not addons.validateDate(clarg.start_time):clarg.start_time = '2018-03-30 12:00:00.0'
+time = Time(clarg.start_time, scale='utc')
 
-time 							= Time(clarg.start_time, scale='utc')
+# check if configfile exists and open it
+CONFIGFILE = clarg.project_name+'.cfg'
 
-cfout = configparser.ConfigParser()
-cfout['Bodies'] 				= {'list_of_bodies'	: clarg.list_of_bodies,
-					   			   'add_to_sun'		: clarg.add_to_sun}
-cfout['Simulation'] 			= {'project_name'	: clarg.project_name,
-								   'units'			: clarg.units,
-								   'start_time'		: clarg.start_time,
-								   'start_time_jd'	: time.jd,
-								   'dt'				: clarg.dt,
-								   'tmax'			: clarg.tmax}
-cfout['Integrator'] 			= {'integrator'		: clarg.integrator,
-								   'gravity'		: clarg.gravity,
-								   'boundary'		: clarg.boundary,
-								   'collision'		: clarg.collision}
+if Path(CONFIGFILE).exists():
+	cfin = configparser.ConfigParser()
+	cfin.read(CONFIGFILE)
+else:
+	clarg.new = True
 
-with open(clarg.project_name+'.ini', 'w') as configfile:
-	cfout.write(configfile)
+# check if -n flag is set and write a complete new file now based on commandline
+# arguments and defaults for variables where no command line argument is set 
+# If -n is not set update configfile with new commandline arguments
+if not (clarg.new):
+	if (len(sys.argv)) > 2:
+		if not '-l' in sys.argv:
+			clarg.list_of_bodies = addons.configStr2List(cfin['Bodies']['list_of_bodies'])
+		if not '-a' in sys.argv:
+			clarg.add_to_sun	 = addons.configStr2List(cfin['Bodies']['add_to_sun'])
+		if not '-u' in sys.argv:
+			clarg.units			 = addons.configStr2List(cfin['Simulation']['units'])
+		if not '-s' in sys.argv:
+			clarg.start_time 	 = cfin['Simulation']['start_time']
+		if not '-s' in sys.argv:
+			clarg.start_time_jd  = cfin['Simulation']['start_time_jd']
+		if not '-d' in sys.argv:
+			clarg.dt 			 = cfin['Simulation']['dt']
+		if not '-t' in sys.argv:
+			clarg.tmax 			 = cfin['Simulation']['tmax']
+		if not '-I' in sys.argv:
+			clarg.integrator 	 = cfin['Integrator']['integrator']
+		if not '-G' in sys.argv:
+			clarg.gravity  		 = cfin['Integrator']['gravity']
+		if not '-B' in sys.argv:
+			clarg.boundary  	 = cfin['Integrator']['boundary']
+		if not '-C' in sys.argv:
+			clarg.collision  	 = cfin['Integrator']['collision']
+		addons.configWrite(CONFIGFILE, clarg)		
+else:
+	addons.configWrite(CONFIGFILE, clarg)
+
+
+
+
+
+# assign file names (quasi-constants)
+#RB_BINFILE = clarg.project_name+'-'+time.jd+
