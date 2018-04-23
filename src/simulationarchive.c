@@ -214,7 +214,7 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
         fclose(fd);
         return 0;
     }else{
-        // Version 1
+        // Version 2
         // load original binary file
         enum reb_input_binary_messages warnings = 0;
         reb_create_simulation_from_binary_with_messages(r,filename,&warnings);
@@ -261,8 +261,49 @@ long reb_simulationarchive_nblobs(struct reb_simulation* r, char* filename){
         fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);  
         fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
         fclose(of);
-        return blob.index;
+        return blob.index+1;
     }
+}
+
+int reb_simulationarchive_create_index(char* filename, long* nblobs, struct reb_simulationarchive_index** index ){
+    // Version 2 only
+    FILE* inf = fopen(filename,"r");
+    if (inf==NULL) return 0; // Something went wrong.
+    struct reb_simulationarchive_blob blob = {0};
+    fseek(inf, -sizeof(struct reb_simulationarchive_blob), SEEK_END);  
+    fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, inf);
+    *nblobs = blob.index;
+    *index = malloc(sizeof(struct reb_simulationarchive_index)*(*nblobs));
+    fseek(inf, 0, SEEK_SET);  
+    
+    for(long i=0;i<*nblobs;i++){
+        struct reb_binary_field field = {0};
+        (*index)[i].offset = ftell(inf);
+        do{
+            fread(&field,sizeof(struct reb_binary_field),1,inf);
+            switch (field.type){
+                case REB_BINARY_FIELD_TYPE_HEADER:
+                    fseek(inf,64 - sizeof(struct reb_binary_field),SEEK_CUR);
+                    break;
+                case REB_BINARY_FIELD_TYPE_T:
+                    fread(&((*index)[i].t), sizeof(double),1,inf);
+                    break;
+                default:
+                    fseek(inf,field.size,SEEK_CUR);
+                    break;
+                    
+            }
+        }while(field.type!=REB_BINARY_FIELD_TYPE_END);
+        fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, inf);
+        if (i!=blob.index) {
+            free(*index);
+            fclose(inf);
+            return 0; // Something went wrong. 
+        }
+    }
+
+    fclose(inf);
+    return 1; // Success
 }
 
 static int reb_simulationarchive_snapshotsize(struct reb_simulation* const r){

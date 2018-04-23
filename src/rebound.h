@@ -625,6 +625,17 @@ struct reb_simulationarchive_blob {
     int16_t offset_next;                   ///< Offset to end of following blob (size of following blob).
 };
 
+
+/**
+ * @brief This structure is used to save and load simulation archive files.
+ */
+struct reb_simulationarchive_index {
+    uint16_t index;
+    uint32_t offset;
+    double t;
+};
+int reb_simulationarchive_create_index(char* filename, long* nblobs, struct reb_simulationarchive_index** index );
+
 /**
  * @brief Holds a particle's hash and the particle's index in the particles array.
  * @details This structure is used for the simulation's particle_lookup_table.

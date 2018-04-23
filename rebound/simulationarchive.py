@@ -93,6 +93,12 @@ class SimulationArchive(Mapping):
         else:
             self.tmax = self.tmin + self.interval*(self.Nblob)
 
+    def create_index(self):
+        if self.Nblobs<1:
+            raise ValueError("Unable to create index.")
+        self.index = [(0,0)] * self.Nblobs
+
+
     def __str__(self):
         """
         Returns a string with details of this simulation archive.
