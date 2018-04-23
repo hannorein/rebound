@@ -247,42 +247,46 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
     }
 }
 
-int reb_simulationarchive_open(struct reb_simulationarchive* sa, char* filename){
-    FILE* inf = fopen(filename,"r");
-    if (inf==NULL) return 0; // Something went wrong.
+struct reb_simulationarchive* reb_open_simulationarchive(const char* filename){
+    struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
+    sa->inf = fopen(filename,"r");
+    if (sa->inf==NULL){
+        free(sa);
+        return NULL; // Something went wrong.
+    }
     sa->filename = malloc(strlen(filename)+1);
     strcpy(sa->filename,filename);
     
     // Get version
-    fseek(inf, 0, SEEK_SET);  
+    fseek(sa->inf, 0, SEEK_SET);  
     struct reb_binary_field field = {0};
     sa->version = 0;
     do{
-        fread(&field,sizeof(struct reb_binary_field),1,inf);
+        fread(&field,sizeof(struct reb_binary_field),1,sa->inf);
         switch (field.type){
             case REB_BINARY_FIELD_TYPE_HEADER:
-                fseek(inf,64 - sizeof(struct reb_binary_field),SEEK_CUR);
+                fseek(sa->inf,64 - sizeof(struct reb_binary_field),SEEK_CUR);
                 break;
             case REB_BINARY_FIELD_TYPE_T:
-                fread(&(sa->t0), sizeof(double),1,inf);
+                fread(&(sa->t0), sizeof(double),1,sa->inf);
                 break;
             case REB_BINARY_FIELD_TYPE_SAVERSION:
-                fread(&(sa->version), sizeof(int),1,inf);
+                fread(&(sa->version), sizeof(int),1,sa->inf);
                 break;
             case REB_BINARY_FIELD_TYPE_SASIZESNAPSHOT:
-                fread(&(sa->size_snapshot), sizeof(long),1,inf);
+                fread(&(sa->size_snapshot), sizeof(long),1,sa->inf);
                 break;
             case REB_BINARY_FIELD_TYPE_SASIZEFIRST:
-                fread(&(sa->size_first), sizeof(long),1,inf);
+                fread(&(sa->size_first), sizeof(long),1,sa->inf);
                 break;
             case REB_BINARY_FIELD_TYPE_SAWALLTIME:
-                fread(&(sa->walltime), sizeof(double),1,inf);
+                fread(&(sa->walltime), sizeof(double),1,sa->inf);
                 break;
             case REB_BINARY_FIELD_TYPE_SAINTERVAL:
-                fread(&(sa->interval), sizeof(double),1,inf);
+                fread(&(sa->interval), sizeof(double),1,sa->inf);
                 break;
             default:
-                fseek(inf,field.size,SEEK_CUR);
+                fseek(sa->inf,field.size,SEEK_CUR);
                 break;
         }
     }while(field.type!=REB_BINARY_FIELD_TYPE_END);
@@ -291,59 +295,74 @@ int reb_simulationarchive_open(struct reb_simulationarchive* sa, char* filename)
     if (sa->version<2){
         // Old version
         if (sa->size_first==-1 || sa->size_snapshot==-1){
-            fclose(inf);
-            return 0; //Something went wrong. 
+            free(sa->filename);
+            fclose(sa->inf);
+            free(sa);
+            return NULL; //Something went wrong. 
         }
-        fseek(inf, 0, SEEK_END);  
-        sa->nblobs = (ftell(inf)-sa->size_first)/sa->size_snapshot+1; // +1 accounts for first binary 
+        fseek(sa->inf, 0, SEEK_END);  
+        sa->nblobs = (ftell(sa->inf)-sa->size_first)/sa->size_snapshot+1; // +1 accounts for first binary 
         sa->t = malloc(sizeof(double)*sa->nblobs);
         sa->offset = malloc(sizeof(uint32_t)*sa->nblobs);
         sa->t[0] = sa->t0;
         sa->offset[0] = 0;
         for(long i=1;i<sa->nblobs;i++){
             double offset = sa->size_first+(i-1)*sa->size_snapshot;
-            fseek(inf, offset, SEEK_SET);  
-            fread(&(sa->t[i]),sizeof(double), 1, inf);
+            fseek(sa->inf, offset, SEEK_SET);  
+            fread(&(sa->t[i]),sizeof(double), 1, sa->inf);
             sa->offset[i] = offset;
         }
     }else{
         // New version
         struct reb_simulationarchive_blob blob = {0};
-        fseek(inf, -sizeof(struct reb_simulationarchive_blob), SEEK_END);  
-        fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, inf);
+        fseek(sa->inf, -sizeof(struct reb_simulationarchive_blob), SEEK_END);  
+        fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa->inf);
         sa->nblobs = blob.index;
         sa->t = malloc(sizeof(double)*sa->nblobs);
         sa->offset = malloc(sizeof(uint32_t)*sa->nblobs);
-        fseek(inf, 0, SEEK_SET);  
+        fseek(sa->inf, 0, SEEK_SET);  
         
         for(long i=0;i<sa->nblobs;i++){
             struct reb_binary_field field = {0};
-            sa->offset[i] = ftell(inf);
+            sa->offset[i] = ftell(sa->inf);
             do{
-                fread(&field,sizeof(struct reb_binary_field),1,inf);
+                fread(&field,sizeof(struct reb_binary_field),1,sa->inf);
                 switch (field.type){
                     case REB_BINARY_FIELD_TYPE_HEADER:
-                        fseek(inf,64 - sizeof(struct reb_binary_field),SEEK_CUR);
+                        fseek(sa->inf,64 - sizeof(struct reb_binary_field),SEEK_CUR);
                         break;
                     case REB_BINARY_FIELD_TYPE_T:
-                        fread(&(sa->t[i]), sizeof(double),1,inf);
+                        fread(&(sa->t[i]), sizeof(double),1,sa->inf);
                         break;
                     default:
-                        fseek(inf,field.size,SEEK_CUR);
+                        fseek(sa->inf,field.size,SEEK_CUR);
                         break;
                         
                 }
             }while(field.type!=REB_BINARY_FIELD_TYPE_END);
-            fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, inf);
+            fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa->inf);
             if (i!=blob.index) {
-                fclose(inf);
+                fclose(sa->inf);
+                free(sa->filename);
                 free(sa->t);
                 free(sa->offset);
-                return 0; //Something went wrong. 
+                free(sa);
+                return NULL; //Something went wrong. 
             }
         }
     }
-    return 1;
+    return sa;
+}
+
+void reb_close_simulationarchive(struct reb_simulationarchive* sa){
+    if (sa->inf){
+        fclose(sa->inf);
+    }
+    sa->inf = fopen(sa->filename,"r");
+    free(sa->filename);
+    free(sa->t);
+    free(sa->offset);
+    free(sa);
 }
 
     
