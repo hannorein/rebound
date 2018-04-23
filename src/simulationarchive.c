@@ -41,42 +41,35 @@
 
 
 
-int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename, long snapshot){
-    if (access(filename, F_OK) == -1) return -1;
-    if (!r) return -2;
-    if (snapshot==0){
-        // load original binary file
-        enum reb_input_binary_messages warnings = 0;
-        reb_create_simulation_from_binary_with_messages(r,filename,&warnings);
-        if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
-            reb_error(r,"Cannot read binary file. Check filename and file contents.");
-        }
-        return 0;
+struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive sa, long snapshot){
+    FILE* inf = sa.inf;
+    if (inf == NULL) return -1;
+    if (snapshot<0) snapshot += sa.nblobs;
+    if (snapshot>sa.nblobs || snapshot<0) return -2;
+    
+    // load original binary file
+    enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
+    struct reb_simulation* r = reb_create_simulation();
+    reb_reset_temporary_pointers(r);
+    reb_reset_function_pointers(r);
+    r->simulationarchive_filename = NULL;
+    // reb_create_simulation sets simulationarchive_version to 2 by default.
+    // This will break reading in old version.
+    // Set to old version by default. Will be overwritten if new version was used.
+    r->simulationarchive_version = 0;
+    while(reb_input_field(r, inf, warnings)){ }
+
+    // Done?
+    if (snapshot==0) return r;
+
+    // Read SA snapshot
+    if(fseek(inf, sa.offset[snapshot], SEEK_SET)){
+        // Seek didn't work.
+        return -3;
     }
-   
     if (r->simulationarchive_version<2){ 
-        // Old version
-        FILE* fd = fopen(filename,"r");
-        int fseekret = 0;
-        if (snapshot<0){
-            // Find latest snapshot
-            fseek(fd,0, SEEK_END);
-            long filesize = ftell(fd);
-            if (filesize < r->simulationarchive_size_first + r->simulationarchive_size_snapshot){
-                fclose(fd);
-                return -4; // No snapshots found. Already loaded binary.
-            }
-            fseekret = fseek(fd,-r->simulationarchive_size_snapshot,SEEK_END);
-        }else{
-            fseekret = fseek(fd,r->simulationarchive_size_first + (snapshot-1)*r->simulationarchive_size_snapshot,SEEK_SET);
-        }
-        if (fseekret){
-            // Seek didn't work.
-            fclose(fd);
-            return -3;
-        }
-        fread(&(r->t),sizeof(double),1,fd);
-        fread(&(r->simulationarchive_walltime),sizeof(double),1,fd);
+        fread(&(r->t),sizeof(double),1,inf);
+        fread(&(r->simulationarchive_walltime),sizeof(double),1,inf);
         gettimeofday(&r->simulationarchive_time,NULL);
         if (r->simulationarchive_interval){
             while (r->simulationarchive_next<=r->t){
@@ -93,7 +86,7 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
                         r->ri_janus.p_int= malloc(sizeof(struct reb_particle)*r->N);
                         r->ri_janus.allocated_N = r->N;
                     }
-                    fread(r->ri_janus.p_int,sizeof(struct reb_particle_int)*r->N,1,fd);
+                    fread(r->ri_janus.p_int,sizeof(struct reb_particle_int)*r->N,1,inf);
                     reb_integrator_synchronize(r);  // get floating point coordinates 
                 }
                 break;
@@ -113,13 +106,13 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
                         ps = r->ri_whfast.p_jh;
                     }
                     for(int i=0;i<r->N;i++){
-                        fread(&(r->particles[i].m),sizeof(double),1,fd);
-                        fread(&(ps[i].x),sizeof(double),1,fd);
-                        fread(&(ps[i].y),sizeof(double),1,fd);
-                        fread(&(ps[i].z),sizeof(double),1,fd);
-                        fread(&(ps[i].vx),sizeof(double),1,fd);
-                        fread(&(ps[i].vy),sizeof(double),1,fd);
-                        fread(&(ps[i].vz),sizeof(double),1,fd);
+                        fread(&(r->particles[i].m),sizeof(double),1,inf);
+                        fread(&(ps[i].x),sizeof(double),1,inf);
+                        fread(&(ps[i].y),sizeof(double),1,inf);
+                        fread(&(ps[i].z),sizeof(double),1,inf);
+                        fread(&(ps[i].vx),sizeof(double),1,inf);
+                        fread(&(ps[i].vy),sizeof(double),1,inf);
+                        fread(&(ps[i].vz),sizeof(double),1,inf);
                     }
                     if (r->ri_whfast.safe_mode==0){
                         // Assume we are not synchronized
@@ -152,20 +145,20 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
                         ps = r->ri_whfast.p_jh;
                     }
                     for(int i=0;i<r->N;i++){
-                        fread(&(r->particles[i].m),sizeof(double),1,fd);
-                        fread(&(ps[i].x),sizeof(double),1,fd);
-                        fread(&(ps[i].y),sizeof(double),1,fd);
-                        fread(&(ps[i].z),sizeof(double),1,fd);
-                        fread(&(ps[i].vx),sizeof(double),1,fd);
-                        fread(&(ps[i].vy),sizeof(double),1,fd);
-                        fread(&(ps[i].vz),sizeof(double),1,fd);
+                        fread(&(r->particles[i].m),sizeof(double),1,inf);
+                        fread(&(ps[i].x),sizeof(double),1,inf);
+                        fread(&(ps[i].y),sizeof(double),1,inf);
+                        fread(&(ps[i].z),sizeof(double),1,inf);
+                        fread(&(ps[i].vx),sizeof(double),1,inf);
+                        fread(&(ps[i].vy),sizeof(double),1,inf);
+                        fread(&(ps[i].vz),sizeof(double),1,inf);
                     }
                     if (r->ri_mercurius.rhill){
                         free(r->ri_mercurius.rhill);
                     }
                     r->ri_mercurius.rhill = malloc(sizeof(double)*r->N);
                     r->ri_mercurius.rhillallocatedN = r->N;
-                    fread(r->ri_mercurius.rhill,sizeof(double),r->N,fd);
+                    fread(r->ri_mercurius.rhill,sizeof(double),r->N,inf);
                     if (r->ri_mercurius.safe_mode==0){
                         // Assume we are not synchronized
                         r->ri_mercurius.is_synchronized=0.;
@@ -184,65 +177,39 @@ int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename
                 break;
             case REB_INTEGRATOR_IAS15:
                 {
-                    fread(&(r->dt),sizeof(double),1,fd);
-                    fread(&(r->dt_last_done),sizeof(double),1,fd);
+                    fread(&(r->dt),sizeof(double),1,inf);
+                    fread(&(r->dt_last_done),sizeof(double),1,inf);
                     struct reb_particle* ps = r->particles;
                     for(int i=0;i<r->N;i++){
-                        fread(&(ps[i].m),sizeof(double),1,fd);
-                        fread(&(ps[i].x),sizeof(double),1,fd);
-                        fread(&(ps[i].y),sizeof(double),1,fd);
-                        fread(&(ps[i].z),sizeof(double),1,fd);
-                        fread(&(ps[i].vx),sizeof(double),1,fd);
-                        fread(&(ps[i].vy),sizeof(double),1,fd);
-                        fread(&(ps[i].vz),sizeof(double),1,fd);
+                        fread(&(ps[i].m),sizeof(double),1,inf);
+                        fread(&(ps[i].x),sizeof(double),1,inf);
+                        fread(&(ps[i].y),sizeof(double),1,inf);
+                        fread(&(ps[i].z),sizeof(double),1,inf);
+                        fread(&(ps[i].vx),sizeof(double),1,inf);
+                        fread(&(ps[i].vy),sizeof(double),1,inf);
+                        fread(&(ps[i].vz),sizeof(double),1,inf);
                     }
                     reb_integrator_ias15_alloc(r);
                     const int N3 = r->N*3;
-                    reb_read_dp7(&(r->ri_ias15.b)  ,N3,fd);
-                    reb_read_dp7(&(r->ri_ias15.csb),N3,fd);
-                    reb_read_dp7(&(r->ri_ias15.e)  ,N3,fd);
-                    reb_read_dp7(&(r->ri_ias15.br) ,N3,fd);
-                    reb_read_dp7(&(r->ri_ias15.er) ,N3,fd);
-                    fread((r->ri_ias15.csx),sizeof(double)*N3,1,fd);
-                    fread((r->ri_ias15.csv),sizeof(double)*N3,1,fd);
+                    reb_read_dp7(&(r->ri_ias15.b)  ,N3,inf);
+                    reb_read_dp7(&(r->ri_ias15.csb),N3,inf);
+                    reb_read_dp7(&(r->ri_ias15.e)  ,N3,inf);
+                    reb_read_dp7(&(r->ri_ias15.br) ,N3,inf);
+                    reb_read_dp7(&(r->ri_ias15.er) ,N3,inf);
+                    fread((r->ri_ias15.csx),sizeof(double)*N3,1,inf);
+                    fread((r->ri_ias15.csv),sizeof(double)*N3,1,inf);
                 }
                 break;
             default:
                 reb_error(r,"Simulation archive not implemented for this integrator.");
                 break;
         }
-        fclose(fd);
         return 0;
     }else{
         // Version 2
-        // load original binary file
-        enum reb_input_binary_messages warnings = 0;
-        reb_create_simulation_from_binary_with_messages(r,filename,&warnings);
-        if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
-            reb_error(r,"Cannot read binary file. Check filename and file contents.");
-        }
-        // Go back through snapshots (can be made faster)
-        FILE* of = fopen(filename,"r");
-        struct reb_simulationarchive_blob blob = {0};
-        fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);  
-        fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-        long last = blob.index;
-        long stepsback = (snapshot<0)?1:last-snapshot+1;
-        if (stepsback<=0||stepsback>last){
-            // Out of range
-            fclose(of);
-            return -3;
-        }
-        for (int i=0;i<stepsback;i++){
-            fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
-            fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-            fseek(of, -blob.offset_prev-sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
-        }
-        while(reb_input_field(r, of, &warnings)){ }
-        if (warnings & REB_INPUT_BINARY_WARNING_FIELD_UNKOWN){
-            reb_warning(r,"Unknown field found in binary file.");
-        }
-        fclose(of);
+        
+        while(reb_input_field(r, inf, &warnings)){ }
+        
         return 0;
     }
 }
@@ -399,18 +366,6 @@ long reb_simulationarchive_estimate_size(struct reb_simulation* const r, double 
         reb_warning(r, "Variable simulationarchive_interval not set. Cannot estimate filesize.");
         return 0;
     }
-}
-
-struct reb_simulation* reb_create_simulation_from_simulationarchive(char* filename){
-    if (access(filename, F_OK) == -1) return NULL;
-    struct reb_simulation* r = reb_create_simulation_from_binary(filename);
-    if (r){
-        int ret = reb_simulationarchive_load_snapshot(r, filename, -1);
-        if (ret){
-            reb_warning(r,"Did not find any snapshots other than the initial one.");
-        }
-    }
-    return r;
 }
 
 void reb_simulationarchive_append(struct reb_simulation* r){

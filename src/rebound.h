@@ -1644,24 +1644,11 @@ struct reb_particle reb_particle_divide(struct reb_particle p1, double value);
  */
 
 /**
- * @brief Restart a simulation using a SimulationArchive file.
- * @detail This function restarts a simulation from a SimulationArchive
- * binary file. It loads the last snapshot in the archive. Note that this 
- * function depends on many requirements, for example a constant particle
- * number. See python documentation and Rein & Tamayo (2017) for more details.
- * @param filename The name of the file to be opened. 
- * @returns Returns a pointer to a new reb_simulation structure. Returns
- * NULL if an error occured. User needs to free the simulation when not used
- * anymore.
- */
-struct reb_simulation* reb_create_simulation_from_simulationarchive(char* filename);
-
-/**
  * @brief Load information from a specific snapshot a SimulationArchive file.
  * @detail This function is used by the python wrapper. If you use it by itself,
  * be sure to look at the python source code beforehand.
  */
-int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename, long snapshot);
+struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive sa, long snapshot);
 
 /**
  * @brief Estimate the file size of a simulation using SimulationArchive.
