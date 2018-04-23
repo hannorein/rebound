@@ -350,8 +350,14 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
     reb_reset_temporary_pointers(r);
     reb_reset_function_pointers(r);
     r->simulationarchive_filename = NULL;
+    
+    // reb_create_simulation sets simulationarchive_version to 2 by default.
+    // This will break reading in old version.
+    // Set to old version by default. Will be overwritten if new version was used.
+    r->simulationarchive_version = 0;
 
     while(reb_input_field(r, inf, warnings)){ }
+
     fclose(inf);
 }
 
