@@ -629,12 +629,22 @@ struct reb_simulationarchive_blob {
 /**
  * @brief This structure is used to save and load simulation archive files.
  */
-struct reb_simulationarchive_index {
-    uint16_t index;
-    uint32_t offset;
-    double t;
+
+struct reb_simulationarchive{
+    FILE* inf;
+    char* filename;
+    int version;
+    long size_first;
+    long size_snapshot;
+    double interval;
+    double walltime;
+    double t0;
+    long nblobs;
+    uint32_t* offset;
+    double* t;
 };
-int reb_simulationarchive_create_index(char* filename, long* nblobs, struct reb_simulationarchive_index** index );
+
+int reb_simulationarchive_open(struct reb_simulationarchive* sa, char* filename);
 
 /**
  * @brief Holds a particle's hash and the particle's index in the particles array.
