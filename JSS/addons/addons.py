@@ -5,23 +5,42 @@ import math
 import configparser
 from astropy.time import Time
 
-def configWrite(file_name, clarg):
+def configWrite(file_name, clarg, sys_argv, update=True):
     # clarg = command line arguments from argparser
-    time = Time(clarg.start_time, scale='utc')
-    cfout = configparser.ConfigParser()
-    cfout['Bodies']                 = {'list_of_bodies' : clarg.list_of_bodies,
-                                       'add_to_sun'     : clarg.add_to_sun}
-    cfout['Simulation']             = {'project_name'   : clarg.project_name,
-                                       'units'          : clarg.units,
-                                       'start_time'     : clarg.start_time,
-                                       'start_time_jd'  : time.jd,
-                                       'dt'             : clarg.dt,
-                                       'tmax'           : clarg.tmax}
-    cfout['Integrator']             = {'integrator'     : clarg.integrator,
-                                       'gravity'        : clarg.gravity,
-                                       'collision'      : clarg.collision}
+    if update:
+        cf = configparser.ConfigParser()
+        cf.read(file_name)
+    else:
+        cf = configparser.ConfigParser()
+        cf.read('.rebounddefault.cfg')
+    
+    if '-l' in sys_argv:
+        cf.set('Bodies', 'list_of_bodies', clarg.list_of_bodies)
+    if '-a' in sys_argv:
+        cf.set('Bodies', 'add_to_sun', clarg.add_to_sun)
+    if '-u' in sys_argv:
+        cf.set('Simulation', 'units', clarg.units)
+    if '-s' in sys_argv:
+        if clarg.start_time=='now':
+            clarg.start_time = f"{datetime.datetime.now():%Y-%m-%d %H:%M}"
+        if not validateDate(clarg.start_time):
+            print("Runtime Warning: Invalid date format. Date set to 2018-03-30 12:00")
+            clarg.start_time = '2018-03-30 12:00'
+        time = Time(clarg.start_time, scale='utc')
+        cf.set('Simulation', 'start_time', clarg.start_time)
+        cf.set('Simulation', 'start_time_jd', str(time.jd))
+    if '-d' in sys_argv:
+        cf.set('Simulation', 'dt', clarg.dt)
+    if '-t' in sys_argv:
+        cf.set('Simulation', 'tmax', clarg.tmax)
+    if '-I' in sys_argv:
+        cf.set('Integrator', 'integrator', clarg.integrator)
+    if '-G' in sys_argv:
+        cf.set('Integrator', 'gravity', clarg.gravity)
+    if '-C' in sys_argv:
+        cf.st('Integrator', 'collision', clarg.collision)
     with open(file_name, 'w') as configfile:
-        cfout.write(configfile)
+        cf.write(configfile)
 
     return 0
 
