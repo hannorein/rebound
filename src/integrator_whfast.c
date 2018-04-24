@@ -159,7 +159,7 @@ void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_p
     const double zeta0 = M - beta*r0;
     double X;
     double Gs[6]; 
-    double invperiod;  // only used for beta>0.
+    double invperiod=0;  // only used for beta>0. Set to 0 only to suppress compiler warnings.
     double X_per_period = nan(""); // only used for beta>0. nan triggers Newton's method for beta<0.
         
     if (beta>0.){
