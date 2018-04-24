@@ -40,15 +40,24 @@
 #include "integrator_ias15.h"
 
 
+struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive* sa, long snapshot){
+    enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
+    return reb_create_simulation_from_simulationarchive_with_messages(sa, snapshot, &warnings);
+}
 
-struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive sa, long snapshot){
-    FILE* inf = sa.inf;
-    if (inf == NULL) return -1;
-    if (snapshot<0) snapshot += sa.nblobs;
-    if (snapshot>sa.nblobs || snapshot<0) return -2;
+struct reb_simulation* reb_create_simulation_from_simulationarchive_with_messages(struct reb_simulationarchive* sa, long snapshot, enum reb_input_binary_messages* warnings){
+    FILE* inf = sa->inf;
+    if (inf == NULL){
+        *warnings |= REB_INPUT_BINARY_ERROR_FILENOTOPEN;
+        return NULL;
+    }
+    if (snapshot<0) snapshot += sa->nblobs;
+    if (snapshot>sa->nblobs || snapshot<0){
+        *warnings |= REB_INPUT_BINARY_ERROR_OUTOFRANGE;
+        return NULL;
+    }
     
     // load original binary file
-    enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
     struct reb_simulation* r = reb_create_simulation();
     reb_reset_temporary_pointers(r);
     reb_reset_function_pointers(r);
@@ -58,14 +67,16 @@ struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_s
     // Set to old version by default. Will be overwritten if new version was used.
     r->simulationarchive_version = 0;
     while(reb_input_field(r, inf, warnings)){ }
+    printf("loaded orig\n");
 
     // Done?
     if (snapshot==0) return r;
 
     // Read SA snapshot
-    if(fseek(inf, sa.offset[snapshot], SEEK_SET)){
-        // Seek didn't work.
-        return -3;
+    if(fseek(inf, sa->offset[snapshot], SEEK_SET)){
+        *warnings |= REB_INPUT_BINARY_ERROR_SEEK;
+        reb_free_simulation(r);
+        return NULL;
     }
     if (r->simulationarchive_version<2){ 
         fread(&(r->t),sizeof(double),1,inf);
@@ -201,17 +212,15 @@ struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_s
                 }
                 break;
             default:
-                reb_error(r,"Simulation archive not implemented for this integrator.");
-                break;
+                *warnings |= REB_INPUT_BINARY_ERROR_INTEGRATOR;
+                reb_free_simulation(r);
+                return NULL;
         }
-        return 0;
     }else{
         // Version 2
-        
-        while(reb_input_field(r, inf, &warnings)){ }
-        
-        return 0;
+        while(reb_input_field(r, inf, warnings)){ }
     }
+    return r;
 }
 
 struct reb_simulationarchive* reb_open_simulationarchive(const char* filename){

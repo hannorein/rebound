@@ -137,7 +137,10 @@ void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf){
     
 int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_messages* warnings){
     struct reb_binary_field field;
-    fread(&field,sizeof(struct reb_binary_field),1,inf);
+    int numread = fread(&field,sizeof(struct reb_binary_field),1,inf);
+    if (numread<1){
+        return 0; // End of file
+    }
     switch (field.type){
         CASE(T,                  &r->t);
         CASE(G,                  &r->G);

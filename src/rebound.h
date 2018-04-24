@@ -1462,7 +1462,11 @@ enum reb_input_binary_messages {
     REB_INPUT_BINARY_WARNING_VERSION = 2,
     REB_INPUT_BINARY_WARNING_POINTERS = 4,
     REB_INPUT_BINARY_WARNING_PARTICLES = 8,
+    REB_INPUT_BINARY_ERROR_FILENOTOPEN = 16,
+    REB_INPUT_BINARY_ERROR_OUTOFRANGE = 32,
+    REB_INPUT_BINARY_ERROR_SEEK = 64,
     REB_INPUT_BINARY_WARNING_FIELD_UNKOWN = 128,
+    REB_INPUT_BINARY_ERROR_INTEGRATOR = 256,
 };
 
 /**
@@ -1648,7 +1652,9 @@ struct reb_particle reb_particle_divide(struct reb_particle p1, double value);
  * @detail This function is used by the python wrapper. If you use it by itself,
  * be sure to look at the python source code beforehand.
  */
-struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive sa, long snapshot);
+struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive* sa, long snapshot);
+
+struct reb_simulation* reb_create_simulation_from_simulationarchive_with_messages(struct reb_simulationarchive* sa, long snapshot, enum reb_input_binary_messages* warnings);
 
 /**
  * @brief Estimate the file size of a simulation using SimulationArchive.
