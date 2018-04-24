@@ -399,6 +399,11 @@ static int reb_simulationarchive_snapshotsize(struct reb_simulation* const r){
 }
 
 void reb_simulationarchive_append(struct reb_simulation* r){
+    struct timeval time_now;
+    gettimeofday(&time_now,NULL);
+    r->simulationarchive_walltime += time_now.tv_sec-r->simulationarchive_time.tv_sec+(time_now.tv_usec-r->simulationarchive_time.tv_usec)/1e6;
+    r->simulationarchive_time = time_now;
+    
     if (r->simulationarchive_version<2){
         // Old version
         FILE* of = fopen(r->simulationarchive_filename,"r+");
@@ -562,11 +567,6 @@ void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
         if (r->simulationarchive_interval){
             if (r->simulationarchive_next <= r->t){
                 r->simulationarchive_next += r->simulationarchive_interval;
-                
-                struct timeval time_now;
-                gettimeofday(&time_now,NULL);
-                r->simulationarchive_walltime += time_now.tv_sec-r->simulationarchive_time.tv_sec+(time_now.tv_usec-r->simulationarchive_time.tv_usec)/1e6;
-                r->simulationarchive_time = time_now;
                 reb_simulationarchive_append(r);
             }
         }
@@ -575,8 +575,6 @@ void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
             gettimeofday(&time_now,NULL);
             double delta_walltime = time_now.tv_sec-r->simulationarchive_time.tv_sec+(time_now.tv_usec-r->simulationarchive_time.tv_usec)/1e6;
             if (delta_walltime >= r->simulationarchive_interval_walltime){
-                r->simulationarchive_walltime += delta_walltime;
-                r->simulationarchive_time = time_now;
                 reb_simulationarchive_append(r);
             }
         }
