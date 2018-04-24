@@ -68,8 +68,9 @@ struct reb_simulation* reb_create_simulation_from_simulationarchive_with_message
     // This will break reading in old version.
     // Set to old version by default. Will be overwritten if new version was used.
     r->simulationarchive_version = 0;
+
+    fseek(inf, 0, SEEK_SET);
     while(reb_input_field(r, inf, warnings)){ }
-    printf("loaded orig\n");
 
     // Done?
     if (snapshot==0) return r;
@@ -225,12 +226,11 @@ struct reb_simulation* reb_create_simulation_from_simulationarchive_with_message
     return r;
 }
 
-struct reb_simulationarchive* reb_open_simulationarchive(const char* filename){
-    struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
+void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, const char* filename, enum reb_input_binary_messages* warnings){
     sa->inf = fopen(filename,"r");
     if (sa->inf==NULL){
-        free(sa);
-        return NULL; // Something went wrong.
+        *warnings &= REB_INPUT_BINARY_ERROR_NOFILE;
+        return;
     }
     sa->filename = malloc(strlen(filename)+1);
     strcpy(sa->filename,filename);
@@ -275,8 +275,8 @@ struct reb_simulationarchive* reb_open_simulationarchive(const char* filename){
         if (sa->size_first==-1 || sa->size_snapshot==-1){
             free(sa->filename);
             fclose(sa->inf);
-            free(sa);
-            return NULL; //Something went wrong. 
+            *warnings &= REB_INPUT_BINARY_ERROR_OUTOFRANGE;
+            return;
         }
         fseek(sa->inf, 0, SEEK_END);  
         sa->nblobs = (ftell(sa->inf)-sa->size_first)/sa->size_snapshot+1; // +1 accounts for first binary 
@@ -325,9 +325,21 @@ struct reb_simulationarchive* reb_open_simulationarchive(const char* filename){
                 free(sa->t);
                 free(sa->offset);
                 free(sa);
-                return NULL; //Something went wrong. 
+                *warnings &= REB_INPUT_BINARY_ERROR_SEEK;
+                return;
             }
         }
+    }
+}
+
+struct reb_simulationarchive* reb_open_simulationarchive(const char* filename){
+    struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
+    enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
+    reb_read_simulationarchive_with_messages(sa, filename, &warnings);
+    reb_input_process_warnings(NULL, warnings);
+    if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
+        free(sa);
+        sa = NULL;
     }
     return sa;
 }

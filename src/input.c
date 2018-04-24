@@ -367,7 +367,7 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
 struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum reb_input_binary_messages warnings){
     if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
         reb_error(r,"Cannot read binary file. Check filename and file contents.");
-        free(r);
+        if (r) free(r);
         return NULL;
     }
     if (warnings & REB_INPUT_BINARY_WARNING_VERSION){
@@ -381,17 +381,17 @@ struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum
     }
     if (warnings & REB_INPUT_BINARY_ERROR_FILENOTOPEN){
         reb_error(r,"Error while reading binary file (file was not open).");
-        free(r);
+        if (r) free(r);
         return NULL;
     }
     if (warnings & REB_INPUT_BINARY_ERROR_OUTOFRANGE){
         reb_error(r,"Index out of range.");
-        free(r);
+        if (r) free(r);
         return NULL;
     }
     if (warnings & REB_INPUT_BINARY_ERROR_SEEK){
         reb_error(r,"Error while trying to seek file.");
-        free(r);
+        if (r) free(r);
         return NULL;
     }
     if (warnings & REB_INPUT_BINARY_WARNING_FIELD_UNKOWN){
@@ -399,7 +399,7 @@ struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum
     }
     if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
         reb_error(r,"Cannot read binary file. Check filename and file contents.");
-        free(r);
+        if (r) free(r);
         return NULL;
     }
     return r;
