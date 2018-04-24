@@ -1,15 +1,14 @@
-from ctypes import POINTER, c_int, c_long, c_char_p, byref, pointer
+from ctypes import Structure, c_double, POINTER, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
 from .simulation import Simulation, BINARY_WARNINGS
 from . import clibrebound 
 import os
 import sys
 import math
 import warnings
-from collections import Mapping
 
 POINTER_REB_SIM = POINTER(Simulation) 
 
-class SimulationArchive(Mapping):
+class SimulationArchive(Structure):
     """
     SimulationArchive Class.
 
@@ -44,6 +43,31 @@ class SimulationArchive(Mapping):
     >>> print(sim.particles[1])
     >>> for sim in sa:
     >>>     print(sim.t, sim.particles[1].e)
+
+    """
+    _fields_ = [("_inf", c_void_p),
+                ("_filename", c_char_p),
+                ("version", c_int), 
+                ("size_first", c_long), 
+                ("size_snapshot", c_long), 
+                ("interval", c_double), 
+                ("walltime", c_double), 
+                ("t0", c_double), 
+                ("nblobs", c_long), 
+                ("offset", POINTER(c_uint32)), 
+                ("t", POINTER(c_double)) 
+                ]
+    def __init__(self,filename,setup=None, setup_args=(), rebxfilename=None):
+        self.setup = setup
+        self.setup_args = setup_args
+        self.rebxfilename = rebxfilename
+        w = c_int(0)
+        clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")),byref(w))
+        if w.value & (1+16+32+64+256) :     # Major error
+            raise ValueError(BINARY_WARNINGS[0])
+        for message, value in BINARY_WARNINGS:  # Just warnings
+            if w.value & value:
+                warnings.warn(message, RuntimeWarning)
 
     """
     def __init__(self,filename,setup=None, setup_args=(), rebxfilename=None):
@@ -92,7 +116,8 @@ class SimulationArchive(Mapping):
             self.tmax = sim.t
         else:
             self.tmax = self.tmin + self.interval*(self.Nblob)
-
+    """
+    
     def create_index(self):
         if self.Nblobs<1:
             raise ValueError("Unable to create index.")
@@ -118,10 +143,18 @@ class SimulationArchive(Mapping):
             raise AttributeError("Must access individual simulations with integer index.")
         if key < 0:
             key += len(self)
-        if key>= len(self):
+        if key>= len(self) or key<0:
             raise IndexError("Index out of range, number of snapshots stored in binary: %d."%len(self))
-        self._loadAndSynchronize(key)
-        return self.simp.contents
+        
+        w = c_int(0)
+        sim = Simulation()
+        clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim), byref(self), c_long(key), byref(w))
+        if w.value & (1+16+32+64+256) :     # Major error
+            raise ValueError(BINARY_WARNINGS[0])
+        for message, value in BINARY_WARNINGS:  # Just warnings
+            if w.value & value and value!=1:
+                warnings.warn(message, RuntimeWarning)
+        return sim
     
     def __setitem__(self, key, value):
         raise AttributeError("Cannot modify SimulationArchive.")
@@ -134,7 +167,7 @@ class SimulationArchive(Mapping):
             yield self[i]
 
     def __len__(self):
-        return self.Nblob+1  # number of binary blobs plus binary of t=0
+        return self.nblobs  # number of SA snapshots (also counting binary at t=0)
 
     def _loadAndSynchronize(self, snapshot, keep_unsynchronized=1):
         """

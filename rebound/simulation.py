@@ -323,6 +323,7 @@ class Simulation(Structure):
         """
         w = c_int(0)
         sim = Simulation()
+        sa = SimulationArchive(filename)
         clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim),byref(sa),snapshot,byref(w))
         if w.value & (1+16+32+64+256) :     # Major error
             raise ValueError(BINARY_WARNINGS[0])
@@ -1803,3 +1804,4 @@ class Particles(MutableMapping):
 # Import at the end to avoid circular dependence
 from . import horizons
 from . import debug
+from .simulationarchive import SimulationArchive
