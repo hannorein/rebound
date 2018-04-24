@@ -118,17 +118,11 @@ class SimulationArchive(Structure):
             self.tmax = self.tmin + self.interval*(self.Nblob)
     """
     
-    def create_index(self):
-        if self.Nblobs<1:
-            raise ValueError("Unable to create index.")
-        self.index = [(0,0)] * self.Nblobs
-
-
     def __str__(self):
         """
         Returns a string with details of this simulation archive.
         """
-        return "<rebound.SimulationArchive instance, snapshots={0} particles={1} filesize={2} >".format(str(len(self)),str(len(self.simp.contents.particles)), str(self.filesize))
+        return "<rebound.SimulationArchive instance, snapshots={0} >".format(str(len(self)))
 
     def __getitem__(self, key):
         PY3 = sys.version_info[0] == 3
@@ -160,7 +154,7 @@ class SimulationArchive(Structure):
         raise AttributeError("Cannot modify SimulationArchive.")
 
     def __delitem__(self, key):
-        pass
+        raise AttributeError("Cannot modify SimulationArchive.")
 
     def __iter__(self):
         for i in range(len(self)):
@@ -313,58 +307,3 @@ class SimulationArchive(Structure):
             yield self.getSimulation(t, **kwargs)
 
     
-    def estimateTime(self, t, tbefore=None):
-        """
-        This function estimates the time needed to integrate the simulation 
-        exactly to time the t starting from the nearest snapshot or the current
-        status of the simulation (whichever is smaller).
-
-        If an array is passed as an argument, the function will estimate the
-        time it will take to integrate to all the times in the array. The 
-        array is assumed to be sorted. The function assumes
-        a simulation can be reused to get to the next requested time if
-        this is faster than reloading the simulation from the nearest snapshot.
-
-        Note that the estimates are based on the runtime of the original 
-        simulation. If the original simulation was run on a different 
-        machine, the estimated runtime may differ. 
-        
-
-        Arguments
-        ---------
-        t : float, array
-            The exact time to which a simulation object is to be integrated.
-
-        Returns
-        -------
-        An approximation of the runtime (in seconds) required to integrate to time t. 
-        """
-        try:
-            # See if we have an array, will fail if not
-            iterator = iter(t)
-            t.sort()
-            tbefore = 0.
-            runtime_estimate = 0.
-            for _t in t:
-                runtime_estimate += self.estimateTime(_t, tbefore)
-                tbefore = _t
-
-        except TypeError:
-            # t is a single floating point number
-            try:
-                speed = self.speed
-            except AttributeError:
-                # get average speed from total runtime:
-                sim = self[-1]
-                speed = sim.t/sim.simulationarchive_walltime
-                # cache speed
-                self.speed = speed
-
-            bi, bt = self._getSnapshotIndex(t)
-            runtime_estimate = (t-bt)/speed
-            if tbefore is not None:
-                runtime_estimate = min((t-bt)/speed, (t-tbefore)/speed)
-
-        return runtime_estimate
-
-
