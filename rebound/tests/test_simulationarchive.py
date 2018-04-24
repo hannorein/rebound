@@ -383,34 +383,6 @@ class TestSimulationArchive(unittest.TestCase):
         sim = sa.getSimulation(tget,mode="close");
         self.assertAlmostEqual(sim.t,tget,delta=sim.dt)
 
-class TestSimulationArchiveEstimates(unittest.TestCase):
-    def test_sa_esimatesize(self):
-        sim = rebound.Simulation()
-        sim.add(m=1)
-        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
-        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
-        sim.integrator = "whfast"
-        sim.dt = 0.1313
-        sim.initSimulationArchive("test.bin", 10.)
-        s = sim.estimateSimulationArchiveSize(40.)
-        self.assertEqual(736,s)
-    
-    def test_sa_estimatetime(self):
-        sim = rebound.Simulation()
-        sim.add(m=1)
-        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
-        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
-        sim.integrator = "ias15"
-        sim.dt = 0.1313
-        sim.initSimulationArchive("test.bin", interval = 100.)
-        sim.integrate(400.,exact_finish_time=0)
-
-        sa = rebound.SimulationArchive("test.bin")
-        t = sa.estimateTime(150.)
-        self.assertLess(t,0.1)
-        t = sa.estimateTime([150.,175.])
-        self.assertLess(t,0.1)
-
 
 class TestSimulationArchiveWarningsErrors(unittest.TestCase):
     def test_sa_binary_missing(self):
