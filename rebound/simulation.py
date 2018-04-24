@@ -480,7 +480,9 @@ class Simulation(Structure):
         if interval_walltime:
             self.simulationarchive_interval_walltime = interval_walltime
 
-    
+    def simulationarchive_append(self):
+        clibrebound.reb_simulationarchive_append(byref(self))
+
     def process_messages(self):
         clibrebound.reb_get_next_message.restype = c_int
         buf = create_string_buffer(c_int.in_dll(clibrebound, "reb_max_messages_length").value)
