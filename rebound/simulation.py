@@ -321,11 +321,14 @@ class Simulation(Structure):
         A rebound.Simulation object.
         
         """
-        sim = Simulation.from_file(filename)
-        clibrebound.reb_simulationarchive_load_snapshot.restype = c_int
-        err = clibrebound.reb_simulationarchive_load_snapshot(byref(sim),c_char_p(filename.encode("ascii")),snapshot)
-        if err != 0:
-            raise AttributeError("Error loading simulation from archive.")
+        w = c_int(0)
+        sim = Simulation()
+        clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim),byref(sa),snapshot,byref(w))
+        if w.value & (1+16+32+64+256) :     # Major error
+            raise ValueError(BINARY_WARNINGS[0])
+        for message, value in BINARY_WARNINGS:  # Just warnings
+            if w.value & value:
+                warnings.warn(message, RuntimeWarning)
         return sim
 
     @classmethod

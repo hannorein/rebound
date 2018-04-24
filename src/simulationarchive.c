@@ -40,20 +40,20 @@
 #include "integrator_ias15.h"
 
 
-struct reb_simulation* reb_create_simulation_from_simulationarchive_with_messages(struct reb_simulationarchive* sa, long snapshot, enum reb_input_binary_messages* warnings){
+void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simulation* r, struct reb_simulationarchive* sa, long snapshot, enum reb_input_binary_messages* warnings){
     FILE* inf = sa->inf;
     if (inf == NULL){
         *warnings |= REB_INPUT_BINARY_ERROR_FILENOTOPEN;
-        return NULL;
+        return;
     }
     if (snapshot<0) snapshot += sa->nblobs;
     if (snapshot>sa->nblobs || snapshot<0){
         *warnings |= REB_INPUT_BINARY_ERROR_OUTOFRANGE;
-        return NULL;
+        return;
     }
     
     // load original binary file
-    struct reb_simulation* r = reb_create_simulation();
+    reb_init_simulation(r);
     reb_reset_temporary_pointers(r);
     reb_reset_function_pointers(r);
     r->simulationarchive_filename = NULL;
@@ -66,13 +66,13 @@ struct reb_simulation* reb_create_simulation_from_simulationarchive_with_message
     while(reb_input_field(r, inf, warnings)){ }
 
     // Done?
-    if (snapshot==0) return r;
+    if (snapshot==0) return;
 
     // Read SA snapshot
     if(fseek(inf, sa->offset[snapshot], SEEK_SET)){
         *warnings |= REB_INPUT_BINARY_ERROR_SEEK;
         reb_free_simulation(r);
-        return NULL;
+        return;
     }
     if (r->simulationarchive_version<2){ 
         fread(&(r->t),sizeof(double),1,inf);
@@ -210,19 +210,20 @@ struct reb_simulation* reb_create_simulation_from_simulationarchive_with_message
             default:
                 *warnings |= REB_INPUT_BINARY_ERROR_INTEGRATOR;
                 reb_free_simulation(r);
-                return NULL;
+                return;
         }
     }else{
         // Version 2
         while(reb_input_field(r, inf, warnings)){ }
     }
-    return r;
+    return;
 }
 
 
 struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive* sa, long snapshot){
     enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
-    struct reb_simulation* r = reb_create_simulation_from_simulationarchive_with_messages(sa, snapshot, &warnings);
+    struct reb_simulation* r = reb_create_simulation();
+    reb_create_simulation_from_simulationarchive_with_messages(r, sa, snapshot, &warnings);
     r = reb_input_process_warnings(r, warnings);
     return r; // might be null if error occured
 }
