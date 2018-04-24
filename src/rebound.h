@@ -1648,13 +1648,9 @@ struct reb_particle reb_particle_divide(struct reb_particle p1, double value);
  */
 
 /**
- * @brief Load information from a specific snapshot a SimulationArchive file.
- * @detail This function is used by the python wrapper. If you use it by itself,
- * be sure to look at the python source code beforehand.
+ * @brief Allocates a simulation and sets it to a specific snapshot in a SimulationArchive file.
  */
 struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive* sa, long snapshot);
-
-struct reb_simulation* reb_create_simulation_from_simulationarchive_with_messages(struct reb_simulationarchive* sa, long snapshot, enum reb_input_binary_messages* warnings);
 
 /**
  * @brief Estimate the file size of a simulation using SimulationArchive.
