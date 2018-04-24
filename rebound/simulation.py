@@ -437,31 +437,6 @@ class Simulation(Structure):
         self._sa_filename = c_char_p(filename.encode("ascii")) # keep a reference to string
         self._simulationarchive_filename = self._sa_filename
     
-    def estimateSimulationArchiveSize(self, tmax):
-        """
-        This function estimates the SimulationArchive file size (in bytes)
-        before a simulation is run. This is useful to check if the interval
-        results in a resonable filesize.
-
-        Note that the simulation setup needs to be complete, that is
-        with all the particles present, before this function can return 
-        meaningful results.
-        
-        Arguments
-        ---------
-        tmax : float
-            Maximum integration time in current code units.
-        """
-        if self.simulationarchive_interval ==0.:
-            raise RuntimeError("Need to set simulationarchive_interval before estimating filesize.")
-        if self.N==0:
-            raise RuntimeError("Need to add particles to simulation before estimating filesize.")
-
-        clibrebound.reb_simulationarchive_estimate_size.restype = c_long
-        estsize = clibrebound.reb_simulationarchive_estimate_size(byref(self), c_double(tmax))
-        self.process_messages()
-        return estsize
-        
     def initSimulationArchive(self, filename, interval=None, interval_walltime=None):
         """
         This function initializes the Simulation Archive so that

@@ -1652,13 +1652,6 @@ struct reb_particle reb_particle_divide(struct reb_particle p1, double value);
  */
 struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive* sa, long snapshot);
 
-/**
- * @brief Estimate the file size of a simulation using SimulationArchive.
- * @param r The simulation to be considered. Needs to have r->simulationarchive_interval set and particles need to be present in the simulation. 
- * @param tmax Maximum integration time. 
- * @returns Returns the approximate size of the SimulationArchive file in bytes.
- */
-long reb_simulationarchive_estimate_size(struct reb_simulation* const r, double tmax);
 /** @} */
 
 /**
