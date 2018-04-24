@@ -20,13 +20,16 @@
 
 int main(int argc, char* argv[]) {
     char filename[512] = "simulationarchive.bin";
+    double tmax = 10000; 
+
     // Trying to restart from the Simulation Archive.
-    struct reb_simulation* r = reb_create_simulation_from_simulationarchive(filename);
+    struct reb_simulationarchive* sa = reb_open_simulationarchive(filename);
+    struct reb_simulation* r = reb_create_simulation_from_simulationarchive(sa,-1);
+    reb_close_simulationarchive(sa);
     // Check if that was successful
     if (r==NULL){
         printf("No simulation archive found. Creating new simulation.\n");
         r= reb_create_simulation();
-        r->simulationarchive_version = 1; // Old version
         struct reb_particle star = {.m=1.};
         reb_add(r, star);
         struct reb_particle planet1 = reb_tools_orbit2d_to_particle(r->G, star, 1e-3, 1., 0.01, 0., 0.);
@@ -35,17 +38,21 @@ int main(int argc, char* argv[]) {
         reb_add(r, planet2);
         reb_move_to_com(r);
         r->dt = 6./365.25*2.*M_PI;                      // 6 days in units where G=1 
-        r->simulationarchive_interval = 2.*M_PI*100000.; // output data every 100000 years
+        r->simulationarchive_interval = 1000.;          // output data every 1000 time units
         r->ri_whfast.safe_mode = 0;                      
         r->ri_whfast.corrector = 5;    
         r->integrator = REB_INTEGRATOR_WHFAST;
     }else{
         printf("Found simulation archive. Loaded snapshot at t=%.16f.\n",r->t);
+        tmax = r->t + 2000; // integrate a little further
     }
 
-    r->simulationarchive_filename = filename;
+    r->simulationarchive_filename = filename; // This will append the SimulationArchive
+    r->simulationarchive_interval = 100.;          // output data every 1000 time units
 
-    reb_integrate(r, 2.*M_PI*1e10); //10 Gyr
+    reb_integrate(r, tmax); 
+    printf("Final time: %f\n",r->t);
+    reb_simulationarchive_append(r);
 }
 
 

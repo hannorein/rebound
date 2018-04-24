@@ -221,6 +221,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
 
 
 struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive* sa, long snapshot){
+    if (sa==NULL) return NULL;
     enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
     struct reb_simulation* r = reb_create_simulation();
     reb_create_simulation_from_simulationarchive_with_messages(r, sa, snapshot, &warnings);
@@ -231,7 +232,7 @@ struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_s
 void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, const char* filename, enum reb_input_binary_messages* warnings){
     sa->inf = fopen(filename,"r");
     if (sa->inf==NULL){
-        *warnings &= REB_INPUT_BINARY_ERROR_NOFILE;
+        *warnings |= REB_INPUT_BINARY_ERROR_NOFILE;
         return;
     }
     sa->filename = malloc(strlen(filename)+1);
@@ -292,7 +293,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
         if (sa->size_first==-1 || sa->size_snapshot==-1){
             free(sa->filename);
             fclose(sa->inf);
-            *warnings &= REB_INPUT_BINARY_ERROR_OUTOFRANGE;
+            *warnings |= REB_INPUT_BINARY_ERROR_OUTOFRANGE;
             return;
         }
         fseek(sa->inf, 0, SEEK_END);  
@@ -342,7 +343,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                 free(sa->t);
                 free(sa->offset);
                 free(sa);
-                *warnings &= REB_INPUT_BINARY_ERROR_SEEK;
+                *warnings |= REB_INPUT_BINARY_ERROR_SEEK;
                 return;
             }
         }
@@ -362,6 +363,7 @@ struct reb_simulationarchive* reb_open_simulationarchive(const char* filename){
 }
 
 void reb_close_simulationarchive(struct reb_simulationarchive* sa){
+    if (sa==NULL) return;
     if (sa->inf){
         fclose(sa->inf);
     }
