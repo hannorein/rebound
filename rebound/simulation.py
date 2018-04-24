@@ -31,7 +31,11 @@ BINARY_WARNINGS = [
     ("Binary file was saved with a different version of REBOUND. Binary format might have changed.", 2),
     ("You have to reset function pointers after creating a reb_simulation struct with a binary file.", 4),
     ("Binary file might be corrupted. Number of particles found does not match particle number expected.", 8),
-    ("Unknown field found in binary file.", 128)
+    ("Error while reading binary file (file was closed).", 16),
+    ("Index out of range.", 32),
+    ("Error while trying to seek file.", 64),
+    ("Encountered unkown field in file. File might have been saved with a different version of REBOUND.", 128),
+    ("Integrator type is not supported by this simulation archive version.", 256)
 ]
 
 class reb_hash_pointer_pair(Structure):
@@ -354,7 +358,7 @@ class Simulation(Structure):
         w = c_int(0)
         sim = Simulation()
         clibrebound.reb_create_simulation_from_binary_with_messages(byref(sim), c_char_p(filename.encode("ascii")),byref(w))
-        if w.value & 1:     # Major error
+        if w.value & (1+16+32+64+256) :     # Major error
             raise ValueError(BINARY_WARNINGS[0])
         for message, value in BINARY_WARNINGS:  # Just warnings
             if w.value & value and value!=1:

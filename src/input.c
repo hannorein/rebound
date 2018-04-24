@@ -364,27 +364,52 @@ void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, c
     fclose(inf);
 }
 
-struct reb_simulation* reb_create_simulation_from_binary(char* filename){
-    enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
-    struct reb_simulation* r = reb_create_simulation();
-    reb_create_simulation_from_binary_with_messages(r,filename,&warnings);
+struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum reb_input_binary_messages warnings){
+    if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
+        reb_error(r,"Cannot read binary file. Check filename and file contents.");
+        free(r);
+        return NULL;
+    }
     if (warnings & REB_INPUT_BINARY_WARNING_VERSION){
         reb_warning(r,"Binary file was saved with a different version of REBOUND. Binary format might have changed.");
-    }
-    if (warnings & REB_INPUT_BINARY_WARNING_FIELD_UNKOWN){
-        reb_warning(r,"Unknown field found in binary file.");
-    }
-    if (warnings & REB_INPUT_BINARY_WARNING_PARTICLES){
-        reb_warning(r,"Binary file might be corrupted. Number of particles found does not match expected number.");
     }
     if (warnings & REB_INPUT_BINARY_WARNING_POINTERS){
         reb_warning(r,"You have to reset function pointers after creating a reb_simulation struct with a binary file.");
     }
+    if (warnings & REB_INPUT_BINARY_WARNING_PARTICLES){
+        reb_warning(r,"Binary file might be corrupted. Number of particles found does not match expected number.");
+    }
+    if (warnings & REB_INPUT_BINARY_ERROR_FILENOTOPEN){
+        reb_error(r,"Error while reading binary file (file was not open).");
+        free(r);
+        return NULL;
+    }
+    if (warnings & REB_INPUT_BINARY_ERROR_OUTOFRANGE){
+        reb_error(r,"Index out of range.");
+        free(r);
+        return NULL;
+    }
+    if (warnings & REB_INPUT_BINARY_ERROR_SEEK){
+        reb_error(r,"Error while trying to seek file.");
+        free(r);
+        return NULL;
+    }
+    if (warnings & REB_INPUT_BINARY_WARNING_FIELD_UNKOWN){
+        reb_warning(r,"Unknown field found in binary file.");
+    }
     if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
         reb_error(r,"Cannot read binary file. Check filename and file contents.");
         free(r);
-        r = NULL;
+        return NULL;
     }
+    return r;
+}
+
+struct reb_simulation* reb_create_simulation_from_binary(char* filename){
+    enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
+    struct reb_simulation* r = reb_create_simulation();
+    reb_create_simulation_from_binary_with_messages(r,filename,&warnings);
+    r = reb_input_process_warnings(r, warnings);
     return r;
 }
 

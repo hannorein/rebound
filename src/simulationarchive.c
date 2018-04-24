@@ -42,7 +42,9 @@
 
 struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive* sa, long snapshot){
     enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
-    return reb_create_simulation_from_simulationarchive_with_messages(sa, snapshot, &warnings);
+    struct reb_simulation* r = reb_create_simulation_from_simulationarchive_with_messages(sa, snapshot, &warnings);
+    r = reb_input_process_warnings(r, warnings);
+    return r; // might be null if error occured
 }
 
 struct reb_simulation* reb_create_simulation_from_simulationarchive_with_messages(struct reb_simulationarchive* sa, long snapshot, enum reb_input_binary_messages* warnings){
