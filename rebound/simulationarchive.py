@@ -52,7 +52,6 @@ class SimulationArchive(Structure):
                 ("size_snapshot", c_long), 
                 ("interval", c_double), 
                 ("walltime", c_double), 
-                ("t0", c_double), 
                 ("nblobs", c_long), 
                 ("offset", POINTER(c_uint32)), 
                 ("t", POINTER(c_double)) 
@@ -68,6 +67,10 @@ class SimulationArchive(Structure):
         for message, value in BINARY_WARNINGS:  # Just warnings
             if w.value & value:
                 warnings.warn(message, RuntimeWarning)
+        if self.nblobs<1:
+            RuntimeError("Something went wrong. SimulationArchive is empty.")
+        self.tmin = self.t[0]
+        self.tmax = self.t[self.nblobs-1]
 
     """
     def __init__(self,filename,setup=None, setup_args=(), rebxfilename=None):
@@ -146,7 +149,7 @@ class SimulationArchive(Structure):
         if w.value & (1+16+32+64+256) :     # Major error
             raise ValueError(BINARY_WARNINGS[0])
         for message, value in BINARY_WARNINGS:  # Just warnings
-            if w.value & value and value!=1:
+            if w.value & value:
                 warnings.warn(message, RuntimeWarning)
         return sim
     
@@ -190,34 +193,21 @@ class SimulationArchive(Structure):
         """
         Return the index for the snapshot just before t
         """
-        if t>self.tmax+self.dt or t<self.tmin:
-            raise ValueError("Requested time outside of baseline stored in binary fie.")
-        try:
-            bi = max(0,int(math.floor((t-self.dt-self.tmin)/self.interval)))
-            bt = self.tmin + self.interval*bi
-            return bi, bt
-        except AttributeError: # No interval, need to use timetable
-            # Bisection method
-            sim = self.simp.contents
-            l = 0
-            r = self.Nblob
-            while True:
-                bi = l+(r-l)//2
-                if self.timetable[bi] == -1.:
-                    clibrebound.reb_simulationarchive_load_snapshot.restype = c_int
-                    retv = clibrebound.reb_simulationarchive_load_snapshot(self.simp, self.cfilename, bi)
-                    if retv:
-                        raise ValueError("Error while loading snapshot in binary file. Errorcode: %d."%retv)
-                    self.timetable[bi] = sim.t
-                if self.timetable[bi]>t:
-                    r = bi
-                else:
-                    l = bi
-                if r-1<=l:
-                    bi = l
-                    break
-            return bi, sim.t
-        return 0, 0.
+        if t>self.tmax or t<self.tmin:
+            raise ValueError("Requested time outside of baseline stored in binary file.")
+        # Bisection method
+        l = 0
+        r = len(self)
+        while True:
+            bi = l+(r-l)//2
+            if self.t[bi]>t:
+                r = bi
+            else:
+                l = bi
+            if r-1<=l:
+                bi = l
+                break
+        return bi, self.t[bi]
 
     def getSimulation(self, t, mode='snapshot', keep_unsynchronized=1):
         """
@@ -261,23 +251,25 @@ class SimulationArchive(Structure):
             raise AttributeError("Unknown mode.")
 
         bi, bt = self._getSnapshotIndex(t)
-        if mode=='snapshot':
-            self._loadAndSynchronize(bi, keep_unsynchronized=keep_unsynchronized)
-            return self.simp.contents
-        else:
-            sim = self.simp.contents
-            if sim.t<t and bt-sim.dt<sim.t \
-                and ((sim.integrator != "whfast" or (sim.ri_whfast.keep_unsynchronized==1 or sim.ri_whfast.safe_mode == 1))
-                or (sim.integrator != "mercurius" or (sim.ri_mercurius.keep_unsynchronized==1 or sim.ri_mercurius.safe_mode == 1))):
-                # Reuse current simulation
-                pass
-            else:
-                # Load from snapshot
-                clibrebound.reb_simulationarchive_load_snapshot.restype = c_int
-                retv = clibrebound.reb_simulationarchive_load_snapshot(self.simp, self.cfilename, c_long(bi));
-                if retv:
-                    raise ValueError("Error while loading snapshot in binary file. Errorcode: %d."%retv)
+        sim = Simulation()
+        w = c_int(0)
+        clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim),byref(self),bi,byref(w))
 
+        if mode=='snapshot':
+            if sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1:
+                keep_unsynchronized = 0
+            if sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1:
+                keep_unsynchronized = 0
+            sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
+            sim.ri_mercurius.keep_unsynchronized = keep_unsynchronized
+            sim.integrator_synchronize()
+            if self.setup:
+                self.setup(sim, *self.setup_args)
+            if self.rebxfilename:
+                import reboundx
+                rebx = reboundx.Extras.from_file(sim, self.rebxfilename)
+            return sim
+        else:
             if mode=='exact':
                 keep_unsynchronized==0
             if sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1:

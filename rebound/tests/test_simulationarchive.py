@@ -243,7 +243,7 @@ class TestSimulationArchive(unittest.TestCase):
 
         self.assertEqual(x0,x1)
 
-        tget = 35.123
+        tget = 27.123
         sim = sa.getSimulation(tget,mode="exact");
         self.assertAlmostEqual(sim.t,tget,delta=1e-14)
         tget = 25.123
@@ -304,7 +304,7 @@ class TestSimulationArchive(unittest.TestCase):
 
         self.assertEqual(x0,x1)
         
-        tget = 35.123
+        tget = 27.123
         sim = sa.getSimulation(tget,mode="exact");
         self.assertAlmostEqual(sim.t,tget,delta=1e-14)
         tget = 25.123
@@ -340,7 +340,7 @@ class TestSimulationArchive(unittest.TestCase):
 
         self.assertEqual(x0,x1)
         
-        tget = 35.123
+        tget = 27.123
         sim = sa.getSimulation(tget,mode="exact");
         self.assertAlmostEqual(sim.t,tget,delta=1e-14)
         tget = 25.123
@@ -376,7 +376,7 @@ class TestSimulationArchive(unittest.TestCase):
 
         self.assertEqual(x0,x1)
         
-        tget = 216.123
+        tget = 116.123
         sim = sa.getSimulation(tget,mode="exact");
         self.assertAlmostEqual(sim.t,tget,delta=1e-14)
         tget = 116.123
@@ -430,7 +430,7 @@ class TestSimulationArchiveWarningsErrors(unittest.TestCase):
             f.write("1.0.0     ".encode('ascii'))
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            sim = rebound.SimulationArchive("test.bin")
+            sa = rebound.SimulationArchive("test.bin")
             self.assertEqual(1, len(w)) 
 
 

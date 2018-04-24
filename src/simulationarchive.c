@@ -241,14 +241,29 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
     fseek(sa->inf, 0, SEEK_SET);  
     struct reb_binary_field field = {0};
     sa->version = 0;
+    double t0 = 0;
     do{
         fread(&field,sizeof(struct reb_binary_field),1,sa->inf);
         switch (field.type){
             case REB_BINARY_FIELD_TYPE_HEADER:
-                fseek(sa->inf,64 - sizeof(struct reb_binary_field),SEEK_CUR);
+                //fseek(sa->inf,64 - sizeof(struct reb_binary_field),SEEK_CUR);
+                {
+                    long objects = 0;
+                    // Input header.
+                    const long bufsize = 64 - sizeof(struct reb_binary_field);
+                    char readbuf[bufsize], curvbuf[bufsize];
+                    const char* header = "REBOUND Binary File. Version: ";
+                    sprintf(curvbuf,"%s%s",header+sizeof(struct reb_binary_field), reb_version_str);
+                    
+                    objects += fread(readbuf,sizeof(char),bufsize,sa->inf);
+                    // Note: following compares version, but ignores githash.
+                    if(strncmp(readbuf,curvbuf,bufsize)!=0){
+                        *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
+                    }
+                }
                 break;
             case REB_BINARY_FIELD_TYPE_T:
-                fread(&(sa->t0), sizeof(double),1,sa->inf);
+                fread(&t0, sizeof(double),1,sa->inf);
                 break;
             case REB_BINARY_FIELD_TYPE_SAVERSION:
                 fread(&(sa->version), sizeof(int),1,sa->inf);
@@ -284,7 +299,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
         sa->nblobs = (ftell(sa->inf)-sa->size_first)/sa->size_snapshot+1; // +1 accounts for first binary 
         sa->t = malloc(sizeof(double)*sa->nblobs);
         sa->offset = malloc(sizeof(uint32_t)*sa->nblobs);
-        sa->t[0] = sa->t0;
+        sa->t[0] = t0;
         sa->offset[0] = 0;
         for(long i=1;i<sa->nblobs;i++){
             double offset = sa->size_first+(i-1)*sa->size_snapshot;

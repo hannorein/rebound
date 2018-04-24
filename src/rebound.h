@@ -638,7 +638,6 @@ struct reb_simulationarchive{
     long size_snapshot;
     double interval;
     double walltime;
-    double t0;
     long nblobs;
     uint32_t* offset;
     double* t;
