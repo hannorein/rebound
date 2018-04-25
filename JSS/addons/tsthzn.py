@@ -6,6 +6,10 @@ sim = rebound.Simulation()
 sim.units = ('AU', 'days', 'Msun')
 
 # We can add Jupiter and four of its moons by name, since REBOUND is linked to the HORIZONS database.
-labels = ["Jupiter", "Io", "Europa","Ganymede","Callisto"]
+labels = ["Neptune barycenter"]
 sim.add(labels, date='2018-03-30 12:00')
-print('done')
+
+sim.status()
+print(sim.particles['Neptune barycenter'])
+
+
