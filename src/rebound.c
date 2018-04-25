@@ -66,6 +66,10 @@ const char* reb_version_str = "3.5.13";         // **VERSIONLINE** This line get
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 void reb_step(struct reb_simulation* const r){
+    // Update walltime
+    struct timeval time_beginning;
+    gettimeofday(&time_beginning,NULL);
+
     // A 'DKD'-like integrator will do the first 'D' part.
     PROFILING_START()
     if (r->pre_timestep_modifications){
@@ -148,6 +152,11 @@ void reb_step(struct reb_simulation* const r){
         reb_collision_search(r);
     }
     PROFILING_STOP(PROFILING_CAT_COLLISION)
+    
+    // Update walltime
+    struct timeval time_end;
+    gettimeofday(&time_end,NULL);
+    r->walltime += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 }
 
 void reb_exit(const char* const msg){
@@ -425,6 +434,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->save_messages = 0;
     r->track_energy_offset = 0;
     r->display_data = NULL;
+    r->walltime = 0;
 
     r->minimum_collision_velocity = 0;
     r->collisions_plog  = 0;

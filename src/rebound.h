@@ -603,6 +603,7 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_MERCURIUS_RHILL = 122,
     REB_BINARY_FIELD_TYPE_MERCURIUS_KEEPUNSYNC = 124,
     REB_BINARY_FIELD_TYPE_SAVERSION = 125,
+    REB_BINARY_FIELD_TYPE_WALLTIME = 126,
     REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
     REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
     REB_BINARY_FIELD_TYPE_END = 9999,
@@ -764,6 +765,7 @@ struct reb_simulation {
     struct reb_display_data* display_data; /// < Datastructure stores visualization related data. Does not have to be modified by the user. 
     int track_energy_offset;        ///< Track energy change during collisions and ejections (default: 0).
     double energy_offset;           ///< Energy offset due to collisions and ejections (only calculated if track_energy_offset=1).
+    double walltime;                ///< Walltime in seconds used by REBOUND for this simulation (integration only, not visualization, heartbeat function, etc).
     /** @} */
 
     /**

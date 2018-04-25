@@ -194,6 +194,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(SAINTERVALWALLTIME, &r->simulationarchive_interval_walltime);
         CASE(SANEXT,             &r->simulationarchive_next);
         CASE(SAWALLTIME,         &r->simulationarchive_walltime);
+        CASE(WALLTIME,           &r->walltime);
         CASE(COLLISION,          &r->collision);
         CASE(VISUALIZATION,      &r->visualization);
         CASE(INTEGRATOR,         &r->integrator);

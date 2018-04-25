@@ -286,6 +286,7 @@ void _reb_output_binary_to_stream(struct reb_simulation* r, FILE* of){
     WRITE_FIELD(SAINTERVALWALLTIME, &r->simulationarchive_interval_walltime, sizeof(double));
     WRITE_FIELD(SANEXT,             &r->simulationarchive_next,         sizeof(long));
     WRITE_FIELD(SAWALLTIME,         &r->simulationarchive_walltime,     sizeof(double));
+    WRITE_FIELD(WALLTIME,           &r->walltime,                       sizeof(double));
     WRITE_FIELD(COLLISION,          &r->collision,                      sizeof(int));
     WRITE_FIELD(VISUALIZATION,      &r->visualization,                  sizeof(int));
     WRITE_FIELD(INTEGRATOR,         &r->integrator,                     sizeof(int));
