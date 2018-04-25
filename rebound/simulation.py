@@ -437,7 +437,7 @@ class Simulation(Structure):
         self._sa_filename = c_char_p(filename.encode("ascii")) # keep a reference to string
         self._simulationarchive_filename = self._sa_filename
     
-    def initSimulationArchive(self, filename, interval=None, interval_walltime=None):
+    def initSimulationArchive(self, filename, interval=None, walltime=None):
         """
         This function initializes the Simulation Archive so that
         binary data can be outputted to the SimulationArchive file 
@@ -450,7 +450,7 @@ class Simulation(Structure):
             Filename of the binary file.
         interval : float
             Interval between outputs in code units.
-        interval_walltime : float
+        walltime : float
             Interval between outputs in wall time (seconds). 
             Useful when using IAS15 with adaptive timesteps. 
         
@@ -467,18 +467,15 @@ class Simulation(Structure):
         >>> sim.integrate(1e8)
         """
         self.simulationarchive_filename = filename
-        if interval is None and interval_walltime is None:
-            raise AttributeError("Need to specify either interval or interval_walltime.")
+        if interval is None and walltime is None:
+            raise AttributeError("Need to specify either interval or walltime.")
         if self.dt<0.:
             raise RuntimeError("Simulation archive requires a positive timestep. If you want to integrate backwards in time, simply flip the sign of all velocities to keep the timestep positive.")
-        self.simulationarchive_walltime = 0.
         self.simulationarchive_next = 0.
-        self.simulationarchive_interval = 0. 
-        self.simulationarchive_interval_walltime = 0.
         if interval:
-            self.simulationarchive_interval = interval
-        if interval_walltime:
-            self.simulationarchive_interval_walltime = interval_walltime
+            self.simulationarchive_auto_interval = interval
+        if walltime:
+            self.simulationarchive_auto_walltime = walltime
 
     def simulationarchive_append(self):
         clibrebound.reb_simulationarchive_append(byref(self))
@@ -1632,6 +1629,7 @@ Simulation._fields_ = [
                 ("display_data", POINTER(reb_display_data)),
                 ("track_energy_offset", c_int),
                 ("energy_offset", c_double),
+                ("walltime", c_double),
                 ("boxsize", reb_vec3d),
                 ("boxsize_max", c_double),
                 ("root_size", c_double),
@@ -1660,12 +1658,10 @@ Simulation._fields_ = [
                 ("simulationarchive_version", c_int),
                 ("simulationarchive_size_first", c_long),
                 ("simulationarchive_size_snapshot", c_long),
-                ("simulationarchive_interval", c_double),
-                ("simulationarchive_interval_walltime", c_double),
+                ("simulationarchive_auto_interval", c_double),
+                ("simulationarchive_auto_walltime", c_double),
                 ("simulationarchive_next", c_double),
                 ("_simulationarchive_filename", c_char_p),
-                ("simulationarchive_walltime", c_double),
-                ("simulationarchive_time", timeval),
                 ("_visualization", c_int),
                 ("_collision", c_int),
                 ("_integrator", c_int),

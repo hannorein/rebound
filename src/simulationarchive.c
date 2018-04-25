@@ -563,10 +563,12 @@ void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
     }
 }
 void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* filename){
+    printf("\nSA Snapshot\n");
     if (filename==NULL) filename = r->simulationarchive_filename;
     struct stat buffer;
     if (stat(filename, &buffer) < 0){
         // File does not exist. Output binary.
+    printf("\nSA FIRST\n");
         if (r->simulationarchive_version<2){
             // Old version
             r->simulationarchive_size_snapshot = reb_simulationarchive_snapshotsize(r);

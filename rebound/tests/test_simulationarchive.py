@@ -354,7 +354,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "ias15"
         sim.dt = 0.1313
-        sim.initSimulationArchive("test.bin", interval_walltime = 0.01)
+        sim.initSimulationArchive("test.bin", walltime = 0.01)
         sim.integrate(400.,exact_finish_time=0)
 
         sim = None
@@ -395,7 +395,7 @@ class TestSimulationArchiveWarningsErrors(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "ias15"
         sim.dt = 0.1313
-        sim.initSimulationArchive("test.bin", interval_walltime = 0.01)
+        sim.initSimulationArchive("test.bin", walltime = 0.01)
         sim.integrate(400.,exact_finish_time=0)
         with open("test.bin","r+b") as f:
             f.seek(30)
