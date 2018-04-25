@@ -77,7 +77,7 @@ def initReboundBinaryFile(project_name, sys_argv):
 
     BINFILE = project_name+'-InitialConditions.bin'
     CONFIGFILE = project_name+'.cfg'
-    REBUILD_FLAGS = ['-n', '-r', '-l', '-a', '-u']
+    REBUILD_FLAGS = ['-n', '-r', '-l', '-a', '-u', '-s']
 
 # read in config file
 
@@ -97,10 +97,10 @@ def initReboundBinaryFile(project_name, sys_argv):
         sim.add(particles, date=cfin['Simulation']['start_time'])
 
         if add_to_sun[0]:
-            for i in range(0,len(sim.particles),1):
-                if particles[i] in add_to_sun:
-                    sim.particles['Sun'].m += sim.particles[i].m
-            for particle in add_to_sun:sim.remove(hash=particle)
+            for particle in particles:
+                if particle in add_to_sun: 
+                    sim.particles['Sun'].m += sim.particles[particle].m
+                    sim.remove(hash=particle)
     else:
         sim         = rb.Simulation.from_file(BINFILE)
 
