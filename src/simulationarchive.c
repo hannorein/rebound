@@ -578,27 +578,24 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
     }
 }
 
-void reb_simulationarchive_automate_interval(struct reb_simulation* const r, const char* filename, double interval){
-    if (r==NULL) return;
+static int _reb_simulationarchive_automate_set_filename(struct reb_simulation* const r, const char* filename){
+    if (r==NULL) return -1;
     if (filename==NULL){
         reb_error(r, "Filename missing.");
-        return;
+        return -1;
     }
     free(r->simulationarchive_filename);
     r->simulationarchive_filename = malloc((strlen(filename)+1)*sizeof(char));
     strcpy(r->simulationarchive_filename, filename);
+    return 0;
+}
+void reb_simulationarchive_automate_interval(struct reb_simulation* const r, const char* filename, double interval){
+    if(_reb_simulationarchive_automate_set_filename(r,filename)<0) return;
     r->simulationarchive_auto_interval = interval;
     r->simulationarchive_next = r->t;
 }
 void reb_simulationarchive_automate_walltime(struct reb_simulation* const r, const char* filename, double walltime){
-    if (r==NULL) return;
-    if (filename==NULL){
-        reb_error(r, "Filename missing.");
-        return;
-    }
-    free(r->simulationarchive_filename);
-    r->simulationarchive_filename = malloc((strlen(filename)+1)*sizeof(char));
-    strcpy(r->simulationarchive_filename, filename);
+    if(_reb_simulationarchive_automate_set_filename(r,filename)<0) return;
     r->simulationarchive_auto_walltime = walltime;
     r->simulationarchive_next = r->walltime;
 }
