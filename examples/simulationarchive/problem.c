@@ -38,7 +38,6 @@ int main(int argc, char* argv[]) {
         reb_add(r, planet2);
         reb_move_to_com(r);
         r->dt = 6./365.25*2.*M_PI;                      // 6 days in units where G=1 
-        r->simulationarchive_interval = 1000.;          // output data every 1000 time units
         r->ri_whfast.safe_mode = 0;                      
         r->ri_whfast.corrector = 5;    
         r->integrator = REB_INTEGRATOR_WHFAST;
@@ -46,13 +45,15 @@ int main(int argc, char* argv[]) {
         printf("Found simulation archive. Loaded snapshot at t=%.16f.\n",r->t);
         tmax = r->t + 2000; // integrate a little further
     }
-
-    r->simulationarchive_filename = filename; // This will append the SimulationArchive
-    r->simulationarchive_interval = 100.;          // output data every 1000 time units
+    
+    // Automatically create a snapshot every 100 time units
+    reb_simulationarchive_automate_interval(r,filename,100.);
 
     reb_integrate(r, tmax); 
     printf("Final time: %f\n",r->t);
-    reb_simulationarchive_append(r);
+    
+    // Manually append a snapshot
+    reb_simulationarchive_snapshot(r,filename);
 }
 
 

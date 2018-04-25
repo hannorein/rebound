@@ -646,6 +646,8 @@ struct reb_simulationarchive{
 struct reb_simulationarchive* reb_open_simulationarchive(const char* filename);
 void reb_close_simulationarchive(struct reb_simulationarchive* sa);
 void reb_simulationarchive_snapshot(struct reb_simulation* r, const char* filename);
+void reb_simulationarchive_automate_interval(struct reb_simulation* const r, const char* filename, double interval);
+void reb_simulationarchive_automate_walltime(struct reb_simulation* const r, const char* filename, double walltime);
 
 /**
  * @brief Holds a particle's hash and the particle's index in the particles array.
