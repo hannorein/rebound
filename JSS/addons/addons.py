@@ -38,7 +38,7 @@ def configWrite(file_name, clarg, sys_argv, update=True):
     if '-G' in sys_argv:
         cf.set('Integrator', 'gravity', clarg.gravity)
     if '-C' in sys_argv:
-        cf.st('Integrator', 'collision', clarg.collision)
+        cf.set('Integrator', 'collision', clarg.collision)
     with open(file_name, 'w') as configfile:
         cf.write(configfile)
 
@@ -73,12 +73,14 @@ def getMass(body=None):
 	mass /= rb.horizons.Gkmkgs # divide by G (horizons masses give GM. units of km^3/kg/s^2)
 	return mass
 
-def initReboundBinaryFile(project_name):
+def initReboundBinaryFile(project_name, sys_argv):
 
-    BINFILE = project_name+'-InCon.bin'
+    BINFILE = project_name+'-InitialConditions.bin'
+    CONFIGFILE = project_name+'.cfg'
+    REBUILD_FLAGS = ['-n', '-r', '-l', '-a', '-u']
 
 # read in config file
-    CONFIGFILE = project_name+'.cfg'
+
     cfin = configparser.ConfigParser()
     cfin.read(CONFIGFILE)
 
@@ -88,8 +90,20 @@ def initReboundBinaryFile(project_name):
     if add_to_sun[0]:particles = particles + add_to_sun
 
 # Set rebound integrator conditions
-    sim             = rb.Simulation()
-    sim.units       = configStr2List(cfin['Simulation']['units'])
+    if [i for i in REBUILD_FLAGS if i in sys_argv]:
+        sim         = rb.Simulation()
+        sim.units   = configStr2List(cfin['Simulation']['units'])
+
+        sim.add(particles, date=cfin['Simulation']['start_time'])
+
+        if add_to_sun[0]:
+            for i in range(0,len(sim.particles),1):
+                if particles[i] in add_to_sun:
+                    sim.particles['Sun'].m += sim.particles[i].m
+            for particle in add_to_sun:sim.remove(hash=particle)
+    else:
+        sim         = rb.Simulation.from_file(BINFILE)
+
     sim.integrator  = cfin['Integrator']['integrator']
     sim.t           = float(cfin['Simulation']['start_time_jd'])
     sim.dt          = float(cfin['Simulation']['dt'])
@@ -97,15 +111,6 @@ def initReboundBinaryFile(project_name):
     sim.collision   = cfin['Integrator']['collision']
     tmax            = float(cfin['Simulation']['tmax'])
 
-    sim.add(particles, date=cfin['Simulation']['start_time'])
-
-# and add up masses of particles in add_to_sun and
-# remove particles in add_to_sun from simulation
-    if add_to_sun[0]:
-        for i in range(0,len(sim.particles),1):
-            if particles[i] in add_to_sun:
-                sim.particles['Sun'].m += sim.particles[i].m
-        for particle in add_to_sun:sim.remove(hash=particle)
 
 # Save initial conditions to binary file
     sim.save(BINFILE)

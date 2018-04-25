@@ -64,7 +64,7 @@ parser.add_argument('-s', '--start_time',
 								  'date is set to the default value.')
 parser.add_argument('-d', '--dt', 
 					action		= 'store', 
-					type		= float, 
+					type		= str, 
 					help		= 'Timestep for model. Depending on the '		\
 								  'underlying integrator dt should be between '	\
 								  '10%% and 25%% of the orbital period or about '	\
@@ -73,7 +73,7 @@ parser.add_argument('-d', '--dt',
 								  'is using an adaptive timestep.')
 parser.add_argument('-t', '--tmax', 
 					action		= 'store', 
-					type		= float, 
+					type		= str, 
 					help		= 'Max duration of model. Default is 10,000yr.')
 parser.add_argument('-I', '--integrator', 
 					action		= 'store', 
@@ -101,6 +101,8 @@ parser.add_argument('-V', '--version',
 
 clarg = parser.parse_args()
 
+# Flags that require a rebuild
+
 if not clarg.rebuild:
 	CONFIGFILE = clarg.project_name+'.cfg'
 
@@ -119,10 +121,10 @@ if not clarg.rebuild:
 		addons.configWrite(CONFIGFILE, clarg, sys.argv, False)
 else:clarg.new = True
 	
-BINFILE = clarg.project_name+'-IC.bin'
+BINFILE = clarg.project_name+'-InitialConditions.bin'
 
 # Check if configuration file was changed and build a new binfile if it has 
-if clarg.new:addons.initReboundBinaryFile(clarg.project_name)
+if clarg.new:addons.initReboundBinaryFile(clarg.project_name, sys.argv)
 
 # load simulation from binary file
 sim = rb.Simulation.from_file(BINFILE)
