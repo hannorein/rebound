@@ -114,7 +114,6 @@ def getNAIF(name_or_id=None):
         else:
             print("Warning:  Unknown NAIF id '{}'. Nevertheless I will give it a try. Maybe it is in HORIZONS?".format(name_or_id))
             return str(name_or_id)
-#            raise AttributeError("Unknown NAIF id. For a list of valid codes and ids call utils.getNAIF('print')")
     elif type(name_or_id) is str:
         if name_or_id in NAIF_NAME_OR_ID:
             return NAIF_NAME_OR_ID[name_or_id]
@@ -123,12 +122,9 @@ def getNAIF(name_or_id=None):
         else:
             print("Warning:  Unknown NAIF id '{}'. Nevertheless I will give it a try. Maybe it is in HORIZONS?".format(name_or_id))
             return str(name_or_id)
-#            raise AttributeError("Unknown NAIF name. For a list of valid codes and ids call utils.getNAIF('print')")
     else:
         print("Warning:  Unknown NAIF id '{}'. Nevertheless I will give it a try. Maybe it is in HORIZONS?".format(name_or_id))
         return (name_or_id)
-#        raise AttributeError("NAIF name or id code not listed. For a list of valid codes and ids call util.getNAIF('print')")
-
 
 def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, plane="ecliptic"):   
     try:
