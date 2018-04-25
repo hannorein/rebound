@@ -11,7 +11,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.integrator = "whfast"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 1
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -39,7 +39,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.integrator = "whfast"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 1
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
         x1 = sim.particles[1].x
 
@@ -63,7 +63,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.ri_whfast.coordinates = "democraticheliocentric"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 1
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -95,7 +95,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.ri_whfast.coordinates = "democraticheliocentric"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 0
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -127,7 +127,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.ri_whfast.coordinates = "whds"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 1
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -159,7 +159,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.ri_whfast.coordinates = "whds"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 0
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -191,7 +191,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.integrator = "whfast"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 1
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -221,7 +221,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.integrator = "whfast"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 0
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -259,7 +259,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.integrator = "whfast"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 0
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -281,7 +281,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 0
         sim.ri_whfast.corrector = 5
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -319,7 +319,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "ias15"
         sim.dt = 0.1313
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -354,7 +354,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "ias15"
         sim.dt = 0.1313
-        sim.initSimulationArchive("test.bin", walltime = 0.01)
+        sim.automateSimulationArchive("test.bin", walltime = 0.01,deletefile=True)
         sim.integrate(400.,exact_finish_time=0)
 
         sim = None
@@ -395,7 +395,7 @@ class TestSimulationArchiveWarningsErrors(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "ias15"
         sim.dt = 0.1313
-        sim.initSimulationArchive("test.bin", walltime = 0.01)
+        sim.automateSimulationArchive("test.bin", walltime = 0.01,deletefile=True)
         sim.integrate(400.,exact_finish_time=0)
         with open("test.bin","r+b") as f:
             f.seek(30)
@@ -415,7 +415,7 @@ class TestSimulationArchiveTmin(unittest.TestCase):
         sim.integrator = "whfast"
         sim.dt = 0.1313
         sim.integrate(400.,exact_finish_time=0)
-        sim.initSimulationArchive("test.bin", interval = 100.)
+        sim.automateSimulationArchive("test.bin", interval = 100.,deletefile=True)
         tmin = sim.t
         sim.integrate(800.,exact_finish_time=0)
         sa = rebound.SimulationArchive("test.bin")
@@ -433,7 +433,7 @@ class TestSimulationArchiveMercurius(unittest.TestCase):
         sim.integrator = "mercurius"
         sim.dt = 0.1313
         sim.ri_mercurius.safe_mode = 0
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -463,7 +463,7 @@ class TestSimulationArchiveMercurius(unittest.TestCase):
         sim.integrator = "mercurius"
         sim.dt = 0.1313
         sim.ri_mercurius.safe_mode = 1
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None

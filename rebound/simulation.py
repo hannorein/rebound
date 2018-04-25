@@ -426,18 +426,7 @@ class Simulation(Structure):
 
 
 # Simulation Archive tools
-    @property 
-    def simulationarchive_filename(self):
-        """
-        Filename where to store SimulationArchive
-        """
-        return self._sa_filename.value.decode("ascii")
-    @simulationarchive_filename.setter
-    def simulationarchive_filename(self, filename):
-        self._sa_filename = c_char_p(filename.encode("ascii")) # keep a reference to string
-        self._simulationarchive_filename = self._sa_filename
-    
-    def initSimulationArchive(self, filename, interval=None, walltime=None):
+    def automateSimulationArchive(self, filename, interval=None, walltime=None, deletefile=False):
         """
         This function initializes the Simulation Archive so that
         binary data can be outputted to the SimulationArchive file 
@@ -466,16 +455,16 @@ class Simulation(Structure):
         >>> sim.initSimulationArchive("sa.bin",interval=1000.)
         >>> sim.integrate(1e8)
         """
-        self.simulationarchive_filename = filename
         if interval is None and walltime is None:
             raise AttributeError("Need to specify either interval or walltime.")
-        if self.dt<0.:
-            raise RuntimeError("Simulation archive requires a positive timestep. If you want to integrate backwards in time, simply flip the sign of all velocities to keep the timestep positive.")
+        if deletefile and os.path.isfile(filename):
+            os.remove(filename)
         self.simulationarchive_next = 0.
         if interval:
-            self.simulationarchive_auto_interval = interval
+            clibrebound.reb_simulationarchive_automate_interval(byref(self), c_char_p(filename.encode("ascii")), c_double(interval))
         if walltime:
-            self.simulationarchive_auto_walltime = walltime
+            clibrebound.reb_simulationarchive_automate_walltime(byref(self), c_char_p(filename.encode("ascii")), c_double(walltime))
+        self.process_messages()
 
     def simulationarchive_append(self):
         clibrebound.reb_simulationarchive_append(byref(self))

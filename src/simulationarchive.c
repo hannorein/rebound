@@ -403,7 +403,7 @@ static int reb_simulationarchive_snapshotsize(struct reb_simulation* const r){
     return size_snapshot;
 }
 
-void reb_simulationarchive_append(struct reb_simulation* r, const char* filename){
+void _reb_simulationarchive_append(struct reb_simulation* r, const char* filename){
     if (r->simulationarchive_version<2){
         // Old version
         FILE* of = fopen(filename,"r+");
@@ -563,12 +563,10 @@ void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
     }
 }
 void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* filename){
-    printf("\nSA Snapshot\n");
     if (filename==NULL) filename = r->simulationarchive_filename;
     struct stat buffer;
     if (stat(filename, &buffer) < 0){
         // File does not exist. Output binary.
-    printf("\nSA FIRST\n");
         if (r->simulationarchive_version<2){
             // Old version
             r->simulationarchive_size_snapshot = reb_simulationarchive_snapshotsize(r);
@@ -576,6 +574,31 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
         reb_output_binary(r,filename);
     }else{
         // File exists, append snapshot.
-        reb_simulationarchive_append(r,filename);
+        _reb_simulationarchive_append(r,filename);
     }
+}
+
+void reb_simulationarchive_automate_interval(struct reb_simulation* const r, const char* filename, double interval){
+    if (r==NULL) return;
+    if (filename==NULL){
+        reb_error(r, "Filename missing.");
+        return;
+    }
+    free(r->simulationarchive_filename);
+    r->simulationarchive_filename = malloc((strlen(filename)+1)*sizeof(char));
+    strcpy(r->simulationarchive_filename, filename);
+    r->simulationarchive_auto_interval = interval;
+    r->simulationarchive_next = r->t;
+}
+void reb_simulationarchive_automate_walltime(struct reb_simulation* const r, const char* filename, double walltime){
+    if (r==NULL) return;
+    if (filename==NULL){
+        reb_error(r, "Filename missing.");
+        return;
+    }
+    free(r->simulationarchive_filename);
+    r->simulationarchive_filename = malloc((strlen(filename)+1)*sizeof(char));
+    strcpy(r->simulationarchive_filename, filename);
+    r->simulationarchive_auto_walltime = walltime;
+    r->simulationarchive_next = r->walltime;
 }

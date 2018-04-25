@@ -276,6 +276,7 @@ void reb_free_simulation(struct reb_simulation* const r){
 }
 
 void reb_free_pointers(struct reb_simulation* const r){
+    free(r->simulationarchive_filename);
     reb_tree_delete(r);
     if(r->display_data){
         pthread_mutex_destroy(&(r->display_data->mutex));
