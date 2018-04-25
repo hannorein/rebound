@@ -96,7 +96,9 @@ def initReboundBinaryFile(project_name, sys_argv):
 
         sim.add(particles, date=cfin['Simulation']['start_time'])
 
-        if add_to_sun[0]:for particle in particles:if particle in add_to_sun: 
+        if add_to_sun[0]:
+            for particle in particles:
+                if particle in add_to_sun: 
                     sim.particles['Sun'].m += sim.particles[particle].m
                     sim.remove(hash=particle)
     else:
