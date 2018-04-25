@@ -29,6 +29,7 @@
 #include <time.h>
 #include <string.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <stdint.h>
 #include "particle.h"
 #include "rebound.h"
@@ -76,12 +77,14 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
     }
     if (r->simulationarchive_version<2){ 
         fread(&(r->t),sizeof(double),1,inf);
-        fread(&(r->simulationarchive_walltime),sizeof(double),1,inf);
-        gettimeofday(&r->simulationarchive_time,NULL);
-        if (r->simulationarchive_interval){
+        fread(&(r->walltime),sizeof(double),1,inf);
+        if (r->simulationarchive_auto_interval){
             while (r->simulationarchive_next<=r->t){
-                r->simulationarchive_next += r->simulationarchive_interval;
+                r->simulationarchive_next += r->simulationarchive_auto_interval;
             }
+        }
+        if (r->simulationarchive_auto_walltime){
+            r->simulationarchive_next = r->walltime + r->simulationarchive_auto_interval;
         }
         switch (r->integrator){
             case REB_INTEGRATOR_JANUS:
@@ -275,11 +278,11 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
             case REB_BINARY_FIELD_TYPE_SASIZEFIRST:
                 fread(&(sa->size_first), sizeof(long),1,sa->inf);
                 break;
-            case REB_BINARY_FIELD_TYPE_SAWALLTIME:
-                fread(&(sa->walltime), sizeof(double),1,sa->inf);
+            case REB_BINARY_FIELD_TYPE_SAAUTOWALLTIME:
+                fread(&(sa->auto_walltime), sizeof(double),1,sa->inf);
                 break;
-            case REB_BINARY_FIELD_TYPE_SAINTERVAL:
-                fread(&(sa->interval), sizeof(double),1,sa->inf);
+            case REB_BINARY_FIELD_TYPE_SAAUTOINTERVAL:
+                fread(&(sa->auto_interval), sizeof(double),1,sa->inf);
                 break;
             default:
                 fseek(sa->inf,field.size,SEEK_CUR);
@@ -400,18 +403,13 @@ static int reb_simulationarchive_snapshotsize(struct reb_simulation* const r){
     return size_snapshot;
 }
 
-void reb_simulationarchive_append(struct reb_simulation* r){
-    struct timeval time_now;
-    gettimeofday(&time_now,NULL);
-    r->simulationarchive_walltime += time_now.tv_sec-r->simulationarchive_time.tv_sec+(time_now.tv_usec-r->simulationarchive_time.tv_usec)/1e6;
-    r->simulationarchive_time = time_now;
-    
+void reb_simulationarchive_append(struct reb_simulation* r, const char* filename){
     if (r->simulationarchive_version<2){
         // Old version
-        FILE* of = fopen(r->simulationarchive_filename,"r+");
+        FILE* of = fopen(filename,"r+");
         fseek(of, 0, SEEK_END);
         fwrite(&(r->t),sizeof(double),1, of);
-        fwrite(&(r->simulationarchive_walltime),sizeof(double),1, of);
+        fwrite(&(r->walltime),sizeof(double),1, of);
         switch (r->integrator){
             case REB_INTEGRATOR_JANUS:
                 {
@@ -487,7 +485,7 @@ void reb_simulationarchive_append(struct reb_simulation* r){
 
 
         // Create file object containing original binary file
-        FILE* of = fopen(r->simulationarchive_filename,"r+b");
+        FILE* of = fopen(filename,"r+b");
         fseek(of, 64, SEEK_SET); // Header
         struct reb_binary_field field = {0};
         int bytesread = 1;
@@ -543,42 +541,39 @@ void reb_simulationarchive_append(struct reb_simulation* r){
 }
 
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
-    if (r->simulationarchive_walltime==0){
-        // First output
+    if (r->simulationarchive_filename!=NULL){
+        if (r->simulationarchive_auto_interval!=0. && r->simulationarchive_auto_walltime!=0.){
+            reb_error(r,"Both simulationarchive_auto_interval and simulationarchive_auto_walltime are set. Only set one at a time.");
+        }
+        if (r->simulationarchive_auto_interval!=0.){
+            const double sign = r->dt>0.?1.:-1;
+            if (sign*r->simulationarchive_next <= sign*r->t){
+                r->simulationarchive_next += sign*r->simulationarchive_auto_interval;
+                //Snap
+                reb_simulationarchive_snapshot(r, NULL);
+            }
+        }
+        if (r->simulationarchive_auto_walltime!=0.){
+            if (r->simulationarchive_next <= r->walltime){
+                r->simulationarchive_next += r->simulationarchive_auto_walltime;
+                //Snap
+                reb_simulationarchive_snapshot(r, NULL);
+            }
+        } 
+    }
+}
+void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* filename){
+    if (filename==NULL) filename = r->simulationarchive_filename;
+    struct stat buffer;
+    if (stat(filename, &buffer) < 0){
+        // File does not exist. Output binary.
         if (r->simulationarchive_version<2){
             // Old version
             r->simulationarchive_size_snapshot = reb_simulationarchive_snapshotsize(r);
         }
-        switch (r->gravity){
-            case REB_GRAVITY_BASIC:
-            case REB_GRAVITY_NONE:
-                break;
-            default:
-                reb_error(r,"Simulation archive not implemented for this gravity module.");
-                break;
-        }
-        if (r->dt<0.){
-            reb_error(r,"Simulation archive requires a positive timestep. If you want to integrate backwards in time, simply flip the sign of all velocities to keep the timestep positive.");
-        }
-        r->simulationarchive_next = r->t + r->simulationarchive_interval;
-        r->simulationarchive_walltime = 1e-300;
-        gettimeofday(&r->simulationarchive_time,NULL);
-        reb_output_binary(r,r->simulationarchive_filename);
+        reb_output_binary(r,filename);
     }else{
-        // Appending outputs
-        if (r->simulationarchive_interval){
-            if (r->simulationarchive_next <= r->t){
-                r->simulationarchive_next += r->simulationarchive_interval;
-                reb_simulationarchive_append(r);
-            }
-        }
-        if (r->simulationarchive_interval_walltime){
-            struct timeval time_now;
-            gettimeofday(&time_now,NULL);
-            double delta_walltime = time_now.tv_sec-r->simulationarchive_time.tv_sec+(time_now.tv_usec-r->simulationarchive_time.tv_usec)/1e6;
-            if (delta_walltime >= r->simulationarchive_interval_walltime){
-                reb_simulationarchive_append(r);
-            }
-        }
+        // File exists, append snapshot.
+        reb_simulationarchive_append(r,filename);
     }
 }

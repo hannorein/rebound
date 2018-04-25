@@ -190,10 +190,9 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(SAVERSION,          &r->simulationarchive_version);
         CASE(SASIZEFIRST,        &r->simulationarchive_size_first);
         CASE(SASIZESNAPSHOT,     &r->simulationarchive_size_snapshot);
-        CASE(SAINTERVAL,         &r->simulationarchive_interval);
-        CASE(SAINTERVALWALLTIME, &r->simulationarchive_interval_walltime);
+        CASE(SAAUTOINTERVAL,     &r->simulationarchive_auto_interval);
+        CASE(SAAUTOWALLTIME,     &r->simulationarchive_auto_walltime);
         CASE(SANEXT,             &r->simulationarchive_next);
-        CASE(SAWALLTIME,         &r->simulationarchive_walltime);
         CASE(WALLTIME,           &r->walltime);
         CASE(COLLISION,          &r->collision);
         CASE(VISUALIZATION,      &r->visualization);

@@ -282,10 +282,9 @@ void _reb_output_binary_to_stream(struct reb_simulation* r, FILE* of){
     WRITE_FIELD(MEGNON,             &r->megno_n,                        sizeof(long));
     WRITE_FIELD(SAVERSION,          &r->simulationarchive_version,      sizeof(int));
     WRITE_FIELD(SASIZESNAPSHOT,     &r->simulationarchive_size_snapshot,sizeof(long));
-    WRITE_FIELD(SAINTERVAL,         &r->simulationarchive_interval,     sizeof(double));
-    WRITE_FIELD(SAINTERVALWALLTIME, &r->simulationarchive_interval_walltime, sizeof(double));
+    WRITE_FIELD(SAAUTOINTERVAL,     &r->simulationarchive_auto_interval, sizeof(double));
+    WRITE_FIELD(SAAUTOWALLTIME,     &r->simulationarchive_auto_walltime, sizeof(double));
     WRITE_FIELD(SANEXT,             &r->simulationarchive_next,         sizeof(long));
-    WRITE_FIELD(SAWALLTIME,         &r->simulationarchive_walltime,     sizeof(double));
     WRITE_FIELD(WALLTIME,           &r->walltime,                       sizeof(double));
     WRITE_FIELD(COLLISION,          &r->collision,                      sizeof(int));
     WRITE_FIELD(VISUALIZATION,      &r->visualization,                  sizeof(int));
@@ -408,7 +407,7 @@ void _reb_output_binary_to_stream(struct reb_simulation* r, FILE* of){
     fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
 }
 
-void reb_output_binary(struct reb_simulation* r, char* filename){
+void reb_output_binary(struct reb_simulation* r, const char* filename){
 #ifdef MPI
     char filename_mpi[1024];
     sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
@@ -423,7 +422,7 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     fclose(of);
 }
 
-void reb_output_binary_positions(struct reb_simulation* r, char* filename){
+void reb_output_binary_positions(struct reb_simulation* r, const char* filename){
     const int N = r->N;
 #ifdef MPI
     char filename_mpi[1024];

@@ -538,7 +538,8 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_MEGNON = 44,
     REB_BINARY_FIELD_TYPE_SASIZEFIRST = 45,
     REB_BINARY_FIELD_TYPE_SASIZESNAPSHOT = 46,
-    REB_BINARY_FIELD_TYPE_SAINTERVAL = 47,
+    REB_BINARY_FIELD_TYPE_SAAUTOINTERVAL = 47,
+    REB_BINARY_FIELD_TYPE_SAAUTOWALLTIME = 102,
     REB_BINARY_FIELD_TYPE_SANEXT = 48,
     REB_BINARY_FIELD_TYPE_SAWALLTIME = 49,
     REB_BINARY_FIELD_TYPE_COLLISION = 50,
@@ -586,7 +587,6 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_IAS15_E = 99,
     REB_BINARY_FIELD_TYPE_IAS15_BR = 100,
     REB_BINARY_FIELD_TYPE_IAS15_ER = 101,
-    REB_BINARY_FIELD_TYPE_SAINTERVALWALLTIME = 102,
     REB_BINARY_FIELD_TYPE_WHFAST_PJ = 104,
     REB_BINARY_FIELD_TYPE_VISUALIZATION = 107,
     REB_BINARY_FIELD_TYPE_JANUS_ALLOCATEDN = 110,
@@ -637,8 +637,8 @@ struct reb_simulationarchive{
     int version;
     long size_first;
     long size_snapshot;
-    double interval;
-    double walltime;
+    double auto_interval;
+    double auto_walltime;
     long nblobs;
     uint32_t* offset;
     double* t;
@@ -646,7 +646,7 @@ struct reb_simulationarchive{
 // TODO Needs documentation!
 struct reb_simulationarchive* reb_open_simulationarchive(const char* filename);
 void reb_close_simulationarchive(struct reb_simulationarchive* sa);
-void reb_simulationarchive_append(struct reb_simulation* r);
+void reb_simulationarchive_snapshot(struct reb_simulation* r, const char* filename);
 
 /**
  * @brief Holds a particle's hash and the particle's index in the particles array.
@@ -841,14 +841,12 @@ struct reb_simulation {
      * @{
      */
     int    simulationarchive_version;           ///< Version of the SA binary format (1=original/, 2=incremental)
-    long   simulationarchive_size_first;        ///< Size of the initial binary file in a SA
-    long   simulationarchive_size_snapshot;     ///< Size of a snapshot in a SA (other than 1st), in bytes
-    double simulationarchive_interval;          ///< Current sampling cadence, in code units
-    double simulationarchive_interval_walltime; ///< Current sampling cadence, in wall time
+    long   simulationarchive_size_first;        ///< (Deprecated SAV1) Size of the initial binary file in a SA
+    long   simulationarchive_size_snapshot;     ///< (Deprecated SAV1) Size of a snapshot in a SA (other than 1st), in bytes
+    double simulationarchive_auto_interval;     ///< Current sampling cadence, in code units
+    double simulationarchive_auto_walltime;     ///< Current sampling cadence, in wall time
     double simulationarchive_next;              ///< Next output time
     char*  simulationarchive_filename;          ///< Name of output file
-    double simulationarchive_walltime;          ///< Current walltime since beginning of simulation
-    struct timeval simulationarchive_time;      ///< Time of last output
     /** @} */
 
     /**
@@ -1319,7 +1317,7 @@ void reb_output_orbits(struct reb_simulation* r, char* filename);
  * @param r The rebound simulation to be considered
  * @param filename Output filename.
  */
-void reb_output_binary(struct reb_simulation* r, char* filename);
+void reb_output_binary(struct reb_simulation* r, const char* filename);
 
 void reb_binary_diff(FILE* f1, FILE* f2, char** bufp, size_t* sizep);
 
@@ -1335,7 +1333,7 @@ void reb_output_ascii(struct reb_simulation* r, char* filename);
  * @param r The rebound simulation to be considered
  * @param filename Output filename.
  */
-void reb_output_binary_positions(struct reb_simulation* r, char* filename);
+void reb_output_binary_positions(struct reb_simulation* r, const char* filename);
 
 /**
  * @brief Append the velocity dispersion of the particles to an ASCII file.

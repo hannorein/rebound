@@ -439,16 +439,15 @@ void reb_init_simulation(struct reb_simulation* r){
     r->minimum_collision_velocity = 0;
     r->collisions_plog  = 0;
     r->collisions_Nlog  = 0;    
-    r->collision_resolve_keep_sorted  = 0;    
+    r->collision_resolve_keep_sorted   = 0;    
     
-    r->simulationarchive_size_first  = 0;    
-    r->simulationarchive_size_snapshot   = 0;    
-    r->simulationarchive_version     = 2;    
-    r->simulationarchive_interval    = 0.;    
-    r->simulationarchive_interval_walltime = 0.;    
-    r->simulationarchive_walltime    = 0.;    
-    r->simulationarchive_next        = 0.;    
-    r->simulationarchive_filename    = NULL;    
+    r->simulationarchive_size_first    = 0;    
+    r->simulationarchive_size_snapshot = 0;    
+    r->simulationarchive_version       = 2;    
+    r->simulationarchive_auto_interval = 0.;    
+    r->simulationarchive_auto_walltime = 0.;    
+    r->simulationarchive_next          = 0.;    
+    r->simulationarchive_filename      = NULL;    
     
     // Default modules
 #ifdef OPENGL
