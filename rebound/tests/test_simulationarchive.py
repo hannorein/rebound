@@ -250,6 +250,26 @@ class TestSimulationArchive(unittest.TestCase):
         sim = sa.getSimulation(tget,mode="close");
         self.assertAlmostEqual(sim.t,tget,delta=sim.dt)
 
+    def test_sa_restart_append(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "whfast"
+        sim.dt = 0.1313
+        sim.ri_whfast.safe_mode = 0
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
+        sim.integrate(40.,exact_finish_time=0)
+
+        sim = None
+        sa = rebound.SimulationArchive("test.bin")
+        sim = sa[-1]
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim.automateSimulationArchive("test.bin", 10.)
+            sim.integrate(80.,exact_finish_time=0)
+            self.assertEqual(1, len(w)) 
+
     
     def test_sa_restart_generator(self):
         sim = rebound.Simulation()

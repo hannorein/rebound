@@ -584,6 +584,10 @@ static int _reb_simulationarchive_automate_set_filename(struct reb_simulation* c
         reb_error(r, "Filename missing.");
         return -1;
     }
+    struct stat buffer;
+    if (stat(filename, &buffer) == 0){
+        reb_warning(r, "File already exists. Will append SimulationArchive");
+    }
     free(r->simulationarchive_filename);
     r->simulationarchive_filename = malloc((strlen(filename)+1)*sizeof(char));
     strcpy(r->simulationarchive_filename, filename);
