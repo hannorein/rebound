@@ -846,7 +846,7 @@ struct reb_simulation {
     long   simulationarchive_size_snapshot;     ///< (Deprecated SAV1) Size of a snapshot in a SA (other than 1st), in bytes
     double simulationarchive_auto_interval;     ///< Current sampling cadence, in code units
     double simulationarchive_auto_walltime;     ///< Current sampling cadence, in wall time
-    double simulationarchive_next;              ///< Next output time
+    double simulationarchive_next;              ///< Next output time (simulation tim or wall time, depending on wether auto_interval or auto_walltime is set)
     char*  simulationarchive_filename;          ///< Name of output file
     /** @} */
 
