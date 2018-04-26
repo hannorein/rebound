@@ -588,7 +588,7 @@ static int _reb_simulationarchive_automate_set_filename(struct reb_simulation* c
     }
     struct stat buffer;
     if (stat(filename, &buffer) == 0){
-        reb_warning(r, "File to be used for SimulationArchive already exists. Snapshots will be appended.");
+        reb_warning(r, "File in use for SimulationArchive already exists. Snapshots will be appended.");
     }
     free(r->simulationarchive_filename);
     r->simulationarchive_filename = malloc((strlen(filename)+1)*sizeof(char));
