@@ -316,7 +316,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
         struct reb_simulationarchive_blob blob = {0};
         fseek(sa->inf, -sizeof(struct reb_simulationarchive_blob), SEEK_END);  
         fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa->inf);
-        sa->nblobs = blob.index;
+        sa->nblobs = blob.index+1;
         sa->t = malloc(sizeof(double)*sa->nblobs);
         sa->offset = malloc(sizeof(uint32_t)*sa->nblobs);
         fseek(sa->inf, 0, SEEK_SET);  
@@ -484,7 +484,6 @@ void _reb_simulationarchive_append(struct reb_simulation* r, const char* filenam
         fclose(of);
     }else{
         // New version with incremental outputs
-
 
         // Create file object containing original binary file
         FILE* of = fopen(filename,"r+b");
