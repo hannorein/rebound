@@ -69,7 +69,7 @@ class TestIntegratorJanus(unittest.TestCase):
             sim.add(m=1e-3,a=2.32323)
             sim.move_to_com()
             sim.dt = 0.25
-            sim.initSimulationArchive("test.bin",interval=5)
+            sim.automateSimulationArchive("test.bin",interval=5,deletefile=True)
             sim.integrator = "janus"
             sim.ri_janus.order = o
             sim.ri_janus.scale_pos = 1e-16
