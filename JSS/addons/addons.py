@@ -24,7 +24,7 @@ def configWrite(file_name, clarg, sys_argv, update=True):
         if clarg.start_time=='now':
             clarg.start_time = f"{datetime.datetime.now():%Y-%m-%d %H:%M}"
         if not validateDate(clarg.start_time):
-            print("Runtime Warning: Invalid date format. Date set to 2018-03-30 12:00")
+            print("Warning: Invalid date format. Date set to 2018-03-30 12:00")
             clarg.start_time = '2018-03-30 12:00'
         time = Time(clarg.start_time, scale='utc')
         cf.set('Simulation', 'start_time', clarg.start_time)
