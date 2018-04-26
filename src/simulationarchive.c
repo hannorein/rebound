@@ -357,10 +357,12 @@ struct reb_simulationarchive* reb_open_simulationarchive(const char* filename){
     struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
     enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
     reb_read_simulationarchive_with_messages(sa, filename, &warnings);
-    reb_input_process_warnings(NULL, warnings);
     if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
+        // Don't output an error if file does not exist, just return NULL.
         free(sa);
         sa = NULL;
+    }else{
+        reb_input_process_warnings(NULL, warnings);
     }
     return sa;
 }
@@ -596,13 +598,23 @@ static int _reb_simulationarchive_automate_set_filename(struct reb_simulation* c
 
 void reb_simulationarchive_automate_interval(struct reb_simulation* const r, const char* filename, double interval){
     if(_reb_simulationarchive_automate_set_filename(r,filename)<0) return;
-    r->simulationarchive_auto_interval = interval;
-    r->simulationarchive_next = r->t;
+    if(r->simulationarchive_auto_interval != interval){
+        // Only update simulationarchive_next if interval changed. 
+        // This ensures that interrupted simulations will continue
+        // after being restarted from a simulationarchive
+        r->simulationarchive_auto_interval = interval;
+        r->simulationarchive_next = r->t;
+    }
 }
 
 void reb_simulationarchive_automate_walltime(struct reb_simulation* const r, const char* filename, double walltime){
     if(_reb_simulationarchive_automate_set_filename(r,filename)<0) return;
-    r->simulationarchive_auto_walltime = walltime;
-    r->simulationarchive_next = r->walltime;
+    if(r->simulationarchive_auto_walltime != walltime){
+        // Only update simulationarchive_next if interval changed. 
+        // This ensures that interrupted simulations will continue
+        // after being restarted from a simulationarchive
+        r->simulationarchive_auto_walltime = walltime;
+        r->simulationarchive_next = r->walltime;
+    }
 }
 
