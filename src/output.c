@@ -284,7 +284,7 @@ void _reb_output_binary_to_stream(struct reb_simulation* r, FILE* of){
     WRITE_FIELD(SASIZESNAPSHOT,     &r->simulationarchive_size_snapshot,sizeof(long));
     WRITE_FIELD(SAAUTOINTERVAL,     &r->simulationarchive_auto_interval, sizeof(double));
     WRITE_FIELD(SAAUTOWALLTIME,     &r->simulationarchive_auto_walltime, sizeof(double));
-    WRITE_FIELD(SANEXT,             &r->simulationarchive_next,         sizeof(long));
+    WRITE_FIELD(SANEXT,             &r->simulationarchive_next,         sizeof(double));
     WRITE_FIELD(WALLTIME,           &r->walltime,                       sizeof(double));
     WRITE_FIELD(COLLISION,          &r->collision,                      sizeof(int));
     WRITE_FIELD(VISUALIZATION,      &r->visualization,                  sizeof(int));

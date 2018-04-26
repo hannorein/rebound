@@ -19,13 +19,12 @@
 
 
 int main(int argc, char* argv[]) {
-    char filename[512] = "simulationarchive.bin";
-    double tmax = 10000; 
+    char* filename = "simulationarchive.bin";
 
     // Trying to restart from the Simulation Archive.
     struct reb_simulationarchive* sa = reb_open_simulationarchive(filename);
     struct reb_simulation* r = reb_create_simulation_from_simulationarchive(sa,-1);
-    reb_close_simulationarchive(sa);
+    //reb_close_simulationarchive(sa);
     // Check if that was successful
     if (r==NULL){
         printf("No simulation archive found. Creating new simulation.\n");
@@ -43,13 +42,12 @@ int main(int argc, char* argv[]) {
         r->integrator = REB_INTEGRATOR_WHFAST;
     }else{
         printf("Found simulation archive. Loaded snapshot at t=%.16f.\n",r->t);
-        tmax = r->t + 2000; // integrate a little further
     }
     
     // Automatically create a snapshot every 100 time units
     reb_simulationarchive_automate_interval(r,filename,100.);
 
-    reb_integrate(r, tmax); 
+    reb_integrate(r, r->t+2000); // integrate a little further
     printf("Final time: %f\n",r->t);
     
     // Manually append a snapshot
