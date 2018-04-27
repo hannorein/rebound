@@ -466,8 +466,8 @@ class Simulation(Structure):
             clibrebound.reb_simulationarchive_automate_walltime(byref(self), c_char_p(filename.encode("ascii")), c_double(walltime))
         self.process_messages()
 
-    def simulationarchive_append(self):
-        clibrebound.reb_simulationarchive_append(byref(self))
+    def simulationarchive_snapshot(self, filename):
+        clibrebound.reb_simulationarchive_snapshot(byref(self), c_char_p(filename.encode("ascii")))
 
     def process_messages(self):
         clibrebound.reb_get_next_message.restype = c_int
