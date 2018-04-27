@@ -5,7 +5,7 @@ import warnings
 class TestSimulationArchiveMatrix(unittest.TestCase):
     pass
 
-def runSimulation(tmax=40., restart=False, interval=None, safe_mode=True, integrator="ias15",G=1.):
+def runSimulation(tmax=40., restart=False, interval=None, safe_mode=True, integrator="ias15",G=1., testparticle=0):
     if restart:
         sim = rebound.Simulation.from_archive("test.bin")
     else:
@@ -19,6 +19,13 @@ def runSimulation(tmax=40., restart=False, interval=None, safe_mode=True, integr
         if safe_mode==False:
             sim.ri_whfast.safe_mode = 1
             sim.ri_mercurius.safe_mode = 1
+        if testparticle>0:
+            if testparticle==1:
+                sim.testparticle_type=0
+            if testparticle==2:
+                sim.testparticle_type=1
+            sim.add(m=1e-4,a=1.2,e=0.04,omega=0.21,M=1.41,inc=0.21,Omega=1.1)
+            sim.N_active = sim.N-1 # one test particle
         if interval:
             sim.automateSimulationArchive("test.bin", interval, deletefile=True)
     sim.integrate(tmax,exact_finish_time=0)
@@ -26,6 +33,8 @@ def runSimulation(tmax=40., restart=False, interval=None, safe_mode=True, integr
 
 def compareSim(test,sim1,sim2):
     test.assertEqual(sim1.N,sim2.N)
+    test.assertEqual(sim1.N_active,sim2.N_active)
+    test.assertEqual(sim1.N_var,sim2.N_var)
     test.assertEqual(sim1.t,sim2.t)
     test.assertEqual(sim1.G,sim2.G)
     for i in range(sim1.N):
@@ -50,13 +59,17 @@ def create_test(params):
 for integrator in ["ias15","whfast","leapfrog","janus","mercurius"]:
     for safe_mode in [True,False]:
         for G in [1.,0.9]:
-            params = {'safe_mode':safe_mode,'integrator':integrator,'G':G}
-            test_method = create_test(params)
-            name = "test"
-            for key in params:
-                name += "_"+key+":"+str(params[key])
-            test_method.__name__ = name
-            setattr(TestSimulationArchiveMatrix, name,test_method)
+            for testparticle in [0,1,2]: # no test particle, passive, semi-active
+                params = {'safe_mode':safe_mode,
+                        'integrator':integrator,
+                        'G':G, 
+                        'testparticle':testparticle}
+                test_method = create_test(params)
+                name = "test"
+                for key in params:
+                    name += "_"+key+":"+str(params[key])
+                test_method.__name__ = name
+                setattr(TestSimulationArchiveMatrix, name,test_method)
 
 if __name__ == "__main__":
     unittest.main()
