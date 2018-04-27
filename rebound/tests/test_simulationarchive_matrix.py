@@ -62,7 +62,14 @@ def create_test_sa_restart(params):
 def create_test_sa_synchronize(params):
     def doTest2(self): 
         sim1 = runSimulation(40., restart=False, interval=10., **params)
-        sim2 = rebound.Simulation.from_archive("test.bin")
+        if params['keep_unsynchronized']==1:
+            sim2 = rebound.Simulation.from_archive("test.bin")
+        else:
+            sa = rebound.SimulationArchive("test.bin")
+            sim2 = sa.getSimulation(sa.tmax,keep_unsynchronized=0)
+        compareSim(self,sim1,sim2)
+        sim1.integrate(sim1.t+12.)
+        sim2.integrate(sim2.t+12.)
         compareSim(self,sim1,sim2)
     return doTest2
 
@@ -72,12 +79,12 @@ for integrator in ["ias15","whfast","leapfrog","janus","mercurius"]:
     for safe_mode in [True,False]:
         for G in [1.,0.9]:
             for testparticle in [0,1,2]: # no test particle, passive, semi-active
-                for keepunsynchronized in [1,0]:
+                for keep_unsynchronized in [1,0]:
                     params = {'safe_mode':safe_mode,
                             'integrator':integrator,
                             'G':G, 
                             'testparticle':testparticle,
-                            'keep_unsynchronized':keepunsynchronized}
+                            'keep_unsynchronized':keep_unsynchronized}
                     test_method = create_test_sa_restart(params)
                     name = "test_sa_restart"
                     for key in params:
