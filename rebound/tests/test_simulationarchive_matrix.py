@@ -5,7 +5,7 @@ import warnings
 class TestSimulationArchiveMatrix(unittest.TestCase):
     pass
 
-def runSimulation(tmax=40., restart=False, keep_unsynchronized=1, interval=None, safe_mode=True, integrator="ias15",G=1., testparticle=0):
+def runSimulation(tmax=40., restart=False, keep_unsynchronized=1, interval=None, safe_mode=True, integrator="ias15",G=1., testparticle=0,simulationarchive_version=2):
     if restart:
         if keep_unsynchronized==1:
             sim = rebound.Simulation.from_archive("test.bin")
@@ -20,6 +20,8 @@ def runSimulation(tmax=40., restart=False, keep_unsynchronized=1, interval=None,
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
         sim.dt = 0.1313
+        if simulationarchive_version==1:
+            sim.simulationarchive_version = 1
         if safe_mode==False:
             sim.ri_whfast.safe_mode = 1
             sim.ri_mercurius.safe_mode = 1
@@ -80,24 +82,26 @@ for integrator in ["ias15","whfast","leapfrog","janus","mercurius"]:
         for G in [1.,0.9]:
             for testparticle in [0,1,2]: # no test particle, passive, semi-active
                 for keep_unsynchronized in [1,0]:
-                    params = {'safe_mode':safe_mode,
-                            'integrator':integrator,
-                            'G':G, 
-                            'testparticle':testparticle,
-                            'keep_unsynchronized':keep_unsynchronized}
-                    test_method = create_test_sa_restart(params)
-                    name = "test_sa_restart"
-                    for key in params:
-                        name += "_"+key+":"+str(params[key])
-                    test_method.__name__ = name
-                    setattr(TestSimulationArchiveMatrix, name,test_method)
-                    
-                    test_method = create_test_sa_synchronize(params)
-                    name = "test_sa_synchronize"
-                    for key in params:
-                        name += "_"+key+":"+str(params[key])
-                    test_method.__name__ = name
-                    setattr(TestSimulationArchiveMatrix, name,test_method)
+                    for simulationarchive_version in [1,2]:
+                        params = {'safe_mode':safe_mode,
+                                'integrator':integrator,
+                                'G':G, 
+                                'testparticle':testparticle,
+                                'keep_unsynchronized':keep_unsynchronized,
+                                'simulationarchive_version':simulationarchive_version}
+                        test_method = create_test_sa_restart(params)
+                        name = "test_sa_restart"
+                        for key in params:
+                            name += "_"+key+":"+str(params[key])
+                        test_method.__name__ = name
+                        setattr(TestSimulationArchiveMatrix, name,test_method)
+                        
+                        test_method = create_test_sa_synchronize(params)
+                        name = "test_sa_synchronize"
+                        for key in params:
+                            name += "_"+key+":"+str(params[key])
+                        test_method.__name__ = name
+                        setattr(TestSimulationArchiveMatrix, name,test_method)
 
 if __name__ == "__main__":
     unittest.main()
