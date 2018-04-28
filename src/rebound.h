@@ -627,27 +627,22 @@ struct reb_simulationarchive_blob {
 
 
 /**
- * @brief This structure is used to save and load simulation archive files.
+ * @brief This structure is used to save and load SimulationArchive files.
+ * @details Everthing in this struct is handled by REBOUND itself. Users 
+ * should not need to access this struct manually.
  */
-
 struct reb_simulationarchive{
-    FILE* inf;
-    char* filename;
-    int version;
-    long size_first;
-    long size_snapshot;
-    double auto_interval;
-    double auto_walltime;
-    long nblobs;
-    uint32_t* offset;
-    double* t;
+    FILE* inf;              ///< File pointer (will be kept open)
+    char* filename;         ///< Filename of open file
+    int version;            ///< SimulationArchive version
+    long size_first;        ///< Size of first snapshot (only used for version 1)
+    long size_snapshot;     ///< Size of snapshot (only used for version 1)
+    double auto_interval;   ///< Interval setting used to create SA (if used)
+    double auto_walltime;   ///< Walltime setting used to create SA (if used)
+    long nblobs;            ///< Total number of snapshots (including initial binary)
+    uint32_t* offset;       ///< Index of offsets in file (length nblobs)
+    double* t;              ///< Index of simulation times in file (length nblobs)
 };
-// TODO Needs documentation!
-struct reb_simulationarchive* reb_open_simulationarchive(const char* filename);
-void reb_close_simulationarchive(struct reb_simulationarchive* sa);
-void reb_simulationarchive_snapshot(struct reb_simulation* r, const char* filename);
-void reb_simulationarchive_automate_interval(struct reb_simulation* const r, const char* filename, double interval);
-void reb_simulationarchive_automate_walltime(struct reb_simulation* const r, const char* filename, double walltime);
 
 /**
  * @brief Holds a particle's hash and the particle's index in the particles array.
@@ -661,6 +656,55 @@ struct reb_hash_pointer_pair{
  * @endcond
  */
 /** @} */
+
+/**
+ * @brief Opens a SimulationArchive
+ * @details This function opens a SimulationArchive file and creates an index to 
+ * find snapshots within the file. This may take a few seconds if there are many 
+ * snapshots in the file. Note that opening a file on a slow filesystem (for example
+ * via a network) might be partiucularly slow. The file is kept open until 
+ * the user calls reb_close_simulationarchive.
+ * @param filename The path and filename of the SimulationArchive input file.
+ * @return Returns a reb_simulationarchive struct.
+ */
+struct reb_simulationarchive* reb_open_simulationarchive(const char* filename);
+
+/**
+ * @brief Closes a SimulationArchive
+ * @details This function closes a SimulationArchive that was previously opened
+ * by the reb_open_simulationarchive function. It also destroys the index created
+ * and frees the allocated memory. 
+ * @param sa The SimulationArchive to be closed.
+ */
+void reb_close_simulationarchive(struct reb_simulationarchive* sa);
+
+/**
+ * @brief Appends a SimulationArchive snapshot to a file
+ * @details This function can either be called manually or via one of the convenience methods
+ * reb_simulationarchive_automate_interval and reb_simulationarchive_automate_walltime.
+ * If the file does not exist, the function outputs a binary file. If a file exists,
+ * it appends a SimulationArchive snapshot to that file. 
+ * @param r The rebound simulation to be considered.
+ * @param filename The path and filename of the SimulationArchive output file.
+ */
+void reb_simulationarchive_snapshot(struct reb_simulation* r, const char* filename);
+
+/**
+ * @brief Automatically create a SimulationArchive Snapshot at regular intervals
+ * @param r The rebound simulation to be considered.
+ * @param filename The path and filename of the SimulationArchive output file.
+ * @param interval The interval between snapshots (in simulation time units).
+ */
+void reb_simulationarchive_automate_interval(struct reb_simulation* const r, const char* filename, double interval);
+
+/**
+ * @brief Automatically create a SimulationArchive Snapshot at regular walltime intervals
+ * @param r The rebound simulation to be considered.
+ * @param filename The path and filename of the SimulationArchive output file.
+ * @param interval The walltime interval between snapshots (in seconds).
+ */
+void reb_simulationarchive_automate_walltime(struct reb_simulation* const r, const char* filename, double walltime);
+
 
 /**
  * @defgroup MainRebStructs 
