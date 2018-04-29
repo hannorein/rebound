@@ -469,6 +469,15 @@ class Simulation(Structure):
     def simulationarchive_snapshot(self, filename):
         clibrebound.reb_simulationarchive_snapshot(byref(self), c_char_p(filename.encode("ascii")))
 
+    @property
+    def simulationarchive_filename(self):
+        """
+        Returns the current simulationarchive filename in use. 
+        Do not set manually. Use sim.automateSimulationArchive() instead
+        """
+        return self._simulationarchive_filename
+
+# Message and memory management functions
     def process_messages(self):
         clibrebound.reb_get_next_message.restype = c_int
         buf = create_string_buffer(c_int.in_dll(clibrebound, "reb_max_messages_length").value)
