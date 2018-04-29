@@ -12,28 +12,28 @@ class SimulationArchive(Structure):
     """
     SimulationArchive Class.
 
-    The SimulationArchive is a binary file that includes all
-    settings, constants as well as initial conditions to reproduce
-    a simulation exactly (down to the last bit). It is also possible 
-    to add snapshots of the current state as the simulation runs.
-    This allows for fast access to long running simulations 
-    by making use of the SimulationArchive binary file. For a full
-    discussion of the functionality see the paper by Rein & Tamayo 
-    2017.
+    The SimulationArchive is a binary file format which includes all
+    settings, constants as well as particle positions and velocities.
+    This makes it possible to reproduce a simulation exactly 
+    (down to the last bit). The SimulationArchive allows you to add
+    an arbitrary number of snapshots. Simulations can be reconstructed
+    from these snapshots. Since version 2 of the SimulationArchive
+    (Spring 2018), you can change anything inbetween snapshots,
+    icluding settings like the integrator, the timestep, the number of
+    particles. The file format is efficient in that only data
+    that changed is stored in the SimulationArchive file. This is all
+    done automatically. All the user has to do is call the function
+    to create a snapshot.
+    The SimulationArchive thus allows for fast access to any long running 
+    simulations. For a full discussion of the functionality see the paper 
+    by Rein & Tamayo 2017.
 
     Requirements
     ------------
-    The SimulationArchive Class only works when the following 
-    requirements are satisfied.  
-
-    - Only the WHFast, WHFastHelio and IAS15 integrators are supported.
-    - Symplectic correcters are supported.
-    - The number of particles can not change.
-    - Any additional forces or post-timestep modifications that are
-      present during the integration also need to be present when 
-      the SimulationArchive class is accessed at a later time.
-
-
+    When using the SimulationArchive, the user is responsible for 
+    setting up any additional forces or post-timestep modifications that 
+    were  present during the original integration. 
+        
     Examples
     --------
     Here is a simple example:
@@ -57,6 +57,20 @@ class SimulationArchive(Structure):
                 ("t", POINTER(c_double)) 
                 ]
     def __init__(self,filename,setup=None, setup_args=(), rebxfilename=None):
+        """
+        Arguments
+        ---------
+        filename : str
+            Filename of the SimulationArchive file to be opened.
+        setup : function
+            Function to be called everytime a simulation object is created
+            In this function, the user can setup additional forces
+        setup_args : list
+            Arguments passed to setup function.
+        rebxfilename : str
+            Filename of the REBOUNDx binary file.
+
+        """
         self.setup = setup
         self.setup_args = setup_args
         self.rebxfilename = rebxfilename
@@ -72,55 +86,6 @@ class SimulationArchive(Structure):
         self.tmin = self.t[0]
         self.tmax = self.t[self.nblobs-1]
 
-    """
-    def __init__(self,filename,setup=None, setup_args=(), rebxfilename=None):
-        self.cfilename = c_char_p(filename.encode("ascii"))
-        self.setup = setup
-        self.setup_args = setup_args
-        self.rebxfilename = rebxfilename
-
-        # Recreate simulation at t=0
-        w = c_int(0)
-        clibrebound.reb_create_simulation.restype = POINTER(Simulation)
-        simp = clibrebound.reb_create_simulation() 
-        clibrebound.reb_create_simulation_from_binary_with_messages(simp, self.cfilename,byref(w))
-        if (not simp) or (w.value & 1):     # Major error
-            raise ValueError(BINARY_WARNINGS[0][0])
-        if (w.value & 2):     
-            warnings.warn(BINARY_WARNINGS[1][0], RuntimeWarning)
-            # Note: Other warnings not shown!
-        self.simp = simp
-        sim = self.simp.contents
-        if self.setup:
-            self.setup(sim, *self.setup_args)
-        if self.rebxfilename:
-            import reboundx
-            rebx = reboundx.Extras.from_file(sim, self.rebxfilename)
-
-        self.filesize = os.path.getsize(filename)
-        self.dt = sim.dt
-        if sim.simulationarchive_interval>0. and sim.simulationarchive_interval_walltime>0.:
-            raise ValueError("Something is wrong. Binary file contains both interval>0 and interval_walltime>0.")
-        if sim.simulationarchive_interval==0. and sim.simulationarchive_interval_walltime==0.:
-            raise ValueError("Something is wrong. Binary file has interval==0 and interval_walltime==0.")
-        if sim.simulationarchive_interval>0.:
-            self.interval = sim.simulationarchive_interval
-        if sim.simulationarchive_interval_walltime>0.:
-            self.interval_walltime = sim.simulationarchive_interval_walltime
-
-        self.tmin = sim.t
-        clibrebound.reb_simulationarchive_nblobs.restype = c_long
-        self.Nblob = clibrebound.reb_simulationarchive_nblobs(simp, self.cfilename)
-        if sim.simulationarchive_interval_walltime>0.:
-            self.timetable = [-1.]*(self.Nblob+1)
-            self.timetable[0] = sim.t
-            self._loadAndSynchronize(-1)
-            self.timetable[-1] = sim.t
-            self.tmax = sim.t
-        else:
-            self.tmax = self.tmin + self.interval*(self.Nblob)
-    """
-    
     def __str__(self):
         """
         Returns a string with details of this simulation archive.
@@ -146,6 +111,11 @@ class SimulationArchive(Structure):
         w = c_int(0)
         sim = Simulation()
         clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim), byref(self), c_long(key), byref(w))
+        if self.setup:
+            self.setup(sim, *self.setup_args)
+        if self.rebxfilename:
+            import reboundx
+            rebx = reboundx.Extras.from_file(sim, self.rebxfilename)
         if w.value & (1+16+32+64+256) :     # Major error
             raise ValueError(BINARY_WARNINGS[0])
         for message, value in BINARY_WARNINGS:  # Just warnings
@@ -165,29 +135,6 @@ class SimulationArchive(Structure):
 
     def __len__(self):
         return self.nblobs  # number of SA snapshots (also counting binary at t=0)
-
-    def _loadAndSynchronize(self, snapshot, keep_unsynchronized=1):
-        """
-        Update self.sim by loading a snapshopt from the binary file. 
-        """
-        sim = self.simp.contents
-        clibrebound.reb_simulationarchive_load_snapshot.restype = c_int
-        retv = clibrebound.reb_simulationarchive_load_snapshot(self.simp, self.cfilename, c_long(snapshot))
-        if retv:
-            raise ValueError("Error while loading snapshot in binary file. Errorcode: %d."%retv)
-        if sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1:
-            keep_unsynchronized = 0
-        if sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1:
-            keep_unsynchronized = 0
-        sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
-        sim.ri_mercurius.keep_unsynchronized = keep_unsynchronized
-        sim.integrator_synchronize()
-        if snapshot == 0:
-            if self.setup:
-                self.setup(sim, *self.setup_args)
-            if self.rebxfilename:
-                import reboundx
-                rebx = reboundx.Extras.from_file(sim, self.rebxfilename)
 
     def _getSnapshotIndex(self, t):
         """
@@ -212,6 +159,7 @@ class SimulationArchive(Structure):
     def getSimulation(self, t, mode='snapshot', keep_unsynchronized=1):
         """
         This function returns a simulation object at (or close to) the requested time `t`. 
+        Everytime this function is called a new simulation object is created.
 
 
         Arguments
@@ -229,9 +177,8 @@ class SimulationArchive(Structure):
         
         Returns
         ------- 
-        A rebound.Simulation object. This object will be modified 
-        the next time getSimulation is called. Making any manual 
-        changes to this object could have unforseen consequences.
+        A rebound.Simulation object. Everytime the function gets called
+        a new object gets created. 
         
         Examples
         --------
@@ -255,6 +202,13 @@ class SimulationArchive(Structure):
         w = c_int(0)
         clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim),byref(self),bi,byref(w))
 
+        # Restore function pointers and any additional setup required by the user/reboundx provided functions
+        if self.setup:
+            self.setup(sim, *self.setup_args)
+        if self.rebxfilename:
+            import reboundx
+            rebx = reboundx.Extras.from_file(sim, self.rebxfilename)
+
         if mode=='snapshot':
             if sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1:
                 keep_unsynchronized = 0
@@ -263,11 +217,6 @@ class SimulationArchive(Structure):
             sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
             sim.ri_mercurius.keep_unsynchronized = keep_unsynchronized
             sim.integrator_synchronize()
-            if self.setup:
-                self.setup(sim, *self.setup_args)
-            if self.rebxfilename:
-                import reboundx
-                rebx = reboundx.Extras.from_file(sim, self.rebxfilename)
             return sim
         else:
             if mode=='exact':
@@ -277,13 +226,6 @@ class SimulationArchive(Structure):
 
             sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
             sim.ri_mercurius.keep_unsynchronized = keep_unsynchronized
-            if bi == 0:
-                if self.setup:
-                    self.setup(sim, *self.setup_args)
-                if self.rebxfilename:
-                    import reboundx
-                    rebx = reboundx.Extras.from_file(sim, self.rebxfilename)
-
             exact_finish_time = 1 if mode=='exact' else 0
             sim.integrate(t,exact_finish_time=exact_finish_time)
                 
