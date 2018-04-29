@@ -428,9 +428,9 @@ class Simulation(Structure):
 # Simulation Archive tools
     def automateSimulationArchive(self, filename, interval=None, walltime=None, deletefile=False):
         """
-        This function initializes the Simulation Archive so that
-        binary data can be outputted to the SimulationArchive file 
-        during the simulation.
+        This function automates taking snapshots during a simulationusing the Simulation Archive.
+        Instead of using this function, one can also call simulationarchive_snapshot() manually
+        to create snapshots.
 
         
         Arguments
@@ -452,8 +452,15 @@ class Simulation(Structure):
         >>> sim = rebound.Simulation()
         >>> sim.add(m=1.)
         >>> sim.add(m=1.e-3,x=1.,vy=1.)
-        >>> sim.initSimulationArchive("sa.bin",interval=1000.)
+        >>> sim.automateSimulationArchive("sa.bin",interval=1000.)
         >>> sim.integrate(1e8)
+
+        The SimulationArchive can later be read in using the following syntax:
+
+        >>> sa = rebound.SimulationArchive("sa.bin")
+        >>> sim = sa[0]   # get the first snapshot in the SA file (initial conditions)
+        >>> sim = sa[-1]  # get the last snapshot in the SA file
+
         """
         if interval is None and walltime is None:
             raise AttributeError("Need to specify either interval or walltime.")
@@ -467,12 +474,23 @@ class Simulation(Structure):
         self.process_messages()
 
     def simulationarchive_snapshot(self, filename):
+        """
+        Take a snapshot and save it to a SimulationArchive file.
+        If the file does not exist yet, a new one will be created. 
+        If the file does exist, a snapshot will be appended.
+        
+        Arguments
+        ---------
+        filename : str
+            Filename of the binary file.
+
+        """
         clibrebound.reb_simulationarchive_snapshot(byref(self), c_char_p(filename.encode("ascii")))
 
     @property
     def simulationarchive_filename(self):
         """
-        Returns the current simulationarchive filename in use. 
+        Returns the current SimulationArchive filename in use. 
         Do not set manually. Use sim.automateSimulationArchive() instead
         """
         return self._simulationarchive_filename
