@@ -466,7 +466,6 @@ class Simulation(Structure):
             raise AttributeError("Need to specify either interval or walltime.")
         if deletefile and os.path.isfile(filename):
             os.remove(filename)
-        self.simulationarchive_next = 0.
         if interval:
             clibrebound.reb_simulationarchive_automate_interval(byref(self), c_char_p(filename.encode("ascii")), c_double(interval))
         if walltime:
