@@ -37,6 +37,7 @@ include src/particle.h
 include src/rebound.h
 include src/input.h
 include src/display.h
+include src/binarydiff.h
 include src/output.h
 include src/simulationarchive.h
 include src/transformations.h
