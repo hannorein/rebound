@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.6.0
+--------------
+* SimulationArchive Version 2. With the new version of the SimulationArchive file format, you can now create snapshots of your simulations without any restrictions. You can change the number of particles, the timestep, even the integrator used during the integration. REBOUND automatically detects what has changed and only stores the differences in incremental snaphots. This reduces the filesize while keeping the format as flexible as possible. The old SimulationArchive Version 1 is still supported for now but might become deprecated in the future. All examples have been updated. As usual these are as usual good starting points for understanding the functionality and the syntax. 
+
 Version 3.5.12
 --------------
 * Added REB_COLLISION_LINE. This is a collision detection routine which serves for collisions during the last timestep, assuming that all particles travel along straight lines. This can be useful in cases where not every collision needs to be detected exactly, but the overall collision rate should be reproduced. The algorithm is O(N**2).

@@ -1,10 +1,10 @@
 /**
- * @file 	simulationarchive.h
- * @brief 	Tools for creating and readin a Simulation Archive binary file.
+ * @file 	binarydiff.h
+ * @brief 	Binary diff allows to compare binary snapshots.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
- * Copyright (c) 2016 Hanno Rein
+ * Copyright (c) 2018 Hanno Rein
  *
  * This file is part of rebound.
  *
@@ -22,18 +22,7 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SIMULATIONARCHIVE_H
-#define SIMULATIONARCHIVE_H
+#ifndef _BINARYDIFF_H
+#define _BINARYDIFF_H
 
-#include <stdint.h>
-
-struct reb_simulation;
-struct reb_particles;
-
-/**
- * @brief Internal function to handle outputs for the Simulation Archive.
- */
-void reb_simulationarchive_heartbeat(struct reb_simulation* const r);
-
-
-#endif 	// SIMULATIONARCHIVE_H
+#endif // _BINARYDIFF_H

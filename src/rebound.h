@@ -48,10 +48,12 @@ extern "C" {
 
 #endif
 
+#include <inttypes.h>
 #include <stdint.h>
 #include <sys/time.h>
 #include <pthread.h>
 #include <signal.h>
+#include <stdio.h>
 #ifndef M_PI
 // Make sure M_PI is defined. 
 #define M_PI           3.14159265358979323846       ///< The mathematical constant pi.
@@ -536,9 +538,9 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_MEGNON = 44,
     REB_BINARY_FIELD_TYPE_SASIZEFIRST = 45,
     REB_BINARY_FIELD_TYPE_SASIZESNAPSHOT = 46,
-    REB_BINARY_FIELD_TYPE_SAINTERVAL = 47,
+    REB_BINARY_FIELD_TYPE_SAAUTOINTERVAL = 47,
+    REB_BINARY_FIELD_TYPE_SAAUTOWALLTIME = 102,
     REB_BINARY_FIELD_TYPE_SANEXT = 48,
-    REB_BINARY_FIELD_TYPE_SAWALLTIME = 49,
     REB_BINARY_FIELD_TYPE_COLLISION = 50,
     REB_BINARY_FIELD_TYPE_INTEGRATOR = 51,
     REB_BINARY_FIELD_TYPE_BOUNDARY = 52,
@@ -584,7 +586,6 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_IAS15_E = 99,
     REB_BINARY_FIELD_TYPE_IAS15_BR = 100,
     REB_BINARY_FIELD_TYPE_IAS15_ER = 101,
-    REB_BINARY_FIELD_TYPE_SAINTERVALWALLTIME = 102,
     REB_BINARY_FIELD_TYPE_WHFAST_PJ = 104,
     REB_BINARY_FIELD_TYPE_VISUALIZATION = 107,
     REB_BINARY_FIELD_TYPE_JANUS_ALLOCATEDN = 110,
@@ -600,6 +601,10 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_MERCURIUS_M0 = 121,
     REB_BINARY_FIELD_TYPE_MERCURIUS_RHILL = 122,
     REB_BINARY_FIELD_TYPE_MERCURIUS_KEEPUNSYNC = 124,
+    REB_BINARY_FIELD_TYPE_SAVERSION = 125,
+    REB_BINARY_FIELD_TYPE_WALLTIME = 126,
+    REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
+    REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
     REB_BINARY_FIELD_TYPE_END = 9999,
 };
 
@@ -607,8 +612,36 @@ enum REB_BINARY_FIELD_TYPE {
  * @brief This structure is used to save and load binary files.
  */
 struct reb_binary_field {
-    enum REB_BINARY_FIELD_TYPE type;    ///< Type of what field
-    long size;                          ///< Size in bytes of field (only what follows, not the binary field, itself).
+    uint32_t type;  ///< Type of what field (enum of REB_BINARY_FIELD_TYPE)
+    uint64_t size;  ///< Size in bytes of field (only counting what follows, not the binary field, itself).
+};
+
+/**
+ * @brief This structure is used to save and load simulation archive files.
+ */
+struct reb_simulationarchive_blob {
+    int32_t index;                         ///< Index of previous blob (binary file is 0, first blob is 1)
+    int16_t offset_prev;                   ///< Offset to beginning of previous blob (size of previous blob).
+    int16_t offset_next;                   ///< Offset to end of following blob (size of following blob).
+};
+
+
+/**
+ * @brief This structure is used to save and load SimulationArchive files.
+ * @details Everthing in this struct is handled by REBOUND itself. Users 
+ * should not need to access this struct manually.
+ */
+struct reb_simulationarchive{
+    FILE* inf;              ///< File pointer (will be kept open)
+    char* filename;         ///< Filename of open file
+    int version;            ///< SimulationArchive version
+    long size_first;        ///< Size of first snapshot (only used for version 1)
+    long size_snapshot;     ///< Size of snapshot (only used for version 1)
+    double auto_interval;   ///< Interval setting used to create SA (if used)
+    double auto_walltime;   ///< Walltime setting used to create SA (if used)
+    long nblobs;            ///< Total number of snapshots (including initial binary)
+    uint32_t* offset;       ///< Index of offsets in file (length nblobs)
+    double* t;              ///< Index of simulation times in file (length nblobs)
 };
 
 /**
@@ -623,6 +656,55 @@ struct reb_hash_pointer_pair{
  * @endcond
  */
 /** @} */
+
+/**
+ * @brief Opens a SimulationArchive
+ * @details This function opens a SimulationArchive file and creates an index to 
+ * find snapshots within the file. This may take a few seconds if there are many 
+ * snapshots in the file. Note that opening a file on a slow filesystem (for example
+ * via a network) might be partiucularly slow. The file is kept open until 
+ * the user calls reb_close_simulationarchive.
+ * @param filename The path and filename of the SimulationArchive input file.
+ * @return Returns a reb_simulationarchive struct.
+ */
+struct reb_simulationarchive* reb_open_simulationarchive(const char* filename);
+
+/**
+ * @brief Closes a SimulationArchive
+ * @details This function closes a SimulationArchive that was previously opened
+ * by the reb_open_simulationarchive function. It also destroys the index created
+ * and frees the allocated memory. 
+ * @param sa The SimulationArchive to be closed.
+ */
+void reb_close_simulationarchive(struct reb_simulationarchive* sa);
+
+/**
+ * @brief Appends a SimulationArchive snapshot to a file
+ * @details This function can either be called manually or via one of the convenience methods
+ * reb_simulationarchive_automate_interval and reb_simulationarchive_automate_walltime.
+ * If the file does not exist, the function outputs a binary file. If a file exists,
+ * it appends a SimulationArchive snapshot to that file. 
+ * @param r The rebound simulation to be considered.
+ * @param filename The path and filename of the SimulationArchive output file.
+ */
+void reb_simulationarchive_snapshot(struct reb_simulation* r, const char* filename);
+
+/**
+ * @brief Automatically create a SimulationArchive Snapshot at regular intervals
+ * @param r The rebound simulation to be considered.
+ * @param filename The path and filename of the SimulationArchive output file.
+ * @param interval The interval between snapshots (in simulation time units).
+ */
+void reb_simulationarchive_automate_interval(struct reb_simulation* const r, const char* filename, double interval);
+
+/**
+ * @brief Automatically create a SimulationArchive Snapshot at regular walltime intervals
+ * @param r The rebound simulation to be considered.
+ * @param filename The path and filename of the SimulationArchive output file.
+ * @param interval The walltime interval between snapshots (in seconds).
+ */
+void reb_simulationarchive_automate_walltime(struct reb_simulation* const r, const char* filename, double walltime);
+
 
 /**
  * @defgroup MainRebStructs 
@@ -728,6 +810,7 @@ struct reb_simulation {
     struct reb_display_data* display_data; /// < Datastructure stores visualization related data. Does not have to be modified by the user. 
     int track_energy_offset;        ///< Track energy change during collisions and ejections (default: 0).
     double energy_offset;           ///< Energy offset due to collisions and ejections (only calculated if track_energy_offset=1).
+    double walltime;                ///< Walltime in seconds used by REBOUND for this simulation (integration only, not visualization, heartbeat function, etc).
     /** @} */
 
     /**
@@ -802,14 +885,13 @@ struct reb_simulation {
      * \name Variables related to SimulationArchive 
      * @{
      */
-    long   simulationarchive_size_first;        ///< Size of the initial binary file in a SA
-    long   simulationarchive_size_snapshot;     ///< Size of a snapshot in a SA (other than 1st), in bytes
-    double simulationarchive_interval;          ///< Current sampling cadence, in code units
-    double simulationarchive_interval_walltime; ///< Current sampling cadence, in wall time
-    double simulationarchive_next;              ///< Next output time
+    int    simulationarchive_version;           ///< Version of the SA binary format (1=original/, 2=incremental)
+    long   simulationarchive_size_first;        ///< (Deprecated SAV1) Size of the initial binary file in a SA
+    long   simulationarchive_size_snapshot;     ///< (Deprecated SAV1) Size of a snapshot in a SA (other than 1st), in bytes
+    double simulationarchive_auto_interval;     ///< Current sampling cadence, in code units
+    double simulationarchive_auto_walltime;     ///< Current sampling cadence, in wall time
+    double simulationarchive_next;              ///< Next output time (simulation tim or wall time, depending on wether auto_interval or auto_walltime is set)
     char*  simulationarchive_filename;          ///< Name of output file
-    double simulationarchive_walltime;          ///< Current walltime since beginning of simulation
-    struct timeval simulationarchive_time;      ///< Time of last output
     /** @} */
 
     /**
@@ -1280,7 +1362,9 @@ void reb_output_orbits(struct reb_simulation* r, char* filename);
  * @param r The rebound simulation to be considered
  * @param filename Output filename.
  */
-void reb_output_binary(struct reb_simulation* r, char* filename);
+void reb_output_binary(struct reb_simulation* r, const char* filename);
+
+void reb_binary_diff(FILE* f1, FILE* f2, char** bufp, size_t* sizep);
 
 /**
  * @brief Append the positions and velocities of all particles to an ASCII file.
@@ -1294,7 +1378,7 @@ void reb_output_ascii(struct reb_simulation* r, char* filename);
  * @param r The rebound simulation to be considered
  * @param filename Output filename.
  */
-void reb_output_binary_positions(struct reb_simulation* r, char* filename);
+void reb_output_binary_positions(struct reb_simulation* r, const char* filename);
 
 /**
  * @brief Append the velocity dispersion of the particles to an ASCII file.
@@ -1423,7 +1507,11 @@ enum reb_input_binary_messages {
     REB_INPUT_BINARY_WARNING_VERSION = 2,
     REB_INPUT_BINARY_WARNING_POINTERS = 4,
     REB_INPUT_BINARY_WARNING_PARTICLES = 8,
+    REB_INPUT_BINARY_ERROR_FILENOTOPEN = 16,
+    REB_INPUT_BINARY_ERROR_OUTOFRANGE = 32,
+    REB_INPUT_BINARY_ERROR_SEEK = 64,
     REB_INPUT_BINARY_WARNING_FIELD_UNKOWN = 128,
+    REB_INPUT_BINARY_ERROR_INTEGRATOR = 256,
 };
 
 /**
@@ -1605,32 +1693,10 @@ struct reb_particle reb_particle_divide(struct reb_particle p1, double value);
  */
 
 /**
- * @brief Restart a simulation using a SimulationArchive file.
- * @detail This function restarts a simulation from a SimulationArchive
- * binary file. It loads the last snapshot in the archive. Note that this 
- * function depends on many requirements, for example a constant particle
- * number. See python documentation and Rein & Tamayo (2017) for more details.
- * @param filename The name of the file to be opened. 
- * @returns Returns a pointer to a new reb_simulation structure. Returns
- * NULL if an error occured. User needs to free the simulation when not used
- * anymore.
+ * @brief Allocates a simulation and sets it to a specific snapshot in a SimulationArchive file.
  */
-struct reb_simulation* reb_create_simulation_from_simulationarchive(char* filename);
+struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive* sa, long snapshot);
 
-/**
- * @brief Load information from a specific snapshot a SimulationArchive file.
- * @detail This function is used by the python wrapper. If you use it by itself,
- * be sure to look at the python source code beforehand.
- */
-int reb_simulationarchive_load_snapshot(struct reb_simulation* r, char* filename, long snapshot);
-
-/**
- * @brief Estimate the file size of a simulation using SimulationArchive.
- * @param r The simulation to be considered. Needs to have r->simulationarchive_interval set and particles need to be present in the simulation. 
- * @param tmax Maximum integration time. 
- * @returns Returns the approximate size of the SimulationArchive file in bytes.
- */
-long reb_simulationarchive_estimate_size(struct reb_simulation* const r, double tmax);
 /** @} */
 
 /**

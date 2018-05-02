@@ -11,7 +11,7 @@ class TestSimulationRestartMercurius(unittest.TestCase):
         sim.integrator = "mercurius"
         sim.dt = 0.1313
         sim.ri_mercurius.safe_mode = 0
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
         sim.save("test.bin")
         sim.integrate(80.,exact_finish_time=0)
@@ -31,7 +31,7 @@ class TestSimulationRestartMercurius(unittest.TestCase):
         sim.integrator = "mercurius"
         sim.dt = 0.1313
         sim.ri_mercurius.safe_mode = 1
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
         sim.save("test.bin")
         sim.integrate(80.,exact_finish_time=0)

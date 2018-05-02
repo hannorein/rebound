@@ -31,7 +31,11 @@ BINARY_WARNINGS = [
     ("Binary file was saved with a different version of REBOUND. Binary format might have changed.", 2),
     ("You have to reset function pointers after creating a reb_simulation struct with a binary file.", 4),
     ("Binary file might be corrupted. Number of particles found does not match particle number expected.", 8),
-    ("Unknown field found in binary file.", 128)
+    ("Error while reading binary file (file was closed).", 16),
+    ("Index out of range.", 32),
+    ("Error while trying to seek file.", 64),
+    ("Encountered unkown field in file. File might have been saved with a different version of REBOUND.", 128),
+    ("Integrator type is not supported by this simulation archive version.", 256)
 ]
 
 class reb_hash_pointer_pair(Structure):
@@ -317,11 +321,15 @@ class Simulation(Structure):
         A rebound.Simulation object.
         
         """
-        sim = Simulation.from_file(filename)
-        clibrebound.reb_simulationarchive_load_snapshot.restype = c_int
-        err = clibrebound.reb_simulationarchive_load_snapshot(byref(sim),c_char_p(filename.encode("ascii")),snapshot)
-        if err != 0:
-            raise AttributeError("Error loading simulation from archive.")
+        w = c_int(0)
+        sim = Simulation()
+        sa = SimulationArchive(filename)
+        clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim),byref(sa),snapshot,byref(w))
+        if w.value & (1+16+32+64+256) :     # Major error
+            raise ValueError(BINARY_WARNINGS[0])
+        for message, value in BINARY_WARNINGS:  # Just warnings
+            if w.value & value:
+                warnings.warn(message, RuntimeWarning)
         return sim
 
     @classmethod
@@ -354,7 +362,7 @@ class Simulation(Structure):
         w = c_int(0)
         sim = Simulation()
         clibrebound.reb_create_simulation_from_binary_with_messages(byref(sim), c_char_p(filename.encode("ascii")),byref(w))
-        if w.value & 1:     # Major error
+        if w.value & (1+16+32+64+256) :     # Major error
             raise ValueError(BINARY_WARNINGS[0])
         for message, value in BINARY_WARNINGS:  # Just warnings
             if w.value & value and value!=1:
@@ -418,47 +426,11 @@ class Simulation(Structure):
 
 
 # Simulation Archive tools
-    @property 
-    def simulationarchive_filename(self):
+    def automateSimulationArchive(self, filename, interval=None, walltime=None, deletefile=False):
         """
-        Filename where to store SimulationArchive
-        """
-        return self._sa_filename.value.decode("ascii")
-    @simulationarchive_filename.setter
-    def simulationarchive_filename(self, filename):
-        self._sa_filename = c_char_p(filename.encode("ascii")) # keep a reference to string
-        self._simulationarchive_filename = self._sa_filename
-    
-    def estimateSimulationArchiveSize(self, tmax):
-        """
-        This function estimates the SimulationArchive file size (in bytes)
-        before a simulation is run. This is useful to check if the interval
-        results in a resonable filesize.
-
-        Note that the simulation setup needs to be complete, that is
-        with all the particles present, before this function can return 
-        meaningful results.
-        
-        Arguments
-        ---------
-        tmax : float
-            Maximum integration time in current code units.
-        """
-        if self.simulationarchive_interval ==0.:
-            raise RuntimeError("Need to set simulationarchive_interval before estimating filesize.")
-        if self.N==0:
-            raise RuntimeError("Need to add particles to simulation before estimating filesize.")
-
-        clibrebound.reb_simulationarchive_estimate_size.restype = c_long
-        estsize = clibrebound.reb_simulationarchive_estimate_size(byref(self), c_double(tmax))
-        self.process_messages()
-        return estsize
-        
-    def initSimulationArchive(self, filename, interval=None, interval_walltime=None):
-        """
-        This function initializes the Simulation Archive so that
-        binary data can be outputted to the SimulationArchive file 
-        during the simulation.
+        This function automates taking snapshots during a simulationusing the Simulation Archive.
+        Instead of using this function, one can also call simulationarchive_snapshot() manually
+        to create snapshots.
 
         
         Arguments
@@ -467,7 +439,7 @@ class Simulation(Structure):
             Filename of the binary file.
         interval : float
             Interval between outputs in code units.
-        interval_walltime : float
+        walltime : float
             Interval between outputs in wall time (seconds). 
             Useful when using IAS15 with adaptive timesteps. 
         
@@ -480,24 +452,50 @@ class Simulation(Structure):
         >>> sim = rebound.Simulation()
         >>> sim.add(m=1.)
         >>> sim.add(m=1.e-3,x=1.,vy=1.)
-        >>> sim.initSimulationArchive("sa.bin",interval=1000.)
+        >>> sim.automateSimulationArchive("sa.bin",interval=1000.)
         >>> sim.integrate(1e8)
-        """
-        self.simulationarchive_filename = filename
-        if interval is None and interval_walltime is None:
-            raise AttributeError("Need to specify either interval or interval_walltime.")
-        if self.dt<0.:
-            raise RuntimeError("Simulation archive requires a positive timestep. If you want to integrate backwards in time, simply flip the sign of all velocities to keep the timestep positive.")
-        self.simulationarchive_walltime = 0.
-        self.simulationarchive_next = 0.
-        self.simulationarchive_interval = 0. 
-        self.simulationarchive_interval_walltime = 0.
-        if interval:
-            self.simulationarchive_interval = interval
-        if interval_walltime:
-            self.simulationarchive_interval_walltime = interval_walltime
 
-    
+        The SimulationArchive can later be read in using the following syntax:
+
+        >>> sa = rebound.SimulationArchive("sa.bin")
+        >>> sim = sa[0]   # get the first snapshot in the SA file (initial conditions)
+        >>> sim = sa[-1]  # get the last snapshot in the SA file
+
+        """
+        if interval is None and walltime is None:
+            raise AttributeError("Need to specify either interval or walltime.")
+        if deletefile and os.path.isfile(filename):
+            os.remove(filename)
+        self.simulationarchive_next = 0.
+        if interval:
+            clibrebound.reb_simulationarchive_automate_interval(byref(self), c_char_p(filename.encode("ascii")), c_double(interval))
+        if walltime:
+            clibrebound.reb_simulationarchive_automate_walltime(byref(self), c_char_p(filename.encode("ascii")), c_double(walltime))
+        self.process_messages()
+
+    def simulationarchive_snapshot(self, filename):
+        """
+        Take a snapshot and save it to a SimulationArchive file.
+        If the file does not exist yet, a new one will be created. 
+        If the file does exist, a snapshot will be appended.
+        
+        Arguments
+        ---------
+        filename : str
+            Filename of the binary file.
+
+        """
+        clibrebound.reb_simulationarchive_snapshot(byref(self), c_char_p(filename.encode("ascii")))
+
+    @property
+    def simulationarchive_filename(self):
+        """
+        Returns the current SimulationArchive filename in use. 
+        Do not set manually. Use sim.automateSimulationArchive() instead
+        """
+        return self._simulationarchive_filename
+
+# Message and memory management functions
     def process_messages(self):
         clibrebound.reb_get_next_message.restype = c_int
         buf = create_string_buffer(c_int.in_dll(clibrebound, "reb_max_messages_length").value)
@@ -1647,6 +1645,7 @@ Simulation._fields_ = [
                 ("display_data", POINTER(reb_display_data)),
                 ("track_energy_offset", c_int),
                 ("energy_offset", c_double),
+                ("walltime", c_double),
                 ("boxsize", reb_vec3d),
                 ("boxsize_max", c_double),
                 ("root_size", c_double),
@@ -1672,14 +1671,13 @@ Simulation._fields_ = [
                 ("megno_mean_t", c_double),
                 ("megno_mean_Y", c_double),
                 ("megno_n", c_long),
+                ("simulationarchive_version", c_int),
                 ("simulationarchive_size_first", c_long),
                 ("simulationarchive_size_snapshot", c_long),
-                ("simulationarchive_interval", c_double),
-                ("simulationarchive_interval_walltime", c_double),
+                ("simulationarchive_auto_interval", c_double),
+                ("simulationarchive_auto_walltime", c_double),
                 ("simulationarchive_next", c_double),
                 ("_simulationarchive_filename", c_char_p),
-                ("simulationarchive_walltime", c_double),
-                ("simulationarchive_time", timeval),
                 ("_visualization", c_int),
                 ("_collision", c_int),
                 ("_integrator", c_int),
@@ -1795,3 +1793,4 @@ class Particles(MutableMapping):
 # Import at the end to avoid circular dependence
 from . import horizons
 from . import debug
+from .simulationarchive import SimulationArchive

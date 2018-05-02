@@ -62,10 +62,14 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.5.13";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.6.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 void reb_step(struct reb_simulation* const r){
+    // Update walltime
+    struct timeval time_beginning;
+    gettimeofday(&time_beginning,NULL);
+
     // A 'DKD'-like integrator will do the first 'D' part.
     PROFILING_START()
     if (r->pre_timestep_modifications){
@@ -148,6 +152,11 @@ void reb_step(struct reb_simulation* const r){
         reb_collision_search(r);
     }
     PROFILING_STOP(PROFILING_CAT_COLLISION)
+    
+    // Update walltime
+    struct timeval time_end;
+    gettimeofday(&time_end,NULL);
+    r->walltime += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 }
 
 void reb_exit(const char* const msg){
@@ -267,6 +276,7 @@ void reb_free_simulation(struct reb_simulation* const r){
 }
 
 void reb_free_pointers(struct reb_simulation* const r){
+    free(r->simulationarchive_filename);
     reb_tree_delete(r);
     if(r->display_data){
         pthread_mutex_destroy(&(r->display_data->mutex));
@@ -425,19 +435,20 @@ void reb_init_simulation(struct reb_simulation* r){
     r->save_messages = 0;
     r->track_energy_offset = 0;
     r->display_data = NULL;
+    r->walltime = 0;
 
     r->minimum_collision_velocity = 0;
     r->collisions_plog  = 0;
     r->collisions_Nlog  = 0;    
-    r->collision_resolve_keep_sorted  = 0;    
+    r->collision_resolve_keep_sorted   = 0;    
     
-    r->simulationarchive_size_first  = 0;    
-    r->simulationarchive_size_snapshot   = 0;    
-    r->simulationarchive_interval    = 0.;    
-    r->simulationarchive_interval_walltime = 0.;    
-    r->simulationarchive_walltime    = 0.;    
-    r->simulationarchive_next        = 0.;    
-    r->simulationarchive_filename    = NULL;    
+    r->simulationarchive_size_first    = 0;    
+    r->simulationarchive_size_snapshot = 0;    
+    r->simulationarchive_version       = 2;    
+    r->simulationarchive_auto_interval = 0.;    
+    r->simulationarchive_auto_walltime = 0.;    
+    r->simulationarchive_next          = 0.;    
+    r->simulationarchive_filename      = NULL;    
     
     // Default modules
 #ifdef OPENGL
@@ -592,7 +603,6 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
 
 
 void reb_run_heartbeat(struct reb_simulation* const r){
-    if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
     if (r->heartbeat){ r->heartbeat(r); }               // Heartbeat
     if (r->display_heartbeat){ reb_check_for_display_heartbeat(r); } 
     if (r->exit_max_distance){
@@ -670,6 +680,7 @@ static void* reb_integrate_raw(void* args){
             if (r->display_data->opengl_enabled){ pthread_mutex_lock(&(r->display_data->mutex)); }
         }
 #endif // OPENGL
+        if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
         reb_step(r); 
         reb_run_heartbeat(r);
         if (reb_sigint== 1){
@@ -689,6 +700,7 @@ static void* reb_integrate_raw(void* args){
     if(r->exact_finish_time==1){ // if finish_time = 1, r->dt could have been shrunk, so set to the last full timestep
         r->dt = last_full_dt; 
     }
+    if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
 
     return NULL;
 }

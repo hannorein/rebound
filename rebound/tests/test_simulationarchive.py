@@ -11,7 +11,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.integrator = "whfast"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 1
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -39,7 +39,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.integrator = "whfast"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 1
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
         x1 = sim.particles[1].x
 
@@ -63,7 +63,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.ri_whfast.coordinates = "democraticheliocentric"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 1
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -95,8 +95,8 @@ class TestSimulationArchive(unittest.TestCase):
         sim.ri_whfast.coordinates = "democraticheliocentric"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 0
-        sim.initSimulationArchive("test.bin", 10.)
-        sim.integrate(40.,exact_finish_time=0)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
+        sim.integrate(42.,exact_finish_time=0)
 
         sim = None
         sa = rebound.SimulationArchive("test.bin")
@@ -127,7 +127,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.ri_whfast.coordinates = "whds"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 1
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -159,8 +159,8 @@ class TestSimulationArchive(unittest.TestCase):
         sim.ri_whfast.coordinates = "whds"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 0
-        sim.initSimulationArchive("test.bin", 10.)
-        sim.integrate(40.,exact_finish_time=0)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
+        sim.integrate(42.,exact_finish_time=0)
 
         sim = None
         sa = rebound.SimulationArchive("test.bin")
@@ -191,7 +191,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.integrator = "whfast"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 1
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -221,14 +221,15 @@ class TestSimulationArchive(unittest.TestCase):
         sim.integrator = "whfast"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 0
-        sim.initSimulationArchive("test.bin", 10.)
-        sim.integrate(40.,exact_finish_time=0)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
+        sim.integrate(42.,exact_finish_time=0)
 
         sim = None
         sa = rebound.SimulationArchive("test.bin")
         sim = sa[-1]
         sim.integrate(80.,exact_finish_time=0)
         x1 = sim.particles[1].x
+        t1 = sim.t
         
         
         sim = rebound.Simulation()
@@ -240,15 +241,37 @@ class TestSimulationArchive(unittest.TestCase):
         sim.ri_whfast.safe_mode = 0
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
+        t0 = sim.t
 
+        self.assertEqual(t0,t1)
         self.assertEqual(x0,x1)
 
-        tget = 35.123
+        tget = 27.123
         sim = sa.getSimulation(tget,mode="exact");
         self.assertAlmostEqual(sim.t,tget,delta=1e-14)
         tget = 25.123
         sim = sa.getSimulation(tget,mode="close");
         self.assertAlmostEqual(sim.t,tget,delta=sim.dt)
+
+    def test_sa_restart_append(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "whfast"
+        sim.dt = 0.1313
+        sim.ri_whfast.safe_mode = 0
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
+        sim.integrate(40.,exact_finish_time=0)
+
+        sim = None
+        sa = rebound.SimulationArchive("test.bin")
+        sim = sa[-1]
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim.automateSimulationArchive("test.bin", 10.)
+            sim.integrate(80.,exact_finish_time=0)
+            self.assertEqual(1, len(w)) 
 
     
     def test_sa_restart_generator(self):
@@ -259,7 +282,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.integrator = "whfast"
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 0
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -281,8 +304,8 @@ class TestSimulationArchive(unittest.TestCase):
         sim.dt = 0.1313
         sim.ri_whfast.safe_mode = 0
         sim.ri_whfast.corrector = 5
-        sim.initSimulationArchive("test.bin", 10.)
-        sim.integrate(40.,exact_finish_time=0)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
+        sim.integrate(42.,exact_finish_time=0)
 
         sim = None
         sa = rebound.SimulationArchive("test.bin")
@@ -304,7 +327,7 @@ class TestSimulationArchive(unittest.TestCase):
 
         self.assertEqual(x0,x1)
         
-        tget = 35.123
+        tget = 27.123
         sim = sa.getSimulation(tget,mode="exact");
         self.assertAlmostEqual(sim.t,tget,delta=1e-14)
         tget = 25.123
@@ -319,7 +342,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "ias15"
         sim.dt = 0.1313
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
@@ -340,7 +363,7 @@ class TestSimulationArchive(unittest.TestCase):
 
         self.assertEqual(x0,x1)
         
-        tget = 35.123
+        tget = 27.123
         sim = sa.getSimulation(tget,mode="exact");
         self.assertAlmostEqual(sim.t,tget,delta=1e-14)
         tget = 25.123
@@ -354,7 +377,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "ias15"
         sim.dt = 0.1313
-        sim.initSimulationArchive("test.bin", interval_walltime = 0.01)
+        sim.automateSimulationArchive("test.bin", walltime = 0.01,deletefile=True)
         sim.integrate(400.,exact_finish_time=0)
 
         sim = None
@@ -376,40 +399,12 @@ class TestSimulationArchive(unittest.TestCase):
 
         self.assertEqual(x0,x1)
         
-        tget = 216.123
+        tget = 116.123
         sim = sa.getSimulation(tget,mode="exact");
         self.assertAlmostEqual(sim.t,tget,delta=1e-14)
         tget = 116.123
         sim = sa.getSimulation(tget,mode="close");
         self.assertAlmostEqual(sim.t,tget,delta=sim.dt)
-
-class TestSimulationArchiveEstimates(unittest.TestCase):
-    def test_sa_esimatesize(self):
-        sim = rebound.Simulation()
-        sim.add(m=1)
-        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
-        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
-        sim.integrator = "whfast"
-        sim.dt = 0.1313
-        sim.initSimulationArchive("test.bin", 10.)
-        s = sim.estimateSimulationArchiveSize(40.)
-        self.assertEqual(736,s)
-    
-    def test_sa_estimatetime(self):
-        sim = rebound.Simulation()
-        sim.add(m=1)
-        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
-        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
-        sim.integrator = "ias15"
-        sim.dt = 0.1313
-        sim.initSimulationArchive("test.bin", interval = 100.)
-        sim.integrate(400.,exact_finish_time=0)
-
-        sa = rebound.SimulationArchive("test.bin")
-        t = sa.estimateTime(150.)
-        self.assertLess(t,0.1)
-        t = sa.estimateTime([150.,175.])
-        self.assertLess(t,0.1)
 
 
 class TestSimulationArchiveWarningsErrors(unittest.TestCase):
@@ -423,14 +418,14 @@ class TestSimulationArchiveWarningsErrors(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "ias15"
         sim.dt = 0.1313
-        sim.initSimulationArchive("test.bin", interval_walltime = 0.01)
+        sim.automateSimulationArchive("test.bin", walltime = 0.01,deletefile=True)
         sim.integrate(400.,exact_finish_time=0)
         with open("test.bin","r+b") as f:
             f.seek(30)
             f.write("1.0.0     ".encode('ascii'))
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            sim = rebound.SimulationArchive("test.bin")
+            sa = rebound.SimulationArchive("test.bin")
             self.assertEqual(1, len(w)) 
 
 
@@ -443,7 +438,7 @@ class TestSimulationArchiveTmin(unittest.TestCase):
         sim.integrator = "whfast"
         sim.dt = 0.1313
         sim.integrate(400.,exact_finish_time=0)
-        sim.initSimulationArchive("test.bin", interval = 100.)
+        sim.automateSimulationArchive("test.bin", interval = 100.,deletefile=True)
         tmin = sim.t
         sim.integrate(800.,exact_finish_time=0)
         sa = rebound.SimulationArchive("test.bin")
@@ -461,8 +456,8 @@ class TestSimulationArchiveMercurius(unittest.TestCase):
         sim.integrator = "mercurius"
         sim.dt = 0.1313
         sim.ri_mercurius.safe_mode = 0
-        sim.initSimulationArchive("test.bin", 10.)
-        sim.integrate(40.,exact_finish_time=0)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
+        sim.integrate(42.,exact_finish_time=0)
 
         sim = None
         sa = rebound.SimulationArchive("test.bin")
@@ -491,7 +486,7 @@ class TestSimulationArchiveMercurius(unittest.TestCase):
         sim.integrator = "mercurius"
         sim.dt = 0.1313
         sim.ri_mercurius.safe_mode = 1
-        sim.initSimulationArchive("test.bin", 10.)
+        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None

@@ -220,17 +220,8 @@ void reb_save_dp7(struct reb_dp7* dp7, const int N3, FILE* of){
         fwrite(value,field.size,1,of);\
     }
 
-void reb_output_binary(struct reb_simulation* r, char* filename){
-#ifdef MPI
-    char filename_mpi[1024];
-    sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
-    FILE* of = fopen(filename_mpi,"wb"); 
-#else // MPI
-    FILE* of = fopen(filename,"wb"); 
-#endif // MPI
-    if (of==NULL){
-        reb_exit("Can not open file.");
-    }
+
+void _reb_output_binary_to_stream(struct reb_simulation* r, FILE* of){
     // Init integrators. This helps with bit-by-bit reproducibility.
     reb_integrator_init(r);
 
@@ -289,11 +280,12 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
     WRITE_FIELD(MEGNOMEANT,         &r->megno_mean_t,                   sizeof(double));
     WRITE_FIELD(MEGNOMEANY,         &r->megno_mean_Y,                   sizeof(double));
     WRITE_FIELD(MEGNON,             &r->megno_n,                        sizeof(long));
+    WRITE_FIELD(SAVERSION,          &r->simulationarchive_version,      sizeof(int));
     WRITE_FIELD(SASIZESNAPSHOT,     &r->simulationarchive_size_snapshot,sizeof(long));
-    WRITE_FIELD(SAINTERVAL,         &r->simulationarchive_interval,     sizeof(double));
-    WRITE_FIELD(SAINTERVALWALLTIME, &r->simulationarchive_interval_walltime, sizeof(double));
-    WRITE_FIELD(SANEXT,             &r->simulationarchive_next,         sizeof(long));
-    WRITE_FIELD(SAWALLTIME,         &r->simulationarchive_walltime,     sizeof(double));
+    WRITE_FIELD(SAAUTOINTERVAL,     &r->simulationarchive_auto_interval, sizeof(double));
+    WRITE_FIELD(SAAUTOWALLTIME,     &r->simulationarchive_auto_walltime, sizeof(double));
+    WRITE_FIELD(SANEXT,             &r->simulationarchive_next,         sizeof(double));
+    WRITE_FIELD(WALLTIME,           &r->walltime,                       sizeof(double));
     WRITE_FIELD(COLLISION,          &r->collision,                      sizeof(int));
     WRITE_FIELD(VISUALIZATION,      &r->visualization,                  sizeof(int));
     WRITE_FIELD(INTEGRATOR,         &r->integrator,                     sizeof(int));
@@ -407,14 +399,30 @@ void reb_output_binary(struct reb_simulation* r, char* filename){
         }
     }
     // To output size of binary file, need to calculate it first. 
-    r->simulationarchive_size_first = ftell(of)+sizeof(struct reb_binary_field)*2+sizeof(long);
+    r->simulationarchive_size_first = ftell(of)+sizeof(struct reb_binary_field)*2+sizeof(long)+sizeof(struct reb_simulationarchive_blob);
     WRITE_FIELD(SASIZEFIRST,        &r->simulationarchive_size_first,   sizeof(long));
     int end_null = 0;
     WRITE_FIELD(END, &end_null, 0);
+    struct reb_simulationarchive_blob blob = {0};
+    fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+}
+
+void reb_output_binary(struct reb_simulation* r, const char* filename){
+#ifdef MPI
+    char filename_mpi[1024];
+    sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
+    FILE* of = fopen(filename_mpi,"wb"); 
+#else // MPI
+    FILE* of = fopen(filename,"wb"); 
+#endif // MPI
+    if (of==NULL){
+        reb_exit("Can not open file.");
+    }
+    _reb_output_binary_to_stream(r, of);
     fclose(of);
 }
 
-void reb_output_binary_positions(struct reb_simulation* r, char* filename){
+void reb_output_binary_positions(struct reb_simulation* r, const char* filename){
     const int N = r->N;
 #ifdef MPI
     char filename_mpi[1024];

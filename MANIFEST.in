@@ -9,6 +9,7 @@ include src/integrator.c
 include src/gravity.c
 include src/collision.c
 include src/boundary.c
+include src/binarydiff.c
 include src/output.c
 include src/input.c
 include src/display.c
