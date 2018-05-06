@@ -52,7 +52,7 @@ void reb_tools_init_srand(void);
 /**
  * @brief Convert angles for orbit routines
  */
-double reb_toosl_M_to_E(double e, double M);
+double reb_tools_M_to_E(double e, double M);
 
 /**
  * @brief Convert angles for orbit routines
