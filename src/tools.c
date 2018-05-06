@@ -415,15 +415,16 @@ void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R
 
 static double mod2pi(double f){
 	while(f < 0.){
-		f += 2*M_PI;
+		f += 2.*M_PI;
 	}
-	while(f > 0.){
-		f -= 2*M_PI;
+	while(f > 2.*M_PI){
+		f -= 2.*M_PI;
 	}
 	return f;
 }
 
 double reb_tools_M_to_E(double e, double M){
+    M = mod2pi(M); // avoid numerical artefacts for negative numbers
 	double E;
 	if(e < 1.){
 		E = e < 0.8 ? M : M_PI;
