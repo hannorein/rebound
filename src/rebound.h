@@ -1049,11 +1049,16 @@ void reb_configure_box(struct reb_simulation* const r, const double boxsize, con
 void reb_free_simulation(struct reb_simulation* const r);
 
 /**
+ * @cond PRIVATE
+ */
+
+/**
  * @brief Frees up all space used by a REBOUND simulation, but not the reb_simulation structure itself.
  * @details The REBOUND simulation is not usable anymore after being passed to this function.
  * @param r The rebound simulation to be freed
  */
 void reb_free_pointers(struct reb_simulation* const r);
+/** @endcond */
 
 #ifdef MPI
 /**
@@ -1670,12 +1675,6 @@ struct reb_simulationarchive* reb_open_simulationarchive(const char* filename);
 void reb_close_simulationarchive(struct reb_simulationarchive* sa);
 
 /**
- * @brief Frees all the pointers in a SimulationArchive structure
- * @param sa The SimulationArchive to be closed.
- */
-void reb_free_simulationarchive_pointers(struct reb_simulationarchive* sa);
-
-/**
  * @brief Appends a SimulationArchive snapshot to a file
  * @details This function can either be called manually or via one of the convenience methods
  * reb_simulationarchive_automate_interval and reb_simulationarchive_automate_walltime.
@@ -1702,7 +1701,17 @@ void reb_simulationarchive_automate_interval(struct reb_simulation* const r, con
  */
 void reb_simulationarchive_automate_walltime(struct reb_simulation* const r, const char* filename, double walltime);
 
+/**
+ * @cond PRIVATE
+ */
 
+/**
+ * @brief Frees all the pointers in a SimulationArchive structure
+ * @param sa The SimulationArchive to be closed.
+ */
+void reb_free_simulationarchive_pointers(struct reb_simulationarchive* sa);
+
+/** @endcond */
 
 /** @} */
 
