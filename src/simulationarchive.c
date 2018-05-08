@@ -368,6 +368,11 @@ struct reb_simulationarchive* reb_open_simulationarchive(const char* filename){
 }
 
 void reb_close_simulationarchive(struct reb_simulationarchive* sa){
+    reb_free_simulationarchive_pointers(sa);
+    free(sa);
+}
+
+void reb_free_simulationarchive_pointers(struct reb_simulationarchive* sa){
     if (sa==NULL) return;
     if (sa->inf){
         fclose(sa->inf);
@@ -375,9 +380,7 @@ void reb_close_simulationarchive(struct reb_simulationarchive* sa){
     free(sa->filename);
     free(sa->t);
     free(sa->offset);
-    free(sa);
 }
-
     
 static int reb_simulationarchive_snapshotsize(struct reb_simulation* const r){
     int size_snapshot = 0;
