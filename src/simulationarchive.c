@@ -429,6 +429,16 @@ void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
         } 
     }
 }
+static inline void reb_save_dp7_old(struct reb_dp7* dp7, const int N3, FILE* of){
+    fwrite(dp7->p0,sizeof(double),N3,of);
+    fwrite(dp7->p1,sizeof(double),N3,of);
+    fwrite(dp7->p2,sizeof(double),N3,of);
+    fwrite(dp7->p3,sizeof(double),N3,of);
+    fwrite(dp7->p4,sizeof(double),N3,of);
+    fwrite(dp7->p5,sizeof(double),N3,of);
+    fwrite(dp7->p6,sizeof(double),N3,of);
+}
+
 void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* filename){
     if (filename==NULL) filename = r->simulationarchive_filename;
     struct stat buffer;
@@ -503,11 +513,11 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
                             fwrite(&(ps[i].vy),sizeof(double),1,of);
                             fwrite(&(ps[i].vz),sizeof(double),1,of);
                         }
-                        reb_save_dp7(&(r->ri_ias15.b)  ,N3,of);
-                        reb_save_dp7(&(r->ri_ias15.csb),N3,of);
-                        reb_save_dp7(&(r->ri_ias15.e)  ,N3,of);
-                        reb_save_dp7(&(r->ri_ias15.br) ,N3,of);
-                        reb_save_dp7(&(r->ri_ias15.er) ,N3,of);
+                        reb_save_dp7_old(&(r->ri_ias15.b)  ,N3,of);
+                        reb_save_dp7_old(&(r->ri_ias15.csb),N3,of);
+                        reb_save_dp7_old(&(r->ri_ias15.e)  ,N3,of);
+                        reb_save_dp7_old(&(r->ri_ias15.br) ,N3,of);
+                        reb_save_dp7_old(&(r->ri_ias15.er) ,N3,of);
                         fwrite((r->ri_ias15.csx),sizeof(double)*N3,1,of);
                         fwrite((r->ri_ias15.csv),sizeof(double)*N3,1,of);
                     }
@@ -520,35 +530,29 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
         }else{
             // New version with incremental outputs
 
-            // Create file object containing original binary file
+            // Create buffer containing original binary file
             FILE* of = fopen(filename,"r+b");
             fseek(of, 64, SEEK_SET); // Header
-            struct reb_binary_field field = {0};
-            int bytesread = 1;
-            while(field.type!=REB_BINARY_FIELD_TYPE_END && bytesread){
+            struct reb_binary_field field;
+            int bytesread;
+            do{
                 bytesread = fread(&field,sizeof(struct reb_binary_field),1,of);
                 fseek(of, field.size, SEEK_CUR);
-            }
+            }while(field.type!=REB_BINARY_FIELD_TYPE_END && bytesread);
             long size_old = ftell(of);
             char* buf_old = malloc(size_old);
             fseek(of, 0, SEEK_SET);  
             fread(buf_old, size_old,1,of);
-            FILE* old_file = fmemopen(buf_old, size_old, "rb");
 
-
-            // Create file object containing current binary file
+            // Create buffer containing current binary file
             char* buf_new;
             size_t size_new;
-            FILE* new_file = open_memstream(&buf_new, &size_new);
-            _reb_output_binary_to_stream(r, new_file);
-            fclose(new_file);
-            new_file = fmemopen(buf_new, size_new, "rb");
+            _reb_output_binary_to_stream(r, &buf_new, &size_new);
             
-            
-            // Create file object containing diff
+            // Create buffer containing diff
             char* buf_diff;
             size_t size_diff;
-            reb_binary_diff(old_file, new_file, &buf_diff, &size_diff);
+            reb_binary_diff(buf_old, size_old, buf_new, size_new, &buf_diff, &size_diff);
             
             // Update blob info and Write diff to binary file
             struct reb_simulationarchive_blob blob = {0};
@@ -565,11 +569,8 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
             blob.offset_prev = blob.offset_next;
             blob.offset_next = 0;
             fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-            
 
             fclose(of);
-            fclose(new_file);
-            fclose(old_file);
             free(buf_new);
             free(buf_old);
             free(buf_diff);

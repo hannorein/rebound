@@ -1320,7 +1320,7 @@ void reb_output_orbits(struct reb_simulation* r, char* filename);
  */
 void reb_output_binary(struct reb_simulation* r, const char* filename);
 
-void reb_binary_diff(FILE* f1, FILE* f2, char** bufp, size_t* sizep);
+void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep);
 
 /**
  * @brief Append the positions and velocities of all particles to an ASCII file.

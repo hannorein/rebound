@@ -41,6 +41,24 @@
 #include "mpi.h"
 #endif // MPI
 
+/** 
+ * @brief Replacement for open_memstream
+ */
+void reb_output_stream_write(char** bufp, size_t* allocatedsize, size_t* sizep, void* restrict data, size_t size){
+    // Increase size
+    int increased = 0;
+    while (*allocatedsize==0 || (*sizep)+size>(*allocatedsize)){
+        increased = 1;
+	    *allocatedsize = (*allocatedsize) ? (*allocatedsize) * 2 : 32;
+    }
+    if (increased){
+        *bufp = realloc(*bufp,*allocatedsize);
+    }
+    // Copy data to buffer
+    memcpy((*bufp)+(*sizep),data,size);
+    *sizep += size;
+}
+
 /**
  * @brief Same as reb_output_check but with a phase argument
  */
@@ -198,14 +216,14 @@ void reb_output_orbits(struct reb_simulation* r, char* filename){
     fclose(of);
 }
 
-void reb_save_dp7(struct reb_dp7* dp7, const int N3, FILE* of){
-    fwrite(dp7->p0,sizeof(double),N3,of);
-    fwrite(dp7->p1,sizeof(double),N3,of);
-    fwrite(dp7->p2,sizeof(double),N3,of);
-    fwrite(dp7->p3,sizeof(double),N3,of);
-    fwrite(dp7->p4,sizeof(double),N3,of);
-    fwrite(dp7->p5,sizeof(double),N3,of);
-    fwrite(dp7->p6,sizeof(double),N3,of);
+void static inline reb_save_dp7(struct reb_dp7* dp7, const int N3, char** bufp, size_t* sizep, size_t* allocatedsize){
+    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p0,sizeof(double)*N3);
+    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p1,sizeof(double)*N3);
+    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p2,sizeof(double)*N3);
+    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p3,sizeof(double)*N3);
+    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p4,sizeof(double)*N3);
+    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p4,sizeof(double)*N3);
+    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p6,sizeof(double)*N3);
 }
 
 // Macro to write a single field to a binary file.
@@ -216,24 +234,23 @@ void reb_save_dp7(struct reb_dp7* dp7, const int N3, FILE* of){
         memset(&field,0,sizeof(struct reb_binary_field));\
         field.type = REB_BINARY_FIELD_TYPE_##typename;\
         field.size = (length);\
-        fwrite(&field,sizeof(struct reb_binary_field),1,of);\
-        fwrite(value,field.size,1,of);\
+        reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));\
+        reb_output_stream_write(bufp, &allocatedsize, sizep, value,field.size);\
     }
 
 
-void _reb_output_binary_to_stream(struct reb_simulation* r, FILE* of){
+void _reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep){
+    size_t allocatedsize = 0;
+    *bufp = NULL;
+    *sizep = 0;
     // Init integrators. This helps with bit-by-bit reproducibility.
     reb_integrator_init(r);
 
     // Output header.
-    const char str[] = "REBOUND Binary File. Version: ";
-    char zero = '\0';
-    size_t lenheader = strlen(str)+strlen(reb_version_str);
-    fwrite(str,sizeof(char),strlen(str),of);
-    fwrite(reb_version_str,sizeof(char), strlen(reb_version_str),of);
-    fwrite(&zero,sizeof(char),1,of);
-    fwrite(reb_githash_str,sizeof(char),62-lenheader,of);
-    fwrite(&zero,sizeof(char),1,of);
+    char header[64] = "\0";
+    int cwritten = sprintf(header,"REBOUND Binary File. Version: %s",reb_version_str);
+    snprintf(header+cwritten+1,64-cwritten-1,"%s",reb_githash_str);
+    reb_output_stream_write(bufp, &allocatedsize, sizep, header,sizeof(char)*64);
    
     WRITE_FIELD(T,                  &r->t,                              sizeof(double));
     WRITE_FIELD(G,                  &r->G,                              sizeof(double));
@@ -345,14 +362,14 @@ void _reb_output_binary_to_stream(struct reb_simulation* r, FILE* of){
         memset(&field,0,sizeof(struct reb_binary_field));
         field.type = REB_BINARY_FIELD_TYPE_PARTICLES;
         field.size = sizeof(struct reb_particle)*r->N;
-        fwrite(&field,sizeof(struct reb_binary_field),1,of);
+        reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
         // output one particle at a time to sanitize pointers.
         for (int l=0;l<r->N;l++){
             struct reb_particle op = r->particles[l];
             op.c = NULL;
             op.ap = NULL;
             op.sim = NULL;
-            fwrite(&op,sizeof(struct reb_particle),1,of);
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &op,sizeof(struct reb_particle));
         }
     } 
     if (r->var_config){
@@ -369,42 +386,42 @@ void _reb_output_binary_to_stream(struct reb_simulation* r, FILE* of){
         WRITE_FIELD(IAS15_CSA0, r->ri_ias15.csa0,   sizeof(double)*N3);
         {
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_G, .size = sizeof(double)*N3*7};
-            fwrite(&field,sizeof(struct reb_binary_field),1,of);
-            reb_save_dp7(&(r->ri_ias15.g),N3,of);
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
+            reb_save_dp7(&(r->ri_ias15.g),N3,bufp,sizep,&allocatedsize);
         }
         {
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_B, .size = sizeof(double)*N3*7};
-            fwrite(&field,sizeof(struct reb_binary_field),1,of);
-            reb_save_dp7(&(r->ri_ias15.b),N3,of);
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
+            reb_save_dp7(&(r->ri_ias15.b),N3,bufp,sizep,&allocatedsize);
         }
         {
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_CSB, .size = sizeof(double)*N3*7};
-            fwrite(&field,sizeof(struct reb_binary_field),1,of);
-            reb_save_dp7(&(r->ri_ias15.csb),N3,of);
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
+            reb_save_dp7(&(r->ri_ias15.csb),N3,bufp,sizep,&allocatedsize);
         }
         {
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_E, .size = sizeof(double)*N3*7};
-            fwrite(&field,sizeof(struct reb_binary_field),1,of);
-            reb_save_dp7(&(r->ri_ias15.e),N3,of);
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
+            reb_save_dp7(&(r->ri_ias15.e),N3,bufp,sizep,&allocatedsize);
         }
         {
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_BR, .size = sizeof(double)*N3*7};
-            fwrite(&field,sizeof(struct reb_binary_field),1,of);
-            reb_save_dp7(&(r->ri_ias15.br),N3,of);
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
+            reb_save_dp7(&(r->ri_ias15.br),N3,bufp,sizep,&allocatedsize);
         }
         {
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_ER, .size = sizeof(double)*N3*7};
-            fwrite(&field,sizeof(struct reb_binary_field),1,of);
-            reb_save_dp7(&(r->ri_ias15.er),N3,of);
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
+            reb_save_dp7(&(r->ri_ias15.er),N3,bufp,sizep,&allocatedsize);
         }
     }
     // To output size of binary file, need to calculate it first. 
-    r->simulationarchive_size_first = ftell(of)+sizeof(struct reb_binary_field)*2+sizeof(long)+sizeof(struct reb_simulationarchive_blob);
+    r->simulationarchive_size_first = (*sizep)+sizeof(struct reb_binary_field)*2+sizeof(long)+sizeof(struct reb_simulationarchive_blob);
     WRITE_FIELD(SASIZEFIRST,        &r->simulationarchive_size_first,   sizeof(long));
     int end_null = 0;
     WRITE_FIELD(END, &end_null, 0);
     struct reb_simulationarchive_blob blob = {0};
-    fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+    reb_output_stream_write(bufp, &allocatedsize, sizep, &blob, sizeof(struct reb_simulationarchive_blob));
 }
 
 void reb_output_binary(struct reb_simulation* r, const char* filename){
@@ -418,7 +435,11 @@ void reb_output_binary(struct reb_simulation* r, const char* filename){
     if (of==NULL){
         reb_exit("Can not open file.");
     }
-    _reb_output_binary_to_stream(r, of);
+    char* bufp;
+    size_t sizep;
+    _reb_output_binary_to_stream(r, &bufp,&sizep);
+    fwrite(bufp,sizep,1,of);
+    free(bufp);
     fclose(of);
 }
 
