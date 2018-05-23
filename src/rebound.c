@@ -65,6 +65,8 @@ const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build strin
 const char* reb_version_str = "3.6.2";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
+static int reb_error_message_waiting(struct reb_simulation* const r);
+
 void reb_step(struct reb_simulation* const r){
     // Update walltime
     struct timeval time_beginning;
@@ -221,6 +223,19 @@ int reb_get_next_message(struct reb_simulation* const r, char* const buf){
             strcpy(buf,w0);
             free(w0);
             return 1;
+        }
+    }
+    return 0;
+}
+
+static int reb_error_message_waiting(struct reb_simulation* const r){
+    if (r->messages){
+        for (int i=0;i<reb_max_messages_N;i++){
+            if (r->messages[i]!=NULL){
+                if (r->messages[i][0]=='e'){
+                    return 1;
+                }
+            }
         }
     }
     return 0;
@@ -545,7 +560,7 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
         usleep(1000);
     }
     const double dtsign = copysign(1.,r->dt);   // Used to determine integration direction
-    if (r->status>=0){
+    if (r->status>=0 || reb_error_message_waiting(r)){
         // Exit now.
     }else if(tmax!=INFINITY){
         if(r->exact_finish_time==1){
