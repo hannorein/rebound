@@ -2,7 +2,7 @@
 import math
 
 # All units entered in SI (kg, m, s)
-G_SI = 6.674e-11
+G_SI = 6.67408e-11
 times_SI = {'s':1.,
     'hr':3600.,
     'day': 86400.,
