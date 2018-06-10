@@ -1,4 +1,5 @@
 import rebound as rb
+import reboundx as rbx
 import addons
 from argparse import ArgumentParser as ap
 import configparser
@@ -6,6 +7,7 @@ from astropy.time import Time
 import datetime
 import sys
 from pathlib import Path
+import numpy as np
 
 # parse commandline arguments
 parser = ap(description='Reads command line arguments and builds configuration '\
@@ -58,7 +60,7 @@ parser.add_argument('-s', '--start_time',
 					type		= str, 
 					help		= 'Date and time of ephemeris in the format '	\
 								  '"YYYY-MM-DD HH:MM" the default is set '	\
-								  'to 2018-03-30 12:00:00.0 "-s now" sets '		\
+								  'to 2000-01-01 12:00:00.0 "-s now" sets '		\
 								  'start_time to now. If the date entered is '	\
 								  'not valid or not in the right format the '	\
 								  'date is set to the default value.')
@@ -129,4 +131,26 @@ if clarg.new:addons.initReboundBinaryFile(clarg.project_name, sys.argv)
 # load simulation from binary file
 sim = rb.Simulation.from_file(BINFILE)
 
+sim.t=0
 sim.status()
+
+
+# Code begins here
+# move simulation to common barycenter
+sim.calculate_com(first=0, last=12)
+sim.move_to_com()
+
+# Add graritational harmonic J2 and J4 using reboundx
+ps = sim.particles
+rebx = rbx.Extras(sim)
+rebx.add("gravitational_harmonics")
+
+ps["Jupiter"].params["J2"] = 0.01473
+ps["Jupiter"].params["J4"] = -5.84e-2
+ps["Jupiter"].params["R_eq"] = 71492/1.496e8
+
+for time in range (0, 8766*2, 1):
+	sim.integrate(time*sim.dt*2)
+	print("{}, {}".format(sim.t, sim.particles["Io"].e))
+
+print(sim.G)
