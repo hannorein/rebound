@@ -31,7 +31,7 @@ class TestUnits(unittest.TestCase):
         self.sim.add(m=1.)
         self.sim.add(m=1., x=1., vx=1.)
         self.sim.convert_particle_units("au", "kg", "yr2pi")
-        self.assertAlmostEqual(self.sim.particles[0].m,1.988499251452493e+30, delta=1e-15)
+        self.assertAlmostEqual(self.sim.particles[0].m,1.9884754159665356e+30, delta=1e-15)
         self.sim.convert_particle_units("m", "kg", "yr2pi")
         self.assertAlmostEqual(self.sim.particles[1].x,149597870700.0, delta=1e-15)
         self.sim.convert_particle_units("m", "kg", "s")
