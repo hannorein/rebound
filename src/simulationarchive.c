@@ -54,9 +54,9 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
     }
     
     // load original binary file
+    reb_free_pointers(r);
+    memset(r,0,sizeof(struct reb_simulation));
     reb_init_simulation(r);
-    reb_reset_temporary_pointers(r);
-    reb_reset_function_pointers(r);
     r->simulationarchive_filename = NULL;
     // reb_create_simulation sets simulationarchive_version to 2 by default.
     // This will break reading in old version.

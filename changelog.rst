@@ -3,6 +3,11 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+
+Version 3.6.2
+--------------
+* Fixes a memory leak in the SimulationArchive read function.
+
 Version 3.6.1
 --------------
 * Removed function calls to open_memstream and fmemopen which might not work on older Mac OSX versions. This only affects the internals and there are no changes to user interface. 
