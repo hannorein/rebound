@@ -86,13 +86,6 @@ char* reb_read_char(int argc, char** argv, const char* argument){
 }
 
 void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf){
-    dp7->p0 = malloc(sizeof(double)*N3);
-    dp7->p1 = malloc(sizeof(double)*N3);
-    dp7->p2 = malloc(sizeof(double)*N3);
-    dp7->p3 = malloc(sizeof(double)*N3);
-    dp7->p4 = malloc(sizeof(double)*N3);
-    dp7->p5 = malloc(sizeof(double)*N3);
-    dp7->p6 = malloc(sizeof(double)*N3);
     fread(dp7->p0,sizeof(double),N3,inf);
     fread(dp7->p1,sizeof(double),N3,inf);
     fread(dp7->p2,sizeof(double),N3,inf);
