@@ -3,10 +3,13 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.6.5
+--------------
+* One can now add particles from NASA Horizons using Julian Days. For example: sim.add("Earth", date="JD2458327.500000")
+
 Version 3.6.4
 --------------
 * Fixes a memory leak when using the old SimulationArchive version. Thanks to Ian Rabago for reporting the issue.
-
 
 Version 3.6.2
 --------------
