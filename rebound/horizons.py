@@ -22,13 +22,18 @@ INITDATE = None
 def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, plane="ecliptic"):   
     if plane not in ["ecliptic","frame"]:
         raise AttributeError("Reference plane needs to be either 'ecliptic' or 'frame'. See Horizons for a definition of these coordinate systems.")
+    jd = False
     if date is not None:
         if type(date) is datetime.datetime:
             pass
         elif type(date) is str:
-            date = datetime.datetime.strptime(date,"%Y-%m-%d %H:%M")
-        else:
-            raise AttributeError("Unknown date format.")
+            try:
+                if date[0:2]=="JD":
+                    jd = True
+                else:
+                    date = datetime.datetime.strptime(date,"%Y-%m-%d %H:%M")
+            except:
+                raise AttributeError("An error occured while calculating the date. Use either YYYY-MM-DD HH:MM or JDxxxxxxx.xxxxxx")
     # set the cached initialization time if it's not set
     global INITDATE
     if INITDATE is None:
@@ -36,19 +41,26 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
 
     if date is None: # if no date passed, used cached value
         date = INITDATE
+    if type(date) is datetime.datetime:
+        # date is a datetime object
+        expect =  (( b'Starting.* :', date.strftime("%Y-%m-%d %H:%M:%S")+'\n' ),
+                  ( b'Ending.* :', (date + datetime.timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M")+'\n' ))
+    else:
+        # Assume date is in JD
+        expect =  (( b'Starting.* :', date+'\n' ),
+                  ( b'Ending.* :', '\n' ))
+
     print("Searching NASA Horizons for '%s'... "%(particle),end="")
     sys.stdout.flush()
 
     t = telnetlib.Telnet()
     t.open('horizons.jpl.nasa.gov', 6775, 20)
-    expect = ( ( b'Horizons>', particle+'\n' ),
+    expect = expect + ( ( b'Horizons>', particle+'\n' ),
                ( b'Continue.*:', 'y\n' ),
                ( b'Select.*E.phemeris.*:', 'E\n'),
                ( b'Observe.*:', 'v\n' ),
                ( b'Coordinate center.*:', '@0\n' ),
                ( b'Reference plane.*:', plane+'\n' ),
-               ( b'Starting.* :', date.strftime("%Y-%m-%d %H:%M:%S")+'\n' ),
-               ( b'Ending.* :', (date + datetime.timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M")+'\n' ),
                ( b'Output interval.*:', '2\n' ),
                ( b'Accept default output \[.*:', 'n\n' ),
                ( b'Output reference frame \[.*:', 'J2000\n' ),
