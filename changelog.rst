@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.6.6
+--------------
+* New: Fancy plotting routine. Usage: rebound.OrbitPlot(sim, fancy=True)
+
 Version 3.6.5
 --------------
 * One can now add particles from NASA Horizons using Julian Days. For example: sim.add("Earth", date="JD2458327.500000")
