@@ -424,7 +424,7 @@ static double mod2pi(double f){
 }
 
 double reb_tools_M_to_E(double e, double M){
-    M = mod2pi(M); // avoid numerical artefacts for negative numbers
+    //M = mod2pi(M); // avoid numerical artefacts for negative numbers
 	double E;
 	if(e < 1.){
 		E = e < 0.8 ? M : M_PI;
