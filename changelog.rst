@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.6.7
+--------------
+* Fixes an issue related to collisions and the Mercurius integrator that prevented the lastcollision property to be updated.
+
 Version 3.6.6
 --------------
 * New: Fancy plotting routine. Usage: rebound.OrbitPlot(sim, fancy=True)

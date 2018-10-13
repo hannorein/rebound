@@ -96,6 +96,7 @@ static void reb_mercurius_encounterstep(struct reb_simulation* const r, const do
             rim->encounterParticles[r->N].r = r->particles[i].r;
             rim->encounterParticles[r->N].ap = r->particles[i].ap;
             rim->encounterParticles[r->N].hash = r->particles[i].hash;
+            rim->encounterParticles[r->N].lastcollision = r->particles[i].lastcollision;
             rim->encounterRhill[r->N] = rim->rhill[i];
             r->N++;
             if (i<rim->globalNactive){
@@ -146,6 +147,7 @@ static void reb_mercurius_encounterstep(struct reb_simulation* const r, const do
             rim->encounterParticles[i].r = r->particles[k].r;
             rim->encounterParticles[i].ap = r->particles[k].ap;
             rim->encounterParticles[i].hash = r->particles[k].hash;
+            rim->encounterParticles[i].lastcollision = r->particles[k].lastcollision;
             // Mass update is more complicated as it is in part done by the transformations.
             // Commenting this out for now.
             //rim->encounterParticles[i].m = r->particles[k].m;
