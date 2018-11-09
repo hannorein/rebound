@@ -554,6 +554,7 @@ struct reb_orbit reb_orbit_nan(void){
     o.l = nan("");
     o.theta = nan("");
     o.T = nan("");
+    o.rhill = nan("");
 
     return o;
 }
@@ -604,6 +605,8 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 	o.v = sqrt(vsquared);
 	vcircsquared = mu/o.d;	
 	o.a = -mu/( vsquared - 2.*vcircsquared );	// semi major axis
+    
+    o.rhill = o.a*cbrt(p.m/(3.*primary.m));
 	
 	hx = (dy*dvz - dz*dvy); 					//angular momentum vector
 	hy = (dz*dvx - dx*dvz);

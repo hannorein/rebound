@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.6.8
+--------------
+* Added the rhill property to reb_orbit in C and the Orbit and Particle classes in Python. This parameter corresponds to the circular Hill radius of the particle: a*pow(m/(3M),1./3.).
+
 Version 3.6.7
 --------------
 * Fixes an issue related to collisions and the Mercurius integrator that prevented the lastcollision property to be updated.

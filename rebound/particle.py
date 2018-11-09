@@ -582,6 +582,9 @@ class Particle(Structure):
     def a(self):
         return self.calculate_orbit().a 
     @property
+    def rhill(self):
+        return self.calculate_orbit().rhill
+    @property
     def e(self):
         return self.calculate_orbit().e 
     @property

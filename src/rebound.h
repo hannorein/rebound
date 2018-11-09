@@ -711,6 +711,7 @@ struct reb_orbit {
     double l;        ///< Mean Longitude
     double theta;    ///< True Longitude
     double T;        ///< Time of pericenter passage
+    double rhill;    ///< Circular Hill radius 
 };
 
 /**

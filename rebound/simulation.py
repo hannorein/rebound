@@ -244,6 +244,8 @@ class Orbit(Structure):
         true longitude = Omega + omega + f
     T       : float
         time of pericenter passage
+    rhill   : float
+        Hill radius ( =a*pow(m/(3M),1./3.) )
     """
     _fields_ = [("d", c_double),
                 ("v", c_double),
@@ -260,7 +262,8 @@ class Orbit(Structure):
                 ("M", c_double),
                 ("l", c_double),
                 ("theta", c_double),
-                ("T", c_double)]
+                ("T", c_double),
+                ("rhill", c_double)]
 
     def __str__(self):
         """
