@@ -275,7 +275,7 @@ void reb_move_to_com(struct reb_simulation* const r){
 	}
 }
 
-void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3]){
+void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
     const int N_real = r->N - r->N_var;
     struct reb_particle* restrict const particles = r->particles;
     for (int i=0;i<N_real;i++){
@@ -297,6 +297,48 @@ void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, doubl
             vxvyvz[i][0] = particles[i].vx;
             vxvyvz[i][1] = particles[i].vy;
             vxvyvz[i][2] = particles[i].vz;
+        }
+        if (xyzvxvyvz){
+            xyzvxvyvz[i][0] = particles[i].x;
+            xyzvxvyvz[i][1] = particles[i].y;
+            xyzvxvyvz[i][2] = particles[i].z;
+            xyzvxvyvz[i][3] = particles[i].vx;
+            xyzvxvyvz[i][4] = particles[i].vy;
+            xyzvxvyvz[i][5] = particles[i].vz;
+        }
+    }
+}
+
+void reb_set_serialized_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
+    const int N_real = r->N - r->N_var;
+    struct reb_particle* restrict const particles = r->particles;
+    for (int i=0;i<N_real;i++){
+        if (hash){
+           particles[i].hash = hash[i];
+        }
+        if (m){
+            particles[i].m = m[i];
+        }
+        if (radius){
+            particles[i].r = radius[i] ;
+        }
+        if (xyz){
+            particles[i].x = xyz[i][0];
+            particles[i].y = xyz[i][1];
+            particles[i].z = xyz[i][2];
+        }
+        if (vxvyvz){
+            particles[i].vx = vxvyvz[i][0];
+            particles[i].vy = vxvyvz[i][1];
+            particles[i].vz = vxvyvz[i][2];
+        }
+        if (xyzvxvyvz){
+            particles[i].x = xyzvxvyvz[i][0];
+            particles[i].y = xyzvxvyvz[i][1];
+            particles[i].z = xyzvxvyvz[i][2];
+            particles[i].vx = xyzvxvyvz[i][3];
+            particles[i].vy = xyzvxvyvz[i][4];
+            particles[i].vz = xyzvxvyvz[i][5];
         }
     }
 }

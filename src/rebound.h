@@ -1237,8 +1237,23 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
  * @param radius 1D array to to hold particle radii
  * @param xyz 3D array to to hold particle positions
  * @param vxvyvz 3D array to to hold particle velocities
+ * @param xyzvxvyvz 3D array to to hold particle positions and velocities
 */
-void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3]);
+void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]);
+
+/**
+ * @brief Sets particle data to data provided in arrays. 
+ * @details This function can be used to quickly set particle data in a serialized form.
+ * NULL pointers will not be accessed.
+ * @param r The rebound simulation to be considered
+ * @param hash 1D array to to hold particle hashes
+ * @param mass 1D array to to hold particle masses
+ * @param radius 1D array to to hold particle radii
+ * @param xyz 3D array to to hold particle positions
+ * @param vxvyvz 3D array to to hold particle velocities
+ * @param xyzvxvyvz 3D array to to hold particle positions and velocities
+*/
+void reb_set_serialized_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]);
 
 /**
  * @brief Takes the center of mass of a system of particles and returns the center of mass with one of the particles removed. 

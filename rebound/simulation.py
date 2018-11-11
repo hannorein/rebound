@@ -1207,11 +1207,13 @@ class Simulation(Structure):
         It expects correctly sized numpy arrays as arguments. The argument
         name indicates what kind of particle data is written to the array. 
         
-        Possible argument names are "hash", "m", "r", "xyz", "vxvyvz".
-        The datatype for the "hash" array needs to be uint32. The other arrays
-        expect a datatype of float64. The lengths of "hash", "m", "r" arrays
-        need to be at least sim.N. The lengths of xyz and vxvyvz need
-        to be at least 3*sim.N. Exceptions are raised otherwise.
+        Possible argument names are "hash", "m", "r", "xyz", "vxvyvz", and 
+        "xyzvxvyvz". The datatype for the "hash" array needs to be uint32. 
+        The other arrays expect a datatype of float64. The lengths of 
+        "hash", "m", "r" arrays need to be at least sim.N. The lengths of 
+        xyz and vxvyvz need to be at least 3*sim.N. The length of
+        "xyzvxvyvz" arrays need to be 6*sim.N. Exceptions are raised 
+        otherwise.
 
         Note that this routine is only intended for special use cases
         where speed is an issue. For normal use, it is recommended to
@@ -1243,7 +1245,7 @@ class Simulation(Structure):
 
         """
         N = self.N
-        possible_keys = ["hash","m","r","xyz","vxvyvz"]
+        possible_keys = ["hash","m","r","xyz","vxvyvz","xyzvxvyvz"]
         d = {x:None for x in possible_keys}
         for k,v in kwargs.items():
             if k in d:
@@ -1258,6 +1260,8 @@ class Simulation(Structure):
                         raise AttributeError("Expected 'float64' data type for %s array."%k)
                     if k in ["xyz", "vxvyvz"]:
                         minsize = 3*N
+                    elif k in ["xyzvxvyvz"]:
+                        minsize = 6*N
                     else:
                         minsize = N
                     if v.size<minsize:
@@ -1266,7 +1270,42 @@ class Simulation(Structure):
             else:
                 raise AttributeError("Only '%s' are currently supported attributes for serialization." % "', '".join(d.keys()))
 
-        clibrebound.reb_serialize_particle_data(byref(self), d["hash"], d["m"], d["r"], d["xyz"], d["vxvyvz"])
+        clibrebound.reb_serialize_particle_data(byref(self), d["hash"], d["m"], d["r"], d["xyz"], d["vxvyvz"], d["xyzvxvyvz"])
+    
+    def set_serialized_particle_data(self,**kwargs):
+        """
+        Fast way to set serialized particle data via numpy arrays.
+        This is the inverse of Simulation.serialize_particle_data()
+        and uses the same syntax
+        """
+
+        N = self.N
+        possible_keys = ["hash","m","r","xyz","vxvyvz","xyzvxvyvz"]
+        d = {x:None for x in possible_keys}
+        for k,v in kwargs.items():
+            if k in d:
+                if k == "hash":
+                    if v.dtype!= "uint32":
+                        raise AttributeError("Expected 'uint32' data type for '%s' array."%k)
+                    if v.size<N:
+                        raise AttributeError("Array '%s' is not large enough."%k)
+                    d[k] = v.ctypes.data_as(ctypes.POINTER(ctypes.c_uint32))
+                else:
+                    if v.dtype!= "float64":
+                        raise AttributeError("Expected 'float64' data type for %s array."%k)
+                    if k in ["xyz", "vxvyvz"]:
+                        minsize = 3*N
+                    elif k in ["xyzvxvyvz"]:
+                        minsize = 6*N
+                    else:
+                        minsize = N
+                    if v.size<minsize:
+                        raise AttributeError("Array '%s' is not large enough."%k)
+                    d[k] = v.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+            else:
+                raise AttributeError("Only '%s' are currently supported attributes for serialization." % "', '".join(d.keys()))
+
+        clibrebound.reb_set_serialized_particle_data(byref(self), d["hash"], d["m"], d["r"], d["xyz"], d["vxvyvz"], d["xyzvxvyvz"])
 
     def move_to_com(self):
         """
