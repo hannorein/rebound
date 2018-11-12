@@ -1307,6 +1307,14 @@ class Simulation(Structure):
 
         clibrebound.reb_set_serialized_particle_data(byref(self), d["hash"], d["m"], d["r"], d["xyz"], d["vxvyvz"], d["xyzvxvyvz"])
 
+    def move_to_hel(self):
+        """
+        This function moves all particles in the simulation to the heliocentric frame.
+        Note that the simulation will not stay in the heliocentric frame during integrations
+        as the heliocentric frame is not an innertial frame.
+        """
+        clibrebound.reb_move_to_hel(byref(self))
+    
     def move_to_com(self):
         """
         This function moves all particles in the simulation to a center of momentum frame.
