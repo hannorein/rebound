@@ -109,6 +109,30 @@ struct reb_vec3d reb_tools_angular_momentum(const struct reb_simulation* const r
 	return L;
 }
 
+void reb_move_to_hel(struct reb_simulation* const r){
+    const int N_real = r->N - r->N_var;
+    if (N_real>0){
+	    struct reb_particle* restrict const particles = r->particles;
+        struct reb_particle hel = r->particles[0];
+        // Note: Variational particles will not be affected.
+        for (int i=1;i<N_real;i++){
+            particles[i].x  -= hel.x;
+            particles[i].y  -= hel.y;
+            particles[i].z  -= hel.z;
+            particles[i].vx -= hel.vx;
+            particles[i].vy -= hel.vy;
+            particles[i].vz -= hel.vz;
+        }
+        r->particles[0].x = 0.;
+        r->particles[0].y = 0.;
+        r->particles[0].z = 0.;
+        r->particles[0].vx = 0.;
+        r->particles[0].vy = 0.;
+        r->particles[0].vz = 0.;
+    }
+}
+
+
 void reb_move_to_com(struct reb_simulation* const r){
     const int N_real = r->N - r->N_var;
 	struct reb_particle* restrict const particles = r->particles;

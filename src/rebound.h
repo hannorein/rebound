@@ -1201,8 +1201,18 @@ double reb_random_normal(double variance);
 double reb_random_rayleigh(double sigma);
 
 /**
+ * @brief Move to the heliocentric frame.
+ * @details This function moves all particles to the heliocentric 
+ * frame. Note that the simulation will not stay in the heliocentric frame
+ * as it is not an inertial frame. Variational particles are not affected
+ * by the function.
+ * @param r The rebound simulation to be considered
+ */
+void reb_move_to_hel(struct reb_simulation* const r);
+
+/**
  * @brief Move to center of momentum and center of mass frame.
- * @details This function moved all particles to the center of mass 
+ * @details This function moves all particles to the center of mass 
  * frame (sometimes also called center of momentum frame). In this frame
  * the center of mass is at rest.
  * It is recommended to call this function before you are doing a long
