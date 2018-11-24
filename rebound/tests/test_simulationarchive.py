@@ -377,8 +377,8 @@ class TestSimulationArchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "ias15"
         sim.dt = 0.1313
-        sim.automateSimulationArchive("test.bin", walltime = 0.2,deletefile=True)
-        sim.integrate(10000.,exact_finish_time=0)
+        sim.automateSimulationArchive("test.bin", walltime = 0.1,deletefile=True)
+        sim.integrate(3000.,exact_finish_time=0)
 
         sim = None
         sa = rebound.SimulationArchive("test.bin")
