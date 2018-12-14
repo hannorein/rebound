@@ -662,7 +662,6 @@ void reb_integrator_whfast_part1(struct reb_simulation* const r){
     struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;
     const int N_real = N-r->N_var;
-    const int N_active = r->N_active==-1?r->N:r->N_active;
     
     reb_integrator_whfast_init(r);
     
