@@ -989,6 +989,14 @@ struct reb_simulation {
 struct reb_simulation* reb_create_simulation(void);
 
 /**
+ * @brief Creates a deep copy of a REBOUND simulation
+ * @details All simulation data, including all particle data will be copied. Function pointers
+ * need to be set manually afterwards. 
+ * Working on the copy will not affect the original simulation.
+ */
+struct reb_simulation* reb_copy_simulation(struct reb_simulation* r);
+
+/**
  * @brief Initialize reb_simulation structure.
  *
  * @details Same as reb_create_simulation() but does not allocate memory for structure itself.

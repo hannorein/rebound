@@ -64,7 +64,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
     r->simulationarchive_version = 0;
 
     fseek(inf, 0, SEEK_SET);
-    while(reb_input_field(r, inf, warnings)){ }
+    while(reb_input_field(r, inf, warnings,NULL)){ }
 
     // Done?
     if (snapshot==0) return;
@@ -201,11 +201,11 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                     }
                     reb_integrator_ias15_alloc(r);
                     const int N3 = r->N*3;
-                    reb_read_dp7(&(r->ri_ias15.b)  ,N3,inf);
-                    reb_read_dp7(&(r->ri_ias15.csb),N3,inf);
-                    reb_read_dp7(&(r->ri_ias15.e)  ,N3,inf);
-                    reb_read_dp7(&(r->ri_ias15.br) ,N3,inf);
-                    reb_read_dp7(&(r->ri_ias15.er) ,N3,inf);
+                    reb_read_dp7(&(r->ri_ias15.b)  ,N3,inf,NULL);
+                    reb_read_dp7(&(r->ri_ias15.csb),N3,inf,NULL);
+                    reb_read_dp7(&(r->ri_ias15.e)  ,N3,inf,NULL);
+                    reb_read_dp7(&(r->ri_ias15.br) ,N3,inf,NULL);
+                    reb_read_dp7(&(r->ri_ias15.er) ,N3,inf,NULL);
                     fread((r->ri_ias15.csx),sizeof(double)*N3,1,inf);
                     fread((r->ri_ias15.csv),sizeof(double)*N3,1,inf);
                 }
@@ -217,7 +217,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
         }
     }else{
         // Version 2
-        while(reb_input_field(r, inf, warnings)){ }
+        while(reb_input_field(r, inf, warnings,NULL)){ }
     }
     return;
 }
@@ -547,7 +547,7 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
             // Create buffer containing current binary file
             char* buf_new;
             size_t size_new;
-            _reb_output_binary_to_stream(r, &buf_new, &size_new);
+            reb_output_binary_to_stream(r, &buf_new, &size_new);
             
             // Create buffer containing diff
             char* buf_diff;

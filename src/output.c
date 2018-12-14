@@ -239,7 +239,7 @@ void static inline reb_save_dp7(struct reb_dp7* dp7, const int N3, char** bufp, 
     }
 
 
-void _reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep){
+void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep){
     size_t allocatedsize = 0;
     *bufp = NULL;
     *sizep = 0;
@@ -437,7 +437,7 @@ void reb_output_binary(struct reb_simulation* r, const char* filename){
     }
     char* bufp;
     size_t sizep;
-    _reb_output_binary_to_stream(r, &bufp,&sizep);
+    reb_output_binary_to_stream(r, &bufp,&sizep);
     fwrite(bufp,sizep,1,of);
     free(bufp);
     fclose(of);

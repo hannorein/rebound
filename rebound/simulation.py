@@ -371,6 +371,26 @@ class Simulation(Structure):
             if w.value & value and value!=1:
                 warnings.warn(message, RuntimeWarning)
         return sim
+    
+    def copy(self):
+        """
+        Returns a deep copy of a REBOUND simulation. You need to reset 
+        any function pointers on the copy. 
+        
+        Returns
+        ------- 
+        A rebound.Simulation object.
+        
+        """
+        w = c_int(0)
+        sim = Simulation()
+        clibrebound._reb_copy_simulation_with_messages(byref(sim),byref(self),byref(w))
+        if w.value & (1+16+32+64+256) :     # Major error
+            raise ValueError(BINARY_WARNINGS[0])
+        for message, value in BINARY_WARNINGS:  # Just warnings
+            if w.value & value:
+                warnings.warn(message, RuntimeWarning)
+        return sim
 
     def getWidget(self,**kwargs):
         """
