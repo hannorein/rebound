@@ -95,6 +95,10 @@ void reb_integrator_part2(struct reb_simulation* r){
 		case REB_INTEGRATOR_JANUS:
 			reb_integrator_janus_part2(r);
 			break;
+        case REB_INTEGRATOR_NONE:
+            r->t += r->dt;
+            r->dt_last_done = r->dt;
+            break;
 		default:
 			break;
 	}
@@ -127,6 +131,7 @@ void reb_integrator_synchronize(struct reb_simulation* r){
 			break;
 	}
 }
+
 void reb_integrator_init(struct reb_simulation* r){
 	switch(r->integrator){
 		case REB_INTEGRATOR_SEI:
