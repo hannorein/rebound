@@ -510,25 +510,31 @@ class Particle(Structure):
         return NotImplemented 
     
     def __mul__(self, other):
-        if isinstance(other, float):
-            clibrebound.reb_particle_multiply.restype = Particle
-            return clibrebound.reb_particle_multiply(self, c_double(other))
-        return NotImplemented 
+        try:
+            other = float(other)
+        except ValueError:
+            return NotImplemented 
+        clibrebound.reb_particle_multiply.restype = Particle
+        return clibrebound.reb_particle_multiply(self, c_double(other))
     
     def __rmul__(self, other):
-        if isinstance(other, float):
-            clibrebound.reb_particle_multiply.restype = Particle
-            return clibrebound.reb_particle_multiply(self, c_double(other))
-        return NotImplemented 
+        try:
+            other = float(other)
+        except ValueError:
+            return NotImplemented 
+        clibrebound.reb_particle_multiply.restype = Particle
+        return clibrebound.reb_particle_multiply(self, c_double(other))
 
     def __truediv__(self, other):
         return self.__div__(other)
 
     def __div__(self, other):
-        if isinstance(other, float):
-            clibrebound.reb_particle_divide.restype = Particle
-            return clibrebound.reb_particle_divide(self, c_double(other))
-        return NotImplemented 
+        try:
+            other = float(other)
+        except ValueError:
+            return NotImplemented 
+        clibrebound.reb_particle_divide.restype = Particle
+        return clibrebound.reb_particle_divide(self, c_double(other))
 
     @property
     def index(self):
