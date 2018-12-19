@@ -557,6 +557,9 @@ class Simulation(Structure):
             return NotImplemented
         return self.multiply(other, other)
     
+    def __div__(self, other):
+        return self.__truediv__(other)
+
     def __truediv__(self, other):
         try:
             other = float(other)
