@@ -534,6 +534,56 @@ class Simulation(Structure):
         if self._b_needsfree_ == 1: # to avoid, e.g., sim.particles[1]._sim.contents.G creating a Simulation instance to get G, and then freeing the C simulation when it immediately goes out of scope
             clibrebound.reb_free_pointers(byref(self))
 
+    def __add__(self, other):
+        if not isinstance(other,Simulation):
+            return NotImplemented
+        clibrebound.reb_simulation_add.restype = c_int
+        ret = clibrebound.reb_simulation_add(byref(self), byref(other))
+        if ret==-1:
+            raise RuntimeError("Cannot add simulations. Check that the simulations have the same number of particles")
+        return self
+    
+    def __rmul__(self, other):
+        try:
+            other = float(other)
+        except:
+            return NotImplemented
+        return self.multiply(other, other)
+    
+    def __mul__(self, other):
+        try:
+            other = float(other)
+        except:
+            return NotImplemented
+        return self.multiply(other, other)
+    
+    def __truediv__(self, other):
+        try:
+            other = float(other)
+        except:
+            return NotImplemented
+        return self * (1./other)
+    
+    def __sub__(self, other):
+        if not isinstance(other,Simulation):
+            return NotImplemented
+        clibrebound.reb_simulation_subtract.restype = c_int
+        ret = clibrebound.reb_simulation_subtract(byref(self), byref(other))
+        if ret==-1:
+            raise RuntimeError("Cannot subtract simulations. Check that the simulations have the same number of particles")
+        return self
+
+
+    def multiply(self, scalar_pos, scalar_vel):
+        try:
+            scalar_pos = float(scalar_pos)
+            scalar_vel = float(scalar_vel)
+        except:
+            raise ValueError("Cannot multiply simulation with non-scalars.")
+        clibrebound.reb_simulation_multiply(byref(self), c_double(scalar_pos), c_double(scalar_vel))
+        return self
+
+
 # Status functions
     def status(self):
         """ 

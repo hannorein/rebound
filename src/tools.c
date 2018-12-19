@@ -1081,3 +1081,49 @@ uint32_t reb_hash(const char* str){
     return reb_murmur3_32(str,(uint32_t)strlen(str),reb_seed);
 }
 
+void reb_simulation_multiply(struct reb_simulation* r, double scalar_pos, double scalar_vel){
+    const int N = r->N;
+    struct reb_particle* restrict const particles = r->particles;
+	for (int i=0;i<N;i++){
+        particles[i].x *= scalar_pos;
+        particles[i].y *= scalar_pos;
+        particles[i].z *= scalar_pos;
+        particles[i].vx *= scalar_vel;
+        particles[i].vy *= scalar_vel;
+        particles[i].vz *= scalar_vel;
+    }
+}
+
+int reb_simulation_add(struct reb_simulation* r, struct reb_simulation* r2){
+    const int N = r->N;
+    const int N2 = r2->N;
+    if (N!=N2) return -1;
+    struct reb_particle* restrict const particles = r->particles;
+    const struct reb_particle* restrict const particles2 = r2->particles;
+	for (int i=0;i<N;i++){
+        particles[i].x += particles2[i].x;
+        particles[i].y += particles2[i].y;
+        particles[i].z += particles2[i].z;
+        particles[i].vx += particles2[i].vx;
+        particles[i].vy += particles2[i].vy;
+        particles[i].vz += particles2[i].vz;
+    }
+    return 0;
+}
+
+int reb_simulation_subtract(struct reb_simulation* r, struct reb_simulation* r2){
+    const int N = r->N;
+    const int N2 = r2->N;
+    if (N!=N2) return -1;
+    struct reb_particle* restrict const particles = r->particles;
+    const struct reb_particle* restrict const particles2 = r2->particles;
+	for (int i=0;i<N;i++){
+        particles[i].x -= particles2[i].x;
+        particles[i].y -= particles2[i].y;
+        particles[i].z -= particles2[i].z;
+        particles[i].vx -= particles2[i].vx;
+        particles[i].vy -= particles2[i].vy;
+        particles[i].vz -= particles2[i].vz;
+    }
+    return 0;
+}
