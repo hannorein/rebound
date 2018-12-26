@@ -273,8 +273,10 @@ class SimulationArchive(Structure):
         Note that the SimulationArchive needs to have enough
         datapoints to allow for smooth and reasonable orbits.
 
+        >>> from matplotlib.path import Path
+        >>> import matplotlib.patches as pathes
         >>> sa = rebound.SimulationArchive("test.bin")
-        >>> verts, codes = getBezierPaths(sa,origin=0)
+        >>> verts, codes = sa.getBezierPaths(origin=0)
         >>> fig, ax = plt.subplots()
         >>> for j in range(sa[0].N):
         >>>     path = Path(verts[:,j,:], codes)
@@ -285,6 +287,7 @@ class SimulationArchive(Structure):
         >>> ax.autoscale_view()
         
         """
+        import numpy as np
         Npoints = len(self)*3-2
         if len(self)<=1:
             raise Runtim
