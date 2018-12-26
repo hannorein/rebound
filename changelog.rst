@@ -3,6 +3,11 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.7.1
+--------------
+* Added getBezierPaths to SimulationArchive to allow for easy plotting of complicated trajectories. To do this, store a lot of snapshots in the SimulationArchive (several per orbit!). 
+* Added functionality to add, subtract, multiply and divide simulations. This might be useful when developing new algorithms, but is most likely not useful for most users.
+
 Version 3.7.0
 --------------
 * Added a deep copy functionality: reb_copy_simulation() in C, and sim.copy() in python. 
