@@ -224,7 +224,7 @@ struct reb_simulation_integrator_mercurius {
     unsigned int mode;          ///< Internal. 0 if WH is operating, 1 if IAS15 is operating.
     unsigned int encounterN;    ///< Number of particles currently having an encounter
     unsigned int globalN;       
-    unsigned int globalNactive;
+    int globalNactive;
     unsigned int allocatedN;
     unsigned int rhillallocatedN;
     unsigned int encounterAllocatedN;

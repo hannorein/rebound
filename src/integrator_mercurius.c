@@ -90,7 +90,7 @@ static void reb_mercurius_encounterstep(struct reb_simulation* const r, const do
     // Keeps track of number of active particles.
     r->N_active = 0;
     r->N = 0;
-    for (int i=0; i<rim->globalN; i++){
+    for (unsigned int i=0; i<rim->globalN; i++){
         if(rim->encounterIndicies[i]>0){
             rim->encounterParticles[r->N] = rim->p_hold[i];
             rim->encounterParticles[r->N].r = r->particles[i].r;
@@ -99,7 +99,7 @@ static void reb_mercurius_encounterstep(struct reb_simulation* const r, const do
             rim->encounterParticles[r->N].lastcollision = r->particles[i].lastcollision;
             rim->encounterRhill[r->N] = rim->rhill[i];
             r->N++;
-            if (i<rim->globalNactive){
+            if ((int)i<rim->globalNactive){
                 // The case globalNactive==-1 is handled below
                 r->N_active++;
             }
@@ -140,7 +140,7 @@ static void reb_mercurius_encounterstep(struct reb_simulation* const r, const do
     // If a collision occured, then encounterIndicies and
     // globalN will have changed.
     int k = 0;
-    for (int i=0; i<rim->globalN; i++){
+    for (unsigned int i=0; i<rim->globalN; i++){
         if(rim->encounterIndicies[i]>0){
             riw->p_jh[i] = r->particles[k];
             // In case properties changed in a collision

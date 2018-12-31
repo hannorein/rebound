@@ -89,7 +89,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
         switch (r->integrator){
             case REB_INTEGRATOR_JANUS:
                 {
-                    if (r->ri_janus.allocated_N<r->N){
+                    if (r->ri_janus.allocated_N<(unsigned int)r->N){
                         if (r->ri_janus.p_int){
                             free(r->ri_janus.p_int);
                         }
@@ -106,7 +106,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                     struct reb_particle* ps = r->particles;
                     if (r->ri_whfast.safe_mode==0){
                         // If same mode is off, store unsynchronized Jacobi coordinates
-                        if (r->ri_whfast.allocated_N<r->N){
+                        if (r->ri_whfast.allocated_N<(unsigned int)r->N){
                             if (r->ri_whfast.p_jh){
                                 free(r->ri_whfast.p_jh);
                             }
@@ -129,7 +129,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                         r->ri_whfast.is_synchronized=0.;
                         // Recalculate total mass
                         double msum = r->particles[0].m;
-                        for (unsigned int i=1;i<r->N;i++){
+                        for (int i=1;i<r->N;i++){
                             r->ri_whfast.p_jh[i].m = r->particles[i].m;
                             r->ri_whfast.p_jh[i].r = r->particles[i].r;
                             msum += r->particles[i].m;
@@ -145,7 +145,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                     struct reb_particle* ps = r->particles;
                     if (r->ri_mercurius.safe_mode==0){
                         // If same mode is off, store unsynchronized Jacobi coordinates
-                        if (r->ri_whfast.allocated_N<r->N){
+                        if (r->ri_whfast.allocated_N<(unsigned int)r->N){
                             if (r->ri_whfast.p_jh){
                                 free(r->ri_whfast.p_jh);
                             }
@@ -175,7 +175,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                         // Recalculate total mass
                         r->ri_mercurius.m0 = r->particles[0].m;
                         double msum = r->particles[0].m;
-                        for (unsigned int i=1;i<r->N;i++){
+                        for (int i=1;i<r->N;i++){
                             r->ri_whfast.p_jh[i].m = r->particles[i].m;
                             r->ri_whfast.p_jh[i].r = r->particles[i].r;
                             msum += r->particles[i].m;

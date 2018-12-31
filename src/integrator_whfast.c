@@ -338,7 +338,7 @@ void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_p
  * Interaction Hamiltonian  */
 
 void reb_whfast_interaction_step(struct reb_simulation* const r, const double _dt){
-    const int N_real = r->N-r->N_var;
+    const unsigned int N_real = r->N-r->N_var;
     const double G = r->G;
     struct reb_particle* particles = r->particles;
     const double m0 = particles[0].m;
@@ -466,7 +466,7 @@ void reb_whfast_jump_step(const struct reb_simulation* const r, const double _dt
 void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _dt){
     const double m0 = r->particles[0].m;
     const double G = r->G;
-    const int N_real = r->N-r->N_var;
+    const unsigned int N_real = r->N-r->N_var;
     const int coordinates = r->ri_whfast.coordinates;
     struct reb_particle* const p_j = r->ri_whfast.p_jh;
     double eta = m0;

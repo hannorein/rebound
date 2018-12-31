@@ -243,7 +243,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
         //remove from global and update global arrays
         int global_index = -1;
         int count = -1;
-        for(int k=0;k<rim->globalN;k++){
+        for(unsigned int k=0;k<rim->globalN;k++){
             if (rim->encounterIndicies[k]){
                 count++;
             }
@@ -259,7 +259,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
         if(global_index<rim->globalNactive && rim->globalNactive!=-1){
             rim->globalNactive--;
         }
-		for(int j=global_index; j<rim->globalN; j++){
+		for(unsigned int j=global_index; j<rim->globalN; j++){
 			rim->encounterParticles[j] = rim->encounterParticles[j+1];  // These are the global particles
 			riw->p_jh[j] = riw->p_jh[j+1];
 			rim->p_hold[j] = rim->p_hold[j+1];
