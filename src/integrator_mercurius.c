@@ -286,11 +286,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
             reb_warning(r,"MERCURIUS: Recalculating heliocentric coordinates but pos/vel were not synchronized before.");
         }
         rim->m0 = r->particles[0].m;
-        if(r->ri_whfast.coordinates == REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC){
-            reb_transformations_inertial_to_democraticheliocentric_posvel(particles, riw->p_jh, N);
-        }else{
-            reb_transformations_inertial_to_whds_posvel(particles, riw->p_jh, N);
-        }
+        reb_transformations_inertial_to_democraticheliocentric_posvel(particles, riw->p_jh, N);
     }
 
     if (rim->recalculate_rhill_this_timestep){
@@ -368,11 +364,7 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     
     reb_whfast_jump_step(r,r->dt/2.);
         
-    if (riw->coordinates == REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC){
-        reb_transformations_democraticheliocentric_to_inertial_posvel(particles, riw->p_jh, N);
-    }else{
-        reb_transformations_whds_to_inertial_posvel(particles, riw->p_jh, N);
-    }
+    reb_transformations_democraticheliocentric_to_inertial_posvel(particles, riw->p_jh, N);
     
     rim->is_synchronized = 0;
     if (rim->safe_mode){
@@ -401,11 +393,8 @@ void reb_integrator_mercurius_synchronize(struct reb_simulation* r){
         reb_calculate_acceleration(r);
         reb_whfast_interaction_step(r,r->dt/2.);
         
-        if (riw->coordinates == REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC){
-            reb_transformations_democraticheliocentric_to_inertial_posvel(particles, riw->p_jh, N);
-        }else{
-            reb_transformations_whds_to_inertial_posvel(particles, riw->p_jh, N);
-        }
+        reb_transformations_democraticheliocentric_to_inertial_posvel(particles, riw->p_jh, N);
+
         if (rim->keep_unsynchronized){
             memcpy(r->ri_whfast.p_jh,sync_ph,r->N*sizeof(struct reb_particle));
             free(sync_ph);
