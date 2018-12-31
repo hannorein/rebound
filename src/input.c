@@ -269,13 +269,13 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
             if (r->allocatedN<r->N && warnings){
                 *warnings |= REB_INPUT_BINARY_WARNING_PARTICLES;
             }
-            for (int l=0;l<r->allocatedN;l++){
+            for (unsigned int l=0;l<r->allocatedN;l++){
                 r->particles[l].c = NULL;
                 r->particles[l].ap = NULL;
                 r->particles[l].sim = r;
             }
             if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE){
-                for (int l=0;l<r->allocatedN;l++){
+                for (unsigned int l=0;l<r->allocatedN;l++){
                     reb_tree_add_particle_to_tree(r, l);
                 }
             }

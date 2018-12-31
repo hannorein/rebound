@@ -1051,7 +1051,7 @@ static void reb_display_set_default_scale(struct reb_simulation* const r){
     if (r->root_size==-1){  
         r->display_data->scale = 0.;
         const struct reb_particle* p = r->particles;
-        for (int i=0;i<r->N;i++){
+        for (unsigned int i=0;i<r->N;i++){
             const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
             r->display_data->scale = MAX(r->display_data->scale, _r);
         }
@@ -1117,7 +1117,7 @@ void reb_display_prepare_data(struct reb_simulation* const r, int orbits){
     reb_integrator_synchronize(r_copy);
        
     // Update data on GPU 
-    for (int i=0;i<r_copy->N;i++){
+    for (unsigned int i=0;i<r_copy->N;i++){
         struct reb_particle p = r_copy->particles[i];
         data->particle_data[i].x  = p.x;
         data->particle_data[i].y  = p.y;
@@ -1129,7 +1129,7 @@ void reb_display_prepare_data(struct reb_simulation* const r, int orbits){
     }
     if (orbits){
         struct reb_particle com = r_copy->particles[0];
-        for (int i=1;i<r_copy->N;i++){
+        for (unsigned int i=1;i<r_copy->N;i++){
             struct reb_particle p = r_copy->particles[i];
             data->orbit_data[i-1].x  = com.x;
             data->orbit_data[i-1].y  = com.y;

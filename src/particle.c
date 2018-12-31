@@ -159,7 +159,7 @@ static void reb_update_particle_lookup_table(struct reb_simulation* const r){
     const struct reb_particle* const particles = r->particles;
     int N_hash = 0;
     int zerohash = -1;
-    for(int i=0; i<r->N; i++){
+    for(unsigned int i=0; i<r->N; i++){
         if(N_hash >= r->allocatedN_lookup){
             r->allocatedN_lookup = r->allocatedN_lookup ? r->allocatedN_lookup * 2 : 128;
             r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*r->allocatedN_lookup);
@@ -210,7 +210,7 @@ void reb_remove_all(struct reb_simulation* const r){
 	r->particles 	= NULL;
 }
 
-int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
+int reb_remove(struct reb_simulation* const r, unsigned int index, int keepSorted){
     if (r->ri_hermes.global){
         // This is a mini simulation. Need to remove particle from two simulations.
         struct reb_simulation* global = r->ri_hermes.global;
@@ -220,7 +220,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
         reb_remove(global,global_index,1);
         
         //Shifting array values (filled with 0/1)
-        for(int k=global_index;k<global->N;k++){
+        for(unsigned int k=global_index;k<global->N;k++){
             global->ri_hermes.is_in_mini[k] = global->ri_hermes.is_in_mini[k+1];
         }
         
@@ -267,7 +267,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 			rim->rhill[j] = rim->rhill[j+1];
 		}
         // Update additional parameter for local 
-		for(int j=index; j<r->N-1; j++){
+		for(unsigned int j=index; j<r->N-1; j++){
 			rim->encounterRhill[j] = rim->encounterRhill[j+1];
 		}
     }
@@ -297,7 +297,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
         if(index<r->N_active){
             r->N_active--;
         }
-		for(int j=index; j<r->N; j++){
+		for(unsigned int j=index; j<r->N; j++){
 			r->particles[j] = r->particles[j+1];
 		}
         if (r->tree_root){

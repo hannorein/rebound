@@ -584,7 +584,7 @@ void reb_integrator_whfast_init(struct reb_simulation* const r){
         reb_error(r, "Symplectic correctors are only compatible with Jacobi coordinates.");
         return;
     }
-    const int N = r->N;
+    const unsigned int N = r->N;
     if (ri_whfast->coordinates==REB_WHFAST_COORDINATES_JACOBI){
         r->gravity_ignore_terms = 1;
     }else{
