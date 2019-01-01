@@ -444,7 +444,7 @@ void reb_whfast_jump_step(const struct reb_simulation* const r, const double _dt
         case REB_WHFAST_COORDINATES_WHDS:
             {
             double px=0, py=0, pz=0;
-#pragma omp parallel for 
+#pragma omp parallel for reduction (+:px), reduction (+:py), reduction (+:pz)
             for(int i=1;i<N_real;i++){
                 const double m = r->particles[i].m;
                 px += m * p_h[i].vx / (m0+m);
@@ -453,7 +453,7 @@ void reb_whfast_jump_step(const struct reb_simulation* const r, const double _dt
              }
 #pragma omp parallel for 
             for(int i=1;i<N_real;i++){
-                 const double m = r->particles[i].m;
+                const double m = r->particles[i].m;
                 p_h[i].x += _dt * (px - (m * p_h[i].vx / (m0+m)) );
                 p_h[i].y += _dt * (py - (m * p_h[i].vy / (m0+m)) );
                 p_h[i].z += _dt * (pz - (m * p_h[i].vz / (m0+m)) );
