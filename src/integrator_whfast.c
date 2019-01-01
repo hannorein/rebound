@@ -577,7 +577,7 @@ void reb_integrator_whfast_init(struct reb_simulation* const r){
     }
 #endif
     if (r->var_config_N>0 && ri_whfast->coordinates!=REB_WHFAST_COORDINATES_JACOBI){
-        reb_error(r, "Varitional particles are only compatible with Jacobi coordinates.");
+        reb_error(r, "Variational particles are only compatible with Jacobi coordinates.");
         return;
     }
     if (ri_whfast->corrector!=0 && ri_whfast->coordinates!=REB_WHFAST_COORDINATES_JACOBI){
@@ -751,32 +751,7 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
 }
 
 void reb_integrator_whfast_part2(struct reb_simulation* const r){
-    for (int v=0;v<r->var_config_N;v++){
-        struct reb_variational_configuration const vc = r->var_config[v];
-        if (vc.order!=1){
-            reb_error(r, "WHFast/MEGNO only supports first order variational equations.");
-            return;
-        }
-        if (vc.testparticle>=0){
-            reb_error(r, "Test particle variations not supported with WHFast. Use IAS15.");
-            return;
-        }
-    }
     struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
-#if defined(_OPENMP)
-    if (ri_whfast->coordinates!=REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC){
-        reb_error(r,"WHFast when used with OpenMP requires REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC\n");
-        return;
-    }
-#endif
-    if (r->var_config_N>0 && ri_whfast->coordinates!=REB_WHFAST_COORDINATES_JACOBI){
-        reb_error(r, "Variational particles are only compatible with Jacobi coordinates.");
-        return;
-    }
-    if (ri_whfast->corrector!=0 && ri_whfast->coordinates!=REB_WHFAST_COORDINATES_JACOBI){
-        reb_error(r, "Symplectic correctors are only compatible with Jacobi coordinates.");
-        return;
-    }
     
     reb_whfast_interaction_step(r, r->dt);
     reb_whfast_jump_step(r,r->dt/2.);
