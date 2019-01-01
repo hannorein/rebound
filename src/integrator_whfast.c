@@ -404,6 +404,7 @@ void reb_whfast_interaction_step(struct reb_simulation* const r, const double _d
             }
             break;
         case REB_WHFAST_COORDINATES_WHDS:
+#pragma omp parallel for 
             for (unsigned int i=1;i<N_real;i++){
                 const double mi = particles[i].m;
                 p_j[i].vx += _dt*(m0+mi)*particles[i].ax/m0;
@@ -443,13 +444,15 @@ void reb_whfast_jump_step(const struct reb_simulation* const r, const double _dt
         case REB_WHFAST_COORDINATES_WHDS:
             {
             double px=0, py=0, pz=0;
+#pragma omp parallel for 
             for(int i=1;i<N_real;i++){
                 const double m = r->particles[i].m;
                 px += m * p_h[i].vx / (m0+m);
                 py += m * p_h[i].vy / (m0+m);
                 pz += m * p_h[i].vz / (m0+m);
              }
-             for(int i=1;i<N_real;i++){
+#pragma omp parallel for 
+            for(int i=1;i<N_real;i++){
                  const double m = r->particles[i].m;
                 p_h[i].x += _dt * (px - (m * p_h[i].vx / (m0+m)) );
                 p_h[i].y += _dt * (py - (m * p_h[i].vy / (m0+m)) );
@@ -557,32 +560,33 @@ void reb_whfast_apply_corrector(struct reb_simulation* r, double inv, int order,
     }
 }
 
-void reb_integrator_whfast_init(struct reb_simulation* const r){
+int reb_integrator_whfast_init(struct reb_simulation* const r){
     for (int v=0;v<r->var_config_N;v++){
         struct reb_variational_configuration const vc = r->var_config[v];
         if (vc.order!=1){
             reb_error(r, "WHFast/MEGNO only supports first order variational equations.");
-            return;
+            return 1; // Error
         }
         if (vc.testparticle>=0){
             reb_error(r, "Test particle variations not supported with WHFast. Use IAS15.");
-            return;
+            return 1; // Error
         }
     }
     struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
 #if defined(_OPENMP)
-    if (ri_whfast->coordinates!=REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC){
-        reb_error(r,"WHFast when used with OpenMP requires REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC\n");
-        return;
+    if (ri_whfast->coordinates!=REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC
+        && ri_whfast->coordinates!=REB_WHFAST_COORDINATES_WHDS){
+        reb_error(r,"WHFast when used with OpenMP requires REB_WHFAST_COORDINATES_WHDS or REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC\n");
+        return 1; // Error
     }
 #endif
     if (r->var_config_N>0 && ri_whfast->coordinates!=REB_WHFAST_COORDINATES_JACOBI){
         reb_error(r, "Variational particles are only compatible with Jacobi coordinates.");
-        return;
+        return 1; // Error
     }
     if (ri_whfast->corrector!=0 && ri_whfast->coordinates!=REB_WHFAST_COORDINATES_JACOBI){
         reb_error(r, "Symplectic correctors are only compatible with Jacobi coordinates.");
-        return;
+        return 1; // Error
     }
     const int N = r->N;
     if (ri_whfast->coordinates==REB_WHFAST_COORDINATES_JACOBI){
@@ -595,6 +599,7 @@ void reb_integrator_whfast_init(struct reb_simulation* const r){
         ri_whfast->p_jh = realloc(ri_whfast->p_jh,sizeof(struct reb_particle)*N);
         ri_whfast->recalculate_coordinates_this_timestep = 1;
     }
+    return 0;
 }
 
 void reb_integrator_whfast_from_inertial(struct reb_simulation* const r){
@@ -663,7 +668,10 @@ void reb_integrator_whfast_part1(struct reb_simulation* const r){
     const int N = r->N;
     const int N_real = N-r->N_var;
     
-    reb_integrator_whfast_init(r);
+    if (reb_integrator_whfast_init(r)){
+        // Non recoverable error occured.
+        return;
+    }
     
     // Only recalculate Jacobi coordinates if needed
     if (ri_whfast->safe_mode || ri_whfast->recalculate_coordinates_this_timestep){
@@ -752,6 +760,11 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
 
 void reb_integrator_whfast_part2(struct reb_simulation* const r){
     struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
+    if (ri_whfast->p_jh==NULL){
+        // Non recoverable error occured earlier. 
+        // Skipping rest of integration to avoid segmentation fault.
+        return;
+    }
     
     reb_whfast_interaction_step(r, r->dt);
     reb_whfast_jump_step(r,r->dt/2.);
