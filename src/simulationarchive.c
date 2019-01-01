@@ -115,7 +115,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                         }
                         ps = r->ri_whfast.p_jh;
                     }
-                    for(unsigned int i=0;i<r->N;i++){
+                    for(int i=0;i<r->N;i++){
                         fread(&(r->particles[i].m),sizeof(double),1,inf);
                         fread(&(ps[i].x),sizeof(double),1,inf);
                         fread(&(ps[i].y),sizeof(double),1,inf);
@@ -129,7 +129,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                         r->ri_whfast.is_synchronized=0.;
                         // Recalculate total mass
                         double msum = r->particles[0].m;
-                        for (unsigned int i=1;i<r->N;i++){
+                        for (int i=1;i<r->N;i++){
                             r->ri_whfast.p_jh[i].m = r->particles[i].m;
                             r->ri_whfast.p_jh[i].r = r->particles[i].r;
                             msum += r->particles[i].m;
@@ -154,7 +154,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                         }
                         ps = r->ri_whfast.p_jh;
                     }
-                    for(unsigned int i=0;i<r->N;i++){
+                    for(int i=0;i<r->N;i++){
                         fread(&(r->particles[i].m),sizeof(double),1,inf);
                         fread(&(ps[i].x),sizeof(double),1,inf);
                         fread(&(ps[i].y),sizeof(double),1,inf);
@@ -175,7 +175,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                         // Recalculate total mass
                         r->ri_mercurius.m0 = r->particles[0].m;
                         double msum = r->particles[0].m;
-                        for (unsigned int i=1;i<r->N;i++){
+                        for (int i=1;i<r->N;i++){
                             r->ri_whfast.p_jh[i].m = r->particles[i].m;
                             r->ri_whfast.p_jh[i].r = r->particles[i].r;
                             msum += r->particles[i].m;
@@ -190,7 +190,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                     fread(&(r->dt),sizeof(double),1,inf);
                     fread(&(r->dt_last_done),sizeof(double),1,inf);
                     struct reb_particle* ps = r->particles;
-                    for(unsigned int i=0;i<r->N;i++){
+                    for(int i=0;i<r->N;i++){
                         fread(&(ps[i].m),sizeof(double),1,inf);
                         fread(&(ps[i].x),sizeof(double),1,inf);
                         fread(&(ps[i].y),sizeof(double),1,inf);
@@ -469,7 +469,7 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
                         if (r->ri_whfast.safe_mode==0){
                             ps = r->ri_whfast.p_jh;
                         }
-                        for(unsigned int i=0;i<r->N;i++){
+                        for(int i=0;i<r->N;i++){
                             fwrite(&(r->particles[i].m),sizeof(double),1,of);
                             fwrite(&(ps[i].x),sizeof(double),1,of);
                             fwrite(&(ps[i].y),sizeof(double),1,of);
@@ -486,7 +486,7 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
                         if (r->ri_mercurius.safe_mode==0){
                             ps = r->ri_whfast.p_jh;
                         }
-                        for(unsigned int i=0;i<r->N;i++){
+                        for(int i=0;i<r->N;i++){
                             fwrite(&(r->particles[i].m),sizeof(double),1,of);
                             fwrite(&(ps[i].x),sizeof(double),1,of);
                             fwrite(&(ps[i].y),sizeof(double),1,of);
@@ -504,7 +504,7 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
                         fwrite(&(r->dt_last_done),sizeof(double),1,of);
                         struct reb_particle* ps = r->particles;
                         const int N3 = r->N*3;
-                        for(unsigned int i=0;i<r->N;i++){
+                        for(int i=0;i<r->N;i++){
                             fwrite(&(ps[i].m),sizeof(double),1,of);
                             fwrite(&(ps[i].x),sizeof(double),1,of);
                             fwrite(&(ps[i].y),sizeof(double),1,of);

@@ -258,7 +258,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
     struct reb_particle* restrict const particles = r->particles;
     struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
     struct reb_simulation_integrator_whfast* const riw = &(r->ri_whfast);
-    const unsigned int N = r->N;
+    const int N = r->N;
    
     
     if (rim->rhillallocatedN<N){
@@ -296,7 +296,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
             reb_warning(r,"MERCURIUS: Recalculating rhill but pos/vel were not synchronized before.");
         }
         rim->rhill[0] = 0; // Unsused
-        for (unsigned int i=1;i<N;i++){
+        for (int i=1;i<N;i++){
             const double dx  = riw->p_jh[i].x;
             const double dy  = riw->p_jh[i].y;
             const double dz  = riw->p_jh[i].z;

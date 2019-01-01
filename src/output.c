@@ -364,7 +364,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
         field.size = sizeof(struct reb_particle)*r->N;
         reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
         // output one particle at a time to sanitize pointers.
-        for (unsigned int l=0;l<r->N;l++){
+        for (int l=0;l<r->N;l++){
             struct reb_particle op = r->particles[l];
             op.c = NULL;
             op.ap = NULL;

@@ -730,7 +730,7 @@ struct reb_simulation {
     double  softening;              ///< Gravitational softening parameter. Default: 0. 
     double  dt;                     ///< Current timestep. 
     double  dt_last_done;           ///< Last dt used by integrator
-    unsigned int N;                 ///< Current number of particles on this node. 
+    int     N;                      ///< Current number of particles on this node. 
     int     N_var;                  ///< Total number of variational particles. Default: 0.
     int     var_config_N;           ///< Number of variational configuration structs. Default: 0.
     struct reb_variational_configuration* var_config;   ///< These configuration structs contain details on variational particles. 
@@ -740,7 +740,7 @@ struct reb_simulation {
     int     hash_ctr;               ///< Counter for number of assigned hashes to assign unique values.
     int     N_lookup;               ///< Number of entries in the particle lookup table.
     int     allocatedN_lookup;      ///< Number of lookup table entries allocated.
-    unsigned int     allocatedN;    ///< Current maximum space allocated in the particles array on this node. 
+    int     allocatedN;             ///< Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; ///< Main particle array. This contains all particles on this node.  
     struct reb_vec3d* gravity_cs;   ///< Vector containing the information for compensated gravity summation 
     int     gravity_cs_allocatedN;  ///< Current number of allocated space for cs array
@@ -1119,7 +1119,7 @@ void reb_remove_all(struct reb_simulation* const r);
  * @return Returns 1 if particle was successfully removed, 0 if index passed was 
  * out of range.
  */
-int reb_remove(struct reb_simulation* const r, unsigned int index, int keepSorted);
+int reb_remove(struct reb_simulation* const r, int index, int keepSorted);
 
 /**
  * @brief Remove a particle by its hash.
