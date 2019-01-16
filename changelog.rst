@@ -3,6 +3,40 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.7.1
+--------------
+* Added getBezierPaths to SimulationArchive to allow for easy plotting of complicated trajectories. To do this, store a lot of snapshots in the SimulationArchive (several per orbit!). 
+* Added functionality to add, subtract, multiply and divide simulations. This might be useful when developing new algorithms, but is most likely not useful for most users.
+
+Version 3.7.0
+--------------
+* Added a deep copy functionality: reb_copy_simulation() in C, and sim.copy() in python. 
+* Refactored WHFast to enable calling only certain substeps. 
+
+Version 3.6.8
+--------------
+* Added the rhill property to reb_orbit in C and the Orbit and Particle classes in Python. This parameter corresponds to the circular Hill radius of the particle: a*pow(m/(3M),1./3.).
+
+Version 3.6.7
+--------------
+* Fixes an issue related to collisions and the Mercurius integrator that prevented the lastcollision property to be updated.
+
+Version 3.6.6
+--------------
+* New: Fancy plotting routine. Usage: rebound.OrbitPlot(sim, fancy=True)
+
+Version 3.6.5
+--------------
+* One can now add particles from NASA Horizons using Julian Days. For example: sim.add("Earth", date="JD2458327.500000")
+
+Version 3.6.4
+--------------
+* Fixes a memory leak when using the old SimulationArchive version. Thanks to Ian Rabago for reporting the issue.
+
+Version 3.6.2
+--------------
+* Fixes a memory leak in the SimulationArchive read function.
+
 Version 3.6.1
 --------------
 * Removed function calls to open_memstream and fmemopen which might not work on older Mac OSX versions. This only affects the internals and there are no changes to user interface. 

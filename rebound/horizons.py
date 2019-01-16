@@ -22,13 +22,18 @@ INITDATE = None
 def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, plane="ecliptic"):   
     if plane not in ["ecliptic","frame"]:
         raise AttributeError("Reference plane needs to be either 'ecliptic' or 'frame'. See Horizons for a definition of these coordinate systems.")
+    jd = False
     if date is not None:
         if type(date) is datetime.datetime:
             pass
         elif type(date) is str:
-            date = datetime.datetime.strptime(date,"%Y-%m-%d %H:%M")
-        else:
-            raise AttributeError("Unknown date format.")
+            try:
+                if date[0:2]=="JD":
+                    jd = True
+                else:
+                    date = datetime.datetime.strptime(date,"%Y-%m-%d %H:%M")
+            except:
+                raise AttributeError("An error occured while calculating the date. Use either YYYY-MM-DD HH:MM or JDxxxxxxx.xxxxxx")
     # set the cached initialization time if it's not set
     global INITDATE
     if INITDATE is None:
@@ -36,19 +41,26 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
 
     if date is None: # if no date passed, used cached value
         date = INITDATE
+    if type(date) is datetime.datetime:
+        # date is a datetime object
+        expect =  (( b'Starting.* :', date.strftime("%Y-%m-%d %H:%M:%S")+'\n' ),
+                  ( b'Ending.* :', (date + datetime.timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M")+'\n' ))
+    else:
+        # Assume date is in JD
+        expect =  (( b'Starting.* :', date+'\n' ),
+                  ( b'Ending.* :', '\n' ))
+
     print("Searching NASA Horizons for '%s'... "%(particle),end="")
     sys.stdout.flush()
 
     t = telnetlib.Telnet()
     t.open('horizons.jpl.nasa.gov', 6775, 20)
-    expect = ( ( b'Horizons>', particle+'\n' ),
+    expect = expect + ( ( b'Horizons>', particle+'\n' ),
                ( b'Continue.*:', 'y\n' ),
                ( b'Select.*E.phemeris.*:', 'E\n'),
                ( b'Observe.*:', 'v\n' ),
                ( b'Coordinate center.*:', '@0\n' ),
                ( b'Reference plane.*:', plane+'\n' ),
-               ( b'Starting.* :', date.strftime("%Y-%m-%d %H:%M:%S")+'\n' ),
-               ( b'Ending.* :', (date + datetime.timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M")+'\n' ),
                ( b'Output interval.*:', '2\n' ),
                ( b'Accept default output \[.*:', 'n\n' ),
                ( b'Output reference frame \[.*:', 'J2000\n' ),
@@ -132,9 +144,11 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
 
 # There is currently no way to get mass data from HORIZONS.
 # The following data was provided by Jon Giorgini (10 May 2015)
+# Last updated: May 31 2018. 
+# Source: ftp://ssd.jpl.nasa.gov/pub/xfr/gm_Horizons.pck
 # Units: km^3/s^2
 
-Gkmkgs = 6.674e-20 # units of km^3/kg/s^2
+Gkmkgs = 6.67408e-20 # units of km^3/kg/s^2
 
 HORIZONS_MASS_DATA = """
     BODY1_GM       = ( 2.2031780000000021E+04 )
@@ -152,37 +166,39 @@ HORIZONS_MASS_DATA = """
     BODY299_GM     = ( 3.2485859200000006E+05 )
     BODY399_GM     = ( 3.9860043543609598E+05 )
     BODY499_GM     = ( 4.282837362069909E+04  )
-    BODY599_GM     = ( 1.266865349218008E+08  )
-    BODY699_GM     = ( 3.793120749865224E+07  )
+    BODY599_GM     = ( 1.266865349115908E+08  )
+    BODY699_GM     = ( 3.793120723493890E+07  )
     BODY799_GM     = ( 5.793951322279009E+06  )
     BODY899_GM     = ( 6.835099502439672E+06  )
-    BODY999_GM     = ( 8.696138177608748E+02  )
-
+    BODY999_GM     = ( 8.693390780381926E+02  )
+ 
     BODY301_GM     = ( 4.9028000661637961E+03 )
 
     BODY401_GM     = ( 7.087546066894452E-04 )
     BODY402_GM     = ( 9.615569648120313E-05 )
 
-    BODY501_GM     = ( 5.959916033410404E+03 )
-    BODY502_GM     = ( 3.202738774922892E+03 )
-    BODY503_GM     = ( 9.887834453334144E+03 )
-    BODY504_GM     = ( 7.179289361397270E+03 )
-    BODY505_GM     = ( 1.378480571202615E-01 )
-
-    BODY601_GM     = ( 2.503522884661795E+00 )
-    BODY602_GM     = ( 7.211292085479989E+00 )
-    BODY603_GM     = ( 4.121117207701302E+01 )
-    BODY604_GM     = ( 7.311635322923193E+01 )
-    BODY605_GM     = ( 1.539422045545342E+02 )
-    BODY606_GM     = ( 8.978138845307376E+03 )
-    BODY607_GM     = ( 3.718791714191668E-01 )
-    BODY608_GM     = ( 1.205134781724041E+02 )
-    BODY609_GM     = ( 5.531110414633374E-01 )
-    BODY610_GM     = ( 1.266231296945636E-01 )
-    BODY611_GM     = ( 3.513977490568457E-02 )
-    BODY615_GM     = ( 3.759718886965353E-04 )
-    BODY616_GM     = ( 1.066368426666134E-02 )
-    BODY617_GM     = ( 9.103768311054300E-03 )
+    BODY501_GM     = ( 5.959924010272514E+03 )
+    BODY502_GM     = ( 3.202739815114734E+03 )
+    BODY503_GM     = ( 9.887819980080976E+03 )
+    BODY504_GM     = ( 7.179304867611079E+03 )
+    BODY505_GM     = ( 1.487604677404272E-01 )
+    BODY506_GM     = ( 1.380080696078966E-01 )
+ 
+    BODY601_GM     = ( 2.503458199931431E+00 )
+    BODY602_GM     = ( 7.211185066509890E+00 )
+    BODY603_GM     = ( 4.120856508658532E+01 )
+    BODY604_GM     = ( 7.311574218947423E+01 )
+    BODY605_GM     = ( 1.539419035933117E+02 )
+    BODY606_GM     = ( 8.978137030983542E+03 )
+    BODY607_GM     = ( 3.712085754472412E-01 )
+    BODY608_GM     = ( 1.205095752388872E+02 )
+    BODY609_GM     = ( 5.532371285376407E-01 )
+    BODY610_GM     = ( 1.265765099012197E-01 )
+    BODY611_GM     = ( 3.512333288208074E-02 )
+    BODY612_GM     = ( 3.424829447502984E-04 )
+    BODY615_GM     = ( 3.718871247516475E-04 )
+    BODY616_GM     = ( 1.075208001007610E-02 )
+    BODY617_GM     = ( 9.290325122028795E-03 )
 
     BODY701_GM     = ( 8.346344431770477E+01 )
     BODY702_GM     = ( 8.509338094489388E+01 )
@@ -191,29 +207,30 @@ HORIZONS_MASS_DATA = """
     BODY705_GM     = ( 4.319516899232100E+00 )
 
     BODY801_GM     = ( 1.427598140725034E+03 )
+  
+    BODY901_GM     = ( 1.062509269522026E+02 )
+    BODY902_GM     = ( 2.150552267969335E-03 )
+    BODY903_GM     = ( 3.663917107480563E-03 )
+    BODY904_GM     = ( 4.540734312735987E-04 )
+    BODY905_GM     = ( 2.000000000000000E-20 )
 
-    BODY901_GM     = ( 1.058799888601881E+02 )
-    BODY902_GM     = ( 3.048175648169760E-03 )
-    BODY903_GM     = ( 3.211039206155255E-03 )
-    BODY904_GM     = ( 1.110040850536676E-03 )
-
-    BODY2000001_GM = ( 6.3130000000000003E+01 )
-    BODY2000002_GM = ( 1.3730000000000000E+01 )
-    BODY2000003_GM = ( 1.8200000000000001E+00 )
-    BODY2000004_GM = ( 1.7289999999999999E+01 )
-    BODY2000006_GM = ( 9.3000000000000005E-01 )
-    BODY2000007_GM = ( 8.5999999999999999E-01 )
-    BODY2000010_GM = ( 5.7800000000000002E+00 )
-    BODY2000015_GM = ( 2.1000000000000001E+00 )
-    BODY2000016_GM = ( 1.8100000000000001E+00 )
-    BODY2000029_GM = ( 8.5999999999999999E-01 )
-    BODY2000052_GM = ( 1.5900000000000001E+00 )
-    BODY2000065_GM = ( 9.1000000000000003E-01 )
-    BODY2000087_GM = ( 9.8999999999999999E-01 )
-    BODY2000088_GM = ( 1.0200000000000000E+00 )
-    BODY2000433_GM = (  4.463E-4 )
-    BODY2000511_GM = ( 2.2599999999999998E+00 )
-    BODY2000704_GM = ( 2.1899999999999999E+00 )
+    BODY2000001_GM = ( 6.2809393000000000E+01 )
+    BODY2000002_GM = ( 1.3923011000000001E+01 )
+    BODY2000003_GM = ( 1.6224149999999999E+00 )
+    BODY2000004_GM = ( 1.7288008999999999E+01 )
+    BODY2000010_GM = ( 5.5423920000000004E+00 )
+    BODY2000015_GM = ( 2.0981550000000002E+00 )
+    BODY2000016_GM = ( 1.5300480000000001E+00 )
+    BODY2000031_GM = ( 2.8448720000000001E+00 )
+    BODY2000048_GM = ( 1.1351590000000000E+00 )
+    BODY2000052_GM = ( 1.1108039999999999E+00 )
+    BODY2000065_GM = ( 1.4264810000000001E+00 )
+    BODY2000087_GM = ( 9.8635300000000004E-01 )
+    BODY2000088_GM = ( 1.1557990000000000E+00 )
+    BODY2000433_GM = ( 4.463E-4 )
+    BODY2000451_GM = ( 1.0295259999999999E+00 )
+    BODY2000511_GM = ( 2.3312860000000000E+00 )
+    BODY2000704_GM = ( 2.3573170000000001E+00 )
 """
 
 

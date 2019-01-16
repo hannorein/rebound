@@ -109,6 +109,30 @@ struct reb_vec3d reb_tools_angular_momentum(const struct reb_simulation* const r
 	return L;
 }
 
+void reb_move_to_hel(struct reb_simulation* const r){
+    const int N_real = r->N - r->N_var;
+    if (N_real>0){
+	    struct reb_particle* restrict const particles = r->particles;
+        struct reb_particle hel = r->particles[0];
+        // Note: Variational particles will not be affected.
+        for (int i=1;i<N_real;i++){
+            particles[i].x  -= hel.x;
+            particles[i].y  -= hel.y;
+            particles[i].z  -= hel.z;
+            particles[i].vx -= hel.vx;
+            particles[i].vy -= hel.vy;
+            particles[i].vz -= hel.vz;
+        }
+        r->particles[0].x = 0.;
+        r->particles[0].y = 0.;
+        r->particles[0].z = 0.;
+        r->particles[0].vx = 0.;
+        r->particles[0].vy = 0.;
+        r->particles[0].vz = 0.;
+    }
+}
+
+
 void reb_move_to_com(struct reb_simulation* const r){
     const int N_real = r->N - r->N_var;
 	struct reb_particle* restrict const particles = r->particles;
@@ -275,7 +299,7 @@ void reb_move_to_com(struct reb_simulation* const r){
 	}
 }
 
-void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3]){
+void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
     const int N_real = r->N - r->N_var;
     struct reb_particle* restrict const particles = r->particles;
     for (int i=0;i<N_real;i++){
@@ -297,6 +321,48 @@ void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, doubl
             vxvyvz[i][0] = particles[i].vx;
             vxvyvz[i][1] = particles[i].vy;
             vxvyvz[i][2] = particles[i].vz;
+        }
+        if (xyzvxvyvz){
+            xyzvxvyvz[i][0] = particles[i].x;
+            xyzvxvyvz[i][1] = particles[i].y;
+            xyzvxvyvz[i][2] = particles[i].z;
+            xyzvxvyvz[i][3] = particles[i].vx;
+            xyzvxvyvz[i][4] = particles[i].vy;
+            xyzvxvyvz[i][5] = particles[i].vz;
+        }
+    }
+}
+
+void reb_set_serialized_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
+    const int N_real = r->N - r->N_var;
+    struct reb_particle* restrict const particles = r->particles;
+    for (int i=0;i<N_real;i++){
+        if (hash){
+           particles[i].hash = hash[i];
+        }
+        if (m){
+            particles[i].m = m[i];
+        }
+        if (radius){
+            particles[i].r = radius[i] ;
+        }
+        if (xyz){
+            particles[i].x = xyz[i][0];
+            particles[i].y = xyz[i][1];
+            particles[i].z = xyz[i][2];
+        }
+        if (vxvyvz){
+            particles[i].vx = vxvyvz[i][0];
+            particles[i].vy = vxvyvz[i][1];
+            particles[i].vz = vxvyvz[i][2];
+        }
+        if (xyzvxvyvz){
+            particles[i].x = xyzvxvyvz[i][0];
+            particles[i].y = xyzvxvyvz[i][1];
+            particles[i].z = xyzvxvyvz[i][2];
+            particles[i].vx = xyzvxvyvz[i][3];
+            particles[i].vy = xyzvxvyvz[i][4];
+            particles[i].vz = xyzvxvyvz[i][5];
         }
     }
 }
@@ -424,9 +490,9 @@ static double mod2pi(double f){
 }
 
 double reb_tools_M_to_E(double e, double M){
-    M = mod2pi(M); // avoid numerical artefacts for negative numbers
 	double E;
 	if(e < 1.){
+        M = mod2pi(M); // avoid numerical artefacts for negative numbers
 		E = e < 0.8 ? M : M_PI;
 		double F = E - e*sin(E) - M;
 		for(int i=0; i<100; i++){
@@ -554,6 +620,7 @@ struct reb_orbit reb_orbit_nan(void){
     o.l = nan("");
     o.theta = nan("");
     o.T = nan("");
+    o.rhill = nan("");
 
     return o;
 }
@@ -604,6 +671,8 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 	o.v = sqrt(vsquared);
 	vcircsquared = mu/o.d;	
 	o.a = -mu/( vsquared - 2.*vcircsquared );	// semi major axis
+    
+    o.rhill = o.a*cbrt(p.m/(3.*primary.m));
 	
 	hx = (dy*dvz - dz*dvy); 					//angular momentum vector
 	hy = (dz*dvx - dx*dvz);
@@ -1012,3 +1081,49 @@ uint32_t reb_hash(const char* str){
     return reb_murmur3_32(str,(uint32_t)strlen(str),reb_seed);
 }
 
+void reb_simulation_multiply(struct reb_simulation* r, double scalar_pos, double scalar_vel){
+    const int N = r->N;
+    struct reb_particle* restrict const particles = r->particles;
+	for (int i=0;i<N;i++){
+        particles[i].x *= scalar_pos;
+        particles[i].y *= scalar_pos;
+        particles[i].z *= scalar_pos;
+        particles[i].vx *= scalar_vel;
+        particles[i].vy *= scalar_vel;
+        particles[i].vz *= scalar_vel;
+    }
+}
+
+int reb_simulation_add(struct reb_simulation* r, struct reb_simulation* r2){
+    const int N = r->N;
+    const int N2 = r2->N;
+    if (N!=N2) return -1;
+    struct reb_particle* restrict const particles = r->particles;
+    const struct reb_particle* restrict const particles2 = r2->particles;
+	for (int i=0;i<N;i++){
+        particles[i].x += particles2[i].x;
+        particles[i].y += particles2[i].y;
+        particles[i].z += particles2[i].z;
+        particles[i].vx += particles2[i].vx;
+        particles[i].vy += particles2[i].vy;
+        particles[i].vz += particles2[i].vz;
+    }
+    return 0;
+}
+
+int reb_simulation_subtract(struct reb_simulation* r, struct reb_simulation* r2){
+    const int N = r->N;
+    const int N2 = r2->N;
+    if (N!=N2) return -1;
+    struct reb_particle* restrict const particles = r->particles;
+    const struct reb_particle* restrict const particles2 = r2->particles;
+	for (int i=0;i<N;i++){
+        particles[i].x -= particles2[i].x;
+        particles[i].y -= particles2[i].y;
+        particles[i].z -= particles2[i].z;
+        particles[i].vx -= particles2[i].vx;
+        particles[i].vy -= particles2[i].vy;
+        particles[i].vz -= particles2[i].vz;
+    }
+    return 0;
+}

@@ -244,6 +244,8 @@ class Orbit(Structure):
         true longitude = Omega + omega + f
     T       : float
         time of pericenter passage
+    rhill   : float
+        Hill radius ( =a*pow(m/(3M),1./3.) )
     """
     _fields_ = [("d", c_double),
                 ("v", c_double),
@@ -260,7 +262,8 @@ class Orbit(Structure):
                 ("M", c_double),
                 ("l", c_double),
                 ("theta", c_double),
-                ("T", c_double)]
+                ("T", c_double),
+                ("rhill", c_double)]
 
     def __str__(self):
         """
@@ -366,6 +369,26 @@ class Simulation(Structure):
             raise ValueError(BINARY_WARNINGS[0])
         for message, value in BINARY_WARNINGS:  # Just warnings
             if w.value & value and value!=1:
+                warnings.warn(message, RuntimeWarning)
+        return sim
+    
+    def copy(self):
+        """
+        Returns a deep copy of a REBOUND simulation. You need to reset 
+        any function pointers on the copy. 
+        
+        Returns
+        ------- 
+        A rebound.Simulation object.
+        
+        """
+        w = c_int(0)
+        sim = Simulation()
+        clibrebound._reb_copy_simulation_with_messages(byref(sim),byref(self),byref(w))
+        if w.value & (1+16+32+64+256) :     # Major error
+            raise ValueError(BINARY_WARNINGS[0])
+        for message, value in BINARY_WARNINGS:  # Just warnings
+            if w.value & value:
                 warnings.warn(message, RuntimeWarning)
         return sim
 
@@ -510,6 +533,59 @@ class Simulation(Structure):
     def __del__(self):
         if self._b_needsfree_ == 1: # to avoid, e.g., sim.particles[1]._sim.contents.G creating a Simulation instance to get G, and then freeing the C simulation when it immediately goes out of scope
             clibrebound.reb_free_pointers(byref(self))
+
+    def __add__(self, other):
+        if not isinstance(other,Simulation):
+            return NotImplemented
+        clibrebound.reb_simulation_add.restype = c_int
+        ret = clibrebound.reb_simulation_add(byref(self), byref(other))
+        if ret==-1:
+            raise RuntimeError("Cannot add simulations. Check that the simulations have the same number of particles")
+        return self
+    
+    def __rmul__(self, other):
+        try:
+            other = float(other)
+        except:
+            return NotImplemented
+        return self.multiply(other, other)
+    
+    def __mul__(self, other):
+        try:
+            other = float(other)
+        except:
+            return NotImplemented
+        return self.multiply(other, other)
+    
+    def __div__(self, other):
+        return self.__truediv__(other)
+
+    def __truediv__(self, other):
+        try:
+            other = float(other)
+        except:
+            return NotImplemented
+        return self * (1./other)
+    
+    def __sub__(self, other):
+        if not isinstance(other,Simulation):
+            return NotImplemented
+        clibrebound.reb_simulation_subtract.restype = c_int
+        ret = clibrebound.reb_simulation_subtract(byref(self), byref(other))
+        if ret==-1:
+            raise RuntimeError("Cannot subtract simulations. Check that the simulations have the same number of particles")
+        return self
+
+
+    def multiply(self, scalar_pos, scalar_vel):
+        try:
+            scalar_pos = float(scalar_pos)
+            scalar_vel = float(scalar_vel)
+        except:
+            raise ValueError("Cannot multiply simulation with non-scalars.")
+        clibrebound.reb_simulation_multiply(byref(self), c_double(scalar_pos), c_double(scalar_vel))
+        return self
+
 
 # Status functions
     def status(self):
@@ -1204,11 +1280,13 @@ class Simulation(Structure):
         It expects correctly sized numpy arrays as arguments. The argument
         name indicates what kind of particle data is written to the array. 
         
-        Possible argument names are "hash", "m", "r", "xyz", "vxvyvz".
-        The datatype for the "hash" array needs to be uint32. The other arrays
-        expect a datatype of float64. The lengths of "hash", "m", "r" arrays
-        need to be at least sim.N. The lengths of xyz and vxvyvz need
-        to be at least 3*sim.N. Exceptions are raised otherwise.
+        Possible argument names are "hash", "m", "r", "xyz", "vxvyvz", and 
+        "xyzvxvyvz". The datatype for the "hash" array needs to be uint32. 
+        The other arrays expect a datatype of float64. The lengths of 
+        "hash", "m", "r" arrays need to be at least sim.N. The lengths of 
+        xyz and vxvyvz need to be at least 3*sim.N. The length of
+        "xyzvxvyvz" arrays need to be 6*sim.N. Exceptions are raised 
+        otherwise.
 
         Note that this routine is only intended for special use cases
         where speed is an issue. For normal use, it is recommended to
@@ -1240,7 +1318,7 @@ class Simulation(Structure):
 
         """
         N = self.N
-        possible_keys = ["hash","m","r","xyz","vxvyvz"]
+        possible_keys = ["hash","m","r","xyz","vxvyvz","xyzvxvyvz"]
         d = {x:None for x in possible_keys}
         for k,v in kwargs.items():
             if k in d:
@@ -1255,6 +1333,8 @@ class Simulation(Structure):
                         raise AttributeError("Expected 'float64' data type for %s array."%k)
                     if k in ["xyz", "vxvyvz"]:
                         minsize = 3*N
+                    elif k in ["xyzvxvyvz"]:
+                        minsize = 6*N
                     else:
                         minsize = N
                     if v.size<minsize:
@@ -1263,8 +1343,51 @@ class Simulation(Structure):
             else:
                 raise AttributeError("Only '%s' are currently supported attributes for serialization." % "', '".join(d.keys()))
 
-        clibrebound.reb_serialize_particle_data(byref(self), d["hash"], d["m"], d["r"], d["xyz"], d["vxvyvz"])
+        clibrebound.reb_serialize_particle_data(byref(self), d["hash"], d["m"], d["r"], d["xyz"], d["vxvyvz"], d["xyzvxvyvz"])
+    
+    def set_serialized_particle_data(self,**kwargs):
+        """
+        Fast way to set serialized particle data via numpy arrays.
+        This is the inverse of Simulation.serialize_particle_data()
+        and uses the same syntax
+        """
 
+        N = self.N
+        possible_keys = ["hash","m","r","xyz","vxvyvz","xyzvxvyvz"]
+        d = {x:None for x in possible_keys}
+        for k,v in kwargs.items():
+            if k in d:
+                if k == "hash":
+                    if v.dtype!= "uint32":
+                        raise AttributeError("Expected 'uint32' data type for '%s' array."%k)
+                    if v.size<N:
+                        raise AttributeError("Array '%s' is not large enough."%k)
+                    d[k] = v.ctypes.data_as(ctypes.POINTER(ctypes.c_uint32))
+                else:
+                    if v.dtype!= "float64":
+                        raise AttributeError("Expected 'float64' data type for %s array."%k)
+                    if k in ["xyz", "vxvyvz"]:
+                        minsize = 3*N
+                    elif k in ["xyzvxvyvz"]:
+                        minsize = 6*N
+                    else:
+                        minsize = N
+                    if v.size<minsize:
+                        raise AttributeError("Array '%s' is not large enough."%k)
+                    d[k] = v.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+            else:
+                raise AttributeError("Only '%s' are currently supported attributes for serialization." % "', '".join(d.keys()))
+
+        clibrebound.reb_set_serialized_particle_data(byref(self), d["hash"], d["m"], d["r"], d["xyz"], d["vxvyvz"], d["xyzvxvyvz"])
+
+    def move_to_hel(self):
+        """
+        This function moves all particles in the simulation to the heliocentric frame.
+        Note that the simulation will not stay in the heliocentric frame during integrations
+        as the heliocentric frame is not an innertial frame.
+        """
+        clibrebound.reb_move_to_hel(byref(self))
+    
     def move_to_com(self):
         """
         This function moves all particles in the simulation to a center of momentum frame.
@@ -1550,7 +1673,7 @@ class reb_simulation_integrator_mercurius(Structure):
                 ("_mode", c_uint),
                 ("_encounterN", c_uint),
                 ("_globalN", c_uint),
-                ("_globalNactive", c_uint),
+                ("_globalNactive", c_int),
                 ("_allocatedN", c_uint),
                 ("_rhillallocatedN", c_uint),
                 ("_encounterAllocatedN", c_uint),

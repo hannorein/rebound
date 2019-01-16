@@ -47,6 +47,7 @@
 #include "output.h"
 #include "tools.h"
 #include "particle.h"
+#include "input.h"
 #include "simulationarchive.h"
 #ifdef MPI
 #include "communication_mpi.h"
@@ -62,8 +63,10 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.6.2";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.7.2";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
+
+static int reb_error_message_waiting(struct reb_simulation* const r);
 
 void reb_step(struct reb_simulation* const r){
     // Update walltime
@@ -221,6 +224,19 @@ int reb_get_next_message(struct reb_simulation* const r, char* const buf){
             strcpy(buf,w0);
             free(w0);
             return 1;
+        }
+    }
+    return 0;
+}
+
+static int reb_error_message_waiting(struct reb_simulation* const r){
+    if (r->messages){
+        for (int i=0;i<reb_max_messages_N;i++){
+            if (r->messages[i]!=NULL){
+                if (r->messages[i][0]=='e'){
+                    return 1;
+                }
+            }
         }
     }
     return 0;
@@ -394,6 +410,33 @@ struct reb_simulation* reb_create_simulation(){
     return r;
 }
 
+
+void _reb_copy_simulation_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum reb_input_binary_messages* warnings){
+    char* bufp;
+    size_t sizep;
+    reb_output_binary_to_stream(r, &bufp,&sizep);
+    
+    reb_reset_temporary_pointers(r_copy);
+    reb_reset_function_pointers(r_copy);
+    r_copy->simulationarchive_filename = NULL;
+    
+    // Set to old version by default. Will be overwritten if new version was used.
+    r_copy->simulationarchive_version = 0;
+
+    char* bufp_beginning = bufp; // bufp will be changed
+    while(reb_input_field(r_copy, NULL, warnings, &bufp)){ }
+    free(bufp_beginning);
+    
+}
+
+struct reb_simulation* reb_copy_simulation(struct reb_simulation* r){
+    struct reb_simulation* r_copy = reb_create_simulation();
+    enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
+    _reb_copy_simulation_with_messages(r_copy,r,&warnings);
+    r = reb_input_process_warnings(r, warnings);
+    return r_copy;
+}
+
 void reb_init_simulation(struct reb_simulation* r){
     reb_tools_init_srand();
     reb_reset_temporary_pointers(r);
@@ -545,7 +588,7 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
         usleep(1000);
     }
     const double dtsign = copysign(1.,r->dt);   // Used to determine integration direction
-    if (r->status>=0){
+    if (r->status>=0 || reb_error_message_waiting(r)){
         // Exit now.
     }else if(tmax!=INFINITY){
         if(r->exact_finish_time==1){

@@ -90,15 +90,16 @@ static void reb_mercurius_encounterstep(struct reb_simulation* const r, const do
     // Keeps track of number of active particles.
     r->N_active = 0;
     r->N = 0;
-    for (int i=0; i<rim->globalN; i++){
+    for (unsigned int i=0; i<rim->globalN; i++){
         if(rim->encounterIndicies[i]>0){
             rim->encounterParticles[r->N] = rim->p_hold[i];
             rim->encounterParticles[r->N].r = r->particles[i].r;
             rim->encounterParticles[r->N].ap = r->particles[i].ap;
             rim->encounterParticles[r->N].hash = r->particles[i].hash;
+            rim->encounterParticles[r->N].lastcollision = r->particles[i].lastcollision;
             rim->encounterRhill[r->N] = rim->rhill[i];
             r->N++;
-            if (i<rim->globalNactive){
+            if ((int)i<rim->globalNactive){
                 // The case globalNactive==-1 is handled below
                 r->N_active++;
             }
@@ -139,13 +140,14 @@ static void reb_mercurius_encounterstep(struct reb_simulation* const r, const do
     // If a collision occured, then encounterIndicies and
     // globalN will have changed.
     int k = 0;
-    for (int i=0; i<rim->globalN; i++){
+    for (unsigned int i=0; i<rim->globalN; i++){
         if(rim->encounterIndicies[i]>0){
             riw->p_jh[i] = r->particles[k];
             // In case properties changed in a collision
             rim->encounterParticles[i].r = r->particles[k].r;
             rim->encounterParticles[i].ap = r->particles[k].ap;
             rim->encounterParticles[i].hash = r->particles[k].hash;
+            rim->encounterParticles[i].lastcollision = r->particles[k].lastcollision;
             // Mass update is more complicated as it is in part done by the transformations.
             // Commenting this out for now.
             //rim->encounterParticles[i].m = r->particles[k].m;
@@ -284,11 +286,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
             reb_warning(r,"MERCURIUS: Recalculating heliocentric coordinates but pos/vel were not synchronized before.");
         }
         rim->m0 = r->particles[0].m;
-        if(r->ri_whfast.coordinates == REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC){
-            reb_transformations_inertial_to_democraticheliocentric_posvel(particles, riw->p_jh, N);
-        }else{
-            reb_transformations_inertial_to_whds_posvel(particles, riw->p_jh, N);
-        }
+        reb_transformations_inertial_to_democraticheliocentric_posvel(particles, riw->p_jh, N);
     }
 
     if (rim->recalculate_rhill_this_timestep){
@@ -366,11 +364,7 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     
     reb_whfast_jump_step(r,r->dt/2.);
         
-    if (riw->coordinates == REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC){
-        reb_transformations_democraticheliocentric_to_inertial_posvel(particles, riw->p_jh, N);
-    }else{
-        reb_transformations_whds_to_inertial_posvel(particles, riw->p_jh, N);
-    }
+    reb_transformations_democraticheliocentric_to_inertial_posvel(particles, riw->p_jh, N);
     
     rim->is_synchronized = 0;
     if (rim->safe_mode){
@@ -399,11 +393,8 @@ void reb_integrator_mercurius_synchronize(struct reb_simulation* r){
         reb_calculate_acceleration(r);
         reb_whfast_interaction_step(r,r->dt/2.);
         
-        if (riw->coordinates == REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC){
-            reb_transformations_democraticheliocentric_to_inertial_posvel(particles, riw->p_jh, N);
-        }else{
-            reb_transformations_whds_to_inertial_posvel(particles, riw->p_jh, N);
-        }
+        reb_transformations_democraticheliocentric_to_inertial_posvel(particles, riw->p_jh, N);
+
         if (rim->keep_unsynchronized){
             memcpy(r->ri_whfast.p_jh,sync_ph,r->N*sizeof(struct reb_particle));
             free(sync_ph);

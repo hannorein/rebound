@@ -1,15 +1,16 @@
-# turn on OpenMP
+# Turninng on OpenMP
+# On Mac OSX, we can use the CLANG compiler. But it requires some additional 
+# flags (see Makefile.defs in src/ directory). You also need to install the 
+# OpenMP library with homebrew:
+#    brew install libomp
+# Alternatively use a compiler which supports OpenMP out of the box (gcc) and
+# uncomment the following line:
+# export CC=gcc
+
+ifeq ($(shell $(CC) -v 2>&1 | grep -c "clang"), 1)
+export OPENMPCLANG=1
+else
 export OPENMP=1
-
-
-# On Mac OSX, we'll have to use the GNU compilers.
-# You can install them with homebrew. 
-OS=$(shell uname)
-	ifeq ($(OS), Darwin)
-	# We'll use specifically the GNU compiler version 7 
-	export CC=gcc-7
-	# Use the OSX linker
-	export OPT=-Wa,-q
 endif
 
 # Include the other definitions from the default makefile

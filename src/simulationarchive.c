@@ -54,9 +54,9 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
     }
     
     // load original binary file
+    reb_free_pointers(r);
+    memset(r,0,sizeof(struct reb_simulation));
     reb_init_simulation(r);
-    reb_reset_temporary_pointers(r);
-    reb_reset_function_pointers(r);
     r->simulationarchive_filename = NULL;
     // reb_create_simulation sets simulationarchive_version to 2 by default.
     // This will break reading in old version.
@@ -64,7 +64,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
     r->simulationarchive_version = 0;
 
     fseek(inf, 0, SEEK_SET);
-    while(reb_input_field(r, inf, warnings)){ }
+    while(reb_input_field(r, inf, warnings,NULL)){ }
 
     // Done?
     if (snapshot==0) return;
@@ -89,7 +89,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
         switch (r->integrator){
             case REB_INTEGRATOR_JANUS:
                 {
-                    if (r->ri_janus.allocated_N<r->N){
+                    if (r->ri_janus.allocated_N<(unsigned int)r->N){
                         if (r->ri_janus.p_int){
                             free(r->ri_janus.p_int);
                         }
@@ -106,7 +106,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                     struct reb_particle* ps = r->particles;
                     if (r->ri_whfast.safe_mode==0){
                         // If same mode is off, store unsynchronized Jacobi coordinates
-                        if (r->ri_whfast.allocated_N<r->N){
+                        if (r->ri_whfast.allocated_N<(unsigned int)r->N){
                             if (r->ri_whfast.p_jh){
                                 free(r->ri_whfast.p_jh);
                             }
@@ -129,7 +129,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                         r->ri_whfast.is_synchronized=0.;
                         // Recalculate total mass
                         double msum = r->particles[0].m;
-                        for (unsigned int i=1;i<r->N;i++){
+                        for (int i=1;i<r->N;i++){
                             r->ri_whfast.p_jh[i].m = r->particles[i].m;
                             r->ri_whfast.p_jh[i].r = r->particles[i].r;
                             msum += r->particles[i].m;
@@ -145,7 +145,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                     struct reb_particle* ps = r->particles;
                     if (r->ri_mercurius.safe_mode==0){
                         // If same mode is off, store unsynchronized Jacobi coordinates
-                        if (r->ri_whfast.allocated_N<r->N){
+                        if (r->ri_whfast.allocated_N<(unsigned int)r->N){
                             if (r->ri_whfast.p_jh){
                                 free(r->ri_whfast.p_jh);
                             }
@@ -175,7 +175,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                         // Recalculate total mass
                         r->ri_mercurius.m0 = r->particles[0].m;
                         double msum = r->particles[0].m;
-                        for (unsigned int i=1;i<r->N;i++){
+                        for (int i=1;i<r->N;i++){
                             r->ri_whfast.p_jh[i].m = r->particles[i].m;
                             r->ri_whfast.p_jh[i].r = r->particles[i].r;
                             msum += r->particles[i].m;
@@ -201,11 +201,11 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                     }
                     reb_integrator_ias15_alloc(r);
                     const int N3 = r->N*3;
-                    reb_read_dp7(&(r->ri_ias15.b)  ,N3,inf);
-                    reb_read_dp7(&(r->ri_ias15.csb),N3,inf);
-                    reb_read_dp7(&(r->ri_ias15.e)  ,N3,inf);
-                    reb_read_dp7(&(r->ri_ias15.br) ,N3,inf);
-                    reb_read_dp7(&(r->ri_ias15.er) ,N3,inf);
+                    reb_read_dp7(&(r->ri_ias15.b)  ,N3,inf,NULL);
+                    reb_read_dp7(&(r->ri_ias15.csb),N3,inf,NULL);
+                    reb_read_dp7(&(r->ri_ias15.e)  ,N3,inf,NULL);
+                    reb_read_dp7(&(r->ri_ias15.br) ,N3,inf,NULL);
+                    reb_read_dp7(&(r->ri_ias15.er) ,N3,inf,NULL);
                     fread((r->ri_ias15.csx),sizeof(double)*N3,1,inf);
                     fread((r->ri_ias15.csv),sizeof(double)*N3,1,inf);
                 }
@@ -217,7 +217,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
         }
     }else{
         // Version 2
-        while(reb_input_field(r, inf, warnings)){ }
+        while(reb_input_field(r, inf, warnings,NULL)){ }
     }
     return;
 }
@@ -547,7 +547,7 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
             // Create buffer containing current binary file
             char* buf_new;
             size_t size_new;
-            _reb_output_binary_to_stream(r, &buf_new, &size_new);
+            reb_output_binary_to_stream(r, &buf_new, &size_new);
             
             // Create buffer containing diff
             char* buf_diff;

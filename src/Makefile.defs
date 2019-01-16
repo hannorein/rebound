@@ -52,7 +52,13 @@ else
 	LIB+= -fopenmp
 endif
 else
+ifeq ($(OPENMPCLANG), 1)
+	PREDEF+= -DOPENMP
+	OPT+= -I$(brew --prefix libomp)/include -Xpreprocessor -fopenmp
+	LIB+= -lomp
+else
 	OPT+= -Wno-unknown-pragmas
+endif
 endif
 
 ifndef GITHASH

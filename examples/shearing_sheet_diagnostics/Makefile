@@ -1,22 +1,4 @@
-export OPENGL=1
-
-# OpenMP
-# On Mac OSX, we can use the CLANG compiler. But it requires some additional 
-# flags (see Makefile.defs in src/ directory). You also need to install the 
-# OpenMP library with homebrew:
-#    brew install libomp
-# Alternatively use a compiler which supports OpenMP out of the box (gcc) and
-# uncomment the following line:
-# export CC=gcc
-
-# Ucomment the following lines to turn on OPENMP
-#ifeq ($(shell $(CC) -v 2>&1 | grep -c "clang"), 1)
-#export OPENMPCLANG=1
-#else
-#export OPENMP=1
-#endif
-
-
+export OPENGL=0
 include ../../src/Makefile.defs
 
 all: librebound
