@@ -1081,7 +1081,7 @@ uint32_t reb_hash(const char* str){
     return reb_murmur3_32(str,(uint32_t)strlen(str),reb_seed);
 }
 
-void reb_simulation_multiply(struct reb_simulation* r, double scalar_pos, double scalar_vel){
+void reb_simulation_imultiply(struct reb_simulation* r, double scalar_pos, double scalar_vel){
     const int N = r->N;
     struct reb_particle* restrict const particles = r->particles;
 	for (int i=0;i<N;i++){
@@ -1094,7 +1094,7 @@ void reb_simulation_multiply(struct reb_simulation* r, double scalar_pos, double
     }
 }
 
-int reb_simulation_add(struct reb_simulation* r, struct reb_simulation* r2){
+int reb_simulation_iadd(struct reb_simulation* r, struct reb_simulation* r2){
     const int N = r->N;
     const int N2 = r2->N;
     if (N!=N2) return -1;
@@ -1111,7 +1111,7 @@ int reb_simulation_add(struct reb_simulation* r, struct reb_simulation* r2){
     return 0;
 }
 
-int reb_simulation_subtract(struct reb_simulation* r, struct reb_simulation* r2){
+int reb_simulation_isubtract(struct reb_simulation* r, struct reb_simulation* r2){
     const int N = r->N;
     const int N2 = r2->N;
     if (N!=N2) return -1;
@@ -1127,3 +1127,4 @@ int reb_simulation_subtract(struct reb_simulation* r, struct reb_simulation* r2)
     }
     return 0;
 }
+
