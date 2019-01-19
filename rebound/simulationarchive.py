@@ -274,7 +274,7 @@ class SimulationArchive(Structure):
         datapoints to allow for smooth and reasonable orbits.
 
         >>> from matplotlib.path import Path
-        >>> import matplotlib.patches as pathes
+        >>> import matplotlib.patches as patches
         >>> sa = rebound.SimulationArchive("test.bin")
         >>> verts, codes = sa.getBezierPaths(origin=0)
         >>> fig, ax = plt.subplots()
