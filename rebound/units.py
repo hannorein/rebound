@@ -74,6 +74,10 @@ def convert_G(new_l, new_t, new_m):
 def check_units(newunits):   
     if len(newunits) is not 3:
         raise Exception("Error: Need to pass exactly 3 units for length, time, and mass (any order), see ipython_examples/Units.ipynb")
+
+    if isinstance(newunits, dict): 
+        # keys are not important as they are inferred from the values anyway
+        newunits = newunits.values() 
     
     l_unit = t_unit = m_unit = None
     for unit in newunits:
