@@ -162,38 +162,120 @@ class TestParticleOperators(unittest.TestCase):
         p1 = rebound.Particle(m=1.1,x=1.2,vy=1.3)
         p2 = rebound.Particle(m=1.4,x=1.6,vy=1.8)
         p3 = p1 - p2
-        self.assertAlmostEqual(p3.m,-0.3,delta=1e-15)
-        self.assertAlmostEqual(p3.x,-0.4,delta=1e-15)
-        self.assertAlmostEqual(p3.vy,-0.5,delta=1e-15)
+        self.assertEqual(p3.x,p1.x-p2.x)
+        self.assertEqual(p3.y,p1.y-p2.y)
+        self.assertEqual(p3.z,p1.z-p2.z)
+        self.assertEqual(p3.vx,p1.vx-p2.vx)
+        self.assertEqual(p3.vy,p1.vy-p2.vy)
+        self.assertEqual(p3.vz,p1.vz-p2.vz)
+        self.assertEqual(p3.m,p1.m-p2.m)
 
     def test_add(self):
         p1 = rebound.Particle(m=1.1,x=1.2,vy=1.3)
         p2 = rebound.Particle(m=1.4,x=1.6,vy=1.8)
         p3 = p1 + p2
-        self.assertAlmostEqual(p3.m,2.5,delta=1e-15)
-        self.assertAlmostEqual(p3.x,2.8,delta=1e-15)
-        self.assertAlmostEqual(p3.vy,3.1,delta=1e-15)
+        self.assertEqual(p3.x,p1.x+p2.x)
+        self.assertEqual(p3.y,p1.y+p2.y)
+        self.assertEqual(p3.z,p1.z+p2.z)
+        self.assertEqual(p3.vx,p1.vx+p2.vx)
+        self.assertEqual(p3.vy,p1.vy+p2.vy)
+        self.assertEqual(p3.vz,p1.vz+p2.vz)
+        self.assertEqual(p3.m,p1.m+p2.m)
 
     def test_mul(self):
         p1 = rebound.Particle(m=1.1,x=1.2,vy=1.3)
         p2 = 2.*p1
-        self.assertAlmostEqual(p2.m,2.2,delta=1e-15)
-        self.assertAlmostEqual(p2.x,2.4,delta=1e-15)
-        self.assertAlmostEqual(p2.vy,2.6,delta=1e-15)
-    
-    def test_irmul(self):
-        p1 = rebound.Particle(m=1.1,x=1.2,vy=1.3)
-        p2 = p1*2.
-        self.assertAlmostEqual(p2.m,2.2,delta=1e-15)
-        self.assertAlmostEqual(p2.x,2.4,delta=1e-15)
-        self.assertAlmostEqual(p2.vy,2.6,delta=1e-15)
+        self.assertEqual(p2.x,2.*p1.x)
+        self.assertEqual(p2.y,2.*p1.y)
+        self.assertEqual(p2.z,2.*p1.z)
+        self.assertEqual(p2.vx,2.*p1.vx)
+        self.assertEqual(p2.vy,2.*p1.vy)
+        self.assertEqual(p2.vz,2.*p1.vz)
+        self.assertEqual(p2.m,2.*p1.m)
     
     def test_div(self):
         p1 = rebound.Particle(m=1.2,x=1.4,vy=1.8)
         p2 = p1/2.
-        self.assertAlmostEqual(p2.m,0.6,delta=1e-15)
-        self.assertAlmostEqual(p2.x,0.7,delta=1e-15)
-        self.assertAlmostEqual(p2.vy,0.9,delta=1e-15)
+        self.assertEqual(p2.x,p1.x/2.)
+        self.assertEqual(p2.y,p1.y/2.)
+        self.assertEqual(p2.z,p1.z/2.)
+        self.assertEqual(p2.vx,p1.vx/2.)
+        self.assertEqual(p2.vy,p1.vy/2.)
+        self.assertEqual(p2.vz,p1.vz/2.)
+        self.assertEqual(p2.m,p1.m/2.)
+    
+    def test_truediv(self):
+        p1 = rebound.Particle(m=1.2,x=1.4,vy=1.8)
+        p2 = p1/2
+        self.assertEqual(p2.x,p1.x/2.)
+        self.assertEqual(p2.y,p1.y/2.)
+        self.assertEqual(p2.z,p1.z/2.)
+        self.assertEqual(p2.vx,p1.vx/2.)
+        self.assertEqual(p2.vy,p1.vy/2.)
+        self.assertEqual(p2.vz,p1.vz/2.)
+        self.assertEqual(p2.m,p1.m/2.)
+    
+    def test_isub(self):
+        p1 = rebound.Particle(m=1.1,x=1.2,vy=1.3)
+        p3 = p1.copy()
+        p2 = rebound.Particle(m=1.4,x=1.6,vy=1.8)
+        p3 -= p2
+        self.assertEqual(p3.x,p1.x-p2.x)
+        self.assertEqual(p3.y,p1.y-p2.y)
+        self.assertEqual(p3.z,p1.z-p2.z)
+        self.assertEqual(p3.vx,p1.vx-p2.vx)
+        self.assertEqual(p3.vy,p1.vy-p2.vy)
+        self.assertEqual(p3.vz,p1.vz-p2.vz)
+        self.assertEqual(p3.m,p1.m-p2.m)
+
+    def test_iadd(self):
+        p1 = rebound.Particle(m=1.1,x=1.2,vy=1.3)
+        p3 = p1.copy()
+        p2 = rebound.Particle(m=1.4,x=1.6,vy=1.8)
+        p3 += p2
+        self.assertEqual(p3.x,p1.x+p2.x)
+        self.assertEqual(p3.y,p1.y+p2.y)
+        self.assertEqual(p3.z,p1.z+p2.z)
+        self.assertEqual(p3.vx,p1.vx+p2.vx)
+        self.assertEqual(p3.vy,p1.vy+p2.vy)
+        self.assertEqual(p3.vz,p1.vz+p2.vz)
+        self.assertEqual(p3.m,p1.m+p2.m)
+
+    def test_imul(self):
+        p1 = rebound.Particle(m=1.1,x=1.2,vy=1.3)
+        p2 = p1.copy()
+        p2 *= 2.
+        self.assertEqual(p2.x,2.*p1.x)
+        self.assertEqual(p2.y,2.*p1.y)
+        self.assertEqual(p2.z,2.*p1.z)
+        self.assertEqual(p2.vx,2.*p1.vx)
+        self.assertEqual(p2.vy,2.*p1.vy)
+        self.assertEqual(p2.vz,2.*p1.vz)
+        self.assertEqual(p2.m,2.*p1.m)
+    
+    def test_idiv(self):
+        p1 = rebound.Particle(m=1.2,x=1.4,vy=1.8)
+        p2 = p1.copy()
+        p2 /=2.
+        self.assertEqual(p2.x,p1.x/2.)
+        self.assertEqual(p2.y,p1.y/2.)
+        self.assertEqual(p2.z,p1.z/2.)
+        self.assertEqual(p2.vx,p1.vx/2.)
+        self.assertEqual(p2.vy,p1.vy/2.)
+        self.assertEqual(p2.vz,p1.vz/2.)
+        self.assertEqual(p2.m,p1.m/2.)
+    
+    def test_itruediv(self):
+        p1 = rebound.Particle(m=1.2,x=1.4,vy=1.8)
+        p2 = p1.copy()
+        p2 /=2
+        self.assertEqual(p2.x,p1.x/2.)
+        self.assertEqual(p2.y,p1.y/2.)
+        self.assertEqual(p2.z,p1.z/2.)
+        self.assertEqual(p2.vx,p1.vx/2.)
+        self.assertEqual(p2.vy,p1.vy/2.)
+        self.assertEqual(p2.vz,p1.vz/2.)
+        self.assertEqual(p2.m,p1.m/2.)
     
 
 

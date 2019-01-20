@@ -496,45 +496,80 @@ class Particle(Structure):
         return pts
 
     # Simple operators for particles.
-
-    def __sub__(self, other):
-        if isinstance(other, Particle):
-            clibrebound.reb_particle_minus.restype = Particle
-            return clibrebound.reb_particle_minus(self, other)
-        return NotImplemented 
     
     def __add__(self, other):
-        if isinstance(other, Particle):
-            clibrebound.reb_particle_plus.restype = Particle
-            return clibrebound.reb_particle_plus(self, other)
-        return NotImplemented 
+        if not isinstance(other, Particle):
+            return NotImplemented 
+        c = self.copy()
+        return c.__iadd__(other)
+    
+    def __iadd__(self, other):
+        if not isinstance(other, Particle):
+            return NotImplemented 
+        clibrebound.reb_particle_iadd(byref(self), byref(other))
+        return self
+    
+    def __sub__(self, other):
+        if not isinstance(other, Particle):
+            return NotImplemented 
+        c = self.copy()
+        return c.__isub__(other)
+    
+    def __isub__(self, other):
+        if not isinstance(other, Particle):
+            return NotImplemented 
+        clibrebound.reb_particle_isub(byref(self), byref(other))
+        return self
     
     def __mul__(self, other):
         try:
             other = float(other)
-        except ValueError:
+        except:
             return NotImplemented 
-        clibrebound.reb_particle_multiply.restype = Particle
-        return clibrebound.reb_particle_multiply(self, c_double(other))
+        c = self.copy()
+        return c.__imul__(other)
+    
+    def __imul__(self, other):
+        try:
+            other = float(other)
+        except:
+            return NotImplemented 
+        clibrebound.reb_particle_imul(byref(self), c_double(other))
+        return self
     
     def __rmul__(self, other):
         try:
             other = float(other)
-        except ValueError:
+        except:
             return NotImplemented 
-        clibrebound.reb_particle_multiply.restype = Particle
-        return clibrebound.reb_particle_multiply(self, c_double(other))
-
-    def __truediv__(self, other):
-        return self.__div__(other)
-
+        c = self.copy()
+        return c.__imul__(other)
+    
     def __div__(self, other):
+        return self.__truediv__(other)
+    
+    def __idiv__(self, other):
+        return self.__itruediv__(other)
+    
+    def __truediv__(self, other):
         try:
             other = float(other)
-        except ValueError:
+        except:
             return NotImplemented 
-        clibrebound.reb_particle_divide.restype = Particle
-        return clibrebound.reb_particle_divide(self, c_double(other))
+        c = self.copy()
+        if other==0.:
+            raise ZeroDivisionError
+        return c.__imul__(1./other)
+    
+    def __itruediv__(self, other):
+        try:
+            other = float(other)
+        except:
+            return NotImplemented 
+        if other==0.:
+            raise ZeroDivisionError
+        return self.__imul__(1./other)
+
 
     @property
     def index(self):

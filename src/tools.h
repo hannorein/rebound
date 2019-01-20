@@ -77,7 +77,7 @@ void reb_fsr_heartbeat(struct reb_simulation* const r);
 /**
  * @brief This function multiplies positions and velocities with a scalar. Note: modifies r.
  */
-void reb_simulation_imultiply(struct reb_simulation* r, double scalar_pos, double scalar_vel);
+void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, double scalar_vel);
 
 /**
  * @brief This function adds the positions and velocities of particles in simulation r2 to those in simulation r. Note: modifies r.
@@ -87,6 +87,6 @@ int reb_simulation_iadd(struct reb_simulation* r, struct reb_simulation* r2);
 /**
  * @brief This function subtracts the positions and velocities of particles in simulation r2 from those in simulation r. Note: modifies r.
  */
-int reb_simulation_isubtract(struct reb_simulation* r, struct reb_simulation* r2);
+int reb_simulation_isub(struct reb_simulation* r, struct reb_simulation* r2);
 
 #endif 	// TOOLS_H

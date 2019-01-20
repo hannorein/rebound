@@ -558,8 +558,8 @@ class Simulation(Structure):
     def __isub__(self, other):
         if not isinstance(other,Simulation):
             return NotImplemented
-        clibrebound.reb_simulation_isubtract.restype = c_int
-        ret = clibrebound.reb_simulation_isubtract(byref(self), byref(other))
+        clibrebound.reb_simulation_isub.restype = c_int
+        ret = clibrebound.reb_simulation_isub(byref(self), byref(other))
         if ret==-1:
             raise RuntimeError("Cannot subtract simulations. Check that the simulations have the same number of particles")
         return self
@@ -602,6 +602,8 @@ class Simulation(Structure):
         except:
             return NotImplemented
         c = self.copy()
+        if other==0.:
+            raise ZeroDivisionError
         c.multiply(1./other, 1./other)
         return c
 
@@ -610,6 +612,8 @@ class Simulation(Structure):
             other = float(other)
         except:
             return NotImplemented
+        if other==0.:
+            raise ZeroDivisionError
         self.multiply(1./other, 1./other)
         return self
 
@@ -619,7 +623,7 @@ class Simulation(Structure):
             scalar_vel = float(scalar_vel)
         except:
             raise ValueError("Cannot multiply simulation with non-scalars.")
-        clibrebound.reb_simulation_imultiply(byref(self), c_double(scalar_pos), c_double(scalar_vel))
+        clibrebound.reb_simulation_imul(byref(self), c_double(scalar_pos), c_double(scalar_vel))
 
 
 # Status functions

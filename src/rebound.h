@@ -1641,39 +1641,29 @@ struct reb_particle reb_derivatives_m_f(double G, struct reb_particle primary, s
  */
 /**
  * @brief Subtract particle p2 from particle p1 (p1 - p2).
- * @details Subtracts positions, velocities, accelerations and mass element by element. 
- * @param p1 First reb_particle.
+ * @details Subtracts positions, velocities, and mass element by element. 
+ * @param p1 First reb_particle (will be modified)
  * @param p2 Second reb_particle to subtract from p1.
  * @returns A new particle with no pointers (not in any simulation etc.) set.
  */
-struct reb_particle reb_particle_minus(struct reb_particle p1, struct reb_particle p2);
+void reb_particle_isub(struct reb_particle* p1, struct reb_particle* p2);
 
 /**
- * @brief Add particle p1 to particle p1.
- * @details Adds positions, velocities, accelerations and mass element by element. 
- * @param p1 First reb_particle.
+ * @brief Add particle p2 to particle p1.
+ * @details Adds positions, velocities, and mass element by element. 
+ * @param p1 First reb_particle (will be modified)
  * @param p2 Second reb_particle.
- * @returns A new particle with no pointers (not in any simulation etc.) set.
  */
-struct reb_particle reb_particle_plus(struct reb_particle p1, struct reb_particle p2);
+void reb_particle_iadd(struct reb_particle* p1, struct reb_particle* p2);
 
 /**
  * @brief Multiply a particle's members by a constant.
- * @details Multiplies particle's positions, velocities, accelerations and mass by a constant.
+ * @details Multiplies particle's positions, velocities, and mass by a constant.
  * @param p1 reb_particle to modify.
  * @param value Value by which to multiply particle's fields.
- * @returns A new particle with no pointers (not in any simulation etc.) set.
  */
-struct reb_particle reb_particle_multiply(struct reb_particle p1, double value);
+void reb_particle_imul(struct reb_particle* p1, double value);
 
-/**
- * @brief Divide a particle's members by a constant.
- * @details Divides particle's positions, velocities, accelerations and mass by a constant.
- * @param p1 reb_particle to modify.
- * @param value Value by which to divide particle's fields.
- * @returns A new particle with no pointers (not in any simulation etc.) set.
- */
-struct reb_particle reb_particle_divide(struct reb_particle p1, double value);
 /** @} */
 
 /**
