@@ -257,6 +257,9 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(MERCURIUS_ISSYNCHRON, &r->ri_mercurius.is_synchronized);
         CASE(MERCURIUS_M0,       &r->ri_mercurius.m0);
         CASE(MERCURIUS_KEEPUNSYNC, &r->ri_mercurius.keep_unsynchronized);
+        CASE(PYTHON_UNIT_L,      &r->python_unit_l);
+        CASE(PYTHON_UNIT_M,      &r->python_unit_m);
+        CASE(PYTHON_UNIT_T,      &r->python_unit_t);
         case REB_BINARY_FIELD_TYPE_PARTICLES:
             if(r->particles){
                 free(r->particles);

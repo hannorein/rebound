@@ -603,6 +603,9 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_MERCURIUS_KEEPUNSYNC = 124,
     REB_BINARY_FIELD_TYPE_SAVERSION = 125,
     REB_BINARY_FIELD_TYPE_WALLTIME = 126,
+    REB_BINARY_FIELD_TYPE_PYTHON_UNIT_L = 130,
+    REB_BINARY_FIELD_TYPE_PYTHON_UNIT_M = 131,
+    REB_BINARY_FIELD_TYPE_PYTHON_UNIT_T = 132,
     REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
     REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
     REB_BINARY_FIELD_TYPE_END = 9999,
@@ -763,6 +766,9 @@ struct reb_simulation {
     int track_energy_offset;        ///< Track energy change during collisions and ejections (default: 0).
     double energy_offset;           ///< Energy offset due to collisions and ejections (only calculated if track_energy_offset=1).
     double walltime;                ///< Walltime in seconds used by REBOUND for this simulation (integration only, not visualization, heartbeat function, etc).
+    uint32_t python_unit_l;         ///< Information only used for when working with units in python.
+    uint32_t python_unit_m;         ///< Information only used for when working with units in python.
+    uint32_t python_unit_t;         ///< Information only used for when working with units in python.
     /** @} */
 
     /**

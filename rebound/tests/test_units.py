@@ -36,4 +36,15 @@ class TestUnits(unittest.TestCase):
         self.assertAlmostEqual(self.sim.particles[1].x,149597870700.0, delta=1e-15)
         self.sim.convert_particle_units("m", "kg", "s")
         self.assertAlmostEqual(self.sim.particles[1].vx,29784.691834383168, delta=1e-15)
+    
+    def test_units_restor(self):
+        units = ["au", "msun", "yr2pi"]
+        self.sim.units = units 
+        self.sim.save("test.bin")
+        sim2 = rebound.Simulation.from_file("test.bin")
+        for i in ["length","time","mass"]:
+            self.assertEqual(sim2.units[i], self.sim.units[i])
+            self.assertIsNotNone(sim2.units[i])
 
+if __name__ == "__main__":
+    unittest.main()
