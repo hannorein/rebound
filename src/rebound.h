@@ -74,6 +74,33 @@ extern volatile sig_atomic_t reb_sigint;  ///< Graceful global interrupt handler
 // Forward declarations
 struct reb_simulation;
 struct reb_display_data;
+struct reb_treecell;
+
+/**
+ * @brief Structure representing one REBOUND particle.
+ * @details This structure is used to represent one particle. 
+ * If this structure is changed, the corresponding python structure
+ * needs to be changes as well. Also update the equivalent declaration 
+ * for MPI in communications_mpi.c.
+ */
+struct reb_particle {
+    double x;           ///< x-position of the particle. 
+    double y;           ///< y-position of the particle. 
+    double z;           ///< z-position of the particle. 
+    double vx;          ///< x-velocity of the particle. 
+    double vy;          ///< y-velocity of the particle. 
+    double vz;          ///< z-velocity of the particle. 
+    double ax;          ///< x-acceleration of the particle. 
+    double ay;          ///< y-acceleration of the particle. 
+    double az;          ///< z-acceleration of the particle. 
+    double m;           ///< Mass of the particle. 
+    double r;           ///< Radius of the particle. 
+    double lastcollision;       ///< Last time the particle had a physical collision.
+    struct reb_treecell* c;     ///< Pointer to the cell the particle is currently in.
+    uint32_t hash;      ///< hash to identify particle.
+    void* ap;           ///< Functionality for externally adding additional properties to particles.
+    struct reb_simulation* sim; ///< Pointer to the parent simulation.
+};
 
 /**
  * @brief Generic 3d vector, for internal use only.
@@ -172,6 +199,9 @@ struct reb_simulation_integrator_ias15 {
     // The following values are used for resetting the b and e coefficients if a timestep gets rejected
     struct reb_dp7 br;
     struct reb_dp7 er;
+
+    int* map;               // map to particles (identity map for non-mercurius simulations)
+    int map_allocated_N;    // allocated size for map
     /**
      * @endcond
      */
@@ -182,7 +212,23 @@ struct reb_simulation_integrator_ias15 {
  * @brief This structure contains variables and pointer used by the MERCURIUS integrator.
  */
 struct reb_simulation_integrator_mercurius {
-    double rcrit;               ///< Critical radius in units of Hill radii
+   /**
+    * @brief This is a function pointer to the force switching function used.
+    * @details If NULL (the default), the MERCURY switching function will be used.
+    * The argument d is the distance between two particles.
+    * The argument dcrit is the maximum of the critical distances of the two particles.
+    * The return value is a scalar between 0 and 1. If it always returns 1, then the
+    * integrator becomes the standard Wisdom-Holman integrator.
+    */
+    double (*L) (const struct reb_simulation* const r, double d, double dcrit);  
+    
+    /** 
+     * @brief Switching distance in units of the Hill radius 
+     * @brief The switching distances for particles are calculated automastically
+     * based on multiple criteria. One criteria calculates the Hill radius of 
+     * particles and then multiplies it with the hillfac variable. 
+     */ 
+    double hillfac;        
     
     /** 
      * @brief Setting this flag to one will recalculate heliocentric coordinates from the particle structure at the beginning of the next timestep. 
@@ -194,13 +240,14 @@ struct reb_simulation_integrator_mercurius {
     unsigned int recalculate_coordinates_this_timestep;
 
     /** 
-     * @brief Setting this flag to one will recalculate Hill radii at the beginning of the next timestep. 
+     * @brief Setting this flag to one will recalculate the critical switchover 
+     * distances dcrit at the the beginning of the next timestep. 
      * @details After one timestep, the flag gets set back to 0. 
-     * If you want to recalculate hill radii at every every timestep, you 
+     * If you want to recalculate dcrit at every every timestep, you 
      * also need to set this flag to 1 before every timestep.
      * Default is 0.
      */ 
-    unsigned int recalculate_rhill_this_timestep;
+    unsigned int recalculate_dcrit_this_timestep;
 
     /**
      * @brief If this flag is set (the default), the integrator will 
@@ -208,71 +255,23 @@ struct reb_simulation_integrator_mercurius {
      * every timestep, to avoid problems with outputs or particle modifications
      * between timesteps. 
      * @details Setting it to 0 will result in a speedup, but care
-     * must be taken to synchronize and recalculate jacobi coordinates when needed.
+     * must be taken to synchronize and recalculate coordinates when needed.
      */
     unsigned int safe_mode;
     
-    /**
-     * @brief Generate inertial coordinates at the end of the integration, but do not change the Jacobi/heliocentric coordinates
-     * @details Danger zone! Only use this flag if you are absolutely sure
-     * what you are doing. This is intended for
-     * simulation which have to be reproducible on a bit by bit basis.
-     */
-    unsigned int keep_unsynchronized;
-    
     unsigned int is_synchronized;   ///< Flag to determine if current particle structure is synchronized
-    unsigned int mode;          ///< Internal. 0 if WH is operating, 1 if IAS15 is operating.
-    unsigned int encounterN;    ///< Number of particles currently having an encounter
-    unsigned int globalN;       
-    int globalNactive;
-    unsigned int allocatedN;
-    unsigned int rhillallocatedN;
-    unsigned int encounterAllocatedN;
-    double m0;
-    double* rhill;
-    double* encounterRhill;
-    unsigned int* encounterIndicies;
-    struct reb_particle* encounterParticles;
-    struct reb_particle* REBOUND_RESTRICT p_hold;
-};
-
-/**
- * @brief This structure contains variables and pointer used by the HERMES integrator.
- */
-struct reb_simulation_integrator_hermes {
-    struct reb_simulation* mini;            ///< Mini simulation integrated using IAS15. See Silburt et al 2016.
-    struct reb_simulation* global;          ///< Global simulation integrated using WHFast. Only set in mini simulation. See Silburt et al 2016).
-    double hill_switch_factor;              ///< Criteria for switching between IAS15 and WHFast in terms of Hill radii (default: 3.).
-    double solar_switch_factor;             ///< Criteria for switching between IAS15 and WHfast in terms of the central star's physical radius (default: 15.).
-    int adaptive_hill_switch_factor;        ///< Flag (default: 1) for automatically calculating the appropriate HSF value each iteration
-    
-    int mini_active;                        ///< Flag that is set to 1 by HERMES if the mini simulation is active in this timestep.
-    
-    /**
-     * @cond PRIVATE
-     * Internal data structures below. Nothing to be changed by the user.
-     */
-    double current_hill_switch_factor;        ///< HSF used in current timestep (useful to debug adaptive HSF)
-    double energy_before_timestep;            ///< Store energy at the beginning of timestep. Used to track energy_offset.
-    int collision_this_global_dt;           
-    
-    int* global_index_from_mini_index;
-    int global_index_from_mini_index_N;
-    int global_index_from_mini_index_Nmax;
-    
-    int* is_in_mini;
-    int is_in_mini_Nmax;
-    
-    double* a_i;
-    double* a_f;
-    int a_Nmax;
-    
-    int timestep_too_large_warning;
-    unsigned long long steps;
-    unsigned long long steps_miniactive;
-    unsigned long long steps_miniN;
-    
-    /** @endcond */
+    unsigned int mode;              ///< Internal. 0 if WH is operating, 1 if IAS15 is operating.
+    unsigned int encounterN;        ///< Number of particles currently having an encounter
+    unsigned int encounterNactive;  ///< Number of particles currently having an encounter
+    unsigned int allocatedN;        ///< Current size of allocated internal arrays
+    unsigned int allocatedN_additionalforces;        ///< Current size of allocated internal particles_backup_additionalforces array
+    unsigned int dcrit_allocatedN;  ///< Current size of dcrit arrays
+    double* dcrit;                  ///< Switching radii for particles
+    struct reb_particle* REBOUND_RESTRICT particles_backup;     ///< Internal array, contains coordinates before Kepler step for encounter prediction
+    struct reb_particle* REBOUND_RESTRICT particles_backup_additionalforces;     ///< Internal array, contains coordinates before Kepler step for encounter prediction
+    int* encounter_map;             ///< Map to represent which particles are integrated with ias15
+    struct reb_vec3d com_pos;       ///< Used internally to keep track of the centre of mass during the timestep
+    struct reb_vec3d com_vel;       ///< Used internally to keep track of the centre of mass during the timestep
 };
 
 /**
@@ -562,13 +561,6 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_IAS15_MINDT = 70,
     REB_BINARY_FIELD_TYPE_IAS15_EPSILONGLOBAL = 71,
     REB_BINARY_FIELD_TYPE_IAS15_ITERATIONSMAX = 72,
-    REB_BINARY_FIELD_TYPE_HERMES_HSF = 73,
-    REB_BINARY_FIELD_TYPE_HERMES_SSF = 74,
-    REB_BINARY_FIELD_TYPE_HERMES_ADAPTIVE = 75,
-    REB_BINARY_FIELD_TYPE_HERMES_TIMESTEPWARN = 76,
-    REB_BINARY_FIELD_TYPE_HERMES_STEPS = 77,
-    REB_BINARY_FIELD_TYPE_HERMES_STEPS_MA = 78,
-    REB_BINARY_FIELD_TYPE_HERMES_STEPS_MN = 79,
     REB_BINARY_FIELD_TYPE_PARTICLES = 85,
     REB_BINARY_FIELD_TYPE_VARCONFIG = 86,
     REB_BINARY_FIELD_TYPE_FUNCTIONPOINTERS = 87,
@@ -595,17 +587,17 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_JANUS_ORDER = 115,
     REB_BINARY_FIELD_TYPE_JANUS_RECALC = 116,
     REB_BINARY_FIELD_TYPE_WHFAST_COORDINATES = 117,
-    REB_BINARY_FIELD_TYPE_MERCURIUS_RCRIT = 118,
+    REB_BINARY_FIELD_TYPE_MERCURIUS_HILLFAC = 118,
     REB_BINARY_FIELD_TYPE_MERCURIUS_SAFEMODE = 119,
     REB_BINARY_FIELD_TYPE_MERCURIUS_ISSYNCHRON = 120,
-    REB_BINARY_FIELD_TYPE_MERCURIUS_M0 = 121,
-    REB_BINARY_FIELD_TYPE_MERCURIUS_RHILL = 122,
-    REB_BINARY_FIELD_TYPE_MERCURIUS_KEEPUNSYNC = 124,
+    REB_BINARY_FIELD_TYPE_MERCURIUS_DCRIT = 122,
     REB_BINARY_FIELD_TYPE_SAVERSION = 125,
     REB_BINARY_FIELD_TYPE_WALLTIME = 126,
     REB_BINARY_FIELD_TYPE_PYTHON_UNIT_L = 130,
     REB_BINARY_FIELD_TYPE_PYTHON_UNIT_M = 131,
     REB_BINARY_FIELD_TYPE_PYTHON_UNIT_T = 132,
+    REB_BINARY_FIELD_TYPE_MERCURIUS_COMPOS = 133,
+    REB_BINARY_FIELD_TYPE_MERCURIUS_COMVEL = 134,
     REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
     REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
     REB_BINARY_FIELD_TYPE_END = 9999,
@@ -665,31 +657,6 @@ struct reb_hash_pointer_pair{
  * @details These are the main REBOUND structures
  * @{
 */
-/**
- * @brief Structure representing one REBOUND particle.
- * @details This structure is used to represent one particle. 
- * If this structure is changed, the corresponding python structure
- * needs to be changes as well. Also update the equivalent declaration 
- * for MPI in communications_mpi.c.
- */
-struct reb_particle {
-    double x;           ///< x-position of the particle. 
-    double y;           ///< y-position of the particle. 
-    double z;           ///< z-position of the particle. 
-    double vx;          ///< x-velocity of the particle. 
-    double vy;          ///< y-velocity of the particle. 
-    double vz;          ///< z-velocity of the particle. 
-    double ax;          ///< x-acceleration of the particle. 
-    double ay;          ///< y-acceleration of the particle. 
-    double az;          ///< z-acceleration of the particle. 
-    double m;           ///< Mass of the particle. 
-    double r;           ///< Radius of the particle. 
-    double lastcollision;       ///< Last time the particle had a physical collision.
-    struct reb_treecell* c;     ///< Pointer to the cell the particle is currently in.
-    uint32_t hash;      ///< hash to identify particle.
-    void* ap;           ///< Functionality for externally adding additional properties to particles.
-    struct reb_simulation* sim; ///< Pointer to the parent simulation.
-};
 
 
 /**
@@ -882,7 +849,7 @@ struct reb_simulation {
         REB_INTEGRATOR_WHFAST = 1,   ///< WHFast integrator, symplectic, 2nd order, up to 11th order correctors
         REB_INTEGRATOR_SEI = 2,      ///< SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable
         REB_INTEGRATOR_LEAPFROG = 4, ///< LEAPFROG integrator, simple, 2nd order, symplectic
-        REB_INTEGRATOR_HERMES = 5,   ///< HERMES Integrator for close encounters (experimental)
+        // REB_INTEGRATOR_HERMES = 5,   ///< HERMES Integrator, not available anymore. Use MERCURIUS instead.
         REB_INTEGRATOR_NONE = 7,     ///< Do not integrate anything
         REB_INTEGRATOR_JANUS = 8,    ///< Bit-wise reversible JANUS integrator.
         REB_INTEGRATOR_MERCURIUS = 9,///< MERCURIUS integrator 
@@ -918,7 +885,6 @@ struct reb_simulation {
     struct reb_simulation_integrator_sei ri_sei;        ///< The SEI struct 
     struct reb_simulation_integrator_whfast ri_whfast;  ///< The WHFast struct 
     struct reb_simulation_integrator_ias15 ri_ias15;    ///< The IAS15 struct
-    struct reb_simulation_integrator_hermes ri_hermes;    ///< The HERMES struct
     struct reb_simulation_integrator_mercurius ri_mercurius;      ///< The MERCURIUS struct
     struct reb_simulation_integrator_janus ri_janus;    ///< The JANUS struct 
     /** @} */
@@ -1157,6 +1123,19 @@ struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, ui
  */
 void reb_run_heartbeat(struct reb_simulation* const r);
 
+
+/**
+ * @brief A force switching function for the MERCURIUS integrator. This function implements 
+ * the same polynomial switching function used in MERCURY. 
+ */
+double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit);           
+
+/**
+ * @brief A force switching function for the MERCURIUS integrator. This function implements 
+ * an infinitely differentiable switching function. 
+ */
+double reb_integrator_mercurius_L_infinite(const struct reb_simulation* const r, double d, double dcrit);           
+
 /**
  * @brief Resolve collision by simply halting the integration and setting r->status=REB_EXIT_COLLISION (Default)
  */
@@ -1170,7 +1149,7 @@ int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_
 /**
  * @brief Merging collision resolving routine.
  * @details Merges particle with higher index into particle of lower index.
- *          Conserves mass, momentum and volume. Compatible with HERMES. 
+ *          Conserves mass, momentum and volume.  
  */
 int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c);
 

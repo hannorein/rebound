@@ -32,6 +32,7 @@
 #include "tree.h"
 #include "boundary.h"
 #include "particle.h"
+#include "integrator_ias15.h"
 #ifndef COLLISIONS_NONE
 #include "collision.h"
 #endif // COLLISIONS_NONE
@@ -211,65 +212,31 @@ void reb_remove_all(struct reb_simulation* const r){
 }
 
 int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
-    if (r->ri_hermes.global){
-        // This is a mini simulation. Need to remove particle from two simulations.
-        struct reb_simulation* global = r->ri_hermes.global;
-        
-        //remove from global and update global arrays
-        int global_index = global->ri_hermes.global_index_from_mini_index[index];
-        reb_remove(global,global_index,1);
-        
-        //Shifting array values (filled with 0/1)
-        for(int k=global_index;k<global->N;k++){
-            global->ri_hermes.is_in_mini[k] = global->ri_hermes.is_in_mini[k+1];
-        }
-        
-        //Shifting array values (filled with index values)
-        global->ri_hermes.global_index_from_mini_index_N--;
-        for(int k=index;k<global->ri_hermes.global_index_from_mini_index_N;k++){
-            global->ri_hermes.global_index_from_mini_index[k] = global->ri_hermes.global_index_from_mini_index[k+1];
-        }
-        
-        //Depreciating all index values larger than global_index
-        for(int k=0;k<global->ri_hermes.global_index_from_mini_index_N;k++){
-            if(global->ri_hermes.global_index_from_mini_index[k] > global_index){
-                global->ri_hermes.global_index_from_mini_index[k]--;
-            }
-        }
-    }
-    if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==1){
+    if (r->integrator == REB_INTEGRATOR_MERCURIUS){
+        keepSorted = 1; // Force keepSorted for hybrid integrator
         struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
-        struct reb_simulation_integrator_whfast* riw = &(r->ri_whfast);
-        //remove from global and update global arrays
-        int global_index = -1;
-        int count = -1;
-        for(unsigned int k=0;k<rim->globalN;k++){
-            if (rim->encounterIndicies[k]){
-                count++;
-            }
-            if (count==index){
-                global_index = k;
-                break;
+        for (int i=0;i<r->N-1;i++){
+            if (i>=index){
+                rim->dcrit[i] = rim->dcrit[i+1];
             }
         }
-        if (global_index==-1){
-            reb_error(r, "Error finding particle in global simulation.");
+        reb_integrator_ias15_reset(r);
+        if (r->ri_mercurius.mode==1){
+            struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
+            int after_to_be_removed_particle = 0;
+            for (int i=0;i<rim->encounterN;i++){
+                if (after_to_be_removed_particle == 1){
+                    rim->encounter_map[i-1] = rim->encounter_map[i] - 1; 
+                }
+                if (rim->encounter_map[i]==index){
+                    after_to_be_removed_particle = 1;
+                }
+            }
+            if (index<rim->encounterNactive){
+                rim->encounterNactive--;
+            }
+            rim->encounterN--;
         }
-	    rim->globalN--;
-        if(global_index<rim->globalNactive && rim->globalNactive!=-1){
-            rim->globalNactive--;
-        }
-		for(unsigned int j=global_index; j<rim->globalN; j++){
-			rim->encounterParticles[j] = rim->encounterParticles[j+1];  // These are the global particles
-			riw->p_jh[j] = riw->p_jh[j+1];
-			rim->p_hold[j] = rim->p_hold[j+1];
-			rim->encounterIndicies[j] = rim->encounterIndicies[j+1];
-			rim->rhill[j] = rim->rhill[j+1];
-		}
-        // Update additional parameter for local 
-		for(int j=index; j<r->N-1; j++){
-			rim->encounterRhill[j] = rim->encounterRhill[j+1];
-		}
     }
 	if (r->N==1){
 	    r->N = 0;

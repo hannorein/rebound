@@ -3,7 +3,12 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
-Version 3.7.1
+Version 3.8.0
+--------------
+* The hybrid integrator MERCURIUS has been completely rewritten. It can now much more easily be used in simulations where physical collisions occur. There are no more hidden particle arrays in the background, meaning adding and removing particles can occur in the same way as for other integrators. It also works reliably with any additional forces.
+* The old hybrid integrator HERMES has been removed. MERCURIUS should always be equal or better in performance and accuracy.
+
+Version 3.7.1 
 --------------
 * Added getBezierPaths to SimulationArchive to allow for easy plotting of complicated trajectories. To do this, store a lot of snapshots in the SimulationArchive (several per orbit!). 
 * Added functionality to add, subtract, multiply and divide simulations. This might be useful when developing new algorithms, but is most likely not useful for most users.

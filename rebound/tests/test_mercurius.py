@@ -2,6 +2,7 @@ import rebound
 import unittest
 import os
 import rebound.data as data
+from datetime import datetime
 
 class TestMercurius(unittest.TestCase):
     
@@ -10,7 +11,6 @@ class TestMercurius(unittest.TestCase):
         rebound.data.add_outer_solar_system(sim)
         
         sim.integrator = "mercurius"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
         P = sim.particles[1].P
         sim.dt = 1e-3*P
         
@@ -26,7 +26,6 @@ class TestMercurius(unittest.TestCase):
             sim.particles[i].m *=50.
         
         sim.integrator = "mercurius"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
         P = sim.particles[1].P
         sim.dt = 1e-3*P
         
@@ -34,7 +33,34 @@ class TestMercurius(unittest.TestCase):
         sim.integrate(1000)
         dE = abs((sim.calculate_energy() - E0)/E0)
         self.assertLess(dE,7e-8)
-        self.assertGreater(sim.ri_mercurius._encounterAllocatedN,1)
+    
+    def test_simple_collision(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1e-5,r=1.6e-4,a=0.5,e=0.1)    #these params lead to collision on my machine
+        sim.add(m=1e-8,r=4e-5,a=0.55,e=0.4,f=-0.94)
+        mtot0= sum([p.m for p in sim.particles])
+        com0 = sim.calculate_com()
+        N0 = sim.N
+
+        sim.integrator = "mercurius"
+        sim.dt = 0.01
+        sim.track_energy_offset = 1;
+        sim.collision = "direct"
+        sim.collision_resolve = "merge"
+        
+        E0 = sim.calculate_energy()
+        sim.integrate(1)
+        com1 = sim.calculate_com()
+        self.assertAlmostEqual(com1.vx,com0.vx,delta=1e-16)
+        self.assertAlmostEqual(com1.vy,com0.vy,delta=1e-16)
+        self.assertAlmostEqual(com1.vz,com0.vz,delta=1e-16)
+        mtot1= sum([p.m for p in sim.particles])
+        self.assertEqual(mtot0,mtot1)
+        dE = abs((sim.calculate_energy() - E0)/E0)
+        self.assertLess(dE,3e-9)
+        self.assertEqual(N0-1,sim.N)
+
 
     def test_planetesimal_collision(self):
         sim = rebound.Simulation()
@@ -42,22 +68,22 @@ class TestMercurius(unittest.TestCase):
         sim.add(m=1e-5,r=1.6e-4,a=0.5,e=0.1)    #these params lead to collision on my machine
         sim.N_active = 2
         sim.add(m=1e-8,r=4e-5,a=0.55,e=0.4,f=-0.94)
-        sim.move_to_com()
+        mtot0= sum([p.m for p in sim.particles])
         N0 = sim.N
 
         sim.integrator = "mercurius"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
-        sim.dt = 0.0001
+        sim.dt = 0.01
         sim.testparticle_type = 1
         sim.track_energy_offset = 1;
-        sim.collision_resolve_keep_sorted = 1
         sim.collision = "direct"
         sim.collision_resolve = "merge"
         
         E0 = sim.calculate_energy()
         sim.integrate(1)
+        mtot1= sum([p.m for p in sim.particles])
+        self.assertEqual(mtot0,mtot1)
         dE = abs((sim.calculate_energy() - E0)/E0)
-        self.assertLess(dE,2e-9)
+        self.assertLess(dE,3e-9)
         self.assertEqual(N0-1,sim.N)
 
     def test_massive_ejection(self):
@@ -66,12 +92,11 @@ class TestMercurius(unittest.TestCase):
         sim.add(m=1e-4,r=1.6e-4,a=0.5,e=0.1)
         sim.add(m=1e-6,r=4e-5,a=0.6)
         sim.particles[2].vy *= 2
+
         sim.N_active = 2
-        sim.move_to_com()
         
         sim.integrator = "mercurius"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
-        sim.dt = 0.001
+        sim.dt = 0.01
         sim.testparticle_type = 1
         sim.collision = "direct"
         sim.collision_resolve = "merge"
@@ -84,91 +109,104 @@ class TestMercurius(unittest.TestCase):
         E0 = sim.calculate_energy()
         sim.integrate(1)
         dE = abs((sim.calculate_energy() - E0)/E0)
-        self.assertLess(dE,5e-11)
-
-
-class TestMercuriusWHDS(unittest.TestCase):
+        self.assertLess(dE,4e-6)
     
-    def test_outer_solar(self):
+    def test_collision_with_star_simple(self):
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
-        
-        sim.integrator = "mercurius"
-        sim.ri_whfast.coordinates = "whds"
-        P = sim.particles[1].P
-        sim.dt = 1e-3*P
-        
-        E0 = sim.calculate_energy()
-        sim.integrate(1000)
-        dE = abs((sim.calculate_energy() - E0)/E0)
-        self.assertLess(dE,5e-10)
-    
-    def test_outer_solar_massive(self):
-        sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
-        for i in range(1,sim.N):
-            sim.particles[i].m *=50.
-        
-        sim.integrator = "mercurius"
-        sim.ri_whfast.coordinates = "whds"
-        P = sim.particles[1].P
-        sim.dt = 1e-3*P
-        
-        E0 = sim.calculate_energy()
-        sim.integrate(1000)
-        dE = abs((sim.calculate_energy() - E0)/E0)
-        self.assertLess(dE,8e-8)
-        self.assertGreater(sim.ri_mercurius._encounterAllocatedN,1)
-
-    def test_planetesimal_collision(self):
-        sim = rebound.Simulation()
-        sim.add(m=1.)
-        sim.add(m=1e-5,r=1.6e-4,a=0.5,e=0.1)    #these params lead to collision on my machine
-        sim.N_active = 2
-        sim.add(m=1e-8,r=4e-5,a=0.55,e=0.4,f=-0.94)
-        sim.move_to_com()
+        sim.add(m=1.,r=1.)
+        sim.add(m=1e-3,r=1.e-3,a=0.5) 
+        mtot0 = sum([p.m for p in sim.particles])
+        com0 = sim.calculate_com()
         N0 = sim.N
 
         sim.integrator = "mercurius"
-        sim.ri_whfast.coordinates = "whds"
-        sim.dt = 0.0001
-        sim.testparticle_type = 1
+        sim.dt = 0.01
         sim.track_energy_offset = 1;
-        sim.collision_resolve_keep_sorted = 1
         sim.collision = "direct"
         sim.collision_resolve = "merge"
         
         E0 = sim.calculate_energy()
         sim.integrate(1)
-        dE = abs((sim.calculate_energy() - E0)/E0)
-        self.assertLess(dE,5e-8)
+        com1 = sim.calculate_com()
+        self.assertAlmostEqual(com1.vx,com0.vx,delta=1e-16)
+        self.assertAlmostEqual(com1.vy,com0.vy,delta=1e-16)
+        self.assertAlmostEqual(com1.vz,com0.vz,delta=1e-16)
+        mtot1 = sum([p.m for p in sim.particles])
+        self.assertEqual(mtot0,mtot1)
         self.assertEqual(N0-1,sim.N)
+        dE = abs((sim.calculate_energy() - E0)/E0)
+        self.assertLess(dE,1e-16)
 
-    def test_massive_ejection(self):
+    def test_collision_with_star(self):
         sim = rebound.Simulation()
-        sim.add(m=1.)
-        sim.add(m=1e-4,r=1.6e-4,a=0.5,e=0.1)
-        sim.add(m=1e-6,r=4e-5,a=0.6)
-        sim.particles[2].vy *= 2
-        sim.N_active = 2
-        sim.move_to_com()
-        
+        sim.add(m=1.,r=0.00465)
+        sim.add(m=1e-5,r=1.6e-4,a=0.5,e=0.1,f=2.3) 
+        sim.add(m=1e-4,r=1.4e-3,x=1.,vx=-0.4) # falling onto the star
+        sim.add(m=1e-5,r=1.6e-4,a=1.5,e=0.1) 
+        mtot0 = sum([p.m for p in sim.particles])
+        com0 = sim.calculate_com()
+        N0 = sim.N
+
         sim.integrator = "mercurius"
-        sim.ri_whfast.coordinates = "whds"
-        sim.dt = 0.001
-        sim.testparticle_type = 1
+        sim.dt = 0.01
+        sim.track_energy_offset = 1;
         sim.collision = "direct"
         sim.collision_resolve = "merge"
-        sim.track_energy_offset = 1;
-        
-        sim.boundary = "open"
-        boxsize = 3.
-        sim.configure_box(boxsize)
         
         E0 = sim.calculate_energy()
         sim.integrate(1)
+        com1 = sim.calculate_com()
+        self.assertAlmostEqual(com1.vx,com0.vx,delta=1e-16)
+        self.assertAlmostEqual(com1.vy,com0.vy,delta=1e-16)
+        self.assertAlmostEqual(com1.vz,com0.vz,delta=1e-16)
+        mtot1 = sum([p.m for p in sim.particles])
+        self.assertEqual(mtot0,mtot1)
+        self.assertEqual(N0-1,sim.N)
         dE = abs((sim.calculate_energy() - E0)/E0)
-        self.assertLess(dE,5e-11)
+        # bad energy conservation due to democratic heliocentric!
+        self.assertLess(dE,3e-2)
+    
+    def test_many_encounters(self):
+        def get_sim():
+            sim = rebound.Simulation()
+            sim.add(m=1)
+            for i in range(6):
+                sim.add(a=1+0.2*i,e=0.1+0.1*i,f=80.*i,omega=30.*i*i,m=0.0001)
+            sim.move_to_com()
+            sim.dt = 0.034
+            return sim
+        
+        sim = get_sim()
+        sim.integrator = "mercurius"
+        E0 = sim.calculate_energy()
+        start=datetime.now()
+        sim.integrate(2000)
+        time_mercurius = (datetime.now()-start).total_seconds()
+        dE_mercurius = abs((sim.calculate_energy() - E0)/E0)
+        
+        sim = get_sim()
+        sim.integrator = "ias15"
+        start=datetime.now()
+        sim.integrate(2000)
+        time_ias15 = (datetime.now()-start).total_seconds()
+        dE_ias15 = abs((sim.calculate_energy() - E0)/E0)
+        
+        sim = get_sim()
+        sim.integrator = "whfast"
+        start=datetime.now()
+        sim.integrate(2000)
+        time_whfast = (datetime.now()-start).total_seconds()
+        dE_whfast = abs((sim.calculate_energy() - E0)/E0)
+        
+        # Note: precision might vary on machine as initializations use cos/sin 
+        # and are therefore machine dependent. 
+        self.assertLess(dE_mercurius,2e-6)              # reasonable precision for mercurius
+        self.assertLess(dE_mercurius/dE_whfast,5e-5)    # at least 1e4 times better than whfast
+        is_travis = 'TRAVIS' in os.environ
+        if not is_travis: # timing not reliable on TRAVIS
+            self.assertLess(2.*time_mercurius,time_ias15) # at least 2 times faster than ias15
+        
+
 
 if __name__ == "__main__":
     unittest.main()

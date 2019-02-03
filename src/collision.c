@@ -48,7 +48,20 @@
 static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
 
 void reb_collision_search(struct reb_simulation* const r){
-	const int N = r->N;
+	int N = r->N;
+	int Ninner = r->N;
+    int* mercurius_map = NULL;
+    if (r->integrator==REB_INTEGRATOR_MERCURIUS){
+        if (r->ri_mercurius.mode==0){
+            // After jump step, only collisions with star might occur.
+            // All other collisions in encounter step/
+            Ninner = 1;
+        }{
+            N = r->ri_mercurius.encounterN;
+            Ninner = N;
+            mercurius_map = r->ri_mercurius.encounter_map;
+        }
+    }
 	int collisions_N = 0;
 	const struct reb_particle* const particles = r->particles;
 	switch (r->collision){
@@ -68,7 +81,11 @@ void reb_collision_search(struct reb_simulation* const r){
 #ifndef OPENMP
                     if (reb_sigint) return;
 #endif // OPENMP
-					struct reb_particle p1 = particles[i];
+                    int ip = i;
+                    if (mercurius_map){
+                        ip = mercurius_map[i];
+                    }
+					struct reb_particle p1 = particles[ip];
 					struct reb_ghostbox gborig = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
 					struct reb_ghostbox gb = gborig;
 					// Precalculate shifted position 
@@ -79,10 +96,14 @@ void reb_collision_search(struct reb_simulation* const r){
 					gb.shiftvy += p1.vy;
 					gb.shiftvz += p1.vz;
 					// Loop over all particles again
-					for (int j=0;j<N;j++){
+					for (int j=0;j<Ninner;j++){
 						// Do not collide particle with itself.
 						if (i==j) continue;
-						struct reb_particle p2 = particles[j];
+                        int jp = j;
+                        if (mercurius_map){
+                            jp = mercurius_map[j];
+                        }
+						struct reb_particle p2 = particles[jp];
 						double dx = gb.shiftx - p2.x; 
 						double dy = gb.shifty - p2.y; 
 						double dz = gb.shiftz - p2.z; 
@@ -102,8 +123,8 @@ void reb_collision_search(struct reb_simulation* const r){
 							r->collisions_allocatedN = r->collisions_allocatedN ? r->collisions_allocatedN * 2 : 32;
 							r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocatedN);
 						}
-						r->collisions[collisions_N].p1 = i;
-						r->collisions[collisions_N].p2 = j;
+						r->collisions[collisions_N].p1 = ip;
+						r->collisions[collisions_N].p2 = jp;
 						r->collisions[collisions_N].gb = gborig;
 						collisions_N++;
 					}
@@ -180,117 +201,6 @@ void reb_collision_search(struct reb_simulation* const r){
 			}
 		}
         break;
-		case REB_COLLISION_MERCURIUS:
-		{
-            struct reb_ghostbox gborig = reb_boundary_get_ghostbox(r, 0,0,0);
-            if (r->ri_mercurius.mode==1){ // encounters
-                // Loop over all particles
-                for (int i=0;i<N;i++){
-#ifndef OPENMP
-                    if (reb_sigint) return;
-#endif // OPENMP
-                    struct reb_particle p1 = particles[i];
-                    // Loop over all particles again
-                    for (int j=0;j<N;j++){
-                        // Do not collide particle with itself.
-                        if (i==j) continue;
-                        struct reb_particle p2 = particles[j];
-                        double dx = p1.x - p2.x; 
-                        double dy = p1.y - p2.y; 
-                        double dz = p1.z - p2.z; 
-                        double sr = p1.r + p2.r; 
-                        double r2 = dx*dx+dy*dy+dz*dz;
-                        // Check if particles are overlapping 
-                        if (r2>sr*sr) continue;	
-                        double dvx = p1.vx - p2.vx; 
-                        double dvy = p1.vy - p2.vy; 
-                        double dvz = p1.vz - p2.vz; 
-                        // Check if particles are approaching each other
-                        if (dvx*dx + dvy*dy + dvz*dz >0) continue; 
-                        // Add particles to collision array.
-                        if (r->collisions_allocatedN<=collisions_N){
-                            // Allocate memory if there is no space in array.
-                            // Init to 32 if no space has been allocated yet, otherwise double it.
-                            r->collisions_allocatedN = r->collisions_allocatedN ? r->collisions_allocatedN * 2 : 32;
-                            r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocatedN);
-                        }
-                        r->collisions[collisions_N].p1 = i;
-                        r->collisions[collisions_N].p2 = j;
-                        r->collisions[collisions_N].gb = gborig;
-                        collisions_N++;
-                    }
-                }
-            }else{ // Only checking for collisions with star
-                struct reb_particle p1 = particles[0];
-                double dt = r->dt;
-                // Loop over all particles again
-                for (int j=1;j<N;j++){
-                    // Simplified version of MERCURIUS collision prediction
-                    // This only takes the current positions as volicities.
-                    // Can be simplified.
-                    struct reb_particle p2 = particles[j];
-                    const double dxn = p1.x - p2.x;
-                    const double dyn = p1.y - p2.y;
-                    const double dzn = p1.z - p2.z;
-                    const double dvxn = p1.vx - p2.vx;
-                    const double dvyn = p1.vy - p2.vy;
-                    const double dvzn = p1.vz - p2.vz;
-                    const double rn = (dxn*dxn + dyn*dyn + dzn*dzn);
-                    const double dxo = p1.x - p2.x - dt*dvxn;
-                    const double dyo = p1.y - p2.y - dt*dvyn;
-                    const double dzo = p1.z - p2.z - dt*dvzn;
-                    const double dvxo = dvxn;
-                    const double dvyo = dvyn;
-                    const double dvzo = dvzn;
-                    const double ro = (dxo*dxo + dyo*dyo + dzo*dzo);
-
-                    const double drndt = (dxn*dvxn+dyn*dvyn+dzn*dvzn)*2.;
-                    const double drodt = (dxo*dvxo+dyo*dvyo+dzo*dvzo)*2.;
-
-                    const double a = 6.*(ro-rn)+3.*dt*(drodt+drndt); 
-                    const double b = 6.*(rn-ro)-2.*dt*(2.*drodt+drndt); 
-                    const double c = dt*drodt; 
-
-                    double rmin = MIN(rn,ro);
-
-                    const double s = b*b-4.*a*c;
-                    const double sr = sqrt(s);
-                    const double tmin1 = (-b + sr)/(2.*a); 
-                    const double tmin2 = (-b - sr)/(2.*a); 
-                    if (tmin1>0. && tmin1<1.){
-                        const double rmin1 = (1.-tmin1)*(1.-tmin1)*(1.+2.*tmin1)*ro
-                                             + tmin1*tmin1*(3.-2.*tmin1)*rn
-                                             + tmin1*(1.-tmin1)*(1.-tmin1)*dt*drodt
-                                             - tmin1*tmin1*(1.-tmin1)*dt*drndt;
-                        rmin = MIN(MAX(rmin1,0.),rmin);
-                    }
-                    if (tmin2>0. && tmin2<1.){
-                        const double rmin2 = (1.-tmin2)*(1.-tmin2)*(1.+2.*tmin2)*ro
-                                             + tmin2*tmin2*(3.-2.*tmin2)*rn
-                                             + tmin2*(1.-tmin2)*(1.-tmin2)*dt*drodt
-                                             - tmin2*tmin2*(1.-tmin2)*dt*drndt;
-                        rmin = MIN(MAX(rmin2,0.),rmin);
-                    }
-
-                    const double spr = p1.r + p2.r; 
-                    // Check if particles are overlapping 
-                    if (rmin>spr*spr) continue;	
-                    // Add particles to collision array.
-                    if (r->collisions_allocatedN<=collisions_N){
-                        // Allocate memory if there is no space in array.
-                        // Init to 32 if no space has been allocated yet, otherwise double it.
-                        r->collisions_allocatedN = r->collisions_allocatedN ? r->collisions_allocatedN * 2 : 32;
-                        r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocatedN);
-                    }
-                    r->collisions[collisions_N].p1 = 0;
-                    r->collisions[collisions_N].p2 = j;
-                    r->collisions[collisions_N].gb = gborig;
-                    collisions_N++;
-                    r->ri_mercurius.recalculate_rhill_this_timestep = 1;
-                }
-            }
-		}
-		break;
 		case REB_COLLISION_TREE:
 		{
 			// Update and simplify tree. 
@@ -663,6 +573,12 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
             double vx = pi->vx;
             double vy = pi->vy;
             double vz = pi->vz;
+            // Calculate energy difference in inertial frame
+            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==1){
+                vx += r->ri_mercurius.com_vel.x;
+                vy += r->ri_mercurius.com_vel.y;
+                vz += r->ri_mercurius.com_vel.z;
+            }
 
             Ei += 0.5*pi->m*(vx*vx + vy*vy + vz*vz);
         }
@@ -670,6 +586,11 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
             double vx = pj->vx;
             double vy = pj->vy;
             double vz = pj->vz;
+            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==1){
+                vx += r->ri_mercurius.com_vel.x;
+                vy += r->ri_mercurius.com_vel.y;
+                vz += r->ri_mercurius.com_vel.z;
+            }
 
             Ei += 0.5*pj->m*(vx*vx + vy*vy + vz*vz);
         }
@@ -696,23 +617,23 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
     pi->r  = pow(pow(pi->r,3.)+pow(pj->r,3.),1./3.);
     pi->lastcollision = r->t;
     
+
     // Keeping track of energy offst
     if(r->track_energy_offset){
         {
             double vx = pi->vx;
             double vy = pi->vy;
             double vz = pi->vz;
+            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==1){
+                vx += r->ri_mercurius.com_vel.x;
+                vy += r->ri_mercurius.com_vel.y;
+                vz += r->ri_mercurius.com_vel.z;
+            }
 
             Ef += 0.5*pi->m*(vx*vx + vy*vy + vz*vz);
         }
         r->energy_offset += Ei - Ef;
     }
     
-    // If hermes calculate energy offset in global - hasn't been removed from global yet
-    if (r->ri_hermes.global){
-        if(r->ri_hermes.global->ri_hermes.mini_active){
-            r->ri_hermes.global->ri_hermes.collision_this_global_dt = 1;
-        }
-    }
     return swap?1:2; // Remove particle p2 from simulation
 }

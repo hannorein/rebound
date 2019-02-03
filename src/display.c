@@ -1093,8 +1093,7 @@ int reb_display_copy_data(struct reb_simulation* const r){
     data->r_copy->particles = data->particles_copy;
     if (
             (r->integrator==REB_INTEGRATOR_WHFAST && r->ri_whfast.is_synchronized==0)
-            ||   
-            (r->integrator==REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.is_synchronized==0))
+       )
        {
         if (r->ri_whfast.allocated_N > data->allocated_N_whfast){
             size_changed = 1;
@@ -1113,7 +1112,7 @@ void reb_display_prepare_data(struct reb_simulation* const r, int orbits){
     struct reb_display_data* data = r->display_data;
     struct reb_simulation* const r_copy = data->r_copy;
 
-    // this only does something for WHFAST + MERCURIUS
+    // this only does something for WHFAST
     reb_integrator_synchronize(r_copy);
        
     // Update data on GPU 

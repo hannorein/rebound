@@ -59,8 +59,7 @@ REB_INTEGRATOR_JANUS        Janus is a bit-wise time-reversible high-order sympl
 REB_INTEGRATOR_EULER        Euler scheme, first order
 REB_INTEGRATOR_LEAPFROG     Leap frog, second order, symplectic
 REB_INTEGRATOR_SEI          Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
-REB_INTEGRATOR_MERCURIUS    A hybrid integrator very similar to the one found in MERCURY. It uses WHFast for long term integrations but switches over smoothly to IAS15 for close encounters. This is a new integrator and might contain bugs. 
-REB_INTEGRATOR_HERMES       A hybrid symplectic integrator that uses WHFast for long term integrations but switches over to IAS15 for close encounters. Note that this integrator is new and might contain bugs. In most cases the MERCURIUS integrator is perfomring better.
+REB_INTEGRATOR_MERCURIUS    A hybrid integrator very similar to the one found in MERCURY. It uses WHFast for long term integrations but switches over smoothly to IAS15 for close encounters.  
 ==========================  ============================================ 
 
 

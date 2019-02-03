@@ -38,7 +38,6 @@
 #include "integrator.h"
 #include "integrator_whfast.h"
 #include "integrator_ias15.h"
-#include "integrator_hermes.h"
 #include "integrator_mercurius.h"
 #include "boundary.h"
 #include "gravity.h"
@@ -63,7 +62,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.7.2";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.8.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_error_message_waiting(struct reb_simulation* const r);
@@ -151,9 +150,7 @@ void reb_step(struct reb_simulation* const r){
 
     // Search for collisions using local and essential tree.
     PROFILING_START()
-    if (r->integrator!=REB_INTEGRATOR_HERMES){ //Hybrid integrator will search for collisions in mini simulation.
-        reb_collision_search(r);
-    }
+    reb_collision_search(r);
     PROFILING_STOP(PROFILING_CAT_COLLISION)
     
     // Update walltime
@@ -350,27 +347,16 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_ias15.csv         = NULL;
     r->ri_ias15.csa0        = NULL;
     r->ri_ias15.at          = NULL;
-    // ********** HERMES
-    r->ri_hermes.mini      = NULL;
-    r->ri_hermes.global    = NULL;
-    r->ri_hermes.global_index_from_mini_index = NULL;
-    r->ri_hermes.global_index_from_mini_index_N = 0;
-    r->ri_hermes.global_index_from_mini_index_Nmax = 0;
-    r->ri_hermes.is_in_mini = NULL;
-    r->ri_hermes.is_in_mini_Nmax = 0;
-    r->ri_hermes.a_Nmax = 0;
-    r->ri_hermes.a_i = NULL;
-    r->ri_hermes.a_f = NULL;
+    r->ri_ias15.map_allocated_N      = 0;
+    r->ri_ias15.map         = NULL;
     // ********** MERCURIUS
-    r->ri_mercurius.rhillallocatedN = 0;
     r->ri_mercurius.allocatedN = 0;
-    r->ri_mercurius.rhill = NULL;
-    r->ri_mercurius.encounterRhill = NULL;
-    r->ri_mercurius.encounterIndicies = NULL;
-    r->ri_mercurius.encounterAllocatedN = 0;
-    r->ri_mercurius.encounterParticles = NULL;
-    r->ri_mercurius.p_hold = NULL;
-    r->ri_mercurius.keep_unsynchronized = 0;
+    r->ri_mercurius.allocatedN_additionalforces = 0;
+    r->ri_mercurius.dcrit_allocatedN = 0;
+    r->ri_mercurius.dcrit = NULL;
+    r->ri_mercurius.particles_backup = NULL;
+    r->ri_mercurius.particles_backup_additionalforces = NULL;
+    r->ri_mercurius.encounter_map = NULL;
 
     // ********** JANUS
     r->ri_janus.allocated_N = 0;
@@ -528,27 +514,14 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_sei.OMEGAZ    = -1;
     r->ri_sei.lastdt    = 0;
     
-    // ********** HERMES
-    r->ri_hermes.mini_active = 0;
-    r->ri_hermes.collision_this_global_dt = 0;
-    r->ri_hermes.steps = 0;
-    r->ri_hermes.steps_miniactive = 0;
-    r->ri_hermes.steps_miniN = 0;
-    r->ri_hermes.timestep_too_large_warning = 0;
-    r->ri_hermes.solar_switch_factor = 15.;
-    r->ri_hermes.hill_switch_factor = 3.;            
-    r->ri_hermes.adaptive_hill_switch_factor = 1;    
-    r->ri_hermes.current_hill_switch_factor = 3.;     //Internal 
-    
     // ********** MERCURIUS
     r->ri_mercurius.mode = 0;
     r->ri_mercurius.safe_mode = 1;
     r->ri_mercurius.recalculate_coordinates_this_timestep = 0;
-    r->ri_mercurius.recalculate_rhill_this_timestep = 0;
+    r->ri_mercurius.recalculate_dcrit_this_timestep = 0;
     r->ri_mercurius.is_synchronized = 1;
     r->ri_mercurius.encounterN = 0;
-    r->ri_mercurius.m0 = 0;
-    r->ri_mercurius.rcrit = 3;
+    r->ri_mercurius.hillfac = 3;
 
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.
     r->tree_needs_update= 0;

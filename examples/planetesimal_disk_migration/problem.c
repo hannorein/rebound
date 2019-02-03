@@ -2,14 +2,12 @@
  * Planetesimal Disk Migration
  *
  * This example integrates a star, 2 planet, N-planetesimal disk system, with the
- * outer planet at the inner edge of the planetesimal disk. If the system is
- * integrated for at least 10^5 years/2pi outward migration by the outer planet in
- * the planetesimal can be observed.
+ * outer planet at the inner edge of the planetesimal disk. The planet in the system
+ * migrates on a very slow timescale and one needs to run the simulation for roughly
+ * 10^5 dynamical timescales to see the effect.
  *
- * The ideal integrator choice for this problem is HERMES due to the large
- * number of close encounters. By default the adaptive HSF routine is on, and
- * we merge bodies inelastically. See Silburt et al. (2016) for further details
- * about HERMES.
+ * The ideal integrator choice for this problem is MERCURIUS due to the large
+ * number of close encounters.  
  */
 
 #include <stdio.h>
@@ -22,17 +20,21 @@
 void heartbeat(struct reb_simulation* r);
 double E0;
 
+int reb_collision_resolve_merge_pass_through(struct reb_simulation* const r, struct reb_collision c);
+
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
     
     // Simulation Setup
-    r->integrator    = REB_INTEGRATOR_HERMES;
+    r->integrator    = REB_INTEGRATOR_MERCURIUS;
     r->heartbeat    = heartbeat;
+    // Test particle type 1 allows massive particles to feel the gravity of testparticles.
+    // However, test particles will not feel the gravity from other test particles.
     r->testparticle_type = 1;
     
     // Collisions
     r->collision = REB_COLLISION_DIRECT;
-    r->collision_resolve = reb_collision_resolve_merge;
+    r->collision_resolve = reb_collision_resolve_merge_pass_through;
     r->track_energy_offset = 1;
     r->collision_resolve_keep_sorted = 1;
     
@@ -100,6 +102,18 @@ int main(int argc, char* argv[]){
     
     // Integrate!
     reb_integrate(r, INFINITY);
+    reb_free_simulation(r);
+}
+
+int reb_collision_resolve_merge_pass_through(struct reb_simulation* const r, struct reb_collision c){
+    // This function passes the collision to the default merging routine. 
+    // If a merger occured, that routine will return a value other than 0.
+    // This function then outputs some information about the merger.
+    int result = reb_collision_resolve_merge(r, c);
+    if (result!=0){
+        printf("A merger occured! Particles involved: %d, %d.\n",c.p1,c.p2);
+    }
+    return result;
 }
 
 void heartbeat(struct reb_simulation* r){
@@ -113,7 +127,6 @@ void heartbeat(struct reb_simulation* r){
         struct reb_particle star = r->particles[0];
         struct reb_orbit o = reb_tools_particle_to_orbit(r->G,p,star);
         
-        reb_output_timing(r, 0);
-        printf("a2=%f,dE=%e",o.a,relE);
+        printf("a2=%f,dE=%e,N=%d\n",o.a,relE,r->N);
     }
 }

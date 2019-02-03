@@ -156,7 +156,12 @@ static inline void add_cs(double* p, double* csp, double inp){
 }
 
 void reb_integrator_ias15_alloc(struct reb_simulation* r){
-    const int N3 = 3*r->N;
+    int N3;
+    if (r->integrator==REB_INTEGRATOR_MERCURIUS){
+        N3 = 3*r->ri_mercurius.encounterN;// mercurius close encounter
+    }else{ 
+        N3 = 3*r->N;
+    }
     if (N3 > r->ri_ias15.allocatedN) {
         realloc_dp7(&(r->ri_ias15.g),N3);
         realloc_dp7(&(r->ri_ias15.b),N3);
@@ -180,6 +185,13 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
         }
         r->ri_ias15.allocatedN = N3;
     }
+    if (N3/3 > r->ri_ias15.map_allocated_N){
+        r->ri_ias15.map = realloc(r->ri_ias15.map,sizeof(int)*(N3/3));
+        for (int i=0;i<N3/3;i++){
+            r->ri_ias15.map[i] = i;
+        }
+        r->ri_ias15.map_allocated_N = N3/3;
+    }
 
 }
  
@@ -188,7 +200,19 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     reb_integrator_ias15_alloc(r);
 
     struct reb_particle* const particles = r->particles;
-    const int N = r->N;
+    int N;
+    int* map; // this map allow for integrating only a selection of particles 
+    if (r->integrator==REB_INTEGRATOR_MERCURIUS){// mercurius close encounter
+        N = r->ri_mercurius.encounterN;
+        map = r->ri_mercurius.encounter_map;
+        if (map==NULL){
+            reb_error(r, "Cannot access MERCURIUS map from IAS15.");
+            return 0;
+        }
+    }else{ 
+        N = r->N;
+        map = r->ri_ias15.map; // identity map
+    }
     const int N3 = 3*N;
     
     // reb_update_acceleration(); // Not needed. Forces are already calculated in main routine.
@@ -209,21 +233,23 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     const struct reb_dpconst7 er = dpcast(r->ri_ias15.er);
     const struct reb_dpconst7 br = dpcast(r->ri_ias15.br);
     for(int k=0;k<N;k++) {
-        x0[3*k]   = particles[k].x;
-        x0[3*k+1] = particles[k].y;
-        x0[3*k+2] = particles[k].z;
-        v0[3*k]   = particles[k].vx;
-        v0[3*k+1] = particles[k].vy;
-        v0[3*k+2] = particles[k].vz;
-        a0[3*k]   = particles[k].ax;
-        a0[3*k+1] = particles[k].ay; 
-        a0[3*k+2] = particles[k].az;
+        int mk = map[k];
+        x0[3*k]   = particles[mk].x;
+        x0[3*k+1] = particles[mk].y;
+        x0[3*k+2] = particles[mk].z;
+        v0[3*k]   = particles[mk].vx;
+        v0[3*k+1] = particles[mk].vy;
+        v0[3*k+2] = particles[mk].vz;
+        a0[3*k]   = particles[mk].ax;
+        a0[3*k+1] = particles[mk].ay; 
+        a0[3*k+2] = particles[mk].az;
     }
     if (r->gravity==REB_GRAVITY_COMPENSATED){
         for(int k=0;k<N;k++) {
-            csa0[3*k]   = gravity_cs[k].x;
-            csa0[3*k+1] = gravity_cs[k].y;  
-            csa0[3*k+2] = gravity_cs[k].z;
+            int mk = map[k];
+            csa0[3*k]   = gravity_cs[mk].x;
+            csa0[3*k+1] = gravity_cs[mk].y;  
+            csa0[3*k+2] = gravity_cs[mk].z;
         }
     }else{
         gravity_cs = (struct reb_vec3d*)csa0; // Always 0.
@@ -304,16 +330,17 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 
             // Prepare particles arrays for force calculation
             for(int i=0;i<N;i++) {                      // Predict positions at interval n using b values
+                int mi = map[i];
                 const int k0 = 3*i+0;
                 const int k1 = 3*i+1;
                 const int k2 = 3*i+2;
 
                 double xk0  = -csx[k0] + (s[8]*b.p6[k0] + s[7]*b.p5[k0] + s[6]*b.p4[k0] + s[5]*b.p3[k0] + s[4]*b.p2[k0] + s[3]*b.p1[k0] + s[2]*b.p0[k0] + s[1]*a0[k0] + s[0]*v0[k0] );
-                particles[i].x = xk0 + x0[k0];
+                particles[mi].x = xk0 + x0[k0];
                 double xk1  = -csx[k1] + (s[8]*b.p6[k1] + s[7]*b.p5[k1] + s[6]*b.p4[k1] + s[5]*b.p3[k1] + s[4]*b.p2[k1] + s[3]*b.p1[k1] + s[2]*b.p0[k1] + s[1]*a0[k1] + s[0]*v0[k1] );
-                particles[i].y = xk1 + x0[k1];
+                particles[mi].y = xk1 + x0[k1];
                 double xk2  = -csx[k2] + (s[8]*b.p6[k2] + s[7]*b.p5[k2] + s[6]*b.p4[k2] + s[5]*b.p3[k2] + s[4]*b.p2[k2] + s[3]*b.p1[k2] + s[2]*b.p0[k2] + s[1]*a0[k2] + s[0]*v0[k2] );
-                particles[i].z = xk2 + x0[k2];
+                particles[mi].z = xk2 + x0[k2];
             }
             if (r->calculate_megno || (r->additional_forces && r->force_is_velocity_dependent)){
                 s[0] = r->dt * h[n];
@@ -326,16 +353,17 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 s[7] = 7. * s[6] * h[n] / 8.;
 
                 for(int i=0;i<N;i++) {                  // Predict velocities at interval n using b values
+                    int mi = map[i];
                     const int k0 = 3*i+0;
                     const int k1 = 3*i+1;
                     const int k2 = 3*i+2;
 
                     double vk0 =  -csv[k0] + s[7]*b.p6[k0] + s[6]*b.p5[k0] + s[5]*b.p4[k0] + s[4]*b.p3[k0] + s[3]*b.p2[k0] + s[2]*b.p1[k0] + s[1]*b.p0[k0] + s[0]*a0[k0];
-                    particles[i].vx = vk0 + v0[k0];
+                    particles[mi].vx = vk0 + v0[k0];
                     double vk1 =  -csv[k1] + s[7]*b.p6[k1] + s[6]*b.p5[k1] + s[5]*b.p4[k1] + s[4]*b.p3[k1] + s[3]*b.p2[k1] + s[2]*b.p1[k1] + s[1]*b.p0[k1] + s[0]*a0[k1];
-                    particles[i].vy = vk1 + v0[k1];
+                    particles[mi].vy = vk1 + v0[k1];
                     double vk2 =  -csv[k2] + s[7]*b.p6[k2] + s[6]*b.p5[k2] + s[5]*b.p4[k2] + s[4]*b.p3[k2] + s[3]*b.p2[k2] + s[2]*b.p1[k2] + s[1]*b.p0[k2] + s[0]*a0[k2];
-                    particles[i].vz = vk2 + v0[k2];
+                    particles[mi].vz = vk2 + v0[k2];
                 }
             }
 
@@ -346,9 +374,10 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }
 
             for(int k=0;k<N;++k) {
-                at[3*k]   = particles[k].ax;
-                at[3*k+1] = particles[k].ay;  
-                at[3*k+2] = particles[k].az;
+                int mk = map[k];
+                at[3*k]   = particles[mk].ax;
+                at[3*k+1] = particles[mk].ay;  
+                at[3*k+2] = particles[mk].az;
             }
             switch (n) {                            // Improve b and g values
                 case 1: 
@@ -498,8 +527,9 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             double maxak = 0.0;
             double maxb6k = 0.0;
             for(int i=0;i<N;i++){ // Looping over all particles and all 3 components of the acceleration. 
-                const double v2 = particles[i].vx*particles[i].vx+particles[i].vy*particles[i].vy+particles[i].vz*particles[i].vz;
-                const double x2 = particles[i].x*particles[i].x+particles[i].y*particles[i].y+particles[i].z*particles[i].z;
+                int mi = map[i];
+                const double v2 = particles[mi].vx*particles[mi].vx+particles[mi].vy*particles[mi].vy+particles[mi].vz*particles[mi].vz;
+                const double x2 = particles[mi].x*particles[mi].x+particles[mi].y*particles[mi].y+particles[mi].z*particles[mi].z;
                 // Skip slowly varying accelerations
                 if (fabs(v2*r->dt*r->dt/x2) < 1e-16) continue;
                 for(int k=3*i;k<3*(i+1);k++) { 
@@ -538,17 +568,18 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         if (fabs(dt_new/dt_done) < safety_factor) { // New timestep is significantly smaller.
             // Reset particles
             for(int k=0;k<N;++k) {
-                particles[k].x = x0[3*k+0]; // Set inital position
-                particles[k].y = x0[3*k+1];
-                particles[k].z = x0[3*k+2];
+                int mk = map[k];
+                particles[mk].x = x0[3*k+0]; // Set inital position
+                particles[mk].y = x0[3*k+1];
+                particles[mk].z = x0[3*k+2];
 
-                particles[k].vx = v0[3*k+0];    // Set inital velocity
-                particles[k].vy = v0[3*k+1];
-                particles[k].vz = v0[3*k+2];
+                particles[mk].vx = v0[3*k+0];    // Set inital velocity
+                particles[mk].vy = v0[3*k+1];
+                particles[mk].vz = v0[3*k+2];
                 
-                particles[k].ax = a0[3*k+0];    // Set inital acceleration
-                particles[k].ay = a0[3*k+1];
-                particles[k].az = a0[3*k+2];
+                particles[mk].ax = a0[3*k+0];    // Set inital acceleration
+                particles[mk].ay = a0[3*k+1];
+                particles[mk].az = a0[3*k+2];
             }
             r->dt = dt_new;
             if (r->dt_last_done!=0.){       // Do not predict next e/b values if this is the first time step.
@@ -600,13 +631,14 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 
     // Swap particle buffers
     for(int k=0;k<N;++k) {
-        particles[k].x = x0[3*k+0]; // Set final position
-        particles[k].y = x0[3*k+1];
-        particles[k].z = x0[3*k+2];
+        int mk = map[k];
+        particles[mk].x = x0[3*k+0]; // Set final position
+        particles[mk].y = x0[3*k+1];
+        particles[mk].z = x0[3*k+2];
 
-        particles[k].vx = v0[3*k+0];    // Set final velocity
-        particles[k].vy = v0[3*k+1];
-        particles[k].vz = v0[3*k+2];
+        particles[mk].vx = v0[3*k+0];    // Set final velocity
+        particles[mk].vy = v0[3*k+1];
+        particles[mk].vz = v0[3*k+2];
     }
     copybuffers(e,er,N3);       
     copybuffers(b,br,N3);       
@@ -717,6 +749,7 @@ void reb_integrator_ias15_clear(struct reb_simulation* r){
 
 void reb_integrator_ias15_reset(struct reb_simulation* r){
     r->ri_ias15.allocatedN  = 0;
+    r->ri_ias15.map_allocated_N  = 0;
     free_dp7(&(r->ri_ias15.g));
     free_dp7(&(r->ri_ias15.e));
     free_dp7(&(r->ri_ias15.b));
@@ -737,6 +770,8 @@ void reb_integrator_ias15_reset(struct reb_simulation* r){
     r->ri_ias15.csv=  NULL;
     free(r->ri_ias15.csa0);
     r->ri_ias15.csa0 =  NULL;
+    free(r->ri_ias15.map);
+    r->ri_ias15.map =  NULL;
 }
 
 #ifdef GENERATE_CONSTANTS

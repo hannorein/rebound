@@ -17,8 +17,9 @@ double e_init; // initial energy
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
-    r->dt = 0.0012*2.*M_PI;                // initial timestep
+    r->dt = 0.0012*2.*M_PI;                
     r->integrator = REB_INTEGRATOR_MERCURIUS;
+    r->ri_mercurius.hillfac = 3;            // By default the switching radius is three times the hill radius
     r->heartbeat  = heartbeat;
 
     struct reb_particle star = {0};
@@ -31,7 +32,7 @@ int main(int argc, char* argv[]){
         double a = 1.+.1*(double)i;        // semi major axis
         double v = sqrt(1./a);             // velocity (circular orbit)
         struct reb_particle planet = {0};
-        planet.m = 2e-5; 
+        planet.m = 2e-3; 
         planet.x = a; 
         planet.vy = v;
         reb_add(r, planet); 

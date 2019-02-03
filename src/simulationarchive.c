@@ -163,17 +163,16 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                         fread(&(ps[i].vy),sizeof(double),1,inf);
                         fread(&(ps[i].vz),sizeof(double),1,inf);
                     }
-                    if (r->ri_mercurius.rhill){
-                        free(r->ri_mercurius.rhill);
+                    if (r->ri_mercurius.dcrit){
+                        free(r->ri_mercurius.dcrit);
                     }
-                    r->ri_mercurius.rhill = malloc(sizeof(double)*r->N);
-                    r->ri_mercurius.rhillallocatedN = r->N;
-                    fread(r->ri_mercurius.rhill,sizeof(double),r->N,inf);
+                    r->ri_mercurius.dcrit = malloc(sizeof(double)*r->N);
+                    r->ri_mercurius.dcrit_allocatedN = r->N;
+                    fread(r->ri_mercurius.dcrit,sizeof(double),r->N,inf);
                     if (r->ri_mercurius.safe_mode==0){
                         // Assume we are not synchronized
                         r->ri_mercurius.is_synchronized=0.;
                         // Recalculate total mass
-                        r->ri_mercurius.m0 = r->particles[0].m;
                         double msum = r->particles[0].m;
                         for (int i=1;i<r->N;i++){
                             r->ri_whfast.p_jh[i].m = r->particles[i].m;
@@ -495,7 +494,7 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
                             fwrite(&(ps[i].vy),sizeof(double),1,of);
                             fwrite(&(ps[i].vz),sizeof(double),1,of);
                         }
-                        fwrite(r->ri_mercurius.rhill,sizeof(double),r->N,of);
+                        fwrite(r->ri_mercurius.dcrit,sizeof(double),r->N,of);
                     }
                     break;
                 case REB_INTEGRATOR_IAS15:

@@ -64,7 +64,6 @@ void reb_boundary_check(struct reb_simulation* const r){
 					removep = 1;
 				}
 				if (removep==1){
-                    // If hermes calculate energy offset in global
                     if(r->track_energy_offset){
                         double Ei = reb_tools_energy(r);
                         reb_remove(r, i,1);

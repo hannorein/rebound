@@ -405,34 +405,32 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 		break;
         case REB_GRAVITY_MERCURIUS:
         {
-            const double m0 = r->ri_mercurius.m0;
+            double (*_L) (const struct reb_simulation* const r, double d, double dcrit) = r->ri_mercurius.L;
             switch (r->ri_mercurius.mode){
                 case 0: // WHFAST part
                 {
-                    const double* const rhill = r->ri_mercurius.rhill;
-#pragma omp parallel for schedule(guided)
-                    for (int i=0; i<_N_real; i++){
-                        particles[i].ax = 0; 
-                        particles[i].ay = 0; 
-                        particles[i].az = 0; 
-                    }
-                    // Summing over all particle pairs
+                    const double* const dcrit = r->ri_mercurius.dcrit;
+                    particles[0].ax = 0; 
+                    particles[0].ay = 0; 
+                    particles[0].az = 0; 
 #pragma omp parallel for schedule(guided)
                     for (int i=1; i<_N_real; i++){
 #ifndef OPENMP
                         if (reb_sigint) return;
 #endif // OPENMP
+                        particles[i].ax = 0; 
+                        particles[i].ay = 0; 
+                        particles[i].az = 0; 
                         for (int j=1; j<_N_active; j++){
                             if (i==j) continue;
                             const double dx = particles[i].x - particles[j].x;
                             const double dy = particles[i].y - particles[j].y;
                             const double dz = particles[i].z - particles[j].z;
                             const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                            const double rchange = MAX(rhill[i],rhill[j]);
-                            const double K = reb_integrator_mercurius_K(_r,rchange);
-                            const double dKdr = reb_integrator_mercurius_dKdr(_r,rchange);
+                            const double dcritmax = MAX(dcrit[i],dcrit[j]);
+                            const double L = _L(r,_r,dcritmax);
                             const double mj = particles[j].m;
-                            const double prefact = -G*mj*(K/(_r*_r*_r)-dKdr/(_r*_r));
+                            const double prefact = -G*mj*L/(_r*_r*_r);
                             particles[i].ax    += prefact*dx;
                             particles[i].ay    += prefact*dy;
                             particles[i].az    += prefact*dz;
@@ -448,11 +446,10 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             const double dy = particles[i].y - particles[j].y;
                             const double dz = particles[i].z - particles[j].z;
                             const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                            const double rchange = MAX(rhill[i],rhill[j]);
-                            const double K = reb_integrator_mercurius_K(_r,rchange);
-                            const double dKdr = reb_integrator_mercurius_dKdr(_r,rchange);
+                            const double dcritmax = MAX(dcrit[i],dcrit[j]);
+                            const double L = _L(r,_r,dcritmax);
                             const double mj = particles[j].m;
-                            const double prefact = -G*mj*(K/(_r*_r*_r)-dKdr/(_r*_r));
+                            const double prefact = -G*mj*L/(_r*_r*_r);
                             particles[i].ax    += prefact*dx;
                             particles[i].ay    += prefact*dy;
                             particles[i].az    += prefact*dz;
@@ -463,85 +460,71 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                 break;
                 case 1: // IAS15 part
                 {
-                    const double* const rhill = r->ri_mercurius.encounterRhill;
-                    unsigned int coord = r->ri_whfast.coordinates;
-                    if (coord == REB_WHFAST_COORDINATES_JACOBI){
-                        reb_error(r,"Jacobi coordinates not supported by Mercurius.");
-                    }
+                    const double m0 = r->particles[0].m;
+                    const double* const dcrit = r->ri_mercurius.dcrit;
+                    const int encounterN = r->ri_mercurius.encounterN;
+                    const int encounterNactive = r->ri_mercurius.encounterNactive;
+                    int* map = r->ri_mercurius.encounter_map;
+                    particles[0].ax = 0; // map[0] is always 0 
+                    particles[0].ay = 0; 
+                    particles[0].az = 0; 
+                    // We're in a heliocentric coordinate system.
+                    // The star feels no acceleration
 #pragma omp parallel for schedule(guided)
-                    for (int i=0; i<N; i++){
-                        particles[i].ax = 0; 
-                        particles[i].ay = 0; 
-                        particles[i].az = 0; 
-                    }
-                    // Summing over all particle pairs
-#pragma omp parallel for schedule(guided)
-                    for (int i=0; i<_N_real; i++){
+                    for (int i=1; i<encounterN; i++){
 #ifndef OPENMP
                         if (reb_sigint) return;
 #endif // OPENMP
-                        const double x = particles[i].x;
-                        const double y = particles[i].y;
-                        const double z = particles[i].z;
-                        const double mi = particles[i].m;
+                        int mi = map[i];
+                        particles[mi].ax = 0; 
+                        particles[mi].ay = 0; 
+                        particles[mi].az = 0; 
+                        // Acceleration due to star
+                        const double x = particles[mi].x;
+                        const double y = particles[mi].y;
+                        const double z = particles[mi].z;
                         const double _r = sqrt(x*x + y*y + z*z + softening2);
-                        double prefact = 0.;
-                        if (coord==REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC){
-                            prefact = -G/(_r*_r*_r)*m0;
-                        }else if (coord==REB_WHFAST_COORDINATES_WHDS){
-                            prefact = -G/(_r*_r*_r)*(m0+mi);
-                        }
-                        particles[i].ax    += prefact*x;
-                        particles[i].ay    += prefact*y;
-                        particles[i].az    += prefact*z;
-                        for (int j=0; j<_N_active; j++){
+                        double prefact = -G/(_r*_r*_r)*m0;
+                        particles[mi].ax    += prefact*x;
+                        particles[mi].ay    += prefact*y;
+                        particles[mi].az    += prefact*z;
+                        for (int j=1; j<encounterNactive; j++){
                             if (i==j) continue;
-                            const double dx = x - particles[j].x;
-                            const double dy = y - particles[j].y;
-                            const double dz = z - particles[j].z;
-                            const double mj = particles[j].m;
+                            int mj = map[j];
+                            const double dx = x - particles[mj].x;
+                            const double dy = y - particles[mj].y;
+                            const double dz = z - particles[mj].z;
                             const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                            const double rchange = MAX(rhill[i],rhill[j]);
-                            const double K = reb_integrator_mercurius_K(_r,rchange);
-                            const double dKdr = reb_integrator_mercurius_dKdr(_r,rchange);
-                            double prefact = 0.;
-                            if (coord==REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC){
-                                prefact = -G*mj*((1.-K)/(_r*_r*_r)+dKdr/(_r*_r));
-                            }else if (coord==REB_WHFAST_COORDINATES_WHDS){
-                                prefact = -G*((1.-K)/(_r*_r*_r)+dKdr/(_r*_r))*mj*(mi+m0)/m0;
-                            }
-                            particles[i].ax    += prefact*dx;
-                            particles[i].ay    += prefact*dy;
-                            particles[i].az    += prefact*dz;
+                            const double dcritmax = MAX(dcrit[mi],dcrit[mj]);
+                            const double L = _L(r,_r,dcritmax);
+                            double prefact = -G*particles[mj].m*(1.-L)/(_r*_r*_r);
+                            particles[mi].ax    += prefact*dx;
+                            particles[mi].ay    += prefact*dy;
+                            particles[mi].az    += prefact*dz;
                         }
                     }
                     if (_testparticle_type){
-                    for (int i=0; i<_N_active; i++){
+#pragma omp parallel for schedule(guided)
+                    for (int i=1; i<encounterNactive; i++){
 #ifndef OPENMP
                         if (reb_sigint) return;
 #endif // OPENMP
-                        const double x = particles[i].x;
-                        const double y = particles[i].y;
-                        const double z = particles[i].z;
-                        const double mi = particles[i].m;
-                        for (int j=_N_active; j<_N_real; j++){
-                            const double dx = x - particles[j].x;
-                            const double dy = y - particles[j].y;
-                            const double dz = z - particles[j].z;
-                            const double mj = particles[j].m;
+                        int mi = map[i];
+                        const double x = particles[mi].x;
+                        const double y = particles[mi].y;
+                        const double z = particles[mi].z;
+                        for (int j=encounterNactive; j<encounterN; j++){
+                            int mj = map[j];
+                            const double dx = x - particles[mj].x;
+                            const double dy = y - particles[mj].y;
+                            const double dz = z - particles[mj].z;
                             const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                            const double rchange = MAX(rhill[i],rhill[j]);
-                            const double K = reb_integrator_mercurius_K(_r,rchange);
-                            const double dKdr = reb_integrator_mercurius_dKdr(_r,rchange);
-                            double prefact = 0.;
-                            if (coord == 0){
-                                prefact = -G*mj*((1.-K)/(_r*_r*_r)+dKdr/(_r*_r));
-                            }else{
-                                prefact = -G*((1.-K)/(_r*_r*_r)+dKdr/(_r*_r))*mj*(mi+m0)/m0;
-                            }
-                            particles[i].ax    += prefact*dx;
-                            particles[i].ay    += prefact*dy;
-                            particles[i].az    += prefact*dz;
+                            const double dcritmax = MAX(dcrit[mi],dcrit[mj]);
+                            const double L = _L(r,_r,dcritmax);
+                            double prefact = -G*particles[mj].m*(1.-L)/(_r*_r*_r);
+                            particles[mi].ax    += prefact*dx;
+                            particles[mi].ay    += prefact*dy;
+                            particles[mi].az    += prefact*dz;
                         }
                     }
                     }
