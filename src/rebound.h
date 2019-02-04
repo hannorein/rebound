@@ -1490,11 +1490,6 @@ enum reb_input_binary_messages {
 };
 
 /**
- * @brief Similar to reb_create_simulation_from_binary() but allows takes simulation as an argument (will be overwritten) and allows for manual message handling.
- */
-void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, char* filename, enum reb_input_binary_messages* messages);
-
-/**
  * @brief This function sets up a Plummer sphere.
  * @param r The rebound simulation to be considered
  * @param _N Number of particles in the plummer sphere.
@@ -1661,6 +1656,11 @@ void reb_particle_imul(struct reb_particle* p1, double value);
  * @brief Allocates a simulation and sets it to a specific snapshot in a SimulationArchive file.
  */
 struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive* sa, long snapshot);
+
+/**
+ * @brief Equivalent to reb_create_simulation_from_simulationarchive() but also processes warning messages.
+ */
+void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simulation* r, struct reb_simulationarchive* sa, long snapshot, enum reb_input_binary_messages* warnings);
 
 /**
  * @brief Opens a SimulationArchive

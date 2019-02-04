@@ -16,7 +16,7 @@ else:
 
 if os.path.isfile(filename):
     # Try to load simulation from file
-    sim = rebound.Simulation.from_file(filename)
+    sim = rebound.Simulation(filename)
 else: 
     sim = rebound.Simulation()
     # Get data from NASA Horizons

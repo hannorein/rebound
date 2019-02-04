@@ -3,7 +3,7 @@ import unittest
 import warnings
 
 class TestSimulationArchive(unittest.TestCase):
-    def test_sa_from_archive(self):
+    def test_sa_fromarchive(self):
         sim = rebound.Simulation()
         sim.add(m=1)
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
@@ -15,7 +15,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
-        sim = rebound.Simulation.from_archive("test.bin")
+        sim = rebound.Simulation("test.bin")
         sim.integrate(80.,exact_finish_time=0)
         x1 = sim.particles[1].x
         
@@ -409,7 +409,7 @@ class TestSimulationArchive(unittest.TestCase):
 
 class TestSimulationArchiveWarningsErrors(unittest.TestCase):
     def test_sa_binary_missing(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(RuntimeError):
             sa = rebound.SimulationArchive("testmissing.bin")
     def test_sa_binary_version(self):
         sim = rebound.Simulation()

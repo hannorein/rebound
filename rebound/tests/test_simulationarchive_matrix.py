@@ -8,7 +8,7 @@ class TestSimulationArchiveMatrix(unittest.TestCase):
 def runSimulation(tmax=40., restart=False, keep_unsynchronized=1, interval=None, safe_mode=True, integrator="ias15",G=1., testparticle=0,simulationarchive_version=2):
     if restart:
         if keep_unsynchronized==1:
-            sim = rebound.Simulation.from_archive("test.bin")
+            sim = rebound.Simulation("test.bin")
         else:
             sa = rebound.SimulationArchive("test.bin")
             sim = sa.getSimulation(sa.tmax,keep_unsynchronized=0)
@@ -65,7 +65,7 @@ def create_test_sa_synchronize(params):
     def doTest2(self): 
         sim1 = runSimulation(40., restart=False, interval=10., **params)
         if params['keep_unsynchronized']==1:
-            sim2 = rebound.Simulation.from_archive("test.bin")
+            sim2 = rebound.Simulation("test.bin")
         else:
             sa = rebound.SimulationArchive("test.bin")
             sim2 = sa.getSimulation(sa.tmax,keep_unsynchronized=0)

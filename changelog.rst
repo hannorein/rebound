@@ -3,6 +3,12 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.8.1
+--------------
+* Syntax change on the python side to create a simulation from a binary file or SimulationArchive:
+  rebound.Simulation.from_file("test.bin") becomes rebound.Simulation("test.bin") 
+  rebound.Simulation.from_archive("test.bin",5) becomes rebound.Simulation("test.bin",5) 
+
 Version 3.8.0
 --------------
 * The hybrid integrator MERCURIUS has been completely rewritten. It can now much more easily be used in simulations where physical collisions occur. There are no more hidden particle arrays in the background, meaning adding and removing particles can occur in the same way as for other integrators. It also works reliably with any additional forces.

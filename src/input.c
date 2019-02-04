@@ -34,6 +34,7 @@
 #include "collision.h"
 #include "input.h"
 #include "tree.h"
+#include "simulationarchive.h"
 #ifdef MPI
 #include "communication_mpi.h"
 #endif
@@ -368,28 +369,6 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
     return 1;
 } 
 
-void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, char* filename, enum reb_input_binary_messages* warnings){
-    FILE* inf = fopen(filename,"rb"); 
-    
-    if (!inf){
-        *warnings |= REB_INPUT_BINARY_ERROR_NOFILE;
-        return;
-    }
-
-    reb_reset_temporary_pointers(r);
-    reb_reset_function_pointers(r);
-    r->simulationarchive_filename = NULL;
-    
-    // reb_create_simulation sets simulationarchive_version to 2 by default.
-    // This will break reading in old version.
-    // Set to old version by default. Will be overwritten if new version was used.
-    r->simulationarchive_version = 0;
-
-    while(reb_input_field(r, inf, warnings, NULL)){ }
-
-    fclose(inf);
-}
-
 struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum reb_input_binary_messages warnings){
     if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
         reb_error(r,"Cannot read binary file. Check filename and file contents.");
@@ -434,7 +413,18 @@ struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum
 struct reb_simulation* reb_create_simulation_from_binary(char* filename){
     enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
     struct reb_simulation* r = reb_create_simulation();
-    reb_create_simulation_from_binary_with_messages(r,filename,&warnings);
+    
+    struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
+    reb_read_simulationarchive_with_messages(sa, filename, &warnings);
+    if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
+        // Don't output an error if file does not exist, just return NULL.
+        free(sa);
+        return NULL;
+    }else{
+        reb_input_process_warnings(NULL, warnings);
+    }
+    reb_create_simulation_from_simulationarchive_with_messages(r, sa, -1, &warnings);
+    reb_close_simulationarchive(sa);
     r = reb_input_process_warnings(r, warnings);
     return r;
 }

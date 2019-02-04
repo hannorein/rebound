@@ -48,7 +48,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
         return;
     }
     if (snapshot<0) snapshot += sa->nblobs;
-    if (snapshot>sa->nblobs || snapshot<0){
+    if (snapshot>=sa->nblobs || snapshot<0){
         *warnings |= REB_INPUT_BINARY_ERROR_OUTOFRANGE;
         return;
     }

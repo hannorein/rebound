@@ -56,7 +56,7 @@ class SimulationArchive(Structure):
                 ("offset", POINTER(c_uint32)), 
                 ("t", POINTER(c_double)) 
                 ]
-    def __init__(self,filename,setup=None, setup_args=(), rebxfilename=None):
+    def __init__(self,filename,setup=None, setup_args=(), rebxfilename=None, process_warnings=True):
         """
         Arguments
         ---------
@@ -69,6 +69,8 @@ class SimulationArchive(Structure):
             Arguments passed to setup function.
         rebxfilename : str
             Filename of the REBOUNDx binary file.
+        process_warnings : Bool
+            Display warning messages if True (default). Only fail on major errors if set to False.
 
         """
         self.setup = setup
@@ -76,11 +78,17 @@ class SimulationArchive(Structure):
         self.rebxfilename = rebxfilename
         w = c_int(0)
         clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")),byref(w))
-        if w.value & (1+16+32+64+256) :     # Major error
-            raise ValueError(BINARY_WARNINGS[0])
-        for message, value in BINARY_WARNINGS:  # Just warnings
+        for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
-                warnings.warn(message, RuntimeWarning)
+                if majorerror:
+                    raise RuntimeError(message)
+                else:  
+                    # Just a warning
+                    if process_warnings:
+                        warnings.warn(message, RuntimeWarning)
+        else:
+            # Store for later
+            self.warnings = w
         if self.nblobs<1:
             RuntimeError("Something went wrong. SimulationArchive is empty.")
         self.tmin = self.t[0]
@@ -120,11 +128,13 @@ class SimulationArchive(Structure):
         if self.rebxfilename:
             import reboundx
             rebx = reboundx.Extras.from_file(sim, self.rebxfilename)
-        if w.value & (1+16+32+64+256) :     # Major error
-            raise ValueError(BINARY_WARNINGS[0])
-        for message, value in BINARY_WARNINGS:  # Just warnings
+        for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
-                warnings.warn(message, RuntimeWarning)
+                if majorerror:
+                    raise RuntimeError(message)
+                else:  
+                    # Just a warning
+                    warnings.warn(message, RuntimeWarning)
         return sim
     
     def __setitem__(self, key, value):

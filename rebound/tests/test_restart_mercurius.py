@@ -17,7 +17,7 @@ class TestSimulationRestartMercurius(unittest.TestCase):
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 
-        sim = rebound.Simulation.from_file("test.bin")
+        sim = rebound.Simulation("test.bin")
         sim.integrate(80.,exact_finish_time=0)
         x1 = sim.particles[1].x
 
@@ -37,7 +37,7 @@ class TestSimulationRestartMercurius(unittest.TestCase):
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 
-        sim = rebound.Simulation.from_file("test.bin")
+        sim = rebound.Simulation("test.bin")
         sim.integrate(80.,exact_finish_time=0)
         x1 = sim.particles[1].x
 

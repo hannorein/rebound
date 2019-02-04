@@ -76,7 +76,7 @@ class TestIntegratorJanus(unittest.TestCase):
             sim.ri_janus.scale_vel = 1e-16
             sim.integrate(1e2,exact_finish_time=0)
             
-            sim2 = rebound.Simulation.from_archive("test.bin")
+            sim2 = rebound.Simulation("test.bin")
             sim2.integrate(2e2,exact_finish_time=0)
             
             sim.integrate(2e2,exact_finish_time=0)

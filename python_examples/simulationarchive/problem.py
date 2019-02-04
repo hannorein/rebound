@@ -4,7 +4,7 @@ import os
 
 filename = "simulationarchive.bin"
 try:
-    sim = rebound.Simulation.from_archive(filename)
+    sim = rebound.Simulation(filename)
     print("Restarting from simulation archive. Last snapshot found at t=%.1f"%sim.t)
 except:
     print("Cannot load SimulationArchive. Creating new simulation.")

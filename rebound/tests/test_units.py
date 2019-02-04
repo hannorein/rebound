@@ -41,7 +41,7 @@ class TestUnits(unittest.TestCase):
         units = ["au", "msun", "yr2pi"]
         self.sim.units = units 
         self.sim.save("test.bin")
-        sim2 = rebound.Simulation.from_file("test.bin")
+        sim2 = rebound.Simulation("test.bin")
         for i in ["length","time","mass"]:
             self.assertEqual(sim2.units[i], self.sim.units[i])
             self.assertIsNotNone(sim2.units[i])

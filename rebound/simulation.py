@@ -26,16 +26,18 @@ GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "mercurius": 3, "line": 4}
 VISUALIZATIONS = {"none": 0, "opengl": 1, "webgl": 2}
 COORDINATES = {"jacobi": 0, "democraticheliocentric": 1, "whds": 2}
+
+# Format: Majorerror, id, message
 BINARY_WARNINGS = [
-    ("Cannot read binary file. Check filename and file contents.", 1),
-    ("Binary file was saved with a different version of REBOUND. Binary format might have changed.", 2),
-    ("You have to reset function pointers after creating a reb_simulation struct with a binary file.", 4),
-    ("Binary file might be corrupted. Number of particles found does not match particle number expected.", 8),
-    ("Error while reading binary file (file was closed).", 16),
-    ("Index out of range.", 32),
-    ("Error while trying to seek file.", 64),
-    ("Encountered unkown field in file. File might have been saved with a different version of REBOUND.", 128),
-    ("Integrator type is not supported by this simulation archive version.", 256)
+    (True,  1, "Cannot read binary file. Check filename and file contents."),
+    (False, 2, "Binary file was saved with a different version of REBOUND. Binary format might have changed."),
+    (False, 4, "You have to reset function pointers after creating a reb_simulation struct with a binary file."),
+    (False, 8, "Binary file might be corrupted. Number of particles found does not match particle number expected."),
+    (True,  16, "Error while reading binary file (file was closed).",),
+    (True,  32, "Index out of range.",),
+    (True,  64, "Error while trying to seek file.",),
+    (False, 128, "Encountered unkown field in file. File might have been saved with a different version of REBOUND."),
+    (True,  256, "Integrator type is not supported by this simulation archive version.")
 ]
 
 class reb_hash_pointer_pair(Structure):
@@ -294,86 +296,76 @@ class Simulation(Structure):
     >>> sim.t = 0.                  # Sets the current simulation time (default 0)
     >>> print(sim.N)                # Gets the current number of particles
     >>> print(sim.N_active)         # Gets the current number of active particles
+       
+    By calling rebound.Simulation() as shown above, you create a new simulation object
+    The following example creates a simulation, saves it to a file and then creates
+    a copy of the simulation store in the binary file.
+
+    >>> sim = rebound.Simulation()
+    >>> sim.add(m=1.)
+    >>> sim.add(m=1.e-3,x=1.,vy=1.)
+    >>> sim.save("simulation.bin")
+    >>> sim_copy = rebound.Simulation("simulation.bin")
+    
+    Similarly, you can create a simulation, from a simulation archive
+    by specifying the snapshot you want to load. 
+
+    >>> sim = rebound.Simulation("archive.bin", 34)
+    
+    or 
+    
+    >>> sim = rebound.Simulation(filename="archive.bin", snapshot=34)
 
     """
-    def __init__(self):
-        clibrebound.reb_init_simulation(byref(self))
+    def __new__(cls, *args, **kw):
+        # Handle arguments
+        filename = None
+        if len(args)>0:
+            filename = args[0]
+        if "filename" in kw:
+            filename = kw["filename"]
+        snapshot = -1
+        if len(args)>1:
+            snapshot = args[1]
+        if "snapshot" in kw:
+            snapshot = kw["snapshot"]
+       
+        # Create simulation
+        if filename==None:
+            # Create a new simulation
+            sim = super(Simulation,cls).__new__(cls)
+            clibrebound.reb_init_simulation(byref(sim))
+            return sim
+        else:
+            # Recreate exisitng simulation 
+            sa = SimulationArchive(filename,process_warnings=False)
+            sim = super(Simulation,cls).__new__(cls)
+            clibrebound.reb_init_simulation(byref(sim))
+            w = sa.warnings # warnings will be appended to previous warnings (as to not repeat them) 
+            clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int(snapshot),byref(w))
+            for majorerror, value, message in BINARY_WARNINGS:
+                if w.value & value:
+                    if majorerror:
+                        raise RuntimeError(message)
+                    else:  
+                        # Just a warning
+                        warnings.warn(message, RuntimeWarning)
+            return sim
+
+    def __init__(self,filename=None,snapshot=None):
         self.save_messages = 1 # Warnings will be checked within python
     
     @classmethod
     def from_archive(cls, filename,snapshot=-1):
-        """
-        Loads a REBOUND simulation from a SimulationArchive binary file.
-        It uses the last snapshot in that file unless otherwise specified. 
-        This function is only really useful for restarting a simulation. 
-        For full access to the Simulation Archive, use the 
-        SimulationArchive class.
-        
-        After loading the REBOUND simulation from file, you need to reset 
-        any function pointers manually. Please read all documentation 
-        before using this function as it has several requirements to work
-        correctly.
-        
-        Arguments
-        ---------
-        filename : str
-            Filename of the binary file.
-        snapshot : int (optional)
-            If given, load the snapshot with this index. Otherwise 
-            load last snapshot.
-        
-        Returns
-        ------- 
-        A rebound.Simulation object.
-        
-        """
-        w = c_int(0)
-        sim = Simulation()
-        sa = SimulationArchive(filename)
-        clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim),byref(sa),snapshot,byref(w))
-        if w.value & (1+16+32+64+256) :     # Major error
-            raise ValueError(BINARY_WARNINGS[0])
-        for message, value in BINARY_WARNINGS:  # Just warnings
-            if w.value & value:
-                warnings.warn(message, RuntimeWarning)
-        return sim
+        """ rebound.Simulation.from_archive(filename,snapshot) is deprecated and will be removed in the futute. Use rebound.Simulation(filename,snapshot) instead """
+        warnings.warn( "rebound.Simulation.from_archive(filename,snapshot) is deprecated and will be removed in the future. Use rebound.Simulation(filename,snapshot) instead", FutureWarning)
+        return cls(filename=filename,snapshot=snapshot)
 
     @classmethod
     def from_file(cls, filename):
-        """
-        Loads a REBOUND simulation from a file.
-        
-        After loading the REBOUND simulation from file, you need to reset any function pointers manually.
-        
-        Arguments
-        ---------
-        filename : str
-            Filename of the binary file.
-        
-        Returns
-        ------- 
-        A rebound.Simulation object.
-        
-        Examples
-        --------
-        The following example creates a simulation, saves it to a file and then creates
-        a copy of the simulation store in the binary file.
-
-        >>> sim = rebound.Simulation()
-        >>> sim.add(m=1.)
-        >>> sim.add(m=1.e-3,x=1.,vy=1.)
-        >>> sim.save("simulation.bin")
-        >>> sim_copy = rebound.Simulation.from_file("simulation.bin")
-        """
-        w = c_int(0)
-        sim = Simulation()
-        clibrebound.reb_create_simulation_from_binary_with_messages(byref(sim), c_char_p(filename.encode("ascii")),byref(w))
-        if w.value & (1+16+32+64+256) :     # Major error
-            raise ValueError(BINARY_WARNINGS[0])
-        for message, value in BINARY_WARNINGS:  # Just warnings
-            if w.value & value and value!=1:
-                warnings.warn(message, RuntimeWarning)
-        return sim
+        """ rebound.Simulation.from_file(filename) is deprecated and will be removed in the futute. Use rebound.Simulation(filename) instead """
+        warnings.warn( "rebound.Simulation.from_file(filename) is deprecated and will be removed in the future. Use rebound.Simulation(filename) instead", FutureWarning)
+        return cls(filename=filename)
     
     def copy(self):
         """
@@ -388,11 +380,13 @@ class Simulation(Structure):
         w = c_int(0)
         sim = Simulation()
         clibrebound._reb_copy_simulation_with_messages(byref(sim),byref(self),byref(w))
-        if w.value & (1+16+32+64+256) :     # Major error
-            raise ValueError(BINARY_WARNINGS[0])
-        for message, value in BINARY_WARNINGS:  # Just warnings
+        for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
-                warnings.warn(message, RuntimeWarning)
+                if majorerror:
+                    raise RuntimeError(message)
+                else:  
+                    # Just a warning
+                    warnings.warn(message, RuntimeWarning)
         return sim
 
     def getWidget(self,**kwargs):
