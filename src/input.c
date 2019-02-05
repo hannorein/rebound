@@ -254,6 +254,9 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(PYTHON_UNIT_L,      &r->python_unit_l);
         CASE(PYTHON_UNIT_M,      &r->python_unit_m);
         CASE(PYTHON_UNIT_T,      &r->python_unit_t);
+        CASE(STEPSDONE,          &r->steps_done);
+        CASE(SAAUTOSTEP,         &r->simulationarchive_auto_step);
+        CASE(SANEXTSTEP,         &r->simulationarchive_next_step);
         case REB_BINARY_FIELD_TYPE_PARTICLES:
             if(r->particles){
                 free(r->particles);

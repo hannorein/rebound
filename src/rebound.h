@@ -598,6 +598,9 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_PYTHON_UNIT_T = 132,
     REB_BINARY_FIELD_TYPE_MERCURIUS_COMPOS = 133,
     REB_BINARY_FIELD_TYPE_MERCURIUS_COMVEL = 134,
+    REB_BINARY_FIELD_TYPE_SAAUTOSTEP = 135,
+    REB_BINARY_FIELD_TYPE_SANEXTSTEP = 136,
+    REB_BINARY_FIELD_TYPE_STEPSDONE = 137,
     REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
     REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
     REB_BINARY_FIELD_TYPE_END = 9999,
@@ -634,6 +637,7 @@ struct reb_simulationarchive{
     long size_snapshot;     ///< Size of snapshot (only used for version 1)
     double auto_interval;   ///< Interval setting used to create SA (if used)
     double auto_walltime;   ///< Walltime setting used to create SA (if used)
+    unsigned long long auto_step;  ///< Steps in-between SA snapshots (if used)
     long nblobs;            ///< Total number of snapshots (including initial binary)
     uint32_t* offset;       ///< Index of offsets in file (length nblobs)
     double* t;              ///< Index of simulation times in file (length nblobs)
@@ -700,6 +704,7 @@ struct reb_simulation {
     double  softening;              ///< Gravitational softening parameter. Default: 0. 
     double  dt;                     ///< Current timestep. 
     double  dt_last_done;           ///< Last dt used by integrator
+    unsigned long long steps_done;  ///< Timesteps done
     int     N;                      ///< Current number of particles on this node. 
     int     N_var;                  ///< Total number of variational particles. Default: 0.
     int     var_config_N;           ///< Number of variational configuration structs. Default: 0.
@@ -815,7 +820,9 @@ struct reb_simulation {
     long   simulationarchive_size_snapshot;     ///< (Deprecated SAV1) Size of a snapshot in a SA (other than 1st), in bytes
     double simulationarchive_auto_interval;     ///< Current sampling cadence, in code units
     double simulationarchive_auto_walltime;     ///< Current sampling cadence, in wall time
+    unsigned long long simulationarchive_auto_step;  ///< Current sampling cadence, in time steps
     double simulationarchive_next;              ///< Next output time (simulation tim or wall time, depending on wether auto_interval or auto_walltime is set)
+    unsigned long long simulationarchive_next_step; ///< Next output step (only used if auto_steps is set)
     char*  simulationarchive_filename;          ///< Name of output file
     /** @} */
 
@@ -1709,6 +1716,15 @@ void reb_simulationarchive_automate_interval(struct reb_simulation* const r, con
  * @param interval The walltime interval between snapshots (in seconds).
  */
 void reb_simulationarchive_automate_walltime(struct reb_simulation* const r, const char* filename, double walltime);
+
+/**
+ * @brief Automatically create a SimulationArchive Snapshot after a fixed number of timesteps
+ * @param r The rebound simulation to be considered.
+ * @param filename The path and filename of the SimulationArchive output file.
+ * @param unsigned long long The number of timesteps between snapshots.
+ */
+void reb_simulationarchive_automate_step(struct reb_simulation* const r, const char* filename, unsigned long long step);
+
 
 /**
  * @cond PRIVATE

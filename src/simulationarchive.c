@@ -283,6 +283,9 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
             case REB_BINARY_FIELD_TYPE_SAAUTOINTERVAL:
                 fread(&(sa->auto_interval), sizeof(double),1,sa->inf);
                 break;
+            case REB_BINARY_FIELD_TYPE_SAAUTOSTEP:
+                fread(&(sa->auto_step), sizeof(unsigned long long),1,sa->inf);
+                break;
             default:
                 fseek(sa->inf,field.size,SEEK_CUR);
                 break;
@@ -408,13 +411,24 @@ static int reb_simulationarchive_snapshotsize(struct reb_simulation* const r){
 
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
     if (r->simulationarchive_filename!=NULL){
-        if (r->simulationarchive_auto_interval!=0. && r->simulationarchive_auto_walltime!=0.){
-            reb_error(r,"Both simulationarchive_auto_interval and simulationarchive_auto_walltime are set. Only set one at a time.");
+        int modes = 0;
+        if (r->simulationarchive_auto_interval!=0) modes++;
+        if (r->simulationarchive_auto_walltime!=0.) modes++;
+        if (r->simulationarchive_auto_step!=0) modes++;
+        if (modes>1){
+            reb_error(r,"Only use one of simulationarchive_auto_interval, simulationarchive_auto_walltime, or simulationarchive_auto_step");
         }
         if (r->simulationarchive_auto_interval!=0.){
             const double sign = r->dt>0.?1.:-1;
             if (sign*r->simulationarchive_next <= sign*r->t){
                 r->simulationarchive_next += sign*r->simulationarchive_auto_interval;
+                //Snap
+                reb_simulationarchive_snapshot(r, NULL);
+            }
+        }
+        if (r->simulationarchive_auto_step!=0.){
+            if (r->simulationarchive_next_step <= r->steps_done){
+                r->simulationarchive_next_step += r->simulationarchive_auto_step;
                 //Snap
                 reb_simulationarchive_snapshot(r, NULL);
             }
@@ -615,3 +629,13 @@ void reb_simulationarchive_automate_walltime(struct reb_simulation* const r, con
     }
 }
 
+void reb_simulationarchive_automate_step(struct reb_simulation* const r, const char* filename, unsigned long long step){
+    if(_reb_simulationarchive_automate_set_filename(r,filename)<0) return;
+    if(r->simulationarchive_auto_step != step){
+        // Only update simulationarchive_next if interval changed. 
+        // This ensures that interrupted simulations will continue
+        // after being restarted from a simulationarchive
+        r->simulationarchive_auto_step = step;
+        r->simulationarchive_next_step = r->steps_done;
+    }
+}

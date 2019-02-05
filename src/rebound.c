@@ -157,6 +157,8 @@ void reb_step(struct reb_simulation* const r){
     struct timeval time_end;
     gettimeofday(&time_end,NULL);
     r->walltime += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
+    // Update step counter
+    r->steps_done++; // This also counts failed IAS15 steps
 }
 
 void reb_exit(const char* const msg){
@@ -432,6 +434,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->softening    = 0;
     r->dt       = 0.001;
     r->dt_last_done = 0.;
+    r->steps_done = 0;
     r->root_size    = -1;
     r->root_nx  = 1;
     r->root_ny  = 1;
@@ -476,7 +479,9 @@ void reb_init_simulation(struct reb_simulation* r){
     r->simulationarchive_version       = 2;    
     r->simulationarchive_auto_interval = 0.;    
     r->simulationarchive_auto_walltime = 0.;    
+    r->simulationarchive_auto_step     = 0;    
     r->simulationarchive_next          = 0.;    
+    r->simulationarchive_next_step     = 0;    
     r->simulationarchive_filename      = NULL;    
     
     // Default modules

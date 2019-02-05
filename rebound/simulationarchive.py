@@ -52,6 +52,7 @@ class SimulationArchive(Structure):
                 ("size_snapshot", c_long), 
                 ("auto_interval", c_double), 
                 ("auto_walltime", c_double), 
+                ("auto_step", c_ulonglong), 
                 ("nblobs", c_long), 
                 ("offset", POINTER(c_uint32)), 
                 ("t", POINTER(c_double)) 

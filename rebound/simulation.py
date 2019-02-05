@@ -446,7 +446,7 @@ class Simulation(Structure):
 
 
 # Simulation Archive tools
-    def automateSimulationArchive(self, filename, interval=None, walltime=None, deletefile=False):
+    def automateSimulationArchive(self, filename, interval=None, walltime=None, step=None, deletefile=False):
         """
         This function automates taking snapshots during a simulationusing the Simulation Archive.
         Instead of using this function, one can also call simulationarchive_snapshot() manually
@@ -462,6 +462,9 @@ class Simulation(Structure):
         walltime : float
             Interval between outputs in wall time (seconds). 
             Useful when using IAS15 with adaptive timesteps. 
+        step : int
+            Interval between outputs in number of timesteps. 
+            Useful when outputs need to be spaced exactly.
         
         Examples
         --------
@@ -482,8 +485,9 @@ class Simulation(Structure):
         >>> sim = sa[-1]  # get the last snapshot in the SA file
 
         """
-        if interval is None and walltime is None:
-            raise AttributeError("Need to specify either interval or walltime.")
+        modes = sum(1 for i in [interval, walltime,step] if i != None)
+        if modes != 1:
+            raise AttributeError("Need to specify either interval, walltime, or step")
         if deletefile and os.path.isfile(filename):
             os.remove(filename)
         self.simulationarchive_next = 0.
@@ -491,6 +495,8 @@ class Simulation(Structure):
             clibrebound.reb_simulationarchive_automate_interval(byref(self), c_char_p(filename.encode("ascii")), c_double(interval))
         if walltime:
             clibrebound.reb_simulationarchive_automate_walltime(byref(self), c_char_p(filename.encode("ascii")), c_double(walltime))
+        if step:
+            clibrebound.reb_simulationarchive_automate_step(byref(self), c_char_p(filename.encode("ascii")), c_ulonglong(step))
         self.process_messages()
 
     def simulationarchive_snapshot(self, filename):
@@ -1744,6 +1750,7 @@ Simulation._fields_ = [
                 ("softening", c_double),
                 ("dt", c_double),
                 ("dt_last_done", c_double),
+                ("steps_done", c_ulonglong),
                 ("N", c_int),
                 ("N_var", c_int),
                 ("var_config_N", c_int),
@@ -1809,7 +1816,9 @@ Simulation._fields_ = [
                 ("simulationarchive_size_snapshot", c_long),
                 ("simulationarchive_auto_interval", c_double),
                 ("simulationarchive_auto_walltime", c_double),
+                ("simulationarchive_auto_step", c_ulonglong),
                 ("simulationarchive_next", c_double),
+                ("simulationarchive_next_step", c_ulonglong),
                 ("_simulationarchive_filename", c_char_p),
                 ("_visualization", c_int),
                 ("_collision", c_int),
