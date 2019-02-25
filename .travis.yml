@@ -46,7 +46,8 @@ addons:
               #- openmpi-bin 
 
 before_install:
-  - sudo apt-get -y --allow-unauthenticated install libglfw3-dev
+  - travis_apt_get_update
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends $(travis_apt_get_options) --allow-unauthenticated install libglfw3-dev
   - if [[ $TESTPART == *"PYTHON"* ]] || [[ $TESTPART == "CCOVERAGE" ]]; then if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-3.5.5-Linux-x86_64.sh -O miniconda.sh; fi; fi
   - if [[ $TESTPART == *"PYTHON"* ]] || [[ $TESTPART == "CCOVERAGE" ]]; then chmod +x miniconda.sh; fi
   - if [[ $TESTPART == *"PYTHON"* ]] || [[ $TESTPART == "CCOVERAGE" ]]; then ./miniconda.sh -b -p /home/travis/mc; fi
