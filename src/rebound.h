@@ -1957,21 +1957,21 @@ void reb_integrator_ias15_reset(struct reb_simulation* r);              ///< Int
 * Related to OpenGL/WebGL visualization. Nothing to be changed by the user.
 */
 struct reb_quaternion {
-double x, y, z, w;
+    double x, y, z, w;
 };
 struct reb_particle_opengl {
-float x,y,z;
-float vx,vy,vz;
-float r;
+    float x,y,z;
+    float vx,vy,vz;
+    float r;
 };
 struct reb_orbit_opengl {
-float x,y,z;
-float a, e, f;
-float omega, Omega, inc;
+    float x,y,z;
+    float a, e, f;
+    float omega, Omega, inc;
 };
 
 struct reb_display_data {
-struct reb_simulation* r;
+    struct reb_simulation* r;
     struct reb_simulation* r_copy;
     struct reb_particle_opengl* particle_data;
     struct reb_orbit_opengl* orbit_data;
