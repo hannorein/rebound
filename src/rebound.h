@@ -1934,11 +1934,28 @@ void reb_error(struct reb_simulation* const r, const char* const msg);
  */
 int reb_get_next_message(struct reb_simulation* const r, char* const buf);
 /** @} */
+/** @} */
 
 /**
  * @cond PRIVATE
- * Related to OpenGL/WebGL visualization. Nothing to be changed by the user.
+ * Internal functions for calling various integrator steps. Nothing to be changed by the user.
  */
+
+void reb_integrator_whfast_from_inertial(struct reb_simulation* const r);   ///< Internal function to the appropriate WHFast coordinates from inertial
+void reb_integrator_whfast_to_inertial(struct reb_simulation* const r); ///< Internal function to move back from particular WHFast coordinates to inertial
+void reb_integrator_whfast_reset(struct reb_simulation* r);		///< Internal function used to call a specific integrator
+void reb_whfast_interaction_step(struct reb_simulation* const r, const double _dt);///< Internal function
+void reb_whfast_jump_step(const struct reb_simulation* const r, const double _dt); ///< Internal function
+void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _dt); ///< Internal function
+void reb_whfast_com_step(const struct reb_simulation* const r, const double _dt); ///< Internal function
+void reb_integrator_ias15_part2(struct reb_simulation* r);              ///< Internal function used to call a specific integrator
+void reb_integrator_ias15_reset(struct reb_simulation* r);              ///< Internal function used to call a specific integrator
+/** @endcond */
+
+/**
+* @cond PRIVATE
+* Related to OpenGL/WebGL visualization. Nothing to be changed by the user.
+*/
 struct reb_quaternion {
     double x, y, z, w;
 };
