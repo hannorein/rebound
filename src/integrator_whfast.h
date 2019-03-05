@@ -27,7 +27,6 @@
 
 #include "rebound.h"
 
-int reb_integrator_whfast_init(struct reb_simulation* const r);    ///< Internal function to check errors and allocate memory if needed
 void reb_integrator_whfast_part1(struct reb_simulation* r);		///< Internal function used to call a specific integrator
 void reb_integrator_whfast_part2(struct reb_simulation* r);		///< Internal function used to call a specific integrator
 void reb_integrator_whfast_synchronize(struct reb_simulation* r);	///< Internal function used to call a specific integrator
