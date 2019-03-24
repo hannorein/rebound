@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.8.2
+--------------
+* Fixes a bug which resulted in duplicate snapshots in SimulationArchives when restarting simulations.
+
 Version 3.8.1
 --------------
 * Syntax change on the python side to create a simulation from a binary file or SimulationArchive:

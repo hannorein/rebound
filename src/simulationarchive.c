@@ -620,13 +620,9 @@ void reb_simulationarchive_automate_interval(struct reb_simulation* const r, con
 
 void reb_simulationarchive_automate_walltime(struct reb_simulation* const r, const char* filename, double walltime){
     if(_reb_simulationarchive_automate_set_filename(r,filename)<0) return;
-    if(r->simulationarchive_auto_walltime != walltime){
-        // Only update simulationarchive_next if interval changed. 
-        // This ensures that interrupted simulations will continue
-        // after being restarted from a simulationarchive
-        r->simulationarchive_auto_walltime = walltime;
-        r->simulationarchive_next = r->walltime;
-    }
+    // Note that this will create two snapshots if restarted.
+    r->simulationarchive_auto_walltime = walltime;
+    r->simulationarchive_next = r->walltime;
 }
 
 void reb_simulationarchive_automate_step(struct reb_simulation* const r, const char* filename, unsigned long long step){
