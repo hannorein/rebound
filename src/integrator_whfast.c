@@ -667,7 +667,6 @@ void reb_integrator_whfast_part1(struct reb_simulation* const r){
     struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;
     const int N_real = N-r->N_var;
-    
     if (reb_integrator_whfast_init(r)){
         // Non recoverable error occured.
         return;
@@ -792,7 +791,6 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
             ri_whfast->p_jh[index].x += r->dt/2.*ri_whfast->p_jh[index].vx;
             ri_whfast->p_jh[index].y += r->dt/2.*ri_whfast->p_jh[index].vy;
             ri_whfast->p_jh[index].z += r->dt/2.*ri_whfast->p_jh[index].vz;
-            reb_transformations_jacobi_to_inertial_posvel(particles_var1, ri_whfast->p_jh+index, particles, N_real);
             if (r->calculate_megno){
                 reb_calculate_acceleration_var(r);
                 const double dx = particles[0].x - particles[1].x;

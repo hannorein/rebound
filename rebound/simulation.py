@@ -1534,6 +1534,7 @@ class Simulation(Structure):
             self.exact_finish_time = c_int(exact_finish_time)
             ret_value = clibrebound.reb_integrate(byref(self), c_double(tmax))
             if ret_value == 1:
+                self.process_messages()
                 raise SimulationError("An error occured during the integration.")
             if ret_value == 2:
                 raise NoParticles("No more particles left in simulation.")
@@ -1550,6 +1551,12 @@ class Simulation(Structure):
         else:
             debug.integrate_other_package(tmax,exact_finish_time)
         self.process_messages()
+
+    def integrator_reset(self):
+        """
+        Call this function to reset temporary integrator variables
+        """
+        clibrebound.reb_integrator_reset(byref(self))
 
     def integrator_synchronize(self):
         """

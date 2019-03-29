@@ -572,6 +572,9 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
     }
     const double dtsign = copysign(1.,r->dt);   // Used to determine integration direction
     if (r->status>=0 || reb_error_message_waiting(r)){
+        if(r->status <= 0){
+            r->status = 1;
+        }
         // Exit now.
     }else if(tmax!=INFINITY){
         if(r->exact_finish_time==1){
