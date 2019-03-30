@@ -1055,7 +1055,7 @@ class Simulation(Structure):
         return s
         
 # MEGNO
-    def init_megno(self):
+    def init_megno(self, seed=None):
         """
         This function initialises the chaos indicator MEGNO particles and enables their integration.
 
@@ -1070,7 +1070,10 @@ class Simulation(Structure):
 
         For more information on MENGO see e.g. http://dx.doi.org/10.1051/0004-6361:20011189
         """
-        clibrebound.reb_tools_megno_init(byref(self))
+        if seed is None:
+            clibrebound.reb_tools_megno_init(byref(self))
+        else:
+            clibrebound.reb_tools_megno_init_seed(byref(self), c_uint(seed))
     
     def calculate_megno(self):
         """

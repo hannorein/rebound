@@ -937,6 +937,11 @@ int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int 
     return index;
 }
 
+void reb_tools_megno_init_seed(struct reb_simulation* const r, unsigned int seed){
+    srand(seed);
+    reb_tools_megno_init(r);
+}
+
 void reb_tools_megno_init(struct reb_simulation* const r){
 	r->megno_Ys = 0.;
 	r->megno_Yss = 0.;
