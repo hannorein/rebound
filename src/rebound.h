@@ -1883,6 +1883,13 @@ int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int 
  */
 void reb_tools_megno_init(struct reb_simulation* const r);
 
+/** 
+ * @brief Init the MEGNO particles, enable MEGNO calculation, and specify a seed for the random number generation.
+ * @param r The rebound simulation to be considered
+ * @param seed The seed to use for the random number generator
+ */
+void reb_tools_megno_init_seed(struct reb_simulation* const r, unsigned int seed);
+
 /**
  * @brief Get the current MEGNO value
  * @param r The rebound simulation to be considered
