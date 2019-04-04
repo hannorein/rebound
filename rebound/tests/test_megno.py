@@ -42,6 +42,27 @@ class TestMegno(unittest.TestCase):
         self.sim.integrate(1000)
         self.assertAlmostEqual(self.sim.calculate_megno(),2.,delta=2e-1)
         self.assertAlmostEqual(self.sim.calculate_lyapunov(),0.,delta=1e-3)
-         
+
+    def test_chaotic(self):
+        self.sim = rebound.Simulation()
+        self.sim.integrator = "ias15"
+        self.sim.add(m=1.)
+        self.sim.add(m=1.e-4, P=1.)
+        self.sim.add(m=1.e-4, P=1.17)
+        self.sim.init_megno(seed=0)
+        self.sim.move_to_com()
+        self.sim.integrate(1000)
+        self.megnoIAS = self.sim.calculate_megno()
+        self.sim = rebound.Simulation()
+        self.sim.integrator = "whfast"
+        self.sim.add(m=1.)
+        self.sim.add(m=1.e-4, P=1.)
+        self.sim.add(m=1.e-4, P=1.17)
+        self.sim.init_megno(seed=0)
+        self.sim.move_to_com()
+        self.sim.integrate(1000)
+        self.megnoWHFast = self.sim.calculate_megno()
+        self.assertAlmostEqual(abs((self.megnoIAS-self.megnoWHFast)/self.megnoIAS), 0., delta=0.2)
+
 if __name__ == "__main__":
     unittest.main()
