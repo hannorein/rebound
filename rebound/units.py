@@ -38,7 +38,9 @@ lengths_SI =  {'m':1.,
     'cm':0.01,
     'km':1000.,
     'au':149597870700.,
-    'aus':149597870700.
+    'aus':149597870700.,
+    'pc':3.085677581e16,
+    'parsec':3.085677581e16
     }
 
     #What we measure accurately is GM, so set mass units such that G*M gives the value of GM in horizons.py (in the list at the end of horizons.py, the NAIF codes ending in 99 refer to the planets, single digits to the total mass of the planet plus its moons).  Have to multiply by 10**9 since that list has G in kg^-1km^3/s^2 and we use SI.
