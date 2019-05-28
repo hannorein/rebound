@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.8.3
+--------------
+* Improves and fixes various issues related to variational equations and MEGNO. 
+
 Version 3.8.2
 --------------
 * Fixes a bug which resulted in duplicate snapshots in SimulationArchives when restarting simulations.
