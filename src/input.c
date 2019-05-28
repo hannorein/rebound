@@ -304,9 +304,9 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
             if (r->var_config){
                 free(r->var_config);
             }
-            reb_fread(r->var_config, field.size,1,inf,mem_stream);
             if (r->var_config_N>0){
                 r->var_config = malloc(field.size);
+                reb_fread(r->var_config, field.size,1,inf,mem_stream);
                 for (int l=0;l<r->var_config_N;l++){
                     r->var_config[l].sim = r;
                 }
