@@ -15,7 +15,7 @@ class TestMegno(unittest.TestCase):
         self.sim.add(m=1e-3,a=1.5,e=0.1,inc=0.1)
         self.sim.add(m=1.e-3, a=15., e=0.1, inc=0.1)
         self.sim.init_megno(seed=0)
-        self.sim.integrate(1000)
+        self.sim.integrate(10000.)
         self.assertAlmostEqual(self.sim.calculate_megno(),2.,delta=2e-1)
         self.assertAlmostEqual(self.sim.calculate_lyapunov(),0.,delta=1e-3)
 
@@ -25,7 +25,8 @@ class TestMegno(unittest.TestCase):
         self.sim.add(m=1e-3,a=1.5,e=0.1,inc=0.1)
         self.sim.add(m=1.e-3, a=15., e=0.1, inc=0.1)
         self.sim.init_megno(seed=0)
-        self.sim.integrate(1000)
+        self.sim.dt = self.sim.particles[1].P*0.07
+        self.sim.integrate(10000.)
         self.assertAlmostEqual(self.sim.calculate_megno(),2.,delta=2e-1)
         self.assertAlmostEqual(self.sim.calculate_lyapunov(),0.,delta=1e-3)
 
@@ -39,7 +40,7 @@ class TestMegno(unittest.TestCase):
         self.sim.add(m=2.1454312223049496e-07, x=0.741238938912468, y=-1.0963570106709737, z=0.006397276680495443, vx=4.459049824337919, vy=3.011488098634852, vz=0.010452444973871466)
         self.sim.init_megno(seed=0)
         self.sim.dt = 0.034641008279678746
-        self.sim.integrate(1000)
+        self.sim.integrate(10000.)
         self.assertAlmostEqual(self.sim.calculate_megno(),2.,delta=2e-1)
         self.assertAlmostEqual(self.sim.calculate_lyapunov(),0.,delta=1e-3)
 
@@ -51,7 +52,7 @@ class TestMegno(unittest.TestCase):
         self.sim.add(m=1.e-4, P=1.17)
         self.sim.init_megno(seed=0)
         self.sim.move_to_com()
-        self.sim.integrate(1000)
+        self.sim.integrate(1000.)
         self.megnoIAS = self.sim.calculate_megno()
         self.sim = rebound.Simulation()
         self.sim.integrator = "whfast"
