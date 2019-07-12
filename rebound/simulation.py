@@ -1498,12 +1498,19 @@ class Simulation(Structure):
         clibrebound.reb_output_binary(byref(self), c_char_p(filename.encode("ascii")))
 
 # Integration
-    def step(self):
+    def step(self, Nsteps=None):
         """
-        Perform exactly one integration step with REBOUND. This function is rarely needed.
+        Perform discrete integration steps with REBOUND. By default, executes a single step.
+        If Nsteps is passed, it will integrate to that TOTAL number of Nsteps.
+        Follows the same convention as integrate, e.g., if 3 steps have already been done
+        and you call sim.step(5), it will integrate until the total number of steps is 5
+        (not for 5 additional steps to 8). This function is rarely needed.
         Instead, use integrate().
         """
-        clibrebound.reb_step(byref(self))
+        if Nsteps is None:
+            clibrebound.reb_step(byref(self))
+        else:
+            clibrebound.reb_steps(byref(self), c_int(Nsteps))
         self.process_messages()
 
     def integrate(self, tmax, exact_finish_time=1):

@@ -984,12 +984,21 @@ struct reb_simulation* reb_copy_simulation(struct reb_simulation* r);
 void reb_init_simulation(struct reb_simulation* r);
 
 /**
- * @brief Performon one integration step
+ * @brief Perform one integration step
  * @details You rarely want to call this function yourself.
  * Use reb_integrate instead.
  * @param r The rebound simulation to be integrated by one step.
  */
 void reb_step(struct reb_simulation* const r);
+
+/**
+ * @brief Perform many integration steps
+ * @details Follows same convention as reb_integrate: Integrate from the current state until the TOTAL number of steps reaches Nsteps. You rarely want to call this function yourself.
+ * Use reb_integrate instead.
+ * @param r The rebound simulation to be stepped.
+ * @param Nsteps The final number of steps to integrate to
+ */
+void reb_steps(struct reb_simulation* const r, const int Nsteps);
 
 /**
  * @brief Performs the actual integration

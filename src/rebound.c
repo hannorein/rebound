@@ -161,6 +161,12 @@ void reb_step(struct reb_simulation* const r){
     r->steps_done++; // This also counts failed IAS15 steps
 }
 
+void reb_steps(struct reb_simulation* const r, const int Nsteps){
+    while (r->steps_done < Nsteps){
+        reb_step(r);
+    }
+}
+
 void reb_exit(const char* const msg){
     // This function should also kill all children. 
     // Not implemented as pid is not easy to get to.
