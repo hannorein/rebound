@@ -511,6 +511,7 @@ class Simulation(Structure):
 
         """
         clibrebound.reb_simulationarchive_snapshot(byref(self), c_char_p(filename.encode("ascii")))
+        self.process_messages()
 
     @property
     def simulationarchive_filename(self):
