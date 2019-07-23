@@ -465,6 +465,9 @@ class Simulation(Structure):
         step : int
             Interval between outputs in number of timesteps. 
             Useful when outputs need to be spaced exactly.
+        deletefile: bool
+            False (default) appends to archive if it exists.
+            True deletes filename and starts a new archive.
         
         Examples
         --------
@@ -498,7 +501,7 @@ class Simulation(Structure):
             clibrebound.reb_simulationarchive_automate_step(byref(self), c_char_p(filename.encode("ascii")), c_ulonglong(step))
         self.process_messages()
 
-    def simulationarchive_snapshot(self, filename):
+    def simulationarchive_snapshot(self, filename, deletefile=False):
         """
         Take a snapshot and save it to a SimulationArchive file.
         If the file does not exist yet, a new one will be created. 
@@ -508,8 +511,13 @@ class Simulation(Structure):
         ---------
         filename : str
             Filename of the binary file.
+        deletefile: bool
+            False (default) appends to archive if it exists.
+            True deletes filename and starts a new archive.
 
         """
+        if deletefile and os.path.isfile(filename):
+            os.remove(filename)
         clibrebound.reb_simulationarchive_snapshot(byref(self), c_char_p(filename.encode("ascii")))
         self.process_messages()
 
