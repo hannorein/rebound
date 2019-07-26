@@ -84,9 +84,11 @@ There are several papers describing the functionality of REBOUND.
 
 5. Rein & Tamayo 2017 (Monthly Notices of the Royal Astronomical Society, Volume 467, Issue 2, p.2377-2383) describes the Simulation Archive for exact reproducibility of N-body simulations. https://arxiv.org/abs/1701.07423
 
-6. Rein, Hernandez, Tamayo, Brown, Eckels, Holmes, Lau, Leblanc & Silburt 2019 (Monthly Notices of the Royal Astronomical Society, Volume 485, Issue 4, p.5490-5497) describes the hyrbid symplectic intergator MERCURIUS. https://arxiv.org/abs/1903.04972
+6. Rein & Tamayo 2018 (Monthly Notices of the Royal Astronomical Society, Volume 473, Issue 3, p.3351–3357) describes the integer based JANUS integrator. https://arxiv.org/abs/1704.07715
 
-7. Rein, Tamayo & Brown 2019 (submitted) describes the implementation of the high order symplectic intergators SABA, SABAC, SABACL, WHCKL, WHCKM, and WHCKC. https://arxiv.org/abs/1903.04972
+7. Rein, Hernandez, Tamayo, Brown, Eckels, Holmes, Lau, Leblanc & Silburt 2019 (Monthly Notices of the Royal Astronomical Society, Volume 485, Issue 4, p.5490-5497) describes the hyrbid symplectic intergator MERCURIUS. https://arxiv.org/abs/1903.04972
+
+8. Rein, Tamayo & Brown 2019 (submitted) describes the implementation of the high order symplectic intergators SABA, SABAC, SABACL, WHCKL, WHCKM, and WHCKC. https://arxiv.org/abs/1903.04972
 
 
 Acknowledgments
@@ -100,6 +102,8 @@ If you use the IAS15 integrator, please cite Rein and Spiegel (2015).
 If you use the WHFast integrator, please cite Rein and Tamayo (2015).
 
 If you use the variational equations, please cite Rein and Tamayo (2016).
+
+If you use the JANUS integrator, please cite Rein and Tamayo (2018).
 
 If you use the MERCURIUS integrator, please cite Rein, Hernandez, Tamayo, Brown, Eckels, Holmes, Lau, Leblanc & Silburt (2019). 
 
