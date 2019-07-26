@@ -169,6 +169,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(G,                  &r->G);
         CASE(SOFTENING,          &r->softening);
         CASE(DT,                 &r->dt);
+        CASE(DTLASTDONE,         &r->dt_last_done);
         CASE(N,                  &r->N);
         CASE(NVAR,               &r->N_var);
         CASE(VARCONFIGN,         &r->var_config_N);
