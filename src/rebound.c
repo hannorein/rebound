@@ -36,6 +36,7 @@
 #include <fcntl.h>
 #include "rebound.h"
 #include "integrator.h"
+#include "integrator_saba.h"
 #include "integrator_whfast.h"
 #include "integrator_ias15.h"
 #include "integrator_mercurius.h"
@@ -47,6 +48,7 @@
 #include "tools.h"
 #include "particle.h"
 #include "input.h"
+#include "binarydiff.h"
 #include "simulationarchive.h"
 #ifdef MPI
 #include "communication_mpi.h"
@@ -62,7 +64,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.8.3";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.9.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_error_message_waiting(struct reb_simulation* const r);
@@ -336,7 +338,9 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->allocatedN_lookup = 0;
     // ********** WHFAST
     r->ri_whfast.allocated_N    = 0;
+    r->ri_whfast.allocated_Ntemp= 0;
     r->ri_whfast.p_jh           = NULL;
+    r->ri_whfast.p_temp         = NULL;
     r->ri_whfast.keep_unsynchronized = 0;
     // ********** IAS15
     r->ri_ias15.allocatedN      = 0;
@@ -422,12 +426,36 @@ void _reb_copy_simulation_with_messages(struct reb_simulation* r_copy,  struct r
     
 }
 
+int reb_diff_simulations(struct reb_simulation* r1, struct reb_simulation* r2, int output_option){
+    if (output_option!=1 && output_option!=2){
+        // Not implemented
+        return -1;
+    }
+    char* bufp1;
+    char* bufp2;
+    size_t sizep1, sizep2;
+    reb_output_binary_to_stream(r1, &bufp1,&sizep1);
+    reb_output_binary_to_stream(r2, &bufp2,&sizep2);
+
+    int ret = reb_binary_diff_with_options(bufp1, sizep1, bufp2, sizep2, NULL, NULL, output_option);
+    
+    free(bufp1);
+    free(bufp2);
+    return ret;
+}
+
 struct reb_simulation* reb_copy_simulation(struct reb_simulation* r){
     struct reb_simulation* r_copy = reb_create_simulation();
     enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
     _reb_copy_simulation_with_messages(r_copy,r,&warnings);
     r = reb_input_process_warnings(r, warnings);
     return r_copy;
+}
+
+void reb_clear_pre_post_pointers(struct reb_simulation* const r){
+    // Temporary fix for REBOUNDx. 
+    r->pre_timestep_modifications  = NULL;
+    r->post_timestep_modifications  = NULL;
 }
 
 void reb_init_simulation(struct reb_simulation* r){
@@ -506,12 +534,20 @@ void reb_init_simulation(struct reb_simulation* r){
     // the defaults below are chosen to safeguard the user against spurious results, but
     // will be slower and less accurate
     r->ri_whfast.corrector = 0;
+    r->ri_whfast.corrector2 = 0;
+    r->ri_whfast.kernel = 0;
     r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_JACOBI;
     r->ri_whfast.safe_mode = 1;
     r->ri_whfast.recalculate_coordinates_this_timestep = 0;
     r->ri_whfast.is_synchronized = 1;
     r->ri_whfast.timestep_warning = 0;
     r->ri_whfast.recalculate_coordinates_but_not_synchronized_warning = 0;
+    
+    // ********** SABA
+    r->ri_saba.k = 1;
+    r->ri_saba.corrector = 0;
+    r->ri_saba.safe_mode = 1;
+    r->ri_saba.is_synchronized = 1;
     
     // ********** IAS15
     r->ri_ias15.epsilon         = 1e-9;
