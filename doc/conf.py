@@ -55,7 +55,7 @@ for problemc in glob.glob("../examples/*/problem.c"):
                     will_output += 1
             fd.write("\n\nThis example is located in the directory `examples/"+problemc.split("/")[2]+"`\n\n")
             if did_output==0:
-                print "Warning: Did not find description in "+problemc
+                print("Warning: Did not find description in "+problemc)
 
 # iPython examples:
 import shutil
@@ -68,10 +68,10 @@ if 1:
         print("Trying file: ", example)
         outp = subprocess.check_output(["cp", example, example[23:]])
         outp = subprocess.check_output(["jupyter", "nbconvert", example[23:], "--to", "rst"])
-        print(outp)
+        print(outp.decode('ascii'))
         print("Replacing links")
         outp = subprocess.check_output(["perl", "-i", "-pe", "s/ipynb/html/g", example[23:][:-5]+"rst"])
-        print(outp)
+        print(outp.decode('ascii'))
     for example in glob.glob("*.rst"):
         with open(example) as fd:
             lines = fd.readlines()
