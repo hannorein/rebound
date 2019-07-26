@@ -224,7 +224,7 @@ void static inline reb_save_dp7(struct reb_dp7* dp7, const int N3, char** bufp, 
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p2,sizeof(double)*N3);
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p3,sizeof(double)*N3);
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p4,sizeof(double)*N3);
-    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p4,sizeof(double)*N3);
+    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p5,sizeof(double)*N3);
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p6,sizeof(double)*N3);
 }
 
