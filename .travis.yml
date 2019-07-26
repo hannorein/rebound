@@ -90,6 +90,7 @@ script:
     #-if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Testparticles.ipynb; fi
     - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Units.ipynb; fi
     - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py WHFast.ipynb; fi
+    - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py HighOrderSymplectic.ipynb; fi
     - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py TransitTimingVariations.ipynb; fi
     - if [[ $TESTPART == "PYTHON" ]]; then cd $TRAVIS_BUILD_DIR/python_examples/dragforce/ && python problem.py; fi
     #-if [[ $TESTPART == "PYTHON" ]]; then cd $TRAVIS_BUILD_DIR/python_examples/horizons/ && python problem.py; fi

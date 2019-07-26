@@ -3,6 +3,12 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.9.0
+--------------
+* Added new high order symplectic integrators from Wisdom et al. (1996) and Laskar & Robutel (2001). The implementation of these integrators are discussed in Rein, Tamayo & Brown (2019). 
+* Implemented new bit-wise comparison functions for simulations. Python syntax is simply sim1==sim2. 
+* Fixed a bug in IAS15 which prevented a restarted simulation to reproduce the original simulation exactly. 
+
 Version 3.8.3
 --------------
 * Improves and fixes various issues related to variational equations and MEGNO. 

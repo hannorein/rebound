@@ -169,6 +169,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(G,                  &r->G);
         CASE(SOFTENING,          &r->softening);
         CASE(DT,                 &r->dt);
+        CASE(DTLASTDONE,         &r->dt_last_done);
         CASE(N,                  &r->N);
         CASE(NVAR,               &r->N_var);
         CASE(VARCONFIGN,         &r->var_config_N);
@@ -257,6 +258,12 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(STEPSDONE,          &r->steps_done);
         CASE(SAAUTOSTEP,         &r->simulationarchive_auto_step);
         CASE(SANEXTSTEP,         &r->simulationarchive_next_step);
+        CASE(SABA_K,             &r->ri_saba.k);
+        CASE(SABA_CORRECTOR,     &r->ri_saba.corrector);
+        CASE(SABA_SAFEMODE,      &r->ri_saba.safe_mode);
+        CASE(SABA_ISSYNCHRON,    &r->ri_saba.is_synchronized);
+        CASE(WHFAST_CORRECTOR2,  &r->ri_whfast.corrector2);
+        CASE(WHFAST_KERNEL,      &r->ri_whfast.kernel);
         case REB_BINARY_FIELD_TYPE_PARTICLES:
             if(r->particles){
                 free(r->particles);
