@@ -55,6 +55,7 @@ Some more advanced topics are covered in the following examples.
    ipython/Resonances_of_Jupiters_moons
    ipython/TransitTimingVariations
    ipython/HyperbolicOrbits
+   ipython/HighOrderSymplectic
 
 Checkpoints and Simulation Archive
 ----------------------------------
