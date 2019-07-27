@@ -314,7 +314,7 @@ struct reb_simulation_integrator_saba {
      * - 1: normal (modified kick) corrector on
      * - 2: lazy implementer's corrector on
      */
-    enum {
+    enum REB_SABA_CORRECTOR_TYPE {
         REB_SABA_CORRECTOR_NONE = 0,
         REB_SABA_CORRECTOR_MODIFIEDKICK = 1,
         REB_SABA_CORRECTOR_LAZY = 2,
