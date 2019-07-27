@@ -52,6 +52,7 @@ Some more advanced topics are covered in the following examples.
 
 .. toctree::
    ipython/AdvWHFast
+   c_example_high_order_symplectic
    ipython/Resonances_of_Jupiters_moons
    ipython/TransitTimingVariations
    ipython/HyperbolicOrbits
