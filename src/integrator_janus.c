@@ -40,20 +40,23 @@
 #include "integrator.h"
 #include "integrator_janus.h"
 
-struct scheme {
-    unsigned int order;
-    unsigned int stages;
-    double gamma[17]; // coefficients padded with 0
+/**
+ * Stucture derscribing one specific JANUS scheme
+ **/
+struct reb_janus_scheme {
+    unsigned int order;     ///< Order of the scheme
+    unsigned int stages;    ///< Number of stages
+    double gamma[17];       ///< Coefficients (padded with 0 if not used)
 };
 
-static struct scheme s1odr2 = {
+static struct reb_janus_scheme s1odr2 = {
     .order = 2,
     .stages = 1,
     .gamma = {  1.,
                 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 };
 
-static struct scheme s5odr4 = {
+static struct reb_janus_scheme s5odr4 = {
     .order = 4,
     .stages = 5,
     .gamma= {   0.41449077179437573714,
@@ -63,7 +66,7 @@ static struct scheme s5odr4 = {
             }
 };
 
-static struct scheme s9odr6a = {
+static struct reb_janus_scheme s9odr6a = {
     .order = 6,
     .stages = 9,
     .gamma= {   0.39216144400731413928,
@@ -75,7 +78,7 @@ static struct scheme s9odr6a = {
     }
 };
 
-static struct scheme s15odr8 = {
+static struct reb_janus_scheme s15odr8 = {
     .order = 8,
     .stages = 15,
     .gamma= {   .74167036435061295345,
@@ -90,7 +93,7 @@ static struct scheme s15odr8 = {
     }
 };
 
-static struct scheme s33odr10c = {
+static struct reb_janus_scheme s33odr10c = {
     .order = 10,
     .stages = 33,
     .gamma= {  0.12313526870982994083,
@@ -113,7 +116,7 @@ static struct scheme s33odr10c = {
     }
 };
 
-static double gg(struct scheme s, unsigned int stage){
+static double gg(struct reb_janus_scheme s, unsigned int stage){
     if (stage<(s.stages+1)/2){
         return s.gamma[stage];
     }else{
@@ -181,7 +184,7 @@ void reb_integrator_janus_part1(struct reb_simulation* r){
         ri_janus->recalculate_integer_coordinates_this_timestep = 0;
     }
 
-    struct scheme s;
+    struct reb_janus_scheme s;
     switch (ri_janus->order){
         case 2:
             s = s1odr2;
@@ -214,7 +217,7 @@ void reb_integrator_janus_part2(struct reb_simulation* r){
     const double scale_pos  = ri_janus->scale_pos;
     const double dt = r->dt;
     
-    struct scheme s;
+    struct reb_janus_scheme s;
     switch (ri_janus->order){
         case 2:
             s = s1odr2;

@@ -97,45 +97,75 @@ class reb_simulation_integrator_sei(Structure):
     """
     _fields_ = [("OMEGA", c_double),
                 ("OMEGAZ", c_double),
-                ("lastdt", c_double),
-                ("sindt", c_double),
-                ("tandt", c_double),
-                ("sindtz", c_double),
-                ("tandtz", c_double)]
+                ("_lastdt", c_double),
+                ("_sindt", c_double),
+                ("_tandt", c_double),
+                ("_sindtz", c_double),
+                ("_tandtz", c_double)]
 
 class reb_simulation_integrator_ias15(Structure):
+    """
+    This class is an abstraction of the C-struct reb_simulation_integrator_ias15.
+    It controls the behaviour of the SEI integrator. See Rein & Spiegel (2015)
+    for more information.
+
+    Example usage:
+
+    >>> sim = rebound.Simulation()
+    >>> sim.integrator = "ias15"
+    >>> sim.ri_ias15.epsilon = 0.
+
+    :ivar float epsilon:          
+        Controls the precision of the integrator. Set to 0 for fixed timesteps.
+    
+    :ivar float min_dt:          
+        IAS15 is an adaptive method. This sets the minimum timestep.
+    
+    :ivar float epsilon_global:          
+        Determines how the adaptive timestep is chosen. 
+    """
     _fields_ = [("epsilon", c_double),
                 ("min_dt", c_double),
                 ("epsilon_global", c_uint),
-                ("iterations_max_exceeded", c_ulong),
-                ("allocatedN", c_int),
-                ("at", POINTER(c_double)),
-                ("x0", POINTER(c_double)),
-                ("v0", POINTER(c_double)),
-                ("a0", POINTER(c_double)),
-                ("csx", POINTER(c_double)),
-                ("csv", POINTER(c_double)),
-                ("csa0", POINTER(c_double)),
-                ("g", reb_dp7),
-                ("b", reb_dp7),
-                ("csb", reb_dp7),
-                ("e", reb_dp7),
-                ("br", reb_dp7),
-                ("er", reb_dp7),
-                ("map", POINTER(c_int)),
-                ("map_allocated_n", c_int),
+                ("_iterations_max_exceeded", c_ulong),
+                ("_allocatedN", c_int),
+                ("_at", POINTER(c_double)),
+                ("_x0", POINTER(c_double)),
+                ("_v0", POINTER(c_double)),
+                ("_a0", POINTER(c_double)),
+                ("_csx", POINTER(c_double)),
+                ("_csv", POINTER(c_double)),
+                ("_csa0", POINTER(c_double)),
+                ("_g", reb_dp7),
+                ("_b", reb_dp7),
+                ("_csb", reb_dp7),
+                ("_e", reb_dp7),
+                ("_br", reb_dp7),
+                ("_er", reb_dp7),
+                ("_map", POINTER(c_int)),
+                ("_map_allocated_n", c_int),
                 ]
 
 class reb_simulation_integrator_saba(Structure):
     """
     This class is an abstraction of the C-struct reb_simulation_integrator_saba.
-    It controls the behaviour of the SABA / SABAC integrator family. 
+    It controls the behaviour of the SABA / SABAC / SABACL integrator family.
+    See Rein, Tamayo, and Brown (2019) for more details.
 
     :ivar int k:      
         Sets the number of evalutations. k=1 is SABA1/SABAC1, k=2 is SABA2/SABAC2
         and so forth.
     :ivar int corrector:      
-        Turns correctors on (1) or off (0)
+        Turns correctors off (0), or specifices which corrector to use. Options are
+        "modifiedkick" (1) or "lazy" (2)
+   
+    Example usage:
+    
+    >>> sim = rebound.Simulation()
+    >>> sim.integrator = "saba"
+    >>> sim.ri_saba.corrector =  "lazy"
+    >>> sim.ri_saba.k = 4
+
     """
     _fields_ = [("k", c_uint),
                 ("_corrector", c_uint),
@@ -173,13 +203,15 @@ class reb_simulation_integrator_whfast(Structure):
     """
     This class is an abstraction of the C-struct reb_simulation_integrator_whfast.
     It controls the behaviour of the symplectic WHFast integrator described 
-    in Rein and Tamayo (2015).
+    in Rein and Tamayo (2015) and in Rein, Tamayo, and Brown (2019).
     
     This struct should be accessed via the simulation class only. Here is an 
     example:
 
     >>> sim = rebound.Simulation()
+    >>> sim.integrator = "whfast"
     >>> sim.ri_whfast.corrector =  11
+    >>> sim.ri_whfast.kernel = "lazy"
 
     
     :ivar int corrector:      
@@ -191,7 +223,7 @@ class reb_simulation_integrator_whfast(Structure):
         Second correctors (C2 of Wisdom et al 1996).
         By default the second symplectic correctors are turned off (=0). 
         Set to 1 to turn them on.
-    :ivar int kernel:      
+    :ivar int/string kernel:      
         Kernel option. Set to 0 for the default WH kernel (standard kick step).
         Other options are "modifiedkick" (1), "composition" (2), "lazy" (3).
     :ivar int recalculate_coordinates_this_timestep:
@@ -220,13 +252,13 @@ class reb_simulation_integrator_whfast(Structure):
                 ("_coordinates", c_uint),
                 ("recalculate_coordinates_this_timestep", c_uint),
                 ("safe_mode", c_uint),
-                ("p_jh", POINTER(Particle)),
-                ("p_temp", POINTER(Particle)),
+                ("_p_jh", POINTER(Particle)),
+                ("_p_temp", POINTER(Particle)),
                 ("keep_unsynchronized", c_uint),
                 ("is_synchronized", c_uint),
-                ("allocatedN", c_uint),
-                ("timestep_warning", c_uint),
-                ("recalculate_coordinates_but_not_synchronized_warning", c_uint)]
+                ("_allocatedN", c_uint),
+                ("_timestep_warning", c_uint),
+                ("_recalculate_coordinates_but_not_synchronized_warning", c_uint)]
     @property
     def coordinates(self):
         """
@@ -1798,10 +1830,25 @@ class reb_simulation_integrator_janus(Structure):
                 ("order", c_uint),
                 ("recalculate_integer_coordinates_this_timestep", c_uint),
                 ("p_int", POINTER(reb_particle_int)),
-                ("allocated_N",c_uint),
+                ("_allocated_N",c_uint),
                 ]
 
 class reb_simulation_integrator_mercurius(Structure):
+    """
+    This class is an abstraction of the C-struct reb_simulation_integrator_mercurius.
+    It controls the behaviour of the MERCURIUS integrator.  See Rein et al. (2019) 
+    for more details.
+    
+    :ivar float hillfac:      
+        Switching radius in units of the hill radius.
+
+    Example usage:
+    
+    >>> sim = rebound.Simulation()
+    >>> sim.integrator = "mercurius"
+    >>> sim.ri_mercurius.hillfac = 3.
+
+    """
     _fields_ = [("L", CFUNCTYPE(c_double, POINTER(Simulation), c_double, c_double)),
                 ("hillfac", c_double),
                 ("recalculate_coordinates_this_timestep", c_uint),
@@ -1865,14 +1912,14 @@ Simulation._fields_ = [
                 ("_particles", POINTER(Particle)),
                 ("gravity_cs", POINTER(reb_vec3d)),
                 ("gravity_cs_allocatedN", c_int),
-                ("tree_root", c_void_p),
-                ("tree_needs_update", c_int),
+                ("_tree_root", c_void_p),
+                ("_tree_needs_update", c_int),
                 ("opening_angle2", c_double),
                 ("_status", c_int),
                 ("exact_finish_time", c_int),
                 ("force_is_velocity_dependent", c_uint),
-                ("gravity_ignore_10", c_uint),
-                ("output_timing_last", c_double),
+                ("gravity_ignore", c_uint),
+                ("_output_timing_last", c_double),
                 ("_display_clock", c_ulong),
                 ("save_messages", c_int),
                 ("messages", c_void_p),
@@ -1904,13 +1951,13 @@ Simulation._fields_ = [
                 ("max_radius", c_double*2),
                 ("collisions_Nlog", c_long),
                 ("_calculate_megno", c_int),
-                ("megno_Ys", c_double),
-                ("megno_Yss", c_double),
-                ("megno_cov_Yt", c_double),
-                ("megno_var_t", c_double),
-                ("megno_mean_t", c_double),
-                ("megno_mean_Y", c_double),
-                ("megno_n", c_long),
+                ("_megno_Ys", c_double),
+                ("_megno_Yss", c_double),
+                ("_megno_cov_Yt", c_double),
+                ("_megno_var_t", c_double),
+                ("_megno_mean_t", c_double),
+                ("_megno_mean_Y", c_double),
+                ("_megno_n", c_long),
                 ("simulationarchive_version", c_int),
                 ("simulationarchive_size_first", c_long),
                 ("simulationarchive_size_snapshot", c_long),

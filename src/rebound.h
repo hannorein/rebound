@@ -137,8 +137,7 @@ struct reb_ghostbox{
 };
 
 /**
- * @defgroup IntegratorStructs 
- * @details Structures for the various integrators.
+ * @defgroup IntegratorStructs Configuration structures for integrators
  * @{
 */
 /**
@@ -487,8 +486,7 @@ struct reb_simulation_integrator_janus {
 };
 
 /**
- * @defgroup MiscRebStructs 
- * @details Miscellaneous REBOUND structures
+ * @defgroup MiscRebStructs Miscellaneous REBOUND structures
  * @{
 */
 
@@ -728,8 +726,7 @@ struct reb_hash_pointer_pair{
 /** @} */
 
 /**
- * @defgroup MainRebStructs 
- * @details These are the main REBOUND structures
+ * @defgroup MainRebStructs Main REBOUND structures
  * @{
 */
 
@@ -1029,7 +1026,7 @@ struct reb_simulation {
 /** @} */
 
 /**
- * @defgroup MainRebFunctions List of the main REBOUND API functions
+ * @defgroup MainRebFunctions Main functions
  * @details These are the functions that typically need to be called by the user.
  * @{
  */
@@ -1247,8 +1244,7 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
 /** @} */
 
 /**
- * @defgroup ToolsRebFunctions 
- * List of the helper functions for REBOUND
+ * @defgroup ToolsRebFunctions Helper functions
  * @{
  */
 /**
@@ -1386,7 +1382,7 @@ struct reb_particle reb_get_jacobi_com(struct reb_particle* p);
 /** @} */
 
 /**
- * @defgroup OutputRebFunctions
+ * @defgroup OutputRebFunctions Output functions
  * List of the built-in output functions for REBOUND
  * @{
  */
@@ -1469,7 +1465,7 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 /** @} */
 
 /**
- * @defgroup SetupRebFunctions 
+ * @defgroup SetupRebFunctions Setup functions
  * List of the built-in setup helper functions
  * @{
  */
@@ -1555,7 +1551,7 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
 
 /**
  * @brief Initialize a particle on a 3D orbit.  See Pal 2009 for a definition of these coordinates.
- * @detail Pal describes a coordinate system for Keplerian Orbits that is analytical (i.e. infinitely differentiable) between spatial coordinates and orbital elements. See http://adsabs.harvard.edu/abs/2009MNRAS.396.1737P
+ * @details Pal describes a coordinate system for Keplerian Orbits that is analytical (i.e. infinitely differentiable) between spatial coordinates and orbital elements. See http://adsabs.harvard.edu/abs/2009MNRAS.396.1737P
  * @param G Gravitational constant.
  * @param primary Particle structure for the orbit's reference body.
  * @param m Mass of the particle.
@@ -1720,7 +1716,7 @@ struct reb_particle reb_derivatives_m_f(double G, struct reb_particle primary, s
 /** @} */
 
 /**
- * @defgroup ParticleManipFunctions 
+ * @defgroup ParticleManipFunctions Particle manipulation functions
  * List of reb_particle manipulation functions for REBOUND
  * @{
  */
@@ -1752,7 +1748,7 @@ void reb_particle_imul(struct reb_particle* p1, double value);
 /** @} */
 
 /**
- * @defgroup SimulationArchiveFunctions
+ * @defgroup SimulationArchiveFunctions Simulation Archive functions
  * Functions for interacting with simulation archives
  * @{
  */
@@ -1839,7 +1835,7 @@ void reb_free_simulationarchive_pointers(struct reb_simulationarchive* sa);
 /** @} */
 
 /**
- * @defgroup TransformationFunctions
+ * @defgroup TransformationFunctions Coordinate transformations
  * Functions for transforming between various coordinate systems.
  * @{
  */
@@ -1933,7 +1929,7 @@ void reb_transformations_whds_to_inertial_posvel(struct reb_particle* const part
 /** @} */
 
 /**
- * @defgroup MiscRebFunctions
+ * @defgroup MiscRebFunctions Miscellaneous functions
  * List of the miscellaneous helper functions for REBOUND
  * @{
  */
@@ -2138,7 +2134,7 @@ struct reb_display_data {
     unsigned int orbit_shader_vertex_count;
 };
 /**
- * @cond PRIVATE
+ * @endcond
  */
 
 #ifdef __cplusplus
