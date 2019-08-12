@@ -101,6 +101,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
                 }
                 break;
             case REB_INTEGRATOR_WHFAST:
+            case REB_INTEGRATOR_SABA:
                 {
                     // Recreate Jacobi arrrays
                     struct reb_particle* ps = r->particles;
@@ -391,6 +392,7 @@ static int reb_simulationarchive_snapshotsize(struct reb_simulation* const r){
             size_snapshot = sizeof(double)*2+sizeof(struct reb_particle_int)*r->N;
             break;
         case REB_INTEGRATOR_WHFAST:
+        case REB_INTEGRATOR_SABA:
             size_snapshot = sizeof(double)*2+sizeof(double)*7*r->N;
             break;
         case REB_INTEGRATOR_MERCURIUS:

@@ -15,6 +15,7 @@ REB_GRAVITY_COMPENSATED   Direct summation with compensated summation, O(N^2), d
 REB_GRAVITY_NONE          No self-gravity
 REB_GRAVITY_BASIC         Direct summation, O(N^2)
 REB_GRAVITY_TREE          Oct tree, Barnes & Hut 1986, O(N log(N))
+REB_GRAVITY_JACOBI        Direct summation, O(N^2), includes special terms needed for some symplectic integrators
 REB_GRAVITY_OPENCL        (upgrade to REBOUND 2.0 still in progress) Direct summation, O(N^2), but accelerated using the OpenCL framework.
 REB_GRAVITY_FFT           (upgrade to REBOUND 2.0 still in progress) Two dimensional gravity solver using FFTW, works in a periodic box and the shearing sheet. 
 =======================  ============================================ 
@@ -53,8 +54,9 @@ Integrators
 ==========================  ============================================ 
 Module name                 Description
 ==========================  ============================================ 
-REB_INTEGRATOR_IAS15        IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precision. IAS15 can integrate variational equations. Rein & Spiegel 2015, Everhart 1985, default
-REB_INTEGRATOR_WHFAST       WHFast is the integrator described in Rein & Tamayo 2015, it's a second order symplectic Wisdom Holman integrator with 11th order symplectic correctors. It is extremely fast and accurate, uses Gauss f and g functions to solve the Kepler motion and can integrate variational equations. The user can choose between Jacobi, Democratic Heliocentric, and WHDS (Hernandez and Dehnen, 2017) coordinates. 
+REB_INTEGRATOR_IAS15        IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precision. IAS15 can integrate variational equations. Rein & Spiegel 2015, Everhart 1985. This is the default integrator of REBOUND.
+REB_INTEGRATOR_WHFAST       WHFast is the integrator described in Rein & Tamayo 2015 and Rein, Tamayo & Brown 2019. It is an implementation of the symplectic Wisdom-Holman integrator. It supports first and second symplectic correctors as well as the kernel method of Wisdom et al. 1996 with various different kernels. It is very fast and accurate, uses Gauss f and g functions to solve the Kepler motion and can integrate variational equations. The user can choose between Jacobi and Democratic Heliocentric coordinates. 
+REB_INTEGRATOR_SABA         SABA are symplectic integrators developed by Laskar & Robutel 2001. This implementation support SABA1, SABA2, SABA3, and SABA4 as well as the corrected versions SABAC1, SABAC2, SABAC3, and SABAC4. Different correctors can be selected. See Rein, Tamayo & Brown 2019 for details. 
 REB_INTEGRATOR_JANUS        Janus is a bit-wise time-reversible high-order symplectic integrator using a mix of floating point and integer arithmetic. This integrator is still in an experimental stage and will be discussed in an upcoming paper. 
 REB_INTEGRATOR_EULER        Euler scheme, first order
 REB_INTEGRATOR_LEAPFROG     Leap frog, second order, symplectic

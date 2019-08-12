@@ -1,7 +1,7 @@
 REBOUND - An open-source multi-purpose N-body code
 ==================================================
 
-.. image:: http://img.shields.io/badge/rebound-v3.8.3-green.svg?style=flat
+.. image:: http://img.shields.io/badge/rebound-v3.9.0-green.svg?style=flat
     :target: http://rebound.readthedocs.org
 .. image:: https://badge.fury.io/py/rebound.svg
     :target: https://badge.fury.io/py/rebound
@@ -19,6 +19,14 @@ REBOUND - An open-source multi-purpose N-body code
     :target: http://arxiv.org/abs/1506.01084
 .. image:: http://img.shields.io/badge/arXiv-1603.03424-green.svg?style=flat 
     :target: http://arxiv.org/abs/1603.03424 
+.. image:: http://img.shields.io/badge/arXiv-1701.07423-green.svg?style=flat 
+    :target: http://arxiv.org/abs/1701.07423
+.. image:: http://img.shields.io/badge/arXiv-1704.07715-green.svg?style=flat 
+    :target: http://arxiv.org/abs/1704.07715
+.. image:: http://img.shields.io/badge/arXiv-1903.04972-green.svg?style=flat 
+    :target: http://arxiv.org/abs/1903.04972
+.. image:: http://img.shields.io/badge/arXiv-1907.11335-green.svg?style=flat 
+    :target: https://arxiv.org/abs/1907.11335
 .. image:: https://readthedocs.org/projects/pip/badge/?version=latest
     :target: http://rebound.readthedocs.org/
 .. image:: https://mybinder.org/badge_logo.svg 

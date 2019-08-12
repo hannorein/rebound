@@ -201,12 +201,6 @@ struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_simulation* const r, in
 	}
 }
 
-/**
- * @brief Checks if a given particle is within the computational domain.
- * @param p reb_particle to be checked.
- * @param r REBOUND simulation to consider
- * @return Return value is 1 if particle is inside the box and 0 otherwise.
- */
 int reb_boundary_particle_is_in_box(const struct reb_simulation* const r, struct reb_particle p){
 	switch(r->boundary){
 		case REB_BOUNDARY_OPEN:

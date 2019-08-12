@@ -20,6 +20,7 @@ Welcome to REBOUND!
 REBOUND is an N-body integrator, i.e. a software package that can integrate the motion of particles under the influence of gravity. The particles can represent stars, planets, moons, ring or dust particles. REBOUND is very flexible and can be customized to accurately and efficiently solve many problems in astrophysics.  An incomplete feature list of REBOUND:
 
 * Symplectic integrators (WHFast, WHFastHelio, SEI, LEAPFROG)
+* High order symplectic integrators (SABA, WH Kernel methods)
 * High accuracy non-symplectic integrator with adaptive timestepping (IAS15)
 * Support for collisional/granular dynamics, various collision detection routines
 * The code is written entirely in C, conforms to the ISO standard C99 and can be used as a thread-safe shared library
@@ -71,7 +72,7 @@ REBOUND is open source. You are invited to contribute to this project if you are
 
 Papers
 ------
-There are five papers describing the functionality of REBOUND. 
+There are several papers describing the functionality of REBOUND. 
 
 1. Rein & Liu 2012 (Astronomy and Astrophysics, Volume 537, A128) describe the code structure and the main feature including the gravity and collision routines for many particle systems. http://adsabs.harvard.edu/abs/2012A%26A...537A.128R 
 
@@ -81,20 +82,32 @@ There are five papers describing the functionality of REBOUND.
 
 4. Rein & Tamayo 2016 (Monthly Notices of the Royal Astronomical Society, Volume 459, Issue 3, p.2275-2285) develop the framework for second order variational equations. http://arxiv.org/abs/1603.03424
 
-5. Rein & Tamayo 2017 (submitted to Monthly Notices of the Royal Astronomical Society) describes the Simulation Archive for exact reproducibility of N-body simulations. http://rein.utsc.utoronto.ca/sa_preprint.pdf
+5. Rein & Tamayo 2017 (Monthly Notices of the Royal Astronomical Society, Volume 467, Issue 2, p.2377-2383) describes the Simulation Archive for exact reproducibility of N-body simulations. https://arxiv.org/abs/1701.07423
+
+6. Rein & Tamayo 2018 (Monthly Notices of the Royal Astronomical Society, Volume 473, Issue 3, p.3351–3357) describes the integer based JANUS integrator. https://arxiv.org/abs/1704.07715
+
+7. Rein, Hernandez, Tamayo, Brown, Eckels, Holmes, Lau, Leblanc & Silburt 2019 (Monthly Notices of the Royal Astronomical Society, Volume 485, Issue 4, p.5490-5497) describes the hyrbid symplectic intergator MERCURIUS. https://arxiv.org/abs/1903.04972
+
+8. Rein, Tamayo & Brown 2019 (submitted) describes the implementation of the high order symplectic intergators SABA, SABAC, SABACL, WHCKL, WHCKM, and WHCKC. https://arxiv.org/abs/1907.11335
 
 
 Acknowledgments
 ---------------
 When you use this code or parts of this code for results presented in a scientific publication, please send us a copy of your paper so that we can keep track of all publications that made use of the code. We would greatly appreciate a citation to Rein and Liu (2012) and an acknowledgment of the form:
 
-"Simulations in this paper made use of the REBOUND code which can be downloaded freely at http://github.com/hannorein/rebound."
+"Simulations in this paper made use of the REBOUND code which is freely available at http://github.com/hannorein/rebound."
 
 If you use the IAS15 integrator, please cite Rein and Spiegel (2015).
 
 If you use the WHFast integrator, please cite Rein and Tamayo (2015).
 
 If you use the variational equations, please cite Rein and Tamayo (2016).
+
+If you use the JANUS integrator, please cite Rein and Tamayo (2018).
+
+If you use the MERCURIUS integrator, please cite Rein, Hernandez, Tamayo, Brown, Eckels, Holmes, Lau, Leblanc & Silburt (2019). 
+
+If you use any of the high order integrators, please cite Rein, Tamayo & Brown (2019). 
 
 
 License

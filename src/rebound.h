@@ -137,8 +137,7 @@ struct reb_ghostbox{
 };
 
 /**
- * @defgroup IntegratorStructs 
- * @details Structures for the various integrators.
+ * @defgroup IntegratorStructs Configuration structures for integrators
  * @{
 */
 /**
@@ -296,19 +295,77 @@ struct reb_simulation_integrator_sei {
 };
 
 /**
+ * @brief This structure contains variables used by the SABA integrator.
+ */
+struct reb_simulation_integrator_saba {
+    /**
+     * @brief Number of evaluations of the interaction step.
+     * @details
+     * - 1: standard WH 
+     * - 2: SABA2/SABAC2 
+     * - 3: SABA3/SABAC3 
+     * - 4: SABA4/SABAC4 
+     */
+    unsigned int k;
+    /**
+     * @brief Turn corrector on/off.
+     * @details
+     * - 0: corrector off
+     * - 1: normal (modified kick) corrector on
+     * - 2: lazy implementer's corrector on
+     */
+    enum {
+        REB_SABA_CORRECTOR_NONE = 0,
+        REB_SABA_CORRECTOR_MODIFIEDKICK = 1,
+        REB_SABA_CORRECTOR_LAZY = 2,
+    } corrector;
+
+    /**
+     * @brief safe_mode has the same functionality as in WHFast.
+     */
+    unsigned int safe_mode;
+    unsigned int is_synchronized;
+};
+
+/**
  * @brief This structure contains variables used by the WHFast integrator.
  */
 struct reb_simulation_integrator_whfast {
     /**
-     * @brief This variable turns on/off different symplectic correctors for WHFast. See Rein & Tamayo 2015 and Wisdom 2006 for a discussion.
-     * @details 
-     * - 0 (default): turns off all correctors
-     * - 3: uses third order (two-stage) corrector 
-     * - 5: uses fifth order (four-stage) corrector 
-     * - 7: uses seventh order (six-stage) corrector 
-     * - 11: uses eleventh order (ten-stage) corrector 
+     * @brief This variable turns on/off different first symplectic correctors for WHFast.
+     * @details These correctors remove terms of order O(eps*dt^2) 
+     * - 0 (default): turns off all first correctors
+     * - 3: uses third order (two-stage) first corrector 
+     * - 5: uses fifth order (four-stage) first corrector 
+     * - 7: uses seventh order (six-stage) first corrector 
+     * - 11: uses eleventh order (ten-stage) first corrector 
+     * - 17: uses 17th order (16-stage) first corrector 
      */
     unsigned int corrector;
+    
+    /**
+     * @brief This variable turns on/off the second symplectic correctors for WHFast.
+     * @details 
+     * - 0 (default): turns off second correctors
+     * - 1: uses second corrector 
+     */
+    unsigned int corrector2;
+    
+    /**
+     * @brief This variable determines the kernel of the WHFast integrator.
+     * @details 
+     * - 0 (default): Uses a standard WH kick step 
+     * - 1: uses the exact modified kick (for Newtonian gravity) 
+     * - 2: uses the composition kernel  
+     * - 3: uses the lazy implementer's modified kick   
+     */
+    enum {
+        REB_WHFAST_KERNEL_DEFAULT = 0,
+        REB_WHFAST_KERNEL_MODIFIEDKICK = 1,
+        REB_WHFAST_KERNEL_COMPOSITION = 2,
+        REB_WHFAST_KERNEL_LAZY = 3,
+    }kernel;
+    
     
     /**
      * @brief Chooses the coordinate system for the WHFast algorithm. Default is Jacobi Coordinates.
@@ -351,6 +408,11 @@ struct reb_simulation_integrator_whfast {
     struct reb_particle* REBOUND_RESTRICT p_jh;
     
     /**
+     * @brief Internal temporary array used for lazy implementer's kernel method
+     */
+    struct reb_particle* REBOUND_RESTRICT p_temp;
+    
+    /**
      * @brief Generate inertial coordinates at the end of the integration, but do not change the Jacobi/heliocentric coordinates
      * @details Danger zone! Only use this flag if you are absolutely sure
      * what you are doing. This is intended for
@@ -364,7 +426,8 @@ struct reb_simulation_integrator_whfast {
      */
 
     unsigned int is_synchronized;   ///< Flag to determine if current particle structure is synchronized
-    unsigned int allocated_N;   ///< Space allocated in arrays
+    unsigned int allocated_N;       ///< Space allocated in p_jh array
+    unsigned int allocated_Ntemp;   ///< Space allocated in p_temp array
     unsigned int timestep_warning;  ///< Counter of timestep warnings
     unsigned int recalculate_coordinates_but_not_synchronized_warning;   ///< Counter of Jacobi synchronization errors
     /**
@@ -423,8 +486,7 @@ struct reb_simulation_integrator_janus {
 };
 
 /**
- * @defgroup MiscRebStructs 
- * @details Miscellaneous REBOUND structures
+ * @defgroup MiscRebStructs Miscellaneous REBOUND structures
  * @{
 */
 
@@ -601,6 +663,13 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_SAAUTOSTEP = 135,
     REB_BINARY_FIELD_TYPE_SANEXTSTEP = 136,
     REB_BINARY_FIELD_TYPE_STEPSDONE = 137,
+    REB_BINARY_FIELD_TYPE_SABA_K = 138,
+    REB_BINARY_FIELD_TYPE_SABA_CORRECTOR = 139,
+    REB_BINARY_FIELD_TYPE_SABA_SAFEMODE = 140,
+    REB_BINARY_FIELD_TYPE_SABA_ISSYNCHRON = 141,
+    REB_BINARY_FIELD_TYPE_WHFAST_CORRECTOR2 = 143,
+    REB_BINARY_FIELD_TYPE_WHFAST_KERNEL = 144,
+    REB_BINARY_FIELD_TYPE_DTLASTDONE = 145,
     REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
     REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
     REB_BINARY_FIELD_TYPE_END = 9999,
@@ -657,8 +726,7 @@ struct reb_hash_pointer_pair{
 /** @} */
 
 /**
- * @defgroup MainRebStructs 
- * @details These are the main REBOUND structures
+ * @defgroup MainRebStructs Main REBOUND structures
  * @{
 */
 
@@ -860,6 +928,7 @@ struct reb_simulation {
         REB_INTEGRATOR_NONE = 7,     ///< Do not integrate anything
         REB_INTEGRATOR_JANUS = 8,    ///< Bit-wise reversible JANUS integrator.
         REB_INTEGRATOR_MERCURIUS = 9,///< MERCURIUS integrator 
+        REB_INTEGRATOR_SABA = 10,    ///< SABA integrator family (Laskar and Robutel 2001)
         } integrator;
 
     /**
@@ -881,6 +950,7 @@ struct reb_simulation {
         REB_GRAVITY_COMPENSATED = 2,    ///< Direct summation algorithm O(N^2) but with compensated summation, slightly slower than BASIC but more accurate
         REB_GRAVITY_TREE = 3,       ///< Use the tree to calculate gravity, O(N log(N)), set opening_angle2 to adjust accuracy.
         REB_GRAVITY_MERCURIUS = 4,  ///< Special gravity routine only for MERCURIUS
+        REB_GRAVITY_JACOBI = 5,     ///< Special gravity routine which includes the Jacobi terms for WH integrators 
         } gravity;
     /** @} */
 
@@ -891,6 +961,7 @@ struct reb_simulation {
      */
     struct reb_simulation_integrator_sei ri_sei;        ///< The SEI struct 
     struct reb_simulation_integrator_whfast ri_whfast;  ///< The WHFast struct 
+    struct reb_simulation_integrator_saba ri_saba;      ///< The SABA struct 
     struct reb_simulation_integrator_ias15 ri_ias15;    ///< The IAS15 struct
     struct reb_simulation_integrator_mercurius ri_mercurius;      ///< The MERCURIUS struct
     struct reb_simulation_integrator_janus ri_janus;    ///< The JANUS struct 
@@ -955,7 +1026,7 @@ struct reb_simulation {
 /** @} */
 
 /**
- * @defgroup MainRebFunctions List of the main REBOUND API functions
+ * @defgroup MainRebFunctions Main functions
  * @details These are the functions that typically need to be called by the user.
  * @{
  */
@@ -974,6 +1045,16 @@ struct reb_simulation* reb_create_simulation(void);
  * Working on the copy will not affect the original simulation.
  */
 struct reb_simulation* reb_copy_simulation(struct reb_simulation* r);
+
+/**
+ * @brief Compares to REBOUND simulations bit by bit.
+ * @return If r1 and r2 are exactly equal to each other then 0 is returned, otherwise 1. The walltime parameter in 
+ * the REBOUND struct is ignored in this comparison.
+ * @param r1 The first REBOUND simulation to be compared.
+ * @param r2 The second REBOUND simulation to be compared.
+ * @param output_option Is set to 1, then the output is printed on the screen. If set to 2, only the return value indicates if the simulations are different. 
+ */
+int reb_diff_simulations(struct reb_simulation* r1, struct reb_simulation* r2, int output_option);
 
 /**
  * @brief Initialize reb_simulation structure.
@@ -1163,8 +1244,7 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
 /** @} */
 
 /**
- * @defgroup ToolsRebFunctions 
- * List of the helper functions for REBOUND
+ * @defgroup ToolsRebFunctions Helper functions
  * @{
  */
 /**
@@ -1302,7 +1382,7 @@ struct reb_particle reb_get_jacobi_com(struct reb_particle* p);
 /** @} */
 
 /**
- * @defgroup OutputRebFunctions
+ * @defgroup OutputRebFunctions Output functions
  * List of the built-in output functions for REBOUND
  * @{
  */
@@ -1346,7 +1426,21 @@ void reb_output_orbits(struct reb_simulation* r, char* filename);
  */
 void reb_output_binary(struct reb_simulation* r, const char* filename);
 
+/**
+ * @brief This function compares two REBOUND simulations and records the difference in a buffer.
+ * @details This is used for taking a SimulationArchive Snapshot.
+ * @param buf1 The buffer corresponding to the first rebound simulation to be compared
+ * @param buf2 The buffer corresponding to the second rebound simulation to be compared
+ * @param bufp The buffer which will contain the differences. 
+ */
 void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep);
+
+/**
+ * @brief Same as reb_binary_diff but with more options.
+ * @param output_option If set to 0, the differences are written to bufp. If set to 1, printed on the screen. If set to 2, then only the return value indicates any differences.
+ * @return 0 is returned if the simulations do not differ (are equal). 1 is return if they differ.
+ */
+int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option);
 
 /**
  * @brief Append the positions and velocities of all particles to an ASCII file.
@@ -1371,7 +1465,7 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 /** @} */
 
 /**
- * @defgroup SetupRebFunctions 
+ * @defgroup SetupRebFunctions Setup functions
  * List of the built-in setup helper functions
  * @{
  */
@@ -1457,7 +1551,7 @@ struct reb_orbit reb_tools_particle_to_orbit(double G, struct reb_particle p, st
 
 /**
  * @brief Initialize a particle on a 3D orbit.  See Pal 2009 for a definition of these coordinates.
- * @detail Pal describes a coordinate system for Keplerian Orbits that is analytical (i.e. infinitely differentiable) between spatial coordinates and orbital elements. See http://adsabs.harvard.edu/abs/2009MNRAS.396.1737P
+ * @details Pal describes a coordinate system for Keplerian Orbits that is analytical (i.e. infinitely differentiable) between spatial coordinates and orbital elements. See http://adsabs.harvard.edu/abs/2009MNRAS.396.1737P
  * @param G Gravitational constant.
  * @param primary Particle structure for the orbit's reference body.
  * @param m Mass of the particle.
@@ -1622,7 +1716,7 @@ struct reb_particle reb_derivatives_m_f(double G, struct reb_particle primary, s
 /** @} */
 
 /**
- * @defgroup ParticleManipFunctions 
+ * @defgroup ParticleManipFunctions Particle manipulation functions
  * List of reb_particle manipulation functions for REBOUND
  * @{
  */
@@ -1654,7 +1748,7 @@ void reb_particle_imul(struct reb_particle* p1, double value);
 /** @} */
 
 /**
- * @defgroup SimulationArchiveFunctions
+ * @defgroup SimulationArchiveFunctions Simulation Archive functions
  * Functions for interacting with simulation archives
  * @{
  */
@@ -1741,7 +1835,7 @@ void reb_free_simulationarchive_pointers(struct reb_simulationarchive* sa);
 /** @} */
 
 /**
- * @defgroup TransformationFunctions
+ * @defgroup TransformationFunctions Coordinate transformations
  * Functions for transforming between various coordinate systems.
  * @{
  */
@@ -1835,7 +1929,7 @@ void reb_transformations_whds_to_inertial_posvel(struct reb_particle* const part
 /** @} */
 
 /**
- * @defgroup MiscRebFunctions
+ * @defgroup MiscRebFunctions Miscellaneous functions
  * List of the miscellaneous helper functions for REBOUND
  * @{
  */
@@ -2040,7 +2134,7 @@ struct reb_display_data {
     unsigned int orbit_shader_vertex_count;
 };
 /**
- * @cond PRIVATE
+ * @endcond
  */
 
 #ifdef __cplusplus
