@@ -322,6 +322,9 @@ void reb_free_pointers(struct reb_simulation* const r){
         }
     }
     free(r->messages);
+    if (r->extras_cleanup){
+        r->extras_cleanup(r);
+    }
 }
 
 void reb_reset_temporary_pointers(struct reb_simulation* const r){

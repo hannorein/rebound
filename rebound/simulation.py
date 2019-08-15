@@ -757,10 +757,6 @@ class Simulation(Structure):
             raise ValueError("Cannot multiply simulation with non-scalars.")
         clibrebound.reb_simulation_imul(byref(self), c_double(scalar_pos), c_double(scalar_vel))
 
-    def clear_pre_post_pointers(self):
-        # temporary fix for REBOUNDx
-        clibrebound.reb_clear_pre_post_pointers(byref(self))
-
 # Status functions
     def status(self):
         """ 
@@ -799,8 +795,6 @@ class Simulation(Structure):
         raise AttributeError("You can only set C function pointers from python.")
     @additional_forces.setter
     def additional_forces(self, func):
-        if hasattr(self, '_extras_ref'): # using REBOUNDx
-            raise Warning("Overwriting REBOUNDx operators. If you want to use REBOUNDx and your own custom effects, add them through REBOUNDx.  See https://github.com/dtamayo/reboundx/blob/master/ipython_examples/Custom_Effects.ipynb for a tutorial.")
         self._afp = AFF(func)
         self._additional_forces = self._afp
 
@@ -815,8 +809,6 @@ class Simulation(Structure):
         raise AttributeError("You can only set C function pointers from python.")
     @pre_timestep_modifications.setter
     def pre_timestep_modifications(self, func):
-        if hasattr(self, '_extras_ref'): # using REBOUNDx
-            raise Warning("Overwriting REBOUNDx operators. If you want to use REBOUNDx and your own custom effects, add them through REBOUNDx.  See https://github.com/dtamayo/reboundx/blob/master/ipython_examples/Custom_Effects.ipynb for a tutorial.")
         self._pretmp = AFF(func)
         self._pre_timestep_modifications = self._pretmp
     
@@ -831,8 +823,6 @@ class Simulation(Structure):
         raise AttributeError("You can only set C function pointers from python.")
     @post_timestep_modifications.setter
     def post_timestep_modifications(self, func):
-        if hasattr(self, '_extras_ref'): # using REBOUNDx
-            raise AttributeError("You cannot access post_timestep_modifications after adding REBOUNDx to a simulation.  Instead, add your own custom effects through REBOUNDx.  See https://github.com/dtamayo/reboundx/blob/master/ipython_examples/Custom_Effects.ipynb for a tutorial.")
         self._posttmp = AFF(func)
         self._post_timestep_modifications = self._posttmp
  
@@ -1986,6 +1976,7 @@ Simulation._fields_ = [
                 ("_coefficient_of_restitution", CFUNCTYPE(c_double,POINTER(Simulation), c_double)),
                 ("_collision_resolve", CFUNCTYPE(c_int,POINTER(Simulation), reb_collision)),
                 ("_free_particle_ap", CFUNCTYPE(None, POINTER(Particle))),
+                ("_extras_cleanup", CFUNCTYPE(None, POINTER(Simulation))),
                 ("extras", c_void_p),
                  ]
 
