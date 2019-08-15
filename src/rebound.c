@@ -390,7 +390,8 @@ int reb_reset_function_pointers(struct reb_simulation* const r){
         r->display_heartbeat ||
         r->pre_timestep_modifications ||
         r->post_timestep_modifications ||
-        r->free_particle_ap){
+        r->free_particle_ap ||
+        r->extras_cleanup){
       wasnotnull = 1;
     }
     r->coefficient_of_restitution   = NULL;
@@ -401,6 +402,7 @@ int reb_reset_function_pointers(struct reb_simulation* const r){
     r->pre_timestep_modifications  = NULL;
     r->post_timestep_modifications  = NULL;
     r->free_particle_ap = NULL;
+    r->extras_cleanup = NULL;
     return wasnotnull;
 }
 
