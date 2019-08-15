@@ -999,7 +999,6 @@ struct reb_simulation {
      * of restitution.
      */
     double (*coefficient_of_restitution) (const struct reb_simulation* const r, double v); 
-
     /**
      * @brief Resolve collision within this function. By default it is NULL, assuming hard sphere model.
      * @details A return value of 0 indicates that both particles remain in the simulation. A return value of 1 (2) indicates that particle 1 (2) should be removed from the simulation. A return value of 3 indicates that both particles should be removed from the simulation. 
@@ -1010,6 +1009,10 @@ struct reb_simulation {
      * @brief Free particle's ap pointer.  Called in reb_remove function.
      */
     void (*free_particle_ap) (struct reb_particle* p);
+    /**
+     * @brief Called in reb_free_pointers function for any necessary cleanup in external libraries that depend on the simulation structure.
+     */
+    void (*extras_cleanup) (struct reb_simulation* r);
     /** @} */
     
     /**
