@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.10.0
+--------------
+* Changes for the new version of REBOUNDx. 
+
 Version 3.9.0
 --------------
 * Added new high order symplectic integrators from Wisdom et al. (1996) and Laskar & Robutel (2001). The implementation of these integrators are discussed in Rein, Tamayo & Brown (2019). 
