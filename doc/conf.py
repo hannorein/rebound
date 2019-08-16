@@ -83,6 +83,7 @@ if 1:
                     fd.write(l.strip()+"==========\n")
                 else:
                     fd.write(l)
+                print(i,l)
 
     os.chdir("../")
 
