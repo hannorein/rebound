@@ -88,6 +88,11 @@ We're alway trying to improve REBOUND and extending the documention is high on o
 If you have trouble installing or using REBOUND, please open an issue on github and we'll try to help as much as we can.
 
 
+Additional Physics
+------------------
+To easily incorporate additional physics into your REBOUND simulations, see REBOUNDx at https://github.com/dtamayo/reboundx
+
+
 Changelog
 ---------
 For a changelog of the most important changes in recent updates, see https://github.com/hannorein/rebound/blob/master/changelog.rst 
