@@ -76,10 +76,13 @@ if 1:
         with open(example) as fd:
             lines = fd.readlines()
         with open(example,"w") as fd:
+            emptylines = 0
             for i,l in enumerate(lines):
-                if i==1:
+                if len(l.strip())==0:
+                    emptylines += 1
+                if i==emptylines:
                     fd.write(l.strip()+" (iPython)\n")
-                elif i==2:
+                elif i==emptylines+1:
                     fd.write(l.strip()+"==========\n")
                 else:
                     fd.write(l)
