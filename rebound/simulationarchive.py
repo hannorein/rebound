@@ -57,7 +57,7 @@ class SimulationArchive(Structure):
                 ("offset", POINTER(c_uint32)), 
                 ("t", POINTER(c_double)) 
                 ]
-    def __init__(self,filename,setup=None, setup_args=(), rebxfilename=None, process_warnings=True):
+    def __init__(self,filename,setup=None, setup_args=(), process_warnings=True):
         """
         Arguments
         ---------
@@ -68,15 +68,12 @@ class SimulationArchive(Structure):
             In this function, the user can setup additional forces
         setup_args : list
             Arguments passed to setup function.
-        rebxfilename : str
-            Filename of the REBOUNDx binary file.
         process_warnings : Bool
             Display warning messages if True (default). Only fail on major errors if set to False.
 
         """
         self.setup = setup
         self.setup_args = setup_args
-        self.rebxfilename = rebxfilename
         w = c_int(0)
         clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")),byref(w))
         for majorerror, value, message in BINARY_WARNINGS:
@@ -126,9 +123,6 @@ class SimulationArchive(Structure):
         clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim), byref(self), c_long(key), byref(w))
         if self.setup:
             self.setup(sim, *self.setup_args)
-        if self.rebxfilename:
-            import reboundx
-            rebx = reboundx.Extras.from_file(sim, self.rebxfilename)
         for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
                 if majorerror:
@@ -217,12 +211,9 @@ class SimulationArchive(Structure):
         w = c_int(0)
         clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim),byref(self),bi,byref(w))
 
-        # Restore function pointers and any additional setup required by the user/reboundx provided functions
+        # Restore function pointers and any additional setup required by the user provided functions
         if self.setup:
             self.setup(sim, *self.setup_args)
-        if self.rebxfilename:
-            import reboundx
-            rebx = reboundx.Extras.from_file(sim, self.rebxfilename)
 
         if mode=='snapshot':
             if sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1:

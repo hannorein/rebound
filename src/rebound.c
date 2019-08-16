@@ -64,7 +64,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.9.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.10.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_error_message_waiting(struct reb_simulation* const r);
@@ -322,6 +322,9 @@ void reb_free_pointers(struct reb_simulation* const r){
         }
     }
     free(r->messages);
+    if (r->extras_cleanup){
+        r->extras_cleanup(r);
+    }
 }
 
 void reb_reset_temporary_pointers(struct reb_simulation* const r){
@@ -387,7 +390,8 @@ int reb_reset_function_pointers(struct reb_simulation* const r){
         r->display_heartbeat ||
         r->pre_timestep_modifications ||
         r->post_timestep_modifications ||
-        r->free_particle_ap){
+        r->free_particle_ap ||
+        r->extras_cleanup){
       wasnotnull = 1;
     }
     r->coefficient_of_restitution   = NULL;
@@ -398,6 +402,7 @@ int reb_reset_function_pointers(struct reb_simulation* const r){
     r->pre_timestep_modifications  = NULL;
     r->post_timestep_modifications  = NULL;
     r->free_particle_ap = NULL;
+    r->extras_cleanup = NULL;
     return wasnotnull;
 }
 

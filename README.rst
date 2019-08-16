@@ -1,7 +1,7 @@
 REBOUND - An open-source multi-purpose N-body code
 ==================================================
 
-.. image:: http://img.shields.io/badge/rebound-v3.9.0-green.svg?style=flat
+.. image:: http://img.shields.io/badge/rebound-v3.10.0-green.svg?style=flat
     :target: http://rebound.readthedocs.org
 .. image:: https://badge.fury.io/py/rebound.svg
     :target: https://badge.fury.io/py/rebound
@@ -25,6 +25,8 @@ REBOUND - An open-source multi-purpose N-body code
     :target: http://arxiv.org/abs/1704.07715
 .. image:: http://img.shields.io/badge/arXiv-1903.04972-green.svg?style=flat 
     :target: http://arxiv.org/abs/1903.04972
+.. image:: http://img.shields.io/badge/arXiv-1907.11335-green.svg?style=flat 
+    :target: https://arxiv.org/abs/1907.11335
 .. image:: https://readthedocs.org/projects/pip/badge/?version=latest
     :target: http://rebound.readthedocs.org/
 .. image:: https://mybinder.org/badge_logo.svg 
@@ -84,6 +86,11 @@ http://rebound.readthedocs.org
 
 We're alway trying to improve REBOUND and extending the documention is high on our to-do list.
 If you have trouble installing or using REBOUND, please open an issue on github and we'll try to help as much as we can.
+
+
+Additional Physics
+------------------
+To easily incorporate additional physics into your REBOUND simulations, see REBOUNDx at https://github.com/dtamayo/reboundx
 
 
 Changelog

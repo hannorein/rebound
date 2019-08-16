@@ -88,7 +88,7 @@ There are several papers describing the functionality of REBOUND.
 
 7. Rein, Hernandez, Tamayo, Brown, Eckels, Holmes, Lau, Leblanc & Silburt 2019 (Monthly Notices of the Royal Astronomical Society, Volume 485, Issue 4, p.5490-5497) describes the hyrbid symplectic intergator MERCURIUS. https://arxiv.org/abs/1903.04972
 
-8. Rein, Tamayo & Brown 2019 (submitted) describes the implementation of the high order symplectic intergators SABA, SABAC, SABACL, WHCKL, WHCKM, and WHCKC. https://arxiv.org/abs/1903.04972
+8. Rein, Tamayo & Brown 2019 (submitted) describes the implementation of the high order symplectic intergators SABA, SABAC, SABACL, WHCKL, WHCKM, and WHCKC. https://arxiv.org/abs/1907.11335
 
 
 Acknowledgments
