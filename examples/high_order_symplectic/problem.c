@@ -1,8 +1,8 @@
 /**
  * High Order Symplectic Integrators
  *
- * This example uses a high order symplectic integrator, WHCKL,
- * to integrate all planets of the Solar System. 
+ * This example uses a high order symplectic integrators
+ * WHCKL and SABA(10,6,4) to integrate all planets of the Solar System. 
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,8 +55,8 @@ double ss_mass[10] =
 struct reb_simulation* create_sim(){
     // Setup constants
     struct reb_simulation* r = reb_create_simulation();
-    r->dt             = 4;                // in days
-    r->G              = 1.4880826e-34;    // in AU^3 / kg / day^2.
+    r->dt             = 4;          // in days
+    r->G              = 1.0e-34;    // in AU^3 / kg / day^2.
     
     // Initial conditions (from NASA Horizons)
     for (int i=0;i<10;i++){
@@ -73,7 +73,7 @@ struct reb_simulation* create_sim(){
 int main(int argc, char* argv[]){
     double tmax       = 1e5;              // 1e5 days ~ 273 years
 
-    // Run the simulation with the WHCKL method
+    // Run the simulation with the WHCKL method.
     {    
         struct reb_simulation* r = create_sim();
         r->integrator           = REB_INTEGRATOR_WHFAST;
@@ -83,10 +83,23 @@ int main(int argc, char* argv[]){
         double e_init = reb_tools_energy(r);
         reb_integrate(r, tmax);
         double e = reb_tools_energy(r);
-        printf("Relative energy error (WHCKL): %e\n", fabs((e_init-e)/e_init));
+        printf("Relative energy error WHCKL: %e\n", fabs((e_init-e)/e_init));
     }
     
-    // Run the same simulation with the standard WH method
+    // Run the same simulation with the SABA(10,6,4) method.
+    // Note that this method has 8 force evaluations per timestep and is therefore 
+    // quite a bit slower for a fixed timestep.
+    {    
+        struct reb_simulation* r = create_sim();
+        r->integrator           = REB_INTEGRATOR_SABA; 
+        r->ri_saba.type  = REB_SABA_10_6_4;    // Chooses the type of SABA integrator. 
+        r->ri_saba.safe_mode  = 0;        // Turn off safe mode. 
+        double e_init = reb_tools_energy(r);
+        reb_integrate(r, tmax);
+        double e = reb_tools_energy(r);
+        printf("Relative energy error SABA(10,6,4):    %e\n", fabs((e_init-e)/e_init));
+    }
+    // Run the same simulation with the standard WH method.
     {    
         struct reb_simulation* r = create_sim();
         r->integrator           = REB_INTEGRATOR_WHFAST; // All WHFast settings default to the standard WH method
@@ -94,7 +107,7 @@ int main(int argc, char* argv[]){
         double e_init = reb_tools_energy(r);
         reb_integrate(r, tmax);
         double e = reb_tools_energy(r);
-        printf("Relative energy error (WH):    %e\n", fabs((e_init-e)/e_init));
+        printf("Relative energy error WH:    %e\n", fabs((e_init-e)/e_init));
     }
 }
 

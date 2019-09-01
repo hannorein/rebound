@@ -299,32 +299,41 @@ struct reb_simulation_integrator_sei {
  */
 struct reb_simulation_integrator_saba {
     /**
-     * @brief Number of evaluations of the interaction step.
-     * @details
-     * - 1: standard WH 
-     * - 2: SABA2/SABAC2 
-     * - 3: SABA3/SABAC3 
-     * - 4: SABA4/SABAC4 
-     */
-    unsigned int k;
-    /**
-     * @brief Turn corrector on/off.
-     * @details
-     * - 0: corrector off
-     * - 1: normal (modified kick) corrector on
-     * - 2: lazy implementer's corrector on
+     * @brief SABA type.
+     * @details Available types include: SABA1, SABA2, SABA3, SABA4, SABACM1, 
+     * SABACM2, SABACM3, SABACM4, SABACL1, SABACL2, SABACL3, SABACL4, 
+     * SABA(10,4), SABA(8,6,4), SABA(10,6,4), SABAH(8,4,4), SABAH(8,6,4), 
+     * and SABAH(10,6,4).
      */
     enum {
-        REB_SABA_CORRECTOR_NONE = 0,
-        REB_SABA_CORRECTOR_MODIFIEDKICK = 1,
-        REB_SABA_CORRECTOR_LAZY = 2,
-    } corrector;
-
+        REB_SABA_1 = 0x0, // WH
+        REB_SABA_2 = 0x1, // SABA2
+        REB_SABA_3 = 0x2, // SABA3
+        REB_SABA_4 = 0x3, // SABA4
+        REB_SABA_CM_1 = 0x100, // SABACM1 (Modified kick corrector)
+        REB_SABA_CM_2 = 0x101, // SABACM2 (Modified kick corrector)
+        REB_SABA_CM_3 = 0x102, // SABACM3 (Modified kick corrector)
+        REB_SABA_CM_4 = 0x103, // SABACM4 (Modified kick corrector)
+        REB_SABA_CL_1 = 0x200, // SABACL1 (lazy corrector)
+        REB_SABA_CL_2 = 0x201, // SABACL2 (lazy corrector)
+        REB_SABA_CL_3 = 0x202, // SABACL3 (lazy corrector)
+        REB_SABA_CL_4 = 0x203, // SABACL4 (lazy corrector)
+        REB_SABA_10_4 = 0x4,   // SABA(10,4), 7 stages
+        REB_SABA_8_6_4 = 0x5,  // SABA(8,6,4), 7 stages
+        REB_SABA_10_6_4 = 0x6, // SABA(10,6,4), 8 stages, default
+        REB_SABA_H_8_4_4 = 0x7,// SABAH(8,4,4), 6 stages
+        REB_SABA_H_8_6_4 = 0x8,// SABAH(8,6,4), 8 stages
+        REB_SABA_H_10_6_4 = 0x9,// SABAH(10,6,4), 9 stages
+    } type;
+    unsigned int safe_mode;       ///< Safe_mode has the same functionality as in WHFast.
+    unsigned int is_synchronized; ///< Flag to determine if current particle structure is synchronized
     /**
-     * @brief safe_mode has the same functionality as in WHFast.
+     * @brief Flaf that determines if the inertial coordinates generated are discared in subsequent timesteps (Jacobi coordinates are used instead).
+     * @details Danger zone! Only use this flag if you are absolutely sure
+     * what you are doing. This is intended for
+     * simulation which have to be reproducible on a bit by bit basis.
      */
-    unsigned int safe_mode;
-    unsigned int is_synchronized;
+    unsigned int keep_unsynchronized;
 };
 
 /**
@@ -663,13 +672,13 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_SAAUTOSTEP = 135,
     REB_BINARY_FIELD_TYPE_SANEXTSTEP = 136,
     REB_BINARY_FIELD_TYPE_STEPSDONE = 137,
-    REB_BINARY_FIELD_TYPE_SABA_K = 138,
-    REB_BINARY_FIELD_TYPE_SABA_CORRECTOR = 139,
     REB_BINARY_FIELD_TYPE_SABA_SAFEMODE = 140,
     REB_BINARY_FIELD_TYPE_SABA_ISSYNCHRON = 141,
     REB_BINARY_FIELD_TYPE_WHFAST_CORRECTOR2 = 143,
     REB_BINARY_FIELD_TYPE_WHFAST_KERNEL = 144,
     REB_BINARY_FIELD_TYPE_DTLASTDONE = 145,
+    REB_BINARY_FIELD_TYPE_SABA_TYPE = 146,
+    REB_BINARY_FIELD_TYPE_SABA_KEEPUNSYNC = 147,
     REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
     REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
     REB_BINARY_FIELD_TYPE_END = 9999,

@@ -258,8 +258,27 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(STEPSDONE,          &r->steps_done);
         CASE(SAAUTOSTEP,         &r->simulationarchive_auto_step);
         CASE(SANEXTSTEP,         &r->simulationarchive_next_step);
-        CASE(SABA_K,             &r->ri_saba.k);
-        CASE(SABA_CORRECTOR,     &r->ri_saba.corrector);
+        CASE(SABA_TYPE,          &r->ri_saba.type);
+        CASE(SABA_KEEPUNSYNC,    &r->ri_saba.keep_unsynchronized);
+        // temporary solution for depreciated SABA k and corrector variables.
+        // can be removed in future versions
+        case 138: 
+            {
+            unsigned int k = 0;
+            reb_fread(&k, field.size,1,inf,mem_stream);
+            r->ri_saba.type/=0x100;
+            r->ri_saba.type += k-1;
+            }
+            break;
+        case 139: 
+            {
+            unsigned int corrector = 0;
+            reb_fread(&corrector, field.size,1,inf,mem_stream);
+            r->ri_saba.type%=0x100;
+            r->ri_saba.type += 0x100*corrector;
+            }
+            break;
+
         CASE(SABA_SAFEMODE,      &r->ri_saba.safe_mode);
         CASE(SABA_ISSYNCHRON,    &r->ri_saba.is_synchronized);
         CASE(WHFAST_CORRECTOR2,  &r->ri_whfast.corrector2);

@@ -27,7 +27,13 @@ COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "mercurius": 3, "line": 4}
 VISUALIZATIONS = {"none": 0, "opengl": 1, "webgl": 2}
 WHFAST_KERNELS = {"default": 0, "modifiedkick": 1, "composition": 2, "lazy": 3}
 WHFAST_COORDINATES = {"jacobi": 0, "democraticheliocentric": 1, "whds": 2}
-SABA_CORRECTORS = {"none": 0, "modifiedkick": 1, "lazy": 2}
+SABA_TYPES = {
+        "1": 0x0, "2": 0x1, "3": 0x2, "4": 0x3,
+        "cm1": 0x100, "cm2": 0x101, "cm3": 0x102, "cm4": 0x103,
+        "cl1": 0x200, "cl2": 0x201, "cl3": 0x202, "cl4": 0x203,
+        "10,4": 0x4, "8,6,4": 0x5, "10,6,4": 0x6,
+        "h8,4,4": 0x7, "h8,6,4": 0x8, "h10,6,4": 0x9,
+        }
 
 # Format: Majorerror, id, message
 BINARY_WARNINGS = [
@@ -149,55 +155,60 @@ class reb_simulation_integrator_ias15(Structure):
 class reb_simulation_integrator_saba(Structure):
     """
     This class is an abstraction of the C-struct reb_simulation_integrator_saba.
-    It controls the behaviour of the SABA / SABAC / SABACL integrator family.
+    It controls the behaviour of the SABA integrator family.
     See Rein, Tamayo, and Brown (2019) for more details.
 
-    :ivar int k:      
-        Sets the number of evalutations. k=1 is SABA1/SABAC1, k=2 is SABA2/SABAC2
-        and so forth.
-    :ivar int corrector:      
-        Turns correctors off (0), or specifices which corrector to use. Options are
-        "modifiedkick" (1) or "lazy" (2)
+    :ivar str type:      
+        Set the type of SABA integrator manually. The type can also be set by setting
+        the integrator field in the REBOUND simulation. 
+
+    :ivar int safe_mode:      
+        This variable acts the same as for WHFast.
+        If safe_mode is 1 (default) particles can be modified between
+        timesteps and particle velocities and positions are always synchronised.
+        If you set safe_mode to 0, the speed and accuracy of the integrator will improve.
+        However, make sure you are aware of the consequences. Read the iPython tutorial
+        on advanced WHFast usage to learn more.
    
     Example usage:
     
     >>> sim = rebound.Simulation()
-    >>> sim.integrator = "saba"
-    >>> sim.ri_saba.corrector =  "lazy"
-    >>> sim.ri_saba.k = 4
+    >>> sim.integrator = "SABA(10,6,4)"
+    
+    >>> sim = rebound.Simulation()
+    >>> sim.integrator = "SABA"
+    >>> sim.ri_saba.type = "(10,6,4)"
+    
+    >>> sim = rebound.Simulation()
+    >>> sim.integrator = "SABACL4"
+    >>> sim.ri_saba.safe_mode = 0
 
     """
-    _fields_ = [("k", c_uint),
-                ("_corrector", c_uint),
+    _fields_ = [("_type", c_uint),
                 ("safe_mode", c_uint),
                 ("is_synchronized", c_uint),
+                ("keep_unsynchronized", c_uint),
             ]
     @property
-    def corrector(self):
+    def type(self):
         """
-        Get or set the SABA Corrector.
-
-        Available correctors are:
-
-        - ``'none'`` (no corrector used, SABA)
-        - ``'modifiedkick'`` (modified kick, SABAC)
-        - ``'lazy'`` (Lazy implementer's method, SABACL)
+        Get or set the type of SABA integrator.
         """
-        i = self._corrector
-        for name, _i in SABA_CORRECTORS.items():
+        i = self._type
+        for name, _i in SABA_TYPES.items():
             if i==_i:
                 return name
         return i
-    @corrector.setter
-    def corrector(self, value):
+    @type.setter
+    def type(self, value):
         if isinstance(value, int):
-            self._corrector = c_uint(value)
+            self._type = value
         elif isinstance(value, basestring):
-            value = value.lower().replace(" ", "")
-            if value in SABA_CORRECTORS: 
-                self._corrector = SABA_CORRECTORS[value]
+            value = value.lower().replace(" ", "").replace("(", "").replace(")", "")
+            if value in SABA_TYPES: 
+                self._type = SABA_TYPES[value]
             else:
-                raise ValueError("Warning. Kernel not found.")
+                raise ValueError("Warning. SABA type not found.")
 
 class reb_simulation_integrator_whfast(Structure):
     """
@@ -920,16 +931,21 @@ class Simulation(Structure):
         """
         Get or set the intergrator module.
 
-        Available integrators are:
+        Available integrators include:
 
-        - ``'ias15'`` (default)
-        - ``'whfast'``
-        - ``'saba'``
-        - ``'sei'``
-        - ``'leapfrog'``
-        - ``'janus'``
-        - ``'mercurius'``
-        - ``'WHCKL'`` (a wrapper which uses and configures WHFAST)
+        - ``'IAS15'`` (default)
+        - ``'WHFast'``
+        - ``'SEI'``
+        - ``'LEAPFROG'``
+        - ``'JANUS'``
+        - ``'MERCURIUS'``
+        - ``'WHCKL'`` 
+        - ``'WHCKM'`` 
+        - ``'WHCKC'`` 
+        - ``'SABA4'`` 
+        - ``'SABA4CL'`` 
+        - ``'SABA4CM'`` 
+        - ``'SABA(10,6,4)'`` 
         - ``'none'``
         
         Check the online documentation for a full description of each of the integrators. 
@@ -947,10 +963,30 @@ class Simulation(Structure):
             value = value.lower()
             if value in INTEGRATORS: 
                 self._integrator = INTEGRATORS[value]
+            # Shortcuts
+            elif value=="wh":
+                self.integrator = "whfast"
+                self.ri_whfast.corrector = 0
+                self.ri_whfast.kernel = "default"
+            elif value=="whc":
+                self.integrator = "whfast"
+                self.ri_whfast.corrector = 17
+                self.ri_whfast.kernel = "default"
             elif value=="whckl":
                 self.integrator = "whfast"
                 self.ri_whfast.corrector = 17
                 self.ri_whfast.kernel = "lazy"
+            elif value=="whckm":
+                self.integrator = "whfast"
+                self.ri_whfast.corrector = 17
+                self.ri_whfast.kernel = "modifiedkick"
+            elif value=="whckc":
+                self.integrator = "whfast"
+                self.ri_whfast.corrector = 17
+                self.ri_whfast.kernel = "composition"
+            elif value[0:4]=="saba" and len(value)>4:
+                self.integrator = "saba"
+                self.ri_saba.type = value[4:]
             else:
                 raise ValueError("Integrator not found.")
     

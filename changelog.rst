@@ -3,6 +3,11 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.10.1
+--------------
+* Small syntax changes for SABA integrator family. 
+* Includes high order integrators by Blanes et al. (2013).
+
 Version 3.10.0
 --------------
 * Changes for the new version of REBOUNDx. 
