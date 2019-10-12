@@ -943,8 +943,8 @@ class Simulation(Structure):
         - ``'WHCKM'`` 
         - ``'WHCKC'`` 
         - ``'SABA4'`` 
-        - ``'SABA4CL'`` 
-        - ``'SABA4CM'`` 
+        - ``'SABACL4'`` 
+        - ``'SABACM4'`` 
         - ``'SABA(10,6,4)'`` 
         - ``'none'``
         
