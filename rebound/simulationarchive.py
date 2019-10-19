@@ -216,7 +216,7 @@ class SimulationArchive(Structure):
             self.setup(sim, *self.setup_args)
 
         if mode=='snapshot':
-            if (sim.integrator=="whfast" or sim.integrator=="saba") and sim.ri_whfast.safe_mode == 1:
+            if (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
                 keep_unsynchronized = 0
             sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
             sim.ri_saba.keep_unsynchronized = keep_unsynchronized
@@ -225,7 +225,7 @@ class SimulationArchive(Structure):
         else:
             if mode=='exact':
                 keep_unsynchronized==0
-            if (sim.integrator=="whfast" or sim.integrator=="saba") and sim.ri_whfast.safe_mode == 1:
+            if (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
                 keep_unsynchronized = 0
             sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
             sim.ri_saba.keep_unsynchronized = keep_unsynchronized
