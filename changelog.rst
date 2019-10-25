@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.10.2
+--------------
+* Updates to OrbitPlot. Includes better layout of plot and some syntax changes. See OrbitPlot documentation for the new syntax.
+
 Version 3.10.1
 --------------
 * Small syntax changes for SABA integrator family. 

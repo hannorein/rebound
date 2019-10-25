@@ -3,45 +3,43 @@ import math
 from .particle import Particle
 from itertools import cycle
 
-def OrbitPlot(sim, figsize=None, lim=None, limz=None, Narc=100, unitlabel=None, color=False, periastron=False, trails=True, show_orbit=True, lw=1., glow=False, slices=False, plotparticles=[], primary=None, fancy=False):
+def OrbitPlot(sim, figsize=None, fancy=False, slices=0, xlim=None, ylim=None, unitlabel=None, color=False, periastron=False, orbit_type="trail", lw=1., plotparticles=[], primary=None, Narc=128):
     """
     Convenience function for plotting instantaneous orbits.
 
     Parameters
     ----------
-    slices          : bool, optional
-        Plot all three slices if set to True. Default is False and plots orbits only in the xy plane.
     figsize         : tuple of float, optional
         Tuple defining the figure size (default: (5,5))
-    lim             : float, optional           
-        Limit for axes (default: None = automatically determined)
-    limz            : float, optional           
-        Limit for z axis, only used if slices=True (default: None = automatically determined)
+    fancy           : bool (default: False)
+        Changes various settings to create a fancy looking plot
+    slices          : float, optional
+        Default is 0, showing the orbits in the xy plane only. Set to a value between 0 and 1 to create three plots, showing the orbits from different directions. The value corresponds to the size of the additional plots relative to the main plot.
+    xlim            : tuple of float, optional           
+        Limits for x axes (default: None = automatically determined)
+    ylim            : tuple of float, optional           
+        Limits for y axes (default: None = automatically determined)
     unitlabel       : str, optional          
         String describing the units, shown on axis labels (default: None)
     color           : bool, str or list, optional            
-        By default plots in black. If set to True, plots using REBOUND color cycle. If a string or list of strings, e.g. ['red', 'cyan'], will cycle between passed colors.
+        By default plots are black and white. If set to True, plots use a color cycle. If a string or list of strings, e.g. ['red', 'cyan'], will cycle between passed colors.
     periastron  : bool, optional            
         Draw a marker at periastron (default: False)
-    trails          : bool, optional            
-        Draw trails instead of solid lines (default: False)
-    show_orbit      : bool, optional
-        Draw orbit trails/lines (default: True)
+    orbit_type       : str, optional
+        This argument determines the type of orbit show. By default it shows the orbit as a trailing and fading line ("trail"). Other object are: "solid", None.
     lw              : float, optional           
-        Linewidth (default: 1.)
-    glow            : bool (default: False)
-        Make lines glow
-    fancy           : bool (default: False)
-        Changes various settings to create a fancy looking plot
+        Linewidth used in plots (default: 1.)
     plotparticles   : list, optional
         List of particles to plot. Can be a list of any valid keys for accessing sim.particles, i.e., integer indices or hashes (default: plot all particles)
     primary         : rebound.Particle, optional
-        Pimrary to use for the osculating orbit (default: Jacobi center of mass)
+        Primary to use for the osculating orbit (default: Jacobi center of mass)
+    Narc            : int, optional
+        Number of points used in an orbit. Increase this number for highly eccentric orbits. (default: 128)
 
     Returns
     -------
-    fig
-        A matplotlib figure
+    fig, ax_main, (ax_top, ax_right)
+        The function return the matplotlib figure as well as the axes (three axes if slices>0.)
 
     Examples
     --------
@@ -50,7 +48,7 @@ def OrbitPlot(sim, figsize=None, lim=None, limz=None, Narc=100, unitlabel=None, 
     >>> sim = rebound.Simulation()
     >>> sim.add(m=1)
     >>> sim.add(a=1)
-    >>> fig = rebound.OrbitPlot(sim)
+    >>> fig, ax_main = rebound.OrbitPlot(sim)
     >>> fig.savefig("image.png") # save figure to file
     >>> fig.show() # show figure on screen
 
@@ -58,6 +56,7 @@ def OrbitPlot(sim, figsize=None, lim=None, limz=None, Narc=100, unitlabel=None, 
     try:
         import matplotlib.pyplot as plt
         from matplotlib import gridspec
+        from mpl_toolkits.axes_grid1 import make_axes_locatable
         import numpy as np
     except:
         raise ImportError("Error importing matplotlib and/or numpy. Plotting functions not available. If running from within a jupyter notebook, try calling '%matplotlib inline' beforehand.")
@@ -65,33 +64,62 @@ def OrbitPlot(sim, figsize=None, lim=None, limz=None, Narc=100, unitlabel=None, 
         unitlabel = " " + unitlabel
     else:
         unitlabel = ""
-    if slices:
-        if figsize is None:
+    if figsize is None:
+        if slices>0.:
             figsize = (8,8)
-        fig, ax = plt.subplots(2, 2, figsize=figsize)
-        gs = gridspec.GridSpec(2, 2, width_ratios=[3., 2.], height_ratios=[2.,3.],wspace=0., hspace=0.) 
-        ax0=plt.subplot(gs[0])
-        ax2=plt.subplot(gs[2])
-        ax3=plt.subplot(gs[3])
-        OrbitPlotOneSlice(sim, ax2, lim=lim, Narc=Narc, color=color, periastron=periastron, trails=trails, show_orbit=show_orbit, lw=lw, axes="xy",fancy=fancy, plotparticles=plotparticles, primary=primary, glow=glow)
-        OrbitPlotOneSlice(sim, ax3, lim=lim, limz=limz, Narc=Narc, color=color, periastron=periastron, trails=trails, show_orbit=show_orbit, lw=lw,fancy=fancy, axes="zy", plotparticles=plotparticles, primary=primary, glow=glow)
-        OrbitPlotOneSlice(sim, ax0, lim=lim, limz=limz, Narc=Narc, color=color, periastron=periastron, trails=trails, show_orbit=show_orbit, lw=lw,fancy=fancy, axes="xz", plotparticles=plotparticles, primary=primary, glow=glow)
-        ax2.set_xlabel("x"+unitlabel)
-        ax2.set_ylabel("y"+unitlabel)
-      
-        plt.setp(ax0.get_xticklabels(), visible=False)
-        ax0.set_ylabel("z"+unitlabel)
-        
-        ax3.set_xlabel("z"+unitlabel)
-        plt.setp(ax3.get_yticklabels(), visible=False)
-    else:
-        if figsize is None:
+        else:
             figsize = (5,5)
-        fig, ax = plt.subplots(1, 1, figsize=figsize)
-        ax.set_xlabel("x"+unitlabel)
-        ax.set_ylabel("y"+unitlabel)
-        OrbitPlotOneSlice(sim, ax, lim=lim, Narc=Narc, color=color, periastron=periastron, trails=trails, show_orbit=show_orbit, lw=lw,fancy=fancy, plotparticles=plotparticles, primary=primary, glow=glow)
-    return fig
+    
+    fig = plt.figure(figsize=figsize)
+    ax_main = plt.subplot(111,aspect="equal")
+    ax_main.set_xlabel("x"+unitlabel)
+    ax_main.set_ylabel("y"+unitlabel)
+
+    if slices>0.:
+        divider = make_axes_locatable(ax_main)
+        divider.set_aspect(True)
+        ax_top   = divider.append_axes("top",  size="%.2f%%"%(100.*slices), sharex=ax_main)
+        ax_top.set_aspect('equal', adjustable='datalim')
+        ax_right = divider.append_axes("right", size="%.2f%%"%(100.*slices), sharey=ax_main)
+        ax_right.set_aspect('equal', adjustable='datalim')
+      
+        plt.setp(ax_top.get_xticklabels(), visible=False)
+        plt.setp(ax_top.get_xticklines(), visible=False)
+        ax_top.set_ylabel("z"+unitlabel)
+        
+        plt.setp(ax_right.get_yticklabels(), visible=False)
+        plt.setp(ax_right.get_yticklines(), visible=False)
+        ax_right.set_xlabel("z"+unitlabel)
+
+    OrbitPlotOneSlice(sim, ax_main, Narc=Narc, color=color, periastron=periastron, orbit_type=orbit_type, lw=lw, axes="xy",fancy=fancy, plotparticles=plotparticles, primary=primary)
+
+    if slices>0.:
+        OrbitPlotOneSlice(sim, ax_right, Narc=Narc, color=color, periastron=periastron, orbit_type=orbit_type, lw=lw,fancy=fancy, axes="zy", plotparticles=plotparticles, primary=primary)
+        OrbitPlotOneSlice(sim, ax_top, Narc=Narc, color=color, periastron=periastron, orbit_type=orbit_type, lw=lw,fancy=fancy, axes="xz", plotparticles=plotparticles, primary=primary)
+
+    if xlim is not None:
+        ax_main.set_xlim(xlim)
+    if ylim is not None:
+        ax_main.set_ylim(ylim)
+
+
+    if fancy:
+        ax_main.apply_aspect()
+        if slices>0.:
+            ax_top.apply_aspect()
+            ax_right.apply_aspect()
+        ax_main.autoscale(False)
+        if slices>0.:
+            ax_top.autoscale(False)
+            ax_right.autoscale(False)
+        OrbitPlotAddFancyStars(ax_main,lw)
+        if slices>0.:
+            OrbitPlotAddFancyStars(ax_top,lw,slices)
+            OrbitPlotAddFancyStars(ax_right,lw,slices)
+    if slices>0.:
+        return fig, ax_main, ax_top, ax_right
+    else:
+        return fig, ax_main
 
 def get_color(color):
     """
@@ -142,15 +170,18 @@ def fading_line(x, y, color='black', alpha_initial=1., alpha_final=0., glow=Fals
         raise ImportError("Error importing matplotlib and/or numpy. Plotting functions not available. If running from within a jupyter notebook, try calling '%matplotlib inline' beforehand.")
 
 
-    if glow:
-        glow = False
+    if "lw" not in kwargs:
         kwargs["lw"] = 1
+    lw = kwargs["lw"]
+
+    if glow:
+        kwargs["lw"] = 1*lw
         fl1 = fading_line(x, y, color, alpha_initial, alpha_final, glow=False, **kwargs)
-        kwargs["lw"] = 2
+        kwargs["lw"] = 2*lw
         alpha_initial *= 0.5
         alpha_final *= 0.5
         fl2 = fading_line(x, y, color, alpha_initial, alpha_final, glow=False, **kwargs)
-        kwargs["lw"] = 6
+        kwargs["lw"] = 6*lw
         alpha_initial *= 0.5
         alpha_final *= 0.5
         fl3 = fading_line(x, y, color, alpha_initial, alpha_final, glow=False, **kwargs)
@@ -179,13 +210,14 @@ def fading_line(x, y, color='black', alpha_initial=1., alpha_final=0., glow=Fals
     lc.set_array(np.linspace(0.,1.,len(segments)))
     return lc
 
-def OrbitPlotOneSlice(sim, ax, lim=None, limz=None, Narc=100, color=False, periastron=False, trails=False, show_orbit=True, lw=1., axes="xy", plotparticles=[], primary=None, glow=False, fancy=False):
+def OrbitPlotOneSlice(sim, ax, Narc=128, color=False, periastron=False, orbit_type="trial", lw=1., axes="xy", plotparticles=[], primary=None, fancy=False):
     import matplotlib.pyplot as plt
     from matplotlib.collections import LineCollection
     from matplotlib.colors import LinearSegmentedColormap
     import numpy as np
     import random
 
+    #ax.set_aspect("equal")
     p_orb_pairs = []
     if not plotparticles:
         plotparticles = range(1, sim.N_real)
@@ -193,37 +225,6 @@ def OrbitPlotOneSlice(sim, ax, lim=None, limz=None, Narc=100, color=False, peria
         p = sim.particles[i]
         p_orb_pairs.append((p, p.calculate_orbit(primary=primary)))
 
-    if lim is None:
-        lim = 0.
-        for p, o in p_orb_pairs: 
-            if o.a>0.:
-                r = (1.+o.e)*o.a
-            else:
-                r = o.d
-            if r>lim:
-                lim = r
-        lim *= 1.15
-    if limz is None:
-        z = [p.z for p,o in p_orb_pairs]
-        limz = 2.0*max(z)
-        if limz > lim:
-            limz = lim
-        if limz <= 0.:
-            limz = lim
-
-    if axes[0]=="z":
-        ax.set_xlim([-limz,limz])
-    else:
-        ax.set_xlim([-lim,lim])
-    if axes[1]=="z":
-        ax.set_ylim([-limz,limz])
-    else:
-        ax.set_ylim([-lim,lim])
-        
-    if fancy:
-        ax.set_facecolor((0.,0.,0.))
-        for pos in ['top', 'bottom', 'right', 'left']:
-            ax.spines[pos].set_edgecolor((0.3,0.3,0.3))
 
     if color:
         if color == True:
@@ -237,7 +238,6 @@ def OrbitPlotOneSlice(sim, ax, lim=None, limz=None, Narc=100, color=False, peria
     else:
         if fancy:
             colors = [(181./206.,66./206.,191./206.)]
-            glow = True
         else:
             colors = ["black"]
     coloriterator = cycle(colors)
@@ -249,55 +249,34 @@ def OrbitPlotOneSlice(sim, ax, lim=None, limz=None, Narc=100, color=False, peria
     prim = sim.particles[0] if primary is None else primary 
     if fancy:
         sun = (256./256.,256./256.,190./256.)
-        opa = 0.020
+        opa = 0.035
         size = 6000.
-        for i in range(256):
+        for i in range(100):
             ax.scatter(getattr(prim,axes[0]),getattr(prim,axes[1]), alpha=opa, s=size*lw, facecolor=sun, edgecolor=None, zorder=3)
             size *= 0.95
-        
-        starcolor = (1.,1.,1.)
-        mi, ma = ax.get_xlim()
-        prestate = random.getstate()
-        random.seed(1) #always same stars
-        x, y = [], []
-        #small stars
-        for i in range(64):
-            x.append(random.uniform(mi,ma))
-            y.append(random.uniform(mi,ma))
-        ax.scatter(x,y, alpha=0.05, s=8*lw, facecolor=starcolor, edgecolor=None, zorder=3)
-        ax.scatter(x,y, alpha=0.1, s=4*lw, facecolor=starcolor, edgecolor=None, zorder=3)
-        ax.scatter(x,y, alpha=0.2, s=0.5*lw, facecolor=starcolor, edgecolor=None, zorder=3)
-        #medium stars
-        x, y = [], []
-        for i in range(16):
-            x.append(random.uniform(mi,ma))
-            y.append(random.uniform(mi,ma))
-        ax.scatter(x,y, alpha=0.1, s=15*lw, facecolor=starcolor, edgecolor=None, zorder=3)
-        ax.scatter(x,y, alpha=0.1, s=5*lw, facecolor=starcolor, edgecolor=None, zorder=3)
-        ax.scatter(x,y, alpha=0.5, s=2*lw, facecolor=starcolor, edgecolor=None, zorder=3)
-        random.setstate(prestate)
-
+        ax.scatter(getattr(prim,axes[0]),getattr(prim,axes[1]), s=size*lw, facecolor=sun, edgecolor=None, zorder=3)
     else:
         ax.scatter(getattr(prim,axes[0]),getattr(prim,axes[1]), marker="*", s=35*lw, facecolor="black", edgecolor=None, zorder=3)
     
     proj = {}
     for p, o in p_orb_pairs:
         prim = p.jacobi_com if primary is None else primary 
-        if fancy:
-            ax.scatter(getattr(p,axes[0]), getattr(p,axes[1]), s=25*lw, facecolor=colors, edgecolor=None, zorder=3)
-        else:
-            ax.scatter(getattr(p,axes[0]), getattr(p,axes[1]), s=25*lw, facecolor="black", edgecolor=None, zorder=3)
 
         colori = next(coloriterator)
+
+        if fancy:
+            ax.scatter(getattr(p,axes[0]), getattr(p,axes[1]), s=25*lw, facecolor=colori, edgecolor=None, zorder=3)
+        else:
+            ax.scatter(getattr(p,axes[0]), getattr(p,axes[1]), s=25*lw, facecolor="black", edgecolor=None, zorder=3)
        
-        if show_orbit is True:
-            alpha_final = 0. if trails is True else 1. # fade to 0 with trails
+        if orbit_type is not None:
+            alpha_final = 0. if orbit_type=="trail" else 1. # fade to 0 with trail
 
             hyperbolic = o.a < 0. # Boolean for whether orbit is hyperbolic
             if hyperbolic is False:
                 pts = np.array(p.sample_orbit(Npts=Narc+1, primary=prim))
                 proj['x'],proj['y'],proj['z'] = [pts[:,i] for i in range(3)]
-                lc = fading_line(proj[axes[0]], proj[axes[1]], colori, alpha_final=alpha_final, lw=lw, glow=glow)
+                lc = fading_line(proj[axes[0]], proj[axes[1]], colori, alpha_final=alpha_final, lw=lw, glow=fancy)
                 if type(lc) is list:
                     for l in lc:
                         ax.add_collection(l)
@@ -308,17 +287,17 @@ def OrbitPlotOneSlice(sim, ax, lim=None, limz=None, Narc=100, color=False, peria
                 pts = np.array(p.sample_orbit(Npts=Narc+1, primary=prim, useTrueAnomaly=False))
                 # true anomaly stays close to limiting value and switches quickly at pericenter for hyperbolic orbit, so use mean anomaly
                 proj['x'],proj['y'],proj['z'] = [pts[:,i] for i in range(3)]
-                lc = fading_line(proj[axes[0]], proj[axes[1]], colori, alpha_final=alpha_final, lw=lw, glow=glow)
+                lc = fading_line(proj[axes[0]], proj[axes[1]], colori, alpha_final=alpha_final, lw=lw, glow=fancy)
                 if type(lc) is list:
                     for l in lc:
                         ax.add_collection(l)
                 else:
                     ax.add_collection(lc)
           
-                alpha = 0.2 if trails is True else 1.
+                alpha = 0.2 if orbit_type=="trail" else 1.
                 pts = np.array(p.sample_orbit(Npts=Narc+1, primary=prim, trailing=False, useTrueAnomaly=False))
                 proj['x'],proj['y'],proj['z'] = [pts[:,i] for i in range(3)]
-                lc = fading_line(proj[axes[0]], proj[axes[1]], colori, alpha_initial=alpha, alpha_final=alpha, lw=lw, glow=glow)
+                lc = fading_line(proj[axes[0]], proj[axes[1]], colori, alpha_initial=alpha, alpha_final=alpha, lw=lw, glow=fancy)
                 if type(lc) is list:
                     for l in lc:
                         ax.add_collection(l)
@@ -329,4 +308,38 @@ def OrbitPlotOneSlice(sim, ax, lim=None, limz=None, Narc=100, color=False, peria
             newp = Particle(a=o.a, f=0., inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=p.m, primary=prim, simulation=sim)
             ax.plot([getattr(prim,axes[0]), getattr(newp,axes[0])], [getattr(prim,axes[1]), getattr(newp,axes[1])], linestyle="dotted", c=colori, zorder=1, lw=lw)
             ax.scatter([getattr(newp,axes[0])],[getattr(newp,axes[1])], marker="o", s=5.*lw, facecolor="none", edgecolor=colori, zorder=1)
+
+
+def OrbitPlotAddFancyStars(ax,lw,slices=1.):
+    import numpy as np
+    # safe the current random seed to restore later
+    os = np.random.get_state()
+    # always produce the same stars
+    np.random.seed(1) 
+
+    ax.set_facecolor((0.,0.,0.))
+    for pos in ['top', 'bottom', 'right', 'left']:
+        ax.spines[pos].set_edgecolor((0.3,0.3,0.3))
+    
+    starcolor = (1.,1.,1.)
+    starsurfacedensity = 0.8
+
+    area = np.sqrt(np.sum(np.square(ax.transAxes.transform([1.,1.]) - ax.transAxes.transform([0.,0.]))))*slices
+    nstars = int(starsurfacedensity*area)
+
+    #small stars
+    xy = np.random.uniform(size=(nstars,2))
+    ax.scatter(xy[:,0],xy[:,1], transform=ax.transAxes, alpha=0.05, s=8*lw, facecolor=starcolor, edgecolor=None, zorder=3)
+    ax.scatter(xy[:,0],xy[:,1], transform=ax.transAxes, alpha=0.1, s=4*lw, facecolor=starcolor, edgecolor=None, zorder=3)
+    ax.scatter(xy[:,0],xy[:,1], transform=ax.transAxes, alpha=0.2, s=0.5*lw, facecolor=starcolor, edgecolor=None, zorder=3)
+    
+    #large stars
+    xy = np.random.uniform(size=(nstars//4,2))
+    ax.scatter(xy[:,0],xy[:,1], transform=ax.transAxes, alpha=0.1, s=15*lw, facecolor=starcolor, edgecolor=None, zorder=3)
+    ax.scatter(xy[:,0],xy[:,1], transform=ax.transAxes, alpha=0.1, s=5*lw, facecolor=starcolor, edgecolor=None, zorder=3)
+    ax.scatter(xy[:,0],xy[:,1], transform=ax.transAxes, alpha=0.5, s=2*lw, facecolor=starcolor, edgecolor=None, zorder=3)
+
+    np.random.set_state(os)
+
+
 
