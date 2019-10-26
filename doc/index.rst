@@ -57,6 +57,10 @@ To learn more about how to use REBOUND with C, study the examples in the `exampl
 
 Note:  If you want to run REBOUND on Windows, the best way is likely to install the Windows Subsystem for Linux. After installing the gcc compiler, e.g., sudo apt-get install gcc, you should be able to install REBOUND and any python libraries by following the Linux/Mac installation instructions in this documentation. Unfortunately we do not have Windows installations ourselves, so we cannot actively support installation problems. Thanks to Keto /Zhang for finding this workaround.
 
+YouTube Videos
+--------------
+Short YouTube videos describing various aspects of REBOUND are available at https://www.youtube.com/channel/UC2wonKI0wWwGi5-JqJtMsYQ/videos.
+
 Contributors
 ------------
 * Hanno Rein, University of Toronto, <hanno@hanno-rein.de>
