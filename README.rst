@@ -87,6 +87,7 @@ http://rebound.readthedocs.org
 We're alway trying to improve REBOUND and extending the documention is high on our to-do list.
 If you have trouble installing or using REBOUND, please open an issue on github and we'll try to help as much as we can.
 
+There are also short YouTube videos describing various aspects of REBOUND available at https://www.youtube.com/channel/UC2wonKI0wWwGi5-JqJtMsYQ/videos.
 
 Additional Physics
 ------------------
