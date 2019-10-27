@@ -820,6 +820,13 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
     return r->status;
 }
 
+  
+#ifdef OPENMP
+void reb_omp_set_num_threads(int num_threads){
+    omp_set_num_threads(num_threads);
+}
+#endif // OPENMP
+
 const char* reb_logo[26] = {
 "          _                           _  ",
 "         | |                         | | ",

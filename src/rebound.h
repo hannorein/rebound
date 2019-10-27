@@ -1153,6 +1153,13 @@ void reb_mpi_init(struct reb_simulation* const r);
 void reb_mpi_finalize(struct reb_simulation* const r);
 #endif // MPI
 
+#ifdef OPENMP
+/**
+ * @brief Wrapper method to set number of OpenMP threads from python.
+ */
+void reb_omp_set_num_threads(int num_threads);
+#endif // OPENMP
+
 /**
  * @cond PRIVATE
  */
