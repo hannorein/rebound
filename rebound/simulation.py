@@ -2050,7 +2050,9 @@ class Particles(MutableMapping):
     @property
     def _ps(self):
         ParticleList = Particle*self.sim.N
-        return ParticleList.from_address(ctypes.addressof(self.sim._particles.contents))
+        pl = ParticleList.from_address(ctypes.addressof(self.sim._particles.contents))
+        pl._sim = self.sim # keep reference to sim until ParticleList is deallocated to avoid memory issues
+        return pl
 
     def __getitem__(self, key):
         hash_types = c_uint32, c_uint, c_ulong
