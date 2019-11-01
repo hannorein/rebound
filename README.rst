@@ -27,8 +27,8 @@ REBOUND - An open-source multi-purpose N-body code
     :target: http://arxiv.org/abs/1903.04972
 .. image:: http://img.shields.io/badge/arXiv-1907.11335-green.svg?style=flat 
     :target: https://arxiv.org/abs/1907.11335
-.. image:: https://readthedocs.org/projects/pip/badge/?version=latest
-    :target: http://rebound.readthedocs.org/
+.. image:: https://readthedocs.org/projects/rebound/badge/?version=latest
+    :target: https://rebound.readthedocs.io/en/latest/?badge=latest
 .. image:: https://mybinder.org/badge_logo.svg 
     :target: https://mybinder.org/v2/gh/hannorein/rebound/master
     
