@@ -14,7 +14,11 @@ ifeq ($(OS), Darwin)
 endif
 
 ifeq ($(MPI), 1)
-	CC?=mpicc
+	ifeq ($(origin CC),default)
+		CC:=mpicc
+	else
+		CC?=mpicc
+	endif
 	PREDEF+= -DMPI
 else
 	CC?=cc
