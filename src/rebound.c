@@ -732,11 +732,11 @@ static void* reb_integrate_raw(void* args){
     reb_sigint = 0;
     signal(SIGINT, reb_sigint_handler);
     struct reb_thread_info* thread_info = (struct reb_thread_info*)args;
+	struct reb_simulation* const r = thread_info->r;
 #ifdef MPI
     // Distribute particles
     reb_communication_mpi_distribute_particles(r);
 #endif // MPI
-    struct reb_simulation* const r = thread_info->r;
 
     double last_full_dt = r->dt; // need to store r->dt in case timestep gets artificially shrunk to meet exact_finish_time=1
     r->dt_last_done = 0.; // Reset in case first timestep attempt will fail

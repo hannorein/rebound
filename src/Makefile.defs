@@ -14,10 +14,10 @@ ifeq ($(OS), Darwin)
 endif
 
 ifeq ($(MPI), 1)
-	CC?=mpicc
+	CC=mpicc
 	PREDEF+= -DMPI
 else
-	CC?=cc
+	CC=cc
 endif
 
 ifeq ($(FFTW), 1)
