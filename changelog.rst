@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.11.0
+--------------
+* This version adds the new Embedded Operator Splitting methods from Rein (2019). See the tutorial in the ipython_examples folder for how to use them. 
+
 Version 3.10.2
 --------------
 * Updates to OrbitPlot. Includes better layout of plot and some syntax changes. See OrbitPlot documentation for the new syntax.

@@ -57,6 +57,7 @@ Some more advanced topics are covered in the following examples.
    ipython/TransitTimingVariations
    ipython/HyperbolicOrbits
    ipython/HighOrderSymplectic
+   ipython/EmbeddedOperatorSplittingMethods
 
 Checkpoints and Simulation Archive
 ----------------------------------

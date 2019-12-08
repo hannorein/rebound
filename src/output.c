@@ -355,6 +355,11 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     WRITE_FIELD(SABA_KEEPUNSYNC,    &r->ri_saba.keep_unsynchronized,    sizeof(unsigned int));
     WRITE_FIELD(WHFAST_CORRECTOR2,  &r->ri_whfast.corrector2,           sizeof(unsigned int));
     WRITE_FIELD(WHFAST_KERNEL,      &r->ri_whfast.kernel,               sizeof(unsigned int));
+    WRITE_FIELD(EOS_PHI0,           &r->ri_eos.phi0,                    sizeof(unsigned int));
+    WRITE_FIELD(EOS_PHI1,           &r->ri_eos.phi1,                    sizeof(unsigned int));
+    WRITE_FIELD(EOS_N,              &r->ri_eos.n,                       sizeof(unsigned int));
+    WRITE_FIELD(EOS_SAFEMODE,       &r->ri_eos.safe_mode,               sizeof(unsigned int));
+    WRITE_FIELD(EOS_ISSYNCHRON,     &r->ri_eos.is_synchronized,         sizeof(unsigned int));
     int functionpointersused = 0;
     if (r->coefficient_of_restitution ||
         r->collision_resolve ||

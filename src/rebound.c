@@ -64,7 +64,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.10.2";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.11.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_error_message_waiting(struct reb_simulation* const r);
@@ -371,7 +371,6 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_mercurius.particles_backup = NULL;
     r->ri_mercurius.particles_backup_additionalforces = NULL;
     r->ri_mercurius.encounter_map = NULL;
-
     // ********** JANUS
     r->ri_janus.allocated_N = 0;
     r->ri_janus.p_int = NULL;
@@ -572,6 +571,13 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_mercurius.is_synchronized = 1;
     r->ri_mercurius.encounterN = 0;
     r->ri_mercurius.hillfac = 3;
+    
+    // ********** EOS
+    r->ri_eos.n = 2;
+    r->ri_eos.phi0 = REB_EOS_LF;
+    r->ri_eos.phi1 = REB_EOS_LF;
+    r->ri_eos.safe_mode = 1;
+    r->ri_eos.is_synchronized = 1;
 
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.
     r->tree_needs_update= 0;
@@ -732,11 +738,11 @@ static void* reb_integrate_raw(void* args){
     reb_sigint = 0;
     signal(SIGINT, reb_sigint_handler);
     struct reb_thread_info* thread_info = (struct reb_thread_info*)args;
+	struct reb_simulation* const r = thread_info->r;
 #ifdef MPI
     // Distribute particles
     reb_communication_mpi_distribute_particles(r);
 #endif // MPI
-    struct reb_simulation* const r = thread_info->r;
 
     double last_full_dt = r->dt; // need to store r->dt in case timestep gets artificially shrunk to meet exact_finish_time=1
     r->dt_last_done = 0.; // Reset in case first timestep attempt will fail

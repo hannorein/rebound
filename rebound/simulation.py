@@ -20,7 +20,7 @@ import types
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "mercurius": 3, "line": 4}
@@ -33,6 +33,17 @@ SABA_TYPES = {
         "cl1": 0x200, "cl2": 0x201, "cl3": 0x202, "cl4": 0x203,
         "10,4": 0x4, "8,6,4": 0x5, "10,6,4": 0x6,
         "h8,4,4": 0x7, "h8,6,4": 0x8, "h10,6,4": 0x9,
+        }
+EOS_TYPES = {
+        "lf": 0x00,
+        "lf4": 0x01,
+        "lf6": 0x02,
+        "lf8": 0x03,
+        "lf4_2": 0x04,
+        "lf8_6_4": 0x05,
+        "plf7_6_4": 0x06,
+        "pmlf4": 0x07,
+        "pmlf6": 0x08,
         }
 
 # Format: Majorerror, id, message
@@ -946,6 +957,7 @@ class Simulation(Structure):
         - ``'SABACL4'`` 
         - ``'SABACM4'`` 
         - ``'SABA(10,6,4)'`` 
+        - ``'EOS'`` 
         - ``'none'``
         
         Check the online documentation for a full description of each of the integrators. 
@@ -1859,6 +1871,80 @@ class reb_simulation_integrator_janus(Structure):
                 ("_allocated_N",c_uint),
                 ]
 
+class reb_simulation_integrator_eos(Structure):
+    """
+    This class is an abstraction of the C-struct reb_simulation_integrator_eos.
+    It controls the behaviour of the Embedded Operator Splitting methods. See Rein (2019) 
+    for more details.
+    
+    :ivar int,string phi0      
+        Sets the Phi_0 operator splitting method
+    :ivar int,string phi1     
+        Sets the Phi_1 operator splitting method
+    :ivar int n     
+        Sets the number of substeps taken by Phi_1
+    :ivar int safe_mode  
+        By default safe_mode is on (1). Set to 0 (off) to combine
+        drift step at the beginning and end of the Phi0 integrator steps.
+
+    Example usage:
+    
+    >>> sim = rebound.Simulation()
+    >>> sim.integrator = "eos"
+    >>> sim.ri_eos.phi0 = "LF8_6_4"
+    >>> sim.ri_eos.phi1 = "LF8"
+    >>> sim.ri_eos.n = 1
+    >>> sim.ri_eos.safe_mode = 0
+
+    """
+    @property
+    def phi0(self):
+        """
+        Get or set the type of operator splitting type for phi0.
+        """
+        i = self._phi0
+        for name, _i in EOS_TYPES.items():
+            if i==_i:
+                return name
+        return i
+    @phi0.setter
+    def phi0(self, value):
+        if isinstance(value, int):
+            self._phi0 = value
+        elif isinstance(value, basestring):
+            value = value.lower().replace(" ", "").replace("(", "").replace(")", "")
+            if value in EOS_TYPES: 
+                self._phi0 = EOS_TYPES[value]
+            else:
+                raise ValueError("Warning. EOS type %s not found."%value)
+    @property
+    def phi1(self):
+        """
+        Get or set the type of operator splitting type for phi1.
+        """
+        i = self._phi1
+        for name, _i in EOS_TYPES.items():
+            if i==_i:
+                return name
+        return i
+    @phi1.setter
+    def phi1(self, value):
+        if isinstance(value, int):
+            self._phi1 = value
+        elif isinstance(value, basestring):
+            value = value.lower().replace(" ", "").replace("(", "").replace(")", "")
+            if value in EOS_TYPES: 
+                self._phi1 = EOS_TYPES[value]
+            else:
+                raise ValueError("Warning. EOS type %s not found."%value)
+    _fields_ = [
+                ("_phi0",c_uint),
+                ("_phi1",c_uint),
+                ("n",c_uint),
+                ("safe_mode",c_uint),
+                ("is_synchonized",c_uint),
+                ]
+
 class reb_simulation_integrator_mercurius(Structure):
     """
     This class is an abstraction of the C-struct reb_simulation_integrator_mercurius.
@@ -2004,6 +2090,7 @@ Simulation._fields_ = [
                 ("ri_ias15", reb_simulation_integrator_ias15),
                 ("ri_mercurius", reb_simulation_integrator_mercurius),
                 ("ri_janus", reb_simulation_integrator_janus),
+                ("ri_eos", reb_simulation_integrator_eos),
                 ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_pre_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
