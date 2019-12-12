@@ -3,6 +3,11 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.11.1
+--------------
+* Added support for test particles and first-order variational particles to the Embedded Operator Splitting (EOS).
+* BASIC Gravity routine changed from O(N^2) to O(0.5 N^2). This should lead to a speed-up in most cases but will break bit-wise reproducibility from earlier versions as the ordering of floating point opperations has changed.
+
 Version 3.11.0
 --------------
 * This version adds the new Embedded Operator Splitting methods from Rein (2019). See the tutorial in the ipython_examples folder for how to use them. 
