@@ -23,7 +23,7 @@ import types
 INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4}
-COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "mercurius": 3, "line": 4}
+COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "mercurius": 3, "line": 4, "linetree": 5}
 VISUALIZATIONS = {"none": 0, "opengl": 1, "webgl": 2}
 WHFAST_KERNELS = {"default": 0, "modifiedkick": 1, "composition": 2, "lazy": 3}
 WHFAST_COORDINATES = {"jacobi": 0, "democraticheliocentric": 1, "whds": 2}

@@ -3,6 +3,14 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.12.0
+--------------
+* Added LINETREE collision search algorithm. 
+  This algorithm uses a tree to check if any two particle trajectories overlapped during the last timestep. This
+  should be beneficial in large N, low density situation as it allows for much larger timesteps. A modification of the
+  collision resolve routine might be necessary to allow for multiple collisions of the same particle during one timestep.
+  This depends on the application and the default is to only allow one collision per timestep.
+
 Version 3.11.1
 --------------
 * Added support for test particles and first-order variational particles to the Embedded Operator Splitting (EOS).

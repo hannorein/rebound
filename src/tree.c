@@ -189,13 +189,15 @@ static struct reb_treecell *reb_tree_update_cell(struct reb_simulation* const r,
 	} 
 	// Leaf nodes
 	if (reb_tree_particle_is_inside_cell(r, node) == 0) {
-		int oldpos = node->pt;
-		struct reb_particle reinsertme = r->particles[oldpos];
-		(r->N)--;
-		r->particles[oldpos] = r->particles[r->N];
-		r->particles[oldpos].c->pt = oldpos;
-        if (!isnan(reinsertme.y)){ // Do not reinsert if flagged for removal
-		    reb_add(r, reinsertme);
+        int oldpos = node->pt;
+        struct reb_particle reinsertme = r->particles[oldpos];
+        if (r->N){ // Check if there remains any particle in the simulation 
+            (r->N)--;
+            r->particles[oldpos] = r->particles[r->N];
+            r->particles[oldpos].c->pt = oldpos;
+            if (!isnan(reinsertme.y)){ // Do not reinsert if flagged for removal
+                reb_add(r, reinsertme);
+            }
         }
 		free(node);
 		return NULL; 
