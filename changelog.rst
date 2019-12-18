@@ -3,6 +3,10 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.12.1
+--------------
+* Bug fixes to LINE and LINETREE algorithms
+  
 Version 3.12.0
 --------------
 * Added LINETREE collision search algorithm. 

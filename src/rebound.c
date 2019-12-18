@@ -64,7 +64,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.12.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.12.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_error_message_waiting(struct reb_simulation* const r);
@@ -89,7 +89,7 @@ void reb_step(struct reb_simulation* const r){
     // Update and simplify tree. 
     // Prepare particles for distribution to other nodes. 
     // This function also creates the tree if called for the first time.
-    if (r->tree_needs_update || r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE){
+    if (r->tree_needs_update || r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
         // Check for root crossings.
         PROFILING_START()
         reb_boundary_check(r);     

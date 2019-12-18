@@ -305,7 +305,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
                 r->particles[l].ap = NULL;
                 r->particles[l].sim = r;
             }
-            if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE){
+            if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
                 for (int l=0;l<r->allocatedN;l++){
                     reb_tree_add_particle_to_tree(r, l);
                 }
