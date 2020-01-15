@@ -447,7 +447,7 @@ class Particle(Structure):
 
         return o
     
-    def sample_orbit(self, Npts=100, primary=None, trailing=True, timespan=None, useTrueAnomaly=True):
+    def sample_orbit(self, Npts=100, primary=None, trailing=True, timespan=None, useTrueAnomaly=None):
         """
         Returns a nested list of xyz positions along the osculating orbit of the particle. 
         If primary is not passed, returns xyz positions along the Jacobi osculating orbit
@@ -466,7 +466,7 @@ class Particle(Structure):
             Defaults to the orbital period for bound orbits, and to the rough time it takes the orbit to move by the current distance from the primary for a hyperbolic orbit. Implementation currently only supports this option if useTrueAnomaly=False.
         useTrueAnomaly: bool, optional
             Will sample equally spaced points in true anomaly if True, otherwise in mean anomaly.
-            Latter might be better for hyperbolic orbits, where true anomaly can stay near the limiting value for a long time, and then switch abruptly at pericenter. (Default: True)
+            Latter might be better for hyperbolic orbits, where true anomaly can stay near the limiting value for a long time, and then switch abruptly at pericenter. (Default: True for bound orbits, False for unbound orbits)
         """
         pts = []
         if primary is None:
@@ -484,6 +484,12 @@ class Particle(Structure):
         if trailing is True:
             lim_phase *= -1 # sample phase backwards from current value
         phase = [lim_phase*i/(Npts-1) for i in range(Npts)]
+
+        if useTrueAnomaly is None:
+            if o.a <0.:
+                useTrueAnomaly = False
+            else:
+                useTrueAnomaly = True
 
         for i,ph in enumerate(phase):
             if useTrueAnomaly is True:

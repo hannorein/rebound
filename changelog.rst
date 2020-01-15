@@ -3,6 +3,36 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.12.1
+--------------
+* Bug fixes to LINE and LINETREE algorithms
+  
+Version 3.12.0
+--------------
+* Added LINETREE collision search algorithm. 
+  This algorithm uses a tree to check if any two particle trajectories overlapped during the last timestep. This
+  should be beneficial in large N, low density situation as it allows for much larger timesteps. A modification of the
+  collision resolve routine might be necessary to allow for multiple collisions of the same particle during one timestep.
+  This depends on the application and the default is to only allow one collision per timestep.
+
+Version 3.11.1
+--------------
+* Added support for test particles and first-order variational particles to the Embedded Operator Splitting (EOS).
+* BASIC Gravity routine changed from O(N^2) to O(0.5 N^2). This should lead to a speed-up in most cases but will break bit-wise reproducibility from earlier versions as the ordering of floating point opperations has changed.
+
+Version 3.11.0
+--------------
+* This version adds the new Embedded Operator Splitting methods from Rein (2019). See the tutorial in the ipython_examples folder for how to use them. 
+
+Version 3.10.2
+--------------
+* Updates to OrbitPlot. Includes better layout of plot and some syntax changes. See OrbitPlot documentation for the new syntax.
+
+Version 3.10.1
+--------------
+* Small syntax changes for SABA integrator family. 
+* Includes high order integrators by Blanes et al. (2013).
+
 Version 3.10.0
 --------------
 * Changes for the new version of REBOUNDx. 

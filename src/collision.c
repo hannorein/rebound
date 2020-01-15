@@ -46,6 +46,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
 static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
+static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simulation* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r, double p1_r_plus_dtv, struct reb_collision* collision_nearest, struct reb_treecell* c, double maxdrift);
 
 void reb_collision_search(struct reb_simulation* const r){
 	int N = r->N - r->N_var;
@@ -161,28 +162,31 @@ void reb_collision_search(struct reb_simulation* const r){
 					gb.shiftvz += p1.vz;
 					// Loop over all particles again
 					for (int j=i+1;j<N;j++){
-						struct reb_particle p2 = particles[j];
-						double ax = gb.shiftx - p2.x; 
-						double ay = gb.shifty - p2.y; 
-						double az = gb.shiftz - p2.z; 
-						double dx = (gb.shiftvx - p2.vx); 
-						double dy = (gb.shiftvy - p2.vy); 
-						double dz = (gb.shiftvz - p2.vz); 
-                        double dn2 = dx*dx + dy*dy + dz*dz;
-						double sr2 = (p1.r + p2.r)*(p1.r + p2.r); 
-                        double a = dn2;
-                        double b = 2.*(ax*dx + ay*dy + az*dz);
-                        double c = ax*ax + ay*ay + az*az - sr2;
-                        double s = sqrt(b*b-4.*a*c);
-                        double t1 = (-b+s)/(2.*a);
-                        double t2 = (-b-s)/(2.*a);
-                        double tmin = MIN(t1,t2);
-                        // No relative motion
-                        if (dn2<1e-30) continue;
-                        // Check if a collision occured in the last timestep
-                        // - checks if first contact was in last timestep (ignore second contact to avoid double counting)
-                        // - only works for forward integrations
-                        if ( tmin<-dt_last_done || tmin>0. || isnan(tmin) ) continue;
+					    struct reb_particle p2 = particles[j];
+                        const double dx1 = gb.shiftx - p2.x; // distance at end
+                        const double dy1 = gb.shifty - p2.y;
+                        const double dz1 = gb.shiftz - p2.z;
+                        const double r1 = (dx1*dx1 + dy1*dy1 + dz1*dz1);
+                        const double dvx1 = gb.shiftvx - p2.vx; 
+                        const double dvy1 = gb.shiftvy - p2.vy;
+                        const double dvz1 = gb.shiftvz - p2.vz;
+                        const double dx2 = dx1 -dt_last_done*dvx1; // distance at beginning
+                        const double dy2 = dy1 -dt_last_done*dvy1;
+                        const double dz2 = dz1 -dt_last_done*dvz1;
+                        const double r2 = (dx2*dx2 + dy2*dy2 + dz2*dz2);
+                        const double t_closest = (dx1*dvx1 + dy1*dvy1 + dz1*dvz1)/(dvx1*dvx1 + dvy1*dvy1 + dvz1*dvz1);
+
+                        double rmin2_ab = MIN(r1,r2);
+                        if (t_closest/dt_last_done>=0. && t_closest/dt_last_done<=1.){
+                            const double dx3 = dx1-t_closest*dvx1; // closest approach
+                            const double dy3 = dy1-t_closest*dvy1;
+                            const double dz3 = dz1-t_closest*dvz1;
+                            const double r3 = (dx3*dx3 + dy3*dy3 + dz3*dz3);
+                            rmin2_ab = MIN(rmin2_ab, r3);
+                        }
+                        double rsum = p1.r + p2.r;
+                        if (rmin2_ab>rsum*rsum) continue;
+
 						// Add particles to collision array.
 						if (r->collisions_allocatedN<=collisions_N){
 							// Allocate memory if there is no space in array.
@@ -254,6 +258,66 @@ void reb_collision_search(struct reb_simulation* const r){
 						struct reb_treecell* rootcell = r->tree_root[ri];
 						if (rootcell!=NULL){
 							reb_tree_get_nearest_neighbour_in_cell(r, &collisions_N, gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
+						}
+					}
+				}
+				}
+				}
+				// Continue if no collision was found
+				if (collision_nearest.p2==-1) continue;
+			}
+		}
+		break;
+		case REB_COLLISION_LINETREE:
+		{
+            // Calculate max drift (can also be stored in tree for further speedup)
+            double vmax2 = 0.;
+			for (int i=0;i<N;i++){
+				struct reb_particle p1 = particles[i];
+                vmax2 = MAX(vmax2, p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz);
+            }
+            double maxdrift = r->dt_last_done*sqrt(vmax2);
+			// Update and simplify tree. 
+			// Prepare particles for distribution to other nodes. 
+			reb_tree_update(r);          
+
+			// Loop over ghost boxes, but only the inner most ring.
+			int nghostxcol = (r->nghostx>1?1:r->nghostx);
+			int nghostycol = (r->nghosty>1?1:r->nghosty);
+			int nghostzcol = (r->nghostz>1?1:r->nghostz);
+			const struct reb_particle* const particles = r->particles;
+			const int N = r->N - r->N_var;
+			// Loop over all particles
+#pragma omp parallel for schedule(guided)
+			for (int i=0;i<N;i++){
+#ifndef OPENMP
+                if (reb_sigint) return;
+#endif // OPENMP
+				struct reb_particle p1 = particles[i];
+				struct reb_collision collision_nearest;
+				collision_nearest.p1 = i;
+				collision_nearest.p2 = -1;
+				double p1_r = p1.r;
+                // Add drift during last timestep
+                double p1_r_plus_dtv = p1_r + r->dt_last_done*sqrt(p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz);
+				// Loop over ghost boxes.
+				for (int gbx=-nghostxcol; gbx<=nghostxcol; gbx++){
+				for (int gby=-nghostycol; gby<=nghostycol; gby++){
+				for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
+					// Calculated shifted position (for speedup). 
+					struct reb_ghostbox gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
+					struct reb_ghostbox gbunmod = gb;
+					gb.shiftx += p1.x; 
+					gb.shifty += p1.y; 
+					gb.shiftz += p1.z; 
+					gb.shiftvx += p1.vx; 
+					gb.shiftvy += p1.vy; 
+					gb.shiftvz += p1.vz; 
+					// Loop over all root boxes.
+					for (int ri=0;ri<r->root_n;ri++){
+						struct reb_treecell* rootcell = r->tree_root[ri];
+						if (rootcell!=NULL){
+							reb_tree_check_for_overlapping_trajectories_in_cell(r, &collisions_N, gb, gbunmod,ri,p1_r,p1_r_plus_dtv,&collision_nearest,rootcell,maxdrift);
 						}
 					}
 				}
@@ -441,6 +505,73 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
 		}
 	}
 }
+
+
+static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simulation* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r, double p1_r_plus_dtv, struct reb_collision* collision_nearest, struct reb_treecell* c, double maxdrift){
+    const struct reb_particle* const particles = r->particles;
+    if (c->pt>=0){     
+        // c is a leaf node
+        if (c->pt != collision_nearest->p1){
+            struct reb_particle p2 = particles[c->pt];
+            double dt_done_last = r->dt_last_done;
+            const double dx1 = gb.shiftx - p2.x; // distance at beginning
+            const double dy1 = gb.shifty - p2.y;
+            const double dz1 = gb.shiftz - p2.z;
+            const double r1 = (dx1*dx1 + dy1*dy1 + dz1*dz1);
+            const double dvx1 = gb.shiftvx - p2.vx; 
+            const double dvy1 = gb.shiftvy - p2.vy;
+            const double dvz1 = gb.shiftvz - p2.vz;
+            const double dx2 = dx1 -dt_done_last*dvx1; // distance at end
+            const double dy2 = dy1 -dt_done_last*dvy1;
+            const double dz2 = dz1 -dt_done_last*dvz1;
+            const double r2 = (dx2*dx2 + dy2*dy2 + dz2*dz2);
+            const double t_closest = (dx1*dvx1 + dy1*dvy1 + dz1*dvz1)/(dvx1*dvx1 + dvy1*dvy1 + dvz1*dvz1);
+
+            double rmin2_ab = MIN(r1,r2);
+            if (t_closest/dt_done_last>=0. && t_closest/dt_done_last<=1.){
+                const double dx3 = dx1-t_closest*dvx1; // closest approach
+                const double dy3 = dy1-t_closest*dvy1;
+                const double dz3 = dz1-t_closest*dvz1;
+                const double r3 = (dx3*dx3 + dy3*dy3 + dz3*dz3);
+                rmin2_ab = MIN(rmin2_ab, r3);
+            }
+            double rsum = p1_r + p2.r;
+            if (rmin2_ab>rsum*rsum) return;
+            collision_nearest->ri = ri;
+            collision_nearest->p2 = c->pt;
+            collision_nearest->gb = gbunmod;
+            // Save collision in collisions array.
+#pragma omp critical
+            {
+                if (r->collisions_allocatedN<=(*collisions_N)){
+                    // Init to 32 if no space has been allocated yet, otherwise double it.
+                    r->collisions_allocatedN = r->collisions_allocatedN ? r->collisions_allocatedN * 2 : 32;
+                    r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocatedN);
+                }
+                r->collisions[(*collisions_N)] = *collision_nearest;
+                (*collisions_N)++;
+            }
+        }
+    }else{        
+        // c is not a leaf node
+        double dx = gb.shiftx - c->x;
+        double dy = gb.shifty - c->y;
+        double dz = gb.shiftz - c->z;
+        double r2 = dx*dx + dy*dy + dz*dz;
+        double rp  = p1_r_plus_dtv + maxdrift + 0.86602540378443*c->w;
+        // Check if we need to decent into daughter cells
+        if (r2 < rp*rp ){
+            for (int o=0;o<8;o++){
+                struct reb_treecell* d = c->oct[o];
+                if (d!=NULL){
+                    reb_tree_check_for_overlapping_trajectories_in_cell(r, collisions_N, gb,gbunmod,ri,p1_r,p1_r_plus_dtv,collision_nearest,d,maxdrift);
+                }
+            }
+        }
+    }
+}
+
+
 
 
 int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c){

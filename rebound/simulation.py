@@ -20,14 +20,31 @@ import types
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4}
-COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "mercurius": 3, "line": 4}
+COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "mercurius": 3, "line": 4, "linetree": 5}
 VISUALIZATIONS = {"none": 0, "opengl": 1, "webgl": 2}
 WHFAST_KERNELS = {"default": 0, "modifiedkick": 1, "composition": 2, "lazy": 3}
 WHFAST_COORDINATES = {"jacobi": 0, "democraticheliocentric": 1, "whds": 2}
-SABA_CORRECTORS = {"none": 0, "modifiedkick": 1, "lazy": 2}
+SABA_TYPES = {
+        "1": 0x0, "2": 0x1, "3": 0x2, "4": 0x3,
+        "cm1": 0x100, "cm2": 0x101, "cm3": 0x102, "cm4": 0x103,
+        "cl1": 0x200, "cl2": 0x201, "cl3": 0x202, "cl4": 0x203,
+        "10,4": 0x4, "8,6,4": 0x5, "10,6,4": 0x6,
+        "h8,4,4": 0x7, "h8,6,4": 0x8, "h10,6,4": 0x9,
+        }
+EOS_TYPES = {
+        "lf": 0x00,
+        "lf4": 0x01,
+        "lf6": 0x02,
+        "lf8": 0x03,
+        "lf4_2": 0x04,
+        "lf8_6_4": 0x05,
+        "plf7_6_4": 0x06,
+        "pmlf4": 0x07,
+        "pmlf6": 0x08,
+        }
 
 # Format: Majorerror, id, message
 BINARY_WARNINGS = [
@@ -149,55 +166,60 @@ class reb_simulation_integrator_ias15(Structure):
 class reb_simulation_integrator_saba(Structure):
     """
     This class is an abstraction of the C-struct reb_simulation_integrator_saba.
-    It controls the behaviour of the SABA / SABAC / SABACL integrator family.
+    It controls the behaviour of the SABA integrator family.
     See Rein, Tamayo, and Brown (2019) for more details.
 
-    :ivar int k:      
-        Sets the number of evalutations. k=1 is SABA1/SABAC1, k=2 is SABA2/SABAC2
-        and so forth.
-    :ivar int corrector:      
-        Turns correctors off (0), or specifices which corrector to use. Options are
-        "modifiedkick" (1) or "lazy" (2)
+    :ivar str type:      
+        Set the type of SABA integrator manually. The type can also be set by setting
+        the integrator field in the REBOUND simulation. 
+
+    :ivar int safe_mode:      
+        This variable acts the same as for WHFast.
+        If safe_mode is 1 (default) particles can be modified between
+        timesteps and particle velocities and positions are always synchronised.
+        If you set safe_mode to 0, the speed and accuracy of the integrator will improve.
+        However, make sure you are aware of the consequences. Read the iPython tutorial
+        on advanced WHFast usage to learn more.
    
     Example usage:
     
     >>> sim = rebound.Simulation()
-    >>> sim.integrator = "saba"
-    >>> sim.ri_saba.corrector =  "lazy"
-    >>> sim.ri_saba.k = 4
+    >>> sim.integrator = "SABA(10,6,4)"
+    
+    >>> sim = rebound.Simulation()
+    >>> sim.integrator = "SABA"
+    >>> sim.ri_saba.type = "(10,6,4)"
+    
+    >>> sim = rebound.Simulation()
+    >>> sim.integrator = "SABACL4"
+    >>> sim.ri_saba.safe_mode = 0
 
     """
-    _fields_ = [("k", c_uint),
-                ("_corrector", c_uint),
+    _fields_ = [("_type", c_uint),
                 ("safe_mode", c_uint),
                 ("is_synchronized", c_uint),
+                ("keep_unsynchronized", c_uint),
             ]
     @property
-    def corrector(self):
+    def type(self):
         """
-        Get or set the SABA Corrector.
-
-        Available correctors are:
-
-        - ``'none'`` (no corrector used, SABA)
-        - ``'modifiedkick'`` (modified kick, SABAC)
-        - ``'lazy'`` (Lazy implementer's method, SABACL)
+        Get or set the type of SABA integrator.
         """
-        i = self._corrector
-        for name, _i in SABA_CORRECTORS.items():
+        i = self._type
+        for name, _i in SABA_TYPES.items():
             if i==_i:
                 return name
         return i
-    @corrector.setter
-    def corrector(self, value):
+    @type.setter
+    def type(self, value):
         if isinstance(value, int):
-            self._corrector = c_uint(value)
+            self._type = value
         elif isinstance(value, basestring):
-            value = value.lower().replace(" ", "")
-            if value in SABA_CORRECTORS: 
-                self._corrector = SABA_CORRECTORS[value]
+            value = value.lower().replace(" ", "").replace("(", "").replace(")", "")
+            if value in SABA_TYPES: 
+                self._type = SABA_TYPES[value]
             else:
-                raise ValueError("Warning. Kernel not found.")
+                raise ValueError("Warning. SABA type not found.")
 
 class reb_simulation_integrator_whfast(Structure):
     """
@@ -920,16 +942,22 @@ class Simulation(Structure):
         """
         Get or set the intergrator module.
 
-        Available integrators are:
+        Available integrators include:
 
-        - ``'ias15'`` (default)
-        - ``'whfast'``
-        - ``'saba'``
-        - ``'sei'``
-        - ``'leapfrog'``
-        - ``'janus'``
-        - ``'mercurius'``
-        - ``'WHCKL'`` (a wrapper which uses and configures WHFAST)
+        - ``'IAS15'`` (default)
+        - ``'WHFast'``
+        - ``'SEI'``
+        - ``'LEAPFROG'``
+        - ``'JANUS'``
+        - ``'MERCURIUS'``
+        - ``'WHCKL'`` 
+        - ``'WHCKM'`` 
+        - ``'WHCKC'`` 
+        - ``'SABA4'`` 
+        - ``'SABACL4'`` 
+        - ``'SABACM4'`` 
+        - ``'SABA(10,6,4)'`` 
+        - ``'EOS'`` 
         - ``'none'``
         
         Check the online documentation for a full description of each of the integrators. 
@@ -947,10 +975,30 @@ class Simulation(Structure):
             value = value.lower()
             if value in INTEGRATORS: 
                 self._integrator = INTEGRATORS[value]
+            # Shortcuts
+            elif value=="wh":
+                self.integrator = "whfast"
+                self.ri_whfast.corrector = 0
+                self.ri_whfast.kernel = "default"
+            elif value=="whc":
+                self.integrator = "whfast"
+                self.ri_whfast.corrector = 17
+                self.ri_whfast.kernel = "default"
             elif value=="whckl":
                 self.integrator = "whfast"
                 self.ri_whfast.corrector = 17
                 self.ri_whfast.kernel = "lazy"
+            elif value=="whckm":
+                self.integrator = "whfast"
+                self.ri_whfast.corrector = 17
+                self.ri_whfast.kernel = "modifiedkick"
+            elif value=="whckc":
+                self.integrator = "whfast"
+                self.ri_whfast.corrector = 17
+                self.ri_whfast.kernel = "composition"
+            elif value[0:4]=="saba" and len(value)>4:
+                self.integrator = "saba"
+                self.ri_saba.type = value[4:]
             else:
                 raise ValueError("Integrator not found.")
     
@@ -1823,6 +1871,80 @@ class reb_simulation_integrator_janus(Structure):
                 ("_allocated_N",c_uint),
                 ]
 
+class reb_simulation_integrator_eos(Structure):
+    """
+    This class is an abstraction of the C-struct reb_simulation_integrator_eos.
+    It controls the behaviour of the Embedded Operator Splitting methods. See Rein (2019) 
+    for more details.
+    
+    :ivar int,string phi0      
+        Sets the Phi_0 operator splitting method
+    :ivar int,string phi1     
+        Sets the Phi_1 operator splitting method
+    :ivar int n     
+        Sets the number of substeps taken by Phi_1
+    :ivar int safe_mode  
+        By default safe_mode is on (1). Set to 0 (off) to combine
+        drift step at the beginning and end of the Phi0 integrator steps.
+
+    Example usage:
+    
+    >>> sim = rebound.Simulation()
+    >>> sim.integrator = "eos"
+    >>> sim.ri_eos.phi0 = "LF8_6_4"
+    >>> sim.ri_eos.phi1 = "LF8"
+    >>> sim.ri_eos.n = 1
+    >>> sim.ri_eos.safe_mode = 0
+
+    """
+    @property
+    def phi0(self):
+        """
+        Get or set the type of operator splitting type for phi0.
+        """
+        i = self._phi0
+        for name, _i in EOS_TYPES.items():
+            if i==_i:
+                return name
+        return i
+    @phi0.setter
+    def phi0(self, value):
+        if isinstance(value, int):
+            self._phi0 = value
+        elif isinstance(value, basestring):
+            value = value.lower().replace(" ", "").replace("(", "").replace(")", "")
+            if value in EOS_TYPES: 
+                self._phi0 = EOS_TYPES[value]
+            else:
+                raise ValueError("Warning. EOS type %s not found."%value)
+    @property
+    def phi1(self):
+        """
+        Get or set the type of operator splitting type for phi1.
+        """
+        i = self._phi1
+        for name, _i in EOS_TYPES.items():
+            if i==_i:
+                return name
+        return i
+    @phi1.setter
+    def phi1(self, value):
+        if isinstance(value, int):
+            self._phi1 = value
+        elif isinstance(value, basestring):
+            value = value.lower().replace(" ", "").replace("(", "").replace(")", "")
+            if value in EOS_TYPES: 
+                self._phi1 = EOS_TYPES[value]
+            else:
+                raise ValueError("Warning. EOS type %s not found."%value)
+    _fields_ = [
+                ("_phi0",c_uint),
+                ("_phi1",c_uint),
+                ("n",c_uint),
+                ("safe_mode",c_uint),
+                ("is_synchonized",c_uint),
+                ]
+
 class reb_simulation_integrator_mercurius(Structure):
     """
     This class is an abstraction of the C-struct reb_simulation_integrator_mercurius.
@@ -1936,7 +2058,7 @@ Simulation._fields_ = [
                 ("collision_resolve_keep_sorted", c_int),
                 ("collisions", c_void_p),
                 ("collisions_allocatedN", c_int),
-                ("minimum_collision_celocity", c_double),
+                ("minimum_collision_velocity", c_double),
                 ("collisions_plog", c_double),
                 ("max_radius", c_double*2),
                 ("collisions_Nlog", c_long),
@@ -1968,6 +2090,7 @@ Simulation._fields_ = [
                 ("ri_ias15", reb_simulation_integrator_ias15),
                 ("ri_mercurius", reb_simulation_integrator_mercurius),
                 ("ri_janus", reb_simulation_integrator_janus),
+                ("ri_eos", reb_simulation_integrator_eos),
                 ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_pre_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
@@ -2014,7 +2137,9 @@ class Particles(MutableMapping):
     @property
     def _ps(self):
         ParticleList = Particle*self.sim.N
-        return ParticleList.from_address(ctypes.addressof(self.sim._particles.contents))
+        pl = ParticleList.from_address(ctypes.addressof(self.sim._particles.contents))
+        pl._sim = self.sim # keep reference to sim until ParticleList is deallocated to avoid memory issues
+        return pl
 
     def __getitem__(self, key):
         hash_types = c_uint32, c_uint, c_ulong

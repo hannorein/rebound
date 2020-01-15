@@ -299,32 +299,41 @@ struct reb_simulation_integrator_sei {
  */
 struct reb_simulation_integrator_saba {
     /**
-     * @brief Number of evaluations of the interaction step.
-     * @details
-     * - 1: standard WH 
-     * - 2: SABA2/SABAC2 
-     * - 3: SABA3/SABAC3 
-     * - 4: SABA4/SABAC4 
-     */
-    unsigned int k;
-    /**
-     * @brief Turn corrector on/off.
-     * @details
-     * - 0: corrector off
-     * - 1: normal (modified kick) corrector on
-     * - 2: lazy implementer's corrector on
+     * @brief SABA type.
+     * @details Available types include: SABA1, SABA2, SABA3, SABA4, SABACM1, 
+     * SABACM2, SABACM3, SABACM4, SABACL1, SABACL2, SABACL3, SABACL4, 
+     * SABA(10,4), SABA(8,6,4), SABA(10,6,4), SABAH(8,4,4), SABAH(8,6,4), 
+     * and SABAH(10,6,4).
      */
     enum {
-        REB_SABA_CORRECTOR_NONE = 0,
-        REB_SABA_CORRECTOR_MODIFIEDKICK = 1,
-        REB_SABA_CORRECTOR_LAZY = 2,
-    } corrector;
-
+        REB_SABA_1 = 0x0, // WH
+        REB_SABA_2 = 0x1, // SABA2
+        REB_SABA_3 = 0x2, // SABA3
+        REB_SABA_4 = 0x3, // SABA4
+        REB_SABA_CM_1 = 0x100, // SABACM1 (Modified kick corrector)
+        REB_SABA_CM_2 = 0x101, // SABACM2 (Modified kick corrector)
+        REB_SABA_CM_3 = 0x102, // SABACM3 (Modified kick corrector)
+        REB_SABA_CM_4 = 0x103, // SABACM4 (Modified kick corrector)
+        REB_SABA_CL_1 = 0x200, // SABACL1 (lazy corrector)
+        REB_SABA_CL_2 = 0x201, // SABACL2 (lazy corrector)
+        REB_SABA_CL_3 = 0x202, // SABACL3 (lazy corrector)
+        REB_SABA_CL_4 = 0x203, // SABACL4 (lazy corrector)
+        REB_SABA_10_4 = 0x4,   // SABA(10,4), 7 stages
+        REB_SABA_8_6_4 = 0x5,  // SABA(8,6,4), 7 stages
+        REB_SABA_10_6_4 = 0x6, // SABA(10,6,4), 8 stages, default
+        REB_SABA_H_8_4_4 = 0x7,// SABAH(8,4,4), 6 stages
+        REB_SABA_H_8_6_4 = 0x8,// SABAH(8,6,4), 8 stages
+        REB_SABA_H_10_6_4 = 0x9,// SABAH(10,6,4), 9 stages
+    } type;
+    unsigned int safe_mode;       ///< Safe_mode has the same functionality as in WHFast.
+    unsigned int is_synchronized; ///< Flag to determine if current particle structure is synchronized
     /**
-     * @brief safe_mode has the same functionality as in WHFast.
+     * @brief Flaf that determines if the inertial coordinates generated are discared in subsequent timesteps (Jacobi coordinates are used instead).
+     * @details Danger zone! Only use this flag if you are absolutely sure
+     * what you are doing. This is intended for
+     * simulation which have to be reproducible on a bit by bit basis.
      */
-    unsigned int safe_mode;
-    unsigned int is_synchronized;
+    unsigned int keep_unsynchronized;
 };
 
 /**
@@ -434,6 +443,34 @@ struct reb_simulation_integrator_whfast {
      * @endcond
      */
 };
+
+/**
+ * @brief Available opperator splitting methods for phi0 and phi1 in EOS integrators.
+ */
+enum REB_EOS_TYPE {
+    REB_EOS_LF = 0x00,      // 2nd order, standard leap-frog
+    REB_EOS_LF4 = 0x01,     // 4th order, three function evaluations
+    REB_EOS_LF6 = 0x02,     // 6th order, nine function evaluations
+    REB_EOS_LF8 = 0x03,     // 8th order, seventeen funtion evaluations, see Blanes & Casa (2016), p91
+    REB_EOS_LF4_2 = 0x04,   // generalized order (4,2), two force evaluations, McLachlan 1995
+    REB_EOS_LF8_6_4= 0x05,  // generalized order (8,6,4), seven force evaluations
+    REB_EOS_PLF7_6_4= 0x06, // generalized order (7,6,4), three force evaluations, pre- and post-processors
+    REB_EOS_PMLF4 = 0x07,   // 4th order, one modified force evaluation, pre- and post-processors, Blanes et al. (1999)
+    REB_EOS_PMLF6 = 0x08,   // 6th order, three modified force evaluations, pre- and post-processors, Blanes et al. (1999)
+};
+
+/**
+ * @brief This structure contains variables used by the EOS integrator family.
+ */
+struct reb_simulation_integrator_eos {
+    enum REB_EOS_TYPE phi0;         ///< Outer opperator splitting scheme
+    enum REB_EOS_TYPE phi1;         ///< Inner opperator splitting scheme
+    unsigned int n;                 ///
+
+    unsigned int safe_mode;         ///< If set to 0, always combine drift steps at the beginning and end of phi0. If set to 1, n needs to be bigger than 1.
+    unsigned int is_synchronized;   ///< Flag to indicate if the drift step at the end of the last timestep has been taken.
+};
+
 
 
 /**
@@ -663,13 +700,19 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_SAAUTOSTEP = 135,
     REB_BINARY_FIELD_TYPE_SANEXTSTEP = 136,
     REB_BINARY_FIELD_TYPE_STEPSDONE = 137,
-    REB_BINARY_FIELD_TYPE_SABA_K = 138,
-    REB_BINARY_FIELD_TYPE_SABA_CORRECTOR = 139,
     REB_BINARY_FIELD_TYPE_SABA_SAFEMODE = 140,
     REB_BINARY_FIELD_TYPE_SABA_ISSYNCHRON = 141,
     REB_BINARY_FIELD_TYPE_WHFAST_CORRECTOR2 = 143,
     REB_BINARY_FIELD_TYPE_WHFAST_KERNEL = 144,
     REB_BINARY_FIELD_TYPE_DTLASTDONE = 145,
+    REB_BINARY_FIELD_TYPE_SABA_TYPE = 146,
+    REB_BINARY_FIELD_TYPE_SABA_KEEPUNSYNC = 147,
+    REB_BINARY_FIELD_TYPE_EOS_PHI0 = 148,
+    REB_BINARY_FIELD_TYPE_EOS_PHI1 = 149,
+    REB_BINARY_FIELD_TYPE_EOS_N = 150,
+    REB_BINARY_FIELD_TYPE_EOS_SAFEMODE = 151,
+    REB_BINARY_FIELD_TYPE_EOS_ISSYNCHRON = 152,
+
     REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
     REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
     REB_BINARY_FIELD_TYPE_END = 9999,
@@ -915,6 +958,7 @@ struct reb_simulation {
         REB_COLLISION_TREE = 2,     ///< Tree based collision search O(N log(N))
         REB_COLLISION_MERCURIUS = 3,///< Direct collision search optimized for MERCURIUS
         REB_COLLISION_LINE = 4,     ///< Direct collision search O(N^2), looks for collisions by assuming a linear path over the last timestep
+        REB_COLLISION_LINETREE = 5, ///< Tree-based collision search O(N log(N)), looks for collisions by assuming a linear path over the last timestep
         } collision;
     /**
      * @brief Available integrators
@@ -929,6 +973,7 @@ struct reb_simulation {
         REB_INTEGRATOR_JANUS = 8,    ///< Bit-wise reversible JANUS integrator.
         REB_INTEGRATOR_MERCURIUS = 9,///< MERCURIUS integrator 
         REB_INTEGRATOR_SABA = 10,    ///< SABA integrator family (Laskar and Robutel 2001)
+        REB_INTEGRATOR_EOS = 11,     ///< Embedded Operator Splitting (EOS) integrator family (Rein 2019)
         } integrator;
 
     /**
@@ -965,6 +1010,7 @@ struct reb_simulation {
     struct reb_simulation_integrator_ias15 ri_ias15;    ///< The IAS15 struct
     struct reb_simulation_integrator_mercurius ri_mercurius;      ///< The MERCURIUS struct
     struct reb_simulation_integrator_janus ri_janus;    ///< The JANUS struct 
+    struct reb_simulation_integrator_eos ri_eos;        ///< The EOS struct 
     /** @} */
 
     /**
@@ -1143,6 +1189,13 @@ void reb_mpi_init(struct reb_simulation* const r);
  */
 void reb_mpi_finalize(struct reb_simulation* const r);
 #endif // MPI
+
+#ifdef OPENMP
+/**
+ * @brief Wrapper method to set number of OpenMP threads from python.
+ */
+void reb_omp_set_num_threads(int num_threads);
+#endif // OPENMP
 
 /**
  * @cond PRIVATE

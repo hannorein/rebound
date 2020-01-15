@@ -18,7 +18,7 @@ def runSimulation(tmax=40., restart=False, keep_unsynchronized=1, interval=None,
         sim.add(m=1)
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
-        sim.integrator = "whfast"
+        sim.integrator = integrator
         sim.dt = 0.1313
         if simulationarchive_version==1:
             sim.simulationarchive_version = 1
@@ -77,12 +77,15 @@ def create_test_sa_synchronize(params):
 
 
 
-for integrator in ["ias15","whfast","leapfrog","janus","mercurius"]:
+for integrator in ["ias15","whfast","leapfrog","janus","mercurius","saba","sabacl4", "saba(10,6,4)"]:
     for safe_mode in [True,False]:
         for G in [1.,0.9]:
             for testparticle in [0,1,2]: # no test particle, passive, semi-active
                 for keep_unsynchronized in [1,0]:
                     for simulationarchive_version in [1,2]:
+                        if simulationarchive_version==1:
+                            if integrator=="leapfrog" or integrator=="saba" or integrator=="mercurius" or integrator=="sabacl4" or integrator=="saba(10,6,4)":
+                                continue
                         params = {'safe_mode':safe_mode,
                                 'integrator':integrator,
                                 'G':G, 

@@ -18,9 +18,9 @@ class TestPlotting(unittest.TestCase):
             import matplotlib; matplotlib.use("pdf")
             import numpy as np
             t = np.array(1.)
-            plot = rebound.OrbitPlot(self.sim,periastron=True)
+            plot, ax_main = rebound.OrbitPlot(self.sim,periastron=True)
             self.assertIsInstance(plot,matplotlib.figure.Figure)
-            plot = rebound.OrbitPlot(self.sim,periastron=True,color=True,trails=True,unitlabel="AU")
+            plot, ax_main = rebound.OrbitPlot(self.sim,periastron=True,color=True,unitlabel="AU")
             self.assertIsInstance(plot,matplotlib.figure.Figure)
     
     def test_orbitplot_slices(self):
@@ -29,9 +29,9 @@ class TestPlotting(unittest.TestCase):
             import matplotlib; matplotlib.use("pdf")
             import numpy as np
             t = np.array(1.)
-            plot = rebound.OrbitPlot(self.sim,periastron=True,slices=True)
+            plot, ax_main, ax_top, ax_right  = rebound.OrbitPlot(self.sim,periastron=True,slices=True)
             self.assertIsInstance(plot,matplotlib.figure.Figure)
-            plot = rebound.OrbitPlot(self.sim,periastron=True,color=True,trails=True,unitlabel="AU",slices=True,limz=1.)
+            plot,ax_main, ax_top, ax_right = rebound.OrbitPlot(self.sim,periastron=True,color=True,orbit_type="solid",unitlabel="AU",slices=0.4,xlim=[-1.,1])
             self.assertIsInstance(plot,matplotlib.figure.Figure)
    
 

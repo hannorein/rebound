@@ -3,6 +3,53 @@ import unittest
 import math
 import numpy as np
 
+class TestLineTreeCollisions(unittest.TestCase):
+    
+    def test_linetree_find(self):
+        # Should find the collision
+        sim = rebound.Simulation()
+        sim.integrator = "leapfrog"
+        sim.collision  = "linetree"
+        sim.configure_box(100)
+        sim.dt = 10
+        sim.add(r=1,x=0)
+        sim.add(r=1,x=3,vx=-1)
+        with self.assertRaises(rebound.Collision) as context:
+            sim.integrate(10)
+    def test_linetree_find_overlap1(self):
+        # Should find the collision which is already overlapping at t=0
+        sim = rebound.Simulation()
+        sim.integrator = "leapfrog"
+        sim.collision  = "linetree"
+        sim.configure_box(100)
+        sim.dt = 10
+        sim.add(r=1,x=0)
+        sim.add(r=1,x=1,vx=-1)
+        with self.assertRaises(rebound.Collision) as context:
+            sim.integrate(10)
+    def test_linetree_find_overlap2(self):
+        # Should find the collision which is not overlapping at t=0, only at end
+        sim = rebound.Simulation()
+        sim.integrator = "leapfrog"
+        sim.collision  = "linetree"
+        sim.configure_box(100)
+        sim.dt = 10
+        sim.add(r=1,x=0)
+        sim.add(r=1,x=11,vx=-1)
+        with self.assertRaises(rebound.Collision) as context:
+            sim.integrate(10)
+    def test_linetree_miss(self):
+        sim = rebound.Simulation()
+        sim.integrator = "leapfrog"
+        sim.collision  = "linetree"
+        sim.configure_box(100)
+        sim.dt = 10
+        sim.add(r=1,x=0)
+        sim.add(r=1,x=2.1,vx=1)
+        sim.integrate(10)
+
+
+
 class TestLineCollisions(unittest.TestCase):
     
     def test_direct_miss(self):
@@ -28,8 +75,8 @@ class TestLineCollisions(unittest.TestCase):
         sim.particles[-1].x = np.nan
         with self.assertRaises(rebound.Collision) as context:
             sim.integrate(10)
-    def test_line_miss_overlap(self):
-        # Should miss the collision because overlapping at t=0
+    def test_line_find_overlap1(self):
+        # Should find the collision already overlapping at t=0
         sim = rebound.Simulation()
         sim.integrator = "leapfrog"
         sim.collision  = "line"
@@ -38,9 +85,10 @@ class TestLineCollisions(unittest.TestCase):
         sim.add(r=1,x=1,vx=-1)
         sim.init_megno()
         sim.particles[-1].x = np.nan
-        sim.integrate(10)
-    def test_line_find_overlap(self):
-        # Should find the collision because not overlapping at t=0, only at end
+        with self.assertRaises(rebound.Collision) as context:
+            sim.integrate(10)
+    def test_line_find_overlap2(self):
+        # Should find the collision which is not overlapping at t=0, only at end
         sim = rebound.Simulation()
         sim.integrator = "leapfrog"
         sim.collision  = "line"
@@ -51,6 +99,15 @@ class TestLineCollisions(unittest.TestCase):
         sim.particles[-1].x = np.nan
         with self.assertRaises(rebound.Collision) as context:
             sim.integrate(10)
+    def test_line_miss(self):
+        sim = rebound.Simulation()
+        sim.integrator = "leapfrog"
+        sim.collision  = "line"
+        sim.configure_box(100)
+        sim.dt = 10
+        sim.add(r=1,x=0)
+        sim.add(r=1,x=2.1,vx=1)
+        sim.integrate(10)
 
 
 class TestCollisions(unittest.TestCase):
