@@ -69,6 +69,11 @@ void reb_calculate_acceleration(struct reb_simulation* r){
     const int _testparticle_type   = r->testparticle_type;
     switch (r->gravity){
         case REB_GRAVITY_NONE: // Do nothing.
+        for (int j=0; j<N; j++){
+            particles[j].ax = 0;  
+            particles[j].ay = 0;  
+            particles[j].az = 0;  
+        }  
         break;
         case REB_GRAVITY_JACOBI:
         {
