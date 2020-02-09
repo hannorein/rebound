@@ -942,7 +942,7 @@ struct reb_simulation {
      * @{
      */
     /**
-     * @brief Available collision routines
+     * @brief Available visualization options
      */
     enum {
         REB_VISUALIZATION_NONE = 0,     ///< No visualization (default if OPENGL compiler flag is turned off)
