@@ -18,7 +18,7 @@
 void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation_from_binary("ss-2016-06-18.bin");
+    struct reb_simulation* r = reb_create_simulation_from_binary("ss-2020-03-03.bin");
     // Setup constants
     r->dt           = 4./365.25*2.*M_PI;        // 4days
     r->integrator   = REB_INTEGRATOR_WHFAST;
