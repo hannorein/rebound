@@ -432,7 +432,8 @@ void reb_whfast_interaction_step(struct reb_simulation* const r, const double _d
 void reb_whfast_jump_step(const struct reb_simulation* const r, const double _dt){
     const struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
     struct reb_particle* const p_h = r->ri_whfast.p_jh;
-    const int N_real = r->N-r->N_var;
+    const int N_active = r->N_active==-1?r->N:r->N_active;
+    const int N_real = r->testparticle_type==0 ? N_active-r->N_var : r->N-r->N_var;
     const double m0 = r->particles[0].m;
     switch (ri_whfast->coordinates){
         case REB_WHFAST_COORDINATES_JACOBI:

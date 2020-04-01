@@ -87,6 +87,85 @@ class TestIntegratorWHFast(unittest.TestCase):
         self.assertLess(math.fabs((e0-e1)/e1),3e-8)
     
     # Democratic Heliocentric
+    def test_order_doesnt_matter_tp0(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1.1,e=0.1,primary=sim.particles[0])
+        sim.add(m=5e-3,a=1.0,e=0.1,primary=sim.particles[0])
+
+        sim.integrator = "whfast"
+        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.dt = 1e-2*2.*3.14
+        sim.N_active = 1
+        sim.testparticle_type = 0
+
+        sim.integrate(1000)
+        
+        o1 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
+        o2 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
+        
+
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=5e-3,a=1.0,e=0.1,primary=sim.particles[0])
+        sim.add(m=1e-3,a=1.1,e=0.1,primary=sim.particles[0])
+
+        sim.integrator = "whfast"
+        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.dt = 1e-2*2.*3.14
+        sim.N_active = 1
+        sim.testparticle_type = 0
+
+        sim.integrate(1000)
+        
+        o3 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
+        o4 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
+
+        self.assertLess(abs(o1.e-o4.e),2e-16)
+        self.assertLess(abs(o2.e-o3.e),2e-16)
+        self.assertLess(abs(o1.a-o4.a),2e-16)
+        self.assertLess(abs(o2.a-o3.a),2e-16)
+    
+    def test_order_doesnt_matter_tp1(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1.1,e=0.1,primary=sim.particles[0])
+        sim.add(m=5e-3,a=1.0,e=0.1,primary=sim.particles[0])
+
+        sim.integrator = "whfast"
+        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.dt = 1e-2*2.*3.14
+        sim.N_active = 1
+        sim.testparticle_type = 1
+
+        sim.integrate(1000)
+        
+        o1 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
+        o2 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
+        
+
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=5e-3,a=1.0,e=0.1,primary=sim.particles[0])
+        sim.add(m=1e-3,a=1.1,e=0.1,primary=sim.particles[0])
+
+        sim.integrator = "whfast"
+        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.dt = 1e-2*2.*3.14
+        sim.N_active = 1
+        sim.testparticle_type = 1
+
+        sim.integrate(1000)
+        
+        o3 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
+        o4 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
+
+        self.assertLess(abs(o1.e-o4.e),2e-16)
+        self.assertLess(abs(o2.e-o3.e),2e-16)
+        self.assertLess(abs(o1.a-o4.a),2e-16)
+        self.assertLess(abs(o2.a-o3.a),2e-16)
+
+
     def test_whfasthelio_outersolarsystem(self):
         sim = rebound.Simulation()
         rebound.data.add_outer_solar_system(sim)

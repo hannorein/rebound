@@ -233,7 +233,8 @@ void reb_integrator_mercurius_interaction_step(struct reb_simulation* const r, d
 
 void reb_integrator_mercurius_jump_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
-    const int N = r->N;
+    const int N_active = r->N_active==-1?r->N:r->N_active;
+    const int N = r->testparticle_type==0 ? N_active: r->N;
     double px=0., py=0., pz=0.;
     for (int i=1;i<N;i++){
         px += r->particles[i].vx*r->particles[i].m; // in dh
