@@ -1232,7 +1232,7 @@ class Simulation(Structure):
         This function also needs to be called if you are interested in the Lyapunov exponent as it is
         calculate with the help of MEGNO. See Rein and Tamayo 2015 for details on the implementation.
 
-        For more information on MENGO see e.g. http://dx.doi.org/10.1051/0004-6361:20011189
+        For more information on MEGNO see e.g. http://dx.doi.org/10.1051/0004-6361:20011189
         """
         if seed is None:
             clibrebound.reb_tools_megno_init(byref(self))
