@@ -57,7 +57,7 @@ void reb_collision_search(struct reb_simulation* const r){
             // After jump step, only collisions with star might occur.
             // All other collisions in encounter step/
             Ninner = 1;
-        }{
+        }else{
             N = r->ri_mercurius.encounterN;
             Ninner = N;
             mercurius_map = r->ri_mercurius.encounter_map;
