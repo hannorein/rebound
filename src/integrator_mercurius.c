@@ -485,6 +485,7 @@ void reb_integrator_mercurius_synchronize(struct reb_simulation* r){
         
         reb_integrator_mercurius_dh_to_inertial(r);
 
+        rim->recalculate_coordinates_this_timestep = 1; 
         rim->is_synchronized = 1;
     }
 }
