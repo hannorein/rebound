@@ -387,6 +387,8 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
         rim->recalculate_dcrit_this_timestep = 0;
         if (rim->is_synchronized==0){
             reb_integrator_mercurius_synchronize(r);
+            reb_integrator_mercurius_inertial_to_dh(r);
+            rim->recalculate_coordinates_this_timestep = 0;
             reb_warning(r,"MERCURIUS: Recalculating dcrit but pos/vel were not synchronized before.");
         }
         rim->dcrit[0] = 2.*r->particles[0].r; // central object only uses physical radius
