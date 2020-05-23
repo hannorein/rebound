@@ -379,7 +379,7 @@ void reb_collision_search(struct reb_simulation* const r){
                                 c.p2--;
                             }
                         }else{
-                            if (c.p2 == r->N-r->N_var-1){
+                            if (c.p2 == r->N-r->N_var){
                                 c.p2 = c.p1;
                             }
                         }
