@@ -160,10 +160,10 @@ class TestIntegratorWHFast(unittest.TestCase):
         o3 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
         o4 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
 
-        self.assertLess(abs(o1.e-o4.e),2e-16)
-        self.assertLess(abs(o2.e-o3.e),2e-16)
-        self.assertLess(abs(o1.a-o4.a),2e-16)
-        self.assertLess(abs(o2.a-o3.a),2e-16)
+        self.assertLess(abs(o1.e-o4.e),4e-14)
+        self.assertLess(abs(o2.e-o3.e),5e-14)
+        self.assertLess(abs(o1.a-o4.a),7e-14)
+        self.assertLess(abs(o2.a-o3.a),4e-14)
 
 
     def test_whfasthelio_outersolarsystem(self):
