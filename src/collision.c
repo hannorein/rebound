@@ -385,7 +385,7 @@ void reb_collision_search(struct reb_simulation* const r){
                         }
                         for (int j=i+1;j<collisions_N;j++){ // Update other collisions
                             struct reb_collision* cp = &(r->collisions[j]);
-                            // Skip collisions which involved the removed particle
+                            // Skip collisions which involve the removed particle
                             if (cp->p1==c.p1 || cp->p2==c.p1){
                                 cp->p1 = -1;
                                 cp->p2 = -1;
@@ -426,7 +426,7 @@ void reb_collision_search(struct reb_simulation* const r){
                     }else{ // Not in a tree, particles get removed immediately 
                         for (int j=i+1;j<collisions_N;j++){
                             struct reb_collision* cp = &(r->collisions[j]);
-                            // Skip collisions which involved the removed particle
+                            // Skip collisions which involve the removed particle
                             if (cp->p1==c.p2 || cp->p2==c.p2){
                                 cp->p1 = -1;
                                 cp->p2 = -1;
