@@ -57,7 +57,7 @@ void reb_collision_search(struct reb_simulation* const r){
             // After jump step, only collisions with star might occur.
             // All other collisions in encounter step/
             Ninner = 1;
-        }{
+        }else{
             N = r->ri_mercurius.encounterN;
             Ninner = N;
             mercurius_map = r->ri_mercurius.encounter_map;
@@ -346,6 +346,11 @@ void reb_collision_search(struct reb_simulation* const r){
 		// Default is hard sphere
 		resolve = reb_collision_resolve_halt;
 	}
+    unsigned int collision_resolve_keep_sorted = r->collision_resolve_keep_sorted;
+    if (r->integrator == REB_INTEGRATOR_MERCURIUS){
+        collision_resolve_keep_sorted = 1; // Force keep_sorted for hybrid integrator
+    }
+
 	for (int i=0;i<collisions_N;i++){
         
         struct reb_collision c = r->collisions[i];
@@ -356,43 +361,93 @@ void reb_collision_search(struct reb_simulation* const r){
             // Remove particles
             if (outcome & 1){
                 // Remove p1
-                if (c.p2==r->N-r->N_var-1 && !(r->tree_root)){
-                    // Particles swapped
-                    c.p2 = c.p1;
-                }
-                reb_remove(r,c.p1,r->collision_resolve_keep_sorted);
-                // Check for pair
-                for (int j=i+1;j<collisions_N;j++){
-                    struct reb_collision cp = r->collisions[j];
-                    if (cp.p1==c.p1 || cp.p2==c.p1){
-                        r->collisions[j].p1 = -1;
-                        r->collisions[j].p2 = -1;
-                        // Will be skipped.
-                    }
-                    if (cp.p1==r->N-r->N_var){
-                        r->collisions[j].p1 = c.p1;
-                    }
-                    if (cp.p2==r->N-r->N_var){
-                        r->collisions[j].p2 = c.p1;
+                int removedp1 = reb_remove(r,c.p1,collision_resolve_keep_sorted);
+                if (removedp1){
+                    if (r->tree_root){ // In a tree, particles get removed later. 
+                        for (int j=i+1;j<collisions_N;j++){ // Update other collisions
+                            struct reb_collision* cp = &(r->collisions[j]);
+                            // Skip collisions which involved the removed particle
+                            if (cp->p1==c.p1 || cp->p2==c.p1){
+                                cp->p1 = -1;
+                                cp->p2 = -1;
+                            }
+                        }
+                    }else{ // Not in a tree, particles get removed immediately 
+                        // Update p2 of current collision
+                        if (collision_resolve_keep_sorted){
+                            if (c.p2 > c.p1){
+                                c.p2--;
+                            }
+                        }else{
+                            if (c.p2 == r->N-r->N_var){
+                                c.p2 = c.p1;
+                            }
+                        }
+                        for (int j=i+1;j<collisions_N;j++){ // Update other collisions
+                            struct reb_collision* cp = &(r->collisions[j]);
+                            // Skip collisions which involve the removed particle
+                            if (cp->p1==c.p1 || cp->p2==c.p1){
+                                cp->p1 = -1;
+                                cp->p2 = -1;
+                            }
+                            // Adjust collisions
+                            if (collision_resolve_keep_sorted){
+                                if (cp->p1 > c.p1){
+                                    cp->p1--;
+                                }
+                                if (cp->p2 > c.p1){
+                                    cp->p2--;
+                                }
+                            }else{
+                                if (cp->p1 == r->N-r->N_var){
+                                    cp->p1 = c.p1;
+                                }
+                                if (cp->p2 == r->N-r->N_var){
+                                    cp->p2 = c.p1;
+                                }
+                            }
+                        }
                     }
                 }
             }
             if (outcome & 2){
-                // Remove p2
-                reb_remove(r,c.p2,r->collision_resolve_keep_sorted);
-                // Check for pair
-                for (int j=i+1;j<collisions_N;j++){
-                    struct reb_collision cp = r->collisions[j];
-                    if (cp.p1==c.p2 || cp.p2==c.p2){
-                        r->collisions[j].p1 = -1;
-                        r->collisions[j].p2 = -1;
-                        // Will be skipped.
-                    }
-                    if (cp.p1==r->N-r->N_var){
-                        r->collisions[j].p1 = c.p2;
-                    }
-                    if (cp.p2==r->N-r->N_var){
-                        r->collisions[j].p2 = c.p2;
+                // Remove p1
+                int removedp2 = reb_remove(r,c.p2,collision_resolve_keep_sorted);
+                if (removedp2){ // Update other collisions
+                    if (r->tree_root){ // In a tree, particles get removed later. 
+                        for (int j=i+1;j<collisions_N;j++){ // Update other collisions
+                            struct reb_collision* cp = &(r->collisions[j]);
+                            // Skip collisions which involved the removed particle
+                            if (cp->p1==c.p2 || cp->p2==c.p2){
+                                cp->p1 = -1;
+                                cp->p2 = -1;
+                            }
+                        }
+                    }else{ // Not in a tree, particles get removed immediately 
+                        for (int j=i+1;j<collisions_N;j++){
+                            struct reb_collision* cp = &(r->collisions[j]);
+                            // Skip collisions which involve the removed particle
+                            if (cp->p1==c.p2 || cp->p2==c.p2){
+                                cp->p1 = -1;
+                                cp->p2 = -1;
+                            }
+                            // Adjust collisions
+                            if (collision_resolve_keep_sorted){
+                                if (cp->p1 > c.p2){
+                                    cp->p1--;
+                                }
+                                if (cp->p2 > c.p2){
+                                    cp->p2--;
+                                }
+                            }else{
+                                if (cp->p1 == r->N-r->N_var){
+                                    cp->p1 = c.p2;
+                                }
+                                if (cp->p2 == r->N-r->N_var){
+                                    cp->p2 = c.p2;
+                                }
+                            }
+                        }
                     }
                 }
             }

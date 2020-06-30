@@ -3,6 +3,11 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.12.2
+--------------
+* Various bug fixes to MERCURIUS
+* Performance increase when using the BASIC Gravity Routine with OpenMP
+  
 Version 3.12.1
 --------------
 * Bug fixes to LINE and LINETREE algorithms

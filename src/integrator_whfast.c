@@ -432,7 +432,8 @@ void reb_whfast_interaction_step(struct reb_simulation* const r, const double _d
 void reb_whfast_jump_step(const struct reb_simulation* const r, const double _dt){
     const struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
     struct reb_particle* const p_h = r->ri_whfast.p_jh;
-    const int N_real = r->N-r->N_var;
+    const int N_active = r->N_active==-1?r->N:r->N_active;
+    const int N_real = r->testparticle_type==0 ? N_active-r->N_var : r->N-r->N_var;
     const double m0 = r->particles[0].m;
     switch (ri_whfast->coordinates){
         case REB_WHFAST_COORDINATES_JACOBI:
@@ -783,7 +784,7 @@ void reb_integrator_whfast_from_inertial(struct reb_simulation* const r){
     struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;
     const int N_real = N-r->N_var;
-    const int N_active = r->N_active==-1?r->N:r->N_active;
+    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
     
     switch (ri_whfast->coordinates){
         case REB_WHFAST_COORDINATES_JACOBI:
@@ -807,7 +808,7 @@ void reb_integrator_whfast_to_inertial(struct reb_simulation* const r){
     struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;
     const int N_real = N-r->N_var;
-    const int N_active = r->N_active==-1?r->N:r->N_active;
+    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
     
     // Prepare coordinates for KICK step
     if (r->force_is_velocity_dependent){
@@ -940,7 +941,7 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
     }
     if (ri_whfast->is_synchronized == 0){
         const int N_real = r->N-r->N_var;
-        const int N_active = r->N_active==-1?r->N:r->N_active;
+        const int N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
         struct reb_particle* sync_pj  = NULL;
         if (ri_whfast->keep_unsynchronized){
             sync_pj = malloc(sizeof(struct reb_particle)*r->N);
