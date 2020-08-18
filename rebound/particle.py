@@ -169,6 +169,8 @@ class Particle(Structure):
             l = random.vonmisesvariate(0.,0.) 
         if theta == "uniform":
             theta = random.vonmisesvariate(0.,0.) 
+        if inc == "uniform":
+            inc = random.vonmisesvariate(0.,0.) 
 
         self.hash = hash # set via the property, which checks for type
 
