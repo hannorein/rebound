@@ -629,6 +629,11 @@ class Simulation(Structure):
             raise AttributeError("Need to specify either interval, walltime, or step")
         if deletefile and os.path.isfile(filename):
             os.remove(filename)
+            
+            # reset intervals so that automate functions C set sim->next consistently
+            self.simulationarchive_auto_interval=0
+            self.simulationarchive_auto_walltime=0
+            self.simulationarchive_auto_step=0
         if interval:
             clibrebound.reb_simulationarchive_automate_interval(byref(self), c_char_p(filename.encode("ascii")), c_double(interval))
         if walltime:
