@@ -1290,8 +1290,14 @@ class Simulation(Structure):
             elif isinstance(particle,str):
                 if self.python_unit_l == 0 or self.python_unit_m == 0 or self.python_unit_t == 0:
                     self.units = ('AU', 'yr2pi', 'Msun')
-                self.add(horizons.getParticle(particle, **kwargs), hash=particle)
-                units_convert_particle(self.particles[-1], 'km', 's', 'kg', hash_to_unit(self.python_unit_l), hash_to_unit(self.python_unit_t), hash_to_unit(self.python_unit_m))
+                builtindatasets = ["solar system", "outer solar system"]
+                if particle.lower() == "solar system":          # built in test dataset
+                    data.add_solar_system(self)
+                elif particle.lower() == "outer solar system":  # built in test dataset
+                    data.add_outer_solar_system(self)
+                else:
+                    self.add(horizons.getParticle(particle, **kwargs), hash=particle)
+                    units_convert_particle(self.particles[-1], 'km', 's', 'kg', hash_to_unit(self.python_unit_l), hash_to_unit(self.python_unit_t), hash_to_unit(self.python_unit_m))
             else: 
                 raise ValueError("Argument passed to add() not supported.")
         else: 
@@ -2202,4 +2208,5 @@ class Particles(MutableMapping):
 
 # Import at the end to avoid circular dependence
 from . import horizons
+from . import data
 from .simulationarchive import SimulationArchive
