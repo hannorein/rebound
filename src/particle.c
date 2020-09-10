@@ -332,6 +332,13 @@ void reb_particle_imul(struct reb_particle* p1, double value){
     p1->m *= value;
 }
 
+double reb_particle_distance(struct reb_particle* p1, struct reb_particle* p2){
+    double dx = p1->x - p2->x;
+    double dy = p1->y - p2->y;
+    double dz = p1->z - p2->z;
+    return sqrt(dx*dx + dy*dy + dz*dz);
+}
+
 struct reb_particle reb_particle_nan(void){
     struct reb_particle p;
     p.x = nan("");

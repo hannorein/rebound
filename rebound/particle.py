@@ -505,6 +505,11 @@ class Particle(Structure):
 
     # Simple operators for particles.
     
+    def __pow__(self, other):
+        if not isinstance(other, Particle):
+            return NotImplemented 
+        clibrebound.reb_particle_distance.restype = c_double
+        return clibrebound.reb_particle_distance(byref(self), byref(other))
     def __add__(self, other):
         if not isinstance(other, Particle):
             return NotImplemented 

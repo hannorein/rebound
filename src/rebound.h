@@ -1801,6 +1801,14 @@ void reb_particle_iadd(struct reb_particle* p1, struct reb_particle* p2);
  */
 void reb_particle_imul(struct reb_particle* p1, double value);
 
+/**
+ * @brief Calculate the distance between two particles.
+ * @param p1 reb_particle First particle.
+ * @param p2 reb_particle Second particle.
+ * @param value Distance between p1 and p2.
+ */
+double reb_particle_distance(struct reb_particle* p1, struct reb_particle* p2);
+
 /** @} */
 
 /**
