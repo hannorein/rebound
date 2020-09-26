@@ -95,7 +95,7 @@ def convert_G(newunits):
     return G_SI*masses_SI[new_m]*times_SI[new_t]**2/lengths_SI[new_l]**3
        
 def check_units(newunits):   
-    if len(newunits) is not 3:
+    if len(newunits) != 3:
         raise Exception("Error: Need to pass exactly 3 units for length, time, and mass (any order), see ipython_examples/Units.ipynb")
 
     if isinstance(newunits, dict): 

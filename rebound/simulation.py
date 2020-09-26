@@ -913,10 +913,10 @@ class Simulation(Structure):
         raise AttributeError("You can only set C function pointers from python.")
     @collision_resolve.setter
     def collision_resolve(self, func):
-        if func is "merge":
+        if func == "merge":
             clibrebound.reb_set_collision_resolve.restype = None
             clibrebound.reb_set_collision_resolve(byref(self), clibrebound.reb_collision_resolve_merge)
-        elif func is "hardsphere":
+        elif func == "hardsphere":
             clibrebound.reb_set_collision_resolve.restype = None
             clibrebound.reb_set_collision_resolve(byref(self), clibrebound.reb_collision_resolve_hardsphere)
         else:
