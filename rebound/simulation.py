@@ -1,5 +1,6 @@
 from ctypes import Structure, c_double, POINTER, c_uint32, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
 from . import clibrebound, Escape, NoParticles, Encounter, Collision, SimulationError, ParticleNotFound
+from .citations import cite
 from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G, hash_to_unit
 from .tools import hash as rebhash
@@ -524,6 +525,16 @@ class Simulation(Structure):
                     # Just a warning
                     warnings.warn(message, RuntimeWarning)
         return sim
+
+    def cite(self):
+        """
+        Generate citations
+
+        This function generates citations to papers relevant to the current 
+        setting of the simulation.
+        """
+
+        print(cite(self))
 
     def getWidget(self,**kwargs):
         """

@@ -3,6 +3,11 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.12.3
+--------------
+* Various small bug fixes 
+* Added a new function sim.cite() to automatically generate citations depending on the current simulation settings. 
+
 Version 3.12.2
 --------------
 * Various bug fixes to MERCURIUS
