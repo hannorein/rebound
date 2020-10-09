@@ -534,7 +534,9 @@ class Simulation(Structure):
         setting of the simulation.
         """
 
-        print(cite(self))
+        txt, bib = cite(self)
+        # one could check for REBOUNDx here, then append txt and bib accordingly
+        print(txt + "\n\n\n" + bib)
 
     def getWidget(self,**kwargs):
         """

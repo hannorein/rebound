@@ -246,4 +246,4 @@ archivePrefix = {arXiv},
 
 
 
-    return txt +"\n\n\n"+bib
+    return txt, bib
