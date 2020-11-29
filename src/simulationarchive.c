@@ -232,7 +232,7 @@ struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_s
     return r; // might be null if error occured
 }
 
-void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, const char* filename, enum reb_input_binary_messages* warnings){
+void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, const char* filename,  struct reb_simulationarchive* sa_index, enum reb_input_binary_messages* warnings){
     sa->inf = fopen(filename,"r");
     if (sa->inf==NULL){
         *warnings |= REB_INPUT_BINARY_ERROR_NOFILE;
@@ -323,27 +323,11 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
         sa->t = malloc(sizeof(double)*sa->nblobs);
         sa->offset = malloc(sizeof(uint32_t)*sa->nblobs);
         fseek(sa->inf, 0, SEEK_SET);  
-        
-        for(long i=0;i<sa->nblobs;i++){
-            struct reb_binary_field field = {0};
-            sa->offset[i] = ftell(sa->inf);
-            do{
-                fread(&field,sizeof(struct reb_binary_field),1,sa->inf);
-                switch (field.type){
-                    case REB_BINARY_FIELD_TYPE_HEADER:
-                        fseek(sa->inf,64 - sizeof(struct reb_binary_field),SEEK_CUR);
-                        break;
-                    case REB_BINARY_FIELD_TYPE_T:
-                        fread(&(sa->t[i]), sizeof(double),1,sa->inf);
-                        break;
-                    default:
-                        fseek(sa->inf,field.size,SEEK_CUR);
-                        break;
-                        
-                }
-            }while(field.type!=REB_BINARY_FIELD_TYPE_END);
-            fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa->inf);
-            if (i!=blob.index) {
+        if (sa_index){
+            // This is an optimzation for loading many large SAs.
+            // It assumes the structure of this SA is *exactly* the same as in sa_index.
+            // Unexpected behaviour if the shape is not the same.
+            if (sa->nblobs!=sa_index->nblobs) {
                 fclose(sa->inf);
                 free(sa->filename);
                 free(sa->t);
@@ -352,6 +336,39 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                 *warnings |= REB_INPUT_BINARY_ERROR_SEEK;
                 return;
             }
+            // No need to read the large file, just copying the index.
+            memcpy(sa->offset, sa_index->offset, sizeof(uint32_t)*sa->nblobs);
+            memcpy(sa->t, sa_index->t, sizeof(double)*sa->nblobs);
+        }else{
+            for(long i=0;i<sa->nblobs;i++){
+                struct reb_binary_field field = {0};
+                sa->offset[i] = ftell(sa->inf);
+                do{
+                    fread(&field,sizeof(struct reb_binary_field),1,sa->inf);
+                    switch (field.type){
+                        case REB_BINARY_FIELD_TYPE_HEADER:
+                            fseek(sa->inf,64 - sizeof(struct reb_binary_field),SEEK_CUR);
+                            break;
+                        case REB_BINARY_FIELD_TYPE_T:
+                            fread(&(sa->t[i]), sizeof(double),1,sa->inf);
+                            break;
+                        default:
+                            fseek(sa->inf,field.size,SEEK_CUR);
+                            break;
+                            
+                    }
+                }while(field.type!=REB_BINARY_FIELD_TYPE_END);
+                fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa->inf);
+                if (i!=blob.index) {
+                    fclose(sa->inf);
+                    free(sa->filename);
+                    free(sa->t);
+                    free(sa->offset);
+                    free(sa);
+                    *warnings |= REB_INPUT_BINARY_ERROR_SEEK;
+                    return;
+                }
+            }
         }
     }
 }
@@ -359,7 +376,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
 struct reb_simulationarchive* reb_open_simulationarchive(const char* filename){
     struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
     enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
-    reb_read_simulationarchive_with_messages(sa, filename, &warnings);
+    reb_read_simulationarchive_with_messages(sa, filename, NULL, &warnings);
     if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
         // Don't output an error if file does not exist, just return NULL.
         free(sa);

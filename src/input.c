@@ -449,7 +449,7 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
     struct reb_simulation* r = reb_create_simulation();
     
     struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
-    reb_read_simulationarchive_with_messages(sa, filename, &warnings);
+    reb_read_simulationarchive_with_messages(sa, filename, NULL, &warnings);
     if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
         // Don't output an error if file does not exist, just return NULL.
         free(sa);
