@@ -79,6 +79,7 @@ class SimulationArchive(Structure):
         """
         self.setup = setup
         self.setup_args = setup_args
+        self.process_warnings = process_warnings
         w = c_int(0)
         if reuse_index:
             # Optimized loading
@@ -138,7 +139,8 @@ class SimulationArchive(Structure):
                     raise RuntimeError(message)
                 else:  
                     # Just a warning
-                    warnings.warn(message, RuntimeWarning)
+                    if self.process_warnings:
+                        warnings.warn(message, RuntimeWarning)
         return sim
     
     def __setitem__(self, key, value):
