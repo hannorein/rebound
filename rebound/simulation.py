@@ -141,10 +141,15 @@ class reb_simulation_integrator_ias15(Structure):
     
     :ivar float epsilon_global:          
         Determines how the adaptive timestep is chosen. 
+    
+    :ivar int neworder:          
+        Changes the order of floating point operations within IAS15. New simulations should use neworder=1. Only set neworder=0 for binary backwards compatibility.
+    
     """
     _fields_ = [("epsilon", c_double),
                 ("min_dt", c_double),
                 ("epsilon_global", c_uint),
+                ("neworder", c_uint),
                 ("_iterations_max_exceeded", c_ulong),
                 ("_allocatedN", c_int),
                 ("_at", POINTER(c_double)),

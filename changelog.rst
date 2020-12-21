@@ -3,6 +3,12 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.13.0
+--------------
+* IAS15: Fixes a bug which leads to a biased energy error in long term integrations with fixed timesteps (see Hernandez and Holman 2020). The old version of IAS15 can still be used for the time being by setting ri_ias15.neworder=0.
+* IAS15: Does not take variational particles into account when predicting new timesteps. This should be beneficial during close encounters.
+* A few improvements have been made to the SimulationArchives code including a more efficient loading procedure for large datasets.
+
 Version 3.12.3
 --------------
 * Various small bug fixes 
