@@ -1,5 +1,6 @@
 from ctypes import Structure, c_double, POINTER, c_uint32, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
 from . import clibrebound, Escape, NoParticles, Encounter, Collision, SimulationError, ParticleNotFound
+from .citations import cite
 from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G, hash_to_unit
 from .tools import hash as rebhash
@@ -140,10 +141,15 @@ class reb_simulation_integrator_ias15(Structure):
     
     :ivar float epsilon_global:          
         Determines how the adaptive timestep is chosen. 
+    
+    :ivar int neworder:          
+        Changes the order of floating point operations within IAS15. New simulations should use neworder=1. Only set neworder=0 for binary backwards compatibility.
+    
     """
     _fields_ = [("epsilon", c_double),
                 ("min_dt", c_double),
                 ("epsilon_global", c_uint),
+                ("neworder", c_uint),
                 ("_iterations_max_exceeded", c_ulong),
                 ("_allocatedN", c_int),
                 ("_at", POINTER(c_double)),
@@ -525,6 +531,18 @@ class Simulation(Structure):
                     warnings.warn(message, RuntimeWarning)
         return sim
 
+    def cite(self):
+        """
+        Generate citations
+
+        This function generates citations to papers relevant to the current 
+        setting of the simulation.
+        """
+
+        txt, bib = cite(self)
+        # one could check for REBOUNDx here, then append txt and bib accordingly
+        print(txt + "\n\n\n" + bib)
+
     def getWidget(self,**kwargs):
         """
         Wrapper function that returns a new widget attached to this simulation.
@@ -629,6 +647,11 @@ class Simulation(Structure):
             raise AttributeError("Need to specify either interval, walltime, or step")
         if deletefile and os.path.isfile(filename):
             os.remove(filename)
+            
+            # reset intervals so that automate functions C set sim->next consistently
+            self.simulationarchive_auto_interval=0
+            self.simulationarchive_auto_walltime=0
+            self.simulationarchive_auto_step=0
         if interval:
             clibrebound.reb_simulationarchive_automate_interval(byref(self), c_char_p(filename.encode("ascii")), c_double(interval))
         if walltime:
@@ -908,10 +931,10 @@ class Simulation(Structure):
         raise AttributeError("You can only set C function pointers from python.")
     @collision_resolve.setter
     def collision_resolve(self, func):
-        if func is "merge":
+        if func == "merge":
             clibrebound.reb_set_collision_resolve.restype = None
             clibrebound.reb_set_collision_resolve(byref(self), clibrebound.reb_collision_resolve_merge)
-        elif func is "hardsphere":
+        elif func == "hardsphere":
             clibrebound.reb_set_collision_resolve.restype = None
             clibrebound.reb_set_collision_resolve(byref(self), clibrebound.reb_collision_resolve_hardsphere)
         else:
@@ -1285,8 +1308,14 @@ class Simulation(Structure):
             elif isinstance(particle,str):
                 if self.python_unit_l == 0 or self.python_unit_m == 0 or self.python_unit_t == 0:
                     self.units = ('AU', 'yr2pi', 'Msun')
-                self.add(horizons.getParticle(particle, **kwargs), hash=particle)
-                units_convert_particle(self.particles[-1], 'km', 's', 'kg', hash_to_unit(self.python_unit_l), hash_to_unit(self.python_unit_t), hash_to_unit(self.python_unit_m))
+                builtindatasets = ["solar system", "outer solar system"]
+                if particle.lower() == "solar system":          # built in test dataset
+                    data.add_solar_system(self)
+                elif particle.lower() == "outer solar system":  # built in test dataset
+                    data.add_outer_solar_system(self)
+                else:
+                    self.add(horizons.getParticle(particle, **kwargs), hash=particle)
+                    units_convert_particle(self.particles[-1], 'km', 's', 'kg', hash_to_unit(self.python_unit_l), hash_to_unit(self.python_unit_t), hash_to_unit(self.python_unit_m))
             else: 
                 raise ValueError("Argument passed to add() not supported.")
         else: 
@@ -2197,4 +2226,5 @@ class Particles(MutableMapping):
 
 # Import at the end to avoid circular dependence
 from . import horizons
+from . import data
 from .simulationarchive import SimulationArchive

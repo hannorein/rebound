@@ -276,8 +276,8 @@ class TestMercurius(unittest.TestCase):
         
         # Note: precision might vary on machine as initializations use cos/sin 
         # and are therefore machine dependent. 
-        self.assertLess(dE_mercurius,2e-6)              # reasonable precision for mercurius
-        self.assertLess(dE_mercurius/dE_whfast,5e-5)    # at least 1e4 times better than whfast
+        self.assertLess(dE_mercurius,4e-6)              # reasonable precision for mercurius
+        self.assertLess(dE_mercurius/dE_whfast,1e-4)    # at least 1e4 times better than whfast
         is_travis = 'TRAVIS' in os.environ
         if not is_travis: # timing not reliable on TRAVIS
             self.assertLess(2.*time_mercurius,time_ias15) # at least 2 times faster than ias15

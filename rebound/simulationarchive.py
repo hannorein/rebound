@@ -57,7 +57,7 @@ class SimulationArchive(Structure):
                 ("offset", POINTER(c_uint32)), 
                 ("t", POINTER(c_double)) 
                 ]
-    def __init__(self,filename,setup=None, setup_args=(), process_warnings=True):
+    def __init__(self,filename,setup=None, setup_args=(), process_warnings=True, reuse_index=None):
         """
         Arguments
         ---------
@@ -70,12 +70,22 @@ class SimulationArchive(Structure):
             Arguments passed to setup function.
         process_warnings : Bool
             Display warning messages if True (default). Only fail on major errors if set to False.
+        reuse_index : SimulationArchive
+            Useful when loading many large SimulationArchives. After loading the first 
+            SimulationArchive, pass it as this argument when opening other SimulationArchives with the 
+            same shape. Note: SimulationArchive shape must be exactly the same to avoid unexpected
+            behaviour.
 
         """
         self.setup = setup
         self.setup_args = setup_args
+        self.process_warnings = process_warnings
         w = c_int(0)
-        clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")),byref(w))
+        if reuse_index:
+            # Optimized loading
+            clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), byref(reuse_index), byref(w))
+        else:
+            clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), None, byref(w))
         for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
                 if majorerror:
@@ -129,7 +139,8 @@ class SimulationArchive(Structure):
                     raise RuntimeError(message)
                 else:  
                     # Just a warning
-                    warnings.warn(message, RuntimeWarning)
+                    if self.process_warnings:
+                        warnings.warn(message, RuntimeWarning)
         return sim
     
     def __setitem__(self, key, value):

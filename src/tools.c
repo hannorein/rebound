@@ -72,7 +72,7 @@ double reb_random_rayleigh(double sigma){
 double reb_tools_energy(const struct reb_simulation* const r){
     const int N = r->N;
     const int N_var = r->N_var;
-    const int _N_active = ((r->N_active==-1)?N:r->N_active) - N_var;
+    const int _N_active = (r->N_active==-1)?(N-N_var):r->N_active;
     const struct reb_particle* restrict const particles = r->particles;
     double e_kin = 0.;
     double e_pot = 0.;

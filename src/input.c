@@ -220,7 +220,15 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(WALLTIME,           &r->walltime);
         CASE(COLLISION,          &r->collision);
         CASE(VISUALIZATION,      &r->visualization);
-        CASE(INTEGRATOR,         &r->integrator);
+        case REB_BINARY_FIELD_TYPE_INTEGRATOR: 
+        {
+            reb_fread(&r->integrator, field.size,1,inf,mem_stream);\
+            // This is for backwards compatibility. To be removed in the future.
+            if (r->integrator == REB_INTEGRATOR_IAS15){
+                r->ri_ias15.neworder = 0;
+            }
+        }
+        break;
         CASE(BOUNDARY,           &r->boundary);
         CASE(GRAVITY,            &r->gravity);
         CASE(SEI_OMEGA,          &r->ri_sei.OMEGA);
@@ -242,6 +250,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global);
         CASE(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded);
         CASE(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN);
+        CASE(IAS15_NEWORDER,     &r->ri_ias15.neworder);
         CASE(JANUS_SCALEPOS,     &r->ri_janus.scale_pos);
         CASE(JANUS_SCALEVEL,     &r->ri_janus.scale_vel);
         CASE(JANUS_ORDER,        &r->ri_janus.order);
@@ -449,7 +458,7 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
     struct reb_simulation* r = reb_create_simulation();
     
     struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
-    reb_read_simulationarchive_with_messages(sa, filename, &warnings);
+    reb_read_simulationarchive_with_messages(sa, filename, NULL, &warnings);
     if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
         // Don't output an error if file does not exist, just return NULL.
         free(sa);

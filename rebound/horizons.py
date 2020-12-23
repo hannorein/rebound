@@ -19,7 +19,7 @@ __all__ = ["getParticle"]
 # If a date is passed, the same date is used for all subsequent particle adds (that don't themselves pass a date).
 INITDATE = None
 
-def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, plane="ecliptic"):   
+def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, plane="ecliptic", hash=0):   
     if plane not in ["ecliptic","frame"]:
         raise AttributeError("Reference plane needs to be either 'ecliptic' or 'frame'. See Horizons for a definition of these coordinate systems.")
     jd = False
@@ -139,6 +139,7 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
     else:
         warnings.warn("Warning: Mass cannot be retrieved from NASA HORIZONS. Set to 0.", RuntimeWarning)
         p.m = 0
+    p.hash = hash 
     return p
 
 

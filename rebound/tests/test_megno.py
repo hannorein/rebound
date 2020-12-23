@@ -63,7 +63,7 @@ class TestMegno(unittest.TestCase):
         self.sim.move_to_com()
         self.sim.integrate(1000)
         self.megnoWHFast = self.sim.calculate_megno()
-        self.assertAlmostEqual(abs((self.megnoIAS-self.megnoWHFast)/self.megnoIAS), 0., delta=0.2)
+        self.assertAlmostEqual(abs((self.megnoIAS-self.megnoWHFast)/self.megnoIAS), 0., delta=0.3)
 
 if __name__ == "__main__":
     unittest.main()

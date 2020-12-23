@@ -167,6 +167,15 @@ struct reb_simulation_integrator_ias15 {
      **/
     unsigned int epsilon_global;
 
+    /**
+     * @brief This parameter controls the order of operations.
+     * @details The order of floating point operations can affect the long term energy error. In the original version of IAS15, 
+     * the order of floating point operations leads to a linear energy error growth when a fixed timestep is used (Hernandez + Holman 2019).
+     * By default this parameter is now set to 1 which uses a different order and thus avoids this issue. Note that using IAS15 as a 
+     * non-adaptive integrator is rarely beneficial. This flag only exists to allow for backwards compatibility. All new simulations should 
+     * use neworder=1.
+     **/
+    unsigned int neworder;
 
     
     /**
@@ -712,6 +721,7 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_EOS_N = 150,
     REB_BINARY_FIELD_TYPE_EOS_SAFEMODE = 151,
     REB_BINARY_FIELD_TYPE_EOS_ISSYNCHRON = 152,
+    REB_BINARY_FIELD_TYPE_IAS15_NEWORDER = 153,
 
     REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
     REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
@@ -1800,6 +1810,14 @@ void reb_particle_iadd(struct reb_particle* p1, struct reb_particle* p2);
  * @param value Value by which to multiply particle's fields.
  */
 void reb_particle_imul(struct reb_particle* p1, double value);
+
+/**
+ * @brief Calculate the distance between two particles.
+ * @param p1 reb_particle First particle.
+ * @param p2 reb_particle Second particle.
+ * @param value Distance between p1 and p2.
+ */
+double reb_particle_distance(struct reb_particle* p1, struct reb_particle* p2);
 
 /** @} */
 

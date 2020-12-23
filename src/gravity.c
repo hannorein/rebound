@@ -651,8 +651,10 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
     struct reb_particle* const particles = r->particles;
     const double G = r->G;
     const unsigned int _gravity_ignore_terms = r->gravity_ignore_terms;
+    const int _testparticle_type   = r->testparticle_type;
     const int N = r->N;
     const int _N_real   = N - r->N_var;
+    const int _N_active = ((r->N_active==-1)?_N_real:r->N_active);
     const int starti = (r->gravity_ignore_terms==0)?1:2;
     const int startj = (r->gravity_ignore_terms==2)?1:0;
     switch (r->gravity){
@@ -682,7 +684,7 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                             particles_var1[i].ay = 0.; 
                             particles_var1[i].az = 0.; 
                         }
-                        for (int i=starti; i<_N_real; i++){
+                        for (int i=starti; i<_N_active; i++){
                         for (int j=startj; j<i; j++){
                             const double dx = particles[i].x - particles[j].x;
                             const double dy = particles[i].y - particles[j].y;
@@ -719,6 +721,47 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                             particles_var1[j].ax -= Gmi * dax - dGmi*r3inv*dx;
                             particles_var1[j].ay -= Gmi * day - dGmi*r3inv*dy;
                             particles_var1[j].az -= Gmi * daz - dGmi*r3inv*dz; 
+                        }
+                        }
+                        for (int i=_N_active; i<_N_real; i++){
+                        for (int j=startj; j<_N_active; j++){
+                            const double dx = particles[i].x - particles[j].x;
+                            const double dy = particles[i].y - particles[j].y;
+                            const double dz = particles[i].z - particles[j].z;
+                            const double r2 = dx*dx + dy*dy + dz*dz;
+                            const double _r  = sqrt(r2);
+                            const double r3inv = 1./(r2*_r);
+                            const double r5inv = 3.*r3inv/r2;
+                            const double ddx = particles_var1[i].x - particles_var1[j].x;
+                            const double ddy = particles_var1[i].y - particles_var1[j].y;
+                            const double ddz = particles_var1[i].z - particles_var1[j].z;
+                            const double Gmi = G * particles[i].m;
+                            const double Gmj = G * particles[j].m;
+
+                            // Variational equations
+                            const double dxdx = dx*dx*r5inv - r3inv;
+                            const double dydy = dy*dy*r5inv - r3inv;
+                            const double dzdz = dz*dz*r5inv - r3inv;
+                            const double dxdy = dx*dy*r5inv;
+                            const double dxdz = dx*dz*r5inv;
+                            const double dydz = dy*dz*r5inv;
+                            const double dax =   ddx * dxdx + ddy * dxdy + ddz * dxdz;
+                            const double day =   ddx * dxdy + ddy * dydy + ddz * dydz;
+                            const double daz =   ddx * dxdz + ddy * dydz + ddz * dzdz;
+
+                            // Variational mass contributions
+                            const double dGmi = G*particles_var1[i].m;
+                            const double dGmj = G*particles_var1[j].m;
+
+                            particles_var1[i].ax += Gmj * dax - dGmj*r3inv*dx;
+                            particles_var1[i].ay += Gmj * day - dGmj*r3inv*dy;
+                            particles_var1[i].az += Gmj * daz - dGmj*r3inv*dz;
+                            if (_testparticle_type){
+                                // Warning! This does not make sense when the mass is varied!
+                                particles_var1[j].ax -= Gmi * dax - dGmi*r3inv*dx;
+                                particles_var1[j].ay -= Gmi * day - dGmi*r3inv*dy;
+                                particles_var1[j].az -= Gmi * daz - dGmi*r3inv*dz; 
+                            }
                         }
                         }
                     }else{ //testparticle
@@ -762,6 +805,9 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
                         }
                     }
                 }else if (vc.order==2){
+                    if (_testparticle_type){
+                        reb_error(r,"testparticletype=1 not implemented for second order variational equations.");
+                    }
                     //////////////////
                     /// 2nd order  ///
                     //////////////////

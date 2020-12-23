@@ -19,7 +19,8 @@ import os
 import warnings
 pymodulepath = os.path.dirname(__file__)
 from ctypes import cdll, c_char_p
-clibrebound = cdll.LoadLibrary(pymodulepath+"/../librebound"+suffix)
+__libpath__ = pymodulepath+"/../librebound"+suffix
+clibrebound = cdll.LoadLibrary(__libpath__)
 
 # Version
 __version__ = c_char_p.in_dll(clibrebound, "reb_version_str").value.decode('ascii')
@@ -76,4 +77,4 @@ from .tools import hash
 from .simulationarchive import SimulationArchive
 from .interruptible_pool import InterruptiblePool
 
-__all__ = ["__version__", "__build__", "__githash__", "SimulationArchive", "Simulation", "Orbit", "OrbitPlot", "Particle", "SimulationError", "Encounter", "Collision", "Escape", "NoParticles", "ParticleNotFound", "InterruptiblePool","Variation", "reb_simulation_integrator_whfast", "reb_simulation_integrator_ias15", "reb_simulation_integrator_saba", "reb_simulation_integrator_sei","reb_simulation_integrator_mercurius", "clibrebound"]
+__all__ = ["__libpath__", "__version__", "__build__", "__githash__", "SimulationArchive", "Simulation", "Orbit", "OrbitPlot", "Particle", "SimulationError", "Encounter", "Collision", "Escape", "NoParticles", "ParticleNotFound", "InterruptiblePool","Variation", "reb_simulation_integrator_whfast", "reb_simulation_integrator_ias15", "reb_simulation_integrator_saba", "reb_simulation_integrator_sei","reb_simulation_integrator_mercurius", "clibrebound"]

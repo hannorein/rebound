@@ -77,7 +77,7 @@ cb1.solids.set_rasterized(True)
 cb1.set_label("MEGNO $\\langle Y \\rangle$")
 
 # Plot Lyapunov timescale
-im2 = axarr[1].imshow(lyaptimescale, vmin=1e1, vmax=1e5, norm=LogNorm(), aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn", extent=extent)
+im2 = axarr[1].imshow(lyaptimescale, norm=LogNorm(vmin=1e1, vmax=1e5), aspect='auto', origin="lower", interpolation='nearest', cmap="RdYlGn", extent=extent)
 cb2 = plt.colorbar(im2, ax=axarr[1])
 cb2.solids.set_rasterized(True)
 cb2.set_label("Lyapunov timescale [years]")

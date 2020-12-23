@@ -179,3 +179,4 @@ They for example show how to use hashes to identify particles.
    ipython/Testparticles
    ipython/UniquelyIdentifyingParticlesWithHashes
    ipython/Units
+   ipython/Cheartbeat

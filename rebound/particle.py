@@ -169,6 +169,8 @@ class Particle(Structure):
             l = random.vonmisesvariate(0.,0.) 
         if theta == "uniform":
             theta = random.vonmisesvariate(0.,0.) 
+        if inc == "uniform":
+            inc = random.vonmisesvariate(0.,0.) 
 
         self.hash = hash # set via the property, which checks for type
 
@@ -447,7 +449,7 @@ class Particle(Structure):
 
         return o
     
-    def sample_orbit(self, Npts=100, primary=None, trailing=True, timespan=None, useTrueAnomaly=None):
+    def sample_orbit(self, Npts=100, primary=None, trailing=True, timespan=None, useTrueAnomaly=None, duplicateEndpoint=True):
         """
         Returns a nested list of xyz positions along the osculating orbit of the particle. 
         If primary is not passed, returns xyz positions along the Jacobi osculating orbit
@@ -467,6 +469,8 @@ class Particle(Structure):
         useTrueAnomaly: bool, optional
             Will sample equally spaced points in true anomaly if True, otherwise in mean anomaly.
             Latter might be better for hyperbolic orbits, where true anomaly can stay near the limiting value for a long time, and then switch abruptly at pericenter. (Default: True for bound orbits, False for unbound orbits)
+        duplicateEndpoint: bool, optional
+            If true (default), then the first and last point will be identical for closed orbits. This is useful for some plotting tools.
         """
         pts = []
         if primary is None:
@@ -483,7 +487,10 @@ class Particle(Structure):
 
         if trailing is True:
             lim_phase *= -1 # sample phase backwards from current value
-        phase = [lim_phase*i/(Npts-1) for i in range(Npts)]
+        _Npts = Npts
+        if duplicateEndpoint:
+            _Npts -= 1
+        phase = [lim_phase*i/_Npts  for i in range(Npts)]
 
         if useTrueAnomaly is None:
             if o.a <0.:
@@ -503,6 +510,11 @@ class Particle(Structure):
 
     # Simple operators for particles.
     
+    def __pow__(self, other):
+        if not isinstance(other, Particle):
+            return NotImplemented 
+        clibrebound.reb_particle_distance.restype = c_double
+        return clibrebound.reb_particle_distance(byref(self), byref(other))
     def __add__(self, other):
         if not isinstance(other, Particle):
             return NotImplemented 
