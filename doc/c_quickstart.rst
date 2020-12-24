@@ -1,4 +1,4 @@
-Quick User Quide (C)
+Quick User Guide (C)
 ====================
 
 This section describes the C version of REBOUND. 
