@@ -9,7 +9,12 @@ import os
 import sys
 import ctypes.util
 import warnings
-from collections import MutableMapping
+try:
+    # Required for Python>=3.9
+    from collections.abc import MutableMapping
+except:
+    from collections import MutableMapping
+
 
 try:
     import pkg_resources
