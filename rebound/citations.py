@@ -21,6 +21,26 @@ archivePrefix = {arXiv},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
 """
+    if sim.extras:
+        txt +="""The REBOUNDx package was used to incorporate additional physics \citep{reboundx}. """
+        bib +="""@ARTICLE{reboundx,
+       author = {{Tamayo}, Daniel and {Rein}, Hanno and {Shi}, Pengshuai and {Hernandez}, David M.},
+        title = "{REBOUNDx: a library for adding conservative and dissipative forces to otherwise symplectic N-body integrations}",
+      journal = {\mnras},
+     keywords = {gravitation, methods: numerical, planets and satellites: dynamical evolution and stability, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics},
+         year = 2020,
+        month = jan,
+       volume = {491},
+       number = {2},
+        pages = {2885-2901},
+          doi = {10.1093/mnras/stz2870},
+archivePrefix = {arXiv},
+       eprint = {1908.05634},
+ primaryClass = {astro-ph.EP},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2020MNRAS.491.2885T},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+"""
     if sim.integrator == "ias15":
         txt += """The simulations were integrated using IAS15, a 15th order Gauss-Radau integrator \citep{reboundias15}. """
         bib += """@ARTICLE{reboundias15,
