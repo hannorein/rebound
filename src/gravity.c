@@ -192,8 +192,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 #endif // OPENMP
                 // Interactions of test particles with active particles
 #ifndef OPENMP // OPENMP off
-#pragma omp parallel for
-                for (int i=_N_active; i<_N_real; i++){
+                const int startitestp = MAX(_N_active, starti);
+                for (int i=startitestp; i<_N_real; i++){
                 if (reb_sigint) return;
                 for (int j=startj; j<_N_active; j++){
                     const double dx = (gb.shiftx+particles[i].x) - particles[j].x;
@@ -216,6 +216,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                 }
 #else // OPENMP on
                 if (_testparticle_type){
+#pragma omp parallel for
 				for (int i=0; i<_N_active; i++){
 				for (int j=_N_active; j<_N_real; j++){
 					if (_gravity_ignore_terms==1 && ((j==1 && i==0) )) continue;
