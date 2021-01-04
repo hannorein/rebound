@@ -3,6 +3,11 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.13.2
+--------------
+* Correct handling of test particles in reb_transformations.
+* Small bug fixes 
+
 Version 3.13.1
 --------------
 * WHFast: Fixes multiple issues with testparticles in WHFast. 
