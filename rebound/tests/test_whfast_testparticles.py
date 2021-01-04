@@ -44,7 +44,7 @@ def create_whfast_testparticle(coordinates, N, N_active):
 
 def create_whfast_testparticle_withplanet(coordinates, N, N_active):
     def do_test(self):
-        eps = 1e-16
+        eps = 1e-13
         sim = rebound.Simulation()
         sim.integrator = "whfast"
         sim.ri_whfast.coordinates = coordinates
@@ -120,7 +120,7 @@ def create_whfast_testparticletype1_withplanet(coordinates, N_active):
 ## Testparticles with mass currently lead to unexpexted behaviour:
 def create_whfast_massivetestparticle(coordinates, N):
     def do_test(self):
-        eps = 1e-16
+        eps = 2e-13
         sim = rebound.Simulation()
         sim.ri_whfast.coordinates = coordinates
         sim.integrator = "whfast"
@@ -135,6 +135,8 @@ def create_whfast_massivetestparticle(coordinates, N):
             sim2.particles[i+2].m = 1 # particles have zero mass for sim, but finite for sim2
 
         sim2.N_active = 2
+
+        sim.integrate(1)
         sim2.integrate(1)
 
         for i in range(sim.N):
@@ -145,7 +147,7 @@ def create_whfast_massivetestparticle(coordinates, N):
     return do_test
 
 
-for N in [1,2]: #TODO Also test 2
+for N in [1,2]: 
     for coordinates in coordinatelist:
         for N_active in [-1]+list(range(1,N+2)):
             test_method = create_whfast_testparticle(coordinates,N, N_active)
@@ -156,9 +158,9 @@ for N in [1,2]: #TODO Also test 2
             test_method = create_whfast_testparticle_withplanet(coordinates,N, N_active)
             test_method.__name__ = "test_whfast_testparticle_withplanet_N%d_Nactive%d_"%(N,N_active)+coordinates
             setattr(TestIntegratorWHFastTestParticle, test_method.__name__, test_method)
-        #test_method = create_whfast_massivetestparticle(coordinates,N)
-        #test_method.__name__ = "test_whfast_massivetestparticle_N%d_"%(N)+coordinates
-        #setattr(TestIntegratorWHFastTestParticle, test_method.__name__, test_method)
+        test_method = create_whfast_massivetestparticle(coordinates,N)
+        test_method.__name__ = "test_whfast_massivetestparticle_N%d_"%(N)+coordinates
+        setattr(TestIntegratorWHFastTestParticle, test_method.__name__, test_method)
 
 for coordinates in coordinatelist:
     for N_active in [-1,1]:
