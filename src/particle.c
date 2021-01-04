@@ -215,7 +215,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
     if (r->integrator == REB_INTEGRATOR_MERCURIUS){
         keepSorted = 1; // Force keepSorted for hybrid integrator
         struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
-        if (rim->dcrit_allocatedN>0 && index<=rim->dcrit_allocatedN){
+        if (rim->dcrit_allocatedN>0 && index<rim->dcrit_allocatedN){
             for (int i=0;i<r->N-1;i++){
                 if (i>=index){
                     rim->dcrit[i] = rim->dcrit[i+1];
