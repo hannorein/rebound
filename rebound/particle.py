@@ -703,4 +703,4 @@ class Particle(Structure):
         elif isinstance(value, int_types):
             self._hash = value
         else:
-            raise AttributeError("Hash must be set to an integer, a ctypes.c_uint32 or a string. See UniquelyIdentifyingParticles.ipynb ipython_example.")
+            raise AttributeError("Hash must be set to an integer, a ctypes.c_uint32 or a string. See UniquelyIdentifyingParticlesWithHashes.ipynb ipython_example.")
