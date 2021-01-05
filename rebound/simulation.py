@@ -2200,7 +2200,7 @@ class Particles(MutableMapping):
             if isinstance(key, string_types):
                 key = rebhash(key)
             elif not isinstance(key, hash_types):
-                raise AttributeError("Expecting string, integer or ctypes.c_uint32 as argument to sim.particles.  See UniquelyIdentifyingParticles.ipynb ipython_example.")
+                raise AttributeError("Expecting string, integer or ctypes.c_uint32 as argument to sim.particles.  See UniquelyIdentifyingParticlesWithHashes.ipynb ipython_example.")
 
             ptr = clibrebound.reb_get_particle_by_hash(byref(self.sim), key) 
             
