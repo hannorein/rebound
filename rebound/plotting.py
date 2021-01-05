@@ -78,9 +78,9 @@ def OrbitPlot(sim, figsize=None, fancy=False, slices=0, xlim=None, ylim=None, un
     if slices>0.:
         divider = make_axes_locatable(ax_main)
         divider.set_aspect(True)
-        ax_top   = divider.append_axes("top",  size="%.2f%%"%(100.*slices), sharex=ax_main)
+        ax_top   = divider.append_axes("top",  size="%.2f%%"%(100.*slices), sharex=ax_main, pad=0)
         ax_top.set_aspect('equal', adjustable='datalim')
-        ax_right = divider.append_axes("right", size="%.2f%%"%(100.*slices), sharey=ax_main)
+        ax_right = divider.append_axes("right", size="%.2f%%"%(100.*slices), sharey=ax_main, pad=0)
         ax_right.set_aspect('equal', adjustable='datalim')
       
         plt.setp(ax_top.get_xticklabels(), visible=False)
