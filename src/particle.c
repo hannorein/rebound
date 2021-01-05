@@ -226,15 +226,17 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
         if (r->ri_mercurius.mode==1){
             struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
             int after_to_be_removed_particle = 0;
+            int encounter_index = -1;
             for (int i=0;i<rim->encounterN;i++){
                 if (after_to_be_removed_particle == 1){
                     rim->encounter_map[i-1] = rim->encounter_map[i] - 1; 
                 }
                 if (rim->encounter_map[i]==index){
+                    encounter_index = i;
                     after_to_be_removed_particle = 1;
                 }
             }
-            if (index<rim->encounterNactive){
+            if (encounter_index<rim->encounterNactive){
                 rim->encounterNactive--;
             }
             rim->encounterN--;
