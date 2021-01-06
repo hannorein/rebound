@@ -1,7 +1,7 @@
 Style Guide
 ===========
 
-This is a short source code style guide for REBOUND. It is not enforced in any way an only itended to be a suggestion.
+This is a short source code style guide for REBOUND. It is not enforced in any way and only intended to be a suggestion.
 
 Functions (c)
 -------------
@@ -16,7 +16,7 @@ Variables (c)
 -------------
 
 * The function naming convention rules apply.
-* The only public variables are in structs. Therefore they do not have the reb_ prefix.
+* The only public variables are in structs. Therefore, they do not have the reb_ prefix.
 * As an exception to the lower case rule: the number of particle N is capitalized.
 * Variables beginning with an underscore are not intended for general use.
 

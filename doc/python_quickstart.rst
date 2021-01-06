@@ -103,7 +103,7 @@ Then, import the rebound module::
 
     import rebound
 
-create a new simualtion::
+create a new simulation::
 
     sim = rebound.Simulation()
 

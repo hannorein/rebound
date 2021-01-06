@@ -70,7 +70,7 @@ class Particle(Structure):
         Whenever initializing a particle from orbital elements, one must 
         specify either the semimajor axis or the period of the orbit.
         
-        For classical orbital paramerers, one can specify the longitude 
+        For classical orbital parameters, one can specify the longitude 
         of the ascending node by passing Omega, to specify the pericenter 
         one can pass either omega or pomega (not both), and for the 
         longitude/anomaly one can pass one of f, M, l or theta.  

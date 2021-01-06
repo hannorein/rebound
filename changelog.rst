@@ -43,7 +43,7 @@ Version 3.12.0
 Version 3.11.1
 --------------
 * Added support for test particles and first-order variational particles to the Embedded Operator Splitting (EOS).
-* BASIC Gravity routine changed from O(N^2) to O(0.5 N^2). This should lead to a speed-up in most cases but will break bit-wise reproducibility from earlier versions as the ordering of floating point opperations has changed.
+* BASIC Gravity routine changed from O(N^2) to O(0.5 N^2). This should lead to a speed-up in most cases but will break bit-wise reproducibility from earlier versions as the ordering of floating point operations has changed.
 
 Version 3.11.0
 --------------
@@ -186,7 +186,7 @@ Version 3.5.1
 Version 3.5.0
 -------------
 * The WHFast integrator now supports Jacobi coordinates (default), democratic heliocentric coordinates and WHDS coordinates. The previously separate WHFastHelio integrator has been removed. The coordinate system can now be changed by simply setting the coordinates flag in the ri_whfast struct.
-* Included a experimental new integrator MERCURIUS. This is similar to the hybrid integrator in Mercury but uses WHFast and IAS15. Not ready for production yet.
+* Included an experimental new integrator MERCURIUS. This is similar to the hybrid integrator in Mercury but uses WHFast and IAS15. Not ready for production yet.
 
 Version 3.4.0
 -------------
@@ -278,11 +278,11 @@ Version 2.19.0
        warnings.simplefilter("always")
        # Execute a command which triggers a warning message.
        # The message will not show up.
-* Improvements regarding the WHFast logic for hyperbolic orbis. No changes should be noticable to users.
+* Improvements regarding the WHFast logic for hyperbolic orbis. No changes should be noticeable to users.
 
 Version 2.18.9
 --------------
-* Added the reb_serialize_particle_data function for fast access to particle data via numpy array. The full syntax is explain in the documentation. Here is a short example: 
+* Added the reb_serialize_particle_data function for fast access to particle data via numpy array. The full syntax is explained in the documentation. Here is a short example: 
 .. code:: python
    
    import numpy as np
@@ -294,7 +294,7 @@ Version 2.18.9
 Version 2.18.5
 --------------
 * When loading a simulation from a binary file, REBOUND now checks if the version of the binary file is the same as the current version. 
-* When saving a simulation to a binary file, all the auxiliary arrays for IAS15 are now stored. This allows for bit-by-bit reproducability in simulations that are making use of checkpoints.
+* When saving a simulation to a binary file, all the auxiliary arrays for IAS15 are now stored. This allows for bit-by-bit reproducibility in simulations that are making use of checkpoints.
 
 
 Version 2.18.0
@@ -327,8 +327,8 @@ Version 2.17.0
 Version 2.0.0
 -------------
 
-* We made many changes to the code. Most importanly, REBOUND is now thread-safe and does not use global variables anymore. All the variables that were previously global, are now contained in the ``reb_simulation`` structure. This has many advantages, for example, you can run separate simulations in parallel from within one process.
+* We made many changes to the code. Most importantly, REBOUND is now thread-safe and does not use global variables anymore. All the variables that were previously global, are now contained in the ``reb_simulation`` structure. This has many advantages, for example, you can run separate simulations in parallel from within one process.
 * We also made it possible to choose all modules at runtime (compared to the selection in the ``Makefile`` that was used before). This is much more in line with standard UNIX coding practice and does not severely impact performance (it might even help making REBOUND a tiny bit faster). This makes REBOUND a fully functional shared library. We added a prefix to all public functions and struct definitions: ``reb_``.
 * There are still some features that haven't been fully ported. Most importantly, the MPI parallelization and the SWEEP collision detection routine. 
-* The best way to get and idea of the changes we made is to look at some of the example problems and the new REBOUND documentation. If you have trouble using the new version or find a bug, please submit an issue or a pull request on github. 
+* The best way to get an idea of the changes we made is to look at some of the example problems and the new REBOUND documentation. If you have trouble using the new version or find a bug, please submit an issue or a pull request on github. 
 

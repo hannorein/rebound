@@ -113,9 +113,9 @@ class reb_simulation_integrator_sei(Structure):
     :ivar float OMEGA:          
         The epicyclic frequency OMEGA. For simulations making use of shearing 
         sheet boundary conditions, REBOUND needs to know the epicyclic frequency. 
-        By default OMEGA is 1. For more details read Rein and Tremaine 2011.
+        By default, OMEGA is 1. For more details read Rein and Tremaine 2011.
     :ivar float OMEGAZ:          
-        The z component of the epicyclic frequency OMEGA. By default it is assuming
+        The z component of the epicyclic frequency OMEGA. By default, it is assuming
         OMEGAZ is the same as OMEGA.
     """
     _fields_ = [("OMEGA", c_double),
@@ -249,12 +249,12 @@ class reb_simulation_integrator_whfast(Structure):
     
     :ivar int corrector:      
         The order of the symplectic corrector in the WHFast integrator.
-        By default the symplectic correctors are turned off (=0). For high
+        By default, the symplectic correctors are turned off (=0). For high
         accuracy simulation set this value to 11 or 17. For more details read 
         Rein and Tamayo (2015).
     :ivar int corrector2:      
         Second correctors (C2 of Wisdom et al 1996).
-        By default the second symplectic correctors are turned off (=0). 
+        By default, the second symplectic correctors are turned off (=0). 
         Set to 1 to turn them on.
     :ivar int/string kernel:      
         Kernel option. Set to 0 for the default WH kernel (standard kick step).
@@ -264,7 +264,7 @@ class reb_simulation_integrator_whfast(Structure):
         Setting this flag to 1 (default 0) triggers the WHFast integrator
         to recalculate Jacobi/heliocenctric coordinates. This is needed 
         if the user changes the particle position, velocity or mass 
-        inbetween timesteps.  After every timestep the flag is set back 
+        in-between timesteps.  After every timestep the flag is set back 
         to 0, so if you continuously update the particles manually, 
         you need to set this flag to 1 after every timestep.
     :ivar string coordinates:
@@ -429,7 +429,7 @@ class Simulation(Structure):
 
     This object encapsulated an entire REBOUND simulation. 
     It is an abstraction of the C struct reb_simulation.
-    You can create mutiple REBOUND simulations (the c library is thread safe). 
+    You can create multiple REBOUND simulations (the c library is thread safe). 
 
     Examples
     --------
@@ -510,7 +510,7 @@ class Simulation(Structure):
 
     @classmethod
     def from_file(cls, filename):
-        """ rebound.Simulation.from_file(filename) is deprecated and will be removed in the futute. Use rebound.Simulation(filename) instead """
+        """ rebound.Simulation.from_file(filename) is deprecated and will be removed in the future. Use rebound.Simulation(filename) instead """
         warnings.warn( "rebound.Simulation.from_file(filename) is deprecated and will be removed in the future. Use rebound.Simulation(filename) instead", FutureWarning)
         return cls(filename=filename)
     
@@ -552,7 +552,7 @@ class Simulation(Structure):
         """
         Wrapper function that returns a new widget attached to this simulation.
 
-        Widgets provide real-time 3D visualizations from within an Jupyter notebook.
+        Widgets provide real-time 3D visualizations from within a Jupyter notebook.
         See the Widget class for more details on the possible arguments.
         
         
@@ -607,7 +607,7 @@ class Simulation(Structure):
 # Simulation Archive tools
     def automateSimulationArchive(self, filename, interval=None, walltime=None, step=None, deletefile=False):
         """
-        This function automates taking snapshots during a simulationusing the Simulation Archive.
+        This function automates taking snapshots during a simulation using the Simulation Archive.
         Instead of using this function, one can also call simulationarchive_snapshot() manually
         to create snapshots.
 
@@ -838,7 +838,7 @@ class Simulation(Structure):
         The argument can be a python function or something that can 
         be cast to a C function of type CFUNCTYPE(None,POINTER(Simulaton)). 
         If the forces are velocity dependent, the flag 
-        force_is_velocity_dependent needs to be set to 1. Otherwise
+        force_is_velocity_dependent needs to be set to 1. Otherwise,
         the particle structures might contain incorrect velocity 
         values.
         """
@@ -931,7 +931,7 @@ class Simulation(Structure):
         Possible options for setting:
           1) Function pointer
           2) "merge": two colliding particles will merge) 
-          3) "hardsphere": two colliding particles will bounce of using a set coefficient of restitution
+          3) "hardsphere": two colliding particles will bounce off using a set coefficient of restitution
         """
         raise AttributeError("You can only set C function pointers from python.")
     @collision_resolve.setter
@@ -968,7 +968,7 @@ class Simulation(Structure):
     @property
     def integrator(self):
         """
-        Get or set the intergrator module.
+        Get or set the integrator module.
 
         Available integrators include:
 
@@ -1186,11 +1186,11 @@ class Simulation(Structure):
     def convert_particle_units(self, *args): 
         """
         Will convert the units for the simulation (i.e. convert G) as well as the particles' cartesian elements.
-        Must have set sim.units ahead of calling this function so REBOUND knows what units to convert from.
+        Must have set sim.units ahead of calling this function, so REBOUND knows what units to convert from.
 
         Parameters
         ----------
-        3 strings corresponding to units of time, length and mass.  Can be in any order and aren't case sensitive.        You can add new units to rebound/rebound/units.py
+        3 strings corresponding to units of time, length and mass.  Can be in any order and aren't case-sensitive.        You can add new units to rebound/rebound/units.py
         """
         if self.python_unit_l == 0 or self.python_unit_m == 0 or self.python_unit_t == 0:
             raise AttributeError("Must set sim.units before calling convert_particle_units in order to know what units to convert from.")
@@ -1214,12 +1214,12 @@ class Simulation(Structure):
         Parameters
         ----------
         order : integer, optional
-            By default the function adds a set of first order variational particles to the simulation. Set this flag to 2 for second order.
+            By default, the function adds a set of first order variational particles to the simulation. Set this flag to 2 for second order.
         first_order : Variation, optional
             Second order variational equations depend on their corresponding first order variational equations. 
             This parameter expects the Variation object corresponding to the first order variational equations. 
         first_order_2 : Variation, optional
-            Same as first_order. But allows to set two different indicies to calculate off-diagonal elements. 
+            Same as first_order. But allows to set two different indicies to calculated off-diagonal elements. 
             If omitted, then first_order will be used for both first order equations.
         testparticle : int, optional
             If set to a value >= 0, then only one variational particle will be added and be treated as a test particle.
@@ -1423,8 +1423,8 @@ class Simulation(Structure):
 # Orbit calculation
     def calculate_orbits(self, primary=None, jacobi_masses=False, heliocentric=None, barycentric=None):
         """ 
-        Calculate orbital parameters for all partices in the simulation.
-        By default this functions returns the orbits in Jacobi coordinates. 
+        Calculate orbital parameters for all particles in the simulation.
+        By default, this functions returns the orbits in Jacobi coordinates. 
 
         If MEGNO is enabled, variational particles will be ignored.
 
@@ -1529,7 +1529,7 @@ class Simulation(Structure):
         Note that this routine is only intended for special use cases
         where speed is an issue. For normal use, it is recommended to
         access particle data via the `sim.particles` array. Be aware of
-        potential issues that arrise by directly accesing the memory of
+        potential issues that arise by directly accesing the memory of
         numpy arrays (see numpy documentation for more details).
 
         Examples
@@ -1622,7 +1622,7 @@ class Simulation(Structure):
         """
         This function moves all particles in the simulation to the heliocentric frame.
         Note that the simulation will not stay in the heliocentric frame during integrations
-        as the heliocentric frame is not an innertial frame.
+        as the heliocentric frame is not an inertial frame.
         """
         clibrebound.reb_move_to_hel(byref(self))
     
@@ -1631,7 +1631,7 @@ class Simulation(Structure):
         This function moves all particles in the simulation to a center of momentum frame.
         In that frame, the center of mass is at the origin and does not move.
         It makes sense to call this function at the beginning of the integration, especially 
-        for the high accuray integrators IAS15 and WHFast.
+        for the high accuracy integrators IAS15 and WHFast.
         """
         clibrebound.reb_move_to_com(byref(self))
     
@@ -1664,7 +1664,7 @@ class Simulation(Structure):
         root_nx, root_ny, root_nz : int, optional
             The number of root boxes in each direction. The total size of the simulation box
             will be ``root_nx * boxsize``, ``root_ny * boxsize`` and ``root_nz * boxsize``.
-            By default there will be exactly one root box in each direction.
+            By default, there will be exactly one root box in each direction.
         """
         clibrebound.reb_configure_box(byref(self), c_double(boxsize), c_int(root_nx), c_int(root_ny), c_int(root_nz))
         return
@@ -1758,7 +1758,7 @@ class Simulation(Structure):
 
     def integrator_synchronize(self):
         """
-        Call this function if safe-mode is disabled and you need synchronize particle positions and velocities between timesteps.
+        Call this function if safe-mode is disabled and you need to synchronize particle positions and velocities between timesteps.
         """
         clibrebound.reb_integrator_synchronize(byref(self))
     
@@ -1783,7 +1783,7 @@ class Variation(Structure):
     variational equations.
 
     Note that variations are only encoded as particles for convenience.  
-    A variational particle's position and velocity should be interpreted as a derivative, i.e. how much that position orvelocity varies with respect to the first or second-order variation.  
+    A variational particle's position and velocity should be interpreted as a derivative, i.e. how much that position or velocity varies with respect to the first or second-order variation.  
     See ipython_examples/VariationalEquations.ipynb and Rein and Tamayo (2016) for details.
 
     Examples
@@ -1846,7 +1846,7 @@ class Variation(Structure):
         variation2: string, optional
             This is only used for second order variations which can depend on two varying parameters. If omitted, then it is assumed that the parameter variation is variation2.
         primary: Particle, optional
-            By default variational particles are created in the Heliocentric frame. 
+            By default, variational particles are created in the Heliocentric frame. 
             Set this parameter to use any other particles as a primary (e.g. the center of mass).
         """
         if self.order==2 and variation2 is None:
@@ -1918,7 +1918,7 @@ class reb_simulation_integrator_eos(Structure):
     :ivar int n     
         Sets the number of substeps taken by Phi_1
     :ivar int safe_mode  
-        By default safe_mode is on (1). Set to 0 (off) to combine
+        By default, safe_mode is on (1). Set to 0 (off) to combine
         drift step at the beginning and end of the Phi0 integrator steps.
 
     Example usage:

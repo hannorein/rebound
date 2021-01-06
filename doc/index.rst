@@ -92,7 +92,7 @@ There are several papers describing the functionality of REBOUND.
 
 7. Rein & Tamayo 2018 (Monthly Notices of the Royal Astronomical Society, Volume 473, Issue 3, p.3351–3357) describes the integer based JANUS integrator. https://ui.adsabs.harvard.edu/abs/2018MNRAS.473.3351R
 
-8. Rein, Hernandez, Tamayo, Brown, Eckels, Holmes, Lau, Leblanc & Silburt 2019 (Monthly Notices of the Royal Astronomical Society, Volume 485, Issue 4, p.5490-5497) describes the hyrbid symplectic intergator MERCURIUS. https://ui.adsabs.harvard.edu/abs/2019MNRAS.485.5490R
+8. Rein, Hernandez, Tamayo, Brown, Eckels, Holmes, Lau, Leblanc & Silburt 2019 (Monthly Notices of the Royal Astronomical Society, Volume 485, Issue 4, p.5490-5497) describes the hyrbid symplectic integrator MERCURIUS. https://ui.adsabs.harvard.edu/abs/2019MNRAS.485.5490R
 
 9. Rein, Tamayo & Brown 2019 (Monthly Notices of the Royal Astronomical Society, Volume 489, Issue 4, November 2019, Pages 4632-4640) describes the implementation of the high order symplectic intergators SABA, SABAC, SABACL, WHCKL, WHCKM, and WHCKC. https://ui.adsabs.harvard.edu/abs/2019MNRAS.489.4632R
 
