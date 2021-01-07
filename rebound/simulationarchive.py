@@ -278,7 +278,7 @@ class SimulationArchive(Structure):
         Examples
         --------
         The following example reads in a SimulationArchive and plots
-        the trajectories as Cubic Bézier Curves. It also plots the 
+        the trajectories as Cubic Bezier Curves. It also plots the 
         actual datapoints stored in the SimulationArchive. 
         Note that the SimulationArchive needs to have enough
         datapoints to allow for smooth and reasonable orbits.
