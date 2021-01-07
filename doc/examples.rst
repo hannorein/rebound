@@ -76,7 +76,7 @@ With the simulation archive you can run a simulation first, then think later abo
 Variational Equations and Chaos detectors
 -----------------------------------------
 REBOUND supports first and second order variational equations. 
-Varational equations have several advantages over shadow particles when calculating chaos indicators such as Lyapunov exponents. 
+Variational equations have several advantages over shadow particles when calculating chaos indicators such as Lyapunov exponents. 
 They can also be used in optimization problems. 
 For more details on variational equations and the math behind them, have a look at the paper `Rein and Tamayo 2016 <https://arxiv.org/abs/1603.03424>`_ and the following examples.
 
@@ -115,7 +115,7 @@ Granular Dynamics
 -----------------
 The examples in this section show how to use REBOUND for simulations in which particles are colliding with each other.
 Note that this is a different type of simulation than simulations of colliding planets.
-Here, particles collide often with each other. In the planet case, they collide with each other very rarely. 
+Here, particles often collide with each other. In the planet case, they collide with each other very rarely. 
 
 .. toctree::
    c_example_bouncing_balls
@@ -127,7 +127,7 @@ Here, particles collide often with each other. In the planet case, they collide 
 
 Tree code
 ---------
-REBOUND has a built in Barnes-Hut oct tree for collision detection and gravity. 
+REBOUND has a built-in Barnes-Hut oct tree for collision detection and gravity. 
 This allows you, for example, to simulate large gravitationally interacting systems.
 
 .. toctree::

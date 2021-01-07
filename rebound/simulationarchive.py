@@ -18,13 +18,13 @@ class SimulationArchive(Structure):
     (down to the last bit). The SimulationArchive allows you to add
     an arbitrary number of snapshots. Simulations can be reconstructed
     from these snapshots. Since version 2 of the SimulationArchive
-    (Spring 2018), you can change anything inbetween snapshots,
-    icluding settings like the integrator, the timestep, the number of
+    (Spring 2018), you can change anything in-between snapshots,
+    including settings like the integrator, the timestep, the number of
     particles. The file format is efficient in that only data
     that changed is stored in the SimulationArchive file. This is all
     done automatically. All the user has to do is call the function
     to create a snapshot.
-    The SimulationArchive thus allows for fast access to any long running 
+    The SimulationArchive thus allows for fast access to any long-running 
     simulations. For a full discussion of the functionality see the paper 
     by Rein & Tamayo 2017.
 
@@ -260,9 +260,9 @@ class SimulationArchive(Structure):
         This function returns array that can be used as a Cubic Bezier
         Path in matplotlib. 
         The function returns two arrays, the first one contains
-        the verticies for each particles and has the shape
-        (Nvert, Nparticles, 2) where Nvert is the number of verticies.
-        The second array returned describes the type of verticies to be
+        the vertices for each particle and has the shape
+        (Nvert, Nparticles, 2) where Nvert is the number of vertices.
+        The second array returned describes the type of vertices to be
         used with matplotlib's Patch class.
 
         Arguments

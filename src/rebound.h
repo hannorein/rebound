@@ -171,7 +171,7 @@ struct reb_simulation_integrator_ias15 {
      * @brief This parameter controls the order of operations.
      * @details The order of floating point operations can affect the long term energy error. In the original version of IAS15, 
      * the order of floating point operations leads to a linear energy error growth when a fixed timestep is used (Hernandez + Holman 2019).
-     * By default this parameter is now set to 1 which uses a different order and thus avoids this issue. Note that using IAS15 as a 
+     * By default, this parameter is now set to 1 which uses a different order and thus avoids this issue. Note that using IAS15 as a 
      * non-adaptive integrator is rarely beneficial. This flag only exists to allow for backwards compatibility. All new simulations should 
      * use neworder=1.
      **/
@@ -232,8 +232,8 @@ struct reb_simulation_integrator_mercurius {
     
     /** 
      * @brief Switching distance in units of the Hill radius 
-     * @brief The switching distances for particles are calculated automastically
-     * based on multiple criteria. One criteria calculates the Hill radius of 
+     * @brief The switching distances for particles are calculated automatically
+     * based on multiple criteria. One criterion calculates the Hill radius of 
      * particles and then multiplies it with the hillfac variable. 
      */ 
     double hillfac;        
@@ -249,9 +249,9 @@ struct reb_simulation_integrator_mercurius {
 
     /** 
      * @brief Setting this flag to one will recalculate the critical switchover 
-     * distances dcrit at the the beginning of the next timestep. 
+     * distances dcrit at the beginning of the next timestep. 
      * @details After one timestep, the flag gets set back to 0. 
-     * If you want to recalculate dcrit at every every timestep, you 
+     * If you want to recalculate dcrit at every timestep, you 
      * also need to set this flag to 1 before every timestep.
      * Default is 0.
      */ 
@@ -337,7 +337,7 @@ struct reb_simulation_integrator_saba {
     unsigned int safe_mode;       ///< Safe_mode has the same functionality as in WHFast.
     unsigned int is_synchronized; ///< Flag to determine if current particle structure is synchronized
     /**
-     * @brief Flaf that determines if the inertial coordinates generated are discared in subsequent timesteps (Jacobi coordinates are used instead).
+     * @brief Flaf that determines if the inertial coordinates generated are discarded in subsequent timesteps (Jacobi coordinates are used instead).
      * @details Danger zone! Only use this flag if you are absolutely sure
      * what you are doing. This is intended for
      * simulation which have to be reproducible on a bit by bit basis.
@@ -454,7 +454,7 @@ struct reb_simulation_integrator_whfast {
 };
 
 /**
- * @brief Available opperator splitting methods for phi0 and phi1 in EOS integrators.
+ * @brief Available operator splitting methods for phi0 and phi1 in EOS integrators.
  */
 enum REB_EOS_TYPE {
     REB_EOS_LF = 0x00,      // 2nd order, standard leap-frog
@@ -472,8 +472,8 @@ enum REB_EOS_TYPE {
  * @brief This structure contains variables used by the EOS integrator family.
  */
 struct reb_simulation_integrator_eos {
-    enum REB_EOS_TYPE phi0;         ///< Outer opperator splitting scheme
-    enum REB_EOS_TYPE phi1;         ///< Inner opperator splitting scheme
+    enum REB_EOS_TYPE phi0;         ///< Outer operator splitting scheme
+    enum REB_EOS_TYPE phi1;         ///< Inner operator splitting scheme
     unsigned int n;                 ///
 
     unsigned int safe_mode;         ///< If set to 0, always combine drift steps at the beginning and end of phi0. If set to 1, n needs to be bigger than 1.
@@ -557,10 +557,10 @@ struct reb_collision{
  */
 enum REB_STATUS {
     REB_RUNNING_PAUSED = -3,    ///< Simulation is paused by visualization.
-    REB_RUNNING_LAST_STEP = -2, ///< Current timestep is the last one. Needed to ensures that t=tmax exactly.
-    REB_RUNNING = -1,           ///< Simulation is current running, no error occured.
+    REB_RUNNING_LAST_STEP = -2, ///< Current timestep is the last one. Needed to ensure that t=tmax exactly.
+    REB_RUNNING = -1,           ///< Simulation is current running, no error occurred.
     REB_EXIT_SUCCESS = 0,       ///< Integration finished successfully.
-    REB_EXIT_ERROR = 1,         ///< A generic error occured and the integration was not successfull.
+    REB_EXIT_ERROR = 1,         ///< A generic error occurred and the integration was not successful.
     REB_EXIT_NOPARTICLES = 2,   ///< The integration ends early because no particles are left in the simulation.
     REB_EXIT_ENCOUNTER = 3,     ///< The integration ends early because two particles had a close encounter (see exit_min_distance)
     REB_EXIT_ESCAPE = 4,        ///< The integration ends early because a particle escaped (see exit_max_distance)  
@@ -585,8 +585,8 @@ struct reb_variational_configuration{
     int order;                  ///< Order of the variational equation. 1 or 2. 
     int index;                  ///< Index of the first variational particle in the particles array.
     int testparticle;           ///< Is this variational configuration describe a test particle? -1 if not.
-    int index_1st_order_a;      ///< Used for 2nd order variational particles only: Index of the first first order variational particle in the particles array.
-    int index_1st_order_b;      ///< Used for 2nd order variational particles only: Index of the first first order variational particle in the particles array.
+    int index_1st_order_a;      ///< Used for 2nd order variational particles only: Index of the first order variational particle in the particles array.
+    int index_1st_order_b;      ///< Used for 2nd order variational particles only: Index of the first order variational particle in the particles array.
 };
 
 /**
@@ -1050,13 +1050,13 @@ struct reb_simulation {
      */
     void (*display_heartbeat) (struct reb_simulation* r);
     /**
-     * @brief Return the coefficient of restitution. By default it is NULL, assuming a coefficient of 1.
+     * @brief Return the coefficient of restitution. By default, it is NULL, assuming a coefficient of 1.
      * @details The velocity of the collision is given to allow for velocity dependent coefficients
      * of restitution.
      */
     double (*coefficient_of_restitution) (const struct reb_simulation* const r, double v); 
     /**
-     * @brief Resolve collision within this function. By default it is NULL, assuming hard sphere model.
+     * @brief Resolve collision within this function. By default, it is NULL, assuming hard sphere model.
      * @details A return value of 0 indicates that both particles remain in the simulation. A return value of 1 (2) indicates that particle 1 (2) should be removed from the simulation. A return value of 3 indicates that both particles should be removed from the simulation. 
      */
     int (*collision_resolve) (struct reb_simulation* const r, struct reb_collision);
@@ -1092,7 +1092,7 @@ struct reb_simulation {
 /**
  * @brief Creates and initialises a REBOUND simulation
  * @details Allocate memory for one reb_simulation structure, initialise all variables 
- * and returni the pointer to the reb_simulation sructure. This function must be called 
+ * and return the pointer to the reb_simulation structure. This function must be called 
  * before any particles are added.
  */
 struct reb_simulation* reb_create_simulation(void);
@@ -1124,7 +1124,7 @@ int reb_diff_simulations(struct reb_simulation* r1, struct reb_simulation* r2, i
 void reb_init_simulation(struct reb_simulation* r);
 
 /**
- * @brief Performon one integration step
+ * @brief Perform one integration step
  * @details You rarely want to call this function yourself.
  * Use reb_integrate instead.
  * @param r The rebound simulation to be integrated by one step.
@@ -1163,9 +1163,9 @@ void reb_integrator_reset(struct reb_simulation* r);
  * Call this function when using open, periodic or shear periodic boundary conditions.
  * @param r The rebound simulation to be considered
  * @param boxsize The size of the root box
- * @param root_nx The numbe rof root boxes in the x direction.
- * @param root_ny The numbe rof root boxes in the y direction.
- * @param root_nz The numbe rof root boxes in the z direction.
+ * @param root_nx The number of root boxes in the x direction.
+ * @param root_ny The number of root boxes in the y direction.
+ * @param root_nz The number of root boxes in the z direction.
  */
 void reb_configure_box(struct reb_simulation* const r, const double boxsize, const int root_nx, const int root_ny, const int root_nz);
 
@@ -1388,12 +1388,12 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
  * @details This function can be used to quickly access particle data in a serialized form.
  * NULL pointers will not be set.
  * @param r The rebound simulation to be considered
- * @param hash 1D array to to hold particle hashes
- * @param mass 1D array to to hold particle masses
- * @param radius 1D array to to hold particle radii
- * @param xyz 3D array to to hold particle positions
- * @param vxvyvz 3D array to to hold particle velocities
- * @param xyzvxvyvz 3D array to to hold particle positions and velocities
+ * @param hash 1D array to hold particle hashes
+ * @param mass 1D array to hold particle masses
+ * @param radius 1D array to hold particle radii
+ * @param xyz 3D array to hold particle positions
+ * @param vxvyvz 3D array to hold particle velocities
+ * @param xyzvxvyvz 3D array to hold particle positions and velocities
 */
 void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]);
 
@@ -1402,12 +1402,12 @@ void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, doubl
  * @details This function can be used to quickly set particle data in a serialized form.
  * NULL pointers will not be accessed.
  * @param r The rebound simulation to be considered
- * @param hash 1D array to to hold particle hashes
- * @param mass 1D array to to hold particle masses
- * @param radius 1D array to to hold particle radii
- * @param xyz 3D array to to hold particle positions
- * @param vxvyvz 3D array to to hold particle velocities
- * @param xyzvxvyvz 3D array to to hold particle positions and velocities
+ * @param hash 1D array to hold particle hashes
+ * @param mass 1D array to hold particle masses
+ * @param radius 1D array to hold particle radii
+ * @param xyz 3D array to hold particle positions
+ * @param vxvyvz 3D array to hold particle velocities
+ * @param xyzvxvyvz 3D array to hold particle positions and velocities
 */
 void reb_set_serialized_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]);
 
@@ -1573,7 +1573,7 @@ struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle 
  * @param Omega Longitude of the ascending node of the particle.
  * @param omega argument of pericenter of the particle.
  * @param f true anomaly of the particle.
- * @param err Pointer to error code that wil be set by this function. Used for checking why particle was set to nans.
+ * @param err Pointer to error code that will be set by this function. Used for checking why particle was set to nans.
  * @return Returns a particle structure with the given orbital parameters. 
  */
 struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particle primary, double m, double a, double e, double i, double Omega, double omega, double f, int* err);
@@ -1634,7 +1634,7 @@ struct reb_particle reb_tools_pal_to_particle(double G, struct reb_particle prim
 /**
  * @brief Reads a binary file.
  * @details Also initialises the particles array with data form the binary file.
- * This can be used to restart a simualtion.
+ * This can be used to restart a simulation.
  * @param filename Filename to be read.
  * @return Returns a pointer to a REBOUND simulation.
  */
@@ -1711,7 +1711,7 @@ int reb_read_int(int argc, char** argv, const char* argument, int _default);
  * @return The derivative as a particle structre. Each structure element is a derivative.
  * @param G The gravitational constant
  * @param primary The primary of the Keplerian orbit
- * @param po The original partical for which the derivative is to be calculated.
+ * @param po The original particle for which the derivative is to be calculated.
  */
 struct reb_particle reb_derivatives_lambda(double G, struct reb_particle primary, struct reb_particle po);
 struct reb_particle reb_derivatives_h(double G, struct reb_particle primary, struct reb_particle po);
@@ -1842,7 +1842,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
  * @details This function opens a SimulationArchive file and creates an index to 
  * find snapshots within the file. This may take a few seconds if there are many 
  * snapshots in the file. Note that opening a file on a slow filesystem (for example
- * via a network) might be partiucularly slow. The file is kept open until 
+ * via a network) might be particularly slow. The file is kept open until 
  * the user calls reb_close_simulationarchive.
  * @param filename The path and filename of the SimulationArchive input file.
  * @return Returns a reb_simulationarchive struct.

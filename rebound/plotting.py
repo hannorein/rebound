@@ -26,7 +26,7 @@ def OrbitPlot(sim, figsize=None, fancy=False, slices=0, xlim=None, ylim=None, un
     periastron  : bool, optional            
         Draw a marker at periastron (default: False)
     orbit_type       : str, optional
-        This argument determines the type of orbit show. By default it shows the orbit as a trailing and fading line ("trail"). Other object are: "solid", None.
+        This argument determines the type of orbit show. By default, it shows the orbit as a trailing and fading line ("trail"). Other object are: "solid", None.
     lw              : float, optional           
         Linewidth used in plots (default: 1.)
     plotparticles   : list, optional
