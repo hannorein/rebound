@@ -722,6 +722,7 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_EOS_SAFEMODE = 151,
     REB_BINARY_FIELD_TYPE_EOS_ISSYNCHRON = 152,
     REB_BINARY_FIELD_TYPE_IAS15_NEWORDER = 153,
+    REB_BINARY_FIELD_TYPE_RAND_SEED = 154,
 
     REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
     REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
@@ -929,6 +930,7 @@ struct reb_simulation {
     double megno_mean_t;    ///< mean of t
     double megno_mean_Y;    ///< mean of MEGNO Y
     long   megno_n;     ///< number of covariance updates
+    unsigned int rand_seed; ///< seed for random number generator
     /** @} */
     
     

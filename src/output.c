@@ -361,6 +361,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     WRITE_FIELD(EOS_N,              &r->ri_eos.n,                       sizeof(unsigned int));
     WRITE_FIELD(EOS_SAFEMODE,       &r->ri_eos.safe_mode,               sizeof(unsigned int));
     WRITE_FIELD(EOS_ISSYNCHRON,     &r->ri_eos.is_synchronized,         sizeof(unsigned int));
+    WRITE_FIELD(RAND_SEED,          &r->rand_seed,                      sizeof(unsigned int));
     int functionpointersused = 0;
     if (r->coefficient_of_restitution ||
         r->collision_resolve ||
