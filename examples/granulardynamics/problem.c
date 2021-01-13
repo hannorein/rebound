@@ -64,12 +64,12 @@ int main(int argc, char* argv[]){
     // Add real particles
     while(r->N-N_border<N_part){
         struct reb_particle pt = {0};
-        pt.x         = reb_random_uniform(-r->boxsize.x/2.,r->boxsize.x/2.);
-        pt.y         = reb_random_uniform(-r->boxsize.y/2.,r->boxsize.y/2.);
-        pt.z         = 0.758*reb_random_uniform(-r->boxsize.z/2.,r->boxsize.z/2.);
-        pt.vx         = reb_random_normal(0.001);
-        pt.vy         = reb_random_normal(0.001);
-        pt.vz         = reb_random_normal(0.001);
+        pt.x         = reb_random_uniform(r, -r->boxsize.x/2.,r->boxsize.x/2.);
+        pt.y         = reb_random_uniform(r, -r->boxsize.y/2.,r->boxsize.y/2.);
+        pt.z         = 0.758*reb_random_uniform(r, -r->boxsize.z/2.,r->boxsize.z/2.);
+        pt.vx         = reb_random_normal(r, 0.001);
+        pt.vy         = reb_random_normal(r, 0.001);
+        pt.vz         = reb_random_normal(r, 0.001);
         pt.r         = radius;                        // m
         pt.m         = 1;
         pt.hash        = 2;

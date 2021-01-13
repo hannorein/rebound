@@ -1317,36 +1317,40 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
  */
 /**
  * @brief Return uniformly distributed random variable in a given range.
+ * @param r Rebound simulation. This is required because it contains the state for the random number generator.
  * @param min Minimum value.
  * @param max Maximum value.
  * @return A random variable
  */
-double reb_random_uniform(double min, double max);
+double reb_random_uniform(struct reb_simulation* r, double min, double max);
 
 /**
  * @brief Returns a random variable drawn form a powerlaw distribution.
+ * @param r Rebound simulation. This is required because it contains the state for the random number generator.
  * @param min Minimum value.
  * @param max Maximum value.
  * @param slope Slope of powerlaw distribution.
  * @return A random variable
  */
-double reb_random_powerlaw(double min, double max, double slope);
+double reb_random_powerlaw(struct reb_simulation* r, double min, double max, double slope);
 
 /**
  * @brief Return a random number with normal distribution.
+ * @param r Rebound simulation. This is required because it contains the state for the random number generator.
  * @details Algorithm by D.E. Knut, 1997, The Art of Computer Programmin, Addison-Wesley. 
  * @param variance Variance of normal distribution.
  * @return A random variable
  */
-double reb_random_normal(double variance);
+double reb_random_normal(struct reb_simulation* r, double variance);
 
 /**
  * @brief Return a random variable drawn form a Rayleigh distribution.  
+ * @param r Rebound simulation. This is required because it contains the state for the random number generator.
  * @details Calculated as described on Rayleigh distribution wikipedia page
  * @param sigma Scale parameter.
  * @return A random variable
  */
-double reb_random_rayleigh(double sigma);
+double reb_random_rayleigh(struct reb_simulation* r, double sigma);
 
 /**
  * @brief Move to the heliocentric frame.

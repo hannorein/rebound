@@ -49,11 +49,11 @@ void run_sim(){
     reb_add(r, star);
     for (int i=0;i<N;i++){
         struct reb_particle pt = {0};
-        double a    = reb_random_powerlaw(boxsize/10.,boxsize/2./1.2,-1.5);
-        double phi     = reb_random_uniform(0,2.*M_PI);
+        double a    = reb_random_powerlaw(r, boxsize/10.,boxsize/2./1.2,-1.5);
+        double phi     = reb_random_uniform(r, 0,2.*M_PI);
         pt.x         = a*cos(phi);
         pt.y         = a*sin(phi);
-        pt.z         = a*reb_random_normal(0.001);
+        pt.z         = a*reb_random_normal(r, 0.001);
         double mu     = star.m + disc_mass * (pow(a,-3./2.)-pow(boxsize/10.,-3./2.))/(pow(boxsize/2./1.2,-3./2.)-pow(boxsize/10.,-3./2.));
         double vkep     = sqrt(r->G*mu/a);
         pt.vx         =  vkep * sin(phi);

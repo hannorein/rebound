@@ -35,36 +35,36 @@
 #include "tools.h"
 
 
-void reb_tools_init_srand(void){
+void reb_tools_init_srand(struct reb_simulation* r){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
-	srand ( tim.tv_usec + getpid());
+	r->rand_seed = tim.tv_usec + getpid();
 }
 
-double reb_random_uniform(double min, double max){
-	return ((double)rand())/((double)(RAND_MAX))*(max-min)+min;
+double reb_random_uniform(struct reb_simulation* r, double min, double max){
+	return ((double)rand_r(&(r->rand_seed)))/((double)(RAND_MAX))*(max-min)+min;
 }
 
 
-double reb_random_powerlaw(double min, double max, double slope){
-	double y = reb_random_uniform(0., 1.);
+double reb_random_powerlaw(struct reb_simulation* r, double min, double max, double slope){
+	double y = reb_random_uniform(r, 0., 1.);
 	if(slope == -1) return exp(y*log(max/min) + log(min));
     else return pow( (pow(max,slope+1.)-pow(min,slope+1.))*y+pow(min,slope+1.), 1./(slope+1.));
 }
 
-double reb_random_normal(double variance){
+double reb_random_normal(struct reb_simulation* r, double variance){
 	double v1,v2,rsq=1.;
 	while(rsq>=1. || rsq<1.0e-12){
-		v1=2.*((double)rand())/((double)(RAND_MAX))-1.0;
-		v2=2.*((double)rand())/((double)(RAND_MAX))-1.0;
+		v1=2.*((double)rand_r(&(r->rand_seed)))/((double)(RAND_MAX))-1.0;
+		v2=2.*((double)rand_r(&(r->rand_seed)))/((double)(RAND_MAX))-1.0;
 		rsq=v1*v1+v2*v2;
 	}
 	// Note: This gives another random variable for free, but we'll throw it away for simplicity and for thread-safety.
 	return 	v1*sqrt(-2.*log(rsq)/rsq*variance);
 }
 
-double reb_random_rayleigh(double sigma){
-	double y = reb_random_uniform(0.,1.);
+double reb_random_rayleigh(struct reb_simulation* r, double sigma){
+	double y = reb_random_uniform(r, 0.,1.);
 	return sigma*sqrt(-2*log(y));
 }
 
@@ -445,22 +445,22 @@ void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R
 	double E = 3./64.*M_PI*M*M/R;
 	for (int i=0;i<_N;i++){
 		struct reb_particle star = {0};
-		double _r = pow(pow(reb_random_uniform(0,1),-2./3.)-1.,-1./2.);
-		double x2 = reb_random_uniform(0,1);
-		double x3 = reb_random_uniform(0,2.*M_PI);
+		double _r = pow(pow(reb_random_uniform(r, 0,1),-2./3.)-1.,-1./2.);
+		double x2 = reb_random_uniform(r, 0,1);
+		double x3 = reb_random_uniform(r, 0,2.*M_PI);
 		star.z = (1.-2.*x2)*_r;
 		star.x = sqrt(_r*_r-star.z*star.z)*cos(x3);
 		star.y = sqrt(_r*_r-star.z*star.z)*sin(x3);
 		double x5,g,q;
 		do{
-			x5 = reb_random_uniform(0.,1.);
-			q = reb_random_uniform(0.,1.);
+			x5 = reb_random_uniform(r, 0.,1.);
+			q = reb_random_uniform(r, 0.,1.);
 			g = q*q*pow(1.-q*q,7./2.);
 		}while(0.1*x5>g);
 		double ve = pow(2.,1./2.)*pow(1.+_r*_r,-1./4.);
 		double v = q*ve;
-		double x6 = reb_random_uniform(0.,1.);
-		double x7 = reb_random_uniform(0.,2.*M_PI);
+		double x6 = reb_random_uniform(r, 0.,1.);
+		double x7 = reb_random_uniform(r, 0.,2.*M_PI);
 		star.vz = (1.-2.*x6)*v;
 		star.vx = sqrt(v*v-star.vz*star.vz)*cos(x7);
 		star.vy = sqrt(v*v-star.vz*star.vz)*sin(x7);
@@ -938,7 +938,7 @@ int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int 
 }
 
 void reb_tools_megno_init_seed(struct reb_simulation* const r, unsigned int seed){
-    srand(seed);
+	r->rand_seed = seed;
     reb_tools_megno_init(r);
 }
 
@@ -956,12 +956,12 @@ void reb_tools_megno_init(struct reb_simulation* const r){
     struct reb_particle* const particles = r->particles;
     for (;i<imax;i++){ 
         particles[i].m  = 0.;
-		particles[i].x  = reb_random_normal(1.);
-		particles[i].y  = reb_random_normal(1.);
-		particles[i].z  = reb_random_normal(1.);
-		particles[i].vx = reb_random_normal(1.);
-		particles[i].vy = reb_random_normal(1.);
-		particles[i].vz = reb_random_normal(1.);
+		particles[i].x  = reb_random_normal(r,1.);
+		particles[i].y  = reb_random_normal(r,1.);
+		particles[i].z  = reb_random_normal(r,1.);
+		particles[i].vx = reb_random_normal(r,1.);
+		particles[i].vy = reb_random_normal(r,1.);
+		particles[i].vz = reb_random_normal(r,1.);
 		double deltad = 1./sqrt(
                 particles[i].x*particles[i].x 
                 + particles[i].y*particles[i].y 

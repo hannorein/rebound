@@ -28,10 +28,10 @@ int main(int argc, char* argv[]){
 
     // Test Particles
     for (int i=0;i<10000;i++){
-        double a = reb_random_uniform(0.4,20.);
-        double e = reb_random_uniform(0.01,0.2);
-        double omega = reb_random_uniform(0.,2.*M_PI);
-        double f = reb_random_uniform(0.,2.*M_PI);
+        double a = reb_random_uniform(r, 0.4,20.);
+        double e = reb_random_uniform(r, 0.01,0.2);
+        double omega = reb_random_uniform(r, 0.,2.*M_PI);
+        double f = reb_random_uniform(r, 0.,2.*M_PI);
         struct reb_particle p = reb_tools_orbit2d_to_particle(1.,r->particles[0],0.,a,e,omega,f);
         reb_add(r, p); 
     }

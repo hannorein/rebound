@@ -58,7 +58,7 @@ int main(int argc, char* argv[]){
     
     // Planet 1 - inner massive planet to scatter planetesimals out
     {
-        double a=a_scat_planet, m=m_neptune, e=0, inc=reb_random_normal(0.00001);
+        double a=a_scat_planet, m=m_neptune, e=0, inc=reb_random_normal(r, 0.00001);
         struct reb_particle p = {0};
         p = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
         p.r = 0.000467;
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]){
     
     // Planet 2 - outer smaller planet to migrate in the disk
     {
-        double a=a_mig_planet, m=2.3*m_earth, e=0, inc=reb_random_normal(0.00001);
+        double a=a_mig_planet, m=2.3*m_earth, e=0, inc=reb_random_normal(r, 0.00001);
         struct reb_particle p = {0};
         p = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
         p.r = 0.0000788215;
@@ -86,12 +86,12 @@ int main(int argc, char* argv[]){
     // Generate Planetesimal Disk
     while(r->N<N_planetesimals + r->N_active){
         struct reb_particle pt = {0};
-        double a    = reb_random_powerlaw(amin,amax,powerlaw);
-        double e    = reb_random_rayleigh(0.005);
-        double inc  = reb_random_rayleigh(0.005);
-        double Omega = reb_random_uniform(0,2.*M_PI);
-        double apsis = reb_random_uniform(0,2.*M_PI);
-        double phi     = reb_random_uniform(0,2.*M_PI);
+        double a    = reb_random_powerlaw(r, amin,amax,powerlaw);
+        double e    = reb_random_rayleigh(r, 0.005);
+        double inc  = reb_random_rayleigh(r, 0.005);
+        double Omega = reb_random_uniform(r, 0,2.*M_PI);
+        double apsis = reb_random_uniform(r, 0,2.*M_PI);
+        double phi     = reb_random_uniform(r, 0,2.*M_PI);
         pt = reb_tools_orbit_to_particle(r->G, star, r->testparticle_type?planetesimal_mass:0., a, e, inc, Omega, apsis, phi);
         pt.r         = 0.00000934532;
         reb_add(r, pt);

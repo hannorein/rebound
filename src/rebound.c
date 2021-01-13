@@ -463,7 +463,7 @@ void reb_clear_pre_post_pointers(struct reb_simulation* const r){
 }
 
 void reb_init_simulation(struct reb_simulation* r){
-    reb_tools_init_srand();
+    reb_tools_init_srand(r);
     reb_reset_temporary_pointers(r);
     reb_reset_function_pointers(r);
     r->t        = 0; 
