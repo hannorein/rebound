@@ -1659,7 +1659,7 @@ class Simulation(Structure):
 
         Parameters
         ----------
-        boxsize : float, optional
+        boxsize : float
             The size of one root box.
         root_nx, root_ny, root_nz : int, optional
             The number of root boxes in each direction. The total size of the simulation box
