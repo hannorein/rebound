@@ -511,7 +511,6 @@ void reb_init_simulation(struct reb_simulation* r){
     r->track_energy_offset = 0;
     r->display_data = NULL;
     r->walltime = 0;
-    r->rand_seed = 1; // default for rand()
 
     r->minimum_collision_velocity = 0;
     r->collisions_plog  = 0;
