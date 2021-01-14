@@ -325,6 +325,7 @@ void reb_free_pointers(struct reb_simulation* const r){
     if (r->extras_cleanup){
         r->extras_cleanup(r);
     }
+    free(r->var_config);
 }
 
 void reb_reset_temporary_pointers(struct reb_simulation* const r){
