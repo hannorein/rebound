@@ -3,6 +3,16 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.14.0
+--------------
+* Due to a bug, WHFast was not thread-safe. It is now.
+* Random number generator seed is now stored in the SimulationArchive. 
+  This allows you to get reproducible random number even after restarting a simulation.
+* Random numbers generated with the reb_rand_*() functions were not thread-safe.
+  They are thread-safe now. Note that this required an API change. All reb_rand_*()
+  functions now require the simulation structure as an argument. This is because the
+  random number generator seed is now stored in the simulation structure. 
+
 Version 3.13.2
 --------------
 * Correct handling of test particles in reb_transformations.
