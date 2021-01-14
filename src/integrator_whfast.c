@@ -373,37 +373,36 @@ void reb_whfast_interaction_step(struct reb_simulation* const r, const double _d
                 if (i<N_active){
                     eta += pji.m;
                 }
-                double rj2i;
-                double rj3iM;
-                double prefac1;
                 p_j[i].vx += _dt * pji.ax;
                 p_j[i].vy += _dt * pji.ay;
                 p_j[i].vz += _dt * pji.az;
                 if (r->gravity != REB_GRAVITY_JACOBI){ 
                     // If Jacobi terms have not been added in update_acceleration, then add them here:
                     if (i>1){
-                        rj2i = 1./(pji.x*pji.x + pji.y*pji.y + pji.z*pji.z + softening*softening);
+                        const double rj2i = 1./(pji.x*pji.x + pji.y*pji.y + pji.z*pji.z + softening*softening);
                         const double rji  = sqrt(rj2i);
-                        rj3iM = rji*rj2i*G*eta;
-                        prefac1 = _dt*rj3iM;
+                        const double rj3iM = rji*rj2i*G*eta;
+                        const double prefac1 = _dt*rj3iM;
                         p_j[i].vx += prefac1*pji.x;
                         p_j[i].vy += prefac1*pji.y;
                         p_j[i].vz += prefac1*pji.z;
+                        for(int v=0;v<r->var_config_N;v++){
+                            struct reb_variational_configuration const vc = r->var_config[v];
+                            const int index = vc.index;
+                            double rj5M = rj3iM*rj2i;
+                            double rdr = p_j[i+index].x*pji.x + p_j[i+index].y*pji.y + p_j[i+index].z*pji.z;
+                            double prefac2 = -_dt*3.*rdr*rj5M;
+                            p_j[i+index].vx += prefac1*p_j[i+index].x + prefac2*pji.x;
+                            p_j[i+index].vy += prefac1*p_j[i+index].y + prefac2*pji.y;
+                            p_j[i+index].vz += prefac1*p_j[i+index].z + prefac2*pji.z;
+                        }
                     }
-                }
-                for(int v=0;v<r->var_config_N;v++){
-                    struct reb_variational_configuration const vc = r->var_config[v];
-                    const int index = vc.index;
-                    double rj5M = rj3iM*rj2i;
-                    double rdr = p_j[i+index].x*pji.x + p_j[i+index].y*pji.y + p_j[i+index].z*pji.z;
-                    double prefac2 = -_dt*3.*rdr*rj5M;
-                    p_j[i+index].vx += _dt * p_j[i+index].ax;
-                    p_j[i+index].vy += _dt * p_j[i+index].ay;
-                    p_j[i+index].vz += _dt * p_j[i+index].az;
-                    if (i>1){
-                        p_j[i+index].vx += prefac1*p_j[i+index].x + prefac2*pji.x;
-                        p_j[i+index].vy += prefac1*p_j[i+index].y + prefac2*pji.y;
-                        p_j[i+index].vz += prefac1*p_j[i+index].z + prefac2*pji.z;
+                    for(int v=0;v<r->var_config_N;v++){
+                        struct reb_variational_configuration const vc = r->var_config[v];
+                        const int index = vc.index;
+                        p_j[i+index].vx += _dt * p_j[i+index].ax;
+                        p_j[i+index].vy += _dt * p_j[i+index].ay;
+                        p_j[i+index].vz += _dt * p_j[i+index].az;
                     }
                 }
             }
