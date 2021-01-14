@@ -363,13 +363,9 @@ void reb_whfast_interaction_step(struct reb_simulation* const r, const double _d
             const double softening = r->softening;
             for (int v=0;v<r->var_config_N;v++){
                 struct reb_variational_configuration const vc = r->var_config[v];
-                reb_transformations_inertial_to_jacobi_acc(particles+vc.index, ri_whfast->p_jh+vc.index, particles, N_real, N_active);
+                reb_transformations_inertial_to_jacobi_acc(particles+vc.index, p_j+vc.index, particles, N_real, N_active);
             }
-            reb_transformations_inertial_to_jacobi_acc(r->particles, p_j, r->particles, N_real, N_active);
-            for (int v=0;v<r->var_config_N;v++){
-                struct reb_variational_configuration const vc = r->var_config[v];
-                reb_transformations_inertial_to_jacobi_acc(r->particles+vc.index, p_j+vc.index, r->particles, N_real, N_active);
-            }
+            reb_transformations_inertial_to_jacobi_acc(particles, p_j, particles, N_real, N_active);
             double eta = m0;
             for (unsigned int i=1;i<N_real;i++){
                 // Eq 132
