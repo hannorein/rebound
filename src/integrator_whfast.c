@@ -212,7 +212,7 @@ void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_p
         // Quartic solver
         // Linear initial guess
         X = beta*_dt/M;
-        static double prevX[WHFAST_NMAX_QUART+1];
+        double prevX[WHFAST_NMAX_QUART+1];
         for(int n_lag=1; n_lag < WHFAST_NMAX_QUART; n_lag++){
             stiefel_Gs3(Gs, beta, X);
             const double f = r0*X + eta0*Gs[2] + zeta0*Gs[3] - _dt;
@@ -373,9 +373,9 @@ void reb_whfast_interaction_step(struct reb_simulation* const r, const double _d
                 if (i<N_active){
                     eta += pji.m;
                 }
-                static double rj2i;
-                static double rj3iM;
-                static double prefac1;
+                double rj2i;
+                double rj3iM;
+                double prefac1;
                 p_j[i].vx += _dt * pji.ax;
                 p_j[i].vy += _dt * pji.ay;
                 p_j[i].vz += _dt * pji.az;
