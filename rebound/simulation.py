@@ -1703,6 +1703,14 @@ class Simulation(Structure):
         """
         clibrebound.reb_step(byref(self))
         self.process_messages()
+    
+    def steps(self, N_steps):
+        """
+        Perform exactly N_steps integration steps with REBOUND. This function is rarely needed.
+        Instead, use integrate().
+        """
+        clibrebound.reb_steps(byref(self),c_uint(N_steps))
+        self.process_messages()
 
     def integrate(self, tmax, exact_finish_time=1):
         """

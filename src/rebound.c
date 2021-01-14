@@ -69,6 +69,11 @@ const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets 
 
 static int reb_error_message_waiting(struct reb_simulation* const r);
 
+void reb_steps(struct reb_simulation* const r, unsigned int N_steps){
+    for (unsigned int i=0;i<N_steps;i++){
+        reb_step(r);
+    }
+}
 void reb_step(struct reb_simulation* const r){
     // Update walltime
     struct timeval time_beginning;

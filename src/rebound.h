@@ -1134,6 +1134,15 @@ void reb_init_simulation(struct reb_simulation* r);
 void reb_step(struct reb_simulation* const r);
 
 /**
+ * @brief Perform a fixed number of integration steps
+ * @details You rarely want to call this function yourself.
+ * Use reb_integrate instead.
+ * @param r The rebound simulation to be integrated.
+ * @param N_steps The number of steps to be taken. 
+ */
+void reb_steps(struct reb_simulation* const r, unsigned int N_steps);
+
+/**
  * @brief Performs the actual integration
  * @details This function performs an integration  from the current time t until time tmax.
  * @param r The rebound simulation to be integrated.
