@@ -151,6 +151,9 @@ class reb_simulation_integrator_ias15(Structure):
         Changes the order of floating point operations within IAS15. New simulations should use neworder=1. Only set neworder=0 for binary backwards compatibility.
     
     """
+    def __repr__(self):
+        return '<{0}.{1} object at {2}, epsilon={3}, min_dt={4}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.epsilon, self.min_dt)
+    
     _fields_ = [("epsilon", c_double),
                 ("min_dt", c_double),
                 ("epsilon_global", c_uint),
@@ -292,8 +295,10 @@ class reb_simulation_integrator_whfast(Structure):
                 ("_allocatedN", c_uint),
                 ("_timestep_warning", c_uint),
                 ("_recalculate_coordinates_but_not_synchronized_warning", c_uint)]
+
     def __repr__(self):
         return '<{0}.{1} object at {2}, safe_mode={3}, keep_unsynchonized={4}, is_synchronized={5}, corrector={6}, corrector2={7}, kernel={8}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.safe_mode, self.keep_unsynchronized, self.is_synchronized, self.corrector, self.corrector2, self.kernel)
+
     @property
     def coordinates(self):
         """
@@ -506,7 +511,6 @@ class Simulation(Structure):
 
     def __repr__(self):
         return '<{0}.{1} object at {2}, N={3}, t={4}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.N, self.t)
-
     
     @classmethod
     def from_archive(cls, filename,snapshot=-1):
@@ -1947,6 +1951,7 @@ class reb_simulation_integrator_eos(Structure):
     """
     def __repr__(self):
         return '<{0}.{1} object at {2}, safe_mode={3}, is_synchronized={4}, n={5}, phi0={6}, phi2={7}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.safe_mode, self.is_synchronized, self.n, self.phi0, self.phi1)
+
     @property
     def phi0(self):
         """
@@ -2013,6 +2018,7 @@ class reb_simulation_integrator_mercurius(Structure):
     """
     def __repr__(self):
         return '<{0}.{1} object at {2}, safe_mode={3}, is_synchronized={4}, hillfac={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.safe_mode, self.is_synchronized, self.hillfac)
+
     _fields_ = [("L", CFUNCTYPE(c_double, POINTER(Simulation), c_double, c_double)),
                 ("hillfac", c_double),
                 ("recalculate_coordinates_this_timestep", c_uint),
