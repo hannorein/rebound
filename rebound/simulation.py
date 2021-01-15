@@ -292,6 +292,8 @@ class reb_simulation_integrator_whfast(Structure):
                 ("_allocatedN", c_uint),
                 ("_timestep_warning", c_uint),
                 ("_recalculate_coordinates_but_not_synchronized_warning", c_uint)]
+    def __repr__(self):
+        return '<{0}.{1} object at {2}, safe_mode={3}, keep_unsynchonized={4}, is_synchronized={5}, corrector={6}, corrector2={7}, kernel={8}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.safe_mode, self.keep_unsynchronized, self.is_synchronized, self.corrector, self.corrector2, self.kernel)
     @property
     def coordinates(self):
         """
@@ -501,6 +503,10 @@ class Simulation(Structure):
 
     def __init__(self,filename=None,snapshot=None):
         self.save_messages = 1 # Warnings will be checked within python
+
+    def __repr__(self):
+        return '<{0}.{1} object at {2}, N={3}, t={4}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.N, self.t)
+
     
     @classmethod
     def from_archive(cls, filename,snapshot=-1):
@@ -1939,6 +1945,8 @@ class reb_simulation_integrator_eos(Structure):
     >>> sim.ri_eos.safe_mode = 0
 
     """
+    def __repr__(self):
+        return '<{0}.{1} object at {2}, safe_mode={3}, is_synchronized={4}, n={5}, phi0={6}, phi2={7}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.safe_mode, self.is_synchronized, self.n, self.phi0, self.phi1)
     @property
     def phi0(self):
         """
@@ -1984,7 +1992,7 @@ class reb_simulation_integrator_eos(Structure):
                 ("_phi1",c_uint),
                 ("n",c_uint),
                 ("safe_mode",c_uint),
-                ("is_synchonized",c_uint),
+                ("is_synchronized",c_uint),
                 ]
 
 class reb_simulation_integrator_mercurius(Structure):
@@ -2003,12 +2011,14 @@ class reb_simulation_integrator_mercurius(Structure):
     >>> sim.ri_mercurius.hillfac = 3.
 
     """
+    def __repr__(self):
+        return '<{0}.{1} object at {2}, safe_mode={3}, is_synchronized={4}, hillfac={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.safe_mode, self.is_synchronized, self.hillfac)
     _fields_ = [("L", CFUNCTYPE(c_double, POINTER(Simulation), c_double, c_double)),
                 ("hillfac", c_double),
                 ("recalculate_coordinates_this_timestep", c_uint),
                 ("recalculate_dcrit_this_timestep", c_uint),
                 ("safe_mode", c_uint),
-                ("_is_synchronized", c_uint),
+                ("is_synchronized", c_uint),
                 ("mode", c_uint),
                 ("_encounterN", c_uint),
                 ("_encounterNactive", c_uint),

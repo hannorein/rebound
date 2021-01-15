@@ -57,6 +57,9 @@ class SimulationArchive(Structure):
                 ("offset", POINTER(c_uint32)), 
                 ("t", POINTER(c_double)) 
                 ]
+    def __repr__(self):
+        return '<{0}.{1} object at {2}, nblobs={3}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.nblobs)
+
     def __init__(self,filename,setup=None, setup_args=(), process_warnings=True, reuse_index=None):
         """
         Arguments
