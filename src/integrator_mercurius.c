@@ -349,6 +349,34 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
 
 }
 
+double reb_integrator_mercurius_calculate_dcrit_for_particle(struct reb_simulation* r, unsigned int i){
+    struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
+    const double m0 = r->particles[0].m;
+    const double dx  = r->particles[i].x;  // in dh
+    const double dy  = r->particles[i].y;
+    const double dz  = r->particles[i].z;
+    const double dvx = r->particles[i].vx - r->particles[0].vx; 
+    const double dvy = r->particles[i].vy - r->particles[0].vy; 
+    const double dvz = r->particles[i].vz - r->particles[0].vz; 
+    const double _r = sqrt(dx*dx + dy*dy + dz*dz);
+    const double v2 = dvx*dvx + dvy*dvy + dvz*dvz;
+
+    const double GM = r->G*(m0+r->particles[i].m);
+    const double a = GM*_r / (2.*GM - _r*v2);
+    const double vc = sqrt(GM/fabs(a));
+    double dcrit = 0;
+    // Criteria 1: average velocity
+    dcrit = MAX(dcrit, vc*0.4*r->dt);
+    // Criteria 2: current velocity
+    dcrit = MAX(dcrit, sqrt(v2)*0.4*r->dt);
+    // Criteria 3: Hill radius
+    dcrit = MAX(dcrit, rim->hillfac*a*pow(r->particles[i].m/(3.*r->particles[0].m),1./3.));
+    // Criteria 4: physical radius
+    dcrit = MAX(dcrit, 2.*r->particles[i].r);
+    return dcrit;
+}
+
+
 void reb_integrator_mercurius_part1(struct reb_simulation* r){
     if (r->var_config_N){
         reb_warning(r,"Mercurius does not work with variational equations.");
@@ -392,31 +420,8 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
             reb_warning(r,"MERCURIUS: Recalculating dcrit but pos/vel were not synchronized before.");
         }
         rim->dcrit[0] = 2.*r->particles[0].r; // central object only uses physical radius
-        const double m0 = r->particles[0].m;
         for (int i=1;i<N;i++){
-            const double dx  = r->particles[i].x;  // in dh
-            const double dy  = r->particles[i].y;
-            const double dz  = r->particles[i].z;
-            const double dvx = r->particles[i].vx - r->particles[0].vx; 
-            const double dvy = r->particles[i].vy - r->particles[0].vy; 
-            const double dvz = r->particles[i].vz - r->particles[0].vz; 
-            const double _r = sqrt(dx*dx + dy*dy + dz*dz);
-            const double v2 = dvx*dvx + dvy*dvy + dvz*dvz;
-
-            const double GM = r->G*(m0+r->particles[i].m);
-            const double a = GM*_r / (2.*GM - _r*v2);
-            const double vc = sqrt(GM/fabs(a));
-            double dcrit = 0;
-            // Criteria 1: average velocity
-            dcrit = MAX(dcrit, vc*0.4*r->dt);
-            // Criteria 2: current velocity
-            dcrit = MAX(dcrit, sqrt(v2)*0.4*r->dt);
-            // Criteria 3: Hill radius
-            dcrit = MAX(dcrit, rim->hillfac*a*pow(r->particles[i].m/(3.*r->particles[0].m),1./3.));
-            // Criteria 4: physical radius
-            dcrit = MAX(dcrit, 2.*r->particles[i].r);
-
-            rim->dcrit[i] = dcrit;
+            rim->dcrit[i] = reb_integrator_mercurius_calculate_dcrit_for_particle(r, i);
         }
     }
     
