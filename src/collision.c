@@ -343,7 +343,7 @@ void reb_collision_search(struct reb_simulation* const r){
     
     int (*resolve) (struct reb_simulation* const r, struct reb_collision c) = r->collision_resolve;
     if (resolve==NULL){
-        // Default is hard sphere
+        // Default is to throw an exception
         resolve = reb_collision_resolve_halt;
     }
     unsigned int collision_resolve_keep_sorted = r->collision_resolve_keep_sorted;
