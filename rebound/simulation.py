@@ -95,8 +95,11 @@ class reb_collision(Structure):
     _fields_ = [("p1", c_int),
                 ("p2", c_int),
                 ("gb", reb_ghostbox),
-                ("time", c_double),
                 ("ri", c_int)]
+    
+    def __repr__(self):
+        return '<{0}.{1} object at {2}, p1={3}, p2={4}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.p1, self.p2)
+    
 
 class reb_simulation_integrator_sei(Structure):
     """
