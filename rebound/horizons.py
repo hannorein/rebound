@@ -102,7 +102,12 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
                 if startdata > 0:
                     startdata += 1
                 if "Target body name:" in line:
-                    print("Found: %s." % line[18:50].strip())
+                    bodyname = line.split(":")[1]
+                    try:
+                        bodyname = line.split("{")[0]
+                    except:
+                        pass
+                    print("Found: %s." % bodyname.strip())
                     try:
                         idn = re.search(r"\(([0-9]+)\)", line).group(1)
                     except:
