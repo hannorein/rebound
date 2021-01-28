@@ -38,3 +38,4 @@ doc/doxygen/html/
 doc/ipython
 doc/search.json
 problems/
+.vscode/
