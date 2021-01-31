@@ -2,7 +2,7 @@
 
 body='{
 "request": {
-"branch":"master"
+"branch":"main"
 }}'
 
 curl -s -X POST \

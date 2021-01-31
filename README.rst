@@ -6,10 +6,10 @@ REBOUND - An open-source multi-purpose N-body code
 .. image:: https://badge.fury.io/py/rebound.svg
     :target: https://badge.fury.io/py/rebound
 .. image:: http://img.shields.io/badge/license-GPL-green.svg?style=flat 
-    :target: https://github.com/hannorein/rebound/blob/master/LICENSE
-.. image:: http://img.shields.io/travis/hannorein/rebound/master.svg?style=flat 
+    :target: https://github.com/hannorein/rebound/blob/main/LICENSE
+.. image:: http://img.shields.io/travis/hannorein/rebound/main.svg?style=flat 
     :target: https://travis-ci.org/hannorein/rebound/
-.. image:: https://codecov.io/gh/hannorein/rebound/branch/master/graph/badge.svg
+.. image:: https://codecov.io/gh/hannorein/rebound/branch/main/graph/badge.svg
     :target: https://codecov.io/gh/hannorein/rebound    
 .. image:: http://img.shields.io/badge/arXiv-1110.4876-green.svg?style=flat 
     :target: http://arxiv.org/abs/1110.4876
@@ -30,7 +30,7 @@ REBOUND - An open-source multi-purpose N-body code
 .. image:: https://readthedocs.org/projects/rebound/badge/?version=latest
     :target: https://rebound.readthedocs.io/en/latest/?badge=latest
 .. image:: https://mybinder.org/badge_logo.svg 
-    :target: https://mybinder.org/v2/gh/hannorein/rebound/master
+    :target: https://mybinder.org/v2/gh/hannorein/rebound/main
     
 
 
