@@ -277,7 +277,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 		reb_warning(r, "Last particle removed.");
 		return 1;
 	}
-	if (index >= r->N){
+	if (index >= r->N || index < 0){
 		char warning[1024];
         sprintf(warning, "Index %d passed to particles_remove was out of range (N=%d).  Did not remove particle.", index, r->N);
 		reb_error(r, warning);
