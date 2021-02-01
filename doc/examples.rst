@@ -34,6 +34,7 @@ If you want to capture close encounters and collisions between particles, have a
    c_example_closeencounter_hybrid
    ipython/CloseEncounters
    c_example_mergers
+   ipython/User_Defined_Collision_Resolve
 
 The following examples demonstrate how to calculate orbital elements.
 
