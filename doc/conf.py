@@ -12,11 +12,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
-import os
-import shlex
-import subprocess
 import glob
+import os
+import subprocess
 
 # Doxygen trigger
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
@@ -37,7 +35,7 @@ for problemc in glob.glob("../examples/*/problem.c"):
                 if line[0:3] == " */":
                     will_output = -1
                     line = ""
-                    fd.write("\n\n.. code-block:: c\n");
+                    fd.write("\n\n.. code-block:: c\n")
                 if will_output>1:
                     if will_output == 2:
                         title = line.strip() + " (C)"
@@ -66,7 +64,7 @@ if 1:
     os.chdir("ipython")
     for example in glob.glob("../../ipython_examples/*.ipynb"):
         print("Trying file: ", example)
-        outp = subprocess.check_output(["cp", example, example[23:]])
+        subprocess.check_output(["cp", example, example[23:]])
         outp = subprocess.check_output(["jupyter", "nbconvert", example[23:], "--to", "rst"])
         print(outp.decode('ascii'))
         print("Replacing links")
@@ -76,18 +74,9 @@ if 1:
         with open(example) as fd:
             lines = fd.readlines()
         with open(example,"w") as fd:
-            emptylines = 0
-            for i,l in enumerate(lines):
-                if len(l.strip())==0:
-                    emptylines += 1
-                if i==emptylines:
-                    fd.write(l.strip()+" (iPython)\n")
-                elif i==emptylines+1:
-                    fd.write(l.strip()+"==========\n")
-                else:
-                    fd.write(l)
-                print(i,l)
-
+            lines[0] = lines[0].strip() + " (iPython)\n"
+            lines[1] = lines[1].strip() + "==========\n"
+            fd.writelines(lines)
     os.chdir("../")
 
 # If extensions (or modules to document with autodoc) are in another directory,
