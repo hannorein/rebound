@@ -632,13 +632,13 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
     }else if(tmax!=INFINITY){
         if(r->exact_finish_time==1){
             if ((r->t+r->dt)*dtsign>=tmax*dtsign){  // Next step would overshoot
-                double tscale = 1e-12*fabs(tmax);   // Find order of magnitude for time
-                if (tscale<1e-200){     // Failsafe if tmax==0.
-                    tscale = 1e-12;
-                }
                 if (r->t==tmax){
                     r->status = REB_EXIT_SUCCESS;
                 }else if(r->status == REB_RUNNING_LAST_STEP){
+                    double tscale = 1e-12*fabs(tmax);   // Find order of magnitude for time
+                    if (tscale<1e-200){     // Failsafe if tmax==0.
+                        tscale = 1e-12;
+                    }
                     if (fabs(r->t-tmax)<tscale){
                         r->status = REB_EXIT_SUCCESS;
                     }else{
