@@ -160,7 +160,7 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
     rim->encounterN = 1;
     rim->encounter_map[0] = 1;
     rim->tponly_encounter = 1;
-	 for (int i=1; i<N; i++){
+    for (int i=1; i<N; i++){
         rim->encounter_map[i] = 0;
     }
     for (int i=0; i<N_active; i++){

@@ -277,7 +277,7 @@ struct reb_simulation_integrator_mercurius {
     unsigned int dcrit_allocatedN;  ///< Current size of dcrit arrays
     double* dcrit;                  ///< Switching radii for particles
     struct reb_particle* REBOUND_RESTRICT particles_post;     ///< Internal array, contains coordinates after Kepler step for encounter prediction
-	 struct reb_particle* REBOUND_RESTRICT particles_backup;     ///< Internal array, contains coordinates before Kepler step for encounter prediction
+    struct reb_particle* REBOUND_RESTRICT particles_backup;     ///< Internal array, contains coordinates before Kepler step for encounter prediction
     struct reb_particle* REBOUND_RESTRICT particles_backup_additionalforces;     ///< Internal array, contains coordinates before Kepler step for encounter prediction
     int* encounter_map;             ///< Map to represent which particles are integrated with ias15
     struct reb_vec3d com_pos;       ///< Used internally to keep track of the centre of mass during the timestep
