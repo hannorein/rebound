@@ -159,7 +159,8 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
     const double dt = r->dt;
     rim->encounterN = 1;
     rim->encounter_map[0] = 1;
-    for (int i=1; i<N; i++){
+    rim->tponly_encounter = 1;
+	 for (int i=1; i<N; i++){
         rim->encounter_map[i] = 0;
     }
     for (int i=0; i<N_active; i++){
@@ -216,6 +217,9 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
                     rim->encounter_map[j] = j;
                     rim->encounterN++;
                 }
+                if (j<N_active || r->testparticle_type==1){
+                    rim->tponly_encounter = 0;
+                }					 
             }
         }
     }
@@ -342,6 +346,14 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
         }
     }
 
+    // if only test particles encountered massive bodies, reset the
+    // massive body coordinates to their post Kepler step state
+    if(rim->tponly_encounter){
+        for (int i=1;i<r->N_active;i++){
+            r->particles[i] = rim->particles_post[i];
+        }
+    }
+
     // Reset constant for global particles
     r->t = old_t;
     r->dt = old_dt;
@@ -399,6 +411,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
         // These arrays are only used within one timestep. 
         // Can be recreated without loosing bit-wise reproducibility
         rim->particles_backup   = realloc(rim->particles_backup,sizeof(struct reb_particle)*N);
+        rim->particles_post   = realloc(rim->particles_post,sizeof(struct reb_particle)*N);
         rim->encounter_map      = realloc(rim->encounter_map,sizeof(int)*N);
         rim->allocatedN = N;
     }
@@ -462,7 +475,12 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     // later by encounter step.
     memcpy(rim->particles_backup,r->particles,N*sizeof(struct reb_particle)); 
     reb_integrator_mercurius_kepler_step(r,r->dt);
-    
+
+    // Make copy of particles after the kepler step.
+    // used to restore the massive objects' states in the case
+    // of only massless test-particle encounters
+    memcpy(rim->particles_post,r->particles,N*sizeof(struct reb_particle)); 
+
     reb_mercurius_encounter_predict(r);
    
     reb_mercurius_encounter_step(r,r->dt);
@@ -503,12 +521,15 @@ void reb_integrator_mercurius_reset(struct reb_simulation* r){
     r->ri_mercurius.encounterN = 0;
     r->ri_mercurius.encounterNactive = 0;
     r->ri_mercurius.hillfac = 3;
+    r->ri_mercurius.tponly_encounter = 0;
     r->ri_mercurius.recalculate_coordinates_this_timestep = 0;
     // Internal arrays (only used within one timestep)
     free(r->ri_mercurius.particles_backup);
     r->ri_mercurius.particles_backup = NULL;
     free(r->ri_mercurius.particles_backup_additionalforces);
     r->ri_mercurius.particles_backup_additionalforces = NULL;
+    free(r->ri_mercurius.particles_post);
+    r->ri_mercurius.particles_post = NULL;
     free(r->ri_mercurius.encounter_map);
     r->ri_mercurius.encounter_map = NULL;
     r->ri_mercurius.allocatedN = 0;
