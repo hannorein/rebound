@@ -10,22 +10,17 @@ class TestMercurius(unittest.TestCase):
         # tests if test particle encounters have an effect
         sim = rebound.Simulation()
         sim.add(m=1)
-        sim.add(m=1,a=1)
+        sim.add(m=1e-3,a=1)
         sim.move_to_com()
         sim.N_active=2
         sim.integrator = "mercurius"
+        sim.dt = 0.1
+        sim2 = sim.copy()
         p = sim.particles[1].copy()
         p.x += 0.01
         p.m = 0
         sim.add(p)
         sim.step()
-
-        sim2 = rebound.Simulation()
-        sim2.add(m=1)
-        sim2.add(m=1,a=1)
-        sim2.move_to_com()
-        sim2.N_active=2
-        sim2.integrator = "mercurius"
         sim2.step()
 
         self.assertEqual(sim.particles[1].x,sim2.particles[1].x)
