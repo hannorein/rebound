@@ -800,7 +800,7 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
     pi->y  = (pi->y*pi->m + pj->y*pj->m)*invmass;
     pi->z  = (pi->z*pi->m + pj->z*pj->m)*invmass;
     pi->m  = pi->m + pj->m;
-    pi->r  = pow(pow(pi->r,3.)+pow(pj->r,3.),1./3.);
+    pi->r  = cbrt(pi->r*pi->r*pi->r + pj->r*pj->r*pj->r);
     pi->lastcollision = r->t;
     
 
