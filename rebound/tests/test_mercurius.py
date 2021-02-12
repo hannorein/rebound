@@ -268,8 +268,14 @@ class TestMercurius(unittest.TestCase):
         def get_sim():
             sim = rebound.Simulation()
             sim.add(m=1)
-            for i in range(6):
-                sim.add(a=1+0.2*i,e=0.1+0.1*i,f=80.*i,omega=30.*i*i,m=0.0001)
+            # Setup using xyz instead of orbital elements for
+            # machine independent test
+            sim.add(m=0.0001,x=0.90000, y=0.00000, vx=0.00000, vy=1.10360)
+            sim.add(m=0.0001, x=-1.17676, y=-0.05212, vx=0.22535, vy=-0.90102)
+            sim.add(m=0.0001, x=-1.66025, y=-0.69852, vx=0.18932, vy=-0.60030)
+            sim.add(m=0.0001, x=0.57904, y=1.03836, vx=-0.69267, vy=0.75995)
+            sim.add(m=0.0001, x=-0.41683, y=0.83128, vx=-1.03478, vy=-0.72482)
+            sim.add(m=0.0001, x=1.83969, y=0.32938, vx=-0.55114, vy=0.51646)
             sim.move_to_com()
             sim.dt = 0.034
             return sim
@@ -303,7 +309,7 @@ class TestMercurius(unittest.TestCase):
         is_travis = 'TRAVIS' in os.environ
         if not is_travis: # timing not reliable on TRAVIS
             self.assertLess(2.*time_mercurius,time_ias15) # at least 2 times faster than ias15
-        self.assertEqual(-262.8071505395041, sim.particles[5].x) # Check if bitwise unchanged
+        self.assertEqual(7060.644251181158, sim.particles[5].x) # Check if bitwise unchanged
         
 
 
