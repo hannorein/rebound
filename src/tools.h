@@ -60,6 +60,11 @@ double reb_tools_M_to_E(double e, double M);
 double reb_tools_M_to_f(double e, double M);
 
 /**
+ * @brief Convert angles for orbit routines
+ */
+double reb_tools_E_to_f(double e, double M);
+
+/**
  * @brief Kepler solver in Pal coordinates
  */
 void reb_tools_solve_kepler_pal(double h, double k, double lambda, double* p, double* q);
