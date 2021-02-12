@@ -395,7 +395,7 @@ double reb_integrator_mercurius_calculate_dcrit_for_particle(struct reb_simulati
     // Criteria 2: current velocity
     dcrit = MAX(dcrit, sqrt(v2)*0.4*r->dt);
     // Criteria 3: Hill radius
-    dcrit = MAX(dcrit, rim->hillfac*a*pow(r->particles[i].m/(3.*r->particles[0].m),1./3.));
+    dcrit = MAX(dcrit, rim->hillfac*a*cbrt(r->particles[i].m/(3.*r->particles[0].m)));
     // Criteria 4: physical radius
     dcrit = MAX(dcrit, 2.*r->particles[i].r);
     return dcrit;
