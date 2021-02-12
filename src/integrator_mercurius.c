@@ -159,6 +159,11 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
     const double dt = r->dt;
     rim->encounterN = 1;
     rim->encounter_map[0] = 1;
+    if (r->testparticle_type==1){
+        rim->tponly_encounter = 0; // testparticles affect massive particles
+    }else{
+        rim->tponly_encounter = 1;
+    }
     for (int i=1; i<N; i++){
         rim->encounter_map[i] = 0;
     }
@@ -217,6 +222,9 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
                 if (rim->encounter_map[j]==0){
                     rim->encounter_map[j] = j;
                     rim->encounterN++;
+                }
+                if (j<N_active){ // Two massive particles have a close encounter
+                    rim->tponly_encounter = 0;
                 }
             }
         }
@@ -278,11 +286,17 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
     rim->encounterNactive = 0;
     for (unsigned int i=0; i<r->N; i++){
         if(rim->encounter_map[i]){  
-            r->particles[i] = rim->particles_backup[i]; // use coordinates before whfast step
+            struct reb_particle tmp = r->particles[i];      // Copy for potential use for tponly_encounter
+            r->particles[i] = rim->particles_backup[i];     // Use coordinates before whfast step
             rim->encounter_map[i_enc] = i;
             i_enc++;
             if (r->N_active==-1 || i<r->N_active){
                 rim->encounterNactive++;
+                if (rim->tponly_encounter){
+                    rim->particles_backup[i] = tmp;         // Make copy of particles after the kepler step.
+                                                            // used to restore the massive objects' states in the case
+                                                            // of only massless test-particle encounters
+                }
             }
         }
     }
@@ -341,6 +355,15 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
                 r->particles[i].y -= r->particles[0].y;
                 r->particles[i].z -= r->particles[0].z;
             }
+        }
+    }
+
+    // if only test particles encountered massive bodies, reset the
+    // massive body coordinates to their post Kepler step state
+    if(rim->tponly_encounter){
+        for (int i=1;i<rim->encounterNactive;i++){
+            unsigned int mi = rim->encounter_map[i];
+            r->particles[mi] = rim->particles_backup[mi];
         }
     }
 
@@ -464,7 +487,7 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     // later by encounter step.
     memcpy(rim->particles_backup,r->particles,N*sizeof(struct reb_particle)); 
     reb_integrator_mercurius_kepler_step(r,r->dt);
-    
+
     reb_mercurius_encounter_predict(r);
    
     reb_mercurius_encounter_step(r,r->dt);
@@ -505,6 +528,7 @@ void reb_integrator_mercurius_reset(struct reb_simulation* r){
     r->ri_mercurius.encounterN = 0;
     r->ri_mercurius.encounterNactive = 0;
     r->ri_mercurius.hillfac = 3;
+    r->ri_mercurius.tponly_encounter = 0;
     r->ri_mercurius.recalculate_coordinates_this_timestep = 0;
     // Internal arrays (only used within one timestep)
     free(r->ri_mercurius.particles_backup);

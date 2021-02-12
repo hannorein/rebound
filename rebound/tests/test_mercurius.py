@@ -6,6 +6,28 @@ from datetime import datetime
 
 class TestMercurius(unittest.TestCase):
     
+    def test_no_effect_tp(self):
+        # tests if test particle encounters have an effect
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1)
+        sim.move_to_com()
+        sim.N_active=2
+        sim.integrator = "mercurius"
+        sim.dt = 0.1
+        sim2 = sim.copy()
+        p = sim.particles[1].copy()
+        p.x += 0.01
+        p.m = 0
+        sim.add(p)
+        sim.step()
+        sim2.step()
+
+        self.assertEqual(sim.particles[1].x,sim2.particles[1].x)
+        self.assertEqual(sim.particles[1].vx,sim2.particles[1].vx)
+        self.assertEqual(sim.particles[0].x,sim2.particles[0].x)
+        self.assertEqual(sim.particles[0].vx,sim2.particles[0].vx)
+
     def test_outer_solar(self):
         sim = rebound.Simulation()
         rebound.data.add_outer_solar_system(sim)
