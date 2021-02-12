@@ -3,6 +3,11 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.16.0
+--------------
+* MERCURIUS: If encounters only involve test-particles (type 0), then the algorithm is now resetting the coordinates of all massive particles after the encounter step. This only changes the outcome at the machine precision, but it makes the trajectories of massive particles independent of the close encounter history. Thanks to Kat Deck for this feature!
+* MERCURIUS: The gravity routine is now O(0.5*N^2) instead of O(N^2) for non-OPENMP runs. This should lead to a noticable improvement in runtime.
+
 Version 3.15.0
 --------------
 * Orbital parameters of particles can now be changed in-place. For example: 'sim.particles[1].e += 0.1'.
