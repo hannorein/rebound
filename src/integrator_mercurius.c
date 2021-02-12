@@ -207,7 +207,9 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
                 rmin = MIN(MAX(rmin2,0.),rmin);
             }
 
-            if (sqrt(rmin)< 1.1*MAX(dcrit[i],dcrit[j])){
+            double dcritmax2 = MAX(dcrit[i],dcrit[j]);
+            dcritmax2 *= 1.21*dcritmax2;
+            if (rmin < dcritmax2){
                 if (rim->encounter_map[i]==0){
                     rim->encounter_map[i] = i;
                     rim->encounterN++;
