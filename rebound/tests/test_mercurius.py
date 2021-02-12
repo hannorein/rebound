@@ -281,6 +281,7 @@ class TestMercurius(unittest.TestCase):
         is_travis = 'TRAVIS' in os.environ
         if not is_travis: # timing not reliable on TRAVIS
             self.assertLess(2.*time_mercurius,time_ias15) # at least 2 times faster than ias15
+        self.assertEqual(-262.8071505395041, sim.particles[5].x) # Check if bitwise unchanged
         
 
 
