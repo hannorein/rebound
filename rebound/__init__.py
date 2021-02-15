@@ -33,16 +33,17 @@ __githash__ = c_char_p.in_dll(clibrebound, "reb_githash_str").value.decode('asci
 
 # Check for version
 try:
+    import pkg_resources
     moduleversion = pkg_resources.require("rebound")[0].version
     libreboundversion = __version__
     if moduleversion != libreboundversion:
         warnings.warn("WARNING: python module and librebound have different version numbers: '%s' vs '%s'.\n" %(moduleversion, libreboundversion), ImportWarning)
 except:
-    # Might fails on python3 versions, but not important
+    # Might fail in some python3 setups, but not important
     pass
 
-# Exceptions    
-class SimulationError(Exception):  
+# Exceptions
+class SimulationError(Exception):
     """The simulation exited with a generic error."""
     pass
 
@@ -58,14 +59,14 @@ class Collision(Exception):
 
 class Escape(Exception):
     """The simulation exited because a particle has been se encounter has been detected.
-    You may want to search for the particle with the largest distance from the 
+    You may want to search for the particle with the largest distance from the
     origin and remove it from the simulation."""
     pass
 
 class NoParticles(Exception):
     """The simulation exited because no particles are left in the simulation."""
     pass
-    
+
 class ParticleNotFound(Exception):
     """Particle was not found in the simulation."""
     pass
