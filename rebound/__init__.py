@@ -41,8 +41,8 @@ except:
     # Might fails on python3 versions, but not important
     pass
 
-# Exceptions    
-class SimulationError(Exception):  
+# Exceptions
+class SimulationError(Exception):
     """The simulation exited with a generic error."""
     pass
 
@@ -58,19 +58,19 @@ class Collision(Exception):
 
 class Escape(Exception):
     """The simulation exited because a particle has been se encounter has been detected.
-    You may want to search for the particle with the largest distance from the 
+    You may want to search for the particle with the largest distance from the
     origin and remove it from the simulation."""
     pass
 
 class NoParticles(Exception):
     """The simulation exited because no particles are left in the simulation."""
     pass
-    
+
 class ParticleNotFound(Exception):
     """Particle was not found in the simulation."""
     pass
 
-from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_saba, reb_simulation_integrator_whfast, reb_simulation_integrator_sei, reb_simulation_integrator_mercurius
+from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_saba, reb_simulation_integrator_whfast, reb_simulation_integrator_sei, reb_simulation_integrator_mercurius, reb_simulation_integrator_ias15
 from .particle import Particle
 from .plotting import OrbitPlot
 from .tools import hash
