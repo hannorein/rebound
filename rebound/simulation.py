@@ -16,11 +16,6 @@ except:
     from collections import MutableMapping
 
 
-try:
-    import pkg_resources
-except: 
-    # Fails on python3, but not important
-    pass
 import types
       
 ### The following enum and class definitions need to

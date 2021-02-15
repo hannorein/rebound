@@ -33,12 +33,13 @@ __githash__ = c_char_p.in_dll(clibrebound, "reb_githash_str").value.decode('asci
 
 # Check for version
 try:
+    import pkg_resources
     moduleversion = pkg_resources.require("rebound")[0].version
     libreboundversion = __version__
     if moduleversion != libreboundversion:
         warnings.warn("WARNING: python module and librebound have different version numbers: '%s' vs '%s'.\n" %(moduleversion, libreboundversion), ImportWarning)
 except:
-    # Might fails on python3 versions, but not important
+    # Might fail in some python3 setups, but not important
     pass
 
 # Exceptions
