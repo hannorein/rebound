@@ -303,7 +303,7 @@ class SimulationArchive(Structure):
         import numpy as np
         Npoints = len(self)*3-2
         if len(self)<=1:
-            raise Runtim
+            raise RuntimeError()
         Nparticles = self[0].N
         verts = np.zeros((Npoints,Nparticles,2))
         xy = np.zeros((len(self),Nparticles,2))
