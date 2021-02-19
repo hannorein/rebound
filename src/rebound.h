@@ -1551,6 +1551,12 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
  * List of the built-in setup helper functions
  * @{
  */
+
+/**
+ * @brief Returns f modulo 2 pi. Return value is in the range [0, 2pi)
+ */
+double reb_tools_mod2pi(double f);
+
 /**
  * @brief returns the true anomaly for a given eccentricity and mean anomaly
  * @param e Eccentricity

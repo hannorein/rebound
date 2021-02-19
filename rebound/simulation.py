@@ -400,6 +400,8 @@ class Orbit(Structure):
         true anomaly
     M       : float           
         mean anomaly
+    E       : float           
+        eccentric anomaly (requires solving Kepler's equation - only calculated when needed)
     l       : float           
         mean longitude = Omega + omega + M
     theta   : float           
@@ -432,6 +434,11 @@ class Orbit(Structure):
         Returns a string with the semi-major axis and eccentricity of the orbit.
         """
         return "<rebound.Orbit instance, a={0} e={1} inc={2} Omega={3} omega={4} f={5}>".format(str(self.a),str(self.e), str(self.inc), str(self.Omega), str(self.omega), str(self.f))
+    
+    @property 
+    def E(self):
+        clibrebound.reb_tools_M_to_E.restype = c_double
+        return clibrebound.reb_tools_M_to_E(c_double(self.e), c_double(self.M))
 
 class Simulation(Structure):
     """
