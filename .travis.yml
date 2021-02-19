@@ -13,18 +13,18 @@ env:
 python:
   - "2.7"
   - "3.4"
-  - "3.8"
+  - "3.9"
 
 matrix:
   exclude:
     - env: TESTPART=C
       python: "3.4"
     - env: TESTPART=C
-      python: "3.8"
+      python: "3.9"
     - env: TESTPART=CCOVERAGE
       python: "3.4"
     - env: TESTPART=CCOVERAGE
-      python: "3.8"
+      python: "3.9"
   include:
     - stage: triggerdependencybuilds
       before_install: skip
@@ -33,7 +33,7 @@ matrix:
         - chmod +x triggerdependencybuilds.sh
         - ./triggerdependencybuilds.sh
       after_success: skip
-      python: '3.8'
+      python: '3.9'
       env: TESTPART=C
 
 addons:
@@ -53,7 +53,7 @@ install:
   - if [[ $TESTPART == *"PYTHON"* ]] && [[ ${TRAVIS_PYTHON_VERSION:0:3} == "2.7" ]]; then conda create -n testenv --yes libgfortran numpy scipy matplotlib setuptools coverage python=$TRAVIS_PYTHON_VERSION; fi
   - if [[ $TESTPART == "CCOVERAGE" ]]; then conda create -n testenv --yes numpy matplotlib setuptools python=$TRAVIS_PYTHON_VERSION; fi
   - if [[ $TESTPART == *"PYTHON"* ]] && [[ ${TRAVIS_PYTHON_VERSION:0:3} == "3.4" ]]; then conda create -n testenv --yes libgfortran numpy scipy matplotlib setuptools coverage python=$TRAVIS_PYTHON_VERSION; fi
-  - if [[ $TESTPART == *"PYTHON"* ]] && [[ ${TRAVIS_PYTHON_VERSION:0:3} == "3.8" ]]; then conda create -n testenv --yes numpy scipy matplotlib setuptools coverage python=$TRAVIS_PYTHON_VERSION; fi
+  - if [[ $TESTPART == *"PYTHON"* ]] && [[ ${TRAVIS_PYTHON_VERSION:0:3} == "3.9" ]]; then conda create -n testenv --yes numpy scipy matplotlib setuptools coverage python=$TRAVIS_PYTHON_VERSION; fi
   - if [[ $TESTPART == *"PYTHON"* ]] || [[ $TESTPART == "CCOVERAGE" ]]; then source activate testenv; fi
   - if [[ $TESTPART == *"PYTHON"* ]]; then pip install coveralls; fi
   - if [[ $TESTPART == "CCOVERAGE" ]]; then pip install cpp-coveralls; fi
@@ -72,7 +72,7 @@ script:
     - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py EscapingParticles.ipynb; fi
     - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Forces.ipynb; fi
     - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py FourierSpectrum.ipynb; fi
-    - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Horizons.ipynb; fi 
+    - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Horizons.ipynb; fi
     - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Megno.ipynb; fi
     - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Resonances_of_Jupiters_moons.ipynb; fi
     - if [[ $TESTPART == "IPYTHON2" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py VariationalEquations.ipynb; fi
@@ -96,7 +96,7 @@ script:
     - if [[ $TESTPART == "PYTHON" ]]; then cd $TRAVIS_BUILD_DIR/python_examples/orbital_elements/ && python problem.py; fi
     - if [[ $TESTPART == "PYTHON" ]]; then cd $TRAVIS_BUILD_DIR/python_examples/outersolarsystem/ && python problem.py; fi
     - if [[ $TESTPART == "PYTHON" ]]; then cd $TRAVIS_BUILD_DIR/python_examples/simple_orbit/ && python problem.py; fi
-    - cd $TRAVIS_BUILD_DIR 
+    - cd $TRAVIS_BUILD_DIR
 
 after_success:
     - if [[ $TESTPART == "PYTHON" ]] && [[ ${TRAVIS_PYTHON_VERSION:0:3} == "2.7" ]]; then coveralls; fi
