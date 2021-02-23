@@ -494,37 +494,59 @@ class Particle(Structure):
         if o.a < 0.: # hyperbolic orbit
             if samplingAngle is None:
                 samplingAngle = "Mf"
-            phi = math.acos(-1./o.e)*0.999
-            dphi = 2*phi/(Npts-2)
-            for i in range(Npts-1):
-                if "M" in samplingAngle:
+            Nptsangle = {}
+            for angle in samplingAngle[1:]:
+                Nptsangle[angle] = (Npts-1)//len(samplingAngle) # one point is reserved for actual position
+            Nptsangle[samplingAngle[0]] = Npts-1-sum(Nptsangle.values())
+            if "M" in samplingAngle:
+                phi = math.acos(-1./o.e)*0.999
+                Npts = Nptsangle["M"]
+                dphi = 2*phi/(Npts-1)
+                for i in range(Npts):
                     f = clibrebound.reb_tools_M_to_f(c_double(o.e), c_double(phi))
                     phases_f.append(f)
-                if "E" in samplingAngle:
+                    phi -= dphi
+            if "E" in samplingAngle:
+                phi = math.acos(-1./o.e)*0.999
+                Npts = Nptsangle["E"]
+                dphi = 2*phi/(Npts-1)
+                for i in range(Npts):
                     f = clibrebound.reb_tools_E_to_f(c_double(o.e), c_double(phi))
                     phases_f.append(f)
-                if "f" in samplingAngle:
+                    phi -= dphi
+            if "f" in samplingAngle:
+                phi = math.acos(-1./o.e)*0.999
+                Npts = Nptsangle["f"]
+                dphi = 2*phi/(Npts-1)
+                for i in range(Npts):
                     f = clibrebound.reb_tools_mod2pi(c_double(phi))
                     phases_f.append(f)
-                phi -= dphi
+                    phi -= dphi
         else:       # circular orbit
             if samplingAngle is None:
                 samplingAngle = "Ef"
             if duplicateEndpoint is None:
                 duplicateEndpoint = True
-            if duplicateEndpoint:
-                dphi = 2.*math.pi/(Npts-2)  # one point is reserved for actual position
-                                            # one point is reserved for the end point
-            else:
-                dphi = 2.*math.pi/(Npts-1)  # one point is reserved for actual position
-            for i in range(Npts-1):
-                if "M" in samplingAngle:
+            Nptsangle = {}
+            for angle in samplingAngle[1:]:
+                Nptsangle[angle] = (Npts-1)//len(samplingAngle) # one point is reserved for actual position
+            Nptsangle[samplingAngle[0]] = Npts-1-sum(Nptsangle.values())
+            if "M" in samplingAngle:
+                Npts = Nptsangle["M"]
+                dphi = 2.*math.pi/(Npts-1 if duplicateEndpoint else Npts)  # one point is reserved for the end point
+                for i in range(Npts):
                     f = clibrebound.reb_tools_M_to_f(c_double(o.e), c_double(i*dphi))
                     phases_f.append(f)
-                if "E" in samplingAngle:
+            if "E" in samplingAngle:
+                Npts = Nptsangle["E"]
+                dphi = 2.*math.pi/(Npts-1 if duplicateEndpoint else Npts)  # one point is reserved for the end point
+                for i in range(Npts):
                     f = clibrebound.reb_tools_E_to_f(c_double(o.e), c_double(i*dphi))
                     phases_f.append(f)
-                if "f" in samplingAngle:
+            if "f" in samplingAngle:
+                Npts = Nptsangle["f"]
+                dphi = 2.*math.pi/(Npts-1 if duplicateEndpoint else Npts)  # one point is reserved for the end point
+                for i in range(Npts):
                     f = i*dphi
                     f = clibrebound.reb_tools_mod2pi(c_double(f))
                     phases_f.append(f)
