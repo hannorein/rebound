@@ -492,13 +492,13 @@ class Simulation(Structure):
         # Create simulation
         if filename is None:
             # Create a new simulation
-            sim = super(Simulation,cls).__new__(cls)
+            sim = super(Structure,cls).__new__(cls)
             clibrebound.reb_init_simulation(byref(sim))
             return sim
         else:
             # Recreate exisitng simulation 
             sa = SimulationArchive(filename,process_warnings=False)
-            sim = super(Simulation,cls).__new__(cls)
+            sim = super(Structure,cls).__new__(cls)
             clibrebound.reb_init_simulation(byref(sim))
             w = sa.warnings # warnings will be appended to previous warnings (as to not repeat them) 
             clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int(snapshot),byref(w))
