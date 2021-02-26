@@ -518,7 +518,7 @@ class Widget(DOMWidget):
         the Simulation object: sim.refreshWidgets(). 
         """
 
-        if simp==None:
+        if simp is None:
             simp = self.simp
         if self.autorefresh==0 and isauto==1:
             return
@@ -534,7 +534,7 @@ class Widget(DOMWidget):
             pass
         if self.useroverlay==True:
             self.overlay = "REBOUND (%s), N=%d, t=%g"%(sim.integrator,sim.N,sim.t)
-        elif self.useroverlay==None or self.useroverlay==False:
+        elif self.useroverlay is None or self.useroverlay==False:
             self.overlay = ""
         else:
             self.overlay = self.useroverlay + ", N=%d, t=%g"%(sim.N,sim.t)

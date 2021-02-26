@@ -143,7 +143,7 @@ class TestMercurius(unittest.TestCase):
 
         sim.integrator = "mercurius"
         sim.dt = 0.01
-        sim.track_energy_offset = 1;
+        sim.track_energy_offset = 1
         sim.collision = "direct"
         sim.collision_resolve = "merge"
         
@@ -172,7 +172,7 @@ class TestMercurius(unittest.TestCase):
         sim.integrator = "mercurius"
         sim.dt = 0.01
         sim.testparticle_type = 1
-        sim.track_energy_offset = 1;
+        sim.track_energy_offset = 1
         sim.collision = "direct"
         sim.collision_resolve = "merge"
         
@@ -198,7 +198,7 @@ class TestMercurius(unittest.TestCase):
         sim.testparticle_type = 1
         sim.collision = "direct"
         sim.collision_resolve = "merge"
-        sim.track_energy_offset = 1;
+        sim.track_energy_offset = 1
         
         sim.boundary = "open"
         boxsize = 3.
@@ -219,7 +219,7 @@ class TestMercurius(unittest.TestCase):
 
         sim.integrator = "mercurius"
         sim.dt = 0.01
-        sim.track_energy_offset = 1;
+        sim.track_energy_offset = 1
         sim.collision = "direct"
         sim.collision_resolve = "merge"
         
@@ -247,7 +247,7 @@ class TestMercurius(unittest.TestCase):
 
         sim.integrator = "mercurius"
         sim.dt = 0.01
-        sim.track_energy_offset = 1;
+        sim.track_energy_offset = 1
         sim.collision = "direct"
         sim.collision_resolve = "merge"
         

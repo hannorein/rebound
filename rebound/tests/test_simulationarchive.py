@@ -275,10 +275,10 @@ class TestSimulationArchive(unittest.TestCase):
         self.assertEqual(x0,x1)
 
         tget = 27.123
-        sim = sa.getSimulation(tget,mode="exact");
+        sim = sa.getSimulation(tget,mode="exact")
         self.assertAlmostEqual(sim.t,tget,delta=1e-14)
         tget = 25.123
-        sim = sa.getSimulation(tget,mode="close");
+        sim = sa.getSimulation(tget,mode="close")
         self.assertAlmostEqual(sim.t,tget,delta=sim.dt)
 
     def test_sa_restart_append(self):
@@ -356,10 +356,10 @@ class TestSimulationArchive(unittest.TestCase):
         self.assertEqual(x0,x1)
         
         tget = 27.123
-        sim = sa.getSimulation(tget,mode="exact");
+        sim = sa.getSimulation(tget,mode="exact")
         self.assertAlmostEqual(sim.t,tget,delta=1e-14)
         tget = 25.123
-        sim = sa.getSimulation(tget,mode="close");
+        sim = sa.getSimulation(tget,mode="close")
         self.assertAlmostEqual(sim.t,tget,delta=sim.dt)
     
     
@@ -392,10 +392,10 @@ class TestSimulationArchive(unittest.TestCase):
         self.assertEqual(x0,x1)
         
         tget = 27.123
-        sim = sa.getSimulation(tget,mode="exact");
+        sim = sa.getSimulation(tget,mode="exact")
         self.assertAlmostEqual(sim.t,tget,delta=1e-14)
         tget = 25.123
-        sim = sa.getSimulation(tget,mode="close");
+        sim = sa.getSimulation(tget,mode="close")
         self.assertAlmostEqual(sim.t,tget,delta=sim.dt)
 
 #    def test_sa_restart_ias15_walltime(self):

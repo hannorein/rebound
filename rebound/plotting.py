@@ -9,6 +9,7 @@ def OrbitPlot(sim, figsize=None, fancy=False, slices=0, xlim=None, ylim=None, un
 
     Parameters
     ----------
+    sim             : Simulation
     figsize         : tuple of float, optional
         Tuple defining the figure size (default: (5,5))
     fancy           : bool (default: False)
@@ -157,6 +158,7 @@ def fading_line(x, y, color='black', alpha=1, fading=True, fancy=False, **kwargs
     color   : Color for the line. 3-tuple of RGB values, hex, or string. Default: 'black'.
     alpha   : float, alpha value of the line. Default 1.
     fading  : bool, determines if the line is fading along the orbit.
+    fancy   : bool, same as fancy argument in OrbitPlot()
     """
     try:
         from matplotlib.collections import LineCollection

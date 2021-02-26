@@ -7,7 +7,7 @@ class TestGravity(unittest.TestCase):
     
     def test_testparticle_0(self):
         sim = rebound.Simulation()
-        sim.testparticle_type = 0;
+        sim.testparticle_type = 0
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.N_active = 1
@@ -17,7 +17,7 @@ class TestGravity(unittest.TestCase):
 
     def test_testparticle_1(self):
         sim = rebound.Simulation()
-        sim.testparticle_type = 1;
+        sim.testparticle_type = 1
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.N_active = 1
@@ -28,7 +28,7 @@ class TestGravity(unittest.TestCase):
     def test_testparticle_comp_0(self):
         sim = rebound.Simulation()
         sim.gravity = "compensated"
-        sim.testparticle_type = 0;
+        sim.testparticle_type = 0
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.N_active = 1
@@ -39,7 +39,7 @@ class TestGravity(unittest.TestCase):
     def test_testparticle_comp_1(self):
         sim = rebound.Simulation()
         sim.gravity = "compensated"
-        sim.testparticle_type = 1;
+        sim.testparticle_type = 1
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.N_active = 1
@@ -54,7 +54,7 @@ class TestGravity(unittest.TestCase):
         sim = rebound.Simulation()
         sim.gravity = "compensated"
         sim.integrator = "whfast"
-        sim.testparticle_type = 0;
+        sim.testparticle_type = 0
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.N_active = 1
@@ -69,7 +69,7 @@ class TestGravity(unittest.TestCase):
         sim.gravity = "compensated"
         sim.integrator = "whfast"
         sim.dt = 1e-4
-        sim.testparticle_type = 1;
+        sim.testparticle_type = 1
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.add(m=1e-3, a=1.4)
@@ -81,7 +81,7 @@ class TestGravity(unittest.TestCase):
 
         sim = rebound.Simulation()
         sim.gravity = "compensated"
-        sim.testparticle_type = 1;
+        sim.testparticle_type = 1
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.add(m=1e-3, a=1.4)
