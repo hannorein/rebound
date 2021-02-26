@@ -238,7 +238,7 @@ class SimulationArchive(Structure):
             return sim
         else:
             if mode=='exact':
-                keep_unsynchronized==0
+                keep_unsynchronized = 0
             if (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
                 keep_unsynchronized = 0
             sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
