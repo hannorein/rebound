@@ -490,7 +490,7 @@ class Simulation(Structure):
             snapshot = kw["snapshot"]
        
         # Create simulation
-        if filename==None:
+        if filename is None:
             # Create a new simulation
             sim = super(Simulation,cls).__new__(cls)
             clibrebound.reb_init_simulation(byref(sim))
@@ -662,7 +662,7 @@ class Simulation(Structure):
         >>> sim = sa[-1]  # get the last snapshot in the SA file
 
         """
-        modes = sum(1 for i in [interval, walltime,step] if i != None)
+        modes = sum(1 for i in [interval, walltime,step] if i is not None)
         if modes != 1:
             raise AttributeError("Need to specify either interval, walltime, or step")
         if deletefile and os.path.isfile(filename):
