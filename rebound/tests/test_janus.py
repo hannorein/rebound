@@ -81,8 +81,8 @@ class TestIntegratorJanus(unittest.TestCase):
             
             sim.integrate(2e2,exact_finish_time=0)
 
-            self.assertEqual(sim.t,sim2.t);
-            self.assertEqual(sim.particles[1].x,sim2.particles[1].x);
+            self.assertEqual(sim.t,sim2.t)
+            self.assertEqual(sim.particles[1].x,sim2.particles[1].x)
             
             
 

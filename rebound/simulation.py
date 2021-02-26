@@ -597,7 +597,7 @@ class Simulation(Structure):
                 for w in self._widgets:
                     w.refresh(simp,isauto=1)
             self.visualization = VISUALIZATIONS["webgl"] 
-            clibrebound.reb_display_init_data(byref(self));
+            clibrebound.reb_display_init_data(byref(self))
             self._dhbf = AFF(display_heartbeat)
             self._display_heartbeat = self._dhbf
             display(HTML(Widget.getClientCode())) # HACK! Javascript should go into custom.js
