@@ -70,7 +70,7 @@ class InterruptiblePool(Pool):
     def __init__(self, processes=None, initializer=None, initargs=(),
                  **kwargs):
         new_initializer = functools.partial(_initializer_wrapper, initializer)
-        super(Pool, self).__init__(processes, new_initializer,
+        super(InterruptiblePool, self).__init__(processes, new_initializer,
                                                 initargs, **kwargs)
 
     def map(self, func, iterable, chunksize=None):
