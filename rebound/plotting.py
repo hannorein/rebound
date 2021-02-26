@@ -3,7 +3,7 @@ import math
 from .particle import Particle
 from itertools import cycle
 
-def OrbitPlot(sim, figsize=None, fancy=False, slices=0, xlim=None, ylim=None, unitlabel=None, color=False, periastron=False, orbit_type="trail", lw=1., plotparticles=[], primary=None, Narc=128):
+def OrbitPlot(sim, figsize=None, fancy=False, slices=0, xlim=None, ylim=None, unitlabel=None, color=False, periastron=False, orbit_type="trail", lw=1., plotparticles=None, primary=None, Narc=128):
     """
     Convenience function for plotting instantaneous orbits.
 
@@ -60,6 +60,8 @@ def OrbitPlot(sim, figsize=None, fancy=False, slices=0, xlim=None, ylim=None, un
         import numpy as np
     except:
         raise ImportError("Error importing matplotlib and/or numpy. Plotting functions not available. If running from within a jupyter notebook, try calling '%matplotlib inline' beforehand.")
+    if not plotparticles:
+        plotparticles = []
     if unitlabel is not None:
         unitlabel = " " + unitlabel
     else:
@@ -199,12 +201,14 @@ def fading_line(x, y, color='black', alpha=1, fading=True, fancy=False, **kwargs
     lc = LineCollection(segments, color=colors, **kwargs)
     return lc
 
-def OrbitPlotOneSlice(sim, ax, Narc=128, color=False, periastron=False, orbit_type="trial", lw=1., axes="xy", plotparticles=[], primary=None, fancy=False, xlim=None, ylim=None):
+def OrbitPlotOneSlice(sim, ax, Narc=128, color=False, periastron=False, orbit_type="trial", lw=1., axes="xy", plotparticles=None, primary=None, fancy=False, xlim=None, ylim=None):
     import matplotlib.pyplot as plt
     from matplotlib.collections import LineCollection
     import numpy as np
     import random
 
+    if not plotparticles:
+        plotparticles = []
     #ax.set_aspect("equal")
     p_orb_pairs = []
     if not plotparticles:
