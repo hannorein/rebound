@@ -1,31 +1,31 @@
 REBOUND - An open-source multi-purpose N-body code
 ==================================================
 
-.. image:: http://img.shields.io/badge/rebound-v3.16.0-green.svg?style=flat
-    :target: http://rebound.readthedocs.org
+.. image:: https://img.shields.io/badge/rebound-v3.16.0-green.svg?style=flat
+    :target: https://rebound.readthedocs.org
 .. image:: https://badge.fury.io/py/rebound.svg
     :target: https://badge.fury.io/py/rebound
-.. image:: http://img.shields.io/badge/license-GPL-green.svg?style=flat 
+.. image:: https://img.shields.io/badge/license-GPL-green.svg?style=flat 
     :target: https://github.com/hannorein/rebound/blob/main/LICENSE
-.. image:: http://img.shields.io/travis/hannorein/rebound/main.svg?style=flat 
+.. image:: https://img.shields.io/travis/hannorein/rebound/main.svg?style=flat 
     :target: https://travis-ci.org/hannorein/rebound/
 .. image:: https://codecov.io/gh/hannorein/rebound/branch/main/graph/badge.svg
     :target: https://codecov.io/gh/hannorein/rebound    
-.. image:: http://img.shields.io/badge/arXiv-1110.4876-green.svg?style=flat 
-    :target: http://arxiv.org/abs/1110.4876
-.. image:: http://img.shields.io/badge/arXiv-1409.4779-green.svg?style=flat 
-    :target: http://arxiv.org/abs/1409.4779
-.. image:: http://img.shields.io/badge/arXiv-1506.01084-green.svg?style=flat 
-    :target: http://arxiv.org/abs/1506.01084
-.. image:: http://img.shields.io/badge/arXiv-1603.03424-green.svg?style=flat 
-    :target: http://arxiv.org/abs/1603.03424 
-.. image:: http://img.shields.io/badge/arXiv-1701.07423-green.svg?style=flat 
-    :target: http://arxiv.org/abs/1701.07423
-.. image:: http://img.shields.io/badge/arXiv-1704.07715-green.svg?style=flat 
-    :target: http://arxiv.org/abs/1704.07715
-.. image:: http://img.shields.io/badge/arXiv-1903.04972-green.svg?style=flat 
-    :target: http://arxiv.org/abs/1903.04972
-.. image:: http://img.shields.io/badge/arXiv-1907.11335-green.svg?style=flat 
+.. image:: https://img.shields.io/badge/arXiv-1110.4876-green.svg?style=flat 
+    :target: https://arxiv.org/abs/1110.4876
+.. image:: https://img.shields.io/badge/arXiv-1409.4779-green.svg?style=flat 
+    :target: https://arxiv.org/abs/1409.4779
+.. image:: https://img.shields.io/badge/arXiv-1506.01084-green.svg?style=flat 
+    :target: https://arxiv.org/abs/1506.01084
+.. image:: https://img.shields.io/badge/arXiv-1603.03424-green.svg?style=flat 
+    :target: https://arxiv.org/abs/1603.03424 
+.. image:: https://img.shields.io/badge/arXiv-1701.07423-green.svg?style=flat 
+    :target: https://arxiv.org/abs/1701.07423
+.. image:: https://img.shields.io/badge/arXiv-1704.07715-green.svg?style=flat 
+    :target: https://arxiv.org/abs/1704.07715
+.. image:: https://img.shields.io/badge/arXiv-1903.04972-green.svg?style=flat 
+    :target: https://arxiv.org/abs/1903.04972
+.. image:: https://img.shields.io/badge/arXiv-1907.11335-green.svg?style=flat 
     :target: https://arxiv.org/abs/1907.11335
 .. image:: https://readthedocs.org/projects/rebound/badge/?version=latest
     :target: https://rebound.readthedocs.io/en/latest/?badge=latest
@@ -50,7 +50,7 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * Parallelized with OpenMP (for shared memory systems)
 * Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems)
 * No libraries are needed, use of OpenGL/glfw3 for visualization is optional
-* The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound
+* The code is fully open-source and can be downloaded freely from https://github.com/hannorein/rebound
 * No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
 * Comes with standard ASCII or binary output routines 
 * Different modules are easily interchangeable at runtime
@@ -75,14 +75,14 @@ Then, you can run a simple REBOUND simulation such as
 
 If you want to use the C version of REBOUND simply copy and paste this line into your terminal (it won't do anything bad, we promise)::
 
-    git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./rebound
+    git clone https://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./rebound
 
  
 Documentation
 -------------
 The full documentation with many examples, changelogs and tutorials can be found at
 
-http://rebound.readthedocs.org
+https://rebound.readthedocs.org
 
 We're always trying to improve REBOUND and extending the documention is high on our to-do list.
 If you have trouble installing or using REBOUND, please open an issue on github and we'll try to help as much as we can.

@@ -30,7 +30,7 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * Parallelized with OpenMP (for shared memory systems)
 * Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems)
 * No libraries are needed, use of OpenGL/glfw3 for visualization is optional
-* The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound
+* The code is fully open-source and can be downloaded freely from https://github.com/hannorein/rebound
 * No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
 * Comes with standard ASCII or binary output routines 
 * Different modules are easily interchangeable at runtime
@@ -51,7 +51,7 @@ To learn more about how to use REBOUND with Python have a look at the iPython/Ju
 
 To install the *C version*, clone this repository, e.g. by simply copy-and-pasting the following command into your terminal::
     
-    git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./rebound
+    git clone https://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./rebound
 
 To learn more about how to use REBOUND with C, study the examples in the `examples/` directory and continue reading this file. You might also want to have a look at the `rebound.h` file in the `src/` directory which contains the API specifications. Last but not least, REBOUND is open source. If you want to know how something works, you can just look at the source code. And of course, you are welcome to e-mail any of the contributors with questions. We'll do our best to answer them quickly.
 
@@ -78,7 +78,7 @@ Papers
 ------
 There are several papers describing the functionality of REBOUND. 
 
-1. Rein & Liu 2012 (Astronomy and Astrophysics, Volume 537, A128) describes the code structure and the main feature including the gravity and collision routines for many particle systems. http://adsabs.harvard.edu/abs/2012A%26A...537A.128R 
+1. Rein & Liu 2012 (Astronomy and Astrophysics, Volume 537, A128) describes the code structure and the main feature including the gravity and collision routines for many particle systems. hnbttp://adsabs.harvard.edu/abs/2012A%26A...537A.128R 
 
 2. Rein & Tremaine 2011 (Monthly Notices of the Royal Astronomical Society, Volume 415, Issue 4, pp. 3168-3176) describes the Symplectic Epicycle integrator for shearing sheet simulations. https://ui.adsabs.harvard.edu/abs/2011MNRAS.415.3168R 
 
