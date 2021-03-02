@@ -78,7 +78,7 @@ Papers
 ------
 There are several papers describing the functionality of REBOUND. 
 
-1. Rein & Liu 2012 (Astronomy and Astrophysics, Volume 537, A128) describes the code structure and the main feature including the gravity and collision routines for many particle systems. hnbttp://adsabs.harvard.edu/abs/2012A%26A...537A.128R 
+1. Rein & Liu 2012 (Astronomy and Astrophysics, Volume 537, A128) describes the code structure and the main feature including the gravity and collision routines for many particle systems. http://adsabs.harvard.edu/abs/2012A%26A...537A.128R 
 
 2. Rein & Tremaine 2011 (Monthly Notices of the Royal Astronomical Society, Volume 415, Issue 4, pp. 3168-3176) describes the Symplectic Epicycle integrator for shearing sheet simulations. https://ui.adsabs.harvard.edu/abs/2011MNRAS.415.3168R 
 
