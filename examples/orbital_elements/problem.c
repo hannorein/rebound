@@ -49,7 +49,7 @@ int main(int argc, char* argv[]){
 
     // There are also versions of the two functions above that let you pass an error integer pointer
     // to diagnose / catch errors.  You can find error codes in the documentation for the functions
-    // at http://rebound.readthedocs.org/
+    // at https://rebound.readthedocs.org/
     
     int err = 0;
     e = 1.001;

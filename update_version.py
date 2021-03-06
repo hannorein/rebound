@@ -17,7 +17,7 @@ with open("README.rst","w") as f:
     start_delete = -1
     for i in xrange(0,len(readme)):
         if "badge/rebound-v" in readme[i]:
-            readme[i] = ".. image:: http://img.shields.io/badge/rebound-v"+reboundversion+"-green.svg?style=flat\n"
+            readme[i] = ".. image:: https://img.shields.io/badge/rebound-v"+reboundversion+"-green.svg?style=flat\n"
         f.write(readme[i])
 
 with open("src/rebound.c") as f:

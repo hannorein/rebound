@@ -8,11 +8,11 @@ Installation
 
 You can download, compile and run REBOUND on almost any modern operating system within seconds.  Simply copy and paste this line to your terminal and press enter::
 
-    git clone http://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./rebound
+    git clone https://github.com/hannorein/rebound && cd rebound/examples/shearing_sheet && make && ./rebound
 
 or if you do not have git installed::
 
-    wget --no-check-certificate https://github.com/hannorein/rebound/tarball/master -O- | tar xvz && cd hannorein-rebound-*/examples/shearing_sheet/ && make && ./rebound
+    wget https://github.com/hannorein/rebound/tarball/master -O- | tar xvz && cd hannorein-rebound-*/examples/shearing_sheet/ && make && ./rebound
 
 Make sure you have a compiler suite installed. Open a terminal and type ``make`` and ``cc`` to test if your installation is complete. If you are on OSX, you can download Xcode from the AppStore (for free). Once installed, open Xcode, go to Settings, then Downloads and install the Command Line Tools. 
 
