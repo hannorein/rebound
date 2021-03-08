@@ -205,6 +205,7 @@ int reb_boundary_particle_is_in_box(const struct reb_simulation* const r, struct
 	switch(r->boundary){
 		case REB_BOUNDARY_OPEN:
 		case REB_BOUNDARY_SHEAR:
+		case REB_BOUNDARY_PERIODIC:
 			if(p.x>r->boxsize.x/2.){
 				return 0;
 			}
@@ -224,7 +225,7 @@ int reb_boundary_particle_is_in_box(const struct reb_simulation* const r, struct
 				return 0;
 			}
 			return 1;
-		default:
+		case REB_BOUNDARY_NONE:
 			return 1;
 	}
 }
