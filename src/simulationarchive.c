@@ -322,6 +322,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
             sa->offset = malloc(sizeof(uint32_t)*nblobsmax);
             fseek(sa->inf, 0, SEEK_SET);  
             int failed = 0;
+            sa->nblobs = 0;
             for(long i=0;i<nblobsmax;i++){
                 struct reb_binary_field field = {0};
                 sa->offset[i] = ftell(sa->inf);
@@ -330,7 +331,6 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                     if (r1!=1){
                         printf("Error while reading file (r1). Attempting recovery.\n");
                         failed = 1;
-                        sa->nblobs = i-1;
                         break;
                     }
                     switch (field.type){
@@ -339,7 +339,6 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                                 int s1 = fseek(sa->inf,64 - sizeof(struct reb_binary_field),SEEK_CUR);
                                 if (s1){
                                     printf("Error while reading file (s1). Attempting recovery.\n");
-                                    sa->nblobs = i-1;
                                     failed = 1;
                                 }
                             }
@@ -349,7 +348,6 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                                 size_t r2 = fread(&(sa->t[i]), sizeof(double),1,sa->inf);
                                 if (r2!=1){
                                     printf("Error while reading file (r2). Attempting recovery.\n");
-                                    sa->nblobs = i-1;
                                     failed = 1;
                                 }
                             }
@@ -359,7 +357,6 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                                 int s2 = fseek(sa->inf,field.size,SEEK_CUR);
                                 if (s2){
                                     printf("Error while reading file (s2). Attempting recovery.\n");
-                                    sa->nblobs = i-1;
                                     failed = 1;
                                 }
                             }
@@ -372,13 +369,13 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                     size_t r3 = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa->inf);
                     if (r3!=1){
                         printf("Error while reading file (r3). Attempting recovery.\n");
-                        sa->nblobs = i-1;
                         failed = 1;
                     }
                 }
                 if (failed){
                     break;
                 }
+                sa->nblobs = i+1;
                 if (i==nblobsmax-1){
                     nblobsmax += 1024;
                     sa->t = realloc(sa->t,sizeof(double)*nblobsmax);
