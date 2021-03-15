@@ -62,9 +62,9 @@ install:
 
 
 script:
-    - if [[ $TESTPART == "CCOVERAGE" ]]; then cd $TRAVIS_BUILD_DIR/ && python setup.py test; fi
+    - if [[ $TESTPART == "CCOVERAGE" ]]; then cd $TRAVIS_BUILD_DIR/ && python -m unittest; fi
     - if [[ $TESTPART == "C" ]]; then cd $TRAVIS_BUILD_DIR/examples/ && make; fi
-    - if [[ $TESTPART == "PYTHON" ]]; then cd $TRAVIS_BUILD_DIR && coverage run --source=rebound setup.py test; fi
+    - if [[ $TESTPART == "PYTHON" ]]; then cd $TRAVIS_BUILD_DIR && coverage run --source=rebound -m unittest; fi
     - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py AdvWHFast.ipynb; fi
     - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Checkpoints.ipynb; fi
     - if [[ $TESTPART == "IPYTHON1" ]]; then cd $TRAVIS_BUILD_DIR/ipython_examples/ && python ipynb2py.py Churyumov-Gerasimenko.ipynb; fi
