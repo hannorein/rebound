@@ -42,22 +42,6 @@ sabasettings2 = [ # type, relative error
         ]
 
 class TestIntegratorSABA(unittest.TestCase):
-    def test_sabasettings1(self):
-        for s in sabasettings1:
-            test_name = "test_energy_%s" % (s[0])
-            self.energy(s)
-            test_name = "test_energy_notcom_%s" % (s[0])
-            self.energy_notcom(s)
-            test_name = "test_compias_%s" % (s[0])
-            self.compias(s)
-    def test_sabasettings2(self):
-        for s in sabasettings2:
-            test_name = "test_backandforth_%s" % (s[0])
-            self.backandforth(s)
-    def test_sabarestart(self):
-        for s in sabasettings2:
-            test_name = "test_restart_%s" % (s[0])
-            self.restart(s)
 
     def energy(self, s):
         integrator, maxerror = s
@@ -136,6 +120,49 @@ class TestIntegratorSABA(unittest.TestCase):
         sim.step()
         sim2.step()
         self.assertEqual(sim,sim2)
+        self.assertEqual(1,12)
+    
+def create_test_sabasettings1(s):
+    def doTest(self):
+        test_name = "test_energy_%s" % (s[0])
+        self.energy(s)
+        test_name = "test_energy_notcom_%s" % (s[0])
+        self.energy_notcom(s)
+        test_name = "test_compias_%s" % (s[0])
+        self.compias(s)
+    return doTest
+
+for s in sabasettings1:
+    test_method = create_test_sabasettings1(s)
+    test_method.__name__ = "test_sabasettings1"
+    for k in s:
+        test_method.__name__ += "_"+str(k)
+    setattr(TestIntegratorSABA, test_method.__name__, test_method)
+
+def create_test_sabasettings2_bf(s):
+    def doTest(self):
+        test_name = "test_backandforth_%s" % (s[0])
+        self.backandforth(s)
+    return doTest
+
+def create_test_sabasettings2_re(s):
+    def doTest(self):
+        test_name = "test_restart_%s" % (s[0])
+        self.restart(s)
+    return doTest
+
+for s in sabasettings2:
+    test_method = create_test_sabasettings2_bf(s)
+    test_method.__name__ = "test_sabasettings2_backandforth"
+    for k in s:
+        test_method.__name__ += "_"+str(k)
+    setattr(TestIntegratorSABA, test_method.__name__, test_method)
+    
+    test_method = create_test_sabasettings2_re(s)
+    test_method.__name__ = "test_sabasettings2_restart"
+    for k in s:
+        test_method.__name__ += "_"+str(k)
+    setattr(TestIntegratorSABA, test_method.__name__, test_method)
 
 if __name__ == "__main__":
     unittest.main()
