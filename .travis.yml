@@ -59,6 +59,7 @@ install:
   - if [[ $TESTPART == "CCOVERAGE" ]]; then pip install cpp-coveralls; fi
   - if [[ $TESTPART == "CCOVERAGE" ]]; then CFLAGS="-fprofile-arcs -ftest-coverage" pip install -e .; fi
   - if [[ $TESTPART == *"PYTHON"* ]]; then python setup.py install; fi
+  - if [[ $TESTPART == "PYTHON" ]]; then make; fi
 
 
 script:
