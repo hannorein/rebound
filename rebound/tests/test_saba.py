@@ -120,7 +120,6 @@ class TestIntegratorSABA(unittest.TestCase):
         sim.step()
         sim2.step()
         self.assertEqual(sim,sim2)
-        self.assertEqual(1,12)
     
 def create_test_sabasettings1(s):
     def doTest(self):

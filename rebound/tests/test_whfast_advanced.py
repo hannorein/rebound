@@ -35,23 +35,6 @@ whfastsettings2 = [ # corrector, corrector2, kernel, relative error
         ]
 
 class TestIntegratorWHFastAdvanced(unittest.TestCase):
-    def test_whfastsettings1(self):
-        for s in whfastsettings1:
-            test_name = "test_energy_WHFastAdvanced_c_%02d_c2_%d_kernel_%s" % (s[0], s[1], s[2])
-            self.energy(s)
-            test_name = "test_energy_notcom_WHFastAdvanced_c_%02d_c2_%d_kernel_%s" % (s[0], s[1], s[2])
-            self.energy_notcom(s)
-            test_name = "test_compias_WHFastAdvanced_c_%02d_c2_%d_kernel_%s" % (s[0], s[1], s[2])
-            self.compias(s)
-    def test_whfastsettings2(self):
-        for s in whfastsettings2:
-            test_name = "test_backandforth_WHFastAdvanced_c_%02d_c2_%d_kernel_%s" % (s[0], s[1], s[2])
-            self.backandforth(s)
-    def test_whfastrestart(self):
-        for s in whfastsettings2:
-            test_name = "test_restart_WHFastAdvanced_c_%02d_c2_%d_kernel_%s" % (s[0], s[1], s[2])
-            self.restart(s)
-
     def energy(self, s):
         corrector, corrector2, kernel, maxerror = s
         sim = rebound.Simulation()
@@ -148,6 +131,48 @@ class TestIntegratorWHFastAdvanced(unittest.TestCase):
         sim.step()
         sim2.step()
         self.assertEqual(sim,sim2)
+
+def create_test_whfastsettings1(s):
+    def doTest(self):
+        test_name = "test_energy_WHFastAdvanced_c_%02d_c2_%d_kernel_%s" % (s[0], s[1], s[2])
+        self.energy(s)
+        test_name = "test_energy_notcom_WHFastAdvanced_c_%02d_c2_%d_kernel_%s" % (s[0], s[1], s[2])
+        self.energy_notcom(s)
+        test_name = "test_compias_WHFastAdvanced_c_%02d_c2_%d_kernel_%s" % (s[0], s[1], s[2])
+        self.compias(s)
+    return doTest
+
+def create_test_whfastsettings2_bf(s):
+    def doTest(self):
+        test_name = "test_backandforth_WHFastAdvanced_c_%02d_c2_%d_kernel_%s" % (s[0], s[1], s[2])
+        self.backandforth(s)
+    return doTest
+
+def create_test_whfastsettings2_re(s):
+    def doTest(self):
+        test_name = "test_restart_WHFastAdvanced_c_%02d_c2_%d_kernel_%s" % (s[0], s[1], s[2])
+        self.restart(s)
+    return doTest
+
+for s in whfastsettings1:
+    test_method = create_test_whfastsettings1(s)
+    test_method.__name__ = "test_whfastsettings1"
+    for k in s:
+        test_method.__name__ += "_"+str(k)
+    setattr(TestIntegratorWHFastAdvanced, test_method.__name__, test_method)
+
+for s in whfastsettings2:
+    test_method = create_test_whfastsettings2_bf(s)
+    test_method.__name__ = "test_whfastsettings2_backandforth"
+    for k in s:
+        test_method.__name__ += "_"+str(k)
+    setattr(TestIntegratorWHFastAdvanced, test_method.__name__, test_method)
+
+    test_method = create_test_whfastsettings2_re(s)
+    test_method.__name__ = "test_whfastsettings2_restart"
+    for k in s:
+        test_method.__name__ += "_"+str(k)
+    setattr(TestIntegratorWHFastAdvanced, test_method.__name__, test_method)
 
 if __name__ == "__main__":
     unittest.main()
