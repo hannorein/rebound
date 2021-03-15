@@ -451,6 +451,9 @@ struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum
         if (r) free(r);
         return NULL;
     }
+    if (warnings & REB_INPUT_BINARY_WARNING_CORRUPTFILE){
+        reb_warning(r,"The binary file seems to be corrupted. An attempt has been made to recover parts of it. However, it might not be possible to append snapshots to the current file.");
+    }
     return r;
 }
 
@@ -459,7 +462,7 @@ struct reb_simulation* reb_create_simulation_from_binary(char* filename){
     struct reb_simulation* r = reb_create_simulation();
     
     struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
-    reb_read_simulationarchive_with_messages(sa, filename, NULL, &warnings,0);
+    reb_read_simulationarchive_with_messages(sa, filename, NULL, &warnings);
     if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
         // Don't output an error if file does not exist, just return NULL.
         free(sa);

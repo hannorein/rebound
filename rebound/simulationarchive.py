@@ -60,7 +60,7 @@ class SimulationArchive(Structure):
     def __repr__(self):
         return '<{0}.{1} object at {2}, nblobs={3}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.nblobs)
 
-    def __init__(self,filename,setup=None, setup_args=(), process_warnings=True, reuse_index=None, recovery_mode=False):
+    def __init__(self,filename,setup=None, setup_args=(), process_warnings=True, reuse_index=None):
         """
         Arguments
         ---------
@@ -78,8 +78,6 @@ class SimulationArchive(Structure):
             SimulationArchive, pass it as this argument when opening other SimulationArchives with the 
             same shape. Note: SimulationArchive shape must be exactly the same to avoid unexpected
             behaviour.
-        recovery_mode : Bool
-            Set to True to attempt a recovery if the file has been corrupted. 
 
         """
         self.setup = setup
@@ -88,9 +86,9 @@ class SimulationArchive(Structure):
         w = c_int(0)
         if reuse_index:
             # Optimized loading
-            clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), byref(reuse_index), byref(w), c_int(recovery_mode))
+            clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), byref(reuse_index), byref(w))
         else:
-            clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), None, byref(w), c_int(recovery_mode))
+            clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), None, byref(w))
         for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
                 if majorerror:
