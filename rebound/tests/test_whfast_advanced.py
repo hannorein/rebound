@@ -23,13 +23,9 @@ whfastsettings1 = [ # corrector, corrector2, kernel, relative error
 
 whfastsettings2 = [ # corrector, corrector2, kernel, relative error
         [0, 0,"default",2e-7], 
-        [3, 0,"default",1e-9], 
         [3, 0,"modifiedkick",1e-9], 
         [3, 0,"composition",1e-12], 
-        [3, 0,"lazy",1e-12], 
         [3, 0,"default",1e-9], 
-        [3, 0,"modifiedkick",1e-9], 
-        [3, 0,"composition",1e-12], 
         [3, 0,"lazy",1e-12], 
         [3, 1,"lazy",1e-12], 
         ]
