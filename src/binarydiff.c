@@ -35,6 +35,25 @@
 #include "output.h"
 #include "binarydiff.h"
 
+
+static inline int reb_binary_diff_particle(struct reb_particle p1, struct reb_particle p2){
+    int differ = 0;
+    differ = differ || (p1.x != p2.x);
+    differ = differ || (p1.y != p2.y);
+    differ = differ || (p1.z != p2.z);
+    differ = differ || (p1.vx != p2.vx);
+    differ = differ || (p1.vy != p2.vy);
+    differ = differ || (p1.vz != p2.vz);
+    differ = differ || (p1.ax != p2.ax);
+    differ = differ || (p1.ay != p2.ay);
+    differ = differ || (p1.az != p2.az);
+    differ = differ || (p1.m != p2.m);
+    differ = differ || (p1.r != p2.r);
+    differ = differ || (p1.lastcollision != p2.lastcollision);
+    differ = differ || (p1.hash != p2.hash);
+    return differ;
+}
+
 // Wrapper for backwards compatibility
 void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep){
     // Ignores return value
@@ -121,8 +140,21 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
         if (pos2+field2.size>size2) printf("Corrupt binary file buf2.\n");
         int fields_differ = 0;
         if (field1.size==field2.size){
-            if (memcmp(buf1+pos1,buf2+pos2,field1.size)!=0){
-                fields_differ = 1;
+            switch (field1.type){
+                case REB_BINARY_FIELD_TYPE_PARTICLES:
+                    {
+                        struct reb_particle* pb1 = (struct reb_particle*)(buf1+pos1);
+                        struct reb_particle* pb2 = (struct reb_particle*)(buf2+pos2);
+                        for (unsigned int i=0;i<field1.size/sizeof(struct reb_particle);i++){
+                            fields_differ |= reb_binary_diff_particle(pb1[i],pb2[i]);
+                        }
+                    }
+                    break;
+                default:
+                    if (memcmp(buf1+pos1,buf2+pos2,field1.size)!=0){
+                        fields_differ = 1;
+                    }
+                    break;
             }
         }else{
             fields_differ = 1;
