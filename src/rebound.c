@@ -755,7 +755,7 @@ static void* reb_integrate_raw(void* args){
     double last_full_dt = r->dt; // need to store r->dt in case timestep gets artificially shrunk to meet exact_finish_time=1
     r->dt_last_done = 0.; // Reset in case first timestep attempt will fail
 
-    if (reb_particle_check_testparticles(r)){
+    if (r->testparticle_hidewarnings==0 && reb_particle_check_testparticles(r)){
         reb_warning(r,"At least one test particle (type 0) has finite mass. This might lead to unexpected behaviour. Set testparticle_hidewarnings=1 to hide this warning.");
     }
 

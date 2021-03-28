@@ -15,10 +15,17 @@ class TestParticleWarning(unittest.TestCase):
             sim.integrate(1)
             self.assertEqual(0,len(w))
         sim.testparticle_type = 0
+        # Warning occurs each time integrate is called
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             sim.integrate(2)
-            self.assertEqual(1,len(w))
+            sim.integrate(3)
+            self.assertEqual(2,len(w))
+        sim.testparticle_hidewarnings = 1
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim.integrate(4)
+            self.assertEqual(0,len(w))
 
 
 class TestParticleInSimulation(unittest.TestCase):
