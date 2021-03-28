@@ -724,6 +724,7 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_EOS_ISSYNCHRON = 152,
     REB_BINARY_FIELD_TYPE_IAS15_NEWORDER = 153,
     REB_BINARY_FIELD_TYPE_RAND_SEED = 154,
+    REB_BINARY_FIELD_TYPE_TESTPARTICLEHIDEWARNINGS = 155,
 
     REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
     REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
@@ -834,6 +835,7 @@ struct reb_simulation {
     struct reb_variational_configuration* var_config;   ///< These configuration structs contain details on variational particles. 
     int     N_active;               ///< Number of massive particles included in force calculation (default: N). Particles with index >= N_active are considered testparticles.
     int     testparticle_type;      ///< Type of the particles with an index>=N_active. 0 means particle does not influence any other particle (default), 1 means particles with index < N_active feel testparticles (similar to MERCURY's small particles). Testparticles never feel each other.
+    int     testparticle_hidewarnings;      ///< Hide testparticle warnings if 1. Default: 0.
     struct reb_hash_pointer_pair* particle_lookup_table; ///< Array of pairs that map particles' hashes to their index in the particles array.
     int     hash_ctr;               ///< Counter for number of assigned hashes to assign unique values.
     int     N_lookup;               ///< Number of entries in the particle lookup table.

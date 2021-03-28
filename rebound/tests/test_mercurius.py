@@ -1,6 +1,7 @@
 import rebound
 import unittest
 import os
+import warnings
 import rebound.data as data
 from datetime import datetime
 
@@ -54,7 +55,10 @@ class TestMercurius(unittest.TestCase):
         sim.N_active = 1
         sim.testparticle_type = 0
 
-        sim.integrate(1000)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim.integrate(1000)
+            self.assertEqual(1,len(w))
         
         o1 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
         o2 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
@@ -70,7 +74,10 @@ class TestMercurius(unittest.TestCase):
         sim.N_active = 1
         sim.testparticle_type = 0
 
-        sim.integrate(1000)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim.integrate(1000)
+            self.assertEqual(1,len(w))
         
         o3 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
         o4 = sim.particles[2].calculate_orbit(primary=sim.particles[0])

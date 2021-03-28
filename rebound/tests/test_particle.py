@@ -1,6 +1,25 @@
 import rebound
 import unittest
-import math 
+import math
+import warnings
+
+class TestParticleWarning(unittest.TestCase):
+    def test_testparticle0_with_mass(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.N_active = sim.N
+        sim.add(m=1,a=1)
+        sim.testparticle_type = 1
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim.integrate(1)
+            self.assertEqual(0,len(w))
+        sim.testparticle_type = 0
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim.integrate(2)
+            self.assertEqual(1,len(w))
+
 
 class TestParticleInSimulation(unittest.TestCase):
     def setUp(self):

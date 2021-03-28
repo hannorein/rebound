@@ -175,6 +175,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(VARCONFIGN,         &r->var_config_N);
         CASE(NACTIVE,            &r->N_active);
         CASE(TESTPARTICLETYPE,   &r->testparticle_type);
+        CASE(TESTPARTICLEHIDEWARNINGS,   &r->testparticle_hidewarnings);
         CASE(HASHCTR,            &r->hash_ctr);
         CASE(OPENINGANGLE2,      &r->opening_angle2);
         CASE(STATUS,             &r->status);

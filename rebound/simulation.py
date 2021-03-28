@@ -2081,6 +2081,7 @@ Simulation._fields_ = [
                 ("var_config", POINTER(Variation)),
                 ("N_active", c_int),
                 ("testparticle_type", c_int),
+                ("testparticle_hidewarnings", c_int),
                 ("_particle_lookup_table", POINTER(reb_hash_pointer_pair)),
                 ("hash_ctr", c_int),
                 ("N_lookup", c_int),

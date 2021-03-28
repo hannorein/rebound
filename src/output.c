@@ -264,6 +264,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     WRITE_FIELD(VARCONFIGN,         &r->var_config_N,                   sizeof(int));
     WRITE_FIELD(NACTIVE,            &r->N_active,                       sizeof(int));
     WRITE_FIELD(TESTPARTICLETYPE,   &r->testparticle_type,              sizeof(int));
+    WRITE_FIELD(TESTPARTICLEHIDEWARNINGS, &r->testparticle_hidewarnings,sizeof(int));
     WRITE_FIELD(HASHCTR,            &r->hash_ctr,                       sizeof(int));
     WRITE_FIELD(OPENINGANGLE2,      &r->opening_angle2,                 sizeof(double));
     WRITE_FIELD(STATUS,             &r->status,                         sizeof(int));

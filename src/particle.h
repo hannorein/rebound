@@ -36,4 +36,8 @@ struct reb_treecell;
  */
 int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt);
 
+/**
+ * @brief Returns 1 if a testparticle of type 0 has a finite mass.
+ */
+int reb_particle_check_testparticles(struct reb_simulation* const r);
 #endif // _PARTICLE_H

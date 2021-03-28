@@ -129,6 +129,23 @@ void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 	reb_add_local(r, pt);
 }
 
+int reb_particle_check_testparticles(struct reb_simulation* const r){
+    if (r->N_active == r->N || r->N_active == -1){
+        return 0;
+    }
+    // Check if testparticle of type 0 has mass!=0
+    if (r->testparticle_type == 0){
+        const int N_real = r->N - r->N_var;
+        for (int i=r->N_active; i<N_real; i++){
+            if (r->particles[i].m!=0.){
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+
 int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt){
 	if (r->root_size==-1) return 0;
 	int i = ((int)floor((pt.x + r->boxsize.x/2.)/r->root_size)+r->root_nx)%r->root_nx;

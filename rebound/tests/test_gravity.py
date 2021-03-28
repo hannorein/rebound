@@ -2,6 +2,7 @@ import rebound
 import unittest
 import math
 import numpy as np
+import warnings
 
 class TestGravity(unittest.TestCase):
     
@@ -11,7 +12,10 @@ class TestGravity(unittest.TestCase):
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.N_active = 1
-        sim.integrate(10.)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim.integrate(10.)
+            self.assertEqual(1,len(w))
         x0 = sim.particles[0].x
         self.assertEqual(x0, 0.)
 
@@ -32,7 +36,10 @@ class TestGravity(unittest.TestCase):
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.N_active = 1
-        sim.integrate(10.)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim.integrate(10.)
+            self.assertEqual(1,len(w))
         x0 = sim.particles[0].x
         self.assertEqual(x0, 0.)
 
@@ -58,7 +65,10 @@ class TestGravity(unittest.TestCase):
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.N_active = 1
-        sim.integrate(10.)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim.integrate(10.)
+            self.assertEqual(1,len(w))
         x0 = sim.particles[0].x
         # TODO
         # Currently fails. WHFAST evolves COM, but should only include star

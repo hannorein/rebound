@@ -137,7 +137,10 @@ def create_whfast_massivetestparticle(coordinates, N):
         sim2.N_active = 2
 
         sim.integrate(1)
-        sim2.integrate(1)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim2.integrate(1)
+            self.assertEqual(1,len(w))
 
         for i in range(sim.N):
             self.assertLess(abs(sim.particles[i].x-sim2.particles[i].x),eps)
