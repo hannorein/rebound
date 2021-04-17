@@ -152,7 +152,6 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                 struct reb_ghostbox gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
                 // All active particle pairs
 #ifndef OPENMP // OPENMP off, do O(1/2*N^2)
-#pragma omp parallel for
                 for (int i=starti; i<_N_active; i++){
                 if (reb_sigint) return;
                 for (int j=startj; j<i; j++){
@@ -173,6 +172,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                 }
                 }
 #else // OPENMP on, do O(N^2)
+#pragma omp parallel for
                 for (int i=0; i<_N_real; i++){
                 for (int j=0; j<_N_active; j++){
                     if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0) )) continue;
