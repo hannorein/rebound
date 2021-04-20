@@ -25,9 +25,7 @@ int main(int argc, char* argv[]) {
     p1.m = 1.;
     reb_add(r, p1);  // reb_add makes a copy of the particle and adds it to the simulation.
     
-    struct reb_particle p2 = {0};
-    p2.x = 1;
-    p2.vy = 1;
+    struct reb_particle p2 = reb_particle_new("a e", 1.,0.);
     reb_add(r, p2); // notice that we didn't set a mass. All parameters default to 0.
 
     reb_integrate(r,100.);

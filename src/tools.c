@@ -30,6 +30,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include "particle.h"
 #include "rebound.h"
 #include "tools.h"
@@ -527,6 +528,140 @@ double reb_tools_E_to_f(double e, double E){
 double reb_tools_M_to_f(double e, double M){
 	double E = reb_tools_M_to_E(e, M);
     return reb_tools_E_to_f(e, E);
+}
+
+struct reb_particle reb_particle_new(const char* fmt, ...){
+    va_list args;
+    va_start(args, fmt);
+    
+    struct reb_particle particle = {0};
+
+    double m = 0;
+    double x = nan("");
+    double y = nan("");
+    double z = nan("");
+    double vx = nan("");
+    double vy = nan("");
+    double vz = nan("");
+    double a = nan("");
+    double P = nan("");
+    double e = nan("");
+    double inc = nan("");
+    double Omega = nan("");
+    double omega = nan("");
+    double pomega = nan("");
+    double f = nan("");
+    double M = nan("");
+    double E = nan("");
+    double l = nan("");
+    double theta = nan("");
+    double T = nan("");
+    double r = 0;
+    double h = nan("");
+    double k = nan("");
+    double ix = nan("");
+    double iy = nan("");
+    struct reb_particle primary = {0};
+    int primary_given = 0;
+
+    char *sep = " \t\n,;";
+
+    char* fmt_c = strdup(fmt);
+    char* token;
+    char* rest = fmt_c;
+
+    while ((token = strtok_r(rest, sep, &rest))){
+        if (0==strcmp(token,"m"))
+            m = va_arg(args, double);
+        if (0==strcmp(token,"x"))
+            x = va_arg(args, double);
+        if (0==strcmp(token,"y"))
+            y = va_arg(args, double);
+        if (0==strcmp(token,"z"))
+            z = va_arg(args, double);
+        if (0==strcmp(token,"vx"))
+            vx = va_arg(args, double);
+        if (0==strcmp(token,"vy"))
+            vy = va_arg(args, double);
+        if (0==strcmp(token,"vz"))
+            vz = va_arg(args, double);
+        if (0==strcmp(token,"a"))
+            a = va_arg(args, double);
+        if (0==strcmp(token,"P"))
+            P = va_arg(args, double);
+        if (0==strcmp(token,"e"))
+            e = va_arg(args, double);
+        if (0==strcmp(token,"inc"))
+            inc = va_arg(args, double);
+        if (0==strcmp(token,"Omega"))
+            Omega = va_arg(args, double);
+        if (0==strcmp(token,"omega"))
+            omega = va_arg(args, double);
+        if (0==strcmp(token,"pomega"))
+            pomega = va_arg(args, double);
+        if (0==strcmp(token,"f"))
+            f = va_arg(args, double);
+        if (0==strcmp(token,"M"))
+            M = va_arg(args, double);
+        if (0==strcmp(token,"E"))
+            E = va_arg(args, double);
+        if (0==strcmp(token,"l"))
+            l = va_arg(args, double);
+        if (0==strcmp(token,"theta"))
+            theta = va_arg(args, double);
+        if (0==strcmp(token,"T"))
+            T = va_arg(args, double);
+        if (0==strcmp(token,"r"))
+            r = va_arg(args, double);
+        if (0==strcmp(token,"h"))
+            h = va_arg(args, double);
+        if (0==strcmp(token,"k"))
+            k = va_arg(args, double);
+        if (0==strcmp(token,"ix"))
+            ix = va_arg(args, double);
+        if (0==strcmp(token,"iy"))
+            iy = va_arg(args, double);
+        if (0==strcmp(token,"primary")){
+            primary = va_arg(args, struct reb_particle);
+            primary_given = 1;
+        }
+    }
+
+    int Ncart = 0;
+    if (!isnan(x)) Ncart++;
+    if (!isnan(y)) Ncart++;
+    if (!isnan(z)) Ncart++;
+    if (!isnan(vx)) Ncart++;
+    if (!isnan(vy)) Ncart++;
+    if (!isnan(vz)) Ncart++;
+
+    int Norb = 0;
+    if (primary_given) Norb++;
+    if (!isnan(a)) Norb++;
+    if (!isnan(P)) Norb++;
+    if (!isnan(e)) Norb++;
+    if (!isnan(inc)) Norb++;
+    if (!isnan(Omega)) Norb++;
+    if (!isnan(omega)) Norb++;
+    if (!isnan(pomega)) Norb++;
+    if (!isnan(f)) Norb++;
+    if (!isnan(M)) Norb++;
+    if (!isnan(E)) Norb++;
+    if (!isnan(l)) Norb++;
+    if (!isnan(theta)) Norb++;
+    if (!isnan(T)) Norb++;
+    
+    int Npal = 0;
+    if (!isnan(h)) Npal++;
+    if (!isnan(k)) Npal++;
+    if (!isnan(ix)) Npal++;
+    if (!isnan(iy)) Npal++;
+
+    particle.m = m;
+    particle.r = r;
+    va_end(args);
+    free(fmt_c);
+    return particle;
 }
 
 struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle primary, double m, double a, double e, double omega, double f){

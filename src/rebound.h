@@ -1567,6 +1567,11 @@ double reb_tools_mod2pi(double f);
  */
 double reb_tools_M_to_f(double e, double M);
 
+/** 
+ * @brief Function to initialize particles.
+ */
+struct reb_particle reb_particle_new(const char* fmt, ...);
+
 /**
  * @brief Initialize a particle on an orbit in the xy plane.
  * @param G Gravitational constant.
