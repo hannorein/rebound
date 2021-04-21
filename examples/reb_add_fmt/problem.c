@@ -1,8 +1,8 @@
 /**
  * Example usage of reb_add_fmt()
  * 
- * The reb_add_fmt() function can be used to add particles 
- * to the simulation by specifying the particles coordinates
+ * The reb_add_fmt() function can be used to add a particle 
+ * to the simulation by specifying the particle's coordinates
  * in a variety of formats. 
  */
 #include "rebound.h"
@@ -37,13 +37,36 @@ int main(int argc, char* argv[]) {
 
     // Cartesian coordinates are supported as well
     reb_add_fmt(r, "m x vy", 1e-3, 9., 0.3);
- 
-    /** Note that it is important to pass floating point numbers, not 
-     * integers, to reb_add_fmt(). For example: 
+
+    /** Supported parameters are: 
+     *       m:          Mass  (Default: 0)
+     *       x, y, z:    Positions in Cartesian coordinates  (Default: 0)
+     *       vx, vy, vz: Velocities in Cartesian coordinates (Default: 0)
+     *       primary:    Primary body for converting orbital elements to cartesian (Default: center of mass of the particles in the passed simulation, i.e., this will yield Jacobi coordinates as one progressively adds particles) 
+     *       a:          Semimajor axis (a or P required if passing orbital elements)
+     *       P:          Orbital period (a or P required if passing orbital elements)
+     *       e:          Eccentricity                (Default: 0)
+     *       inc:        Inclination                 (Default: 0)
+     *       Omega:      Longitude of ascending node (Default: 0)
+     *       omega:      Argument of pericenter      (Default: 0)
+     *       pomega:     Longitude of pericenter     (Default: 0)
+     *       f:          True anomaly                (Default: 0)
+     *       M:          Mean anomaly                (Default: 0)
+     *       E:          Eccentric anomaly           (Default: 0)
+     *       l:          Mean longitude              (Default: 0)
+     *       theta:      True longitude              (Default: 0)
+     *       T:          Time of pericenter passage  
+     *       h:          h variable, see Pal (2009) for a definition  (Default: 0)
+     *       k:          k variable, see Pal (2009) for a definition  (Default: 0)
+     *       ix:         ix variable, see Pal (2009) for a definition  (Default: 0)
+     *       iy:         iy variable, see Pal (2009) for a definition  (Default: 0)
+     *       r:          Particle radius
+     *
+     * Note that it is important to pass floating point numbers and not integers to reb_add_fmt(). 
+     * For example: 
      *     reb_add_fmt(r, "a", 1) 
-     * will lead to undefined behaviour. Use 
+     * will lead to undefined behaviour. Instead, use 
      *     reb_add_fmt(r, "a", 1.0) 
-     * instead.
      */
 
     // Run a test simulation
