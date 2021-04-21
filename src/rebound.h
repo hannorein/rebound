@@ -1570,7 +1570,8 @@ double reb_tools_M_to_f(double e, double M);
 /** 
  * @brief Function to initialize particles.
  */
-struct reb_particle reb_particle_new(const char* fmt, ...);
+struct reb_particle reb_particle_new(struct reb_simulation* r, const char* fmt, ...);
+void reb_add_fmt(struct reb_simulation* r, const char* fmt, ...);
 
 /**
  * @brief Initialize a particle on an orbit in the xy plane.

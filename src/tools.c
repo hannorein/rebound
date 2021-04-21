@@ -530,13 +530,27 @@ double reb_tools_M_to_f(double e, double M){
     return reb_tools_E_to_f(e, E);
 }
 
-struct reb_particle reb_particle_new(const char* fmt, ...){
+static struct reb_particle reb_particle_newV(struct reb_simulation* r, const char* fmt, va_list args);
+
+void reb_add_fmt(struct reb_simulation* r, const char* fmt, ...){
     va_list args;
     va_start(args, fmt);
-    
+    struct reb_particle particle = reb_particle_newV(r, fmt, args);
+    va_end(args);
+    reb_add(r, particle);
+}
+
+struct reb_particle reb_particle_new(struct reb_simulation* r, const char* fmt, ...){
+    va_list args;
+    va_start(args, fmt);
+    struct reb_particle particle = reb_particle_newV(r, fmt, args);
+    va_end(args);
+    return particle;
+}
+
+static struct reb_particle reb_particle_newV(struct reb_simulation* r, const char* fmt, va_list args){
     struct reb_particle particle = {0};
 
-    double m = 0;
     double x = nan("");
     double y = nan("");
     double z = nan("");
@@ -556,7 +570,6 @@ struct reb_particle reb_particle_new(const char* fmt, ...){
     double l = nan("");
     double theta = nan("");
     double T = nan("");
-    double r = 0;
     double h = nan("");
     double k = nan("");
     double ix = nan("");
@@ -572,7 +585,9 @@ struct reb_particle reb_particle_new(const char* fmt, ...){
 
     while ((token = strtok_r(rest, sep, &rest))){
         if (0==strcmp(token,"m"))
-            m = va_arg(args, double);
+            particle.m = va_arg(args, double);
+        if (0==strcmp(token,"r"))
+            particle.r = va_arg(args, double);
         if (0==strcmp(token,"x"))
             x = va_arg(args, double);
         if (0==strcmp(token,"y"))
@@ -611,8 +626,6 @@ struct reb_particle reb_particle_new(const char* fmt, ...){
             theta = va_arg(args, double);
         if (0==strcmp(token,"T"))
             T = va_arg(args, double);
-        if (0==strcmp(token,"r"))
-            r = va_arg(args, double);
         if (0==strcmp(token,"h"))
             h = va_arg(args, double);
         if (0==strcmp(token,"k"))
@@ -626,6 +639,7 @@ struct reb_particle reb_particle_new(const char* fmt, ...){
             primary_given = 1;
         }
     }
+    free(fmt_c);
 
     int Ncart = 0;
     if (!isnan(x)) Ncart++;
@@ -651,16 +665,164 @@ struct reb_particle reb_particle_new(const char* fmt, ...){
     if (!isnan(theta)) Norb++;
     if (!isnan(T)) Norb++;
     
+    int Nnonpal = 0;
+    if (primary_given) Nnonpal++;
+    if (!isnan(e)) Nnonpal++;
+    if (!isnan(inc)) Nnonpal++;
+    if (!isnan(Omega)) Nnonpal++;
+    if (!isnan(omega)) Nnonpal++;
+    if (!isnan(pomega)) Nnonpal++;
+    if (!isnan(f)) Nnonpal++;
+    if (!isnan(M)) Nnonpal++;
+    if (!isnan(E)) Nnonpal++;
+    if (!isnan(theta)) Nnonpal++;
+    if (!isnan(T)) Nnonpal++;
+    
     int Npal = 0;
     if (!isnan(h)) Npal++;
     if (!isnan(k)) Npal++;
     if (!isnan(ix)) Npal++;
     if (!isnan(iy)) Npal++;
+    
+    int Nlong = 0;
+    if (!isnan(f)) Nlong++;
+    if (!isnan(M)) Nlong++;
+    if (!isnan(E)) Nlong++;
+    if (!isnan(l)) Nlong++;
+    if (!isnan(theta)) Nlong++;
+    if (!isnan(T)) Nlong++;
 
-    particle.m = m;
-    particle.r = r;
-    va_end(args);
-    free(fmt_c);
+    if (Nnonpal>0 && Npal>0){
+        fprintf(stderr, "\n\033[1mError!\033[0m Cannot mix Pal coordinates (h,k,ix,iy) with certain orbital elements (e, inc, Omega, omega, pomega, f, M, E, theta, T). Use longitude l to indicate the phase.\n");
+        return particle;
+    }
+    if (Ncart>0 && Norb>0){
+        fprintf(stderr, "\n\033[1mError!\033[0m Cannot pass cartesian coordinates and orbital elements (incl primary) at the same time\n");
+        return particle;
+    }
+
+    if (Ncart){ // Cartesian coordinates given
+        if (!isnan(x)) particle.x = x; // Note: is x is nan, then particle.x is 0  
+        if (!isnan(y)) particle.y = y; 
+        if (!isnan(z)) particle.z = z; 
+        if (!isnan(vx)) particle.vx = vx; 
+        if (!isnan(vy)) particle.vy = vy; 
+        if (!isnan(vz)) particle.vz = vz; 
+        return particle;
+    }
+    
+    if (r==NULL){
+        fprintf(stderr, "\n\033[1mError!\033[0m Need to pass reb_simulation object when initializing particle with orbital elements.\n");
+        return particle;
+    }
+    if (!primary_given){
+        primary = reb_get_com(r);
+    }
+    // Note: jacobi_masses not yet implemented.
+
+    if (isnan(a) && isnan(P)){
+        fprintf(stderr, "\n\033[1mError!\033[0m Need to pass either semi-major axis or orbital period to initialize particle using orbital elements.\n");
+        return particle;
+    }
+    if (!isnan(a) && !isnan(P)){
+        fprintf(stderr, "\n\033[1mError!\033[0m Need to pass either semi-major axis or orbital period, but not both.\n");
+        return particle;
+    }
+    if (isnan(a)){
+        a = cbrt(P*P*r->G *(primary.m + particle.m)/(4.*M_PI*M_PI));
+    }
+    if (Npal>0){
+        if (isnan(l)) l=0;
+        if (isnan(h)) h=0;
+        if (isnan(k)) k=0;
+        if (isnan(ix)) ix=0;
+        if (isnan(iy)) iy=0;
+        if ((ix*ix + iy*iy) > 4.0){
+            fprintf(stderr, "\n\033[1mError!\033[0m (ix, iy) coordinates are not valid. Squared sum exceeds 4.\n");
+            return particle;
+        }
+        return reb_tools_pal_to_particle(r->G, primary, particle.m, a, l, k, h, ix, iy);
+    }
+    
+    if (isnan(e)) e = 0.;
+    if (isnan(inc)) inc = 0.;
+    if (isnan(Omega)) Omega = 0.;
+    
+    if (!isnan(omega) && !isnan(pomega)){
+        fprintf(stderr, "\n\033[1mError!\033[0m Cannot pass both (omega, pomega) together.\n");
+        return particle;
+    }
+    if (isnan(omega) && isnan(pomega)) omega = 0.;
+    if (!isnan(pomega)){
+        if (cos(inc)>0.){
+            omega = pomega - Omega;
+        }else{
+            omega = Omega - pomega; // retrograde orbits
+        }
+    }
+
+    if (Nlong>1){
+        fprintf(stderr, "\n\033[1mError!\033[0m Can only pass one longitude/anomaly in the set (f, M, E, l, theta, T).\n");
+        return particle;
+    }
+    if (Nlong==0){
+        f=0;
+    }
+    if (Nlong==1){
+        if (!isnan(theta)){
+            if (cos(inc)>0.){
+                f = theta - Omega - omega;
+            }else{
+                f = Omega - omega - theta; // retrograde
+            }
+        }
+        if (!isnan(l)){
+            if (cos(inc)>0.){
+                M = l - Omega - omega; // M will be converted to f below
+            }else{
+                M = Omega - omega - l; // retrograde
+            }
+        }
+        if (!isnan(T)){
+            double n = sqrt(r->G*(primary.m + particle.m)/fabs(a*a*a));
+            M = n * (r->t-T);
+        }
+        if (!isnan(M)){
+            f = reb_tools_M_to_f(e,M);
+        }
+        if (!isnan(E)){
+            f = reb_tools_E_to_f(e,E);
+        }
+    }
+    int err = 0;
+    particle = reb_tools_orbit_to_particle_err(r->G, primary, particle.m, a, e, inc, Omega, omega, f, &err);
+        
+    if (err==1){
+        fprintf(stderr, "\n\033[1mError!\033[0m Cannot set e exactly to 1.\n");
+        return particle;
+    }
+    if (err==2){
+        fprintf(stderr, "\n\033[1mError!\033[0m Eccentricity must be greater than or equal to zero.\n");
+        return particle;
+    }
+    if (err==3){
+        fprintf(stderr, "\n\033[1mError!\033[0m Bound orbit (a > 0) must have e < 1.\n");
+        return particle;
+    }
+    if (err==4){
+        fprintf(stderr, "\n\033[1mError!\033[0m Unbound orbit (a < 0) must have e > 1.\n");
+        return particle;
+    }
+    if (err==5){
+        fprintf(stderr, "\n\033[1mError!\033[0m Unbound orbit can't have f beyond the range allowed by the asymptotes set by the hyperbola.\n");
+        return particle;
+    }
+    if (err==6){
+        fprintf(stderr, "\n\033[1mError!\033[0m Primary has no mass.\n");
+        return particle;
+    }
+
+
     return particle;
 }
 
