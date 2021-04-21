@@ -1,7 +1,7 @@
 REBOUND - An open-source multi-purpose N-body code
 ==================================================
 
-.. image:: https://img.shields.io/badge/rebound-v3.16.0-green.svg?style=flat
+.. image:: https://img.shields.io/badge/rebound-v3.17.0-green.svg?style=flat
     :target: https://rebound.readthedocs.org
 .. image:: https://badge.fury.io/py/rebound.svg
     :target: https://badge.fury.io/py/rebound

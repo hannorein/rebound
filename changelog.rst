@@ -3,6 +3,14 @@ Changelog
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+Version 3.17.0
+--------------
+* Added new 'reb_add_fmt()' function. This makes adding particles in C as easy as in python.
+* Orbits can now also be initialized using the eccentric anomaly.
+* Fixed an issue which prevented one loop in the gravity routine form being parallelized with OpenMP.
+* Added a warning message when test particles have finite mass.
+* More reliable reading of corrupt SimulationArchive files.
+
 Version 3.16.0
 --------------
 * MERCURIUS: If encounters only involve test-particles (type 0), then the algorithm is now resetting the coordinates of all massive particles after the encounter step. This only changes the outcome at the machine precision, but it makes the trajectories of massive particles independent of the close encounter history. Thanks to Kat Deck for this feature!

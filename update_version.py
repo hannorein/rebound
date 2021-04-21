@@ -15,7 +15,7 @@ keep_lines_after_header = 5
 
 with open("README.rst","w") as f:
     start_delete = -1
-    for i in xrange(0,len(readme)):
+    for i in range(0,len(readme)):
         if "badge/rebound-v" in readme[i]:
             readme[i] = ".. image:: https://img.shields.io/badge/rebound-v"+reboundversion+"-green.svg?style=flat\n"
         f.write(readme[i])
@@ -41,7 +41,7 @@ with open("setup.py") as f:
         f.writelines(setuplines)
 
 shortversion = reboundversion
-while shortversion[-1] is not '.':
+while shortversion[-1] != '.':
     shortversion = shortversion[:-1]
     
 shortversion = shortversion[:-1]
