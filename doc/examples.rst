@@ -16,6 +16,7 @@ The following examples are good if you're just starting to use REBOUND.
 
 .. toctree::
    c_example_simplest
+   c_example_reb_add_fmt
    ipython/Churyumov-Gerasimenko
    ipython/WHFast
    c_example_solar_system
