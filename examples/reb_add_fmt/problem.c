@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
 
     // By default Jacobi coordinates are used, here we use
     // heliocentric coordinates by specifying the primary.
-    reb_add_fmt(r, "a e primary", 0.1, 0.3, r->particles[0]); // By default 
+    reb_add_fmt(r, "a e primary", 0.1, 0.3, r->particles[0]); 
 
     // The function supports any arbitrary combination of 
     // orbital parameters as long as it's physically meaningful. 
