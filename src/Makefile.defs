@@ -32,6 +32,8 @@ endif
 ifeq ($(OPENGL), 1)
 PREDEF+= -DOPENGL
 ifeq ($(OS), Darwin)
+	OPT+= -I/opt/homebrew/include
+	OPT+= -L/opt/homebrew/lib
 	LIB+= -lglfw -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo
 else
 	LIB+= -lglfw
