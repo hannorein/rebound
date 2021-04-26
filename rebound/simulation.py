@@ -292,6 +292,7 @@ class reb_simulation_integrator_whfast(Structure):
                 ("keep_unsynchronized", c_uint),
                 ("is_synchronized", c_uint),
                 ("_allocatedN", c_uint),
+                ("_allocatedNtmp", c_uint),
                 ("_timestep_warning", c_uint),
                 ("_recalculate_coordinates_but_not_synchronized_warning", c_uint)]
 
