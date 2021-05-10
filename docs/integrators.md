@@ -5,7 +5,7 @@ A numerical integrator evolves particles forward in time, one timestep at a time
 To do that, the integrator needs to know the current position and velocity coordinates of the particles, and the equations of motion which come in the form of a set of ordinary differential equations.
 
 Because an exact solution to these differential equations is in general unknown, each integrator attempts to approximate the true solution numerically. 
-Different integrators do this differently and each of them has some advantages and some disadvanatges. 
+Different integrators do this differently and each of them has some advantages and some disadvantages. 
 Each of the built-in integrators of REBOUND is described in this section.
 
 ## IAS15
@@ -71,7 +71,7 @@ The user can choose between Jacobi and Democratic Heliocentric coordinates.
 
 The following code enables the WHFast integrator. 
 Because WHFast is not an adaptive integrator, you also need to set a timestep.
-Typically this should be a small fraction (a few percent) of the smallest dynamical timescale in the problem.
+Typically, this should be a small fraction (a few percent) of the smallest dynamical timescale in the problem.
 === "C"
     ```c
     struct reb_simulation* r = reb_create_simulation();
@@ -91,7 +91,7 @@ The setting for WHFast are stored in the `reb_simulation_integrator_whfast` stru
 
 `unsigned int corrector`
 :   This variable turns on/off different first symplectic correctors for WHFast. 
-    By default it is set to zero and symplectic correctors are turned off. 
+    By default, it is set to zero and symplectic correctors are turned off. 
 
     First symplectic correctors remove error terms up to $O(\epsilon \cdot dt^p)$, where $p$ is the order of the symplectic corrector, and $\epsilon$ is the mass ratio in the system.
     The following first correctors are implemented in REBOUND:
@@ -127,7 +127,7 @@ The setting for WHFast are stored in the `reb_simulation_integrator_whfast` stru
 
 `unsigned int corrector2`
 :   This variable turns on/off second symplectic correctors for WHFast. 
-    By default second symplectic correctors are off (0). 
+    By default, second symplectic correctors are off (0). 
     Set to 1 to use second symplectic correctors.
 
     !!! Info
@@ -261,7 +261,7 @@ The `reb_simulation_integrator_mercurius` structure contains the configuration a
 :   The critical switchover radii of particles are calculated automatically based on multiple criteria. One criterion calculates the Hill radius of particles and then multiplies it with the `hillfac` parameter. The parameter is in units of the Hill radius. The default value is 3. 
 
 `unsigned int recalculate_coordinates_this_timestep`
-:   Setting this flag to one will recalculate heliocentric coordinates from the particle structure at the beginning of the next timestep. After a single timestep, the flag gets set back to 0. If one changes a particles manually after a timestep, then one needs to set this flag to 1 before the next timestep.
+:   Setting this flag to one will recalculate heliocentric coordinates from the particle structure at the beginning of the next timestep. After a single timestep, the flag gets set back to 0. If one changes a particle manually after a timestep, then one needs to set this flag to 1 before the next timestep.
 
 `unsigned int recalculate_dcrit_this_timestep`
 :   Setting this flag to one will recalculate the critical switchover distances dcrit at the beginning of the next timestep. After one timestep, the flag gets set back to 0. If you want to recalculate `dcrit` at every timestep, you also need to set this flag to 1 before every timestep.
@@ -286,7 +286,7 @@ All other members of this structure are only for internal use and should not be 
 SABA are symplectic integrators developed by [Laskar & Robutel 2001](https://ui.adsabs.harvard.edu/abs/2001CeMDA..80...39L/abstract) and [Blanes et al. 2013](https://ui.adsabs.harvard.edu/abs/2012arXiv1208.0689B/abstract). 
 The implementation in REBOUND supports SABA1, SABA2, SABA3, and SABA4 as well as the corrected versions SABAC1, SABAC2, SABAC3, and SABAC4. 
 Different correctors can be selected. 
-In addition the following methods with various generalized orders are supported: SABA(8,4,4), SABA(8,6,4), SABA(10,6,4). 
+In addition, the following methods with various generalized orders are supported: SABA(8,4,4), SABA(8,6,4), SABA(10,6,4). 
 See [Rein, Tamayo & Brown 2019](https://ui.adsabs.harvard.edu/abs/2019MNRAS.489.4632R/abstract) for details on how these methods work.
 
 The `reb_simulation_integrator_saba` structure contains the configuration and data structures used by the SABA integrator family.
@@ -340,7 +340,7 @@ The `reb_simulation_integrator_saba` structure contains the configuration and da
         ```
 
 `unsigned int safe_mode`
-:   This flag has the same functionality as in WHFast. Default is 1. Setting this to 0 will provide a speedup but care must be taken with synchronizing integration steps and modifying particles.
+:   This flag has the same functionality as in WHFast. Default is 1. Setting this to 0 will provide a speedup, but care must be taken with synchronizing integration steps and modifying particles.
 
 `unsigned int keep_unsynchronized`
 :   This flag determines if the inertial coordinates generated are discarded in subsequent timesteps (cached Jacobi coordinates are used instead). The default is 0. Set this flag to 1 if you require outputs and bit-wise reproducibility 
@@ -413,7 +413,7 @@ Numerical value | Constant name         | Description
 0x00            | `REB_EOS_LF`          | 2nd order, standard leap-frog
 0x01            | `REB_EOS_LF4`         | 4th order, three function evaluations
 0x02            | `REB_EOS_LF6`         | 6th order, nine function evaluations
-0x03            | `REB_EOS_LF8`         | 8th order, seventeen funtion evaluations, see Blanes & Casa (2016), p91
+0x03            | `REB_EOS_LF8`         | 8th order, seventeen function evaluations, see Blanes & Casa (2016), p91
 0x04            | `REB_EOS_LF4_2`       | generalized order (4,2), two force evaluations, McLachlan 1995
 0x05            | `REB_EOS_LF8_6_4`     | generalized order (8,6,4), seven force evaluations
 0x06            | `REB_EOS_PLF7_6_4`    | generalized order (7,6,4), three force evaluations, pre- and post-processors

@@ -54,7 +54,7 @@ Each row in the file corresponds to one particle and contains the following colu
  - orbital period,
  - f (true anomaly) 
 
-## Ascii coordinates
+## ASCII coordinates
 ```c
 void reb_output_ascii(struct reb_simulation* r, char* filename);
 ```
@@ -80,6 +80,6 @@ This is useful for ring simulations where one wants to monitor that the system h
 void reb_output_binary(struct reb_simulation* r, const char* filename);
 ```
 
-This functions save the `reb_simulation` structure as a binary file.
+These functions save the `reb_simulation` structure as a binary file.
 It can be used to save the current status of a REBOUND simulation and later restart the simulation.
 

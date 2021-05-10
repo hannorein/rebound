@@ -1,5 +1,5 @@
 # REBOUND API
-These pages describe the REBOUD API.
+These pages describe the REBOUND API.
 There are two structures (called *objects* in Python) which you will encounter frequently when working with REBOUND.
 The first is the [Simulation structure](simulation.md) which contains all the configuration, status and particle data of one REBOUND simulation.
 The second is the [Particle structure](particles.md) which represents one particle in a simulation.

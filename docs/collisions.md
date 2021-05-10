@@ -47,7 +47,7 @@ The following code enables this module:
 
 ### Line
 This is a brute force collision search and scales as $O(N^2)$ but compared to the direct method described above, this algorithm checks for overlapping particles during the timestep (not just at the end).
-It assumes particles travelled along straight lines during the timestep and might therefor miss some collisions.
+It assumes particles travelled along straight lines during the timestep and might therefore miss some collisions.
 
 === "C"
     ```c
@@ -85,7 +85,7 @@ Below is an example on how to enable the tree based collision search.
 ### Linetree
 Similar to the tree method, this method also uses an oct-tree and has a scaling of $O(N log(N))$.  
 It checks for overlapping trajectories during the last timestep, not only for overlapping particles at the end of the timestep.
-It might still miss some collisions because it assume that particles travel along straight lines.
+It might still miss some collisions because it assumes that particles travel along straight lines.
 
 
 Below is an example on how to enable the line-tree collision search.
@@ -107,7 +107,7 @@ Below is an example on how to enable the line-tree collision search.
 ## Resolving collisions
 
 Once a collision has been detected, you have a choice on what to do next.
-You might just want to merge particles, let them bounce off each other, or simply keep a log of all collisions that occured. 
+You might just want to merge particles, let them bounce off each other, or simply keep a log of all collisions that occurred. 
 
 REBOUND comes with several built-in collision resolve functions. 
 You can also write your own.

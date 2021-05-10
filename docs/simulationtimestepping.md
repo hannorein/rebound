@@ -2,7 +2,7 @@
 
 ## Integrate 
 In most cases, you will want to integrate your simulation to a given time. 
-This could be the time at which you want to create the next output, or a very long time into the future, if you are waiting fot an exception to happen (close encounter, ejection, etc). 
+This could be the time at which you want to create the next output, or a very long time into the future, if you are waiting for an exception to happen (close encounter, ejection, etc). 
 
 In those cases use this syntax:
 === "C"

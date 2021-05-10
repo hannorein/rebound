@@ -47,7 +47,7 @@ This feature can come in very handy when you want to compare two different simul
 For example, you can run two simulations with different timesteps and then subtract the simulation from each other after the integration to how much of a difference the timestep makes.
 These operations will fail if the number of particles are not the same in `r1` and `r2`.
 
-You can also multiple a simulation with two scalars, one for the position and one for the velocity coordinates.
+You can also multiply a simulation with two scalars, one for the position and one for the velocity coordinates.
 This can come in handy when rescaling a simulation
 
 === "C"

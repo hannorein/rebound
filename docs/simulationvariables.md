@@ -38,7 +38,7 @@ To keep the documentation concise, variables which are only intended for interna
 `#!c int exact_finish_time`     
 :   If this variable is set to 1 (default), then REBOUND will integrate the simulation exactly up to the requested time. 
     Unless the requested time is a multiple of the timestep, REBOUND will need to reduce the timestep to achieve this.
-    Set this variable to 0 and REBOUND will not reduce the timestep and will instead overshoot the integration by a fractions of one timestep. 
+    Set this variable to 0 and REBOUND will not reduce the timestep and will instead overshoot the integration by a fraction of one timestep. 
 
     === "C"
         ```c
@@ -108,7 +108,7 @@ To keep the documentation concise, variables which are only intended for interna
 ## Gravity
 
 `#!c double G`                  
-:   Gravitational constant. By default this value is 1. 
+:   Gravitational constant. By default, this value is 1. 
     If $G=1$, then an orbit with semi-major axis $a=1$ has a period of $P=2\pi$.
     See also the [discussion on units](units.md).
 
@@ -130,7 +130,7 @@ To keep the documentation concise, variables which are only intended for interna
     Note that gravitational forces alone are not velocity dependent. 
     
 `#!c unsigned int gravity_ignore_terms`        
-:   This variable determines if the gravity form the central object is inlcuded in the gravity calculation.
+:   This variable determines if the gravity form the central object is included in the gravity calculation.
     In general the integrators will set this variable automatically and nothing needs to be changed by the user.
     Possible values are:
 
@@ -274,7 +274,7 @@ To keep the documentation concise, variables which are only intended for interna
 :   Number of ghost-boxes in x, y, and z directions. 
 
 `#!c unsigned int rand_seed`    
-:   Seed for random number generators. This will be automatically initialized automatically to a random number based on the current time and the process id. However, it can also be set manually to make the simulation reproducible and always return the same sequence of random numbers.
+:   Seed for random number generators. This will be automatically initialized to a random number based on the current time and the process id. However, it can also be set manually to make the simulation reproducible and always return the same sequence of random numbers.
 
 
 ## Module selection 
