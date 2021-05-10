@@ -1,5 +1,5 @@
 /**
- * The chaos indicator MEGNO.
+ * The chaos indicator MEGNO
  * 
  * This example uses the IAS15 or WHFAST integrator
  * to calculate the MEGNO of a two planet system.

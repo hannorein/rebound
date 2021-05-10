@@ -217,9 +217,6 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     
     // reb_update_acceleration(); // Not needed. Forces are already calculated in main routine.
     
-    // New order is better. Old order for backwards compatibility. 
-    const unsigned int neworder = r->ri_ias15.neworder;  
-    double s[9];                // Summation coefficients 
     double* restrict const csx = r->ri_ias15.csx; 
     double* restrict const csv = r->ri_ias15.csv; 
     double* restrict const csa0 = r->ri_ias15.csa0; 
@@ -317,19 +314,6 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         integrator_megno_thisdt = integrator_megno_thisdt_init;
 
         for(int n=1;n<8;n++) {                          // Loop over interval using Gauss-Radau spacings
-
-            if (!neworder){
-                s[0] = r->dt * h[n];
-                s[1] = s[0] * s[0] / 2.;
-                s[2] = s[1] * h[n] / 3.;
-                s[3] = s[2] * h[n] / 2.;
-                s[4] = 3. * s[3] * h[n] / 5.;
-                s[5] = 2. * s[4] * h[n] / 3.;
-                s[6] = 5. * s[5] * h[n] / 7.;
-                s[7] = 3. * s[6] * h[n] / 4.;
-                s[8] = 7. * s[7] * h[n] / 9.;
-            }
-            
             r->t = t_beginning + r->dt * h[n];
 
             // Prepare particles arrays for force calculation
@@ -342,31 +326,14 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 double xk0;
                 double xk1;
                 double xk2;
-                if (neworder){
-                    xk0 = -csx[k0] + ((((((((b.p6[k0]*7.*h[n]/9. + b.p5[k0])*3.*h[n]/4. + b.p4[k0])*5.*h[n]/7. + b.p3[k0])*2.*h[n]/3. + b.p2[k0])*3.*h[n]/5. + b.p1[k0])*h[n]/2. + b.p0[k0])*h[n]/3. + a0[k0])*r->dt*h[n]/2. + v0[k0])*r->dt*h[n];
-                    xk1 = -csx[k1] + ((((((((b.p6[k1]*7.*h[n]/9. + b.p5[k1])*3.*h[n]/4. + b.p4[k1])*5.*h[n]/7. + b.p3[k1])*2.*h[n]/3. + b.p2[k1])*3.*h[n]/5. + b.p1[k1])*h[n]/2. + b.p0[k1])*h[n]/3. + a0[k1])*r->dt*h[n]/2. + v0[k1])*r->dt*h[n];
-                    xk2 = -csx[k2] + ((((((((b.p6[k2]*7.*h[n]/9. + b.p5[k2])*3.*h[n]/4. + b.p4[k2])*5.*h[n]/7. + b.p3[k2])*2.*h[n]/3. + b.p2[k2])*3.*h[n]/5. + b.p1[k2])*h[n]/2. + b.p0[k2])*h[n]/3. + a0[k2])*r->dt*h[n]/2. + v0[k2])*r->dt*h[n];
-                }else{
-                    xk0 = -csx[k0] + (s[8]*b.p6[k0] + s[7]*b.p5[k0] + s[6]*b.p4[k0] + s[5]*b.p3[k0] + s[4]*b.p2[k0] + s[3]*b.p1[k0] + s[2]*b.p0[k0] + s[1]*a0[k0] + s[0]*v0[k0] );
-                    xk1 = -csx[k1] + (s[8]*b.p6[k1] + s[7]*b.p5[k1] + s[6]*b.p4[k1] + s[5]*b.p3[k1] + s[4]*b.p2[k1] + s[3]*b.p1[k1] + s[2]*b.p0[k1] + s[1]*a0[k1] + s[0]*v0[k1] );
-                    xk2 = -csx[k2] + (s[8]*b.p6[k2] + s[7]*b.p5[k2] + s[6]*b.p4[k2] + s[5]*b.p3[k2] + s[4]*b.p2[k2] + s[3]*b.p1[k2] + s[2]*b.p0[k2] + s[1]*a0[k2] + s[0]*v0[k2] );
-                }
+                xk0 = -csx[k0] + ((((((((b.p6[k0]*7.*h[n]/9. + b.p5[k0])*3.*h[n]/4. + b.p4[k0])*5.*h[n]/7. + b.p3[k0])*2.*h[n]/3. + b.p2[k0])*3.*h[n]/5. + b.p1[k0])*h[n]/2. + b.p0[k0])*h[n]/3. + a0[k0])*r->dt*h[n]/2. + v0[k0])*r->dt*h[n];
+                xk1 = -csx[k1] + ((((((((b.p6[k1]*7.*h[n]/9. + b.p5[k1])*3.*h[n]/4. + b.p4[k1])*5.*h[n]/7. + b.p3[k1])*2.*h[n]/3. + b.p2[k1])*3.*h[n]/5. + b.p1[k1])*h[n]/2. + b.p0[k1])*h[n]/3. + a0[k1])*r->dt*h[n]/2. + v0[k1])*r->dt*h[n];
+                xk2 = -csx[k2] + ((((((((b.p6[k2]*7.*h[n]/9. + b.p5[k2])*3.*h[n]/4. + b.p4[k2])*5.*h[n]/7. + b.p3[k2])*2.*h[n]/3. + b.p2[k2])*3.*h[n]/5. + b.p1[k2])*h[n]/2. + b.p0[k2])*h[n]/3. + a0[k2])*r->dt*h[n]/2. + v0[k2])*r->dt*h[n];
                 particles[mi].x = xk0 + x0[k0];
                 particles[mi].y = xk1 + x0[k1];
                 particles[mi].z = xk2 + x0[k2];
             }
             if (r->calculate_megno || (r->additional_forces && r->force_is_velocity_dependent)){
-                if (!neworder){
-                    s[0] = r->dt * h[n];
-                    s[1] =      s[0] * h[n] / 2.;
-                    s[2] = 2. * s[1] * h[n] / 3.;
-                    s[3] = 3. * s[2] * h[n] / 4.;
-                    s[4] = 4. * s[3] * h[n] / 5.;
-                    s[5] = 5. * s[4] * h[n] / 6.;
-                    s[6] = 6. * s[5] * h[n] / 7.;
-                    s[7] = 7. * s[6] * h[n] / 8.;
-                }
-
                 for(int i=0;i<N;i++) {                  // Predict velocities at interval n using b values
                     int mi = map[i];
                     const int k0 = 3*i+0;
@@ -376,15 +343,9 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                     double vk0;
                     double vk1;
                     double vk2;
-                    if (neworder){
-                        vk0 =  -csv[k0] + (((((((b.p6[k0]*7.*h[n]/8. + b.p5[k0])*6.*h[n]/7. + b.p4[k0])*5.*h[n]/6. + b.p3[k0])*4.*h[n]/5. + b.p2[k0])*3.*h[n]/4. + b.p1[k0])*2.*h[n]/3. + b.p0[k0])*h[n]/2. + a0[k0])*r->dt*h[n];
-                        vk1 =  -csv[k1] + (((((((b.p6[k1]*7.*h[n]/8. + b.p5[k1])*6.*h[n]/7. + b.p4[k1])*5.*h[n]/6. + b.p3[k1])*4.*h[n]/5. + b.p2[k1])*3.*h[n]/4. + b.p1[k1])*2.*h[n]/3. + b.p0[k1])*h[n]/2. + a0[k1])*r->dt*h[n];
-                        vk2 =  -csv[k2] + (((((((b.p6[k2]*7.*h[n]/8. + b.p5[k2])*6.*h[n]/7. + b.p4[k2])*5.*h[n]/6. + b.p3[k2])*4.*h[n]/5. + b.p2[k2])*3.*h[n]/4. + b.p1[k2])*2.*h[n]/3. + b.p0[k2])*h[n]/2. + a0[k2])*r->dt*h[n];
-                    }else{
-                        vk0 =  -csv[k0] + s[7]*b.p6[k0] + s[6]*b.p5[k0] + s[5]*b.p4[k0] + s[4]*b.p3[k0] + s[3]*b.p2[k0] + s[2]*b.p1[k0] + s[1]*b.p0[k0] + s[0]*a0[k0];
-                        vk1 =  -csv[k1] + s[7]*b.p6[k1] + s[6]*b.p5[k1] + s[5]*b.p4[k1] + s[4]*b.p3[k1] + s[3]*b.p2[k1] + s[2]*b.p1[k1] + s[1]*b.p0[k1] + s[0]*a0[k1];
-                        vk2 =  -csv[k2] + s[7]*b.p6[k2] + s[6]*b.p5[k2] + s[5]*b.p4[k2] + s[4]*b.p3[k2] + s[3]*b.p2[k2] + s[2]*b.p1[k2] + s[1]*b.p0[k2] + s[0]*a0[k2];
-                    }
+                    vk0 =  -csv[k0] + (((((((b.p6[k0]*7.*h[n]/8. + b.p5[k0])*6.*h[n]/7. + b.p4[k0])*5.*h[n]/6. + b.p3[k0])*4.*h[n]/5. + b.p2[k0])*3.*h[n]/4. + b.p1[k0])*2.*h[n]/3. + b.p0[k0])*h[n]/2. + a0[k0])*r->dt*h[n];
+                    vk1 =  -csv[k1] + (((((((b.p6[k1]*7.*h[n]/8. + b.p5[k1])*6.*h[n]/7. + b.p4[k1])*5.*h[n]/6. + b.p3[k1])*4.*h[n]/5. + b.p2[k1])*3.*h[n]/4. + b.p1[k1])*2.*h[n]/3. + b.p0[k1])*h[n]/2. + a0[k1])*r->dt*h[n];
+                    vk2 =  -csv[k2] + (((((((b.p6[k2]*7.*h[n]/8. + b.p5[k2])*6.*h[n]/7. + b.p4[k2])*5.*h[n]/6. + b.p3[k2])*4.*h[n]/5. + b.p2[k2])*3.*h[n]/4. + b.p1[k2])*2.*h[n]/3. + b.p0[k2])*h[n]/2. + a0[k2])*r->dt*h[n];
                     particles[mi].vx = vk0 + v0[k0];
                     particles[mi].vy = vk1 + v0[k1];
                     particles[mi].vz = vk2 + v0[k2];
@@ -548,9 +509,6 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         //   This might fail in cases where a particle does not experience any (physical) acceleration besides roundoff errors. 
         double integrator_error = 0.0;
         unsigned int Nreal = N - r->N_var;
-        if (r->ri_ias15.neworder==0){
-            Nreal = N; // backwards compatibility. will be removed in the future. 
-        }
         if (r->ri_ias15.epsilon_global){
             double maxak = 0.0;
             double maxb6k = 0.0;
@@ -626,41 +584,26 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     }
 
     // Find new position and velocity values at end of the sequence
-    double dt_done2 = dt_done*dt_done;
     for(int k=0;k<N3;++k) {
-        if (neworder){
-            // Note: dt_done*dt_done is not precalculated to avoid 
-            //       biased round-off errors when a fixed timestep is used.
-            add_cs(&(x0[k]), &(csx[k]), b.p6[k]/72.*dt_done*dt_done);
-            add_cs(&(x0[k]), &(csx[k]), b.p5[k]/56.*dt_done*dt_done);
-            add_cs(&(x0[k]), &(csx[k]), b.p4[k]/42.*dt_done*dt_done);
-            add_cs(&(x0[k]), &(csx[k]), b.p3[k]/30.*dt_done*dt_done);
-            add_cs(&(x0[k]), &(csx[k]), b.p2[k]/20.*dt_done*dt_done);
-            add_cs(&(x0[k]), &(csx[k]), b.p1[k]/12.*dt_done*dt_done);
-            add_cs(&(x0[k]), &(csx[k]), b.p0[k]/6.*dt_done*dt_done);
-            add_cs(&(x0[k]), &(csx[k]), a0[k]/2.*dt_done*dt_done);
-            add_cs(&(x0[k]), &(csx[k]), v0[k]*dt_done);
-        }else{
-            add_cs(&(x0[k]), &(csx[k]), b.p6[k]/72.*dt_done2);
-            add_cs(&(x0[k]), &(csx[k]), b.p5[k]/56.*dt_done2);
-            add_cs(&(x0[k]), &(csx[k]), b.p4[k]/42.*dt_done2);
-            add_cs(&(x0[k]), &(csx[k]), b.p3[k]/30.*dt_done2);
-            add_cs(&(x0[k]), &(csx[k]), b.p2[k]/20.*dt_done2);
-            add_cs(&(x0[k]), &(csx[k]), b.p1[k]/12.*dt_done2);
-            add_cs(&(x0[k]), &(csx[k]), b.p0[k]/6.*dt_done2);
-            add_cs(&(x0[k]), &(csx[k]), a0[k]/2.*dt_done2);
-            add_cs(&(x0[k]), &(csx[k]), v0[k]*dt_done);
-        }
-        {
-            add_cs(&(v0[k]), &(csv[k]), b.p6[k]/8.*dt_done);
-            add_cs(&(v0[k]), &(csv[k]), b.p5[k]/7.*dt_done);
-            add_cs(&(v0[k]), &(csv[k]), b.p4[k]/6.*dt_done);
-            add_cs(&(v0[k]), &(csv[k]), b.p3[k]/5.*dt_done);
-            add_cs(&(v0[k]), &(csv[k]), b.p2[k]/4.*dt_done);
-            add_cs(&(v0[k]), &(csv[k]), b.p1[k]/3.*dt_done);
-            add_cs(&(v0[k]), &(csv[k]), b.p0[k]/2.*dt_done);
-            add_cs(&(v0[k]), &(csv[k]), a0[k]*dt_done);
-        }
+        // Note: dt_done*dt_done is not precalculated to avoid 
+        //       biased round-off errors when a fixed timestep is used.
+        add_cs(&(x0[k]), &(csx[k]), b.p6[k]/72.*dt_done*dt_done);
+        add_cs(&(x0[k]), &(csx[k]), b.p5[k]/56.*dt_done*dt_done);
+        add_cs(&(x0[k]), &(csx[k]), b.p4[k]/42.*dt_done*dt_done);
+        add_cs(&(x0[k]), &(csx[k]), b.p3[k]/30.*dt_done*dt_done);
+        add_cs(&(x0[k]), &(csx[k]), b.p2[k]/20.*dt_done*dt_done);
+        add_cs(&(x0[k]), &(csx[k]), b.p1[k]/12.*dt_done*dt_done);
+        add_cs(&(x0[k]), &(csx[k]), b.p0[k]/6.*dt_done*dt_done);
+        add_cs(&(x0[k]), &(csx[k]), a0[k]/2.*dt_done*dt_done);
+        add_cs(&(x0[k]), &(csx[k]), v0[k]*dt_done);
+        add_cs(&(v0[k]), &(csv[k]), b.p6[k]/8.*dt_done);
+        add_cs(&(v0[k]), &(csv[k]), b.p5[k]/7.*dt_done);
+        add_cs(&(v0[k]), &(csv[k]), b.p4[k]/6.*dt_done);
+        add_cs(&(v0[k]), &(csv[k]), b.p3[k]/5.*dt_done);
+        add_cs(&(v0[k]), &(csv[k]), b.p2[k]/4.*dt_done);
+        add_cs(&(v0[k]), &(csv[k]), b.p1[k]/3.*dt_done);
+        add_cs(&(v0[k]), &(csv[k]), b.p0[k]/2.*dt_done);
+        add_cs(&(v0[k]), &(csv[k]), a0[k]*dt_done);
     }
 
     r->t += dt_done;

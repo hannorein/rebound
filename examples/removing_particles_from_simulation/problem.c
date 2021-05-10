@@ -1,5 +1,5 @@
 /**
- * Removing particles from simulations.
+ * Removing particles from simulations
  *
  * This example demonstrates different 
  * options for removing particles from the simulation.

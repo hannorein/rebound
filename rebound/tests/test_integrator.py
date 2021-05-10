@@ -122,16 +122,6 @@ class TestIntegrator(unittest.TestCase):
         e1 = self.sim.calculate_energy()
         self.assertLess(math.fabs((e0-e1)/e1),1e-14)
     
-    def test_ias15_oldorder(self):
-        self.sim.integrator = "ias15"
-        self.sim.ri_ias15.neworder = 0
-        jupyr = 11.86*2.*math.pi
-        e0 = self.sim.calculate_energy()
-        self.assertNotEqual(e0,0.)
-        self.sim.integrate(1e3*jupyr)
-        e1 = self.sim.calculate_energy()
-        self.assertLess(math.fabs((e0-e1)/e1),1e-14)
-    
     def test_whfast_largedt(self):
         self.sim.integrator = "whfast"
         jupyr = 11.86*2.*math.pi

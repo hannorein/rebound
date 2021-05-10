@@ -394,32 +394,6 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
 	return p1;
 }
 
-struct reb_particle reb_get_com_without_particle(struct reb_particle com, struct reb_particle p){
-    com.x = com.x*com.m - p.x*p.m;
-    com.y = com.y*com.m - p.y*p.m;
-    com.z = com.z*com.m - p.z*p.m;
-    com.vx = com.vx*com.m - p.vx*p.m;
-    com.vy = com.vy*com.m - p.vy*p.m;
-    com.vz = com.vz*com.m - p.vz*p.m;
-    com.ax = com.ax*com.m - p.ax*p.m;
-    com.ay = com.ay*com.m - p.ay*p.m;
-    com.az = com.az*com.m - p.az*p.m;
-    com.m -= p.m; 
-
-    if (com.m > 0.){
-        com.x /= com.m;
-        com.y /= com.m;
-        com.z /= com.m;
-        com.vx /= com.m;
-        com.vy /= com.m;
-        com.vz /= com.m;
-        com.ax /= com.m;
-        com.ay /= com.m;
-        com.az /= com.m;
-    }
-    return com;
-}
-
 struct reb_particle reb_get_com_range(struct reb_simulation* r, int first, int last){
 	struct reb_particle com = {0};
 	for(int i=first; i<last; i++){
@@ -857,12 +831,6 @@ static struct reb_particle reb_particle_new_errV(struct reb_simulation* r, int* 
     struct reb_particle particle = reb_tools_orbit_to_particle_err(r->G, primary, m, a, e, inc, Omega, omega, f, err);
     particle.r = radius;
     return particle;
-}
-
-struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle primary, double m, double a, double e, double omega, double f){
-	double Omega = 0.;
-	double inc = 0.;
-	return reb_tools_orbit_to_particle(G, primary, m, a, e, inc, Omega, omega, f);
 }
 
 #define TINY 1.E-308 		///< Close to smallest representable floating point number, used for orbit calculation

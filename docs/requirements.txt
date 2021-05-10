@@ -1,0 +1,4 @@
+mkdocs-material
+mkdocs-jupyter
+#git+git://github.com/hannorein/mkdocs-jupyter
+mkdocs-simple-hooks

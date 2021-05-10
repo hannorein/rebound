@@ -1,0 +1,171 @@
+site_name: REBOUND
+repo_url: https://github.com/hannorein/rebound
+repo_name: hannorein/rebound
+edit_uri: ""
+nav:
+  - "Home":
+    - index.md
+    - changelog.md
+  - "Quick-start guide":
+    - quickstart_installation.md
+    - quickstart_firstexample.md
+    - quickstart_whereto.md
+  - "API":
+    - api.md
+    - "Simulation":
+      - simulation.md
+      - simulationvariables.md
+      - simulationtimestepping.md
+      - simulationbinaryfiles.md
+      - simulationdiagnostics.md
+      - simulationreferenceframes.md
+      - simulationoperators.md
+    - "Particles":
+      - particles.md
+      - addingparticles.md
+      - removingparticles.md
+      - particleoperators.md
+    - "Modules":
+      - integrators.md
+      - collisions.md
+      - boundaryconditions.md
+      - gravity.md
+    - 'Other concepts':
+      - units.md
+      - orbitalelements.md
+      - simulationarchive.md
+      - chaos.md
+      - c_randomsamplingfunctions.md
+      - c_outputfunctions.md
+      - miscellaneous.md
+  - "Examples":
+    - examples.md
+    - "Planetary systems":
+      - "Just getting started":
+        - c_examples/simplest.md
+        - c_examples/heartbeat.md
+        - c_examples/reb_add_fmt.md
+        - ipython_examples/Churyumov-Gerasimenko.ipynb
+        - ipython_examples/WHFast.ipynb
+        - c_examples/solar_system.md
+        - c_examples/outer_solar_system.md
+        - c_examples/kozai.md
+        - c_examples/eccentric_orbit.md
+        - c_examples/restricted_threebody.md
+        - ipython_examples/Horizons.ipynb
+        - ipython_examples/Starman.ipynb
+      - "Close encounters and collisions":
+        - c_examples/closeencounter.md
+        - c_examples/closeencounter_record.md
+        - c_examples/closeencounter_hybrid.md
+        - ipython_examples/HybridIntegrationsWithMercurius.ipynb
+        - ipython_examples/CloseEncounters.ipynb
+        - c_examples/mergers.md
+        - ipython_examples/User_Defined_Collision_Resolve.ipynb
+      - "Orbital elements":
+        - c_examples/orbital_elements.md
+        - ipython_examples/OrbitalElements.ipynb
+      - "Small bodies":
+        - c_examples/planetesimal_disk_migration.md
+        - c_examples/solar_system_with_testparticles.md
+        - ipython_examples/EccentricComets.ipynb
+        - ipython_examples/PrimordialEarth.ipynb
+      - "Advanced topics":
+        - ipython_examples/AdvWHFast.ipynb
+        - c_examples/high_order_symplectic.md
+        - ipython_examples/Resonances_of_Jupiters_moons.ipynb
+        - ipython_examples/TransitTimingVariations.ipynb
+        - ipython_examples/HyperbolicOrbits.ipynb
+        - ipython_examples/HighOrderSymplectic.ipynb
+        - ipython_examples/EmbeddedOperatorSplittingMethods.ipynb
+    - "Checkpoints and Simulation Archive":
+      - ipython_examples/Checkpoints.ipynb
+      - c_examples/simulationarchive.md
+      - c_examples/restarting_simulation.md
+      - ipython_examples/SimulationArchive.ipynb
+      - ipython_examples/SimulationArchiveRestart.ipynb
+    - "Variational equations":
+      - c_examples/variational_equations.md
+      - ipython_examples/VariationalEquations.ipynb
+      - ipython_examples/VariationalEquationsWithChainRule.ipynb
+    - "Chaos detectors":
+      - c_examples/megno.md
+      - ipython_examples/Megno.ipynb
+      - ipython_examples/PoincareMap.ipynb
+      - ipython_examples/FourierSpectrum.ipynb
+    - "Additional forces":
+      - c_examples/J2.md
+      - c_examples/dragforce.md
+      - c_examples/prdrag.md
+      - c_examples/circumplanetarydust.md
+      - c_examples/planetary_migration.md
+      - ipython_examples/Forces.ipynb
+    - "Granular Dynamics":
+      - c_examples/bouncing_balls.md
+      - c_examples/bouncing_balls_corners.md
+      - c_examples/bouncing_string.md
+      - c_examples/spreading_ring.md
+      - c_examples/granulardynamics.md
+    - "Tree code":
+      - c_examples/selfgravity_disc.md
+      - c_examples/selfgravity_disc_mpi.md
+    - "Planetary rings":
+      - c_examples/shearing_sheet.md
+      - c_examples/shearing_sheet_2.md
+      - c_examples/shearing_sheet_mpi.md
+      - c_examples/shearing_sheet_diagnostics.md
+      - c_examples/overstability.md
+      - ipython_examples/SaturnsRings.ipynb
+    - "Visualization":
+      - ipython_examples/WebGLVisualization.ipynb
+      - ipython_examples/OrbitPlot.ipynb
+      - ipython_examples/ScreenshotsAndMoviesWithWebGL.ipynb
+    - "Removing particles":
+      - c_examples/removing_particles_from_simulation.md
+      - ipython_examples/EscapingParticles.ipynb
+      - ipython_examples/RemovingParticlesFromSimulation.ipynb
+    - "Other examples":
+      - c_examples/selfgravity_plummer.md
+      - c_examples/uniquely_identifying_particles_with_hashes.md
+      - c_examples/openmp.md
+      - c_examples/profiling.md
+      - c_examples/star_of_david.md
+      - ipython_examples/Testparticles.ipynb
+      - ipython_examples/UniquelyIdentifyingParticlesWithHashes.ipynb
+      - ipython_examples/Units.ipynb
+      - ipython_examples/Cheartbeat.ipynb
+
+theme:
+  name: material
+  logo: img/rebound.png
+  favicon: img/favicon.ico
+  features:
+    - navigation.tabs
+    - toc.integrate
+markdown_extensions:
+  - admonition
+  - def_list
+  - pymdownx.tabbed
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+  - wikilinks
+extra_javascript:
+  - javascripts/config.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js      
+extra:
+  social:
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/reboundbot
+    - icon: fontawesome/brands/github
+      link: https://github.com/hannorein/rebound
+
+plugins:
+  - search
+  - mkdocs-simple-hooks:
+      hooks:
+        on_pre_build: "docs.c_examples.generate_c_examples:run"
+  - mkdocs-jupyter

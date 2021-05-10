@@ -1,5 +1,5 @@
 /**
- * Self-gravitating disc.
+ * Self-gravitating disc
  *
  * A self-gravitating disc is integrated using
  * the leap frog integrator. Collisions are not resolved.

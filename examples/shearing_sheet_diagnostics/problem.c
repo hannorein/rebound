@@ -1,5 +1,5 @@
 /**
- * Shearing sheet (with diagnostics)
+ * Shearing sheet with diagnostics
  *
  * This example simulates a small patch of Saturn's
  * Rings in shearing sheet coordinates. It also calculated

@@ -39,53 +39,6 @@
 #include "communication_mpi.h"
 #endif
 
-double reb_read_double(int argc, char** argv, const char* argument, double _default){
-    char* value = reb_read_char(argc,argv,argument);
-    if (value){
-        return atof(value);
-    }
-    return _default;
-}
-
-int reb_read_int(int argc, char** argv, const char* argument, int _default){
-    char* value = reb_read_char(argc,argv,argument);
-    if (value){
-        return atoi(value);
-    }
-    return _default;
-}
-
-
-char* reb_read_char(int argc, char** argv, const char* argument){
-    opterr = 0;
-    optind = 1;
-    while (1) {
-        struct option long_options[] = {
-            {NULL, required_argument, 0, 'a'},
-            {0,0,0,0}
-        };
-
-        long_options[0].name = argument;
-
-        /* getopt_long stores the option index here.   */
-        int option_index = 0;
-        //              short options. format abc:d::
-        int c = getopt_long (argc, argv, "", long_options, &option_index);
-
-        /* Detect the end of the options.   */
-        if (c == -1) break;
-
-        switch (c){
-            case 'a':
-                return optarg;
-                break;
-            default:
-                break;
-        }
-    }
-    return NULL;
-}
-
 static size_t reb_fread(void *restrict ptr, size_t size, size_t nitems, FILE *restrict stream, char **restrict mem_stream){
     if (mem_stream!=NULL){
         // read from memory
@@ -221,15 +174,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(WALLTIME,           &r->walltime);
         CASE(COLLISION,          &r->collision);
         CASE(VISUALIZATION,      &r->visualization);
-        case REB_BINARY_FIELD_TYPE_INTEGRATOR: 
-        {
-            reb_fread(&r->integrator, field.size,1,inf,mem_stream);\
-            // This is for backwards compatibility. To be removed in the future.
-            if (r->integrator == REB_INTEGRATOR_IAS15){
-                r->ri_ias15.neworder = 0;
-            }
-        }
-        break;
+        CASE(INTEGRATOR,         &r->integrator);
         CASE(BOUNDARY,           &r->boundary);
         CASE(GRAVITY,            &r->gravity);
         CASE(SEI_OMEGA,          &r->ri_sei.OMEGA);
@@ -251,7 +196,6 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global);
         CASE(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded);
         CASE(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN);
-        CASE(IAS15_NEWORDER,     &r->ri_ias15.neworder);
         CASE(JANUS_SCALEPOS,     &r->ri_janus.scale_pos);
         CASE(JANUS_SCALEVEL,     &r->ri_janus.scale_vel);
         CASE(JANUS_ORDER,        &r->ri_janus.order);

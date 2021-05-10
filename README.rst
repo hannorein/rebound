@@ -96,4 +96,4 @@ To easily incorporate additional physics into your REBOUND simulations, see REBO
 
 Changelog
 ---------
-For a changelog of the most important changes in recent updates, see https://github.com/hannorein/rebound/blob/master/changelog.rst 
+For a changelog of the most important changes in recent updates, see https://github.com/hannorein/rebound/blob/main/changelog.md

@@ -1,5 +1,5 @@
 /**
- * Bouncing balls.
+ * Bouncing balls
  * 
  * This example is a simple test of collision detection 
  * methods.

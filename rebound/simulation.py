@@ -1,5 +1,5 @@
 from ctypes import Structure, c_double, POINTER, c_uint32, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
-from . import clibrebound, Escape, NoParticles, Encounter, Collision, SimulationError, ParticleNotFound
+from . import clibrebound, Escape, NoParticles, Encounter, Collision, SimulationError, ParticleNotFound, M_to_E
 from .citations import cite
 from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G, hash_to_unit
@@ -146,9 +146,6 @@ class reb_simulation_integrator_ias15(Structure):
     :ivar float epsilon_global:          
         Determines how the adaptive timestep is chosen. 
     
-    :ivar int neworder:          
-        Changes the order of floating point operations within IAS15. New simulations should use neworder=1. Only set neworder=0 for binary backwards compatibility.
-    
     """
     def __repr__(self):
         return '<{0}.{1} object at {2}, epsilon={3}, min_dt={4}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.epsilon, self.min_dt)
@@ -156,7 +153,6 @@ class reb_simulation_integrator_ias15(Structure):
     _fields_ = [("epsilon", c_double),
                 ("min_dt", c_double),
                 ("epsilon_global", c_uint),
-                ("neworder", c_uint),
                 ("_iterations_max_exceeded", c_ulong),
                 ("_allocatedN", c_int),
                 ("_at", POINTER(c_double)),
@@ -287,9 +283,9 @@ class reb_simulation_integrator_whfast(Structure):
                 ("_coordinates", c_uint),
                 ("recalculate_coordinates_this_timestep", c_uint),
                 ("safe_mode", c_uint),
+                ("keep_unsynchronized", c_uint),
                 ("_p_jh", POINTER(Particle)),
                 ("_p_temp", POINTER(Particle)),
-                ("keep_unsynchronized", c_uint),
                 ("is_synchronized", c_uint),
                 ("_allocatedN", c_uint),
                 ("_allocatedNtmp", c_uint),
@@ -434,19 +430,15 @@ class Orbit(Structure):
     
     @property 
     def E(self):
-        clibrebound.reb_tools_M_to_E.restype = c_double
-        return clibrebound.reb_tools_M_to_E(c_double(self.e), c_double(self.M))
+        return M_to_E(self.e, self.M)
 
 class Simulation(Structure):
     """
-    REBOUND Simulation Object.
+    This is the REBOUND Simulation Class.
+    In encapsulated an entire REBOUND simulation and is an abstraction of the C struct reb_simulation.
 
-    This object encapsulated an entire REBOUND simulation. 
-    It is an abstraction of the C struct reb_simulation.
-    You can create multiple REBOUND simulations (the c library is thread safe). 
-
-    Examples
-    --------
+    ### Examples
+    
     Most simulation parameters can be directly changed with the property syntax:
 
     >>> sim = rebound.Simulation()
@@ -959,6 +951,9 @@ class Simulation(Structure):
         elif func == "hardsphere":
             clibrebound.reb_set_collision_resolve.restype = None
             clibrebound.reb_set_collision_resolve(byref(self), clibrebound.reb_collision_resolve_hardsphere)
+        elif func == "halt":
+            clibrebound.reb_set_collision_resolve.restype = None
+            clibrebound.reb_set_collision_resolve(byref(self), clibrebound.reb_collision_resolve_halt)
         else:
             self._colrfp = COLRFF(func)
             self._collision_resolve = self._colrfp

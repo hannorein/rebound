@@ -1,5 +1,5 @@
 from ctypes import Structure, c_double, c_int, byref, memmove, sizeof, c_uint32, c_uint, c_ulong
-from . import clibrebound
+from . import clibrebound, E_to_f, M_to_f, mod2pi
 import math
 import ctypes.util
 import rebound
@@ -337,20 +337,16 @@ class Particle(Structure):
                             M = l - Omega - omega
                         else:
                             M = Omega - omega - l       # for retrograde, l = Omega - omega - M
-                        clibrebound.reb_tools_M_to_f.restype = c_double
-                        f = clibrebound.reb_tools_M_to_f(c_double(e), c_double(M))
+                        f = M_to_f(e, M)
                     elif T is not None:                 # works for both elliptical and hyperbolic orbits
                                                         # TODO: has accuracy problems for M=n*(t-T) << 1
                         n = (simulation.G*(primary.m+self.m)/abs(a**3))**0.5
                         M = n*(simulation.t - T)
-                        clibrebound.reb_tools_M_to_f.restype = c_double
-                        f = clibrebound.reb_tools_M_to_f(c_double(e), c_double(M))
+                        f = M_to_f(e, M)
                     elif M is not None:
-                        clibrebound.reb_tools_M_to_f.restype = c_double
-                        f = clibrebound.reb_tools_M_to_f(c_double(e), c_double(M))
+                        f = M_to_f(e, M)
                     elif E is not None:
-                        clibrebound.reb_tools_E_to_f.restype = c_double
-                        f = clibrebound.reb_tools_E_to_f(c_double(e), c_double(E))
+                        f = E_to_f(e, E)
 
                 err = c_int()
                 clibrebound.reb_tools_orbit_to_particle_err.restype = Particle
@@ -484,9 +480,6 @@ class Particle(Structure):
         o = self.calculate_orbit(primary=primary)
 
         phases_f = []
-        clibrebound.reb_tools_E_to_f.restype = c_double
-        clibrebound.reb_tools_M_to_f.restype = c_double
-        clibrebound.reb_tools_mod2pi.restype = c_double
         if samplingAngle is not None:
             if any(c not in "EMf" for c in samplingAngle):
                 raise ValueError("Unknown character in samplingAngle.")
@@ -503,7 +496,7 @@ class Particle(Structure):
                 Npts = Nptsangle["M"]
                 dphi = 2*phi/(Npts-1)
                 for i in range(Npts):
-                    f = clibrebound.reb_tools_M_to_f(c_double(o.e), c_double(phi))
+                    f = M_to_f(o.e, phi)
                     phases_f.append(f)
                     phi -= dphi
             if "E" in samplingAngle:
@@ -511,7 +504,7 @@ class Particle(Structure):
                 Npts = Nptsangle["E"]
                 dphi = 2*phi/(Npts-1)
                 for i in range(Npts):
-                    f = clibrebound.reb_tools_E_to_f(c_double(o.e), c_double(phi))
+                    f = E_to_f(o.e, phi)
                     phases_f.append(f)
                     phi -= dphi
             if "f" in samplingAngle:
@@ -519,7 +512,7 @@ class Particle(Structure):
                 Npts = Nptsangle["f"]
                 dphi = 2*phi/(Npts-1)
                 for i in range(Npts):
-                    f = clibrebound.reb_tools_mod2pi(c_double(phi))
+                    f = mod2pi(phi)
                     phases_f.append(f)
                     phi -= dphi
         else:       # circular orbit
@@ -535,24 +528,24 @@ class Particle(Structure):
                 Npts = Nptsangle["M"]
                 dphi = 2.*math.pi/(Npts-1 if duplicateEndpoint else Npts)  # one point is reserved for the end point
                 for i in range(Npts):
-                    f = clibrebound.reb_tools_M_to_f(c_double(o.e), c_double(i*dphi))
+                    f = M_to_f(o.e, i*dphi)
                     phases_f.append(f)
             if "E" in samplingAngle:
                 Npts = Nptsangle["E"]
                 dphi = 2.*math.pi/(Npts-1 if duplicateEndpoint else Npts)  # one point is reserved for the end point
                 for i in range(Npts):
-                    f = clibrebound.reb_tools_E_to_f(c_double(o.e), c_double(i*dphi))
+                    f = E_to_f(o.e, i*dphi)
                     phases_f.append(f)
             if "f" in samplingAngle:
                 Npts = Nptsangle["f"]
                 dphi = 2.*math.pi/(Npts-1 if duplicateEndpoint else Npts)  # one point is reserved for the end point
                 for i in range(Npts):
                     f = i*dphi
-                    f = clibrebound.reb_tools_mod2pi(c_double(f))
+                    f = mod2pi(f)
                     phases_f.append(f)
 
         # add actual position
-        f = clibrebound.reb_tools_mod2pi(c_double(o.f))
+        f = mod2pi(o.f)
         phases_f.append(f)
         phases_f.sort()
       

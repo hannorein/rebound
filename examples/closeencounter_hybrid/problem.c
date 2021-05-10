@@ -1,5 +1,5 @@
 /**
- * Close encounters with MERCURIUS integrator.
+ * Close encounters with MERCURIUS integrator
  * 
  * This example integrates a densely packed planetary system 
  * which becomes unstable on a timescale of only a few orbits. 

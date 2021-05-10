@@ -1,5 +1,5 @@
 /**
- * Granular dynamics.
+ * Granular dynamics
  *
  * This example is about granular dynamics. No gravitational 
  * forces are present in this example. Two boundary layers made of 
