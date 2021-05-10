@@ -7,12 +7,12 @@ Below is an example on how to work with binary files.
     ```c
     struct reb_simulation* r = reb_create_simulation();
     // ... setup simulation ...
-    reb_integate(r, 10); // integrate 
+    reb_integrate(r, 10); // integrate 
     reb_output_binary(r, "snapshot.bin");
     reb_free_simulation(r); 
 
     struct reb_simulation* r2 = reb_create_simulation_from_binary("snapshot.bin);
-    reb_integate(r2, 20); // continue integration
+    reb_integrate(r2, 20); // continue integration
     reb_free_simulation(r2); 
     ```
 
@@ -20,7 +20,7 @@ Below is an example on how to work with binary files.
     ```python
     sim = rebound.Simulation()
     // ... setup simulation ...
-    sim.integate(10)
+    sim.integrate(10)
     sim.save("snapshot.bin")
     sim = None # Remove reference, allow python to release memory
 

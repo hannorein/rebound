@@ -44,7 +44,7 @@ Thus, one year corresponds to $2\pi$ in these units.
 An alternative interpretation of the same REBOUND simulation could be the following. 
 Suppose the central object is the Earth. 
 Then $M=1$ corresponds to one Earth mass.
-If we consider the test particle to be the international space station, then $a=1$ corresponds to $6790{\rm km}$ ($420{\rm km}$ above MSL).
+If we consider the test particle to be the International Space Station, then $a=1$ corresponds to $6790{\rm km}$ ($420{\rm km}$ above MSL).
 The orbit of the particle still has a period of $2\pi$ in our units, but this would now correspond to 92.8 minutes.
 
 !!! Info
