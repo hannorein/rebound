@@ -39,8 +39,12 @@ pip install -e .
 ```
 You should now be able to import REBOUND from python. 
 
-!!! Note "Installing REBOUND on Windows"
-    If you want to install REBOUND on Windows, the best way is likely to use the Windows Subsystem for Linux. After installing the gcc compiler, e.g., sudo apt-get install gcc, you should be able to install REBOUND and any python libraries by following the installation instructions in this documentation. Unfortunately we do not have Windows installations ourselves, so we cannot actively support installation problems. Thanks to Keto/Zhang for finding this workaround. If you have any additional information on how to use REBOUND on Windows, let us know!
+!!! Info "Installing REBOUND on Windows"
+    To best way to use REBOUND on Windows is to install the Windows Subsystem (WSL) for Linux.
+    The Ubuntu distribution works well with REBOUND.
+    Once you've installed WSL, open a WSL terminal and make sure you have a compiler installed with the command `sudo apt-get install gcc`.
+    If you want to use the Python version of REBOUND, also make sure you have a recent version of Python installed: `sudo apt-get install python3 python3-pip`.
+    From here on, you can follow the installation instructions above.
 
 ## Compiling the C version of REBOUND
 
