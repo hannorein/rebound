@@ -8,16 +8,17 @@ with open("version.txt") as f:
     reboundversion = f.readlines()[0].strip()
     print("Updating version to "+reboundversion)
 
-with open("README.rst") as f:
+with open("README.md") as f:
     readme = f.readlines()
 
 keep_lines_after_header = 5
 
-with open("README.rst","w") as f:
+with open("README.md","w") as f:
     start_delete = -1
     for i in range(0,len(readme)):
-        if "badge/rebound-v" in readme[i]:
-            readme[i] = ".. image:: https://img.shields.io/badge/rebound-v"+reboundversion+"-green.svg?style=flat\n"
+        # [![Version](https://img.shields.io/badge/rebound-v3.17.0-green.svg?style=flat)](https://rebound.readthedocs.org)
+        if "![Version]" in readme[i]:
+            readme[i] = "[![Version](https://img.shields.io/badge/rebound-v"+reboundversion+"-green.svg?style=flat)](https://rebound.readthedocs.org)\n"
         f.write(readme[i])
 
 with open("src/rebound.c") as f:
@@ -46,15 +47,5 @@ while shortversion[-1] != '.':
     
 shortversion = shortversion[:-1]
 
-with open("doc/conf.py") as f:
-    conflines = f.readlines()
-    for i,l  in enumerate(conflines):
-        if "version =" in l:
-            conflines[i] = "version = '"+shortversion+"'\n"
-        if "release =" in l:
-            conflines[i] = "release = '"+reboundversion+"'\n"
-
-    with open("doc/conf.py", "w") as f:
-        f.writelines(conflines)
 print("To commit, copy and paste:")
 print("\ngit commit -a -m \"Updating version to "+reboundversion+"\"")
