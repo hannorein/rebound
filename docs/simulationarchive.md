@@ -23,7 +23,7 @@ If the file already exists, the function will append a Simulation Archive snapsh
     sim.simulationarchive_snapshpt("archive.bin")
     ```
     You can pass the optional argument `deletefile=True` to delete the file if it already exists.
-    By default the function appends a snapshot to existing files.
+    By default, the function appends a snapshot to existing files.
 
 Instead of manually outputting each snapshot, you can also automate this process as shown below.
 
@@ -65,7 +65,7 @@ The following code automatically creates a Simulation Archive snapshot after a f
     This only affects very high accuracy simulation where you want to make sure the outputs occur exactly at the right timestep. 
 
 
-### Regular wall-time interbals
+### Regular wall-time intervals
 The following code automatically creates a Simulation Archive snapshot after a fixed wall-time.
 This is particularly useful for creating restart files when running long simulations.
 The wall-time is given in seconds.
@@ -103,5 +103,5 @@ For example, the last snapshot in the file would have the index `-1`, the second
     # ... work on simulation ...
     ```
     In python, `snapshot=-1` is the default. 
-    Thus `#!python sim = rebound.Simulation("archive.bin")` will create a new simulation from the last snapshot in the archive. 
+    Thus, `#!python sim = rebound.Simulation("archive.bin")` will create a new simulation from the last snapshot in the archive. 
 

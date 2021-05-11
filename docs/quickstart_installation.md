@@ -5,7 +5,7 @@
 You can use either C or Python when working with REBOUND.
 Which programming language you want to use depends on your taste and your specific application. In short: 
 
-- If you want to setup a planetary system, visualize data with matplotlib, and integrate your simulation with one of the built-in integrators then use the Python version. It's quick and easy to use. 
+- If you want to set up a planetary system, visualize data with matplotlib, and integrate your simulation with one of the built-in integrators then use the Python version. It's quick and easy to use. 
 - If you want to run large simulations with millions of particles, develop your own integrator, use OpenGL visualizations, or make use of the distributed tree code, then use the C version. C gives you the best performance and direct access to all the internals.
 
 !!! Note
@@ -63,7 +63,7 @@ This triggers the following tasks:
     the entire REBOUND code into a shared library.
 3.  It then creates a symbolic link from the current directory to the
     location of the shared library is located.
-4.  Finally it compiles your own code, the `problem.c` file and links it to the REBOUND shared library.
+4.  Finally, it compiles your own code, the `problem.c` file and links it to the REBOUND shared library.
 
 You can execute your program with `./rebound`. After you edited either the `problem.c` file or any file in the `src/` directory, you can simply type `make` again to recompile your program. 
 If you change any of the environment variables, clean the build directory first, by executing `make clean`.
@@ -80,13 +80,13 @@ By simply replicating and modifying one of the examples, you'll avoid these comp
 
 ### Possible issues during compilation
 
-The way we've designed REBOUND should make the compilation process extremly easy.
+The way we've designed REBOUND should make the compilation process extremely easy.
 You do not need to install any additional libraries (although you might want to, see below), and you do not need root access. 
 You might nevertheless run into problems. Some of the most common issues are:
 
 -   **Missing compilers.** Make sure you have a C compiler installed. If
     you are using a Mac, install the Xcode package which you can
-    download for free on the AppStore. Make sure the command line tools 
+    download for free on the App Store. Make sure the command line tools 
     are installed.
 -   **Missing glfw3 library.** You can compile REBOUND with support for
     real-time OpenGL visualizations. This requires the glfw3 library. If
