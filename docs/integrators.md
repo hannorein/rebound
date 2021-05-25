@@ -51,7 +51,7 @@ The setting for IAS15 are stored in the `reb_simulation_integrator_ias15` struct
     === "Python"
         ```python
         sim = rebound.Simulation()
-        sim.ri_ias.min_dt = 1e-3
+        sim.ri_ias15.min_dt = 1e-3
         ```
 
 `epsilon_global` `(unsigned int`)
