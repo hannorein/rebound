@@ -33,7 +33,7 @@ You can remove a particle using this index as shown in the following code:
     In most cases you want to (set the argument to 1). 
     For simulation with many particles (millions), this might be slow. In that case set this argument to 0.
 
-    The function retursn 1 if the particle was successfully removed, and 0 if the index was out of range.
+    The function returns 1 if the particle was successfully removed, and 0 if the index was out of range.
 
 === "Python"
     ```python
