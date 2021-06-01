@@ -53,6 +53,30 @@ double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, 
     }
 }
 
+double reb_integrator_mercurius_L_C4(const struct reb_simulation* const r, double d, double dcrit){
+    // This is the changeover function C4 proposed by Hernandez (2019)
+    double y = (d-0.1*dcrit)/(0.9*dcrit);
+    if (y<0.){
+        return 0.;
+    }else if (y>1.){
+        return 1.;
+    }else{
+        return (70.*y*y*y*y -315.*y*y*y +540.*y*y -420.*y +126.)*y*y*y*y*y;
+    }
+}
+
+double reb_integrator_mercurius_L_C5(const struct reb_simulation* const r, double d, double dcrit){
+    // This is the changeover function C5 proposed by Hernandez (2019)
+    double y = (d-0.1*dcrit)/(0.9*dcrit);
+    if (y<0.){
+        return 0.;
+    }else if (y>1.){
+        return 1.;
+    }else{
+        return (-252.*y*y*y*y*y +1386.*y*y*y*y -3080.*y*y*y +3465.*y*y -1980.*y +462.)*y*y*y*y*y*y;
+    }
+}
+
 static double f(double x){
     if (x<0) return 0;
     return exp(-1./x);

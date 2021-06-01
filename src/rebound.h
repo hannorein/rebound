@@ -647,8 +647,10 @@ void reb_update_acceleration(struct reb_simulation* r);
 int reb_diff_simulations(struct reb_simulation* r1, struct reb_simulation* r2, int output_option);
 
 // Mercurius switching functions
-double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit);           
-double reb_integrator_mercurius_L_infinite(const struct reb_simulation* const r, double d, double dcrit);           
+double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit);
+double reb_integrator_mercurius_L_infinity(const struct reb_simulation* const r, double d, double dcrit);
+double reb_integrator_mercurius_L_C4(const struct reb_simulation* const r, double d, double dcrit);
+double reb_integrator_mercurius_L_C5(const struct reb_simulation* const r, double d, double dcrit);
 
 // Collision resolve functions
 int reb_collision_resolve_halt(struct reb_simulation* const r, struct reb_collision c);
