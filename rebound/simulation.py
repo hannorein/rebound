@@ -2021,7 +2021,7 @@ class reb_simulation_integrator_mercurius(Structure):
     def __repr__(self):
         return '<{0}.{1} object at {2}, safe_mode={3}, is_synchronized={4}, hillfac={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.safe_mode, self.is_synchronized, self.hillfac)
 
-    _fields_ = [("L", CFUNCTYPE(c_double, POINTER(Simulation), c_double, c_double)),
+    _fields_ = [("_L", CFUNCTYPE(c_double, POINTER(Simulation), c_double, c_double)),
                 ("hillfac", c_double),
                 ("recalculate_coordinates_this_timestep", c_uint),
                 ("recalculate_dcrit_this_timestep", c_uint),
@@ -2041,6 +2041,22 @@ class reb_simulation_integrator_mercurius(Structure):
                 ("_com_pos", reb_vec3d),
                 ("_com_vel", reb_vec3d),
                 ]
+    @property
+    def L(self):
+        raise AttributeError("You can only set C function pointers from python.")
+    @L.setter
+    def L(self, func):
+        if func == "mercury":
+            self._L = cast(clibrebound.reb_integrator_mercurius_L_mercury,MERCURIUSLF)
+        elif func == "C4":
+            self._L = cast(clibrebound.reb_integrator_mercurius_L_C4,MERCURIUSLF)
+        elif func == "C5":
+            self._L = cast(clibrebound.reb_integrator_mercurius_L_C5,MERCURIUSLF)
+        elif func == "infinity":
+            self._L = cast(clibrebound.reb_integrator_mercurius_L_minfinity,MERCURIUSLF)
+        else:
+            self._Lfp = MERCURIUSLF(func)
+            self._L = self._Lfp
 
 class timeval(Structure):
     _fields_ = [("tv_sec",c_long),("tv_usec",c_long)]
@@ -2187,6 +2203,7 @@ POINTER_REB_SIM = POINTER(Simulation)
 AFF = CFUNCTYPE(None,POINTER_REB_SIM)
 CORFF = CFUNCTYPE(c_double,POINTER_REB_SIM, c_double)
 COLRFF = CFUNCTYPE(c_int, POINTER_REB_SIM, reb_collision)
+MERCURIUSLF = CFUNCTYPE(c_double, POINTER_REB_SIM, c_double, c_double)
 FPA = CFUNCTYPE(None, POINTER(Particle))
 
 class Particles(MutableMapping):

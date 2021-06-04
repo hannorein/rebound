@@ -262,10 +262,17 @@ The `reb_simulation_integrator_mercurius` structure contains the configuration a
    
     The switching function can be set using this syntax: 
 
-    ```c
-    struct reb_simulation* r = reb_create_simulation();
-    r->ri_mercurius.L = reb_integrator_mercurius_L_infinity; 
-    ```
+    === "C"
+        ```c
+        struct reb_simulation* r = reb_create_simulation();
+        r->ri_mercurius.L = reb_integrator_mercurius_L_infinity; 
+        ```
+
+    === "Python"
+        ```python
+        sim = rebound.Simulation()
+        sim.ri_mercurius.L = "infinity"
+        ```
 
 `double hillfac`
 :   The critical switchover radii of particles are calculated automatically based on multiple criteria. One criterion calculates the Hill radius of particles and then multiplies it with the `hillfac` parameter. The parameter is in units of the Hill radius. The default value is 3. 
