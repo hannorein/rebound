@@ -3,6 +3,11 @@
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
 ## Version 3.x
+### Version 3.17.1
+* Fixed an issue where the simulation struct in python did not match the one in C. This might have lead to unexpected behaviour in rare cases.
+* Fixed various typos in the documentation
+* MERCURIUS switching functions can now be set from Python. Also inluded more built-in switching functions from Hernandez (2019). 
+
 ### Version 3.17.0
 * Added new 'reb_add_fmt()' function. This makes adding particles in C as easy as in python.
 * Orbits can now also be initialized using the eccentric anomaly.
