@@ -3,6 +3,9 @@
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
 ## Version 3.x
+### Version 3.17.2
+* Moved some function declarations to rebound.h. This is a temporary fix for REBOUNDx.
+
 ### Version 3.17.1
 * Fixed an issue where the simulation struct in python did not match the one in C. This might have lead to unexpected behaviour in rare cases.
 * Fixed various typos in the documentation
