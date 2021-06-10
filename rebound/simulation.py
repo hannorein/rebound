@@ -1433,7 +1433,7 @@ class Simulation(Structure):
                     raise AttributeError("Each line requires 8 floats corresponding to mass, radius, position (x,y,z) and velocity (x,y,z).")
 
 # Orbit calculation
-    def calculate_orbits(self, primary=None, jacobi_masses=False, heliocentric=None, barycentric=None):
+    def calculate_orbits(self, primary=None, jacobi_masses=False):
         """ 
         Calculate orbital parameters for all particles in the simulation.
         By default, this functions returns the orbits in Jacobi coordinates. 
@@ -1444,13 +1444,10 @@ class Simulation(Structure):
         ----------
 
         primary     : rebound.Particle, optional
-            Set the primary against which to reference the osculating orbit. Default(use Jacobi center of mass)
+            Set the primary against which to reference the osculating orbit. Default (use Jacobi center of mass).
+            For heliocentric coordinates, pass the central object to this parameter. 
         jacobi_masses: bool
             Whether to use jacobi primary mass in orbit calculation. (Default: False)
-        heliocentric: bool, DEPRECATED
-            To calculate heliocentric elements, pass primary=sim.particles[0]
-        barycentric : bool, DEPRECATED
-            To calculate barycentric elements, pass primary=sim.calculate_com()
 
         Returns
         -------
@@ -1458,9 +1455,6 @@ class Simulation(Structure):
         """
         orbits = []
        
-        if heliocentric is not None or barycentric is not None:
-            raise AttributeError('heliocentric and barycentric keywords in calculate_orbits are deprecated. Pass primary keyword instead (sim.particles[0] for heliocentric and sim.calculate_com() for barycentric)')
-
         if primary is None:
             jacobi = True
             primary = self.particles[0]

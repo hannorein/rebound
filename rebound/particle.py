@@ -410,7 +410,7 @@ class Particle(Structure):
         >>> sim = rebound.Simulation()
         >>> sim.add(m=1.)
         >>> sim.add(x=1.,vy=1.)
-        >>> orbit = sim.particles[1].calculate_orbit(sim.particles[0])
+        >>> orbit = sim.particles[1].calculate_orbit(sim.particles[0]) # Heliocentric coordinates
         >>> print(orbit.e) # gives the eccentricity
 
         Parameters
