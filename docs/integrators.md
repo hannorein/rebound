@@ -287,15 +287,6 @@ The `reb_simulation_integrator_mercurius` structure contains the configuration a
 :   If this flag is set to 1 (the default), the integrator will recalculate heliocentric coordinates and synchronize after every timestep to avoid problems with outputs or particle modifications between timesteps. Setting this flag to 0 will result in a speedup, but care must be taken to synchronize and recalculate coordinates manually if needed.
 
 
-The `reb_simulation_integrator_sei` structure contains the configuration and data structures used by the Symplectic Epicycle Integrator (SEI).
-
-Member                      | Description
---------------------------- | --------------
-`double OMEGA`              | Epicyclic/orbital frequency.
-`double OMEGAZ`             | Epicyclic frequency in vertical direction.
-
-All other members of this structure are only for internal use and should not be changed manually.
-
 
 
 ## SABA
@@ -460,12 +451,34 @@ The following code shows how to enable EOS and set the embedded methods.
 ## Leapfrog
 `REB_INTEGRATOR_LEAPFROG`     
 
-Leap frog, second order, symplectic
+This is the standard leap frog integrator. It is second order and symplectic. No configuration is available (the timestep is set in the simulation structure).
 
 ## Symplectic Epicycle Integrator (SEI)
 `REB_INTEGRATOR_SEI`          
 
-Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011
+Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011. The `reb_simulation_integrator_sei` structure contains the configuration and data structures used by the Symplectic Epicycle Integrator (SEI).
+
+`double OMEGA`
+:   Epicyclic/orbital frequency. This can be set as follows:
+    === "C"
+        ```c
+        struct reb_simulation* r = reb_create_simulation();
+        r->integrator = REB_INTEGRATOR_SEI;
+        r->ri_sei.OMEGA = 1.0;
+        ```
+
+    === "Python"
+        ```python
+        sim = rebound.Simulation()
+        sim.integrator = "sei"
+        sim.ri_sei.OMEGA = 1.0
+        ```
+
+`double OMEGAZ`
+:   Epicyclic frequency in vertical direction. Defaults to `OMEGA` if not set.
+
+All other members of this structure are only for internal use and should not be changed manually.
+
 
 ## No integrator
 Sometimes it might make sense to simply not advance any particle positions or velocities. By selecting this integrator, one can still perform integration steps, but particles will not move.
