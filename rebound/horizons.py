@@ -47,8 +47,12 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
                   ( b'Ending.* :', (date + datetime.timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M")+'\n' ))
     else:
         # Assume date is in JD
+        if "." in date: # end date slightly later
+            dateend = date+"1"
+        else:
+            dateend = date+".1"
         expect =  (( b'Starting.* :', date+'\n' ),
-                  ( b'Ending.* :', '\n' ))
+                  ( b'Ending.* :', dateend+'\n' ))
 
     print("Searching NASA Horizons for '%s'... "%(particle),end="")
     sys.stdout.flush()
