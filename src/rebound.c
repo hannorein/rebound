@@ -40,6 +40,7 @@
 #include "integrator_whfast.h"
 #include "integrator_ias15.h"
 #include "integrator_mercurius.h"
+#include "integrator_tes.h"
 #include "boundary.h"
 #include "gravity.h"
 #include "collision.h"
@@ -802,6 +803,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
                 if (r->display_data){
                     r->display_data->opengl_enabled = 0;
                 }
+                reb_integrator_tes_init(r);
                 reb_integrate_raw(&thread_info);
             }
             break;
