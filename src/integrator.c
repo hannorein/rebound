@@ -72,6 +72,9 @@ void reb_integrator_part1(struct reb_simulation* r){
 		case REB_INTEGRATOR_EOS:
 			reb_integrator_eos_part1(r);
 			break;
+		case REB_INTEGRATOR_TES:
+			reb_integrator_tes_part1(r);
+			break;
 		default:
 			break;
 	}
@@ -103,6 +106,9 @@ void reb_integrator_part2(struct reb_simulation* r){
 		case REB_INTEGRATOR_EOS:
 			reb_integrator_eos_part2(r);
 			break;
+		case REB_INTEGRATOR_TES:
+			reb_integrator_tes_part1(r);
+			break;			
         case REB_INTEGRATOR_NONE:
             r->t += r->dt;
             r->dt_last_done = r->dt;

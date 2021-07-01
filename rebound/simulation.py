@@ -21,7 +21,7 @@ import types
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "tes": 20}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "mercurius": 3, "line": 4, "linetree": 5}
@@ -998,6 +998,7 @@ class Simulation(Structure):
         - ``'SABACM4'`` 
         - ``'SABA(10,6,4)'`` 
         - ``'EOS'`` 
+        - ``'TES'``
         - ``'none'``
         
         Check the online documentation for a full description of each of the integrators. 
@@ -2052,6 +2053,16 @@ class reb_simulation_integrator_mercurius(Structure):
             self._Lfp = MERCURIUSLF(func)
             self._L = self._Lfp
 
+class reb_simulation_integrator_tes(Structure):
+    """
+    This class is an abstraction of the C-struct reb_simulation_integrator_tes.
+    It controls the behaviour of the Terrestrial Exoplanet Simulator (TES) integrator.
+    """
+
+    _fields_ = [
+            ]               
+
+
 class timeval(Structure):
     _fields_ = [("tv_sec",c_long),("tv_usec",c_long)]
 
@@ -2164,6 +2175,7 @@ Simulation._fields_ = [
                 ("ri_mercurius", reb_simulation_integrator_mercurius),
                 ("ri_janus", reb_simulation_integrator_janus),
                 ("ri_eos", reb_simulation_integrator_eos),
+                ("ri_tes", reb_simulation_integrator_tes),
                 ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_pre_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),

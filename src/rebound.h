@@ -216,6 +216,10 @@ struct reb_simulation_integrator_whfast {
     unsigned int recalculate_coordinates_but_not_synchronized_warning;
 };
 
+struct reb_simulation_integrator_tes {
+
+};
+
 enum REB_EOS_TYPE {
     REB_EOS_LF = 0x00, 
     REB_EOS_LF4 = 0x01,
@@ -555,6 +559,7 @@ struct reb_simulation {
         REB_INTEGRATOR_MERCURIUS = 9,// MERCURIUS integrator 
         REB_INTEGRATOR_SABA = 10,    // SABA integrator family (Laskar and Robutel 2001)
         REB_INTEGRATOR_EOS = 11,     // Embedded Operator Splitting (EOS) integrator family (Rein 2019)
+        REB_INTEGRATOR_TES = 20,     // Terrestrial Exoplanet Simulator (TES) 
         } integrator;
     enum {
         REB_BOUNDARY_NONE = 0,      // Do not check for anything (default)
@@ -579,6 +584,7 @@ struct reb_simulation {
     struct reb_simulation_integrator_mercurius ri_mercurius;// The MERCURIUS struct
     struct reb_simulation_integrator_janus ri_janus;        // The JANUS struct 
     struct reb_simulation_integrator_eos ri_eos;            // The EOS struct 
+    struct reb_simulation_integrator_tes ri_tes;            // TES struct
 
      // Callback functions
     void (*additional_forces) (struct reb_simulation* const r);
