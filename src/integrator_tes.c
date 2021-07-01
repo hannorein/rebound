@@ -30,11 +30,12 @@
 #include <time.h>
 #include "rebound.h"
 #include "integrator_tes.h"
-#include "Simulation.h"
+#include "simulation.h"
 #include "dhem.h"
 #include "radau.h"
 #include "radau_step.h"
 #include "UniversalVars.h"
+
 
 #define n  3
 static double Q[n*3];
@@ -85,11 +86,14 @@ void reb_integrator_tes_synchronize(struct reb_simulation* r){
     struct reb_particle* const particles = r->particles;
     uint32_t N = r->N;
 
+    // Do I need to convert away from DH coords here?
     for(uint32_t i=0; i < N; i++) 
     {
         particles[i].x = Q[3*i];
         particles[i].y = Q[3*i+1];
         particles[i].z = Q[3*i+2];
+
+        // This need to be converted back to velocity
         particles[i].vx = P[3*i];
         particles[i].vy = P[3*i+1];
         particles[i].vz = P[3*i+2];
@@ -115,16 +119,16 @@ void reb_integrator_tes_init(struct reb_simulation* r)
 
     // Default values - these need changing to be proper
     double t0 = 0;
-    double period = 86;
-    double orbits = 1;
+    double period = r->ri_tes.orbital_period;
+    double orbits = 100;
     uint32_t output_spacing = 0;
-    uint32_t output_samples = 0;
-    double rTol = 1e-6;
+    uint32_t output_samples = r->ri_tes.output_samples;
+    double rTol = r->ri_tes.epsilon;
     double aTol = 1;
-    double rectisPerOrbit = 1.618;
-    double dQcutoff = 1e-3;
+    double rectisPerOrbit = r->ri_tes.recti_per_orbit;
+    double dQcutoff = r->ri_tes.dq_max;
     double dPcutoff = 1;
-    double hInitial = 0.1;
+    double hInitial = r->dt;
     double timeOut = 1e11;
     char * outputFile = "temp_output.txt";  
 
@@ -166,5 +170,9 @@ void reb_integrator_tes_init(struct reb_simulation* r)
     Radau_Init(sim);
     // Perform the integration.
     Radau_integrate();
-
+    // Clean up after onesself.
+    UniversalVars_Free();
+    dhem_Free();
+    Radau_Free();
+    Simulation_Free();
 }

@@ -380,61 +380,48 @@ static void RadauStep15_Step(uint32_t * z_iterations, double t, double h, uint32
     accMax = 0;
     acc_max_tb = 0;
     errMax = 0;
+    double q_ddot[3*sim->n];
 
-    for(uint32_t i = 1; i < sim->n; i++)
-    {   
-      for(uint32_t j = 0; j < 3; j++)
+    for(uint32_t j = 1; j < sim->n; j++)
+    {
+      q_ddot[3*j+0] = sim->rhs->Xosc_dotArr[8][3*sim->n+3*j+0] / sim->mass[j];
+      q_ddot[3*j+1] = sim->rhs->Xosc_dotArr[8][3*sim->n+3*j+1] / sim->mass[j];
+      q_ddot[3*j+2] = sim->rhs->Xosc_dotArr[8][3*sim->n+3*j+2] / sim->mass[j];
+    }    
+
+    for(uint32_t j = 3; j < 3*sim->n; j++)
+    {
+      double b6 = fabs(radau->b6_store[j]);
+      double acc = fabs(radau->acc_ptr[j]);
+
+      // double acc_tb = fabs(sim->rhs->Xosc_dotArr[8][j]);
+      double acc_tb = fabs(q_ddot[j]);
+
+      if(isnormal(acc_tb))
       {
-        uint32_t idx = 3*i+j;
-        double b6 = fabs(radau->b6_store[idx]);
-        double acc = fabs(radau->acc_ptr[idx]);
-        double acc_tb = fabs(sim->rhs->Xosc_dotArr[8][3*sim->n+idx] / sim->mass[i]);   
+        acc_max_tb = acc_tb > acc_max_tb ? acc_tb : acc_max_tb;
+      }
 
-        if(isnormal(acc_tb))
-        {
-          acc_max_tb = acc_tb > acc_max_tb ? acc_tb : acc_max_tb;
-        }
+      if(isnormal(b6))
+      {
+        b6Max = b6 > b6Max ? b6 : b6Max;
+      }
 
-        if(isnormal(b6))
-        {
-          b6Max = b6 > b6Max ? b6 : b6Max;
-        }
-
-        if(isnormal(acc))
-        {
-          accMax = acc > accMax ? acc : accMax;
-        }        
+      if(isnormal(acc))
+      {
+        accMax = acc > accMax ? acc : accMax;
       }
     }
-
-
-
-
-    // for(uint32_t j = 3; j < 3*sim->n; j++)
-    // {
-    //   double b6 = fabs(radau->b6_store[j]);
-    //   double acc = fabs(radau->acc_ptr[j]);
-
-    //   double acc_tb = fabs(sim->rhs->Xosc_dotArr[8][j]);
-
-    //   if(isnormal(acc_tb))
-    //   {
-    //     acc_max_tb = acc_tb > acc_max_tb ? acc_tb : acc_max_tb;
-    //   }
-
-    //   if(isnormal(b6))
-    //   {
-    //     b6Max = b6 > b6Max ? b6 : b6Max;
-    //   }
-
-    //   if(isnormal(acc))
-    //   {
-    //     accMax = acc > accMax ? acc : accMax;
-    //   }
-    // }
     errMax = b6Max/acc_max_tb;
-    errMax = b6Max/accMax;
   
+
+    for(uint32_t k = 1; k < sim->n; k++)
+    {
+      ratio = NORM(radau->dX, k) / NORM(sim->rhs->Qosc, k);
+
+      ratioMax = ratio > ratioMax ? ratio : ratioMax;
+    }
+
     // Have we converged?
     if(((errMax < 1E-15 ) && n >= MIN_ITERATIONS))
     {
@@ -827,7 +814,7 @@ void ControlVars_Clear(controlVars * var)
     var->p5[i] = 0.0;
     var->p6[i] = 0.0;
   }
-  // var->size = 0;
+  var->size = 0;
 }
 
 

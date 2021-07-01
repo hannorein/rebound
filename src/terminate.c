@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "Simulation.h"
+#include "simulation.h"
 #include "dhem.h"
 #include "radau.h"
 #include "radau_step.h"

@@ -45,6 +45,7 @@
 #include "integrator_sei.h"
 #include "integrator_janus.h"
 #include "integrator_eos.h"
+#include "integrator_tes.h"
 
 void reb_integrator_part1(struct reb_simulation* r){
 	switch(r->integrator){

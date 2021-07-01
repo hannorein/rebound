@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include "terminate.h"
 #include <time.h>
-#include "Simulation.h"
+#include "simulation.h"
 #include "dhem.h"
 #include "UniversalVars.h"
 

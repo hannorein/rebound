@@ -17,7 +17,7 @@
 #ifndef _IAS15_H_
 #define _IAS15_H_
 
-#include "Simulation.h"
+#include "simulation.h"
 #include <stdio.h>
 #include <time.h>
 

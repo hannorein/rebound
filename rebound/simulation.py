@@ -2059,8 +2059,11 @@ class reb_simulation_integrator_tes(Structure):
     It controls the behaviour of the Terrestrial Exoplanet Simulator (TES) integrator.
     """
 
-    _fields_ = [
-            ]               
+    _fields_ = [("dq_max", c_double),
+    ("recti_per_orbit", c_double),
+    ("epsilon", c_double),
+    ("output_samples", c_double),
+    ("orbital_period", c_double)]               
 
 
 class timeval(Structure):

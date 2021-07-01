@@ -16,7 +16,7 @@
 
 #ifndef RADAU_STEP_H
 #define RADAU_STEP_H
-#include "Simulation.h"
+#include "simulation.h"
 
 void RadauStep15_Init(SIMULATION * z_sim);
 void RadauStep15_Free(void);

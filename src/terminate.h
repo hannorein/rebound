@@ -17,7 +17,7 @@
 #ifndef TERMINATE_H
 #define TERMINATE_H
 
-#include "Simulation.h"
+#include "simulation.h"
 
 typedef enum
 {

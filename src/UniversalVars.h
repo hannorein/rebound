@@ -16,7 +16,7 @@
 
 #ifndef _UVARS_H_
 #define _UVARS_H_
-#include "Simulation.h"
+#include "simulation.h"
 
 // Build switch for using long double implementation of universal variables.
 #ifdef USE_LONG_DOUBLES

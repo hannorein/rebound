@@ -5,7 +5,7 @@ OPT+= -fPIC -DLIBREBOUND
 SOURCES=rebound.c tree.c particle.c gravity.c integrator.c integrator_whfast.c integrator_saba.c integrator_ias15.c \
 		integrator_sei.c integrator_leapfrog.c integrator_mercurius.c integrator_eos.c integrator_tes.c boundary.c \
 		input.c binarydiff.c output.c collision.c communication_mpi.c display.c tools.c derivatives.c simulationarchive.c \
-		glad.c integrator_janus.c transformations.c  dhem.c radau.c radau_step.c Simulation.c terminate.c UniversalVars.c
+		glad.c integrator_janus.c transformations.c  dhem.c radau.c radau_step.c simulation.c terminate.c UniversalVars.c
 
 OBJECTS=$(SOURCES:.c=.o)
 HEADERS=$(SOURCES:.c=.h)

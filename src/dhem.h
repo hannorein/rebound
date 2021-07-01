@@ -17,7 +17,7 @@
 #ifndef _DHEM_H_
 #define _DHEM_H_
 
-#include "Simulation.h"
+#include "simulation.h"
 
 typedef enum _RHS_CONFIG_
 {
