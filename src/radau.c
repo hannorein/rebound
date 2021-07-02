@@ -53,11 +53,8 @@ uint32_t Radau_integrate(void)
   t = sim->t0;
   tEnd = sim->tEnd;
   h = sim->hInitial;
-  double hNew = 0.0;
+
   double hLast = 0.0;
-  uint32_t terminatedEarly = 0;
-  uint32_t stepRejected = 0;
-  uint32_t previouslyRejected = 0;
 
   radau->tStart = clock();
 
@@ -65,29 +62,15 @@ uint32_t Radau_integrate(void)
 
   while(1)
   {
+    double hNew = 0.0;
     radau->h = h;
     radau->t = t;
 
-    // If we have been rejected before then dont repeat these steps. (step rejection removed for now anyway)
-    if(previouslyRejected == 0)
-    {
-      OutputToFile(t, rectificationCount, iterations, h, 0);
+    OutputToFile(t, rectificationCount, iterations, h, 0);
 
-      if(step != 0)
-      {
-          if(sim->termination_check_enable && radau->fTerminate != NULL)
-          {
-            if(radau->fTerminate())
-            {
-              terminatedEarly = 1;
-            }
-          }
-
-          rectificationCount = sim->fRectify(t, sim->Q_dh, sim->P_dh, radau->dQ,
-                                            radau->dP, radau->rectifiedArray, FINAL_STAGE_INDEX);
-        radau->rectifications += rectificationCount;
-      }
-    }
+    rectificationCount = sim->fRectify(t, sim->Q_dh, sim->P_dh, radau->dQ,
+                                        radau->dP, radau->rectifiedArray, FINAL_STAGE_INDEX);
+    radau->rectifications += rectificationCount;
 
     // Calculate the osculating orbits.
     sim->fStartOfStep(t, h, hArr, OSCULATING_ORBIT_SLOTS, 1);
@@ -100,14 +83,14 @@ uint32_t Radau_integrate(void)
     radau->step(&iterations, t, h, step);
     radau->convergenceIterations += iterations;
 
-    hNew = sim->rTol > 0 ? Radau_CalculateStepSize(h, hLast, &stepRejected, t) : h;
+    hNew = sim->rTol > 0 ? Radau_CalculateStepSize(h, hLast, t) : h;
 
     radau->AnalyticalContinuation(radau->B_1st, radau->Blast_1st, h, hNew, radau->rectifiedArray, step);
     radau->AnalyticalContinuation(radau->B, radau->Blast, h, hNew, radau->rectifiedArray, step);
 
     t += h; 
     
-    if(fabs(t-tEnd) < 1E-15 || t > tEnd || terminatedEarly)
+    if(fabs(t-tEnd) < 1E-15 || t > tEnd)
     {
       OutputToFile(t, rectificationCount, iterations, h, 1);
       // We have finished
@@ -124,7 +107,6 @@ uint32_t Radau_integrate(void)
     hLast = h;
     // Updating the step size should be the final thing we do.
     h = hNew;
-    previouslyRejected = 0;
   }
 
   radau->stepsTaken = step;
@@ -133,12 +115,6 @@ uint32_t Radau_integrate(void)
   sim->tEnd = t;
   clock_t tFinish = clock();
   radau->cpuTimeUsed = ((double)(tFinish - radau->tStart)) / CLOCKS_PER_SEC;
-
-
-  if(terminatedEarly == 0)
-  {
-    sim->fPerformSummation(sim->Q_dh, sim->P_dh, radau->dQ, radau->dP, FINAL_STAGE_INDEX);
-  }
 
   sim->H1 = sim->fCalculateInvariant(sim->Q_dh, sim->P_dh);
   printf("\nH1: %.15E", sim->H1);
@@ -154,11 +130,6 @@ uint32_t Radau_integrate(void)
   printf("Iterations per step: %f\n", (double)radau->convergenceIterations/(double)radau->stepsTaken);
   printf("Rectifications per orbit: %f\n", (double)radau->rectifications/((double)sim->orbits*(sim->n-1)));
   printf("Change in hamiltonian: %E\n", fabs((sim->H1-sim->H0)/sim->H0));
-
-  if(terminatedEarly != 0)
-  {
-    printf("\nTerminated early due to user specified integration event.\n");
-  }
 
   return 1;
 }
@@ -293,12 +264,9 @@ void Radau_Free(void)
   free(radau);
 }
 
-double Radau_CalculateStepSize(double h, double hLast, uint32_t * rejected, double t)
+double Radau_CalculateStepSize(double h, double hLast, double t)
 {
   double hTrial = 0.0;
-
-  // Removed this feature, for now.
-  rejected[0] = 0;
 
   // Get the error estimate and orbit size estimate.
   double errMax = radau->ReturnStepError(h, t);

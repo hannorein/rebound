@@ -17,6 +17,7 @@
 #include "simulation.h"
 #include <stdlib.h>
 #include <string.h>
+#include "rebound.h"
 
 static SIMULATION * sim = NULL;
 

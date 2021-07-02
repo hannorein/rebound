@@ -157,7 +157,7 @@ typedef struct RADAU
 uint32_t Radau_integrate(void);
 void Radau_Init(SIMULATION * z_sim);
 void Radau_Free(void);
-double Radau_CalculateStepSize(double h, double hLast, uint32_t * rejected, double t);
+double Radau_CalculateStepSize(double h, double hLast, double t);
 
 
 #endif

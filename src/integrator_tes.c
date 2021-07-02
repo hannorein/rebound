@@ -49,55 +49,55 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
     struct reb_particle* const particles = r->particles;
     uint32_t N = r->N;
 
-    for(uint32_t i=0;i<N;i++) 
-    {
-        Q[3*i] = particles[i].x;
-        Q[3*i+1] = particles[i].y;
-        Q[3*i+2] = particles[i].z;
+    // for(uint32_t i=0;i<N;i++) 
+    // {
+    //     Q[3*i] = particles[i].x;
+    //     Q[3*i+1] = particles[i].y;
+    //     Q[3*i+2] = particles[i].z;
 
-        P[3*i] = particles[i].vx;
-        P[3*i+1] = particles[i].vy;
-        P[3*i+2] = particles[i].vz;        
-    }
+    //     P[3*i] = particles[i].vx;
+    //     P[3*i+1] = particles[i].vy;
+    //     P[3*i+2] = particles[i].vz;        
+    // }
 
     // remove this when an actual step is performed (enables testing from python for now)
-    for(uint32_t i=0;i<N;i++) 
-    {
-        particles[i].x = 0;
-        particles[i].y = 0;
-        particles[i].z = 0;
-        particles[i].vx = 0;
-        particles[i].vy = 0;
-        particles[i].vz = 0;
-        particles[i].ax = 0;
-        particles[i].ay = 0;
-        particles[i].az = 0;
-    }        
+    // for(uint32_t i=0;i<N;i++) 
+    // {
+    //     particles[i].x = 0;
+    //     particles[i].y = 0;
+    //     particles[i].z = 0;
+    //     particles[i].vx = 0;
+    //     particles[i].vy = 0;
+    //     particles[i].vz = 0;
+    //     particles[i].ax = 0;
+    //     particles[i].ay = 0;
+    //     particles[i].az = 0;
+    // }        
 
     // update timestep
 	r->t+=r->dt;
 	r->dt_last_done = r->dt;
 
     // update the particle arrays - dont need to call this all the time. Does the main rebound routine handle this when required?
-    reb_integrator_tes_synchronize(r);
+    // reb_integrator_tes_synchronize(r);
 }
 
 void reb_integrator_tes_synchronize(struct reb_simulation* r){
     struct reb_particle* const particles = r->particles;
     uint32_t N = r->N;
 
-    // Do I need to convert away from DH coords here?
-    for(uint32_t i=0; i < N; i++) 
-    {
-        particles[i].x = Q[3*i];
-        particles[i].y = Q[3*i+1];
-        particles[i].z = Q[3*i+2];
+    // // Do I need to convert away from DH coords here?
+    // for(uint32_t i=0; i < N; i++) 
+    // {
+    //     particles[i].x = Q[3*i];
+    //     particles[i].y = Q[3*i+1];
+    //     particles[i].z = Q[3*i+2];
 
-        // This need to be converted back to velocity
-        particles[i].vx = P[3*i];
-        particles[i].vy = P[3*i+1];
-        particles[i].vz = P[3*i+2];
-    }
+    //     // This need to be converted back to velocity
+    //     particles[i].vx = P[3*i];
+    //     particles[i].vy = P[3*i+1];
+    //     particles[i].vz = P[3*i+2];
+    // }
 }
 
 void reb_integrator_tes_reset(struct reb_simulation* r){
@@ -109,7 +109,7 @@ void reb_integrator_tes_init(struct reb_simulation* r)
 {
     struct reb_particle* const particles = r->particles;
     uint32_t N = r->N;
-    printf("\n\nCalling init function...\n");
+
         // Allocate memory for input arrays.
     double * Q = (double *)malloc(sizeof(double)*3*r->N);
     double * V = (double *)malloc(sizeof(double)*3*r->N);
@@ -170,6 +170,22 @@ void reb_integrator_tes_init(struct reb_simulation* r)
     Radau_Init(sim);
     // Perform the integration.
     Radau_integrate();
+
+    // Store the output data.
+    double * Q_out = sim->radau->Qout;
+    double * P_out = sim->radau->Pout;
+    for(uint32_t i=0; i < N; i++) // Do I need to convert away from DH coords here?
+    {
+        particles[i].x = Q_out[3*i];
+        particles[i].y = Q_out[3*i+1];
+        particles[i].z = Q_out[3*i+2];
+
+        // This need to be converted back to velocity
+        particles[i].vx = P_out[3*i];
+        particles[i].vy = P_out[3*i+1];
+        particles[i].vz = P_out[3*i+2];
+    }
+    
     // Clean up after onesself.
     UniversalVars_Free();
     dhem_Free();

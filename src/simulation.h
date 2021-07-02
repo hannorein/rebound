@@ -53,6 +53,9 @@ typedef struct
 
 typedef struct _SIMULATION_
 {
+	// ##############################################
+	// To use rebound data structure instead
+	// ##############################################
 	double t0;								/// Initial time
 	double tEnd;							/// End time for the simulation
 	double period;							/// Period of inner most orbit at start of simulation.
@@ -70,9 +73,9 @@ typedef struct _SIMULATION_
 	double dQcutoff;						/// Delta Q growth allowed before rectification.
 	double dPcutoff;						/// Delta P growth allowed before rectification.
 
-	char * outputFile;					/// Output file for integration data.
-	uint32_t output_samples;			/// How many samples to output over the span of the integration
-	uint32_t output_spacing;			/// Linear or log spacing on the outputs?
+	// ##############################################
+	// To keep / refactor
+	// ##############################################
 
 	uint32_t stateVectorLength;		/// Length of the state vector in doubles.
 	uint32_t n3;					/// 3*number of bodies.
@@ -102,24 +105,32 @@ typedef struct _SIMULATION_
 	double H0;								/// Hamiltonian at t0;
 	double H1;								/// Hamiltonian at tEnd.
 
-	// RHS function pointers to be provided by all force models.
-  void (*f_rhs)(double * dQ, double * dP, double * dQ_dot,
-                double * dP_dot, double * dQ_ddot, double * dP_ddot,
-								uint32_t stageNumber, double * cs1, double * cs2);
-  void (*f_rhs_full)(double * r, double * acc);								
-  void (*fStartOfStep)(double t0, double h, double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis);
-  uint32_t (*fRectify)(double t, double * Q, double * P,
-                              double * dQ, double * dP, uint32_t * rectifiedArray, uint32_t stageNumber);
-	void (*fPerformSummation)(double *, double *, double *, double *, uint32_t);
-	double (*fCalculateInvariant)(double * Q, double * P);
-  void (*fCalculateOsculatingOrbitNorm)(double * Xosc_norm);
-  void (*fCalculate_dQdot)(double * dP, double * dQdot, double * Posc);
-  void (*f_dh_full_rhs)(double * Q, double * P, double * Qdot, double * Qddot, double * Pdot, double * mass, uint32_t n);
+	// ##############################################
+	// To throw away
+	// ##############################################
 
-  FILE * encounterFile;
-  uint32_t initial_condition_format;
-  uint32_t fixed_step_size;
-  uint32_t termination_check_enable;
+	char * outputFile;					/// Output file for integration data.
+	uint32_t output_samples;			/// How many samples to output over the span of the integration
+	uint32_t output_spacing;			/// Linear or log spacing on the outputs?	
+
+	// RHS function pointers to be provided by all force models.
+	void (*f_rhs)(double * dQ, double * dP, double * dQ_dot,
+					double * dP_dot, double * dQ_ddot, double * dP_ddot,
+									uint32_t stageNumber, double * cs1, double * cs2);
+	void (*f_rhs_full)(double * r, double * acc);								
+	void (*fStartOfStep)(double t0, double h, double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis);
+	uint32_t (*fRectify)(double t, double * Q, double * P,
+								double * dQ, double * dP, uint32_t * rectifiedArray, uint32_t stageNumber);
+		void (*fPerformSummation)(double *, double *, double *, double *, uint32_t);
+		double (*fCalculateInvariant)(double * Q, double * P);
+	void (*fCalculateOsculatingOrbitNorm)(double * Xosc_norm);
+	void (*fCalculate_dQdot)(double * dP, double * dQdot, double * Posc);
+	void (*f_dh_full_rhs)(double * Q, double * P, double * Qdot, double * Qddot, double * Pdot, double * mass, uint32_t n);
+
+	FILE * encounterFile;
+	uint32_t initial_condition_format;
+	uint32_t fixed_step_size;
+	uint32_t termination_check_enable;
 }SIMULATION;
 
 
