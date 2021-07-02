@@ -187,8 +187,8 @@ void reb_integrator_tes_init(struct reb_simulation* r)
     }
     
     // Clean up after onesself.
-    UniversalVars_Free();
-    dhem_Free();
-    Radau_Free();
-    Simulation_Free();
+    // UniversalVars_Free();
+    // dhem_Free();
+    // Radau_Free();
+    // Simulation_Free();
 }
