@@ -2063,7 +2063,12 @@ class reb_simulation_integrator_tes(Structure):
     ("recti_per_orbit", c_double),
     ("epsilon", c_double),
     ("output_samples", c_double),
-    ("orbital_period", c_double)]               
+    ("orbital_period", c_double),    
+    ("orbits", c_double),    
+    ("version", c_uint),     
+    ("sim", POINTER(c_double)),
+    ("allocated_N", c_double),
+    ]
 
 
 class timeval(Structure):

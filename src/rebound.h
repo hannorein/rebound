@@ -35,6 +35,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <math.h>
+#include "simulation.h" //@todo this is temporary for porting
 #ifdef MPI
 #include "mpi.h"
 #endif // MPI
@@ -217,11 +218,22 @@ struct reb_simulation_integrator_whfast {
 };
 
 struct reb_simulation_integrator_tes {
+    // MUST ALL BE IN CORRECT ORDER!!!
     double dq_max;              // value of dq/q that triggers a rectification (backup to recti_per_orbit)
     double recti_per_orbit;     // main method for triggering a rectification 
     double epsilon;             // tolerance parameter
+    // temporary data storage for porting
     double output_samples;      // temp
     double orbital_period;      // temp
+    double orbits;
+    uint32_t version;
+
+
+
+
+    
+    SIMULATION * sim;   
+    uint32_t allocated_N;
 };
 
 enum REB_EOS_TYPE {

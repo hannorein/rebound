@@ -17,89 +17,41 @@ import tes_driver
 import time
 
 class TestIntegratorTES(unittest.TestCase):
-    # Test case for energy - yet to be implemented. 
-    # def test_particle_pass_through(self):
-        # sim = rebound.Simulation()
-        # sim.add(m=1.)
-        # sim.add(m=1e-3,a=1.12313)
-        # sim.add(m=1e-3,a=2.32323)
-        # sim.move_to_com()
-        # sim.dt = 0.5
-        # sim.integrator = "tes"
-        # e0 = sim.calculate_energy()
-        # sim.integrate(1)
-        # e1 = sim.calculate_energy()
-        # self.assertLess(math.fabs((e0-e1)/e1),eps)
+    # def test_energy(self):
+    #     orbits = (10/100)
+    #     problem = init.GetApophis1979
+    #     output_samples=2500
+    #     samples = 1
+    #     tol=1e-6
+    #     recti_per_orbit = 1.61803398875    
+                 
+    #     G_au_kg_dy = 1.4881806877180788e-34   
+    #     Q,V,mass,period,_ = problem()
+    #     mass /= G_au_kg_dy
+        
+    #     sim = rebound.Simulation()
+    #     sim.G = G_au_kg_dy
+    #     for i in range(3):
+    #         sim.add(m=mass[i], x=Q[i,0], y=Q[i,1], z=Q[i,2], vx=V[i,0], vy=V[i,1], vz=V[i,2])
+        
+    #     sim.move_to_com()
+    #     sim.dt = period/100
+    #     sim.integrator = "tes"  
+    #     sim.ri_tes.dq_max = 1e-3
+    #     sim.ri_tes.recti_per_orbit = recti_per_orbit
+    #     sim.ri_tes.epsilon = tol
+    #     sim.ri_tes.output_samples = output_samples
+    #     sim.ri_tes.orbital_period = period
 
+    #     # need to move out of dh coords first
+    #     # e0 = sim.calculate_energy()
+    #     sim.integrate(period*orbits, 1)
+    #     # e1 = sim.calculate_energy()    
+    #     # self.assertLess(math.fabs((e0-e1)/e1),1e-14)
+        
 
-    def test_bitwise_identical_tes_v1_vs_tes_rebound(self):
-        orbits = 100
-        problem = init.GetApophis1979
-        output_samples=2500
-        samples = 1
-        tol=1e-6
-        recti_per_orbit = 1.61803398875    
-        
-        ###################################################
-        # Run experiments using TES in REBOUND
-        ###################################################       
-        G_au_kg_dy = 1.4881806877180788e-34   
-        Q,V,mass,period,_ = problem()
-        mass /= G_au_kg_dy
-        
-        sim = rebound.Simulation()
-        sim.G = G_au_kg_dy
-        for i in range(3):
-            sim.add(m=mass[i], x=Q[i,0], y=Q[i,1], z=Q[i,2], vx=V[i,0], vy=V[i,1], vz=V[i,2])
-    
-        sim.move_to_com()
-        sim.dt = period/100
-        sim.integrator = "tes"  
-        sim.ri_tes.dq_max = 1e-3
-        sim.ri_tes.recti_per_orbit = recti_per_orbit
-        sim.ri_tes.epsilon = tol
-        sim.ri_tes.output_samples = output_samples
-        sim.ri_tes.orbital_period = period
-        
-        sim.integrate(1)    
-        data = tes_driver.extract_data('temp_output.txt')
-    
-    
-        ###################################################
-        # Run experiments using TES v1 distibution
-        ###################################################
-    
-        manager = Exp.ExperimentManager("apophis_baseline") 
-        config = {}
-        config['orbits'] = orbits
-        config['rtol'] = tol
-        config['name'] = 'tes'
-        config['integrator'] = 'tes'
-        config['output samples'] = output_samples
-        config['output spacing'] = 'linear'   
-        config['dQ max'] = 1E-3
-        config['dP max'] = 1
-        config['rectifications per orbit'] = 1.61803398875
-        config['steps initial per orbit'] = 1E2
-        config['time out'] = 2*86400
-        config['exe file'] = 'output_v1'
-        manager.add_experiment(config, problem)
-       
-        manager.run_experiments()
-        manager.save_experiments()    
-      
-        
-        ###################################################
-        # Comparison between the two tools
-        ###################################################
-        data_reb = manager.experiments[0].integration
-        data_tes = data
-        
-        error = np.abs(data_tes['Q'] - data_reb['Q'])
-        error = error[error > 0.0]
-        self.assertEqual(len(error), 0)
-        
-    def test_integration_output_particles(self):       
+           
+    def test_integration_output_particles(self):  
         orbits = 100
         problem = init.GetApophis1979
         output_samples=2500
@@ -124,6 +76,8 @@ class TestIntegratorTES(unittest.TestCase):
         sim.ri_tes.epsilon = tol
         sim.ri_tes.output_samples = output_samples
         sim.ri_tes.orbital_period = period
+        sim.ri_tes.orbits = orbits
+        sim.ri_tes.version = 0
         
         sim.integrate(period*orbits)
         
@@ -143,12 +97,13 @@ class TestIntegratorTES(unittest.TestCase):
         
         error = np.abs(data_tes - tes_reb_pos)
         errors = len(error[error > 0.0])
-        self.assertEqual(errors, 0)                    
+        self.assertEqual(errors, 0)    
         
-    def test_timing_with_ias15(self):       
+    def test_timing_with_ias15(self):    
+        # return
         orbits = 100
         problem = init.GetApophis1979
-        output_samples=2500
+        output_samples=1
         samples = 1
         tol=1e-6
         recti_per_orbit = 1.61803398875    
@@ -170,6 +125,8 @@ class TestIntegratorTES(unittest.TestCase):
         sim.ri_tes.epsilon = tol
         sim.ri_tes.output_samples = output_samples
         sim.ri_tes.orbital_period = period
+        sim.ri_tes.orbits = orbits
+        sim.ri_tes.version = 0   
         
         t0_tes = time.time()
         sim.integrate(period*orbits)
@@ -189,6 +146,7 @@ class TestIntegratorTES(unittest.TestCase):
 
         rt_ias = t1_ias-t0_ias
         rt_tes = t1_tes-t0_tes
+        print('\nruntime tes/ias15:', rt_tes/rt_ias)
         self.assertGreater(rt_ias, rt_tes)  
 
 

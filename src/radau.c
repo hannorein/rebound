@@ -35,26 +35,57 @@
 static RADAU * radau;
 static SIMULATION * sim;
 
-double t_cs = 0.0;
 double t = 0.0;
 double tEnd = 0.0;
 double h = 0.0;
 uint32_t iterations = 0;
 
-
-static void ClearRectifiedBFields(controlVars * B, uint32_t * rectifiedArray);
 static void OutputToFile(double t, uint32_t rectified, uint32_t iterations, double h, uint32_t forceOutput);
 static double hArr[9] = {0.0, 0.0562625605369221464656521910318, 0.180240691736892364987579942780, 0.352624717113169637373907769648, 0.547153626330555383001448554766, 0.734210177215410531523210605558, 0.885320946839095768090359771030, 0.977520613561287501891174488626, 1.0};
 
+
+double Radau_SingleStep(double z_t, double dt, double dt_last_done)
+{
+    double dt_new = 0.0;
+    radau->h = dt;
+    radau->t = z_t;
+
+    OutputToFile(z_t, sim->rectificationCount, iterations, dt, 0);
+
+    sim->rectificationCount = sim->fRectify(z_t, sim->Q_dh, sim->P_dh, radau->dQ,
+                                        radau->dP, radau->rectifiedArray, FINAL_STAGE_INDEX);
+    radau->rectifications += sim->rectificationCount;
+
+    // Calculate the osculating orbits.
+    sim->fStartOfStep(z_t, dt, hArr, OSCULATING_ORBIT_SLOTS, 1);
+
+    ClearRectifiedBFields(radau->B, radau->rectifiedArray);
+    ClearRectifiedBFields(radau->B_1st, radau->rectifiedArray);
+
+    radau->CalculateGfromB(); 
+
+    radau->step(&iterations, z_t, dt, sim->step);
+    radau->convergenceIterations += iterations;
+
+    dt_new = sim->rTol > 0 ? Radau_CalculateStepSize(dt, dt_last_done, z_t) : dt;
+
+    radau->AnalyticalContinuation(radau->B_1st, radau->Blast_1st, dt, dt_new, radau->rectifiedArray, sim->step);
+    radau->AnalyticalContinuation(radau->B, radau->Blast, dt, dt_new, radau->rectifiedArray, sim->step);
+  
+    // for(uint32_t i = 0; i < 3; i++)
+    // {
+    //   printf("\n%.8E %.8E %.8E", radau->dQ[3*i], radau->dQ[3*i+1], radau->dQ[3*i+2]);
+    // }
+    return dt_new;
+}
+
 uint32_t Radau_integrate(void)
 {
-  uint32_t step = 0;
-  uint32_t rectificationCount = 0;
+  sim->step = 0;
+  sim->rectificationCount = 0;
   t = sim->t0;
   tEnd = sim->tEnd;
   h = sim->hInitial;
-
-  double hLast = 0.0;
 
   radau->tStart = clock();
 
@@ -63,36 +94,15 @@ uint32_t Radau_integrate(void)
   while(1)
   {
     double hNew = 0.0;
-    radau->h = h;
-    radau->t = t;
 
-    OutputToFile(t, rectificationCount, iterations, h, 0);
-
-    rectificationCount = sim->fRectify(t, sim->Q_dh, sim->P_dh, radau->dQ,
-                                        radau->dP, radau->rectifiedArray, FINAL_STAGE_INDEX);
-    radau->rectifications += rectificationCount;
-
-    // Calculate the osculating orbits.
-    sim->fStartOfStep(t, h, hArr, OSCULATING_ORBIT_SLOTS, 1);
-
-    ClearRectifiedBFields(radau->B, radau->rectifiedArray);
-    ClearRectifiedBFields(radau->B_1st, radau->rectifiedArray);
-
-    radau->CalculateGfromB(); 
-
-    radau->step(&iterations, t, h, step);
-    radau->convergenceIterations += iterations;
-
-    hNew = sim->rTol > 0 ? Radau_CalculateStepSize(h, hLast, t) : h;
-
-    radau->AnalyticalContinuation(radau->B_1st, radau->Blast_1st, h, hNew, radau->rectifiedArray, step);
-    radau->AnalyticalContinuation(radau->B, radau->Blast, h, hNew, radau->rectifiedArray, step);
+    hNew = Radau_SingleStep(t, h, sim->h_last_done);
+    // printf("\nt: %.5f. dt: %.5f. dt_new: %.5f", t, h, hNew);
 
     t += h; 
     
     if(fabs(t-tEnd) < 1E-15 || t > tEnd)
     {
-      OutputToFile(t, rectificationCount, iterations, h, 1);
+      OutputToFile(t, sim->rectificationCount, iterations, h, 1);
       // We have finished
       break;
     }
@@ -103,13 +113,13 @@ uint32_t Radau_integrate(void)
       hNew = tEnd-t;
     }
 
-    step++;
-    hLast = h;
+    sim->step++;
+    sim->h_last_done = h;
     // Updating the step size should be the final thing we do.
     h = hNew;
   }
 
-  radau->stepsTaken = step;
+  radau->stepsTaken = sim->step;
 
   sim->orbits = t / sim->period;
   sim->tEnd = t;
@@ -291,7 +301,7 @@ double Radau_CalculateStepSize(double h, double hLast, double t)
 }
 
 
-static void ClearRectifiedBFields(controlVars * B, uint32_t * rectifiedArray)
+void ClearRectifiedBFields(controlVars * B, uint32_t * rectifiedArray)
 {
   for(uint32_t i = 0; i < sim->stateVectorLength; i++)
   {

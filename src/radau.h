@@ -158,6 +158,6 @@ uint32_t Radau_integrate(void);
 void Radau_Init(SIMULATION * z_sim);
 void Radau_Free(void);
 double Radau_CalculateStepSize(double h, double hLast, double t);
-
-
+void ClearRectifiedBFields(controlVars * B, uint32_t * rectifiedArray);
+double Radau_SingleStep(double z_t, double dt, double dt_last_done);
 #endif
