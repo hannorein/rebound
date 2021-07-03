@@ -11,7 +11,6 @@ include src/dhem.c
 include src/radau.c 
 include src/radau_step.c 
 include src/simulation.c 
-include src/terminate.c 
 include src/UniversalVars.c
 include src/integrator.c
 include src/gravity.c

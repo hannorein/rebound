@@ -77,7 +77,6 @@ class TestIntegratorTES(unittest.TestCase):
         sim.ri_tes.output_samples = output_samples
         sim.ri_tes.orbital_period = period
         sim.ri_tes.orbits = orbits
-        sim.ri_tes.version = 0
         
         sim.integrate(period*orbits)
         
@@ -100,7 +99,6 @@ class TestIntegratorTES(unittest.TestCase):
         self.assertEqual(errors, 0)    
         
     def test_timing_with_ias15(self):    
-        # return
         orbits = 100
         problem = init.GetApophis1979
         output_samples=1
@@ -126,7 +124,6 @@ class TestIntegratorTES(unittest.TestCase):
         sim.ri_tes.output_samples = output_samples
         sim.ri_tes.orbital_period = period
         sim.ri_tes.orbits = orbits
-        sim.ri_tes.version = 0   
         
         t0_tes = time.time()
         sim.integrate(period*orbits)

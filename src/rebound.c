@@ -812,7 +812,6 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
                 if (r->display_data){
                     r->display_data->opengl_enabled = 0;
                 }
-                reb_integrator_tes_init(r);
                 reb_integrate_raw(&thread_info);
             }
             break;

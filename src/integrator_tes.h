@@ -28,5 +28,4 @@ void reb_integrator_tes_part1(struct reb_simulation* r);          ///< Internal 
 void reb_integrator_tes_part2(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
 void reb_integrator_tes_synchronize(struct reb_simulation* r);    ///< Internal function used to call a specific integrator
 void reb_integrator_tes_reset(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
-void reb_integrator_tes_init(struct reb_simulation* r);           //@todo remove this interface function once tes is properly installed
 #endif

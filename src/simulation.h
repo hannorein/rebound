@@ -111,9 +111,6 @@ typedef struct _SIMULATION_
 	uint32_t step;
 	uint32_t rectificationCount;
 	uint32_t h_last_done;
-	char * outputFile;					/// Output file for integration data.
-	uint32_t output_samples;			/// How many samples to output over the span of the integration
-	uint32_t output_spacing;			/// Linear or log spacing on the outputs?	
 
 	// RHS function pointers to be provided by all force models.
 	void (*f_rhs)(double * dQ, double * dP, double * dQ_dot,

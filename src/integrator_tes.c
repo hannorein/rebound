@@ -39,11 +39,6 @@
 void reb_integrator_tes_part1(struct reb_simulation* r){} // unused
 
 void reb_integrator_tes_part2(struct reb_simulation* r){
-    if(r->ri_tes.version == 1)
-    {
-        r->t = r->ri_tes.orbits*r->ri_tes.orbital_period;
-        return;
-    }
     struct reb_particle* const particles = r->particles;
     uint32_t N = r->N;
 
@@ -79,10 +74,7 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         r->ri_tes.sim->period = r->ri_tes.orbital_period;
         r->ri_tes.sim->dQcutoff = r->ri_tes.dq_max;
         r->ri_tes.sim->dPcutoff = 1;
-        r->ri_tes.sim->outputFile = "temp_output.txt";
         r->ri_tes.sim->timeOut = 1e11;
-        r->ri_tes.sim->output_spacing = 0;
-        r->ri_tes.sim->output_samples = r->ri_tes.output_samples;
 
         UniversalVars_Init(r->ri_tes.sim);
         dhem_Init(r->ri_tes.sim, r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit, 9);
@@ -121,75 +113,9 @@ void reb_integrator_tes_synchronize(struct reb_simulation* r){
 }
 
 void reb_integrator_tes_reset(struct reb_simulation* r){
-	// Do nothing.
-}
-
-// @todo this is temporary code and needs to be removed once unit testing is wrapped around
-void reb_integrator_tes_init(struct reb_simulation* r)
-{
-    if(r->ri_tes.version == 0)
-    {
-        return;
-    }
-
-    struct reb_particle* const particles = r->particles;
-    uint32_t N = r->N;
-
-    r->ri_tes.sim = Simulation_Init(N);
-
-    // Default values - these need removing
-    double t0 = 0;
-
-    for(uint32_t i=0;i<N;i++) 
-    {
-        r->ri_tes.sim->Q0[3*i] = particles[i].x;
-        r->ri_tes.sim->Q0[3*i+1] = particles[i].y;
-        r->ri_tes.sim->Q0[3*i+2] = particles[i].z;
-        r->ri_tes.sim->V0[3*i] = particles[i].vx;
-        r->ri_tes.sim->V0[3*i+1] = particles[i].vy;
-        r->ri_tes.sim->V0[3*i+2] = particles[i].vz;        
-        r->ri_tes.sim->mass[i] = particles[i].m*r->G; // need to think carefully about what the do with G (probs change to rebound style to make use of helper functions).
-    }
-
-    // Store configuration values in the simulation.
-    r->ri_tes.sim->t0 = t0;
-    r->ri_tes.sim->tEnd = r->ri_tes.orbital_period*r->ri_tes.orbits;
-    r->ri_tes.sim->hInitial = r->dt;
-    r->ri_tes.sim->aTol = 1;
-    r->ri_tes.sim->rTol = r->ri_tes.epsilon;
-    r->ri_tes.sim->rectisPerOrbit = r->ri_tes.recti_per_orbit;
-    r->ri_tes.sim->period = r->ri_tes.orbital_period;
-    r->ri_tes.sim->dQcutoff = r->ri_tes.dq_max;
-    r->ri_tes.sim->dPcutoff = 1;
-    r->ri_tes.sim->outputFile = "temp_output.txt";
-    r->ri_tes.sim->timeOut = 1e11;
-    r->ri_tes.sim->output_spacing = 0;
-    r->ri_tes.sim->output_samples = r->ri_tes.output_samples;
-
-    UniversalVars_Init(r->ri_tes.sim);
-    dhem_Init(r->ri_tes.sim, r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit, 9);
-    Radau_Init(r->ri_tes.sim);
-    // Perform the integration.
-    Radau_integrate();
-
-    // Store the output data.
-    double * Q_out = r->ri_tes.sim->radau->Qout;
-    double * P_out = r->ri_tes.sim->radau->Pout;
-    for(uint32_t i=0; i < N; i++) // Do I need to convert away from DH coords here?
-    {
-        particles[i].x = Q_out[3*i];
-        particles[i].y = Q_out[3*i+1];
-        particles[i].z = Q_out[3*i+2];
-
-        // This need to be converted back to velocity
-        particles[i].vx = P_out[3*i];
-        particles[i].vy = P_out[3*i+1];
-        particles[i].vz = P_out[3*i+2];
-    }
-    
-    // Clean up after onesself.
-    UniversalVars_Free();
-    dhem_Free();
-    Radau_Free();
-    Simulation_Free();
+    // Need to think about this properly - should this also go inside the part2 loop?
+    // UniversalVars_Free();
+    // dhem_Free();
+    // Radau_Free();
+    // Simulation_Free();    
 }

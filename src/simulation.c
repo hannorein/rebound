@@ -32,7 +32,6 @@ SIMULATION * Simulation_Init(uint32_t z_n)
   sim->n = z_n;
   sim->n3 = 3*z_n;
   sim->n_init = z_n;
-  sim->outputFile = (char*)"outputDefault.txt";
   sim->stateVectorLength = 2*3*sim->n;
   sim->stateVectorSize = sim->stateVectorLength * sizeof(double);
   sim->stateVectorSize_ld = sim->stateVectorLength * sizeof(long double);

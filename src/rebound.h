@@ -222,16 +222,13 @@ struct reb_simulation_integrator_tes {
     double dq_max;              // value of dq/q that triggers a rectification (backup to recti_per_orbit)
     double recti_per_orbit;     // main method for triggering a rectification 
     double epsilon;             // tolerance parameter
-    // temporary data storage for porting
+
+
+    // temporary data storage for porting - everything below here can ultimately be removed.
     double output_samples;      // temp
     double orbital_period;      // temp
     double orbits;
     uint32_t version;
-
-
-
-
-    
     SIMULATION * sim;   
     uint32_t allocated_N;
 };
