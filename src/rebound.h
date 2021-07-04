@@ -218,7 +218,7 @@ struct reb_simulation_integrator_whfast {
 };
 
 struct reb_simulation_integrator_tes {
-    // MUST ALL BE IN CORRECT ORDER!!!
+    // MUST ALL BE IN CORRECT ORDER
     double dq_max;              // value of dq/q that triggers a rectification (backup to recti_per_orbit)
     double recti_per_orbit;     // main method for triggering a rectification 
     double epsilon;             // tolerance parameter
@@ -231,6 +231,7 @@ struct reb_simulation_integrator_tes {
     uint32_t version;
     SIMULATION * sim;   
     uint32_t allocated_N;
+    struct reb_particle* particles_dh;
 };
 
 enum REB_EOS_TYPE {

@@ -31,7 +31,7 @@ static SIMULATION * sim;
 
 static void dhem_PerformSummation(double * Q, double * P,
                                double * dQ, double * dP, uint32_t stageNumber);
-static void dhem_InitialiseOsculatingOrbits(double * Q, double * P, double t);
+
 static inline void add_cs(double* out, double* cs, double inp);
 
 void dhem_rhs_wrapped(double * dQ, double * dP, double * dQ_dot,
@@ -261,7 +261,7 @@ static void dhem_PerformSummation(double * Q, double * P,
 
 }
 
-static void dhem_InitialiseOsculatingOrbits(double * Q, double * P, double t)
+void dhem_InitialiseOsculatingOrbits(double * Q, double * P, double t)
 {
   for(uint32_t i = 1; i < sim->n; i++)
   {
@@ -463,10 +463,22 @@ void dhem_ConvertToDHCoords(double * Q, double * V, double * Qout, double * Pout
 
       double mTot = dhem->mTotal;
 
-      // Work in the COM frame.
       Qout[0] = 0;
       Qout[1] = 0;
       Qout[2] = 0;
+
+      for(uint32_t i = 0; i < sim->n; i++)
+      {
+        Qout[0] += Q[3*i]*m[i];
+        Qout[1] += Q[3*i+1]*m[i];
+        Qout[2] += Q[3*i+2]*m[i];
+      }
+
+      Qout[0] /= mTot;
+      Qout[1] /= mTot;
+      Qout[2] /= mTot;
+
+
 
       // Calculate the momenta terms.
       double COP[3] = {0,0,0};
@@ -519,9 +531,9 @@ void dhem_ConvertToDHCoords(double * Q, double * V, double * Qout, double * Pout
     }
   }
       // Work in the COM frame.
-      Pout[0] = 0;
-      Pout[1] = 0;
-      Pout[2] = 0;
+      // Pout[0] = 0;
+      // Pout[1] = 0;
+      // Pout[2] = 0;
 }
 
 void dhem_CalcOscOrbitsForAllStages(double t0, double h, double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis)
@@ -664,11 +676,6 @@ void dhem_Init(SIMULATION * z_sim, double z_rectificationPeriodDefault, uint32_t
     dhem->rectifyTimeArray[i] = sim->t0 + z_rectificationPeriodDefault;
     dhem->rectificationPeriod[i] = z_rectificationPeriodDefault;
   }
-
-  dhem_ConvertToCOM(sim->Q0, sim->V0, sim->r0, sim->v0);
-  dhem_ConvertToDHCoords(sim->Q0, sim->V0, sim->Q_dh, sim->P_dh);
-
-  dhem_InitialiseOsculatingOrbits(sim->Q_dh, sim->P_dh, sim->t0);
 }
 
 void dhem_Free(void)

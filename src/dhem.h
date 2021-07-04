@@ -97,6 +97,7 @@ void dhem_CalcOscOrbitsForAllStages(double t0, double h, double * hArr, uint32_t
 double dhem_CalculateHamiltonian(double * Q, double * P);
 void dhem_ConvertToDHCoords(double * Q, double * V, double * Qout, double * Pout);
 void dhem_ConvertToCOM(double * Q, double * V, double * Qout, double * Vout);
+void dhem_InitialiseOsculatingOrbits(double * Q, double * P, double t);
 void dhem_rhs(double const * __restrict__ const dQ, double const * __restrict__ const dP, double * __restrict__ const dQ_dot,
               double * __restrict__ const dP_dot, double * __restrict__ const dQ_ddot, double * __restrict__ const dP_ddot);
 void dhem_rhs_full(double * r, double * acc);

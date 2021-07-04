@@ -17,40 +17,6 @@ import tes_driver
 import time
 
 class TestIntegratorTES(unittest.TestCase):
-    # def test_energy(self):
-    #     orbits = (10/100)
-    #     problem = init.GetApophis1979
-    #     output_samples=2500
-    #     samples = 1
-    #     tol=1e-6
-    #     recti_per_orbit = 1.61803398875    
-                 
-    #     G_au_kg_dy = 1.4881806877180788e-34   
-    #     Q,V,mass,period,_ = problem()
-    #     mass /= G_au_kg_dy
-        
-    #     sim = rebound.Simulation()
-    #     sim.G = G_au_kg_dy
-    #     for i in range(3):
-    #         sim.add(m=mass[i], x=Q[i,0], y=Q[i,1], z=Q[i,2], vx=V[i,0], vy=V[i,1], vz=V[i,2])
-        
-    #     sim.move_to_com()
-    #     sim.dt = period/100
-    #     sim.integrator = "tes"  
-    #     sim.ri_tes.dq_max = 1e-3
-    #     sim.ri_tes.recti_per_orbit = recti_per_orbit
-    #     sim.ri_tes.epsilon = tol
-    #     sim.ri_tes.output_samples = output_samples
-    #     sim.ri_tes.orbital_period = period
-
-    #     # need to move out of dh coords first
-    #     # e0 = sim.calculate_energy()
-    #     sim.integrate(period*orbits, 1)
-    #     # e1 = sim.calculate_energy()    
-    #     # self.assertLess(math.fabs((e0-e1)/e1),1e-14)
-        
-
-           
     def test_integration_output_particles(self):  
         orbits = 100
         problem = init.GetApophis1979
@@ -77,9 +43,12 @@ class TestIntegratorTES(unittest.TestCase):
         sim.ri_tes.output_samples = output_samples
         sim.ri_tes.orbital_period = period
         sim.ri_tes.orbits = orbits
-        
+                
+        e0 = sim.calculate_energy()
         sim.integrate(period*orbits)
-        
+        e1 = sim.calculate_energy()
+        de = np.abs((e1-e0)/e0)
+
         data_tes = np.array([[ 0.0000000000000000e+00,  0.0000000000000000e+00,
              0.0000000000000000e+00],
            [-9.9604746697684021e-01,  3.5311915613020404e-03,
@@ -94,9 +63,11 @@ class TestIntegratorTES(unittest.TestCase):
             tes_reb_pos[i,1] = sim.particles[i].y
             tes_reb_pos[i,2] = sim.particles[i].z    
         
-        error = np.abs(data_tes - tes_reb_pos)
-        errors = len(error[error > 0.0])
-        self.assertEqual(errors, 0)    
+        error = np.max(np.abs(data_tes - tes_reb_pos))
+        # 1e-7 is max precision (from article) - noise here is due to dh coords change.
+        self.assertLess(error, 5e-6) 
+        self.assertLess(de, 1e-15)
+        
         
     def test_timing_with_ias15(self):    
         orbits = 100

@@ -47,22 +47,31 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         r->ri_tes.allocated_N = N;
         struct reb_particle* const particles = r->particles;
 
+        // Adding new mallocs for data that isnt under the sim data structure here.
+        r->ri_tes.particles_dh = (struct particles*)malloc(sizeof(particles)*r->N);
+
+
         r->ri_tes.sim = Simulation_Init(N);
 
-        // Default values - these need changing to be proper
-        double t0 = 0;
-        double orbits = 100;
+        // Convert from inertial to dh coords.
+        reb_move_to_com(r); // This can be removed once all inertial frames are enabled.
+        reb_transformations_inertial_to_democraticheliocentric_posvel(particles, r->ri_tes.particles_dh, r->N, r->N);
 
-        for(uint32_t i=0;i<N;i++) 
+        for(uint32_t i=1;i<N;i++) 
         {
-            r->ri_tes.sim->Q0[3*i] = particles[i].x;
-            r->ri_tes.sim->Q0[3*i+1] = particles[i].y;
-            r->ri_tes.sim->Q0[3*i+2] = particles[i].z;
-            r->ri_tes.sim->V0[3*i] = particles[i].vx;
-            r->ri_tes.sim->V0[3*i+1] = particles[i].vy;
-            r->ri_tes.sim->V0[3*i+2] = particles[i].vz;        
-            r->ri_tes.sim->mass[i] = particles[i].m*r->G; // need to think carefully about what the do with G (probs change to rebound style to make use of helper functions).
+            r->ri_tes.sim->mass[i] =     r->ri_tes.particles_dh[i].m;
+            r->ri_tes.sim->Q_dh[3*i] =   r->ri_tes.particles_dh[i].x;
+            r->ri_tes.sim->Q_dh[3*i+1] = r->ri_tes.particles_dh[i].y;
+            r->ri_tes.sim->Q_dh[3*i+2] = r->ri_tes.particles_dh[i].z;
+            r->ri_tes.sim->P_dh[3*i] =   r->ri_tes.particles_dh[i].vx*r->ri_tes.particles_dh[i].m;
+            r->ri_tes.sim->P_dh[3*i+1] = r->ri_tes.particles_dh[i].vy*r->ri_tes.particles_dh[i].m;
+            r->ri_tes.sim->P_dh[3*i+2] = r->ri_tes.particles_dh[i].vz*r->ri_tes.particles_dh[i].m; 
         }
+        // Need this until above loop is changed to start at zero.
+        r->ri_tes.sim->mass[0] = particles[0].m;
+
+        // Default value - this need changing to be proper
+        double t0 = 0;
 
         // Store configuration values in the simulation. (should be able to remove this section entirely eventually)
         r->ri_tes.sim->t0 = t0;
@@ -75,9 +84,11 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         r->ri_tes.sim->dQcutoff = r->ri_tes.dq_max;
         r->ri_tes.sim->dPcutoff = 1;
         r->ri_tes.sim->timeOut = 1e11;
+        r->ri_tes.sim->G = r->G;
 
         UniversalVars_Init(r->ri_tes.sim);
         dhem_Init(r->ri_tes.sim, r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit, 9);
+        dhem_InitialiseOsculatingOrbits(r->ri_tes.sim->Q_dh, r->ri_tes.sim->P_dh, r->ri_tes.sim->t0);
         Radau_Init(r->ri_tes.sim);  
     }
 
@@ -98,22 +109,24 @@ void reb_integrator_tes_synchronize(struct reb_simulation* r){
                  
     double * Q_out = r->ri_tes.sim->radau->Qout;
     double * P_out = r->ri_tes.sim->radau->Pout;
-    for(uint32_t i=0; i < N; i++) // Do I need to convert away from DH coords here?
-    {
-        // Probably OK to just do Qosc+dQ and Posc+dP rather than having a separate function here.
-        particles[i].x = Q_out[3*i];
-        particles[i].y = Q_out[3*i+1];
-        particles[i].z = Q_out[3*i+2];
+    double * m = r->ri_tes.sim->mass;
 
-        // These need to be converted back to velocity
-        particles[i].vx = P_out[3*i];
-        particles[i].vy = P_out[3*i+1];
-        particles[i].vz = P_out[3*i+2];
-    }                
+    for(uint32_t i=1; i < N; i++) // Change index to zero once all inertial frames are supported.
+    {
+        r->ri_tes.particles_dh[i].x = Q_out[3*i];
+        r->ri_tes.particles_dh[i].y = Q_out[3*i+1];
+        r->ri_tes.particles_dh[i].z = Q_out[3*i+2];
+        r->ri_tes.particles_dh[i].vx = P_out[3*i]/m[i];    
+        r->ri_tes.particles_dh[i].vy = P_out[3*i+1]/m[i];
+        r->ri_tes.particles_dh[i].vz = P_out[3*i+2]/m[i];
+
+        r->ri_tes.particles_dh[i].m = m[i];
+    }       
+    reb_transformations_democraticheliocentric_to_inertial_posvel(r->particles, r->ri_tes.particles_dh, r->N, r->N);          
 }
 
 void reb_integrator_tes_reset(struct reb_simulation* r){
-    // Need to think about this properly - should this also go inside the part2 loop?
+    // Need to think about this properly - should this also go inside the part2 loop? When is reset called?
     // UniversalVars_Free();
     // dhem_Free();
     // Radau_Free();
