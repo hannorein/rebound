@@ -609,6 +609,10 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
                 fseek(of, field.size, SEEK_CUR);
             }while(field.type!=REB_BINARY_FIELD_TYPE_END && bytesread);
             long size_old = ftell(of);
+            
+            // store location after initial binary (including trailing blob) as first valid end of file
+            long last_blob=ftell(of) + sizeof(struct reb_simulationarchive_blob);
+
             char* buf_old = malloc(size_old);
             fseek(of, 0, SEEK_SET);  
             fread(buf_old, size_old,1,of);
@@ -622,13 +626,31 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
             char* buf_diff;
             size_t size_diff;
             reb_binary_diff(buf_old, size_old, buf_new, size_new, &buf_diff, &size_diff);
-            
-            // Update blob info and Write diff to binary file
+    
             struct reb_simulationarchive_blob blob = {0};
-            fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);  
+            fseek(of, size_old, SEEK_SET);
+         
+            // Find last valid snapshot to allow for restarting and appending to archives where last snapshot was cut off
+            do
+            {
+                fseek(of, -sizeof(struct reb_binary_field), SEEK_CUR);
+                fread(&field, sizeof(struct reb_binary_field), 1, of);
+                if (field.type != REB_BINARY_FIELD_TYPE_END){ // could be EOF or corrupt snapshot
+                    break;
+                }
+                bytesread = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+                last_blob = ftell(of);
+                fseek(of, blob.offset_next, SEEK_CUR);
+            } while(bytesread);
+
+            // To append diff, seek to last valid location (=EOF if all snapshots valid)
+            fseek(of, last_blob, SEEK_SET);
+
+            // Update blob info and Write diff to binary file
+            fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
             fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
             blob.offset_next = size_diff+sizeof(struct reb_binary_field);
-            fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);  
+            fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
             fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
             fwrite(buf_diff, size_diff, 1, of); 
             field.type = REB_BINARY_FIELD_TYPE_END;
