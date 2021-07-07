@@ -546,7 +546,7 @@ class TestSimulationArchiveMercurius(unittest.TestCase):
         sim.integrate(3001)
         with open('simulationarchive.bin', 'r+b') as f:
             f.seek(15900)
-            f.write(bytes("Overwriting binary file with a bunch of garbage. Overwriting binary file with a bunch of garbage. Overwriting binary file with a bunch of garbage.", 'utf-8'))
+            f.write(bytes(72)) # binary should be 15972 bytes, overwrite last 72 bytes with all zeros
         sa = rebound.SimulationArchive("simulationarchive.bin")
         sim = sa[-1]
         sim.automateSimulationArchive("simulationarchive.bin", interval=1000)
