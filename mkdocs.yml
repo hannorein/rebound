@@ -35,6 +35,7 @@ nav:
       - orbitalelements.md
       - simulationarchive.md
       - chaos.md
+      - binaryformat.md
       - c_randomsamplingfunctions.md
       - c_outputfunctions.md
       - miscellaneous.md
