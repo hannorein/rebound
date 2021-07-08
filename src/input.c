@@ -397,7 +397,7 @@ struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum
         return NULL;
     }
     if (warnings & REB_INPUT_BINARY_WARNING_CORRUPTFILE){
-        reb_warning(r,"The binary file seems to be corrupted. An attempt has been made to recover parts of it.");
+        reb_warning(r,"The binary file seems to be corrupted. An attempt has been made to read the uncorrupted parts of it.");
     }
     return r;
 }
