@@ -1,5 +1,6 @@
 import rebound
 import unittest
+import os
 import warnings
 
 class TestSimulationArchive(unittest.TestCase):
@@ -545,8 +546,33 @@ class TestSimulationArchiveMercurius(unittest.TestCase):
         sim.automateSimulationArchive("simulationarchive.bin", interval=1000,deletefile=True) 
         sim.integrate(3001)
         with open('simulationarchive.bin', 'r+b') as f:
-            f.seek(15900)
+            f.seek(0, os.SEEK_END)          
+            f.seek(f.tell() - 72, os.SEEK_SET)
             f.write(bytes(72)) # binary should be 15972 bytes, overwrite last 72 bytes with all zeros
+        sa = rebound.SimulationArchive("simulationarchive.bin")
+        sim = sa[-1]
+        sim.automateSimulationArchive("simulationarchive.bin", interval=1000)
+        sim.integrate(7001)
+        sa = rebound.SimulationArchive("simulationarchive.bin")
+        self.assertEqual(sa.nblobs, 8)
+    
+
+    def test_append_to_corrupt_snapshot_by_2bytes(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1e-3,a=1.)
+        sim.add(m=5e-3,a=2.25)
+    
+        sim.automateSimulationArchive("simulationarchive.bin", interval=1000,deletefile=True) 
+        sim.integrate(3001)
+        s1 = os.path.getsize('simulationarchive.bin')
+        with open('simulationarchive.bin', 'r+b') as f:
+            f.seek(0, os.SEEK_END)          
+            f.seek(f.tell() - 2, os.SEEK_SET)
+            f.truncate() # truncate by 2 bytes
+        s2 = os.path.getsize('simulationarchive.bin')
+        self.assertEqual(s1, s2+2)
+
         sa = rebound.SimulationArchive("simulationarchive.bin")
         sim = sa[-1]
         sim.automateSimulationArchive("simulationarchive.bin", interval=1000)

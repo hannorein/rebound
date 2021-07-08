@@ -58,7 +58,7 @@ BINARY_WARNINGS = [
     (True,  64, "Error while trying to seek file.",),
     (False, 128, "Encountered unkown field in file. File might have been saved with a different version of REBOUND."),
     (True,  256, "Integrator type is not supported by this simulation archive version."),
-    (False,  512, "The binary file seems to be corrupted. An attempt has been made to recover parts of it. However, it might not be possible to append snapshots to the current file."),
+    (False,  512, "The binary file seems to be corrupted. An attempt has been made to recover parts of it."),
 ]
 
 class reb_hash_pointer_pair(Structure):

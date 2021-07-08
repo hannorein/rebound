@@ -363,11 +363,14 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                 if (endoffile==0 && failed==0){
                     struct reb_simulationarchive_blob blob = {0};
                     size_t r3 = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa->inf);
-                    if (r3!=1){
+                    if (r3!=1){ // Next snapshot is corrupted. Current one is ok.
                         failed = 1;
+                        sa->nblobs = i;
+                        break;
                     }
                 }
                 if (failed){
+                    // Current snapshot is corrupt
                     break;
                 }
                 sa->nblobs = i;
@@ -610,9 +613,6 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
             }while(field.type!=REB_BINARY_FIELD_TYPE_END && bytesread);
             long size_old = ftell(of);
             
-            // store location after initial binary (including trailing blob) as first valid end of file
-            long last_blob=ftell(of) + sizeof(struct reb_simulationarchive_blob);
-
             char* buf_old = malloc(size_old);
             fseek(of, 0, SEEK_SET);  
             fread(buf_old, size_old,1,of);
@@ -628,23 +628,58 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
             reb_binary_diff(buf_old, size_old, buf_new, size_new, &buf_diff, &size_diff);
     
             struct reb_simulationarchive_blob blob = {0};
-            fseek(of, size_old, SEEK_SET);
-         
-            // Find last valid snapshot to allow for restarting and appending to archives where last snapshot was cut off
-            do
-            {
-                fseek(of, -sizeof(struct reb_binary_field), SEEK_CUR);
-                fread(&field, sizeof(struct reb_binary_field), 1, of);
-                if (field.type != REB_BINARY_FIELD_TYPE_END){ // could be EOF or corrupt snapshot
-                    break;
+            int file_corrupt = 0;
+            int seek_ok = fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);
+            int blobs_read = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+            if (seek_ok !=0 || blobs_read != 1){ // cannot read blob
+                file_corrupt = 1;
+            }
+            if ( (blob.index>0 && blob.offset_prev <=0) || blob.offset_next != 0){ // blob contains unexpected data. Note: First blob is all zeros.
+                file_corrupt = 1;
+            }
+            if (file_corrupt==0 && blob.index>0 ){
+                // Check if last two blobs are consistent.
+                seek_ok = fseek(of, -blob.offset_prev - 2*sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
+                struct reb_simulationarchive_blob blob2 = {0};
+                blobs_read = fread(&blob2, sizeof(struct reb_simulationarchive_blob), 1, of);
+                if (seek_ok!=0 || blobs_read!=1 || blob2.offset_next != blob.offset_prev){
+                    file_corrupt = 1;
                 }
-                bytesread = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-                last_blob = ftell(of);
-                fseek(of, blob.offset_next, SEEK_CUR);
-            } while(bytesread);
+            }
 
-            // To append diff, seek to last valid location (=EOF if all snapshots valid)
-            fseek(of, last_blob, SEEK_SET);
+            if (file_corrupt){
+                // Find last valid snapshot to allow for restarting and appending to archives where last snapshot was cut off
+                reb_warning(r, "SimulationArchive appears to be corrupted. Will attempt to fix it before appending more snapshots.\n");
+                fseek(of, size_old, SEEK_SET);
+                long last_blob;
+                int seek_ok;
+                do
+                {
+                    seek_ok = fseek(of, -sizeof(struct reb_binary_field), SEEK_CUR);
+                    if (seek_ok != 0){
+                        break;
+                    }
+                    bytesread = fread(&field, sizeof(struct reb_binary_field), 1, of);
+                    if (bytesread != 1 || field.type != REB_BINARY_FIELD_TYPE_END){ // could be EOF or corrupt snapshot
+                        break;
+                    }
+                    bytesread = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+                    if (bytesread != 1){
+                        break;
+                    }
+                    last_blob = ftell(of);
+                    seek_ok = fseek(of, blob.offset_next, SEEK_CUR);
+                    if (seek_ok != 0){
+                        break;
+                    }
+                } while(1);
+
+                // To append diff, seek to last valid location (=EOF if all snapshots valid)
+                fseek(of, last_blob, SEEK_SET);
+            }else{
+                // File is not corrupt. Start at end to save time.
+                fseek(of, 0, SEEK_END);  
+            }
 
             // Update blob info and Write diff to binary file
             fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
