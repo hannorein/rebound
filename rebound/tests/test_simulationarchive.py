@@ -555,6 +555,7 @@ class TestSimulationArchiveMercurius(unittest.TestCase):
         sim.integrate(7001)
         sa = rebound.SimulationArchive("simulationarchive.bin")
         self.assertEqual(sa.nblobs, 8)
+        self.assertAlmostEqual(sa[-1].t, 7000, places=0)
     
 
     def test_append_to_corrupt_snapshot_by_2bytes(self):
@@ -579,6 +580,7 @@ class TestSimulationArchiveMercurius(unittest.TestCase):
         sim.integrate(7001)
         sa = rebound.SimulationArchive("simulationarchive.bin")
         self.assertEqual(sa.nblobs, 8)
+        self.assertAlmostEqual(sa[-1].t, 7000, places=0)
 
 if __name__ == "__main__":
     unittest.main()
