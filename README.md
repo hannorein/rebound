@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/rebound-v3.17.3-green.svg?style=flat)](https://rebound.readthedocs.org)
+[![Version](https://img.shields.io/badge/rebound-v3.17.4-green.svg?style=flat)](https://rebound.readthedocs.org)
 [![PyPI](https://badge.fury.io/py/rebound.svg)](https://badge.fury.io/py/rebound)
 [![GPL](https://img.shields.io/badge/license-GPL-green.svg?style=flat)](https://github.com/hannorein/rebound/blob/main/LICENSE)
 [![Travis](https://api.travis-ci.org/hannorein/rebound.svg?branch=main)](https://travis-ci.org/hannorein/rebound/)
