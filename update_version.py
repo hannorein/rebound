@@ -49,3 +49,7 @@ shortversion = shortversion[:-1]
 
 print("To commit, copy and paste:")
 print("\ngit commit -a -m \"Updating version to "+reboundversion+"\"")
+print("----")
+print("Next:")
+print("python setup.py sdist")
+print("twine upload -r rebound dist/*")
