@@ -48,7 +48,7 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         struct reb_particle* const particles = r->particles;
 
         // Adding new mallocs for data that isnt under the sim data structure here.
-        r->ri_tes.particles_dh = (struct particles*)malloc(sizeof(particles)*r->N);
+        r->ri_tes.particles_dh = (struct particles*)malloc(sizeof(struct reb_particle)*r->N);
 
 
         r->ri_tes.sim = Simulation_Init(N);
