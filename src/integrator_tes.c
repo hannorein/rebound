@@ -75,15 +75,8 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
 
         // Store configuration values in the simulation. (should be able to remove this section entirely eventually)
         r->ri_tes.sim->t0 = t0;
-        r->ri_tes.sim->tEnd = r->ri_tes.orbital_period*r->ri_tes.orbits;
-        r->ri_tes.sim->hInitial = r->dt;
-        r->ri_tes.sim->aTol = 1;
         r->ri_tes.sim->rTol = r->ri_tes.epsilon;
-        r->ri_tes.sim->rectisPerOrbit = r->ri_tes.recti_per_orbit;
-        r->ri_tes.sim->period = r->ri_tes.orbital_period;
         r->ri_tes.sim->dQcutoff = r->ri_tes.dq_max;
-        r->ri_tes.sim->dPcutoff = 1;
-        r->ri_tes.sim->timeOut = 1e11;
         r->ri_tes.sim->G = r->G;
 
         UniversalVars_Init(r->ri_tes.sim);

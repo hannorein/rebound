@@ -33,23 +33,6 @@ typedef enum ERROR_SIMULATION_
 
 }ERROR_SIMULATION;
 
-typedef enum INITIAL_CONDITION_COORDS_
-{
-	cartesian = 0,
-	democratic_heliocentric = 1
-}INITIAL_CONDITION_COORDS;
-
-typedef enum OUTPUT_SPACING_
-{
-	linear_spacing = 0,
-	log_spacing = 1
-}output_spacing;
-
-typedef struct
-{
-	double val;
-	double cs;
-}dbl_dbl;
 
 typedef struct _SIMULATION_
 {
@@ -57,21 +40,10 @@ typedef struct _SIMULATION_
 	// To use rebound data structure instead
 	// ##############################################
 	double t0;								/// Initial time
-	double tEnd;							/// End time for the simulation
-	double period;							/// Period of inner most orbit at start of simulation.
-	double rectisPerOrbit;					/// Rectifications per orbit on average.
-	double hInitial;						/// Initial step size for integrations.
-	double orbits;							/// Estimate as to the highest number of orbits in a simualtion (use for normalization of performance statistics.)
 	double G;								/// Gravitational constant
 	uint32_t n;								/// Number of particles presently
-	uint32_t n_init;						/// Number of particles initially
-	double outputInterval;					/// How frequently in time to output to a file.
-
-	double aTol;								/// Absolute tolerance used by the integrator.
 	double rTol;								/// Relative tolerance used by the integrator.
-
 	double dQcutoff;						/// Delta Q growth allowed before rectification.
-	double dPcutoff;						/// Delta P growth allowed before rectification.
 
 	// ##############################################
 	// To keep / refactor
@@ -87,23 +59,10 @@ typedef struct _SIMULATION_
 	DHEM * rhs;								/// Pointer to the DHEM rhs
 	RADAU * radau;  /// Pointer to our integrator
 
-	double timeOut;
-
-	// For the standard RHS
-	double * r0;
-	double * r;
-	double * v0;
-
 	double * mass;							/// Initial particle masses
-	double * Q0;							/// Initial positions
-	double * V0;							/// Initial velocities.
-
 	double * X_dh;						/// Memory for current state in dh coords.
 	double * Q_dh;						/// Current state in dh coords.
 	double * P_dh;						/// Current state in dh coords.
-
-	double H0;								/// Hamiltonian at t0;
-	double H1;								/// Hamiltonian at tEnd.
 
 	// ##############################################
 	// To throw away
@@ -111,6 +70,7 @@ typedef struct _SIMULATION_
 	uint32_t step;
 	uint32_t rectificationCount;
 	uint32_t h_last_done;
+	uint32_t termination_check_enable;
 
 	// RHS function pointers to be provided by all force models.
 	void (*f_rhs)(double * dQ, double * dP, double * dQ_dot,
@@ -126,15 +86,11 @@ typedef struct _SIMULATION_
 	void (*fCalculate_dQdot)(double * dP, double * dQdot, double * Posc);
 	void (*f_dh_full_rhs)(double * Q, double * P, double * Qdot, double * Qddot, double * Pdot, double * mass, uint32_t n);
 
-	FILE * encounterFile;
-	uint32_t initial_condition_format;
-	uint32_t fixed_step_size;
-	uint32_t termination_check_enable;
+	
 }SIMULATION;
 
 
 SIMULATION * Simulation_Init(uint32_t z_n);
 void Simulation_Free(void);
-void Sim_AddInitialConditions(double * Q, double * V, double * mass);
 
 #endif /* SIMULATION_H_ */

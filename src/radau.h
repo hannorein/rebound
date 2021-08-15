@@ -49,7 +49,6 @@ typedef struct RADAU
   double * P;
 
   // Stepsize control variables
-  double aTol;
   double rTol;
 
   // Temporary buffers for rectifying before we output to file.

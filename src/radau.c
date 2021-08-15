@@ -144,12 +144,7 @@ void Radau_Init(SIMULATION * z_sim)
   radau->nextOutputTime = 0.0;
 
   // Copy across our tolerance fields.
-  radau->aTol = sim->aTol;
   radau->rTol = sim->rTol;
-
-  sim->fixed_step_size = sim->rTol <= 0? 1 : 0;
-
-   sim->hInitial = sim->hInitial < MIN_STEP_SIZE ? MIN_STEP_SIZE : sim->hInitial;
 
   RadauStep15_Init(z_sim);
 }
