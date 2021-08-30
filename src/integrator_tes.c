@@ -46,7 +46,7 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
     {
         r->ri_tes.allocated_N = N;
         struct reb_particle* const particles = r->particles;
-
+        
         // Adding new mallocs for data that isnt under the sim data structure here.
         r->ri_tes.particles_dh = (struct particles*)malloc(sizeof(struct reb_particle)*r->N);
 
@@ -84,7 +84,6 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         dhem_InitialiseOsculatingOrbits(r->ri_tes.sim->Q_dh, r->ri_tes.sim->P_dh, r->ri_tes.sim->t0);
         Radau_Init(r->ri_tes.sim);  
     }
-
     double dt_new = Radau_SingleStep(r->t, r->dt, r->dt_last_done);
 
     // update timestep
@@ -97,25 +96,27 @@ void reb_integrator_tes_synchronize(struct reb_simulation* r){
     struct reb_particle* const particles = r->particles;
     uint32_t N = r->N;
 
-    r->ri_tes.sim->fPerformSummation(r->ri_tes.sim->radau->Qout, r->ri_tes.sim->radau->Pout, 
-                                     r->ri_tes.sim->radau->dQ, r->ri_tes.sim->radau->dP, 8);
-                 
-    double * Q_out = r->ri_tes.sim->radau->Qout;
-    double * P_out = r->ri_tes.sim->radau->Pout;
-    double * m = r->ri_tes.sim->mass;
+    if(r->ri_tes.allocated_N == N)
+    {    
+        r->ri_tes.sim->fPerformSummation(r->ri_tes.sim->radau->Qout, r->ri_tes.sim->radau->Pout, 
+                                        r->ri_tes.sim->radau->dQ, r->ri_tes.sim->radau->dP, 8);
+                    
+        double * Q_out = r->ri_tes.sim->radau->Qout;
+        double * P_out = r->ri_tes.sim->radau->Pout;
+        double * m = r->ri_tes.sim->mass;
+        for(uint32_t i=1; i < N; i++) // Change index to zero once all inertial frames are supported.
+        {
+            r->ri_tes.particles_dh[i].x = Q_out[3*i];
+            r->ri_tes.particles_dh[i].y = Q_out[3*i+1];
+            r->ri_tes.particles_dh[i].z = Q_out[3*i+2];
+            r->ri_tes.particles_dh[i].vx = P_out[3*i]/m[i];    
+            r->ri_tes.particles_dh[i].vy = P_out[3*i+1]/m[i];
+            r->ri_tes.particles_dh[i].vz = P_out[3*i+2]/m[i];
 
-    for(uint32_t i=1; i < N; i++) // Change index to zero once all inertial frames are supported.
-    {
-        r->ri_tes.particles_dh[i].x = Q_out[3*i];
-        r->ri_tes.particles_dh[i].y = Q_out[3*i+1];
-        r->ri_tes.particles_dh[i].z = Q_out[3*i+2];
-        r->ri_tes.particles_dh[i].vx = P_out[3*i]/m[i];    
-        r->ri_tes.particles_dh[i].vy = P_out[3*i+1]/m[i];
-        r->ri_tes.particles_dh[i].vz = P_out[3*i+2]/m[i];
-
-        r->ri_tes.particles_dh[i].m = m[i];
-    }       
-    reb_transformations_democraticheliocentric_to_inertial_posvel(r->particles, r->ri_tes.particles_dh, r->N, r->N);          
+            r->ri_tes.particles_dh[i].m = m[i];
+        }       
+        reb_transformations_democraticheliocentric_to_inertial_posvel(r->particles, r->ri_tes.particles_dh, r->N, r->N); 
+    }         
 }
 
 void reb_integrator_tes_reset(struct reb_simulation* r){
