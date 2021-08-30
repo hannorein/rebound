@@ -35,7 +35,6 @@
 #include <signal.h>
 #include <stdio.h>
 #include <math.h>
-#include "simulation.h" //@todo this is temporary for porting
 #ifdef MPI
 #include "mpi.h"
 #endif // MPI

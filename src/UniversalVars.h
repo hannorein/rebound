@@ -16,7 +16,7 @@
 
 #ifndef _UVARS_H_
 #define _UVARS_H_
-#include "simulation.h"
+
 
 // Build switch for using long double implementation of universal variables.
 #ifdef USE_LONG_DOUBLES
@@ -76,12 +76,12 @@ typedef struct UNIVERSAL_VARS
 //Interface functions.
 void UniversalVars_Init(struct reb_simulation* const r);
 void UniversalVars_Free(void);
-void CalculateClassicalOrbitalElements(void);
+void CalculateClassicalOrbitalElements(struct reb_simulation* r);
 void RebasisOsculatingOrbits_Momenta(double * z_Q, double * z_P, double z_t, uint32_t i);
-void CalculateOsculatingOrbitsForSingleStep(double **Xosc_map, 
+void CalculateOsculatingOrbitsForSingleStep(struct reb_simulation* r, double **Xosc_map, 
                                             const double t0, const double h, double const * const h_array, 
                                             const uint32_t z_stagesPerStep, uint32_t z_rebasis);
-void ApplyCorrectorToOsculatingOrbitCalculation(double **Xosc_map, double t, uint32_t z_stagesPerStep);                                            
+void ApplyCorrectorToOsculatingOrbitCalculation(struct reb_simulation* r, double **Xosc_map, double t, uint32_t z_stagesPerStep);                                            
 
 
 #endif

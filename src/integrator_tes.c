@@ -30,7 +30,6 @@
 #include <time.h>
 #include "rebound.h"
 #include "integrator_tes.h"
-#include "simulation.h"
 #include "dhem.h"
 #include "radau.h"
 #include "radau_step.h"
@@ -51,7 +50,7 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         r->ri_tes.particles_dh = (struct particles*)malloc(sizeof(struct reb_particle)*r->N);
 
 
-        r->ri_tes.sim = Simulation_Init(N);
+        r->ri_tes.sim = Simulation_Init(r, N);
 
         // Convert from inertial to dh coords.
         reb_move_to_com(r); // This can be removed once all inertial frames are enabled.
@@ -75,13 +74,11 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
 
         // Store configuration values in the simulation. (should be able to remove this section entirely eventually)
         r->ri_tes.sim->t0 = t0;
-        r->ri_tes.sim->rTol = r->ri_tes.epsilon;
-        r->ri_tes.sim->dQcutoff = r->ri_tes.dq_max;
 
         UniversalVars_Init(r);
-        dhem_Init(r->ri_tes.sim, r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit, 9);
-        dhem_InitialiseOsculatingOrbits(r->ri_tes.sim->Q_dh, r->ri_tes.sim->P_dh, r->ri_tes.sim->t0);
-        Radau_Init(r->ri_tes.sim);  
+        dhem_Init(r, r->ri_tes.sim, r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit, 9);
+        dhem_InitialiseOsculatingOrbits(r, r->ri_tes.sim->Q_dh, r->ri_tes.sim->P_dh, r->ri_tes.sim->t0);
+        Radau_Init(r);  
     }
     double dt_new = Radau_SingleStep(r, r->t, r->dt, r->dt_last_done);
 
@@ -97,7 +94,7 @@ void reb_integrator_tes_synchronize(struct reb_simulation* r){
 
     if(r->ri_tes.allocated_N == N)
     {    
-        r->ri_tes.sim->fPerformSummation(r->ri_tes.sim->radau->Qout, r->ri_tes.sim->radau->Pout, 
+        r->ri_tes.sim->fPerformSummation(r, r->ri_tes.sim->radau->Qout, r->ri_tes.sim->radau->Pout, 
                                         r->ri_tes.sim->radau->dQ, r->ri_tes.sim->radau->dP, 8);
                     
         double * Q_out = r->ri_tes.sim->radau->Qout;

@@ -71,7 +71,7 @@ controlVars Blast_full;
 
 static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_fCalls, double t, double h, uint32_t step);
 static inline void add_cs(double* out, double* cs, double inp);
-static double ReturnIAS15StepError(double h, double t);
+static double ReturnIAS15StepError(struct reb_simulation* r, double h, double t);
 static void ControlVars_Copy(controlVars * out, controlVars * in);
 static void CalculateGFromBInternal(controlVars * z_G, controlVars * z_B, uint32_t z_start, uint32_t z_end);
 
@@ -105,10 +105,10 @@ static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, 
 {
   double errMax = 0;
   controlVars * z_csB = &radau->cs_B;
-  const uint32_t n3 = sim->n3;
+  const uint32_t n3 = 3*r->N;
 
-  sim->f_rhs(r, radau->dQ, radau->dP, radau->dState0, &radau->dState0[3*sim->n],
-             radau->ddState0, &radau->ddState0[3*sim->n], 0, radau->cs_dState0, radau->cs_ddState0);
+  sim->f_rhs(r, radau->dQ, radau->dP, radau->dState0, &radau->dState0[3*r->N],
+             radau->ddState0, &radau->ddState0[3*r->N], 0, radau->cs_dState0, radau->cs_ddState0);
 
   radau->fCalls++;
 
@@ -131,8 +131,8 @@ static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, 
                                   radau->cs_dX, (int)sim->stateVectorLength/2, sim->stateVectorLength, DONT_ADD_CS_VAR);
 
 
-      sim->f_rhs(r, radau->predictors, &radau->predictors[3*sim->n], radau->dState, &radau->dState[3*sim->n],
-           radau->ddState, &radau->ddState[3*sim->n], i,
+      sim->f_rhs(r, radau->predictors, &radau->predictors[3*r->N], radau->dState, &radau->dState[3*r->N],
+           radau->ddState, &radau->ddState[3*r->N], i,
            radau->cs_dState, radau->cs_ddState);
 
       radau->fCalls++;
@@ -380,16 +380,16 @@ static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, 
     accMax = 0;
     acc_max_tb = 0;
     errMax = 0;
-    double q_ddot[3*sim->n];
+    double q_ddot[3*r->N];
 
-    for(uint32_t j = 1; j < sim->n; j++)
+    for(uint32_t j = 1; j < r->N; j++)
     {
-      q_ddot[3*j+0] = sim->rhs->Xosc_dotArr[8][3*sim->n+3*j+0] / sim->mass[j];
-      q_ddot[3*j+1] = sim->rhs->Xosc_dotArr[8][3*sim->n+3*j+1] / sim->mass[j];
-      q_ddot[3*j+2] = sim->rhs->Xosc_dotArr[8][3*sim->n+3*j+2] / sim->mass[j];
+      q_ddot[3*j+0] = sim->rhs->Xosc_dotArr[8][3*r->N+3*j+0] / sim->mass[j];
+      q_ddot[3*j+1] = sim->rhs->Xosc_dotArr[8][3*r->N+3*j+1] / sim->mass[j];
+      q_ddot[3*j+2] = sim->rhs->Xosc_dotArr[8][3*r->N+3*j+2] / sim->mass[j];
     }    
 
-    for(uint32_t j = 3; j < 3*sim->n; j++)
+    for(uint32_t j = 3; j < 3*r->N; j++)
     {
       double b6 = fabs(radau->b6_store[j]);
       double acc = fabs(radau->acc_ptr[j]);
@@ -415,7 +415,7 @@ static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, 
     errMax = b6Max/acc_max_tb;
   
 
-    for(uint32_t k = 1; k < sim->n; k++)
+    for(uint32_t k = 1; k < r->N; k++)
     {
       ratio = NORM(radau->dX, k) / NORM(sim->rhs->Qosc, k);
 
@@ -443,16 +443,16 @@ static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, 
                                 radau->cs_dX, (int)(n3), sim->stateVectorLength);                                
 
   // Now that we have cs_dX we can perform our correction.
-  ApplyCorrectorToOsculatingOrbitCalculation(sim->rhs->XoscArr, t+h, 9); 
+  ApplyCorrectorToOsculatingOrbitCalculation(r, sim->rhs->XoscArr, t+h, 9); 
 }
 
-static double ReturnIAS15StepError(double h, double t)
+static double ReturnIAS15StepError(struct reb_simulation* r, double h, double t)
 {
   double b6Max = 0;
   double accMax = 0;
   double errMax = 0;
 
-  for(uint32_t i = 0; i < sim->n; i++) 
+  for(uint32_t i = 0; i < r->N; i++) 
   {
       for(uint32_t j = 0; j < 3; j++)
       {
@@ -656,9 +656,9 @@ void RejectStep(void)
   ControlVars_Copy(&Blast, &Blast0);
 }
 
-void RadauStep15_Init(SIMULATION * z_sim)
+void RadauStep15_Init(struct reb_simulation* r)
 {
-    sim = z_sim;
+    sim = r->ri_tes.sim;
     radau = sim->radau;
     radau->step = RadauStep15_Step;
     radau->AnalyticalContinuation = AnalyticalContinuation;

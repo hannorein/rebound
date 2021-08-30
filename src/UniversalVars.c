@@ -67,7 +67,7 @@ static void CalculateClassicalOrbitalElementsSingle(uint32_t i);
 static inline void add_cs(double * out, double * cs, double inp);
 
 
-void CalculateOsculatingOrbitsForSingleStep(double **Xosc_map, 
+void CalculateOsculatingOrbitsForSingleStep(struct reb_simulation* r, double **Xosc_map, 
                                             const double t0, const double h, double const * const h_array, 
                                             const uint32_t z_stagesPerStep, uint32_t z_rebasis)
 {
@@ -93,7 +93,7 @@ void CalculateOsculatingOrbitsForSingleStep(double **Xosc_map,
     
 
     double C[4] = {0.0, 0.0, 0.0, 0.0};
-    for(uint32_t i = 1; i < sim->n; i++)
+    for(uint32_t i = 1; i < r->N; i++)
     {  
       // Calculate the dt value and wrap around the orbital period.
       dt = fmod(dt, p_uVars->period[i]);
@@ -110,10 +110,10 @@ void CalculateOsculatingOrbitsForSingleStep(double **Xosc_map,
       p_uVars->C.c3[i] = C[3];
     }
 
-    for(uint32_t i = 1; i < sim->n; i++)
+    for(uint32_t i = 1; i < r->N; i++)
     {    
       double * Qout = Xosc_map[stage];
-      double * Pout = &Qout[3*sim->n];      
+      double * Pout = &Qout[3*r->N];      
       const double X = p_uVars->X[i];
       const double X2 = X*X;
       const double X3 = X2*X;
@@ -204,12 +204,12 @@ void CalculateOsculatingOrbitsForSingleStep(double **Xosc_map,
 }
 
 
-void ApplyCorrectorToOsculatingOrbitCalculation(double **Xosc_map, double t, uint32_t z_stagePerStep)
+void ApplyCorrectorToOsculatingOrbitCalculation(struct reb_simulation* r, double **Xosc_map, double t, uint32_t z_stagePerStep)
 { 
     double * Qout = Xosc_map[z_stagePerStep-1];
-    double * Pout = &Qout[3*sim->n];      
+    double * Pout = &Qout[3*r->N];      
 
-    for(uint32_t i = 1; i < sim->n; i++)
+    for(uint32_t i = 1; i < r->N; i++)
     {
         for(uint32_t j = 0; j < 3; j++)
         {
@@ -236,7 +236,7 @@ void ApplyCorrectorToOsculatingOrbitCalculation(double **Xosc_map, double t, uin
         }
         RebasisOsculatingOrbits_Momenta(Qout, Pout, t, i);  
     }
-  CalculateClassicalOrbitalElements(); // Remove this (All classical elements can be removed actually)
+  CalculateClassicalOrbitalElements(r); // Remove this (All classical elements can be removed actually)
 }
 
 /*
@@ -393,11 +393,11 @@ static void CalculateClassicalOrbitalElementsSingle(uint32_t i)
   }
 }
 
-void CalculateClassicalOrbitalElements(void)
+void CalculateClassicalOrbitalElements(struct reb_simulation* r)
 {
   if(sim->termination_check_enable)
   {
-    for(uint32_t i = 1; i < sim->n; i++)
+    for(uint32_t i = 1; i < r->N; i++)
     {
       CalculateClassicalOrbitalElementsSingle(i);
     }

@@ -14,14 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 
-#include "simulation.h"
 #include <stdlib.h>
 #include <string.h>
 #include "rebound.h"
 
 static SIMULATION * sim = NULL;
 
-SIMULATION * Simulation_Init(uint32_t z_n)
+SIMULATION * Simulation_Init(struct reb_simulation* r, uint32_t z_n)
 {
   sim = (SIMULATION *)malloc(sizeof(SIMULATION));
 
@@ -29,12 +28,9 @@ SIMULATION * Simulation_Init(uint32_t z_n)
   memset(sim, 0, sizeof(SIMULATION));
 
   // Set control variables to initial values
-  sim->n = z_n;
-  sim->n3 = 3*z_n;
-  sim->stateVectorLength = 2*3*sim->n;
+  sim->stateVectorLength = 2*3*r->N;
   sim->stateVectorSize = sim->stateVectorLength * sizeof(double);
-  sim->stateVectorSize_ld = sim->stateVectorLength * sizeof(long double);
-  sim->controlVectorSize = sim->n * sizeof(double);
+  sim->controlVectorSize = r->N * sizeof(double);
 
   // Allocate memory
   sim->mass = (double *)malloc(sim->controlVectorSize);

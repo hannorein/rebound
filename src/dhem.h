@@ -65,28 +65,12 @@ typedef struct DHEM
   double * __restrict__ m;
   double * __restrict__ m_inv;
   double mTotal;
-  double n;
 
   double * rectificationPeriod;
 
   double * dQdot_cs;
   double * dQddot_cs;
   double * dPdot_cs;
-
-  // Long double implementation storage for osculating orbits.
-  long double * XoscStore_ld;
-  long double ** XoscArr_ld;
-  long double * Xosc_dotStore_ld;
-  long double ** Xosc_dotArr_ld;  
-
-
-  long double * Xosc_ld;
-  long double * Qosc_ld;
-  long double * Posc_ld;
-  long double * Vosc_ld;
-  long double * Xosc_dot_ld;
-  long double * Qosc_dot_ld;
-  long double * Posc_dot_ld;
 
   uint32_t final_stage_index;
 
@@ -97,7 +81,7 @@ void dhem_CalcOscOrbitsForAllStages(struct reb_simulation* r, double t0, double 
 double dhem_CalculateHamiltonian(struct reb_simulation* r, double * Q, double * P);
 void dhem_ConvertToDHCoords(double * Q, double * V, double * Qout, double * Pout);
 void dhem_ConvertToCOM(double * Q, double * V, double * Qout, double * Vout);
-void dhem_InitialiseOsculatingOrbits(double * Q, double * P, double t);
+void dhem_InitialiseOsculatingOrbits(struct reb_simulation* r, double * Q, double * P, double t);
 void dhem_rhs(struct reb_simulation* r, double const * __restrict__ const dQ, double const * __restrict__ const dP, double * __restrict__ const dQ_dot,
               double * __restrict__ const dP_dot, double * __restrict__ const dQ_ddot, double * __restrict__ const dP_ddot);
 void dhem_rhs_wrapped(struct reb_simulation* r, double * dQ, double * dP, double * dQ_dot,
@@ -105,9 +89,9 @@ void dhem_rhs_wrapped(struct reb_simulation* r, double * dQ, double * dP, double
                       double * cs1, double * cs2);      
 void dhem_CalculateOsculatingOrbitDerivatives_Momenta(struct reb_simulation* r, double const * const __restrict__ Qosc, double const * const __restrict__ Posc, 
                                                       double * const __restrict__ Qosc_dot, double * const __restrict__ Posc_dot);
-uint32_t dhem_RectifyOrbits(double t, double * Q, double * P,
+uint32_t dhem_RectifyOrbits(struct reb_simulation* r, double t, double * Q, double * P,
                             double * dQ, double * dP, uint32_t * rectifiedArray, uint32_t stageNumber);
-void dhem_Init(SIMULATION * z_sim, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep);
+void dhem_Init(struct reb_simulation* r, SIMULATION * z_sim, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep);
 void dhem_Free(void);
 void dh_full_rhs(double * Q, double * P, double * Qdot, double * Qddot, double * Pdot, double * mass, uint32_t n);
 

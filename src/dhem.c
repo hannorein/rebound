@@ -29,7 +29,7 @@ static SIMULATION * sim;
 #define NORMl(x, i) sqrtq(x[3*i]*x[3*i]+x[3*i+1]*x[3*i+1]+x[3*i+2]*x[3*i+2])
 #define DOT(x, y, i, j) (x[3*i+0]*y[3*j+0]+x[3*i+1]*y[3*j+1]+x[3*i+2]*y[3*j+2])
 
-static void dhem_PerformSummation(double * Q, double * P,
+static void dhem_PerformSummation(struct reb_simulation* r, double * Q, double * P,
                                double * dQ, double * dP, uint32_t stageNumber);
 
 static inline void add_cs(double* out, double* cs, double inp);
@@ -41,15 +41,15 @@ void dhem_rhs_wrapped(struct reb_simulation* r, double * dQ, double * dP, double
   // Set up the pointer to the previously calculated osculating orbit values.
   dhem->Xosc = dhem->XoscArr[stageNumber];
   dhem->Qosc = dhem->Xosc;
-  dhem->Posc = &dhem->Qosc[3*sim->n];
+  dhem->Posc = &dhem->Qosc[3*r->N];
   dhem->Xosc_dot = dhem->Xosc_dotArr[stageNumber];
   dhem->Qosc_dot = dhem->Xosc_dot;
-  dhem->Posc_dot = &dhem->Qosc_dot[3*sim->n];
+  dhem->Posc_dot = &dhem->Qosc_dot[3*r->N];
 
   // cs vars
   dhem->Xosc_cs = dhem->XoscArr_cs[stageNumber];
   dhem->Qosc_cs = dhem->Xosc_cs;
-  dhem->Posc_cs = &dhem->Qosc_cs[3*sim->n];
+  dhem->Posc_cs = &dhem->Qosc_cs[3*r->N];
 
   dhem_rhs(r, dQ, dP, dQ_dot, dP_dot, dQ_ddot, dP_ddot);
 
@@ -65,8 +65,8 @@ void dhem_rhs(struct reb_simulation* r, double const * __restrict__ const dQ, do
 {
   // Not necessary but makes code more reable.
   const double * const __restrict__ m = dhem->m;
-  const uint32_t n = dhem->n;
-  const uint32_t n3 = 3*dhem->n;
+  const uint32_t n = r->N;
+  const uint32_t n3 = 3*r->N;
   const double G = r->G;
   const double * const __restrict__ Qosc = dhem->Qosc;
   const double * const __restrict__ Posc = dhem->Posc;
@@ -205,7 +205,7 @@ double dhem_CalculateHamiltonian(struct reb_simulation* r, double * Q, double * 
   double Psun[3] = {0,0,0};
   double sepVec[3] = {0,0,0};
 
-  for(uint32_t i = 1; i < sim->n; i++)
+  for(uint32_t i = 1; i < r->N; i++)
   {
     double Pnorm = (NORM(P, i));
     hamiltonian += Pnorm*Pnorm / (2*m[i]);
@@ -218,9 +218,9 @@ double dhem_CalculateHamiltonian(struct reb_simulation* r, double * Q, double * 
   double PsunNorm = NORM(Psun, 0);
   hamiltonian += (1.0/(2.0*m[0])) * PsunNorm*PsunNorm;
 
-  for(uint32_t i = 1; i < sim->n; i++)
+  for(uint32_t i = 1; i < r->N; i++)
   {
-    for(uint32_t j = i+1; j < sim->n; j++)
+    for(uint32_t j = i+1; j < r->N; j++)
     {
       sepVec[0] = Q[3*i]-Q[3*j];
       sepVec[1] = Q[3*i+1]-Q[3*j+1];
@@ -233,13 +233,13 @@ double dhem_CalculateHamiltonian(struct reb_simulation* r, double * Q, double * 
   return hamiltonian;
 }
 
-static void dhem_PerformSummation(double * Q, double * P,
+static void dhem_PerformSummation(struct reb_simulation* r, double * Q, double * P,
                                double * dQ, double * dP, uint32_t stageNumber)
 {
   // Need to setup a pointer to the osculating orbits in memory.
   dhem->Xosc = dhem->XoscArr[stageNumber];
   dhem->Qosc = dhem->Xosc;
-  dhem->Posc = &dhem->Qosc[3*sim->n];
+  dhem->Posc = &dhem->Qosc[3*r->N];
 
   // Always zero in our frame of reference.
   for(uint32_t i = 0; i < 3; i++)
@@ -248,7 +248,7 @@ static void dhem_PerformSummation(double * Q, double * P,
     P[i] = 0;
   }
 
-  for(uint32_t i = 1; i < sim->n; i++)
+  for(uint32_t i = 1; i < r->N; i++)
   {
     Q[3*i+0] = dhem->Qosc[3*i+0] + (dQ[3*i+0] + (dhem->Qosc_cs[3*i+0] + sim->radau->cs_dq[3*i+0]));
     Q[3*i+1] = dhem->Qosc[3*i+1] + (dQ[3*i+1] + (dhem->Qosc_cs[3*i+1] + sim->radau->cs_dq[3*i+1]));
@@ -261,15 +261,15 @@ static void dhem_PerformSummation(double * Q, double * P,
 
 }
 
-void dhem_InitialiseOsculatingOrbits(double * Q, double * P, double t)
+void dhem_InitialiseOsculatingOrbits(struct reb_simulation* r, double * Q, double * P, double t)
 {
-  for(uint32_t i = 1; i < sim->n; i++)
+  for(uint32_t i = 1; i < r->N; i++)
   {
     RebasisOsculatingOrbits_Momenta(Q, P, t, i);
   }
 }
 
-uint32_t dhem_RectifyOrbits(double t, double * Q, double * P,
+uint32_t dhem_RectifyOrbits(struct reb_simulation* r, double t, double * Q, double * P,
                             double * dQ, double * dP, uint32_t * rectifiedArray, uint32_t stageNumber)
 {
   uint32_t rectifyFlag = 0;
@@ -280,38 +280,38 @@ uint32_t dhem_RectifyOrbits(double t, double * Q, double * P,
   // Need to setup a pointer to the osculating orbits in memory.
   dhem->Xosc = dhem->XoscArr[stageNumber];
   dhem->Qosc = dhem->Xosc;
-  dhem->Posc = &dhem->Qosc[3*sim->n];
+  dhem->Posc = &dhem->Qosc[3*r->N];
   dhem->Xosc_dot = dhem->Xosc_dotArr[stageNumber];
   dhem->Qosc_dot = dhem->Xosc_dot;
-  dhem->Posc_dot = &dhem->Qosc_dot[3*sim->n];
+  dhem->Posc_dot = &dhem->Qosc_dot[3*r->N];
 
   // CS variables
   dhem->Xosc_cs = dhem->XoscArr_cs[stageNumber];
   dhem->Qosc_cs = dhem->Xosc_cs;
-  dhem->Posc_cs = &dhem->Qosc_cs[3*sim->n];
+  dhem->Posc_cs = &dhem->Qosc_cs[3*r->N];
 
-  for(uint32_t i = 1; i < sim->n; i++)
+  for(uint32_t i = 1; i < r->N; i++)
   {
     rectifiedArray[3*i] = 0;
     rectifiedArray[3*i+1] = 0;
     rectifiedArray[3*i+2] = 0;
 
-    rectifiedArray[sim->n*3+3*i] = 0;
-    rectifiedArray[sim->n*3+3*i+1] = 0;
-    rectifiedArray[sim->n*3+3*i+2] = 0;
+    rectifiedArray[r->N*3+3*i] = 0;
+    rectifiedArray[r->N*3+3*i+1] = 0;
+    rectifiedArray[r->N*3+3*i+2] = 0;
 
     dQ_norm = NORM(dQ, i) / NORM(dhem->Qosc, i);
     dP_norm = NORM(dP, i) / NORM(dhem->Posc, i);
 
     if(t > dhem->rectifyTimeArray[i] ||
-      dQ_norm > sim->dQcutoff)
+      dQ_norm > r->ri_tes.dq_max)
     {
       rectifyFlag = 1;
       break;
     }
   }
 
-  for(uint32_t i = 1; i < sim->n; i++)
+  for(uint32_t i = 1; i < r->N; i++)
   {
     if(rectifyFlag != 0)
     {
@@ -353,9 +353,9 @@ uint32_t dhem_RectifyOrbits(double t, double * Q, double * P,
       rectifiedArray[3*i] = 1;
       rectifiedArray[3*i+1] = 1;
       rectifiedArray[3*i+2] = 1;
-      rectifiedArray[sim->n*3+3*i] = 1;
-      rectifiedArray[sim->n*3+3*i+1] = 1;
-      rectifiedArray[sim->n*3+3*i+2] = 1;
+      rectifiedArray[r->N*3+3*i] = 1;
+      rectifiedArray[r->N*3+3*i+1] = 1;
+      rectifiedArray[r->N*3+3*i+2] = 1;
     }    
   }
 
@@ -368,7 +368,7 @@ void dhem_CalculateOsculatingOrbitDerivatives_Momenta(struct reb_simulation* r, 
 {
   const double GM0 = -r->G*dhem->m[0];
 
-  for(uint32_t i = 1; i < sim->n; i++)
+  for(uint32_t i = 1; i < r->N; i++)
   {
     const double m = sim->mass[i];
     const double GMM = GM0*m;
@@ -390,25 +390,25 @@ void dhem_CalcOscOrbitsForAllStages(struct reb_simulation* r, double t0, double 
 {
   if(z_rebasis != 0)
   {
-    CalculateOsculatingOrbitsForSingleStep(dhem->XoscArr, t0, h, hArr, z_stagesPerStep, z_rebasis);  
+    CalculateOsculatingOrbitsForSingleStep(r, dhem->XoscArr, t0, h, hArr, z_stagesPerStep, z_rebasis);  
   }
   else
   {
-    CalculateOsculatingOrbitsForSingleStep(dhem->XoscPredArr, t0, h, hArr, z_stagesPerStep, z_rebasis);  
+    CalculateOsculatingOrbitsForSingleStep(r, dhem->XoscPredArr, t0, h, hArr, z_stagesPerStep, z_rebasis);  
   }
 
   for(uint32_t i = 0; i < z_stagesPerStep; i++)
   {
       double const * const __restrict__ Qout = dhem->XoscArr[i];
-      double const * const __restrict__ Pout = &dhem->XoscArr[i][3*sim->n];
+      double const * const __restrict__ Pout = &dhem->XoscArr[i][3*r->N];
       double * const __restrict__ Q_dot_out = dhem->Xosc_dotArr[i];
-      double * const __restrict__ P_dot_out = &dhem->Xosc_dotArr[i][3*sim->n];
+      double * const __restrict__ P_dot_out = &dhem->Xosc_dotArr[i][3*r->N];
 
       dhem_CalculateOsculatingOrbitDerivatives_Momenta(r, Qout, Pout, Q_dot_out, P_dot_out);
   }
 }
 
-void dhem_Init(SIMULATION * z_sim, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep)
+void dhem_Init(struct reb_simulation* r, SIMULATION * z_sim, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep)
 {
   sim = z_sim;
   // Get memory for the dhem state vectors.
@@ -445,12 +445,6 @@ void dhem_Init(SIMULATION * z_sim, double z_rectificationPeriodDefault, uint32_t
   // Creat space for osculating orbit compensated summation variables
   dhem->XoscStore_cs = (double*)malloc(z_stagesPerStep*sim->stateVectorSize);
   dhem->XoscArr_cs = (double **)malloc(z_stagesPerStep*sizeof(double*));
-
-  // Create space to allow for all of the osculating orbits for a step to be stored but in extended precision.
-  dhem->XoscStore_ld = (long double*)malloc(z_stagesPerStep*sim->stateVectorSize_ld);
-  dhem->XoscArr_ld = (long double **)malloc(z_stagesPerStep*sizeof(long double*));
-  dhem->Xosc_dotStore_ld = (long double*)malloc(z_stagesPerStep*sim->stateVectorSize_ld);
-  dhem->Xosc_dotArr_ld = (long double **)malloc(z_stagesPerStep*sizeof(long double*));
   
   // Compensated summation rhs variables
   dhem->dQdot_cs = (double*)malloc((int)sim->stateVectorSize/2);
@@ -479,47 +473,38 @@ void dhem_Init(SIMULATION * z_sim, double z_rectificationPeriodDefault, uint32_t
   memset(dhem->XoscStore_cs, 0, z_stagesPerStep*sim->stateVectorSize);
   memset(dhem->XoscArr_cs, 0, z_stagesPerStep*sizeof(double *));
 
-  // Long double version.
-  memset(dhem->XoscStore_ld, 0, z_stagesPerStep*sim->stateVectorSize_ld);
-  memset(dhem->XoscArr_ld, 0, z_stagesPerStep*sizeof(long double *));
-  memset(dhem->Xosc_dotStore_ld, 0, z_stagesPerStep*sim->stateVectorSize_ld);
-  memset(dhem->Xosc_dotArr_ld, 0, z_stagesPerStep*sizeof(long double *));
-
   // To enable easier access to the osculating orbits.
   for(uint32_t i = 0; i < z_stagesPerStep; i++)
   {
     dhem->XoscArr[i] = &dhem->XoscStore[i*sim->stateVectorLength];
     dhem->XoscPredArr[i] = &dhem->XoscPredStore[i*sim->stateVectorLength];
     dhem->Xosc_dotArr[i] = &dhem->Xosc_dotStore[i*sim->stateVectorLength];
-    dhem->XoscArr_ld[i] = &dhem->XoscStore_ld[i*sim->stateVectorLength];
-    dhem->Xosc_dotArr_ld[i] = &dhem->Xosc_dotStore_ld[i*sim->stateVectorLength];    
 
     dhem->XoscArr_cs[i] = &dhem->XoscStore_cs[i*sim->stateVectorLength];
   }
 
   // Setup pointers for more human readable access.
   dhem->Qosc = dhem->XoscArr[0];
-  dhem->Posc = &dhem->Qosc[3*sim->n];
+  dhem->Posc = &dhem->Qosc[3*r->N];
 
   dhem->Qosc_cs = dhem->XoscArr_cs[0];
-  dhem->Posc_cs = &dhem->Qosc_cs[3*sim->n];
+  dhem->Posc_cs = &dhem->Qosc_cs[3*r->N];
 
   dhem->Qosc_dot = dhem->Xosc_dotArr[0];
-  dhem->Posc_dot = &dhem->Qosc_dot[3*sim->n];
+  dhem->Posc_dot = &dhem->Qosc_dot[3*r->N];
 
   dhem->Q = dhem->X;
-  dhem->P = &dhem->X[3*sim->n];
+  dhem->P = &dhem->X[3*r->N];
 
   dhem->Q_dot = dhem->X_dot;
-  dhem->P_dot = &dhem->X_dot[3*sim->n];
+  dhem->P_dot = &dhem->X_dot[3*r->N];
 
   dhem->m = sim->mass;
-  dhem->n = sim->n;
   dhem->mTotal = 0;
 
-  dhem->m_inv = (double*)malloc(sim->n*sizeof(double));
+  dhem->m_inv = (double*)malloc(r->N*sizeof(double));
 
-  for(uint32_t i = 0; i < dhem->n; i++)
+  for(uint32_t i = 0; i < r->N; i++)
   {
     dhem->m_inv[i] = 1.0 / dhem->m[i];
     dhem->mTotal += dhem->m[i];

@@ -22,7 +22,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
-#include "simulation.h"
 #include "dhem.h"
 #include "UniversalVars.h"
 
@@ -48,7 +47,7 @@ double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double 
     radau->h = dt;
     radau->t = z_t;
 
-    sim->rectificationCount = sim->fRectify(z_t, sim->Q_dh, sim->P_dh, radau->dQ,
+    sim->rectificationCount = sim->fRectify(r, z_t, sim->Q_dh, sim->P_dh, radau->dQ,
                                         radau->dP, radau->rectifiedArray, FINAL_STAGE_INDEX);
     radau->rectifications += sim->rectificationCount;
 
@@ -63,7 +62,7 @@ double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double 
     radau->step(r, &iterations, z_t, dt, sim->step);
     radau->convergenceIterations += iterations;
 
-    dt_new = sim->rTol > 0 ? Radau_CalculateStepSize(dt, dt_last_done, z_t) : dt;
+    dt_new = r->ri_tes.epsilon > 0 ? Radau_CalculateStepSize(r, dt, dt_last_done, z_t) : dt;
 
     radau->AnalyticalContinuation(radau->B_1st, radau->Blast_1st, dt, dt_new, radau->rectifiedArray, sim->step);
     radau->AnalyticalContinuation(radau->B, radau->Blast, dt, dt_new, radau->rectifiedArray, sim->step);
@@ -71,9 +70,9 @@ double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double 
     return dt_new;
 }
 
-void Radau_Init(SIMULATION * z_sim)
+void Radau_Init(struct reb_simulation* r)
 {
-  sim = z_sim;
+  sim = r->ri_tes.sim;
   radau = (RADAU *)malloc(sizeof(RADAU));
   memset(radau, 0, sizeof(RADAU));
 
@@ -117,9 +116,9 @@ void Radau_Init(SIMULATION * z_sim)
   memset(radau->predictors, 0, sim->stateVectorSize);
 
   radau->Q = radau->X;
-  radau->P = &radau->X[3*sim->n];
+  radau->P = &radau->X[3*r->N];
   radau->dQ = radau->dX;
-  radau->dP = &radau->dX[3*sim->n];
+  radau->dP = &radau->dX[3*r->N];
   radau->Qout = radau->Xout;
   radau->Pout = &radau->Xout[sim->stateVectorLength/2];
 
@@ -144,9 +143,9 @@ void Radau_Init(SIMULATION * z_sim)
   radau->nextOutputTime = 0.0;
 
   // Copy across our tolerance fields.
-  radau->rTol = sim->rTol;
+  radau->rTol = r->ri_tes.epsilon;
 
-  RadauStep15_Init(z_sim);
+  RadauStep15_Init(r);
 }
 
 void Radau_Free(void)
@@ -161,12 +160,12 @@ void Radau_Free(void)
   free(radau);
 }
 
-double Radau_CalculateStepSize(double h, double hLast, double t)
+double Radau_CalculateStepSize(struct reb_simulation* r, double h, double hLast, double t)
 {
   double hTrial = 0.0;
 
   // Get the error estimate and orbit size estimate.
-  double errMax = radau->ReturnStepError(h, t);
+  double errMax = radau->ReturnStepError(r, h, t);
     
   if(isnormal(errMax))
   {
