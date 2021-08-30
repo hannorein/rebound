@@ -54,18 +54,18 @@ double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double 
     // Calculate the osculating orbits.
     sim->fStartOfStep(r, z_t, dt, hArr, OSCULATING_ORBIT_SLOTS, 1);
 
-    ClearRectifiedBFields(radau->B, radau->rectifiedArray);
-    ClearRectifiedBFields(radau->B_1st, radau->rectifiedArray);
+    ClearRectifiedBFields(r, radau->B, radau->rectifiedArray);
+    ClearRectifiedBFields(r, radau->B_1st, radau->rectifiedArray);
 
-    radau->CalculateGfromB(); 
+    radau->CalculateGfromB(r); 
 
     radau->step(r, &iterations, z_t, dt, sim->step);
     radau->convergenceIterations += iterations;
 
     dt_new = r->ri_tes.epsilon > 0 ? Radau_CalculateStepSize(r, dt, dt_last_done, z_t) : dt;
 
-    radau->AnalyticalContinuation(radau->B_1st, radau->Blast_1st, dt, dt_new, radau->rectifiedArray, sim->step);
-    radau->AnalyticalContinuation(radau->B, radau->Blast, dt, dt_new, radau->rectifiedArray, sim->step);
+    radau->AnalyticalContinuation(r, radau->B_1st, radau->Blast_1st, dt, dt_new, radau->rectifiedArray, sim->step);
+    radau->AnalyticalContinuation(r, radau->B, radau->Blast, dt, dt_new, radau->rectifiedArray, sim->step);
 
     return dt_new;
 }
@@ -77,63 +77,63 @@ void Radau_Init(struct reb_simulation* r)
   memset(radau, 0, sizeof(RADAU));
 
   sim->radau = radau;
-  radau->dX = (double*)malloc(sim->stateVectorSize);
-  radau->dXtemp = (double*)malloc(sim->stateVectorSize);
-  radau->dX0 = (double*)malloc(sim->stateVectorSize);
-  radau->X = (double*)malloc(sim->stateVectorSize);
-  radau->Xout = (double*)malloc(sim->stateVectorSize);
-  radau->predictors = (double*)malloc(sim->stateVectorSize);
+  radau->dX = (double*)malloc(r->ri_tes.stateVectorSize);
+  radau->dXtemp = (double*)malloc(r->ri_tes.stateVectorSize);
+  radau->dX0 = (double*)malloc(r->ri_tes.stateVectorSize);
+  radau->X = (double*)malloc(r->ri_tes.stateVectorSize);
+  radau->Xout = (double*)malloc(r->ri_tes.stateVectorSize);
+  radau->predictors = (double*)malloc(r->ri_tes.stateVectorSize);
 
-  radau->q = (double*)malloc(sim->stateVectorSize/2);
-  radau->p = (double*)malloc(sim->stateVectorSize/2);
-  radau->q_dot = (double*)malloc(sim->stateVectorSize/2);
-  radau->q_ddot = (double*)malloc(sim->stateVectorSize/2);
-  radau->p_dot = (double*)malloc(sim->stateVectorSize/2);
+  radau->q = (double*)malloc(r->ri_tes.stateVectorSize/2);
+  radau->p = (double*)malloc(r->ri_tes.stateVectorSize/2);
+  radau->q_dot = (double*)malloc(r->ri_tes.stateVectorSize/2);
+  radau->q_ddot = (double*)malloc(r->ri_tes.stateVectorSize/2);
+  radau->p_dot = (double*)malloc(r->ri_tes.stateVectorSize/2);
 
-  memset(radau->q, 0, sim->stateVectorSize/2);
-  memset(radau->p, 0, sim->stateVectorSize/2);
-  memset(radau->q_dot, 0, sim->stateVectorSize/2);
-  memset(radau->q_ddot, 0, sim->stateVectorSize/2);
-  memset(radau->p_dot, 0, sim->stateVectorSize/2);
+  memset(radau->q, 0, r->ri_tes.stateVectorSize/2);
+  memset(radau->p, 0, r->ri_tes.stateVectorSize/2);
+  memset(radau->q_dot, 0, r->ri_tes.stateVectorSize/2);
+  memset(radau->q_ddot, 0, r->ri_tes.stateVectorSize/2);
+  memset(radau->p_dot, 0, r->ri_tes.stateVectorSize/2);
 
-  radau->q0 = (double*)malloc(sim->stateVectorSize/2);
-  radau->p0 = (double*)malloc(sim->stateVectorSize/2);
-  radau->q_dot0 = (double*)malloc(sim->stateVectorSize/2);
-  radau->q_ddot0 = (double*)malloc(sim->stateVectorSize/2);
-  radau->p_dot0 = (double*)malloc(sim->stateVectorSize/2);
+  radau->q0 = (double*)malloc(r->ri_tes.stateVectorSize/2);
+  radau->p0 = (double*)malloc(r->ri_tes.stateVectorSize/2);
+  radau->q_dot0 = (double*)malloc(r->ri_tes.stateVectorSize/2);
+  radau->q_ddot0 = (double*)malloc(r->ri_tes.stateVectorSize/2);
+  radau->p_dot0 = (double*)malloc(r->ri_tes.stateVectorSize/2);
 
-  memset(radau->q0, 0, sim->stateVectorSize/2);
-  memset(radau->p0, 0, sim->stateVectorSize/2);
-  memset(radau->q_dot0, 0, sim->stateVectorSize/2);
-  memset(radau->q_ddot0, 0, sim->stateVectorSize/2);
-  memset(radau->p_dot0, 0, sim->stateVectorSize/2);
+  memset(radau->q0, 0, r->ri_tes.stateVectorSize/2);
+  memset(radau->p0, 0, r->ri_tes.stateVectorSize/2);
+  memset(radau->q_dot0, 0, r->ri_tes.stateVectorSize/2);
+  memset(radau->q_ddot0, 0, r->ri_tes.stateVectorSize/2);
+  memset(radau->p_dot0, 0, r->ri_tes.stateVectorSize/2);
 
-  memset(radau->dX, 0, sim->stateVectorSize);
-  memset(radau->dXtemp, 0, sim->stateVectorSize);
-  memset(radau->dX0, 0, sim->stateVectorSize);
-  memset(radau->X, 0, sim->stateVectorSize);
-  memset(radau->Xout, 0, sim->stateVectorSize);
-  memset(radau->predictors, 0, sim->stateVectorSize);
+  memset(radau->dX, 0, r->ri_tes.stateVectorSize);
+  memset(radau->dXtemp, 0, r->ri_tes.stateVectorSize);
+  memset(radau->dX0, 0, r->ri_tes.stateVectorSize);
+  memset(radau->X, 0, r->ri_tes.stateVectorSize);
+  memset(radau->Xout, 0, r->ri_tes.stateVectorSize);
+  memset(radau->predictors, 0, r->ri_tes.stateVectorSize);
 
   radau->Q = radau->X;
   radau->P = &radau->X[3*r->N];
   radau->dQ = radau->dX;
   radau->dP = &radau->dX[3*r->N];
   radau->Qout = radau->Xout;
-  radau->Pout = &radau->Xout[sim->stateVectorLength/2];
+  radau->Pout = &radau->Xout[r->ri_tes.stateVectorLength/2];
 
 // Copy to here so that we are ready to output to a file before we calculate osculating orbtis.
-  memcpy(radau->Qout, sim->Q_dh, sim->stateVectorSize / 2);
-  memcpy(radau->Pout, sim->P_dh, sim->stateVectorSize / 2);
+  memcpy(radau->Qout, sim->Q_dh, r->ri_tes.stateVectorSize / 2);
+  memcpy(radau->Pout, sim->P_dh, r->ri_tes.stateVectorSize / 2);
 
-  radau->rectifiedArray = (uint32_t*)malloc(sizeof(uint32_t)*sim->stateVectorLength);
-  memset(radau->rectifiedArray, 0, sizeof(uint32_t)*sim->stateVectorLength);
+  radau->rectifiedArray = (uint32_t*)malloc(sizeof(uint32_t)*r->ri_tes.stateVectorLength);
+  memset(radau->rectifiedArray, 0, sizeof(uint32_t)*r->ri_tes.stateVectorLength);
 
-  radau->b6_store = (double*)malloc(sim->stateVectorSize);
-  radau->Xsize = (double*)malloc(2*sim->controlVectorSize);
+  radau->b6_store = (double*)malloc(r->ri_tes.stateVectorSize);
+  radau->Xsize = (double*)malloc(2*r->ri_tes.controlVectorSize);
 
-  memset(radau->b6_store, 0, sim->stateVectorSize);
-  memset(radau->Xsize, 0, 2*sim->controlVectorSize);
+  memset(radau->b6_store, 0, r->ri_tes.stateVectorSize);
+  memset(radau->Xsize, 0, 2*r->ri_tes.controlVectorSize);
 
   //@todo should be able to remove these, but test.
   radau->fCalls = 0;
@@ -186,9 +186,9 @@ double Radau_CalculateStepSize(struct reb_simulation* r, double h, double hLast,
 }
 
 
-void ClearRectifiedBFields(controlVars * B, uint32_t * rectifiedArray)
+void ClearRectifiedBFields(struct reb_simulation* r, controlVars * B, uint32_t * rectifiedArray)
 {
-  for(uint32_t i = 0; i < sim->stateVectorLength; i++)
+  for(uint32_t i = 0; i < r->ri_tes.stateVectorLength; i++)
   {
     if(rectifiedArray[i] > 0)
     {

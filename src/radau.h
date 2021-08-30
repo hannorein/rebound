@@ -58,8 +58,8 @@ typedef struct RADAU
 
   // Step function pointers
   void (*step)(struct reb_simulation* r, uint32_t *, double, double, uint32_t);
-  void (*AnalyticalContinuation)(controlVars *, controlVars *, const double, const double, const uint32_t * const, const uint32_t);
-  void (*CalculateGfromB)(void);
+  void (*AnalyticalContinuation)(struct reb_simulation* r, controlVars *, controlVars *, const double, const double, const uint32_t * const, const uint32_t);
+  void (*CalculateGfromB)(struct reb_simulation* r);
   double (*ReturnStepError)(struct reb_simulation* r, double h, double t);
   void (*RejectStep)(void);
 
@@ -156,6 +156,6 @@ typedef struct RADAU
 void Radau_Init(struct reb_simulation* r);
 void Radau_Free(void);
 double Radau_CalculateStepSize(struct reb_simulation* r, double h, double hLast, double t);
-void ClearRectifiedBFields(controlVars * B, uint32_t * rectifiedArray);
+void ClearRectifiedBFields(struct reb_simulation* r, controlVars * B, uint32_t * rectifiedArray);
 double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double dt_last_done);
 #endif

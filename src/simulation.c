@@ -28,19 +28,19 @@ SIMULATION * Simulation_Init(struct reb_simulation* r, uint32_t z_n)
   memset(sim, 0, sizeof(SIMULATION));
 
   // Set control variables to initial values
-  sim->stateVectorLength = 2*3*r->N;
-  sim->stateVectorSize = sim->stateVectorLength * sizeof(double);
-  sim->controlVectorSize = r->N * sizeof(double);
+  r->ri_tes.stateVectorLength = 2*3*r->N;
+  r->ri_tes.stateVectorSize = r->ri_tes.stateVectorLength * sizeof(double);
+  r->ri_tes.controlVectorSize = r->N * sizeof(double);
 
   // Allocate memory
-  sim->mass = (double *)malloc(sim->controlVectorSize);
-  sim->X_dh = (double *)malloc(sim->stateVectorSize);
+  sim->mass = (double *)malloc(r->ri_tes.controlVectorSize);
+  sim->X_dh = (double *)malloc(r->ri_tes.stateVectorSize);
   sim->Q_dh = sim->X_dh;
-  sim->P_dh = &sim->X_dh[sim->stateVectorLength/2];
+  sim->P_dh = &sim->X_dh[r->ri_tes.stateVectorLength/2];
 
   // Ensure we are clean for each integration.
-  memset(sim->mass, 0, sim->controlVectorSize);
-  memset(sim->X_dh, 0, sim->stateVectorSize);
+  memset(sim->mass, 0, r->ri_tes.controlVectorSize);
+  memset(sim->X_dh, 0, r->ri_tes.stateVectorSize);
 
   sim->termination_check_enable = 0;
 

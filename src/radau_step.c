@@ -125,10 +125,10 @@ static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, 
     {
       radau->t = t+h*hArr[i];
       CalculatePredictors(h, hArr[i], radau->dX, radau->dState0, radau->ddState0, &B,
-                          radau->predictors, radau->cs_dX, 3, sim->stateVectorLength/2, DONT_ADD_CS_VAR);
+                          radau->predictors, radau->cs_dX, 3, r->ri_tes.stateVectorLength/2, DONT_ADD_CS_VAR);
 
       CalculatePredictors_1stOrder(h, hArr[i], radau->dX, radau->dState0, &B_1st, radau->predictors, 
-                                  radau->cs_dX, (int)sim->stateVectorLength/2, sim->stateVectorLength, DONT_ADD_CS_VAR);
+                                  radau->cs_dX, (int)r->ri_tes.stateVectorLength/2, r->ri_tes.stateVectorLength, DONT_ADD_CS_VAR);
 
 
       sim->f_rhs(r, radau->predictors, &radau->predictors[3*r->N], radau->dState, &radau->dState[3*r->N],
@@ -440,7 +440,7 @@ static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, 
                     radau->cs_dX, 0, (int)(n3));
 
   CalculateNewState_1stOrder(h, radau->dState0, &B_1st, radau->dX, 
-                                radau->cs_dX, (int)(n3), sim->stateVectorLength);                                
+                                radau->cs_dX, (int)(n3), r->ri_tes.stateVectorLength);                                
 
   // Now that we have cs_dX we can perform our correction.
   ApplyCorrectorToOsculatingOrbitCalculation(r, sim->rhs->XoscArr, t+h, 9); 
@@ -492,13 +492,13 @@ static void CalculateGFromBInternal(controlVars * z_G, controlVars * z_B, uint32
   }
 }
 
-void CalculateGfromB(void)
+void CalculateGfromB(struct reb_simulation* r)
 {
-  CalculateGFromBInternal(&G, &B, 0, (int)(sim->stateVectorLength/2));
-  CalculateGFromBInternal(&G_1st, &B_1st, (int)(sim->stateVectorLength/2), sim->stateVectorLength);
+  CalculateGFromBInternal(&G, &B, 0, (int)(r->ri_tes.stateVectorLength/2));
+  CalculateGFromBInternal(&G_1st, &B_1st, (int)(r->ri_tes.stateVectorLength/2), r->ri_tes.stateVectorLength);
 }
 
-void AnalyticalContinuation(controlVars * z_B, controlVars * z_Blast, const double h,
+void AnalyticalContinuation(struct reb_simulation* r, controlVars * z_B, controlVars * z_Blast, const double h,
                              const double h_new, const uint32_t * const rectificationArray, const uint32_t step)
 {
   const double ratio = h_new / h;
@@ -510,7 +510,7 @@ void AnalyticalContinuation(controlVars * z_B, controlVars * z_Blast, const doub
   const double q6 = q3 * q3;
   const double q7 = q3 * q4;
 
-  for(uint32_t i = 0; i < sim->stateVectorLength; i++)
+  for(uint32_t i = 0; i < r->ri_tes.stateVectorLength; i++)
   {
     double dB0 = 0;
     double dB1 = 0;
@@ -649,12 +649,6 @@ void CalculateNewState(double h, double * z_dState, double * z_ddState,
   }
 }
 
-void RejectStep(void)
-{
-  memcpy(radau->dX, radau->dX0, sim->stateVectorSize);
-  ControlVars_Copy(&B, &B0);
-  ControlVars_Copy(&Blast, &Blast0);
-}
 
 void RadauStep15_Init(struct reb_simulation* r)
 {
@@ -664,19 +658,18 @@ void RadauStep15_Init(struct reb_simulation* r)
     radau->AnalyticalContinuation = AnalyticalContinuation;
     radau->CalculateGfromB = CalculateGfromB;
     radau->ReturnStepError = ReturnIAS15StepError;
-    radau->RejectStep = RejectStep;
 
-    ControlVars_Init(&G, sim->stateVectorSize);
-    ControlVars_Init(&B, sim->stateVectorSize);
-    ControlVars_Init(&radau->cs_B, sim->stateVectorSize);
-    ControlVars_Init(&Blast, sim->stateVectorSize);
-    ControlVars_Init(&Blast_1st, sim->stateVectorSize);
+    ControlVars_Init(&G, r->ri_tes.stateVectorSize);
+    ControlVars_Init(&B, r->ri_tes.stateVectorSize);
+    ControlVars_Init(&radau->cs_B, r->ri_tes.stateVectorSize);
+    ControlVars_Init(&Blast, r->ri_tes.stateVectorSize);
+    ControlVars_Init(&Blast_1st, r->ri_tes.stateVectorSize);
 
-    ControlVars_Init(&B0, sim->stateVectorSize);
-    ControlVars_Init(&Blast0, sim->stateVectorSize);
-    ControlVars_Init(&G_full, sim->stateVectorSize);
-    ControlVars_Init(&B_full, sim->stateVectorSize);
-    ControlVars_Init(&Blast_full, sim->stateVectorSize);
+    ControlVars_Init(&B0, r->ri_tes.stateVectorSize);
+    ControlVars_Init(&Blast0, r->ri_tes.stateVectorSize);
+    ControlVars_Init(&G_full, r->ri_tes.stateVectorSize);
+    ControlVars_Init(&B_full, r->ri_tes.stateVectorSize);
+    ControlVars_Init(&Blast_full, r->ri_tes.stateVectorSize);
 
     radau->B = &B;
     radau->Blast = &Blast;
@@ -687,53 +680,53 @@ void RadauStep15_Init(struct reb_simulation* r)
     radau->B_full = &B_full;
     radau->Blast_full = &Blast_full;
 
-    ControlVars_Init(&G_1st, sim->stateVectorSize);
-    ControlVars_Init(&B_1st, sim->stateVectorSize);
-    ControlVars_Init(&radau->cs_B1st, sim->stateVectorSize);
-    ControlVars_Init(&radau->cs_B_full, sim->stateVectorSize);
+    ControlVars_Init(&G_1st, r->ri_tes.stateVectorSize);
+    ControlVars_Init(&B_1st, r->ri_tes.stateVectorSize);
+    ControlVars_Init(&radau->cs_B1st, r->ri_tes.stateVectorSize);
+    ControlVars_Init(&radau->cs_B_full, r->ri_tes.stateVectorSize);
 
-    radau->dState0 = (double *)malloc(sim->stateVectorSize);
-    radau->ddState0 = (double *)malloc(sim->stateVectorSize);
-    radau->dState = (double *)malloc(sim->stateVectorSize);
-    radau->ddState = (double *)malloc(sim->stateVectorSize);
+    radau->dState0 = (double *)malloc(r->ri_tes.stateVectorSize);
+    radau->ddState0 = (double *)malloc(r->ri_tes.stateVectorSize);
+    radau->dState = (double *)malloc(r->ri_tes.stateVectorSize);
+    radau->ddState = (double *)malloc(r->ri_tes.stateVectorSize);
 
-    memset(radau->dState0, 0, sim->stateVectorSize);
-    memset(radau->ddState0, 0, sim->stateVectorSize);
-    memset(radau->dState, 0, sim->stateVectorSize);
-    memset(radau->ddState, 0, sim->stateVectorSize);
+    memset(radau->dState0, 0, r->ri_tes.stateVectorSize);
+    memset(radau->ddState0, 0, r->ri_tes.stateVectorSize);
+    memset(radau->dState, 0, r->ri_tes.stateVectorSize);
+    memset(radau->ddState, 0, r->ri_tes.stateVectorSize);
 
     // Compensated summation arrays
-    radau->cs_state = (double *)malloc(sim->stateVectorSize);
-    radau->csx = (double *)malloc(sim->stateVectorSize);
-    radau->csv = (double *)malloc(sim->stateVectorSize);
-    radau->cs_state_1st = (double *)malloc(sim->stateVectorSize);
-    radau->cs_dState0 = (double *)malloc(sim->stateVectorSize);
-    radau->cs_ddState0 = (double *)malloc(sim->stateVectorSize);
-    radau->cs_dState = (double *)malloc(sim->stateVectorSize);
-    radau->cs_ddState = (double *)malloc(sim->stateVectorSize);
+    radau->cs_state = (double *)malloc(r->ri_tes.stateVectorSize);
+    radau->csx = (double *)malloc(r->ri_tes.stateVectorSize);
+    radau->csv = (double *)malloc(r->ri_tes.stateVectorSize);
+    radau->cs_state_1st = (double *)malloc(r->ri_tes.stateVectorSize);
+    radau->cs_dState0 = (double *)malloc(r->ri_tes.stateVectorSize);
+    radau->cs_ddState0 = (double *)malloc(r->ri_tes.stateVectorSize);
+    radau->cs_dState = (double *)malloc(r->ri_tes.stateVectorSize);
+    radau->cs_ddState = (double *)malloc(r->ri_tes.stateVectorSize);
 
-    memset(radau->cs_state, 0, sim->stateVectorSize);
-    memset(radau->csx, 0, sim->stateVectorSize);
-    memset(radau->csv, 0, sim->stateVectorSize);
-    memset(radau->cs_state_1st, 0, sim->stateVectorSize);
-    memset(radau->cs_dState0, 0, sim->stateVectorSize);
-    memset(radau->cs_ddState0, 0, sim->stateVectorSize);
-    memset(radau->cs_dState, 0, sim->stateVectorSize);
-    memset(radau->cs_ddState, 0, sim->stateVectorSize);
+    memset(radau->cs_state, 0, r->ri_tes.stateVectorSize);
+    memset(radau->csx, 0, r->ri_tes.stateVectorSize);
+    memset(radau->csv, 0, r->ri_tes.stateVectorSize);
+    memset(radau->cs_state_1st, 0, r->ri_tes.stateVectorSize);
+    memset(radau->cs_dState0, 0, r->ri_tes.stateVectorSize);
+    memset(radau->cs_ddState0, 0, r->ri_tes.stateVectorSize);
+    memset(radau->cs_dState, 0, r->ri_tes.stateVectorSize);
+    memset(radau->cs_ddState, 0, r->ri_tes.stateVectorSize);
 
 
-    radau->cs_dq_dot = (double *)malloc(sim->stateVectorSize);
-    radau->cs_dX = (double *)malloc(sim->stateVectorSize);
+    radau->cs_dq_dot = (double *)malloc(r->ri_tes.stateVectorSize);
+    radau->cs_dX = (double *)malloc(r->ri_tes.stateVectorSize);
     radau->cs_dq = radau->cs_dX;
-    radau->cs_dp = &radau->cs_dX[(int)sim->stateVectorLength/2];
+    radau->cs_dp = &radau->cs_dX[(int)r->ri_tes.stateVectorLength/2];
 
-    radau->csx_recti = (double *)malloc(sim->stateVectorSize);
-    radau->csv_recti = (double *)malloc(sim->stateVectorSize);
+    radau->csx_recti = (double *)malloc(r->ri_tes.stateVectorSize);
+    radau->csv_recti = (double *)malloc(r->ri_tes.stateVectorSize);
     
-    memset(radau->cs_dq_dot, 0, sim->stateVectorSize);
-    memset(radau->cs_dX, 0, sim->stateVectorSize);
-    memset(radau->csx_recti, 0, sim->stateVectorSize);
-    memset(radau->csv_recti, 0, sim->stateVectorSize);
+    memset(radau->cs_dq_dot, 0, r->ri_tes.stateVectorSize);
+    memset(radau->cs_dX, 0, r->ri_tes.stateVectorSize);
+    memset(radau->csx_recti, 0, r->ri_tes.stateVectorSize);
+    memset(radau->csv_recti, 0, r->ri_tes.stateVectorSize);
 }
 
 void RadauStep15_Free(void)

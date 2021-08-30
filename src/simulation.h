@@ -44,10 +44,6 @@ typedef struct _SIMULATION_
 	// ##############################################
 	// To keep / refactor
 	// ##############################################
-	uint32_t stateVectorLength;		/// Length of the state vector in doubles.
-	uint32_t stateVectorSize;		/// Size in bytes of the state vector
-	uint32_t controlVectorSize; 	/// Size in bytes of n * sizeof(double)
-	uint32_t controlVectorLength;	/// Length of the control vector in doubles.
 	UNIVERSAL_VARS * uVars;			/// Pointer to the universal variables module
 	DHEM * rhs;						/// Pointer to the DHEM rhs
 	RADAU * radau;  				/// Pointer to our integrator

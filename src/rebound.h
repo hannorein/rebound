@@ -233,6 +233,12 @@ struct reb_simulation_integrator_tes {
     SIMULATION * sim;           // When I remove this also remove the include above.
     uint32_t allocated_N;
     struct reb_particle* particles_dh;
+
+    // Ported from simulation
+    uint32_t stateVectorLength;		/// Length of the state vector in doubles.
+    uint32_t stateVectorSize;		/// Size in bytes of the state vector.
+    uint32_t controlVectorSize; 	/// Size in bytes of n * sizeof(double).
+    uint32_t controlVectorLength;	/// Length of the control vector in doubles.
 };
 
 enum REB_EOS_TYPE {

@@ -74,7 +74,7 @@ void dhem_rhs(struct reb_simulation* r, double const * __restrict__ const dQ, do
   double * __restrict__ Q = dhem->Q;
   double * __restrict__ P = dhem->P;
 
-  memset(dQ_ddot, 0, sim->stateVectorSize/2);
+  memset(dQ_ddot, 0, r->ri_tes.stateVectorSize/2);
 
   #pragma GCC ivdep
   for(uint32_t i = 3; i < n3; i++)
@@ -425,62 +425,62 @@ void dhem_Init(struct reb_simulation* r, SIMULATION * z_sim, double z_rectificat
 
   dhem->final_stage_index = 8;
 
-  dhem->X = (double*)malloc(sim->stateVectorSize);
-  dhem->X_dot = (double*)malloc(sim->stateVectorSize);
-  dhem->rectifyTimeArray = (double*)malloc(sim->controlVectorSize);
-  dhem->rectificationPeriod = (double*)malloc(sim->controlVectorSize);
+  dhem->X = (double*)malloc(r->ri_tes.stateVectorSize);
+  dhem->X_dot = (double*)malloc(r->ri_tes.stateVectorSize);
+  dhem->rectifyTimeArray = (double*)malloc(r->ri_tes.controlVectorSize);
+  dhem->rectificationPeriod = (double*)malloc(r->ri_tes.controlVectorSize);
 
   // Create space to allow for all of the osculating orbits for a step to be stored.
-  dhem->XoscStore = (double*)malloc(z_stagesPerStep*sim->stateVectorSize);
+  dhem->XoscStore = (double*)malloc(z_stagesPerStep*r->ri_tes.stateVectorSize);
   dhem->XoscArr = (double **)malloc(z_stagesPerStep*sizeof(double*));
-  dhem->Xosc_dotStore = (double*)malloc(z_stagesPerStep*sim->stateVectorSize);
+  dhem->Xosc_dotStore = (double*)malloc(z_stagesPerStep*r->ri_tes.stateVectorSize);
   dhem->Xosc_dotArr = (double **)malloc(z_stagesPerStep*sizeof(double*));
-  dhem->Vosc = (double*)malloc(sim->stateVectorSize / 2);
+  dhem->Vosc = (double*)malloc(r->ri_tes.stateVectorSize / 2);
 
   // Create space to allow for all of the osculating orbits for a step to be stored.
-  dhem->XoscPredStore = (double*)malloc(z_stagesPerStep*sim->stateVectorSize);
+  dhem->XoscPredStore = (double*)malloc(z_stagesPerStep*r->ri_tes.stateVectorSize);
   dhem->XoscPredArr = (double **)malloc(z_stagesPerStep*sizeof(double*));
 
 
   // Creat space for osculating orbit compensated summation variables
-  dhem->XoscStore_cs = (double*)malloc(z_stagesPerStep*sim->stateVectorSize);
+  dhem->XoscStore_cs = (double*)malloc(z_stagesPerStep*r->ri_tes.stateVectorSize);
   dhem->XoscArr_cs = (double **)malloc(z_stagesPerStep*sizeof(double*));
   
   // Compensated summation rhs variables
-  dhem->dQdot_cs = (double*)malloc((int)sim->stateVectorSize/2);
-  dhem->dQddot_cs = (double*)malloc((int)sim->stateVectorSize/2);
-  dhem->dPdot_cs = (double*)malloc((int)sim->stateVectorSize/2);
-  memset(dhem->dQdot_cs, 0, sim->stateVectorSize / 2);
-  memset(dhem->dQddot_cs, 0, sim->stateVectorSize / 2);
-  memset(dhem->dPdot_cs, 0, sim->stateVectorSize / 2);
+  dhem->dQdot_cs = (double*)malloc((int)r->ri_tes.stateVectorSize/2);
+  dhem->dQddot_cs = (double*)malloc((int)r->ri_tes.stateVectorSize/2);
+  dhem->dPdot_cs = (double*)malloc((int)r->ri_tes.stateVectorSize/2);
+  memset(dhem->dQdot_cs, 0, r->ri_tes.stateVectorSize / 2);
+  memset(dhem->dQddot_cs, 0, r->ri_tes.stateVectorSize / 2);
+  memset(dhem->dPdot_cs, 0, r->ri_tes.stateVectorSize / 2);
 
 
   // Set required arrays to zero.
-  memset(dhem->X, 0, sim->stateVectorSize);
-  memset(dhem->X_dot, 0, sim->stateVectorSize);
-  memset(dhem->rectifyTimeArray, 0, sim->controlVectorSize);
-  memset(dhem->rectificationPeriod, 0, sim->controlVectorSize);
+  memset(dhem->X, 0, r->ri_tes.stateVectorSize);
+  memset(dhem->X_dot, 0, r->ri_tes.stateVectorSize);
+  memset(dhem->rectifyTimeArray, 0, r->ri_tes.controlVectorSize);
+  memset(dhem->rectificationPeriod, 0, r->ri_tes.controlVectorSize);
 
-  memset(dhem->XoscStore, 0, z_stagesPerStep*sim->stateVectorSize);
+  memset(dhem->XoscStore, 0, z_stagesPerStep*r->ri_tes.stateVectorSize);
   memset(dhem->XoscArr, 0, z_stagesPerStep*sizeof(double *));
-  memset(dhem->Xosc_dotStore, 0, z_stagesPerStep*sim->stateVectorSize);
+  memset(dhem->Xosc_dotStore, 0, z_stagesPerStep*r->ri_tes.stateVectorSize);
   memset(dhem->Xosc_dotArr, 0, z_stagesPerStep*sizeof(double *));
-  memset(dhem->Vosc, 0, sim->stateVectorSize / 2);
+  memset(dhem->Vosc, 0, r->ri_tes.stateVectorSize / 2);
 
-  memset(dhem->XoscPredStore, 0, z_stagesPerStep*sim->stateVectorSize);
+  memset(dhem->XoscPredStore, 0, z_stagesPerStep*r->ri_tes.stateVectorSize);
   memset(dhem->XoscPredArr, 0, z_stagesPerStep*sizeof(double *));
 
-  memset(dhem->XoscStore_cs, 0, z_stagesPerStep*sim->stateVectorSize);
+  memset(dhem->XoscStore_cs, 0, z_stagesPerStep*r->ri_tes.stateVectorSize);
   memset(dhem->XoscArr_cs, 0, z_stagesPerStep*sizeof(double *));
 
   // To enable easier access to the osculating orbits.
   for(uint32_t i = 0; i < z_stagesPerStep; i++)
   {
-    dhem->XoscArr[i] = &dhem->XoscStore[i*sim->stateVectorLength];
-    dhem->XoscPredArr[i] = &dhem->XoscPredStore[i*sim->stateVectorLength];
-    dhem->Xosc_dotArr[i] = &dhem->Xosc_dotStore[i*sim->stateVectorLength];
+    dhem->XoscArr[i] = &dhem->XoscStore[i*r->ri_tes.stateVectorLength];
+    dhem->XoscPredArr[i] = &dhem->XoscPredStore[i*r->ri_tes.stateVectorLength];
+    dhem->Xosc_dotArr[i] = &dhem->Xosc_dotStore[i*r->ri_tes.stateVectorLength];
 
-    dhem->XoscArr_cs[i] = &dhem->XoscStore_cs[i*sim->stateVectorLength];
+    dhem->XoscArr_cs[i] = &dhem->XoscStore_cs[i*r->ri_tes.stateVectorLength];
   }
 
   // Setup pointers for more human readable access.

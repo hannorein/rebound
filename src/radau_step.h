@@ -22,7 +22,6 @@ void RadauStep15_Free(void);
 void ControlVars_Free(controlVars * var);
 void ControlVars_Init(controlVars * var, uint32_t size);
 void ControlVars_Clear(controlVars * var);
-void RejectStep(void);
 
 void CalculatePredictors(double h, double hSample, double const * __restrict__ z_state0, double const * __restrict__ z_dState, 
                          double const * __restrict__ z_ddState, controlVars const * z_B, double * __restrict__ z_predictors, 
@@ -32,6 +31,6 @@ void CalculatePredictors_1stOrder(double h, double hSample, double * z_state0, d
 
 void CalculateNewState(double h, double * z_dState, double * z_ddState, controlVars * z_B, double * z_state0, double * z_csState, uint32_t z_start, uint32_t z_end);
 void CalculateNewState_1stOrder(double h, double * z_dState, controlVars * z_B, double * z_state0, double * z_csState, uint32_t z_start, uint32_t z_end);
-void AnalyticalContinuation(controlVars * z_B, controlVars * z_Blast, const double h, const double h_new, const uint32_t * const rectificationArray, const uint32_t step);
-void CalculateGfromB(void);
+void AnalyticalContinuation(struct reb_simulation* r, controlVars * z_B, controlVars * z_Blast, const double h, const double h_new, const uint32_t * const rectificationArray, const uint32_t step);
+void CalculateGfromB(struct reb_simulation* r);
 #endif // RADAU_STEP_H
