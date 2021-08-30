@@ -40,7 +40,6 @@ typedef struct _SIMULATION_
 	// To use rebound data structure instead
 	// ##############################################
 	double t0;								/// Initial time
-	double G;								/// Gravitational constant
 	uint32_t n;								/// Number of particles presently
 	double rTol;								/// Relative tolerance used by the integrator.
 	double dQcutoff;						/// Delta Q growth allowed before rectification.
@@ -73,15 +72,15 @@ typedef struct _SIMULATION_
 	uint32_t termination_check_enable;
 
 	// RHS function pointers to be provided by all force models.
-	void (*f_rhs)(double * dQ, double * dP, double * dQ_dot,
+	void (*f_rhs)(struct reb_simulation* r, double * dQ, double * dP, double * dQ_dot,
 					double * dP_dot, double * dQ_ddot, double * dP_ddot,
 									uint32_t stageNumber, double * cs1, double * cs2);
 	void (*f_rhs_full)(double * r, double * acc);								
-	void (*fStartOfStep)(double t0, double h, double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis);
+	void (*fStartOfStep)(struct reb_simulation* r, double t0, double h, double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis);
 	uint32_t (*fRectify)(double t, double * Q, double * P,
 								double * dQ, double * dP, uint32_t * rectifiedArray, uint32_t stageNumber);
 		void (*fPerformSummation)(double *, double *, double *, double *, uint32_t);
-		double (*fCalculateInvariant)(double * Q, double * P);
+		double (*fCalculateInvariant)(struct reb_simulation* r, double * Q, double * P);
 	void (*fCalculateOsculatingOrbitNorm)(double * Xosc_norm);
 	void (*fCalculate_dQdot)(double * dP, double * dQdot, double * Posc);
 	void (*f_dh_full_rhs)(double * Q, double * P, double * Qdot, double * Qddot, double * Pdot, double * mass, uint32_t n);

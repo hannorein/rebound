@@ -42,7 +42,7 @@ uint32_t iterations = 0;
 static double hArr[9] = {0.0, 0.0562625605369221464656521910318, 0.180240691736892364987579942780, 0.352624717113169637373907769648, 0.547153626330555383001448554766, 0.734210177215410531523210605558, 0.885320946839095768090359771030, 0.977520613561287501891174488626, 1.0};
 
 
-double Radau_SingleStep(double z_t, double dt, double dt_last_done)
+double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double dt_last_done)
 {
     double dt_new = 0.0;
     radau->h = dt;
@@ -53,14 +53,14 @@ double Radau_SingleStep(double z_t, double dt, double dt_last_done)
     radau->rectifications += sim->rectificationCount;
 
     // Calculate the osculating orbits.
-    sim->fStartOfStep(z_t, dt, hArr, OSCULATING_ORBIT_SLOTS, 1);
+    sim->fStartOfStep(r, z_t, dt, hArr, OSCULATING_ORBIT_SLOTS, 1);
 
     ClearRectifiedBFields(radau->B, radau->rectifiedArray);
     ClearRectifiedBFields(radau->B_1st, radau->rectifiedArray);
 
     radau->CalculateGfromB(); 
 
-    radau->step(&iterations, z_t, dt, sim->step);
+    radau->step(r, &iterations, z_t, dt, sim->step);
     radau->convergenceIterations += iterations;
 
     dt_new = sim->rTol > 0 ? Radau_CalculateStepSize(dt, dt_last_done, z_t) : dt;

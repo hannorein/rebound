@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 
+#include "rebound.h"
 #include "UniversalVars.h"
 #include "radau.h"
 #include <stdlib.h>
@@ -406,17 +407,18 @@ void CalculateClassicalOrbitalElements(void)
 
 
 
-void UniversalVars_Init(SIMULATION * z_sim)
+void UniversalVars_Init(struct reb_simulation* const r)
 {
-  sim = z_sim;
+  int N = r->N;
+  sim = r->ri_tes.sim;
   // Create the main control data structure for universal variables.
   p_uVars = (UNIVERSAL_VARS *)malloc(sizeof(UNIVERSAL_VARS));
   memset(p_uVars, 0, sizeof(UNIVERSAL_VARS));
 
-  z_sim->uVars = p_uVars;
+  sim->uVars = p_uVars;
 
-  p_uVars->stateVectorSize = 3 * z_sim->n * sizeof(double);
-  p_uVars->controlVectorSize = z_sim->n * sizeof(double);
+  p_uVars->stateVectorSize = 3 * N * sizeof(double);
+  p_uVars->controlVectorSize = N * sizeof(double);
 
   // Allocate memory for all objects used in universal vars
   p_uVars->Q0 = (double *)malloc(p_uVars->stateVectorSize);
@@ -425,8 +427,8 @@ void UniversalVars_Init(SIMULATION * z_sim)
   p_uVars->V1 = (double *)malloc(p_uVars->stateVectorSize);
   p_uVars->P0 = (double *)malloc(p_uVars->stateVectorSize);
   p_uVars->P1 = (double *)malloc(p_uVars->stateVectorSize);
-  p_uVars->t0 = (double *)malloc(z_sim->n*sizeof(double));
-  p_uVars->tLast = (double *)malloc(z_sim->n*sizeof(double));
+  p_uVars->t0 = (double *)malloc(N*sizeof(double));
+  p_uVars->tLast = (double *)malloc(N*sizeof(double));
   p_uVars->Q0_norm = (double *)malloc(p_uVars->controlVectorSize);
   p_uVars->beta = (double *)malloc(p_uVars->controlVectorSize);
   p_uVars->eta =  (double *)malloc(p_uVars->controlVectorSize);
@@ -437,7 +439,7 @@ void UniversalVars_Init(SIMULATION * z_sim)
   p_uVars->dt = (double *)malloc(p_uVars->controlVectorSize);
   p_uVars->mass = (double *)malloc(p_uVars->controlVectorSize);
 
-  p_uVars->mu = (double)sim->G*(double)sim->mass[0];
+  p_uVars->mu = (double)r->G*(double)sim->mass[0];
   p_uVars->e = (double *)malloc(p_uVars->controlVectorSize);
   p_uVars->a = (double *)malloc(p_uVars->controlVectorSize);
   p_uVars->h = (double *)malloc(p_uVars->stateVectorSize);
@@ -446,9 +448,9 @@ void UniversalVars_Init(SIMULATION * z_sim)
   p_uVars->apo = (double *)malloc(p_uVars->controlVectorSize);
   
   // @todo dont need this copy - update all refs 
-  for(uint32_t i = 0; i < z_sim->n; i++)
+  for(uint32_t i = 0; i < N; i++)
   {
-    p_uVars->mass[i] = z_sim->mass[i];
+    p_uVars->mass[i] = sim->mass[i];
   }
 
   p_uVars->C.c0 = (double *)malloc(p_uVars->controlVectorSize);
@@ -462,8 +464,8 @@ void UniversalVars_Init(SIMULATION * z_sim)
   memset(p_uVars->V1, 0, p_uVars->stateVectorSize);
   memset(p_uVars->P0, 0, p_uVars->stateVectorSize);
   memset(p_uVars->P1, 0, p_uVars->stateVectorSize);
-  memset(p_uVars->t0, 0, z_sim->n*sizeof(double));
-  memset(p_uVars->tLast, 0, z_sim->n*sizeof(double));
+  memset(p_uVars->t0, 0, N*sizeof(double));
+  memset(p_uVars->tLast, 0, N*sizeof(double));
   memset(p_uVars->Q0_norm, 0, p_uVars->controlVectorSize);
   memset(p_uVars->beta, 0, p_uVars->controlVectorSize);
   memset(p_uVars->eta, 0, p_uVars->controlVectorSize);
@@ -480,12 +482,12 @@ void UniversalVars_Init(SIMULATION * z_sim)
   memset(p_uVars->dt, 0, p_uVars->controlVectorSize);
 
   // CS vars
-  p_uVars->uv_csq = (double *)malloc(3 * z_sim->n * sizeof(double));
-  p_uVars->uv_csv = (double *)malloc(3 * z_sim->n * sizeof(double));
-  p_uVars->uv_csp = (double *)malloc(3 * z_sim->n * sizeof(double));
-  memset(p_uVars->uv_csq, 0, 3 * z_sim->n * sizeof(double));
-  memset(p_uVars->uv_csv, 0, 3 * z_sim->n * sizeof(double));
-  memset(p_uVars->uv_csp, 0, 3 * z_sim->n * sizeof(double));  
+  p_uVars->uv_csq = (double *)malloc(3 * N * sizeof(double));
+  p_uVars->uv_csv = (double *)malloc(3 * N * sizeof(double));
+  p_uVars->uv_csp = (double *)malloc(3 * N * sizeof(double));
+  memset(p_uVars->uv_csq, 0, 3 * N * sizeof(double));
+  memset(p_uVars->uv_csv, 0, 3 * N * sizeof(double));
+  memset(p_uVars->uv_csp, 0, 3 * N * sizeof(double));  
 }
 
 

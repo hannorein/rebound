@@ -34,7 +34,7 @@ static void dhem_PerformSummation(double * Q, double * P,
 
 static inline void add_cs(double* out, double* cs, double inp);
 
-void dhem_rhs_wrapped(double * dQ, double * dP, double * dQ_dot,
+void dhem_rhs_wrapped(struct reb_simulation* r, double * dQ, double * dP, double * dQ_dot,
               double * dP_dot, double * dQ_ddot, double * dP_ddot, uint32_t stageNumber,
               double * cs1, double * cs2)
 {
@@ -51,7 +51,7 @@ void dhem_rhs_wrapped(double * dQ, double * dP, double * dQ_dot,
   dhem->Qosc_cs = dhem->Xosc_cs;
   dhem->Posc_cs = &dhem->Qosc_cs[3*sim->n];
 
-  dhem_rhs(dQ, dP, dQ_dot, dP_dot, dQ_ddot, dP_ddot);
+  dhem_rhs(r, dQ, dP, dQ_dot, dP_dot, dQ_ddot, dP_ddot);
 
 }
 
@@ -60,14 +60,14 @@ void dhem_rhs_wrapped(double * dQ, double * dP, double * dQ_dot,
  * dQ, dP are the input deltas and dQ_dot, dP_dot are the first derivatives terms.
  * dQ_ddot and dP_ddot are the second derivative terms.
  */
-void dhem_rhs(double const * __restrict__ const dQ, double const * __restrict__ const dP, double * __restrict__ const dQ_dot,
+void dhem_rhs(struct reb_simulation* r, double const * __restrict__ const dQ, double const * __restrict__ const dP, double * __restrict__ const dQ_dot,
               double * __restrict__ const dP_dot, double * __restrict__ const dQ_ddot, double * __restrict__ const dP_ddot)
 {
   // Not necessary but makes code more reable.
   const double * const __restrict__ m = dhem->m;
   const uint32_t n = dhem->n;
   const uint32_t n3 = 3*dhem->n;
-  const double G = sim->G;
+  const double G = r->G;
   const double * const __restrict__ Qosc = dhem->Qosc;
   const double * const __restrict__ Posc = dhem->Posc;
   const double * const __restrict__ Posc_dot = dhem->Posc_dot;
@@ -198,7 +198,7 @@ void dhem_rhs(double const * __restrict__ const dQ, double const * __restrict__ 
   }
 }
 
-double dhem_CalculateHamiltonian(double * Q, double * P)
+double dhem_CalculateHamiltonian(struct reb_simulation* r, double * Q, double * P)
 {
   double * m = sim->mass;
   double hamiltonian = 0;
@@ -209,7 +209,7 @@ double dhem_CalculateHamiltonian(double * Q, double * P)
   {
     double Pnorm = (NORM(P, i));
     hamiltonian += Pnorm*Pnorm / (2*m[i]);
-    hamiltonian -= sim->G*m[0]*m[i] / NORM(Q, i);
+    hamiltonian -= r->G*m[0]*m[i] / NORM(Q, i);
 
     Psun[0] += P[3*i];
     Psun[1] += P[3*i+1];
@@ -226,7 +226,7 @@ double dhem_CalculateHamiltonian(double * Q, double * P)
       sepVec[1] = Q[3*i+1]-Q[3*j+1];
       sepVec[2] = Q[3*i+2]-Q[3*j+2];
 
-      hamiltonian -= (sim->G*m[i]*m[j]) / NORM(sepVec, 0);
+      hamiltonian -= (r->G*m[i]*m[j]) / NORM(sepVec, 0);
     }
   }
 
@@ -363,10 +363,10 @@ uint32_t dhem_RectifyOrbits(double t, double * Q, double * P,
   return rectifiedCount;
 }
 
-void dhem_CalculateOsculatingOrbitDerivatives_Momenta(double const * const __restrict__ Qosc, double const * const __restrict__ Posc, 
+void dhem_CalculateOsculatingOrbitDerivatives_Momenta(struct reb_simulation* r, double const * const __restrict__ Qosc, double const * const __restrict__ Posc, 
                                                       double * const __restrict__ Qosc_dot, double * const __restrict__ Posc_dot)
 {
-  const double GM0 = -sim->G*dhem->m[0];
+  const double GM0 = -r->G*dhem->m[0];
 
   for(uint32_t i = 1; i < sim->n; i++)
   {
@@ -386,7 +386,7 @@ void dhem_CalculateOsculatingOrbitDerivatives_Momenta(double const * const __res
   }
 }
 
-void dhem_CalcOscOrbitsForAllStages(double t0, double h, double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis)
+void dhem_CalcOscOrbitsForAllStages(struct reb_simulation* r, double t0, double h, double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis)
 {
   if(z_rebasis != 0)
   {
@@ -404,7 +404,7 @@ void dhem_CalcOscOrbitsForAllStages(double t0, double h, double * hArr, uint32_t
       double * const __restrict__ Q_dot_out = dhem->Xosc_dotArr[i];
       double * const __restrict__ P_dot_out = &dhem->Xosc_dotArr[i][3*sim->n];
 
-      dhem_CalculateOsculatingOrbitDerivatives_Momenta(Qout, Pout, Q_dot_out, P_dot_out);
+      dhem_CalculateOsculatingOrbitDerivatives_Momenta(r, Qout, Pout, Q_dot_out, P_dot_out);
   }
 }
 

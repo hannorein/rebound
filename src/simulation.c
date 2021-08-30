@@ -46,8 +46,6 @@ SIMULATION * Simulation_Init(uint32_t z_n)
   memset(sim->mass, 0, sim->controlVectorSize);
   memset(sim->X_dh, 0, sim->stateVectorSize);
 
-
-  sim->G = 1.0;
   sim->termination_check_enable = 0;
 
   return sim;

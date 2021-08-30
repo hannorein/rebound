@@ -69,7 +69,7 @@ controlVars B_full;
 controlVars Blast_full;
 
 
-static void RadauStep15_Step(uint32_t * z_fCalls, double t, double h, uint32_t step);
+static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_fCalls, double t, double h, uint32_t step);
 static inline void add_cs(double* out, double* cs, double inp);
 static double ReturnIAS15StepError(double h, double t);
 static void ControlVars_Copy(controlVars * out, controlVars * in);
@@ -101,13 +101,13 @@ controlVars_const control_vars_cast(controlVars in)
     return out;
 }
 
-static void RadauStep15_Step(uint32_t * z_iterations, double t, double h, uint32_t step)
+static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, double t, double h, uint32_t step)
 {
   double errMax = 0;
   controlVars * z_csB = &radau->cs_B;
   const uint32_t n3 = sim->n3;
 
-  sim->f_rhs(radau->dQ, radau->dP, radau->dState0, &radau->dState0[3*sim->n],
+  sim->f_rhs(r, radau->dQ, radau->dP, radau->dState0, &radau->dState0[3*sim->n],
              radau->ddState0, &radau->ddState0[3*sim->n], 0, radau->cs_dState0, radau->cs_ddState0);
 
   radau->fCalls++;
@@ -131,7 +131,7 @@ static void RadauStep15_Step(uint32_t * z_iterations, double t, double h, uint32
                                   radau->cs_dX, (int)sim->stateVectorLength/2, sim->stateVectorLength, DONT_ADD_CS_VAR);
 
 
-      sim->f_rhs(radau->predictors, &radau->predictors[3*sim->n], radau->dState, &radau->dState[3*sim->n],
+      sim->f_rhs(r, radau->predictors, &radau->predictors[3*sim->n], radau->dState, &radau->dState[3*sim->n],
            radau->ddState, &radau->ddState[3*sim->n], i,
            radau->cs_dState, radau->cs_ddState);
 

@@ -17,7 +17,7 @@
 #ifndef _DHEM_H_
 #define _DHEM_H_
 
-#include "simulation.h"
+#include "rebound.h"
 
 typedef enum _RHS_CONFIG_
 {
@@ -93,18 +93,17 @@ typedef struct DHEM
   RHS_CONFIG rhsConfig;  
 }DHEM;
 
-void dhem_CalcOscOrbitsForAllStages(double t0, double h, double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis);
-double dhem_CalculateHamiltonian(double * Q, double * P);
+void dhem_CalcOscOrbitsForAllStages(struct reb_simulation* r, double t0, double h, double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis);
+double dhem_CalculateHamiltonian(struct reb_simulation* r, double * Q, double * P);
 void dhem_ConvertToDHCoords(double * Q, double * V, double * Qout, double * Pout);
 void dhem_ConvertToCOM(double * Q, double * V, double * Qout, double * Vout);
 void dhem_InitialiseOsculatingOrbits(double * Q, double * P, double t);
-void dhem_rhs(double const * __restrict__ const dQ, double const * __restrict__ const dP, double * __restrict__ const dQ_dot,
+void dhem_rhs(struct reb_simulation* r, double const * __restrict__ const dQ, double const * __restrict__ const dP, double * __restrict__ const dQ_dot,
               double * __restrict__ const dP_dot, double * __restrict__ const dQ_ddot, double * __restrict__ const dP_ddot);
-void dhem_rhs_full(double * r, double * acc);
-void dhem_rhs_wrapped(double * dQ, double * dP, double * dQ_dot,
+void dhem_rhs_wrapped(struct reb_simulation* r, double * dQ, double * dP, double * dQ_dot,
                       double * dP_dot, double * dQ_ddot, double * dP_ddot, uint32_t stageNumber,
                       double * cs1, double * cs2);      
-void dhem_CalculateOsculatingOrbitDerivatives_Momenta(double const * const __restrict__ Qosc, double const * const __restrict__ Posc, 
+void dhem_CalculateOsculatingOrbitDerivatives_Momenta(struct reb_simulation* r, double const * const __restrict__ Qosc, double const * const __restrict__ Posc, 
                                                       double * const __restrict__ Qosc_dot, double * const __restrict__ Posc_dot);
 uint32_t dhem_RectifyOrbits(double t, double * Q, double * P,
                             double * dQ, double * dP, uint32_t * rectifiedArray, uint32_t stageNumber);

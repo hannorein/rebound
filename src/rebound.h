@@ -217,6 +217,8 @@ struct reb_simulation_integrator_whfast {
     unsigned int recalculate_coordinates_but_not_synchronized_warning;
 };
 
+#include "simulation.h" // REMOVE this when I remove SIMULATION from the structure below (cyclic deps temp fix)
+
 struct reb_simulation_integrator_tes {
     // MUST ALL BE IN CORRECT ORDER
     double dq_max;              // value of dq/q that triggers a rectification (backup to recti_per_orbit)
@@ -229,7 +231,7 @@ struct reb_simulation_integrator_tes {
     double orbital_period;      // temp
     double orbits;
     uint32_t version;
-    SIMULATION * sim;   
+    SIMULATION * sim;           // When I remove this also remove the include above.
     uint32_t allocated_N;
     struct reb_particle* particles_dh;
 };

@@ -17,7 +17,7 @@
 #ifndef _IAS15_H_
 #define _IAS15_H_
 
-#include "simulation.h"
+#include "rebound.h"
 #include <stdio.h>
 #include <time.h>
 
@@ -57,7 +57,7 @@ typedef struct RADAU
   double * Pout;
 
   // Step function pointers
-  void (*step)(uint32_t *, double, double, uint32_t);
+  void (*step)(struct reb_simulation* r, uint32_t *, double, double, uint32_t);
   void (*AnalyticalContinuation)(controlVars *, controlVars *, const double, const double, const uint32_t * const, const uint32_t);
   void (*CalculateGfromB)(void);
   double (*ReturnStepError)(double h, double t);
@@ -157,5 +157,5 @@ void Radau_Init(SIMULATION * z_sim);
 void Radau_Free(void);
 double Radau_CalculateStepSize(double h, double hLast, double t);
 void ClearRectifiedBFields(controlVars * B, uint32_t * rectifiedArray);
-double Radau_SingleStep(double z_t, double dt, double dt_last_done);
+double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double dt_last_done);
 #endif

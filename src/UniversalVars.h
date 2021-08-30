@@ -74,7 +74,7 @@ typedef struct UNIVERSAL_VARS
 }UNIVERSAL_VARS;
 
 //Interface functions.
-void UniversalVars_Init(SIMULATION * z_sim);
+void UniversalVars_Init(struct reb_simulation* const r);
 void UniversalVars_Free(void);
 void CalculateClassicalOrbitalElements(void);
 void RebasisOsculatingOrbits_Momenta(double * z_Q, double * z_P, double z_t, uint32_t i);
