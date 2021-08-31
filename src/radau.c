@@ -31,7 +31,6 @@
 #define OSCULATING_ORBIT_SLOTS 9  // stages + 2 for t=0 and t=1.
 
 static RADAU * radau;
-static SIMULATION * sim;
 
 double t = 0.0;
 double tEnd = 0.0;
@@ -47,12 +46,12 @@ double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double 
     radau->h = dt;
     radau->t = z_t;
 
-    uint32_t rectificationCount = sim->fRectify(r, z_t, sim->Q_dh, sim->P_dh, radau->dQ,
+    uint32_t rectificationCount = dhem_RectifyOrbits(r, z_t, r->ri_tes.Q_dh, r->ri_tes.P_dh, radau->dQ,
                                         radau->dP, radau->rectifiedArray, FINAL_STAGE_INDEX);
     radau->rectifications += rectificationCount;
 
     // Calculate the osculating orbits.
-    sim->fStartOfStep(r, z_t, dt, hArr, OSCULATING_ORBIT_SLOTS, 1);
+    dhem_CalcOscOrbitsForAllStages(r, z_t, dt, hArr, OSCULATING_ORBIT_SLOTS, 1);
 
     ClearRectifiedBFields(r, radau->B, radau->rectifiedArray);
     ClearRectifiedBFields(r, radau->B_1st, radau->rectifiedArray);
@@ -72,7 +71,6 @@ double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double 
 
 void Radau_Init(struct reb_simulation* r)
 {
-  sim = r->ri_tes.sim;
   radau = (RADAU *)malloc(sizeof(RADAU));
   memset(radau, 0, sizeof(RADAU));
 
@@ -123,8 +121,8 @@ void Radau_Init(struct reb_simulation* r)
   radau->Pout = &radau->Xout[r->ri_tes.stateVectorLength/2];
 
 // Copy to here so that we are ready to output to a file before we calculate osculating orbtis.
-  memcpy(radau->Qout, sim->Q_dh, r->ri_tes.stateVectorSize / 2);
-  memcpy(radau->Pout, sim->P_dh, r->ri_tes.stateVectorSize / 2);
+  memcpy(radau->Qout, r->ri_tes.Q_dh, r->ri_tes.stateVectorSize / 2);
+  memcpy(radau->Pout, r->ri_tes.P_dh, r->ri_tes.stateVectorSize / 2);
 
   radau->rectifiedArray = (uint32_t*)malloc(sizeof(uint32_t)*r->ri_tes.stateVectorLength);
   memset(radau->rectifiedArray, 0, sizeof(uint32_t)*r->ri_tes.stateVectorLength);

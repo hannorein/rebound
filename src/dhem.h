@@ -77,6 +77,8 @@ typedef struct DHEM
   RHS_CONFIG rhsConfig;  
 }DHEM;
 
+void dhem_PerformSummation(struct reb_simulation* r, double * Q, double * P,
+                               double * dQ, double * dP, uint32_t stageNumber);
 void dhem_CalcOscOrbitsForAllStages(struct reb_simulation* r, double t0, double h, double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis);
 double dhem_CalculateHamiltonian(struct reb_simulation* r, double * Q, double * P);
 void dhem_ConvertToDHCoords(double * Q, double * V, double * Qout, double * Pout);
@@ -91,7 +93,7 @@ void dhem_CalculateOsculatingOrbitDerivatives_Momenta(struct reb_simulation* r, 
                                                       double * const __restrict__ Qosc_dot, double * const __restrict__ Posc_dot);
 uint32_t dhem_RectifyOrbits(struct reb_simulation* r, double t, double * Q, double * P,
                             double * dQ, double * dP, uint32_t * rectifiedArray, uint32_t stageNumber);
-void dhem_Init(struct reb_simulation* r, SIMULATION * z_sim, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep);
+void dhem_Init(struct reb_simulation* r, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep);
 void dhem_Free(void);
 void dh_full_rhs(double * Q, double * P, double * Qdot, double * Qddot, double * Pdot, double * mass, uint32_t n);
 

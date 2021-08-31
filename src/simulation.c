@@ -18,39 +18,30 @@
 #include <string.h>
 #include "rebound.h"
 
-static SIMULATION * sim = NULL;
 
-SIMULATION * Simulation_Init(struct reb_simulation* r, uint32_t z_n)
+void Simulation_Init(struct reb_simulation* r, uint32_t z_n)
 {
-  sim = (SIMULATION *)malloc(sizeof(SIMULATION));
-
-  // Initialise all object variables to zero to begin with.
-  memset(sim, 0, sizeof(SIMULATION));
-
   // Set control variables to initial values
   r->ri_tes.stateVectorLength = 2*3*r->N;
   r->ri_tes.stateVectorSize = r->ri_tes.stateVectorLength * sizeof(double);
   r->ri_tes.controlVectorSize = r->N * sizeof(double);
 
   // Allocate memory
-  sim->mass = (double *)malloc(r->ri_tes.controlVectorSize);
-  sim->X_dh = (double *)malloc(r->ri_tes.stateVectorSize);
-  sim->Q_dh = sim->X_dh;
-  sim->P_dh = &sim->X_dh[r->ri_tes.stateVectorLength/2];
+  r->ri_tes.mass = (double *)malloc(r->ri_tes.controlVectorSize);
+  r->ri_tes.X_dh = (double *)malloc(r->ri_tes.stateVectorSize);
+  r->ri_tes.Q_dh = r->ri_tes.X_dh;
+  r->ri_tes.P_dh = &r->ri_tes.X_dh[r->ri_tes.stateVectorLength/2];
 
   // Ensure we are clean for each integration.
-  memset(sim->mass, 0, r->ri_tes.controlVectorSize);
-  memset(sim->X_dh, 0, r->ri_tes.stateVectorSize);
+  memset(r->ri_tes.mass, 0, r->ri_tes.controlVectorSize);
+  memset(r->ri_tes.X_dh, 0, r->ri_tes.stateVectorSize);
 
   r->ri_tes.termination_check_enable = 0;
-
-  return sim;
 }
 
 
-void Simulation_Free(void)
+void Simulation_Free(struct reb_simulation* r)
 {
-  free(sim->X_dh);
-  free(sim->mass);
-  free(sim);
+  free(r->ri_tes.X_dh);
+  free(r->ri_tes.mass);
 }

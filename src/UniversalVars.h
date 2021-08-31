@@ -62,7 +62,6 @@ typedef struct UNIVERSAL_VARS
   StumpfCoefficients C;
 
   datatype_t mu;  /// G*mCentral
-  datatype_t * mass; // Extra storage but means we dont have to cast everywhere.
 
   // Variables for storing classical orbital elements.
   double * e;

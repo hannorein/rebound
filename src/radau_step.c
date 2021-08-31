@@ -24,7 +24,6 @@
 #include "dhem.h"
 #include "UniversalVars.h"
 
-static SIMULATION * __restrict__ sim;
 static RADAU * __restrict__ radau;
 
 // Note this is modified from previous implementations and now has 1.0 instead of 0.0.
@@ -107,7 +106,7 @@ static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, 
   controlVars * z_csB = &radau->cs_B;
   const uint32_t n3 = 3*r->N;
 
-  sim->f_rhs(r, radau->dQ, radau->dP, radau->dState0, &radau->dState0[3*r->N],
+  dhem_rhs_wrapped(r, radau->dQ, radau->dP, radau->dState0, &radau->dState0[3*r->N],
              radau->ddState0, &radau->ddState0[3*r->N], 0, radau->cs_dState0, radau->cs_ddState0);
 
   radau->fCalls++;
@@ -131,7 +130,7 @@ static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, 
                                   radau->cs_dX, (int)r->ri_tes.stateVectorLength/2, r->ri_tes.stateVectorLength, DONT_ADD_CS_VAR);
 
 
-      sim->f_rhs(r, radau->predictors, &radau->predictors[3*r->N], radau->dState, &radau->dState[3*r->N],
+      dhem_rhs_wrapped(r, radau->predictors, &radau->predictors[3*r->N], radau->dState, &radau->dState[3*r->N],
            radau->ddState, &radau->ddState[3*r->N], i,
            radau->cs_dState, radau->cs_ddState);
 
@@ -384,9 +383,9 @@ static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, 
 
     for(uint32_t j = 1; j < r->N; j++)
     {
-      q_ddot[3*j+0] = r->ri_tes.rhs->Xosc_dotArr[8][3*r->N+3*j+0] / sim->mass[j];
-      q_ddot[3*j+1] = r->ri_tes.rhs->Xosc_dotArr[8][3*r->N+3*j+1] / sim->mass[j];
-      q_ddot[3*j+2] = r->ri_tes.rhs->Xosc_dotArr[8][3*r->N+3*j+2] / sim->mass[j];
+      q_ddot[3*j+0] = r->ri_tes.rhs->Xosc_dotArr[8][3*r->N+3*j+0] / r->ri_tes.mass[j];
+      q_ddot[3*j+1] = r->ri_tes.rhs->Xosc_dotArr[8][3*r->N+3*j+1] / r->ri_tes.mass[j];
+      q_ddot[3*j+2] = r->ri_tes.rhs->Xosc_dotArr[8][3*r->N+3*j+2] / r->ri_tes.mass[j];
     }    
 
     for(uint32_t j = 3; j < 3*r->N; j++)
@@ -652,7 +651,6 @@ void CalculateNewState(double h, double * z_dState, double * z_ddState,
 
 void RadauStep15_Init(struct reb_simulation* r)
 {
-    sim = r->ri_tes.sim;
     radau = r->ri_tes.radau;
     radau->step = RadauStep15_Step;
     radau->AnalyticalContinuation = AnalyticalContinuation;

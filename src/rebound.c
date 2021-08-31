@@ -595,7 +595,6 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_tes.epsilon = 1e-6;
     r->ri_tes.output_samples = 1000;
     r->ri_tes.orbital_period = 365.25;  // Assume Earth for now 
-    r->ri_tes.sim = NULL;
     r->ri_tes.allocated_N = 0;
 
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.

@@ -57,7 +57,6 @@ double invfactorial[35] = {1.0,1.0,0.5,0.166666666666666666666666666666667,0.041
 #define STUMPF_ITERATIONS 13 // must be an odd number
 
 static UNIVERSAL_VARS * p_uVars = NULL;
-static SIMULATION * sim = NULL;
 
 // Internal functions.
 static void C_Stumpff(double * cs_in, double z_in);
@@ -168,7 +167,7 @@ void CalculateOsculatingOrbitsForSingleStep(struct reb_simulation* r, double **X
       const double fp = -p_uVars->mu * g1 / (p_uVars->Q0_norm[i]*Qnorm);
       const double gp =  -p_uVars->mu * g2 / Qnorm;
 
-      const double mi =  p_uVars->mass[i]; 
+      const double mi =  r->ri_tes.mass[i]; 
       dx = (((gp*V0x_t+fp*Q0x_t) + gp*V0x_h) + fp*Q0x_h)*mi;
       dy = (((gp*V0y_t+fp*Q0y_t) + gp*V0y_h) + fp*Q0y_h)*mi;
       dz = (((gp*V0z_t+fp*Q0z_t) + gp*V0z_h) + fp*Q0z_h)*mi;
@@ -232,7 +231,7 @@ void ApplyCorrectorToOsculatingOrbitCalculation(struct reb_simulation* r, double
           add_cs(&r->ri_tes.radau->dP[3*i+j], &p_uVars->uv_csp[3*i+j], -csp);
 
           // Obtain cs sum for v for next step.
-          p_uVars->uv_csv[3*i+j] = p_uVars->uv_csp[3*i+j]/sim->mass[i];
+          p_uVars->uv_csv[3*i+j] = p_uVars->uv_csp[3*i+j]/r->ri_tes.mass[i];
         }
         RebasisOsculatingOrbits_Momenta(r, Qout, Pout, t, i);  
     }
@@ -244,18 +243,18 @@ This version is called whenever a rectification is performed.
 */
 void RebasisOsculatingOrbits_Momenta(struct reb_simulation* r, double * z_Q, double * z_P, double z_t, uint32_t i)
 {
-
+  double * mass = r->ri_tes.mass;
   p_uVars->Q0[3*i+0] = z_Q[3*i+0];
   p_uVars->Q0[3*i+1] = z_Q[3*i+1];
   p_uVars->Q0[3*i+2] = z_Q[3*i+2];
   
-  p_uVars->V0[3*i+0] = z_P[3*i+0] / sim->mass[i];
-  p_uVars->V0[3*i+1] = z_P[3*i+1] / sim->mass[i];
-  p_uVars->V0[3*i+2] = z_P[3*i+2] / sim->mass[i];
+  p_uVars->V0[3*i+0] = z_P[3*i+0] / mass[i];
+  p_uVars->V0[3*i+1] = z_P[3*i+1] / mass[i];
+  p_uVars->V0[3*i+2] = z_P[3*i+2] / mass[i];
 
-  p_uVars->uv_csv[3*i] = p_uVars->uv_csp[3*i] / sim->mass[i];
-  p_uVars->uv_csv[3*i+1] = p_uVars->uv_csp[3*i+1] / sim->mass[i];
-  p_uVars->uv_csv[3*i+2] = p_uVars->uv_csp[3*i+2] / sim->mass[i];
+  p_uVars->uv_csv[3*i] = p_uVars->uv_csp[3*i] / mass[i];
+  p_uVars->uv_csv[3*i+1] = p_uVars->uv_csp[3*i+1] / mass[i];
+  p_uVars->uv_csv[3*i+2] = p_uVars->uv_csp[3*i+2] / mass[i];
 
   p_uVars->P0[3*i+0] = z_P[3*i+0];
   p_uVars->P0[3*i+1] = z_P[3*i+1];
@@ -267,9 +266,9 @@ void RebasisOsculatingOrbits_Momenta(struct reb_simulation* r, double * z_Q, dou
   const double Q0x = z_Q[3*i];
   const double Q0y = z_Q[3*i+1];
   const double Q0z = z_Q[3*i+2];
-  const double V0x = z_P[3*i]/sim->mass[i];
-  const double V0y = z_P[3*i+1]/sim->mass[i];
-  const double V0z = z_P[3*i+2]/sim->mass[i];
+  const double V0x = z_P[3*i]/mass[i];
+  const double V0y = z_P[3*i+1]/mass[i];
+  const double V0z = z_P[3*i+2]/mass[i];
 
   p_uVars->t0[i] = z_t;
   const double Q0_norm = sqrt(Q0x*Q0x+Q0y*Q0y+Q0z*Q0z);
@@ -410,7 +409,6 @@ void CalculateClassicalOrbitalElements(struct reb_simulation* r)
 void UniversalVars_Init(struct reb_simulation* const r)
 {
   int N = r->N;
-  sim = r->ri_tes.sim;
   // Create the main control data structure for universal variables.
   p_uVars = (UNIVERSAL_VARS *)malloc(sizeof(UNIVERSAL_VARS));
   memset(p_uVars, 0, sizeof(UNIVERSAL_VARS));
@@ -437,9 +435,8 @@ void UniversalVars_Init(struct reb_simulation* const r)
   p_uVars->Xperiod = (double *)malloc(p_uVars->controlVectorSize);
   p_uVars->X = (double *)malloc(p_uVars->controlVectorSize);
   p_uVars->dt = (double *)malloc(p_uVars->controlVectorSize);
-  p_uVars->mass = (double *)malloc(p_uVars->controlVectorSize);
 
-  p_uVars->mu = (double)r->G*(double)sim->mass[0];
+  p_uVars->mu = (double)r->G*(double)r->ri_tes.mass[0];
   p_uVars->e = (double *)malloc(p_uVars->controlVectorSize);
   p_uVars->a = (double *)malloc(p_uVars->controlVectorSize);
   p_uVars->h = (double *)malloc(p_uVars->stateVectorSize);
@@ -447,12 +444,6 @@ void UniversalVars_Init(struct reb_simulation* const r)
   p_uVars->peri = (double *)malloc(p_uVars->controlVectorSize);
   p_uVars->apo = (double *)malloc(p_uVars->controlVectorSize);
   
-  // @todo dont need this copy - update all refs 
-  for(uint32_t i = 0; i < N; i++)
-  {
-    p_uVars->mass[i] = sim->mass[i];
-  }
-
   p_uVars->C.c0 = (double *)malloc(p_uVars->controlVectorSize);
   p_uVars->C.c1 = (double *)malloc(p_uVars->controlVectorSize);
   p_uVars->C.c2 = (double *)malloc(p_uVars->controlVectorSize);

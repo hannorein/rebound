@@ -23,14 +23,10 @@
 #include <math.h>
 
 static DHEM * dhem;
-static SIMULATION * sim;
 
 #define NORM(x, i) sqrt(x[3*i]*x[3*i]+x[3*i+1]*x[3*i+1]+x[3*i+2]*x[3*i+2])
 #define NORMl(x, i) sqrtq(x[3*i]*x[3*i]+x[3*i+1]*x[3*i+1]+x[3*i+2]*x[3*i+2])
 #define DOT(x, y, i, j) (x[3*i+0]*y[3*j+0]+x[3*i+1]*y[3*j+1]+x[3*i+2]*y[3*j+2])
-
-static void dhem_PerformSummation(struct reb_simulation* r, double * Q, double * P,
-                               double * dQ, double * dP, uint32_t stageNumber);
 
 static inline void add_cs(double* out, double* cs, double inp);
 
@@ -200,7 +196,7 @@ void dhem_rhs(struct reb_simulation* r, double const * __restrict__ const dQ, do
 
 double dhem_CalculateHamiltonian(struct reb_simulation* r, double * Q, double * P)
 {
-  double * m = sim->mass;
+  double * m = r->ri_tes.mass;
   double hamiltonian = 0;
   double Psun[3] = {0,0,0};
   double sepVec[3] = {0,0,0};
@@ -233,7 +229,7 @@ double dhem_CalculateHamiltonian(struct reb_simulation* r, double * Q, double * 
   return hamiltonian;
 }
 
-static void dhem_PerformSummation(struct reb_simulation* r, double * Q, double * P,
+void dhem_PerformSummation(struct reb_simulation* r, double * Q, double * P,
                                double * dQ, double * dP, uint32_t stageNumber)
 {
   // Need to setup a pointer to the osculating orbits in memory.
@@ -370,7 +366,7 @@ void dhem_CalculateOsculatingOrbitDerivatives_Momenta(struct reb_simulation* r, 
 
   for(uint32_t i = 1; i < r->N; i++)
   {
-    const double m = sim->mass[i];
+    const double m = r->ri_tes.mass[i];
     const double GMM = GM0*m;
     // Copy across the velocity term.
     Qosc_dot[3*i+0] = Posc[3*i] / m;
@@ -408,19 +404,14 @@ void dhem_CalcOscOrbitsForAllStages(struct reb_simulation* r, double t0, double 
   }
 }
 
-void dhem_Init(struct reb_simulation* r, SIMULATION * z_sim, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep)
+void dhem_Init(struct reb_simulation* r, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep)
 {
-  sim = z_sim;
   // Get memory for the dhem state vectors.
   dhem = (DHEM*)malloc(sizeof(DHEM));
   memset(dhem, 0, sizeof(DHEM));
 
   // Configure function pointers for other modules.
   r->ri_tes.rhs = dhem;
-  sim->f_rhs = dhem_rhs_wrapped;
-  sim->fStartOfStep = dhem_CalcOscOrbitsForAllStages;
-  sim->fRectify = dhem_RectifyOrbits;
-  sim->fPerformSummation = dhem_PerformSummation;
 
   dhem->final_stage_index = 8;
 
@@ -498,7 +489,7 @@ void dhem_Init(struct reb_simulation* r, SIMULATION * z_sim, double z_rectificat
   dhem->Q_dot = dhem->X_dot;
   dhem->P_dot = &dhem->X_dot[3*r->N];
 
-  dhem->m = sim->mass;
+  dhem->m = r->ri_tes.mass;
   dhem->mTotal = 0;
 
   dhem->m_inv = (double*)malloc(r->N*sizeof(double));

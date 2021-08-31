@@ -216,7 +216,10 @@ struct reb_simulation_integrator_whfast {
     unsigned int recalculate_coordinates_but_not_synchronized_warning;
 };
 
-#include "simulation.h" // REMOVE this when I remove SIMULATION from the structure below (cyclic deps temp fix)
+// Forward declarations
+typedef struct UNIVERSAL_VARS UNIVERSAL_VARS;
+typedef struct DHEM DHEM;
+typedef struct RADAU RADAU;
 
 struct reb_simulation_integrator_tes {
     // MUST ALL BE IN CORRECT ORDER
@@ -231,7 +234,6 @@ struct reb_simulation_integrator_tes {
     double orbits;
     uint32_t version;
     double t0;								/// Initial time
-    SIMULATION * sim;           // When I remove this also remove the include above.
     uint32_t allocated_N;
     struct reb_particle* particles_dh;
 
@@ -246,6 +248,12 @@ struct reb_simulation_integrator_tes {
     UNIVERSAL_VARS * uVars;			/// Pointer to the universal variables module
     DHEM * rhs;						/// Pointer to the DHEM rhs
     RADAU * radau;  				/// Pointer to our integrator
+
+    // State storage
+    double * mass;					/// Initial particle masses
+    double * X_dh;					/// Memory for current state in dh coords.
+	double * Q_dh;						/// Current state in dh coords.
+	double * P_dh;						/// Current state in dh coords.    
 };
 
 enum REB_EOS_TYPE {
