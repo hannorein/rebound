@@ -56,12 +56,10 @@ double invfactorial[35] = {1.0,1.0,0.5,0.166666666666666666666666666666667,0.041
 #define MAX_NEWTON_ITERATIONS 50
 #define STUMPF_ITERATIONS 13 // must be an odd number
 
-static UNIVERSAL_VARS * p_uVars = NULL;
-
 // Internal functions.
 static void C_Stumpff(double * cs_in, double z_in);
-static double SolveForUnivsersalAnomaly(double dt, double h, uint32_t i, double * C);
-static double CalcUpdateValue(double X, double dt, uint32_t i, double * C);
+static double SolveForUnivsersalAnomaly(struct reb_simulation* const r, double dt, double h, uint32_t i, double * C);
+static double CalcUpdateValue(struct reb_simulation* const r, double X, double dt, uint32_t i, double * C);
 static void CalculateClassicalOrbitalElementsSingle(struct reb_simulation* r, uint32_t i);
 static inline void add_cs(double * out, double * cs, double inp);
 
@@ -70,6 +68,7 @@ void CalculateOsculatingOrbitsForSingleStep(struct reb_simulation* r, double **X
                                             const double t0, const double h, double const * const h_array, 
                                             const uint32_t z_stagesPerStep, uint32_t z_rebasis)
 {
+  UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
   double t_last_rebasis = 0;
 
   for(uint32_t stage = 0; stage < z_stagesPerStep; stage++)
@@ -101,7 +100,7 @@ void CalculateOsculatingOrbitsForSingleStep(struct reb_simulation* r, double **X
       double h = t - p_uVars->tLast[i];
       p_uVars->tLast[i] = t;
 
-      SolveForUnivsersalAnomaly(dt, h, i, C);
+      SolveForUnivsersalAnomaly(r, dt, h, i, C);
 
       p_uVars->C.c0[i] = C[0];
       p_uVars->C.c1[i] = C[1];
@@ -205,6 +204,7 @@ void CalculateOsculatingOrbitsForSingleStep(struct reb_simulation* r, double **X
 
 void ApplyCorrectorToOsculatingOrbitCalculation(struct reb_simulation* r, double **Xosc_map, double t, uint32_t z_stagePerStep)
 { 
+    UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
     double * Qout = Xosc_map[z_stagePerStep-1];
     double * Pout = &Qout[3*r->N];      
 
@@ -243,6 +243,7 @@ This version is called whenever a rectification is performed.
 */
 void RebasisOsculatingOrbits_Momenta(struct reb_simulation* r, double * z_Q, double * z_P, double z_t, uint32_t i)
 {
+  UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
   double * mass = r->ri_tes.mass;
   p_uVars->Q0[3*i+0] = z_Q[3*i+0];
   p_uVars->Q0[3*i+1] = z_Q[3*i+1];
@@ -291,8 +292,9 @@ void RebasisOsculatingOrbits_Momenta(struct reb_simulation* r, double * z_Q, dou
 }
 
 
-static double SolveForUnivsersalAnomaly(double dt, double h, uint32_t i, double * C)
+static double SolveForUnivsersalAnomaly(struct reb_simulation* const r, double dt, double h, uint32_t i, double * C)
 {
+  UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
   double X = p_uVars->X[i] + (h / p_uVars->Q0_norm[i]);
   X *= (1.0 - X*p_uVars->eta[i]*0.5/p_uVars->Q0_norm[i]);
 
@@ -302,7 +304,7 @@ static double SolveForUnivsersalAnomaly(double dt, double h, uint32_t i, double 
 
   for(uint32_t k = 0; k < MAX_NEWTON_ITERATIONS; k++)
   {    
-    X = CalcUpdateValue(X, dt, i, C);
+    X = CalcUpdateValue(r, X, dt, i, C);
 
     for(uint32_t j = 0; j < k; j++)
     {
@@ -317,8 +319,9 @@ static double SolveForUnivsersalAnomaly(double dt, double h, uint32_t i, double 
   return -1.0;
 }
 
-static double CalcUpdateValue(double X, double dt, uint32_t i, double * C)
+static double CalcUpdateValue(struct reb_simulation* const r, double X, double dt, uint32_t i, double * C)
 {
+  UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
   const double X2 = X*X;
   const double X3 = X2*X;
   double Z = p_uVars->beta[i]*X2;
@@ -365,6 +368,7 @@ static void C_Stumpff(double * cs, double z)
 
 static void CalculateClassicalOrbitalElementsSingle(struct reb_simulation* r, uint32_t i)
 {
+  UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
   if(r->ri_tes.termination_check_enable)
   {
     // Semimajor axis
@@ -410,10 +414,9 @@ void UniversalVars_Init(struct reb_simulation* const r)
 {
   int N = r->N;
   // Create the main control data structure for universal variables.
-  p_uVars = (UNIVERSAL_VARS *)malloc(sizeof(UNIVERSAL_VARS));
-  memset(p_uVars, 0, sizeof(UNIVERSAL_VARS));
-
-  r->ri_tes.uVars = p_uVars;
+  r->ri_tes.uVars = (UNIVERSAL_VARS *)malloc(sizeof(UNIVERSAL_VARS));
+  memset(r->ri_tes.uVars, 0, sizeof(UNIVERSAL_VARS));
+  UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
 
   p_uVars->stateVectorSize = 3 * N * sizeof(double);
   p_uVars->controlVectorSize = N * sizeof(double);
@@ -482,8 +485,9 @@ void UniversalVars_Init(struct reb_simulation* const r)
 }
 
 
-void UniversalVars_Free(void)
+void UniversalVars_Free(struct reb_simulation* r)
 {
+  UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
   free(p_uVars->Q0);
   free(p_uVars->V0);
   free(p_uVars->Q1);

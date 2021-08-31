@@ -30,18 +30,12 @@
 #define MIN_STEP_SIZE 1E-5
 #define OSCULATING_ORBIT_SLOTS 9  // stages + 2 for t=0 and t=1.
 
-static RADAU * radau;
-
-double t = 0.0;
-double tEnd = 0.0;
-double h = 0.0;
-uint32_t iterations = 0;
-
 static double hArr[9] = {0.0, 0.0562625605369221464656521910318, 0.180240691736892364987579942780, 0.352624717113169637373907769648, 0.547153626330555383001448554766, 0.734210177215410531523210605558, 0.885320946839095768090359771030, 0.977520613561287501891174488626, 1.0};
-
 
 double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double dt_last_done)
 {
+    RADAU * radau = r->ri_tes.radau;
+    uint32_t iterations = 0;
     double dt_new = 0.0;
     uint32_t rectificationCount = dhem_RectifyOrbits(r, z_t, r->ri_tes.Q_dh, r->ri_tes.P_dh, radau->dQ,
                                         radau->dP, radau->rectifiedArray, FINAL_STAGE_INDEX);
@@ -68,10 +62,10 @@ double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double 
 
 void Radau_Init(struct reb_simulation* r)
 {
-  radau = (RADAU *)malloc(sizeof(RADAU));
-  memset(radau, 0, sizeof(RADAU));
+  r->ri_tes.radau = (RADAU *)malloc(sizeof(RADAU));
+  memset(r->ri_tes.radau, 0, sizeof(RADAU));
+  RADAU * radau = r->ri_tes.radau;
 
-  r->ri_tes.radau = radau;
   radau->dX = (double*)malloc(r->ri_tes.stateVectorSize);
   radau->Xout = (double*)malloc(r->ri_tes.stateVectorSize);
   radau->predictors = (double*)malloc(r->ri_tes.stateVectorSize);
@@ -85,7 +79,7 @@ void Radau_Init(struct reb_simulation* r)
   radau->Qout = radau->Xout;
   radau->Pout = &radau->Xout[r->ri_tes.stateVectorLength/2];
 
-// Copy to here so that we are ready to output to a file before we calculate osculating orbtis.
+  // Copy to here so that we are ready to output to a file before we calculate osculating orbtis.
   memcpy(radau->Qout, r->ri_tes.Q_dh, r->ri_tes.stateVectorSize / 2);
   memcpy(radau->Pout, r->ri_tes.P_dh, r->ri_tes.stateVectorSize / 2);
 
@@ -104,9 +98,10 @@ void Radau_Init(struct reb_simulation* r)
   RadauStep15_Init(r);
 }
 
-void Radau_Free(void)
+void Radau_Free(struct reb_simulation* r)
 {
-  RadauStep15_Free();
+  RADAU * radau = r->ri_tes.radau;
+  RadauStep15_Free(r);
   free(radau->dX);
   free(radau->Xout);
   free(radau->predictors);

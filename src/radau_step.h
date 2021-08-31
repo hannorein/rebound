@@ -18,7 +18,7 @@
 #define RADAU_STEP_H
 
 void RadauStep15_Init(struct reb_simulation* r);
-void RadauStep15_Free(void);
+void RadauStep15_Free(struct reb_simulation* r);
 void ControlVars_Free(controlVars * var);
 void ControlVars_Init(controlVars * var, uint32_t size);
 void ControlVars_Clear(controlVars * var);

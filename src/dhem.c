@@ -22,8 +22,6 @@
 #include <string.h>
 #include <math.h>
 
-static DHEM * dhem;
-
 #define NORM(x, i) sqrt(x[3*i]*x[3*i]+x[3*i+1]*x[3*i+1]+x[3*i+2]*x[3*i+2])
 #define NORMl(x, i) sqrtq(x[3*i]*x[3*i]+x[3*i+1]*x[3*i+1]+x[3*i+2]*x[3*i+2])
 #define DOT(x, y, i, j) (x[3*i+0]*y[3*j+0]+x[3*i+1]*y[3*j+1]+x[3*i+2]*y[3*j+2])
@@ -34,6 +32,7 @@ void dhem_rhs_wrapped(struct reb_simulation* r, double * dQ, double * dP, double
               double * dP_dot, double * dQ_ddot, double * dP_ddot, uint32_t stageNumber,
               double * cs1, double * cs2)
 {
+  DHEM * dhem = r->ri_tes.rhs;
   // Set up the pointer to the previously calculated osculating orbit values.
   dhem->Xosc = dhem->XoscArr[stageNumber];
   dhem->Qosc = dhem->Xosc;
@@ -59,6 +58,7 @@ void dhem_rhs_wrapped(struct reb_simulation* r, double * dQ, double * dP, double
 void dhem_rhs(struct reb_simulation* r, double const * __restrict__ const dQ, double const * __restrict__ const dP, double * __restrict__ const dQ_dot,
               double * __restrict__ const dP_dot, double * __restrict__ const dQ_ddot, double * __restrict__ const dP_ddot)
 {
+  DHEM * dhem = r->ri_tes.rhs;
   // Not necessary but makes code more reable.
   const double * const __restrict__ m = dhem->m;
   const uint32_t n = r->N;
@@ -232,6 +232,7 @@ double dhem_CalculateHamiltonian(struct reb_simulation* r, double * Q, double * 
 void dhem_PerformSummation(struct reb_simulation* r, double * Q, double * P,
                                double * dQ, double * dP, uint32_t stageNumber)
 {
+  DHEM * dhem = r->ri_tes.rhs;
   // Need to setup a pointer to the osculating orbits in memory.
   dhem->Xosc = dhem->XoscArr[stageNumber];
   dhem->Qosc = dhem->Xosc;
@@ -268,6 +269,7 @@ void dhem_InitialiseOsculatingOrbits(struct reb_simulation* r, double * Q, doubl
 uint32_t dhem_RectifyOrbits(struct reb_simulation* r, double t, double * Q, double * P,
                             double * dQ, double * dP, uint32_t * rectifiedArray, uint32_t stageNumber)
 {
+  DHEM * dhem = r->ri_tes.rhs;
   uint32_t rectifyFlag = 0;
   uint32_t rectifiedCount = 0;
   double dQ_norm = 0;
@@ -362,6 +364,7 @@ uint32_t dhem_RectifyOrbits(struct reb_simulation* r, double t, double * Q, doub
 void dhem_CalculateOsculatingOrbitDerivatives_Momenta(struct reb_simulation* r, double const * const __restrict__ Qosc, double const * const __restrict__ Posc, 
                                                       double * const __restrict__ Qosc_dot, double * const __restrict__ Posc_dot)
 {
+  DHEM * dhem = r->ri_tes.rhs;
   const double GM0 = -r->G*dhem->m[0];
 
   for(uint32_t i = 1; i < r->N; i++)
@@ -384,6 +387,7 @@ void dhem_CalculateOsculatingOrbitDerivatives_Momenta(struct reb_simulation* r, 
 
 void dhem_CalcOscOrbitsForAllStages(struct reb_simulation* r, double t0, double h, double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis)
 {
+  DHEM * dhem = r->ri_tes.rhs;
   if(z_rebasis != 0)
   {
     CalculateOsculatingOrbitsForSingleStep(r, dhem->XoscArr, t0, h, hArr, z_stagesPerStep, z_rebasis);  
@@ -407,11 +411,9 @@ void dhem_CalcOscOrbitsForAllStages(struct reb_simulation* r, double t0, double 
 void dhem_Init(struct reb_simulation* r, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep)
 {
   // Get memory for the dhem state vectors.
-  dhem = (DHEM*)malloc(sizeof(DHEM));
-  memset(dhem, 0, sizeof(DHEM));
-
-  // Configure function pointers for other modules.
-  r->ri_tes.rhs = dhem;
+  r->ri_tes.rhs = (DHEM*)malloc(sizeof(DHEM));
+  memset(r->ri_tes.rhs, 0, sizeof(DHEM));
+  DHEM * dhem = r->ri_tes.rhs;
 
   dhem->X = (double*)malloc(r->ri_tes.stateVectorSize);
   dhem->rectifyTimeArray = (double*)malloc(r->ri_tes.controlVectorSize);
