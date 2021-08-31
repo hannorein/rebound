@@ -227,33 +227,33 @@ struct reb_simulation_integrator_tes {
     double recti_per_orbit;     // main method for triggering a rectification 
     double epsilon;             // tolerance parameter
 
-
-    // temporary data storage for porting - everything below here can ultimately be removed.
-    double output_samples;      // temp
-    double orbital_period;      // temp
-    double orbits;
-    uint32_t version;
-    double t0;								/// Initial time
+    // Synchronisation particle storage.
     uint32_t allocated_N;
     struct reb_particle* particles_dh;
 
-    // Ported from simulation
+    // Vector dimensions variables.
     uint32_t stateVectorLength;		/// Length of the state vector in doubles.
     uint32_t stateVectorSize;		/// Size in bytes of the state vector.
     uint32_t controlVectorSize; 	/// Size in bytes of n * sizeof(double).
     uint32_t controlVectorLength;	/// Length of the control vector in doubles.
     uint32_t termination_check_enable; /// @todo potentially this could be removed depending on if we want the option to calculate classical orbital elements
 
+    // State storage
+    double * mass;					/// Initial particle masses
+    double * X_dh;					/// Memory for current state in dh coords.
+	double * Q_dh;					/// Current state in dh coords.
+	double * P_dh;					/// Current state in dh coords.   
+
     // Pointers to various modules comprising TES.
     UNIVERSAL_VARS * uVars;			/// Pointer to the universal variables module
     DHEM * rhs;						/// Pointer to the DHEM rhs
     RADAU * radau;  				/// Pointer to our integrator
 
-    // State storage
-    double * mass;					/// Initial particle masses
-    double * X_dh;					/// Memory for current state in dh coords.
-	double * Q_dh;						/// Current state in dh coords.
-	double * P_dh;						/// Current state in dh coords.    
+    double orbital_period;      // The lowest initial orbital period.
+
+    // temporary data storage for porting - everything below here can ultimately be removed.
+    double orbits;
+    double t0;								/// Initial time
 };
 
 enum REB_EOS_TYPE {

@@ -43,9 +43,6 @@ static double hArr[9] = {0.0, 0.0562625605369221464656521910318, 0.1802406917368
 double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double dt_last_done)
 {
     double dt_new = 0.0;
-    radau->h = dt;
-    radau->t = z_t;
-
     uint32_t rectificationCount = dhem_RectifyOrbits(r, z_t, r->ri_tes.Q_dh, r->ri_tes.P_dh, radau->dQ,
                                         radau->dP, radau->rectifiedArray, FINAL_STAGE_INDEX);
     radau->rectifications += rectificationCount;
@@ -56,15 +53,15 @@ double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double 
     ClearRectifiedBFields(r, radau->B, radau->rectifiedArray);
     ClearRectifiedBFields(r, radau->B_1st, radau->rectifiedArray);
 
-    radau->CalculateGfromB(r); 
+    CalculateGfromB(r); 
 
-    radau->step(r, &iterations, z_t, dt);
+    RadauStep15_Step(r, &iterations, z_t, dt);
     radau->convergenceIterations += iterations;
 
     dt_new = r->ri_tes.epsilon > 0 ? Radau_CalculateStepSize(r, dt, dt_last_done, z_t) : dt;
 
-    radau->AnalyticalContinuation(r, radau->B_1st, radau->Blast_1st, dt, dt_new, radau->rectifiedArray);
-    radau->AnalyticalContinuation(r, radau->B, radau->Blast, dt, dt_new, radau->rectifiedArray);
+    AnalyticalContinuation(r, radau->B_1st, radau->Blast_1st, dt, dt_new, radau->rectifiedArray);
+    AnalyticalContinuation(r, radau->B, radau->Blast, dt, dt_new, radau->rectifiedArray);
 
     return dt_new;
 }
@@ -76,45 +73,13 @@ void Radau_Init(struct reb_simulation* r)
 
   r->ri_tes.radau = radau;
   radau->dX = (double*)malloc(r->ri_tes.stateVectorSize);
-  radau->dXtemp = (double*)malloc(r->ri_tes.stateVectorSize);
-  radau->dX0 = (double*)malloc(r->ri_tes.stateVectorSize);
-  radau->X = (double*)malloc(r->ri_tes.stateVectorSize);
   radau->Xout = (double*)malloc(r->ri_tes.stateVectorSize);
   radau->predictors = (double*)malloc(r->ri_tes.stateVectorSize);
 
-  radau->q = (double*)malloc(r->ri_tes.stateVectorSize/2);
-  radau->p = (double*)malloc(r->ri_tes.stateVectorSize/2);
-  radau->q_dot = (double*)malloc(r->ri_tes.stateVectorSize/2);
-  radau->q_ddot = (double*)malloc(r->ri_tes.stateVectorSize/2);
-  radau->p_dot = (double*)malloc(r->ri_tes.stateVectorSize/2);
-
-  memset(radau->q, 0, r->ri_tes.stateVectorSize/2);
-  memset(radau->p, 0, r->ri_tes.stateVectorSize/2);
-  memset(radau->q_dot, 0, r->ri_tes.stateVectorSize/2);
-  memset(radau->q_ddot, 0, r->ri_tes.stateVectorSize/2);
-  memset(radau->p_dot, 0, r->ri_tes.stateVectorSize/2);
-
-  radau->q0 = (double*)malloc(r->ri_tes.stateVectorSize/2);
-  radau->p0 = (double*)malloc(r->ri_tes.stateVectorSize/2);
-  radau->q_dot0 = (double*)malloc(r->ri_tes.stateVectorSize/2);
-  radau->q_ddot0 = (double*)malloc(r->ri_tes.stateVectorSize/2);
-  radau->p_dot0 = (double*)malloc(r->ri_tes.stateVectorSize/2);
-
-  memset(radau->q0, 0, r->ri_tes.stateVectorSize/2);
-  memset(radau->p0, 0, r->ri_tes.stateVectorSize/2);
-  memset(radau->q_dot0, 0, r->ri_tes.stateVectorSize/2);
-  memset(radau->q_ddot0, 0, r->ri_tes.stateVectorSize/2);
-  memset(radau->p_dot0, 0, r->ri_tes.stateVectorSize/2);
-
   memset(radau->dX, 0, r->ri_tes.stateVectorSize);
-  memset(radau->dXtemp, 0, r->ri_tes.stateVectorSize);
-  memset(radau->dX0, 0, r->ri_tes.stateVectorSize);
-  memset(radau->X, 0, r->ri_tes.stateVectorSize);
   memset(radau->Xout, 0, r->ri_tes.stateVectorSize);
   memset(radau->predictors, 0, r->ri_tes.stateVectorSize);
 
-  radau->Q = radau->X;
-  radau->P = &radau->X[3*r->N];
   radau->dQ = radau->dX;
   radau->dP = &radau->dX[3*r->N];
   radau->Qout = radau->Xout;
@@ -128,20 +93,13 @@ void Radau_Init(struct reb_simulation* r)
   memset(radau->rectifiedArray, 0, sizeof(uint32_t)*r->ri_tes.stateVectorLength);
 
   radau->b6_store = (double*)malloc(r->ri_tes.stateVectorSize);
-  radau->Xsize = (double*)malloc(2*r->ri_tes.controlVectorSize);
 
   memset(radau->b6_store, 0, r->ri_tes.stateVectorSize);
-  memset(radau->Xsize, 0, 2*r->ri_tes.controlVectorSize);
 
   //@todo should be able to remove these, but test.
   radau->fCalls = 0;
   radau->rectifications = 0;
-  radau->stepsTaken = 0;
   radau->convergenceIterations = 0;
-  radau->nextOutputTime = 0.0;
-
-  // Copy across our tolerance fields.
-  radau->rTol = r->ri_tes.epsilon;
 
   RadauStep15_Init(r);
 }
@@ -150,8 +108,6 @@ void Radau_Free(void)
 {
   RadauStep15_Free();
   free(radau->dX);
-  free(radau->dX0);
-  free(radau->X);
   free(radau->Xout);
   free(radau->predictors);
   free(radau->rectifiedArray);
@@ -163,11 +119,11 @@ double Radau_CalculateStepSize(struct reb_simulation* r, double h, double hLast,
   double hTrial = 0.0;
 
   // Get the error estimate and orbit size estimate.
-  double errMax = radau->ReturnStepError(r, h, t);
+  double errMax = ReturnIAS15StepError(r, h, t);
     
   if(isnormal(errMax))
   {
-    hTrial = h*pow(radau->rTol / errMax, (1.0/7.0));
+    hTrial = h*pow(r->ri_tes.epsilon / errMax, (1.0/7.0));
   }
   else
   {

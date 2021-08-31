@@ -413,10 +413,7 @@ void dhem_Init(struct reb_simulation* r, double z_rectificationPeriodDefault, ui
   // Configure function pointers for other modules.
   r->ri_tes.rhs = dhem;
 
-  dhem->final_stage_index = 8;
-
   dhem->X = (double*)malloc(r->ri_tes.stateVectorSize);
-  dhem->X_dot = (double*)malloc(r->ri_tes.stateVectorSize);
   dhem->rectifyTimeArray = (double*)malloc(r->ri_tes.controlVectorSize);
   dhem->rectificationPeriod = (double*)malloc(r->ri_tes.controlVectorSize);
 
@@ -436,18 +433,8 @@ void dhem_Init(struct reb_simulation* r, double z_rectificationPeriodDefault, ui
   dhem->XoscStore_cs = (double*)malloc(z_stagesPerStep*r->ri_tes.stateVectorSize);
   dhem->XoscArr_cs = (double **)malloc(z_stagesPerStep*sizeof(double*));
   
-  // Compensated summation rhs variables
-  dhem->dQdot_cs = (double*)malloc((int)r->ri_tes.stateVectorSize/2);
-  dhem->dQddot_cs = (double*)malloc((int)r->ri_tes.stateVectorSize/2);
-  dhem->dPdot_cs = (double*)malloc((int)r->ri_tes.stateVectorSize/2);
-  memset(dhem->dQdot_cs, 0, r->ri_tes.stateVectorSize / 2);
-  memset(dhem->dQddot_cs, 0, r->ri_tes.stateVectorSize / 2);
-  memset(dhem->dPdot_cs, 0, r->ri_tes.stateVectorSize / 2);
-
-
   // Set required arrays to zero.
   memset(dhem->X, 0, r->ri_tes.stateVectorSize);
-  memset(dhem->X_dot, 0, r->ri_tes.stateVectorSize);
   memset(dhem->rectifyTimeArray, 0, r->ri_tes.controlVectorSize);
   memset(dhem->rectificationPeriod, 0, r->ri_tes.controlVectorSize);
 
@@ -485,9 +472,6 @@ void dhem_Init(struct reb_simulation* r, double z_rectificationPeriodDefault, ui
 
   dhem->Q = dhem->X;
   dhem->P = &dhem->X[3*r->N];
-
-  dhem->Q_dot = dhem->X_dot;
-  dhem->P_dot = &dhem->X_dot[3*r->N];
 
   dhem->m = r->ri_tes.mass;
   dhem->mTotal = 0;

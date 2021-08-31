@@ -32,5 +32,7 @@ void CalculatePredictors_1stOrder(double h, double hSample, double * z_state0, d
 void CalculateNewState(double h, double * z_dState, double * z_ddState, controlVars * z_B, double * z_state0, double * z_csState, uint32_t z_start, uint32_t z_end);
 void CalculateNewState_1stOrder(double h, double * z_dState, controlVars * z_B, double * z_state0, double * z_csState, uint32_t z_start, uint32_t z_end);
 void AnalyticalContinuation(struct reb_simulation* r, controlVars * z_B, controlVars * z_Blast, const double h, const double h_new, const uint32_t * const rectificationArray);
-void CalculateGfromB(struct reb_simulation* r);
+void CalculateGfromB(struct reb_simulation* r);\
+void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_fCalls, double t, double h);
+double ReturnIAS15StepError(struct reb_simulation* r, double h, double t);
 #endif // RADAU_STEP_H

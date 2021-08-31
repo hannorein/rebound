@@ -593,7 +593,6 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_tes.dq_max = 1e-3;    //@todo need to set this based upon largest mass ratio in the system
     r->ri_tes.recti_per_orbit = 1.61803398875; // golden ratio 
     r->ri_tes.epsilon = 1e-6;
-    r->ri_tes.output_samples = 1000;
     r->ri_tes.orbital_period = 365.25;  // Assume Earth for now 
     r->ri_tes.allocated_N = 0;
 

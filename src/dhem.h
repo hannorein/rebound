@@ -19,62 +19,42 @@
 
 #include "rebound.h"
 
-typedef enum _RHS_CONFIG_
-{
-  rhs_full = 0,         // The standard DHEM RHS.
-  rhs_extended = 1      // The DHEM RHS but with extended precision for the osculating orbit.
-} RHS_CONFIG;
-
 typedef struct DHEM
 {
+  // Pointers to osculating orbits at a single point in time.
   double * Xosc;
   double * Qosc;
   double * Posc;
   double * Vosc;
-
+  // Osculating orbits for all stages within a step.
   double * XoscStore;
   double ** XoscArr;
-
   double * XoscPredStore;
   double ** XoscPredArr;  
-
   // CS variables for the osculating orbits.
   double * Xosc_cs;
   double * XoscStore_cs;
   double ** XoscArr_cs;
   double * Qosc_cs;
   double * Posc_cs;
-
-  double * Xosc_dotStore;
-  double ** Xosc_dotArr;
-
+  // Pointers to osculating orbit derivatives at a single point in time.
   double * Xosc_dot;
   double * Qosc_dot;
   double * Posc_dot;
-
+  // Osculating orbits derivatives for all stages within a step.
+  double * Xosc_dotStore;
+  double ** Xosc_dotArr;
+  // Variables for summing Xosc+dX into.
   double * X;
   double * Q;
   double * P;
-
-  double * X_dot;
-  double * Q_dot;
-  double * P_dot;
-
-  double * rectifyTimeArray;  /// The time at which we need to rectify each body.
-
+  // Mass variables.
   double * __restrict__ m;
   double * __restrict__ m_inv;
   double mTotal;
-
-  double * rectificationPeriod;
-
-  double * dQdot_cs;
-  double * dQddot_cs;
-  double * dPdot_cs;
-
-  uint32_t final_stage_index;
-
-  RHS_CONFIG rhsConfig;  
+  // Rectification variables.
+  double * rectifyTimeArray;    /// The time at which we need to rectify each body.
+  double * rectificationPeriod; /// Elapsed time to trigger a rectification.
 }DHEM;
 
 void dhem_PerformSummation(struct reb_simulation* r, double * Q, double * P,
@@ -95,6 +75,5 @@ uint32_t dhem_RectifyOrbits(struct reb_simulation* r, double t, double * Q, doub
                             double * dQ, double * dP, uint32_t * rectifiedArray, uint32_t stageNumber);
 void dhem_Init(struct reb_simulation* r, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep);
 void dhem_Free(void);
-void dh_full_rhs(double * Q, double * P, double * Qdot, double * Qddot, double * Pdot, double * mass, uint32_t n);
 
 #endif

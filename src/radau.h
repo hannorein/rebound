@@ -35,33 +35,15 @@ typedef struct _controlVars {
 
 typedef struct RADAU
 {
-  double h;
-  double t;
-
   // State vectors
   double * dX;
-  double * dXtemp;
-  double * dX0;
   double * dQ;
   double * dP;
-  double * X;
-  double * Q;
-  double * P;
 
-  // Stepsize control variables
-  double rTol;
-
-  // Temporary buffers for rectifying before we output to file.
+  // Buffers for rectifying into before performing a synchronisation.
   double * Xout;
   double * Qout;
   double * Pout;
-
-  // Step function pointers
-  void (*step)(struct reb_simulation* r, uint32_t *, double, double);
-  void (*AnalyticalContinuation)(struct reb_simulation* r, controlVars *, controlVars *, const double, const double, const uint32_t * const);
-  void (*CalculateGfromB)(struct reb_simulation* r);
-  double (*ReturnStepError)(struct reb_simulation* r, double h, double t);
-  void (*RejectStep)(void);
 
   uint32_t * rectifiedArray;
 
@@ -72,9 +54,7 @@ typedef struct RADAU
   double * __restrict__ dState0;
   double * __restrict__ ddState0;
 
-  double * dQ_dot_from_expansion;
-
-  // Intermidiate derivatives.
+  // Intermediate derivatives.
   double * __restrict__ dState;
   double * __restrict__ ddState;
 
@@ -89,68 +69,24 @@ typedef struct RADAU
   controlVars cs_B1st;
 
   // Compensated summation array for the predictor and corrector.
-  double * cs_state;
-  double * cs_state_1st;
-  double * csx;
-  double * csv;
-
-  double * csx_recti;
-  double * csv_recti;
-
-  double * cs_dq_dot;
   double * cs_dX;
   double * cs_dq;
   double * cs_dp;
 
-  // Access pointers for testing
+  // Integrator coefficients.
   controlVars * B;
   controlVars * Blast;
-
   controlVars * B_1st;
-  controlVars * Blast_1st;
-  controlVars * B_full;
-  controlVars * Blast_full;  
-  controlVars cs_B_full;
+  controlVars * Blast_1st; 
 
   // Variables for performance metrics
   uint64_t fCalls;
   uint64_t rectifications;
-  uint64_t stepsTaken;
   uint32_t convergenceIterations;
-  uint64_t stepsRejected;
 
-  // File output fields
-  double nextOutputTime;
-  FILE * outputFile;
-  double base;  // base value for the log scaling
-  uint32_t output_samples_count;
-  uint32_t t0_lim;
-
-
+  // Iteration convergence variables.
   double * b6_store;
-  double * Xsize;
-
-  // Terminate early function pointer.
-  uint32_t (*fTerminate)(void);
-
-  clock_t tStart;
-  double cpuTimeUsed;
-
-  double b6Max;
-  double accMax;
   double * acc_ptr;
-
-  double * q;
-  double * p;
-  double * q_dot;
-  double * q_ddot;
-  double * p_dot;
-
-  double * q0;
-  double * p0;
-  double * q_dot0;
-  double * q_ddot0;
-  double * p_dot0;
 }RADAU;
 
 void Radau_Init(struct reb_simulation* r);
