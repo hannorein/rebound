@@ -69,7 +69,7 @@ controlVars B_full;
 controlVars Blast_full;
 
 
-static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_fCalls, double t, double h, uint32_t step);
+static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_fCalls, double t, double h);
 static inline void add_cs(double* out, double* cs, double inp);
 static double ReturnIAS15StepError(struct reb_simulation* r, double h, double t);
 static void ControlVars_Copy(controlVars * out, controlVars * in);
@@ -101,7 +101,7 @@ controlVars_const control_vars_cast(controlVars in)
     return out;
 }
 
-static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, double t, double h, uint32_t step)
+static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, double t, double h)
 {
   double errMax = 0;
   controlVars * z_csB = &radau->cs_B;
@@ -384,9 +384,9 @@ static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, 
 
     for(uint32_t j = 1; j < r->N; j++)
     {
-      q_ddot[3*j+0] = sim->rhs->Xosc_dotArr[8][3*r->N+3*j+0] / sim->mass[j];
-      q_ddot[3*j+1] = sim->rhs->Xosc_dotArr[8][3*r->N+3*j+1] / sim->mass[j];
-      q_ddot[3*j+2] = sim->rhs->Xosc_dotArr[8][3*r->N+3*j+2] / sim->mass[j];
+      q_ddot[3*j+0] = r->ri_tes.rhs->Xosc_dotArr[8][3*r->N+3*j+0] / sim->mass[j];
+      q_ddot[3*j+1] = r->ri_tes.rhs->Xosc_dotArr[8][3*r->N+3*j+1] / sim->mass[j];
+      q_ddot[3*j+2] = r->ri_tes.rhs->Xosc_dotArr[8][3*r->N+3*j+2] / sim->mass[j];
     }    
 
     for(uint32_t j = 3; j < 3*r->N; j++)
@@ -417,7 +417,7 @@ static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, 
 
     for(uint32_t k = 1; k < r->N; k++)
     {
-      ratio = NORM(radau->dX, k) / NORM(sim->rhs->Qosc, k);
+      ratio = NORM(radau->dX, k) / NORM(r->ri_tes.rhs->Qosc, k);
 
       ratioMax = ratio > ratioMax ? ratio : ratioMax;
     }
@@ -443,7 +443,7 @@ static void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, 
                                 radau->cs_dX, (int)(n3), r->ri_tes.stateVectorLength);                                
 
   // Now that we have cs_dX we can perform our correction.
-  ApplyCorrectorToOsculatingOrbitCalculation(r, sim->rhs->XoscArr, t+h, 9); 
+  ApplyCorrectorToOsculatingOrbitCalculation(r, r->ri_tes.rhs->XoscArr, t+h, 9); 
 }
 
 static double ReturnIAS15StepError(struct reb_simulation* r, double h, double t)
@@ -499,7 +499,7 @@ void CalculateGfromB(struct reb_simulation* r)
 }
 
 void AnalyticalContinuation(struct reb_simulation* r, controlVars * z_B, controlVars * z_Blast, const double h,
-                             const double h_new, const uint32_t * const rectificationArray, const uint32_t step)
+                             const double h_new, const uint32_t * const rectificationArray)
 {
   const double ratio = h_new / h;
   const double q1 = ratio;
@@ -653,7 +653,7 @@ void CalculateNewState(double h, double * z_dState, double * z_ddState,
 void RadauStep15_Init(struct reb_simulation* r)
 {
     sim = r->ri_tes.sim;
-    radau = sim->radau;
+    radau = r->ri_tes.radau;
     radau->step = RadauStep15_Step;
     radau->AnalyticalContinuation = AnalyticalContinuation;
     radau->CalculateGfromB = CalculateGfromB;

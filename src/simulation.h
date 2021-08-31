@@ -37,17 +37,8 @@ typedef enum ERROR_SIMULATION_
 typedef struct _SIMULATION_
 {
 	// ##############################################
-	// To use rebound data structure instead
-	// ##############################################
-	double t0;								/// Initial time
-
-	// ##############################################
 	// To keep / refactor
 	// ##############################################
-	UNIVERSAL_VARS * uVars;			/// Pointer to the universal variables module
-	DHEM * rhs;						/// Pointer to the DHEM rhs
-	RADAU * radau;  				/// Pointer to our integrator
-
 	double * mass;						/// Initial particle masses
 	double * X_dh;						/// Memory for current state in dh coords.
 	double * Q_dh;						/// Current state in dh coords.
@@ -56,11 +47,6 @@ typedef struct _SIMULATION_
 	// ##############################################
 	// To throw away
 	// ##############################################
-	uint32_t step;
-	uint32_t rectificationCount;
-	uint32_t h_last_done;
-	uint32_t termination_check_enable;
-
 	// RHS function pointers to be provided by all force models.
 	void (*f_rhs)(struct reb_simulation* r, double * dQ, double * dP, double * dQ_dot,
 					double * dP_dot, double * dQ_ddot, double * dP_ddot,
@@ -69,12 +55,6 @@ typedef struct _SIMULATION_
 	uint32_t (*fRectify)(struct reb_simulation* r, double t, double * Q, double * P,
 								double * dQ, double * dP, uint32_t * rectifiedArray, uint32_t stageNumber);
 		void (*fPerformSummation)(struct reb_simulation* r, double *, double *, double *, double *, uint32_t);
-		double (*fCalculateInvariant)(struct reb_simulation* r, double * Q, double * P);
-	void (*fCalculateOsculatingOrbitNorm)(double * Xosc_norm);
-	void (*fCalculate_dQdot)(double * dP, double * dQdot, double * Posc);
-	void (*f_dh_full_rhs)(double * Q, double * P, double * Qdot, double * Qddot, double * Pdot, double * mass, uint32_t n);
-
-	
 }SIMULATION;
 
 

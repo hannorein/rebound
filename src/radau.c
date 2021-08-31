@@ -47,9 +47,9 @@ double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double 
     radau->h = dt;
     radau->t = z_t;
 
-    sim->rectificationCount = sim->fRectify(r, z_t, sim->Q_dh, sim->P_dh, radau->dQ,
+    uint32_t rectificationCount = sim->fRectify(r, z_t, sim->Q_dh, sim->P_dh, radau->dQ,
                                         radau->dP, radau->rectifiedArray, FINAL_STAGE_INDEX);
-    radau->rectifications += sim->rectificationCount;
+    radau->rectifications += rectificationCount;
 
     // Calculate the osculating orbits.
     sim->fStartOfStep(r, z_t, dt, hArr, OSCULATING_ORBIT_SLOTS, 1);
@@ -59,13 +59,13 @@ double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double 
 
     radau->CalculateGfromB(r); 
 
-    radau->step(r, &iterations, z_t, dt, sim->step);
+    radau->step(r, &iterations, z_t, dt);
     radau->convergenceIterations += iterations;
 
     dt_new = r->ri_tes.epsilon > 0 ? Radau_CalculateStepSize(r, dt, dt_last_done, z_t) : dt;
 
-    radau->AnalyticalContinuation(r, radau->B_1st, radau->Blast_1st, dt, dt_new, radau->rectifiedArray, sim->step);
-    radau->AnalyticalContinuation(r, radau->B, radau->Blast, dt, dt_new, radau->rectifiedArray, sim->step);
+    radau->AnalyticalContinuation(r, radau->B_1st, radau->Blast_1st, dt, dt_new, radau->rectifiedArray);
+    radau->AnalyticalContinuation(r, radau->B, radau->Blast, dt, dt_new, radau->rectifiedArray);
 
     return dt_new;
 }
@@ -76,7 +76,7 @@ void Radau_Init(struct reb_simulation* r)
   radau = (RADAU *)malloc(sizeof(RADAU));
   memset(radau, 0, sizeof(RADAU));
 
-  sim->radau = radau;
+  r->ri_tes.radau = radau;
   radau->dX = (double*)malloc(r->ri_tes.stateVectorSize);
   radau->dXtemp = (double*)malloc(r->ri_tes.stateVectorSize);
   radau->dX0 = (double*)malloc(r->ri_tes.stateVectorSize);

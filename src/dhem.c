@@ -250,13 +250,13 @@ static void dhem_PerformSummation(struct reb_simulation* r, double * Q, double *
 
   for(uint32_t i = 1; i < r->N; i++)
   {
-    Q[3*i+0] = dhem->Qosc[3*i+0] + (dQ[3*i+0] + (dhem->Qosc_cs[3*i+0] + sim->radau->cs_dq[3*i+0]));
-    Q[3*i+1] = dhem->Qosc[3*i+1] + (dQ[3*i+1] + (dhem->Qosc_cs[3*i+1] + sim->radau->cs_dq[3*i+1]));
-    Q[3*i+2] = dhem->Qosc[3*i+2] + (dQ[3*i+2] + (dhem->Qosc_cs[3*i+2] + sim->radau->cs_dq[3*i+2]));
+    Q[3*i+0] = dhem->Qosc[3*i+0] + (dQ[3*i+0] + (dhem->Qosc_cs[3*i+0] + r->ri_tes.radau->cs_dq[3*i+0]));
+    Q[3*i+1] = dhem->Qosc[3*i+1] + (dQ[3*i+1] + (dhem->Qosc_cs[3*i+1] + r->ri_tes.radau->cs_dq[3*i+1]));
+    Q[3*i+2] = dhem->Qosc[3*i+2] + (dQ[3*i+2] + (dhem->Qosc_cs[3*i+2] + r->ri_tes.radau->cs_dq[3*i+2]));
 
-    P[3*i+0] = dhem->Posc[3*i+0] + (dP[3*i+0] + (dhem->Posc_cs[3*i+0] + sim->radau->cs_dp[3*i+0]));
-    P[3*i+1] = dhem->Posc[3*i+1] + (dP[3*i+1] + (dhem->Posc_cs[3*i+1] + sim->radau->cs_dp[3*i+1]));
-    P[3*i+2] = dhem->Posc[3*i+2] + (dP[3*i+2] + (dhem->Posc_cs[3*i+2] + sim->radau->cs_dp[3*i+2]));
+    P[3*i+0] = dhem->Posc[3*i+0] + (dP[3*i+0] + (dhem->Posc_cs[3*i+0] + r->ri_tes.radau->cs_dp[3*i+0]));
+    P[3*i+1] = dhem->Posc[3*i+1] + (dP[3*i+1] + (dhem->Posc_cs[3*i+1] + r->ri_tes.radau->cs_dp[3*i+1]));
+    P[3*i+2] = dhem->Posc[3*i+2] + (dP[3*i+2] + (dhem->Posc_cs[3*i+2] + r->ri_tes.radau->cs_dp[3*i+2]));
   }
 
 }
@@ -265,7 +265,7 @@ void dhem_InitialiseOsculatingOrbits(struct reb_simulation* r, double * Q, doubl
 {
   for(uint32_t i = 1; i < r->N; i++)
   {
-    RebasisOsculatingOrbits_Momenta(Q, P, t, i);
+    RebasisOsculatingOrbits_Momenta(r, Q, P, t, i);
   }
 }
 
@@ -323,12 +323,12 @@ uint32_t dhem_RectifyOrbits(struct reb_simulation* r, double t, double * Q, doub
 
         Q[3*i+j] = dhem->Qosc[3*i+j];
         add_cs(&Q[3*i+j], &temp_cs, dQ[3*i+j]);
-        add_cs(&Q[3*i+j], &temp_cs, sim->uVars->uv_csq[3*i+j]);            
-        add_cs(&Q[3*i+j], &temp_cs, sim->radau->cs_dq[3*i+j]);
+        add_cs(&Q[3*i+j], &temp_cs, r->ri_tes.uVars->uv_csq[3*i+j]);            
+        add_cs(&Q[3*i+j], &temp_cs, r->ri_tes.radau->cs_dq[3*i+j]);
 
         dQ[3*i+j] = -temp_cs;
-        sim->radau->cs_dq[3*i+j] = 0;
-        sim->uVars->uv_csq[3*i+j] = 0;
+        r->ri_tes.radau->cs_dq[3*i+j] = 0;
+        r->ri_tes.uVars->uv_csq[3*i+j] = 0;
       }
 
       for(uint32_t j = 0; j < 3; j++)
@@ -337,15 +337,15 @@ uint32_t dhem_RectifyOrbits(struct reb_simulation* r, double t, double * Q, doub
 
         P[3*i+j] = dhem->Posc[3*i+j];
         add_cs(&P[3*i+j], &temp_cs, dP[3*i+j]);
-        add_cs(&P[3*i+j], &temp_cs, sim->uVars->uv_csp[3*i+j]);            
-        add_cs(&P[3*i+j], &temp_cs, sim->radau->cs_dp[3*i+j]);
+        add_cs(&P[3*i+j], &temp_cs, r->ri_tes.uVars->uv_csp[3*i+j]);            
+        add_cs(&P[3*i+j], &temp_cs, r->ri_tes.radau->cs_dp[3*i+j]);
 
         dP[3*i+j] = -temp_cs;
-        sim->radau->cs_dp[3*i+j] = 0;
-        sim->uVars->uv_csp[3*i+j] = 0;
+        r->ri_tes.radau->cs_dp[3*i+j] = 0;
+        r->ri_tes.uVars->uv_csp[3*i+j] = 0;
       }          
 
-      RebasisOsculatingOrbits_Momenta(Q, P, t, i);
+      RebasisOsculatingOrbits_Momenta(r, Q, P, t, i);
       //dhem->rectifyTimeArray[i] += dhem->rectificationPeriod[i];
       // This option will add some randomness to the rectification process.
       dhem->rectifyTimeArray[i] = t + dhem->rectificationPeriod[i];
@@ -416,12 +416,11 @@ void dhem_Init(struct reb_simulation* r, SIMULATION * z_sim, double z_rectificat
   memset(dhem, 0, sizeof(DHEM));
 
   // Configure function pointers for other modules.
-  sim->rhs = dhem;
+  r->ri_tes.rhs = dhem;
   sim->f_rhs = dhem_rhs_wrapped;
   sim->fStartOfStep = dhem_CalcOscOrbitsForAllStages;
   sim->fRectify = dhem_RectifyOrbits;
   sim->fPerformSummation = dhem_PerformSummation;
-  sim->fCalculateInvariant = dhem_CalculateHamiltonian;
 
   dhem->final_stage_index = 8;
 
@@ -508,7 +507,7 @@ void dhem_Init(struct reb_simulation* r, SIMULATION * z_sim, double z_rectificat
   {
     dhem->m_inv[i] = 1.0 / dhem->m[i];
     dhem->mTotal += dhem->m[i];
-    dhem->rectifyTimeArray[i] = sim->t0 + z_rectificationPeriodDefault;
+    dhem->rectifyTimeArray[i] = r->ri_tes.t0 + z_rectificationPeriodDefault;
     dhem->rectificationPeriod[i] = z_rectificationPeriodDefault;
   }
 }

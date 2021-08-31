@@ -42,7 +42,7 @@ SIMULATION * Simulation_Init(struct reb_simulation* r, uint32_t z_n)
   memset(sim->mass, 0, r->ri_tes.controlVectorSize);
   memset(sim->X_dh, 0, r->ri_tes.stateVectorSize);
 
-  sim->termination_check_enable = 0;
+  r->ri_tes.termination_check_enable = 0;
 
   return sim;
 }

@@ -230,6 +230,7 @@ struct reb_simulation_integrator_tes {
     double orbital_period;      // temp
     double orbits;
     uint32_t version;
+    double t0;								/// Initial time
     SIMULATION * sim;           // When I remove this also remove the include above.
     uint32_t allocated_N;
     struct reb_particle* particles_dh;
@@ -239,6 +240,12 @@ struct reb_simulation_integrator_tes {
     uint32_t stateVectorSize;		/// Size in bytes of the state vector.
     uint32_t controlVectorSize; 	/// Size in bytes of n * sizeof(double).
     uint32_t controlVectorLength;	/// Length of the control vector in doubles.
+    uint32_t termination_check_enable; /// @todo potentially this could be removed depending on if we want the option to calculate classical orbital elements
+
+    // Pointers to various modules comprising TES.
+    UNIVERSAL_VARS * uVars;			/// Pointer to the universal variables module
+    DHEM * rhs;						/// Pointer to the DHEM rhs
+    RADAU * radau;  				/// Pointer to our integrator
 };
 
 enum REB_EOS_TYPE {

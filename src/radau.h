@@ -57,8 +57,8 @@ typedef struct RADAU
   double * Pout;
 
   // Step function pointers
-  void (*step)(struct reb_simulation* r, uint32_t *, double, double, uint32_t);
-  void (*AnalyticalContinuation)(struct reb_simulation* r, controlVars *, controlVars *, const double, const double, const uint32_t * const, const uint32_t);
+  void (*step)(struct reb_simulation* r, uint32_t *, double, double);
+  void (*AnalyticalContinuation)(struct reb_simulation* r, controlVars *, controlVars *, const double, const double, const uint32_t * const);
   void (*CalculateGfromB)(struct reb_simulation* r);
   double (*ReturnStepError)(struct reb_simulation* r, double h, double t);
   void (*RejectStep)(void);

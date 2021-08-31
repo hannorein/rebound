@@ -63,7 +63,7 @@ static SIMULATION * sim = NULL;
 static void C_Stumpff(double * cs_in, double z_in);
 static double SolveForUnivsersalAnomaly(double dt, double h, uint32_t i, double * C);
 static double CalcUpdateValue(double X, double dt, uint32_t i, double * C);
-static void CalculateClassicalOrbitalElementsSingle(uint32_t i);
+static void CalculateClassicalOrbitalElementsSingle(struct reb_simulation* r, uint32_t i);
 static inline void add_cs(double * out, double * cs, double inp);
 
 
@@ -191,7 +191,7 @@ void CalculateOsculatingOrbitsForSingleStep(struct reb_simulation* r, double **X
       {       
         if(z_rebasis)
         {
-          RebasisOsculatingOrbits_Momenta(Qout, Pout, t, i);
+          RebasisOsculatingOrbits_Momenta(r, Qout, Pout, t, i);
         }
       }
     }
@@ -217,24 +217,24 @@ void ApplyCorrectorToOsculatingOrbitCalculation(struct reb_simulation* r, double
           double csp = 0;
 
           // Correct the osculating orbit inline with the various cs vars.
-          add_cs(&Qout[i*3+j], &csq, -sim->radau->cs_dq[3*i+j]);
+          add_cs(&Qout[i*3+j], &csq, -r->ri_tes.radau->cs_dq[3*i+j]);
           add_cs(&Qout[i*3+j], &csq, -p_uVars->uv_csq[3*i+j]);
-          add_cs(&Pout[i*3+j], &csp, -sim->radau->cs_dp[3*i+j]);
+          add_cs(&Pout[i*3+j], &csp, -r->ri_tes.radau->cs_dp[3*i+j]);
           add_cs(&Pout[i*3+j], &csp, -p_uVars->uv_csp[3*i+j]);   
 
           p_uVars->uv_csq[3*i+j] = 0;
           p_uVars->uv_csp[3*i+j] = 0;  
-          sim->radau->cs_dq[3*i+j] = 0;
-          sim->radau->cs_dp[3*i+j] = 0;        
+          r->ri_tes.radau->cs_dq[3*i+j] = 0;
+          r->ri_tes.radau->cs_dp[3*i+j] = 0;        
           
           // Take anything left over from the oscualting orbit corrector and place into the delta.
-          add_cs(&sim->radau->dQ[3*i+j], &p_uVars->uv_csq[3*i+j], -csq);
-          add_cs(&sim->radau->dP[3*i+j], &p_uVars->uv_csp[3*i+j], -csp);
+          add_cs(&r->ri_tes.radau->dQ[3*i+j], &p_uVars->uv_csq[3*i+j], -csq);
+          add_cs(&r->ri_tes.radau->dP[3*i+j], &p_uVars->uv_csp[3*i+j], -csp);
 
           // Obtain cs sum for v for next step.
           p_uVars->uv_csv[3*i+j] = p_uVars->uv_csp[3*i+j]/sim->mass[i];
         }
-        RebasisOsculatingOrbits_Momenta(Qout, Pout, t, i);  
+        RebasisOsculatingOrbits_Momenta(r, Qout, Pout, t, i);  
     }
   CalculateClassicalOrbitalElements(r); // Remove this (All classical elements can be removed actually)
 }
@@ -242,7 +242,7 @@ void ApplyCorrectorToOsculatingOrbitCalculation(struct reb_simulation* r, double
 /*
 This version is called whenever a rectification is performed.
 */
-void RebasisOsculatingOrbits_Momenta(double * z_Q, double * z_P, double z_t, uint32_t i)
+void RebasisOsculatingOrbits_Momenta(struct reb_simulation* r, double * z_Q, double * z_P, double z_t, uint32_t i)
 {
 
   p_uVars->Q0[3*i+0] = z_Q[3*i+0];
@@ -288,7 +288,7 @@ void RebasisOsculatingOrbits_Momenta(double * z_Q, double * z_P, double z_t, uin
   p_uVars->X[i] = 0.0;
   p_uVars->dt[i] = 0;
 
-  CalculateClassicalOrbitalElementsSingle(i);
+  CalculateClassicalOrbitalElementsSingle(r, i);
 }
 
 
@@ -364,9 +364,9 @@ static void C_Stumpff(double * cs, double z)
     }
 }
 
-static void CalculateClassicalOrbitalElementsSingle(uint32_t i)
+static void CalculateClassicalOrbitalElementsSingle(struct reb_simulation* r, uint32_t i)
 {
-  if(sim->termination_check_enable)
+  if(r->ri_tes.termination_check_enable)
   {
     // Semimajor axis
     p_uVars->a[i] = p_uVars->mu / p_uVars->beta[i];
@@ -395,11 +395,11 @@ static void CalculateClassicalOrbitalElementsSingle(uint32_t i)
 
 void CalculateClassicalOrbitalElements(struct reb_simulation* r)
 {
-  if(sim->termination_check_enable)
+  if(r->ri_tes.termination_check_enable)
   {
     for(uint32_t i = 1; i < r->N; i++)
     {
-      CalculateClassicalOrbitalElementsSingle(i);
+      CalculateClassicalOrbitalElementsSingle(r, i);
     }
   }
 }
@@ -415,7 +415,7 @@ void UniversalVars_Init(struct reb_simulation* const r)
   p_uVars = (UNIVERSAL_VARS *)malloc(sizeof(UNIVERSAL_VARS));
   memset(p_uVars, 0, sizeof(UNIVERSAL_VARS));
 
-  sim->uVars = p_uVars;
+  r->ri_tes.uVars = p_uVars;
 
   p_uVars->stateVectorSize = 3 * N * sizeof(double);
   p_uVars->controlVectorSize = N * sizeof(double);
@@ -508,7 +508,6 @@ void UniversalVars_Free(void)
   free(p_uVars->Xperiod);
   free(p_uVars->X);
   free(p_uVars);
-  sim->uVars = NULL;
 }
 
 static inline void add_cs(double * out, double * cs, double inp)
