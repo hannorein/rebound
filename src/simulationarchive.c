@@ -233,6 +233,7 @@ struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_s
 }
 
 void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, const char* filename,  struct reb_simulationarchive* sa_index, enum reb_input_binary_messages* warnings){
+    int debug = 1;
     sa->inf = fopen(filename,"r");
     if (sa->inf==NULL){
         *warnings |= REB_INPUT_BINARY_ERROR_NOFILE;
@@ -316,6 +317,8 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
         }
     }else{
         // New version
+        if (debug) printf("=============\n");
+        if (debug) printf("SA Version: 2\n");
         if (sa_index == NULL){ // Need to construct offset index from file.
             long nblobsmax = 1024;
             sa->t = malloc(sizeof(double)*nblobsmax);
@@ -335,6 +338,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                         switch (field.type){
                             case REB_BINARY_FIELD_TYPE_HEADER:
                                 {
+                                    if (debug) printf("SA Field. type=HEADER\n");
                                     int s1 = fseek(sa->inf,64 - sizeof(struct reb_binary_field),SEEK_CUR);
                                     if (s1){
                                         read_error = 1;
@@ -344,6 +348,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                             case REB_BINARY_FIELD_TYPE_T:
                                 {
                                     size_t r2 = fread(&(sa->t[i]), sizeof(double),1,sa->inf);
+                                    if (debug) printf("SA Field. type=TIME      value=%.10f\n",sa->t[1]);
                                     if (r2!=1){
                                         read_error = 1;
                                     }
@@ -351,12 +356,14 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                                 break;
                             case REB_BINARY_FIELD_TYPE_END:
                                 {
+                                    if (debug) printf("SA Field. type=END   =====\n");
                                     blob_finished = 1;
                                 }
                                 break;
                             default:
                                 {
                                     int s2 = fseek(sa->inf,field.size,SEEK_CUR);
+                                    if (debug) printf("SA Field. type=%-6d    size=%d\n",field.type,field.size);
                                     if (s2){
                                         read_error = 1;
                                     }
@@ -368,6 +375,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                     }
                 }while(blob_finished==0 && read_error==0);
                 if (read_error){
+                    if (debug) printf("SA Error. Error while reading current blob.\n");
                     // Error during reading. Current snapshot is corrupt.
                     break;
                 }
@@ -375,6 +383,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                 struct reb_simulationarchive_blob blob = {0};
                 size_t r3 = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa->inf);
                 if (r3!=1){ // Next snapshot is definitly corrupted. Assume current might also be.
+                    if (debug) printf("SA Error. Error while reading next blob.\n");
                     read_error = 1;
                     break;
                 }
@@ -382,6 +391,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                     // Checking the offsets. Acts like a checksum.
                     if (blob.offset_prev + sizeof(struct reb_simulationarchive_blob) != ftell(sa->inf) - sa->offset[i] ){
                         // Offsets don't work. Next snapshot is definitly corrupted. Assume current one as well.
+                        if (debug) printf("SA Error. Offset mismatch.\n");
                         read_error = 1;
                         break;
                     }
@@ -390,6 +400,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                 sa->nblobs = i+1;
                 if (blob.offset_next==0){
                     // Last blob. 
+                    if (debug) printf("SA Reached final blob.\n");
                     break;
                 }
                 if (i==nblobsmax-1){ // Increase 
