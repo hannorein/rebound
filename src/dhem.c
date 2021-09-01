@@ -484,7 +484,7 @@ void dhem_Init(struct reb_simulation* r, double z_rectificationPeriodDefault, ui
   {
     dhem->m_inv[i] = 1.0 / dhem->m[i];
     dhem->mTotal += dhem->m[i];
-    dhem->rectifyTimeArray[i] = r->ri_tes.t0 + z_rectificationPeriodDefault;
+    dhem->rectifyTimeArray[i] = r->t + z_rectificationPeriodDefault;
     dhem->rectificationPeriod[i] = z_rectificationPeriodDefault;
   }
 }

@@ -222,10 +222,10 @@ typedef struct DHEM DHEM;
 typedef struct RADAU RADAU;
 
 struct reb_simulation_integrator_tes {
-    // MUST ALL BE IN CORRECT ORDER
     double dq_max;              // value of dq/q that triggers a rectification (backup to recti_per_orbit)
     double recti_per_orbit;     // main method for triggering a rectification 
     double epsilon;             // tolerance parameter
+    double orbital_period;      // The lowest initial orbital period.
 
     // Synchronisation particle storage.
     uint32_t allocated_N;
@@ -248,12 +248,6 @@ struct reb_simulation_integrator_tes {
     UNIVERSAL_VARS * uVars;			/// Pointer to the universal variables module
     DHEM * rhs;						/// Pointer to the DHEM rhs
     RADAU * radau;  				/// Pointer to our integrator
-
-    double orbital_period;      // The lowest initial orbital period.
-
-    // temporary data storage for porting - everything below here can ultimately be removed.
-    double orbits;
-    double t0;								/// Initial time
 };
 
 enum REB_EOS_TYPE {

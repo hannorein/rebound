@@ -2062,12 +2062,21 @@ class reb_simulation_integrator_tes(Structure):
     _fields_ = [("dq_max", c_double),
     ("recti_per_orbit", c_double),
     ("epsilon", c_double),
-    ("output_samples", c_double),
     ("orbital_period", c_double),    
-    ("orbits", c_double),    
-    ("version", c_uint),     
-    ("sim", POINTER(c_double)),
-    ("allocated_N", c_double),
+    ("allocated_N", c_uint32),
+    ("_particles_dh", POINTER(Particle)),
+    ("_svLen", c_uint32),
+    ("_svSize", c_uint32),
+    ("_cvLen", c_uint32),
+    ("_cvSize", c_uint32),
+    ("_calcElems", c_uint32),
+    ("_mass", POINTER(c_double)),
+    ("_X_dh", POINTER(c_double)),
+    ("_Q_dh", POINTER(c_double)),
+    ("_P_dh", POINTER(c_double)),
+    ("_uVars", POINTER(c_double)),
+    ("_rhs", POINTER(c_double)),
+    ("_radau", POINTER(c_double))
     ]
 
 

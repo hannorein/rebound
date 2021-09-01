@@ -68,15 +68,9 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         // Need this until above loop is changed to start at zero.
         r->ri_tes.mass[0] = particles[0].m;
 
-        
-        double t0 = 0;
-
-        
-        r->ri_tes.t0 = 0; // Default value - this need changing when rectification over multiple initialisations in considered properly.
-
         UniversalVars_Init(r);
         dhem_Init(r, r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit, 9);
-        dhem_InitialiseOsculatingOrbits(r, r->ri_tes.Q_dh, r->ri_tes.P_dh, r->ri_tes.t0);
+        dhem_InitialiseOsculatingOrbits(r, r->ri_tes.Q_dh, r->ri_tes.P_dh, r->t);
         Radau_Init(r);  
     }
     double dt_new = Radau_SingleStep(r, r->t, r->dt, r->dt_last_done);
