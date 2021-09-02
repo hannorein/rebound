@@ -2063,7 +2063,7 @@ class reb_simulation_integrator_tes(Structure):
     ("recti_per_orbit", c_double),
     ("epsilon", c_double),
     ("orbital_period", c_double),    
-    ("allocated_N", c_uint32),
+    ("_allocated_N", c_uint32),
     ("_particles_dh", POINTER(Particle)),
     ("_svLen", c_uint32),
     ("_svSize", c_uint32),
