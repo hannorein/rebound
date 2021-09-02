@@ -2074,6 +2074,12 @@ class reb_simulation_integrator_tes(Structure):
     ("_X_dh", POINTER(c_double)),
     ("_Q_dh", POINTER(c_double)),
     ("_P_dh", POINTER(c_double)),
+    ("_com_x", c_double),
+    ("_com_y", c_double),
+    ("_com_z", c_double),
+    ("_com_dot_x", c_double),
+    ("_com_dot_y", c_double),
+    ("_com_dot_z", c_double),
     ("_uVars", POINTER(c_double)),
     ("_rhs", POINTER(c_double)),
     ("_radau", POINTER(c_double))

@@ -62,10 +62,6 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         r->ri_tes.COM_dot[0] = r->ri_tes.particles_dh[0].vx;
         r->ri_tes.COM_dot[1] = r->ri_tes.particles_dh[0].vy;
         r->ri_tes.COM_dot[2] = r->ri_tes.particles_dh[0].vz;        
-        
-        printf("\n\n com %.15e %.15e %.15e", r->ri_tes.COM[0], r->ri_tes.COM[1], r->ri_tes.COM[2]);
-        printf("\n com_dot %.15e %.15e %.15e \n\n", r->ri_tes.COM_dot[0], r->ri_tes.COM_dot[1], r->ri_tes.COM_dot[2]);
-        
 
         for(uint32_t i=1;i<N;i++) 
         {
