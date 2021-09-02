@@ -233,7 +233,7 @@ struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_s
 }
 
 void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, const char* filename,  struct reb_simulationarchive* sa_index, enum reb_input_binary_messages* warnings){
-    int debug = 1;
+    const int debug = 0;
     sa->inf = fopen(filename,"r");
     if (sa->inf==NULL){
         *warnings |= REB_INPUT_BINARY_ERROR_NOFILE;
@@ -363,7 +363,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                             default:
                                 {
                                     int s2 = fseek(sa->inf,field.size,SEEK_CUR);
-                                    if (debug) printf("SA Field. type=%-6d    size=%d\n",field.type,field.size);
+                                    if (debug) printf("SA Field. type=%-6d    size=%llu\n",field.type,field.size);
                                     if (s2){
                                         read_error = 1;
                                     }
@@ -391,7 +391,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                     // Checking the offsets. Acts like a checksum.
                     if (blob.offset_prev + sizeof(struct reb_simulationarchive_blob) != ftell(sa->inf) - sa->offset[i] ){
                         // Offsets don't work. Next snapshot is definitly corrupted. Assume current one as well.
-                        if (debug) printf("SA Error. Offset mismatch.\n");
+                        if (debug) printf("SA Error. Offset mismatch: %lu != %ld.\n",blob.offset_prev + sizeof(struct reb_simulationarchive_blob), ftell(sa->inf) - sa->offset[i] );
                         read_error = 1;
                         break;
                     }
