@@ -57,6 +57,12 @@ double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double 
     AnalyticalContinuation(r, radau->B_1st, radau->Blast_1st, dt, dt_new, radau->rectifiedArray);
     AnalyticalContinuation(r, radau->B, radau->Blast, dt, dt_new, radau->rectifiedArray);
 
+    // Perform a linear update to the drift of the COM.
+    for(uint32_t i = 0; i < 3; i++)
+    {
+      r->ri_tes.COM[i] += r->ri_tes.COM_dot[i]*dt;
+    }
+
     return dt_new;
 }
 

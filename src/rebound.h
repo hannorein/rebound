@@ -234,15 +234,17 @@ struct reb_simulation_integrator_tes {
     // Vector dimensions variables.
     uint32_t stateVectorLength;		/// Length of the state vector in doubles.
     uint32_t stateVectorSize;		/// Size in bytes of the state vector.
-    uint32_t controlVectorSize; 	/// Size in bytes of n * sizeof(double).
     uint32_t controlVectorLength;	/// Length of the control vector in doubles.
+    uint32_t controlVectorSize; 	/// Size in bytes of n * sizeof(double).
     uint32_t termination_check_enable; /// @todo potentially this could be removed depending on if we want the option to calculate classical orbital elements
 
     // State storage
     double * mass;					/// Initial particle masses
     double * X_dh;					/// Memory for current state in dh coords.
 	double * Q_dh;					/// Current state in dh coords.
-	double * P_dh;					/// Current state in dh coords.   
+	double * P_dh;					/// Current state in dh coords. 
+    double COM[3];                  // Centre of mass
+    double COM_dot[3];              // Velocity of COM
 
     // Pointers to various modules comprising TES.
     UNIVERSAL_VARS * uVars;			/// Pointer to the universal variables module
