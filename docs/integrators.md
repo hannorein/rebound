@@ -118,8 +118,8 @@ The setting for WHFast are stored in the `reb_simulation_integrator_whfast` stru
 
     === "Python"
         ```python
-        sim.ri_ias.corrector = 17
-        sim.ri_ias.safe_mode = 0
+        sim.ri_whfast.corrector = 17
+        sim.ri_whfast.safe_mode = 0
         ```
     
     Note that the above code also turns off the safe mode. 
@@ -159,10 +159,10 @@ The setting for WHFast are stored in the `reb_simulation_integrator_whfast` stru
 
     === "Python"
         ```python
-        sim.ri_ias.kernel = "default"      # or
-        sim.ri_ias.kernel = "modifiedkick" # or
-        sim.ri_ias.kernel = "composition"  # or
-        sim.ri_ias.kernel = "lazy"
+        sim.ri_whfast.kernel = "default"      # or
+        sim.ri_whfast.kernel = "modifiedkick" # or
+        sim.ri_whfast.kernel = "composition"  # or
+        sim.ri_whfast.kernel = "lazy"
         ```
 
 `unsigned int coordinates`
@@ -180,9 +180,9 @@ The setting for WHFast are stored in the `reb_simulation_integrator_whfast` stru
 
     === "Python"
         ```python
-        sim.ri_ias.coordinates = "jacobi"                 # or
-        sim.ri_ias.coordinates = "democraticheliocentric" # or
-        sim.ri_ias.coordinates = "whds"
+        sim.ri_whfast.coordinates = "jacobi"                 # or
+        sim.ri_whfast.coordinates = "democraticheliocentric" # or
+        sim.ri_whfast.coordinates = "whds"
         ```
 
 `unsigned int recalculate_coordinates_this_timestep`
@@ -365,8 +365,8 @@ The following code shows how to enable JANUS and set the length and velocity sca
     ```c
     struct reb_simulation* r = reb_create_simulation();
     r->integrator = REB_INTEGRATOR_JANUS;
-    r->ri_mercurius.scale_pos = 1e-10;
-    r->ri_mercurius.scale_vel = 1e-10;
+    r->ri_janus.scale_pos = 1e-10;
+    r->ri_janus.scale_vel = 1e-10;
     ```
 
 === "Python"
