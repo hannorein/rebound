@@ -5,11 +5,12 @@ Pull data from HORIZONS and format it for use as a REBOUND particle.
 
 """
 from __future__ import print_function
-import telnetlib
+
 import datetime
 import re
-import sys
-import math
+import urllib
+import urllib.parse
+import urllib.request
 import warnings
 
 __all__ = ["getParticle"]
@@ -17,138 +18,118 @@ __all__ = ["getParticle"]
 # Default date for orbital elements is the current time when first particle added, if no date is passed.
 # Cached at the beginning to ensure that all particles are synchronized.
 # If a date is passed, the same date is used for all subsequent particle adds (that don't themselves pass a date).
+
 INITDATE = None
 
-def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, plane="ecliptic", hash=0):   
-    if plane not in ["ecliptic","frame"]:
-        raise AttributeError("Reference plane needs to be either 'ecliptic' or 'frame'. See Horizons for a definition of these coordinate systems.")
+
+def quote(text):
+    return "'{}'".format(text)
+
+
+def api_request(particle, datestart, dateend, plane):
+    get_params = {
+        "format": "text",
+        "COMMAND": quote(particle),
+        "START_TIME": quote(str(datestart)),
+        "STOP_TIME": quote(str(dateend)),
+        "MAKE_EPHEM": quote("YES"),
+        "EPHEM_TYPE": quote("VECTORS"),
+        "CENTER": quote("@0"),
+        "REF_PLANE": quote(plane),
+        "STEP_SIZE": quote("2"),  # not sure what's the unit
+        "REF_SYSTEM": quote("J2000"),
+        "VEC_CORR": quote("NONE"),
+        "OUT_UNITS": quote("KM-S"),
+        "CSV_FORMAT": quote("NO"),
+        "VEC_DELTA_T": quote("NO"),
+        "VEC_TABLE": quote("3"),
+        "VEC_LABELS": quote("NO")
+
+    }
+    url = "https://ssd.jpl.nasa.gov/api/horizons.api?" + urllib.parse.urlencode(get_params)
+    with urllib.request.urlopen(url) as f:
+        return f.read().decode()
+
+
+def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None,
+                anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, plane="ecliptic", hash=0):
+    if plane not in ["ecliptic", "frame"]:
+        raise AttributeError(
+            "Reference plane needs to be either 'ecliptic' or 'frame'. See Horizons for a definition of these coordinate systems.")
     jd = False
     if date is not None:
-        if type(date) is datetime.datetime:
+        if isinstance(date, datetime.datetime):
             pass
-        elif type(date) is str:
+        elif isinstance(date, str):
             try:
-                if date[0:2]=="JD":
+                if date[0:2] == "JD":
                     jd = True
                 else:
-                    date = datetime.datetime.strptime(date,"%Y-%m-%d %H:%M")
+                    date = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M")
             except:
-                raise AttributeError("An error occured while calculating the date. Use either YYYY-MM-DD HH:MM or JDxxxxxxx.xxxxxx")
+                raise AttributeError(
+                    "An error occured while calculating the date. Use either YYYY-MM-DD HH:MM or JDxxxxxxx.xxxxxx")
     # set the cached initialization time if it's not set
     global INITDATE
     if INITDATE is None:
         INITDATE = date if date is not None else datetime.datetime.utcnow()
 
-    if date is None: # if no date passed, used cached value
+    if date is None:  # if no date passed, used cached value
         date = INITDATE
-    if type(date) is datetime.datetime:
+
+    if isinstance(date, datetime.datetime):
         # date is a datetime object
-        expect =  (( b'Starting.* :', date.strftime("%Y-%m-%d %H:%M:%S")+'\n' ),
-                  ( b'Ending.* :', (date + datetime.timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M")+'\n' ))
+        datestart = date.strftime("%Y-%m-%d %H:%M:%S")
+        dateend = (date + datetime.timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M")
     else:
         # Assume date is in JD
-        if "." in date: # end date slightly later
-            dateend = date+"1"
+        datestart = date
+        if "." in date:  # end date slightly later
+            dateend = date + "1"
         else:
-            dateend = date+".1"
-        expect =  (( b'Starting.* :', date+'\n' ),
-                  ( b'Ending.* :', dateend+'\n' ))
+            dateend = date + ".1"
 
-    print("Searching NASA Horizons for '%s'... "%(particle),end="")
-    sys.stdout.flush()
-
-    t = telnetlib.Telnet()
-    t.open('horizons.jpl.nasa.gov', 6775, 20)
-    expect = expect + ( ( b'Horizons>', particle+'\n' ),
-               ( b'Continue.*:', 'y\n' ),
-               ( b'Select.*E.phemeris.*:', 'E\n'),
-               ( b'Observe.*:', 'v\n' ),
-               ( b'Coordinate center.*:', '@0\n' ),
-               ( b'Reference plane.*:', plane+'\n' ),
-               ( b'Output interval.*:', '2\n' ),
-               ( b'Accept default output \[.*:', 'n\n' ),
-               ( b'Output reference frame \[.*:', 'J2000\n' ),
-               ( b'Corrections \[.*:', 'NONE\n' ),
-               ( b'Output units \[.*:', '1\n' ),
-               ( b'Spreadsheet CSV format.*\[.*:', 'NO\n' ),
-               ( b'Output delta.*\[.*:', 'NO\n' ),
-               ( b'Select output table type.*\[.*:', '3\n' ),
-               ( b'Label cartesian output.*\[.*:', 'NO\n' ),
-               ( b'Scroll . Page: .*%', ' '),
-               ( b'Select\.\.\. .A.gain.* :', 'X\n' ),
-               ( b'Select \.\.\. .F.tp.*:', 'selectID' )
-    )
-    p = Particle()
-    startdata = 0
-    message = ""
+    print("Searching NASA Horizons for '{}'... ".format(particle))
     idn = None
-    while True:
+    body = api_request(particle, datestart, dateend, plane)
+    made_choice = False
+    if "Multiple major-bodies match string" in body:
         try:
-            answer = t.expect(list(i[0] for i in expect), 8)
-        except EOFError:
-            break
-        a = answer[2].decode()
-        if "$$SOE" in a:
-            lines = a.split("\n")
-            for line in lines:
-                if line.strip() == "$$EOE":
-                    break
-                if startdata == 2:
-                    pos = [float(i) for i in line.split()]
-                    p.x = pos[0]
-                    p.y = pos[1]
-                    p.z = pos[2]
-                if startdata == 3:
-                    vel = [float(i) for i in line.split()]
-                    p.vx = vel[0]
-                    p.vy = vel[1]
-                    p.vz = vel[2]
-                if startdata > 0:
-                    startdata += 1
-                if "Target body name:" in line:
-                    bodyname = line.split(":")[1]
-                    try:
-                        bodyname = line.split("{")[0]
-                    except:
-                        pass
-                    print("Found: %s." % bodyname.strip())
-                    try:
-                        idn = re.search(r"\(([0-9]+)\)", line).group(1)
-                    except:
-                        pass
-                if line.strip() == "$$SOE":
-                    startdata = 1
-        message += a.replace(chr(27)+"[H","")
-        if answer[0] != -1:
-            if expect[answer[0]][1] == "selectID":
-                try:
-                    idn = a.split("ID#")[1].split("\n")[2].split()[0]
-                except:
-                    try:
-                        idn = a.split("Record #")[1].split("\n")[2].split()[0]
-                    except:
-                        raise Exception("Error while trying to find object.")
-                t.write((idn+"\n").encode())
-            else:
-                t.write(expect[answer[0]][1].encode())
-        else:
-            pass
-    if startdata == 0:
-        print(message)
-        raise SyntaxError("Object not found. See above output from HORIZONS. Please try different identifier or look up JPL Body Number.")
+            idn = body.split("ID#")[1].split("\n")[2].split()[0]
+        except KeyError:
+            try:
+                idn = body.split("Record #")[1].split("\n")[2].split()[0]
+            except:
+                raise Exception("Error while trying to find object.")
+
+        made_choice = True
+        body = api_request(idn, datestart, dateend, plane)
+    lines = body.split("$$SOE")[-1].split("\n")
+    p = Particle()
+
+    p.x, p.y, p.z = [float(i) for i in lines[2].split()]
+    p.vx, p.vy, p.vz = [float(i) for i in lines[3].split()]
+
+    match = re.search(r"Target body name: (.+) \(([0-9]+)\)", body)
+    if match:
+        bodyname = match.group(1).strip()
+        idn = match.group(2)
+        print("Found: {}.".format(bodyname), "(chosen from query '{}')".format(particle) if made_choice else "")
+
     if m is not None:
         p.m = m
     elif idn is not None:
         try:
-            p.m = float(re.search(r"BODY%d\_GM .* \( *([\.E\+\-0-9]+ *)\)"%int(idn), HORIZONS_MASS_DATA).group(1))
-            p.m /= Gkmkgs # divide by G (horizons masses give GM)
-        except:
+            p.m = float(
+                re.search(r"BODY{:d}\_GM .* \( *([\.E\+\-0-9]+ *)\)".format(int(idn)), HORIZONS_MASS_DATA).group(1))
+            p.m /= Gkmkgs  # divide by G (horizons masses give GM)
+        except AttributeError:
             warnings.warn("Warning: Mass cannot be retrieved from NASA HORIZONS. Set to 0.", RuntimeWarning)
             p.m = 0
     else:
         warnings.warn("Warning: Mass cannot be retrieved from NASA HORIZONS. Set to 0.", RuntimeWarning)
         p.m = 0
-    p.hash = hash 
+    p.hash = hash
     return p
 
 
@@ -158,7 +139,7 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
 # Source: ftp://ssd.jpl.nasa.gov/pub/xfr/gm_Horizons.pck
 # Units: km^3/s^2
 
-Gkmkgs = 6.67408e-20 # units of km^3/kg/s^2
+Gkmkgs = 6.67408e-20  # units of km^3/kg/s^2
 
 HORIZONS_MASS_DATA = """
     BODY1_GM       = ( 2.2031780000000021E+04 )
@@ -242,7 +223,6 @@ HORIZONS_MASS_DATA = """
     BODY2000511_GM = ( 2.3312860000000000E+00 )
     BODY2000704_GM = ( 2.3573170000000001E+00 )
 """
-
 
 # Import at the end to avoid circular dependence
 from .particle import *
