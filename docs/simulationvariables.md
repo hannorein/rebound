@@ -23,7 +23,7 @@ To keep the documentation concise, variables which are only intended for interna
 :   Current simulation time. The default value is 0. The value increases if a simulation is integrated forward in time ($dt>0$). See also the [discussion on units](units.md).
 
 `#!c double dt`                 
-:   This is the current timestep. The default is 0.01. 
+:   This is the current timestep. The default is 0.001. 
     Make sure to set the timestep to a small fraction (a few percent) of the shortest dynamical timescale in the problem.
     Adaptive integrators such as [IAS15](../integrators/#ias15) will use this value as their initial guess during the first timestep.
     In subsequent timesteps, adaptive integrators will change this value.
