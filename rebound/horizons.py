@@ -8,10 +8,14 @@ from __future__ import print_function
 
 import datetime
 import re
-import urllib
-import urllib.parse
-import urllib.request
 import warnings
+
+try:
+    from urllib.parse import urlencode
+    from urllib.request import urlopen
+except ImportError:
+    from urllib import urlencode
+    from urllib2 import urlopen
 
 __all__ = ["getParticle"]
 
@@ -46,9 +50,12 @@ def api_request(particle, datestart, dateend, plane):
         "VEC_LABELS": quote("NO")
 
     }
-    url = "https://ssd.jpl.nasa.gov/api/horizons.api?" + urllib.parse.urlencode(get_params)
-    with urllib.request.urlopen(url) as f:
-        return f.read().decode()
+    url = "https://ssd.jpl.nasa.gov/api/horizons.api?" + urlencode(get_params)
+    # don't use a context manager for python2 compatibility
+    f = urlopen(url)
+    body = f.read().decode()
+    f.close()
+    return body
 
 
 def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None,
