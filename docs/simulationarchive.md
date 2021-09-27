@@ -20,7 +20,7 @@ If the file already exists, the function will append a Simulation Archive snapsh
     ```python
     sim = rebound.Simulation()
     # ... work on simulation ...
-    sim.simulationarchive_snapshpt("archive.bin")
+    sim.simulationarchive_snapshot("archive.bin")
     ```
     You can pass the optional argument `deletefile=True` to delete the file if it already exists.
     By default, the function appends a snapshot to existing files.
