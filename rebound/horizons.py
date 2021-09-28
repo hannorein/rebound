@@ -121,7 +121,7 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
     if match:
         bodyname = match.group(1).strip()
         idn = match.group(2)
-        print("Found: {}".format(bodyname), "(chosen from query '{}')".format(particle) if made_choice else "")
+        print("Found: {} ({})".format(bodyname, idn), "(chosen from query '{}')".format(particle) if made_choice else "")
     else:
         # fall back to more general regex
         match = re.search(r"Target body name: (.+) {", body)
