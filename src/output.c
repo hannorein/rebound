@@ -431,12 +431,21 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
         }
     }
     // To output size of binary file, need to calculate it first. 
-    r->simulationarchive_size_first = (*sizep)+sizeof(struct reb_binary_field)*2+sizeof(long)+sizeof(struct reb_simulationarchive_blob);
+    if (r->simulationarchive_version<3){ // to be removed in a future release
+        r->simulationarchive_size_first = (*sizep)+sizeof(struct reb_binary_field)*2+sizeof(long)+sizeof(struct reb_simulationarchive_blob16);
+    }else{
+        r->simulationarchive_size_first = (*sizep)+sizeof(struct reb_binary_field)*2+sizeof(long)+sizeof(struct reb_simulationarchive_blob);
+    }
     WRITE_FIELD(SASIZEFIRST,        &r->simulationarchive_size_first,   sizeof(long));
     int end_null = 0;
     WRITE_FIELD(END, &end_null, 0);
-    struct reb_simulationarchive_blob blob = {0};
-    reb_output_stream_write(bufp, &allocatedsize, sizep, &blob, sizeof(struct reb_simulationarchive_blob));
+    if (r->simulationarchive_version<3){ // to be removed in a future release
+        struct reb_simulationarchive_blob16 blob = {0};
+        reb_output_stream_write(bufp, &allocatedsize, sizep, &blob, sizeof(struct reb_simulationarchive_blob16));
+    }else{
+        struct reb_simulationarchive_blob blob = {0};
+        reb_output_stream_write(bufp, &allocatedsize, sizep, &blob, sizeof(struct reb_simulationarchive_blob));
+    }
 }
 
 void reb_output_binary(struct reb_simulation* r, const char* filename){

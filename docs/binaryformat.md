@@ -20,10 +20,13 @@ and
 ```c
 struct reb_simulationarchive_blob {
     int32_t index;
-    int16_t offset_prev;
-    int16_t offset_next;
+    int32_t offset_prev;
+    int32_t offset_next;
 };
 ```
+
+!!! note
+    Before version 3.18, the offset datatype was `int16_t`. This caused problems for simulations with a large number of particles and has since been change to `int32_t`.
 
 ## Binary file (one snapshot)
 You create a binary file if you save a simulation

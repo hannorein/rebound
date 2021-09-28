@@ -5,7 +5,7 @@ import warnings
 class TestSimulationArchiveMatrix(unittest.TestCase):
     pass
 
-def runSimulation(test,tmax=40., restart=False, keep_unsynchronized=1, interval=None, safe_mode=True, integrator="ias15",G=1., testparticle=0,simulationarchive_version=2):
+def runSimulation(test,tmax=40., restart=False, keep_unsynchronized=1, interval=None, safe_mode=True, integrator="ias15",G=1., testparticle=0,simulationarchive_version=3):
     if restart:
         if keep_unsynchronized==1:
             sim = rebound.Simulation("test.bin")
@@ -94,7 +94,7 @@ for integrator in ["ias15","whfast","leapfrog","janus","mercurius","saba","sabac
         for G in [1.,0.9]:
             for testparticle in [0,1,2]: # no test particle, passive, semi-active
                 for keep_unsynchronized in [1,0]:
-                    for simulationarchive_version in [1,2]:
+                    for simulationarchive_version in [1,3]:
                         if simulationarchive_version==1:
                             if integrator=="leapfrog" or integrator=="saba" or integrator=="mercurius" or integrator=="sabacl4" or integrator=="saba(10,6,4)":
                                 continue
