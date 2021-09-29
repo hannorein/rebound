@@ -7,6 +7,9 @@ This changelog only includes the most important changes in recent updates. For a
 ### Version 3.18.0
 * Fixes an issue in the SimulationArchive that prevented REBOUND from seeing more than one snapshot. This only affected simulations with a large number of particles. 
 
+### Version 3.17.5
+* REBOUND will now uses the new HTTP API from NASA Horizons. This is significantly faster than the old telnet version. Thanks to Lukas Winkler for implementing this.
+
 ### Version 3.17.4
 * REBOUND will now attempt to recover binary files and SimulationArchives which have been corrupted. Simulations can be restarted from corrupt files and in most cases the corrupt files will fix themselves.
 
