@@ -29,7 +29,7 @@ Instead of manually outputting each snapshot, you can also automate this process
 
 ### Regular time intervals
 The following code automatically creates a Simulation Archive snapshot at regular intervals.
-== "C"
+=== "C"
     ```c
     struct reb_simulation* r = reb_create_simulation();
     // ... work on simulation ...
@@ -45,7 +45,7 @@ The following code automatically creates a Simulation Archive snapshot at regula
 
 ### Regular number of timesteps
 The following code automatically creates a Simulation Archive snapshot after a fixed number of timesteps.
-== "C"
+=== "C"
     ```c
     struct reb_simulation* r = reb_create_simulation();
     // ... work on simulation ...
@@ -69,7 +69,7 @@ The following code automatically creates a Simulation Archive snapshot after a f
 The following code automatically creates a Simulation Archive snapshot after a fixed wall-time.
 This is particularly useful for creating restart files when running long simulations.
 The wall-time is given in seconds.
-== "C"
+=== "C"
     ```c
     struct reb_simulation* r = reb_create_simulation();
     // ... work on simulation ...
