@@ -111,6 +111,20 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
 
         made_choice = True
         body = api_request(idn, datestart, dateend, plane)
+    elif "Matching small-bodies" in body:
+        for line in body.split("\n"):
+            try:
+                first_word = line.split()[0]
+            except IndexError:
+                continue
+            print(first_word)
+            if first_word.isdecimal():
+                idn = first_word
+                break
+        if not idn:
+            raise Exception("Error while trying to find object.")
+        body = api_request(idn, datestart, dateend, plane)
+
     lines = body.split("$$SOE")[-1].split("\n")
     p = Particle()
 
