@@ -40,7 +40,7 @@ def api_request(particle, datestart, dateend, plane):
         "EPHEM_TYPE": quote("VECTORS"),
         "CENTER": quote("@0"),
         "REF_PLANE": quote(plane),
-        "STEP_SIZE": quote("2"),  # not sure what's the unit
+        "STEP_SIZE": quote("2"),  # seconds
         "REF_SYSTEM": quote("J2000"),
         "VEC_CORR": quote("NONE"),
         "OUT_UNITS": quote("KM-S"),
@@ -92,7 +92,8 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
         # Assume date is in JD
         datestart = date
         if "." in date:  # end date slightly later
-            dateend = date + "1"
+            date_f = float(re.sub("[^0-9\.]","",date))
+            dateend = "JD%.8f"%(date_f+0.1)
         else:
             dateend = date + ".1"
 
