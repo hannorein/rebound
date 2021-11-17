@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.18.1
+* Various improvements and fixes relates to NASA Horizons: small bodies are retrieved correctly, the dates now work with fractional JD values and dates in the format YYYY-MM-DD HH:MM:SS are now supported. 
+
 ### Version 3.18.0
 * Fixes an issue in the SimulationArchive that prevented REBOUND from seeing more than one snapshot. This only affected simulations with a large number of particles. 
 
