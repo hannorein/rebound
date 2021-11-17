@@ -63,14 +63,11 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
     if plane not in ["ecliptic", "frame"]:
         raise AttributeError(
             "Reference plane needs to be either 'ecliptic' or 'frame'. See Horizons for a definition of these coordinate systems.")
-    jd = False
     if date is not None:
         if isinstance(date, datetime.datetime):
             pass
         elif isinstance(date, str):
-            if date[0:2] == "JD":
-                jd = True
-            else:
+            if date[0:2] != "JD":
                 formats = ["%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"] # allowed formats
                 found_match = False
                 for f in formats:
@@ -92,15 +89,12 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
     if isinstance(date, datetime.datetime):
         # date is a datetime object
         datestart = date.strftime("%Y-%m-%d %H:%M:%S")
-        dateend = (date + datetime.timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M")
+        dateend = (date + datetime.timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M:%S")
     else:
-        # Assume date is in JD
+        # Assume date is in JD with format JDxxxxxx.xxxx
         datestart = date
-        if "." in date:  # end date slightly later
-            date_f = float(re.sub("[^0-9\.]","",date))
-            dateend = "JD%.8f"%(date_f+0.1)
-        else:
-            dateend = date + ".1"
+        date_f = float(re.sub("[^0-9\.]","",date))
+        dateend = "JD%.8f"%(date_f+0.1)
 
     print("Searching NASA Horizons for '{}'... ".format(particle))
     idn = None
