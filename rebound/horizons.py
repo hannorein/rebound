@@ -68,7 +68,7 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
             pass
         elif isinstance(date, str):
             if date[0:2] != "JD":
-                formats = ["%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"] # allowed formats
+                formats = ["%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"] # allowed formats
                 found_match = False
                 for f in formats:
                     try:
@@ -77,7 +77,7 @@ def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None,
                     except:
                         continue
                 if found_match == False:
-                    raise AttributeError("An error occured while calculating the date. Use either YYYY-MM-DD HH:MM, YYYY-MM-DD HH:MM:SS or JDxxxxxxx.xxxxxx")
+                    raise AttributeError("An error occured while calculating the date. Use one "+" or ".join(formats) + " or JDxxxxxxx.xxxxxx")
     # set the cached initialization time if it's not set
     global INITDATE
     if INITDATE is None:
