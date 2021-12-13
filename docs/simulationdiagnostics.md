@@ -20,7 +20,7 @@ You can calculate the angular momentum of a simulation using the following funct
 === "C"
     ```c
     struct reb_simulation* r = reb_create_simulation();
-    double energy = reb_calculate_angular_momentum(r);
+    double angular_momentum = reb_calculate_angular_momentum(r);
     ```
 === "Python"
     ```python
