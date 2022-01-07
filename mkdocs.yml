@@ -146,7 +146,8 @@ theme:
 markdown_extensions:
   - admonition
   - def_list
-  - pymdownx.tabbed
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.highlight
   - pymdownx.inlinehilite
   - pymdownx.superfences
