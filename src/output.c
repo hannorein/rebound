@@ -362,6 +362,13 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     WRITE_FIELD(EOS_SAFEMODE,       &r->ri_eos.safe_mode,               sizeof(unsigned int));
     WRITE_FIELD(EOS_ISSYNCHRON,     &r->ri_eos.is_synchronized,         sizeof(unsigned int));
     WRITE_FIELD(RAND_SEED,          &r->rand_seed,                      sizeof(unsigned int));
+    WRITE_FIELD(BS_EPSABS,          &r->ri_bs.eps_abs,                  sizeof(double));
+    WRITE_FIELD(BS_EPSREL,          &r->ri_bs.eps_rel,                  sizeof(double));
+    WRITE_FIELD(BS_MINDT,           &r->ri_bs.min_dt,                   sizeof(double));
+    WRITE_FIELD(BS_MAXDT,           &r->ri_bs.max_dt,                   sizeof(double));
+    WRITE_FIELD(BS_FIRSTORLASTSTEP, &r->ri_bs.firstOrLastStep,          sizeof(int));
+    WRITE_FIELD(BS_PREVIOUSREJECTED,&r->ri_bs.previousRejected,         sizeof(int));
+    WRITE_FIELD(BS_TARGETITER,      &r->ri_bs.targetIter,               sizeof(int));
     int functionpointersused = 0;
     if (r->coefficient_of_restitution ||
         r->collision_resolve ||

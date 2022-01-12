@@ -216,6 +216,43 @@ struct reb_simulation_integrator_whfast {
     unsigned int recalculate_coordinates_but_not_synchronized_warning;
 };
 
+struct reb_ode{ // defines an ODE 
+    unsigned int length; // number of components / dimenion
+    unsigned int allocatedN;
+    unsigned int needs_nbody;
+    double* y;      // Current state 
+    double* scale;
+    double* C;      // Temporary internal array (extrapolation) 
+    double** D;     // Temporary internal array (extrapolation) 
+    double* y1;     // Temporary internal array (state during the step) 
+    double* y0Dot;  // Temporary internal array (derivatives at beginning of step)
+    double* yDot;   // Temporary internal array (derivatives)
+    double* yTmp;   // Temporary internal array (midpoint method)
+    void (*derivatives)(struct reb_ode* const ode, double* const yDot, const double* const y, const double t); // right hand side 
+    void (*getscale)(struct reb_ode* const ode, const double* const y0, const double* const y1); // right hand side 
+    struct reb_simulation* r; // weak reference to main simulation 
+    void* ref;  // pointer to any additional data needed for derivatives
+};
+
+
+struct reb_simulation_integrator_bs {
+    struct reb_ode* nbody_ode; //
+    int* sequence;      // stepsize sequence
+    int* costPerStep;   // overall cost of applying step reduction up to iteration k + 1, in number of calls.
+    double* costPerTimeUnit; // cost per unit step.
+    double* optimalStep; // optimal steps for each order. 
+    double* coeff;    // extrapolation coefficients.
+    double eps_abs; // Allowed absolute scalar error.
+    double eps_rel; // Allowed relative scalar error.
+    double min_dt;
+    double max_dt;
+    double dt_proposed;
+    int firstOrLastStep;
+    int previousRejected;
+    int targetIter;
+    int user_ode_needs_nbody; // Do not set manually. Use needs_nbody in reb_ode instead.
+};
+
 enum REB_EOS_TYPE {
     REB_EOS_LF = 0x00, 
     REB_EOS_LF4 = 0x01,
@@ -406,6 +443,13 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_EOS_ISSYNCHRON = 152,
     REB_BINARY_FIELD_TYPE_RAND_SEED = 154,
     REB_BINARY_FIELD_TYPE_TESTPARTICLEHIDEWARNINGS = 155,
+    REB_BINARY_FIELD_TYPE_BS_EPSABS = 156,
+    REB_BINARY_FIELD_TYPE_BS_EPSREL = 157,
+    REB_BINARY_FIELD_TYPE_BS_MINDT = 158,
+    REB_BINARY_FIELD_TYPE_BS_MAXDT = 159,
+    REB_BINARY_FIELD_TYPE_BS_FIRSTORLASTSTEP = 160,
+    REB_BINARY_FIELD_TYPE_BS_PREVIOUSREJECTED = 161,
+    REB_BINARY_FIELD_TYPE_BS_TARGETITER = 162,
 
     REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
     REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
@@ -555,6 +599,7 @@ struct reb_simulation {
         REB_INTEGRATOR_MERCURIUS = 9,// MERCURIUS integrator 
         REB_INTEGRATOR_SABA = 10,    // SABA integrator family (Laskar and Robutel 2001)
         REB_INTEGRATOR_EOS = 11,     // Embedded Operator Splitting (EOS) integrator family (Rein 2019)
+        REB_INTEGRATOR_BS = 12,      // Gragg-Bulirsch-Stoer 
         } integrator;
     enum {
         REB_BOUNDARY_NONE = 0,      // Do not check for anything (default)
@@ -579,6 +624,13 @@ struct reb_simulation {
     struct reb_simulation_integrator_mercurius ri_mercurius;// The MERCURIUS struct
     struct reb_simulation_integrator_janus ri_janus;        // The JANUS struct 
     struct reb_simulation_integrator_eos ri_eos;            // The EOS struct 
+    struct reb_simulation_integrator_bs ri_bs;              // The BS struct
+
+    // ODEs
+    struct reb_ode** odes;  // all ode sets (includes nbody if BS set as integrator)
+    int odes_N;            // number of ode sets
+    int odes_allocatedN;   // number of ode sets allocated
+    int ode_warnings;
 
      // Callback functions
     void (*additional_forces) (struct reb_simulation* const r);
@@ -701,6 +753,9 @@ enum reb_input_binary_messages {
     REB_INPUT_BINARY_WARNING_CORRUPTFILE = 512,
 };
 
+// ODE functions
+struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length);
+void reb_free_ode(struct reb_ode* ode);
 
 // Miscellaneous functions
 uint32_t reb_hash(const char* str);

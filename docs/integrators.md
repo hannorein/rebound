@@ -198,6 +198,108 @@ The setting for WHFast are stored in the `reb_simulation_integrator_whfast` stru
 
 All other members of the `reb_simulation_integrator_whfast` structure are for internal use only.
 
+## Gragg-Bulirsch-Stoer (BS)
+The Gragg-Bulirsch-Stoer integrator (short BS for Bulirsch-Stoer) is an adaptive integrator which uses Richardson extrapolation and the modified midpoint method to obtain solutions to ordinary differential equations.
+
+The version in REBOUND is based on the method described in Hairer, Norsett, and Wanner 1993 (see section II.9, page 224ff), specifically the JAVA implementation available in the [Hipparchus package](https://github.com/Hipparchus-Math/hipparchus/blob/master/hipparchus-ode/src/main/java/org/hipparchus/ode/nonstiff/GraggBulirschStoerIntegrator.java). The Hipparchus as well as the REBOUND version are adaptive in both the timestep and the order of the method for optimal performance. 
+The BS implementation in REBOUND can integrate first and second orer variational equations. 
+
+The BS integrator is particularly useful for short integrations where only medium accuracy is required. For long integrations a symplectic integrator such as WHFast performs better. For high accuracy integrations the IAS15 integrator performs better. Because BS is adaptive, it can handle close encounters. Currently a collision search is only performed after every timestep, i.e. not after a sub-timestep.
+
+The following code enables the BS integrator and sets both the relative and absolute tolerances to 0.0001 (the default is $10^{-8}$):
+
+=== "C"
+    ```c
+    struct reb_simulation* r = reb_create_simulation();
+    r->integrator = REB_INTEGRATOR_BS;
+    r->ri_bs.eps_rel = 1e-4;
+    r->ri_bs.eps_abs = 1e-4;
+    ```
+
+=== "Python"
+    ```python
+    sim = rebound.Simulation()
+    sim.integrator = "BS"
+    sim.ri_bs.eps_rel = 1e-4
+    sim.ri_bs.eps_abs = 1e-4
+    ```
+
+The BS integrator tries to keep the error of each coordinate $y$ below $\epsilon_{abs} + \epsilon_{rel} \cdot  \left|y\right|$. Note that this applies to both position and velocity coordinates of all particles which implues that the code units you're choosing for the integration matter. If you need fine control over the scales used internally, you can set the `getscale` function pointer in `r->ri_bs.nbody_ode` (this is currently undocumented, search the source code for `getscale` to find out more).
+
+!!! Info
+        The code does not guarantee that the errors remain below the tolerances. In particular, note that BS is not a symplectic integrator which results in errors growing linearly in time (phase errors grow quadratically in time). It requires some experimentation to find the tolerances that offer the best compromise between accuracy and speed for your specific problem. 
+
+
+You can limit the timestep with both a maximum and minimum timestep:
+
+=== "C"
+    ```c
+    r->ri_bs.min_dt = 1e-5;
+    r->ri_bs.max_dt = 1e-2;
+    ```
+
+=== "Python"
+    ```python
+    sim.ri_bs.min_dt = 1e-5
+    sim.ri_bs.max_dt = 1e-2
+    ```
+
+Compared to the other integrators in REBOUND, BS can be used to integrate arbitrary ordinary differential equations (ODEs), not just the N-body problem. We expose an ODE-API in REBOUND which allows you to make use of this. User-defined ODEs are always integrated with BS. You can choose to integrate the N-body equations with BS as well, or any of the other integrators. 
+
+If you choose BS for the N-body equations, then BS will treat all ODEs (N-body + all user-defined ones) as one big system of coupled ODEs. This means your timestep will be set by either the N-body problem or the user-defined ODEs, whichever involves the shorter timescale.
+
+If you choose IAS15 or WHFast for the N-body equation but also have user-defined ODEs, then they cannot be treated as one big coupled system of ODEs anymore. In that case the N-body integration is done first. Then the user-defined ODEs are advanced to the exact same time as the N-body system using BS using whatever timestep is required to achieve the tolerance set in the `ri_bs` struct. During the integration of the user-defined ODEs, the coordinates of the particles in the N-body simulation are assumed to be fixed at their final position and velocity. This introduces an error. However, if the system evolves adiabatically (the timescales in the user-defined ODEs are much longer than in the N-body problem), then the error will be small. 
+
+The following code sets up a REBOUND simulation in which a harmonic oscillator is driven by the phase of a planet orbiting a star:
+
+=== "C"
+    ```c
+    void derivatives(struct reb_ode* const ode, double* const yDot, const double* const y, const double t){
+        struct reb_orbit o = reb_tools_particle_to_orbit(ode->r->G, ode->r->particles[1], ode->r->particles[0]);
+        const double omega = 1;
+        double forcing = sin(o.f);
+        yDot[0] = y[1];
+        yDot[1] = -omega*omega*y[0] + forcing;
+    }
+
+    void run(){
+        struct reb_simulation* r = reb_create_simulation();
+        reb_add_fmt(r, "m", 1.);
+        reb_add_fmt(r, "m a e", 1e-3, 1., 0.1);
+
+        r->integrator = REB_INTEGRATOR_BS;
+
+        struct reb_ode* ho = reb_create_ode(r,2);   // Add an ODE with 2 dimensions
+        ho->derivatives = derivatives;              // Right hand side of the ODE
+        ho->y[0] = 1;                               // Initial conditions
+        ho->y[1] = 0;
+    }
+    ```
+
+=== "Python"
+    ```python
+    import numpy as np
+
+    def derivatives(ode, yDot, y, t):
+        omega = 1.0
+        sim_pointer = ode.contents.r
+        orbit = sim_pointer.contents.particles[1]
+        forcing = np.sin(orbit.f)
+        yDot[0] = y[1]
+        yDot[1] = -omega*omega*y[0] + forcing
+
+    sim = rebound.Simulation()
+    sim.add(m=1)
+    sim.add(m=1e-3, a=1, e=0.1)
+
+    sim.integrator = "BS"
+
+    ho = sim.create_ode(length=2)   # Add an ODE with 2 dimensions
+    ho.derivatives = derivatives    # Right hand side of the ODE
+    ho.y[0] = 1.0                   # Initial conditions
+    ho.y[1] = 0.0
+    ```
+
 
 ## Mercurius
 

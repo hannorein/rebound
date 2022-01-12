@@ -12,6 +12,8 @@
 // This function creates a simulation with one star, one planet and one test particle.
 struct reb_simulation* create_sim(){
     struct reb_simulation* r = reb_create_simulation();
+    r->integrator = REB_INTEGRATOR_IAS15; // First and second order  variational equations supported in IAS15.
+    // r->integrator = REB_INTEGRATOR_BS; // First and second order  variational equations supported in BS.
     // r->integrator = REB_INTEGRATOR_WHFAST;  Only first order variational equations supported in WHFast.
     struct reb_particle star = {0.};
     star.m = 1;

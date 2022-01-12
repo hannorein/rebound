@@ -220,6 +220,13 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(EOS_SAFEMODE,       &r->ri_eos.safe_mode);
         CASE(EOS_ISSYNCHRON,     &r->ri_eos.is_synchronized);
         CASE(RAND_SEED,          &r->rand_seed);
+        CASE(BS_EPSABS,          &r->ri_bs.eps_abs);
+        CASE(BS_EPSREL,          &r->ri_bs.eps_rel);
+        CASE(BS_MINDT,           &r->ri_bs.min_dt);
+        CASE(BS_MAXDT,           &r->ri_bs.max_dt);
+        CASE(BS_FIRSTORLASTSTEP, &r->ri_bs.firstOrLastStep);
+        CASE(BS_PREVIOUSREJECTED,&r->ri_bs.previousRejected);
+        CASE(BS_TARGETITER,      &r->ri_bs.targetIter);
         // temporary solution for depreciated SABA k and corrector variables.
         // can be removed in future versions
         case 138: 

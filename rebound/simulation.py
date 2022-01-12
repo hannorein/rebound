@@ -21,7 +21,7 @@ import types
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "mercurius": 3, "line": 4, "linetree": 5}
@@ -816,6 +816,13 @@ class Simulation(Structure):
             raise ValueError("Cannot multiply simulation with non-scalars.")
         clibrebound.reb_simulation_imul(byref(self), c_double(scalar_pos), c_double(scalar_vel))
 
+#ODE functions
+    def create_ode(self, length, needs_nbody=True):
+        clibrebound.reb_create_ode.restype = POINTER(ODE)
+        ode_p = clibrebound.reb_create_ode(byref(self), c_int(length))
+        ode_p.contents.needs_nbody = c_int(needs_nbody)
+        return ODE.from_address(ctypes.addressof(ode_p.contents))
+
 # Status functions
     def status(self):
         """ 
@@ -998,6 +1005,7 @@ class Simulation(Structure):
         - ``'SABACM4'`` 
         - ``'SABA(10,6,4)'`` 
         - ``'EOS'`` 
+        - ``'BS'`` 
         - ``'none'``
         
         Check the online documentation for a full description of each of the integrators. 
@@ -1751,7 +1759,10 @@ class Simulation(Structure):
             self.process_messages()
             raise SimulationError("An error occured during the integration.")
         if ret_value == 2:
-            raise NoParticles("No more particles left in simulation.")
+            if self._odes_N>0:
+                raise NoParticles("No particles found. Will exit. Use BS integrator to integrate user-defined ODEs without any particles present.");
+            else:
+                raise NoParticles("No more particles left in simulation.")
         if ret_value == 3:
             raise Encounter("Two particles had a close encounter (d<exit_min_distance).")
         if ret_value == 4:
@@ -2052,6 +2063,60 @@ class reb_simulation_integrator_mercurius(Structure):
             self._Lfp = MERCURIUSLF(func)
             self._L = self._Lfp
 
+class ODE(Structure):
+    @property
+    def derivatives(self):
+        raise AttributeError("You can only set C function pointers from python.")
+    @derivatives.setter
+    def derivatives(self, func):
+        self._dfp = ODEDER(func)
+        func.argtypes = self._dfp.argtypes # I do not understand why this is needed
+        self._derivatives = self._dfp
+    def update_particles(self):
+        clibrebound.reb_integrator_bs_update_particles(self.r, None) 
+
+
+ODE._fields_ = [
+                ("length", c_uint),
+                ("allocatedN", c_uint),
+                ("needs_nbody", c_int),
+                ("y", POINTER(c_double)),
+                ("_scale", POINTER(c_double)),
+                ("_C", POINTER(c_double)),
+                ("_D", POINTER(POINTER(c_double))),
+                ("_y1", POINTER(c_double)),
+                ("_y0Dot", POINTER(c_double)),
+                ("_yDot", POINTER(c_double)),
+                ("_yTmp", POINTER(c_double)),
+                ("_derivatives", CFUNCTYPE(None,POINTER(ODE), POINTER(c_double), POINTER(c_double), c_double)),
+                ("_getscale", CFUNCTYPE(None,POINTER(ODE), POINTER(c_double), POINTER(c_double))),
+                ("r", POINTER(Simulation)),
+                ("ref", c_void_p),
+            ]               
+
+class reb_simulation_integrator_bs(Structure):
+    """
+    This class is an abstraction of the C-struct reb_simulation_integrator_bs.
+    It controls the behaviour of the Gragg-Bulirsch-Stoer integrator.
+    """
+    _fields_ = [
+                ("_nbody_ode", POINTER(ODE)),
+                ("_sequence", POINTER(c_int)),
+                ("_costPerStep", POINTER(c_int)),
+                ("_costPerTimeUnit", POINTER(c_double)),
+                ("_optimalStep", POINTER(c_double)),
+                ("_coeff", POINTER(c_double)),
+                ("eps_abs", c_double),
+                ("eps_rel", c_double),
+                ("min_dt", c_double),
+                ("max_dt", c_double),
+                ("dt_proposed", c_double),
+                ("_firstOrLastStep", c_int),
+                ("_previousRejected", c_int),
+                ("_targetIter", c_int),
+                ("_user_ode_needs_nbody", c_int),
+            ]               
+
 class timeval(Structure):
     _fields_ = [("tv_sec",c_long),("tv_usec",c_long)]
 
@@ -2164,6 +2229,11 @@ Simulation._fields_ = [
                 ("ri_mercurius", reb_simulation_integrator_mercurius),
                 ("ri_janus", reb_simulation_integrator_janus),
                 ("ri_eos", reb_simulation_integrator_eos),
+                ("ri_bs", reb_simulation_integrator_bs),
+                ("_odes", POINTER(POINTER(ODE))),
+                ("_odes_N", c_int),
+                ("_odes_allocatedN", c_int),
+                ("_odes_warnings", c_int),
                 ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_pre_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
@@ -2195,6 +2265,8 @@ Particle._fields_ = [("x", c_double),
 
 POINTER_REB_SIM = POINTER(Simulation) 
 AFF = CFUNCTYPE(None,POINTER_REB_SIM)
+ODEDER = CFUNCTYPE(None,POINTER(ODE), POINTER(c_double), POINTER(c_double), c_double)
+ODESCALE = CFUNCTYPE(None,POINTER(ODE), POINTER(c_double), POINTER(c_double))
 CORFF = CFUNCTYPE(c_double,POINTER_REB_SIM, c_double)
 COLRFF = CFUNCTYPE(c_int, POINTER_REB_SIM, reb_collision)
 MERCURIUSLF = CFUNCTYPE(c_double, POINTER_REB_SIM, c_double, c_double)

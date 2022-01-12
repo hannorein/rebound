@@ -34,7 +34,7 @@ def run(*args, **kwargs):
                     if will_output>0:
                         will_output += 1
                 fd.write("```\n")
-                fd.write("\n\nThis example is located in the directory `examples/"+problemc.split("/")[2]+"`\n\n")
+                fd.write("\n\nThis example is located in the directory `examples/"+problemc.split("/")[1]+"`\n\n")
                 if did_output==0:
                     print("Warning: Did not find description in "+problemc)
     print("Converted %d C examples."%count)

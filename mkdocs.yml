@@ -100,8 +100,14 @@ nav:
       - c_examples/prdrag.md
       - c_examples/circumplanetarydust.md
       - c_examples/planetary_migration.md
+      - c_examples/ode_affecting_nbody.md
       - ipython_examples/Forces.ipynb
-    - "Granular Dynamics":
+    - "Integrating arbitrary ODEs":
+      - c_examples/arbitrary_ode.md
+      - c_examples/ode_affecting_nbody.md
+      - ipython_examples/ChaoticHyperion.ipynb
+      - ipython_examples/IntegratingArbitraryODEs.ipynb
+    - "Granular dynamics":
       - c_examples/bouncing_balls.md
       - c_examples/bouncing_balls_corners.md
       - c_examples/bouncing_string.md
