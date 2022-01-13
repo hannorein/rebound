@@ -70,7 +70,7 @@
 // They are hard coded here because it
 // is unlikely that these need to be changed by the user.
 static const int maxOrder = 18;// was 18 
-static const int sequence_length = maxOrder / 2; 
+static const int sequence_length = 9; // = maxOrder / 2; 
 static const double stepControl1 = 0.65;
 static const double stepControl2 = 0.94;
 static const double stepControl3 = 0.02;

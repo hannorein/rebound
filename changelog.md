@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.19.1
+* Some compilers seem to complain that a constant cannot be initialized from a constant. Fixed this so that REBOUND works on colaboratory.
+
 ### Version 3.19.0
 * Added a Gragg-Bulirsch-Stoer integrator (short BS for Bulirsch-Stoer). This is an adaptive integrator which uses Richardson extrapolation and the modified midpoint method to obtain solutions to ordinary differential equations. The version in REBOUND is based on the method described in Hairer, Norsett, and Wanner 1993 (see section II.9, page 224ff).
 * Added the ability to integrate arbitrary ordinary differential equations with REBOUND. The ODEs can be couple to the N-body simulation. This can be used to simulate spin, tides, and other physical effects. The user-defined ODEs are integrated with the new BS integrator.
