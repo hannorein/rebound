@@ -35,6 +35,8 @@
 #include "output.h"
 #include "integrator.h"
 #include "integrator_sei.h"
+#include "integrator_tes.h"
+
 #include "input.h"
 #ifdef MPI
 #include "communication_mpi.h"
@@ -227,6 +229,18 @@ void static inline reb_save_dp7(struct reb_dp7* dp7, const int N3, char** bufp, 
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p5,sizeof(double)*N3);
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p6,sizeof(double)*N3);
 }
+
+void static inline reb_save_controlVars(controlVars* dp7, const int N3, char** bufp, size_t* sizep, size_t* allocatedsize){
+    reb_output_stream_write(bufp, allocatedsize, sizep, &dp7->size, sizeof(uint32_t));
+    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p0, dp7->size);
+    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p1, dp7->size);
+    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p2, dp7->size);
+    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p3, dp7->size);
+    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p4, dp7->size);
+    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p5, dp7->size);
+    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p6, dp7->size);
+}
+
 
 // Macro to write a single field to a binary file.
 // Memset forces padding to be set to 0 (not necessary but
@@ -430,6 +444,133 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
             reb_save_dp7(&(r->ri_ias15.er),N3,bufp,sizep,&allocatedsize);
         }
     }
+
+
+    // Output fields for TES integrator.
+    WRITE_FIELD(TES_DQ_MAX,             &r->ri_tes.dq_max,                sizeof(double));
+    WRITE_FIELD(TES_RECTI_PER_ORBIT,    &r->ri_tes.recti_per_orbit,       sizeof(double));
+    WRITE_FIELD(TES_EPSILON,            &r->ri_tes.epsilon,               sizeof(double));
+    WRITE_FIELD(TES_PERIOD,             &r->ri_tes.orbital_period,        sizeof(double));
+    WRITE_FIELD(TES_SV_LEN,             &r->ri_tes.stateVectorLength,     sizeof(uint32_t));
+    WRITE_FIELD(TES_SV_SIZE,            &r->ri_tes.stateVectorSize,       sizeof(uint32_t));
+    WRITE_FIELD(TES_CV_LEN,             &r->ri_tes.controlVectorLength,   sizeof(uint32_t));
+    WRITE_FIELD(TES_CV_SIZE,            &r->ri_tes.controlVectorSize,     sizeof(uint32_t));
+    WRITE_FIELD(TES_COM,                &r->ri_tes.COM,                   3*sizeof(double));
+    WRITE_FIELD(TES_COM_DOT,            &r->ri_tes.COM_dot,               3*sizeof(double));
+    WRITE_FIELD(TES_ALLOCATED_N,        &r->ri_tes.allocated_N,           sizeof(uint32_t));
+    
+    if(r->ri_tes.allocated_N)
+    {
+        uint32_t N = r->ri_tes.allocated_N;
+        WRITE_FIELD(TES_PARTICLES_DH,       r->ri_tes.particles_dh,          N*sizeof(struct reb_particle));
+        WRITE_FIELD(TES_MASS,               r->ri_tes.mass,                  N*sizeof(double));
+        WRITE_FIELD(TES_X_DH,               r->ri_tes.X_dh,                  6*N*sizeof(double));
+
+        // Kepler solver vars.
+        WRITE_FIELD(TES_UVARS_SV_SIZE, &r->ri_tes.uVars->stateVectorSize, sizeof(uint32_t));
+        WRITE_FIELD(TES_UVARS_T0, r->ri_tes.uVars->t0, r->ri_tes.uVars->controlVectorSize);
+        WRITE_FIELD(TES_UVARS_TLAST, r->ri_tes.uVars->tLast, r->ri_tes.uVars->controlVectorSize);
+        WRITE_FIELD(TES_UVARS_CSQ, r->ri_tes.uVars->uv_csq, r->ri_tes.uVars->stateVectorSize);
+        WRITE_FIELD(TES_UVARS_CSP, r->ri_tes.uVars->uv_csp, r->ri_tes.uVars->stateVectorSize);
+        WRITE_FIELD(TES_UVARS_CSV, r->ri_tes.uVars->uv_csv, r->ri_tes.uVars->stateVectorSize);
+        WRITE_FIELD(TES_UVARS_Q0, r->ri_tes.uVars->Q0, r->ri_tes.uVars->stateVectorSize);
+        WRITE_FIELD(TES_UVARS_V0, r->ri_tes.uVars->V0, r->ri_tes.uVars->stateVectorSize);
+        WRITE_FIELD(TES_UVARS_P0, r->ri_tes.uVars->P0, r->ri_tes.uVars->stateVectorSize);
+        WRITE_FIELD(TES_UVARS_Q1, r->ri_tes.uVars->Q1, r->ri_tes.uVars->stateVectorSize);
+        WRITE_FIELD(TES_UVARS_V1, r->ri_tes.uVars->V1, r->ri_tes.uVars->stateVectorSize);
+        WRITE_FIELD(TES_UVARS_P1, r->ri_tes.uVars->P1, r->ri_tes.uVars->stateVectorSize);
+        WRITE_FIELD(TES_UVARS_X, r->ri_tes.uVars->X, r->ri_tes.uVars->controlVectorSize);
+        WRITE_FIELD(TES_UVARS_Q0_NORM, r->ri_tes.uVars->Q0_norm, r->ri_tes.uVars->controlVectorSize);
+        WRITE_FIELD(TES_UVARS_BETA, r->ri_tes.uVars->beta, r->ri_tes.uVars->controlVectorSize);
+        WRITE_FIELD(TES_UVARS_ETA, r->ri_tes.uVars->eta, r->ri_tes.uVars->controlVectorSize);
+        WRITE_FIELD(TES_UVARS_ZETA, r->ri_tes.uVars->zeta, r->ri_tes.uVars->controlVectorSize);
+        WRITE_FIELD(TES_UVARS_PERIOD, r->ri_tes.uVars->period, r->ri_tes.uVars->controlVectorSize);
+        WRITE_FIELD(TES_UVARS_XPERIOD, r->ri_tes.uVars->Xperiod, r->ri_tes.uVars->controlVectorSize);
+        WRITE_FIELD(TES_UVARS_STUMPF_C0, r->ri_tes.uVars->C.c0, r->ri_tes.uVars->controlVectorSize);
+        WRITE_FIELD(TES_UVARS_STUMPF_C1, r->ri_tes.uVars->C.c1, r->ri_tes.uVars->controlVectorSize);
+        WRITE_FIELD(TES_UVARS_STUMPF_C2, r->ri_tes.uVars->C.c2, r->ri_tes.uVars->controlVectorSize);
+        WRITE_FIELD(TES_UVARS_STUMPF_C3, r->ri_tes.uVars->C.c3, r->ri_tes.uVars->controlVectorSize);
+        WRITE_FIELD(TES_UVARS_MU, &r->ri_tes.uVars->mu, sizeof(double));
+
+        // Integrator vars
+        WRITE_FIELD(TES_RADAU_DX, r->ri_tes.radau->dX, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_RADAU_XOUT, r->ri_tes.radau->Xout, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_RADAU_RECTI_ARRAY, r->ri_tes.radau->rectifiedArray, sizeof(uint32_t)*r->ri_tes.stateVectorLength);
+        WRITE_FIELD(TES_RADAU_PREDICTORS, r->ri_tes.radau->predictors, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_RADAU_DSTATE0, r->ri_tes.radau->dState0, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_RADAU_DDSTATE0, r->ri_tes.radau->ddState0, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_RADAU_DSTATE, r->ri_tes.radau->dState, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_RADAU_DDSTATE, r->ri_tes.radau->ddState, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_RADAU_CS_DSTATE0, r->ri_tes.radau->cs_dState0, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_RADAU_CS_DDSTATE0, r->ri_tes.radau->cs_ddState0, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_RADAU_CS_DSTATE, r->ri_tes.radau->cs_dState, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_RADAU_CS_DDSTATE, r->ri_tes.radau->cs_ddState, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_RADAU_CS_DX, r->ri_tes.radau->cs_dX, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_RADAU_FCALLS, &r->ri_tes.radau->fCalls, sizeof(uint64_t));
+        WRITE_FIELD(TES_RADAU_RECTIS, &r->ri_tes.radau->rectifications, sizeof(uint64_t));
+        WRITE_FIELD(TES_RADAU_ITERS, &r->ri_tes.radau->convergenceIterations, sizeof(uint32_t));
+        WRITE_FIELD(TES_RADAU_B6, r->ri_tes.radau->b6_store, r->ri_tes.stateVectorSize);
+
+        {
+            uint32_t array_size = r->ri_tes.radau->B->size;
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_B, .size = 7*array_size+sizeof(uint32_t)};
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
+            reb_save_controlVars(r->ri_tes.radau->B, 3*r->allocatedN,bufp,sizep,&allocatedsize);
+        }
+        {
+            uint32_t array_size = r->ri_tes.radau->Blast->size;
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_BLAST, .size = 7*array_size+sizeof(uint32_t)};
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
+            reb_save_controlVars(r->ri_tes.radau->Blast,3*r->allocatedN,bufp,sizep,&allocatedsize);
+        }
+        {
+            uint32_t array_size = r->ri_tes.radau->B_1st->size;
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_B_1ST, .size = 7*array_size+sizeof(uint32_t)};
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
+            reb_save_controlVars(r->ri_tes.radau->B_1st,3*r->allocatedN,bufp,sizep,&allocatedsize);
+        }
+        {
+            uint32_t array_size = r->ri_tes.radau->Blast_1st->size;
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_BLAST_1ST, .size = 7*array_size+sizeof(uint32_t)};
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
+            reb_save_controlVars(r->ri_tes.radau->Blast_1st,3*r->allocatedN,bufp,sizep,&allocatedsize);
+        }
+        {
+            uint32_t array_size = r->ri_tes.radau->cs_B.size;
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_CS_B, .size = 7*array_size+sizeof(uint32_t)};
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
+            reb_save_controlVars(&r->ri_tes.radau->cs_B,3*r->allocatedN,bufp,sizep,&allocatedsize);
+        }
+        {
+            uint32_t array_size = r->ri_tes.radau->cs_B1st.size;
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_CS_B_1ST, .size = 7*array_size+sizeof(uint32_t)};
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
+            reb_save_controlVars(&r->ri_tes.radau->cs_B1st,3*r->allocatedN,bufp,sizep,&allocatedsize);
+        }          
+        {
+            uint32_t array_size = r->ri_tes.radau->G->size;
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_G, .size = 7*array_size+sizeof(uint32_t)};
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
+            reb_save_controlVars(r->ri_tes.radau->G,3*r->allocatedN,bufp,sizep,&allocatedsize);
+        }
+        {
+            uint32_t array_size = r->ri_tes.radau->G_1st->size;
+            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_G_1ST, .size = 7*array_size+sizeof(uint32_t)};
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
+            reb_save_controlVars(r->ri_tes.radau->G_1st,3*r->allocatedN,bufp,sizep,&allocatedsize);
+        }  
+        // force model vars
+        WRITE_FIELD(TES_DHEM_XOSC_STORE, r->ri_tes.rhs->XoscStore, 9*r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_DHEM_XOSC_PRED_STORE, r->ri_tes.rhs->XoscPredStore, 9*r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_DHEM_XOSC_CS_STORE, r->ri_tes.rhs->XoscStore_cs, 9*r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_DHEM_XOSC_DOT_STORE, r->ri_tes.rhs->Xosc_dotStore, 9*r->ri_tes.stateVectorSize);        
+        WRITE_FIELD(TES_DHEM_X, r->ri_tes.rhs->X, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_DHEM_M_INV, r->ri_tes.rhs->m_inv, r->ri_tes.controlVectorSize);
+        WRITE_FIELD(TES_DHEM_M_TOTAL, &r->ri_tes.rhs->mTotal, sizeof(double));
+        WRITE_FIELD(TES_DHEM_RECTI_TIME, r->ri_tes.rhs->rectifyTimeArray, r->ri_tes.controlVectorSize);
+        WRITE_FIELD(TES_DHEM_RECTI_PERIOD, r->ri_tes.rhs->rectificationPeriod, r->ri_tes.controlVectorSize);
+    }
+
     // To output size of binary file, need to calculate it first. 
     r->simulationarchive_size_first = (*sizep)+sizeof(struct reb_binary_field)*2+sizeof(long)+sizeof(struct reb_simulationarchive_blob);
     WRITE_FIELD(SASIZEFIRST,        &r->simulationarchive_size_first,   sizeof(long));

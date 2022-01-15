@@ -35,8 +35,6 @@ void Simulation_Init(struct reb_simulation* r, uint32_t z_n)
   // Ensure we are clean for each integration.
   memset(r->ri_tes.mass, 0, r->ri_tes.controlVectorSize);
   memset(r->ri_tes.X_dh, 0, r->ri_tes.stateVectorSize);
-
-  r->ri_tes.termination_check_enable = 0;
 }
 
 

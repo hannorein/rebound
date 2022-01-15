@@ -424,7 +424,6 @@ void dhem_Init(struct reb_simulation* r, double z_rectificationPeriodDefault, ui
   dhem->XoscArr = (double **)malloc(z_stagesPerStep*sizeof(double*));
   dhem->Xosc_dotStore = (double*)malloc(z_stagesPerStep*r->ri_tes.stateVectorSize);
   dhem->Xosc_dotArr = (double **)malloc(z_stagesPerStep*sizeof(double*));
-  dhem->Vosc = (double*)malloc(r->ri_tes.stateVectorSize / 2);
 
   // Create space to allow for all of the osculating orbits for a step to be stored.
   dhem->XoscPredStore = (double*)malloc(z_stagesPerStep*r->ri_tes.stateVectorSize);
@@ -444,7 +443,6 @@ void dhem_Init(struct reb_simulation* r, double z_rectificationPeriodDefault, ui
   memset(dhem->XoscArr, 0, z_stagesPerStep*sizeof(double *));
   memset(dhem->Xosc_dotStore, 0, z_stagesPerStep*r->ri_tes.stateVectorSize);
   memset(dhem->Xosc_dotArr, 0, z_stagesPerStep*sizeof(double *));
-  memset(dhem->Vosc, 0, r->ri_tes.stateVectorSize / 2);
 
   memset(dhem->XoscPredStore, 0, z_stagesPerStep*r->ri_tes.stateVectorSize);
   memset(dhem->XoscPredArr, 0, z_stagesPerStep*sizeof(double *));

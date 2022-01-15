@@ -69,6 +69,8 @@ typedef struct RADAU
   controlVars * Blast;
   controlVars * B_1st;
   controlVars * Blast_1st; 
+  controlVars * G;
+  controlVars * G_1st;
   // Variables for performance metrics
   uint64_t fCalls;
   uint64_t rectifications;

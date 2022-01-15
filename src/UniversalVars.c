@@ -235,7 +235,6 @@ void ApplyCorrectorToOsculatingOrbitCalculation(struct reb_simulation* r, double
         }
         RebasisOsculatingOrbits_Momenta(r, Qout, Pout, t, i);  
     }
-  CalculateClassicalOrbitalElements(r); // Remove this (All classical elements can be removed actually)
 }
 
 /*
@@ -287,8 +286,6 @@ void RebasisOsculatingOrbits_Momenta(struct reb_simulation* r, double * z_Q, dou
   p_uVars->Xperiod[i] = 2.0*PI / sqrt(beta);
   p_uVars->X[i] = 0.0;
   p_uVars->dt[i] = 0;
-
-  CalculateClassicalOrbitalElementsSingle(r, i);
 }
 
 
@@ -369,41 +366,36 @@ static void C_Stumpff(double * cs, double z)
 static void CalculateClassicalOrbitalElementsSingle(struct reb_simulation* r, uint32_t i)
 {
   UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
-  if(r->ri_tes.termination_check_enable)
-  {
-    // Semimajor axis
-    p_uVars->a[i] = p_uVars->mu / p_uVars->beta[i];
 
-    // Angular momentum
-    CROSS(p_uVars->h, p_uVars->Q0, p_uVars->V0, i);
-    p_uVars->h_norm[i] = NORM(p_uVars->h, i);
+  // Semimajor axis
+  p_uVars->a[i] = p_uVars->mu / p_uVars->beta[i];
 
-    // Eccentricity
-    double eccVec[3] = {0,0,0};
-    CROSS_LOCAL(eccVec, &p_uVars->V0[3*i], &p_uVars->h[3*i]);
-    eccVec[0] /= p_uVars->mu;
-    eccVec[1] /= p_uVars->mu;
-    eccVec[2] /= p_uVars->mu;
-    double Q_norm = NORM(p_uVars->Q0, i);
-    eccVec[0] -= p_uVars->Q0[3*i+0] / Q_norm;
-    eccVec[1] -= p_uVars->Q0[3*i+1] / Q_norm;
-    eccVec[2] -= p_uVars->Q0[3*i+2] / Q_norm;
-    p_uVars->e[i] = NORM(eccVec, 0);
+  // Angular momentum
+  CROSS(p_uVars->h, p_uVars->Q0, p_uVars->V0, i);
+  p_uVars->h_norm[i] = NORM(p_uVars->h, i);
 
-    // Apogee and perigee.
-    p_uVars->peri[i] = p_uVars->a[i]*(1-p_uVars->e[i]);
-    p_uVars->apo[i] = p_uVars->a[i]*(1+p_uVars->e[i]);
-  }
+  // Eccentricity
+  double eccVec[3] = {0,0,0};
+  CROSS_LOCAL(eccVec, &p_uVars->V0[3*i], &p_uVars->h[3*i]);
+  eccVec[0] /= p_uVars->mu;
+  eccVec[1] /= p_uVars->mu;
+  eccVec[2] /= p_uVars->mu;
+  double Q_norm = NORM(p_uVars->Q0, i);
+  eccVec[0] -= p_uVars->Q0[3*i+0] / Q_norm;
+  eccVec[1] -= p_uVars->Q0[3*i+1] / Q_norm;
+  eccVec[2] -= p_uVars->Q0[3*i+2] / Q_norm;
+  p_uVars->e[i] = NORM(eccVec, 0);
+
+  // Apogee and perigee.
+  p_uVars->peri[i] = p_uVars->a[i]*(1-p_uVars->e[i]);
+  p_uVars->apo[i] = p_uVars->a[i]*(1+p_uVars->e[i]);
 }
 
 void CalculateClassicalOrbitalElements(struct reb_simulation* r)
 {
-  if(r->ri_tes.termination_check_enable)
+  for(uint32_t i = 1; i < r->N; i++)
   {
-    for(uint32_t i = 1; i < r->N; i++)
-    {
-      CalculateClassicalOrbitalElementsSingle(r, i);
-    }
+    CalculateClassicalOrbitalElementsSingle(r, i);
   }
 }
 
@@ -476,12 +468,12 @@ void UniversalVars_Init(struct reb_simulation* const r)
   memset(p_uVars->dt, 0, p_uVars->controlVectorSize);
 
   // CS vars
-  p_uVars->uv_csq = (double *)malloc(3 * N * sizeof(double));
-  p_uVars->uv_csv = (double *)malloc(3 * N * sizeof(double));
-  p_uVars->uv_csp = (double *)malloc(3 * N * sizeof(double));
-  memset(p_uVars->uv_csq, 0, 3 * N * sizeof(double));
-  memset(p_uVars->uv_csv, 0, 3 * N * sizeof(double));
-  memset(p_uVars->uv_csp, 0, 3 * N * sizeof(double));  
+  p_uVars->uv_csq = (double *)malloc(p_uVars->stateVectorSize);
+  p_uVars->uv_csv = (double *)malloc(p_uVars->stateVectorSize);
+  p_uVars->uv_csp = (double *)malloc(p_uVars->stateVectorSize);
+  memset(p_uVars->uv_csq, 0, p_uVars->stateVectorSize);
+  memset(p_uVars->uv_csv, 0, p_uVars->stateVectorSize);
+  memset(p_uVars->uv_csp, 0, p_uVars->stateVectorSize);  
 }
 
 

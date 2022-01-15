@@ -18,19 +18,13 @@
 #define _UVARS_H_
 
 #include "rebound.h"
-// Build switch for using long double implementation of universal variables.
-#ifdef USE_LONG_DOUBLES
-  #define datatype_t long double
-#else
-  #define datatype_t double
-#endif
 
 typedef struct _StumpfCoefficients
 {
-  datatype_t * __restrict__ c0;
-  datatype_t * __restrict__ c1;
-  datatype_t * __restrict__ c2;
-  datatype_t * __restrict__ c3;
+  double * __restrict__ c0;
+  double * __restrict__ c1;
+  double * __restrict__ c2;
+  double * __restrict__ c3;
 }StumpfCoefficients;
 
 typedef struct UNIVERSAL_VARS
@@ -40,28 +34,26 @@ typedef struct UNIVERSAL_VARS
   double * uv_csq;
   double * uv_csp;
   double * uv_csv;  
-  datatype_t * dt;
-  datatype_t * __restrict__ Q0;
-  datatype_t * __restrict__ V0;
-  datatype_t * __restrict__ P0;
-  datatype_t * __restrict__ Q1;
-  datatype_t * __restrict__ V1;
-  datatype_t * __restrict__ P1;  
-  datatype_t * __restrict__ X;
-  datatype_t * __restrict__ Q0_norm;
-  datatype_t * __restrict__ beta;
-  datatype_t * __restrict__ eta;
-  datatype_t * __restrict__ zeta;
-  datatype_t * __restrict__ period;
-  datatype_t * __restrict__ Xperiod;
+  double * dt;
+  double * __restrict__ Q0;
+  double * __restrict__ V0;
+  double * __restrict__ P0;
+  double * __restrict__ Q1;
+  double * __restrict__ V1;
+  double * __restrict__ P1;  
+  double * __restrict__ X;
+  double * __restrict__ Q0_norm;
+  double * __restrict__ beta;
+  double * __restrict__ eta;
+  double * __restrict__ zeta;
+  double * __restrict__ period;
+  double * __restrict__ Xperiod;
   uint32_t stateVectorSize;
-  uint32_t stateVectorSize_l;
   uint32_t controlVectorSize;
-  uint32_t controlVectorSize_l;
 
   StumpfCoefficients C;
 
-  datatype_t mu;  /// G*mCentral
+  double mu;  /// G*mCentral
 
   // Variables for storing classical orbital elements.
   double * e;

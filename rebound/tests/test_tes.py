@@ -7,19 +7,32 @@ import copy
 import os
 import sys
 import pathlib
-sys.path.append('/home/pete/Desktop/TES_V1/experiment_manager/experiments/')
-sys.path.append('/home/pete/Desktop/TES_V1/experiment_manager/drivers/')
 from matplotlib import pyplot as plt
-import initial_conditions as init
-import experiment_manager as Exp
 import numpy as np
-import tes_driver
 import time
+
+def GetApophis1979():
+    return (np.array([[ 2.0461278699861521e-06,  2.2370897738299570e-06,
+             -1.6661854822847768e-10],
+            [-6.8124977762585481e-01, -7.4482975052825995e-01,
+              5.5474953737657817e-05],
+            [ 7.5476934423654385e-01, -1.8985795987726539e-03,
+              1.8667813859384475e-02]]),
+     np.array([[-3.7290167155085508e-08,  3.5092072454320220e-08,
+             -2.6790975184377306e-12],
+            [ 1.2415606304314073e-02, -1.1683759801433082e-02,
+              8.9199439363293445e-07],
+            [ 1.7223306120259661e-03,  2.1389341162818411e-02,
+             -1.0892481215440922e-03]]),
+     np.array([2.959122082855911e-04, 8.887697821383033e-10,
+            4.016599676151095e-24]),
+     365.24141698304345,
+     False)    
 
 class TestIntegratorTES(unittest.TestCase):
     def test_integration_output_particles(self):  
         orbits = 100
-        problem = init.GetApophis1979
+        problem = GetApophis1979
         output_samples=2500
         samples = 1
         tol=1e-6
@@ -50,11 +63,11 @@ class TestIntegratorTES(unittest.TestCase):
         de = np.abs((e1-e0)/e0)
 
         data_tes = np.array([[ 0.0000000000000000e+00,  0.0000000000000000e+00,
-             0.0000000000000000e+00],
-           [-9.9604746697684021e-01,  3.5311915613020404e-03,
+              0.0000000000000000e+00],
+            [-9.9604746697684021e-01,  3.5311915613020404e-03,
             -1.2054180564475472e-06],
-           [-8.1089946547081804e-01, -5.4094730893500276e-01,
-             6.8972157890442951e-03]])
+            [-8.1089946547081804e-01, -5.4094730893500276e-01,
+              6.8972157890442951e-03]])
     
         N=3
         tes_reb_pos = np.zeros([N,3])
@@ -71,7 +84,7 @@ class TestIntegratorTES(unittest.TestCase):
         
     def test_timing_with_ias15(self):    
         orbits = 100
-        problem = init.GetApophis1979
+        problem = GetApophis1979
         output_samples=1
         samples = 1
         tol=1e-6
@@ -119,7 +132,7 @@ class TestIntegratorTES(unittest.TestCase):
 
     def test_piecewise_integration(self):  
         orbits = 100
-        problem = init.GetApophis1979
+        problem = GetApophis1979
         output_samples=2500
         samples = 1
         tol=1e-6
@@ -149,11 +162,11 @@ class TestIntegratorTES(unittest.TestCase):
         de = np.abs((e1-e0)/e0)
 
         data_tes = np.array([[ 0.0000000000000000e+00,  0.0000000000000000e+00,
-             0.0000000000000000e+00],
-           [-9.9604746697684021e-01,  3.5311915613020404e-03,
+              0.0000000000000000e+00],
+            [-9.9604746697684021e-01,  3.5311915613020404e-03,
             -1.2054180564475472e-06],
-           [-8.1089946547081804e-01, -5.4094730893500276e-01,
-             6.8972157890442951e-03]])
+            [-8.1089946547081804e-01, -5.4094730893500276e-01,
+              6.8972157890442951e-03]])
     
         N=3
         tes_reb_pos = np.zeros([N,3])
@@ -169,7 +182,7 @@ class TestIntegratorTES(unittest.TestCase):
         
     def test_add_remove_particle(self):  
         orbits = 1
-        problem = init.GetApophis1979
+        problem = GetApophis1979
         output_samples=2500
         samples = 1
         tol=1e-6
@@ -244,10 +257,56 @@ class TestIntegratorTES(unittest.TestCase):
         de = np.abs((e1-e0)/e0)        
         self.assertLess(de, 1e-15)        
         
+        
+    def test_simulation_archive_bitwise(self):                 
+        def create_sim():
+            sim = rebound.Simulation()
+            sim.G = 1.4881806877180788e-34
+            problem = GetApophis1979
+            Q,V,mass,period,_ = problem()
+            mass /= sim.G
+            
+            for i in range(3):
+                sim.add(m=mass[i], x=Q[i,0], y=Q[i,1], z=Q[i,2], vx=V[i,0], vy=V[i,1], vz=V[i,2])
+            
+            sim.move_to_com()
+            sim.dt = period/100
+            sim.integrator = "tes"  
+            return sim, period
+        
+        # sim0 is the ground truth
+        sim0, period = create_sim()
+        sim0.integrate(100*period, exact_finish_time=1)
+        
+        try:
+            os.remove("test_simulation_archive_bitwise.archive")        
+        except:
+            pass
+        
+        # Perform half an integration and save archive
+        sim1,_ = create_sim()
+        sim1.integrate(50*period, exact_finish_time=0)
+        sim1.simulationarchive_snapshot("test_simulation_archive_bitwise.archive")
+        
+        # Load archive and do the second half of the integration
+        sim2 = rebound.SimulationArchive("test_simulation_archive_bitwise.archive")[-1]
+        sim2.integrate(100*period, exact_finish_time=1)
+        
+        self.assertEqual(sim0.particles[1].x, sim2.particles[1].x)
+        self.assertEqual(sim0.particles[1].y, sim2.particles[1].y)
+        self.assertEqual(sim0.particles[1].z, sim2.particles[1].z)
+        
+        try:
+            os.remove("test_simulation_archive_bitwise.archive")        
+        except:
+            pass
+            
+        
+
+    
 if __name__ == "__main__":
     unittest.main()
 
-    
     
 
     

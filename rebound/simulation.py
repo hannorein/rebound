@@ -2069,7 +2069,6 @@ class reb_simulation_integrator_tes(Structure):
     ("_svSize", c_uint32),
     ("_cvLen", c_uint32),
     ("_cvSize", c_uint32),
-    ("_calcElems", c_uint32),
     ("_mass", POINTER(c_double)),
     ("_X_dh", POINTER(c_double)),
     ("_Q_dh", POINTER(c_double)),

@@ -25,7 +25,6 @@ typedef struct DHEM
   double * Xosc;
   double * Qosc;
   double * Posc;
-  double * Vosc;
   // Osculating orbits for all stages within a step.
   double * XoscStore;
   double ** XoscArr;

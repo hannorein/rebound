@@ -62,7 +62,7 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         r->ri_tes.COM_dot[0] = r->ri_tes.particles_dh[0].vx;
         r->ri_tes.COM_dot[1] = r->ri_tes.particles_dh[0].vy;
         r->ri_tes.COM_dot[2] = r->ri_tes.particles_dh[0].vz;        
-
+        
         for(uint32_t i=1;i<N;i++) 
         {
             r->ri_tes.mass[i] =     r->ri_tes.particles_dh[i].m;
@@ -135,4 +135,13 @@ void reb_integrator_tes_reset(struct reb_simulation* r){
     // dhem_Free();
     // Radau_Free();
     // Simulation_Free();    
+}
+
+void reb_integrator_tes_allocate_memory(struct reb_simulation* r)
+{
+    Simulation_Init(r, r->N);
+    r->ri_tes.particles_dh = (struct particles*)malloc(sizeof(struct reb_particle)*r->N);
+    UniversalVars_Init(r);
+    dhem_Init(r, r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit, 9);
+    Radau_Init(r);          
 }

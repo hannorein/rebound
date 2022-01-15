@@ -24,7 +24,7 @@
 #include "dhem.h"
 #include "UniversalVars.h"
 
-static double hArr[9] = {0.0, 0.0562625605369221464656521910318, 0.180240691736892364987579942780, 0.352624717113169637373907769648, 0.547153626330555383001448554766, 0.734210177215410531523210605558, 0.885320946839095768090359771030, 0.977520613561287501891174488626, 1.0};
+static const double hArr[9] = {0.0, 0.0562625605369221464656521910318, 0.180240691736892364987579942780, 0.352624717113169637373907769648, 0.547153626330555383001448554766, 0.734210177215410531523210605558, 0.885320946839095768090359771030, 0.977520613561287501891174488626, 1.0};
 static const double rr_inv[28] = {17.7738089140780008407526624, 5.5481367185372165056928203, 8.0659386483818866885371223, 2.8358760786444386782520107, 3.3742499769626352599420361, 5.8010015592640614823286804, 1.8276402675175978297946079, 2.0371118353585847827949161, 2.7254422118082262837742729, 5.1406241058109342286363203, 1.3620078160624694969370006, 1.4750402175604115479218482, 1.8051535801402512604391149, 2.6206449263870350811541814, 5.3459768998711075141214895, 1.1295338753367899027322862, 1.2061876660584456166252037, 1.4182782637347391537713785, 1.8772424961868100972169920, 2.9571160172904557478071039, 6.6176620137024244874471300, 1.0229963298234867458386119, 1.0854721939386423840467243, 1.2542646222818777659905423, 1.6002665494908162609916716, 2.3235983002196942228325344, 4.1099757783445590862385765, 10.8460261902368446847064289};
 static const double c[21] = {-0.0562625605369221464656522, 0.0101408028300636299864818, -0.2365032522738145114532321, -0.0035758977292516175949345, 0.0935376952594620658957485, -0.5891279693869841488271399, 0.0019565654099472210769006, -0.0547553868890686864408084, 0.4158812000823068616886219, -1.1362815957175395318285885, -0.0014365302363708915424460, 0.0421585277212687077072973, -0.3600995965020568122897665, 1.2501507118406910258505441, -1.8704917729329500633517991, 0.0012717903090268677492943, -0.0387603579159067703699046, 0.3609622434528459832253398, -1.4668842084004269643701553, 2.9061362593084293014237913, -2.7558127197720458314421588};
 static const double d[21] = {0.0562625605369221464656522, 0.0031654757181708292499905, 0.2365032522738145114532321, 0.0001780977692217433881125, 0.0457929855060279188954539, 0.5891279693869841488271399, 0.0000100202365223291272096, 0.0084318571535257015445000, 0.2535340690545692665214616, 1.1362815957175395318285885, 0.0000005637641639318207610, 0.0015297840025004658189490, 0.0978342365324440053653648, 0.8752546646840910912297246, 1.8704917729329500633517991, 0.0000000317188154017613665, 0.0002762930909826476593130, 0.0360285539837364596003871, 0.5767330002770787313544596, 2.2485887607691597933926895, 2.7558127197720458314421588};
@@ -46,27 +46,15 @@ static const double d[21] = {0.0562625605369221464656522, 0.00316547571817082924
 #define ADD_CS_VAR 1
 
 // Integration step variables
-controlVars G;
-controlVars B;
-controlVars Blast;
-
-controlVars B0;
-controlVars Blast0;
-controlVars Blast_1st;
-
-controlVars * bActive;
-
-controlVars G_1st;
-controlVars B_1st;
-
-controlVars G_full;
-controlVars B_full;
-controlVars Blast_full;
-
+static controlVars G;
+static controlVars B;
+static controlVars Blast;
+static controlVars Blast_1st;
+static controlVars G_1st;
+static controlVars B_1st;
 
 
 static inline void add_cs(double* out, double* cs, double inp);
-static void ControlVars_Copy(controlVars * out, controlVars * in);
 static void CalculateGFromBInternal(controlVars * z_G, controlVars * z_B, uint32_t z_start, uint32_t z_end);
 
 
@@ -111,7 +99,7 @@ void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, double 
   ControlVars_Clear(z_csB);
   ControlVars_Clear(&radau->cs_B1st);
 
-  uint32_t n = 1;;
+  uint32_t n = 1;
   for(n = 1; n < MAX_ITERATIONS; n++)
   {
     z_iterations[0] = n + 1;
@@ -120,6 +108,8 @@ void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, double 
     {
       CalculatePredictors(h, hArr[i], radau->dX, radau->dState0, radau->ddState0, &B,
                           radau->predictors, radau->cs_dX, 3, r->ri_tes.stateVectorLength/2, DONT_ADD_CS_VAR);
+
+      // printf("\n%.16e %.16e %.16e %.16e %.16e %.16e", radau->predictors[0], radau->predictors[1], radau->predictors[2], radau->predictors[3], radau->predictors[4], radau->predictors[5]);
 
       CalculatePredictors_1stOrder(h, hArr[i], radau->dX, radau->dState0, &B_1st, radau->predictors, 
                                   radau->cs_dX, (int)r->ri_tes.stateVectorLength/2, r->ri_tes.stateVectorLength, DONT_ADD_CS_VAR);
@@ -317,7 +307,6 @@ void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, double 
                 break;
         case 7:  
                 radau->acc_ptr = radau->ddState;
-                bActive = &B;
 
                 #pragma GCC ivdep
                 for(uint32_t j = n3+3; j < 2*n3; j++)
@@ -420,6 +409,7 @@ void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, double 
     if(((errMax < 1E-15 ) && n >= MIN_ITERATIONS))
     {
       z_iterations[0] = n;
+      // printf("\nIterations: %u", n);
       break;
     }
   }
@@ -451,7 +441,7 @@ double ReturnIAS15StepError(struct reb_simulation* r, double h, double t)
   {
       for(uint32_t j = 0; j < 3; j++)
       {
-        double b6 = fabs(bActive->p6[3*i+j]);
+        double b6 = fabs(B.p6[3*i+j]);
         double acc = fabs(radau->acc_ptr[3*i+j]); 
 
         if(isnormal(b6))
@@ -466,6 +456,7 @@ double ReturnIAS15StepError(struct reb_simulation* r, double h, double t)
       }
   }  
   errMax = b6Max/accMax;
+  // printf("\n%.16e %.16e", b6Max, accMax);
 
   return errMax;
 }
@@ -646,26 +637,25 @@ void RadauStep15_Init(struct reb_simulation* r)
 {
     RADAU * radau = r->ri_tes.radau;
     ControlVars_Init(&G, r->ri_tes.stateVectorSize);
+    radau->G = &G;
+    
     ControlVars_Init(&B, r->ri_tes.stateVectorSize);
-    ControlVars_Init(&radau->cs_B, r->ri_tes.stateVectorSize);
-    ControlVars_Init(&Blast, r->ri_tes.stateVectorSize);
-    ControlVars_Init(&Blast_1st, r->ri_tes.stateVectorSize);
-
-    ControlVars_Init(&B0, r->ri_tes.stateVectorSize);
-    ControlVars_Init(&Blast0, r->ri_tes.stateVectorSize);
-    ControlVars_Init(&G_full, r->ri_tes.stateVectorSize);
-    ControlVars_Init(&B_full, r->ri_tes.stateVectorSize);
-    ControlVars_Init(&Blast_full, r->ri_tes.stateVectorSize);
-
     radau->B = &B;
+    
+    ControlVars_Init(&Blast, r->ri_tes.stateVectorSize);
     radau->Blast = &Blast;
-
-    radau->B_1st = &B_1st;
+    
+    ControlVars_Init(&Blast_1st, r->ri_tes.stateVectorSize);
     radau->Blast_1st = &Blast_1st;
 
     ControlVars_Init(&G_1st, r->ri_tes.stateVectorSize);
+    radau->G_1st = &G_1st;
+
     ControlVars_Init(&B_1st, r->ri_tes.stateVectorSize);
+    radau->B_1st = &B_1st;
+    
     ControlVars_Init(&radau->cs_B1st, r->ri_tes.stateVectorSize);
+    ControlVars_Init(&radau->cs_B, r->ri_tes.stateVectorSize);
 
     radau->dState0 = (double *)malloc(r->ri_tes.stateVectorSize);
     radau->ddState0 = (double *)malloc(r->ri_tes.stateVectorSize);
@@ -702,8 +692,6 @@ void RadauStep15_Free(struct reb_simulation* r)
   ControlVars_Free(&B);
   ControlVars_Free(&radau->cs_B);
   ControlVars_Free(&Blast);
-  ControlVars_Free(&B0);
-  ControlVars_Free(&Blast0);
   free(radau->dState0);
   free(radau->ddState0);
   free(radau->dState);
@@ -715,19 +703,6 @@ void RadauStep15_Free(struct reb_simulation* r)
   // free(radau->dState0_hp);
 }
 
-static void ControlVars_Copy(controlVars * out, controlVars * in)
-{
-  if(out->size == in->size)
-  {
-    memcpy(out->p0, in->p0, out->size);
-    memcpy(out->p1, in->p1, out->size);
-    memcpy(out->p2, in->p2, out->size);
-    memcpy(out->p3, in->p3, out->size);
-    memcpy(out->p4, in->p4, out->size);
-    memcpy(out->p5, in->p5, out->size);
-    memcpy(out->p6, in->p6, out->size);
-  }
-}
 
 void ControlVars_Init(controlVars * var, uint32_t size)
 {
@@ -772,7 +747,7 @@ void ControlVars_Clear(controlVars * var)
     var->p5[i] = 0.0;
     var->p6[i] = 0.0;
   }
-  var->size = 0;
+  //var->size = 0;
 }
 
 
