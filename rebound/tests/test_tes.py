@@ -300,6 +300,49 @@ class TestIntegratorTES(unittest.TestCase):
             os.remove("test_simulation_archive_bitwise.archive")        
         except:
             pass
+        
+    def test_add_particle_then_save(self):                 
+        def create_sim():
+            sim = rebound.Simulation()
+            sim.G = 1.4881806877180788e-34
+            problem = GetApophis1979
+            Q,V,mass,period,_ = problem()
+            mass /= sim.G
+            
+            for i in range(3):
+                sim.add(m=mass[i], x=Q[i,0], y=Q[i,1], z=Q[i,2], vx=V[i,0], vy=V[i,1], vz=V[i,2])
+            
+            sim.move_to_com()
+            sim.dt = period/100
+            sim.integrator = "tes"  
+            return sim, period
+        
+        # sim0 is the ground truth
+        sim0, period = create_sim()
+        sim0.integrate(100*period, exact_finish_time=1)
+        
+        try:
+            os.remove("test_simulation_archive_bitwise.archive")        
+        except:
+            pass
+        
+        # Perform half an integration and save archive
+        sim1,_ = create_sim()
+        sim1.integrate(50*period, exact_finish_time=0)
+        sim1.add(m=1, x=1.0, y=1.1, z=1.2, vx=0.0, vy=1.0, vz=0.0)
+        sim1.simulationarchive_snapshot("test_simulation_archive_bitwise.archive")
+
+        # Load archive and check for extra particle
+        sim2 = rebound.SimulationArchive("test_simulation_archive_bitwise.archive")[-1]
+        
+        self.assertEqual(sim2.particles[-1].x, 1.0)
+        self.assertEqual(sim2.particles[-1].y, 1.1)
+        self.assertEqual(sim2.particles[-1].z, 1.2)
+        
+        try:
+            os.remove("test_simulation_archive_bitwise.archive")        
+        except:
+            pass        
             
         
 
