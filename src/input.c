@@ -386,7 +386,10 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(TES_CV_LEN,             &r->ri_tes.controlVectorLength);
         CASE(TES_CV_SIZE,            &r->ri_tes.controlVectorSize);
         CASE(TES_COM,                &r->ri_tes.COM);
-        CASE(TES_COM_DOT,            &r->ri_tes.COM_dot);               
+        CASE(TES_COM_DOT,            &r->ri_tes.COM_dot);   
+        CASE(TES_MASS_STAR_LAST,     &r->ri_tes.mStar_last);   
+
+        
         case REB_BINARY_FIELD_TYPE_TES_ALLOCATED_N:
             {
                 reb_fread(&r->ri_tes.allocated_N, field.size, 1, inf, mem_stream);

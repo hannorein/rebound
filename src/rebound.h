@@ -385,6 +385,8 @@ struct reb_simulation_integrator_tes {
     DHEM * rhs;						/// Pointer to the DHEM rhs
     RADAU * radau;  				/// Pointer to our integrator
     void (*allocate_tes)(struct reb_simulation* r);     // Function to allocate memory for TES when loading data from sim archive.
+
+    double mStar_last;              /// Mass of the star last step.
 };
 
 enum REB_EOS_TYPE {
@@ -592,6 +594,7 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_TES_X_DH = 311,
     REB_BINARY_FIELD_TYPE_TES_COM = 312,
     REB_BINARY_FIELD_TYPE_TES_COM_DOT = 313,
+    REB_BINARY_FIELD_TYPE_TES_MASS_STAR_LAST = 314,
 
     REB_BINARY_FIELD_TYPE_TES_UVARS_SV_SIZE = 320,
     REB_BINARY_FIELD_TYPE_TES_UVARS_CV_SIZE = 321,

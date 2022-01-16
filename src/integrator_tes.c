@@ -99,8 +99,10 @@ void reb_integrator_tes_part1(struct reb_simulation* r){} // unused
 void reb_integrator_tes_part2(struct reb_simulation* r){
     uint32_t N = r->N;
 
-    if(r->ri_tes.allocated_N != N)
+    // If the number of bodies or the mass of the star has changed then do a "hard" reset.
+    if(r->ri_tes.allocated_N != N || r->ri_tes.mStar_last != r->particles[0].m)
     {
+        r->ri_tes.mStar_last = r->particles[0].m;
         r->ri_tes.allocated_N = N;
         struct reb_particle* const particles = r->particles;
         
