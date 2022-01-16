@@ -65,12 +65,12 @@ typedef struct RADAU
   double * cs_dq;
   double * cs_dp;
   // Integrator coefficients.
-  controlVars * B;
-  controlVars * Blast;
-  controlVars * B_1st;
-  controlVars * Blast_1st; 
-  controlVars * G;
-  controlVars * G_1st;
+  controlVars G;
+  controlVars B;
+  controlVars Blast;
+  controlVars Blast_1st;
+  controlVars G_1st;
+  controlVars B_1st;  
   // Variables for performance metrics
   uint64_t fCalls;
   uint64_t rectifications;

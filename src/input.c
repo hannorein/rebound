@@ -443,14 +443,14 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(TES_RADAU_RECTIS, &r->ri_tes.radau->rectifications);
         CASE(TES_RADAU_ITERS, &r->ri_tes.radau->convergenceIterations);
         CASE(TES_RADAU_B6, r->ri_tes.radau->b6_store);
-        CASE_CONTROL_VARS(TES_RADAU_B, r->ri_tes.radau->B);
-        CASE_CONTROL_VARS(TES_RADAU_BLAST, r->ri_tes.radau->Blast);
-        CASE_CONTROL_VARS(TES_RADAU_B_1ST, r->ri_tes.radau->B_1st);
-        CASE_CONTROL_VARS(TES_RADAU_BLAST_1ST, r->ri_tes.radau->Blast_1st);
+        CASE_CONTROL_VARS(TES_RADAU_B, (&(r->ri_tes.radau->B)));
+        CASE_CONTROL_VARS(TES_RADAU_BLAST, (&(r->ri_tes.radau->Blast)));
+        CASE_CONTROL_VARS(TES_RADAU_B_1ST, (&(r->ri_tes.radau->B_1st)));
+        CASE_CONTROL_VARS(TES_RADAU_BLAST_1ST, (&(r->ri_tes.radau->Blast_1st)));
         CASE_CONTROL_VARS(TES_RADAU_CS_B, (&(r->ri_tes.radau->cs_B)));
         CASE_CONTROL_VARS(TES_RADAU_CS_B_1ST, (&(r->ri_tes.radau->cs_B1st)));
-        CASE_CONTROL_VARS(TES_RADAU_G, r->ri_tes.radau->G);
-        CASE_CONTROL_VARS(TES_RADAU_G_1ST, r->ri_tes.radau->G_1st);
+        CASE_CONTROL_VARS(TES_RADAU_G, (&(r->ri_tes.radau->G)));
+        CASE_CONTROL_VARS(TES_RADAU_G_1ST, (&(r->ri_tes.radau->G_1st)));
 
         // TES force model vars
         CASE(TES_DHEM_XOSC_STORE, r->ri_tes.rhs->XoscStore);

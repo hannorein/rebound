@@ -46,12 +46,6 @@ static const double d[21] = {0.0562625605369221464656522, 0.00316547571817082924
 #define ADD_CS_VAR 1
 
 // Integration step variables
-static controlVars G;
-static controlVars B;
-static controlVars Blast;
-static controlVars Blast_1st;
-static controlVars G_1st;
-static controlVars B_1st;
 
 
 static inline void add_cs(double* out, double* cs, double inp);
@@ -89,6 +83,12 @@ void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, double 
   double errMax = 0;
   controlVars * z_csB = &radau->cs_B;
   const uint32_t n3 = 3*r->N;
+  controlVars * G = &r->ri_tes.radau->G;
+  controlVars * B = &r->ri_tes.radau->B;
+  controlVars * Blast = &r->ri_tes.radau->Blast;
+  controlVars * Blast_1st = &r->ri_tes.radau->Blast_1st;
+  controlVars * G_1st = &r->ri_tes.radau->G_1st;
+  controlVars * B_1st = &r->ri_tes.radau->B_1st;
 
   dhem_rhs_wrapped(r, radau->dQ, radau->dP, radau->dState0, &radau->dState0[3*r->N],
              radau->ddState0, &radau->ddState0[3*r->N], 0, radau->cs_dState0, radau->cs_ddState0);
@@ -106,14 +106,10 @@ void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, double 
 
     for(uint32_t i = 1; i <= stages; i++)
     {
-      CalculatePredictors(h, hArr[i], radau->dX, radau->dState0, radau->ddState0, &B,
+      CalculatePredictors(h, hArr[i], radau->dX, radau->dState0, radau->ddState0, B,
                           radau->predictors, radau->cs_dX, 3, r->ri_tes.stateVectorLength/2, DONT_ADD_CS_VAR);
-
-      // printf("\n%.16e %.16e %.16e %.16e %.16e %.16e", radau->predictors[0], radau->predictors[1], radau->predictors[2], radau->predictors[3], radau->predictors[4], radau->predictors[5]);
-
-      CalculatePredictors_1stOrder(h, hArr[i], radau->dX, radau->dState0, &B_1st, radau->predictors, 
+      CalculatePredictors_1stOrder(h, hArr[i], radau->dX, radau->dState0, B_1st, radau->predictors, 
                                   radau->cs_dX, (int)r->ri_tes.stateVectorLength/2, r->ri_tes.stateVectorLength, DONT_ADD_CS_VAR);
-
 
       dhem_rhs_wrapped(r, radau->predictors, &radau->predictors[3*r->N], radau->dState, &radau->dState[3*r->N],
            radau->ddState, &radau->ddState[3*r->N], i,
@@ -127,109 +123,108 @@ void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, double 
                 #pragma GCC ivdep
                 for(uint32_t i = 3; i < n3; i++)
                 {
-                  double tmp = G.p0[i];
+                  double tmp = G->p0[i];
                   double Gi = radau->ddState[i]-radau->ddState0[i];                  
-                  G.p0[i] = Gi*rr_inv[0];
-
-                  add_cs(&(B.p0[i]), &(radau->cs_B.p0[i]), G.p0[i]-tmp); 
+                  G->p0[i] = Gi*rr_inv[0];
+                  add_cs(&(B->p0[i]), &(radau->cs_B.p0[i]), G->p0[i]-tmp); 
                 }                
 
                 #pragma GCC ivdep
                 for(uint32_t j = n3+3; j < 2*n3; j++)
                 {
-                  double tmp2 = G_1st.p0[j];
+                  double tmp2 = G_1st->p0[j];
                   double Gi2 = radau->dState[j]-radau->dState0[j];
-                  G_1st.p0[j] = Gi2*rr_inv[0];
-                  add_cs(&(B_1st.p0[j]), &(radau->cs_B1st.p0[j]), G_1st.p0[j]-tmp2);
+                  G_1st->p0[j] = Gi2*rr_inv[0];
+                  add_cs(&(B_1st->p0[j]), &(radau->cs_B1st.p0[j]), G_1st->p0[j]-tmp2);
                 }                       
                 break;
         case 2: 
                 #pragma GCC ivdep
                 for(uint32_t i = 3; i < n3; i++)
                 {
-                  double tmp = G.p1[i];
+                  double tmp = G->p1[i];
                   double Gi = radau->ddState[i]-radau->ddState0[i];
                   
-                  G.p1[i] = (Gi*rr_inv[1] - G.p0[i]) *rr_inv[2];
-                  tmp = G.p1[i] - tmp;
+                  G->p1[i] = (Gi*rr_inv[1] - G->p0[i]) *rr_inv[2];
+                  tmp = G->p1[i] - tmp;
                   
-                  add_cs(&(B.p0[i]), &(radau->cs_B.p0[i]), tmp*c[0]);
-                  add_cs(&(B.p1[i]), &(radau->cs_B.p1[i]), tmp);
+                  add_cs(&(B->p0[i]), &(radau->cs_B.p0[i]), tmp*c[0]);
+                  add_cs(&(B->p1[i]), &(radau->cs_B.p1[i]), tmp);
                 }    
 
                 #pragma GCC ivdep
                 for(uint32_t j = n3+3; j < 2*n3; j++)
                 {
-                  double tmp2 = G_1st.p1[j];
+                  double tmp2 = G_1st->p1[j];
                   double Gi2 = radau->dState[j]-radau->dState0[j];
-                  G_1st.p1[j] = (Gi2*rr_inv[1] - G_1st.p0[j]) *rr_inv[2];
-                  tmp2 = G_1st.p1[j] - tmp2;
+                  G_1st->p1[j] = (Gi2*rr_inv[1] - G_1st->p0[j]) *rr_inv[2];
+                  tmp2 = G_1st->p1[j] - tmp2;
 
-                  add_cs(&(B_1st.p0[j]), &(radau->cs_B1st.p0[j]), tmp2*c[0]);
-                  add_cs(&(B_1st.p1[j]), &(radau->cs_B1st.p1[j]), tmp2);                    
+                  add_cs(&(B_1st->p0[j]), &(radau->cs_B1st.p0[j]), tmp2*c[0]);
+                  add_cs(&(B_1st->p1[j]), &(radau->cs_B1st.p1[j]), tmp2);                    
                 }                
                 break;
         case 3:                 
                 #pragma GCC ivdep
                 for(uint32_t i = 3; i < n3; i++)
                 {
-                  double tmp = G.p2[i];
+                  double tmp = G->p2[i];
                   double Gi = radau->ddState[i]-radau->ddState0[i];
-                  G.p2[i] = ((Gi*rr_inv[3] - G.p0[i]) *rr_inv[4] - G.p1[i])*rr_inv[5];
+                  G->p2[i] = ((Gi*rr_inv[3] - G->p0[i]) *rr_inv[4] - G->p1[i])*rr_inv[5];
 
-                  tmp = G.p2[i] - tmp;
+                  tmp = G->p2[i] - tmp;
 
                   // We only need to calculate the change in B.
-                  add_cs(&(B.p0[i]), &(radau->cs_B.p0[i]), tmp*c[1]);
-                  add_cs(&(B.p1[i]), &(radau->cs_B.p1[i]), tmp*c[2]);
-                  add_cs(&(B.p2[i]), &(radau->cs_B.p2[i]), tmp);            
+                  add_cs(&(B->p0[i]), &(radau->cs_B.p0[i]), tmp*c[1]);
+                  add_cs(&(B->p1[i]), &(radau->cs_B.p1[i]), tmp*c[2]);
+                  add_cs(&(B->p2[i]), &(radau->cs_B.p2[i]), tmp);            
                 }       
 
                 #pragma GCC ivdep
                 for(uint32_t j = n3+3; j < 2*n3; j++)
                 {
-                  double tmp2 = G_1st.p2[j];
+                  double tmp2 = G_1st->p2[j];
                   double Gi2 = radau->dState[j]-radau->dState0[j];
-                  G_1st.p2[j] = ((Gi2*rr_inv[3] - G_1st.p0[j]) *rr_inv[4] - G_1st.p1[j])*rr_inv[5];
+                  G_1st->p2[j] = ((Gi2*rr_inv[3] - G_1st->p0[j]) *rr_inv[4] - G_1st->p1[j])*rr_inv[5];
 
-                  tmp2 = G_1st.p2[j] - tmp2;
+                  tmp2 = G_1st->p2[j] - tmp2;
 
-                  add_cs(&(B_1st.p0[j]), &(radau->cs_B1st.p0[j]), tmp2*c[1]);
-                  add_cs(&(B_1st.p1[j]), &(radau->cs_B1st.p1[j]), tmp2*c[2]);
-                  add_cs(&(B_1st.p2[j]), &(radau->cs_B1st.p2[j]), tmp2);      
+                  add_cs(&(B_1st->p0[j]), &(radau->cs_B1st.p0[j]), tmp2*c[1]);
+                  add_cs(&(B_1st->p1[j]), &(radau->cs_B1st.p1[j]), tmp2*c[2]);
+                  add_cs(&(B_1st->p2[j]), &(radau->cs_B1st.p2[j]), tmp2);      
                 }                         
                 break;
         case 4:  
                 #pragma GCC ivdep
                 for(uint32_t i = 3; i < n3; i++)
                 {
-                  double tmp = G.p3[i];
+                  double tmp = G->p3[i];
                   double Gi = radau->ddState[i]-radau->ddState0[i];
 
-                  G.p3[i] = (((Gi*rr_inv[6] - G.p0[i]) *rr_inv[7] - G.p1[i])*rr_inv[8] - G.p2[i]) *rr_inv[9];
+                  G->p3[i] = (((Gi*rr_inv[6] - G->p0[i]) *rr_inv[7] - G->p1[i])*rr_inv[8] - G->p2[i]) *rr_inv[9];
 
-                  tmp = G.p3[i] - tmp;
+                  tmp = G->p3[i] - tmp;
 
-                  add_cs(&(B.p0[i]), &(radau->cs_B.p0[i]), tmp*c[3]);
-                  add_cs(&(B.p1[i]), &(radau->cs_B.p1[i]), tmp*c[4]);
-                  add_cs(&(B.p2[i]), &(radau->cs_B.p2[i]), tmp*c[5]);
-                  add_cs(&(B.p3[i]), &(radau->cs_B.p3[i]), tmp);              
+                  add_cs(&(B->p0[i]), &(radau->cs_B.p0[i]), tmp*c[3]);
+                  add_cs(&(B->p1[i]), &(radau->cs_B.p1[i]), tmp*c[4]);
+                  add_cs(&(B->p2[i]), &(radau->cs_B.p2[i]), tmp*c[5]);
+                  add_cs(&(B->p3[i]), &(radau->cs_B.p3[i]), tmp);              
                 }     
 
                 #pragma GCC ivdep
                 for(uint32_t j = n3+3; j < 2*n3; j++)
                 {
-                  double tmp2 = G_1st.p3[j];
+                  double tmp2 = G_1st->p3[j];
                   double Gi2 = radau->dState[j]-radau->dState0[j];
 
-                  G_1st.p3[j] = (((Gi2*rr_inv[6] - G_1st.p0[j]) *rr_inv[7] - G_1st.p1[j])*rr_inv[8] - G_1st.p2[j]) *rr_inv[9];
+                  G_1st->p3[j] = (((Gi2*rr_inv[6] - G_1st->p0[j]) *rr_inv[7] - G_1st->p1[j])*rr_inv[8] - G_1st->p2[j]) *rr_inv[9];
 
-                  tmp2 = G_1st.p3[j] - tmp2;
+                  tmp2 = G_1st->p3[j] - tmp2;
 
-                  add_cs(&(B_1st.p0[j]), &(radau->cs_B1st.p0[j]), tmp2*c[3]);
-                  add_cs(&(B_1st.p1[j]), &(radau->cs_B1st.p1[j]), tmp2*c[4]);
-                  add_cs(&(B_1st.p2[j]), &(radau->cs_B1st.p2[j]), tmp2*c[5]);
-                  add_cs(&(B_1st.p3[j]), &(radau->cs_B1st.p3[j]), tmp2);    
+                  add_cs(&(B_1st->p0[j]), &(radau->cs_B1st.p0[j]), tmp2*c[3]);
+                  add_cs(&(B_1st->p1[j]), &(radau->cs_B1st.p1[j]), tmp2*c[4]);
+                  add_cs(&(B_1st->p2[j]), &(radau->cs_B1st.p2[j]), tmp2*c[5]);
+                  add_cs(&(B_1st->p3[j]), &(radau->cs_B1st.p3[j]), tmp2);    
                 }                
 
                 break;
@@ -237,31 +232,31 @@ void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, double 
                 #pragma GCC ivdep
                 for(uint32_t i = 3; i < n3; i++)
                 {
-                  double tmp = G.p4[i];
+                  double tmp = G->p4[i];
                   double Gi = radau->ddState[i]-radau->ddState0[i];                  
-                  G.p4[i] = ((((Gi*rr_inv[10] - G.p0[i]) *rr_inv[11] - G.p1[i])*rr_inv[12] - G.p2[i])*rr_inv[13] - G.p3[i]) *rr_inv[14];
-                  tmp = G.p4[i] - tmp;
+                  G->p4[i] = ((((Gi*rr_inv[10] - G->p0[i]) *rr_inv[11] - G->p1[i])*rr_inv[12] - G->p2[i])*rr_inv[13] - G->p3[i]) *rr_inv[14];
+                  tmp = G->p4[i] - tmp;
                   
 
-                  add_cs(&(B.p0[i]), &(radau->cs_B.p0[i]), tmp*c[6]);
-                  add_cs(&(B.p1[i]), &(radau->cs_B.p1[i]), tmp*c[7]);
-                  add_cs(&(B.p2[i]), &(radau->cs_B.p2[i]), tmp*c[8]);
-                  add_cs(&(B.p3[i]), &(radau->cs_B.p3[i]), tmp*c[9]);
-                  add_cs(&(B.p4[i]), &(radau->cs_B.p4[i]), tmp);
+                  add_cs(&(B->p0[i]), &(radau->cs_B.p0[i]), tmp*c[6]);
+                  add_cs(&(B->p1[i]), &(radau->cs_B.p1[i]), tmp*c[7]);
+                  add_cs(&(B->p2[i]), &(radau->cs_B.p2[i]), tmp*c[8]);
+                  add_cs(&(B->p3[i]), &(radau->cs_B.p3[i]), tmp*c[9]);
+                  add_cs(&(B->p4[i]), &(radau->cs_B.p4[i]), tmp);
                 }
 
                 #pragma GCC ivdep
                 for(uint32_t j = n3+3; j < 2*n3; j++)
                 {
-                  double tmp2 = G_1st.p4[j];
+                  double tmp2 = G_1st->p4[j];
                   double Gi2 = radau->dState[j]-radau->dState0[j];
-                  G_1st.p4[j] = ((((Gi2*rr_inv[10] - G_1st.p0[j]) *rr_inv[11] - G_1st.p1[j])*rr_inv[12] - G_1st.p2[j])*rr_inv[13] - G_1st.p3[j]) *rr_inv[14];
-                  tmp2 = G_1st.p4[j] - tmp2;
-                  add_cs(&(B_1st.p0[j]), &(radau->cs_B1st.p0[j]), tmp2*c[6]);
-                  add_cs(&(B_1st.p1[j]), &(radau->cs_B1st.p1[j]), tmp2*c[7]);
-                  add_cs(&(B_1st.p2[j]), &(radau->cs_B1st.p2[j]), tmp2*c[8]);
-                  add_cs(&(B_1st.p3[j]), &(radau->cs_B1st.p3[j]), tmp2*c[9]);
-                  add_cs(&(B_1st.p4[j]), &(radau->cs_B1st.p4[j]), tmp2);          
+                  G_1st->p4[j] = ((((Gi2*rr_inv[10] - G_1st->p0[j]) *rr_inv[11] - G_1st->p1[j])*rr_inv[12] - G_1st->p2[j])*rr_inv[13] - G_1st->p3[j]) *rr_inv[14];
+                  tmp2 = G_1st->p4[j] - tmp2;
+                  add_cs(&(B_1st->p0[j]), &(radau->cs_B1st.p0[j]), tmp2*c[6]);
+                  add_cs(&(B_1st->p1[j]), &(radau->cs_B1st.p1[j]), tmp2*c[7]);
+                  add_cs(&(B_1st->p2[j]), &(radau->cs_B1st.p2[j]), tmp2*c[8]);
+                  add_cs(&(B_1st->p3[j]), &(radau->cs_B1st.p3[j]), tmp2*c[9]);
+                  add_cs(&(B_1st->p4[j]), &(radau->cs_B1st.p4[j]), tmp2);          
                 }                
 
                 break;
@@ -269,39 +264,39 @@ void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, double 
                 #pragma GCC ivdep 
                 for(uint32_t i = 3; i < n3; i++)
                 {
-                  double tmp = G.p5[i];
+                  double tmp = G->p5[i];
 
                   double Gi = radau->ddState[i]-radau->ddState0[i];
                   
-                  G.p5[i] = (((((Gi*rr_inv[15] - G.p0[i]) *rr_inv[16] - G.p1[i])*rr_inv[17] -
-                                    G.p2[i]) *rr_inv[18] - G.p3[i]) *rr_inv[19] - G.p4[i]) *rr_inv[20];
+                  G->p5[i] = (((((Gi*rr_inv[15] - G->p0[i]) *rr_inv[16] - G->p1[i])*rr_inv[17] -
+                                    G->p2[i]) *rr_inv[18] - G->p3[i]) *rr_inv[19] - G->p4[i]) *rr_inv[20];
                   
-                  tmp = G.p5[i] - tmp;
+                  tmp = G->p5[i] - tmp;
                   
 
-                  add_cs(&(B.p0[i]), &(radau->cs_B.p0[i]), tmp*c[10]);                  
-                  add_cs(&(B.p1[i]), &(radau->cs_B.p1[i]), tmp*c[11]);
-                  add_cs(&(B.p2[i]), &(radau->cs_B.p2[i]), tmp*c[12]);
-                  add_cs(&(B.p3[i]), &(radau->cs_B.p3[i]), tmp*c[13]);
-                  add_cs(&(B.p4[i]), &(radau->cs_B.p4[i]), tmp*c[14]);
-                  add_cs(&(B.p5[i]), &(radau->cs_B.p5[i]), tmp);
+                  add_cs(&(B->p0[i]), &(radau->cs_B.p0[i]), tmp*c[10]);                  
+                  add_cs(&(B->p1[i]), &(radau->cs_B.p1[i]), tmp*c[11]);
+                  add_cs(&(B->p2[i]), &(radau->cs_B.p2[i]), tmp*c[12]);
+                  add_cs(&(B->p3[i]), &(radau->cs_B.p3[i]), tmp*c[13]);
+                  add_cs(&(B->p4[i]), &(radau->cs_B.p4[i]), tmp*c[14]);
+                  add_cs(&(B->p5[i]), &(radau->cs_B.p5[i]), tmp);
                 }
 
                 #pragma GCC ivdep
                 for(uint32_t j = n3+3; j < 2*n3; j++)
                 {
-                  double tmp2 = G_1st.p5[j];
+                  double tmp2 = G_1st->p5[j];
                   double Gi2 = radau->dState[j]-radau->dState0[j]; 
-                  G_1st.p5[j] = (((((Gi2*rr_inv[15] - G_1st.p0[j]) *rr_inv[16] - G_1st.p1[j])*rr_inv[17] -
-                                    G_1st.p2[j]) *rr_inv[18] - G_1st.p3[j]) *rr_inv[19] - G_1st.p4[j]) *rr_inv[20]; 
-                  tmp2 = G_1st.p5[j] - tmp2;
+                  G_1st->p5[j] = (((((Gi2*rr_inv[15] - G_1st->p0[j]) *rr_inv[16] - G_1st->p1[j])*rr_inv[17] -
+                                    G_1st->p2[j]) *rr_inv[18] - G_1st->p3[j]) *rr_inv[19] - G_1st->p4[j]) *rr_inv[20]; 
+                  tmp2 = G_1st->p5[j] - tmp2;
 
-                  add_cs(&(B_1st.p0[j]), &(radau->cs_B1st.p0[j]), tmp2*c[10]);
-                  add_cs(&(B_1st.p1[j]), &(radau->cs_B1st.p1[j]), tmp2*c[11]);
-                  add_cs(&(B_1st.p2[j]), &(radau->cs_B1st.p2[j]), tmp2*c[12]);
-                  add_cs(&(B_1st.p3[j]), &(radau->cs_B1st.p3[j]), tmp2*c[13]);
-                  add_cs(&(B_1st.p4[j]), &(radau->cs_B1st.p4[j]), tmp2*c[14]);
-                  add_cs(&(B_1st.p5[j]), &(radau->cs_B1st.p5[j]), tmp2);
+                  add_cs(&(B_1st->p0[j]), &(radau->cs_B1st.p0[j]), tmp2*c[10]);
+                  add_cs(&(B_1st->p1[j]), &(radau->cs_B1st.p1[j]), tmp2*c[11]);
+                  add_cs(&(B_1st->p2[j]), &(radau->cs_B1st.p2[j]), tmp2*c[12]);
+                  add_cs(&(B_1st->p3[j]), &(radau->cs_B1st.p3[j]), tmp2*c[13]);
+                  add_cs(&(B_1st->p4[j]), &(radau->cs_B1st.p4[j]), tmp2*c[14]);
+                  add_cs(&(B_1st->p5[j]), &(radau->cs_B1st.p5[j]), tmp2);
 
                 }
                 break;
@@ -311,40 +306,40 @@ void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, double 
                 #pragma GCC ivdep
                 for(uint32_t j = n3+3; j < 2*n3; j++)
                 {
-                  double tmp2 = G_1st.p6[j];
+                  double tmp2 = G_1st->p6[j];
                   double Gi2 = radau->dState[j]-radau->dState0[j];
 
-                  G_1st.p6[j] = ((((((Gi2*rr_inv[21] - G_1st.p0[j]) *rr_inv[22] - G_1st.p1[j])*rr_inv[23] - G_1st.p2[j]) *rr_inv[24] - 
-                                  G_1st.p3[j]) *rr_inv[25] - G_1st.p4[j]) *rr_inv[26] - G_1st.p5[j]) *rr_inv[27];
-                  tmp2 = G_1st.p6[j] - tmp2;                                  
+                  G_1st->p6[j] = ((((((Gi2*rr_inv[21] - G_1st->p0[j]) *rr_inv[22] - G_1st->p1[j])*rr_inv[23] - G_1st->p2[j]) *rr_inv[24] - 
+                                  G_1st->p3[j]) *rr_inv[25] - G_1st->p4[j]) *rr_inv[26] - G_1st->p5[j]) *rr_inv[27];
+                  tmp2 = G_1st->p6[j] - tmp2;                                  
 
-                  add_cs(&(B_1st.p0[j]), &(radau->cs_B1st.p0[j]), tmp2*c[15]);
-                  add_cs(&(B_1st.p1[j]), &(radau->cs_B1st.p1[j]), tmp2*c[16]);
-                  add_cs(&(B_1st.p2[j]), &(radau->cs_B1st.p2[j]), tmp2*c[17]);
-                  add_cs(&(B_1st.p3[j]), &(radau->cs_B1st.p3[j]), tmp2*c[18]);
-                  add_cs(&(B_1st.p4[j]), &(radau->cs_B1st.p4[j]), tmp2*c[19]);
-                  add_cs(&(B_1st.p5[j]), &(radau->cs_B1st.p5[j]), tmp2*c[20]);
-                  add_cs(&(B_1st.p6[j]), &(radau->cs_B1st.p6[j]), tmp2);
+                  add_cs(&(B_1st->p0[j]), &(radau->cs_B1st.p0[j]), tmp2*c[15]);
+                  add_cs(&(B_1st->p1[j]), &(radau->cs_B1st.p1[j]), tmp2*c[16]);
+                  add_cs(&(B_1st->p2[j]), &(radau->cs_B1st.p2[j]), tmp2*c[17]);
+                  add_cs(&(B_1st->p3[j]), &(radau->cs_B1st.p3[j]), tmp2*c[18]);
+                  add_cs(&(B_1st->p4[j]), &(radau->cs_B1st.p4[j]), tmp2*c[19]);
+                  add_cs(&(B_1st->p5[j]), &(radau->cs_B1st.p5[j]), tmp2*c[20]);
+                  add_cs(&(B_1st->p6[j]), &(radau->cs_B1st.p6[j]), tmp2);
                 }
 
                 #pragma GCC ivdep
                 for(uint32_t i = 3; i < n3; i++)
                 {
-                  double tmp = G.p6[i]; 
+                  double tmp = G->p6[i]; 
                   double Gi = radau->ddState[i]-radau->ddState0[i];
                   
-                  G.p6[i] =     ((((((Gi*rr_inv[21] - G.p0[i]) *rr_inv[22] - G.p1[i])*rr_inv[23] - G.p2[i]) *rr_inv[24] - 
-                                  G.p3[i]) *rr_inv[25] - G.p4[i]) *rr_inv[26] - G.p5[i]) *rr_inv[27];
+                  G->p6[i] =     ((((((Gi*rr_inv[21] - G->p0[i]) *rr_inv[22] - G->p1[i])*rr_inv[23] - G->p2[i]) *rr_inv[24] - 
+                                  G->p3[i]) *rr_inv[25] - G->p4[i]) *rr_inv[26] - G->p5[i]) *rr_inv[27];
                                   
-                  tmp = G.p6[i] - tmp;
+                  tmp = G->p6[i] - tmp;
                   
-                  add_cs(&(B.p0[i]), &(radau->cs_B.p0[i]), tmp*c[15]);
-                  add_cs(&(B.p1[i]), &(radau->cs_B.p1[i]), tmp*c[16]);
-                  add_cs(&(B.p2[i]), &(radau->cs_B.p2[i]), tmp*c[17]);
-                  add_cs(&(B.p3[i]), &(radau->cs_B.p3[i]), tmp*c[18]);
-                  add_cs(&(B.p4[i]), &(radau->cs_B.p4[i]), tmp*c[19]);
-                  add_cs(&(B.p5[i]), &(radau->cs_B.p5[i]), tmp*c[20]);
-                  add_cs(&(B.p6[i]), &(radau->cs_B.p6[i]), tmp);
+                  add_cs(&(B->p0[i]), &(radau->cs_B.p0[i]), tmp*c[15]);
+                  add_cs(&(B->p1[i]), &(radau->cs_B.p1[i]), tmp*c[16]);
+                  add_cs(&(B->p2[i]), &(radau->cs_B.p2[i]), tmp*c[17]);
+                  add_cs(&(B->p3[i]), &(radau->cs_B.p3[i]), tmp*c[18]);
+                  add_cs(&(B->p4[i]), &(radau->cs_B.p4[i]), tmp*c[19]);
+                  add_cs(&(B->p5[i]), &(radau->cs_B.p5[i]), tmp*c[20]);
+                  add_cs(&(B->p6[i]), &(radau->cs_B.p6[i]), tmp);
                   // Store b6 for convergence criteria.
                   radau->b6_store[i] = tmp;    
                 }                
@@ -420,10 +415,10 @@ void RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, double 
   }
 
   // Apply correctors to obtain X at t=1.
-  CalculateNewState(h, radau->dState0, radau->ddState0, &B, radau->dX, 
+  CalculateNewState(h, radau->dState0, radau->ddState0, B, radau->dX, 
                     radau->cs_dX, 0, (int)(n3));
 
-  CalculateNewState_1stOrder(h, radau->dState0, &B_1st, radau->dX, 
+  CalculateNewState_1stOrder(h, radau->dState0, B_1st, radau->dX, 
                                 radau->cs_dX, (int)(n3), r->ri_tes.stateVectorLength);                                
 
   // Now that we have cs_dX we can perform our correction.
@@ -441,7 +436,7 @@ double ReturnIAS15StepError(struct reb_simulation* r, double h, double t)
   {
       for(uint32_t j = 0; j < 3; j++)
       {
-        double b6 = fabs(B.p6[3*i+j]);
+        double b6 = fabs(radau->B.p6[3*i+j]);
         double acc = fabs(radau->acc_ptr[3*i+j]); 
 
         if(isnormal(b6))
@@ -477,8 +472,8 @@ static void CalculateGFromBInternal(controlVars * z_G, controlVars * z_B, uint32
 
 void CalculateGfromB(struct reb_simulation* r)
 {
-  CalculateGFromBInternal(&G, &B, 0, (int)(r->ri_tes.stateVectorLength/2));
-  CalculateGFromBInternal(&G_1st, &B_1st, (int)(r->ri_tes.stateVectorLength/2), r->ri_tes.stateVectorLength);
+  CalculateGFromBInternal(&r->ri_tes.radau->G, &r->ri_tes.radau->B, 0, (int)(r->ri_tes.stateVectorLength/2));
+  CalculateGFromBInternal(&r->ri_tes.radau->G_1st, &r->ri_tes.radau->B_1st, (int)(r->ri_tes.stateVectorLength/2), r->ri_tes.stateVectorLength);
 }
 
 void AnalyticalContinuation(struct reb_simulation* r, controlVars * z_B, controlVars * z_Blast, const double h,
@@ -636,23 +631,12 @@ void CalculateNewState(double h, double * z_dState, double * z_ddState,
 void RadauStep15_Init(struct reb_simulation* r)
 {
     RADAU * radau = r->ri_tes.radau;
-    ControlVars_Init(&G, r->ri_tes.stateVectorSize);
-    radau->G = &G;
-    
-    ControlVars_Init(&B, r->ri_tes.stateVectorSize);
-    radau->B = &B;
-    
-    ControlVars_Init(&Blast, r->ri_tes.stateVectorSize);
-    radau->Blast = &Blast;
-    
-    ControlVars_Init(&Blast_1st, r->ri_tes.stateVectorSize);
-    radau->Blast_1st = &Blast_1st;
-
-    ControlVars_Init(&G_1st, r->ri_tes.stateVectorSize);
-    radau->G_1st = &G_1st;
-
-    ControlVars_Init(&B_1st, r->ri_tes.stateVectorSize);
-    radau->B_1st = &B_1st;
+    ControlVars_Init(&radau->G, r->ri_tes.stateVectorSize);    
+    ControlVars_Init(&radau->B, r->ri_tes.stateVectorSize);    
+    ControlVars_Init(&radau->Blast, r->ri_tes.stateVectorSize);   
+    ControlVars_Init(&radau->Blast_1st, r->ri_tes.stateVectorSize);
+    ControlVars_Init(&radau->G_1st, r->ri_tes.stateVectorSize);
+    ControlVars_Init(&radau->B_1st, r->ri_tes.stateVectorSize);
     
     ControlVars_Init(&radau->cs_B1st, r->ri_tes.stateVectorSize);
     ControlVars_Init(&radau->cs_B, r->ri_tes.stateVectorSize);
@@ -688,10 +672,10 @@ void RadauStep15_Init(struct reb_simulation* r)
 void RadauStep15_Free(struct reb_simulation* r)
 {
   RADAU * radau = r->ri_tes.radau;
-  ControlVars_Free(&G);
-  ControlVars_Free(&B);
-  ControlVars_Free(&radau->cs_B);
-  ControlVars_Free(&Blast);
+  ControlVars_Free(&r->ri_tes.radau->G);
+  ControlVars_Free(&r->ri_tes.radau->B);
+  ControlVars_Free(&r->ri_tes.radau->cs_B);
+  ControlVars_Free(&r->ri_tes.radau->Blast);
   free(radau->dState0);
   free(radau->ddState0);
   free(radau->dState);

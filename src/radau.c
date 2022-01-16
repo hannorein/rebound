@@ -44,8 +44,8 @@ double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double 
     // Calculate the osculating orbits.
     dhem_CalcOscOrbitsForAllStages(r, z_t, dt, hArr, OSCULATING_ORBIT_SLOTS, 1);
 
-    ClearRectifiedBFields(r, radau->B, radau->rectifiedArray);
-    ClearRectifiedBFields(r, radau->B_1st, radau->rectifiedArray);
+    ClearRectifiedBFields(r, &radau->B, radau->rectifiedArray);
+    ClearRectifiedBFields(r, &radau->B_1st, radau->rectifiedArray);
 
     CalculateGfromB(r); 
 
@@ -54,8 +54,8 @@ double Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double 
 
     dt_new = r->ri_tes.epsilon > 0 ? Radau_CalculateStepSize(r, dt, dt_last_done, z_t) : dt;
 
-    AnalyticalContinuation(r, radau->B_1st, radau->Blast_1st, dt, dt_new, radau->rectifiedArray);
-    AnalyticalContinuation(r, radau->B, radau->Blast, dt, dt_new, radau->rectifiedArray);
+    AnalyticalContinuation(r, &radau->B_1st, &radau->Blast_1st, dt, dt_new, radau->rectifiedArray);
+    AnalyticalContinuation(r, &radau->B, &radau->Blast, dt, dt_new, radau->rectifiedArray);
 
     // Perform a linear update to the drift of the COM.
     for(uint32_t i = 0; i < 3; i++)
