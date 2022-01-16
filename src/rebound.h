@@ -216,10 +216,145 @@ struct reb_simulation_integrator_whfast {
     unsigned int recalculate_coordinates_but_not_synchronized_warning;
 };
 
-// Forward declarations
-typedef struct UNIVERSAL_VARS UNIVERSAL_VARS;
-typedef struct DHEM DHEM;
-typedef struct RADAU RADAU;
+typedef struct _StumpfCoefficients
+{
+  double * __restrict__ c0;
+  double * __restrict__ c1;
+  double * __restrict__ c2;
+  double * __restrict__ c3;
+}StumpfCoefficients;
+
+typedef struct UNIVERSAL_VARS
+{
+  double * __restrict__ t0;
+  double * __restrict__ tLast;
+  double * uv_csq;
+  double * uv_csp;
+  double * uv_csv;  
+  double * dt;
+  double * __restrict__ Q0;
+  double * __restrict__ V0;
+  double * __restrict__ P0;
+  double * __restrict__ Q1;
+  double * __restrict__ V1;
+  double * __restrict__ P1;  
+  double * __restrict__ X;
+  double * __restrict__ Q0_norm;
+  double * __restrict__ beta;
+  double * __restrict__ eta;
+  double * __restrict__ zeta;
+  double * __restrict__ period;
+  double * __restrict__ Xperiod;
+  uint32_t stateVectorSize;
+  uint32_t controlVectorSize;
+
+  StumpfCoefficients C;
+
+  double mu;  /// G*mCentral
+
+  // Variables for storing classical orbital elements.
+  double * e;
+  double * a;
+  double * h;
+  double * h_norm;
+  double * peri;
+  double * apo;  
+}UNIVERSAL_VARS;
+
+typedef struct _controlVars {
+    double* __restrict__ p0;
+    double* __restrict__ p1;
+    double* __restrict__ p2;
+    double* __restrict__ p3;
+    double* __restrict__ p4;
+    double* __restrict__ p5;
+    double* __restrict__ p6;
+    uint32_t size;
+}controlVars;
+
+typedef struct RADAU
+{
+  // State vectors
+  double * dX;
+  double * dQ;
+  double * dP;
+  // Buffers for rectifying into before performing a synchronisation.
+  double * Xout;
+  double * Qout;
+  double * Pout;
+  uint32_t * rectifiedArray;
+  // Buffer for predictors
+  double * predictors;
+  // Derivatives at start of the step.
+  double * __restrict__ dState0;
+  double * __restrict__ ddState0;
+  // Intermediate derivatives.
+  double * __restrict__ dState;
+  double * __restrict__ ddState;
+  // Compensated summation arrays for gravity
+  double * __restrict__ cs_dState0;
+  double * __restrict__ cs_ddState0;
+  double * __restrict__ cs_dState;
+  double * __restrict__ cs_ddState;
+  // Compensated summation arrays for B's.
+  controlVars cs_B;
+  controlVars cs_B1st;
+  // Compensated summation array for the predictor and corrector.
+  double * cs_dX;
+  double * cs_dq;
+  double * cs_dp;
+  // Integrator coefficients.
+  controlVars G;
+  controlVars B;
+  controlVars Blast;
+  controlVars Blast_1st;
+  controlVars G_1st;
+  controlVars B_1st;  
+  // Variables for performance metrics
+  uint64_t fCalls;
+  uint64_t rectifications;
+  uint32_t convergenceIterations;
+  // Iteration convergence variables.
+  double * b6_store;
+  double * acc_ptr;
+}RADAU;
+
+typedef struct DHEM
+{
+  // Pointers to osculating orbits at a single point in time.
+  double * Xosc;
+  double * Qosc;
+  double * Posc;
+  // Osculating orbits for all stages within a step.
+  double * XoscStore;
+  double ** XoscArr;
+  double * XoscPredStore;
+  double ** XoscPredArr;  
+  // CS variables for the osculating orbits.
+  double * Xosc_cs;
+  double * XoscStore_cs;
+  double ** XoscArr_cs;
+  double * Qosc_cs;
+  double * Posc_cs;
+  // Pointers to osculating orbit derivatives at a single point in time.
+  double * Xosc_dot;
+  double * Qosc_dot;
+  double * Posc_dot;
+  // Osculating orbits derivatives for all stages within a step.
+  double * Xosc_dotStore;
+  double ** Xosc_dotArr;
+  // Variables for summing Xosc+dX into.
+  double * X;
+  double * Q;
+  double * P;
+  // Mass variables.
+  double * __restrict__ m;
+  double * __restrict__ m_inv;
+  double mTotal;
+  // Rectification variables.
+  double * rectifyTimeArray;    /// The time at which we need to rectify each body.
+  double * rectificationPeriod; /// Elapsed time to trigger a rectification.
+}DHEM;
 
 struct reb_simulation_integrator_tes {
     double dq_max;              // value of dq/q that triggers a rectification (backup to recti_per_orbit)

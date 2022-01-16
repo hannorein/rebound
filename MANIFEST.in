@@ -7,11 +7,6 @@ include src/integrator_mercurius.c
 include src/integrator_eos.c
 include src/integrator_janus.c
 include src/integrator_tes.c
-include src/dhem.c 
-include src/radau.c 
-include src/radau_step.c 
-include src/simulation.c 
-include src/UniversalVars.c
 include src/integrator.c
 include src/gravity.c
 include src/collision.c
@@ -34,12 +29,6 @@ include src/integrator_mercurius.h
 include src/integrator_eos.h
 include src/integrator_janus.h
 include src/integrator_tes.h
-include src/dhem.h
-include src/radau.h 
-include src/radau_step.h 
-include src/simulation.h 
-include src/terminate.h 
-include src/UniversalVars.h
 include src/integrator.h
 include src/collision.h
 include src/boundary.h

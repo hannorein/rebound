@@ -24,14 +24,11 @@
  */
 #ifndef _INTEGRATOR_TES_H
 #define _INTEGRATOR_TES_H
-#include "UniversalVars.h"
-#include "radau.h"
-#include "dhem.h"
-
 
 void reb_integrator_tes_part1(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
 void reb_integrator_tes_part2(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
 void reb_integrator_tes_synchronize(struct reb_simulation* r);    ///< Internal function used to call a specific integrator
 void reb_integrator_tes_reset(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
 void reb_integrator_tes_allocate_memory(struct reb_simulation* r);  ///< Function used to allocate memory when loading a sim archive.
+
 #endif
