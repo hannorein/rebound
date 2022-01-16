@@ -139,6 +139,19 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         reb_dhem_Init(r, r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit, 9);
         reb_dhem_InitialiseOsculatingOrbits(r, r->ri_tes.Q_dh, r->ri_tes.P_dh, r->t);
         reb_Radau_Init(r);  
+
+        // No step-size specified, calculate timestep from shortest orbital period object in the system.
+        if(r->dt == 0.001 && r->dt_last_done == 0)
+        {
+            double period_min = 1E15;
+            for(uint32_t i=1;i<N;i++) 
+            {
+                double period = r->ri_tes.uVars->period[i];
+                period_min = period < period_min ? period : period_min;
+            }                        
+            // Default to 100th of minimum period for the step size.                                  
+            r->dt = period_min/100.0;
+        }        
     }
     
     double dt_new = reb_Radau_SingleStep(r, r->t, r->dt, r->dt_last_done);
@@ -828,6 +841,11 @@ double reb_Radau_CalculateStepSize(struct reb_simulation* r, double h, double hL
 
   // Get the error estimate and orbit size estimate.
   double errMax = reb_ReturnIAS15StepError(r, h, t);
+
+  if(errMax > r->ri_tes.epsilon*100.0)
+  {
+    printf("\nWarning! The initial step size chosen does not properly capture the system dynamics. Either do not set the value of sim.dt initially, or if initialising a close encounter then set sim.dt to a smaller initial step size. The current initial step size is %e.", r->dt);
+  }
     
   if(isnormal(errMax))
   {
@@ -1292,7 +1310,6 @@ double reb_ReturnIAS15StepError(struct reb_simulation* r, double h, double t)
       }
   }  
   errMax = b6Max/accMax;
-  // printf("\n%.16e %.16e", b6Max, accMax);
 
   return errMax;
 }
@@ -1639,8 +1656,6 @@ void reb_CalculateOsculatingOrbitsForSingleStep(struct reb_simulation* r, double
     {
       dt = h*(h_array[stage]-t_last_rebasis); 
     }
-
-    
 
     double C[4] = {0.0, 0.0, 0.0, 0.0};
     for(int32_t i = 1; i < r->N; i++)

@@ -29,6 +29,21 @@ def GetApophis1979():
      365.24141698304345,
      False)    
 
+def create_sim():
+    sim = rebound.Simulation()
+    sim.G = 1.4881806877180788e-34
+    problem = GetApophis1979
+    Q,V,mass,period,_ = problem()
+    mass /= sim.G
+    
+    for i in range(3):
+        sim.add(m=mass[i], x=Q[i,0], y=Q[i,1], z=Q[i,2], vx=V[i,0], vy=V[i,1], vz=V[i,2])
+    
+    sim.move_to_com()
+    sim.dt = period/100
+    sim.integrator = "tes"  
+    return sim, period
+
 class TestIntegratorTES(unittest.TestCase):
     def test_integration_output_particles(self):  
         orbits = 100
@@ -258,22 +273,7 @@ class TestIntegratorTES(unittest.TestCase):
         self.assertLess(de, 1e-15)        
         
         
-    def test_simulation_archive_bitwise(self):                 
-        def create_sim():
-            sim = rebound.Simulation()
-            sim.G = 1.4881806877180788e-34
-            problem = GetApophis1979
-            Q,V,mass,period,_ = problem()
-            mass /= sim.G
-            
-            for i in range(3):
-                sim.add(m=mass[i], x=Q[i,0], y=Q[i,1], z=Q[i,2], vx=V[i,0], vy=V[i,1], vz=V[i,2])
-            
-            sim.move_to_com()
-            sim.dt = period/100
-            sim.integrator = "tes"  
-            return sim, period
-        
+    def test_simulation_archive_bitwise(self):                        
         # sim0 is the ground truth
         sim0, period = create_sim()
         sim0.integrate(100*period, exact_finish_time=1)
@@ -301,22 +301,7 @@ class TestIntegratorTES(unittest.TestCase):
         except:
             pass
         
-    def test_add_particle_then_save(self):                 
-        def create_sim():
-            sim = rebound.Simulation()
-            sim.G = 1.4881806877180788e-34
-            problem = GetApophis1979
-            Q,V,mass,period,_ = problem()
-            mass /= sim.G
-            
-            for i in range(3):
-                sim.add(m=mass[i], x=Q[i,0], y=Q[i,1], z=Q[i,2], vx=V[i,0], vy=V[i,1], vz=V[i,2])
-            
-            sim.move_to_com()
-            sim.dt = period/100
-            sim.integrator = "tes"  
-            return sim, period
-        
+    def test_add_particle_then_save(self):                        
         # sim0 is the ground truth
         sim0, period = create_sim()
         sim0.integrate(100*period, exact_finish_time=1)
