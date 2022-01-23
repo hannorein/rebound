@@ -33,8 +33,8 @@
 #include "integrator_tes.h"
 
 // Simulation functions
-void reb_Simulation_Init(struct reb_simulation* r, uint32_t z_n);
-void reb_Simulation_Free(struct reb_simulation* r);
+void reb_tes_init(struct reb_simulation* r, uint32_t z_n);
+void reb_tes_free(struct reb_simulation* r);
 
 // Gravity functions
 void reb_dhem_PerformSummation(struct reb_simulation* r, double * Q, double * P,
@@ -54,7 +54,7 @@ void reb_dhem_CalculateOsculatingOrbitDerivatives_Momenta(struct reb_simulation*
 uint32_t reb_dhem_RectifyOrbits(struct reb_simulation* r, double t, double * Q, double * P,
                             double * dQ, double * dP, uint32_t * rectifiedArray, uint32_t stageNumber);
 void reb_dhem_Init(struct reb_simulation* r, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep);
-void dhem_Free(void);
+void reb_dhem_Free(struct reb_simulation* r);
 
 // Radau functions
 void reb_Radau_Init(struct reb_simulation* r);
@@ -106,10 +106,7 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         r->ri_tes.allocated_N = N;
         struct reb_particle* const particles = r->particles;
         
-        // Adding new mallocs for data that isnt under the sim data structure here.
-        r->ri_tes.particles_dh = (struct reb_particle*)malloc(sizeof(struct reb_particle)*r->N);
-
-        reb_Simulation_Init(r, N);
+        reb_tes_init(r, N);
 
         // Convert from inertial to dh coords.
         reb_transformations_inertial_to_democraticheliocentric_posvel(particles, r->ri_tes.particles_dh, r->N, r->N);
@@ -149,7 +146,7 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
                 double period = r->ri_tes.uVars->period[i];
                 period_min = period < period_min ? period : period_min;
             }                        
-            // Default to 100th of minimum period for the step size.                                  
+            // Default to 100th of minimum period for the initial step size.                                  
             r->dt = period_min/100.0;
         }        
     }
@@ -202,17 +199,20 @@ void reb_integrator_tes_synchronize(struct reb_simulation* r){
 }
 
 void reb_integrator_tes_reset(struct reb_simulation* r){
-    // Need to think about this properly - should this also go inside the part2 loop? When is reset called?
-    // UniversalVars_Free();
-    // dhem_Free();
-    // Radau_Free();
-    // Simulation_Free();    
+    
+    if(r->ri_tes.allocated_N != 0)
+    {
+      reb_UniversalVars_Free(r);
+      reb_dhem_Free(r);
+      reb_Radau_Free(r);
+      reb_tes_free(r);    
+    }
+
 }
 
 void reb_integrator_tes_allocate_memory(struct reb_simulation* r)
 {
-    reb_Simulation_Init(r, r->N);
-    r->ri_tes.particles_dh = (struct reb_particle*)malloc(sizeof(struct reb_particle)*r->N);
+    reb_tes_init(r, r->N);
     reb_UniversalVars_Init(r);
     reb_dhem_Init(r, r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit, 9);
     reb_Radau_Init(r);          
@@ -222,8 +222,13 @@ void reb_integrator_tes_allocate_memory(struct reb_simulation* r)
 ///////////////////////////////////////////////////////////////////////////////////
 // Original TES file: Simulation.c
 ///////////////////////////////////////////////////////////////////////////////////
-void reb_Simulation_Init(struct reb_simulation* r, uint32_t z_n)
+void reb_tes_init(struct reb_simulation* r, uint32_t z_n)
 {
+  if(r->ri_tes.allocated_N != 0)
+  {
+    reb_tes_free(r);
+  }
+  
   // Set control variables to initial values
   r->ri_tes.stateVectorLength = 2*3*r->N;
   r->ri_tes.stateVectorSize = r->ri_tes.stateVectorLength * sizeof(double);
@@ -232,6 +237,7 @@ void reb_Simulation_Init(struct reb_simulation* r, uint32_t z_n)
   // Allocate memory
   r->ri_tes.mass = (double *)malloc(r->ri_tes.controlVectorSize);
   r->ri_tes.X_dh = (double *)malloc(r->ri_tes.stateVectorSize);
+  r->ri_tes.particles_dh = (struct reb_particle*)malloc(sizeof(struct reb_particle)*r->N);
   r->ri_tes.Q_dh = r->ri_tes.X_dh;
   r->ri_tes.P_dh = &r->ri_tes.X_dh[r->ri_tes.stateVectorLength/2];
 
@@ -241,10 +247,11 @@ void reb_Simulation_Init(struct reb_simulation* r, uint32_t z_n)
 }
 
 
-void reb_Simulation_Free(struct reb_simulation* r)
+void reb_tes_free(struct reb_simulation* r)
 {
-  free(r->ri_tes.X_dh);
   free(r->ri_tes.mass);
+  free(r->ri_tes.X_dh);
+  free(r->ri_tes.particles_dh);
 }
 
 
@@ -569,8 +576,6 @@ uint32_t reb_dhem_RectifyOrbits(struct reb_simulation* r, double t, double * Q, 
       }          
 
       reb_RebasisOsculatingOrbits_Momenta(r, Q, P, t, i);
-      //dhem->rectifyTimeArray[i] += dhem->rectificationPeriod[i];
-      // This option will add some randomness to the rectification process.
       dhem->rectifyTimeArray[i] = t + dhem->rectificationPeriod[i];
 
       rectifiedArray[3*i] = 1;
@@ -712,24 +717,23 @@ void reb_dhem_Init(struct reb_simulation* r, double z_rectificationPeriodDefault
   }
 }
 
-void dhem_Free(void)
+void reb_dhem_Free(struct reb_simulation* r)
 {
-  // @todo clean up properly - should run a memcheck on the entire program.
-  // free(dhem->X);
-  // free(dhem->X_dot);
-  // free(dhem->rectifyTimeArray);
-  // free(dhem->rectificationPeriod);
-  // free(dhem->XoscStore);
-  // free(dhem->XoscArr);
-  // free(dhem->Xosc_dotStore);
-  // free(dhem->Xosc_dotArr);
-  // free(dhem->Vosc);
-  // free(dhem);
-  // free(dhem->fStore);
-  // free(dhem->fAccessArray);
-  // free(dhem->gStore);
-  // free(dhem->gAccessArray);
-  // sim->rhs = NULL;
+  DHEM * rhs = r->ri_tes.rhs;
+  free(rhs->X);
+  free(rhs->rectifyTimeArray);
+  free(rhs->rectificationPeriod);
+  free(rhs->XoscStore);
+  free(rhs->XoscArr);
+  free(rhs->Xosc_dotStore);
+  free(rhs->Xosc_dotArr);
+  free(rhs->XoscPredStore);
+  free(rhs->XoscPredArr);
+  free(rhs->XoscStore_cs);
+  free(rhs->XoscArr_cs);
+  free(rhs->m_inv);
+  free(rhs);
+  rhs = NULL;
 }
 
 static inline void add_cs(double* out, double* cs, double inp)
@@ -832,7 +836,9 @@ void reb_Radau_Free(struct reb_simulation* r)
   free(radau->Xout);
   free(radau->predictors);
   free(radau->rectifiedArray);
+  free(radau->b6_store);
   free(radau);
+  radau = NULL;
 }
 
 double reb_Radau_CalculateStepSize(struct reb_simulation* r, double h, double hLast, double t)
@@ -1532,8 +1538,12 @@ void reb_RadauStep15_Free(struct reb_simulation* r)
   RADAU * radau = r->ri_tes.radau;
   reb_ControlVars_Free(&r->ri_tes.radau->G);
   reb_ControlVars_Free(&r->ri_tes.radau->B);
-  reb_ControlVars_Free(&r->ri_tes.radau->cs_B);
   reb_ControlVars_Free(&r->ri_tes.radau->Blast);
+  reb_ControlVars_Free(&r->ri_tes.radau->Blast_1st);
+  reb_ControlVars_Free(&r->ri_tes.radau->G_1st);
+  reb_ControlVars_Free(&r->ri_tes.radau->B_1st);    
+  reb_ControlVars_Free(&r->ri_tes.radau->cs_B1st);
+  reb_ControlVars_Free(&r->ri_tes.radau->cs_B);
   free(radau->dState0);
   free(radau->ddState0);
   free(radau->dState);
@@ -1542,7 +1552,7 @@ void reb_RadauStep15_Free(struct reb_simulation* r)
   free(radau->cs_ddState0);
   free(radau->cs_dState);
   free(radau->cs_ddState);
-  // free(radau->dState0_hp);
+  free(radau->cs_dX);
 }
 
 
@@ -1589,7 +1599,6 @@ void reb_ControlVars_Clear(controlVars * var)
     var->p5[i] = 0.0;
     var->p6[i] = 0.0;
   }
-  //var->size = 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -2050,6 +2059,7 @@ void reb_UniversalVars_Free(struct reb_simulation* r)
   free(p_uVars->Q0);
   free(p_uVars->V0);
   free(p_uVars->Q1);
+  free(p_uVars->V1);
   free(p_uVars->P0);
   free(p_uVars->P1);
   free(p_uVars->t0);
@@ -2061,5 +2071,25 @@ void reb_UniversalVars_Free(struct reb_simulation* r)
   free(p_uVars->period);
   free(p_uVars->Xperiod);
   free(p_uVars->X);
+  free(p_uVars->dt);
+  free(p_uVars->e);
+  free(p_uVars->a);
+  free(p_uVars->h);
+  free(p_uVars->h_norm);
+  free(p_uVars->peri);
+  free(p_uVars->apo);
+  free(p_uVars->C.c0);
+  free(p_uVars->C.c1);
+  free(p_uVars->C.c2);
+  free(p_uVars->C.c3);
+  free(p_uVars->uv_csq);
+  free(p_uVars->uv_csv);
+  free(p_uVars->uv_csp);
   free(p_uVars);
+}
+
+
+void reb_tes_allocate_memory(struct reb_simulation* r)
+{
+
 }
