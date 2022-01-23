@@ -329,8 +329,51 @@ class TestIntegratorTES(unittest.TestCase):
         except:
             pass        
             
-        
+    def test_longterm_conservation(self): 
+        return # Comment to run test (takes a few minutes)
+        Q = np.array([[ 1.6166089996756736e-07, -1.3174811284580585e-06,  2.7324913024933070e-08],
+                       [ 2.5649647880625376e-01,  1.9231594858567522e-01, -7.8597568865791164e-03],
+                       [-3.5944957551650537e-02, -7.2591833677411899e-01, -7.7858351034036984e-03],
+                       [-1.8053334772678853e-01,  9.6659467393463594e-01, 6.4783933279786331e-05],
+                       [ 1.3261049612058200e+00,  4.9619050870453013e-01, -2.2292003930474757e-02]])
 
+        V = np.array([[ 7.6312215682912423e-09,  3.7792298576194310e-09,  2.0802159000845027e-09],
+                   [-2.2401743922574373e-02,  2.3733227399426897e-02,     3.9957465111722101e-03],
+                   [ 2.0064892939487048e-02, -1.0775553592363494e-03,    -1.1732906261155678e-03],
+                   [-1.7193861432114162e-02, -3.2158096004801006e-03,    2.3079228394344072e-07],
+                   [-4.3648866780331211e-03,  1.4300831106604298e-02,   4.0702686654480900e-04]])
+
+        mass = np.array([2.959122082855911e-04, 4.888673559153889e-11, 7.242975407123889e-10, 8.887415067052367e-10, 9.509474594518523e-11])
+        period = 87.96828365969395    
+        
+        sim = rebound.Simulation()
+        
+        sim.G = 1.4881806877180788e-34
+        mass /= sim.G
+        
+        for i in range(3):
+            sim.add(m=mass[i], x=Q[i,0], y=Q[i,1], z=Q[i,2], vx=V[i,0], vy=V[i,1], vz=V[i,2])
+        
+        sim.move_to_com()
+        # sim.dt = period/100
+        sim.integrator = "tes"          
+        e0 = sim.calculate_energy()
+
+        samples = 10000
+        orbits = 100
+        e_arr = np.zeros(samples)
+        t_arr = np.zeros(samples)
+        for i in range(samples):
+            sim.integrate(i*orbits*period)
+            e_arr[i] = sim.calculate_energy()
+            t_arr[i] = i*orbits
+        de = np.abs((e_arr-e0)/e0)
+        plt.figure(dpi=300)
+        plt.loglog(t_arr[1:], de[1:])
+        plt.ylim(1e-16, 1e-13)
+        plt.grid()
+        plt.xlabel("time (orbits)")
+        plt.ylabel("relative energy error")
     
 if __name__ == "__main__":
     unittest.main()

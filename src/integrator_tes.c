@@ -32,64 +32,135 @@
 #include "rebound.h"
 #include "integrator_tes.h"
 
-// Simulation functions
-void reb_tes_init(struct reb_simulation* r, uint32_t z_n);
-void reb_tes_free(struct reb_simulation* r);
+#define stages 7
+#define FINAL_STAGE_INDEX 8
+#define MAX_STEP_SIZE_GROWTH 4.0
+#define MIN_STEP_SIZE 1E-5
+#define OSCULATING_ORBIT_SLOTS 9  // stages + 2 for t=0 and t=1.
+#define MAX_ITERATIONS 12
+#define MIN_ITERATIONS 2
+#define PI 3.141592653589793238462643383279
+#define PI_SQ_X4 (4.0*PI*PI)
+#define MAX_NEWTON_ITERATIONS 50
+#define STUMPF_ITERATIONS 13 
+
+// Coefficients
+static const double hArr[9] = {0.0, 0.0562625605369221464656521910318, 0.180240691736892364987579942780, 0.352624717113169637373907769648, 0.547153626330555383001448554766, 0.734210177215410531523210605558, 0.885320946839095768090359771030, 0.977520613561287501891174488626, 1.0};
+static const double rr_inv[28] = {17.7738089140780008407526624, 5.5481367185372165056928203, 8.0659386483818866885371223, 2.8358760786444386782520107, 3.3742499769626352599420361, 5.8010015592640614823286804, 1.8276402675175978297946079, 2.0371118353585847827949161, 2.7254422118082262837742729, 5.1406241058109342286363203, 1.3620078160624694969370006, 1.4750402175604115479218482, 1.8051535801402512604391149, 2.6206449263870350811541814, 5.3459768998711075141214895, 1.1295338753367899027322862, 1.2061876660584456166252037, 1.4182782637347391537713785, 1.8772424961868100972169920, 2.9571160172904557478071039, 6.6176620137024244874471300, 1.0229963298234867458386119, 1.0854721939386423840467243, 1.2542646222818777659905423, 1.6002665494908162609916716, 2.3235983002196942228325344, 4.1099757783445590862385765, 10.8460261902368446847064289};
+static const double c[21] = {-0.0562625605369221464656522, 0.0101408028300636299864818, -0.2365032522738145114532321, -0.0035758977292516175949345, 0.0935376952594620658957485, -0.5891279693869841488271399, 0.0019565654099472210769006, -0.0547553868890686864408084, 0.4158812000823068616886219, -1.1362815957175395318285885, -0.0014365302363708915424460, 0.0421585277212687077072973, -0.3600995965020568122897665, 1.2501507118406910258505441, -1.8704917729329500633517991, 0.0012717903090268677492943, -0.0387603579159067703699046, 0.3609622434528459832253398, -1.4668842084004269643701553, 2.9061362593084293014237913, -2.7558127197720458314421588};
+static const double d[21] = {0.0562625605369221464656522, 0.0031654757181708292499905, 0.2365032522738145114532321, 0.0001780977692217433881125, 0.0457929855060279188954539, 0.5891279693869841488271399, 0.0000100202365223291272096, 0.0084318571535257015445000, 0.2535340690545692665214616, 1.1362815957175395318285885, 0.0000005637641639318207610, 0.0015297840025004658189490, 0.0978342365324440053653648, 0.8752546646840910912297246, 1.8704917729329500633517991, 0.0000000317188154017613665, 0.0002762930909826476593130, 0.0360285539837364596003871, 0.5767330002770787313544596, 2.2485887607691597933926895, 2.7558127197720458314421588};
+double invfactorial[35] = {1.0,1.0,0.5,0.166666666666666666666666666666667,0.0416666666666666666666666666666667,
+                            0.00833333333333333333333333333333333,0.00138888888888888888888888888888889,0.000198412698412698412698412698412698,
+                            0.0000248015873015873015873015873015873,0.00000275573192239858906525573192239859,0.000000275573192239858906525573192239859,
+                            0.0000000250521083854417187750521083854417,0.00000000208767569878680989792100903212014,0.000000000160590438368216145993923771701549,
+                            1.14707455977297247138516979786821e-11,7.64716373181981647590113198578807e-13,4.77947733238738529743820749111754e-14,
+                            2.81145725434552076319894558301032e-15,1.56192069685862264622163643500573e-16,8.22063524662432971695598123687228e-18,
+                            4.11031762331216485847799061843614e-19,1.95729410633912612308475743735054e-20,8.89679139245057328674889744250247e-22,
+                            3.86817017063068403771691193152281e-23,1.61173757109611834904871330480117e-24,6.44695028438447339619485321920469e-26,
+                            2.47959626322479746007494354584796e-27,9.18368986379554614842571683647391e-29,3.27988923706983791015204172731211e-30,
+                            1.13099628864477169315587645769383e-31,3.76998762881590564385292152564611e-33,1.21612504155351794962997468569229e-34,
+                            3.80039075485474359259367089278841e-36,1.15163356207719502805868814932982e-37,3.38715753552116184723143573332301e-39};
+
+typedef struct _controlVars_const {
+    const double* const __restrict__ p0;
+    const double* const __restrict__ p1;
+    const double* const __restrict__ p2;
+    const double* const __restrict__ p3;
+    const double* const __restrict__ p4;
+    const double* const __restrict__ p5;
+    const double* const __restrict__ p6;
+    uint32_t size;
+}controlVars_const;
+
+controlVars_const control_vars_cast(controlVars in)
+{
+    controlVars_const out = {
+        .p0 = in.p0, 
+        .p1 = in.p1, 
+        .p2 = in.p2, 
+        .p3 = in.p3, 
+        .p4 = in.p4, 
+        .p5 = in.p5, 
+        .p6 = in.p6, 
+    };    
+    return out;
+}
+
+// Macros for performance.
+#define NORM(x, i) sqrt(x[3*i]*x[3*i]+x[3*i+1]*x[3*i+1]+x[3*i+2]*x[3*i+2])
+#define DOT(x, y, i) x[3*i+0]*y[3*i+0]+x[3*i+1]*y[3*i+1]+x[3*i+2]*y[3*i+2]
+#define CROSS(a,b,c,i) \
+	(a)[3*i+0] = (b)[3*i+1] * (c)[3*i+2] - (c)[3*i+1] * (b)[3*i+2]; \
+	(a)[3*i+1] = (b)[3*i+2] * (c)[3*i+0] - (c)[3*i+2] * (b)[3*i+0]; \
+	(a)[3*i+2] = (b)[3*i+0] * (c)[3*i+1] - (c)[3*i+0] * (b)[3*i+1];
+#define CROSS_LOCAL(a,b,c) \
+	(a)[0] = (b)[1] * (c)[2] - (c)[1] * (b)[2]; \
+	(a)[1] = (b)[2] * (c)[0] - (c)[2] * (b)[0]; \
+	(a)[2] = (b)[0] * (c)[1] - (c)[0] * (b)[1];
+
+
+// Top level functions
+static void reb_tes_init(struct reb_simulation* r, uint32_t z_n);
+static void reb_tes_free(struct reb_simulation* r);
 
 // Gravity functions
-void reb_dhem_PerformSummation(struct reb_simulation* r, double * Q, double * P,
+static void reb_dhem_perform_summation(struct reb_simulation* r, double * Q, double * P,
                                double * dQ, double * dP, uint32_t stageNumber);
-void reb_dhem_CalcOscOrbitsForAllStages(struct reb_simulation* r, double t0, double h, const double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis);
-double reb_dhem_CalculateHamiltonian(struct reb_simulation* r, double * Q, double * P);
-void reb_dhem_ConvertToDHCoords(double * Q, double * V, double * Qout, double * Pout);
-void reb_dhem_ConvertToCOM(double * Q, double * V, double * Qout, double * Vout);
-void reb_dhem_InitialiseOsculatingOrbits(struct reb_simulation* r, double * Q, double * P, double t);
-void reb_dhem_rhs(struct reb_simulation* r, double const * __restrict__ const dQ, double const * __restrict__ const dP, double * __restrict__ const dQ_dot,
+static void reb_dhem_calc_osc_orbits_for_all_stages(struct reb_simulation* r, double t0, double h, const double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis);
+static void reb_dhem_init_osc_orbits(struct reb_simulation* r, double * Q, double * P, double t);
+static void reb_dhem_rhs(struct reb_simulation* r, double const * __restrict__ const dQ, double const * __restrict__ const dP, double * __restrict__ const dQ_dot,
               double * __restrict__ const dP_dot, double * __restrict__ const dQ_ddot, double * __restrict__ const dP_ddot);
-void reb_dhem_rhs_wrapped(struct reb_simulation* r, double * dQ, double * dP, double * dQ_dot,
+static void reb_dhem_rhs_wrapped(struct reb_simulation* r, double * dQ, double * dP, double * dQ_dot,
                       double * dP_dot, double * dQ_ddot, double * dP_ddot, uint32_t stageNumber,
                       double * cs1, double * cs2);      
-void reb_dhem_CalculateOsculatingOrbitDerivatives_Momenta(struct reb_simulation* r, double const * const __restrict__ Qosc, double const * const __restrict__ Posc, 
+static void reb_dhem_calc_osc_orbit_derivs(struct reb_simulation* r, double const * const __restrict__ Qosc, double const * const __restrict__ Posc, 
                                                       double * const __restrict__ Qosc_dot, double * const __restrict__ Posc_dot);
-uint32_t reb_dhem_RectifyOrbits(struct reb_simulation* r, double t, double * Q, double * P,
+static uint32_t reb_dhem_rectify(struct reb_simulation* r, double t, double * Q, double * P,
                             double * dQ, double * dP, uint32_t * rectifiedArray, uint32_t stageNumber);
-void reb_dhem_Init(struct reb_simulation* r, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep);
-void reb_dhem_Free(struct reb_simulation* r);
+static void reb_dhem_init(struct reb_simulation* r, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep);
+static void reb_dhem_free(struct reb_simulation* r);
 
 // Radau functions
-void reb_Radau_Init(struct reb_simulation* r);
-void reb_Radau_Free(struct reb_simulation* r);
-double reb_Radau_CalculateStepSize(struct reb_simulation* r, double h, double hLast, double t);
-void reb_ClearRectifiedBFields(struct reb_simulation* r, controlVars * B, uint32_t * rectifiedArray);
-double reb_Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double dt_last_done);
-void reb_RadauStep15_Init(struct reb_simulation* r);
-void reb_RadauStep15_Free(struct reb_simulation* r);
-void reb_ControlVars_Free(controlVars * var);
-void reb_ControlVars_Init(controlVars * var, uint32_t size);
-void reb_ControlVars_Clear(controlVars * var);
-void reb_CalculatePredictors(double h, double hSample, double const * __restrict__ z_state0, double const * __restrict__ z_dState, 
+static void reb_radau_init(struct reb_simulation* r);
+static void reb_radau_free(struct reb_simulation* r);
+static double reb_calc_stepsize(struct reb_simulation* r, double h, double hLast, double t);
+static void reb_clear_rectified_b_fields(struct reb_simulation* r, controlVars * B, uint32_t * rectifiedArray);
+static double reb_single_step(struct reb_simulation* r, double z_t, double dt, double dt_last_done);
+static void reb_init_radau_step(struct reb_simulation* r);
+static void reb_free_radau_step(struct reb_simulation* r);
+static void reb_free_controlvars(controlVars * var);
+static void reb_init_controlvars(controlVars * var, uint32_t size);
+static void reb_clear_controlvars(controlVars * var);
+static void reb_calc_predictors(double h, double hSample, double const * __restrict__ z_state0, double const * __restrict__ z_dState, 
                          double const * __restrict__ z_ddState, controlVars const * z_B, double * __restrict__ z_predictors, 
-                         double const * __restrict__ z_csState, uint32_t const z_start, uint32_t const z_end, uint32_t const add_cs_var);
-void reb_CalculatePredictors_1stOrder(double h, double hSample, double * z_state0, double * z_dState, 
-                                  controlVars * z_B, double * z_predictors, double *, uint32_t start, uint32_t length, uint32_t add_cs_var);
+                         double const * __restrict__ z_csState, uint32_t const z_start, uint32_t const z_end);
+static void reb_calc_predictors_1st_order(double h, double hSample, double * z_state0, double * z_dState, 
+                                  controlVars * z_B, double * z_predictors, double *, uint32_t start, uint32_t length);
 
-void reb_CalculateNewState(double h, double * z_dState, double * z_ddState, controlVars * z_B, double * z_state0, double * z_csState, uint32_t z_start, uint32_t z_end);
-void reb_CalculateNewState_1stOrder(double h, double * z_dState, controlVars * z_B, double * z_state0, double * z_csState, uint32_t z_start, uint32_t z_end);
-void reb_AnalyticalContinuation(struct reb_simulation* r, controlVars * z_B, controlVars * z_Blast, const double h, const double h_new, const uint32_t * const rectificationArray);
-void reb_CalculateGfromB(struct reb_simulation* r);\
-void reb_RadauStep15_Step(struct reb_simulation* r, uint32_t * z_fCalls, double t, double h);
-double reb_ReturnIAS15StepError(struct reb_simulation* r, double h, double t);
+static void reb_update_state(double h, double * z_dState, double * z_ddState, controlVars * z_B, double * z_state0, double * z_csState, uint32_t z_start, uint32_t z_end);
+static void reb_update_state_1st_order(double h, double * z_dState, controlVars * z_B, double * z_state0, double * z_csState, uint32_t z_start, uint32_t z_end);
+static void reb_analytical_continuation(struct reb_simulation* r, controlVars * z_B, controlVars * z_Blast, const double h, const double h_new, const uint32_t * const rectificationArray);
+static void reb_calc_g_from_b(struct reb_simulation* r);\
+static void reb_calc_g_from_b_internal(controlVars * z_G, controlVars * z_B, uint32_t z_start, uint32_t z_end);
+static void reb_radau_step(struct reb_simulation* r, uint32_t * z_fCalls, double t, double h);
+static double reb_calc_step_error(struct reb_simulation* r, double h, double t);
 
 // Universal variables functions
-void reb_UniversalVars_Init(struct reb_simulation* const r);
-void reb_UniversalVars_Free(struct reb_simulation* r);
-void reb_CalculateClassicalOrbitalElements(struct reb_simulation* r);
-void reb_RebasisOsculatingOrbits_Momenta(struct reb_simulation* r, double * z_Q, double * z_P, double z_t, uint32_t i);
-void reb_CalculateOsculatingOrbitsForSingleStep(struct reb_simulation* r, double **Xosc_map, 
+static void reb_init_uvars(struct reb_simulation* const r);
+static void reb_free_uvars(struct reb_simulation* r);
+static void reb_cal_orb_elems(struct reb_simulation* r);
+static void reb_rebasis_osc_orbits(struct reb_simulation* r, double * z_Q, double * z_P, double z_t, uint32_t i);
+static void reb_calc_osc_orbits(struct reb_simulation* r, double **Xosc_map, 
                                             const double t0, const double h, double const * const h_array, 
                                             const uint32_t z_stagesPerStep, uint32_t z_rebasis);
-void reb_ApplyCorrectorToOsculatingOrbitCalculation(struct reb_simulation* r, double **Xosc_map, double t, uint32_t z_stagesPerStep);                                            
+static void reb_apply_osc_orbit_corrector(struct reb_simulation* r, double **Xosc_map, double t, uint32_t z_stagesPerStep);                                            
+static void reb_c_stumpff(double * cs_in, double z_in);
+static double reb_solve_for_universal_anomaly(struct reb_simulation* const r, double dt, double h, uint32_t i, double * C);
+static double reb_calc_osc_update_value(struct reb_simulation* const r, double X, double dt, uint32_t i, double * C);
+static void reb_calc_single_orb_elem(struct reb_simulation* r, uint32_t i);
 
+
+static inline void add_cs(double* out, double* cs, double inp);
 
 
 
@@ -132,10 +203,10 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         }
         r->ri_tes.mass[0] = particles[0].m; // Keep mass[0] as stellar mass.
 
-        reb_UniversalVars_Init(r);
-        reb_dhem_Init(r, r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit, 9);
-        reb_dhem_InitialiseOsculatingOrbits(r, r->ri_tes.Q_dh, r->ri_tes.P_dh, r->t);
-        reb_Radau_Init(r);  
+        reb_init_uvars(r);
+        reb_dhem_init(r, r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit, 9);
+        reb_dhem_init_osc_orbits(r, r->ri_tes.Q_dh, r->ri_tes.P_dh, r->t);
+        reb_radau_init(r);  
 
         // No step-size specified, calculate timestep from shortest orbital period object in the system.
         if(r->dt == 0.001 && r->dt_last_done == 0)
@@ -151,7 +222,7 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         }        
     }
     
-    double dt_new = reb_Radau_SingleStep(r, r->t, r->dt, r->dt_last_done);
+    double dt_new = reb_single_step(r, r->t, r->dt, r->dt_last_done);
 
     // update timestep
 	r->t+=r->dt;
@@ -164,7 +235,7 @@ void reb_integrator_tes_synchronize(struct reb_simulation* r){
 
     if(r->ri_tes.allocated_N == N)
     {    
-        reb_dhem_PerformSummation(r, r->ri_tes.radau->Qout, r->ri_tes.radau->Pout, 
+        reb_dhem_perform_summation(r, r->ri_tes.radau->Qout, r->ri_tes.radau->Pout, 
                                         r->ri_tes.radau->dQ, r->ri_tes.radau->dP, 8);
                     
         double * Q_out = r->ri_tes.radau->Qout;
@@ -202,9 +273,9 @@ void reb_integrator_tes_reset(struct reb_simulation* r){
     
     if(r->ri_tes.allocated_N != 0)
     {
-      reb_UniversalVars_Free(r);
-      reb_dhem_Free(r);
-      reb_Radau_Free(r);
+      reb_free_uvars(r);
+      reb_dhem_free(r);
+      reb_radau_free(r);
       reb_tes_free(r);    
     }
 
@@ -213,16 +284,16 @@ void reb_integrator_tes_reset(struct reb_simulation* r){
 void reb_integrator_tes_allocate_memory(struct reb_simulation* r)
 {
     reb_tes_init(r, r->N);
-    reb_UniversalVars_Init(r);
-    reb_dhem_Init(r, r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit, 9);
-    reb_Radau_Init(r);          
+    reb_init_uvars(r);
+    reb_dhem_init(r, r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit, 9);
+    reb_radau_init(r);          
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Original TES file: Simulation.c
 ///////////////////////////////////////////////////////////////////////////////////
-void reb_tes_init(struct reb_simulation* r, uint32_t z_n)
+static void reb_tes_init(struct reb_simulation* r, uint32_t z_n)
 {
   if(r->ri_tes.allocated_N != 0)
   {
@@ -247,7 +318,7 @@ void reb_tes_init(struct reb_simulation* r, uint32_t z_n)
 }
 
 
-void reb_tes_free(struct reb_simulation* r)
+static void reb_tes_free(struct reb_simulation* r)
 {
   free(r->ri_tes.mass);
   free(r->ri_tes.X_dh);
@@ -258,11 +329,7 @@ void reb_tes_free(struct reb_simulation* r)
 ///////////////////////////////////////////////////////////////////////////////////
 // Original TES file: dhem.c
 ///////////////////////////////////////////////////////////////////////////////////
-#define NORM(x, i) sqrt(x[3*i]*x[3*i]+x[3*i+1]*x[3*i+1]+x[3*i+2]*x[3*i+2])
-
-static inline void add_cs(double* out, double* cs, double inp);
-
-void reb_dhem_rhs_wrapped(struct reb_simulation* r, double * dQ, double * dP, double * dQ_dot,
+static void reb_dhem_rhs_wrapped(struct reb_simulation* r, double * dQ, double * dP, double * dQ_dot,
               double * dP_dot, double * dQ_ddot, double * dP_ddot, uint32_t stageNumber,
               double * cs1, double * cs2)
 {
@@ -284,12 +351,7 @@ void reb_dhem_rhs_wrapped(struct reb_simulation* r, double * dQ, double * dP, do
 
 }
 
-
-/*
- * dQ, dP are the input deltas and dQ_dot, dP_dot are the first derivatives terms.
- * dQ_ddot and dP_ddot are the second derivative terms.
- */
-void reb_dhem_rhs(struct reb_simulation* r, double const * __restrict__ const dQ, double const * __restrict__ const dP, double * __restrict__ const dQ_dot,
+static void reb_dhem_rhs(struct reb_simulation* r, double const * __restrict__ const dQ, double const * __restrict__ const dP, double * __restrict__ const dQ_dot,
               double * __restrict__ const dP_dot, double * __restrict__ const dQ_ddot, double * __restrict__ const dP_ddot)
 {
   DHEM * dhem = r->ri_tes.rhs;
@@ -428,42 +490,7 @@ void reb_dhem_rhs(struct reb_simulation* r, double const * __restrict__ const dQ
   }
 }
 
-double reb_dhem_CalculateHamiltonian(struct reb_simulation* r, double * Q, double * P)
-{
-  double * m = r->ri_tes.mass;
-  double hamiltonian = 0;
-  double Psun[3] = {0,0,0};
-  double sepVec[3] = {0,0,0};
-
-  for(int32_t i = 1; i < r->N; i++)
-  {
-    double Pnorm = (NORM(P, i));
-    hamiltonian += Pnorm*Pnorm / (2*m[i]);
-    hamiltonian -= r->G*m[0]*m[i] / NORM(Q, i);
-
-    Psun[0] += P[3*i];
-    Psun[1] += P[3*i+1];
-    Psun[2] += P[3*i+2];
-  }
-  double PsunNorm = NORM(Psun, 0);
-  hamiltonian += (1.0/(2.0*m[0])) * PsunNorm*PsunNorm;
-
-  for(int32_t i = 1; i < r->N; i++)
-  {
-    for(int32_t j = i+1; j < r->N; j++)
-    {
-      sepVec[0] = Q[3*i]-Q[3*j];
-      sepVec[1] = Q[3*i+1]-Q[3*j+1];
-      sepVec[2] = Q[3*i+2]-Q[3*j+2];
-
-      hamiltonian -= (r->G*m[i]*m[j]) / NORM(sepVec, 0);
-    }
-  }
-
-  return hamiltonian;
-}
-
-void reb_dhem_PerformSummation(struct reb_simulation* r, double * Q, double * P,
+static void reb_dhem_perform_summation(struct reb_simulation* r, double * Q, double * P,
                                double * dQ, double * dP, uint32_t stageNumber)
 {
   DHEM * dhem = r->ri_tes.rhs;
@@ -492,15 +519,15 @@ void reb_dhem_PerformSummation(struct reb_simulation* r, double * Q, double * P,
 
 }
 
-void reb_dhem_InitialiseOsculatingOrbits(struct reb_simulation* r, double * Q, double * P, double t)
+static void reb_dhem_init_osc_orbits(struct reb_simulation* r, double * Q, double * P, double t)
 {
   for(int32_t i = 1; i < r->N; i++)
   {
-    reb_RebasisOsculatingOrbits_Momenta(r, Q, P, t, i);
+    reb_rebasis_osc_orbits(r, Q, P, t, i);
   }
 }
 
-uint32_t reb_dhem_RectifyOrbits(struct reb_simulation* r, double t, double * Q, double * P,
+uint32_t reb_dhem_rectify(struct reb_simulation* r, double t, double * Q, double * P,
                             double * dQ, double * dP, uint32_t * rectifiedArray, uint32_t stageNumber)
 {
   DHEM * dhem = r->ri_tes.rhs;
@@ -575,7 +602,7 @@ uint32_t reb_dhem_RectifyOrbits(struct reb_simulation* r, double t, double * Q, 
         r->ri_tes.uVars->uv_csp[3*i+j] = 0;
       }          
 
-      reb_RebasisOsculatingOrbits_Momenta(r, Q, P, t, i);
+      reb_rebasis_osc_orbits(r, Q, P, t, i);
       dhem->rectifyTimeArray[i] = t + dhem->rectificationPeriod[i];
 
       rectifiedArray[3*i] = 1;
@@ -591,7 +618,7 @@ uint32_t reb_dhem_RectifyOrbits(struct reb_simulation* r, double t, double * Q, 
   return rectifiedCount;
 }
 
-void reb_dhem_CalculateOsculatingOrbitDerivatives_Momenta(struct reb_simulation* r, double const * const __restrict__ Qosc, double const * const __restrict__ Posc, 
+static void reb_dhem_calc_osc_orbit_derivs(struct reb_simulation* r, double const * const __restrict__ Qosc, double const * const __restrict__ Posc, 
                                                       double * const __restrict__ Qosc_dot, double * const __restrict__ Posc_dot)
 {
   DHEM * dhem = r->ri_tes.rhs;
@@ -615,16 +642,16 @@ void reb_dhem_CalculateOsculatingOrbitDerivatives_Momenta(struct reb_simulation*
   }
 }
 
-void reb_dhem_CalcOscOrbitsForAllStages(struct reb_simulation* r, double t0, double h, const double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis)
+static void reb_dhem_calc_osc_orbits_for_all_stages(struct reb_simulation* r, double t0, double h, const double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis)
 {
   DHEM * dhem = r->ri_tes.rhs;
   if(z_rebasis != 0)
   {
-    reb_CalculateOsculatingOrbitsForSingleStep(r, dhem->XoscArr, t0, h, hArr, z_stagesPerStep, z_rebasis);  
+    reb_calc_osc_orbits(r, dhem->XoscArr, t0, h, hArr, z_stagesPerStep, z_rebasis);  
   }
   else
   {
-    reb_CalculateOsculatingOrbitsForSingleStep(r, dhem->XoscPredArr, t0, h, hArr, z_stagesPerStep, z_rebasis);  
+    reb_calc_osc_orbits(r, dhem->XoscPredArr, t0, h, hArr, z_stagesPerStep, z_rebasis);  
   }
 
   for(uint32_t i = 0; i < z_stagesPerStep; i++)
@@ -634,11 +661,11 @@ void reb_dhem_CalcOscOrbitsForAllStages(struct reb_simulation* r, double t0, dou
       double * const __restrict__ Q_dot_out = dhem->Xosc_dotArr[i];
       double * const __restrict__ P_dot_out = &dhem->Xosc_dotArr[i][3*r->N];
 
-      reb_dhem_CalculateOsculatingOrbitDerivatives_Momenta(r, Qout, Pout, Q_dot_out, P_dot_out);
+      reb_dhem_calc_osc_orbit_derivs(r, Qout, Pout, Q_dot_out, P_dot_out);
   }
 }
 
-void reb_dhem_Init(struct reb_simulation* r, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep)
+static void reb_dhem_init(struct reb_simulation* r, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep)
 {
   // Get memory for the dhem state vectors.
   r->ri_tes.rhs = (DHEM*)malloc(sizeof(DHEM));
@@ -717,7 +744,7 @@ void reb_dhem_Init(struct reb_simulation* r, double z_rectificationPeriodDefault
   }
 }
 
-void reb_dhem_Free(struct reb_simulation* r)
+static void reb_dhem_free(struct reb_simulation* r)
 {
   DHEM * rhs = r->ri_tes.rhs;
   free(rhs->X);
@@ -748,38 +775,30 @@ static inline void add_cs(double* out, double* cs, double inp)
 ///////////////////////////////////////////////////////////////////////////////////
 // Original TES file: dhem.c
 ///////////////////////////////////////////////////////////////////////////////////
-
-#define FINAL_STAGE_INDEX 8
-#define MAX_STEP_SIZE_GROWTH 4.0
-#define MIN_STEP_SIZE 1E-5
-#define OSCULATING_ORBIT_SLOTS 9  // stages + 2 for t=0 and t=1.
-
-static const double hArr[9] = {0.0, 0.0562625605369221464656521910318, 0.180240691736892364987579942780, 0.352624717113169637373907769648, 0.547153626330555383001448554766, 0.734210177215410531523210605558, 0.885320946839095768090359771030, 0.977520613561287501891174488626, 1.0};
-
-double reb_Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, double dt_last_done)
+double reb_single_step(struct reb_simulation* r, double z_t, double dt, double dt_last_done)
 {
     RADAU * radau = r->ri_tes.radau;
     uint32_t iterations = 0;
     double dt_new = 0.0;
-    uint32_t rectificationCount = reb_dhem_RectifyOrbits(r, z_t, r->ri_tes.Q_dh, r->ri_tes.P_dh, radau->dQ,
+    uint32_t rectificationCount = reb_dhem_rectify(r, z_t, r->ri_tes.Q_dh, r->ri_tes.P_dh, radau->dQ,
                                         radau->dP, radau->rectifiedArray, FINAL_STAGE_INDEX);
     radau->rectifications += rectificationCount;
 
     // Calculate the osculating orbits.
-    reb_dhem_CalcOscOrbitsForAllStages(r, z_t, dt, hArr, OSCULATING_ORBIT_SLOTS, 1);
+    reb_dhem_calc_osc_orbits_for_all_stages(r, z_t, dt, hArr, OSCULATING_ORBIT_SLOTS, 1);
 
-    reb_ClearRectifiedBFields(r, &radau->B, radau->rectifiedArray);
-    reb_ClearRectifiedBFields(r, &radau->B_1st, radau->rectifiedArray);
+    reb_clear_rectified_b_fields(r, &radau->B, radau->rectifiedArray);
+    reb_clear_rectified_b_fields(r, &radau->B_1st, radau->rectifiedArray);
 
-    reb_CalculateGfromB(r); 
+    reb_calc_g_from_b(r); 
 
-    reb_RadauStep15_Step(r, &iterations, z_t, dt);
+    reb_radau_step(r, &iterations, z_t, dt);
     radau->convergenceIterations += iterations;
 
-    dt_new = r->ri_tes.epsilon > 0 ? reb_Radau_CalculateStepSize(r, dt, dt_last_done, z_t) : dt;
+    dt_new = r->ri_tes.epsilon > 0 ? reb_calc_stepsize(r, dt, dt_last_done, z_t) : dt;
 
-    reb_AnalyticalContinuation(r, &radau->B_1st, &radau->Blast_1st, dt, dt_new, radau->rectifiedArray);
-    reb_AnalyticalContinuation(r, &radau->B, &radau->Blast, dt, dt_new, radau->rectifiedArray);
+    reb_analytical_continuation(r, &radau->B_1st, &radau->Blast_1st, dt, dt_new, radau->rectifiedArray);
+    reb_analytical_continuation(r, &radau->B, &radau->Blast, dt, dt_new, radau->rectifiedArray);
 
     // Perform a linear update to the drift of the COM.
     for(uint32_t i = 0; i < 3; i++)
@@ -790,7 +809,7 @@ double reb_Radau_SingleStep(struct reb_simulation* r, double z_t, double dt, dou
     return dt_new;
 }
 
-void reb_Radau_Init(struct reb_simulation* r)
+static void reb_radau_init(struct reb_simulation* r)
 {
   r->ri_tes.radau = (RADAU *)malloc(sizeof(RADAU));
   memset(r->ri_tes.radau, 0, sizeof(RADAU));
@@ -825,13 +844,13 @@ void reb_Radau_Init(struct reb_simulation* r)
   radau->rectifications = 0;
   radau->convergenceIterations = 0;
 
-  reb_RadauStep15_Init(r);
+  reb_init_radau_step(r);
 }
 
-void reb_Radau_Free(struct reb_simulation* r)
+static void reb_radau_free(struct reb_simulation* r)
 {
   RADAU * radau = r->ri_tes.radau;
-  reb_RadauStep15_Free(r);
+  reb_free_radau_step(r);
   free(radau->dX);
   free(radau->Xout);
   free(radau->predictors);
@@ -841,16 +860,16 @@ void reb_Radau_Free(struct reb_simulation* r)
   radau = NULL;
 }
 
-double reb_Radau_CalculateStepSize(struct reb_simulation* r, double h, double hLast, double t)
+double reb_calc_stepsize(struct reb_simulation* r, double h, double hLast, double t)
 {
   double hTrial = 0.0;
 
   // Get the error estimate and orbit size estimate.
-  double errMax = reb_ReturnIAS15StepError(r, h, t);
+  double errMax = reb_calc_step_error(r, h, t);
 
-  if(errMax > r->ri_tes.epsilon*100.0)
+  if(errMax > r->ri_tes.epsilon*10.0 && r->steps_done == 0)
   {
-    printf("\nWarning! The initial step size chosen does not properly capture the system dynamics. Either do not set the value of sim.dt initially, or if initialising a close encounter then set sim.dt to a smaller initial step size. The current initial step size is %e.", r->dt);
+    printf("\nWarning! The initial step size chosen does not capture the system dynamics. Either do not set the value of sim.dt initially, or if initialising a close encounter then set sim.dt to a smaller initial step size. The current initial step size is %e.", r->dt);
   }
     
   if(isnormal(errMax))
@@ -872,7 +891,7 @@ double reb_Radau_CalculateStepSize(struct reb_simulation* r, double h, double hL
 }
 
 
-void reb_ClearRectifiedBFields(struct reb_simulation* r, controlVars * B, uint32_t * rectifiedArray)
+static void reb_clear_rectified_b_fields(struct reb_simulation* r, controlVars * B, uint32_t * rectifiedArray)
 {
   for(uint32_t i = 0; i < r->ri_tes.stateVectorLength; i++)
   {
@@ -892,59 +911,7 @@ void reb_ClearRectifiedBFields(struct reb_simulation* r, controlVars * B, uint32
 ///////////////////////////////////////////////////////////////////////////////////
 // Original TES file: radau_step.c
 ///////////////////////////////////////////////////////////////////////////////////
-static const double rr_inv[28] = {17.7738089140780008407526624, 5.5481367185372165056928203, 8.0659386483818866885371223, 2.8358760786444386782520107, 3.3742499769626352599420361, 5.8010015592640614823286804, 1.8276402675175978297946079, 2.0371118353585847827949161, 2.7254422118082262837742729, 5.1406241058109342286363203, 1.3620078160624694969370006, 1.4750402175604115479218482, 1.8051535801402512604391149, 2.6206449263870350811541814, 5.3459768998711075141214895, 1.1295338753367899027322862, 1.2061876660584456166252037, 1.4182782637347391537713785, 1.8772424961868100972169920, 2.9571160172904557478071039, 6.6176620137024244874471300, 1.0229963298234867458386119, 1.0854721939386423840467243, 1.2542646222818777659905423, 1.6002665494908162609916716, 2.3235983002196942228325344, 4.1099757783445590862385765, 10.8460261902368446847064289};
-static const double c[21] = {-0.0562625605369221464656522, 0.0101408028300636299864818, -0.2365032522738145114532321, -0.0035758977292516175949345, 0.0935376952594620658957485, -0.5891279693869841488271399, 0.0019565654099472210769006, -0.0547553868890686864408084, 0.4158812000823068616886219, -1.1362815957175395318285885, -0.0014365302363708915424460, 0.0421585277212687077072973, -0.3600995965020568122897665, 1.2501507118406910258505441, -1.8704917729329500633517991, 0.0012717903090268677492943, -0.0387603579159067703699046, 0.3609622434528459832253398, -1.4668842084004269643701553, 2.9061362593084293014237913, -2.7558127197720458314421588};
-static const double d[21] = {0.0562625605369221464656522, 0.0031654757181708292499905, 0.2365032522738145114532321, 0.0001780977692217433881125, 0.0457929855060279188954539, 0.5891279693869841488271399, 0.0000100202365223291272096, 0.0084318571535257015445000, 0.2535340690545692665214616, 1.1362815957175395318285885, 0.0000005637641639318207610, 0.0015297840025004658189490, 0.0978342365324440053653648, 0.8752546646840910912297246, 1.8704917729329500633517991, 0.0000000317188154017613665, 0.0002762930909826476593130, 0.0360285539837364596003871, 0.5767330002770787313544596, 2.2485887607691597933926895, 2.7558127197720458314421588};
-
-#define stages 7
-#define OSCULATING_ORBIT_SLOTS 9  // stages + 2 for t=0 and t=1.
-#define MAX_ITERATIONS 12
-#define MIN_ITERATIONS 2
-#define NORM(x, i) sqrt(x[3*i]*x[3*i]+x[3*i+1]*x[3*i+1]+x[3*i+2]*x[3*i+2])
-
-#define LOCAL_ERROR_ESTIMATE 0
-#define GLOBAL_ERROR_ESTIMATE 1
-// #define ERROR_ESTIMATE LOCAL_ERROR_ESTIMATE
-#define ERROR_ESTIMATE GLOBAL_ERROR_ESTIMATE
-
-#define CUT_OFF 1E-13
-
-#define DONT_ADD_CS_VAR 0
-#define ADD_CS_VAR 1
-
-// Integration step variables
-
-
-static inline void add_cs(double* out, double* cs, double inp);
-static void reb_CalculateGFromBInternal(controlVars * z_G, controlVars * z_B, uint32_t z_start, uint32_t z_end);
-
-
-typedef struct _controlVars_const {
-    const double* const __restrict__ p0;
-    const double* const __restrict__ p1;
-    const double* const __restrict__ p2;
-    const double* const __restrict__ p3;
-    const double* const __restrict__ p4;
-    const double* const __restrict__ p5;
-    const double* const __restrict__ p6;
-    uint32_t size;
-}controlVars_const;
-
-controlVars_const control_vars_cast(controlVars in)
-{
-    controlVars_const out = {
-        .p0 = in.p0, 
-        .p1 = in.p1, 
-        .p2 = in.p2, 
-        .p3 = in.p3, 
-        .p4 = in.p4, 
-        .p5 = in.p5, 
-        .p6 = in.p6, 
-    };    
-    return out;
-}
-
-void reb_RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, double t, double h)
+static void reb_radau_step(struct reb_simulation* r, uint32_t * z_iterations, double t, double h)
 {
   RADAU * radau = r->ri_tes.radau;
   double errMax = 0;
@@ -961,8 +928,8 @@ void reb_RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, dou
   radau->fCalls++;
 
   // Wipe the cs variables for B summation.
-  reb_ControlVars_Clear(z_csB);
-  reb_ControlVars_Clear(&radau->cs_B1st);
+  reb_clear_controlvars(z_csB);
+  reb_clear_controlvars(&radau->cs_B1st);
 
   uint32_t n = 1;
   for(n = 1; n < MAX_ITERATIONS; n++)
@@ -971,10 +938,10 @@ void reb_RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, dou
 
     for(uint32_t i = 1; i <= stages; i++)
     {
-      reb_CalculatePredictors(h, hArr[i], radau->dX, radau->dState0, radau->ddState0, B,
-                          radau->predictors, radau->cs_dX, 3, r->ri_tes.stateVectorLength/2, DONT_ADD_CS_VAR);
-      reb_CalculatePredictors_1stOrder(h, hArr[i], radau->dX, radau->dState0, B_1st, radau->predictors, 
-                                  radau->cs_dX, (int)r->ri_tes.stateVectorLength/2, r->ri_tes.stateVectorLength, DONT_ADD_CS_VAR);
+      reb_calc_predictors(h, hArr[i], radau->dX, radau->dState0, radau->ddState0, B,
+                          radau->predictors, radau->cs_dX, 3, r->ri_tes.stateVectorLength/2);
+      reb_calc_predictors_1st_order(h, hArr[i], radau->dX, radau->dState0, B_1st, radau->predictors, 
+                                  radau->cs_dX, (int)r->ri_tes.stateVectorLength/2, r->ri_tes.stateVectorLength);
 
       reb_dhem_rhs_wrapped(r, radau->predictors, &radau->predictors[3*r->N], radau->dState, &radau->dState[3*r->N],
            radau->ddState, &radau->ddState[3*r->N], i,
@@ -1269,7 +1236,6 @@ void reb_RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, dou
     if(((errMax < 1E-15 ) && n >= MIN_ITERATIONS))
     {
       z_iterations[0] = n;
-      // printf("\nIterations: %u", n);
       break;
     }
   }
@@ -1280,17 +1246,17 @@ void reb_RadauStep15_Step(struct reb_simulation* r, uint32_t * z_iterations, dou
   }
 
   // Apply correctors to obtain X at t=1.
-  reb_CalculateNewState(h, radau->dState0, radau->ddState0, B, radau->dX, 
+  reb_update_state(h, radau->dState0, radau->ddState0, B, radau->dX, 
                     radau->cs_dX, 0, (int)(n3));
 
-  reb_CalculateNewState_1stOrder(h, radau->dState0, B_1st, radau->dX, 
+  reb_update_state_1st_order(h, radau->dState0, B_1st, radau->dX, 
                                 radau->cs_dX, (int)(n3), r->ri_tes.stateVectorLength);                                
 
   // Now that we have cs_dX we can perform our correction.
-  reb_ApplyCorrectorToOsculatingOrbitCalculation(r, r->ri_tes.rhs->XoscArr, t+h, 9); 
+  reb_apply_osc_orbit_corrector(r, r->ri_tes.rhs->XoscArr, t+h, 9); 
 }
 
-double reb_ReturnIAS15StepError(struct reb_simulation* r, double h, double t)
+double reb_calc_step_error(struct reb_simulation* r, double h, double t)
 {
   RADAU * radau = r->ri_tes.radau;
   double b6Max = 0;
@@ -1320,7 +1286,7 @@ double reb_ReturnIAS15StepError(struct reb_simulation* r, double h, double t)
   return errMax;
 }
 
-static void reb_CalculateGFromBInternal(controlVars * z_G, controlVars * z_B, uint32_t z_start, uint32_t z_end)
+static void reb_calc_g_from_b_internal(controlVars * z_G, controlVars * z_B, uint32_t z_start, uint32_t z_end)
 {
   for(uint32_t i = z_start; i < z_end; i++)
   {
@@ -1334,13 +1300,13 @@ static void reb_CalculateGFromBInternal(controlVars * z_G, controlVars * z_B, ui
   }
 }
 
-void reb_CalculateGfromB(struct reb_simulation* r)
+static void reb_calc_g_from_b(struct reb_simulation* r)
 {
-  reb_CalculateGFromBInternal(&r->ri_tes.radau->G, &r->ri_tes.radau->B, 0, (int)(r->ri_tes.stateVectorLength/2));
-  reb_CalculateGFromBInternal(&r->ri_tes.radau->G_1st, &r->ri_tes.radau->B_1st, (int)(r->ri_tes.stateVectorLength/2), r->ri_tes.stateVectorLength);
+  reb_calc_g_from_b_internal(&r->ri_tes.radau->G, &r->ri_tes.radau->B, 0, (int)(r->ri_tes.stateVectorLength/2));
+  reb_calc_g_from_b_internal(&r->ri_tes.radau->G_1st, &r->ri_tes.radau->B_1st, (int)(r->ri_tes.stateVectorLength/2), r->ri_tes.stateVectorLength);
 }
 
-void reb_AnalyticalContinuation(struct reb_simulation* r, controlVars * z_B, controlVars * z_Blast, const double h,
+static void reb_analytical_continuation(struct reb_simulation* r, controlVars * z_B, controlVars * z_Blast, const double h,
                              const double h_new, const uint32_t * const rectificationArray)
 {
   const double ratio = h_new / h;
@@ -1397,9 +1363,9 @@ void reb_AnalyticalContinuation(struct reb_simulation* r, controlVars * z_B, con
   }
 }
 
-void reb_CalculatePredictors_1stOrder(double h, double hSample, double * z_state0, double * z_dState0, 
+static void reb_calc_predictors_1st_order(double h, double hSample, double * z_state0, double * z_dState0, 
                                     controlVars * z_B, double * z_predictors, double * z_csState, 
-                                    uint32_t z_start, uint32_t z_end, uint32_t add_cs_var)
+                                    uint32_t z_start, uint32_t z_end)
 {
     double s[9];
     s[0] = h * hSample;
@@ -1425,9 +1391,9 @@ void reb_CalculatePredictors_1stOrder(double h, double hSample, double * z_state
 }
 
             
-void reb_CalculatePredictors(double h, double hSample, double const * __restrict__ z_state0, double const * __restrict__ z_dState, 
+static void reb_calc_predictors(double h, double hSample, double const * __restrict__ z_state0, double const * __restrict__ z_dState, 
                          double const * __restrict__ z_ddState, controlVars const * z_B, double * __restrict__ z_predictors, 
-                         double const * __restrict__ z_csState, uint32_t const z_start, uint32_t const z_end, uint32_t const add_cs_var)
+                         double const * __restrict__ z_csState, uint32_t const z_start, uint32_t const z_end)
 {
     double s[9];
     s[0] = h * hSample;
@@ -1452,12 +1418,7 @@ void reb_CalculatePredictors(double h, double hSample, double const * __restrict
     }
 }
 
-
-
-
-
-
-void reb_CalculateNewState_1stOrder(double h, double * z_dState, controlVars * z_B, double * z_state0, 
+static void reb_update_state_1st_order(double h, double * z_dState, controlVars * z_B, double * z_state0, 
                                 double * z_csState, uint32_t z_start, uint32_t z_end)
 {
   for(uint32_t i = z_start; i < z_end; i++)
@@ -1473,7 +1434,7 @@ void reb_CalculateNewState_1stOrder(double h, double * z_dState, controlVars * z
   }
 }
 
-void reb_CalculateNewState(double h, double * z_dState, double * z_ddState,
+static void reb_update_state(double h, double * z_dState, double * z_ddState,
                         controlVars * z_B, double * z_state0, double * z_csState, uint32_t z_start, uint32_t z_end)
 {
   double h2 = h*h;
@@ -1491,19 +1452,18 @@ void reb_CalculateNewState(double h, double * z_dState, double * z_ddState,
   }
 }
 
-
-void reb_RadauStep15_Init(struct reb_simulation* r)
+static void reb_init_radau_step(struct reb_simulation* r)
 {
     RADAU * radau = r->ri_tes.radau;
-    reb_ControlVars_Init(&radau->G, r->ri_tes.stateVectorSize);    
-    reb_ControlVars_Init(&radau->B, r->ri_tes.stateVectorSize);    
-    reb_ControlVars_Init(&radau->Blast, r->ri_tes.stateVectorSize);   
-    reb_ControlVars_Init(&radau->Blast_1st, r->ri_tes.stateVectorSize);
-    reb_ControlVars_Init(&radau->G_1st, r->ri_tes.stateVectorSize);
-    reb_ControlVars_Init(&radau->B_1st, r->ri_tes.stateVectorSize);
+    reb_init_controlvars(&radau->G, r->ri_tes.stateVectorSize);    
+    reb_init_controlvars(&radau->B, r->ri_tes.stateVectorSize);    
+    reb_init_controlvars(&radau->Blast, r->ri_tes.stateVectorSize);   
+    reb_init_controlvars(&radau->Blast_1st, r->ri_tes.stateVectorSize);
+    reb_init_controlvars(&radau->G_1st, r->ri_tes.stateVectorSize);
+    reb_init_controlvars(&radau->B_1st, r->ri_tes.stateVectorSize);
     
-    reb_ControlVars_Init(&radau->cs_B1st, r->ri_tes.stateVectorSize);
-    reb_ControlVars_Init(&radau->cs_B, r->ri_tes.stateVectorSize);
+    reb_init_controlvars(&radau->cs_B1st, r->ri_tes.stateVectorSize);
+    reb_init_controlvars(&radau->cs_B, r->ri_tes.stateVectorSize);
 
     radau->dState0 = (double *)malloc(r->ri_tes.stateVectorSize);
     radau->ddState0 = (double *)malloc(r->ri_tes.stateVectorSize);
@@ -1533,17 +1493,17 @@ void reb_RadauStep15_Init(struct reb_simulation* r)
     memset(radau->cs_dX, 0, r->ri_tes.stateVectorSize);
 }
 
-void reb_RadauStep15_Free(struct reb_simulation* r)
+static void reb_free_radau_step(struct reb_simulation* r)
 {
   RADAU * radau = r->ri_tes.radau;
-  reb_ControlVars_Free(&r->ri_tes.radau->G);
-  reb_ControlVars_Free(&r->ri_tes.radau->B);
-  reb_ControlVars_Free(&r->ri_tes.radau->Blast);
-  reb_ControlVars_Free(&r->ri_tes.radau->Blast_1st);
-  reb_ControlVars_Free(&r->ri_tes.radau->G_1st);
-  reb_ControlVars_Free(&r->ri_tes.radau->B_1st);    
-  reb_ControlVars_Free(&r->ri_tes.radau->cs_B1st);
-  reb_ControlVars_Free(&r->ri_tes.radau->cs_B);
+  reb_free_controlvars(&r->ri_tes.radau->G);
+  reb_free_controlvars(&r->ri_tes.radau->B);
+  reb_free_controlvars(&r->ri_tes.radau->Blast);
+  reb_free_controlvars(&r->ri_tes.radau->Blast_1st);
+  reb_free_controlvars(&r->ri_tes.radau->G_1st);
+  reb_free_controlvars(&r->ri_tes.radau->B_1st);    
+  reb_free_controlvars(&r->ri_tes.radau->cs_B1st);
+  reb_free_controlvars(&r->ri_tes.radau->cs_B);
   free(radau->dState0);
   free(radau->ddState0);
   free(radau->dState);
@@ -1556,7 +1516,7 @@ void reb_RadauStep15_Free(struct reb_simulation* r)
 }
 
 
-void reb_ControlVars_Init(controlVars * var, uint32_t size)
+static void reb_init_controlvars(controlVars * var, uint32_t size)
 {
   var->size = size;
   var->p0 = (double*)malloc(size);
@@ -1576,7 +1536,7 @@ void reb_ControlVars_Init(controlVars * var, uint32_t size)
   memset(var->p6, 0, size);
 }
 
-void reb_ControlVars_Free(controlVars * var)
+static void reb_free_controlvars(controlVars * var)
 {
   free(var->p0);
   free(var->p1);
@@ -1587,7 +1547,7 @@ void reb_ControlVars_Free(controlVars * var)
   free(var->p6);
 }
 
-void reb_ControlVars_Clear(controlVars * var)
+static void reb_clear_controlvars(controlVars * var)
 {
   for(uint32_t i = 0; i < var->size/sizeof(double); i++)
   {
@@ -1604,45 +1564,7 @@ void reb_ControlVars_Clear(controlVars * var)
 ///////////////////////////////////////////////////////////////////////////////////
 // Original TES file: UniversalVars.c
 ///////////////////////////////////////////////////////////////////////////////////
-#define PI 3.141592653589793238462643383279
-#define PI_SQ_X4 (4.0*PI*PI)
-#define PI_X2 (2.0*PI)
-
-
-double invfactorial[35] = {1.0,1.0,0.5,0.166666666666666666666666666666667,0.0416666666666666666666666666666667,
-0.00833333333333333333333333333333333,0.00138888888888888888888888888888889,0.000198412698412698412698412698412698,
-0.0000248015873015873015873015873015873,0.00000275573192239858906525573192239859,0.000000275573192239858906525573192239859,
-0.0000000250521083854417187750521083854417,0.00000000208767569878680989792100903212014,0.000000000160590438368216145993923771701549,
-1.14707455977297247138516979786821e-11,7.64716373181981647590113198578807e-13,4.77947733238738529743820749111754e-14,
-2.81145725434552076319894558301032e-15,1.56192069685862264622163643500573e-16,8.22063524662432971695598123687228e-18,
-4.11031762331216485847799061843614e-19,1.95729410633912612308475743735054e-20,8.89679139245057328674889744250247e-22,
-3.86817017063068403771691193152281e-23,1.61173757109611834904871330480117e-24,6.44695028438447339619485321920469e-26,
-2.47959626322479746007494354584796e-27,9.18368986379554614842571683647391e-29,3.27988923706983791015204172731211e-30,
-1.13099628864477169315587645769383e-31,3.76998762881590564385292152564611e-33,1.21612504155351794962997468569229e-34,
-3.80039075485474359259367089278841e-36,1.15163356207719502805868814932982e-37,3.38715753552116184723143573332301e-39};
-
-#define DOT(x, y, i) x[3*i+0]*y[3*i+0]+x[3*i+1]*y[3*i+1]+x[3*i+2]*y[3*i+2]
-
-#define CROSS(a,b,c,i) \
-	(a)[3*i+0] = (b)[3*i+1] * (c)[3*i+2] - (c)[3*i+1] * (b)[3*i+2]; \
-	(a)[3*i+1] = (b)[3*i+2] * (c)[3*i+0] - (c)[3*i+2] * (b)[3*i+0]; \
-	(a)[3*i+2] = (b)[3*i+0] * (c)[3*i+1] - (c)[3*i+0] * (b)[3*i+1];
-
-#define CROSS_LOCAL(a,b,c) \
-	(a)[0] = (b)[1] * (c)[2] - (c)[1] * (b)[2]; \
-	(a)[1] = (b)[2] * (c)[0] - (c)[2] * (b)[0]; \
-	(a)[2] = (b)[0] * (c)[1] - (c)[0] * (b)[1];
-
-#define MAX_NEWTON_ITERATIONS 50
-#define STUMPF_ITERATIONS 13 // must be an odd number
-
-// Internal functions.
-static void reb_C_Stumpff(double * cs_in, double z_in);
-static double reb_SolveForUnivsersalAnomaly(struct reb_simulation* const r, double dt, double h, uint32_t i, double * C);
-static double reb_CalcUpdateValue(struct reb_simulation* const r, double X, double dt, uint32_t i, double * C);
-static void reb_CalculateClassicalOrbitalElementsSingle(struct reb_simulation* r, uint32_t i);
-
-void reb_CalculateOsculatingOrbitsForSingleStep(struct reb_simulation* r, double **Xosc_map, 
+static void reb_calc_osc_orbits(struct reb_simulation* r, double **Xosc_map, 
                                             const double t0, const double h, double const * const h_array, 
                                             const uint32_t z_stagesPerStep, uint32_t z_rebasis)
 {
@@ -1676,7 +1598,7 @@ void reb_CalculateOsculatingOrbitsForSingleStep(struct reb_simulation* r, double
       double h = t - p_uVars->tLast[i];
       p_uVars->tLast[i] = t;
 
-      reb_SolveForUnivsersalAnomaly(r, dt, h, i, C);
+      reb_solve_for_universal_anomaly(r, dt, h, i, C);
 
       p_uVars->C.c0[i] = C[0];
       p_uVars->C.c1[i] = C[1];
@@ -1765,7 +1687,7 @@ void reb_CalculateOsculatingOrbitsForSingleStep(struct reb_simulation* r, double
       {       
         if(z_rebasis)
         {
-          reb_RebasisOsculatingOrbits_Momenta(r, Qout, Pout, t, i);
+          reb_rebasis_osc_orbits(r, Qout, Pout, t, i);
         }
       }
     }
@@ -1777,8 +1699,7 @@ void reb_CalculateOsculatingOrbitsForSingleStep(struct reb_simulation* r, double
   } 
 }
 
-
-void reb_ApplyCorrectorToOsculatingOrbitCalculation(struct reb_simulation* r, double **Xosc_map, double t, uint32_t z_stagePerStep)
+static void reb_apply_osc_orbit_corrector(struct reb_simulation* r, double **Xosc_map, double t, uint32_t z_stagePerStep)
 { 
     UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
     double * Qout = Xosc_map[z_stagePerStep-1];
@@ -1809,14 +1730,11 @@ void reb_ApplyCorrectorToOsculatingOrbitCalculation(struct reb_simulation* r, do
           // Obtain cs sum for v for next step.
           p_uVars->uv_csv[3*i+j] = p_uVars->uv_csp[3*i+j]/r->ri_tes.mass[i];
         }
-        reb_RebasisOsculatingOrbits_Momenta(r, Qout, Pout, t, i);  
+        reb_rebasis_osc_orbits(r, Qout, Pout, t, i);  
     }
 }
 
-/*
-This version is called whenever a rectification is performed.
-*/
-void reb_RebasisOsculatingOrbits_Momenta(struct reb_simulation* r, double * z_Q, double * z_P, double z_t, uint32_t i)
+static void reb_rebasis_osc_orbits(struct reb_simulation* r, double * z_Q, double * z_P, double z_t, uint32_t i)
 {
   UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
   double * mass = r->ri_tes.mass;
@@ -1865,7 +1783,7 @@ void reb_RebasisOsculatingOrbits_Momenta(struct reb_simulation* r, double * z_Q,
 }
 
 
-static double reb_SolveForUnivsersalAnomaly(struct reb_simulation* const r, double dt, double h, uint32_t i, double * C)
+static double reb_solve_for_universal_anomaly(struct reb_simulation* const r, double dt, double h, uint32_t i, double * C)
 {
   UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
   double X = p_uVars->X[i] + (h / p_uVars->Q0_norm[i]);
@@ -1877,7 +1795,7 @@ static double reb_SolveForUnivsersalAnomaly(struct reb_simulation* const r, doub
 
   for(uint32_t k = 0; k < MAX_NEWTON_ITERATIONS; k++)
   {    
-    X = reb_CalcUpdateValue(r, X, dt, i, C);
+    X = reb_calc_osc_update_value(r, X, dt, i, C);
 
     for(uint32_t j = 0; j < k; j++)
     {
@@ -1892,14 +1810,14 @@ static double reb_SolveForUnivsersalAnomaly(struct reb_simulation* const r, doub
   return -1.0;
 }
 
-static double reb_CalcUpdateValue(struct reb_simulation* const r, double X, double dt, uint32_t i, double * C)
+static double reb_calc_osc_update_value(struct reb_simulation* const r, double X, double dt, uint32_t i, double * C)
 {
   UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
   const double X2 = X*X;
   const double X3 = X2*X;
   double Z = p_uVars->beta[i]*X2;
 
-  reb_C_Stumpff(C, Z);
+  reb_c_stumpff(C, Z);
 
   const double num = (X*(p_uVars->eta[i]*X*C[1] + p_uVars->zeta[i]*X2*C[2]) -
               p_uVars->eta[i]*X2*C[2] -
@@ -1909,9 +1827,7 @@ static double reb_CalcUpdateValue(struct reb_simulation* const r, double X, doub
   return (num / denom);
 }
 
-
-
-static void reb_C_Stumpff(double * cs, double z)
+static void reb_c_stumpff(double * cs, double z)
 {
     unsigned int n = 0;
     while(fabs(z) > 0.1){
@@ -1939,7 +1855,7 @@ static void reb_C_Stumpff(double * cs, double z)
     }
 }
 
-static void reb_CalculateClassicalOrbitalElementsSingle(struct reb_simulation* r, uint32_t i)
+static void reb_calc_single_orb_elem(struct reb_simulation* r, uint32_t i)
 {
   UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
 
@@ -1967,18 +1883,15 @@ static void reb_CalculateClassicalOrbitalElementsSingle(struct reb_simulation* r
   p_uVars->apo[i] = p_uVars->a[i]*(1+p_uVars->e[i]);
 }
 
-void reb_CalculateClassicalOrbitalElements(struct reb_simulation* r)
+static void reb_cal_orb_elems(struct reb_simulation* r)
 {
   for(int32_t i = 1; i < r->N; i++)
   {
-    reb_CalculateClassicalOrbitalElementsSingle(r, i);
+    reb_calc_single_orb_elem(r, i);
   }
 }
 
-
-
-
-void reb_UniversalVars_Init(struct reb_simulation* const r)
+static void reb_init_uvars(struct reb_simulation* const r)
 {
   int N = r->N;
   // Create the main control data structure for universal variables.
@@ -2052,8 +1965,7 @@ void reb_UniversalVars_Init(struct reb_simulation* const r)
   memset(p_uVars->uv_csp, 0, p_uVars->stateVectorSize);  
 }
 
-
-void reb_UniversalVars_Free(struct reb_simulation* r)
+static void reb_free_uvars(struct reb_simulation* r)
 {
   UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
   free(p_uVars->Q0);
@@ -2086,10 +1998,4 @@ void reb_UniversalVars_Free(struct reb_simulation* r)
   free(p_uVars->uv_csv);
   free(p_uVars->uv_csp);
   free(p_uVars);
-}
-
-
-void reb_tes_allocate_memory(struct reb_simulation* r)
-{
-
 }
