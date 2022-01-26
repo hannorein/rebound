@@ -278,7 +278,8 @@ void reb_integrator_mercurius_jump_step(struct reb_simulation* const r, double d
     px /= r->particles[0].m;
     py /= r->particles[0].m;
     pz /= r->particles[0].m;
-    for (int i=1;i<N;i++){
+    const int N_all = r->N;
+    for (int i=1;i<N_all;i++){
         particles[i].x += dt*px;
         particles[i].y += dt*py;
         particles[i].z += dt*pz;

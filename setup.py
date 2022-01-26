@@ -17,7 +17,7 @@ try:
     ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")
     ghash_arg = "-DGITHASH="+ghash.strip()
 except:
-    ghash_arg = "-DGITHASH=8f9650a7f5a88f6018b1a96c93d3499699a6e6ee" #GITHASHAUTOUPDATE
+    ghash_arg = "-DGITHASH=fd97858219fcefde1b5e848247985364cb45d0ca" #GITHASHAUTOUPDATE
 
 extra_link_args=[]
 if sys.platform == 'darwin':
@@ -64,7 +64,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='3.19.1',
+    version='3.19.2',
     description='An open-source multi-purpose N-body code',
     long_description=long_description,
     url='https://github.com/hannorein/rebound/',

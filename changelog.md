@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.19.2
+* Fixes a bug relates to test particles of type 0 in MERCURIUS.
+
 ### Version 3.19.1
 * Some compilers seem to complain that a constant cannot be initialized from a constant. Fixed this so that REBOUND works on colaboratory.
 
