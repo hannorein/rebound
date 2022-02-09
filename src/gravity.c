@@ -77,6 +77,9 @@ void reb_calculate_acceleration(struct reb_simulation* r){
         break;
         case REB_GRAVITY_JACOBI:
         {
+            if (r->integrator != REB_INTEGRATOR_WHFAST && r->integrator != REB_INTEGRATOR_SABA ){
+                reb_warning(r, "An integrator other than WHFast/SABA is being used with REB_GRAVITY_JACOBI. This is probably not correct. Use another gravity routine such as REB_GRAVITY_BASIC.");
+            }
             double Rjx = 0.;
             double Rjy = 0.;
             double Rjz = 0.;
