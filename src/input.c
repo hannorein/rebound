@@ -35,6 +35,8 @@
 #include "input.h"
 #include "tree.h"
 #include "simulationarchive.h"
+#include "integrator_tes.h"
+
 #ifdef MPI
 #include "communication_mpi.h"
 #endif
@@ -110,6 +112,31 @@ void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf, char **restrict 
         reb_fread(valueref.p6, field.size/7,1,inf,mem_stream);\
     }\
     break;
+
+#define CASE_DP7(typename, valueref) case REB_BINARY_FIELD_TYPE_##typename: \
+    {\
+        reb_fread(valueref.p0, field.size/7,1,inf,mem_stream);\
+        reb_fread(valueref.p1, field.size/7,1,inf,mem_stream);\
+        reb_fread(valueref.p2, field.size/7,1,inf,mem_stream);\
+        reb_fread(valueref.p3, field.size/7,1,inf,mem_stream);\
+        reb_fread(valueref.p4, field.size/7,1,inf,mem_stream);\
+        reb_fread(valueref.p5, field.size/7,1,inf,mem_stream);\
+        reb_fread(valueref.p6, field.size/7,1,inf,mem_stream);\
+    }\
+    break;    
+
+#define CASE_CONTROL_VARS(typename, valueref) case REB_BINARY_FIELD_TYPE_##typename: \
+    {\
+        reb_fread(&valueref->size, sizeof(uint32_t),1,inf,mem_stream);\
+        reb_fread(valueref->p0, valueref->size,1,inf,mem_stream);\
+        reb_fread(valueref->p1, valueref->size,1,inf,mem_stream);\
+        reb_fread(valueref->p2, valueref->size,1,inf,mem_stream);\
+        reb_fread(valueref->p3, valueref->size,1,inf,mem_stream);\
+        reb_fread(valueref->p4, valueref->size,1,inf,mem_stream);\
+        reb_fread(valueref->p5, valueref->size,1,inf,mem_stream);\
+        reb_fread(valueref->p6, valueref->size,1,inf,mem_stream);\
+    }\
+    break;        
     
 int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_messages* warnings, char **restrict mem_stream){
     struct reb_binary_field field;
@@ -355,12 +382,96 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
                 }
             }
             break;
-        default:
-            if (warnings){
-                *warnings |= REB_INPUT_BINARY_WARNING_FIELD_UNKOWN;
+
+        // TES integrator variables
+        CASE(TES_DQ_MAX,             &r->ri_tes.dq_max);
+        CASE(TES_RECTI_PER_ORBIT,    &r->ri_tes.recti_per_orbit);
+        CASE(TES_EPSILON,            &r->ri_tes.epsilon);
+        CASE(TES_PERIOD,             &r->ri_tes.orbital_period);
+        CASE(TES_SV_LEN,             &r->ri_tes.stateVectorLength);
+        CASE(TES_SV_SIZE,            &r->ri_tes.stateVectorSize);
+        CASE(TES_CV_LEN,             &r->ri_tes.controlVectorLength);
+        CASE(TES_CV_SIZE,            &r->ri_tes.controlVectorSize);
+        CASE(TES_COM,                &r->ri_tes.COM);
+        CASE(TES_COM_DOT,            &r->ri_tes.COM_dot);   
+        CASE(TES_MASS_STAR_LAST,     &r->ri_tes.mStar_last);   
+
+        
+        case REB_BINARY_FIELD_TYPE_TES_ALLOCATED_N:
+            {
+                reb_fread(&r->ri_tes.allocated_N, field.size, 1, inf, mem_stream);
+                // Allocate all memory for loading the simulation archive.
+                r->ri_tes.allocate_tes(r);
             }
-            reb_fseek(inf,field.size,SEEK_CUR,mem_stream);
             break;
+
+        CASE(TES_PARTICLES_DH, r->ri_tes.particles_dh);
+        CASE(TES_MASS, r->ri_tes.mass);
+        CASE(TES_X_DH, r->ri_tes.X_dh); 
+        
+        // TES Kepler vars
+        CASE(TES_UVARS_SV_SIZE, &r->ri_tes.uVars->stateVectorSize);
+        CASE(TES_UVARS_T0, r->ri_tes.uVars->t0);
+        CASE(TES_UVARS_TLAST, r->ri_tes.uVars->tLast);
+        CASE(TES_UVARS_CSQ, r->ri_tes.uVars->uv_csq);
+        CASE(TES_UVARS_CSP, r->ri_tes.uVars->uv_csp);
+        CASE(TES_UVARS_CSV, r->ri_tes.uVars->uv_csv);
+        CASE(TES_UVARS_Q0, r->ri_tes.uVars->Q0);
+        CASE(TES_UVARS_V0, r->ri_tes.uVars->V0);
+        CASE(TES_UVARS_P0, r->ri_tes.uVars->P0);
+        CASE(TES_UVARS_Q1, r->ri_tes.uVars->Q1);
+        CASE(TES_UVARS_V1, r->ri_tes.uVars->V1);
+        CASE(TES_UVARS_P1, r->ri_tes.uVars->P1);
+        CASE(TES_UVARS_X, r->ri_tes.uVars->X);
+        CASE(TES_UVARS_Q0_NORM, r->ri_tes.uVars->Q0_norm);
+        CASE(TES_UVARS_BETA, r->ri_tes.uVars->beta);
+        CASE(TES_UVARS_ETA, r->ri_tes.uVars->eta);
+        CASE(TES_UVARS_ZETA, r->ri_tes.uVars->zeta);
+        CASE(TES_UVARS_PERIOD, r->ri_tes.uVars->period);
+        CASE(TES_UVARS_XPERIOD, r->ri_tes.uVars->Xperiod);
+        CASE(TES_UVARS_STUMPF_C0, r->ri_tes.uVars->C.c0);
+        CASE(TES_UVARS_STUMPF_C1, r->ri_tes.uVars->C.c1);
+        CASE(TES_UVARS_STUMPF_C2, r->ri_tes.uVars->C.c2);
+        CASE(TES_UVARS_STUMPF_C3, r->ri_tes.uVars->C.c3);
+        CASE(TES_UVARS_MU, &r->ri_tes.uVars->mu);
+
+        // TES Radau vars
+        CASE(TES_RADAU_DX, r->ri_tes.radau->dX);
+        CASE(TES_RADAU_XOUT, r->ri_tes.radau->Xout);
+        CASE(TES_RADAU_RECTI_ARRAY, r->ri_tes.radau->rectifiedArray);
+        CASE(TES_RADAU_PREDICTORS, r->ri_tes.radau->predictors);
+        CASE(TES_RADAU_DSTATE0, r->ri_tes.radau->dState0);
+        CASE(TES_RADAU_DDSTATE0, r->ri_tes.radau->ddState0);
+        CASE(TES_RADAU_DSTATE, r->ri_tes.radau->dState);
+        CASE(TES_RADAU_DDSTATE, r->ri_tes.radau->ddState);
+        CASE(TES_RADAU_CS_DSTATE0, r->ri_tes.radau->cs_dState0);
+        CASE(TES_RADAU_CS_DDSTATE0, r->ri_tes.radau->cs_ddState0);
+        CASE(TES_RADAU_CS_DSTATE, r->ri_tes.radau->cs_dState);
+        CASE(TES_RADAU_CS_DDSTATE, r->ri_tes.radau->cs_ddState);
+        CASE(TES_RADAU_CS_DX, r->ri_tes.radau->cs_dX);
+        CASE(TES_RADAU_FCALLS, &r->ri_tes.radau->fCalls);
+        CASE(TES_RADAU_RECTIS, &r->ri_tes.radau->rectifications);
+        CASE(TES_RADAU_ITERS, &r->ri_tes.radau->convergenceIterations);
+        CASE(TES_RADAU_B6, r->ri_tes.radau->b6_store);
+        CASE_CONTROL_VARS(TES_RADAU_B, (&(r->ri_tes.radau->B)));
+        CASE_CONTROL_VARS(TES_RADAU_BLAST, (&(r->ri_tes.radau->Blast)));
+        CASE_CONTROL_VARS(TES_RADAU_B_1ST, (&(r->ri_tes.radau->B_1st)));
+        CASE_CONTROL_VARS(TES_RADAU_BLAST_1ST, (&(r->ri_tes.radau->Blast_1st)));
+        CASE_CONTROL_VARS(TES_RADAU_CS_B, (&(r->ri_tes.radau->cs_B)));
+        CASE_CONTROL_VARS(TES_RADAU_CS_B_1ST, (&(r->ri_tes.radau->cs_B1st)));
+        CASE_CONTROL_VARS(TES_RADAU_G, (&(r->ri_tes.radau->G)));
+        CASE_CONTROL_VARS(TES_RADAU_G_1ST, (&(r->ri_tes.radau->G_1st)));
+
+        // TES force model vars
+        CASE(TES_DHEM_XOSC_STORE, r->ri_tes.rhs->XoscStore);
+        CASE(TES_DHEM_XOSC_PRED_STORE, r->ri_tes.rhs->XoscPredStore);
+        CASE(TES_DHEM_XOSC_CS_STORE, r->ri_tes.rhs->XoscStore_cs);
+        CASE(TES_DHEM_XOSC_DOT_STORE, r->ri_tes.rhs->Xosc_dotStore);
+        CASE(TES_DHEM_X, r->ri_tes.rhs->X);
+        CASE(TES_DHEM_M_INV, r->ri_tes.rhs->m_inv);
+        CASE(TES_DHEM_M_TOTAL, &r->ri_tes.rhs->mTotal);
+        CASE(TES_DHEM_RECTI_TIME, r->ri_tes.rhs->rectifyTimeArray);
+        CASE(TES_DHEM_RECTI_PERIOD, r->ri_tes.rhs->rectificationPeriod);
     }
     return 1;
 } 

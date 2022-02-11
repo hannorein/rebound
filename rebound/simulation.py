@@ -21,7 +21,7 @@ import types
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12, "tes": 20}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4, "jacobi": 5}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "mercurius": 3, "line": 4, "linetree": 5}
@@ -1006,6 +1006,7 @@ class Simulation(Structure):
         - ``'SABA(10,6,4)'`` 
         - ``'EOS'`` 
         - ``'BS'`` 
+        - ``'TES'``
         - ``'none'``
         
         Check the online documentation for a full description of each of the integrators. 
@@ -2117,6 +2118,39 @@ class reb_simulation_integrator_bs(Structure):
                 ("_user_ode_needs_nbody", c_int),
             ]               
 
+class reb_simulation_integrator_tes(Structure):
+    """
+    This class is an abstraction of the C-struct reb_simulation_integrator_tes.
+    It controls the behaviour of the Terrestrial Exoplanet Simulator (TES) integrator.
+    """
+
+    _fields_ = [("dq_max", c_double),
+    ("recti_per_orbit", c_double),
+    ("epsilon", c_double),
+    ("orbital_period", c_double),    
+    ("_allocated_N", c_uint32),
+    ("_particles_dh", POINTER(Particle)),
+    ("_svLen", c_uint32),
+    ("_svSize", c_uint32),
+    ("_cvLen", c_uint32),
+    ("_cvSize", c_uint32),
+    ("_mass", POINTER(c_double)),
+    ("_X_dh", POINTER(c_double)),
+    ("_Q_dh", POINTER(c_double)),
+    ("_P_dh", POINTER(c_double)),
+    ("_com_x", c_double),
+    ("_com_y", c_double),
+    ("_com_z", c_double),
+    ("_com_dot_x", c_double),
+    ("_com_dot_y", c_double),
+    ("_com_dot_z", c_double),
+    ("_uVars", POINTER(c_double)),
+    ("_rhs", POINTER(c_double)),
+    ("_radau", POINTER(c_double)),
+    ("_allocate_tes", POINTER(c_double)),
+    ("_mStar_last", POINTER(c_double))
+    ]
+
 class timeval(Structure):
     _fields_ = [("tv_sec",c_long),("tv_usec",c_long)]
 
@@ -2230,6 +2264,7 @@ Simulation._fields_ = [
                 ("ri_janus", reb_simulation_integrator_janus),
                 ("ri_eos", reb_simulation_integrator_eos),
                 ("ri_bs", reb_simulation_integrator_bs),
+                ("ri_tes", reb_simulation_integrator_tes),
                 ("_odes", POINTER(POINTER(ODE))),
                 ("_odes_N", c_int),
                 ("_odes_allocatedN", c_int),

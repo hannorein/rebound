@@ -7,6 +7,7 @@ include src/integrator_sei.c
 include src/integrator_mercurius.c
 include src/integrator_eos.c
 include src/integrator_janus.c
+include src/integrator_tes.c
 include src/integrator.c
 include src/gravity.c
 include src/collision.c
@@ -29,6 +30,7 @@ include src/integrator_sei.h
 include src/integrator_mercurius.h
 include src/integrator_eos.h
 include src/integrator_janus.h
+include src/integrator_tes.h
 include src/integrator.h
 include src/collision.h
 include src/boundary.h
