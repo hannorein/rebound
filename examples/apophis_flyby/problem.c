@@ -85,6 +85,8 @@ int main(int argc, char* argv[]){
 
     printf("\nMax position error: %.3e AU", max_pos_err);
 
+    reb_free_simulation(r);
+
 }
 
 void heartbeat(struct reb_simulation* r){
