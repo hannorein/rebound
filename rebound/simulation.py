@@ -2207,7 +2207,7 @@ Simulation._fields_ = [
                 ("_megno_mean_t", c_double),
                 ("_megno_mean_Y", c_double),
                 ("_megno_n", c_long),
-                ("_rand_seed",c_uint),
+                ("rand_seed",c_uint),
                 ("simulationarchive_version", c_int),
                 ("simulationarchive_size_first", c_long),
                 ("simulationarchive_size_snapshot", c_long),
