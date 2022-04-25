@@ -4,6 +4,10 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.19.3
+* Added several examples.
+* Changed how pypi is rendering the documentation.
+
 ### Version 3.19.2
 * Fixes a bug relates to test particles of type 0 in MERCURIUS.
 
