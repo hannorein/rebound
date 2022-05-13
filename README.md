@@ -16,7 +16,7 @@
 
 # Welcome to REBOUND
 
-![REBOUND Examples](docs/img/reboundbanner.png)
+![REBOUND Examples](https://github.com/hannorein/rebound/raw/main/docs/img/reboundbanner.png)
 
 REBOUND is an N-body integrator, i.e. a software package that can integrate the motion of particles under the influence of gravity. The particles can represent stars, planets, moons, ring or dust particles. REBOUND is very flexible and can be customized to accurately and efficiently solve many problems in astrophysics.  
 
