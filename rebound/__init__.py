@@ -76,6 +76,11 @@ from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_
 from .particle import Particle
 from .plotting import OrbitPlot
 from .simulationarchive import SimulationArchive
-from .interruptible_pool import InterruptiblePool
+try:
+    from .interruptible_pool import InterruptiblePool
+except:
+    InterruptiblePool = "Not available"
+    print("InterruptiblePool not available")
+
 
 __all__ = ["__libpath__", "__version__", "__build__", "__githash__", "SimulationArchive", "Simulation", "Orbit", "OrbitPlot", "Particle", "SimulationError", "Encounter", "Collision", "Escape", "NoParticles", "ParticleNotFound", "InterruptiblePool","Variation", "reb_simulation_integrator_whfast", "reb_simulation_integrator_ias15", "reb_simulation_integrator_saba", "reb_simulation_integrator_sei","reb_simulation_integrator_mercurius", "clibrebound", "mod2pi", "M_to_f", "E_to_f", "M_to_E"]
