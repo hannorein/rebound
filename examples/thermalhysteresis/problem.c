@@ -92,7 +92,7 @@ int collision_resolve(struct reb_simulation* const r, struct reb_collision c){
 	double sphi = sin(phi);
 	double vx21nn = cphi * vx21  + sphi * vy21n;		
 
-	// Coefficient of restitution
+	// Determine coefficient of restitution
 	double eps = eps_realistic(r, vx21nn, (p1.x + gb.shiftx  + p2.x)/2.);
 
 	double dvx2 = -(1.0+eps)*vx21nn;
@@ -109,7 +109,6 @@ int collision_resolve(struct reb_simulation* const r, struct reb_collision c){
 	double dvy2nn = ctheta * dvy2n;	
 	double dvz2nn = stheta * dvy2n;	
 
-
 	// Applying the changes to the particles.
 	const double p2pf = p1.m/(p1.m+p2.m);
 	particles[c.p2].vx -=	p2pf*dvx2n;
@@ -122,7 +121,6 @@ int collision_resolve(struct reb_simulation* const r, struct reb_collision c){
 	particles[c.p1].vz +=	p1pf*dvz2nn; 
 	particles[c.p1].lastcollision = r->t;
 		
-
     struct reb_particle new1 = particles[c.p1];
     struct reb_particle new2 = particles[c.p2];
     new1.vy += 1.5*r->ri_sei.OMEGA*new1.x;
@@ -167,7 +165,6 @@ double midplane_fillingfactor(const struct reb_simulation* const r){
     return area/(r->boxsize.x*r->boxsize.y);
 }
 
-
 struct reb_vec3d velocity_dispersion(const struct reb_simulation* const r, double xmin, double xmax){
     // Algorithm with reduced roundoff errors (see wikipedia)
     struct reb_vec3d A = {.x=0, .y=0, .z=0};
@@ -196,8 +193,9 @@ struct reb_vec3d velocity_dispersion(const struct reb_simulation* const r, doubl
 
 void heartbeat(struct reb_simulation* const r){
     struct collisions_log* log = (struct collisions_log* )r->extras; 
+
+    // Calculate quantities for each slice
     int Nslices = log->Nslices;
-    
     for (int i=0;i<Nslices;i++){
         double xmin = -r->boxsize.x/2. + r->boxsize.x * i /Nslices; 
         double xmax = xmin + r->boxsize.x /Nslices; 
@@ -259,34 +257,37 @@ void heartbeat(struct reb_simulation* const r){
         }
         log->plog[i] = 0;
 
-        
     }
     log->lastsample = r->t;
     log->Nsamples ++;
+
+    // Save output 10 times per orbit
     if (reb_output_check(r,0.1*2.*M_PI/r->ri_sei.OMEGA)){
-         char buf[256];
-         sprintf(buf,"out_tau%.1f_hot%d/out.txt",log->tau,log->isHot);
-         FILE* f = fopen(buf,"a+");
-         fprintf(f, "%5.3f\t",r->t/(2.*M_PI/r->ri_sei.OMEGA));     // 0
-         double FF = midplane_fillingfactor(r);
-         fprintf(f, "%5.7f\t",FF);                       // 1
-         
-         for (int i=0;i<Nslices;i++){
-             fprintf(f, "%5.3f\t", log->T[i]/log->Nsamples);       // 2  (c^2)
-             fprintf(f, "%5.3f\t", log->qL[i]/log->Nsamples);      // 3
-             fprintf(f, "%5.3f\t", log->qNL[i]/log->Nsamples);     // 4
-             fprintf(f, "%5.3f\t", log->nuT[i]/log->Nsamples);     // 5
-             fprintf(f, "%5.3f\t", log->nuC[i]/log->Nsamples);     // 6
-             log->T[i] = 0;
-             log->qL[i] = 0;
-             log->qNL[i] = 0;
-             log->nuT[i] = 0;
-             log->nuC[i] = 0;
-         }
-         log->Nsamples = 0;
-         fprintf(f, "\n");
-         fclose(f);
-     }
+        char buf[256];
+        sprintf(buf,"out_tau%.1f_hot%d/out.txt",log->tau,log->isHot);
+        FILE* f = fopen(buf,"a+");
+        fprintf(f, "%5.3f\t",r->t/(2.*M_PI/r->ri_sei.OMEGA));     // 0
+        double FF = midplane_fillingfactor(r);
+        fprintf(f, "%5.7f\t",FF);                                 // 1
+        
+        for (int i=0;i<Nslices;i++){
+            fprintf(f, "%5.3f\t", log->T[i]/log->Nsamples);       // 2  (c^2)
+            fprintf(f, "%5.3f\t", log->qL[i]/log->Nsamples);      // 3
+            fprintf(f, "%5.3f\t", log->qNL[i]/log->Nsamples);     // 4
+            fprintf(f, "%5.3f\t", log->nuT[i]/log->Nsamples);     // 5
+            fprintf(f, "%5.3f\t", log->nuC[i]/log->Nsamples);     // 6
+            log->T[i] = 0;
+            log->qL[i] = 0;
+            log->qNL[i] = 0;
+            log->nuT[i] = 0;
+            log->nuC[i] = 0;
+        }
+        log->Nsamples = 0;
+        fprintf(f, "\n");
+        fclose(f);
+    }
+
+    // On screen update every 10 orbit
     if (reb_output_check(r,10.*2.*M_PI/r->ri_sei.OMEGA)){
         printf("tau = %.3f\t t = %.2f\n", log->tau, r->t/(2.*M_PI/r->ri_sei.OMEGA));
     }
@@ -294,10 +295,8 @@ void heartbeat(struct reb_simulation* const r){
 
 int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_create_simulation();
-    // Setup constants
     const double OMEGA    = 1;    
-    const int Nslices = 1;
-    r->opening_angle2     = .5;                 // This determines the precission of the tree code gravity calculation.
+    r->opening_angle2     = .5;
     r->integrator         = REB_INTEGRATOR_SEI;
     r->boundary           = REB_BOUNDARY_SHEAR;
     r->gravity            = REB_GRAVITY_NONE;
@@ -305,21 +304,20 @@ int main(int argc, char* argv[]) {
     r->collision_resolve  = collision_resolve;
     r->ri_sei.OMEGA       = OMEGA;
     r->ri_sei.OMEGAZ      = OMEGA;
-    r->dt                 = 1e-3*2.*M_PI/OMEGA; // s
-    r->heartbeat          = heartbeat;          // function pointer for callbacks after every timestep
-    double particle_radius    = 1;          // m
-    double boxsize                = 200;        // m
+    r->dt                 = 1e-3*2.*M_PI/OMEGA;
+    r->heartbeat          = heartbeat;
+    double boxsize        = 200; 
     reb_configure_box(r, boxsize, 1, 1, 1);
     r->nghostx = 1;
     r->nghosty = 1;
     r->nghostz = 0;
     
-    r->minimum_collision_velocity = particle_radius*OMEGA*0.001;  // small fraction of the shear accross a particle
+    r->minimum_collision_velocity = OMEGA*0.001;  // small fraction of the shear accross a particle
 
     // Setup memory for logging.
     struct collisions_log* log= malloc(sizeof(struct collisions_log));
 
-    // Add all ring paricles
+    // Read in command line arguments to overwrite defaults: tau, hot, tmax
     log->tau = 0.1;
     if (argc>1){
         log->tau = atof(argv[1]);
@@ -332,6 +330,10 @@ int main(int argc, char* argv[]) {
     if (argc>3){
         tmax = atof(argv[3]);
     }
+    
+    
+    
+    // Add all ring paricles
     double area = 0.;
     while (log->tau> area/(r->boxsize.x*r->boxsize.y)){
         struct reb_particle pt = {0};
@@ -339,34 +341,34 @@ int main(int argc, char* argv[]) {
         if (log->isHot){
             fac = 20;
         }
-        pt.x         = reb_random_uniform(r, -r->boxsize.x/2.,r->boxsize.x/2.);
-        pt.y         = reb_random_uniform(r, -r->boxsize.y/2.,r->boxsize.y/2.);
-        pt.vx         = fac*reb_random_normal(r, 1.)*OMEGA;
-        pt.vy         = -1.5*pt.x*OMEGA+fac*reb_random_normal(r, 1.)*OMEGA;
+        pt.x     = reb_random_uniform(r, -r->boxsize.x/2.,r->boxsize.x/2.);
+        pt.y     = reb_random_uniform(r, -r->boxsize.y/2.,r->boxsize.y/2.);
+        pt.vx    = fac*reb_random_normal(r, 1.)*OMEGA;
+        pt.vy    = -1.5*pt.x*OMEGA+fac*reb_random_normal(r, 1.)*OMEGA;
         double a = fac*0.1*reb_random_normal(r, 1.)*OMEGA;
         double f = reb_random_uniform(r, 0,2.*M_PI);
-        pt.z         = a*cos(f);                    // m
-        pt.vz         = -a*sin(f);
-        pt.r         = particle_radius;                        // m
-        pt.m         = 1.;     // kg
+        pt.z     = a*cos(f);
+        pt.vz    = -a*sin(f);
+        pt.r     = 1.;
+        pt.m     = 1.;
         reb_add(r, pt);
         area += M_PI*pt.r*pt.r;
     }
 
     r->extras = log;
-    log->Nslices = Nslices;
+    log->Nslices = 1;
     log->lastsample = 0;
     log->Nsamples = 0;
     log->twarmup = 20 * 2.*M_PI/OMEGA;
-    log->T = malloc(sizeof(double)*Nslices);
-    log->qNL = malloc(sizeof(double)*Nslices);
-    log->qL = malloc(sizeof(double)*Nslices);
-    log->nuT = malloc(sizeof(double)*Nslices);
-    log->nuC= malloc(sizeof(double)*Nslices);
-    log->plog = malloc(sizeof(double)*Nslices);
-    log->Elog = malloc(sizeof(double)*Nslices);
-    log->Nlog = malloc(sizeof(long)*Nslices);
-    for (int i=0;i<Nslices;i++){
+    log->T = malloc(sizeof(double)*log->Nslices);
+    log->qNL = malloc(sizeof(double)*log->Nslices);
+    log->qL = malloc(sizeof(double)*log->Nslices);
+    log->nuT = malloc(sizeof(double)*log->Nslices);
+    log->nuC= malloc(sizeof(double)*log->Nslices);
+    log->plog = malloc(sizeof(double)*log->Nslices);
+    log->Elog = malloc(sizeof(double)*log->Nslices);
+    log->Nlog = malloc(sizeof(long)*log->Nslices);
+    for (int i=0;i<log->Nslices;i++){
         log->T[i] = 0;
         log->qNL[i] = 0;
         log->qL[i] = 0;
