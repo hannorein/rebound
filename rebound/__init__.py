@@ -1,5 +1,22 @@
 # -*- coding: utf-8 -*-
 """An N-body integrator package for python."""
+
+# Find suffix
+import sysconfig
+suffix = sysconfig.get_config_var("EXT_SUFFIX")
+if suffix is None:
+    suffix = ".so"
+
+try: # Only needed for pyodide
+    import pyodide_js
+    from site import getsitepackages
+    pyodide_js._module.loadDynamicLibrary(f'{getsitepackages()[0]}/librebound{suffix}')
+    del getsitepackages
+    del pyodide_js
+except:
+    pass
+
+
 # Make changes for python 2 and 3 compatibility
 try:
     import builtins      # if this succeeds it's python 3.x
@@ -8,11 +25,6 @@ try:
 except ImportError:
     pass                 # python 2.x
 
-# Find suffix
-import sysconfig
-suffix = sysconfig.get_config_var('EXT_SUFFIX')
-if suffix is None:
-    suffix = ".so"
 
 # Import shared library
 import os
