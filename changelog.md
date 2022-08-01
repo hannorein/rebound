@@ -4,6 +4,10 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.19.5
+* Workaround for urllib support in pyodide added
+* Silent warning when InterruptiblePool is not available
+
 ### Version 3.19.4
 * InterruptiblePool is optional.
 * Fixed an issue that occured when switching integrators while using the SimulationArchive.
