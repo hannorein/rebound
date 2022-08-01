@@ -91,7 +91,7 @@ from .simulationarchive import SimulationArchive
 
 import sys
 if "pyodide" in sys.modules:
-    class InterruptiblePool(Pool):
+    class InterruptiblePool:
         def __init__(self, processes=None, initializer=None, initargs=(), **kwargs):
             print("InterruptiblePool is not available in pyodide")
 else:
