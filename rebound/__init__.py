@@ -89,6 +89,7 @@ from .particle import Particle
 from .plotting import OrbitPlot
 from .simulationarchive import SimulationArchive
 
+import sys
 if "pyodide" in sys.modules:
     class InterruptiblePool(Pool):
         def __init__(self, processes=None, initializer=None, initargs=(), **kwargs):
