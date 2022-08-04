@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.19.9
+* Two bugs fixed in the BS integrator. One was related to unitialized memory and the other to issues when the particle number changed.
+
 ### Version 3.19.5
 * Workaround for urllib support in pyodide added
 * Silent warning when InterruptiblePool is not available
