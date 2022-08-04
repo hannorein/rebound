@@ -10,7 +10,7 @@ if suffix is None:
 try: # Only needed for pyodide
     import pyodide_js
     from site import getsitepackages
-    pyodide_js._module.loadDynamicLibrary(f'{getsitepackages()[0]}/librebound{suffix}')
+    pyodide_js._module.loadDynamicLibrary(getsitepackages()[0]+"/librebound"+suffix)
     del getsitepackages
     del pyodide_js
 except:
