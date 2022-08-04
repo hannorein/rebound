@@ -340,6 +340,16 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
 
 
 void reb_integrator_bs_part1(struct reb_simulation* r){
+    struct reb_ode** odes = r->odes;
+    int Ns = r->odes_N; // Number of ode sets
+    for (int s=0; s < Ns; s++){
+        const int length = odes[s]->length;
+        double* y0 = odes[s]->y;
+        double* y1 = odes[s]->y1;
+        for (int i = 0; i < length; ++i) {
+            y1[i] = y0[i];
+        }
+    }
 }
 
 static void allocate_sequence_arrays(struct reb_simulation_integrator_bs* ri_bs){
@@ -733,6 +743,13 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
     struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
     
     int nbody_length = r->N*3*2;
+    // Check if particle numbers changed, if so delete and recreate ode.
+    if (ri_bs->nbody_ode != NULL){ 
+        if (ri_bs->nbody_ode->length != nbody_length){
+            reb_free_ode(ri_bs->nbody_ode);
+            ri_bs->nbody_ode = NULL;
+        }
+    }
     if (ri_bs->nbody_ode == NULL){ 
         ri_bs->nbody_ode = reb_create_ode(r, nbody_length);
         ri_bs->nbody_ode->derivatives = nbody_derivatives;
@@ -822,6 +839,7 @@ void reb_integrator_bs_reset(struct reb_simulation* r){
     // Delete nbody ode but not others
     if (ri_bs->nbody_ode){
         reb_free_ode(ri_bs->nbody_ode);
+        ri_bs->nbody_ode = NULL;
     }
 
     // Free sequence arrays
@@ -845,5 +863,6 @@ void reb_integrator_bs_reset(struct reb_simulation* r){
     ri_bs->min_dt           = 0; 
     ri_bs->firstOrLastStep  = 1;
     ri_bs->previousRejected = 0;
+    ri_bs->targetIter       = 0;
         
 }
