@@ -26,3 +26,14 @@ jobs:
       - name: Running unittests
         run: |
           python -m unittest discover -s rebound/tests/ -v
+      - name: Running python examples
+        run: |
+          cd python_examples
+          python dragforce/problem.py
+          python horizons/problem.py
+          python longtermtest/problem.py
+          python megno/problem.py
+          python megno_simple/problem.py
+          python orbital_elements/problem.py
+          python outersolarsystem/problem.py
+          python simple_orbit/problem.py

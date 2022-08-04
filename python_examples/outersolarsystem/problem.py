@@ -24,12 +24,11 @@ sim.move_to_com()
 # timestep counter
 steps = 0 
 # Integrate until t=1e4 (unit of time in this example is days)
-for i in range(100):
-    tmax = 1.0e2*i
-    sim.integrate(tmax)
-    if 'TRAVIS' not in os.environ: # Don't output anything in test build
-        # Print particle positions 
-        for p in sim.particles:
-            #     time       x    y    z 
-            print(sim.t, p.x, p.y, p.z)
+for i in range(10):
+    t = 1.0e3*i
+    sim.integrate(t)
+    # Print particle positions 
+    for p in sim.particles:
+        #     time       x    y    z 
+        print(sim.t, p.x, p.y, p.z)
 

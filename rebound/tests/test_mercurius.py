@@ -313,7 +313,6 @@ class TestMercurius(unittest.TestCase):
         # and are therefore machine dependent. 
         self.assertLess(dE_mercurius,4e-6)              # reasonable precision for mercurius
         self.assertLess(dE_mercurius/dE_whfast,1e-4)    # at least 1e4 times better than whfast
-        is_travis = 'TRAVIS' in os.environ
         self.assertLess(time_mercurius,time_ias15) # faster than ias15
         self.assertEqual(7060.644251181158, sim.particles[5].x) # Check if bitwise unchanged
         
