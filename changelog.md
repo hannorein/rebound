@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.19.10
+* Fixes another bug int he BS integrator when additional forces are used.
+
 ### Version 3.19.9
 * Two bugs fixed in the BS integrator. One was related to unitialized memory and the other to issues when the particle number changed.
 
