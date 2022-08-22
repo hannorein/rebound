@@ -4,8 +4,32 @@ import math
 import rebound.data
 import warnings
     
+def af(simp):
+    sim = simp.contents
+    x = sim.particles[0].x
+    y = sim.particles[0].y
+    z = sim.particles[0].z
+    r = math.sqrt(x*x+y*y+z*z)
+    sim.particles[0].ax -= x/(r*r*r)
+    sim.particles[0].ay -= y/(r*r*r)
+    sim.particles[0].az -= z/(r*r*r)
     
 class TestIntegratorBS(unittest.TestCase):
+    def test_bs_additionali_force_only(self):
+        sim = rebound.Simulation()
+        sim.additional_forces = af
+        sim.integrator = "bs"
+        eps = 1e-11
+        sim.ri_bs.eps_rel = eps
+        sim.ri_bs.eps_abs = eps
+        sim.add(m=0,x=1,vy=1)
+        sim.integrate(2.*math.pi)
+        self.assertLess(math.fabs(sim.particles[0].x-1.),5*eps)
+        self.assertLess(math.fabs(sim.particles[0].vy-1.),5*eps)
+        self.assertLess(math.fabs(sim.particles[0].y),5*eps)
+        self.assertLess(math.fabs(sim.particles[0].vx),5*eps)
+
+
     def test_bs_outersolarsystem(self):
         for eps in [1e-5, 1e-7, 1e-9, 1e-11]:
             sim = rebound.Simulation()

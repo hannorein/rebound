@@ -320,11 +320,6 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
         // Not needed for first step. Accelerations already calculated. Just need to copy them
         reb_integrator_bs_update_particles(r, y);
         reb_update_acceleration(r);
-        if (r->N_var){
-            reb_calculate_acceleration_var(r);
-        }
-        // Calculate non-gravity accelerations. 
-        if (r->additional_forces) r->additional_forces(r);
     }
 
     for (int i=0; i<r->N; i++){
