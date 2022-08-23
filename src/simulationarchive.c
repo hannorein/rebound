@@ -326,7 +326,6 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
             fseek(sa->inf, 0, SEEK_SET);  
             sa->nblobs = 0;
             int read_error = 0;
-            struct reb_binary_field lastreadfield = {0};
             for(long i=0;i<nblobsmax;i++){
                 struct reb_binary_field field = {0};
                 sa->offset[i] = ftell(sa->inf);
@@ -334,7 +333,6 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                 do{
                     size_t r1 = fread(&field,sizeof(struct reb_binary_field),1,sa->inf);
                     if (r1==1){
-                        lastreadfield = field;
                         switch (field.type){
                             case REB_BINARY_FIELD_TYPE_HEADER:
                                 {
