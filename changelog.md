@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.20.0
+* A new integrator has been added, the Terrestrial Exoplanet Simulation (TES).
+
 ### Version 3.19.10
 * Fixes another bug int he BS integrator when additional forces are used.
 
