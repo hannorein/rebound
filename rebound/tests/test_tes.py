@@ -1,7 +1,6 @@
 import rebound
 import unittest
 import os
-from matplotlib import pyplot as plt
 import numpy as np
 import time
 
@@ -362,6 +361,7 @@ class TestIntegratorTES(unittest.TestCase):
             e_arr[i] = sim.calculate_energy()
             t_arr[i] = i*orbits
         de = np.abs((e_arr-e0)/e0)
+        from matplotlib import pyplot as plt
         plt.figure(dpi=300)
         plt.loglog(t_arr[1:], de[1:])
         plt.ylim(1e-16, 1e-13)
