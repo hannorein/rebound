@@ -1,12 +1,6 @@
 import rebound
 import unittest
-import math
-import rebound.data
-import warnings
-import copy
 import os
-import sys
-import pathlib
 from matplotlib import pyplot as plt
 import numpy as np
 import time
