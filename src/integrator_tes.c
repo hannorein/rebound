@@ -270,7 +270,6 @@ void reb_integrator_tes_synchronize(struct reb_simulation* r){
 }
 
 void reb_integrator_tes_reset(struct reb_simulation* r){
-    
     if(r->ri_tes.allocated_N != 0)
     {
       reb_free_uvars(r);

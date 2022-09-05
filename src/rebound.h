@@ -421,7 +421,6 @@ struct reb_simulation_integrator_tes {
     UNIVERSAL_VARS * uVars;			/// Pointer to the universal variables module
     DHEM * rhs;						/// Pointer to the DHEM rhs
     RADAU * radau;  				/// Pointer to our integrator
-    void (*allocate_tes)(struct reb_simulation* r);     // Function to allocate memory for TES when loading data from sim archive.
 
     double mStar_last;              /// Mass of the star last step.
 };

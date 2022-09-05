@@ -2147,7 +2147,6 @@ class reb_simulation_integrator_tes(Structure):
     ("_uVars", POINTER(c_double)),
     ("_rhs", POINTER(c_double)),
     ("_radau", POINTER(c_double)),
-    ("_allocate_tes", POINTER(c_double)),
     ("_mStar_last", POINTER(c_double))
     ]
 

@@ -464,7 +464,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     WRITE_FIELD(TES_CV_SIZE,            &r->ri_tes.controlVectorSize,     sizeof(uint32_t));
     WRITE_FIELD(TES_COM,                &r->ri_tes.COM,                   3*sizeof(double));
     WRITE_FIELD(TES_COM_DOT,            &r->ri_tes.COM_dot,               3*sizeof(double));
-    WRITE_FIELD(TES_MASS_STAR_LAST,     &r->ri_tes.mStar_last, sizeof(double));  
+    WRITE_FIELD(TES_MASS_STAR_LAST,     &r->ri_tes.mStar_last,            sizeof(double));  
     WRITE_FIELD(TES_ALLOCATED_N,        &r->ri_tes.allocated_N,           sizeof(uint32_t));
     
     if(r->ri_tes.allocated_N)

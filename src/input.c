@@ -401,7 +401,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
             {
                 reb_fread(&r->ri_tes.allocated_N, field.size, 1, inf, mem_stream);
                 // Allocate all memory for loading the simulation archive.
-                r->ri_tes.allocate_tes(r);
+                reb_integrator_tes_allocate_memory(r);
             }
             break;
 

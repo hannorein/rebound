@@ -608,7 +608,6 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_tes.recti_per_orbit = 1.61803398875; // golden ratio 
     r->ri_tes.epsilon = 1e-6;
     r->ri_tes.allocated_N = 0;
-    r->ri_tes.allocate_tes = reb_integrator_tes_allocate_memory;
 
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.
     r->tree_needs_update= 0;
