@@ -11,10 +11,7 @@ with open("version.txt") as f:
 with open("README.md") as f:
     readme = f.readlines()
 
-keep_lines_after_header = 5
-
 with open("README.md","w") as f:
-    start_delete = -1
     for i in range(0,len(readme)):
         # [![Version](https://img.shields.io/badge/rebound-v3.17.0-green.svg?style=flat)](https://rebound.readthedocs.org)
         if "![Version]" in readme[i]:

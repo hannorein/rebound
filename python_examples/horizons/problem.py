@@ -7,12 +7,7 @@ import os.path
 import os
 filename = "cache.bin"
 
-if 'TRAVIS' in os.environ:
-    # Shorter built time
-    solar_system_objects = ["Sun", "Mercury"]
-else:
-    # More planets
-    solar_system_objects = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "C/2014 Q2"]
+solar_system_objects = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "C/2014 Q2"]
 
 if os.path.isfile(filename):
     # Try to load simulation from file

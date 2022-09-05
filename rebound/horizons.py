@@ -9,13 +9,18 @@ from __future__ import print_function
 import datetime
 import re
 import warnings
+import sys
 
-try:
+if "pyodide" in sys.modules:
     from urllib.parse import urlencode
-    from urllib.request import urlopen
-except ImportError:
-    from urllib import urlencode
-    from urllib2 import urlopen
+    from pyodide.http import open_url as urlopen
+else:
+    try:
+        from urllib.parse import urlencode
+        from urllib.request import urlopen
+    except ImportError:
+        from urllib import urlencode
+        from urllib2 import urlopen
 
 __all__ = ["getParticle"]
 
@@ -53,7 +58,10 @@ def api_request(particle, datestart, dateend, plane):
     url = "https://ssd.jpl.nasa.gov/api/horizons.api?" + urlencode(get_params)
     # don't use a context manager for python2 compatibility
     f = urlopen(url)
-    body = f.read().decode()
+    if "pyodide" in sys.modules:
+        body = f.read()
+    else:
+        body = f.read().decode()
     f.close()
     return body
 

@@ -1,5 +1,22 @@
 # -*- coding: utf-8 -*-
 """An N-body integrator package for python."""
+
+# Find suffix
+import sysconfig
+suffix = sysconfig.get_config_var("EXT_SUFFIX")
+if suffix is None:
+    suffix = ".so"
+
+try: # Only needed for pyodide
+    import pyodide_js
+    from site import getsitepackages
+    pyodide_js._module.loadDynamicLibrary(getsitepackages()[0]+"/librebound"+suffix)
+    del getsitepackages
+    del pyodide_js
+except:
+    pass
+
+
 # Make changes for python 2 and 3 compatibility
 try:
     import builtins      # if this succeeds it's python 3.x
@@ -8,11 +25,6 @@ try:
 except ImportError:
     pass                 # python 2.x
 
-# Find suffix
-import sysconfig
-suffix = sysconfig.get_config_var('EXT_SUFFIX')
-if suffix is None:
-    suffix = ".so"
 
 # Import shared library
 import os
@@ -76,6 +88,13 @@ from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_
 from .particle import Particle
 from .plotting import OrbitPlot
 from .simulationarchive import SimulationArchive
-from .interruptible_pool import InterruptiblePool
+
+import sys
+if "pyodide" in sys.modules:
+    class InterruptiblePool:
+        def __init__(self, processes=None, initializer=None, initargs=(), **kwargs):
+            print("InterruptiblePool is not available in pyodide")
+else:
+    from .interruptible_pool import InterruptiblePool
 
 __all__ = ["__libpath__", "__version__", "__build__", "__githash__", "SimulationArchive", "Simulation", "Orbit", "OrbitPlot", "Particle", "SimulationError", "Encounter", "Collision", "Escape", "NoParticles", "ParticleNotFound", "InterruptiblePool","Variation", "reb_simulation_integrator_whfast", "reb_simulation_integrator_ias15", "reb_simulation_integrator_saba", "reb_simulation_integrator_sei","reb_simulation_integrator_mercurius", "clibrebound", "mod2pi", "M_to_f", "E_to_f", "M_to_E"]

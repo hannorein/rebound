@@ -55,6 +55,7 @@ nav:
         - c_examples/restricted_threebody.md
         - ipython_examples/Horizons.ipynb
         - ipython_examples/Starman.ipynb
+        - ipython_examples/RadialVelocity.ipynb
       - "Close encounters and collisions":
         - c_examples/closeencounter.md
         - c_examples/closeencounter_record.md
@@ -79,6 +80,7 @@ nav:
         - ipython_examples/HyperbolicOrbits.ipynb
         - ipython_examples/HighOrderSymplectic.ipynb
         - ipython_examples/EmbeddedOperatorSplittingMethods.ipynb
+        - ipython_examples/PoincareSurfaceOfSection.ipynb
     - "Checkpoints and Simulation Archive":
       - ipython_examples/Checkpoints.ipynb
       - c_examples/simulationarchive.md
