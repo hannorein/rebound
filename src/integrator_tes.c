@@ -148,7 +148,6 @@ static double reb_calc_step_error(struct reb_simulation* r, double h, double t);
 // Universal variables functions
 static void reb_init_uvars(struct reb_simulation* const r);
 static void reb_free_uvars(struct reb_simulation* r);
-static void reb_cal_orb_elems(struct reb_simulation* r);
 static void reb_rebasis_osc_orbits(struct reb_simulation* r, double * z_Q, double * z_P, double z_t, uint32_t i);
 static void reb_calc_osc_orbits(struct reb_simulation* r, double **Xosc_map, 
                                             const double t0, const double h, double const * const h_array, 
@@ -157,7 +156,6 @@ static void reb_apply_osc_orbit_corrector(struct reb_simulation* r, double **Xos
 static void reb_c_stumpff(double * cs_in, double z_in);
 static double reb_solve_for_universal_anomaly(struct reb_simulation* const r, double dt, double h, uint32_t i, double * C);
 static double reb_calc_osc_update_value(struct reb_simulation* const r, double X, double dt, uint32_t i, double * C);
-static void reb_calc_single_orb_elem(struct reb_simulation* r, uint32_t i);
 
 
 static inline void add_cs(double* out, double* cs, double inp);
@@ -165,7 +163,14 @@ static inline void add_cs(double* out, double* cs, double inp);
 
 
 
-void reb_integrator_tes_part1(struct reb_simulation* r){} // unused
+void reb_integrator_tes_part1(struct reb_simulation* r){
+    // unused
+    if (r->ri_tes.warnings==0){
+        r->ri_tes.warnings++;
+        reb_warning(r,"The TES integrator is a recent addition to REBOUND. It may contain bugs or produce unphysical results. If you encounter a problem, please open an issue on GitHub.");
+    }
+
+} 
 
 void reb_integrator_tes_part2(struct reb_simulation* r){
     uint32_t N = r->N;
@@ -1852,42 +1857,6 @@ static void reb_c_stumpff(double * cs, double z)
         cs[1] = cs[0]*cs[1];
         cs[0] = 2.0*cs[0]*cs[0]-1.0;
     }
-}
-
-static void reb_calc_single_orb_elem(struct reb_simulation* r, uint32_t i)
-{
-  UNIVERSAL_VARS * p_uVars = r->ri_tes.uVars;
-
-  // Semimajor axis
-  p_uVars->a[i] = p_uVars->mu / p_uVars->beta[i];
-
-  // Angular momentum
-  CROSS(p_uVars->h, p_uVars->Q0, p_uVars->V0, i);
-  p_uVars->h_norm[i] = NORM(p_uVars->h, i);
-
-  // Eccentricity
-  double eccVec[3] = {0,0,0};
-  CROSS_LOCAL(eccVec, &p_uVars->V0[3*i], &p_uVars->h[3*i]);
-  eccVec[0] /= p_uVars->mu;
-  eccVec[1] /= p_uVars->mu;
-  eccVec[2] /= p_uVars->mu;
-  double Q_norm = NORM(p_uVars->Q0, i);
-  eccVec[0] -= p_uVars->Q0[3*i+0] / Q_norm;
-  eccVec[1] -= p_uVars->Q0[3*i+1] / Q_norm;
-  eccVec[2] -= p_uVars->Q0[3*i+2] / Q_norm;
-  p_uVars->e[i] = NORM(eccVec, 0);
-
-  // Apogee and perigee.
-  p_uVars->peri[i] = p_uVars->a[i]*(1-p_uVars->e[i]);
-  p_uVars->apo[i] = p_uVars->a[i]*(1+p_uVars->e[i]);
-}
-
-static void reb_cal_orb_elems(struct reb_simulation* r)
-{
-  for(int32_t i = 1; i < r->N; i++)
-  {
-    reb_calc_single_orb_elem(r, i);
-  }
 }
 
 static void reb_init_uvars(struct reb_simulation* const r)

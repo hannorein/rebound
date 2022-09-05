@@ -423,6 +423,7 @@ struct reb_simulation_integrator_tes {
     RADAU * radau;  				/// Pointer to our integrator
 
     double mStar_last;              /// Mass of the star last step.
+    uint32_t warnings;              /// Number of times warning has been shown
 };
 
 enum REB_EOS_TYPE {
