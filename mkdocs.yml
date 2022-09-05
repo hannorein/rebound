@@ -60,6 +60,7 @@ nav:
         - c_examples/closeencounter.md
         - c_examples/closeencounter_record.md
         - c_examples/closeencounter_hybrid.md
+        - c_examples/apophis_flyby.md
         - ipython_examples/HybridIntegrationsWithMercurius.ipynb
         - ipython_examples/CloseEncounters.ipynb
         - c_examples/mergers.md

@@ -2,7 +2,7 @@
  * Apophis
  * 
  * This problem uses TES to integrate the Apophis encounter with the Earth in 2029. 
- * Toy model consisting of Sun, Earth and Apophis is used.
+ * A toy model consisting of Sun, Earth and Apophis is used.
  */
 #include <stdio.h>
 #include <stdlib.h>
