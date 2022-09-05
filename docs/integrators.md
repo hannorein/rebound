@@ -582,6 +582,57 @@ Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for t
 All other members of this structure are only for internal use and should not be changed manually.
 
 
+## TES
+
+TES stands for **T**errestrial **E**xoplanet **S**imulator. TES builds upon the classic Encke method and integrates only the perturbations to Keplerian trajectories to reduce both the error and runtime of simulations. Variable step size is used throughout to enable close encounters to be precisely handled.
+The algorithm is described in detail in [Bartram & Wittig 2021](https://ui.adsabs.harvard.edu/abs/2021MNRAS.504..678B/abstract). 
+    
+!!! Important
+    TES is a new addition to REBOUND. Whereas it has been tested extensively, you might experience some bugs and there are likely edge cases where it will not return physical results. It is therefore especially important to make sure that simulations using TES are convergend and not dependent on any numerical parameters. This can be done by varying the timestep and other paramters or by comparing results to simulations using other integrators. Please report any issue that you encounter on GitHub.
+
+
+
+The following code shows how to enable TES and how to set some of its control parameters. 
+
+=== "C"
+    ```c
+    struct reb_simulation* r = reb_create_simulation();
+    r->integrator = REB_INTEGRATOR_TES;
+    r->ri_tes.dq_max = 1e-3;
+    r->ri_tes.recti_per_orbit = 1.61803398875;
+    r->ri_tes.epsilon = 1e-6;
+    ```
+
+=== "Python"
+    ```python
+    sim = rebound.Simulation()
+    sim.integrator = "tes"
+    sim.ri_tes.dq_max = 1e-3
+    sim.ri_tes.recti_per_orbit = 1.61803398875
+    sim.ri_tes.epsilon = 1e-6
+    ```
+
+The setting for TES are stored in the `reb_simulation_integrator_tes` structure. 
+
+`dq_max` (`double`)
+:   The value of dq/q that triggers a rectification. 
+
+`recti_per_orbit` (`double`)
+:   The number of rectifications per orbit (this is the main method for rectifications)
+
+`epsilon` `(double`)
+:   Tolerance parameter 
+
+`orbital_period` `(double`)
+:   The lowest initial orbital period 
+
+`warnings` `(uint32_t`)
+:   To silence the TES warning message, set this variable to 1. 
+
+
+All other members of this structure are only for internal TES use.
+
+
 ## No integrator
 Sometimes it might make sense to simply not advance any particle positions or velocities. By selecting this integrator, one can still perform integration steps, but particles will not move.
 

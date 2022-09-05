@@ -2148,7 +2148,7 @@ class reb_simulation_integrator_tes(Structure):
     ("_rhs", POINTER(c_double)),
     ("_radau", POINTER(c_double)),
     ("_mStar_last", POINTER(c_double)),
-    ("_warnings", c_uint32),
+    ("warnings", c_uint32),
     ]
 
 class timeval(Structure):
