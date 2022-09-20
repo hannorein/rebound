@@ -403,6 +403,14 @@ class Orbit(Structure):
         time of pericenter passage
     rhill   : float
         Hill radius ( =a*pow(m/(3M),1./3.) )
+    pal_h   : float
+        Cartesian component of the eccentricity ( = e*sin(pomega) )
+    pal_k   : float
+        Cartesian component of the eccentricity ( = e*cos(pomega) )
+    pal_ix   : float
+        Cartesian component of the inclination ( = 2*sin(i/2)*cos(Omega) )
+    pal_iy   : float
+        Cartesian component of the inclination ( = 2*sin(i/2)*sin(Omega) )
     """
     _fields_ = [("d", c_double),
                 ("v", c_double),
@@ -421,6 +429,10 @@ class Orbit(Structure):
                 ("theta", c_double),
                 ("T", c_double),
                 ("rhill", c_double)]
+                ("pal_h", c_double)]
+                ("pal_k", c_double)]
+                ("pal_ix", c_double)]
+                ("pal_iy", c_double)]
 
     def __str__(self):
         """

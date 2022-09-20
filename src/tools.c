@@ -1083,6 +1083,14 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
     o.M = reb_tools_mod2pi(o.M);
     o.theta = reb_tools_mod2pi(o.theta);
     o.omega = reb_tools_mod2pi(o.omega);
+    
+    
+    // Cartesian eccentricity and inclination components, see Pal (2009)
+    double fac = sqrt(2./(1.+hz/o.h))/o.h;
+    o.pal_ix = -fac * hy;
+    o.pal_iy = fac * hx;
+    o.pal_k = o.h/mu*(dvy-dvz/(o.h+hz)*hy)-1./o.d*(dx-dz/(o.h+hz)*hx);
+    o.pal_h = o.h/mu*(-dvx+dvz/(o.h+hz)*hx)-1./o.d*(dy-dz/(o.h+hz)*hy);
     return o;
 }
 

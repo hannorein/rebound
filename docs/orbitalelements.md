@@ -32,6 +32,10 @@ Variable name   | Description
 `theta`         | true longitude = Omega + omega + f
 `T`             | time of pericenter passage
 `rhill`         | Hill radius, $r_{\rm hill} =a\sqrt[3]{\frac{m}{3M}}$
+`pal_h`         | Cartesian component of the eccentricity, $h = e\cdot \sin(pomega)$
+`pal_k`         | Cartesian component of the eccentricity, $k = e\cdot \cos(pomega)$
+`pal_ix`        | Cartesian component of the inclination $i_x = 2\cdot \sin(i/2)\cdot \cos(\Omega)$
+`pal_iy`        | Cartesian component of the inclination $i_y = 2\cdot \sin(i/2)\cdot \sin(\Omega)$
 
 !!! Important
     All angles in REBOUND are in radians. 

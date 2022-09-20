@@ -918,6 +918,10 @@ struct reb_orbit {
     double theta;    // True Longitude
     double T;        // Time of pericenter passage
     double rhill;    // Circular Hill radius 
+    double pal_h;    // Cartesian component of the eccentricity, h = e*sin(pomega) 
+    double pal_k;    // Cartesian component of the eccentricity, k = e*cos(pomega) 
+    double pal_ix;    // Cartesian component of the inclination, ix = 2*sin(i/2)*cos(Omega)
+    double pal_iy;    // Cartesian component of the inclination, ix = 2*sin(i/2)*sin(Omega)
 };
 
 

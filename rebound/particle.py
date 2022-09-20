@@ -6,38 +6,6 @@ import rebound
 import sys
 import random
 
-class OrbitPal(Structure):
-    """
-    A class containing orbital parameters for a particle using the Pal convention of
-    a, l, h, k, ix, and iy.
-
-    Attributes
-    ----------
-    a       : float           
-        semimajor axis
-    l       : float           
-        mean longitude 
-    h       : float           
-        certesian component of eccentricity
-    k       : float           
-        certesian component of eccentricity
-    ix       : float           
-        certesian component of inclination
-    iy       : float           
-        certesian component of inclination
-    """
-    _fields_ = [("a", c_double),
-                ("l", c_double),
-                ("h", c_double),
-                ("k", c_double),
-                ("ix", c_double),
-                ("iy", c_double),
-                ]
-
-    def __str__(self):
-        return "<rebound.OrbitPal instance, a={0} l={1} h={2} k={3} ix={4} iy={5}>".format(str(self.a),str(self.l), str(self.h), str(self.k), str(self.ix), str(self.iy))
-
-
 __all__ = ["Particle"]
 
 def notNone(a):
@@ -486,78 +454,6 @@ class Particle(Structure):
             raise ValueError("Particle and primary positions are the same.")
 
         return o
-    
-    def calculate_orbit_pal(self, primary=None, G=None):
-        """ 
-        Returns a rebound.OrbitPal object with the keplerian orbital elements
-        corresponding to the particle around the passed primary
-        (rebound.Particle). If no primary is passed, defaults to Jacobi coordinates
-        (with mu = G*Minc, where Minc is the total mass from index 0 to the particle's index, inclusive). 
-        In contrast to calculate_orbit(), this function returns Pal coordinates, i.e.
-        a, l, h, k, ix, iy 
-        
-        Examples
-        --------
-        
-        >>> sim = rebound.Simulation()
-        >>> sim.add(m=1.)
-        >>> sim.add(x=1.,vy=1.)
-        >>> orbit_pal = sim.particles[1].calculate_orbit_pal(sim.particles[0]) # Heliocentric coordinates
-        >>> print(orbit_pal.e) # gives the eccentricity
-
-        Parameters
-        ----------
-        primary : rebound.Particle
-            Central body (Optional. Default uses Jacobi coordinates)
-        G : float
-            Gravitational constant (Optional. Default takes G from simulation in which particle is in)
-        
-        Returns
-        -------
-        A rebound.OrbitPal object 
-        """
-
-        if not self._sim:
-            # Particle not in a simulation
-            if primary is None:
-                raise ValueError("Particle does not belong to any simulation and no primary given. Cannot calculate orbit.")
-            if G is None:
-                raise ValueError("Particle does not belong to any simulation and G not given. Cannot calculate orbit.")
-            else:
-                G = c_double(G)
-        else:
-            # First check whether this is particles[0]
-            clibrebound.reb_get_particle_index.restype = c_int
-            index = clibrebound.reb_get_particle_index(byref(self)) # first check this isn't particles[0]
-            if index == 0 and primary is None:
-                raise ValueError("Orbital elements for particle[0] not implemented unless primary is provided")
-
-            if primary is None:    # Use default, i.e., Jacobi coordinates
-                clibrebound.reb_get_jacobi_com.restype = Particle   # now return jacobi center of mass
-                primary = clibrebound.reb_get_jacobi_com(byref(self))
-            G = c_double(self._sim.contents.G)
-       
-        if primary.m <= 0.:
-            raise ValueError("Primary has no mass.")
-        
-        a = c_double()
-        l = c_double()
-        k = c_double()
-        h = c_double()
-        ix = c_double()
-        iy = c_double()
-        clibrebound.reb_tools_particle_to_pal(G, self, primary, byref(a), byref(l), byref(k), byref(h), byref(ix), byref(iy))
-        
-        o = OrbitPal()
-        o.a = a
-        o.l = l
-        o.h = h
-        o.k = k
-        o.ix = ix
-        o.iy = iy
-
-        return o
-
     
     def sample_orbit(self, Npts=100, primary=None, samplingAngle=None, duplicateEndpoint=None):
         """
