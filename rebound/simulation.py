@@ -428,10 +428,10 @@ class Orbit(Structure):
                 ("l", c_double),
                 ("theta", c_double),
                 ("T", c_double),
-                ("rhill", c_double)]
-                ("pal_h", c_double)]
-                ("pal_k", c_double)]
-                ("pal_ix", c_double)]
+                ("rhill", c_double),
+                ("pal_h", c_double),
+                ("pal_k", c_double),
+                ("pal_ix", c_double),
                 ("pal_iy", c_double)]
 
     def __str__(self):
