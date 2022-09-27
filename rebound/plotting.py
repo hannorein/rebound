@@ -203,7 +203,7 @@ def fading_line(x, y, color='black', alpha=1, fading=True, fancy=False, **kwargs
     lc = LineCollection(segments, color=colors, **kwargs)
     return lc
 
-def OrbitPlotOneSlice(sim, ax, Narc=128, color=False, periastron=False, orbit_type="trial", lw=1., axes="xy", plotparticles=None, primary=None, fancy=False, xlim=None, ylim=None):
+def OrbitPlotOneSlice(sim, ax, Narc=128, color=False, periastron=False, orbit_type="trail", lw=1., axes="xy", plotparticles=None, primary=None, fancy=False, xlim=None, ylim=None):
     import matplotlib.pyplot as plt
     from matplotlib.collections import LineCollection
     import numpy as np
