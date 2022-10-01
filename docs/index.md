@@ -35,6 +35,9 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 
 REBOUND is open source and you are invited to contribute to this project! 
 
+## YouTube tutorials
+
+There are several short YouTube videos describing various aspects of REBOUND available at <https://www.youtube.com/channel/UCNmrCzxcmWVTBwtDPPLxkkw.>
 
 ## Papers
 
