@@ -114,7 +114,7 @@ sim.cite()
 ## Contributors
 
 * Hanno Rein, University of Toronto, <hanno@hanno-rein.de>
-* Dan Tamayo, Princeton University, <dtamayo@astro.princeton.edu>
+* Dan Tamayo, Harvey Mudd College, <dtamayo@hmc.edu>
 * David S. Spiegel, Institute for Advanced Study Princeton, <dave@ias.edu>
 * Garett Brown, University of Toronto, <gbrown@physics.utoronto.ca>
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University, <liushangfei@pku.edu.cn>
