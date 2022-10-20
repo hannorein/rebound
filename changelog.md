@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.20.1
+* Pal coordinates have been added to the `reb_orbit` struct.
+
 ### Version 3.20.0
 * A new integrator has been added, the Terrestrial Exoplanet Simulation (TES).
 
