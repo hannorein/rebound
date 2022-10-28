@@ -43,6 +43,18 @@ The following code shows you how to do that.
     sim.integrate(100., exact_finish_time=0) # integrate until t=100. or a bit further
     ```
 
+If you want to stop a current integration after the current timestep, for example from within the heartbeat function, you can call:
+=== "C"
+    ```c
+    reb_stop(r); 
+    ```
+=== "Python"
+    sim.stop()
+    ```
+
+Note that you might need to manually synchronize the simulation afterwards if you have safe mode turned off.
+
+
 ## Single step
 
 Rather than integrating up to a fixed time, you can also advance the simulation by a single timestep:
