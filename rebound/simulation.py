@@ -1781,12 +1781,19 @@ class Simulation(Structure):
         if ret_value == 4:
             raise Escape("A particle escaped (r>exit_max_distance).")
         if ret_value == 5:
-            raise Escape("User caused exit. Simulation did not finish.") # should not occur in python
+            pass # User caused exit. Do not raise error message
         if ret_value == 6:
             raise KeyboardInterrupt
         if ret_value == 7:
             raise Collision("Two particles collided (d < r1+r2)")
         self.process_messages()
+
+    def stop(self):
+        """
+        Call this function to stop an integration, for example
+        from the heartbeat function.
+        """
+        clibrebound.reb_stop(byref(self))
 
     def integrator_reset(self):
         """

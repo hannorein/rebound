@@ -221,6 +221,10 @@ void reb_error(struct reb_simulation* const r, const char* const msg){
     reb_message(r, 'e', msg);
 }
 
+void reb_stop(struct reb_simulation* const r){
+    r->status = REB_EXIT_USER;
+}
+
 int reb_get_next_message(struct reb_simulation* const r, char* const buf){
     if (r->messages){
         char* w0 = r->messages[0];

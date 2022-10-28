@@ -949,6 +949,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax);
 void reb_integrator_synchronize(struct reb_simulation* r);
 void reb_integrator_reset(struct reb_simulation* r);
 void reb_update_acceleration(struct reb_simulation* r);
+void reb_stop(struct reb_simulation* const r); // Stop current integration
 
 // Compare simulations
 // If r1 and r2 are exactly equal to each other then 0 is returned, otherwise 1. Walltime is ignored.
