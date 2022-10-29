@@ -1211,9 +1211,7 @@ void reb_var_rescale(struct reb_simulation* const r){
     for (int v=0;v<r->var_config_N;v++){
         struct reb_variational_configuration* vc = &(r->var_config[v]);
 
-        if (vc->lrescale <0 ){ // Skip rescaling if lrescale set to -1
-           continue;
-        }
+        if (vc->lrescale <0 ) continue;  // Skip rescaling if lrescale set to -1
 
         int N = 1;
         if (vc->testparticle<0){
@@ -1231,6 +1229,25 @@ void reb_var_rescale(struct reb_simulation* const r){
             scale = MAX(fabs(p.vz), scale);
         }
         if (scale > 1e100){
+             
+            if (vc->order == 1){
+                for (int w=0;w<r->var_config_N;w++){
+                    struct reb_variational_configuration* wc = &(r->var_config[w]);
+                    if (wc->index_1st_order_a == vc->index || wc->index_1st_order_b == vc->index){
+                        if (!(r->var_rescale_warning & 4)){
+                            r->var_rescale_warning |= 4;
+                            reb_warning(r, "Rescaling a set of variational equations of order 1 which are being used by a set of variational equations of order 2. Order 2 equations will no longer be valid.");
+                        }
+                    }
+                }
+            }else{ // order 2
+                if (!(r->var_rescale_warning & 2)){
+                    r->var_rescale_warning |= 2;
+                    reb_warning(r, "Variational particles which are part of a second order variational equation have now large coordinates which might exceed range of floating point number range. REBOUND cannot rescale a second order variational equation as it is non-linear.");
+                }
+                return;
+            }
+
 
             int is_synchronized = 1;
             if (r->integrator == REB_INTEGRATOR_WHFAST && r->ri_whfast.is_synchronized == 0){
@@ -1240,8 +1257,8 @@ void reb_var_rescale(struct reb_simulation* const r){
                 is_synchronized = 0;
             }
             if (is_synchronized == 0){
-                if (r->var_rescale_warning == 0){
-                    r->var_rescale_warning = 1;
+                if (!(r->var_rescale_warning & 1)){
+                    r->var_rescale_warning |= 1;
                     reb_warning(r, "Variational particles have large coordinates which might exceed range of floating point numbers. Rescaling failed because integrator was not synchronized. Turn on safe_mode or manually synchronize and rescale.");
                 }
                 return;
@@ -1256,6 +1273,7 @@ void reb_var_rescale(struct reb_simulation* const r){
                 particles[i].vy /= scale;
                 particles[i].vz /= scale;
             }
+
             if (r->integrator == REB_INTEGRATOR_WHFAST && r->ri_whfast.safe_mode == 0){
                 r->ri_whfast.recalculate_coordinates_this_timestep = 1;
             }

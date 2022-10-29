@@ -4,6 +4,10 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.21.0
+* Automatic rescaling of first order variational particles has been added. This will allow you to integrate chaotic systems for longer and obtain a more accruate measure of MEGNO and the Lyapunoc exponent. 
+* Added `sim.stop()` / `reb_stop()` to end an integration from within the heartbeat function.
+
 ### Version 3.20.1
 * Pal coordinates have been added to the `reb_orbit` struct.
 
