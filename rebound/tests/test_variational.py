@@ -14,7 +14,7 @@ class TestVariationalRescale(unittest.TestCase):
 
         v = sim.add_variation()
         v.particles[1].x = 1
-        sim.integrate(4e5)
+        sim.integrate(2e5)
 
         self.assertGreater(v.lrescale, 100.0)
 
@@ -60,9 +60,16 @@ class TestVariationalRescale(unittest.TestCase):
         sim.move_to_com()
 
         sim.init_megno()
-        sim.integrate(4e5)
+        sim2 = sim.copy()
+        sim2.var_config[0].lrescale = -1
+
+        sim.integrate(1.3e5)
+        sim2.integrate(1.3e5)
 
         self.assertGreater(sim.var_config[0].lrescale, 100.0)
+        self.assertEqual(sim2.var_config[0].lrescale, -1.0)
+        self.assertEqual(sim2.calculate_megno(), sim.calculate_megno())
+        
 
 
 
