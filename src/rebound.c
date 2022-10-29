@@ -145,6 +145,10 @@ void reb_step(struct reb_simulation* const r){
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
+    
+    if (r->N_var){
+        reb_var_rescale(r);
+    }
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
     // Do collisions here. We need both the positions and velocities at the same time.
@@ -506,6 +510,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->N        = 0;    
     r->allocatedN   = 0;    
     r->N_active     = -1;   
+    r->var_rescale_warning   = 0;   
     r->particle_lookup_table = NULL;
     r->hash_ctr = 0;
     r->N_lookup = 0;

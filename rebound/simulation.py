@@ -1848,8 +1848,8 @@ class Variation(Structure):
                 ("index", c_int),
                 ("testparticle", c_int),
                 ("index_1st_order_a", c_int),
-                ("index_1st_order_b", c_int)]
-                ("lrescale", c_double)]
+                ("index_1st_order_b", c_int),
+                ("_lrescale", c_double)]
 
     def vary(self, particle_index, variation, variation2=None, primary=None):
         """
@@ -1930,6 +1930,38 @@ class Variation(Structure):
         ParticleList = Particle*N
         ps = ParticleList.from_address(ctypes.addressof(sim._particles.contents)+self.index*ctypes.sizeof(Particle))
         return ps
+    
+    @property
+    def lrescale(self):
+        """
+        Access the lrescale parameter. 
+        
+        This is a property because sim.add_variation() returns a copy of the struct, so need to find up-to-date reb_variational_configuration struct in simulation.
+        """
+        sim = self._sim.contents
+        for i in range(sim.var_config_N):
+            if sim.var_config[i].index == self.index:
+                return sim.var_config[i]._lrescale
+        raise SimulationError("An error occured while trying to find variational struct in simulation.")
+    
+    @lrescale.setter
+    def lrescale(self, value):
+        """
+        Set the lrescale parameter. 
+        
+        This is a property because sim.add_variation() returns a copy of the struct, so need to find up-to-date reb_variational_configuration struct in simulation.
+        """
+        sim = self._sim.contents
+        for i in range(sim.var_config_N):
+            if sim.var_config[i].index == self.index:
+                self._lrescale = c_double(value)
+                sim.var_config[i]._lrescale = c_double(value)
+                return
+
+        raise SimulationError("An error occured while trying to find variational struct in simulation.")
+
+
+        
 
 class reb_particle_int(Structure):
     _fields_ = [

@@ -1201,7 +1201,7 @@ struct reb_particle reb_tools_pal_to_particle(double G, struct reb_particle prim
 /***********************************
  * Variational Equations and Megno */
 
-void reb_var_rescale(struct reb_simulation* const r, int testparticle){
+void reb_var_rescale(struct reb_simulation* const r){
     // This function rescales variational particles if a coordinate
     // approached floating point limits (>1e100)
     if (r->var_config_N==0){
@@ -1255,6 +1255,9 @@ void reb_var_rescale(struct reb_simulation* const r, int testparticle){
                 particles[i].vx /= scale;
                 particles[i].vy /= scale;
                 particles[i].vz /= scale;
+            }
+            if (r->integrator == REB_INTEGRATOR_WHFAST && r->ri_whfast.safe_mode == 0){
+                r->ri_whfast.recalculate_coordinates_this_timestep = 1;
             }
         }
     }

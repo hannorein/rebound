@@ -1087,6 +1087,15 @@ int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle);
 // Returns the index of the first variational particle added
 int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b);
 
+// Rescale all sets of variational particles if their size gets too large (>1e100).
+// This can prevent an overflow in floating point numbers. The logarithm of the rescaling
+// factor is stored in the reb_variational_configuration's lrescale variable. 
+// This function is called automatically every timestep. To avoid automatic rescaling,
+// set the reb_variational_configuration's lrescale variable to -1.
+// For this function to work, the positions and velocities needs to be synchronized. 
+// A warning is presented if the integrator is not synchronized. 
+void reb_var_rescale(struct reb_simulation* const r);
+
 // These functions calculates the first/second derivative of a Keplerian orbit. 
 //   Derivatives of Keplerian orbits are required for variational equations, in particular
 //   for optimization problems. 
