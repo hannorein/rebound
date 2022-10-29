@@ -69,7 +69,7 @@ To print out the MEGNO value or the largest Lyapunov characteristic number (LCN)
 !!! Important
     This is a new feature, first implemented in version 3.21
 
-REBOUND will automatically rescale first order variational equation once any coordinate of a variational particle becomes larger than $10^100$. 
+REBOUND will automatically rescale first order variational equation once any coordinate of a variational particle becomes larger than $10^{100}$. 
 This is only possible for first order variational equations because they are linear. 
 It is not possible to rescale second order equations. 
 For the calculation of MEGNO, all this is done behind the scenes and no user intervention is needed.
@@ -94,5 +94,5 @@ This variable contains the natural logarithm of all rescaling factors that have 
     vc = sim.var_config[0]
     log_x = vc.particles[0] + vc.lrescale // log of x coordinate of variational particle
 
-Note that above the  calculations involving the rescaling factors have been done in log space as floating point numbers cannot be used to represent number larger than $10^{308}$.
+Note that above the  calculations involving the rescaling factors have been done in log space as floating point numbers cannot be used to represent a number larger than $10^{308}$.
 For a more complete example, check out the [iPython Variational Equation example](ipython_examples/VariationalEquations.ipynb).
