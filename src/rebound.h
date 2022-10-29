@@ -623,6 +623,7 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_BS_FIRSTORLASTSTEP = 160,
     REB_BINARY_FIELD_TYPE_BS_PREVIOUSREJECTED = 161,
     REB_BINARY_FIELD_TYPE_BS_TARGETITER = 162,
+    REB_BINARY_FIELD_TYPE_VARRESCALEWARNING = 163,
 
     REB_BINARY_FIELD_TYPE_TES_DQ_MAX = 300,
     REB_BINARY_FIELD_TYPE_TES_RECTI_PER_ORBIT = 301,
@@ -731,6 +732,7 @@ struct reb_simulation {
     int     N_var;
     int     var_config_N;
     struct reb_variational_configuration* var_config;   // These configuration structs contain details on variational particles. 
+    int     var_rescale_warning;
     int     N_active;
     int     testparticle_type;
     int     testparticle_hidewarnings;
@@ -1067,6 +1069,7 @@ struct reb_variational_configuration{
     int testparticle;           // Is this variational configuration describe a test particle? -1 if not.
     int index_1st_order_a;      // Used for 2nd order variational particles only: Index of the first order variational particle in the particles array.
     int index_1st_order_b;      // Used for 2nd order variational particles only: Index of the first order variational particle in the particles array.
+    double lrescale;             // Accumulates the logarithm of rescalings
 };
 
 // Add and initialize a set of first order variational particles

@@ -1849,6 +1849,7 @@ class Variation(Structure):
                 ("testparticle", c_int),
                 ("index_1st_order_a", c_int),
                 ("index_1st_order_b", c_int)]
+                ("lrescale", c_double)]
 
     def vary(self, particle_index, variation, variation2=None, primary=None):
         """
@@ -2203,6 +2204,7 @@ Simulation._fields_ = [
                 ("N_var", c_int),
                 ("var_config_N", c_int),
                 ("var_config", POINTER(Variation)),
+                ("_var_rescale_warning", c_int),
                 ("N_active", c_int),
                 ("testparticle_type", c_int),
                 ("testparticle_hidewarnings", c_int),
