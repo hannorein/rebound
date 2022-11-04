@@ -180,3 +180,4 @@ plugins:
       hooks:
         on_pre_build: "docs.c_examples.generate_c_examples:run"
   - mkdocs-jupyter
+  - mkdocs-video

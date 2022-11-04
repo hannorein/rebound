@@ -1,5 +1,7 @@
 # Installation
 
+![type:video](https://www.youtube.com/embed/_7Y3YLKyxWA)
+
 ## Choosing between C and Python
 
 You can use either C or Python when working with REBOUND.
