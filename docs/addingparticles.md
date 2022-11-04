@@ -1,4 +1,7 @@
 # Adding particles
+
+![type:video](https://www.youtube.com/embed/FoTwDtAeJyk)
+
 Once you've created a [simulation object](simulation.md), you can add particles to it. 
 REBOUND supports several different ways to do that. 
 Also check out the [discussion on particle operators](particleoperators.md).

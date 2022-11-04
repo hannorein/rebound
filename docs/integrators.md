@@ -1,5 +1,7 @@
 # Integrators
 
+![type:video](https://www.youtube.com/embed/QW5a-iH62dQ)
+
 Numerical integrators are the backbone of any N-body package. 
 A numerical integrator evolves particles forward in time, one timestep at a time.
 To do that, the integrator needs to know the current position and velocity coordinates of the particles, and the equations of motion which come in the form of a set of ordinary differential equations.
@@ -9,6 +11,8 @@ Different integrators do this differently and each of them has some advantages a
 Each of the built-in integrators of REBOUND is described in this section.
 
 ## IAS15
+
+![type:video](https://www.youtube.com/embed/UILEgdZt-fw)
 
 IAS15 stands for **I**ntegrator with **A**daptive **S**tep-size control, **15**th order. It is a very high order, non-symplectic integrator which can handle arbitrary forces (including those who are velocity dependent). 
 It is in most cases accurate down to machine precision (16 significant decimal digits). 
@@ -61,6 +65,9 @@ All other members of this structure are only for internal IAS15 use.
 
 
 ## WHFast
+
+![type:video](https://www.youtube.com/embed/ttLUhtNj1Lc)
+
 WHFast is an implementation of the symplectic [Wisdom-Holman](https://ui.adsabs.harvard.edu/abs/1991AJ....102.1528W/abstract) integrator. 
 It is the best choice for systems in which there is a dominant central object and perturbations to the Keplerian orbits are small. 
 It supports first and second symplectic correctors as well as the kernel method of [Wisdom et al. 1996](https://ui.adsabs.harvard.edu/abs/1996FIC....10..217W/abstract) with various different kernels.
