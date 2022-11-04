@@ -181,3 +181,6 @@ plugins:
         on_pre_build: "docs.c_examples.generate_c_examples:run"
   - mkdocs-jupyter
   - mkdocs-video
+      css_style:
+        width: "48vw"
+        height: "27vw"
