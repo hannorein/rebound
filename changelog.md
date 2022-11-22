@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.22.0
+* OrbitPlot is now a class. Checkout the OrbitPlot.ipynb tutorial. This change allows for interactive plots and much faster updates to existing plots. This is great for rendering animations! 
+
 ### Version 3.21.0
 * Automatic rescaling of first order variational particles has been added. This will allow you to integrate chaotic systems for longer and obtain a more accruate measure of MEGNO and the Lyapunoc exponent. 
 * Added `sim.stop()` / `reb_stop()` to end an integration from within the heartbeat function.
