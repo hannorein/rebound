@@ -33,3 +33,5 @@ others/*.tar
 docs/c_examples
 problems/
 .vscode/
+*.pete
+examples/solar_system_tes

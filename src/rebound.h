@@ -229,7 +229,9 @@ struct reb_ode{ // defines an ODE
     double* yDot;   // Temporary internal array (derivatives)
     double* yTmp;   // Temporary internal array (midpoint method)
     void (*derivatives)(struct reb_ode* const ode, double* const yDot, const double* const y, const double t); // right hand side 
-    void (*getscale)(struct reb_ode* const ode, const double* const y0, const double* const y1); // right hand side 
+    void (*getscale)(struct reb_ode* const ode, const double* const y0, const double* const y1); // right hand side (optional) 
+    void (*pre_timestep)(struct reb_ode* const ode, const double* const y0); // gets called just before the ODE integration (optional)
+    void (*post_timestep)(struct reb_ode* const ode, const double* const y0); // gets called just after the ODE integration (optional)
     struct reb_simulation* r; // weak reference to main simulation 
     void* ref;  // pointer to any additional data needed for derivatives
 };
@@ -251,6 +253,179 @@ struct reb_simulation_integrator_bs {
     int previousRejected;
     int targetIter;
     int user_ode_needs_nbody; // Do not set manually. Use needs_nbody in reb_ode instead.
+};
+
+typedef struct _StumpfCoefficients
+{
+  double * __restrict__ c0;
+  double * __restrict__ c1;
+  double * __restrict__ c2;
+  double * __restrict__ c3;
+}StumpfCoefficients;
+
+typedef struct UNIVERSAL_VARS
+{
+  double * __restrict__ t0;
+  double * __restrict__ tLast;
+  double * uv_csq;
+  double * uv_csp;
+  double * uv_csv;  
+  double * dt;
+  double * __restrict__ Q0;
+  double * __restrict__ V0;
+  double * __restrict__ P0;
+  double * __restrict__ Q1;
+  double * __restrict__ V1;
+  double * __restrict__ P1;  
+  double * __restrict__ X;
+  double * __restrict__ Q0_norm;
+  double * __restrict__ beta;
+  double * __restrict__ eta;
+  double * __restrict__ zeta;
+  double * __restrict__ period;
+  double * __restrict__ Xperiod;
+  uint32_t stateVectorSize;
+  uint32_t controlVectorSize;
+
+  StumpfCoefficients C;
+
+  double mu;  /// G*mCentral
+
+  // Variables for storing classical orbital elements.
+  double * e;
+  double * a;
+  double * h;
+  double * h_norm;
+  double * peri;
+  double * apo;  
+}UNIVERSAL_VARS;
+
+typedef struct _controlVars {
+    double* __restrict__ p0;
+    double* __restrict__ p1;
+    double* __restrict__ p2;
+    double* __restrict__ p3;
+    double* __restrict__ p4;
+    double* __restrict__ p5;
+    double* __restrict__ p6;
+    uint32_t size;
+}controlVars;
+
+typedef struct RADAU
+{
+  // State vectors
+  double * dX;
+  double * dQ;
+  double * dP;
+  // Buffers for rectifying into before performing a synchronisation.
+  double * Xout;
+  double * Qout;
+  double * Pout;
+  uint32_t * rectifiedArray;
+  // Buffer for predictors
+  double * predictors;
+  // Derivatives at start of the step.
+  double * __restrict__ dState0;
+  double * __restrict__ ddState0;
+  // Intermediate derivatives.
+  double * __restrict__ dState;
+  double * __restrict__ ddState;
+  // Compensated summation arrays for gravity
+  double * __restrict__ cs_dState0;
+  double * __restrict__ cs_ddState0;
+  double * __restrict__ cs_dState;
+  double * __restrict__ cs_ddState;
+  // Compensated summation arrays for B's.
+  controlVars cs_B;
+  controlVars cs_B1st;
+  // Compensated summation array for the predictor and corrector.
+  double * cs_dX;
+  double * cs_dq;
+  double * cs_dp;
+  // Integrator coefficients.
+  controlVars G;
+  controlVars B;
+  controlVars Blast;
+  controlVars Blast_1st;
+  controlVars G_1st;
+  controlVars B_1st;  
+  // Variables for performance metrics
+  uint64_t fCalls;
+  uint64_t rectifications;
+  uint32_t convergenceIterations;
+  // Iteration convergence variables.
+  double * b6_store;
+  double * acc_ptr;
+}RADAU;
+
+typedef struct DHEM
+{
+  // Pointers to osculating orbits at a single point in time.
+  double * Xosc;
+  double * Qosc;
+  double * Posc;
+  // Osculating orbits for all stages within a step.
+  double * XoscStore;
+  double ** XoscArr;
+  double * XoscPredStore;
+  double ** XoscPredArr;  
+  // CS variables for the osculating orbits.
+  double * Xosc_cs;
+  double * XoscStore_cs;
+  double ** XoscArr_cs;
+  double * Qosc_cs;
+  double * Posc_cs;
+  // Pointers to osculating orbit derivatives at a single point in time.
+  double * Xosc_dot;
+  double * Qosc_dot;
+  double * Posc_dot;
+  // Osculating orbits derivatives for all stages within a step.
+  double * Xosc_dotStore;
+  double ** Xosc_dotArr;
+  // Variables for summing Xosc+dX into.
+  double * X;
+  double * Q;
+  double * P;
+  // Mass variables.
+  double * __restrict__ m;
+  double * __restrict__ m_inv;
+  double mTotal;
+  // Rectification variables.
+  double * rectifyTimeArray;    /// The time at which we need to rectify each body.
+  double * rectificationPeriod; /// Elapsed time to trigger a rectification.
+}DHEM;
+
+struct reb_simulation_integrator_tes {
+    double dq_max;              // value of dq/q that triggers a rectification (backup to recti_per_orbit)
+    double recti_per_orbit;     // main method for triggering a rectification 
+    double epsilon;             // tolerance parameter
+    double orbital_period;      // The lowest initial orbital period.
+
+    // Synchronisation particle storage.
+    uint32_t allocated_N;
+    struct reb_particle* particles_dh;
+
+    // Vector dimensions variables.
+    uint32_t stateVectorLength;		/// Length of the state vector in doubles.
+    uint32_t stateVectorSize;		/// Size in bytes of the state vector.
+    uint32_t controlVectorLength;	/// Length of the control vector in doubles.
+    uint32_t controlVectorSize; 	/// Size in bytes of n * sizeof(double).
+
+    // State storage
+    double * mass;					/// Initial particle masses
+    double * X_dh;					/// Memory for current state in dh coords.
+	double * Q_dh;					/// Current state in dh coords.
+	double * P_dh;					/// Current state in dh coords. 
+    double COM[3];                  // Centre of mass
+    double COM_dot[3];              // Velocity of COM
+
+    // Pointers to various modules comprising TES.
+    UNIVERSAL_VARS * uVars;			/// Pointer to the universal variables module
+    DHEM * rhs;						/// Pointer to the DHEM rhs
+    RADAU * radau;  				/// Pointer to our integrator
+
+    double mStar_last;              /// Mass of the star last step.
+    uint32_t warnings;              /// Number of times warning has been shown
 };
 
 enum REB_EOS_TYPE {
@@ -450,6 +625,85 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_BS_FIRSTORLASTSTEP = 160,
     REB_BINARY_FIELD_TYPE_BS_PREVIOUSREJECTED = 161,
     REB_BINARY_FIELD_TYPE_BS_TARGETITER = 162,
+    REB_BINARY_FIELD_TYPE_VARRESCALEWARNING = 163,
+
+    REB_BINARY_FIELD_TYPE_TES_DQ_MAX = 300,
+    REB_BINARY_FIELD_TYPE_TES_RECTI_PER_ORBIT = 301,
+    REB_BINARY_FIELD_TYPE_TES_EPSILON = 302,
+    REB_BINARY_FIELD_TYPE_TES_PERIOD = 303,
+    REB_BINARY_FIELD_TYPE_TES_ALLOCATED_N = 304,
+    REB_BINARY_FIELD_TYPE_TES_PARTICLES_DH = 305,
+    REB_BINARY_FIELD_TYPE_TES_SV_LEN = 306,
+    REB_BINARY_FIELD_TYPE_TES_SV_SIZE = 307,
+    REB_BINARY_FIELD_TYPE_TES_CV_LEN = 308,
+    REB_BINARY_FIELD_TYPE_TES_CV_SIZE = 309,
+    REB_BINARY_FIELD_TYPE_TES_MASS = 310,
+    REB_BINARY_FIELD_TYPE_TES_X_DH = 311,
+    REB_BINARY_FIELD_TYPE_TES_COM = 312,
+    REB_BINARY_FIELD_TYPE_TES_COM_DOT = 313,
+    REB_BINARY_FIELD_TYPE_TES_MASS_STAR_LAST = 314,
+
+    REB_BINARY_FIELD_TYPE_TES_UVARS_SV_SIZE = 320,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_CV_SIZE = 321,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_T0 = 322,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_TLAST = 323,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_CSQ = 324,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_CSP = 325,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_CSV = 326,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_Q0 = 327,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_V0 = 328,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_P0 = 329,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_Q1 = 330,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_V1 = 331,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_P1 = 332,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_X = 333,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_Q0_NORM = 334,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_BETA = 335,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_ETA = 336,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_ZETA = 337,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_PERIOD = 338,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_XPERIOD = 339,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_STUMPF_C0     = 340,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_STUMPF_C1     = 341,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_STUMPF_C2     = 342,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_STUMPF_C3     = 343,
+    REB_BINARY_FIELD_TYPE_TES_UVARS_MU = 344,
+
+    REB_BINARY_FIELD_TYPE_TES_RADAU_DX = 350,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_XOUT = 351,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_RECTI_ARRAY = 352,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_PREDICTORS = 353,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_DSTATE0 = 354,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_DDSTATE0 = 355,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_DSTATE = 356,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_DDSTATE = 357,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_CS_DSTATE0 = 358,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_CS_DDSTATE0 = 359,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_CS_DSTATE = 360,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_CS_DDSTATE = 361,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_CS_DX = 362,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_FCALLS = 363,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_RECTIS = 364,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_ITERS = 365,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_B6 = 366,    
+    REB_BINARY_FIELD_TYPE_TES_RADAU_B = 367,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_BLAST = 368,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_B_1ST = 369,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_BLAST_1ST = 370,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_CS_B = 371,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_CS_B_1ST = 372,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_G = 373,
+    REB_BINARY_FIELD_TYPE_TES_RADAU_G_1ST = 374,
+
+    REB_BINARY_FIELD_TYPE_TES_DHEM_XOSC_STORE = 380,
+    REB_BINARY_FIELD_TYPE_TES_DHEM_XOSC_PRED_STORE = 381,
+    REB_BINARY_FIELD_TYPE_TES_DHEM_XOSC_CS_STORE = 382,
+    REB_BINARY_FIELD_TYPE_TES_DHEM_XOSC_DOT_STORE = 383,
+    REB_BINARY_FIELD_TYPE_TES_DHEM_X = 384,
+    REB_BINARY_FIELD_TYPE_TES_DHEM_M_INV = 385,
+    REB_BINARY_FIELD_TYPE_TES_DHEM_M_TOTAL = 386,
+    REB_BINARY_FIELD_TYPE_TES_DHEM_RECTI_TIME = 387,
+    REB_BINARY_FIELD_TYPE_TES_DHEM_RECTI_PERIOD = 388,
 
     REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
     REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
@@ -480,6 +734,7 @@ struct reb_simulation {
     int     N_var;
     int     var_config_N;
     struct reb_variational_configuration* var_config;   // These configuration structs contain details on variational particles. 
+    int     var_rescale_warning;
     int     N_active;
     int     testparticle_type;
     int     testparticle_hidewarnings;
@@ -600,6 +855,7 @@ struct reb_simulation {
         REB_INTEGRATOR_SABA = 10,    // SABA integrator family (Laskar and Robutel 2001)
         REB_INTEGRATOR_EOS = 11,     // Embedded Operator Splitting (EOS) integrator family (Rein 2019)
         REB_INTEGRATOR_BS = 12,      // Gragg-Bulirsch-Stoer 
+        REB_INTEGRATOR_TES = 20,     // Terrestrial Exoplanet Simulator (TES) 
         } integrator;
     enum {
         REB_BOUNDARY_NONE = 0,      // Do not check for anything (default)
@@ -625,6 +881,7 @@ struct reb_simulation {
     struct reb_simulation_integrator_janus ri_janus;        // The JANUS struct 
     struct reb_simulation_integrator_eos ri_eos;            // The EOS struct 
     struct reb_simulation_integrator_bs ri_bs;              // The BS struct
+    struct reb_simulation_integrator_tes ri_tes;            // TES struct
 
     // ODEs
     struct reb_ode** odes;  // all ode sets (includes nbody if BS set as integrator)
@@ -665,6 +922,10 @@ struct reb_orbit {
     double theta;    // True Longitude
     double T;        // Time of pericenter passage
     double rhill;    // Circular Hill radius 
+    double pal_h;    // Cartesian component of the eccentricity, h = e*sin(pomega) 
+    double pal_k;    // Cartesian component of the eccentricity, k = e*cos(pomega) 
+    double pal_ix;    // Cartesian component of the inclination, ix = 2*sin(i/2)*cos(Omega)
+    double pal_iy;    // Cartesian component of the inclination, ix = 2*sin(i/2)*sin(Omega)
 };
 
 
@@ -692,6 +953,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax);
 void reb_integrator_synchronize(struct reb_simulation* r);
 void reb_integrator_reset(struct reb_simulation* r);
 void reb_update_acceleration(struct reb_simulation* r);
+void reb_stop(struct reb_simulation* const r); // Stop current integration
 
 // Compare simulations
 // If r1 and r2 are exactly equal to each other then 0 is returned, otherwise 1. Walltime is ignored.
@@ -809,6 +1071,7 @@ struct reb_variational_configuration{
     int testparticle;           // Is this variational configuration describe a test particle? -1 if not.
     int index_1st_order_a;      // Used for 2nd order variational particles only: Index of the first order variational particle in the particles array.
     int index_1st_order_b;      // Used for 2nd order variational particles only: Index of the first order variational particle in the particles array.
+    double lrescale;             // Accumulates the logarithm of rescalings
 };
 
 // Add and initialize a set of first order variational particles
@@ -825,6 +1088,15 @@ int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle);
 // index_1st_order_b is the index of the corresponding first variational particles.
 // Returns the index of the first variational particle added
 int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b);
+
+// Rescale all sets of variational particles if their size gets too large (>1e100).
+// This can prevent an overflow in floating point numbers. The logarithm of the rescaling
+// factor is stored in the reb_variational_configuration's lrescale variable. 
+// This function is called automatically every timestep. To avoid automatic rescaling,
+// set the reb_variational_configuration's lrescale variable to -1.
+// For this function to work, the positions and velocities needs to be synchronized. 
+// A warning is presented if the integrator is not synchronized. 
+void reb_var_rescale(struct reb_simulation* const r);
 
 // These functions calculates the first/second derivative of a Keplerian orbit. 
 //   Derivatives of Keplerian orbits are required for variational equations, in particular

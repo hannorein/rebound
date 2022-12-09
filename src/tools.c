@@ -34,6 +34,7 @@
 #include "particle.h"
 #include "rebound.h"
 #include "tools.h"
+#define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
 
 void reb_tools_init_srand(struct reb_simulation* r){
@@ -1083,6 +1084,14 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
     o.M = reb_tools_mod2pi(o.M);
     o.theta = reb_tools_mod2pi(o.theta);
     o.omega = reb_tools_mod2pi(o.omega);
+    
+    
+    // Cartesian eccentricity and inclination components, see Pal (2009)
+    double fac = sqrt(2./(1.+hz/o.h))/o.h;
+    o.pal_ix = -fac * hy;
+    o.pal_iy = fac * hx;
+    o.pal_k = o.h/mu*(dvy-dvz/(o.h+hz)*hy)-1./o.d*(dx-dz/(o.h+hz)*hx);
+    o.pal_h = o.h/mu*(-dvx+dvz/(o.h+hz)*hx)-1./o.d*(dy-dz/(o.h+hz)*hy);
     return o;
 }
 
@@ -1192,6 +1201,86 @@ struct reb_particle reb_tools_pal_to_particle(double G, struct reb_particle prim
 /***********************************
  * Variational Equations and Megno */
 
+void reb_var_rescale(struct reb_simulation* const r){
+    // This function rescales variational particles if a coordinate
+    // approached floating point limits (>1e100)
+    if (r->var_config_N==0){
+        return;
+    }
+
+    for (int v=0;v<r->var_config_N;v++){
+        struct reb_variational_configuration* vc = &(r->var_config[v]);
+
+        if (vc->lrescale <0 ) continue;  // Skip rescaling if lrescale set to -1
+
+        int N = 1;
+        if (vc->testparticle<0){
+            N = r->N - r->N_var;
+        }
+        double scale = 0;
+        struct reb_particle* const particles = r->particles + vc->index;
+        for (int i=0; i<N; i++){
+            struct reb_particle p = particles[i];
+            scale = MAX(fabs(p.x), scale);
+            scale = MAX(fabs(p.y), scale);
+            scale = MAX(fabs(p.z), scale);
+            scale = MAX(fabs(p.vx), scale);
+            scale = MAX(fabs(p.vy), scale);
+            scale = MAX(fabs(p.vz), scale);
+        }
+        if (scale > 1e100){
+             
+            if (vc->order == 1){
+                for (int w=0;w<r->var_config_N;w++){
+                    struct reb_variational_configuration* wc = &(r->var_config[w]);
+                    if (wc->index_1st_order_a == vc->index || wc->index_1st_order_b == vc->index){
+                        if (!(r->var_rescale_warning & 4)){
+                            r->var_rescale_warning |= 4;
+                            reb_warning(r, "Rescaling a set of variational equations of order 1 which are being used by a set of variational equations of order 2. Order 2 equations will no longer be valid.");
+                        }
+                    }
+                }
+            }else{ // order 2
+                if (!(r->var_rescale_warning & 2)){
+                    r->var_rescale_warning |= 2;
+                    reb_warning(r, "Variational particles which are part of a second order variational equation have now large coordinates which might exceed range of floating point number range. REBOUND cannot rescale a second order variational equation as it is non-linear.");
+                }
+                return;
+            }
+
+
+            int is_synchronized = 1;
+            if (r->integrator == REB_INTEGRATOR_WHFAST && r->ri_whfast.is_synchronized == 0){
+                is_synchronized = 0;
+            }
+            if (r->integrator == REB_INTEGRATOR_EOS && r->ri_eos.is_synchronized == 0){
+                is_synchronized = 0;
+            }
+            if (is_synchronized == 0){
+                if (!(r->var_rescale_warning & 1)){
+                    r->var_rescale_warning |= 1;
+                    reb_warning(r, "Variational particles have large coordinates which might exceed range of floating point numbers. Rescaling failed because integrator was not synchronized. Turn on safe_mode or manually synchronize and rescale.");
+                }
+                return;
+            }
+
+            vc->lrescale += log(scale);
+            for (int i=0; i<N; i++){
+                particles[i].x /= scale;
+                particles[i].y /= scale;
+                particles[i].z /= scale;
+                particles[i].vx /= scale;
+                particles[i].vy /= scale;
+                particles[i].vz /= scale;
+            }
+
+            if (r->integrator == REB_INTEGRATOR_WHFAST && r->ri_whfast.safe_mode == 0){
+                r->ri_whfast.recalculate_coordinates_this_timestep = 1;
+            }
+        }
+    }
+}
+
 
 int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle){
     r->var_config_N++;
@@ -1200,6 +1289,7 @@ int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle){
     r->var_config[r->var_config_N-1].order = 1;
     int index = r->N;
     r->var_config[r->var_config_N-1].index = index;
+    r->var_config[r->var_config_N-1].lrescale = 0;
     r->var_config[r->var_config_N-1].testparticle = testparticle;
     struct reb_particle p0 = {0};
     if (testparticle>=0){
@@ -1223,6 +1313,7 @@ int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int 
     r->var_config[r->var_config_N-1].order = 2;
     int index = r->N;
     r->var_config[r->var_config_N-1].index = index;
+    r->var_config[r->var_config_N-1].lrescale = 0;
     r->var_config[r->var_config_N-1].testparticle = testparticle;
     r->var_config[r->var_config_N-1].index_1st_order_a = index_1st_order_a;
     r->var_config[r->var_config_N-1].index_1st_order_b = index_1st_order_b;

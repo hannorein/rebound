@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/rebound-v3.19.8-green.svg?style=flat)](https://rebound.readthedocs.org)
+[![Version](https://img.shields.io/badge/rebound-v3.22.0-green.svg?style=flat)](https://rebound.readthedocs.org)
 [![PyPI](https://badge.fury.io/py/rebound.svg)](https://badge.fury.io/py/rebound)
 [![GPL](https://img.shields.io/badge/license-GPL-green.svg?style=flat)](https://github.com/hannorein/rebound/blob/main/LICENSE)
 [![Paper](https://img.shields.io/badge/arXiv-1110.4876-green.svg?style=flat)](https://arxiv.org/abs/1110.4876)
@@ -70,7 +70,7 @@ The full documentation with many examples, changelogs and tutorials can be found
 
 If you have trouble installing or using REBOUND, please open an issue on github and we'll try to help as much as we can.
 
-There are also short YouTube videos describing various aspects of REBOUND available at https://www.youtube.com/channel/UC2wonKI0wWwGi5-JqJtMsYQ/videos.
+There are also short YouTube videos describing various aspects of REBOUND available at https://www.youtube.com/channel/UCNmrCzxcmWVTBwtDPPLxkkw.
 
 ## Additional Physics
 To easily incorporate additional physics into your REBOUND simulations, see REBOUNDx at https://github.com/dtamayo/reboundx
@@ -114,7 +114,7 @@ sim.cite()
 ## Contributors
 
 * Hanno Rein, University of Toronto, <hanno@hanno-rein.de>
-* Dan Tamayo, Princeton University, <dtamayo@astro.princeton.edu>
+* Dan Tamayo, Harvey Mudd College, <dtamayo@hmc.edu>
 * David S. Spiegel, Institute for Advanced Study Princeton, <dave@ias.edu>
 * Garett Brown, University of Toronto, <gbrown@physics.utoronto.ca>
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University, <liushangfei@pku.edu.cn>

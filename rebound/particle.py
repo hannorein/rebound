@@ -176,6 +176,10 @@ class Particle(Structure):
             inc = random.vonmisesvariate(0.,0.) 
 
         self.hash = hash # set via the property, which checks for type
+            
+        if isinstance(primary, (str,int)):
+           primary = simulation.particles[primary]
+
 
         if variation:
             if primary is None:
@@ -485,6 +489,7 @@ class Particle(Structure):
                 raise ValueError("Unknown character in samplingAngle.")
         
         if o.a < 0.: # hyperbolic orbit
+            #a = o.a
             if samplingAngle is None:
                 samplingAngle = "Mf"
             Nptsangle = {}
@@ -516,6 +521,7 @@ class Particle(Structure):
                     phases_f.append(f)
                     phi -= dphi
         else:       # circular orbit
+            #a = primary.m/(primary.m+self.m)*o.a
             if samplingAngle is None:
                 samplingAngle = "Ef"
             if duplicateEndpoint is None:
@@ -551,6 +557,10 @@ class Particle(Structure):
       
         pts_pre = []
         pts_post = []
+        
+        #clibrebound.reb_get_com_of_pair.restype = Particle
+        #primary = clibrebound.reb_get_com_of_pair(primary, self)
+
         for f in phases_f:
             newp = Particle(a=o.a, f=f, inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=self.m, primary=primary, simulation=self._sim.contents)
             if f<=o.f:

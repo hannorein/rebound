@@ -41,6 +41,7 @@
 #include "integrator_ias15.h"
 #include "integrator_mercurius.h"
 #include "integrator_bs.h"
+#include "integrator_tes.h"
 #include "boundary.h"
 #include "gravity.h"
 #include "collision.h"
@@ -65,7 +66,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.19.8";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.22.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_error_message_waiting(struct reb_simulation* const r);
@@ -144,6 +145,10 @@ void reb_step(struct reb_simulation* const r){
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
+    
+    if (r->N_var){
+        reb_var_rescale(r);
+    }
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
     // Do collisions here. We need both the positions and velocities at the same time.
@@ -218,6 +223,10 @@ void reb_warning(struct reb_simulation* const r, const char* const msg){
 
 void reb_error(struct reb_simulation* const r, const char* const msg){
     reb_message(r, 'e', msg);
+}
+
+void reb_stop(struct reb_simulation* const r){
+    r->status = REB_EXIT_USER;
 }
 
 int reb_get_next_message(struct reb_simulation* const r, char* const buf){
@@ -316,6 +325,7 @@ void reb_free_pointers(struct reb_simulation* const r){
     reb_integrator_ias15_reset(r);
     reb_integrator_mercurius_reset(r);
     reb_integrator_bs_reset(r);
+    reb_integrator_tes_reset(r);
     if(r->free_particle_ap){
         for(int i=0; i<r->N; i++){
             r->free_particle_ap(&r->particles[i]);
@@ -393,6 +403,8 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->odes = NULL;
     r->odes_N = 0;
     r->odes_allocatedN = 0;
+    // ********** TES
+    r->ri_tes.particles_dh = NULL;
 }
 
 int reb_reset_function_pointers(struct reb_simulation* const r){
@@ -498,6 +510,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->N        = 0;    
     r->allocatedN   = 0;    
     r->N_active     = -1;   
+    r->var_rescale_warning   = 0;   
     r->particle_lookup_table = NULL;
     r->hash_ctr = 0;
     r->N_lookup = 0;
@@ -598,6 +611,12 @@ void reb_init_simulation(struct reb_simulation* r){
     
     // ********** NS
     reb_integrator_bs_reset(r);
+
+    // ********** TES
+    r->ri_tes.dq_max = 1e-2;                   // good fall back value and should be OK for reasonable planet masses.
+    r->ri_tes.recti_per_orbit = 1.61803398875; // golden ratio 
+    r->ri_tes.epsilon = 1e-6;
+    r->ri_tes.allocated_N = 0;
 
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.
     r->tree_needs_update= 0;

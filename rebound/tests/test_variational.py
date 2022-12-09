@@ -1,6 +1,79 @@
 import rebound
 import unittest
 import datetime
+import math
+
+class TestVariationalRescale(unittest.TestCase):
+    def test_var_rescale_ias15(self):
+        sim = rebound.Simulation()
+        sim.integrator = "ias15"
+        sim.add(m=1.) # Star
+        sim.add(m=0.000954, a=5.204, M=0.600, omega=0.257, e=0.048)
+        sim.add(m=0.000285, a=7.2, M=0.871, omega=1.616, e=0.12)
+        sim.move_to_com()
+
+        v = sim.add_variation()
+        v.particles[1].x = 1
+        sim.integrate(2e5)
+
+        self.assertGreater(v.lrescale, 100.0)
+
+    def test_var_rescale_whfast(self):
+        sim = rebound.Simulation()
+        sim.integrator = "whfast"
+        sim.dt = 5.
+        sim.add(m=1.) # Star
+        sim.add(m=0.000954, a=5.204, M=0.600, omega=0.257, e=0.048)
+        sim.add(m=0.000285, a=7.2, M=0.871, omega=1.616, e=0.12)
+        sim.move_to_com()
+
+        v = sim.add_variation()
+        v.particles[1].x = 1
+        sim.integrate(4e5)
+
+        self.assertGreater(v.lrescale, 100.0)
+
+    def test_var_rescale_whfast_norescale(self):
+        sim = rebound.Simulation()
+        sim.integrator = "whfast"
+        sim.dt = 5.
+        sim.add(m=1.) # Star
+        sim.add(m=0.000954, a=5.204, M=0.600, omega=0.257, e=0.048)
+        sim.add(m=0.000285, a=7.2, M=0.871, omega=1.616, e=0.12)
+        sim.move_to_com()
+
+        v = sim.add_variation()
+        v.particles[1].x = 1
+        v.lrescale = -1
+        sim.integrate(4e5)
+
+        self.assertTrue(math.isnan(v.particles[1].x))
+        self.assertEqual(v.lrescale, -1.0)
+
+    def test_var_rescale_whfast_megno(self):
+        sim = rebound.Simulation()
+        sim.integrator = "whfast"
+        sim.dt = 5.
+        sim.add(m=1.) # Star
+        sim.add(m=0.000954, a=5.204, M=0.600, omega=0.257, e=0.048)
+        sim.add(m=0.000285, a=7.2, M=0.871, omega=1.616, e=0.12)
+        sim.move_to_com()
+
+        sim.init_megno()
+        sim2 = sim.copy()
+        sim2.var_config[0].lrescale = -1
+
+        sim.integrate(1.3e5)
+        sim2.integrate(1.3e5)
+
+        self.assertGreater(sim.var_config[0].lrescale, 100.0)
+        self.assertEqual(sim2.var_config[0].lrescale, -1.0)
+        self.assertEqual(sim2.calculate_megno(), sim.calculate_megno())
+        
+
+
+
+
 
 
 class TestVariational(unittest.TestCase):

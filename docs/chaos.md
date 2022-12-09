@@ -58,11 +58,41 @@ To print out the MEGNO value or the largest Lyapunov characteristic number (LCN)
     print("MEGNO", sim.calculate_megno())
     print("LCN", sim.calculate_lyapunov())
     ```
-!!! Important
+!!! Note
     Using chaos indicators is not always straightforward. 
     It can be particularly tricky to figure out how long to integrate for.
     If the integration time is too short, you might not capture the Lyapunov timescale accurately. 
     On the other hand, if the integration time is too long, you can run into problems as well because quantities tend to grow exponentially with time in chaotic systems.
-    In the worst case, the magnitude of the variational particles' coordinates will reach the maximum range of double precision floating point numbers. 
-    Ideally, you would want to rescale the variational particles whenever that happens. 
-    However, this is currently not implemented in these convenience methods and you will have to use variational particles directly.
+
+## Rescaling of variational equations 
+
+!!! Important
+    This is a new feature, first implemented in version 3.21
+
+REBOUND will automatically rescale first order variational equation once any coordinate of a variational particle becomes larger than $10^{100}$. 
+This is only possible for first order variational equations because they are linear. 
+It is not possible to rescale second order equations. 
+For the calculation of MEGNO, all this is done behind the scenes and no user intervention is needed.
+However, should you be interested in the actual value of the variational particles, for example to calculate a Lyapunov exponent manually, then you need to take the value of the `lrescale` variable into account. 
+This variable contains the natural logarithm of all rescaling factors that have been applied throughout the integration to a given set of variational particles.
+
+=== "C"
+    ```c
+    struct reb_simulation* r = reb_create_simulation();
+    // ... add particles ...
+    reb_tools_megno_init_seed(r);
+    // ... integrate ...
+    struct reb_variational_configuration* vc = &(r->var_config[0]);
+    double log_x = log(r->particles[vc->index].x) + vc->lrescale; // log of x coordinate of variational particle
+    ```
+=== "Python"
+    ```python
+    sim = rebound.Simulation()
+    # ... add particles ...
+    sim.init_megno()
+    # ... integrate ...
+    vc = sim.var_config[0]
+    log_x = vc.particles[0] + vc.lrescale // log of x coordinate of variational particle
+
+Note that above the  calculations involving the rescaling factors have been done in log space as floating point numbers cannot be used to represent a number larger than $10^{308}$.
+For a more complete example, check out the [iPython Variational Equation example](ipython_examples/VariationalEquations.ipynb).

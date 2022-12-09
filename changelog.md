@@ -4,6 +4,29 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.??.?
+* Fixes an issue with showing an incorrect periastron location in OrbitPlot for high mass-ratio systems
+* Adds pre and post timestep calls to the ode framework.
+
+### Version 3.22.0
+* OrbitPlot is now a class. Checkout the OrbitPlot.ipynb tutorial. This change allows for interactive plots and much faster updates to existing plots. This is great for rendering animations! 
+
+### Version 3.21.0
+* Automatic rescaling of first order variational particles has been added. This will allow you to integrate chaotic systems for longer and obtain a more accruate measure of MEGNO and the Lyapunoc exponent. 
+* Added `sim.stop()` / `reb_stop()` to end an integration from within the heartbeat function.
+
+### Version 3.20.1
+* Pal coordinates have been added to the `reb_orbit` struct.
+
+### Version 3.20.0
+* A new integrator has been added, the Terrestrial Exoplanet Simulation (TES).
+
+### Version 3.19.10
+* Fixes another bug int he BS integrator when additional forces are used.
+
+### Version 3.19.9
+* Two bugs fixed in the BS integrator. One was related to unitialized memory and the other to issues when the particle number changed.
+
 ### Version 3.19.5
 * Workaround for urllib support in pyodide added
 * Silent warning when InterruptiblePool is not available

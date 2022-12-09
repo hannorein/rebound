@@ -21,7 +21,7 @@ import types
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12, "tes": 20}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4, "jacobi": 5}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "mercurius": 3, "line": 4, "linetree": 5}
@@ -403,6 +403,14 @@ class Orbit(Structure):
         time of pericenter passage
     rhill   : float
         Hill radius ( =a*pow(m/(3M),1./3.) )
+    pal_h   : float
+        Cartesian component of the eccentricity ( = e*sin(pomega) )
+    pal_k   : float
+        Cartesian component of the eccentricity ( = e*cos(pomega) )
+    pal_ix   : float
+        Cartesian component of the inclination ( = 2*sin(i/2)*cos(Omega) )
+    pal_iy   : float
+        Cartesian component of the inclination ( = 2*sin(i/2)*sin(Omega) )
     """
     _fields_ = [("d", c_double),
                 ("v", c_double),
@@ -420,7 +428,11 @@ class Orbit(Structure):
                 ("l", c_double),
                 ("theta", c_double),
                 ("T", c_double),
-                ("rhill", c_double)]
+                ("rhill", c_double),
+                ("pal_h", c_double),
+                ("pal_k", c_double),
+                ("pal_ix", c_double),
+                ("pal_iy", c_double)]
 
     def __str__(self):
         """
@@ -1006,6 +1018,7 @@ class Simulation(Structure):
         - ``'SABA(10,6,4)'`` 
         - ``'EOS'`` 
         - ``'BS'`` 
+        - ``'TES'``
         - ``'none'``
         
         Check the online documentation for a full description of each of the integrators. 
@@ -1768,12 +1781,19 @@ class Simulation(Structure):
         if ret_value == 4:
             raise Escape("A particle escaped (r>exit_max_distance).")
         if ret_value == 5:
-            raise Escape("User caused exit. Simulation did not finish.") # should not occur in python
+            pass # User caused exit. Do not raise error message
         if ret_value == 6:
             raise KeyboardInterrupt
         if ret_value == 7:
             raise Collision("Two particles collided (d < r1+r2)")
         self.process_messages()
+
+    def stop(self):
+        """
+        Call this function to stop an integration, for example
+        from the heartbeat function.
+        """
+        clibrebound.reb_stop(byref(self))
 
     def integrator_reset(self):
         """
@@ -1828,7 +1848,8 @@ class Variation(Structure):
                 ("index", c_int),
                 ("testparticle", c_int),
                 ("index_1st_order_a", c_int),
-                ("index_1st_order_b", c_int)]
+                ("index_1st_order_b", c_int),
+                ("_lrescale", c_double)]
 
     def vary(self, particle_index, variation, variation2=None, primary=None):
         """
@@ -1909,6 +1930,38 @@ class Variation(Structure):
         ParticleList = Particle*N
         ps = ParticleList.from_address(ctypes.addressof(sim._particles.contents)+self.index*ctypes.sizeof(Particle))
         return ps
+    
+    @property
+    def lrescale(self):
+        """
+        Access the lrescale parameter. 
+        
+        This is a property because sim.add_variation() returns a copy of the struct, so need to find up-to-date reb_variational_configuration struct in simulation.
+        """
+        sim = self._sim.contents
+        for i in range(sim.var_config_N):
+            if sim.var_config[i].index == self.index:
+                return sim.var_config[i]._lrescale
+        raise SimulationError("An error occured while trying to find variational struct in simulation.")
+    
+    @lrescale.setter
+    def lrescale(self, value):
+        """
+        Set the lrescale parameter. 
+        
+        This is a property because sim.add_variation() returns a copy of the struct, so need to find up-to-date reb_variational_configuration struct in simulation.
+        """
+        sim = self._sim.contents
+        for i in range(sim.var_config_N):
+            if sim.var_config[i].index == self.index:
+                self._lrescale = c_double(value)
+                sim.var_config[i]._lrescale = c_double(value)
+                return
+
+        raise SimulationError("An error occured while trying to find variational struct in simulation.")
+
+
+        
 
 class reb_particle_int(Structure):
     _fields_ = [
@@ -2090,6 +2143,8 @@ ODE._fields_ = [
                 ("_yTmp", POINTER(c_double)),
                 ("_derivatives", CFUNCTYPE(None,POINTER(ODE), POINTER(c_double), POINTER(c_double), c_double)),
                 ("_getscale", CFUNCTYPE(None,POINTER(ODE), POINTER(c_double), POINTER(c_double))),
+                ("_pre_timestep", CFUNCTYPE(None,POINTER(ODE), POINTER(c_double))),
+                ("_post_timestep", CFUNCTYPE(None,POINTER(ODE), POINTER(c_double))),
                 ("r", POINTER(Simulation)),
                 ("ref", c_void_p),
             ]               
@@ -2116,6 +2171,39 @@ class reb_simulation_integrator_bs(Structure):
                 ("_targetIter", c_int),
                 ("_user_ode_needs_nbody", c_int),
             ]               
+
+class reb_simulation_integrator_tes(Structure):
+    """
+    This class is an abstraction of the C-struct reb_simulation_integrator_tes.
+    It controls the behaviour of the Terrestrial Exoplanet Simulator (TES) integrator.
+    """
+
+    _fields_ = [("dq_max", c_double),
+    ("recti_per_orbit", c_double),
+    ("epsilon", c_double),
+    ("orbital_period", c_double),    
+    ("_allocated_N", c_uint32),
+    ("_particles_dh", POINTER(Particle)),
+    ("_svLen", c_uint32),
+    ("_svSize", c_uint32),
+    ("_cvLen", c_uint32),
+    ("_cvSize", c_uint32),
+    ("_mass", POINTER(c_double)),
+    ("_X_dh", POINTER(c_double)),
+    ("_Q_dh", POINTER(c_double)),
+    ("_P_dh", POINTER(c_double)),
+    ("_com_x", c_double),
+    ("_com_y", c_double),
+    ("_com_z", c_double),
+    ("_com_dot_x", c_double),
+    ("_com_dot_y", c_double),
+    ("_com_dot_z", c_double),
+    ("_uVars", POINTER(c_double)),
+    ("_rhs", POINTER(c_double)),
+    ("_radau", POINTER(c_double)),
+    ("_mStar_last", POINTER(c_double)),
+    ("warnings", c_uint32),
+    ]
 
 class timeval(Structure):
     _fields_ = [("tv_sec",c_long),("tv_usec",c_long)]
@@ -2150,6 +2238,7 @@ Simulation._fields_ = [
                 ("N_var", c_int),
                 ("var_config_N", c_int),
                 ("var_config", POINTER(Variation)),
+                ("_var_rescale_warning", c_int),
                 ("N_active", c_int),
                 ("testparticle_type", c_int),
                 ("testparticle_hidewarnings", c_int),
@@ -2230,6 +2319,7 @@ Simulation._fields_ = [
                 ("ri_janus", reb_simulation_integrator_janus),
                 ("ri_eos", reb_simulation_integrator_eos),
                 ("ri_bs", reb_simulation_integrator_bs),
+                ("ri_tes", reb_simulation_integrator_tes),
                 ("_odes", POINTER(POINTER(ODE))),
                 ("_odes_N", c_int),
                 ("_odes_allocatedN", c_int),
