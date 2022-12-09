@@ -4,6 +4,10 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.??.?
+* Fixes an issue with showing an incorrect periastron location in OrbitPlot for high mass-ratio systems
+* Adds pre and post timestep calls to the ode framework.
+
 ### Version 3.22.0
 * OrbitPlot is now a class. Checkout the OrbitPlot.ipynb tutorial. This change allows for interactive plots and much faster updates to existing plots. This is great for rendering animations! 
 
