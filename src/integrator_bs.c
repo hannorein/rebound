@@ -423,8 +423,13 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
             return 0;
         }
     }
-    
+
     for (int s=0; s < Ns; s++){
+        // Check if ODEs need pre timestep setup
+        if (odes[s]->pre_timestep){
+            odes[s]->pre_timestep(odes[s], odes[s]->y);
+        }
+        // Scaling
         if (odes[s]->getscale){
             odes[s]->getscale(odes[s], odes[s]->y, odes[s]->y); // initial scaling
         }else{
@@ -621,6 +626,10 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
             double* y_tmp = odes[s]->y;
             odes[s]->y = odes[s]->y1; 
             odes[s]->y1 = y_tmp; 
+            // Check if ODEs need post timestep call
+            if (odes[s]->post_timestep){
+                odes[s]->post_timestep(odes[s], odes[s]->y);
+            }
         }
 
         int optimalIter;
@@ -715,6 +724,8 @@ struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length){
     ode->allocatedN = length;
     ode->getscale = NULL;
     ode->derivatives = NULL;
+    ode->pre_timestep = NULL;
+    ode->post_timestep = NULL;
     ode->D   = malloc(sizeof(double*)*(sequence_length));
     for (int k = 0; k < sequence_length; ++k) {
         ode->D[k]   = malloc(sizeof(double)*length);

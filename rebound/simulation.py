@@ -2143,6 +2143,8 @@ ODE._fields_ = [
                 ("_yTmp", POINTER(c_double)),
                 ("_derivatives", CFUNCTYPE(None,POINTER(ODE), POINTER(c_double), POINTER(c_double), c_double)),
                 ("_getscale", CFUNCTYPE(None,POINTER(ODE), POINTER(c_double), POINTER(c_double))),
+                ("_pre_timestep", CFUNCTYPE(None,POINTER(ODE), POINTER(c_double))),
+                ("_post_timestep", CFUNCTYPE(None,POINTER(ODE), POINTER(c_double))),
                 ("r", POINTER(Simulation)),
                 ("ref", c_void_p),
             ]               

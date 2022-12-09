@@ -229,7 +229,9 @@ struct reb_ode{ // defines an ODE
     double* yDot;   // Temporary internal array (derivatives)
     double* yTmp;   // Temporary internal array (midpoint method)
     void (*derivatives)(struct reb_ode* const ode, double* const yDot, const double* const y, const double t); // right hand side 
-    void (*getscale)(struct reb_ode* const ode, const double* const y0, const double* const y1); // right hand side 
+    void (*getscale)(struct reb_ode* const ode, const double* const y0, const double* const y1); // right hand side (optional) 
+    void (*pre_timestep)(struct reb_ode* const ode, const double* const y0); // gets called just before the ODE integration (optional)
+    void (*post_timestep)(struct reb_ode* const ode, const double* const y0); // gets called just after the ODE integration (optional)
     struct reb_simulation* r; // weak reference to main simulation 
     void* ref;  // pointer to any additional data needed for derivatives
 };
