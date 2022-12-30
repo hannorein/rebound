@@ -77,38 +77,38 @@ class reb_vec3d(Structure):
             except: # use default x,y,z __init__
                 super().__init__(*args)
     @classmethod
-    ''' Initialize Cartesian vector from its magnitude and two spherical angles theta (measured from z) and phi (measured from x)'''
     def from_spherical(cls, mag, theta, phi):
+        ''' Initialize Cartesian vector from its magnitude and two spherical angles theta (measured from z) and phi (measured from x)'''
         clibrebound.reb_tools_spherical_to_xyz.restype = reb_vec3d
         xyz = clibrebound.reb_tools_spherical_to_xyz(c_double(mag), c_double(theta), c_double(phi))
         return cls(xyz.x, xyz.y, xyz.z)
     @property
-    ''' Return [x,y,z] as list'''
     def xyz(self):
+        ''' Return [x,y,z] as list'''
         return [self.x, self.y, self.z]
     @property
-    ''' Return vector magnitude'''
     def mag(self):
+        ''' Return vector magnitude'''
         return sqrt(self.x**2 + self.y**2 + self.z**2)
     @property
-    ''' Return spherical angle theta measured from z axis'''
     def theta(self):
+        ''' Return spherical angle theta measured from z axis'''
         mag = c_double()
         theta = c_double()
         phi = c_double()
         clibrebound.reb_tools_xyz_to_spherical(self, byref(mag), byref(theta), byref(phi))
         return theta.value
     @property
-    ''' Return spherical angle phi measured from x axis'''
     def phi(self):
+        ''' Return spherical angle phi measured from x axis'''
         mag = c_double()
         theta = c_double()
         phi = c_double()
         clibrebound.reb_tools_xyz_to_spherical(self, byref(mag), byref(theta), byref(phi))
         return phi.value
     @property
-    ''' Return a unit vector'''
     def hat(self):
+        ''' Return a unit vector'''
         mag = sqrt(self.x**2 + self.y**2 + self.z**2)
         return [self.x/mag, self.y/mag, self.z/mag]
 
