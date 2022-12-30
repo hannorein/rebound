@@ -694,6 +694,10 @@ class Particle(Structure):
     def h(self):
         return self.calculate_orbit().h
     @property
+    def hvec(self):
+        h = self.calculate_orbit().hvec
+        return [h.x, h.y, h.z]
+    @property
     def P(self):
         return self.calculate_orbit().P
     @P.setter
@@ -735,6 +739,10 @@ class Particle(Structure):
             raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
         newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, e=value, inc=o.inc, omega=o.omega, Omega=o.Omega, f=o.f) 
         self._cpcoords(newP)
+    @property
+    def evec(self):
+        e = self.calculate_orbit().evec
+        return [e.x, e.y, e.z]
     @property
     def inc(self):
         return self.calculate_orbit().inc 
