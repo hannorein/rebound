@@ -70,7 +70,7 @@ The full documentation with many examples, changelogs and tutorials can be found
 
 If you have trouble installing or using REBOUND, please open an issue on github and we'll try to help as much as we can.
 
-There are also short YouTube videos describing various aspects of REBOUND available at https://www.youtube.com/channel/UCNmrCzxcmWVTBwtDPPLxkkw.
+There are also short YouTube videos describing various aspects of REBOUND available at https://www.youtube.com/channel/UCNmrCzxcmWVTBwtDPPLxkkw .
 
 ## Additional Physics
 To easily incorporate additional physics into your REBOUND simulations, see REBOUNDx at https://github.com/dtamayo/reboundx
