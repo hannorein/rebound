@@ -65,6 +65,36 @@ class reb_hash_pointer_pair(Structure):
     _fields_ = [("hash", c_uint32),
                 ("index", c_int)]
 
+
+class reb_quat(Structure):
+    def __init__(self, ix=None, iy=None, iz=None, r=None):
+        cart = [ix, iy, iz, r] 
+        if cart.count(None) != 0:
+            raise ValueError("You need to specify all four parameters ix, iy, iz, r.")
+        super().__init__(ix, iy, iz, r)   
+
+    @classmethod
+    def with_angle_axis(cls, angle, axis):
+        _axis = reb_vec3d(axis)
+        clibrebound.reb_quat_init_with_angle_axis.restype = cls
+        q = clibrebound.reb_quat_init_with_angle_axis(c_double(angle), _axis)
+        return q
+    
+    @classmethod
+    def with_orbital(cls, Omega=0.0, inc=0.0, omega=0.0):
+        clibrebound.reb_quat_init_with_orbital.restype = cls
+        q = clibrebound.reb_quat_init_with_orbital(c_double(Omega), c_double(inc), c_double(omega))
+        return q
+
+
+    def __repr__(self):
+        return '<{0}.{1} object at {2}, ix={3}, iy={4}, iz={5}, r={6}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.ix, self.iy, self.iz, self.r)
+    _fields_ = [("ix", c_double),
+                ("iy", c_double),
+                ("iz", c_double),
+                ("r", c_double)]
+
+
 class reb_vec3d(Structure):
     def __init__(self, *args):
         try:        # try assuming it's a list
@@ -1716,9 +1746,6 @@ class Simulation(Structure):
         """
         clibrebound.reb_move_to_com(byref(self))
 
-    def rotate_simulation(self, normalvec):
-        clibrebound.reb_rotate_simulation(byref(self), reb_vec3d(normalvec))
-    
     def calculate_energy(self):
         """
         Returns the sum of potential and kinetic energy of all particles in the simulation.
