@@ -64,12 +64,22 @@ struct reb_vec3d reb_vec3d_cross(struct reb_vec3d a, struct reb_vec3d b){
     return c;
 }
 
+double reb_vec3d_length_squared(struct reb_vec3d v){
+    return v.x*v.x + v.y*v.y + v.z*v.z;
+}
+
+struct reb_vec3d reb_vec3d_normalize(struct reb_vec3d v){
+    return reb_vec3d_mul(v, 1./sqrt(reb_vec3d_length_squared(v)));
+}
+
+
 struct reb_quat reb_quat_identity(){
     struct reb_quat q = {.ix = 0.0, .iy = 0.0, .iz = 0.0, .r = 1.0 };
     return q;
 }
 
 struct reb_quat reb_quat_from_angle_axis(double angle, struct reb_vec3d axis){
+    axis = reb_vec3d_normalize(axis);
     double cos2 = cos(angle/2.0);
     double sin2 = sin(angle/2.0);
     struct reb_vec3d imag = reb_vec3d_mul(axis, sin2);
