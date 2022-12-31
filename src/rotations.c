@@ -27,11 +27,6 @@
 #include "rebound.h"
 
 
-struct reb_quat reb_quat_identity(){
-    struct reb_quat q = {.ix = 0.0, .iy = 0.0, .iz = 0.0, .r = 1.0 };
-    return q;
-}
-
 struct reb_vec3d reb_quat_imag(struct reb_quat q){
     struct reb_vec3d i = {
         .x = q.ix,
@@ -67,6 +62,19 @@ struct reb_vec3d reb_vec3d_cross(struct reb_vec3d a, struct reb_vec3d b){
         .z = a.x*b.y - a.y*b.x,
     };
     return c;
+}
+
+struct reb_quat reb_quat_identity(){
+    struct reb_quat q = {.ix = 0.0, .iy = 0.0, .iz = 0.0, .r = 1.0 };
+    return q;
+}
+
+struct reb_quat reb_quat_from_angle_axis(double angle, struct reb_vec3d axis){
+    double cos2 = cos(angle/2.0);
+    double sin2 = sin(angle/2.0);
+    struct reb_vec3d imag = reb_vec3d_mul(axis, sin2);
+    struct reb_quat q = {.ix = imag.x, .iy = imag.y, .iz = imag.z, .r = cos2 };
+    return q;
 }
 
 struct reb_vec3d reb_quat_act(struct reb_quat q, struct reb_vec3d v){

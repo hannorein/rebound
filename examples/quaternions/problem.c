@@ -21,6 +21,16 @@ int main(int argc, char* argv[]) {
     v = reb_quat_act(q,v);
     printf("v = %.f %.f %.f\n", v.x, v.y, v.z);
 
+    struct reb_vec3d axis = {.x = 1, .y = 0, .z = 0};
+    q = reb_quat_from_angle_axis(M_PI/2., axis);
+    v = reb_quat_act(q, v);
+    printf("v = %.f %.f %.f\n", v.x, v.y, v.z);
+    
+    axis.x = 0; axis.y = 1; axis.z = 0;
+    q = reb_quat_from_angle_axis(M_PI/2., axis);
+    v = reb_quat_act(q, v);
+    printf("v = %.f %.f %.f\n", v.x, v.y, v.z);
+
     reb_free_simulation(r);
 }
 
