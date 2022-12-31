@@ -907,7 +907,7 @@ struct reb_simulation {
 struct reb_orbit {
     double d;        // Radial distance from central object
     double v;        // velocity relative to central object's velocity
-    double h;        // Angular momentum
+    double h;        // Specific angular momentum
     double P;        // Orbital period
     double n;        // Mean motion
     double a;        // Semi-major axis
@@ -924,8 +924,10 @@ struct reb_orbit {
     double rhill;    // Circular Hill radius 
     double pal_h;    // Cartesian component of the eccentricity, h = e*sin(pomega) 
     double pal_k;    // Cartesian component of the eccentricity, k = e*cos(pomega) 
-    double pal_ix;    // Cartesian component of the inclination, ix = 2*sin(i/2)*cos(Omega)
+    double pal_ix;   // Cartesian component of the inclination, ix = 2*sin(i/2)*cos(Omega)
     double pal_iy;    // Cartesian component of the inclination, ix = 2*sin(i/2)*sin(Omega)
+    struct reb_vec3d hvec;  // specific angular momentum vector
+    struct reb_vec3d evec;  // eccentricity vector (mag=ecc, points toward peri)
 };
 
 
@@ -1234,7 +1236,7 @@ void reb_simulationarchive_automate_step(struct reb_simulation* const r, const c
 void reb_free_simulationarchive_pointers(struct reb_simulationarchive* sa);
 
 
-// Functions to between coordinate systems
+// Functions to convert between coordinate systems
 
 // Jacobi
 // p_mass: Should be the same particles array as ps for real particles. If passing variational
@@ -1255,6 +1257,16 @@ void reb_transformations_democraticheliocentric_to_inertial_posvel(struct reb_pa
 void reb_transformations_inertial_to_whds_posvel(const struct reb_particle* const particles, struct reb_particle* const p_h, const unsigned int N, const int N_active);
 void reb_transformations_whds_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_h, const unsigned int N, const int N_active);
 void reb_transformations_whds_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_h, const unsigned int N, const int N_active);
+
+// Functions for facilitating rotations
+void reb_tools_calc_plane_Omega_inc(struct reb_vec3d normal_vec, double* Omega, double* inc);
+struct reb_vec3d reb_tools_rotate_XYZ_to_orbital_xyz(struct reb_vec3d XYZ, const double Omega, const double inc, const double omega);
+struct reb_vec3d reb_tools_rotate_orbital_xyz_to_XYZ(const struct reb_vec3d xyz, const double Omega, const double inc, const double omega);
+struct reb_vec3d reb_tools_rotate_XYZ_to_plane_xyz(const struct reb_vec3d XYZ, const struct reb_vec3d normalvec);
+struct reb_vec3d reb_tools_rotate_plane_xyz_to_XYZ(const struct reb_vec3d xyz, const struct reb_vec3d normalvec);
+struct reb_vec3d reb_tools_spherical_to_xyz(const double mag, const double theta, const double phi);
+void reb_tools_xyz_to_spherical(struct reb_vec3d const xyz, double* mag, double* theta, double* phi);
+void reb_rotate_simulation(struct reb_simulation* const sim, struct reb_vec3d normalvec);
 
 #ifdef MPI
 void reb_mpi_init(struct reb_simulation* const r);

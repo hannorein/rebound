@@ -66,6 +66,116 @@ class reb_hash_pointer_pair(Structure):
                 ("index", c_int)]
 
 class reb_vec3d(Structure):
+    def __init__(self, *args):
+        try:        # try assuming it's a list
+            vec = args[0]
+            super().__init__(*vec)                      
+        except:
+            try:    # fall back on another reb_vec3d so functions can reb_vec3d(argument) to take either list or vec3d
+                vec = args[0]
+                super().__init__(vec.x, vec.y, vec.z)   
+            except: # use default x,y,z __init__
+                super().__init__(*args)
+    @classmethod
+    def from_spherical(cls, mag, theta, phi):
+        ''' Initialize Cartesian vector from its magnitude and two spherical angles theta (measured from z) and phi (measured from x)'''
+        clibrebound.reb_tools_spherical_to_xyz.restype = reb_vec3d
+        xyz = clibrebound.reb_tools_spherical_to_xyz(c_double(mag), c_double(theta), c_double(phi))
+        return cls(xyz.x, xyz.y, xyz.z)
+    @property
+    def xyz(self):
+        ''' Return [x,y,z] as list'''
+        return [self.x, self.y, self.z]
+    @property
+    def mag(self):
+        ''' Return vector magnitude'''
+        return sqrt(self.x**2 + self.y**2 + self.z**2)
+    @property
+    def theta(self):
+        ''' Return spherical angle theta measured from z axis'''
+        mag = c_double()
+        theta = c_double()
+        phi = c_double()
+        clibrebound.reb_tools_xyz_to_spherical(self, byref(mag), byref(theta), byref(phi))
+        return theta.value
+    @property
+    def phi(self):
+        ''' Return spherical angle phi measured from x axis'''
+        mag = c_double()
+        theta = c_double()
+        phi = c_double()
+        clibrebound.reb_tools_xyz_to_spherical(self, byref(mag), byref(theta), byref(phi))
+        return phi.value
+    @property
+    def hat(self):
+        ''' Return a unit vector'''
+        mag = sqrt(self.x**2 + self.y**2 + self.z**2)
+        return [self.x/mag, self.y/mag, self.z/mag]
+
+    def rotate_XYZ_to_plane_xyz(self, normalvec):
+        """
+        Takes vec3d and calculates coordinates relative to a rotated reference plane.
+        The original vec3d has coordinates XYZ in the original reference system XhatYhatZhat. 
+        We specify the new reference plane through its normal vector (nX, nY, nZ) in the original reference system.
+        Method then returns xyz components in the rotated system where z points along the orbit normal, and x points along the line of nodes between the original and new reference planes (specifically the Z cross z direction). 
+        
+        Parameters
+        ----------
+        normalvec : list(x,y,z) or reb_vec3d with the x y and z components of the vector normal to the rotated reference plane
+        
+        Returns
+        ------- 
+        A rebound.reb_vec3d object.
+        
+        Examples
+        --------
+
+        >>> r = reb_vec3d([1,1,1]) # original r vector
+        >>> rrot = r.rotate_XYZ_to_planet_xyz(normalvec=[1,0,0]) # get r components relative to a yz reference plane (normal along x)
+        """
+        clibrebound.reb_tools_rotate_XYZ_to_plane_xyz.restype = reb_vec3d
+        return clibrebound.reb_tools_rotate_XYZ_to_plane_xyz(self, reb_vec3d(normalvec))
+    
+    def rotate_plane_xyz_to_XYZ(self, normalvec):
+        """
+        Takes vec3d expressed relative to a rotated reference plane, and express it relative to original reference plane.
+        The vec3d has coordinates xyz in the rotated reference system xhatyhatzhat. 
+        We specify the rotated reference plane through its normal vector (nX, nY, nZ) in the original XYZ reference system.
+        Method then returns XYZ components in the original system. Inverse of XYZ_to_plane_xyz.
+        
+        Parameters
+        ----------
+        normalvec : list(x,y,z) or reb_vec3d with the x y and z components of the vector normal to the rotated reference plane
+        
+        Returns
+        ------- 
+        A rebound.reb_vec3d object.
+        
+        Examples
+        --------
+
+        >>> r = reb_vec3d([1,1,1]) # original r vector
+        >>> rrot = r.rotate_XYZ_to_planet_xyz(normalvec=[1,0,0]) # get r components relative to a yz reference plane (normal along x)
+        """
+        clibrebound.reb_tools_rotate_plane_xyz_to_XYZ.restype = reb_vec3d
+        return clibrebound.reb_tools_rotate_plane_xyz_to_XYZ(self, reb_vec3d(normalvec))
+
+    def rotate_XYZ_to_orbital_xyz(self, Omega=0, inc=0, omega=0):
+        clibrebound.reb_tools_rotate_XYZ_to_orbital_xyz.restype = reb_vec3d
+        return clibrebound.reb_tools_rotate_XYZ_to_orbital_xyz(self, c_double(Omega), c_double(inc), c_double(omega))
+    
+    def rotate_orbital_xyz_to_XYZ(self, Omega=0, inc=0, omega=0):
+        clibrebound.reb_tools_rotate_orbital_xyz_to_XYZ.restype = reb_vec3d
+        return clibrebound.reb_tools_rotate_orbital_xyz_to_XYZ(self, c_double(Omega), c_double(inc), c_double(omega))
+    
+    def calc_plane_Omega_inc(self):
+        Omega = c_double()
+        inc = c_double()
+        clibrebound.reb_tools_calc_plane_Omega_inc(self, byref(Omega), byref(inc))
+        return Omega.value, inc.value
+
+    def __repr__(self):
+        return '<{0}.{1} object at {2}, x={3}, y={4}, z={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.x, self.y, self.z)
     _fields_ = [("x", c_double),
                 ("y", c_double),
                 ("z", c_double)]
@@ -411,6 +521,10 @@ class Orbit(Structure):
         Cartesian component of the inclination ( = 2*sin(i/2)*cos(Omega) )
     pal_iy   : float
         Cartesian component of the inclination ( = 2*sin(i/2)*sin(Omega) )
+    hvec     : reb_vec3d
+        Specific angular momentum vector
+    evec     : reb_vec3d
+        Eccentricity vector (mag = eccentricity, points toward pericenter)
     """
     _fields_ = [("d", c_double),
                 ("v", c_double),
@@ -432,7 +546,9 @@ class Orbit(Structure):
                 ("pal_h", c_double),
                 ("pal_k", c_double),
                 ("pal_ix", c_double),
-                ("pal_iy", c_double)]
+                ("pal_iy", c_double),
+                ("hvec", reb_vec3d),
+                ("evec", reb_vec3d)]
 
     def __str__(self):
         """
@@ -1661,6 +1777,9 @@ class Simulation(Structure):
         for the high accuracy integrators IAS15 and WHFast.
         """
         clibrebound.reb_move_to_com(byref(self))
+
+    def rotate_simulation(self, normalvec):
+        clibrebound.reb_rotate_simulation(byref(self), reb_vec3d(normalvec))
     
     def calculate_energy(self):
         """
