@@ -649,6 +649,11 @@ class Particle(Structure):
         if other==0.:
             raise ZeroDivisionError
         return self.__imul__(1./other)
+    
+    def irotate(self, q):
+        if not isinstance(q, Quat):
+            raise NotImplementedError
+        clibrebound.reb_particle_irotate(byref(self), q)
 
 
     @property

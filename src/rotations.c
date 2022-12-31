@@ -81,7 +81,6 @@ struct reb_quat reb_quat_mul(struct reb_quat p, struct reb_quat q){
         .iz = p.r*q.iz + p.ix*q.iy - p.iy*q.ix + p.iz*q.r
     };
     return r;
-
 }
 
 double reb_quat_length_squared(struct reb_quat q){

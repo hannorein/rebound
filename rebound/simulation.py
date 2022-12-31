@@ -98,6 +98,19 @@ class Quat(Structure):
         q = clibrebound.reb_quat_init_with_orbital(c_double(Omega), c_double(inc), c_double(omega))
         return q
 
+    def inverse(self):
+        clibrebound.reb_quat_inverse.restype = Quat
+        q = clibrebound.reb_quat_inverse(self)
+        return q
+    
+    def __mul__(self, other):
+        if isinstance(other, Quat):
+            clibrebound.reb_quat_mul.restype = Quat
+            q = clibrebound.reb_quat_mul(self, other)
+            return q
+
+        return NotImplemented
+    
 
     def __repr__(self):
         return '<{0}.{1} object at {2}, ix={3}, iy={4}, iz={5}, r={6}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.ix, self.iy, self.iz, self.r)
@@ -926,8 +939,8 @@ class Simulation(Structure):
     
 
     def irotate(self, q):
-        if not isinstance(q,Quat):
-            return NotImplemented
+        if not isinstance(q, Quat):
+            raise NotImplementedError
         clibrebound.reb_simulation_irotate(byref(self), q)
     
 
