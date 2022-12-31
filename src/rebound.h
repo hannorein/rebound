@@ -1272,8 +1272,8 @@ struct reb_quat reb_quat_init_with_angle_axis(double angle, struct reb_vec3d axi
 struct reb_quat reb_quat_mul(struct reb_quat p, struct reb_quat q);
 struct reb_quat reb_quat_inverse(struct reb_quat q);
 struct reb_quat reb_quat_init_with_orbital(const double Omega, const double inc, const double omega);
-struct reb_vec3d reb_quat_act(struct reb_quat q, struct reb_vec3d v);
-void reb_simulation_rotate(struct reb_simulation* const sim, struct reb_quat q);
+struct reb_vec3d reb_vec3d_rotate(struct reb_vec3d v, struct reb_quat q);
+void reb_simulation_irotate(struct reb_simulation* const sim, struct reb_quat q);
 
 // Functions for facilitating rotations
 void reb_tools_calc_plane_Omega_inc(struct reb_vec3d normal_vec, double* Omega, double* inc);

@@ -126,30 +126,29 @@ struct reb_quat reb_quat_init_with_orbital(const double Omega, const double inc,
     return reb_quat_mul(P3, reb_quat_mul(P2, P1));
 }
 
-struct reb_vec3d reb_quat_act(struct reb_quat q, struct reb_vec3d v){
+struct reb_vec3d reb_vec3d_rotate(struct reb_vec3d v, struct reb_quat q){
     struct reb_vec3d imag = reb_quat_imag(q);
     struct reb_vec3d t = reb_vec3d_mul(reb_vec3d_cross(imag,v), 2);
     return reb_vec3d_add(v, reb_vec3d_add(reb_vec3d_mul(t, q.r), reb_vec3d_cross(imag, t)));
 }
 
-static void reb_quat_act_on_particle_inplace(struct reb_particle* p, struct reb_quat q){
+static void reb_particle_irotate(struct reb_particle* p, struct reb_quat q){
     struct reb_vec3d pos = {p->x, p->y, p->z};
-    struct reb_vec3d vel = {p->vx, p->vy, p->vz};
-    pos = reb_quat_act(q, pos);
-    vel = reb_quat_act(q, vel);
+    pos = reb_vec3d_rotate(pos, q);
     p->x = pos.x;
     p->y = pos.y;
     p->z = pos.z;
+    struct reb_vec3d vel = {p->vx, p->vy, p->vz};
+    vel = reb_vec3d_rotate(vel, q);
     p->vx = vel.x;
     p->vy = vel.y;
     p->vz = vel.z;
 }
 
-
-void reb_simulation_rotate(struct reb_simulation* const sim, struct reb_quat q){
+void reb_simulation_irotate(struct reb_simulation* const sim, struct reb_quat q){
     const int N = sim->N;
     for (int i = 0; i < N; i++){
         struct reb_particle* p = &sim->particles[i];
-        reb_quat_act_on_particle_inplace(p,q);
+        reb_particle_irotate(p,q);
     }
 }

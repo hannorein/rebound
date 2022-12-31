@@ -66,16 +66,28 @@ class reb_hash_pointer_pair(Structure):
                 ("index", c_int)]
 
 
-class reb_quat(Structure):
-    def __init__(self, ix=None, iy=None, iz=None, r=None):
+class Quat(Structure):
+    def __init__(self, ix=None, iy=None, iz=None, r=None, angle=None, axis=None):
         cart = [ix, iy, iz, r] 
-        if cart.count(None) != 0:
+        angle_axis = [angle, axis]
+        if cart.count(None) == len(cart) and angle_axis.count(None) == len(angle_axis):
+            super().__init__(0.0,0.0,0.0,1.0) # Identity
+            return
+        if cart.count(None) != 0 and angle_axis.count(None) == len(angle_axis):
             raise ValueError("You need to specify all four parameters ix, iy, iz, r.")
-        super().__init__(ix, iy, iz, r)   
+        if angle_axis.count(None) != 0 and cart.count(None) == len(cart):
+            raise ValueError("You need to specify both angle and axis.")
+        if cart.count(None) < len(cart) and angle_axis.count(None) < len(angle_axis):
+            raise ValueError("Cannot mix parameters ix, iy, iz, r with angle, axis.")
+        if cart.count(None) == 0:
+            super().__init__(ix, iy, iz, r)   
+        if angle_axis.count(None) == 0:
+            q = Quat.with_angle_axis(angle, axis)
+            super().__init__(q.ix, q.iy, q.iz, q.r)   
 
     @classmethod
     def with_angle_axis(cls, angle, axis):
-        _axis = reb_vec3d(axis)
+        _axis = Vec3d(axis)
         clibrebound.reb_quat_init_with_angle_axis.restype = cls
         q = clibrebound.reb_quat_init_with_angle_axis(c_double(angle), _axis)
         return q
@@ -95,13 +107,13 @@ class reb_quat(Structure):
                 ("r", c_double)]
 
 
-class reb_vec3d(Structure):
+class Vec3d(Structure):
     def __init__(self, *args):
         try:        # try assuming it's a list
             vec = args[0]
             super().__init__(*vec)                      
         except:
-            try:    # fall back on another reb_vec3d so functions can reb_vec3d(argument) to take either list or vec3d
+            try:    # fall back on another Vec3d so functions can Vec3d(argument) to take either list or vec3d
                 vec = args[0]
                 super().__init__(vec.x, vec.y, vec.z)   
             except: # use default x,y,z __init__
@@ -109,7 +121,7 @@ class reb_vec3d(Structure):
     @classmethod
     def from_spherical(cls, mag, theta, phi):
         ''' Initialize Cartesian vector from its magnitude and two spherical angles theta (measured from z) and phi (measured from x)'''
-        clibrebound.reb_tools_spherical_to_xyz.restype = reb_vec3d
+        clibrebound.reb_tools_spherical_to_xyz.restype = cls
         xyz = clibrebound.reb_tools_spherical_to_xyz(c_double(mag), c_double(theta), c_double(phi))
         return cls(xyz.x, xyz.y, xyz.z)
     @property
@@ -489,9 +501,9 @@ class Orbit(Structure):
         Cartesian component of the inclination ( = 2*sin(i/2)*cos(Omega) )
     pal_iy   : float
         Cartesian component of the inclination ( = 2*sin(i/2)*sin(Omega) )
-    hvec     : reb_vec3d
+    hvec     : Vec3d
         Specific angular momentum vector
-    evec     : reb_vec3d
+    evec     : Vec3d
         Eccentricity vector (mag = eccentricity, points toward pericenter)
     """
     _fields_ = [("d", c_double),
@@ -515,8 +527,8 @@ class Orbit(Structure):
                 ("pal_k", c_double),
                 ("pal_ix", c_double),
                 ("pal_iy", c_double),
-                ("hvec", reb_vec3d),
-                ("evec", reb_vec3d)]
+                ("hvec", Vec3d),
+                ("evec", Vec3d)]
 
     def __str__(self):
         """
@@ -911,6 +923,13 @@ class Simulation(Structure):
         except:
             raise ValueError("Cannot multiply simulation with non-scalars.")
         clibrebound.reb_simulation_imul(byref(self), c_double(scalar_pos), c_double(scalar_vel))
+    
+
+    def irotate(self, q):
+        if not isinstance(q,Quat):
+            return NotImplemented
+        clibrebound.reb_simulation_irotate(byref(self), q)
+    
 
 #ODE functions
     def create_ode(self, length, needs_nbody=True):
@@ -1757,7 +1776,7 @@ class Simulation(Structure):
         """
         Returns a list of the three (x,y,z) components of the total angular momentum of all particles in the simulation.
         """
-        clibrebound.reb_tools_angular_momentum.restype = reb_vec3d
+        clibrebound.reb_tools_angular_momentum.restype = Vec3d
         L = clibrebound.reb_tools_angular_momentum(byref(self))
         return [L.x, L.y, L.z]
 
@@ -2180,8 +2199,8 @@ class reb_simulation_integrator_mercurius(Structure):
                 ("_particles_backup", POINTER(Particle)),
                 ("_particles_backup_additionalforces", POINTER(Particle)),
                 ("_encounter_map", POINTER(c_int)),
-                ("_com_pos", reb_vec3d),
-                ("_com_vel", reb_vec3d),
+                ("_com_pos", Vec3d),
+                ("_com_vel", Vec3d),
                 ]
     @property
     def L(self):
@@ -2332,7 +2351,7 @@ Simulation._fields_ = [
                 ("allocatedN_lookup", c_int),
                 ("allocated_N", c_int),
                 ("_particles", POINTER(Particle)),
-                ("gravity_cs", POINTER(reb_vec3d)),
+                ("gravity_cs", POINTER(Vec3d)),
                 ("gravity_cs_allocatedN", c_int),
                 ("_tree_root", c_void_p),
                 ("_tree_needs_update", c_int),
@@ -2355,7 +2374,7 @@ Simulation._fields_ = [
                 ("python_unit_t",c_uint32),
                 ("python_unit_l",c_uint32),
                 ("python_unit_m",c_uint32),
-                ("boxsize", reb_vec3d),
+                ("boxsize", Vec3d),
                 ("boxsize_max", c_double),
                 ("root_size", c_double),
                 ("root_n", c_int),
