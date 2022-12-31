@@ -1268,10 +1268,10 @@ void reb_transformations_whds_to_inertial_posvel(struct reb_particle* const part
 
 // Rotations
 struct reb_quat reb_quat_identity();
-struct reb_quat reb_quat_from_angle_axis(double angle, struct reb_vec3d axis);
+struct reb_quat reb_quat_init_with_angle_axis(double angle, struct reb_vec3d axis);
 struct reb_quat reb_quat_mul(struct reb_quat p, struct reb_quat q);
 struct reb_quat reb_quat_inverse(struct reb_quat q);
-struct reb_quat reb_quat_from_orbital(const double Omega, const double inc, const double omega);
+struct reb_quat reb_quat_init_with_orbital(const double Omega, const double inc, const double omega);
 struct reb_vec3d reb_quat_act(struct reb_quat q, struct reb_vec3d v);
 void reb_simulation_rotate(struct reb_simulation* const sim, struct reb_quat q);
 

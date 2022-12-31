@@ -2,6 +2,9 @@
  * @file 	rotations.c
  * @brief 	Tools for rotations and quaternions.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @details This code uses the same conventions as the Apple SIMD
+ *          quaternion framework. See e.g.: 
+ *          https://github.com/MartinWeigel/Quaternion/blob/master/Quaternion.c
  * 
  * @section 	LICENSE
  * Copyright (c) 2022 Hanno Rein
@@ -107,7 +110,7 @@ struct reb_quat reb_quat_inverse(struct reb_quat q){
     return c;
 }
 
-struct reb_quat reb_quat_from_angle_axis(double angle, struct reb_vec3d axis){
+struct reb_quat reb_quat_init_with_angle_axis(double angle, struct reb_vec3d axis){
     axis = reb_vec3d_normalize(axis);
     double cos2 = cos(angle/2.0);
     double sin2 = sin(angle/2.0);
@@ -116,12 +119,13 @@ struct reb_quat reb_quat_from_angle_axis(double angle, struct reb_vec3d axis){
     return q;
 }
 
-struct reb_quat reb_quat_from_orbital(const double Omega, const double inc, const double omega){
+struct reb_quat reb_quat_init_with_orbital(const double Omega, const double inc, const double omega){
+    // Murray and Dermot Eq. 2.121
     struct reb_vec3d x = {.x=1.0, .y=0.0, .z=0.0};
     struct reb_vec3d z = {.x=0.0, .y=0.0, .z=1.0};
-    struct reb_quat P1 = reb_quat_from_angle_axis(omega, z);
-    struct reb_quat P2 = reb_quat_from_angle_axis(inc, x);
-    struct reb_quat P3 = reb_quat_from_angle_axis(Omega, z);
+    struct reb_quat P1 = reb_quat_init_with_angle_axis(omega, z);
+    struct reb_quat P2 = reb_quat_init_with_angle_axis(inc, x);
+    struct reb_quat P3 = reb_quat_init_with_angle_axis(Omega, z);
     return reb_quat_mul(P3, reb_quat_mul(P2, P1));
 }
 

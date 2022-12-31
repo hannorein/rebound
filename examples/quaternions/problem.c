@@ -22,12 +22,12 @@ int main(int argc, char* argv[]) {
     printf("v = %.5f %.5f %.5f\n", v.x, v.y, v.z);
 
     struct reb_vec3d axis = {.x = 1, .y = 0, .z = 0};
-    q1 = reb_quat_from_angle_axis(M_PI/2.12, axis);
+    q1 = reb_quat_init_with_angle_axis(M_PI/2.12, axis);
     v = reb_quat_act(q1, v);
     printf("v = %.5f %.5f %.5f\n", v.x, v.y, v.z);
     
     axis.x = 0; axis.y = 1; axis.z = 0;
-    struct reb_quat q2 = reb_quat_from_angle_axis(M_PI/2.12, axis);
+    struct reb_quat q2 = reb_quat_init_with_angle_axis(M_PI/2.12, axis);
     v = reb_quat_act(q2, v);
     printf("v = %.5f %.5f %.5f\n", v.x, v.y, v.z);
     
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
     reb_add_fmt(r2, "a e", 1., 0.00000001); 
     printf("r->particle  = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r->particles[1].x, r->particles[1].y, r->particles[1].z, r->particles[1].vx, r->particles[1].vy, r->particles[1].vz);
     printf("r2->particle = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r2->particles[1].x, r2->particles[1].y, r2->particles[1].z, r2->particles[1].vx, r2->particles[1].vy, r2->particles[1].vz);
-    struct reb_quat q5 = reb_quat_from_orbital(Omega, inc, omega);
+    struct reb_quat q5 = reb_quat_init_with_orbital(Omega, inc, omega);
     reb_simulation_rotate(r2, q5);
     printf("r2->particle = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r2->particles[1].x, r2->particles[1].y, r2->particles[1].z, r2->particles[1].vx, r2->particles[1].vy, r2->particles[1].vz);
     
