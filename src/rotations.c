@@ -118,7 +118,11 @@ struct reb_quat reb_quat_from_angle_axis(double angle, struct reb_vec3d axis){
 
 struct reb_quat reb_quat_from_orbital(const double Omega, const double inc, const double omega){
     struct reb_vec3d x = {.x=1.0, .y=0.0, .z=0.0};
-    //struct reb_quat P1 = reb_quat_from_angle_axis(double angle, struct reb_vec3d axis){
+    struct reb_vec3d z = {.x=0.0, .y=0.0, .z=1.0};
+    struct reb_quat P1 = reb_quat_from_angle_axis(omega, z);
+    struct reb_quat P2 = reb_quat_from_angle_axis(inc, x);
+    struct reb_quat P3 = reb_quat_from_angle_axis(Omega, z);
+    return reb_quat_mul(P3, reb_quat_mul(P2, P1));
 }
 
 struct reb_vec3d reb_quat_act(struct reb_quat q, struct reb_vec3d v){

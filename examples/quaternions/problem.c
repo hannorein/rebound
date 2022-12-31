@@ -64,6 +64,9 @@ int main(int argc, char* argv[]) {
     reb_add_fmt(r2, "a e", 1., 0.00000001); 
     printf("r->particle  = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r->particles[1].x, r->particles[1].y, r->particles[1].z, r->particles[1].vx, r->particles[1].vy, r->particles[1].vz);
     printf("r2->particle = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r2->particles[1].x, r2->particles[1].y, r2->particles[1].z, r2->particles[1].vx, r2->particles[1].vy, r2->particles[1].vz);
+    struct reb_quat q5 = reb_quat_from_orbital(Omega, inc, omega);
+    reb_simulation_rotate(r2, q5);
+    printf("r2->particle = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r2->particles[1].x, r2->particles[1].y, r2->particles[1].z, r2->particles[1].vx, r2->particles[1].vy, r2->particles[1].vz);
     
 
     reb_free_simulation(r);
