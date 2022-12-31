@@ -151,3 +151,14 @@ void reb_simulation_irotate(struct reb_simulation* const sim, struct reb_quat q)
         reb_particle_irotate(p,q);
     }
 }
+
+void reb_quat_to_orbital(struct reb_quat q, double* Omega, double* inc, double* omega){
+    // see https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0276302
+    double ap = q.r;
+    double bp = q.iz;
+    double cp = q.ix;
+    double dp = q.iy;
+    *inc = acos(2.0*(ap*ap+bp*bp) - 1.0);
+    *omega = atan2(bp, ap) - atan2(dp, cp);
+    *Omega = atan2(bp, ap) + atan2(dp, cp);
+}

@@ -65,6 +65,9 @@ int main(int argc, char* argv[]) {
     printf("r->particle  = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r->particles[1].x, r->particles[1].y, r->particles[1].z, r->particles[1].vx, r->particles[1].vy, r->particles[1].vz);
     printf("r2->particle = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r2->particles[1].x, r2->particles[1].y, r2->particles[1].z, r2->particles[1].vx, r2->particles[1].vy, r2->particles[1].vz);
     struct reb_quat q5 = reb_quat_init_with_orbital(Omega, inc, omega);
+    printf("Omega = %.5f   inc = %.5f   omega = %.5f\n", Omega, inc, omega);
+    reb_quat_to_orbital(q5, &Omega, &inc, &omega);  // recover angles
+    printf("Omega = %.5f   inc = %.5f   omega = %.5f\n", Omega, inc, omega);
     reb_simulation_irotate(r2, q5);
     printf("r2->particle = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r2->particles[1].x, r2->particles[1].y, r2->particles[1].z, r2->particles[1].vx, r2->particles[1].vy, r2->particles[1].vz);
     

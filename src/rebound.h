@@ -1273,6 +1273,7 @@ struct reb_quat reb_quat_mul(struct reb_quat p, struct reb_quat q);
 struct reb_quat reb_quat_inverse(struct reb_quat q);
 struct reb_quat reb_quat_init_with_orbital(const double Omega, const double inc, const double omega);
 struct reb_vec3d reb_vec3d_rotate(struct reb_vec3d v, struct reb_quat q);
+void reb_quat_to_orbital(struct reb_quat q, double* Omega, double* inc, double* omega);
 void reb_simulation_irotate(struct reb_simulation* const sim, struct reb_quat q);
 
 // Functions for facilitating rotations
