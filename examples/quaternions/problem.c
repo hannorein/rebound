@@ -15,6 +15,11 @@ int main(int argc, char* argv[]) {
 
 
     struct reb_quat q = reb_quat_identity();
+    struct reb_vec3d v = {.x = 1, .y = 2, .z = 3};
+
+    printf("v = %.f %.f %.f\n", v.x, v.y, v.z);
+    v = reb_quat_act(q,v);
+    printf("v = %.f %.f %.f\n", v.x, v.y, v.z);
 
     reb_free_simulation(r);
 }

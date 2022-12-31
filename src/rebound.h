@@ -1029,10 +1029,6 @@ enum reb_input_binary_messages {
 struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length);
 void reb_free_ode(struct reb_ode* ode);
 
-
-// Rotations
-struct reb_quat reb_quat_identity();
-
 // Miscellaneous functions
 uint32_t reb_hash(const char* str);
 double reb_tools_mod2pi(double f);
@@ -1269,6 +1265,10 @@ void reb_transformations_democraticheliocentric_to_inertial_posvel(struct reb_pa
 void reb_transformations_inertial_to_whds_posvel(const struct reb_particle* const particles, struct reb_particle* const p_h, const unsigned int N, const int N_active);
 void reb_transformations_whds_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_h, const unsigned int N, const int N_active);
 void reb_transformations_whds_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_h, const unsigned int N, const int N_active);
+
+// Rotations
+struct reb_quat reb_quat_identity();
+struct reb_vec3d reb_quat_act(struct reb_quat q, struct reb_vec3d v);
 
 // Functions for facilitating rotations
 void reb_tools_calc_plane_Omega_inc(struct reb_vec3d normal_vec, double* Omega, double* inc);
