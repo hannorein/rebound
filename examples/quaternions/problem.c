@@ -68,6 +68,10 @@ int main(int argc, char* argv[]) {
     reb_simulation_rotate(r2, q5);
     printf("r2->particle = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r2->particles[1].x, r2->particles[1].y, r2->particles[1].z, r2->particles[1].vx, r2->particles[1].vy, r2->particles[1].vz);
     
+    struct reb_quat q6 = reb_quat_inverse(q5);
+    reb_simulation_rotate(r2, q6);
+    printf("r2->particle = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r2->particles[1].x, r2->particles[1].y, r2->particles[1].z, r2->particles[1].vx, r2->particles[1].vy, r2->particles[1].vz);
+    
 
     reb_free_simulation(r);
     reb_free_simulation(r2);
