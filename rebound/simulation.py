@@ -112,68 +112,6 @@ class reb_vec3d(Structure):
         mag = sqrt(self.x**2 + self.y**2 + self.z**2)
         return [self.x/mag, self.y/mag, self.z/mag]
 
-    def rotate_XYZ_to_plane_xyz(self, normalvec):
-        """
-        Takes vec3d and calculates coordinates relative to a rotated reference plane.
-        The original vec3d has coordinates XYZ in the original reference system XhatYhatZhat. 
-        We specify the new reference plane through its normal vector (nX, nY, nZ) in the original reference system.
-        Method then returns xyz components in the rotated system where z points along the orbit normal, and x points along the line of nodes between the original and new reference planes (specifically the Z cross z direction). 
-        
-        Parameters
-        ----------
-        normalvec : list(x,y,z) or reb_vec3d with the x y and z components of the vector normal to the rotated reference plane
-        
-        Returns
-        ------- 
-        A rebound.reb_vec3d object.
-        
-        Examples
-        --------
-
-        >>> r = reb_vec3d([1,1,1]) # original r vector
-        >>> rrot = r.rotate_XYZ_to_planet_xyz(normalvec=[1,0,0]) # get r components relative to a yz reference plane (normal along x)
-        """
-        clibrebound.reb_tools_rotate_XYZ_to_plane_xyz.restype = reb_vec3d
-        return clibrebound.reb_tools_rotate_XYZ_to_plane_xyz(self, reb_vec3d(normalvec))
-    
-    def rotate_plane_xyz_to_XYZ(self, normalvec):
-        """
-        Takes vec3d expressed relative to a rotated reference plane, and express it relative to original reference plane.
-        The vec3d has coordinates xyz in the rotated reference system xhatyhatzhat. 
-        We specify the rotated reference plane through its normal vector (nX, nY, nZ) in the original XYZ reference system.
-        Method then returns XYZ components in the original system. Inverse of XYZ_to_plane_xyz.
-        
-        Parameters
-        ----------
-        normalvec : list(x,y,z) or reb_vec3d with the x y and z components of the vector normal to the rotated reference plane
-        
-        Returns
-        ------- 
-        A rebound.reb_vec3d object.
-        
-        Examples
-        --------
-
-        >>> r = reb_vec3d([1,1,1]) # original r vector
-        >>> rrot = r.rotate_XYZ_to_planet_xyz(normalvec=[1,0,0]) # get r components relative to a yz reference plane (normal along x)
-        """
-        clibrebound.reb_tools_rotate_plane_xyz_to_XYZ.restype = reb_vec3d
-        return clibrebound.reb_tools_rotate_plane_xyz_to_XYZ(self, reb_vec3d(normalvec))
-
-    def rotate_XYZ_to_orbital_xyz(self, Omega=0, inc=0, omega=0):
-        clibrebound.reb_tools_rotate_XYZ_to_orbital_xyz.restype = reb_vec3d
-        return clibrebound.reb_tools_rotate_XYZ_to_orbital_xyz(self, c_double(Omega), c_double(inc), c_double(omega))
-    
-    def rotate_orbital_xyz_to_XYZ(self, Omega=0, inc=0, omega=0):
-        clibrebound.reb_tools_rotate_orbital_xyz_to_XYZ.restype = reb_vec3d
-        return clibrebound.reb_tools_rotate_orbital_xyz_to_XYZ(self, c_double(Omega), c_double(inc), c_double(omega))
-    
-    def calc_plane_Omega_inc(self):
-        Omega = c_double()
-        inc = c_double()
-        clibrebound.reb_tools_calc_plane_Omega_inc(self, byref(Omega), byref(inc))
-        return Omega.value, inc.value
-
     def __repr__(self):
         return '<{0}.{1} object at {2}, x={3}, y={4}, z={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.x, self.y, self.z)
     _fields_ = [("x", c_double),
