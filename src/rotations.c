@@ -84,9 +84,29 @@ struct reb_quat reb_quat_mul(struct reb_quat p, struct reb_quat q){
 
 }
 
+double reb_quat_length_squared(struct reb_quat q){
+    return q.r*q.r + q.ix*q.ix + q.iy*q.iy + q.iz*q.iz;
+}
 struct reb_quat reb_quat_identity(){
     struct reb_quat q = {.ix = 0.0, .iy = 0.0, .iz = 0.0, .r = 1.0 };
     return q;
+}
+
+struct reb_quat reb_quat_conjugate(struct reb_quat q){
+    struct reb_quat c = {.ix = -q.ix, .iy = -q.iy, .iz = -q.iz, .r = q.r };
+    return c;
+}
+
+struct reb_quat reb_quat_inverse(struct reb_quat q){
+    struct reb_quat c = reb_quat_conjugate(q);
+    double rl2 = 1./reb_quat_length_squared(q);
+
+    c.r *= rl2;
+    c.ix *= rl2;
+    c.iy *= rl2;
+    c.iz *= rl2;
+
+    return c;
 }
 
 struct reb_quat reb_quat_from_angle_axis(double angle, struct reb_vec3d axis){

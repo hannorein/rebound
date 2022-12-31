@@ -35,6 +35,11 @@ int main(int argc, char* argv[]) {
     struct reb_vec3d v3 = {.x = 1, .y = 2, .z = 3};
     v3 = reb_quat_act(q3, v3);
     printf("v3 = %.5f %.5f %.5f\n", v3.x, v3.y, v3.z);
+    
+    struct reb_quat q4 = reb_quat_inverse(q3);
+    v3 = reb_quat_act(q4, v3);
+    printf("v3 = %.5f %.5f %.5f\n", v3.x, v3.y, v3.z);
+    
 
     reb_free_simulation(r);
 }
