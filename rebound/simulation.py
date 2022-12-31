@@ -167,6 +167,34 @@ class Vec3d(Structure):
         mag = sqrt(self.x**2 + self.y**2 + self.z**2)
         return [self.x/mag, self.y/mag, self.z/mag]
 
+    def __len__(self):
+        return 3
+    
+    def __getitem__(self, key):
+        if not isinstance(key, int):
+            raise IndexError("Index must be an integer.")
+        if key < 0 or key >= 3:
+            raise IndexError("Vec3d has exactly three elements and can therefore not access the item with index "+str(key)+".")
+        if key == 0:
+            return self.x
+        if key == 1:
+            return self.y
+        if key == 2:
+            return self.z
+    
+    def __setitem__(self, key, value):
+        if not isinstance(key, int):
+            raise IndexError("Index must be an integer.")
+        if key < 0 or key >= 3:
+            raise IndexError("Vec3d has exactly three elements and can therefore not access the item with index "+str(key)+".")
+        if key == 0:
+            self.x = c_double(value)
+        if key == 1:
+            self.y = c_double(value)
+        if key == 2:
+            self.z = c_double(value)
+        
+
     def __repr__(self):
         return '<{0}.{1} object at {2}, x={3}, y={4}, z={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.x, self.y, self.z)
     _fields_ = [("x", c_double),
