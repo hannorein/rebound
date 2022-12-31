@@ -2,9 +2,8 @@
  * @file 	rotations.c
  * @brief 	Tools for rotations and quaternions.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @details This code uses the same conventions as the Apple SIMD
- *          quaternion framework. See e.g.: 
- *          https://github.com/MartinWeigel/Quaternion/blob/master/Quaternion.c
+ * @details This code uses the same conventions as the Apple SIMD quaternion framework. See e.g.: 
+ *          https://github.com/xybp888/iOS-SDKs/blob/master/iPhoneOS13.0.sdk/usr/include/simd/quaternion.h
  * 
  * @section 	LICENSE
  * Copyright (c) 2022 Hanno Rein
@@ -101,12 +100,10 @@ struct reb_quat reb_quat_conjugate(struct reb_quat q){
 struct reb_quat reb_quat_inverse(struct reb_quat q){
     struct reb_quat c = reb_quat_conjugate(q);
     double rl2 = 1./reb_quat_length_squared(q);
-
     c.r *= rl2;
     c.ix *= rl2;
     c.iy *= rl2;
     c.iz *= rl2;
-
     return c;
 }
 
@@ -136,7 +133,7 @@ struct reb_vec3d reb_quat_act(struct reb_quat q, struct reb_vec3d v){
 }
 
 static void reb_quat_act_on_particle_inplace(struct reb_particle* p, struct reb_quat q){
-	struct reb_vec3d pos = {p->x, p->y, p->z};
+    struct reb_vec3d pos = {p->x, p->y, p->z};
     struct reb_vec3d vel = {p->vx, p->vy, p->vz};
     pos = reb_quat_act(q, pos);
     vel = reb_quat_act(q, vel);
