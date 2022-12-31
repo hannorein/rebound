@@ -61,9 +61,9 @@ You can also use orbital parameters to initialize the particle object.
     primary = rebound.Particle(m=1., x=1.)
     sim.add(primary)
     ```
-    If you want to use orbital parameters, you need to pass the primary and the gravitational constant to the constructor:
+    If you want to use orbital parameters, you need to pass the primary and the simulation to the constructor:
     ```python
-    planet = rebound.Particle(G=sim.G, primary=primary, m=1e-3, a=1., e=0.1)
+    planet = rebound.Particle(simulation=sim, primary=primary, m=1e-3, a=1., e=0.1)
     ```
     You can use any combination of orbital parameters that makes physically sense. 
     See [the discussion on orbital elements](orbitalelements.md) for more details.
