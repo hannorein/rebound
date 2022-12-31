@@ -116,6 +116,11 @@ struct reb_quat reb_quat_from_angle_axis(double angle, struct reb_vec3d axis){
     return q;
 }
 
+struct reb_quat reb_quat_from_orbital(const double Omega, const double inc, const double omega){
+    struct reb_vec3d x = {.x=1.0, .y=0.0, .z=0.0};
+    //struct reb_quat P1 = reb_quat_from_angle_axis(double angle, struct reb_vec3d axis){
+}
+
 struct reb_vec3d reb_quat_act(struct reb_quat q, struct reb_vec3d v){
     struct reb_vec3d imag = reb_quat_imag(q);
     struct reb_vec3d t = reb_vec3d_mul(reb_vec3d_cross(imag,v), 2);
@@ -123,13 +128,10 @@ struct reb_vec3d reb_quat_act(struct reb_quat q, struct reb_vec3d v){
 }
 
 static void reb_quat_act_on_particle_inplace(struct reb_particle* p, struct reb_quat q){
-    struct reb_vec3d imag = reb_quat_imag(q);
 	struct reb_vec3d pos = {p->x, p->y, p->z};
     struct reb_vec3d vel = {p->vx, p->vy, p->vz};
-    struct reb_vec3d tpos = reb_vec3d_mul(reb_vec3d_cross(imag,pos), 2);
-    pos = reb_vec3d_add(pos, reb_vec3d_add(reb_vec3d_mul(tpos, q.r), reb_vec3d_cross(imag, tpos)));
-    struct reb_vec3d tvel = reb_vec3d_mul(reb_vec3d_cross(imag,vel), 2);
-    vel = reb_vec3d_add(vel, reb_vec3d_add(reb_vec3d_mul(tvel, q.r), reb_vec3d_cross(imag, tvel)));
+    pos = reb_quat_act(q, pos);
+    vel = reb_quat_act(q, vel);
     p->x = pos.x;
     p->y = pos.y;
     p->z = pos.z;

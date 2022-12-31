@@ -47,7 +47,26 @@ int main(int argc, char* argv[]) {
     printf("particle = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r->particles[1].x, r->particles[1].y, r->particles[1].z, r->particles[1].vx, r->particles[1].vy, r->particles[1].vz);
 
     
+    reb_free_simulation(r);
+
+
+    // new tests
+    printf("  \n\n");
+    r = reb_create_simulation();
+    struct reb_simulation* r2 = reb_create_simulation();
+
+    reb_add_fmt(r, "m", 1.);                // Central object
+    reb_add_fmt(r2, "m", 1.);                // Central object
+    double Omega = 0.12;
+    double inc = 0.23;
+    double omega = 0.345;
+    reb_add_fmt(r, "a e Omega inc omega ", 1., 0.00000001, Omega, inc, omega); 
+    reb_add_fmt(r2, "a e", 1., 0.00000001); 
+    printf("r->particle  = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r->particles[1].x, r->particles[1].y, r->particles[1].z, r->particles[1].vx, r->particles[1].vy, r->particles[1].vz);
+    printf("r2->particle = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r2->particles[1].x, r2->particles[1].y, r2->particles[1].z, r2->particles[1].vx, r2->particles[1].vy, r2->particles[1].vz);
+    
 
     reb_free_simulation(r);
+    reb_free_simulation(r2);
 }
 
