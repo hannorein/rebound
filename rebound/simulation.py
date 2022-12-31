@@ -137,14 +137,12 @@ class Vec3d(Structure):
         clibrebound.reb_tools_spherical_to_xyz.restype = cls
         xyz = clibrebound.reb_tools_spherical_to_xyz(c_double(mag), c_double(theta), c_double(phi))
         return cls(xyz.x, xyz.y, xyz.z)
+    
     @property
-    def xyz(self):
-        ''' Return [x,y,z] as list'''
-        return [self.x, self.y, self.z]
-    @property
-    def mag(self):
+    def length(self):
         ''' Return vector magnitude'''
-        return sqrt(self.x**2 + self.y**2 + self.z**2)
+        return math.sqrt(self.x**2 + self.y**2 + self.z**2)
+    
     @property
     def theta(self):
         ''' Return spherical angle theta measured from z axis'''
@@ -153,6 +151,7 @@ class Vec3d(Structure):
         phi = c_double()
         clibrebound.reb_tools_xyz_to_spherical(self, byref(mag), byref(theta), byref(phi))
         return theta.value
+
     @property
     def phi(self):
         ''' Return spherical angle phi measured from x axis'''
@@ -161,6 +160,7 @@ class Vec3d(Structure):
         phi = c_double()
         clibrebound.reb_tools_xyz_to_spherical(self, byref(mag), byref(theta), byref(phi))
         return phi.value
+
     @property
     def hat(self):
         ''' Return a unit vector'''
