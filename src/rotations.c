@@ -72,6 +72,17 @@ struct reb_vec3d reb_vec3d_normalize(struct reb_vec3d v){
     return reb_vec3d_mul(v, 1./sqrt(reb_vec3d_length_squared(v)));
 }
 
+struct reb_quat reb_quat_mul(struct reb_quat p, struct reb_quat q){
+    // v_rot = p * ( q * v)
+    struct reb_quat r = {
+        .r  = p.r*q.r  - p.ix*q.ix - p.iy*q.iy - p.iz*q.iz,
+        .ix = p.r*q.ix + p.ix*q.r  + p.iy*q.iz - p.iz*q.iy,
+        .iy = p.r*q.iy - p.ix*q.iz + p.iy*q.r  + p.iz*q.ix,
+        .iz = p.r*q.iz + p.ix*q.iy - p.iy*q.ix + p.iz*q.r
+    };
+    return r;
+
+}
 
 struct reb_quat reb_quat_identity(){
     struct reb_quat q = {.ix = 0.0, .iy = 0.0, .iz = 0.0, .r = 1.0 };
