@@ -1626,24 +1626,3 @@ void reb_tools_xyz_to_spherical(struct reb_vec3d const xyz, double* mag, double*
     *phi = atan2(xyz.y, xyz.x);
 }  
 
-void reb_rotate_simulation(struct reb_simulation* const sim, struct reb_vec3d normalvec){
-    // Based on celmech nbody_simulation_utilities.py by Sam Hadden
-    const int N_real = sim->N - sim->N_var;
-    double Omega, inc;
-    reb_tools_calc_plane_Omega_inc(normalvec, &Omega, &inc);
-    for (int i = 0; i < N_real; i++){
-        struct reb_particle* p = &sim->particles[i];
-	    struct reb_vec3d pos = {p->x, p->y, p->z};
-	    struct reb_vec3d vel = {p->vx, p->vy, p->vz};
-        struct reb_vec3d ps = reb_tools_rotate_XYZ_to_orbital_xyz(pos, Omega, inc, 0);
-      	struct reb_vec3d vs = reb_tools_rotate_XYZ_to_orbital_xyz(vel, Omega, inc, 0);
-
-      	p->x = ps.x;
-      	p->y = ps.y;
-      	p->z = ps.z;
-
-      	p->vx = vs.x;
-      	p->vy = vs.y;
-      	p->vz = vs.z;
-    }
-}

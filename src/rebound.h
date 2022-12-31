@@ -1272,6 +1272,7 @@ struct reb_quat reb_quat_from_angle_axis(double angle, struct reb_vec3d axis);
 struct reb_quat reb_quat_mul(struct reb_quat p, struct reb_quat q);
 struct reb_quat reb_quat_inverse(struct reb_quat q);
 struct reb_vec3d reb_quat_act(struct reb_quat q, struct reb_vec3d v);
+void reb_simulation_rotate(struct reb_simulation* const sim, struct reb_quat q);
 
 // Functions for facilitating rotations
 void reb_tools_calc_plane_Omega_inc(struct reb_vec3d normal_vec, double* Omega, double* inc);
@@ -1281,7 +1282,6 @@ struct reb_vec3d reb_tools_rotate_XYZ_to_plane_xyz(const struct reb_vec3d XYZ, c
 struct reb_vec3d reb_tools_rotate_plane_xyz_to_XYZ(const struct reb_vec3d xyz, const struct reb_vec3d normalvec);
 struct reb_vec3d reb_tools_spherical_to_xyz(const double mag, const double theta, const double phi);
 void reb_tools_xyz_to_spherical(struct reb_vec3d const xyz, double* mag, double* theta, double* phi);
-void reb_rotate_simulation(struct reb_simulation* const sim, struct reb_vec3d normalvec);
 
 #ifdef MPI
 void reb_mpi_init(struct reb_simulation* const r);

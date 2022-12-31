@@ -26,7 +26,6 @@
 #include <math.h>
 #include "rebound.h"
 
-
 struct reb_vec3d reb_quat_imag(struct reb_quat q){
     struct reb_vec3d i = {
         .x = q.ix,
@@ -35,7 +34,6 @@ struct reb_vec3d reb_quat_imag(struct reb_quat q){
     };
     return i;
 }
-
 
 struct reb_vec3d reb_vec3d_mul(struct reb_vec3d v, double s){
     struct reb_vec3d nv = {
@@ -124,3 +122,27 @@ struct reb_vec3d reb_quat_act(struct reb_quat q, struct reb_vec3d v){
     return reb_vec3d_add(v, reb_vec3d_add(reb_vec3d_mul(t, q.r), reb_vec3d_cross(imag, t)));
 }
 
+static void reb_quat_act_on_particle_inplace(struct reb_particle* p, struct reb_quat q){
+    struct reb_vec3d imag = reb_quat_imag(q);
+	struct reb_vec3d pos = {p->x, p->y, p->z};
+    struct reb_vec3d vel = {p->vx, p->vy, p->vz};
+    struct reb_vec3d tpos = reb_vec3d_mul(reb_vec3d_cross(imag,pos), 2);
+    pos = reb_vec3d_add(pos, reb_vec3d_add(reb_vec3d_mul(tpos, q.r), reb_vec3d_cross(imag, tpos)));
+    struct reb_vec3d tvel = reb_vec3d_mul(reb_vec3d_cross(imag,vel), 2);
+    vel = reb_vec3d_add(vel, reb_vec3d_add(reb_vec3d_mul(tvel, q.r), reb_vec3d_cross(imag, tvel)));
+    p->x = pos.x;
+    p->y = pos.y;
+    p->z = pos.z;
+    p->vx = vel.x;
+    p->vy = vel.y;
+    p->vz = vel.z;
+}
+
+
+void reb_simulation_rotate(struct reb_simulation* const sim, struct reb_quat q){
+    const int N = sim->N;
+    for (int i = 0; i < N; i++){
+        struct reb_particle* p = &sim->particles[i];
+        reb_quat_act_on_particle_inplace(p,q);
+    }
+}
