@@ -80,6 +80,14 @@ struct reb_vec3d {
     double z;
 };
 
+// Quaternion
+struct reb_quat {
+    double ix;
+    double iy;
+    double iz;
+    double r;
+};
+
 // Generic pointer with 7 elements, for internal use only (IAS15).
 struct reb_dp7 {
     double* REBOUND_RESTRICT p0;
@@ -1020,6 +1028,10 @@ enum reb_input_binary_messages {
 // ODE functions
 struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length);
 void reb_free_ode(struct reb_ode* ode);
+
+
+// Rotations
+struct reb_quat reb_quat_identity();
 
 // Miscellaneous functions
 uint32_t reb_hash(const char* str);
