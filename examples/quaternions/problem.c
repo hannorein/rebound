@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
     reb_add_fmt(r, "m", 1.);                // Central object
     reb_add_fmt(r2, "m", 1.);                // Central object
     double Omega = 0.12;
-    double inc = 0.23;
+    double inc = -0.023;
     double omega = 0.345;
     reb_add_fmt(r, "a e Omega inc omega ", 1., 0.00000001, Omega, inc, omega); 
     reb_add_fmt(r2, "a e", 1., 0.00000001); 

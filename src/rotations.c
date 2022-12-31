@@ -155,18 +155,37 @@ void reb_simulation_irotate(struct reb_simulation* const sim, struct reb_quat q)
 #define MIN_INC 1.e-8 
 void reb_quat_to_orbital(struct reb_quat q, double* Omega, double* inc, double* omega){
     // see https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0276302
+    // and https://github.com/evbernardes/quaternion_to_euler/blob/main/euler_from_quat.py
     // Works but angles doen't always land in the right quadrant.
     double ap = q.r;
     double bp = q.iz;
     double cp = q.ix;
     double dp = q.iy;
     *inc = acos(2.0*(ap*ap+bp*bp) - 1.0);
-    if (fabs(*inc) > MIN_INC){
-        *omega = atan2(bp, ap) - atan2(dp, cp);
-        *Omega = atan2(bp, ap) + atan2(dp, cp);
+    int safe1 =  (fabs(*inc) > MIN_INC);
+    int safe2 =  (fabs(*inc - M_PI) > MIN_INC);
+
+    if (safe1 && safe2){
+        double half_sum = atan2(bp, ap);
+        double half_diff = atan2(dp, cp);
+        *omega = half_sum - half_diff;
+        *Omega = half_sum + half_diff;
     }else{
-        *omega = 2.*atan2(bp, ap);
         *Omega = 0;
+        if (!safe1){
+            double half_sum = atan2(bp, ap);
+            *omega = 2.0 * half_sum;
+        }else{
+            double half_diff = atan2(dp, cp);
+            *omega = 2.0 * half_diff;
+        }
     }
+    if (*omega < 0){
+        *omega += M_PI*2.0;
+    }
+    if (*Omega < 0){
+        *Omega += M_PI*2.0;
+    }
+
 
 }
