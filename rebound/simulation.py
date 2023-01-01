@@ -152,6 +152,24 @@ class Vec3d(Structure):
         xyz = clibrebound.reb_tools_spherical_to_xyz(c_double(mag), c_double(theta), c_double(phi))
         return cls(xyz.x, xyz.y, xyz.z)
     
+    def irotate(self, q):
+        if not isinstance(q, Quat):
+            raise NotImplementedError
+        clibrebound.reb_vec3d_rotate.restype = Vec3d
+        r = clibrebound.reb_vec3d_rotate(self, q)
+        self.x = r.x
+        self.y = r.y
+        self.z = r.z
+        return self
+    
+    def normalize(self):
+        clibrebound.reb_vec3d_normalize.restype = Vec3d
+        r = clibrebound.reb_vec3d_normalize(self)
+        self.x = r.x
+        self.y = r.y
+        self.z = r.z
+        return self
+    
     @property
     def length(self):
         ''' Return vector magnitude'''
