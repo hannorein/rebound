@@ -168,6 +168,8 @@ static inline struct reb_quat reb_quat_init_with_from_to_reduced(struct reb_vec3
 }
 
 struct reb_quat reb_quat_init_with_from_to(struct reb_vec3d from, struct reb_vec3d to) {
+    from = reb_vec3d_normalize(from);
+    to = reb_vec3d_normalize(to);
 
     if (reb_vec3d_dot(from, to) >= 0) {  // small angle
         return reb_quat_init_with_from_to_reduced(from, to);
