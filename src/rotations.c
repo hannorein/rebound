@@ -64,8 +64,12 @@ struct reb_vec3d reb_vec3d_cross(struct reb_vec3d a, struct reb_vec3d b){
     return c;
 }
 
+double reb_vec3d_dot(struct reb_vec3d a, struct reb_vec3d b){
+    return a.x*b.x + a.y*b.y + a.z*b.z;
+}
+
 double reb_vec3d_length_squared(struct reb_vec3d v){
-    return v.x*v.x + v.y*v.y + v.z*v.z;
+    return reb_vec3d_dot(v, v);
 }
 
 struct reb_vec3d reb_vec3d_normalize(struct reb_vec3d v){
@@ -150,6 +154,54 @@ void reb_simulation_irotate(struct reb_simulation* const sim, struct reb_quat q)
         struct reb_particle* p = &sim->particles[i];
         reb_particle_irotate(p,q);
     }
+}
+
+
+static inline struct reb_quat reb_quat_from_to_reduced(struct reb_vec3d from, struct reb_vec3d to) {
+    // Internal use only
+    struct reb_vec3d half = {.x=from.x+to.x, .y=from.y+to.y, .z=from.z+to.z};
+    half = reb_vec3d_normalize(half);
+    struct reb_vec3d cross = reb_vec3d_cross(from, half);
+    double dot = reb_vec3d_dot(from, half);
+    struct reb_quat q = {.ix=cross.x, .iy=cross.y, .iz=cross.z, .r=dot};
+    return q;
+}
+
+struct reb_quat reb_quat_from_to(struct reb_vec3d from, struct reb_vec3d to) {
+
+    if (reb_vec3d_dot(from, to) >= 0) {  // small angle
+        return reb_quat_from_to_reduced(from, to);
+    }
+
+    //  More than 90 degrees apart, do rotation in two stages:
+    //  (from -> half), (half -> to) 
+    struct reb_vec3d half = {.x=from.x+to.x, .y=from.y+to.y, .z=from.z+to.z};
+    half = reb_vec3d_normalize(half);
+
+    if (reb_vec3d_length_squared(half) == 0) {
+        //  half is nearly zero, so from and to point in nearly opposite directions
+        //  and the rotation is numerically underspecified. Pick an axis orthogonal
+        //  to the vectors, and use an angle of pi radians.
+        struct reb_vec3d abs_from = {.x=fabs(from.x), .y=fabs(from.y), .z=fabs(from.z)};
+        if (abs_from.x <= abs_from.y && abs_from.x <= abs_from.z){
+            struct reb_vec3d axis = {.x=1, .y=0, .z = 0};
+            axis = reb_vec3d_cross(from, axis);
+            struct reb_quat q = {.ix=axis.x, .iy=axis.y, .iz=axis.z, .r=0.0};
+            return q;
+        }
+        if (abs_from.y <= abs_from.z){
+            struct reb_vec3d axis = {.x=0, .y=1, .z = 0};
+            axis = reb_vec3d_cross(from, axis);
+            struct reb_quat q = {.ix=axis.x, .iy=axis.y, .iz=axis.z, .r=0.0};
+            return q;
+        }
+        struct reb_vec3d axis = {.x=0, .y=0, .z = 1};
+        axis = reb_vec3d_cross(from, axis);
+        struct reb_quat q = {.ix=axis.x, .iy=axis.y, .iz=axis.z, .r=0.0};
+        return q;
+    }
+
+    return reb_quat_mul(reb_quat_from_to_reduced(from, half), reb_quat_from_to_reduced(half, to));
 }
 
 #define MIN_INC 1.e-8 
