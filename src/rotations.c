@@ -157,7 +157,7 @@ void reb_simulation_irotate(struct reb_simulation* const sim, struct reb_quat q)
 }
 
 
-static inline struct reb_quat reb_quat_from_to_reduced(struct reb_vec3d from, struct reb_vec3d to) {
+static inline struct reb_quat reb_quat_init_with_from_to_reduced(struct reb_vec3d from, struct reb_vec3d to) {
     // Internal use only
     struct reb_vec3d half = {.x=from.x+to.x, .y=from.y+to.y, .z=from.z+to.z};
     half = reb_vec3d_normalize(half);
@@ -167,10 +167,10 @@ static inline struct reb_quat reb_quat_from_to_reduced(struct reb_vec3d from, st
     return q;
 }
 
-struct reb_quat reb_quat_from_to(struct reb_vec3d from, struct reb_vec3d to) {
+struct reb_quat reb_quat_init_with_from_to(struct reb_vec3d from, struct reb_vec3d to) {
 
     if (reb_vec3d_dot(from, to) >= 0) {  // small angle
-        return reb_quat_from_to_reduced(from, to);
+        return reb_quat_init_with_from_to_reduced(from, to);
     }
 
     //  More than 90 degrees apart, do rotation in two stages:
@@ -201,7 +201,7 @@ struct reb_quat reb_quat_from_to(struct reb_vec3d from, struct reb_vec3d to) {
         return q;
     }
 
-    return reb_quat_mul(reb_quat_from_to_reduced(from, half), reb_quat_from_to_reduced(half, to));
+    return reb_quat_mul(reb_quat_init_with_from_to_reduced(from, half), reb_quat_init_with_from_to_reduced(half, to));
 }
 
 #define MIN_INC 1.e-8 

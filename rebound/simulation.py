@@ -86,6 +86,20 @@ class Quat(Structure):
             super().__init__(q.ix, q.iy, q.iz, q.r)   
 
     @classmethod
+    def with_from_to(cls, fromv, tov):
+        # "from" is a keyword, need to use somethign else: "fromv"
+        try:
+            assert 3 == len(fromv)
+            assert 3 == len(tov)
+        except:
+            raise ValueError("Both to and from need to be 3 vectors")
+        _from = Vec3d(fromv)
+        _to = Vec3d(tov)
+        clibrebound.reb_quat_init_with_from_to.restype = cls
+        q = clibrebound.reb_quat_init_with_from_to(_from, _to)
+        return q
+
+    @classmethod
     def with_angle_axis(cls, angle, axis):
         _axis = Vec3d(axis)
         clibrebound.reb_quat_init_with_angle_axis.restype = cls
