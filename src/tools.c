@@ -1532,3 +1532,17 @@ int reb_simulation_isub(struct reb_simulation* r, struct reb_simulation* r2){
     }
     return 0;
 }
+
+struct reb_vec3d reb_tools_spherical_to_xyz(const double magnitude, const double theta, const double phi){
+    struct reb_vec3d xyz;
+    xyz.x = magnitude * sin(theta) * cos(phi);
+    xyz.y = magnitude * sin(theta) * sin(phi);
+    xyz.z = magnitude * cos(theta);
+    return xyz;
+}  
+
+void reb_tools_xyz_to_spherical(const struct reb_vec3d xyz, double* magnitude, double* theta, double* phi){
+    *magnitude = sqrt(xyz.x*xyz.x + xyz.y*xyz.y + xyz.z*xyz.z);
+    *theta = acos2(xyz.z, *magnitude, 1.);    // theta always in [0,pi] so pass dummy disambiguator=1
+    *phi = atan2(xyz.y, xyz.x);
+}  

@@ -29,10 +29,9 @@ class TestRotations(unittest.TestCase):
     
     def test_to_orbital(self):
         sim = rebound.Simulation()
-        a, e = 1, 0.1
-        Omega, omega, inc = 0.1, 0.2, 0.3
+        a, e, inc, Omega, omega = 1, 0.1, 0.2, 0.3, 0.4, 0.5
         sim.add(m=1)
-        sim.add(a=a,e=e, inc=inc,Omega=Omega,omega=omega,f=0)
+        sim.add(a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=0)
         # when we rotate our particle's xyz to_orbital (x=toward peri, z=orb normal) we should get (a(1-e), 0, 0)
         r = rebound.Rotation.to_orbital(Omega=Omega, inc=inc, omega=omega)
         res = r*sim.particles[1].xyz
@@ -70,6 +69,14 @@ class TestRotations(unittest.TestCase):
         self.assertAlmostEqual(res1[0]-res2[0], 0, delta=1e-15)
         self.assertAlmostEqual(res1[1]-res2[1], 0, delta=1e-15)
         self.assertAlmostEqual(res1[2]-res2[2], 0, delta=1e-15)
-
+    
+    def test_to_from_spherical(self):
+        mag, theta, phi = 3, math.pi/3, -math.pi/4
+        vec = rebound.spherical_to_xyz(mag, theta, phi)
+        mag2, theta2, phi2 = rebound.xyz_to_spherical(vec)
+        self.assertAlmostEqual(mag, mag2, delta=1e-15)
+        self.assertAlmostEqual(theta, theta2, delta=1e-15)
+        self.assertAlmostEqual(phi, phi2, delta=1e-15)
+        
 if __name__ == "__main__":
     unittest.main()

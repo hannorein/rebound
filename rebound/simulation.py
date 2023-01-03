@@ -115,15 +115,22 @@ class Rotation(Structure):
     @classmethod
     def from_to(cls, fromv, tov):
         """
-        Returns the Rotation object that maps the 3D fromv vector to the 3D tov vector, i.e., Rotation * fromv = tov.
+        Returns a Rotation object that maps the 3D fromv vector to the 3D tov vector, i.e., Rotation * fromv = tov.
         Specifically, the rotation is done counterclockwise around the fromv cross tov axis.
         
         Arguments
         ---------
-        fromv: rebound.Vec3d, list, or numpy array 
-            Input vector that Rotation will map to vector tov
-        tov: rebound.Vec3d, list, or numpy array 
-            Output vector when Rotation is applied to fromv
+        fromv: list-like (e.g. list, numpy array)
+            Input 3D vector that Rotation will map to vector tov
+        tov: list-like (e.g. list, numpy array)
+            Output 3D vector when Rotation is applied to fromv
+        
+        Examples
+        --------
+
+        >>> fromv = [2,3,-5]                                            # An arbitrary vector
+        >>> rot = rebound.Rotation.from_to(fromv=fromv, tov=[0,0,1])    # Get a rotation that maps fromv to the z axis
+        >>> print(rot * fromv)                                          # When our rotation acts on fromv, we get back [0,0,1]
         """
         # "from" is a keyword, need to use somethign else: "fromv"
         try:
@@ -139,13 +146,64 @@ class Rotation(Structure):
 
     @classmethod
     def to_orbital(cls, Omega=0.0, inc=0.0, omega=0.0):
+        """
+        Consider an orbit, which in a reference coordinate system has standard orbital angles inc, Omega, omega.
+        This returns a rotation object 'rot' that takes a Cartesian vector 'XYZ' in the reference coordinate system
+        and maps it to rot * XYZ = xyz, where the x component of xyz now points toward the orbit's pericenter, the z 
+        component of xyz points along the orbit normal, and the y component completes a right-handed coordinate system.
+        
+        Arguments
+        ---------
+        fromv: list-like (e.g. list, numpy array)
+            Input 3D vector that Rotation will map to vector tov
+        tov: list-like (e.g. list, numpy array)
+            Output 3D vector when Rotation is applied to fromv
+        
+        Examples
+        --------
+
+        >>> a, e, inc, Omega, omega = 1, 0.1, 0.2, 0.3, 0.4, 0.5        # Make up arbitrary numbers
+        >>> rot = rebound.Rotation.to_orbital(Omega=Omega, inc=inc, omega=omega) # Initialize a Rotation to that specific orbit 
+        >>> sim = rebound.Simulation()                                  # If we now initialize a particle at pericenter (f=0)
+        >>> sim.add(m=1)                                                # with those orbital angles, then rot * ps[1].xyz 
+        >>> sim.add(a=a, e=e, inc=inc, Omega=Omega, omega=omega)        # should point along the x axis (toward pericenter)
+        >>> print(rot * sim.particles[1].xyz)                           # with magnitude given by the distance to pericenter a*(1-e)
+        """
         clibrebound.reb_rotation_init_to_orbital.restype = cls
         q = clibrebound.reb_rotation_init_to_orbital(c_double(Omega), c_double(inc), c_double(omega))
         return q
     
     @classmethod
     def to_new_axes(cls, newz, newx=None):
-        if not newx:
+        """
+        Returns a rotation object that rotates vectors into a new coordinate system with the z axis pointing along 
+        the vector newz. If newx is passed, the new x axis will point along newx. If not, the new x axis defaults
+        to the intersection betweeen the new xy plane (normal to newz) and the original xy plane (specifically along
+        the z cross newz direction). The new y axis completes a right-handed coordinate system. 
+
+        If passed, newx should be perpendicular to newz. This function will only take the component of newx that is 
+        perpendicular to newz, in order to avoid any rounding issues. 
+        
+        Arguments
+        ---------
+        newz: list-like (e.g. list, numpy array)
+            3D vector to use as the new z axis
+        newx: list-like (e.g. list, numpy array)
+            3D vector to use as the new x axis. If not passed, defaults to the intersection between the new xy plane
+            (normal to newz) and the original xy plane (along the z cross newz direction).
+        
+        Examples
+        --------
+
+        >>> sim = rebound.Simulation()                  # Initialize a sim with two Jupiters on arbitrary inclined orbits
+        >>> sim.add(m=1)                                                 
+        >>> sim.add(m=1e-3, a=1, inc=0.3, Omega=4.2)
+        >>> sim.add(m=1e-3, a=2, inc=0.1, Omega=0.5)    # Get a rotation to new axes where z points along total ang. momentum L. Didn't specify newx, 
+        >>> rot = rebound.Rotation.to_new_axes(newz=sim.calculate_angular_momentum()) # so it points along line of nodes between our original xy plane
+        >>> sim.rotate(rot)                             # and the new plane perp. to L. Rotate our simulation into this new reference system
+        >>> print(sim.calculate_angular_momentum())     # Now the total angular momentum points in the z direction as we expect.
+        """
+        if not newx: # newx not specified, newx will point along z cross newz (line of nodes)
             clibrebound.reb_vec3d_cross.restype = Vec3d
             newx = clibrebound.reb_vec3d_cross(Vec3d(0,0,1), Vec3d(newz))
         clibrebound.reb_rotation_init_to_new_axes.restype = cls
@@ -153,6 +211,9 @@ class Rotation(Structure):
         return q
 
     def inverse(self):
+        """
+        Returns a Rotation object's inverse rotation.
+        """
         clibrebound.reb_rotation_inverse.restype = Rotation 
         q = clibrebound.reb_rotation_inverse(self)
         return q
@@ -168,7 +229,6 @@ class Rotation(Structure):
             return [vec[0], vec[1], vec[2]]
         except:
             return NotImplemented
-    
 
     def __repr__(self):
         return '<{0}.{1} object at {2}, ix={3}, iy={4}, iz={5}, r={6}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.ix, self.iy, self.iz, self.r)
@@ -176,7 +236,6 @@ class Rotation(Structure):
                 ("iy", c_double),
                 ("iz", c_double),
                 ("r", c_double)]
-
 
 class Vec3d(Structure):
     def __init__(self, *args):
@@ -189,89 +248,6 @@ class Vec3d(Structure):
                 super().__init__(vec.x, vec.y, vec.z)   
             except: # use default x,y,z __init__
                 super().__init__(*args)
-    @classmethod
-    def from_spherical(cls, magnitude, theta, phi):
-        """Initialize Cartesian vector from its magnitude and two spherical angles theta (polar angle measured from z) and phi (azimuthal angle measured from x)"""
-        clibrebound.reb_vec3d_spherical_to_xyz.restype = cls
-        xyz = clibrebound.reb_vec3d_spherical_to_xyz(c_double(magnitude), c_double(theta), c_double(phi))
-        return cls(xyz.x, xyz.y, xyz.z)
-    
-    def rotate(self, q):
-        if not isinstance(q, Rotation):
-            return NotImplemented
-        clibrebound.reb_vec3d_irotate.restype = Vec3d
-        clibrebound.reb_vec3d_irotate(byref(self), q)
-    
-    def normalize(self):
-        clibrebound.reb_vec3d_normalize.restype = Vec3d
-        r = clibrebound.reb_vec3d_normalize(self)
-        self.x = r.x
-        self.y = r.y
-        self.z = r.z
-        return self
-   
-    def copy(self):
-        return Vec3d(self)
-
-    @property
-    def xyz(self):
-        """Return [x,y,z] list"""
-        return [self.x, self.y, self.z]
-
-    @property
-    def magnitude(self):
-        """Return vector magnitude"""
-        return math.sqrt(self.x**2 + self.y**2 + self.z**2)
-    
-    @property
-    def theta(self):
-        """Return spherical angle theta measured from z axis"""
-        mag = c_double()
-        theta = c_double()
-        phi = c_double()
-        clibrebound.reb_vec3d_xyz_to_spherical(self, byref(mag), byref(theta), byref(phi))
-        return theta.value
-
-    @property
-    def phi(self):
-        """Return spherical angle phi measured from x axis"""
-        mag = c_double()
-        theta = c_double()
-        phi = c_double()
-        clibrebound.reb_vec3d_xyz_to_spherical(self, byref(mag), byref(theta), byref(phi))
-        return phi.value
-
-    def __len__(self):
-        return 3
-
-    def __getitem__(self, key):
-        if not isinstance(key, int):
-            raise IndexError("Index must be an integer.")
-        if key < 0 or key >= 3:
-            raise IndexError("Vec3d has exactly three elements and can therefore not access the item with index "+str(key)+".")
-        if key == 0:
-            return self.x
-        if key == 1:
-            return self.y
-        if key == 2:
-            return self.z
-
-    def __setitem__(self, key, value):
-        if not isinstance(key, int):
-            raise IndexError("Index must be an integer.")
-        if key < 0 or key >= 3:
-            raise IndexError("Vec3d has exactly three elements and can therefore not access the item with index "+str(key)+".")
-        if key == 0:
-            self.x = c_double(value)
-        if key == 1:
-            self.y = c_double(value)
-        if key == 2:
-            self.z = c_double(value)
-    
-    def __iter__(self):
-        for val in [self.x, self.y, self.z]:
-            yield val
-
     def __repr__(self):
         return '<{0}.{1} object at {2}, x={3}, y={4}, z={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.x, self.y, self.z)
     

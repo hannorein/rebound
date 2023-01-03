@@ -1038,6 +1038,11 @@ double reb_tools_M_to_E(double e, double M); // Eccentric anomaly for a given ec
 void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R); // This function sets up a Plummer sphere, N=number of particles, M=total mass, R=characteristic radius
 void reb_run_heartbeat(struct reb_simulation* const r);  // used internally
 
+// transformations to/from vec3d
+struct reb_vec3d reb_tools_spherical_to_xyz(const double mag, const double theta, const double phi);
+void reb_tools_xyz_to_spherical(struct reb_vec3d const xyz, double* mag, double* theta, double* phi);
+
+
 // Functions to add and initialize particles
 struct reb_particle reb_particle_nan(void); // Returns a reb_particle structure with fields/hash/ptrs initialized to nan/0/NULL. 
 void reb_add(struct reb_simulation* const r, struct reb_particle pt);
@@ -1265,10 +1270,6 @@ void reb_transformations_democraticheliocentric_to_inertial_posvel(struct reb_pa
 void reb_transformations_inertial_to_whds_posvel(const struct reb_particle* const particles, struct reb_particle* const p_h, const unsigned int N, const int N_active);
 void reb_transformations_whds_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_h, const unsigned int N, const int N_active);
 void reb_transformations_whds_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_h, const unsigned int N, const int N_active);
-
-// vec3d 
-struct reb_vec3d reb_vec3d_spherical_to_xyz(const double mag, const double theta, const double phi);
-void reb_vec3d_xyz_to_spherical(struct reb_vec3d const xyz, double* mag, double* theta, double* phi);
 
 // Rotations
 struct reb_rotation reb_rotation_inverse(const struct reb_rotation q);

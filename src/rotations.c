@@ -70,20 +70,6 @@ struct reb_vec3d reb_vec3d_normalize(const struct reb_vec3d v){
     return reb_vec3d_mul(v, 1./sqrt(reb_vec3d_length_squared(v)));
 }
 
-struct reb_vec3d reb_vec3d_spherical_to_xyz(const double magnitude, const double theta, const double phi){
-    struct reb_vec3d xyz;
-    xyz.x = magnitude * sin(theta) * cos(phi);
-    xyz.y = magnitude * sin(theta) * sin(phi);
-    xyz.z = magnitude * cos(theta);
-    return xyz;
-}  
-
-void reb_vec3d_xyz_to_spherical(const struct reb_vec3d xyz, double* magnitude, double* theta, double* phi){
-    *magnitude = sqrt(xyz.x*xyz.x + xyz.y*xyz.y + xyz.z*xyz.z);
-    *theta = acos2(xyz.z, *magnitude, 1.);    // theta always in [0,pi] so pass dummy disambiguator=1
-    *phi = atan2(xyz.y, xyz.x);
-}  
-
 // reb_rotation manipulation functions 
 
 struct reb_vec3d reb_rotation_imag(const struct reb_rotation q){
