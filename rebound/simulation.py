@@ -90,8 +90,9 @@ class Rotation(Structure):
             Real part of quaternion r + (ix)i + (iy)j + (iz)k
         angle: float
             Angle (in radians) by which to rotate counterclockwise around passed axis
-        axis: rebound.Vec3d, list, or numpy array 
-            3D vector specifying the axis of rotation
+        axis: rebound.Vec3d, list, numpy array, or character 
+            3D vector specifying the axis of rotation. The characters "x", "y", "z" are
+            shorthand for [1,0,0], [0,1,0], [0,0,1].
         """
         cart = [ix, iy, iz, r]
         angle_axis = [angle, axis]
@@ -119,9 +120,9 @@ class Rotation(Structure):
         
         Arguments
         ---------
-        fromv: list-like (e.g. list, numpy array)
+        fromv: list-like (e.g. list, numpy array), or character
             Input 3D vector that Rotation will map to vector tov
-        tov: list-like (e.g. list, numpy array)
+        tov: list-like (e.g. list, numpy array), or character
             Output 3D vector when Rotation is applied to fromv
         
         Examples
@@ -132,11 +133,6 @@ class Rotation(Structure):
         >>> print(rot * fromv)                                          # When our rotation acts on fromv, we get back [0,0,1]
         """
         # "from" is a keyword, need to use somethign else: "fromv"
-        try:
-            assert 3 == len(fromv)
-            assert 3 == len(tov)
-        except:
-            raise ValueError("Both to and from need to be 3 vectors")
         _from = Vec3d(fromv)
         _to = Vec3d(tov)
         clibrebound.reb_rotation_init_from_to.restype = cls
@@ -253,6 +249,16 @@ class Vec3d(Structure):
     def __init__(self, *args):
         try:        # try assuming it's a list
             vec = args[0]
+            if isinstance(vec,str):
+                vec = vec.lower()
+                if vec != "x" and vec !="y" and vec != "z":
+                    raise ValueError("When passing a string to create a Vec3D, it needs to be one of 'x', 'y', or  'z'")
+                if vec == "x":
+                    vec = [1,0,0]
+                elif vec == "y":
+                    vec = [0,1,0]
+                if vec == "z":
+                    vec = [0,0,1]
             super(Vec3d, self).__init__(*vec)                      
         except:
             try:    # fall back on another Vec3d so functions can Vec3d(argument) to take either list or vec3d
