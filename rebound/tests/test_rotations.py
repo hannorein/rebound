@@ -53,8 +53,8 @@ class TestRotations(unittest.TestCase):
         self.assertAlmostEqual(res[2], 0, delta=1e-15)
     
     def test_to_new_axes_no_x_unnormalized(self):
-        newz = [-1,-1,-1]
-        mag = (newz[0]**2 + newz[1]**2 + newz[2]**2)**(1/2)
+        newz = [-1.,-1.,-1.]
+        mag = (newz[0]**2 + newz[1]**2 + newz[2]**2)**0.5
         r = rebound.Rotation.to_new_axes(newz=newz)
         res = r*newz
         self.assertAlmostEqual(res[0], 0, delta=1e-15)
