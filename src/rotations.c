@@ -225,7 +225,7 @@ struct reb_rotation reb_rotation_init_to_new_axes(struct reb_vec3d newz, struct 
     return reb_rotation_mul(q2, q1);
 }
 
-struct reb_rotation reb_rotation_init_to_orbital(const double Omega, const double inc, const double omega){
+struct reb_rotation reb_rotation_init_orbital(const double Omega, const double inc, const double omega){
     // Murray and Dermot Eq. 2.121 (left hand side) 
     struct reb_vec3d x = {.x=1.0};
     struct reb_vec3d z = {.z=1.0};
@@ -236,12 +236,10 @@ struct reb_rotation reb_rotation_init_to_orbital(const double Omega, const doubl
 }
 
 #define MIN_INC 1.e-8 
-void reb_rotation_to_orbital(struct reb_rotation qin, double* Omega, double* inc, double* omega){
+void reb_rotation_to_orbital(struct reb_rotation q, double* Omega, double* inc, double* omega){
     // see https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0276302
     // and https://github.com/evbernardes/quaternion_to_euler/blob/main/euler_from_rotation.py
     // Works but angles doen't always land in the right quadrant.
-    // to_orbital is the inverse rotation so that it rotates vector into orbital axes
-    struct reb_rotation q = reb_rotation_inverse(qin); 
     double ap = q.r;
     double bp = q.iz;
     double cp = q.ix;

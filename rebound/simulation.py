@@ -140,12 +140,11 @@ class Rotation(Structure):
         return q
 
     @classmethod
-    def to_orbital(cls, Omega=0.0, inc=0.0, omega=0.0):
+    def orbital(cls, Omega=0.0, inc=0.0, omega=0.0):
         """
-        Consider an orbit, which in a reference coordinate system has standard orbital angles inc, Omega, omega.
-        This returns a rotation object 'rot' that takes a Cartesian vector 'XYZ' in the reference coordinate system
-        and maps it to rot * XYZ = xyz, where the x component of xyz now points toward the orbit's pericenter, the z 
-        component of xyz points along the orbit normal, and the y component completes a right-handed coordinate system.
+        Consider an orbit, which in a reference coordinate system has standard orbital angles Omega, inc, omega.
+        This returns a rotation object 'rot' that rotates the vector [1,0,0] such that is lies in the 
+        orbital plane and points towards the pericenter of the orbit. 
         
         Arguments
         ---------
@@ -160,14 +159,14 @@ class Rotation(Structure):
         --------
 
         >>> a, e, inc, Omega, omega = 1, 0.1, 0.2, 0.3, 0.4             # Make up arbitrary numbers
-        >>> rot = rebound.Rotation.to_orbital(Omega=Omega, inc=inc, omega=omega) # Initialize a Rotation to that specific orbit 
+        >>> rot = rebound.Rotation.orbital(Omega=Omega, inc=inc, omega=omega) # Initialize a Rotation to that specific orbit 
         >>> sim = rebound.Simulation()                                  # If we now initialize a particle at pericenter (f=0)
         >>> sim.add(m=1)                                                # with those orbital angles, then rot * ps[1].xyz 
         >>> sim.add(a=a, e=e, inc=inc, Omega=Omega, omega=omega)        # should point along the x axis (toward pericenter)
         >>> print(rot * sim.particles[1].xyz)                           # with magnitude given by the distance to pericenter a*(1-e)
         """
-        clibrebound.reb_rotation_init_to_orbital.restype = cls
-        q = clibrebound.reb_rotation_init_to_orbital(c_double(Omega), c_double(inc), c_double(omega))
+        clibrebound.reb_rotation_init_orbital.restype = cls
+        q = clibrebound.reb_rotation_init_orbital(c_double(Omega), c_double(inc), c_double(omega))
         return q
     
     @classmethod
