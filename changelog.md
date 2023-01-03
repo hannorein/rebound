@@ -4,8 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
-### Version 3.??.?
-* Fixes an issue with showing an incorrect periastron location in OrbitPlot for high mass-ratio systems
+### Version 3.23.0
+* Added the REBOUND Rotations framework.
+* Fixes an issue with showing an incorrect periastron location in OrbitPlot for high mass-ratio systems.
 * Adds pre and post timestep calls to the ode framework.
 
 ### Version 3.22.0
