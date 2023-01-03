@@ -1035,7 +1035,7 @@ class Simulation(Structure):
     def rotate(self, q):
         if not isinstance(q, Rotation):
             return NotImplemented
-        clibrebound.reb_simulation_rotate(byref(self), q)
+        clibrebound.reb_simulation_irotate(byref(self), q)
 
 #ODE functions
     def create_ode(self, length, needs_nbody=True):
