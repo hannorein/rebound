@@ -113,7 +113,15 @@ struct reb_rotation reb_rotation_inverse(const struct reb_rotation q){
 
 // Object rotation functions
 
+struct reb_vec3d reb_vec3d_rotate(struct reb_vec3d v, const struct reb_rotation q){
+    // Returns a copy
+    struct reb_vec3d r = v;
+    reb_vec3d_irotate(&r, q);
+    return r;
+}
+
 void reb_vec3d_irotate(struct reb_vec3d* v, const struct reb_rotation q){
+    // Rotates vector in place
     struct reb_vec3d imag = reb_rotation_imag(q);
     struct reb_vec3d t = reb_vec3d_mul(reb_vec3d_cross(imag,*v), 2);
     struct reb_vec3d res = reb_vec3d_add(*v, reb_vec3d_add(reb_vec3d_mul(t, q.r), reb_vec3d_cross(imag, t)));
