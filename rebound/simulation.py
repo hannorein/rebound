@@ -96,7 +96,7 @@ class Rotation(Structure):
         cart = [ix, iy, iz, r]
         angle_axis = [angle, axis]
         if cart.count(None) == len(cart) and angle_axis.count(None) == len(angle_axis):
-            super().__init__(0.0,0.0,0.0,1.0) # Identity
+            super(Rotation, self).__init__(0.0,0.0,0.0,1.0) # Identity
             return
         if cart.count(None) != 0 and angle_axis.count(None) == len(angle_axis):
             raise ValueError("You need to specify all four parameters ix, iy, iz, r.")
@@ -105,12 +105,11 @@ class Rotation(Structure):
         if cart.count(None) < len(cart) and angle_axis.count(None) < len(angle_axis):
             raise ValueError("Cannot mix parameters ix, iy, iz, r with angle, axis.")
         if cart.count(None) == 0:
-            super().__init__(ix, iy, iz, r)   
+            super(Rotation, self).__init__(ix, iy, iz, r)   
         if angle_axis.count(None) == 0:
-            _axis = Vec3d(axis)
             clibrebound.reb_rotation_init_angle_axis.restype = Rotation
-            q = clibrebound.reb_rotation_init_angle_axis(c_double(angle), _axis)
-            super().__init__(q.ix, q.iy, q.iz, q.r)   
+            q = clibrebound.reb_rotation_init_angle_axis(c_double(angle), Vec3d(axis))
+            super(Rotation, self).__init__(q.ix, q.iy, q.iz, q.r)   
 
     @classmethod
     def from_to(cls, fromv, tov):
@@ -252,13 +251,13 @@ class Vec3d(Structure):
     def __init__(self, *args):
         try:        # try assuming it's a list
             vec = args[0]
-            super().__init__(*vec)                      
+            super(Vec3d, self).__init__(*vec)                      
         except:
             try:    # fall back on another Vec3d so functions can Vec3d(argument) to take either list or vec3d
                 vec = args[0]
-                super().__init__(vec.x, vec.y, vec.z)   
+                super(Vec3d, self).__init__(vec.x, vec.y, vec.z)   
             except: # use default x,y,z __init__
-                super().__init__(*args)
+                super(Vec3d, self).__init__(*args)
     
     def __repr__(self):
         return '<{0}.{1} object at {2}, x={3}, y={4}, z={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.x, self.y, self.z)
