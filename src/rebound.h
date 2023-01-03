@@ -1285,6 +1285,8 @@ void reb_vec3d_irotate(struct reb_vec3d *v, const struct reb_rotation q);
 void reb_particle_irotate(struct reb_particle* p, const struct reb_rotation q);
 void reb_simulation_rotate(struct reb_simulation* const sim, const struct reb_rotation q);
 
+void reb_rotation_to_orbital(struct reb_rotation q, double* Omega, double* inc, double* omega);
+
 #ifdef MPI
 void reb_mpi_init(struct reb_simulation* const r);
 void reb_mpi_finalize(struct reb_simulation* const r);
