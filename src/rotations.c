@@ -181,7 +181,7 @@ struct reb_rotation reb_rotation_init_from_to(struct reb_vec3d from, struct reb_
     struct reb_vec3d half = {.x=from.x+to.x, .y=from.y+to.y, .z=from.z+to.z};
     half = reb_vec3d_normalize(half);
 
-    if (reb_vec3d_length_squared(half) == 0) {
+    if (!isnormal(reb_vec3d_length_squared(half))) {
         //  half is nearly zero, so from and to point in nearly opposite directions
         //  and the rotation is numerically underspecified. Pick an axis orthogonal
         //  to the vectors, and use an angle of pi radians.
