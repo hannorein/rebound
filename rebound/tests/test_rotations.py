@@ -53,6 +53,21 @@ class TestRotations(unittest.TestCase):
         self.assertAlmostEqual(res[1], 0, delta=1e-15)
         self.assertAlmostEqual(res[2], 0, delta=1e-15)
     
+    def test_to_new_axes_not_perp(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(a=1,inc=math.pi/2,Omega=math.pi/2)
+        orbnorm = [1,0,0] # along x axis for above orbit
+        ascnode = [0,1,0] # along y axis for above orbit
+        # since omega=f=0, particle is at node. If we rotate into a frame with newx along the node, and z along orbnorm, should get (1,0,0)
+        delta = 0.01 # deviation from orthogonal newx ([0,1,0])
+        r = rebound.Rotation.to_new_axes(newz=orbnorm, newx=[0,1,delta])
+        res = r*sim.particles[1].xyz
+        self.assertAlmostEqual(res[0], 1, delta=delta)
+        self.assertAlmostEqual(res[1], 0, delta=delta)
+        self.assertAlmostEqual(res[2], 0, delta=delta)
+    
+    
     def test_to_new_axes_no_x_unnormalized(self):
         newz = [-1.,-1.,-1.]
         mag = (newz[0]**2 + newz[1]**2 + newz[2]**2)**0.5
