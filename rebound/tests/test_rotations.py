@@ -29,7 +29,7 @@ class TestRotations(unittest.TestCase):
     
     def test_to_orbital(self):
         sim = rebound.Simulation()
-        a, e, inc, Omega, omega = 1, 0.1, 0.2, 0.3, 0.4, 0.5
+        a, e, inc, Omega, omega = 1, 0.1, 0.2, 0.3, 0.4
         sim.add(m=1)
         sim.add(a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=0)
         # when we rotate our particle's xyz to_orbital (x=toward peri, z=orb normal) we should get (a(1-e), 0, 0)

@@ -162,7 +162,7 @@ class Rotation(Structure):
         Examples
         --------
 
-        >>> a, e, inc, Omega, omega = 1, 0.1, 0.2, 0.3, 0.4, 0.5        # Make up arbitrary numbers
+        >>> a, e, inc, Omega, omega = 1, 0.1, 0.2, 0.3, 0.4             # Make up arbitrary numbers
         >>> rot = rebound.Rotation.to_orbital(Omega=Omega, inc=inc, omega=omega) # Initialize a Rotation to that specific orbit 
         >>> sim = rebound.Simulation()                                  # If we now initialize a particle at pericenter (f=0)
         >>> sim.add(m=1)                                                # with those orbital angles, then rot * ps[1].xyz 
@@ -223,10 +223,18 @@ class Rotation(Structure):
             clibrebound.reb_rotation_mul.restype = Rotation 
             q = clibrebound.reb_rotation_mul(self, other)
             return q
+        if isinstance(other, Particle):
+            p = other.copy()
+            p.rotate(self)
+            return p
+        if isinstance(other, Simulation):
+            s = other.copy()
+            s.rotate(self)
+            return s
         try:
             vec = Vec3d(other) # make copy if vec3d, try to convert to vec3d if list-like
-            vec.rotate(self)
-            return [vec[0], vec[1], vec[2]]
+            clibrebound.reb_vec3d_irotate(byref(vec), self) # rotate vector in place
+            return [vec.x, vec.y, vec.z]
         except:
             return NotImplemented
 
@@ -238,6 +246,9 @@ class Rotation(Structure):
                 ("r", c_double)]
 
 class Vec3d(Structure):
+    """
+    Class for 3D Cartesian vectors. Used internally and likely not needed by user.
+    """
     def __init__(self, *args):
         try:        # try assuming it's a list
             vec = args[0]
@@ -248,6 +259,7 @@ class Vec3d(Structure):
                 super().__init__(vec.x, vec.y, vec.z)   
             except: # use default x,y,z __init__
                 super().__init__(*args)
+    
     def __repr__(self):
         return '<{0}.{1} object at {2}, x={3}, y={4}, z={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.x, self.y, self.z)
     
@@ -1019,12 +1031,10 @@ class Simulation(Structure):
             raise ValueError("Cannot multiply simulation with non-scalars.")
         clibrebound.reb_simulation_imul(byref(self), c_double(scalar_pos), c_double(scalar_vel))
     
-
     def rotate(self, q):
         if not isinstance(q, Rotation):
             return NotImplemented
         clibrebound.reb_simulation_rotate(byref(self), q)
-    
 
 #ODE functions
     def create_ode(self, length, needs_nbody=True):

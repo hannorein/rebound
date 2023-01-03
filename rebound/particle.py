@@ -650,11 +650,10 @@ class Particle(Structure):
             raise ZeroDivisionError
         return self.__imul__(1./other)
     
-    def irotate(self, q):
-        if not isinstance(q, Quat):
+    def rotate(self, q):
+        if not isinstance(q, rebound.Rotation):
             raise NotImplementedError
         clibrebound.reb_particle_irotate(byref(self), q)
-
 
     @property
     def index(self):
