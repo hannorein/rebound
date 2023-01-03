@@ -1284,7 +1284,7 @@ struct reb_rotation reb_rotation_init_to_new_axes(struct reb_vec3d newz, struct 
 struct reb_vec3d reb_vec3d_rotate(struct reb_vec3d v, const struct reb_rotation q);
 void reb_vec3d_irotate(struct reb_vec3d *v, const struct reb_rotation q);
 void reb_particle_irotate(struct reb_particle* p, const struct reb_rotation q);
-void reb_simulation_rotate(struct reb_simulation* const sim, const struct reb_rotation q);
+void reb_simulation_irotate(struct reb_simulation* const sim, const struct reb_rotation q);
 
 void reb_rotation_to_orbital(struct reb_rotation q, double* Omega, double* inc, double* omega);
 

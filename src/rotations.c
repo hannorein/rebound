@@ -143,7 +143,7 @@ void reb_particle_irotate(struct reb_particle* p, const struct reb_rotation q){
     p->vz = vel.z;
 }
 
-void reb_simulation_rotate(struct reb_simulation* const sim, const struct reb_rotation q){
+void reb_simulation_irotate(struct reb_simulation* const sim, const struct reb_rotation q){
     const int N = sim->N;
     for (int i = 0; i < N; i++){
         struct reb_particle* p = &sim->particles[i];
