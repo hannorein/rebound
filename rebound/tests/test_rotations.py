@@ -58,7 +58,6 @@ class TestRotations(unittest.TestCase):
         sim.add(m=1)
         sim.add(a=1,inc=math.pi/2,Omega=math.pi/2)
         orbnorm = [1,0,0] # along x axis for above orbit
-        ascnode = [0,1,0] # along y axis for above orbit
         # since omega=f=0, particle is at node. If we rotate into a frame with newx along the node, and z along orbnorm, should get (1,0,0)
         delta = 0.01 # deviation from orthogonal newx ([0,1,0])
         r = rebound.Rotation.to_new_axes(newz=orbnorm, newx=[0,1,delta])
