@@ -267,6 +267,43 @@ class Vec3d(Structure):
                 super(Vec3d, self).__init__(vec.x, vec.y, vec.z)   
             except: # use default x,y,z __init__
                 super(Vec3d, self).__init__(*args)
+
+    def rotate(self, q):
+        if not isinstance(q, Rotation):
+            raise NotImplementedError
+        clibrebound.reb_vec3d_irotate(byref(self), q)
+        return self
+
+    def normalize(self):
+        clibrebound.reb_vec3d_normalize.restype = Vec3d
+        r = clibrebound.reb_vec3d_normalize(self)
+        self.x = r.x
+        self.y = r.y
+        self.z = r.z
+        return self
+    def __getitem__(self, key):
+        if not isinstance(key, int):
+            raise IndexError("Index must be an integer.")
+        if key < 0 or key >= 3:
+            raise IndexError("Vec3d has exactly three elements and can therefore not access the item with index "+str(key)+".")
+        if key == 0:
+            return self.x
+        if key == 1:
+            return self.y
+        if key == 2:
+            return self.z
+
+    def __setitem__(self, key, value):
+        if not isinstance(key, int):
+            raise IndexError("Index must be an integer.")
+        if key < 0 or key >= 3:
+            raise IndexError("Vec3d has exactly three elements and can therefore not access the item with index "+str(key)+".")
+        if key == 0:
+            self.x = c_double(value)
+        if key == 1:
+            self.y = c_double(value)
+        if key == 2:
+            self.z = c_double(value)
     
     def __repr__(self):
         return '<{0}.{1} object at {2}, x={3}, y={4}, z={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.x, self.y, self.z)
