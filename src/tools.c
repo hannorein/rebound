@@ -933,7 +933,7 @@ struct reb_orbit reb_orbit_nan(void){
 // will return 0 or pi appropriately if num is larger than denom by machine precision
 // and will return 0 if denom is exactly 0.
 
-static double acos2(double num, double denom, double disambiguator){
+double acos2(double num, double denom, double disambiguator){
 	double val;
 	double cosine = num/denom;
 	if(cosine > -1. && cosine < 1.){
@@ -1532,97 +1532,3 @@ int reb_simulation_isub(struct reb_simulation* r, struct reb_simulation* r2){
     }
     return 0;
 }
-
-// Rotation functions
-
-void reb_tools_calc_plane_Omega_inc(struct reb_vec3d normal_vec, double* Omega, double* inc){
-    double r = sqrt(normal_vec.x*normal_vec.x + normal_vec.y*normal_vec.y + normal_vec.z*normal_vec.z);
-    *inc = acos(normal_vec.z/r);
-    double nx = -normal_vec.y;  // n is the vector pointing toward ascending node
-    double ny = normal_vec.x;
-    double n = sqrt(nx*nx + ny*ny);
-    *Omega = acos2(nx, n, ny);
-}
-
-struct reb_vec3d reb_tools_rotate_XYZ_to_orbital_xyz(struct reb_vec3d XYZ, const double Omega, const double inc, const double omega){
-    // adapted from celmech nbody_simulation_utilities.py. Eq 2.121 of 2.8 in Murray & Dermott, xyz = P1^-1P2^-1P3^-1(XYZ)
-    double X = XYZ.x;
-    double Y = XYZ.y;
-    double Z = XYZ.z;
-
-    double s3 = sin(-Omega);
-    double c3 = cos(-Omega);
-    double x3 = c3 * X - s3 * Y;
-    double y3 = s3 * X + c3 * Y;
-    double z3 = Z;
-
-    double s2 = sin(-inc);
-    double c2 = cos(-inc);
-    double x2 = x3;
-    double y2 = c2 * y3 - s2 * z3;
-    double z2 = s2 * y3 + c2 * z3;
-
-    double s1 = sin(-omega);
-    double c1 = cos(-omega);
-    double x1 = c1 * x2 - s1 * y2;
-    double y1 = s1 * x2 + c1 * y2;
-    double z1 = z2;
-
-    struct reb_vec3d xyz = {x1, y1, z1};
-    return xyz;
-}
-
-struct reb_vec3d reb_tools_rotate_orbital_xyz_to_XYZ(const struct reb_vec3d xyz, const double Omega, const double inc, const double omega){
-    // adapted from celmech nbody_simulation_utilities.py. Uses Eq 2.121 of 2.8 in Murray & Dermott, XYZ = P3P2P1(xyz).
-    double x = xyz.x;
-    double y = xyz.y;
-    double z = xyz.z;
-
-    double s1 = sin(omega);
-    double c1 = cos(omega);
-    double x1 = c1 * x - s1 * y;
-    double y1 = s1 * x + c1 * y;
-    double z1 = z;
-
-    double s2 = sin(inc);
-    double c2 = cos(inc);
-    double x2 = x1;
-    double y2 = c2 * y1 - s2 * z1;
-    double z2 = s2 * y1 + c2 * z1;
-
-    double s3 = sin(Omega);
-    double c3 = cos(Omega);
-    double x3 = c3 * x2 - s3 * y2;
-    double y3 = s3 * x2 + c3 * y2;
-    double z3 = z2;
-
-    struct reb_vec3d XYZ = {x3, y3, z3};
-    return XYZ;
-}
-
-struct reb_vec3d reb_tools_rotate_XYZ_to_plane_xyz(const struct reb_vec3d XYZ, const struct reb_vec3d normalvec){
-    double Omega, inc;
-    reb_tools_calc_plane_Omega_inc(normalvec, &Omega, &inc);
-    return reb_tools_rotate_XYZ_to_orbital_xyz(XYZ, Omega, inc, 0);
-}
-
-struct reb_vec3d reb_tools_rotate_plane_xyz_to_XYZ(const struct reb_vec3d xyz, const struct reb_vec3d normalvec){
-    double Omega, inc;
-    reb_tools_calc_plane_Omega_inc(normalvec, &Omega, &inc);
-    return reb_tools_rotate_orbital_xyz_to_XYZ(xyz, Omega, inc, 0);
-}
-
-struct reb_vec3d reb_tools_spherical_to_xyz(const double mag, const double theta, const double phi){
-    struct reb_vec3d xyz;
-    xyz.x = mag * sin(theta) * cos(phi);
-    xyz.y = mag * sin(theta) * sin(phi);
-    xyz.z = mag * cos(theta);
-    return xyz;
-}  
-
-void reb_tools_xyz_to_spherical(struct reb_vec3d const xyz, double* mag, double* theta, double* phi){
-    *mag = sqrt(xyz.x*xyz.x + xyz.y*xyz.y + xyz.z*xyz.z);
-    *theta = acos2(xyz.z, *mag, 1.);    // theta always in [0,pi] so pass dummy disambiguator=1
-    *phi = atan2(xyz.y, xyz.x);
-}  
-

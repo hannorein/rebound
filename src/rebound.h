@@ -80,8 +80,8 @@ struct reb_vec3d {
     double z;
 };
 
-// Quaternion
-struct reb_quat {
+// Rotation (Implemented as a quaternion)
+struct reb_rotation {
     double ix;
     double iy;
     double iz;
@@ -1266,24 +1266,23 @@ void reb_transformations_inertial_to_whds_posvel(const struct reb_particle* cons
 void reb_transformations_whds_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_h, const unsigned int N, const int N_active);
 void reb_transformations_whds_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_h, const unsigned int N, const int N_active);
 
-// Rotations
-struct reb_quat reb_quat_identity();
-struct reb_quat reb_quat_init_with_angle_axis(double angle, struct reb_vec3d axis);
-struct reb_quat reb_quat_mul(struct reb_quat p, struct reb_quat q);
-struct reb_quat reb_quat_inverse(struct reb_quat q);
-struct reb_quat reb_quat_init_with_orbital(const double Omega, const double inc, const double omega);
-struct reb_vec3d reb_vec3d_rotate(struct reb_vec3d v, struct reb_quat q);
-void reb_quat_to_orbital(struct reb_quat q, double* Omega, double* inc, double* omega);
-void reb_simulation_irotate(struct reb_simulation* const sim, struct reb_quat q);
+// vec3d 
+struct reb_vec3d reb_vec3d_spherical_to_xyz(const double mag, const double theta, const double phi);
+void reb_vec3d_xyz_to_spherical(struct reb_vec3d const xyz, double* mag, double* theta, double* phi);
 
-// Functions for facilitating rotations
-void reb_tools_calc_plane_Omega_inc(struct reb_vec3d normal_vec, double* Omega, double* inc);
-struct reb_vec3d reb_tools_rotate_XYZ_to_orbital_xyz(struct reb_vec3d XYZ, const double Omega, const double inc, const double omega);
-struct reb_vec3d reb_tools_rotate_orbital_xyz_to_XYZ(const struct reb_vec3d xyz, const double Omega, const double inc, const double omega);
-struct reb_vec3d reb_tools_rotate_XYZ_to_plane_xyz(const struct reb_vec3d XYZ, const struct reb_vec3d normalvec);
-struct reb_vec3d reb_tools_rotate_plane_xyz_to_XYZ(const struct reb_vec3d xyz, const struct reb_vec3d normalvec);
-struct reb_vec3d reb_tools_spherical_to_xyz(const double mag, const double theta, const double phi);
-void reb_tools_xyz_to_spherical(struct reb_vec3d const xyz, double* mag, double* theta, double* phi);
+// Rotations
+struct reb_rotation reb_rotation_inverse(const struct reb_rotation q);
+struct reb_rotation reb_rotation_mul(const struct reb_rotation p, const struct reb_rotation q);
+
+struct reb_rotation reb_rotation_identity();
+struct reb_rotation reb_rotation_init_angle_axis(const double angle, struct reb_vec3d axis);
+struct reb_rotation reb_rotation_init_from_to(struct reb_vec3d from, struct reb_vec3d to);
+struct reb_rotation reb_rotation_init_to_orbital(const double Omega, const double inc, const double omega);
+struct reb_rotation reb_rotation_init_to_new_axes(struct reb_vec3d newz, struct reb_vec3d newx);
+
+void reb_vec3d_irotate(struct reb_vec3d *v, const struct reb_rotation q);
+void reb_particle_irotate(struct reb_particle* p, const struct reb_rotation q);
+void reb_simulation_rotate(struct reb_simulation* const sim, const struct reb_rotation q);
 
 #ifdef MPI
 void reb_mpi_init(struct reb_simulation* const r);
@@ -1336,7 +1335,7 @@ struct reb_display_data {
     int reference;                  // reb_particle used as a reference for centering.
     unsigned int mouse_action;      
     unsigned int key_mods;      
-    struct reb_quaternion view;
+    struct reb_rotation view;
     unsigned int simplefont_tex;
     unsigned int simplefont_shader_program;
     unsigned int simplefont_shader_vao;

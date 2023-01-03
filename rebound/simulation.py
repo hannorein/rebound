@@ -66,9 +66,34 @@ class reb_hash_pointer_pair(Structure):
                 ("index", c_int)]
 
 
-class Quat(Structure):
+class Rotation(Structure):
+    """
+    This class facilitates rotations of Vec3d objects, and provides various convenience functions
+    for commonly used rotations in celestial mechanics.
+    """
     def __init__(self, ix=None, iy=None, iz=None, r=None, angle=None, axis=None):
-        cart = [ix, iy, iz, r] 
+        """
+        Rotations are implemented as quaternions r + (ix)i + (iy)j + (iz)k. To initialize one
+        can directly pass a set of the real numbers (ix, iy, iz, r). Alternatively one can pass
+        an axis vector for the rotation axis, and an angle of rotation (counter-clockwise around axis).
+        Only one full set of (r, ix, iy, iz) OR (angle, axis) must be passed.
+
+        Arguments
+        ---------
+        ix : float
+            Coefficient of i in quaternion r + (ix)i + (iy)j + (iz)k
+        iy : float
+            Coefficient of j in quaternion r + (ix)i + (iy)j + (iz)k
+        iz : float
+            Coefficient of k in quaternion r + (ix)i + (iy)j + (iz)k
+        r : float
+            Real part of quaternion r + (ix)i + (iy)j + (iz)k
+        angle: float
+            Angle (in radians) by which to rotate counterclockwise around passed axis
+        axis: rebound.Vec3d, list, or numpy array 
+            3D vector specifying the axis of rotation
+        """
+        cart = [ix, iy, iz, r]
         angle_axis = [angle, axis]
         if cart.count(None) == len(cart) and angle_axis.count(None) == len(angle_axis):
             super().__init__(0.0,0.0,0.0,1.0) # Identity
@@ -82,11 +107,24 @@ class Quat(Structure):
         if cart.count(None) == 0:
             super().__init__(ix, iy, iz, r)   
         if angle_axis.count(None) == 0:
-            q = Quat.with_angle_axis(angle, axis)
+            _axis = Vec3d(axis)
+            clibrebound.reb_rotation_init_angle_axis.restype = Rotation
+            q = clibrebound.reb_rotation_init_angle_axis(c_double(angle), _axis)
             super().__init__(q.ix, q.iy, q.iz, q.r)   
 
     @classmethod
-    def with_from_to(cls, fromv, tov):
+    def from_to(cls, fromv, tov):
+        """
+        Returns the Rotation object that maps the 3D fromv vector to the 3D tov vector, i.e., Rotation * fromv = tov.
+        Specifically, the rotation is done counterclockwise around the fromv cross tov axis.
+        
+        Arguments
+        ---------
+        fromv: rebound.Vec3d, list, or numpy array 
+            Input vector that Rotation will map to vector tov
+        tov: rebound.Vec3d, list, or numpy array 
+            Output vector when Rotation is applied to fromv
+        """
         # "from" is a keyword, need to use somethign else: "fromv"
         try:
             assert 3 == len(fromv)
@@ -95,35 +133,41 @@ class Quat(Structure):
             raise ValueError("Both to and from need to be 3 vectors")
         _from = Vec3d(fromv)
         _to = Vec3d(tov)
-        clibrebound.reb_quat_init_with_from_to.restype = cls
-        q = clibrebound.reb_quat_init_with_from_to(_from, _to)
+        clibrebound.reb_rotation_init_from_to.restype = cls
+        q = clibrebound.reb_rotation_init_from_to(_from, _to)
         return q
 
     @classmethod
-    def with_angle_axis(cls, angle, axis):
-        _axis = Vec3d(axis)
-        clibrebound.reb_quat_init_with_angle_axis.restype = cls
-        q = clibrebound.reb_quat_init_with_angle_axis(c_double(angle), _axis)
+    def to_orbital(cls, Omega=0.0, inc=0.0, omega=0.0):
+        clibrebound.reb_rotation_init_to_orbital.restype = cls
+        q = clibrebound.reb_rotation_init_to_orbital(c_double(Omega), c_double(inc), c_double(omega))
         return q
     
     @classmethod
-    def with_orbital(cls, Omega=0.0, inc=0.0, omega=0.0):
-        clibrebound.reb_quat_init_with_orbital.restype = cls
-        q = clibrebound.reb_quat_init_with_orbital(c_double(Omega), c_double(inc), c_double(omega))
+    def to_new_axes(cls, newz, newx=None):
+        if not newx:
+            clibrebound.reb_vec3d_cross.restype = Vec3d
+            newx = clibrebound.reb_vec3d_cross(Vec3d(0,0,1), Vec3d(newz))
+        clibrebound.reb_rotation_init_to_new_axes.restype = cls
+        q = clibrebound.reb_rotation_init_to_new_axes(Vec3d(newz), Vec3d(newx))
         return q
 
     def inverse(self):
-        clibrebound.reb_quat_inverse.restype = Quat
-        q = clibrebound.reb_quat_inverse(self)
+        clibrebound.reb_rotation_inverse.restype = Rotation 
+        q = clibrebound.reb_rotation_inverse(self)
         return q
     
     def __mul__(self, other):
-        if isinstance(other, Quat):
-            clibrebound.reb_quat_mul.restype = Quat
-            q = clibrebound.reb_quat_mul(self, other)
+        if isinstance(other, Rotation):
+            clibrebound.reb_rotation_mul.restype = Rotation 
+            q = clibrebound.reb_rotation_mul(self, other)
             return q
-
-        return NotImplemented
+        try:
+            vec = Vec3d(other) # make copy if vec3d, try to convert to vec3d if list-like
+            vec.rotate(self)
+            return [vec[0], vec[1], vec[2]]
+        except:
+            return NotImplemented
     
 
     def __repr__(self):
@@ -146,21 +190,17 @@ class Vec3d(Structure):
             except: # use default x,y,z __init__
                 super().__init__(*args)
     @classmethod
-    def from_spherical(cls, mag, theta, phi):
-        ''' Initialize Cartesian vector from its magnitude and two spherical angles theta (measured from z) and phi (measured from x)'''
-        clibrebound.reb_tools_spherical_to_xyz.restype = cls
-        xyz = clibrebound.reb_tools_spherical_to_xyz(c_double(mag), c_double(theta), c_double(phi))
+    def from_spherical(cls, magnitude, theta, phi):
+        """Initialize Cartesian vector from its magnitude and two spherical angles theta (polar angle measured from z) and phi (azimuthal angle measured from x)"""
+        clibrebound.reb_vec3d_spherical_to_xyz.restype = cls
+        xyz = clibrebound.reb_vec3d_spherical_to_xyz(c_double(magnitude), c_double(theta), c_double(phi))
         return cls(xyz.x, xyz.y, xyz.z)
     
-    def irotate(self, q):
-        if not isinstance(q, Quat):
-            raise NotImplementedError
-        clibrebound.reb_vec3d_rotate.restype = Vec3d
-        r = clibrebound.reb_vec3d_rotate(self, q)
-        self.x = r.x
-        self.y = r.y
-        self.z = r.z
-        return self
+    def rotate(self, q):
+        if not isinstance(q, Rotation):
+            return NotImplemented
+        clibrebound.reb_vec3d_irotate.restype = Vec3d
+        clibrebound.reb_vec3d_irotate(byref(self), q)
     
     def normalize(self):
         clibrebound.reb_vec3d_normalize.restype = Vec3d
@@ -169,39 +209,41 @@ class Vec3d(Structure):
         self.y = r.y
         self.z = r.z
         return self
-    
+   
+    def copy(self):
+        return Vec3d(self)
+
     @property
-    def length(self):
-        ''' Return vector magnitude'''
+    def xyz(self):
+        """Return [x,y,z] list"""
+        return [self.x, self.y, self.z]
+
+    @property
+    def magnitude(self):
+        """Return vector magnitude"""
         return math.sqrt(self.x**2 + self.y**2 + self.z**2)
     
     @property
     def theta(self):
-        ''' Return spherical angle theta measured from z axis'''
+        """Return spherical angle theta measured from z axis"""
         mag = c_double()
         theta = c_double()
         phi = c_double()
-        clibrebound.reb_tools_xyz_to_spherical(self, byref(mag), byref(theta), byref(phi))
+        clibrebound.reb_vec3d_xyz_to_spherical(self, byref(mag), byref(theta), byref(phi))
         return theta.value
 
     @property
     def phi(self):
-        ''' Return spherical angle phi measured from x axis'''
+        """Return spherical angle phi measured from x axis"""
         mag = c_double()
         theta = c_double()
         phi = c_double()
-        clibrebound.reb_tools_xyz_to_spherical(self, byref(mag), byref(theta), byref(phi))
+        clibrebound.reb_vec3d_xyz_to_spherical(self, byref(mag), byref(theta), byref(phi))
         return phi.value
-
-    @property
-    def hat(self):
-        ''' Return a unit vector'''
-        mag = sqrt(self.x**2 + self.y**2 + self.z**2)
-        return [self.x/mag, self.y/mag, self.z/mag]
 
     def __len__(self):
         return 3
-    
+
     def __getitem__(self, key):
         if not isinstance(key, int):
             raise IndexError("Index must be an integer.")
@@ -213,7 +255,7 @@ class Vec3d(Structure):
             return self.y
         if key == 2:
             return self.z
-    
+
     def __setitem__(self, key, value):
         if not isinstance(key, int):
             raise IndexError("Index must be an integer.")
@@ -225,10 +267,14 @@ class Vec3d(Structure):
             self.y = c_double(value)
         if key == 2:
             self.z = c_double(value)
-        
+    
+    def __iter__(self):
+        for val in [self.x, self.y, self.z]:
+            yield val
 
     def __repr__(self):
         return '<{0}.{1} object at {2}, x={3}, y={4}, z={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.x, self.y, self.z)
+    
     _fields_ = [("x", c_double),
                 ("y", c_double),
                 ("z", c_double)]
@@ -998,10 +1044,10 @@ class Simulation(Structure):
         clibrebound.reb_simulation_imul(byref(self), c_double(scalar_pos), c_double(scalar_vel))
     
 
-    def irotate(self, q):
-        if not isinstance(q, Quat):
-            raise NotImplementedError
-        clibrebound.reb_simulation_irotate(byref(self), q)
+    def rotate(self, q):
+        if not isinstance(q, Rotation):
+            return NotImplemented
+        clibrebound.reb_simulation_rotate(byref(self), q)
     
 
 #ODE functions

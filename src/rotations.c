@@ -1,7 +1,7 @@
 /**
  * @file 	rotations.c
- * @brief 	Tools for rotations and quaternions.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @brief 	Tools for vector manipulations, rotations and quaternions.
+ * @author 	Hanno Rein <hanno@hanno-rein.de>, Dan Tamayo
  * @details This code uses the same conventions as the Apple SIMD quaternion framework. See e.g.: 
  *          https://github.com/xybp888/iOS-SDKs/blob/master/iPhoneOS13.0.sdk/usr/include/simd/quaternion.h
  * 
@@ -27,17 +27,11 @@
 #include <stdlib.h>
 #include <math.h>
 #include "rebound.h"
+#include "tools.h"
 
-struct reb_vec3d reb_quat_imag(struct reb_quat q){
-    struct reb_vec3d i = {
-        .x = q.ix,
-        .y = q.iy,
-        .z = q.iz
-    };
-    return i;
-}
+// reb_vec3d manipulation functions
 
-struct reb_vec3d reb_vec3d_mul(struct reb_vec3d v, double s){
+struct reb_vec3d reb_vec3d_mul(const struct reb_vec3d v, const double s){
     struct reb_vec3d nv = {
         .x = s*v.x,
         .y = s*v.y,
@@ -46,7 +40,7 @@ struct reb_vec3d reb_vec3d_mul(struct reb_vec3d v, double s){
     return nv;
 }
 
-struct reb_vec3d reb_vec3d_add(struct reb_vec3d v, struct reb_vec3d w){
+struct reb_vec3d reb_vec3d_add(const struct reb_vec3d v, const struct reb_vec3d w){
     struct reb_vec3d nv = {
         .x = v.x + w.x,
         .y = v.y + w.y,
@@ -55,7 +49,7 @@ struct reb_vec3d reb_vec3d_add(struct reb_vec3d v, struct reb_vec3d w){
     return nv;
 }
 
-struct reb_vec3d reb_vec3d_cross(struct reb_vec3d a, struct reb_vec3d b){
+struct reb_vec3d reb_vec3d_cross(const struct reb_vec3d a, const struct reb_vec3d b){
     struct reb_vec3d c = {
         .x = a.y*b.z - a.z*b.y,
         .y = a.z*b.x - a.x*b.z,
@@ -64,21 +58,46 @@ struct reb_vec3d reb_vec3d_cross(struct reb_vec3d a, struct reb_vec3d b){
     return c;
 }
 
-double reb_vec3d_dot(struct reb_vec3d a, struct reb_vec3d b){
+double reb_vec3d_dot(const struct reb_vec3d a, const struct reb_vec3d b){
     return a.x*b.x + a.y*b.y + a.z*b.z;
 }
 
-double reb_vec3d_length_squared(struct reb_vec3d v){
+double reb_vec3d_length_squared(const struct reb_vec3d v){
     return reb_vec3d_dot(v, v);
 }
 
-struct reb_vec3d reb_vec3d_normalize(struct reb_vec3d v){
+struct reb_vec3d reb_vec3d_normalize(const struct reb_vec3d v){
     return reb_vec3d_mul(v, 1./sqrt(reb_vec3d_length_squared(v)));
 }
 
-struct reb_quat reb_quat_mul(struct reb_quat p, struct reb_quat q){
+struct reb_vec3d reb_vec3d_spherical_to_xyz(const double magnitude, const double theta, const double phi){
+    struct reb_vec3d xyz;
+    xyz.x = magnitude * sin(theta) * cos(phi);
+    xyz.y = magnitude * sin(theta) * sin(phi);
+    xyz.z = magnitude * cos(theta);
+    return xyz;
+}  
+
+void reb_vec3d_xyz_to_spherical(const struct reb_vec3d xyz, double* magnitude, double* theta, double* phi){
+    *magnitude = sqrt(xyz.x*xyz.x + xyz.y*xyz.y + xyz.z*xyz.z);
+    *theta = acos2(xyz.z, *magnitude, 1.);    // theta always in [0,pi] so pass dummy disambiguator=1
+    *phi = atan2(xyz.y, xyz.x);
+}  
+
+// reb_rotation manipulation functions 
+
+struct reb_vec3d reb_rotation_imag(const struct reb_rotation q){
+    struct reb_vec3d i = {
+        .x = q.ix,
+        .y = q.iy,
+        .z = q.iz
+    };
+    return i;
+}
+
+struct reb_rotation reb_rotation_mul(const struct reb_rotation p, const struct reb_rotation q){
     // v_rot = p * ( q * v)
-    struct reb_quat r = {
+    struct reb_rotation r = {
         .r  = p.r*q.r  - p.ix*q.ix - p.iy*q.iy - p.iz*q.iz,
         .ix = p.r*q.ix + p.ix*q.r  + p.iy*q.iz - p.iz*q.iy,
         .iy = p.r*q.iy - p.ix*q.iz + p.iy*q.r  + p.iz*q.ix,
@@ -87,22 +106,18 @@ struct reb_quat reb_quat_mul(struct reb_quat p, struct reb_quat q){
     return r;
 }
 
-double reb_quat_length_squared(struct reb_quat q){
+double reb_rotation_length_squared(const struct reb_rotation q){
     return q.r*q.r + q.ix*q.ix + q.iy*q.iy + q.iz*q.iz;
 }
-struct reb_quat reb_quat_identity(){
-    struct reb_quat q = {.ix = 0.0, .iy = 0.0, .iz = 0.0, .r = 1.0 };
-    return q;
-}
 
-struct reb_quat reb_quat_conjugate(struct reb_quat q){
-    struct reb_quat c = {.ix = -q.ix, .iy = -q.iy, .iz = -q.iz, .r = q.r };
+struct reb_rotation reb_rotation_conjugate(const struct reb_rotation q){
+    struct reb_rotation c = {.ix = -q.ix, .iy = -q.iy, .iz = -q.iz, .r = q.r };
     return c;
 }
 
-struct reb_quat reb_quat_inverse(struct reb_quat q){
-    struct reb_quat c = reb_quat_conjugate(q);
-    double rl2 = 1./reb_quat_length_squared(q);
+struct reb_rotation reb_rotation_inverse(const struct reb_rotation q){
+    struct reb_rotation c = reb_rotation_conjugate(q);
+    double rl2 = 1./reb_rotation_length_squared(q);
     c.r *= rl2;
     c.ix *= rl2;
     c.iy *= rl2;
@@ -110,45 +125,31 @@ struct reb_quat reb_quat_inverse(struct reb_quat q){
     return c;
 }
 
-struct reb_quat reb_quat_init_with_angle_axis(double angle, struct reb_vec3d axis){
-    axis = reb_vec3d_normalize(axis);
-    double cos2 = cos(angle/2.0);
-    double sin2 = sin(angle/2.0);
-    struct reb_vec3d imag = reb_vec3d_mul(axis, sin2);
-    struct reb_quat q = {.ix = imag.x, .iy = imag.y, .iz = imag.z, .r = cos2 };
-    return q;
+// Object rotation functions
+
+void reb_vec3d_irotate(struct reb_vec3d* v, const struct reb_rotation q){
+    struct reb_vec3d imag = reb_rotation_imag(q);
+    struct reb_vec3d t = reb_vec3d_mul(reb_vec3d_cross(imag,*v), 2);
+    struct reb_vec3d res = reb_vec3d_add(*v, reb_vec3d_add(reb_vec3d_mul(t, q.r), reb_vec3d_cross(imag, t)));
+    v->x = res.x;
+    v->y = res.y;
+    v->z = res.z;
 }
 
-struct reb_quat reb_quat_init_with_orbital(const double Omega, const double inc, const double omega){
-    // Murray and Dermot Eq. 2.121
-    struct reb_vec3d x = {.x=1.0, .y=0.0, .z=0.0};
-    struct reb_vec3d z = {.x=0.0, .y=0.0, .z=1.0};
-    struct reb_quat P1 = reb_quat_init_with_angle_axis(omega, z);
-    struct reb_quat P2 = reb_quat_init_with_angle_axis(inc, x);
-    struct reb_quat P3 = reb_quat_init_with_angle_axis(Omega, z);
-    return reb_quat_mul(P3, reb_quat_mul(P2, P1));
-}
-
-struct reb_vec3d reb_vec3d_rotate(struct reb_vec3d v, struct reb_quat q){
-    struct reb_vec3d imag = reb_quat_imag(q);
-    struct reb_vec3d t = reb_vec3d_mul(reb_vec3d_cross(imag,v), 2);
-    return reb_vec3d_add(v, reb_vec3d_add(reb_vec3d_mul(t, q.r), reb_vec3d_cross(imag, t)));
-}
-
-static void reb_particle_irotate(struct reb_particle* p, struct reb_quat q){
+void reb_particle_irotate(struct reb_particle* p, const struct reb_rotation q){
     struct reb_vec3d pos = {p->x, p->y, p->z};
-    pos = reb_vec3d_rotate(pos, q);
+    reb_vec3d_irotate(&pos, q);
     p->x = pos.x;
     p->y = pos.y;
     p->z = pos.z;
     struct reb_vec3d vel = {p->vx, p->vy, p->vz};
-    vel = reb_vec3d_rotate(vel, q);
+    reb_vec3d_irotate(&vel, q);
     p->vx = vel.x;
     p->vy = vel.y;
     p->vz = vel.z;
 }
 
-void reb_simulation_irotate(struct reb_simulation* const sim, struct reb_quat q){
+void reb_simulation_rotate(struct reb_simulation* const sim, const struct reb_rotation q){
     const int N = sim->N;
     for (int i = 0; i < N; i++){
         struct reb_particle* p = &sim->particles[i];
@@ -156,23 +157,29 @@ void reb_simulation_irotate(struct reb_simulation* const sim, struct reb_quat q)
     }
 }
 
+// Alternate ways of initializing rotation
 
-static inline struct reb_quat reb_quat_init_with_from_to_reduced(struct reb_vec3d from, struct reb_vec3d to) {
+struct reb_rotation reb_rotation_identity(){
+    struct reb_rotation q = {.ix = 0.0, .iy = 0.0, .iz = 0.0, .r = 1.0 };
+    return q;
+}
+
+static inline struct reb_rotation reb_rotation_init_from_to_reduced(const struct reb_vec3d from, const struct reb_vec3d to) {
     // Internal use only
     struct reb_vec3d half = {.x=from.x+to.x, .y=from.y+to.y, .z=from.z+to.z};
     half = reb_vec3d_normalize(half);
     struct reb_vec3d cross = reb_vec3d_cross(from, half);
     double dot = reb_vec3d_dot(from, half);
-    struct reb_quat q = {.ix=cross.x, .iy=cross.y, .iz=cross.z, .r=dot};
+    struct reb_rotation q = {.ix=cross.x, .iy=cross.y, .iz=cross.z, .r=dot};
     return q;
 }
 
-struct reb_quat reb_quat_init_with_from_to(struct reb_vec3d from, struct reb_vec3d to) {
+struct reb_rotation reb_rotation_init_from_to(struct reb_vec3d from, struct reb_vec3d to) {
     from = reb_vec3d_normalize(from);
     to = reb_vec3d_normalize(to);
 
     if (reb_vec3d_dot(from, to) >= 0) {  // small angle
-        return reb_quat_init_with_from_to_reduced(from, to);
+        return reb_rotation_init_from_to_reduced(from, to);
     }
 
     //  More than 90 degrees apart, do rotation in two stages:
@@ -188,28 +195,56 @@ struct reb_quat reb_quat_init_with_from_to(struct reb_vec3d from, struct reb_vec
         if (abs_from.x <= abs_from.y && abs_from.x <= abs_from.z){
             struct reb_vec3d axis = {.x=1, .y=0, .z = 0};
             axis = reb_vec3d_cross(from, axis);
-            struct reb_quat q = {.ix=axis.x, .iy=axis.y, .iz=axis.z, .r=0.0};
+            struct reb_rotation q = {.ix=axis.x, .iy=axis.y, .iz=axis.z, .r=0.0};
             return q;
         }
         if (abs_from.y <= abs_from.z){
             struct reb_vec3d axis = {.x=0, .y=1, .z = 0};
             axis = reb_vec3d_cross(from, axis);
-            struct reb_quat q = {.ix=axis.x, .iy=axis.y, .iz=axis.z, .r=0.0};
+            struct reb_rotation q = {.ix=axis.x, .iy=axis.y, .iz=axis.z, .r=0.0};
             return q;
         }
         struct reb_vec3d axis = {.x=0, .y=0, .z = 1};
         axis = reb_vec3d_cross(from, axis);
-        struct reb_quat q = {.ix=axis.x, .iy=axis.y, .iz=axis.z, .r=0.0};
+        struct reb_rotation q = {.ix=axis.x, .iy=axis.y, .iz=axis.z, .r=0.0};
         return q;
     }
 
-    return reb_quat_mul(reb_quat_init_with_from_to_reduced(from, half), reb_quat_init_with_from_to_reduced(half, to));
+    return reb_rotation_mul(reb_rotation_init_from_to_reduced(from, half), reb_rotation_init_from_to_reduced(half, to));
+}
+
+struct reb_rotation reb_rotation_init_angle_axis(const double angle, struct reb_vec3d axis){
+    axis = reb_vec3d_normalize(axis);
+    double cos2 = cos(angle/2.0);
+    double sin2 = sin(angle/2.0);
+    struct reb_vec3d imag = reb_vec3d_mul(axis, sin2);
+    struct reb_rotation q = {.ix = imag.x, .iy = imag.y, .iz = imag.z, .r = cos2 };
+    return q;
+}
+
+struct reb_rotation reb_rotation_init_to_new_axes(struct reb_vec3d newz, struct reb_vec3d newx){
+    struct reb_vec3d z = {.x=0.0, .y=0.0, .z=1.0};
+    struct reb_rotation q1 = reb_rotation_init_from_to(newz, z);
+    struct reb_vec3d x = {.x=1.0, .y=0.0, .z=0.0};
+    reb_vec3d_irotate(&newx, q1); // need to rotate newx to what it would be after the first rotation
+    struct reb_rotation q2 = reb_rotation_init_from_to(newx, x);
+    return reb_rotation_mul(q2, q1);
+}
+
+struct reb_rotation reb_rotation_init_to_orbital(const double Omega, const double inc, const double omega){
+    // Murray and Dermot Eq. 2.121 xyz = P1^-1P2^-1P3^-1(XYZ)
+    struct reb_vec3d x = {.x=1.0, .y=0.0, .z=0.0};
+    struct reb_vec3d z = {.x=0.0, .y=0.0, .z=1.0};
+    struct reb_rotation P1 = reb_rotation_init_angle_axis(-omega, z);
+    struct reb_rotation P2 = reb_rotation_init_angle_axis(-inc, x);
+    struct reb_rotation P3 = reb_rotation_init_angle_axis(-Omega, z);
+    return reb_rotation_mul(P1, reb_rotation_mul(P2, P3));
 }
 
 #define MIN_INC 1.e-8 
-void reb_quat_to_orbital(struct reb_quat q, double* Omega, double* inc, double* omega){
+void reb_rotation_to_orbital(struct reb_rotation q, double* Omega, double* inc, double* omega){
     // see https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0276302
-    // and https://github.com/evbernardes/quaternion_to_euler/blob/main/euler_from_quat.py
+    // and https://github.com/evbernardes/quaternion_to_euler/blob/main/euler_from_rotation.py
     // Works but angles doen't always land in the right quadrant.
     double ap = q.r;
     double bp = q.iz;
@@ -240,6 +275,4 @@ void reb_quat_to_orbital(struct reb_quat q, double* Omega, double* inc, double* 
     if (*Omega < 0){
         *Omega += M_PI*2.0;
     }
-
-
 }
