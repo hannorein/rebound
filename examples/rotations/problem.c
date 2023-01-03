@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
     printf("v_rotated = %.5f %.5f %.5f\n", v_rotated.x, v_rotated.y, v_rotated.z);
 
 
-    // You can rotate a particles (it's position and velocity)
+    // You can rotate a particle (its position and velocity)
     struct reb_particle p = {.m=1, .x=1, .vy=1};
     reb_particle_irotate(&p, r1); // irotate means rotate in place
 
