@@ -226,13 +226,13 @@ struct reb_rotation reb_rotation_init_to_new_axes(struct reb_vec3d newz, struct 
 }
 
 struct reb_rotation reb_rotation_init_to_orbital(const double Omega, const double inc, const double omega){
-    // Murray and Dermot Eq. 2.121 xyz = P1^-1P2^-1P3^-1(XYZ)
-    struct reb_vec3d x = {.x=1.0, .y=0.0, .z=0.0};
-    struct reb_vec3d z = {.x=0.0, .y=0.0, .z=1.0};
-    struct reb_rotation P1 = reb_rotation_init_angle_axis(-omega, z);
-    struct reb_rotation P2 = reb_rotation_init_angle_axis(-inc, x);
-    struct reb_rotation P3 = reb_rotation_init_angle_axis(-Omega, z);
-    return reb_rotation_mul(P1, reb_rotation_mul(P2, P3));
+    // Murray and Dermot Eq. 2.121 (left hand side) 
+    struct reb_vec3d x = {.x=1.0};
+    struct reb_vec3d z = {.z=1.0};
+    struct reb_rotation P1 = reb_rotation_init_angle_axis(omega, z);
+    struct reb_rotation P2 = reb_rotation_init_angle_axis(inc, x);
+    struct reb_rotation P3 = reb_rotation_init_angle_axis(Omega, z);
+    return reb_rotation_mul(P3, reb_rotation_mul(P2, P1));
 }
 
 #define MIN_INC 1.e-8 
