@@ -204,6 +204,9 @@ class Rotation(Structure):
         if not newx: # newx not specified, newx will point along z cross newz (line of nodes)
             clibrebound.reb_vec3d_cross.restype = Vec3d
             newx = clibrebound.reb_vec3d_cross(Vec3d(0,0,1), Vec3d(newz))
+            mag = (newx.x**2 + newx.y**2 + newx.z**2)**(0.5)
+            if mag < 1e-15: # z and newz point in the same direction, so line of nodes undefined, don't rotate x
+                newx.x, newx.y, newx.z = 1,0,0
         clibrebound.reb_rotation_init_to_new_axes.restype = cls
         q = clibrebound.reb_rotation_init_to_new_axes(Vec3d(newz), Vec3d(newx))
         return q

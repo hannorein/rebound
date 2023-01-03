@@ -26,7 +26,14 @@ class TestRotations(unittest.TestCase):
         self.assertAlmostEqual(res[0], tov[0], delta=1e-15)
         self.assertAlmostEqual(res[1], tov[1], delta=1e-15)
         self.assertAlmostEqual(res[2], tov[2], delta=1e-15)
-    
+
+    def test_from_to_edge(self):
+        q = rebound.Rotation.from_to([1,0,0], [-1,0,0])
+        res = q*[1,0,0] 
+        self.assertAlmostEqual(res[0], -1, delta=1e-15)
+        self.assertAlmostEqual(res[1], 0, delta=1e-15)
+        self.assertAlmostEqual(res[2], 0, delta=1e-15)
+
     def test_to_orbit(self):
         sim = rebound.Simulation()
         a, e, inc, Omega, omega = 1, 0.1, 0.2, 0.3, 0.4
