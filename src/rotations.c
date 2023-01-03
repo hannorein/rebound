@@ -219,7 +219,7 @@ struct reb_rotation reb_rotation_init_angle_axis(const double angle, struct reb_
 struct reb_rotation reb_rotation_init_to_new_axes(struct reb_vec3d newz, struct reb_vec3d newx){
     double dotprod = reb_vec3d_dot(newz, newx);
     newz = reb_vec3d_normalize(newz);
-    newx = reb_vec3d_add(newx, reb_vec3d_mul(newz, -dotprod); // orthogonalize: newx = newx - (newx dot newz) newzhat
+    newx = reb_vec3d_add(newx, reb_vec3d_mul(newz, -dotprod)); // orthogonalize: newx = newx - (newx dot newz) newzhat
     struct reb_vec3d z = {.x=0.0, .y=0.0, .z=1.0};
     struct reb_rotation q1 = reb_rotation_init_from_to(newz, z);
     struct reb_vec3d x = {.x=1.0, .y=0.0, .z=0.0};
