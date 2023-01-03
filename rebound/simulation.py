@@ -153,11 +153,13 @@ class Rotation(Structure):
         
         Arguments
         ---------
-        fromv: list-like (e.g. list, numpy array)
-            Input 3D vector that Rotation will map to vector tov
-        tov: list-like (e.g. list, numpy array)
-            Output 3D vector when Rotation is applied to fromv
-        
+        Omega: float
+            Longitude of ascending node (default 0)
+        inc: float
+            Inclination (default 0)
+        omega: float
+            Argument of pericenter (default 0)
+
         Examples
         --------
 
