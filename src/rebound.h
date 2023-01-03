@@ -1278,7 +1278,7 @@ struct reb_rotation reb_rotation_mul(const struct reb_rotation p, const struct r
 struct reb_rotation reb_rotation_identity();
 struct reb_rotation reb_rotation_init_angle_axis(const double angle, struct reb_vec3d axis);
 struct reb_rotation reb_rotation_init_from_to(struct reb_vec3d from, struct reb_vec3d to);
-struct reb_rotation reb_rotation_init_orbital(const double Omega, const double inc, const double omega);
+struct reb_rotation reb_rotation_init_orbit(const double Omega, const double inc, const double omega);
 struct reb_rotation reb_rotation_init_to_new_axes(struct reb_vec3d newz, struct reb_vec3d newx);
 
 double reb_vec3d_length_squared(const struct reb_vec3d v);

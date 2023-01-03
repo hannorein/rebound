@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
     double Omega = 0.12;
     double inc = 0.223;
     double omega = 0.345;
-    struct reb_rotation r_orbit = reb_rotation_init_orbital(Omega, inc, omega);
+    struct reb_rotation r_orbit = reb_rotation_init_orbit(Omega, inc, omega);
     
     r = reb_create_simulation();
     reb_add_fmt(r, "m", 1.);          // Central object

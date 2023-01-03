@@ -140,7 +140,7 @@ class Rotation(Structure):
         return q
 
     @classmethod
-    def orbital(cls, Omega=0.0, inc=0.0, omega=0.0):
+    def orbit(cls, Omega=0.0, inc=0.0, omega=0.0):
         """
         Consider an orbit, which in a reference coordinate system has standard orbital angles Omega, inc, omega.
         This returns a rotation object 'rot' that rotates the vector [1,0,0] such that is lies in the 
@@ -159,14 +159,16 @@ class Rotation(Structure):
         --------
 
         >>> a, e, inc, Omega, omega = 1, 0.1, 0.2, 0.3, 0.4             # Make up arbitrary numbers
-        >>> rot = rebound.Rotation.orbital(Omega=Omega, inc=inc, omega=omega) # Initialize a Rotation to that specific orbit 
-        >>> sim = rebound.Simulation()                                  # If we now initialize a particle at pericenter (f=0)
-        >>> sim.add(m=1)                                                # with those orbital angles, then rot * ps[1].xyz 
-        >>> sim.add(a=a, e=e, inc=inc, Omega=Omega, omega=omega)        # should point along the x axis (toward pericenter)
-        >>> print(rot * sim.particles[1].xyz)                           # with magnitude given by the distance to pericenter a*(1-e)
+        >>> rot = rebound.Rotation.orbit(Omega=Omega, inc=inc, omega=omega) # Initialize a Rotation to that specific orbit 
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1)
+        >>> sim.add(a=a, e=e, inc=inc, Omega=Omega, omega=omega)        # 3D orbit
+        >>> sim.add(a=a, e=e)                                           # Orbit in the xy plane
+        >>> print(sim.particles[1].xyz)
+        >>> print(rot * sim.particles[2].xyz)                           # Same location as other particle after applying rot
         """
-        clibrebound.reb_rotation_init_orbital.restype = cls
-        q = clibrebound.reb_rotation_init_orbital(c_double(Omega), c_double(inc), c_double(omega))
+        clibrebound.reb_rotation_init_orbit.restype = cls
+        q = clibrebound.reb_rotation_init_orbit(c_double(Omega), c_double(inc), c_double(omega))
         return q
     
     @classmethod

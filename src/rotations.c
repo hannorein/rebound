@@ -225,7 +225,7 @@ struct reb_rotation reb_rotation_init_to_new_axes(struct reb_vec3d newz, struct 
     return reb_rotation_mul(q2, q1);
 }
 
-struct reb_rotation reb_rotation_init_orbital(const double Omega, const double inc, const double omega){
+struct reb_rotation reb_rotation_init_orbit(const double Omega, const double inc, const double omega){
     // Murray and Dermot Eq. 2.121 (left hand side) 
     struct reb_vec3d x = {.x=1.0};
     struct reb_vec3d z = {.z=1.0};
