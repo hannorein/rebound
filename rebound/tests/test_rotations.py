@@ -27,17 +27,18 @@ class TestRotations(unittest.TestCase):
         self.assertAlmostEqual(res[1], tov[1], delta=1e-15)
         self.assertAlmostEqual(res[2], tov[2], delta=1e-15)
     
-    def test_to_orbital(self):
+    def test_to_orbit(self):
         sim = rebound.Simulation()
         a, e, inc, Omega, omega = 1, 0.1, 0.2, 0.3, 0.4
         sim.add(m=1)
         sim.add(a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=0)
-        # when we rotate our particle's xyz to_orbital (x=toward peri, z=orb normal) we should get (a(1-e), 0, 0)
-        r = rebound.Rotation.to_orbital(Omega=Omega, inc=inc, omega=omega)
-        res = r*sim.particles[1].xyz
-        self.assertAlmostEqual(res[0], a*(1-e), delta=1e-15)
-        self.assertAlmostEqual(res[1], 0, delta=1e-15)
-        self.assertAlmostEqual(res[2], 0, delta=1e-15)
+        sim.add(a=a,e=e)
+        # when we rotate our particle's xyz orbit (x=toward peri, z=orb normal) we should get (a(1-e), 0, 0)
+        r = rebound.Rotation.orbit(Omega=Omega, inc=inc, omega=omega)
+        res = r*sim.particles[2].xyz
+        self.assertAlmostEqual(res[0], sim.particles[1].x, delta=1e-15)
+        self.assertAlmostEqual(res[1], sim.particles[1].y, delta=1e-15)
+        self.assertAlmostEqual(res[2], sim.particles[1].z, delta=1e-15)
     
     def test_to_new_axes(self):
         sim = rebound.Simulation()
