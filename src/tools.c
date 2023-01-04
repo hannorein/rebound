@@ -933,7 +933,7 @@ struct reb_orbit reb_orbit_nan(void){
 // will return 0 or pi appropriately if num is larger than denom by machine precision
 // and will return 0 if denom is exactly 0.
 
-static double acos2(double num, double denom, double disambiguator){
+double acos2(double num, double denom, double disambiguator){
 	double val;
 	double cosine = num/denom;
 	if(cosine > -1. && cosine < 1.){
@@ -972,14 +972,17 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
 
     o.rhill = o.a*cbrt(p.m/(3.*primary.m));
 
-    hx = (dy*dvz - dz*dvy); 					//angular momentum vector
+    hx = (dy*dvz - dz*dvy); 					// specific angular momentum vector
     hy = (dz*dvx - dx*dvz);
     hz = (dx*dvy - dy*dvx);
     o.h = sqrt ( hx*hx + hy*hy + hz*hz );		// abs value of angular momentum
+    o.hvec.x = hx;
+    o.hvec.y = hy;
+    o.hvec.z = hz;
 
     vdiffsquared = vsquared - vcircsquared;	
     if(o.d <= TINY){							
-        *err = 2;									// particle is on top of primary
+        *err = 2;								// particle is on top of primary
         return reb_orbit_nan();
     }
     vr = (dx*dvx + dy*dvy + dz*dvz)/o.d;	
@@ -990,6 +993,9 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
     ey = muinv*( vdiffsquared*dy - rvr*dvy );
     ez = muinv*( vdiffsquared*dz - rvr*dvz );
     o.e = sqrt( ex*ex + ey*ey + ez*ez );		// eccentricity
+    o.evec.x = ex;
+    o.evec.y = ey;
+    o.evec.z = ez;
     o.n = o.a/fabs(o.a)*sqrt(fabs(mu/(o.a*o.a*o.a)));	// mean motion (negative if hyperbolic)
     o.P = 2*M_PI/o.n;									// period (negative if hyperbolic)
 
@@ -1527,3 +1533,16 @@ int reb_simulation_isub(struct reb_simulation* r, struct reb_simulation* r2){
     return 0;
 }
 
+struct reb_vec3d reb_tools_spherical_to_xyz(const double magnitude, const double theta, const double phi){
+    struct reb_vec3d xyz;
+    xyz.x = magnitude * sin(theta) * cos(phi);
+    xyz.y = magnitude * sin(theta) * sin(phi);
+    xyz.z = magnitude * cos(theta);
+    return xyz;
+}  
+
+void reb_tools_xyz_to_spherical(const struct reb_vec3d xyz, double* magnitude, double* theta, double* phi){
+    *magnitude = sqrt(xyz.x*xyz.x + xyz.y*xyz.y + xyz.z*xyz.z);
+    *theta = acos2(xyz.z, *magnitude, 1.);    // theta always in [0,pi] so pass dummy disambiguator=1
+    *phi = atan2(xyz.y, xyz.x);
+}  

@@ -1,4 +1,5 @@
 *.o
+*.swp
 /*.ipynb
 Info.plist
 *.so

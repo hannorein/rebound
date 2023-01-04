@@ -80,6 +80,14 @@ struct reb_vec3d {
     double z;
 };
 
+// Rotation (Implemented as a quaternion)
+struct reb_rotation {
+    double ix;
+    double iy;
+    double iz;
+    double r;
+};
+
 // Generic pointer with 7 elements, for internal use only (IAS15).
 struct reb_dp7 {
     double* REBOUND_RESTRICT p0;
@@ -907,7 +915,7 @@ struct reb_simulation {
 struct reb_orbit {
     double d;        // Radial distance from central object
     double v;        // velocity relative to central object's velocity
-    double h;        // Angular momentum
+    double h;        // Specific angular momentum
     double P;        // Orbital period
     double n;        // Mean motion
     double a;        // Semi-major axis
@@ -924,8 +932,10 @@ struct reb_orbit {
     double rhill;    // Circular Hill radius 
     double pal_h;    // Cartesian component of the eccentricity, h = e*sin(pomega) 
     double pal_k;    // Cartesian component of the eccentricity, k = e*cos(pomega) 
-    double pal_ix;    // Cartesian component of the inclination, ix = 2*sin(i/2)*cos(Omega)
+    double pal_ix;   // Cartesian component of the inclination, ix = 2*sin(i/2)*cos(Omega)
     double pal_iy;    // Cartesian component of the inclination, ix = 2*sin(i/2)*sin(Omega)
+    struct reb_vec3d hvec;  // specific angular momentum vector
+    struct reb_vec3d evec;  // eccentricity vector (mag=ecc, points toward peri)
 };
 
 
@@ -1027,6 +1037,11 @@ double reb_tools_E_to_f(double e, double M); // True anomaly for a given eccentr
 double reb_tools_M_to_E(double e, double M); // Eccentric anomaly for a given eccentricity and mean anomaly
 void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R); // This function sets up a Plummer sphere, N=number of particles, M=total mass, R=characteristic radius
 void reb_run_heartbeat(struct reb_simulation* const r);  // used internally
+
+// transformations to/from vec3d
+struct reb_vec3d reb_tools_spherical_to_xyz(const double mag, const double theta, const double phi);
+void reb_tools_xyz_to_spherical(struct reb_vec3d const xyz, double* mag, double* theta, double* phi);
+
 
 // Functions to add and initialize particles
 struct reb_particle reb_particle_nan(void); // Returns a reb_particle structure with fields/hash/ptrs initialized to nan/0/NULL. 
@@ -1234,7 +1249,7 @@ void reb_simulationarchive_automate_step(struct reb_simulation* const r, const c
 void reb_free_simulationarchive_pointers(struct reb_simulationarchive* sa);
 
 
-// Functions to between coordinate systems
+// Functions to convert between coordinate systems
 
 // Jacobi
 // p_mass: Should be the same particles array as ps for real particles. If passing variational
@@ -1255,6 +1270,27 @@ void reb_transformations_democraticheliocentric_to_inertial_posvel(struct reb_pa
 void reb_transformations_inertial_to_whds_posvel(const struct reb_particle* const particles, struct reb_particle* const p_h, const unsigned int N, const int N_active);
 void reb_transformations_whds_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_h, const unsigned int N, const int N_active);
 void reb_transformations_whds_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_h, const unsigned int N, const int N_active);
+
+// Rotations
+struct reb_rotation reb_rotation_inverse(const struct reb_rotation q);
+struct reb_rotation reb_rotation_mul(const struct reb_rotation p, const struct reb_rotation q);
+
+struct reb_rotation reb_rotation_identity();
+struct reb_rotation reb_rotation_init_angle_axis(const double angle, struct reb_vec3d axis);
+struct reb_rotation reb_rotation_init_from_to(struct reb_vec3d from, struct reb_vec3d to);
+struct reb_rotation reb_rotation_init_orbit(const double Omega, const double inc, const double omega);
+struct reb_rotation reb_rotation_init_to_new_axes(struct reb_vec3d newz, struct reb_vec3d newx);
+
+double reb_vec3d_length_squared(const struct reb_vec3d v);
+double reb_vec3d_dot(const struct reb_vec3d a, const struct reb_vec3d b);
+struct reb_vec3d reb_vec3d_cross(const struct reb_vec3d a, const struct reb_vec3d b);
+struct reb_vec3d reb_vec3d_normalize(const struct reb_vec3d v);
+struct reb_vec3d reb_vec3d_rotate(struct reb_vec3d v, const struct reb_rotation q);
+void reb_vec3d_irotate(struct reb_vec3d *v, const struct reb_rotation q);
+void reb_particle_irotate(struct reb_particle* p, const struct reb_rotation q);
+void reb_simulation_irotate(struct reb_simulation* const sim, const struct reb_rotation q);
+
+void reb_rotation_to_orbital(struct reb_rotation q, double* Omega, double* inc, double* omega);
 
 #ifdef MPI
 void reb_mpi_init(struct reb_simulation* const r);
@@ -1307,7 +1343,7 @@ struct reb_display_data {
     int reference;                  // reb_particle used as a reference for centering.
     unsigned int mouse_action;      
     unsigned int key_mods;      
-    struct reb_quaternion view;
+    struct reb_rotation view;
     unsigned int simplefont_tex;
     unsigned int simplefont_shader_program;
     unsigned int simplefont_shader_vao;
