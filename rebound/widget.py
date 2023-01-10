@@ -428,6 +428,8 @@ import base64
 import sys
 from ctypes import c_float, byref, create_string_buffer, c_int, c_char, pointer
 from . import clibrebound
+from .simulation import VISUALIZATIONS
+
 def savescreenshot(change):
     if len(change["new"]) and change["type"] =="change":
         w = change["owner"]
@@ -443,6 +445,9 @@ def savescreenshot(change):
             nexttime = w.times[w.screenshotcount]
             if w.archive:
                 sim = w.archive.getSimulation(w.times[w.screenshotcount],mode=w.mode)
+                sim.visualization = VISUALIZATIONS["webgl"]
+                clibrebound.reb_display_init_data(byref(sim))
+
                 w.refresh(pointer(sim))
             else:
                 w.simp.contents.integrate(w.times[w.screenshotcount])
@@ -646,6 +651,8 @@ class Widget(DOMWidget):
             self.mode = mode
             self.observe(savescreenshot,names="screenshot")
             sim = archive.getSimulation(times[0],mode=mode)
+            sim.visualization = VISUALIZATIONS["webgl"]
+            clibrebound.reb_display_init_data(byref(sim))
             self.refresh(pointer(sim))
             self.screenshotcount += 1 # triggers first screenshot
 
