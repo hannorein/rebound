@@ -81,21 +81,21 @@ static const char* onscreenhelp[] = {
 };
 
 
-static struct reb_quaternion normalize(struct reb_quaternion quat) {
-    float L = sqrtf(quat.x * quat.x + quat.y * quat.y + quat.z * quat.z + quat.w * quat.w);
-    quat.x /= L; quat.y /= L; quat.z /= L; quat.w /= L;
+static struct reb_rotation normalize(struct reb_rotation quat) {
+    float L = sqrtf(quat.ix * quat.ix + quat.iy * quat.iy + quat.iz * quat.iz + quat.r * quat.r);
+    quat.ix /= L; quat.iy /= L; quat.iz /= L; quat.r /= L;
     return quat;
 }
-static struct reb_quaternion conjugate(struct reb_quaternion quat) {
-    quat.x = -quat.x; quat.y = -quat.y; quat.z = -quat.z;
+static struct reb_rotation conjugate(struct reb_rotation quat) {
+    quat.ix = -quat.ix; quat.iy = -quat.iy; quat.iz = -quat.iz;
     return quat;
 }
-static struct reb_quaternion mult(struct reb_quaternion A, struct reb_quaternion B) {
-    struct reb_quaternion C;
-    C.x = A.w*B.x + A.x*B.w + A.y*B.z - A.z*B.y;
-    C.y = A.w*B.y - A.x*B.z + A.y*B.w + A.z*B.x;
-    C.z = A.w*B.z + A.x*B.y - A.y*B.x + A.z*B.w;
-    C.w = A.w*B.w - A.x*B.x - A.y*B.y - A.z*B.z;
+static struct reb_rotation mult(struct reb_rotation A, struct reb_rotation B) {
+    struct reb_rotation C;
+    C.ix = A.r*B.ix + A.ix*B.r + A.iy*B.iz - A.iz*B.iy;
+    C.iy = A.r*B.iy - A.ix*B.iz + A.iy*B.r + A.iz*B.ix;
+    C.iz = A.r*B.iz + A.ix*B.iy - A.iy*B.ix + A.iz*B.r;
+    C.r = A.r*B.r - A.ix*B.ix - A.iy*B.iy - A.iz*B.iz;
     return C;
 }
 static void matscale(float mat[16], float s){
@@ -118,10 +118,10 @@ static void matortho(float mat[16], float l, float r, float b, float t, float n,
     mat[8] = 0.; mat[9] = 0.; mat[10] = -2.f/(f-n); mat[11] = -(f+n)/(f-n);
     mat[12] = 0.; mat[13] = 0.; mat[14] = 0.; mat[15] = 1.f;
 }
-static void quat2mat(struct reb_quaternion A, float mat[16]){
-    float xx = A.x * A.x; float xy = A.x * A.y; float xz = A.x * A.z;
-    float xw = A.x * A.w; float yy = A.y * A.y; float yz = A.y * A.z;
-    float yw = A.y * A.w; float zz = A.z * A.z; float zw = A.z * A.w;
+static void quat2mat(struct reb_rotation A, float mat[16]){
+    float xx = A.ix * A.ix; float xy = A.ix * A.iy; float xz = A.ix * A.iz;
+    float xw = A.ix * A.r; float yy = A.iy * A.iy; float yz = A.iy * A.iz;
+    float yw = A.iy * A.r; float zz = A.iz * A.iz; float zw = A.iz * A.r;
     mat[0] = 1.-2.*(yy+zz);
     mat[1] =    2.*(xy-zw);
     mat[2] =    2.*(xz+yw);
@@ -133,7 +133,7 @@ static void quat2mat(struct reb_quaternion A, float mat[16]){
     mat[10]= 1.-2.*(xx+yy);
     mat[3] = mat[7] = mat[11] = mat[12] = mat[13] = mat[14] = 0; mat[15]= 1;
 }
-static void multvec(struct reb_quaternion A, float B[3], float vecr[3]) {
+static void multvec(struct reb_rotation A, float B[3], float vecr[3]) {
     float mat[16];
     quat2mat(A,mat);
     vecr[0] = mat[0]*B[0] + mat[1]*B[1] + mat[2]*B[2];
@@ -277,7 +277,7 @@ static void reb_display_cursor(GLFWwindow* window, double x, double y){
             data->mouse_x = x;
             data->mouse_y = y;
 
-            struct reb_quaternion inv = conjugate(data->view);
+            struct reb_rotation inv = conjugate(data->view);
             float up[3] = {0.,1.,0.};
             float right[3] = {1.,0.,0.};
             float inv_right[3];
@@ -286,20 +286,20 @@ static void reb_display_cursor(GLFWwindow* window, double x, double y){
             multvec(inv,up,inv_up); 
 
             float sin_dy = sin(dy);
-            struct reb_quaternion rot_dy;
-            rot_dy.x    = inv_right[0]*sin_dy;
-            rot_dy.y    = inv_right[1]*sin_dy;
-            rot_dy.z    = inv_right[2]*sin_dy;
-            rot_dy.w    = cos(dy);
+            struct reb_rotation rot_dy;
+            rot_dy.ix    = inv_right[0]*sin_dy;
+            rot_dy.iy    = inv_right[1]*sin_dy;
+            rot_dy.iz    = inv_right[2]*sin_dy;
+            rot_dy.r    = cos(dy);
             rot_dy = normalize( rot_dy );
             data->view = mult(data->view,rot_dy);
             
             float sin_dx = sin(dx);
-            struct reb_quaternion rot_dx;
-            rot_dx.x    = inv_up[0]*sin_dx;
-            rot_dx.y    = inv_up[1]*sin_dx;
-            rot_dx.z    = inv_up[2]*sin_dx;
-            rot_dx.w    = cos(dx);
+            struct reb_rotation rot_dx;
+            rot_dx.ix    = inv_up[0]*sin_dx;
+            rot_dx.iy    = inv_up[1]*sin_dx;
+            rot_dx.iz    = inv_up[2]*sin_dx;
+            rot_dx.r    = cos(dx);
             rot_dx = normalize(rot_dx);
             data->view = mult(data->view,rot_dx);
         }else{
@@ -349,21 +349,21 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
                 }
                 break;
             case 'R':
-                if (data->view.w ==1.){
-                    data->view.x = 1./sqrt(2.);
-                    data->view.y = 0.;
-                    data->view.z = 0.;
-                    data->view.w = 1./sqrt(2.);
-                }else if (data->view.x == 1./sqrt(2.)){
-                    data->view.x = 0.;
-                    data->view.y = -1./sqrt(2.);
-                    data->view.z = 0.;
-                    data->view.w = 1./sqrt(2.);
+                if (data->view.r ==1.){
+                    data->view.ix = 1./sqrt(2.);
+                    data->view.iy = 0.;
+                    data->view.iz = 0.;
+                    data->view.r = 1./sqrt(2.);
+                }else if (data->view.ix == 1./sqrt(2.)){
+                    data->view.ix = 0.;
+                    data->view.iy = -1./sqrt(2.);
+                    data->view.iz = 0.;
+                    data->view.r = 1./sqrt(2.);
                 }else{
-                    data->view.x = 0.;
-                    data->view.y = 0.;
-                    data->view.z = 0.;
-                    data->view.w = 1.;
+                    data->view.ix = 0.;
+                    data->view.iy = 0.;
+                    data->view.iz = 0.;
+                    data->view.r = 1.;
                 }
                 data->reference     = -1;
                 reb_display_set_default_scale(data->r);
@@ -621,7 +621,7 @@ void reb_display_init(struct reb_simulation * const r){
     data->clear         = 1; 
     data->ghostboxes    = 0; 
     data->reference     = -1;
-    data->view.w        = 1.;
+    data->view.r        = 1.;
     data->p_jh_copy      = NULL;
     data->allocated_N_whfast = 0;
 
