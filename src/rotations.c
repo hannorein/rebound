@@ -101,6 +101,12 @@ struct reb_rotation reb_rotation_conjugate(const struct reb_rotation q){
     return c;
 }
 
+struct reb_rotation reb_rotation_normalize(const struct reb_rotation q){
+    double l = 1./sqrt(reb_rotation_length_squared(q));
+    struct reb_rotation n = {.ix = q.ix*l, .iy = q.iy*l, .iz = q.iz*l, .r = q.r*l };
+    return n;
+}
+
 struct reb_rotation reb_rotation_inverse(const struct reb_rotation q){
     struct reb_rotation c = reb_rotation_conjugate(q);
     double rl2 = 1./reb_rotation_length_squared(q);
