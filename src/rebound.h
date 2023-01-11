@@ -41,6 +41,9 @@
 #ifndef GITHASH
 #define GITHASH notavailable0000000000000000000000000001 
 #endif // GITHASH
+#ifndef __GNUC__
+#  define  __attribute__(x)  /*DO NOTHING*/
+#endif
 
 extern const char* reb_build_str;   ///< Date and time build string.
 extern const char* reb_version_str; ///< Version string.
