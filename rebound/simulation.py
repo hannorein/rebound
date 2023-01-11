@@ -1922,10 +1922,27 @@ class Simulation(Structure):
         """
         Returns the sum of potential and kinetic energy of all particles in the simulation.
         """
+        warnings.warn( "sim.calculate_energy() is deprecated and will be removed in the future. Use sim.energy() instead", FutureWarning)
+        clibrebound.reb_tools_energy.restype = c_double
+        return clibrebound.reb_tools_energy(byref(self))
+    
+    def energy(self):
+        """
+        Returns the sum of potential and kinetic energy of all particles in the simulation.
+        """
         clibrebound.reb_tools_energy.restype = c_double
         return clibrebound.reb_tools_energy(byref(self))
    
     def calculate_angular_momentum(self):
+        """
+        Returns a list of the three (x,y,z) components of the total angular momentum of all particles in the simulation.
+        """
+        warnings.warn( "sim.calculate_angular_momentum() is deprecated and will be removed in the future. Use sim.angular_momentum() instead", FutureWarning)
+        clibrebound.reb_tools_angular_momentum.restype = Vec3d
+        L = clibrebound.reb_tools_angular_momentum(byref(self))
+        return [L.x, L.y, L.z]
+    
+    def angular_momentum(self):
         """
         Returns a list of the three (x,y,z) components of the total angular momentum of all particles in the simulation.
         """
