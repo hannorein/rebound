@@ -37,9 +37,9 @@ class TestMercurius(unittest.TestCase):
         P = sim.particles[1].P
         sim.dt = 1e-3*P
         
-        E0 = sim.calculate_energy()
+        E0 = sim.energy()
         sim.integrate(1000)
-        dE = abs((sim.calculate_energy() - E0)/E0)
+        dE = abs((sim.energy() - E0)/E0)
         self.assertLess(dE,2e-10)
     
     def test_order_doesnt_matter_tp0(self):
@@ -134,9 +134,9 @@ class TestMercurius(unittest.TestCase):
         P = sim.particles[1].P
         sim.dt = 1e-3*P
         
-        E0 = sim.calculate_energy()
+        E0 = sim.energy()
         sim.integrate(1000)
-        dE = abs((sim.calculate_energy() - E0)/E0)
+        dE = abs((sim.energy() - E0)/E0)
         self.assertLess(dE,7e-8)
     
     def test_simple_collision(self):
@@ -154,7 +154,7 @@ class TestMercurius(unittest.TestCase):
         sim.collision = "direct"
         sim.collision_resolve = "merge"
         
-        E0 = sim.calculate_energy()
+        E0 = sim.energy()
         sim.integrate(1)
         com1 = sim.calculate_com()
         self.assertAlmostEqual(com1.vx,com0.vx,delta=1e-16)
@@ -162,7 +162,7 @@ class TestMercurius(unittest.TestCase):
         self.assertAlmostEqual(com1.vz,com0.vz,delta=1e-16)
         mtot1= sum([p.m for p in sim.particles])
         self.assertEqual(mtot0,mtot1)
-        dE = abs((sim.calculate_energy() - E0)/E0)
+        dE = abs((sim.energy() - E0)/E0)
         self.assertLess(dE,3e-9)
         self.assertEqual(N0-1,sim.N)
 
@@ -183,11 +183,11 @@ class TestMercurius(unittest.TestCase):
         sim.collision = "direct"
         sim.collision_resolve = "merge"
         
-        E0 = sim.calculate_energy()
+        E0 = sim.energy()
         sim.integrate(1)
         mtot1= sum([p.m for p in sim.particles])
         self.assertEqual(mtot0,mtot1)
-        dE = abs((sim.calculate_energy() - E0)/E0)
+        dE = abs((sim.energy() - E0)/E0)
         self.assertLess(dE,3e-9)
         self.assertEqual(N0-1,sim.N)
 
@@ -211,9 +211,9 @@ class TestMercurius(unittest.TestCase):
         boxsize = 3.
         sim.configure_box(boxsize)
         
-        E0 = sim.calculate_energy()
+        E0 = sim.energy()
         sim.integrate(1)
-        dE = abs((sim.calculate_energy() - E0)/E0)
+        dE = abs((sim.energy() - E0)/E0)
         self.assertLess(dE,4e-6)
     
     def test_collision_with_star_simple(self):
@@ -230,7 +230,7 @@ class TestMercurius(unittest.TestCase):
         sim.collision = "direct"
         sim.collision_resolve = "merge"
         
-        E0 = sim.calculate_energy()
+        E0 = sim.energy()
         sim.integrate(1)
         com1 = sim.calculate_com()
         self.assertAlmostEqual(com1.vx,com0.vx,delta=1e-16)
@@ -239,7 +239,7 @@ class TestMercurius(unittest.TestCase):
         mtot1 = sum([p.m for p in sim.particles])
         self.assertEqual(mtot0,mtot1)
         self.assertEqual(N0-1,sim.N)
-        dE = abs((sim.calculate_energy() - E0)/E0)
+        dE = abs((sim.energy() - E0)/E0)
         self.assertLess(dE,1e-16)
 
     def test_collision_with_star(self):
@@ -258,7 +258,7 @@ class TestMercurius(unittest.TestCase):
         sim.collision = "direct"
         sim.collision_resolve = "merge"
         
-        E0 = sim.calculate_energy()
+        E0 = sim.energy()
         sim.integrate(1)
         com1 = sim.calculate_com()
         self.assertAlmostEqual(com1.vx,com0.vx,delta=1e-16)
@@ -267,7 +267,7 @@ class TestMercurius(unittest.TestCase):
         mtot1 = sum([p.m for p in sim.particles])
         self.assertEqual(mtot0,mtot1)
         self.assertEqual(N0-1,sim.N)
-        dE = abs((sim.calculate_energy() - E0)/E0)
+        dE = abs((sim.energy() - E0)/E0)
         # bad energy conservation due to democratic heliocentric!
         self.assertLess(dE,3e-2)
     
@@ -289,25 +289,25 @@ class TestMercurius(unittest.TestCase):
         
         sim = get_sim()
         sim.integrator = "mercurius"
-        E0 = sim.calculate_energy()
+        E0 = sim.energy()
         start=datetime.now()
         sim.integrate(2000)
         time_mercurius = (datetime.now()-start).total_seconds()
-        dE_mercurius = abs((sim.calculate_energy() - E0)/E0)
+        dE_mercurius = abs((sim.energy() - E0)/E0)
         
         sim = get_sim()
         sim.integrator = "ias15"
         start=datetime.now()
         sim.integrate(2000)
         time_ias15 = (datetime.now()-start).total_seconds()
-        dE_ias15 = abs((sim.calculate_energy() - E0)/E0)
+        dE_ias15 = abs((sim.energy() - E0)/E0)
         
         sim = get_sim()
         sim.integrator = "whfast"
         start=datetime.now()
         sim.integrate(2000)
         time_whfast = (datetime.now()-start).total_seconds()
-        dE_whfast = abs((sim.calculate_energy() - E0)/E0)
+        dE_whfast = abs((sim.energy() - E0)/E0)
         
         # Note: precision might vary on machine as initializations use cos/sin 
         # and are therefore machine dependent. 

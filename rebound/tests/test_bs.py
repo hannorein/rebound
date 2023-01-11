@@ -37,9 +37,9 @@ class TestIntegratorBS(unittest.TestCase):
             sim.integrator = "bs"
             sim.ri_bs.eps_rel = eps
             sim.ri_bs.eps_abs = eps
-            e0 = sim.calculate_energy()
+            e0 = sim.energy()
             sim.integrate(1000)
-            e1 = sim.calculate_energy()
+            e1 = sim.energy()
             self.assertLess(math.fabs((e0-e1)/e1),5*eps)
 
     def test_bs_high_e(self):
@@ -51,9 +51,9 @@ class TestIntegratorBS(unittest.TestCase):
             sim.integrator = "bs"
             sim.ri_bs.eps_rel = eps
             sim.ri_bs.eps_abs = eps
-            e0 = sim.calculate_energy()
+            e0 = sim.energy()
             sim.integrate(1000)
-            e1 = sim.calculate_energy()
+            e1 = sim.energy()
             self.assertLess(math.fabs((e0-e1)/e1),60*eps)
     
     def test_bs_inout(self):

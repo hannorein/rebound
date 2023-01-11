@@ -17,9 +17,9 @@ class TestIntegratorJanus(unittest.TestCase):
             sim.ri_janus.order = o
             sim.ri_janus.scale_pos = 1e-16
             sim.ri_janus.scale_vel = 1e-16
-            e0 = sim.calculate_energy()
+            e0 = sim.energy()
             sim.integrate(1e2)
-            e1 = sim.calculate_energy()
+            e1 = sim.energy()
             self.assertLess(math.fabs((e0-e1)/e1),eps)
     
     def test_janus_reverse(self):

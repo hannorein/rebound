@@ -6,12 +6,12 @@ You can calculate the total energy (kinetic plus potential energy) of a simulati
 === "C"
     ```c
     struct reb_simulation* r = reb_create_simulation();
-    double energy = reb_calculate_energy(r);
+    double energy = reb_tools_energy(r);
     ```
 === "Python"
     ```python
     sim = rebound.Simulation()
-    energy = sim.calculate_energy()
+    energy = sim.energy()
     ```
 
 ## Angular momentum
@@ -20,12 +20,12 @@ You can calculate the angular momentum of a simulation using the following funct
 === "C"
     ```c
     struct reb_simulation* r = reb_create_simulation();
-    double angular_momentum = reb_calculate_angular_momentum(r);
+    struct reb_vec3d angular_momentum = reb_tools_angular_momentum(r);
     ```
 === "Python"
     ```python
     sim = rebound.Simulation()
-    Lx, Ly, Lz = sim.calculate_angular_momentum()
+    Lx, Ly, Lz = sim.angular_momentum()
     ```
 
 ## Center-of-mass

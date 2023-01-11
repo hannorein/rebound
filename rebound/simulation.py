@@ -197,9 +197,9 @@ class Rotation(Structure):
         >>> sim.add(m=1)                                                 
         >>> sim.add(m=1e-3, a=1, inc=0.3, Omega=4.2)
         >>> sim.add(m=1e-3, a=2, inc=0.1, Omega=0.5)    # Get a rotation to new axes where z points along total ang. momentum L. Didn't specify newx, 
-        >>> rot = rebound.Rotation.to_new_axes(newz=sim.calculate_angular_momentum()) # so it points along line of nodes between our original xy plane
+        >>> rot = rebound.Rotation.to_new_axes(newz=sim.angular_momentum()) # so it points along line of nodes between our original xy plane
         >>> sim.rotate(rot)                             # and the new plane perp. to L. Rotate our simulation into this new reference system
-        >>> print(sim.calculate_angular_momentum())     # Now the total angular momentum points in the z direction as we expect.
+        >>> print(sim.angular_momentum())     # Now the total angular momentum points in the z direction as we expect.
         """
         if not newx: # newx not specified, newx will point along z cross newz (line of nodes)
             clibrebound.reb_vec3d_cross.restype = Vec3d

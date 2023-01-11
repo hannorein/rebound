@@ -44,9 +44,9 @@ class TestIntegratorSABA(unittest.TestCase):
         sim.integrator = integrator
         sim.ri_saba.safe_mode = False
         sim.dt = 0.0123235235*sim.particles[1].P  
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         sim.integrate(1000.*2.*3.1415)
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),maxerror)
 
     def energy_notcom(self, s):
@@ -58,9 +58,9 @@ class TestIntegratorSABA(unittest.TestCase):
         com = sim.calculate_com()
         sim.integrator = integrator
         sim.dt = 0.0123235235*sim.particles[1].P  
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         sim.integrate(1000.*2.*3.1415)
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),maxerror)
         com1 = sim.calculate_com()
         self.assertLess(math.fabs((com.x+com.vx*sim.t-com1.x)/(com1.x+com1.y)),1e-12)
