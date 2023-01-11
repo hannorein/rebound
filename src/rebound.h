@@ -1283,6 +1283,8 @@ struct reb_rotation reb_rotation_init_from_to(struct reb_vec3d from, struct reb_
 struct reb_rotation reb_rotation_init_orbit(const double Omega, const double inc, const double omega);
 struct reb_rotation reb_rotation_init_to_new_axes(struct reb_vec3d newz, struct reb_vec3d newx);
 
+struct reb_vec3d reb_vec3d_mul(const struct reb_vec3d v, const double s);
+struct reb_vec3d reb_vec3d_add(const struct reb_vec3d v, const struct reb_vec3d w);
 double reb_vec3d_length_squared(const struct reb_vec3d v);
 double reb_vec3d_dot(const struct reb_vec3d a, const struct reb_vec3d b);
 struct reb_vec3d reb_vec3d_cross(const struct reb_vec3d a, const struct reb_vec3d b);
