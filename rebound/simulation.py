@@ -197,9 +197,9 @@ class Rotation(Structure):
         >>> sim.add(m=1)                                                 
         >>> sim.add(m=1e-3, a=1, inc=0.3, Omega=4.2)
         >>> sim.add(m=1e-3, a=2, inc=0.1, Omega=0.5)    # Get a rotation to new axes where z points along total ang. momentum L. Didn't specify newx, 
-        >>> rot = rebound.Rotation.to_new_axes(newz=sim.calculate_angular_momentum()) # so it points along line of nodes between our original xy plane
+        >>> rot = rebound.Rotation.to_new_axes(newz=sim.angular_momentum()) # so it points along line of nodes between our original xy plane
         >>> sim.rotate(rot)                             # and the new plane perp. to L. Rotate our simulation into this new reference system
-        >>> print(sim.calculate_angular_momentum())     # Now the total angular momentum points in the z direction as we expect.
+        >>> print(sim.angular_momentum())     # Now the total angular momentum points in the z direction as we expect.
         """
         if not newx: # newx not specified, newx will point along z cross newz (line of nodes)
             clibrebound.reb_vec3d_cross.restype = Vec3d
@@ -1922,10 +1922,27 @@ class Simulation(Structure):
         """
         Returns the sum of potential and kinetic energy of all particles in the simulation.
         """
+        warnings.warn( "sim.calculate_energy() is deprecated and will be removed in the future. Use sim.energy() instead", FutureWarning)
+        clibrebound.reb_tools_energy.restype = c_double
+        return clibrebound.reb_tools_energy(byref(self))
+    
+    def energy(self):
+        """
+        Returns the sum of potential and kinetic energy of all particles in the simulation.
+        """
         clibrebound.reb_tools_energy.restype = c_double
         return clibrebound.reb_tools_energy(byref(self))
    
     def calculate_angular_momentum(self):
+        """
+        Returns a list of the three (x,y,z) components of the total angular momentum of all particles in the simulation.
+        """
+        warnings.warn( "sim.calculate_angular_momentum() is deprecated and will be removed in the future. Use sim.angular_momentum() instead", FutureWarning)
+        clibrebound.reb_tools_angular_momentum.restype = Vec3d
+        L = clibrebound.reb_tools_angular_momentum(byref(self))
+        return [L.x, L.y, L.z]
+    
+    def angular_momentum(self):
         """
         Returns a list of the three (x,y,z) components of the total angular momentum of all particles in the simulation.
         """

@@ -65,9 +65,9 @@ class TestIntegratorTES(unittest.TestCase):
         sim.ri_tes.orbital_period = period
         sim.ri_tes.orbits = orbits
                 
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         sim.integrate(period*orbits)
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         de = np.abs((e1-e0)/e0)
 
         data_tes = np.array([[ 0.0000000000000000e+00,  0.0000000000000000e+00,
@@ -162,11 +162,11 @@ class TestIntegratorTES(unittest.TestCase):
         sim.ri_tes.recti_per_orbit = recti_per_orbit
         sim.ri_tes.epsilon = tol
                 
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         times = np.linspace(0, orbits*period, 10)
         for t in times:
             sim.integrate(t)
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         de = np.abs((e1-e0)/e0)
 
         data_tes = np.array([[ 0.0000000000000000e+00,  0.0000000000000000e+00,
@@ -214,7 +214,7 @@ class TestIntegratorTES(unittest.TestCase):
         sim.ri_tes.recti_per_orbit = recti_per_orbit
         sim.ri_tes.epsilon = tol
                 
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         outputs=100
         times = np.linspace(0, orbits*period, outputs)
         pos_out = np.zeros([outputs, 2, 3])
@@ -225,14 +225,14 @@ class TestIntegratorTES(unittest.TestCase):
                 pos_out[i,j,1] = sim.particles[j].y
                 pos_out[i,j,2] = sim.particles[j].z
                 
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         de = np.abs((e1-e0)/e0)
         self.assertLess(de, 1e-15)
         
         
         # Add Apophis to the simulation.
         sim.add(m=mass[2], x=Q[2,0], y=Q[2,1], z=Q[2,2], vx=V[2,0], vy=V[2,1], vz=V[2,2], hash=2)
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         outputs=100
         times = np.linspace(orbits*period, 2*orbits*period, outputs)
         pos_out = np.zeros([outputs, 3, 3])
@@ -243,14 +243,14 @@ class TestIntegratorTES(unittest.TestCase):
                 pos_out[i,j,1] = sim.particles[j].y
                 pos_out[i,j,2] = sim.particles[j].z
                 
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         de = np.abs((e1-e0)/e0)        
         self.assertLess(de, 1e-15)
         
         
         # Remove Apophis from the simulation.
         sim.remove(sim.particles[2])
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         outputs=100
         times = np.linspace(2*orbits*period, 3*orbits*period, outputs)
         pos_out = np.zeros([outputs, 3, 3])
@@ -261,7 +261,7 @@ class TestIntegratorTES(unittest.TestCase):
                 pos_out[i,j,1] = sim.particles[j].y
                 pos_out[i,j,2] = sim.particles[j].z
                 
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         de = np.abs((e1-e0)/e0)        
         self.assertLess(de, 1e-15)        
         
@@ -350,7 +350,7 @@ class TestIntegratorTES(unittest.TestCase):
         sim.move_to_com()
         # sim.dt = period/100
         sim.integrator = "tes"          
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
 
         samples = 10000
         orbits = 100
@@ -358,7 +358,7 @@ class TestIntegratorTES(unittest.TestCase):
         t_arr = np.zeros(samples)
         for i in range(samples):
             sim.integrate(i*orbits*period)
-            e_arr[i] = sim.calculate_energy()
+            e_arr[i] = sim.energy()
             t_arr[i] = i*orbits
         de = np.abs((e_arr-e0)/e0)
         from matplotlib import pyplot as plt

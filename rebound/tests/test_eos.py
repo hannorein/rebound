@@ -16,10 +16,10 @@ class TestEOSn(unittest.TestCase):
     def _run(self):
         tmax = 100.
         Emax = 0
-        E0 = self.sim.calculate_energy()
+        E0 = self.sim.energy()
         while self.sim.t<tmax:
             self.sim.integrate(self.sim.t+1.23456, exact_finish_time=0)
-            E1 = self.sim.calculate_energy()
+            E1 = self.sim.energy()
             Emax = max([Emax,abs((E0-E1)/E0)])
         return Emax
     

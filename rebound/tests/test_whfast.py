@@ -13,9 +13,9 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.integrator = "whfast"
         sim.ri_whfast.coordinates = "whds"
         sim.dt = 0.005*12.*2.*3.1415   # ~ 1/200 of a jupiter year
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         sim.integrate(1000.*2.*3.1415)
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),2.4e-8)
 
     # Jacobi
@@ -25,9 +25,9 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.integrator = "whfast"
         sim.ri_whfast.coordinates = "jacobi"
         sim.dt = 0.005*12.*2.*3.1415   # ~ 1/200 of a jupiter year
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         sim.integrate(1000.*2.*3.1415)
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),2.4e-8)
 
     def test_whfast_veryhyperbolic(self):
@@ -48,11 +48,11 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=1e-3, a=-1.,e=2.5)
         sim.integrator = "whfast"
         sim.ri_whfast.coordinates = "jacobi"
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         yr = -sim.particles[1].P
         sim.dt = 0.00512*yr
         sim.integrate(1e2*yr)
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),1e-14)
     
     def test_whfast(self):
@@ -64,10 +64,10 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.ri_whfast.coordinates = "jacobi"
         jupyr = 2.*math.pi
         sim.dt = 0.005123*jupyr
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         sim.integrate(1e3*jupyr)
         self.assertNotEqual(e0,0.)
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),1.2e-8)
     
     def test_whfast_nosafemode(self):
@@ -80,10 +80,10 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.ri_whfast.safe_mode = 0
         jupyr = 2.*math.pi
         sim.dt = 0.005123*jupyr
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         sim.integrate(1e3*jupyr)
         self.assertNotEqual(e0,0.)
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),3e-8)
     
     # Democratic Heliocentric
@@ -216,9 +216,9 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.integrator = "whfast"
         sim.ri_whfast.coordinates = "democraticheliocentric"
         sim.dt = 0.005*12.*2.*3.1415   # ~ 1/200 of a jupiter year
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         sim.integrate(1000.*2.*3.1415)
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),1.2e-8)
     
     def test_whfasthelio_veryhyperbolic(self):
@@ -239,11 +239,11 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=1e-3, a=-1.,e=2.5)
         sim.integrator = "whfast"
         sim.ri_whfast.coordinates = "democraticheliocentric"
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         yr = -sim.particles[1].P
         sim.dt = 0.00512*yr
         sim.integrate(1e2*yr)
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),4.5e-8)
     
     def test_whfasthelio(self):
@@ -255,10 +255,10 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.ri_whfast.coordinates = "democraticheliocentric"
         jupyr = 2.*math.pi
         sim.dt = 0.005123*jupyr
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         sim.integrate(1e3*jupyr)
         self.assertNotEqual(e0,0.)
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),2.9e-8)
     
     def test_whfasthelio_orderdoesnotmatter(self):
@@ -297,10 +297,10 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.ri_whfast.safe_mode = 0
         jupyr = 2.*math.pi
         sim.dt = 0.005123*jupyr
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         sim.integrate(1e3*jupyr)
         self.assertNotEqual(e0,0.)
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),2.9e-8)
 
 
@@ -312,7 +312,7 @@ class TestIntegratorWHFastBackAndForth(unittest.TestCase):
         x0 = sim.particles[1].x
         v0 = sim.particles[1].vx
         sim.integrator = "whfast"
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         yr = -sim.particles[1].P
         sim.dt = 0.0512*yr
         for i in range(100):
@@ -322,7 +322,7 @@ class TestIntegratorWHFastBackAndForth(unittest.TestCase):
             sim.step()
         x1 = sim.particles[1].x
         v1 = sim.particles[1].vx
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),1e-14)
         self.assertLess(math.fabs((x0-x1)/x1),1e-14)
         self.assertLess(math.fabs((v0-v1)/v1),1e-14)
@@ -334,7 +334,7 @@ class TestIntegratorWHFastBackAndForth(unittest.TestCase):
         x0 = sim.particles[1].x
         v0 = sim.particles[1].vx
         sim.integrator = "whfast"
-        e0 = sim.calculate_energy()
+        e0 = sim.energy()
         yr = sim.particles[1].P
         sim.dt = 0.0512*yr
         for i in range(100):
@@ -344,7 +344,7 @@ class TestIntegratorWHFastBackAndForth(unittest.TestCase):
             sim.step()
         x1 = sim.particles[1].x
         v1 = sim.particles[1].vx
-        e1 = sim.calculate_energy()
+        e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),1e-13)
         self.assertLess(math.fabs((x0-x1)/x1),1e-13)
         self.assertLess(math.fabs((v0-v1)/v1),1e-13)
