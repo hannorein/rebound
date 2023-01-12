@@ -109,7 +109,7 @@ class Rotation(Structure):
             super(Rotation, self).__init__(ix, iy, iz, r)   
         if angle_axis.count(None) == 0:
             clibrebound.reb_rotation_init_angle_axis.restype = Rotation
-            q = clibrebound.reb_rotation_init_angle_axis(c_double(angle), Vec3d(axis))
+            q = clibrebound.reb_rotation_init_angle_axis(c_double(angle), Vec3d(axis)._vec3d)
             super(Rotation, self).__init__(q.ix, q.iy, q.iz, q.r)   
 
     @classmethod
@@ -136,7 +136,7 @@ class Rotation(Structure):
         _from = Vec3d(fromv)
         _to = Vec3d(tov)
         clibrebound.reb_rotation_init_from_to.restype = cls
-        q = clibrebound.reb_rotation_init_from_to(_from, _to)
+        q = clibrebound.reb_rotation_init_from_to(_from._vec3d, _to._vec3d)
         return q
 
     @classmethod
@@ -202,13 +202,13 @@ class Rotation(Structure):
         >>> print(sim.angular_momentum())     # Now the total angular momentum points in the z direction as we expect.
         """
         if not newx: # newx not specified, newx will point along z cross newz (line of nodes)
-            clibrebound.reb_vec3d_cross.restype = Vec3d
-            newx = clibrebound.reb_vec3d_cross(Vec3d(0,0,1), Vec3d(newz))
+            clibrebound.reb_vec3d_cross.restype = _Vec3d
+            newx = Vec3d(clibrebound.reb_vec3d_cross(Vec3d(0,0,1)._vec3d, Vec3d(newz)._vec3d))
             mag = (newx.x**2 + newx.y**2 + newx.z**2)**(0.5)
             if mag < 1e-15: # z and newz point in the same direction, so line of nodes undefined, don't rotate x
                 newx.x, newx.y, newx.z = 1,0,0
         clibrebound.reb_rotation_init_to_new_axes.restype = cls
-        q = clibrebound.reb_rotation_init_to_new_axes(Vec3d(newz), Vec3d(newx))
+        q = clibrebound.reb_rotation_init_to_new_axes(Vec3d(newz)._vec3d, Vec3d(newx)._vec3d)
         return q
 
     def inverse(self):
@@ -234,8 +234,8 @@ class Rotation(Structure):
             return s
         try:
             vec = Vec3d(other) # make copy if vec3d, try to convert to vec3d if list-like
-            clibrebound.reb_vec3d_irotate(byref(vec), self) # rotate vector in place
-            return [vec.x, vec.y, vec.z]
+            clibrebound.reb_vec3d_irotate(byref(vec._vec3d), self) # rotate vector in place
+            return vec
         except:
             return NotImplemented
 
@@ -246,14 +246,30 @@ class Rotation(Structure):
                 ("iz", c_double),
                 ("r", c_double)]
 
-class Vec3d(Structure):
+class _Vec3d(Structure):
     """
-    Class for 3D Cartesian vectors. Used internally and likely not needed by user.
+    Internal use only. Not used as Vec3d directly because assigments to numpy arrays don't worl
     """
+    _fields_ = [("x", c_double),
+                ("y", c_double),
+                ("z", c_double)]
+
+class Vec3d:
+    """
+    Class for 3D Cartesian vectors. 
+    """
+    _vec3d = None
+
+    @property
+    def __array_interface__(self):
+        return {"shape": (3,), "typestr": "<f8", "data": self._vec3d} 
+
     def __init__(self, *args):
-        try:        # try assuming it's a list
+        if len(args) == 1: 
             vec = args[0]
-            if isinstance(vec,str):
+            if isinstance(vec,_Vec3d):
+                vec = [vec.x, vec.y, vec.z]
+            elif isinstance(vec,str):
                 vec = vec.lower()
                 if vec != "x" and vec !="y" and vec != "z":
                     raise ValueError("When passing a string to create a Vec3D, it needs to be one of 'x', 'y', or  'z'")
@@ -263,38 +279,35 @@ class Vec3d(Structure):
                     vec = [0,1,0]
                 if vec == "z":
                     vec = [0,0,1]
-            super(Vec3d, self).__init__(*vec)                      
-        except:
-            try:    # fall back on another Vec3d so functions can Vec3d(argument) to take either list or vec3d
-                vec = args[0]
-                super(Vec3d, self).__init__(vec.x, vec.y, vec.z)   
-            except: # use default x,y,z __init__
-                super(Vec3d, self).__init__(*args)
+            else:
+                vec = [float(vec[0]), float(vec[1]), float(vec[2])]
+        elif len(args) >= 3:
+            vec = [float(args[0]), float(args[1]), float(args[2])]
+        self._vec3d =_Vec3d(vec[0],vec[1],vec[2])
 
     def rotate(self, q):
         if not isinstance(q, Rotation):
             raise NotImplementedError
-        clibrebound.reb_vec3d_irotate(byref(self), q)
+        clibrebound.reb_vec3d_irotate(byref(_vec3d), q)
         return self
 
     def normalize(self):
-        clibrebound.reb_vec3d_normalize.restype = Vec3d
-        r = clibrebound.reb_vec3d_normalize(self)
-        self.x = r.x
-        self.y = r.y
-        self.z = r.z
+        clibrebound.reb_vec3d_normalize.restype = _Vec3d
+        r = clibrebound.reb_vec3d_normalize(self._vec3d)
+        self._vec3d = r._vec3d
         return self
+
     def __getitem__(self, key):
         if not isinstance(key, int):
             raise IndexError("Index must be an integer.")
         if key < 0 or key >= 3:
             raise IndexError("Vec3d has exactly three elements and can therefore not access the item with index "+str(key)+".")
         if key == 0:
-            return self.x
+            return self._vec3d.x
         if key == 1:
-            return self.y
+            return self._vec3d.y
         if key == 2:
-            return self.z
+            return self._vec3d.z
 
     def __setitem__(self, key, value):
         if not isinstance(key, int):
@@ -302,18 +315,34 @@ class Vec3d(Structure):
         if key < 0 or key >= 3:
             raise IndexError("Vec3d has exactly three elements and can therefore not access the item with index "+str(key)+".")
         if key == 0:
-            self.x = c_double(value)
+            self._vec3d.x = c_double(value)
         if key == 1:
-            self.y = c_double(value)
+            self._vec3d.y = c_double(value)
         if key == 2:
-            self.z = c_double(value)
-    
+            self._vec3d.z = c_double(value)
+
+    @property
+    def x(self):
+         return self._vec3d.x
+    @x.setter
+    def x(self, v):
+         self._vec3d.x = v
+    @property
+    def y(self):
+         return self._vec3d.y
+    @y.setter
+    def y(self, v):
+         self._vec3d.y = v
+    @property
+    def z(self):
+         return self._vec3d.z
+    @z.setter
+    def z(self, v):
+         self._vec3d.z = v
+
     def __repr__(self):
-        return '<{0}.{1} object at {2}, x={3}, y={4}, z={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.x, self.y, self.z)
+        return '<{0}.{1} object at {2}, [{3}, {4}, {5}]>'.format(self.__module__, type(self).__name__, hex(id(self)), self._vec3d.x, self._vec3d.y, self._vec3d.z)
     
-    _fields_ = [("x", c_double),
-                ("y", c_double),
-                ("z", c_double)]
 
 class reb_dp7(Structure):
     _fields_ = [("p0", POINTER(c_double)),
@@ -682,8 +711,8 @@ class Orbit(Structure):
                 ("pal_k", c_double),
                 ("pal_ix", c_double),
                 ("pal_iy", c_double),
-                ("hvec", Vec3d),
-                ("evec", Vec3d)]
+                ("hvec", _Vec3d),
+                ("evec", _Vec3d)]
 
     def __str__(self):
         """
@@ -1938,17 +1967,15 @@ class Simulation(Structure):
         Returns a list of the three (x,y,z) components of the total angular momentum of all particles in the simulation.
         """
         warnings.warn( "sim.calculate_angular_momentum() is deprecated and will be removed in the future. Use sim.angular_momentum() instead", FutureWarning)
-        clibrebound.reb_tools_angular_momentum.restype = Vec3d
-        L = clibrebound.reb_tools_angular_momentum(byref(self))
-        return [L.x, L.y, L.z]
+        clibrebound.reb_tools_angular_momentum.restype = _Vec3d
+        return Vec3d(clibrebound.reb_tools_angular_momentum(byref(self)))
     
     def angular_momentum(self):
         """
         Returns a list of the three (x,y,z) components of the total angular momentum of all particles in the simulation.
         """
-        clibrebound.reb_tools_angular_momentum.restype = Vec3d
-        L = clibrebound.reb_tools_angular_momentum(byref(self))
-        return [L.x, L.y, L.z]
+        clibrebound.reb_tools_angular_momentum.restype = _Vec3d
+        return Vec3d(clibrebound.reb_tools_angular_momentum(byref(self)))
 
     def configure_box(self, boxsize, root_nx=1, root_ny=1, root_nz=1):
         """
@@ -2369,8 +2396,8 @@ class reb_simulation_integrator_mercurius(Structure):
                 ("_particles_backup", POINTER(Particle)),
                 ("_particles_backup_additionalforces", POINTER(Particle)),
                 ("_encounter_map", POINTER(c_int)),
-                ("_com_pos", Vec3d),
-                ("_com_vel", Vec3d),
+                ("_com_pos", _Vec3d),
+                ("_com_vel", _Vec3d),
                 ]
     @property
     def L(self):
@@ -2521,7 +2548,7 @@ Simulation._fields_ = [
                 ("allocatedN_lookup", c_int),
                 ("allocated_N", c_int),
                 ("_particles", POINTER(Particle)),
-                ("gravity_cs", POINTER(Vec3d)),
+                ("gravity_cs", POINTER(_Vec3d)),
                 ("gravity_cs_allocatedN", c_int),
                 ("_tree_root", c_void_p),
                 ("_tree_needs_update", c_int),
@@ -2544,7 +2571,7 @@ Simulation._fields_ = [
                 ("python_unit_t",c_uint32),
                 ("python_unit_l",c_uint32),
                 ("python_unit_m",c_uint32),
-                ("boxsize", Vec3d),
+                ("boxsize", _Vec3d),
                 ("boxsize_max", c_double),
                 ("root_size", c_double),
                 ("root_n", c_int),
