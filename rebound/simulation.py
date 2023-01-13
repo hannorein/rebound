@@ -143,8 +143,8 @@ class Rotation(Structure):
     def orbit(cls, Omega=0.0, inc=0.0, omega=0.0):
         """
         Consider an orbit, which in a reference coordinate system has standard orbital angles Omega, inc, omega.
-        This returns a rotation object 'rot' that rotates the vector [1,0,0] such that is lies in the 
-        orbital plane and points towards the pericenter of the orbit. 
+        This returns a rotation object 'rot' that rotates vectors into this inclined orbital plane. The vector [1,0,0]
+        is rotated such that it points towards the pericenter of the orbit. Murray & Dermott Eq. 2.121 (left hand side)
         
         Arguments
         ---------
@@ -285,6 +285,34 @@ class Vec3d:
             vec = [float(args[0]), float(args[1]), float(args[2])]
         self._vec3d =_Vec3d(vec[0],vec[1],vec[2])
 
+    def __mul__(self, other):
+        try:
+            return Vec3d([self.x*other, self.y*other, self.z*other]) 
+        except:
+            return NotImplemented
+
+    def __truediv__(self, other):
+        if other==0.:
+            raise ZeroDivisionError
+        try:
+            return Vec3d([self.x/other, self.y/other, self.z/other])
+        except:
+            return NotImplemented
+
+    def __add__(self, other):
+        try:
+            o = Vec3d(other)
+            return Vec3d([self[0]+other[0], self[1]+other[1], self[2]+other[2]]) 
+        except:
+            return NotImplemented
+    
+    def __sub__(self, other):
+        try:
+            o = Vec3d(other)
+            return Vec3d([self[0]-other[0], self[1]-other[1], self[2]-other[2]]) 
+        except:
+            return NotImplemented
+    
     def rotate(self, q):
         if not isinstance(q, Rotation):
             raise NotImplementedError
