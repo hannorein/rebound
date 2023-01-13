@@ -11,6 +11,8 @@
 [![Paper](https://img.shields.io/badge/arXiv-1907.11335-green.svg?style=flat)](https://arxiv.org/abs/1907.11335)
 [![Docs](https://readthedocs.org/projects/rebound/badge/?version=latest)](https://rebound.readthedocs.io/en/latest/?badge=latest)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/hannorein/rebound/main)
+[![REBOUND (C)](https://github.com/hannorein/rebound/actions/workflows/c.yml/badge.svg)](https://github.com/hannorein/rebound/actions/workflows/c.yml)
+[![REBOUND (python)](https://github.com/hannorein/rebound/actions/workflows/python.yml/badge.svg)](https://github.com/hannorein/rebound/actions/workflows/python.yml)
     
 
 # Welcome to REBOUND
