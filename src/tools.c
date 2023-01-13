@@ -933,7 +933,10 @@ struct reb_orbit reb_orbit_nan(void){
 // will return 0 or pi appropriately if num is larger than denom by machine precision
 // and will return 0 if denom is exactly 0.
 
-double acos2(double num, double denom, double disambiguator){
+
+
+// Calculates right quadrant for acos(num/denom) using a disambiguator that is < 0 when acos in the range (0, -pi)
+static double acos2(double num, double denom, double disambiguator){
 	double val;
 	double cosine = num/denom;
 	if(cosine > -1. && cosine < 1.){
