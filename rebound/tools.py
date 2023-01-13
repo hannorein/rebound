@@ -74,9 +74,9 @@ def spherical_to_xyz(magnitude=1., theta=0., phi=0.):
     -------
     List of [x,y,z] components
     """ 
-    clibrebound.reb_tools_spherical_to_xyz.restype = rebound.Vec3d
+    clibrebound.reb_tools_spherical_to_xyz.restype = rebound._Vec3d
     xyz = clibrebound.reb_tools_spherical_to_xyz(c_double(magnitude), c_double(theta), c_double(phi))
-    return [xyz.x, xyz.y, xyz.z]
+    return rebound.Vec3d(xyz)
 
 def xyz_to_spherical(vector):
     """Return spherical angle theta measured from z axis
@@ -93,6 +93,6 @@ def xyz_to_spherical(vector):
     magnitude = c_double()
     theta = c_double()
     phi = c_double()
-    clibrebound.reb_tools_xyz_to_spherical(rebound.Vec3d(vector), byref(magnitude), byref(theta), byref(phi))
+    clibrebound.reb_tools_xyz_to_spherical(rebound.Vec3d(vector)._vec3d, byref(magnitude), byref(theta), byref(phi))
     return magnitude.value, theta.value, phi.value
 
