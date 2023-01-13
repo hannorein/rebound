@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.23.2
+* Minor changes to the python side of Vec3d to make it more compatible with numpy.
+
 ### Version 3.23.1
 * Minor changes related to the REBOUND Rotations framework.
 
