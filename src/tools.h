@@ -78,10 +78,4 @@ void reb_tools_particle_to_pal(double G, struct reb_particle p, struct reb_parti
  * @brief internal function to handle outputs for the Fast Simulation Restarter.
  */
 void reb_fsr_heartbeat(struct reb_simulation* const r);
-
-/**
- * @brief Calculates right quadrant for acos(num/denom) using a disambiguator that is < 0 when acos in the range (0, -pi)
- */
-double acos2(double num, double denom, double disambiguator);
-
 #endif 	// TOOLS_H
