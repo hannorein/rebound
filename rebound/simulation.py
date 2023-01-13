@@ -798,7 +798,7 @@ class Simulation(Structure):
         """
         w = c_int(0)
         sim = Simulation()
-        clibrebound._reb_copy_simulation_with_messages(byref(sim),byref(self),byref(w))
+        clibrebound.reb_copy_simulation_with_messages(byref(sim),byref(self),byref(w))
         for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
                 if majorerror:

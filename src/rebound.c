@@ -439,7 +439,7 @@ struct reb_simulation* reb_create_simulation(){
 }
 
 
-void _reb_copy_simulation_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum reb_input_binary_messages* warnings){
+void reb_copy_simulation_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum reb_input_binary_messages* warnings){
     char* bufp;
     size_t sizep;
     reb_output_binary_to_stream(r, &bufp,&sizep);
@@ -478,7 +478,7 @@ int reb_diff_simulations(struct reb_simulation* r1, struct reb_simulation* r2, i
 struct reb_simulation* reb_copy_simulation(struct reb_simulation* r){
     struct reb_simulation* r_copy = reb_create_simulation();
     enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
-    _reb_copy_simulation_with_messages(r_copy,r,&warnings);
+    reb_copy_simulation_with_messages(r_copy,r,&warnings);
     r = reb_input_process_warnings(r, warnings);
     return r_copy;
 }
