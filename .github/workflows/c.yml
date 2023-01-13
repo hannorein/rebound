@@ -9,7 +9,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Compile all examples
+      - name: Check if symbols in shared library have correct prefix
         run: |
-          cd examples
+          make
+          nm -g --defined-only librebound.so | cut -d ' ' -f3 
+          ! nm -g --defined-only librebound.so | cut -d ' ' -f3 | grep -v "^reb_"
+      - name: Compile all examples
+        working-directory: ./examples
+        run: |
           make
