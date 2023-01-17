@@ -3,7 +3,7 @@ from . import clibrebound, Escape, NoParticles, Encounter, Collision, Simulation
 from .citations import cite
 from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G, hash_to_unit
-from .tools import hash as rebhash
+from .tools import hash as rebhash, deref_arg
 import math
 import os
 import sys
@@ -826,6 +826,7 @@ class Simulation(Structure):
             return sim
 
     def __init__(self,filename=None,snapshot=None):
+        self._hbs = [] # prevent GC heartbeats
         self.save_messages = 1 # Warnings will be checked within python
 
     def __repr__(self):
@@ -1253,9 +1254,87 @@ class Simulation(Structure):
         self._hb = AFF(func)
         self._heartbeat = self._hb
 
-    def add_heartbeat(self, func, interval, is_dt_multiple=False):
-        clibrebound.reb_add_heartbeat.restype = HeartbeatUnit
-        return clibrebound.reb_add_heartbeat(byref(self), AFF(func), interval, is_dt_multiple)
+    @property
+    def contents(self):
+        """
+        Compatibility with functions that expect a POINTER argument.
+        """
+        return self
+
+    def add_heartbeat(self, heartbeat, interval, is_dt_multiple=False):
+        """
+        Adds a heartbeat to the simulation that is automatically wrapped
+        with reb_output_check in C. Allows for better performance for
+        Python heartbeats.
+
+        Arguments
+        ---------
+        heartbeat: CFunctionType
+            A C function .
+
+            The function called will receive a pointer to the simulation
+            object as its argument.
+
+            Use the AFF or rebound.tools.deref_arg function to convert a Python
+            function to a C function (or use the interval_heartbeat decorator
+            that converts and adds a Python function automatically).
+        interval: float
+            The time in simulated time or multiples of dt to wait before
+            calling the function again. Internally uses reb_output_check.
+        is_dt_multiple: bool
+            Whether the interval represents a float of time or a multiple
+            of the current Simulation.dt.
+
+        Returns
+        -------
+        Returns an instance of HeartbeatUnit.
+
+        Examples
+        --------
+
+        >>> import rebound
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1.)
+        >>> sim.add(m=1e-3, a=1)
+        >>> @rebound.tools.deref_arg(rebound.Simulation)
+        >>> def heartbeat(sim):
+        >>>     print(sim.t)
+        >>> sim.add_heartbeat(heartbeat, 1.)
+        >>> sim.integrate(10.)
+        """
+        self._hbs.append(heartbeat)
+
+        clibrebound.reb_add_heartbeat.argtypes = (POINTER_REB_SIM, AFF, c_double, c_int)
+        clibrebound.reb_add_heartbeat.restype = POINTER(HeartbeatUnit)
+        return clibrebound.reb_add_heartbeat(byref(self), heartbeat, interval, int(is_dt_multiple))
+
+    def interval_heartbeat(self, interval, is_dt_multiple=False):
+        """
+        Decorator factory that automatically wraps and adds a Python
+        function as a heartbeat callback with the specified interval.
+
+        See documentation for Simulation.add_heartbeat for details.
+
+        The function will receive a Simulation as the argument (although
+        Simulation.contents is defined for backward compatilibity with
+        heartbeats that expect a pointer).
+
+        Examples
+        --------
+
+        >>> import rebound
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1.)
+        >>> sim.add(m=1e-3, a=1)
+        >>> @sim.interval_heartbeat(1.)
+        >>> def heartbeat(sim):
+        >>>     print(sim.t)
+        >>> sim.integrate(10.)
+        """
+        def _decorator(func):
+            self.add_heartbeat(deref_arg(Simulation)(func), interval, is_dt_multiple)
+            return func
+        return _decorator
 
     @property 
     def coefficient_of_restitution(self):

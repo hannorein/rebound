@@ -1,6 +1,7 @@
-from ctypes import c_uint32, c_uint, c_ulong, c_char_p, c_double, byref
+from ctypes import c_uint32, c_uint, c_ulong, c_char_p, c_double, byref, CFUNCTYPE, POINTER
 from . import clibrebound
 import sys
+import functools
 import rebound
 
 def hash(key):
@@ -96,3 +97,17 @@ def xyz_to_spherical(vector):
     clibrebound.reb_tools_xyz_to_spherical(rebound.Vec3d(vector)._vec3d, byref(magnitude), byref(theta), byref(phi))
     return magnitude.value, theta.value, phi.value
 
+def deref_arg(contents_type, return_type=None):
+    """
+    Turns a Python function that accepts a value (e.g. Simulation) into a C
+    function that accepts a pointer to a value.
+
+    Used as a decorator factory.
+    """
+    _cfunctype = CFUNCTYPE(return_type, POINTER(contents_type))
+    def _decorator(func):
+        @functools.wraps(func)
+        def _wrapper(pointer, *args, **kwargs):
+            func(pointer.contents, *args, **kwargs)
+        return _cfunctype(_wrapper)
+    return _decorator
