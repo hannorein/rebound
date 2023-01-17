@@ -737,6 +737,7 @@ struct reb_hash_pointer_pair{
 struct reb_heartbeat_unit {
     void (*heartbeat)(struct reb_simulation* r);
     double interval;
+    double phase;
     int is_dt_multiple; // Determines if interval is in time units or is a multiple of reb_simulation->dt
 };
 
@@ -1045,7 +1046,9 @@ struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length);
 void reb_free_ode(struct reb_ode* ode);
 
 // Function to add one of multiple heartbeats
-struct reb_heartbeat_unit* reb_add_heartbeat(struct reb_simulation* r, void (*heartbeat)(struct reb_simulation* r), double interval, int is_dt_multiple);
+struct reb_heartbeat_unit* reb_add_heartbeat(struct reb_simulation* r, void (*heartbeat)(struct reb_simulation* r));
+struct reb_heartbeat_unit* reb_add_heartbeat_interval(struct reb_simulation* r, void (*heartbeat)(struct reb_simulation* r), double interval, int is_dt_multiple);
+struct reb_heartbeat_unit* reb_add_heartbeat_interval_phase(struct reb_simulation* r, void (*heartbeat)(struct reb_simulation* r), double interval, double phase, int is_dt_multiple);
 
 // Miscellaneous functions
 uint32_t reb_hash(const char* str);

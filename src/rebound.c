@@ -732,7 +732,7 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
     return r->status;
 }
 
-struct reb_heartbeat_unit* reb_add_heartbeat(struct reb_simulation* r, void (*heartbeat)(struct reb_simulation* r), double interval, int is_dt_multiple){
+struct reb_heartbeat_unit* reb_add_heartbeat_interval_phase(struct reb_simulation* r, void (*heartbeat)(struct reb_simulation* r), double interval, double phase, int is_dt_multiple){
     struct reb_heartbeat_unit* hu = malloc(sizeof(struct reb_heartbeat_unit));
 
     if (r->heartbeat_set_allocatedN <= r->heartbeat_set_N){
@@ -746,10 +746,18 @@ struct reb_heartbeat_unit* reb_add_heartbeat(struct reb_simulation* r, void (*he
     hu->heartbeat = heartbeat;
     hu->interval = interval;
     hu->is_dt_multiple = is_dt_multiple;
+    hu->phase = phase;
 
     return hu;
 }
 
+struct reb_heartbeat_unit* reb_add_heartbeat_interval(struct reb_simulation* r, void (*heartbeat)(struct reb_simulation* r), double interval, int is_dt_multiple){
+    return reb_add_heartbeat_interval_phase(r, heartbeat, interval, 0., is_dt_multiple);
+}
+
+struct reb_heartbeat_unit* reb_add_heartbeat(struct reb_simulation* r, void (*heartbeat)(struct reb_simulation* r)){
+    return reb_add_heartbeat_interval(r, heartbeat, -1.0, 0);
+}
 
 void reb_run_heartbeat(struct reb_simulation* const r){
     if (r->heartbeat){ r->heartbeat(r); }               // Heartbeat
@@ -757,7 +765,7 @@ void reb_run_heartbeat(struct reb_simulation* const r){
         for (int i=0;i<r->heartbeat_set_N;i++) {
             struct reb_heartbeat_unit* hu = r->heartbeat_set[i];
             double interval = hu->is_dt_multiple ? r->dt * hu->interval : hu->interval;
-            if (reb_output_check(r, interval)){
+            if (hu->interval < 0. || reb_output_check_phase(r, interval, hu->phase)){
                 hu->heartbeat(r);
             }
         }

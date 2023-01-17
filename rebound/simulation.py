@@ -1261,7 +1261,7 @@ class Simulation(Structure):
         """
         return self
 
-    def add_heartbeat(self, heartbeat, interval, is_dt_multiple=False):
+    def add_heartbeat(self, heartbeat, interval=-1.0, phase=0.0, is_dt_multiple=False):
         """
         Adds a heartbeat to the simulation that is automatically wrapped
         with reb_output_check in C. Allows for better performance for
@@ -1281,6 +1281,9 @@ class Simulation(Structure):
         interval: float
             The time in simulated time or multiples of dt to wait before
             calling the function again. Internally uses reb_output_check.
+        phase: float
+            The phase, as a value from from 0.0 to 1.0, within an interval
+            to call the function at. Supplied to reb_output_check.
         is_dt_multiple: bool
             Whether the interval represents a float of time or a multiple
             of the current Simulation.dt.
@@ -1304,11 +1307,11 @@ class Simulation(Structure):
         """
         self._hbs.append(heartbeat)
 
-        clibrebound.reb_add_heartbeat.argtypes = (POINTER_REB_SIM, AFF, c_double, c_int)
-        clibrebound.reb_add_heartbeat.restype = POINTER(HeartbeatUnit)
-        return clibrebound.reb_add_heartbeat(byref(self), heartbeat, interval, int(is_dt_multiple))
+        clibrebound.reb_add_heartbeat_interval_phase.argtypes = (POINTER_REB_SIM, AFF, c_double, c_double, c_int)
+        clibrebound.reb_add_heartbeat_interval_phase.restype = POINTER(HeartbeatUnit)
+        return clibrebound.reb_add_heartbeat_interval_phase(byref(self), heartbeat, interval, phase, int(is_dt_multiple))
 
-    def interval_heartbeat(self, interval, is_dt_multiple=False):
+    def register_heartbeat(self, interval=-1.0, phase=0.0, is_dt_multiple=False):
         """
         Decorator factory that automatically wraps and adds a Python
         function as a heartbeat callback with the specified interval.
@@ -1326,13 +1329,13 @@ class Simulation(Structure):
         >>> sim = rebound.Simulation()
         >>> sim.add(m=1.)
         >>> sim.add(m=1e-3, a=1)
-        >>> @sim.interval_heartbeat(1.)
+        >>> @sim.register_heartbeat(interval=1., phase=.5)
         >>> def heartbeat(sim):
         >>>     print(sim.t)
         >>> sim.integrate(10.)
         """
         def _decorator(func):
-            self.add_heartbeat(deref_arg(Simulation)(func), interval, is_dt_multiple)
+            self.add_heartbeat(deref_arg(Simulation)(func), interval, phase, is_dt_multiple)
             return func
         return _decorator
 
@@ -2644,6 +2647,7 @@ class HeartbeatUnit(Structure):
     """
     _fields_ = [("heartbeat", CFUNCTYPE(None, POINTER(Simulation))),
                 ("interval", c_double),
+                ("phase", c_double),
                 ("is_dt_multiple", c_int)]
 
 # Setting up fields after class definition (because of self-reference)
