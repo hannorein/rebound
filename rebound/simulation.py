@@ -1324,7 +1324,7 @@ class Simulation(Structure):
         clibrebound.reb_add_heartbeat_interval_phase.restype = POINTER(HeartbeatUnit)
         return clibrebound.reb_add_heartbeat_interval_phase(byref(self), cheartbeat, interval, phase, int(is_dt_multiple))
 
-    def register_heartbeat(self, interval=math.nan, phase=0.0, is_dt_multiple=False):
+    def register_heartbeat(self, interval=float("nan"), phase=0.0, is_dt_multiple=False):
         """
         Decorator factory that automatically adds a Python
         function as a heartbeat callback with the specified interval.
