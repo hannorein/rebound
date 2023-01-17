@@ -1276,14 +1276,16 @@ class Simulation(Structure):
             object as its argument.
 
             Use the AFF or rebound.tools.deref_arg function to convert a Python
-            function to a C function (or use the interval_heartbeat decorator
+            function to a C function (or use the register_heartbeat decorator
             that converts and adds a Python function automatically).
         interval: float
             The time in simulated time or multiples of dt to wait before
             calling the function again. Internally uses reb_output_check.
         phase: float
             The phase, as a value from from 0.0 to 1.0, within an interval
-            to call the function at. Supplied to reb_output_check.
+            to call the function at. Subtracts from interval, so with interval
+            1.0 and phase 0.2, the function will be called just after 0.8, 1.8,
+            2.8, 3.8, etc. Supplied to reb_output_check_phase.
         is_dt_multiple: bool
             Whether the interval represents a float of time or a multiple
             of the current Simulation.dt.

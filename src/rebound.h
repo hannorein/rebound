@@ -1008,6 +1008,7 @@ void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, doubl
 void reb_set_serialized_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]); // Null pointers will be ignored.
 
 // Output functions
+int reb_output_check_phase(struct reb_simulation* r, double interval, double phase);
 int reb_output_check(struct reb_simulation* r, double interval);
 void reb_output_timing(struct reb_simulation* r, const double tmax);
 void reb_output_orbits(struct reb_simulation* r, char* filename);
