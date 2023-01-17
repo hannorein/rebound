@@ -346,6 +346,12 @@ void reb_free_pointers(struct reb_simulation* const r){
     for (int s=0; s<r->odes_N; s++){
         r->odes[s]->r = NULL;
     }
+    if (r->heartbeat_set){
+        for (int i=0;i<r->heartbeat_set_N;i++){
+            free(r->heartbeat_set[i]);
+        }
+    }
+    free(r->heartbeat_set);
 }
 
 void reb_reset_temporary_pointers(struct reb_simulation* const r){
@@ -405,6 +411,10 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->odes_allocatedN = 0;
     // ********** TES
     r->ri_tes.particles_dh = NULL;
+    // ********** Multiple heartbeats
+    r->heartbeat_set = NULL;
+    r->heartbeat_set_N = 0;
+    r->heartbeat_set_allocatedN = 0;
 }
 
 int reb_reset_function_pointers(struct reb_simulation* const r){
@@ -722,9 +732,36 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
     return r->status;
 }
 
+struct reb_heartbeat_unit* reb_add_heartbeat(struct reb_simulation* r, void (*heartbeat)(struct reb_simulation* r), double interval, int is_dt_multiple){
+    struct reb_heartbeat_unit* hu = malloc(sizeof(struct reb_heartbeat_unit));
+
+    if (r->heartbeat_set_allocatedN <= r->heartbeat_set_N){
+        r->heartbeat_set_allocatedN += 32;
+        r->heartbeat_set = realloc(r->heartbeat_set,sizeof(struct reb_heartbeat_unit*)*r->heartbeat_set_allocatedN);
+    }
+
+    r->heartbeat_set[r->heartbeat_set_N] = hu;
+    r->heartbeat_set_N += 1;
+
+    hu->heartbeat = heartbeat;
+    hu->interval = interval;
+    hu->is_dt_multiple = is_dt_multiple;
+
+    return hu;
+}
+
 
 void reb_run_heartbeat(struct reb_simulation* const r){
     if (r->heartbeat){ r->heartbeat(r); }               // Heartbeat
+    if (r->heartbeat_set){
+        for (int i=0;i<r->heartbeat_set_N;i++) {
+            struct reb_heartbeat_unit* hu = r->heartbeat_set[i];
+            double interval = hu->is_dt_multiple ? r->dt * hu->interval : hu->interval;
+            if (reb_output_check(r, interval)){
+                hu->heartbeat(r);
+            }
+        }
+    };
     if (r->display_heartbeat){ reb_check_for_display_heartbeat(r); } 
     if (r->exit_max_distance){
         // Check for escaping particles

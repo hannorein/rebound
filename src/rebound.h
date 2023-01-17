@@ -733,6 +733,13 @@ struct reb_hash_pointer_pair{
     int index;
 };
 
+// Structure holding a heartbeat function and the interval to call it
+struct reb_heartbeat_unit {
+    void (*heartbeat)(struct reb_simulation* r);
+    double interval;
+    int is_dt_multiple; // Determines if interval is in time units or is a multiple of reb_simulation->dt
+};
+
 // Main REBOUND Simulation structure
 struct reb_simulation {
     double  t;
@@ -900,6 +907,11 @@ struct reb_simulation {
     int odes_allocatedN;   // number of ode sets allocated
     int ode_warnings;
 
+    // Multiple Heartbeat
+    struct reb_heartbeat_unit** heartbeat_set;
+    int heartbeat_set_N; // number of heartbeat functions
+    int heartbeat_set_allocatedN; // number of heartbeat functions allocated
+
      // Callback functions
     void (*additional_forces) (struct reb_simulation* const r);
     void (*pre_timestep_modifications) (struct reb_simulation* const r);    // used by REBOUNDx
@@ -1031,6 +1043,9 @@ enum reb_input_binary_messages {
 // ODE functions
 struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length);
 void reb_free_ode(struct reb_ode* ode);
+
+// Function to add one of multiple heartbeats
+struct reb_heartbeat_unit* reb_add_heartbeat(struct reb_simulation* r, void (*heartbeat)(struct reb_simulation* r), double interval, int is_dt_multiple);
 
 // Miscellaneous functions
 uint32_t reb_hash(const char* str);
@@ -1377,7 +1392,6 @@ struct reb_display_data {
     unsigned int orbit_shader_particle_vao;
     unsigned int orbit_shader_vertex_count;
 };
-
 
 // Temporary. Function declarations needed by REBOUNDx 
 void reb_integrator_ias15_reset(struct reb_simulation* r);         ///< Internal function used to call a specific integrator
