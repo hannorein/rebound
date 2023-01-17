@@ -1253,6 +1253,10 @@ class Simulation(Structure):
         self._hb = AFF(func)
         self._heartbeat = self._hb
 
+    def add_heartbeat(self, func, interval, is_dt_multiple=False):
+        clibrebound.reb_add_heartbeat.restype = HeartbeatUnit
+        return clibrebound.reb_add_heartbeat(byref(self), AFF(func), interval, is_dt_multiple)
+
     @property 
     def coefficient_of_restitution(self):
         """
@@ -2553,6 +2557,15 @@ class reb_display_data(Structure):
                 # ignoring other data (never used)
                 ]
 
+class HeartbeatUnit(Structure):
+    """
+    Object representing a heartbeat function and the metadata to run it automatically
+    using the heartbeat set code. Returned from Simulation.add_heartbeat, should not be
+    created manually.
+    """
+    _fields_ = [("heartbeat", CFUNCTYPE(None, POINTER(Simulation))),
+                ("interval", c_double),
+                ("is_dt_multiple", c_int)]
 
 # Setting up fields after class definition (because of self-reference)
 Simulation._fields_ = [
@@ -2652,6 +2665,9 @@ Simulation._fields_ = [
                 ("_odes_N", c_int),
                 ("_odes_allocatedN", c_int),
                 ("_odes_warnings", c_int),
+                ("_heartbeat_set", POINTER(POINTER(HeartbeatUnit))),
+                ("_heartbeat_set_N", c_int),
+                ("_heartbeat_set_allocatedN", c_int),
                 ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_pre_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
