@@ -1177,8 +1177,12 @@ class Simulation(Structure):
         """
         Get or set a function pointer for calculating additional forces in the simulation.
 
-        The argument can be a python function or something that can 
-        be cast to a C function of type CFUNCTYPE(None,POINTER(Simulaton)). 
+        A C function will receive a pointer to the reb_simulation as
+        its argument.
+
+        Non-C Python functions will be wrapped automatically and receive
+        a Simulation object.
+
         If the forces are velocity dependent, the flag 
         force_is_velocity_dependent needs to be set to 1. Otherwise,
         the particle structures might contain incorrect velocity 
@@ -1264,7 +1268,7 @@ class Simulation(Structure):
         """
         return self
 
-    def add_heartbeat(self, heartbeat, interval=math.nan, phase=0.0, is_dt_multiple=False):
+    def add_heartbeat(self, heartbeat, interval=float("nan"), phase=0.0, is_dt_multiple=False):
         """
         Adds a heartbeat to the simulation that is automatically wrapped
         with reb_output_check in C. Allows for better performance for
@@ -1272,15 +1276,14 @@ class Simulation(Structure):
 
         Arguments
         ---------
-        heartbeat: CFunctionType
-            A C function .
+        heartbeat: Callable
+            Either a C function or Python function to execute at each interval.
 
-            The function called will receive a pointer to the simulation
-            object as its argument.
+            A C function will receive a pointer to the reb_simulation as
+            its argument.
 
-            Use the AFF or rebound.tools.deref_arg function to convert a Python
-            function to a C function (or use the register_heartbeat decorator
-            that converts and adds a Python function automatically).
+            Non-C Python functions will be wrapped automatically and receive
+            a Simulation object.
         interval: float
             The time in simulated time or multiples of dt to wait before
             calling the function again. Internally uses reb_output_check.
@@ -1304,7 +1307,6 @@ class Simulation(Structure):
         >>> sim = rebound.Simulation()
         >>> sim.add(m=1.)
         >>> sim.add(m=1e-3, a=1)
-        >>> @rebound.tools.deref_arg(rebound.Simulation)
         >>> def heartbeat(sim):
         >>>     print(sim.t)
         >>> sim.add_heartbeat(heartbeat, 1.)
@@ -1324,7 +1326,7 @@ class Simulation(Structure):
 
     def register_heartbeat(self, interval=math.nan, phase=0.0, is_dt_multiple=False):
         """
-        Decorator factory that automatically wraps and adds a Python
+        Decorator factory that automatically adds a Python
         function as a heartbeat callback with the specified interval.
 
         See documentation for Simulation.add_heartbeat for details.
