@@ -309,6 +309,7 @@ static void reb_tree_delete_cell(struct reb_treecell* node){
 	for (int o=0; o<8; o++) {
 		reb_tree_delete_cell(node->oct[o]);
 	}
+	free(node);
 }
 
 void reb_tree_delete(struct reb_simulation* const r){
