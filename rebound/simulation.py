@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_uint32, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
+from ctypes import Structure, c_double, POINTER, c_uint32, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, _CFuncPtr, byref, create_string_buffer, addressof, pointer, cast
 from . import clibrebound, Escape, NoParticles, Encounter, Collision, SimulationError, ParticleNotFound, M_to_E
 from .citations import cite
 from .particle import Particle
@@ -1187,7 +1187,10 @@ class Simulation(Structure):
         raise AttributeError("You can only set C function pointers from python.")
     @additional_forces.setter
     def additional_forces(self, func):
-        self._afp = AFF(func)
+        if isinstance(func, _CFuncPtr):
+            self._afp = func
+        else: # assume is Python callable
+            self._afp = deref_arg(Simulation)(func)
         self._additional_forces = self._afp
 
     @property
@@ -1261,7 +1264,7 @@ class Simulation(Structure):
         """
         return self
 
-    def add_heartbeat(self, heartbeat, interval=-1.0, phase=0.0, is_dt_multiple=False):
+    def add_heartbeat(self, heartbeat, interval=math.nan, phase=0.0, is_dt_multiple=False):
         """
         Adds a heartbeat to the simulation that is automatically wrapped
         with reb_output_check in C. Allows for better performance for
@@ -1307,13 +1310,19 @@ class Simulation(Structure):
         >>> sim.add_heartbeat(heartbeat, 1.)
         >>> sim.integrate(10.)
         """
-        self._hbs.append(heartbeat)
+
+        if isinstance(heartbeat, _CFuncPtr):
+            cheartbeat = heartbeat
+        else: # assume is Python callable
+            cheartbeat = deref_arg(Simulation)(heartbeat)
+
+        self._hbs.append(cheartbeat)
 
         clibrebound.reb_add_heartbeat_interval_phase.argtypes = (POINTER_REB_SIM, AFF, c_double, c_double, c_int)
         clibrebound.reb_add_heartbeat_interval_phase.restype = POINTER(HeartbeatUnit)
-        return clibrebound.reb_add_heartbeat_interval_phase(byref(self), heartbeat, interval, phase, int(is_dt_multiple))
+        return clibrebound.reb_add_heartbeat_interval_phase(byref(self), cheartbeat, interval, phase, int(is_dt_multiple))
 
-    def register_heartbeat(self, interval=-1.0, phase=0.0, is_dt_multiple=False):
+    def register_heartbeat(self, interval=math.nan, phase=0.0, is_dt_multiple=False):
         """
         Decorator factory that automatically wraps and adds a Python
         function as a heartbeat callback with the specified interval.
@@ -1337,7 +1346,7 @@ class Simulation(Structure):
         >>> sim.integrate(10.)
         """
         def _decorator(func):
-            self.add_heartbeat(deref_arg(Simulation)(func), interval, phase, is_dt_multiple)
+            self.add_heartbeat(func, interval, phase, is_dt_multiple)
             return func
         return _decorator
 

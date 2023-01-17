@@ -756,7 +756,7 @@ struct reb_heartbeat_unit* reb_add_heartbeat_interval(struct reb_simulation* r, 
 }
 
 struct reb_heartbeat_unit* reb_add_heartbeat(struct reb_simulation* r, void (*heartbeat)(struct reb_simulation* r)){
-    return reb_add_heartbeat_interval(r, heartbeat, -1.0, 0);
+    return reb_add_heartbeat_interval(r, heartbeat, NAN, 0);
 }
 
 void reb_run_heartbeat(struct reb_simulation* const r){
@@ -765,7 +765,7 @@ void reb_run_heartbeat(struct reb_simulation* const r){
         for (int i=0;i<r->heartbeat_set_N;i++) {
             struct reb_heartbeat_unit* hu = r->heartbeat_set[i];
             double interval = hu->is_dt_multiple ? r->dt * hu->interval : hu->interval;
-            if (hu->interval < 0. || reb_output_check_phase(r, interval, hu->phase)){
+            if (isnan(hu->interval) || reb_output_check_phase(r, interval, hu->phase)){
                 hu->heartbeat(r);
             }
         }
