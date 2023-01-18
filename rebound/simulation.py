@@ -1324,34 +1324,6 @@ class Simulation(Structure):
         clibrebound.reb_add_heartbeat_interval_phase.restype = POINTER(HeartbeatUnit)
         return clibrebound.reb_add_heartbeat_interval_phase(byref(self), cheartbeat, interval, phase, int(is_dt_multiple))
 
-    def register_heartbeat(self, interval=float("nan"), phase=0.0, is_dt_multiple=False):
-        """
-        Decorator factory that automatically adds a Python
-        function as a heartbeat callback with the specified interval.
-
-        See documentation for Simulation.add_heartbeat for details.
-
-        The function will receive a Simulation as the argument (although
-        Simulation.contents is defined for backward compatilibity with
-        heartbeats that expect a pointer).
-
-        Examples
-        --------
-
-        >>> import rebound
-        >>> sim = rebound.Simulation()
-        >>> sim.add(m=1.)
-        >>> sim.add(m=1e-3, a=1)
-        >>> @sim.register_heartbeat(interval=1., phase=.5)
-        >>> def heartbeat(sim):
-        >>>     print(sim.t)
-        >>> sim.integrate(10.)
-        """
-        def _decorator(func):
-            self.add_heartbeat(func, interval, phase, is_dt_multiple)
-            return func
-        return _decorator
-
     @property 
     def coefficient_of_restitution(self):
         """
