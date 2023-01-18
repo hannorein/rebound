@@ -62,7 +62,7 @@ class TestMultipleHeartbeats(unittest.TestCase):
         hb_interval = 256 * sim.dt
 
         for i in range(hb_N):
-            sim.add_heartbeat(heartbeat, interval=hb_interval, phase=i/hb_N)
+            sim.add_heartbeat(heartbeat, interval=hb_interval, phase=float(i)/hb_N)
 
         n_steps = 300
         sim.integrate(n_steps * sim.dt)
