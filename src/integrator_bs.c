@@ -408,7 +408,8 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
         ri_bs->targetIter = MAX(1, MIN(sequence_length - 2, (int) floor(0.5 - 0.6 * log10R)));
     }
 
-    double  maxError = DBL_MAX;
+    // maxError not used at the moment.
+    // double  maxError = DBL_MAX;
 
     int Ns = r->odes_N; // Number of ode sets
     struct reb_ode** odes = r->odes;
@@ -516,7 +517,8 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                     loop   = 0;
                 } else {
 
-                    maxError = MAX(4 * error, 1.0);
+                    // Not used at the moment
+                    // maxError = MAX(4 * error, 1.0);
 
                     // compute optimal stepsize for this order
                     const double exp = 1.0 / (2 * k + 1);
