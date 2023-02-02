@@ -232,6 +232,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(MERCURIUS_HILLFAC,  &r->ri_mercurius.hillfac);
         CASE(MERCURIUS_SAFEMODE, &r->ri_mercurius.safe_mode);
         CASE(MERCURIUS_ISSYNCHRON, &r->ri_mercurius.is_synchronized);
+        CASE(MERCURIUS_RECALCULATE_COORD, &r->ri_mercurius.recalculate_coordinates_this_timestep);
         CASE(MERCURIUS_COMPOS,   &r->ri_mercurius.com_pos);
         CASE(MERCURIUS_COMVEL,   &r->ri_mercurius.com_vel);
         CASE(PYTHON_UNIT_L,      &r->python_unit_l);

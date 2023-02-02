@@ -355,6 +355,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     WRITE_FIELD(MERCURIUS_HILLFAC,  &r->ri_mercurius.hillfac,           sizeof(double));
     WRITE_FIELD(MERCURIUS_SAFEMODE, &r->ri_mercurius.safe_mode,         sizeof(unsigned int));
     WRITE_FIELD(MERCURIUS_ISSYNCHRON, &r->ri_mercurius.is_synchronized, sizeof(unsigned int));
+    WRITE_FIELD(MERCURIUS_RECALCULATE_COORD, &r->ri_mercurius.recalculate_coordinates_this_timestep, sizeof(unsigned int));
     WRITE_FIELD(MERCURIUS_DCRIT,    r->ri_mercurius.dcrit,              sizeof(double)*r->ri_mercurius.dcrit_allocatedN);
     WRITE_FIELD(MERCURIUS_COMPOS,   &(r->ri_mercurius.com_pos),         sizeof(struct reb_vec3d));
     WRITE_FIELD(MERCURIUS_COMVEL,   &(r->ri_mercurius.com_vel),         sizeof(struct reb_vec3d));
