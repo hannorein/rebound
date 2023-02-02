@@ -790,8 +790,10 @@ static void* reb_integrate_raw(void* args){
     reb_communication_mpi_distribute_particles(r);
 #endif // MPI
 
-    int dt_sign = (thread_info->tmax > r->t) ? 1.0 : -1.0; // determine integration direction
-    r->dt = copysign(r->dt, dt_sign);
+    if (thread_info->tmax != r->t){
+        int dt_sign = (thread_info->tmax > r->t) ? 1.0 : -1.0; // determine integration direction
+        r->dt = copysign(r->dt, dt_sign);
+    }
 
     double last_full_dt = r->dt; // need to store r->dt in case timestep gets artificially shrunk to meet exact_finish_time=1
     r->dt_last_done = 0.; // Reset in case first timestep attempt will fail
