@@ -54,20 +54,21 @@ static size_t reb_fread(void *restrict ptr, size_t size, size_t nitems, FILE *re
     return 0; 
 }
 
-static int reb_fseek(FILE *stream, long offset, int whence, char **restrict mem_stream){
-    if (mem_stream!=NULL){
-        // read from memory
-        if (whence==SEEK_CUR){
-            *mem_stream = (char*)(*mem_stream)+offset;
-            return 0;
-        }
-        return -1;
-    }else if(stream!=NULL){
-        // read from file
-        return fseek(stream,offset,whence);
-    }
-    return -1;
-}
+// The reb_fseek function is currently not used, but provides functionality along the lines of reb_fread
+// static int reb_fseek(FILE *stream, long offset, int whence, char **restrict mem_stream){
+//     if (mem_stream!=NULL){
+//         // read from memory
+//         if (whence==SEEK_CUR){
+//             *mem_stream = (char*)(*mem_stream)+offset;
+//             return 0;
+//         }
+//         return -1;
+//     }else if(stream!=NULL){
+//         // read from file
+//         return fseek(stream,offset,whence);
+//     }
+//     return -1;
+// }
 
 
 void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf, char **restrict mem_stream){
@@ -231,6 +232,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(MERCURIUS_HILLFAC,  &r->ri_mercurius.hillfac);
         CASE(MERCURIUS_SAFEMODE, &r->ri_mercurius.safe_mode);
         CASE(MERCURIUS_ISSYNCHRON, &r->ri_mercurius.is_synchronized);
+        CASE(MERCURIUS_RECALCULATE_COORD, &r->ri_mercurius.recalculate_coordinates_this_timestep);
         CASE(MERCURIUS_COMPOS,   &r->ri_mercurius.com_pos);
         CASE(MERCURIUS_COMVEL,   &r->ri_mercurius.com_vel);
         CASE(PYTHON_UNIT_L,      &r->python_unit_l);
@@ -376,9 +378,13 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
                 sprintf(curvbuf,"%s%s",header+sizeof(struct reb_binary_field), reb_version_str);
                 
                 objects += reb_fread(readbuf,sizeof(char),bufsize,inf,mem_stream);
-                // Note: following compares version, but ignores githash.
-                if(strncmp(readbuf,curvbuf,bufsize)!=0){
-                    *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
+                if (objects < 1){
+                    *warnings |= REB_INPUT_BINARY_WARNING_CORRUPTFILE;
+                }else{
+                    // Note: following compares version, but ignores githash.
+                    if(strncmp(readbuf,curvbuf,bufsize)!=0){
+                        *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
+                    }
                 }
             }
             break;

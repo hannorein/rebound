@@ -4,6 +4,17 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.23.3
+* Changed the way REBOUND reverses the integration direction when the sign of the timestep is inconsistent with respect to the requested final time.
+* Fixes a memory leak when a tree code is used
+* Fixes an issue where MERCURIUS was not bit-wise reproducible when safe mode was turned off.
+
+### Version 3.23.2
+* Minor changes to the python side of Vec3d to make it more compatible with numpy.
+
+### Version 3.23.1
+* Minor changes related to the REBOUND Rotations framework.
+
 ### Version 3.23.0
 * Added the REBOUND Rotations framework.
 * Fixes an issue with showing an incorrect periastron location in OrbitPlot for high mass-ratio systems.

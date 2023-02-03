@@ -261,9 +261,13 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                     sprintf(curvbuf,"%s%s",header+sizeof(struct reb_binary_field), reb_version_str);
                     
                     objects += fread(readbuf,sizeof(char),bufsize,sa->inf);
-                    // Note: following compares version, but ignores githash.
-                    if(strncmp(readbuf,curvbuf,bufsize)!=0){
-                        *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
+                    if (objects < 1){
+                        *warnings |= REB_INPUT_BINARY_WARNING_CORRUPTFILE;
+                    }else{
+                        // Note: following compares version, but ignores githash.
+                        if(strncmp(readbuf,curvbuf,bufsize)!=0){
+                            *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
+                        }
                     }
                 }
                 break;

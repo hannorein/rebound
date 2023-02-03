@@ -66,7 +66,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.23.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.23.3";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_error_message_waiting(struct reb_simulation* const r);
@@ -439,7 +439,7 @@ struct reb_simulation* reb_create_simulation(){
 }
 
 
-void _reb_copy_simulation_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum reb_input_binary_messages* warnings){
+void reb_copy_simulation_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum reb_input_binary_messages* warnings){
     char* bufp;
     size_t sizep;
     reb_output_binary_to_stream(r, &bufp,&sizep);
@@ -478,7 +478,7 @@ int reb_diff_simulations(struct reb_simulation* r1, struct reb_simulation* r2, i
 struct reb_simulation* reb_copy_simulation(struct reb_simulation* r){
     struct reb_simulation* r_copy = reb_create_simulation();
     enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
-    _reb_copy_simulation_with_messages(r_copy,r,&warnings);
+    reb_copy_simulation_with_messages(r_copy,r,&warnings);
     r = reb_input_process_warnings(r, warnings);
     return r_copy;
 }
@@ -789,6 +789,11 @@ static void* reb_integrate_raw(void* args){
     // Distribute particles
     reb_communication_mpi_distribute_particles(r);
 #endif // MPI
+
+    if (thread_info->tmax != r->t){
+        int dt_sign = (thread_info->tmax > r->t) ? 1.0 : -1.0; // determine integration direction
+        r->dt = copysign(r->dt, dt_sign);
+    }
 
     double last_full_dt = r->dt; // need to store r->dt in case timestep gets artificially shrunk to meet exact_finish_time=1
     r->dt_last_done = 0.; // Reset in case first timestep attempt will fail

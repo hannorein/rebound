@@ -3,6 +3,92 @@ import unittest
 import math
 import rebound.data
 import warnings
+
+
+def derivatives_ho(ode, yDot, y, t):
+    m = 1.
+    k = 100.
+    yDot[0] = y[1]
+    yDot[1] = -k/m*y[0]
+
+class TestIntegratorBSHarmonic(unittest.TestCase):
+    def test_bs_harmonic_only(self):
+        sim = rebound.Simulation()
+        sim.integrator = "BS"
+        ode_ho = sim.create_ode(length=2, needs_nbody=False)
+        ode_ho.derivatives = derivatives_ho
+
+        ode_ho.y[0] = 1. 
+        ode_ho.y[1] = 0. # zero velocity
+
+        sim.integrate(20.*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-10)
+        self.assertLess(math.fabs(ode_ho.y[1]),2e-9)
+   
+    def test_bs_harmonic_only_low_eps(self):
+        sim = rebound.Simulation()
+        sim.integrator = "BS"
+        sim.ri_bs.eps_abs = 1e-5
+        sim.ri_bs.eps_rel = 1e-5
+        ode_ho = sim.create_ode(length=2, needs_nbody=False)
+        ode_ho.derivatives = derivatives_ho
+
+        ode_ho.y[0] = 1. 
+        ode_ho.y[1] = 0. # zero velocity
+
+        sim.integrate(20.*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-8)
+        self.assertLess(math.fabs(ode_ho.y[1]),5e-6)
+    
+    def test_bs_harmonic_only_high_eps(self):
+        sim = rebound.Simulation()
+        sim.integrator = "BS"
+        sim.ri_bs.eps_abs = 1e-10
+        sim.ri_bs.eps_rel = 1e-10
+        ode_ho = sim.create_ode(length=2, needs_nbody=False)
+        ode_ho.derivatives = derivatives_ho
+
+        ode_ho.y[0] = 1. 
+        ode_ho.y[1] = 0. # zero velocity
+
+        sim.integrate(20.*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]-1.),1e-10)
+        self.assertLess(math.fabs(ode_ho.y[1]),1e-10)
+    
+    
+    def test_bs_harmonic_with_nbody(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.123);
+        sim.add(m=1e-3,a=2.6,e=0.123);
+        sim.integrator = "BS"
+        ode_ho = sim.create_ode(length=2, needs_nbody=False)
+        ode_ho.derivatives = derivatives_ho
+
+        ode_ho.y[0] = 1. 
+        ode_ho.y[1] = 0. # zero velocity
+
+        sim.integrate(20.*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-10)
+        self.assertLess(math.fabs(ode_ho.y[1]),2e-9)
+    
+    def test_bs_harmonic_with_nbody_coupledy(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.123);
+        sim.add(m=1e-3,a=2.6,e=0.123);
+        sim.integrator = "BS"
+        ode_ho = sim.create_ode(length=2, needs_nbody=True)
+        ode_ho.derivatives = derivatives_ho
+
+        ode_ho.y[0] = 1. 
+        ode_ho.y[1] = 0. # zero velocity
+
+        sim.integrate(20.*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-10)
+        self.assertLess(math.fabs(ode_ho.y[1]),2e-9)
+
+
     
 def af(simp):
     sim = simp.contents
@@ -15,7 +101,7 @@ def af(simp):
     sim.particles[0].az -= z/(r*r*r)
     
 class TestIntegratorBS(unittest.TestCase):
-    def test_bs_additionali_force_only(self):
+    def test_bs_additional_force_only(self):
         sim = rebound.Simulation()
         sim.additional_forces = af
         sim.integrator = "bs"

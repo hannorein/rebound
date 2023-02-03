@@ -84,7 +84,7 @@ class ParticleNotFound(Exception):
     pass
 
 from .tools import hash, mod2pi, M_to_f, E_to_f, M_to_E, spherical_to_xyz, xyz_to_spherical
-from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_saba, reb_simulation_integrator_whfast, reb_simulation_integrator_sei, reb_simulation_integrator_mercurius, reb_simulation_integrator_ias15, ODE, Rotation, Vec3d
+from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_saba, reb_simulation_integrator_whfast, reb_simulation_integrator_sei, reb_simulation_integrator_mercurius, reb_simulation_integrator_ias15, ODE, Rotation, Vec3d, _Vec3d
 from .particle import Particle
 from .plotting import OrbitPlot, OrbitPlotSet
 from .simulationarchive import SimulationArchive

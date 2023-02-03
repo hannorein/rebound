@@ -249,7 +249,7 @@ class TestIntegratorTES(unittest.TestCase):
         
         
         # Remove Apophis from the simulation.
-        sim.remove(sim.particles[2])
+        sim.remove(2)
         e0 = sim.energy()
         outputs=100
         times = np.linspace(2*orbits*period, 3*orbits*period, outputs)
