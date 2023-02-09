@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.23.4
+* Added pyproject.toml file
+
 ### Version 3.23.3
 * Changed the way REBOUND reverses the integration direction when the sign of the timestep is inconsistent with respect to the requested final time.
 * Fixes a memory leak when a tree code is used
