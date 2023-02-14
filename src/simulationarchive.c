@@ -365,7 +365,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                             default:
                                 {
                                     int s2 = fseek(sa->inf,field.size,SEEK_CUR);
-                                    if (debug) printf("SA Field. type=%-6d    size=%llu\n",field.type,field.size);
+                                    if (debug) printf("SA Field. type=%-6d    size=%llu\n",field.type,(unsigned long long)field.size);
                                     if (s2){
                                         read_error = 1;
                                     }
