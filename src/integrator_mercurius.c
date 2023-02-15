@@ -45,19 +45,16 @@
 double reb_integrator_mercurius_F_cond(double d, double dcrit){
   return d - dcrit;
 }
-
-// TLu condition from Listing 3
-int reb_integrator_mercurius_check_F(double d0, double dtry, double dcrit0){
-  double f0 = reb_integrator_mercurius_F_cond(d0, dcrit0);
-  double ftry = reb_integrator_mercurius_F_cond(dtry, dcrit0);
-
-  int c1 = f0 > 0;
-  int c2 = (f0 + ftry) > 0;
-
-  return (c1 == c2);
-}
-
 /*
+double reb_integrator_mercurius_velocity_dependent_F_cond(const struct reb_simulation* const r, const struct reb_particle* const pi, const struct reb_particle* const pi){
+  const double q = sqrt(reb_vec3d_length_squared((struct reb_vec3d) {.x = pi->x - pj->x, .y = pi->y - pj->y, .z = pi->z - pj->z}));
+  const double v2 = reb_vec3d_length_squared((struct reb_vec3d) {.x = pi->vx - pj->vx, .y = pi->vy - pj->vy, .z = pi->vz - pj->vz});
+
+  return q * (1. / sqrt(3 * v2 + r->G * (pi->m + pj->m) / q)) - 30.0 * r->dt;
+
+}
+*/
+
 double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit){
     // This is the changeover function used by the Mercury integrator.
     double y = (d-0.1*dcrit)/(0.9*dcrit);
@@ -69,10 +66,11 @@ double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, 
         return 10.*(y*y*y) - 15.*(y*y*y*y) + 6.*(y*y*y*y*y);
     }
 }
-*/
+
 
 // TLu for now, easiest to just change the default Mercurius splitting function
 // This is actually calculating K!!!! But in the Hernandez 2023 formulism, this is equivalent to L in the old formalism since K' = 0
+/*
 double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit){
     // This is the changeover function used by the Mercury integrator.
     double y = reb_integrator_mercurius_F_cond(d, dcrit);
@@ -82,6 +80,7 @@ double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, 
         return 1.0;
     }
 }
+*/
 
 double reb_integrator_mercurius_L_C4(const struct reb_simulation* const r, double d, double dcrit){
     // This is the changeover function C4 proposed by Hernandez (2019)
@@ -201,18 +200,15 @@ void reb_integrator_mercurius_dh_to_inertial(struct reb_simulation* r){
 
 
 static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
-    // This function predicts close encounters during the timestep
-    // It makes use of the old and new position and velocities obtained
-    // after the Kepler step.
     struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
     struct reb_particle* const particles = r->particles;
     struct reb_particle* const particles_backup = rim->particles_backup;
-    const double* const dcrit = rim->dcrit; // This is for pre-timestep I believe - check this
+    const double* const dcrit = rim->dcrit;
     const int N = r->N;
     const int N_active = r->N_active==-1?r->N:r->N_active;
     const double dt = r->dt;
-    rim->encounterN = N;
-    rim->encounter_map[0] = 1; // TLu Why initialize these to 1? I think this just skips over the central object in IAS15 every time?
+    rim->encounterN = 1;
+    rim->encounter_map[0] = 1;
     if (r->testparticle_type==1){
         rim->tponly_encounter = 0; // testparticles affect massive particles
     }else{
@@ -222,38 +218,22 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
         rim->encounter_map[i] = 0;
     }
     for (int i=0; i<N_active; i++){
-        // calculate new dcrit
-        // double dcrittry_i = reb_integrator_mercurius_crude_post_ts_dcrit_calc(r, particles[i], particles[0]);
         for (int j=i+1; j<N; j++){
+            /*
             const double dxn = particles[i].x - particles[j].x;
             const double dyn = particles[i].y - particles[j].y;
             const double dzn = particles[i].z - particles[j].z;
-            const double rn = (dxn*dxn + dyn*dyn + dzn*dzn); // d^2 post WHFast
-
-            const double dxo = particles_backup[i].x - particles_backup[j].x;
-            const double dyo = particles_backup[i].y - particles_backup[j].y;
-            const double dzo = particles_backup[i].z - particles_backup[j].z;
-            const double ro = (dxo*dxo + dyo*dyo + dzo*dzo); // d^2 pre WHFast
-
-            //double dcrittry_j = reb_integrator_mercurius_crude_post_ts_dcrit_calc(r, particles[j], particles[0]);
-
-            // TLu check if WHFast step is accepted here
-            // Assumes dcrit doesn't change over one timestep
-            /*
-            const double d0 = sqrt(ro);
-            dcritmax2 *= 1.21*dcritmax2;
-            const double dtry = sqrt(rn);
-            */
-
-            // printf("%d %d %e %e %e\n", i, j, d0, dcritmax2, dtry);
-
-            // If WHFast is not accepted, we flag particles for IAS15 integration
             const double dvxn = particles[i].vx - particles[j].vx;
             const double dvyn = particles[i].vy - particles[j].vy;
             const double dvzn = particles[i].vz - particles[j].vz;
+            const double rn = (dxn*dxn + dyn*dyn + dzn*dzn);
+            const double dxo = particles_backup[i].x - particles_backup[j].x;
+            const double dyo = particles_backup[i].y - particles_backup[j].y;
+            const double dzo = particles_backup[i].z - particles_backup[j].z;
             const double dvxo = particles_backup[i].vx - particles_backup[j].vx;
             const double dvyo = particles_backup[i].vy - particles_backup[j].vy;
             const double dvzo = particles_backup[i].vz - particles_backup[j].vz;
+            const double ro = (dxo*dxo + dyo*dyo + dzo*dzo);
 
             const double drndt = (dxn*dvxn+dyn*dvyn+dzn*dvzn)*2.;
             const double drodt = (dxo*dvxo+dyo*dvyo+dzo*dvzo)*2.;
@@ -285,7 +265,8 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
 
             double dcritmax2 = MAX(dcrit[i],dcrit[j]);
             dcritmax2 *= 1.21*dcritmax2;
-            if (rmin < dcritmax2){
+            */
+            if (i != 0){ // if encounter_predict is called we need to integrate ALL particles
                 if (rim->encounter_map[i]==0){
                     rim->encounter_map[i] = i;
                     rim->encounterN++;
@@ -293,6 +274,7 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
                 if (rim->encounter_map[j]==0){
                     rim->encounter_map[j] = j;
                     rim->encounterN++;
+
                 }
                 if (j<N_active){ // Two massive particles have a close encounter
                     rim->tponly_encounter = 0;
@@ -339,6 +321,7 @@ void reb_integrator_mercurius_com_step(struct reb_simulation* const r, double dt
     r->ri_mercurius.com_pos.z += dt*r->ri_mercurius.com_vel.z;
 }
 
+
 void reb_integrator_mercurius_kepler_step(struct reb_simulation* const r, double dt){
     // struct reb_particle* restrict const particles = r->particles;
     struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
@@ -353,20 +336,18 @@ void reb_integrator_mercurius_kepler_step(struct reb_simulation* const r, double
     r->t = old_t;
 }
 
+
 static void reb_mercurius_encounter_step(struct reb_simulation* const r, const double _dt){
     // Only particles having a close encounter are integrated by IAS15.
     struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
-    for (unsigned int i=0; i<r->N; i++){
-      r->particles[i] = rim->particles_backup[i];     // Use backup coordinates
-    }
-    // TLu REMOVE FOR NOW! INTEGRATE ALL PARTICLES
-    /*
+
     if (rim->encounterN<2){
         return; // If there are no particles (other than the star) having a close encounter, then there is nothing to do.
     }
 
     int i_enc = 0;
     rim->encounterNactive = 0;
+    for (unsigned int i=0; i<r->N; i++){
         if(rim->encounter_map[i]){
             struct reb_particle tmp = r->particles[i];      // Copy for potential use for tponly_encounter
             r->particles[i] = rim->particles_backup[i];     // Use coordinates before whfast step
@@ -382,7 +363,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
             }
         }
     }
-    */
+
 
     rim->mode = 1;
 
@@ -444,14 +425,14 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
 
     // if only test particles encountered massive bodies, reset the
     // massive body coordinates to their post Kepler step state
-    /*
+
     if(rim->tponly_encounter){
         for (int i=1;i<rim->encounterNactive;i++){
             unsigned int mi = rim->encounter_map[i];
             r->particles[mi] = rim->particles_backup[mi];
         }
     }
-    */
+
 
     // Reset constant for global particles
 
@@ -485,6 +466,7 @@ double reb_integrator_mercurius_calculate_dcrit_for_particle(struct reb_simulati
     dcrit = MAX(dcrit, rim->hillfac*a*cbrt(r->particles[i].m/(3.*r->particles[0].m)));
     // Criteria 4: physical radius
     dcrit = MAX(dcrit, 2.*r->particles[i].r);
+    //printf("Calculate dcrit for %d: %e %e %e %e\n", i, vc*0.4*r->dt, sqrt(v2)*0.4*r->dt, rim->hillfac*a*cbrt(r->particles[i].m/(3.*r->particles[0].m)), 2.*r->particles[i].r);
     return dcrit;
 }
 
@@ -560,16 +542,12 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
 
 // TLu part2 from Hernandez & Dehnen 2023
 // simple version: not particle-wise. Integrate whole sim w/ WHFast vs IAS15
-// THREE NEST FOR LOOPS but i dont think its avoidable...
+// THREE NESTED FOR LOOPS but i dont think its avoidable...
+
 void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
     const int N = r->N;
     const double* const dcrit = rim->dcrit;
-
-    // TLu temp IAS15 full integration - set encounter_map to identity
-    for (int i=0;i<N;i++){
-        rim->encounter_map[i] = i;
-    }
 
     if (rim->is_synchronized){
         reb_integrator_mercurius_interaction_step(r,r->dt/2.);
@@ -584,7 +562,8 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
 
     // ytry for each particle
     int close_encounter = 0;
-    for (int i=0; i < N; i++){
+
+    for (int i=1; i < N; i++){
       for (int j = i + 1; j < N; j++){
         // pre-timestep
         const double dx = r->particles[i].x - r->particles[j].x;
@@ -593,7 +572,7 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
         const double d0 = sqrt(dx*dx + dy*dy + dz*dz);
 
         double dcrit0 = MAX(dcrit[i],dcrit[j]);
-        dcrit0 *= 1.21*dcrit0;
+        dcrit0 *= 1.21;
 
         if (reb_integrator_mercurius_F_cond(d0, dcrit0) < 0.0){
           // If any particle has a close encounter, we integrate with IAS15
@@ -603,8 +582,10 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
         }
       }
     }
+
     // If there has been a close encounter, advance whole sim with IAS15
     if (close_encounter){
+      reb_mercurius_encounter_predict(r);
       reb_mercurius_encounter_step(r,r->dt);
     }
     // Otherwise, advance with WHFast
@@ -612,8 +593,9 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
       reb_integrator_mercurius_kepler_step(r, r->dt);
     }
     // Now we assess if the step should be accepted
+
     int reject = 0;
-    for (int i=0; i < N; i++){
+    for (int i=1; i < N; i++){
       for (int j = i + 1; j < N; j++){
         // pre-timestep
         const double dx0 = rim->particles_backup[i].x - rim->particles_backup[j].x;
@@ -628,7 +610,7 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
         const double dn = sqrt(dxn*dxn + dyn*dyn + dzn*dzn);
 
         double dcrit0 = MAX(dcrit[i],dcrit[j]);
-        dcrit0 *= 1.21*dcrit0;
+        dcrit0 *= 1.21;
 
         double f0 = reb_integrator_mercurius_F_cond(d0, dcrit0);
         double ftry = reb_integrator_mercurius_F_cond(dn, dcrit0);
@@ -649,12 +631,13 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
         reb_integrator_mercurius_kepler_step(r, r->dt);
       }
       else{
+        reb_mercurius_encounter_predict(r);
         reb_mercurius_encounter_step(r,r->dt);
       }
 
       // Now assess Falt
       int reject_alt = 0;
-      for (int i=0; i < N; i++){
+      for (int i=1; i < N; i++){
         for (int j = i + 1; j < N; j++){
           // pre-timestep
           const double dx0 = rim->particles_backup[i].x - rim->particles_backup[j].x;
@@ -669,7 +652,7 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
           const double dalt = sqrt(dxalt*dxalt + dyalt*dyalt + dzalt*dzalt);
 
           double dcritmax = MAX(dcrit[i],dcrit[j]);
-          dcritmax *= 1.21*dcritmax;
+          dcritmax *= 1.21;
 
           double f0 = reb_integrator_mercurius_F_cond(d0, dcritmax);
           double falt = reb_integrator_mercurius_F_cond(dalt, dcritmax);
@@ -682,11 +665,14 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
           }
           }
         }
+        //printf("9\n");
 
         if (reject_alt){
+          printf("ALTERNATIVE INTEGRATOR REJECTED\n", r->t);
           // Use the original map
           // This should very rarely happen?
           if (close_encounter){
+            reb_mercurius_encounter_predict(r);
             reb_mercurius_encounter_step(r,r->dt);
           }
           else{
@@ -694,6 +680,7 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
           }
         }
       }
+
 
 
     reb_integrator_mercurius_jump_step(r,r->dt/2.);
