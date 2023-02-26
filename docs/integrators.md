@@ -622,16 +622,19 @@ The following code shows how to enable TES and how to set some of its control pa
 The setting for TES are stored in the `reb_simulation_integrator_tes` structure. 
 
 `dq_max` (`double`)
-:   The value of dq/q that triggers a rectification. 
+:   The value of dq/q that triggers a rectification. Generally, this variable can be left at the default value of $10^{-3}$ as the `recti_per_orbit` variable is the main rectification trigger. One exception is for systems where the ratio of the most massive planet's mass to the stellar mass is greater than $10^{-3}$, and in this case the value should be set to that ratio to avoid excessive rectification frequency. However, in this use case it is typically better to use IAS15 instead.    
 
 `recti_per_orbit` (`double`)
-:   The number of rectifications per orbit (this is the main method for rectifications)
+:   The number of rectifications per orbit. This variable can be brought closer to 1 to slightly reduce computational costs in low mass ratio (planets to star) systems but the default value of 1.61803398875, the golden ratio, is recommended to ensure precision. 
 
-`epsilon` `(double`)
-:   Tolerance parameter 
+`epsilon` (`double`)
+:   TES is an adaptive integrator. It chooses its timesteps automatically. This parameter controls the accuracy of the integrator. The default value is $10^{-6}$ and has been chosen heuristically from a wide range of test cases.
 
+    !!! Important
+        It is tempting to change `epsilon` to achieve a speedup at the loss of some accuracy. However, that makes rarely sense. The reason is that TES is a very high (15th!) order integrator. Suppose we increasing the timestep by a factor of 10. This will increase the error by a factor of $10^{15}$. In other words, a simulation that previously was converged to machine precision will now have an error of order unity. 
+        
 `orbital_period` `(double`)
-:   The lowest initial orbital period 
+:   Set this to roughly the period of the particle with the smallest period in the system in whichever units you are using for `G`. 
 
 `warnings` `(uint32_t`)
 :   To silence the TES warning message, set this variable to 1. 
