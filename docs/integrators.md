@@ -41,7 +41,7 @@ The setting for IAS15 are stored in the `reb_simulation_integrator_ias15` struct
 :   IAS15 is an adaptive integrator. It chooses its timesteps automatically. This parameter controls the accuracy of the integrator. The default value is $10^{-9}$. Setting this parameter to 0 turns off adaptive timestepping and a constant timestep will is used. Turning off adaptive time-stepping is rarely useful. 
 
     !!! Important
-        It is tempting to change `epsilon` to achieve a speedup at the loss of some accuracy. However, that makes rarely sense. The reason is that IAS15 is a very high (15th!) order integrator. Suppose we increasing the timestep by a factor of 10. This will increase the error by a factor of $10^{15}$. In other words, a simulation that previously was converged to machine precision will now have an error of order unity. 
+        It is tempting to change `epsilon` to achieve a speedup at the loss of some accuracy. However, that makes rarely sense. The reason is that IAS15 is a very high (15th!) order integrator. Suppose we increase the timestep by a factor of 10. This will increase the error by a factor of $10^{15}$. In other words, a simulation that previously was converged to machine precision will now have an error of order unity. 
 
 `min_dt` (`double`)
 :   This sets the minimum allowed timestep. The default value is 0. Set this to a finite value if the adaptive timestep becomes excessively small, for example during close encounters or because of finite floating point precision. Use with caution and make sure the simulation results still make physically sense as you might be in danger of ignoring small timescales in the problem. 
@@ -605,7 +605,7 @@ The following code shows how to enable TES and how to set some of its control pa
     ```c
     struct reb_simulation* r = reb_create_simulation();
     r->integrator = REB_INTEGRATOR_TES;
-    r->ri_tes.dq_max = 1e-3;
+    r->ri_tes.dq_max = 1e-2;
     r->ri_tes.recti_per_orbit = 1.61803398875;
     r->ri_tes.epsilon = 1e-6;
     ```
@@ -614,27 +614,27 @@ The following code shows how to enable TES and how to set some of its control pa
     ```python
     sim = rebound.Simulation()
     sim.integrator = "tes"
-    sim.ri_tes.dq_max = 1e-3
+    sim.ri_tes.dq_max = 1e-2
     sim.ri_tes.recti_per_orbit = 1.61803398875
     sim.ri_tes.epsilon = 1e-6
     ```
 
-The setting for TES are stored in the `reb_simulation_integrator_tes` structure. 
+The setting for TES are stored in the `reb_simulation_integrator_tes` structure. For almost all use cases TES will work best with default settings for all configuration variables below and can therefore be left uninitialised in your code. The two cases where a user may want the adjust these values are if: 1) a severe shrinkage of the semi-major axis of the inner-most planet is expected; 2) the ratio of the most massive planet mass to that of the star exceeds 1e-2, and in this case it is typically better to use IAS15.
 
 `dq_max` (`double`)
-:   The value of dq/q that triggers a rectification. Generally, this variable can be left at the default value of $10^{-3}$ as the `recti_per_orbit` variable is the main rectification trigger. One exception is for systems where the ratio of the most massive planet's mass to the stellar mass is greater than $10^{-3}$, and in this case the value should be set to that ratio to avoid excessive rectification frequency. However, in this use case it is typically better to use IAS15 instead.    
+:   The value of dq/q that triggers a rectification. Generally, this variable can be left at the default value of $10^{-2}$ as the `recti_per_orbit` variable is the main rectification trigger. One exception is for systems where the ratio of the most massive planet's mass to the stellar mass is greater than $10^{-2}$, and in this case the value should be set to that ratio to avoid excessive rectification frequency. However, in this use case it is typically better to use IAS15 instead.    
 
 `recti_per_orbit` (`double`)
-:   The number of rectifications per orbit. This variable can be brought closer to 1 to slightly reduce computational costs in low mass ratio (planets to star) systems but the default value of 1.61803398875, the golden ratio, is recommended to ensure precision. 
+:   The number of rectifications per orbit. This variable can be brought closer to 1 to slightly reduce computational costs in low mass ratio (planets to star) systems but the default value of 1.61803398875, the golden ratio, is recommended to ensure accuracy. 
 
 `epsilon` (`double`)
-:   TES is an adaptive integrator. It chooses its timesteps automatically. This parameter controls the accuracy of the integrator. The default value is $10^{-6}$ and has been chosen heuristically from a wide range of test cases.
+:   TES is an adaptive integrator. It chooses its timesteps automatically. This parameter controls the accuracy of the integrator. The default value is $10^{-6}$ which has been chosen heuristically from a wide range of test cases and is therefore the recommended value for all integrations.
 
     !!! Important
-        It is tempting to change `epsilon` to achieve a speedup at the loss of some accuracy. However, that makes rarely sense. The reason is that TES is a very high (15th!) order integrator. Suppose we increasing the timestep by a factor of 10. This will increase the error by a factor of $10^{15}$. In other words, a simulation that previously was converged to machine precision will now have an error of order unity. 
+        It is tempting to change `epsilon` to achieve a speedup at the loss of some accuracy. However, that makes rarely sense. The reason is that TES is a very high (15th!) order integrator. Suppose we increase the timestep by a factor of 10. This will increase the error by a factor of $10^{15}$. In other words, a simulation that previously was converged to machine precision will now have an error of order unity. 
         
 `orbital_period` `(double`)
-:   Set this to roughly the period of the particle with the smallest period in the system in whichever units you are using for `G`. 
+:   This specifies the shortest dynamic period of all objects in the system and is set automatically by REBOUND. The only use case for changing this is if you are expecting severe shrinkage of the semi-major axis of the inner-most planet and in this case it might make sense to reduce the period accordingly.
 
 `warnings` `(uint32_t`)
 :   To silence the TES warning message, set this variable to 1. 

@@ -62,7 +62,6 @@ class TestIntegratorTES(unittest.TestCase):
         sim.ri_tes.recti_per_orbit = recti_per_orbit
         sim.ri_tes.epsilon = tol
         sim.ri_tes.output_samples = output_samples
-        sim.ri_tes.orbital_period = period
         sim.ri_tes.orbits = orbits
                 
         e0 = sim.energy()
@@ -114,7 +113,6 @@ class TestIntegratorTES(unittest.TestCase):
         sim.ri_tes.recti_per_orbit = recti_per_orbit
         sim.ri_tes.epsilon = tol
         sim.ri_tes.output_samples = output_samples
-        sim.ri_tes.orbital_period = period
         sim.ri_tes.orbits = orbits
         
         t0_tes = time.time()
