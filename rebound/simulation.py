@@ -1665,6 +1665,9 @@ class Simulation(Structure):
                 elif particle.lower() == "outer solar system":  # built in test dataset
                     data.add_outer_solar_system(self)
                 else:
+                    if "frame" not in kwargs:
+                        if hasattr(self, 'default_plane'):
+                            kwargs["plane"] = self.default_plane # allow ASSIST to set default plane
                     self.add(horizons.getParticle(particle, **kwargs), hash=particle)
                     units_convert_particle(self.particles[-1], 'km', 's', 'kg', hash_to_unit(self.python_unit_l), hash_to_unit(self.python_unit_t), hash_to_unit(self.python_unit_m))
             else: 
