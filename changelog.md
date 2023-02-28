@@ -4,6 +4,10 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.23.5
+* Added new units shortcuts (year,years,massist)
+* Rearranged some loops and switch statements (doesn't affect floating point numbers). 
+
 ### Version 3.23.4
 * Added pyproject.toml file
 
