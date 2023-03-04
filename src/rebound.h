@@ -162,6 +162,7 @@ struct reb_simulation_integrator_mercurius {
     // int* close_encounters; // TLu tracking which integrator is used for each particle
     struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
     struct reb_vec3d com_vel;
+    double current_L; // TLu tracking L for the entire timestep
 };
 
 struct reb_simulation_integrator_sei {
