@@ -233,7 +233,7 @@ struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_s
 }
 
 void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, const char* filename,  struct reb_simulationarchive* sa_index, enum reb_input_binary_messages* warnings){
-    const int debug = 1;
+    const int debug = 0;
     sa->inf = fopen(filename,"r");
     if (sa->inf==NULL){
         *warnings |= REB_INPUT_BINARY_ERROR_NOFILE;
