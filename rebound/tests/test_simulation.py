@@ -141,7 +141,7 @@ class TestSimulation(unittest.TestCase):
         self.assertEqual(self.sim.N,4)
         self.assertEqual(self.sim.N_real,2)
         self.assertEqual(self.sim.calculate_megno(),0)
-        self.assertTrue(math.isnan(self.sim.calculate_lyapunov()))
+        self.assertEqual(self.sim.calculate_lyapunov(),0)
         
     def test_energy(self):
         self.sim.move_to_com()
