@@ -1628,6 +1628,8 @@ class Simulation(Structure):
         """
         Return the current Lyapunov Characteristic Number (LCN).
         Note that you need to call init_megno() before the start of the simulation.
+        Different definitions of the LCN exist.  Here, we're following Eq 24 of 
+        Cincotta and Simo (2000): https://aas.aanda.org/articles/aas/abs/2000/20/h1686/h1686.html.
         To get a timescale (the Lyapunov timescale), take the inverse of this quantity.
         """
         if self._calculate_megno==0:

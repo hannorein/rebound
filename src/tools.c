@@ -1384,8 +1384,12 @@ double reb_tools_calculate_megno(struct reb_simulation* r){ // Returns the MEGNO
 	if (r->t==0.) return 0.;
 	return r->megno_Yss/r->t;
 }
-double reb_tools_calculate_lyapunov(struct reb_simulation* r){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
-	if (r->t==0.) return 0.;
+double reb_tools_calculate_lyapunov(struct reb_simulation* r){ 
+    // Returns the largest Lyapunov characteristic number (LCN)
+    // Note that different definitions exist. 
+    // Here, we're following Eq 24 of Cincotta and Simo (2000)
+    // https://aas.aanda.org/articles/aas/abs/2000/20/h1686/h1686.html
+	if (r->megno_var_t==0.0) return 0.;
 	return r->megno_cov_Yt/r->megno_var_t;
 }
 double reb_tools_megno_deltad_delta(struct reb_simulation* const r){
