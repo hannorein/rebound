@@ -54,7 +54,7 @@ class SimulationArchive(Structure):
                 ("auto_walltime", c_double), 
                 ("auto_step", c_ulonglong), 
                 ("nblobs", c_long), 
-                ("offset", POINTER(c_uint32)), 
+                ("offset64", POINTER(c_uint64)), 
                 ("t", POINTER(c_double)) 
                 ]
     def __repr__(self):
