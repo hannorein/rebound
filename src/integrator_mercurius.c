@@ -296,20 +296,6 @@ void reb_integrator_mercurius_interaction_step(struct reb_simulation* const r, d
     }
 }
 
-void reb_integrator_mercurius_ias15_interaction_step(struct reb_simulation* const r, double dt){
-    struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
-    const int N = r->N;
-    for (int i=0; i<N; i++){
-        r->particles[i] = rim->particles_backup[i];
-    }
-    struct reb_particle* restrict const particles = r->particles;
-    for (int i=1;i<N;i++){
-        particles[i].vx += dt*particles[i].ax;
-        particles[i].vy += dt*particles[i].ay;
-        particles[i].vz += dt*particles[i].az;
-    }
-}
-
 void reb_integrator_mercurius_jump_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
     const int N_active = r->N_active==-1?r->N:r->N_active;
@@ -345,22 +331,6 @@ void reb_integrator_mercurius_kepler_step(struct reb_simulation* const r, double
         reb_whfast_kepler_solver(r,r->particles,r->G*r->particles[0].m,i,dt); // in dh
     }
 }
-
-/*
-void reb_integrator_mercurius_kepler_step(struct reb_simulation* const r, double dt){
-    // struct reb_particle* restrict const particles = r->particles;
-    struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
-    const int N = r->N;
-    for (unsigned int i=0; i<r->N; i++){
-      r->particles[i] = rim->particles_backup[i];     // Use backup coordinates
-    }
-    const double old_t = r->t;
-    for (int i=1;i<N;i++){
-        reb_whfast_kepler_solver(r,r->particles,r->G*r->particles[0].m,i,dt); // in dh
-    }
-    r->t = old_t;
-}
-*/
 
 
 static void reb_mercurius_encounter_step(struct reb_simulation* const r, const double _dt){
@@ -402,7 +372,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
     reb_integrator_ias15_reset(r);
 
     r->dt = 0.0001*_dt; // start with a small timestep.
-    printf("Before ias15_part2\n");
+
     while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
         struct reb_particle star = r->particles[0]; // backup velocity
         r->particles[0].vx = 0; // star does not move in dh
@@ -568,7 +538,177 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
     }
 }
 
-// TLu part2 from Hernandez & Dehnen 2023
+void reb_integrator_mercurius_whfast_step(struct reb_simulation* const r, double dt){
+  struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
+  reb_update_acceleration(r);
+  if (rim->is_synchronized){
+      reb_integrator_mercurius_interaction_step(r,r->dt/2.);
+  }else{
+      reb_integrator_mercurius_interaction_step(r,r->dt);
+  }
+  reb_integrator_mercurius_jump_step(r,r->dt/2.);
+  reb_integrator_mercurius_com_step(r,r->dt);
+
+  // WHFast Kepler step for all particles
+  //reb_update_acceleration(r);
+  reb_integrator_mercurius_kepler_step(r, r->dt); // Kepler solver does NOT advance timestep
+  reb_integrator_mercurius_jump_step(r,r->dt/2.);
+
+  rim->is_synchronized = 0;
+  if (rim->safe_mode){
+      reb_integrator_mercurius_synchronize(r);
+  }
+}
+
+void reb_integrator_mercurius_ias15_step(struct reb_simulation* const r, double dt){
+  struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
+  reb_update_acceleration(r);
+  if (rim->is_synchronized){
+      reb_integrator_mercurius_interaction_step(r,r->dt/2.);
+  }else{
+      reb_integrator_mercurius_interaction_step(r,r->dt);
+  }
+  reb_integrator_mercurius_jump_step(r,r->dt/2.);
+  reb_integrator_mercurius_com_step(r,r->dt);
+
+  reb_mercurius_encounter_predict(r);
+  reb_mercurius_encounter_step(r,r->dt);
+  reb_integrator_mercurius_jump_step(r,r->dt/2.);
+
+  rim->is_synchronized = 0;
+  if (rim->safe_mode){
+      reb_integrator_mercurius_synchronize(r);
+  }
+}
+
+// Check F for pre-timestep using backup particles
+int F_pre_timestep(struct reb_simulation* const r){
+  struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
+  const int N = r->N;
+  const double* const dcrit = rim->dcrit;
+
+  for (int i=1; i < N; i++){
+    for (int j = i + 1; j < N; j++){
+      // pre-timestep
+      const double dx0 = rim->particles_backup[i].x - rim->particles_backup[j].x;
+      const double dy0 = rim->particles_backup[i].y - rim->particles_backup[j].y;
+      const double dz0 = rim->particles_backup[i].z - rim->particles_backup[j].z;
+      const double d0 = sqrt(dx0*dx0 + dy0*dy0 + dz0*dz0);
+
+      double dcritmax = MAX(dcrit[i],dcrit[j]);
+      dcritmax *= 1.21;
+
+      if (reb_integrator_mercurius_F_cond(d0, dcritmax) < 0.0){
+        // If F(y0) < 0 - close encounter
+        rim->current_L = 0.;
+        return 1;
+      }
+    }
+  }
+
+  return 0;
+}
+
+int F_current(struct reb_simulation* const r){
+  struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
+  const int N = r->N;
+  const double* const dcrit = rim->dcrit;
+
+  for (int i=1; i < N; i++){
+    for (int j = i + 1; j < N; j++){
+      // post-timestep
+      const double dx = r->particles[i].x - r->particles[j].x;
+      const double dy = r->particles[i].y - r->particles[j].y;
+      const double dz = r->particles[i].z - r->particles[j].z;
+      const double d1 = sqrt(dx*dx + dy*dy + dz*dz);
+
+      double dcritmax = MAX(dcrit[i],dcrit[j]);
+      dcritmax *= 1.21;
+
+      if (reb_integrator_mercurius_F_cond(d1, dcritmax) < 0.0){
+        // If F(y1) < 0 - close encounter
+        rim->current_L = 0.;
+        return 1;
+      }
+    }
+  }
+
+  return 0;
+}
+
+// Checks Ftry both pre- and post- timestep as in Listing 3 of Hernandez & Dehnen (2023)
+int F_try(struct reb_simulation* const r){
+  struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
+  const int N = r->N;
+  const double* const dcrit = rim->dcrit;
+
+  for (int i=1; i < N; i++){
+    for (int j = i + 1; j < N; j++){
+      // pre-timestep
+      const double dx0 = rim->particles_backup[i].x - rim->particles_backup[j].x;
+      const double dy0 = rim->particles_backup[i].y - rim->particles_backup[j].y;
+      const double dz0 = rim->particles_backup[i].z - rim->particles_backup[j].z;
+      const double d0 = sqrt(dx0*dx0 + dy0*dy0 + dz0*dz0);
+
+      // post-timestep
+      const double dxtry = r->particles[i].x - r->particles[j].x;
+      const double dytry = r->particles[i].y - r->particles[j].y;
+      const double dztry = r->particles[i].z - r->particles[j].z;
+      const double dtry = sqrt(dxtry*dxtry + dytry*dytry + dztry*dztry);
+
+      double dcrit0 = MAX(dcrit[i],dcrit[j]);
+      dcrit0 *= 1.21;
+
+      double f0 = reb_integrator_mercurius_F_cond(d0, dcrit0);
+      double ftry = reb_integrator_mercurius_F_cond(dtry, dcrit0);
+
+      // Check if we should reject the step
+      if ((f0 > 0) != (f0 + ftry > 0)){
+        // Do something to current_L
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+// Checks Falt both pre- and post- timestep as in Listing 3 of Hernandez & Dehnen (2023)
+int F_alt(struct reb_simulation* const r){
+  struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
+  const int N = r->N;
+  const double* const dcrit = rim->dcrit;
+
+  for (int i=1; i < N; i++){
+    for (int j = i + 1; j < N; j++){
+      // pre-timestep
+      const double dx0 = rim->particles_backup[i].x - rim->particles_backup[j].x;
+      const double dy0 = rim->particles_backup[i].y - rim->particles_backup[j].y;
+      const double dz0 = rim->particles_backup[i].z - rim->particles_backup[j].z;
+      const double d0 = sqrt(dx0*dx0 + dy0*dy0 + dz0*dz0);
+
+      // alternative integrator
+      const double dxalt = r->particles[i].x - r->particles[j].x;
+      const double dyalt = r->particles[i].y - r->particles[j].y;
+      const double dzalt = r->particles[i].z - r->particles[j].z;
+      const double dalt = sqrt(dxalt*dxalt + dyalt*dyalt + dzalt*dzalt);
+
+      double dcrit0 = MAX(dcrit[i],dcrit[j]);
+      dcrit0 *= 1.21;
+
+      double f0 = reb_integrator_mercurius_F_cond(d0, dcrit0);
+      double falt = reb_integrator_mercurius_F_cond(dalt, dcrit0);
+
+      // Check if we should reject the step
+      if ((f0 < 0) && (f0 + falt < 0)){
+        // Do something to current_L
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+// TLu part2 from Hernandez & Dehnen 2023 Listing 3
 // simple version: not particle-wise. Integrate whole sim w/ WHFast vs IAS15
 // THREE NESTED FOR LOOPS but i dont think its avoidable...
 /*
@@ -577,152 +717,71 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     const int N = r->N;
     const double* const dcrit = rim->dcrit;
 
-    if (rim->is_synchronized){
-        reb_integrator_mercurius_interaction_step(r,r->dt/2.);
-    }else{
-        reb_integrator_mercurius_interaction_step(r,r->dt);
-    }
-    reb_integrator_mercurius_jump_step(r,r->dt/2.);
-    reb_integrator_mercurius_com_step(r,r->dt);
-
     // Make copy of particles
     memcpy(rim->particles_backup,r->particles,N*sizeof(struct reb_particle));
 
     // ytry for each particle
-    int close_encounter = 0;
-
-    for (int i=1; i < N; i++){
-      for (int j = i + 1; j < N; j++){
-        // pre-timestep
-        const double dx = r->particles[i].x - r->particles[j].x;
-        const double dy = r->particles[i].y - r->particles[j].y;
-        const double dz = r->particles[i].z - r->particles[j].z;
-        const double d0 = sqrt(dx*dx + dy*dy + dz*dz);
-
-        double dcrit0 = MAX(dcrit[i],dcrit[j]);
-        dcrit0 *= 1.21;
-
-        if (reb_integrator_mercurius_F_cond(d0, dcrit0) < 0.0){
-          // If any particle has a close encounter, we integrate with IAS15
-          close_encounter = 1;
-          i = N;
-          break;
-        }
-      }
-    }
+    int f0 = F_pre_timestep(r);
 
     // If there has been a close encounter, advance whole sim with IAS15
-    if (close_encounter){
-      reb_mercurius_encounter_predict(r);
-      reb_mercurius_encounter_step(r,r->dt);
+    if (f0){
+      rim->current_L = 0.;
+      reb_integrator_mercurius_ias15_step(r, r->dt);
     }
     // Otherwise, advance with WHFast
     else{
-      reb_integrator_mercurius_kepler_step(r, r->dt);
+      rim->current_L = 1.;
+      reb_integrator_mercurius_whfast_step(r, r->dt);
     }
-    // Now we assess if the step should be accepted
+    // Now we assess if the step should be accepted by evaluating Ftry
 
-    int reject = 0;
-    for (int i=1; i < N; i++){
-      for (int j = i + 1; j < N; j++){
-        // pre-timestep
-        const double dx0 = rim->particles_backup[i].x - rim->particles_backup[j].x;
-        const double dy0 = rim->particles_backup[i].y - rim->particles_backup[j].y;
-        const double dz0 = rim->particles_backup[i].z - rim->particles_backup[j].z;
-        const double d0 = sqrt(dx0*dx0 + dy0*dy0 + dz0*dz0);
+    int ftry = F_try(r);
 
-        // post-timestep
-        const double dxn = r->particles[i].x - r->particles[j].x;
-        const double dyn = r->particles[i].y - r->particles[j].y;
-        const double dzn = r->particles[i].z - r->particles[j].z;
-        const double dn = sqrt(dxn*dxn + dyn*dyn + dzn*dzn);
-
-        double dcrit0 = MAX(dcrit[i],dcrit[j]);
-        dcrit0 *= 1.21;
-
-        double f0 = reb_integrator_mercurius_F_cond(d0, dcrit0);
-        double ftry = reb_integrator_mercurius_F_cond(dn, dcrit0);
-
-        // Check if we should reject the step
-        if ((f0 > 0) != (f0 + ftry > 0)){
-          reject = 1;
-          i = N;
-          break;
-        }
+    if (ftry){
+      // Reject first integrator, try alternative integrators
+      printf("REJECT FIRST INTEGRATOR\n");
+      // In both cases, reset to backup values
+      for (int i=0; i<N; i++){
+          r->particles[i] = rim->particles_backup[i];
       }
-    }
 
-    if (reject){
-      // Use alternative integrators
-      // In both cases, particles are reset to backup values internally
-      if (close_encounter){
-        reb_integrator_mercurius_kepler_step(r, r->dt);
+      if (f0){
+        rim->current_L = 1.;
+        reb_integrator_mercurius_whfast_step(r, r->dt);
       }
       else{
-        reb_mercurius_encounter_predict(r);
-        reb_mercurius_encounter_step(r,r->dt);
+        rim->current_L = 0.;
+        reb_integrator_mercurius_ias15_step(r, r->dt);
       }
 
       // Now assess Falt
-      int reject_alt = 0;
-      for (int i=1; i < N; i++){
-        for (int j = i + 1; j < N; j++){
-          // pre-timestep
-          const double dx0 = rim->particles_backup[i].x - rim->particles_backup[j].x;
-          const double dy0 = rim->particles_backup[i].y - rim->particles_backup[j].y;
-          const double dz0 = rim->particles_backup[i].z - rim->particles_backup[j].z;
-          const double d0 = sqrt(dx0*dx0 + dy0*dy0 + dz0*dz0);
-
-          // alternative integrator
-          const double dxalt = r->particles[i].x - r->particles[j].x;
-          const double dyalt = r->particles[i].y - r->particles[j].y;
-          const double dzalt = r->particles[i].z - r->particles[j].z;
-          const double dalt = sqrt(dxalt*dxalt + dyalt*dyalt + dzalt*dzalt);
-
-          double dcritmax = MAX(dcrit[i],dcrit[j]);
-          dcritmax *= 1.21;
-
-          double f0 = reb_integrator_mercurius_F_cond(d0, dcritmax);
-          double falt = reb_integrator_mercurius_F_cond(dalt, dcritmax);
-
-          if ((f0 < 0) && (f0 + falt < 0)){
-            // reject alternative integrator
-            reject_alt = 1;
-            i = N;
-            break;
-          }
-          }
-        }
-        //printf("9\n");
-
-        if (reject_alt){
+      int falt = F_alt(r);
+        if (falt){
           printf("ALTERNATIVE INTEGRATOR REJECTED\n", r->t);
           // Use the original map
           // This should very rarely happen?
-          if (close_encounter){
-            reb_mercurius_encounter_predict(r);
-            reb_mercurius_encounter_step(r,r->dt);
+          // In both cases, reset to backup values
+          for (int i=0; i<N; i++){
+              r->particles[i] = rim->particles_backup[i];
+          }
+          if (f0){
+            //rim->current_L = 0.;
+            reb_integrator_mercurius_ias15_step(r, r->dt);
           }
           else{
-            reb_integrator_mercurius_kepler_step(r, r->dt);
+            //rim->current_L = 1.;
+            reb_integrator_mercurius_whfast_step(r, r->dt);
           }
         }
       }
-
-
-
-    reb_integrator_mercurius_jump_step(r,r->dt/2.);
-
-    rim->is_synchronized = 0;
-    if (rim->safe_mode){
-        reb_integrator_mercurius_synchronize(r);
-    }
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;
 }
 */
+
 // TLu test w/ Listing 2
+
 void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
     const int N = r->N;
@@ -731,139 +790,38 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     // Make copy of particles
     memcpy(rim->particles_backup,r->particles,N*sizeof(struct reb_particle));
 
-    // Check f(y0)
-    int fy0 = 0;
-
     // set current L at the beginning of each timestep
-    rim->current_L = 1.0;
+    rim->current_L = 1.; // 1 means no close encounter
 
-    for (int i=1; i < N; i++){
-      for (int j = i + 1; j < N; j++){
-        // pre-timestep
-        const double dx0 = rim->particles_backup[i].x - rim->particles_backup[j].x;
-        const double dy0 = rim->particles_backup[i].y - rim->particles_backup[j].y;
-        const double dz0 = rim->particles_backup[i].z - rim->particles_backup[j].z;
-        const double d0 = sqrt(dx0*dx0 + dy0*dy0 + dz0*dz0);
+    // Check F(y0)
+    int fy0 = F_pre_timestep(r);
 
-        double dcritmax = MAX(dcrit[i],dcrit[j]);
-        dcritmax *= 1.21;
-
-        if (reb_integrator_mercurius_F_cond(d0, dcritmax) < 0.0){
-          // If F(y0) < 0 - close encounter
-          printf("Close encounter detected\n");
-          rim->current_L = 0.0;
-          fy0 = 1;
-          i = N;
-          break;
-        }
-      }
-    }
-
-    if (fy0 == 0){
+    if (!fy0){
       // No close encounter at y0 - advance sim with WHFast step
-      printf("Try WHFast\n");
-      reb_update_acceleration(r);
-      if (rim->is_synchronized){
-          printf("Updating WHFast Accelerations\n");
-          //reb_update_acceleration(r);
-          reb_integrator_mercurius_interaction_step(r,r->dt/2.);
-      }else{
-          reb_integrator_mercurius_interaction_step(r,r->dt);
-      }
-      reb_integrator_mercurius_jump_step(r,r->dt/2.);
-      reb_integrator_mercurius_com_step(r,r->dt);
-
-      // WHFast Kepler step for all particles
-      reb_integrator_mercurius_kepler_step(r, r->dt); // Kepler solver does NOT advance timestep
-      reb_integrator_mercurius_jump_step(r,r->dt/2.);
-
-      rim->is_synchronized = 0;
-      if (rim->safe_mode){
-          reb_integrator_mercurius_synchronize(r);
-      }
+      reb_integrator_mercurius_whfast_step(r, r->dt);
 
       // Now check condition f(y1)
-      int fy1 = 0;
+      int fy1 = F_current(r);
 
-      for (int i=1; i < N; i++){
-        for (int j = i + 1; j < N; j++){
-          // post-timestep
-          const double dx = r->particles[i].x - r->particles[j].x;
-          const double dy = r->particles[i].y - r->particles[j].y;
-          const double dz = r->particles[i].z - r->particles[j].z;
-          const double dp = sqrt(dx*dx + dy*dy + dz*dz);
-
-
-          double dcritmax = MAX(dcrit[i],dcrit[j]);
-          dcritmax *= 1.21;
-
-          printf("dp, dcrit = %e,%e\n", dp, dcritmax);
-
-          if (reb_integrator_mercurius_F_cond(dp, dcritmax) < 0.0){
-            // If F(y1) < 0 - close encounter
-            fy1 = 1;
-            i = N;
-            break;
-          }
-        }
-      }
-
-      if (fy1 == 0){
-        // No close encounter post-timestep - we accept the WHFast step
-        printf("Accepted WHFast\n");
-        //exit(1);
-      }
-      else{
+      if (fy1){
         // This means close encounter post-timestep but NOT pre-timestep: we reject the WHFast step and integrate the backup particles with IAS15
-        printf("Reject WHFast and try IAS15\n");
         for (int i=0; i<N; i++){
             r->particles[i] = rim->particles_backup[i];
         }
-        r->ri_mercurius.mode = 3;
-        rim->current_L = 0.0;
-        reb_update_acceleration(r);
-        r->ri_mercurius.mode = 0;
-        reb_integrator_mercurius_interaction_step(r,r->dt);
-        reb_integrator_mercurius_jump_step(r,r->dt/2.);
-        reb_integrator_mercurius_com_step(r,r->dt);
-
-        reb_mercurius_encounter_predict(r);
-        reb_mercurius_encounter_step(r,r->dt);
-        reb_integrator_mercurius_jump_step(r,r->dt/2.);
-
-        rim->is_synchronized = 0;
-        if (rim->safe_mode){
-            reb_integrator_mercurius_synchronize(r);
-        }
-        //exit(1);
+        reb_integrator_mercurius_ias15_step(r, r->dt);
       }
     }
     else{
       // There HAS been a close encounter pre-timestep - advance with IAS15
-      printf("Try IAS15\n");
-      reb_update_acceleration(r);
-      reb_integrator_mercurius_interaction_step(r,r->dt);
-      reb_integrator_mercurius_jump_step(r,r->dt/2.);
-      reb_integrator_mercurius_com_step(r,r->dt);
-
-      reb_mercurius_encounter_predict(r);
-      reb_mercurius_encounter_step(r,r->dt);
-      reb_integrator_mercurius_jump_step(r,r->dt/2.);
-
-      rim->is_synchronized = 0;
-      if (rim->safe_mode){
-          reb_integrator_mercurius_synchronize(r);
-      }
+      reb_integrator_mercurius_ias15_step(r, r->dt);
     }
-
-    //if (r->t > 152.){
-      //exit(1);
-    //}
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;
 }
+
 /*
+// Old Mercurius version
 void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
     const int N = r->N;
@@ -909,8 +867,8 @@ void reb_integrator_mercurius_synchronize(struct reb_simulation* r){
             // Setting default switching function
             rim->L = reb_integrator_mercurius_L_mercury;
         }
-        printf("Before Synchronize\n");
-        reb_update_acceleration(r);
+        //printf("Before Synchronize\n");
+        reb_update_acceleration(r); // why do we need this???
         reb_integrator_mercurius_interaction_step(r,r->dt/2.);
 
         reb_integrator_mercurius_dh_to_inertial(r);

@@ -127,7 +127,7 @@ void reb_step(struct reb_simulation* const r){
     }
 
     // Calculate accelerations.
-    printf("\nBefore part2 t=%e\n", r->t);
+    //printf("\nBefore part2 t=%e\n", r->t);
     reb_calculate_acceleration(r);
     if (r->N_var){
         reb_calculate_acceleration_var(r);

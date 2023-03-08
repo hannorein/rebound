@@ -541,7 +541,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
                             const double dcritmax = MAX(dcrit[i],dcrit[j]);
                             const double L = current_L;//_L(r,_r,dcritmax);
-                            printf("WHFast L: %e\n", L);
+                            //printf("WHFast L: %e\n", L);
                             const double prefact = G*L/(_r*_r*_r);
                             const double prefactj = -prefact*particles[j].m;
                             const double prefacti = prefact*particles[i].m;
@@ -760,106 +760,6 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                 break;
                 case 2: // Skipp WHFAST part because of synchronization
                 break;
-
-                case 3: // TLu temp for rejected WHFast step bc of F(y1)
-                {
-                    const double* const dcrit = r->ri_mercurius.dcrit;
-#ifndef OPENMP
-                    for (int i=0; i<_N_real; i++){
-                        particles[i].ax = 0;
-                        particles[i].ay = 0;
-                        particles[i].az = 0;
-                    }
-                    for (int i=2; i<_N_active; i++){
-                        if (reb_sigint) return;
-                        for (int j=1; j<i; j++){
-                            const double dx = particles[i].x - particles[j].x;
-                            const double dy = particles[i].y - particles[j].y;
-                            const double dz = particles[i].z - particles[j].z;
-                            const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                            const double dcritmax = MAX(dcrit[i],dcrit[j]);
-                            const double L = current_L;//_L(r,_r,dcritmax);
-                            printf("WHFast F(yi) L: %e\n", L);
-                            const double prefact = G*L/(_r*_r*_r);
-                            const double prefactj = -prefact*particles[j].m;
-                            const double prefacti = prefact*particles[i].m;
-                            particles[i].ax    += prefactj*dx;
-                            particles[i].ay    += prefactj*dy;
-                            particles[i].az    += prefactj*dz;
-                            particles[j].ax    += prefacti*dx;
-                            particles[j].ay    += prefacti*dy;
-                            particles[j].az    += prefacti*dz;
-                        }
-                    }
-                    const int startitestp = MAX(_N_active,2);
-                    for (int i=startitestp; i<_N_real; i++){
-                        if (reb_sigint) return;
-                        for (int j=1; j<_N_active; j++){
-                            const double dx = particles[i].x - particles[j].x;
-                            const double dy = particles[i].y - particles[j].y;
-                            const double dz = particles[i].z - particles[j].z;
-                            const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                            const double dcritmax = MAX(dcrit[i],dcrit[j]);
-                            const double L = _L(r,_r,dcritmax);
-                            //printf("WHFast test L: %d %d %e\n", i, j, L);
-                            const double prefact = G*L/(_r*_r*_r);
-                            const double prefactj = -prefact*particles[j].m;
-                            particles[i].ax    += prefactj*dx;
-                            particles[i].ay    += prefactj*dy;
-                            particles[i].az    += prefactj*dz;
-                            if (_testparticle_type){
-                                const double prefacti = prefact*particles[i].m;
-                                particles[j].ax    += prefacti*dx;
-                                particles[j].ay    += prefacti*dy;
-                                particles[j].az    += prefacti*dz;
-                            }
-                        }
-                    }
-#else // OPENMP
-                    particles[0].ax = 0;
-                    particles[0].ay = 0;
-                    particles[0].az = 0;
-#pragma omp parallel for schedule(guided)
-                    for (int i=1; i<_N_real; i++){
-                        particles[i].ax = 0;
-                        particles[i].ay = 0;
-                        particles[i].az = 0;
-                        for (int j=1; j<_N_active; j++){
-                            if (i==j) continue;
-                            const double dx = particles[i].x - particles[j].x;
-                            const double dy = particles[i].y - particles[j].y;
-                            const double dz = particles[i].z - particles[j].z;
-                            const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                            const double dcritmax = MAX(dcrit[i],dcrit[j]);
-                            const double L = _L(r,_r,dcritmax);
-                            //printf("WHFast OpenMP L: %d %d %e\n", i, j, L);
-                            const double prefact = -G*particles[j].m*L/(_r*_r*_r);
-                            particles[i].ax    += prefact*dx;
-                            particles[i].ay    += prefact*dy;
-                            particles[i].az    += prefact*dz;
-                        }
-                    }
-                    if (_testparticle_type){
-                    for (int i=1; i<_N_active; i++){
-                        for (int j=_N_active; j<_N_real; j++){
-                            const double dx = particles[i].x - particles[j].x;
-                            const double dy = particles[i].y - particles[j].y;
-                            const double dz = particles[i].z - particles[j].z;
-                            const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                            const double dcritmax = MAX(dcrit[i],dcrit[j]);
-                            const double L = _L(r,_r,dcritmax);
-                            //printf("WHFast OpenMP test L: %d %d %e\n", i, j, L);
-                            const double prefact = -G*particles[j].m*L/(_r*_r*_r);
-                            particles[i].ax    += prefact*dx;
-                            particles[i].ay    += prefact*dy;
-                            particles[i].az    += prefact*dz;
-                        }
-                    }
-                    }
-#endif // OPENMP
-                }
-                break;
-
             }
         }
         break;
