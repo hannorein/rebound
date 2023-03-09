@@ -1239,7 +1239,7 @@ struct reb_simulationarchive{
     double auto_walltime;        // Walltime setting used to create SA (if used)
     unsigned long long auto_step;// Steps in-between SA snapshots (if used)
     long nblobs;                 // Total number of snapshots (including initial binary)
-    uint32_t* offset;            // Index of offsets in file (length nblobs)
+    uint64_t* offset64;            // Index of offsets in file (length nblobs)
     double* t;                   // Index of simulation times in file (length nblobs)
 };
 struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive* sa, long snapshot);
