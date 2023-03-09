@@ -4,6 +4,10 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.24.0
+* Added support for SimulationArchive larger than 4 GB.
+* Updated documentation for Lyapunov characteristic number.
+
 ### Version 3.23.5
 * Added new units shortcuts (year,years,massist)
 * Rearranged some loops and switch statements (doesn't affect floating point numbers). 
