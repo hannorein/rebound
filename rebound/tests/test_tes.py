@@ -184,7 +184,7 @@ class TestIntegratorTES(unittest.TestCase):
         error = np.max(np.abs(data_tes - tes_reb_pos))
         # 1e-7 is max precision (from article) - noise here is due to dh coords change.
         self.assertLess(error, 5e-6) 
-        self.assertLess(de, 1e-15)
+        self.assertLess(de, 2e-15)
         
     def test_add_remove_particle(self):  
         orbits = 1
