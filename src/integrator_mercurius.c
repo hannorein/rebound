@@ -298,6 +298,10 @@ void reb_integrator_mercurius_interaction_step(struct reb_simulation* const r, d
 
 void reb_integrator_mercurius_jump_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
+
+    struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
+    double current_L = r->ri_mercurius.current_L;
+
     const int N_active = r->N_active==-1?r->N:r->N_active;
     const int N = r->testparticle_type==0 ? N_active: r->N;
     double px=0., py=0., pz=0.;
@@ -311,9 +315,34 @@ void reb_integrator_mercurius_jump_step(struct reb_simulation* const r, double d
     pz /= r->particles[0].m;
     const int N_all = r->N;
     for (int i=1;i<N_all;i++){
-        particles[i].x += dt*px;
-        particles[i].y += dt*py;
-        particles[i].z += dt*pz;
+        particles[i].x += dt*px * (1 - current_L);
+        particles[i].y += dt*py * (1 - current_L);
+        particles[i].z += dt*pz * (1 - current_L);
+    }
+}
+
+void reb_integrator_mercurius_jump_step_A(struct reb_simulation* const r, double dt){
+    struct reb_particle* restrict const particles = r->particles;
+
+    struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
+    double current_L = r->ri_mercurius.current_L;
+
+    const int N_active = r->N_active==-1?r->N:r->N_active;
+    const int N = r->testparticle_type==0 ? N_active: r->N;
+    double px=0., py=0., pz=0.;
+    for (int i=1;i<N;i++){
+        px += r->particles[i].vx*r->particles[i].m; // in dh
+        py += r->particles[i].vy*r->particles[i].m;
+        pz += r->particles[i].vz*r->particles[i].m;
+    }
+    px /= r->particles[0].m;
+    py /= r->particles[0].m;
+    pz /= r->particles[0].m;
+    const int N_all = r->N;
+    for (int i=1;i<N_all;i++){
+        particles[i].x += dt*px * (current_L);
+        particles[i].y += dt*py * (current_L);
+        particles[i].z += dt*pz * (current_L);
     }
 }
 
@@ -552,7 +581,7 @@ void reb_integrator_mercurius_whfast_step(struct reb_simulation* const r, double
   // WHFast Kepler step for all particles
   //reb_update_acceleration(r);
   reb_integrator_mercurius_kepler_step(r, r->dt); // Kepler solver does NOT advance timestep
-  reb_integrator_mercurius_jump_step(r,r->dt/2.);
+  reb_integrator_mercurius_jump_step_A(r,r->dt/2.);
 
   rim->is_synchronized = 0;
   if (rim->safe_mode){
@@ -573,7 +602,7 @@ void reb_integrator_mercurius_ias15_step(struct reb_simulation* const r, double 
 
   reb_mercurius_encounter_predict(r);
   reb_mercurius_encounter_step(r,r->dt);
-  reb_integrator_mercurius_jump_step(r,r->dt/2.);
+  reb_integrator_mercurius_jump_step_A(r,r->dt/2.);
 
   rim->is_synchronized = 0;
   if (rim->safe_mode){
@@ -678,7 +707,7 @@ int F_alt(struct reb_simulation* const r){
   const int N = r->N;
   const double* const dcrit = rim->dcrit;
 
-  for (int i=1; i < N; i++){
+  for (int i=0; i < N; i++){
     for (int j = i + 1; j < N; j++){
       // pre-timestep
       const double dx0 = rim->particles_backup[i].x - rim->particles_backup[j].x;
