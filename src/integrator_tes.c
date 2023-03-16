@@ -117,6 +117,7 @@ static void reb_dhem_calc_osc_orbit_derivs(struct reb_simulation* r, double cons
                                                       double * const __restrict__ Qosc_dot, double * const __restrict__ Posc_dot);
 static uint32_t reb_dhem_rectify(struct reb_simulation* r, double t, double * Q, double * P,
                             double * dQ, double * dP, uint32_t * rectifiedArray, uint32_t stageNumber);
+static double reb_find_min_particle_period(struct reb_simulation* r);
 static void reb_dhem_init(struct reb_simulation* r, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep);
 static void reb_dhem_free(struct reb_simulation* r);
 
@@ -216,24 +217,32 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         // No step-size specified, calculate timestep from shortest orbital period object in the system.
         if(r->dt == 0.001 && r->dt_last_done == 0)
         {
-            double period_min = 1E15;
-            for(uint32_t i=1;i<N;i++) 
-            {
-                double period = r->ri_tes.uVars->period[i];
-                period_min = period < period_min ? period : period_min;
-            }                        
             // Default to 100th of minimum period for the initial step size.                                  
-            r->dt = period_min/100.0;
-        }        
+            r->dt = reb_find_min_particle_period(r)/100.0;
+        }   
+
+        // No orbital period specified, get this data from osculating elements.
+        if(r->ri_tes.orbital_period == 0.0)
+        {            
+            r->ri_tes.orbital_period = reb_find_min_particle_period(r);
+
+            // Update the rectification times again due to period change.
+            for(int32_t i = 0; i < r->N; i++)
+            {
+              r->ri_tes.rhs->rectifyTimeArray[i] = r->t + r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit;
+              r->ri_tes.rhs->rectificationPeriod[i] = r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit;
+            }
+        }     
     }
     
     double dt_new = reb_single_step(r, r->t, r->dt, r->dt_last_done);
 
     // update timestep
-	r->t+=r->dt;
-	r->dt_last_done = r->dt;
+    r->t+=r->dt;
+    r->dt_last_done = r->dt;
     r->dt = dt_new;
 }
+
 
 void reb_integrator_tes_synchronize(struct reb_simulation* r){
     uint32_t N = r->N;
@@ -667,6 +676,20 @@ static void reb_dhem_calc_osc_orbits_for_all_stages(struct reb_simulation* r, do
 
       reb_dhem_calc_osc_orbit_derivs(r, Qout, Pout, Q_dot_out, P_dot_out);
   }
+}
+
+static double reb_find_min_particle_period(struct reb_simulation* r)
+{
+    uint32_t N = r->N;  
+    double period_min = 1E15;
+
+    for(uint32_t i=1;i<N;i++) 
+    {
+        double period = r->ri_tes.uVars->period[i];
+        period_min = period < period_min ? period : period_min;
+    }                        
+    
+  return period_min;
 }
 
 static void reb_dhem_init(struct reb_simulation* r, double z_rectificationPeriodDefault, uint32_t z_stagesPerStep)
