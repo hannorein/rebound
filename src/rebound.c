@@ -758,9 +758,6 @@ void reb_run_heartbeat(struct reb_simulation* const r){
             }
         }
     }
-    if (r->usleep > 0){
-        usleep(r->usleep);
-    }
 }
 
 ////////////////////////////////////////////////////
@@ -821,6 +818,9 @@ static void* reb_integrate_raw(void* args){
             if (r->display_data->opengl_enabled){ pthread_mutex_unlock(&(r->display_data->mutex)); }
         }
 #endif // OPENGL
+        if (r->usleep > 0){
+            usleep(r->usleep);
+        }
     }
 
     reb_integrator_synchronize(r);
