@@ -4,6 +4,11 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.24.1
+* Added CORS proxy for Horizons request in pyodide
+* Smoother OpenGL animations when using usleep
+* TES calculates orbital period automatically
+
 ### Version 3.24.0
 * Added support for SimulationArchive larger than 4 GB.
 * Updated documentation for Lyapunov characteristic number.
