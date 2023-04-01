@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.24.2
+* Fixed bug in TES ctypes structure
+
 ### Version 3.24.1
 * Added CORS proxy for Horizons request in pyodide
 * Smoother OpenGL animations when using usleep
