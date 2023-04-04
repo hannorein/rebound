@@ -2,9 +2,9 @@
  * @file 	rotations.c
  * @brief 	Tools for vector manipulations, rotations and quaternions.
  * @author 	Hanno Rein <hanno@hanno-rein.de>, Dan Tamayo
- * @details This code uses the same conventions as the Apple SIMD quaternion framework. See e.g.: 
+ * @details This code uses the same conventions as the Apple SIMD quaternion framework. See e.g.:
  *          https://github.com/xybp888/iOS-SDKs/blob/master/iPhoneOS13.0.sdk/usr/include/simd/quaternion.h
- * 
+ *
  * @section 	LICENSE
  * Copyright (c) 2022 Hanno Rein
  *
@@ -70,7 +70,7 @@ struct reb_vec3d reb_vec3d_normalize(const struct reb_vec3d v){
     return reb_vec3d_mul(v, 1./sqrt(reb_vec3d_length_squared(v)));
 }
 
-// reb_rotation manipulation functions 
+// reb_rotation manipulation functions
 
 struct reb_vec3d reb_rotation_imag(const struct reb_rotation q){
     struct reb_vec3d i = {
@@ -183,7 +183,7 @@ struct reb_rotation reb_rotation_init_from_to(struct reb_vec3d from, struct reb_
     }
 
     //  More than 90 degrees apart, do rotation in two stages:
-    //  (from -> half), (half -> to) 
+    //  (from -> half), (half -> to)
     struct reb_vec3d half = {.x=from.x+to.x, .y=from.y+to.y, .z=from.z+to.z};
     half = reb_vec3d_normalize(half);
 
@@ -235,7 +235,7 @@ struct reb_rotation reb_rotation_init_to_new_axes(struct reb_vec3d newz, struct 
 }
 
 struct reb_rotation reb_rotation_init_orbit(const double Omega, const double inc, const double omega){
-    // Murray and Dermot Eq. 2.121 (left hand side) 
+    // Murray and Dermot Eq. 2.121 (left hand side)
     struct reb_vec3d x = {.x=1.0};
     struct reb_vec3d z = {.z=1.0};
     struct reb_rotation P1 = reb_rotation_init_angle_axis(omega, z);
@@ -244,7 +244,7 @@ struct reb_rotation reb_rotation_init_orbit(const double Omega, const double inc
     return reb_rotation_mul(P3, reb_rotation_mul(P2, P1));
 }
 
-#define MIN_INC 1.e-8 
+#define MIN_INC 1.e-8
 void reb_rotation_to_orbital(struct reb_rotation q, double* Omega, double* inc, double* omega){
     // see https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0276302
     // and https://github.com/evbernardes/quaternion_to_euler/blob/main/euler_from_rotation.py

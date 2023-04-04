@@ -2,7 +2,7 @@
  * @file 	integrator.c
  * @brief 	BS integration scheme.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @details	This file implements the Gragg-Bulirsch-Stoer integration scheme.  
+ * @details	This file implements the Gragg-Bulirsch-Stoer integration scheme.
  *          It is a reimplementation of the fortran code by E. Hairer and G. Wanner.
  *          The starting point was the JAVA implementation in hipparchus:
  *          https://github.com/Hipparchus-Math/hipparchus/blob/master/hipparchus-ode/src/main/java/org/hipparchus/ode/nonstiff/GraggBulirschStoerIntegrator.java
@@ -30,7 +30,7 @@
  * Redistribution and use in source and binary forms, with or
  * without modification, are permitted provided that the following
  * conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright
@@ -65,12 +65,12 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 #define DEBUG 0 // set to 1 to print out debug information (reason for step rejection)
-    
-// Default configuration parameter. 
+
+// Default configuration parameter.
 // They are hard coded here because it
 // is unlikely that these need to be changed by the user.
-// static const int maxOrder = 18;// was 18 
-static const int sequence_length = 9; // = maxOrder / 2; 
+// static const int maxOrder = 18;// was 18
+static const int sequence_length = 9; // = maxOrder / 2;
 static const double stepControl1 = 0.65;
 static const double stepControl2 = 0.94;
 static const double stepControl3 = 0.02;
@@ -90,6 +90,7 @@ void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* 
         reb_error(r, "Update particles called without valid y pointer.");
         return;
     }
+    //printf("Updating Particles\n");
     for (int i=0; i<r->N; i++){
         struct reb_particle* const p = &(r->particles[i]);
         p->x  = y[i*6+0];
@@ -98,7 +99,9 @@ void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* 
         p->vx = y[i*6+3];
         p->vy = y[i*6+4];
         p->vz = y[i*6+5];
+        //printf("%e %e %e %e %e %e\n", y[i*6+0], y[i*6+1], y[i*6+2], y[i*6+3], y[i*6+4], y[i*6+5]);
     }
+    //exit(0);
 }
 
 
@@ -108,7 +111,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
     double t = t0;
     int needs_nbody = r->ri_bs.user_ode_needs_nbody;
 
-    // LeapFrog Method did not seem to be of any advantage 
+    // LeapFrog Method did not seem to be of any advantage
     //    switch (method) {
     //        case 0: // LeapFrog
     //            {
@@ -198,8 +201,8 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
     //
     //                return 1;
     //            }
-    
-    
+
+
     // Modified Midpoint method
     // first substep
     t += subStep;
@@ -289,7 +292,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
 
 static void extrapolate(const struct reb_ode* ode, double * const coeff, const int k) {
     double* const y1 = ode->y1;
-    double* const C = ode->C;  // C and D values follow Numerical Recipes 
+    double* const C = ode->C;  // C and D values follow Numerical Recipes
     double** const D =  ode->D;
     double const length = ode->length;
     for (int j = 0; j < k; ++j) {
@@ -316,20 +319,44 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
 
 static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
-    if (r->t != t) { 
+    if (r->t != t) {
         // Not needed for first step. Accelerations already calculated. Just need to copy them
         reb_integrator_bs_update_particles(r, y);
         reb_update_acceleration(r);
     }
 
-    for (int i=0; i<r->N; i++){
+    // TLu Levison & Duncan 22, 23 EoMs
+    double px=0., py=0., pz=0.;
+    int start = 0;
+    if (r->integrator==REB_INTEGRATOR_MERCURIUS){
+      double L = r->ri_mercurius.current_L;
+      start = 1; // If we are using MERCURIUS, this is in DH, so star feels no acceleration
+      for (int i=1;i<r->N;i++){
+          px += r->particles[i].vx*r->particles[i].m; // in dh
+          py += r->particles[i].vy*r->particles[i].m;
+          pz += r->particles[i].vz*r->particles[i].m;
+      }
+      px *= (L / r->particles[0].m);
+      py *= (L / r->particles[0].m);
+      pz *= (L / r->particles[0].m);
+
+      yDot[0] = 0.0;
+      yDot[1] = 0.0;
+      yDot[2] = 0.0;
+      yDot[3] = 0.0;
+      yDot[4] = 0.0;
+      yDot[5] = 0.0;
+    }
+    for (int i=start; i<r->N; i++){
         const struct reb_particle p = r->particles[i];
-        yDot[i*6+0] = p.vx;
-        yDot[i*6+1] = p.vy;
-        yDot[i*6+2] = p.vz;
+        yDot[i*6+0] = p.vx + px;
+        yDot[i*6+1] = p.vy + py;
+        yDot[i*6+2] = p.vz + pz;
         yDot[i*6+3] = p.ax;
         yDot[i*6+4] = p.ay;
         yDot[i*6+5] = p.az;
+
+        //printf("%d %e %e %e %e %e %e %e %e\n", i, r->dt, t, yDot[i*6+0],yDot[i*6+1],yDot[i*6+2],yDot[i*6+3],yDot[i*6+4],yDot[i*6+5]);
     }
 }
 
@@ -358,7 +385,7 @@ static void allocate_sequence_arrays(struct reb_simulation_integrator_bs* ri_bs)
      for (int k = 0; k < sequence_length; ++k) {
         ri_bs->sequence[k] = 4 * k + 2;
     }
-    
+
     // step size sequence: 1,2,3,4,5 ...
     //for (int k = 0; k < sequence_length; ++k) {
     //    ri_bs->sequence[k] = 2*( k+1);
@@ -390,10 +417,10 @@ static void reb_integrator_bs_default_scale(struct reb_ode* ode, double* y1, dou
 
 int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     // return 1 if step was successful
-    //        0 if rejected 
+    //        0 if rejected
     //
     struct reb_simulation_integrator_bs* ri_bs = &r->ri_bs;
-    
+
     if (ri_bs->sequence==NULL){
         allocate_sequence_arrays(ri_bs);
     }
@@ -416,7 +443,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     double error;
     int reject = 0;
 
-    // Check if ODEs have been set up correctly 
+    // Check if ODEs have been set up correctly
     for (int s=0; s < Ns; s++){
         if (!odes[s]->derivatives){
             reb_error(r,"A user-specified set of ODEs has not been provided with a derivatives function.");
@@ -450,7 +477,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     for (int loop = 1; loop; ) {
 
         ++k;
-        
         // modified midpoint integration with the current substep
         if ( ! tryStep(r, Ns, k, ri_bs->sequence[k], t, dt)) {
 
@@ -621,13 +647,13 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 
     if (! reject) {
 #if DEBUG
-        printf("."); 
+        printf(".");
 #endif
         // Swap arrays
         for (int s=0; s < Ns; s++){
             double* y_tmp = odes[s]->y;
-            odes[s]->y = odes[s]->y1; 
-            odes[s]->y1 = y_tmp; 
+            odes[s]->y = odes[s]->y1;
+            odes[s]->y1 = y_tmp;
             // Check if ODEs need post timestep call
             if (odes[s]->post_timestep){
                 odes[s]->post_timestep(odes[s], odes[s]->y);
@@ -708,14 +734,14 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 
 struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length){
     struct reb_ode* ode = malloc(sizeof(struct reb_ode));
-    
+
     memset(ode, 0, sizeof(struct reb_ode)); // not really necessaery
 
     if (r->odes_allocatedN <= r->odes_N){
         r->odes_allocatedN += 32;
         r->odes = realloc(r->odes,sizeof(struct reb_ode*)*r->odes_allocatedN);
     }
-    
+
     r->odes[r->odes_N] = ode;
     r->odes_N += 1;
 
@@ -749,22 +775,22 @@ struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length){
 
 void reb_integrator_bs_part2(struct reb_simulation* r){
     struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
-    
+
     int nbody_length = r->N*3*2;
     // Check if particle numbers changed, if so delete and recreate ode.
-    if (ri_bs->nbody_ode != NULL){ 
+    if (ri_bs->nbody_ode != NULL){
         if (ri_bs->nbody_ode->length != nbody_length){
             reb_free_ode(ri_bs->nbody_ode);
             ri_bs->nbody_ode = NULL;
         }
     }
-    if (ri_bs->nbody_ode == NULL){ 
+    if (ri_bs->nbody_ode == NULL){
         ri_bs->nbody_ode = reb_create_ode(r, nbody_length);
         ri_bs->nbody_ode->derivatives = nbody_derivatives;
         ri_bs->nbody_ode->needs_nbody = 0; // No need to update unless there's another ode
         ri_bs->firstOrLastStep = 1;
     }
-    
+
     for (int s=0; s < r->odes_N; s++){
         if (r->odes[s]->needs_nbody){
             ri_bs->user_ode_needs_nbody = 1;
@@ -783,6 +809,7 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
     }
 
     int success = reb_integrator_bs_step(r, r->dt);
+    //printf("%f %f %f\n", r->t, r->dt, ri_bs->dt_proposed);
     if (success){
         r->t += r->dt;
         r->dt_last_done = r->dt;
@@ -804,7 +831,7 @@ void reb_free_ode(struct reb_ode* ode){
     ode->C = NULL;
     free(ode->scale);
     ode->scale = NULL;
-    
+
     if (ode->D){
         for (int k = 0; k < sequence_length; ++k) {
             ode->D[k] = NULL;
@@ -818,7 +845,7 @@ void reb_free_ode(struct reb_ode* ode){
     ode->yTmp = NULL;
     free(ode->yDot);
     ode->yDot = NULL;
-    
+
     struct reb_simulation* r = ode->r;
     if (r){ // only do this is ode is in a simulation
         struct reb_simulation_integrator_bs* ri_bs = &r->ri_bs;
@@ -843,7 +870,7 @@ void reb_free_ode(struct reb_ode* ode){
 
 void reb_integrator_bs_reset(struct reb_simulation* r){
     struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
-    
+
     // Delete nbody ode but not others
     if (ri_bs->nbody_ode){
         reb_free_ode(ri_bs->nbody_ode);
@@ -853,7 +880,7 @@ void reb_integrator_bs_reset(struct reb_simulation* r){
     // Free sequence arrays
     free(ri_bs->sequence);
     ri_bs->sequence = NULL;
-    
+
     free(ri_bs->coeff);
     ri_bs->coeff = NULL;
     free(ri_bs->costPerStep);
@@ -862,15 +889,15 @@ void reb_integrator_bs_reset(struct reb_simulation* r){
     ri_bs->costPerTimeUnit = NULL;
     free(ri_bs->optimalStep);
     ri_bs->optimalStep = NULL;
-    
-    
+
+
     // Default settings
     ri_bs->eps_abs          = 1e-8;
     ri_bs->eps_rel          = 1e-8;
     ri_bs->max_dt           = 0;
-    ri_bs->min_dt           = 0; 
+    ri_bs->min_dt           = 0;
     ri_bs->firstOrLastStep  = 1;
     ri_bs->previousRejected = 0;
     ri_bs->targetIter       = 0;
-        
+
 }
