@@ -142,6 +142,7 @@ struct reb_simulation_integrator_ias15 {
 struct reb_simulation_integrator_mercurius {
     double (*L) (const struct reb_simulation* const r, double d, double dcrit);
     double hillfac;
+    double peri; // TLu check for close pericenter passage
     unsigned int recalculate_coordinates_this_timestep;
     unsigned int recalculate_dcrit_this_timestep;
     unsigned int safe_mode;
@@ -162,7 +163,8 @@ struct reb_simulation_integrator_mercurius {
     // int* close_encounters; // TLu tracking which integrator is used for each particle
     struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
     struct reb_vec3d com_vel;
-    double current_L; // TLu tracking L for the entire timestep
+    double current_K; // TLu tracking K for the entire timestep
+    double current_L; // TLu tracking K for the entire timestep
 };
 
 struct reb_simulation_integrator_sei {

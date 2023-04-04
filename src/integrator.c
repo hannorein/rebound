@@ -2,14 +2,14 @@
  * @file 	integrator.c
  * @brief 	Integration schemes.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @details	This file implements the leap-frog integration scheme.  
- * This scheme is second order accurate, symplectic and well suited for 
+ * @details	This file implements the leap-frog integration scheme.
+ * This scheme is second order accurate, symplectic and well suited for
  * non-rotating coordinate systems. Note that the scheme is formally only
  * first order accurate when velocity dependent forces are present.
- * 
+ *
  * @section 	LICENSE
  * Copyright (c) 2015 Hanno Rein
- * 
+ *
  * This file is part of rebound.
  *
  * rebound is free software: you can redistribute it and/or modify
@@ -118,7 +118,7 @@ void reb_integrator_part2(struct reb_simulation* r){
 			break;
 		case REB_INTEGRATOR_TES:
 			reb_integrator_tes_part2(r);
-			break;			
+			break;
         case REB_INTEGRATOR_NONE:
             r->t += r->dt;
             r->dt_last_done = r->dt;
@@ -126,9 +126,10 @@ void reb_integrator_part2(struct reb_simulation* r){
 		default:
 			break;
 	}
-    
+
     // Integrate other ODEs
-    if (r->integrator != REB_INTEGRATOR_BS && r->odes_N){
+		// TLu changed condition for this - look into further. For now MERCURIUS just does not support additional ODEs, which definitely needs to be fixed.
+    if (r->integrator != REB_INTEGRATOR_BS && r->odes_N && r->integrator != REB_INTEGRATOR_MERCURIUS){
         if (r->ode_warnings==0 && (!r->ri_whfast.safe_mode || !r->ri_saba.safe_mode || !r->ri_eos.safe_mode || !r->ri_mercurius.safe_mode)){
             reb_warning(r, "Safe mode should be enabled when custom ODEs are being used.");
             r->ode_warnings = 1;
@@ -158,8 +159,9 @@ void reb_integrator_part2(struct reb_simulation* r){
             }
         }
     }
+
 }
-	
+
 void reb_integrator_synchronize(struct reb_simulation* r){
 	switch(r->integrator){
 		case REB_INTEGRATOR_IAS15:
@@ -191,7 +193,7 @@ void reb_integrator_synchronize(struct reb_simulation* r){
 			break;
 		case REB_INTEGRATOR_TES:
 			reb_integrator_tes_synchronize(r);
-			break;				
+			break;
 		default:
 			break;
 	}
@@ -230,6 +232,7 @@ void reb_update_acceleration(struct reb_simulation* r){
 	if (r->N_var){
 		reb_calculate_acceleration_var(r);
 	}
+	/*
 	if (r->additional_forces  && (r->integrator != REB_INTEGRATOR_MERCURIUS || r->ri_mercurius.mode==0)){
         // For Mercurius:
         // Additional forces are only calculated in the kick step, not during close encounter
@@ -240,9 +243,10 @@ void reb_update_acceleration(struct reb_simulation* r){
                 r->ri_mercurius.particles_backup_additionalforces = realloc(r->ri_mercurius.particles_backup_additionalforces, r->N*sizeof(struct reb_particle));
                 r->ri_mercurius.allocatedN_additionalforces = r->N;
             }
-            memcpy(r->ri_mercurius.particles_backup_additionalforces,r->particles,r->N*sizeof(struct reb_particle)); 
+            memcpy(r->ri_mercurius.particles_backup_additionalforces,r->particles,r->N*sizeof(struct reb_particle));
             reb_integrator_mercurius_dh_to_inertial(r);
         }
+
         r->additional_forces(r);
         if (r->integrator==REB_INTEGRATOR_MERCURIUS){
             struct reb_particle* restrict const particles = r->particles;
@@ -257,7 +261,7 @@ void reb_update_acceleration(struct reb_simulation* r){
             }
         }
     }
+		*/
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 	PROFILING_START()
 }
-
