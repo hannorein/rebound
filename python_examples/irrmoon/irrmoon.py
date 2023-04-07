@@ -1,6 +1,6 @@
 """
 This is an example to investigate the stability of irregular moons. 
-This simulation involves a jupiter mass planet, several moons and a star acted as perturber. The moons have different inclinations. I also include some retrograde moons.
+This simulation involves a jupiter mass planet, several moons and a star acted as perturber. The moons have different initial inclinations. I also include some retrograde moons.
 
 The moons undergo Lidov–Kozai oscillation, so some moons will unbound from the planet because of the high eccentricity. The retrograded ones are more bounded.
 """
@@ -66,7 +66,7 @@ for i in range(nout):
 
 # plot r from jupiter
 for j in range(nmoon):
-   plt.plot(times/(2*np.pi/(np.sqrt(10**(-3)/0.2**3))),xs[j],label = 'a = {:.3}'.format(moonvar[j]))
+   plt.plot(times/(2*np.pi/(np.sqrt(10**(-3)/0.2**3))),xs[j],label = 'inc0 = {:.3}'.format(moonvar[j]))
 plt.ylabel('r')
 plt.xlabel(r't ($P_{moon}$)')
 plt.yscale('log')
@@ -83,7 +83,7 @@ plt.legend()
 plt.show()
 '''
 for j in range(nmoon):
-   plt.plot(times/(2*np.pi/(np.sqrt(10**(-3)/0.2**3))),eccs[j],label = 'a = {:.3}'.format(moonvar[j]))
+   plt.plot(times/(2*np.pi/(np.sqrt(10**(-3)/0.2**3))),eccs[j],label = 'inc0 = {:.3}'.format(moonvar[j]))
 plt.ylabel('ecc')
 plt.xlabel(r't ($P_{moon}$)')
 plt.yscale('log')
