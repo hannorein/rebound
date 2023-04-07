@@ -66,7 +66,7 @@ for i in range(nout):
 
 # plot r from jupiter
 for j in range(nmoon):
-   plt.plot(times/(2*np.pi/(np.sqrt(10**(-3)/0.2**3))),xs[j],label = 'inc0 = {:.3}'.format(moonvar[j]))
+   plt.plot(times/(2*np.pi/(np.sqrt(10**(-3)/0.2**3))),xs[j],label = 'i={:.3}'.format(moonvar[j]))
 plt.ylabel('r')
 plt.xlabel(r't ($P_{moon}$)')
 plt.yscale('log')
@@ -76,14 +76,14 @@ plt.show()
 
 '''
 for j in range(nmoon):
-   plt.plot(times/(2*np.pi/(np.sqrt(10**(-3)/0.2**3))),incs[j],label = 'a = {:.3}'.format(moonvar[j]))
+   plt.plot(times/(2*np.pi/(np.sqrt(10**(-3)/0.2**3))),incs[j],label = '1={:.3}'.format(moonvar[j]))
 plt.ylabel('inc')
 plt.xlabel(r't ($P_{moon}$)')
 plt.legend()
 plt.show()
 '''
 for j in range(nmoon):
-   plt.plot(times/(2*np.pi/(np.sqrt(10**(-3)/0.2**3))),eccs[j],label = 'inc0 = {:.3}'.format(moonvar[j]))
+   plt.plot(times/(2*np.pi/(np.sqrt(10**(-3)/0.2**3))),eccs[j],label = 'i={:.3}'.format(moonvar[j]))
 plt.ylabel('ecc')
 plt.xlabel(r't ($P_{moon}$)')
 plt.yscale('log')
