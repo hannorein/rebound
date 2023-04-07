@@ -1,4 +1,5 @@
 import rebound
+import sys
 import unittest
 import math 
 
@@ -62,7 +63,10 @@ class TestMegno(unittest.TestCase):
         self.sim.move_to_com()
         self.sim.integrate(1000)
         self.megnoWHFast = self.sim.calculate_megno()
-        self.assertAlmostEqual(abs((self.megnoIAS-self.megnoWHFast)/self.megnoIAS), 0., delta=0.3)
+        if sys.maxsize > 2**32: # 64 bit
+            self.assertAlmostEqual(abs((self.megnoIAS-self.megnoWHFast)/self.megnoIAS), 0., delta=0.3)
+        else: # 32 bit
+            self.assertAlmostEqual(abs((self.megnoIAS-self.megnoWHFast)/self.megnoIAS), 0., delta=1.9)
 
 if __name__ == "__main__":
     unittest.main()

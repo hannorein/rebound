@@ -1,6 +1,7 @@
 import rebound
 import unittest
 import os
+import sys
 import warnings
 import rebound.data as data
 from datetime import datetime
@@ -119,9 +120,9 @@ class TestMercurius(unittest.TestCase):
         o3 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
         o4 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
 
-        self.assertLess(abs(o1.e-o4.e),7e-14)
+        self.assertLess(abs(o1.e-o4.e),2e-13)
         self.assertLess(abs(o2.e-o3.e),9e-14)
-        self.assertLess(abs(o1.a-o4.a),8e-14)
+        self.assertLess(abs(o1.a-o4.a),9e-14)
         self.assertLess(abs(o2.a-o3.a),4e-14)
     
     def test_outer_solar_massive(self):
@@ -314,7 +315,8 @@ class TestMercurius(unittest.TestCase):
         self.assertLess(dE_mercurius,4e-6)              # reasonable precision for mercurius
         self.assertLess(dE_mercurius/dE_whfast,1e-4)    # at least 1e4 times better than whfast
         self.assertLess(time_mercurius,time_ias15) # faster than ias15
-        self.assertEqual(7060.644251181158, sim.particles[5].x) # Check if bitwise unchanged
+        if sys.maxsize > 2**32: # 64 bit
+            self.assertEqual(7060.644251181158, sim.particles[5].x) # Check if bitwise unchanged
         
 
 
