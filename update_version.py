@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!python
 # This script automatically creates a list of examples by reading the header in all problem.c files.
 import glob
 import subprocess
@@ -44,9 +44,9 @@ while shortversion[-1] != '.':
     
 shortversion = shortversion[:-1]
 
-print("To commit, copy and paste:")
+print("Next:")
 print("\ngit commit -a -m \"Updating version to "+reboundversion+"\"")
 print("----")
-print("Next:")
-print("python setup.py sdist")
-print("twine upload -r rebound dist/*")
+print("git tag "+reboundversion+" && git push --tags")
+print("----")
+print("Create release on github")
