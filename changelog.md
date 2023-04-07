@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.24.3
+* Updated unit tests so they work on 32bit machines
+
 ### Version 3.24.2
 * Fixed bug in TES ctypes structure
 
