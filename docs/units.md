@@ -64,10 +64,10 @@ The following example sets $G$ to its value in SI units:
     sim = rebound.Simulation()
     sim.G = 6.6743e-11 # m^3 / kg s^2
     ```
-From now on, all quantities that have unit of length (semi-major axis, particle radius, etc) are in meters.
-All quantities that have unit of time (timestep, orbital period, etc) are in seconds. 
-All quantities that have unit of mass are in kg.
-All quantities that have unit of velocity are in meter per second.
+From now on, all quantities that have unit of length (semi-major axis, particle radius, etc) need to be specified (and will be output) in meters.
+All quantities that have units of time (timestep, orbital period, etc) need to be specified in seconds. 
+All quantities that have units of mass need to be specified in kg.
+All quantities that have units of velocity need to be specified in meters per second.
 And so on.
 
 ## Convenience methods in python
