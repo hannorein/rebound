@@ -66,10 +66,10 @@ double jacobi_dh(struct reb_simulation* r){
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
-    r->dt = 0.1*2.*M_PI;
+    r->dt = (8./365.)*2.*M_PI;
     r->integrator = REB_INTEGRATOR_MERCURIUS;
     r->ri_mercurius.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
-    r->ri_mercurius.peri = 1.;
+    r->ri_mercurius.peri = 0.01;
     r->heartbeat  = heartbeat;
     r->N_active = 2;
 
@@ -99,12 +99,11 @@ int main(int argc, char* argv[]){
     test.vy = vhel + star.vy;
     reb_add(r, test);
 
-
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
     e_init = jacobi_dh(r);
     system("rm -rf energy.txt");
 
-    reb_integrate(r, 1000.*12.*2.*M_PI);
+    reb_integrate(r, 500.*11.86*2.*M_PI);
     //reb_integrate(r, 200.);
     reb_free_simulation(r);
 }
@@ -113,14 +112,14 @@ void heartbeat(struct reb_simulation* r){
     //if (reb_output_check(r, 10.*2.*M_PI)){
     //    reb_output_timing(r, 0);
     //}
-    if (reb_output_check(r, (4. / 365.25) * 2.*M_PI)){
+    //if (reb_output_check(r, (4. / 365.25) * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
         FILE* f = fopen("energy.txt","a");
 
         // rotate whole simulation to rotating frame
-        struct reb_vec3d v1 = {.x = r->particles[1].x, .y = r->particles[1].y, .z = r->particles[1].z};
-        struct reb_vec3d v2 = {.x = (1 / (1 + (0.01 / (1 - 0.01)))) * 5.2, .y = 0, .z = 0};
-        struct reb_rotation r1 = reb_rotation_init_from_to(v1, v2);
+        //struct reb_vec3d v1 = {.x = r->particles[1].x, .y = r->particles[1].y, .z = r->particles[1].z};
+        //struct reb_vec3d v2 = {.x = (1 / (1 + (0.01 / (1 - 0.01)))) * 5.2, .y = 0, .z = 0};
+        //struct reb_rotation r1 = reb_rotation_init_from_to(v1, v2);
         //reb_simulation_irotate(r, r1);
         //reb_integrator_synchronize(r);
         double e = jacobi_dh(r);//reb_tools_energy(r);
@@ -132,5 +131,5 @@ void heartbeat(struct reb_simulation* r){
 
         //struct reb_rotation inverse = reb_rotation_inverse(r1);
         //reb_simulation_irotate(r, inverse);
-    }
+    //}
 }

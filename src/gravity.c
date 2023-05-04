@@ -594,10 +594,10 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             const double dy = particles[i].y - particles[j].y;
                             const double dz = particles[i].z - particles[j].z;
                             const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                            const double dcritmax = MAX(dcrit[i],dcrit[j]);
-                            const double L = _L(r,_r,dcritmax);
+                            //const double dcritmax = MAX(dcrit[i],dcrit[j]);
+                            //const double L = _L(r,_r,dcritmax);
                             //printf("WHFast OpenMP L: %d %d %e\n", i, j, L);
-                            const double prefact = -G*particles[j].m*L/(_r*_r*_r);
+                            const double prefact = -G*particles[j].m*(1. - current_K)/(_r*_r*_r);
                             particles[i].ax    += prefact*dx;
                             particles[i].ay    += prefact*dy;
                             particles[i].az    += prefact*dz;
@@ -610,9 +610,10 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             const double dy = particles[i].y - particles[j].y;
                             const double dz = particles[i].z - particles[j].z;
                             const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                            const double dcritmax = MAX(dcrit[i],dcrit[j]);
-                            const double L = _L(r,_r,dcritmax);
-                            const double prefact = -G*particles[j].m*L/(_r*_r*_r);
+                            //const double dcritmax = MAX(dcrit[i],dcrit[j]);
+                            //const double L = _L(r,_r,dcritmax);
+                            const double prefact = -G*particles[j].m*(1. - current_K)/(_r*_r*_r);
+                            //const double prefact = -G*particles[j].m/(_r*_r*_r);
                             particles[i].ax    += prefact*dx;
                             particles[i].ay    += prefact*dy;
                             particles[i].az    += prefact*dz;
@@ -643,7 +644,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                         const double y = particles[i].y;
                         const double z = particles[i].z;
                         const double _r = sqrt(x*x + y*y + z*z + softening2);
-                        double prefact = -G / (_r*_r*_r)*m0;
+                        double prefact = -G * m0 / (_r*_r*_r);
                         particles[i].ax    = prefact*x;
                         particles[i].ay    = prefact*y;
                         particles[i].az    = prefact*z;
@@ -662,7 +663,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                               const double dz = particles[mi].z - particles[mj].z;
                               const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
                               const double dcritmax = MAX(dcrit[mi],dcrit[mj]);
-                              double prefact = G*current_K/(_r*_r*_r);
+                              //double prefact = G*current_K/(_r*_r*_r);
+                              double prefact = G /(_r*_r*_r);
                               double prefactj = -prefact*particles[mj].m;
                               double prefacti = prefact*particles[mi].m;
 
@@ -688,7 +690,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             const double dz = particles[mi].z - particles[mj].z;
                             const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
                             //const double dcritmax = MAX(dcrit[mi],dcrit[mj]);
-                            double prefact = G*current_K/(_r*_r*_r);
+                            //double prefact = G*current_K/(_r*_r*_r);
+                            double prefact = G / (_r*_r*_r);
                             double prefactj = -prefact*particles[mj].m;
                             particles[mi].ax    += prefactj*dx;
                             particles[mi].ay    += prefactj*dy;
@@ -710,7 +713,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                     // The star feels no acceleration
 #pragma omp parallel for schedule(guided)
                     for (int i=1; i<encounterN; i++){
-                        int mi = map[i];
+                        int mi = i;//map[i];
                         particles[mi].ax = 0;
                         particles[mi].ay = 0;
                         particles[mi].az = 0;
@@ -725,14 +728,15 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                         particles[mi].az    += prefact*z;
                         for (int j=1; j<encounterNactive; j++){
                             if (i==j) continue;
-                            int mj = map[j];
+                            int mj = j;//map[j];
                             const double dx = x - particles[mj].x;
                             const double dy = y - particles[mj].y;
                             const double dz = z - particles[mj].z;
                             const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                            const double dcritmax = MAX(dcrit[mi],dcrit[mj]);
-                            const double L = _L(r,_r,dcritmax);
-                            double prefact = -G*particles[mj].m*(1.-L)/(_r*_r*_r);
+                            //const double dcritmax = MAX(dcrit[mi],dcrit[mj]);
+                            //const double L = _L(r,_r,dcritmax);
+                            //double prefact = -G*particles[mj].m*current_K/(_r*_r*_r);
+                            double prefact = -G*particles[mj].m/(_r*_r*_r);
                             //rintf("IAS15 OpenMP L: %d %d %e\n", i, j, L);
                             particles[mi].ax    += prefact*dx;
                             particles[mi].ay    += prefact*dy;
@@ -742,19 +746,20 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                     if (_testparticle_type){
 #pragma omp parallel for schedule(guided)
                     for (int i=1; i<encounterNactive; i++){
-                        int mi = map[i];
+                        int mi = i;//map[i];
                         const double x = particles[mi].x;
                         const double y = particles[mi].y;
                         const double z = particles[mi].z;
                         for (int j=encounterNactive; j<encounterN; j++){
-                            int mj = map[j];
+                            int mj = j;//map[j];
                             const double dx = x - particles[mj].x;
                             const double dy = y - particles[mj].y;
                             const double dz = z - particles[mj].z;
                             const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                            const double dcritmax = MAX(dcrit[mi],dcrit[mj]);
-                            const double L = _L(r,_r,dcritmax);
-                            double prefact = -G*particles[mj].m*(1.-L)/(_r*_r*_r);
+                            //const double dcritmax = MAX(dcrit[mi],dcrit[mj]);
+                            //const double L = _L(r,_r,dcritmax);
+                            //double prefact = -G*particles[mj].m*current_K/(_r*_r*_r);
+                            double prefact = -G*particles[mj].m/(_r*_r*_r);
                             //printf("IAS15 OpenMP test L: %d %d %e\n", i, j, L);
                             particles[mi].ax    += prefact*dx;
                             particles[mi].ay    += prefact*dy;

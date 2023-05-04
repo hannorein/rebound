@@ -330,6 +330,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
     int start = 0;
     if (r->integrator==REB_INTEGRATOR_MERCURIUS){
       double L = r->ri_mercurius.current_L;
+      L = 0.0;
       start = 1; // If we are using MERCURIUS, this is in DH, so star feels no acceleration
       for (int i=1;i<r->N;i++){
           px += r->particles[i].vx*r->particles[i].m; // in dh
@@ -892,8 +893,8 @@ void reb_integrator_bs_reset(struct reb_simulation* r){
 
 
     // Default settings
-    ri_bs->eps_abs          = 1e-8;
-    ri_bs->eps_rel          = 1e-8;
+    ri_bs->eps_abs          = 1e-12;
+    ri_bs->eps_rel          = 1e-12;
     ri_bs->max_dt           = 0;
     ri_bs->min_dt           = 0;
     ri_bs->firstOrLastStep  = 1;
