@@ -157,7 +157,7 @@ struct reb_simulation_integrator_mercurius {
     unsigned int allocatedN_additionalforces;
     unsigned int dcrit_allocatedN;  // Current size of dcrit arrays
     double* dcrit;                  // Precalculated switching radii for particles
-    struct reb_particle* REBOUND_RESTRICT particles_backup; //  contains coordinates before Kepler step for encounter prediction
+    struct reb_particle* REBOUND_RESTRICT particles_backup; //  TLu contains coordinates before the entire step
     struct reb_particle* REBOUND_RESTRICT particles_backup_additionalforces; // contains coordinates before Kepler step for encounter prediction
     int* encounter_map;             // Map to represent which particles are integrated with ias15
     // int* close_encounters; // TLu tracking which integrator is used for each particle
@@ -166,6 +166,7 @@ struct reb_simulation_integrator_mercurius {
     int current_K; // TLu tracking K for the entire timestep
     int current_L; // TLu tracking K for the entire timestep
     double* f0; // TLu 1D array right now - perhaps a better way to do this...
+    struct reb_particle* REBOUND_RESTRICT particles_backup_try; //  TLu contains coordinates after initial try
 };
 
 struct reb_simulation_integrator_sei {

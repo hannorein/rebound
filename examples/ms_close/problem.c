@@ -34,7 +34,7 @@ int main(int argc, char* argv[]){
     r->dt = 0.1*2.*M_PI;
     r->integrator = REB_INTEGRATOR_MERCURIUS;
     r->ri_mercurius.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
-    r->ri_mercurius.peri = 1;
+    r->ri_mercurius.peri = 2;
     r->heartbeat  = heartbeat;
 
     reb_add(r, star);
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]){
     system("rm -rf energy.txt");
     FILE* f = fopen("energy.txt","w");
 
-    reb_integrate(r, 3000 * 2 * M_PI);
+    reb_integrate(r, 12000 * 2 * M_PI);
 
     reb_free_simulation(r);
 }
