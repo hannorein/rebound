@@ -25,9 +25,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <math.h>
-#include <time.h>
-#include <stdlib.h>
 #include <string.h>
 #include "rebound.h"
 #include "integrator_tes.h"
@@ -161,8 +158,15 @@ static double reb_calc_osc_update_value(struct reb_simulation* const r, double X
 
 static inline void add_cs(double* out, double* cs, double inp);
 
-
-
+// Machine independent implementation of pow(*,1./7.)
+static double sqrt7(double a){
+    double x = 1.;
+    for (int k=0; k<20;k++){  // A smaller number should be ok too.
+        double x6 = x*x*x*x*x*x;
+        x += (a/x6-x)/7.;
+    }
+    return x;
+}
 
 void reb_integrator_tes_part1(struct reb_simulation* r){
     // unused
@@ -901,7 +905,7 @@ double reb_calc_stepsize(struct reb_simulation* r, double h, double hLast, doubl
     
   if(isnormal(errMax))
   {
-    hTrial = h*pow(r->ri_tes.epsilon / errMax, (1.0/7.0));
+    hTrial = h*sqrt7(r->ri_tes.epsilon / errMax);
   }
   else
   {
