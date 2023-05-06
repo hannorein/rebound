@@ -629,17 +629,9 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
       int calt = F_cond(r,1);
         if (calt){
           // Reject alternative integrator, use original integrators
-          if (rim->current_Ls[0] == 1){
-            printf("Oh no\n");
-            exit(1);
-          }
           for (int i=0; i<N; i++){
               r->particles[i] = rim->particles_backup_try[i];
           }
-        }
-        if (rim->current_Ls[0] == 1){
-          printf("Oh no\n");
-          exit(1);
         }
       }
 

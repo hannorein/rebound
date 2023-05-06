@@ -352,7 +352,6 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
       // TLu must be a better way to structure this
         if (r->integrator==REB_INTEGRATOR_MERCURIUS){
             current_L = (r->ri_mercurius.current_Ls[i-1] * (r->particles[i].m!=0)); // TLu crude test particle check, fix later
-            printf("%d %d\n", i, current_L);
         }
         const struct reb_particle p = r->particles[i];
         yDot[i*6+0] = p.vx + current_L * px;
