@@ -330,16 +330,15 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
     int start = 0;
     if (r->integrator==REB_INTEGRATOR_MERCURIUS){
       // Kepler Step
-      int L = r->ri_mercurius.current_L;
       start = 1; // If we are using MERCURIUS, this is in DH, so star feels no acceleration
       for (int i=1;i<r->N;i++){
           px += r->particles[i].vx*r->particles[i].m; // in dh
           py += r->particles[i].vy*r->particles[i].m;
           pz += r->particles[i].vz*r->particles[i].m;
       }
-      px *= (L / r->particles[0].m);
-      py *= (L / r->particles[0].m);
-      pz *= (L / r->particles[0].m);
+      px /= r->particles[0].m;
+      py /= r->particles[0].m;
+      pz /= r->particles[0].m;
 
       yDot[0] = 0.0;
       yDot[1] = 0.0;
@@ -348,11 +347,17 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
       yDot[4] = 0.0;
       yDot[5] = 0.0;
     }
+    int current_L = 0;
     for (int i=start; i<r->N; i++){
+      // TLu must be a better way to structure this
+        if (r->integrator==REB_INTEGRATOR_MERCURIUS){
+            current_L = (r->ri_mercurius.current_Ls[i-1] * (r->particles[i].m!=0)); // TLu crude test particle check, fix later
+            printf("%d %d\n", i, current_L);
+        }
         const struct reb_particle p = r->particles[i];
-        yDot[i*6+0] = p.vx + px;
-        yDot[i*6+1] = p.vy + py;
-        yDot[i*6+2] = p.vz + pz;
+        yDot[i*6+0] = p.vx + current_L * px;
+        yDot[i*6+1] = p.vy + current_L * py;
+        yDot[i*6+2] = p.vz + current_L * pz;
         yDot[i*6+3] = p.ax;
         yDot[i*6+4] = p.ay;
         yDot[i*6+5] = p.az;

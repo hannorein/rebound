@@ -523,7 +523,6 @@ void reb_calculate_acceleration(struct reb_simulation* r){
         {
             double (*_L) (const struct reb_simulation* const r, double d, double dcrit) = r->ri_mercurius.L;
             double cK = r->ri_mercurius.current_K;
-            double cL = r->ri_mercurius.current_L;
             switch (r->ri_mercurius.mode){
                 case 0: // WHFAST part
                 // Interaction step
