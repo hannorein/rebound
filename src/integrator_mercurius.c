@@ -391,7 +391,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
         rim->particles_backup_try   = realloc(rim->particles_backup_try,sizeof(struct reb_particle)*N);
         rim->encounter_map          = realloc(rim->encounter_map,sizeof(int)*N);
         rim->f0                     = realloc(rim->f0,sizeof(double)*((N-1)*(N-2))/2);
-        //rim->f0_peri                = realloc(rim->f0,sizeof(double)*(N-1));
+        rim->f0_peris               = realloc(rim->f0_peris,sizeof(double)*(N-1));
         rim->allocatedN = N;
 
         //rim->close_encounters   = realloc(rim->close_encounters,sizeof(int)*N); // TLu
@@ -523,9 +523,12 @@ int Fp(struct reb_simulation* const r){
       }
 
       // Check for close encounter with central body
-      if (i == 0 && f0_peri < 0.0){
-        rim->current_Ls[j-1] = 1;
-        c0 = 1;
+      if (i == 0){
+          rim->f0_peris[j-1] = f0_peri;
+          if (f0_peri < 0.0){
+          rim->current_Ls[j-1] = 1;
+          c0 = 1;
+        }
       }
     }
   }
@@ -539,21 +542,33 @@ int F_cond(struct reb_simulation* const r, int cond){
   struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
   const int N = r->N;
   const double* const dcrit = rim->dcrit;
-  int K = 0;
+  const double peri = rim->peri;
+  int ctry = 0;
+
+  for (int i = 1; i < r->N; i++){
+    rim->current_Ls[i-1] = 0; // 0 means no close encounter
+  }
 
   // Ftry only assesses planet-planet
-  for (int i = 1; i < N; i++){
+  for (int i = 0; i < N; i++){
     for (int j = i + 1; j < N; j++){
       const double dx = r->particles[i].x - r->particles[j].x;
       const double dy = r->particles[i].y - r->particles[j].y;
       const double dz = r->particles[i].z - r->particles[j].z;
       const double d = sqrt(dx*dx + dy*dy + dz*dz);
 
-      double f0 = rim->f0[pindex(i,j,N)];
+      double f0;
+      double f;
 
-      double dcrit0 = MAX(dcrit[i],dcrit[j]);
-      dcrit0 *= 1.21;
-      double f = d - dcrit0;
+      if (i == 0){ // for close pericenter approach
+        f0 = rim->f0_peris[j-1];
+        f = d - MAX(dcrit[i],dcrit[j])*1.21;
+      }
+      else{ // for planet-planet
+        f0 = rim->f0[pindex(i,j,N)];
+        f = d - peri;
+      }
+
 
       int c0;
       int c;
@@ -562,7 +577,14 @@ int F_cond(struct reb_simulation* const r, int cond){
         c = (f0 + f) > 0;
 
         if (c0 != c){
-            K = 1; // We reject the step
+          ctry = 1;
+          if (i == 0){ // Can safely set these, bc whfast step always reverts these
+            rim->current_Ls[j-1] = 1;
+            printf("0,%e\n", r->t);
+          }
+          else{
+            rim->current_K = 1;
+          }
         }
       }
 
@@ -571,12 +593,19 @@ int F_cond(struct reb_simulation* const r, int cond){
         c = (f0 + f) < 0;
 
         if (c0 == c){
-          K = 1; // We reject the step
+          ctry = 1;
+          if (i == 0){
+            rim->current_Ls[j-1] = 1;
+            printf("1,%e\n", r->t);
+          }
+          else{
+            rim->current_K = 1;
+          }
         }
       }
     }
   }
-  return K;
+  return ctry;
 }
 
 // TLu part2 from Hernandez & Dehnen 2023 Listing 3
@@ -622,7 +651,6 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
         reb_integrator_mercurius_whfast_step(r, r->dt);
       }
       else{
-        rim->current_K = 1;
         reb_integrator_mercurius_bs_step(r, r->dt);
       }
       // Now assess Falt
@@ -687,6 +715,9 @@ void reb_integrator_mercurius_reset(struct reb_simulation* r){
 
     free(r->ri_mercurius.f0);
     r->ri_mercurius.f0 = NULL;
+
+    free(r->ri_mercurius.f0_peris);
+    r->ri_mercurius.f0_peris = NULL;
 
     //free(r->ri_mercurius.current_Ls);
     //r->ri_mercurius.current_Ls = NULL;
