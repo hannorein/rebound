@@ -377,7 +377,6 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
         // Need to safe these arrays in SimulationArchive
         rim->dcrit              = realloc(rim->dcrit, sizeof(double)*N);
         rim->dcrit_allocatedN = N;
-        rim->current_Ls         = realloc(rim->current_Ls, sizeof(int)*(N-1));
         // If particle number increased (or this is the first step), need to calculate critical radii
         rim->recalculate_dcrit_this_timestep        = 1;
         // Heliocentric coordinates were never calculated.
@@ -389,6 +388,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
         // Can be recreated without loosing bit-wise reproducibility.
         rim->particles_backup       = realloc(rim->particles_backup,sizeof(struct reb_particle)*N);
         rim->particles_backup_try   = realloc(rim->particles_backup_try,sizeof(struct reb_particle)*N);
+        rim->current_Ls             = realloc(rim->current_Ls, sizeof(int)*(N-1));
         rim->encounter_map          = realloc(rim->encounter_map,sizeof(int)*N);
         rim->f0                     = realloc(rim->f0,sizeof(double)*((N-1)*(N-2))/2);
         rim->f0_peris               = realloc(rim->f0_peris,sizeof(double)*(N-1));
@@ -491,7 +491,7 @@ int pindex(int i, int j, int N){
 }
 
 // Check F for pre-timestep using backup particles
-int Fp(struct reb_simulation* const r){
+int Fp(struct reb_simulation* const r, int* L_rej){
   struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
   const int N = r->N;
   const double* const dcrit = rim->dcrit;
@@ -526,8 +526,9 @@ int Fp(struct reb_simulation* const r){
       if (i == 0){
           rim->f0_peris[j-1] = f0_peri;
           if (f0_peri < 0.0){
-          rim->current_Ls[j-1] = 1;
-          c0 = 1;
+            rim->current_Ls[j-1] = 1;
+            c0 = 1;
+            *L_rej = 1;
         }
       }
     }
@@ -545,30 +546,16 @@ int F_cond(struct reb_simulation* const r, int cond){
   const double peri = rim->peri;
   int ctry = 0;
 
-  for (int i = 1; i < r->N; i++){
-    rim->current_Ls[i-1] = 0; // 0 means no close encounter
-  }
-
   // Ftry only assesses planet-planet
-  for (int i = 0; i < N; i++){
+  for (int i = 1; i < N; i++){
     for (int j = i + 1; j < N; j++){
       const double dx = r->particles[i].x - r->particles[j].x;
       const double dy = r->particles[i].y - r->particles[j].y;
       const double dz = r->particles[i].z - r->particles[j].z;
       const double d = sqrt(dx*dx + dy*dy + dz*dz);
 
-      double f0;
-      double f;
-
-      if (i == 0){ // for close pericenter approach
-        f0 = rim->f0_peris[j-1];
-        f = d - MAX(dcrit[i],dcrit[j])*1.21;
-      }
-      else{ // for planet-planet
-        f0 = rim->f0[pindex(i,j,N)];
-        f = d - peri;
-      }
-
+      double f0 = rim->f0[pindex(i,j,N)];;
+      double f = d - peri;;
 
       int c0;
       int c;
@@ -578,13 +565,6 @@ int F_cond(struct reb_simulation* const r, int cond){
 
         if (c0 != c){
           ctry = 1;
-          if (i == 0){ // Can safely set these, bc whfast step always reverts these
-            rim->current_Ls[j-1] = 1;
-            printf("0,%e\n", r->t);
-          }
-          else{
-            rim->current_K = 1;
-          }
         }
       }
 
@@ -594,13 +574,6 @@ int F_cond(struct reb_simulation* const r, int cond){
 
         if (c0 == c){
           ctry = 1;
-          if (i == 0){
-            rim->current_Ls[j-1] = 1;
-            printf("1,%e\n", r->t);
-          }
-          else{
-            rim->current_K = 1;
-          }
         }
       }
     }
@@ -624,7 +597,8 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     memcpy(rim->particles_backup,r->particles,N*sizeof(struct reb_particle));
 
     // ytry for each particle
-    int c0 = Fp(r);
+    int L_rej = 0;
+    int c0 = Fp(r, &L_rej);
 
     // If there has been a close encounter, advance whole sim with BS
     if (c0){
@@ -634,34 +608,40 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     else{
       reb_integrator_mercurius_whfast_step(r, r->dt);
     }
-    // Backup particles from first try in case alternative integrator is rejected
-    memcpy(rim->particles_backup_try,r->particles,N*sizeof(struct reb_particle));
 
-    // Now we assess if the step should be accepted by evaluating Ftry
-    int ctry = F_cond(r,0);
-    if (ctry){
-      // Reject first integrator, try alternative integrators
-      // In both cases, reset to backup values
-      for (int i=0; i<N; i++){
-          r->particles[i] = rim->particles_backup[i];
-      }
+    // If close encounter with sun was detected, immediately accept BS step
+    // otherwise:
+    if (L_rej == 0){ // may be a better way to do this
+      // Backup particles from first try in case alternative integrator is rejected
+      memcpy(rim->particles_backup_try,r->particles,N*sizeof(struct reb_particle));
 
-      if (c0){
-        // Means we tried BS and rejected. Now try with WHFast
-        reb_integrator_mercurius_whfast_step(r, r->dt);
-      }
-      else{
-        reb_integrator_mercurius_bs_step(r, r->dt);
-      }
-      // Now assess Falt
-      int calt = F_cond(r,1);
-        if (calt){
-          // Reject alternative integrator, use original integrators
-          for (int i=0; i<N; i++){
-              r->particles[i] = rim->particles_backup_try[i];
+      // Now we assess if the step should be accepted by evaluating Ftry
+      int ctry = F_cond(r,0);
+      if (ctry){
+        // Reject first integrator, try alternative integrators
+        // In both cases, reset to backup values
+        for (int i=0; i<N; i++){
+            r->particles[i] = rim->particles_backup[i];
+        }
+
+        if (c0){
+          // Means we tried BS and rejected. Now try with WHFast
+          reb_integrator_mercurius_whfast_step(r, r->dt);
+        }
+        else{
+          rim->current_K = 1;
+          reb_integrator_mercurius_bs_step(r, r->dt);
+        }
+        // Now assess Falt
+        int calt = F_cond(r,1);
+          if (calt){
+            // Reject alternative integrator, use original integrators
+            for (int i=0; i<N; i++){
+                r->particles[i] = rim->particles_backup_try[i];
+            }
           }
         }
-      }
+    }
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;
