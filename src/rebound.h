@@ -116,6 +116,8 @@ struct reb_simulation_integrator_ias15 {
     double epsilon;
     double min_dt;
     unsigned int epsilon_global;
+    double zeta;
+    unsigned int dt_mode;
    
     // Internal use
     unsigned long iterations_max_exceeded; // Counter how many times the iteration did not converge. 

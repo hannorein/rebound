@@ -455,6 +455,8 @@ class reb_simulation_integrator_ias15(Structure):
     _fields_ = [("epsilon", c_double),
                 ("min_dt", c_double),
                 ("epsilon_global", c_uint),
+                ("zeta", c_double),
+                ("dt_mode", c_uint),
                 ("_iterations_max_exceeded", c_ulong),
                 ("_allocatedN", c_int),
                 ("_at", POINTER(c_double)),
