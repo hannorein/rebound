@@ -587,15 +587,16 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 if (dt_new/dt_done > 1./safety_factor) dt_new = dt_done /safety_factor; // Don't increase the timestep by too much compared to the last one.
             }
         }else{ 
-            // Otherwise, use y'''/y'' dt timestep calculation method
+            // Otherwise, use zeta * y''/y''' = dt timestep calculation method
             // Loop over all particles and choose the smallest dt
             unsigned int Nreal = N - r->N_var;
 
             dt_new = 0.; // Will update this value in the loop below
             for(int i=0;i<Nreal;i++){
-                double y2tmp = sqrt(at[3*i+0]*at[3*i+0] + at[3*i+1]*at[3*i+1] + at[3*i+2]*at[3*i+2]);
-                double y3tmp = sqrt(b.p0[3*i+0]*b.p0[3*i+0] + b.p0[3*i+1]*b.p0[3*i+1] + b.p0[3*i+2]*b.p0[3*i+2]) / r->dt;
-                double dttmp = fabs(y2tmp / y3tmp) * r->ri_ias15.zeta;
+                double y2tmp = at[3*i+0]*at[3*i+0] + at[3*i+1]*at[3*i+1] + at[3*i+2]*at[3*i+2];
+                // Technically, y''' = a0 = b0 / dt, but we only have b0 here, will divide by dt later
+                double y3tmp = b.p0[3*i+0]*b.p0[3*i+0] + b.p0[3*i+1]*b.p0[3*i+1] + b.p0[3*i+2]*b.p0[3*i+2];
+                double dttmp = sqrt(y2tmp / y3tmp) * r->dt * r->ri_ias15.zeta;
 
                 if (isnormal(dttmp)){
                     if (dt_new == 0. || dttmp < dt_new) {
