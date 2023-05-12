@@ -17,7 +17,7 @@ class TestIAS15mode1(unittest.TestCase):
         sim.integrate(1e3*jupyr)
 
         sim2 = rebound.Simulation("sim.bin")
-        sim2.integrate(-1e3*jupyr)
+        sim2.integrate(1e3*jupyr)
         
         for i in range(sim.N):
             self.assertEqual(sim2.particles[i].x,sim.particles[i].x)
