@@ -569,9 +569,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 double y3tmp = b.p0[3*i+0]*b.p0[3*i+0] + b.p0[3*i+1]*b.p0[3*i+1] + b.p0[3*i+2]*b.p0[3*i+2];
                 double dttmp = sqrt(y2tmp / y3tmp) * r->dt * r->ri_ias15.zeta;
 
-                // fabs(dttmp - dt_new) < 0 is equivalent to fabs(dttmp) < fabs(dt_new)
-                // (we want to keep cases where the dt is smaller than current dt)
-                if (isnormal(dttmp) && (dt_new == 0. || fabs(dttmp - dt_new) < 0)) { // TODO: Make sure this works for backwards integrations
+                if (isnormal(dttmp) && (dt_new == 0. || fabs(dttmp) < fabs(dt_new))) {
                     dt_new = dttmp;
                 }
             }
