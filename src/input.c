@@ -223,6 +223,8 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(IAS15_MINDT,        &r->ri_ias15.min_dt);
         CASE(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global);
         CASE(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded);
+        CASE(IAS15_DTMODE,       &r->ri_ias15.dt_mode);
+        CASE(IAS15_ZETA,         &r->ri_ias15.zeta);
         CASE(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN);
         CASE(JANUS_SCALEPOS,     &r->ri_janus.scale_pos);
         CASE(JANUS_SCALEVEL,     &r->ri_janus.scale_vel);
