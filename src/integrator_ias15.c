@@ -74,7 +74,7 @@ static void predict_next_step(double ratio, int N3,  const struct reb_dpconst7 _
 /////////////////////////
 //   Constants 
 
-static const double safety_factor           = 0.25; /**< Maximum increase/deacrease of consecutve timesteps. */
+static const double safety_factor_dtmode_0  = 0.25; /**< Maximum increase/deacrease of consecutve timesteps. */
 static const double safety_factor_dtmode_1  = 0.50; /**< Maximum increase/deacrease of consecutve timesteps in dtmode 1. */
 
 // Gauss Radau spacings
@@ -500,10 +500,11 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     // Find new timestep
     const double dt_done = r->dt;
     double dt_new;
+    double safety_factor = safety_factor_dtmode_0;
 
     if (r->ri_ias15.epsilon>0){
         // If dt_mode == 0: use the b6/y'' dt calculation mode
-        if (!r->ri_ias15.dt_mode) {
+        if (r->ri_ias15.dt_mode == 0) {
             // Estimate error (given by last term in series expansion) 
             // There are two options:
             // r->ri_ias15.epsilon_global==1  (default)
@@ -556,36 +557,6 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }else{                  // In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
-
-            if (fabs(dt_new)<r->ri_ias15.min_dt) dt_new = copysign(r->ri_ias15.min_dt,dt_new);
-
-            if (fabs(dt_new/dt_done) < safety_factor) { // New timestep is significantly smaller.
-                // Reset particles
-                for(int k=0;k<N;++k) {
-                    int mk = map[k];
-                    particles[mk].x = x0[3*k+0]; // Set inital position
-                    particles[mk].y = x0[3*k+1];
-                    particles[mk].z = x0[3*k+2];
-
-                    particles[mk].vx = v0[3*k+0];    // Set inital velocity
-                    particles[mk].vy = v0[3*k+1];
-                    particles[mk].vz = v0[3*k+2];
-                    
-                    particles[mk].ax = a0[3*k+0];    // Set inital acceleration
-                    particles[mk].ay = a0[3*k+1];
-                    particles[mk].az = a0[3*k+2];
-                }
-                r->dt = dt_new;
-                if (r->dt_last_done!=0.){       // Do not predict next e/b values if this is the first time step.
-                    double ratio = r->dt/r->dt_last_done;
-                    predict_next_step(ratio, N3, er, br, e, b);
-                }
-
-                return 0; // Step rejected. Do again. 
-            }
-            if (fabs(dt_new/dt_done) > 1.0) {   // New timestep is larger.
-                if (dt_new/dt_done > 1./safety_factor) dt_new = dt_done /safety_factor; // Don't increase the timestep by too much compared to the last one.
-            }
         }else{ 
             // Otherwise, use zeta * y''/y''' = dt timestep calculation method
             // Loop over all particles and choose the smallest dt
@@ -598,48 +569,48 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 double y3tmp = b.p0[3*i+0]*b.p0[3*i+0] + b.p0[3*i+1]*b.p0[3*i+1] + b.p0[3*i+2]*b.p0[3*i+2];
                 double dttmp = sqrt(y2tmp / y3tmp) * r->dt * r->ri_ias15.zeta;
 
-                if (isnormal(dttmp)){
-                    if (dt_new == 0. || dttmp < dt_new) {
-                        dt_new = dttmp;
-                    }
+                if (isnormal(dttmp) && (dt_new == 0. || dttmp < dt_new)) { // TODO: Make sure this works for backwards integrations
+                    dt_new = dttmp;
                 }
             }
+
+            safety_factor = safety_factor_dtmode_1;
 
             if  (dt_new == 0.){ // If the rare case that no new dt is found, use default){
-                dt_new = dt_done/safety_factor_dtmode_1; // by default, increase timestep a little
-            }
-
-            if (fabs(dt_new)<r->ri_ias15.min_dt) dt_new = copysign(r->ri_ias15.min_dt,dt_new);
-
-            if (fabs(dt_new/dt_done) < safety_factor_dtmode_1) { // New timestep is significantly smaller.
-                // Reset particles
-                for(int k=0;k<N;++k) {
-                    int mk = map[k];
-                    particles[mk].x = x0[3*k+0]; // Set inital position
-                    particles[mk].y = x0[3*k+1];
-                    particles[mk].z = x0[3*k+2];
-
-                    particles[mk].vx = v0[3*k+0];    // Set inital velocity
-                    particles[mk].vy = v0[3*k+1];
-                    particles[mk].vz = v0[3*k+2];
-
-                    particles[mk].ax = a0[3*k+0];    // Set inital acceleration
-                    particles[mk].ay = a0[3*k+1];
-                    particles[mk].az = a0[3*k+2];
-                }
-                r->dt = dt_new;
-                if (r->dt_last_done!=0.){       // Do not predict next e/b values if this is the first time step.
-                    double ratio = r->dt/r->dt_last_done;
-                    predict_next_step(ratio, N3, er, br, e, b);
-                }
-
-                return 0; // Step rejected. Do again. 
-            }
-            if (fabs(dt_new/dt_done) > 1.0) {   // New timestep is larger.
-                if (dt_new/dt_done > 1./safety_factor_dtmode_1) dt_new = dt_done /safety_factor_dtmode_1; // Don't increase the timestep by too much compared to the last one.
+                dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
         }
+            
 
+        if (fabs(dt_new)<r->ri_ias15.min_dt) dt_new = copysign(r->ri_ias15.min_dt,dt_new);
+
+        if (fabs(dt_new/dt_done) < safety_factor) { // New timestep is significantly smaller.
+                                                             // Reset particles
+            for(int k=0;k<N;++k) {
+                int mk = map[k];
+                particles[mk].x = x0[3*k+0];    // Set inital position
+                particles[mk].y = x0[3*k+1];
+                particles[mk].z = x0[3*k+2];
+
+                particles[mk].vx = v0[3*k+0];   // Set inital velocity
+                particles[mk].vy = v0[3*k+1];
+                particles[mk].vz = v0[3*k+2];
+
+                particles[mk].ax = a0[3*k+0];   // Set inital acceleration
+                particles[mk].ay = a0[3*k+1];
+                particles[mk].az = a0[3*k+2];
+            }
+            r->dt = dt_new;
+            if (r->dt_last_done!=0.){       // Do not predict next e/b values if this is the first time step.
+                double ratio = r->dt/r->dt_last_done;
+                predict_next_step(ratio, N3, er, br, e, b);
+            }
+
+            return 0; // Step rejected. Do again. 
+        }
+        if (fabs(dt_new/dt_done) > 1.0) {   // New timestep is larger.
+            if (dt_new/dt_done > 1./safety_factor) dt_new = dt_done /safety_factor; // Don't increase the timestep by too much compared to the last one.
+        }
         r->dt = dt_new;
     }
 
