@@ -387,11 +387,16 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
         // These arrays are only used within one timestep.
         // Can be recreated without loosing bit-wise reproducibility.
         rim->particles_backup       = realloc(rim->particles_backup,sizeof(struct reb_particle)*N);
-        rim->particles_backup_try   = realloc(rim->particles_backup_try,sizeof(struct reb_particle)*N);
+
+        rim->current_Ks = realloc(rim->current_Ks, sizeof(int)*((N-1)*(N-2))/2);
         rim->current_Ls             = realloc(rim->current_Ls, sizeof(int)*(N-1));
         rim->encounter_map          = realloc(rim->encounter_map,sizeof(int)*N);
-        rim->f0                     = realloc(rim->f0,sizeof(double)*((N-1)*(N-2))/2);
-        rim->f0_peris               = realloc(rim->f0_peris,sizeof(double)*(N-1));
+
+        // Only need this stuff for Listing 3
+        // rim->particles_backup_try   = realloc(rim->particles_backup_try,sizeof(struct reb_particle)*N);
+        // rim->f0                     = realloc(rim->f0,sizeof(double)*((N-1)*(N-2))/2);
+        // rim->f0_peris               = realloc(rim->f0_peris,sizeof(double)*(N-1));
+
         rim->allocatedN = N;
 
         //rim->close_encounters   = realloc(rim->close_encounters,sizeof(int)*N); // TLu
@@ -440,10 +445,14 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
 void reb_integrator_mercurius_whfast_step(struct reb_simulation* const r, double dt){
   struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
   // If we are running WHFast K, L are always 0
-  rim->current_K = 0;
+  const int N =  r->N;
   for (int i = 1; i < r->N; i++){
     rim->current_Ls[i-1] = 0; // 0 means no close encounter
   }
+  for (int i = 0; i < (N-1)*(N-2)/2; i++){
+    rim->current_Ks[i] = 0; // 0 means no close encounter
+  }
+
   reb_update_acceleration(r);
   if (rim->is_synchronized){
       reb_integrator_mercurius_interaction_step(r,dt/2.);
@@ -490,6 +499,60 @@ int pindex(int i, int j, int N){
   return (i-1)*N-((i-1)*(2+i)/2)+j-i-1;
 }
 
+// In listing 2 can use this for errything
+int effF(struct reb_simulation* const r){
+  struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
+  const int N = r->N;
+  const double* const dcrit = rim->dcrit;
+  const double peri = rim->peri;
+  int c0 = 0;
+
+  // This is inefficient for many test particles...
+  for (int i = 0; i < N; i++){
+    for (int j = i + 1; j < N; j++){
+      // Needed for both
+      const double dx = r->particles[i].x - r->particles[j].x;
+      const double dy = r->particles[i].y - r->particles[j].y;
+      const double dz = r->particles[i].z - r->particles[j].z;
+      const double d = sqrt(dx*dx + dy*dy + dz*dz);
+
+      // Naive condition
+      double dcritmax = MAX(dcrit[i],dcrit[j]);
+      dcritmax *= 1.21;
+
+      double fcond = d - dcritmax;
+      double fcond_peri = d - peri;
+
+/*
+      // Velocity dependent condition
+
+      const double vx = r->particles[i].vx - r->particles[j].vx;
+      const double vy = r->particles[i].vy - r->particles[j].vy;
+      const double vz = r->particles[i].vz - r->particles[j].vz;
+      const double v = sqrt(vx*vx + vy*vy + vz*vz);
+
+      double F_vel = d / (sqrt(3. * v * v + r->G * (r->particles[i].m + r->particles[j].m) / d));
+      double fcond = F_vel - 30. * r->dt; // velocity dependent condition
+      double fcond_peri = fcond;
+*/
+
+
+      // Body-body
+      if (i != 0 && fcond < 0.0){
+        rim->current_Ks[pindex(i,j,N)] = 1;
+        c0 = 1;
+      }
+
+      // Check for close encounter with central body
+      if (i == 0 && fcond_peri < 0.0){
+        rim->current_Ls[j-1] = 1;
+        c0 = 1;
+      }
+    }
+  }
+  return c0;
+}
+
 // Check F for pre-timestep using backup particles
 int Fp(struct reb_simulation* const r, int* L_rej){
   struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
@@ -517,7 +580,7 @@ int Fp(struct reb_simulation* const r, int* L_rej){
         // Populate f0 array so don't need to recalculate
         rim->f0[pindex(i,j,N)] = f0; // probably needs to be fact checked, but seems to be working for now
         if (f0 < 0.0){
-          rim->current_K = 1;
+          rim->current_Ks[pindex(i,j,N)] = 1;
           c0 = 1;
         }
       }
@@ -581,8 +644,50 @@ int F_cond(struct reb_simulation* const r, int cond){
   return ctry;
 }
 
+// This is Listing 2
+void reb_integrator_mercurius_part2(struct reb_simulation* const r){
+    struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
+    const int N = r->N;
+    const double* const dcrit = rim->dcrit;
+
+    // Make copy of particles
+    memcpy(rim->particles_backup,r->particles,N*sizeof(struct reb_particle));
+
+    // set current L at the beginning of each timestep
+    for (int i = 1; i < N; i++){
+      rim->current_Ls[i-1] = 0;
+    }
+
+    for (int i = 0; i < (N-1)*(N-2)/2; i++){
+      rim->current_Ls[i-1] = 0;
+    }
+
+    int c0 = effF(r); // Check initial condition
+
+    if (!c0){
+      reb_integrator_mercurius_whfast_step(r, r->dt);
+
+      int fy1 = effF(r);
+
+      if (fy1){
+        // This means close encounter post-timestep but NOT pre-timestep: we reject the WHFast step and integrate the backup particles with IAS15
+        for (int i=0; i<N; i++){
+            r->particles[i] = rim->particles_backup[i];
+        }
+        reb_integrator_mercurius_bs_step(r, r->dt);
+      }
+    }
+    else{
+      reb_integrator_mercurius_bs_step(r, r->dt);
+    }
+
+    r->t+=r->dt;
+    r->dt_last_done = r->dt;
+}
+
 // TLu part2 from Hernandez & Dehnen 2023 Listing 3
 // simple version: not particle-wise. Integrate whole sim w/ WHFast vs BS
+/*
 void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
     const int N = r->N;
@@ -646,6 +751,7 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     r->t+=r->dt;
     r->dt_last_done = r->dt;
 }
+*/
 
 void reb_integrator_mercurius_synchronize(struct reb_simulation* r){
     struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);

@@ -28,13 +28,13 @@ int main(int argc, char* argv[]){
     // Saturn
     double sm = 2.857e-4;
     double sa = 9.58;
-    double se = 0.95;
+    double se = 0.99;
     double si = M_PI / 2.;
 
     r->dt = 0.1*2.*M_PI;
     r->integrator = REB_INTEGRATOR_MERCURIUS;
     r->ri_mercurius.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
-    r->ri_mercurius.peri = 2;
+    r->ri_mercurius.peri = 1;
     r->heartbeat  = heartbeat;
 
     reb_add(r, star);
@@ -48,9 +48,9 @@ int main(int argc, char* argv[]){
     e_init = reb_tools_energy(r);
     system("rm -rf energy.txt");
     FILE* f = fopen("energy.txt","w");
-
     reb_integrate(r, 12000 * 2 * M_PI);
-
+    //err = reb_tools_energy(r);
+    //printf("%e\n", (err - e_init) /  e_init);
     reb_free_simulation(r);
 }
 
