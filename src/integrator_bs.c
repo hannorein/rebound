@@ -385,9 +385,9 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
             current_L = (r->ri_mercurius.current_Ls[mi-1]); // TLu crude test particle check, fix later
         }
 
-        if (r->ri_mercurius.print){
-          printf("%f %d %d %d\n", r->t, i, mi, current_L);
-        }
+        //if (r->ri_mercurius.print){
+        //  printf("%f %d %d %d\n", r->t, i, mi, current_L);
+        //}
         const struct reb_particle p = r->particles[mi];
         yDot[i*6+0] = p.vx + current_L * px;
         yDot[i*6+1] = p.vy + current_L * py;

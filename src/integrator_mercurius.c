@@ -496,6 +496,7 @@ int pindex(int i, int j, int N){
 void F0(struct reb_simulation* const r){
   struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
   const int N = r->N;
+  const int Nactive= r->N_active;
   const double* const dcrit = rim->dcrit;
   const double peri = rim->peri;
 
@@ -506,7 +507,7 @@ void F0(struct reb_simulation* const r){
   rim->encounterN = 1;
 
   // This is inefficient for many test particles...
-  for (int i = 0; i < N; i++){
+  for (int i = 0; i < Nactive; i++){
     for (int j = i + 1; j < N; j++){
       // Needed for both
       const double dx = r->particles[i].x - r->particles[j].x;
@@ -566,6 +567,7 @@ void F0(struct reb_simulation* const r){
 int Ftry(struct reb_simulation* const r){
   struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
   const int N = r->N;
+  const int Nactive = r->N_active;
   const double* const dcrit = rim->dcrit;
   int ctry = 0;
 
@@ -574,7 +576,7 @@ int Ftry(struct reb_simulation* const r){
   }
 
   // This is inefficient for many test particles...
-  for (int i = 1; i < N; i++){
+  for (int i = 1; i < Nactive; i++){
     for (int j = i + 1; j < N; j++){
       // Needed for both
       const double dx = r->particles[i].x - r->particles[j].x;
@@ -617,15 +619,14 @@ int Ftry(struct reb_simulation* const r){
 
 void reb_integrator_trace_step(struct reb_simulation* const r, double dt){
   struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
-  reb_update_acceleration(r);
   if (rim->is_synchronized){
       //printf("First Call\n");
-      reb_integrator_mercurius_interaction_step(r, dt/2.); // Pdot for B
+      reb_integrator_mercurius_jump_step(r, dt/2.); // Pdot for B
   }else{
-      reb_integrator_mercurius_interaction_step(r, dt);
+      reb_integrator_mercurius_jump_step(r, dt);
   }
-
-  reb_integrator_mercurius_jump_step(r,dt/2.);
+  reb_update_acceleration(r);
+  reb_integrator_mercurius_interaction_step(r, dt/2.);
   reb_integrator_mercurius_com_step(r,dt);
 
   memcpy(rim->particles_backup_try,r->particles,r->N*sizeof(struct reb_particle));
@@ -665,20 +666,7 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     //}
 
     // Always Interaction first - Ks taken care of in F0
-    reb_update_acceleration(r);
-    if (rim->is_synchronized){
-        //printf("First Call\n");
-        reb_integrator_mercurius_interaction_step(r, r->dt/2.); // Pdot for B
-    }else{
-        reb_integrator_mercurius_interaction_step(r, r->dt);
-    }
-
-    reb_integrator_mercurius_jump_step(r,r->dt/2.);
-    reb_integrator_mercurius_com_step(r,r->dt);
-
-    memcpy(rim->particles_backup_try,r->particles,N*sizeof(struct reb_particle));
-    reb_integrator_mercurius_kepler_step(r, r->dt); // We can always advance ALL particles
-    reb_mercurius_bs_encounter_step(r, r->dt); // This will do nothing if no close encounters
+    reb_integrator_trace_step(r, r->dt);
 
     // Recheck condition here. Essentially, checking if any Ks changed 0 -> 1
     int ctry = Ftry(r);
@@ -691,23 +679,14 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
           r->particles[i] = rim->particles_backup[i];
       }
       // Update takes care of Kijs, interaction should be done correctly
-      reb_update_acceleration(r);
-      if (rim->is_synchronized){
-          reb_integrator_mercurius_interaction_step(r, r->dt/2.); // Pdot for B
-      }else{
-          reb_integrator_mercurius_interaction_step(r, r->dt);
-      }
-      reb_integrator_mercurius_jump_step(r,r->dt/2.); // fairly certain this needs to be redone bc velocities change in interaction
-      reb_integrator_mercurius_com_step(r,r->dt);
-      memcpy(rim->particles_backup_try,r->particles,N*sizeof(struct reb_particle));
-      reb_integrator_mercurius_kepler_step(r, r->dt);
-      reb_mercurius_bs_encounter_step(r, r->dt);
+      reb_integrator_trace_step(r, r->dt);
     }
     //else{ // Nothing flagged by ctry. We are done!
       //printf("Success\n");
     //}
 
-    reb_integrator_mercurius_jump_step(r,r->dt/2.);
+    reb_update_acceleration(r);
+    reb_integrator_mercurius_interaction_step(r,r->dt/2.);
 
     rim->is_synchronized = 0;
     if (rim->safe_mode){
@@ -726,13 +705,12 @@ void reb_integrator_mercurius_synchronize(struct reb_simulation* r){
     if (rim->is_synchronized == 0){
         r->gravity = REB_GRAVITY_MERCURIUS; // needed here again for SimulationArchive
         rim->mode = 0;
-        if (rim->L == NULL){
+        //if (rim->L == NULL){
             // Setting default switching function
-            rim->L = reb_integrator_mercurius_L_mercury;
-        }
+        //    rim->L = reb_integrator_mercurius_L_mercury;
+        //}
         //printf("Before interaction 2\n");
-        reb_update_acceleration(r);
-        reb_integrator_mercurius_interaction_step(r,r->dt/2.);
+        reb_integrator_mercurius_jump_step(r,r->dt/2.);
 
         reb_integrator_mercurius_dh_to_inertial(r);
 
@@ -767,12 +745,6 @@ void reb_integrator_mercurius_reset(struct reb_simulation* r){
     free(r->ri_mercurius.particles_backup_try);
     r->ri_mercurius.particles_backup_try = NULL;
 
-    free(r->ri_mercurius.f0);
-    r->ri_mercurius.f0 = NULL;
-
-    free(r->ri_mercurius.f0_peris);
-    r->ri_mercurius.f0_peris = NULL;
-
     free(r->ri_mercurius.current_Ks);
     r->ri_mercurius.current_Ks = NULL;
     free(r->ri_mercurius.delta_Ks);
@@ -782,6 +754,15 @@ void reb_integrator_mercurius_reset(struct reb_simulation* r){
 
     free(r->ri_mercurius.encounter_map_backup);
     r->ri_mercurius.encounter_map_backup = NULL;
+
+    free(r->ri_mercurius.encounter_map_WH);
+    r->ri_mercurius.encounter_map_WH = NULL;
+
+    //free(r->ri_mercurius.f0);
+    //r->ri_mercurius.f0 = NULL;
+
+    //free(r->ri_mercurius.f0_peris);
+    //r->ri_mercurius.f0_peris = NULL;
 
     // free(r->ri_mercurius.close_encounters);
     // r->close_encounters = NULL;
