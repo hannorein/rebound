@@ -89,7 +89,6 @@ void reb_step(struct reb_simulation* const r){
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
-
     reb_integrator_part1(r);
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
@@ -127,7 +126,6 @@ void reb_step(struct reb_simulation* const r){
     }
 
     // Calculate accelerations.
-    //printf("Before part2\n", r->t);
     reb_calculate_acceleration(r);
     if (r->N_var){
         reb_calculate_acceleration_var(r);
@@ -725,7 +723,9 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
 
 
 void reb_run_heartbeat(struct reb_simulation* const r){
-    if (r->heartbeat){ r->heartbeat(r); }               // Heartbeat
+    if (r->heartbeat){
+      r->heartbeat(r);
+    }               // Heartbeat
     if (r->display_heartbeat){ reb_check_for_display_heartbeat(r); }
     if (r->exit_max_distance){
         // Check for escaping particles

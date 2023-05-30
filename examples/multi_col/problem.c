@@ -89,8 +89,8 @@ int main(int argc, char* argv[]){
     e2_init = jacobi_dh(r, 3);
     system("rm -rf energy.txt");
 
-    reb_integrate(r, 3.*11.86*2.*M_PI);
-    //reb_integrate(r, 200.);
+    //reb_integrate(r, 500.*11.86*2.*M_PI);
+    reb_integrate(r, 12849.);
     reb_free_simulation(r);
 }
 

@@ -159,15 +159,19 @@ struct reb_simulation_integrator_mercurius {
     double* dcrit;                  // Precalculated switching radii for particles
     struct reb_particle* REBOUND_RESTRICT particles_backup; //  TLu contains coordinates before the entire step
     struct reb_particle* REBOUND_RESTRICT particles_backup_additionalforces; // contains coordinates before Kepler step for encounter prediction
-    int* encounter_map;             // Map to represent which particles are integrated with ias15
+    int* encounter_map;             // Map to represent which particles are integrated with BS
     // int* close_encounters; // TLu tracking which integrator is used for each particle
     struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
     struct reb_vec3d com_vel;
+
     int* current_Ks; // TLu tracking K for the entire timestep
+    int* delta_Ks; // TLu checking if Ks change during timestep
     int* current_Ls; // TLu tracking K for the entire timestep
+    int* encounter_map_backup;             // Needed for step rejections
     double* f0; // TLu 1D array right now - perhaps a better way to do this...
     double* f0_peris;
     struct reb_particle* REBOUND_RESTRICT particles_backup_try; //  TLu contains coordinates after initial try
+    int print; // for debugging
 };
 
 struct reb_simulation_integrator_sei {
@@ -271,6 +275,10 @@ struct reb_simulation_integrator_bs {
     int previousRejected;
     int targetIter;
     int user_ode_needs_nbody; // Do not set manually. Use needs_nbody in reb_ode instead.
+
+    // TRACE
+    int* map;               // internal map to particles (this is an identity map except when MERCURIUS is used
+    int map_allocated_N;    // allocated size for map
 };
 
 typedef struct _StumpfCoefficients

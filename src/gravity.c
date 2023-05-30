@@ -525,12 +525,9 @@ void reb_calculate_acceleration(struct reb_simulation* r){
         // TLu this implements the Levison & Duncan 2000 EoMs - 22 & 23 in Hernandez & Dehnen 2023
         case REB_GRAVITY_MERCURIUS:
         {
-            double (*_L) (const struct reb_simulation* const r, double d, double dcrit) = r->ri_mercurius.L;
             switch (r->ri_mercurius.mode){
-                case 0: // WHFAST part
-                // Interaction step
+                case 0: // Interaction step
                 {
-                    const double* const dcrit = r->ri_mercurius.dcrit;
 #ifndef OPENMP
                     for (int i=0; i<_N_real; i++){
                         particles[i].ax = 0;
@@ -619,10 +616,14 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                 // Kepler Step
                 {
                     const double m0 = r->particles[0].m;
-                    const double* const dcrit = r->ri_mercurius.dcrit;
-                    const int encounterN = r->N;//r->ri_mercurius.encounterN;
-                    const int encounterNactive = r->N_active;//r->ri_mercurius.encounterNactive;
+                    const int encounterN = r->ri_mercurius.encounterN;
+                    const int encounterNactive = r->ri_mercurius.encounterNactive;
                     int* map = r->ri_mercurius.encounter_map;
+                    int pr = r->ri_mercurius.print;
+                    //if (pr){
+                    //  printf("%d,%d", encounterN, encounterNactive);
+                    //  exit(1);
+                    //}
 #ifndef OPENMP
                     particles[0].ax = 0; // map[0] is always 0
                     particles[0].ay = 0;
@@ -630,31 +631,37 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 
                     // Acceleration due to star
                     for (int i=1; i<encounterN; i++){
-                        //printf("Stellar accel %d\t",i);
-                        // int mi = map[i];
-                        const double x = particles[i].x;
-                        const double y = particles[i].y;
-                        const double z = particles[i].z;
+                        int mi = map[i];
+                        //if (pr){
+                        //  printf("stellar: %d %d\n", i, mi);
+                        //}
+                        const double x = particles[mi].x;
+                        const double y = particles[mi].y;
+                        const double z = particles[mi].z;
                         const double _r = sqrt(x*x + y*y + z*z + softening2);
                         double prefact = -G * m0 / (_r*_r*_r);
-                        particles[i].ax    = prefact*x;
-                        particles[i].ay    = prefact*y;
-                        particles[i].az    = prefact*z;
+                        particles[mi].ax    = prefact*x;
+                        particles[mi].ay    = prefact*y;
+                        particles[mi].az    = prefact*z;
+                        //if (pr){
+                        //  printf("Stellar: %d %d %f %f %f %f\n", i, mi, r->t, particles[mi].ax, particles[mi].ay, particles[mi].az);
+                        //}
                     }
 
                     // We're in a heliocentric coordinate system.
                     // The star feels no acceleration
                     // Interactions between active-active
                     if (encounterNactive > 2){ // if two or less, no active-active planets
+                      printf("Should never happen\n");
                       for (int i=2; i<encounterNactive; i++){
-                          int mi = i;//map[i];
+                          int mi = map[i];
                           for (int j=1; j<i; j++){
-                              int mj = j;//map[j];
+                              int mj = map[j];
                               const double dx = particles[mi].x - particles[mj].x;
                               const double dy = particles[mi].y - particles[mj].y;
                               const double dz = particles[mi].z - particles[mj].z;
                               const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                              double prefact = G*r->ri_mercurius.current_Ks[pgindex(j, i, N)]/(_r*_r*_r);
+                              double prefact = G*r->ri_mercurius.current_Ks[pgindex(mj, mi, N)]/(_r*_r*_r);
                               double prefactj = -prefact*particles[mj].m;
                               double prefacti = prefact*particles[mi].m;
 
@@ -672,19 +679,28 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                     // Interactions between active-testparticle
                     const int startitestp = MAX(encounterNactive,2);
                     for (int i=startitestp; i<encounterN; i++){
-                        int mi = i;//map[i];
+                        int mi = map[i];
                         for (int j=1; j<encounterNactive; j++){
-                            int mj = j;//map[j];
+                            int mj = map[j];
                             const double dx = particles[mi].x - particles[mj].x;
                             const double dy = particles[mi].y - particles[mj].y;
                             const double dz = particles[mi].z - particles[mj].z;
                             const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                            double prefact = G*r->ri_mercurius.current_Ks[pgindex(j, i, N)]/(_r*_r*_r);
+                            double prefact = G*r->ri_mercurius.current_Ks[pgindex(mj, mi, N)]/(_r*_r*_r);
                             double prefactj = -prefact*particles[mj].m;
+                            //if (mi == 3 && r->t > 117.){
+                            //  printf("Pre-Add: %f %f %f %f %f %f\n", r->t,_r, particles[mi].ax, particles[mi].ay, particles[mi].az,prefact);
+                            //}
                             particles[mi].ax    += prefactj*dx;
                             particles[mi].ay    += prefactj*dy;
                             particles[mi].az    += prefactj*dz;
+
+                            //if (pr){
+                            //  printf("Post-Add: %f %d %d %d %d %d\n", r->t,i,mi,j,mj,r->ri_mercurius.current_Ks[pgindex(mj, mi, N)]);
+                            //}
+
                             if (_testparticle_type){
+                              printf("Shouldn't happen\n");
                                 double prefacti = prefact*particles[mi].m;
                                 particles[mj].ax    += prefacti*dx;
                                 particles[mj].ay    += prefacti*dy;
@@ -692,6 +708,9 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             }
                         }
                     }
+                    //if (pr){
+                    //  printf("%f %f %f %f %f %f\n", particles[1].ax, particles[1].ay, particles[1].az, particles[3].ax, particles[3].ay, particles[3].az);
+                    //}
 #else // OPENMP
                     particles[0].ax = 0; // map[0] is always 0
                     particles[0].ay = 0;
@@ -700,7 +719,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                     // The star feels no acceleration
 #pragma omp parallel for schedule(guided)
                     for (int i=1; i<encounterN; i++){
-                        int mi = i;//map[i];
+                        int mi = map[i];
                         particles[mi].ax = 0;
                         particles[mi].ay = 0;
                         particles[mi].az = 0;
@@ -715,12 +734,12 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                         particles[mi].az    += prefact*z;
                         for (int j=1; j<encounterNactive; j++){
                             if (i==j) continue;
-                            int mj = j;//map[j];
+                            int mj = map[j];
                             const double dx = x - particles[mj].x;
                             const double dy = y - particles[mj].y;
                             const double dz = z - particles[mj].z;
                             const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                            double prefact = -G*particles[mj].m*r->ri_mercurius.current_Ks[pgindex(j, i, N)]/(_r*_r*_r);
+                            double prefact = -G*particles[mj].m*r->ri_mercurius.current_Ks[pgindex(mj, mi, N)]/(_r*_r*_r);
                             particles[mi].ax    += prefact*dx;
                             particles[mi].ay    += prefact*dy;
                             particles[mi].az    += prefact*dz;
@@ -729,17 +748,17 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                     if (_testparticle_type){
 #pragma omp parallel for schedule(guided)
                     for (int i=1; i<encounterNactive; i++){
-                        int mi = i;//map[i];
+                        int mi = map[i];
                         const double x = particles[mi].x;
                         const double y = particles[mi].y;
                         const double z = particles[mi].z;
                         for (int j=encounterNactive; j<encounterN; j++){
-                            int mj = j;//map[j];
+                            int mj = map[j];
                             const double dx = x - particles[mj].x;
                             const double dy = y - particles[mj].y;
                             const double dz = z - particles[mj].z;
                             const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                            double prefact = -G*particles[mj].m*r->ri_mercurius.current_Ks[pgindex(j, i, N)]/(_r*_r*_r);
+                            double prefact = -G*particles[mj].m*r->ri_mercurius.current_Ks[pgindex(mj, mi, N)]/(_r*_r*_r);
                             particles[mi].ax    += prefact*dx;
                             particles[mi].ay    += prefact*dy;
                             particles[mi].az    += prefact*dz;
