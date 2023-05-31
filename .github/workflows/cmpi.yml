@@ -1,0 +1,17 @@
+name: REBOUND (C + MPI)
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install OpenMPI
+        run: sudo apt-get install -y -q openmpi-bin libopenmpi-dev
+      - name: Compile all MPI examples
+        working-directory: ./examples
+        run: |
+          make mpi
