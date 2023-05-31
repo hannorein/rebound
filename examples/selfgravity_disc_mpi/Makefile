@@ -1,4 +1,4 @@
-export OPENGL=1
+export OPENGL=0
 export MPI=1
 export CC=mpicc
 include ../../src/Makefile.defs
