@@ -90,7 +90,7 @@ void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char**
         oldtypes[bnum] 	= MPI_UB;
     }
 	bnum++;
-	MPI_Type_struct(bnum, blen, indices, oldtypes, &(r->mpi_particle) );
+	MPI_Type_create_struct(bnum, blen, indices, oldtypes, &(r->mpi_particle) );
 	MPI_Type_commit(&(r->mpi_particle)); 
 
 	// Setup MPI description of the cell structure 
@@ -123,7 +123,7 @@ void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char**
         oldtypes[bnum] 	= MPI_UB;
     }
 	bnum++;
-	MPI_Type_struct(bnum, blen, indices, oldtypes, &(r->mpi_cell) );
+	MPI_Type_create_struct(bnum, blen, indices, oldtypes, &(r->mpi_cell) );
 	MPI_Type_commit(&(r->mpi_cell)); 
 	
 	// Prepare send/recv buffers for particles
