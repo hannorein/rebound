@@ -394,7 +394,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                         // Checking the offsets. Acts like a checksum.
                         if (((long)blob.offset_prev) + ((long)sizeof(struct reb_simulationarchive_blob16)) != ftell(sa->inf) - ((long)sa->offset64[i]) ){
                             // Offsets don't work. Next snapshot is definitly corrupted. Assume current one as well.
-                            if (debug) printf("SA Error. Offset mismatch: %lu != %lld.\n",blob.offset_prev + sizeof(struct reb_simulationarchive_blob16), ftell(sa->inf) - sa->offset64[i] );
+                            if (debug) printf("SA Error. Offset mismatch: %lu != %ld.\n",blob.offset_prev + sizeof(struct reb_simulationarchive_blob16), (long unsigned int)(ftell(sa->inf) - sa->offset64[i]) );
                             read_error = 1;
                             break;
                         }
@@ -423,7 +423,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                         // Checking the offsets. Acts like a checksum.
                         if (((long)blob.offset_prev )+ ((long)sizeof(struct reb_simulationarchive_blob)) != ftell(sa->inf) - ((long)sa->offset64[i]) ){
                             // Offsets don't work. Next snapshot is definitly corrupted. Assume current one as well.
-                            if (debug) printf("SA Error. Offset mismatch: %lu != %lld.\n",blob.offset_prev + sizeof(struct reb_simulationarchive_blob), ftell(sa->inf) - sa->offset64[i] );
+                            if (debug) printf("SA Error. Offset mismatch: %lu != %ld.\n",blob.offset_prev + sizeof(struct reb_simulationarchive_blob), (long unsigned int)(ftell(sa->inf) - sa->offset64[i]) );
                             read_error = 1;
                             break;
                         }
