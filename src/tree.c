@@ -373,6 +373,7 @@ void reb_tree_add_essential_node_to_node(struct reb_treecell* nnode, struct reb_
 }
 
 void reb_tree_add_essential_node(struct reb_simulation* const r, struct reb_treecell* node){
+    node->remote = 1;
 	// Add essential node to appropriate parent.
 	for (int o=0;o<8;o++){
 		node->oct[o] = NULL;	

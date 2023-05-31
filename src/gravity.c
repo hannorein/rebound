@@ -1241,7 +1241,7 @@ static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_s
 #endif
         }
     } else { // It's a leaf node
-        if (node->pt == pt) return;
+        if (node->remote == 0 && node->pt == pt) return;
         double _r = sqrt(r2 + softening2);
         double prefact = -G/(_r*_r*_r)*node->m;
         particles[pt].ax += prefact*dx; 
