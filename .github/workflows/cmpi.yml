@@ -18,12 +18,12 @@ jobs:
       - name: Run MPI Unit Tests (np=1)
         working-directory: ./examples/mpi_unittests
         run: |
-            mpirun -np 1 ./rebound
+            mpirun --oversubscribe -np 1 ./rebound
       - name: Run MPI Unit Tests (np=2)
         working-directory: ./examples/mpi_unittests
         run: |
-            mpirun -np 2 ./rebound
+            mpirun --oversubscribe -np 2 ./rebound
       - name: Run MPI Unit Tests (np=4)
         working-directory: ./examples/mpi_unittests
         run: |
-            mpirun -np 4 ./rebound
+            mpirun --oversubscribe -np 4 ./rebound
