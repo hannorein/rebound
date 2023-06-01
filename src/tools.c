@@ -34,6 +34,9 @@
 #include "particle.h"
 #include "rebound.h"
 #include "tools.h"
+#include "tree.h"
+#include "boundary.h"
+#include "communication_mpi.h"
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
 
@@ -136,9 +139,10 @@ void reb_move_to_hel(struct reb_simulation* const r){
 
 
 void reb_move_to_com(struct reb_simulation* const r){
-    const int N_real = r->N - r->N_var;
+	struct reb_particle com = reb_get_com(r); // Particles will be redistributed in this call if MPI used
 	struct reb_particle* restrict const particles = r->particles;
-	struct reb_particle com = reb_get_com(r);
+    const int N_real = r->N - r->N_var; 
+    
     // First do second order
     for (int v=0;v<r->var_config_N;v++){
         int index = r->var_config[v].index;
@@ -299,6 +303,15 @@ void reb_move_to_com(struct reb_simulation* const r){
 		particles[i].vy -= com.vy;
 		particles[i].vz -= com.vz;
 	}
+    
+    // Check boundaries and update tree if needed
+    reb_boundary_check(r);     
+    if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
+        reb_tree_update(r);          
+    }
+#ifdef MPI
+    reb_communication_mpi_distribute_particles(r);
+#endif // MPI
 }
 
 void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
@@ -404,8 +417,49 @@ struct reb_particle reb_get_com_range(struct reb_simulation* r, int first, int l
 }
 
 struct reb_particle reb_get_com(struct reb_simulation* r){
+#ifdef MPI
+    reb_communication_mpi_distribute_particles(r);
     int N_real = r->N-r->N_var;
-	return reb_get_com_range(r, 0, N_real); 
+    struct reb_particle com_local = reb_get_com_range(r, 0, N_real);
+	struct reb_particle com = {0};
+    com_local.x  *= com_local.m;
+    com_local.y  *= com_local.m;
+    com_local.z  *= com_local.m;
+    com_local.vx *= com_local.m;
+    com_local.vy *= com_local.m;
+    com_local.vz *= com_local.m;
+    com_local.ax *= com_local.m;
+    com_local.ay *= com_local.m;
+    com_local.az *= com_local.m;
+
+    MPI_Allreduce(&com_local.x, &com.x, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.x, &com.y, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.x, &com.z, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.vx, &com.vx, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.vx, &com.vy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.vx, &com.vz, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.ax, &com.ax, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.ax, &com.ay, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.ax, &com.az, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.m, &com.m, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    
+    if (com.m > 0){
+        com.x  /= com.m;
+        com.y  /= com.m;
+        com.z  /= com.m;
+        com.vx /= com.m;
+        com.vy /= com.m;
+        com.vz /= com.m;
+        com.ax /= com.m;
+        com.ay /= com.m;
+        com.az /= com.m;
+    }
+
+	return com; 
+#else // MPI
+    int N_real = r->N-r->N_var;
+    return reb_get_com_range(r, 0, N_real);
+#endif // MPI
 }
 
 struct reb_particle reb_get_jacobi_com(struct reb_particle* p){
