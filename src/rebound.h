@@ -175,6 +175,41 @@ struct reb_simulation_integrator_mercurius {
     int print; // for debugging
 };
 
+struct reb_simulation_integrator_trace {
+    double hillfac;
+    double peri; // TLu check for close pericenter passage
+    unsigned int recalculate_coordinates_this_timestep;
+    unsigned int recalculate_dcrit_this_timestep;
+    unsigned int safe_mode;
+
+    // Internal use
+    unsigned int is_synchronized;
+    unsigned int mode;              // 0 if WH is operating, 1 if IAS15 is operating.
+    unsigned int encounterN;        // Number of particles currently having an encounter
+    unsigned int encounterNactive;  // Number of active particles currently having an encounter
+    unsigned int tponly_encounter;  // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
+    unsigned int allocatedN;
+    unsigned int allocatedN_additionalforces;
+    unsigned int dcrit_allocatedN;  // Current size of dcrit arrays
+    double* dcrit;                  // Precalculated switching radii for particles
+    struct reb_particle* REBOUND_RESTRICT particles_backup; //  TLu contains coordinates before the entire step
+    struct reb_particle* REBOUND_RESTRICT particles_backup_additionalforces; // contains coordinates before Kepler step for encounter prediction
+    int* encounter_map;             // Map to represent which particles are integrated with BS
+    // int* close_encounters; // TLu tracking which integrator is used for each particle
+    struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
+    struct reb_vec3d com_vel;
+
+    int* current_Ks; // TLu tracking K for the entire timestep
+    int* delta_Ks; // TLu checking if Ks change during timestep
+    int* current_Ls; // TLu tracking K for the entire timestep
+    int* encounter_map_WH;             // Map to represent which particles are integrated with WHFast - maybe speeds things up?
+    int* encounter_map_backup;             // Needed for step rejections
+    // double* f0; // TLu 1D array right now - perhaps a better way to do this...
+    // double* f0_peris;
+    struct reb_particle* REBOUND_RESTRICT particles_backup_try; //  TLu contains coordinates after initial try
+    int print; // for debugging
+};
+
 struct reb_simulation_integrator_sei {
     double OMEGA;
     double OMEGAZ;
@@ -278,7 +313,7 @@ struct reb_simulation_integrator_bs {
     int user_ode_needs_nbody; // Do not set manually. Use needs_nbody in reb_ode instead.
 
     // TRACE
-    int* map;               // internal map to particles (this is an identity map except when MERCURIUS is used
+    int* map;               // internal map to particles (this is an identity map except when TRACE is used
     int map_allocated_N;    // allocated size for map
 };
 
@@ -884,6 +919,7 @@ struct reb_simulation {
         REB_INTEGRATOR_EOS = 11,     // Embedded Operator Splitting (EOS) integrator family (Rein 2019)
         REB_INTEGRATOR_BS = 12,      // Gragg-Bulirsch-Stoer
         REB_INTEGRATOR_TES = 20,     // Terrestrial Exoplanet Simulator (TES)
+        REB_INTEGRATOR_TRACE = 25,     // Terrestrial Exoplanet Simulator (TES)
         } integrator;
     enum {
         REB_BOUNDARY_NONE = 0,      // Do not check for anything (default)
@@ -898,6 +934,7 @@ struct reb_simulation {
         REB_GRAVITY_TREE = 3,       // Use the tree to calculate gravity, O(N log(N)), set opening_angle2 to adjust accuracy.
         REB_GRAVITY_MERCURIUS = 4,  // Special gravity routine only for MERCURIUS
         REB_GRAVITY_JACOBI = 5,     // Special gravity routine which includes the Jacobi terms for WH integrators
+        REB_GRAVITY_TRACE = 6,  // Special gravity routine only for TRACE. Or maybe can co-opt MERCURIUS?
         } gravity;
 
     // Integrators
@@ -910,6 +947,7 @@ struct reb_simulation {
     struct reb_simulation_integrator_eos ri_eos;            // The EOS struct
     struct reb_simulation_integrator_bs ri_bs;              // The BS struct
     struct reb_simulation_integrator_tes ri_tes;            // TES struct
+    struct reb_simulation_integrator_trace ri_tr;            // TRACE struct
 
     // ODEs
     struct reb_ode** odes;  // all ode sets (includes nbody if BS set as integrator)

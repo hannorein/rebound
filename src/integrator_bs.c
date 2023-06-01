@@ -93,9 +93,9 @@ void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* 
 
     int N;
     int* map;
-    if (r->integrator == REB_INTEGRATOR_MERCURIUS){
-      N = r->ri_mercurius.encounterN;
-      map = r->ri_mercurius.encounter_map;
+    if (r->integrator == REB_INTEGRATOR_TRACE){
+      N = r->ri_tr.encounterN;
+      map = r->ri_tr.encounter_map;
       if (map==NULL){
         reb_error(r, "Cannot access TRACE map from BS.");
         return;
@@ -345,14 +345,14 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
     int start = 0;
     int* map;
     int N;
-    if (r->integrator==REB_INTEGRATOR_MERCURIUS){
-      map = r->ri_mercurius.encounter_map;
+    if (r->integrator==REB_INTEGRATOR_TRACE){
+      map = r->ri_tr.encounter_map;
       if (map==NULL){
         reb_error(r, "Cannot access TRACE map from BS.");
         return;
       }
 
-      N = r->ri_mercurius.encounterN;
+      N = r->ri_tr.encounterN;
       // Kepler Step
       // This is only for pericenter approach
       start = 1;
@@ -365,7 +365,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
       py /= r->particles[0].m;
       pz /= r->particles[0].m;
 
-      // If we are using MERCURIUS, this is in DH, so star feels no acceleration
+      // If we are using TRACE, this is in DH, so star feels no acceleration
       yDot[0] = 0.0;
       yDot[1] = 0.0;
       yDot[2] = 0.0;
@@ -381,13 +381,10 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
     for (int i=start; i<N; i++){
       // TLu must be a better way to structure this
         int mi = map[i];
-        if (r->integrator==REB_INTEGRATOR_MERCURIUS){
-            current_L = (r->ri_mercurius.current_Ls[mi-1]); // TLu crude test particle check, fix later
+        if (r->integrator==REB_INTEGRATOR_TRACE){
+            current_L = (r->ri_tr.current_Ls[mi-1]); // TLu crude test particle check, fix later
         }
 
-        //if (r->ri_mercurius.print){
-        //  printf("%f %d %d %d\n", r->t, i, mi, current_L);
-        //}
         const struct reb_particle p = r->particles[mi];
         yDot[i*6+0] = p.vx + current_L * px;
         yDot[i*6+1] = p.vy + current_L * py;
@@ -395,9 +392,6 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
         yDot[i*6+3] = p.ax;
         yDot[i*6+4] = p.ay;
         yDot[i*6+5] = p.az;
-        //if (mi==3){
-        //  printf("In BS: %f %f %f %f\n", r->t, yDot[mi*6+3], yDot[mi*6+4], yDot[mi*6+5]);
-        //}
     }
 }
 
@@ -449,8 +443,8 @@ static void allocate_sequence_arrays(struct reb_simulation* r, struct reb_simula
     // TLu TRACE - allocate map
     // From IAS15 code
     int N;
-    if (r->integrator == REB_INTEGRATOR_MERCURIUS){
-      N = r->ri_mercurius.encounterN;
+    if (r->integrator == REB_INTEGRATOR_TRACE){
+      N = r->ri_tr.encounterN;
     }
     else{
       N = r->N;
@@ -839,10 +833,10 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
     int nbody_length;
     int N;
     int* map;
-    if (r->integrator == REB_INTEGRATOR_MERCURIUS){
-      nbody_length = r->ri_mercurius.encounterN*3*2; // Not quite correct yet - need to fix for multiple pairs of CEs
-      N = r->ri_mercurius.encounterN;
-      map = r->ri_mercurius.encounter_map;
+    if (r->integrator == REB_INTEGRATOR_TRACE){
+      nbody_length = r->ri_tr.encounterN*3*2; // Not quite correct yet - need to fix for multiple pairs of CEs
+      N = r->ri_tr.encounterN;
+      map = r->ri_tr.encounter_map;
     }
     else{
       nbody_length = r->N*3*2;

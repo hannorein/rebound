@@ -44,11 +44,15 @@ double jacobi_dh(struct reb_simulation* r, int p){
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
     r->dt = (8./365.)*2.*M_PI;
+    //r->integrator = REB_INTEGRATOR_TRACE;
+    //r->ri_tr.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
+    //r->ri_tr.peri = 0.001;
+
     r->integrator = REB_INTEGRATOR_MERCURIUS;
     r->ri_mercurius.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
-    r->ri_mercurius.peri = 0.001;
     //r->heartbeat  = heartbeat;
     r->N_active = 2;
+    r->visualization= REB_VISUALIZATION_NONE;
 
     // Initialize masses
     struct reb_particle star = {0};
@@ -89,7 +93,7 @@ int main(int argc, char* argv[]){
     e2_init = jacobi_dh(r, 3);
     system("rm -rf energy.txt");
 
-    reb_integrate(r, 50000.*11.86*2.*M_PI);
+    reb_integrate(r, 500.*11.86*2.*M_PI);
     //reb_integrate(r, 12849.);
     reb_free_simulation(r);
 }

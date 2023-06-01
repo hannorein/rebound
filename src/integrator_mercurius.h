@@ -31,5 +31,4 @@ void reb_integrator_mercurius_reset(struct reb_simulation* r);          ///< Int
 void reb_integrator_mercurius_inertial_to_dh(struct reb_simulation* r); ///< Internal in-place coordinate transformation
 void reb_integrator_mercurius_dh_to_inertial(struct reb_simulation* r); ///< Internal in-place coordinate transformation
 double reb_integrator_mercurius_calculate_dcrit_for_particle(struct reb_simulation* r, unsigned int i); ///< Internal function for calculating dcrit in reb_add_local
-int reb_integrator_mercurius_check_F(double d0, double dtry, double dcrit0); // TLu
 #endif

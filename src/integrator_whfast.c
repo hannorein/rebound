@@ -181,6 +181,8 @@ void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_p
         invperiod = sqrt_beta*beta/(2.*M_PI*M);
         X_per_period = 2.*M_PI/sqrt_beta;
         if (fabs(_dt)*invperiod>1. && r->ri_whfast.timestep_warning == 0){
+            printf("%f %f\n", _dt, invperiod);
+            //exit(1);
             // Ignoring const qualifiers. This warning should not have any effect on
             // other parts of the code, nor is it vital to show it.
             ((struct reb_simulation* const)r)->ri_whfast.timestep_warning++;

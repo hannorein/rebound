@@ -41,6 +41,7 @@
 #include "integrator_saba.h"
 #include "integrator_ias15.h"
 #include "integrator_mercurius.h"
+#include "integrator_trace.h"
 #include "integrator_leapfrog.h"
 #include "integrator_sei.h"
 #include "integrator_janus.h"
@@ -82,6 +83,10 @@ void reb_integrator_part1(struct reb_simulation* r){
 		case REB_INTEGRATOR_TES:
 			reb_integrator_tes_part1(r);
 			break;
+
+		case REB_INTEGRATOR_TRACE:
+			reb_integrator_trace_part1(r);
+		break;
 		default:
 			break;
 	}
@@ -118,6 +123,10 @@ void reb_integrator_part2(struct reb_simulation* r){
 			break;
 		case REB_INTEGRATOR_TES:
 			reb_integrator_tes_part2(r);
+			break;
+
+		case REB_INTEGRATOR_TRACE:
+			reb_integrator_trace_part2(r);
 			break;
         case REB_INTEGRATOR_NONE:
             r->t += r->dt;
@@ -194,6 +203,10 @@ void reb_integrator_synchronize(struct reb_simulation* r){
 		case REB_INTEGRATOR_TES:
 			reb_integrator_tes_synchronize(r);
 			break;
+
+		case REB_INTEGRATOR_TRACE:
+			reb_integrator_trace_synchronize(r);
+			break;
 		default:
 			break;
 	}
@@ -222,6 +235,7 @@ void reb_integrator_reset(struct reb_simulation* r){
 	reb_integrator_eos_reset(r);
 	reb_integrator_bs_reset(r);
 	reb_integrator_tes_reset(r);
+	reb_integrator_trace_reset(r);
 }
 
 void reb_update_acceleration(struct reb_simulation* r){

@@ -40,6 +40,7 @@
 #include "integrator_whfast.h"
 #include "integrator_ias15.h"
 #include "integrator_mercurius.h"
+#include "integrator_trace.h"
 #include "integrator_bs.h"
 #include "integrator_tes.h"
 #include "boundary.h"
@@ -88,6 +89,7 @@ void reb_step(struct reb_simulation* const r){
         r->pre_timestep_modifications(r);
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
+        r->ri_tr.recalculate_coordinates_this_timestep = 1;
     }
     reb_integrator_part1(r);
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
@@ -143,6 +145,7 @@ void reb_step(struct reb_simulation* const r){
         r->post_timestep_modifications(r);
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
+        r->ri_tr.recalculate_coordinates_this_timestep = 1;
     }
 
     if (r->N_var){
@@ -323,6 +326,7 @@ void reb_free_pointers(struct reb_simulation* const r){
     reb_integrator_whfast_reset(r);
     reb_integrator_ias15_reset(r);
     reb_integrator_mercurius_reset(r);
+    reb_integrator_trace_reset(r);
     reb_integrator_bs_reset(r);
     reb_integrator_tes_reset(r);
     if(r->free_particle_ap){
@@ -391,6 +395,15 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_mercurius.particles_backup = NULL;
     r->ri_mercurius.particles_backup_additionalforces = NULL;
     r->ri_mercurius.encounter_map = NULL;
+    // ********** TRACE
+    r->ri_tr.allocatedN = 0;
+    r->ri_tr.allocatedN_additionalforces = 0;
+    r->ri_tr.dcrit_allocatedN = 0;
+    r->ri_tr.dcrit = NULL;
+    r->ri_tr.particles_backup = NULL;
+    r->ri_tr.particles_backup_try = NULL;
+    r->ri_tr.particles_backup_additionalforces = NULL;
+    r->ri_tr.encounter_map = NULL;
     // ********** JANUS
     r->ri_janus.allocated_N = 0;
     r->ri_janus.p_int = NULL;
@@ -599,6 +612,15 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_mercurius.is_synchronized = 1;
     r->ri_mercurius.encounterN = 0;
     r->ri_mercurius.hillfac = 3;
+
+    // ********** TRACE
+    r->ri_tr.mode = 0;
+    r->ri_tr.safe_mode = 1;
+    r->ri_tr.recalculate_coordinates_this_timestep = 0;
+    r->ri_tr.recalculate_dcrit_this_timestep = 0;
+    r->ri_tr.is_synchronized = 1;
+    r->ri_tr.encounterN = 0;
+    r->ri_tr.hillfac = 4;
 
     // ********** EOS
     r->ri_eos.n = 2;

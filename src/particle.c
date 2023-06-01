@@ -2,7 +2,7 @@
  * @file 	particle.c
  * @brief 	reb_particle structure and main particle routines.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * 
+ *
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
  *
@@ -33,7 +33,9 @@
 #include "boundary.h"
 #include "particle.h"
 #include "integrator_ias15.h"
+#include "integrator_bs.h"
 #include "integrator_mercurius.h"
+#include "integrator_trace.h"
 #ifndef COLLISIONS_NONE
 #include "collision.h"
 #endif // COLLISIONS_NONE
@@ -42,7 +44,7 @@
 #endif // MPI
 
 #ifdef GRAVITY_GRAPE
-#warning Fix this. 
+#warning Fix this.
 extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
@@ -90,10 +92,37 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
             }
             rim->encounter_map[rim->encounterN] = r->N-1;
             rim->encounterN++;
-            if (r->N_active==-1){ 
+            if (r->N_active==-1){
                 // If global N_active is not set, then all particles are active, so the new one as well.
-                // Otherwise, assume we're adding non active particle. 
+                // Otherwise, assume we're adding non active particle.
                 rim->encounterNactive++;
+            }
+        }
+    }
+		if (r->integrator == REB_INTEGRATOR_TRACE){
+        struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
+				// TODO: RIGHT NOW JUST MERCURIUS
+        if (r->ri_tr.mode==0){ //WHFast part
+            ri_tr->recalculate_dcrit_this_timestep       = 1;
+            ri_tr->recalculate_coordinates_this_timestep = 1;
+        }else{  // BS part
+            reb_integrator_bs_reset(r);
+            if (ri_tr->dcrit_allocatedN<r->N){
+                ri_tr->dcrit              = realloc(ri_tr->dcrit, sizeof(double)*r->N);
+                ri_tr->dcrit_allocatedN = r->N;
+            }
+            ri_tr->dcrit[r->N-1] = reb_integrator_trace_calculate_dcrit_for_particle(r,r->N-1);
+            if (ri_tr->allocatedN<r->N){
+                ri_tr->particles_backup   = realloc(ri_tr->particles_backup,sizeof(struct reb_particle)*r->N);
+                ri_tr->encounter_map      = realloc(ri_tr->encounter_map,sizeof(int)*r->N);
+                ri_tr->allocatedN = r->N;
+            }
+            ri_tr->encounter_map[ri_tr->encounterN] = r->N-1;
+            ri_tr->encounterN++;
+            if (r->N_active==-1){
+                // If global N_active is not set, then all particles are active, so the new one as well.
+                // Otherwise, assume we're adding non active particle.
+                ri_tr->encounterNactive++;
             }
         }
     }
@@ -120,7 +149,7 @@ void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 	int root_n_per_node = r->root_n/r->mpi_num;
 	int proc_id = rootbox/root_n_per_node;
 	if (proc_id != r->mpi_id && r->N >= r->N_active){
-		// Add particle to array and send them to proc_id later. 
+		// Add particle to array and send them to proc_id later.
 		reb_communication_mpi_add_particle_to_send_queue(r,pt,proc_id);
 		return;
 	}
@@ -163,7 +192,7 @@ int reb_get_particle_index(struct reb_particle* p){
 		i++;
 		if(i>=N){
 			return -1;	// p not in simulation.  Shouldn't happen unless you mess with p.sim after creating the particle
-		}	
+		}
 	}
 	return i;
 }
@@ -199,7 +228,7 @@ static struct reb_particle* reb_search_lookup_table(struct reb_simulation* const
 }
 
 static int compare_hash(const void* a, const void* b){
-    struct reb_hash_pointer_pair* ia = (struct reb_hash_pointer_pair*)a; 
+    struct reb_hash_pointer_pair* ia = (struct reb_hash_pointer_pair*)a;
     struct reb_hash_pointer_pair* ib = (struct reb_hash_pointer_pair*)b;
     return (ia->hash > ib->hash) - (ia->hash < ib->hash); // to avoid overflow possibilities
 }
@@ -224,7 +253,7 @@ static void reb_update_particle_lookup_table(struct reb_simulation* const r){
                 r->particle_lookup_table[zerohash].index = i;
             }
         }
-        else{                   
+        else{
             r->particle_lookup_table[N_hash].hash = particles[i].hash;
             r->particle_lookup_table[N_hash].index = i;
             N_hash++;
@@ -235,7 +264,7 @@ static void reb_update_particle_lookup_table(struct reb_simulation* const r){
 }
 
 struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash){
-    struct reb_particle* p; 
+    struct reb_particle* p;
     p = reb_search_lookup_table(r, hash);
     if (p == NULL){
         reb_update_particle_lookup_table(r);
@@ -277,7 +306,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
             int encounter_index = -1;
             for (int i=0;i<rim->encounterN;i++){
                 if (after_to_be_removed_particle == 1){
-                    rim->encounter_map[i-1] = rim->encounter_map[i] - 1; 
+                    rim->encounter_map[i-1] = rim->encounter_map[i] - 1;
                 }
                 if (rim->encounter_map[i]==index){
                     encounter_index = i;
@@ -290,6 +319,39 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
             rim->encounterN--;
         }
     }
+
+		if (r->integrator == REB_INTEGRATOR_TRACE){
+				// TODO: RIGHT NOW JUST MERCURIUS
+        keepSorted = 1; // Force keepSorted for hybrid integrator
+        struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
+        if (ri_tr->dcrit_allocatedN>0 && index<ri_tr->dcrit_allocatedN){
+            for (int i=0;i<r->N-1;i++){
+                if (i>=index){
+                    ri_tr->dcrit[i] = ri_tr->dcrit[i+1];
+                }
+            }
+        }
+        reb_integrator_bs_reset(r);
+        if (r->ri_mercurius.mode==1){
+            struct reb_simulation_integrator_mercurius* ri_tr = &(r->ri_mercurius);
+            int after_to_be_removed_particle = 0;
+            int encounter_index = -1;
+            for (int i=0;i<ri_tr->encounterN;i++){
+                if (after_to_be_removed_particle == 1){
+                    ri_tr->encounter_map[i-1] = ri_tr->encounter_map[i] - 1;
+                }
+                if (ri_tr->encounter_map[i]==index){
+                    encounter_index = i;
+                    after_to_be_removed_particle = 1;
+                }
+            }
+            if (encounter_index<ri_tr->encounterNactive){
+                ri_tr->encounterNactive--;
+            }
+            ri_tr->encounterN--;
+        }
+    }
+
 	if (r->N==1){
 	    r->N = 0;
         if(r->free_particle_ap){
