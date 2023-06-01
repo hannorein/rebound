@@ -1,4 +1,4 @@
-MPIEXAMPLES := shearing_sheet_mpi/. selfgravity_disc_mpi/.
+MPIEXAMPLES := shearing_sheet_mpi/. selfgravity_disc_mpi/. mpi_unittests/.
 SUBDIRS := $(filter-out $(MPIEXAMPLES),$(wildcard */.))
 MPISUBDIRS := $(filter $(MPIEXAMPLES),$(wildcard */.))
 

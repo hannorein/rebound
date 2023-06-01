@@ -803,7 +803,12 @@ static struct reb_particle reb_particle_new_errV(struct reb_simulation* r, int* 
         return reb_particle_nan();
     }
     if (!primary_given){
+#ifdef MPI
+        reb_error(r, "When using MPI, you need to provide a primary to reb_add_fmt() when using orbital elements.");
+        return reb_particle_nan();
+#else // MPI
         primary = reb_get_com(r);
+#endif // MPI
     }
     // Note: jacobi_masses not yet implemented.
 
