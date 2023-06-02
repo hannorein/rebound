@@ -635,6 +635,7 @@ struct reb_particle reb_particle_new(struct reb_simulation* r, const char* fmt, 
 static struct reb_particle reb_particle_new_errV(struct reb_simulation* r, int* err, const char* fmt, va_list args){
     double m = 0;
     double radius = 0;
+    uint32_t hash = 0;
     double x = nan("");
     double y = nan("");
     double z = nan("");
@@ -722,6 +723,9 @@ static struct reb_particle reb_particle_new_errV(struct reb_simulation* r, int* 
             primary = va_arg(args, struct reb_particle);
             primary_given = 1;
         }
+        if (0==strcmp(token,"hash")){
+            hash = va_arg(args, uint32_t);
+        }
     }
     free(fmt_c);
 
@@ -787,6 +791,7 @@ static struct reb_particle reb_particle_new_errV(struct reb_simulation* r, int* 
 
     if (Ncart || (!Norb)){ // Cartesian coordinates given, or not coordinates whatsoever
         struct reb_particle particle = {0};
+        particle.hash = hash;
         particle.m = m;
         particle.r = radius;
         if (!isnan(x)) particle.x = x; // Note: is x is nan, then particle.x is 0  
@@ -890,6 +895,7 @@ static struct reb_particle reb_particle_new_errV(struct reb_simulation* r, int* 
     }
     struct reb_particle particle = reb_tools_orbit_to_particle_err(r->G, primary, m, a, e, inc, Omega, omega, f, err);
     particle.r = radius;
+    particle.hash = hash;
     return particle;
 }
 
