@@ -268,6 +268,7 @@ struct reb_particle reb_get_remote_particle_by_hash(struct reb_simulation* const
     struct reb_particle ph = {0};
     if (found){
         ph = *p;
+        ph.sim = NULL;
     }
     MPI_Bcast(&ph, sizeof(struct reb_particle), MPI_CHAR, root, MPI_COMM_WORLD);
     return ph;
