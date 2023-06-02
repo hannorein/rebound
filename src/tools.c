@@ -840,6 +840,7 @@ static struct reb_particle reb_particle_new_errV(struct reb_simulation* r, int* 
         }
         struct reb_particle particle = reb_tools_pal_to_particle(r->G, primary, m, a, l, k, h, ix, iy);
         particle.r = radius;
+        particle.hash = hash;
         return particle;
     }
     
