@@ -142,7 +142,7 @@ struct reb_simulation_integrator_ias15 {
 struct reb_simulation_integrator_mercurius {
     double (*L) (const struct reb_simulation* const r, double d, double dcrit);
     double hillfac;
-    double peri; // TLu check for close pericenter passage
+
     unsigned int recalculate_coordinates_this_timestep;
     unsigned int recalculate_dcrit_this_timestep;
     unsigned int safe_mode;
@@ -157,22 +157,11 @@ struct reb_simulation_integrator_mercurius {
     unsigned int allocatedN_additionalforces;
     unsigned int dcrit_allocatedN;  // Current size of dcrit arrays
     double* dcrit;                  // Precalculated switching radii for particles
-    struct reb_particle* REBOUND_RESTRICT particles_backup; //  TLu contains coordinates before the entire step
+    struct reb_particle* REBOUND_RESTRICT particles_backup; // contains coordinates before Kepler step for encounter prediction
     struct reb_particle* REBOUND_RESTRICT particles_backup_additionalforces; // contains coordinates before Kepler step for encounter prediction
     int* encounter_map;             // Map to represent which particles are integrated with BS
-    // int* close_encounters; // TLu tracking which integrator is used for each particle
     struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
     struct reb_vec3d com_vel;
-
-    int* current_Ks; // TLu tracking K for the entire timestep
-    int* delta_Ks; // TLu checking if Ks change during timestep
-    int* current_Ls; // TLu tracking K for the entire timestep
-    int* encounter_map_WH;             // Map to represent which particles are integrated with WHFast - maybe speeds things up?
-    int* encounter_map_backup;             // Needed for step rejections
-    // double* f0; // TLu 1D array right now - perhaps a better way to do this...
-    // double* f0_peris;
-    struct reb_particle* REBOUND_RESTRICT particles_backup_try; //  TLu contains coordinates after initial try
-    int print; // for debugging
 };
 
 struct reb_simulation_integrator_trace {

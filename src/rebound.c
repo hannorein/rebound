@@ -826,6 +826,7 @@ static void* reb_integrate_raw(void* args){
     }
 
     r->status = REB_RUNNING;
+
     reb_run_heartbeat(r);
     while(reb_check_exit(r,thread_info->tmax,&last_full_dt)<0){
 #ifdef OPENGL
@@ -845,7 +846,6 @@ static void* reb_integrate_raw(void* args){
         }
 #endif // OPENGL
     }
-
     reb_integrator_synchronize(r);
     if (r->display_heartbeat){                          // Display Heartbeat
         r->display_heartbeat(r);

@@ -35,7 +35,6 @@
 #include "integrator.h"
 #include "gravity.h"
 #include "integrator_trace.h"
-#include "integrator_ias15.h"
 #include "integrator_whfast.h"
 #include "integrator_bs.h"
 #include "collision.h"

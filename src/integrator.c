@@ -83,7 +83,6 @@ void reb_integrator_part1(struct reb_simulation* r){
 		case REB_INTEGRATOR_TES:
 			reb_integrator_tes_part1(r);
 			break;
-
 		case REB_INTEGRATOR_TRACE:
 			reb_integrator_trace_part1(r);
 		break;
@@ -137,8 +136,8 @@ void reb_integrator_part2(struct reb_simulation* r){
 	}
 
     // Integrate other ODEs
-		// TLu changed condition for this - look into further. For now MERCURIUS just does not support additional ODEs, which definitely needs to be fixed.
-    if (r->integrator != REB_INTEGRATOR_BS && r->odes_N && r->integrator != REB_INTEGRATOR_MERCURIUS){
+		// TLu changed condition for this - look into further. For now TRACE just does not support additional ODEs, which definitely needs to be fixed.
+    if (r->integrator != REB_INTEGRATOR_BS && r->odes_N && r->integrator != REB_INTEGRATOR_TRACE){
         if (r->ode_warnings==0 && (!r->ri_whfast.safe_mode || !r->ri_saba.safe_mode || !r->ri_eos.safe_mode || !r->ri_mercurius.safe_mode)){
             reb_warning(r, "Safe mode should be enabled when custom ODEs are being used.");
             r->ode_warnings = 1;

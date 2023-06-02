@@ -453,9 +453,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
         rim->allocatedN = N;
     }
     if (rim->safe_mode || rim->recalculate_coordinates_this_timestep){
-      printf("1\n");
         if (rim->is_synchronized==0){
-            printf("2\n");
             reb_integrator_mercurius_synchronize(r);
             reb_warning(r,"MERCURIUS: Recalculating heliocentric coordinates but coordinates were not synchronized before.");
         }
