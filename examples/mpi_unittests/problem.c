@@ -29,28 +29,36 @@ void test_twobody(){
     printf("MPI init...\n");
     reb_mpi_init(r);
     if (r->mpi_id==0){
-        reb_add_fmt(r, "m", 1.);
+        reb_add_fmt(r, "m hash", 2., reb_hash("star1"));
     }
     struct reb_particle com = reb_get_com(r); // Need to call this on all machines. 
     if (r->mpi_id==0){
-        reb_add_fmt(r, "m a e primary", 1., 1., 0.1, com);
+        reb_add_fmt(r, "m a e primary hash", 1., 1., 0.1, com, reb_hash("star2"));
     }
     printf("Init done. (%d)   N = %d\n", r->mpi_id, r->N);
 
-    printf("Moving to com...\n");
+    printf("Moving to com...\n"); // Will also distribute particles
     reb_move_to_com(r);
     
     printf("Checking com...\n");
     com = reb_get_com(r);
-    assert(com.x==0);
-    assert(com.y==0);
-    assert(com.z==0);
-    assert(com.vx==0);
-    assert(com.vy==0);
-    assert(com.vz==0);
+    assert(fabs(com.x)<1e-15);
+    assert(fabs(com.y)<1e-15);
+    assert(fabs(com.z)<1e-15);
+    assert(fabs(com.vx)<1e-15);
+    assert(fabs(com.vy)<1e-15);
+    assert(fabs(com.vz)<1e-15);
 
     printf("Starting the integration...\n");
     reb_integrate(r, 10.);
+    
+    printf("Checking conservation of orbital elements...\n");
+    struct reb_particle star1 = reb_get_remote_particle_by_hash(r, reb_hash("star1"));
+    struct reb_particle star2 = reb_get_remote_particle_by_hash(r, reb_hash("star2"));
+    struct reb_orbit o = reb_tools_particle_to_orbit(r->G, star2, star1);
+    
+    assert(fabs(o.a-1.)<1e-3);
+    assert(fabs(o.e-0.1)<1e-2);
 
     printf("Cleanup...\n");
     reb_mpi_finalize(r);
