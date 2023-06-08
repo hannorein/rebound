@@ -36,7 +36,9 @@
 #include "tools.h"
 #include "tree.h"
 #include "boundary.h"
+#ifdef MPI
 #include "communication_mpi.h"
+#endif // MPI
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
 

@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.25.1
+* Bug fixed that prevented the installation via PyPi
+
 ### Version 3.25.0
 * MPI parts updated and unit tests added
 * Fixed machine independence bug in TES.
