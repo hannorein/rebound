@@ -499,8 +499,9 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     r->t = t_beginning;
     // Find new timestep
     const double dt_done = r->dt;
-    double dt_new;
+    const double dtmode_zeta = 3.0 * sqrt7(r->ri_ias15.epsilon);
     double safety_factor = safety_factor_dtmode_0;
+    double dt_new;
 
     if (r->ri_ias15.epsilon>0){
         // If dt_mode == 0: use the b6/y'' dt calculation mode
@@ -567,7 +568,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 double y2tmp = at[3*i+0]*at[3*i+0] + at[3*i+1]*at[3*i+1] + at[3*i+2]*at[3*i+2];
                 // Technically, y''' = a0 = b0 / dt, but we only have b0 here, will divide by dt later
                 double y3tmp = b.p0[3*i+0]*b.p0[3*i+0] + b.p0[3*i+1]*b.p0[3*i+1] + b.p0[3*i+2]*b.p0[3*i+2];
-                double dttmp = sqrt(y2tmp / y3tmp) * r->dt * 3.0 * sqrt7(r->ri_ias15.epsilon);
+                double dttmp = sqrt(y2tmp / y3tmp) * r->dt * dtmode_zeta;
 
                 if (isnormal(dttmp) && (dt_new == 0. || fabs(dttmp) < fabs(dt_new))) {
                     dt_new = dttmp;
