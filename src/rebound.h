@@ -798,7 +798,6 @@ struct reb_simulation {
 #ifdef MPI
     int    mpi_id;                              // Unique id of this node (starting at 0). Used for MPI only.
     int    mpi_num;                             // Number of MPI nodes. Used for MPI only.
-    MPI_Datatype mpi_particle;                  // MPI datatype corresponding to the C struct reb_particle. 
     struct reb_particle** particles_send;       // Send buffer for particles. There is one buffer per node. 
     int*   particles_send_N;                    // Current length of particle send buffer. 
     int*   particles_send_Nmax;                 // Maximal length of particle send beffer before realloc() is needed. 
@@ -806,7 +805,6 @@ struct reb_simulation {
     int*   particles_recv_N;                    // Current length of particle receive buffer. 
     int*   particles_recv_Nmax;                 // Maximal length of particle receive beffer before realloc() is needed. */
 
-    MPI_Datatype mpi_cell;                      // MPI datatype corresponding to the C struct reb_treecell. 
     struct reb_treecell** tree_essential_send;  // Send buffer for cells. There is one buffer per node. 
     int*   tree_essential_send_N;               // Current length of cell send buffer. 
     int*   tree_essential_send_Nmax;            // Maximal length of cell send beffer before realloc() is needed. 
@@ -1063,6 +1061,7 @@ void reb_remove_all(struct reb_simulation* const r);
 int reb_remove(struct reb_simulation* const r, int index, int keepSorted);
 int reb_remove_by_hash(struct reb_simulation* const r, uint32_t hash, int keepSorted);
 struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash);
+struct reb_particle reb_get_remote_particle_by_hash(struct reb_simulation* const r, uint32_t hash);
 int reb_get_particle_index(struct reb_particle* p); // Returns a particle's index in the simulation it's in. Needs to be in the simulation its sim pointer is pointing to. Otherwise -1 returned.
 struct reb_particle reb_get_jacobi_com(struct reb_particle* p); // Returns the Jacobi center of mass for a given particle. Used by python. Particle needs to be in a simulation.
 
