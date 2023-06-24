@@ -39,6 +39,7 @@ nav:
       - c_randomsamplingfunctions.md
       - c_outputfunctions.md
       - miscellaneous.md
+      - mpi.md
   - "Examples":
     - examples.md
     - "Planetary systems":
