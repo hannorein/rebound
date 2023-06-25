@@ -61,6 +61,7 @@
 #include "rebound.h"
 #include "gravity.h"
 #include "integrator_bs.h"
+#include "integrator_trace.h"
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -116,7 +117,6 @@ void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* 
         p->vy = y[i*6+4];
         p->vz = y[i*6+5];
     }
-    //exit(0);
 }
 
 
@@ -346,6 +346,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
     int* map;
     int N;
     if (r->integrator==REB_INTEGRATOR_TRACE){
+      start = 1;
       map = r->ri_tr.encounter_map;
       if (map==NULL){
         reb_error(r, "Cannot access TRACE map from BS.");
@@ -355,15 +356,24 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
       N = r->ri_tr.encounterN;
       // Kepler Step
       // This is only for pericenter approach
-      start = 1;
-      for (int i=1;i<r->N;i++){
-          px += r->particles[i].vx*r->particles[i].m; // in dh
-          py += r->particles[i].vy*r->particles[i].m;
-          pz += r->particles[i].vz*r->particles[i].m;
+      if (r->ri_tr.current_L){
+        reb_integrator_trace_pxyz(r);
+        px = r->ri_tr.px;
+        py = r->ri_tr.py;
+        pz = r->ri_tr.pz;
+
+        /*
+        for (int i=1;i<r->N;i++){ // all particles
+            px += r->particles[i].vx*r->particles[i].m; // in dh
+            py += r->particles[i].vy*r->particles[i].m;
+            pz += r->particles[i].vz*r->particles[i].m;
+        }
+        px /= r->particles[0].m;
+        py /= r->particles[0].m;
+        pz /= r->particles[0].m;
+        */
+
       }
-      px /= r->particles[0].m;
-      py /= r->particles[0].m;
-      pz /= r->particles[0].m;
 
       // If we are using TRACE, this is in DH, so star feels no acceleration
       yDot[0] = 0.0;
@@ -377,18 +387,14 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
       map = r->ri_bs.map;
       N = r->N;
     }
-    int current_L = 0;
     for (int i=start; i<N; i++){
-      // TLu must be a better way to structure this
+        // TLu may be a better way to structure this
         int mi = map[i];
-        if (r->integrator==REB_INTEGRATOR_TRACE){
-            current_L = (r->ri_tr.current_Ls[mi-1]); // TLu crude test particle check, fix later
-        }
 
         const struct reb_particle p = r->particles[mi];
-        yDot[i*6+0] = p.vx + current_L * px;
-        yDot[i*6+1] = p.vy + current_L * py;
-        yDot[i*6+2] = p.vz + current_L * pz;
+        yDot[i*6+0] = p.vx + px; // Already checked for current_L
+        yDot[i*6+1] = p.vy + py;
+        yDot[i*6+2] = p.vz + pz;
         yDot[i*6+3] = p.ax;
         yDot[i*6+4] = p.ay;
         yDot[i*6+5] = p.az;
@@ -474,10 +480,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     //        0 if rejected
     //
     struct reb_simulation_integrator_bs* ri_bs = &r->ri_bs;
-
-    if (ri_bs->sequence==NULL){
-        allocate_sequence_arrays(r, ri_bs);
-    }
 
     double t = r->t;
     ri_bs->dt_proposed = dt; // In case of early fail
@@ -833,6 +835,11 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
     int nbody_length;
     int N;
     int* map;
+
+    if (ri_bs->sequence==NULL){ // Moved from BS Step because need to allocate map here
+        allocate_sequence_arrays(r, ri_bs);
+    }
+
     if (r->integrator == REB_INTEGRATOR_TRACE){
       nbody_length = r->ri_tr.encounterN*3*2; // Not quite correct yet - need to fix for multiple pairs of CEs
       N = r->ri_tr.encounterN;

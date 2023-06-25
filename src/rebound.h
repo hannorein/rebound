@@ -189,14 +189,18 @@ struct reb_simulation_integrator_trace {
     struct reb_vec3d com_vel;
 
     int* current_Ks; // TLu tracking K for the entire timestep
-    int* delta_Ks; // TLu checking if Ks change during timestep
     int* current_Ls; // TLu tracking K for the entire timestep
+    int* delta_Ks; // TLu checking if Ks change during timestep
+    unsigned int current_L; // TLu tracking L for the entire timestep
     int* encounter_map_WH;             // Map to represent which particles are integrated with WHFast - maybe speeds things up?
     int* encounter_map_backup;             // Needed for step rejections
     // double* f0; // TLu 1D array right now - perhaps a better way to do this...
     // double* f0_peris;
     struct reb_particle* REBOUND_RESTRICT particles_backup_try; //  TLu contains coordinates after initial try
     int print; // for debugging
+    double px;
+    double py;
+    double pz;
 };
 
 struct reb_simulation_integrator_sei {
