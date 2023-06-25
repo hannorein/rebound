@@ -1628,6 +1628,8 @@ class Simulation(Structure):
         """
         Return the current Lyapunov Characteristic Number (LCN).
         Note that you need to call init_megno() before the start of the simulation.
+        Different definitions of the LCN exist.  Here, we're following Eq 24 of 
+        Cincotta and Simo (2000): https://aas.aanda.org/articles/aas/abs/2000/20/h1686/h1686.html.
         To get a timescale (the Lyapunov timescale), take the inverse of this quantity.
         """
         if self._calculate_megno==0:
@@ -1665,6 +1667,9 @@ class Simulation(Structure):
                 elif particle.lower() == "outer solar system":  # built in test dataset
                     data.add_outer_solar_system(self)
                 else:
+                    if "frame" not in kwargs:
+                        if hasattr(self, 'default_plane'):
+                            kwargs["plane"] = self.default_plane # allow ASSIST to set default plane
                     self.add(horizons.getParticle(particle, **kwargs), hash=particle)
                     units_convert_particle(self.particles[-1], 'km', 's', 'kg', hash_to_unit(self.python_unit_l), hash_to_unit(self.python_unit_t), hash_to_unit(self.python_unit_m))
             else: 
@@ -2520,16 +2525,12 @@ class reb_simulation_integrator_tes(Structure):
     ("_X_dh", POINTER(c_double)),
     ("_Q_dh", POINTER(c_double)),
     ("_P_dh", POINTER(c_double)),
-    ("_com_x", c_double),
-    ("_com_y", c_double),
-    ("_com_z", c_double),
-    ("_com_dot_x", c_double),
-    ("_com_dot_y", c_double),
-    ("_com_dot_z", c_double),
+    ("_com", c_double*3),
+    ("_com_dot", c_double*3),
     ("_uVars", POINTER(c_double)),
     ("_rhs", POINTER(c_double)),
     ("_radau", POINTER(c_double)),
-    ("_mStar_last", POINTER(c_double)),
+    ("_mStar_last", c_double),
     ("warnings", c_uint32),
     ]
 

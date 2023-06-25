@@ -500,27 +500,34 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
     const int coordinates = r->ri_whfast.coordinates;
     struct reb_particle* const p_j = r->ri_whfast.p_jh;
     double eta = m0;
+    switch (coordinates){
+        case REB_WHFAST_COORDINATES_JACOBI:
 #pragma omp parallel for 
-    for (unsigned int i=1;i<N_real;i++){
-        switch (coordinates){
-            case REB_WHFAST_COORDINATES_JACOBI:
+            for (unsigned int i=1;i<N_real;i++){
                 if (i<N_active){
                     eta += p_j[i].m;
                 }
-                break;
-            case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
-                //  eta = m0
-                break;
-            case REB_WHFAST_COORDINATES_WHDS:
+                reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
+            }
+            break;
+        case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
+#pragma omp parallel for 
+            for (unsigned int i=1;i<N_real;i++){
+                reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt); //  eta = m0
+            }
+            break;
+        case REB_WHFAST_COORDINATES_WHDS:
+#pragma omp parallel for 
+            for (unsigned int i=1;i<N_real;i++){
                 if (i<N_active){
                     eta = m0+p_j[i].m;
                 }else{
                     eta = m0;
                 }
-                break;
-        };
-        reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
-    }
+                reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
+            }
+            break;
+    };
 }
 
 void reb_whfast_com_step(const struct reb_simulation* const r, const double _dt){

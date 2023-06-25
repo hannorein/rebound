@@ -11,9 +11,13 @@ import re
 import warnings
 import sys
 
+HORIZONSBASEURL = "https://ssd.jpl.nasa.gov/api/horizons.api?"
+
 if "pyodide" in sys.modules:
     from urllib.parse import urlencode
     from pyodide.http import open_url as urlopen
+    # Use CORS proxy
+    HORIZONSBASEURL = "https://rebound.hanno-rein.de/api/horizons.api?"
 else:
     try:
         from urllib.parse import urlencode
@@ -55,7 +59,7 @@ def api_request(particle, datestart, dateend, plane):
         "VEC_LABELS": quote("NO")
 
     }
-    url = "https://ssd.jpl.nasa.gov/api/horizons.api?" + urlencode(get_params)
+    url =  HORIZONSBASEURL + urlencode(get_params)
     # don't use a context manager for python2 compatibility
     f = urlopen(url)
     if "pyodide" in sys.modules:

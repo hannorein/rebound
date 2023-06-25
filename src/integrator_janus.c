@@ -120,7 +120,7 @@ static double gg(struct reb_janus_scheme s, unsigned int stage){
     if (stage<(s.stages+1)/2){
         return s.gamma[stage];
     }else{
-        return s.gamma[s.stages-1-stage];
+        return s.gamma[ (s.stages-1-stage)%17 ]; // modulo only needed to avoid compiler warning
     }
 }
 

@@ -138,8 +138,7 @@ It can also be set manually using the following syntax:
 
 ### Hard-sphere
 
-This assumes a hard-sphere collision. 
-This uses the `coefficient_of_restitution` parameter in `struct reb_simulation`. 
+This assumes a hard-sphere collision and uses the `coefficient_of_restitution` function pointer in `struct reb_simulation` to determine coefficient of restitution which can be velocity dependent
 It conserves momentum and mass.
 Depending on the coefficient of restitution, it also conserves energy.
 
@@ -147,17 +146,26 @@ The following example shows how to set up a hard-sphere collision resolve functi
 
 === "C"
     ```c
+    double coefficient_of_restitution_constant(const struct reb_simulation* const r, double v){
+        // v is the normal impact velocity.
+        // Here, we just use a constant coefficient of restitution
+        return 0.5;
+    }
     struct reb_simulation* r = reb_create_simulation();
     r->collision = REB_COLLISION_DIRECT;
-    r->coefficient_of_resitution = 0.5;
+    r->coefficient_of_restitution = coefficient_of_restitution_constant;
     r->collision_resolve = reb_collision_resolve_hardsphere;
     ```
 
 === "Python"
     ```python
+    def coefficient_of_restitution_constant(r, v):
+        # v is the normal impact velocity.
+        # Here, we just use a constant coefficient of restitution
+        return 0.5
     sim = rebound.Simulation()
     sim.collision = "direct"
-    sim.coefficient_of_resitution = 0.5
+    sim.coefficient_of_restitution = coefficient_of_restitution_constant
     sim.collision_resolve = "hardsphere"
     ```
 

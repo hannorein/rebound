@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
+from ctypes import Structure, c_double, POINTER, c_float, c_int, c_uint, c_uint32, c_int64, c_uint64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
 from .simulation import Simulation, BINARY_WARNINGS
 from . import clibrebound 
 import os
@@ -54,7 +54,7 @@ class SimulationArchive(Structure):
                 ("auto_walltime", c_double), 
                 ("auto_step", c_ulonglong), 
                 ("nblobs", c_long), 
-                ("offset", POINTER(c_uint32)), 
+                ("offset64", POINTER(c_uint64)), 
                 ("t", POINTER(c_double)) 
                 ]
     def __repr__(self):

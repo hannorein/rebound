@@ -27,6 +27,8 @@ times_SI = {'s':1.,
     'days': 86400.,
     'd': 86400.,
     'yr':31557600., # Julian year (exact)
+    'year':31557600., 
+    'years':31557600., 
     'yrs':31557600., 
     'jyr':31557600.,
     'sidereal_yr':31558149.7635,
@@ -60,7 +62,9 @@ masses_SI = {'kg':1.,
     'msaturn':3.793120749865224E+07/G_SI*10**9,
     'muranus':5.793951322279009E+06/G_SI*10**9,
     'mneptune':6.835099502439672E+06/G_SI*10**9,
-    'mpluto':8.696138177608748E+02/G_SI*10**9}
+    'mpluto':8.696138177608748E+02/G_SI*10**9,
+    'massist':4.48485856027459e+14/G_SI*10**9, # Sun has mass 0.00029591220828412 in these units. Used to keep G=1 while length=AU and time=day
+             }
 
 
 def units_convert_particle(p, old_l, old_t, old_m, new_l, new_t, new_m):

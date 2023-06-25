@@ -4,6 +4,35 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.25.1
+* Bug fixed that prevented the installation via PyPi
+
+### Version 3.25.0
+* MPI parts updated and unit tests added
+* Fixed machine independence bug in TES.
+
+### Version 3.24.3
+* Updated unit tests so they work on 32bit machines
+
+### Version 3.24.2
+* Fixed bug in TES ctypes structure
+
+### Version 3.24.1
+* Added CORS proxy for Horizons request in pyodide
+* Smoother OpenGL animations when using usleep
+* TES calculates orbital period automatically
+
+### Version 3.24.0
+* Added support for SimulationArchive larger than 4 GB.
+* Updated documentation for Lyapunov characteristic number.
+
+### Version 3.23.5
+* Added new units shortcuts (year,years,massist)
+* Rearranged some loops and switch statements (doesn't affect floating point numbers). 
+
+### Version 3.23.4
+* Added pyproject.toml file
+
 ### Version 3.23.3
 * Changed the way REBOUND reverses the integration direction when the sign of the timestep is inconsistent with respect to the requested final time.
 * Fixes a memory leak when a tree code is used

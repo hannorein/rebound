@@ -1,0 +1,31 @@
+name: deploy-release
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  deploy-pypi:
+    runs-on: ubuntu-latest
+    environment: PyPi
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: python -m pip install build twine
+
+      - name: Build wheel
+        run: python setup.py sdist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          packages_dir: dist/

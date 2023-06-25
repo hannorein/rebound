@@ -53,5 +53,6 @@ include src/transformations.c
 include README.md
 include LICENSE
 include version.txt
+include pyproject.toml
 recursive-include rebound/tests *.py
 include rebound/rebound.h

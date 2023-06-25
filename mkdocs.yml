@@ -39,6 +39,7 @@ nav:
       - c_randomsamplingfunctions.md
       - c_outputfunctions.md
       - miscellaneous.md
+      - mpi.md
   - "Examples":
     - examples.md
     - "Planetary systems":
@@ -171,8 +172,8 @@ extra_javascript:
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js      
 extra:
   social:
-    - icon: fontawesome/brands/twitter
-      link: https://twitter.com/reboundbot
+    - icon: fontawesome/brands/mastodon
+      link: https://botsin.space/@reboundbot
     - icon: fontawesome/brands/github
       link: https://github.com/hannorein/rebound
 

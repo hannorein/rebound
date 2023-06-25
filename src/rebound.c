@@ -66,7 +66,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.23.3";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.25.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_error_message_waiting(struct reb_simulation* const r);
@@ -758,9 +758,6 @@ void reb_run_heartbeat(struct reb_simulation* const r){
             }
         }
     }
-    if (r->usleep > 0){
-        usleep(r->usleep);
-    }
 }
 
 ////////////////////////////////////////////////////
@@ -821,6 +818,9 @@ static void* reb_integrate_raw(void* args){
             if (r->display_data->opengl_enabled){ pthread_mutex_unlock(&(r->display_data->mutex)); }
         }
 #endif // OPENGL
+        if (r->usleep > 0){
+            usleep(r->usleep);
+        }
     }
 
     reb_integrator_synchronize(r);
