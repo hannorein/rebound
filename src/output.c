@@ -66,6 +66,8 @@ void reb_output_stream_write(char** bufp, size_t* allocatedsize, size_t* sizep, 
  */
 int reb_output_check_phase(struct reb_simulation* r, double interval,double phase){
     double shift = r->t+interval*phase;
+    // Can output multiple times within the first timestemp 
+    // Consider adding shift >= r->dt condition? 
     if (floor(shift/interval)!=floor((shift-r->dt)/interval)){
         return 1;
     }

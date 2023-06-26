@@ -1,9 +1,9 @@
-from ctypes import Structure, c_double, POINTER, c_uint32, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
+from ctypes import Structure, c_double, POINTER, c_uint32, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, _CFuncPtr, byref, create_string_buffer, addressof, pointer, cast
 from . import clibrebound, Escape, NoParticles, Encounter, Collision, SimulationError, ParticleNotFound, M_to_E
 from .citations import cite
 from .particle import Particle
 from .units import units_convert_particle, check_units, convert_G, hash_to_unit
-from .tools import hash as rebhash
+from .tools import hash as rebhash, deref_arg
 import math
 import os
 import sys
@@ -826,6 +826,7 @@ class Simulation(Structure):
             return sim
 
     def __init__(self,filename=None,snapshot=None):
+        self._hbs = [] # prevent GC heartbeats
         self.save_messages = 1 # Warnings will be checked within python
 
     def __repr__(self):
@@ -1176,8 +1177,12 @@ class Simulation(Structure):
         """
         Get or set a function pointer for calculating additional forces in the simulation.
 
-        The argument can be a python function or something that can 
-        be cast to a C function of type CFUNCTYPE(None,POINTER(Simulaton)). 
+        A C function will receive a pointer to the reb_simulation as
+        its argument.
+
+        Non-C Python functions will be wrapped automatically and receive
+        a Simulation object.
+
         If the forces are velocity dependent, the flag 
         force_is_velocity_dependent needs to be set to 1. Otherwise,
         the particle structures might contain incorrect velocity 
@@ -1186,7 +1191,10 @@ class Simulation(Structure):
         raise AttributeError("You can only set C function pointers from python.")
     @additional_forces.setter
     def additional_forces(self, func):
-        self._afp = AFF(func)
+        if isinstance(func, _CFuncPtr):
+            self._afp = func
+        else: # assume is Python callable
+            self._afp = deref_arg(Simulation)(func)
         self._additional_forces = self._afp
 
     @property
@@ -1252,6 +1260,69 @@ class Simulation(Structure):
     def heartbeat(self, func):
         self._hb = AFF(func)
         self._heartbeat = self._hb
+
+    @property
+    def contents(self):
+        """
+        Compatibility with functions that expect a POINTER argument.
+        """
+        return self
+
+    def add_heartbeat(self, heartbeat, interval=float("nan"), phase=0.0, is_dt_multiple=False):
+        """
+        Adds a heartbeat to the simulation that is automatically wrapped
+        with reb_output_check in C. Allows for better performance for
+        Python heartbeats.
+
+        Arguments
+        ---------
+        heartbeat: Callable
+            Either a C function or Python function to execute at each interval.
+
+            A C function will receive a pointer to the reb_simulation as
+            its argument.
+
+            Non-C Python functions will be wrapped automatically and receive
+            a Simulation object.
+        interval: float
+            The time in simulated time or multiples of dt to wait before
+            calling the function again. Internally uses reb_output_check.
+        phase: float
+            The phase, as a value from from 0.0 to 1.0, within an interval
+            to call the function at. Subtracts from interval, so with interval
+            1.0 and phase 0.2, the function will be called just after 0.8, 1.8,
+            2.8, 3.8, etc. Supplied to reb_output_check_phase.
+        is_dt_multiple: bool
+            Whether the interval represents a float of time or a multiple
+            of the current Simulation.dt.
+
+        Returns
+        -------
+        Returns an instance of HeartbeatUnit.
+
+        Examples
+        --------
+
+        >>> import rebound
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1.)
+        >>> sim.add(m=1e-3, a=1)
+        >>> def heartbeat(sim):
+        >>>     print(sim.t)
+        >>> sim.add_heartbeat(heartbeat, 1.)
+        >>> sim.integrate(10.)
+        """
+
+        if isinstance(heartbeat, _CFuncPtr):
+            cheartbeat = heartbeat
+        else: # assume is Python callable
+            cheartbeat = deref_arg(Simulation)(heartbeat)
+
+        self._hbs.append(cheartbeat)
+
+        clibrebound.reb_add_heartbeat_interval_phase.argtypes = (POINTER_REB_SIM, AFF, c_double, c_double, c_int)
+        clibrebound.reb_add_heartbeat_interval_phase.restype = POINTER(HeartbeatUnit)
+        return clibrebound.reb_add_heartbeat_interval_phase(byref(self), cheartbeat, interval, phase, int(is_dt_multiple))
 
     @property 
     def coefficient_of_restitution(self):
@@ -2554,6 +2625,16 @@ class reb_display_data(Structure):
                 # ignoring other data (never used)
                 ]
 
+class HeartbeatUnit(Structure):
+    """
+    Object representing a heartbeat function and the metadata to run it automatically
+    using the heartbeat set code. Returned from Simulation.add_heartbeat, should not be
+    created manually.
+    """
+    _fields_ = [("heartbeat", CFUNCTYPE(None, POINTER(Simulation))),
+                ("interval", c_double),
+                ("phase", c_double),
+                ("is_dt_multiple", c_int)]
 
 # Setting up fields after class definition (because of self-reference)
 Simulation._fields_ = [
@@ -2653,6 +2734,9 @@ Simulation._fields_ = [
                 ("_odes_N", c_int),
                 ("_odes_allocatedN", c_int),
                 ("_odes_warnings", c_int),
+                ("_heartbeat_set", POINTER(POINTER(HeartbeatUnit))),
+                ("_heartbeat_set_N", c_int),
+                ("_heartbeat_set_allocatedN", c_int),
                 ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_pre_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
