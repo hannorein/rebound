@@ -621,6 +621,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_tr.is_synchronized = 1;
     r->ri_tr.encounterN = 0;
     r->ri_tr.hillfac = 4;
+    r->ri_tr.peri = 1;
 
     // ********** EOS
     r->ri_eos.n = 2;

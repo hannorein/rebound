@@ -871,9 +871,6 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             // Acceleration due to star
                             for (int i=1; i<encounterN; i++){
                                 int mi = map[i];
-                                //if (pr){
-                                //  printf("stellar: %d %d\n", i, mi);
-                                //}
                                 const double x = particles[mi].x;
                                 const double y = particles[mi].y;
                                 const double z = particles[mi].z;
@@ -882,14 +879,6 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                 particles[mi].ax    = prefact*x;
                                 particles[mi].ay    = prefact*y;
                                 particles[mi].az    = prefact*z;
-                                //if (pr){
-                                //  printf("%f \t Stellar: %d %f %f %f %f %f\n", r->t, mi, prefact, _r, x, y, z);
-                                //}
-                                //  if (particles[mi].ax < 0.0){
-                                //    printf("NEGATIVE ALERT\n");
-                                //  }
-                                //  printf("Stellar: %d %d %f %f %f %f %f %f\n", i, mi, r->t, _r, particles[mi].ax, particles[mi].ay, x, y);
-                                //}
                             }
 
                             // We're in a heliocentric coordinate system.
@@ -900,29 +889,27 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                   int mi = map[i];
                                   for (int j=1; j<i; j++){
                                       int mj = map[j];
-                                      const double dx = particles[mi].x - particles[mj].x;
-                                      const double dy = particles[mi].y - particles[mj].y;
-                                      const double dz = particles[mi].z - particles[mj].z;
-                                      const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                      double prefact = G*r->ri_tr.current_Ks[pgindex(mj, mi, N)]/(_r*_r*_r);
-                                      double prefactj = -prefact*particles[mj].m;
-                                      double prefacti = prefact*particles[mi].m;
+                                      int current_K = r->ri_tr.current_Ks[pgindex(mj, mi, N)];
+                                      if (current_K){ // Only need to calculate if CE
+                                        const double dx = particles[mi].x - particles[mj].x;
+                                        const double dy = particles[mi].y - particles[mj].y;
+                                        const double dz = particles[mi].z - particles[mj].z;
+                                        const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                                        double prefact = G/(_r*_r*_r);
+                                        double prefactj = -prefact*particles[mj].m;
+                                        double prefacti = prefact*particles[mi].m;
 
-                                      particles[mi].ax    += prefactj*dx;
-                                      particles[mi].ay    += prefactj*dy;
-                                      particles[mi].az    += prefactj*dz;
-                                      particles[mj].ax    += prefacti*dx;
-                                      particles[mj].ay    += prefacti*dy;
-                                      particles[mj].az    += prefacti*dz;
-
-                                    //  if (pr && mi == 2){
-                                      //  printf("Interaction: %f %f %f %f ", prefactj, dx, dy, dz);
-                                      //}
+                                        particles[mi].ax    += prefactj*dx;
+                                        particles[mi].ay    += prefactj*dy;
+                                        particles[mi].az    += prefactj*dz;
+                                        particles[mj].ax    += prefacti*dx;
+                                        particles[mj].ay    += prefacti*dy;
+                                        particles[mj].az    += prefacti*dz;
+                                      }
 
                                   }
                               }
                             }
-                            //printf("\n");
 
                             // Interactions between active-testparticle
                             const int startitestp = MAX(encounterNactive,2);
@@ -930,35 +917,28 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                 int mi = map[i];
                                 for (int j=1; j<encounterNactive; j++){
                                     int mj = map[j];
-                                    const double dx = particles[mi].x - particles[mj].x;
-                                    const double dy = particles[mi].y - particles[mj].y;
-                                    const double dz = particles[mi].z - particles[mj].z;
-                                    const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                    double prefact = G*r->ri_tr.current_Ks[pgindex(mj, mi, N)]/(_r*_r*_r);
-                                    double prefactj = -prefact*particles[mj].m;
-                                    //if (pr){
-                                    //  printf("Pre-Add: %f %d %d %f, %f %f %f\n", r->t, _r, mi, mj, particles[mi].ax, particles[mi].ay, prefactj, r->ri_tr.current_Ks[pgindex(mj, mi, N)]);
-                                    //}
-                                    particles[mi].ax    += prefactj*dx;
-                                    particles[mi].ay    += prefactj*dy;
-                                    particles[mi].az    += prefactj*dz;
-
-                                    //if (pr){
-                                    //  printf("Post-Add: %f %d %d %d %e\n", r->t,mi,mj,r->ri_tr.current_Ks[pgindex(mj, mi, N)], prefactj);
-                                    //}
+                                    int current_K = r->ri_tr.current_Ks[pgindex(mj, mi, N)];
+                                    if (current_K){
+                                      const double dx = particles[mi].x - particles[mj].x;
+                                      const double dy = particles[mi].y - particles[mj].y;
+                                      const double dz = particles[mi].z - particles[mj].z;
+                                      const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                                      double prefact = G/(_r*_r*_r);
+                                      double prefactj = -prefact*particles[mj].m;
+                                      particles[mi].ax    += prefactj*dx;
+                                      particles[mi].ay    += prefactj*dy;
+                                      particles[mi].az    += prefactj*dz;
 
                                     if (_testparticle_type){
-                                      printf("Shouldn't happen\n");
+                                      //printf("Shouldn't happen\n");
                                         double prefacti = prefact*particles[mi].m;
                                         particles[mj].ax    += prefacti*dx;
                                         particles[mj].ay    += prefacti*dy;
                                         particles[mj].az    += prefacti*dz;
                                     }
+                                  }
                                 }
                             }
-                            //if (pr){
-                            //  printf("%f %f %f %f %f %f\n", particles[1].ax, particles[1].ay, particles[1].az, particles[3].ax, particles[3].ay, particles[3].az);
-                            //}
         #else // OPENMP
                             particles[0].ax = 0; // map[0] is always 0
                             particles[0].ay = 0;

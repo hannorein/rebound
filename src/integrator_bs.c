@@ -121,6 +121,7 @@ void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* 
 
 
 static int tryStep(struct reb_simulation* r, const int Ns, const int k, const int n, const double t0, const double step) {
+    //printf("Happening %f %f\n", t0, step);
     struct reb_ode** odes = r->odes;
     const double subStep  = step / n;
     double t = t0;
@@ -398,7 +399,10 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
         yDot[i*6+3] = p.ax;
         yDot[i*6+4] = p.ay;
         yDot[i*6+5] = p.az;
+
+        //printf("%d %d %e %e %e %e %e %e\n", i, mi, yDot[i*6+0], yDot[i*6+1], yDot[i*6+2], yDot[i*6+3], yDot[i*6+4], yDot[i*6+5]);
     }
+    //printf("\n");
 }
 
 
@@ -841,6 +845,7 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
     }
 
     if (r->integrator == REB_INTEGRATOR_TRACE){
+      // Can probably change this to just not integrate the Sun - idk if that would speed up or not...
       nbody_length = r->ri_tr.encounterN*3*2; // Not quite correct yet - need to fix for multiple pairs of CEs
       N = r->ri_tr.encounterN;
       map = r->ri_tr.encounter_map;
@@ -881,9 +886,12 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
         y[i*6+3] = p.vx;
         y[i*6+4] = p.vy;
         y[i*6+5] = p.vz;
+        //printf("%d %d %e %e %e %e %e %e\n", i, mi, y[i*6+0], y[i*6+1], y[i*6+2], y[i*6+3], y[i*6+4], y[i*6+5]);
     }
 
     int success = reb_integrator_bs_step(r, r->dt);
+
+    printf("%f %d\n", r->dt, success);
     if (success){
         r->t += r->dt;
         r->dt_last_done = r->dt;
@@ -891,6 +899,7 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
     r->dt = ri_bs->dt_proposed;
 
     reb_integrator_bs_update_particles(r, ri_bs->nbody_ode->y);
+    //exit(1);
 }
 
 void reb_integrator_bs_synchronize(struct reb_simulation* r){
