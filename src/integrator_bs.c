@@ -121,7 +121,6 @@ void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* 
 
 
 static int tryStep(struct reb_simulation* r, const int Ns, const int k, const int n, const double t0, const double step) {
-    //printf("Happening %f %f\n", t0, step);
     struct reb_ode** odes = r->odes;
     const double subStep  = step / n;
     double t = t0;
@@ -223,12 +222,13 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
     // first substep
     t += subStep;
     for (int s=0; s < Ns; s++){
-        double* y0 = odes[s]->y;
-        double* y1 = odes[s]->y1;
+        double* y0 = odes[s]->y; // pre TS
+        double* y1 = odes[s]->y1; // post first TS
         double* y0Dot = odes[s]->y0Dot;
         const int length = odes[s]->length;
         for (int i = 0; i < length; ++i) {
             y1[i] = y0[i] + subStep * y0Dot[i];
+            //printf("%d, %f, %f, %f\n", i, y0[i], subStep, y0Dot[i]);
         }
     }
 
@@ -237,7 +237,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
         reb_integrator_bs_update_particles(r, r->ri_bs.nbody_ode->y1);
     }
     for (int s=0; s < Ns; s++){
-        odes[s]->derivatives(odes[s], odes[s]->yDot, odes[s]->y1, t);
+        odes[s]->derivatives(odes[s], odes[s]->yDot, odes[s]->y1, t); // update yDot w/ nbody derivatives
     }
     for (int s=0; s < Ns; s++){
         double* y0 = odes[s]->y;
@@ -253,7 +253,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
         for (int s=0; s < Ns; s++){
             double* y1 = odes[s]->y1;
             double* yDot = odes[s]->yDot;
-            double* yTmp = odes[s]->yTmp;
+            double* yTmp = odes[s]->yTmp; // On first iteration this is y0. Becomes y1 of each subsequent iteration
             const int length = odes[s]->length;
             for (int i = 0; i < length; ++i) {
                 const double middle = y1[i];
@@ -266,7 +266,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
             reb_integrator_bs_update_particles(r, r->ri_bs.nbody_ode->y1);
         }
         for (int s=0; s < Ns; s++){
-            odes[s]->derivatives(odes[s], odes[s]->yDot, odes[s]->y1, t);
+            odes[s]->derivatives(odes[s], odes[s]->yDot, odes[s]->y1, t); // Why update again?
         }
 
         // stability check
@@ -300,9 +300,8 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
         const int length = odes[s]->length;
         for (int i = 0; i < length; ++i) {
             y1[i] = 0.5 * (yTmp[i] + y1[i] + subStep * yDot[i]); // = 0.25*(y_(2n-1) + 2*y_n(2) + y_(2n+1))     Eq (9.13c)
-        }
+        } // At the end, y1[i] is y_n for each particle (this is 17.3.2)
     }
-
     return 1;
 }
 
@@ -312,18 +311,20 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
     double** const D =  ode->D;
     double const length = ode->length;
     for (int j = 0; j < k; ++j) {
-        double xi = coeff[k-j-1];
-        double xim1 = coeff[k];
+        double xi = coeff[k-j-1]; // 1 / n_{k-j}**2
+        double xim1 = coeff[k];// 1 / n_{k}**2
         double facC = xi/(xi-xim1);
         double facD = xim1/(xi-xim1);
         for (int i = 0; i < length; ++i) {
-            double CD = C[i] - D[k - j -1][i];
+            double CD = C[i] - D[k - j -1][i]; // Cs are just yns
+            //printf("%d %f %f %f\n", i, y1[i], C[i], D[k - j -1][i]);
             C[i] = facC * CD; // Only need to keep one C value
             D[k - j - 1][i] = facD * CD; // Keep all D values for recursion
         }
+        //exit(1);
     }
     for (int i = 0; i < length; ++i) {
-        y1[i] = D[0][i];
+        y1[i] = D[0][i]; // y1s = T0s... I think...
     }
     for (int j = 1; j <= k; ++j) {
         for (int i = 0; i < length; ++i) {
@@ -335,7 +336,7 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
 
 static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
-    if (r->t != t) {
+    if (r->t != t || r->integrator == REB_INTEGRATOR_TRACE) { // TRACE always needs this to ensure the right Hamiltonian is evolved
         // Not needed for first step. Accelerations already calculated. Just need to copy them
         reb_integrator_bs_update_particles(r, y);
         reb_update_acceleration(r);
@@ -358,12 +359,12 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
       // Kepler Step
       // This is only for pericenter approach
       if (r->ri_tr.current_L){
-        reb_integrator_trace_pxyz(r);
-        px = r->ri_tr.px;
-        py = r->ri_tr.py;
-        pz = r->ri_tr.pz;
+        //reb_integrator_trace_pxyz(r);
+        //px = r->ri_tr.px;
+        //py = r->ri_tr.py;
+        //pz = r->ri_tr.pz;
 
-        /*
+
         for (int i=1;i<r->N;i++){ // all particles
             px += r->particles[i].vx*r->particles[i].m; // in dh
             py += r->particles[i].vy*r->particles[i].m;
@@ -372,7 +373,6 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
         px /= r->particles[0].m;
         py /= r->particles[0].m;
         pz /= r->particles[0].m;
-        */
 
       }
 
@@ -400,9 +400,8 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
         yDot[i*6+4] = p.ay;
         yDot[i*6+5] = p.az;
 
-        //printf("%d %d %e %e %e %e %e %e\n", i, mi, yDot[i*6+0], yDot[i*6+1], yDot[i*6+2], yDot[i*6+3], yDot[i*6+4], yDot[i*6+5]);
+        //printf("%d %e %e %e %e %e %e\n", i, yDot[i*6+0], yDot[i*6+1], yDot[i*6+2], yDot[i*6+3], yDot[i*6+4], yDot[i*6+5]);
     }
-    //printf("\n");
 }
 
 
@@ -447,7 +446,7 @@ static void allocate_sequence_arrays(struct reb_simulation* r, struct reb_simula
     // initialize the extrapolation tables
     for (int j = 0; j < sequence_length; ++j) {
         double r = 1./((double) ri_bs->sequence[j]);
-        ri_bs->coeff[j] = r*r;
+        ri_bs->coeff[j] = r*r; // 1 / stepsize**2
     }
 
     // TLu TRACE - allocate map
@@ -527,8 +526,10 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 
     // first evaluation, at the beginning of the step
     for (int s=0; s < Ns; s++){
-        odes[s]->derivatives(odes[s], odes[s]->y0Dot, odes[s]->y, t);
+        // y is set earlier in part2 to x y z vx vy vz
+        odes[s]->derivatives(odes[s], odes[s]->y0Dot, odes[s]->y, t); // This sets the nbody derivatives into y0Dot
     }
+    //exit(1);
 
     const int forward = (dt >= 0.);
 
@@ -537,8 +538,10 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     for (int loop = 1; loop; ) {
 
         ++k;
+        //printf("k: %d %e\n", k, dt);
         // modified midpoint integration with the current substep
         if ( ! tryStep(r, Ns, k, ri_bs->sequence[k], t, dt)) {
+            // tryStep returns 0
 
             // the stability check failed, we reduce the global step
 #if DEBUG
@@ -552,12 +555,13 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
             for (int s=0; s < Ns; s++){
                 const int length = odes[s]->length;
                 for (int i = 0; i < length; ++i) {
-                    double CD = odes[s]->y1[i];
-                    odes[s]->C[i] = CD;
-                    odes[s]->D[k][i] = CD;
+                    double CD = odes[s]->y1[i]; // y1s are the yns now
+                    odes[s]->C[i] = CD; // So Cs are now the yns
+                    odes[s]->D[k][i] = CD; // Set the kth row of D to yns
                 }
             }
 
+            // tryStep returns 1
             // the substep was computed successfully
             if (k > 0) {
 
@@ -583,6 +587,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                     for (int j = 0; j < length; ++j) {
                         const double e = C[j] / scale[j];
                         error = MAX(error, e * e);
+                        //printf("%d %e %e %e\n", j, C[j], scale[j], error);
                     }
                 }
                 // Note: Used to be: error = sqrt(error / combined_length). But for N-body applications it might be more consistent to use:
@@ -643,6 +648,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                                         dt = ri_bs->optimalStep[ri_bs->targetIter];
 #if DEBUG
                                         printf("O");
+                                        //printf(" %f, %d, %e\n", dt, ri_bs->targetIter, ratio);
 #endif
                                     }
                                 }
@@ -708,6 +714,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     if (! reject) {
 #if DEBUG
         printf(".");
+        //exit(1);
 #endif
         // Swap arrays
         for (int s=0; s < Ns; s++){
@@ -886,12 +893,11 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
         y[i*6+3] = p.vx;
         y[i*6+4] = p.vy;
         y[i*6+5] = p.vz;
-        //printf("%d %d %e %e %e %e %e %e\n", i, mi, y[i*6+0], y[i*6+1], y[i*6+2], y[i*6+3], y[i*6+4], y[i*6+5]);
+        //printf("%e %e %e %e %e %e\n", y[i*6+0], y[i*6+1], y[i*6+2], y[i*6+3], y[i*6+4], y[i*6+5]);
     }
 
     int success = reb_integrator_bs_step(r, r->dt);
-
-    printf("%f %d\n", r->dt, success);
+    //printf("%f %d\n", r->dt, success);
     if (success){
         r->t += r->dt;
         r->dt_last_done = r->dt;

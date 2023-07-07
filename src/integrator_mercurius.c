@@ -491,6 +491,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
         // Setting default switching function
         rim->L = reb_integrator_mercurius_L_mercury;
     }
+
 }
 
 void reb_integrator_mercurius_part2(struct reb_simulation* const r){
@@ -502,7 +503,7 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     }else{
         reb_integrator_mercurius_interaction_step(r,r->dt);
     }
-    reb_integrator_mercurius_jump_step(r,r->dt/2.);
+    //reb_integrator_mercurius_jump_step(r,r->dt/2.);
     reb_integrator_mercurius_com_step(r,r->dt);
 
     // Make copy of particles before the kepler step.

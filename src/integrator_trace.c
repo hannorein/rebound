@@ -43,7 +43,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
 // Can we just use Mercurius for these? Maybe not if Jacobi...
-/*
+
 void reb_integrator_trace_inertial_to_dh(struct reb_simulation* r){
     struct reb_particle* restrict const particles = r->particles;
     struct reb_vec3d com_pos = {0};
@@ -117,7 +117,7 @@ void reb_integrator_trace_dh_to_inertial(struct reb_simulation* r){
     particles[0].vy = r->ri_tr.com_vel.y - temp.vy;
     particles[0].vz = r->ri_tr.com_vel.z - temp.vz;
 }
-
+/*
 static void reb_integrator_trace_iterate_map(struct reb_simulation* const r){
   struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
 
@@ -316,6 +316,7 @@ static void reb_trace_bs_step(struct reb_simulation* const r, const double _dt){
     r->t = old_t;
     r->dt = old_dt;
     ri_tr->mode = 0;
+    //exit(1);
 }
 
 double reb_integrator_trace_calculate_dcrit_for_particle(struct reb_simulation* r, unsigned int i){
@@ -394,7 +395,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
             reb_integrator_trace_synchronize(r);
             reb_warning(r,"TRACE: Recalculating heliocentric coordinates but coordinates were not synchronized before.");
         }
-        reb_integrator_mercurius_inertial_to_dh(r);
+        reb_integrator_trace_inertial_to_dh(r);
         ri_tr->recalculate_coordinates_this_timestep = 0;
     }
 
@@ -402,7 +403,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         ri_tr->recalculate_dcrit_this_timestep = 0;
         if (ri_tr->is_synchronized==0){
             reb_integrator_trace_synchronize(r);
-            reb_integrator_mercurius_inertial_to_dh(r);
+            reb_integrator_trace_inertial_to_dh(r);
             ri_tr->recalculate_coordinates_this_timestep = 0;
             reb_warning(r,"TRACE: Recalculating dcrit but pos/vel were not synchronized before.");
         }
@@ -629,6 +630,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 
     if (!ri_tr->current_L){ // No pericenter close encounter, proceed as normal
 
+
       // Make copy of encounter map if needed
       memcpy(ri_tr->encounter_map_backup,ri_tr->encounter_map,N*sizeof(int));
 
@@ -640,7 +642,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       }
 
       reb_integrator_trace_interaction_step(r, r->dt/2.);
-      reb_integrator_trace_com_step(r,r->dt);
 
       memcpy(ri_tr->particles_backup_try,r->particles,r->N*sizeof(struct reb_particle));
       reb_integrator_trace_kepler_step(r, r->dt); // We can always advance ALL particles
@@ -679,13 +680,15 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
           reb_trace_bs_step(r, r->dt);
         }
         else{
+          // No CE, WHFast into BS
           reb_integrator_trace_kepler_step(r, r->dt); // We can always advance ALL particles
           reb_trace_bs_step(r, r->dt); // This will do nothing if no close encounters
         }
       }
     }
 
-    else{ // there has been a pericenter close encounter. Immediately integrate entire sim with BS
+    else{ // there has been a pericenter close encounter.
+      // Immediately integrate entire sim with BS - no Jump step
       reb_integrator_trace_interaction_step(r, r->dt/2.);
       reb_integrator_trace_com_step(r,r->dt);
 
@@ -697,9 +700,8 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
         ri_tr->encounter_map[i] = i; // Identity map
         ri_tr->encounterN++;
       }
-      //reb_integrator_trace_iterate_map(r);
       ri_tr->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
-      reb_trace_bs_step(r, r->dt); // This will do nothing if no close encounters
+      reb_trace_bs_step(r, r->dt);
     }
 
     reb_integrator_trace_interaction_step(r,r->dt/2.);
@@ -722,7 +724,7 @@ void reb_integrator_trace_synchronize(struct reb_simulation* r){
           reb_integrator_trace_jump_step(r,r->dt/2.);
         }
 
-        reb_integrator_mercurius_dh_to_inertial(r);
+        reb_integrator_trace_dh_to_inertial(r);
 
         ri_tr->recalculate_coordinates_this_timestep = 1;
         ri_tr->is_synchronized = 1;

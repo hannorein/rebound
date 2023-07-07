@@ -869,6 +869,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             particles[0].az = 0;
 
                             // Acceleration due to star
+                            //printf("Stellar accel\n");
                             for (int i=1; i<encounterN; i++){
                                 int mi = map[i];
                                 const double x = particles[mi].x;
@@ -879,6 +880,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                 particles[mi].ax    = prefact*x;
                                 particles[mi].ay    = prefact*y;
                                 particles[mi].az    = prefact*z;
+                                //printf("%d %e %e %e\n", particles[mi].ax, particles[mi].ay, particles[mi].az);
                             }
 
                             // We're in a heliocentric coordinate system.

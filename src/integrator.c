@@ -127,10 +127,10 @@ void reb_integrator_part2(struct reb_simulation* r){
 		case REB_INTEGRATOR_TRACE:
 			reb_integrator_trace_part2(r);
 			break;
-        case REB_INTEGRATOR_NONE:
-            r->t += r->dt;
-            r->dt_last_done = r->dt;
-            break;
+    case REB_INTEGRATOR_NONE:
+        r->t += r->dt;
+        r->dt_last_done = r->dt;
+        break;
 		default:
 			break;
 	}
