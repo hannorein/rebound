@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.26.0
+* Added WHFast512 integrator (Javaheri, Rein, Tamayo 2023)
+
 ### Version 3.25.1
 * Bug fixed that prevented the installation via PyPi
 
