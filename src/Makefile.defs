@@ -4,7 +4,7 @@ ifndef OS
 	OS=$(shell uname)
 endif
 ifeq ($(OS), Linux)
-	OPT+= -Wall -g -Wno-unused-result
+	OPT+= -Wall -g 
 	LIB+= -lm -lrt
 endif
 ifeq ($(OS), Darwin)
@@ -38,6 +38,10 @@ ifeq ($(OS), Darwin)
 else
 	LIB+= -lglfw
 endif
+endif
+
+ifeq ($(AVX512), 1)
+	PREDEF+= -DAVX512
 endif
 
 ifeq ($(QUADRUPOLE), 1)

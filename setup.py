@@ -30,6 +30,7 @@ libreboundmodule = Extension('librebound',
                     sources = [ 'src/rebound.c',
                                 'src/integrator_ias15.c',
                                 'src/integrator_whfast.c',
+                                'src/integrator_whfast512.c',
                                 'src/integrator_saba.c',
                                 'src/integrator_mercurius.c',
                                 'src/integrator_eos.c',
@@ -56,8 +57,10 @@ libreboundmodule = Extension('librebound',
                                 ],
                     include_dirs = ['src'],
                     define_macros=[ ('LIBREBOUND', None) ],
-                    # Removed '-march=native' for now.
+                    # Uncomment the following line for the non-AVX512 version of REBOUND
                     extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC'],
+                    # Uncomment the following line to enable AVX512 
+                    # extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC', '-march=native', '-DAVX512'],
                     extra_link_args=extra_link_args,
                     )
 

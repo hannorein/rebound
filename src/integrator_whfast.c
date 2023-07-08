@@ -939,11 +939,9 @@ void reb_integrator_whfast_part1(struct reb_simulation* const r){
         reb_whfast_kepler_step(r, r->dt);    // full timestep
         reb_whfast_com_step(r, r->dt);
     }
-
     reb_whfast_jump_step(r,r->dt/2.);
 
     reb_integrator_whfast_to_inertial(r);
-
     // Variational equations only available for jacobi coordinates. 
     // If other coordinates are used, the code will raise an exception in part1 of the integrator.
     for (int v=0;v<r->var_config_N;v++){
@@ -1037,6 +1035,7 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
     switch (ri_whfast->kernel){
         case REB_WHFAST_KERNEL_DEFAULT: 
             reb_whfast_interaction_step(r, dt);
+
             reb_whfast_jump_step(r,dt/2.);
             break;
         case REB_WHFAST_KERNEL_MODIFIEDKICK: 
