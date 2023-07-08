@@ -669,6 +669,11 @@ It is using Single Instruction Multiple Data (SIMD) parallelism and 512-bit Adva
     To use WHFast512 you need to compile and run REBOUND on a computer that has a CPU which supports AVX512 instructions.
     You will see an error message if you try to use WHFast512 but have not compiled REBOUND with the AVX512 flag.
     We describe below how to do this for both the C and python versions of REBOUND below.
+
+    To find out if your CPU supports AVX512 instructions, check for the AVX512 flags by running
+    ```bash
+    cat /proc/cpuinfo | grep avx512
+    ```
     
     Note that you can read SimulationArchives of simulations which used WHFast512 on machines that do not support AVX512 instruction.
     If a synchronization is required, it will be performed with the standard WHFast integrator.
