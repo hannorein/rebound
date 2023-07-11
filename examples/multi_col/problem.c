@@ -12,6 +12,8 @@ void heartbeat(struct reb_simulation* r);
 
 double e1_init; // initial energy
 double e2_init;
+double etot = 0.0;
+double emax = 0.0;
 
 double jacobi_dh(struct reb_simulation* r, int p){
   // Jacobi constant for the restricted 3-body problem
@@ -44,15 +46,12 @@ double jacobi_dh(struct reb_simulation* r, int p){
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
     r->dt = (8./365.)*2.*M_PI;
-    //r->integrator = REB_INTEGRATOR_TRACE;
-    //r->ri_tr.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
-    //r->ri_tr.peri = 0.001;
-
-    r->integrator = REB_INTEGRATOR_MERCURIUS;
-    r->ri_mercurius.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
-    //r->heartbeat  = heartbeat;
+    r->integrator = REB_INTEGRATOR_TRACE;
+    r->ri_tr.hillfac = 4.;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
+    r->ri_tr.peri = 1.;
+    r->heartbeat  = heartbeat;
     r->N_active = 2;
-    r->visualization= REB_VISUALIZATION_NONE;
+    //r->visualization= REB_VISUALIZATION_NONE;
 
     // Initialize masses
     struct reb_particle star = {0};
@@ -93,16 +92,27 @@ int main(int argc, char* argv[]){
     e2_init = jacobi_dh(r, 3);
     system("rm -rf energy.txt");
 
-    reb_integrate(r, 500.*11.86*2.*M_PI);
-    //reb_integrate(r, 12849.);
+    reb_integrate(r, 50000.*11.86*2.*M_PI);
+    //reb_integrate(r, 120.);
+    //reb_integrate(r, 119.);
     reb_free_simulation(r);
+    printf("%e %e\n", etot, emax);
 }
 
 void heartbeat(struct reb_simulation* r){
     //if (reb_output_check(r, 10.*2.*M_PI)){
     //    reb_output_timing(r, 0);
     //}
-    //if (reb_output_check(r, (4. / 365.25) * 2.*M_PI)){
+    double e1 = jacobi_dh(r, 2);
+    double e2 = jacobi_dh(r, 3);
+
+    double estep = fabs((e1-e1_init)/e1_init + (e2-e2_init)/e2_init);
+    if (estep > emax){
+      emax = estep;
+    }
+
+    etot += ((e1-e1_init)/e1_init + (e2-e2_init)/e2_init);
+    if (reb_output_check(r, (40. / 365.25) * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
         FILE* f = fopen("energy.txt","a");
 
@@ -112,8 +122,6 @@ void heartbeat(struct reb_simulation* r){
         //struct reb_rotation r1 = reb_rotation_init_from_to(v1, v2);
         //reb_simulation_irotate(r, r1);
         //reb_integrator_synchronize(r);
-        double e1 = jacobi_dh(r, 2);
-        double e2 = jacobi_dh(r, 3);
         fprintf(f,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",r->t, (e1-e1_init)/e1_init, (e2-e2_init)/e2_init, r->particles[0].x, r->particles[0].y, r->particles[0].z, r->particles[1].x, r->particles[1].y, r->particles[1].z, r->particles[2].x, r->particles[2].y, r->particles[2].z, r->particles[3].x, r->particles[3].y, r->particles[3].z);
         fclose(f);
 
@@ -122,5 +130,5 @@ void heartbeat(struct reb_simulation* r){
 
         //struct reb_rotation inverse = reb_rotation_inverse(r1);
         //reb_simulation_irotate(r, inverse);
-    //}
+    }
 }
