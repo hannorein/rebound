@@ -757,10 +757,9 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
         reb_whfast512_com_step(r, dt);
     }
 
-    reb_whfast512_jump_step(r,dt/2.);
+    reb_whfast512_jump_step(r, dt);
 
     reb_whfast512_interaction_step(r, dt);
-    reb_whfast512_jump_step(r,dt/2.);
    
     ri_whfast512->is_synchronized = 0;
     
