@@ -345,7 +345,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     WRITE_FIELD(IAS15_MINDT,        &r->ri_ias15.min_dt,                sizeof(double));
     WRITE_FIELD(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global,        sizeof(unsigned int));
     WRITE_FIELD(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded,sizeof(unsigned long));
-    if (r->ias15.allocatedN>r->N*3){
+    if (r->ri_ias15.allocatedN>r->N*3){
         int N3 = 3*r->N; // Useful to avoid file size increase if particles got removed
         WRITE_FIELD(IAS15_ALLOCATEDN,   &N3,            sizeof(int));
     }else{
