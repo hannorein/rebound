@@ -861,8 +861,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             const int encounterN = r->ri_tr.encounterN;
                             const int encounterNactive = r->ri_tr.encounterNactive;
                             int* map = r->ri_tr.encounter_map;
-                            int pr = r->ri_tr.print;
-                            int current_L = r->ri_tr.current_L;
+                            //int pr = r->ri_tr.print;
+                            //int current_L = r->ri_tr.current_L;
         #ifndef OPENMP
                             particles[0].ax = 0; // map[0] is always 0
                             particles[0].ay = 0;
