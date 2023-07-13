@@ -380,7 +380,7 @@ class OrbitPlotSet:
         self.top   = OrbitPlot(sim, fig=self.fig, ax=self.ax_top, projection="xz", **kwargs)
         self.right = OrbitPlot(sim, fig=self.fig, ax=self.ax_right, projection="zy", **kwargs)
         
-        self.draw(updateLimits=updateLimits)
+        self.draw(updateLimits=updateLimits, update=True)
 
     def draw(self, update=False, updateLimits=True):
         self.main.draw(update=update, updateLimits=updateLimits)
