@@ -30,7 +30,7 @@ nav:
       - collisions.md
       - boundaryconditions.md
       - gravity.md
-    - 'Other concepts':
+    - "Other concepts":
       - units.md
       - orbitalelements.md
       - simulationarchive.md
