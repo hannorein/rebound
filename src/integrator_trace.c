@@ -528,13 +528,11 @@ int Ftry(struct reb_simulation* const r){
           ri_tr->current_Ks[pindex(i,j,N)] = 1;
           if (ri_tr->encounter_map[i]==0){
               ri_tr->encounter_map[i] = i;
-              //printf("Flagged %d at %f\n", i, r->t);
               ri_tr->encounterN++;
           }
           if (ri_tr->encounter_map[j]==0){
               ri_tr->encounter_map[j] = j;
               ri_tr->encounterN++;
-              //printf("Flagged %d at %f\n", j, r->t);
           }
           ctry = 1;
         }
@@ -549,61 +547,6 @@ int Ftry(struct reb_simulation* const r){
   }
   return ctry;
 }
-
-void reb_integrator_trace_step(struct reb_simulation* const r, double dt){
-  struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
-  if (ri_tr->is_synchronized){
-      //printf("First Call\n");
-      reb_integrator_trace_jump_step(r, dt/2.); // Pdot for B
-  }else{
-      reb_integrator_trace_jump_step(r, dt);
-  }
-  reb_integrator_trace_interaction_step(r, dt/2.);
-  reb_integrator_trace_com_step(r,dt);
-
-  memcpy(ri_tr->particles_backup_try,r->particles,r->N*sizeof(struct reb_particle));
-  reb_integrator_trace_kepler_step(r, dt); // We can always advance ALL particles
-  //reb_integrator_trace_iterate_map(r);
-  reb_trace_bs_step(r, dt); // This will do nothing if no close encounters
-}
-/*
-static void reb_trace_encounter_predict(struct reb_simulation* const r){
-  // For now this flags ALL particles TLu
-    struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
-    struct reb_particle* const particles = r->particles;
-    const int N = r->N;
-    const int N_active = r->N_active==-1?r->N:r->N_active;
-    const double dt = r->dt;
-    rim->encounterN = 1;
-    rim->encounter_map[0] = 1;
-    if (r->testparticle_type==1){
-        rim->tponly_encounter = 0; // testparticles affect massive particles
-    }else{
-        rim->tponly_encounter = 1;
-    }
-    for (int i=1; i<N; i++){
-        rim->encounter_map[i] = 0;
-    }
-    for (int i=0; i<N_active; i++){
-        for (int j=i+1; j<N; j++){
-            if (i != 0){ // if encounter_predict is called we need to integrate ALL particles
-                if (rim->encounter_map[i]==0){
-                    rim->encounter_map[i] = i;
-                    rim->encounterN++;
-                }
-                if (rim->encounter_map[j]==0){
-                    rim->encounter_map[j] = j;
-                    rim->encounterN++;
-
-                }
-                if (j<N_active){ // Two massive particles have a close encounter
-                    rim->tponly_encounter = 0;
-                }
-            }
-        }
-    }
-}
-*/
 
 // This is Listing 2
 void reb_integrator_trace_part2(struct reb_simulation* const r){
@@ -996,5 +939,62 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
   if (ri_tr->safe_mode){
       reb_integrator_trace_synchronize(r); // Interaction here: PDot for B
   }
+}
+*/
+
+/*
+
+void reb_integrator_trace_step(struct reb_simulation* const r, double dt){
+  struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
+  if (ri_tr->is_synchronized){
+      //printf("First Call\n");
+      reb_integrator_trace_jump_step(r, dt/2.); // Pdot for B
+  }else{
+      reb_integrator_trace_jump_step(r, dt);
+  }
+  reb_integrator_trace_interaction_step(r, dt/2.);
+  reb_integrator_trace_com_step(r,dt);
+
+  memcpy(ri_tr->particles_backup_try,r->particles,r->N*sizeof(struct reb_particle));
+  reb_integrator_trace_kepler_step(r, dt); // We can always advance ALL particles
+  //reb_integrator_trace_iterate_map(r);
+  reb_trace_bs_step(r, dt); // This will do nothing if no close encounters
+}
+
+static void reb_trace_encounter_predict(struct reb_simulation* const r){
+  // For now this flags ALL particles TLu
+    struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
+    struct reb_particle* const particles = r->particles;
+    const int N = r->N;
+    const int N_active = r->N_active==-1?r->N:r->N_active;
+    const double dt = r->dt;
+    rim->encounterN = 1;
+    rim->encounter_map[0] = 1;
+    if (r->testparticle_type==1){
+        rim->tponly_encounter = 0; // testparticles affect massive particles
+    }else{
+        rim->tponly_encounter = 1;
+    }
+    for (int i=1; i<N; i++){
+        rim->encounter_map[i] = 0;
+    }
+    for (int i=0; i<N_active; i++){
+        for (int j=i+1; j<N; j++){
+            if (i != 0){ // if encounter_predict is called we need to integrate ALL particles
+                if (rim->encounter_map[i]==0){
+                    rim->encounter_map[i] = i;
+                    rim->encounterN++;
+                }
+                if (rim->encounter_map[j]==0){
+                    rim->encounter_map[j] = j;
+                    rim->encounterN++;
+
+                }
+                if (j<N_active){ // Two massive particles have a close encounter
+                    rim->tponly_encounter = 0;
+                }
+            }
+        }
+    }
 }
 */
