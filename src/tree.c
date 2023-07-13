@@ -107,10 +107,16 @@ static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation*
 	}
 	// In a existing node
 	if (node->pt >= 0) { // It's a leaf node
-		int o = reb_reb_tree_get_octant_for_particle_in_cell(particles[node->pt], node);
-		node->oct[o] = reb_tree_add_particle_to_cell(r, node->oct[o], node->pt, node, o); 
-		o = reb_reb_tree_get_octant_for_particle_in_cell(particles[pt], node);
-		node->oct[o] = reb_tree_add_particle_to_cell(r, node->oct[o], pt, node, o);
+		int o1 = reb_reb_tree_get_octant_for_particle_in_cell(particles[node->pt], node);
+		int o2 = reb_reb_tree_get_octant_for_particle_in_cell(particles[pt], node);
+        if (o1==o2){ // If they fall in the same octant, check if they have same coordinates to avoid infinite recursion
+            if (particles[pt].x == particles[node->pt].x && particles[pt].y == particles[node->pt].y && particles[pt].z == particles[node->pt].z){
+                reb_error(r, "Cannot add two particles with the same coordinates to the tree.");
+                return node;
+            }
+        }
+		node->oct[o1] = reb_tree_add_particle_to_cell(r, node->oct[o1], node->pt, node, o1); 
+		node->oct[o2] = reb_tree_add_particle_to_cell(r, node->oct[o2], pt, node, o2);
 		node->pt = -2;
 	}else{ // It's not a leaf
 		node->pt--;
@@ -306,6 +312,9 @@ static void reb_tree_delete_cell(struct reb_treecell* node){
 	if (node==NULL){
 		return;
 	}
+    if (node->remote==1){
+        return;
+    }
 	for (int o=0; o<8; o++) {
 		reb_tree_delete_cell(node->oct[o]);
 	}
@@ -318,6 +327,7 @@ void reb_tree_delete(struct reb_simulation* const r){
 			reb_tree_delete_cell(r->tree_root[i]);
 		}
 		free(r->tree_root);
+		r->tree_root = NULL;
 	}
 }
 
@@ -367,6 +377,7 @@ void reb_tree_add_essential_node_to_node(struct reb_treecell* nnode, struct reb_
 }
 
 void reb_tree_add_essential_node(struct reb_simulation* const r, struct reb_treecell* node){
+    node->remote = 1;
 	// Add essential node to appropriate parent.
 	for (int o=0;o<8;o++){
 		node->oct[o] = NULL;	

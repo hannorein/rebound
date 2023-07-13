@@ -35,6 +35,9 @@
 #include <signal.h>
 #include <stdio.h>
 #include <math.h>
+#ifdef AVX512
+#include <immintrin.h>
+#endif
 #ifdef MPI
 #include "mpi.h"
 #endif // MPI
@@ -267,7 +270,37 @@ struct reb_simulation_integrator_whfast {
     unsigned int recalculate_coordinates_but_not_synchronized_warning;
 };
 
-struct reb_ode{ // defines an ODE
+struct reb_particle_avx512{
+#ifdef AVX512
+    __m512d m __attribute__ ((aligned (64)));
+    __m512d x __attribute__ ((aligned (64)));
+    __m512d y __attribute__ ((aligned (64)));
+    __m512d z __attribute__ ((aligned (64)));
+    __m512d vx __attribute__ ((aligned (64)));
+    __m512d vy __attribute__ ((aligned (64)));
+    __m512d vz __attribute__ ((aligned (64)));
+#else // AVX512
+    double m[8];
+    double x[8];
+    double y[8];
+    double z[8];
+    double vx[8];
+    double vy[8];
+    double vz[8];
+#endif // AVX512
+};
+
+struct reb_simulation_integrator_whfast512 {
+    unsigned int is_synchronized;
+    unsigned int keep_unsynchronized;
+    unsigned int allocated_N;
+    unsigned int gr_potential;
+    unsigned int recalculate_constants;
+    struct reb_particle_avx512* p_jh;
+    struct reb_particle p_jh0;
+};
+
+struct reb_ode{ // defines an ODE 
     unsigned int length; // number of components / dimenion
     unsigned int allocatedN;
     unsigned int needs_nbody;
@@ -760,6 +793,13 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_TES_DHEM_M_TOTAL = 386,
     REB_BINARY_FIELD_TYPE_TES_DHEM_RECTI_TIME = 387,
     REB_BINARY_FIELD_TYPE_TES_DHEM_RECTI_PERIOD = 388,
+    
+    REB_BINARY_FIELD_TYPE_WHFAST512_KEEPUNSYNC = 390,
+    REB_BINARY_FIELD_TYPE_WHFAST512_ISSYNCHRON = 391,
+    REB_BINARY_FIELD_TYPE_WHFAST512_GRPOTENTIAL = 392,
+    REB_BINARY_FIELD_TYPE_WHFAST512_ALLOCATEDN = 393,
+    REB_BINARY_FIELD_TYPE_WHFAST512_PJH = 394,
+    REB_BINARY_FIELD_TYPE_WHFAST512_PJH0 = 395,
 
     REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
     REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
@@ -840,21 +880,19 @@ struct reb_simulation {
 #ifdef MPI
     int    mpi_id;                              // Unique id of this node (starting at 0). Used for MPI only.
     int    mpi_num;                             // Number of MPI nodes. Used for MPI only.
-    MPI_Datatype mpi_particle;                  // MPI datatype corresponding to the C struct reb_particle.
-    struct reb_particle** particles_send;       // Send buffer for particles. There is one buffer per node.
-    int*   particles_send_N;                    // Current length of particle send buffer.
-    int*   particles_send_Nmax;                 // Maximal length of particle send beffer before realloc() is needed.
-    struct reb_particle** particles_recv;       // Receive buffer for particles. There is one buffer per node.
-    int*   particles_recv_N;                    // Current length of particle receive buffer.
+    struct reb_particle** particles_send;       // Send buffer for particles. There is one buffer per node. 
+    int*   particles_send_N;                    // Current length of particle send buffer. 
+    int*   particles_send_Nmax;                 // Maximal length of particle send beffer before realloc() is needed. 
+    struct reb_particle** particles_recv;       // Receive buffer for particles. There is one buffer per node. 
+    int*   particles_recv_N;                    // Current length of particle receive buffer. 
     int*   particles_recv_Nmax;                 // Maximal length of particle receive beffer before realloc() is needed. */
 
-    MPI_Datatype mpi_cell;                      // MPI datatype corresponding to the C struct reb_treecell.
-    struct reb_treecell** tree_essential_send;  // Send buffer for cells. There is one buffer per node.
-    int*   tree_essential_send_N;               // Current length of cell send buffer.
-    int*   tree_essential_send_Nmax;            // Maximal length of cell send beffer before realloc() is needed.
-    struct reb_treecell** tree_essential_recv;  // Receive buffer for cells. There is one buffer per node.
-    int*   tree_essential_recv_N;               // Current length of cell receive buffer.
-    int*   tree_essential_recv_Nmax;            // Maximal length of cell receive beffer before realloc() is needed.
+    struct reb_treecell** tree_essential_send;  // Send buffer for cells. There is one buffer per node. 
+    int*   tree_essential_send_N;               // Current length of cell send buffer. 
+    int*   tree_essential_send_Nmax;            // Maximal length of cell send beffer before realloc() is needed. 
+    struct reb_treecell** tree_essential_recv;  // Receive buffer for cells. There is one buffer per node. 
+    int*   tree_essential_recv_N;               // Current length of cell receive buffer. 
+    int*   tree_essential_recv_Nmax;            // Maximal length of cell receive beffer before realloc() is needed. 
 #endif // MPI
 
     int collision_resolve_keep_sorted;
@@ -910,8 +948,9 @@ struct reb_simulation {
         REB_INTEGRATOR_MERCURIUS = 9,// MERCURIUS integrator
         REB_INTEGRATOR_SABA = 10,    // SABA integrator family (Laskar and Robutel 2001)
         REB_INTEGRATOR_EOS = 11,     // Embedded Operator Splitting (EOS) integrator family (Rein 2019)
-        REB_INTEGRATOR_BS = 12,      // Gragg-Bulirsch-Stoer
-        REB_INTEGRATOR_TES = 20,     // Terrestrial Exoplanet Simulator (TES)
+        REB_INTEGRATOR_BS = 12,      // Gragg-Bulirsch-Stoer 
+        REB_INTEGRATOR_TES = 20,     // Terrestrial Exoplanet Simulator (TES) 
+        REB_INTEGRATOR_WHFAST512 = 21,   // WHFast integrator, optimized for AVX512
         REB_INTEGRATOR_TRACE = 25,     // Terrestrial Exoplanet Simulator (TES)
         } integrator;
     enum {
@@ -931,9 +970,10 @@ struct reb_simulation {
         } gravity;
 
     // Integrators
-    struct reb_simulation_integrator_sei ri_sei;            // The SEI struct
-    struct reb_simulation_integrator_whfast ri_whfast;      // The WHFast struct
-    struct reb_simulation_integrator_saba ri_saba;          // The SABA struct
+    struct reb_simulation_integrator_sei ri_sei;            // The SEI struct 
+    struct reb_simulation_integrator_whfast ri_whfast;      // The WHFast struct 
+    struct reb_simulation_integrator_whfast512 ri_whfast512;      // The WHFast512 struct 
+    struct reb_simulation_integrator_saba ri_saba;          // The SABA struct 
     struct reb_simulation_integrator_ias15 ri_ias15;        // The IAS15 struct
     struct reb_simulation_integrator_mercurius ri_mercurius;// The MERCURIUS struct
     struct reb_simulation_integrator_janus ri_janus;        // The JANUS struct
@@ -1108,6 +1148,7 @@ void reb_remove_all(struct reb_simulation* const r);
 int reb_remove(struct reb_simulation* const r, int index, int keepSorted);
 int reb_remove_by_hash(struct reb_simulation* const r, uint32_t hash, int keepSorted);
 struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash);
+struct reb_particle reb_get_remote_particle_by_hash(struct reb_simulation* const r, uint32_t hash);
 int reb_get_particle_index(struct reb_particle* p); // Returns a particle's index in the simulation it's in. Needs to be in the simulation its sim pointer is pointing to. Otherwise -1 returned.
 struct reb_particle reb_get_jacobi_com(struct reb_particle* p); // Returns the Jacobi center of mass for a given particle. Used by python. Particle needs to be in a simulation.
 
@@ -1286,7 +1327,7 @@ struct reb_simulationarchive{
     double auto_walltime;        // Walltime setting used to create SA (if used)
     unsigned long long auto_step;// Steps in-between SA snapshots (if used)
     long nblobs;                 // Total number of snapshots (including initial binary)
-    uint32_t* offset;            // Index of offsets in file (length nblobs)
+    uint64_t* offset64;            // Index of offsets in file (length nblobs)
     double* t;                   // Index of simulation times in file (length nblobs)
 };
 struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive* sa, long snapshot);

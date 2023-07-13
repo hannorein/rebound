@@ -75,7 +75,7 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
     size_t allocatedsize = 0;
 
     // Header.
-    if(memcmp(buf1,buf2,64)!=0){
+    if(memcmp(buf1,buf2,64)!=0 && output_option==1){
         printf("Header in binary files are different.\n");
     }
 

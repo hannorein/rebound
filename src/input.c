@@ -480,6 +480,21 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(TES_DHEM_M_TOTAL, &r->ri_tes.rhs->mTotal);
         CASE(TES_DHEM_RECTI_TIME, r->ri_tes.rhs->rectifyTimeArray);
         CASE(TES_DHEM_RECTI_PERIOD, r->ri_tes.rhs->rectificationPeriod);
+    
+        case REB_BINARY_FIELD_TYPE_WHFAST512_ALLOCATEDN:
+            reb_fread(&r->ri_whfast512.allocated_N, field.size, 1, inf, mem_stream);
+            if(r->ri_whfast512.p_jh){
+                free(r->ri_whfast512.p_jh);
+            }
+            r->ri_whfast512.p_jh = aligned_alloc(64,sizeof(struct reb_particle_avx512));
+            r->ri_whfast512.recalculate_constants = 1;
+            break;
+        
+        CASE(WHFAST512_KEEPUNSYNC, &r->ri_whfast512.keep_unsynchronized);
+        CASE(WHFAST512_ISSYNCHRON, &r->ri_whfast512.is_synchronized);
+        CASE(WHFAST512_GRPOTENTIAL, &r->ri_whfast512.gr_potential);
+        CASE(WHFAST512_PJH, r->ri_whfast512.p_jh);
+        CASE(WHFAST512_PJH0, &r->ri_whfast512.p_jh0);
     }
     return 1;
 } 

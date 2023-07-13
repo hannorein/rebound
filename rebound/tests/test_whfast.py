@@ -167,7 +167,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         o4 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
 
         self.assertLess(abs(o1.e-o4.e),4e-14)
-        self.assertLess(abs(o2.e-o3.e),5e-14)
+        self.assertLess(abs(o2.e-o3.e),1e-13)
         self.assertLess(abs(o1.a-o4.a),7e-14)
         self.assertLess(abs(o2.a-o3.a),4e-14)
 

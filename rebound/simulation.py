@@ -21,7 +21,7 @@ import types
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12, "tes": 20}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12, "tes": 20, "whfast512":21}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4, "jacobi": 5}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "mercurius": 3, "line": 4, "linetree": 5}
@@ -650,6 +650,7 @@ class reb_simulation_integrator_whfast(Structure):
                 self._kernel = WHFAST_KERNELS[value]
             else:
                 raise ValueError("Warning. Kernel not found.")
+
 
 class Orbit(Structure):
     """
@@ -1628,6 +1629,8 @@ class Simulation(Structure):
         """
         Return the current Lyapunov Characteristic Number (LCN).
         Note that you need to call init_megno() before the start of the simulation.
+        Different definitions of the LCN exist.  Here, we're following Eq 24 of 
+        Cincotta and Simo (2000): https://aas.aanda.org/articles/aas/abs/2000/20/h1686/h1686.html.
         To get a timescale (the Lyapunov timescale), take the inverse of this quantity.
         """
         if self._calculate_megno==0:
@@ -1665,6 +1668,9 @@ class Simulation(Structure):
                 elif particle.lower() == "outer solar system":  # built in test dataset
                     data.add_outer_solar_system(self)
                 else:
+                    if "frame" not in kwargs:
+                        if hasattr(self, 'default_plane'):
+                            kwargs["plane"] = self.default_plane # allow ASSIST to set default plane
                     self.add(horizons.getParticle(particle, **kwargs), hash=particle)
                     units_convert_particle(self.particles[-1], 'km', 's', 'kg', hash_to_unit(self.python_unit_l), hash_to_unit(self.python_unit_t), hash_to_unit(self.python_unit_m))
             else: 
@@ -2520,16 +2526,12 @@ class reb_simulation_integrator_tes(Structure):
     ("_X_dh", POINTER(c_double)),
     ("_Q_dh", POINTER(c_double)),
     ("_P_dh", POINTER(c_double)),
-    ("_com_x", c_double),
-    ("_com_y", c_double),
-    ("_com_z", c_double),
-    ("_com_dot_x", c_double),
-    ("_com_dot_y", c_double),
-    ("_com_dot_z", c_double),
+    ("_com", c_double*3),
+    ("_com_dot", c_double*3),
     ("_uVars", POINTER(c_double)),
     ("_rhs", POINTER(c_double)),
     ("_radau", POINTER(c_double)),
-    ("_mStar_last", POINTER(c_double)),
+    ("_mStar_last", c_double),
     ("warnings", c_uint32),
     ]
 
@@ -2553,6 +2555,31 @@ class reb_display_data(Structure):
                 # ignoring other data (never used)
                 ]
 
+Particle._fields_ = [("x", c_double),
+                ("y", c_double),
+                ("z", c_double),
+                ("vx", c_double),
+                ("vy", c_double),
+                ("vz", c_double),
+                ("ax", c_double),
+                ("ay", c_double),
+                ("az", c_double),
+                ("m", c_double),
+                ("r", c_double),
+                ("lastcollision", c_double),
+                ("c", c_void_p),
+                ("_hash", c_uint32),
+                ("ap", c_void_p),
+                ("_sim", POINTER(Simulation))]
+
+class reb_simulation_integrator_whfast512(Structure):
+    _fields_ = [("is_synchronized", c_uint),
+                ("keep_unsynchronized", c_uint),
+                ("_allocatedN", c_uint),
+                ("gr_potential", c_uint),
+                ("recalculate_constants", c_uint),
+                ("_p_jh", POINTER(Particle)),
+                ("_p_jh0", Particle)]
 
 # Setting up fields after class definition (because of self-reference)
 Simulation._fields_ = [
@@ -2641,6 +2668,7 @@ Simulation._fields_ = [
                 ("_gravity", c_int),
                 ("ri_sei", reb_simulation_integrator_sei), 
                 ("ri_whfast", reb_simulation_integrator_whfast),
+                ("ri_whfast512", reb_simulation_integrator_whfast512),
                 ("ri_saba", reb_simulation_integrator_saba),
                 ("ri_ias15", reb_simulation_integrator_ias15),
                 ("ri_mercurius", reb_simulation_integrator_mercurius),
@@ -2664,22 +2692,6 @@ Simulation._fields_ = [
                 ("extras", c_void_p),
                  ]
 
-Particle._fields_ = [("x", c_double),
-                ("y", c_double),
-                ("z", c_double),
-                ("vx", c_double),
-                ("vy", c_double),
-                ("vz", c_double),
-                ("ax", c_double),
-                ("ay", c_double),
-                ("az", c_double),
-                ("m", c_double),
-                ("r", c_double),
-                ("lastcollision", c_double),
-                ("c", c_void_p),
-                ("_hash", c_uint32),
-                ("ap", c_void_p),
-                ("_sim", POINTER(Simulation))]
 
 POINTER_REB_SIM = POINTER(Simulation) 
 AFF = CFUNCTYPE(None,POINTER_REB_SIM)

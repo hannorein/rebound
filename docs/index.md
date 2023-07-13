@@ -6,17 +6,18 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 
 ## Features
 
-* Symplectic integrators (WHFast, SEI, LEAPFROG, EOS)
-* High order symplectic integrators for integrating planetary systems (SABA, WH Kernel methods)
-* Hybrid symplectic integrators for planetary dynamics with close encounters (MERCURIUS)
-* High accuracy non-symplectic integrator with adaptive time-stepping (IAS15)
+* Symplectic integrators ([WHFast](integrators/#whfast), [SEI](integrators/#sei), [LEAPFROG](integrators/#leapfrog), [EOS](integrators/#embedded-operator-splitting-method-eos))
+* High order symplectic integrators for integrating planetary systems ([SABA](integrators/#saba), WH Kernel methods)
+* Hybrid symplectic integrators for planetary dynamics with close encounters ([MERCURIUS](integrators/#mercurius))
+* High accuracy non-symplectic integrator with adaptive time-stepping ([IAS15](integrators/#ias15))
 * Support for collisional/granular dynamics, various collision detection routines
 * The code is written entirely in C, conforms to the ISO standard C99 and can be used as a thread-safe shared library
 * Easy-to-use Python module, installation in 3 words: `pip install rebound`
 * Extensive set of example problems in both C and Python
 * Real-time, 3D OpenGL visualization (C version)
+* Parallelized [WHFast512](integrators/#whfast512) integrator for super fast integrations of planetary systems with SIMD AVX512 instructions
 * Parallelized with OpenMP (for shared memory systems)
-* Parallelized with MPI is supported for some special use cases only (using an essential tree for gravity and collisions)
+* Parallelized with [MPI](mpi/) is supported for some special use cases only (using an essential tree for gravity and collisions)
 * No dependencies on external libraries (use of OpenGL/glfw3 for visualization is optional)
 * The code is 100% open-source. All features are inluced in the public repository on [github](https://github.com/hannorein/rebound)
 * No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
@@ -31,6 +32,7 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * Garett Brown, University of Toronto, <gbrown@physics.utoronto.ca>
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University, <liushangfei@pku.edu.cn>
 * Ari Silburt, Penn State University, <ajs725@psu.edu>
+* Pejvak Javaher, University of Toronto, <pejvak.javaheri@mail.utoronto.ca>
 * and many others! Check the git history to find out who contributed to the code.
 
 REBOUND is open source and you are invited to contribute to this project! 
@@ -63,6 +65,8 @@ There are several papers describing the functionality of REBOUND.
 
 10. Bartram & Wittig 2021 (Monthly Notices of the Royal Astronomical Society, Volume 504, Issue 1, Pages 678-691) describes the implementation of the TES integrator. <https://ui.adsabs.harvard.edu/abs/2021MNRAS.504..678B/abstract>
 
+11. Javaheri, Rein & Tamayo 2023 (in prep) describes the WHFast512 integrator which uses AVX512 instructions.
+
 ## Acknowledgments
 
 If you use this code or parts of this code for results presented in a scientific publication, we would greatly appreciate a citation.
@@ -76,7 +80,7 @@ sim.cite()
 ```
 
 !!! Info
-    When you cite one of the REBOUND papers, your paper will receive an automatic shout-out from the [REBOUND Citation Bot](https://twitter.com/reboundbot). 
+    When you cite one of the REBOUND papers, your paper will receive an automatic shout-out from the [REBOUND Citation Bot](https://botsin.space/@reboundbot). 
 
 ## License
 

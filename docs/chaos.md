@@ -64,6 +64,10 @@ To print out the MEGNO value or the largest Lyapunov characteristic number (LCN)
     If the integration time is too short, you might not capture the Lyapunov timescale accurately. 
     On the other hand, if the integration time is too long, you can run into problems as well because quantities tend to grow exponentially with time in chaotic systems.
 
+!!! Note
+    There are different definitions of the LCN which might differ by a factor of order unity.
+    Here, we're following Eq. 24 of [Cincotta and Simo (2000)](https://aas.aanda.org/articles/aas/abs/2000/20/h1686/h1686.html).
+
 ## Rescaling of variational equations 
 
 !!! Important

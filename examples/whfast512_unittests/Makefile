@@ -1,6 +1,6 @@
+export AVX512=1
 export OPENGL=0
-export MPI=1
-export CC=mpicc
+export OPT=-march=native
 include ../../src/Makefile.defs
 
 all: librebound

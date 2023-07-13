@@ -70,7 +70,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
     if (snapshot==0) return;
 
     // Read SA snapshot
-    if(fseek(inf, sa->offset[snapshot], SEEK_SET)){
+    if(fseek(inf, sa->offset64[snapshot], SEEK_SET)){
         *warnings |= REB_INPUT_BINARY_ERROR_SEEK;
         reb_free_simulation(r);
         return;
@@ -310,14 +310,14 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
         fseek(sa->inf, 0, SEEK_END);  
         sa->nblobs = (ftell(sa->inf)-sa->size_first)/sa->size_snapshot+1; // +1 accounts for first binary 
         sa->t = malloc(sizeof(double)*sa->nblobs);
-        sa->offset = malloc(sizeof(uint32_t)*sa->nblobs);
+        sa->offset64 = malloc(sizeof(uint64_t)*sa->nblobs);
         sa->t[0] = t0;
-        sa->offset[0] = 0;
+        sa->offset64[0] = 0;
         for(long i=1;i<sa->nblobs;i++){
             double offset = sa->size_first+(i-1)*sa->size_snapshot;
             fseek(sa->inf, offset, SEEK_SET);  
             fread(&(sa->t[i]),sizeof(double), 1, sa->inf);
-            sa->offset[i] = offset;
+            sa->offset64[i] = offset;
         }
     }else{
         // New version
@@ -326,13 +326,13 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
         if (sa_index == NULL){ // Need to construct offset index from file.
             long nblobsmax = 1024;
             sa->t = malloc(sizeof(double)*nblobsmax);
-            sa->offset = malloc(sizeof(uint32_t)*nblobsmax);
+            sa->offset64 = malloc(sizeof(uint64_t)*nblobsmax);
             fseek(sa->inf, 0, SEEK_SET);  
             sa->nblobs = 0;
             int read_error = 0;
             for(long i=0;i<nblobsmax;i++){
                 struct reb_binary_field field = {0};
-                sa->offset[i] = ftell(sa->inf);
+                sa->offset64[i] = ftell(sa->inf);
                 int blob_finished = 0;
                 do{
                     size_t r1 = fread(&field,sizeof(struct reb_binary_field),1,sa->inf);
@@ -365,7 +365,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                             default:
                                 {
                                     int s2 = fseek(sa->inf,field.size,SEEK_CUR);
-                                    if (debug) printf("SA Field. type=%-6d    size=%llu\n",field.type,field.size);
+                                    if (debug) printf("SA Field. type=%-6d    size=%llu\n",field.type,(unsigned long long)field.size);
                                     if (s2){
                                         read_error = 1;
                                     }
@@ -392,9 +392,9 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                     }
                     if (i>0){
                         // Checking the offsets. Acts like a checksum.
-                        if (blob.offset_prev + sizeof(struct reb_simulationarchive_blob16) != ftell(sa->inf) - sa->offset[i] ){
+                        if (((long)blob.offset_prev) + ((long)sizeof(struct reb_simulationarchive_blob16)) != ftell(sa->inf) - ((long)sa->offset64[i]) ){
                             // Offsets don't work. Next snapshot is definitly corrupted. Assume current one as well.
-                            if (debug) printf("SA Error. Offset mismatch: %lu != %ld.\n",blob.offset_prev + sizeof(struct reb_simulationarchive_blob16), ftell(sa->inf) - sa->offset[i] );
+                            if (debug) printf("SA Error. Offset mismatch: %lu != %ld.\n",blob.offset_prev + sizeof(struct reb_simulationarchive_blob16), (long unsigned int)(ftell(sa->inf) - sa->offset64[i]) );
                             read_error = 1;
                             break;
                         }
@@ -409,7 +409,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                     if (i==nblobsmax-1){ // Increase 
                         nblobsmax += 1024;
                         sa->t = realloc(sa->t,sizeof(double)*nblobsmax);
-                        sa->offset = realloc(sa->offset,sizeof(uint32_t)*nblobsmax);
+                        sa->offset64 = realloc(sa->offset64,sizeof(uint64_t)*nblobsmax);
                     }
                 }else{
                     struct reb_simulationarchive_blob blob = {0};
@@ -421,9 +421,9 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                     }
                     if (i>0){
                         // Checking the offsets. Acts like a checksum.
-                        if (blob.offset_prev + sizeof(struct reb_simulationarchive_blob) != ftell(sa->inf) - sa->offset[i] ){
+                        if (((long)blob.offset_prev )+ ((long)sizeof(struct reb_simulationarchive_blob)) != ftell(sa->inf) - ((long)sa->offset64[i]) ){
                             // Offsets don't work. Next snapshot is definitly corrupted. Assume current one as well.
-                            if (debug) printf("SA Error. Offset mismatch: %lu != %ld.\n",blob.offset_prev + sizeof(struct reb_simulationarchive_blob), ftell(sa->inf) - sa->offset[i] );
+                            if (debug) printf("SA Error. Offset mismatch: %lu != %ld.\n",blob.offset_prev + sizeof(struct reb_simulationarchive_blob), (long unsigned int)(ftell(sa->inf) - sa->offset64[i]) );
                             read_error = 1;
                             break;
                         }
@@ -438,7 +438,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                     if (i==nblobsmax-1){ // Increase 
                         nblobsmax += 1024;
                         sa->t = realloc(sa->t,sizeof(double)*nblobsmax);
-                        sa->offset = realloc(sa->offset,sizeof(uint32_t)*nblobsmax);
+                        sa->offset64 = realloc(sa->offset64,sizeof(uint64_t)*nblobsmax);
                     }
                 }
             }
@@ -449,7 +449,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                     fclose(sa->inf);
                     free(sa->filename);
                     free(sa->t);
-                    free(sa->offset);
+                    free(sa->offset64);
                     free(sa);
                     *warnings |= REB_INPUT_BINARY_ERROR_SEEK;
                     return;
@@ -462,10 +462,10 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
             // Unexpected behaviour if the shape is not the same.
             sa->nblobs = sa_index->nblobs;
             sa->t = malloc(sizeof(double)*sa->nblobs);
-            sa->offset = malloc(sizeof(uint32_t)*sa->nblobs);
+            sa->offset64 = malloc(sizeof(uint64_t)*sa->nblobs);
             fseek(sa->inf, 0, SEEK_SET);
             // No need to read the large file, just copying the index.
-            memcpy(sa->offset, sa_index->offset, sizeof(uint32_t)*sa->nblobs);
+            memcpy(sa->offset64, sa_index->offset64, sizeof(uint64_t)*sa->nblobs);
             memcpy(sa->t, sa_index->t, sizeof(double)*sa->nblobs);
         }
     }
@@ -497,7 +497,7 @@ void reb_free_simulationarchive_pointers(struct reb_simulationarchive* sa){
     }
     free(sa->filename);
     free(sa->t);
-    free(sa->offset);
+    free(sa->offset64);
 }
     
 static int reb_simulationarchive_snapshotsize(struct reb_simulation* const r){

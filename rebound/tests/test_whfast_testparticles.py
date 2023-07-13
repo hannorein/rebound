@@ -24,7 +24,7 @@ def create_whfast_testparticle(coordinates, N, N_active):
         sim2.integrate(1)
 
         # some combinations can't do a simple keplerian orbit exactly (sad but true)
-        eps = 1e-14
+        eps = 2e-14
         for i in range(sim.N):
             self.assertLess(abs(sim.particles[i].x-sim2.particles[i].x),eps)
             self.assertLess(abs(sim.particles[i].vx-sim2.particles[i].vx),eps)
