@@ -1662,6 +1662,7 @@ class Simulation(Structure):
             elif isinstance(particle,str):
                 if self.python_unit_l == 0 or self.python_unit_m == 0 or self.python_unit_t == 0:
                     self.units = ('AU', 'yr2pi', 'Msun')
+                    self.G = 1.0
                 builtindatasets = ["solar system", "outer solar system"]
                 if particle.lower() == "solar system":          # built in test dataset
                     data.add_solar_system(self)
