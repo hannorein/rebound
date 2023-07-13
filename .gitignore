@@ -1,4 +1,5 @@
 *.o
+*.swp
 /*.ipynb
 Info.plist
 *.so
@@ -30,12 +31,8 @@ src/rebound
 ipython_examples/*.png
 others/*.tar.gz
 others/*.tar
-doc/doxygen/xml/
-doc/_build/
-doc/c_examples.rst
-doc/c_example_*.rst
-doc/doxygen/html/
-doc/ipython
-doc/search.json
+docs/c_examples
 problems/
-ipython_examples/HERMES_examples/*
+.vscode/
+*.pete
+examples/solar_system_tes

@@ -81,23 +81,6 @@ static const char* onscreenhelp[] = {
 };
 
 
-static struct reb_quaternion normalize(struct reb_quaternion quat) {
-    float L = sqrtf(quat.x * quat.x + quat.y * quat.y + quat.z * quat.z + quat.w * quat.w);
-    quat.x /= L; quat.y /= L; quat.z /= L; quat.w /= L;
-    return quat;
-}
-static struct reb_quaternion conjugate(struct reb_quaternion quat) {
-    quat.x = -quat.x; quat.y = -quat.y; quat.z = -quat.z;
-    return quat;
-}
-static struct reb_quaternion mult(struct reb_quaternion A, struct reb_quaternion B) {
-    struct reb_quaternion C;
-    C.x = A.w*B.x + A.x*B.w + A.y*B.z - A.z*B.y;
-    C.y = A.w*B.y - A.x*B.z + A.y*B.w + A.z*B.x;
-    C.z = A.w*B.z + A.x*B.y - A.y*B.x + A.z*B.w;
-    C.w = A.w*B.w - A.x*B.x - A.y*B.y - A.z*B.z;
-    return C;
-}
 static void matscale(float mat[16], float s){
     mat[0] = s; mat[1] = 0.; mat[2] = 0.; mat[3] = 0.; 
     mat[4] = 0.; mat[5] = s; mat[6] = 0.; mat[7] = 0.; 
@@ -118,10 +101,10 @@ static void matortho(float mat[16], float l, float r, float b, float t, float n,
     mat[8] = 0.; mat[9] = 0.; mat[10] = -2.f/(f-n); mat[11] = -(f+n)/(f-n);
     mat[12] = 0.; mat[13] = 0.; mat[14] = 0.; mat[15] = 1.f;
 }
-static void quat2mat(struct reb_quaternion A, float mat[16]){
-    float xx = A.x * A.x; float xy = A.x * A.y; float xz = A.x * A.z;
-    float xw = A.x * A.w; float yy = A.y * A.y; float yz = A.y * A.z;
-    float yw = A.y * A.w; float zz = A.z * A.z; float zw = A.z * A.w;
+static void rotation2mat(struct reb_rotation A, float mat[16]){
+    float xx = A.ix * A.ix; float xy = A.ix * A.iy; float xz = A.ix * A.iz;
+    float xw = A.ix * A.r; float yy = A.iy * A.iy; float yz = A.iy * A.iz;
+    float yw = A.iy * A.r; float zz = A.iz * A.iz; float zw = A.iz * A.r;
     mat[0] = 1.-2.*(yy+zz);
     mat[1] =    2.*(xy-zw);
     mat[2] =    2.*(xz+yw);
@@ -132,13 +115,6 @@ static void quat2mat(struct reb_quaternion A, float mat[16]){
     mat[9] =    2.*(yz+xw);
     mat[10]= 1.-2.*(xx+yy);
     mat[3] = mat[7] = mat[11] = mat[12] = mat[13] = mat[14] = 0; mat[15]= 1;
-}
-static void multvec(struct reb_quaternion A, float B[3], float vecr[3]) {
-    float mat[16];
-    quat2mat(A,mat);
-    vecr[0] = mat[0]*B[0] + mat[1]*B[1] + mat[2]*B[2];
-    vecr[1] = mat[4]*B[0] + mat[5]*B[1] + mat[6]*B[2];
-    vecr[2] = mat[8]*B[0] + mat[9]*B[1] + mat[10]*B[2];
 }
 
 static void matmult(float A[16], float B[16], float C[16]) {
@@ -277,31 +253,29 @@ static void reb_display_cursor(GLFWwindow* window, double x, double y){
             data->mouse_x = x;
             data->mouse_y = y;
 
-            struct reb_quaternion inv = conjugate(data->view);
-            float up[3] = {0.,1.,0.};
-            float right[3] = {1.,0.,0.};
-            float inv_right[3];
-            float inv_up[3];
-            multvec(inv,right,inv_right);   
-            multvec(inv,up,inv_up); 
+            struct reb_rotation inv = reb_rotation_conjugate(data->view);
+            struct reb_vec3d up = {.x=0.,.y=1.,.z=0.};
+            struct reb_vec3d right = {.x=1.,.y=0.,.z=0.};
+            struct reb_vec3d inv_right = reb_vec3d_rotate(right, inv);
+            struct reb_vec3d inv_up = reb_vec3d_rotate(up, inv);
 
             float sin_dy = sin(dy);
-            struct reb_quaternion rot_dy;
-            rot_dy.x    = inv_right[0]*sin_dy;
-            rot_dy.y    = inv_right[1]*sin_dy;
-            rot_dy.z    = inv_right[2]*sin_dy;
-            rot_dy.w    = cos(dy);
-            rot_dy = normalize( rot_dy );
-            data->view = mult(data->view,rot_dy);
+            struct reb_rotation rot_dy;
+            rot_dy.ix    = inv_right.x*sin_dy;
+            rot_dy.iy    = inv_right.y*sin_dy;
+            rot_dy.iz    = inv_right.z*sin_dy;
+            rot_dy.r    = cos(dy);
+            rot_dy = reb_rotation_normalize( rot_dy );
+            data->view = reb_rotation_mul(data->view,rot_dy);
             
             float sin_dx = sin(dx);
-            struct reb_quaternion rot_dx;
-            rot_dx.x    = inv_up[0]*sin_dx;
-            rot_dx.y    = inv_up[1]*sin_dx;
-            rot_dx.z    = inv_up[2]*sin_dx;
-            rot_dx.w    = cos(dx);
-            rot_dx = normalize(rot_dx);
-            data->view = mult(data->view,rot_dx);
+            struct reb_rotation rot_dx;
+            rot_dx.ix    = inv_up.x*sin_dx;
+            rot_dx.iy    = inv_up.y*sin_dx;
+            rot_dx.iz    = inv_up.z*sin_dx;
+            rot_dx.r    = cos(dx);
+            rot_dx = reb_rotation_normalize(rot_dx);
+            data->view = reb_rotation_mul(data->view,rot_dx);
         }else{
             // Zoom
             float dx = 3.*(x-data->mouse_x)/width;
@@ -349,21 +323,21 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
                 }
                 break;
             case 'R':
-                if (data->view.w ==1.){
-                    data->view.x = 1./sqrt(2.);
-                    data->view.y = 0.;
-                    data->view.z = 0.;
-                    data->view.w = 1./sqrt(2.);
-                }else if (data->view.x == 1./sqrt(2.)){
-                    data->view.x = 0.;
-                    data->view.y = -1./sqrt(2.);
-                    data->view.z = 0.;
-                    data->view.w = 1./sqrt(2.);
+                if (data->view.r ==1.){
+                    data->view.ix = 1./sqrt(2.);
+                    data->view.iy = 0.;
+                    data->view.iz = 0.;
+                    data->view.r = 1./sqrt(2.);
+                }else if (data->view.ix == 1./sqrt(2.)){
+                    data->view.ix = 0.;
+                    data->view.iy = -1./sqrt(2.);
+                    data->view.iz = 0.;
+                    data->view.r = 1./sqrt(2.);
                 }else{
-                    data->view.x = 0.;
-                    data->view.y = 0.;
-                    data->view.z = 0.;
-                    data->view.w = 1.;
+                    data->view.ix = 0.;
+                    data->view.iy = 0.;
+                    data->view.iz = 0.;
+                    data->view.r = 1.;
                 }
                 data->reference     = -1;
                 reb_display_set_default_scale(data->r);
@@ -427,10 +401,10 @@ static void reb_display(GLFWwindow* window){
     if (data->reference>=0){
         struct reb_particle p = data->particles_copy[data->reference];
         mattranslate(tmp2,-p.x,-p.y,-p.z);
-        quat2mat(data->view,tmp1);
+        rotation2mat(data->view,tmp1);
         matmult(tmp1,tmp2,view);
     }else{
-        quat2mat(data->view,view);
+        rotation2mat(data->view,view);
     }
     
     for (int i=-data->ghostboxes*data->r_copy->nghostx;i<=data->ghostboxes*data->r_copy->nghostx;i++){
@@ -621,7 +595,7 @@ void reb_display_init(struct reb_simulation * const r){
     data->clear         = 1; 
     data->ghostboxes    = 0; 
     data->reference     = -1;
-    data->view.w        = 1.;
+    data->view.r        = 1.;
     data->p_jh_copy      = NULL;
     data->allocated_N_whfast = 0;
 
@@ -1093,8 +1067,7 @@ int reb_display_copy_data(struct reb_simulation* const r){
     data->r_copy->particles = data->particles_copy;
     if (
             (r->integrator==REB_INTEGRATOR_WHFAST && r->ri_whfast.is_synchronized==0)
-            ||   
-            (r->integrator==REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.is_synchronized==0))
+       )
        {
         if (r->ri_whfast.allocated_N > data->allocated_N_whfast){
             size_changed = 1;
@@ -1113,7 +1086,7 @@ void reb_display_prepare_data(struct reb_simulation* const r, int orbits){
     struct reb_display_data* data = r->display_data;
     struct reb_simulation* const r_copy = data->r_copy;
 
-    // this only does something for WHFAST + MERCURIUS
+    // this only does something for WHFAST
     reb_integrator_synchronize(r_copy);
        
     // Update data on GPU 

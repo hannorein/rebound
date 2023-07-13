@@ -36,19 +36,46 @@
 #include "binarydiff.h"
 
 
+static inline int reb_binary_diff_particle(struct reb_particle p1, struct reb_particle p2){
+    int differ = 0;
+    differ = differ || (p1.x != p2.x);
+    differ = differ || (p1.y != p2.y);
+    differ = differ || (p1.z != p2.z);
+    differ = differ || (p1.vx != p2.vx);
+    differ = differ || (p1.vy != p2.vy);
+    differ = differ || (p1.vz != p2.vz);
+    differ = differ || (p1.ax != p2.ax);
+    differ = differ || (p1.ay != p2.ay);
+    differ = differ || (p1.az != p2.az);
+    differ = differ || (p1.m != p2.m);
+    differ = differ || (p1.r != p2.r);
+    differ = differ || (p1.lastcollision != p2.lastcollision);
+    differ = differ || (p1.hash != p2.hash);
+    return differ;
+}
 
+// Wrapper for backwards compatibility
 void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep){
+    // Ignores return value
+    reb_binary_diff_with_options(buf1, size1, buf2, size2, bufp, sizep, 0);
+}
+
+int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option){
     if (!buf1 || !buf2 || size1<64 || size2<64){
         printf("Cannot read input buffers.\n");
-        return;
+        return 0;
     }
+
+    int are_different = 0;
     
-    *bufp = NULL;
-    *sizep = 0;
+    if (output_option==0){
+        *bufp = NULL;
+        *sizep = 0;
+    }
     size_t allocatedsize = 0;
 
     // Header.
-    if(memcmp(buf1,buf2,64)!=0){
+    if(memcmp(buf1,buf2,64)!=0 && output_option==1){
         printf("Header in binary files are different.\n");
     }
 
@@ -94,7 +121,17 @@ void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** 
                 pos1 += field1.size; // For next search
                 pos2 = 64; // For next search
                 field1.size = 0;
-                reb_output_stream_write(bufp, &allocatedsize, sizep, &field1,sizeof(struct reb_binary_field));
+                are_different = 1.;
+                switch(output_option){
+                    case 0:
+                        reb_output_stream_write(bufp, &allocatedsize, sizep, &field1,sizeof(struct reb_binary_field));
+                        break;
+                    case 1:
+                        printf("Field %d not in simulation 2.\n",field1.type);
+                        break;
+                    default:
+                        break;
+                }
                 continue;
             }
         }
@@ -103,15 +140,42 @@ void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** 
         if (pos2+field2.size>size2) printf("Corrupt binary file buf2.\n");
         int fields_differ = 0;
         if (field1.size==field2.size){
-            if (memcmp(buf1+pos1,buf2+pos2,field1.size)!=0){
-                fields_differ = 1;
+            switch (field1.type){
+                case REB_BINARY_FIELD_TYPE_PARTICLES:
+                    {
+                        struct reb_particle* pb1 = (struct reb_particle*)(buf1+pos1);
+                        struct reb_particle* pb2 = (struct reb_particle*)(buf2+pos2);
+                        for (unsigned int i=0;i<field1.size/sizeof(struct reb_particle);i++){
+                            fields_differ |= reb_binary_diff_particle(pb1[i],pb2[i]);
+                        }
+                    }
+                    break;
+                default:
+                    if (memcmp(buf1+pos1,buf2+pos2,field1.size)!=0){
+                        fields_differ = 1;
+                    }
+                    break;
             }
         }else{
             fields_differ = 1;
         }
         if(fields_differ){
-            reb_output_stream_write(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binary_field));
-            reb_output_stream_write(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
+            if (field1.type!=REB_BINARY_FIELD_TYPE_WALLTIME){
+                // Ignore the walltime field for the return value.
+                // Typically we do not care about this field when comparing simulations.
+                are_different = 1.;
+            }
+            switch(output_option){
+                case 0:
+                    reb_output_stream_write(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binary_field));
+                    reb_output_stream_write(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
+                    break;
+                case 1:
+                    printf("Field %d differs.\n",field1.type);
+                    break;
+                default:
+                    break;
+            }
         }
         pos1 += field1.size;
         pos2 += field2.size;
@@ -165,10 +229,20 @@ void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** 
             continue;
         }
 
-        reb_output_stream_write(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binary_field));
-        reb_output_stream_write(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
+        are_different = 1.;
+        switch(output_option){
+            case 0:
+                reb_output_stream_write(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binary_field));
+                reb_output_stream_write(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
+                break;
+            case 1:
+                printf("Field %d not in simulation 1.\n",field2.type);
+                break;
+            default:
+                break;
+        }
         pos1 = 64;
         pos2 += field2.size;
     }
-    return;
+    return are_different;
 }

@@ -1,5 +1,22 @@
 # -*- coding: utf-8 -*-
 """An N-body integrator package for python."""
+
+# Find suffix
+import sysconfig
+suffix = sysconfig.get_config_var("EXT_SUFFIX")
+if suffix is None:
+    suffix = ".so"
+
+try: # Only needed for pyodide
+    import pyodide_js
+    from site import getsitepackages
+    pyodide_js._module.loadDynamicLibrary(getsitepackages()[0]+"/librebound"+suffix)
+    del getsitepackages
+    del pyodide_js
+except:
+    pass
+
+
 # Make changes for python 2 and 3 compatibility
 try:
     import builtins      # if this succeeds it's python 3.x
@@ -8,18 +25,14 @@ try:
 except ImportError:
     pass                 # python 2.x
 
-# Find suffix
-import sysconfig
-suffix = sysconfig.get_config_var('EXT_SUFFIX')
-if suffix is None:
-    suffix = ".so"
 
 # Import shared library
 import os
 import warnings
 pymodulepath = os.path.dirname(__file__)
 from ctypes import cdll, c_char_p
-clibrebound = cdll.LoadLibrary(pymodulepath+"/../librebound"+suffix)
+__libpath__ = pymodulepath+"/../librebound"+suffix
+clibrebound = cdll.LoadLibrary(__libpath__)
 
 # Version
 __version__ = c_char_p.in_dll(clibrebound, "reb_version_str").value.decode('ascii')
@@ -32,16 +45,17 @@ __githash__ = c_char_p.in_dll(clibrebound, "reb_githash_str").value.decode('asci
 
 # Check for version
 try:
+    import pkg_resources
     moduleversion = pkg_resources.require("rebound")[0].version
     libreboundversion = __version__
     if moduleversion != libreboundversion:
         warnings.warn("WARNING: python module and librebound have different version numbers: '%s' vs '%s'.\n" %(moduleversion, libreboundversion), ImportWarning)
 except:
-    # Might fails on python3 versions, but not important
+    # Might fail in some python3 setups, but not important
     pass
 
-# Exceptions    
-class SimulationError(Exception):  
+# Exceptions
+class SimulationError(Exception):
     """The simulation exited with a generic error."""
     pass
 
@@ -57,23 +71,30 @@ class Collision(Exception):
 
 class Escape(Exception):
     """The simulation exited because a particle has been se encounter has been detected.
-    You may want to search for the particle with the largest distance from the 
+    You may want to search for the particle with the largest distance from the
     origin and remove it from the simulation."""
     pass
 
 class NoParticles(Exception):
     """The simulation exited because no particles are left in the simulation."""
     pass
-    
+
 class ParticleNotFound(Exception):
     """Particle was not found in the simulation."""
     pass
 
-from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_whfast, reb_simulation_integrator_sei, reb_simulation_integrator_mercurius
+from .tools import hash, mod2pi, M_to_f, E_to_f, M_to_E, spherical_to_xyz, xyz_to_spherical
+from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_saba, reb_simulation_integrator_whfast, reb_simulation_integrator_sei, reb_simulation_integrator_mercurius, reb_simulation_integrator_ias15, ODE, Rotation, Vec3d, _Vec3d
 from .particle import Particle
-from .plotting import OrbitPlot
-from .tools import hash
+from .plotting import OrbitPlot, OrbitPlotSet
 from .simulationarchive import SimulationArchive
-from .interruptible_pool import InterruptiblePool
 
-__all__ = ["__version__", "__build__", "__githash__", "SimulationArchive", "Simulation", "Orbit", "OrbitPlot", "Particle", "SimulationError", "Encounter", "Collision", "Escape", "NoParticles", "ParticleNotFound", "InterruptiblePool","Variation", "reb_simulation_integrator_whfast", "reb_simulation_integrator_sei","reb_simulation_integrator_mercurius", "clibrebound"]
+import sys
+if "pyodide" in sys.modules:
+    class InterruptiblePool:
+        def __init__(self, processes=None, initializer=None, initargs=(), **kwargs):
+            print("InterruptiblePool is not available in pyodide")
+else:
+    from .interruptible_pool import InterruptiblePool
+
+__all__ = ["__libpath__", "__version__", "__build__", "__githash__", "SimulationArchive", "Simulation", "Orbit", "OrbitPlot", "OrbitPlotSet", "Particle", "SimulationError", "Encounter", "Collision", "Escape", "NoParticles", "ParticleNotFound", "InterruptiblePool","Variation", "reb_simulation_integrator_whfast", "reb_simulation_integrator_ias15", "reb_simulation_integrator_saba", "reb_simulation_integrator_sei","reb_simulation_integrator_mercurius", "clibrebound", "mod2pi", "M_to_f", "E_to_f", "M_to_E", "ODE", "Rotation", "Vec3d", "spherical_to_xyz", "xyz_to_spherical"]

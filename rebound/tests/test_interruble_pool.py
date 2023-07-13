@@ -17,6 +17,7 @@ class TestInterruptiblePool(unittest.TestCase):
         res = [runsim(params[0]), runsim(params[1])]
         self.assertAlmostEqual(res[0],0.9950041652780258,delta=1e-15)
         self.assertAlmostEqual(res[1],1.095870355119381,delta=1e-15)
+        pool.close()
 
     def test_pool(self):
         pool = InterruptiblePool(2)
@@ -24,6 +25,7 @@ class TestInterruptiblePool(unittest.TestCase):
         res = pool.map(runsim,params)
         self.assertAlmostEqual(res[0],0.9950041652780258,delta=1e-15)
         self.assertAlmostEqual(res[1],1.095870355119381,delta=1e-15)
+        pool.close()
 
 if __name__ == "__main__":
     unittest.main()

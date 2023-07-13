@@ -2,22 +2,26 @@ import rebound
 import unittest
 import math
 import numpy as np
+import warnings
 
 class TestGravity(unittest.TestCase):
     
     def test_testparticle_0(self):
         sim = rebound.Simulation()
-        sim.testparticle_type = 0;
+        sim.testparticle_type = 0
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.N_active = 1
-        sim.integrate(10.)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim.integrate(10.)
+            self.assertEqual(1,len(w))
         x0 = sim.particles[0].x
         self.assertEqual(x0, 0.)
 
     def test_testparticle_1(self):
         sim = rebound.Simulation()
-        sim.testparticle_type = 1;
+        sim.testparticle_type = 1
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.N_active = 1
@@ -28,18 +32,21 @@ class TestGravity(unittest.TestCase):
     def test_testparticle_comp_0(self):
         sim = rebound.Simulation()
         sim.gravity = "compensated"
-        sim.testparticle_type = 0;
+        sim.testparticle_type = 0
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.N_active = 1
-        sim.integrate(10.)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim.integrate(10.)
+            self.assertEqual(1,len(w))
         x0 = sim.particles[0].x
         self.assertEqual(x0, 0.)
 
     def test_testparticle_comp_1(self):
         sim = rebound.Simulation()
         sim.gravity = "compensated"
-        sim.testparticle_type = 1;
+        sim.testparticle_type = 1
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.N_active = 1
@@ -54,11 +61,14 @@ class TestGravity(unittest.TestCase):
         sim = rebound.Simulation()
         sim.gravity = "compensated"
         sim.integrator = "whfast"
-        sim.testparticle_type = 0;
+        sim.testparticle_type = 0
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.N_active = 1
-        sim.integrate(10.)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim.integrate(10.)
+            self.assertEqual(1,len(w))
         x0 = sim.particles[0].x
         # TODO
         # Currently fails. WHFAST evolves COM, but should only include star
@@ -69,7 +79,7 @@ class TestGravity(unittest.TestCase):
         sim.gravity = "compensated"
         sim.integrator = "whfast"
         sim.dt = 1e-4
-        sim.testparticle_type = 1;
+        sim.testparticle_type = 1
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.add(m=1e-3, a=1.4)
@@ -81,7 +91,7 @@ class TestGravity(unittest.TestCase):
 
         sim = rebound.Simulation()
         sim.gravity = "compensated"
-        sim.testparticle_type = 1;
+        sim.testparticle_type = 1
         sim.add(m=1.)
         sim.add(m=1e-3, a=1.)
         sim.add(m=1e-3, a=1.4)

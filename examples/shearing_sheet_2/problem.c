@@ -68,11 +68,11 @@ int main(int argc, char* argv[]) {
     double mass = 0;
     while(mass<total_mass){
         struct reb_particle pt = {0};
-        pt.x         = reb_random_uniform(-r->boxsize.x/2.,r->boxsize.x/2.);
-        pt.y         = reb_random_uniform(-r->boxsize.y/2.,r->boxsize.y/2.);
-        pt.z         = reb_random_normal(1.);                    // m
+        pt.x         = reb_random_uniform(r, -r->boxsize.x/2.,r->boxsize.x/2.);
+        pt.y         = reb_random_uniform(r, -r->boxsize.y/2.,r->boxsize.y/2.);
+        pt.z         = reb_random_normal(r, 1.);                    // m
         pt.vy         = -1.5*pt.x*OMEGA;
-        double radius     = reb_random_powerlaw(particle_radius_min,particle_radius_max,particle_radius_slope);
+        double radius     = reb_random_powerlaw(r, particle_radius_min,particle_radius_max,particle_radius_slope);
         pt.r         = radius;                        // m
         double        particle_mass = particle_density*4./3.*M_PI*radius*radius*radius;
         pt.m         = particle_mass;     // kg

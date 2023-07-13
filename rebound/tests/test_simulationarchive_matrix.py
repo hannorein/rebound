@@ -5,10 +5,10 @@ import warnings
 class TestSimulationArchiveMatrix(unittest.TestCase):
     pass
 
-def runSimulation(tmax=40., restart=False, keep_unsynchronized=1, interval=None, safe_mode=True, integrator="ias15",G=1., testparticle=0,simulationarchive_version=2):
+def runSimulation(test,tmax=40., restart=False, keep_unsynchronized=1, interval=None, safe_mode=True, integrator="ias15",G=1., testparticle=0,simulationarchive_version=3):
     if restart:
         if keep_unsynchronized==1:
-            sim = rebound.Simulation.from_archive("test.bin")
+            sim = rebound.Simulation("test.bin")
         else:
             sa = rebound.SimulationArchive("test.bin")
             sim = sa.getSimulation(sa.tmax,keep_unsynchronized=0)
@@ -18,7 +18,7 @@ def runSimulation(tmax=40., restart=False, keep_unsynchronized=1, interval=None,
         sim.add(m=1)
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
-        sim.integrator = "whfast"
+        sim.integrator = integrator
         sim.dt = 0.1313
         if simulationarchive_version==1:
             sim.simulationarchive_version = 1
@@ -34,7 +34,13 @@ def runSimulation(tmax=40., restart=False, keep_unsynchronized=1, interval=None,
             sim.N_active = sim.N-1 # one test particle
         if interval:
             sim.automateSimulationArchive("test.bin", interval, deletefile=True)
-    sim.integrate(tmax,exact_finish_time=0)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        sim.integrate(tmax,exact_finish_time=0)
+        if testparticle==1:
+            test.assertEqual(1,len(w))
+        else:
+            test.assertEqual(0,len(w))
     return sim
 
 def compareSim(test,sim1,sim2):
@@ -55,34 +61,43 @@ def compareSim(test,sim1,sim2):
 
 def create_test_sa_restart(params):
     def doTest(self): 
-        runSimulation(40., restart=False, interval=10., **params)
-        sim1 = runSimulation(80., restart=True, **params)
-        sim2 = runSimulation(80., restart=False, **params)
+        runSimulation(self, 40., restart=False, interval=10., **params)
+        sim1 = runSimulation(self, 80., restart=True, **params)
+        sim2 = runSimulation(self, 80., restart=False, **params)
         compareSim(self,sim1,sim2)
     return doTest
 
 def create_test_sa_synchronize(params):
     def doTest2(self): 
-        sim1 = runSimulation(40., restart=False, interval=10., **params)
+        sim1 = runSimulation(self, 40., restart=False, interval=10., **params)
         if params['keep_unsynchronized']==1:
-            sim2 = rebound.Simulation.from_archive("test.bin")
+            sim2 = rebound.Simulation("test.bin")
         else:
             sa = rebound.SimulationArchive("test.bin")
             sim2 = sa.getSimulation(sa.tmax,keep_unsynchronized=0)
         compareSim(self,sim1,sim2)
-        sim1.integrate(sim1.t+12.)
-        sim2.integrate(sim2.t+12.)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sim1.integrate(sim1.t+12.)
+            sim2.integrate(sim2.t+12.)
+            if params["testparticle"]==1:
+                self.assertEqual(2,len(w))
+            else:
+                self.assertEqual(0,len(w))
         compareSim(self,sim1,sim2)
     return doTest2
 
 
 
-for integrator in ["ias15","whfast","leapfrog","janus","mercurius"]:
+for integrator in ["ias15","whfast","leapfrog","janus","mercurius","saba","sabacl4", "saba(10,6,4)"]:
     for safe_mode in [True,False]:
         for G in [1.,0.9]:
             for testparticle in [0,1,2]: # no test particle, passive, semi-active
                 for keep_unsynchronized in [1,0]:
-                    for simulationarchive_version in [1,2]:
+                    for simulationarchive_version in [1,3]:
+                        if simulationarchive_version==1:
+                            if integrator=="leapfrog" or integrator=="saba" or integrator=="mercurius" or integrator=="sabacl4" or integrator=="saba(10,6,4)":
+                                continue
                         params = {'safe_mode':safe_mode,
                                 'integrator':integrator,
                                 'G':G, 

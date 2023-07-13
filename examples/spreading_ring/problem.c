@@ -37,11 +37,11 @@ int main(int argc, char* argv[]){
 
     while(r->N<_N){
         struct reb_particle pt = {0};
-        double a    = reb_random_powerlaw(boxsize/2.9,boxsize/3.1,.5);
-        double phi     = reb_random_uniform(0,2.*M_PI);
+        double a    = reb_random_powerlaw(r, boxsize/2.9,boxsize/3.1,.5);
+        double phi     = reb_random_uniform(r, 0,2.*M_PI);
         pt.x         = a*cos(phi);
         pt.y         = a*sin(phi);
-        pt.z         = a*reb_random_normal(0.0001);
+        pt.z         = a*reb_random_normal(r, 0.0001);
         double vkep     = sqrt(r->G*star.m/a);
         pt.vx         =  vkep * sin(phi);
         pt.vy         = -vkep * cos(phi);

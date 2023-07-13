@@ -141,21 +141,21 @@ class TestSimulation(unittest.TestCase):
         self.assertEqual(self.sim.N,4)
         self.assertEqual(self.sim.N_real,2)
         self.assertEqual(self.sim.calculate_megno(),0)
-        self.assertTrue(math.isnan(self.sim.calculate_lyapunov()))
+        self.assertEqual(self.sim.calculate_lyapunov(),0)
         
-    def test_calculate_energy(self):
+    def test_energy(self):
         self.sim.move_to_com()
-        energy = self.sim.calculate_energy()
+        energy = self.sim.energy()
         self.assertAlmostEqual(energy, -0.5e-3, delta=1e-14)
 
-    def test_calculate_angular_momentum(self):
+    def test_angular_momentum(self):
         sim = rebound.Simulation()
         sim.add(m=1.)
         sim.add(m=1.e-3, a=1., inc=0.3, Omega=0.5)
         sim.add(m=1.e-3, a=3., inc=0.2, Omega = -0.8)
-        L0 = sim.calculate_angular_momentum()
+        L0 = sim.angular_momentum()
         sim.integrate(1.)
-        Lf = sim.calculate_angular_momentum()
+        Lf = sim.angular_momentum()
         for i in range(3):
             self.assertAlmostEqual(abs((Lf[i]-L0[i])/L0[i]), 0., delta=1e-15)
 
@@ -221,13 +221,13 @@ class TestSimulation(unittest.TestCase):
 
 
     def test_nofile(self):
-        with self.assertRaises(ValueError):
-            sim2 = rebound.Simulation.from_file("doesnotexist.bin")
+        with self.assertRaises(RuntimeError):
+            sim2 = rebound.Simulation("doesnotexist.bin")
 
 
     def test_checkpoint(self):
         self.sim.save("bintest.bin")
-        sim2 = rebound.Simulation.from_file("bintest.bin")
+        sim2 = rebound.Simulation("bintest.bin")
         self.assertEqual(self.sim.particles[1].x, sim2.particles[1].x)
         self.assertEqual(self.sim.particles[1].vx, sim2.particles[1].vx)
         self.assertEqual(self.sim.t, sim2.t)
@@ -239,7 +239,7 @@ class TestSimulation(unittest.TestCase):
         self.sim.integrate(1.)
         self.sim.save("bintest.bin")
         self.sim.integrate(5.)
-        sim2 = rebound.Simulation.from_file("bintest.bin")
+        sim2 = rebound.Simulation("bintest.bin")
         sim2.integrate(5.)
         self.assertEqual(self.sim.particles[1].x, sim2.particles[1].x)
         self.assertEqual(self.sim.particles[1].vx, sim2.particles[1].vx)
@@ -264,12 +264,12 @@ class TestSimulationCollisions(unittest.TestCase):
     def test_coefficient_of_restitution(self):
         self.sim.add(m=1.,x=-1,vx=1.,r=0.5)
         self.sim.add(m=1.,x=1,vx=-1.,r=0.5)
-        energy_initial = self.sim.calculate_energy()
+        energy_initial = self.sim.energy()
         def coef(sim,vrel):
             return 0.5
         self.sim.coefficient_of_restitution = coef
         self.sim.integrate(1.)
-        energy_final = self.sim.calculate_energy()
+        energy_final = self.sim.energy()
         self.assertAlmostEqual(energy_final, 0.25*energy_initial,delta=1e-15)
 
     def test_direct(self):

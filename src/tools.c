@@ -30,41 +30,48 @@
 #include <string.h>
 #include <sys/time.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include "particle.h"
 #include "rebound.h"
 #include "tools.h"
+#include "tree.h"
+#include "boundary.h"
+#ifdef MPI
+#include "communication_mpi.h"
+#endif // MPI
+#define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
 
-void reb_tools_init_srand(void){
+void reb_tools_init_srand(struct reb_simulation* r){
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
-	srand ( tim.tv_usec + getpid());
+	r->rand_seed = tim.tv_usec + getpid();
 }
 
-double reb_random_uniform(double min, double max){
-	return ((double)rand())/((double)(RAND_MAX))*(max-min)+min;
+double reb_random_uniform(struct reb_simulation* r, double min, double max){
+	return ((double)rand_r(&(r->rand_seed)))/((double)(RAND_MAX))*(max-min)+min;
 }
 
 
-double reb_random_powerlaw(double min, double max, double slope){
-	double y = reb_random_uniform(0., 1.);
+double reb_random_powerlaw(struct reb_simulation* r, double min, double max, double slope){
+	double y = reb_random_uniform(r, 0., 1.);
 	if(slope == -1) return exp(y*log(max/min) + log(min));
     else return pow( (pow(max,slope+1.)-pow(min,slope+1.))*y+pow(min,slope+1.), 1./(slope+1.));
 }
 
-double reb_random_normal(double variance){
+double reb_random_normal(struct reb_simulation* r, double variance){
 	double v1,v2,rsq=1.;
 	while(rsq>=1. || rsq<1.0e-12){
-		v1=2.*((double)rand())/((double)(RAND_MAX))-1.0;
-		v2=2.*((double)rand())/((double)(RAND_MAX))-1.0;
+		v1=2.*((double)rand_r(&(r->rand_seed)))/((double)(RAND_MAX))-1.0;
+		v2=2.*((double)rand_r(&(r->rand_seed)))/((double)(RAND_MAX))-1.0;
 		rsq=v1*v1+v2*v2;
 	}
 	// Note: This gives another random variable for free, but we'll throw it away for simplicity and for thread-safety.
 	return 	v1*sqrt(-2.*log(rsq)/rsq*variance);
 }
 
-double reb_random_rayleigh(double sigma){
-	double y = reb_random_uniform(0.,1.);
+double reb_random_rayleigh(struct reb_simulation* r, double sigma){
+	double y = reb_random_uniform(r, 0.,1.);
 	return sigma*sqrt(-2*log(y));
 }
 
@@ -72,7 +79,7 @@ double reb_random_rayleigh(double sigma){
 double reb_tools_energy(const struct reb_simulation* const r){
     const int N = r->N;
     const int N_var = r->N_var;
-    const int _N_active = ((r->N_active==-1)?N:r->N_active) - N_var;
+    const int _N_active = (r->N_active==-1)?(N-N_var):r->N_active;
     const struct reb_particle* restrict const particles = r->particles;
     double e_kin = 0.;
     double e_pot = 0.;
@@ -134,9 +141,10 @@ void reb_move_to_hel(struct reb_simulation* const r){
 
 
 void reb_move_to_com(struct reb_simulation* const r){
-    const int N_real = r->N - r->N_var;
+	struct reb_particle com = reb_get_com(r); // Particles will be redistributed in this call if MPI used
 	struct reb_particle* restrict const particles = r->particles;
-	struct reb_particle com = reb_get_com(r);
+    const int N_real = r->N - r->N_var; 
+    
     // First do second order
     for (int v=0;v<r->var_config_N;v++){
         int index = r->var_config[v].index;
@@ -297,6 +305,15 @@ void reb_move_to_com(struct reb_simulation* const r){
 		particles[i].vy -= com.vy;
 		particles[i].vz -= com.vz;
 	}
+    
+    // Check boundaries and update tree if needed
+    reb_boundary_check(r);     
+    if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
+        reb_tree_update(r);          
+    }
+#ifdef MPI
+    reb_communication_mpi_distribute_particles(r);
+#endif // MPI
 }
 
 void reb_serialize_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
@@ -393,32 +410,6 @@ struct reb_particle reb_get_com_of_pair(struct reb_particle p1, struct reb_parti
 	return p1;
 }
 
-struct reb_particle reb_get_com_without_particle(struct reb_particle com, struct reb_particle p){
-    com.x = com.x*com.m - p.x*p.m;
-    com.y = com.y*com.m - p.y*p.m;
-    com.z = com.z*com.m - p.z*p.m;
-    com.vx = com.vx*com.m - p.vx*p.m;
-    com.vy = com.vy*com.m - p.vy*p.m;
-    com.vz = com.vz*com.m - p.vz*p.m;
-    com.ax = com.ax*com.m - p.ax*p.m;
-    com.ay = com.ay*com.m - p.ay*p.m;
-    com.az = com.az*com.m - p.az*p.m;
-    com.m -= p.m; 
-
-    if (com.m > 0.){
-        com.x /= com.m;
-        com.y /= com.m;
-        com.z /= com.m;
-        com.vx /= com.m;
-        com.vy /= com.m;
-        com.vz /= com.m;
-        com.ax /= com.m;
-        com.ay /= com.m;
-        com.az /= com.m;
-    }
-    return com;
-}
-
 struct reb_particle reb_get_com_range(struct reb_simulation* r, int first, int last){
 	struct reb_particle com = {0};
 	for(int i=first; i<last; i++){
@@ -428,8 +419,49 @@ struct reb_particle reb_get_com_range(struct reb_simulation* r, int first, int l
 }
 
 struct reb_particle reb_get_com(struct reb_simulation* r){
+#ifdef MPI
+    reb_communication_mpi_distribute_particles(r);
     int N_real = r->N-r->N_var;
-	return reb_get_com_range(r, 0, N_real); 
+    struct reb_particle com_local = reb_get_com_range(r, 0, N_real);
+	struct reb_particle com = {0};
+    com_local.x  *= com_local.m;
+    com_local.y  *= com_local.m;
+    com_local.z  *= com_local.m;
+    com_local.vx *= com_local.m;
+    com_local.vy *= com_local.m;
+    com_local.vz *= com_local.m;
+    com_local.ax *= com_local.m;
+    com_local.ay *= com_local.m;
+    com_local.az *= com_local.m;
+
+    MPI_Allreduce(&com_local.x, &com.x, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.x, &com.y, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.x, &com.z, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.vx, &com.vx, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.vx, &com.vy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.vx, &com.vz, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.ax, &com.ax, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.ax, &com.ay, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.ax, &com.az, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&com_local.m, &com.m, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    
+    if (com.m > 0){
+        com.x  /= com.m;
+        com.y  /= com.m;
+        com.z  /= com.m;
+        com.vx /= com.m;
+        com.vy /= com.m;
+        com.vz /= com.m;
+        com.ax /= com.m;
+        com.ay /= com.m;
+        com.az /= com.m;
+    }
+
+	return com; 
+#else // MPI
+    int N_real = r->N-r->N_var;
+    return reb_get_com_range(r, 0, N_real);
+#endif // MPI
 }
 
 struct reb_particle reb_get_jacobi_com(struct reb_particle* p){
@@ -445,22 +477,22 @@ void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R
 	double E = 3./64.*M_PI*M*M/R;
 	for (int i=0;i<_N;i++){
 		struct reb_particle star = {0};
-		double _r = pow(pow(reb_random_uniform(0,1),-2./3.)-1.,-1./2.);
-		double x2 = reb_random_uniform(0,1);
-		double x3 = reb_random_uniform(0,2.*M_PI);
+		double _r = pow(pow(reb_random_uniform(r, 0,1),-2./3.)-1.,-1./2.);
+		double x2 = reb_random_uniform(r, 0,1);
+		double x3 = reb_random_uniform(r, 0,2.*M_PI);
 		star.z = (1.-2.*x2)*_r;
 		star.x = sqrt(_r*_r-star.z*star.z)*cos(x3);
 		star.y = sqrt(_r*_r-star.z*star.z)*sin(x3);
 		double x5,g,q;
 		do{
-			x5 = reb_random_uniform(0.,1.);
-			q = reb_random_uniform(0.,1.);
+			x5 = reb_random_uniform(r, 0.,1.);
+			q = reb_random_uniform(r, 0.,1.);
 			g = q*q*pow(1.-q*q,7./2.);
 		}while(0.1*x5>g);
 		double ve = pow(2.,1./2.)*pow(1.+_r*_r,-1./4.);
 		double v = q*ve;
-		double x6 = reb_random_uniform(0.,1.);
-		double x7 = reb_random_uniform(0.,2.*M_PI);
+		double x6 = reb_random_uniform(r, 0.,1.);
+		double x7 = reb_random_uniform(r, 0.,2.*M_PI);
 		star.vz = (1.-2.*x6)*v;
 		star.vx = sqrt(v*v-star.vz*star.vz)*cos(x7);
 		star.vy = sqrt(v*v-star.vz*star.vz)*sin(x7);
@@ -479,20 +511,15 @@ void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R
 	}
 }
 
-static double mod2pi(double f){
-	while(f < 0.){
-		f += 2.*M_PI;
-	}
-	while(f > 2.*M_PI){
-		f -= 2.*M_PI;
-	}
-	return f;
+double reb_tools_mod2pi(double f){
+    const double pi2 = 2.*M_PI;
+    return fmod(pi2 + fmod(f, pi2), pi2);
 }
 
 double reb_tools_M_to_E(double e, double M){
 	double E;
 	if(e < 1.){
-        M = mod2pi(M); // avoid numerical artefacts for negative numbers
+        M = reb_tools_mod2pi(M); // avoid numerical artefacts for negative numbers
 		E = e < 0.8 ? M : M_PI;
 		double F = E - e*sin(E) - M;
 		for(int i=0; i<100; i++){
@@ -502,7 +529,7 @@ double reb_tools_M_to_E(double e, double M){
 				break;
 			}
 		}
-		E = mod2pi(E);
+		E = reb_tools_mod2pi(E);
 		return E;
 	}
 	else{
@@ -520,81 +547,420 @@ double reb_tools_M_to_E(double e, double M){
 	}
 }
 
-double reb_tools_M_to_f(double e, double M){
-	double E = reb_tools_M_to_E(e, M);
+double reb_tools_E_to_f(double e, double E){
 	if(e > 1.){
-		return 2.*atan(sqrt((1.+e)/(e-1.))*tanh(0.5*E));
+		return reb_tools_mod2pi(2.*atan(sqrt((1.+e)/(e-1.))*tanh(0.5*E)));
 	}
 	else{
-		return 2*atan(sqrt((1.+e)/(1.-e))*tan(0.5*E));
+		return reb_tools_mod2pi(2.*atan(sqrt((1.+e)/(1.-e))*tan(0.5*E)));
 	}
 }
 
-struct reb_particle reb_tools_orbit2d_to_particle(double G, struct reb_particle primary, double m, double a, double e, double omega, double f){
-	double Omega = 0.;
-	double inc = 0.;
-	return reb_tools_orbit_to_particle(G, primary, m, a, e, inc, Omega, omega, f);
+double reb_tools_M_to_f(double e, double M){
+	double E = reb_tools_M_to_E(e, M);
+    return reb_tools_E_to_f(e, E);
+}
+
+static const char* reb_string_for_particle_error(int err){
+    if (err==1)
+        return "Cannot set e exactly to 1.";
+    if (err==2)
+        return "Eccentricity must be greater than or equal to zero.";
+    if (err==3)
+        return "Bound orbit (a > 0) must have e < 1.";
+    if (err==4)
+        return "Unbound orbit (a < 0) must have e > 1.";
+    if (err==5)
+        return "Unbound orbit can't have f beyond the range allowed by the asymptotes set by the hyperbola.";
+    if (err==6)
+        return "Primary has no mass.";
+    if (err==7)
+        return "Cannot mix Pal coordinates (h,k,ix,iy) with certain orbital elements (e, inc, Omega, omega, pomega, f, M, E, theta, T). Use longitude l to indicate the phase.";
+    if (err==8)
+        return "Cannot pass cartesian coordinates and orbital elements (incl primary) at the same time.";
+    if (err==9)
+        return "Need to pass reb_simulation object when initializing particle with orbital elements.";
+    if (err==10)
+        return "Need to pass either semi-major axis or orbital period to initialize particle using orbital elements.";
+    if (err==11)
+        return "Need to pass either semi-major axis or orbital period, but not both.";
+    if (err==12)
+        return "(ix, iy) coordinates are not valid. Squared sum exceeds 4.";
+    if (err==13)
+        return "Cannot pass both (omega, pomega) together.";
+    if (err==14)
+        return "Can only pass one longitude/anomaly in the set (f, M, E, l, theta, T).";
+    return "An unknown error occured during reb_add_fmt().";
+
+}
+
+static struct reb_particle reb_particle_new_errV(struct reb_simulation* r, int* err, const char* fmt, va_list args);
+
+void reb_add_fmt(struct reb_simulation* r, const char* fmt, ...){
+    if (!r){
+        fprintf(stderr, "\n\033[1mError!\033[0m Simulation can't be NULL1.\n");
+        return;
+    }
+
+    int err = 0;
+    va_list args;
+    va_start(args, fmt);
+    struct reb_particle particle = reb_particle_new_errV(r, &err, fmt, args);
+    va_end(args);
+
+    if (err==0){ // Success
+        reb_add(r, particle);
+    }else{
+        const char* error_string = reb_string_for_particle_error(err);
+        reb_error(r, error_string);
+    }
+}
+
+struct reb_particle reb_particle_new(struct reb_simulation* r, const char* fmt, ...){
+    int err = 0;
+
+    va_list args;
+    va_start(args, fmt);
+    struct reb_particle particle = reb_particle_new_errV(r, &err, fmt, args);
+    va_end(args);
+    
+    if (err==0){ // Success
+        return particle;
+        reb_add(r, particle);
+    }else{
+        const char* error_string = reb_string_for_particle_error(err);
+        fprintf(stderr, "\n\033[1mError!\033[0m %s\n", error_string);
+        return reb_particle_nan();
+    }
+}
+
+static struct reb_particle reb_particle_new_errV(struct reb_simulation* r, int* err, const char* fmt, va_list args){
+    double m = 0;
+    double radius = 0;
+    uint32_t hash = 0;
+    double x = nan("");
+    double y = nan("");
+    double z = nan("");
+    double vx = nan("");
+    double vy = nan("");
+    double vz = nan("");
+    double a = nan("");
+    double P = nan("");
+    double e = nan("");
+    double inc = nan("");
+    double Omega = nan("");
+    double omega = nan("");
+    double pomega = nan("");
+    double f = nan("");
+    double M = nan("");
+    double E = nan("");
+    double l = nan("");
+    double theta = nan("");
+    double T = nan("");
+    double h = nan("");
+    double k = nan("");
+    double ix = nan("");
+    double iy = nan("");
+    struct reb_particle primary = {0};
+    int primary_given = 0;
+
+    char *sep = " \t\n,;";
+
+    char* fmt_c = strdup(fmt);
+    char* token;
+    char* rest = fmt_c;
+
+    while ((token = strtok_r(rest, sep, &rest))){
+        if (0==strcmp(token,"m"))
+            m = va_arg(args, double);
+        if (0==strcmp(token,"r"))
+            radius = va_arg(args, double);
+        if (0==strcmp(token,"x"))
+            x = va_arg(args, double);
+        if (0==strcmp(token,"y"))
+            y = va_arg(args, double);
+        if (0==strcmp(token,"z"))
+            z = va_arg(args, double);
+        if (0==strcmp(token,"vx"))
+            vx = va_arg(args, double);
+        if (0==strcmp(token,"vy"))
+            vy = va_arg(args, double);
+        if (0==strcmp(token,"vz"))
+            vz = va_arg(args, double);
+        if (0==strcmp(token,"a"))
+            a = va_arg(args, double);
+        if (0==strcmp(token,"P"))
+            P = va_arg(args, double);
+        if (0==strcmp(token,"e"))
+            e = va_arg(args, double);
+        if (0==strcmp(token,"inc"))
+            inc = va_arg(args, double);
+        if (0==strcmp(token,"Omega"))
+            Omega = va_arg(args, double);
+        if (0==strcmp(token,"omega"))
+            omega = va_arg(args, double);
+        if (0==strcmp(token,"pomega"))
+            pomega = va_arg(args, double);
+        if (0==strcmp(token,"f"))
+            f = va_arg(args, double);
+        if (0==strcmp(token,"M"))
+            M = va_arg(args, double);
+        if (0==strcmp(token,"E"))
+            E = va_arg(args, double);
+        if (0==strcmp(token,"l"))
+            l = va_arg(args, double);
+        if (0==strcmp(token,"theta"))
+            theta = va_arg(args, double);
+        if (0==strcmp(token,"T"))
+            T = va_arg(args, double);
+        if (0==strcmp(token,"h"))
+            h = va_arg(args, double);
+        if (0==strcmp(token,"k"))
+            k = va_arg(args, double);
+        if (0==strcmp(token,"ix"))
+            ix = va_arg(args, double);
+        if (0==strcmp(token,"iy"))
+            iy = va_arg(args, double);
+        if (0==strcmp(token,"primary")){
+            primary = va_arg(args, struct reb_particle);
+            primary_given = 1;
+        }
+        if (0==strcmp(token,"hash")){
+            hash = va_arg(args, uint32_t);
+        }
+    }
+    free(fmt_c);
+
+    int Ncart = 0;
+    if (!isnan(x)) Ncart++;
+    if (!isnan(y)) Ncart++;
+    if (!isnan(z)) Ncart++;
+    if (!isnan(vx)) Ncart++;
+    if (!isnan(vy)) Ncart++;
+    if (!isnan(vz)) Ncart++;
+
+    int Norb = 0;
+    if (primary_given) Norb++;
+    if (!isnan(a)) Norb++;
+    if (!isnan(P)) Norb++;
+    if (!isnan(e)) Norb++;
+    if (!isnan(inc)) Norb++;
+    if (!isnan(Omega)) Norb++;
+    if (!isnan(omega)) Norb++;
+    if (!isnan(pomega)) Norb++;
+    if (!isnan(f)) Norb++;
+    if (!isnan(M)) Norb++;
+    if (!isnan(E)) Norb++;
+    if (!isnan(l)) Norb++;
+    if (!isnan(theta)) Norb++;
+    if (!isnan(T)) Norb++;
+    
+    int Nnonpal = 0;
+    if (primary_given) Nnonpal++;
+    if (!isnan(e)) Nnonpal++;
+    if (!isnan(inc)) Nnonpal++;
+    if (!isnan(Omega)) Nnonpal++;
+    if (!isnan(omega)) Nnonpal++;
+    if (!isnan(pomega)) Nnonpal++;
+    if (!isnan(f)) Nnonpal++;
+    if (!isnan(M)) Nnonpal++;
+    if (!isnan(E)) Nnonpal++;
+    if (!isnan(theta)) Nnonpal++;
+    if (!isnan(T)) Nnonpal++;
+    
+    int Npal = 0;
+    if (!isnan(h)) Npal++;
+    if (!isnan(k)) Npal++;
+    if (!isnan(ix)) Npal++;
+    if (!isnan(iy)) Npal++;
+    
+    int Nlong = 0;
+    if (!isnan(f)) Nlong++;
+    if (!isnan(M)) Nlong++;
+    if (!isnan(E)) Nlong++;
+    if (!isnan(l)) Nlong++;
+    if (!isnan(theta)) Nlong++;
+    if (!isnan(T)) Nlong++;
+
+    if (Nnonpal>0 && Npal>0){
+        *err = 7; // cannot mix pal and orbital elements
+        return reb_particle_nan();
+    }
+    if (Ncart>0 && Norb>0){
+        *err = 8; // cannot mix cartesian and orbital elements
+        return reb_particle_nan();
+    }
+
+    if (Ncart || (!Norb)){ // Cartesian coordinates given, or not coordinates whatsoever
+        struct reb_particle particle = {0};
+        particle.hash = hash;
+        particle.m = m;
+        particle.r = radius;
+        if (!isnan(x)) particle.x = x; // Note: is x is nan, then particle.x is 0  
+        if (!isnan(y)) particle.y = y; 
+        if (!isnan(z)) particle.z = z; 
+        if (!isnan(vx)) particle.vx = vx; 
+        if (!isnan(vy)) particle.vy = vy; 
+        if (!isnan(vz)) particle.vz = vz; 
+        return particle;
+    }
+    
+    if (r==NULL){
+        *err = 9; // need simulation for orbital elements
+        return reb_particle_nan();
+    }
+    if (!primary_given){
+#ifdef MPI
+        reb_error(r, "When using MPI, you need to provide a primary to reb_add_fmt() when using orbital elements.");
+        return reb_particle_nan();
+#else // MPI
+        primary = reb_get_com(r);
+#endif // MPI
+    }
+    // Note: jacobi_masses not yet implemented.
+
+    if (isnan(a) && isnan(P)){
+        *err = 10; // can't have a and P
+        return reb_particle_nan();
+    }
+    if (!isnan(a) && !isnan(P)){
+        *err = 11; // need to have a or P
+        return reb_particle_nan();
+    }
+    if (isnan(a)){
+        a = cbrt(P*P*r->G *(primary.m + m)/(4.*M_PI*M_PI));
+    }
+    if (Npal>0){
+        if (isnan(l)) l=0;
+        if (isnan(h)) h=0;
+        if (isnan(k)) k=0;
+        if (isnan(ix)) ix=0;
+        if (isnan(iy)) iy=0;
+        if ((ix*ix + iy*iy) > 4.0){
+            *err = 12; // e too high 
+            return reb_particle_nan();
+        }
+        struct reb_particle particle = reb_tools_pal_to_particle(r->G, primary, m, a, l, k, h, ix, iy);
+        particle.r = radius;
+        particle.hash = hash;
+        return particle;
+    }
+    
+    if (isnan(e)) e = 0.;
+    if (isnan(inc)) inc = 0.;
+    if (isnan(Omega)) Omega = 0.;
+    
+    if (!isnan(omega) && !isnan(pomega)){
+        *err = 13; // Can't pass omega and pomega 
+        return reb_particle_nan();
+    }
+    if (isnan(omega) && isnan(pomega)) omega = 0.;
+    if (!isnan(pomega)){
+        if (cos(inc)>0.){
+            omega = pomega - Omega;
+        }else{
+            omega = Omega - pomega; // retrograde orbits
+        }
+    }
+
+    if (Nlong>1){
+        *err = 14; // only one longitude 
+        return reb_particle_nan();
+    }
+    if (Nlong==0){
+        f=0;
+    }
+    if (Nlong==1){
+        if (!isnan(theta)){
+            if (cos(inc)>0.){
+                f = theta - Omega - omega;
+            }else{
+                f = Omega - omega - theta; // retrograde
+            }
+        }
+        if (!isnan(l)){
+            if (cos(inc)>0.){
+                M = l - Omega - omega; // M will be converted to f below
+            }else{
+                M = Omega - omega - l; // retrograde
+            }
+        }
+        if (!isnan(T)){
+            double n = sqrt(r->G*(primary.m + m)/fabs(a*a*a));
+            M = n * (r->t-T);
+        }
+        if (!isnan(M)){
+            f = reb_tools_M_to_f(e,M);
+        }
+        if (!isnan(E)){
+            f = reb_tools_E_to_f(e,E);
+        }
+    }
+    struct reb_particle particle = reb_tools_orbit_to_particle_err(r->G, primary, m, a, e, inc, Omega, omega, f, err);
+    particle.r = radius;
+    particle.hash = hash;
+    return particle;
 }
 
 #define TINY 1.E-308 		///< Close to smallest representable floating point number, used for orbit calculation
 
 struct reb_particle reb_tools_orbit_to_particle_err(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f, int* err){
-	if(e == 1.){
-		*err = 1; 		// Can't initialize a radial orbit with orbital elements.
-		return reb_particle_nan();
-	}
-	if(e < 0.){
-		*err = 2; 		// Eccentricity must be greater than or equal to zero.
-		return reb_particle_nan();
-	}
-	if(e > 1.){
-		if(a > 0.){
-			*err = 3; 	// Bound orbit (a > 0) must have e < 1. 
-			return reb_particle_nan();
-		}
-	}
-	else{
-		if(a < 0.){
-			*err =4; 	// Unbound orbit (a < 0) must have e > 1.
-			return reb_particle_nan();
-		}
-	}
-	if(e*cos(f) < -1.){
-		*err = 5;		// Unbound orbit can't have f set beyond the range allowed by the asymptotes set by the parabola.
-		return reb_particle_nan();
-	}
+    if(e == 1.){
+        *err = 1; 		// Can't initialize a radial orbit with orbital elements.
+        return reb_particle_nan();
+    }
+    if(e < 0.){
+        *err = 2; 		// Eccentricity must be greater than or equal to zero.
+        return reb_particle_nan();
+    }
+    if(e > 1.){
+        if(a > 0.){
+            *err = 3; 	// Bound orbit (a > 0) must have e < 1. 
+            return reb_particle_nan();
+        }
+    }
+    else{
+        if(a < 0.){
+            *err =4; 	// Unbound orbit (a < 0) must have e > 1.
+            return reb_particle_nan();
+        }
+    }
+    if(e*cos(f) < -1.){
+        *err = 5;		// Unbound orbit can't have f set beyond the range allowed by the asymptotes set by the parabola.
+        return reb_particle_nan();
+    }
     if(primary.m < TINY){
         *err = 6;       // Primary has no mass.
         return reb_particle_nan();
     }
 
-	struct reb_particle p = {0};
-	p.m = m;
-	double r = a*(1-e*e)/(1 + e*cos(f));
-	double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
+    struct reb_particle p = {0};
+    p.m = m;
+    double r = a*(1-e*e)/(1 + e*cos(f));
+    double v0 = sqrt(G*(m+primary.m)/a/(1.-e*e)); // in this form it works for elliptical and hyperbolic orbits
 
-	double cO = cos(Omega);
-	double sO = sin(Omega);
-	double co = cos(omega);
-	double so = sin(omega);
-	double cf = cos(f);
-	double sf = sin(f);
-	double ci = cos(inc);
-	double si = sin(inc);
-	
-	// Murray & Dermott Eq 2.122
-	p.x = primary.x + r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
-	p.y = primary.y + r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
-	p.z = primary.z + r*(so*cf+co*sf)*si;
+    double cO = cos(Omega);
+    double sO = sin(Omega);
+    double co = cos(omega);
+    double so = sin(omega);
+    double cf = cos(f);
+    double sf = sin(f);
+    double ci = cos(inc);
+    double si = sin(inc);
 
-	// Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
-	p.vx = primary.vx + v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
-	p.vy = primary.vy + v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
-	p.vz = primary.vz + v0*((e+cf)*co*si - sf*si*so);
-	
-	p.ax = 0; 	p.ay = 0; 	p.az = 0;
+    // Murray & Dermott Eq 2.122
+    p.x = primary.x + r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
+    p.y = primary.y + r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
+    p.z = primary.z + r*(so*cf+co*sf)*si;
 
-	return p;
+    // Murray & Dermott Eq. 2.36 after applying the 3 rotation matrices from Sec. 2.8 to the velocities in the orbital plane
+    p.vx = primary.vx + v0*((e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
+    p.vy = primary.vy + v0*((e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
+    p.vz = primary.vz + v0*((e+cf)*co*si - sf*si*so);
+
+    p.ax = 0; 	p.ay = 0; 	p.az = 0;
+
+    return p;
 }
 
 struct reb_particle reb_tools_orbit_to_particle(double G, struct reb_particle primary, double m, double a, double e, double inc, double Omega, double omega, double f){
@@ -635,6 +1001,9 @@ struct reb_orbit reb_orbit_nan(void){
 // will return 0 or pi appropriately if num is larger than denom by machine precision
 // and will return 0 if denom is exactly 0.
 
+
+
+// Calculates right quadrant for acos(num/denom) using a disambiguator that is < 0 when acos in the range (0, -pi)
 static double acos2(double num, double denom, double disambiguator){
 	double val;
 	double cosine = num/denom;
@@ -651,63 +1020,69 @@ static double acos2(double num, double denom, double disambiguator){
 }
 
 struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p, struct reb_particle primary, int* err){
-	struct reb_orbit o;
-	if (primary.m <= TINY){	
-		*err = 1;			// primary has no mass.
-		return reb_orbit_nan();
-	}
-	double mu,dx,dy,dz,dvx,dvy,dvz,vsquared,vcircsquared,vdiffsquared;
-	double hx,hy,hz,vr,rvr,muinv,ex,ey,ez,nx,ny,n,ea;
-	mu = G*(p.m+primary.m);
-	dx = p.x - primary.x;
-	dy = p.y - primary.y;
-	dz = p.z - primary.z;
-	dvx = p.vx - primary.vx;
-	dvy = p.vy - primary.vy;
-	dvz = p.vz - primary.vz;
-	o.d = sqrt ( dx*dx + dy*dy + dz*dz );
-	
-	vsquared = dvx*dvx + dvy*dvy + dvz*dvz;
-	o.v = sqrt(vsquared);
-	vcircsquared = mu/o.d;	
-	o.a = -mu/( vsquared - 2.*vcircsquared );	// semi major axis
-    
+    struct reb_orbit o;
+    if (primary.m <= TINY){	
+        *err = 1;			// primary has no mass.
+        return reb_orbit_nan();
+    }
+    double mu,dx,dy,dz,dvx,dvy,dvz,vsquared,vcircsquared,vdiffsquared;
+    double hx,hy,hz,vr,rvr,muinv,ex,ey,ez,nx,ny,n,ea;
+    mu = G*(p.m+primary.m);
+    dx = p.x - primary.x;
+    dy = p.y - primary.y;
+    dz = p.z - primary.z;
+    dvx = p.vx - primary.vx;
+    dvy = p.vy - primary.vy;
+    dvz = p.vz - primary.vz;
+    o.d = sqrt ( dx*dx + dy*dy + dz*dz );
+
+    vsquared = dvx*dvx + dvy*dvy + dvz*dvz;
+    o.v = sqrt(vsquared);
+    vcircsquared = mu/o.d;	
+    o.a = -mu/( vsquared - 2.*vcircsquared );	// semi major axis
+
     o.rhill = o.a*cbrt(p.m/(3.*primary.m));
-	
-	hx = (dy*dvz - dz*dvy); 					//angular momentum vector
-	hy = (dz*dvx - dx*dvz);
-	hz = (dx*dvy - dy*dvx);
-	o.h = sqrt ( hx*hx + hy*hy + hz*hz );		// abs value of angular momentum
 
-	vdiffsquared = vsquared - vcircsquared;	
-	if(o.d <= TINY){							
-		*err = 2;									// particle is on top of primary
-		return reb_orbit_nan();
-	}
-	vr = (dx*dvx + dy*dvy + dz*dvz)/o.d;	
-	rvr = o.d*vr;
-	muinv = 1./mu;
+    hx = (dy*dvz - dz*dvy); 					// specific angular momentum vector
+    hy = (dz*dvx - dx*dvz);
+    hz = (dx*dvy - dy*dvx);
+    o.h = sqrt ( hx*hx + hy*hy + hz*hz );		// abs value of angular momentum
+    o.hvec.x = hx;
+    o.hvec.y = hy;
+    o.hvec.z = hz;
 
-	ex = muinv*( vdiffsquared*dx - rvr*dvx );
-	ey = muinv*( vdiffsquared*dy - rvr*dvy );
-	ez = muinv*( vdiffsquared*dz - rvr*dvz );
- 	o.e = sqrt( ex*ex + ey*ey + ez*ez );		// eccentricity
-	o.n = o.a/fabs(o.a)*sqrt(fabs(mu/(o.a*o.a*o.a)));	// mean motion (negative if hyperbolic)
-	o.P = 2*M_PI/o.n;									// period (negative if hyperbolic)
+    vdiffsquared = vsquared - vcircsquared;	
+    if(o.d <= TINY){							
+        *err = 2;								// particle is on top of primary
+        return reb_orbit_nan();
+    }
+    vr = (dx*dvx + dy*dvy + dz*dvz)/o.d;	
+    rvr = o.d*vr;
+    muinv = 1./mu;
 
-	o.inc = acos2(hz, o.h, 1.);			// cosi = dot product of h and z unit vectors.  Always in [0,pi], so pass dummy disambiguator
-										// will = 0 if h is 0.
+    ex = muinv*( vdiffsquared*dx - rvr*dvx );
+    ey = muinv*( vdiffsquared*dy - rvr*dvy );
+    ez = muinv*( vdiffsquared*dz - rvr*dvz );
+    o.e = sqrt( ex*ex + ey*ey + ez*ez );		// eccentricity
+    o.evec.x = ex;
+    o.evec.y = ey;
+    o.evec.z = ez;
+    o.n = o.a/fabs(o.a)*sqrt(fabs(mu/(o.a*o.a*o.a)));	// mean motion (negative if hyperbolic)
+    o.P = 2*M_PI/o.n;									// period (negative if hyperbolic)
 
-	nx = -hy;							// vector pointing along the ascending node = zhat cross h
-	ny =  hx;		
-	n = sqrt( nx*nx + ny*ny );
+    o.inc = acos2(hz, o.h, 1.);			// cosi = dot product of h and z unit vectors.  Always in [0,pi], so pass dummy disambiguator
+    // will = 0 if h is 0.
 
-	// Omega, pomega and theta are measured from x axis, so we can always use y component to disambiguate if in the range [0,pi] or [pi,2pi]
-	o.Omega = acos2(nx, n, ny);			// cos Omega is dot product of x and n unit vectors. Will = 0 if i=0.
+    nx = -hy;							// vector pointing along the ascending node = zhat cross h
+    ny =  hx;		
+    n = sqrt( nx*nx + ny*ny );
+
+    // Omega, pomega and theta are measured from x axis, so we can always use y component to disambiguate if in the range [0,pi] or [pi,2pi]
+    o.Omega = acos2(nx, n, ny);			// cos Omega is dot product of x and n unit vectors. Will = 0 if i=0.
 
     if(o.e < 1.){
-	    ea = acos2(1.-o.d/o.a, o.e, vr);// from definition of eccentric anomaly.  If vr < 0, must be going from apo to peri, so ea = [pi, 2pi] so ea = -acos(cosea)
-	    o.M = ea - o.e*sin(ea);			// mean anomaly (Kepler's equation)
+        ea = acos2(1.-o.d/o.a, o.e, vr);// from definition of eccentric anomaly.  If vr < 0, must be going from apo to peri, so ea = [pi, 2pi] so ea = -acos(cosea)
+        o.M = ea - o.e*sin(ea);			// mean anomaly (Kepler's equation)
     }
     else{
         ea = acosh((1.-o.d/o.a)/o.e);
@@ -717,62 +1092,62 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
         o.M = o.e*sinh(ea) - ea;          // Hyperbolic Kepler's equation
     }
 
-	// in the near-planar case, the true longitude is always well defined for the position, and pomega for the pericenter if e!= 0
-	// we therefore calculate those and calculate the remaining angles from them
-	if(o.inc < MIN_INC || o.inc > M_PI - MIN_INC){	// nearly planar.  Use longitudes rather than angles referenced to node for numerical stability.
-		o.theta = acos2(dx, o.d, dy);		// cos theta is dot product of x and r vectors (true longitude). 
+    // in the near-planar case, the true longitude is always well defined for the position, and pomega for the pericenter if e!= 0
+    // we therefore calculate those and calculate the remaining angles from them
+    if(o.inc < MIN_INC || o.inc > M_PI - MIN_INC){	// nearly planar.  Use longitudes rather than angles referenced to node for numerical stability.
+        o.theta = acos2(dx, o.d, dy);		// cos theta is dot product of x and r vectors (true longitude). 
         o.pomega = acos2(ex, o.e, ey);		// cos pomega is dot product of x and e unit vectors.  Will = 0 if e=0.
 
-		if(o.inc < M_PI/2.){
-			o.omega = o.pomega - o.Omega;
-			o.f = o.theta - o.pomega;
+        if(o.inc < M_PI/2.){
+            o.omega = o.pomega - o.Omega;
+            o.f = o.theta - o.pomega;
             if(o.e > MIN_ECC){              // pomega well defined
-			    o.l = o.pomega + o.M;
+                o.l = o.pomega + o.M;
             }
             else{                           // when e << 1 and pomega ill defined, use l = theta+(M-f). M-f is O(e) so well behaved
                 o.l = o.theta - 2.*o.e*sin(o.f); // M-f from Murray & Dermott Eq 2.93. This way l->theta smoothly as e->0
             }
-		}
-		else{
-			o.omega = o.Omega - o.pomega;
-			o.f = o.pomega - o.theta;
+        }
+        else{
+            o.omega = o.Omega - o.pomega;
+            o.f = o.pomega - o.theta;
             if(o.e > MIN_ECC){              // pomega well defined
-			    o.l = o.pomega - o.M;
+                o.l = o.pomega - o.M;
             }
             else{                           // when e << 1 and pomega ill defined, use l = theta+(M-f). M-f is O(e) so well behaved
                 o.l = o.theta + 2.*o.e*sin(o.f); // M-f from Murray & Dermott Eq 2.93 (retrograde changes sign). This way l->theta smoothly as e->0
             }
-		}
-	    
-	}
-	// in the non-planar case, we can't calculate the broken angles from vectors like above.  omega+f is always well defined, and omega if e!=0
-	else{
-		double wpf = acos2(nx*dx + ny*dy, n*o.d, dz);	// omega plus f.  Both angles measured in orbital plane, and always well defined for i!=0.
-		o.omega = acos2(nx*ex + ny*ey, n*o.e, ez);
-		if(o.inc < M_PI/2.){
-			o.pomega = o.Omega + o.omega;
-			o.f = wpf - o.omega;
-			o.theta = o.Omega + wpf;
+        }
+
+    }
+    // in the non-planar case, we can't calculate the broken angles from vectors like above.  omega+f is always well defined, and omega if e!=0
+    else{
+        double wpf = acos2(nx*dx + ny*dy, n*o.d, dz);	// omega plus f.  Both angles measured in orbital plane, and always well defined for i!=0.
+        o.omega = acos2(nx*ex + ny*ey, n*o.e, ez);
+        if(o.inc < M_PI/2.){
+            o.pomega = o.Omega + o.omega;
+            o.f = wpf - o.omega;
+            o.theta = o.Omega + wpf;
             if(o.e > MIN_ECC){              // pomega well defined
-			    o.l = o.pomega + o.M;
+                o.l = o.pomega + o.M;
             }
             else{                           // when e << 1 and pomega ill defined, use l = theta+(M-f). M-f is O(e) so well behaved
                 o.l = o.theta - 2.*o.e*sin(o.f); // M-f from Murray & Dermott Eq 2.93. This way l->theta smoothly as e->0
             }
-		}
-		else{
-			o.pomega = o.Omega - o.omega;
-			o.f = wpf - o.omega;
-			o.theta = o.Omega - wpf;
+        }
+        else{
+            o.pomega = o.Omega - o.omega;
+            o.f = wpf - o.omega;
+            o.theta = o.Omega - wpf;
             if(o.e > MIN_ECC){              // pomega well defined
-			    o.l = o.pomega - o.M;
+                o.l = o.pomega - o.M;
             }
             else{                           // when e << 1 and pomega ill defined, use l = theta+(M-f). M-f is O(e) so well behaved
                 o.l = o.theta + 2.*o.e*sin(o.f); // M-f from Murray & Dermott Eq 2.93 (retrograde changes sign). This way l->theta smoothly as e->0
             }
-		}
-	}
-    
+        }
+    }
+
     if (p.sim == NULL){                         // if particle isn't in simulation yet, can't get time.  You can still manually apply the equation below using o.M and o.n
         o.T = nan("");
     }
@@ -780,7 +1155,21 @@ struct reb_orbit reb_tools_particle_to_orbit_err(double G, struct reb_particle p
         o.T = p.sim->t - o.M/fabs(o.n);         // time of pericenter passage (M = n(t-T).  Works for hyperbolic with fabs and n defined as above).
     }
 
-	return o;
+    // move some of the angles into [0,2pi) range
+    o.f = reb_tools_mod2pi(o.f);
+    o.l = reb_tools_mod2pi(o.l);
+    o.M = reb_tools_mod2pi(o.M);
+    o.theta = reb_tools_mod2pi(o.theta);
+    o.omega = reb_tools_mod2pi(o.omega);
+    
+    
+    // Cartesian eccentricity and inclination components, see Pal (2009)
+    double fac = sqrt(2./(1.+hz/o.h))/o.h;
+    o.pal_ix = -fac * hy;
+    o.pal_iy = fac * hx;
+    o.pal_k = o.h/mu*(dvy-dvz/(o.h+hz)*hy)-1./o.d*(dx-dz/(o.h+hz)*hx);
+    o.pal_h = o.h/mu*(-dvx+dvz/(o.h+hz)*hx)-1./o.d*(dy-dz/(o.h+hz)*hy);
+    return o;
 }
 
 
@@ -889,6 +1278,86 @@ struct reb_particle reb_tools_pal_to_particle(double G, struct reb_particle prim
 /***********************************
  * Variational Equations and Megno */
 
+void reb_var_rescale(struct reb_simulation* const r){
+    // This function rescales variational particles if a coordinate
+    // approached floating point limits (>1e100)
+    if (r->var_config_N==0){
+        return;
+    }
+
+    for (int v=0;v<r->var_config_N;v++){
+        struct reb_variational_configuration* vc = &(r->var_config[v]);
+
+        if (vc->lrescale <0 ) continue;  // Skip rescaling if lrescale set to -1
+
+        int N = 1;
+        if (vc->testparticle<0){
+            N = r->N - r->N_var;
+        }
+        double scale = 0;
+        struct reb_particle* const particles = r->particles + vc->index;
+        for (int i=0; i<N; i++){
+            struct reb_particle p = particles[i];
+            scale = MAX(fabs(p.x), scale);
+            scale = MAX(fabs(p.y), scale);
+            scale = MAX(fabs(p.z), scale);
+            scale = MAX(fabs(p.vx), scale);
+            scale = MAX(fabs(p.vy), scale);
+            scale = MAX(fabs(p.vz), scale);
+        }
+        if (scale > 1e100){
+             
+            if (vc->order == 1){
+                for (int w=0;w<r->var_config_N;w++){
+                    struct reb_variational_configuration* wc = &(r->var_config[w]);
+                    if (wc->index_1st_order_a == vc->index || wc->index_1st_order_b == vc->index){
+                        if (!(r->var_rescale_warning & 4)){
+                            r->var_rescale_warning |= 4;
+                            reb_warning(r, "Rescaling a set of variational equations of order 1 which are being used by a set of variational equations of order 2. Order 2 equations will no longer be valid.");
+                        }
+                    }
+                }
+            }else{ // order 2
+                if (!(r->var_rescale_warning & 2)){
+                    r->var_rescale_warning |= 2;
+                    reb_warning(r, "Variational particles which are part of a second order variational equation have now large coordinates which might exceed range of floating point number range. REBOUND cannot rescale a second order variational equation as it is non-linear.");
+                }
+                return;
+            }
+
+
+            int is_synchronized = 1;
+            if (r->integrator == REB_INTEGRATOR_WHFAST && r->ri_whfast.is_synchronized == 0){
+                is_synchronized = 0;
+            }
+            if (r->integrator == REB_INTEGRATOR_EOS && r->ri_eos.is_synchronized == 0){
+                is_synchronized = 0;
+            }
+            if (is_synchronized == 0){
+                if (!(r->var_rescale_warning & 1)){
+                    r->var_rescale_warning |= 1;
+                    reb_warning(r, "Variational particles have large coordinates which might exceed range of floating point numbers. Rescaling failed because integrator was not synchronized. Turn on safe_mode or manually synchronize and rescale.");
+                }
+                return;
+            }
+
+            vc->lrescale += log(scale);
+            for (int i=0; i<N; i++){
+                particles[i].x /= scale;
+                particles[i].y /= scale;
+                particles[i].z /= scale;
+                particles[i].vx /= scale;
+                particles[i].vy /= scale;
+                particles[i].vz /= scale;
+            }
+
+            if (r->integrator == REB_INTEGRATOR_WHFAST && r->ri_whfast.safe_mode == 0){
+                r->ri_whfast.recalculate_coordinates_this_timestep = 1;
+            }
+        }
+    }
+}
+
 
 int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle){
     r->var_config_N++;
@@ -897,6 +1366,7 @@ int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle){
     r->var_config[r->var_config_N-1].order = 1;
     int index = r->N;
     r->var_config[r->var_config_N-1].index = index;
+    r->var_config[r->var_config_N-1].lrescale = 0;
     r->var_config[r->var_config_N-1].testparticle = testparticle;
     struct reb_particle p0 = {0};
     if (testparticle>=0){
@@ -920,6 +1390,7 @@ int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int 
     r->var_config[r->var_config_N-1].order = 2;
     int index = r->N;
     r->var_config[r->var_config_N-1].index = index;
+    r->var_config[r->var_config_N-1].lrescale = 0;
     r->var_config[r->var_config_N-1].testparticle = testparticle;
     r->var_config[r->var_config_N-1].index_1st_order_a = index_1st_order_a;
     r->var_config[r->var_config_N-1].index_1st_order_b = index_1st_order_b;
@@ -937,6 +1408,11 @@ int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int 
     return index;
 }
 
+void reb_tools_megno_init_seed(struct reb_simulation* const r, unsigned int seed){
+	r->rand_seed = seed;
+    reb_tools_megno_init(r);
+}
+
 void reb_tools_megno_init(struct reb_simulation* const r){
 	r->megno_Ys = 0.;
 	r->megno_Yss = 0.;
@@ -951,12 +1427,12 @@ void reb_tools_megno_init(struct reb_simulation* const r){
     struct reb_particle* const particles = r->particles;
     for (;i<imax;i++){ 
         particles[i].m  = 0.;
-		particles[i].x  = reb_random_normal(1.);
-		particles[i].y  = reb_random_normal(1.);
-		particles[i].z  = reb_random_normal(1.);
-		particles[i].vx = reb_random_normal(1.);
-		particles[i].vy = reb_random_normal(1.);
-		particles[i].vz = reb_random_normal(1.);
+		particles[i].x  = reb_random_normal(r,1.);
+		particles[i].y  = reb_random_normal(r,1.);
+		particles[i].z  = reb_random_normal(r,1.);
+		particles[i].vx = reb_random_normal(r,1.);
+		particles[i].vy = reb_random_normal(r,1.);
+		particles[i].vz = reb_random_normal(r,1.);
 		double deltad = 1./sqrt(
                 particles[i].x*particles[i].x 
                 + particles[i].y*particles[i].y 
@@ -976,8 +1452,12 @@ double reb_tools_calculate_megno(struct reb_simulation* r){ // Returns the MEGNO
 	if (r->t==0.) return 0.;
 	return r->megno_Yss/r->t;
 }
-double reb_tools_calculate_lyapunov(struct reb_simulation* r){ // Returns the largest Lyapunov characteristic number (LCN), or maximal Lyapunov exponent
-	if (r->t==0.) return 0.;
+double reb_tools_calculate_lyapunov(struct reb_simulation* r){ 
+    // Returns the largest Lyapunov characteristic number (LCN)
+    // Note that different definitions exist. 
+    // Here, we're following Eq 24 of Cincotta and Simo (2000)
+    // https://aas.aanda.org/articles/aas/abs/2000/20/h1686/h1686.html
+	if (r->megno_var_t==0.0) return 0.;
 	return r->megno_cov_Yt/r->megno_var_t;
 }
 double reb_tools_megno_deltad_delta(struct reb_simulation* const r){
@@ -1081,7 +1561,7 @@ uint32_t reb_hash(const char* str){
     return reb_murmur3_32(str,(uint32_t)strlen(str),reb_seed);
 }
 
-void reb_simulation_multiply(struct reb_simulation* r, double scalar_pos, double scalar_vel){
+void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, double scalar_vel){
     const int N = r->N;
     struct reb_particle* restrict const particles = r->particles;
 	for (int i=0;i<N;i++){
@@ -1094,7 +1574,7 @@ void reb_simulation_multiply(struct reb_simulation* r, double scalar_pos, double
     }
 }
 
-int reb_simulation_add(struct reb_simulation* r, struct reb_simulation* r2){
+int reb_simulation_iadd(struct reb_simulation* r, struct reb_simulation* r2){
     const int N = r->N;
     const int N2 = r2->N;
     if (N!=N2) return -1;
@@ -1111,7 +1591,7 @@ int reb_simulation_add(struct reb_simulation* r, struct reb_simulation* r2){
     return 0;
 }
 
-int reb_simulation_subtract(struct reb_simulation* r, struct reb_simulation* r2){
+int reb_simulation_isub(struct reb_simulation* r, struct reb_simulation* r2){
     const int N = r->N;
     const int N2 = r2->N;
     if (N!=N2) return -1;
@@ -1127,3 +1607,17 @@ int reb_simulation_subtract(struct reb_simulation* r, struct reb_simulation* r2)
     }
     return 0;
 }
+
+struct reb_vec3d reb_tools_spherical_to_xyz(const double magnitude, const double theta, const double phi){
+    struct reb_vec3d xyz;
+    xyz.x = magnitude * sin(theta) * cos(phi);
+    xyz.y = magnitude * sin(theta) * sin(phi);
+    xyz.z = magnitude * cos(theta);
+    return xyz;
+}  
+
+void reb_tools_xyz_to_spherical(const struct reb_vec3d xyz, double* magnitude, double* theta, double* phi){
+    *magnitude = sqrt(xyz.x*xyz.x + xyz.y*xyz.y + xyz.z*xyz.z);
+    *theta = acos2(xyz.z, *magnitude, 1.);    // theta always in [0,pi] so pass dummy disambiguator=1
+    *phi = atan2(xyz.y, xyz.x);
+}  

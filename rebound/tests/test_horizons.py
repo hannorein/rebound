@@ -17,7 +17,7 @@ class TestHorizons(unittest.TestCase):
                 warnings.simplefilter("always")
                 self.sim.add("Earth",date="2000-01-01 00:00")
                 self.assertEqual(0,len(w))
-            self.assertAlmostEqual(self.sim.particles[0].x,-0.17568959237103887,delta=1e-10)
+            self.assertAlmostEqual(self.sim.particles[0].x,-0.17569031580176828,delta=1e-10)
             self.assertAlmostEqual(self.sim.particles[0].m,3.0404326480226416e-06,delta=1e-15)
         except socket.error: 
             print("Socket error. Most likely due to HORIZON being slow. Ignoring.")

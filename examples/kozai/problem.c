@@ -51,6 +51,8 @@ int main(int argc, char* argv[]){
     system("rm -v orbits.txt");        // delete previous output file
 
     reb_integrate(r, tmax);
+
+    reb_free_simulation(r);
 }
 
 void heartbeat(struct reb_simulation* r){

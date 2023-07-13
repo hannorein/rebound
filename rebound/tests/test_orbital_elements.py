@@ -340,5 +340,24 @@ class TestOrbitalElements(unittest.TestCase):
         self.assertAlmostEqual(ps[3].theta, 0.632, delta=d)
         self.assertAlmostEqual(ps[3].inc, np.pi, delta=d)
 
+    def test_pal_back_and_forth(self):
+        def test_p(x, y, z, vx, vy, vz):
+            sim = rebound.Simulation()
+            sim.add(m=1.234)
+            sim.add(m=0.0002345, x=x, y=y, z=z, vx=vx, vy=vy, vz=vz)
+            o = sim.calculate_orbits()[0]
+            sim.add(primary=sim.particles[0], m=sim.particles[1].m, a=o.a, l=o.l, h=o.pal_h, k=o.pal_k, ix=o.pal_ix, iy=o.pal_iy)
+            
+            d = 2.e-14 # abs error tolerance
+            self.assertAlmostEqual(sim.particles[1].x, sim.particles[2].x, delta=d)
+            self.assertAlmostEqual(sim.particles[1].y, sim.particles[2].y, delta=d)
+            self.assertAlmostEqual(sim.particles[1].z, sim.particles[2].z, delta=d)
+            self.assertAlmostEqual(sim.particles[1].vx, sim.particles[2].vx, delta=d)
+            self.assertAlmostEqual(sim.particles[1].vy, sim.particles[2].vy, delta=d)
+            self.assertAlmostEqual(sim.particles[1].vz, sim.particles[2].vz, delta=d)
+
+        test_p(x=0.98, y=0.023, z=0.01, vx=-0.0151, vy=0.9981, vz=-0.01)
+        test_p(x=0.198, y=0.023, z=1.01, vx=-0.01, vy=0.09981, vz=-0.01)
+
 if __name__ == "__main__":
     unittest.main()

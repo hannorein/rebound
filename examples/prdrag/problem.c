@@ -39,7 +39,7 @@ int main(int argc, char* argv[]){
         p.m  = 0;                    // massless
         double a = 1.;                    // a = 1 AU
         double v = sqrt(r->G*(star.m*(1.-betaparticles))/a);
-        double phi = reb_random_uniform(0,2.*M_PI);        // random phase
+        double phi = reb_random_uniform(r, 0,2.*M_PI);        // random phase
         p.x  = a*sin(phi);  p.y  = a*cos(phi); 
         p.vx = -v*cos(phi); p.vy = v*sin(phi);
         reb_add(r, p); 

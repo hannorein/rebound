@@ -32,6 +32,8 @@
 #include "tree.h"
 #include "boundary.h"
 #include "particle.h"
+#include "integrator_ias15.h"
+#include "integrator_mercurius.h"
 #ifndef COLLISIONS_NONE
 #include "collision.h"
 #endif // COLLISIONS_NONE
@@ -57,14 +59,44 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
 
 	r->particles[r->N] = pt;
 	r->particles[r->N].sim = r;
-	if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE){
+	if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
         if (r->root_size==-1){
             reb_error(r,"root_size is -1. Make sure you call reb_configure_box() before using a tree based gravity or collision solver.");
+            return;
+        }
+        if(fabs(pt.x)>r->boxsize.x/2. || fabs(pt.y)>r->boxsize.y/2. || fabs(pt.z)>r->boxsize.z/2.){
+            reb_error(r,"Cannot add particle outside of simulation box.");
             return;
         }
 		reb_tree_add_particle_to_tree(r, r->N);
 	}
 	(r->N)++;
+    if (r->integrator == REB_INTEGRATOR_MERCURIUS){
+        struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
+        if (r->ri_mercurius.mode==0){ //WHFast part
+            rim->recalculate_dcrit_this_timestep       = 1;
+            rim->recalculate_coordinates_this_timestep = 1;
+        }else{  // IAS15 part
+            reb_integrator_ias15_reset(r);
+            if (rim->dcrit_allocatedN<r->N){
+                rim->dcrit              = realloc(rim->dcrit, sizeof(double)*r->N);
+                rim->dcrit_allocatedN = r->N;
+            }
+            rim->dcrit[r->N-1] = reb_integrator_mercurius_calculate_dcrit_for_particle(r,r->N-1);
+            if (rim->allocatedN<r->N){
+                rim->particles_backup   = realloc(rim->particles_backup,sizeof(struct reb_particle)*r->N);
+                rim->encounter_map      = realloc(rim->encounter_map,sizeof(int)*r->N);
+                rim->allocatedN = r->N;
+            }
+            rim->encounter_map[rim->encounterN] = r->N-1;
+            rim->encounterN++;
+            if (r->N_active==-1){ 
+                // If global N_active is not set, then all particles are active, so the new one as well.
+                // Otherwise, assume we're adding non active particle. 
+                rim->encounterNactive++;
+            }
+        }
+    }
 }
 
 void reb_add(struct reb_simulation* const r, struct reb_particle pt){
@@ -96,6 +128,23 @@ void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 	// Add particle to local partical array.
 	reb_add_local(r, pt);
 }
+
+int reb_particle_check_testparticles(struct reb_simulation* const r){
+    if (r->N_active == r->N || r->N_active == -1){
+        return 0;
+    }
+    // Check if testparticle of type 0 has mass!=0
+    if (r->testparticle_type == 0){
+        const int N_real = r->N - r->N_var;
+        for (int i=r->N_active; i<N_real; i++){
+            if (r->particles[i].m!=0.){
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 
 int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt){
 	if (r->root_size==-1) return 0;
@@ -201,6 +250,38 @@ struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, ui
     return p;
 }
 
+struct reb_particle reb_get_remote_particle_by_hash(struct reb_simulation* const r, uint32_t hash){
+#ifdef MPI
+    struct reb_particle* p = reb_get_particle_by_hash(r, hash);
+    int found = p==0?0:1;
+    int found_sum = 0;
+    MPI_Allreduce(&found, &found_sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    if (found_sum == 0){
+        return reb_particle_nan();
+    }
+    if (found_sum > 1){
+        reb_error(r, "Multiple particles with same hash found.");
+    }
+    int root;
+    int mayberoot = found ? r->mpi_id : 0;
+    MPI_Allreduce(&mayberoot, &root, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    struct reb_particle ph = {0};
+    if (found){
+        ph = *p;
+        ph.sim = NULL;
+    }
+    MPI_Bcast(&ph, sizeof(struct reb_particle), MPI_CHAR, root, MPI_COMM_WORLD);
+    return ph;
+#else // MPI
+    struct reb_particle* p = reb_get_particle_by_hash(r, hash);
+    if (p==0){
+        return reb_particle_nan();
+    }else{
+       return *p;
+    }
+#endif // MPI
+}
+
 void reb_remove_all(struct reb_simulation* const r){
 	r->N 		= 0;
 	r->allocatedN 	= 0;
@@ -211,65 +292,35 @@ void reb_remove_all(struct reb_simulation* const r){
 }
 
 int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
-    if (r->ri_hermes.global){
-        // This is a mini simulation. Need to remove particle from two simulations.
-        struct reb_simulation* global = r->ri_hermes.global;
-        
-        //remove from global and update global arrays
-        int global_index = global->ri_hermes.global_index_from_mini_index[index];
-        reb_remove(global,global_index,1);
-        
-        //Shifting array values (filled with 0/1)
-        for(int k=global_index;k<global->N;k++){
-            global->ri_hermes.is_in_mini[k] = global->ri_hermes.is_in_mini[k+1];
-        }
-        
-        //Shifting array values (filled with index values)
-        global->ri_hermes.global_index_from_mini_index_N--;
-        for(int k=index;k<global->ri_hermes.global_index_from_mini_index_N;k++){
-            global->ri_hermes.global_index_from_mini_index[k] = global->ri_hermes.global_index_from_mini_index[k+1];
-        }
-        
-        //Depreciating all index values larger than global_index
-        for(int k=0;k<global->ri_hermes.global_index_from_mini_index_N;k++){
-            if(global->ri_hermes.global_index_from_mini_index[k] > global_index){
-                global->ri_hermes.global_index_from_mini_index[k]--;
-            }
-        }
-    }
-    if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==1){
+    if (r->integrator == REB_INTEGRATOR_MERCURIUS){
+        keepSorted = 1; // Force keepSorted for hybrid integrator
         struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
-        struct reb_simulation_integrator_whfast* riw = &(r->ri_whfast);
-        //remove from global and update global arrays
-        int global_index = -1;
-        int count = -1;
-        for(unsigned int k=0;k<rim->globalN;k++){
-            if (rim->encounterIndicies[k]){
-                count++;
-            }
-            if (count==index){
-                global_index = k;
-                break;
+        if (rim->dcrit_allocatedN>0 && index<rim->dcrit_allocatedN){
+            for (int i=0;i<r->N-1;i++){
+                if (i>=index){
+                    rim->dcrit[i] = rim->dcrit[i+1];
+                }
             }
         }
-        if (global_index==-1){
-            reb_error(r, "Error finding particle in global simulation.");
+        reb_integrator_ias15_reset(r);
+        if (r->ri_mercurius.mode==1){
+            struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
+            int after_to_be_removed_particle = 0;
+            int encounter_index = -1;
+            for (int i=0;i<rim->encounterN;i++){
+                if (after_to_be_removed_particle == 1){
+                    rim->encounter_map[i-1] = rim->encounter_map[i] - 1; 
+                }
+                if (rim->encounter_map[i]==index){
+                    encounter_index = i;
+                    after_to_be_removed_particle = 1;
+                }
+            }
+            if (encounter_index<rim->encounterNactive){
+                rim->encounterNactive--;
+            }
+            rim->encounterN--;
         }
-	    rim->globalN--;
-        if(global_index<rim->globalNactive && rim->globalNactive!=-1){
-            rim->globalNactive--;
-        }
-		for(unsigned int j=global_index; j<rim->globalN; j++){
-			rim->encounterParticles[j] = rim->encounterParticles[j+1];  // These are the global particles
-			riw->p_jh[j] = riw->p_jh[j+1];
-			rim->p_hold[j] = rim->p_hold[j+1];
-			rim->encounterIndicies[j] = rim->encounterIndicies[j+1];
-			rim->rhill[j] = rim->rhill[j+1];
-		}
-        // Update additional parameter for local 
-		for(int j=index; j<r->N-1; j++){
-			rim->encounterRhill[j] = rim->encounterRhill[j+1];
-		}
     }
 	if (r->N==1){
 	    r->N = 0;
@@ -279,7 +330,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 		reb_warning(r, "Last particle removed.");
 		return 1;
 	}
-	if (index >= r->N){
+	if (index >= r->N || index < 0){
 		char warning[1024];
         sprintf(warning, "Index %d passed to particles_remove was out of range (N=%d).  Did not remove particle.", index, r->N);
 		reb_error(r, warning);
@@ -335,64 +386,41 @@ int reb_remove_by_hash(struct reb_simulation* const r, uint32_t hash, int keepSo
     }
 }
 
-struct reb_particle reb_particle_minus(struct reb_particle p1, struct reb_particle p2){
-    struct reb_particle p = {0};
-    p.x = p1.x - p2.x;
-    p.y = p1.y - p2.y;
-    p.z = p1.z - p2.z;
-    p.vx = p1.vx - p2.vx;
-    p.vy = p1.vy - p2.vy;
-    p.vz = p1.vz - p2.vz;
-    p.ax = p1.ax - p2.ax;
-    p.ay = p1.ay - p2.ay;
-    p.az = p1.az - p2.az;
-    p.m = p1.m - p2.m;
-    return p;
+void reb_particle_isub(struct reb_particle* p1, struct reb_particle* p2){
+    p1->x -= p2->x;
+    p1->y -= p2->y;
+    p1->z -= p2->z;
+    p1->vx -= p2->vx;
+    p1->vy -= p2->vy;
+    p1->vz -= p2->vz;
+    p1->m -= p2->m;
 }
 
-struct reb_particle reb_particle_plus(struct reb_particle p1, struct reb_particle p2){
-    struct reb_particle p = {0};
-    p.x = p1.x + p2.x;
-    p.y = p1.y + p2.y;
-    p.z = p1.z + p2.z;
-    p.vx = p1.vx + p2.vx;
-    p.vy = p1.vy + p2.vy;
-    p.vz = p1.vz + p2.vz;
-    p.ax = p1.ax + p2.ax;
-    p.ay = p1.ay + p2.ay;
-    p.az = p1.az + p2.az;
-    p.m = p1.m + p2.m;
-    return p;
+void reb_particle_iadd(struct reb_particle* p1, struct reb_particle* p2){
+    p1->x += p2->x;
+    p1->y += p2->y;
+    p1->z += p2->z;
+    p1->vx += p2->vx;
+    p1->vy += p2->vy;
+    p1->vz += p2->vz;
+    p1->m += p2->m;
 }
 
-struct reb_particle reb_particle_multiply(struct reb_particle p1, double value){
-    struct reb_particle p = {0};
-    p.x = p1.x * value;
-    p.y = p1.y * value;
-    p.z = p1.z * value;
-    p.vx = p1.vx * value;
-    p.vy = p1.vy * value;
-    p.vz = p1.vz * value;
-    p.ax = p1.ax * value;
-    p.ay = p1.ay * value;
-    p.az = p1.az * value;
-    p.m = p1.m * value;
-    return p;
+void reb_particle_imul(struct reb_particle* p1, double value){
+    p1->x *= value;
+    p1->y *= value;
+    p1->z *= value;
+    p1->vx *= value;
+    p1->vy *= value;
+    p1->vz *= value;
+    p1->m *= value;
 }
 
-struct reb_particle reb_particle_divide(struct reb_particle p1, double value){
-    struct reb_particle p = {0};
-    p.x = p1.x / value;
-    p.y = p1.y / value;
-    p.z = p1.z / value;
-    p.vx = p1.vx / value;
-    p.vy = p1.vy / value;
-    p.vz = p1.vz / value;
-    p.ax = p1.ax / value;
-    p.ay = p1.ay / value;
-    p.az = p1.az / value;
-    p.m = p1.m / value;
-    return p;
+double reb_particle_distance(struct reb_particle* p1, struct reb_particle* p2){
+    double dx = p1->x - p2->x;
+    double dy = p1->y - p2->y;
+    double dz = p1->z - p2->z;
+    return sqrt(dx*dx + dy*dy + dz*dz);
 }
 
 struct reb_particle reb_particle_nan(void){

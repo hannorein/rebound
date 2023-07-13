@@ -34,56 +34,12 @@
 #include "collision.h"
 #include "input.h"
 #include "tree.h"
+#include "simulationarchive.h"
+#include "integrator_tes.h"
+
 #ifdef MPI
 #include "communication_mpi.h"
 #endif
-
-double reb_read_double(int argc, char** argv, const char* argument, double _default){
-    char* value = reb_read_char(argc,argv,argument);
-    if (value){
-        return atof(value);
-    }
-    return _default;
-}
-
-int reb_read_int(int argc, char** argv, const char* argument, int _default){
-    char* value = reb_read_char(argc,argv,argument);
-    if (value){
-        return atoi(value);
-    }
-    return _default;
-}
-
-
-char* reb_read_char(int argc, char** argv, const char* argument){
-    opterr = 0;
-    optind = 1;
-    while (1) {
-        struct option long_options[] = {
-            {NULL, required_argument, 0, 'a'},
-            {0,0,0,0}
-        };
-
-        long_options[0].name = argument;
-
-        /* getopt_long stores the option index here.   */
-        int option_index = 0;
-        //              short options. format abc:d::
-        int c = getopt_long (argc, argv, "", long_options, &option_index);
-
-        /* Detect the end of the options.   */
-        if (c == -1) break;
-
-        switch (c){
-            case 'a':
-                return optarg;
-                break;
-            default:
-                break;
-        }
-    }
-    return NULL;
-}
 
 static size_t reb_fread(void *restrict ptr, size_t size, size_t nitems, FILE *restrict stream, char **restrict mem_stream){
     if (mem_stream!=NULL){
@@ -98,20 +54,21 @@ static size_t reb_fread(void *restrict ptr, size_t size, size_t nitems, FILE *re
     return 0; 
 }
 
-static int reb_fseek(FILE *stream, long offset, int whence, char **restrict mem_stream){
-    if (mem_stream!=NULL){
-        // read from memory
-        if (whence==SEEK_CUR){
-            *mem_stream = (char*)(*mem_stream)+offset;
-            return 0;
-        }
-        return -1;
-    }else if(stream!=NULL){
-        // read from file
-        return fseek(stream,offset,whence);
-    }
-    return -1;
-}
+// The reb_fseek function is currently not used, but provides functionality along the lines of reb_fread
+// static int reb_fseek(FILE *stream, long offset, int whence, char **restrict mem_stream){
+//     if (mem_stream!=NULL){
+//         // read from memory
+//         if (whence==SEEK_CUR){
+//             *mem_stream = (char*)(*mem_stream)+offset;
+//             return 0;
+//         }
+//         return -1;
+//     }else if(stream!=NULL){
+//         // read from file
+//         return fseek(stream,offset,whence);
+//     }
+//     return -1;
+// }
 
 
 void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf, char **restrict mem_stream){
@@ -156,6 +113,31 @@ void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf, char **restrict 
         reb_fread(valueref.p6, field.size/7,1,inf,mem_stream);\
     }\
     break;
+
+#define CASE_DP7(typename, valueref) case REB_BINARY_FIELD_TYPE_##typename: \
+    {\
+        reb_fread(valueref.p0, field.size/7,1,inf,mem_stream);\
+        reb_fread(valueref.p1, field.size/7,1,inf,mem_stream);\
+        reb_fread(valueref.p2, field.size/7,1,inf,mem_stream);\
+        reb_fread(valueref.p3, field.size/7,1,inf,mem_stream);\
+        reb_fread(valueref.p4, field.size/7,1,inf,mem_stream);\
+        reb_fread(valueref.p5, field.size/7,1,inf,mem_stream);\
+        reb_fread(valueref.p6, field.size/7,1,inf,mem_stream);\
+    }\
+    break;    
+
+#define CASE_CONTROL_VARS(typename, valueref) case REB_BINARY_FIELD_TYPE_##typename: \
+    {\
+        reb_fread(&valueref->size, sizeof(uint32_t),1,inf,mem_stream);\
+        reb_fread(valueref->p0, valueref->size,1,inf,mem_stream);\
+        reb_fread(valueref->p1, valueref->size,1,inf,mem_stream);\
+        reb_fread(valueref->p2, valueref->size,1,inf,mem_stream);\
+        reb_fread(valueref->p3, valueref->size,1,inf,mem_stream);\
+        reb_fread(valueref->p4, valueref->size,1,inf,mem_stream);\
+        reb_fread(valueref->p5, valueref->size,1,inf,mem_stream);\
+        reb_fread(valueref->p6, valueref->size,1,inf,mem_stream);\
+    }\
+    break;        
     
 int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_messages* warnings, char **restrict mem_stream){
     struct reb_binary_field field;
@@ -168,11 +150,13 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(G,                  &r->G);
         CASE(SOFTENING,          &r->softening);
         CASE(DT,                 &r->dt);
+        CASE(DTLASTDONE,         &r->dt_last_done);
         CASE(N,                  &r->N);
         CASE(NVAR,               &r->N_var);
         CASE(VARCONFIGN,         &r->var_config_N);
         CASE(NACTIVE,            &r->N_active);
         CASE(TESTPARTICLETYPE,   &r->testparticle_type);
+        CASE(TESTPARTICLEHIDEWARNINGS,   &r->testparticle_hidewarnings);
         CASE(HASHCTR,            &r->hash_ctr);
         CASE(OPENINGANGLE2,      &r->opening_angle2);
         CASE(STATUS,             &r->status);
@@ -240,23 +224,61 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global);
         CASE(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded);
         CASE(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN);
-        CASE(HERMES_HSF,         &r->ri_hermes.hill_switch_factor);
-        CASE(HERMES_SSF,         &r->ri_hermes.solar_switch_factor);
-        CASE(HERMES_ADAPTIVE,    &r->ri_hermes.adaptive_hill_switch_factor);
-        CASE(HERMES_TIMESTEPWARN,&r->ri_hermes.timestep_too_large_warning);
-        CASE(HERMES_STEPS,       &r->ri_hermes.steps);
-        CASE(HERMES_STEPS_MA,    &r->ri_hermes.steps_miniactive);
-        CASE(HERMES_STEPS_MN,    &r->ri_hermes.steps_miniN);
         CASE(JANUS_SCALEPOS,     &r->ri_janus.scale_pos);
         CASE(JANUS_SCALEVEL,     &r->ri_janus.scale_vel);
         CASE(JANUS_ORDER,        &r->ri_janus.order);
         CASE(JANUS_ALLOCATEDN,   &r->ri_janus.allocated_N);
         CASE(JANUS_RECALC,       &r->ri_janus.recalculate_integer_coordinates_this_timestep);
-        CASE(MERCURIUS_RCRIT,    &r->ri_mercurius.rcrit);
+        CASE(MERCURIUS_HILLFAC,  &r->ri_mercurius.hillfac);
         CASE(MERCURIUS_SAFEMODE, &r->ri_mercurius.safe_mode);
         CASE(MERCURIUS_ISSYNCHRON, &r->ri_mercurius.is_synchronized);
-        CASE(MERCURIUS_M0,       &r->ri_mercurius.m0);
-        CASE(MERCURIUS_KEEPUNSYNC, &r->ri_mercurius.keep_unsynchronized);
+        CASE(MERCURIUS_RECALCULATE_COORD, &r->ri_mercurius.recalculate_coordinates_this_timestep);
+        CASE(MERCURIUS_COMPOS,   &r->ri_mercurius.com_pos);
+        CASE(MERCURIUS_COMVEL,   &r->ri_mercurius.com_vel);
+        CASE(PYTHON_UNIT_L,      &r->python_unit_l);
+        CASE(PYTHON_UNIT_M,      &r->python_unit_m);
+        CASE(PYTHON_UNIT_T,      &r->python_unit_t);
+        CASE(STEPSDONE,          &r->steps_done);
+        CASE(SAAUTOSTEP,         &r->simulationarchive_auto_step);
+        CASE(SANEXTSTEP,         &r->simulationarchive_next_step);
+        CASE(SABA_TYPE,          &r->ri_saba.type);
+        CASE(SABA_KEEPUNSYNC,    &r->ri_saba.keep_unsynchronized);
+        CASE(EOS_PHI0,           &r->ri_eos.phi0);
+        CASE(EOS_PHI1,           &r->ri_eos.phi1);
+        CASE(EOS_N,              &r->ri_eos.n);
+        CASE(EOS_SAFEMODE,       &r->ri_eos.safe_mode);
+        CASE(EOS_ISSYNCHRON,     &r->ri_eos.is_synchronized);
+        CASE(RAND_SEED,          &r->rand_seed);
+        CASE(BS_EPSABS,          &r->ri_bs.eps_abs);
+        CASE(BS_EPSREL,          &r->ri_bs.eps_rel);
+        CASE(BS_MINDT,           &r->ri_bs.min_dt);
+        CASE(BS_MAXDT,           &r->ri_bs.max_dt);
+        CASE(BS_FIRSTORLASTSTEP, &r->ri_bs.firstOrLastStep);
+        CASE(BS_PREVIOUSREJECTED,&r->ri_bs.previousRejected);
+        CASE(BS_TARGETITER,      &r->ri_bs.targetIter);
+        // temporary solution for depreciated SABA k and corrector variables.
+        // can be removed in future versions
+        case 138: 
+            {
+            unsigned int k = 0;
+            reb_fread(&k, field.size,1,inf,mem_stream);
+            r->ri_saba.type/=0x100;
+            r->ri_saba.type += k-1;
+            }
+            break;
+        case 139: 
+            {
+            unsigned int corrector = 0;
+            reb_fread(&corrector, field.size,1,inf,mem_stream);
+            r->ri_saba.type%=0x100;
+            r->ri_saba.type += 0x100*corrector;
+            }
+            break;
+
+        CASE(SABA_SAFEMODE,      &r->ri_saba.safe_mode);
+        CASE(SABA_ISSYNCHRON,    &r->ri_saba.is_synchronized);
+        CASE(WHFAST_CORRECTOR2,  &r->ri_whfast.corrector2);
+        CASE(WHFAST_KERNEL,      &r->ri_whfast.kernel);
         case REB_BINARY_FIELD_TYPE_PARTICLES:
             if(r->particles){
                 free(r->particles);
@@ -274,7 +296,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
                 r->particles[l].ap = NULL;
                 r->particles[l].sim = r;
             }
-            if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE){
+            if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
                 for (int l=0;l<r->allocatedN;l++){
                     reb_tree_add_particle_to_tree(r, l);
                 }
@@ -304,22 +326,22 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
             if (r->var_config){
                 free(r->var_config);
             }
-            reb_fread(r->var_config, field.size,1,inf,mem_stream);
             if (r->var_config_N>0){
                 r->var_config = malloc(field.size);
+                reb_fread(r->var_config, field.size,1,inf,mem_stream);
                 for (int l=0;l<r->var_config_N;l++){
                     r->var_config[l].sim = r;
                 }
             }
             break;
-        case REB_BINARY_FIELD_TYPE_MERCURIUS_RHILL:
-            if(r->ri_mercurius.rhill){
-                free(r->ri_mercurius.rhill);
+        case REB_BINARY_FIELD_TYPE_MERCURIUS_DCRIT:
+            if(r->ri_mercurius.dcrit){
+                free(r->ri_mercurius.dcrit);
             }
-            r->ri_mercurius.rhillallocatedN = (int)(field.size/sizeof(double));
+            r->ri_mercurius.dcrit_allocatedN = (int)(field.size/sizeof(double));
             if (field.size){
-                r->ri_mercurius.rhill = malloc(field.size);
-                reb_fread(r->ri_mercurius.rhill, field.size,1,inf,mem_stream);
+                r->ri_mercurius.dcrit = malloc(field.size);
+                reb_fread(r->ri_mercurius.dcrit, field.size,1,inf,mem_stream);
             }
             break;
         CASE_MALLOC(IAS15_AT,     r->ri_ias15.at);
@@ -356,43 +378,126 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
                 sprintf(curvbuf,"%s%s",header+sizeof(struct reb_binary_field), reb_version_str);
                 
                 objects += reb_fread(readbuf,sizeof(char),bufsize,inf,mem_stream);
-                // Note: following compares version, but ignores githash.
-                if(strncmp(readbuf,curvbuf,bufsize)!=0){
-                    *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
+                if (objects < 1){
+                    *warnings |= REB_INPUT_BINARY_WARNING_CORRUPTFILE;
+                }else{
+                    // Note: following compares version, but ignores githash.
+                    if(strncmp(readbuf,curvbuf,bufsize)!=0){
+                        *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
+                    }
                 }
             }
             break;
-        default:
-            if (warnings){
-                *warnings |= REB_INPUT_BINARY_WARNING_FIELD_UNKOWN;
+
+        // TES integrator variables
+        CASE(TES_DQ_MAX,             &r->ri_tes.dq_max);
+        CASE(TES_RECTI_PER_ORBIT,    &r->ri_tes.recti_per_orbit);
+        CASE(TES_EPSILON,            &r->ri_tes.epsilon);
+        CASE(TES_PERIOD,             &r->ri_tes.orbital_period);
+        CASE(TES_SV_LEN,             &r->ri_tes.stateVectorLength);
+        CASE(TES_SV_SIZE,            &r->ri_tes.stateVectorSize);
+        CASE(TES_CV_LEN,             &r->ri_tes.controlVectorLength);
+        CASE(TES_CV_SIZE,            &r->ri_tes.controlVectorSize);
+        CASE(TES_COM,                &r->ri_tes.COM);
+        CASE(TES_COM_DOT,            &r->ri_tes.COM_dot);   
+        CASE(TES_MASS_STAR_LAST,     &r->ri_tes.mStar_last);   
+
+        
+        case REB_BINARY_FIELD_TYPE_TES_ALLOCATED_N:
+            {
+                reb_fread(&r->ri_tes.allocated_N, field.size, 1, inf, mem_stream);
+                // Allocate all memory for loading the simulation archive.
+                if (r->ri_tes.allocated_N) {
+                    reb_integrator_tes_allocate_memory(r);
+                }
             }
-            reb_fseek(inf,field.size,SEEK_CUR,mem_stream);
             break;
+
+        CASE(TES_PARTICLES_DH, r->ri_tes.particles_dh);
+        CASE(TES_MASS, r->ri_tes.mass);
+        CASE(TES_X_DH, r->ri_tes.X_dh); 
+        
+        // TES Kepler vars
+        CASE(TES_UVARS_SV_SIZE, &r->ri_tes.uVars->stateVectorSize);
+        CASE(TES_UVARS_T0, r->ri_tes.uVars->t0);
+        CASE(TES_UVARS_TLAST, r->ri_tes.uVars->tLast);
+        CASE(TES_UVARS_CSQ, r->ri_tes.uVars->uv_csq);
+        CASE(TES_UVARS_CSP, r->ri_tes.uVars->uv_csp);
+        CASE(TES_UVARS_CSV, r->ri_tes.uVars->uv_csv);
+        CASE(TES_UVARS_Q0, r->ri_tes.uVars->Q0);
+        CASE(TES_UVARS_V0, r->ri_tes.uVars->V0);
+        CASE(TES_UVARS_P0, r->ri_tes.uVars->P0);
+        CASE(TES_UVARS_Q1, r->ri_tes.uVars->Q1);
+        CASE(TES_UVARS_V1, r->ri_tes.uVars->V1);
+        CASE(TES_UVARS_P1, r->ri_tes.uVars->P1);
+        CASE(TES_UVARS_X, r->ri_tes.uVars->X);
+        CASE(TES_UVARS_Q0_NORM, r->ri_tes.uVars->Q0_norm);
+        CASE(TES_UVARS_BETA, r->ri_tes.uVars->beta);
+        CASE(TES_UVARS_ETA, r->ri_tes.uVars->eta);
+        CASE(TES_UVARS_ZETA, r->ri_tes.uVars->zeta);
+        CASE(TES_UVARS_PERIOD, r->ri_tes.uVars->period);
+        CASE(TES_UVARS_XPERIOD, r->ri_tes.uVars->Xperiod);
+        CASE(TES_UVARS_STUMPF_C0, r->ri_tes.uVars->C.c0);
+        CASE(TES_UVARS_STUMPF_C1, r->ri_tes.uVars->C.c1);
+        CASE(TES_UVARS_STUMPF_C2, r->ri_tes.uVars->C.c2);
+        CASE(TES_UVARS_STUMPF_C3, r->ri_tes.uVars->C.c3);
+        CASE(TES_UVARS_MU, &r->ri_tes.uVars->mu);
+
+        // TES Radau vars
+        CASE(TES_RADAU_DX, r->ri_tes.radau->dX);
+        CASE(TES_RADAU_XOUT, r->ri_tes.radau->Xout);
+        CASE(TES_RADAU_RECTI_ARRAY, r->ri_tes.radau->rectifiedArray);
+        CASE(TES_RADAU_PREDICTORS, r->ri_tes.radau->predictors);
+        CASE(TES_RADAU_DSTATE0, r->ri_tes.radau->dState0);
+        CASE(TES_RADAU_DDSTATE0, r->ri_tes.radau->ddState0);
+        CASE(TES_RADAU_DSTATE, r->ri_tes.radau->dState);
+        CASE(TES_RADAU_DDSTATE, r->ri_tes.radau->ddState);
+        CASE(TES_RADAU_CS_DSTATE0, r->ri_tes.radau->cs_dState0);
+        CASE(TES_RADAU_CS_DDSTATE0, r->ri_tes.radau->cs_ddState0);
+        CASE(TES_RADAU_CS_DSTATE, r->ri_tes.radau->cs_dState);
+        CASE(TES_RADAU_CS_DDSTATE, r->ri_tes.radau->cs_ddState);
+        CASE(TES_RADAU_CS_DX, r->ri_tes.radau->cs_dX);
+        CASE(TES_RADAU_FCALLS, &r->ri_tes.radau->fCalls);
+        CASE(TES_RADAU_RECTIS, &r->ri_tes.radau->rectifications);
+        CASE(TES_RADAU_ITERS, &r->ri_tes.radau->convergenceIterations);
+        CASE(TES_RADAU_B6, r->ri_tes.radau->b6_store);
+        CASE_CONTROL_VARS(TES_RADAU_B, (&(r->ri_tes.radau->B)));
+        CASE_CONTROL_VARS(TES_RADAU_BLAST, (&(r->ri_tes.radau->Blast)));
+        CASE_CONTROL_VARS(TES_RADAU_B_1ST, (&(r->ri_tes.radau->B_1st)));
+        CASE_CONTROL_VARS(TES_RADAU_BLAST_1ST, (&(r->ri_tes.radau->Blast_1st)));
+        CASE_CONTROL_VARS(TES_RADAU_CS_B, (&(r->ri_tes.radau->cs_B)));
+        CASE_CONTROL_VARS(TES_RADAU_CS_B_1ST, (&(r->ri_tes.radau->cs_B1st)));
+        CASE_CONTROL_VARS(TES_RADAU_G, (&(r->ri_tes.radau->G)));
+        CASE_CONTROL_VARS(TES_RADAU_G_1ST, (&(r->ri_tes.radau->G_1st)));
+
+        // TES force model vars
+        CASE(TES_DHEM_XOSC_STORE, r->ri_tes.rhs->XoscStore);
+        CASE(TES_DHEM_XOSC_PRED_STORE, r->ri_tes.rhs->XoscPredStore);
+        CASE(TES_DHEM_XOSC_CS_STORE, r->ri_tes.rhs->XoscStore_cs);
+        CASE(TES_DHEM_XOSC_DOT_STORE, r->ri_tes.rhs->Xosc_dotStore);
+        CASE(TES_DHEM_X, r->ri_tes.rhs->X);
+        CASE(TES_DHEM_M_INV, r->ri_tes.rhs->m_inv);
+        CASE(TES_DHEM_M_TOTAL, &r->ri_tes.rhs->mTotal);
+        CASE(TES_DHEM_RECTI_TIME, r->ri_tes.rhs->rectifyTimeArray);
+        CASE(TES_DHEM_RECTI_PERIOD, r->ri_tes.rhs->rectificationPeriod);
+    
+        case REB_BINARY_FIELD_TYPE_WHFAST512_ALLOCATEDN:
+            reb_fread(&r->ri_whfast512.allocated_N, field.size, 1, inf, mem_stream);
+            if(r->ri_whfast512.p_jh){
+                free(r->ri_whfast512.p_jh);
+            }
+            r->ri_whfast512.p_jh = aligned_alloc(64,sizeof(struct reb_particle_avx512));
+            r->ri_whfast512.recalculate_constants = 1;
+            break;
+        
+        CASE(WHFAST512_KEEPUNSYNC, &r->ri_whfast512.keep_unsynchronized);
+        CASE(WHFAST512_ISSYNCHRON, &r->ri_whfast512.is_synchronized);
+        CASE(WHFAST512_GRPOTENTIAL, &r->ri_whfast512.gr_potential);
+        CASE(WHFAST512_PJH, r->ri_whfast512.p_jh);
+        CASE(WHFAST512_PJH0, &r->ri_whfast512.p_jh0);
     }
     return 1;
 } 
-
-void reb_create_simulation_from_binary_with_messages(struct reb_simulation* r, char* filename, enum reb_input_binary_messages* warnings){
-    FILE* inf = fopen(filename,"rb"); 
-    
-    if (!inf){
-        *warnings |= REB_INPUT_BINARY_ERROR_NOFILE;
-        return;
-    }
-
-    reb_reset_temporary_pointers(r);
-    reb_reset_function_pointers(r);
-    r->simulationarchive_filename = NULL;
-    
-    // reb_create_simulation sets simulationarchive_version to 2 by default.
-    // This will break reading in old version.
-    // Set to old version by default. Will be overwritten if new version was used.
-    r->simulationarchive_version = 0;
-
-    while(reb_input_field(r, inf, warnings, NULL)){ }
-
-    fclose(inf);
-}
 
 struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum reb_input_binary_messages warnings){
     if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
@@ -432,13 +537,27 @@ struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum
         if (r) free(r);
         return NULL;
     }
+    if (warnings & REB_INPUT_BINARY_WARNING_CORRUPTFILE){
+        reb_warning(r,"The binary file seems to be corrupted. An attempt has been made to read the uncorrupted parts of it.");
+    }
     return r;
 }
 
 struct reb_simulation* reb_create_simulation_from_binary(char* filename){
     enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
     struct reb_simulation* r = reb_create_simulation();
-    reb_create_simulation_from_binary_with_messages(r,filename,&warnings);
+    
+    struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
+    reb_read_simulationarchive_with_messages(sa, filename, NULL, &warnings);
+    if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
+        // Don't output an error if file does not exist, just return NULL.
+        free(sa);
+        return NULL;
+    }else{
+        reb_input_process_warnings(NULL, warnings);
+    }
+    reb_create_simulation_from_simulationarchive_with_messages(r, sa, -1, &warnings);
+    reb_close_simulationarchive(sa);
     r = reb_input_process_warnings(r, warnings);
     return r;
 }

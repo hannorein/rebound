@@ -1,5 +1,5 @@
 /**
- * Solar System with test particles.
+ * Solar System with test particles
  *
  * This example integrates all planets of the Solar
  * System and 10000 test particles. The initial data comes 
@@ -18,7 +18,7 @@
 void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation_from_binary("ss-2016-06-18.bin");
+    struct reb_simulation* r = reb_create_simulation_from_binary("ss-2020-03-03.bin");
     // Setup constants
     r->dt           = 4./365.25*2.*M_PI;        // 4days
     r->integrator   = REB_INTEGRATOR_WHFAST;
@@ -28,11 +28,11 @@ int main(int argc, char* argv[]){
 
     // Test Particles
     for (int i=0;i<10000;i++){
-        double a = reb_random_uniform(0.4,20.);
-        double e = reb_random_uniform(0.01,0.2);
-        double omega = reb_random_uniform(0.,2.*M_PI);
-        double f = reb_random_uniform(0.,2.*M_PI);
-        struct reb_particle p = reb_tools_orbit2d_to_particle(1.,r->particles[0],0.,a,e,omega,f);
+        double a = reb_random_uniform(r, 0.4,20.);
+        double e = reb_random_uniform(r, 0.01,0.2);
+        double omega = reb_random_uniform(r, 0.,2.*M_PI);
+        double f = reb_random_uniform(r, 0.,2.*M_PI);
+        struct reb_particle p = reb_tools_orbit_to_particle(1.,r->particles[0],0.,a,e,0.,0.,omega,f);
         reb_add(r, p); 
     }
     reb_move_to_com(r);

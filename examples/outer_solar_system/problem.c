@@ -47,7 +47,7 @@ double ss_mass[6] =
      1. / 3501.6,   // Saturn
      1. / 22869.,   // Uranus
      1. / 19314.,   // Neptune
-     7.4074074e-09  // Pluto
+     0.0  // Pluto
 };
 
 double tmax = 7.3e7;

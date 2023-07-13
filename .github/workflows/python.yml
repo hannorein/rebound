@@ -1,0 +1,39 @@
+name: REBOUND (python)
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Build package
+        run: pip install -e .
+      - name: Running unittests
+        run: |
+          python -m unittest discover -s rebound/tests/ -v
+      - name: Running python examples
+        run: |
+          cd python_examples
+          python dragforce/problem.py
+          python horizons/problem.py
+          python longtermtest/problem.py
+          python megno/problem.py
+          python megno_simple/problem.py
+          python orbital_elements/problem.py
+          python outersolarsystem/problem.py
+          python simple_orbit/problem.py

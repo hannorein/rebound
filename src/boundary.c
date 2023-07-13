@@ -64,7 +64,6 @@ void reb_boundary_check(struct reb_simulation* const r){
 					removep = 1;
 				}
 				if (removep==1){
-                    // If hermes calculate energy offset in global
                     if(r->track_energy_offset){
                         double Ei = reb_tools_energy(r);
                         reb_remove(r, i,1);
@@ -202,16 +201,11 @@ struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_simulation* const r, in
 	}
 }
 
-/**
- * @brief Checks if a given particle is within the computational domain.
- * @param p reb_particle to be checked.
- * @param r REBOUND simulation to consider
- * @return Return value is 1 if particle is inside the box and 0 otherwise.
- */
 int reb_boundary_particle_is_in_box(const struct reb_simulation* const r, struct reb_particle p){
 	switch(r->boundary){
 		case REB_BOUNDARY_OPEN:
 		case REB_BOUNDARY_SHEAR:
+		case REB_BOUNDARY_PERIODIC:
 			if(p.x>r->boxsize.x/2.){
 				return 0;
 			}
@@ -231,7 +225,8 @@ int reb_boundary_particle_is_in_box(const struct reb_simulation* const r, struct
 				return 0;
 			}
 			return 1;
-		default:
+        default:
+		case REB_BOUNDARY_NONE:
 			return 1;
 	}
 }

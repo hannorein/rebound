@@ -11,13 +11,12 @@ class TestSimulationRestartMercurius(unittest.TestCase):
         sim.integrator = "mercurius"
         sim.dt = 0.1313
         sim.ri_mercurius.safe_mode = 0
-        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
-        sim.save("test.bin")
+        sim.save("test_mid.bin")
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 
-        sim = rebound.Simulation.from_file("test.bin")
+        sim = rebound.Simulation("test_mid.bin")
         sim.integrate(80.,exact_finish_time=0)
         x1 = sim.particles[1].x
 
@@ -31,13 +30,12 @@ class TestSimulationRestartMercurius(unittest.TestCase):
         sim.integrator = "mercurius"
         sim.dt = 0.1313
         sim.ri_mercurius.safe_mode = 1
-        sim.automateSimulationArchive("test.bin", 10.,deletefile=True)
         sim.integrate(40.,exact_finish_time=0)
         sim.save("test.bin")
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 
-        sim = rebound.Simulation.from_file("test.bin")
+        sim = rebound.Simulation("test.bin")
         sim.integrate(80.,exact_finish_time=0)
         x1 = sim.particles[1].x
 

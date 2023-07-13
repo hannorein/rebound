@@ -17,7 +17,7 @@ try:
     ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")
     ghash_arg = "-DGITHASH="+ghash.strip()
 except:
-    ghash_arg = "-DGITHASH=508d99b4ab9bddbc5fcacf12ddd738b536f6f5a8" #GITHASHAUTOUPDATE
+    ghash_arg = "-DGITHASH=1d2bc758b1443080d425fbc7c5e7e326bdcbbfbb" #GITHASHAUTOUPDATE
 
 extra_link_args=[]
 if sys.platform == 'darwin':
@@ -30,17 +30,22 @@ libreboundmodule = Extension('librebound',
                     sources = [ 'src/rebound.c',
                                 'src/integrator_ias15.c',
                                 'src/integrator_whfast.c',
-                                'src/integrator_hermes.c',
+                                'src/integrator_whfast512.c',
+                                'src/integrator_saba.c',
                                 'src/integrator_mercurius.c',
+                                'src/integrator_eos.c',
                                 'src/integrator_leapfrog.c',
+                                'src/integrator_bs.c',
                                 'src/integrator_janus.c',
                                 'src/integrator_sei.c',
+                                'src/integrator_tes.c',
                                 'src/integrator.c',
                                 'src/gravity.c',
                                 'src/boundary.c',
                                 'src/display.c',
                                 'src/collision.c',
                                 'src/tools.c',
+                                'src/rotations.c',
                                 'src/derivatives.c',
                                 'src/tree.c',
                                 'src/particle.c',
@@ -52,20 +57,23 @@ libreboundmodule = Extension('librebound',
                                 ],
                     include_dirs = ['src'],
                     define_macros=[ ('LIBREBOUND', None) ],
-                    # Removed '-march=native' for now.
+                    # Uncomment the following line for the non-AVX512 version of REBOUND
                     extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC'],
+                    # Uncomment the following line to enable AVX512 
+                    # extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC', '-march=native', '-DAVX512'],
                     extra_link_args=extra_link_args,
                     )
 
 here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
+with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='3.7.2',
+    version='3.26.0',
     description='An open-source multi-purpose N-body code',
     long_description=long_description,
-    url='http://github.com/hannorein/rebound',
+    long_description_content_type="text/markdown",
+    url='https://github.com/hannorein/rebound/',
     author='Hanno Rein',
     author_email='hanno@hanno-rein.de',
     license='GPL',

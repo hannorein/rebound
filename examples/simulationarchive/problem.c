@@ -34,12 +34,9 @@ int main(int argc, char* argv[]) {
     if (r==NULL){
         printf("No simulation archive found. Creating new simulation.\n");
         r= reb_create_simulation();
-        struct reb_particle star = {.m=1.};
-        reb_add(r, star);
-        struct reb_particle planet1 = reb_tools_orbit2d_to_particle(r->G, star, 1e-3, 1., 0.01, 0., 0.);
-        reb_add(r, planet1);
-        struct reb_particle planet2 = reb_tools_orbit2d_to_particle(r->G, star, 1e-3, 2.3, 0.01, 0., 0.);
-        reb_add(r, planet2);
+        reb_add_fmt(r, "m", 1.0);                   // star
+        reb_add_fmt(r, "m a e", 1e-3, 1.0, 0.01);   // planet 1
+        reb_add_fmt(r, "m a e", 1e-3, 2.3, 0.01);   // planet 2
         reb_move_to_com(r);
         r->dt = 6./365.25*2.*M_PI;              // 6 days in units where G=1 
         r->ri_whfast.safe_mode = 0;             // The SimulationArchive works with both safe_mode on and off           

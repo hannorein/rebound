@@ -1,5 +1,5 @@
 /**
- * Bouncing balls at corner.
+ * Bouncing balls at corner
  *
  * This example tests collision detection methods across box boundaries.
  * There are four particles, one in each corner. To see the ghost boxes in OpenGL

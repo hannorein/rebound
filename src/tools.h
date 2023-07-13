@@ -47,7 +47,7 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY);
 /**
  * @brief Init random number generator based on time and process id.
  */
-void reb_tools_init_srand(void);
+void reb_tools_init_srand(struct reb_simulation* r);
 
 /**
  * @brief Convert angles for orbit routines
@@ -58,6 +58,11 @@ double reb_tools_M_to_E(double e, double M);
  * @brief Convert angles for orbit routines
  */
 double reb_tools_M_to_f(double e, double M);
+
+/**
+ * @brief Convert angles for orbit routines
+ */
+double reb_tools_E_to_f(double e, double M);
 
 /**
  * @brief Kepler solver in Pal coordinates
@@ -73,21 +78,4 @@ void reb_tools_particle_to_pal(double G, struct reb_particle p, struct reb_parti
  * @brief internal function to handle outputs for the Fast Simulation Restarter.
  */
 void reb_fsr_heartbeat(struct reb_simulation* const r);
-
-/**
- * @brief This function multiplies positions and velocities with a scalar.
- */
-void reb_simulation_multiply(struct reb_simulation* r, double scalar_pos, double scalar_vel);
-
-/**
- * @brief This function adds the positions and velocities of particles in simulation r2 to those in simulation r.
- */
-int reb_simulation_add(struct reb_simulation* r, struct reb_simulation* r2);
-
-/**
- * @brief This function subtracts the positions and velocities of particles in simulation r2 from those in simulation r.
- */
-int reb_simulation_subtract(struct reb_simulation* r, struct reb_simulation* r2);
-
-
 #endif 	// TOOLS_H

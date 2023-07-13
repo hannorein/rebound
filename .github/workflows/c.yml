@@ -1,0 +1,20 @@
+name: REBOUND (C)
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check if symbols in shared library have correct prefix
+        run: |
+          make
+          nm -g --defined-only librebound.so | cut -d ' ' -f3 
+          ! nm -g --defined-only librebound.so | cut -d ' ' -f3 | grep -v "^reb_"
+      - name: Compile all examples
+        working-directory: ./examples
+        run: |
+          make

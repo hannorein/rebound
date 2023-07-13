@@ -1,10 +1,14 @@
 include src/integrator_ias15.c
 include src/integrator_whfast.c
+include src/integrator_whfast512.c
+include src/integrator_saba.c
 include src/integrator_leapfrog.c
+include src/integrator_bs.c
 include src/integrator_sei.c
-include src/integrator_hermes.c
 include src/integrator_mercurius.c
+include src/integrator_eos.c
 include src/integrator_janus.c
+include src/integrator_tes.c
 include src/integrator.c
 include src/gravity.c
 include src/collision.c
@@ -15,16 +19,21 @@ include src/input.c
 include src/display.c
 include src/rebound.c
 include src/tools.c
+include src/rotations.c
 include src/derivatives.c
 include src/particle.c
 include src/simulationarchive.c
 include src/integrator_ias15.h
 include src/integrator_whfast.h
+include src/integrator_whfast512.h
+include src/integrator_saba.h
 include src/integrator_leapfrog.h
+include src/integrator_bs.h
 include src/integrator_sei.h
-include src/integrator_hermes.h
 include src/integrator_mercurius.h
+include src/integrator_eos.h
 include src/integrator_janus.h
+include src/integrator_tes.h
 include src/integrator.h
 include src/collision.h
 include src/boundary.h
@@ -32,6 +41,7 @@ include src/gravity.h
 include src/tree.h
 include src/tree.c
 include src/tools.h
+include src/rotations.h
 include src/derivatives.h
 include src/particle.h
 include src/rebound.h
@@ -42,8 +52,9 @@ include src/output.h
 include src/simulationarchive.h
 include src/transformations.h
 include src/transformations.c
-include README.rst
+include README.md
 include LICENSE
 include version.txt
+include pyproject.toml
 recursive-include rebound/tests *.py
 include rebound/rebound.h

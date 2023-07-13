@@ -43,14 +43,6 @@ void reb_integrator_part1(struct reb_simulation* r);
  */
 void reb_integrator_part2(struct reb_simulation* r);
 
-
-/** 
- * @brief This function updates the acceleration on all particles. 
- * @details It uses the current position and velocity data in the 
- * (struct reb_particle*) particles structure.
- */
-void reb_update_acceleration(struct reb_simulation* r);
-
 /** 
  * @brief This function is used to initialize constants in some integrators. 
  * @details The function doesn't need to be called. Integrators will call it

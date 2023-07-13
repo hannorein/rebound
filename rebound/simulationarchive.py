@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
+from ctypes import Structure, c_double, POINTER, c_float, c_int, c_uint, c_uint32, c_int64, c_uint64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
 from .simulation import Simulation, BINARY_WARNINGS
 from . import clibrebound 
 import os
@@ -18,13 +18,13 @@ class SimulationArchive(Structure):
     (down to the last bit). The SimulationArchive allows you to add
     an arbitrary number of snapshots. Simulations can be reconstructed
     from these snapshots. Since version 2 of the SimulationArchive
-    (Spring 2018), you can change anything inbetween snapshots,
-    icluding settings like the integrator, the timestep, the number of
+    (Spring 2018), you can change anything in-between snapshots,
+    including settings like the integrator, the timestep, the number of
     particles. The file format is efficient in that only data
     that changed is stored in the SimulationArchive file. This is all
     done automatically. All the user has to do is call the function
     to create a snapshot.
-    The SimulationArchive thus allows for fast access to any long running 
+    The SimulationArchive thus allows for fast access to any long-running 
     simulations. For a full discussion of the functionality see the paper 
     by Rein & Tamayo 2017.
 
@@ -52,11 +52,15 @@ class SimulationArchive(Structure):
                 ("size_snapshot", c_long), 
                 ("auto_interval", c_double), 
                 ("auto_walltime", c_double), 
+                ("auto_step", c_ulonglong), 
                 ("nblobs", c_long), 
-                ("offset", POINTER(c_uint32)), 
+                ("offset64", POINTER(c_uint64)), 
                 ("t", POINTER(c_double)) 
                 ]
-    def __init__(self,filename,setup=None, setup_args=(), rebxfilename=None):
+    def __repr__(self):
+        return '<{0}.{1} object at {2}, nblobs={3}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.nblobs)
+
+    def __init__(self,filename,setup=None, setup_args=(), process_warnings=True, reuse_index=None):
         """
         Arguments
         ---------
@@ -67,20 +71,35 @@ class SimulationArchive(Structure):
             In this function, the user can setup additional forces
         setup_args : list
             Arguments passed to setup function.
-        rebxfilename : str
-            Filename of the REBOUNDx binary file.
+        process_warnings : Bool
+            Display warning messages if True (default). Only fail on major errors if set to False.
+        reuse_index : SimulationArchive
+            Useful when loading many large SimulationArchives. After loading the first 
+            SimulationArchive, pass it as this argument when opening other SimulationArchives with the 
+            same shape. Note: SimulationArchive shape must be exactly the same to avoid unexpected
+            behaviour.
 
         """
         self.setup = setup
         self.setup_args = setup_args
-        self.rebxfilename = rebxfilename
+        self.process_warnings = process_warnings
         w = c_int(0)
-        clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")),byref(w))
-        if w.value & (1+16+32+64+256) :     # Major error
-            raise ValueError(BINARY_WARNINGS[0])
-        for message, value in BINARY_WARNINGS:  # Just warnings
+        if reuse_index:
+            # Optimized loading
+            clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), byref(reuse_index), byref(w))
+        else:
+            clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), None, byref(w))
+        for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
-                warnings.warn(message, RuntimeWarning)
+                if majorerror:
+                    raise RuntimeError(message)
+                else:  
+                    # Just a warning
+                    if process_warnings:
+                        warnings.warn(message, RuntimeWarning)
+        else:
+            # Store for later
+            self.warnings = w
         if self.nblobs<1:
             RuntimeError("Something went wrong. SimulationArchive is empty.")
         self.tmin = self.t[0]
@@ -117,14 +136,17 @@ class SimulationArchive(Structure):
         clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim), byref(self), c_long(key), byref(w))
         if self.setup:
             self.setup(sim, *self.setup_args)
-        if self.rebxfilename:
-            import reboundx
-            rebx = reboundx.Extras.from_file(sim, self.rebxfilename)
-        if w.value & (1+16+32+64+256) :     # Major error
-            raise ValueError(BINARY_WARNINGS[0])
-        for message, value in BINARY_WARNINGS:  # Just warnings
+        for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
-                warnings.warn(message, RuntimeWarning)
+                if majorerror:
+                    raise RuntimeError(message)
+                else:  
+                    # Just a warning
+                    if self.process_warnings:
+                        warnings.warn(message, RuntimeWarning)
+        if sim.ri_eos.is_synchronized==0 or sim.ri_mercurius.is_synchronized==0 or sim.ri_whfast.is_synchronized==0 or sim.ri_mercurius.is_synchronized==0:
+            warnings.warn("The simulation might not be synchronized. You can manually synchronize it by calling sim.integrator_synchronize().", RuntimeWarning)
+
         return sim
     
     def __setitem__(self, key, value):
@@ -206,30 +228,24 @@ class SimulationArchive(Structure):
         w = c_int(0)
         clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim),byref(self),bi,byref(w))
 
-        # Restore function pointers and any additional setup required by the user/reboundx provided functions
+        # Restore function pointers and any additional setup required by the user provided functions
         if self.setup:
             self.setup(sim, *self.setup_args)
-        if self.rebxfilename:
-            import reboundx
-            rebx = reboundx.Extras.from_file(sim, self.rebxfilename)
 
         if mode=='snapshot':
-            if sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1:
-                keep_unsynchronized = 0
-            if sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1:
+            if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
                 keep_unsynchronized = 0
             sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
-            sim.ri_mercurius.keep_unsynchronized = keep_unsynchronized
+            sim.ri_saba.keep_unsynchronized = keep_unsynchronized
             sim.integrator_synchronize()
             return sim
         else:
             if mode=='exact':
-                keep_unsynchronized==0
-            if sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1:
                 keep_unsynchronized = 0
-
+            if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
+                keep_unsynchronized = 0
             sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
-            sim.ri_mercurius.keep_unsynchronized = keep_unsynchronized
+            sim.ri_saba.keep_unsynchronized = keep_unsynchronized
             exact_finish_time = 1 if mode=='exact' else 0
             sim.integrate(t,exact_finish_time=exact_finish_time)
                 
@@ -250,9 +266,9 @@ class SimulationArchive(Structure):
         This function returns array that can be used as a Cubic Bezier
         Path in matplotlib. 
         The function returns two arrays, the first one contains
-        the verticies for each particles and has the shape
-        (Nvert, Nparticles, 2) where Nvert is the number of verticies.
-        The second array returned describes the type of verticies to be
+        the vertices for each particle and has the shape
+        (Nvert, Nparticles, 2) where Nvert is the number of vertices.
+        The second array returned describes the type of vertices to be
         used with matplotlib's Patch class.
 
         Arguments
@@ -274,7 +290,7 @@ class SimulationArchive(Structure):
         datapoints to allow for smooth and reasonable orbits.
 
         >>> from matplotlib.path import Path
-        >>> import matplotlib.patches as pathes
+        >>> import matplotlib.patches as patches
         >>> sa = rebound.SimulationArchive("test.bin")
         >>> verts, codes = sa.getBezierPaths(origin=0)
         >>> fig, ax = plt.subplots()
@@ -290,7 +306,7 @@ class SimulationArchive(Structure):
         import numpy as np
         Npoints = len(self)*3-2
         if len(self)<=1:
-            raise Runtim
+            raise RuntimeError()
         Nparticles = self[0].N
         verts = np.zeros((Npoints,Nparticles,2))
         xy = np.zeros((len(self),Nparticles,2))

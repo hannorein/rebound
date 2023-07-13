@@ -51,81 +51,6 @@ void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char**
 	MPI_Comm_size(MPI_COMM_WORLD,&(r->mpi_num));
 	MPI_Comm_rank(MPI_COMM_WORLD,&(r->mpi_id));
 	
-	
-	// Setup MPI description of the particle structure 
-	int bnum = 0;
-	int blen[5];
-	MPI_Aint indices[5];
-	MPI_Datatype oldtypes[5];
-    {
-        blen[bnum] 	= 12;
-        indices[bnum] 	= 0; 
-        oldtypes[bnum] 	= MPI_DOUBLE;
-    }
-	bnum++;
-    {
-        struct reb_particle p;
-        blen[bnum] 	= 1; 
-        indices[bnum] 	= (char*)&p.c - (char*)&p; 
-        oldtypes[bnum] 	= MPI_CHAR;
-    }
-	bnum++;
-    {
-        struct reb_particle p;
-        blen[bnum] 	= 1; 
-        indices[bnum] 	= (char*)&p.hash - (char*)&p; 
-        oldtypes[bnum] 	= MPI_INT; // hash is a uint32_t, but not all MPI headers seem to have MPI_UINT32_T
-    }
-	bnum++;
-    {
-        struct reb_particle p;
-        blen[bnum] 	= 2; 
-        indices[bnum] 	= (char*)&p.ap - (char*)&p; 
-        oldtypes[bnum] 	= MPI_CHAR;
-    }
-	bnum++;
-    {
-        blen[bnum] 	= 1; 
-        indices[bnum] 	= sizeof(struct reb_particle); 
-        oldtypes[bnum] 	= MPI_UB;
-    }
-	bnum++;
-	MPI_Type_struct(bnum, blen, indices, oldtypes, &(r->mpi_particle) );
-	MPI_Type_commit(&(r->mpi_particle)); 
-
-	// Setup MPI description of the cell structure 
-	struct reb_treecell c;
-	bnum = 0;
-    {
-        blen[bnum] 	= 8; 
-#ifdef QUADRUPOLE
-        blen[bnum] 	+= 6;
-#endif // QUADRUPOLE
-        indices[bnum] 	= 0; 
-        oldtypes[bnum] 	= MPI_DOUBLE;
-    }
-	bnum++;
-    {
-        blen[bnum] 	= 8; 
-        indices[bnum] 	= (char*)&c.oct - (char*)&c; 
-        oldtypes[bnum] 	= MPI_CHAR;
-    }
-	bnum++;
-    {
-        blen[bnum] 	= 1; 
-        indices[bnum] 	= (char*)&c.pt - (char*)&c; 
-        oldtypes[bnum] 	= MPI_INT;
-    }
-	bnum++;
-    {
-        blen[bnum] 	= 1; 
-        indices[bnum] 	= sizeof(struct reb_treecell); 
-        oldtypes[bnum] 	= MPI_UB;
-    }
-	bnum++;
-	MPI_Type_struct(bnum, blen, indices, oldtypes, &(r->mpi_cell) );
-	MPI_Type_commit(&(r->mpi_cell)); 
-	
 	// Prepare send/recv buffers for particles
 	r->particles_send   	= calloc(r->mpi_num,sizeof(struct reb_particle*));
 	r->particles_send_N 	= calloc(r->mpi_num,sizeof(int));
@@ -174,13 +99,13 @@ void reb_communication_mpi_distribute_particles(struct reb_simulation* const r){
 	for (int i=0;i<r->mpi_num;i++){
 		if (i==r->mpi_id) continue;
 		if (r->particles_recv_N[i]==0) continue;
-		MPI_Irecv(r->particles_recv[i], r->particles_recv_N[i], r->mpi_particle, i, i*r->mpi_num+r->mpi_id, MPI_COMM_WORLD, &(request[i]));
+		MPI_Irecv(r->particles_recv[i], sizeof(struct reb_particle)*r->particles_recv_N[i], MPI_CHAR, i, i*r->mpi_num+r->mpi_id, MPI_COMM_WORLD, &(request[i]));
 	}
 	// Using blocking send call.
 	for (int i=0;i<r->mpi_num;i++){
 		if (i==r->mpi_id) continue;
 		if (r->particles_send_N[i]==0) continue;
-		MPI_Send(r->particles_send[i], r->particles_send_N[i], r->mpi_particle, i, r->mpi_id*r->mpi_num+i, MPI_COMM_WORLD);
+		MPI_Send(r->particles_send[i], sizeof(struct reb_particle)* r->particles_send_N[i], MPI_CHAR, i, r->mpi_id*r->mpi_num+i, MPI_COMM_WORLD);
 	}
 	// Wait for all particles to be received.
 	for (int i=0;i<r->mpi_num;i++){
@@ -391,13 +316,13 @@ void reb_communication_mpi_distribute_essential_tree_for_gravity(struct reb_simu
 	for (int i=0;i<r->mpi_num;i++){
 		if (i==r->mpi_id) continue;
 		if (r->tree_essential_recv_N[i]==0) continue;
-		MPI_Irecv(r->tree_essential_recv[i], r->tree_essential_recv_N[i], r->mpi_cell, i, i*r->mpi_num+r->mpi_id, MPI_COMM_WORLD, &(request[i]));
+		MPI_Irecv(r->tree_essential_recv[i], sizeof(struct reb_treecell)* r->tree_essential_recv_N[i], MPI_CHAR, i, i*r->mpi_num+r->mpi_id, MPI_COMM_WORLD, &(request[i]));
 	}
 	// Using blocking send call.
 	for (int i=0;i<r->mpi_num;i++){
 		if (i==r->mpi_id) continue;
 		if (r->tree_essential_send_N[i]==0) continue;
-		MPI_Send(r->tree_essential_send[i], r->tree_essential_send_N[i], r->mpi_cell, i, r->mpi_id*r->mpi_num+i, MPI_COMM_WORLD);
+		MPI_Send(r->tree_essential_send[i],  sizeof(struct reb_treecell)*r->tree_essential_send_N[i], MPI_CHAR, i, r->mpi_id*r->mpi_num+i, MPI_COMM_WORLD);
 	}
 	// Wait for all tree_essential to be received.
 	for (int i=0;i<r->mpi_num;i++){
@@ -445,13 +370,13 @@ void reb_communication_mpi_distribute_essential_tree_for_collisions(struct reb_s
 	for (int i=0;i<r->mpi_num;i++){
 		if (i==r->mpi_id) continue;
 		if (r->tree_essential_recv_N[i]==0) continue;
-		MPI_Irecv(r->tree_essential_recv[i], r->tree_essential_recv_N[i], r->mpi_cell, i, i*r->mpi_num+r->mpi_id, MPI_COMM_WORLD, &(request[i]));
+		MPI_Irecv(r->tree_essential_recv[i],  sizeof(struct reb_treecell)*r->tree_essential_recv_N[i], MPI_CHAR, i, i*r->mpi_num+r->mpi_id, MPI_COMM_WORLD, &(request[i]));
 	}
 	// Using blocking send call.
 	for (int i=0;i<r->mpi_num;i++){
 		if (i==r->mpi_id) continue;
 		if (r->tree_essential_send_N[i]==0) continue;
-		MPI_Send(r->tree_essential_send[i], r->tree_essential_send_N[i], r->mpi_cell, i, r->mpi_id*r->mpi_num+i, MPI_COMM_WORLD);
+		MPI_Send(r->tree_essential_send[i],  sizeof(struct reb_treecell)*r->tree_essential_send_N[i], MPI_CHAR, i, r->mpi_id*r->mpi_num+i, MPI_COMM_WORLD);
 	}
 	// Wait for all tree_essential to be received.
 	for (int i=0;i<r->mpi_num;i++){
@@ -495,13 +420,13 @@ void reb_communication_mpi_distribute_essential_tree_for_collisions(struct reb_s
 	for (int i=0;i<r->mpi_num;i++){
 		if (i==r->mpi_id) continue;
 		if (r->particles_recv_N[i]==0) continue;
-		MPI_Irecv(r->particles_recv[i], r->particles_recv_N[i], r->mpi_particle, i, i*r->mpi_num+r->mpi_id, MPI_COMM_WORLD, &(request[i]));
+		MPI_Irecv(r->particles_recv[i], sizeof(struct reb_particle)* r->particles_recv_N[i], MPI_CHAR, i, i*r->mpi_num+r->mpi_id, MPI_COMM_WORLD, &(request[i]));
 	}
 	// Using blocking send call.
 	for (int i=0;i<r->mpi_num;i++){
 		if (i==r->mpi_id) continue;
 		if (r->particles_send_N[i]==0) continue;
-		MPI_Send(r->particles_send[i], r->particles_send_N[i], r->mpi_particle, i, r->mpi_id*r->mpi_num+i, MPI_COMM_WORLD);
+		MPI_Send(r->particles_send[i], sizeof(struct reb_particle)* r->particles_send_N[i], MPI_CHAR, i, r->mpi_id*r->mpi_num+i, MPI_COMM_WORLD);
 	}
 	// Wait for all particles to be received.
 	for (int i=0;i<r->mpi_num;i++){

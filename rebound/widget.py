@@ -44,10 +44,11 @@ shader_code = """
 <script id="point_shader-vs" type="x-shader/x-vertex">
     attribute vec3 vp;
     uniform mat4 mvp;
+    uniform float pointsize;
     //uniform vec4 vc;
     //varying vec4 color;
     void main() {
-      gl_PointSize = 15.0;
+      gl_PointSize = pointsize;
       gl_Position = mvp*vec4(vp, 1.0);
       //color = vc;
     }
@@ -273,6 +274,8 @@ function startGL(reboundView) {
     
     reboundView.orbit_shader_program = createProgramFromScripts(gl,"orbit_shader-vs","orbit_shader-fs");
     reboundView.point_shader_program = createProgramFromScripts(gl,"point_shader-vs","point_shader-fs");
+    
+    reboundView.point_shader_pointsize_location = gl.getUniformLocation(reboundView.point_shader_program,"pointsize");
    
     var lintwopi = new Float32Array(500);
     for(i=0;i<500;i++){
@@ -345,6 +348,7 @@ function drawGL(reboundView) {
     var mvp = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.];
     matmult(projection,view,mvp);
     gl.uniformMatrix4fv(reboundView.point_shader_mvp_location,false,mattransp(mvp));
+    gl.uniform1f(reboundView.point_shader_pointsize_location,reboundView.pointsize);
     gl.drawArrays(gl.POINTS,0,reboundView.N);
    
     if (reboundView.orbits){
@@ -385,6 +389,7 @@ require.undef('rebound');
             this.width = this.model.get("width");
             this.height = this.model.get("height");
             this.orbits = this.model.get("orbits");
+            this.pointsize = this.model.get("pointsize");
             this.orientation = this.model.get("orientation");
             startGL(this);
         },
@@ -423,6 +428,8 @@ import base64
 import sys
 from ctypes import c_float, byref, create_string_buffer, c_int, c_char, pointer
 from . import clibrebound
+from .simulation import VISUALIZATIONS
+
 def savescreenshot(change):
     if len(change["new"]) and change["type"] =="change":
         w = change["owner"]
@@ -438,6 +445,9 @@ def savescreenshot(change):
             nexttime = w.times[w.screenshotcount]
             if w.archive:
                 sim = w.archive.getSimulation(w.times[w.screenshotcount],mode=w.mode)
+                sim.visualization = VISUALIZATIONS["webgl"]
+                clibrebound.reb_display_init_data(byref(sim))
+
                 w.refresh(pointer(sim))
             else:
                 w.simp.contents.integrate(w.times[w.screenshotcount])
@@ -462,8 +472,9 @@ class Widget(DOMWidget):
     orbit_data = traitlets.CBytes(allow_none=True).tag(sync=True)
     orientation = traitlets.Tuple().tag(sync=True)
     orbits = traitlets.Int().tag(sync=True)
+    pointsize = traitlets.Float().tag(sync=True)
     screenshot = traitlets.Unicode().tag(sync=True)
-    def __init__(self,simulation,size=(200,200),orientation=(0.,0.,0.,1.),scale=None,autorefresh=True,orbits=True, overlay=True):
+    def __init__(self,simulation,size=(200,200),orientation=(0.,0.,0.,1.),scale=None,autorefresh=True,pointsize=15,orbits=True, overlay=True):
         """ 
         Initializes a Widget.
 
@@ -490,6 +501,8 @@ class Widget(DOMWidget):
             The default value for this is True and the widget will draw the instantaneous 
             orbits of the particles. For simulations in which particles are not on
             Keplerian orbits, the orbits shown will not be accurate. 
+        pointsize : float, optional
+            The default point size is 15. 
         overlay : string, optional
             Change the default text overlay. Set to None to hide all text.
         """
@@ -499,6 +512,7 @@ class Widget(DOMWidget):
         self.orientation = orientation
         self.autorefresh = autorefresh
         self.orbits = orbits
+        self.pointsize = pointsize
         self.useroverlay = overlay
         self.simp = pointer(simulation)
         clibrebound.reb_display_copy_data.restype = c_int
@@ -518,7 +532,7 @@ class Widget(DOMWidget):
         the Simulation object: sim.refreshWidgets(). 
         """
 
-        if simp==None:
+        if simp is None:
             simp = self.simp
         if self.autorefresh==0 and isauto==1:
             return
@@ -534,7 +548,7 @@ class Widget(DOMWidget):
             pass
         if self.useroverlay==True:
             self.overlay = "REBOUND (%s), N=%d, t=%g"%(sim.integrator,sim.N,sim.t)
-        elif self.useroverlay==None or self.useroverlay==False:
+        elif self.useroverlay is None or self.useroverlay==False:
             self.overlay = ""
         else:
             self.overlay = self.useroverlay + ", N=%d, t=%g"%(sim.N,sim.t)
@@ -637,6 +651,8 @@ class Widget(DOMWidget):
             self.mode = mode
             self.observe(savescreenshot,names="screenshot")
             sim = archive.getSimulation(times[0],mode=mode)
+            sim.visualization = VISUALIZATIONS["webgl"]
+            clibrebound.reb_display_init_data(byref(sim))
             self.refresh(pointer(sim))
             self.screenshotcount += 1 # triggers first screenshot
 

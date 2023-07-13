@@ -1,5 +1,5 @@
 from ctypes import Structure, c_double, c_int, byref, memmove, sizeof, c_uint32, c_uint, c_ulong
-from . import clibrebound
+from . import clibrebound, E_to_f, M_to_f, mod2pi
 import math
 import ctypes.util
 import rebound
@@ -45,15 +45,14 @@ class Particle(Structure):
     a, e, inc, Omega, omega, f	: float
 	    (Kepler Elements) Semi-major axis, eccentricity, inclination, longitude of the ascending node, argument of periapsis, and true anomaly respectively. The Keplerian Elements are in Jacobi coordinates (with mu = G*Minc, where Minc is the total mass from index 0 to the particle's index, inclusive).
     """
-    def __str__(self):
+    def __repr__(self):
         """ 
         Returns a string with the position and velocity of the particle.
         """
-        return "<rebound.Particle object, m=%s x=%s y=%s z=%s vx=%s vy=%s vz=%s>"%(self.m,self.x,self.y,self.z,self.vx,self.vy,self.vz)
+        return '<{0}.{1} object at {2}, m={3} x={4} y={5} z={6} vx={7} vy={8} vz={9}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.m, self.x, self.y, self.z, self.vx, self.vy, self.vz)
    
-    __repr__ = __str__
 
-    def __init__(self, simulation=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, l=None, theta=None, T=None, r=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None, hash=0, jacobi_masses=False):
+    def __init__(self, simulation=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, E=None, l=None, theta=None, T=None, r=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None, hash=0, jacobi_masses=False):
         """
         Initializes a Particle structure. Rather than explicitly creating 
         a Particle structure, users may use the ``add()`` member function 
@@ -70,7 +69,7 @@ class Particle(Structure):
         Whenever initializing a particle from orbital elements, one must 
         specify either the semimajor axis or the period of the orbit.
         
-        For classical orbital paramerers, one can specify the longitude 
+        For classical orbital parameters, one can specify the longitude 
         of the ascending node by passing Omega, to specify the pericenter 
         one can pass either omega or pomega (not both), and for the 
         longitude/anomaly one can pass one of f, M, l or theta.  
@@ -115,6 +114,8 @@ class Particle(Structure):
             True anomaly                (Default: 0)
         M           : float       
             Mean anomaly                (Default: 0)
+        E           : float       
+            Eccentric anomaly           (Default: 0)
         l           : float       
             Mean longitude              (Default: 0)
         theta       : float       
@@ -165,12 +166,20 @@ class Particle(Structure):
             f = random.vonmisesvariate(0.,0.) 
         if M == "uniform":
             M = random.vonmisesvariate(0.,0.) 
+        if E == "uniform":
+            E = random.vonmisesvariate(0.,0.) 
         if l == "uniform":
             l = random.vonmisesvariate(0.,0.) 
         if theta == "uniform":
             theta = random.vonmisesvariate(0.,0.) 
+        if inc == "uniform":
+            inc = random.vonmisesvariate(0.,0.) 
 
         self.hash = hash # set via the property, which checks for type
+            
+        if isinstance(primary, (str,int)):
+           primary = simulation.particles[primary]
+
 
         if variation:
             if primary is None:
@@ -233,7 +242,7 @@ class Particle(Structure):
             memmove(byref(self), byref(particle), sizeof(self))
             return
         cart = [x,y,z,vx,vy,vz]
-        orbi = [primary,a,P,e,inc,Omega,omega,pomega,f,M,l,theta,T]
+        orbi = [primary,a,P,e,inc,Omega,omega,pomega,f,M,E,l,theta,T]
         pal  = [h,k,ix,iy]
        
         self.ax = 0.
@@ -251,8 +260,8 @@ class Particle(Structure):
         self.c = None
         self.ap = None
         
-        if notNone([e,inc,omega,pomega,Omega,M,f,theta,T]) and notNone(pal):
-            raise ValueError("You cannot mix Pal coordinates (h,k,ix,iy) with the following orbital elements: e,inc,Omega,omega,pomega,f,M,theta,T. If a longitude/anomaly is needed in Pal coordinates, use l.")
+        if notNone([e,inc,omega,pomega,Omega,M,f,E,theta,T]) and notNone(pal):
+            raise ValueError("You cannot mix Pal coordinates (h,k,ix,iy) with the following orbital elements: e,inc,Omega,omega,pomega,f,M,E,theta,T. If a longitude/anomaly is needed in Pal coordinates, use l.")
         if notNone(cart) and notNone(orbi):
                 raise ValueError("You cannot pass cartesian coordinates and orbital elements (and/or primary) at the same time.")
         if notNone(orbi):
@@ -312,33 +321,36 @@ class Particle(Structure):
                         else:
                             omega = Omega - pomega  # for retrograde orbits, pomega = Omega - omega
 
-                longitudes = [f,M,l,theta,T]      # can specify longitude through any of these four.  Need f for C function.
+                longitudes = [f,M,E,l,theta,T]      # can specify longitude through any of these.  Need f for C function.
                 numNones = longitudes.count(None)
 
-                if numNones < 4:
-                    raise ValueError("Can only pass one longitude/anomaly in the set [f, M, l, theta, T]")
-                if numNones == 5:                           # none of them passed.  Default to 0.
+                if numNones < 5:
+                    raise ValueError("Can only pass one longitude/anomaly in the set [f, M, E, l, theta, T]")
+                if numNones == 6:                           # none of them passed.  Default to 0.
                     f = 0.
-                if numNones == 4:                           # Only one was passed.
-                    if f is None:                           # Only have to work if f wasn't passed.
-                        if theta is not None:               # theta is next easiest
-                            if math.cos(inc) > 0:           # for prograde orbits, theta = Omega + omega + f
-                                f = theta - Omega - omega
-                            else:
-                                f = Omega - omega - theta   # for retrograde, theta = Omega - omega - f
-                        else:                               # Either M, l, or T was passed.  Will need to find M first (if not passed) to find f
-                            if l is not None:
-                                if math.cos(inc) > 0:       # for prograde orbits, l = Omega + omega + M
-                                    M = l - Omega - omega
-                                else:
-                                    M = Omega - omega - l   # for retrograde, l = Omega - omega - M
-                            else:
-                                if T is not None:           # works for both elliptical and hyperbolic orbits
-                                                            # TODO: has accuracy problems for M=n*(t-T) << 1
-                                    n = (simulation.G*(primary.m+self.m)/abs(a**3))**0.5
-                                    M = n*(simulation.t - T)
-                            clibrebound.reb_tools_M_to_f.restype = c_double
-                            f = clibrebound.reb_tools_M_to_f(c_double(e), c_double(M))
+                if numNones == 5:                           # Only one was passed. Calculate f.
+                    if f is not None:
+                        pass                            # Nothing to be done
+                    elif theta is not None:               # theta is next easiest
+                        if math.cos(inc) > 0:           # for prograde orbits, theta = Omega + omega + f
+                            f = theta - Omega - omega
+                        else:
+                            f = Omega - omega - theta   # for retrograde, theta = Omega - omega - f
+                    elif l is not None:                 
+                        if math.cos(inc) > 0:           # for prograde orbits, l = Omega + omega + M
+                            M = l - Omega - omega
+                        else:
+                            M = Omega - omega - l       # for retrograde, l = Omega - omega - M
+                        f = M_to_f(e, M)
+                    elif T is not None:                 # works for both elliptical and hyperbolic orbits
+                                                        # TODO: has accuracy problems for M=n*(t-T) << 1
+                        n = (simulation.G*(primary.m+self.m)/abs(a**3))**0.5
+                        M = n*(simulation.t - T)
+                        f = M_to_f(e, M)
+                    elif M is not None:
+                        f = M_to_f(e, M)
+                    elif E is not None:
+                        f = E_to_f(e, E)
 
                 err = c_int()
                 clibrebound.reb_tools_orbit_to_particle_err.restype = Particle
@@ -402,7 +414,7 @@ class Particle(Structure):
         >>> sim = rebound.Simulation()
         >>> sim.add(m=1.)
         >>> sim.add(x=1.,vy=1.)
-        >>> orbit = sim.particles[1].calculate_orbit(sim.particles[0])
+        >>> orbit = sim.particles[1].calculate_orbit(sim.particles[0]) # Heliocentric coordinates
         >>> print(orbit.e) # gives the eccentricity
 
         Parameters
@@ -447,7 +459,7 @@ class Particle(Structure):
 
         return o
     
-    def sample_orbit(self, Npts=100, primary=None, trailing=True, timespan=None, useTrueAnomaly=True):
+    def sample_orbit(self, Npts=100, primary=None, samplingAngle=None, duplicateEndpoint=None):
         """
         Returns a nested list of xyz positions along the osculating orbit of the particle. 
         If primary is not passed, returns xyz positions along the Jacobi osculating orbit
@@ -459,82 +471,189 @@ class Particle(Structure):
             Number of points along the orbit to return  (default: 100)
         primary : rebound.Particle, optional
             Primary to use for the osculating orbit (default: Jacobi center of mass)
-        trailing: bool, optional
-            Whether to return points stepping backwards in time (True) or forwards (False). (default: True)
-        timespan: float, optional    
-            Return points (for the osculating orbit) from the current position to timespan (forwards or backwards in time depending on trailing keyword). 
-            Defaults to the orbital period for bound orbits, and to the rough time it takes the orbit to move by the current distance from the primary for a hyperbolic orbit. Implementation currently only supports this option if useTrueAnomaly=False.
-        useTrueAnomaly: bool, optional
-            Will sample equally spaced points in true anomaly if True, otherwise in mean anomaly.
-            Latter might be better for hyperbolic orbits, where true anomaly can stay near the limiting value for a long time, and then switch abruptly at pericenter. (Default: True)
+        samplingAngle: str, optional
+            This determines which angle is sampled linearly. Can be:
+              - "M" (mean anomaly)
+              - "E" (eccentric anomaly) 
+              - "f" (true anomaly)
+        duplicateEndpoint: bool, optional
+            If true, then the first and last point will be identical for closed orbits. This is useful for some plotting tools. The default is true for eccentric orbits. The argument has no effect for hyperbolic orbits (because the endpoints are not identical).
         """
-        pts = []
         if primary is None:
             primary = self.jacobi_com
         o = self.calculate_orbit(primary=primary)
 
-        if timespan is None:
-            if o.a < 0.: # hyperbolic orbit
-                timespan = 2*math.pi*o.d/o.v # rough time to cross display box
+        phases_f = []
+        if samplingAngle is not None:
+            if any(c not in "EMf" for c in samplingAngle):
+                raise ValueError("Unknown character in samplingAngle.")
+        
+        if o.a < 0.: # hyperbolic orbit
+            #a = o.a
+            if samplingAngle is None:
+                samplingAngle = "Mf"
+            Nptsangle = {}
+            for angle in samplingAngle[1:]:
+                Nptsangle[angle] = (Npts-1)//len(samplingAngle) # one point is reserved for actual position
+            Nptsangle[samplingAngle[0]] = Npts-1-sum(Nptsangle.values())
+            if "M" in samplingAngle:
+                phi = math.acos(-1./o.e)*0.999
+                Npts = Nptsangle["M"]
+                dphi = 2*phi/(Npts-1)
+                for i in range(Npts):
+                    f = M_to_f(o.e, phi)
+                    phases_f.append(f)
+                    phi -= dphi
+            if "E" in samplingAngle:
+                phi = math.acos(-1./o.e)*0.999
+                Npts = Nptsangle["E"]
+                dphi = 2*phi/(Npts-1)
+                for i in range(Npts):
+                    f = E_to_f(o.e, phi)
+                    phases_f.append(f)
+                    phi -= dphi
+            if "f" in samplingAngle:
+                phi = math.acos(-1./o.e)*0.999
+                Npts = Nptsangle["f"]
+                dphi = 2*phi/(Npts-1)
+                for i in range(Npts):
+                    f = mod2pi(phi)
+                    phases_f.append(f)
+                    phi -= dphi
+        else:       # circular orbit
+            #a = primary.m/(primary.m+self.m)*o.a
+            if samplingAngle is None:
+                samplingAngle = "Ef"
+            if duplicateEndpoint is None:
+                duplicateEndpoint = True
+            Nptsangle = {}
+            for angle in samplingAngle[1:]:
+                Nptsangle[angle] = (Npts-1)//len(samplingAngle) # one point is reserved for actual position
+            Nptsangle[samplingAngle[0]] = Npts-1-sum(Nptsangle.values())
+            if "M" in samplingAngle:
+                Npts = Nptsangle["M"]
+                dphi = 2.*math.pi/(Npts-1 if duplicateEndpoint else Npts)  # one point is reserved for the end point
+                for i in range(Npts):
+                    f = M_to_f(o.e, i*dphi)
+                    phases_f.append(f)
+            if "E" in samplingAngle:
+                Npts = Nptsangle["E"]
+                dphi = 2.*math.pi/(Npts-1 if duplicateEndpoint else Npts)  # one point is reserved for the end point
+                for i in range(Npts):
+                    f = E_to_f(o.e, i*dphi)
+                    phases_f.append(f)
+            if "f" in samplingAngle:
+                Npts = Nptsangle["f"]
+                dphi = 2.*math.pi/(Npts-1 if duplicateEndpoint else Npts)  # one point is reserved for the end point
+                for i in range(Npts):
+                    f = i*dphi
+                    f = mod2pi(f)
+                    phases_f.append(f)
+
+        # add actual position
+        f = mod2pi(o.f)
+        phases_f.append(f)
+        phases_f.sort()
+      
+        pts_pre = []
+        pts_post = []
+        
+        #clibrebound.reb_get_com_of_pair.restype = Particle
+        #primary = clibrebound.reb_get_com_of_pair(primary, self)
+
+        for f in phases_f:
+            newp = Particle(a=o.a, f=f, inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=self.m, primary=primary, simulation=self._sim.contents)
+            if f<=o.f:
+                pts_pre.append(newp.xyz)
             else:
-                timespan = o.P
+                pts_post.append(newp.xyz)
         
-        lim_phase = abs(o.n)*timespan # n is negative for hyperbolic orbits
-
-        if trailing is True:
-            lim_phase *= -1 # sample phase backwards from current value
-        phase = [lim_phase*i/(Npts-1) for i in range(Npts)]
-
-        for i,ph in enumerate(phase):
-            if useTrueAnomaly is True:
-                newp = Particle(a=o.a, f=o.f+ph, inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=self.m, primary=primary, simulation=self._sim.contents)
-            else: 
-                newp = Particle(a=o.a, M=o.M+ph, inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=self.m, primary=primary, simulation=self._sim.contents)
-
-            pts.append(newp.xyz)
-        
-        return pts
+        return pts_post + pts_pre
 
     # Simple operators for particles.
-
-    def __sub__(self, other):
-        if isinstance(other, Particle):
-            clibrebound.reb_particle_minus.restype = Particle
-            return clibrebound.reb_particle_minus(self, other)
-        return NotImplemented 
     
+    def __pow__(self, other):
+        if not isinstance(other, Particle):
+            return NotImplemented 
+        clibrebound.reb_particle_distance.restype = c_double
+        return clibrebound.reb_particle_distance(byref(self), byref(other))
     def __add__(self, other):
-        if isinstance(other, Particle):
-            clibrebound.reb_particle_plus.restype = Particle
-            return clibrebound.reb_particle_plus(self, other)
-        return NotImplemented 
+        if not isinstance(other, Particle):
+            return NotImplemented 
+        c = self.copy()
+        return c.__iadd__(other)
+    
+    def __iadd__(self, other):
+        if not isinstance(other, Particle):
+            return NotImplemented 
+        clibrebound.reb_particle_iadd(byref(self), byref(other))
+        return self
+    
+    def __sub__(self, other):
+        if not isinstance(other, Particle):
+            return NotImplemented 
+        c = self.copy()
+        return c.__isub__(other)
+    
+    def __isub__(self, other):
+        if not isinstance(other, Particle):
+            return NotImplemented 
+        clibrebound.reb_particle_isub(byref(self), byref(other))
+        return self
     
     def __mul__(self, other):
         try:
             other = float(other)
-        except ValueError:
+        except:
             return NotImplemented 
-        clibrebound.reb_particle_multiply.restype = Particle
-        return clibrebound.reb_particle_multiply(self, c_double(other))
+        c = self.copy()
+        return c.__imul__(other)
+    
+    def __imul__(self, other):
+        try:
+            other = float(other)
+        except:
+            return NotImplemented 
+        clibrebound.reb_particle_imul(byref(self), c_double(other))
+        return self
     
     def __rmul__(self, other):
         try:
             other = float(other)
-        except ValueError:
+        except:
             return NotImplemented 
-        clibrebound.reb_particle_multiply.restype = Particle
-        return clibrebound.reb_particle_multiply(self, c_double(other))
-
-    def __truediv__(self, other):
-        return self.__div__(other)
-
+        c = self.copy()
+        return c.__imul__(other)
+    
     def __div__(self, other):
+        return self.__truediv__(other)
+    
+    def __idiv__(self, other):
+        return self.__itruediv__(other)
+    
+    def __truediv__(self, other):
         try:
             other = float(other)
-        except ValueError:
+        except:
             return NotImplemented 
-        clibrebound.reb_particle_divide.restype = Particle
-        return clibrebound.reb_particle_divide(self, c_double(other))
+        c = self.copy()
+        if other==0.:
+            raise ZeroDivisionError
+        return c.__imul__(1./other)
+    
+    def __itruediv__(self, other):
+        try:
+            other = float(other)
+        except:
+            return NotImplemented 
+        if other==0.:
+            raise ZeroDivisionError
+        return self.__imul__(1./other)
+    
+    def rotate(self, q):
+        if not isinstance(q, rebound.Rotation):
+            raise NotImplementedError
+        clibrebound.reb_particle_irotate(byref(self), q)
 
     @property
     def index(self):
@@ -579,47 +698,163 @@ class Particle(Structure):
     def h(self):
         return self.calculate_orbit().h
     @property
+    def hvec(self):
+        h = self.calculate_orbit().hvec
+        return [h.x, h.y, h.z]
+    @property
     def P(self):
         return self.calculate_orbit().P
+    @P.setter
+    def P(self,value):
+        o = self.calculate_orbit()
+        clibrebound.reb_get_jacobi_com.restype = Particle
+        primary = clibrebound.reb_get_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, P=value, e=o.e, inc=o.inc, omega=o.omega, Omega=o.Omega, f=o.f) 
+        self._cpcoords(newP)
     @property
     def n(self):
         return self.calculate_orbit().n 
     @property
     def a(self):
         return self.calculate_orbit().a 
+    @a.setter
+    def a(self,value):
+        o = self.calculate_orbit()
+        clibrebound.reb_get_jacobi_com.restype = Particle
+        primary = clibrebound.reb_get_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=value, e=o.e, inc=o.inc, omega=o.omega, Omega=o.Omega, f=o.f) 
+        self._cpcoords(newP)
     @property
     def rhill(self):
         return self.calculate_orbit().rhill
     @property
     def e(self):
         return self.calculate_orbit().e 
+    @e.setter
+    def e(self,value):
+        o = self.calculate_orbit()
+        clibrebound.reb_get_jacobi_com.restype = Particle
+        primary = clibrebound.reb_get_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, e=value, inc=o.inc, omega=o.omega, Omega=o.Omega, f=o.f) 
+        self._cpcoords(newP)
+    @property
+    def evec(self):
+        e = self.calculate_orbit().evec
+        return [e.x, e.y, e.z]
     @property
     def inc(self):
         return self.calculate_orbit().inc 
+    @inc.setter
+    def inc(self,value):
+        o = self.calculate_orbit()
+        clibrebound.reb_get_jacobi_com.restype = Particle
+        primary = clibrebound.reb_get_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, e=o.e, inc=value, omega=o.omega, Omega=o.Omega, f=o.f) 
+        self._cpcoords(newP)
     @property
     def Omega(self):
         return self.calculate_orbit().Omega 
+    @Omega.setter
+    def Omega(self,value):
+        o = self.calculate_orbit()
+        clibrebound.reb_get_jacobi_com.restype = Particle
+        primary = clibrebound.reb_get_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, e=o.e, inc=o.inc, omega=o.omega, Omega=value, f=o.f) 
+        self._cpcoords(newP)
     @property
     def omega(self):
         return self.calculate_orbit().omega 
+    @omega.setter
+    def omega(self,value):
+        o = self.calculate_orbit()
+        clibrebound.reb_get_jacobi_com.restype = Particle
+        primary = clibrebound.reb_get_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, e=o.e, inc=o.inc, omega=value, Omega=o.Omega, f=o.f) 
+        self._cpcoords(newP)
     @property
     def pomega(self):
         return self.calculate_orbit().pomega 
+    @pomega.setter
+    def pomega(self,value):
+        o = self.calculate_orbit()
+        clibrebound.reb_get_jacobi_com.restype = Particle
+        primary = clibrebound.reb_get_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, e=o.e, inc=o.inc, pomega=value, Omega=o.Omega, f=o.f) 
+        self._cpcoords(newP)
     @property
     def f(self):
         return self.calculate_orbit().f 
+    @f.setter
+    def f(self,value):
+        o = self.calculate_orbit()
+        clibrebound.reb_get_jacobi_com.restype = Particle
+        primary = clibrebound.reb_get_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, e=o.e, inc=o.inc, omega=o.omega, Omega=o.Omega, f=value) 
+        self._cpcoords(newP)
     @property
     def M(self):
         return self.calculate_orbit().M 
+    @M.setter
+    def M(self,value):
+        o = self.calculate_orbit()
+        clibrebound.reb_get_jacobi_com.restype = Particle
+        primary = clibrebound.reb_get_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, e=o.e, inc=o.inc, omega=o.omega, Omega=o.Omega, M=value) 
+        self._cpcoords(newP)
     @property
     def l(self):
         return self.calculate_orbit().l 
+    @l.setter
+    def l(self,value):
+        o = self.calculate_orbit()
+        clibrebound.reb_get_jacobi_com.restype = Particle
+        primary = clibrebound.reb_get_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, e=o.e, inc=o.inc, omega=o.omega, Omega=o.Omega, l=value) 
+        self._cpcoords(newP)
     @property
     def theta(self):
         return self.calculate_orbit().theta 
+    @theta.setter
+    def theta(self,value):
+        o = self.calculate_orbit()
+        clibrebound.reb_get_jacobi_com.restype = Particle
+        primary = clibrebound.reb_get_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, e=o.e, inc=o.inc, omega=o.omega, Omega=o.Omega, theta=value) 
+        self._cpcoords(newP)
     @property
     def T(self):
         return self.calculate_orbit().T
+    @T.setter
+    def T(self,value):
+        o = self.calculate_orbit()
+        clibrebound.reb_get_jacobi_com.restype = Particle
+        primary = clibrebound.reb_get_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, e=o.e, inc=o.inc, omega=o.omega, Omega=o.Omega, T=value) 
+        self._cpcoords(newP)
     @property
     def orbit(self):
         return self.calculate_orbit()
@@ -650,4 +885,11 @@ class Particle(Structure):
         elif isinstance(value, int_types):
             self._hash = value
         else:
-            raise AttributeError("Hash must be set to an integer, a ctypes.c_uint32 or a string. See UniquelyIdentifyingParticles.ipynb ipython_example.")
+            raise AttributeError("Hash must be set to an integer, a ctypes.c_uint32 or a string. See UniquelyIdentifyingParticlesWithHashes.ipynb ipython_example.")
+
+    def _cpcoords(self, p):
+        """
+        Copy coordinates (and only coordinates) from particle p to self
+        """
+        self.xyz = p.xyz
+        self.vxyz = p.vxyz

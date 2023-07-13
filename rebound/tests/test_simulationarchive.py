@@ -1,9 +1,38 @@
 import rebound
 import unittest
+import os
 import warnings
 
 class TestSimulationArchive(unittest.TestCase):
-    def test_sa_from_archive(self):
+    def test_sa_step(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "whfast"
+        sim.dt = 0.1313
+        sim.ri_whfast.safe_mode = 1
+        sim.automateSimulationArchive("test.bin", step=10,deletefile=True)
+        sim.integrate(40.,exact_finish_time=0)
+
+        sim = None
+        sim = rebound.Simulation("test.bin")
+        sim.integrate(80.,exact_finish_time=0)
+        x1 = sim.particles[1].x
+        
+        
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
+        sim.integrator = "whfast"
+        sim.dt = 0.1313
+        sim.ri_whfast.safe_mode = 1
+        sim.integrate(80.,exact_finish_time=0)
+        x0 = sim.particles[1].x
+
+        self.assertEqual(x0,x1)
+    def test_sa_fromarchive(self):
         sim = rebound.Simulation()
         sim.add(m=1)
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
@@ -15,7 +44,7 @@ class TestSimulationArchive(unittest.TestCase):
         sim.integrate(40.,exact_finish_time=0)
 
         sim = None
-        sim = rebound.Simulation.from_archive("test.bin")
+        sim = rebound.Simulation("test.bin")
         sim.integrate(80.,exact_finish_time=0)
         x1 = sim.particles[1].x
         
@@ -247,10 +276,10 @@ class TestSimulationArchive(unittest.TestCase):
         self.assertEqual(x0,x1)
 
         tget = 27.123
-        sim = sa.getSimulation(tget,mode="exact");
+        sim = sa.getSimulation(tget,mode="exact")
         self.assertAlmostEqual(sim.t,tget,delta=1e-14)
         tget = 25.123
-        sim = sa.getSimulation(tget,mode="close");
+        sim = sa.getSimulation(tget,mode="close")
         self.assertAlmostEqual(sim.t,tget,delta=sim.dt)
 
     def test_sa_restart_append(self):
@@ -328,10 +357,10 @@ class TestSimulationArchive(unittest.TestCase):
         self.assertEqual(x0,x1)
         
         tget = 27.123
-        sim = sa.getSimulation(tget,mode="exact");
+        sim = sa.getSimulation(tget,mode="exact")
         self.assertAlmostEqual(sim.t,tget,delta=1e-14)
         tget = 25.123
-        sim = sa.getSimulation(tget,mode="close");
+        sim = sa.getSimulation(tget,mode="close")
         self.assertAlmostEqual(sim.t,tget,delta=sim.dt)
     
     
@@ -364,10 +393,10 @@ class TestSimulationArchive(unittest.TestCase):
         self.assertEqual(x0,x1)
         
         tget = 27.123
-        sim = sa.getSimulation(tget,mode="exact");
+        sim = sa.getSimulation(tget,mode="exact")
         self.assertAlmostEqual(sim.t,tget,delta=1e-14)
         tget = 25.123
-        sim = sa.getSimulation(tget,mode="close");
+        sim = sa.getSimulation(tget,mode="close")
         self.assertAlmostEqual(sim.t,tget,delta=sim.dt)
 
 #    def test_sa_restart_ias15_walltime(self):
@@ -409,7 +438,7 @@ class TestSimulationArchive(unittest.TestCase):
 
 class TestSimulationArchiveWarningsErrors(unittest.TestCase):
     def test_sa_binary_missing(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(RuntimeError):
             sa = rebound.SimulationArchive("testmissing.bin")
     def test_sa_binary_version(self):
         sim = rebound.Simulation()
@@ -507,9 +536,51 @@ class TestSimulationArchiveMercurius(unittest.TestCase):
         x0 = sim.particles[1].x
 
         self.assertEqual(x0,x1)
+
+    def test_append_to_corrupt_snapshot(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1e-3,a=1.)
+        sim.add(m=5e-3,a=2.25)
     
+        sim.automateSimulationArchive("simulationarchive.bin", interval=1000,deletefile=True) 
+        sim.integrate(3001)
+        with open('simulationarchive.bin', 'r+b') as f:
+            f.seek(0, os.SEEK_END)          
+            f.seek(f.tell() - 72, os.SEEK_SET)
+            f.write(bytes(72)) # binary should be 15972 bytes, overwrite last 72 bytes with all zeros
+        sa = rebound.SimulationArchive("simulationarchive.bin")
+        sim = sa[-1]
+        sim.automateSimulationArchive("simulationarchive.bin", interval=1000)
+        sim.integrate(7001)
+        sa = rebound.SimulationArchive("simulationarchive.bin")
+        self.assertEqual(sa.nblobs, 8)
+        self.assertAlmostEqual(sa[-1].t, 7000, places=0)
     
+
+    def test_append_to_corrupt_snapshot_by_2bytes(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1e-3,a=1.)
+        sim.add(m=5e-3,a=2.25)
     
+        sim.automateSimulationArchive("simulationarchive.bin", interval=1000,deletefile=True) 
+        sim.integrate(3001)
+        s1 = os.path.getsize('simulationarchive.bin')
+        with open('simulationarchive.bin', 'r+b') as f:
+            f.seek(0, os.SEEK_END)          
+            f.seek(f.tell() - 2, os.SEEK_SET)
+            f.truncate() # truncate by 2 bytes
+        s2 = os.path.getsize('simulationarchive.bin')
+        self.assertEqual(s1, s2+2)
+
+        sa = rebound.SimulationArchive("simulationarchive.bin")
+        sim = sa[-1]
+        sim.automateSimulationArchive("simulationarchive.bin", interval=1000)
+        sim.integrate(7001)
+        sa = rebound.SimulationArchive("simulationarchive.bin")
+        self.assertEqual(sa.nblobs, 8)
+        self.assertAlmostEqual(sa[-1].t, 7000, places=0)
 
 if __name__ == "__main__":
     unittest.main()
