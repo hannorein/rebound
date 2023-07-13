@@ -1,5 +1,6 @@
 MPIEXAMPLES := shearing_sheet_mpi/. selfgravity_disc_mpi/. mpi_unittests/.
-SUBDIRS := $(filter-out $(MPIEXAMPLES),$(wildcard */.))
+WHFAST512EXAMPLES := whfast512_unittests/. whfast512_solar_system/.
+SUBDIRS := $(filter-out $(WHFAST512EXAMPLES) $(MPIEXAMPLES),$(wildcard */.))
 MPISUBDIRS := $(filter $(MPIEXAMPLES),$(wildcard */.))
 
 all: $(SUBDIRS)

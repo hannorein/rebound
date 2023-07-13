@@ -116,6 +116,28 @@ archivePrefix = {arXiv},
     }
     """
 
+    if sim.integrator == "whfast512":
+        txt += """The simulations were integrated using WHFast512, a symplectic Wisdom-Holman integrator using SIMD AVX512 instructions \citep{reboundwhfast512,wh}. """
+        bib += """@ARTICLE{reboundwhfast512,
+       author = {{Javaheri}, Pejvak and {Rein}, Hanno and {Tamayp}, Daniel},
+        title = "{WHFast512: An N-body integrator for planetary systems optimized with AVX512 SIMD instructions}",
+         year = 2023,
+}
+"""
+        bib += """@ARTICLE{wh,
+       author = {{Wisdom}, Jack and {Holman}, Matthew},
+        title = "{Symplectic maps for the N-body problem.}",
+      journal = {\aj},
+     keywords = {Many Body Problem, Planetary Evolution, Pluto (Planet), Astronomical Maps, Gravitational Effects, Physics (General)},
+         year = 1991,
+        month = oct,
+       volume = {102},
+        pages = {1528-1538},
+          doi = {10.1086/115978},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/1991AJ....102.1528W},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+"""
 
     
     if sim.integrator == "mercurius":

@@ -345,7 +345,12 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     WRITE_FIELD(IAS15_MINDT,        &r->ri_ias15.min_dt,                sizeof(double));
     WRITE_FIELD(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global,        sizeof(unsigned int));
     WRITE_FIELD(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded,sizeof(unsigned long));
-    WRITE_FIELD(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN,            sizeof(int));
+    if (r->ri_ias15.allocatedN>r->N*3){
+        int N3 = 3*r->N; // Useful to avoid file size increase if particles got removed
+        WRITE_FIELD(IAS15_ALLOCATEDN,   &N3,            sizeof(int));
+    }else{
+        WRITE_FIELD(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN,            sizeof(int));
+    }
     WRITE_FIELD(JANUS_SCALEPOS,     &r->ri_janus.scale_pos,             sizeof(double));
     WRITE_FIELD(JANUS_SCALEVEL,     &r->ri_janus.scale_vel,             sizeof(double));
     WRITE_FIELD(JANUS_ORDER,        &r->ri_janus.order,                 sizeof(unsigned int));
@@ -413,7 +418,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
         WRITE_FIELD(VARCONFIG,      r->var_config,                      sizeof(struct reb_variational_configuration)*r->var_config_N);
     }
     if (r->ri_ias15.allocatedN){
-        int N3 = r->ri_ias15.allocatedN;
+        int N3 = 3*r->N; // Only outut useful data (useful if particles got removed)
         WRITE_FIELD(IAS15_AT,   r->ri_ias15.at,     sizeof(double)*N3);
         WRITE_FIELD(IAS15_X0,   r->ri_ias15.x0,     sizeof(double)*N3);
         WRITE_FIELD(IAS15_V0,   r->ri_ias15.v0,     sizeof(double)*N3);
@@ -578,7 +583,19 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
         WRITE_FIELD(TES_DHEM_M_TOTAL, &r->ri_tes.rhs->mTotal, sizeof(double));
         WRITE_FIELD(TES_DHEM_RECTI_TIME, r->ri_tes.rhs->rectifyTimeArray, r->ri_tes.controlVectorSize);
         WRITE_FIELD(TES_DHEM_RECTI_PERIOD, r->ri_tes.rhs->rectificationPeriod, r->ri_tes.controlVectorSize);
+    
     }
+   
+#ifdef AVX512 
+    WRITE_FIELD(WHFAST512_KEEPUNSYNC, &r->ri_whfast512.keep_unsynchronized, sizeof(unsigned int));
+    WRITE_FIELD(WHFAST512_ISSYNCHRON, &r->ri_whfast512.is_synchronized, sizeof(unsigned int));
+    WRITE_FIELD(WHFAST512_GRPOTENTIAL, &r->ri_whfast512.gr_potential, sizeof(unsigned int));
+    WRITE_FIELD(WHFAST512_ALLOCATEDN, &r->ri_whfast512.allocated_N, sizeof(unsigned int));
+    if (r->ri_whfast512.allocated_N){
+        WRITE_FIELD(WHFAST512_PJH, r->ri_whfast512.p_jh, sizeof(struct reb_particle_avx512));
+        WRITE_FIELD(WHFAST512_PJH0, &r->ri_whfast512.p_jh0, sizeof(struct reb_particle));
+    }
+#endif // AVX512
 
     // To output size of binary file, need to calculate it first. 
     if (r->simulationarchive_version<3){ // to be removed in a future release

@@ -66,7 +66,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.25.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.26.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_error_message_waiting(struct reb_simulation* const r);
@@ -308,7 +308,9 @@ void reb_free_simulation(struct reb_simulation* const r){
 }
 
 void reb_free_pointers(struct reb_simulation* const r){
-    free(r->simulationarchive_filename);
+    if (r->simulationarchive_filename){
+        free(r->simulationarchive_filename);
+    }
     reb_tree_delete(r);
     if(r->display_data){
         pthread_mutex_destroy(&(r->display_data->mutex));
@@ -319,8 +321,12 @@ void reb_free_pointers(struct reb_simulation* const r){
         free(r->display_data->orbit_data);
         free(r->display_data); // TODO: Free other pointers in display_data
     }
-    free(r->gravity_cs  );
-    free(r->collisions  );
+    if (r->gravity_cs){
+        free(r->gravity_cs  );
+    }
+    if (r->collisions){
+        free(r->collisions  );
+    }
     reb_integrator_whfast_reset(r);
     reb_integrator_ias15_reset(r);
     reb_integrator_mercurius_reset(r);
@@ -331,18 +337,26 @@ void reb_free_pointers(struct reb_simulation* const r){
             r->free_particle_ap(&r->particles[i]);
         }
     }
-    free(r->particles   );
-    free(r->particle_lookup_table);
+    if (r->particles){
+        free(r->particles   );
+    }
+    if (r->particle_lookup_table){
+        free(r->particle_lookup_table);
+    }
     if (r->messages){
         for (int i=0;i<reb_max_messages_N;i++){
             free(r->messages[i]);
         }
     }
-    free(r->messages);
+    if (r->messages){
+        free(r->messages);
+    }
     if (r->extras_cleanup){
         r->extras_cleanup(r);
     }
-    free(r->var_config);
+    if (r->var_config){
+        free(r->var_config);
+    }
     for (int s=0; s<r->odes_N; s++){
         r->odes[s]->r = NULL;
     }
@@ -575,6 +589,12 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_whfast.is_synchronized = 1;
     r->ri_whfast.timestep_warning = 0;
     r->ri_whfast.recalculate_coordinates_but_not_synchronized_warning = 0;
+    
+    // ********** WHFAST512
+    r->ri_whfast512.is_synchronized = 1;
+    r->ri_whfast512.gr_potential = 0;
+    r->ri_whfast512.keep_unsynchronized = 0;
+    r->ri_whfast512.recalculate_constants = 1;
     
     // ********** SABA
     r->ri_saba.type = REB_SABA_10_6_4;

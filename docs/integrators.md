@@ -658,3 +658,92 @@ Here is how to do that:
     sim = rebound.Simulation()
     sim.integrator = "none"
     ```
+
+## WHFast512
+
+WHFast512 is a symplectic Wisdom-Holman integrator. 
+It is using Single Instruction Multiple Data (SIMD) parallelism and 512-bit Advanced Vector Extensions (AVX512) to speed up the integration of planetary systems by up to 4.7x compared to the standard version of WHFast. 
+
+!!! warning "Important"
+
+    To use WHFast512 you need to compile and run REBOUND on a computer that has a CPU which supports AVX512 instructions.
+    You will see an error message if you try to use WHFast512 but have not compiled REBOUND with the AVX512 flag.
+    We describe below how to do this for both the C and python versions of REBOUND below.
+
+    To find out if your CPU supports AVX512 instructions, check for the AVX512 flags by running
+    ```bash
+    cat /proc/cpuinfo | grep avx512
+    ```
+    
+    Note that you can read SimulationArchives of simulations which used WHFast512 on machines that do not support AVX512 instruction.
+    If a synchronization is required, it will be performed with the standard WHFast integrator.
+
+
+=== "C"
+    To turn on the AVX512 flag, go to the Makefile in problem directory. Add this line at the top:
+    ```
+    export AVX512=1
+    ```
+    To explicitly turn AVX512 off, add
+    ```
+    export AVX512=0
+    ```
+    Also make sure to add the `-march=native` flag to the compiler. This will optimize your code (and enable AVX512 instruction) for the specific CPU you're using.
+    ```
+    export OPT=-march=native
+    ```
+    Then, clean your build directory and (re)-build REBOUND with
+    ```bash
+    make clean
+    make
+    ```
+
+=== "Python"
+    To use WHFast512 from python, you cannot use `pip install rebound`. 
+    Instead download the source code of REBOUND. 
+    Open `the setup.py` file in the main directory and find the line where `extra_compile_args` are declared.
+    Comment out the line without AVX512 and uncomment the line with AVX512.
+    Then install REBOUND by running 
+    ```
+    pip install -e .
+    ```
+    from the main directory. 
+
+Once you have compiled REBOUND with AVX512 enabled, you can use WHFast512 like any other integrator:
+
+=== "C"
+    ```c
+    struct reb_simulation* r = reb_create_simulation();
+    r->integrator = REB_INTEGRATOR_WHFAST512;
+    ```
+
+=== "Python"
+    ```python
+    sim = rebound.Simulation()
+    sim.integrator = "whfast512"
+    ```
+
+See also [this example](c_examples/whfast512_solar_system) on how to use WHFast512.
+
+To allow for the best performance, WHFast512 has certain limitations that WHFast does not have.
+
+- The number of particles cannot exceed 9 (1 star and 8 planets) and needs to be constant. 
+- The gravitational constant needs to be exactly equal to 1. Note that you can always [rescale](units/) your system such that G=1. 
+- The integrator always operates combines the first and last drift step (`safe_mode=0` for WHFast). 
+- No variational or test particles are supported (although a particle can have mass 0). 
+- MEGNO and other chaos indicators are not supported.
+- WHFast512 always uses democratic heliocentric coordinates. Jacobi coordinates are not supported.
+- The timestep needs to be constant and the `exact_finish_time` flag needs to be set to 0. To change the timestep, first synchronize the simulation, then call `reb_integrator_reset()`.
+- The masses of all particles need to be constant. To change the masses, first synchronize the simulation, then call `reb_integrator_reset()`.
+- Additional forces (other than the GR potential) and REBOUNDx are not supported.
+
+
+The setting for WHFast512 are stored in the `reb_simulation_integrator_whfast512` structure, which itself is part of the simulation structure. 
+The following settings are available:
+
+`unsigned int keep_unsynchronized`
+:   This flag determines if democratic heliocentric coordinates are re-used after subsequent calls to `reb_integrate()`. The default is 0. This makes WHFast512 recalculate democratic heliocentric coordinates at the beginning of each `reb_integrate()` call. Set this flag to 1 if you want to continue an integration using unsynchronized democratic heliocentric coordinates. This is useful if you require outputs (and therefore synchronization) but don't want the integration to be affected by the output to allow for bit-wise reproducibility.
+
+`unsigned int gr_potential`
+:   This flag determines if an additional $1/r^2$ potential is included in the force calculation. The default is 0. Set to 1 to turn on the potential. This can be used to mimic general relativistic precession. Note that this feature assumes [units](units/) of AU and year/2pi. 
+

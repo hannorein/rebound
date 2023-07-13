@@ -35,6 +35,9 @@
 #include <signal.h>
 #include <stdio.h>
 #include <math.h>
+#ifdef AVX512
+#include <immintrin.h>
+#endif
 #ifdef MPI
 #include "mpi.h"
 #endif // MPI
@@ -225,6 +228,36 @@ struct reb_simulation_integrator_whfast {
     unsigned int allocated_Ntemp;
     unsigned int timestep_warning;
     unsigned int recalculate_coordinates_but_not_synchronized_warning;
+};
+
+struct reb_particle_avx512{
+#ifdef AVX512
+    __m512d m __attribute__ ((aligned (64)));
+    __m512d x __attribute__ ((aligned (64)));
+    __m512d y __attribute__ ((aligned (64)));
+    __m512d z __attribute__ ((aligned (64)));
+    __m512d vx __attribute__ ((aligned (64)));
+    __m512d vy __attribute__ ((aligned (64)));
+    __m512d vz __attribute__ ((aligned (64)));
+#else // AVX512
+    double m[8];
+    double x[8];
+    double y[8];
+    double z[8];
+    double vx[8];
+    double vy[8];
+    double vz[8];
+#endif // AVX512
+};
+
+struct reb_simulation_integrator_whfast512 {
+    unsigned int is_synchronized;
+    unsigned int keep_unsynchronized;
+    unsigned int allocated_N;
+    unsigned int gr_potential;
+    unsigned int recalculate_constants;
+    struct reb_particle_avx512* p_jh;
+    struct reb_particle p_jh0;
 };
 
 struct reb_ode{ // defines an ODE 
@@ -716,6 +749,13 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_TES_DHEM_M_TOTAL = 386,
     REB_BINARY_FIELD_TYPE_TES_DHEM_RECTI_TIME = 387,
     REB_BINARY_FIELD_TYPE_TES_DHEM_RECTI_PERIOD = 388,
+    
+    REB_BINARY_FIELD_TYPE_WHFAST512_KEEPUNSYNC = 390,
+    REB_BINARY_FIELD_TYPE_WHFAST512_ISSYNCHRON = 391,
+    REB_BINARY_FIELD_TYPE_WHFAST512_GRPOTENTIAL = 392,
+    REB_BINARY_FIELD_TYPE_WHFAST512_ALLOCATEDN = 393,
+    REB_BINARY_FIELD_TYPE_WHFAST512_PJH = 394,
+    REB_BINARY_FIELD_TYPE_WHFAST512_PJH0 = 395,
 
     REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
     REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
@@ -866,6 +906,7 @@ struct reb_simulation {
         REB_INTEGRATOR_EOS = 11,     // Embedded Operator Splitting (EOS) integrator family (Rein 2019)
         REB_INTEGRATOR_BS = 12,      // Gragg-Bulirsch-Stoer 
         REB_INTEGRATOR_TES = 20,     // Terrestrial Exoplanet Simulator (TES) 
+        REB_INTEGRATOR_WHFAST512 = 21,   // WHFast integrator, optimized for AVX512
         } integrator;
     enum {
         REB_BOUNDARY_NONE = 0,      // Do not check for anything (default)
@@ -885,6 +926,7 @@ struct reb_simulation {
     // Integrators
     struct reb_simulation_integrator_sei ri_sei;            // The SEI struct 
     struct reb_simulation_integrator_whfast ri_whfast;      // The WHFast struct 
+    struct reb_simulation_integrator_whfast512 ri_whfast512;      // The WHFast512 struct 
     struct reb_simulation_integrator_saba ri_saba;          // The SABA struct 
     struct reb_simulation_integrator_ias15 ri_ias15;        // The IAS15 struct
     struct reb_simulation_integrator_mercurius ri_mercurius;// The MERCURIUS struct

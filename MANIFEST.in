@@ -1,5 +1,6 @@
 include src/integrator_ias15.c
 include src/integrator_whfast.c
+include src/integrator_whfast512.c
 include src/integrator_saba.c
 include src/integrator_leapfrog.c
 include src/integrator_bs.c
@@ -24,6 +25,7 @@ include src/particle.c
 include src/simulationarchive.c
 include src/integrator_ias15.h
 include src/integrator_whfast.h
+include src/integrator_whfast512.h
 include src/integrator_saba.h
 include src/integrator_leapfrog.h
 include src/integrator_bs.h
