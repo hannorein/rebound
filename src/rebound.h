@@ -1100,19 +1100,27 @@ void reb_free_ode(struct reb_ode* ode);
 // Miscellaneous functions
 uint32_t reb_hash(const char* str);
 double reb_tools_mod2pi(double f);
-double reb_tools_M_to_f(double e, double M); // True anomaly for a given eccentricity and mean anomaly
-double reb_tools_E_to_f(double e, double M); // True anomaly for a given eccentricity and eccentric anomaly
-double reb_tools_M_to_E(double e, double M); // Eccentric anomaly for a given eccentricity and mean anomaly
-void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R); // This function sets up a Plummer sphere, N=number of particles, M=total mass, R=characteristic radius
-void reb_run_heartbeat(struct reb_simulation* const r);  // used internally
+/// True anomaly for a given eccentricity and mean anomaly
+double reb_tools_M_to_f(double e, double M);
+/// True anomaly for a given eccentricity and eccentric anomaly
+double reb_tools_E_to_f(double e, double M);
+/// Eccentric anomaly for a given eccentricity and mean anomaly
+double reb_tools_M_to_E(double e, double M);
 
-// transformations to/from vec3d
+/// This function sets up a Plummer sphere, N=number of particles, M=total mass, R=characteristic radius
+void reb_tools_init_plummer(struct reb_simulation* r, int _N, double M, double R);
+
+/// used internally
+void reb_run_heartbeat(struct reb_simulation* const r);
+
+/// transformations to/from vec3d
 struct reb_vec3d reb_tools_spherical_to_xyz(const double mag, const double theta, const double phi);
 void reb_tools_xyz_to_spherical(struct reb_vec3d const xyz, double* mag, double* theta, double* phi);
 
 
 // Functions to add and initialize particles
-struct reb_particle reb_particle_nan(void); // Returns a reb_particle structure with fields/hash/ptrs initialized to nan/0/NULL. 
+/// Returns a reb_particle structure with fields/hash/ptrs initialized to nan/0/NULL.
+struct reb_particle reb_particle_nan(void);
 void reb_add(struct reb_simulation* const r, struct reb_particle pt);
 void reb_add_fmt(struct reb_simulation* r, const char* fmt, ...);
 struct reb_particle reb_particle_new(struct reb_simulation* r, const char* fmt, ...);    // Same as reb_add_fmt() but returns the particle instead of adding it to the simualtion.
