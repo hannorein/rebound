@@ -1065,11 +1065,14 @@ void reb_output_ascii(struct reb_simulation* r, char* filename);
 void reb_output_binary_positions(struct reb_simulation* r, const char* filename);
 void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 
-// Compares two simulations, stores difference in buffer.
+/// Compares two simulations, stores difference in buffer.
 void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep); 
-// Same as reb_binary_diff, but with options.
-// output_option If set to 0, the differences are written to bufp. If set to 1, printed on the screen. If set to 2, then only the return value indicates any differences.
-// returns 0 is returned if the simulations do not differ (are equal). 1 is return if they differ.
+/** Same as reb_binary_diff, but with options.
+ *
+ * output_option If set to 0, the differences are written to bufp. If set to 1, printed on the screen. If set to 2, then only the return value indicates any differences.
+ *
+ * returns 0 is returned if the simulations do not differ (are equal). 1 is return if they differ.
+ */
 int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option);
 
 // Input functions
