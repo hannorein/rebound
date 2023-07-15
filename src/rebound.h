@@ -520,19 +520,40 @@ struct reb_collision{
     int ri;
 };
 
-// Possible return values of of rebound_integrate
+/// Possible return values of of rebound_integrate
 enum REB_STATUS {
-    REB_RUNNING_PAUSED = -3,    // Simulation is paused by visualization.
-    REB_RUNNING_LAST_STEP = -2, // Current timestep is the last one. Needed to ensure that t=tmax exactly.
-    REB_RUNNING = -1,           // Simulation is current running, no error occurred.
-    REB_EXIT_SUCCESS = 0,       // Integration finished successfully.
-    REB_EXIT_ERROR = 1,         // A generic error occurred and the integration was not successful.
-    REB_EXIT_NOPARTICLES = 2,   // The integration ends early because no particles are left in the simulation.
-    REB_EXIT_ENCOUNTER = 3,     // The integration ends early because two particles had a close encounter (see exit_min_distance)
-    REB_EXIT_ESCAPE = 4,        // The integration ends early because a particle escaped (see exit_max_distance)  
-    REB_EXIT_USER = 5,          // User caused exit, simulation did not finish successfully.
-    REB_EXIT_SIGINT = 6,        // SIGINT received. Simulation stopped.
-    REB_EXIT_COLLISION = 7,     // The integration ends early because two particles collided. 
+    /// Simulation is paused by visualization.
+    REB_RUNNING_PAUSED = -3,
+
+    /// Current timestep is the last one. Needed to ensure that t=tmax exactly.
+    REB_RUNNING_LAST_STEP = -2,
+
+    /// Simulation is current running, no error occurred.
+    REB_RUNNING = -1,
+
+    /// Integration finished successfully.
+    REB_EXIT_SUCCESS = 0,
+
+    /// A generic error occurred and the integration was not successful.
+    REB_EXIT_ERROR = 1,
+
+    /// The integration ends early because no particles are left in the simulation.
+    REB_EXIT_NOPARTICLES = 2,
+
+    /// The integration ends early because two particles had a close encounter (see exit_min_distance)
+    REB_EXIT_ENCOUNTER = 3,
+
+    /// The integration ends early because a particle escaped (see exit_max_distance)
+    REB_EXIT_ESCAPE = 4,
+
+    /// User caused exit, simulation did not finish successfully.
+    REB_EXIT_USER = 5,
+
+    /// SIGINT received. Simulation stopped.
+    REB_EXIT_SIGINT = 6,
+
+    /// The integration ends early because two particles collided.
+    REB_EXIT_COLLISION = 7,
 };
 
 // IDs for content of a binary field. Used to read and write binary files.
