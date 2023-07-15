@@ -1149,45 +1149,57 @@ double reb_tools_calculate_lyapunov(struct reb_simulation* r);
 
 // Variational equations
 
-// Struct describing the properties of a set of variational equations.
-// If testparticle is set to -1, then it is assumed that all particles are massive
-// and all particles influence all other particles. If testparticle is >=0 then 
-// the particle with that index is assumed to be a testparticle, i.e. it does not 
-// influence other particles. For second order variational equation, index_1st_order_a/b 
-// is the index in the particle array that corresponds to the 1st order variational 
-// equations.
+/** Struct describing the properties of a set of variational equations.
+ *
+ * If testparticle is set to -1, then it is assumed that all particles are massive
+ * and all particles influence all other particles. If testparticle is >=0 then
+ * the particle with that index is assumed to be a testparticle, i.e. it does not
+ * influence other particles. For second order variational equation, index_1st_order_a/b
+ * is the index in the particle array that corresponds to the 1st order variational
+ * equations.
+ */
 struct reb_variational_configuration{
-    struct reb_simulation* sim; // Reference to the simulation.
-    int order;                  // Order of the variational equation. 1 or 2. 
-    int index;                  // Index of the first variational particle in the particles array.
-    int testparticle;           // Is this variational configuration describe a test particle? -1 if not.
-    int index_1st_order_a;      // Used for 2nd order variational particles only: Index of the first order variational particle in the particles array.
-    int index_1st_order_b;      // Used for 2nd order variational particles only: Index of the first order variational particle in the particles array.
-    double lrescale;             // Accumulates the logarithm of rescalings
+    struct reb_simulation* sim; /// Reference to the simulation.
+    int order;                  /// Order of the variational equation. 1 or 2.
+    int index;                  /// Index of the first variational particle in the particles array.
+    int testparticle;           /// Is this variational configuration describe a test particle? -1 if not.
+    int index_1st_order_a;      /// Used for 2nd order variational particles only: Index of the first order variational particle in the particles array.
+    int index_1st_order_b;      /// Used for 2nd order variational particles only: Index of the first order variational particle in the particles array.
+    double lrescale;            /// Accumulates the logarithm of rescalings
 };
 
-// Add and initialize a set of first order variational particles
-// If testparticle is >= 0, then only one variational particle (the test particle) will be added.
-// If testparticle is -1, one variational particle for each real particle will be added.
-// Returns the index of the first variational particle added
+/** Add and initialize a set of first order variational particles
+ *
+ * If testparticle is >= 0, then only one variational particle (the test particle) will be added.
+ * If testparticle is -1, one variational particle for each real particle will be added.
+ *
+ * Returns the index of the first variational particle added
+ */
 int reb_add_var_1st_order(struct reb_simulation* const r, int testparticle);
 
-// Add and initialize a set of second order variational particles
-// Note: a set of second order variational particles requires two sets of first order variational equations.
-// If testparticle is >= 0, then only one variational particle (the test particle) will be added.
-// If testparticle is -1, one variational particle for each real particle will be added.
-// index_1st_order_a is the index of the corresponding first variational particles.
-// index_1st_order_b is the index of the corresponding first variational particles.
-// Returns the index of the first variational particle added
+/** Add and initialize a set of second order variational particles
+ *
+ * Note: a set of second order variational particles requires two sets of first order variational equations.
+ *
+ * If testparticle is >= 0, then only one variational particle (the test particle) will be added.
+ * If testparticle is -1, one variational particle for each real particle will be added.
+ *
+ * index_1st_order_a is the index of the corresponding first variational particles.
+ * index_1st_order_b is the index of the corresponding first variational particles.
+ *
+ * Returns the index of the first variational particle added
+ */
 int reb_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b);
 
-// Rescale all sets of variational particles if their size gets too large (>1e100).
-// This can prevent an overflow in floating point numbers. The logarithm of the rescaling
-// factor is stored in the reb_variational_configuration's lrescale variable. 
-// This function is called automatically every timestep. To avoid automatic rescaling,
-// set the reb_variational_configuration's lrescale variable to -1.
-// For this function to work, the positions and velocities needs to be synchronized. 
-// A warning is presented if the integrator is not synchronized. 
+/** Rescale all sets of variational particles if their size gets too large (>1e100).
+ *
+ * This can prevent an overflow in floating point numbers. The logarithm of the rescaling
+ * factor is stored in the reb_variational_configuration's lrescale variable.
+ * This function is called automatically every timestep. To avoid automatic rescaling,
+ * set the reb_variational_configuration's lrescale variable to -1.
+ * For this function to work, the positions and velocities needs to be synchronized.
+ * A warning is presented if the integrator is not synchronized.
+ */
 void reb_var_rescale(struct reb_simulation* const r);
 
 // These functions calculates the first/second derivative of a Keplerian orbit. 
