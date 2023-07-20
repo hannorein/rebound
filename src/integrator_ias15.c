@@ -494,12 +494,11 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }
         }
     }
-
     // Set time back to initial value (will be updated below) 
     r->t = t_beginning;
     // Find new timestep
     const double dt_done = r->dt;
-                    
+    
     // If dt_mode == 0: use the b6/y'' dt calculation mode
     double safety_factor;
     double* bp = b.p6;
@@ -568,7 +567,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         }else{                  // In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
             dt_new = dt_done/safety_factor; // by default, increase timestep a little
         }
-
+        
         if (fabs(dt_new)<r->ri_ias15.min_dt) dt_new = copysign(r->ri_ias15.min_dt,dt_new);
         
         if (fabs(dt_new/dt_done) < safety_factor) { // New timestep is significantly smaller.
