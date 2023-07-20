@@ -499,7 +499,6 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     r->t = t_beginning;
     // Find new timestep
     const double dt_done = r->dt;
-    const double dtmode_zeta = 2.4 * sqrt7(r->ri_ias15.epsilon);
     double safety_factor = safety_factor_dtmode_0;
     double dt_new;
 
@@ -564,7 +563,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             // Otherwise, use zeta * y''/y''' = dt timestep calculation method
             // Loop over all particles and choose the smallest dt
             unsigned int Nreal = N - r->N_var;
-            
+            const double dtmode_zeta = 2.4 * sqrt7(r->ri_ias15.epsilon);
             if (r->ri_ias15.epsilon_global){
                 double maxak = 0.;
                 double maxb0k = 0.;
