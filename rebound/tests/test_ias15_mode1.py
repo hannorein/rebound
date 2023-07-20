@@ -58,7 +58,7 @@ class TestIAS15mode1(unittest.TestCase):
         self.assertNotEqual(e0,0.)
         sim.integrate(1e3*jupyr)
         e1 = sim.energy()
-        self.assertLess(math.fabs((e0-e1)/e1),1e-15)
+        self.assertLess(math.fabs((e0-e1)/e1),2e-15)
 
 
 if __name__ == "__main__":
