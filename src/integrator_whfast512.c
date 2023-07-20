@@ -778,7 +778,7 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
 #else // AVX512
 // Dummy function when AVX512 is not available
 void reb_integrator_whfast512_part1(struct reb_simulation* const r){
-    reb_error(r, "WHFast512 is not available. Please make sure your CPU supports AVX512 instructions, then recompile REBOUND with the AVX512 option turned on in the Makefile or setup.py file.");
+    reb_error(r, "WHFast512 is not available. Please make sure your CPU supports AVX512 instructions, then recompile REBOUND with the AVX512 option turned on in the Makefile or set the AVX512 environment variable to 1 before running pip install.");
     r->status = REB_EXIT_ERROR;
 }
 #endif // AVX512
