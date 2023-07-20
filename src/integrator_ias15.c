@@ -75,7 +75,7 @@ static void predict_next_step(double ratio, int N3,  const struct reb_dpconst7 _
 //   Constants 
 
 static const double safety_factor_dtmode_0  = 0.25; /**< Maximum increase/deacrease of consecutve timesteps. */
-static const double safety_factor_dtmode_1  = 0.50; /**< Maximum increase/deacrease of consecutve timesteps in dtmode 1. */
+static const double safety_factor_dtmode_1  = 0.85; /**< Maximum increase/deacrease of consecutve timesteps in dtmode 1. */
 
 // Gauss Radau spacings
 static const double h[8]    = { 0.0, 0.0562625605369221464656521910318, 0.180240691736892364987579942780, 0.352624717113169637373907769648, 0.547153626330555383001448554766, 0.734210177215410531523210605558, 0.885320946839095768090359771030, 0.977520613561287501891174488626};
@@ -499,7 +499,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     r->t = t_beginning;
     // Find new timestep
     const double dt_done = r->dt;
-    const double dtmode_zeta = sqrt7(r->ri_ias15.epsilon);
+    const double dtmode_zeta = 2.4 * sqrt7(r->ri_ias15.epsilon);
     double safety_factor = safety_factor_dtmode_0;
     double dt_new;
 
@@ -558,30 +558,67 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }else{                  // In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
+
+            
         }else{ 
             // Otherwise, use zeta * y''/y''' = dt timestep calculation method
             // Loop over all particles and choose the smallest dt
             unsigned int Nreal = N - r->N_var;
+            
+            if (r->ri_ias15.epsilon_global){
+                double maxak = 0.;
+                double maxb0k = 0.;
+                for(int i=0;i<Nreal;i++){
+                    for(int k=3*i;k<3*(i+1);k++) {
 
-            dt_new = 0.; // Will update this value in the loop below
-            for(int i=0;i<Nreal;i++){
-                double y2tmp = at[3*i+0]*at[3*i+0] + at[3*i+1]*at[3*i+1] + at[3*i+2]*at[3*i+2];
-                // Technically, y''' = a0 = b0 / dt, but we only have b0 here, will divide by dt later
-                double y3tmp = b.p0[3*i+0]*b.p0[3*i+0] + b.p0[3*i+1]*b.p0[3*i+1] + b.p0[3*i+2]*b.p0[3*i+2];
-                double dttmp = sqrt(y2tmp / y3tmp) * r->dt * dtmode_zeta;
+                        const double ak = fabs(at[k]);
+                        const double b0k = fabs(b.p0[k]);
 
-                if (isnormal(dttmp) && (dt_new == 0. || fabs(dttmp) < fabs(dt_new))) {
-                    dt_new = dttmp;
+                        if (isnormal(ak) && ak>maxak){
+                            maxak = ak;                        }
+                        if (isnormal(b0k) && b0k>maxb0k){
+                            maxb0k = b0k;
+                        }
+                    }
+                }
+                dt_new = (maxak / maxb0k) * dt_done * dtmode_zeta;
+
+            }else{
+                // This individual component version gives unrealistic dt
+                // So we use the version below that calculates the length of the vectors?
+                // dt_new = 0.; // Will update this value in the loop below
+                // for(int i=0;i<N3;i++){
+                //     double y2tmp = at[i];
+                //     double y3tmp = b.p0[i];
+                //     double dttmp = fabs(y2tmp / y3tmp) * dt_done * dtmode_zeta;
+
+                //     if (isnormal(dttmp) && (dt_new == 0. || fabs(dttmp) < fabs(dt_new))) {
+                //         dt_new = dttmp;
+                //     }
+                // }
+
+                // In this version, we find the minimum dt over all particles
+                // Where the dt is calculated from the length of vector, instead of individual components
+                dt_new = 0.; // Will update this value in the loop below
+                for(int i=0;i<Nreal;i++){
+                    double y2tmp = at[3*i+0]*at[3*i+0] + at[3*i+1]*at[3*i+1] + at[3*i+2]*at[3*i+2];
+                    double y3tmp = b.p0[3*i+0]*b.p0[3*i+0] + b.p0[3*i+1]*b.p0[3*i+1] + b.p0[3*i+2]*b.p0[3*i+2];
+                    double dttmp = sqrt(y2tmp / y3tmp) * dt_done * dtmode_zeta;
+
+                    if (isnormal(dttmp) && (dt_new == 0. || fabs(dttmp) < fabs(dt_new))) {
+                        dt_new = dttmp;
+                    }
                 }
             }
 
             safety_factor = safety_factor_dtmode_1;
-
-            if  (dt_new == 0.){ // If the rare case that no new dt is found, use default){
+            if  (!isnormal(dt_new) || dt_new == 0.){ // In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
+
+            // printf("%e\n", dt_new)
+
         }
-            
 
         if (fabs(dt_new)<r->ri_ias15.min_dt) dt_new = copysign(r->ri_ias15.min_dt,dt_new);
 
@@ -613,7 +650,6 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             if (dt_new/dt_done > 1./safety_factor) dt_new = dt_done /safety_factor; // Don't increase the timestep by too much compared to the last one.
         }
         r->dt = dt_new;
-    }
 
     // Find new position and velocity values at end of the sequence
     for(int k=0;k<N3;++k) {
