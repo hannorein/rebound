@@ -699,12 +699,11 @@ It is using Single Instruction Multiple Data (SIMD) parallelism and 512-bit Adva
     ```
 
 === "Python"
-    To use WHFast512 from python, you cannot use `pip install rebound`. 
-    Instead download the source code of REBOUND. 
-    Open `the setup.py` file in the main directory and find the line where `extra_compile_args` are declared.
-    Comment out the line without AVX512 and uncomment the line with AVX512.
-    Then install REBOUND by running 
+    To use WHFast512 from python, you need to compile REBOUND with AVX512 instructions enabled. They are disabled by default.
+    First, download the source code of REBOUND. 
+    Then set the AVX512 environment variable and install REBOUND by running 
     ```
+    export AVX512=1
     pip install -e .
     ```
     from the main directory. 
