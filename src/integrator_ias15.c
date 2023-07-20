@@ -501,7 +501,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     
     // If dt_mode == 0: use the b6/y'' dt calculation mode
     double safety_factor;
-    double* bp = b.p6;
+    double* bp;
     // Otherwise, use zeta * y''/y''' = dt timestep calculation method
     if (r->ri_ias15.dt_mode == 0){
         bp = b.p6;
@@ -538,7 +538,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                     if (isnormal(ak) && ak>maxak){
                         maxak = ak;
                     }
-                    const double bk = bp[k];
+                    const double bk = fabs(bp[k]);
                     if (isnormal(bk) && bk>maxbk){
                         maxbk = bk;
                     }
