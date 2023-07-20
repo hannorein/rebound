@@ -575,7 +575,8 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                         const double b0k = fabs(b.p0[k]);
 
                         if (isnormal(ak) && ak>maxak){
-                            maxak = ak;                        }
+                            maxak = ak;
+                        }
                         if (isnormal(b0k) && b0k>maxb0k){
                             maxb0k = b0k;
                         }
@@ -615,9 +616,6 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             if  (!isnormal(dt_new) || dt_new == 0.){ // In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
-
-            // printf("%e\n", dt_new)
-
         }
 
         if (fabs(dt_new)<r->ri_ias15.min_dt) dt_new = copysign(r->ri_ias15.min_dt,dt_new);
@@ -650,6 +648,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             if (dt_new/dt_done > 1./safety_factor) dt_new = dt_done /safety_factor; // Don't increase the timestep by too much compared to the last one.
         }
         r->dt = dt_new;
+    }
 
     // Find new position and velocity values at end of the sequence
     for(int k=0;k<N3;++k) {
