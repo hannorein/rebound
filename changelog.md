@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.26.1
+* Added support for `AVX512` and `FFP_CONTRACT_OFF` environment variables when using pip to install REBOUND.
+
 ### Version 3.26.0
 * Added WHFast512 integrator (Javaheri, Rein, Tamayo 2023)
 
