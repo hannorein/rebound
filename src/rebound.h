@@ -119,6 +119,7 @@ struct reb_simulation_integrator_ias15 {
     double epsilon;
     double min_dt;
     unsigned int epsilon_global;
+    unsigned int dt_mode;
    
     // Internal use
     unsigned long iterations_max_exceeded; // Counter how many times the iteration did not converge. 
@@ -608,6 +609,7 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_IAS15_MINDT = 70,
     REB_BINARY_FIELD_TYPE_IAS15_EPSILONGLOBAL = 71,
     REB_BINARY_FIELD_TYPE_IAS15_ITERATIONSMAX = 72,
+    REB_BINARY_FIELD_TYPE_IAS15_DTMODE = 401,
     REB_BINARY_FIELD_TYPE_PARTICLES = 85,
     REB_BINARY_FIELD_TYPE_VARCONFIG = 86,
     REB_BINARY_FIELD_TYPE_FUNCTIONPOINTERS = 87,

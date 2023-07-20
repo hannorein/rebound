@@ -450,11 +450,13 @@ class reb_simulation_integrator_ias15(Structure):
     
     """
     def __repr__(self):
-        return '<{0}.{1} object at {2}, epsilon={3}, min_dt={4}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.epsilon, self.min_dt)
-    
+        return '<{0}.{1} object at {2}, dt_mode={3}, epsilon={4}, min_dt={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.dt_mode, self.epsilon, self.min_dt)
+
+
     _fields_ = [("epsilon", c_double),
                 ("min_dt", c_double),
                 ("epsilon_global", c_uint),
+                ("dt_mode", c_uint),
                 ("_iterations_max_exceeded", c_ulong),
                 ("_allocatedN", c_int),
                 ("_at", POINTER(c_double)),
