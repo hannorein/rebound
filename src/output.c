@@ -346,7 +346,12 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     WRITE_FIELD(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global,        sizeof(unsigned int));
     WRITE_FIELD(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded,sizeof(unsigned long));
     WRITE_FIELD(IAS15_DTMODE,       &r->ri_ias15.dt_mode,               sizeof(unsigned int));
-    WRITE_FIELD(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN,            sizeof(int));
+    if (r->ri_ias15.allocatedN>r->N*3){
+        int N3 = 3*r->N; // Useful to avoid file size increase if particles got removed
+        WRITE_FIELD(IAS15_ALLOCATEDN,   &N3,            sizeof(int));
+    }else{
+        WRITE_FIELD(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN,            sizeof(int));
+    }
     WRITE_FIELD(JANUS_SCALEPOS,     &r->ri_janus.scale_pos,             sizeof(double));
     WRITE_FIELD(JANUS_SCALEVEL,     &r->ri_janus.scale_vel,             sizeof(double));
     WRITE_FIELD(JANUS_ORDER,        &r->ri_janus.order,                 sizeof(unsigned int));
