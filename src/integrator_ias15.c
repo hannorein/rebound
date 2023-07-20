@@ -499,7 +499,6 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     r->t = t_beginning;
     // Find new timestep
     const double dt_done = r->dt;
-    double dt_new;
                     
     // If dt_mode == 0: use the b6/y'' dt calculation mode
     double safety_factor;
@@ -534,9 +533,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 const double v2 = particles[mi].vx*particles[mi].vx+particles[mi].vy*particles[mi].vy+particles[mi].vz*particles[mi].vz;
                 const double x2 = particles[mi].x*particles[mi].x+particles[mi].y*particles[mi].y+particles[mi].z*particles[mi].z;
                 // Skip slowly varying accelerations
-                if (fabs(v2*r->dt*r->dt/x2) < 1e-16) {
-                    continue;
-                }
+                if (fabs(v2*r->dt*r->dt/x2) < 1e-16) continue;
                 for(int k=3*i;k<3*(i+1);k++) { 
                     const double ak  = fabs(at[k]);
                     if (isnormal(ak) && ak>maxak){
@@ -560,6 +557,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }
         }
 
+        double dt_new;
         if  (isnormal(integrator_error)){   
             // if error estimate is available increase by more educated guess
             if (r->ri_ias15.dt_mode == 0){
