@@ -12,8 +12,9 @@ class TestIAS15mode1(unittest.TestCase):
         sim.move_to_com()
         sim.integrator = "ias15"
         sim.ri_ias15.dt_mode = 1
-        sim.save("sim.bin")
         jupyr = 11.86*2.*math.pi
+        sim.integrate(1e1*jupyr)
+        sim.save("sim.bin")
         sim.integrate(1e3*jupyr)
 
         sim2 = rebound.Simulation("sim.bin")
