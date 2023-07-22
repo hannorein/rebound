@@ -177,6 +177,9 @@ void reb_integrator_trace_interaction_step(struct reb_simulation* const r, doubl
         particles[i].vx += dt*particles[i].ax;
         particles[i].vy += dt*particles[i].ay;
         particles[i].vz += dt*particles[i].az;
+        //if (i == 2){
+        //  printf("%e %e %e %e\n", r->t, particles[i].ax, particles[i].ay, particles[i].az);
+      //}
     }
 }
 
@@ -199,7 +202,7 @@ void reb_integrator_trace_jump_step(struct reb_simulation* const r, double dt){
     pz /= r->particles[0].m;
     const int N_all = r->N;
     for (int i=1;i<N_all;i++){
-        particles[i].x += dt*px*(1-current_L); // TLu crude test particle fix
+        particles[i].x += dt*px*(1-current_L);
         particles[i].y += dt*py*(1-current_L);
         particles[i].z += dt*pz*(1-current_L);
     }
@@ -597,6 +600,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       int ctry = Ftry(r);
       if (ctry){ // Something has been flagged.
         // Reset to backup values
+        //printf("Rejection\n");
         for (int i=0; i<N; i++){
             r->particles[i] = ri_tr->particles_backup[i];
         }
@@ -632,7 +636,11 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 
     else{ // there has been a pericenter close encounter.
       // Immediately integrate entire sim with BS - no Jump step
-      reb_integrator_trace_interaction_step(r, r->dt/2.);
+      //if (r->t != 0.0){
+        //printf("Interaction one\n");
+        // BUG: IF YOU START AT PERI CE ERROR IS BAD
+        reb_integrator_trace_interaction_step(r, r->dt/2.);
+      //}
       reb_integrator_trace_com_step(r,r->dt);
 
       memcpy(ri_tr->particles_backup_try,r->particles,r->N*sizeof(struct reb_particle));
@@ -647,6 +655,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       ri_tr->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
       reb_trace_bs_step(r, r->dt); // This will do nothing if no close encounters
     }
+    //printf("Interaction two\n");
     reb_integrator_trace_interaction_step(r,r->dt/2.);
 
     ri_tr->is_synchronized = 0;

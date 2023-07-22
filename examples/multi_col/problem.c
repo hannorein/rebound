@@ -50,7 +50,7 @@ int main(int argc, char* argv[]){
     // Command line arguments for new timestep
     double new_dt = 0.0;
     if (argc == 2){
-      new_dt = (atof(argv[1]) * 5.0);
+      new_dt = (atof(argv[1]) * 1.0);
       r->dt = (new_dt / 365.) * 2. * M_PI;
     }
     r->integrator = REB_INTEGRATOR_TRACE;
