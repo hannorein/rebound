@@ -48,17 +48,17 @@ int main(int argc, char* argv[]){
     //r->dt = (8./365.)*2.*M_PI;
 
     // Command line arguments for new timestep
-    double new_dt = 0.0;
-    if (argc == 2){
-      new_dt = (atof(argv[1]) * 1.0);
-      r->dt = (new_dt / 365.) * 2. * M_PI;
-    }
+    //double new_dt = 0.0;
+    //if (argc == 2){
+    //  new_dt = (atof(argv[1]) * 1.0);
+    r->dt = (8. / 365.) * 2. * M_PI;
+    //}
     r->integrator = REB_INTEGRATOR_TRACE;
     r->ri_tr.hillfac = 4.;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
     r->ri_tr.peri = 0.01;
     r->N_active = 2;
     r->visualization= REB_VISUALIZATION_NONE;
-    r->heartbeat  = heartbeat;
+    //r->heartbeat  = heartbeat;
     //r->ri_mercurius.hillfac = 4;
 
     // Initialize masses
@@ -100,11 +100,11 @@ int main(int argc, char* argv[]){
     e2_init = jacobi_dh(r, 3);
     //system("rm -rf energy.txt");
 
-    reb_integrate(r, 50000.*11.86*2.*M_PI);
+    reb_integrate(r, 500000.*11.86*2.*M_PI);
     //reb_integrate(r, 120.);
     //reb_integrate(r, 119.);
     reb_free_simulation(r);
-    printf("%f %e %e\n", new_dt, etot, emax);
+    // printf("%f %e %e\n", new_dt, etot, emax);
 }
 
 void heartbeat(struct reb_simulation* r){

@@ -342,6 +342,7 @@ double reb_integrator_trace_calculate_dcrit_for_particle(struct reb_simulation* 
     const double a = GM*_r / (2.*GM - _r*v2);
     // const double vc = sqrt(GM/fabs(a));
     double dcrit = ri_tr->hillfac*a*cbrt(r->particles[i].m/(3.*r->particles[0].m));
+    //printf("%d %f\n", i, dcrit);
     // Criteria 1: average velocity
     //dcrit = MAX(dcrit, vc*0.4*r->dt);
     // Criteria 2: current velocity
@@ -555,13 +556,10 @@ int Ftry(struct reb_simulation* const r){
 void reb_integrator_trace_part2(struct reb_simulation* const r){
     struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
     const int N = r->N;
-
     // Make copy of particles
     memcpy(ri_tr->particles_backup,r->particles,N*sizeof(struct reb_particle));
 
     // Set encounter map
-    //memset(ri_tr->encounter_map, 0, N);
-    //memset(ri_tr->current_Ks, 0, (N-1)*(N-2)/2);
     ri_tr->encounter_map[0] = 1;
     for (int i=1; i<N; i++){
         ri_tr->encounter_map[i] = 0;
@@ -577,7 +575,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     F0(r); // Check initial condition
 
     if (!ri_tr->current_L){ // No pericenter close encounter, proceed as normal
-
 
       // Make copy of encounter map if needed
       memcpy(ri_tr->encounter_map_backup,ri_tr->encounter_map,N*sizeof(int));
@@ -600,7 +597,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       int ctry = Ftry(r);
       if (ctry){ // Something has been flagged.
         // Reset to backup values
-        //printf("Rejection\n");
+        // ri_tr->delta_Ks[0] += 1;
         for (int i=0; i<N; i++){
             r->particles[i] = ri_tr->particles_backup[i];
         }
@@ -639,7 +636,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       //if (r->t != 0.0){
         //printf("Interaction one\n");
         // BUG: IF YOU START AT PERI CE ERROR IS BAD
-        reb_integrator_trace_interaction_step(r, r->dt/2.);
+      reb_integrator_trace_interaction_step(r, r->dt/2.);
       //}
       reb_integrator_trace_com_step(r,r->dt);
 
