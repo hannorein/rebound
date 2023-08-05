@@ -2590,7 +2590,7 @@ Simulation._fields_ = [
                 ("dt", c_double),
                 ("dt_last_done", c_double),
                 ("steps_done", c_ulonglong),
-                ("N", c_int),
+                ("N", c_uint),
                 ("N_var", c_int),
                 ("var_config_N", c_int),
                 ("var_config", POINTER(Variation)),

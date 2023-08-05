@@ -782,7 +782,7 @@ struct reb_simulation {
     double  dt;
     double  dt_last_done;
     unsigned long long steps_done;
-    int     N;
+    unsigned int     N;
     int     N_var;
     int     var_config_N;
     struct reb_variational_configuration* var_config;   // These configuration structs contain details on variational particles. 
