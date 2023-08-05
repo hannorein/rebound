@@ -97,7 +97,7 @@ static controlVars_const control_vars_cast(controlVars in)
 
 
 // Top level functions
-static void reb_tes_init(struct reb_simulation* r, uint32_t z_n);
+static void reb_tes_init(struct reb_simulation* r);
 static void reb_tes_free(struct reb_simulation* r);
 
 // Gravity functions
@@ -106,10 +106,9 @@ static void reb_dhem_perform_summation(struct reb_simulation* r, double * Q, dou
 static void reb_dhem_calc_osc_orbits_for_all_stages(struct reb_simulation* r, double t0, double h, const double * hArr, uint32_t z_stagesPerStep, uint32_t z_rebasis);
 static void reb_dhem_init_osc_orbits(struct reb_simulation* r, double * Q, double * P, double t);
 static void reb_dhem_rhs(struct reb_simulation* r, double const * __restrict__ const dQ, double const * __restrict__ const dP, double * __restrict__ const dQ_dot,
-              double * __restrict__ const dP_dot, double * __restrict__ const dQ_ddot, double * __restrict__ const dP_ddot);
+              double * __restrict__ const dP_dot, double * __restrict__ const dQ_ddot);
 static void reb_dhem_rhs_wrapped(struct reb_simulation* r, double * dQ, double * dP, double * dQ_dot,
-                      double * dP_dot, double * dQ_ddot, double * dP_ddot, uint32_t stageNumber,
-                      double * cs1, double * cs2);      
+                      double * dP_dot, double * dQ_ddot, uint32_t stageNumber);      
 static void reb_dhem_calc_osc_orbit_derivs(struct reb_simulation* r, double const * const __restrict__ Qosc, double const * const __restrict__ Posc, 
                                                       double * const __restrict__ Qosc_dot, double * const __restrict__ Posc_dot);
 static uint32_t reb_dhem_rectify(struct reb_simulation* r, double t, double * Q, double * P,
@@ -121,9 +120,9 @@ static void reb_dhem_free(struct reb_simulation* r);
 // Radau functions
 static void reb_radau_init(struct reb_simulation* r);
 static void reb_radau_free(struct reb_simulation* r);
-static double reb_calc_stepsize(struct reb_simulation* r, double h, double hLast, double t);
+static double reb_calc_stepsize(struct reb_simulation* r, double h);
 static void reb_clear_rectified_b_fields(struct reb_simulation* r, controlVars * B, uint32_t * rectifiedArray);
-static double reb_single_step(struct reb_simulation* r, double z_t, double dt, double dt_last_done);
+static double reb_single_step(struct reb_simulation* r, double z_t, double dt);
 static void reb_init_radau_step(struct reb_simulation* r);
 static void reb_free_radau_step(struct reb_simulation* r);
 static void reb_free_controlvars(controlVars * var);
@@ -131,9 +130,9 @@ static void reb_init_controlvars(controlVars * var, uint32_t size);
 static void reb_clear_controlvars(controlVars * var);
 static void reb_calc_predictors(double h, double hSample, double const * __restrict__ z_state0, double const * __restrict__ z_dState, 
                          double const * __restrict__ z_ddState, controlVars const * z_B, double * __restrict__ z_predictors, 
-                         double const * __restrict__ z_csState, uint32_t const z_start, uint32_t const z_end);
+                         uint32_t const z_start, uint32_t const z_end);
 static void reb_calc_predictors_1st_order(double h, double hSample, double * z_state0, double * z_dState, 
-                                  controlVars * z_B, double * z_predictors, double *, uint32_t start, uint32_t length);
+                                  controlVars * z_B, double * z_predictors, uint32_t start, uint32_t length);
 
 static void reb_update_state(double h, double * z_dState, double * z_ddState, controlVars * z_B, double * z_state0, double * z_csState, uint32_t z_start, uint32_t z_end);
 static void reb_update_state_1st_order(double h, double * z_dState, controlVars * z_B, double * z_state0, double * z_csState, uint32_t z_start, uint32_t z_end);
@@ -141,7 +140,7 @@ static void reb_analytical_continuation(struct reb_simulation* r, controlVars * 
 static void reb_calc_g_from_b(struct reb_simulation* r);\
 static void reb_calc_g_from_b_internal(controlVars * z_G, controlVars * z_B, uint32_t z_start, uint32_t z_end);
 static void reb_radau_step(struct reb_simulation* r, uint32_t * z_fCalls, double t, double h);
-static double reb_calc_step_error(struct reb_simulation* r, double h, double t);
+static double reb_calc_step_error(struct reb_simulation* r);
 
 // Universal variables functions
 static void reb_init_uvars(struct reb_simulation* const r);
@@ -187,7 +186,7 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         r->ri_tes.allocated_N = N;
         struct reb_particle* const particles = r->particles;
         
-        reb_tes_init(r, N);
+        reb_tes_init(r);
 
         // Convert from inertial to dh coords.
         reb_transformations_inertial_to_democraticheliocentric_posvel(particles, r->ri_tes.particles_dh, r->N, r->N);
@@ -231,7 +230,7 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
             r->ri_tes.orbital_period = reb_find_min_particle_period(r);
 
             // Update the rectification times again due to period change.
-            for(int32_t i = 0; i < r->N; i++)
+            for(uint32_t i = 0; i < r->N; i++)
             {
               r->ri_tes.rhs->rectifyTimeArray[i] = r->t + r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit;
               r->ri_tes.rhs->rectificationPeriod[i] = r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit;
@@ -239,7 +238,7 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         }     
     }
     
-    double dt_new = reb_single_step(r, r->t, r->dt, r->dt_last_done);
+    double dt_new = reb_single_step(r, r->t, r->dt);
 
     // update timestep
     r->t+=r->dt;
@@ -300,7 +299,7 @@ void reb_integrator_tes_reset(struct reb_simulation* r){
 
 void reb_integrator_tes_allocate_memory(struct reb_simulation* r)
 {
-    reb_tes_init(r, r->N);
+    reb_tes_init(r);
     reb_init_uvars(r);
     reb_dhem_init(r, r->ri_tes.orbital_period/r->ri_tes.recti_per_orbit, 9);
     reb_radau_init(r);          
@@ -310,7 +309,7 @@ void reb_integrator_tes_allocate_memory(struct reb_simulation* r)
 ///////////////////////////////////////////////////////////////////////////////////
 // Original TES file: Simulation.c
 ///////////////////////////////////////////////////////////////////////////////////
-static void reb_tes_init(struct reb_simulation* r, uint32_t z_n)
+static void reb_tes_init(struct reb_simulation* r)
 {
   if(r->ri_tes.allocated_N != 0)
   {
@@ -347,8 +346,7 @@ static void reb_tes_free(struct reb_simulation* r)
 // Original TES file: dhem.c
 ///////////////////////////////////////////////////////////////////////////////////
 static void reb_dhem_rhs_wrapped(struct reb_simulation* r, double * dQ, double * dP, double * dQ_dot,
-              double * dP_dot, double * dQ_ddot, double * dP_ddot, uint32_t stageNumber,
-              double * cs1, double * cs2)
+              double * dP_dot, double * dQ_ddot, uint32_t stageNumber)
 {
   DHEM * dhem = r->ri_tes.rhs;
   // Set up the pointer to the previously calculated osculating orbit values.
@@ -364,12 +362,12 @@ static void reb_dhem_rhs_wrapped(struct reb_simulation* r, double * dQ, double *
   dhem->Qosc_cs = dhem->Xosc_cs;
   dhem->Posc_cs = &dhem->Qosc_cs[3*r->N];
 
-  reb_dhem_rhs(r, dQ, dP, dQ_dot, dP_dot, dQ_ddot, dP_ddot);
+  reb_dhem_rhs(r, dQ, dP, dQ_dot, dP_dot, dQ_ddot);
 
 }
 
 static void reb_dhem_rhs(struct reb_simulation* r, double const * __restrict__ const dQ, double const * __restrict__ const dP, double * __restrict__ const dQ_dot,
-              double * __restrict__ const dP_dot, double * __restrict__ const dQ_ddot, double * __restrict__ const dP_ddot)
+              double * __restrict__ const dP_dot, double * __restrict__ const dQ_ddot)
 {
   DHEM * dhem = r->ri_tes.rhs;
   // Not necessary but makes code more reable.
@@ -523,7 +521,7 @@ static void reb_dhem_perform_summation(struct reb_simulation* r, double * Q, dou
     P[i] = 0;
   }
 
-  for(int32_t i = 1; i < r->N; i++)
+  for(uint32_t i = 1; i < r->N; i++)
   {
     Q[3*i+0] = dhem->Qosc[3*i+0] + (dQ[3*i+0] + (dhem->Qosc_cs[3*i+0] + r->ri_tes.radau->cs_dq[3*i+0]));
     Q[3*i+1] = dhem->Qosc[3*i+1] + (dQ[3*i+1] + (dhem->Qosc_cs[3*i+1] + r->ri_tes.radau->cs_dq[3*i+1]));
@@ -538,7 +536,7 @@ static void reb_dhem_perform_summation(struct reb_simulation* r, double * Q, dou
 
 static void reb_dhem_init_osc_orbits(struct reb_simulation* r, double * Q, double * P, double t)
 {
-  for(int32_t i = 1; i < r->N; i++)
+  for(uint32_t i = 1; i < r->N; i++)
   {
     reb_rebasis_osc_orbits(r, Q, P, t, i);
   }
@@ -565,7 +563,7 @@ uint32_t reb_dhem_rectify(struct reb_simulation* r, double t, double * Q, double
   dhem->Qosc_cs = dhem->Xosc_cs;
   dhem->Posc_cs = &dhem->Qosc_cs[3*r->N];
 
-  for(int32_t i = 1; i < r->N; i++)
+  for(uint32_t i = 1; i < r->N; i++)
   {
     rectifiedArray[3*i] = 0;
     rectifiedArray[3*i+1] = 0;
@@ -585,7 +583,7 @@ uint32_t reb_dhem_rectify(struct reb_simulation* r, double t, double * Q, double
     }
   }
 
-  for(int32_t i = 1; i < r->N; i++)
+  for(uint32_t i = 1; i < r->N; i++)
   {
     if(rectifyFlag != 0)
     {
@@ -641,7 +639,7 @@ static void reb_dhem_calc_osc_orbit_derivs(struct reb_simulation* r, double cons
   DHEM * dhem = r->ri_tes.rhs;
   const double GM0 = -r->G*dhem->m[0];
 
-  for(int32_t i = 1; i < r->N; i++)
+  for(uint32_t i = 1; i < r->N; i++)
   {
     const double m = r->ri_tes.mass[i];
     const double GMM = GM0*m;
@@ -766,7 +764,7 @@ static void reb_dhem_init(struct reb_simulation* r, double z_rectificationPeriod
 
   dhem->m_inv = (double*)malloc(r->N*sizeof(double));
 
-  for(int32_t i = 0; i < r->N; i++)
+  for(uint32_t i = 0; i < r->N; i++)
   {
     dhem->m_inv[i] = 1.0 / dhem->m[i];
     dhem->mTotal += dhem->m[i];
@@ -806,7 +804,7 @@ static inline void add_cs(double* out, double* cs, double inp)
 ///////////////////////////////////////////////////////////////////////////////////
 // Original TES file: dhem.c
 ///////////////////////////////////////////////////////////////////////////////////
-double reb_single_step(struct reb_simulation* r, double z_t, double dt, double dt_last_done)
+static double reb_single_step(struct reb_simulation* r, double z_t, double dt)
 {
     RADAU * radau = r->ri_tes.radau;
     uint32_t iterations = 0;
@@ -826,7 +824,7 @@ double reb_single_step(struct reb_simulation* r, double z_t, double dt, double d
     reb_radau_step(r, &iterations, z_t, dt);
     radau->convergenceIterations += iterations;
 
-    dt_new = r->ri_tes.epsilon > 0 ? reb_calc_stepsize(r, dt, dt_last_done, z_t) : dt;
+    dt_new = r->ri_tes.epsilon > 0 ? reb_calc_stepsize(r, dt) : dt;
 
     reb_analytical_continuation(r, &radau->B_1st, &radau->Blast_1st, dt, dt_new, radau->rectifiedArray);
     reb_analytical_continuation(r, &radau->B, &radau->Blast, dt, dt_new, radau->rectifiedArray);
@@ -891,12 +889,12 @@ static void reb_radau_free(struct reb_simulation* r)
   radau = NULL;
 }
 
-double reb_calc_stepsize(struct reb_simulation* r, double h, double hLast, double t)
+static double reb_calc_stepsize(struct reb_simulation* r, double h)
 {
   double hTrial = 0.0;
 
   // Get the error estimate and orbit size estimate.
-  double errMax = reb_calc_step_error(r, h, t);
+  double errMax = reb_calc_step_error(r);
 
   if(errMax > r->ri_tes.epsilon*10.0 && r->steps_done == 0)
   {
@@ -954,7 +952,7 @@ static void reb_radau_step(struct reb_simulation* r, uint32_t * z_iterations, do
   controlVars * B_1st = &r->ri_tes.radau->B_1st;
 
   reb_dhem_rhs_wrapped(r, radau->dQ, radau->dP, radau->dState0, &radau->dState0[3*r->N],
-             radau->ddState0, &radau->ddState0[3*r->N], 0, radau->cs_dState0, radau->cs_ddState0);
+             radau->ddState0, 0);
 
   radau->fCalls++;
 
@@ -970,13 +968,12 @@ static void reb_radau_step(struct reb_simulation* r, uint32_t * z_iterations, do
     for(uint32_t i = 1; i <= stages; i++)
     {
       reb_calc_predictors(h, hArr[i], radau->dX, radau->dState0, radau->ddState0, B,
-                          radau->predictors, radau->cs_dX, 3, r->ri_tes.stateVectorLength/2);
+                          radau->predictors, 3, r->ri_tes.stateVectorLength/2);
       reb_calc_predictors_1st_order(h, hArr[i], radau->dX, radau->dState0, B_1st, radau->predictors, 
-                                  radau->cs_dX, (int)r->ri_tes.stateVectorLength/2, r->ri_tes.stateVectorLength);
+                                  (int)r->ri_tes.stateVectorLength/2, r->ri_tes.stateVectorLength);
 
       reb_dhem_rhs_wrapped(r, radau->predictors, &radau->predictors[3*r->N], radau->dState, &radau->dState[3*r->N],
-           radau->ddState, &radau->ddState[3*r->N], i,
-           radau->cs_dState, radau->cs_ddState);
+           radau->ddState, i);
 
       radau->fCalls++;
 
@@ -1223,14 +1220,14 @@ static void reb_radau_step(struct reb_simulation* r, uint32_t * z_iterations, do
     errMax = 0;
     double q_ddot[3*r->N];
 
-    for(int32_t j = 1; j < r->N; j++)
+    for(uint32_t j = 1; j < r->N; j++)
     {
       q_ddot[3*j+0] = r->ri_tes.rhs->Xosc_dotArr[8][3*r->N+3*j+0] / r->ri_tes.mass[j];
       q_ddot[3*j+1] = r->ri_tes.rhs->Xosc_dotArr[8][3*r->N+3*j+1] / r->ri_tes.mass[j];
       q_ddot[3*j+2] = r->ri_tes.rhs->Xosc_dotArr[8][3*r->N+3*j+2] / r->ri_tes.mass[j];
     }    
 
-    for(int32_t j = 3; j < 3*r->N; j++)
+    for(uint32_t j = 3; j < 3*r->N; j++)
     {
       double b6 = fabs(radau->b6_store[j]);
       double acc = fabs(radau->acc_ptr[j]);
@@ -1256,7 +1253,7 @@ static void reb_radau_step(struct reb_simulation* r, uint32_t * z_iterations, do
     errMax = b6Max/acc_max_tb;
   
 
-    for(int32_t k = 1; k < r->N; k++)
+    for(uint32_t k = 1; k < r->N; k++)
     {
       ratio = NORM(radau->dX, k) / NORM(r->ri_tes.rhs->Qosc, k);
 
@@ -1287,14 +1284,14 @@ static void reb_radau_step(struct reb_simulation* r, uint32_t * z_iterations, do
   reb_apply_osc_orbit_corrector(r, r->ri_tes.rhs->XoscArr, t+h, 9); 
 }
 
-double reb_calc_step_error(struct reb_simulation* r, double h, double t)
+double reb_calc_step_error(struct reb_simulation* r)
 {
   RADAU * radau = r->ri_tes.radau;
   double b6Max = 0;
   double accMax = 0;
   double errMax = 0;
 
-  for(int32_t i = 0; i < r->N; i++) 
+  for(uint32_t i = 0; i < r->N; i++) 
   {
       for(uint32_t j = 0; j < 3; j++)
       {
@@ -1395,7 +1392,7 @@ static void reb_analytical_continuation(struct reb_simulation* r, controlVars * 
 }
 
 static void reb_calc_predictors_1st_order(double h, double hSample, double * z_state0, double * z_dState0, 
-                                    controlVars * z_B, double * z_predictors, double * z_csState, 
+                                    controlVars * z_B, double * z_predictors, 
                                     uint32_t z_start, uint32_t z_end)
 {
     double s[9];
@@ -1424,7 +1421,7 @@ static void reb_calc_predictors_1st_order(double h, double hSample, double * z_s
             
 static void reb_calc_predictors(double h, double hSample, double const * __restrict__ z_state0, double const * __restrict__ z_dState, 
                          double const * __restrict__ z_ddState, controlVars const * z_B, double * __restrict__ z_predictors, 
-                         double const * __restrict__ z_csState, uint32_t const z_start, uint32_t const z_end)
+                         uint32_t const z_start, uint32_t const z_end)
 {
     double s[9];
     s[0] = h * hSample;
@@ -1620,7 +1617,7 @@ static void reb_calc_osc_orbits(struct reb_simulation* r, double **Xosc_map,
     }
 
     double C[4] = {0.0, 0.0, 0.0, 0.0};
-    for(int32_t i = 1; i < r->N; i++)
+    for(uint32_t i = 1; i < r->N; i++)
     {  
       // Calculate the dt value and wrap around the orbital period.
       dt = fmod(dt, p_uVars->period[i]);
@@ -1637,7 +1634,7 @@ static void reb_calc_osc_orbits(struct reb_simulation* r, double **Xosc_map,
       p_uVars->C.c3[i] = C[3];
     }
 
-    for(int32_t i = 1; i < r->N; i++)
+    for(uint32_t i = 1; i < r->N; i++)
     {    
       double * Qout = Xosc_map[stage];
       double * Pout = &Qout[3*r->N];      
@@ -1736,7 +1733,7 @@ static void reb_apply_osc_orbit_corrector(struct reb_simulation* r, double **Xos
     double * Qout = Xosc_map[z_stagePerStep-1];
     double * Pout = &Qout[3*r->N];      
 
-    for(int32_t i = 1; i < r->N; i++)
+    for(uint32_t i = 1; i < r->N; i++)
     {
         for(uint32_t j = 0; j < 3; j++)
         {
