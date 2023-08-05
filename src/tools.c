@@ -1242,7 +1242,7 @@ void reb_tools_particle_to_pal(double G, struct reb_particle p, struct reb_parti
 }
 
 struct reb_particle reb_tools_pal_to_particle(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy){
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     np.m = m;
 
     double p=0.,q=0.;
