@@ -333,7 +333,7 @@ void reb_free_pointers(struct reb_simulation* const r){
     reb_integrator_bs_reset(r);
     reb_integrator_tes_reset(r);
     if(r->free_particle_ap){
-        for(int i=0; i<r->N; i++){
+        for(unsigned int i=0; i<r->N; i++){
             r->free_particle_ap(&r->particles[i]);
         }
     }

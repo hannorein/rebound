@@ -258,7 +258,7 @@ void reb_update_acceleration(struct reb_simulation* r){
         if (r->integrator==REB_INTEGRATOR_MERCURIUS){
             struct reb_particle* restrict const particles = r->particles;
             struct reb_particle* restrict const backup = r->ri_mercurius.particles_backup_additionalforces;
-            for (int i=0;i<r->N;i++){
+            for (unsigned int i=0;i<r->N;i++){
                 particles[i].x = backup[i].x;
                 particles[i].y = backup[i].y;
                 particles[i].z = backup[i].z;

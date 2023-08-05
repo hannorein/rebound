@@ -139,7 +139,7 @@ struct reb_simulation_integrator_ias15 {
     struct reb_dp7 er;   // Same for e coefficients
 
     int* map;               // internal map to particles (this is an identity map except when MERCURIUS is used
-    int map_allocated_N;    // allocated size for map
+    unsigned int map_allocated_N;    // allocated size for map
 };
 
 struct reb_simulation_integrator_mercurius {

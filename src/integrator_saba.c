@@ -141,7 +141,7 @@ static void reb_saba_corrector_step(struct reb_simulation* r, double cc){
             // Calculate jerk
             reb_whfast_calculate_jerk(r);
 
-            for (int i=0; i<N; i++){
+            for (unsigned int i=0; i<N; i++){
                 const double prefact = r->dt*r->dt;
                 particles[i].ax = prefact*p_j[i].ax; 
                 particles[i].ay = prefact*p_j[i].ay; 

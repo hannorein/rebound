@@ -471,7 +471,7 @@ class reb_simulation_integrator_ias15(Structure):
                 ("_br", reb_dp7),
                 ("_er", reb_dp7),
                 ("_map", POINTER(c_int)),
-                ("_map_allocated_n", c_int),
+                ("_map_allocated_n", c_uint),
                 ]
 
 class reb_simulation_integrator_saba(Structure):

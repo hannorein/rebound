@@ -156,7 +156,7 @@ static inline void add_cs(double* p, double* csp, double inp){
 }
 
 void reb_integrator_ias15_alloc(struct reb_simulation* r){
-    int N3;
+    unsigned int N3;
     if (r->integrator==REB_INTEGRATOR_MERCURIUS){
         N3 = 3*r->ri_mercurius.encounterN;// mercurius close encounter
     }else{ 
@@ -178,7 +178,7 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
         r->ri_ias15.csa0 = realloc(r->ri_ias15.csa0,sizeof(double)*N3);
         double* restrict const csx = r->ri_ias15.csx; 
         double* restrict const csv = r->ri_ias15.csv; 
-        for (int i=0;i<N3;i++){
+        for (unsigned int i=0;i<N3;i++){
             // Kill compensated summation coefficients
             csx[i] = 0;
             csv[i] = 0;
@@ -187,7 +187,7 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
     }
     if (N3/3 > r->ri_ias15.map_allocated_N){
         r->ri_ias15.map = realloc(r->ri_ias15.map,sizeof(int)*(N3/3));
-        for (int i=0;i<N3/3;i++){
+        for (unsigned int i=0;i<N3/3;i++){
             r->ri_ias15.map[i] = i;
         }
         r->ri_ias15.map_allocated_N = N3/3;
@@ -512,7 +512,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         if (r->ri_ias15.epsilon_global){
             double maxak = 0.0;
             double maxb6k = 0.0;
-            for(int i=0;i<Nreal;i++){ // Looping over all particles and all 3 components of the acceleration. 
+            for(unsigned int i=0;i<Nreal;i++){ // Looping over all particles and all 3 components of the acceleration. 
                 // Note: Before December 2020, N-N_var, was simply N. This change should make timestep choices during
                 // close encounters more stable if variational particles are present.
                 int mi = map[i];
@@ -520,7 +520,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 const double x2 = particles[mi].x*particles[mi].x+particles[mi].y*particles[mi].y+particles[mi].z*particles[mi].z;
                 // Skip slowly varying accelerations
                 if (fabs(v2*r->dt*r->dt/x2) < 1e-16) continue;
-                for(int k=3*i;k<3*(i+1);k++) { 
+                for(unsigned int k=3*i;k<3*(i+1);k++) { 
                     const double ak  = fabs(at[k]);
                     if (isnormal(ak) && ak>maxak){
                         maxak = ak;
