@@ -8,7 +8,7 @@ ifeq ($(OS), Linux)
 	LIB+= -lm -lrt
 endif
 ifeq ($(OS), Darwin)
-	OPT+= -I/usr/local/include -Wall -g #-Wsign-compare
+	OPT+= -I/usr/local/include -Wextra -g #-Wsign-compare
 	PREDEF+= -D_APPLE
 	LIB+= -L/usr/local/lib
 endif
