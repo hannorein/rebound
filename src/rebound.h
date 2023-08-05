@@ -122,7 +122,7 @@ struct reb_simulation_integrator_ias15 {
    
     // Internal use
     unsigned long iterations_max_exceeded; // Counter how many times the iteration did not converge. 
-    int allocatedN;          
+    unsigned int allocatedN;          
     double* REBOUND_RESTRICT at;
     double* REBOUND_RESTRICT x0;
     double* REBOUND_RESTRICT v0;
@@ -794,7 +794,7 @@ struct reb_simulation {
     int     hash_ctr;               // Counter for number of assigned hashes to assign unique values.
     int     N_lookup;               // Number of entries in the particle lookup table.
     int     allocatedN_lookup;      // Number of lookup table entries allocated.
-    int     allocatedN;             // Current maximum space allocated in the particles array on this node. 
+    unsigned int   allocatedN;             // Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles;
     struct reb_vec3d* gravity_cs;   // Containing the information for compensated gravity summation 
     int     gravity_cs_allocatedN;

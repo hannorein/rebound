@@ -230,7 +230,7 @@ void static inline reb_save_dp7(struct reb_dp7* dp7, const int N3, char** bufp, 
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p6,sizeof(double)*N3);
 }
 
-void static inline reb_save_controlVars(controlVars* dp7, const int N3, char** bufp, size_t* sizep, size_t* allocatedsize){
+void static inline reb_save_controlVars(controlVars* dp7, char** bufp, size_t* sizep, size_t* allocatedsize){
     reb_output_stream_write(bufp, allocatedsize, sizep, &dp7->size, sizeof(uint32_t));
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p0, dp7->size);
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p1, dp7->size);
@@ -406,7 +406,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
         field.size = sizeof(struct reb_particle)*r->N;
         reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
         // output one particle at a time to sanitize pointers.
-        for (int l=0;l<r->N;l++){
+        for (unsigned int l=0;l<r->N;l++){
             struct reb_particle op = r->particles[l];
             op.c = NULL;
             op.ap = NULL;
@@ -529,49 +529,49 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
             uint32_t array_size = r->ri_tes.radau->B.size;
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_B, .size = 7*array_size+sizeof(uint32_t)};
             reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
-            reb_save_controlVars(&r->ri_tes.radau->B, 3*r->allocatedN,bufp,sizep,&allocatedsize);
+            reb_save_controlVars(&r->ri_tes.radau->B, bufp,sizep,&allocatedsize);
         }
         {
             uint32_t array_size = r->ri_tes.radau->Blast.size;
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_BLAST, .size = 7*array_size+sizeof(uint32_t)};
             reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
-            reb_save_controlVars(&r->ri_tes.radau->Blast,3*r->allocatedN,bufp,sizep,&allocatedsize);
+            reb_save_controlVars(&r->ri_tes.radau->Blast,bufp,sizep,&allocatedsize);
         }
         {
             uint32_t array_size = r->ri_tes.radau->B_1st.size;
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_B_1ST, .size = 7*array_size+sizeof(uint32_t)};
             reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
-            reb_save_controlVars(&r->ri_tes.radau->B_1st,3*r->allocatedN,bufp,sizep,&allocatedsize);
+            reb_save_controlVars(&r->ri_tes.radau->B_1st,bufp,sizep,&allocatedsize);
         }
         {
             uint32_t array_size = r->ri_tes.radau->Blast_1st.size;
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_BLAST_1ST, .size = 7*array_size+sizeof(uint32_t)};
             reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
-            reb_save_controlVars(&r->ri_tes.radau->Blast_1st,3*r->allocatedN,bufp,sizep,&allocatedsize);
+            reb_save_controlVars(&r->ri_tes.radau->Blast_1st,bufp,sizep,&allocatedsize);
         }
         {
             uint32_t array_size = r->ri_tes.radau->cs_B.size;
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_CS_B, .size = 7*array_size+sizeof(uint32_t)};
             reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
-            reb_save_controlVars(&r->ri_tes.radau->cs_B,3*r->allocatedN,bufp,sizep,&allocatedsize);
+            reb_save_controlVars(&r->ri_tes.radau->cs_B,bufp,sizep,&allocatedsize);
         }
         {
             uint32_t array_size = r->ri_tes.radau->cs_B1st.size;
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_CS_B_1ST, .size = 7*array_size+sizeof(uint32_t)};
             reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
-            reb_save_controlVars(&r->ri_tes.radau->cs_B1st,3*r->allocatedN,bufp,sizep,&allocatedsize);
+            reb_save_controlVars(&r->ri_tes.radau->cs_B1st,bufp,sizep,&allocatedsize);
         }          
         {
             uint32_t array_size = r->ri_tes.radau->G.size;
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_G, .size = 7*array_size+sizeof(uint32_t)};
             reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
-            reb_save_controlVars(&r->ri_tes.radau->G,3*r->allocatedN,bufp,sizep,&allocatedsize);
+            reb_save_controlVars(&r->ri_tes.radau->G,bufp,sizep,&allocatedsize);
         }
         {
             uint32_t array_size = r->ri_tes.radau->G_1st.size;
             struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_TES_RADAU_G_1ST, .size = 7*array_size+sizeof(uint32_t)};
             reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
-            reb_save_controlVars(&r->ri_tes.radau->G_1st,3*r->allocatedN,bufp,sizep,&allocatedsize);
+            reb_save_controlVars(&r->ri_tes.radau->G_1st,bufp,sizep,&allocatedsize);
         }  
         // force model vars
         WRITE_FIELD(TES_DHEM_XOSC_STORE, r->ri_tes.rhs->XoscStore, 9*r->ri_tes.stateVectorSize);
