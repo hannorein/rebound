@@ -1,6 +1,7 @@
 export OPENGL=0
 export MPI=1
 export CC=mpicc
+export OPT=-Wextra
 include ../../src/Makefile.defs
 
 all: librebound
