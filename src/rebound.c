@@ -902,6 +902,21 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
     return r->status;
 }
 
+int reb_check_fp_contract(){
+    // Checks if floating point contractions are on. 
+    // If so, this will prevent unit tests from passing
+    // and bit-wise reproducibility will fail.
+    double a = 1.2382309285234567;
+    double b = 2.123478623874623234567;
+    double c = 6.0284234234234567;
+
+    double r1 = a*b+c;
+    double ab = a*b;
+    double r2 = ab+c;
+
+    return r1 != r2;
+}
+
   
 #ifdef OPENMP
 void reb_omp_set_num_threads(int num_threads){

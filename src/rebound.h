@@ -1001,6 +1001,7 @@ void reb_exit(const char* const msg); // Print out an error message, then exit i
 void reb_warning(struct reb_simulation* const r, const char* const msg);   // Print or store a warning message, then continue.
 void reb_error(struct reb_simulation* const r, const char* const msg);     // Print or store an error message, then continue.
 int reb_get_next_message(struct reb_simulation* const r, char* const buf); // Get the next stored warning message. Used only if save_messages==1. Return value is 0 if no messages are present, 1 otherwise.
+int reb_check_fp_contract(); // Returns 1 if floating point contraction are enabled. 0 otherwise.
 
 // Timestepping
 void reb_step(struct reb_simulation* const r);
