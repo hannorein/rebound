@@ -582,7 +582,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 // Numerical factor is there to match timestep to that of dt_mode==0 and default epsilon
                 const double fac = 0.17092266441463;
                 // sqrt7 is only accurate within 1e-7 to 1e2. Scaling epsilon so it is in range for default.
-                dt_new = direction*sqrt(min_timescale2) * fac * sqrt7(r->ri_ias15.epsilon/1e9); 
+                dt_new = direction*sqrt(min_timescale2) * fac * sqrt7(r->ri_ias15.epsilon/1e-9); 
             }else{
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
