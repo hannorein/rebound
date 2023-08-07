@@ -579,7 +579,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             if (isnormal(min_timescale2)){
                 // Factor 1.2 to match timestep to that of dt_mode==0 and default epsilon
                 double direction = r->dt>0.?1.:-1.;
-                dt_new = direction*sqrt(min_timescale2) * 1.2 * sqrt7(r->ri_ias15.epsilon);
+                dt_new = direction*sqrt(min_timescale2) * 3.3 * sqrt7(r->ri_ias15.epsilon);
             }else{
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
