@@ -734,6 +734,9 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
             r->status = REB_EXIT_ERROR;
             return;
         }
+        if (r->exit_min_distance || r->exit_max_distance){
+            reb_warning(r, "You are using WHFast512 together with the flags exit_min_distance and/or exit_max_distance. With the current implementation, these flags will only check the last synchronized positions. In addition they might slow down WHFast512 significantly. If you need to use these flags, please open an issue on GitHub for further advice.");
+        }
         ri_whfast512->allocated_N=1;
         ri_whfast512->recalculate_constants = 1;
         r->gravity = REB_GRAVITY_NONE; // WHFast512 uses its own gravity routine.
