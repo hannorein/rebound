@@ -89,6 +89,7 @@ static const double d[21] = {0.0562625605369221464656522, 0.00316547571817082924
 static const double w[8] = {0.03125, 0.185358154802979278540728972807180754479812609, 0.304130620646785128975743291458180383736715043, 0.376517545389118556572129261157225608762708603, 0.391572167452493593082499533303669362149363727, 0.347014795634501068709955597003528601733139176, 0.249647901329864963257869294715235590174262844, 0.114508814744257199342353731044292225247093225};
 
 // Machine independent implementation of pow(*,1./7.)
+// Note: is only accurate for arguments in [1e-7, 1e2]
 static double sqrt7(double a){
     double x = 1.;
     for (int k=0; k<20;k++){  // A smaller number should be ok too.
@@ -577,9 +578,11 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 }
             }
             if (isnormal(min_timescale2)){
-                // Factor 1.2 to match timestep to that of dt_mode==0 and default epsilon
                 double direction = r->dt>0.?1.:-1.;
-                dt_new = direction*sqrt(min_timescale2) * 3.3 * sqrt7(r->ri_ias15.epsilon);
+                // Numerical factor is there to match timestep to that of dt_mode==0 and default epsilon
+                const double fac = 0.17092266441463;
+                // sqrt7 is only accurate within 1e-7 to 1e2. Scaling epsilon so it is in range for default.
+                dt_new = direction*sqrt(min_timescale2) * fac * sqrt7(r->ri_ias15.epsilon/1e9); 
             }else{
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
