@@ -572,7 +572,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             };
         }else{ //dt_mode ==1
-            double min_timescale2 = INFINITY;
+            double min_timescale4 = INFINITY;
             for(unsigned int i=0;i<Nreal;i++){ 
                 double ai = 0; 
                 //double ji = 0; //jerk
@@ -582,18 +582,18 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                     ai += tmp*tmp;
                     //tmp = (b.p0[k] + 2.* b.p1[k] + 3.* b.p2[k] + 4.* b.p3[k] + 5.* b.p4[k] + 6.* b.p5[k] + 7.* b.p6[k])/r->dt;
                     //ji += tmp*tmp;
-                    tmp = (2.* b.p1[k] + 6.* b.p2[k] + 12.* b.p3[k] + 20.* b.p4[k] + 30.* b.p5[k] + 42.* b.p6[k])/(r->dt*r->dt);
+                    tmp = 2.* b.p1[k] + 6.* b.p2[k] + 12.* b.p3[k] + 20.* b.p4[k] + 30.* b.p5[k] + 42.* b.p6[k];
                     si += tmp*tmp;
                 }
-                double timescale2 = sqrt(ai/si);
-                if (isnormal(timescale2) && timescale2<min_timescale2){
-                    min_timescale2 = timescale2;
+                double timescale4 = ai/si;
+                if (isnormal(timescale4) && timescale4<min_timescale4){
+                    min_timescale4 = timescale4;
                 }
             }
-            if (isnormal(min_timescale2)){
+            if (isnormal(min_timescale4)){
                 double direction = r->dt>0.?1.:-1.;
                 // Numerical factor below is there to match timestep to that of dt_mode==0 and default epsilon
-                dt_new = direction*sqrt(min_timescale2) * 3.3845 * sqrt7(r->ri_ias15.epsilon); 
+                dt_new = direction*sqrt(sqrt(min_timescale4)) * dt_done * sqrt7(r->ri_ias15.epsilon*5040.0); 
             }else{
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
