@@ -591,9 +591,8 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 }
             }
             if (isnormal(min_timescale4)){
-                double direction = r->dt>0.?1.:-1.;
                 // Numerical factor below is there to match timestep to that of dt_mode==0 and default epsilon
-                dt_new = direction*sqrt(sqrt(min_timescale4)) * dt_done * sqrt7(r->ri_ias15.epsilon*5040.0); 
+                dt_new = sqrt(sqrt(min_timescale4)) * dt_done * sqrt7(r->ri_ias15.epsilon*5040.0); 
             }else{
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
