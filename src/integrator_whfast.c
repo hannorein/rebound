@@ -351,7 +351,7 @@ void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_p
  * Interaction Hamiltonian  */
 void reb_whfast_interaction_step(struct reb_simulation* const r, const double _dt){
     const unsigned int N_real = r->N-r->N_var;
-    const int N_active = (r->N_active==-1 || r->testparticle_type ==1)?N_real:r->N_active;
+    const unsigned int N_active = (r->N_active==-1 || r->testparticle_type ==1)?N_real:r->N_active;
     const double G = r->G;
     struct reb_particle* particles = r->particles;
     const double m0 = particles[0].m;
@@ -496,7 +496,7 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
     const double m0 = r->particles[0].m;
     const double G = r->G;
     const unsigned int N_real = r->N-r->N_var;
-    const int N_active = (r->N_active==-1 || r->testparticle_type ==1)?N_real:r->N_active;
+    const unsigned int N_active = (r->N_active==-1 || r->testparticle_type ==1)?N_real:r->N_active;
     const int coordinates = r->ri_whfast.coordinates;
     struct reb_particle* const p_j = r->ri_whfast.p_jh;
     double eta = m0;
@@ -797,7 +797,7 @@ int reb_integrator_whfast_init(struct reb_simulation* const r){
             r->gravity_ignore_terms = 2;
         }
     }
-    const int N = r->N;
+    const unsigned int N = r->N;
     if (ri_whfast->allocated_N != N){
         ri_whfast->allocated_N = N;
         ri_whfast->p_jh = realloc(ri_whfast->p_jh,sizeof(struct reb_particle)*N);
@@ -811,7 +811,7 @@ void reb_integrator_whfast_from_inertial(struct reb_simulation* const r){
     struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;
     const int N_real = N-r->N_var;
-    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
+    const unsigned int N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
     
     switch (ri_whfast->coordinates){
         case REB_WHFAST_COORDINATES_JACOBI:
@@ -1023,9 +1023,9 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
     struct reb_particle* restrict const particles = r->particles;
     struct reb_particle* const p_j = ri_whfast->p_jh;
     const double dt = r->dt;
-    const int N = r->N;
+    const unsigned int N = r->N;
     const int N_real = r->N-r->N_var;
-    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
+    const int unsigned N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
     if (p_j==NULL){
         // Non recoverable error occured earlier. 
         // Skipping rest of integration to avoid segmentation fault.
@@ -1041,7 +1041,7 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
         case REB_WHFAST_KERNEL_MODIFIEDKICK: 
             // p_jh used as a temporary buffer for "jerk"
             reb_whfast_calculate_jerk(r);
-            for (int i=0; i<N; i++){
+            for (unsigned int i=0; i<N; i++){
                 const double prefact = dt*dt/12.;
                 particles[i].ax += prefact*p_j[i].ax; 
                 particles[i].ay += prefact*p_j[i].ay; 

@@ -66,7 +66,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.26.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.26.2";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_error_message_waiting(struct reb_simulation* const r);
@@ -333,7 +333,7 @@ void reb_free_pointers(struct reb_simulation* const r){
     reb_integrator_bs_reset(r);
     reb_integrator_tes_reset(r);
     if(r->free_particle_ap){
-        for(int i=0; i<r->N; i++){
+        for(unsigned int i=0; i<r->N; i++){
             r->free_particle_ap(&r->particles[i]);
         }
     }

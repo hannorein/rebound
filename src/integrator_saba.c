@@ -132,7 +132,7 @@ static void reb_saba_corrector_step(struct reb_simulation* r, double cc){
     struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
     struct reb_particle* const p_j = ri_whfast->p_jh;
 	struct reb_particle* const particles = r->particles;
-    const int N = r->N;
+    const unsigned int N = r->N;
     switch (r->ri_saba.type/0x100){
         case 1: // modified kick
             // Calculate normal kick
@@ -141,7 +141,7 @@ static void reb_saba_corrector_step(struct reb_simulation* r, double cc){
             // Calculate jerk
             reb_whfast_calculate_jerk(r);
 
-            for (int i=0; i<N; i++){
+            for (unsigned int i=0; i<N; i++){
                 const double prefact = r->dt*r->dt;
                 particles[i].ax = prefact*p_j[i].ax; 
                 particles[i].ay = prefact*p_j[i].ay; 
@@ -295,7 +295,7 @@ void reb_integrator_saba_part2(struct reb_simulation* const r){
     struct reb_particle* restrict const particles = r->particles;
     const int type = ri_saba->type;
     const int stages = reb_saba_stages(type);
-    const int N = r->N;
+    const unsigned int N = r->N;
     if (ri_whfast->p_jh==NULL){
         // Non recoverable error occured earlier. 
         // Skipping rest of integration to avoid segmentation fault.

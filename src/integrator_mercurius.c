@@ -315,7 +315,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
             r->particles[i] = rim->particles_backup[i];     // Use coordinates before whfast step
             rim->encounter_map[i_enc] = i;
             i_enc++;
-            if (r->N_active==-1 || i<r->N_active){
+            if (r->N_active==-1 || (int)i<r->N_active){
                 rim->encounterNactive++;
                 if (rim->tponly_encounter){
                     rim->particles_backup[i] = tmp;         // Make copy of particles after the kepler step.
@@ -386,7 +386,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
     // if only test particles encountered massive bodies, reset the
     // massive body coordinates to their post Kepler step state
     if(rim->tponly_encounter){
-        for (int i=1;i<rim->encounterNactive;i++){
+        for (unsigned int i=1;i<rim->encounterNactive;i++){
             unsigned int mi = rim->encounter_map[i];
             r->particles[mi] = rim->particles_backup[mi];
         }
@@ -433,7 +433,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
     }
     
     struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
-    const int N = r->N;
+    const unsigned int N = r->N;
     
     if (rim->dcrit_allocatedN<N){
         // Need to safe these arrays in SimulationArchive
@@ -470,7 +470,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
             reb_warning(r,"MERCURIUS: Recalculating dcrit but pos/vel were not synchronized before.");
         }
         rim->dcrit[0] = 2.*r->particles[0].r; // central object only uses physical radius
-        for (int i=1;i<N;i++){
+        for (unsigned int i=1;i<N;i++){
             rim->dcrit[i] = reb_integrator_mercurius_calculate_dcrit_for_particle(r, i);
         }
     }

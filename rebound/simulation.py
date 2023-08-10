@@ -456,7 +456,7 @@ class reb_simulation_integrator_ias15(Structure):
                 ("min_dt", c_double),
                 ("epsilon_global", c_uint),
                 ("_iterations_max_exceeded", c_ulong),
-                ("_allocatedN", c_int),
+                ("_allocatedN", c_uint),
                 ("_at", POINTER(c_double)),
                 ("_x0", POINTER(c_double)),
                 ("_v0", POINTER(c_double)),
@@ -471,7 +471,7 @@ class reb_simulation_integrator_ias15(Structure):
                 ("_br", reb_dp7),
                 ("_er", reb_dp7),
                 ("_map", POINTER(c_int)),
-                ("_map_allocated_n", c_int),
+                ("_map_allocated_n", c_uint),
                 ]
 
 class reb_simulation_integrator_saba(Structure):
@@ -2590,7 +2590,7 @@ Simulation._fields_ = [
                 ("dt", c_double),
                 ("dt_last_done", c_double),
                 ("steps_done", c_ulonglong),
-                ("N", c_int),
+                ("N", c_uint),
                 ("N_var", c_int),
                 ("var_config_N", c_int),
                 ("var_config", POINTER(Variation)),
@@ -2602,7 +2602,7 @@ Simulation._fields_ = [
                 ("hash_ctr", c_int),
                 ("N_lookup", c_int),
                 ("allocatedN_lookup", c_int),
-                ("allocated_N", c_int),
+                ("allocatedN", c_uint),
                 ("_particles", POINTER(Particle)),
                 ("gravity_cs", POINTER(_Vec3d)),
                 ("gravity_cs_allocatedN", c_int),

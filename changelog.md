@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.26.2
+* Fixed various signed/unsigned int issues. This should reduce the number of compiler warnings but not affect any calculation.
+
 ### Version 3.26.1
 * Added support for `AVX512` and `FFP_CONTRACT_OFF` environment variables when using pip to install REBOUND.
 

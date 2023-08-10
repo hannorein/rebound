@@ -379,7 +379,7 @@ void reb_collision_search(struct reb_simulation* const r){
                                 c.p2--;
                             }
                         }else{
-                            if (c.p2 == r->N-r->N_var){
+                            if (c.p2 == (int)(r->N-r->N_var)){
                                 c.p2 = c.p1;
                             }
                         }
@@ -399,10 +399,10 @@ void reb_collision_search(struct reb_simulation* const r){
                                     cp->p2--;
                                 }
                             }else{
-                                if (cp->p1 == r->N-r->N_var){
+                                if (cp->p1 == (int)(r->N-r->N_var)){
                                     cp->p1 = c.p1;
                                 }
-                                if (cp->p2 == r->N-r->N_var){
+                                if (cp->p2 == (int)(r->N-r->N_var)){
                                     cp->p2 = c.p1;
                                 }
                             }
@@ -440,10 +440,10 @@ void reb_collision_search(struct reb_simulation* const r){
                                     cp->p2--;
                                 }
                             }else{
-                                if (cp->p1 == r->N-r->N_var){
+                                if (cp->p1 == (int)(r->N-r->N_var)){
                                     cp->p1 = c.p2;
                                 }
-                                if (cp->p2 == r->N-r->N_var){
+                                if (cp->p2 == (int)(r->N-r->N_var)){
                                     cp->p2 = c.p2;
                                 }
                             }

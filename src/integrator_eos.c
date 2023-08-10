@@ -356,7 +356,7 @@ static inline void reb_integrator_eos_postprocessor(struct reb_simulation* const
 static void reb_integrator_eos_drift_shell1(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
     unsigned int N = r->N;
-    for (int i=0;i<N;i++){  
+    for (unsigned int i=0;i<N;i++){  
         particles[i].x += dt*particles[i].vx;
         particles[i].y += dt*particles[i].vy;
         particles[i].z += dt*particles[i].vz;
