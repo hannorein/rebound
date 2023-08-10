@@ -119,7 +119,8 @@ void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 	int rootbox = reb_get_rootbox_for_particle(r, pt);
 	int root_n_per_node = r->root_n/r->mpi_num;
 	int proc_id = rootbox/root_n_per_node;
-	if (proc_id != r->mpi_id && r->N >= r->N_active){
+    const unsigned int N_active = (r->N_active==-1)?r->N: (unsigned int)r->N_active;
+	if (proc_id != r->mpi_id && r->N >= N_active){
 		// Add particle to array and send them to proc_id later. 
 		reb_communication_mpi_add_particle_to_send_queue(r,pt,proc_id);
 		return;

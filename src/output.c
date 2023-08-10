@@ -220,7 +220,7 @@ void reb_output_orbits(struct reb_simulation* r, char* filename){
     fclose(of);
 }
 
-void static inline reb_save_dp7(struct reb_dp7* dp7, const int N3, char** bufp, size_t* sizep, size_t* allocatedsize){
+static inline void reb_save_dp7(struct reb_dp7* dp7, const int N3, char** bufp, size_t* sizep, size_t* allocatedsize){
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p0,sizeof(double)*N3);
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p1,sizeof(double)*N3);
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p2,sizeof(double)*N3);
@@ -230,7 +230,7 @@ void static inline reb_save_dp7(struct reb_dp7* dp7, const int N3, char** bufp, 
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p6,sizeof(double)*N3);
 }
 
-void static inline reb_save_controlVars(controlVars* dp7, char** bufp, size_t* sizep, size_t* allocatedsize){
+static inline void reb_save_controlVars(controlVars* dp7, char** bufp, size_t* sizep, size_t* allocatedsize){
     reb_output_stream_write(bufp, allocatedsize, sizep, &dp7->size, sizeof(uint32_t));
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p0, dp7->size);
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p1, dp7->size);

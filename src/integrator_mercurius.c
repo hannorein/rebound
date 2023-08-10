@@ -100,7 +100,7 @@ void reb_integrator_mercurius_inertial_to_dh(struct reb_simulation* r){
     struct reb_vec3d com_pos = {0};
     struct reb_vec3d com_vel = {0};
     double mtot = 0.;
-    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
+    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?(int)r->N:r->N_active;
     const int N = r->N;
     for (int i=0;i<N_active;i++){
         double m = particles[i].m;
@@ -131,7 +131,7 @@ void reb_integrator_mercurius_dh_to_inertial(struct reb_simulation* r){
     struct reb_particle* restrict const particles = r->particles;
     struct reb_particle temp = {0};
     const int N = r->N;
-    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
+    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?(int)r->N:r->N_active;
     for (int i=1;i<N_active;i++){
         double m = particles[i].m;
         temp.x += m * particles[i].x;
@@ -178,8 +178,8 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
     struct reb_particle* const particles = r->particles;
     struct reb_particle* const particles_backup = rim->particles_backup;
     const double* const dcrit = rim->dcrit;
-    const int N = r->N;
-    const int N_active = r->N_active==-1?r->N:r->N_active;
+    const unsigned int N = r->N;
+    const unsigned int N_active = r->N_active==-1?r->N:(unsigned int)r->N_active;
     const double dt = r->dt;
     rim->encounterN = 1;
     rim->encounter_map[0] = 1;
@@ -188,11 +188,11 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
     }else{
         rim->tponly_encounter = 1;
     }
-    for (int i=1; i<N; i++){
+    for (unsigned int i=1; i<N; i++){
         rim->encounter_map[i] = 0;
     }
-    for (int i=0; i<N_active; i++){
-        for (int j=i+1; j<N; j++){
+    for (unsigned int i=0; i<N_active; i++){
+        for (unsigned int j=i+1; j<N; j++){
             const double dxn = particles[i].x - particles[j].x;
             const double dyn = particles[i].y - particles[j].y;
             const double dzn = particles[i].z - particles[j].z;
@@ -267,7 +267,7 @@ void reb_integrator_mercurius_interaction_step(struct reb_simulation* const r, d
 
 void reb_integrator_mercurius_jump_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
-    const int N_active = r->N_active==-1?r->N:r->N_active;
+    const unsigned int N_active = r->N_active==-1?r->N: (unsigned int)r->N_active;
     const int N = r->testparticle_type==0 ? N_active: r->N;
     double px=0., py=0., pz=0.;
     for (int i=1;i<N;i++){
