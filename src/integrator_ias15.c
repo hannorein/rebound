@@ -572,7 +572,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             };
         }else{ //dt_mode ==1
-            double min_timescale4 = INFINITY;
+            double min_timescale4 = INFINITY;  // timescale**4 (note factor of 1./dt_done**4 not included)
             for(unsigned int i=0;i<Nreal;i++){ 
                 double ai = 0; 
                 //double ji = 0; //jerk
