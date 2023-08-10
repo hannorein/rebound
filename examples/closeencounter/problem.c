@@ -15,7 +15,7 @@
 #include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
-
+double E0;
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
     r->dt         = 0.01*2.*M_PI;        // initial timestep
@@ -40,6 +40,7 @@ int main(int argc, char* argv[]){
         reb_add(r, planet); 
     }
     reb_move_to_com(r);        // This makes sure the planetary systems stays within the computational domain and doesn't drift.
+    E0 = reb_tools_energy(r);
     reb_integrate(r, INFINITY);
 }
 
@@ -47,4 +48,6 @@ void heartbeat(struct reb_simulation* r){
     if (reb_output_check(r, 10.*2.*M_PI)){  
         reb_output_timing(r, 0);
     }
+    double E1 = reb_tools_energy(r);
+    printf("%e\n", fabs((E1-E0)/E0));
 }
