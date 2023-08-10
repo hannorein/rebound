@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.26.3
+* A few more changes to reduce the number of compiler warnings. This should not affect any calculation.
+
 ### Version 3.26.2
 * Fixed various signed/unsigned int issues. This should reduce the number of compiler warnings but not affect any calculation.
 
