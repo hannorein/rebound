@@ -75,7 +75,7 @@ static void predict_next_step(double ratio, int N3,  const struct reb_dpconst7 _
 //   Constants 
 
 static const double safety_factor_dtmode_0  = 0.25; /**< Maximum increase/deacrease of consecutve timesteps. */
-static const double safety_factor_dtmode_1  = 0.85; /**< Maximum increase/deacrease of consecutve timesteps in dtmode 1. */
+static const double safety_factor_dtmode_1  = 0.25; /**< Maximum increase/deacrease of consecutve timesteps in dtmode 1. */
 
 // Gauss Radau spacings
 static const double h[8]    = { 0.0, 0.0562625605369221464656521910318, 0.180240691736892364987579942780, 0.352624717113169637373907769648, 0.547153626330555383001448554766, 0.734210177215410531523210605558, 0.885320946839095768090359771030, 0.977520613561287501891174488626};
