@@ -170,6 +170,8 @@ struct reb_simulation_integrator_mercurius {
 struct reb_simulation_integrator_trace {
     double hillfac;
     double peri; // TLu check for close pericenter passage
+    double vfac;
+    double vfac_p;
     unsigned int recalculate_coordinates_this_timestep;
     unsigned int recalculate_dcrit_this_timestep;
     unsigned int safe_mode;
@@ -201,9 +203,10 @@ struct reb_simulation_integrator_trace {
     // double* f0_peris;
     struct reb_particle* REBOUND_RESTRICT particles_backup_try; //  TLu contains coordinates after initial try
     int print; // for debugging
-    double px;
-    double py;
-    double pz;
+
+    double (*S) (struct reb_simulation* const r, const int i, const int j);
+
+    unsigned int vSwitch;
 };
 
 struct reb_simulation_integrator_sei {
@@ -300,7 +303,7 @@ struct reb_simulation_integrator_whfast512 {
     struct reb_particle p_jh0;
 };
 
-struct reb_ode{ // defines an ODE 
+struct reb_ode{ // defines an ODE
     unsigned int length; // number of components / dimenion
     unsigned int allocatedN;
     unsigned int needs_nbody;
@@ -793,7 +796,7 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_TES_DHEM_M_TOTAL = 386,
     REB_BINARY_FIELD_TYPE_TES_DHEM_RECTI_TIME = 387,
     REB_BINARY_FIELD_TYPE_TES_DHEM_RECTI_PERIOD = 388,
-    
+
     REB_BINARY_FIELD_TYPE_WHFAST512_KEEPUNSYNC = 390,
     REB_BINARY_FIELD_TYPE_WHFAST512_ISSYNCHRON = 391,
     REB_BINARY_FIELD_TYPE_WHFAST512_GRPOTENTIAL = 392,
@@ -880,19 +883,19 @@ struct reb_simulation {
 #ifdef MPI
     int    mpi_id;                              // Unique id of this node (starting at 0). Used for MPI only.
     int    mpi_num;                             // Number of MPI nodes. Used for MPI only.
-    struct reb_particle** particles_send;       // Send buffer for particles. There is one buffer per node. 
-    int*   particles_send_N;                    // Current length of particle send buffer. 
-    int*   particles_send_Nmax;                 // Maximal length of particle send beffer before realloc() is needed. 
-    struct reb_particle** particles_recv;       // Receive buffer for particles. There is one buffer per node. 
-    int*   particles_recv_N;                    // Current length of particle receive buffer. 
+    struct reb_particle** particles_send;       // Send buffer for particles. There is one buffer per node.
+    int*   particles_send_N;                    // Current length of particle send buffer.
+    int*   particles_send_Nmax;                 // Maximal length of particle send beffer before realloc() is needed.
+    struct reb_particle** particles_recv;       // Receive buffer for particles. There is one buffer per node.
+    int*   particles_recv_N;                    // Current length of particle receive buffer.
     int*   particles_recv_Nmax;                 // Maximal length of particle receive beffer before realloc() is needed. */
 
-    struct reb_treecell** tree_essential_send;  // Send buffer for cells. There is one buffer per node. 
-    int*   tree_essential_send_N;               // Current length of cell send buffer. 
-    int*   tree_essential_send_Nmax;            // Maximal length of cell send beffer before realloc() is needed. 
-    struct reb_treecell** tree_essential_recv;  // Receive buffer for cells. There is one buffer per node. 
-    int*   tree_essential_recv_N;               // Current length of cell receive buffer. 
-    int*   tree_essential_recv_Nmax;            // Maximal length of cell receive beffer before realloc() is needed. 
+    struct reb_treecell** tree_essential_send;  // Send buffer for cells. There is one buffer per node.
+    int*   tree_essential_send_N;               // Current length of cell send buffer.
+    int*   tree_essential_send_Nmax;            // Maximal length of cell send beffer before realloc() is needed.
+    struct reb_treecell** tree_essential_recv;  // Receive buffer for cells. There is one buffer per node.
+    int*   tree_essential_recv_N;               // Current length of cell receive buffer.
+    int*   tree_essential_recv_Nmax;            // Maximal length of cell receive beffer before realloc() is needed.
 #endif // MPI
 
     int collision_resolve_keep_sorted;
@@ -948,8 +951,8 @@ struct reb_simulation {
         REB_INTEGRATOR_MERCURIUS = 9,// MERCURIUS integrator
         REB_INTEGRATOR_SABA = 10,    // SABA integrator family (Laskar and Robutel 2001)
         REB_INTEGRATOR_EOS = 11,     // Embedded Operator Splitting (EOS) integrator family (Rein 2019)
-        REB_INTEGRATOR_BS = 12,      // Gragg-Bulirsch-Stoer 
-        REB_INTEGRATOR_TES = 20,     // Terrestrial Exoplanet Simulator (TES) 
+        REB_INTEGRATOR_BS = 12,      // Gragg-Bulirsch-Stoer
+        REB_INTEGRATOR_TES = 20,     // Terrestrial Exoplanet Simulator (TES)
         REB_INTEGRATOR_WHFAST512 = 21,   // WHFast integrator, optimized for AVX512
         REB_INTEGRATOR_TRACE = 25,     // Terrestrial Exoplanet Simulator (TES)
         } integrator;
@@ -970,10 +973,10 @@ struct reb_simulation {
         } gravity;
 
     // Integrators
-    struct reb_simulation_integrator_sei ri_sei;            // The SEI struct 
-    struct reb_simulation_integrator_whfast ri_whfast;      // The WHFast struct 
-    struct reb_simulation_integrator_whfast512 ri_whfast512;      // The WHFast512 struct 
-    struct reb_simulation_integrator_saba ri_saba;          // The SABA struct 
+    struct reb_simulation_integrator_sei ri_sei;            // The SEI struct
+    struct reb_simulation_integrator_whfast ri_whfast;      // The WHFast struct
+    struct reb_simulation_integrator_whfast512 ri_whfast512;      // The WHFast512 struct
+    struct reb_simulation_integrator_saba ri_saba;          // The SABA struct
     struct reb_simulation_integrator_ias15 ri_ias15;        // The IAS15 struct
     struct reb_simulation_integrator_mercurius ri_mercurius;// The MERCURIUS struct
     struct reb_simulation_integrator_janus ri_janus;        // The JANUS struct

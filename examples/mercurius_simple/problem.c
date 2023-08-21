@@ -66,11 +66,16 @@ double jacobi_dh(struct reb_simulation* r){
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
-    r->dt = (8./365.)*2.*M_PI;
-    r->integrator = REB_INTEGRATOR_MERCURIUS;
-    r->ri_mercurius.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
-    r->ri_mercurius.peri = 1.;
-    //r->heartbeat  = heartbeat;
+    r->integrator = REB_INTEGRATOR_BS;
+
+//    r->dt = (8./365.) * 2. *M_PI;
+
+//    r->integrator = REB_INTEGRATOR_TRACE;
+//    r->ri_tr.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
+//    r->ri_tr.peri = 0.01;
+
+
+    r->heartbeat  = heartbeat;
     r->N_active = 2;
 
     // Initialize masses
@@ -101,21 +106,23 @@ int main(int argc, char* argv[]){
 
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
     e_init = jacobi_dh(r);
-    system("rm -rf energy_l2.txt");
-    //FILE* f = fopen("energy_l2.txt","w");
+    system("rm -rf energy_bs.txt");
+    FILE* f = fopen("energy_bs.txt","w");
 
-    reb_integrate(r, 50000.*11.86*2.*M_PI);
-    //reb_integrate(r, 200.);
+    //reb_integrate(r, 1000000. * 11.86 * 2 * M_PI);
+    //reb_steps(r, 20.);
+    reb_integrate(r, 1000.);
     reb_free_simulation(r);
 }
 
 void heartbeat(struct reb_simulation* r){
+    //printf("this happening???\n");
     //if (reb_output_check(r, 10.*2.*M_PI)){
     //    reb_output_timing(r, 0);
     //}
-    //if (reb_output_check(r, (4. / 365.25) * 2.*M_PI)){
+    //if (reb_output_check(r, (1000. / 365.25) * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
-        FILE* f = fopen("energy_l2.txt","a");
+        FILE* f = fopen("energy_bs.txt","a");
 
         // rotate whole simulation to rotating frame
         //struct reb_vec3d v1 = {.x = r->particles[1].x, .y = r->particles[1].y, .z = r->particles[1].z};
@@ -125,7 +132,7 @@ void heartbeat(struct reb_simulation* r){
         //reb_integrator_synchronize(r);
         double e = jacobi_dh(r);//reb_tools_energy(r);
         fprintf(f,"%e %e %e %e %e %e %e %e %e %e %e\n",r->t, (e-e_init)/e_init, r->particles[0].x, r->particles[0].y, r->particles[0].z, r->particles[1].x, r->particles[1].y, r->particles[1].z, r->particles[2].x, r->particles[2].y, r->particles[2].z);
-
+        fclose(f);
         //reb_integrator_synchronize(r);
         //printf("\n Jacobi: %e\n", e);
 

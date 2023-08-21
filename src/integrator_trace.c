@@ -44,6 +44,73 @@
 
 // Can we just use Mercurius for these? Maybe not if Jacobi...
 
+struct reb_vec3d reb_integrator_trace_default(struct reb_simulation* const r, int i, int j){
+  struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
+  struct reb_vec3d a = {0};
+  const double* const dcrit = ri_tr->dcrit;
+  const double peri = ri_tr->peri;
+
+  const double dx = r->particles[i].x - r->particles[j].x;
+  const double dy = r->particles[i].y - r->particles[j].y;
+  const double dz = r->particles[i].z - r->particles[j].z;
+  const double d = sqrt(dx*dx + dy*dy + dz*dz);
+
+  // Use traditional switching function
+  double dcritmax = MAX(dcrit[i],dcrit[j]);
+  dcritmax *= 1.21;
+
+  double fcond = d - dcritmax;
+  double fcond_peri = d - peri;
+
+  a.x = fcond;
+  a.y = fcond_peri;
+
+  return a;
+}
+
+struct reb_vec3d reb_integrator_trace_velocity(const struct reb_simulation* const r, int i, int j){
+  struct reb_vec3d conds = {0};
+  struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
+  const double vfac = ri_tr->vfac;
+  const double vfacp = ri_tr->vfac_p;
+
+  const double dx = r->particles[i].x - r->particles[j].x;
+  const double dy = r->particles[i].y - r->particles[j].y;
+  const double dz = r->particles[i].z - r->particles[j].z;
+  const double d = sqrt(dx*dx + dy*dy + dz*dz);
+
+  const double vx = r->particles[i].vx - r->particles[j].vx;
+  const double vy = r->particles[i].vy - r->particles[j].vy;
+  const double vz = r->particles[i].vz - r->particles[j].vz;
+  const double vsquared = vx*vx + vy*vy + vz*vz;
+
+  const double F_vel = d / (sqrt(3. * vsquared + r->G * (r->particles[i].m + r->particles[j].m) / d));
+  const double fcond = F_vel - vfac * r->dt;
+
+  const double mu = r->G*(r->particles[i].m+r->particles[j].m);
+  const double vcircsquared = mu/d;
+  const double a = -mu/(vsquared - 2.*vcircsquared);
+
+  const double vdiffsquared = vsquared - vcircsquared;
+  const double vr = (dx*vx + dy*vy + dz*vz)/d;
+  const double rvr = d*vr;
+  const double muinv = 1./mu;
+  const double ex = muinv*(vdiffsquared*dx - rvr*vx );
+  const double ey = muinv*(vdiffsquared*dy - rvr*vy );
+  const double ez = muinv*(vdiffsquared*dz - rvr*vz );
+  const double e = sqrt( ex*ex + ey*ey + ez*ez );
+  const double ome = 1. - e;
+
+  // The fdot condition
+  const double F_vel_peri = 2 * M_PI * sqrt(((ome*ome*ome)/(1+e))*(a*a*a/mu));
+  double fcond_peri = F_vel_peri - vfacp * r->dt;
+
+  conds.x = fcond;
+  conds.y = fcond_peri;
+
+  return conds;
+}
+
 void reb_integrator_trace_inertial_to_dh(struct reb_simulation* r){
     struct reb_particle* restrict const particles = r->particles;
     struct reb_vec3d com_pos = {0};
@@ -150,24 +217,6 @@ double dcrit(struct reb_simulation* const r, const int i){
 }
 */
 
-void reb_integrator_trace_pxyz(struct reb_simulation* r){
-  struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
-
-  double px=0., py=0., pz=0.;
-  for (int i=1;i<r->N;i++){
-      px += r->particles[i].vx*r->particles[i].m; // in dh
-      py += r->particles[i].vy*r->particles[i].m;
-      pz += r->particles[i].vz*r->particles[i].m;
-  }
-  px /= r->particles[0].m;
-  py /= r->particles[0].m;
-  pz /= r->particles[0].m;
-
-  ri_tr->px = px;
-  ri_tr->py = py;
-  ri_tr->pz = pz;
-}
-
 void reb_integrator_trace_interaction_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;
@@ -178,7 +227,7 @@ void reb_integrator_trace_interaction_step(struct reb_simulation* const r, doubl
         particles[i].vy += dt*particles[i].ay;
         particles[i].vz += dt*particles[i].az;
         //if (i == 2){
-        //  printf("%e %e %e %e\n", r->t, particles[i].ax, particles[i].ay, particles[i].az);
+        //printf("%e %e %e %e\n", r->t, particles[i].ax, particles[i].ay, particles[i].az);
       //}
     }
 }
@@ -217,9 +266,12 @@ void reb_integrator_trace_com_step(struct reb_simulation* const r, double dt){
 // Old Kepler
 void reb_integrator_trace_kepler_step(struct reb_simulation* const r, double dt){
     //struct reb_particle* restrict const particles = r->particles;
+    struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
     const int N = r->N;
     for (int i=1;i<N;i++){
-        reb_whfast_kepler_solver(r,r->particles,r->G*r->particles[0].m,i,dt); // in dh
+        //if (ri_tr->encounter_map[i] != 0){
+          reb_whfast_kepler_solver(r,r->particles,r->G*r->particles[0].m,i,dt); // in dh
+        //}
     }
 }
 
@@ -254,7 +306,7 @@ static void reb_trace_bs_step(struct reb_simulation* const r, const double _dt){
   const double old_dt = r->dt;
   const double old_t = r->t;
   double t_needed = r->t + _dt;
-  reb_integrator_bs_reset(r);
+  //reb_integrator_bs_reset(r);
 
   r->dt = _dt; // start with a small timestep.
   while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
@@ -265,6 +317,7 @@ static void reb_trace_bs_step(struct reb_simulation* const r, const double _dt){
       //reb_update_acceleration(r);
       //reb_integrator_trace_pxyz(r);
       reb_integrator_bs_part2(r);
+      //printf("TRACE proposed: %f %f %f\n", r->dt, r->t, t_needed);
 
       r->particles[0].vx = star.vx; // restore every timestep for collisions
       r->particles[0].vy = star.vy;
@@ -380,7 +433,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         ri_tr->particles_backup       = realloc(ri_tr->particles_backup,sizeof(struct reb_particle)*N);
 
         ri_tr->current_Ks = realloc(ri_tr->current_Ks, sizeof(int)*((N-1)*(N-2))/2);
-        ri_tr->delta_Ks   = realloc(ri_tr->delta_Ks, sizeof(int)*((N-1)*(N-2))/2);
+        ri_tr->delta_Ks   = realloc(ri_tr->delta_Ks, sizeof(int)*100);//sizeof(int)*((N-1)*(N-2))/2);
         //ri_tr->current_Ls             = realloc(ri_tr->current_Ls, sizeof(int)*(N-1));
         ri_tr->encounter_map          = realloc(ri_tr->encounter_map,sizeof(int)*N);
         ri_tr->encounter_map_backup   = realloc(ri_tr->encounter_map_backup,sizeof(int)*N);
@@ -415,6 +468,8 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         for (int i=1;i<N;i++){
             ri_tr->dcrit[i] = reb_integrator_trace_calculate_dcrit_for_particle(r, i);
         }
+        //struct reb_simulation_integrator_bs* ri_bs = &r->ri_bs;
+        //ri_bs->max_dt = r->dt;
     }
 
     // Calculate collisions only with DIRECT method
@@ -440,70 +495,45 @@ void F0(struct reb_simulation* const r){
   struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
   const int N = r->N;
   const int Nactive = r->N_active==-1?r->N:r->N_active;
-  const double* const dcrit = ri_tr->dcrit;
-  const double peri = ri_tr->peri;
+  struct reb_vec3d (*_switch) (const struct reb_simulation* const r, int i, int j) = r->ri_tr.S;
 
   for (int i = 0; i < Nactive; i++){
     for (int j = i + 1; j < N; j++){
-      // Needed for both
-      const double dx = r->particles[i].x - r->particles[j].x;
-      const double dy = r->particles[i].y - r->particles[j].y;
-      const double dz = r->particles[i].z - r->particles[j].z;
-      const double d = sqrt(dx*dx + dy*dy + dz*dz);
 
-      //double fcond = d - dcritmax;
-      //double fcond_peri = d - peri;
+      struct reb_vec3d cond = _switch(r, i, j);
+      double fcond = cond.x;
+      double fcond_peri = cond.y;
 
-/*
-      // Velocity dependent condition
-
-      const double vx = r->particles[i].vx - r->particles[j].vx;
-      const double vy = r->particles[i].vy - r->particles[j].vy;
-      const double vz = r->particles[i].vz - r->particles[j].vz;
-      const double v = sqrt(vx*vx + vy*vy + vz*vz);
-
-      double F_vel = d / (sqrt(3. * v * v + r->G * (r->particles[i].m + r->particles[j].m) / d));
-      double fcond = F_vel - 30. * r->dt; // velocity dependent condition
-      double fcond_peri = fcond;
-*/
-
+      // Check for close encounter with central body. No test particles
+      if (i == 0 && j < Nactive && ri_tr->current_L == 0 && fcond_peri < 0.0){
+        ri_tr->current_L = 1;
+      }
 
       // Body-body
-      if (i != 0){
-        // Naive condition
-        double dcritmax = MAX(dcrit[i],dcrit[j]);
-        dcritmax *= 1.21;
-
-        if ((d - dcritmax) < 0.0){
-          ri_tr->current_Ks[pindex(i,j,N)] = 1;
-          if (ri_tr->encounter_map[i]==0){
-              ri_tr->encounter_map[i] = i;
-              ri_tr->encounterN++;
-          }
-          if (ri_tr->encounter_map[j]==0){
-              ri_tr->encounter_map[j] = j;
-              ri_tr->encounterN++;
-          }
+      if (i != 0 && fcond < 0.0){
+        ri_tr->current_Ks[pindex(i,j,N)] = 1;
+        if (ri_tr->encounter_map[i] == 0){
+            ri_tr->encounter_map[i] = i;
+            ri_tr->encounterN++;
+        }
+        if (ri_tr->encounter_map[j] == 0){
+            ri_tr->encounter_map[j] = j;
+            ri_tr->encounterN++;
+        }
           //if (j<Nactive){ // Two massive particles have a close encounter
           //    ri_tr->tponly_encounter = 0;
           //}
-        }
-      }
-
-      // Check for close encounter with central body. No test particles
-      if (i == 0 && j < Nactive && ri_tr->current_L == 0 && (d - peri) < 0.0){
-        ri_tr->current_L = 1;
       }
     }
   }
+
 }
 
 int Ftry(struct reb_simulation* const r){
   struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
   const int N = r->N;
   const int Nactive = r->N_active==-1?r->N:r->N_active;
-  const double* const dcrit = ri_tr->dcrit;
-  const double peri = ri_tr->peri;
+  struct reb_vec3d (*_switch) (const struct reb_simulation* const r, int i, int j) = r->ri_tr.S;
   int ctry = 0;
 
   for (int i = 0; i < N; i++){
@@ -512,44 +542,110 @@ int Ftry(struct reb_simulation* const r){
 
   for (int i = 0; i < Nactive; i++){
     for (int j = i + 1; j < N; j++){
-      // Needed for both
-      const double dx = r->particles[i].x - r->particles[j].x;
-      const double dy = r->particles[i].y - r->particles[j].y;
-      const double dz = r->particles[i].z - r->particles[j].z;
-      const double d = sqrt(dx*dx + dy*dy + dz*dz);
 
-      // Naive condition
-      //double fcond = d - dcritmax;
-      // double fcond_peri = d - peri;
+      struct reb_vec3d cond = _switch(r, i, j);
+      double fcond = cond.x;
+      double fcond_peri = cond.y;
 
       // We only care if K_ij goes from 0->1
       // if 1->0 just integrate with BS, probably not worth the hassle
-      if (i != 0 && ri_tr->current_Ks[pindex(i,j,N)] == 0){
-        double dcritmax = MAX(dcrit[i],dcrit[j]);
-        dcritmax *= 1.21;
-        //ri_tr->delta_Ks[pindex(i,j,N)] = 1;
-        if ((d - dcritmax) < 0.0){
-          ri_tr->current_Ks[pindex(i,j,N)] = 1;
-          if (ri_tr->encounter_map[i]==0){
-              ri_tr->encounter_map[i] = i;
-              ri_tr->encounterN++;
-          }
-          if (ri_tr->encounter_map[j]==0){
-              ri_tr->encounter_map[j] = j;
-              ri_tr->encounterN++;
-          }
-          ctry = 1;
+      if (i != 0 && ri_tr->current_Ks[pindex(i,j,N)] == 0 && fcond < 0.0){
+        ri_tr->current_Ks[pindex(i,j,N)] = 1;
+        if (ri_tr->encounter_map[i]==0){
+            ri_tr->encounter_map[i] = i;
+            ri_tr->encounterN++;
         }
+        if (ri_tr->encounter_map[j]==0){
+            ri_tr->encounter_map[j] = j;
+            ri_tr->encounterN++;
+        }
+        ctry = 1;
       }
 
       // If new pericenter CE has been detected
-      if (i == 0 && j < Nactive && ri_tr->current_L == 0 && (d - peri) < 0.0){
+      if (i == 0 && j < Nactive && ri_tr->current_L == 0 && fcond_peri < 0.0){
         ri_tr->current_L = 1;
         ctry = 1;
       }
     }
   }
+
+  /*
+  const double dx = r->particles[i].x - r->particles[j].x;
+  const double dy = r->particles[i].y - r->particles[j].y;
+  const double dz = r->particles[i].z - r->particles[j].z;
+  const double d = sqrt(dx*dx + dy*dy + dz*dz);
+
+  double fcond;
+  double fcond_peri;
+
+  if (vSwitch){
+    // Use the velocity dependent condition
+    const double vx = r->particles[i].vx - r->particles[j].vx;
+    const double vy = r->particles[i].vy - r->particles[j].vy;
+    const double vz = r->particles[i].vz - r->particles[j].vz;
+    const double vsquared = vx*vx + vy*vy + vz*vz;
+
+    if (i != 0){
+      double F_vel = d / (sqrt(3. * vsquared + r->G * (r->particles[i].m + r->particles[j].m) / d));
+      fcond = F_vel - vfac * r->dt;
+    }
+
+    else{
+      const double mu = r->G*(r->particles[i].m+r->particles[j].m);
+      const double vcircsquared = mu/d;
+      const double a = -mu/(vsquared - 2.*vcircsquared);
+
+      const double vdiffsquared = vsquared - vcircsquared;
+      const double vr = (dx*vx + dy*vy + dz*vz)/d;
+      const double rvr = d*vr;
+      const double muinv = 1./mu;
+      const double ex = muinv*(vdiffsquared*dx - rvr*vx );
+      const double ey = muinv*(vdiffsquared*dy - rvr*vy );
+      const double ez = muinv*(vdiffsquared*dz - rvr*vz );
+      const double e = sqrt( ex*ex + ey*ey + ez*ez );
+      const double ome = 1. - e;
+
+      const double F_vel_peri = 2 * M_PI * sqrt(((ome*ome*ome)/(1+e))*(a*a*a/mu));
+      fcond_peri = F_vel_peri - vfacp * r->dt;
+    }
+  }
+
+  else{
+    // Use traditional switching function
+    double dcritmax = MAX(dcrit[i],dcrit[j]);
+    dcritmax *= 1.21;
+
+    fcond = d - dcritmax;
+    fcond_peri = d - peri;
+  }
+  */
   return ctry;
+}
+
+int Ftest(struct reb_simulation* const r){
+  struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
+  const int N = r->N;
+  const int Nactive = r->N_active==-1?r->N:r->N_active;
+  struct reb_vec3d (*_switch) (const struct reb_simulation* const r, int i, int j) = r->ri_tr.S;
+  int ctest = 0;
+
+  for (int i = 1; i < Nactive; i++){
+    for (int j = i + 1; j < N; j++){
+      struct reb_vec3d cond = _switch(r, i, j);
+      double fcond = cond.x;
+
+      // We only care if K_ij goes from 0->1
+      // if 1->0 just integrate with BS, probably not worth the hassle
+      if (ri_tr->current_Ks[pindex(i,j,N)] == 0 && fcond < 0.0){
+        ri_tr->current_Ks[pindex(i,j,N)] = 1;
+        if (ctest == 0){
+          ctest = 1;
+        }
+      }
+    }
+  }
+  return ctest;
 }
 
 // This is Listing 2
@@ -569,8 +665,16 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 
     for (int i = 0; i < (N-1)*(N-2)/2; i++){
       ri_tr->current_Ks[i] = 0;
-      ri_tr->delta_Ks[i] = 0;
+      //ri_tr->delta_Ks[i] = 0;
     }
+
+    if (r->t == 0){
+      for (int i = 0; i < 6; i++){
+        ri_tr->delta_Ks[i] = 0;
+      }
+    }
+
+    ri_tr->delta_Ks[0] += 1;
 
     F0(r); // Check initial condition
 
@@ -581,11 +685,12 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 
       // No pericenter CE, so we do the jump step
       if (ri_tr->is_synchronized){
+          //printf("synced??\n");
           reb_integrator_trace_jump_step(r, r->dt/2.); // Pdot for B
       }else{
+          //printf("not synced\n");
           reb_integrator_trace_jump_step(r, r->dt);
       }
-
       reb_integrator_trace_interaction_step(r, r->dt/2.);
       reb_integrator_trace_com_step(r,r->dt);
 
@@ -597,7 +702,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       int ctry = Ftry(r);
       if (ctry){ // Something has been flagged.
         // Reset to backup values
-        // ri_tr->delta_Ks[0] += 1;
         for (int i=0; i<N; i++){
             r->particles[i] = ri_tr->particles_backup[i];
         }
@@ -614,7 +718,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
         memcpy(ri_tr->particles_backup_try,r->particles,r->N*sizeof(struct reb_particle));
 
         if (ri_tr->current_L){ // Pericenter CE, integrate whole sim with BS
-
           ri_tr->encounterN = N;
           ri_tr->encounter_map[0] = 1; // Identity map except central body
           for (int i = 1; i < N; i++){
@@ -622,37 +725,69 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
           }
           ri_tr->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
           reb_trace_bs_step(r, r->dt);
+          ri_tr->delta_Ks[4] += 1; // Flagged peri
         }
         else{
           // No CE, WHFast into BS
           reb_integrator_trace_kepler_step(r, r->dt); // We can always advance ALL particles
-          reb_trace_bs_step(r, r->dt); // This will do nothing if no close encounters
+          reb_trace_bs_step(r, r->dt);
+          ri_tr->delta_Ks[5] += 1; // Flagged CE
         }
+      }
+      else{
+        ri_tr->delta_Ks[3] += 1; // No flag everything is fine
       }
     }
 
     else{ // there has been a pericenter close encounter.
       // Immediately integrate entire sim with BS - no Jump step
-      //if (r->t != 0.0){
         //printf("Interaction one\n");
         // BUG: IF YOU START AT PERI CE ERROR IS BAD
       reb_integrator_trace_interaction_step(r, r->dt/2.);
-      //}
       reb_integrator_trace_com_step(r,r->dt);
 
       memcpy(ri_tr->particles_backup_try,r->particles,r->N*sizeof(struct reb_particle));
 
       ri_tr->encounter_map[0] = 1;
-      ri_tr->encounterN = 1;
+      ri_tr->encounterN = N;
       for (int i = 1; i < N; i++){
         ri_tr->encounter_map[i] = i; // Identity map
-        ri_tr->encounterN++;
       }
 
       ri_tr->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
       reb_trace_bs_step(r, r->dt); // This will do nothing if no close encounters
+
+      int ctest = Ftest(r);
+      if (ctest){
+        // Reset to backup values
+        for (int i=0; i<N; i++){
+            r->particles[i] = ri_tr->particles_backup[i];
+        }
+
+        if (ri_tr->is_synchronized){
+            reb_integrator_trace_jump_step(r, r->dt/2.); // Pdot for B
+        }else{
+            reb_integrator_trace_jump_step(r, r->dt);
+        }
+        reb_integrator_trace_interaction_step(r, r->dt/2.);
+        reb_integrator_trace_com_step(r,r->dt);
+
+        memcpy(ri_tr->particles_backup_try,r->particles,r->N*sizeof(struct reb_particle));
+
+        ri_tr->encounterN = N;
+        ri_tr->encounter_map[0] = 1; // Identity map except central body
+        for (int i = 1; i < N; i++){
+          ri_tr->encounter_map[i] = i;
+        }
+        ri_tr->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
+        reb_trace_bs_step(r, r->dt);
+        ri_tr->delta_Ks[2] += 1; // Init peri -> flagged CE
+      }
+      else{
+        ri_tr->delta_Ks[1] += 1; // Init Peri -> No flag
+      }
     }
-    //printf("Interaction two\n");
+
     reb_integrator_trace_interaction_step(r,r->dt/2.);
 
     ri_tr->is_synchronized = 0;
@@ -667,6 +802,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 void reb_integrator_trace_synchronize(struct reb_simulation* r){
     struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
     if (ri_tr->is_synchronized == 0){
+        //printf("synchronizing\n");
         r->gravity = REB_GRAVITY_TRACE; // needed here again for SimulationArchive
 
         ri_tr->mode=0;
@@ -683,6 +819,8 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_tr.encounterN = 0;
     r->ri_tr.encounterNactive = 0;
     r->ri_tr.hillfac = 4; // TLu changed to Hernandez (2023)
+    r->ri_tr.vSwitch = 0; // TLu changed to Hernandez (2023)
+    r->ri_tr.vfac = 3.;
     //r->ri_tr.peri = 0.; // TLu changed to Hernandez (2023)
     r->ri_tr.tponly_encounter = 0;
     r->ri_tr.recalculate_coordinates_this_timestep = 0;
@@ -725,13 +863,6 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     // free(r->ri_tr.close_encounters);
     // r->close_encounters = NULL;
 }
-/*
-void reb_integrator_tlu_bs_step(struct reb_simulation* r, double dt){
-  int nRefineMax = 8;
-  double T[0][nRefineMax][nRefineMax] ={0};
-  double T[0][nRefineMax] ={0};
-}
-*/
 
 // Check F for pre-timestep using backup particles
 /*

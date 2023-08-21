@@ -65,7 +65,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-#define DEBUG 0 // set to 1 to print out debug information (reason for step rejection)
+#define DEBUG 0// set to 1 to print out debug information (reason for step rejection)
 
 // Default configuration parameter.
 // They are hard coded here because it
@@ -81,6 +81,8 @@ static const double orderControl2 = 0.9;
 static const double stabilityReduction = 0.5;
 static const int maxIter = 2; // maximal number of iterations for which checks are performed
 static const int maxChecks = 1; // maximal number of checks for each iteration
+
+int calls = 0;
 
 void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* y){
     if (r==NULL){
@@ -125,6 +127,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
     const double subStep  = step / n;
     double t = t0;
     int needs_nbody = r->ri_bs.user_ode_needs_nbody;
+    //printf("%d %f %f %d\n", n, step, subStep, needs_nbody);
 
     // LeapFrog Method did not seem to be of any advantage
     //    switch (method) {
@@ -388,17 +391,28 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
       map = r->ri_bs.map;
       N = r->N;
     }
-    for (int i=start; i<N; i++){
-        // TLu may be a better way to structure this
-        int mi = map[i];
 
-        const struct reb_particle p = r->particles[mi];
-        yDot[i*6+0] = p.vx + px; // Already checked for current_L
-        yDot[i*6+1] = p.vy + py;
-        yDot[i*6+2] = p.vz + pz;
-        yDot[i*6+3] = p.ax;
-        yDot[i*6+4] = p.ay;
-        yDot[i*6+5] = p.az;
+
+    for (int i=start; i<r->N; i++){
+        // TLu may be a better way to structure this
+        if (i < N){
+          int mi = map[i];
+          const struct reb_particle p = r->particles[mi];
+          yDot[i*6+0] = p.vx + px; // Already checked for current_L
+          yDot[i*6+1] = p.vy + py;
+          yDot[i*6+2] = p.vz + pz;
+          yDot[i*6+3] = p.ax;
+          yDot[i*6+4] = p.ay;
+          yDot[i*6+5] = p.az;
+        }
+        else{
+          yDot[i*6+0] = 0.0;
+          yDot[i*6+1] = 0.0;
+          yDot[i*6+2] = 0.0;
+          yDot[i*6+3] = 0.0;
+          yDot[i*6+4] = 0.0;
+          yDot[i*6+5] = 0.0;
+        }
 
         //printf("%d %e %e %e %e %e %e\n", i, yDot[i*6+0], yDot[i*6+1], yDot[i*6+2], yDot[i*6+3], yDot[i*6+4], yDot[i*6+5]);
     }
@@ -479,6 +493,7 @@ static void reb_integrator_bs_default_scale(struct reb_ode* ode, double* y1, dou
 
 
 int reb_integrator_bs_step(struct reb_simulation* r, double dt){
+    //printf("%f\n", r->t);
     // return 1 if step was successful
     //        0 if rejected
     //
@@ -587,7 +602,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                     for (int j = 0; j < length; ++j) {
                         const double e = C[j] / scale[j];
                         error = MAX(error, e * e);
-                        //printf("%d %e %e %e\n", j, C[j], scale[j], error);
+                        //printf("%d %e %e %e\n", j, C[j], scale[j], e);
                     }
                 }
                 // Note: Used to be: error = sqrt(error / combined_length). But for N-body applications it might be more consistent to use:
@@ -755,16 +770,20 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
             // should increase
             ri_bs->targetIter = MIN(optimalIter, k);
             dt = MIN(fabs(dt), ri_bs->optimalStep[ri_bs->targetIter]);
+            //printf("Previous rejected: %f\n", dt);
         } else {
             // stepsize control
             if (optimalIter <= k) {
                 dt = ri_bs->optimalStep[optimalIter];
+                //printf("optimalIter: %f\n", dt);
             } else {
                 if ((k < ri_bs->targetIter) &&
                         (ri_bs->costPerTimeUnit[k] < orderControl2 * ri_bs->costPerTimeUnit[k - 1])) {
                     dt = ri_bs->optimalStep[k] * ri_bs->costPerStep[optimalIter + 1] / ri_bs->costPerStep[k];
+                    //printf("< targetIter: %f %d %d %f %d %d\n", dt, k, ri_bs->targetIter, ri_bs->optimalStep[k], ri_bs->costPerStep[optimalIter + 1], ri_bs->costPerStep[k]);
                 } else {
                     dt = ri_bs->optimalStep[k] * ri_bs->costPerStep[optimalIter] / ri_bs->costPerStep[k];
+                    //printf("< targetIter: %f %d %d %f %d %d\n", dt, k, ri_bs->targetIter, ri_bs->optimalStep[k], ri_bs->costPerStep[optimalIter], ri_bs->costPerStep[k]);
                 }
             }
 
@@ -780,9 +799,12 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
         reb_warning(r,"Minimal stepsize reached during ODE integration.");
     }
 
-    if (ri_bs->max_dt !=0.0 && dt > ri_bs->max_dt) {
+    if (ri_bs->max_dt != 0.0 && dt > ri_bs->max_dt) {
         dt = ri_bs->max_dt;
-        reb_warning(r,"Maximum stepsize reached during ODE integration.");
+        // no warning if TRACE. Better way for this??
+        if (r->integrator != REB_INTEGRATOR_TRACE){
+          reb_warning(r,"Maximum stepsize reached during ODE integration.");
+        }
     }
 
     if (! forward) {
@@ -841,24 +863,25 @@ struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length){
 }
 
 void reb_integrator_bs_part2(struct reb_simulation* r){
+    //printf("Time: %f\n", r->t);
     struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
 
-    int nbody_length;
+    int nbody_length = r->N*3*2;;
     int N;
     int* map;
+
+    //printf("Initial: %f ", r->dt);
 
     if (ri_bs->sequence==NULL){ // Moved from BS Step because need to allocate map here
         allocate_sequence_arrays(r, ri_bs);
     }
 
     if (r->integrator == REB_INTEGRATOR_TRACE){
-      // Can probably change this to just not integrate the Sun - idk if that would speed up or not...
-      nbody_length = r->ri_tr.encounterN*3*2; // Not quite correct yet - need to fix for multiple pairs of CEs
+      //nbody_length = r->ri_tr.encounterN*3*2; // Not quite correct yet - need to fix for multiple pairs of CEs
       N = r->ri_tr.encounterN;
       map = r->ri_tr.encounter_map;
     }
     else{
-      nbody_length = r->N*3*2;
       N = r->N;
       map = ri_bs->map;
     }
@@ -896,13 +919,16 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
         //printf("%e %e %e %e %e %e\n", y[i*6+0], y[i*6+1], y[i*6+2], y[i*6+3], y[i*6+4], y[i*6+5]);
     }
 
+    printf("%f,%f", r->t, r->dt);
+
     int success = reb_integrator_bs_step(r, r->dt);
-    //printf("%f %d\n", r->dt, success);
+    printf(",%f,%d", r->dt, success);
     if (success){
         r->t += r->dt;
         r->dt_last_done = r->dt;
     }
     r->dt = ri_bs->dt_proposed;
+    printf(",%f\n", ri_bs->dt_proposed);
 
     reb_integrator_bs_update_particles(r, ri_bs->nbody_ode->y);
     //exit(1);
