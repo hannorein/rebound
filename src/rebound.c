@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <stddef.h> // for offsetof()
 #include <sys/types.h>
 #include <string.h>
 #include <sys/time.h>
@@ -935,6 +936,25 @@ const char* reb_logo[26] = {
 "        -ossoys++++++++++++osso.         ",
 "          `-/oyyyssosssyso+/.            ",
 "                ``....`                  ",
+};
+
+
+struct reb_binary_field_descriptor {
+    unsigned int identifier;
+    enum {
+        REB_DOUBLE,
+        REB_INT,
+        REB_UINT,
+        REB_LONG,
+        REB_ULONG,
+        REB_OTHER,
+    } type;
+    char name[1024];
+    size_t offset;
+};
+
+const struct reb_binary_field_descriptor reb_binary_field_descriptor_list []= {
+    {0, REB_DOUBLE, "t", offsetof(struct reb_simulation, t)},
 };
 
 
