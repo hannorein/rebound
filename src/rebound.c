@@ -607,6 +607,9 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_ias15.epsilon_global  = 1;
     r->ri_ias15.iterations_max_exceeded = 0;    
     r->ri_ias15.dt_mode = 1;
+    r->ri_ias15.rejected = 0;
+    r->ri_ias15.mindt = 1e300;
+    r->ri_ias15.safety = 0.25;
     
     // ********** SEI
     r->ri_sei.OMEGA     = 1;

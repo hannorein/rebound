@@ -601,6 +601,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         if (fabs(dt_new)<r->ri_ias15.min_dt) dt_new = copysign(r->ri_ias15.min_dt,dt_new);
         
         if (fabs(dt_new/dt_done) < safety_factor) { // New timestep is significantly smaller.
+            r->ri_ias15.rejected += 1;
             // Reset particles
             for(int k=0;k<N;++k) {
                 int mk = map[k];
@@ -625,9 +626,14 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             return 0; // Step rejected. Do again. 
         }       
         if (fabs(dt_new/dt_done) > 1.0) {   // New timestep is larger.
-            if (dt_new/dt_done > 1./safety_factor) dt_new = dt_done /safety_factor; // Don't increase the timestep by too much compared to the last one.
+            if (dt_new/dt_done > 1./safety_factor){
+                r->ri_ias15.rejected += 1;
+                dt_new = dt_done /safety_factor; // Don't increase the timestep by too much compared to the last one.
+            }
         }
         r->dt = dt_new;
+        #define MIN(a, b) ((a) > (b) ? (b) : (a))
+        r->ri_ias15.mindt = MIN(r->ri_ias15.mindt, r->dt);
     }
 
     // Find new position and velocity values at end of the sequence
