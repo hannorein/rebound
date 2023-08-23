@@ -52,6 +52,7 @@ extern const char* reb_build_str;   ///< Date and time build string.
 extern const char* reb_version_str; ///< Version string.
 extern const char* reb_githash_str; ///< Current git hash.
 extern const char* reb_logo[26];    ///< Logo of rebound. 
+extern const char* reb_binary_field_type_reverse; ///< Dictionary to allow for reverse lookup of names of REB_BINARY_FIELD_TYPE
 extern volatile sig_atomic_t reb_sigint;  ///< Graceful global interrupt handler 
 
 // Forward declarations
@@ -1050,6 +1051,8 @@ void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** 
 // output_option If set to 0, the differences are written to bufp. If set to 1, printed on the screen. If set to 2, then only the return value indicates any differences.
 // returns 0 is returned if the simulations do not differ (are equal). 1 is return if they differ.
 int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option);
+// Returns the name fora given binary field type
+char* reb_name_for_binary_field_type(int type);
 
 // Input functions
 struct reb_simulation* reb_create_simulation_from_binary(char* filename);

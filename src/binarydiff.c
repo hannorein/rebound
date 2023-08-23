@@ -60,6 +60,26 @@ void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** 
     reb_binary_diff_with_options(buf1, size1, buf2, size2, bufp, sizep, 0);
 }
 
+// Result does not need to be freed.
+char* reb_name_for_binary_field_type_const(int type){
+    char needle[256];
+    sprintf(needle, " %d ", type); 
+    char* result = strstr(reb_binary_field_type_reverse, needle);
+    result += strlen(needle);
+    return result;
+
+}
+// Result needs to be freed.
+char* reb_name_for_binary_field_type(int type){
+    char* result = reb_name_for_binary_field_type_const(type);
+    if (!result) return NULL;
+    char* result2 = strstr(result, " ");
+    char* name = malloc(sizeof(char)*(result2-result));
+    strncpy(name, result, result2-result);
+    return name;
+
+}
+
 int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option){
     if (!buf1 || !buf2 || size1<64 || size2<64){
         printf("Cannot read input buffers.\n");
@@ -127,7 +147,11 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
                         reb_output_stream_write(bufp, &allocatedsize, sizep, &field1,sizeof(struct reb_binary_field));
                         break;
                     case 1:
-                        printf("Field %d not in simulation 2.\n",field1.type);
+                        {
+                            char* name = reb_name_for_binary_field_type(field1.type);
+                            printf("Field \"%s\" (type=%d) not in simulation 2.\n",name, field1.type);
+                            free(name);
+                        }
                         break;
                     default:
                         break;
@@ -171,7 +195,11 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
                     reb_output_stream_write(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
                     break;
                 case 1:
-                    printf("Field %d differs.\n",field1.type);
+                    {
+                        char* name = reb_name_for_binary_field_type(field1.type);
+                        printf("Field \"%s\" (type=%d) differs.\n",name, field1.type);
+                        free(name);
+                    }
                     break;
                 default:
                     break;
@@ -236,7 +264,11 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
                 reb_output_stream_write(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
                 break;
             case 1:
-                printf("Field %d not in simulation 1.\n",field2.type);
+                {
+                    char* name = reb_name_for_binary_field_type(field1.type);
+                    printf("Field \"%s\" (type=%d) not in simulation 1.\n",name, field1.type);
+                    free(name);
+                }
                 break;
             default:
                 break;
