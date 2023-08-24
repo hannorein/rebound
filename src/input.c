@@ -145,6 +145,22 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
     if (numread<1){
         return 0; // End of file
     }
+    int i=0;
+    while (reb_binary_field_descriptor_list[i].type!=9999){
+        int type = reb_binary_field_descriptor_list[i].type;
+        int dtype = reb_binary_field_descriptor_list[i].dtype;
+        if (type==field.type){
+            if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32 ||
+                    dtype == REB_LONG || dtype == REB_ULONG || dtype == REB_ULONGLONG || dtype == REB_VEC3D
+                ){
+                char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
+                reb_fread(pointer, field.size, 1, inf ,mem_stream);
+                return 1;
+            }
+        }
+        i++;
+    }
+
     switch (field.type){
         CASE(T,                  &r->t);
         CASE(G,                  &r->G);

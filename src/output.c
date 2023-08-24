@@ -271,14 +271,9 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     int i=0;
     while (reb_binary_field_descriptor_list[i].type!=9999){
         int dtype = reb_binary_field_descriptor_list[i].dtype;
-        if (dtype == REB_DOUBLE ||
-                dtype == REB_INT ||
-                dtype == REB_UINT ||
-                dtype == REB_UINT32 ||
-                dtype == REB_LONG ||
-                dtype == REB_ULONG ||
-                dtype == REB_ULONGLONG ||
-                dtype == REB_VEC3D
+        // Simple data types:
+        if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32 ||
+                dtype == REB_LONG || dtype == REB_ULONG || dtype == REB_ULONGLONG || dtype == REB_VEC3D
                 ){
             struct reb_binary_field field;
             memset(&field,0,sizeof(struct reb_binary_field));
