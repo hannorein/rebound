@@ -279,52 +279,43 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
             char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
             reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
         }
+        if (reb_binary_field_descriptor_list[i].dtype == REB_INT){
+            struct reb_binary_field field;
+            memset(&field,0,sizeof(struct reb_binary_field));
+            field.type = reb_binary_field_descriptor_list[i].type;
+            field.size = sizeof(int);
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
+            char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
+            reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
+        }
+        if (reb_binary_field_descriptor_list[i].dtype == REB_UINT){
+            struct reb_binary_field field;
+            memset(&field,0,sizeof(struct reb_binary_field));
+            field.type = reb_binary_field_descriptor_list[i].type;
+            field.size = sizeof(unsigned int);
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
+            char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
+            reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
+        }
+        if (reb_binary_field_descriptor_list[i].dtype == REB_UINT32){
+            struct reb_binary_field field;
+            memset(&field,0,sizeof(struct reb_binary_field));
+            field.type = reb_binary_field_descriptor_list[i].type;
+            field.size = sizeof(uint32_t);
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
+            char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
+            reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
+        }
         i++;
     }
 
    
-    WRITE_FIELD(N,                  &r->N,                              sizeof(int));
-    WRITE_FIELD(NVAR,               &r->N_var,                          sizeof(int));
-    WRITE_FIELD(VARCONFIGN,         &r->var_config_N,                   sizeof(int));
-    WRITE_FIELD(NACTIVE,            &r->N_active,                       sizeof(int));
-    WRITE_FIELD(TESTPARTICLETYPE,   &r->testparticle_type,              sizeof(int));
-    WRITE_FIELD(TESTPARTICLEHIDEWARNINGS, &r->testparticle_hidewarnings,sizeof(int));
-    WRITE_FIELD(HASHCTR,            &r->hash_ctr,                       sizeof(int));
-    WRITE_FIELD(STATUS,             &r->status,                         sizeof(int));
-    WRITE_FIELD(EXACTFINISHTIME,    &r->exact_finish_time,              sizeof(int));
-    WRITE_FIELD(FORCEISVELOCITYDEP, &r->force_is_velocity_dependent,    sizeof(unsigned int));
-    WRITE_FIELD(GRAVITYIGNORETERMS, &r->gravity_ignore_terms,           sizeof(unsigned int));
-    WRITE_FIELD(SAVEMESSAGES,       &r->save_messages,                  sizeof(int));
-    WRITE_FIELD(TRACKENERGYOFFSET,  &r->track_energy_offset,            sizeof(int));
     WRITE_FIELD(BOXSIZE,            &r->boxsize,                        sizeof(struct reb_vec3d));
-    WRITE_FIELD(ROOTN,              &r->root_n,                         sizeof(int));
-    WRITE_FIELD(ROOTNX,             &r->root_nx,                        sizeof(int));
-    WRITE_FIELD(ROOTNY,             &r->root_ny,                        sizeof(int));
-    WRITE_FIELD(ROOTNZ,             &r->root_nz,                        sizeof(int));
-    WRITE_FIELD(NGHOSTX,            &r->nghostx,                        sizeof(int));
-    WRITE_FIELD(NGHOSTY,            &r->nghosty,                        sizeof(int));
-    WRITE_FIELD(NGHOSTZ,            &r->nghostz,                        sizeof(int));
-    WRITE_FIELD(COLLISIONRESOLVEKEEPSORTED, &r->collision_resolve_keep_sorted, sizeof(int));
     WRITE_FIELD(MAXRADIUS,          &r->max_radius,                     2*sizeof(double));
     WRITE_FIELD(COLLISIONSNLOG,     &r->collisions_Nlog,                sizeof(long));
-    WRITE_FIELD(CALCULATEMEGNO,     &r->calculate_megno,                sizeof(int));
     WRITE_FIELD(MEGNON,             &r->megno_n,                        sizeof(long));
-    WRITE_FIELD(SAVERSION,          &r->simulationarchive_version,      sizeof(int));
     WRITE_FIELD(SASIZESNAPSHOT,     &r->simulationarchive_size_snapshot,sizeof(long));
-    WRITE_FIELD(COLLISION,          &r->collision,                      sizeof(int));
-    WRITE_FIELD(VISUALIZATION,      &r->visualization,                  sizeof(int));
-    WRITE_FIELD(INTEGRATOR,         &r->integrator,                     sizeof(int));
-    WRITE_FIELD(BOUNDARY,           &r->boundary,                       sizeof(int));
-    WRITE_FIELD(GRAVITY,            &r->gravity,                        sizeof(int));
-    WRITE_FIELD(WHFAST_CORRECTOR,   &r->ri_whfast.corrector,            sizeof(unsigned int));
-    WRITE_FIELD(WHFAST_RECALCJAC,   &r->ri_whfast.recalculate_coordinates_this_timestep, sizeof(unsigned int));
-    WRITE_FIELD(WHFAST_SAFEMODE,    &r->ri_whfast.safe_mode,            sizeof(unsigned int));
-    WRITE_FIELD(WHFAST_KEEPUNSYNC,  &r->ri_whfast.keep_unsynchronized,  sizeof(unsigned int));
-    WRITE_FIELD(WHFAST_ISSYNCHRON,  &r->ri_whfast.is_synchronized,      sizeof(unsigned int));
-    WRITE_FIELD(WHFAST_TIMESTEPWARN,&r->ri_whfast.timestep_warning,     sizeof(unsigned int));
     WRITE_FIELD(WHFAST_PJ,          r->ri_whfast.p_jh,                  sizeof(struct reb_particle)*r->ri_whfast.allocated_N);
-    WRITE_FIELD(WHFAST_COORDINATES, &r->ri_whfast.coordinates,          sizeof(int));
-    WRITE_FIELD(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global,        sizeof(unsigned int));
     WRITE_FIELD(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded,sizeof(unsigned long));
     if (r->ri_ias15.allocatedN>r->N*3){
         int N3 = 3*r->N; // Useful to avoid file size increase if particles got removed
@@ -332,37 +323,13 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     }else{
         WRITE_FIELD(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN,            sizeof(int));
     }
-    WRITE_FIELD(JANUS_ORDER,        &r->ri_janus.order,                 sizeof(unsigned int));
-    WRITE_FIELD(JANUS_ALLOCATEDN,   &r->ri_janus.allocated_N,           sizeof(unsigned int));
-    WRITE_FIELD(JANUS_RECALC,       &r->ri_janus.recalculate_integer_coordinates_this_timestep, sizeof(unsigned int));
     WRITE_FIELD(JANUS_PINT,         r->ri_janus.p_int,                  sizeof(struct reb_particle_int)*r->ri_janus.allocated_N);
-    WRITE_FIELD(MERCURIUS_SAFEMODE, &r->ri_mercurius.safe_mode,         sizeof(unsigned int));
-    WRITE_FIELD(MERCURIUS_ISSYNCHRON, &r->ri_mercurius.is_synchronized, sizeof(unsigned int));
-    WRITE_FIELD(MERCURIUS_RECALCULATE_COORD, &r->ri_mercurius.recalculate_coordinates_this_timestep, sizeof(unsigned int));
     WRITE_FIELD(MERCURIUS_DCRIT,    r->ri_mercurius.dcrit,              sizeof(double)*r->ri_mercurius.dcrit_allocatedN);
     WRITE_FIELD(MERCURIUS_COMPOS,   &(r->ri_mercurius.com_pos),         sizeof(struct reb_vec3d));
     WRITE_FIELD(MERCURIUS_COMVEL,   &(r->ri_mercurius.com_vel),         sizeof(struct reb_vec3d));
-    WRITE_FIELD(PYTHON_UNIT_L,      &r->python_unit_l,                  sizeof(uint32_t));
-    WRITE_FIELD(PYTHON_UNIT_M,      &r->python_unit_m,                  sizeof(uint32_t));
-    WRITE_FIELD(PYTHON_UNIT_T,      &r->python_unit_t,                  sizeof(uint32_t));
     WRITE_FIELD(STEPSDONE,          &r->steps_done,                     sizeof(unsigned long long));
     WRITE_FIELD(SAAUTOSTEP,         &r->simulationarchive_auto_step,    sizeof(unsigned long long));
     WRITE_FIELD(SANEXTSTEP,         &r->simulationarchive_next_step,    sizeof(unsigned long long));
-    WRITE_FIELD(SABA_TYPE,          &r->ri_saba.type,                   sizeof(unsigned int));
-    WRITE_FIELD(SABA_SAFEMODE,      &r->ri_saba.safe_mode,              sizeof(unsigned int));
-    WRITE_FIELD(SABA_ISSYNCHRON,    &r->ri_saba.is_synchronized,        sizeof(unsigned int));
-    WRITE_FIELD(SABA_KEEPUNSYNC,    &r->ri_saba.keep_unsynchronized,    sizeof(unsigned int));
-    WRITE_FIELD(WHFAST_CORRECTOR2,  &r->ri_whfast.corrector2,           sizeof(unsigned int));
-    WRITE_FIELD(WHFAST_KERNEL,      &r->ri_whfast.kernel,               sizeof(unsigned int));
-    WRITE_FIELD(EOS_PHI0,           &r->ri_eos.phi0,                    sizeof(unsigned int));
-    WRITE_FIELD(EOS_PHI1,           &r->ri_eos.phi1,                    sizeof(unsigned int));
-    WRITE_FIELD(EOS_N,              &r->ri_eos.n,                       sizeof(unsigned int));
-    WRITE_FIELD(EOS_SAFEMODE,       &r->ri_eos.safe_mode,               sizeof(unsigned int));
-    WRITE_FIELD(EOS_ISSYNCHRON,     &r->ri_eos.is_synchronized,         sizeof(unsigned int));
-    WRITE_FIELD(RAND_SEED,          &r->rand_seed,                      sizeof(unsigned int));
-    WRITE_FIELD(BS_FIRSTORLASTSTEP, &r->ri_bs.firstOrLastStep,          sizeof(int));
-    WRITE_FIELD(BS_PREVIOUSREJECTED,&r->ri_bs.previousRejected,         sizeof(int));
-    WRITE_FIELD(BS_TARGETITER,      &r->ri_bs.targetIter,               sizeof(int));
     int functionpointersused = 0;
     if (r->coefficient_of_restitution ||
         r->collision_resolve ||
@@ -434,13 +401,8 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
 
 
     // Output fields for TES integrator.
-    WRITE_FIELD(TES_SV_LEN,             &r->ri_tes.stateVectorLength,     sizeof(uint32_t));
-    WRITE_FIELD(TES_SV_SIZE,            &r->ri_tes.stateVectorSize,       sizeof(uint32_t));
-    WRITE_FIELD(TES_CV_LEN,             &r->ri_tes.controlVectorLength,   sizeof(uint32_t));
-    WRITE_FIELD(TES_CV_SIZE,            &r->ri_tes.controlVectorSize,     sizeof(uint32_t));
     WRITE_FIELD(TES_COM,                &r->ri_tes.COM,                   3*sizeof(double));
     WRITE_FIELD(TES_COM_DOT,            &r->ri_tes.COM_dot,               3*sizeof(double));
-    WRITE_FIELD(TES_ALLOCATED_N,        &r->ri_tes.allocated_N,           sizeof(uint32_t));
     
     if(r->ri_tes.allocated_N)
     {
@@ -556,10 +518,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     }
    
 #ifdef AVX512 
-    WRITE_FIELD(WHFAST512_KEEPUNSYNC, &r->ri_whfast512.keep_unsynchronized, sizeof(unsigned int));
-    WRITE_FIELD(WHFAST512_ISSYNCHRON, &r->ri_whfast512.is_synchronized, sizeof(unsigned int));
-    WRITE_FIELD(WHFAST512_GRPOTENTIAL, &r->ri_whfast512.gr_potential, sizeof(unsigned int));
-    WRITE_FIELD(WHFAST512_ALLOCATEDN, &r->ri_whfast512.allocated_N, sizeof(unsigned int));
     if (r->ri_whfast512.allocated_N){
         WRITE_FIELD(WHFAST512_PJH, r->ri_whfast512.p_jh, sizeof(struct reb_particle_avx512));
         WRITE_FIELD(WHFAST512_PJH0, &r->ri_whfast512.p_jh0, sizeof(struct reb_particle));

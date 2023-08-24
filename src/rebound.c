@@ -1073,7 +1073,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 160, REB_INT,     "ri_bs.firstOrLastStep", offsetof(struct reb_simulation, ri_bs.firstOrLastStep)},
     { 161, REB_INT,     "ri_bs.previousRejected", offsetof(struct reb_simulation, ri_bs.previousRejected)},
     { 162, REB_INT,     "ri_bs.targetIter", offsetof(struct reb_simulation, ri_bs.targetIter)},
-    { 163, REB_INT,     "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning)},
+//    { 163, REB_INT,     "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning)},
     { 300, REB_DOUBLE,  "ri_tes.dq_max", offsetof(struct reb_simulation, ri_tes.dq_max)},
     { 301, REB_DOUBLE,  "ri_tes.recti_per_orbit", offsetof(struct reb_simulation, ri_tes.recti_per_orbit)},
     { 302, REB_DOUBLE,  "ri_tes.epsilon", offsetof(struct reb_simulation, ri_tes.epsilon)},
