@@ -270,38 +270,28 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
 
     int i=0;
     while (reb_binary_field_descriptor_list[i].type!=9999){
-        if (reb_binary_field_descriptor_list[i].dtype == REB_DOUBLE){
+        int dtype = reb_binary_field_descriptor_list[i].dtype;
+        if (dtype == REB_DOUBLE ||
+                dtype == REB_INT ||
+                dtype == REB_UINT ||
+                dtype == REB_UINT32 ){
             struct reb_binary_field field;
             memset(&field,0,sizeof(struct reb_binary_field));
             field.type = reb_binary_field_descriptor_list[i].type;
-            field.size = sizeof(double);
-            reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
-            char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
-            reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
-        }
-        if (reb_binary_field_descriptor_list[i].dtype == REB_INT){
-            struct reb_binary_field field;
-            memset(&field,0,sizeof(struct reb_binary_field));
-            field.type = reb_binary_field_descriptor_list[i].type;
-            field.size = sizeof(int);
-            reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
-            char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
-            reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
-        }
-        if (reb_binary_field_descriptor_list[i].dtype == REB_UINT){
-            struct reb_binary_field field;
-            memset(&field,0,sizeof(struct reb_binary_field));
-            field.type = reb_binary_field_descriptor_list[i].type;
-            field.size = sizeof(unsigned int);
-            reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
-            char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
-            reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
-        }
-        if (reb_binary_field_descriptor_list[i].dtype == REB_UINT32){
-            struct reb_binary_field field;
-            memset(&field,0,sizeof(struct reb_binary_field));
-            field.type = reb_binary_field_descriptor_list[i].type;
-            field.size = sizeof(uint32_t);
+            switch (dtype){
+                case REB_DOUBLE: 
+                    field.size = sizeof(double);
+                    break;
+                case REB_INT: 
+                    field.size = sizeof(int);
+                    break;
+                case REB_UINT: 
+                    field.size = sizeof(unsigned int);
+                    break;
+                case REB_UINT32: 
+                    field.size = sizeof(uint32_t);
+                    break;
+            }
             reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
             char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
             reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
