@@ -277,7 +277,8 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
                 dtype == REB_UINT32 ||
                 dtype == REB_LONG ||
                 dtype == REB_ULONG ||
-                dtype == REB_ULONGLONG
+                dtype == REB_ULONGLONG ||
+                dtype == REB_VEC3D
                 ){
             struct reb_binary_field field;
             memset(&field,0,sizeof(struct reb_binary_field));
@@ -316,7 +317,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     }
 
    
-    WRITE_FIELD(BOXSIZE,            &r->boxsize,                        sizeof(struct reb_vec3d));
     WRITE_FIELD(MAXRADIUS,          &r->max_radius,                     2*sizeof(double));
     WRITE_FIELD(WHFAST_PJ,          r->ri_whfast.p_jh,                  sizeof(struct reb_particle)*r->ri_whfast.allocated_N);
     if (r->ri_ias15.allocatedN>r->N*3){
@@ -327,8 +327,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     }
     WRITE_FIELD(JANUS_PINT,         r->ri_janus.p_int,                  sizeof(struct reb_particle_int)*r->ri_janus.allocated_N);
     WRITE_FIELD(MERCURIUS_DCRIT,    r->ri_mercurius.dcrit,              sizeof(double)*r->ri_mercurius.dcrit_allocatedN);
-    WRITE_FIELD(MERCURIUS_COMPOS,   &(r->ri_mercurius.com_pos),         sizeof(struct reb_vec3d));
-    WRITE_FIELD(MERCURIUS_COMVEL,   &(r->ri_mercurius.com_vel),         sizeof(struct reb_vec3d));
     int functionpointersused = 0;
     if (r->coefficient_of_restitution ||
         r->collision_resolve ||
