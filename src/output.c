@@ -308,6 +308,18 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
             char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
             reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
         }
+        // Pointer data types:
+        if (dtype == REB_POINTER ){
+            struct reb_binary_field field;
+            memset(&field,0,sizeof(struct reb_binary_field));
+            field.type = reb_binary_field_descriptor_list[i].type;
+            field.size = sizeof(struct reb_variational_configuration)*r->var_config_N;
+            if (field.size){
+                reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
+                char** pointer = (char**)r + reb_binary_field_descriptor_list[i].offset;
+                reb_output_stream_write(bufp, &allocatedsize, sizep, *pointer, field.size);
+            }
+        }
         i++;
     }
 
@@ -347,9 +359,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
             reb_output_stream_write(bufp, &allocatedsize, sizep, &op,sizeof(struct reb_particle));
         }
     } 
-    if (r->var_config){
-        WRITE_FIELD(VARCONFIG,      r->var_config,                      sizeof(struct reb_variational_configuration)*r->var_config_N);
-    }
     if (r->ri_ias15.allocatedN){
         int N3 = 3*r->N; // Only outut useful data (useful if particles got removed)
         WRITE_FIELD(IAS15_AT,   r->ri_ias15.at,     sizeof(double)*N3);

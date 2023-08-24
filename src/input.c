@@ -157,6 +157,14 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
                 reb_fread(pointer, field.size, 1, inf ,mem_stream);
                 return 1;
             }
+            if (dtype == REB_POINTER){
+                r->var_config = realloc(r->var_config, field.size);
+                reb_fread(r->var_config, field.size,1,inf,mem_stream);
+                for (int l=0;l<r->var_config_N;l++){ // TODO!!
+                    r->var_config[l].sim = r;
+                }
+                return 1;
+            }
         }
         i++;
     }
@@ -317,18 +325,6 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
             if (field.size){
                 r->ri_janus.p_int = malloc(field.size);
                 reb_fread(r->ri_janus.p_int, field.size,1,inf,mem_stream);
-            }
-            break;
-        case REB_BINARY_FIELD_TYPE_VARCONFIG:
-            if (r->var_config){
-                free(r->var_config);
-            }
-            if (r->var_config_N>0){
-                r->var_config = malloc(field.size);
-                reb_fread(r->var_config, field.size,1,inf,mem_stream);
-                for (int l=0;l<r->var_config_N;l++){
-                    r->var_config[l].sim = r;
-                }
             }
             break;
         case REB_BINARY_FIELD_TYPE_MERCURIUS_DCRIT:

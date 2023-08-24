@@ -1012,7 +1012,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 71, REB_UINT,         "ri_ias15.epsilon_global", offsetof(struct reb_simulation, ri_ias15.epsilon_global)},
     { 72, REB_ULONG,        "ri_ias15.iterations_max_exceeded", offsetof(struct reb_simulation, ri_ias15.iterations_max_exceeded)},
     { 85, REB_OTHER,        "particles", offsetof(struct reb_simulation, particles)},
-    { 86, REB_OTHER,        "varconfig", offsetof(struct reb_simulation, var_config)},
+    { 86, REB_POINTER,      "var_config", offsetof(struct reb_simulation, var_config)},
     { 87, REB_OTHER,        "functionpointers", 0},
     { 88, REB_OTHER,        "ri_ias15.allocatedN", offsetof(struct reb_simulation, ri_ias15.allocatedN)},
     { 89, REB_OTHER,        "ri_ias15.at", offsetof(struct reb_simulation, ri_ias15.at)},
