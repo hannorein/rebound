@@ -272,25 +272,6 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(BS_FIRSTORLASTSTEP, &r->ri_bs.firstOrLastStep);
         CASE(BS_PREVIOUSREJECTED,&r->ri_bs.previousRejected);
         CASE(BS_TARGETITER,      &r->ri_bs.targetIter);
-        // temporary solution for depreciated SABA k and corrector variables.
-        // can be removed in future versions
-        case 138: 
-            {
-            unsigned int k = 0;
-            reb_fread(&k, field.size,1,inf,mem_stream);
-            r->ri_saba.type/=0x100;
-            r->ri_saba.type += k-1;
-            }
-            break;
-        case 139: 
-            {
-            unsigned int corrector = 0;
-            reb_fread(&corrector, field.size,1,inf,mem_stream);
-            r->ri_saba.type%=0x100;
-            r->ri_saba.type += 0x100*corrector;
-            }
-            break;
-
         CASE(SABA_SAFEMODE,      &r->ri_saba.safe_mode);
         CASE(SABA_ISSYNCHRON,    &r->ri_saba.is_synchronized);
         CASE(WHFAST_CORRECTOR2,  &r->ri_whfast.corrector2);

@@ -1065,6 +1065,7 @@ struct reb_binary_field_descriptor {
         REB_ULONG,
         REB_ULONGLONG,
         REB_VEC3D,
+        REB_POINTER,
         REB_OTHER,
     } dtype;
     char name[1024];
