@@ -985,7 +985,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 42, REB_DOUBLE,   "megno_mean_t", offsetof(struct reb_simulation, megno_mean_t)},
     { 43, REB_DOUBLE,   "megno_mean_Y", offsetof(struct reb_simulation, megno_mean_Y)},
     { 44, REB_LONG,     "megno_n", offsetof(struct reb_simulation, megno_n)},
-    { 45, REB_LONG,     "simulationarchive_size_first", offsetof(struct reb_simulation, simulationarchive_size_first)},
+    // { 45, REB_LONG,     "simulationarchive_size_first", offsetof(struct reb_simulation, simulationarchive_size_first)}, // Manually calculated
     { 46, REB_LONG,     "simulationarchive_size_snapshot", offsetof(struct reb_simulation, simulationarchive_size_snapshot)},
     { 47, REB_DOUBLE,   "simulationarchive_auto_interval", offsetof(struct reb_simulation, simulationarchive_auto_interval)},
     { 102, REB_DOUBLE,  "simulationarchive_auto_walltime", offsetof(struct reb_simulation, simulationarchive_auto_walltime)},

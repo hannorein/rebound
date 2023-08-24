@@ -274,7 +274,11 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
         if (dtype == REB_DOUBLE ||
                 dtype == REB_INT ||
                 dtype == REB_UINT ||
-                dtype == REB_UINT32 ){
+                dtype == REB_UINT32 ||
+                dtype == REB_LONG ||
+                dtype == REB_ULONG ||
+                dtype == REB_ULONGLONG
+                ){
             struct reb_binary_field field;
             memset(&field,0,sizeof(struct reb_binary_field));
             field.type = reb_binary_field_descriptor_list[i].type;
@@ -291,6 +295,18 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
                 case REB_UINT32: 
                     field.size = sizeof(uint32_t);
                     break;
+                case REB_LONG:
+                    field.size = sizeof(long);
+                    break;
+                case REB_ULONG:
+                    field.size = sizeof(unsigned long);
+                    break;
+                case REB_ULONGLONG:
+                    field.size = sizeof(unsigned long long);
+                    break;
+                case REB_VEC3D:
+                    field.size = sizeof(struct reb_vec3d);
+                    break;
             }
             reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
             char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
@@ -302,11 +318,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
    
     WRITE_FIELD(BOXSIZE,            &r->boxsize,                        sizeof(struct reb_vec3d));
     WRITE_FIELD(MAXRADIUS,          &r->max_radius,                     2*sizeof(double));
-    WRITE_FIELD(COLLISIONSNLOG,     &r->collisions_Nlog,                sizeof(long));
-    WRITE_FIELD(MEGNON,             &r->megno_n,                        sizeof(long));
-    WRITE_FIELD(SASIZESNAPSHOT,     &r->simulationarchive_size_snapshot,sizeof(long));
     WRITE_FIELD(WHFAST_PJ,          r->ri_whfast.p_jh,                  sizeof(struct reb_particle)*r->ri_whfast.allocated_N);
-    WRITE_FIELD(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded,sizeof(unsigned long));
     if (r->ri_ias15.allocatedN>r->N*3){
         int N3 = 3*r->N; // Useful to avoid file size increase if particles got removed
         WRITE_FIELD(IAS15_ALLOCATEDN,   &N3,            sizeof(int));
@@ -317,9 +329,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     WRITE_FIELD(MERCURIUS_DCRIT,    r->ri_mercurius.dcrit,              sizeof(double)*r->ri_mercurius.dcrit_allocatedN);
     WRITE_FIELD(MERCURIUS_COMPOS,   &(r->ri_mercurius.com_pos),         sizeof(struct reb_vec3d));
     WRITE_FIELD(MERCURIUS_COMVEL,   &(r->ri_mercurius.com_vel),         sizeof(struct reb_vec3d));
-    WRITE_FIELD(STEPSDONE,          &r->steps_done,                     sizeof(unsigned long long));
-    WRITE_FIELD(SAAUTOSTEP,         &r->simulationarchive_auto_step,    sizeof(unsigned long long));
-    WRITE_FIELD(SANEXTSTEP,         &r->simulationarchive_next_step,    sizeof(unsigned long long));
     int functionpointersused = 0;
     if (r->coefficient_of_restitution ||
         r->collision_resolve ||
