@@ -395,6 +395,8 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     // Output fields for TES integrator.
     WRITE_FIELD(TES_COM,                &r->ri_tes.COM,                   3*sizeof(double));
     WRITE_FIELD(TES_COM_DOT,            &r->ri_tes.COM_dot,               3*sizeof(double));
+    WRITE_FIELD(TES_ALLOCATED_N,        &r->ri_tes.allocated_N,           sizeof(uint32_t));
+
     
     if(r->ri_tes.allocated_N)
     {
