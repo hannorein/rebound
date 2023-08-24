@@ -939,23 +939,6 @@ const char* reb_logo[26] = {
 };
 
 
-struct reb_binary_field_descriptor {
-    unsigned int identifier;
-    enum {
-        REB_DOUBLE,
-        REB_INT,
-        REB_UINT,
-        REB_UINT32,
-        REB_LONG,
-        REB_ULONG,
-        REB_ULONGLONG,
-        REB_VEC3D,
-        REB_OTHER,
-    } type;
-    char name[1024];
-    size_t offset;
-};
-
 const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 0,  REB_DOUBLE,   "t", offsetof(struct reb_simulation, t)},
     { 1,  REB_DOUBLE,   "G", offsetof(struct reb_simulation, G)},

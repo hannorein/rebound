@@ -1054,6 +1054,25 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
 // Returns the name fora given binary field type
 char* reb_name_for_binary_field_type(int type);
 
+struct reb_binary_field_descriptor {
+    unsigned int type;
+    enum {
+        REB_DOUBLE,
+        REB_INT,
+        REB_UINT,
+        REB_UINT32,
+        REB_LONG,
+        REB_ULONG,
+        REB_ULONGLONG,
+        REB_VEC3D,
+        REB_OTHER,
+    } dtype;
+    char name[1024];
+    size_t offset;
+};
+
+extern const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[];
+
 // Input functions
 struct reb_simulation* reb_create_simulation_from_binary(char* filename);
 

@@ -267,12 +267,22 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     int cwritten = sprintf(header,"REBOUND Binary File. Version: %s",reb_version_str);
     snprintf(header+cwritten+1,64-cwritten-1,"%s",reb_githash_str);
     reb_output_stream_write(bufp, &allocatedsize, sizep, header,sizeof(char)*64);
+
+    int i=0;
+    while (reb_binary_field_descriptor_list[i].type!=9999){
+        if (reb_binary_field_descriptor_list[i].dtype == REB_DOUBLE){
+            struct reb_binary_field field;
+            memset(&field,0,sizeof(struct reb_binary_field));
+            field.type = reb_binary_field_descriptor_list[i].type;
+            field.size = sizeof(double);
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
+            char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
+            reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
+        }
+        i++;
+    }
+
    
-    WRITE_FIELD(T,                  &r->t,                              sizeof(double));
-    WRITE_FIELD(G,                  &r->G,                              sizeof(double));
-    WRITE_FIELD(SOFTENING,          &r->softening,                      sizeof(double));
-    WRITE_FIELD(DT,                 &r->dt,                             sizeof(double));
-    WRITE_FIELD(DTLASTDONE,         &r->dt_last_done,                   sizeof(double));
     WRITE_FIELD(N,                  &r->N,                              sizeof(int));
     WRITE_FIELD(NVAR,               &r->N_var,                          sizeof(int));
     WRITE_FIELD(VARCONFIGN,         &r->var_config_N,                   sizeof(int));
@@ -280,21 +290,13 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     WRITE_FIELD(TESTPARTICLETYPE,   &r->testparticle_type,              sizeof(int));
     WRITE_FIELD(TESTPARTICLEHIDEWARNINGS, &r->testparticle_hidewarnings,sizeof(int));
     WRITE_FIELD(HASHCTR,            &r->hash_ctr,                       sizeof(int));
-    WRITE_FIELD(OPENINGANGLE2,      &r->opening_angle2,                 sizeof(double));
     WRITE_FIELD(STATUS,             &r->status,                         sizeof(int));
     WRITE_FIELD(EXACTFINISHTIME,    &r->exact_finish_time,              sizeof(int));
     WRITE_FIELD(FORCEISVELOCITYDEP, &r->force_is_velocity_dependent,    sizeof(unsigned int));
     WRITE_FIELD(GRAVITYIGNORETERMS, &r->gravity_ignore_terms,           sizeof(unsigned int));
-    WRITE_FIELD(OUTPUTTIMINGLAST,   &r->output_timing_last,             sizeof(double));
     WRITE_FIELD(SAVEMESSAGES,       &r->save_messages,                  sizeof(int));
-    WRITE_FIELD(EXITMAXDISTANCE,    &r->exit_max_distance,              sizeof(double));
-    WRITE_FIELD(EXITMINDISTANCE,    &r->exit_min_distance,              sizeof(double));
-    WRITE_FIELD(USLEEP,             &r->usleep,                         sizeof(double));
     WRITE_FIELD(TRACKENERGYOFFSET,  &r->track_energy_offset,            sizeof(int));
-    WRITE_FIELD(ENERGYOFFSET,       &r->energy_offset,                  sizeof(double));
     WRITE_FIELD(BOXSIZE,            &r->boxsize,                        sizeof(struct reb_vec3d));
-    WRITE_FIELD(BOXSIZEMAX,         &r->boxsize_max,                    sizeof(double));
-    WRITE_FIELD(ROOTSIZE,           &r->root_size,                      sizeof(double));
     WRITE_FIELD(ROOTN,              &r->root_n,                         sizeof(int));
     WRITE_FIELD(ROOTNX,             &r->root_nx,                        sizeof(int));
     WRITE_FIELD(ROOTNY,             &r->root_ny,                        sizeof(int));
@@ -303,36 +305,17 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     WRITE_FIELD(NGHOSTY,            &r->nghosty,                        sizeof(int));
     WRITE_FIELD(NGHOSTZ,            &r->nghostz,                        sizeof(int));
     WRITE_FIELD(COLLISIONRESOLVEKEEPSORTED, &r->collision_resolve_keep_sorted, sizeof(int));
-    WRITE_FIELD(MINIMUMCOLLISIONVELOCITY, &r->minimum_collision_velocity, sizeof(double));
-    WRITE_FIELD(COLLISIONSPLOG,     &r->collisions_plog,                sizeof(double));
     WRITE_FIELD(MAXRADIUS,          &r->max_radius,                     2*sizeof(double));
     WRITE_FIELD(COLLISIONSNLOG,     &r->collisions_Nlog,                sizeof(long));
     WRITE_FIELD(CALCULATEMEGNO,     &r->calculate_megno,                sizeof(int));
-    WRITE_FIELD(MEGNOYS,            &r->megno_Ys,                       sizeof(double));
-    WRITE_FIELD(MEGNOYSS,           &r->megno_Yss,                      sizeof(double));
-    WRITE_FIELD(MEGNOCOVYT,         &r->megno_cov_Yt,                   sizeof(double));
-    WRITE_FIELD(MEGNOVART,          &r->megno_var_t,                    sizeof(double));
-    WRITE_FIELD(MEGNOMEANT,         &r->megno_mean_t,                   sizeof(double));
-    WRITE_FIELD(MEGNOMEANY,         &r->megno_mean_Y,                   sizeof(double));
     WRITE_FIELD(MEGNON,             &r->megno_n,                        sizeof(long));
     WRITE_FIELD(SAVERSION,          &r->simulationarchive_version,      sizeof(int));
     WRITE_FIELD(SASIZESNAPSHOT,     &r->simulationarchive_size_snapshot,sizeof(long));
-    WRITE_FIELD(SAAUTOINTERVAL,     &r->simulationarchive_auto_interval, sizeof(double));
-    WRITE_FIELD(SAAUTOWALLTIME,     &r->simulationarchive_auto_walltime, sizeof(double));
-    WRITE_FIELD(SANEXT,             &r->simulationarchive_next,         sizeof(double));
-    WRITE_FIELD(WALLTIME,           &r->walltime,                       sizeof(double));
     WRITE_FIELD(COLLISION,          &r->collision,                      sizeof(int));
     WRITE_FIELD(VISUALIZATION,      &r->visualization,                  sizeof(int));
     WRITE_FIELD(INTEGRATOR,         &r->integrator,                     sizeof(int));
     WRITE_FIELD(BOUNDARY,           &r->boundary,                       sizeof(int));
     WRITE_FIELD(GRAVITY,            &r->gravity,                        sizeof(int));
-    WRITE_FIELD(SEI_OMEGA,          &r->ri_sei.OMEGA,                   sizeof(double));
-    WRITE_FIELD(SEI_OMEGAZ,         &r->ri_sei.OMEGAZ,                  sizeof(double));
-    WRITE_FIELD(SEI_LASTDT,         &r->ri_sei.lastdt,                  sizeof(double));
-    WRITE_FIELD(SEI_SINDT,          &r->ri_sei.sindt,                   sizeof(double));
-    WRITE_FIELD(SEI_TANDT,          &r->ri_sei.tandt,                   sizeof(double));
-    WRITE_FIELD(SEI_SINDTZ,         &r->ri_sei.sindtz,                  sizeof(double));
-    WRITE_FIELD(SEI_TANDTZ,         &r->ri_sei.tandtz,                  sizeof(double));
     WRITE_FIELD(WHFAST_CORRECTOR,   &r->ri_whfast.corrector,            sizeof(unsigned int));
     WRITE_FIELD(WHFAST_RECALCJAC,   &r->ri_whfast.recalculate_coordinates_this_timestep, sizeof(unsigned int));
     WRITE_FIELD(WHFAST_SAFEMODE,    &r->ri_whfast.safe_mode,            sizeof(unsigned int));
@@ -341,8 +324,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     WRITE_FIELD(WHFAST_TIMESTEPWARN,&r->ri_whfast.timestep_warning,     sizeof(unsigned int));
     WRITE_FIELD(WHFAST_PJ,          r->ri_whfast.p_jh,                  sizeof(struct reb_particle)*r->ri_whfast.allocated_N);
     WRITE_FIELD(WHFAST_COORDINATES, &r->ri_whfast.coordinates,          sizeof(int));
-    WRITE_FIELD(IAS15_EPSILON,      &r->ri_ias15.epsilon,               sizeof(double));
-    WRITE_FIELD(IAS15_MINDT,        &r->ri_ias15.min_dt,                sizeof(double));
     WRITE_FIELD(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global,        sizeof(unsigned int));
     WRITE_FIELD(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded,sizeof(unsigned long));
     if (r->ri_ias15.allocatedN>r->N*3){
@@ -351,13 +332,10 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     }else{
         WRITE_FIELD(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN,            sizeof(int));
     }
-    WRITE_FIELD(JANUS_SCALEPOS,     &r->ri_janus.scale_pos,             sizeof(double));
-    WRITE_FIELD(JANUS_SCALEVEL,     &r->ri_janus.scale_vel,             sizeof(double));
     WRITE_FIELD(JANUS_ORDER,        &r->ri_janus.order,                 sizeof(unsigned int));
     WRITE_FIELD(JANUS_ALLOCATEDN,   &r->ri_janus.allocated_N,           sizeof(unsigned int));
     WRITE_FIELD(JANUS_RECALC,       &r->ri_janus.recalculate_integer_coordinates_this_timestep, sizeof(unsigned int));
     WRITE_FIELD(JANUS_PINT,         r->ri_janus.p_int,                  sizeof(struct reb_particle_int)*r->ri_janus.allocated_N);
-    WRITE_FIELD(MERCURIUS_HILLFAC,  &r->ri_mercurius.hillfac,           sizeof(double));
     WRITE_FIELD(MERCURIUS_SAFEMODE, &r->ri_mercurius.safe_mode,         sizeof(unsigned int));
     WRITE_FIELD(MERCURIUS_ISSYNCHRON, &r->ri_mercurius.is_synchronized, sizeof(unsigned int));
     WRITE_FIELD(MERCURIUS_RECALCULATE_COORD, &r->ri_mercurius.recalculate_coordinates_this_timestep, sizeof(unsigned int));
@@ -382,10 +360,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     WRITE_FIELD(EOS_SAFEMODE,       &r->ri_eos.safe_mode,               sizeof(unsigned int));
     WRITE_FIELD(EOS_ISSYNCHRON,     &r->ri_eos.is_synchronized,         sizeof(unsigned int));
     WRITE_FIELD(RAND_SEED,          &r->rand_seed,                      sizeof(unsigned int));
-    WRITE_FIELD(BS_EPSABS,          &r->ri_bs.eps_abs,                  sizeof(double));
-    WRITE_FIELD(BS_EPSREL,          &r->ri_bs.eps_rel,                  sizeof(double));
-    WRITE_FIELD(BS_MINDT,           &r->ri_bs.min_dt,                   sizeof(double));
-    WRITE_FIELD(BS_MAXDT,           &r->ri_bs.max_dt,                   sizeof(double));
     WRITE_FIELD(BS_FIRSTORLASTSTEP, &r->ri_bs.firstOrLastStep,          sizeof(int));
     WRITE_FIELD(BS_PREVIOUSREJECTED,&r->ri_bs.previousRejected,         sizeof(int));
     WRITE_FIELD(BS_TARGETITER,      &r->ri_bs.targetIter,               sizeof(int));
@@ -460,17 +434,12 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
 
 
     // Output fields for TES integrator.
-    WRITE_FIELD(TES_DQ_MAX,             &r->ri_tes.dq_max,                sizeof(double));
-    WRITE_FIELD(TES_RECTI_PER_ORBIT,    &r->ri_tes.recti_per_orbit,       sizeof(double));
-    WRITE_FIELD(TES_EPSILON,            &r->ri_tes.epsilon,               sizeof(double));
-    WRITE_FIELD(TES_PERIOD,             &r->ri_tes.orbital_period,        sizeof(double));
     WRITE_FIELD(TES_SV_LEN,             &r->ri_tes.stateVectorLength,     sizeof(uint32_t));
     WRITE_FIELD(TES_SV_SIZE,            &r->ri_tes.stateVectorSize,       sizeof(uint32_t));
     WRITE_FIELD(TES_CV_LEN,             &r->ri_tes.controlVectorLength,   sizeof(uint32_t));
     WRITE_FIELD(TES_CV_SIZE,            &r->ri_tes.controlVectorSize,     sizeof(uint32_t));
     WRITE_FIELD(TES_COM,                &r->ri_tes.COM,                   3*sizeof(double));
     WRITE_FIELD(TES_COM_DOT,            &r->ri_tes.COM_dot,               3*sizeof(double));
-    WRITE_FIELD(TES_MASS_STAR_LAST,     &r->ri_tes.mStar_last,            sizeof(double));  
     WRITE_FIELD(TES_ALLOCATED_N,        &r->ri_tes.allocated_N,           sizeof(uint32_t));
     
     if(r->ri_tes.allocated_N)
