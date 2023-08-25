@@ -245,6 +245,15 @@ static inline void reb_save_controlVars(controlVars* dp7, char** bufp, size_t* s
         reb_output_stream_write(bufp, &allocatedsize, sizep, value,field.size);\
     }
 
+#define WRITE_FIELD_TYPE(typen, value, length) {\
+        struct reb_binary_field field;\
+        memset(&field,0,sizeof(struct reb_binary_field));\
+        field.type = typen;\
+        field.size = (length);\
+        reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));\
+        reb_output_stream_write(bufp, &allocatedsize, sizep, value,field.size);\
+    }
+
 
 void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep){
     size_t allocatedsize = 0;
@@ -474,7 +483,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     }else{
         r->simulationarchive_size_first = (*sizep)+sizeof(struct reb_binary_field)*2+sizeof(long)+sizeof(struct reb_simulationarchive_blob);
     }
-    WRITE_FIELD(SASIZEFIRST,        &r->simulationarchive_size_first,   sizeof(long));
+    WRITE_FIELD_TYPE( 45 ,        &r->simulationarchive_size_first,   sizeof(long));
     int end_null = 0;
     WRITE_FIELD(END, &end_null, 0);
     if (r->simulationarchive_version<3){ // to be removed in a future release
