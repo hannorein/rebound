@@ -120,6 +120,9 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
     if (numread<1){
         return 0; // End of file
     }
+    if (field.type==9999){
+        return 0; // End of snapshot
+    }
     int i=0;
     while (reb_binary_field_descriptor_list[i].type!=9999){
         int type = reb_binary_field_descriptor_list[i].type;
@@ -191,9 +194,9 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
                 r->max_radius1 = max_radius[1];
             }
             break;
-        CASE(SASIZEFIRST,        &r->simulationarchive_size_first);
-        case REB_BINARY_FIELD_TYPE_END:
-            return 0;
+        case 45: // simulationarchive_size_first was manually written.
+            reb_fread(&r->simulationarchive_size_first, field.size,1,inf,mem_stream);
+            break;
         case REB_BINARY_FIELD_TYPE_FUNCTIONPOINTERS:
             {
                 int fpwarn;
