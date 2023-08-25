@@ -130,8 +130,8 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         if (type==field.type){
             // Read simple data types
             if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32 ||
-                    dtype == REB_LONG || dtype == REB_ULONG || dtype == REB_ULONGLONG || dtype == REB_VEC3D
-                ){
+                    dtype == REB_LONG || dtype == REB_ULONG || dtype == REB_ULONGLONG || 
+                    dtype == REB_PARTICLE || dtype == REB_VEC3D ){
                 char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
                 reb_fread(pointer, field.size, 1, inf ,mem_stream);
                 return 1;
@@ -140,12 +140,17 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
             // 1) reallocate memory
             // 2) read data into memory
             // 3) set allocated_N variable
-            if (dtype == REB_POINTER){
+            if (dtype == REB_POINTER || dtype == REB_POINTER_ALIGNED){
                 if (field.size % reb_binary_field_descriptor_list[i].element_size){
                     reb_warning(r, "Inconsistent size encountered in binary field.");
                 }
                 char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
-                *(char**)pointer = realloc(*(char**)pointer, field.size);
+                if (dtype == REB_POINTER_ALIGNED){
+                    if (*(char**)pointer) free(*(char**)pointer);
+                    *(char**)pointer = aligned_alloc(64,sizeof(struct reb_particle_avx512));
+                }else{ // normal malloc
+                    *(char**)pointer = realloc(*(char**)pointer, field.size);
+                }
                 reb_fread(*(char**)pointer, field.size,1,inf,mem_stream);
                 
                 unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
@@ -332,7 +337,6 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(WHFAST512_ISSYNCHRON, &r->ri_whfast512.is_synchronized);
         CASE(WHFAST512_GRPOTENTIAL, &r->ri_whfast512.gr_potential);
         CASE(WHFAST512_PJH, r->ri_whfast512.p_jh);
-        CASE(WHFAST512_PJH0, &r->ri_whfast512.p_jh0);
     }
     return 1;
 } 

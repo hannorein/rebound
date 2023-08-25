@@ -272,8 +272,8 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
         int dtype = reb_binary_field_descriptor_list[i].dtype;
         // Simple data types:
         if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32 ||
-                dtype == REB_LONG || dtype == REB_ULONG || dtype == REB_ULONGLONG || dtype == REB_VEC3D
-                ){
+                dtype == REB_LONG || dtype == REB_ULONG || dtype == REB_ULONGLONG ||
+                dtype == REB_PARTICLE || dtype == REB_VEC3D ){
             struct reb_binary_field field;
             memset(&field,0,sizeof(struct reb_binary_field));
             field.type = reb_binary_field_descriptor_list[i].type;
@@ -302,13 +302,16 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
                 case REB_VEC3D:
                     field.size = sizeof(struct reb_vec3d);
                     break;
+                case REB_PARTICLE:
+                    field.size = sizeof(struct reb_particle);
+                    break;
             }
             reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
             char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
             reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
         }
         // Pointer data types
-        if (dtype == REB_POINTER ){
+        if (dtype == REB_POINTER || dtype == REB_POINTER_ALIGNED ){
             struct reb_binary_field field;
             memset(&field,0,sizeof(struct reb_binary_field));
             field.type = reb_binary_field_descriptor_list[i].type;
@@ -477,13 +480,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     
     }
    
-#ifdef AVX512 
-    if (r->ri_whfast512.allocated_N){
-        WRITE_FIELD(WHFAST512_PJH, r->ri_whfast512.p_jh, sizeof(struct reb_particle_avx512));
-        WRITE_FIELD(WHFAST512_PJH0, &r->ri_whfast512.p_jh0, sizeof(struct reb_particle));
-    }
-#endif // AVX512
-
     // To output size of binary file, need to calculate it first. 
     if (r->simulationarchive_version<3){ // to be removed in a future release
         r->simulationarchive_size_first = (*sizep)+sizeof(struct reb_binary_field)*2+sizeof(long)+sizeof(struct reb_simulationarchive_blob16);

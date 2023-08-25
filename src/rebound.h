@@ -1066,7 +1066,9 @@ struct reb_binary_field_descriptor {
         REB_ULONG,
         REB_ULONGLONG,
         REB_VEC3D,
+        REB_PARTICLE,
         REB_POINTER,
+        REB_POINTER_ALIGNED, // memory aligned to 64 bit boundary for AVX512
         REB_DP7, // Special datatype for IAS15
         REB_OTHER,
     } dtype;
