@@ -192,13 +192,13 @@ void reb_integrator_tes_part2(struct reb_simulation* r){
         reb_transformations_inertial_to_democraticheliocentric_posvel(particles, r->ri_tes.particles_dh, r->N, r->N);
 
         // Store the COM and it's velocity as they are treated differently by TES.
-        r->ri_tes.COM[0] = r->ri_tes.particles_dh[0].x;
-        r->ri_tes.COM[1] = r->ri_tes.particles_dh[0].y;
-        r->ri_tes.COM[2] = r->ri_tes.particles_dh[0].z;
+        r->ri_tes.COM.x = r->ri_tes.particles_dh[0].x;
+        r->ri_tes.COM.y = r->ri_tes.particles_dh[0].y;
+        r->ri_tes.COM.z = r->ri_tes.particles_dh[0].z;
 
-        r->ri_tes.COM_dot[0] = r->ri_tes.particles_dh[0].vx;
-        r->ri_tes.COM_dot[1] = r->ri_tes.particles_dh[0].vy;
-        r->ri_tes.COM_dot[2] = r->ri_tes.particles_dh[0].vz;        
+        r->ri_tes.COM_dot.x = r->ri_tes.particles_dh[0].vx;
+        r->ri_tes.COM_dot.y = r->ri_tes.particles_dh[0].vy;
+        r->ri_tes.COM_dot.z = r->ri_tes.particles_dh[0].vz;        
         
         for(uint32_t i=1;i<N;i++) 
         {
@@ -272,13 +272,13 @@ void reb_integrator_tes_synchronize(struct reb_simulation* r){
         }       
 
         // Update the output with the COM including drift.
-        r->ri_tes.particles_dh[0].x = r->ri_tes.COM[0];
-        r->ri_tes.particles_dh[0].y = r->ri_tes.COM[1];
-        r->ri_tes.particles_dh[0].z = r->ri_tes.COM[2];
+        r->ri_tes.particles_dh[0].x = r->ri_tes.COM.x;
+        r->ri_tes.particles_dh[0].y = r->ri_tes.COM.y;
+        r->ri_tes.particles_dh[0].z = r->ri_tes.COM.z;
 
-        r->ri_tes.particles_dh[0].vx = r->ri_tes.COM_dot[0];
-        r->ri_tes.particles_dh[0].vy = r->ri_tes.COM_dot[1];
-        r->ri_tes.particles_dh[0].vz = r->ri_tes.COM_dot[2];  
+        r->ri_tes.particles_dh[0].vx = r->ri_tes.COM_dot.x;
+        r->ri_tes.particles_dh[0].vy = r->ri_tes.COM_dot.y;
+        r->ri_tes.particles_dh[0].vz = r->ri_tes.COM_dot.z;  
 
         r->ri_tes.particles_dh[0].m = r->ri_tes.rhs->mTotal;
 
@@ -830,10 +830,9 @@ static double reb_single_step(struct reb_simulation* r, double z_t, double dt)
     reb_analytical_continuation(r, &radau->B, &radau->Blast, dt, dt_new, radau->rectifiedArray);
 
     // Perform a linear update to the drift of the COM.
-    for(uint32_t i = 0; i < 3; i++)
-    {
-      r->ri_tes.COM[i] += r->ri_tes.COM_dot[i]*dt;
-    }
+    r->ri_tes.COM.x += r->ri_tes.COM_dot.x*dt;
+    r->ri_tes.COM.y += r->ri_tes.COM_dot.y*dt;
+    r->ri_tes.COM.z += r->ri_tes.COM_dot.z*dt;
 
     return dt_new;
 }

@@ -461,8 +461,8 @@ struct reb_simulation_integrator_tes {
     double * X_dh;					/// Memory for current state in dh coords.
 	double * Q_dh;					/// Current state in dh coords.
 	double * P_dh;					/// Current state in dh coords. 
-    double COM[3];                  // Centre of mass
-    double COM_dot[3];              // Velocity of COM
+    struct reb_vec3d COM;           /// Centre of mass
+    struct reb_vec3d COM_dot;       /// Velocity of COM
 
     // Pointers to various modules comprising TES.
     UNIVERSAL_VARS * uVars;			/// Pointer to the universal variables module

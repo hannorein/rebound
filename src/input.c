@@ -244,16 +244,6 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
             }
             break;
 
-        // TES integrator variables
-        CASE(TES_COM,                &r->ri_tes.COM);
-        CASE(TES_COM_DOT,            &r->ri_tes.COM_dot);   
-
-        
-
-        CASE(TES_PARTICLES_DH, r->ri_tes.particles_dh);
-        //CASE(TES_MASS, r->ri_tes.mass);
-        CASE(TES_X_DH, r->ri_tes.X_dh); 
-        
         // TES Kepler vars
         CASE(TES_UVARS_SV_SIZE, &r->ri_tes.uVars->stateVectorSize);
         CASE(TES_UVARS_T0, r->ri_tes.uVars->t0);
