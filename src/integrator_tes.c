@@ -317,8 +317,7 @@ static void reb_tes_init(struct reb_simulation* r)
   }
   
   // Set control variables to initial values
-  r->ri_tes.stateVectorLength = 2*3*r->N;
-  r->ri_tes.stateVectorSize = r->ri_tes.stateVectorLength * sizeof(double);
+  r->ri_tes.stateVectorSize = r->ri_tes.allocated_N*6 * sizeof(double);
   r->ri_tes.controlVectorSize = r->N * sizeof(double);
 
   // Allocate memory
@@ -326,7 +325,7 @@ static void reb_tes_init(struct reb_simulation* r)
   r->ri_tes.X_dh = (double *)malloc(r->ri_tes.stateVectorSize);
   r->ri_tes.particles_dh = (struct reb_particle*)malloc(sizeof(struct reb_particle)*r->N);
   r->ri_tes.Q_dh = r->ri_tes.X_dh;
-  r->ri_tes.P_dh = &r->ri_tes.X_dh[r->ri_tes.stateVectorLength/2];
+  r->ri_tes.P_dh = &r->ri_tes.X_dh[r->ri_tes.allocated_N*6/2];
 
   // Ensure we are clean for each integration.
   memset(r->ri_tes.mass, 0, r->ri_tes.controlVectorSize);
@@ -739,11 +738,11 @@ static void reb_dhem_init(struct reb_simulation* r, double z_rectificationPeriod
   // To enable easier access to the osculating orbits.
   for(uint32_t i = 0; i < z_stagesPerStep; i++)
   {
-    dhem->XoscArr[i] = &dhem->XoscStore[i*r->ri_tes.stateVectorLength];
-    dhem->XoscPredArr[i] = &dhem->XoscPredStore[i*r->ri_tes.stateVectorLength];
-    dhem->Xosc_dotArr[i] = &dhem->Xosc_dotStore[i*r->ri_tes.stateVectorLength];
+    dhem->XoscArr[i] = &dhem->XoscStore[i*r->ri_tes.allocated_N*6];
+    dhem->XoscPredArr[i] = &dhem->XoscPredStore[i*r->ri_tes.allocated_N*6];
+    dhem->Xosc_dotArr[i] = &dhem->Xosc_dotStore[i*r->ri_tes.allocated_N*6];
 
-    dhem->XoscArr_cs[i] = &dhem->XoscStore_cs[i*r->ri_tes.stateVectorLength];
+    dhem->XoscArr_cs[i] = &dhem->XoscStore_cs[i*r->ri_tes.allocated_N*6];
   }
 
   // Setup pointers for more human readable access.
@@ -854,14 +853,14 @@ static void reb_radau_init(struct reb_simulation* r)
   radau->dQ = radau->dX;
   radau->dP = &radau->dX[3*r->N];
   radau->Qout = radau->Xout;
-  radau->Pout = &radau->Xout[r->ri_tes.stateVectorLength/2];
+  radau->Pout = &radau->Xout[r->ri_tes.allocated_N*6/2];
 
   // Copy to here so that we are ready to output to a file before we calculate osculating orbtis.
   memcpy(radau->Qout, r->ri_tes.Q_dh, r->ri_tes.stateVectorSize / 2);
   memcpy(radau->Pout, r->ri_tes.P_dh, r->ri_tes.stateVectorSize / 2);
 
-  radau->rectifiedArray = (uint32_t*)malloc(sizeof(uint32_t)*r->ri_tes.stateVectorLength);
-  memset(radau->rectifiedArray, 0, sizeof(uint32_t)*r->ri_tes.stateVectorLength);
+  radau->rectifiedArray = (uint32_t*)malloc(sizeof(uint32_t)*r->ri_tes.allocated_N*6);
+  memset(radau->rectifiedArray, 0, sizeof(uint32_t)*r->ri_tes.allocated_N*6);
 
   radau->b6_store = (double*)malloc(r->ri_tes.stateVectorSize);
 
@@ -921,7 +920,7 @@ static double reb_calc_stepsize(struct reb_simulation* r, double h)
 
 static void reb_clear_rectified_b_fields(struct reb_simulation* r, controlVars * B, uint32_t * rectifiedArray)
 {
-  for(uint32_t i = 0; i < r->ri_tes.stateVectorLength; i++)
+  for(uint32_t i = 0; i < r->ri_tes.allocated_N*6; i++)
   {
     if(rectifiedArray[i] > 0)
     {
@@ -967,9 +966,9 @@ static void reb_radau_step(struct reb_simulation* r, uint32_t * z_iterations, do
     for(uint32_t i = 1; i <= stages; i++)
     {
       reb_calc_predictors(h, hArr[i], radau->dX, radau->dState0, radau->ddState0, B,
-                          radau->predictors, 3, r->ri_tes.stateVectorLength/2);
+                          radau->predictors, 3, r->ri_tes.allocated_N*6/2);
       reb_calc_predictors_1st_order(h, hArr[i], radau->dX, radau->dState0, B_1st, radau->predictors, 
-                                  (int)r->ri_tes.stateVectorLength/2, r->ri_tes.stateVectorLength);
+                                  (int)r->ri_tes.allocated_N*6/2, r->ri_tes.allocated_N*6);
 
       reb_dhem_rhs_wrapped(r, radau->predictors, &radau->predictors[3*r->N], radau->dState, &radau->dState[3*r->N],
            radau->ddState, i);
@@ -1277,7 +1276,7 @@ static void reb_radau_step(struct reb_simulation* r, uint32_t * z_iterations, do
                     radau->cs_dX, 0, (int)(n3));
 
   reb_update_state_1st_order(h, radau->dState0, B_1st, radau->dX, 
-                                radau->cs_dX, (int)(n3), r->ri_tes.stateVectorLength);                                
+                                radau->cs_dX, (int)(n3), r->ri_tes.allocated_N*6);                                
 
   // Now that we have cs_dX we can perform our correction.
   reb_apply_osc_orbit_corrector(r, r->ri_tes.rhs->XoscArr, t+h, 9); 
@@ -1329,8 +1328,8 @@ static void reb_calc_g_from_b_internal(controlVars * z_G, controlVars * z_B, uin
 
 static void reb_calc_g_from_b(struct reb_simulation* r)
 {
-  reb_calc_g_from_b_internal(&r->ri_tes.radau->G, &r->ri_tes.radau->B, 0, (int)(r->ri_tes.stateVectorLength/2));
-  reb_calc_g_from_b_internal(&r->ri_tes.radau->G_1st, &r->ri_tes.radau->B_1st, (int)(r->ri_tes.stateVectorLength/2), r->ri_tes.stateVectorLength);
+  reb_calc_g_from_b_internal(&r->ri_tes.radau->G, &r->ri_tes.radau->B, 0, (int)(r->ri_tes.allocated_N*6/2));
+  reb_calc_g_from_b_internal(&r->ri_tes.radau->G_1st, &r->ri_tes.radau->B_1st, (int)(r->ri_tes.allocated_N*6/2), r->ri_tes.allocated_N*6);
 }
 
 static void reb_analytical_continuation(struct reb_simulation* r, controlVars * z_B, controlVars * z_Blast, const double h,
@@ -1345,7 +1344,7 @@ static void reb_analytical_continuation(struct reb_simulation* r, controlVars * 
   const double q6 = q3 * q3;
   const double q7 = q3 * q4;
 
-  for(uint32_t i = 0; i < r->ri_tes.stateVectorLength; i++)
+  for(uint32_t i = 0; i < r->ri_tes.allocated_N*6; i++)
   {
     double dB0 = 0;
     double dB1 = 0;
@@ -1515,7 +1514,7 @@ static void reb_init_radau_step(struct reb_simulation* r)
 
     radau->cs_dX = (double *)malloc(r->ri_tes.stateVectorSize);
     radau->cs_dq = radau->cs_dX;
-    radau->cs_dp = &radau->cs_dX[(int)r->ri_tes.stateVectorLength/2];
+    radau->cs_dp = &radau->cs_dX[(int)r->ri_tes.allocated_N*6/2];
 
     memset(radau->cs_dX, 0, r->ri_tes.stateVectorSize);
 }

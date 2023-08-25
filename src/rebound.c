@@ -1081,7 +1081,6 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 303, REB_DOUBLE,      "ri_tes.orbital_period", offsetof(struct reb_simulation, ri_tes.orbital_period)},
     { 304, REB_UINT,        "ri_tes.allocated_N", offsetof(struct reb_simulation, ri_tes.allocated_N)}, // TODO!
     { 305, REB_POINTER,     "ri_tes.particles_dh", offsetof(struct reb_simulation, ri_tes.particles_dh), offsetof(struct reb_simulation, ri_tes.allocated_N), sizeof(struct reb_particle)},
-    { 306, REB_UINT32,      "ri_tes.stateVectorLength", offsetof(struct reb_simulation, ri_tes.stateVectorLength)},
     { 307, REB_UINT32,      "ri_tes.stateVectorSize", offsetof(struct reb_simulation, ri_tes.stateVectorSize)},
     { 308, REB_UINT32,      "ri_tes.controlVectorLength", offsetof(struct reb_simulation, ri_tes.controlVectorLength)},
     { 309, REB_UINT32,      "ri_tes.controlVectorSize", offsetof(struct reb_simulation, ri_tes.controlVectorSize)},
