@@ -269,6 +269,14 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     snprintf(header+cwritten+1,64-cwritten-1,"%s",reb_githash_str);
     reb_output_stream_write(bufp, &allocatedsize, sizep, header,sizeof(char)*64);
 
+
+    // Compress data if possible
+    // This does not affect future calculation, but might trigger a realloc.
+    if (r->ri_ias15.allocatedN > 3*r->N){
+        r->ri_ias15.allocatedN = 3*r->N;
+    }
+
+    /// Output all fields
     int i=0;
     while (reb_binary_field_descriptor_list[i].type!=9999){
         int dtype = reb_binary_field_descriptor_list[i].dtype;
@@ -316,6 +324,8 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
             field.type = reb_binary_field_descriptor_list[i].type;
             int* pointer_N = (int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
             field.size = (*pointer_N) * reb_binary_field_descriptor_list[i].element_size;
+            if (field.type>=89 && field.type<=101){ printf("\nwriting %d %d \n", field.type, field.size);}
+            if (field.type>=89 && field.type<=101){ printf("\nallocatedN %d", r->ri_ias15.allocatedN);}
                 
             if (field.size){
                 reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
@@ -329,12 +339,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
 
    
     WRITE_FIELD(MAXRADIUS,          &r->max_radius,                     2*sizeof(double));
-    if (r->ri_ias15.allocatedN>r->N*3){
-        int N3 = 3*r->N; // Useful to avoid file size increase if particles got removed
-        WRITE_FIELD(IAS15_ALLOCATEDN,   &N3,            sizeof(int));
-    }else{
-        WRITE_FIELD(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN,            sizeof(int));
-    }
     int functionpointersused = 0;
     if (r->coefficient_of_restitution ||
         r->collision_resolve ||
@@ -347,7 +351,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     WRITE_FIELD(FUNCTIONPOINTERS,   &functionpointersused,              sizeof(int));
     if (r->ri_ias15.allocatedN){
         int N3 = 3*r->N; // Only outut useful data (useful if particles got removed)
-        WRITE_FIELD(IAS15_AT,   r->ri_ias15.at,     sizeof(double)*N3);
         WRITE_FIELD(IAS15_X0,   r->ri_ias15.x0,     sizeof(double)*N3);
         WRITE_FIELD(IAS15_V0,   r->ri_ias15.v0,     sizeof(double)*N3);
         WRITE_FIELD(IAS15_A0,   r->ri_ias15.a0,     sizeof(double)*N3);

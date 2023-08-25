@@ -154,6 +154,11 @@ void reb_input_field_finish(struct reb_simulation* r, enum reb_input_binary_mess
             reb_tree_add_particle_to_tree(r, l);
         }
     }
+    if (r->ri_ias15.at){ 
+        // Assume that all arrays were saved whenever ri_ias15.at was saved.
+        // Only N entries got saved. 
+        r->ri_ias15.allocatedN = r->N;
+    }
 }
 
 
@@ -194,8 +199,6 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
 
     switch (field.type){
         CASE(SASIZEFIRST,        &r->simulationarchive_size_first);
-        CASE(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN);
-        CASE_MALLOC(IAS15_AT,     r->ri_ias15.at);
         CASE_MALLOC(IAS15_X0,     r->ri_ias15.x0);
         CASE_MALLOC(IAS15_V0,     r->ri_ias15.v0);
         CASE_MALLOC(IAS15_A0,     r->ri_ias15.a0);
