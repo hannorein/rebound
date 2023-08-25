@@ -785,7 +785,7 @@ struct reb_simulation {
     unsigned long long steps_done;
     unsigned int     N;
     int     N_var;
-    int     var_config_N;
+    unsigned int     var_config_N;
     struct reb_variational_configuration* var_config;   // These configuration structs contain details on variational particles. 
     int     var_rescale_warning;
     int     N_active;

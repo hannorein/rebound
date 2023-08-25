@@ -156,8 +156,8 @@ void reb_input_field_finish(struct reb_simulation* r, enum reb_input_binary_mess
     }
     if (r->ri_ias15.at){ 
         // Assume that all arrays were saved whenever ri_ias15.at was saved.
-        // Only N entries got saved. 
-        r->ri_ias15.allocatedN = r->N;
+        // Only 3*N entries got saved. 
+        r->ri_ias15.allocatedN = 3*r->N;
     }
 }
 
@@ -185,7 +185,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
                 *(char**)pointer = realloc(*(char**)pointer, field.size);
                 reb_fread(*(char**)pointer, field.size,1,inf,mem_stream);
             
-                int* pointer_N = (int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
+                unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
                 if (field.size % reb_binary_field_descriptor_list[i].element_size){
                     reb_warning(r, "Inconsistent size encountered in binary field.");
                 }
@@ -199,12 +199,6 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
 
     switch (field.type){
         CASE(SASIZEFIRST,        &r->simulationarchive_size_first);
-        CASE_MALLOC(IAS15_X0,     r->ri_ias15.x0);
-        CASE_MALLOC(IAS15_V0,     r->ri_ias15.v0);
-        CASE_MALLOC(IAS15_A0,     r->ri_ias15.a0);
-        CASE_MALLOC(IAS15_CSX,    r->ri_ias15.csx);
-        CASE_MALLOC(IAS15_CSV,    r->ri_ias15.csv);
-        CASE_MALLOC(IAS15_CSA0,   r->ri_ias15.csa0);
         CASE_MALLOC_DP7(IAS15_G,  r->ri_ias15.g);
         CASE_MALLOC_DP7(IAS15_B,  r->ri_ias15.b);
         CASE_MALLOC_DP7(IAS15_CSB,r->ri_ias15.csb);

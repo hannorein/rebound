@@ -322,10 +322,8 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
             struct reb_binary_field field;
             memset(&field,0,sizeof(struct reb_binary_field));
             field.type = reb_binary_field_descriptor_list[i].type;
-            int* pointer_N = (int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
+            unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
             field.size = (*pointer_N) * reb_binary_field_descriptor_list[i].element_size;
-            if (field.type>=89 && field.type<=101){ printf("\nwriting %d %d \n", field.type, field.size);}
-            if (field.type>=89 && field.type<=101){ printf("\nallocatedN %d", r->ri_ias15.allocatedN);}
                 
             if (field.size){
                 reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
