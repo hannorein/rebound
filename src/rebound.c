@@ -468,6 +468,7 @@ void reb_copy_simulation_with_messages(struct reb_simulation* r_copy,  struct re
 
     char* bufp_beginning = bufp; // bufp will be changed
     while(reb_input_field(r_copy, NULL, warnings, &bufp)){ }
+    reb_input_field_finish(r_copy);
     free(bufp_beginning);
     
 }

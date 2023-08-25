@@ -138,7 +138,14 @@ void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf, char **restrict 
         reb_fread(valueref->p6, valueref->size,1,inf,mem_stream);\
     }\
     break;        
-    
+
+void reb_input_field_finish(struct reb_simulation* r){
+    for (int l=0;l<r->var_config_N;l++){
+        r->var_config[l].sim = r;
+    }
+}
+
+
 int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_messages* warnings, char **restrict mem_stream){
     struct reb_binary_field field;
     int numread = reb_fread(&field,sizeof(struct reb_binary_field),1,inf,mem_stream);
@@ -158,11 +165,9 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
                 return 1;
             }
             if (dtype == REB_POINTER){
-                r->var_config = realloc(r->var_config, field.size);
-                reb_fread(r->var_config, field.size,1,inf,mem_stream);
-                for (int l=0;l<r->var_config_N;l++){ // TODO!!
-                    r->var_config[l].sim = r;
-                }
+                char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
+                *(char**)pointer = realloc(*(char**)pointer, field.size);
+                reb_fread(*(char**)pointer, field.size,1,inf,mem_stream);
                 return 1;
             }
         }

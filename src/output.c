@@ -316,8 +316,9 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
             field.size = sizeof(struct reb_variational_configuration)*r->var_config_N;
             if (field.size){
                 reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
-                char** pointer = (char**)r + reb_binary_field_descriptor_list[i].offset;
-                reb_output_stream_write(bufp, &allocatedsize, sizep, *pointer, field.size);
+                char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
+                pointer = *(char**)pointer;
+                reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
             }
         }
         i++;
