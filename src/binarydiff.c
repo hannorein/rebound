@@ -108,11 +108,13 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
     size_t pos1 = 64;
     size_t pos2 = 64;
     
+    struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
+
     while(1){
         if (pos1+sizeof(struct reb_binary_field)>size1) break;
         struct reb_binary_field field1 = *(struct reb_binary_field*)(buf1+pos1);
         pos1 += sizeof(struct reb_binary_field);
-        if (field1.type==REB_BINARY_FIELD_TYPE_END){
+        if (field1.type==fd_end.type){
             break;
         }
         if (pos2+sizeof(struct reb_binary_field)>size2) pos2 = 64;
@@ -132,7 +134,7 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
                 }
                 field2 = *(struct reb_binary_field*)(buf2+pos2);
                 pos2 += sizeof(struct reb_binary_field);
-                if(field2.type==REB_BINARY_FIELD_TYPE_END){
+                if(field2.type==fd_end.type){
                     notfound = 1;
                     break;
                 }
@@ -214,7 +216,7 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
         if (pos2+sizeof(struct reb_binary_field)>size2) break;
         struct reb_binary_field field2 = *(struct reb_binary_field*)(buf2+pos2);
         pos2 += sizeof(struct reb_binary_field);
-        if (field2.type==REB_BINARY_FIELD_TYPE_END){
+        if (field2.type==fd_end.type){
             break;
         }
         if (pos1+sizeof(struct reb_binary_field)>size1) pos1 = 64;
@@ -238,7 +240,7 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
             }
             field1 = *(struct reb_binary_field*)(buf1+pos1);
             pos1 += sizeof(struct reb_binary_field);
-            if(field1.type==REB_BINARY_FIELD_TYPE_END){
+            if(field1.type==fd_end.type){
                 notfound = 1;
                 break;
             }
