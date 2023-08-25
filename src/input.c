@@ -111,6 +111,7 @@ void reb_input_field_finish(struct reb_simulation* r, enum reb_input_binary_mess
         // Only 3*N entries got saved. 
         r->ri_ias15.allocatedN = 3*r->N;
     }
+    r->ri_whfast512.recalculate_constants = 1;
 }
 
 
@@ -199,7 +200,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
                 r->max_radius1 = max_radius[1];
             }
             break;
-        case 45: // simulationarchive_size_first was manually written.
+        case 45: // simulationarchive_size_first was manually written. reading it manually here.
             reb_fread(&r->simulationarchive_size_first, field.size,1,inf,mem_stream);
             break;
         case REB_BINARY_FIELD_TYPE_FUNCTIONPOINTERS:
@@ -324,19 +325,6 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(TES_DHEM_RECTI_TIME, r->ri_tes.rhs->rectifyTimeArray);
         CASE(TES_DHEM_RECTI_PERIOD, r->ri_tes.rhs->rectificationPeriod);
     
-        case REB_BINARY_FIELD_TYPE_WHFAST512_ALLOCATEDN:
-            reb_fread(&r->ri_whfast512.allocated_N, field.size, 1, inf, mem_stream);
-            if(r->ri_whfast512.p_jh){
-                free(r->ri_whfast512.p_jh);
-            }
-            r->ri_whfast512.p_jh = aligned_alloc(64,sizeof(struct reb_particle_avx512));
-            r->ri_whfast512.recalculate_constants = 1;
-            break;
-        
-        CASE(WHFAST512_KEEPUNSYNC, &r->ri_whfast512.keep_unsynchronized);
-        CASE(WHFAST512_ISSYNCHRON, &r->ri_whfast512.is_synchronized);
-        CASE(WHFAST512_GRPOTENTIAL, &r->ri_whfast512.gr_potential);
-        CASE(WHFAST512_PJH, r->ri_whfast512.p_jh);
     }
     return 1;
 } 
