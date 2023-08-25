@@ -451,8 +451,9 @@ struct reb_simulation_integrator_tes {
     struct reb_particle* particles_dh;
 
     // Vector dimensions variables.
-    uint32_t stateVectorSize;		/// Size in bytes of the state vector.
     uint32_t controlVectorLength;	/// Length of the control vector in doubles.
+// Cant delete fellowing variable. Not sure why
+    uint32_t statesdfsdfsfdVectorSize;		/// Size in bytes of the state vector.
     uint32_t controlVectorSize; 	/// Size in bytes of n * sizeof(double).
 
     // State storage

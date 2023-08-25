@@ -132,7 +132,6 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         if (r->ri_tes.allocated_N) {
             reb_integrator_tes_allocate_memory(r);
         }
-        printf("allocate new memory %d\n", r->ri_tes.allocated_N);
         return 1;
     }
     int i=0;

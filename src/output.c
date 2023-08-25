@@ -387,23 +387,25 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
         WRITE_FIELD(TES_UVARS_MU, &r->ri_tes.uVars->mu, sizeof(double));
 
         // Integrator vars
-        WRITE_FIELD(TES_RADAU_DX, r->ri_tes.radau->dX, r->ri_tes.stateVectorSize);
-        WRITE_FIELD(TES_RADAU_XOUT, r->ri_tes.radau->Xout, r->ri_tes.stateVectorSize);
+        //
+        const int stateVectorSize = r->ri_tes.allocated_N*6*sizeof(double);
+        WRITE_FIELD(TES_RADAU_DX, r->ri_tes.radau->dX, stateVectorSize);
+        WRITE_FIELD(TES_RADAU_XOUT, r->ri_tes.radau->Xout, stateVectorSize);
         WRITE_FIELD(TES_RADAU_RECTI_ARRAY, r->ri_tes.radau->rectifiedArray, sizeof(uint32_t)*r->ri_tes.allocated_N*6);
-        WRITE_FIELD(TES_RADAU_PREDICTORS, r->ri_tes.radau->predictors, r->ri_tes.stateVectorSize);
-        WRITE_FIELD(TES_RADAU_DSTATE0, r->ri_tes.radau->dState0, r->ri_tes.stateVectorSize);
-        WRITE_FIELD(TES_RADAU_DDSTATE0, r->ri_tes.radau->ddState0, r->ri_tes.stateVectorSize);
-        WRITE_FIELD(TES_RADAU_DSTATE, r->ri_tes.radau->dState, r->ri_tes.stateVectorSize);
-        WRITE_FIELD(TES_RADAU_DDSTATE, r->ri_tes.radau->ddState, r->ri_tes.stateVectorSize);
-        WRITE_FIELD(TES_RADAU_CS_DSTATE0, r->ri_tes.radau->cs_dState0, r->ri_tes.stateVectorSize);
-        WRITE_FIELD(TES_RADAU_CS_DDSTATE0, r->ri_tes.radau->cs_ddState0, r->ri_tes.stateVectorSize);
-        WRITE_FIELD(TES_RADAU_CS_DSTATE, r->ri_tes.radau->cs_dState, r->ri_tes.stateVectorSize);
-        WRITE_FIELD(TES_RADAU_CS_DDSTATE, r->ri_tes.radau->cs_ddState, r->ri_tes.stateVectorSize);
-        WRITE_FIELD(TES_RADAU_CS_DX, r->ri_tes.radau->cs_dX, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_RADAU_PREDICTORS, r->ri_tes.radau->predictors, stateVectorSize);
+        WRITE_FIELD(TES_RADAU_DSTATE0, r->ri_tes.radau->dState0, stateVectorSize);
+        WRITE_FIELD(TES_RADAU_DDSTATE0, r->ri_tes.radau->ddState0, stateVectorSize);
+        WRITE_FIELD(TES_RADAU_DSTATE, r->ri_tes.radau->dState, stateVectorSize);
+        WRITE_FIELD(TES_RADAU_DDSTATE, r->ri_tes.radau->ddState, stateVectorSize);
+        WRITE_FIELD(TES_RADAU_CS_DSTATE0, r->ri_tes.radau->cs_dState0, stateVectorSize);
+        WRITE_FIELD(TES_RADAU_CS_DDSTATE0, r->ri_tes.radau->cs_ddState0, stateVectorSize);
+        WRITE_FIELD(TES_RADAU_CS_DSTATE, r->ri_tes.radau->cs_dState, stateVectorSize);
+        WRITE_FIELD(TES_RADAU_CS_DDSTATE, r->ri_tes.radau->cs_ddState, stateVectorSize);
+        WRITE_FIELD(TES_RADAU_CS_DX, r->ri_tes.radau->cs_dX, stateVectorSize);
         WRITE_FIELD(TES_RADAU_FCALLS, &r->ri_tes.radau->fCalls, sizeof(uint64_t));
         WRITE_FIELD(TES_RADAU_RECTIS, &r->ri_tes.radau->rectifications, sizeof(uint64_t));
         WRITE_FIELD(TES_RADAU_ITERS, &r->ri_tes.radau->convergenceIterations, sizeof(uint32_t));
-        WRITE_FIELD(TES_RADAU_B6, r->ri_tes.radau->b6_store, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_RADAU_B6, r->ri_tes.radau->b6_store, stateVectorSize);
 
         {
             uint32_t array_size = r->ri_tes.radau->B.size;
@@ -454,11 +456,11 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
             reb_save_controlVars(&r->ri_tes.radau->G_1st,bufp,sizep,&allocatedsize);
         }  
         // force model vars
-        WRITE_FIELD(TES_DHEM_XOSC_STORE, r->ri_tes.rhs->XoscStore, 9*r->ri_tes.stateVectorSize);
-        WRITE_FIELD(TES_DHEM_XOSC_PRED_STORE, r->ri_tes.rhs->XoscPredStore, 9*r->ri_tes.stateVectorSize);
-        WRITE_FIELD(TES_DHEM_XOSC_CS_STORE, r->ri_tes.rhs->XoscStore_cs, 9*r->ri_tes.stateVectorSize);
-        WRITE_FIELD(TES_DHEM_XOSC_DOT_STORE, r->ri_tes.rhs->Xosc_dotStore, 9*r->ri_tes.stateVectorSize);        
-        WRITE_FIELD(TES_DHEM_X, r->ri_tes.rhs->X, r->ri_tes.stateVectorSize);
+        WRITE_FIELD(TES_DHEM_XOSC_STORE, r->ri_tes.rhs->XoscStore, 9*stateVectorSize);
+        WRITE_FIELD(TES_DHEM_XOSC_PRED_STORE, r->ri_tes.rhs->XoscPredStore, 9*stateVectorSize);
+        WRITE_FIELD(TES_DHEM_XOSC_CS_STORE, r->ri_tes.rhs->XoscStore_cs, 9*stateVectorSize);
+        WRITE_FIELD(TES_DHEM_XOSC_DOT_STORE, r->ri_tes.rhs->Xosc_dotStore, 9*stateVectorSize);        
+        WRITE_FIELD(TES_DHEM_X, r->ri_tes.rhs->X, stateVectorSize);
         WRITE_FIELD(TES_DHEM_M_INV, r->ri_tes.rhs->m_inv, r->ri_tes.controlVectorSize);
         WRITE_FIELD(TES_DHEM_M_TOTAL, &r->ri_tes.rhs->mTotal, sizeof(double));
         WRITE_FIELD(TES_DHEM_RECTI_TIME, r->ri_tes.rhs->rectifyTimeArray, r->ri_tes.controlVectorSize);
