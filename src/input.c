@@ -71,60 +71,12 @@ static size_t reb_fread(void *restrict ptr, size_t size, size_t nitems, FILE *re
 // }
 
 
-void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf, char **restrict mem_stream){
-    reb_fread(dp7->p0,sizeof(double),N3,inf,mem_stream);
-    reb_fread(dp7->p1,sizeof(double),N3,inf,mem_stream);
-    reb_fread(dp7->p2,sizeof(double),N3,inf,mem_stream);
-    reb_fread(dp7->p3,sizeof(double),N3,inf,mem_stream);
-    reb_fread(dp7->p4,sizeof(double),N3,inf,mem_stream);
-    reb_fread(dp7->p5,sizeof(double),N3,inf,mem_stream);
-    reb_fread(dp7->p6,sizeof(double),N3,inf,mem_stream);
-}
-
 // Macro to read a single field from a binary file.
 #define CASE(typename, value) case REB_BINARY_FIELD_TYPE_##typename: \
     {\
         reb_fread(value, field.size,1,inf,mem_stream);\
     }\
     break;
-
-#define CASE_MALLOC(typename, valueref) case REB_BINARY_FIELD_TYPE_##typename: \
-    {\
-        valueref = malloc(field.size);\
-        reb_fread(valueref, field.size,1,inf,mem_stream);\
-    }\
-    break;
-
-#define CASE_MALLOC_DP7(typename, valueref) case REB_BINARY_FIELD_TYPE_##typename: \
-    {\
-        valueref.p0 = malloc(field.size/7);\
-        valueref.p1 = malloc(field.size/7);\
-        valueref.p2 = malloc(field.size/7);\
-        valueref.p3 = malloc(field.size/7);\
-        valueref.p4 = malloc(field.size/7);\
-        valueref.p5 = malloc(field.size/7);\
-        valueref.p6 = malloc(field.size/7);\
-        reb_fread(valueref.p0, field.size/7,1,inf,mem_stream);\
-        reb_fread(valueref.p1, field.size/7,1,inf,mem_stream);\
-        reb_fread(valueref.p2, field.size/7,1,inf,mem_stream);\
-        reb_fread(valueref.p3, field.size/7,1,inf,mem_stream);\
-        reb_fread(valueref.p4, field.size/7,1,inf,mem_stream);\
-        reb_fread(valueref.p5, field.size/7,1,inf,mem_stream);\
-        reb_fread(valueref.p6, field.size/7,1,inf,mem_stream);\
-    }\
-    break;
-
-#define CASE_DP7(typename, valueref) case REB_BINARY_FIELD_TYPE_##typename: \
-    {\
-        reb_fread(valueref.p0, field.size/7,1,inf,mem_stream);\
-        reb_fread(valueref.p1, field.size/7,1,inf,mem_stream);\
-        reb_fread(valueref.p2, field.size/7,1,inf,mem_stream);\
-        reb_fread(valueref.p3, field.size/7,1,inf,mem_stream);\
-        reb_fread(valueref.p4, field.size/7,1,inf,mem_stream);\
-        reb_fread(valueref.p5, field.size/7,1,inf,mem_stream);\
-        reb_fread(valueref.p6, field.size/7,1,inf,mem_stream);\
-    }\
-    break;    
 
 #define CASE_CONTROL_VARS(typename, valueref) case REB_BINARY_FIELD_TYPE_##typename: \
     {\
@@ -173,6 +125,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         int type = reb_binary_field_descriptor_list[i].type;
         int dtype = reb_binary_field_descriptor_list[i].dtype;
         if (type==field.type){
+            // Read simple data types
             if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32 ||
                     dtype == REB_LONG || dtype == REB_ULONG || dtype == REB_ULONGLONG || dtype == REB_VEC3D
                 ){
@@ -180,15 +133,47 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
                 reb_fread(pointer, field.size, 1, inf ,mem_stream);
                 return 1;
             }
+            // Read a pointer data type. 
+            // 1) reallocate memory
+            // 2) read data into memory
+            // 3) set allocated_N variable
             if (dtype == REB_POINTER){
-                char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
-                *(char**)pointer = realloc(*(char**)pointer, field.size);
-                reb_fread(*(char**)pointer, field.size,1,inf,mem_stream);
-            
-                unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
                 if (field.size % reb_binary_field_descriptor_list[i].element_size){
                     reb_warning(r, "Inconsistent size encountered in binary field.");
                 }
+                char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
+                *(char**)pointer = realloc(*(char**)pointer, field.size);
+                reb_fread(*(char**)pointer, field.size,1,inf,mem_stream);
+                
+                unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
+                *pointer_N = field.size/reb_binary_field_descriptor_list[i].element_size;
+
+                return 1;
+            }
+            // Special datatype for ias15. Similar to REB_POINTER. 
+            if (dtype == REB_DP7){
+                if (field.size % reb_binary_field_descriptor_list[i].element_size){
+                    reb_warning(r, "Inconsistent size encountered in binary field.");
+                }
+                char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
+                struct reb_dp7* dp7 = (struct reb_dp7*)pointer;
+        
+                dp7->p0 = realloc(dp7->p0,field.size/7);
+                dp7->p1 = realloc(dp7->p1,field.size/7);
+                dp7->p2 = realloc(dp7->p2,field.size/7);
+                dp7->p3 = realloc(dp7->p3,field.size/7);
+                dp7->p4 = realloc(dp7->p4,field.size/7);
+                dp7->p5 = realloc(dp7->p5,field.size/7);
+                dp7->p6 = realloc(dp7->p6,field.size/7);
+                reb_fread(dp7->p0, field.size/7, 1, inf, mem_stream);
+                reb_fread(dp7->p1, field.size/7, 1, inf, mem_stream);
+                reb_fread(dp7->p2, field.size/7, 1, inf, mem_stream);
+                reb_fread(dp7->p3, field.size/7, 1, inf, mem_stream);
+                reb_fread(dp7->p4, field.size/7, 1, inf, mem_stream);
+                reb_fread(dp7->p5, field.size/7, 1, inf, mem_stream);
+                reb_fread(dp7->p6, field.size/7, 1, inf, mem_stream);
+            
+                unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
                 *pointer_N = field.size/reb_binary_field_descriptor_list[i].element_size;
 
                 return 1;
@@ -199,12 +184,6 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
 
     switch (field.type){
         CASE(SASIZEFIRST,        &r->simulationarchive_size_first);
-        CASE_MALLOC_DP7(IAS15_G,  r->ri_ias15.g);
-        CASE_MALLOC_DP7(IAS15_B,  r->ri_ias15.b);
-        CASE_MALLOC_DP7(IAS15_CSB,r->ri_ias15.csb);
-        CASE_MALLOC_DP7(IAS15_E,  r->ri_ias15.e);
-        CASE_MALLOC_DP7(IAS15_BR, r->ri_ias15.br);
-        CASE_MALLOC_DP7(IAS15_ER, r->ri_ias15.er);
         case REB_BINARY_FIELD_TYPE_END:
             return 0;
         case REB_BINARY_FIELD_TYPE_FUNCTIONPOINTERS:
@@ -382,6 +361,11 @@ struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum
     }
     if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
         reb_error(r,"Cannot read binary file. Check filename and file contents.");
+        if (r) free(r);
+        return NULL;
+    }
+    if (warnings & REB_INPUT_BINARY_ERROR_OLD){
+        reb_error(r,"Reading old SimulationArchives (version < 2) is no longer supported. If you need to read such an archive, use a REBOUND version <= 3.26.3");
         if (r) free(r);
         return NULL;
     }

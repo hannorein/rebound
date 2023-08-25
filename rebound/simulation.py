@@ -59,6 +59,7 @@ BINARY_WARNINGS = [
     (False, 128, "Encountered unkown field in file. File might have been saved with a different version of REBOUND."),
     (True,  256, "Integrator type is not supported by this simulation archive version."),
     (False,  512, "The binary file seems to be corrupted. An attempt has been made to read the uncorrupted parts of it."),
+    (True, 1024, "Reading old SimulationArchives (version < 2) is no longer supported. If you need to read such an archive, use a REBOUND version <= 3.26.3"),
 ]
 
 class reb_hash_pointer_pair(Structure):

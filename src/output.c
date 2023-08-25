@@ -221,16 +221,6 @@ void reb_output_orbits(struct reb_simulation* r, char* filename){
     fclose(of);
 }
 
-static inline void reb_save_dp7(struct reb_dp7* dp7, const int N3, char** bufp, size_t* sizep, size_t* allocatedsize){
-    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p0,sizeof(double)*N3);
-    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p1,sizeof(double)*N3);
-    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p2,sizeof(double)*N3);
-    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p3,sizeof(double)*N3);
-    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p4,sizeof(double)*N3);
-    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p5,sizeof(double)*N3);
-    reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p6,sizeof(double)*N3);
-}
-
 static inline void reb_save_controlVars(controlVars* dp7, char** bufp, size_t* sizep, size_t* allocatedsize){
     reb_output_stream_write(bufp, allocatedsize, sizep, &dp7->size, sizeof(uint32_t));
     reb_output_stream_write(bufp, allocatedsize, sizep, dp7->p0, dp7->size);
@@ -317,7 +307,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
             char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
             reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
         }
-        // Pointer data types:
+        // Pointer data types
         if (dtype == REB_POINTER ){
             struct reb_binary_field field;
             memset(&field,0,sizeof(struct reb_binary_field));
@@ -330,6 +320,27 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
                 char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
                 pointer = *(char**)pointer;
                 reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
+            }
+        }
+        // Special datatype for IAS15. Similar to POINTER
+        if (dtype == REB_DP7 ){
+            struct reb_binary_field field;
+            memset(&field,0,sizeof(struct reb_binary_field));
+            field.type = reb_binary_field_descriptor_list[i].type;
+            unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
+            field.size = (*pointer_N) * reb_binary_field_descriptor_list[i].element_size;
+                
+            if (field.size){
+                reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
+                char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
+                struct reb_dp7* dp7 = (struct reb_dp7*)pointer;
+                reb_output_stream_write(bufp, &allocatedsize, sizep, dp7->p0,field.size/7);
+                reb_output_stream_write(bufp, &allocatedsize, sizep, dp7->p1,field.size/7);
+                reb_output_stream_write(bufp, &allocatedsize, sizep, dp7->p2,field.size/7);
+                reb_output_stream_write(bufp, &allocatedsize, sizep, dp7->p3,field.size/7);
+                reb_output_stream_write(bufp, &allocatedsize, sizep, dp7->p4,field.size/7);
+                reb_output_stream_write(bufp, &allocatedsize, sizep, dp7->p5,field.size/7);
+                reb_output_stream_write(bufp, &allocatedsize, sizep, dp7->p6,field.size/7);
             }
         }
         i++;
@@ -347,45 +358,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
         functionpointersused = 1;
     }
     WRITE_FIELD(FUNCTIONPOINTERS,   &functionpointersused,              sizeof(int));
-    if (r->ri_ias15.allocatedN){
-        int N3 = 3*r->N; // Only outut useful data (useful if particles got removed)
-        WRITE_FIELD(IAS15_X0,   r->ri_ias15.x0,     sizeof(double)*N3);
-        WRITE_FIELD(IAS15_V0,   r->ri_ias15.v0,     sizeof(double)*N3);
-        WRITE_FIELD(IAS15_A0,   r->ri_ias15.a0,     sizeof(double)*N3);
-        WRITE_FIELD(IAS15_CSX,  r->ri_ias15.csx,    sizeof(double)*N3);
-        WRITE_FIELD(IAS15_CSV,  r->ri_ias15.csv,    sizeof(double)*N3);
-        WRITE_FIELD(IAS15_CSA0, r->ri_ias15.csa0,   sizeof(double)*N3);
-        {
-            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_G, .size = sizeof(double)*N3*7};
-            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
-            reb_save_dp7(&(r->ri_ias15.g),N3,bufp,sizep,&allocatedsize);
-        }
-        {
-            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_B, .size = sizeof(double)*N3*7};
-            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
-            reb_save_dp7(&(r->ri_ias15.b),N3,bufp,sizep,&allocatedsize);
-        }
-        {
-            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_CSB, .size = sizeof(double)*N3*7};
-            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
-            reb_save_dp7(&(r->ri_ias15.csb),N3,bufp,sizep,&allocatedsize);
-        }
-        {
-            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_E, .size = sizeof(double)*N3*7};
-            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
-            reb_save_dp7(&(r->ri_ias15.e),N3,bufp,sizep,&allocatedsize);
-        }
-        {
-            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_BR, .size = sizeof(double)*N3*7};
-            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
-            reb_save_dp7(&(r->ri_ias15.br),N3,bufp,sizep,&allocatedsize);
-        }
-        {
-            struct reb_binary_field field = {.type = REB_BINARY_FIELD_TYPE_IAS15_ER, .size = sizeof(double)*N3*7};
-            reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
-            reb_save_dp7(&(r->ri_ias15.er),N3,bufp,sizep,&allocatedsize);
-        }
-    }
 
 
     // Output fields for TES integrator.

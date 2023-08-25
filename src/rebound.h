@@ -1066,6 +1066,7 @@ struct reb_binary_field_descriptor {
         REB_ULONGLONG,
         REB_VEC3D,
         REB_POINTER,
+        REB_DP7, // Special datatype for IAS15
         REB_OTHER,
     } dtype;
     char name[1024];
@@ -1092,6 +1093,7 @@ enum reb_input_binary_messages {
     REB_INPUT_BINARY_WARNING_FIELD_UNKOWN = 128,
     REB_INPUT_BINARY_ERROR_INTEGRATOR = 256,
     REB_INPUT_BINARY_WARNING_CORRUPTFILE = 512,
+    REB_INPUT_BINARY_ERROR_OLD = 1024,
 };
 
 // ODE functions
