@@ -538,8 +538,8 @@ void reb_init_simulation(struct reb_simulation* r){
     r->var_config   = NULL;     
     r->exit_min_distance    = 0;    
     r->exit_max_distance    = 0;    
-    r->max_radius[0]    = 0.;   
-    r->max_radius[1]    = 0.;   
+    r->max_radius0    = 0.;   
+    r->max_radius1    = 0.;   
     r->status       = REB_RUNNING;
     r->exact_finish_time    = 1;
     r->force_is_velocity_dependent = 0;
@@ -976,7 +976,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 32, REB_INT,          "collision_resolve_keep_sorted", offsetof(struct reb_simulation, collision_resolve_keep_sorted)},
     { 33, REB_DOUBLE,       "minimum_collision_velocity", offsetof(struct reb_simulation, minimum_collision_velocity)},
     { 34, REB_DOUBLE,       "collisions_plog", offsetof(struct reb_simulation, collisions_plog)},
-    { 35, REB_OTHER,        "max_radius", offsetof(struct reb_simulation, max_radius)},
+//    { 35, REB_OTHER,        "max_radius", offsetof(struct reb_simulation, max_radius)},
     { 36, REB_LONG,         "collisions_Nlog", offsetof(struct reb_simulation, collisions_Nlog)},
     { 37, REB_INT,          "calculate_megno", offsetof(struct reb_simulation, calculate_megno)},
     { 38, REB_DOUBLE,       "megno_Ys", offsetof(struct reb_simulation, megno_Ys)},
@@ -1156,6 +1156,8 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 393, REB_OTHER,        "ri_whfast512.allocated_N", offsetof(struct reb_simulation, ri_whfast512.allocated_N)},
     { 394, REB_OTHER,       "ri_whfast512.pjh", offsetof(struct reb_simulation, ri_whfast512.p_jh)},
     { 395, REB_OTHER,       "ri_whfast512.pjh0", offsetof(struct reb_simulation, ri_whfast512.p_jh0)},
+    { 396, REB_DOUBLE,      "max_radius0", offsetof(struct reb_simulation, max_radius0)},
+    { 397, REB_DOUBLE,      "max_radius1", offsetof(struct reb_simulation, max_radius1)},
     { 1329743186, REB_OTHER,"header", 0},
     { 9998, REB_OTHER,      "sablob", 0},
     { 9999, REB_OTHER,      "end", 0}

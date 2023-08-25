@@ -548,7 +548,7 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
         double dy = gb.shifty - c->y;
         double dz = gb.shiftz - c->z;
         double r2 = dx*dx + dy*dy + dz*dz;
-        double rp  = p1_r + r->max_radius[1] + 0.86602540378443*c->w;
+        double rp  = p1_r + r->max_radius1 + 0.86602540378443*c->w;
         // Check if we need to decent into daughter cells
         if (r2 < rp*rp ){
             for (int o=0;o<8;o++){

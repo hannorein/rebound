@@ -101,12 +101,12 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
 
 void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 #ifndef COLLISIONS_NONE
-	if (pt.r>=r->max_radius[0]){
-		r->max_radius[1] = r->max_radius[0];
-		r->max_radius[0] = pt.r;
+	if (pt.r>=r->max_radius0){
+		r->max_radius1 = r->max_radius0;
+		r->max_radius0 = pt.r;
 	}else{
-		if (pt.r>=r->max_radius[1]){
-			r->max_radius[1] = pt.r;
+		if (pt.r>=r->max_radius1){
+			r->max_radius1 = pt.r;
 		}
 	}
 #endif 	// COLLISIONS_NONE

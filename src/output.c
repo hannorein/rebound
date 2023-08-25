@@ -346,8 +346,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
         i++;
     }
 
-   
-    WRITE_FIELD(MAXRADIUS,          &r->max_radius,                     2*sizeof(double));
     int functionpointersused = 0;
     if (r->coefficient_of_restitution ||
         r->collision_resolve ||

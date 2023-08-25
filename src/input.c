@@ -183,6 +183,14 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
     }
 
     switch (field.type){
+        case 35:
+            { // Only kept for backwards compatability. Can be removed in future version.
+                double max_radius[2];
+                reb_fread(&max_radius, field.size,1,inf,mem_stream);
+                r->max_radius0 = max_radius[0];
+                r->max_radius1 = max_radius[1];
+            }
+            break;
         CASE(SASIZEFIRST,        &r->simulationarchive_size_first);
         case REB_BINARY_FIELD_TYPE_END:
             return 0;

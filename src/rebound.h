@@ -857,7 +857,8 @@ struct reb_simulation {
     int collisions_allocatedN;
     double minimum_collision_velocity;
     double collisions_plog;
-    double max_radius[2];               // Two largest particle radii, set automatically, needed for collision search.
+    double max_radius0;               // Two largest particle radii, set automatically, needed for collision search.
+    double max_radius1;               // Two largest particle radii, set automatically, needed for collision search.
     long collisions_Nlog;
     
     // MEGNO
