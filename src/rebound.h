@@ -447,7 +447,7 @@ struct reb_simulation_integrator_tes {
     double orbital_period;      // The lowest initial orbital period.
 
     // Synchronisation particle storage.
-    uint32_t allocated_N;
+    unsigned int allocated_N;
     struct reb_particle* particles_dh;
 
     // Vector dimensions variables.

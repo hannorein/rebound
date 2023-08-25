@@ -1079,13 +1079,14 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 301, REB_DOUBLE,      "ri_tes.recti_per_orbit", offsetof(struct reb_simulation, ri_tes.recti_per_orbit)},
     { 302, REB_DOUBLE,      "ri_tes.epsilon", offsetof(struct reb_simulation, ri_tes.epsilon)},
     { 303, REB_DOUBLE,      "ri_tes.orbital_period", offsetof(struct reb_simulation, ri_tes.orbital_period)},
-    { 304, REB_OTHER,       "ri_tes.allocated_N", offsetof(struct reb_simulation, ri_tes.allocated_N)}, // other!
+    { 304, REB_UINT,        "ri_tes.allocated_N", offsetof(struct reb_simulation, ri_tes.allocated_N)}, // TODO!
     { 305, REB_OTHER,       "ri_tes.particles_dh", offsetof(struct reb_simulation, ri_tes.particles_dh)},
     { 306, REB_UINT32,      "ri_tes.stateVectorLength", offsetof(struct reb_simulation, ri_tes.stateVectorLength)},
     { 307, REB_UINT32,      "ri_tes.stateVectorSize", offsetof(struct reb_simulation, ri_tes.stateVectorSize)},
     { 308, REB_UINT32,      "ri_tes.controlVectorLength", offsetof(struct reb_simulation, ri_tes.controlVectorLength)},
     { 309, REB_UINT32,      "ri_tes.controlVectorSize", offsetof(struct reb_simulation, ri_tes.controlVectorSize)},
-    { 310, REB_OTHER,       "ri_tes.mass", offsetof(struct reb_simulation, ri_tes.mass)},
+    { 310, REB_POINTER,     "ri_tes.mass", offsetof(struct reb_simulation, ri_tes.mass), offsetof(struct reb_simulation, ri_tes.allocated_N), sizeof(double)},
+    //{ 310, REB_OTHER,       "ri_tes.mass", offsetof(struct reb_simulation, ri_tes.mass)},
     { 311, REB_OTHER,       "ri_tes.X_dh", offsetof(struct reb_simulation, ri_tes.X_dh)},
     { 312, REB_OTHER,       "ri_tes.COM", offsetof(struct reb_simulation, ri_tes.COM)},
     { 313, REB_OTHER,       "ri_tes.COM_dot", offsetof(struct reb_simulation, ri_tes.COM_dot)},

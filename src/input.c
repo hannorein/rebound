@@ -124,6 +124,17 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
     if (field.type==9999){
         return 0; // End of snapshot
     }
+        // only here for testding. delete TODO 
+        // only here for testding. delete TODO 
+    if (field.type==REB_BINARY_FIELD_TYPE_TES_ALLOCATED_N){
+        reb_fread(&r->ri_tes.allocated_N, field.size, 1, inf, mem_stream);
+        // Allocate all memory for loading the simulation archive.
+        if (r->ri_tes.allocated_N) {
+            reb_integrator_tes_allocate_memory(r);
+        }
+        printf("allocate new memory %d\n", r->ri_tes.allocated_N);
+        return 1;
+    }
     int i=0;
     while (reb_binary_field_descriptor_list[i].type!=9999){
         int type = reb_binary_field_descriptor_list[i].type;
@@ -234,31 +245,13 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
             break;
 
         // TES integrator variables
-        CASE(TES_DQ_MAX,             &r->ri_tes.dq_max);
-        CASE(TES_RECTI_PER_ORBIT,    &r->ri_tes.recti_per_orbit);
-        CASE(TES_EPSILON,            &r->ri_tes.epsilon);
-        CASE(TES_PERIOD,             &r->ri_tes.orbital_period);
-        CASE(TES_SV_LEN,             &r->ri_tes.stateVectorLength);
-        CASE(TES_SV_SIZE,            &r->ri_tes.stateVectorSize);
-        CASE(TES_CV_LEN,             &r->ri_tes.controlVectorLength);
-        CASE(TES_CV_SIZE,            &r->ri_tes.controlVectorSize);
         CASE(TES_COM,                &r->ri_tes.COM);
         CASE(TES_COM_DOT,            &r->ri_tes.COM_dot);   
-        CASE(TES_MASS_STAR_LAST,     &r->ri_tes.mStar_last);   
 
         
-        case REB_BINARY_FIELD_TYPE_TES_ALLOCATED_N:
-            {
-                reb_fread(&r->ri_tes.allocated_N, field.size, 1, inf, mem_stream);
-                // Allocate all memory for loading the simulation archive.
-                if (r->ri_tes.allocated_N) {
-                    reb_integrator_tes_allocate_memory(r);
-                }
-            }
-            break;
 
         CASE(TES_PARTICLES_DH, r->ri_tes.particles_dh);
-        CASE(TES_MASS, r->ri_tes.mass);
+        //CASE(TES_MASS, r->ri_tes.mass);
         CASE(TES_X_DH, r->ri_tes.X_dh); 
         
         // TES Kepler vars

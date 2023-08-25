@@ -265,7 +265,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     if (r->ri_ias15.allocatedN > 3*r->N){
         r->ri_ias15.allocatedN = 3*r->N;
     }
-
     /// Output all fields
     int i=0;
     while (reb_binary_field_descriptor_list[i].type!=9999){
@@ -364,18 +363,16 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     // Output fields for TES integrator.
     WRITE_FIELD(TES_COM,                &r->ri_tes.COM,                   3*sizeof(double));
     WRITE_FIELD(TES_COM_DOT,            &r->ri_tes.COM_dot,               3*sizeof(double));
-    WRITE_FIELD(TES_ALLOCATED_N,        &r->ri_tes.allocated_N,           sizeof(uint32_t));
 
     
     if(r->ri_tes.allocated_N)
     {
         uint32_t N = r->ri_tes.allocated_N;
         WRITE_FIELD(TES_PARTICLES_DH,       r->ri_tes.particles_dh,          N*sizeof(struct reb_particle));
-        WRITE_FIELD(TES_MASS,               r->ri_tes.mass,                  N*sizeof(double));
+        //WRITE_FIELD(TES_MASS,               r->ri_tes.mass,                  N*sizeof(double));
         WRITE_FIELD(TES_X_DH,               r->ri_tes.X_dh,                  6*N*sizeof(double));
 
         // Kepler solver vars.
-        WRITE_FIELD(TES_UVARS_SV_SIZE, &r->ri_tes.uVars->stateVectorSize, sizeof(uint32_t));
         WRITE_FIELD(TES_UVARS_T0, r->ri_tes.uVars->t0, r->ri_tes.uVars->controlVectorSize);
         WRITE_FIELD(TES_UVARS_TLAST, r->ri_tes.uVars->tLast, r->ri_tes.uVars->controlVectorSize);
         WRITE_FIELD(TES_UVARS_CSQ, r->ri_tes.uVars->uv_csq, r->ri_tes.uVars->stateVectorSize);
