@@ -276,7 +276,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     }
     /// Output all fields
     int i=0;
-    while (reb_binary_field_descriptor_list[i].type!=9999){
+    while (reb_binary_field_descriptor_list[i].dtype!=REB_FIELD_END){
         int dtype = reb_binary_field_descriptor_list[i].dtype;
         // Simple data types:
         if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32 ||
@@ -485,7 +485,9 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     }
     WRITE_FIELD_TYPE( 45 ,        &r->simulationarchive_size_first,   sizeof(long));
     int end_null = 0;
-    WRITE_FIELD(END, &end_null, 0);
+    
+    struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
+    WRITE_FIELD_TYPE(fd_end.type, &end_null, 0);
     if (r->simulationarchive_version<3){ // to be removed in a future release
         struct reb_simulationarchive_blob16 blob = {0};
         reb_output_stream_write(bufp, &allocatedsize, sizep, &blob, sizeof(struct reb_simulationarchive_blob16));

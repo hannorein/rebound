@@ -121,7 +121,9 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
     if (numread<1){
         return 0; // End of file
     }
-    if (field.type==9999){
+    // struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
+    // if (field.type==fd_end.type){
+    if (field.type==9999){ // harcoded for efficiency
         return 0; // End of snapshot
     }
         // only here for testding. delete TODO 
@@ -135,7 +137,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         return 1;
     }
     int i=0;
-    while (reb_binary_field_descriptor_list[i].type!=9999){
+    while (reb_binary_field_descriptor_list[i].dtype!=REB_FIELD_END){
         int type = reb_binary_field_descriptor_list[i].type;
         int dtype = reb_binary_field_descriptor_list[i].dtype;
         if (type==field.type){
