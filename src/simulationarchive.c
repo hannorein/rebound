@@ -113,9 +113,21 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
     struct reb_binary_field field = {0};
     sa->version = 0;
     double t0 = 0;
+    
+    // Cache descriptors
+    struct reb_binary_field_descriptor fd_header = reb_binary_field_descriptor_for_name("header");
+    struct reb_binary_field_descriptor fd_t = reb_binary_field_descriptor_for_name("t");
+    struct reb_binary_field_descriptor fd_sa_version = reb_binary_field_descriptor_for_name("simulationarchive_version");
+    struct reb_binary_field_descriptor fd_sa_size_snapshot = reb_binary_field_descriptor_for_name("simulationarchive_size_snapshot");
+    struct reb_binary_field_descriptor fd_sa_size_first = reb_binary_field_descriptor_for_name("simulationarchive_size_first");
+    struct reb_binary_field_descriptor fd_sa_auto_walltime = reb_binary_field_descriptor_for_name("simulationarchive_auto_walltime");
+    struct reb_binary_field_descriptor fd_sa_auto_interval = reb_binary_field_descriptor_for_name("simulationarchive_auto_interval");
+    struct reb_binary_field_descriptor fd_sa_auto_step = reb_binary_field_descriptor_for_name("simulationarchive_auto_step");
+
+
     do{
         fread(&field,sizeof(struct reb_binary_field),1,sa->inf);
-        if (strcmp(reb_binary_field_name_for_type(field.type),"header")==0){
+        if (field.type == fd_header.type){
             long objects = 0;
             // Input header.
             const long bufsize = 64 - sizeof(struct reb_binary_field);
@@ -133,19 +145,19 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                 }
             }
 
-        }else if (strcmp(reb_binary_field_name_for_type(field.type), "t")==0){
+        }else if (field.type == fd_t.type){
             fread(&t0, sizeof(double),1,sa->inf);
-        }else if (strcmp(reb_binary_field_name_for_type(field.type), "simulationarchive_version")==0){
+        }else if (field.type == fd_sa_version.type){
             fread(&(sa->version), sizeof(int),1,sa->inf);
-        }else if (strcmp(reb_binary_field_name_for_type(field.type), "simulationarchive_size_snapshot")==0){
+        }else if (field.type == fd_sa_size_snapshot.type){
             fread(&(sa->size_snapshot), sizeof(long),1,sa->inf);
-        }else if (strcmp(reb_binary_field_name_for_type(field.type), "simulationarchive_size_first")==0){
+        }else if (field.type == fd_sa_size_first.type){
             fread(&(sa->size_first), sizeof(long),1,sa->inf);
-        }else if (strcmp(reb_binary_field_name_for_type(field.type), "simulationarchive_auto_walltime")==0){
+        }else if (field.type == fd_sa_auto_walltime.type){
             fread(&(sa->auto_walltime), sizeof(double),1,sa->inf);
-        }else if (strcmp(reb_binary_field_name_for_type(field.type), "simulationarchive_auto_interval")==0){
+        }else if (field.type == fd_sa_auto_interval.type){
             fread(&(sa->auto_interval), sizeof(double),1,sa->inf);
-        }else if (strcmp(reb_binary_field_name_for_type(field.type), "simulationarchive_auto_step")==0){
+        }else if (field.type == fd_sa_auto_step.type){
             fread(&(sa->auto_step), sizeof(unsigned long long),1,sa->inf);
         }else{
             fseek(sa->inf,field.size,SEEK_CUR);
@@ -177,19 +189,19 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
                 do{
                     size_t r1 = fread(&field,sizeof(struct reb_binary_field),1,sa->inf);
                     if (r1==1){
-                        if (strcmp(reb_binary_field_name_for_type(field.type),"header")==0){
+                        if (strcmp(reb_binary_field_descriptor_for_type(field.type).name,"header")==0){
                             if (debug) printf("SA Field. type=HEADER\n");
                             int s1 = fseek(sa->inf,64 - sizeof(struct reb_binary_field),SEEK_CUR);
                             if (s1){
                                 read_error = 1;
                             }
-                        }else if (strcmp(reb_binary_field_name_for_type(field.type),"t")==0){
+                        }else if (strcmp(reb_binary_field_descriptor_for_type(field.type).name,"t")==0){
                             size_t r2 = fread(&(sa->t[i]), sizeof(double),1,sa->inf);
                             if (debug) printf("SA Field. type=TIME      value=%.10f\n",sa->t[1]);
                             if (r2!=1){
                                 read_error = 1;
                             }
-                        }else if (strcmp(reb_binary_field_name_for_type(field.type),"end")==0){
+                        }else if (strcmp(reb_binary_field_descriptor_for_type(field.type).name,"end")==0){
                             if (debug) printf("SA Field. type=END   =====\n");
                             blob_finished = 1;
                         }else{

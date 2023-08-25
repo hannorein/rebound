@@ -917,8 +917,9 @@ void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** 
 // output_option If set to 0, the differences are written to bufp. If set to 1, printed on the screen. If set to 2, then only the return value indicates any differences.
 // returns 0 is returned if the simulations do not differ (are equal). 1 is return if they differ.
 int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option);
-// Returns the name fora given binary field type
-const char* reb_binary_field_name_for_type(int type);
+// Returns the name fora given binary field type or name
+const struct reb_binary_field_descriptor reb_binary_field_descriptor_for_type(int type);
+const struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(const char* name);
 
 struct reb_binary_field_descriptor {
     unsigned int type;
@@ -933,9 +934,11 @@ struct reb_binary_field_descriptor {
         REB_VEC3D,
         REB_PARTICLE,
         REB_POINTER,
-        REB_POINTER_ALIGNED, // memory aligned to 64 bit boundary for AVX512
-        REB_DP7, // Special datatype for IAS15
+        REB_POINTER_ALIGNED,    // memory aligned to 64 bit boundary for AVX512
+        REB_DP7,                // Special datatype for IAS15
         REB_OTHER,
+        REB_FIELD_END,          // Special type to indicate end of blob
+        REB_FIELD_NOT_FOUND,    // Special type used to throw error messages
     } dtype;
     char name[1024];
     size_t offset;

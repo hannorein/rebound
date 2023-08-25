@@ -60,16 +60,30 @@ void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** 
     reb_binary_diff_with_options(buf1, size1, buf2, size2, bufp, sizep, 0);
 }
 
-const char* reb_binary_field_name_for_type(int type){
-    int i=0;
-    while (reb_binary_field_descriptor_list[i].type!=9999){
-        if (reb_binary_field_descriptor_list[i].type==type){
-            return reb_binary_field_descriptor_list[i].name;
-        }
+const struct reb_binary_field_descriptor reb_binary_field_descriptor_for_type(int type){
+    int i=-1;
+    do{
         i++;
-    }
-    if (reb_binary_field_descriptor_list[i].type==type) return reb_binary_field_descriptor_list[i].name;
-    return NULL;
+        if (reb_binary_field_descriptor_list[i].type==type){
+            return reb_binary_field_descriptor_list[i];
+        }
+    } while (reb_binary_field_descriptor_list[i].dtype!=REB_FIELD_END);
+    struct reb_binary_field_descriptor bfd = {0};
+    bfd.dtype = REB_FIELD_NOT_FOUND;
+    return bfd;
+}
+
+const struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(const char* name){
+    int i=-1;
+    do{
+        i++;
+        if (strcmp(reb_binary_field_descriptor_list[i].name, name)==0){
+            return reb_binary_field_descriptor_list[i];
+        }
+    } while (reb_binary_field_descriptor_list[i].dtype!=REB_FIELD_END);
+    struct reb_binary_field_descriptor bfd = {0};
+    bfd.dtype = REB_FIELD_NOT_FOUND;
+    return bfd;
 }
 
 int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option){
@@ -140,7 +154,7 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
                         break;
                     case 1:
                         {
-                            const char* name = reb_binary_field_name_for_type(field1.type);
+                            const char* name = reb_binary_field_descriptor_for_type(field1.type).name;
                             printf("Field \"%s\" (type=%d) not in simulation 2.\n",name, field1.type);
                         }
                         break;
@@ -155,7 +169,7 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
         if (pos2+field2.size>size2) printf("Corrupt binary file buf2.\n");
         int fields_differ = 0;
         if (field1.size==field2.size){
-            if (strcmp(reb_binary_field_name_for_type(field1.type), "particles")==0){
+            if (strcmp(reb_binary_field_descriptor_for_type(field1.type).name, "particles")==0){
                 struct reb_particle* pb1 = (struct reb_particle*)(buf1+pos1);
                 struct reb_particle* pb2 = (struct reb_particle*)(buf2+pos2);
                 for (unsigned int i=0;i<field1.size/sizeof(struct reb_particle);i++){
@@ -170,7 +184,7 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
             fields_differ = 1;
         }
         if(fields_differ){
-            if (strcmp(reb_binary_field_name_for_type(field1.type), "walltime")!=0){
+            if (strcmp(reb_binary_field_descriptor_for_type(field1.type).name, "walltime")!=0){
                 // Ignore the walltime field for the return value.
                 // Typically we do not care about this field when comparing simulations.
                 are_different = 1.;
@@ -182,7 +196,7 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
                     break;
                 case 1:
                     {
-                        const char* name = reb_binary_field_name_for_type(field1.type);
+                        const char* name = reb_binary_field_descriptor_for_type(field1.type).name;
                         printf("Field \"%s\" (type=%d) differs.\n",name, field1.type);
                     }
                     break;
@@ -250,7 +264,7 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
                 break;
             case 1:
                 {
-                    const char* name = reb_binary_field_name_for_type(field1.type);
+                    const char* name = reb_binary_field_descriptor_for_type(field1.type).name;
                     printf("Field \"%s\" (type=%d) not in simulation 1.\n",name, field1.type);
                 }
                 break;

@@ -939,7 +939,6 @@ const char* reb_logo[26] = {
 "                ``....`                  ",
 };
 
-
 const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 0,  REB_DOUBLE,       "t", offsetof(struct reb_simulation, t)},
     { 1,  REB_DOUBLE,       "G", offsetof(struct reb_simulation, G)},
@@ -1157,6 +1156,6 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 397, REB_DOUBLE,      "max_radius1", offsetof(struct reb_simulation, max_radius1)},
     { 1329743186, REB_OTHER,"header", 0},
     { 9998, REB_OTHER,      "sablob", 0},
-    { 9999, REB_OTHER,      "end", 0}
+    { 9999, REB_FIELD_END,  "end", 0}
 };
 
