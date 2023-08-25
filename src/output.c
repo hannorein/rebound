@@ -335,7 +335,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     }else{
         WRITE_FIELD(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN,            sizeof(int));
     }
-    WRITE_FIELD(MERCURIUS_DCRIT,    r->ri_mercurius.dcrit,              sizeof(double)*r->ri_mercurius.dcrit_allocatedN);
     int functionpointersused = 0;
     if (r->coefficient_of_restitution ||
         r->collision_resolve ||
@@ -346,21 +345,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
         functionpointersused = 1;
     }
     WRITE_FIELD(FUNCTIONPOINTERS,   &functionpointersused,              sizeof(int));
-    {
-        struct reb_binary_field field;
-        memset(&field,0,sizeof(struct reb_binary_field));
-        field.type = REB_BINARY_FIELD_TYPE_PARTICLES;
-        field.size = sizeof(struct reb_particle)*r->N;
-        reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));
-        // output one particle at a time to sanitize pointers.
-        for (unsigned int l=0;l<r->N;l++){
-            struct reb_particle op = r->particles[l];
-            op.c = NULL;
-            op.ap = NULL;
-            op.sim = NULL;
-            reb_output_stream_write(bufp, &allocatedsize, sizep, &op,sizeof(struct reb_particle));
-        }
-    } 
     if (r->ri_ias15.allocatedN){
         int N3 = 3*r->N; // Only outut useful data (useful if particles got removed)
         WRITE_FIELD(IAS15_AT,   r->ri_ias15.at,     sizeof(double)*N3);

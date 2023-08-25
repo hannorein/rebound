@@ -139,9 +139,20 @@ void reb_read_dp7(struct reb_dp7* dp7, const int N3, FILE* inf, char **restrict 
     }\
     break;        
 
-void reb_input_field_finish(struct reb_simulation* r){
+void reb_input_field_finish(struct reb_simulation* r, enum reb_input_binary_messages* warnings){
     for (int l=0;l<r->var_config_N;l++){
         r->var_config[l].sim = r;
+    }
+    r->allocatedN = r->N; // This used to be different. Now only saving N.
+    for (unsigned int l=0;l<r->allocatedN;l++){
+        r->particles[l].c = NULL;
+        r->particles[l].ap = NULL;
+        r->particles[l].sim = r;
+    }
+    if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
+        for (unsigned int l=0;l<r->allocatedN;l++){
+            reb_tree_add_particle_to_tree(r, l);
+        }
     }
 }
 
@@ -296,39 +307,6 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         CASE(SABA_ISSYNCHRON,    &r->ri_saba.is_synchronized);
         CASE(WHFAST_CORRECTOR2,  &r->ri_whfast.corrector2);
         CASE(WHFAST_KERNEL,      &r->ri_whfast.kernel);
-        case REB_BINARY_FIELD_TYPE_PARTICLES:
-            if(r->particles){
-                free(r->particles);
-            }
-            r->allocatedN = (int)(field.size/sizeof(struct reb_particle));
-            if (field.size){
-                r->particles = malloc(field.size);
-                reb_fread(r->particles, field.size,1,inf,mem_stream);
-            }
-            if (r->allocatedN<r->N && warnings){
-                *warnings |= REB_INPUT_BINARY_WARNING_PARTICLES;
-            }
-            for (unsigned int l=0;l<r->allocatedN;l++){
-                r->particles[l].c = NULL;
-                r->particles[l].ap = NULL;
-                r->particles[l].sim = r;
-            }
-            if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
-                for (unsigned int l=0;l<r->allocatedN;l++){
-                    reb_tree_add_particle_to_tree(r, l);
-                }
-            }
-            break;
-        case REB_BINARY_FIELD_TYPE_MERCURIUS_DCRIT:
-            if(r->ri_mercurius.dcrit){
-                free(r->ri_mercurius.dcrit);
-            }
-            r->ri_mercurius.dcrit_allocatedN = (int)(field.size/sizeof(double));
-            if (field.size){
-                r->ri_mercurius.dcrit = malloc(field.size);
-                reb_fread(r->ri_mercurius.dcrit, field.size,1,inf,mem_stream);
-            }
-            break;
         CASE_MALLOC(IAS15_AT,     r->ri_ias15.at);
         CASE_MALLOC(IAS15_X0,     r->ri_ias15.x0);
         CASE_MALLOC(IAS15_V0,     r->ri_ias15.v0);

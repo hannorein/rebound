@@ -468,7 +468,7 @@ void reb_copy_simulation_with_messages(struct reb_simulation* r_copy,  struct re
 
     char* bufp_beginning = bufp; // bufp will be changed
     while(reb_input_field(r_copy, NULL, warnings, &bufp)){ }
-    reb_input_field_finish(r_copy);
+    reb_input_field_finish(r_copy, warnings);
     free(bufp_beginning);
     
 }
@@ -1012,7 +1012,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 70, REB_DOUBLE,       "ri_ias15.min_dt", offsetof(struct reb_simulation, ri_ias15.min_dt)},
     { 71, REB_UINT,         "ri_ias15.epsilon_global", offsetof(struct reb_simulation, ri_ias15.epsilon_global)},
     { 72, REB_ULONG,        "ri_ias15.iterations_max_exceeded", offsetof(struct reb_simulation, ri_ias15.iterations_max_exceeded)},
-    { 85, REB_OTHER,        "particles", offsetof(struct reb_simulation, particles)},
+    { 85, REB_POINTER,      "particles", offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle)},
     { 86, REB_POINTER,      "var_config", offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, var_config_N), sizeof(struct reb_variational_configuration)},
     { 87, REB_OTHER,        "functionpointers", 0},
     { 88, REB_OTHER,        "ri_ias15.allocatedN", offsetof(struct reb_simulation, ri_ias15.allocatedN)},
@@ -1041,7 +1041,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 118, REB_DOUBLE,      "ri_mercurius.hillfac", offsetof(struct reb_simulation, ri_mercurius.hillfac)},
     { 119, REB_UINT,        "ri_mercurius.safe_mode", offsetof(struct reb_simulation, ri_mercurius.safe_mode)},
     { 120, REB_UINT,        "ri_mercurius.is_synchronized", offsetof(struct reb_simulation, ri_mercurius.is_synchronized)},
-    { 122, REB_OTHER,       "ri_mercurius.dcrit", offsetof(struct reb_simulation, ri_mercurius.dcrit)},
+    { 122, REB_POINTER,     "ri_mercurius.dcrit", offsetof(struct reb_simulation, ri_mercurius.dcrit), offsetof(struct reb_simulation, ri_mercurius.dcrit_allocatedN), sizeof(double)},
     { 123, REB_UINT,        "ri_mercurius.recalculate_coordinates_this_timestep", offsetof(struct reb_simulation, ri_mercurius.recalculate_coordinates_this_timestep)},
     { 125, REB_INT,         "simulationarchive_version", offsetof(struct reb_simulation, simulationarchive_version)},
     { 126, REB_DOUBLE,      "walltime", offsetof(struct reb_simulation, walltime)},
