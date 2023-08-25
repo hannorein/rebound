@@ -193,38 +193,8 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
     }
 
     switch (field.type){
-        CASE(SAVERSION,          &r->simulationarchive_version);
         CASE(SASIZEFIRST,        &r->simulationarchive_size_first);
-        CASE(SASIZESNAPSHOT,     &r->simulationarchive_size_snapshot);
-        CASE(SAAUTOINTERVAL,     &r->simulationarchive_auto_interval);
-        CASE(SAAUTOWALLTIME,     &r->simulationarchive_auto_walltime);
-        CASE(SANEXT,             &r->simulationarchive_next);
-        CASE(WHFAST_CORRECTOR,   &r->ri_whfast.corrector);
-        CASE(WHFAST_RECALCJAC,   &r->ri_whfast.recalculate_coordinates_this_timestep);
-        CASE(WHFAST_SAFEMODE,    &r->ri_whfast.safe_mode);
-        CASE(WHFAST_KEEPUNSYNC,  &r->ri_whfast.keep_unsynchronized);
-        CASE(WHFAST_ISSYNCHRON,  &r->ri_whfast.is_synchronized);
-        CASE(WHFAST_TIMESTEPWARN,&r->ri_whfast.timestep_warning);
-        CASE(WHFAST_COORDINATES, &r->ri_whfast.coordinates);
-        CASE(IAS15_EPSILON,      &r->ri_ias15.epsilon);
-        CASE(IAS15_MINDT,        &r->ri_ias15.min_dt);
-        CASE(IAS15_EPSILONGLOBAL,&r->ri_ias15.epsilon_global);
-        CASE(IAS15_ITERATIONSMAX,&r->ri_ias15.iterations_max_exceeded);
         CASE(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN);
-        CASE(JANUS_SCALEPOS,     &r->ri_janus.scale_pos);
-        CASE(JANUS_SCALEVEL,     &r->ri_janus.scale_vel);
-        CASE(JANUS_ORDER,        &r->ri_janus.order);
-        CASE(JANUS_ALLOCATEDN,   &r->ri_janus.allocated_N);
-        CASE(JANUS_RECALC,       &r->ri_janus.recalculate_integer_coordinates_this_timestep);
-        CASE(MERCURIUS_HILLFAC,  &r->ri_mercurius.hillfac);
-        CASE(MERCURIUS_SAFEMODE, &r->ri_mercurius.safe_mode);
-        CASE(MERCURIUS_ISSYNCHRON, &r->ri_mercurius.is_synchronized);
-        CASE(MERCURIUS_RECALCULATE_COORD, &r->ri_mercurius.recalculate_coordinates_this_timestep);
-        CASE(MERCURIUS_COMPOS,   &r->ri_mercurius.com_pos);
-        CASE(MERCURIUS_COMVEL,   &r->ri_mercurius.com_vel);
-        CASE(PYTHON_UNIT_L,      &r->python_unit_l);
-        CASE(PYTHON_UNIT_M,      &r->python_unit_m);
-        CASE(PYTHON_UNIT_T,      &r->python_unit_t);
         CASE(STEPSDONE,          &r->steps_done);
         CASE(SAAUTOSTEP,         &r->simulationarchive_auto_step);
         CASE(SANEXTSTEP,         &r->simulationarchive_next_step);
