@@ -539,7 +539,6 @@ enum REB_STATUS {
 // IDs for content of a binary field. Used to read and write binary files.
 enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_FUNCTIONPOINTERS = 87,
-    REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
 
     REB_BINARY_FIELD_TYPE_TES_DQ_MAX = 300,
     REB_BINARY_FIELD_TYPE_TES_RECTI_PER_ORBIT = 301,

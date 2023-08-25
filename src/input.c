@@ -203,6 +203,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         i++;
     }
 
+    // TODO: These special cases still have hard coded types
     switch (field.type){
         case 35:
             { // Only kept for backwards compatability. Can be removed in future version.
@@ -224,7 +225,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
                 }
             }
             break;
-        case REB_BINARY_FIELD_TYPE_HEADER:
+        case 132974386:
             {
                 long objects = 0;
                 // Input header.
