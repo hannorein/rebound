@@ -195,28 +195,6 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
     switch (field.type){
         CASE(SASIZEFIRST,        &r->simulationarchive_size_first);
         CASE(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN);
-        CASE(STEPSDONE,          &r->steps_done);
-        CASE(SAAUTOSTEP,         &r->simulationarchive_auto_step);
-        CASE(SANEXTSTEP,         &r->simulationarchive_next_step);
-        CASE(SABA_TYPE,          &r->ri_saba.type);
-        CASE(SABA_KEEPUNSYNC,    &r->ri_saba.keep_unsynchronized);
-        CASE(EOS_PHI0,           &r->ri_eos.phi0);
-        CASE(EOS_PHI1,           &r->ri_eos.phi1);
-        CASE(EOS_N,              &r->ri_eos.n);
-        CASE(EOS_SAFEMODE,       &r->ri_eos.safe_mode);
-        CASE(EOS_ISSYNCHRON,     &r->ri_eos.is_synchronized);
-        CASE(RAND_SEED,          &r->rand_seed);
-        CASE(BS_EPSABS,          &r->ri_bs.eps_abs);
-        CASE(BS_EPSREL,          &r->ri_bs.eps_rel);
-        CASE(BS_MINDT,           &r->ri_bs.min_dt);
-        CASE(BS_MAXDT,           &r->ri_bs.max_dt);
-        CASE(BS_FIRSTORLASTSTEP, &r->ri_bs.firstOrLastStep);
-        CASE(BS_PREVIOUSREJECTED,&r->ri_bs.previousRejected);
-        CASE(BS_TARGETITER,      &r->ri_bs.targetIter);
-        CASE(SABA_SAFEMODE,      &r->ri_saba.safe_mode);
-        CASE(SABA_ISSYNCHRON,    &r->ri_saba.is_synchronized);
-        CASE(WHFAST_CORRECTOR2,  &r->ri_whfast.corrector2);
-        CASE(WHFAST_KERNEL,      &r->ri_whfast.kernel);
         CASE_MALLOC(IAS15_AT,     r->ri_ias15.at);
         CASE_MALLOC(IAS15_X0,     r->ri_ias15.x0);
         CASE_MALLOC(IAS15_V0,     r->ri_ias15.v0);
