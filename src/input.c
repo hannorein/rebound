@@ -168,6 +168,13 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
                 char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
                 *(char**)pointer = realloc(*(char**)pointer, field.size);
                 reb_fread(*(char**)pointer, field.size,1,inf,mem_stream);
+            
+                int* pointer_N = (int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
+                if (field.size % reb_binary_field_descriptor_list[i].element_size){
+                    reb_warning(r, "Inconsistent size encountered in binary field.");
+                }
+                *pointer_N = field.size/reb_binary_field_descriptor_list[i].element_size;
+
                 return 1;
             }
         }
@@ -310,26 +317,6 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
                 for (unsigned int l=0;l<r->allocatedN;l++){
                     reb_tree_add_particle_to_tree(r, l);
                 }
-            }
-            break;
-        case REB_BINARY_FIELD_TYPE_WHFAST_PJ:
-            if(r->ri_whfast.p_jh){
-                free(r->ri_whfast.p_jh);
-            }
-            r->ri_whfast.allocated_N = (int)(field.size/sizeof(struct reb_particle));
-            if (field.size){
-                r->ri_whfast.p_jh = malloc(field.size);
-                reb_fread(r->ri_whfast.p_jh, field.size,1,inf,mem_stream);
-            }
-            break;
-        case REB_BINARY_FIELD_TYPE_JANUS_PINT:
-            if(r->ri_janus.p_int){
-                free(r->ri_janus.p_int);
-            }
-            r->ri_janus.allocated_N = (int)(field.size/sizeof(struct reb_particle_int));
-            if (field.size){
-                r->ri_janus.p_int = malloc(field.size);
-                reb_fread(r->ri_janus.p_int, field.size,1,inf,mem_stream);
             }
             break;
         case REB_BINARY_FIELD_TYPE_MERCURIUS_DCRIT:

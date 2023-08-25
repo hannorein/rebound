@@ -1070,6 +1070,8 @@ struct reb_binary_field_descriptor {
     } dtype;
     char name[1024];
     size_t offset;
+    size_t offset_N;
+    size_t element_size;
 };
 
 extern const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[];

@@ -29,6 +29,7 @@
 #include <time.h>
 #include <string.h>
 #include <sys/time.h>
+#include <stddef.h>
 #include "particle.h"
 #include "rebound.h"
 #include "tools.h"
@@ -313,7 +314,9 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
             struct reb_binary_field field;
             memset(&field,0,sizeof(struct reb_binary_field));
             field.type = reb_binary_field_descriptor_list[i].type;
-            field.size = sizeof(struct reb_variational_configuration)*r->var_config_N;
+            int* pointer_N = (int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
+            field.size = (*pointer_N) * reb_binary_field_descriptor_list[i].element_size;
+                
             if (field.size){
                 reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
                 char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
@@ -326,14 +329,12 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
 
    
     WRITE_FIELD(MAXRADIUS,          &r->max_radius,                     2*sizeof(double));
-    WRITE_FIELD(WHFAST_PJ,          r->ri_whfast.p_jh,                  sizeof(struct reb_particle)*r->ri_whfast.allocated_N);
     if (r->ri_ias15.allocatedN>r->N*3){
         int N3 = 3*r->N; // Useful to avoid file size increase if particles got removed
         WRITE_FIELD(IAS15_ALLOCATEDN,   &N3,            sizeof(int));
     }else{
         WRITE_FIELD(IAS15_ALLOCATEDN,   &r->ri_ias15.allocatedN,            sizeof(int));
     }
-    WRITE_FIELD(JANUS_PINT,         r->ri_janus.p_int,                  sizeof(struct reb_particle_int)*r->ri_janus.allocated_N);
     WRITE_FIELD(MERCURIUS_DCRIT,    r->ri_mercurius.dcrit,              sizeof(double)*r->ri_mercurius.dcrit_allocatedN);
     int functionpointersused = 0;
     if (r->coefficient_of_restitution ||
