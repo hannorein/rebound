@@ -103,6 +103,7 @@ void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_input_binary
     struct reb_binary_field_descriptor fd_functionpointers = reb_binary_field_descriptor_for_name("functionpointers");
     
 next_field:
+    // Loop over all fields
     while(1){
 
         int numread = reb_fread(&field,sizeof(struct reb_binary_field),1,inf,mem_stream);
@@ -122,6 +123,8 @@ next_field:
             goto next_field;
         }
         int i=0;
+
+        // Loop over field descriptor list. Simple datatypes and pointers will be read in this loop.
         while (reb_binary_field_descriptor_list[i].dtype!=REB_FIELD_END){
             struct reb_binary_field_descriptor fd = reb_binary_field_descriptor_list[i];
             if (fd.type==field.type){
@@ -184,11 +187,14 @@ next_field:
 
                     goto next_field;
                 }
+                // If we're here then it was not a simple or pointer datatype. 
+                // Can skip the iteration trough the descriptor list.
+                break;
             }
             i++;
         }
 
-
+        // Fields with types that require special handling
         if (field.type == 35){
             // Only kept for backwards compatability. Can be removed in future version.
             double max_radius[2];
@@ -203,6 +209,8 @@ next_field:
             goto next_field;
         }
         if (field.type == fd_functionpointers.type){
+            // Warning for when function pointers were used. 
+            // No effect on simulation.
             int fpwarn;
             reb_fread(&fpwarn, field.size,1,inf,mem_stream);
             if (fpwarn && warnings){
@@ -211,8 +219,8 @@ next_field:
             goto next_field;
         }
         if (field.type == fd_header.type){
+            // Check header.
             long objects = 0;
-            // Input header.
             const long bufsize = 64 - sizeof(struct reb_binary_field);
             char readbuf[bufsize], curvbuf[bufsize];
             const char* header = "REBOUND Binary File. Version: ";
@@ -230,7 +238,7 @@ next_field:
             goto next_field;
         }
 
-        // Only TES Variable remain here.
+        // Only TES variables remain here.
         switch(field.type){
             // TES Kepler vars
             CASE(TES_UVARS_SV_SIZE, &r->ri_tes.uVars->stateVectorSize);

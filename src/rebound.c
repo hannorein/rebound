@@ -1011,7 +1011,6 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 85, REB_POINTER,      "particles", offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle)},
     { 86, REB_POINTER,      "var_config", offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, var_config_N), sizeof(struct reb_variational_configuration)},
     { 87, REB_OTHER,        "functionpointers", 0},
-    //{ 88, REB_OTHER,        "ri_ias15.allocatedN", offsetof(struct reb_simulation, ri_ias15.allocatedN)},
     { 89, REB_POINTER,      "ri_ias15.at", offsetof(struct reb_simulation, ri_ias15.at), offsetof(struct reb_simulation, ri_ias15.allocatedN), sizeof(double)},
     { 90, REB_POINTER,      "ri_ias15.x0", offsetof(struct reb_simulation, ri_ias15.x0), offsetof(struct reb_simulation, ri_ias15.allocatedN), sizeof(double)},
     { 91, REB_POINTER,      "ri_ias15.v0", offsetof(struct reb_simulation, ri_ias15.v0), offsetof(struct reb_simulation, ri_ias15.allocatedN), sizeof(double)},
@@ -1025,9 +1024,8 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 99, REB_DP7,          "ri_ias15.e", offsetof(struct reb_simulation, ri_ias15.e), offsetof(struct reb_simulation, ri_ias15.allocatedN), 7*sizeof(double)},
     { 100, REB_DP7,         "ri_ias15.br", offsetof(struct reb_simulation, ri_ias15.br), offsetof(struct reb_simulation, ri_ias15.allocatedN), 7*sizeof(double)},
     { 101, REB_DP7,         "ri_ias15.er", offsetof(struct reb_simulation, ri_ias15.er), offsetof(struct reb_simulation, ri_ias15.allocatedN), 7*sizeof(double)},
-    { 104, REB_POINTER,       "ri_whfast.p_jh", offsetof(struct reb_simulation, ri_whfast.p_jh), offsetof(struct reb_simulation, ri_whfast.allocated_N), sizeof(struct reb_particle)},
+    { 104, REB_POINTER,     "ri_whfast.p_jh", offsetof(struct reb_simulation, ri_whfast.p_jh), offsetof(struct reb_simulation, ri_whfast.allocated_N), sizeof(struct reb_particle)},
     { 107, REB_INT,         "visualization", offsetof(struct reb_simulation, visualization)},
-//    { 110, REB_UINT,        "ri_janus.allocated_N", offsetof(struct reb_simulation, ri_janus.allocated_N)},
     { 112, REB_POINTER,     "ri_janus.p_int", offsetof(struct reb_simulation, ri_janus.p_int), offsetof(struct reb_simulation, ri_janus.allocated_N), sizeof(struct reb_particle_int)},
     { 113, REB_DOUBLE,      "ri_janus.scale_pos", offsetof(struct reb_simulation, ri_janus.scale_pos)},
     { 114, REB_DOUBLE,      "ri_janus.scale_vel", offsetof(struct reb_simulation, ri_janus.scale_vel)},
@@ -1077,7 +1075,6 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 303, REB_DOUBLE,      "ri_tes.orbital_period", offsetof(struct reb_simulation, ri_tes.orbital_period)},
     { 304, REB_UINT,        "ri_tes.allocated_N", offsetof(struct reb_simulation, ri_tes.allocated_N)}, // TODO!
     { 305, REB_POINTER,     "ri_tes.particles_dh", offsetof(struct reb_simulation, ri_tes.particles_dh), offsetof(struct reb_simulation, ri_tes.allocated_N), sizeof(struct reb_particle)},
-    //{ 307, REB_UINT32,      "ri_tes.stateVectorSize", offsetof(struct reb_simulation, ri_tes.stateVectorSize)},
     { 308, REB_UINT32,      "ri_tes.controlVectorLength", offsetof(struct reb_simulation, ri_tes.controlVectorLength)},
     { 309, REB_UINT32,      "ri_tes.controlVectorSize", offsetof(struct reb_simulation, ri_tes.controlVectorSize)},
     { 310, REB_POINTER,     "ri_tes.mass", offsetof(struct reb_simulation, ri_tes.mass), offsetof(struct reb_simulation, ri_tes.allocated_N), sizeof(double)},
@@ -1085,7 +1082,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 312, REB_VEC3D,       "ri_tes.COM", offsetof(struct reb_simulation, ri_tes.COM)},
     { 313, REB_VEC3D,       "ri_tes.COM_dot", offsetof(struct reb_simulation, ri_tes.COM_dot)},
     { 314, REB_DOUBLE,      "ri_tes.mStar_last", offsetof(struct reb_simulation, ri_tes.mStar_last)},
-    // TES Variables only implemented as REB_OTHER
+    // TES Variables only implemented as REB_OTHER so far
     { 320, REB_OTHER,       "ri_tes.uVars->stateVectorSize", 0}, 
     { 321, REB_OTHER,       "ri_tes.uVars->controlVectorSize", 0}, 
     { 322, REB_OTHER,       "ri_tes.uVars->t0", 0}, 

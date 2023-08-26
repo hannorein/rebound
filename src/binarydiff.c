@@ -266,8 +266,8 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
                 break;
             case 1:
                 {
-                    const char* name = reb_binary_field_descriptor_for_type(field1.type).name;
-                    printf("Field \"%s\" (type=%d) not in simulation 1.\n",name, field1.type);
+                    const char* name = reb_binary_field_descriptor_for_type(field2.type).name;
+                    printf("Field \"%s\" (type=%d) not in simulation 1.\n",name, field2.type);
                 }
                 break;
             default:
@@ -276,5 +276,9 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
         pos1 = 64;
         pos2 += field2.size;
     }
+    if (output_option==1 && are_different==0){
+        printf("The simulations are identical.\n");
+    }
+
     return are_different;
 }
