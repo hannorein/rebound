@@ -75,6 +75,7 @@ static size_t reb_fread(void *restrict ptr, size_t size, size_t nitems, FILE *re
 #define CASE(typename, value) case REB_BINARY_FIELD_TYPE_##typename: \
     {\
         reb_fread(value, field.size,1,inf,mem_stream);\
+        goto next_field;\
     }\
     break;
 
@@ -88,10 +89,219 @@ static size_t reb_fread(void *restrict ptr, size_t size, size_t nitems, FILE *re
         reb_fread(valueref->p4, valueref->size,1,inf,mem_stream);\
         reb_fread(valueref->p5, valueref->size,1,inf,mem_stream);\
         reb_fread(valueref->p6, valueref->size,1,inf,mem_stream);\
+        goto next_field;\
     }\
     break;        
 
-void reb_input_field_finish(struct reb_simulation* r, enum reb_input_binary_messages* warnings){
+
+void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_input_binary_messages* warnings, char **restrict mem_stream){
+    struct reb_binary_field field;
+    // A few fields need special treatment. Find their descriptors first.
+    struct reb_binary_field_descriptor fd_header = reb_binary_field_descriptor_for_name("header");
+    struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
+    struct reb_binary_field_descriptor fd_sa_size_first = reb_binary_field_descriptor_for_name("simulationarchive_size_first");
+    struct reb_binary_field_descriptor fd_functionpointers = reb_binary_field_descriptor_for_name("functionpointers");
+    
+next_field:
+    while(1){
+
+        int numread = reb_fread(&field,sizeof(struct reb_binary_field),1,inf,mem_stream);
+        if (numread<1){
+            goto finish_fields; // End of file
+        }
+        if (field.type==fd_end.type){
+            goto finish_fields; // End of snapshot
+        }
+        // only here for testing. delete TODO 
+        if (field.type==REB_BINARY_FIELD_TYPE_TES_ALLOCATED_N){
+            reb_fread(&r->ri_tes.allocated_N, field.size, 1, inf, mem_stream);
+            // Allocate all memory for loading the simulation archive.
+            if (r->ri_tes.allocated_N) {
+                reb_integrator_tes_allocate_memory(r);
+            }
+            goto next_field;
+        }
+        int i=0;
+        while (reb_binary_field_descriptor_list[i].dtype!=REB_FIELD_END){
+            struct reb_binary_field_descriptor fd = reb_binary_field_descriptor_list[i];
+            if (fd.type==field.type){
+                // Read simple data types
+                if (fd.dtype == REB_DOUBLE || fd.dtype == REB_INT || fd.dtype == REB_UINT 
+                        || fd.dtype == REB_UINT32 || fd.dtype == REB_LONG 
+                        || fd.dtype == REB_ULONG || fd.dtype == REB_ULONGLONG 
+                        || fd.dtype == REB_PARTICLE || fd.dtype == REB_VEC3D ){
+                    char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
+                    reb_fread(pointer, field.size, 1, inf ,mem_stream);
+                    goto next_field;
+                }
+                // Read a pointer data type. 
+                // 1) reallocate memory
+                // 2) read data into memory
+                // 3) set allocated_N variable
+                if (fd.dtype == REB_POINTER || fd.dtype == REB_POINTER_ALIGNED){
+                    if (field.size % reb_binary_field_descriptor_list[i].element_size){
+                        reb_warning(r, "Inconsistent size encountered in binary field.");
+                    }
+                    char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
+                    if (fd.dtype == REB_POINTER_ALIGNED){
+                        if (*(char**)pointer) free(*(char**)pointer);
+                        *(char**)pointer = aligned_alloc(64,sizeof(struct reb_particle_avx512));
+                    }else{ // normal malloc
+                        *(char**)pointer = realloc(*(char**)pointer, field.size);
+                    }
+                    reb_fread(*(char**)pointer, field.size,1,inf,mem_stream);
+
+                    unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
+                    *pointer_N = field.size/reb_binary_field_descriptor_list[i].element_size;
+
+                    goto next_field;
+                }
+                // Special datatype for ias15. Similar to REB_POINTER. 
+                if (fd.dtype == REB_DP7){
+                    if (field.size % reb_binary_field_descriptor_list[i].element_size){
+                        reb_warning(r, "Inconsistent size encountered in binary field.");
+                    }
+                    char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
+                    struct reb_dp7* dp7 = (struct reb_dp7*)pointer;
+
+                    dp7->p0 = realloc(dp7->p0,field.size/7);
+                    dp7->p1 = realloc(dp7->p1,field.size/7);
+                    dp7->p2 = realloc(dp7->p2,field.size/7);
+                    dp7->p3 = realloc(dp7->p3,field.size/7);
+                    dp7->p4 = realloc(dp7->p4,field.size/7);
+                    dp7->p5 = realloc(dp7->p5,field.size/7);
+                    dp7->p6 = realloc(dp7->p6,field.size/7);
+                    reb_fread(dp7->p0, field.size/7, 1, inf, mem_stream);
+                    reb_fread(dp7->p1, field.size/7, 1, inf, mem_stream);
+                    reb_fread(dp7->p2, field.size/7, 1, inf, mem_stream);
+                    reb_fread(dp7->p3, field.size/7, 1, inf, mem_stream);
+                    reb_fread(dp7->p4, field.size/7, 1, inf, mem_stream);
+                    reb_fread(dp7->p5, field.size/7, 1, inf, mem_stream);
+                    reb_fread(dp7->p6, field.size/7, 1, inf, mem_stream);
+
+                    unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
+                    *pointer_N = field.size/reb_binary_field_descriptor_list[i].element_size;
+
+                    goto next_field;
+                }
+            }
+            i++;
+        }
+
+
+        if (field.type == 35){
+            // Only kept for backwards compatability. Can be removed in future version.
+            double max_radius[2];
+            reb_fread(&max_radius, field.size,1,inf,mem_stream);
+            r->max_radius0 = max_radius[0];
+            r->max_radius1 = max_radius[1];
+            goto next_field;
+        }
+        if (field.type == fd_sa_size_first.type){
+            // simulationarchive_size_first was manually written. reading it manually here.
+            reb_fread(&r->simulationarchive_size_first, field.size,1,inf,mem_stream);
+            goto next_field;
+        }
+        if (field.type == fd_functionpointers.type){
+            int fpwarn;
+            reb_fread(&fpwarn, field.size,1,inf,mem_stream);
+            if (fpwarn && warnings){
+                *warnings |= REB_INPUT_BINARY_WARNING_POINTERS;
+            }
+            goto next_field;
+        }
+        if (field.type == fd_header.type){
+            long objects = 0;
+            // Input header.
+            const long bufsize = 64 - sizeof(struct reb_binary_field);
+            char readbuf[bufsize], curvbuf[bufsize];
+            const char* header = "REBOUND Binary File. Version: ";
+            sprintf(curvbuf,"%s%s",header+sizeof(struct reb_binary_field), reb_version_str);
+
+            objects += reb_fread(readbuf,sizeof(char),bufsize,inf,mem_stream);
+            if (objects < 1){
+                *warnings |= REB_INPUT_BINARY_WARNING_CORRUPTFILE;
+            }else{
+                // Note: following compares version, but ignores githash.
+                if(strncmp(readbuf,curvbuf,bufsize)!=0){
+                    *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
+                }
+            }
+            goto next_field;
+        }
+
+        // Only TES Variable remain here.
+        switch(field.type){
+            // TES Kepler vars
+            CASE(TES_UVARS_SV_SIZE, &r->ri_tes.uVars->stateVectorSize);
+            CASE(TES_UVARS_T0, r->ri_tes.uVars->t0);
+            CASE(TES_UVARS_TLAST, r->ri_tes.uVars->tLast);
+            CASE(TES_UVARS_CSQ, r->ri_tes.uVars->uv_csq);
+            CASE(TES_UVARS_CSP, r->ri_tes.uVars->uv_csp);
+            CASE(TES_UVARS_CSV, r->ri_tes.uVars->uv_csv);
+            CASE(TES_UVARS_Q0, r->ri_tes.uVars->Q0);
+            CASE(TES_UVARS_V0, r->ri_tes.uVars->V0);
+            CASE(TES_UVARS_P0, r->ri_tes.uVars->P0);
+            CASE(TES_UVARS_Q1, r->ri_tes.uVars->Q1);
+            CASE(TES_UVARS_V1, r->ri_tes.uVars->V1);
+            CASE(TES_UVARS_P1, r->ri_tes.uVars->P1);
+            CASE(TES_UVARS_X, r->ri_tes.uVars->X);
+            CASE(TES_UVARS_Q0_NORM, r->ri_tes.uVars->Q0_norm);
+            CASE(TES_UVARS_BETA, r->ri_tes.uVars->beta);
+            CASE(TES_UVARS_ETA, r->ri_tes.uVars->eta);
+            CASE(TES_UVARS_ZETA, r->ri_tes.uVars->zeta);
+            CASE(TES_UVARS_PERIOD, r->ri_tes.uVars->period);
+            CASE(TES_UVARS_XPERIOD, r->ri_tes.uVars->Xperiod);
+            CASE(TES_UVARS_STUMPF_C0, r->ri_tes.uVars->C.c0);
+            CASE(TES_UVARS_STUMPF_C1, r->ri_tes.uVars->C.c1);
+            CASE(TES_UVARS_STUMPF_C2, r->ri_tes.uVars->C.c2);
+            CASE(TES_UVARS_STUMPF_C3, r->ri_tes.uVars->C.c3);
+            CASE(TES_UVARS_MU, &r->ri_tes.uVars->mu);
+
+            // TES Radau vars
+            CASE(TES_RADAU_DX, r->ri_tes.radau->dX);
+            CASE(TES_RADAU_XOUT, r->ri_tes.radau->Xout);
+            CASE(TES_RADAU_RECTI_ARRAY, r->ri_tes.radau->rectifiedArray);
+            CASE(TES_RADAU_PREDICTORS, r->ri_tes.radau->predictors);
+            CASE(TES_RADAU_DSTATE0, r->ri_tes.radau->dState0);
+            CASE(TES_RADAU_DDSTATE0, r->ri_tes.radau->ddState0);
+            CASE(TES_RADAU_DSTATE, r->ri_tes.radau->dState);
+            CASE(TES_RADAU_DDSTATE, r->ri_tes.radau->ddState);
+            CASE(TES_RADAU_CS_DSTATE0, r->ri_tes.radau->cs_dState0);
+            CASE(TES_RADAU_CS_DDSTATE0, r->ri_tes.radau->cs_ddState0);
+            CASE(TES_RADAU_CS_DSTATE, r->ri_tes.radau->cs_dState);
+            CASE(TES_RADAU_CS_DDSTATE, r->ri_tes.radau->cs_ddState);
+            CASE(TES_RADAU_CS_DX, r->ri_tes.radau->cs_dX);
+            CASE(TES_RADAU_FCALLS, &r->ri_tes.radau->fCalls);
+            CASE(TES_RADAU_RECTIS, &r->ri_tes.radau->rectifications);
+            CASE(TES_RADAU_ITERS, &r->ri_tes.radau->convergenceIterations);
+            CASE(TES_RADAU_B6, r->ri_tes.radau->b6_store);
+            CASE_CONTROL_VARS(TES_RADAU_B, (&(r->ri_tes.radau->B)));
+            CASE_CONTROL_VARS(TES_RADAU_BLAST, (&(r->ri_tes.radau->Blast)));
+            CASE_CONTROL_VARS(TES_RADAU_B_1ST, (&(r->ri_tes.radau->B_1st)));
+            CASE_CONTROL_VARS(TES_RADAU_BLAST_1ST, (&(r->ri_tes.radau->Blast_1st)));
+            CASE_CONTROL_VARS(TES_RADAU_CS_B, (&(r->ri_tes.radau->cs_B)));
+            CASE_CONTROL_VARS(TES_RADAU_CS_B_1ST, (&(r->ri_tes.radau->cs_B1st)));
+            CASE_CONTROL_VARS(TES_RADAU_G, (&(r->ri_tes.radau->G)));
+            CASE_CONTROL_VARS(TES_RADAU_G_1ST, (&(r->ri_tes.radau->G_1st)));
+
+            // TES force model vars
+            CASE(TES_DHEM_XOSC_STORE, r->ri_tes.rhs->XoscStore);
+            CASE(TES_DHEM_XOSC_PRED_STORE, r->ri_tes.rhs->XoscPredStore);
+            CASE(TES_DHEM_XOSC_CS_STORE, r->ri_tes.rhs->XoscStore_cs);
+            CASE(TES_DHEM_XOSC_DOT_STORE, r->ri_tes.rhs->Xosc_dotStore);
+            CASE(TES_DHEM_X, r->ri_tes.rhs->X);
+            CASE(TES_DHEM_M_INV, r->ri_tes.rhs->m_inv);
+            CASE(TES_DHEM_M_TOTAL, &r->ri_tes.rhs->mTotal);
+            CASE(TES_DHEM_RECTI_TIME, r->ri_tes.rhs->rectifyTimeArray);
+            CASE(TES_DHEM_RECTI_PERIOD, r->ri_tes.rhs->rectificationPeriod);
+        }
+        // We should never get here. If so, it's an unknown field type.
+        *warnings |= REB_INPUT_BINARY_WARNING_FIELD_UNKOWN;
+    } 
+
+finish_fields:
+    // Some final initialization
     for (int l=0;l<r->var_config_N;l++){
         r->var_config[l].sim = r;
     }
@@ -113,206 +323,6 @@ void reb_input_field_finish(struct reb_simulation* r, enum reb_input_binary_mess
     }
     r->ri_whfast512.recalculate_constants = 1;
 }
-
-
-int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_messages* warnings, char **restrict mem_stream){
-    struct reb_binary_field field;
-    int numread = reb_fread(&field,sizeof(struct reb_binary_field),1,inf,mem_stream);
-    if (numread<1){
-        return 0; // End of file
-    }
-    // struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
-    // if (field.type==fd_end.type){
-    if (field.type==9999){ // harcoded for efficiency
-        return 0; // End of snapshot
-    }
-        // only here for testding. delete TODO 
-        // only here for testding. delete TODO 
-    if (field.type==REB_BINARY_FIELD_TYPE_TES_ALLOCATED_N){
-        reb_fread(&r->ri_tes.allocated_N, field.size, 1, inf, mem_stream);
-        // Allocate all memory for loading the simulation archive.
-        if (r->ri_tes.allocated_N) {
-            reb_integrator_tes_allocate_memory(r);
-        }
-        return 1;
-    }
-    int i=0;
-    while (reb_binary_field_descriptor_list[i].dtype!=REB_FIELD_END){
-        int type = reb_binary_field_descriptor_list[i].type;
-        int dtype = reb_binary_field_descriptor_list[i].dtype;
-        if (type==field.type){
-            // Read simple data types
-            if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32 ||
-                    dtype == REB_LONG || dtype == REB_ULONG || dtype == REB_ULONGLONG || 
-                    dtype == REB_PARTICLE || dtype == REB_VEC3D ){
-                char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
-                reb_fread(pointer, field.size, 1, inf ,mem_stream);
-                return 1;
-            }
-            // Read a pointer data type. 
-            // 1) reallocate memory
-            // 2) read data into memory
-            // 3) set allocated_N variable
-            if (dtype == REB_POINTER || dtype == REB_POINTER_ALIGNED){
-                if (field.size % reb_binary_field_descriptor_list[i].element_size){
-                    reb_warning(r, "Inconsistent size encountered in binary field.");
-                }
-                char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
-                if (dtype == REB_POINTER_ALIGNED){
-                    if (*(char**)pointer) free(*(char**)pointer);
-                    *(char**)pointer = aligned_alloc(64,sizeof(struct reb_particle_avx512));
-                }else{ // normal malloc
-                    *(char**)pointer = realloc(*(char**)pointer, field.size);
-                }
-                reb_fread(*(char**)pointer, field.size,1,inf,mem_stream);
-                
-                unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
-                *pointer_N = field.size/reb_binary_field_descriptor_list[i].element_size;
-
-                return 1;
-            }
-            // Special datatype for ias15. Similar to REB_POINTER. 
-            if (dtype == REB_DP7){
-                if (field.size % reb_binary_field_descriptor_list[i].element_size){
-                    reb_warning(r, "Inconsistent size encountered in binary field.");
-                }
-                char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
-                struct reb_dp7* dp7 = (struct reb_dp7*)pointer;
-        
-                dp7->p0 = realloc(dp7->p0,field.size/7);
-                dp7->p1 = realloc(dp7->p1,field.size/7);
-                dp7->p2 = realloc(dp7->p2,field.size/7);
-                dp7->p3 = realloc(dp7->p3,field.size/7);
-                dp7->p4 = realloc(dp7->p4,field.size/7);
-                dp7->p5 = realloc(dp7->p5,field.size/7);
-                dp7->p6 = realloc(dp7->p6,field.size/7);
-                reb_fread(dp7->p0, field.size/7, 1, inf, mem_stream);
-                reb_fread(dp7->p1, field.size/7, 1, inf, mem_stream);
-                reb_fread(dp7->p2, field.size/7, 1, inf, mem_stream);
-                reb_fread(dp7->p3, field.size/7, 1, inf, mem_stream);
-                reb_fread(dp7->p4, field.size/7, 1, inf, mem_stream);
-                reb_fread(dp7->p5, field.size/7, 1, inf, mem_stream);
-                reb_fread(dp7->p6, field.size/7, 1, inf, mem_stream);
-            
-                unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
-                *pointer_N = field.size/reb_binary_field_descriptor_list[i].element_size;
-
-                return 1;
-            }
-        }
-        i++;
-    }
-
-    // TODO: These special cases still have hard coded types
-    switch (field.type){
-        case 35:
-            { // Only kept for backwards compatability. Can be removed in future version.
-                double max_radius[2];
-                reb_fread(&max_radius, field.size,1,inf,mem_stream);
-                r->max_radius0 = max_radius[0];
-                r->max_radius1 = max_radius[1];
-            }
-            break;
-        case 45: // simulationarchive_size_first was manually written. reading it manually here.
-            reb_fread(&r->simulationarchive_size_first, field.size,1,inf,mem_stream);
-            break;
-        case REB_BINARY_FIELD_TYPE_FUNCTIONPOINTERS:
-            {
-                int fpwarn;
-                reb_fread(&fpwarn, field.size,1,inf,mem_stream);
-                if (fpwarn && warnings){
-                    *warnings |= REB_INPUT_BINARY_WARNING_POINTERS;
-                }
-            }
-            break;
-        case 132974386:
-            {
-                long objects = 0;
-                // Input header.
-                const long bufsize = 64 - sizeof(struct reb_binary_field);
-                char readbuf[bufsize], curvbuf[bufsize];
-                const char* header = "REBOUND Binary File. Version: ";
-                sprintf(curvbuf,"%s%s",header+sizeof(struct reb_binary_field), reb_version_str);
-                
-                objects += reb_fread(readbuf,sizeof(char),bufsize,inf,mem_stream);
-                if (objects < 1){
-                    *warnings |= REB_INPUT_BINARY_WARNING_CORRUPTFILE;
-                }else{
-                    // Note: following compares version, but ignores githash.
-                    if(strncmp(readbuf,curvbuf,bufsize)!=0){
-                        *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
-                    }
-                }
-            }
-            break;
-
-        // TES Kepler vars
-        CASE(TES_UVARS_SV_SIZE, &r->ri_tes.uVars->stateVectorSize);
-        CASE(TES_UVARS_T0, r->ri_tes.uVars->t0);
-        CASE(TES_UVARS_TLAST, r->ri_tes.uVars->tLast);
-        CASE(TES_UVARS_CSQ, r->ri_tes.uVars->uv_csq);
-        CASE(TES_UVARS_CSP, r->ri_tes.uVars->uv_csp);
-        CASE(TES_UVARS_CSV, r->ri_tes.uVars->uv_csv);
-        CASE(TES_UVARS_Q0, r->ri_tes.uVars->Q0);
-        CASE(TES_UVARS_V0, r->ri_tes.uVars->V0);
-        CASE(TES_UVARS_P0, r->ri_tes.uVars->P0);
-        CASE(TES_UVARS_Q1, r->ri_tes.uVars->Q1);
-        CASE(TES_UVARS_V1, r->ri_tes.uVars->V1);
-        CASE(TES_UVARS_P1, r->ri_tes.uVars->P1);
-        CASE(TES_UVARS_X, r->ri_tes.uVars->X);
-        CASE(TES_UVARS_Q0_NORM, r->ri_tes.uVars->Q0_norm);
-        CASE(TES_UVARS_BETA, r->ri_tes.uVars->beta);
-        CASE(TES_UVARS_ETA, r->ri_tes.uVars->eta);
-        CASE(TES_UVARS_ZETA, r->ri_tes.uVars->zeta);
-        CASE(TES_UVARS_PERIOD, r->ri_tes.uVars->period);
-        CASE(TES_UVARS_XPERIOD, r->ri_tes.uVars->Xperiod);
-        CASE(TES_UVARS_STUMPF_C0, r->ri_tes.uVars->C.c0);
-        CASE(TES_UVARS_STUMPF_C1, r->ri_tes.uVars->C.c1);
-        CASE(TES_UVARS_STUMPF_C2, r->ri_tes.uVars->C.c2);
-        CASE(TES_UVARS_STUMPF_C3, r->ri_tes.uVars->C.c3);
-        CASE(TES_UVARS_MU, &r->ri_tes.uVars->mu);
-
-        // TES Radau vars
-        CASE(TES_RADAU_DX, r->ri_tes.radau->dX);
-        CASE(TES_RADAU_XOUT, r->ri_tes.radau->Xout);
-        CASE(TES_RADAU_RECTI_ARRAY, r->ri_tes.radau->rectifiedArray);
-        CASE(TES_RADAU_PREDICTORS, r->ri_tes.radau->predictors);
-        CASE(TES_RADAU_DSTATE0, r->ri_tes.radau->dState0);
-        CASE(TES_RADAU_DDSTATE0, r->ri_tes.radau->ddState0);
-        CASE(TES_RADAU_DSTATE, r->ri_tes.radau->dState);
-        CASE(TES_RADAU_DDSTATE, r->ri_tes.radau->ddState);
-        CASE(TES_RADAU_CS_DSTATE0, r->ri_tes.radau->cs_dState0);
-        CASE(TES_RADAU_CS_DDSTATE0, r->ri_tes.radau->cs_ddState0);
-        CASE(TES_RADAU_CS_DSTATE, r->ri_tes.radau->cs_dState);
-        CASE(TES_RADAU_CS_DDSTATE, r->ri_tes.radau->cs_ddState);
-        CASE(TES_RADAU_CS_DX, r->ri_tes.radau->cs_dX);
-        CASE(TES_RADAU_FCALLS, &r->ri_tes.radau->fCalls);
-        CASE(TES_RADAU_RECTIS, &r->ri_tes.radau->rectifications);
-        CASE(TES_RADAU_ITERS, &r->ri_tes.radau->convergenceIterations);
-        CASE(TES_RADAU_B6, r->ri_tes.radau->b6_store);
-        CASE_CONTROL_VARS(TES_RADAU_B, (&(r->ri_tes.radau->B)));
-        CASE_CONTROL_VARS(TES_RADAU_BLAST, (&(r->ri_tes.radau->Blast)));
-        CASE_CONTROL_VARS(TES_RADAU_B_1ST, (&(r->ri_tes.radau->B_1st)));
-        CASE_CONTROL_VARS(TES_RADAU_BLAST_1ST, (&(r->ri_tes.radau->Blast_1st)));
-        CASE_CONTROL_VARS(TES_RADAU_CS_B, (&(r->ri_tes.radau->cs_B)));
-        CASE_CONTROL_VARS(TES_RADAU_CS_B_1ST, (&(r->ri_tes.radau->cs_B1st)));
-        CASE_CONTROL_VARS(TES_RADAU_G, (&(r->ri_tes.radau->G)));
-        CASE_CONTROL_VARS(TES_RADAU_G_1ST, (&(r->ri_tes.radau->G_1st)));
-
-        // TES force model vars
-        CASE(TES_DHEM_XOSC_STORE, r->ri_tes.rhs->XoscStore);
-        CASE(TES_DHEM_XOSC_PRED_STORE, r->ri_tes.rhs->XoscPredStore);
-        CASE(TES_DHEM_XOSC_CS_STORE, r->ri_tes.rhs->XoscStore_cs);
-        CASE(TES_DHEM_XOSC_DOT_STORE, r->ri_tes.rhs->Xosc_dotStore);
-        CASE(TES_DHEM_X, r->ri_tes.rhs->X);
-        CASE(TES_DHEM_M_INV, r->ri_tes.rhs->m_inv);
-        CASE(TES_DHEM_M_TOTAL, &r->ri_tes.rhs->mTotal);
-        CASE(TES_DHEM_RECTI_TIME, r->ri_tes.rhs->rectifyTimeArray);
-        CASE(TES_DHEM_RECTI_PERIOD, r->ri_tes.rhs->rectificationPeriod);
-    
-    }
-    return 1;
-} 
 
 struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum reb_input_binary_messages warnings){
     if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){

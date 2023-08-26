@@ -64,8 +64,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
     r->simulationarchive_version = 0;
 
     fseek(inf, 0, SEEK_SET);
-    while(reb_input_field(r, inf, warnings,NULL)){ }
-    reb_input_field_finish(r, warnings);
+    reb_input_fields(r, inf, warnings,NULL);
 
     // Done?
     if (snapshot==0) return;
@@ -82,8 +81,7 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
         return;
     }else{
         // Version 2 or higher
-        while(reb_input_field(r, inf, warnings,NULL)){ }
-        reb_input_field_finish(r, warnings);
+        reb_input_fields(r, inf, warnings,NULL);
     }
     return;
 }
