@@ -87,7 +87,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(co
     return bfd;
 }
 
-static int print_reb_type(FILE * restrict stream, int dtype, char* pointer){
+void print_reb_type(FILE * restrict stream, int dtype, char* pointer, size_t size){
     switch (dtype){
         case REB_DOUBLE:
             fprintf(stream, "%e",*(double*)(pointer));
@@ -111,10 +111,9 @@ static int print_reb_type(FILE * restrict stream, int dtype, char* pointer){
             fprintf(stream, "%llu",*(unsigned long long*)(pointer));
             break;
         default:
-            return 0; // Not implemented
+            fprintf(stream, "(%zu bytes, values not printed)", size);
             break;
     }
-    return 1;
 }
 
 int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option){
@@ -179,21 +178,16 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
                 // Output field with size 0
                 pos1 += field1.size; // For next search
                 pos2 = 64; // For next search
-                field1.size = 0;
                 are_different = 1.;
-                switch(output_option){
-                    case 0:
-                        reb_output_stream_write(bufp, &allocatedsize, sizep, &field1,sizeof(struct reb_binary_field));
-                        break;
-                    case 1:
-                        {
-                            const char* name = reb_binary_field_descriptor_for_type(field1.type).name;
-                            printf("Field '%s' (type=%d) not in simulation 2.\n",name, field1.type);
-                        }
-                        break;
-                    default:
-                        break;
+                if (output_option==0){
+                    reb_output_stream_write(bufp, &allocatedsize, sizep, &field1,sizeof(struct reb_binary_field));
+                }else if (output_option==1){
+                    const struct reb_binary_field_descriptor fd = reb_binary_field_descriptor_for_type(field1.type);
+                    printf("%s:\n\033[31m< ",fd.name);
+                    print_reb_type(stdout, fd.dtype, buf1+pos1, field1.size);
+                    printf("\033[0m\n");
                 }
+                field1.size = 0;
                 continue;
             }
         }
@@ -222,25 +216,16 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
                 // Typically we do not care about this field when comparing simulations.
                 are_different = 1.;
             }
-            switch(output_option){
-                case 0:
-                    reb_output_stream_write(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binary_field));
-                    reb_output_stream_write(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
-                    break;
-                case 1:
-                    {
-                        const struct reb_binary_field_descriptor fd = reb_binary_field_descriptor_for_type(field1.type);
-                        printf("Field '%s' (type=%d) differs. ",fd.name, field1.type);
-                        if (print_reb_type(stdout, fd.dtype, buf1+pos1)){
-                            printf(" != ");
-                            print_reb_type(stdout, fd.dtype, buf2+pos2);
-                        }
-                        printf("\n");
-
-                    }
-                    break;
-                default:
-                    break;
+            if (output_option==0){
+                reb_output_stream_write(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binary_field));
+                reb_output_stream_write(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
+            }else if (output_option==1){
+                const struct reb_binary_field_descriptor fd = reb_binary_field_descriptor_for_type(field1.type);
+                printf("%s:\n\033[31m< ",fd.name);
+                print_reb_type(stdout, fd.dtype, buf1+pos1, field1.size);
+                printf("\033[0m\n---\n\033[32m> ");
+                print_reb_type(stdout, fd.dtype, buf2+pos2, field2.size);
+                printf("\033[0m\n");
             }
         }
         pos1 += field1.size;
@@ -296,25 +281,17 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
         }
 
         are_different = 1.;
-        switch(output_option){
-            case 0:
-                reb_output_stream_write(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binary_field));
-                reb_output_stream_write(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
-                break;
-            case 1:
-                {
-                    const char* name = reb_binary_field_descriptor_for_type(field2.type).name;
-                    printf("Field '%s\' (type=%d) not in simulation 1.\n",name, field2.type);
-                }
-                break;
-            default:
-                break;
+        if (output_option==0){
+            reb_output_stream_write(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binary_field));
+            reb_output_stream_write(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
+        }else if (output_option==1){
+            const struct reb_binary_field_descriptor fd = reb_binary_field_descriptor_for_type(field2.type);
+            printf("%s:\n\033[32m> ",fd.name);
+            print_reb_type(stdout, fd.dtype, buf2+pos2, field2.size);
+            printf("\033[0m\n");
         }
         pos1 = 64;
         pos2 += field2.size;
-    }
-    if (output_option==1 && are_different==0){
-        printf("The simulations are identical.\n");
     }
 
     return are_different;

@@ -1174,7 +1174,7 @@ class Simulation(Structure):
         return ODE.from_address(ctypes.addressof(ode_p.contents))
 
 # Status functions
-    def status(self):
+    def status(self, showParticles=True, showAllFields=True):
         """ 
         Prints a summary of the current status 
         of the simulation.
@@ -1188,12 +1188,18 @@ class Simulation(Structure):
         s += "Selected integrator: \t" + self.integrator + "\n"       
         s += "Simulation time:     \t%.16e\n" %self.t
         s += "Current timestep:    \t%f\n" %self.dt
-        if self.N>0:
-            s += "---------------------------------\n"
+        s += "---------------------------------\n"
+        if self.N>0 and showParticles:
             for p in self.particles:
                 s += str(p) + "\n"
-        s += "---------------------------------"
-        print(s)
+            s += "---------------------------------\n"
+        print(s, end="")
+        if showAllFields:
+            print("The following fields have non-default values:")
+            newsim = Simulation()
+            clibrebound.reb_diff_simulations(byref(newsim), byref(self),c_int(1))
+
+
 
 # Set function pointer for additional forces
     @property
