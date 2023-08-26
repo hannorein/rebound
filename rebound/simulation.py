@@ -1069,6 +1069,13 @@ class Simulation(Structure):
         clibrebound.reb_diff_simulations.restype = c_int
         ret = clibrebound.reb_diff_simulations(byref(self), byref(other),c_int(2))
         return not ret
+            
+    def diff(self, other):
+        if not isinstance(other,Simulation):
+            return NotImplemented
+        clibrebound.reb_diff_simulations_char.restype = c_char_p
+        output = clibrebound.reb_diff_simulations_char(byref(other), byref(self))
+        print(output.decode("utf-8"))
 
     def __add__(self, other):
         if not isinstance(other,Simulation):

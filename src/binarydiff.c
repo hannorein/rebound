@@ -238,8 +238,15 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
             fields_differ = 1;
         }
         if(fields_differ){
+            if (strcmp(reb_binary_field_descriptor_for_type(field1.type).name, "simulationarchive_size_first")==0){
+                // Ignore the_size_first field for the return value.
+                // Typically we do not care about this field when comparing simulations.
+                pos1 += field1.size;
+                pos2 += field2.size;
+                continue;
+            }
             if (strcmp(reb_binary_field_descriptor_for_type(field1.type).name, "walltime")!=0){
-                // Ignore the walltime field for the return value.
+                // Ignore the walltime and field, but only for the return value (print it out)
                 // Typically we do not care about this field when comparing simulations.
                 are_different = 1.;
             }
