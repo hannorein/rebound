@@ -28,6 +28,7 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
+#include <inttypes.h>
 #include <sys/time.h>
 #include "particle.h"
 #include "rebound.h"
@@ -84,6 +85,36 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(co
     struct reb_binary_field_descriptor bfd = {0};
     bfd.dtype = REB_FIELD_NOT_FOUND;
     return bfd;
+}
+
+static int print_reb_type(FILE * restrict stream, int dtype, char* pointer){
+    switch (dtype){
+        case REB_DOUBLE:
+            fprintf(stream, "%e",*(double*)(pointer));
+            break;
+        case REB_INT:
+            fprintf(stream, "%d",*(int*)(pointer));
+            break;
+        case REB_UINT:
+            fprintf(stream, "%u",*(unsigned int*)(pointer));
+            break;
+        case REB_UINT32:
+            fprintf(stream, "%"PRIu32,*(uint32_t*)(pointer)); // PRIu32 defined in inttypes.h
+            break;
+        case REB_LONG:
+            fprintf(stream, "%ld",*(long*)(pointer));
+            break;
+        case REB_ULONG:
+            fprintf(stream, "%lu",*(unsigned long*)(pointer));
+            break;
+        case REB_ULONGLONG:
+            fprintf(stream, "%llu",*(unsigned long long*)(pointer));
+            break;
+        default:
+            return 0; // Not implemented
+            break;
+    }
+    return 1;
 }
 
 int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option){
@@ -157,7 +188,7 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
                     case 1:
                         {
                             const char* name = reb_binary_field_descriptor_for_type(field1.type).name;
-                            printf("Field \"%s\" (type=%d) not in simulation 2.\n",name, field1.type);
+                            printf("Field '%s' (type=%d) not in simulation 2.\n",name, field1.type);
                         }
                         break;
                     default:
@@ -198,8 +229,14 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
                     break;
                 case 1:
                     {
-                        const char* name = reb_binary_field_descriptor_for_type(field1.type).name;
-                        printf("Field \"%s\" (type=%d) differs.\n",name, field1.type);
+                        const struct reb_binary_field_descriptor fd = reb_binary_field_descriptor_for_type(field1.type);
+                        printf("Field '%s' (type=%d) differs. ",fd.name, field1.type);
+                        if (print_reb_type(stdout, fd.dtype, buf1+pos1)){
+                            printf(" != ");
+                            print_reb_type(stdout, fd.dtype, buf2+pos2);
+                        }
+                        printf("\n");
+
                     }
                     break;
                 default:
@@ -267,7 +304,7 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
             case 1:
                 {
                     const char* name = reb_binary_field_descriptor_for_type(field2.type).name;
-                    printf("Field \"%s\" (type=%d) not in simulation 1.\n",name, field2.type);
+                    printf("Field '%s\' (type=%d) not in simulation 1.\n",name, field2.type);
                 }
                 break;
             default:

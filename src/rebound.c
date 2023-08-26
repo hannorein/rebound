@@ -1051,7 +1051,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 141, REB_UINT,        "ri_saba.is_synchronized", offsetof(struct reb_simulation, ri_saba.is_synchronized)},
     { 143, REB_UINT,        "ri_whfast.corrector2", offsetof(struct reb_simulation, ri_whfast.corrector2)},
     { 144, REB_INT,         "ri_whfast.kernel", offsetof(struct reb_simulation, ri_whfast.kernel)},
-    { 145, REB_DOUBLE,      "dti_last_done", offsetof(struct reb_simulation, dt_last_done)},
+    { 145, REB_DOUBLE,      "dt_last_done", offsetof(struct reb_simulation, dt_last_done)},
     { 146, REB_INT,         "ri_saba.type", offsetof(struct reb_simulation, ri_saba.type)},
     { 147, REB_UINT,        "ri_saba.keep_unsynchronized", offsetof(struct reb_simulation, ri_saba.keep_unsynchronized)},
     { 148, REB_INT,         "ri_eos.phi0", offsetof(struct reb_simulation, ri_eos.phi0)},

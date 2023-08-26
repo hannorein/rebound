@@ -920,7 +920,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_for_type(in
 const struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(const char* name);
 
 struct reb_binary_field_descriptor {
-    unsigned int type;
+    unsigned int type;          // Unique id for each field. Should not change between versions. Ids should not be reused.
     enum {
         REB_DOUBLE,
         REB_INT,
@@ -934,14 +934,14 @@ struct reb_binary_field_descriptor {
         REB_POINTER,
         REB_POINTER_ALIGNED,    // memory aligned to 64 bit boundary for AVX512
         REB_DP7,                // Special datatype for IAS15
-        REB_OTHER,
+        REB_OTHER,              // Fields that need special treatment during input and/or output
         REB_FIELD_END,          // Special type to indicate end of blob
         REB_FIELD_NOT_FOUND,    // Special type used to throw error messages
     } dtype;
     char name[1024];
-    size_t offset;
-    size_t offset_N;
-    size_t element_size;
+    size_t offset;              // Offset of the storage location relative to the beginning of reb_simulation
+    size_t offset_N;            // Offset of the storage location for the size relative to the beginning of reb_simulation
+    size_t element_size;        // Size in bytes of each element (only used for pointers, dp7, etc)
 };
 
 extern const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[];
