@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_uint32, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
+from ctypes import Structure, c_double, POINTER, c_uint32, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast, c_char, c_size_t
 from . import clibrebound, Escape, NoParticles, Encounter, Collision, SimulationError, ParticleNotFound, M_to_E
 from .citations import cite
 from .particle import Particle
@@ -65,6 +65,29 @@ BINARY_WARNINGS = [
 class reb_hash_pointer_pair(Structure):
     _fields_ = [("hash", c_uint32),
                 ("index", c_int)]
+
+class reb_binary_field_descriptor(Structure):
+    def __repr__(self):
+        return '<{0}.{1} object at {2}, type={3}, dtype={4}, name=\'{5}\'>'.format(self.__module__, type(self).__name__, hex(id(self)), self.type, self.dtype, self.name.decode("ascii"))
+    _fields_ = [("type", c_uint),
+                ("dtype", c_int),
+                ("name", c_char*1024),
+                ("offset", c_size_t),
+                ("offset_N", c_size_t),
+                ("element_size", c_size_t),
+                ]
+def binary_field_descriptor_list():
+    fd_pointer_t = POINTER(reb_binary_field_descriptor)
+    fd_pointer = (reb_binary_field_descriptor*3).in_dll(clibrebound, "reb_binary_field_descriptor_list")
+    fd_pointer = cast(fd_pointer, fd_pointer_t) # not sure why I have to do it this way
+    l = []
+    i=0
+    while True:
+        l.append(fd_pointer[i])
+        if fd_pointer[i].name == b'end':
+            break
+        i += 1
+    return l
 
 
 class Rotation(Structure):
