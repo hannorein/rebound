@@ -87,33 +87,41 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(co
     return bfd;
 }
 
-void print_reb_type(FILE * restrict stream, int dtype, char* pointer, size_t size){
+static void output_stream_reb_type(int dtype, char* pointer, size_t dsize, char** buf){
+    char* newbuf = NULL;
     switch (dtype){
         case REB_DOUBLE:
-            fprintf(stream, "%e",*(double*)(pointer));
+            asprintf(&newbuf,"%e",*(double*)(pointer));
             break;
         case REB_INT:
-            fprintf(stream, "%d",*(int*)(pointer));
+            asprintf(&newbuf,"%d",*(int*)(pointer));
             break;
         case REB_UINT:
-            fprintf(stream, "%u",*(unsigned int*)(pointer));
+            asprintf(&newbuf,"%u",*(unsigned int*)(pointer));
             break;
         case REB_UINT32:
-            fprintf(stream, "%"PRIu32,*(uint32_t*)(pointer)); // PRIu32 defined in inttypes.h
+            asprintf(&newbuf,"%"PRIu32,*(uint32_t*)(pointer)); // PRIu32 defined in inttypes.h
             break;
         case REB_LONG:
-            fprintf(stream, "%ld",*(long*)(pointer));
+            asprintf(&newbuf,"%ld",*(long*)(pointer));
             break;
         case REB_ULONG:
-            fprintf(stream, "%lu",*(unsigned long*)(pointer));
+            asprintf(&newbuf,"%lu",*(unsigned long*)(pointer));
             break;
         case REB_ULONGLONG:
-            fprintf(stream, "%llu",*(unsigned long long*)(pointer));
+            asprintf(&newbuf,"%llu",*(unsigned long long*)(pointer));
             break;
         default:
-            fprintf(stream, "(%zu bytes, values not printed)", size);
+            asprintf(&newbuf,"(%zu bytes, values not printed)", dsize);
             break;
     }
+    if (buf){
+        *buf = realloc(*buf, strlen(*buf) + strlen(newbuf) + sizeof(char));
+        strcat(*buf,newbuf);
+    }else{
+        printf("%s",newbuf);
+    }
+    free(newbuf);
 }
 
 int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option){
@@ -127,6 +135,10 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
     if (output_option==0){
         *bufp = NULL;
         *sizep = 0;
+    }
+    if (output_option==3){
+        *bufp = malloc(sizeof(char));
+        *bufp[0] = '\0';
     }
     size_t allocatedsize = 0;
 
@@ -181,11 +193,26 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
                 are_different = 1.;
                 if (output_option==0){
                     reb_output_stream_write(bufp, &allocatedsize, sizep, &field1,sizeof(struct reb_binary_field));
-                }else if (output_option==1){
+                }else if (output_option==1 || output_option==3){
                     const struct reb_binary_field_descriptor fd = reb_binary_field_descriptor_for_type(field1.type);
-                    printf("%s:\n\033[31m< ",fd.name);
-                    print_reb_type(stdout, fd.dtype, buf1+pos1, field1.size);
-                    printf("\033[0m\n");
+                    char* buf;
+                    asprintf(&buf, "%s:\n\033[31m< ",fd.name);
+                    if (bufp){
+                        *bufp = realloc(*bufp, strlen(*bufp) + strlen(buf) + sizeof(char));
+                        strcat(*bufp,buf);
+                    }else{
+                        printf("%s",buf);
+                    }
+                    free(buf);
+                    output_stream_reb_type(fd.dtype, buf1+pos1, field1.size, bufp);
+                    asprintf(&buf, "\033[0m\n");
+                    if (bufp){
+                        *bufp = realloc(*bufp, strlen(*bufp) + strlen(buf) + sizeof(char));
+                        strcat(*bufp,buf);
+                    }else{
+                        printf("%s",buf);
+                    }
+                    free(buf);
                 }
                 field1.size = 0;
                 continue;
@@ -219,13 +246,32 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
             if (output_option==0){
                 reb_output_stream_write(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binary_field));
                 reb_output_stream_write(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
-            }else if (output_option==1){
+            }else if (output_option==1 || output_option==3){
                 const struct reb_binary_field_descriptor fd = reb_binary_field_descriptor_for_type(field1.type);
-                printf("%s:\n\033[31m< ",fd.name);
-                print_reb_type(stdout, fd.dtype, buf1+pos1, field1.size);
-                printf("\033[0m\n---\n\033[32m> ");
-                print_reb_type(stdout, fd.dtype, buf2+pos2, field2.size);
-                printf("\033[0m\n");
+                char* buf;
+                asprintf(&buf, "%s:\n\033[31m< ",fd.name);
+                if (bufp){
+                    *bufp = realloc(*bufp, strlen(*bufp) + strlen(buf) + sizeof(char));
+                    strcat(*bufp,buf);
+                }else{
+                    printf("%s",buf);
+                }
+                output_stream_reb_type(fd.dtype, buf1+pos1, field1.size, bufp);
+                asprintf(&buf, "\033[0m\n---\n\033[32m> ");
+                if (bufp){
+                    *bufp = realloc(*bufp, strlen(*bufp) + strlen(buf) + sizeof(char));
+                    strcat(*bufp,buf);
+                }else{
+                    printf("%s",buf);
+                }
+                output_stream_reb_type(fd.dtype, buf2+pos2, field2.size, bufp);
+                asprintf(&buf, "\033[0m\n");
+                if (bufp){
+                    *bufp = realloc(*bufp, strlen(*bufp) + strlen(buf) + sizeof(char));
+                    strcat(*bufp,buf);
+                }else{
+                    printf("%s",buf);
+                }
             }
         }
         pos1 += field1.size;
@@ -284,11 +330,24 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
         if (output_option==0){
             reb_output_stream_write(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binary_field));
             reb_output_stream_write(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
-        }else if (output_option==1){
+        }else if (output_option==1 || output_option==3){
             const struct reb_binary_field_descriptor fd = reb_binary_field_descriptor_for_type(field2.type);
-            printf("%s:\n\033[32m> ",fd.name);
-            print_reb_type(stdout, fd.dtype, buf2+pos2, field2.size);
-            printf("\033[0m\n");
+            char* buf;
+            asprintf(&buf, "%s:\n\033[32m> ",fd.name);
+            if (bufp){
+                *bufp = realloc(*bufp, strlen(*bufp) + strlen(buf) + sizeof(char));
+                strcat(*bufp,buf);
+            }else{
+                printf("%s",buf);
+            }
+            output_stream_reb_type(fd.dtype, buf2+pos2, field2.size, bufp);
+            asprintf(&buf, "\033[0m\n");
+            if (bufp){
+                *bufp = realloc(*bufp, strlen(*bufp) + strlen(buf) + sizeof(char));
+                strcat(*bufp,buf);
+            }else{
+                printf("%s",buf);
+            }
         }
         pos1 = 64;
         pos2 += field2.size;

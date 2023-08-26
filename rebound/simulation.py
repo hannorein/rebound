@@ -1197,7 +1197,9 @@ class Simulation(Structure):
         if showAllFields:
             print("The following fields have non-default values:")
             newsim = Simulation()
-            clibrebound.reb_diff_simulations(byref(newsim), byref(self),c_int(1))
+            clibrebound.reb_diff_simulations_char.restype = c_char_p
+            output = clibrebound.reb_diff_simulations_char(byref(newsim), byref(self))
+            print(output.decode("utf-8"))
 
 
 

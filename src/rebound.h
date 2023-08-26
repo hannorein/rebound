@@ -878,6 +878,8 @@ void reb_stop(struct reb_simulation* const r); // Stop current integration
 // If r1 and r2 are exactly equal to each other then 0 is returned, otherwise 1. Walltime is ignored.
 // If output_option=1, then output is printed on the screen. If 2, only return value os given. 
 int reb_diff_simulations(struct reb_simulation* r1, struct reb_simulation* r2, int output_option);
+// Same but return value is string to human readable difference. Needs to be freed.
+char* reb_diff_simulations_char(struct reb_simulation* r1, struct reb_simulation* r2);
 
 // Mercurius switching functions
 double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit);
@@ -916,6 +918,7 @@ void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** 
 // - If set to 0, differences are written to bufp in the form of reb_binary_field structs. 
 // - If set to 1, differences are printed on the screen. 
 // - If set to 2, only the return value indicates any differences.
+// - If set to 3, differences are written to bufp in a human readable form.
 // returns value:  0 is returned if the simulations do not differ (are equal). 1 is return if they differ.
 int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option);
 // Returns the name fora given binary field type or name

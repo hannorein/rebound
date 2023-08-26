@@ -472,6 +472,21 @@ void reb_copy_simulation_with_messages(struct reb_simulation* r_copy,  struct re
     
 }
 
+char* reb_diff_simulations_char(struct reb_simulation* r1, struct reb_simulation* r2){
+    char* bufp1;
+    char* bufp2;
+    char* bufp;
+    size_t sizep1, sizep2, size;
+    reb_output_binary_to_stream(r1, &bufp1,&sizep1);
+    reb_output_binary_to_stream(r2, &bufp2,&sizep2);
+
+    reb_binary_diff_with_options(bufp1, sizep1, bufp2, sizep2, &bufp, &size, 3);
+    
+    free(bufp1);
+    free(bufp2);
+    return bufp;
+}
+
 int reb_diff_simulations(struct reb_simulation* r1, struct reb_simulation* r2, int output_option){
     if (output_option!=1 && output_option!=2){
         // Not implemented
