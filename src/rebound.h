@@ -922,8 +922,8 @@ void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** 
 // returns value:  0 is returned if the simulations do not differ (are equal). 1 is return if they differ.
 int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option);
 // Returns the name fora given binary field type or name
-const struct reb_binary_field_descriptor reb_binary_field_descriptor_for_type(int type);
-const struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(const char* name);
+struct reb_binary_field_descriptor reb_binary_field_descriptor_for_type(int type);
+struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(const char* name);
 
 struct reb_binary_field_descriptor {
     unsigned int type;          // Unique id for each field. Should not change between versions. Ids should not be reused.

@@ -61,7 +61,7 @@ void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** 
     reb_binary_diff_with_options(buf1, size1, buf2, size2, bufp, sizep, 0);
 }
 
-const struct reb_binary_field_descriptor reb_binary_field_descriptor_for_type(int type){
+struct reb_binary_field_descriptor reb_binary_field_descriptor_for_type(int type){
     int i=-1;
     do{
         i++;
@@ -74,7 +74,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_for_type(in
     return bfd;
 }
 
-const struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(const char* name){
+struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(const char* name){
     int i=-1;
     do{
         i++;
