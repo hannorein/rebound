@@ -167,8 +167,9 @@ class Particle(Structure):
         if binarydata is not None:
             if len(binarydata) != sizeof(self):
                 raise ValueError("Binary particle data does not have the right size.")
-            p = c_char_p(binarydata)
-            memmove(byref(self), p, sizeof(self))
+            buft = c_char * len(binarydata)
+            buf = buft.from_buffer_copy(binarydata)
+            memmove(byref(self), byref(buf), sizeof(self))
             self.c = 0
             self.sim = 0
             self.ap = 0

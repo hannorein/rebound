@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_float, c_int, c_uint, c_uint32, c_int64, c_uint64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast, c_size_t
+from ctypes import Structure, c_double, POINTER, c_float, c_int, c_uint, c_uint32, c_int64, c_uint64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast, c_size_t, c_char
 from .simulation import Simulation, BINARY_WARNINGS
 from . import clibrebound 
 import os
@@ -88,13 +88,17 @@ class SimulationArchive(Structure):
         if reuse_index:
             # Optimized loading
             if isinstance(filename, bytes):
-                clibrebound.reb_read_simulationarchive_from_buffer_with_messages(byref(self),c_char_p(filename), c_size_t(len(filename)), byref(reuse_index), byref(w))
+                buft = c_char * len(filename)
+                buf = buft.from_buffer_copy(filename)
+                clibrebound.reb_read_simulationarchive_from_buffer_with_messages(byref(self),byref(buf), c_size_t(len(filename)), byref(reuse_index), byref(w))
             else:
                 clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), byref(reuse_index), byref(w))
 
         else:
             if isinstance(filename, bytes):
-                clibrebound.reb_read_simulationarchive_from_buffer_with_messages(byref(self),c_char_p(filename), c_size_t(len(filename)), None, byref(w))
+                buft = c_char * len(filename)
+                buf = buft.from_buffer_copy(filename)
+                clibrebound.reb_read_simulationarchive_from_buffer_with_messages(byref(self),byref(buf), c_size_t(len(filename)), None, byref(w))
             else:
                 clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), None, byref(w))
         for majorerror, value, message in BINARY_WARNINGS:
