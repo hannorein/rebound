@@ -1174,7 +1174,7 @@ struct reb_simulationarchive_blob16 {  // For backwards compatability only. Will
 
 struct reb_simulationarchive{
     FILE* inf;                   // File pointer (will be kept open)
-    char* filename;              // Filename of open file
+    char* filename;              // Filename of open file. This is NULL if this is a memory-mapped file (using fmemopen)
     int version;                 // SimulationArchive version
     long size_first;             // Size of first snapshot (only used for version 1)
     long size_snapshot;          // Size of snapshot (only used for version 1)

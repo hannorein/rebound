@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_uint32, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast, c_char, c_size_t
+from ctypes import Structure, c_double, POINTER, c_uint32, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast, c_char, c_size_t, string_at
 from . import clibrebound, Escape, NoParticles, Encounter, Collision, SimulationError, ParticleNotFound, M_to_E
 from .citations import cite
 from .particle import Particle
@@ -814,6 +814,11 @@ class Simulation(Structure):
     
     >>> sim = rebound.Simulation(filename="archive.bin", snapshot=34)
 
+    Finally, you can also create a new Simulation by passing a bytes object of a 
+    SimulationArchive to Simulation():
+    
+    >>> sim = rebound.Simulation(open("archive.bin","rb").read())
+
     """
     def __new__(cls, *args, **kw):
         # Handle arguments
@@ -827,7 +832,7 @@ class Simulation(Structure):
             snapshot = args[1]
         if "snapshot" in kw:
             snapshot = kw["snapshot"]
-       
+
         # Create simulation
         if filename is None:
             # Create a new simulation
@@ -1058,6 +1063,14 @@ class Simulation(Structure):
             elif msg[0]=='e':
                 raise RuntimeError(msg[1:])
 
+# Pickling methods: return SimulationArchive binary
+    def __reduce__(self):
+        buf = c_char_p()
+        size = c_size_t()
+        clibrebound.reb_output_binary_to_stream(byref(self), byref(buf), byref(size))
+        return (Simulation, (string_at(buf, size=size.value),))
+
+# Other operators
 
     def __del__(self):
         if self._b_needsfree_ == 1: # to avoid, e.g., sim.particles[1]._sim.contents.G creating a Simulation instance to get G, and then freeing the C simulation when it immediately goes out of scope

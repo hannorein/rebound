@@ -86,7 +86,6 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
     return;
 }
 
-
 struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_simulationarchive* sa, long snapshot){
     if (sa==NULL) return NULL;
     enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
@@ -96,15 +95,13 @@ struct reb_simulation* reb_create_simulation_from_simulationarchive(struct reb_s
     return r; // might be null if error occured
 }
 
-void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, const char* filename,  struct reb_simulationarchive* sa_index, enum reb_input_binary_messages* warnings){
+void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationarchive* sa, struct reb_simulationarchive* sa_index, enum reb_input_binary_messages* warnings){
+    // Assumes sa->inf is set to an open stream
     const int debug = 0;
-    sa->inf = fopen(filename,"r");
     if (sa->inf==NULL){
         *warnings |= REB_INPUT_BINARY_ERROR_NOFILE;
         return;
     }
-    sa->filename = malloc(strlen(filename)+1);
-    strcpy(sa->filename,filename);
     
     // Get version
     fseek(sa->inf, 0, SEEK_SET);  
@@ -165,7 +162,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
 
     // Make index
     if (sa->version<2){
-        // Version 1 no lonfer supported
+        // Version 1 no longer supported
         free(sa->filename);
         fclose(sa->inf);
         *warnings |= REB_INPUT_BINARY_ERROR_OLD;
@@ -310,6 +307,21 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
             memcpy(sa->t, sa_index->t, sizeof(double)*sa->nblobs);
         }
     }
+}
+
+void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, const char* filename,  struct reb_simulationarchive* sa_index, enum reb_input_binary_messages* warnings){
+    // Somewhat complicated calls for backwards compatability.
+    sa->inf = fopen(filename,"r");
+    sa->filename = malloc(strlen(filename)+1);
+    strcpy(sa->filename,filename);
+    reb_read_simulationarchive_from_stream_with_messages(sa, sa_index, warnings);
+}
+
+void reb_read_simulationarchive_from_buffer_with_messages(struct reb_simulationarchive* sa, char* buf, size_t size, struct reb_simulationarchive* sa_index, enum reb_input_binary_messages* warnings){
+    // Somewhat complicated calls for backwards compatability.
+    sa->inf = fmemopen(buf,size,"r");
+    sa->filename = NULL;
+    reb_read_simulationarchive_from_stream_with_messages(sa, sa_index, warnings);
 }
 
 struct reb_simulationarchive* reb_open_simulationarchive(const char* filename){
