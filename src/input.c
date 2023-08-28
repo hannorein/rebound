@@ -310,7 +310,7 @@ next_field:
 
 finish_fields:
     // Some final initialization
-    for (int l=0;l<r->var_config_N;l++){
+    for (unsigned int l=0;l<r->var_config_N;l++){
         r->var_config[l].sim = r;
     }
     r->allocatedN = r->N; // This used to be different. Now only saving N.
