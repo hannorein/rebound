@@ -600,7 +600,7 @@ class Particle(Structure):
         if not isinstance(other,Particle):
             return NotImplemented
         clibrebound.reb_diff_particles.restype = c_int
-        ret = clibrebound.reb_diff_particles(byref(self), byref(other))
+        ret = clibrebound.reb_diff_particles(self, other)
         return not ret
     
     def __pow__(self, other):
