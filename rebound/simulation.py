@@ -1075,6 +1075,7 @@ class Simulation(Structure):
     def __del__(self):
         if self._b_needsfree_ == 1: # to avoid, e.g., sim.particles[1]._sim.contents.G creating a Simulation instance to get G, and then freeing the C simulation when it immediately goes out of scope
             clibrebound.reb_free_pointers(byref(self))
+
     def __eq__(self, other):
         # This ignores the walltime parameter
         if not isinstance(other,Simulation):

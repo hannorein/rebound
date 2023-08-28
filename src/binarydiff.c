@@ -37,7 +37,7 @@
 #include "binarydiff.h"
 
 
-static inline int reb_binary_diff_particle(struct reb_particle p1, struct reb_particle p2){
+int reb_diff_particles(struct reb_particle p1, struct reb_particle p2){
     int differ = 0;
     differ = differ || (p1.x != p2.x);
     differ = differ || (p1.y != p2.y);
@@ -227,7 +227,7 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
                 struct reb_particle* pb1 = (struct reb_particle*)(buf1+pos1);
                 struct reb_particle* pb2 = (struct reb_particle*)(buf2+pos2);
                 for (unsigned int i=0;i<field1.size/sizeof(struct reb_particle);i++){
-                    fields_differ |= reb_binary_diff_particle(pb1[i],pb2[i]);
+                    fields_differ |= reb_diff_particles(pb1[i],pb2[i]);
                 }
             }else{
                 if (memcmp(buf1+pos1,buf2+pos2,field1.size)!=0){

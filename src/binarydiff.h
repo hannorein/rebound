@@ -25,5 +25,9 @@
 #ifndef _BINARYDIFF_H
 #define _BINARYDIFF_H
 
+// Compares two particles, ignoring pointers.
+// Returns 1 if particles differ
+int reb_diff_particles(struct reb_particle p1, struct reb_particle p2);
+
 
 #endif // _BINARYDIFF_H

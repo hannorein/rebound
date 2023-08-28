@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, c_int, byref, memmove, sizeof, c_uint32, c_uint, c_ulong
+from ctypes import Structure, c_double, c_int, byref, memmove, sizeof, c_uint32, c_uint, c_ulong, c_char_p, string_at, POINTER, c_char
 from . import clibrebound, E_to_f, M_to_f, mod2pi
 import math
 import ctypes.util
@@ -155,6 +155,24 @@ class Particle(Structure):
         >>> p4 = rebound.Particle(simulation=sim, m=0.001, a=1.5, omega="uniform")  # omega will be a random number between 0 and 2pi
 
         """        
+
+        # Unpickling
+        binarydata = None
+        if isinstance(simulation, bytes):
+            # simulation is actually a bytes array with the particle data
+            binarydata = simulation
+        if isinstance(particle, bytes):
+            # simulation is actually a bytes array with the particle data
+            binarydata = particle
+        if binarydata is not None:
+            if len(binarydata) != sizeof(self):
+                raise ValueError("Binary particle data does not have the right size.")
+            p = c_char_p(binarydata)
+            memmove(byref(self), p, sizeof(self))
+            self.c = 0
+            self.sim = 0
+            self.ap = 0
+            return
 
         if Omega == "uniform":
             Omega = random.vonmisesvariate(0.,0.) 
@@ -401,6 +419,10 @@ class Particle(Structure):
         memmove(byref(np), byref(self), sizeof(self))
         return np
 
+# Pickling method
+    def __reduce__(self):
+        return (Particle, (string_at(byref(self), size=sizeof(self)),))
+
     def calculate_orbit(self, primary=None, G=None):
         """ 
         Returns a rebound.Orbit object with the keplerian orbital elements
@@ -571,6 +593,14 @@ class Particle(Structure):
         return pts_post + pts_pre
 
     # Simple operators for particles.
+    
+    def __eq__(self, other):
+        # This ignores the pointer values
+        if not isinstance(other,Particle):
+            return NotImplemented
+        clibrebound.reb_diff_particles.restype = c_int
+        ret = clibrebound.reb_diff_particles(byref(self), byref(other))
+        return not ret
     
     def __pow__(self, other):
         if not isinstance(other, Particle):
