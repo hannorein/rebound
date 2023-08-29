@@ -1,5 +1,4 @@
 export OPENGL=0
-export OPT=-ferror-limit=5
 include ../../src/Makefile.defs
 
 all: librebound
