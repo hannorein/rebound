@@ -264,6 +264,10 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 9999, REB_FIELD_END,  "end", 0, 0, 0}
 };
 
+// required for python pickling
+void reb_output_free_stream(char* buf){
+    free(buf);
+}
 
 /** 
  * @brief Replacement for open_memstream
@@ -488,7 +492,6 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     int cwritten = sprintf(header,"REBOUND Binary File. Version: %s",reb_version_str);
     snprintf(header+cwritten+1,64-cwritten-1,"%s",reb_githash_str);
     reb_output_stream_write(bufp, &allocatedsize, sizep, header,sizeof(char)*64);
-
 
     // Compress data if possible
     // This does not affect future calculation, but might trigger a realloc.

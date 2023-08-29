@@ -87,20 +87,10 @@ class SimulationArchive(Structure):
         w = c_int(0)
         if reuse_index:
             # Optimized loading
-            if isinstance(filename, bytes):
-                buft = c_char * len(filename)
-                buf = buft.from_buffer_copy(filename)
-                clibrebound.reb_read_simulationarchive_from_buffer_with_messages(byref(self),byref(buf), c_size_t(len(filename)), byref(reuse_index), byref(w))
-            else:
-                clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), byref(reuse_index), byref(w))
+            clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), byref(reuse_index), byref(w))
 
         else:
-            if isinstance(filename, bytes):
-                buft = c_char * len(filename)
-                buf = buft.from_buffer_copy(filename)
-                clibrebound.reb_read_simulationarchive_from_buffer_with_messages(byref(self),byref(buf), c_size_t(len(filename)), None, byref(w))
-            else:
-                clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), None, byref(w))
+            clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), None, byref(w))
         for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
                 if majorerror:
@@ -109,7 +99,7 @@ class SimulationArchive(Structure):
                     # Just a warning
                     if process_warnings:
                         warnings.warn(message, RuntimeWarning)
-        else:
+        if not process_warnings:
             # Store for later
             self.warnings = w
         if self.nblobs<1:

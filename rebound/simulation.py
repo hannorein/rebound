@@ -824,6 +824,29 @@ class Simulation(Structure):
         # Handle arguments
         filename = None
         if len(args)>0:
+            # If first argument is of type bytes, then this is unpickling a Simulation
+            if isinstance(args[0], bytes):
+                l = len(args[0]) 
+                buft = c_char * l
+                buf = buft.from_buffer_copy(args[0])
+                # Note: Not calling SimulationArchive.
+                # Doing this manually here because we need to keep the reference to buf.
+                # So we can later access the contents of the archive to get the simulation.
+                sa = SimulationArchive.__new__(SimulationArchive, None, None)
+                w = c_int(0)
+                clibrebound.reb_read_simulationarchive_from_buffer_with_messages(byref(sa), byref(buf), c_size_t(l), None, byref(w))
+                sim = super(Simulation,cls).__new__(cls)
+                clibrebound.reb_init_simulation(byref(sim))
+                clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int(-1),byref(w))
+                for majorerror, value, message in BINARY_WARNINGS:
+                    if w.value & value:
+                        if majorerror:
+                            raise RuntimeError(message)
+                        else:  
+                            # Just a warning
+                            warnings.warn(message, RuntimeWarning)
+                return sim
+            # Otherwise assume first argument is filename
             filename = args[0]
         if "filename" in kw:
             filename = kw["filename"]
@@ -1068,7 +1091,9 @@ class Simulation(Structure):
         buf = c_char_p()
         size = c_size_t()
         clibrebound.reb_output_binary_to_stream(byref(self), byref(buf), byref(size))
-        return (Simulation, (string_at(buf, size=size.value),))
+        s = bytes(string_at(buf, size=size.value)) #make copy
+        clibrebound.reb_output_free_stream(buf) # free original
+        return (Simulation, (s,))
 
 # Other operators
 

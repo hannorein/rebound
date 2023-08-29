@@ -926,7 +926,7 @@ struct reb_binary_field_descriptor reb_binary_field_descriptor_for_type(int type
 struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(const char* name);
 
 struct reb_binary_field_descriptor {
-    unsigned int type;          // Unique id for each field. Should not change between versions. Ids should not be reused.
+    uint32_t type;          // Unique id for each field. Should not change between versions. Ids should not be reused.
     enum {
         REB_DOUBLE,
         REB_INT,
@@ -1194,7 +1194,7 @@ void reb_simulationarchive_automate_interval(struct reb_simulation* const r, con
 void reb_simulationarchive_automate_walltime(struct reb_simulation* const r, const char* filename, double walltime);
 void reb_simulationarchive_automate_step(struct reb_simulation* const r, const char* filename, unsigned long long step);
 void reb_free_simulationarchive_pointers(struct reb_simulationarchive* sa);
-
+void reb_read_simulationarchive_from_buffer_with_messages(struct reb_simulationarchive* sa, char* buf, size_t size, struct reb_simulationarchive* sa_index, enum reb_input_binary_messages* warnings);
 
 // Functions to convert between coordinate systems
 
