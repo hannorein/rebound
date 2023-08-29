@@ -142,19 +142,19 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
             }
 
         }else if (field.type == fd_t.type){
-            fread(&t0, sizeof(double),1,sa->inf);
+            fread(&t0, field.size, 1, sa->inf);
         }else if (field.type == fd_sa_version.type){
-            fread(&(sa->version), sizeof(int),1,sa->inf);
+            fread(&(sa->version), field.size, 1, sa->inf);
         }else if (field.type == fd_sa_size_snapshot.type){
-            fread(&(sa->size_snapshot), sizeof(long),1,sa->inf);
+            fread(&(sa->size_snapshot), field.size, 1, sa->inf);
         }else if (field.type == fd_sa_size_first.type){
-            fread(&(sa->size_first), sizeof(long),1,sa->inf);
+            fread(&(sa->size_first), field.size, 1, sa->inf);
         }else if (field.type == fd_sa_auto_walltime.type){
-            fread(&(sa->auto_walltime), sizeof(double),1,sa->inf);
+            fread(&(sa->auto_walltime), field.size, 1, sa->inf);
         }else if (field.type == fd_sa_auto_interval.type){
-            fread(&(sa->auto_interval), sizeof(double),1,sa->inf);
+            fread(&(sa->auto_interval), field.size, 1, sa->inf);
         }else if (field.type == fd_sa_auto_step.type){
-            fread(&(sa->auto_step), sizeof(unsigned long long),1,sa->inf);
+            fread(&(sa->auto_step), field.size, 1, sa->inf);
         }else{
             fseek(sa->inf,field.size,SEEK_CUR);
         }
@@ -195,7 +195,7 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
                                 read_error = 1;
                             }
                         }else if (field.type == fd_t.type){
-                            size_t r2 = fread(&(sa->t[i]), sizeof(double),1,sa->inf);
+                            size_t r2 = fread(&(sa->t[i]), field.size,1,sa->inf);
                             if (debug) printf("SA Field. type=TIME      value=%.10f\n",sa->t[1]);
                             if (r2!=1){
                                 read_error = 1;
