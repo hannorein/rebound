@@ -185,6 +185,7 @@ void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_p
             // other parts of the code, nor is it vital to show it.
             ((struct reb_simulation* const)r)->ri_whfast.timestep_warning++;
             reb_warning((struct reb_simulation* const)r,"WHFast convergence issue. Timestep is larger than at least one orbital period.");
+            printf("%f %f\n", r->t, _dt);
         }
         //X = _dt*invperiod*X_per_period; // first order guess
         const double dtr0i = _dt*r0i;
@@ -502,7 +503,7 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
     double eta = m0;
     switch (coordinates){
         case REB_WHFAST_COORDINATES_JACOBI:
-#pragma omp parallel for 
+#pragma omp parallel for
             for (unsigned int i=1;i<N_real;i++){
                 if (i<N_active){
                     eta += p_j[i].m;
@@ -511,13 +512,13 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
             }
             break;
         case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
-#pragma omp parallel for 
+#pragma omp parallel for
             for (unsigned int i=1;i<N_real;i++){
                 reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt); //  eta = m0
             }
             break;
         case REB_WHFAST_COORDINATES_WHDS:
-#pragma omp parallel for 
+#pragma omp parallel for
             for (unsigned int i=1;i<N_real;i++){
                 if (i<N_active){
                     eta = m0+p_j[i].m;
@@ -942,7 +943,7 @@ void reb_integrator_whfast_part1(struct reb_simulation* const r){
     reb_whfast_jump_step(r,r->dt/2.);
 
     reb_integrator_whfast_to_inertial(r);
-    // Variational equations only available for jacobi coordinates. 
+    // Variational equations only available for jacobi coordinates.
     // If other coordinates are used, the code will raise an exception in part1 of the integrator.
     for (int v=0;v<r->var_config_N;v++){
         struct reb_variational_configuration const vc = r->var_config[v];

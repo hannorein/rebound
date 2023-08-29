@@ -205,8 +205,11 @@ struct reb_simulation_integrator_trace {
     int print; // for debugging
 
     double (*S) (struct reb_simulation* const r, const int i, const int j);
-
     unsigned int vSwitch;
+    double dt_proposed;
+    double* dt_shells;
+    int current_shell;
+    int nshells;
 };
 
 struct reb_simulation_integrator_sei {

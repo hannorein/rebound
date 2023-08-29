@@ -865,12 +865,11 @@ struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length){
 void reb_integrator_bs_part2(struct reb_simulation* r){
     //printf("Time: %f\n", r->t);
     struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
+    struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
 
     int nbody_length = r->N*3*2;;
     int N;
     int* map;
-
-    //printf("Initial: %f ", r->dt);
 
     if (ri_bs->sequence==NULL){ // Moved from BS Step because need to allocate map here
         allocate_sequence_arrays(r, ri_bs);
@@ -916,22 +915,17 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
         y[i*6+3] = p.vx;
         y[i*6+4] = p.vy;
         y[i*6+5] = p.vz;
-        //printf("%e %e %e %e %e %e\n", y[i*6+0], y[i*6+1], y[i*6+2], y[i*6+3], y[i*6+4], y[i*6+5]);
     }
 
-    printf("%f,%f", r->t, r->dt);
 
     int success = reb_integrator_bs_step(r, r->dt);
-    printf(",%f,%d", r->dt, success);
     if (success){
         r->t += r->dt;
         r->dt_last_done = r->dt;
     }
     r->dt = ri_bs->dt_proposed;
-    printf(",%f\n", ri_bs->dt_proposed);
 
     reb_integrator_bs_update_particles(r, ri_bs->nbody_ode->y);
-    //exit(1);
 }
 
 void reb_integrator_bs_synchronize(struct reb_simulation* r){
@@ -1016,3 +1010,63 @@ void reb_integrator_bs_reset(struct reb_simulation* r){
     ri_bs->targetIter       = 0;
 
 }
+
+// TLU FOR TRACE
+/*
+void reb_integrator_bs_timestep_prediction(struct reb_simulation* r){
+    //printf("Time: %f\n", r->t);
+    struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
+    struct reb_simulation_integrator_bs* ri_tr = &(r->ri_tr);
+
+    int nbody_length = r->N*3*2;
+    int N = r->ri_tr.encounterN;
+    int* map = r->ri_tr.encounter_map;
+    double old_dt = r->dt;
+
+    if (ri_bs->sequence==NULL){ // Moved from BS Step because need to allocate map here
+        allocate_sequence_arrays(r, ri_bs);
+    }
+
+    // Check if particle numbers changed, if so delete and recreate ode.
+    if (ri_bs->nbody_ode != NULL){
+        if (ri_bs->nbody_ode->length != nbody_length){
+            reb_free_ode(ri_bs->nbody_ode);
+            ri_bs->nbody_ode = NULL;
+        }
+    }
+
+    if (ri_bs->nbody_ode == NULL){
+        ri_bs->nbody_ode = reb_create_ode(r, nbody_length);
+        ri_bs->nbody_ode->derivatives = nbody_derivatives;
+        ri_bs->nbody_ode->needs_nbody = 0; // No need to update unless there's another ode
+        ri_bs->firstOrLastStep = 1;
+    }
+
+    for (int s=0; s < r->odes_N; s++){
+        if (r->odes[s]->needs_nbody){
+            ri_bs->user_ode_needs_nbody = 1;
+        }
+    }
+
+    double* const y = ri_bs->nbody_ode->y;
+    for (int i=0; i<N; i++){
+        int mi = map[i];
+        const struct reb_particle p = r->particles[mi];
+        y[i*6+0] = p.x;
+        y[i*6+1] = p.y;
+        y[i*6+2] = p.z;
+        y[i*6+3] = p.vx;
+        y[i*6+4] = p.vy;
+        y[i*6+5] = p.vz;
+    }
+
+
+    int success = reb_integrator_bs_step(r, r->dt);
+    if (success){
+        ri_tr->dt_proposed = r->dt;
+    }
+    else{
+      ri_tr->dt_proposed = old_dt;
+    }
+}
+*/

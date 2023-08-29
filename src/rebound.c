@@ -66,7 +66,7 @@
 
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
-const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
+const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string.
 const char* reb_version_str = "3.26.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
@@ -601,13 +601,13 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_whfast.is_synchronized = 1;
     r->ri_whfast.timestep_warning = 0;
     r->ri_whfast.recalculate_coordinates_but_not_synchronized_warning = 0;
-    
+
     // ********** WHFAST512
     r->ri_whfast512.is_synchronized = 1;
     r->ri_whfast512.gr_potential = 0;
     r->ri_whfast512.keep_unsynchronized = 0;
     r->ri_whfast512.recalculate_constants = 1;
-    
+
     // ********** SABA
     r->ri_saba.type = REB_SABA_10_6_4;
     r->ri_saba.safe_mode = 1;
