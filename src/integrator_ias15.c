@@ -574,16 +574,23 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         }else{ //dt_mode ==1
             double min_timescale2 = INFINITY;  // note factor of dt_done**2 not included
             for(unsigned int i=0;i<Nreal;i++){ 
-                double ai = 0; 
-                double ji = 0; //jerk
-                double si = 0; //snap
+                double a0i = 0; //accelertation at beginning of timestep
+                double ai = 0;  //accalaeration at end of timestep
+                double ji = 0;  //jerk
+                double si = 0;  //snap
                 for(unsigned int k=3*i;k<3*(i+1);k++) { 
+                    a0i += a0[k]*a0[k];
                     double tmp = a0[k] + b.p0[k] + b.p1[k] + b.p2[k] + b.p3[k] + b.p4[k] + b.p5[k] + b.p6[k];
                     ai += tmp*tmp;
                     tmp = b.p0[k] + 2.* b.p1[k] + 3.* b.p2[k] + 4.* b.p3[k] + 5.* b.p4[k] + 6.* b.p5[k] + 7.* b.p6[k];
                     ji += tmp*tmp;
                     tmp = 2.* b.p1[k] + 6.* b.p2[k] + 12.* b.p3[k] + 20.* b.p4[k] + 30.* b.p5[k] + 42.* b.p6[k];
                     si += tmp*tmp;
+                }
+                if (!isnormal(a0i)){
+                    // Skipp particles which do not experience any acceleration or
+                    // have acceleration which is inf or Nan.
+                    continue;
                 }
                 double timescale2 = 1./(ji/ai+sqrt(si/ai));
                 if (isnormal(timescale2) && timescale2<min_timescale2){
