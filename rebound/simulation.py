@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_uint32, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
+from ctypes import Structure, c_double, POINTER, c_uint32, c_float, c_int, c_uint, c_uint32, c_int64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast, c_char, c_size_t, string_at
 from . import clibrebound, Escape, NoParticles, Encounter, Collision, SimulationError, ParticleNotFound, M_to_E
 from .citations import cite
 from .particle import Particle
@@ -59,11 +59,35 @@ BINARY_WARNINGS = [
     (False, 128, "Encountered unkown field in file. File might have been saved with a different version of REBOUND."),
     (True,  256, "Integrator type is not supported by this simulation archive version."),
     (False,  512, "The binary file seems to be corrupted. An attempt has been made to read the uncorrupted parts of it."),
+    (True, 1024, "Reading old SimulationArchives (version < 2) is no longer supported. If you need to read such an archive, use a REBOUND version <= 3.26.3"),
 ]
 
 class reb_hash_pointer_pair(Structure):
     _fields_ = [("hash", c_uint32),
                 ("index", c_int)]
+
+class reb_binary_field_descriptor(Structure):
+    def __repr__(self):
+        return '<{0}.{1} object at {2}, type={3}, dtype={4}, name=\'{5}\'>'.format(self.__module__, type(self).__name__, hex(id(self)), self.type, self.dtype, self.name.decode("ascii"))
+    _fields_ = [("type", c_uint),
+                ("dtype", c_int),
+                ("name", c_char*1024),
+                ("offset", c_size_t),
+                ("offset_N", c_size_t),
+                ("element_size", c_size_t),
+                ]
+def binary_field_descriptor_list():
+    fd_pointer_t = POINTER(reb_binary_field_descriptor)
+    fd_pointer = (reb_binary_field_descriptor*3).in_dll(clibrebound, "reb_binary_field_descriptor_list")
+    fd_pointer = cast(fd_pointer, fd_pointer_t) # not sure why I have to do it this way
+    l = []
+    i=0
+    while True:
+        l.append(fd_pointer[i])
+        if fd_pointer[i].name == b'end':
+            break
+        i += 1
+    return l
 
 
 class Rotation(Structure):
@@ -461,7 +485,7 @@ class reb_simulation_integrator_ias15(Structure):
                 ("mindt", c_double),
                 ("safety", c_double),
                 ("_iterations_max_exceeded", c_ulong),
-                ("_allocatedN", c_int),
+                ("_allocatedN", c_uint),
                 ("_at", POINTER(c_double)),
                 ("_x0", POINTER(c_double)),
                 ("_v0", POINTER(c_double)),
@@ -476,7 +500,7 @@ class reb_simulation_integrator_ias15(Structure):
                 ("_br", reb_dp7),
                 ("_er", reb_dp7),
                 ("_map", POINTER(c_int)),
-                ("_map_allocated_n", c_int),
+                ("_map_allocated_n", c_uint),
                 ]
 
 class reb_simulation_integrator_saba(Structure):
@@ -795,11 +819,39 @@ class Simulation(Structure):
     
     >>> sim = rebound.Simulation(filename="archive.bin", snapshot=34)
 
+    Finally, you can also create a new Simulation by passing a bytes object of a 
+    SimulationArchive to Simulation():
+    
+    >>> sim = rebound.Simulation(open("archive.bin","rb").read())
+
     """
     def __new__(cls, *args, **kw):
         # Handle arguments
         filename = None
         if len(args)>0:
+            # If first argument is of type bytes, then this is unpickling a Simulation
+            if isinstance(args[0], bytes):
+                l = len(args[0]) 
+                buft = c_char * l
+                buf = buft.from_buffer_copy(args[0])
+                # Note: Not calling SimulationArchive.
+                # Doing this manually here because we need to keep the reference to buf.
+                # So we can later access the contents of the archive to get the simulation.
+                sa = SimulationArchive.__new__(SimulationArchive, None, None)
+                w = c_int(0)
+                clibrebound.reb_read_simulationarchive_from_buffer_with_messages(byref(sa), byref(buf), c_size_t(l), None, byref(w))
+                sim = super(Simulation,cls).__new__(cls)
+                clibrebound.reb_init_simulation(byref(sim))
+                clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int(-1),byref(w))
+                for majorerror, value, message in BINARY_WARNINGS:
+                    if w.value & value:
+                        if majorerror:
+                            raise RuntimeError(message)
+                        else:  
+                            # Just a warning
+                            warnings.warn(message, RuntimeWarning)
+                return sim
+            # Otherwise assume first argument is filename
             filename = args[0]
         if "filename" in kw:
             filename = kw["filename"]
@@ -808,7 +860,7 @@ class Simulation(Structure):
             snapshot = args[1]
         if "snapshot" in kw:
             snapshot = kw["snapshot"]
-       
+
         # Create simulation
         if filename is None:
             # Create a new simulation
@@ -1039,10 +1091,21 @@ class Simulation(Structure):
             elif msg[0]=='e':
                 raise RuntimeError(msg[1:])
 
+# Pickling methods: return SimulationArchive binary
+    def __reduce__(self):
+        buf = c_char_p()
+        size = c_size_t()
+        clibrebound.reb_output_binary_to_stream(byref(self), byref(buf), byref(size))
+        s = bytes(string_at(buf, size=size.value)) #make copy
+        clibrebound.reb_output_free_stream(buf) # free original
+        return (Simulation, (s,))
+
+# Other operators
 
     def __del__(self):
         if self._b_needsfree_ == 1: # to avoid, e.g., sim.particles[1]._sim.contents.G creating a Simulation instance to get G, and then freeing the C simulation when it immediately goes out of scope
             clibrebound.reb_free_pointers(byref(self))
+
     def __eq__(self, other):
         # This ignores the walltime parameter
         if not isinstance(other,Simulation):
@@ -1050,6 +1113,13 @@ class Simulation(Structure):
         clibrebound.reb_diff_simulations.restype = c_int
         ret = clibrebound.reb_diff_simulations(byref(self), byref(other),c_int(2))
         return not ret
+            
+    def diff(self, other):
+        if not isinstance(other,Simulation):
+            return NotImplemented
+        clibrebound.reb_diff_simulations_char.restype = c_char_p
+        output = clibrebound.reb_diff_simulations_char(byref(other), byref(self))
+        print(output.decode("utf-8"))
 
     def __add__(self, other):
         if not isinstance(other,Simulation):
@@ -1155,7 +1225,7 @@ class Simulation(Structure):
         return ODE.from_address(ctypes.addressof(ode_p.contents))
 
 # Status functions
-    def status(self):
+    def status(self, showParticles=True, showAllFields=True):
         """ 
         Prints a summary of the current status 
         of the simulation.
@@ -1169,12 +1239,20 @@ class Simulation(Structure):
         s += "Selected integrator: \t" + self.integrator + "\n"       
         s += "Simulation time:     \t%.16e\n" %self.t
         s += "Current timestep:    \t%f\n" %self.dt
-        if self.N>0:
-            s += "---------------------------------\n"
+        s += "---------------------------------\n"
+        if self.N>0 and showParticles:
             for p in self.particles:
                 s += str(p) + "\n"
-        s += "---------------------------------"
-        print(s)
+            s += "---------------------------------\n"
+        print(s, end="")
+        if showAllFields:
+            print("The following fields have non-default values:")
+            newsim = Simulation()
+            clibrebound.reb_diff_simulations_char.restype = c_char_p
+            output = clibrebound.reb_diff_simulations_char(byref(newsim), byref(self))
+            print(output.decode("utf-8"))
+
+
 
 # Set function pointer for additional forces
     @property
@@ -2595,7 +2673,7 @@ Simulation._fields_ = [
                 ("dt", c_double),
                 ("dt_last_done", c_double),
                 ("steps_done", c_ulonglong),
-                ("N", c_int),
+                ("N", c_uint),
                 ("N_var", c_int),
                 ("var_config_N", c_int),
                 ("var_config", POINTER(Variation)),
@@ -2607,7 +2685,7 @@ Simulation._fields_ = [
                 ("hash_ctr", c_int),
                 ("N_lookup", c_int),
                 ("allocatedN_lookup", c_int),
-                ("allocated_N", c_int),
+                ("allocatedN", c_uint),
                 ("_particles", POINTER(Particle)),
                 ("gravity_cs", POINTER(_Vec3d)),
                 ("gravity_cs_allocatedN", c_int),

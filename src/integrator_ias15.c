@@ -168,7 +168,7 @@ static inline void add_cs(double* p, double* csp, double inp){
 }
 
 void reb_integrator_ias15_alloc(struct reb_simulation* r){
-    int N3;
+    unsigned int N3;
     if (r->integrator==REB_INTEGRATOR_MERCURIUS){
         N3 = 3*r->ri_mercurius.encounterN;// mercurius close encounter
     }else{ 
@@ -190,7 +190,7 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
         r->ri_ias15.csa0 = realloc(r->ri_ias15.csa0,sizeof(double)*N3);
         double* restrict const csx = r->ri_ias15.csx; 
         double* restrict const csv = r->ri_ias15.csv; 
-        for (int i=0;i<N3;i++){
+        for (unsigned int i=0;i<N3;i++){
             // Kill compensated summation coefficients
             csx[i] = 0;
             csv[i] = 0;
@@ -199,7 +199,7 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
     }
     if (N3/3 > r->ri_ias15.map_allocated_N){
         r->ri_ias15.map = realloc(r->ri_ias15.map,sizeof(int)*(N3/3));
-        for (int i=0;i<N3/3;i++){
+        for (unsigned int i=0;i<N3/3;i++){
             r->ri_ias15.map[i] = i;
         }
         r->ri_ias15.map_allocated_N = N3/3;

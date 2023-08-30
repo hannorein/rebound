@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <stddef.h> // for offsetof()
 #include <sys/types.h>
 #include <string.h>
 #include <sys/time.h>
@@ -66,7 +67,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.26.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.26.3";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_error_message_waiting(struct reb_simulation* const r);
@@ -333,7 +334,7 @@ void reb_free_pointers(struct reb_simulation* const r){
     reb_integrator_bs_reset(r);
     reb_integrator_tes_reset(r);
     if(r->free_particle_ap){
-        for(int i=0; i<r->N; i++){
+        for(unsigned int i=0; i<r->N; i++){
             r->free_particle_ap(&r->particles[i]);
         }
     }
@@ -466,9 +467,24 @@ void reb_copy_simulation_with_messages(struct reb_simulation* r_copy,  struct re
     r_copy->simulationarchive_version = 0;
 
     char* bufp_beginning = bufp; // bufp will be changed
-    while(reb_input_field(r_copy, NULL, warnings, &bufp)){ }
+    reb_input_fields(r_copy, NULL, warnings, &bufp);
     free(bufp_beginning);
     
+}
+
+char* reb_diff_simulations_char(struct reb_simulation* r1, struct reb_simulation* r2){
+    char* bufp1;
+    char* bufp2;
+    char* bufp;
+    size_t sizep1, sizep2, size;
+    reb_output_binary_to_stream(r1, &bufp1,&sizep1);
+    reb_output_binary_to_stream(r2, &bufp2,&sizep2);
+
+    reb_binary_diff_with_options(bufp1, sizep1, bufp2, sizep2, &bufp, &size, 3);
+    
+    free(bufp1);
+    free(bufp2);
+    return bufp;
 }
 
 int reb_diff_simulations(struct reb_simulation* r1, struct reb_simulation* r2, int output_option){
@@ -536,8 +552,8 @@ void reb_init_simulation(struct reb_simulation* r){
     r->var_config   = NULL;     
     r->exit_min_distance    = 0;    
     r->exit_max_distance    = 0;    
-    r->max_radius[0]    = 0.;   
-    r->max_radius[1]    = 0.;   
+    r->max_radius0    = 0.;   
+    r->max_radius1    = 0.;   
     r->status       = REB_RUNNING;
     r->exact_finish_time    = 1;
     r->force_is_velocity_dependent = 0;
@@ -955,3 +971,4 @@ const char* reb_logo[26] = {
 "          `-/oyyyssosssyso+/.            ",
 "                ``....`                  ",
 };
+

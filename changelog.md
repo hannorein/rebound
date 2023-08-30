@@ -4,6 +4,19 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.27.0
+* In python REBOUND's Simulation and Particle objects are now picklable. Just like loading Simulations from a binary file, function pointers will need to be re-set manually after unpickling.
+* Differences between simulations can now be printed out in a human readable form. Python syntax: `sim.diff(sim2)`. C syntax: `reb_diff_simulations(sim2, sim1, 1)`.
+* Reading SimulationArchives with version < 2 is no longer supported.
+* fmemopen is now required to compile REBOUND. If using macOS, the operating version needs to be >= 10.13. This version of macOS (High Sierra) was released in 2017, so hopefully this will not affect many users. To use REBOUND on an older version of macOS, one manually needs to comment out the use of fmemopen in simulationarchive.c.
+* Internal changes on how SimulationArchives are written. 
+
+### Version 3.26.3
+* A few more changes to reduce the number of compiler warnings. This should not affect any calculation.
+
+### Version 3.26.2
+* Fixed various signed/unsigned int issues. This should reduce the number of compiler warnings but not affect any calculation.
+
 ### Version 3.26.1
 * Added support for `AVX512` and `FFP_CONTRACT_OFF` environment variables when using pip to install REBOUND.
 
