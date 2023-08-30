@@ -281,6 +281,7 @@ int reb_trace_bs_step(struct reb_simulation* const r, const double _dt){
   struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
 
   if (ri_tr->encounterN < 2){
+    // No close encounters, skip
     return 0;
   }
 
@@ -320,7 +321,6 @@ int reb_trace_bs_step(struct reb_simulation* const r, const double _dt){
       r->particles[0].vy = 0;
       r->particles[0].vz = 0;
       //reb_update_acceleration(r);
-      //reb_integrator_trace_pxyz(r);
       reb_integrator_bs_part2(r);
       //printf("TRACE proposed: %f %f %f\n", r->dt, r->t, t_needed);
 
@@ -331,16 +331,13 @@ int reb_trace_bs_step(struct reb_simulation* const r, const double _dt){
       // TLUTS
       ri_tr->dt_proposed = r->dt;
 
-      //printf("%f ", r->dt);
+      // Reject timestep
       if (r->dt < ri_tr->dt_shells[ri_tr->current_shell] && ri_tr->current_shell != 0){
         ri_tr->current_shell -= 1;
         reject = 1;
-        printf("Rejected, Reduce Timestep to %f ", ri_tr->dt_shells[ri_tr->current_shell]);
+        //printf("Rejected, Reduce Timestep to %f ", ri_tr->dt_shells[ri_tr->current_shell]);
         break;
       }
-      //else{
-      //  printf("Accepted ");
-      //}
 
       if (r->t+r->dt >  t_needed){
           r->dt = t_needed-r->t;
@@ -588,6 +585,23 @@ int Ftest(struct reb_simulation* const r){
   return ctest;
 }
 
+void reb_integrator_trace_select_timestep(struct reb_simulation* const r){
+    struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
+    double old_dt = r->dt;
+    for (int i = ri_tr->nshells - 1; i >= 0; i--){
+      if (ri_tr->dt_proposed >= ri_tr->dt_shells[i]){
+        r->dt = ri_tr->dt_shells[i];
+        ri_tr->current_shell = i;
+        break;
+      }
+
+      // If we get to the last shell this is the minimum ts
+      if (i == 0){
+        r->dt = ri_tr->dt_shells[i];
+      }
+    }
+}
+
 // This is Listing 2
 void reb_integrator_trace_part2(struct reb_simulation* const r){
     struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
@@ -617,23 +631,18 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     ri_tr->delta_Ks[0] += 1;
 
     int c0 = F0(r); // Check initial condition
-    int rej;
+    int ts_rej = 0;
 
     // TLU TS
-
-    double old_dt = r->dt;
-    for (int i = ri_tr->nshells - 1; i >= 0; i--){
-      if (ri_tr->dt_proposed >= ri_tr->dt_shells[i]){
-        r->dt = ri_tr->dt_shells[i];
-        ri_tr->current_shell = i;
-        //printf("%f %f\n", r->t, r->dt);
-        break;
-      }
-
-      // If we get to the last shell this is the minimum ts
-      if (i == 0){
-        r->dt = ri_tr->dt_shells[i];
-      }
+    if (c0){
+      reb_integrator_trace_select_timestep(r);
+    }
+    else{
+      // no close encounters, we use the lowest timestep for WHFast only
+      ri_tr->print = 1;
+      r->dt = ri_tr->dt_shells[0];
+      ri_tr->dt_proposed = r->dt; // guess for next time we need BS
+      //printf("No CE, using lowest timestep %f\n", r->t);
     }
 
 
@@ -656,20 +665,23 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 
       memcpy(ri_tr->particles_backup_try,r->particles,r->N*sizeof(struct reb_particle));
       reb_integrator_trace_kepler_step(r, r->dt); // We can always advance ALL particles
-      reb_trace_bs_step(r, r->dt); // This will do nothing if no close encounters
+      ts_rej = reb_trace_bs_step(r, r->dt); // This will do nothing if no close encounters
 
       // Recheck condition here. Essentially, checking if any Ks changed 0 -> 1
       // continuously recheck condition
-      /*
       int ctry = Ftry(r);
       memcpy(ri_tr->encounter_map_backup,ri_tr->encounter_map,N*sizeof(int));
-      int rejections = 0;
-      while (ctry || rej){
+      while (ctry || ts_rej){
+        //if (ri_tr->print){
+        //  printf("Rejected! %f %d %d\n", r->t, ctry, ts_rej);
+        //}
+        // Either flagged for close encounter or timestep rejection
+        // Either way, reset particles
         for (int i=0; i<N; i++){
             r->particles[i] = ri_tr->particles_backup[i];
         }
 
-        if (rej){
+        if (ts_rej){
           r->dt = ri_tr->dt_shells[ri_tr->current_shell];
         }
 
@@ -683,59 +695,13 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 
         memcpy(ri_tr->particles_backup_try,r->particles,r->N*sizeof(struct reb_particle));
 
-        // No Peri CE, WHFast into BS
+        // No Peri CE, WHFast into BS. Add Peri shortly
         reb_integrator_trace_kepler_step(r, r->dt); // We can always advance ALL particles
-        rej = reb_trace_bs_step(r, r->dt);
-        if (!rej){
+        ts_rej = reb_trace_bs_step(r, r->dt);
+        if (!ts_rej){
           ctry = Ftry(r);
           memcpy(ri_tr->encounter_map_backup,ri_tr->encounter_map,N*sizeof(int));
         }
-      }
-      */
-
-      int ctry = Ftry(r);
-
-      // Also need to check if need to lower timestep
-      if (ctry || rej){ // Something has been flagged.
-        // Reset to backup values
-        for (int i=0; i<N; i++){
-            r->particles[i] = ri_tr->particles_backup[i];
-        }
-
-        if (rej){
-          r->dt = ri_tr->dt_shells[ri_tr->current_shell];
-        }
-        //memcpy(r->particles,ri_tr->particles_backup,N*sizeof(struct reb_particle));
-
-        if (ri_tr->is_synchronized){
-            reb_integrator_trace_jump_step(r, r->dt/2.); // Pdot for B
-        }else{
-            reb_integrator_trace_jump_step(r, r->dt);
-        }
-        reb_integrator_trace_interaction_step(r, r->dt/2.);
-        reb_integrator_trace_com_step(r,r->dt);
-
-        memcpy(ri_tr->particles_backup_try,r->particles,r->N*sizeof(struct reb_particle));
-
-        if (ri_tr->current_L){ // Pericenter CE, integrate whole sim with BS
-          ri_tr->encounterN = N;
-          ri_tr->encounter_map[0] = 1; // Identity map except central body
-          for (int i = 1; i < N; i++){
-            ri_tr->encounter_map[i] = i;
-          }
-          ri_tr->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
-          rej = reb_trace_bs_step(r, r->dt);
-          ri_tr->delta_Ks[4] += 1; // Flagged peri
-        }
-        else{
-          // No CE, WHFast into BS
-          reb_integrator_trace_kepler_step(r, r->dt); // We can always advance ALL particles
-          rej = reb_trace_bs_step(r, r->dt);
-          //printf("%f,3\n", r->t);
-        }
-      }
-      else{
-        ri_tr->delta_Ks[3] += 1; // No flag everything is fine
       }
 
     }
@@ -756,7 +722,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       }
 
       ri_tr->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
-      rej = reb_trace_bs_step(r, r->dt); // This will do nothing if no close encounters
+      ts_rej = reb_trace_bs_step(r, r->dt); // This will do nothing if no close encounters
 
       int ctest = Ftest(r);
       if (ctest){
@@ -781,11 +747,9 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
           ri_tr->encounter_map[i] = i;
         }
         ri_tr->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
-        rej = reb_trace_bs_step(r, r->dt);
-        ri_tr->delta_Ks[2] += 1; // Init peri -> flagged CE
+        ts_rej = reb_trace_bs_step(r, r->dt);
       }
       else{
-        ri_tr->delta_Ks[1] += 1; // Init Peri -> No flag
       }
     }
 
@@ -1030,79 +994,8 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     r->dt_last_done = r->dt;
 }
 */
-/*
-void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt){
-  struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
-  // If we are running WHFast K, L are always 0
-  const int N =  r->N;
-  for (int i = 1; i < r->N; i++){
-    ri_tr->current_Ls[i-1] = 0; // 0 means no close encounter
-  }
-  for (int i = 0; i < (N-1)*(N-2)/2; i++){
-    ri_tr->current_Ks[i] = 0; // 0 means no close encounter
-  }
-
-  reb_update_acceleration(r);
-  if (ri_tr->is_synchronized){
-      reb_integrator_trace_interaction_step(r,dt/2.);
-  }else{
-      reb_integrator_trace_interaction_step(r,dt);
-  }
-  reb_integrator_trace_jump_step(r,dt/2.);
-  reb_integrator_trace_com_step(r,dt);
-
-  // WHFast Kepler step for all particles
-  reb_integrator_trace_kepler_step(r, dt); // Kepler solver does NOT advance timestep
-
-  reb_integrator_trace_jump_step(r,dt/2.);
-
-  ri_tr->is_synchronized = 0;
-  if (ri_tr->safe_mode){
-      reb_integrator_trace_synchronize(r);
-  }
-}
-
-
-void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
-  struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
-  reb_update_acceleration(r);
-  if (ri_tr->is_synchronized){
-      reb_integrator_trace_interaction_step(r, dt/2.); // Pdot for B
-  }else{
-      reb_integrator_trace_interaction_step(r, dt);
-  }
-  reb_integrator_trace_jump_step(r,dt/2.);
-  reb_integrator_trace_com_step(r,dt);
-
-  reb_trace_encounter_predict(r);
-  reb_trace_bs_encounter_step(r, dt);
-  reb_integrator_trace_jump_step(r,dt/2.);
-
-  ri_tr->is_synchronized = 0;
-  if (ri_tr->safe_mode){
-      reb_integrator_trace_synchronize(r); // Interaction here: PDot for B
-  }
-}
-*/
 
 /*
-
-void reb_integrator_trace_step(struct reb_simulation* const r, double dt){
-  struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
-  if (ri_tr->is_synchronized){
-      //printf("First Call\n");
-      reb_integrator_trace_jump_step(r, dt/2.); // Pdot for B
-  }else{
-      reb_integrator_trace_jump_step(r, dt);
-  }
-  reb_integrator_trace_interaction_step(r, dt/2.);
-  reb_integrator_trace_com_step(r,dt);
-
-  memcpy(ri_tr->particles_backup_try,r->particles,r->N*sizeof(struct reb_particle));
-  reb_integrator_trace_kepler_step(r, dt); // We can always advance ALL particles
-  //reb_integrator_trace_iterate_map(r);
-  reb_trace_bs_step(r, dt); // This will do nothing if no close encounters
-}
 
 static void reb_trace_encounter_predict(struct reb_simulation* const r){
   // For now this flags ALL particles TLu
@@ -1173,37 +1066,6 @@ double reb_integrator_trace_calculate_dcrit_for_particle(struct reb_simulation* 
     return dcrit;
 }
 
-
-static void reb_integrator_trace_iterate_map(struct reb_simulation* const r){
-  struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
-
-  int i_enc = 0;
-  ri_tr->encounterNactive = 0;
-  for (unsigned int i=0; i<r->N; i++){
-      if(ri_tr->encounter_map[i]){
-          struct reb_particle tmp = r->particles[i];      // Copy for potential use for tponly_encounter
-          r->particles[i] = ri_tr->particles_backup_try[i]; // Coordinates before WHFast step, overwrite particles with close encounters
-          ri_tr->encounter_map[i_enc] = i;
-          i_enc++;
-          if (r->N_active==-1 || i<r->N_active){
-              ri_tr->encounterNactive++;
-              if (ri_tr->tponly_encounter){
-                  ri_tr->particles_backup_try[i] = tmp;         // Make copy of particles after the kepler step.
-                                                          // used to restore the massive objects' states in the case
-                                                          // of only massless test-particle encounters
-              }
-          }
-      }
-  }
-}
-
-double dcrit(struct reb_simulation* const r, const int i){
-  struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
-  if (i == 0 || r->particles[i].m == 0){
-    return 0.0;
-  }
-  return ri_tr->hillfac*a*cbrt(r->particles[i].m/(3.*r->particles[0].m);
-}
 
 
 

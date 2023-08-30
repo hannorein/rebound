@@ -107,11 +107,6 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
             ri_tr->recalculate_coordinates_this_timestep = 1;
         }else{  // BS part
             reb_integrator_bs_reset(r);
-            if (ri_tr->dcrit_allocatedN<r->N){
-                ri_tr->dcrit              = realloc(ri_tr->dcrit, sizeof(double)*r->N);
-                ri_tr->dcrit_allocatedN = r->N;
-            }
-            ri_tr->dcrit[r->N-1] = reb_integrator_trace_calculate_dcrit_for_particle(r,r->N-1);
             if (ri_tr->allocatedN<r->N){
                 ri_tr->particles_backup   = realloc(ri_tr->particles_backup,sizeof(struct reb_particle)*r->N);
                 ri_tr->encounter_map      = realloc(ri_tr->encounter_map,sizeof(int)*r->N);

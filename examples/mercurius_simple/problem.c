@@ -113,7 +113,7 @@ int main(int argc, char* argv[]){
 
     //reb_integrate(r, 500. * 11.86 * 2 * M_PI);
     //reb_steps(r, 20.);
-    reb_integrate(r, 500. * 11.86 * 2 * M_PI);
+    reb_integrate(r, 1000.);
     reb_free_simulation(r);
 }
 
@@ -122,7 +122,7 @@ void heartbeat(struct reb_simulation* r){
     //if (reb_output_check(r, 10.*2.*M_PI)){
     //    reb_output_timing(r, 0);
     //}
-    if (reb_output_check(r, (4. / 365.25) * 2.*M_PI)){
+    //if (reb_output_check(r, (4. / 365.25) * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
         FILE* f = fopen("energy_test.txt","a");
 
@@ -140,5 +140,5 @@ void heartbeat(struct reb_simulation* r){
 
         //struct reb_rotation inverse = reb_rotation_inverse(r1);
         //reb_simulation_irotate(r, inverse);
-    }
+    //}
 }
