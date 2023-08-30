@@ -435,22 +435,22 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
     struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
     const unsigned int N = r->N;
     
-    if (rim->dcrit_allocatedN<N){
+    if (rim->dcrit_allocated_N<N){
         // Need to safe these arrays in SimulationArchive
         rim->dcrit              = realloc(rim->dcrit, sizeof(double)*N);
-        rim->dcrit_allocatedN = N;
+        rim->dcrit_allocated_N = N;
         // If particle number increased (or this is the first step), need to calculate critical radii
         rim->recalculate_dcrit_this_timestep        = 1;
         // Heliocentric coordinates were never calculated.
         // This will get triggered on first step only (not when loaded from archive)
         rim->recalculate_coordinates_this_timestep = 1;
     }
-    if (rim->allocatedN<N){
+    if (rim->allocated_N<N){
         // These arrays are only used within one timestep. 
         // Can be recreated without loosing bit-wise reproducibility
         rim->particles_backup   = realloc(rim->particles_backup,sizeof(struct reb_particle)*N);
         rim->encounter_map      = realloc(rim->encounter_map,sizeof(int)*N);
-        rim->allocatedN = N;
+        rim->allocated_N = N;
     }
     if (rim->safe_mode || rim->recalculate_coordinates_this_timestep){
         if (rim->is_synchronized==0){
@@ -562,11 +562,11 @@ void reb_integrator_mercurius_reset(struct reb_simulation* r){
     r->ri_mercurius.particles_backup_additionalforces = NULL;
     free(r->ri_mercurius.encounter_map);
     r->ri_mercurius.encounter_map = NULL;
-    r->ri_mercurius.allocatedN = 0;
-    r->ri_mercurius.allocatedN_additionalforces = 0;
+    r->ri_mercurius.allocated_N = 0;
+    r->ri_mercurius.allocated_N_additionalforces = 0;
     // dcrit array
     free(r->ri_mercurius.dcrit);
     r->ri_mercurius.dcrit = NULL;
-    r->ri_mercurius.dcrit_allocatedN = 0;
+    r->ri_mercurius.dcrit_allocated_N = 0;
 }
 

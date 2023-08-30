@@ -313,21 +313,21 @@ finish_fields:
     for (unsigned int l=0;l<r->var_config_N;l++){
         r->var_config[l].sim = r;
     }
-    r->allocatedN = r->N; // This used to be different. Now only saving N.
-    for (unsigned int l=0;l<r->allocatedN;l++){
+    r->allocated_N = r->N; // This used to be different. Now only saving N.
+    for (unsigned int l=0;l<r->allocated_N;l++){
         r->particles[l].c = NULL;
         r->particles[l].ap = NULL;
         r->particles[l].sim = r;
     }
     if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
-        for (unsigned int l=0;l<r->allocatedN;l++){
+        for (unsigned int l=0;l<r->allocated_N;l++){
             reb_tree_add_particle_to_tree(r, l);
         }
     }
     if (r->ri_ias15.at){ 
         // Assume that all arrays were saved whenever ri_ias15.at was saved.
         // Only 3*N entries got saved. 
-        r->ri_ias15.allocatedN = 3*r->N;
+        r->ri_ias15.allocated_N = 3*r->N;
     }
     r->ri_whfast512.recalculate_constants = 1;
 }

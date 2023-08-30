@@ -247,9 +247,9 @@ void reb_update_acceleration(struct reb_simulation* r){
         if (r->integrator==REB_INTEGRATOR_MERCURIUS){
             // shift pos and velocity so that external forces are calculated in inertial frame
             // Note: Copying avoids degrading floating point performance
-            if(r->N>r->ri_mercurius.allocatedN_additionalforces){
+            if(r->N>r->ri_mercurius.allocated_N_additionalforces){
                 r->ri_mercurius.particles_backup_additionalforces = realloc(r->ri_mercurius.particles_backup_additionalforces, r->N*sizeof(struct reb_particle));
-                r->ri_mercurius.allocatedN_additionalforces = r->N;
+                r->ri_mercurius.allocated_N_additionalforces = r->N;
             }
             memcpy(r->ri_mercurius.particles_backup_additionalforces,r->particles,r->N*sizeof(struct reb_particle)); 
             reb_integrator_mercurius_dh_to_inertial(r);

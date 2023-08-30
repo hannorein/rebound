@@ -76,8 +76,8 @@ int main(int argc, char* argv[]){
 #ifdef OPENGL
     // Hack to artificially increase particle array.
     // This cannot be done once OpenGL is activated. 
-    r->allocatedN *=8;
-    r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->allocatedN);
+    r->allocated_N *=8;
+    r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->allocated_N);
 #endif // OPENGL
     
     // Start the integration

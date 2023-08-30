@@ -365,16 +365,16 @@ void reb_free_pointers(struct reb_simulation* const r){
 
 void reb_reset_temporary_pointers(struct reb_simulation* const r){
     // Note: this will not clear the particle array.
-    r->gravity_cs_allocatedN    = 0;
+    r->gravity_cs_allocated_N    = 0;
     r->gravity_cs           = NULL;
-    r->collisions_allocatedN    = 0;
+    r->collisions_allocated_N    = 0;
     r->collisions           = NULL;
     r->extras               = NULL;
     r->messages             = NULL;
     // ********** Lookup Table
     r->particle_lookup_table = NULL;
     r->N_lookup = 0;
-    r->allocatedN_lookup = 0;
+    r->allocated_N_lookup = 0;
     // ********** WHFAST
     r->ri_whfast.allocated_N    = 0;
     r->ri_whfast.allocated_Ntemp= 0;
@@ -382,7 +382,7 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_whfast.p_temp         = NULL;
     r->ri_whfast.keep_unsynchronized = 0;
     // ********** IAS15
-    r->ri_ias15.allocatedN      = 0;
+    r->ri_ias15.allocated_N      = 0;
     set_dp7_null(&(r->ri_ias15.g));
     set_dp7_null(&(r->ri_ias15.b));
     set_dp7_null(&(r->ri_ias15.csb));
@@ -400,9 +400,9 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_ias15.map_allocated_N      = 0;
     r->ri_ias15.map         = NULL;
     // ********** MERCURIUS
-    r->ri_mercurius.allocatedN = 0;
-    r->ri_mercurius.allocatedN_additionalforces = 0;
-    r->ri_mercurius.dcrit_allocatedN = 0;
+    r->ri_mercurius.allocated_N = 0;
+    r->ri_mercurius.allocated_N_additionalforces = 0;
+    r->ri_mercurius.dcrit_allocated_N = 0;
     r->ri_mercurius.dcrit = NULL;
     r->ri_mercurius.particles_backup = NULL;
     r->ri_mercurius.particles_backup_additionalforces = NULL;
@@ -417,7 +417,7 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     // ********** ODEs
     r->odes = NULL;
     r->odes_N = 0;
-    r->odes_allocatedN = 0;
+    r->odes_allocated_N = 0;
     // ********** TES
     r->ri_tes.particles_dh = NULL;
 }
@@ -538,13 +538,13 @@ void reb_init_simulation(struct reb_simulation* r){
     r->nghosty  = 0;
     r->nghostz  = 0;
     r->N        = 0;    
-    r->allocatedN   = 0;    
+    r->allocated_N   = 0;    
     r->N_active     = -1;   
     r->var_rescale_warning   = 0;   
     r->particle_lookup_table = NULL;
     r->hash_ctr = 0;
     r->N_lookup = 0;
-    r->allocatedN_lookup = 0;
+    r->allocated_N_lookup = 0;
     r->testparticle_type = 0;   
     r->testparticle_hidewarnings = 0;
     r->N_var    = 0;    
