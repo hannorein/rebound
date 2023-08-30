@@ -116,6 +116,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 69, REB_DOUBLE,       "ri_ias15.epsilon",             offsetof(struct reb_simulation, ri_ias15.epsilon), 0, 0},
     { 70, REB_DOUBLE,       "ri_ias15.min_dt",              offsetof(struct reb_simulation, ri_ias15.min_dt), 0, 0},
     { 71, REB_UINT,         "ri_ias15.epsilon_global",      offsetof(struct reb_simulation, ri_ias15.epsilon_global), 0, 0},
+    { 401, REB_UINT,        "ri_ias15.dt_mode",             offsetof(struct reb_simulation, ri_ias15.dt_mode), 0, 0},
     { 72, REB_ULONG,        "ri_ias15.iterations_max_exceeded", offsetof(struct reb_simulation, ri_ias15.iterations_max_exceeded), 0, 0},
     { 85, REB_POINTER,      "particles",                    offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle)},
     { 86, REB_POINTER,      "var_config",                   offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, var_config_N), sizeof(struct reb_variational_configuration)},
