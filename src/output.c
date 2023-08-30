@@ -99,7 +99,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 50, REB_INT,          "collision",                    offsetof(struct reb_simulation, collision), 0, 0},
     { 51, REB_INT,          "integrator",                   offsetof(struct reb_simulation, integrator), 0, 0},
     { 52, REB_INT,          "boundary",                     offsetof(struct reb_simulation, boundary), 0, 0},
-    { 53, REB_INT,          "gravity",                  offsetof(struct reb_simulation, gravity), 0, 0},
+    { 53, REB_INT,          "gravity",                      offsetof(struct reb_simulation, gravity), 0, 0},
     { 54, REB_DOUBLE,       "ri_sei.OMEGA",                 offsetof(struct reb_simulation, ri_sei.OMEGA), 0, 0},
     { 55, REB_DOUBLE,       "ri_sei.OMEGAZ",                offsetof(struct reb_simulation, ri_sei.OMEGAZ), 0, 0},
     { 56, REB_DOUBLE,       "ri_sei.lastdt",                offsetof(struct reb_simulation, ri_sei.lastdt), 0, 0},
