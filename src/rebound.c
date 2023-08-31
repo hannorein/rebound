@@ -466,9 +466,9 @@ void reb_copy_simulation_with_messages(struct reb_simulation* r_copy,  struct re
     // Set to old version by default. Will be overwritten if new version was used.
     r_copy->simulationarchive_version = 0;
 
-    char* bufp_beginning = bufp; // bufp will be changed
-    reb_input_fields(r_copy, NULL, warnings, &bufp);
-    free(bufp_beginning);
+    FILE* fin = fmemopen(bufp, sizep, "r");
+    reb_input_fields(r_copy, fin, warnings);
+    fclose(fin);
     
 }
 

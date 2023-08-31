@@ -24,7 +24,7 @@
  */
 #ifndef _INPUT_H
 
-void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_input_binary_messages* warnings, char **restrict mem_stream); ///< Read all fields from inf stream into r. 
+void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_input_binary_messages* warnings); ///< Read all fields from inf stream into r. 
 
 struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum reb_input_binary_messages warnings); ///< Process warning messages and print them on screen.
 

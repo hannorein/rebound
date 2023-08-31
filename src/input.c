@@ -41,60 +41,30 @@
 #include "communication_mpi.h"
 #endif
 
-static size_t reb_fread(void *restrict ptr, size_t size, size_t nitems, FILE *restrict stream, char **restrict mem_stream){
-    if (mem_stream!=NULL){
-        // read from memory
-        memcpy(ptr,*mem_stream,size*nitems);
-        *mem_stream = (char*)(*mem_stream)+ size*nitems;
-        return size*nitems;
-    }else if(stream!=NULL){
-        // read from file
-        return fread(ptr,size,nitems,stream);
-    }
-    return 0; 
-}
-
-// The reb_fseek function is currently not used, but provides functionality along the lines of reb_fread
-// static int reb_fseek(FILE *stream, long offset, int whence, char **restrict mem_stream){
-//     if (mem_stream!=NULL){
-//         // read from memory
-//         if (whence==SEEK_CUR){
-//             *mem_stream = (char*)(*mem_stream)+offset;
-//             return 0;
-//         }
-//         return -1;
-//     }else if(stream!=NULL){
-//         // read from file
-//         return fseek(stream,offset,whence);
-//     }
-//     return -1;
-// }
-
-
 // Macro to read a single field from a binary file.
 #define CASE(typename, value) case REB_BINARY_FIELD_TYPE_##typename: \
     {\
-        reb_fread(value, field.size,1,inf,mem_stream);\
+        fread(value, field.size,1,inf);\
         goto next_field;\
     }\
     break;
 
 #define CASE_CONTROL_VARS(typename, valueref) case REB_BINARY_FIELD_TYPE_##typename: \
     {\
-        reb_fread(&valueref->size, sizeof(uint32_t),1,inf,mem_stream);\
-        reb_fread(valueref->p0, valueref->size,1,inf,mem_stream);\
-        reb_fread(valueref->p1, valueref->size,1,inf,mem_stream);\
-        reb_fread(valueref->p2, valueref->size,1,inf,mem_stream);\
-        reb_fread(valueref->p3, valueref->size,1,inf,mem_stream);\
-        reb_fread(valueref->p4, valueref->size,1,inf,mem_stream);\
-        reb_fread(valueref->p5, valueref->size,1,inf,mem_stream);\
-        reb_fread(valueref->p6, valueref->size,1,inf,mem_stream);\
+        fread(&valueref->size, sizeof(uint32_t),1,inf);\
+        fread(valueref->p0, valueref->size,1,inf);\
+        fread(valueref->p1, valueref->size,1,inf);\
+        fread(valueref->p2, valueref->size,1,inf);\
+        fread(valueref->p3, valueref->size,1,inf);\
+        fread(valueref->p4, valueref->size,1,inf);\
+        fread(valueref->p5, valueref->size,1,inf);\
+        fread(valueref->p6, valueref->size,1,inf);\
         goto next_field;\
     }\
     break;        
 
 
-void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_input_binary_messages* warnings, char **restrict mem_stream){
+void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_input_binary_messages* warnings){
     struct reb_binary_field field;
     // A few fields need special treatment. Find their descriptors first.
     struct reb_binary_field_descriptor fd_header = reb_binary_field_descriptor_for_name("header");
@@ -106,7 +76,7 @@ next_field:
     // Loop over all fields
     while(1){
 
-        int numread = reb_fread(&field,sizeof(struct reb_binary_field),1,inf,mem_stream);
+        int numread = fread(&field,sizeof(struct reb_binary_field),1,inf);
         if (numread<1){
             goto finish_fields; // End of file
         }
@@ -115,7 +85,7 @@ next_field:
         }
         // only here for testing. delete TODO 
         if (field.type==REB_BINARY_FIELD_TYPE_TES_ALLOCATED_N){
-            reb_fread(&r->ri_tes.allocated_N, field.size, 1, inf, mem_stream);
+            fread(&r->ri_tes.allocated_N, field.size, 1, inf);
             // Allocate all memory for loading the simulation archive.
             if (r->ri_tes.allocated_N) {
                 reb_integrator_tes_allocate_memory(r);
@@ -134,7 +104,7 @@ next_field:
                         || fd.dtype == REB_ULONG || fd.dtype == REB_ULONGLONG 
                         || fd.dtype == REB_PARTICLE || fd.dtype == REB_VEC3D ){
                     char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
-                    reb_fread(pointer, field.size, 1, inf ,mem_stream);
+                    fread(pointer, field.size, 1, inf);
                     goto next_field;
                 }
                 // Read a pointer data type. 
@@ -152,7 +122,7 @@ next_field:
                     }else{ // normal malloc
                         *(char**)pointer = realloc(*(char**)pointer, field.size);
                     }
-                    reb_fread(*(char**)pointer, field.size,1,inf,mem_stream);
+                    fread(*(char**)pointer, field.size,1,inf);
 
                     unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
                     *pointer_N = field.size/reb_binary_field_descriptor_list[i].element_size;
@@ -174,13 +144,13 @@ next_field:
                     dp7->p4 = realloc(dp7->p4,field.size/7);
                     dp7->p5 = realloc(dp7->p5,field.size/7);
                     dp7->p6 = realloc(dp7->p6,field.size/7);
-                    reb_fread(dp7->p0, field.size/7, 1, inf, mem_stream);
-                    reb_fread(dp7->p1, field.size/7, 1, inf, mem_stream);
-                    reb_fread(dp7->p2, field.size/7, 1, inf, mem_stream);
-                    reb_fread(dp7->p3, field.size/7, 1, inf, mem_stream);
-                    reb_fread(dp7->p4, field.size/7, 1, inf, mem_stream);
-                    reb_fread(dp7->p5, field.size/7, 1, inf, mem_stream);
-                    reb_fread(dp7->p6, field.size/7, 1, inf, mem_stream);
+                    fread(dp7->p0, field.size/7, 1, inf);
+                    fread(dp7->p1, field.size/7, 1, inf);
+                    fread(dp7->p2, field.size/7, 1, inf);
+                    fread(dp7->p3, field.size/7, 1, inf);
+                    fread(dp7->p4, field.size/7, 1, inf);
+                    fread(dp7->p5, field.size/7, 1, inf);
+                    fread(dp7->p6, field.size/7, 1, inf);
 
                     unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
                     *pointer_N = field.size/reb_binary_field_descriptor_list[i].element_size;
@@ -198,21 +168,21 @@ next_field:
         if (field.type == 35){
             // Only kept for backwards compatability. Can be removed in future version.
             double max_radius[2];
-            reb_fread(&max_radius, field.size,1,inf,mem_stream);
+            fread(&max_radius, field.size,1,inf);
             r->max_radius0 = max_radius[0];
             r->max_radius1 = max_radius[1];
             goto next_field;
         }
         if (field.type == fd_sa_size_first.type){
             // simulationarchive_size_first was manually written. reading it manually here.
-            reb_fread(&r->simulationarchive_size_first, field.size,1,inf,mem_stream);
+            fread(&r->simulationarchive_size_first, field.size,1,inf);
             goto next_field;
         }
         if (field.type == fd_functionpointers.type){
             // Warning for when function pointers were used. 
             // No effect on simulation.
             int fpwarn;
-            reb_fread(&fpwarn, field.size,1,inf,mem_stream);
+            fread(&fpwarn, field.size,1,inf);
             if (fpwarn && warnings){
                 *warnings |= REB_INPUT_BINARY_WARNING_POINTERS;
             }
@@ -226,7 +196,7 @@ next_field:
             const char* header = "REBOUND Binary File. Version: ";
             sprintf(curvbuf,"%s%s",header+sizeof(struct reb_binary_field), reb_version_str);
 
-            objects += reb_fread(readbuf,sizeof(char),bufsize,inf,mem_stream);
+            objects += fread(readbuf,sizeof(char),bufsize,inf);
             if (objects < 1){
                 *warnings |= REB_INPUT_BINARY_WARNING_CORRUPTFILE;
             }else{
