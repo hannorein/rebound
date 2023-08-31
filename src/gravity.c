@@ -249,9 +249,9 @@ void reb_calculate_acceleration(struct reb_simulation* r){
         break;
         case REB_GRAVITY_COMPENSATED:
         {
-            if (r->gravity_cs_allocatedN<N){
+            if (r->gravity_cs_allocated_N<N){
                 r->gravity_cs = realloc(r->gravity_cs,N*sizeof(struct reb_vec3d));
-                r->gravity_cs_allocatedN = N;
+                r->gravity_cs_allocated_N = N;
             }
             struct reb_vec3d* restrict const cs = r->gravity_cs;
 #pragma omp parallel for schedule(guided)

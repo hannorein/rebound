@@ -127,7 +127,7 @@ struct reb_simulation_integrator_ias15 {
    
     // Internal use
     unsigned long iterations_max_exceeded; // Counter how many times the iteration did not converge. 
-    unsigned int allocatedN;          
+    unsigned int allocated_N;          
     double* REBOUND_RESTRICT at;
     double* REBOUND_RESTRICT x0;
     double* REBOUND_RESTRICT v0;
@@ -160,9 +160,9 @@ struct reb_simulation_integrator_mercurius {
     unsigned int encounterN;        // Number of particles currently having an encounter
     unsigned int encounterNactive;  // Number of active particles currently having an encounter
     unsigned int tponly_encounter;  // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
-    unsigned int allocatedN;
-    unsigned int allocatedN_additionalforces;
-    unsigned int dcrit_allocatedN;  // Current size of dcrit arrays
+    unsigned int allocated_N;
+    unsigned int allocated_N_additionalforces;
+    unsigned int dcrit_allocated_N;  // Current size of dcrit arrays
     double* dcrit;                  // Precalculated switching radii for particles
     struct reb_particle* REBOUND_RESTRICT particles_backup; //  contains coordinates before Kepler step for encounter prediction
     struct reb_particle* REBOUND_RESTRICT particles_backup_additionalforces; // contains coordinates before Kepler step for encounter prediction
@@ -267,7 +267,7 @@ struct reb_simulation_integrator_whfast512 {
 
 struct reb_ode{ // defines an ODE 
     unsigned int length; // number of components / dimenion
-    unsigned int allocatedN;
+    unsigned int allocated_N;
     unsigned int needs_nbody;
     double* y;      // Current state 
     double* scale;
@@ -661,11 +661,11 @@ struct reb_simulation {
     struct reb_hash_pointer_pair* particle_lookup_table; // Array of pairs that map particles' hashes to their index in the particles array.
     int     hash_ctr;               // Counter for number of assigned hashes to assign unique values.
     int     N_lookup;               // Number of entries in the particle lookup table.
-    int     allocatedN_lookup;      // Number of lookup table entries allocated.
-    unsigned int   allocatedN;             // Current maximum space allocated in the particles array on this node. 
+    int     allocated_N_lookup;      // Number of lookup table entries allocated.
+    unsigned int   allocated_N;             // Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles;
     struct reb_vec3d* gravity_cs;   // Containing the information for compensated gravity summation 
-    int     gravity_cs_allocatedN;
+    int     gravity_cs_allocated_N;
     struct reb_treecell** tree_root;// Pointer to the roots of the trees. 
     int     tree_needs_update;      // Flag to force a tree update (after boundary check)
     double opening_angle2;
@@ -721,7 +721,7 @@ struct reb_simulation {
 
     int collision_resolve_keep_sorted;
     struct reb_collision* collisions;       ///< Array of all collisions. 
-    int collisions_allocatedN;
+    int collisions_allocated_N;
     double minimum_collision_velocity;
     double collisions_plog;
     double max_radius0;               // Two largest particle radii, set automatically, needed for collision search.
@@ -807,7 +807,7 @@ struct reb_simulation {
     // ODEs
     struct reb_ode** odes;  // all ode sets (includes nbody if BS set as integrator)
     int odes_N;            // number of ode sets
-    int odes_allocatedN;   // number of ode sets allocated
+    int odes_allocated_N;   // number of ode sets allocated
     int ode_warnings;
 
      // Callback functions
