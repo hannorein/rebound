@@ -315,8 +315,17 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
 void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, const char* filename,  struct reb_simulationarchive* sa_index, enum reb_input_binary_messages* warnings){
     // Somewhat complicated calls for backwards compatability.
 #ifdef MPI
+    int initialized;
+    MPI_Initialized(&initialized);
+    if (!initialized){
+        int argc = 0;
+        char** argv = NULL;
+        MPI_Init(&argc, &argv);
+    }
+    int mpi_id=0;
+    MPI_Comm_rank(MPI_COMM_WORLD,&mpi_id);
     char filename_mpi[1024];
-    sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
+    sprintf(filename_mpi,"%s_%d",filename,mpi_id);
     sa->inf = fopen(filename_mpi,"r");
 #else // MPI
     sa->inf = fopen(filename,"r");
