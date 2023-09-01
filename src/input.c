@@ -282,6 +282,7 @@ int reb_input_field(struct reb_simulation* r, FILE* inf, enum reb_input_binary_m
         case REB_BINARY_FIELD_TYPE_PARTICLES:
             if(r->particles){
                 free(r->particles);
+                reb_tree_delete(r);
             }
             r->allocatedN = (int)(field.size/sizeof(struct reb_particle));
             if (field.size){
