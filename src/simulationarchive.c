@@ -39,6 +39,9 @@
 #include "input.h"
 #include "output.h"
 #include "integrator_ias15.h"
+#ifdef MPI
+#include "communication_mpi.h"
+#endif
 
 
 void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simulation* r, struct reb_simulationarchive* sa, long snapshot, enum reb_input_binary_messages* warnings){
@@ -311,7 +314,13 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
 
 void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, const char* filename,  struct reb_simulationarchive* sa_index, enum reb_input_binary_messages* warnings){
     // Somewhat complicated calls for backwards compatability.
+#ifdef MPI
+    char filename_mpi[1024];
+    sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
+    sa->inf = fopen(filename_mpi,"r");
+#else // MPI
     sa->inf = fopen(filename,"r");
+#endif // MPI
     sa->filename = malloc(strlen(filename)+1);
     strcpy(sa->filename,filename);
     reb_read_simulationarchive_from_stream_with_messages(sa, sa_index, warnings);
@@ -394,7 +403,13 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
     }
     if (filename==NULL) filename = r->simulationarchive_filename;
     struct stat buffer;
+#ifdef MPI
+    char filename_mpi[1024];
+    sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
+    if (stat(filename_mpi, &buffer) < 0){
+#else // MPI
     if (stat(filename, &buffer) < 0){
+#endif // MPI
         // File does not exist. Output binary.
         reb_output_binary(r,filename);
     }else{
@@ -529,7 +544,13 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
             free(buf_diff);
         }else{ // Duplicate (version 3 of SimulationArchive. This is the part that will remain. Above duplicate will be removed in future release.
                // Create buffer containing original binary file
+#ifdef MPI
+            char filename_mpi[1024];
+            sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
+            FILE* of = fopen(filename_mpi,"r+b");
+#else // MPI
             FILE* of = fopen(filename,"r+b");
+#endif // MPI
             fseek(of, 64, SEEK_SET); // Header
             struct reb_binary_field field = {0};
             struct reb_simulationarchive_blob blob = {0};
@@ -665,7 +686,13 @@ static int _reb_simulationarchive_automate_set_filename(struct reb_simulation* c
         return -1;
     }
     struct stat buffer;
+#ifdef MPI
+    char filename_mpi[1024];
+    sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
+    if (stat(filename_mpi, &buffer) == 0){
+#else // MPI
     if (stat(filename, &buffer) == 0){
+#endif // MPI
         reb_warning(r, "File in use for SimulationArchive already exists. Snapshots will be appended.");
     }
     free(r->simulationarchive_filename);
