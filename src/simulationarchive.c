@@ -60,6 +60,9 @@ void reb_create_simulation_from_simulationarchive_with_messages(struct reb_simul
     reb_free_pointers(r);
     memset(r,0,sizeof(struct reb_simulation));
     reb_init_simulation(r);
+#ifdef MPI
+    reb_communication_mpi_init(r, 0, NULL);
+#endif //MPI
     r->simulationarchive_filename = NULL;
     // reb_create_simulation sets simulationarchive_version to 3 by default.
     // This will break reading in old version.
