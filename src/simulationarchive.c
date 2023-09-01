@@ -788,7 +788,13 @@ void reb_simulationarchive_snapshot(struct reb_simulation* const r, const char* 
                 free(buf_diff);
             }else{ // Duplicate (version 3 of SimulationArchive. This is the part that will remain. Above duplicate will be removed in future release.
                 // Create buffer containing original binary file
-                FILE* of = fopen(filename,"r+b");
+#ifdef MPI
+                char filename_mpi[1024];
+                sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
+                FILE* of = fopen(filename_mpi,"r+b"); 
+#else // MPI
+                FILE* of = fopen(filename,"r+b"); 
+#endif // MPI
                 fseek(of, 64, SEEK_SET); // Header
                 struct reb_binary_field field = {0};
                 struct reb_simulationarchive_blob blob = {0};
