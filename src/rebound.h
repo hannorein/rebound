@@ -199,17 +199,23 @@ struct reb_simulation_integrator_trace {
     unsigned int current_L; // TLu tracking L for the entire timestep
     int* encounter_map_WH;             // Map to represent which particles are integrated with WHFast - maybe speeds things up?
     int* encounter_map_backup;             // Needed for step rejections
-    // double* f0; // TLu 1D array right now - perhaps a better way to do this...
-    // double* f0_peris;
     struct reb_particle* REBOUND_RESTRICT particles_backup_try; //  TLu contains coordinates after initial try
     int print; // for debugging
 
     double (*S) (struct reb_simulation* const r, const int i, const int j);
-    unsigned int vSwitch;
+    double (*S_peri) (struct reb_simulation* const r, const int j);
+
+    // Adaptive timestep
     double dt_proposed;
     double* dt_shells;
     int current_shell;
     int nshells;
+    int ts_rej;
+    double last_dt;
+
+    int* encounter_map_internal;
+    int regime; // 0 for not using BS at all, 1 otherwise
+    int regime_switch;
 };
 
 struct reb_simulation_integrator_sei {

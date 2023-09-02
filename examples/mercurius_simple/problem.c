@@ -66,7 +66,7 @@ double jacobi_dh(struct reb_simulation* r){
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
-//    r->integrator = REB_INTEGRATOR_BS;
+    r->integrator = REB_INTEGRATOR_BS;
 
     r->dt = (8./365.) * 2. *M_PI;
 
@@ -75,6 +75,7 @@ int main(int argc, char* argv[]){
     r->ri_tr.peri = 0.01;
     r->ri_tr.nshells = 7;
     r->exact_finish_time = 0; // Need to fix
+
 
 
     r->heartbeat  = heartbeat;
@@ -111,9 +112,9 @@ int main(int argc, char* argv[]){
     system("rm -rf energy_test.txt");
     FILE* f = fopen("energy_test.txt","w");
 
-    //reb_integrate(r, 500. * 11.86 * 2 * M_PI);
+    reb_integrate(r, 152.);
     //reb_steps(r, 20.);
-    reb_integrate(r, 1000.);
+    //reb_integrate(r, 1000.);
     reb_free_simulation(r);
 }
 

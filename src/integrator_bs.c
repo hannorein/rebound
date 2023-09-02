@@ -923,6 +923,11 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
         r->t += r->dt;
         r->dt_last_done = r->dt;
     }
+    else{
+      if (r->integrator == REB_INTEGRATOR_TRACE){
+        ri_tr->ts_rej = 1;
+      }
+    }
     r->dt = ri_bs->dt_proposed;
 
     reb_integrator_bs_update_particles(r, ri_bs->nbody_ode->y);
