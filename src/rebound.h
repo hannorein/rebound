@@ -207,6 +207,7 @@ struct reb_simulation_integrator_trace {
 
     // Adaptive timestep
     double dt_proposed;
+    double dt_saved;
     double* dt_shells;
     int current_shell;
     int nshells;
@@ -214,8 +215,9 @@ struct reb_simulation_integrator_trace {
     double last_dt;
 
     int* encounter_map_internal;
-    int regime; // 0 for not using BS at all, 1 otherwise
-    int regime_switch;
+    int last_regime;
+    int regime;
+    int second_kepler;
 };
 
 struct reb_simulation_integrator_sei {

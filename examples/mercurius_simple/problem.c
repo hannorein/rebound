@@ -75,6 +75,7 @@ int main(int argc, char* argv[]){
     r->ri_tr.peri = 0.01;
     r->ri_tr.nshells = 7;
     r->exact_finish_time = 0; // Need to fix
+    
 
 
 
@@ -112,7 +113,7 @@ int main(int argc, char* argv[]){
     system("rm -rf energy_test.txt");
     FILE* f = fopen("energy_test.txt","w");
 
-    reb_integrate(r, 152.);
+    reb_integrate(r, 50000.);
     //reb_steps(r, 20.);
     //reb_integrate(r, 1000.);
     reb_free_simulation(r);
