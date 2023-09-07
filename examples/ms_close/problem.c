@@ -32,13 +32,18 @@ int main(int argc, char* argv[]){
     double se = 0.9995;
     double si = M_PI / 2.;
 
+    //r->integrator = REB_INTEGRATOR_BS;
     r->dt = 0.15*2.*M_PI;
-    r->integrator = REB_INTEGRATOR_WHFAST;
+    r->heartbeat = heartbeat;
 
-    //r->integrator = REB_INTEGRATOR_TRACE;
-    //r->ri_tr.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
-    //r->ri_tr.peri = 2;
+    // r->integrator = REB_INTEGRATOR_WHFAST;
+
+    r->integrator = REB_INTEGRATOR_TRACE;
+    r->ri_tr.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
+    r->ri_tr.peri = 2;
+    r->ri_tr.ats = 0;
     r->visualization = REB_VISUALIZATION_NONE;
+
 
     reb_add(r, star);
     reb_add_fmt(r, "m a e", jm, ja, je);
@@ -48,12 +53,12 @@ int main(int argc, char* argv[]){
     reb_add_fmt(r, "primary m a e inc pomega f", star, sm, sa, se, si, M_PI/2, M_PI);
 
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
-    //r->heartbeat  = heartbeat;
-    //e_init = reb_tools_energy(r);
-    //system("rm -rf energy_BS.txt");
-    //FILE* f = fopen("energy.txt","w");
+    r->heartbeat  = heartbeat;
+    e_init = reb_tools_energy(r);
+    system("rm -rf energy.txt");
+    FILE* f = fopen("energy.txt","w");
 
-    reb_integrate(r, 300*2*M_PI*11.86);
+    reb_integrate(r, 500*2*M_PI*11.86);
     //reb_integrate(r,2. *M_PI*11.86);
     //reb_integrate(r, 1277.);
     //err = reb_tools_energy(r);
@@ -72,7 +77,7 @@ void heartbeat(struct reb_simulation* r){
     }
     //if (reb_output_check(r, 10. * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
-        FILE* f = fopen("energy_BS.txt","a");
+        FILE* f = fopen("energy.txt","a");
 
         // rotate whole simulation to rotating frame
         //reb_simulation_irotate(r, r1);

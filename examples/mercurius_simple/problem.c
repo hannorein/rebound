@@ -66,18 +66,19 @@ double jacobi_dh(struct reb_simulation* r){
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
-    r->integrator = REB_INTEGRATOR_BS;
+//    r->integrator = REB_INTEGRATOR_BS;
 
     r->dt = (8./365.) * 2. *M_PI;
-
     r->integrator = REB_INTEGRATOR_TRACE;
     r->ri_tr.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
     r->ri_tr.peri = 0.01;
     r->ri_tr.nshells = 7;
     r->exact_finish_time = 0; // Need to fix
-    
+    r->ri_tr.ats = 1;
 
 
+    struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
+    ri_bs->counter = 0;
 
     r->heartbeat  = heartbeat;
     r->N_active = 2;
@@ -113,7 +114,8 @@ int main(int argc, char* argv[]){
     system("rm -rf energy_test.txt");
     FILE* f = fopen("energy_test.txt","w");
 
-    reb_integrate(r, 50000.);
+    reb_integrate(r, 500. * 11.86 * 2 * M_PI);
+    printf("Counter: %d\n", ri_bs->counter);
     //reb_steps(r, 20.);
     //reb_integrate(r, 1000.);
     reb_free_simulation(r);

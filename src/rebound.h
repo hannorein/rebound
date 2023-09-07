@@ -217,7 +217,7 @@ struct reb_simulation_integrator_trace {
     int* encounter_map_internal;
     int last_regime;
     int regime;
-    int second_kepler;
+    int ats;
 };
 
 struct reb_simulation_integrator_sei {
@@ -355,6 +355,7 @@ struct reb_simulation_integrator_bs {
     // TRACE
     int* map;               // internal map to particles (this is an identity map except when TRACE is used
     int map_allocated_N;    // allocated size for map
+    int counter;
 };
 
 typedef struct _StumpfCoefficients

@@ -523,27 +523,41 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     int new_ce = Fcond(r); // output means nothing at this step for now
 
     // Check condition at the beginning of TS
-    if (ri_tr->regime){
-      reb_integrator_trace_select_timestep(r);
-    }
-    else{
-      // no close encounters, we use the lowest timestep for WHFast only
-      r->dt = ri_tr->dt_shells[0];
-      ri_tr->current_shell = 0;
+    if (ri_tr->ats){
+      if (ri_tr->regime){
+        reb_integrator_trace_select_timestep(r);
+      }
+      else{
+        // no close encounters, we use the lowest timestep for WHFast only
+        r->dt = ri_tr->dt_shells[0];
+        ri_tr->current_shell = 0;
+      }
     }
 
     for (int loop = 1; loop; ) { // Loop until timestep is accepted
       // Check for regime shift
-      if (ri_tr->regime == 1 && ri_tr->last_regime == 0){
-        // Switching from WHFAST back to BS. We need to use the old timestep.
-        r->dt = ri_tr->dt_saved;
-        // printf("WHFAST to BS: %f %f\n", r->t, r->dt);
+      if (ri_tr->ats){
+        if (ri_tr->regime == 1 && ri_tr->last_regime == 0){
+          // Switching from WHFAST back to BS. We need to use the old timestep.
+          r->dt = ri_tr->dt_saved;
+          // printf("WHFAST to BS: %f %f\n", r->t, r->dt);
+        }
+
+        if (ri_tr->regime == 0 && ri_tr->last_regime == 1){
+          // Switching from BS to WHFAST. Need to save the last timestep we used.
+          ri_tr->dt_saved = ri_tr->last_dt;
+          // printf("BS to WHFAST: %f %f\n", r->t, ri_tr->dt_saved);
+        }
       }
 
-      if (ri_tr->regime == 0 && ri_tr->last_regime == 1){
-        // Switching from BS to WHFAST. Need to save the last timestep we used.
-        ri_tr->dt_saved = ri_tr->last_dt;
-        // printf("BS to WHFAST: %f %f\n", r->t, ri_tr->dt_saved);
+      if (ri_tr->current_L){ //more efficient way to check if we need to redo this...
+        // Pericenter close encounter detected. We integrate the entire simulation with BS
+        ri_tr->encounter_map_internal[0] = 1;
+        ri_tr->encounterN = N;
+        for (int i = 1; i < N; i++){
+          ri_tr->encounter_map_internal[i] = i; // Identity map
+        }
+        ri_tr->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
       }
 
       reb_integrator_trace_kepler_step(r, r->dt/2.); // always accept this
@@ -553,23 +567,30 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       reb_integrator_trace_kepler_step(r, r->dt/2.);
       // This sets last_regime. At the end of the loop, this should be correctly set
 
-      // r->dt_proposed is now the new proposed timestep
-
-      // Here check for timestep
-      double proposed_shell = ri_tr->current_shell;
-      double proposed_dt = r->dt;
-      reb_integrator_trace_select_timestep(r); // updates current_shell, and sets r->dt
-
       // Also check for new close_encounters
       int ctry = Fcond(r);
+
+      // r->dt_proposed is now the new proposed timestep
+      // Here check for timestep
+      double proposed_shell = 0;
+      double proposed_dt;
+
+      if (ri_tr->ats){
+        proposed_shell = ri_tr->current_shell;
+        proposed_dt = r->dt;
+        reb_integrator_trace_select_timestep(r); // updates current_shell, and sets r->dt
+      }
 
       if (ri_tr->current_shell >= proposed_shell && !ctry){
         // Timestep is fine and no new close encounters. We break the loop.
         loop = 0;
 
         // Reset in case a higher timestep is demanded
-        r->dt = proposed_dt;
-        ri_tr->current_shell = proposed_shell;
+
+        if (ri_tr->ats){
+          r->dt = proposed_dt;
+          ri_tr->current_shell = proposed_shell;
+        }
       }
       else{
         // Reject, reset simulation and try again with new timestep
@@ -578,8 +599,10 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
             r->particles[i] = ri_tr->particles_backup[i];
         }
 
-        if (ctry && ri_tr->regime == 0){
-          ri_tr->regime = 1;
+        if (ri_tr->ats){
+          if (ctry && ri_tr->regime == 0){
+            ri_tr->regime = 1;
+          }
         }
         /*
         if (ctry){
@@ -596,10 +619,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     if (ri_tr->safe_mode){
         reb_integrator_trace_synchronize(r);
     }
-
-    //if (r->t > 1121.04){
-    //  exit(1);
-    //}
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;
@@ -627,6 +646,7 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_tr.encounterN = 0;
     r->ri_tr.encounterNactive = 0;
     r->ri_tr.hillfac = 4; // TLu changed to Hernandez (2023)
+    r->ri_tr.ats = 0; // turn off adaptive timesteps
     //r->ri_tr.vSwitch = 0; // TLu changed to Hernandez (2023)
     r->ri_tr.vfac = 3.;
     //r->ri_tr.peri = 0.; // TLu changed to Hernandez (2023)

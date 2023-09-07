@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <math.h>
 #include "rebound.h"
+#include "integrator_trace.h"
 
 void heartbeat(struct reb_simulation* r);
 
@@ -72,20 +73,21 @@ int main(int argc, char* argv[]){
         min = o.P;
       }
     }
+
     r->integrator = REB_INTEGRATOR_TRACE;
     r->dt = min * 0.05;//0.059331635924546614;
-    r->ri_tr.vSwitch = 1;
+    r->ri_tr.S = reb_integrator_trace_switch_velocity;
     r->ri_tr.vfac = 5.;
-    r->ri_tr.vfac_p = 16.;
+    r->ri_tr.vfac_p = 10.;
+    r->ri_tr.ats = 0;
+
 
     //r->integrator = REB_INTEGRATOR_IAS15;
-
-    //r->ri_tr.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
-    //r->ri_tr.peri = 0.3;
     r->visualization = REB_VISUALIZATION_NONE;
     r->heartbeat  = heartbeat;
 
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
+
     system("rm -rf energy.txt");
     FILE* f = fopen("energy.txt","w");
     fprintf(f, "t,E,x0,y0,z0");
@@ -95,9 +97,10 @@ int main(int argc, char* argv[]){
     fprintf(f, "\n");
     fclose(f);
 
-    reb_integrate(r, 10000.*2*M_PI);
+
+    reb_integrate(r, 100000.*2*M_PI);
     //reb_step(r);
-    printf("Total: %d\nInit Peri No Flag: %d\nInit Peri Flag: %d\nNo Flags:%d\nFlagged Peri:%d\nFlagged CE:%d\n", r->ri_tr.delta_Ks[0], r->ri_tr.delta_Ks[1], r->ri_tr.delta_Ks[2], r->ri_tr.delta_Ks[3], r->ri_tr.delta_Ks[4], r->ri_tr.delta_Ks[5]);
+    //printf("Total: %d\nInit Peri No Flag: %d\nInit Peri Flag: %d\nNo Flags:%d\nFlagged Peri:%d\nFlagged CE:%d\n", r->ri_tr.delta_Ks[0], r->ri_tr.delta_Ks[1], r->ri_tr.delta_Ks[2], r->ri_tr.delta_Ks[3], r->ri_tr.delta_Ks[4], r->ri_tr.delta_Ks[5]);
     reb_free_simulation(r);
 }
 
@@ -106,7 +109,7 @@ void heartbeat(struct reb_simulation* r){
     //if (reb_output_check(r, 10.*2.*M_PI)){
     //    reb_output_timing(r, 0);
     //}
-    //if (reb_output_check(r, 2.*M_PI)){
+    if (reb_output_check(r, 100. * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
         FILE* f = fopen("energy.txt","a");
 
@@ -121,5 +124,5 @@ void heartbeat(struct reb_simulation* r){
         }
         fprintf(f, "\n");
         fclose(f);
-    //}
+    }
 }

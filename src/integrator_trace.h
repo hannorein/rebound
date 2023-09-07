@@ -31,5 +31,6 @@ void reb_integrator_trace_reset(struct reb_simulation* r);          ///< Interna
 void reb_integrator_trace_inertial_to_dh(struct reb_simulation* r); ///< Internal in-place coordinate transformation
 void reb_integrator_trace_dh_to_inertial(struct reb_simulation* r); ///< Internal in-place coordinate transformation
 double reb_integrator_trace_calculate_dcrit_for_particle(struct reb_simulation* r, unsigned int i); ///< Internal function for calculating dcrit in reb_add_local
-void reb_integrator_trace_pxyz(struct reb_simulation* r); // TLu
+struct reb_vec3d reb_integrator_trace_switch_velocity(const struct reb_simulation* const r, int i, int j); // TLu
+//struct reb_vec3d reb_integrator_trace_switch_default(const struct reb_simulation* const r, int i, int j); // TLu
 #endif

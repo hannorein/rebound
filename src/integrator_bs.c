@@ -931,6 +931,7 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
     r->dt = ri_bs->dt_proposed;
 
     reb_integrator_bs_update_particles(r, ri_bs->nbody_ode->y);
+    ri_bs->counter += 1;
 }
 
 void reb_integrator_bs_synchronize(struct reb_simulation* r){
