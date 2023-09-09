@@ -60,9 +60,50 @@ void test_twobody(){
     assert(fabs(o.a-1.)<1e-3);
     assert(fabs(o.e-0.1)<1e-2);
 
+    printf("Checking input/output...\n");
+
+    com = reb_get_com(r); // Need to call this on all machines. 
+    if (r->mpi_id==0){
+        for (int i=0; i<10; i++){
+            reb_add_fmt(r, "m a primary hash", 0.01, 2.0+0.1*i, com, i);
+        }
+    }
+    reb_steps(r, 1);
+    {
+        // Delete any previous files
+        char filename[1024];
+        sprintf(filename, "out.bin_%d", r->mpi_id);
+        remove(filename);
+    }
+    reb_simulationarchive_snapshot(r, "out.bin");
+    reb_steps(r, 1);
+    reb_simulationarchive_snapshot(r, "out.bin");
+    reb_steps(r, 10);
+
+    struct reb_simulationarchive* sa = reb_open_simulationarchive("out.bin");
+    assert(sa->nblobs==2);
+    struct reb_simulation* r2 = reb_create_simulation_from_simulationarchive(sa,-1);
+    reb_steps(r2, 10);
+
+    assert(r->N == r2->N);
+    assert(r->t == r2->t);
+
+    // Order of particles will be different. Need to compare them by hash
+    for(int i=0; i<10; i++){
+        struct reb_particle p1 = reb_get_remote_particle_by_hash(r, i);
+        struct reb_particle p2 = reb_get_remote_particle_by_hash(r2, i);
+        assert(p1.x==p2.x);
+        assert(p1.y==p2.y);
+        assert(p1.z==p2.z);
+    }
+
+
+
+
     printf("Cleanup...\n");
     reb_mpi_finalize(r);
     reb_free_simulation(r); 
+    reb_free_simulation(r2); 
 
 
 }

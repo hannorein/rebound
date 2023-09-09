@@ -52,9 +52,9 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
 		reb_error(r,"Particle outside of box boundaries. Did not add particle.");
 		return;
 	}
-	while (r->allocatedN<=r->N){
-		r->allocatedN = r->allocatedN ? r->allocatedN * 2 : 128;
-		r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->allocatedN);
+	while (r->allocated_N<=r->N){
+		r->allocated_N = r->allocated_N ? r->allocated_N * 2 : 128;
+		r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->allocated_N);
 	}
 
 	r->particles[r->N] = pt;
@@ -78,15 +78,15 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
             rim->recalculate_coordinates_this_timestep = 1;
         }else{  // IAS15 part
             reb_integrator_ias15_reset(r);
-            if (rim->dcrit_allocatedN<r->N){
+            if (rim->dcrit_allocated_N<r->N){
                 rim->dcrit              = realloc(rim->dcrit, sizeof(double)*r->N);
-                rim->dcrit_allocatedN = r->N;
+                rim->dcrit_allocated_N = r->N;
             }
             rim->dcrit[r->N-1] = reb_integrator_mercurius_calculate_dcrit_for_particle(r,r->N-1);
-            if (rim->allocatedN<r->N){
+            if (rim->allocated_N<r->N){
                 rim->particles_backup   = realloc(rim->particles_backup,sizeof(struct reb_particle)*r->N);
                 rim->encounter_map      = realloc(rim->encounter_map,sizeof(int)*r->N);
-                rim->allocatedN = r->N;
+                rim->allocated_N = r->N;
             }
             rim->encounter_map[rim->encounterN] = r->N-1;
             rim->encounterN++;
@@ -101,12 +101,12 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
 
 void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 #ifndef COLLISIONS_NONE
-	if (pt.r>=r->max_radius[0]){
-		r->max_radius[1] = r->max_radius[0];
-		r->max_radius[0] = pt.r;
+	if (pt.r>=r->max_radius0){
+		r->max_radius1 = r->max_radius0;
+		r->max_radius0 = pt.r;
 	}else{
-		if (pt.r>=r->max_radius[1]){
-			r->max_radius[1] = pt.r;
+		if (pt.r>=r->max_radius1){
+			r->max_radius1 = pt.r;
 		}
 	}
 #endif 	// COLLISIONS_NONE
@@ -210,9 +210,9 @@ static void reb_update_particle_lookup_table(struct reb_simulation* const r){
     int N_hash = 0;
     int zerohash = -1;
     for(unsigned int i=0; i<r->N; i++){
-        if(N_hash >= r->allocatedN_lookup){
-            r->allocatedN_lookup = r->allocatedN_lookup ? r->allocatedN_lookup * 2 : 128;
-            r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*r->allocatedN_lookup);
+        if(N_hash >= r->allocated_N_lookup){
+            r->allocated_N_lookup = r->allocated_N_lookup ? r->allocated_N_lookup * 2 : 128;
+            r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*r->allocated_N_lookup);
         }
         if(particles[i].hash == 0){ // default hash (0) special case
             if (zerohash == -1){    // first zero hash
@@ -285,7 +285,7 @@ struct reb_particle reb_get_remote_particle_by_hash(struct reb_simulation* const
 
 void reb_remove_all(struct reb_simulation* const r){
 	r->N 		= 0;
-	r->allocatedN 	= 0;
+	r->allocated_N 	= 0;
 	r->N_active 	= -1;
 	r->N_var 	= 0;
 	free(r->particles);
@@ -296,7 +296,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
     if (r->integrator == REB_INTEGRATOR_MERCURIUS){
         keepSorted = 1; // Force keepSorted for hybrid integrator
         struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
-        if (rim->dcrit_allocatedN>0 && index<(int)rim->dcrit_allocatedN){
+        if (rim->dcrit_allocated_N>0 && index<(int)rim->dcrit_allocated_N){
             for (unsigned int i=0;i<r->N-1;i++){
                 if ((int)i>=index){
                     rim->dcrit[i] = rim->dcrit[i+1];

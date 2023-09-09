@@ -244,7 +244,7 @@ void reb_communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct
 		r->particles_send_N[proc]++;
 	}else{		// Not a leaf. Check if we need to transfer daughters.
 		double distance2 = reb_communication_distance2_of_proc_to_node(r, proc,node);
-		double rp  = 2.*r->max_radius[0] + 0.86602540378443*node->w;
+		double rp  = 2.*r->max_radius0 + 0.86602540378443*node->w;
 		if (distance2 < rp*rp ){
 			for (int o=0;o<8;o++){
 				struct reb_treecell* d = node->oct[o];

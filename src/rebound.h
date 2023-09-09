@@ -122,7 +122,7 @@ struct reb_simulation_integrator_ias15 {
    
     // Internal use
     unsigned long iterations_max_exceeded; // Counter how many times the iteration did not converge. 
-    unsigned int allocatedN;          
+    unsigned int allocated_N;          
     double* REBOUND_RESTRICT at;
     double* REBOUND_RESTRICT x0;
     double* REBOUND_RESTRICT v0;
@@ -155,9 +155,9 @@ struct reb_simulation_integrator_mercurius {
     unsigned int encounterN;        // Number of particles currently having an encounter
     unsigned int encounterNactive;  // Number of active particles currently having an encounter
     unsigned int tponly_encounter;  // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
-    unsigned int allocatedN;
-    unsigned int allocatedN_additionalforces;
-    unsigned int dcrit_allocatedN;  // Current size of dcrit arrays
+    unsigned int allocated_N;
+    unsigned int allocated_N_additionalforces;
+    unsigned int dcrit_allocated_N;  // Current size of dcrit arrays
     double* dcrit;                  // Precalculated switching radii for particles
     struct reb_particle* REBOUND_RESTRICT particles_backup; //  contains coordinates before Kepler step for encounter prediction
     struct reb_particle* REBOUND_RESTRICT particles_backup_additionalforces; // contains coordinates before Kepler step for encounter prediction
@@ -262,7 +262,7 @@ struct reb_simulation_integrator_whfast512 {
 
 struct reb_ode{ // defines an ODE 
     unsigned int length; // number of components / dimenion
-    unsigned int allocatedN;
+    unsigned int allocated_N;
     unsigned int needs_nbody;
     double* y;      // Current state 
     double* scale;
@@ -446,13 +446,13 @@ struct reb_simulation_integrator_tes {
     double orbital_period;      // The lowest initial orbital period.
 
     // Synchronisation particle storage.
-    uint32_t allocated_N;
+    unsigned int allocated_N;
     struct reb_particle* particles_dh;
 
     // Vector dimensions variables.
-    uint32_t stateVectorLength;		/// Length of the state vector in doubles.
-    uint32_t stateVectorSize;		/// Size in bytes of the state vector.
     uint32_t controlVectorLength;	/// Length of the control vector in doubles.
+// Cant delete fellowing variable. Not sure why
+    uint32_t statesdfsdfsfdVectorSize;		/// Size in bytes of the state vector.
     uint32_t controlVectorSize; 	/// Size in bytes of n * sizeof(double).
 
     // State storage
@@ -460,8 +460,8 @@ struct reb_simulation_integrator_tes {
     double * X_dh;					/// Memory for current state in dh coords.
 	double * Q_dh;					/// Current state in dh coords.
 	double * P_dh;					/// Current state in dh coords. 
-    double COM[3];                  // Centre of mass
-    double COM_dot[3];              // Velocity of COM
+    struct reb_vec3d COM;           /// Centre of mass
+    struct reb_vec3d COM_dot;       /// Velocity of COM
 
     // Pointers to various modules comprising TES.
     UNIVERSAL_VARS * uVars;			/// Pointer to the universal variables module
@@ -537,140 +537,7 @@ enum REB_STATUS {
 
 // IDs for content of a binary field. Used to read and write binary files.
 enum REB_BINARY_FIELD_TYPE {
-    REB_BINARY_FIELD_TYPE_T = 0,
-    REB_BINARY_FIELD_TYPE_G = 1,
-    REB_BINARY_FIELD_TYPE_SOFTENING = 2,
-    REB_BINARY_FIELD_TYPE_DT = 3,
-    REB_BINARY_FIELD_TYPE_N = 4,
-    REB_BINARY_FIELD_TYPE_NVAR = 5,
-    REB_BINARY_FIELD_TYPE_VARCONFIGN = 6,
-    REB_BINARY_FIELD_TYPE_NACTIVE = 7,
-    REB_BINARY_FIELD_TYPE_TESTPARTICLETYPE = 8,
-    REB_BINARY_FIELD_TYPE_HASHCTR = 9, 
-    REB_BINARY_FIELD_TYPE_OPENINGANGLE2 = 10,
-    REB_BINARY_FIELD_TYPE_STATUS = 11,
-    REB_BINARY_FIELD_TYPE_EXACTFINISHTIME = 12,
-    REB_BINARY_FIELD_TYPE_FORCEISVELOCITYDEP = 13,
-    REB_BINARY_FIELD_TYPE_GRAVITYIGNORETERMS = 14,
-    REB_BINARY_FIELD_TYPE_OUTPUTTIMINGLAST = 15,
-    REB_BINARY_FIELD_TYPE_SAVEMESSAGES = 16,
-    REB_BINARY_FIELD_TYPE_EXITMAXDISTANCE = 17,
-    REB_BINARY_FIELD_TYPE_EXITMINDISTANCE = 18,
-    REB_BINARY_FIELD_TYPE_USLEEP = 19,
-    REB_BINARY_FIELD_TYPE_TRACKENERGYOFFSET = 20,
-    REB_BINARY_FIELD_TYPE_ENERGYOFFSET = 21,
-    REB_BINARY_FIELD_TYPE_BOXSIZE = 22, 
-    REB_BINARY_FIELD_TYPE_BOXSIZEMAX = 23, 
-    REB_BINARY_FIELD_TYPE_ROOTSIZE = 24,
-    REB_BINARY_FIELD_TYPE_ROOTN = 25,
-    REB_BINARY_FIELD_TYPE_ROOTNX = 26, 
-    REB_BINARY_FIELD_TYPE_ROOTNY = 27,
-    REB_BINARY_FIELD_TYPE_ROOTNZ = 28,
-    REB_BINARY_FIELD_TYPE_NGHOSTX = 29,
-    REB_BINARY_FIELD_TYPE_NGHOSTY = 30,
-    REB_BINARY_FIELD_TYPE_NGHOSTZ = 31,
-    REB_BINARY_FIELD_TYPE_COLLISIONRESOLVEKEEPSORTED = 32,
-    REB_BINARY_FIELD_TYPE_MINIMUMCOLLISIONVELOCITY = 33,
-    REB_BINARY_FIELD_TYPE_COLLISIONSPLOG = 34, 
-    REB_BINARY_FIELD_TYPE_MAXRADIUS = 35, 
-    REB_BINARY_FIELD_TYPE_COLLISIONSNLOG = 36, 
-    REB_BINARY_FIELD_TYPE_CALCULATEMEGNO = 37, 
-    REB_BINARY_FIELD_TYPE_MEGNOYS = 38, 
-    REB_BINARY_FIELD_TYPE_MEGNOYSS = 39, 
-    REB_BINARY_FIELD_TYPE_MEGNOCOVYT = 40,
-    REB_BINARY_FIELD_TYPE_MEGNOVART = 41, 
-    REB_BINARY_FIELD_TYPE_MEGNOMEANT = 42, 
-    REB_BINARY_FIELD_TYPE_MEGNOMEANY = 43, 
-    REB_BINARY_FIELD_TYPE_MEGNON = 44,
-    REB_BINARY_FIELD_TYPE_SASIZEFIRST = 45,
-    REB_BINARY_FIELD_TYPE_SASIZESNAPSHOT = 46,
-    REB_BINARY_FIELD_TYPE_SAAUTOINTERVAL = 47,
-    REB_BINARY_FIELD_TYPE_SAAUTOWALLTIME = 102,
-    REB_BINARY_FIELD_TYPE_SANEXT = 48,
-    REB_BINARY_FIELD_TYPE_COLLISION = 50,
-    REB_BINARY_FIELD_TYPE_INTEGRATOR = 51,
-    REB_BINARY_FIELD_TYPE_BOUNDARY = 52,
-    REB_BINARY_FIELD_TYPE_GRAVITY = 53,
-    REB_BINARY_FIELD_TYPE_SEI_OMEGA = 54,
-    REB_BINARY_FIELD_TYPE_SEI_OMEGAZ = 55,
-    REB_BINARY_FIELD_TYPE_SEI_LASTDT = 56,
-    REB_BINARY_FIELD_TYPE_SEI_SINDT = 57,
-    REB_BINARY_FIELD_TYPE_SEI_TANDT = 58,
-    REB_BINARY_FIELD_TYPE_SEI_SINDTZ = 59,
-    REB_BINARY_FIELD_TYPE_SEI_TANDTZ = 60,
-    REB_BINARY_FIELD_TYPE_WHFAST_CORRECTOR = 61,
-    REB_BINARY_FIELD_TYPE_WHFAST_RECALCJAC = 62, 
-    REB_BINARY_FIELD_TYPE_WHFAST_SAFEMODE = 63,
-    REB_BINARY_FIELD_TYPE_WHFAST_KEEPUNSYNC = 64,
-    REB_BINARY_FIELD_TYPE_WHFAST_ISSYNCHRON = 65,
-    REB_BINARY_FIELD_TYPE_WHFAST_TIMESTEPWARN = 66,
-    REB_BINARY_FIELD_TYPE_IAS15_EPSILON = 69,
-    REB_BINARY_FIELD_TYPE_IAS15_MINDT = 70,
-    REB_BINARY_FIELD_TYPE_IAS15_EPSILONGLOBAL = 71,
-    REB_BINARY_FIELD_TYPE_IAS15_ITERATIONSMAX = 72,
-    REB_BINARY_FIELD_TYPE_PARTICLES = 85,
-    REB_BINARY_FIELD_TYPE_VARCONFIG = 86,
     REB_BINARY_FIELD_TYPE_FUNCTIONPOINTERS = 87,
-    REB_BINARY_FIELD_TYPE_IAS15_ALLOCATEDN = 88,
-    REB_BINARY_FIELD_TYPE_IAS15_AT = 89,
-    REB_BINARY_FIELD_TYPE_IAS15_X0 = 90,
-    REB_BINARY_FIELD_TYPE_IAS15_V0 = 91,
-    REB_BINARY_FIELD_TYPE_IAS15_A0 = 92,
-    REB_BINARY_FIELD_TYPE_IAS15_CSX = 93,
-    REB_BINARY_FIELD_TYPE_IAS15_CSV = 94,
-    REB_BINARY_FIELD_TYPE_IAS15_CSA0 = 95,
-    REB_BINARY_FIELD_TYPE_IAS15_G = 96,
-    REB_BINARY_FIELD_TYPE_IAS15_B = 97,
-    REB_BINARY_FIELD_TYPE_IAS15_CSB = 98,
-    REB_BINARY_FIELD_TYPE_IAS15_E = 99,
-    REB_BINARY_FIELD_TYPE_IAS15_BR = 100,
-    REB_BINARY_FIELD_TYPE_IAS15_ER = 101,
-    REB_BINARY_FIELD_TYPE_WHFAST_PJ = 104,
-    REB_BINARY_FIELD_TYPE_VISUALIZATION = 107,
-    REB_BINARY_FIELD_TYPE_JANUS_ALLOCATEDN = 110,
-    REB_BINARY_FIELD_TYPE_JANUS_PINT = 112,
-    REB_BINARY_FIELD_TYPE_JANUS_SCALEPOS = 113,
-    REB_BINARY_FIELD_TYPE_JANUS_SCALEVEL = 114,
-    REB_BINARY_FIELD_TYPE_JANUS_ORDER = 115,
-    REB_BINARY_FIELD_TYPE_JANUS_RECALC = 116,
-    REB_BINARY_FIELD_TYPE_WHFAST_COORDINATES = 117,
-    REB_BINARY_FIELD_TYPE_MERCURIUS_HILLFAC = 118,
-    REB_BINARY_FIELD_TYPE_MERCURIUS_SAFEMODE = 119,
-    REB_BINARY_FIELD_TYPE_MERCURIUS_ISSYNCHRON = 120,
-    REB_BINARY_FIELD_TYPE_MERCURIUS_DCRIT = 122,
-    REB_BINARY_FIELD_TYPE_MERCURIUS_RECALCULATE_COORD = 123,
-    REB_BINARY_FIELD_TYPE_SAVERSION = 125,
-    REB_BINARY_FIELD_TYPE_WALLTIME = 126,
-    REB_BINARY_FIELD_TYPE_PYTHON_UNIT_L = 130,
-    REB_BINARY_FIELD_TYPE_PYTHON_UNIT_M = 131,
-    REB_BINARY_FIELD_TYPE_PYTHON_UNIT_T = 132,
-    REB_BINARY_FIELD_TYPE_MERCURIUS_COMPOS = 133,
-    REB_BINARY_FIELD_TYPE_MERCURIUS_COMVEL = 134,
-    REB_BINARY_FIELD_TYPE_SAAUTOSTEP = 135,
-    REB_BINARY_FIELD_TYPE_SANEXTSTEP = 136,
-    REB_BINARY_FIELD_TYPE_STEPSDONE = 137,
-    REB_BINARY_FIELD_TYPE_SABA_SAFEMODE = 140,
-    REB_BINARY_FIELD_TYPE_SABA_ISSYNCHRON = 141,
-    REB_BINARY_FIELD_TYPE_WHFAST_CORRECTOR2 = 143,
-    REB_BINARY_FIELD_TYPE_WHFAST_KERNEL = 144,
-    REB_BINARY_FIELD_TYPE_DTLASTDONE = 145,
-    REB_BINARY_FIELD_TYPE_SABA_TYPE = 146,
-    REB_BINARY_FIELD_TYPE_SABA_KEEPUNSYNC = 147,
-    REB_BINARY_FIELD_TYPE_EOS_PHI0 = 148,
-    REB_BINARY_FIELD_TYPE_EOS_PHI1 = 149,
-    REB_BINARY_FIELD_TYPE_EOS_N = 150,
-    REB_BINARY_FIELD_TYPE_EOS_SAFEMODE = 151,
-    REB_BINARY_FIELD_TYPE_EOS_ISSYNCHRON = 152,
-    REB_BINARY_FIELD_TYPE_RAND_SEED = 154,
-    REB_BINARY_FIELD_TYPE_TESTPARTICLEHIDEWARNINGS = 155,
-    REB_BINARY_FIELD_TYPE_BS_EPSABS = 156,
-    REB_BINARY_FIELD_TYPE_BS_EPSREL = 157,
-    REB_BINARY_FIELD_TYPE_BS_MINDT = 158,
-    REB_BINARY_FIELD_TYPE_BS_MAXDT = 159,
-    REB_BINARY_FIELD_TYPE_BS_FIRSTORLASTSTEP = 160,
-    REB_BINARY_FIELD_TYPE_BS_PREVIOUSREJECTED = 161,
-    REB_BINARY_FIELD_TYPE_BS_TARGETITER = 162,
-    REB_BINARY_FIELD_TYPE_VARRESCALEWARNING = 163,
 
     REB_BINARY_FIELD_TYPE_TES_DQ_MAX = 300,
     REB_BINARY_FIELD_TYPE_TES_RECTI_PER_ORBIT = 301,
@@ -756,10 +623,6 @@ enum REB_BINARY_FIELD_TYPE {
     REB_BINARY_FIELD_TYPE_WHFAST512_ALLOCATEDN = 393,
     REB_BINARY_FIELD_TYPE_WHFAST512_PJH = 394,
     REB_BINARY_FIELD_TYPE_WHFAST512_PJH0 = 395,
-
-    REB_BINARY_FIELD_TYPE_HEADER = 1329743186,  // Corresponds to REBO (first characters of header text)
-    REB_BINARY_FIELD_TYPE_SABLOB = 9998,        // SA Blob
-    REB_BINARY_FIELD_TYPE_END = 9999,
 };
 
 // This structure is used to save and load binary files.
@@ -784,7 +647,7 @@ struct reb_simulation {
     unsigned long long steps_done;
     unsigned int     N;
     int     N_var;
-    int     var_config_N;
+    unsigned int     var_config_N;
     struct reb_variational_configuration* var_config;   // These configuration structs contain details on variational particles. 
     int     var_rescale_warning;
     int     N_active;
@@ -793,11 +656,11 @@ struct reb_simulation {
     struct reb_hash_pointer_pair* particle_lookup_table; // Array of pairs that map particles' hashes to their index in the particles array.
     int     hash_ctr;               // Counter for number of assigned hashes to assign unique values.
     int     N_lookup;               // Number of entries in the particle lookup table.
-    int     allocatedN_lookup;      // Number of lookup table entries allocated.
-    unsigned int   allocatedN;             // Current maximum space allocated in the particles array on this node. 
+    int     allocated_N_lookup;      // Number of lookup table entries allocated.
+    unsigned int   allocated_N;             // Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles;
     struct reb_vec3d* gravity_cs;   // Containing the information for compensated gravity summation 
-    int     gravity_cs_allocatedN;
+    int     gravity_cs_allocated_N;
     struct reb_treecell** tree_root;// Pointer to the roots of the trees. 
     int     tree_needs_update;      // Flag to force a tree update (after boundary check)
     double opening_angle2;
@@ -853,10 +716,11 @@ struct reb_simulation {
 
     int collision_resolve_keep_sorted;
     struct reb_collision* collisions;       ///< Array of all collisions. 
-    int collisions_allocatedN;
+    int collisions_allocated_N;
     double minimum_collision_velocity;
     double collisions_plog;
-    double max_radius[2];               // Two largest particle radii, set automatically, needed for collision search.
+    double max_radius0;               // Two largest particle radii, set automatically, needed for collision search.
+    double max_radius1;               // Two largest particle radii, set automatically, needed for collision search.
     long collisions_Nlog;
     
     // MEGNO
@@ -938,7 +802,7 @@ struct reb_simulation {
     // ODEs
     struct reb_ode** odes;  // all ode sets (includes nbody if BS set as integrator)
     int odes_N;            // number of ode sets
-    int odes_allocatedN;   // number of ode sets allocated
+    int odes_allocated_N;   // number of ode sets allocated
     int ode_warnings;
 
      // Callback functions
@@ -1013,6 +877,8 @@ void reb_stop(struct reb_simulation* const r); // Stop current integration
 // If r1 and r2 are exactly equal to each other then 0 is returned, otherwise 1. Walltime is ignored.
 // If output_option=1, then output is printed on the screen. If 2, only return value os given. 
 int reb_diff_simulations(struct reb_simulation* r1, struct reb_simulation* r2, int output_option);
+// Same but return value is string to human readable difference. Needs to be freed.
+char* reb_diff_simulations_char(struct reb_simulation* r1, struct reb_simulation* r2);
 
 // Mercurius switching functions
 double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit);
@@ -1047,9 +913,43 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 // Compares two simulations, stores difference in buffer.
 void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep); 
 // Same as reb_binary_diff, but with options.
-// output_option If set to 0, the differences are written to bufp. If set to 1, printed on the screen. If set to 2, then only the return value indicates any differences.
-// returns 0 is returned if the simulations do not differ (are equal). 1 is return if they differ.
+// output_option:
+// - If set to 0, differences are written to bufp in the form of reb_binary_field structs. 
+// - If set to 1, differences are printed on the screen. 
+// - If set to 2, only the return value indicates any differences.
+// - If set to 3, differences are written to bufp in a human readable form.
+// returns value:  0 is returned if the simulations do not differ (are equal). 1 is return if they differ.
 int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option);
+// Returns the name fora given binary field type or name
+struct reb_binary_field_descriptor reb_binary_field_descriptor_for_type(int type);
+struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(const char* name);
+
+struct reb_binary_field_descriptor {
+    uint32_t type;          // Unique id for each field. Should not change between versions. Ids should not be reused.
+    enum {
+        REB_DOUBLE = 0,
+        REB_INT = 1,
+        REB_UINT = 2,
+        REB_UINT32 = 3,
+        REB_LONG = 4,
+        REB_ULONG = 5,
+        REB_ULONGLONG = 6,
+        REB_VEC3D = 7,
+        REB_PARTICLE = 8,
+        REB_POINTER = 9,
+        REB_POINTER_ALIGNED = 10,    // memory aligned to 64 bit boundary for AVX512
+        REB_DP7 = 11,                // Special datatype for IAS15
+        REB_OTHER = 12,              // Fields that need special treatment during input and/or output
+        REB_FIELD_END = 13,          // Special type to indicate end of blob
+        REB_FIELD_NOT_FOUND = 14,    // Special type used to throw error messages
+    } dtype;
+    char name[1024];
+    size_t offset;              // Offset of the storage location relative to the beginning of reb_simulation
+    size_t offset_N;            // Offset of the storage location for the size relative to the beginning of reb_simulation
+    size_t element_size;        // Size in bytes of each element (only used for pointers, dp7, etc)
+};
+
+extern const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[];
 
 // Input functions
 struct reb_simulation* reb_create_simulation_from_binary(char* filename);
@@ -1067,6 +967,7 @@ enum reb_input_binary_messages {
     REB_INPUT_BINARY_WARNING_FIELD_UNKOWN = 128,
     REB_INPUT_BINARY_ERROR_INTEGRATOR = 256,
     REB_INPUT_BINARY_WARNING_CORRUPTFILE = 512,
+    REB_INPUT_BINARY_ERROR_OLD = 1024,
 };
 
 // ODE functions
@@ -1272,7 +1173,7 @@ struct reb_simulationarchive_blob16 {  // For backwards compatability only. Will
 
 struct reb_simulationarchive{
     FILE* inf;                   // File pointer (will be kept open)
-    char* filename;              // Filename of open file
+    char* filename;              // Filename of open file. This is NULL if this is a memory-mapped file (using fmemopen)
     int version;                 // SimulationArchive version
     long size_first;             // Size of first snapshot (only used for version 1)
     long size_snapshot;          // Size of snapshot (only used for version 1)
@@ -1292,7 +1193,7 @@ void reb_simulationarchive_automate_interval(struct reb_simulation* const r, con
 void reb_simulationarchive_automate_walltime(struct reb_simulation* const r, const char* filename, double walltime);
 void reb_simulationarchive_automate_step(struct reb_simulation* const r, const char* filename, unsigned long long step);
 void reb_free_simulationarchive_pointers(struct reb_simulationarchive* sa);
-
+void reb_read_simulationarchive_from_buffer_with_messages(struct reb_simulationarchive* sa, char* buf, size_t size, struct reb_simulationarchive* sa_index, enum reb_input_binary_messages* warnings);
 
 // Functions to convert between coordinate systems
 

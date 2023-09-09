@@ -162,7 +162,7 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
     }else{ 
         N3 = 3*r->N;
     }
-    if (N3 > r->ri_ias15.allocatedN) {
+    if (N3 > r->ri_ias15.allocated_N) {
         realloc_dp7(&(r->ri_ias15.g),N3);
         realloc_dp7(&(r->ri_ias15.b),N3);
         realloc_dp7(&(r->ri_ias15.csb),N3);
@@ -183,7 +183,7 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
             csx[i] = 0;
             csv[i] = 0;
         }
-        r->ri_ias15.allocatedN = N3;
+        r->ri_ias15.allocated_N = N3;
     }
     if (N3/3 > r->ri_ias15.map_allocated_N){
         r->ri_ias15.map = realloc(r->ri_ias15.map,sizeof(int)*(N3/3));
@@ -713,7 +713,7 @@ void reb_integrator_ias15_part2(struct reb_simulation* r){
 void reb_integrator_ias15_synchronize(struct reb_simulation* r){
 }
 void reb_integrator_ias15_clear(struct reb_simulation* r){
-    const int N3 = r->ri_ias15.allocatedN;
+    const int N3 = r->ri_ias15.allocated_N;
     if (N3){
         clear_dp7(&(r->ri_ias15.g),N3);
         clear_dp7(&(r->ri_ias15.e),N3);
@@ -733,7 +733,7 @@ void reb_integrator_ias15_clear(struct reb_simulation* r){
 }
 
 void reb_integrator_ias15_reset(struct reb_simulation* r){
-    r->ri_ias15.allocatedN  = 0;
+    r->ri_ias15.allocated_N  = 0;
     r->ri_ias15.map_allocated_N  = 0;
     free_dp7(&(r->ri_ias15.g));
     free_dp7(&(r->ri_ias15.e));
