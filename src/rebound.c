@@ -42,7 +42,6 @@
 #include "integrator_ias15.h"
 #include "integrator_mercurius.h"
 #include "integrator_bs.h"
-#include "integrator_tes.h"
 #include "boundary.h"
 #include "gravity.h"
 #include "collision.h"
@@ -332,7 +331,6 @@ void reb_free_pointers(struct reb_simulation* const r){
     reb_integrator_ias15_reset(r);
     reb_integrator_mercurius_reset(r);
     reb_integrator_bs_reset(r);
-    reb_integrator_tes_reset(r);
     if(r->free_particle_ap){
         for(unsigned int i=0; i<r->N; i++){
             r->free_particle_ap(&r->particles[i]);
@@ -418,8 +416,6 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->odes = NULL;
     r->odes_N = 0;
     r->odes_allocated_N = 0;
-    // ********** TES
-    r->ri_tes.particles_dh = NULL;
 }
 
 int reb_reset_function_pointers(struct reb_simulation* const r){
@@ -647,12 +643,6 @@ void reb_init_simulation(struct reb_simulation* r){
     
     // ********** NS
     reb_integrator_bs_reset(r);
-
-    // ********** TES
-    r->ri_tes.dq_max = 1e-2;                   // good fall back value and should be OK for reasonable planet masses.
-    r->ri_tes.recti_per_orbit = 1.61803398875; // golden ratio 
-    r->ri_tes.epsilon = 1e-6;
-    r->ri_tes.allocated_N = 0;
 
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.
     r->tree_needs_update= 0;

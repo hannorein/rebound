@@ -11,6 +11,7 @@ This changelog only includes the most important changes in recent updates. For a
 * The POSIX function fmemopen() is now required to compile REBOUND. This should not affect many users. However, if you are using macOS, the version needs to be >= 10.13 (this version of macOS, High Sierra, was released in 2017). 
 * Internal changes on how SimulationArchives are written. 
 * Internal variable names that represent the size of allocated buffers now consistently include the name `allocated_N`.
+* The TES (Terrestrial Exoplanet Integrator) has been removed. If you wish to use TES, you will need checkout an earlier version.
 
 ### Version 3.26.3
 * A few more changes to reduce the number of compiler warnings. This should not affect any calculation.

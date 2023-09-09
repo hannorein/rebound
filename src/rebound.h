@@ -439,39 +439,6 @@ typedef struct DHEM
   double * rectificationPeriod; /// Elapsed time to trigger a rectification.
 }DHEM;
 
-struct reb_simulation_integrator_tes {
-    double dq_max;              // value of dq/q that triggers a rectification (backup to recti_per_orbit)
-    double recti_per_orbit;     // main method for triggering a rectification 
-    double epsilon;             // tolerance parameter
-    double orbital_period;      // The lowest initial orbital period.
-
-    // Synchronisation particle storage.
-    unsigned int allocated_N;
-    struct reb_particle* particles_dh;
-
-    // Vector dimensions variables.
-    uint32_t controlVectorLength;	/// Length of the control vector in doubles.
-// Cant delete fellowing variable. Not sure why
-    uint32_t statesdfsdfsfdVectorSize;		/// Size in bytes of the state vector.
-    uint32_t controlVectorSize; 	/// Size in bytes of n * sizeof(double).
-
-    // State storage
-    double * mass;					/// Initial particle masses
-    double * X_dh;					/// Memory for current state in dh coords.
-	double * Q_dh;					/// Current state in dh coords.
-	double * P_dh;					/// Current state in dh coords. 
-    struct reb_vec3d COM;           /// Centre of mass
-    struct reb_vec3d COM_dot;       /// Velocity of COM
-
-    // Pointers to various modules comprising TES.
-    UNIVERSAL_VARS * uVars;			/// Pointer to the universal variables module
-    DHEM * rhs;						/// Pointer to the DHEM rhs
-    RADAU * radau;  				/// Pointer to our integrator
-
-    double mStar_last;              /// Mass of the star last step.
-    uint32_t warnings;              /// Number of times warning has been shown
-};
-
 enum REB_EOS_TYPE {
     REB_EOS_LF = 0x00, 
     REB_EOS_LF4 = 0x01,
@@ -535,99 +502,9 @@ enum REB_STATUS {
     REB_EXIT_COLLISION = 7,     // The integration ends early because two particles collided. 
 };
 
-// IDs for content of a binary field. Used to read and write binary files.
-enum REB_BINARY_FIELD_TYPE {
-    REB_BINARY_FIELD_TYPE_FUNCTIONPOINTERS = 87,
-
-    REB_BINARY_FIELD_TYPE_TES_DQ_MAX = 300,
-    REB_BINARY_FIELD_TYPE_TES_RECTI_PER_ORBIT = 301,
-    REB_BINARY_FIELD_TYPE_TES_EPSILON = 302,
-    REB_BINARY_FIELD_TYPE_TES_PERIOD = 303,
-    REB_BINARY_FIELD_TYPE_TES_ALLOCATED_N = 304,
-    REB_BINARY_FIELD_TYPE_TES_PARTICLES_DH = 305,
-    REB_BINARY_FIELD_TYPE_TES_SV_LEN = 306,
-    REB_BINARY_FIELD_TYPE_TES_SV_SIZE = 307,
-    REB_BINARY_FIELD_TYPE_TES_CV_LEN = 308,
-    REB_BINARY_FIELD_TYPE_TES_CV_SIZE = 309,
-    REB_BINARY_FIELD_TYPE_TES_MASS = 310,
-    REB_BINARY_FIELD_TYPE_TES_X_DH = 311,
-    REB_BINARY_FIELD_TYPE_TES_COM = 312,
-    REB_BINARY_FIELD_TYPE_TES_COM_DOT = 313,
-    REB_BINARY_FIELD_TYPE_TES_MASS_STAR_LAST = 314,
-
-    REB_BINARY_FIELD_TYPE_TES_UVARS_SV_SIZE = 320,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_CV_SIZE = 321,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_T0 = 322,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_TLAST = 323,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_CSQ = 324,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_CSP = 325,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_CSV = 326,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_Q0 = 327,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_V0 = 328,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_P0 = 329,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_Q1 = 330,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_V1 = 331,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_P1 = 332,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_X = 333,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_Q0_NORM = 334,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_BETA = 335,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_ETA = 336,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_ZETA = 337,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_PERIOD = 338,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_XPERIOD = 339,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_STUMPF_C0     = 340,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_STUMPF_C1     = 341,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_STUMPF_C2     = 342,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_STUMPF_C3     = 343,
-    REB_BINARY_FIELD_TYPE_TES_UVARS_MU = 344,
-
-    REB_BINARY_FIELD_TYPE_TES_RADAU_DX = 350,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_XOUT = 351,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_RECTI_ARRAY = 352,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_PREDICTORS = 353,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_DSTATE0 = 354,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_DDSTATE0 = 355,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_DSTATE = 356,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_DDSTATE = 357,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_CS_DSTATE0 = 358,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_CS_DDSTATE0 = 359,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_CS_DSTATE = 360,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_CS_DDSTATE = 361,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_CS_DX = 362,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_FCALLS = 363,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_RECTIS = 364,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_ITERS = 365,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_B6 = 366,    
-    REB_BINARY_FIELD_TYPE_TES_RADAU_B = 367,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_BLAST = 368,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_B_1ST = 369,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_BLAST_1ST = 370,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_CS_B = 371,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_CS_B_1ST = 372,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_G = 373,
-    REB_BINARY_FIELD_TYPE_TES_RADAU_G_1ST = 374,
-
-    REB_BINARY_FIELD_TYPE_TES_DHEM_XOSC_STORE = 380,
-    REB_BINARY_FIELD_TYPE_TES_DHEM_XOSC_PRED_STORE = 381,
-    REB_BINARY_FIELD_TYPE_TES_DHEM_XOSC_CS_STORE = 382,
-    REB_BINARY_FIELD_TYPE_TES_DHEM_XOSC_DOT_STORE = 383,
-    REB_BINARY_FIELD_TYPE_TES_DHEM_X = 384,
-    REB_BINARY_FIELD_TYPE_TES_DHEM_M_INV = 385,
-    REB_BINARY_FIELD_TYPE_TES_DHEM_M_TOTAL = 386,
-    REB_BINARY_FIELD_TYPE_TES_DHEM_RECTI_TIME = 387,
-    REB_BINARY_FIELD_TYPE_TES_DHEM_RECTI_PERIOD = 388,
-    
-    REB_BINARY_FIELD_TYPE_WHFAST512_KEEPUNSYNC = 390,
-    REB_BINARY_FIELD_TYPE_WHFAST512_ISSYNCHRON = 391,
-    REB_BINARY_FIELD_TYPE_WHFAST512_GRPOTENTIAL = 392,
-    REB_BINARY_FIELD_TYPE_WHFAST512_ALLOCATEDN = 393,
-    REB_BINARY_FIELD_TYPE_WHFAST512_PJH = 394,
-    REB_BINARY_FIELD_TYPE_WHFAST512_PJH0 = 395,
-};
-
 // This structure is used to save and load binary files.
 struct reb_binary_field {
-    uint32_t type;  // enum of REB_BINARY_FIELD_TYPE
+    uint32_t type;  // type as given by reb_binary_field_descriptor
     uint64_t size;  // Size in bytes of field (only counting what follows, not the binary field, itself).
 };
 
@@ -769,7 +646,7 @@ struct reb_simulation {
         REB_INTEGRATOR_SABA = 10,    // SABA integrator family (Laskar and Robutel 2001)
         REB_INTEGRATOR_EOS = 11,     // Embedded Operator Splitting (EOS) integrator family (Rein 2019)
         REB_INTEGRATOR_BS = 12,      // Gragg-Bulirsch-Stoer 
-        REB_INTEGRATOR_TES = 20,     // Terrestrial Exoplanet Simulator (TES) 
+        // REB_INTEGRATOR_TES = 20,     // Used to be Terrestrial Exoplanet Simulator (TES) -- Do not reuse.
         REB_INTEGRATOR_WHFAST512 = 21,   // WHFast integrator, optimized for AVX512
         } integrator;
     enum {
@@ -797,7 +674,6 @@ struct reb_simulation {
     struct reb_simulation_integrator_janus ri_janus;        // The JANUS struct 
     struct reb_simulation_integrator_eos ri_eos;            // The EOS struct 
     struct reb_simulation_integrator_bs ri_bs;              // The BS struct
-    struct reb_simulation_integrator_tes ri_tes;            // TES struct
 
     // ODEs
     struct reb_ode** odes;  // all ode sets (includes nbody if BS set as integrator)

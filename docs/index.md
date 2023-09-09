@@ -63,9 +63,7 @@ There are several papers describing the functionality of REBOUND.
 
 9. Rein, Tamayo & Brown 2019 (Monthly Notices of the Royal Astronomical Society, Volume 489, Issue 4, November 2019, Pages 4632-4640) describes the implementation of the high order symplectic integrators SABA, SABAC, SABACL, WHCKL, WHCKM, and WHCKC. <https://ui.adsabs.harvard.edu/abs/2019MNRAS.489.4632R/abstract>
 
-10. Bartram & Wittig 2021 (Monthly Notices of the Royal Astronomical Society, Volume 504, Issue 1, Pages 678-691) describes the implementation of the TES integrator. <https://ui.adsabs.harvard.edu/abs/2021MNRAS.504..678B/abstract>
-
-11. Javaheri, Rein & Tamayo 2023 (in prep) describes the WHFast512 integrator which uses AVX512 instructions.
+10. Javaheri, Rein & Tamayo 2023 (in prep) describes the WHFast512 integrator which uses AVX512 instructions.
 
 ## Acknowledgments
 

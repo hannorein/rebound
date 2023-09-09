@@ -35,7 +35,6 @@
 #include "input.h"
 #include "tree.h"
 #include "simulationarchive.h"
-#include "integrator_tes.h"
 
 #ifdef MPI
 #include "communication_mpi.h"
@@ -82,15 +81,6 @@ next_field:
         }
         if (field.type==fd_end.type){
             goto finish_fields; // End of snapshot
-        }
-        // only here for testing. delete TODO 
-        if (field.type==REB_BINARY_FIELD_TYPE_TES_ALLOCATED_N){
-            fread(&r->ri_tes.allocated_N, field.size, 1, inf);
-            // Allocate all memory for loading the simulation archive.
-            if (r->ri_tes.allocated_N) {
-                reb_integrator_tes_allocate_memory(r);
-            }
-            goto next_field;
         }
         int i=0;
 
@@ -208,72 +198,6 @@ next_field:
             goto next_field;
         }
 
-        // Only TES variables remain here.
-        switch(field.type){
-            // TES Kepler vars
-            CASE(TES_UVARS_SV_SIZE, &r->ri_tes.uVars->stateVectorSize);
-            CASE(TES_UVARS_T0, r->ri_tes.uVars->t0);
-            CASE(TES_UVARS_TLAST, r->ri_tes.uVars->tLast);
-            CASE(TES_UVARS_CSQ, r->ri_tes.uVars->uv_csq);
-            CASE(TES_UVARS_CSP, r->ri_tes.uVars->uv_csp);
-            CASE(TES_UVARS_CSV, r->ri_tes.uVars->uv_csv);
-            CASE(TES_UVARS_Q0, r->ri_tes.uVars->Q0);
-            CASE(TES_UVARS_V0, r->ri_tes.uVars->V0);
-            CASE(TES_UVARS_P0, r->ri_tes.uVars->P0);
-            CASE(TES_UVARS_Q1, r->ri_tes.uVars->Q1);
-            CASE(TES_UVARS_V1, r->ri_tes.uVars->V1);
-            CASE(TES_UVARS_P1, r->ri_tes.uVars->P1);
-            CASE(TES_UVARS_X, r->ri_tes.uVars->X);
-            CASE(TES_UVARS_Q0_NORM, r->ri_tes.uVars->Q0_norm);
-            CASE(TES_UVARS_BETA, r->ri_tes.uVars->beta);
-            CASE(TES_UVARS_ETA, r->ri_tes.uVars->eta);
-            CASE(TES_UVARS_ZETA, r->ri_tes.uVars->zeta);
-            CASE(TES_UVARS_PERIOD, r->ri_tes.uVars->period);
-            CASE(TES_UVARS_XPERIOD, r->ri_tes.uVars->Xperiod);
-            CASE(TES_UVARS_STUMPF_C0, r->ri_tes.uVars->C.c0);
-            CASE(TES_UVARS_STUMPF_C1, r->ri_tes.uVars->C.c1);
-            CASE(TES_UVARS_STUMPF_C2, r->ri_tes.uVars->C.c2);
-            CASE(TES_UVARS_STUMPF_C3, r->ri_tes.uVars->C.c3);
-            CASE(TES_UVARS_MU, &r->ri_tes.uVars->mu);
-
-            // TES Radau vars
-            CASE(TES_RADAU_DX, r->ri_tes.radau->dX);
-            CASE(TES_RADAU_XOUT, r->ri_tes.radau->Xout);
-            CASE(TES_RADAU_RECTI_ARRAY, r->ri_tes.radau->rectifiedArray);
-            CASE(TES_RADAU_PREDICTORS, r->ri_tes.radau->predictors);
-            CASE(TES_RADAU_DSTATE0, r->ri_tes.radau->dState0);
-            CASE(TES_RADAU_DDSTATE0, r->ri_tes.radau->ddState0);
-            CASE(TES_RADAU_DSTATE, r->ri_tes.radau->dState);
-            CASE(TES_RADAU_DDSTATE, r->ri_tes.radau->ddState);
-            CASE(TES_RADAU_CS_DSTATE0, r->ri_tes.radau->cs_dState0);
-            CASE(TES_RADAU_CS_DDSTATE0, r->ri_tes.radau->cs_ddState0);
-            CASE(TES_RADAU_CS_DSTATE, r->ri_tes.radau->cs_dState);
-            CASE(TES_RADAU_CS_DDSTATE, r->ri_tes.radau->cs_ddState);
-            CASE(TES_RADAU_CS_DX, r->ri_tes.radau->cs_dX);
-            CASE(TES_RADAU_FCALLS, &r->ri_tes.radau->fCalls);
-            CASE(TES_RADAU_RECTIS, &r->ri_tes.radau->rectifications);
-            CASE(TES_RADAU_ITERS, &r->ri_tes.radau->convergenceIterations);
-            CASE(TES_RADAU_B6, r->ri_tes.radau->b6_store);
-            CASE_CONTROL_VARS(TES_RADAU_B, (&(r->ri_tes.radau->B)));
-            CASE_CONTROL_VARS(TES_RADAU_BLAST, (&(r->ri_tes.radau->Blast)));
-            CASE_CONTROL_VARS(TES_RADAU_B_1ST, (&(r->ri_tes.radau->B_1st)));
-            CASE_CONTROL_VARS(TES_RADAU_BLAST_1ST, (&(r->ri_tes.radau->Blast_1st)));
-            CASE_CONTROL_VARS(TES_RADAU_CS_B, (&(r->ri_tes.radau->cs_B)));
-            CASE_CONTROL_VARS(TES_RADAU_CS_B_1ST, (&(r->ri_tes.radau->cs_B1st)));
-            CASE_CONTROL_VARS(TES_RADAU_G, (&(r->ri_tes.radau->G)));
-            CASE_CONTROL_VARS(TES_RADAU_G_1ST, (&(r->ri_tes.radau->G_1st)));
-
-            // TES force model vars
-            CASE(TES_DHEM_XOSC_STORE, r->ri_tes.rhs->XoscStore);
-            CASE(TES_DHEM_XOSC_PRED_STORE, r->ri_tes.rhs->XoscPredStore);
-            CASE(TES_DHEM_XOSC_CS_STORE, r->ri_tes.rhs->XoscStore_cs);
-            CASE(TES_DHEM_XOSC_DOT_STORE, r->ri_tes.rhs->Xosc_dotStore);
-            CASE(TES_DHEM_X, r->ri_tes.rhs->X);
-            CASE(TES_DHEM_M_INV, r->ri_tes.rhs->m_inv);
-            CASE(TES_DHEM_M_TOTAL, &r->ri_tes.rhs->mTotal);
-            CASE(TES_DHEM_RECTI_TIME, r->ri_tes.rhs->rectifyTimeArray);
-            CASE(TES_DHEM_RECTI_PERIOD, r->ri_tes.rhs->rectificationPeriod);
-        }
         // We should never get here. If so, it's an unknown field type.
         *warnings |= REB_INPUT_BINARY_WARNING_FIELD_UNKOWN;
     } 

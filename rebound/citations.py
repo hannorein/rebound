@@ -205,27 +205,6 @@ archivePrefix = {arXiv},
 }
 """
     
-    if sim.integrator == "tes":
-        txt += """The simulations were integrated using the Terrestrial Exoplanet Simulator (TES) \citep{reboundtes}. """
-        bib += """@ARTICLE{reboundtes,
-       author = {{Bartram}, Peter and {Wittig}, Alexander},
-        title = "{Terrestrial exoplanet simulator: an error optimal planetary system integrator that permits close encounters}",
-      journal = {\mnras},
-     keywords = {gravitation, methods: numerical, celestial mechanics, planets and satellites: dynamical evolution and stability, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics},
-         year = 2021,
-        month = jun,
-       volume = {504},
-       number = {1},
-        pages = {678-691},
-          doi = {10.1093/mnras/stab896},
-archivePrefix = {arXiv},
-       eprint = {2102.00465},
- primaryClass = {astro-ph.EP},
-       adsurl = {https://ui.adsabs.harvard.edu/abs/2021MNRAS.504..678B},
-      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
-}
-"""
-
     if sim.integrator == "saba":
         txt += """The simulations were integrated using the SABA Integrator \citep{reboundhighorder,saba}. """
         bib += """@ARTICLE{reboundhighorder,

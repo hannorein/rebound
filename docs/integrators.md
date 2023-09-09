@@ -589,60 +589,6 @@ Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for t
 All other members of this structure are only for internal use and should not be changed manually.
 
 
-## TES
-
-TES stands for **T**errestrial **E**xoplanet **S**imulator. TES builds upon the classic Encke method and integrates only the perturbations to Keplerian trajectories to reduce both the error and runtime of simulations. Variable step size is used throughout to enable close encounters to be precisely handled.
-The algorithm is described in detail in [Bartram & Wittig 2021](https://ui.adsabs.harvard.edu/abs/2021MNRAS.504..678B/abstract). 
-    
-!!! Important
-    TES is a new addition to REBOUND. Whereas it has been tested extensively, you might experience some bugs and there are likely edge cases where it will not return physical results. It is therefore especially important to make sure that simulations using TES are converged and not dependent on any numerical parameters. This can be done by varying the timestep and other parameters or by comparing results to simulations using other integrators. Please report any issue that you encounter on GitHub.
-
-
-
-The following code shows how to enable TES and how to set some of its control parameters. 
-
-=== "C"
-    ```c
-    struct reb_simulation* r = reb_create_simulation();
-    r->integrator = REB_INTEGRATOR_TES;
-    r->ri_tes.dq_max = 1e-2;
-    r->ri_tes.recti_per_orbit = 1.61803398875;
-    r->ri_tes.epsilon = 1e-6;
-    ```
-
-=== "Python"
-    ```python
-    sim = rebound.Simulation()
-    sim.integrator = "tes"
-    sim.ri_tes.dq_max = 1e-2
-    sim.ri_tes.recti_per_orbit = 1.61803398875
-    sim.ri_tes.epsilon = 1e-6
-    ```
-
-The setting for TES are stored in the `reb_simulation_integrator_tes` structure. For almost all use cases TES will work best with default settings for all configuration variables below and can therefore be left uninitialized in your code. The two cases where a user may want the adjust these values are if: 1) a severe shrinkage of the semi-major axis of the inner-most planet is expected; 2) the ratio of the most massive planet mass to that of the star exceeds 1e-2, and in this case it is typically better to use IAS15.
-
-`dq_max` (`double`)
-:   The value of dq/q that triggers a rectification. Generally, this variable can be left at the default value of $10^{-2}$ as the `recti_per_orbit` variable is the main rectification trigger. One exception is for systems where the ratio of the most massive planet's mass to the stellar mass is greater than $10^{-2}$, and in this case the value should be set to that ratio to avoid excessive rectification frequency. However, in this use case it is typically better to use IAS15 instead.    
-
-`recti_per_orbit` (`double`)
-:   The number of rectifications per orbit. This variable can be brought closer to 1 to slightly reduce computational costs in low mass ratio (planets to star) systems but the default value of 1.61803398875, the golden ratio, is recommended to ensure accuracy. 
-
-`epsilon` (`double`)
-:   TES is an adaptive integrator. It chooses its timesteps automatically. This parameter controls the accuracy of the integrator. The default value is $10^{-6}$ which has been chosen heuristically from a wide range of test cases and is therefore the recommended value for all integrations.
-
-    !!! Important
-        It is tempting to change `epsilon` to achieve a speedup at the loss of some accuracy. However, that makes rarely sense. The reason is that TES is a very high (15th!) order integrator. Suppose we increase the timestep by a factor of 10. This will increase the error by a factor of $10^{15}$. In other words, a simulation that previously was converged to machine precision will now have an error of order unity. 
-        
-`orbital_period` `(double`)
-:   This specifies the shortest dynamic period of all objects in the system and is set automatically by REBOUND. The only use case for changing this is if you are expecting severe shrinkage of the semi-major axis of the inner-most planet and in this case it might make sense to reduce the period accordingly.
-
-`warnings` `(uint32_t`)
-:   To silence the TES warning message, set this variable to 1. 
-
-
-All other members of this structure are only for internal TES use.
-
-
 ## No integrator
 Sometimes it might make sense to simply not advance any particle positions or velocities. By selecting this integrator, one can still perform integration steps, but particles will not move.
 
