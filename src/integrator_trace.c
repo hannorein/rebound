@@ -457,6 +457,8 @@ int Fcond(struct reb_simulation* const r){
         ri_tr->current_L = 1;
         new_c = 1;
         ri_tr->regime = 1;
+
+        //printf("%f %d Peri CE\n", r->t, j);
       }
 
       // Body-body
@@ -470,6 +472,7 @@ int Fcond(struct reb_simulation* const r){
             ri_tr->encounter_map_internal[j] = j;
             ri_tr->encounterN++;
         }
+        //printf("%f %d %d Body-Body CE\n", r->t, i, j);
         // Checks for switching Kij 0->1. Initialized as all 0 the first time of asking.
         if (ri_tr->current_Ks[pindex(i,j,N)] == 0){
           ri_tr->current_Ks[pindex(i,j,N)] = 1;
@@ -560,12 +563,23 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
         ri_tr->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
       }
 
+      // Kepler - Interaction/Jump - Kepler for now if we use adaptive timesteps
+      /*
       reb_integrator_trace_kepler_step(r, r->dt/2.); // always accept this
       reb_integrator_trace_interaction_step(r, r->dt);
       reb_integrator_trace_jump_step(r, r->dt);
       reb_integrator_trace_com_step(r,r->dt);
       reb_integrator_trace_kepler_step(r, r->dt/2.);
+      */
       // This sets last_regime. At the end of the loop, this should be correctly set
+
+      // This is faster if not using adaptive TS
+      reb_integrator_trace_interaction_step(r, r->dt/2.);
+      reb_integrator_trace_jump_step(r, r->dt/2.);
+      reb_integrator_trace_kepler_step(r, r->dt); // always accept this
+      reb_integrator_trace_com_step(r,r->dt);
+      reb_integrator_trace_jump_step(r, r->dt/2.);
+      reb_integrator_trace_interaction_step(r, r->dt/2.);
 
       // Also check for new close_encounters
       int ctry = Fcond(r);
@@ -598,6 +612,8 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
             // Reject & reset
             r->particles[i] = ri_tr->particles_backup[i];
         }
+
+        //printf("Rejected at %f\n", r->t);
 
         if (ri_tr->ats){
           if (ctry && ri_tr->regime == 0){

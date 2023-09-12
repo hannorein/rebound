@@ -74,7 +74,7 @@ int main(int argc, char* argv[]){
     r->ri_tr.peri = 0.01;
     r->ri_tr.nshells = 7;
     r->exact_finish_time = 0; // Need to fix
-    r->ri_tr.ats = 1;
+    r->ri_tr.ats = 0;
 
 
     struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
