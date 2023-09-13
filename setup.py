@@ -17,7 +17,7 @@ try:
     ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")
     ghash_arg = "-DGITHASH="+ghash.strip()
 except:
-    ghash_arg = "-DGITHASH=1d2bc758b1443080d425fbc7c5e7e326bdcbbfbb" #GITHASHAUTOUPDATE
+    ghash_arg = "-DGITHASH=0ce1103753b84ddf6adb71857818710330da8e0c" #GITHASHAUTOUPDATE
 
 extra_link_args=[]
 if sys.platform == 'darwin':
@@ -25,6 +25,20 @@ if sys.platform == 'darwin':
     vars = sysconfig.get_config_vars()
     vars['LDSHARED'] = vars['LDSHARED'].replace('-bundle', '-shared')
     extra_link_args=['-Wl,-install_name,@rpath/librebound'+suffix]
+
+# Default compile args
+extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC']
+
+# Option to disable FMA in CLANG. 
+FFP_CONTRACT_OFF = os.environ.get("FFP_CONTRACT_OFF", None)
+if FFP_CONTRACT_OFF:
+    extra_compile_args.append('-ffp-contract=off')
+
+# Option to enable AVX512 enabled integrators (WHFast512). 
+AVX512 = os.environ.get("AVX512", None)
+if AVX512:
+    extra_compile_args.append('-march=native')
+    extra_compile_args.append('-DAVX512')
     
 libreboundmodule = Extension('librebound',
                     sources = [ 'src/rebound.c',
@@ -38,7 +52,6 @@ libreboundmodule = Extension('librebound',
                                 'src/integrator_bs.c',
                                 'src/integrator_janus.c',
                                 'src/integrator_sei.c',
-                                'src/integrator_tes.c',
                                 'src/integrator.c',
                                 'src/gravity.c',
                                 'src/boundary.c',
@@ -57,11 +70,8 @@ libreboundmodule = Extension('librebound',
                                 ],
                     include_dirs = ['src'],
                     define_macros=[ ('LIBREBOUND', None) ],
-                    # Uncomment the following line for the non-AVX512 version of REBOUND
-                    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC'],
-                    # Uncomment the following line to enable AVX512 
-                    # extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC', '-march=native', '-DAVX512'],
                     extra_link_args=extra_link_args,
+                    extra_compile_args=extra_compile_args,
                     )
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -69,7 +79,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='3.26.0',
+    version='3.27.0',
     description='An open-source multi-purpose N-body code',
     long_description=long_description,
     long_description_content_type="text/markdown",

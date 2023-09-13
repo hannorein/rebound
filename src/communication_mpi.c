@@ -47,7 +47,11 @@
 #include "communication_mpi.h"
 
 void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char** argv){
-	MPI_Init(&argc,&argv);
+    int initialized;
+    MPI_Initialized(&initialized);
+    if (!initialized){
+	    MPI_Init(&argc,&argv);
+    }
 	MPI_Comm_size(MPI_COMM_WORLD,&(r->mpi_num));
 	MPI_Comm_rank(MPI_COMM_WORLD,&(r->mpi_id));
 	
@@ -240,7 +244,7 @@ void reb_communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct
 		r->particles_send_N[proc]++;
 	}else{		// Not a leaf. Check if we need to transfer daughters.
 		double distance2 = reb_communication_distance2_of_proc_to_node(r, proc,node);
-		double rp  = 2.*r->max_radius[0] + 0.86602540378443*node->w;
+		double rp  = 2.*r->max_radius0 + 0.86602540378443*node->w;
 		if (distance2 < rp*rp ){
 			for (int o=0;o<8;o++){
 				struct reb_treecell* d = node->oct[o];

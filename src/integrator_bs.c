@@ -90,7 +90,7 @@ void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* 
         reb_error(r, "Update particles called without valid y pointer.");
         return;
     }
-    for (int i=0; i<r->N; i++){
+    for (unsigned int i=0; i<r->N; i++){
         struct reb_particle* const p = &(r->particles[i]);
         p->x  = y[i*6+0];
         p->y  = y[i*6+1];
@@ -322,7 +322,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
         reb_update_acceleration(r);
     }
 
-    for (int i=0; i<r->N; i++){
+    for (unsigned int i=0; i<r->N; i++){
         const struct reb_particle p = r->particles[i];
         yDot[i*6+0] = p.vx;
         yDot[i*6+1] = p.vy;
@@ -711,9 +711,9 @@ struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length){
     
     memset(ode, 0, sizeof(struct reb_ode)); // not really necessaery
 
-    if (r->odes_allocatedN <= r->odes_N){
-        r->odes_allocatedN += 32;
-        r->odes = realloc(r->odes,sizeof(struct reb_ode*)*r->odes_allocatedN);
+    if (r->odes_allocated_N <= r->odes_N){
+        r->odes_allocated_N += 32;
+        r->odes = realloc(r->odes,sizeof(struct reb_ode*)*r->odes_allocated_N);
     }
     
     r->odes[r->odes_N] = ode;
@@ -723,7 +723,7 @@ struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length){
     ode->r = r; // weak reference
     ode->length = length;
     ode->needs_nbody = 1;
-    ode->allocatedN = length;
+    ode->allocated_N = length;
     ode->getscale = NULL;
     ode->derivatives = NULL;
     ode->pre_timestep = NULL;
@@ -750,7 +750,7 @@ struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length){
 void reb_integrator_bs_part2(struct reb_simulation* r){
     struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
     
-    int nbody_length = r->N*3*2;
+    unsigned int nbody_length = r->N*3*2;
     // Check if particle numbers changed, if so delete and recreate ode.
     if (ri_bs->nbody_ode != NULL){ 
         if (ri_bs->nbody_ode->length != nbody_length){
@@ -772,7 +772,7 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
     }
 
     double* const y = ri_bs->nbody_ode->y;
-    for (int i=0; i<r->N; i++){
+    for (unsigned int i=0; i<r->N; i++){
         const struct reb_particle p = r->particles[i];
         y[i*6+0] = p.x;
         y[i*6+1] = p.y;

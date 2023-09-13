@@ -626,7 +626,6 @@ struct reb_particle reb_particle_new(struct reb_simulation* r, const char* fmt, 
     
     if (err==0){ // Success
         return particle;
-        reb_add(r, particle);
     }else{
         const char* error_string = reb_string_for_particle_error(err);
         fprintf(stderr, "\n\033[1mError!\033[0m %s\n", error_string);
@@ -1242,7 +1241,7 @@ void reb_tools_particle_to_pal(double G, struct reb_particle p, struct reb_parti
 }
 
 struct reb_particle reb_tools_pal_to_particle(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy){
-    struct reb_particle np = {0.};
+    struct reb_particle np = {0};
     np.m = m;
 
     double p=0.,q=0.;

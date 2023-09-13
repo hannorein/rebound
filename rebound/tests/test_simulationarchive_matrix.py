@@ -94,10 +94,7 @@ for integrator in ["ias15","whfast","leapfrog","janus","mercurius","saba","sabac
         for G in [1.,0.9]:
             for testparticle in [0,1,2]: # no test particle, passive, semi-active
                 for keep_unsynchronized in [1,0]:
-                    for simulationarchive_version in [1,3]:
-                        if simulationarchive_version==1:
-                            if integrator=="leapfrog" or integrator=="saba" or integrator=="mercurius" or integrator=="sabacl4" or integrator=="saba(10,6,4)":
-                                continue
+                    for simulationarchive_version in [2,3]: # no longer testing version 1!
                         params = {'safe_mode':safe_mode,
                                 'integrator':integrator,
                                 'G':G, 

@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <stddef.h> // for offsetof()
 #include <sys/types.h>
 #include <string.h>
 #include <sys/time.h>
@@ -41,7 +42,6 @@
 #include "integrator_ias15.h"
 #include "integrator_mercurius.h"
 #include "integrator_bs.h"
-#include "integrator_tes.h"
 #include "boundary.h"
 #include "gravity.h"
 #include "collision.h"
@@ -66,7 +66,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.26.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.27.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_error_message_waiting(struct reb_simulation* const r);
@@ -331,9 +331,8 @@ void reb_free_pointers(struct reb_simulation* const r){
     reb_integrator_ias15_reset(r);
     reb_integrator_mercurius_reset(r);
     reb_integrator_bs_reset(r);
-    reb_integrator_tes_reset(r);
     if(r->free_particle_ap){
-        for(int i=0; i<r->N; i++){
+        for(unsigned int i=0; i<r->N; i++){
             r->free_particle_ap(&r->particles[i]);
         }
     }
@@ -364,16 +363,16 @@ void reb_free_pointers(struct reb_simulation* const r){
 
 void reb_reset_temporary_pointers(struct reb_simulation* const r){
     // Note: this will not clear the particle array.
-    r->gravity_cs_allocatedN    = 0;
+    r->gravity_cs_allocated_N    = 0;
     r->gravity_cs           = NULL;
-    r->collisions_allocatedN    = 0;
+    r->collisions_allocated_N    = 0;
     r->collisions           = NULL;
     r->extras               = NULL;
     r->messages             = NULL;
     // ********** Lookup Table
     r->particle_lookup_table = NULL;
     r->N_lookup = 0;
-    r->allocatedN_lookup = 0;
+    r->allocated_N_lookup = 0;
     // ********** WHFAST
     r->ri_whfast.allocated_N    = 0;
     r->ri_whfast.allocated_Ntemp= 0;
@@ -381,7 +380,7 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_whfast.p_temp         = NULL;
     r->ri_whfast.keep_unsynchronized = 0;
     // ********** IAS15
-    r->ri_ias15.allocatedN      = 0;
+    r->ri_ias15.allocated_N      = 0;
     set_dp7_null(&(r->ri_ias15.g));
     set_dp7_null(&(r->ri_ias15.b));
     set_dp7_null(&(r->ri_ias15.csb));
@@ -399,9 +398,9 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_ias15.map_allocated_N      = 0;
     r->ri_ias15.map         = NULL;
     // ********** MERCURIUS
-    r->ri_mercurius.allocatedN = 0;
-    r->ri_mercurius.allocatedN_additionalforces = 0;
-    r->ri_mercurius.dcrit_allocatedN = 0;
+    r->ri_mercurius.allocated_N = 0;
+    r->ri_mercurius.allocated_N_additionalforces = 0;
+    r->ri_mercurius.dcrit_allocated_N = 0;
     r->ri_mercurius.dcrit = NULL;
     r->ri_mercurius.particles_backup = NULL;
     r->ri_mercurius.particles_backup_additionalforces = NULL;
@@ -416,9 +415,7 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     // ********** ODEs
     r->odes = NULL;
     r->odes_N = 0;
-    r->odes_allocatedN = 0;
-    // ********** TES
-    r->ri_tes.particles_dh = NULL;
+    r->odes_allocated_N = 0;
 }
 
 int reb_reset_function_pointers(struct reb_simulation* const r){
@@ -465,10 +462,25 @@ void reb_copy_simulation_with_messages(struct reb_simulation* r_copy,  struct re
     // Set to old version by default. Will be overwritten if new version was used.
     r_copy->simulationarchive_version = 0;
 
-    char* bufp_beginning = bufp; // bufp will be changed
-    while(reb_input_field(r_copy, NULL, warnings, &bufp)){ }
-    free(bufp_beginning);
+    FILE* fin = fmemopen(bufp, sizep, "r");
+    reb_input_fields(r_copy, fin, warnings);
+    fclose(fin);
     
+}
+
+char* reb_diff_simulations_char(struct reb_simulation* r1, struct reb_simulation* r2){
+    char* bufp1;
+    char* bufp2;
+    char* bufp;
+    size_t sizep1, sizep2, size;
+    reb_output_binary_to_stream(r1, &bufp1,&sizep1);
+    reb_output_binary_to_stream(r2, &bufp2,&sizep2);
+
+    reb_binary_diff_with_options(bufp1, sizep1, bufp2, sizep2, &bufp, &size, 3);
+    
+    free(bufp1);
+    free(bufp2);
+    return bufp;
 }
 
 int reb_diff_simulations(struct reb_simulation* r1, struct reb_simulation* r2, int output_option){
@@ -522,13 +534,13 @@ void reb_init_simulation(struct reb_simulation* r){
     r->nghosty  = 0;
     r->nghostz  = 0;
     r->N        = 0;    
-    r->allocatedN   = 0;    
+    r->allocated_N   = 0;    
     r->N_active     = -1;   
     r->var_rescale_warning   = 0;   
     r->particle_lookup_table = NULL;
     r->hash_ctr = 0;
     r->N_lookup = 0;
-    r->allocatedN_lookup = 0;
+    r->allocated_N_lookup = 0;
     r->testparticle_type = 0;   
     r->testparticle_hidewarnings = 0;
     r->N_var    = 0;    
@@ -536,8 +548,8 @@ void reb_init_simulation(struct reb_simulation* r){
     r->var_config   = NULL;     
     r->exit_min_distance    = 0;    
     r->exit_max_distance    = 0;    
-    r->max_radius[0]    = 0.;   
-    r->max_radius[1]    = 0.;   
+    r->max_radius0    = 0.;   
+    r->max_radius1    = 0.;   
     r->status       = REB_RUNNING;
     r->exact_finish_time    = 1;
     r->force_is_velocity_dependent = 0;
@@ -631,12 +643,6 @@ void reb_init_simulation(struct reb_simulation* r){
     
     // ********** NS
     reb_integrator_bs_reset(r);
-
-    // ********** TES
-    r->ri_tes.dq_max = 1e-2;                   // good fall back value and should be OK for reasonable planet masses.
-    r->ri_tes.recti_per_orbit = 1.61803398875; // golden ratio 
-    r->ri_tes.epsilon = 1e-6;
-    r->ri_tes.allocated_N = 0;
 
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.
     r->tree_needs_update= 0;
@@ -936,3 +942,4 @@ const char* reb_logo[26] = {
 "          `-/oyyyssosssyso+/.            ",
 "                ``....`                  ",
 };
+

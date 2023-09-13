@@ -19,7 +19,7 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * Parallelized with OpenMP (for shared memory systems)
 * Parallelized with [MPI](mpi/) is supported for some special use cases only (using an essential tree for gravity and collisions)
 * No dependencies on external libraries (use of OpenGL/glfw3 for visualization is optional)
-* The code is 100% open-source. All features are inluced in the public repository on [github](https://github.com/hannorein/rebound)
+* The code is 100% open-source. All features are included in the public repository on [github](https://github.com/hannorein/rebound)
 * No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
 * Comes with standard ASCII or binary output routines
 * Different modules are easily interchangeable at runtime
@@ -29,7 +29,7 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * Hanno Rein, University of Toronto, <hanno@hanno-rein.de>
 * Dan Tamayo, Harvey Mudd College <dtamayo@hmc.edu>
 * David S. Spiegel, Institute for Advanced Study Princeton, <dave@ias.edu>
-* Garett Brown, University of Toronto, <gbrown@physics.utoronto.ca>
+* Garett Brown, University of Toronto, <garett.brown@mail.utoronto.ca>
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University, <liushangfei@pku.edu.cn>
 * Ari Silburt, Penn State University, <ajs725@psu.edu>
 * Pejvak Javaher, University of Toronto, <pejvak.javaheri@mail.utoronto.ca>
@@ -63,9 +63,7 @@ There are several papers describing the functionality of REBOUND.
 
 9. Rein, Tamayo & Brown 2019 (Monthly Notices of the Royal Astronomical Society, Volume 489, Issue 4, November 2019, Pages 4632-4640) describes the implementation of the high order symplectic integrators SABA, SABAC, SABACL, WHCKL, WHCKM, and WHCKC. <https://ui.adsabs.harvard.edu/abs/2019MNRAS.489.4632R/abstract>
 
-10. Bartram & Wittig 2021 (Monthly Notices of the Royal Astronomical Society, Volume 504, Issue 1, Pages 678-691) describes the implementation of the TES integrator. <https://ui.adsabs.harvard.edu/abs/2021MNRAS.504..678B/abstract>
-
-11. Javaheri, Rein & Tamayo 2023 (in prep) describes the WHFast512 integrator which uses AVX512 instructions.
+10. Javaheri, Rein & Tamayo 2023 (in prep) describes the WHFast512 integrator which uses AVX512 instructions.
 
 ## Acknowledgments
 

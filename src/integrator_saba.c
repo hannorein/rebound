@@ -79,7 +79,7 @@ static int reb_saba_stages(const int type){
 
 
 // Some coefficients appear multiple times to simplify the loop structures. 
-const static double reb_saba_c[10][5] = {
+static const double reb_saba_c[10][5] = {
         {0.5, }, // SABA1
         {0.2113248654051871177454256097490212721762, 0.5773502691896257645091487805019574556476, }, // SABA2
         {0.1127016653792583114820734600217600389167, 0.3872983346207416885179265399782399610833, }, // SABA3
@@ -101,7 +101,7 @@ const static double reb_saba_c[10][5] = {
         -0.009976522883811240843267468164812380613143, -0.05992919973494155126395247987729676004016,
          0.2574761120673404534492282264603316880356}, // ABAH(10,6,4)
 }; 
-const static double reb_saba_d[10][5] = {
+static const double reb_saba_d[10][5] = {
         {1., },
         {0.5,},
         {0.2777777777777777777777777777777777777778, 0.4444444444444444444444444444444444444444,},
@@ -120,7 +120,7 @@ const static double reb_saba_d[10][5] = {
         -0.4684593418325993783650820409805381740605, 0.3351397342755897010393098942949569049275,
         0.2766711191210800975049457263356834696055}, // ABAH(10,6,4)
 };
-const static double reb_saba_cc[4] = {
+static const double reb_saba_cc[4] = {
         0.08333333333333333333333333333333333333333,  // SABAC1
         0.01116454968463011276968973577058865137738,  // SABAC2
         0.005634593363122809402267823769797538671562, // SABAC3
@@ -132,7 +132,7 @@ static void reb_saba_corrector_step(struct reb_simulation* r, double cc){
     struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
     struct reb_particle* const p_j = ri_whfast->p_jh;
 	struct reb_particle* const particles = r->particles;
-    const int N = r->N;
+    const unsigned int N = r->N;
     switch (r->ri_saba.type/0x100){
         case 1: // modified kick
             // Calculate normal kick
@@ -141,7 +141,7 @@ static void reb_saba_corrector_step(struct reb_simulation* r, double cc){
             // Calculate jerk
             reb_whfast_calculate_jerk(r);
 
-            for (int i=0; i<N; i++){
+            for (unsigned int i=0; i<N; i++){
                 const double prefact = r->dt*r->dt;
                 particles[i].ax = prefact*p_j[i].ax; 
                 particles[i].ay = prefact*p_j[i].ay; 
@@ -295,7 +295,7 @@ void reb_integrator_saba_part2(struct reb_simulation* const r){
     struct reb_particle* restrict const particles = r->particles;
     const int type = ri_saba->type;
     const int stages = reb_saba_stages(type);
-    const int N = r->N;
+    const unsigned int N = r->N;
     if (ri_whfast->p_jh==NULL){
         // Non recoverable error occured earlier. 
         // Skipping rest of integration to avoid segmentation fault.

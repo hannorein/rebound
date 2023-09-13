@@ -47,7 +47,6 @@
 #include "integrator_janus.h"
 #include "integrator_eos.h"
 #include "integrator_bs.h"
-#include "integrator_tes.h"
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
 
@@ -82,9 +81,6 @@ void reb_integrator_part1(struct reb_simulation* r){
 			break;
 		case REB_INTEGRATOR_BS:
 			reb_integrator_bs_part1(r);
-			break;
-		case REB_INTEGRATOR_TES:
-			reb_integrator_tes_part1(r);
 			break;
 		default:
 			break;
@@ -123,9 +119,6 @@ void reb_integrator_part2(struct reb_simulation* r){
 		case REB_INTEGRATOR_BS:
 			reb_integrator_bs_part2(r);
 			break;
-		case REB_INTEGRATOR_TES:
-			reb_integrator_tes_part2(r);
-			break;			
         case REB_INTEGRATOR_NONE:
             r->t += r->dt;
             r->dt_last_done = r->dt;
@@ -199,9 +192,6 @@ void reb_integrator_synchronize(struct reb_simulation* r){
 		case REB_INTEGRATOR_BS:
 			reb_integrator_bs_synchronize(r);
 			break;
-		case REB_INTEGRATOR_TES:
-			reb_integrator_tes_synchronize(r);
-			break;				
 		default:
 			break;
 	}
@@ -230,7 +220,6 @@ void reb_integrator_reset(struct reb_simulation* r){
 	reb_integrator_janus_reset(r);
 	reb_integrator_eos_reset(r);
 	reb_integrator_bs_reset(r);
-	reb_integrator_tes_reset(r);
 }
 
 void reb_update_acceleration(struct reb_simulation* r){
@@ -247,9 +236,9 @@ void reb_update_acceleration(struct reb_simulation* r){
         if (r->integrator==REB_INTEGRATOR_MERCURIUS){
             // shift pos and velocity so that external forces are calculated in inertial frame
             // Note: Copying avoids degrading floating point performance
-            if(r->N>r->ri_mercurius.allocatedN_additionalforces){
+            if(r->N>r->ri_mercurius.allocated_N_additionalforces){
                 r->ri_mercurius.particles_backup_additionalforces = realloc(r->ri_mercurius.particles_backup_additionalforces, r->N*sizeof(struct reb_particle));
-                r->ri_mercurius.allocatedN_additionalforces = r->N;
+                r->ri_mercurius.allocated_N_additionalforces = r->N;
             }
             memcpy(r->ri_mercurius.particles_backup_additionalforces,r->particles,r->N*sizeof(struct reb_particle)); 
             reb_integrator_mercurius_dh_to_inertial(r);
@@ -258,7 +247,7 @@ void reb_update_acceleration(struct reb_simulation* r){
         if (r->integrator==REB_INTEGRATOR_MERCURIUS){
             struct reb_particle* restrict const particles = r->particles;
             struct reb_particle* restrict const backup = r->ri_mercurius.particles_backup_additionalforces;
-            for (int i=0;i<r->N;i++){
+            for (unsigned int i=0;i<r->N;i++){
                 particles[i].x = backup[i].x;
                 particles[i].y = backup[i].y;
                 particles[i].z = backup[i].z;

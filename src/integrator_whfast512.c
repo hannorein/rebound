@@ -470,13 +470,13 @@ static void inertial_to_democraticheliocentric_posvel(struct reb_simulation* r){
     struct reb_particle_avx512* p512 = aligned_alloc(64,sizeof(struct reb_particle_avx512));
     struct reb_particle* particles = r->particles;
     struct reb_particle_avx512* p_jh = ri_whfast512->p_jh;
-    const int N = r->N;
+    const unsigned int N = r->N;
     double val[8];
 #define CONVERT2AVX(x, p) \
-    for (int i=1;i<N;i++){\
+    for (unsigned int i=1;i<N;i++){\
         val[i-1] = particles[i].x;\
     }\
-    for (int i=N;i<9;i++){\
+    for (unsigned int i=N;i<9;i++){\
         if (p){\
             val[i-1] = 100+i;\
         }else{\
@@ -541,7 +541,7 @@ static void democraticheliocentric_to_inertial_posvel(struct reb_simulation* r){
     struct reb_particle_avx512* p512 = aligned_alloc(64,sizeof(struct reb_particle_avx512));
     struct reb_particle_avx512* p_jh = ri_whfast512->p_jh;
     const double mtot = ri_whfast512->p_jh0.m;
-    const int N = r->N;
+    const unsigned int N = r->N;
     
     __m512d x0 = _mm512_mul_pd(p_jh->x,p_jh->m);
     double x0s = _mm512_reduce_add_pd(x0)/mtot;
@@ -588,7 +588,7 @@ static void democraticheliocentric_to_inertial_posvel(struct reb_simulation* r){
     double val[8];
 #define CONVERT2PAR(x) \
     _mm512_storeu_pd(&val, p512->x);\
-    for (int i=1;i<N;i++){\
+    for (unsigned int i=1;i<N;i++){\
         particles[i].x = val[i-1];\
     }
    
@@ -660,7 +660,7 @@ static void reb_whfast512_com_step(struct reb_simulation* r, const double _dt){
 // Precalculate various constants and put them in 512 bit vectors.
 void static recalculate_constants(struct reb_simulation* r){
     struct reb_simulation_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
-    const int N = r->N;
+    const unsigned int N = r->N;
     half = _mm512_set1_pd(0.5); 
     one = _mm512_add_pd(half, half); 
     two = _mm512_add_pd(one, one); 
@@ -670,7 +670,7 @@ void static recalculate_constants(struct reb_simulation* r){
     _M = _mm512_set1_pd(r->particles[0].m); 
     so1 = _mm512_set_epi64(1,2,3,0,6,7,4,5);
     so2 = _mm512_set_epi64(3,2,1,0,6,5,4,7);
-    for(int i=0;i<35;i++){
+    for(unsigned int i=0;i<35;i++){
         invfactorial512[i] = _mm512_set1_pd(invfactorial[i]); 
     }
 
@@ -678,10 +678,10 @@ void static recalculate_constants(struct reb_simulation* r){
     double c = 10065.32;
     gr_prefac = _mm512_set1_pd(6.*r->particles[0].m*r->particles[0].m/(c*c));
     double _gr_prefac2[8];
-    for(int i=1;i<N;i++){
+    for(unsigned int i=1;i<N;i++){
         _gr_prefac2[i-1] = r->particles[i].m/r->particles[0].m;
     }
-    for(int i=N;i<9;i++){
+    for(unsigned int i=N;i<9;i++){
         _gr_prefac2[i-1] = 0;
     }
     gr_prefac2 = _mm512_loadu_pd(&_gr_prefac2);
@@ -734,6 +734,9 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
             r->status = REB_EXIT_ERROR;
             return;
         }
+        if (r->exit_min_distance || r->exit_max_distance){
+            reb_warning(r, "You are using WHFast512 together with the flags exit_min_distance and/or exit_max_distance. With the current implementation, these flags will only check the last synchronized positions. In addition they might slow down WHFast512 significantly. If you need to use these flags, please open an issue on GitHub for further advice.");
+        }
         ri_whfast512->allocated_N=1;
         ri_whfast512->recalculate_constants = 1;
         r->gravity = REB_GRAVITY_NONE; // WHFast512 uses its own gravity routine.
@@ -778,7 +781,7 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
 #else // AVX512
 // Dummy function when AVX512 is not available
 void reb_integrator_whfast512_part1(struct reb_simulation* const r){
-    reb_error(r, "WHFast512 is not available. Please make sure your CPU supports AVX512 instructions, then recompile REBOUND with the AVX512 option turned on in the Makefile or setup.py file.");
+    reb_error(r, "WHFast512 is not available. Please make sure your CPU supports AVX512 instructions, then recompile REBOUND with the AVX512 option turned on in the Makefile or set the AVX512 environment variable to 1 before running pip install.");
     r->status = REB_EXIT_ERROR;
 }
 #endif // AVX512
@@ -816,7 +819,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
         reb_warning(r, "WHFast512 is not available. Synchronization is provided using WHFast and is not bit-compatible to WHFast512.");
         reb_integrator_whfast_init(r);
         ri_whfast->p_jh[0] = ri_whfast512->p_jh0;
-        for (int i=1;i<r->N;i++){
+        for (unsigned int i=1;i<r->N;i++){
             ri_whfast->p_jh[i].m = ri_whfast512->p_jh->m[i-1];
             ri_whfast->p_jh[i].x = ri_whfast512->p_jh->x[i-1];
             ri_whfast->p_jh[i].y = ri_whfast512->p_jh->y[i-1];
