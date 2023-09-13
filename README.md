@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/rebound-v3.26.0-green.svg?style=flat)](https://rebound.readthedocs.org)
+[![Version](https://img.shields.io/badge/rebound-v3.27.0-green.svg?style=flat)](https://rebound.readthedocs.org)
 [![PyPI](https://badge.fury.io/py/rebound.svg)](https://badge.fury.io/py/rebound)
 [![GPL](https://img.shields.io/badge/license-GPL-green.svg?style=flat)](https://github.com/hannorein/rebound/blob/main/LICENSE)
 [![Paper](https://img.shields.io/badge/arXiv-1110.4876-green.svg?style=flat)](https://arxiv.org/abs/1110.4876)
@@ -36,7 +36,7 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * Parallelized with OpenMP (for shared memory systems)
 * Parallelized with MPI is supported for some special use cases only (using an essential tree for gravity and collisions)
 * No dependencies on external libraries (use of OpenGL/glfw3 for visualization is optional)
-* The code is 100% open-source. All features are inluced in the public repository on [github](https://github.com/hannorein/rebound)
+* The code is 100% open-source. All features are included in the public repository on [github](https://github.com/hannorein/rebound)
 * No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
 * Comes with standard ASCII or binary output routines
 * Different modules are easily interchangeable at runtime
@@ -118,7 +118,7 @@ sim.cite()
 * Hanno Rein, University of Toronto, <hanno@hanno-rein.de>
 * Dan Tamayo, Harvey Mudd College, <dtamayo@hmc.edu>
 * David S. Spiegel, Institute for Advanced Study Princeton, <dave@ias.edu>
-* Garett Brown, University of Toronto, <gbrown@physics.utoronto.ca>
+* Garett Brown, University of Toronto, <garett.brown@mail.utoronto.ca>
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University, <liushangfei@pku.edu.cn>
 * Ari Silburt, Penn State University, <ajs725@psu.edu>
 * and many others! Check the git history to find out who contributed to the code.

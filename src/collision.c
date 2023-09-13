@@ -138,11 +138,11 @@ void reb_collision_search(struct reb_simulation* const r){
                         // Check if particles are approaching each other
                         if (dvx*dx + dvy*dy + dvz*dz >0) continue;
                         // Add particles to collision array.
-                        if (r->collisions_allocatedN<=collisions_N){
+                        if (r->collisions_allocated_N<=collisions_N){
                             // Allocate memory if there is no space in array.
                             // Init to 32 if no space has been allocated yet, otherwise double it.
-                            r->collisions_allocatedN = r->collisions_allocatedN ? r->collisions_allocatedN * 2 : 32;
-                            r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocatedN);
+                            r->collisions_allocated_N = r->collisions_allocated_N ? r->collisions_allocated_N * 2 : 32;
+                            r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocated_N);
                         }
                         r->collisions[collisions_N].p1 = ip;
                         r->collisions[collisions_N].p2 = jp;
@@ -208,11 +208,11 @@ void reb_collision_search(struct reb_simulation* const r){
                         if (rmin2_ab>rsum*rsum) continue;
 
                         // Add particles to collision array.
-                        if (r->collisions_allocatedN<=collisions_N){
+                        if (r->collisions_allocated_N<=collisions_N){
                             // Allocate memory if there is no space in array.
                             // Init to 32 if no space has been allocated yet, otherwise double it.
-                            r->collisions_allocatedN = r->collisions_allocatedN ? r->collisions_allocatedN * 2 : 32;
-                            r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocatedN);
+                            r->collisions_allocated_N = r->collisions_allocated_N ? r->collisions_allocated_N * 2 : 32;
+                            r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocated_N);
                         }
                         r->collisions[collisions_N].p1 = i;
                         r->collisions[collisions_N].p2 = j;
@@ -399,7 +399,7 @@ void reb_collision_search(struct reb_simulation* const r){
                                 c.p2--;
                             }
                         }else{
-                            if (c.p2 == r->N-r->N_var){
+                            if (c.p2 == (int)(r->N-r->N_var)){
                                 c.p2 = c.p1;
                             }
                         }
@@ -419,10 +419,10 @@ void reb_collision_search(struct reb_simulation* const r){
                                     cp->p2--;
                                 }
                             }else{
-                                if (cp->p1 == r->N-r->N_var){
+                                if (cp->p1 == (int)(r->N-r->N_var)){
                                     cp->p1 = c.p1;
                                 }
-                                if (cp->p2 == r->N-r->N_var){
+                                if (cp->p2 == (int)(r->N-r->N_var)){
                                     cp->p2 = c.p1;
                                 }
                             }
@@ -460,10 +460,10 @@ void reb_collision_search(struct reb_simulation* const r){
                                     cp->p2--;
                                 }
                             }else{
-                                if (cp->p1 == r->N-r->N_var){
+                                if (cp->p1 == (int)(r->N-r->N_var)){
                                     cp->p1 = c.p2;
                                 }
-                                if (cp->p2 == r->N-r->N_var){
+                                if (cp->p2 == (int)(r->N-r->N_var)){
                                     cp->p2 = c.p2;
                                 }
                             }
@@ -553,10 +553,10 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
             // Save collision in collisions array.
 #pragma omp critical
             {
-                if (r->collisions_allocatedN<=(*collisions_N)){
+                if (r->collisions_allocated_N<=(*collisions_N)){
                     // Init to 32 if no space has been allocated yet, otherwise double it.
-                    r->collisions_allocatedN = r->collisions_allocatedN ? r->collisions_allocatedN * 2 : 32;
-                    r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocatedN);
+                    r->collisions_allocated_N = r->collisions_allocated_N ? r->collisions_allocated_N * 2 : 32;
+                    r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocated_N);
                 }
                 r->collisions[(*collisions_N)] = *collision_nearest;
                 (*collisions_N)++;
@@ -568,7 +568,7 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
         double dy = gb.shifty - c->y;
         double dz = gb.shiftz - c->z;
         double r2 = dx*dx + dy*dy + dz*dz;
-        double rp  = p1_r + r->max_radius[1] + 0.86602540378443*c->w;
+        double rp  = p1_r + r->max_radius1 + 0.86602540378443*c->w;
         // Check if we need to decent into daughter cells
         if (r2 < rp*rp ){
             for (int o=0;o<8;o++){
@@ -618,10 +618,10 @@ static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simul
             // Save collision in collisions array.
 #pragma omp critical
             {
-                if (r->collisions_allocatedN<=(*collisions_N)){
+                if (r->collisions_allocated_N<=(*collisions_N)){
                     // Init to 32 if no space has been allocated yet, otherwise double it.
-                    r->collisions_allocatedN = r->collisions_allocatedN ? r->collisions_allocatedN * 2 : 32;
-                    r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocatedN);
+                    r->collisions_allocated_N = r->collisions_allocated_N ? r->collisions_allocated_N * 2 : 32;
+                    r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocated_N);
                 }
                 r->collisions[(*collisions_N)] = *collision_nearest;
                 (*collisions_N)++;
@@ -759,8 +759,8 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
     // Always remove particle with larger index and merge into lower index particle.
     // This will keep N_active meaningful even after mergers.
     int swap = 0;
-    int i = c.p1;
-    int j = c.p2;   //want j to be removed particle
+    unsigned int i = c.p1;
+    unsigned int j = c.p2;   //want j to be removed particle
     if (j<i){
         swap = 1;
         i = c.p2;
@@ -812,7 +812,7 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
 
             Ei += 0.5*pj->m*(vx*vx + vy*vy + vz*vz);
         }
-        const int N_active = ((r->N_active==-1)?r->N-r->N_var:r->N_active);
+        const unsigned int N_active = ((r->N_active==-1)?r->N-r->N_var: (unsigned int)r->N_active);
         // No potential energy between test particles
         if (i<N_active || j<N_active){
             double x = pi->x - pj->x;

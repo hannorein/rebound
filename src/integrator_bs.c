@@ -826,9 +826,9 @@ struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length){
 
     memset(ode, 0, sizeof(struct reb_ode)); // not really necessaery
 
-    if (r->odes_allocatedN <= r->odes_N){
-        r->odes_allocatedN += 32;
-        r->odes = realloc(r->odes,sizeof(struct reb_ode*)*r->odes_allocatedN);
+    if (r->odes_allocated_N <= r->odes_N){
+        r->odes_allocated_N += 32;
+        r->odes = realloc(r->odes,sizeof(struct reb_ode*)*r->odes_allocated_N);
     }
 
     r->odes[r->odes_N] = ode;
@@ -838,7 +838,7 @@ struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length){
     ode->r = r; // weak reference
     ode->length = length;
     ode->needs_nbody = 1;
-    ode->allocatedN = length;
+    ode->allocated_N = length;
     ode->getscale = NULL;
     ode->derivatives = NULL;
     ode->pre_timestep = NULL;

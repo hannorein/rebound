@@ -100,7 +100,7 @@ void reb_integrator_mercurius_inertial_to_dh(struct reb_simulation* r){
     struct reb_vec3d com_pos = {0};
     struct reb_vec3d com_vel = {0};
     double mtot = 0.;
-    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
+    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?(int)r->N:r->N_active;
     const int N = r->N;
     for (int i=0;i<N_active;i++){
         double m = particles[i].m;
@@ -131,7 +131,7 @@ void reb_integrator_mercurius_dh_to_inertial(struct reb_simulation* r){
     struct reb_particle* restrict const particles = r->particles;
     struct reb_particle temp = {0};
     const int N = r->N;
-    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
+    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?(int)r->N:r->N_active;
     for (int i=1;i<N_active;i++){
         double m = particles[i].m;
         temp.x += m * particles[i].x;
@@ -178,8 +178,8 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
     struct reb_particle* const particles = r->particles;
     struct reb_particle* const particles_backup = rim->particles_backup;
     const double* const dcrit = rim->dcrit;
-    const int N = r->N;
-    const int N_active = r->N_active==-1?r->N:r->N_active;
+    const unsigned int N = r->N;
+    const unsigned int N_active = r->N_active==-1?r->N:(unsigned int)r->N_active;
     const double dt = r->dt;
     rim->encounterN = 1;
     rim->encounter_map[0] = 1;
@@ -188,11 +188,11 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
     }else{
         rim->tponly_encounter = 1;
     }
-    for (int i=1; i<N; i++){
+    for (unsigned int i=1; i<N; i++){
         rim->encounter_map[i] = 0;
     }
-    for (int i=0; i<N_active; i++){
-        for (int j=i+1; j<N; j++){
+    for (unsigned int i=0; i<N_active; i++){
+        for (unsigned int j=i+1; j<N; j++){
             const double dxn = particles[i].x - particles[j].x;
             const double dyn = particles[i].y - particles[j].y;
             const double dzn = particles[i].z - particles[j].z;
@@ -267,7 +267,7 @@ void reb_integrator_mercurius_interaction_step(struct reb_simulation* const r, d
 
 void reb_integrator_mercurius_jump_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
-    const int N_active = r->N_active==-1?r->N:r->N_active;
+    const unsigned int N_active = r->N_active==-1?r->N: (unsigned int)r->N_active;
     const int N = r->testparticle_type==0 ? N_active: r->N;
     double px=0., py=0., pz=0.;
     for (int i=1;i<N;i++){
@@ -315,7 +315,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
             r->particles[i] = rim->particles_backup[i];     // Use coordinates before whfast step
             rim->encounter_map[i_enc] = i;
             i_enc++;
-            if (r->N_active==-1 || i<r->N_active){
+            if (r->N_active==-1 || (int)i<r->N_active){
                 rim->encounterNactive++;
                 if (rim->tponly_encounter){
                     rim->particles_backup[i] = tmp;         // Make copy of particles after the kepler step.
@@ -386,7 +386,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
     // if only test particles encountered massive bodies, reset the
     // massive body coordinates to their post Kepler step state
     if(rim->tponly_encounter){
-        for (int i=1;i<rim->encounterNactive;i++){
+        for (unsigned int i=1;i<rim->encounterNactive;i++){
             unsigned int mi = rim->encounter_map[i];
             r->particles[mi] = rim->particles_backup[mi];
         }
@@ -433,24 +433,24 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
     }
 
     struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
-    const int N = r->N;
-
-    if (rim->dcrit_allocatedN<N){
+    const unsigned int N = r->N;
+    
+    if (rim->dcrit_allocated_N<N){
         // Need to safe these arrays in SimulationArchive
         rim->dcrit              = realloc(rim->dcrit, sizeof(double)*N);
-        rim->dcrit_allocatedN = N;
+        rim->dcrit_allocated_N = N;
         // If particle number increased (or this is the first step), need to calculate critical radii
         rim->recalculate_dcrit_this_timestep        = 1;
         // Heliocentric coordinates were never calculated.
         // This will get triggered on first step only (not when loaded from archive)
         rim->recalculate_coordinates_this_timestep = 1;
     }
-    if (rim->allocatedN<N){
-        // These arrays are only used within one timestep.
+    if (rim->allocated_N<N){
+        // These arrays are only used within one timestep. 
         // Can be recreated without loosing bit-wise reproducibility
         rim->particles_backup   = realloc(rim->particles_backup,sizeof(struct reb_particle)*N);
         rim->encounter_map      = realloc(rim->encounter_map,sizeof(int)*N);
-        rim->allocatedN = N;
+        rim->allocated_N = N;
     }
     if (rim->safe_mode || rim->recalculate_coordinates_this_timestep){
         if (rim->is_synchronized==0){
@@ -470,7 +470,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
             reb_warning(r,"MERCURIUS: Recalculating dcrit but pos/vel were not synchronized before.");
         }
         rim->dcrit[0] = 2.*r->particles[0].r; // central object only uses physical radius
-        for (int i=1;i<N;i++){
+        for (unsigned int i=1;i<N;i++){
             rim->dcrit[i] = reb_integrator_mercurius_calculate_dcrit_for_particle(r, i);
         }
     }
@@ -563,10 +563,10 @@ void reb_integrator_mercurius_reset(struct reb_simulation* r){
     r->ri_mercurius.particles_backup_additionalforces = NULL;
     free(r->ri_mercurius.encounter_map);
     r->ri_mercurius.encounter_map = NULL;
-    r->ri_mercurius.allocatedN = 0;
-    r->ri_mercurius.allocatedN_additionalforces = 0;
+    r->ri_mercurius.allocated_N = 0;
+    r->ri_mercurius.allocated_N_additionalforces = 0;
     // dcrit array
     free(r->ri_mercurius.dcrit);
     r->ri_mercurius.dcrit = NULL;
-    r->ri_mercurius.dcrit_allocatedN = 0;
+    r->ri_mercurius.dcrit_allocated_N = 0;
 }

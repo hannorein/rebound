@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_float, c_int, c_uint, c_uint32, c_int64, c_uint64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast
+from ctypes import Structure, c_double, POINTER, c_float, c_int, c_uint, c_uint32, c_int64, c_uint64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast, c_size_t, c_char
 from .simulation import Simulation, BINARY_WARNINGS
 from . import clibrebound 
 import os
@@ -64,8 +64,9 @@ class SimulationArchive(Structure):
         """
         Arguments
         ---------
-        filename : str
+        filename : str or bytes
             Filename of the SimulationArchive file to be opened.
+            Can also be of type bytes to read from memory (uses fmemopen).
         setup : function
             Function to be called everytime a simulation object is created
             In this function, the user can setup additional forces
@@ -87,6 +88,7 @@ class SimulationArchive(Structure):
         if reuse_index:
             # Optimized loading
             clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), byref(reuse_index), byref(w))
+
         else:
             clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), None, byref(w))
         for majorerror, value, message in BINARY_WARNINGS:
@@ -97,7 +99,7 @@ class SimulationArchive(Structure):
                     # Just a warning
                     if process_warnings:
                         warnings.warn(message, RuntimeWarning)
-        else:
+        if not process_warnings:
             # Store for later
             self.warnings = w
         if self.nblobs<1:

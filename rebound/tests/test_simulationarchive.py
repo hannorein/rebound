@@ -581,6 +581,26 @@ class TestSimulationArchiveMercurius(unittest.TestCase):
         sa = rebound.SimulationArchive("simulationarchive.bin")
         self.assertEqual(sa.nblobs, 8)
         self.assertAlmostEqual(sa[-1].t, 7000, places=0)
+    
+    def test_tree(self):
+        sim = rebound.Simulation()
+        sim.gravity = "tree"
+        sim.integrator = "leapfrog"
+        sim.configure_box(100,2,2,1)
+        sim.add(m=1.)
+        sim.add(m=1e-3,a=1.)
+        sim.add(m=5e-3,a=2.25)
+    
+        sim.automateSimulationArchive("out.bin", interval=100,deletefile=True) 
+        sim.integrate(305)
+        
+        sa = rebound.SimulationArchive("out.bin")
+        self.assertEqual(sa.nblobs, 4)
+
+        sim2 = sa[-1]
+        sim2.integrate(305)
+        self.assertEqual(sim, sim2)
+    
 
 if __name__ == "__main__":
     unittest.main()
