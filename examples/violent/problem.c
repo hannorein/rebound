@@ -35,9 +35,9 @@ double Omegas[10] = {0.0, 3.1129104598773245, -1.3274903358954842, -1.0319182859
   0.1922025319432963, -0.38233708635963903, 2.6522366656182905, 2.751328894621499};
 
 int nbodies = 3;
-double tmax = 200000.*2*M_PI;
+double tmax = 1000.*2*M_PI;
 
-char title[100] = "violent_ias15_";
+char title[100] = "energy.txt";
 
 int main(int argc, char* argv[]){
 
@@ -49,9 +49,9 @@ int main(int argc, char* argv[]){
     reb_add(r, star);
 
     double planet_m = 9.55e-4;
-    double planet_r = 0.000477895;
+    // double planet_r = 0.000477895;
 
-    double sma = 1.;
+    double sma = 5.;
     double delta= 3.;
 
     int index = 0;
@@ -63,11 +63,11 @@ int main(int argc, char* argv[]){
     r->rand_seed = index;
 
     for (int i = 0; i < nbodies; i++){
-      double a_rand = reb_random_uniform(r, -1e-10, 1e-10);
-      double e_rand = reb_random_uniform(r, -1e-10, 1e-10);
-      double Om_rand = reb_random_uniform(r, 0, 1e-10);
-      double f_rand = reb_random_uniform(r, 0, 1e-10);
-      reb_add_fmt(r, "m r a e inc Omega f", planet_m, planet_r, sma + a_rand, 0.01 + e_rand, (double)i * M_PI / 180., Om_rand, f_rand);
+      double a_rand = 0.;//reb_random_uniform(r, -1e-10, 1e-10);
+      double e_rand = 0.;//reb_random_uniform(r, -1e-10, 1e-10);
+      double Om_rand = 0.;//reb_random_uniform(r, 0, 1e-10);
+      double f_rand = 0.;//reb_random_uniform(r, 0, 1e-10);
+      reb_add_fmt(r, "m a e inc Omega f", planet_m, sma, 0.01 + e_rand, (double)i * M_PI / 180., Om_rand, (double)i*(180.* M_PI / 180.));
       double num = -pow(2., 1./3.) * pow(3., 1./3.) * sma - pow((planet_m / star.m), 1./3.) * delta * sma;
       double denom = -pow(2., 1./3.) * pow(3., 1./3.) + pow((planet_m / star.m), 1./3.) * delta;
 
@@ -82,33 +82,39 @@ int main(int argc, char* argv[]){
       if (o.P < min){
         min = o.P;
       }
+      //printf("%d %f %f\n", i, p->x, p->y);
     }
 
-/*
+    //printf("%f\n", min * 0.05);
+
+
     r->integrator = REB_INTEGRATOR_TRACE;
     r->dt = min * 0.05;//0.059331635924546614;
-    r->ri_tr.S = reb_integrator_trace_switch_velocity;
-    r->ri_tr.vfac = 5.;
+    r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
+    r->ri_tr.hillfac = 4;
     r->ri_tr.vfac_p = 16.;
     r->ri_tr.ats = 0;
-*/
 
 
-    r->integrator = REB_INTEGRATOR_IAS15;
+    // r->integrator = REB_INTEGRATOR_IAS15;
     r->visualization = REB_VISUALIZATION_NONE;
     r->heartbeat  = heartbeat;
 
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
 
     if (r->heartbeat != NULL){
-      //system("rm -rf energy.txt");
-      FILE* f = fopen(title, "w");
+      system("rm -rf test_3.txt");
+      //FILE* f = fopen(title, "w");
+      FILE* f = fopen("test_3.txt", "w");
       fprintf(f, "# Seed: %d\n", index);
       fprintf(f, "t,E");
+
+      fprintf(f, "t,E");
       for (int i = 1; i < nbodies+1; i++){
-        // fprintf(f, ",a%d,e%d,i%d,x%d,y%d,z%d",i,i,i,i,i,i);
-        fprintf(f, ",a%d",i);
+        fprintf(f, ",a%d,e%d,i%d,x%d,y%d,z%d",i,i,i,i,i,i);
+        //fprintf(f, ",a%d",i);
       }
+
       fprintf(f, "\n");
       fclose(f);
     }
@@ -127,18 +133,36 @@ void heartbeat(struct reb_simulation* r){
     //}
     //if (reb_output_check(r, 100. * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
-        FILE* f = fopen(title, "a");
-
+        //FILE* f = fopen(title, "a");
+        FILE* f = fopen("test_3.txt", "a");
         fprintf(f, "%e,%e", r->t, reb_tools_energy(r));
 
         struct reb_particle* sun = &r->particles[0];
+
         //fprintf(f, ",%e,%e,%e",sun->x,sun->y,sun->z);
+
         for (int i = 0; i < nbodies; i++){
           struct reb_particle* p = &r->particles[i+1];
           struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
-          //fprintf(f, ",%e,%e,%e,%e,%e,%e", o.a, o.e, o.inc,p->x,p->y,p->z);
-          fprintf(f, ",%e", o.a);
+          fprintf(f, ",%e,%e,%e,%e,%e,%e", o.a, o.e, o.inc,p->x,p->y,p->z);
+          //fprintf(f, ",%e", o.a);
         }
+
+/*
+        struct reb_particle* p1 = &r->particles[1];
+        struct reb_particle* p2 = &r->particles[2];
+        const double dx = p1->x - p2->x;
+        const double dy = p1->y - p2->y;
+        const double dz = p1->z - p2->z;
+        const double dij = sqrt(dx*dx + dy*dy + dz*dz);
+
+        const double dvx = p1->vx - p2->vx;
+        const double dvy = p1->vy - p2->vy;
+        const double dvz = p1->vz - p2->vz;
+        const double dvij = sqrt(dvx*dvx + dvy*dvy + dvz*dvz);
+
+        fprintf(f, "%e,%e,%e,%e", r->t, reb_tools_energy(r), dij, dvij);
+*/
         fprintf(f, "\n");
         fclose(f);
     //}
