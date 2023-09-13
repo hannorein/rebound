@@ -108,8 +108,6 @@ int main(int argc, char* argv[]){
       FILE* f = fopen("test_3.txt", "w");
       fprintf(f, "# Seed: %d\n", index);
       fprintf(f, "t,E");
-
-      fprintf(f, "t,E");
       for (int i = 1; i < nbodies+1; i++){
         fprintf(f, ",a%d,e%d,i%d,x%d,y%d,z%d",i,i,i,i,i,i);
         //fprintf(f, ",a%d",i);
@@ -119,7 +117,7 @@ int main(int argc, char* argv[]){
       fclose(f);
     }
 
-
+    tmax = min * 1000;
     reb_integrate(r, tmax);
     //reb_step(r);
     //printf("Total: %d\nInit Peri No Flag: %d\nInit Peri Flag: %d\nNo Flags:%d\nFlagged Peri:%d\nFlagged CE:%d\n", r->ri_tr.delta_Ks[0], r->ri_tr.delta_Ks[1], r->ri_tr.delta_Ks[2], r->ri_tr.delta_Ks[3], r->ri_tr.delta_Ks[4], r->ri_tr.delta_Ks[5]);
