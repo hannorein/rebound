@@ -473,11 +473,11 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
 }
 
 // Particle-particle collision tracking. Explanation is in my notes.
-int pindex(int i, int j, int N){
+int reb_integrator_trace_pindex(int i, int j, int N){
   return (i-1)*N-((i-1)*(2+i)/2)+j-i-1;
 }
 
-int Fcond(struct reb_simulation* const r){
+int reb_integrator_trace_Fcond(struct reb_simulation* const r){
   struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
   const int N = r->N;
   const int Nactive = r->N_active==-1?r->N:r->N_active;
@@ -519,8 +519,8 @@ int Fcond(struct reb_simulation* const r){
         }
         // printf("%f %d %d Body-Body CE\n", r->t, i, j);
         // Checks for switching Kij 0->1. Initialized as all 0 the first time of asking.
-        if (ri_tr->current_Ks[pindex(i,j,N)] == 0){
-          ri_tr->current_Ks[pindex(i,j,N)] = 1;
+        if (ri_tr->current_Ks[reb_integrator_trace_pindex(i,j,N)] == 0){
+          ri_tr->current_Ks[reb_integrator_trace_pindex(i,j,N)] = 1;
           new_c = 1;
         }
       }
@@ -568,7 +568,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       ri_tr->current_Ks[i] = 0;
     }
 
-    int new_ce = Fcond(r); // output means nothing at this step for now
+    int new_ce = reb_integrator_trace_Fcond(r); // output means nothing at this step for now
 
     // ------------------- Adaptive TS -------------------------
     // Check condition at the beginning of TS
@@ -632,7 +632,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       reb_integrator_trace_interaction_step(r, r->dt/2.);
 
       // Also check for new close_encounters
-      int ctry = Fcond(r);
+      int ctry = reb_integrator_trace_Fcond(r);
 
       // ------------------- Adaptive TS -------------------------
       // r->dt_proposed is now the new proposed timestep
