@@ -17,7 +17,7 @@ try:
     ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")
     ghash_arg = "-DGITHASH="+ghash.strip()
 except:
-    ghash_arg = "-DGITHASH=0ce1103753b84ddf6adb71857818710330da8e0c" #GITHASHAUTOUPDATE
+    ghash_arg = "-DGITHASH=abecf9f1df3610536b8fcf70d4e0d23f46ca53ec" #GITHASHAUTOUPDATE
 
 extra_link_args=[]
 if sys.platform == 'darwin':
@@ -25,9 +25,11 @@ if sys.platform == 'darwin':
     vars = sysconfig.get_config_vars()
     vars['LDSHARED'] = vars['LDSHARED'].replace('-bundle', '-shared')
     extra_link_args=['-Wl,-install_name,@rpath/librebound'+suffix]
-
-# Default compile args
-extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC']
+if sys.platform == 'win32':
+    extra_compile_args=[ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE']
+else:
+    # Default compile args
+    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC']
 
 # Option to disable FMA in CLANG. 
 FFP_CONTRACT_OFF = os.environ.get("FFP_CONTRACT_OFF", None)
@@ -79,7 +81,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='3.27.0',
+    version='3.28.0',
     description='An open-source multi-purpose N-body code',
     long_description=long_description,
     long_description_content_type="text/markdown",

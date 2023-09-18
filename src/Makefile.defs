@@ -1,8 +1,44 @@
-OPT+= -std=c99 -Wpointer-arith -D_GNU_SOURCE -O3 
-# Removed -march=native for now
 ifndef OS
 	OS=$(shell uname)
 endif
+ifneq ($(OS), Windows_NT)
+	OPT+= -std=c99 -Wpointer-arith -D_GNU_SOURCE -O3 -fPIC
+	OBJFILEEXT=o
+	LIBREBOUND=librebound.so
+	EXEREBOUND=rebound
+	RM=rm -f
+	LINKORCOPYLIBREBOUND=ln -s -f ../../src/$(LIBREBOUND) .
+	LINKORCOPYLIBREBOUNDMAIN=ln -s -f src/$(LIBREBOUND) .
+	CCPROBLEM=$(CC) -I../../src/ -Wl,-rpath,./ $(OPT) $(PREDEF) $< -L. -lrebound $(LIB) -o $(EXEREBOUND)
+else
+ifeq ($(OPENGL), 1)
+$(warning OpenGL currently not supported on Windows. Setting OPENGL=0)
+	OPENGL=0
+endif
+ifeq ($(MPI), 1)
+$(error MPI currently not supported on Windows. Please set MPI=0)
+endif
+ifeq ($(OPENMP), 1)
+$(error OPENMP currently not supported on Windows. Please set OPENMP=0)
+endif
+ifeq ($(AVX512), 1)
+$(error AVX512 currently not supported on Windows. Please set AVX512=0)
+endif
+	OPT+= /D_GNU_SOURCE /Ox /fp:precise 
+	OBJFILEEXT=obj
+	LIBREBOUND=librebound.dll
+	EXEREBOUND=rebound.exe
+	RM=del
+	ifeq (, $(shell copy))
+		LINKORCOPYLIBREBOUND=cp ../../src/librebound.* . & cp ../../src/rebound.h .
+		LINKORCOPYLIBREBOUNDMAIN=cp src/librebound.* . & cp src/rebound.h .
+	else
+		LINKORCOPYLIBREBOUND=copy ..\..\src\librebound.* . & copy ..\..\src\rebound.h .
+		LINKORCOPYLIBREBOUNDMAIN=copy src\librebound.* . & copy src\rebound.h .
+	endif
+	CCPROBLEM=$(CC) $(OPT) $(PREDEF) $< librebound.lib /Fe: $(EXEREBOUND)
+endif
+# Removed -march=native for now
 ifeq ($(OS), Linux)
 	OPT+= -Wall -g 
 	LIB+= -lm -lrt
@@ -21,7 +57,13 @@ ifeq ($(MPI), 1)
 	endif
 	PREDEF+= -DMPI
 else
-	CC?=cc
+	ifeq ($(OS),Windows_NT) 
+		ifeq ($(origin CC),default)
+			CC:=cl
+		endif
+	else
+		CC?=cc
+	endif
 endif
 
 ifeq ($(FFTW), 1)
@@ -67,7 +109,9 @@ ifeq ($(OPENMPCLANG), 1)
 	OPT+= -I$(brew --prefix libomp)/include -Xpreprocessor -fopenmp
 	LIB+= -lomp
 else
-	OPT+= -Wno-unknown-pragmas
+	ifneq ($(OS), Windows_NT)
+		OPT+= -Wno-unknown-pragmas
+	endif
 endif
 endif
 

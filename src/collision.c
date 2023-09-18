@@ -31,9 +31,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <math.h>
-#include <time.h>
 #include "particle.h"
 #include "collision.h"
 #include "rebound.h"

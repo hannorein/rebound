@@ -8,7 +8,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 #include "rebound.h"
 
@@ -38,7 +37,7 @@ int main(int argc, char* argv[]){
     reb_add(r, p); 
 
     // Delete previous output
-    system("rm -v r.txt");    
+    remove("r.txt");    
 
     // Do the integration
     reb_integrate(r, tmax);
@@ -63,7 +62,7 @@ void heartbeat(struct reb_simulation* const r){
     }
     // Output the particle position to a file every timestep.
     const struct reb_particle* const particles = r->particles;
-    FILE* f = fopen("r.txt","a");
+    FILE* f = fopen("r.txt","ab");
     fprintf(f,"%e\t%e\t%e\n",r->t,particles[0].x, particles[1].vx);
     fclose(f);
 }

@@ -16,6 +16,12 @@ Which programming language you want to use depends on your taste and your specif
 
 
 ## Installation via pip
+!!! info inline end Python Wheels
+    Starting with REBOUND version 3.28, we provide Python Wheels for REBOUND. 
+    This makes installing REBOUND easier on a wide variety of systems. 
+    For optimal performance, you can compiling REBOUND yourself with the specific optimizations flags for your system turned on manually.
+
+
 If you just want to try out REBOUND or don't plan to modify it in any way, then the easiest way to install the python version of REBOUND is [pip](https://pypi.org) (the Package Installer for Python). Simply type the following command into a terminal:
 
 ```bash
@@ -40,13 +46,6 @@ To use the python version of REBOUND, go to the `rebound/` directory, then insta
 pip install -e .
 ```
 You should now be able to import REBOUND from python. 
-
-!!! Info "Installing REBOUND on Windows"
-    To best way to use REBOUND on Windows is to install the Windows Subsystem (WSL) for Linux.
-    The Ubuntu distribution works well with REBOUND.
-    Once you've installed WSL, open a WSL terminal and make sure you have a compiler installed with the command `sudo apt-get install gcc`.
-    If you want to use the Python version of REBOUND, also make sure you have a recent version of Python installed: `sudo apt-get install python3 python3-pip`.
-    From here on, you can follow the installation instructions above.
 
 ## Compiling the C version of REBOUND
 
@@ -109,3 +108,47 @@ You might nevertheless run into problems. Some of the most common issues are:
     in the file `src/Makefile.defs`. If you use the python version, you
     can add compiler flags to `setup.py`. This might improve performance
     significantly.
+
+
+## Running REBOUND on Windows
+
+There are several ways to run REBOUND on Windows.
+
+### Python
+You can install the python version of REBOUND using pip:
+```bash
+pip install -e .
+```
+This will download the latest python wheel and install it on your system. 
+
+### Windows Subsystem for Linux (WSL)
+You can run the C-version of REBOUND using the Windows Subsystem for Linux (WSL).
+You will need `make` and a compiler, such as `gcc`. These can be installed within WSL with the following command:
+```bash
+sudo apt-install make gcc
+```
+Then, you can follow the above instructions for Linux. Start by download REBOUND, for example using git:
+```bash
+git clone https://github.com/hannorein/rebound
+```
+Then, compile and run a simple C-example with the following commands:
+```bash
+cd rebound/examples/simplest
+make
+./rebound
+```
+
+### Native Windows Builds
+Since version 3.28, you can also run REBOUND natively on Windows. You need to install make and the Microsoft Visual Studio compiler. Once you have downloaded the source code of REBOUND, open the Developer Command Prompt for VS or the Windows PowerShell on your system and go to the REBOUND source code. Then, compile and run a simple C-example with the following commands:
+```bash
+cd examples
+cd simplest
+make
+rebound.exe
+```
+
+
+    
+!!! Note
+    The native Windows support for REBOUND is relatively new. Several features are currently not supported on native Windows builds: OpenMP, MPI, OpenGL, and AVX512. Please [file a bug report on github](https://github.com/hannorein/rebound/issues) if you require any of these featured or if you encounter any other problems. 
+

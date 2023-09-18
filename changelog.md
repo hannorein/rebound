@@ -4,6 +4,10 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.28.0
+- Native Windows support. REBOUND can now be built natively on Windows (without WSL) using the Microsoft Visual Studio Compiler. 
+- Python Wheels are now provided for Linux, MacOS, and Windows. This should significantly speed up the installation process on a wide variety of systems.
+
 ### Version 3.27.0
 * In python, Simulation and Particle objects are now picklable. Just like loading Simulations from a binary file, function pointers will need to be re-set manually after unpickling.
 * The difference between simulations can now be printed out in a human readable form. Python syntax: `sim.diff(sim2)`. C syntax: `reb_diff_simulations(sim2, sim1, 1)`.

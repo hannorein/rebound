@@ -1,7 +1,7 @@
 import rebound
 import unittest
 import math
-import numpy as np
+import random
 
 class TestShearingSheet(unittest.TestCase):
     
@@ -12,7 +12,7 @@ class TestShearingSheet(unittest.TestCase):
         surface_density = 400.    # kg/m^2
         particle_density = 400.   # kg/m^3
         sim.G = 6.67428e-11       # N m^2 / kg^2
-        sim.dt = 1e-3*2.*np.pi/OMEGA
+        sim.dt = 1e-3*2.*math.pi/OMEGA
         sim.softening = 0.2       # [m]
         boxsize = 50.            # [m]
         sim.configure_box(boxsize)
@@ -31,27 +31,27 @@ class TestShearingSheet(unittest.TestCase):
             return eps
         sim.coefficient_of_restitution = cor_bridges
         def powerlaw(slope, min_v, max_v):
-            y = np.random.uniform()
+            y = random.random()
             pow_max = pow(max_v, slope+1.)
             pow_min = pow(min_v, slope+1.)
             return pow((pow_max-pow_min)*y + pow_min, 1./(slope+1.))
         total_mass = 0.
         while total_mass < surface_density*(boxsize**2):
             radius = powerlaw(slope=-3, min_v=1, max_v=4)  # [m]    
-            mass = particle_density*4./3.*np.pi*(radius**3)
-            x = np.random.uniform(low=-boxsize/2., high=boxsize/2.)
+            mass = particle_density*4./3.*math.pi*(radius**3)
+            x = random.uniform(-boxsize/2., boxsize/2.)
             sim.add(
                 m=mass,
                 r=radius,
                 x=x,
-                y=np.random.uniform(low=-boxsize/2., high=boxsize/2.),
-                z=np.random.normal(),
+                y=random.uniform(-boxsize/2., boxsize/2.),
+                z=random.normalvariate(mu=0.0, sigma=1.0),
                 vx = 0.,
                 vy = -3./2.*x*OMEGA, 
                 vz = 0.)
             total_mass += mass
         self.assertGreater(sim.N,50)
-        sim.integrate(2.*np.pi/OMEGA)
+        sim.integrate(2.*math.pi/OMEGA)
         self.assertGreater(sim.collisions_Nlog,1000)
         Nbefore = sim.N
         sim.remove(0,keepSorted=0)

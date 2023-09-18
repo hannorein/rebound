@@ -9,7 +9,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 #include "rebound.h"
 
@@ -48,7 +47,7 @@ int main(int argc, char* argv[]){
 
     reb_move_to_com(r);
     
-    system("rm -v orbits.txt");        // delete previous output file
+    remove("orbits.txt");        // delete previous output file
 
     reb_integrate(r, tmax);
 

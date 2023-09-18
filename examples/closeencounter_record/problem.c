@@ -12,7 +12,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 #include "rebound.h"
 
@@ -27,7 +26,7 @@ int collision_record_only(struct reb_simulation* const r, struct reb_collision c
         particles[c.p1].lastcollision = t; 
         particles[c.p2].lastcollision = t;
         printf("\nCollision detected.\n");        
-        FILE* of = fopen("collisions.txt","a+");        // open file for collision output
+        FILE* of = fopen("collisions.txt","a+b");        // open file for collision output
         fprintf(of, "%e\t", t);                    // time
         fprintf(of, "%e\t", (particles[c.p1].x+particles[c.p2].x)/2.);    // x position
         fprintf(of, "%e\t", (particles[c.p1].y+particles[c.p2].y)/2.);    // y position

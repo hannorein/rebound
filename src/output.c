@@ -24,11 +24,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <math.h>
-#include <time.h>
 #include <string.h>
-#include <sys/time.h>
 #include <stddef.h>
 #include "particle.h"
 #include "rebound.h"
@@ -335,9 +331,9 @@ void reb_output_ascii(struct reb_simulation* r, char* filename){
 #ifdef MPI
     char filename_mpi[1024];
     sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
-    FILE* of = fopen(filename_mpi,"a"); 
+    FILE* of = fopen(filename_mpi,"ab"); 
 #else // MPI
-    FILE* of = fopen(filename,"a"); 
+    FILE* of = fopen(filename,"ab"); 
 #endif // MPI
     if (of==NULL){
         reb_error(r, "Can not open file.");
@@ -355,9 +351,9 @@ void reb_output_orbits(struct reb_simulation* r, char* filename){
 #ifdef MPI
     char filename_mpi[1024];
     sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
-    FILE* of = fopen(filename_mpi,"a"); 
+    FILE* of = fopen(filename_mpi,"ab"); 
 #else // MPI
-    FILE* of = fopen(filename,"a"); 
+    FILE* of = fopen(filename,"ab"); 
 #endif // MPI
     if (of==NULL){
         reb_error(r, "Can not open file.");
@@ -606,7 +602,7 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename){
     Q_tot.x = sqrt(Q_tot.x/(double)N_tot);
     Q_tot.y = sqrt(Q_tot.y/(double)N_tot);
     Q_tot.z = sqrt(Q_tot.z/(double)N_tot);
-    FILE* of = fopen(filename,"a"); 
+    FILE* of = fopen(filename,"ab"); 
     if (of==NULL){
         reb_error(r, "Can not open file.");
         return;

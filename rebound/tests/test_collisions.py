@@ -1,7 +1,7 @@
 import rebound
 import unittest
 import math
-import numpy as np
+import random 
 
 class TestLineTreeCollisions(unittest.TestCase):
     
@@ -61,7 +61,7 @@ class TestLineCollisions(unittest.TestCase):
         sim.add(r=1,x=0)
         sim.add(r=1,x=3,vx=-1)
         sim.init_megno()
-        sim.particles[-1].x = np.nan # test that collisions with variational particles not being checked
+        sim.particles[-1].x = math.nan # test that collisions with variational particles not being checked
         sim.integrate(10)
     def test_line_find(self):
         # Should find the collision
@@ -72,7 +72,7 @@ class TestLineCollisions(unittest.TestCase):
         sim.add(r=1,x=0)
         sim.add(r=1,x=3,vx=-1)
         sim.init_megno()
-        sim.particles[-1].x = np.nan
+        sim.particles[-1].x = math.nan
         with self.assertRaises(rebound.Collision) as context:
             sim.integrate(10)
     def test_line_find_overlap1(self):
@@ -84,7 +84,7 @@ class TestLineCollisions(unittest.TestCase):
         sim.add(r=1,x=0)
         sim.add(r=1,x=1,vx=-1)
         sim.init_megno()
-        sim.particles[-1].x = np.nan
+        sim.particles[-1].x = math.nan
         with self.assertRaises(rebound.Collision) as context:
             sim.integrate(10)
     def test_line_find_overlap2(self):
@@ -96,7 +96,7 @@ class TestLineCollisions(unittest.TestCase):
         sim.add(r=1,x=0)
         sim.add(r=1,x=11,vx=-1)
         sim.init_megno()
-        sim.particles[-1].x = np.nan
+        sim.particles[-1].x = math.nan
         with self.assertRaises(rebound.Collision) as context:
             sim.integrate(10)
     def test_line_miss(self):
@@ -127,9 +127,9 @@ class TestCollisions(unittest.TestCase):
         sim.collision_resolve = cor_remove_both
         
         while sim.N< 10:
-            sim.add(m=1., r=100., x=np.random.uniform(-20,20),
-                                y=np.random.uniform(-20,20),
-                                z=np.random.uniform(-20,20))
+            sim.add(m=1., r=100., x=random.uniform(-20,20),
+                                y=random.uniform(-20,20),
+                                z=random.uniform(-20,20))
         sim.dt = 0.001
         with self.assertRaises(rebound.NoParticles):
             sim.integrate(1000.)
@@ -148,9 +148,9 @@ class TestCollisions(unittest.TestCase):
         sim.collision_resolve = cor_remove_both
         
         while sim.N< 10:
-            sim.add(m=1., r=100., x=np.random.uniform(-20,20),
-                                y=np.random.uniform(-20,20),
-                                z=np.random.uniform(-20,20))
+            sim.add(m=1., r=100., x=random.uniform(-20,20),
+                                y=random.uniform(-20,20),
+                                z=random.uniform(-20,20))
         sim.dt = 0.001
         with self.assertRaises(rebound.NoParticles):
             sim.integrate(1000.)
@@ -166,13 +166,13 @@ class TestCollisions(unittest.TestCase):
         sim.collision  = "tree"
         def cor_remove_both(r, c):
             r.contents.collisions_Nlog += 1
-            return np.random.randint(1,3)
+            return random.randint(1,3)
         sim.collision_resolve = cor_remove_both
         
         while sim.N< 50:
-            sim.add(m=1., r=100., x=np.random.uniform(-2,2),
-                                y=np.random.uniform(-2,2),
-                                z=np.random.uniform(-2,2))
+            sim.add(m=1., r=100., x=random.uniform(-2,2),
+                                y=random.uniform(-2,2),
+                                z=random.uniform(-2,2))
         sim.dt = 0.001
         sim.integrate(sim.dt)
         sim.integrate(2.*sim.dt)
@@ -187,13 +187,14 @@ class TestCollisions(unittest.TestCase):
         sim.collision  = "direct"
         def cor_remove_both(r, c):
             r.contents.collisions_Nlog += 1
-            return np.random.randint(1,3)
+            return random.randint(1,3)
         sim.collision_resolve = cor_remove_both
-        
+       
+        random.seed(1)
         while sim.N< 50:
-            sim.add(m=1., r=100., x=np.random.uniform(-2,2),
-                                y=np.random.uniform(-2,2),
-                                z=np.random.uniform(-2,2))
+            sim.add(m=1., r=100., x=random.uniform(-2,2),
+                                y=random.uniform(-2,2),
+                                z=random.uniform(-2,2))
         sim.dt = 0.001
         sim.integrate(sim.dt)
         sim.integrate(2.*sim.dt)
