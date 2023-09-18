@@ -29,6 +29,10 @@ pip install rebound
 ```
 
 If you have trouble installing a package with pip, consider using a [virtual environment](https://docs.python.org/3/tutorial/venv.html).
+Also, make sure your version of pip is not too old. You can update pip with pip itself:
+```bash
+pip install --upgrade pip
+```
 
 ## Installation via git
 
